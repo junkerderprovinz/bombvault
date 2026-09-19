@@ -1,6 +1,7 @@
 package api
 
 import (
+	"cmp"
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/hex"
@@ -14,6 +15,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -579,6 +581,20 @@ type containerView struct {
 	// Self marks BombVault's own container: the UI hides its backup action and
 	// excludes it from "select all" so a batch can never stop the app itself.
 	Self bool `json:"self"`
+	// RenameFrom and RenameReason name the not-installed entry a live container
+	// without backups of its own looks renamed from (see matchRenames); the UI
+	// words the reason. Both are empty when nothing matched or the backup times
+	// could not be read, since a wrong suggestion is worse than none.
+	RenameFrom   string `json:"renameFrom"`
+	RenameReason string `json:"renameReason"`
+	// AliasConflicts are the former names of this entry that are live
+	// containers again, alphabetically. The UI offers no unlink onto any of
+	// them and asks for that container to be renamed instead. The entry's
+	// history is unaffected, because an alias claims only the old name's
+	// snapshots from before its link.
+	AliasConflicts []string `json:"aliasConflicts"`
+	// Aliases are the names this entry had before, oldest link first.
+	Aliases []string `json:"aliases"`
 }
 
 func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
@@ -588,7 +604,6 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Index targets by name for include flag + last backup.
 	targets, _ := h.store.ListTargets()
 	byName := make(map[string]store.Target, len(targets))
 	for _, t := range targets {
@@ -598,20 +613,65 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 	self := h.svc.SelfContainerName(r.Context())
 
 	live := make(map[string]bool, len(infos))
-	views := make([]containerView, 0, len(infos)+len(targets))
 	for _, c := range infos {
 		live[c.Name] = true
-		v := containerView{
-			Name:      c.Name,
-			Image:     c.Image,
-			State:     c.State,
-			Status:    c.Status,
-			IP:        c.IP,
-			Installed: true,
-			Stack:     c.Stack,
-			Self:      self != "" && c.Name == self,
+	}
+
+	// Alias conflicts land on the row of the entry the live former name
+	// belongs to, not on the live container's own row.
+	var formerNames, aliasConflicts aliasIndex
+	if aliases, aErr := h.store.ListAliases("container"); aErr != nil {
+		log.Printf("api: list containers: alias conflict check: %v", aErr)
+	} else {
+		formerNames = newAliasIndex(aliases)
+		aliasConflicts = liveFormerNames(aliases, live)
+	}
+
+	var orphanTargets []store.Target
+	for _, t := range targets {
+		if !live[t.ContainerName] {
+			orphanTargets = append(orphanTargets, t)
 		}
+	}
+
+	// A Discover-rebuilt orphan has a fresh target id with no run record, so its
+	// run-based "last backup" is nil and would read "Never" despite having
+	// snapshots (#44); the newest snapshot's time stands in, listed only when an
+	// orphan exists. The same map tells the rename pass whether a live container
+	// has backups under its own name, and snapTimesFailed keeps that pass from
+	// guessing off a partial read.
+	var snapTimes map[string]int64
+	snapTimesFailed := false
+	if len(orphanTargets) > 0 {
+		if m, sErr := h.svc.LatestContainerBackupTimes(r.Context()); sErr != nil {
+			log.Printf("api: list containers: latest backup times: %v", sErr)
+			snapTimesFailed = true
+		} else {
+			snapTimes = m
+		}
+	}
+
+	views := make([]containerView, 0, len(infos)+len(targets))
+	viewIndex := make(map[string]int, len(infos)) // live rows only, for the rename-suggestion backfill below
+	hasOwnBackup := make(map[string]bool, len(infos))
+	needsRenameSuggestion := false
+	for _, c := range infos {
+		v := containerView{
+			Name:           c.Name,
+			Image:          c.Image,
+			State:          c.State,
+			Status:         c.Status,
+			IP:             c.IP,
+			Installed:      true,
+			Stack:          c.Stack,
+			Self:           self != "" && c.Name == self,
+			AliasConflicts: []string{},
+			Aliases:        []string{},
+		}
+		own := false
 		if t, ok := byName[c.Name]; ok {
+			v.AliasConflicts = aliasConflicts.of(t.ID)
+			v.Aliases = formerNames.of(t.ID)
 			v.IncludeInSchedule = t.IncludeInSchedule
 			v.PreHook = t.PreHook
 			v.PostHook = t.PostHook
@@ -626,34 +686,41 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
 				v.LastBackup = run.FinishedAt
 				v.LastBackupStarted = &run.StartedAt
+				own = true
 			}
 		}
+		if !own {
+			if ts, ok := snapTimes[c.Name]; ok && ts > 0 {
+				own = true
+			}
+		}
+		hasOwnBackup[c.Name] = own
+		if !own {
+			needsRenameSuggestion = true
+		}
+		viewIndex[c.Name] = len(views)
 		views = append(views, v)
 	}
 
-	// Orphans: targets with backups whose container is no longer installed. The
-	// image comes from the stored recreate definition (so the row is recognisable
-	// even though the container is gone).
-	//
-	// A Discover-rebuilt orphan has a fresh target id with NO run record, so its
-	// run-based "last backup" is nil and would read "Never" despite having
-	// snapshots (#44). Fall back to the newest snapshot's time — listed once, and
-	// only when an orphan actually exists.
-	var snapTimes map[string]int64
-	for _, t := range targets {
-		if !live[t.ContainerName] {
-			if m, sErr := h.svc.LatestContainerBackupTimes(r.Context()); sErr != nil {
-				log.Printf("api: list containers: latest backup times: %v", sErr)
-			} else {
-				snapTimes = m
+	// Rename suggestions need an orphan to match and a live container without
+	// backups to offer it to. When the backup times could not be read the pass
+	// is skipped, since a wrong suggestion is worse than none.
+	if len(orphanTargets) > 0 && needsRenameSuggestion && !snapTimesFailed {
+		for liveName, cand := range h.svc.suggestRenames(infos, orphanTargets) {
+			if hasOwnBackup[liveName] {
+				continue // the gate above is a global "worth trying" switch, not a per-row filter
 			}
-			break
+			if idx, ok := viewIndex[liveName]; ok {
+				views[idx].RenameFrom = cand.OldName
+				views[idx].RenameReason = cand.Reason
+			}
 		}
 	}
-	for _, t := range targets {
-		if live[t.ContainerName] {
-			continue
-		}
+
+	// Orphans: targets with backups whose container is not installed. The
+	// image comes from the stored recreate definition (so the row is recognisable
+	// even though the container is gone).
+	for _, t := range orphanTargets {
 		v := containerView{
 			Name:              t.ContainerName,
 			State:             "not-installed",
@@ -661,6 +728,8 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			IncludeInSchedule: t.IncludeInSchedule,
 			ScheduleCadence:   t.ScheduleCadence,
 			Repo:              t.Repo,
+			AliasConflicts:    aliasConflicts.of(t.ID),
+			Aliases:           formerNames.of(t.ID),
 		}
 		if t.Definition != "" {
 			var def containerDefinition
@@ -681,6 +750,41 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 		views = append(views, v)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "containers": views})
+}
+
+// aliasIndex holds former names by the ID of the entry they belong to.
+type aliasIndex map[string][]string
+
+// newAliasIndex indexes every entry's former names, oldest link first.
+func newAliasIndex(aliases []store.Alias) aliasIndex {
+	byLink := slices.Clone(aliases)
+	slices.SortStableFunc(byLink, func(a, b store.Alias) int { return cmp.Compare(a.LinkedAt, b.LinkedAt) })
+	idx := make(aliasIndex, len(byLink))
+	for _, a := range byLink {
+		idx[a.TargetID] = append(idx[a.TargetID], a.OldName)
+	}
+	return idx
+}
+
+// liveFormerNames indexes the former names that are live machines again, each
+// a conflict on its entry's row. aliases come from ListAliases, which orders
+// them by name, so each entry's list is alphabetical.
+func liveFormerNames(aliases []store.Alias, live map[string]bool) aliasIndex {
+	idx := aliasIndex{}
+	for _, a := range aliases {
+		if live[a.OldName] {
+			idx[a.TargetID] = append(idx[a.TargetID], a.OldName)
+		}
+	}
+	return idx
+}
+
+// of returns an empty list rather than nil, so the row encodes it as [].
+func (idx aliasIndex) of(targetID string) []string {
+	if names, ok := idx[targetID]; ok {
+		return names
+	}
+	return []string{}
 }
 
 // resourceNameRe matches a safe Docker container / libvirt VM name: it starts
@@ -772,6 +876,95 @@ func (h *Handler) handleForgetContainer(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if err := h.svc.ForgetTarget(r.Context(), name); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleTakeOverContainer moves a not-installed entry onto the name its
+// container was renamed to, keeping its history and settings with the old name
+// as an alias. POST /api/containers/{name}/takeover with body
+// {"from":"<old name>"}; "from" is checked like {name}, because
+// RenameTargetWithAlias validates nothing itself.
+func (h *Handler) handleTakeOverContainer(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		From string `json:"from"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if !validResourceName(body.From) {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid name"})
+		return
+	}
+	if err := h.svc.TakeOverContainer(r.Context(), body.From, name); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleUnlinkContainerAlias undoes a takeover, moving the entry back to its
+// old name. DELETE /api/containers/{name}/alias/{old}; {old} alone finds the
+// entry, since a former name belongs to one entry.
+func (h *Handler) handleUnlinkContainerAlias(w http.ResponseWriter, r *http.Request) {
+	if _, ok := h.nameParam(w, r); !ok {
+		return
+	}
+	old := r.PathValue("old")
+	if !validResourceName(old) {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid name"})
+		return
+	}
+	if err := h.svc.UnlinkContainerAlias(r.Context(), old); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleTakeOverVM moves a VM entry onto the libvirt name its VM was renamed
+// to. POST /api/vms/{name}/takeover with body {"from":"<old libvirt name>"};
+// both are libvirt names, never TrueNAS display names.
+func (h *Handler) handleTakeOverVM(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.vmNameParam(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		From string `json:"from"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if !validVMName(body.From) {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid VM name"})
+		return
+	}
+	if err := h.svc.TakeOverVM(r.Context(), body.From, name); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleUnlinkVMAlias undoes a VM takeover. DELETE /api/vms/{name}/alias/{old};
+// {old} alone finds the entry, since a former name belongs to one entry.
+func (h *Handler) handleUnlinkVMAlias(w http.ResponseWriter, r *http.Request) {
+	if _, ok := h.vmNameParam(w, r); !ok {
+		return
+	}
+	old := r.PathValue("old")
+	if !validVMName(old) {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid VM name"})
+		return
+	}
+	if err := h.svc.UnlinkVMAlias(r.Context(), old); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -4915,7 +5108,8 @@ func (h *Handler) handleCreateFileSet(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "path is required"})
 		return
 	}
-	if err := h.svc.validateFileSet(fs); err != nil {
+	// A new set's path counts as changed, so it has to exist.
+	if err := h.svc.validateFileSet(fs, true); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -4925,9 +5119,23 @@ func (h *Handler) handleCreateFileSet(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	// A live set already owns this name: say so plainly rather than running
+	// the leftover-snapshot check below, which would answer as if the name
+	// were free and its history orphaned.
+	if _, err := h.store.GetFileSetByName(fs.Name); err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a file set with this name already exists"})
+		return
+	}
+	// A name whose fileset:<name> snapshots are still in the repo (for
+	// example after "Remove set", which keeps them) must not be silently
+	// adopted by an unrelated new set.
+	if err := h.svc.fileSetNameAdoptable(r.Context(), fs.Name, fs.Repo, fs.Path); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 	created, err := h.store.CreateFileSet(fs)
 	if err != nil {
-		// A duplicate name violates the UNIQUE constraint — report it clearly.
+		// A duplicate name violates the UNIQUE constraint; report it clearly.
 		if strings.Contains(err.Error(), "UNIQUE") {
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a file set with this name already exists"})
 			return
@@ -4983,10 +5191,11 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	oldName := fs.Name
-	// Captured before the merge — the path edit below overwrites fs.Path, and
-	// the clear-on-path-edit rule needs the OLD value as the anchor the stored
+	// Captured before the merge: the path edit below overwrites fs.Path, and
+	// the clear-on-path-edit rule needs the old value as the anchor the stored
 	// selection was validated against.
 	oldPath := fs.Path
+	wasEnabled := fs.Enabled
 	if body.Name != nil {
 		fs.Name = strings.TrimSpace(*body.Name)
 	}
@@ -4999,44 +5208,89 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 	if body.Enabled != nil {
 		fs.Enabled = *body.Enabled
 	}
-	if err := h.svc.validateFileSet(fs); err != nil {
+	// A path change moves the anchor every stored entry was validated against,
+	// so it clears the selection in the same save (fileSetPositionals also
+	// re-anchors at compile time). The clear wins over entries sent in the same
+	// request, since keeping both would rewrite their meaning under the new
+	// root. Roots are compared resolved, so re-sending the same path is no
+	// change; an unresolvable one counts as changed.
+	pathChanged := false
+	if body.Path != nil {
+		oldResolved, oldErr := paths.Resolve(h.cfg.HostMountRoot, oldPath)
+		newResolved, newErr := paths.Resolve(h.cfg.HostMountRoot, fs.Path)
+		pathChanged = oldErr != nil || newErr != nil || newResolved != oldResolved
+	}
+	isEnabling := fs.Enabled && !wasEnabled
+	if err := h.svc.validateFileSet(fs, pathChanged || isEnabling); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	// A rename and a repository change both move where the set's next backup
+	// writes, so either one needs the files domain lock: BackupFileSet holds it
+	// for its whole run, and a change landing mid-backup would leave that run's
+	// snapshot behind the old identity while the set already points at the new
+	// one.
+	nameChanging := fs.Name != oldName
+	repoChanging := body.Repo != nil && strings.TrimSpace(*body.Repo) != strings.TrimSpace(fs.Repo)
+	if nameChanging || repoChanging {
+		reason := "repository change"
+		if nameChanging {
+			reason = "rename"
+		}
+		unlock, ok := h.svc.tryLockDomainFor("files", reason)
+		if !ok {
+			op, busy := h.svc.domainBusy("files")
+			if !busy {
+				op = "another operation"
+			}
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": fmt.Sprintf("%s is running on files; try the change again once it finishes", op)})
+			return
+		}
+		defer unlock()
+	}
 	// Refuse a rename once the set has backups: its snapshots are tagged
 	// fileset:<oldName> and are never re-tagged, so a rename would strand them
-	// (DeleteBackupsFileSet then can't find them). Path/excludes/enabled edits stay
-	// allowed — only the name is load-bearing for the snapshot tags.
-	if fs.Name != oldName {
+	// (DeleteBackupsFileSet then can't find them). Path, excludes and enabled
+	// edits stay allowed; only the name is load-bearing for the snapshot tags.
+	if nameChanging {
 		hasBackups, bErr := h.svc.fileSetHasBackups(r.Context(), id)
-		if bErr != nil {
+		if bErr != nil && !errors.Is(bErr, errFileSetRepoUnreachable) {
 			writeJSON(w, http.StatusOK, failEnvelope(bErr))
 			return
 		}
 		if hasBackups {
-			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "cannot rename a file set that already has backups; create a new set instead"})
+			msg := "cannot rename a file set that already has backups; create a new set instead"
+			if errors.Is(bErr, errFileSetRepoUnreachable) {
+				msg = "cannot rename: " + bErr.Error()
+			}
+			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 			return
 		}
 	}
-	// The repository override (#204), applied here and NOT through UpdateFileSet
-	// (the store setter is separate on purpose).
+	// The repository override goes through its own store setter, not
+	// UpdateFileSet.
 	//
-	// Refused once the set has backups, for the same reason a rename is refused
-	// twelve lines up and with more at stake: its snapshots live in the repo it
-	// used, nothing re-homes them, and afterwards the set would look healthy
-	// while its history sat in a repository nothing points at any more. Unlike a
-	// rename, the damage is invisible - a backup to the new repo succeeds, so
-	// nothing ever reports an error.
+	// Refused once the set has backups, for the same reason as a rename above
+	// and with more at stake: its snapshots live in the repo it used, nothing
+	// re-homes them, and the set would look healthy while its history sat in a
+	// repository nothing points at. Unlike a rename, the damage is invisible: a
+	// backup to the new repo succeeds, so nothing ever reports an error. The
+	// files lock above already covers this block too.
+	repoChanged := false
 	if body.Repo != nil {
 		want := strings.TrimSpace(*body.Repo)
 		if want != strings.TrimSpace(fs.Repo) {
 			hasBackups, bErr := h.svc.fileSetHasBackups(r.Context(), id)
-			if bErr != nil {
+			if bErr != nil && !errors.Is(bErr, errFileSetRepoUnreachable) {
 				writeJSON(w, http.StatusOK, failEnvelope(bErr))
 				return
 			}
 			if hasBackups {
-				writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "cannot change the repository of a file set that already has backups; delete its backups first, or create a new set"})
+				msg := "cannot change the repository of a file set that already has backups; delete its backups first, or create a new set"
+				if errors.Is(bErr, errFileSetRepoUnreachable) {
+					msg = "cannot change the repository: " + bErr.Error()
+				}
+				writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 				return
 			}
 			// Checked once here so an unusable choice is refused at the
@@ -5046,35 +5300,32 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 				writeJSON(w, http.StatusOK, failEnvelope(vErr))
 				return
 			}
+			// The target repository may hold leftover fileset:<name>
+			// snapshots of an unrelated folder.
+			if err := h.svc.fileSetNameAdoptable(r.Context(), fs.Name, want, fs.Path); err != nil {
+				writeJSON(w, http.StatusOK, failEnvelope(err))
+				return
+			}
 			if sErr := h.store.SetFileSetRepo(id, want); sErr != nil {
 				writeJSON(w, http.StatusOK, failEnvelope(sErr))
 				return
 			}
 			fs.Repo = want
+			repoChanged = true
 		}
 	}
-	// Selection handling (Phase 4 plan 02; review WR-01). A path change moves
-	// the anchor every stored entry was validated against, so it CLEARS the
-	// selection in the same save (RESEARCH Pitfall 2 layer 1 / A3; the
-	// compile-time re-anchor in fileSetPositionals stays layer 2) — and the
-	// clear WINS over entries in the same request: honoring both would
-	// silently rewrite the selection's meaning under the new root. Comparison
-	// is on the RESOLVED roots (paths.Resolve, the same anchor space), so a
-	// cosmetic re-send of the identical path is not a change; an unresolvable
-	// old or new path counts as changed (defensive — validateFileSet above
-	// already rejected a bad new path, and a path-less set has no selection to
-	// clear).
-	pathChanged := false
-	if body.Path != nil {
-		oldResolved, oldErr := paths.Resolve(h.cfg.HostMountRoot, oldPath)
-		newResolved, newErr := paths.Resolve(h.cfg.HostMountRoot, fs.Path)
-		pathChanged = oldErr != nil || newErr != nil || newResolved != oldResolved
+	// A repository change above already checked the new name against the
+	// final repo.
+	if fs.Name != oldName && !repoChanged {
+		if err := h.svc.fileSetNameAdoptable(r.Context(), fs.Name, fs.Repo, fs.Path); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
 	}
-	// The path-change branch persists the row AND the selection clear as ONE
-	// statement (UpdateFileSetClearingSelection), so a failure can no longer
-	// leave the new path live while the response reports failure with the
-	// old-anchor selection still stored (WR-01): either the whole save lands
-	// or the row is untouched.
+	// On a path change the row and the selection clear go out as one statement
+	// (UpdateFileSetClearingSelection), so either the whole save lands or the
+	// row is untouched, and a failure cannot leave the new path live with the
+	// old-anchor selection still stored.
 	var upErr error
 	if pathChanged {
 		upErr = h.store.UpdateFileSetClearingSelection(fs)

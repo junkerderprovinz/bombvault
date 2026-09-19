@@ -1,6 +1,11 @@
 package api
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -38,7 +43,9 @@ func TestValidateFileSet(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			err := s.validateFileSet(c.fs)
+			// Create always checks the path.
+			// TestValidateFileSetChecksPathOnlyWhenAsked covers the flag.
+			err := s.validateFileSet(c.fs, true)
 			if c.wantErr && err == nil {
 				t.Fatalf("validateFileSet(%+v) = nil, want error", c.fs)
 			}
@@ -46,6 +53,65 @@ func TestValidateFileSet(t *testing.T) {
 				t.Fatalf("validateFileSet(%+v) = %v, want nil", c.fs, err)
 			}
 		})
+	}
+}
+
+// A well-formed, contained path that does not exist is refused only when
+// checkPathExists is set.
+func TestValidateFileSetChecksPathOnlyWhenAsked(t *testing.T) {
+	root := t.TempDir()
+	s := &Service{cfg: config.Config{HostMountRoot: root}}
+	dead := store.FileSet{Name: "docs", Path: "data/gone", Enabled: true}
+
+	if err := s.validateFileSet(dead, true); err == nil {
+		t.Fatal("checkPathExists=true must refuse a dead path")
+	}
+	if err := s.validateFileSet(dead, false); err != nil {
+		t.Fatalf("checkPathExists=false must pass a dead path through, got %v", err)
+	}
+
+	// The flag never waives containment or the empty-path/enabled rule, only
+	// the on-disk existence check.
+	traversal := store.FileSet{Name: "docs", Path: "../etc", Enabled: false}
+	if err := s.validateFileSet(traversal, false); err == nil {
+		t.Fatal("checkPathExists=false must still refuse a traversal path")
+	}
+	emptyEnabled := store.FileSet{Name: "docs", Path: "", Enabled: true}
+	if err := s.validateFileSet(emptyEnabled, false); err == nil {
+		t.Fatal("checkPathExists=false must still refuse enabling a path-less set")
+	}
+}
+
+// A directory holding only nested empty directories is empty, while a file at
+// any depth makes it non-empty.
+func TestFileSetSourceEmptyCountsOnlyFilesAsContent(t *testing.T) {
+	root := t.TempDir()
+
+	empty := filepath.Join(root, "empty")
+	if err := os.MkdirAll(filepath.Join(empty, "nested", "deeper"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	got, err := fileSetSourceEmpty(empty)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got {
+		t.Fatal("a tree of only empty directories must read as empty")
+	}
+
+	withFile := filepath.Join(root, "with-file")
+	if err := os.MkdirAll(filepath.Join(withFile, "nested"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(withFile, "nested", "leaf.txt"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	got, err = fileSetSourceEmpty(withFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got {
+		t.Fatal("a tree with a deeply nested file must not read as empty")
 	}
 }
 
@@ -149,5 +215,124 @@ func TestBeginRestoreRunForTarget(t *testing.T) {
 	}
 	if run.SnapshotID != "deadbeef12345678" {
 		t.Fatalf("run snapshot = %q, want the restored snapshot id", run.SnapshotID)
+	}
+}
+
+// When the store cannot say whether the repository was ever established, it
+// may sit on a share that is not mounted with every snapshot still in it, so
+// the refusal treats that as having backups. It is an internal test because
+// only a broken schema makes that read fail.
+func TestFileSetHasBackupsUnknownEstablishmentCountsAsHasBackups(t *testing.T) {
+	dir := t.TempDir()
+	db, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	st := store.New(db)
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.FilesPath = "backups/files" // never created on disk
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	set, err := st.CreateFileSet(store.FileSet{Name: "docs", Path: "data/docs", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc := NewService(config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}, st, nil, nil, nil)
+
+	if _, err := db.Exec("DROP TABLE established_repos"); err != nil {
+		t.Fatal(err)
+	}
+
+	hasBackups, bErr := svc.fileSetHasBackups(context.Background(), set.ID)
+	if !hasBackups {
+		t.Fatalf("an unreadable establishment marker must count as having backups, got hasBackups=%v err=%v", hasBackups, bErr)
+	}
+	if !errors.Is(bErr, errFileSetRepoUnreachable) {
+		t.Fatalf("want errFileSetRepoUnreachable, got %v", bErr)
+	}
+}
+
+// The busy refusal names whichever operation holds the files domain lock, not
+// always "backup".
+func TestFileSetPatchBusyRefusalNamesTheHoldingOperation(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, "data", "docs"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	db, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	st := store.New(db)
+	set, err := st.CreateFileSet(store.FileSet{Name: "docs", Path: "data/docs", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc := NewService(cfg, st, nil, nil, nil)
+	h := NewHandler(cfg, st, nil, svc, nil, nil)
+
+	unlock := svc.lockDomainFor("files", "delete")
+	defer unlock()
+
+	req := httptest.NewRequest(http.MethodPatch, "/api/files/sets/"+set.ID, strings.NewReader(`{"name":"renamed"}`))
+	req.Header.Set("Content-Type", "application/json")
+	req.SetPathValue("id", set.ID)
+	w := httptest.NewRecorder()
+	h.handlePatchFileSet(w, req)
+
+	var resp struct {
+		OK    bool   `json:"ok"`
+		Error string `json:"error"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v (%s)", err, w.Body.String())
+	}
+	if resp.OK {
+		t.Fatal("rename while delete holds the files lock must be refused")
+	}
+	if !strings.Contains(resp.Error, "delete") {
+		t.Fatalf("want the refusal to name the holding operation, got %q", resp.Error)
+	}
+}
+
+// A repository chosen for the set after discovery first read it is the
+// operator's, so the repair leaves it.
+func TestRestoreFileSetRepoKeepsARepositoryChosenSinceTheFirstRead(t *testing.T) {
+	dir := t.TempDir()
+	db, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	st := store.New(db)
+	chosen, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Role: store.RoleRepo, Name: "chosen", Repo: "backups/chosen", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	set, err := st.CreateFileSet(store.FileSet{Name: "docs", Repo: chosen.ID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc := NewService(config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}, st, nil, nil, nil)
+
+	svc.restoreFileSetRepo(context.Background(), set.ID, "docs", "found-elsewhere")
+	if got, err := st.GetFileSet(set.ID); err != nil || got.Repo != chosen.ID {
+		t.Fatalf("repo = %q, %v; want the chosen %q kept", got.Repo, err, chosen.ID)
 	}
 }

@@ -60,7 +60,7 @@ func (f *hookFakeEngine) Copy(_ context.Context, dest, src string, _ []string, _
 	return nil
 }
 
-func (f *hookFakeEngine) ForgetPolicy(_ context.Context, repo string, p restic.RetentionPolicy, _ restic.Mode, _ string, _ bool) error {
+func (f *hookFakeEngine) ForgetPolicy(_ context.Context, repo string, p restic.RetentionPolicy, _ restic.Mode, _ []string, _ bool) error {
 	if p.Any() {
 		f.forgot = append(f.forgot, repo)
 	}

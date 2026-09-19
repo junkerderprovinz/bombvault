@@ -69,7 +69,7 @@ func TestRestoreVMRestoresEachDiskFromItsOwnSnapshot(t *testing.T) {
 	// The listing the backup would have produced: the file-backed snapshot plus
 	// one per zvol disk, each with its identity tag, the run tag and its stdin
 	// path.
-	snaps := []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:mixedvm", "p2", runTag}}}
+	snaps := []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:mixedvm", "p2", runTag}, Paths: eng.lastPaths}}
 	for i, entry := range eng.stdinBackups {
 		path, tag := zvolTagOf(entry)
 		if tag == "" {
@@ -131,7 +131,7 @@ func TestRestoreVMFileOnlyUsesSingleSnapshot(t *testing.T) {
 		t.Fatalf("tags = %v, want [vm:plainvm p2] (no vmrun: tag for a file-only VM)", eng.lastTags)
 	}
 
-	eng.snaps = []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:plainvm", "p2"}}}
+	eng.snaps = []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:plainvm", "p2"}, Paths: eng.lastPaths}}
 	seedVMsRepoConfig(t, root)
 
 	if err := svc.RestoreVM(context.Background(), "plainvm", "latest", true, "", true); err != nil {
@@ -159,7 +159,7 @@ func TestRestoreVMMixedDiskHistoricalRunFallsBackWithoutInventingSnapshots(t *te
 	}
 
 	// Only the file-backed snapshot is listed, without a vmrun: tag.
-	eng.snaps = []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:mixedvm", "p2"}}}
+	eng.snaps = []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:mixedvm", "p2"}, Paths: eng.lastPaths}}
 	seedVMsRepoConfig(t, root)
 
 	if err := svc.RestoreVM(context.Background(), "mixedvm", "latest", true, "", true); err != nil {

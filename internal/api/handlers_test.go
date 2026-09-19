@@ -55,7 +55,7 @@ func newTestRouterSvcDir(t *testing.T, d *fakeServiceDocker, eng *fakeResticEngi
 	if err := os.MkdirAll(filepath.Join(dir, "appdata", "plex"), 0o750); err != nil {
 		t.Fatal(err)
 	}
-	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir, DataRootSegments: []string{"appdata"}} // config.Load's default; this helper builds Config by hand
 	st := newMemStore(t)
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
 	sched := schedule.New(
@@ -167,10 +167,417 @@ func TestListContainers(t *testing.T) {
 	}
 }
 
+// containerRow returns the row for name from the "containers" array of a
+// decoded GET /api/containers response and fails the test if there is none.
+func containerRow(t *testing.T, containers []any, name string) map[string]any {
+	t.Helper()
+	for _, c := range containers {
+		if cm, ok := c.(map[string]any); ok && cm["name"] == name {
+			return cm
+		}
+	}
+	t.Fatalf("row %q not found in %v", name, containers)
+	return nil
+}
+
+// TestListContainersSuggestsRename: a live container without backups of its
+// own whose appdata bind mount matches a not-installed entry's gets that
+// entry's name as a suggestion, so the UI can offer to keep its history.
+func TestListContainersSuggestsRename(t *testing.T) {
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{
+		{
+			Name: "radarr",
+			ID:   "live-1",
+			Mounts: []dockercli.MountPoint{
+				{Source: "/mnt/user/appdata/radarr", Destination: "/config"},
+			},
+		},
+	}}
+	h, st := newTestRouter(t, d, &fakeResticEngine{})
+
+	defJSON, err := marshalDefinition(model.Inspect{
+		ID: "orphan-1",
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/mnt/user/appdata/radarr", Destination: "/config"},
+		},
+	}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies", Definition: string(defJSON)}); err != nil {
+		t.Fatal(err)
+	}
+
+	w, m := doJSON(t, h, http.MethodGet, "/api/containers", "")
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("list failed: %d %v", w.Code, m)
+	}
+	radarr := containerRow(t, m["containers"].([]any), "radarr")
+	if radarr["renameFrom"] != "radarr-movies" {
+		t.Fatalf("renameFrom = %v, want %q", radarr["renameFrom"], "radarr-movies")
+	}
+	if radarr["renameReason"] != "appdata-bind" {
+		t.Fatalf("renameReason = %v, want %q", radarr["renameReason"], "appdata-bind")
+	}
+}
+
+// TestListContainersMatchesAppdataUnderTheConfiguredDataRoot: the appdata
+// signal takes the data-root segments from the configuration, so a bind under
+// /mnt/user/config counts where that is the configured root.
+func TestListContainersMatchesAppdataUnderTheConfiguredDataRoot(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir, DataRootSegments: []string{"config"}}
+	st := newMemStore(t)
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{
+		Name:   "radarr",
+		ID:     "live-1",
+		Mounts: []dockercli.MountPoint{{Source: "/mnt/user/config/radarr", Destination: "/config"}},
+	}}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+	h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
+
+	defJSON, err := marshalDefinition(model.Inspect{
+		ID:     "orphan-1",
+		Mounts: []model.Mount{{Type: "bind", Source: "/mnt/user/config/radarr", Destination: "/config"}},
+	}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies", Definition: string(defJSON)}); err != nil {
+		t.Fatal(err)
+	}
+
+	w, m := doJSON(t, h, http.MethodGet, "/api/containers", "")
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("list failed: %d %v", w.Code, m)
+	}
+	radarr := containerRow(t, m["containers"].([]any), "radarr")
+	if radarr["renameFrom"] != "radarr-movies" || radarr["renameReason"] != "appdata-bind" {
+		t.Fatalf("suggestion = %v / %v, want radarr-movies by appdata-bind", radarr["renameFrom"], radarr["renameReason"])
+	}
+}
+
+// TestListContainersShowsAliasConflict: a container named like a retired alias
+// is a real container again, so the link must not keep claiming its name.
+func TestListContainersShowsAliasConflict(t *testing.T) {
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{
+		{Name: "radarr", ID: "a1"},
+		{Name: "radarr-movies", ID: "b2"}, // the old name is back
+		{Name: "sonarr", ID: "c3"},
+	}}
+	h, st := newTestRouter(t, d, &fakeResticEngine{})
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "radarr"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.AddAlias("container", "radarr-movies", tg.ID); err != nil {
+		t.Fatal(err)
+	}
+	// sonarr's alias is not live again and must stay silent, or every
+	// ordinary rename would report a conflict.
+	sonarrTg, err := st.UpsertTarget(store.Target{ContainerName: "sonarr"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.AddAlias("container", "sonarr-legacy", sonarrTg.ID); err != nil {
+		t.Fatal(err)
+	}
+	w, m := doJSON(t, h, http.MethodGet, "/api/containers", "")
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("list failed: %d %v", w.Code, m)
+	}
+	rows := m["containers"].([]any)
+	// The warning belongs to the entry whose history is at risk, not to the
+	// container that took the retired name back.
+	for name, want := range map[string][]any{
+		"radarr":        {"radarr-movies"},
+		"radarr-movies": {},
+		"sonarr":        {}, // its alias is not live
+	} {
+		row := containerRow(t, rows, name)
+		if got := row["aliasConflicts"]; !reflect.DeepEqual(got, want) {
+			t.Errorf("%s aliasConflicts = %#v, want %#v", name, got, want)
+		}
+		if _, ok := row["aliasConflict"]; ok {
+			t.Errorf("%s has an aliasConflict field, want aliasConflicts alone", name)
+		}
+	}
+}
+
+// TestListContainersShowsAliasConflictOnOrphanRow: the conflict also shows on
+// a not-installed entry when one of its retired names is live again as a
+// different container.
+func TestListContainersShowsAliasConflictOnOrphanRow(t *testing.T) {
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{
+		{Name: "radarr-movies", ID: "b2"}, // the retired name, live again as a different container
+	}}
+	h, st := newTestRouter(t, d, &fakeResticEngine{})
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "radarr"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.AddAlias("container", "radarr-movies", tg.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	w, m := doJSON(t, h, http.MethodGet, "/api/containers", "")
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("list failed: %d %v", w.Code, m)
+	}
+	radarr := containerRow(t, m["containers"].([]any), "radarr")
+	if radarr["installed"] != false {
+		t.Fatalf("radarr should be the not-installed row here, got %v", radarr)
+	}
+	if got, want := radarr["aliasConflicts"], []any{"radarr-movies"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("aliasConflicts = %#v, want %#v", got, want)
+	}
+}
+
+// TestListContainersListsEveryLiveFormerNameAsAConflict: with several aliases
+// live again, aliasConflicts names each of them, alphabetically, so none of
+// them is offered for an unlink.
+func TestListContainersListsEveryLiveFormerNameAsAConflict(t *testing.T) {
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{
+		{Name: "radarr", ID: "a1"},
+		{Name: "radarr-zulu", ID: "b2"},
+		{Name: "radarr-alpha", ID: "c3"},
+	}}
+	h, st := newTestRouter(t, d, &fakeResticEngine{})
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "radarr"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.AddAlias("container", "radarr-zulu", tg.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.AddAlias("container", "radarr-alpha", tg.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	w, m := doJSON(t, h, http.MethodGet, "/api/containers", "")
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("list failed: %d %v", w.Code, m)
+	}
+	radarr := containerRow(t, m["containers"].([]any), "radarr")
+	if got, want := radarr["aliasConflicts"], []any{"radarr-alpha", "radarr-zulu"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("aliasConflicts = %#v, want %#v", got, want)
+	}
+}
+
+func TestListContainersListsFormerNamesInLinkOrder(t *testing.T) {
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{
+		{Name: "radarr", ID: "a1"},
+		{Name: "sonarr", ID: "b2"},
+		{Name: "plex", ID: "c3"},
+	}}
+	h, st := newTestRouter(t, d, &fakeResticEngine{})
+	radarr, err := st.UpsertTarget(store.Target{ContainerName: "radarr"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "sonarr"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.AddAliasAt("container", "radarr-zulu", radarr.ID, 100); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.AddAliasAt("container", "radarr-alpha", radarr.ID, 200); err != nil {
+		t.Fatal(err)
+	}
+	lidarr, err := st.UpsertTarget(store.Target{ContainerName: "lidarr"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.AddAliasAt("container", "lidarr-old", lidarr.ID, 100); err != nil {
+		t.Fatal(err)
+	}
+
+	w, m := doJSON(t, h, http.MethodGet, "/api/containers", "")
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("list failed: %d %v", w.Code, m)
+	}
+	rows := m["containers"].([]any)
+	for name, want := range map[string][]any{
+		"radarr": {"radarr-zulu", "radarr-alpha"},
+		"sonarr": {},
+		"plex":   {},
+		"lidarr": {"lidarr-old"},
+	} {
+		if got := containerRow(t, rows, name)["aliases"]; !reflect.DeepEqual(got, want) {
+			t.Errorf("%s aliases = %#v, want %#v", name, got, want)
+		}
+	}
+}
+
+// TestListContainersSuppressesRenameWhenLiveHasOwnRunRecord: a container with
+// backups under its own name is never a rename candidate, even when it matches
+// a not-installed entry on a hard signal. "unrelated" has no backups, so the
+// suggestion pass still runs and the per-row filter is what gets tested.
+func TestListContainersSuppressesRenameWhenLiveHasOwnRunRecord(t *testing.T) {
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{
+		{
+			Name: "radarr",
+			ID:   "live-radarr",
+			Mounts: []dockercli.MountPoint{
+				{Source: "/mnt/user/appdata/radarr", Destination: "/config"},
+			},
+		},
+		{Name: "unrelated"}, // no backups: keeps the suggestion pass' gate open
+	}}
+	h, st := newTestRouter(t, d, &fakeResticEngine{})
+
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "radarr"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	runID, err := st.StartRun(tg.ID, "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishRun(runID, "success", "deadbeef12345678", 1024, ""); err != nil {
+		t.Fatal(err)
+	}
+
+	defJSON, err := marshalDefinition(model.Inspect{
+		ID: "orphan-1",
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/mnt/user/appdata/radarr", Destination: "/config"},
+		},
+	}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies", Definition: string(defJSON)}); err != nil {
+		t.Fatal(err)
+	}
+
+	w, m := doJSON(t, h, http.MethodGet, "/api/containers", "")
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("list failed: %d %v", w.Code, m)
+	}
+	radarr := containerRow(t, m["containers"].([]any), "radarr")
+	if radarr["renameFrom"] != "" {
+		t.Fatalf("renameFrom = %v, want empty: radarr already has a successful run of its own", radarr["renameFrom"])
+	}
+}
+
+// TestListContainersSuppressesRenameWhenLiveHasSnapshotHistory: a container's
+// own history can also be snapshots without a run record, as with a target
+// Discover rebuilt. radarr has neither a target nor a run record here, only a
+// snapshot tagged container:radarr.
+func TestListContainersSuppressesRenameWhenLiveHasSnapshotHistory(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir, DataRootSegments: []string{"appdata"}}
+	st := newMemStore(t)
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ContainersPath = "backups/c"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo := filepath.Join(dir, "backups", "c")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{
+		{
+			Name: "radarr",
+			ID:   "live-radarr",
+			Mounts: []dockercli.MountPoint{
+				{Source: "/mnt/user/appdata/radarr", Destination: "/config"},
+			},
+		},
+		{Name: "unrelated"}, // no backups: keeps the suggestion pass' gate open
+	}}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Time: "2024-01-01T00:00:00Z", Tags: []string{"container:radarr", "p1"}},
+	}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+	h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
+
+	defJSON, err := marshalDefinition(model.Inspect{
+		ID: "orphan-1",
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/mnt/user/appdata/radarr", Destination: "/config"},
+		},
+	}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies", Definition: string(defJSON)}); err != nil {
+		t.Fatal(err)
+	}
+
+	w, m := doJSON(t, h, http.MethodGet, "/api/containers", "")
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("list failed: %d %v", w.Code, m)
+	}
+	radarr := containerRow(t, m["containers"].([]any), "radarr")
+	if radarr["renameFrom"] != "" {
+		t.Fatalf("renameFrom = %v, want empty: radarr already has snapshot history under its own name", radarr["renameFrom"])
+	}
+}
+
+// TestListContainersSkipsRenameSuggestionsWhenBackupTimesFail: when the backup
+// times cannot be read the list still succeeds, but suggests nothing. An
+// absolute ContainersPath, which paths.Resolve always refuses, makes
+// LatestContainerBackupTimes fail without touching Docker or the store.
+func TestListContainersSkipsRenameSuggestionsWhenBackupTimesFail(t *testing.T) {
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{
+		{
+			Name: "radarr",
+			ID:   "live-radarr",
+			Mounts: []dockercli.MountPoint{
+				{Source: "/mnt/user/appdata/radarr", Destination: "/config"},
+			},
+		},
+	}}
+	h, st := newTestRouter(t, d, &fakeResticEngine{})
+
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ContainersPath = "/absolute-path-is-always-refused"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	defJSON, err := marshalDefinition(model.Inspect{
+		ID: "orphan-1",
+		Mounts: []model.Mount{
+			{Type: "bind", Source: "/mnt/user/appdata/radarr", Destination: "/config"},
+		},
+	}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies", Definition: string(defJSON)}); err != nil {
+		t.Fatal(err)
+	}
+
+	w, m := doJSON(t, h, http.MethodGet, "/api/containers", "")
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("list must still succeed despite the backup-times failure: %d %v", w.Code, m)
+	}
+	radarr := containerRow(t, m["containers"].([]any), "radarr")
+	if radarr["renameFrom"] != "" {
+		t.Fatalf("renameFrom = %v, want empty: a failed backup-times read must skip the whole suggestion pass", radarr["renameFrom"])
+	}
+}
+
 // waitForBackupRun polls the runs store until a backup run reaches a terminal
-// (success/failed) state, then returns it. Single backups are now ASYNC: the
+// (success/failed) state, then returns it. Single backups are asynchronous: the
 // handler returns immediately and the work runs in a detached goroutine, so a
-// test must wait for the recorded run before reading the outcome — and before
+// test must wait for the recorded run before reading the outcome, and before
 // the in-memory store closes on cleanup.
 func waitForBackupRun(t *testing.T, st *store.Repo) store.Run {
 	t.Helper()
@@ -2042,15 +2449,23 @@ func TestFileSetRenameRefusedWhenBackedUp(t *testing.T) {
 
 // TestFileSetRenameRefusedWhenSnapshotsExistWithoutRuns pins the completeness
 // of the rename guard: a Discover-rebuilt set has real fileset:<Name> snapshots
-// in the repo but NO run rows, so a runs-only check would wrongly allow the
+// in the repo but no run rows, so a runs-only check would wrongly allow the
 // rename and strand the snapshots. fileSetHasBackups must also see the tags.
 func TestFileSetRenameRefusedWhenSnapshotsExistWithoutRuns(t *testing.T) {
-	eng := &fakeResticEngine{snaps: []restic.Snapshot{
-		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:orphan"}},
-	}}
-	h, _, _, _ := newFilesTestRouter(t, eng)
+	eng := &fakeResticEngine{}
+	h, _, _, dir := newFilesTestRouter(t, eng)
 
-	// A set named exactly like the tag, with NO recorded run (mirrors Discover).
+	// The snapshot records the set's own source, so the create below adopts
+	// it instead of refusing it as another folder's history.
+	resolved, err := paths.Resolve(dir, "data/docs")
+	if err != nil {
+		t.Fatalf("resolve test source path: %v", err)
+	}
+	eng.snaps = []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:orphan"}, Paths: []string{resolved}},
+	}
+
+	// A set named exactly like the tag, with no recorded run (mirrors Discover).
 	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"orphan","path":"data/docs"}`)
 	if w.Code != http.StatusOK || m["ok"] != true {
 		t.Fatalf("create: %d %v", w.Code, m)
@@ -2069,9 +2484,577 @@ func TestFileSetRenameRefusedWhenSnapshotsExistWithoutRuns(t *testing.T) {
 	}
 }
 
-// TestStatsFilesDomainAccepted pins the completeness fix (#61 Task 2): GET
-// /api/stats?domain=files is accepted (no longer 400), so the Storage card can
-// show the files repo's samples; an unknown domain is still rejected.
+// TestFileSetRenameRefusedWhileBackupRunning: BackupFileSet tags the snapshot
+// with the name it read at the start, so a rename during the set's first
+// backup would strand that snapshot under the old name.
+func TestFileSetRenameRefusedWhileBackupRunning(t *testing.T) {
+	eng := &fakeResticEngine{block: make(chan struct{}), backupEntered: make(chan struct{}, 1)}
+	h, _, svc, _ := newFilesTestRouter(t, eng)
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("create: %d %v", w.Code, m)
+	}
+	id, _ := m["id"].(string)
+
+	// Once the backup has reached restic it holds the files domain lock.
+	if started, err := svc.StartBackupFileSet(context.Background(), id); err != nil || !started {
+		t.Fatalf("backup should start: started=%v err=%v", started, err)
+	}
+	select {
+	case <-eng.backupEntered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("backup never reached the engine")
+	}
+
+	w, m = doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, `{"name":"docs-renamed"}`)
+	if w.Code != http.StatusOK || m["ok"] != false {
+		t.Fatalf("rename during a running backup must be refused: %d %v", w.Code, m)
+	}
+	if msg, _ := m["error"].(string); !strings.Contains(msg, "running") {
+		t.Fatalf("want a busy/running message, got %q", msg)
+	}
+	if got := fileSetsOf(t, h)[0]; got.Name != "docs" {
+		t.Fatalf("name must be unchanged while the backup is in flight, got %q", got.Name)
+	}
+
+	close(eng.block) // let the backup finish
+	waitForBackupDone(t, svc)
+
+	// After the run the rename is still refused, because the set has backups.
+	w, m = doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, `{"name":"docs-renamed"}`)
+	if w.Code != http.StatusOK || m["ok"] != false {
+		t.Fatalf("rename after a completed backup must still be refused: %d %v", w.Code, m)
+	}
+	if msg, _ := m["error"].(string); !strings.Contains(msg, "already has backups") {
+		t.Fatalf("want the has-backups message once the run is done, got %q", msg)
+	}
+}
+
+// TestFileSetRepoChangeRefusedWhileBackupRunning: a repository change takes the
+// same files domain lock a rename does, so it cannot land mid-backup and leave
+// that run's snapshot in the old repository while the set already points at
+// the new one.
+func TestFileSetRepoChangeRefusedWhileBackupRunning(t *testing.T) {
+	eng := &fakeResticEngine{block: make(chan struct{}), backupEntered: make(chan struct{}, 1), backupErr: errors.New("simulated failure")}
+	h, st, svc, dir := newFilesTestRouter(t, eng)
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("create: %d %v", w.Code, m)
+	}
+	id, _ := m["id"].(string)
+
+	altRepoDir := filepath.Join(dir, "backups", "altrepo")
+	if err := os.MkdirAll(altRepoDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(altRepoDir, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Role: store.RoleRepo, Name: "alt", Repo: "backups/altrepo", Enabled: true}); err != nil {
+		t.Fatalf("seed named repo: %v", err)
+	}
+	namedRepos, err := st.ListNamedRepos()
+	if err != nil || len(namedRepos) == 0 {
+		t.Fatalf("list named repos: %v %v", namedRepos, err)
+	}
+	altID := namedRepos[0].ID
+
+	// Once the backup has reached restic it holds the files domain lock.
+	if started, err := svc.StartBackupFileSet(context.Background(), id); err != nil || !started {
+		t.Fatalf("backup should start: started=%v err=%v", started, err)
+	}
+	select {
+	case <-eng.backupEntered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("backup never reached the engine")
+	}
+
+	w, m = doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, fmt.Sprintf(`{"repo":%q}`, altID))
+	if w.Code != http.StatusOK || m["ok"] != false {
+		t.Fatalf("repository change during a running backup must be refused: %d %v", w.Code, m)
+	}
+	if msg, _ := m["error"].(string); !strings.Contains(msg, "running") {
+		t.Fatalf("want a busy/running message, got %q", msg)
+	}
+	if got, gErr := st.GetFileSet(id); gErr != nil || got.Repo != "" {
+		t.Fatalf("repo must be unchanged while the backup is in flight, got %q err=%v", got.Repo, gErr)
+	}
+
+	close(eng.block) // let the (failing) backup finish and release the lock
+	waitForBackupDone(t, svc)
+
+	w, m = doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, fmt.Sprintf(`{"repo":%q}`, altID))
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("repository change must succeed once the lock is free: %d %v", w.Code, m)
+	}
+	if got, gErr := st.GetFileSet(id); gErr != nil || got.Repo != altID {
+		t.Fatalf("repo must be updated, got %q err=%v", got.Repo, gErr)
+	}
+}
+
+// TestDiscoverFileSetsLeavesTheRepositoryAloneWhileABackupRuns: the repair that
+// puts a set back on the repository its snapshots were found in takes the
+// files lock a backup holds, so a set never moves under a running backup and
+// is repaired by the next discovery instead.
+func TestDiscoverFileSetsLeavesTheRepositoryAloneWhileABackupRuns(t *testing.T) {
+	eng := &fakeResticEngine{block: make(chan struct{}), backupEntered: make(chan struct{}, 1), backupErr: errors.New("simulated failure")}
+	h, st, svc, dir := newFilesTestRouter(t, eng)
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("create: %d %v", w.Code, m)
+	}
+	id, _ := m["id"].(string)
+	alt, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Role: store.RoleRepo, Name: "alt", Repo: "backups/altrepo", Enabled: true})
+	if err != nil {
+		t.Fatalf("seed named repo: %v", err)
+	}
+	eng.snapsByRepo = map[string][]restic.Snapshot{
+		establishLocalRepo(t, dir, "backups/altrepo"): {{ID: "cafe0001", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}}},
+	}
+
+	if started, err := svc.StartBackupFileSet(context.Background(), id); err != nil || !started {
+		t.Fatalf("backup should start: started=%v err=%v", started, err)
+	}
+	select {
+	case <-eng.backupEntered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("backup never reached the engine")
+	}
+
+	out := captureLog(func() {
+		if _, _, err := svc.DiscoverFileSets(context.Background(), false); err != nil {
+			t.Errorf("DiscoverFileSets: %v", err)
+		}
+	})
+	if got, gErr := st.GetFileSet(id); gErr != nil || got.Repo != "" {
+		t.Fatalf("repo = %q, %v; want it unchanged while the backup is in flight", got.Repo, gErr)
+	}
+	if !strings.Contains(out, `"docs"`) || !strings.Contains(out, "next discovery") {
+		t.Fatalf("log = %s\nwant a line saying the repair of docs waits for the next discovery", out)
+	}
+
+	close(eng.block)
+	waitForBackupDone(t, svc)
+
+	if _, _, err := svc.DiscoverFileSets(context.Background(), false); err != nil {
+		t.Fatalf("DiscoverFileSets: %v", err)
+	}
+	if got, gErr := st.GetFileSet(id); gErr != nil || got.Repo != alt.ID {
+		t.Fatalf("repo = %q, %v; want %q once the lock is free", got.Repo, gErr, alt.ID)
+	}
+}
+
+// TestFileSetRenameRefusedWhenRepoUnreachable: an established repository that
+// is not mounted cannot be checked, which refuses the rename too, but with its
+// own reason instead of claiming backups nobody could confirm.
+func TestFileSetRenameRefusedWhenRepoUnreachable(t *testing.T) {
+	eng := &fakeResticEngine{}
+	h, st, _, dir := newFilesTestRouter(t, eng)
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("create: %d %v", w.Code, m)
+	}
+	id, _ := m["id"].(string)
+
+	// MarkRepoEstablished must key off the same resolved path the service uses.
+	repo, err := paths.Resolve(dir, "backups/files")
+	if err != nil {
+		t.Fatalf("resolve files repo: %v", err)
+	}
+	if err := st.MarkRepoEstablished(repo); err != nil {
+		t.Fatalf("mark established: %v", err)
+	}
+	// The share vanishes: its config marker is gone and mountinfo has no
+	// mount backing the repo path, so it reads as not mounted.
+	if err := os.Remove(filepath.Join(dir, "backups", "files", "config")); err != nil {
+		t.Fatalf("remove repo config marker: %v", err)
+	}
+	writeMountinfo(t, "/", slashRepo(dir))
+
+	w, m = doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, `{"name":"docs-renamed"}`)
+	if w.Code != http.StatusOK || m["ok"] != false {
+		t.Fatalf("rename with an unreachable repository must be refused: %d %v", w.Code, m)
+	}
+	msg, _ := m["error"].(string)
+	if !strings.Contains(msg, "could not be checked") {
+		t.Fatalf("want the 'could not be checked' reason, got %q", msg)
+	}
+	if strings.Contains(msg, "already has backups") {
+		t.Fatalf("must not claim backups nobody could confirm, got %q", msg)
+	}
+	if got := fileSetsOf(t, h)[0]; got.Name != "docs" {
+		t.Fatalf("name must be unchanged, got %q", got.Name)
+	}
+
+	// A repository change is refused with the same reason.
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Role: store.RoleRepo, Name: "alt", Repo: "backups/altrepo", Enabled: true}); err != nil {
+		t.Fatalf("seed named repo: %v", err)
+	}
+	namedRepos, err := st.ListNamedRepos()
+	if err != nil || len(namedRepos) == 0 {
+		t.Fatalf("list named repos: %v %v", namedRepos, err)
+	}
+	w, m = doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, fmt.Sprintf(`{"repo":%q}`, namedRepos[0].ID))
+	if w.Code != http.StatusOK || m["ok"] != false {
+		t.Fatalf("repository change with an unreachable repository must be refused: %d %v", w.Code, m)
+	}
+	msg = m["error"].(string)
+	if !strings.Contains(msg, "could not be checked") {
+		t.Fatalf("want the 'could not be checked' reason, got %q", msg)
+	}
+	if strings.Contains(msg, "already has backups") {
+		t.Fatalf("must not claim backups nobody could confirm, got %q", msg)
+	}
+}
+
+// TestFileSetRenameAllowedWithPlainlyEmptyRepo: a reachable repository with no
+// snapshots yet is not "cannot tell", so the rename goes through.
+func TestFileSetRenameAllowedWithPlainlyEmptyRepo(t *testing.T) {
+	h, _, _, _ := newFilesTestRouter(t, &fakeResticEngine{})
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("create: %d %v", w.Code, m)
+	}
+	id, _ := m["id"].(string)
+
+	w, m = doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, `{"name":"docs-renamed"}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("rename with no backups yet must be allowed: %d %v", w.Code, m)
+	}
+	if got := fileSetsOf(t, h)[0]; got.Name != "docs-renamed" {
+		t.Fatalf("name must be updated, got %q", got.Name)
+	}
+}
+
+// TestCreateFileSetAdoptsMatchingLeftoverSnapshots: snapshots left under a
+// name (Remove set keeps them) are adopted by a new set of that name when they
+// record the set's own source folder.
+func TestCreateFileSetAdoptsMatchingLeftoverSnapshots(t *testing.T) {
+	eng := &fakeResticEngine{}
+	h, _, _, dir := newFilesTestRouter(t, eng)
+	resolved, err := paths.Resolve(dir, "data/docs")
+	if err != nil {
+		t.Fatal(err)
+	}
+	eng.snaps = []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:reborn"}, Paths: []string{resolved}},
+	}
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"reborn","path":"data/docs"}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("create onto a matching-path leftover must be allowed (adopted): %d %v", w.Code, m)
+	}
+}
+
+// TestCreateFileSetRefusesMismatchedLeftoverSnapshots: a leftover snapshot of
+// a different folder under the same name refuses the create, and nothing is
+// written.
+func TestCreateFileSetRefusesMismatchedLeftoverSnapshots(t *testing.T) {
+	eng := &fakeResticEngine{}
+	h, _, _, _ := newFilesTestRouter(t, eng)
+	eng.snaps = []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:reborn"}, Paths: []string{"/host/some/unrelated/folder"}},
+	}
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"reborn","path":"data/docs"}`)
+	if w.Code != http.StatusOK || m["ok"] != false {
+		t.Fatalf("create onto a mismatched-path leftover must be refused: %d %v", w.Code, m)
+	}
+	msg, _ := m["error"].(string)
+	if !strings.Contains(msg, "different source folder") {
+		t.Fatalf("want the mismatch message, got %q", msg)
+	}
+	if !strings.Contains(msg, "Discover") {
+		t.Fatalf("want the message to name Discover as an exit, got %q", msg)
+	}
+	if sets := fileSetsOf(t, h); len(sets) != 0 {
+		t.Fatalf("a refused create must not leave a row behind, got %+v", sets)
+	}
+}
+
+// TestCreateFileSetRefusesLeftoverSnapshotUnderAParentPath: a snapshot of a
+// parent folder covers more than the set claims, so it is not the same folder
+// coming back.
+func TestCreateFileSetRefusesLeftoverSnapshotUnderAParentPath(t *testing.T) {
+	eng := &fakeResticEngine{}
+	h, _, _, dir := newFilesTestRouter(t, eng)
+	parent, err := paths.Resolve(dir, "data")
+	if err != nil {
+		t.Fatal(err)
+	}
+	eng.snaps = []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:reborn"}, Paths: []string{parent}},
+	}
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"reborn","path":"data/docs"}`)
+	if w.Code != http.StatusOK || m["ok"] != false {
+		t.Fatalf("create onto a leftover snapshot recording a parent path must be refused: %d %v", w.Code, m)
+	}
+	if msg, _ := m["error"].(string); !strings.Contains(msg, "different source folder") {
+		t.Fatalf("want the mismatch message, got %q", msg)
+	}
+}
+
+// TestCreateFileSetAdoptsSelectionShapedLeftoverHistory: a set with a tree
+// selection records the selected subpaths rather than its root, so history is
+// adopted as long as every recorded path lies at or below the root.
+func TestCreateFileSetAdoptsSelectionShapedLeftoverHistory(t *testing.T) {
+	eng := &fakeResticEngine{}
+	h, _, _, dir := newFilesTestRouter(t, eng)
+	resolved, err := paths.Resolve(dir, "data/docs")
+	if err != nil {
+		t.Fatal(err)
+	}
+	eng.snaps = []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:reborn"}, Paths: []string{resolved}},
+		{ID: "cafefeed12345678", Time: "2026-07-15T00:00:00Z", Tags: []string{"fileset:reborn"}, Paths: []string{resolved + "/keep-a", resolved + "/keep-b"}},
+	}
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"reborn","path":"data/docs"}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("create onto history mixing a root snapshot and a selection-shaped one must be allowed (adopted): %d %v", w.Code, m)
+	}
+}
+
+// TestCreateFileSetRefusesWhenOnlySomeLeftoverSnapshotsMatch: one mismatched
+// snapshot refuses the create, even next to a matching one.
+func TestCreateFileSetRefusesWhenOnlySomeLeftoverSnapshotsMatch(t *testing.T) {
+	eng := &fakeResticEngine{}
+	h, _, _, dir := newFilesTestRouter(t, eng)
+	resolved, err := paths.Resolve(dir, "data/docs")
+	if err != nil {
+		t.Fatal(err)
+	}
+	eng.snaps = []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:reborn"}, Paths: []string{"/host/some/unrelated/folder"}},
+		{ID: "cafefeed12345678", Time: "2026-07-15T00:00:00Z", Tags: []string{"fileset:reborn"}, Paths: []string{resolved}},
+	}
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"reborn","path":"data/docs"}`)
+	if w.Code != http.StatusOK || m["ok"] != false {
+		t.Fatalf("create must refuse when any leftover snapshot mismatches, even with a later matching one: %d %v", w.Code, m)
+	}
+}
+
+// TestCreateFileSetRefusesWhenLeftoverListingFails: if the leftover snapshots
+// cannot be listed, the create is refused rather than assuming there is
+// nothing to adopt.
+func TestCreateFileSetRefusesWhenLeftoverListingFails(t *testing.T) {
+	eng := &fakeResticEngine{}
+	h, _, _, dir := newFilesTestRouter(t, eng)
+	repo, err := paths.Resolve(dir, "backups/files")
+	if err != nil {
+		t.Fatal(err)
+	}
+	eng.snapsErrFor = map[string]error{repo: errors.New("boom: repo unreadable")}
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	if w.Code != http.StatusOK || m["ok"] != false {
+		t.Fatalf("create must refuse when the leftover listing fails (fail closed): %d %v", w.Code, m)
+	}
+	if sets := fileSetsOf(t, h); len(sets) != 0 {
+		t.Fatalf("a refused create must not leave a row behind, got %+v", sets)
+	}
+}
+
+// TestCreateFileSetOntoLiveNameSaysAlreadyExists: the duplicate-name check
+// runs before the adoption check, which would otherwise treat the live set's
+// own history as another folder's leftovers.
+func TestCreateFileSetOntoLiveNameSaysAlreadyExists(t *testing.T) {
+	eng := &fakeResticEngine{}
+	h, _, _, dir := newFilesTestRouter(t, eng)
+	if err := os.MkdirAll(filepath.Join(dir, "data", "other"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	resolved, err := paths.Resolve(dir, "data/docs")
+	if err != nil {
+		t.Fatal(err)
+	}
+	eng.snaps = []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{resolved}},
+	}
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("create the live set: %d %v", w.Code, m)
+	}
+
+	w, m = doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/other"}`)
+	if w.Code != http.StatusOK || m["ok"] != false {
+		t.Fatalf("create onto a live set's name must be refused: %d %v", w.Code, m)
+	}
+	if msg, _ := m["error"].(string); msg != "a file set with this name already exists" {
+		t.Fatalf("want the duplicate-name message, got %q", msg)
+	}
+}
+
+// TestFileSetRenameMatchesLeftoverSnapshotsByResolvedPath: a rename onto a name
+// with leftover snapshots is refused while they record another folder and
+// allowed once they record the set's own source.
+func TestFileSetRenameMatchesLeftoverSnapshotsByResolvedPath(t *testing.T) {
+	eng := &fakeResticEngine{}
+	h, _, _, dir := newFilesTestRouter(t, eng)
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("create: %d %v", w.Code, m)
+	}
+	id, _ := m["id"].(string)
+
+	resolved, err := paths.Resolve(dir, "data/docs")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Leftover snapshots under the target name, from an unrelated folder.
+	eng.snaps = []restic.Snapshot{
+		{ID: "cafefeed12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:reborn"}, Paths: []string{"/host/unrelated"}},
+	}
+
+	w, m = doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, `{"name":"reborn"}`)
+	if w.Code != http.StatusOK || m["ok"] != false {
+		t.Fatalf("rename onto a mismatched-path leftover must be refused: %d %v", w.Code, m)
+	}
+	if msg, _ := m["error"].(string); !strings.Contains(msg, "different source folder") {
+		t.Fatalf("want the mismatch message, got %q", msg)
+	}
+	if got := fileSetsOf(t, h)[0]; got.Name != "docs" {
+		t.Fatalf("name must be unchanged, got %q", got.Name)
+	}
+
+	// The same folder coming back is adopted.
+	eng.snaps[0].Paths = []string{resolved}
+	w, m = doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, `{"name":"reborn"}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("rename onto a matching-path leftover must be allowed (adopted): %d %v", w.Code, m)
+	}
+	if got := fileSetsOf(t, h)[0]; got.Name != "reborn" {
+		t.Fatalf("name must be updated, got %q", got.Name)
+	}
+}
+
+// TestFileSetPatchRepoChangeRefusesLeftoverSnapshotsFromAnotherFolder: moving a
+// set to a repository that holds another folder's snapshots under its name is
+// refused, and allowed once those snapshots record the set's own source.
+func TestFileSetPatchRepoChangeRefusesLeftoverSnapshotsFromAnotherFolder(t *testing.T) {
+	eng := &fakeResticEngine{}
+	h, st, _, dir := newFilesTestRouter(t, eng)
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("create: %d %v", w.Code, m)
+	}
+	id, _ := m["id"].(string)
+
+	altRepoDir := filepath.Join(dir, "backups", "altrepo")
+	if err := os.MkdirAll(altRepoDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(altRepoDir, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	altRepoResolved, err := paths.Resolve(dir, "backups/altrepo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	eng.snapsByRepo = map[string][]restic.Snapshot{
+		altRepoResolved: {{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{"/host/unrelated"}}},
+	}
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Role: store.RoleRepo, Name: "alt", Repo: "backups/altrepo", Enabled: true}); err != nil {
+		t.Fatalf("seed named repo: %v", err)
+	}
+	namedRepos, err := st.ListNamedRepos()
+	if err != nil || len(namedRepos) == 0 {
+		t.Fatalf("list named repos: %v %v", namedRepos, err)
+	}
+	altID := namedRepos[0].ID
+
+	w, m = doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, fmt.Sprintf(`{"repo":%q}`, altID))
+	if w.Code != http.StatusOK || m["ok"] != false {
+		t.Fatalf("repository change onto a leftover from another folder must be refused: %d %v", w.Code, m)
+	}
+	if msg, _ := m["error"].(string); !strings.Contains(msg, "different source folder") {
+		t.Fatalf("want the mismatch message, got %q", msg)
+	}
+	if got, gErr := st.GetFileSet(id); gErr != nil || got.Repo != "" {
+		t.Fatalf("a refused repository change must not persist, got repo=%q err=%v", got.Repo, gErr)
+	}
+
+	resolved, err := paths.Resolve(dir, "data/docs")
+	if err != nil {
+		t.Fatal(err)
+	}
+	eng.snapsByRepo[altRepoResolved][0].Paths = []string{resolved}
+	w, m = doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, fmt.Sprintf(`{"repo":%q}`, altID))
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("repository change onto a matching-path leftover must be allowed (adopted): %d %v", w.Code, m)
+	}
+	if got, gErr := st.GetFileSet(id); gErr != nil || got.Repo != altID {
+		t.Fatalf("repo must be updated, got %q err=%v", got.Repo, gErr)
+	}
+}
+
+// TestFileSetPatchDeadPathBlocksOnlyPathChangeAndEnable: a set whose folder is
+// gone can still be disabled or have its excludes, cadence and repository
+// edited. Only enabling it or changing to another missing path is refused.
+func TestFileSetPatchDeadPathBlocksOnlyPathChangeAndEnable(t *testing.T) {
+	h, st, _, dir := newFilesTestRouter(t, &fakeResticEngine{})
+
+	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("create: %d %v", w.Code, m)
+	}
+	id, _ := m["id"].(string)
+
+	if err := os.RemoveAll(filepath.Join(dir, "data", "docs")); err != nil {
+		t.Fatal(err)
+	}
+
+	w, m = doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, `{"enabled":false}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("disabling a set with a dead path must pass: %d %v", w.Code, m)
+	}
+
+	// The edit dialog resends name, path and enabled unchanged.
+	w, m = doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, `{"name":"docs","path":"data/docs","excludes":["*.tmp"],"enabled":false}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("editing excludes on a set with a dead path must pass: %d %v", w.Code, m)
+	}
+
+	w, m = doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, `{"scheduleCadence":"off"}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("editing cadence on a set with a dead path must pass: %d %v", w.Code, m)
+	}
+
+	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Role: store.RoleRepo, Name: "alt", Repo: "backups/altrepo", Enabled: true}); err != nil {
+		t.Fatalf("seed named repo: %v", err)
+	}
+	namedRepos, err := st.ListNamedRepos()
+	if err != nil || len(namedRepos) == 0 {
+		t.Fatalf("list named repos: %v %v", namedRepos, err)
+	}
+	w, m = doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, fmt.Sprintf(`{"repo":%q}`, namedRepos[0].ID))
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("changing the repository on a set with a dead path must pass: %d %v", w.Code, m)
+	}
+
+	w, m = doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, `{"enabled":true}`)
+	if w.Code != http.StatusOK || m["ok"] != false {
+		t.Fatalf("enabling a set with a dead path must be refused: %d %v", w.Code, m)
+	}
+
+	w, m = doJSON(t, h, http.MethodPatch, "/api/files/sets/"+id, `{"path":"data/still-gone"}`)
+	if w.Code != http.StatusOK || m["ok"] != false {
+		t.Fatalf("changing to another dead path must be refused: %d %v", w.Code, m)
+	}
+}
+
+// TestStatsFilesDomainAccepted: GET /api/stats?domain=files is accepted, so the
+// Storage card can show the files repo's samples; an unknown domain is still
+// rejected.
 func TestStatsFilesDomainAccepted(t *testing.T) {
 	h, st := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
 	// Seed one files sample so the handler returns it directly (no async collect).
@@ -2093,7 +3076,7 @@ func TestStatsFilesDomainAccepted(t *testing.T) {
 
 // TestCreateFileSetRejectsBadPaths pins the save-time path guard: a traversal
 // path and a non-existent path are both refused gracefully and nothing is
-// stored (the path is validated BEFORE the row is written).
+// stored (the path is validated before the row is written).
 func TestCreateFileSetRejectsBadPaths(t *testing.T) {
 	h, _, _, _ := newFilesTestRouter(t, &fakeResticEngine{})
 
@@ -2120,12 +3103,15 @@ func TestCreateFileSetRejectsBadPaths(t *testing.T) {
 // restore (no targetPath) without confirm:true fails synchronously with the
 // familiar not-confirmed sentinel and starts no restic work.
 func TestRestoreFileSetUnconfirmedInPlace(t *testing.T) {
-	eng := &fakeResticEngine{snaps: []restic.Snapshot{
-		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}},
-	}}
+	eng := &fakeResticEngine{}
 	h, _, _, _ := newFilesTestRouter(t, eng)
 	_, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
 	id, _ := m["id"].(string)
+	// Seeded after the create so its leftover check does not see the
+	// snapshot, which stands for a backup the set already ran.
+	eng.snaps = []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}},
+	}
 
 	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","confirm":false}`)
 	if w.Code != http.StatusOK {
@@ -2144,12 +3130,14 @@ func TestRestoreFileSetUnconfirmedInPlace(t *testing.T) {
 // resolved source folder via RestorePath, and the outcome is recorded as a
 // kind "restore" run against the set's stable id.
 func TestRestoreFileSetInPlaceConfirmed(t *testing.T) {
-	eng := &fakeResticEngine{snaps: []restic.Snapshot{
-		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}},
-	}}
+	eng := &fakeResticEngine{}
 	h, st, svc, dir := newFilesTestRouter(t, eng)
 	_, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
 	id, _ := m["id"].(string)
+	// Seeded after the create: see TestRestoreFileSetUnconfirmedInPlace.
+	eng.snaps = []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}},
+	}
 
 	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","confirm":true}`)
 	if w.Code != http.StatusOK || m["ok"] != true || m["started"] != true {
@@ -2190,12 +3178,14 @@ func TestRestoreFileSetInPlaceConfirmed(t *testing.T) {
 // set.Path resolves to (HostMountRoot changed since the backup), proving the
 // subtree comes from the snapshot, not a recompute of set.Path.
 func TestRestoreFileSetToFolder(t *testing.T) {
-	eng := &fakeResticEngine{snaps: []restic.Snapshot{
-		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{"/host/olduser/data/docs"}},
-	}}
+	eng := &fakeResticEngine{}
 	h, _, svc, dir := newFilesTestRouter(t, eng)
 	_, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
 	id, _ := m["id"].(string)
+	// Seeded after the create: see TestRestoreFileSetUnconfirmedInPlace.
+	eng.snaps = []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{"/host/olduser/data/docs"}},
+	}
 
 	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","targetPath":"restore-here/docs"}`)
 	if w.Code != http.StatusOK || m["ok"] != true || m["started"] != true {
@@ -2236,15 +3226,17 @@ func TestRestoreFileSetToFolder(t *testing.T) {
 // against the real engine that the ancestor yields exactly the recorded roots
 // and leaves a never-backed-up sibling alone.
 func TestRestoreFileSetToFolderMultiRoot(t *testing.T) {
-	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+	eng := &fakeResticEngine{}
+	h, _, svc, dir := newFilesTestRouter(t, eng)
+	_, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	id, _ := m["id"].(string)
+	// Seeded after the create: see TestRestoreFileSetUnconfirmedInPlace.
+	eng.snaps = []restic.Snapshot{
 		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{
 			"/host/olduser/data/docs/keep-a",
 			"/host/olduser/data/docs/keep-b",
 		}},
-	}}
-	h, _, svc, dir := newFilesTestRouter(t, eng)
-	_, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
-	id, _ := m["id"].(string)
+	}
 
 	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","targetPath":"restore-here/docs"}`)
 	if w.Code != http.StatusOK || m["ok"] != true || m["started"] != true {
@@ -2262,28 +3254,25 @@ func TestRestoreFileSetToFolderMultiRoot(t *testing.T) {
 	}
 }
 
-// TestRestoreFileSetFilesUnderSecondRecordedRoot pins the other side of the same
-// Paths[0] read: the SELECTIVE restore's containment guard.
-//
-// The file picker lists the whole snapshot, so a file under the second recorded
-// root is visible and tickable. Restoring it to a folder was then refused with
-// "selected path is outside the file set snapshot" - about a file that is
-// plainly inside the snapshot. On the cross-instance route, where a target
-// folder is the only option, that refusal was terminal: the data sat in the
-// repository with no route to it. The guard now measures against the node that
-// covers every recorded path.
+// TestRestoreFileSetFilesUnderSecondRecordedRoot: the file picker lists the
+// whole snapshot, so the selective restore's containment guard measures
+// against the node covering every recorded path. On the cross-instance route a
+// target folder is the only option, and a refusal there would leave the file
+// unreachable.
 func TestRestoreFileSetFilesUnderSecondRecordedRoot(t *testing.T) {
-	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+	eng := &fakeResticEngine{}
+	h, _, svc, _ := newFilesTestRouter(t, eng)
+	_, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
+	id, _ := m["id"].(string)
+	// Seeded after the create: see TestRestoreFileSetUnconfirmedInPlace.
+	eng.snaps = []restic.Snapshot{
 		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{
 			"/host/user/data/docs/keep-a",
 			"/host/user/data/docs/keep-b",
 		}},
-	}}
-	h, _, svc, _ := newFilesTestRouter(t, eng)
-	_, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
-	id, _ := m["id"].(string)
+	}
 
-	// A file under keep-b, the SECOND recorded root.
+	// A file under keep-b, the second recorded root.
 	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore-files",
 		`{"snapshotId":"deadbeef12345678","paths":["/host/user/data/docs/keep-b/report.pdf"],"targetPath":"restore-here/docs","confirm":true}`)
 	if w.Code != http.StatusOK || m["ok"] != true || m["started"] != true {
@@ -2301,17 +3290,18 @@ func TestRestoreFileSetFilesUnderSecondRecordedRoot(t *testing.T) {
 // TestRestoreFileSetMetadataOnlyIsSuccessWithWarning pins issue #62's "restore
 // failed" half: when restic extracted all data but could not set ownership/
 // metadata on the /mnt/user (FUSE) target (restic.ErrRestoreMetadataOnly), the run
-// is recorded SUCCESS with a warning message — not a hard failure.
+// is recorded as a success with a warning message, not as a hard failure.
 func TestRestoreFileSetMetadataOnlyIsSuccessWithWarning(t *testing.T) {
 	eng := &fakeResticEngine{
-		snaps: []restic.Snapshot{
-			{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{"/host/user/data/docs"}},
-		},
 		restoreErr: restic.ErrRestoreMetadataOnly,
 	}
 	h, st, svc, _ := newFilesTestRouter(t, eng)
 	_, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
 	id, _ := m["id"].(string)
+	// Seeded after the create: see TestRestoreFileSetUnconfirmedInPlace.
+	eng.snaps = []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{"/host/user/data/docs"}},
+	}
 
 	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","targetPath":"restore-here/docs"}`)
 	if w.Code != http.StatusOK || m["ok"] != true || m["started"] != true {
@@ -2335,14 +3325,15 @@ func TestRestoreFileSetMetadataOnlyIsSuccessWithWarning(t *testing.T) {
 // restore failure (not metadata-only) is still recorded as failed.
 func TestRestoreFileSetGenuineErrorStaysFailed(t *testing.T) {
 	eng := &fakeResticEngine{
-		snaps: []restic.Snapshot{
-			{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{"/host/user/data/docs"}},
-		},
 		restoreErr: errors.New("restic restore failed: no space left on device"),
 	}
 	h, st, svc, _ := newFilesTestRouter(t, eng)
 	_, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
 	id, _ := m["id"].(string)
+	// Seeded after the create: see TestRestoreFileSetUnconfirmedInPlace.
+	eng.snaps = []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{"/host/user/data/docs"}},
+	}
 
 	w, _ := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","targetPath":"restore-here/docs"}`)
 	if w.Code != http.StatusOK {
@@ -2377,12 +3368,14 @@ func latestRestoreRun(t *testing.T, st *store.Repo, targetID string) store.Run {
 // alternate folder: a "../" target is refused synchronously and no restic work
 // starts.
 func TestRestoreFileSetRefusesTraversalTarget(t *testing.T) {
-	eng := &fakeResticEngine{snaps: []restic.Snapshot{
-		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}},
-	}}
+	eng := &fakeResticEngine{}
 	h, _, _, _ := newFilesTestRouter(t, eng)
 	_, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
 	id, _ := m["id"].(string)
+	// Seeded after the create: see TestRestoreFileSetUnconfirmedInPlace.
+	eng.snaps = []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}},
+	}
 
 	w, m := doJSON(t, h, http.MethodPost, "/api/files/sets/"+id+"/restore", `{"snapshotId":"deadbeef12345678","targetPath":"../escape"}`)
 	if w.Code != http.StatusOK {
@@ -2396,18 +3389,20 @@ func TestRestoreFileSetRefusesTraversalTarget(t *testing.T) {
 	}
 }
 
-// TestSnapshotsFileSetFilteredByTag pins the tag scoping: only THIS set's
-// fileset:<Name> snapshots come back — another set's and other domains'
-// snapshots in the shared repo never leak through this route.
+// TestSnapshotsFileSetFilteredByTag pins the tag scoping: only this set's
+// fileset:<Name> snapshots come back, never another set's or another domain's
+// from the shared repo.
 func TestSnapshotsFileSetFilteredByTag(t *testing.T) {
-	eng := &fakeResticEngine{snaps: []restic.Snapshot{
-		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}},
-		{ID: "cafebabe87654321", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:other"}},
-		{ID: "abcdef0123456789", Time: "2026-07-14T00:00:00Z", Tags: []string{"container:plex"}},
-	}}
+	eng := &fakeResticEngine{}
 	h, _, _, _ := newFilesTestRouter(t, eng)
 	_, m := doJSON(t, h, http.MethodPost, "/api/files/sets", `{"name":"docs","path":"data/docs"}`)
 	id, _ := m["id"].(string)
+	// Seeded after the create: see TestRestoreFileSetUnconfirmedInPlace.
+	eng.snaps = []restic.Snapshot{
+		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}},
+		{ID: "cafebabe87654321", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:other"}},
+		{ID: "abcdef0123456789", Time: "2026-07-14T00:00:00Z", Tags: []string{"container:plex"}},
+	}
 
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/files/sets/"+id+"/snapshots", nil))
@@ -2826,10 +3821,12 @@ func TestRestoreFileSetSelectionGuard(t *testing.T) {
 		// restic calls.
 		eng := &fakeResticEngine{}
 		h, _, svc, dir := newFilesTestRouter(t, eng)
+		id, root := newDocsSet(t, h, dir)
+		// Seeded after the create so its leftover check does not see the
+		// snapshot; the restore guard is what this subtest exercises.
 		eng.snaps = []restic.Snapshot{
 			{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{dir + "/data/docs/elsewhere"}},
 		}
-		id, root := newDocsSet(t, h, dir)
 		if w, m := patchFileSet(t, h, id, map[string]any{
 			"selectedPaths": []string{root + "/keep-a"},
 		}); w.Code != http.StatusOK || m["ok"] != true {
@@ -2850,16 +3847,16 @@ func TestRestoreFileSetSelectionGuard(t *testing.T) {
 	})
 
 	t.Run("to-folder route keeps whole-snapshot semantics even when the selection maps empty", func(t *testing.T) {
-		// Non-destructive and snapshot-shaped by design (Open Question 1): a
-		// selection disjoint from the snapshot's cross-root path must NOT
-		// abort a to-folder restore — the subtree comes from the snapshot, not
-		// the stored selection (the TestRestoreFileSetToFolder contract, now
-		// pinned against the guard over-reaching).
-		eng := &fakeResticEngine{snaps: []restic.Snapshot{
-			{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{"/host/olduser/data/docs"}},
-		}}
+		// A to-folder restore is non-destructive and takes its subtree from
+		// the snapshot, not the stored selection, so a selection disjoint from
+		// the snapshot's path must not abort it.
+		eng := &fakeResticEngine{}
 		h, _, svc, dir := newFilesTestRouter(t, eng)
 		id, root := newDocsSet(t, h, dir)
+		// Seeded after the create, as in the subtest above.
+		eng.snaps = []restic.Snapshot{
+			{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{"/host/olduser/data/docs"}},
+		}
 		if w, m := patchFileSet(t, h, id, map[string]any{
 			"selectedPaths": []string{root + "/keep-a"},
 		}); w.Code != http.StatusOK || m["ok"] != true {
@@ -3223,4 +4220,63 @@ func TestEmptySelectionGuard(t *testing.T) {
 			t.Fatalf("stored selection = %v, want empty", tg.SelectedPaths)
 		}
 	})
+}
+
+// TestTakeOverContainerRoute pins POST /api/containers/{name}/takeover
+// {"from":"<old name>"}: the not-installed entry moves onto {name} and the old
+// name becomes an alias.
+func TestTakeOverContainerRoute(t *testing.T) {
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
+	h, st := newTestRouter(t, d, &fakeResticEngine{})
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies"}); err != nil {
+		t.Fatal(err)
+	}
+	w, m := doJSON(t, h, http.MethodPost, "/api/containers/radarr/takeover", `{"from":"radarr-movies"}`)
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("takeover failed: %d %v", w.Code, m)
+	}
+	tg, err := st.GetTargetByContainer("radarr")
+	if err != nil {
+		t.Fatal("entry must now live under the new name")
+	}
+	names, _ := st.AliasNames("container", tg.ID)
+	if len(names) != 1 || names[0] != "radarr-movies" {
+		t.Fatalf("alias = %v", names)
+	}
+}
+
+// TestTakeOverContainerRouteRejectsBadFrom: decodeBody only proves the body is
+// JSON, so the route validates "from" before it can reach
+// target_aliases.old_name.
+func TestTakeOverContainerRouteRejectsBadFrom(t *testing.T) {
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
+	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+	w, m := doJSON(t, h, http.MethodPost, "/api/containers/radarr/takeover", `{"from":"../etc/passwd"}`)
+	if w.Code != http.StatusBadRequest || m["ok"] == true {
+		t.Fatalf("an invalid 'from' name must be refused at the boundary, got %d %v", w.Code, m)
+	}
+}
+
+// TestUnlinkContainerAliasRoute pins DELETE /api/containers/{name}/alias/{old},
+// the reverse of the takeover route: the entry goes back to its old name.
+func TestUnlinkContainerAliasRoute(t *testing.T) {
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
+	h, st := newTestRouter(t, d, &fakeResticEngine{})
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies"}); err != nil {
+		t.Fatal(err)
+	}
+	if w, m := doJSON(t, h, http.MethodPost, "/api/containers/radarr/takeover", `{"from":"radarr-movies"}`); w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("setup takeover failed: %d %v", w.Code, m)
+	}
+
+	w, m := doJSON(t, h, http.MethodDelete, "/api/containers/radarr/alias/radarr-movies", "")
+	if w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("unlink failed: %d %v", w.Code, m)
+	}
+	if _, err := st.GetTargetByContainer("radarr-movies"); err != nil {
+		t.Fatal("entry must be back under its old name")
+	}
+	if _, err := st.GetTargetByContainer("radarr"); err == nil {
+		t.Fatal("the taken-over name must no longer have an entry of its own")
+	}
 }

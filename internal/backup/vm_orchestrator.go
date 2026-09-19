@@ -33,14 +33,8 @@ func parentDirs(paths []string) []string {
 	return dirs
 }
 
-// withRunTag returns tags with runTag appended when runTag is non-empty,
-// ALWAYS as a fresh slice (never mutates tags' backing array — every call
-// site below passes a freshly-built literal, but this stays safe even if
-// that ever changes). Returns tags completely UNCHANGED when runTag is
-// empty — the default/zero value every existing caller/test uses today — so
-// every tagged restic call in this file stays byte-identical to before
-// VMBackupDeps.RunTag existed. See that field's doc comment for the full
-// design context.
+// withRunTag returns tags with runTag appended in a fresh slice, so the
+// caller's backing array is never shared. An empty runTag returns tags as is.
 func withRunTag(tags []string, runTag string) []string {
 	if runTag == "" {
 		return tags
@@ -48,6 +42,15 @@ func withRunTag(tags []string, runTag string) []string {
 	out := make([]string, len(tags), len(tags)+1)
 	copy(out, tags)
 	return append(out, runTag)
+}
+
+// withFormerNames gives each former name a tag of its own, as BackupContainer
+// does, so a reader matches a snapshot on any one of them.
+func withFormerNames(tags, formerNames []string) []string {
+	for _, n := range formerNames {
+		tags = append(tags, "formerly:"+n)
+	}
+	return tags
 }
 
 // ---------------------------------------------------------------------------
@@ -93,27 +96,16 @@ const (
 type VMBackupDeps struct {
 	// Name is the libvirt domain name (used for tags + run recording).
 	Name string
-	// RunTag, when non-empty, is a shared per-run correlation tag (e.g.
-	// "vmrun:<runID>") added ADDITIONALLY — never replacing — to every restic
-	// backup call this struct drives: the main file-backed-disk backup below
-	// (runVMGraceful/runVMLive's own d.Restic.Backup call, tagged
-	// "vm:<name>") AND each of BlockDisks' per-zvol-disk backups
-	// (backupBlockDisksAndLog's own call per disk, tagged "vm:<name>" or —
-	// when that disk's VMBlockDisk.Dev is set — its own distinct
-	// "vm:<name>:zvol:<dev>" identity tag; see VMBlockDisk.Dev's doc comment).
-	//
-	// Lets a caller correlate every restic snapshot ONE backup invocation
-	// produced, since restic's --stdin mode forces a mixed file+zvol VM
-	// backup into multiple distinct invocations/snapshots (see this file's
-	// "Zvol-aware VM disk backup/restore" section header comment below for
-	// why, and see withRunTag for the exact append-not-replace mechanics).
-	// Actually persisting a run's tag and querying restic by it at restore
-	// time is a real caller's job (internal/api/service.go, out of this
-	// file's scope; see the design notes' Task 2/3).
-	//
-	// Empty (the default, and what every existing caller/test uses today) is
-	// a byte-identical no-op: every tags slice this file builds stays EXACTLY
-	// what it was before this field existed.
+	// FormerNames are the entry's former names, each written as a
+	// "formerly:<name>" tag on the file-backed snapshot so the link survives in
+	// the repository. The zvol snapshots go without: a VM with zvol disks
+	// cannot be taken over.
+	FormerNames []string
+	// RunTag, when non-empty, is a per-run correlation tag (e.g.
+	// "vmrun:<runID>") added to every restic backup this struct drives: the
+	// file-backed disks and each BlockDisks entry. restic's --stdin mode splits
+	// a mixed file and zvol backup into several snapshots, and the tag ties
+	// them back to one run.
 	RunTag string
 	// DiskPaths are the container-visible absolute paths to the disk images.
 	DiskPaths []string
@@ -233,9 +225,8 @@ type VMBlockDisk struct {
 }
 
 // VMRestoreDir pairs a snapshot subtree (Subtree, a dir the backup recorded)
-// with the destination dir (Target) its contents are restored into. Used to
-// place a cross-instance VM restore's disks on a chosen pool rather than the
-// source server's original paths.
+// with the destination dir (Target) its contents are restored into: a chosen
+// pool for a cross-instance restore, or the folder a rename moved the disks to.
 type VMRestoreDir struct {
 	Subtree string
 	Target  string
@@ -262,16 +253,13 @@ type VMRestoreDeps struct {
 	RunTag string
 	// SnapshotID is the restic snapshot to restore (validated hex).
 	SnapshotID string
-	// DiskPaths are the absolute container-visible paths the restored disks END UP
-	// at (the destination). For a same-instance restore these ARE the snapshot's
-	// own paths; for a cross-instance restore they are the remapped destination
-	// paths. Used for the safety path check and (in the same-instance case) as the
-	// restic restore subtrees.
+	// DiskPaths are the absolute container-visible paths the restored disks end
+	// up at, checked for safety either way. Without RestoreDirs they are the
+	// snapshot's own paths and their folders are restored in place.
 	DiskPaths []string
-	// RestoreDirs, when non-empty, drives a REMAPPED restore: each entry restores a
-	// snapshot subtree (Subtree, the source dir) INTO a destination dir (Target),
-	// instead of the default restore-each-path-back-to-its-own-location behaviour.
-	// A cross-instance VM restore sets this so the disks land on the chosen pool.
+	// RestoreDirs, when non-empty, restores each snapshot subtree into its
+	// Target instead. A cross-instance restore uses it to land the disks on the
+	// chosen pool, and a snapshot from before a rename to reach the moved folder.
 	RestoreDirs []VMRestoreDir
 	// NVRAMPath is the absolute container-visible NVRAM path (may be empty).
 	NVRAMPath string
@@ -458,7 +446,7 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 			paths = append(paths, d.TPMPath)
 		}
 
-		tags := withRunTag([]string{"vm:" + d.Name, "p2"}, d.RunTag)
+		tags := withRunTag(withFormerNames([]string{"vm:" + d.Name, "p2"}, d.FormerNames), d.RunTag)
 		summary, backupErr = d.Restic.Backup(ctx, d.RepoPath, paths, tags)
 		if backupErr != nil {
 			backupErr = fmt.Errorf("vm backup: restic: %w", backupErr)
@@ -552,7 +540,7 @@ func runVMLive(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	if d.TPMPath != "" {
 		paths = append(paths, d.TPMPath)
 	}
-	tags := withRunTag([]string{"vm:" + d.Name, "p2", "live"}, d.RunTag)
+	tags := withRunTag(withFormerNames([]string{"vm:" + d.Name, "p2", "live"}, d.FormerNames), d.RunTag)
 	summary, backupErr := d.Restic.Backup(ctx, d.RepoPath, paths, tags)
 
 	// ALWAYS commit EVERY overlay back, even if the backup failed, so no disk keeps
@@ -703,9 +691,8 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 	// <id>:<subpath> subtree form needs a DIRECTORY (a file path fails with
 	// "not a directory").
 	if len(d.RestoreDirs) > 0 {
-		// REMAPPED restore (cross-instance): each source subtree is restored INTO a
-		// chosen destination dir, so the disks land on the destination host's pool
-		// rather than the source server's original paths.
+		// Each snapshot subtree goes into its Target: a chosen pool for a
+		// cross-instance restore, the moved folder for a snapshot from before a rename.
 		for _, rd := range d.RestoreDirs {
 			if err := d.Restic.RestoreSubtreeTo(ctx, d.RepoPath, d.SnapshotID, rd.Subtree, rd.Target); err != nil {
 				return fmt.Errorf("vm restore: restic restore: %w", err)

@@ -111,7 +111,7 @@ const vmDomainXML = `<domain type='kvm'><name>win10</name>` +
 // to the destination (the untouched cdrom ISO source proves only the VM's own
 // disks move).
 func TestPrepareRestoreVMRemapsDisksAndXML(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:win10"}}}}
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:win10"}, Paths: []string{"/host/user/pool/domains/win10/win10.qcow2"}}}}
 	s := vmRestoreSvc(t, eng)
 	repoDir := filepath.Join(t.TempDir(), "repo")
 	seedResticRepoDir(t, repoDir)
@@ -123,7 +123,7 @@ func TestPrepareRestoreVMRemapsDisksAndXML(t *testing.T) {
 		"/etc/libvirt/qemu/nvram/win10_VARS.fd")
 
 	plan, err := s.prepareRestoreVMForTarget(context.Background(),
-		repoRef{repo: repoDir}, "win10", "latest", tg, "/host/user/vmrestore", "")
+		repoRef{repo: repoDir}, "win10", "latest", tg, tagIdentity("vm:win10"), "/host/user/vmrestore", "")
 	if err != nil {
 		t.Fatalf("prepareRestoreVMForTarget: %v", err)
 	}
@@ -154,7 +154,7 @@ func TestPrepareRestoreVMRemapsDisksAndXML(t *testing.T) {
 // destination is NOT on a real mounted pool the restore aborts BEFORE any restic
 // call, so a multi-GB disk can never be written into the host's RAM rootfs.
 func TestPrepareRestoreVMGuardAbortsWhenNotMounted(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:win10"}}}}
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:win10"}, Paths: []string{"/host/user/pool/domains/win10/win10.qcow2"}}}}
 	s := vmRestoreSvc(t, eng)
 	repoDir := filepath.Join(t.TempDir(), "repo")
 	seedResticRepoDir(t, repoDir)
@@ -166,7 +166,7 @@ func TestPrepareRestoreVMGuardAbortsWhenNotMounted(t *testing.T) {
 		"/etc/libvirt/qemu/nvram/win10_VARS.fd")
 
 	_, err := s.prepareRestoreVMForTarget(context.Background(),
-		repoRef{repo: repoDir}, "win10", "latest", tg, "/host/user/vmrestore", "")
+		repoRef{repo: repoDir}, "win10", "latest", tg, tagIdentity("vm:win10"), "/host/user/vmrestore", "")
 	if err == nil || !strings.Contains(err.Error(), "not on a mounted") {
 		t.Fatalf("want the not-mounted brick-guard abort, got %v", err)
 	}
@@ -180,7 +180,7 @@ func TestPrepareRestoreVMGuardAbortsWhenNotMounted(t *testing.T) {
 // write.
 func TestPrepareRestoreVMGuardAbortsWhenTooSmall(t *testing.T) {
 	eng := &foreignRecordingEngine{
-		snaps:             []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:win10"}}},
+		snaps:             []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:win10"}, Paths: []string{"/host/user/pool/domains/win10/win10.qcow2"}}},
 		statsRestoreBytes: 50 << 30, // the restore needs 50 GiB
 	}
 	s := vmRestoreSvc(t, eng)
@@ -194,7 +194,7 @@ func TestPrepareRestoreVMGuardAbortsWhenTooSmall(t *testing.T) {
 		"/etc/libvirt/qemu/nvram/win10_VARS.fd")
 
 	_, err := s.prepareRestoreVMForTarget(context.Background(),
-		repoRef{repo: repoDir}, "win10", "latest", tg, "/host/user/vmrestore", "")
+		repoRef{repo: repoDir}, "win10", "latest", tg, tagIdentity("vm:win10"), "/host/user/vmrestore", "")
 	if err == nil || !strings.Contains(err.Error(), "free space") {
 		t.Fatalf("want the free-space brick-guard abort, got %v", err)
 	}
@@ -210,7 +210,7 @@ func TestPrepareRestoreVMGuardAbortsWhenTooSmall(t *testing.T) {
 // guard runs (proven by the absence of any mount fixture: it would otherwise
 // abort). Byte-for-byte the historical behaviour.
 func TestPrepareRestoreVMSameInstanceUnchanged(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:win10"}}}}
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:win10"}, Paths: []string{"/host/user/pool/domains/win10/win10.qcow2"}}}}
 	s := vmRestoreSvc(t, eng)
 	repoDir := filepath.Join(t.TempDir(), "repo")
 	seedResticRepoDir(t, repoDir)
@@ -219,7 +219,7 @@ func TestPrepareRestoreVMSameInstanceUnchanged(t *testing.T) {
 	tg := vmTargetJSON(t, "win10", vmDomainXML, disks, "/etc/libvirt/qemu/nvram/win10_VARS.fd")
 
 	plan, err := s.prepareRestoreVMForTarget(context.Background(),
-		repoRef{repo: repoDir}, "win10", "latest", tg, "", "")
+		repoRef{repo: repoDir}, "win10", "latest", tg, tagIdentity("vm:win10"), "", "")
 	if err != nil {
 		t.Fatalf("prepareRestoreVMForTarget: %v", err)
 	}
@@ -257,7 +257,7 @@ const vmZvolDomainXML = `<domain type='kvm'><name>zvolvm</name>` +
 // vmRestoreSvc never sets it (mirrors a fresh/DR instance, or SSH removed
 // from Settings after the original backup).
 func TestPrepareRestoreVMRefusesBlockDisksWithoutSSH(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}}}}
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}, Paths: []string{"/host/user/pool/domains/zvolvm/zvolvm.qcow2"}}}}
 	s := vmRestoreSvc(t, eng)
 	repoDir := filepath.Join(t.TempDir(), "repo")
 	seedResticRepoDir(t, repoDir)
@@ -266,7 +266,7 @@ func TestPrepareRestoreVMRefusesBlockDisksWithoutSSH(t *testing.T) {
 	tg := vmTargetJSON(t, "zvolvm", vmZvolDomainXML, disks, "/etc/libvirt/qemu/nvram/zvolvm_VARS.fd")
 
 	_, err := s.prepareRestoreVMForTarget(context.Background(),
-		repoRef{repo: repoDir}, "zvolvm", "latest", tg, "", "")
+		repoRef{repo: repoDir}, "zvolvm", "latest", tg, tagIdentity("vm:zvolvm"), "", "")
 	if err == nil {
 		t.Fatal("want a clean error for block-device disks with no SSH configured, got nil (plan would panic later in RestoreZvolDisk)")
 	}
@@ -297,7 +297,7 @@ func TestPrepareRestoreVMRefusesBlockDisksWithoutSSH(t *testing.T) {
 // TestPrepareRestoreVMCrossInstanceZvolRefusesWithoutDestPool pins the
 // EARLY-CLEAR-REFUSAL half of the fix: see this section's header comment.
 func TestPrepareRestoreVMCrossInstanceZvolRefusesWithoutDestPool(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}}}}
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}, Paths: []string{"/host/user/pool/domains/zvolvm/zvolvm.qcow2"}}}}
 	s := vmRestoreSvc(t, eng)
 	s.ssh = &fakeHostSSH{}
 	repoDir := filepath.Join(t.TempDir(), "repo")
@@ -311,7 +311,7 @@ func TestPrepareRestoreVMCrossInstanceZvolRefusesWithoutDestPool(t *testing.T) {
 	tg := vmTargetJSON(t, "zvolvm", vmZvolDomainXML, disks, "/etc/libvirt/qemu/nvram/zvolvm_VARS.fd")
 
 	_, err := s.prepareRestoreVMForTarget(context.Background(),
-		repoRef{repo: repoDir}, "zvolvm", "latest", tg, "/host/user/vmrestore", "")
+		repoRef{repo: repoDir}, "zvolvm", "latest", tg, tagIdentity("vm:zvolvm"), "/host/user/vmrestore", "")
 	if err == nil {
 		t.Fatal("want a clear refusal for a cross-instance zvol restore with no destination pool, got nil (would otherwise silently attempt `zfs receive` against the source pool's name)")
 	}
@@ -339,7 +339,7 @@ func TestPrepareRestoreVMCrossInstanceZvolRefusesWithoutDestPool(t *testing.T) {
 // actionable error instead. It must hit the SAME early-refusal message as a
 // truly empty destZvolPool.
 func TestPrepareRestoreVMCrossInstanceZvolRefusesWithWhitespaceOnlyDestPool(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}}}}
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}, Paths: []string{"/host/user/pool/domains/zvolvm/zvolvm.qcow2"}}}}
 	s := vmRestoreSvc(t, eng)
 	s.ssh = &fakeHostSSH{}
 	repoDir := filepath.Join(t.TempDir(), "repo")
@@ -350,7 +350,7 @@ func TestPrepareRestoreVMCrossInstanceZvolRefusesWithWhitespaceOnlyDestPool(t *t
 	tg := vmTargetJSON(t, "zvolvm", vmZvolDomainXML, disks, "/etc/libvirt/qemu/nvram/zvolvm_VARS.fd")
 
 	_, err := s.prepareRestoreVMForTarget(context.Background(),
-		repoRef{repo: repoDir}, "zvolvm", "latest", tg, "/host/user/vmrestore", "   ")
+		repoRef{repo: repoDir}, "zvolvm", "latest", tg, tagIdentity("vm:zvolvm"), "/host/user/vmrestore", "   ")
 	if err == nil {
 		t.Fatal("want a clear refusal for a whitespace-only destination pool, got nil")
 	}
@@ -368,7 +368,7 @@ func TestPrepareRestoreVMCrossInstanceZvolRefusesWithWhitespaceOnlyDestPool(t *t
 // disk's dataset is rebased onto it, ready for RestoreZvolDisk to `zfs
 // receive` into the DESTINATION pool instead of the source box's.
 func TestPrepareRestoreVMCrossInstanceZvolRebasesOntoDestPool(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}}}}
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}, Paths: []string{"/host/user/pool/domains/zvolvm/zvolvm.qcow2"}}}}
 	s := vmRestoreSvc(t, eng)
 	s.ssh = &fakeHostSSH{}
 	repoDir := filepath.Join(t.TempDir(), "repo")
@@ -379,7 +379,7 @@ func TestPrepareRestoreVMCrossInstanceZvolRebasesOntoDestPool(t *testing.T) {
 	tg := vmTargetJSON(t, "zvolvm", vmZvolDomainXML, disks, "/etc/libvirt/qemu/nvram/zvolvm_VARS.fd")
 
 	plan, err := s.prepareRestoreVMForTarget(context.Background(),
-		repoRef{repo: repoDir}, "zvolvm", "latest", tg, "/host/user/vmrestore", "flashpool")
+		repoRef{repo: repoDir}, "zvolvm", "latest", tg, tagIdentity("vm:zvolvm"), "/host/user/vmrestore", "flashpool")
 	if err != nil {
 		t.Fatalf("prepareRestoreVMForTarget: %v", err)
 	}
@@ -402,7 +402,7 @@ func TestPrepareRestoreVMCrossInstanceZvolRebasesOntoDestPool(t *testing.T) {
 // RestoreZvolDisk falls back to SourceDataset exactly as it did before this
 // task (the pre-existing, already-correct same-instance behavior).
 func TestPrepareRestoreVMSameInstanceZvolUnaffectedByDestPoolCheck(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}}}}
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}, Paths: []string{"/host/user/pool/domains/zvolvm/zvolvm.qcow2"}}}}
 	s := vmRestoreSvc(t, eng)
 	s.ssh = &fakeHostSSH{}
 	repoDir := filepath.Join(t.TempDir(), "repo")
@@ -412,7 +412,7 @@ func TestPrepareRestoreVMSameInstanceZvolUnaffectedByDestPoolCheck(t *testing.T)
 	tg := vmTargetJSON(t, "zvolvm", vmZvolDomainXML, disks, "/etc/libvirt/qemu/nvram/zvolvm_VARS.fd")
 
 	plan, err := s.prepareRestoreVMForTarget(context.Background(),
-		repoRef{repo: repoDir}, "zvolvm", "latest", tg, "", "")
+		repoRef{repo: repoDir}, "zvolvm", "latest", tg, tagIdentity("vm:zvolvm"), "", "")
 	if err != nil {
 		t.Fatalf("prepareRestoreVMForTarget: %v", err)
 	}
@@ -440,7 +440,7 @@ func TestPrepareRestoreVMSameInstanceZvolUnaffectedByDestPoolCheck(t *testing.T)
 // ZvolRefusesWithoutDestPool nor its whitespace-only sibling exercises this
 // branch — both stop at the earlier, simpler "no pool at all" refusal.
 func TestPrepareRestoreVMCrossInstanceZvolRebaseFailureBypassesScrubber(t *testing.T) {
-	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}}}}
+	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:zvolvm"}, Paths: []string{"/host/user/pool/domains/zvolvm/zvolvm.qcow2"}}}}
 	s := vmRestoreSvc(t, eng)
 	s.ssh = &fakeHostSSH{}
 	repoDir := filepath.Join(t.TempDir(), "repo")
@@ -451,7 +451,7 @@ func TestPrepareRestoreVMCrossInstanceZvolRebaseFailureBypassesScrubber(t *testi
 	tg := vmTargetJSON(t, "zvolvm", vmZvolDomainXML, disks, "/etc/libvirt/qemu/nvram/zvolvm_VARS.fd")
 
 	_, err := s.prepareRestoreVMForTarget(context.Background(),
-		repoRef{repo: repoDir}, "zvolvm", "latest", tg, "/host/user/vmrestore", "-badpool")
+		repoRef{repo: repoDir}, "zvolvm", "latest", tg, tagIdentity("vm:zvolvm"), "/host/user/vmrestore", "-badpool")
 	if err == nil {
 		t.Fatal("want a rebase-failure error for a destination pool RebaseZvolDatasetPool itself rejects, got nil")
 	}
@@ -481,9 +481,12 @@ func TestPrepareRestoreVMCrossInstanceZvolRebaseFailureBypassesScrubber(t *testi
 
 // recordingVirsh records the lifecycle calls the round trip must (or must not)
 // make. It implements the full virshcli.Virsh surface (no-op except where noted)
-// so it can drive executeRestoreVM.
+// so it can drive executeRestoreVM. state is what State reports, "" for a
+// domain the host does not define.
 type recordingVirsh struct {
 	mu           sync.Mutex
+	state        string
+	teardown     []string
 	autostartOn  *bool
 	started      bool
 	defineCalled bool
@@ -492,13 +495,21 @@ type recordingVirsh struct {
 var _ virshcli.Virsh = (*recordingVirsh)(nil)
 
 func (v *recordingVirsh) List(context.Context) ([]virshcli.VMInfo, error) { return nil, nil }
-func (v *recordingVirsh) State(context.Context, string) (string, error)   { return "", nil } // absent
+func (v *recordingVirsh) State(context.Context, string) (string, error)   { return v.state, nil }
 func (v *recordingVirsh) DumpXML(context.Context, string) (string, error) { return "<domain/>", nil }
 func (v *recordingVirsh) DumpXMLInactive(context.Context, string) (string, error) {
 	return "<domain/>", nil
 }
-func (v *recordingVirsh) Shutdown(context.Context, string) error { return nil }
-func (v *recordingVirsh) Destroy(context.Context, string) error  { return nil }
+
+func (v *recordingVirsh) recordTeardown(call string) error {
+	v.mu.Lock()
+	v.teardown = append(v.teardown, call)
+	v.mu.Unlock()
+	return nil
+}
+
+func (v *recordingVirsh) Shutdown(context.Context, string) error { return v.recordTeardown("Shutdown") }
+func (v *recordingVirsh) Destroy(context.Context, string) error  { return v.recordTeardown("Destroy") }
 func (v *recordingVirsh) Start(context.Context, string) error {
 	v.mu.Lock()
 	v.started = true
@@ -511,7 +522,7 @@ func (v *recordingVirsh) Define(context.Context, string) error {
 	v.mu.Unlock()
 	return nil
 }
-func (v *recordingVirsh) Undefine(context.Context, string) error { return nil }
+func (v *recordingVirsh) Undefine(context.Context, string) error { return v.recordTeardown("Undefine") }
 func (v *recordingVirsh) Autostart(_ context.Context, _ string, on bool) error {
 	v.mu.Lock()
 	b := on
@@ -570,9 +581,9 @@ func TestForeignRestoreVMLeavesStoppedAndRemaps(t *testing.T) {
 
 	// The disk lives under the host mount so paths.Within accepts it.
 	diskPath := filepath.ToSlash(filepath.Join(mountRoot, "pool/domains/win10/win10.qcow2"))
-	// The Subtree production computes for this disk is its PARENT directory
-	// (prepareRestoreVMForTarget: src := path.Dir(cp), deduplicated per disk
-	// directory) — that is exactly what LsPath gets queried with.
+	eng.snaps[0].Paths = []string{diskPath}
+	// The restore reads the disk's folder in the snapshot, here its own parent
+	// directory, and that is what LsPath gets queried with.
 	diskDir := filepath.Dir(diskPath)
 	eng.lsPathEntries = []restic.FileEntry{
 		{Path: diskDir, Type: "dir", Uid: os.Getuid(), Gid: os.Getgid(), Mode: uint32(fs.ModeDir | wantDirMode)},
