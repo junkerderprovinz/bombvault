@@ -1,4 +1,5 @@
-import type { ToastSeverity } from "../lib/toastEngine";
+import type { ToastAction, ToastSeverity } from "../lib/toastEngine";
+import { Button } from "./Button";
 
 // The presentational half of the toast system. These components use no hooks,
 // so tests can call them as plain functions; the queue, timers and portal live
@@ -9,6 +10,8 @@ export interface ToastCardProps {
   id: string;
   message: string;
   severity: ToastSeverity;
+  /** Taking the action also dismisses the toast, since what it offered is done. */
+  action?: ToastAction;
   /** Accessible name for the dismiss button, the same for every toast. */
   dismissLabel: string;
   onDismiss: (id: string) => void;
@@ -69,6 +72,7 @@ export function ToastCard({
   id,
   message,
   severity,
+  action,
   dismissLabel,
   onDismiss,
   onMouseEnter,
@@ -95,6 +99,18 @@ export function ToastCard({
     >
       <ToastGlyph severity={severity} />
       <p className="min-w-0 flex-1 text-sm leading-snug wrap-break-word">{message}</p>
+      {action && (
+        <Button
+          label={action.label}
+          labelKey={null}
+          tone="neutral"
+          onClick={() => {
+            action.onClick();
+            onDismiss(id);
+          }}
+          className="shrink-0"
+        />
+      )}
       <button
         type="button"
         onClick={() => onDismiss(id)}
@@ -114,6 +130,7 @@ export interface ToastViewportEntry {
   id: string;
   message: string;
   severity: ToastSeverity;
+  action?: ToastAction;
 }
 
 export interface ToastViewportProps {
@@ -143,6 +160,7 @@ export function ToastViewport({ toasts, dismissLabel, onDismiss, onMouseEnter, o
           id={t.id}
           message={t.message}
           severity={t.severity}
+          action={t.action}
           dismissLabel={dismissLabel}
           onDismiss={onDismiss}
           onMouseEnter={onMouseEnter}

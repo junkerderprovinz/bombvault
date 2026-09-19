@@ -36,12 +36,12 @@ function humanBytes(n: number): string {
   return `${i === 0 ? v : v.toFixed(1)} ${units[i]}`;
 }
 
-// displayTags hides the ownership tag every snapshot carries and the
-// orchestrator's internal marker tags.
+// displayTags hides the ownership tags under the entry's own or a former name,
+// the formerly: takeover marker and the orchestrator's internal marker tags.
 const INTERNAL_TAGS = new Set(["p1"]);
-function displayTags(snap: Snapshot, containerName: string): string[] {
-  const owner = `container:${containerName}`;
-  return (snap.tags ?? []).filter((tg) => tg !== owner && !INTERNAL_TAGS.has(tg));
+function displayTags(snap: Snapshot, containerName: string, aliases: string[]): string[] {
+  const owners = new Set([containerName, ...aliases].map((n) => `container:${n}`));
+  return (snap.tags ?? []).filter((tg) => !owners.has(tg) && !INTERNAL_TAGS.has(tg) && !tg.startsWith("formerly:"));
 }
 
 // SnapshotFileBrowser restores ticked files and folders from a snapshot, in
@@ -223,6 +223,8 @@ function SnapshotFileBrowser({
 
 interface RestorePanelProps {
   name: string;
+  /** The entry's former names, whose ownership tags are hidden like its own. */
+  aliases?: string[];
   t: T;
   // False for a container that is not installed. With a config-only backup
   // it can be recreated from the saved definition.
@@ -508,12 +510,14 @@ function CompareSnapshots({
 function SnapshotTags({
   snap,
   containerName,
+  aliases,
   source,
   onTagged,
   t,
 }: {
   snap: Snapshot;
   containerName: string;
+  aliases: string[];
   source: string;
   onTagged: () => void;
   t: T;
@@ -522,7 +526,7 @@ function SnapshotTags({
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
-  const tags = displayTags(snap, containerName);
+  const tags = displayTags(snap, containerName, aliases);
 
   // A failed tag only toasts. The shake replays by remounting the element,
   // and remounting this focused input fires blur, which would submit the same
@@ -598,6 +602,7 @@ type RestoreMode = "inPlace" | "files" | "toFolder";
 function SnapshotRow({
   snap,
   containerName,
+  aliases,
   source,
   hostMountRoot,
   defaultFolder,
@@ -607,6 +612,7 @@ function SnapshotRow({
 }: {
   snap: Snapshot;
   containerName: string;
+  aliases: string[];
   source: RepoSource;
   hostMountRoot: string;
   defaultFolder: string;
@@ -664,7 +670,7 @@ function SnapshotRow({
         </span>
         <Advanced>
           <div className="hidden sm:flex">
-            <SnapshotTags snap={snap} containerName={containerName} source={source} onTagged={onTagged} t={t} />
+            <SnapshotTags snap={snap} containerName={containerName} aliases={aliases} source={source} onTagged={onTagged} t={t} />
           </div>
         </Advanced>
 
@@ -781,7 +787,7 @@ function SnapshotRow({
 // setting is empty. It matches the backend column default.
 export const DEFAULT_RESTORE_FOLDER = "user/bombvault/restore";
 
-export function RestorePanel({ name, t, installed = true, open }: RestorePanelProps) {
+export function RestorePanel({ name, aliases = [], t, installed = true, open }: RestorePanelProps) {
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(false);
@@ -873,6 +879,7 @@ export function RestorePanel({ name, t, installed = true, open }: RestorePanelPr
           key={snap.id}
           snap={snap}
           containerName={name}
+          aliases={aliases}
           source={source}
           hostMountRoot={hostMountRoot}
           defaultFolder={restoreFolder}

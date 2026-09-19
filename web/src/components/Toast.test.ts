@@ -136,6 +136,21 @@ describe("ToastCard", () => {
     expect(seen).toEqual(["focus:t1", "blur:t1"]);
   });
 
+  it("runs its action and then dismisses itself", () => {
+    let ran = 0;
+    let dismissed: string | undefined;
+    const tree = ToastCard({
+      ...baseProps,
+      action: { label: "Undo", onClick: () => ran++ },
+      onDismiss: (id) => (dismissed = id),
+    }) as ElementNode;
+    const children = tree.props!.children as unknown[];
+    const action = children.find((c): c is ElementNode => isElementNode(c) && c.props?.label === "Undo");
+    action!.props!.onClick();
+    expect(ran).toBe(1);
+    expect(dismissed).toBe("t1");
+  });
+
   it("takes pointer events on the card", () => {
     const tree = ToastCard(baseProps) as ElementNode;
     expect(tree.props?.className).toContain("pointer-events-auto");

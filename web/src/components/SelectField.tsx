@@ -1,5 +1,6 @@
-import { useId, useRef, useState, type ReactNode } from "react";
+import { useId, useRef, useState, type ReactNode, type Ref } from "react";
 import { DropdownListbox } from "./DropdownListbox";
+import { mergeRefs } from "../lib/mergeRefs";
 import { stepIndex } from "../lib/selectScroll";
 
 // SelectField replaces a native <select>, whose open list is drawn by the
@@ -34,6 +35,7 @@ export function SelectField<T extends string>({
   disabled = false,
   className = "",
   id,
+  ref,
 }: {
   value: T;
   onChange: (next: T) => void;
@@ -45,6 +47,9 @@ export function SelectField<T extends string>({
   className?: string;
   /** Set on the trigger, for a visible <label htmlFor>. */
   id?: string;
+  /** The trigger's own DOM node, for a caller that opens this field already
+   *  focused (LinkEntryPicker does, the moment the picker itself opens). */
+  ref?: Ref<HTMLButtonElement>;
 }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -70,7 +75,7 @@ export function SelectField<T extends string>({
   return (
     <>
       <button
-        ref={triggerRef}
+        ref={mergeRefs(ref, triggerRef)}
         id={id}
         type="button"
         disabled={disabled}

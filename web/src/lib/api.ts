@@ -55,6 +55,16 @@ export interface Container {
    *  Settings and picked here, so the same bucket path is never typed into ten
    *  items and can be corrected in one place. */
   repo?: string;
+  /** The not-installed entry a live container with no backups looks like it
+   *  was renamed from, or "". */
+  renameFrom?: string;
+  /** Why it looks that way: "docker-id", "appdata-bind", "compose-service" or
+   *  "template-lineage". */
+  renameReason?: string;
+  /** The names this entry had before, oldest link first. */
+  aliases?: string[];
+  /** The former names of this entry that a live container carries again, sorted. */
+  aliasConflicts?: string[];
 }
 
 export interface ListContainersResponse {
@@ -1312,7 +1322,7 @@ export function deleteBackups(name: string): Promise<OkEnvelope> {
   });
 }
 
-/** Clear a stale container entry (its target row) without touching any repo —
+/** Clear a stale container entry (its target row) without touching any repo,
  *  the container twin of forgetVM (#232). */
 export function forgetContainer(name: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
@@ -1320,8 +1330,27 @@ export function forgetContainer(name: string): Promise<OkEnvelope> {
   });
 }
 
+/** Move a not-installed entry (`from`) onto `name`, the name its container was
+ *  renamed to: it keeps its history and settings, and `from` lives on as an
+ *  alias. Refused when `name` isn't installed, `from` is installed again,
+ *  `from` has no entry, or `name` already has backups of its own. */
+export function takeOverContainer(name: string, from: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/takeover`, {
+    method: "POST",
+    body: JSON.stringify({ from }),
+  });
+}
+
+/** Undo a takeover: the entry goes back to living under `old`, and the alias
+ *  is removed. */
+export function unlinkContainerAlias(name: string, old: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/alias/${encodeURIComponent(old)}`, {
+    method: "DELETE",
+  });
+}
+
 /**
- * Delete ALL backups of a VM from the selected source (local or off-site) in one
+ * Delete every backup of a VM from the selected source (local or off-site) in one
  * go and prune the freed space. On the local source the VM is also forgotten from
  * the store; on off-site the target is kept (still restorable from local).
  */
@@ -1331,10 +1360,25 @@ export function deleteBackupsVM(name: string, source?: string): Promise<OkEnvelo
   });
 }
 
-/** Clear a stale VM entry (its target row) without touching any repo — for a
- *  no-longer-installed VM that has no backups left to delete. */
+/** Clear a stale VM entry (its target row) without touching any repo, for a
+ *  VM that is gone and has no backups left to delete. */
 export function forgetVM(name: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/vms/${encodeURIComponent(name)}`, {
+    method: "DELETE",
+  });
+}
+
+/** takeOverContainer for a VM. Both names are libvirt names. */
+export function takeOverVM(name: string, from: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/vms/${encodeURIComponent(name)}/takeover`, {
+    method: "POST",
+    body: JSON.stringify({ from }),
+  });
+}
+
+/** unlinkContainerAlias for a VM. Both names are libvirt names. */
+export function unlinkVMAlias(name: string, old: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/vms/${encodeURIComponent(name)}/alias/${encodeURIComponent(old)}`, {
     method: "DELETE",
   });
 }
@@ -2252,6 +2296,15 @@ export interface VM {
   /** Optional per-item repository override (#204): the ID of a named
    *  repository from Settings, "" for the VMs domain repository. */
   repo?: string;
+  /** The libvirt name of the not-installed entry this VM looks like it was
+   *  renamed from, or "". */
+  renameFrom?: string;
+  /** Why it looks that way: "libvirt-uuid". */
+  renameReason?: string;
+  /** The libvirt names this entry had before, oldest link first. */
+  aliases?: string[];
+  /** The former names of this entry that a live VM carries again, sorted. */
+  aliasConflicts?: string[];
 }
 
 export interface ListVMsResponse {

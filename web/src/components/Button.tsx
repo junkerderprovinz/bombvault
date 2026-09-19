@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode, Ref } from "react";
 import { hueVars } from "../lib/appearance";
 import { hidesLabel, labelWidth, widthStage, type WidthStage } from "../lib/controls";
+import { mergeRefs } from "../lib/mergeRefs";
 import { useLabelMode } from "../lib/useLabelMode";
 import { useTipBubble } from "../lib/useTipBubble";
 import { glyphFor } from "./glyphFor";
@@ -212,19 +213,4 @@ export function Button({
       {tooltip.bubble}
     </>
   );
-}
-
-/**
- * Feeds one element to both the caller's ref and the tooltip's. Object refs
- * are handled too, since ConfirmDialog passes a `useRef`.
- */
-function mergeRefs(
-  outer: Ref<HTMLButtonElement> | undefined,
-  inner: (el: HTMLElement | null) => void,
-): (el: HTMLButtonElement | null) => void {
-  return (el) => {
-    inner(el);
-    if (typeof outer === "function") outer(el);
-    else if (outer) outer.current = el;
-  };
 }

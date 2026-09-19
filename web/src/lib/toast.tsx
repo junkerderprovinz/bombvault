@@ -3,13 +3,14 @@ import { createPortal } from "react-dom";
 import { ToastViewport } from "../components/Toast";
 import {
   NO_ENGAGEMENT,
-  TOAST_DURATION_MS,
   addToast,
   applyEngagement,
   pauseToast,
   removeToast,
   resumeToast,
   shouldShowToast,
+  toastDuration,
+  type ToastAction,
   type ToastEngagement,
   type ToastEngagementKind,
   type ToastEntry,
@@ -41,7 +42,7 @@ interface ToastContextValue {
   /** Queues a toast. Severity defaults to "success", the routine case quiet
    *  mode may suppress. A suppressed push is dropped, not queued for later
    *  (see toastEngine.shouldShowToast). */
-  push: (message: string, severity?: ToastSeverity) => void;
+  push: (message: string, severity?: ToastSeverity, action?: ToastAction) => void;
   /** Current quiet-toasts preference (Settings › General › Appearance). */
   quiet: boolean;
   setQuiet: (next: boolean) => void;
@@ -98,11 +99,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 
   const push = useCallback(
-    (message: string, severity: ToastSeverity = "success") => {
+    (message: string, severity: ToastSeverity = "success", action?: ToastAction) => {
       if (!shouldShowToast(severity, quiet)) return;
       const id = `toast-${++nextId.current}`;
       setToasts((list) => {
-        const next = addToast(list, { id, message, severity }, Date.now());
+        const next = addToast(list, { id, message, severity, action }, Date.now());
         // addToast caps the stack at MAX_VISIBLE_TOASTS by dropping the oldest
         // entries. A dropped toast still has the timer from its own push, so
         // clear it here rather than let it fire a stale dismiss, and drop its
@@ -115,7 +116,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         }
         return next;
       });
-      scheduleTimer(id, TOAST_DURATION_MS);
+      scheduleTimer(id, toastDuration({ action }));
     },
     [quiet, scheduleTimer, clearTimer]
   );

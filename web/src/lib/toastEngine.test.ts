@@ -2,6 +2,7 @@
 // so the suite runs in the plain node environment.
 import { describe, expect, it } from "vitest";
 import {
+  ACTION_TOAST_DURATION_MS,
   MAX_VISIBLE_TOASTS,
   NO_ENGAGEMENT,
   TOAST_DURATION_MS,
@@ -26,6 +27,14 @@ describe("addToast", () => {
     const list = addToast([], { id: "a", message: "Saved", severity: "success" }, 1_000_000);
     expect(list[0].expiresAt).toBe(1_000_000 + TOAST_DURATION_MS);
     expect(list[0].remainingMs).toBe(TOAST_DURATION_MS);
+  });
+
+  it("keeps a toast that offers an action for the longer action duration", () => {
+    const action = { label: "Undo", onClick: () => {} };
+    const list = addToast([], { id: "a", message: "Linked", severity: "success", action }, 1_000_000);
+    expect(list[0].expiresAt).toBe(1_000_000 + ACTION_TOAST_DURATION_MS);
+    expect(list[0].remainingMs).toBe(ACTION_TOAST_DURATION_MS);
+    expect(ACTION_TOAST_DURATION_MS).toBeGreaterThan(TOAST_DURATION_MS);
   });
 
   it("stacks onto the list rather than replacing an existing toast", () => {

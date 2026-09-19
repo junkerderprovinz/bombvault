@@ -14,10 +14,26 @@ export const TOAST_DURATION_MS = 4000;
  *  screen, and the cards block clicks on the page behind them. */
 export const MAX_VISIBLE_TOASTS = 4;
 
+/** The one control a toast may carry beside its message, such as Undo. */
+export interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+
+/** How long a toast with an action stays. After the dialog that led to it
+ *  closes, focus is back on the page and the toast is a Shift+Tab away, which
+ *  takes longer than reading a line. */
+export const ACTION_TOAST_DURATION_MS = 20000;
+
+export function toastDuration(toast: { action?: ToastAction }): number {
+  return toast.action ? ACTION_TOAST_DURATION_MS : TOAST_DURATION_MS;
+}
+
 export interface ToastEntry {
   id: string;
   message: string;
   severity: ToastSeverity;
+  action?: ToastAction;
   /** Time left, frozen when the toast was paused. Only meaningful while
    *  expiresAt is null; while running, expiresAt is the source of truth. */
   remainingMs: number;
@@ -33,15 +49,16 @@ export interface ToastEntry {
  *  drop-oldest would always pick it first and pull focus back to <body>. */
 export function addToast(
   list: ToastEntry[],
-  toast: { id: string; message: string; severity: ToastSeverity },
+  toast: { id: string; message: string; severity: ToastSeverity; action?: ToastAction },
   now: number,
-  durationMs: number = TOAST_DURATION_MS,
+  durationMs: number = toastDuration(toast),
   maxVisible: number = MAX_VISIBLE_TOASTS
 ): ToastEntry[] {
   const newest: ToastEntry = {
     id: toast.id,
     message: toast.message,
     severity: toast.severity,
+    action: toast.action,
     remainingMs: durationMs,
     expiresAt: now + durationMs,
   };

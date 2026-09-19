@@ -19,6 +19,10 @@ import { IconVM, IconRestore, IconTrash, IconBackupNow, IconDownload, IconPower,
 import { InfoBubble } from "../components/InfoBubble";
 import { NotInstalledHeading } from "../components/NotInstalledHeading";
 import { OrphanRemoveButton } from "../components/OrphanRemoveButton";
+import { RenameTakeoverRow } from "../components/RenameTakeoverRow";
+import { LinkEntryPicker } from "../components/LinkEntryPicker";
+import { FormerNames } from "../components/FormerNames";
+import { vmTakeover } from "../lib/useTakeOver";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { Button } from "../components/Button";
 import { groupStage } from "../lib/controls";
@@ -607,6 +611,7 @@ export function VMRow({
   onRefresh,
   selected,
   onToggleSelect,
+  linkCandidates = [],
   index,
 }: {
   vm: VM;
@@ -614,6 +619,8 @@ export function VMRow({
   onRefresh: () => void;
   selected?: boolean;
   onToggleSelect?: () => void;
+  /** The libvirt names of the not-installed entries this card can take over by hand. */
+  linkCandidates?: string[];
   /** Position in the rendered list, which sets the palette position. */
   index: number;
 }) {
@@ -646,6 +653,9 @@ export function VMRow({
   }
 
   const lastBackupText = `${t("containers.lastBackup")}: ${vm.lastBackup ? formatTs(vm.lastBackup) : t("containers.never")}`;
+
+  const aliases = vm.aliases ?? [];
+  const takeoverEntry = { name: vm.libvirtName, displayName: vm.name, api: vmTakeover };
 
   return (
     <div
@@ -722,9 +732,34 @@ export function VMRow({
         )}
       </div>
 
-      {/* Shown on a removed VM too: it stays scheduled, and every run tries it
-          again and logs a skip until this switch goes off. */}
-      <div className="flex items-start">
+      {installed && vm.renameFrom && (
+        <RenameTakeoverRow
+          key={vm.renameFrom}
+          from={vm.renameFrom}
+          reason={vm.renameReason ?? ""}
+          entry={takeoverEntry}
+          onDone={onRefresh}
+          t={t}
+        />
+      )}
+      {aliases.length > 0 && (
+        <FormerNames
+          aliases={aliases}
+          conflicts={vm.aliasConflicts ?? []}
+          entry={takeoverEntry}
+          onDone={onRefresh}
+          t={t}
+        />
+      )}
+
+      {/* The include toggle shows on a removed VM too: it stays scheduled, and
+          every run tries it again and logs a skip until this switch goes off. */}
+      <div className="flex items-start gap-3">
+        {/* The start of this row is free, so the link picker takes it, as on
+            the container card. */}
+        {installed && vm.lastBackup == null && linkCandidates.length > 0 && (
+          <LinkEntryPicker candidates={linkCandidates} entry={takeoverEntry} onDone={onRefresh} t={t} />
+        )}
         {/* IncludeToggle renders its own label. */}
         <div className="ms-auto">
           <IncludeToggle
@@ -1247,6 +1282,8 @@ export function VMs() {
   const sorted = sortVMs(filtered, sortKey);
   const live = sorted.filter((v) => v.state !== "not-installed");
   const orphans = sorted.filter((v) => v.state === "not-installed");
+  // Unfiltered, so a search cannot hide the entry to link.
+  const notInstalledNames = vms.filter((v) => v.state === "not-installed").map((v) => v.libvirtName);
 
   // When the list has VMs but the filters excluded them all, show a no-match hint
   // (distinct from the "no VMs at all" empty state, which keys off vms.length).
@@ -1503,6 +1540,7 @@ export function VMs() {
               onRefresh={() => void loadVMs()}
               selected={selected.has(v.libvirtName)}
               onToggleSelect={() => toggleSelect(v.libvirtName)}
+              linkCandidates={notInstalledNames}
               index={i}
             />
           ))}

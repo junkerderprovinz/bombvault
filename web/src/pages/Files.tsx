@@ -739,10 +739,10 @@ export function FileSetDialog({
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
   // Empty means the Folders repository, which is where a new set starts.
   const [repo, setRepo] = useState(initial?.repo ?? "");
-  // A set with backups cannot change repository, since nothing moves its
-  // snapshots. Locked here as well as refused by the server, so the reason
-  // shows before the attempt.
-  const repoLocked = Boolean(initial) && (initial?.lastBackup ?? 0) > 0;
+  // A set with backups keeps its repository and its name, since nothing moves
+  // or re-tags its snapshots. Locked here as well as refused by the server, so
+  // the reason shows before the attempt.
+  const hasBackups = Boolean(initial) && (initial?.lastBackup ?? 0) > 0;
   const [saving, setSaving] = useState(false);
   const [shake, setShake] = useState(0);
 
@@ -817,15 +817,19 @@ export function FileSetDialog({
       >
         {/* The name becomes a restic tag, so the server validates it strictly. */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-carbon-textSub">{t("files.name")}</label>
+          <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+            {t("files.name")}
+            {hasBackups && <InfoBubble tip={t("files.nameLocked")} />}
+          </label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            disabled={hasBackups}
             spellCheck={false}
             autoComplete="off"
             placeholder="documents"
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus disabled:opacity-50"
           />
         </div>
 
@@ -866,7 +870,7 @@ export function FileSetDialog({
         <RepoPicker
           value={repo}
           onChange={setRepo}
-          locked={repoLocked}
+          locked={hasBackups}
           labelKey="files.repo"
           hintKey="files.repoHint"
           defaultLabelKey="files.repoPlaceholder"
