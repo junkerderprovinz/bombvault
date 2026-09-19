@@ -488,8 +488,15 @@ func (r *Repo) GetOffsiteTarget(id string) (OffsiteTarget, bool, error) {
 // exist, or if id names a "primary" row — the off-site delete handler must
 // never be able to remove a domain's remote-primary safety-config row (that
 // row is removed only via DeletePrimaryRemoteTarget, keyed by domain).
+// What the observation tables recorded for the target goes with it.
 func (r *Repo) DeleteOffsiteTarget(id string) error {
-	if _, err := r.db.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
+	err := r.inTx(func(tx *sql.Tx) error {
+		if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
+			return err
+		}
+		return deleteTargetObservationsTx(tx, id)
+	})
+	if err != nil {
 		return fmt.Errorf("DeleteOffsiteTarget: %w", err)
 	}
 	return nil

@@ -59,3 +59,16 @@ func SeedDefault(t *testing.T, r *Repo, domain, home string, skip ...string) Pla
 	}
 	return d
 }
+
+// SeedListing records a listing of a target for a domain.
+func SeedListing(t *testing.T, r *Repo, domain, targetID string, listedAt int64, rows ...ItemCopies) {
+	t.Helper()
+	if err := r.RecordTargetListing(domain, targetID, listedAt, rows); err != nil {
+		t.Fatalf("seed listing of %s: %v", targetID, err)
+	}
+}
+
+// CopiesOf is one row of a listing.
+func CopiesOf(identity string, count int, latest int64) ItemCopies {
+	return ItemCopies{Identity: identity, SnapshotCount: count, LatestSnapshotAt: latest}
+}
