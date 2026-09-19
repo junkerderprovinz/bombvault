@@ -213,6 +213,17 @@ func TestMigrationVersionsAreStrictlySequential(t *testing.T) {
 	}
 }
 
+// TestMigrationNamesAreUnique backs recordedAs, which finds a migration by name.
+func TestMigrationNamesAreUnique(t *testing.T) {
+	seen := map[string]int{}
+	for _, m := range migrations {
+		if prev, dup := seen[m.name]; dup {
+			t.Fatalf("migrations v%d and v%d share the name %q", prev, m.version, m.name)
+		}
+		seen[m.name] = m.version
+	}
+}
+
 // TestContestedMigrationsCarryTheirGuard pins the rule the numbering hazard
 // forces, so a later edit cannot quietly drop it: a migration whose BODY already
 // shipped under a different version number will run a second time on the

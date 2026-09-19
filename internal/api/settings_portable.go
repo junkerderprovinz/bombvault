@@ -757,7 +757,9 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 }
 
 // replaceOffsiteTargets drops all current off-site targets and re-inserts the
-// imported set, preserving each id + created_at for an exact round-trip.
+// imported set, preserving each id + created_at for an exact round-trip. The
+// file's sort orders are then settled the way the offsite_targets_primary_slot
+// migration settles them, against the off-site fields the import just wrote.
 func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView) error {
 	current, err := h.store.ListOffsiteTargets()
 	if err != nil {
@@ -781,6 +783,15 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView) error {
 		t.CreatedAt = tv.CreatedAt      // preserve the exported timestamp (0 → store stamps now)
 		t.Repo = importedLocation(currentRepo[t.ID], t.Repo)
 		if _, err := h.store.UpsertOffsiteTarget(t); err != nil {
+			return err
+		}
+	}
+	settings, err := h.store.GetSettings()
+	if err != nil {
+		return err
+	}
+	for _, d := range offsiteConfigDomains {
+		if err := h.store.NormalizeOffsiteSortOrder(d, offsiteRepoFromSettings(d, settings)); err != nil {
 			return err
 		}
 	}

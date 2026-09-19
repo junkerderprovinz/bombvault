@@ -197,6 +197,28 @@ func TestSettingsExportImportRoundTrip(t *testing.T) {
 	}
 }
 
+func TestImportGivesSortOrderZeroBackToTheFieldsTarget(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	if _, err := srcStore.UpsertOffsiteTarget(store.OffsiteTarget{
+		ID: "tgt-3", Domain: "containers", Name: "mesh: tower", Repo: "rest:http://tower:8000/containers", Enabled: true, CreatedAt: 3000,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	body, _ := doExport(t, src, "")
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("import = %v", env)
+	}
+	for id, want := range map[string]int{"tgt-1": 0, "tgt-2": 1, "tgt-3": 2} {
+		tg, ok, err := dstStore.GetOffsiteTarget(id)
+		if err != nil || !ok || tg.SortOrder != want {
+			t.Errorf("%s: sort_order %d (ok=%v err=%v), want %d", id, tg.SortOrder, ok, err, want)
+		}
+	}
+}
+
 // doImport runs the import handler and returns the decoded envelope.
 func doImport(t *testing.T, h *Handler, body []byte, query string) map[string]any {
 	t.Helper()

@@ -1,34 +1,9 @@
 package store
 
 import (
-	"database/sql"
 	"testing"
 	"time"
 )
-
-// migrateThrough applies migrations up to and including maxVersion, recording
-// them in schema_migrations exactly as Migrate does, so a later Migrate() call
-// applies only the remaining ones. It lets a test reconstruct a pre-v75 install
-// (schema + data) and then run the v75 backfill against it.
-func migrateThrough(t *testing.T, db *sql.DB, maxVersion int) {
-	t.Helper()
-	if _, err := db.Exec(`CREATE TABLE IF NOT EXISTS schema_migrations (
-		version INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at INTEGER NOT NULL)`); err != nil {
-		t.Fatalf("migrateThrough: schema_migrations: %v", err)
-	}
-	for _, m := range migrations {
-		if m.version > maxVersion {
-			continue
-		}
-		if _, err := db.Exec(m.sql); err != nil {
-			t.Fatalf("migrateThrough: apply v%d (%s): %v", m.version, m.name, err)
-		}
-		if _, err := db.Exec(`INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)`,
-			m.version, m.name, time.Now().Unix()); err != nil {
-			t.Fatalf("migrateThrough: record v%d: %v", m.version, err)
-		}
-	}
-}
 
 func TestOffsiteBackfillV75(t *testing.T) {
 	db := OpenMem(t)

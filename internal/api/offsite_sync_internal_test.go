@@ -97,36 +97,98 @@ func TestSyncPrimaryOffsiteTargetCreatesWhenMissing(t *testing.T) {
 	}
 }
 
-// TestSyncPrimaryOffsiteTargetDeletesWhenCleared: clearing the off-site repo in
-// Settings drops the primary target so offsiteRepoFor falls back to the (now
-// empty) column instead of returning a stale repo.
-func TestSyncPrimaryOffsiteTargetDeletesWhenCleared(t *testing.T) {
-	s, st := newSyncTestService(t)
-
+// setContainersField stores the containers off-site field and syncs its target
+// row, the way a settings save does.
+func setContainersField(t *testing.T, s *Service, st *store.Repo, location string) store.Settings {
+	t.Helper()
 	settings, err := st.GetSettings()
 	if err != nil {
 		t.Fatal(err)
 	}
-	settings.FlashOffsite = "s3:flash"
+	settings.ContainersOffsite = location
 	if err := st.UpdateSettings(settings); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "flash", Name: "Primary", Repo: "s3:flash", Enabled: true}); err != nil {
+	if err := s.syncPrimaryOffsiteTarget("containers", settings); err != nil {
+		t.Fatalf("syncPrimaryOffsiteTarget: %v", err)
+	}
+	return settings
+}
+
+func fieldTarget(t *testing.T, st *store.Repo) store.OffsiteTarget {
+	t.Helper()
+	tg, ok, err := st.FieldOffsiteTarget("containers")
+	if err != nil || !ok {
+		t.Fatalf("FieldOffsiteTarget: ok=%v err=%v", ok, err)
+	}
+	return tg
+}
+
+func TestClearingTheOffsiteFieldSwitchesItsTargetOff(t *testing.T) {
+	s, st := newSyncTestService(t)
+	setContainersField(t, s, st, "s3:b2")
+	first := fieldTarget(t, st)
+	first.CredsRef = "set-b2"
+	if _, err := st.UpsertOffsiteTarget(first); err != nil {
 		t.Fatal(err)
 	}
 
-	// Off-site turned off for flash.
-	settings.FlashOffsite = ""
-	if err := st.UpdateSettings(settings); err != nil {
+	settings := setContainersField(t, s, st, "")
+	off := fieldTarget(t, st)
+	if off.ID != first.ID || off.Enabled || off.Repo != "s3:b2" || off.CredsRef != "set-b2" {
+		t.Fatalf("after clearing: %+v, want the same row switched off with location and credentials", off)
+	}
+	if got := s.offsiteRepoFor("containers", settings); got != "" {
+		t.Fatalf("offsiteRepoFor after clearing = %q, want empty", got)
+	}
+
+	setContainersField(t, s, st, "s3:b2")
+	back := fieldTarget(t, st)
+	if back.ID != first.ID || !back.Enabled || back.CredsRef != "set-b2" {
+		t.Fatalf("after filling again: %+v, want target %s switched on", back, first.ID)
+	}
+}
+
+func TestTheOffsiteFieldLeavesAMeshTargetOnZeroAlone(t *testing.T) {
+	s, st := newSyncTestService(t)
+	setContainersField(t, s, st, "s3:b2")
+	field := fieldTarget(t, st)
+	mesh, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		Domain: "containers", Name: "mesh: tower", Repo: "rest:http://tower:8000/containers",
+		CredsRef: "mesh-tower", Enabled: true, CreatedAt: field.CreatedAt + 60,
+	})
+	if err != nil {
 		t.Fatal(err)
 	}
-	if err := s.syncPrimaryOffsiteTarget("flash", settings); err != nil {
+
+	setContainersField(t, s, st, "")
+	setContainersField(t, s, st, "s3:b2-eu")
+
+	got, ok, err := st.GetOffsiteTarget(mesh.ID)
+	if err != nil || !ok || got != mesh {
+		t.Fatalf("mesh target = %+v (ok=%v err=%v), want it unchanged: %+v", got, ok, err, mesh)
+	}
+	if now := fieldTarget(t, st); now.ID != field.ID || now.Repo != "s3:b2-eu" || !now.Enabled {
+		t.Fatalf("field target = %+v, want %s on s3:b2-eu", now, field.ID)
+	}
+}
+
+func TestFillingTheOffsiteFieldWithNoRowOnZeroAddsOne(t *testing.T) {
+	s, st := newSyncTestService(t)
+	mesh, err := st.CreateOffsiteTarget(store.OffsiteTarget{
+		Domain: "containers", Name: "mesh: tower", Repo: "rest:http://tower:8000/containers", Enabled: true,
+	})
+	if err != nil {
 		t.Fatal(err)
 	}
-	if got := s.offsiteRepoFor("flash", settings); got != "" {
-		t.Fatalf("offsiteRepoFor(flash) after clear = %q, want empty", got)
+
+	setContainersField(t, s, st, "s3:b2")
+
+	field := fieldTarget(t, st)
+	if field.ID == mesh.ID || field.Repo != "s3:b2" || !field.Enabled {
+		t.Fatalf("field target = %+v, want a new row on s3:b2", field)
 	}
-	if targets := s.offsiteTargetsFor("flash"); len(targets) != 0 {
-		t.Fatalf("primary flash target should be deleted, got %d", len(targets))
+	if got, _, _ := st.GetOffsiteTarget(mesh.ID); got != mesh {
+		t.Fatalf("mesh target changed: %+v, want %+v", got, mesh)
 	}
 }

@@ -88,6 +88,37 @@ func TestOffsiteTargetCRUDHandlers(t *testing.T) {
 	}
 }
 
+func TestTheServerDecidesWhereANewTargetGoes(t *testing.T) {
+	h, st := newCRUDHandler(t)
+	field, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Primary", Repo: "s3:b2", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	body, _ := json.Marshal(offsiteTargetView{Domain: "containers", Name: "Hetzner", Repo: "sftp:u1@hetzner:/c", Enabled: true, SortOrder: 0})
+	rec := httptest.NewRecorder()
+	h.handleCreateOffsiteTarget(rec, jsonReq(http.MethodPost, "/api/offsite/targets", bytes.NewReader(body)))
+	env := decodeEnvelope(t, rec)
+	created, _ := env["target"].(map[string]any)
+	if env["ok"] != true || created["sortOrder"] != float64(1) {
+		t.Fatalf("create = %v, want ok and sortOrder 1", env)
+	}
+	id, _ := created["id"].(string)
+
+	body, _ = json.Marshal(offsiteTargetView{Domain: "containers", Name: "Hetzner", Repo: "sftp:u1@hetzner:/c", Enabled: true, SortOrder: 0})
+	req := jsonReq(http.MethodPut, "/api/offsite/targets/"+id, bytes.NewReader(body))
+	req.SetPathValue("id", id)
+	rec = httptest.NewRecorder()
+	h.handleUpdateOffsiteTarget(rec, req)
+	env = decodeEnvelope(t, rec)
+	if upd, _ := env["target"].(map[string]any); env["ok"] != true || upd["sortOrder"] != float64(1) {
+		t.Fatalf("update = %v, want ok and sortOrder still 1", env)
+	}
+	if got, _, _ := st.FieldOffsiteTarget("containers"); got.ID != field.ID {
+		t.Fatalf("field target = %s, want %s", got.ID, field.ID)
+	}
+}
+
 func TestOffsiteTargetCreateValidation(t *testing.T) {
 	h, _ := newCRUDHandler(t)
 

@@ -22,57 +22,35 @@ func validOffsiteDomain(domain string) bool {
 	return false
 }
 
-// syncPrimaryOffsiteTarget reconciles a domain's PRIMARY off-site target row with
-// the current Settings columns (+ the decoded cloud storage class), so that
-// editing off-site config through the legacy Settings setters keeps working now
-// that the replication path reads the offsite_targets rows instead of Settings.
-//
-// The PRIMARY target is the domain's first row in per-domain order (the shape the
-// stage-1 backfill produced: name "Primary", sort_order 0). When it exists, its
-// identity (id/created_at/sort_order/creds_ref) is preserved and only the mutable
-// config is rewritten from Settings — so an N=1 install stays a single, same-id
-// target. When it does not exist yet (a post-backfill install configured only via
-// Settings) a fresh one is created. When the domain's off-site repo has been
-// CLEARED, the primary row is DELETED so offsiteRepoFor falls back to the (now
-// empty) Settings column instead of a stale repo.
-//
-// The storage class is copied from the shared cloud creds (best-effort: a decode
-// failure leaves it empty, which offsiteModeForTarget treats as "use the global
-// class" — identical replication behavior). This finally populates the primary
-// target's storage_class, which the pure-SQL backfill could not.
+// syncPrimaryOffsiteTarget writes a domain's off-site settings field into the
+// target on sort_order 0. Clearing the field switches that row off, so filling
+// it again brings back the same target.
 func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Settings) error {
 	if s.store == nil {
 		return nil
 	}
-	targets, err := s.store.OffsiteTargetsForDomain(domain)
+	primary, ok, err := s.store.FieldOffsiteTarget(domain)
 	if err != nil {
 		return err
 	}
-	var primary *store.OffsiteTarget
-	if len(targets) > 0 {
-		primary = &targets[0] // first in (sort_order, created_at) order
-	}
-
 	repo := offsiteRepoFromSettings(domain, settings)
 	if repo == "" {
-		// Off-site cleared for this domain: drop the primary so offsiteRepoFor
-		// resolves back to the empty Settings column rather than a stale target.
-		if primary != nil {
-			return s.store.DeleteOffsiteTarget(primary.ID)
+		if !ok || !primary.Enabled {
+			return nil
 		}
-		return nil
+		primary.Enabled = false
+		_, err := s.store.UpsertOffsiteTarget(primary)
+		return err
 	}
-
 	t := settingsOffsiteTarget(domain, settings, repo)
+	// Unreadable cloud credentials leave the class empty, which
+	// offsiteModeForTarget reads as the global class.
 	if c, cErr := s.decodeCloud(settings); cErr == nil {
 		t.StorageClass = c.S3StorageClass
 	}
-	if primary != nil {
-		// Preserve the existing row's identity + placement + creds selector; only
-		// the Settings-derived config is refreshed.
+	if ok {
 		t.ID = primary.ID
 		t.CreatedAt = primary.CreatedAt
-		t.SortOrder = primary.SortOrder
 		t.CredsRef = primary.CredsRef
 	}
 	_, err = s.store.UpsertOffsiteTarget(t)

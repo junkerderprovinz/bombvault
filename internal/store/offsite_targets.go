@@ -106,12 +106,9 @@ const (
 	RoleRepo = "repo"
 )
 
-// UpsertOffsiteTarget inserts or updates an off-site target by id. An empty ID
-// is assigned via newID(); CreatedAt is stamped now when 0. An empty Role
-// normalizes to RoleOffsite, so every row written before this field existed (and
-// every caller that does not set it) keeps behaving as a replication
-// destination. Returns the stored OffsiteTarget (with the assigned
-// id/timestamp/role).
+// UpsertOffsiteTarget inserts t, or updates the row with its id, and returns the
+// row as stored. An update keeps the stored sort_order; an insert writes
+// t.SortOrder. An empty ID gets a fresh one and an empty Role means RoleOffsite.
 func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	if strings.TrimSpace(t.Repo) == "" {
 		return OffsiteTarget{}, ErrEmptyOffsiteRepo
@@ -125,8 +122,12 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	if t.Role == "" {
 		t.Role = RoleOffsite
 	}
-
-	_, err := r.db.Exec(`
+	tx, err := r.db.Begin()
+	if err != nil {
+		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
+	_, err = tx.Exec(`
 		INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 		  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 		  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order)
@@ -147,8 +148,7 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 		  limit_upload           = excluded.limit_upload,
 		  limit_download         = excluded.limit_download,
 		  growth_budget_gb       = excluded.growth_budget_gb,
-		  enabled                = excluded.enabled,
-		  sort_order             = excluded.sort_order`,
+		  enabled                = excluded.enabled`,
 		t.ID, t.Domain, t.Name, t.Repo, t.Role, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Schedule,
 		t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
 		t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB, boolInt(t.Enabled), t.CreatedAt, t.SortOrder,
@@ -156,7 +156,136 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	if err != nil {
 		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
 	}
+	return commitStoredTargetTx(tx, t.ID)
+}
+
+// CreateOffsiteTarget inserts a replication destination behind the domain's last one.
+func (r *Repo) CreateOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
+	if strings.TrimSpace(t.Repo) == "" {
+		return OffsiteTarget{}, ErrEmptyOffsiteRepo
+	}
+	if t.ID == "" {
+		t.ID = newID()
+	}
+	if t.CreatedAt == 0 {
+		t.CreatedAt = time.Now().Unix()
+	}
+	tx, err := r.db.Begin()
+	if err != nil {
+		return OffsiteTarget{}, fmt.Errorf("CreateOffsiteTarget: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
+	_, err = tx.Exec(`
+		INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
+		  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
+		  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order)
+		SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(MAX(sort_order), 0) + 1
+		  FROM offsite_targets WHERE role = ? AND domain = ?`,
+		t.ID, t.Domain, t.Name, t.Repo, RoleOffsite, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Schedule,
+		t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
+		t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB, boolInt(t.Enabled), t.CreatedAt,
+		RoleOffsite, t.Domain,
+	)
+	if err != nil {
+		return OffsiteTarget{}, fmt.Errorf("CreateOffsiteTarget: %w", err)
+	}
+	return commitStoredTargetTx(tx, t.ID)
+}
+
+// commitStoredTargetTx reads back the row a write in tx just made, then commits.
+func commitStoredTargetTx(tx *sql.Tx, id string) (OffsiteTarget, error) {
+	t, err := scanOffsiteTarget(tx.QueryRow(`SELECT `+offsiteTargetCols+` FROM offsite_targets WHERE id = ?`, id))
+	if err != nil {
+		return OffsiteTarget{}, err
+	}
+	if err := tx.Commit(); err != nil {
+		return OffsiteTarget{}, fmt.Errorf("commit offsite target: %w", err)
+	}
 	return t, nil
+}
+
+// FieldOffsiteTarget returns the row the domain's off-site settings field edits:
+// role offsite, sort_order 0, enabled or not.
+func (r *Repo) FieldOffsiteTarget(domain string) (OffsiteTarget, bool, error) {
+	row := r.db.QueryRow(`SELECT `+offsiteTargetCols+`
+		FROM offsite_targets WHERE domain = ? AND role = ? AND sort_order = 0
+		ORDER BY created_at, id LIMIT 1`, domain, RoleOffsite)
+	t, err := scanOffsiteTarget(row)
+	if errors.Is(err, sql.ErrNoRows) {
+		return OffsiteTarget{}, false, nil
+	}
+	if err != nil {
+		return OffsiteTarget{}, false, err
+	}
+	return t, true, nil
+}
+
+// NormalizeOffsiteSortOrder applies the rule of the offsite_targets_primary_slot
+// migration to one domain: the oldest target whose location is field takes
+// sort_order 0, and every other target on 0 moves behind the domain's last one,
+// in the order they were created.
+func (r *Repo) NormalizeOffsiteSortOrder(domain, field string) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("NormalizeOffsiteSortOrder: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
+	slots, err := targetSlotsTx(tx, domain)
+	if err != nil {
+		return err
+	}
+	primary, last := "", 0
+	for _, s := range slots {
+		if primary == "" && field != "" && s.repo == field {
+			primary = s.id
+		}
+		last = max(last, s.order)
+	}
+	next := last + 1
+	for _, s := range slots {
+		order := s.order
+		switch {
+		case s.id == primary:
+			order = 0
+		case s.order == 0:
+			order = next
+			next++
+		}
+		if order == s.order {
+			continue
+		}
+		if _, err := tx.Exec(`UPDATE offsite_targets SET sort_order = ? WHERE id = ?`, order, s.id); err != nil {
+			return fmt.Errorf("NormalizeOffsiteSortOrder: %w", err)
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("NormalizeOffsiteSortOrder commit: %w", err)
+	}
+	return nil
+}
+
+type targetSlot struct {
+	id, repo string
+	order    int
+}
+
+// targetSlotsTx lists a domain's replication destinations in creation order.
+func targetSlotsTx(tx *sql.Tx, domain string) ([]targetSlot, error) {
+	rows, err := tx.Query(`SELECT id, repo, sort_order FROM offsite_targets
+		WHERE domain = ? AND role = ? ORDER BY created_at, id`, domain, RoleOffsite)
+	if err != nil {
+		return nil, fmt.Errorf("list target slots: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+	var out []targetSlot
+	for rows.Next() {
+		var s targetSlot
+		if err := rows.Scan(&s.id, &s.repo, &s.order); err != nil {
+			return nil, fmt.Errorf("scan target slot: %w", err)
+		}
+		out = append(out, s)
+	}
+	return out, rows.Err()
 }
 
 const offsiteTargetCols = `id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,

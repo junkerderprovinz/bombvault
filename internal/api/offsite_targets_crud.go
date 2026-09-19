@@ -171,8 +171,9 @@ func (h *Handler) handleListOffsiteTargets(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"targets": offsiteTargetsToViews(targets)}))
 }
 
-// handleCreateOffsiteTarget creates an additional off-site target.
-// POST /api/offsite/targets — body is an offsiteTargetView (id/createdAt ignored).
+// handleCreateOffsiteTarget creates an additional off-site target behind the
+// domain's last one. POST /api/offsite/targets; the body's id, createdAt and
+// sortOrder are ignored.
 func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Request) {
 	var v offsiteTargetView
 	if !decodeBody(w, r, &v) {
@@ -187,8 +188,7 @@ func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
-	t.ID = "" // force a fresh id even if the client sent one
-	stored, err := h.store.UpsertOffsiteTarget(t)
+	stored, err := h.store.CreateOffsiteTarget(t)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -197,8 +197,8 @@ func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 }
 
 // handleUpdateOffsiteTarget updates an existing off-site target in place.
-// PUT /api/offsite/targets/{id}. The id comes from the path; created_at is
-// preserved from the stored row so an update never re-stamps it.
+// PUT /api/offsite/targets/{id}. The id comes from the path; created_at and
+// sort_order stay as stored.
 func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	existing, ok, err := h.store.GetOffsiteTarget(id)

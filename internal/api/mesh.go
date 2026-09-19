@@ -205,7 +205,7 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 		CredsRef: setID,
 		Enabled:  true,
 	}
-	stored, err := h.store.UpsertOffsiteTarget(target)
+	stored, err := h.store.CreateOffsiteTarget(target)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return

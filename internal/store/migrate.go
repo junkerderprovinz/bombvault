@@ -65,6 +65,18 @@ func tablePresent(table string) func(*sql.Tx) (bool, error) {
 	}
 }
 
+// recordedAs reports whether a migration of this name is already recorded under
+// another number. It guards bodies that only change data and leave nothing to probe.
+func recordedAs(name string) func(*sql.Tx) (bool, error) {
+	return func(tx *sql.Tx) (bool, error) {
+		var n int
+		if err := tx.QueryRow(`SELECT count(*) FROM schema_migrations WHERE name = ?`, name).Scan(&n); err != nil {
+			return false, fmt.Errorf("probe migration %s: %w", name, err)
+		}
+		return n > 0, nil
+	}
+}
+
 // ADDING A MIGRATION — and the one rule that got broken here:
 //
 // Take the next unused number, append at the end, never edit a body that has
@@ -1558,6 +1570,54 @@ ALTER TABLE settings ADD COLUMN pull_enabled INTEGER NOT NULL DEFAULT 0;`,
 		// that the column exists while the table does not, because one body
 		// writes both.
 		alreadySatisfied: columnPresent("settings", "pull_enabled"),
+	},
+	{
+		// A domain's off-site field edits the target on sort_order 0, so that
+		// slot holds one row: the oldest whose location is the field. Every other
+		// row on 0, an accepted mesh offer included, moves behind the domain's
+		// last target in the order the rows were created. With the field empty no
+		// row keeps 0. The body only changes data, so recordedAs is what keeps a
+		// renumbered copy from running a second time.
+		version: 109,
+		name:    "offsite_targets_primary_slot",
+		sql: `
+CREATE TEMP TABLE slot_field AS
+  SELECT 'containers' AS domain, containers_offsite AS field FROM settings WHERE id = 1
+  UNION ALL SELECT 'vms',    vms_offsite    FROM settings WHERE id = 1
+  UNION ALL SELECT 'flash',  flash_offsite  FROM settings WHERE id = 1
+  UNION ALL SELECT 'config', config_offsite FROM settings WHERE id = 1
+  UNION ALL SELECT 'files',  files_offsite  FROM settings WHERE id = 1;
+
+CREATE TEMP TABLE slot_primary AS
+  SELECT (SELECT ot.id FROM offsite_targets ot
+           WHERE ot.role = 'offsite' AND ot.domain = f.domain AND ot.repo = f.field
+           ORDER BY ot.created_at, ot.id LIMIT 1) AS id
+    FROM slot_field f
+   WHERE f.field <> '';
+DELETE FROM slot_primary WHERE id IS NULL;
+
+CREATE TEMP TABLE slot_moves AS
+  SELECT ot.id AS id,
+         (SELECT MAX(o2.sort_order) FROM offsite_targets o2
+           WHERE o2.role = 'offsite' AND o2.domain = ot.domain) + 1
+         + (SELECT COUNT(*) FROM offsite_targets o3
+             WHERE o3.role = 'offsite' AND o3.domain = ot.domain AND o3.sort_order = 0
+               AND o3.id NOT IN (SELECT id FROM slot_primary)
+               AND (o3.created_at < ot.created_at
+                    OR (o3.created_at = ot.created_at AND o3.id < ot.id))) AS sort_order
+    FROM offsite_targets ot
+   WHERE ot.role = 'offsite' AND ot.sort_order = 0
+     AND ot.id NOT IN (SELECT id FROM slot_primary);
+
+UPDATE offsite_targets
+   SET sort_order = (SELECT m.sort_order FROM slot_moves m WHERE m.id = offsite_targets.id)
+ WHERE id IN (SELECT id FROM slot_moves);
+UPDATE offsite_targets SET sort_order = 0 WHERE id IN (SELECT id FROM slot_primary);
+
+DROP TABLE temp.slot_moves;
+DROP TABLE temp.slot_primary;
+DROP TABLE temp.slot_field;`,
+		alreadySatisfied: recordedAs("offsite_targets_primary_slot"),
 	},
 }
 

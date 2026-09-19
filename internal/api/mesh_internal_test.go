@@ -167,6 +167,40 @@ func TestAcceptMeshOffer(t *testing.T) {
 	}
 }
 
+func TestAnAcceptedMeshOfferGoesBehindTheFieldTarget(t *testing.T) {
+	appKey := strings.Repeat("c", 64)
+	h, st := meshHandlerFixture(t, appKey)
+	field, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Primary", Repo: "s3:b2", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	enc, err := secret.Encrypt(appKey, []byte("peer-password"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	offer, err := st.CreateMeshOffer(store.MeshOffer{
+		From: "tower-a", SuggestedDomain: "containers",
+		Repo:     "rest:http://192.168.1.50:8000/bombvault-containers/containers",
+		RESTUser: "bombvault-containers", RESTPasswordEnc: enc,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	w := httptest.NewRecorder()
+	r := postJSONReq(t, "/api/fleet/mesh-offers/"+offer.ID+"/accept", map[string]any{"domain": "containers"})
+	r.SetPathValue("id", offer.ID)
+	h.handleAcceptMeshOffer(w, r)
+	resp := decodeResp(t, w)
+	created, _ := resp["target"].(map[string]any)
+	if resp["ok"] != true || created["sortOrder"] != float64(1) {
+		t.Fatalf("accept = %v, want ok and sortOrder 1", resp)
+	}
+	if got, _, _ := st.FieldOffsiteTarget("containers"); got.ID != field.ID {
+		t.Fatalf("field target = %s, want %s", got.ID, field.ID)
+	}
+}
+
 func TestDeclineMeshOffer(t *testing.T) {
 	h, st := meshHandlerFixture(t, strings.Repeat("c", 64))
 	offer, err := st.CreateMeshOffer(store.MeshOffer{From: "tower-a", Repo: "rest:http://x:8000/y"})
