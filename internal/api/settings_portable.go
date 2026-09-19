@@ -716,7 +716,7 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 	// Replace the off-site targets with the imported set (a clean, deterministic
 	// round-trip): drop the current rows, then upsert each imported target
 	// preserving its id + created_at so the far instance reproduces the source.
-	if err := h.replaceOffsiteTargets(exp.OffsiteTargets); err != nil {
+	if err := h.replaceOffsiteTargets(exp.OffsiteTargets, exp.Settings); err != nil {
 		return err
 	}
 
@@ -756,11 +756,35 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 	return nil
 }
 
+// offsiteRepoFromView reads a domain's off-site location straight off the
+// export's own settings block, the view-typed twin of offsiteRepoFromSettings.
+func offsiteRepoFromView(domain string, v settingsView) string {
+	switch domain {
+	case "containers":
+		return v.ContainersOffsite
+	case "vms":
+		return v.VMsOffsite
+	case "flash":
+		return v.FlashOffsite
+	case "config":
+		return v.ConfigOffsite
+	case "files":
+		return v.FilesOffsite
+	}
+	return ""
+}
+
 // replaceOffsiteTargets drops all current off-site targets and re-inserts the
 // imported set, preserving each id + created_at for an exact round-trip. The
 // file's sort orders are then settled the way the offsite_targets_primary_slot
-// migration settles them, against the off-site fields the import just wrote.
-func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView) error {
+// migration settles them, against fileSettings, the file's own off-site fields,
+// rather than the merged settings just written: a redacted field can be kept at
+// this instance's working location by importedLocation while the row for it
+// lands under a fresh id with nothing to keep, so the row's redacted repo would
+// never match the merged field and the domain would end up with no row on
+// sort_order 0. The file's field and its row were redacted the same way on
+// export, so comparing the file against itself always matches.
+func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, fileSettings settingsView) error {
 	current, err := h.store.ListOffsiteTargets()
 	if err != nil {
 		return err
@@ -786,12 +810,8 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView) error {
 			return err
 		}
 	}
-	settings, err := h.store.GetSettings()
-	if err != nil {
-		return err
-	}
 	for _, d := range offsiteConfigDomains {
-		if err := h.store.NormalizeOffsiteSortOrder(d, offsiteRepoFromSettings(d, settings)); err != nil {
+		if err := h.store.NormalizeOffsiteSortOrder(d, offsiteRepoFromView(d, fileSettings)); err != nil {
 			return err
 		}
 	}

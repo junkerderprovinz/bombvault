@@ -127,11 +127,11 @@ func TestNormalizeOffsiteSortOrderGivesZeroToTheFieldsRow(t *testing.T) {
 	}
 }
 
-func TestNormalizeOffsiteSortOrderWithAnEmptyFieldLeavesNothingOnZero(t *testing.T) {
+func TestNormalizeOffsiteSortOrderWithAnEmptyFieldKeepsASwitchedOffRowOnZero(t *testing.T) {
 	r := newRepo(t)
 	for _, tg := range []store.OffsiteTarget{
-		{ID: "old-field", Domain: "files", Repo: "s3:b2", CreatedAt: 1000},
-		{ID: "second", Domain: "files", Repo: "sftp:hetzner", CreatedAt: 1100, SortOrder: 1},
+		{ID: "off-field", Domain: "files", Repo: "s3:b2", CreatedAt: 1000}, // Enabled defaults false
+		{ID: "second", Domain: "files", Repo: "sftp:hetzner", Enabled: true, CreatedAt: 1100, SortOrder: 1},
 	} {
 		if _, err := r.UpsertOffsiteTarget(tg); err != nil {
 			t.Fatal(err)
@@ -140,10 +140,31 @@ func TestNormalizeOffsiteSortOrderWithAnEmptyFieldLeavesNothingOnZero(t *testing
 	if err := r.NormalizeOffsiteSortOrder("files", ""); err != nil {
 		t.Fatalf("NormalizeOffsiteSortOrder: %v", err)
 	}
-	if got := sortOrderOf(t, r, "old-field"); got != 2 {
-		t.Fatalf("old-field: sort_order %d, want 2", got)
+	if got := sortOrderOf(t, r, "off-field"); got != 0 {
+		t.Fatalf("off-field: sort_order %d, want 0", got)
+	}
+	if got, ok, err := r.FieldOffsiteTarget("files"); err != nil || !ok || got.ID != "off-field" {
+		t.Fatalf("FieldOffsiteTarget(files) = %q ok=%v err=%v, want off-field", got.ID, ok, err)
+	}
+}
+
+func TestNormalizeOffsiteSortOrderWithAnEmptyFieldMovesAnEnabledRowOffZero(t *testing.T) {
+	r := newRepo(t)
+	for _, tg := range []store.OffsiteTarget{
+		{ID: "mesh", Domain: "files", Repo: "rest:http://peer/files", Enabled: true, CreatedAt: 1000},
+		{ID: "second", Domain: "files", Repo: "sftp:hetzner", Enabled: true, CreatedAt: 1100, SortOrder: 1},
+	} {
+		if _, err := r.UpsertOffsiteTarget(tg); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := r.NormalizeOffsiteSortOrder("files", ""); err != nil {
+		t.Fatalf("NormalizeOffsiteSortOrder: %v", err)
+	}
+	if got := sortOrderOf(t, r, "mesh"); got != 2 {
+		t.Fatalf("mesh: sort_order %d, want 2", got)
 	}
 	if _, ok, _ := r.FieldOffsiteTarget("files"); ok {
-		t.Fatal("an empty field must leave no row on sort_order 0")
+		t.Fatal("an empty field with no switched-off row on zero must leave nothing on it")
 	}
 }

@@ -106,9 +106,9 @@ const (
 	RoleRepo = "repo"
 )
 
-// UpsertOffsiteTarget inserts t, or updates the row with its id, and returns the
-// row as stored. An update keeps the stored sort_order; an insert writes
-// t.SortOrder. An empty ID gets a fresh one and an empty Role means RoleOffsite.
+// UpsertOffsiteTarget inserts t or updates the row with its id, keeping that
+// row's sort_order, and returns the row as stored. An empty ID gets a fresh one
+// and an empty Role means RoleOffsite.
 func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	if strings.TrimSpace(t.Repo) == "" {
 		return OffsiteTarget{}, ErrEmptyOffsiteRepo
@@ -223,7 +223,9 @@ func (r *Repo) FieldOffsiteTarget(domain string) (OffsiteTarget, bool, error) {
 // NormalizeOffsiteSortOrder applies the rule of the offsite_targets_primary_slot
 // migration to one domain: the oldest target whose location is field takes
 // sort_order 0, and every other target on 0 moves behind the domain's last one,
-// in the order they were created.
+// in the order they were created. With field empty, the oldest switched-off
+// target already on sort_order 0 keeps it instead: that is the row a cleared
+// field leaves behind, still holding its id and credentials for the next fill.
 func (r *Repo) NormalizeOffsiteSortOrder(domain, field string) error {
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -236,7 +238,11 @@ func (r *Repo) NormalizeOffsiteSortOrder(domain, field string) error {
 	}
 	primary, last := "", 0
 	for _, s := range slots {
-		if primary == "" && field != "" && s.repo == field {
+		switch {
+		case primary != "":
+		case field != "" && s.repo == field:
+			primary = s.id
+		case field == "" && s.order == 0 && !s.enabled:
 			primary = s.id
 		}
 		last = max(last, s.order)
@@ -267,11 +273,12 @@ func (r *Repo) NormalizeOffsiteSortOrder(domain, field string) error {
 type targetSlot struct {
 	id, repo string
 	order    int
+	enabled  bool
 }
 
 // targetSlotsTx lists a domain's replication destinations in creation order.
 func targetSlotsTx(tx *sql.Tx, domain string) ([]targetSlot, error) {
-	rows, err := tx.Query(`SELECT id, repo, sort_order FROM offsite_targets
+	rows, err := tx.Query(`SELECT id, repo, sort_order, enabled FROM offsite_targets
 		WHERE domain = ? AND role = ? ORDER BY created_at, id`, domain, RoleOffsite)
 	if err != nil {
 		return nil, fmt.Errorf("list target slots: %w", err)
@@ -280,9 +287,11 @@ func targetSlotsTx(tx *sql.Tx, domain string) ([]targetSlot, error) {
 	var out []targetSlot
 	for rows.Next() {
 		var s targetSlot
-		if err := rows.Scan(&s.id, &s.repo, &s.order); err != nil {
+		var enabled int
+		if err := rows.Scan(&s.id, &s.repo, &s.order, &enabled); err != nil {
 			return nil, fmt.Errorf("scan target slot: %w", err)
 		}
+		s.enabled = enabled != 0
 		out = append(out, s)
 	}
 	return out, rows.Err()
@@ -295,11 +304,12 @@ const offsiteTargetCols = `id, domain, name, repo, role, creds_ref, storage_clas
 // ListOffsiteTargets returns all off-site REPLICATION DESTINATIONS (role =
 // 'offsite'; a domain's "primary" safety-config row, if any, is never among
 // them — see PrimaryRemoteTarget) ordered by domain, then sort_order, then
-// created_at (a stable per-domain display order).
+// created_at, then id (a stable per-domain display order, tie-broken all the
+// way down so equal sort_order and created_at never leave the order to chance).
 func (r *Repo) ListOffsiteTargets() ([]OffsiteTarget, error) {
 	rows, err := r.db.Query(`
 		SELECT `+offsiteTargetCols+`
-		FROM offsite_targets WHERE role = ? ORDER BY domain, sort_order, created_at`, RoleOffsite)
+		FROM offsite_targets WHERE role = ? ORDER BY domain, sort_order, created_at, id`, RoleOffsite)
 	if err != nil {
 		return nil, fmt.Errorf("ListOffsiteTargets: %w", err)
 	}
@@ -317,15 +327,15 @@ func (r *Repo) ListOffsiteTargets() ([]OffsiteTarget, error) {
 }
 
 // OffsiteTargetsForDomain returns the off-site REPLICATION DESTINATIONS (role =
-// 'offsite') for a single domain, ordered by sort_order then created_at. A
-// domain's "primary" row (issue #152 remote-primary safety settings, if any)
+// 'offsite') for a single domain, ordered by sort_order, then created_at, then
+// id. A domain's "primary" row (issue #152 remote-primary safety settings, if any)
 // is deliberately excluded — see PrimaryRemoteTarget — so it can never be
 // picked up by the replication loop, the multi-target CRUD UI, or anything
 // else that iterates a domain's off-site destinations.
 func (r *Repo) OffsiteTargetsForDomain(domain string) ([]OffsiteTarget, error) {
 	rows, err := r.db.Query(`
 		SELECT `+offsiteTargetCols+`
-		FROM offsite_targets WHERE domain = ? AND role = ? ORDER BY sort_order, created_at`, domain, RoleOffsite)
+		FROM offsite_targets WHERE domain = ? AND role = ? ORDER BY sort_order, created_at, id`, domain, RoleOffsite)
 	if err != nil {
 		return nil, fmt.Errorf("OffsiteTargetsForDomain: %w", err)
 	}

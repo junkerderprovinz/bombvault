@@ -197,6 +197,105 @@ func TestSettingsExportImportRoundTrip(t *testing.T) {
 	}
 }
 
+// TestImportRestoresTheFieldsCredentialAfterAClearAndRefill: a field cleared
+// before export must still hand its credential set back to the same target
+// once the field is filled in again after the import.
+func TestImportRestoresTheFieldsCredentialAfterAClearAndRefill(t *testing.T) {
+	h, st := newPortableHandler(t, appKeyA)
+
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ContainersOffsite = "s3:offsite-containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if err := h.svc.syncPrimaryOffsiteTarget("containers", s); err != nil {
+		t.Fatal(err)
+	}
+	field, ok, err := st.FieldOffsiteTarget("containers")
+	if err != nil || !ok {
+		t.Fatalf("FieldOffsiteTarget: ok=%v err=%v", ok, err)
+	}
+	field.CredsRef = "set-b2"
+	if _, err := st.UpsertOffsiteTarget(field); err != nil {
+		t.Fatal(err)
+	}
+	wantID := field.ID
+
+	// Clear the field: the row stays, switched off, with its credentials.
+	s.ContainersOffsite = ""
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if err := h.svc.syncPrimaryOffsiteTarget("containers", s); err != nil {
+		t.Fatal(err)
+	}
+
+	body, _ := doExport(t, h, "")
+	if env := doImport(t, h, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply failed: %v", env)
+	}
+
+	// Fill the field again: the same row, with its credential set, must come back.
+	s, err = st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ContainersOffsite = "s3:offsite-containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if err := h.svc.syncPrimaryOffsiteTarget("containers", s); err != nil {
+		t.Fatal(err)
+	}
+
+	back, ok, err := st.FieldOffsiteTarget("containers")
+	if err != nil || !ok || back.ID != wantID || back.CredsRef != "set-b2" {
+		t.Fatalf("after refill: %+v (ok=%v err=%v), want id %s with CredsRef set-b2", back, ok, err, wantID)
+	}
+}
+
+// TestImportNormalizesAgainstTheFilesOwnRedactedField: a plain export redacts
+// a field location and its target row the same way, so the import must settle
+// sort order against the file's own field, not against the merged settings
+// value importedLocation may have kept at the destination's working location
+// for an unrelated row.
+func TestImportNormalizesAgainstTheFilesOwnRedactedField(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	seedCredentialInLocation(t, srcStore) // ContainersOffsite and tgt-1/tgt-2 -> locWithCreds
+	body, _ := doExport(t, src, "")       // plain export: locations redacted
+
+	// The destination already has a row for the domain's field under an id the
+	// file never mentions, so the imported tgt-1 lands under a fresh id: there is
+	// nothing in currentRepo to keep, and its stored location stays redacted.
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	if _, err := dstStore.UpsertOffsiteTarget(store.OffsiteTarget{
+		ID: "dst-only", Domain: "containers", Name: "Primary", Repo: "s3:dst-working", Enabled: true, CreatedAt: 500,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	s, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ContainersOffsite = "s3:dst-working"
+	if err := dstStore.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply failed: %v", env)
+	}
+
+	field, ok, err := dstStore.FieldOffsiteTarget("containers")
+	if err != nil || !ok || field.ID != "tgt-1" {
+		t.Fatalf("FieldOffsiteTarget(containers) = %q ok=%v err=%v, want tgt-1 on sort_order 0", field.ID, ok, err)
+	}
+}
+
 func TestImportGivesSortOrderZeroBackToTheFieldsTarget(t *testing.T) {
 	src, srcStore := newPortableHandler(t, appKeyA)
 	seedSource(t, src, srcStore)

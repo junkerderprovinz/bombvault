@@ -1575,9 +1575,11 @@ ALTER TABLE settings ADD COLUMN pull_enabled INTEGER NOT NULL DEFAULT 0;`,
 		// A domain's off-site field edits the target on sort_order 0, so that
 		// slot holds one row: the oldest whose location is the field. Every other
 		// row on 0, an accepted mesh offer included, moves behind the domain's
-		// last target in the order the rows were created. With the field empty no
-		// row keeps 0. The body only changes data, so recordedAs is what keeps a
-		// renumbered copy from running a second time.
+		// last target in the order the rows were created. With the field empty,
+		// the oldest switched-off row already on 0 keeps it instead: that is the
+		// row a cleared field leaves behind, and it must still be there for the
+		// next fill to find. The body only changes data, so recordedAs is what
+		// keeps a renumbered copy from running a second time.
 		version: 109,
 		name:    "offsite_targets_primary_slot",
 		sql: `
@@ -1593,7 +1595,13 @@ CREATE TEMP TABLE slot_primary AS
            WHERE ot.role = 'offsite' AND ot.domain = f.domain AND ot.repo = f.field
            ORDER BY ot.created_at, ot.id LIMIT 1) AS id
     FROM slot_field f
-   WHERE f.field <> '';
+   WHERE f.field <> ''
+  UNION ALL
+  SELECT (SELECT ot.id FROM offsite_targets ot
+           WHERE ot.role = 'offsite' AND ot.domain = f.domain AND ot.sort_order = 0 AND ot.enabled = 0
+           ORDER BY ot.created_at, ot.id LIMIT 1) AS id
+    FROM slot_field f
+   WHERE f.field = '';
 DELETE FROM slot_primary WHERE id IS NULL;
 
 CREATE TEMP TABLE slot_moves AS
