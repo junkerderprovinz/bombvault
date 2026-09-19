@@ -4891,7 +4891,10 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// per service. Same flag the batched off-site replication already keys on,
 	// so there is one notion of "part of a round" rather than two.
 	if !bulkReplicateSuppressed(ctx) {
-		if err := s.BackupStacks(ctx, []string{name}); err != nil {
+		// The stack's own retention forgets without pruning: the container's
+		// applyRetention right below prunes once for both, the same repo either
+		// way, instead of two separate prune passes for one manual backup.
+		if err := s.BackupStacks(WithBulkReplicateSuppressed(ctx), []string{name}); err != nil {
 			// Logged, never fatal: the container's own data is already safe.
 			log.Printf("api: backup: %v", err)
 		}

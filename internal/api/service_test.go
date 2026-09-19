@@ -4642,7 +4642,11 @@ type fakeResticEngine struct {
 	forgotModes []restic.Mode
 	prunedRepos []string
 	forgetTags  []string // identity tags passed to ForgetPolicy (issue #91)
-	checked     []string
+	// forgetPolicyPrunes is the prune flag of every ForgetPolicy call, parallel
+	// to forgetTags, so a test can tell how many of a backup's retention passes
+	// actually pruned rather than just how many ran.
+	forgetPolicyPrunes []bool
+	checked            []string
 	// The MODE each maintenance call was made with, parallel to the repo slices
 	// above. Without these a test can only see WHICH repositories an operation
 	// reached, not whether each was addressed with its own credentials, storage
@@ -4995,10 +4999,11 @@ func (f *fakeResticEngine) Forget(_ context.Context, repo string, snapshotIDs []
 	return nil
 }
 
-func (f *fakeResticEngine) ForgetPolicy(_ context.Context, repo string, p restic.RetentionPolicy, _ restic.Mode, tag string, _ bool) error {
+func (f *fakeResticEngine) ForgetPolicy(_ context.Context, repo string, p restic.RetentionPolicy, _ restic.Mode, tag string, prune bool) error {
 	if p.Any() {
 		f.prunedRepos = append(f.prunedRepos, repo)
 		f.forgetTags = append(f.forgetTags, tag)
+		f.forgetPolicyPrunes = append(f.forgetPolicyPrunes, prune)
 	}
 	return f.forgetPolicyErr
 }
