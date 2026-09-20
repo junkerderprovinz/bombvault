@@ -192,7 +192,7 @@ func moveCopyRuleTx(tx *sql.Tx, domain, from, to string) error {
 
 // encodeSkip stores a skip list sorted and without repeats; nil is every target.
 func encodeSkip(skip []string) (string, error) {
-	if err := validSkipList(skip); err != nil {
+	if err := ValidSkipList(skip); err != nil {
 		return "", err
 	}
 	list := slices.Compact(slices.Sorted(slices.Values(skip)))
@@ -213,14 +213,14 @@ func decodeSkip(raw string) ([]string, error) {
 	if err := json.Unmarshal([]byte(raw), &list); err != nil || list == nil {
 		return nil, ErrBadSkip
 	}
-	if err := validSkipList(list); err != nil {
+	if err := ValidSkipList(list); err != nil {
 		return nil, err
 	}
 	return list, nil
 }
 
-// validSkipList refuses an empty id and "*" next to anything.
-func validSkipList(skip []string) error {
+// ValidSkipList refuses an empty id and "*" next to anything.
+func ValidSkipList(skip []string) error {
 	for _, id := range skip {
 		if strings.TrimSpace(id) == "" || (id == SkipAll && len(skip) > 1) {
 			return ErrBadSkip

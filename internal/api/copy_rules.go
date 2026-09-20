@@ -233,20 +233,10 @@ func (s *Service) copiesChange(settings store.Settings, p placementRead, named m
 	return p.effectiveTargets(identity), after, nil
 }
 
-// validSkip accepts [], ["*"] or a list of target ids.
-func validSkip(skip []string) bool {
-	for _, id := range skip {
-		if strings.TrimSpace(id) == "" || (id == store.SkipAll && len(skip) > 1) {
-			return false
-		}
-	}
-	return true
-}
-
-// checkSkip is validSkip plus the rule that every id names a target of the
-// domain, switched on or off.
+// checkSkip is the store's rule for what a skip may hold, plus the rule that
+// every id names a target of the domain, switched on or off.
 func checkSkip(p placementRead, skip []string) error {
-	if !validSkip(skip) {
+	if err := store.ValidSkipList(skip); err != nil {
 		return errInvalidPlacement
 	}
 	for _, id := range skip {
