@@ -2,6 +2,7 @@ package dockercli
 
 import (
 	"context"
+	"io"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/model"
@@ -96,6 +97,13 @@ type Docker interface {
 	// Exec runs cmd inside the (running) container and returns an error when the
 	// command exits non-zero. Used for pre/post-backup hooks.
 	Exec(ctx context.Context, name string, cmd []string) error
+	// ExecOutput runs a short command and returns the first max bytes of its
+	// stdout and the command's exit code. Used for the dump probe and for the
+	// readiness check an import waits on.
+	ExecOutput(ctx context.Context, name string, cmd []string, max int) (string, int, error)
+	// ExecStdin runs cmd with stdin attached, returns the last tailMax bytes of
+	// its stderr and the exit code. Used to feed a dump back into a database.
+	ExecStdin(ctx context.Context, name string, cmd []string, stdin io.Reader, tailMax int) (string, int, error)
 }
 
 // normalizeName strips a single leading slash from a docker container name.

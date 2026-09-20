@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -615,6 +616,15 @@ func (f *foreignFakeDocker) CreateAndStart(_ context.Context, in model.Inspect, 
 func (f *foreignFakeDocker) InspectName(context.Context, string) (string, error) { return "", nil }
 func (f *foreignFakeDocker) Self(context.Context) (string, error)                { return "", nil }
 func (f *foreignFakeDocker) Exec(context.Context, string, []string) error        { return nil }
+
+func (f *foreignFakeDocker) ExecOutput(context.Context, string, []string, int) (string, int, error) {
+	return "", 0, nil
+}
+
+func (f *foreignFakeDocker) ExecStdin(_ context.Context, _ string, _ []string, stdin io.Reader, _ int) (string, int, error) {
+	_, _ = io.Copy(io.Discard, stdin)
+	return "", 0, nil
+}
 
 // waitForeignIdle blocks until the detached foreign-restore goroutine has
 // released the shared single-flight guard — i.e. progress, cancel and run

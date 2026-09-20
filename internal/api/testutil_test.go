@@ -3,6 +3,7 @@ package api_test
 import (
 	"context"
 	"errors"
+	"io"
 	"strings"
 	"testing"
 	"time"
@@ -54,10 +55,17 @@ type fakeServiceDocker struct {
 	imageRemoveErr error
 	createErr      error
 	createErrName  string // when set, CreateAndStart fails for this container name
-	started        bool
-	createdIn      model.Inspect
-	createdStart   bool
-	calls          []string
+
+	execOut    string // stdout of ExecOutput
+	execStderr string // stderr tail of ExecStdin
+	execExit   int    // exit code both report
+	execErr    error
+	execFed    string // what ExecStdin was fed
+
+	started      bool
+	createdIn    model.Inspect
+	createdStart bool
+	calls        []string
 }
 
 var _ dockercli.Docker = (*fakeServiceDocker)(nil)
@@ -131,6 +139,25 @@ func (f *fakeServiceDocker) ImageRemove(_ context.Context, id string) error {
 func (f *fakeServiceDocker) Exec(_ context.Context, name string, cmd []string) error {
 	f.calls = append(f.calls, "exec:"+name)
 	return nil
+}
+
+func (f *fakeServiceDocker) ExecOutput(_ context.Context, name string, _ []string, max int) (string, int, error) {
+	f.calls = append(f.calls, "execOutput:"+name)
+	out := f.execOut
+	if len(out) > max {
+		out = out[:max]
+	}
+	return out, f.execExit, f.execErr
+}
+
+func (f *fakeServiceDocker) ExecStdin(_ context.Context, name string, _ []string, stdin io.Reader, _ int) (string, int, error) {
+	f.calls = append(f.calls, "execStdin:"+name)
+	fed, err := io.ReadAll(stdin)
+	if err != nil {
+		return "", 0, err
+	}
+	f.execFed = string(fed)
+	return f.execStderr, f.execExit, f.execErr
 }
 
 func (f *fakeServiceDocker) CreateAndStart(_ context.Context, in model.Inspect, start bool) error {
