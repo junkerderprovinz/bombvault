@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -223,5 +224,31 @@ func TestSettleCommitReportsARowChosenMeanwhile(t *testing.T) {
 	}
 	if got := f.home(item); got.Repo != "" {
 		t.Fatalf("home = %+v, want the choice made in between", got)
+	}
+}
+
+func TestRecordHomeStartsOverWhenTheRowAppearedMeanwhile(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.setDefault("containers", nas.ID)
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	item := store.ItemRef{Domain: "containers", Key: "nginx"}
+	step, err := f.svc.prepareHome(context.Background(), settings, item)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.openContainer("nginx")
+	step, err = f.svc.recordHome(context.Background(), settings, item, step)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := f.home(item); got.Repo != nas.ID || got.Choice != store.RepoChosen {
+		t.Fatalf("home = %+v, want NAS chosen", got)
+	}
+	if !strings.HasSuffix(filepath.ToSlash(step.repo), "/nas") {
+		t.Fatalf("the backup goes to %q, want NAS", step.repo)
 	}
 }

@@ -4691,18 +4691,11 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
 	}
-	repo, err := s.containerRepoForName(settings, name, "local")
+	item := store.ItemRef{Domain: "containers", Key: name}
+	step, err := s.prepareHome(ctx, settings, item)
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	// issue #152 (bandwidth caps) and #182 (this domain's own credential set)
-	mode := s.primaryModeFor(settings, "containers", repo)
-	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
-		return backup.Summary{}, err
-	}
-	// Clear any stale lock left by a previously interrupted run so it can't block
-	// this backup (BombVault is the sole writer; an active lock is never stale).
-	s.unlockStale(ctx, repo, mode)
 
 	in, err := s.docker.Inspect(ctx, name)
 	if err != nil {
@@ -4748,6 +4741,11 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		s.notifyBackup(ctx, "container", name, false, backup.Summary{}, err)
 		return backup.Summary{}, err
 	}
+
+	if step, err = s.recordHome(ctx, settings, item, step); err != nil {
+		return backup.Summary{}, err
+	}
+	repo, mode := step.repo, step.mode
 
 	// Persist the recreate recipe (self-contained: inspect + template + backup
 	// paths) so restore works even after the container has been deleted.
@@ -9458,18 +9456,11 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
 	}
-	repo, err := s.vmRepoForName(settings, name, "local")
+	item := store.ItemRef{Domain: "vms", Key: name}
+	step, err := s.prepareHome(ctx, settings, item)
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	// issue #152 (bandwidth caps) and #182 (this domain's own credential set)
-	mode := s.primaryModeFor(settings, "vms", repo)
-	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
-		return backup.Summary{}, err
-	}
-	// Clear any stale lock left by a previously interrupted run so it can't block
-	// this backup (BombVault is the sole writer; an active lock is never stale).
-	s.unlockStale(ctx, repo, mode)
 
 	// Pin the host key before any virsh-over-SSH call (libvirt's qemu+ssh won't
 	// self-populate known_hosts). Best-effort: a failure here surfaces again on
@@ -9617,6 +9608,11 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		WasRunning:    wasRunning,
 	}
 	defBytes, _ := json.Marshal(def)
+
+	if step, err = s.recordHome(ctx, settings, item, step); err != nil {
+		return backup.Summary{}, err
+	}
+	repo, mode := step.repo, step.mode
 
 	tg, err := s.store.UpsertVMTarget(store.VMTarget{
 		Name: name, Method: method, Definition: string(defBytes),
@@ -10828,18 +10824,15 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	// point. replicateOffsite is the deliberate exception and stays per domain:
 	// an off-site copy is configured for the Folders domain, and a set's own
 	// primary says nothing about where its replica should live.
-	repo, err := s.fileSetRepoPath(settings, set)
+	item := store.ItemRef{Domain: "files", Key: set.ID}
+	step, err := s.prepareHome(ctx, settings, item)
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	// issue #152 (bandwidth caps) and #182 (this domain's own credential set)
-	mode := s.primaryModeFor(settings, "files", repo)
-	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
+	if step, err = s.recordHome(ctx, settings, item, step); err != nil {
 		return backup.Summary{}, err
 	}
-	// Clear any stale lock left by a previously interrupted run so it can't block
-	// this backup (BombVault is the sole writer; an active lock is never stale).
-	s.unlockStale(ctx, repo, mode)
+	repo, mode := step.repo, step.mode
 	// Healthchecks /start ping: deferred to here, past the source-exists + EnsureRepo
 	// guards, so the paired done/fail notifyBackup below always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "files")
