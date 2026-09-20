@@ -249,6 +249,18 @@ func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
 	}
 }
 
+func TestPauseReasonsCoverExactlyWhatPausePlacementPasses(t *testing.T) {
+	want := []pauseReason{reasonFoundHistory, reasonOlderSource}
+	if len(pauseReasons) != len(want) {
+		t.Fatalf("pauseReasons has %d entries, want exactly %v", len(pauseReasons), want)
+	}
+	for _, reason := range want {
+		if pauseReasons[reason] == "" {
+			t.Errorf("pauseReasons[%s] is empty", reason)
+		}
+	}
+}
+
 func TestItemParamChecksDomainAndName(t *testing.T) {
 	h := &Handler{}
 	var got []string

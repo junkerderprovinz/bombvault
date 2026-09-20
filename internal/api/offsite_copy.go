@@ -537,7 +537,7 @@ func (s *Service) pauseOnFirstListing(ctx context.Context, settings store.Settin
 		}
 		s.recordListing(r.p.Domain, t, r.owners, held, nil)
 		if r.owners.ownsAny(held) {
-			paused, err = true, s.pausePlacement(ctx, r.p.Domain, "found-history")
+			paused, err = true, s.pausePlacement(ctx, r.p.Domain, reasonFoundHistory)
 			return paused, nil, err
 		}
 	}
@@ -571,7 +571,7 @@ func (s *Service) pauseOnOlderSources(ctx context.Context, settings store.Settin
 		for _, sn := range snaps {
 			at := parseSnapshotTime(sn.Time)
 			if len(owners[sn.ID].Possible) > 0 && !at.IsZero() && at.Before(born) {
-				return true, s.pausePlacement(ctx, r.p.Domain, "older-source")
+				return true, s.pausePlacement(ctx, r.p.Domain, reasonOlderSource)
 			}
 		}
 	}

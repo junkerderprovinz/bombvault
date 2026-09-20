@@ -370,9 +370,17 @@ func (s *Service) namedRepoIndex() (map[string]store.OffsiteTarget, error) {
 	return out, nil
 }
 
+// pauseReason names why pausePlacement started a pause, for the notification text.
+type pauseReason string
+
+const (
+	reasonFoundHistory pauseReason = "found-history"
+	reasonOlderSource  pauseReason = "older-source"
+)
+
 // pausePlacement pauses the domain's replication until its default is confirmed,
 // and notifies when this call is the one that started the pause.
-func (s *Service) pausePlacement(ctx context.Context, domain, why string) error {
+func (s *Service) pausePlacement(ctx context.Context, domain string, why pauseReason) error {
 	s.placementMu.Lock()
 	started, err := s.store.PausePlacement(domain)
 	s.placementMu.Unlock()
@@ -393,16 +401,15 @@ func (s *Service) confirmPlacement(domain string, exclude []string) error {
 	return s.store.ConfirmPlacement(domain, exclude)
 }
 
-// pauseReasons says, by the why of pausePlacement, what made a domain pause.
-var pauseReasons = map[string]string{
-	"found-history": "its first listing found backups this database never replicated, so the database may have been rebuilt without the rules that kept items from being copied",
-	"older-source":  "one of its sources holds a snapshot older than this database, so the database may have been rebuilt without the rules that kept items from being copied",
-	"discover":      "Discover rebuilt its items in a database that never backed them up or replicated them, so the rules that kept items from being copied are gone",
+// pauseReasons says, by the reason pausePlacement paused a domain, what made it pause.
+var pauseReasons = map[pauseReason]string{
+	reasonFoundHistory: "its first listing found backups this database never replicated, so the database may have been rebuilt without the rules that kept items from being copied",
+	reasonOlderSource:  "one of its sources holds a snapshot older than this database, so the database may have been rebuilt without the rules that kept items from being copied",
 }
 
 // notifyPlacementPaused says that a domain's replication waits for its default
 // to be confirmed, and where. Same gate and fan-out as notifyReplicationFailed.
-func (s *Service) notifyPlacementPaused(ctx context.Context, domain, why string) {
+func (s *Service) notifyPlacementPaused(ctx context.Context, domain string, why pauseReason) {
 	c, err := s.NotifyConfig()
 	if err != nil || c.On == "" || c.On == "never" {
 		return
@@ -481,7 +488,7 @@ func (s *Service) listTargetOnce(ctx context.Context, domain, targetID string) e
 		return err
 	}
 	if pass.owners.ownsAny(held) {
-		return s.pausePlacement(ctx, domain, "found-history")
+		return s.pausePlacement(ctx, domain, reasonFoundHistory)
 	}
 	sources, _ := s.offsiteReplicationSources(settings, domain)
 	_, err = s.pauseOnOlderSources(ctx, settings, pass, sources)
