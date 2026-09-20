@@ -117,6 +117,26 @@ func TestAFailedTargetListingWithoutRulesHandsOverEveryID(t *testing.T) {
 	}
 }
 
+func TestAWholeSourceThatCouldNotBeListedIsNotRecordedAsLanded(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	f.replicated("containers")
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:nginx"))
+	f.eng.listErr[f.domainPath("containers")] = errors.New("connection reset")
+
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatal(err)
+	}
+	if len(f.eng.copies) != 1 || f.eng.copies[0].IDs != nil {
+		t.Fatalf("copies = %+v, want one whole copy of the domain path", f.eng.copies)
+	}
+	if _, listed, err := f.st.TargetObservationFor("containers", b2.ID); err != nil {
+		t.Fatal(err)
+	} else if listed {
+		t.Fatal("a pass that copied a source it could not list must not record what B2 holds")
+	}
+}
+
 func TestARemoteDomainPathIsCopiedWhole(t *testing.T) {
 	f := newPlacementFixture(t)
 	settings := settingsOf(t, f.svc)

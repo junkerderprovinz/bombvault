@@ -2885,8 +2885,14 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	}
 	if perr == nil {
 		var paused bool
-		if paused, perr = s.pauseOnFirstListing(ctx, settings, pass, targets, localRepos); paused && perr == nil {
+		var pending []string
+		if paused, pending, perr = s.pauseOnFirstListing(ctx, settings, pass, targets, localRepos); paused && perr == nil {
 			return nil
+		}
+		if perr == nil && len(pending) > 0 {
+			targets = slices.DeleteFunc(slices.Clone(targets), func(t store.OffsiteTarget) bool {
+				return slices.Contains(pending, t.ID)
+			})
 		}
 	}
 	// Additive kind="offsite" row in the SHARED runs table (StartRun/FinishRun on
@@ -3148,7 +3154,7 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	// must not stamp the run aging-only, or its history claims a maintenance
 	// pass that never happened.
 	agingOnly = visit.agingOnly && copied == 0 && copyErr == nil
-	if visit.observe && dstErr == nil {
+	if visit.observe && dstErr == nil && !out.uncertain {
 		s.recordListing(domain, target, visit.owners, dstSnaps, out.landed)
 	}
 	// Nothing arrived at all: the maintenance below is about what DID arrive, so
