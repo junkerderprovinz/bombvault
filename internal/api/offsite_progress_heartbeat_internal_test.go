@@ -79,7 +79,7 @@ func TestCopyToOffsiteHeartbeatsWhileCopying(t *testing.T) {
 
 	done := make(chan error, 1)
 	go func() {
-		done <- svc.copyToOffsite(context.Background(), "flash", settings, restic.Mode{}, []domainRepoRef{ownRef("/local/flash")}, nil)
+		done <- svc.copyToOffsite(context.Background(), "flash", settings, "", []domainRepoRef{ownRef("/local/flash")}, nil)
 	}()
 
 	// Drain events while Copy is still blocked, counting active "offsite:flash"
@@ -194,7 +194,7 @@ func TestCopyToOffsiteHeartbeatPreservesRealPercentage(t *testing.T) {
 
 	done := make(chan error, 1)
 	go func() {
-		done <- svc.copyToOffsite(context.Background(), "flash", settings, restic.Mode{}, []domainRepoRef{ownRef("/local/flash")}, nil)
+		done <- svc.copyToOffsite(context.Background(), "flash", settings, "", []domainRepoRef{ownRef("/local/flash")}, nil)
 	}()
 
 	sawReal := false
@@ -283,7 +283,7 @@ func TestCopyToOffsiteHeartbeatStopsAfterFinish(t *testing.T) {
 	prog := progress.NewStore()
 	svc := &Service{store: st, engine: fake, progress: prog}
 
-	if err := svc.copyToOffsite(context.Background(), "flash", settings, restic.Mode{}, []domainRepoRef{ownRef("/local/flash")}, nil); err != nil {
+	if err := svc.copyToOffsite(context.Background(), "flash", settings, "", []domainRepoRef{ownRef("/local/flash")}, nil); err != nil {
 		t.Fatalf("copyToOffsite: %v", err)
 	}
 

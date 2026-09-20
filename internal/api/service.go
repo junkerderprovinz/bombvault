@@ -2777,29 +2777,37 @@ func (s *Service) CollectStatsOnStartup() {
 // callers can surface it; it never logs an off-site location, which can embed
 // credentials. Lock-free — the caller holds the domain lock.
 //
-// The passed-in mode is superseded by a per-target mode built inside the loop (so
-// each destination carries its own S3 storage class); it is kept in the signature
-// only to keep call-sites compiling.
+// item is the snapshot name a post-backup hook replicates for; the pass then
+// visits only that item's targets. "" is the whole domain.
 //
 // offsiteProgressHeartbeat is how often copyToOffsite re-publishes the
 // indeterminate "replicating" progress event while a copy is in flight (#134).
 // A package var (not a const) so tests can shrink it.
 var offsiteProgressHeartbeat = 5 * time.Second
 
-func (s *Service) copyToOffsite(ctx context.Context, domain string, settings store.Settings, _ restic.Mode, localRepos []domainRepoRef, skipped []repoSkip) (err error) {
-	targets := s.offsiteReplicationTargets(domain, settings)
+func (s *Service) copyToOffsite(ctx context.Context, domain string, settings store.Settings, item string, localRepos []domainRepoRef, skipped []repoSkip) (err error) {
+	// One read of the rules, the default and the targets, before any restic call.
+	p, perr := s.readPlacement(settings, domain)
+	if perr == nil && p.State.Paused() {
+		log.Printf("api: offsite %s: replication is paused until the placement default is confirmed", domain) //nolint:gosec // G706: domain is a fixed literal
+		return nil
+	}
+	targets := p.enabledTargets()
+	if perr == nil && item != "" {
+		targets = p.effectiveTargets(item)
+	}
 	if len(targets) == 0 {
+		if item != "" {
+			return nil
+		}
 		return errNoOffsiteRepo
 	}
-	if len(localRepos) == 0 {
-		// With the skip list, when there is one. offsiteReplicationSources builds a
-		// real reason for this exact case - an unresolvable domain path, a
-		// repository that went away - and its own comment names the generic
-		// sentence below as the thing it exists to replace. Dropping it here left
-		// that sentence in place, which names nothing anybody can act on.
-		// nothingCoveredError, not skippedError: there are no sources at all here,
-		// so "this replication covered only part of this domain" is false in the
-		// direction that matters - it covered none of it.
+	if perr == nil && p.TargetsUncertain && p.State.HasRules() {
+		perr = errTargetsUncertain
+	}
+	if perr == nil && len(localRepos) == 0 {
+		// nothingCoveredError, not skippedError: there are no sources at all, so
+		// "covered only part of this domain" would be false.
 		if sErr := nothingCoveredError(skipped); sErr != nil {
 			return sErr
 		}
@@ -2831,6 +2839,10 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 			log.Printf("api: offsite %s: could not finish activity run: %v", domain, fErr) //nolint:gosec // G706: domain is a fixed literal
 		}
 	}()
+	if perr != nil {
+		err = s.failPass(domain, targets, perr)
+		return err
+	}
 	// Publish an active "off-site replication running" indicator for this domain so
 	// the UI shows WHICH domain is replicating, alongside a REAL live percentage
 	// once one becomes available (issue #159 — see restic.Copy's and
@@ -3606,7 +3618,10 @@ func (s *Service) ReplicateOffsiteAfterBulk(ctx context.Context, domain string) 
 // A REMOTE named repository is skipped for the same reason it is skipped there:
 // it is already off site, and one restic process cannot hold two clouds'
 // credentials at once.
-func (s *Service) replicateOffsite(ctx context.Context, domain string, settings store.Settings, mode restic.Mode, localRepo string) {
+//
+// item is the snapshot name of what the backup just wrote; the hook copies only
+// to that item's targets. Flash and config pass "".
+func (s *Service) replicateOffsite(ctx context.Context, domain string, settings store.Settings, localRepo, item string) {
 	if bulkReplicateSuppressed(ctx) {
 		return // scheduled multi-item run: replicated once after the whole loop (#95)
 	}
@@ -3652,9 +3667,14 @@ func (s *Service) replicateOffsite(ctx context.Context, domain string, settings 
 	// backup of an install with one switched-off repository.
 	_, allSkips := s.offsiteReplicationSources(settings, domain)
 	skipped := unreachableSkips(allSkips)
-	if err := s.copyToOffsite(ctx, domain, settings, mode, []domainRepoRef{ref}, skipped); err != nil {
+	if err := s.copyToOffsite(ctx, domain, settings, item, []domainRepoRef{ref}, skipped); err != nil {
 		// domain is a fixed literal; the error is already path-scrubbed by restic.
 		log.Printf("api: offsite %s: copy failed (local backup is safe): %v", domain, err)
+		// The hook reports nothing else, so a replication that stopped over the
+		// rules would otherwise go unnoticed.
+		if errors.Is(err, errPlacementUnreadable) || errors.Is(err, errTargetsUncertain) {
+			s.notifyReplicationFailed(ctx, domain, truncateRunErr(err))
+		}
 	}
 }
 
@@ -3680,7 +3700,7 @@ func (s *Service) ReplicateOffsite(ctx context.Context, domain string) error {
 	// The skip list goes IN, so the run row this opens records it too rather than
 	// being stamped a success the caller then contradicts.
 	sources, skipped := s.offsiteReplicationSources(settings, domain)
-	return s.copyToOffsite(ctx, domain, settings, s.ModeFor(settings), sources, skipped)
+	return s.copyToOffsite(ctx, domain, settings, "", sources, skipped)
 }
 
 // StartReplicateOffsite kicks off an on-demand off-site replication in the
@@ -3720,7 +3740,7 @@ func (s *Service) StartReplicateOffsite(domain string) error {
 			return
 		}
 		sources, skipped := s.offsiteReplicationSources(settings, domain)
-		err = s.copyToOffsite(ctx, domain, settings, s.ModeFor(settings), sources, skipped)
+		err = s.copyToOffsite(ctx, domain, settings, "", sources, skipped)
 		if err != nil {
 			log.Printf("api: offsite %s: manual replication failed: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 			s.notifyReplicationFailed(ctx, domain, truncateRunErr(err))
@@ -4901,7 +4921,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	}
 	s.applyRetention(ctx, repo, settings, mode, "container:"+name, "containers")
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
-	s.replicateOffsite(ctx, "containers", settings, mode, repo)
+	s.replicateOffsite(ctx, "containers", settings, repo, "container:"+name)
 	s.collectStatsAfterItem(ctx, "containers")
 	s.checkPrimaryRemoteBudget(ctx, "containers", repo, settings)
 	return sum, nil
@@ -9799,7 +9819,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		s.applyRetention(ctx, repo, settings, mode, "vm:"+name+":zvol:"+bd.Dev, "vms")
 	}
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
-	s.replicateOffsite(ctx, "vms", settings, mode, repo)
+	s.replicateOffsite(ctx, "vms", settings, repo, "vm:"+name)
 	s.collectStatsAfterItem(ctx, "vms")
 	s.checkPrimaryRemoteBudget(ctx, "vms", repo, settings)
 	return sum, nil
@@ -10676,7 +10696,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	}
 	s.applyRetention(ctx, repo, settings, mode, "flash", "flash")
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
-	s.replicateOffsite(ctx, "flash", settings, mode, repo)
+	s.replicateOffsite(ctx, "flash", settings, repo, "")
 	s.collectStatsAfterItem(ctx, "flash")
 	s.checkPrimaryRemoteBudget(ctx, "flash", repo, settings)
 	if err := s.exportFlashZip(ctx, settings, sum.SnapshotID, mode, repo); err != nil {
@@ -10951,7 +10971,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	}
 	s.applyRetention(ctx, repo, settings, mode, "fileset:"+set.Name, "files")
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
-	s.replicateOffsite(ctx, "files", settings, mode, repo)
+	s.replicateOffsite(ctx, "files", settings, repo, "fileset:"+set.Name)
 	s.collectStatsAfterItem(ctx, "files")
 	s.checkPrimaryRemoteBudget(ctx, "files", repo, settings)
 	return sum, nil
@@ -12024,7 +12044,7 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 		return backup.Summary{}, err
 	}
 	s.applyRetention(ctx, repo, settings, mode, "config", "config")
-	s.replicateOffsite(ctx, "config", settings, mode, repo)
+	s.replicateOffsite(ctx, "config", settings, repo, "")
 	s.collectStatsAfterItem(ctx, "config")
 	s.checkPrimaryRemoteBudget(ctx, "config", repo, settings)
 	return sum, nil

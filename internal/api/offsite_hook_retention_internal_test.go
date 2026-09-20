@@ -160,7 +160,7 @@ func TestTheHookAgesAnAllNamedDomainsDestination(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	svc.replicateOffsite(context.Background(), "containers", settings, restic.Mode{}, filepath.Join(filepath.Dir(own), "cold"))
+	svc.replicateOffsite(context.Background(), "containers", settings, filepath.Join(filepath.Dir(own), "cold"), "container:plex")
 
 	if len(eng.forgot) == 0 {
 		t.Error("an all-named domain's off-site destination was never aged.\n" +
@@ -257,7 +257,7 @@ func TestTheHookAgesTheDestinationWhenEverySourceIsThere(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	svc.replicateOffsite(context.Background(), "containers", settings, restic.Mode{}, own)
+	svc.replicateOffsite(context.Background(), "containers", settings, own, "container:plex")
 
 	if len(eng.copied) != 1 {
 		t.Fatalf("the hook copied %v, want exactly the repository the backup wrote", eng.copied)
@@ -317,7 +317,7 @@ func TestTheHookDoesNotReportASwitchedOffRepositoryAsAFailure(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	svc.replicateOffsite(context.Background(), "containers", settings, restic.Mode{}, own)
+	svc.replicateOffsite(context.Background(), "containers", settings, own, "container:plex")
 
 	runs, err := st.ListRuns(20)
 	if err != nil {
@@ -367,7 +367,7 @@ func TestTheHookDoesNotAgeTheDestinationBehindAnUnreachableSource(t *testing.T) 
 		t.Fatal(err)
 	}
 
-	svc.replicateOffsite(context.Background(), "containers", settings, restic.Mode{}, own)
+	svc.replicateOffsite(context.Background(), "containers", settings, own, "container:plex")
 
 	if len(eng.copied) != 1 {
 		t.Fatalf("the hook copied %v, want exactly the repository the backup wrote", eng.copied)
