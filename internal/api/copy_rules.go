@@ -2,8 +2,6 @@ package api
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -207,76 +205,6 @@ func withLegacyRepo(change placementChange, repo *string) (placementChange, erro
 	return change, nil
 }
 
-// copiesSkip is the skip a copies field asks for, nil for follow. Follow and a
-// skip together, or neither, is refused.
-func copiesSkip(c copiesChoice) ([]string, error) {
-	switch {
-	case c.Follow && c.Skip == nil:
-		return nil, nil
-	case !c.Follow && c.Skip != nil:
-		return *c.Skip, nil
-	}
-	return nil, errInvalidPlacement
-}
-
-// currentItemRepo is the repository id an item's row names, "" for the domain
-// path and for a container or VM that has no row yet.
-func (s *Service) currentItemRepo(item store.ItemRef) (string, error) {
-	switch item.Domain {
-	case "containers":
-		t, err := s.store.GetTargetByContainer(item.Key)
-		return repoOfRow(t.Repo, err)
-	case "vms":
-		v, err := s.store.GetVMTargetByName(item.Key)
-		return repoOfRow(v.Repo, err)
-	case "files":
-		fs, err := s.store.GetFileSet(item.Key)
-		if errors.Is(err, sql.ErrNoRows) {
-			return "", errFileSetNotFound
-		}
-		return strings.TrimSpace(fs.Repo), err
-	}
-	return "", fmt.Errorf("%q has no placement", item.Domain)
-}
-
-// repoOfRow reads a missing container or VM row as the domain path: it has no
-// repository of its own yet.
-func repoOfRow(repo string, err error) (string, error) {
-	if errors.Is(err, sql.ErrNoRows) {
-		return "", nil
-	}
-	return strings.TrimSpace(repo), err
-}
-
-// copiesChange checks a skip against the item's home and returns the targets the
-// item is copied to before and after it; skip nil is follow. An item whose home
-// is no copy source goes nowhere either way. repoChanging is whether the same
-// request also names a new repository: an id that names no row is then left
-// for that repository change to refuse, rather than judged here as a home
-// that takes no copies.
-func (s *Service) copiesChange(settings store.Settings, p placementRead, named map[string]store.OffsiteTarget, repoID, identity string, skip []string, repoChanging bool) (before, after []store.OffsiteTarget, err error) {
-	kind := s.homeKindOf(settings, p.Domain, repoID, named)
-	if repoChanging && kind == homeMissing {
-		return nil, nil, nil
-	}
-	if skip != nil {
-		if err := checkSkip(p, skip); err != nil {
-			return nil, nil, err
-		}
-		if !kind.copySource() && !skipsEverything(skip) {
-			return nil, nil, errCopiesNotAllowed
-		}
-	}
-	if !kind.copySource() {
-		return nil, nil, nil
-	}
-	after = p.targetsFor(p.defaultSkip())
-	if skip != nil {
-		after = p.targetsFor(skip)
-	}
-	return p.effectiveTargets(identity), after, nil
-}
-
 // checkSkip is validSkip plus the rule that every id names a target of the
 // domain, switched on or off.
 func checkSkip(p placementRead, skip []string) error {
@@ -390,69 +318,78 @@ func (l sourceListing) uploadEstimate(identity string, observed []store.ItemCopi
 	return max(n, 0)
 }
 
-// previewPlacement answers what a copies change would do without writing it:
-// the targets the item gains, with an estimate of the upload, and the targets it
-// loses, with the copies they keep.
+// previewPlacement answers what a change would do without writing it: the
+// targets that would get this item's history, at about how many snapshots, and
+// the targets that would stop getting it, with the copies they keep.
 func (s *Service) previewPlacement(ctx context.Context, item store.ItemRef, change placementChange) ([]uploadEstimate, []droppedTarget, error) {
-	added, dropped := []uploadEstimate{}, []droppedTarget{}
-	if change.Home != nil {
-		return added, dropped, errInvalidPlacement
-	}
-	if change.Copies == nil {
-		return added, dropped, nil
-	}
-	skip, err := copiesSkip(*change.Copies)
+	home, copies, err := placementWrites(change)
 	if err != nil {
-		return added, dropped, err
+		return nil, nil, err
 	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return added, dropped, err
+		return nil, nil, err
 	}
 	p, err := s.readPlacement(settings, item.Domain)
 	if err != nil {
-		return added, dropped, err
+		return nil, nil, err
 	}
 	named, err := s.namedRepoIndex()
 	if err != nil {
-		return added, dropped, err
+		return nil, nil, err
+	}
+	read, err := s.store.ItemHome(item)
+	if err != nil {
+		return nil, nil, err
+	}
+	next := read
+	if home != nil {
+		next = store.HomeState{Exists: true, Repo: home.Repo, Choice: home.Choice}
+	}
+	// The copy side answers for where the item's backups actually land, the
+	// same effective home checkHomeChange and writeItemPlacement judge by, not
+	// the row's raw repo field.
+	beforeRepo, _ := p.effectiveHome(read)
+	afterRepo, _ := p.effectiveHome(next)
+	if copies != nil {
+		if err := s.checkCopies(settings, p, named, afterRepo, *copies); err != nil {
+			return nil, nil, err
+		}
 	}
 	identity, err := s.itemIdentity(item)
 	if err != nil {
-		return added, dropped, err
+		return nil, nil, err
 	}
-	repoID, err := s.currentItemRepo(item)
+	before := s.itemCopyTargets(settings, p, named, beforeRepo, identity)
+	after := s.itemCopyTargets(settings, p.withCopies(identity, copies), named, afterRepo, identity)
+	dropped, err := s.droppedTargets(item.Domain, identity, before, after)
 	if err != nil {
-		return added, dropped, err
+		return nil, nil, err
 	}
-	before, after, err := s.copiesChange(settings, p, named, repoID, identity, skip, false)
+	added := []uploadEstimate{}
+	var gained []store.OffsiteTarget
+	for _, t := range after {
+		if !containsTarget(before, t.ID) {
+			gained = append(gained, t)
+		}
+	}
+	if len(gained) == 0 {
+		return added, dropped, nil
+	}
+	listing, err := s.listCopySources(ctx, settings, item.Domain)
 	if err != nil {
-		return added, dropped, err
-	}
-	if dropped, err = s.droppedTargets(item.Domain, identity, before, after); err != nil {
-		return added, dropped, err
+		return nil, nil, err
 	}
 	observed, err := s.store.ItemCopiesFor(item.Domain, identity)
 	if err != nil {
-		return added, dropped, err
+		return nil, nil, err
 	}
-	var listing *sourceListing
-	for _, t := range after {
-		if containsTarget(before, t.ID) {
-			continue
-		}
-		if listing == nil {
-			l, err := s.listCopySources(ctx, settings, item.Domain)
-			if err != nil {
-				return added, dropped, err
-			}
-			listing = &l
-		}
+	for _, t := range gained {
 		added = append(added, uploadEstimate{
 			TargetID:    t.ID,
 			Name:        placementTargetName(t),
 			Snapshots:   listing.uploadEstimate(identity, observed, t.ID),
-			Uncheckable: listing.Unreadable,
+			Uncheckable: append([]string{}, listing.Unreadable...),
 		})
 	}
 	return added, dropped, nil

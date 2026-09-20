@@ -1,8 +1,10 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -293,5 +295,56 @@ func TestALaterFieldFailingLeavesHomeAndTheRuleUntouched(t *testing.T) {
 		if _, found, err := f.st.CopyRuleFor(tc.domain, tc.identity); err != nil || found {
 			t.Errorf("%s: rule found = %v, %v, want none", tc.path, found, err)
 		}
+	}
+}
+
+func TestResetPreviewCountsTheNameInEveryCopySource(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	paperless := f.namedRepo("Paperless", "paperless")
+	b2 := f.target("containers", "B2", "b2:bucket/containers")
+	f.container("immich", nas.ID)
+	f.container("paperless", paperless.ID)
+	f.openContainer("vaultwarden")
+	f.rule("containers", "container:vaultwarden", store.SkipAll)
+	f.hold(f.root+"/nas", snap("aaaa0001", 100, "container:vaultwarden"), snap("aaaa0002", 200, "container:vaultwarden"))
+	f.eng.listErr = map[string]error{f.root + "/paperless": errors.New("share not mounted")}
+	f.listing("containers", b2.ID, 300)
+
+	res := f.do(http.MethodPost, "/api/items/containers/vaultwarden/placement/preview", map[string]any{
+		"home": map[string]any{"follow": true}, "copies": map[string]any{"follow": true},
+	})
+	added, _ := res["added"].([]any)
+	if len(added) != 1 {
+		t.Fatalf("added = %v, want B2", res)
+	}
+	a := added[0].(map[string]any)
+	if a["targetId"] != b2.ID || a["snapshots"] != float64(2) {
+		t.Fatalf("added = %v, want about 2 snapshots for B2 from NAS", a)
+	}
+	if !strings.Contains(fmt.Sprint(a["uncheckable"]), "Paperless") {
+		t.Fatalf("uncheckable = %v, want the unreadable source named", a["uncheckable"])
+	}
+}
+
+func TestAHomeOnAStorageboxDropsTheTargetsOfTheItem(t *testing.T) {
+	f := newPlacementFixture(t)
+	box := f.namedRepo("Storagebox", "sftp:u1@box.example:/bv")
+	b2 := f.target("containers", "B2", "b2:bucket/containers")
+	f.openContainer("nginx")
+	f.listing("containers", b2.ID, 300, copiesRow("container:nginx", 5, 290))
+
+	res := f.do(http.MethodPost, "/api/items/containers/nginx/placement/preview", map[string]any{
+		"home": map[string]any{"repo": box.ID}, "copies": map[string]any{"skip": []string{store.SkipAll}},
+	})
+	dropped, _ := res["dropped"].([]any)
+	if len(dropped) != 1 {
+		t.Fatalf("dropped = %v, want B2", res)
+	}
+	if d := dropped[0].(map[string]any); d["targetId"] != b2.ID || d["copies"] != float64(5) {
+		t.Fatalf("dropped = %v, want B2 keeping 5 copies", d)
+	}
+	if len(res["added"].([]any)) != 0 {
+		t.Fatalf("added = %v, want nothing", res["added"])
 	}
 }
