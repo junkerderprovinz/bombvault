@@ -849,12 +849,12 @@ func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 		}
 		// The same count-and-delete transaction the DELETE endpoint uses, so the
 		// import cannot become the way around its refusal.
-		n, dErr := h.store.DeleteNamedRepoIfUnused(t.ID)
+		use, dErr := h.store.DeleteNamedRepoIfUnused(t.ID)
 		if dErr != nil {
 			return dErr
 		}
-		if n > 0 {
-			log.Printf("api: settings import: repository %q is still in use by %d item(s) and is NOT in the imported file — kept", t.Name, n) //nolint:gosec // G706: the name is %q-quoted
+		if use.InUse() {
+			log.Printf("api: settings import: repository %q is not in the imported file but still in use here (items: %d, defaults: %s), so it stays", t.Name, use.Items, strings.Join(use.DefaultDomains, ", ")) //nolint:gosec // G706: the name is %q-quoted
 		}
 	}
 	for _, tv := range views {

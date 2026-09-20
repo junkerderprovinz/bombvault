@@ -539,3 +539,19 @@ func TestConfirmPlacementIsIdempotentOnADomainNeverPaused(t *testing.T) {
 		t.Fatalf("second confirm = %v, want ok", res)
 	}
 }
+
+func TestDeletingARepositoryADefaultPointsAtNamesTheDomain(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.setDefault("containers", nas.ID)
+	res := f.do(http.MethodDelete, "/api/repos/"+nas.ID, nil)
+	if res["code"] != "repo-in-use" || res["items"] != float64(0) {
+		t.Fatalf("DELETE = %v, want repo-in-use without items", res)
+	}
+	if domains, _ := res["defaultDomains"].([]any); len(domains) != 1 || domains[0] != "containers" {
+		t.Fatalf("defaultDomains = %v, want containers", res["defaultDomains"])
+	}
+	if _, err := f.st.GetNamedRepo(nas.ID); err != nil {
+		t.Fatalf("the repository is gone: %v", err)
+	}
+}
