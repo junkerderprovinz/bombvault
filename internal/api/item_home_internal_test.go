@@ -188,3 +188,40 @@ func TestCopiesOnAnOpenItemAreCheckedAgainstItsEffectiveHome(t *testing.T) {
 		t.Fatalf("PATCH = %v, want copies-not-allowed", res)
 	}
 }
+
+// TestALaterFieldFailingLeavesHomeAndTheRuleUntouched pins that a PATCH writes
+// placement no earlier than every other field in the same request: the
+// schedule cadence here is invalid and refuses the request after home and
+// copies would already have validated cleanly, so neither may land.
+func TestALaterFieldFailingLeavesHomeAndTheRuleUntouched(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.openContainer("web")
+	f.openVM("win11")
+	docs := f.openFileSet("docs")
+	for _, tc := range []struct {
+		domain   string
+		path     string
+		item     store.ItemRef
+		identity string
+	}{
+		{"containers", "/api/containers/web", store.ItemRef{Domain: "containers", Key: "web"}, "container:web"},
+		{"vms", "/api/vms/win11", store.ItemRef{Domain: "vms", Key: "win11"}, "vm:win11"},
+		{"files", "/api/files/sets/" + docs.ID, store.ItemRef{Domain: "files", Key: docs.ID}, "fileset:docs"},
+	} {
+		res := f.do(http.MethodPatch, tc.path, map[string]any{
+			"home":            map[string]any{"repo": nas.ID},
+			"copies":          map[string]any{"skip": []string{}},
+			"scheduleCadence": "bogus",
+		})
+		if res["ok"] != false {
+			t.Errorf("%s = %v, want the schedule refusal", tc.path, res)
+		}
+		if got := f.home(tc.item); got.Choice != store.RepoOpen {
+			t.Errorf("%s moved home to %+v despite the later refusal", tc.path, got)
+		}
+		if _, found, err := f.st.CopyRuleFor(tc.domain, tc.identity); err != nil || found {
+			t.Errorf("%s: rule found = %v, %v, want none", tc.path, found, err)
+		}
+	}
+}
