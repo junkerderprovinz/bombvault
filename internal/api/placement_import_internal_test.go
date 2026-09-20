@@ -116,6 +116,87 @@ func TestADefaultOnAnUnknownRepositoryRefusesTheImport(t *testing.T) {
 	}
 }
 
+func TestADefaultSkipNamingAnUnknownTargetRefusesTheImport(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.rule("vms", "vm:win11", store.SkipAll)
+	res := importEdited(t, f, func(exp map[string]any) {
+		exp["placementDefaults"] = []any{map[string]any{"domain": "containers", "home": "", "skip": []any{"no-such-target"}}}
+	})
+	if res["code"] != "unknown-target" {
+		t.Fatalf("import = %v, want unknown-target", res)
+	}
+	if _, found, _ := f.st.CopyRuleFor("vms", "vm:win11"); !found {
+		t.Error("a refused import still cleared the rules")
+	}
+}
+
+// TestADefaultSkipNamingATargetTheFileItselfBringsIsAccepted pins that a skip
+// entry is checked against the targets the import is about to create, not
+// only the ones already stored: dst has none of its own yet, and B2 arrives
+// in the same file as the default that excludes it.
+func TestADefaultSkipNamingATargetTheFileItselfBringsIsAccepted(t *testing.T) {
+	src := newPlacementFixture(t)
+	b2 := src.target("containers", "B2", "b2:bucket/containers")
+	src.setDefault("containers", "", b2.ID)
+	exp := src.do(http.MethodGet, "/api/settings/export", nil)
+
+	dst := newPlacementFixture(t)
+	if res := dst.do(http.MethodPost, "/api/settings/import?apply=true", exp); res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+	d, found, err := dst.st.PlacementDefaultFor("containers")
+	if err != nil || !found || len(d.Skip) != 1 || d.Skip[0] != b2.ID {
+		t.Fatalf("containers default = %+v, %v, %v, want the file's own target kept in its skip", d, found, err)
+	}
+}
+
+// TestTwoDefaultsForTheSameDomainRefuseTheImport pins that the pre-flight
+// catches a duplicate domain itself: ImportPlacement's insert refuses the
+// second row only after settings and the off-site targets have already been
+// replaced, which is too late.
+func TestTwoDefaultsForTheSameDomainRefuseTheImport(t *testing.T) {
+	f := newPlacementFixture(t)
+	res := importEdited(t, f, func(exp map[string]any) {
+		exp["placementDefaults"] = []any{
+			map[string]any{"domain": "containers", "home": "", "skip": []any{}},
+			map[string]any{"domain": "containers", "home": "", "skip": []any{}},
+		}
+	})
+	if res["code"] != "invalid-placement" {
+		t.Fatalf("import = %v, want invalid-placement", res)
+	}
+	if _, found, _ := f.st.PlacementDefaultFor("containers"); found {
+		t.Error("a refused import still wrote a default")
+	}
+}
+
+// TestADefaultOnADisabledRepositoryRefusesTheImport pins that the home is
+// checked the way every other writer checks a repository choice: it must be
+// able to take a backup, not merely exist. NAS is dropped from the file's own
+// namedRepos block so the check falls back to the stored row, which is
+// switched off.
+func TestADefaultOnADisabledRepositoryRefusesTheImport(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	nas.Enabled = false
+	if _, err := f.st.UpsertOffsiteTarget(nas); err != nil {
+		t.Fatal(err)
+	}
+	f.setDefault("containers", nas.ID)
+	res := importEdited(t, f, func(exp map[string]any) {
+		var keep []any
+		for _, row := range exp["namedRepos"].([]any) {
+			if row.(map[string]any)["name"] != "NAS" {
+				keep = append(keep, row)
+			}
+		}
+		exp["namedRepos"] = keep
+	})
+	if res["code"] != "repo-invalid" {
+		t.Fatalf("import = %v, want repo-invalid", res)
+	}
+}
+
 func TestAnImportRefusesARuleWhoseIdentityMismatchesItsDomain(t *testing.T) {
 	f := newPlacementFixture(t)
 	exp := settingsExport{CopyRules: []copyRuleExport{{Domain: "containers", Identity: "vm:win11"}}}
