@@ -93,11 +93,16 @@ func TestConfirmPlacementAcceptsAnEmptyBody(t *testing.T) {
 
 func TestConfirmPlacementIsIdempotentOnADomainNeverPaused(t *testing.T) {
 	f := newPlacementFixture(t)
-	if res := f.do(http.MethodPost, "/api/placement/containers/confirm", map[string]any{}); res["ok"] != true {
+	if res := f.do(http.MethodPost, "/api/placement/containers/confirm", map[string]any{"skip": []string{"container:old-app"}}); res["ok"] != true {
 		t.Fatalf("confirm = %v, want ok", res)
 	}
-	if pausedDefault(t, f, "containers") {
-		t.Fatal("confirming an unpaused domain paused it")
+	if _, found, err := f.st.PlacementDefaultFor("containers"); err != nil {
+		t.Fatal(err)
+	} else if found {
+		t.Fatal("confirming a domain that was never paused wrote a placement default")
+	}
+	if _, found := ruleOf(t, f, "containers", "container:old-app"); found {
+		t.Fatal("confirming a domain that was never paused wrote a copy rule from its skip list")
 	}
 	if res := f.do(http.MethodPost, "/api/placement/containers/confirm", map[string]any{}); res["ok"] != true {
 		t.Fatalf("second confirm = %v, want ok", res)
