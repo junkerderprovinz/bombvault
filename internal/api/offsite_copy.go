@@ -489,6 +489,97 @@ func (r replicationPass) copyingRepos() map[string]bool {
 	return out
 }
 
+// pauseOnFirstListing looks at what a domain that never replicated finds when a
+// target is listed for it the first time. The domain's history already at the
+// target, or in a source and older than this database, means the database was
+// rebuilt and the rules that kept items away are gone, so the domain pauses
+// until its default is confirmed. Once that default is confirmed, this check
+// stays out of it for good: the confirmation is what ends the pause, and a
+// target still unlisted after it must not start a new one.
+func (s *Service) pauseOnFirstListing(ctx context.Context, settings store.Settings, r replicationPass, targets []store.OffsiteTarget, sources []domainRepoRef) (bool, error) {
+	if !validPlacementDomain(r.p.Domain) {
+		return false, nil
+	}
+	if r.p.State.HasDefault && !r.p.State.Default.Paused() {
+		return false, nil
+	}
+	var first []store.OffsiteTarget
+	for _, t := range targets {
+		if _, listed := r.listed[t.ID]; t.ID != "" && !listed {
+			first = append(first, t)
+		}
+	}
+	if len(first) == 0 {
+		return false, nil
+	}
+	if never, err := s.neverReplicated(r.p.Domain); err != nil || !never {
+		return false, err
+	}
+	for _, t := range first {
+		held, err := s.listTarget(ctx, settings, t)
+		if err != nil {
+			continue // the pass lists it again and reports the failure there
+		}
+		s.recordListing(r.p.Domain, t, r.owners, held, nil)
+		if r.owners.ownsAny(held) {
+			return true, s.pausePlacement(ctx, r.p.Domain, "found-history")
+		}
+	}
+	return s.pauseOnOlderSources(ctx, settings, r, sources)
+}
+
+// neverReplicated reports whether the domain has no successful off-site run in
+// this database.
+func (s *Service) neverReplicated(domain string) (bool, error) {
+	_, offsite, err := s.store.DomainHasHistory(domain)
+	if err != nil {
+		return false, fmt.Errorf("%w: %v", errPlacementUnreadable, err)
+	}
+	return !offsite, nil
+}
+
+// pauseOnOlderSources pauses the domain when a source holds a snapshot of it
+// older than this database.
+func (s *Service) pauseOnOlderSources(ctx context.Context, settings store.Settings, r replicationPass, sources []domainRepoRef) (bool, error) {
+	born, err := s.store.DatabaseBornAt()
+	if err != nil {
+		return false, fmt.Errorf("%w: %v", errPlacementUnreadable, err)
+	}
+	for _, src := range sources {
+		snaps, err := s.listSnapshots(ctx, src.Loc, s.primaryModeFor(settings, r.p.Domain, src.Loc))
+		if err != nil {
+			continue // an unreadable source is no finding; the copy reports it
+		}
+		owners := r.owners.owners(snaps)
+		for _, sn := range snaps {
+			at := parseSnapshotTime(sn.Time)
+			if len(owners[sn.ID].Possible) > 0 && !at.IsZero() && at.Before(born) {
+				return true, s.pausePlacement(ctx, r.p.Domain, "found-history")
+			}
+		}
+	}
+	return false, nil
+}
+
+// ownsAny reports whether one of the snapshots belongs to the domain.
+func (c ownerContext) ownsAny(snaps []restic.Snapshot) bool {
+	owners := c.owners(snaps)
+	return slices.ContainsFunc(snaps, func(sn restic.Snapshot) bool { return len(owners[sn.ID].Possible) > 0 })
+}
+
+// listTarget lists one target with its own credentials. A local target not
+// created yet holds nothing.
+func (s *Service) listTarget(ctx context.Context, settings store.Settings, t store.OffsiteTarget) ([]restic.Snapshot, error) {
+	dest, err := s.resolveRepo(t.Repo)
+	if err != nil {
+		return nil, err
+	}
+	if localRepoMissing(dest) {
+		return nil, nil
+	}
+	return s.listSnapshots(ctx, dest, s.offsiteModeForTarget(settings, t))
+}
+
 // stillHeld reports whether an enabled target may still hold items of the
 // source: one never listed for the domain, or one whose listing counted copies
 // of them.

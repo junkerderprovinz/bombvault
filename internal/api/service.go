@@ -407,6 +407,15 @@ type Service struct {
 	// constructed.
 	detectMu     sync.Mutex
 	detectFlight *encryptionDetectFlight
+
+	// placementMu serialises writes to copy rules and placement defaults with the
+	// counts a caller computed before them.
+	placementMu sync.Mutex
+
+	// listingMu guards listing, the (domain, target) pairs being listed in the
+	// background, so a second request for the same pair does not list it twice.
+	listingMu sync.Mutex
+	listing   map[string]bool
 }
 
 // lockTamper blocks until it holds domain's tamper lock and returns the unlock
@@ -2830,6 +2839,12 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 			return nil
 		}
 		return errors.New("no repository to replicate")
+	}
+	if perr == nil {
+		var paused bool
+		if paused, perr = s.pauseOnFirstListing(ctx, settings, pass, targets, localRepos); paused && perr == nil {
+			return nil
+		}
 	}
 	// Additive kind="offsite" row in the SHARED runs table (StartRun/FinishRun on
 	// the reserved domain target id, like prune/verify) so the replication shows

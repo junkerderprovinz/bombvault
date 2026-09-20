@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
@@ -11,7 +12,9 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -365,4 +368,109 @@ func (s *Service) namedRepoIndex() (map[string]store.OffsiteTarget, error) {
 		out[r.ID] = r
 	}
 	return out, nil
+}
+
+// pausePlacement pauses the domain's replication until its default is confirmed,
+// and notifies when this call is the one that started the pause.
+func (s *Service) pausePlacement(ctx context.Context, domain, why string) error {
+	s.placementMu.Lock()
+	started, err := s.store.PausePlacement(domain)
+	s.placementMu.Unlock()
+	if err != nil {
+		return err
+	}
+	if started {
+		s.notifyPlacementPaused(ctx, domain, why)
+	}
+	return nil
+}
+
+// pauseReasons says, by the why of pausePlacement, what made a domain pause.
+var pauseReasons = map[string]string{
+	"found-history": "its first listing found backups this database never replicated, so the database may have been rebuilt without the rules that kept items from being copied",
+	"discover":      "Discover rebuilt its items in a database that never backed them up or replicated them, so the rules that kept items from being copied are gone",
+}
+
+// notifyPlacementPaused says that a domain's replication waits for its default
+// to be confirmed, and where. Same gate and fan-out as notifyReplicationFailed.
+func (s *Service) notifyPlacementPaused(ctx context.Context, domain, why string) {
+	c, err := s.NotifyConfig()
+	if err != nil || c.On == "" || c.On == "never" {
+		return
+	}
+	subject := "Off-site replication paused for " + domain
+	msg := fmt.Sprintf("Nothing in %s is copied off site: %s. Confirm the placement default under Settings > Storage > Placement defaults to resume.", domain, pauseReasons[why])
+	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + ": " + msg, OK: false})
+	if s.unraidGate(c.Unraid) {
+		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
+			log.Printf("notify: unraid: %v", e)
+		}
+	}
+}
+
+// listTargetInBackground lists one target for one domain once, so a change that
+// took copies away from a target never listed can name how many stay.
+func (s *Service) listTargetInBackground(domain, targetID string) {
+	key := domain + "\x00" + targetID
+	s.listingMu.Lock()
+	if s.listing == nil {
+		s.listing = map[string]bool{}
+	}
+	if s.listing[key] {
+		s.listingMu.Unlock()
+		return
+	}
+	s.listing[key] = true
+	s.listingMu.Unlock()
+	go func() {
+		defer func() {
+			s.listingMu.Lock()
+			delete(s.listing, key)
+			s.listingMu.Unlock()
+		}()
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+		defer cancel()
+		if err := s.listTargetOnce(ctx, domain, targetID); err != nil {
+			log.Printf("api: offsite %s: listing a target in the background failed: %v", domain, scrubError(err)) //nolint:gosec // G706: domain is a fixed literal, the error scrubbed here
+		}
+	}()
+}
+
+// listTargetOnce lists the target and records what it holds. A domain that never
+// replicated looks at the listing for history first, as its passes do.
+func (s *Service) listTargetOnce(ctx context.Context, domain, targetID string) error {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return err
+	}
+	p, err := s.readPlacement(settings, domain)
+	if err != nil {
+		return err
+	}
+	i := slices.IndexFunc(p.Targets, func(t store.OffsiteTarget) bool { return t.ID == targetID })
+	if i < 0 {
+		return errNotATarget
+	}
+	pass, err := s.newPass(settings, p)
+	if err != nil {
+		return err
+	}
+	held, err := s.listTarget(ctx, settings, p.Targets[i])
+	if err != nil {
+		return err
+	}
+	s.recordListing(domain, p.Targets[i], pass.owners, held, nil)
+	if _, listed := pass.listed[targetID]; listed {
+		return nil
+	}
+	never, err := s.neverReplicated(domain)
+	if err != nil || !never {
+		return err
+	}
+	if pass.owners.ownsAny(held) {
+		return s.pausePlacement(ctx, domain, "found-history")
+	}
+	sources, _ := s.offsiteReplicationSources(settings, domain)
+	_, err = s.pauseOnOlderSources(ctx, settings, pass, sources)
+	return err
 }
