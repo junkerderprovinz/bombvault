@@ -201,6 +201,37 @@ func TestATargetGettingRealContentAgainClearsItsAgingMark(t *testing.T) {
 	}
 }
 
+func TestATargetCopiedToAgainClearsItsAgingMarkEvenWithNothingNewToSend(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := keepLast(t, f, f.target("files", "B2", "b2:bucket:files"), 5)
+	f.fileSet("Docs", "")
+	f.rule("files", "fileset:Docs", store.SkipAll)
+	f.replicated("files")
+	f.hold(f.domainPath("files"), snap("d1", 100, "fileset:Docs"))
+
+	if err := f.svc.ReplicateOffsite(context.Background(), "files"); err != nil {
+		t.Fatal(err)
+	}
+	if obs, found, err := f.st.TargetObservationFor("files", b2.ID); err != nil || !found || obs.AgedAt == 0 {
+		t.Fatalf("B2's observation = %+v found=%v err=%v, want an aging mark after the first pass", obs, found, err)
+	}
+
+	// B2 already holds a copy of d1 from before the rule change, so ticking
+	// Docs back on to it sends nothing new.
+	f.hold("b2:bucket:files", copied("c1", "d1", 100, "fileset:Docs"))
+	f.rule("files", "fileset:Docs")
+
+	if err := f.svc.ReplicateOffsite(context.Background(), "files"); err != nil {
+		t.Fatal(err)
+	}
+	if n := len(heldAt(t, f, "b2:bucket:files")); n != 1 {
+		t.Fatalf("B2 holds %d, want the one copy it already had and nothing new", n)
+	}
+	if obs, found, err := f.st.TargetObservationFor("files", b2.ID); err != nil || !found || obs.AgedAt != 0 {
+		t.Fatalf("B2's observation = %+v found=%v err=%v, want the aging mark cleared once Docs copies there again, even though nothing new landed", obs, found, err)
+	}
+}
+
 func TestChangedRetentionAgesAMarkedTargetAgain(t *testing.T) {
 	f := newPlacementFixture(t)
 	b2 := photosOnTheNAS(t, f)
