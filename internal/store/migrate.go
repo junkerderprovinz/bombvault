@@ -47,6 +47,22 @@ func columnPresent(table, column string) func(*sql.Tx) (bool, error) {
 	}
 }
 
+// columnPresentOnAll reports whether every one of tables already has column. It
+// backs an alreadySatisfied guard whose body alters more than one table: the
+// guard can only call the body's intent met once none of those tables is
+// still missing what the body would add.
+func columnPresentOnAll(column string, tables ...string) func(*sql.Tx) (bool, error) {
+	return func(tx *sql.Tx) (bool, error) {
+		for _, table := range tables {
+			ok, err := columnPresent(table, column)(tx)
+			if err != nil || !ok {
+				return ok, err
+			}
+		}
+		return true, nil
+	}
+}
+
 // tablePresent reports whether a table exists. The CREATE TABLE bodies already
 // carry IF NOT EXISTS, so this guard is not what keeps them safe to re-run; it
 // is what lets such a migration be RECORDED as satisfied on a database that got
@@ -1716,7 +1732,7 @@ CREATE TABLE IF NOT EXISTS offsite_observations (
 		// take the default's location at their first backup.
 		version:          115,
 		name:             "items_repo_chosen",
-		alreadySatisfied: columnPresent("targets", "repo_chosen"),
+		alreadySatisfied: columnPresentOnAll("repo_chosen", "targets", "vms", "file_sets"),
 		sql: `
 ALTER TABLE targets   ADD COLUMN repo_chosen INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE vms       ADD COLUMN repo_chosen INTEGER NOT NULL DEFAULT 0;
