@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -870,4 +871,90 @@ func (h *Handler) handleApplyDefault(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"reset": reset, "kept": kept}))
+}
+
+type placementDefaultExport struct {
+	Domain string   `json:"domain"`
+	Home   string   `json:"home"`
+	Skip   []string `json:"skip"`
+}
+
+type copyRuleExport struct {
+	Domain   string   `json:"domain"`
+	Identity string   `json:"identity"`
+	Skip     []string `json:"skip"`
+}
+
+func placementDefaultsToExport(rows []store.PlacementDefault) []placementDefaultExport {
+	out := make([]placementDefaultExport, 0, len(rows))
+	for _, d := range rows {
+		out = append(out, placementDefaultExport{Domain: d.Domain, Home: d.Home, Skip: append([]string{}, d.Skip...)})
+	}
+	return out
+}
+
+func copyRulesToExport(rules []store.CopyRule) []copyRuleExport {
+	out := make([]copyRuleExport, 0, len(rules))
+	for _, r := range rules {
+		out = append(out, copyRuleExport{Domain: r.Domain, Identity: r.Identity, Skip: append([]string{}, r.Skip...)})
+	}
+	return out
+}
+
+// importedPlacement is the file's two blocks for the store. A nil block is one
+// the file does not carry, which leaves its table alone.
+func importedPlacement(exp settingsExport) store.PlacementImport {
+	in := store.PlacementImport{HasDefaults: exp.PlacementDefaults != nil, HasRules: exp.CopyRules != nil}
+	for _, d := range exp.PlacementDefaults {
+		in.Defaults = append(in.Defaults, store.PlacementDefault{Domain: d.Domain, Home: strings.TrimSpace(d.Home), Skip: d.Skip})
+	}
+	for _, r := range exp.CopyRules {
+		in.Rules = append(in.Rules, store.CopyRule{Domain: r.Domain, Identity: r.Identity, Skip: r.Skip})
+	}
+	return in
+}
+
+// ruleTagPrefix is the snapshot tag prefix of the items a domain's rules name.
+var ruleTagPrefix = map[string]string{"containers": "container:", "vms": "vm:", "files": "fileset:"}
+
+// checkImportedPlacement refuses the defaults and rules an import could not
+// write whole, before anything of the file is written.
+func (h *Handler) checkImportedPlacement(exp settingsExport) error {
+	inFile := make(map[string]bool, len(exp.NamedRepos))
+	for _, tv := range exp.NamedRepos {
+		inFile[strings.TrimSpace(tv.ID)] = true
+	}
+	for _, d := range exp.PlacementDefaults {
+		if !validPlacementDomain(d.Domain) || !validSkip(d.Skip) {
+			return errInvalidPlacement
+		}
+		home := strings.TrimSpace(d.Home)
+		if home == "" || inFile[home] {
+			continue
+		}
+		if _, err := h.store.GetNamedRepo(home); errors.Is(err, sql.ErrNoRows) {
+			return errDefaultRepoMissing
+		} else if err != nil {
+			return err
+		}
+	}
+	for _, r := range exp.CopyRules {
+		if strings.HasPrefix(r.Identity, "stack:") {
+			return store.ErrStackCopyRule
+		}
+		prefix, ok := ruleTagPrefix[r.Domain]
+		if !ok || !strings.HasPrefix(r.Identity, prefix) || r.Identity == prefix || !validSkip(r.Skip) {
+			return errInvalidPlacement
+		}
+	}
+	return nil
+}
+
+// countIfPresent is the preview count of a block, nil when the file lacks it.
+func countIfPresent[T any](block []T) *int {
+	if block == nil {
+		return nil
+	}
+	n := len(block)
+	return &n
 }

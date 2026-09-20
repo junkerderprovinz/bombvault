@@ -55,7 +55,13 @@ type settingsExport struct {
 	Settings       settingsView        `json:"settings"`
 	OffsiteTargets []offsiteTargetView `json:"offsiteTargets"`
 	NamedRepos     []offsiteTargetView `json:"namedRepos,omitempty"`
-	Credentials    *exportCredentials  `json:"credentials,omitempty"`
+	// PlacementDefaults and CopyRules carry each domain's placement default and
+	// its copy rules. Always present, even empty, so the import can tell a
+	// missing block (an older file, leave the table alone) from an empty one
+	// (replace it with nothing); see importedPlacement.
+	PlacementDefaults []placementDefaultExport `json:"placementDefaults"`
+	CopyRules         []copyRuleExport         `json:"copyRules"`
+	Credentials       *exportCredentials       `json:"credentials,omitempty"`
 }
 
 // buildSettingsView returns the export's settings block: the user-facing view with
@@ -208,14 +214,26 @@ func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	defaults, err := h.store.ListPlacementDefaults()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	rules, err := h.store.ListCopyRules()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 
 	exp := settingsExport{
-		SchemaVersion:  settingsExportSchema,
-		ExportedAt:     time.Now().UTC().Format(time.RFC3339),
-		AppVersion:     Version,
-		Settings:       buildSettingsView(s),
-		OffsiteTargets: offsiteTargetsToViews(targets),
-		NamedRepos:     offsiteTargetsToViews(namedRepos),
+		SchemaVersion:     settingsExportSchema,
+		ExportedAt:        time.Now().UTC().Format(time.RFC3339),
+		AppVersion:        Version,
+		Settings:          buildSettingsView(s),
+		OffsiteTargets:    offsiteTargetsToViews(targets),
+		NamedRepos:        offsiteTargetsToViews(namedRepos),
+		PlacementDefaults: placementDefaultsToExport(defaults),
+		CopyRules:         copyRulesToExport(rules),
 	}
 
 	if withCredentials {
@@ -268,13 +286,15 @@ func (h *Handler) collectCredentials(s store.Settings) (*exportCredentials, erro
 
 // importSummary is the preview payload: what an apply WOULD change, without writing.
 type importSummary struct {
-	SchemaVersion  int                 `json:"schemaVersion"`
-	ExportedAt     string              `json:"exportedAt"`
-	AppVersion     string              `json:"appVersion"`
-	OffsiteTargets int                 `json:"offsiteTargets"`
-	NamedRepos     int                 `json:"namedRepos"`
-	Credentials    importCredsPresence `json:"credentials"`
-	SettingsGroups []string            `json:"settingsGroups"`
+	SchemaVersion     int                 `json:"schemaVersion"`
+	ExportedAt        string              `json:"exportedAt"`
+	AppVersion        string              `json:"appVersion"`
+	OffsiteTargets    int                 `json:"offsiteTargets"`
+	NamedRepos        int                 `json:"namedRepos"`
+	PlacementDefaults *int                `json:"placementDefaults"`
+	CopyRules         *int                `json:"copyRules"`
+	Credentials       importCredsPresence `json:"credentials"`
+	SettingsGroups    []string            `json:"settingsGroups"`
 }
 
 // importCredsPresence reports which credential kinds the file carries (never the
@@ -309,6 +329,10 @@ func (h *Handler) handleImportSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	if msg := h.rejectImportCollisions(exp); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+		return
+	}
+	if err := h.checkImportedPlacement(exp); err != nil {
+		placementFail(w, err, nil)
 		return
 	}
 
@@ -622,13 +646,15 @@ func exportCadences(v settingsView) []string {
 // summarizeExport builds the preview/summary payload for a validated export.
 func summarizeExport(exp settingsExport) importSummary {
 	return importSummary{
-		SchemaVersion:  exp.SchemaVersion,
-		ExportedAt:     exp.ExportedAt,
-		AppVersion:     exp.AppVersion,
-		OffsiteTargets: len(exp.OffsiteTargets),
-		NamedRepos:     len(exp.NamedRepos),
-		Credentials:    credsPresence(exp.Credentials),
-		SettingsGroups: settingsGroups(exp.Settings),
+		SchemaVersion:     exp.SchemaVersion,
+		ExportedAt:        exp.ExportedAt,
+		AppVersion:        exp.AppVersion,
+		OffsiteTargets:    len(exp.OffsiteTargets),
+		NamedRepos:        len(exp.NamedRepos),
+		PlacementDefaults: countIfPresent(exp.PlacementDefaults),
+		CopyRules:         countIfPresent(exp.CopyRules),
+		Credentials:       credsPresence(exp.Credentials),
+		SettingsGroups:    settingsGroups(exp.Settings),
 	}
 }
 
@@ -717,6 +743,16 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 	// round-trip): drop the current rows, then upsert each imported target
 	// preserving its id + created_at so the far instance reproduces the source.
 	if err := h.replaceOffsiteTargets(exp.OffsiteTargets, exp.Settings); err != nil {
+		return err
+	}
+
+	// The placement defaults and copy rules, written here so an imported default
+	// already protects the named repository it points at before the delete loop
+	// below runs.
+	h.svc.placementMu.Lock()
+	err := h.store.ImportPlacement(importedPlacement(exp))
+	h.svc.placementMu.Unlock()
+	if err != nil {
 		return err
 	}
 
