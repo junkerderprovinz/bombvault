@@ -11045,14 +11045,10 @@ func (s *Service) SetFileSetSelectedPaths(_ context.Context, id string, entries 
 	return nil
 }
 
-// fileSetHasBackups and vmHasBackups decide whether an item may still move. An
-// unreadable location counts as having backups.
+// fileSetHasBackups decides whether a file set may still move. An unreadable
+// location counts as having backups.
 func (s *Service) fileSetHasBackups(ctx context.Context, id string) (bool, error) {
 	return countsAsBackedUp(s.itemBackups(ctx, store.ItemRef{Domain: "files", Key: id}))
-}
-
-func (s *Service) vmHasBackups(ctx context.Context, name string) (bool, error) {
-	return countsAsBackedUp(s.itemBackups(ctx, store.ItemRef{Domain: "vms", Key: name}))
 }
 
 // SnapshotsFileSet lists restic snapshots for a single file set, filtered by
@@ -11684,12 +11680,13 @@ func (s *Service) DeleteBackupsFileSet(ctx context.Context, id string) error {
 //
 // An existing set keeps its path, excludes and enabled state: those are the
 // operator's own configuration. Its repository is the one exception, and only
-// while it is still open or left unread by an earlier pass. Such a set with no
-// backups where it is pointed now is put back on the
-// repository its snapshots were actually found in, the same repair Discover and
-// DiscoverVMs make and the file sets went without. The result counts the file
-// sets found. dryRun makes it read-only: it lists and counts but writes nothing.
-// The Recovery readability probe uses this so it never resurrects orphan entries (#44).
+// while it is still open or left unread by an earlier pass. Such a set with
+// no backups where it is pointed now is put back on the repository its
+// snapshots were actually found in, the same repair Discover and
+// DiscoverVMs make and the file sets went without. The result counts the
+// file sets found. dryRun makes it read-only: it lists and counts but writes
+// nothing. The Recovery readability probe uses this so it never resurrects
+// orphan entries (#44).
 func (s *Service) DiscoverFileSets(ctx context.Context, dryRun bool) (DiscoverResult, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
