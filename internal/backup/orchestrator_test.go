@@ -3,6 +3,7 @@ package backup_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -195,17 +196,42 @@ func (t *fakeTemplates) Write(dir, name, xml string) error {
 	return t.writeErr
 }
 
+// runFinish is one recorded Finish, so a flow with more than one run can be
+// checked per run rather than by position in the status list.
+type runFinish struct {
+	runID      string
+	status     string
+	snapshotID string
+	bytes      int64
+	note       string
+}
+
 type fakeRuns struct {
 	log       []string
 	startErr  error
 	finishErr error
 	lastRunID string
 	finishes  []string // recorded "status" values
+	// numbered hands every run its own id; the zero value answers run-1 always.
+	numbered bool
+	// startErrKind, when set, narrows startErr to runs of that kind.
+	startErrKind string
+	started      int
+	kinds        []string
+	finishCalls  []runFinish
 }
 
 func (r *fakeRuns) Start(targetID, kind string) (string, error) {
 	r.log = append(r.log, "runStart:"+targetID+":"+kind)
+	r.kinds = append(r.kinds, kind)
+	r.started++
 	r.lastRunID = "run-1"
+	if r.numbered {
+		r.lastRunID = fmt.Sprintf("run-%d", r.started)
+	}
+	if r.startErrKind != "" && r.startErrKind != kind {
+		return r.lastRunID, nil
+	}
 	return r.lastRunID, r.startErr
 }
 
@@ -216,7 +242,25 @@ func (r *fakeRuns) Finish(runID, status, snapshotID string, bytes int64, errMsg 
 	}
 	r.log = append(r.log, entry)
 	r.finishes = append(r.finishes, status)
+	r.finishCalls = append(r.finishCalls, runFinish{
+		runID:      runID,
+		status:     status,
+		snapshotID: snapshotID,
+		bytes:      bytes,
+		note:       errMsg,
+	})
 	return r.finishErr
+}
+
+func (r *fakeRuns) finishOf(t *testing.T, runID string) runFinish {
+	t.Helper()
+	for _, f := range r.finishCalls {
+		if f.runID == runID {
+			return f
+		}
+	}
+	t.Fatalf("no finish recorded for %q: %v", runID, r.finishCalls)
+	return runFinish{}
 }
 
 // ---------------------------------------------------------------------------

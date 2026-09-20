@@ -182,13 +182,24 @@ type BackupDeps struct {
 	// restarted afterwards.
 	WasRunning bool
 	// PreHook / PostHook are optional shell commands run inside the container via
-	// `sh -c`. PreHook runs while the container is still up (before stop) so a DB
-	// dump can be captured INTO appdata and included in the backup; a PreHook
-	// failure aborts the backup (no inconsistent snapshot). PostHook runs after
-	// the container is back up; its failure is logged but never fails the backup.
+	// `sh -c`. PreHook runs while the container is still up (before stop), so a
+	// step that needs a live container (flushing a cache) happens before the
+	// snapshot; a PreHook failure aborts the backup (no inconsistent snapshot).
+	// A database dump belongs in DBDump, not here. PostHook runs after the
+	// container is back up; its failure is logged but never fails the backup.
 	// Hooks only run when WasRunning (you cannot exec in a stopped container).
 	PreHook  string
 	PostHook string
+	// DBDump, when non-nil, streams a logical dump of this container's database
+	// into the repository as its own snapshot, after PreHook and before the stop,
+	// while the server still runs. It is never fatal: its outcome is a run of its
+	// own. Skipped when !WasRunning. A nil plan leaves argv, tags, exec calls and
+	// run records exactly as they are without one.
+	DBDump   *DBDumpPlan
+	DBDumper DBDumper
+	// OnDBDumpDone hands the dump's recorded outcome to the caller, which sends
+	// the notification once the backup's own result is known.
+	OnDBDumpDone func(DBDumpOutcome)
 	// StopContainers are OTHER containers to stop for the duration of this
 	// backup (e.g. a database) and restart afterwards. Each carries its own
 	// WasRunning: a dependency that was already stopped is left untouched
@@ -358,7 +369,7 @@ func pullRef(in model.Inspect) string {
 // BackupContainer orchestrates a container backup:
 //
 //	recordRunStart
-//	→ stop → restic backup → capture+persist template
+//	→ pre-hook → database dump → stop → restic backup → capture+persist template
 //	→ FINALLY always start (even on error)
 //	→ recordRunFinish(success|failed)
 //	→ re-throw on failure
@@ -370,13 +381,26 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		return Summary{}, fmt.Errorf("backup: record run start: %w", err)
 	}
 
-	// Pre-backup hook runs while the container is still UP (before stop), so a DB
-	// dump etc. lands in appdata and is included below. A failure aborts the
+	// Pre-backup hook runs while the container is still UP (before stop), so what
+	// it writes lands in appdata and is included below. A failure aborts the
 	// backup — we never store a snapshot the hook was meant to make consistent.
 	// Skipped when the container is already stopped (cannot exec in it).
 	if d.WasRunning && d.PreHook != "" {
 		if hookErr := d.Docker.Exec(ctx, d.ContainerRef, []string{"sh", "-c", d.PreHook}); hookErr != nil {
 			e := fmt.Errorf("backup: pre-hook: %w", hookErr)
+			_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(e))
+			return Summary{}, e
+		}
+	}
+
+	// The dump runs against the live database, so it has to happen before the
+	// stop. A cancel or a deadline during it ends the backup here, while nothing
+	// is stopped yet: there is nothing to restart and no post-hook to run.
+	var dumpNote string
+	if d.WasRunning && d.DBDump != nil && d.DBDumper != nil {
+		dumpNote = runDBDump(ctx, d, runID)
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			e := fmt.Errorf("backup: stopped after database dump: %w", ctxErr)
 			_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(e))
 			return Summary{}, e
 		}
@@ -542,7 +566,7 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 	if summarySeen {
 		snap = summary.SnapshotID
 	}
-	if err := d.Runs.Finish(runID, statusSuccess, snap, summary.Bytes, ""); err != nil {
+	if err := d.Runs.Finish(runID, statusSuccess, snap, summary.Bytes, dumpNote); err != nil {
 		return summary, fmt.Errorf("backup: record run finish: %w", err)
 	}
 	return summary, nil
@@ -668,6 +692,9 @@ func waitHealthy(ctx context.Context, d BackupDeps, name string, timeout time.Du
 //
 // Returns an error WITHOUT recording a run when not confirmed or the snapshot
 // id is invalid (nothing destructive has happened yet).
+//
+// A database dump is never replayed here: the restored snapshot was taken with
+// the container stopped and is the authoritative state.
 func RestoreContainer(ctx context.Context, d RestoreDeps) error {
 	if !d.Confirmed {
 		return ErrNotConfirmed
