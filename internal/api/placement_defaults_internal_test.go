@@ -107,6 +107,20 @@ func TestLocalForTheDefaultAsksForItemsAndProjectFolders(t *testing.T) {
 	}
 }
 
+func TestADefaultSkipChangeIgnoresAnItemHomedOnARemoteNamedRepositoryByDefault(t *testing.T) {
+	f := newPlacementFixture(t)
+	box := f.namedRepo("Storagebox", "sftp:u1@box.example:/bv")
+	f.target("containers", "B2", "b2:bucket/containers")
+	f.setDefault("containers", box.ID)
+	f.openContainer("web")
+
+	res := f.do(http.MethodPost, "/api/placement/default/containers/preview", map[string]any{"skip": []string{store.SkipAll}})
+	dropped := res["impact"].(map[string]any)["dropped"].([]any)
+	if len(dropped) != 0 {
+		t.Fatalf("dropped = %v, want none: web is homed on Storagebox by default, not on the domain path", dropped)
+	}
+}
+
 func TestPutWithStaleNumbersIsRefusedWithTheNewOnes(t *testing.T) {
 	f, _ := fourteenContainers(t)
 	empty := map[string]any{"dropped": []any{}, "added": []any{}, "openTakeHome": 0}
