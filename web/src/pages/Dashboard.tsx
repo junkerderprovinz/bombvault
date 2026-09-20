@@ -7,7 +7,7 @@ import type { Run, SpikeCheck, Container, Settings, DomainStatus, CoverageReport
 import { ErrorDetailPanel } from "../components/ErrorDetailPanel";
 import { useT } from "../lib/i18n";
 import { SelectField } from "../components/SelectField";
-import { isOwnReason, runReason } from "../lib/runReason";
+import { isOwnReason, isWarningNote, runReason } from "../lib/runReason";
 import { runKindLabel } from "../lib/runKind";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { useAdvanced } from "../lib/advanced";
@@ -139,6 +139,39 @@ function StatCard({
   return <div className={base}>{inner}</div>;
 }
 
+// The kinds the error badge counts, and the outcome each one can clear. A dump
+// and an import stand apart from the item's backup: a failed dump must not hide
+// a failed backup of the same container, and neither of them cancels the other.
+// A saved dump is missing on purpose, since writing a copy of an old dump into
+// a folder says nothing about the state of the database (#3).
+const ERROR_CLASSES: Record<string, string> = {
+  backup: "item",
+  restore: "item",
+  update: "item",
+  dbdump: "dbdump",
+  dbimport: "dbimport",
+};
+
+/**
+ * How many failures the error badge stands for: the last completed run per
+ * target and class, counting only the ones that failed (#100). A target that
+ * has since succeeded drops out, and so does an acknowledged failure (#126).
+ * `runs` arrives newest-first, and a still running one is skipped so an
+ * in-flight retry does not hide the previous result.
+ */
+export function unresolvedErrorCount(runs: Run[]): number {
+  const latest = new Map<string, Run>();
+  for (const r of runs) {
+    const cls = ERROR_CLASSES[r.kind];
+    if (!cls) continue;
+    if (r.status === "running") continue;
+    if (r.acknowledged) continue;
+    const key = `${r.targetId}|${cls}`;
+    if (!latest.has(key)) latest.set(key, r);
+  }
+  return Array.from(latest.values()).filter((r) => r.status === "failed").length;
+}
+
 // computeStatData fetches the four inputs the stat cards need and derives the
 // tile values. Extracted from the component so it can be re-run on demand (after
 // the error panel acknowledges failures) as well as on mount. Rejects if any
@@ -163,28 +196,7 @@ async function computeStatData(): Promise<StatData> {
   const schedEnabled = settings ? settings.containersSchedule !== "off" && settings.containersSchedule !== "" : false;
   const activeJobs = schedEnabled ? installed.filter((c) => c.includeInSchedule).length : 0;
   const pausedJobs = !schedEnabled ? installed.filter((c) => c.includeInSchedule).length : 0;
-  // Scoped to backup/restore/update kinds — a failed prune/verify
-  // (maintenance) run is surfaced in the Activity Log, not here, so this
-  // badge keeps its original "backup/restore failures" meaning (#3).
-  //
-  // Reflects the LAST completed run per item (#100), not a cumulative
-  // count of every failure ever recorded — a target that has since
-  // backed up (or restored/updated) successfully must drop out. `runs`
-  // arrives newest-first, so the first non-"running" run seen per
-  // targetId is that item's latest completed outcome; "running" runs
-  // are skipped so an in-flight retry doesn't hide the prior result.
-  // Acknowledged failures (#126) are skipped too, so resolving an error in the
-  // detail panel drops the target out of the badge just like a later success.
-  const latestCompletedByTarget = new Map<string, (typeof runs)[number]>();
-  for (const r of runs) {
-    if (r.kind !== "backup" && r.kind !== "restore" && r.kind !== "update") continue;
-    if (r.status === "running") continue;
-    if (r.acknowledged) continue;
-    if (!latestCompletedByTarget.has(r.targetId)) {
-      latestCompletedByTarget.set(r.targetId, r);
-    }
-  }
-  const errors = Array.from(latestCompletedByTarget.values()).filter((r) => r.status === "failed").length;
+  const errors = unresolvedErrorCount(runs);
 
   return {
     containers: installed.length,
@@ -611,6 +623,9 @@ export function CoverageCard({
     "not-included": "coverage.reason.notIncluded",
     "override-off": "coverage.reason.overrideOff",
     "no-schedule": "coverage.reason.noSchedule",
+    "db-dump-failing": "coverage.reason.dbDumpFailing",
+    "db-dump-only-copy-off": "coverage.reason.dbDumpOnlyCopyOff",
+    "db-not-scheduled": "coverage.reason.dbNotScheduled",
   };
 
   const rows = (coverage?.domains ?? [])
@@ -1235,7 +1250,7 @@ export function RansomwareCard({
 // Recent Runs card
 // ---------------------------------------------------------------------------
 
-function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
+export function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const [runs, setRuns] = useState<Run[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1294,7 +1309,9 @@ function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?:
               <div key={run.id} className="flex flex-col gap-0.5 py-2.5 text-sm">
                 <div className="flex items-center gap-3">
                   <Badge tone={statusTone(run.status)}>{statusLabel(run.status, t)}</Badge>
-                  <span className="text-carbon-text font-medium w-16 shrink-0 truncate">
+                  {/* Room for two lines: "Database dump" and its translations
+                      do not fit one line at 360px. */}
+                  <span className="text-carbon-text font-medium min-w-16 max-w-32 shrink-0 break-words">
                     {runKindLabel(t, run.kind)}
                   </span>
                   <span className="text-carbon-text flex-1 truncate min-w-0">
@@ -1333,6 +1350,19 @@ function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?:
                   <p
                     dir={isOwnReason(run.error) ? undefined : "ltr"}
                     className="ps-16 text-xs text-carbon-textMuted wrap-break-word text-start"
+                  >
+                    {runReason(run.error, t)}
+                  </p>
+                )}
+                {/* A run can succeed and still have something to say: which
+                    folder the import kept, or that only one database was
+                    reachable. */}
+                {run.status === "success" && run.error && (
+                  <p
+                    dir={isOwnReason(run.error) ? undefined : "ltr"}
+                    className={`ps-16 text-xs wrap-break-word text-start ${
+                      isWarningNote(run.error) ? "text-statusWarn" : "text-carbon-textMuted"
+                    }`}
                   >
                     {runReason(run.error, t)}
                   </p>

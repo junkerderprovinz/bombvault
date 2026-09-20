@@ -1,6 +1,7 @@
 // ErrorDetailPanel is the modal behind the dashboard's error count. It groups
-// the failed runs by error message, so one fault across many targets reads as
-// one row, and lets the user acknowledge a group or every failure at once.
+// the failed runs by kind and error message, so one fault across many targets
+// reads as one row while a failed database dump never reads as the container's
+// backup, and lets the user acknowledge a group or every failure at once.
 // After an acknowledge it reloads and calls onChanged so the parent can
 // refresh its count.
 
@@ -13,7 +14,11 @@ import type { TranslationKey } from "../lib/i18n";
 import { LOG_FILTER_DOMAINS, LOG_FILTER_KINDS } from "../lib/activityLog";
 import type { LogFilterDomain, LogFilterKind } from "../lib/activityLog";
 import { SelectField } from "./SelectField";
+import { remedyKey } from "../lib/dbdump";
+import { runKindLabel } from "../lib/runKind";
+import { RunReasonText } from "../lib/runReason";
 import { formatTs, relativeTime } from "../lib/reltime";
+import { InfoBubble } from "./InfoBubble";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { IconClose } from "./Sidebar";
@@ -31,7 +36,8 @@ const DOMAIN_SELECT_TO_RUN: Record<string, string> = {
 };
 
 interface ErrorGroup {
-  key: string; // trimmed error message, the group identity
+  key: string; // kind and trimmed error message, the group identity
+  kind: string; // the run kind every member of the group has
   message: string; // display text, may be empty
   ids: string[]; // the run ids in this group (the acknowledge targets)
   targets: string[]; // unique affected target names (run.target, never the UUID)
@@ -119,10 +125,12 @@ export function ErrorDetailPanel({
         const hay = `${message} ${r.target} ${domainLabel(r.domain)}`.toLowerCase();
         if (!hay.includes(text)) continue;
       }
-      let g = byMsg.get(message);
+      // A kind never contains a space, so the pair cannot be read two ways.
+      const key = `${r.kind} ${message}`;
+      let g = byMsg.get(key);
       if (!g) {
-        g = { key: message, message, ids: [], targets: [], domains: [], latest: 0, count: 0 };
-        byMsg.set(message, g);
+        g = { key, kind: r.kind, message, ids: [], targets: [], domains: [], latest: 0, count: 0 };
+        byMsg.set(key, g);
       }
       g.ids.push(r.id);
       g.count++;
@@ -224,12 +232,25 @@ export function ErrorDetailPanel({
           )}
           {!loading && groups.length > 0 && (
             <div className="divide-y divide-carbon-border">
-              {groups.map((g) => (
-                <div key={g.key || "(none)"} className="flex flex-col gap-1.5 py-3">
+              {groups.map((g) => {
+                // Only a dump failure has advice of ours; everything else in
+                // here is a message from restic, rclone or Docker.
+                const remedy = g.kind === "dbdump" ? remedyKey(g.message) : null;
+                return (
+                <div key={g.key} className="flex flex-col gap-1.5 py-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 items-start gap-2">
                       <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-statusFailSolid" />
-                      <p className="min-w-0 wrap-break-word text-sm text-statusFail">{g.message || "—"}</p>
+                      <p className="min-w-0 wrap-break-word text-sm text-statusFail">
+                        {g.message ? (
+                          <>
+                            {runKindLabel(t, g.kind)}: <RunReasonText reason={g.message} t={t} />
+                          </>
+                        ) : (
+                          runKindLabel(t, g.kind)
+                        )}
+                      </p>
+                      {remedy && <InfoBubble tip={t(remedy)} />}
                     </div>
                     {/* Both badges take size="large" so they are the same height,
                         although one renders a span and the other a button. */}
@@ -257,7 +278,8 @@ export function ErrorDetailPanel({
                     <span title={formatTs(g.latest)}>{relativeTime(t, g.latest)}</span>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

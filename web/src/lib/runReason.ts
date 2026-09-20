@@ -61,6 +61,22 @@ export const RUN_REASON_PREFIXES: Record<string, TranslationKey> = {
   "database imported with errors": "runReason.dbimportErrors",
 };
 
+/**
+ * The notes a successful run can carry that ask the reader to do something
+ * about them. Every other note only records what was kept or skipped.
+ */
+const WARNING_NOTES = [
+  "database dump covers one database only",
+  "database dump skipped: its run could not be recorded",
+  "database imported with errors",
+];
+
+/** Whether a note of a successful run reports something worth acting on. */
+export function isWarningNote(raw: string | null | undefined): boolean {
+  const text = raw?.trim() ?? "";
+  return WARNING_NOTES.some((note) => text === note || text.startsWith(note + ": "));
+}
+
 /** A reason split into its translated head and the raw detail behind it. */
 export interface RunReasonParts {
   head: string;

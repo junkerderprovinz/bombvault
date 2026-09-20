@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 // The error panel has to know the Backup Everything pseudo-domain like the
-// Activity Log does: as a filter option and as a translated label. listRuns and
-// ackRuns are mocked.
+// Activity Log does: as a filter option and as a translated label, and a group
+// has to say which kind of run failed, or a failed dump reads as a failed
+// container backup. listRuns and ackRuns are mocked.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { I18nProvider, en } from "../lib/i18n";
@@ -89,5 +90,39 @@ describe("ErrorDetailPanel with the Backup Everything domain", () => {
       en["activityLog.domainFiles"],
       en["activityLog.domainEverything"],
     ]);
+  });
+});
+
+describe("a failed database dump in the panel", () => {
+  it("names the kind and carries the remedy", async () => {
+    renderPanel([
+      run({
+        id: "d1",
+        kind: "dbdump",
+        target: "immich_postgres",
+        domain: "container",
+        error: "database dump failed: the database refused the login: FATAL: password authentication failed",
+      }),
+    ]);
+
+    await waitFor(() => expect(listRuns).toHaveBeenCalled());
+    const head = await screen.findByText(en["runReason.dbdumpAuth"], { exact: false });
+    const line = head.closest("p");
+    expect(line?.textContent).toContain(`${en["run.kindDbDump"]}: ${en["runReason.dbdumpAuth"]}`);
+    expect(line?.textContent).toContain("FATAL: password authentication failed");
+    expect(screen.getByLabelText(en["dbdump.fixAuth"])).toBeTruthy();
+  });
+
+  it("keeps the container's failed backup as a group of its own", async () => {
+    renderPanel([
+      run({ id: "d1", kind: "dbdump", target: "immich_postgres", domain: "container", error: "boom" }),
+      run({ id: "b1", kind: "backup", target: "immich_postgres", domain: "container", error: "boom" }),
+    ]);
+
+    await waitFor(() => expect(listRuns).toHaveBeenCalled());
+    expect(screen.getAllByRole("button", { name: en["errorPanel.resolve"] })).toHaveLength(2);
+    const panel = screen.getByRole("dialog").textContent ?? "";
+    expect(panel).toContain(`${en["run.kindDbDump"]}: boom`);
+    expect(panel).toContain(`${en["run.kindBackup"]}: boom`);
   });
 });
