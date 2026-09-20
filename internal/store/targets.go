@@ -18,11 +18,13 @@ type Target struct {
 	// container's recreate recipe (inspect + template XML) so restore works even
 	// after the container has been deleted from the host.
 	Definition string
-	// Repo is this container's OPTIONAL per-item repository override (#204): the
-	// ID of a named repository from Settings, or "" for the Containers domain
-	// repository. Owned by SetTargetRepo, never by Upsert - see that method for
-	// why a repository must not move as a side effect.
+	// Repo is this container's own repository: the ID of a named repository, or
+	// "" for the Containers domain repository. UpsertTarget writes it when it
+	// creates the row and SetTargetRepo afterwards, never another edit.
 	Repo string
+	// RepoChosen says whether Repo is settled. An open row has an empty Repo and
+	// takes the default's location at its first backup.
+	RepoChosen RepoChoice
 	// PreHook / PostHook are optional shell commands run inside the container via
 	// `sh -c` before/after a backup. Owned by SetHooks (never reset by Upsert).
 	PreHook  string
@@ -110,6 +112,9 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 	if t.CreatedAt == 0 {
 		t.CreatedAt = time.Now().Unix()
 	}
+	if err := checkRepoChoice(t.Repo, t.RepoChosen); err != nil {
+		return Target{}, fmt.Errorf("UpsertTarget: %w", err)
+	}
 
 	pathsJSON, err := json.Marshal(t.AppdataPaths)
 	if err != nil {
@@ -139,14 +144,16 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 	// backup_order (like selected_paths/stop_containers/excludes) is owned by its
 	// setter and intentionally NOT in the ON CONFLICT update set, so a backup's
 	// UpsertTarget never clobbers the user's chosen sequence.
+	// repo and repo_chosen are written on insert only: an upsert never moves
+	// where an item's backups go.
 	_, err = r.db.Exec(`
-		INSERT INTO targets (id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, backup_order, schedule_cadence)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO targets (id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, backup_order, schedule_cadence, repo, repo_chosen)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(container_name) DO UPDATE SET
 		  appdata_paths = excluded.appdata_paths,
 		  definition    = excluded.definition`,
 		t.ID, t.ContainerName, string(pathsJSON),
-		boolInt(t.IncludeInSchedule), t.CreatedAt, t.Definition, t.PreHook, t.PostHook, string(selJSON), string(stopJSON), string(exJSON), string(ecJSON), boolInt(t.UpdateAfterBackup), t.BackupOrder, t.ScheduleCadence,
+		boolInt(t.IncludeInSchedule), t.CreatedAt, t.Definition, t.PreHook, t.PostHook, string(selJSON), string(stopJSON), string(exJSON), string(ecJSON), boolInt(t.UpdateAfterBackup), t.BackupOrder, t.ScheduleCadence, t.Repo, t.RepoChosen,
 	)
 	if err != nil {
 		return Target{}, fmt.Errorf("UpsertTarget: %w", err)
@@ -159,7 +166,7 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 // GetTargetByContainer returns the target for the named container.
 func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 	row := r.db.QueryRow(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence, repo
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence, repo, repo_chosen
 		FROM targets WHERE container_name = ?`, name)
 	return scanTarget(row)
 }
@@ -167,7 +174,7 @@ func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 // ListTargets returns all known targets.
 func (r *Repo) ListTargets() ([]Target, error) {
 	rows, err := r.db.Query(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence, repo
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence, repo, repo_chosen
 		FROM targets ORDER BY container_name`)
 	if err != nil {
 		return nil, fmt.Errorf("ListTargets: %w", err)
@@ -209,7 +216,7 @@ func (r *Repo) ListTargetsScheduleOrder() ([]Target, error) {
 	// there is and drifts to the end of the queue for good — quietly, since the
 	// ordering is a preference rather than an error.
 	rows, err := r.db.Query(`
-		SELECT t.id, t.container_name, t.appdata_paths, t.include_in_schedule, t.created_at, t.definition, t.pre_hook, t.post_hook, t.selected_paths, t.stop_containers, t.excludes, t.exclude_caches, t.update_after_backup, t.last_update_check, t.last_update_result, t.backup_order, t.schedule_cadence, t.repo
+		SELECT t.id, t.container_name, t.appdata_paths, t.include_in_schedule, t.created_at, t.definition, t.pre_hook, t.post_hook, t.selected_paths, t.stop_containers, t.excludes, t.exclude_caches, t.update_after_backup, t.last_update_check, t.last_update_result, t.backup_order, t.schedule_cadence, t.repo, t.repo_chosen
 		FROM targets t
 		LEFT JOIN (
 			SELECT target_id, MAX(finished_at) AS last_ok
@@ -327,7 +334,7 @@ func (r *Repo) SetUpdateCheck(containerName string, at int64, result string) err
 // a repository at all - which is precisely when somebody would want to, BEFORE
 // the first run puts data in the wrong place. Found by clicking it.
 func (r *Repo) SetTargetRepo(containerName, repo string) error {
-	res, err := r.db.Exec(`UPDATE targets SET repo = ? WHERE container_name = ?`, repo, containerName)
+	res, err := r.db.Exec(`UPDATE targets SET repo = ?, repo_chosen = 1 WHERE container_name = ?`, repo, containerName)
 	if err != nil {
 		return fmt.Errorf("SetTargetRepo: %w", err)
 	}
@@ -335,7 +342,7 @@ func (r *Repo) SetTargetRepo(containerName, repo string) error {
 		if _, err := r.UpsertTarget(Target{ContainerName: containerName}); err != nil {
 			return fmt.Errorf("SetTargetRepo create target: %w", err)
 		}
-		if _, err := r.db.Exec(`UPDATE targets SET repo = ? WHERE container_name = ?`, repo, containerName); err != nil {
+		if _, err := r.db.Exec(`UPDATE targets SET repo = ?, repo_chosen = 1 WHERE container_name = ?`, repo, containerName); err != nil {
 			return fmt.Errorf("SetTargetRepo: %w", err)
 		}
 	}
@@ -621,7 +628,7 @@ func scanTarget(s scanner) (Target, error) {
 	var t Target
 	var pathsJSON, selJSON, stopJSON, exJSON, ecJSON string
 	var include, updateAfter int
-	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition, &t.PreHook, &t.PostHook, &selJSON, &stopJSON, &exJSON, &ecJSON, &updateAfter, &t.LastUpdateCheck, &t.LastUpdateResult, &t.BackupOrder, &t.ScheduleCadence, &t.Repo)
+	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition, &t.PreHook, &t.PostHook, &selJSON, &stopJSON, &exJSON, &ecJSON, &updateAfter, &t.LastUpdateCheck, &t.LastUpdateResult, &t.BackupOrder, &t.ScheduleCadence, &t.Repo, &t.RepoChosen)
 	if err != nil {
 		return Target{}, fmt.Errorf("scanTarget: %w", err)
 	}

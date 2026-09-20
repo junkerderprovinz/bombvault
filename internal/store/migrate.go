@@ -1710,6 +1710,21 @@ CREATE TABLE IF NOT EXISTS offsite_observations (
 		sql:              `ALTER TABLE offsite_runs ADD COLUMN aging_only INTEGER NOT NULL DEFAULT 0;`,
 		alreadySatisfied: columnPresent("offsite_runs", "aging_only"),
 	},
+	{
+		// Every row that exists here was set up before a default could name a
+		// location, so each one counts as chosen. Rows created later start open and
+		// take the default's location at their first backup.
+		version:          115,
+		name:             "items_repo_chosen",
+		alreadySatisfied: columnPresent("targets", "repo_chosen"),
+		sql: `
+ALTER TABLE targets   ADD COLUMN repo_chosen INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE vms       ADD COLUMN repo_chosen INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE file_sets ADD COLUMN repo_chosen INTEGER NOT NULL DEFAULT 0;
+UPDATE targets   SET repo_chosen = 1;
+UPDATE vms       SET repo_chosen = 1;
+UPDATE file_sets SET repo_chosen = 1;`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

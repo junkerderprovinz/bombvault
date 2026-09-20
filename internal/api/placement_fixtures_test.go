@@ -206,7 +206,7 @@ func (f *placementFixture) fileSet(name, repoID string) store.FileSet {
 	if err := os.MkdirAll(filepath.FromSlash(f.root+"/"+path), 0o750); err != nil {
 		f.t.Fatal(err)
 	}
-	fs, err := f.st.CreateFileSet(store.FileSet{Name: name, Path: path, Enabled: true, Repo: repoID})
+	fs, err := f.st.CreateFileSet(store.FileSet{Name: name, Path: path, Enabled: true, Repo: repoID, RepoChosen: store.RepoChosen})
 	if err != nil {
 		f.t.Fatalf("file set %s: %v", name, err)
 	}

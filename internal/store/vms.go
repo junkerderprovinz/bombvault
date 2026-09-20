@@ -17,10 +17,13 @@ type VMTarget struct {
 	// after the VM has been deleted or BombVault's /config is lost (full DR).
 	Definition string
 	CreatedAt  int64
-	// Repo is this VM's OPTIONAL per-item repository override (#204): the ID of a
-	// named repository from Settings, or "" for the VMs domain repository. Owned
-	// by SetVMRepo, never by Upsert.
+	// Repo is this VM's own repository: the ID of a named repository, or "" for
+	// the VMs domain repository. UpsertVMTarget writes it when it creates the
+	// row and SetVMRepo afterwards.
 	Repo string
+	// RepoChosen says whether Repo is settled. An open row has an empty Repo and
+	// takes the default's location at its first backup.
+	RepoChosen RepoChoice
 	// ScheduleCadence is this VM's OPTIONAL per-item schedule override (#121, same
 	// cadence grammar as the domain schedules). Empty (the default) means "use the
 	// VMs domain schedule exactly as today"; only consulted when the per-item-
@@ -48,14 +51,17 @@ func (r *Repo) UpsertVMTarget(t VMTarget) (VMTarget, error) {
 	if t.Method == "" {
 		t.Method = "graceful"
 	}
+	if err := checkRepoChoice(t.Repo, t.RepoChosen); err != nil {
+		return VMTarget{}, fmt.Errorf("UpsertVMTarget: %w", err)
+	}
 
 	_, err := r.db.Exec(`
-		INSERT INTO vms (id, name, method, include_in_schedule, definition, created_at, schedule_cadence, backup_order)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO vms (id, name, method, include_in_schedule, definition, created_at, schedule_cadence, backup_order, repo, repo_chosen)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(name) DO UPDATE SET
 		  method     = excluded.method,
 		  definition = excluded.definition`,
-		t.ID, t.Name, t.Method, boolInt(t.IncludeInSchedule), t.Definition, t.CreatedAt, t.ScheduleCadence, t.BackupOrder,
+		t.ID, t.Name, t.Method, boolInt(t.IncludeInSchedule), t.Definition, t.CreatedAt, t.ScheduleCadence, t.BackupOrder, t.Repo, t.RepoChosen,
 	)
 	if err != nil {
 		return VMTarget{}, fmt.Errorf("UpsertVMTarget: %w", err)
@@ -66,7 +72,7 @@ func (r *Repo) UpsertVMTarget(t VMTarget) (VMTarget, error) {
 // GetVMTargetByName returns the VM target for the named domain.
 func (r *Repo) GetVMTargetByName(name string) (VMTarget, error) {
 	row := r.db.QueryRow(`
-		SELECT id, name, method, include_in_schedule, definition, created_at, schedule_cadence, backup_order, repo
+		SELECT id, name, method, include_in_schedule, definition, created_at, schedule_cadence, backup_order, repo, repo_chosen
 		FROM vms WHERE name = ?`, name)
 	return scanVMTarget(row)
 }
@@ -74,7 +80,7 @@ func (r *Repo) GetVMTargetByName(name string) (VMTarget, error) {
 // ListVMTargets returns all known VM targets ordered by name.
 func (r *Repo) ListVMTargets() ([]VMTarget, error) {
 	rows, err := r.db.Query(`
-		SELECT id, name, method, include_in_schedule, definition, created_at, schedule_cadence, backup_order, repo
+		SELECT id, name, method, include_in_schedule, definition, created_at, schedule_cadence, backup_order, repo, repo_chosen
 		FROM vms ORDER BY name`)
 	if err != nil {
 		return nil, fmt.Errorf("ListVMTargets: %w", err)
@@ -112,7 +118,7 @@ func (r *Repo) ListVMTargets() ([]VMTarget, error) {
 // backed up could not be pointed at a repository at all - which is exactly when
 // somebody would want to.
 func (r *Repo) SetVMRepo(name, repo string) error {
-	res, err := r.db.Exec(`UPDATE vms SET repo = ? WHERE name = ?`, repo, name)
+	res, err := r.db.Exec(`UPDATE vms SET repo = ?, repo_chosen = 1 WHERE name = ?`, repo, name)
 	if err != nil {
 		return fmt.Errorf("SetVMRepo: %w", err)
 	}
@@ -120,7 +126,7 @@ func (r *Repo) SetVMRepo(name, repo string) error {
 		if _, err := r.UpsertVMTarget(VMTarget{Name: name}); err != nil {
 			return fmt.Errorf("SetVMRepo create target: %w", err)
 		}
-		if _, err := r.db.Exec(`UPDATE vms SET repo = ? WHERE name = ?`, repo, name); err != nil {
+		if _, err := r.db.Exec(`UPDATE vms SET repo = ?, repo_chosen = 1 WHERE name = ?`, repo, name); err != nil {
 			return fmt.Errorf("SetVMRepo: %w", err)
 		}
 	}
@@ -190,7 +196,7 @@ func (r *Repo) DeleteVMTarget(name string) error {
 func scanVMTarget(s scanner) (VMTarget, error) {
 	var t VMTarget
 	var include int
-	err := s.Scan(&t.ID, &t.Name, &t.Method, &include, &t.Definition, &t.CreatedAt, &t.ScheduleCadence, &t.BackupOrder, &t.Repo)
+	err := s.Scan(&t.ID, &t.Name, &t.Method, &include, &t.Definition, &t.CreatedAt, &t.ScheduleCadence, &t.BackupOrder, &t.Repo, &t.RepoChosen)
 	if err != nil {
 		return VMTarget{}, fmt.Errorf("scanVMTarget: %w", err)
 	}

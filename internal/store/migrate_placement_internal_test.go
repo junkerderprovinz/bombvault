@@ -273,6 +273,7 @@ var branchMigrations = []struct {
 	{"offsite_item_copies", tablePresent("offsite_item_copies")},
 	{"offsite_observations", tablePresent("offsite_observations")},
 	{"offsite_runs_aging_only", columnPresent("offsite_runs", "aging_only")},
+	{"items_repo_chosen", columnPresent("targets", "repo_chosen")},
 }
 
 func probeOnce(t *testing.T, db *sql.DB, probe func(*sql.Tx) (bool, error)) bool {
@@ -409,6 +410,46 @@ func TestThePlacementTablesStartEmpty(t *testing.T) {
 	var agingOnly int
 	if err := db.QueryRow(`SELECT aging_only FROM offsite_runs`).Scan(&agingOnly); err != nil || agingOnly != 0 {
 		t.Errorf("aging_only of the seeded run = %d (%v), want 0", agingOnly, err)
+	}
+}
+
+func TestItemsRepoChosenMarksEveryExistingRowChosen(t *testing.T) {
+	db := OpenMem(t)
+	seedV8111(t, db)
+	if err := Migrate(db); err != nil {
+		t.Fatalf("Migrate: %v", err)
+	}
+	for _, table := range []string{"targets", "vms", "file_sets"} {
+		var rows, chosen int
+		if err := db.QueryRow(`SELECT COUNT(*), COALESCE(SUM(repo_chosen = 1), 0) FROM ` + table).Scan(&rows, &chosen); err != nil {
+			t.Fatal(err)
+		}
+		if rows == 0 || chosen != rows {
+			t.Errorf("%s: %d of %d rows chosen, want every row", table, chosen, rows)
+		}
+	}
+}
+
+func TestItemsRepoChosenDoesNotRunAgainUnderANewNumber(t *testing.T) {
+	db := OpenMem(t)
+	if err := Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`INSERT INTO targets (id, container_name, appdata_paths, created_at) VALUES ('t1', 'nginx', '[]', 1)`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`DELETE FROM schema_migrations WHERE name = 'items_repo_chosen'`); err != nil {
+		t.Fatal(err)
+	}
+	if err := Migrate(db); err != nil {
+		t.Fatalf("Migrate over a body that already ran: %v", err)
+	}
+	var choice int
+	if err := db.QueryRow(`SELECT repo_chosen FROM targets WHERE id = 't1'`).Scan(&choice); err != nil {
+		t.Fatal(err)
+	}
+	if choice != 0 {
+		t.Fatalf("an open row reads %d: the body ran a second time", choice)
 	}
 }
 

@@ -175,7 +175,7 @@ func TestCreateFileSetStoresTheRepository(t *testing.T) {
 	r := namedRepoStore(t)
 	repo := aNamedRepo(t, r, "Cold", "backups/cold")
 
-	set, err := r.CreateFileSet(store.FileSet{Name: "docs", Path: "user/docs", Enabled: true, Repo: repo.ID})
+	set, err := r.CreateFileSet(store.FileSet{Name: "docs", Path: "user/docs", Enabled: true, Repo: repo.ID, RepoChosen: store.RepoChosen})
 	if err != nil {
 		t.Fatalf("CreateFileSet: %v", err)
 	}
