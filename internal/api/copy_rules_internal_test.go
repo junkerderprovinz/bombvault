@@ -203,6 +203,25 @@ func TestARenamedFileSetCarriesItsRule(t *testing.T) {
 	}
 }
 
+func TestARenameThatAlsoSetsCopiesKeepsTheRuleUnderTheNewName(t *testing.T) {
+	f := newPlacementFixture(t)
+	docs := f.fileSet("Docs", "")
+
+	res := f.do(http.MethodPatch, "/api/files/sets/"+docs.ID, map[string]any{
+		"name":   "Papers",
+		"copies": map[string]any{"skip": []string{store.SkipAll}},
+	})
+	if res["ok"] != true {
+		t.Fatalf("rename with copies = %v", res)
+	}
+	if skip, found := ruleOf(t, f, "files", "fileset:Papers"); !found || !slices.Equal(skip, []string{store.SkipAll}) {
+		t.Fatalf("rule of the new name = %v found=%v, want [*]", skip, found)
+	}
+	if _, found := ruleOf(t, f, "files", "fileset:Docs"); found {
+		t.Fatal("the rule the same request wrote stayed under the old name")
+	}
+}
+
 func TestARenameOntoANameWithARuleIsRefused(t *testing.T) {
 	f := newPlacementFixture(t)
 	docs := f.fileSet("Docs", "")
