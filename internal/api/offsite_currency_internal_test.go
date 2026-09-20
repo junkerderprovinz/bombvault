@@ -44,7 +44,7 @@ func replicatedAt(t *testing.T, f *placementFixture, domain, targetID string, at
 		t.Fatal(err)
 	}
 	if agingOnly {
-		if err := f.st.MarkOffsiteRunAgingOnly(targetID, at); err != nil {
+		if err := f.st.MarkOffsiteRunAgingOnly(domain, targetID, at); err != nil {
 			t.Fatal(err)
 		}
 	}

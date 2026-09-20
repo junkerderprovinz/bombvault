@@ -180,19 +180,22 @@ func (r *Repo) FinishOffsiteRun(id int64, ok bool, errText string) error {
 // placement rules could not be read. It says nothing about the target.
 const ReasonCopyRulesUnreadable = "copy rules could not be read"
 
-// MarkOffsiteRunAgingOnly marks the newest run to a target that started at
-// startedAt as one that only listed and aged it.
-func (r *Repo) MarkOffsiteRunAgingOnly(targetID string, startedAt int64) error {
+// MarkOffsiteRunAgingOnly marks the newest run of a domain to a target that
+// started at startedAt as one that only listed and aged it. The domain is
+// part of the match because the settings-synthesized N=1 target shares the
+// empty target id across every domain, and two of them can start in the
+// same second.
+func (r *Repo) MarkOffsiteRunAgingOnly(domain, targetID string, startedAt int64) error {
 	res, err := r.db.Exec(`
 		UPDATE offsite_runs SET aging_only = 1
 		 WHERE rowid = (SELECT rowid FROM offsite_runs
-		                 WHERE offsite_target_id = ? AND started_at = ?
-		                 ORDER BY rowid DESC LIMIT 1)`, targetID, startedAt)
+		                 WHERE domain = ? AND offsite_target_id = ? AND started_at = ?
+		                 ORDER BY rowid DESC LIMIT 1)`, domain, targetID, startedAt)
 	if err != nil {
 		return fmt.Errorf("MarkOffsiteRunAgingOnly: %w", err)
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
-		return fmt.Errorf("MarkOffsiteRunAgingOnly: no run to %s started at %d", targetID, startedAt)
+		return fmt.Errorf("MarkOffsiteRunAgingOnly: no run to %s in %s started at %d", targetID, domain, startedAt)
 	}
 	return nil
 }
