@@ -85,15 +85,44 @@ func (s *Service) newPass(settings store.Settings, p placementRead) (replication
 
 // targetVisit is what a pass does at one target.
 type targetVisit struct {
-	p        placementRead
-	owners   ownerContext
-	targetID string
-	filtered bool // a name is left out here, so every id restic gets is chosen by the rules
-	observe  bool // the target has a row, so what it holds is recorded
+	p         placementRead
+	owners    ownerContext
+	targetID  string
+	filtered  bool // a name is left out here, so every id restic gets is chosen by the rules
+	observe   bool // the target has a row, so what it holds is recorded
+	agingOnly bool // no item is copied here; the visit lists and ages what the target holds
+	aged      bool // it was aged under this state of the rules already
+	wasAged   bool // an aging mark exists, cleared when items are copied here again
 }
 
-func (r replicationPass) visit(t store.OffsiteTarget) targetVisit {
-	return targetVisit{p: r.p, owners: r.owners, targetID: t.ID, filtered: r.p.leavesOutAny(t.ID), observe: t.ID != ""}
+// visit decides what the pass does at one target, and whether it opens it at
+// all: a target nothing is copied to that held nothing of the domain at its
+// last listing stays closed.
+func (r replicationPass) visit(t store.OffsiteTarget) (targetVisit, bool) {
+	v := targetVisit{p: r.p, owners: r.owners, targetID: t.ID, filtered: r.p.leavesOutAny(t.ID), observe: t.ID != ""}
+	if !r.p.State.HasRules() || t.ID == "" {
+		return v, true
+	}
+	o, listed := r.listed[t.ID]
+	v.agingOnly = !r.itemsCopiedTo(t.ID)
+	v.wasAged = listed && o.AgedAt > 0
+	v.aged = v.wasAged && o.RulesRev == r.p.rulesRev(t)
+	return v, r.p.anyCopiesTo(t.ID) || !listed || r.holds(t.ID)
+}
+
+// itemsCopiedTo reports whether an item row is copied to the target.
+func (r replicationPass) itemsCopiedTo(targetID string) bool {
+	return slices.ContainsFunc(r.items, func(it placedItem) bool {
+		return it.Kind.copySource() && slices.ContainsFunc(r.p.effectiveTargets(it.Identity),
+			func(t store.OffsiteTarget) bool { return t.ID == targetID })
+	})
+}
+
+// holds reports whether the target's last listing counted anything of the domain.
+func (r replicationPass) holds(targetID string) bool {
+	return slices.ContainsFunc(r.copies, func(c store.ItemCopies) bool {
+		return c.TargetID == targetID && c.SnapshotCount > 0
+	})
 }
 
 // leavesOutAny reports whether the default or a rule keeps something from the target.
@@ -343,10 +372,10 @@ func (c ownerContext) itemCopies(snaps []restic.Snapshot) []store.ItemCopies {
 // ageTarget runs the target's keep-policy over the names it holds and records
 // what it holds afterwards. held is its listing before the copy and landed what
 // the copy added; without a listing the policy lists by itself.
-func (s *Service) ageTarget(ctx context.Context, domain, dest string, mode restic.Mode, target store.OffsiteTarget, v targetVisit, held []restic.Snapshot, heldErr error, landed []restic.Snapshot) {
+func (s *Service) ageTarget(ctx context.Context, domain, dest string, mode restic.Mode, target store.OffsiteTarget, v targetVisit, held []restic.Snapshot, heldErr error, landed []restic.Snapshot) bool {
 	op := targetOffsiteRetentionPolicy(target)
 	if !op.Any() {
-		return
+		return false
 	}
 	var tags []string
 	if heldErr == nil {
@@ -361,15 +390,31 @@ func (s *Service) ageTarget(ctx context.Context, domain, dest string, mode resti
 	if err != nil {
 		log.Printf("api: offsite %s: retention prune failed (replica is safe): %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 	}
-	if !v.observe {
-		return
+	if v.observe {
+		after, lErr := s.listSnapshots(ctx, dest, mode)
+		if lErr != nil {
+			log.Printf("api: offsite %s: could not list %s after its keep-policy: %v", domain, placementTargetName(target), scrubError(lErr)) //nolint:gosec // G706: domain is a fixed literal, the name is the row's own and the error scrubbed here
+		} else {
+			s.recordListing(domain, target, v.owners, after, nil)
+		}
 	}
-	after, lErr := s.listSnapshots(ctx, dest, mode)
-	if lErr != nil {
-		log.Printf("api: offsite %s: could not list %s after its keep-policy: %v", domain, placementTargetName(target), scrubError(lErr)) //nolint:gosec // G706: domain is a fixed literal, the name is the row's own and the error scrubbed here
-		return
+	return err == nil
+}
+
+// noteAged keeps the aging mark: set after a pass that only aged the target,
+// cleared once items are copied there again. A new state of the rules needs no
+// clearing, because its fingerprint differs.
+func (s *Service) noteAged(domain string, target store.OffsiteTarget, v targetVisit, agingOnly, settled bool) {
+	var err error
+	switch {
+	case agingOnly && settled:
+		err = s.store.MarkTargetAged(domain, target.ID, v.p.rulesRev(target), time.Now().Unix())
+	case !v.agingOnly && v.wasAged:
+		err = s.store.ResetTargetAged(domain, target.ID)
 	}
-	s.recordListing(domain, target, v.owners, after, nil)
+	if err != nil {
+		log.Printf("api: offsite %s: could not note the aging of %s: %v", domain, placementTargetName(target), err) //nolint:gosec // G706: domain is a fixed literal, the name is the row's own
+	}
 }
 
 // nothingCopiedNote says a domain's pass had no source to copy from, which

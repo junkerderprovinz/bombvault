@@ -2956,6 +2956,11 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	multiTarget := len(p.enabledTargets()) > 1
 	var errs []error
 	for _, t := range targets {
+		visit, open := pass.visit(t)
+		if !open {
+			log.Printf("api: offsite %s: %s held nothing of this domain and gets nothing; not opened", domain, placementTargetName(t)) //nolint:gosec // G706: domain is a fixed literal, the name is the row's own
+			continue
+		}
 		// The skip list travels WITH the sources. It names repositories this domain
 		// uses that no source in localRepos could speak for this pass, and the
 		// retention decision at the far end needs that as much as the error does:
@@ -2964,7 +2969,7 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 		// items whose other copy is the unreachable one. Reporting it only at the
 		// end (skippedError, below) reaches the run row long after every target's
 		// retention has already run.
-		if cerr := s.copyToOffsiteTarget(ctx, domain, settings, t, localRepos, skipped, multiTarget, startedAt, lastCopy, pass.visit(t)); cerr != nil {
+		if cerr := s.copyToOffsiteTarget(ctx, domain, settings, t, localRepos, skipped, multiTarget, startedAt, lastCopy, visit); cerr != nil {
 			log.Printf("api: offsite %s: copy to a destination failed (continuing): %v", domain, cerr) //nolint:gosec // G706: domain is a fixed literal
 			errs = append(errs, cerr)
 		}
@@ -3019,15 +3024,23 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	// logged, never fatal. offsite_target_id attributes the run to this
 	// destination (empty for a settings-synthesized N=1 target, exactly as
 	// before the backfill).
-	runID, recErr := s.store.RecordOffsiteRunForTarget(domain, target.ID, time.Now().Unix())
+	runStarted := time.Now().Unix()
+	runID, recErr := s.store.RecordOffsiteRunForTarget(domain, target.ID, runStarted)
 	if recErr != nil {
 		log.Printf("api: offsite %s: could not record replication run (continuing): %v", domain, recErr) //nolint:gosec // G706: domain is a fixed literal
 		runID = 0
 	}
-	var ok bool
+	var ok, agingOnly bool
 	defer func() {
 		if runID == 0 {
 			return
+		}
+		// Marked before the row turns green, so no reader sees a success that
+		// counts for the currency and is none.
+		if agingOnly {
+			if mErr := s.store.MarkOffsiteRunAgingOnly(target.ID, runStarted); mErr != nil {
+				log.Printf("api: offsite %s: could not mark the run as aging only: %v", domain, mErr) //nolint:gosec // G706: domain is a fixed literal
+			}
 		}
 		if ferr := s.store.FinishOffsiteRun(runID, ok, truncateRunErr(err)); ferr != nil {
 			log.Printf("api: offsite %s: could not finish replication run: %v", domain, ferr) //nolint:gosec // G706: domain is a fixed literal
@@ -3070,6 +3083,7 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	}
 	out := s.copySources(ctx, domain, dest, mode, target, visit, localRepos, dstSnaps, dstErr, startedAt, lastCopy)
 	copied, accounted, destIsASource := out.copied, out.accounted, out.destIsASource
+	agingOnly = visit.agingOnly && copied == 0
 	// Carried past the maintenance below: whatever did arrive is aged, sampled and
 	// measured against the budget, and the joined error still reaches the run row.
 	copyErr := errors.Join(out.errs...)
@@ -3098,6 +3112,7 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	// must not fail the replication that already succeeded. An IMMUTABLE
 	// (append-only) off-site repo is never pruned from here: the far side would
 	// refuse the delete anyway, and retention is enforced far-side by design.
+	settled := false
 	switch {
 	case destIsASource:
 		// The destination holds a repository this domain BACKS UP TO. Whatever the
@@ -3141,9 +3156,12 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 		log.Printf("api: offsite %s: not applying retention - no source could account for this domain's snapshots this pass", domain) //nolint:gosec // G706: domain is a fixed literal
 	case target.Immutable:
 		log.Printf("api: offsite %s: retention is enforced far-side (append-only)", domain) //nolint:gosec // G706: domain is a fixed literal
+	case agingOnly && visit.aged:
+		log.Printf("api: offsite %s: %s was aged under these rules already; listed only", domain, placementTargetName(target)) //nolint:gosec // G706: domain is a fixed literal, the name is the row's own
 	default:
-		s.ageTarget(ctx, domain, dest, mode, target, visit, dstSnaps, dstErr, out.landed)
+		settled = s.ageTarget(ctx, domain, dest, mode, target, visit, dstSnaps, dstErr, out.landed)
 	}
+	s.noteAged(domain, target, visit, agingOnly, settled)
 	// Sample the off-site repo size into the repo_stats time series and evaluate the
 	// growth budget. When a budget is set we sample SYNCHRONOUSLY first so the check
 	// sees THIS replication's fresh size — including the very first replication,
