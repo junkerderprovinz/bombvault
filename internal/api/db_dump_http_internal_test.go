@@ -352,7 +352,7 @@ func TestDownloadDBDumpRefusals(t *testing.T) {
 	})
 }
 
-func waitForSaveDone(t *testing.T, svc *Service) {
+func waitForDetachedRun(t *testing.T, svc *Service) {
 	t.Helper()
 	deadline := time.Now().Add(5 * time.Second)
 	for time.Now().Before(deadline) {
@@ -361,7 +361,7 @@ func waitForSaveDone(t *testing.T, svc *Service) {
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
-	t.Fatal("timed out waiting for the save goroutine to finish")
+	t.Fatal("timed out waiting for the detached run to finish")
 }
 
 func latestRunOfKind(t *testing.T, st *store.Repo, kind string) store.Run {
@@ -402,7 +402,7 @@ func TestSaveDBDumpToPathContainedAndExclusive(t *testing.T) {
 		if err != nil || !started {
 			t.Fatalf("started=%v err=%v", started, err)
 		}
-		waitForSaveDone(t, svc)
+		waitForDetachedRun(t, svc)
 
 		want := filepath.Join(svc.cfg.HostMountRoot, "user", "restore", savedName)
 		if target != want {
@@ -467,7 +467,7 @@ func TestSaveDBDumpToPathContainedAndExclusive(t *testing.T) {
 		if err != nil || !started {
 			t.Fatalf("started=%v err=%v", started, err)
 		}
-		waitForSaveDone(t, svc)
+		waitForDetachedRun(t, svc)
 
 		if _, err := os.Stat(target + ".partial"); !errors.Is(err, os.ErrNotExist) {
 			t.Error("a failed save must remove its partial file")

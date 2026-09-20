@@ -150,16 +150,21 @@ const (
 	dbCoverageUnknown = "unknown"
 )
 
+// dumpMounts is a container's mount table as the recognition reads it.
+func dumpMounts(in model.Inspect) []dbdump.Mount {
+	mounts := make([]dbdump.Mount, 0, len(in.Mounts))
+	for _, m := range in.Mounts {
+		mounts = append(mounts, dbdump.Mount{Source: m.Source, Destination: m.Destination})
+	}
+	return mounts
+}
+
 // dbDataCoverage locates the engine's data directory on the host and reports
 // which of those a files backup makes of it. toContainer translates a host path
 // into this process's view; stackDir, effective and folderSetPaths are already
 // in it.
 func dbDataCoverage(in model.Inspect, e dbdump.Engine, toContainer func(string) (string, bool), stackDir string, effective, folderSetPaths []string) string {
-	mounts := make([]dbdump.Mount, 0, len(in.Mounts))
-	for _, m := range in.Mounts {
-		mounts = append(mounts, dbdump.Mount{Source: m.Source, Destination: m.Destination})
-	}
-	host, found := dbdump.DataMount(e, in.Config.Env, mounts)
+	host, found := dbdump.DataMount(e, in.Config.Env, dumpMounts(in))
 	if !found {
 		return dbCoverageUnknown
 	}
@@ -887,6 +892,14 @@ func (s *Service) damagedDBDumpSnapshots(name string) (map[string]bool, error) {
 	return s.store.FailedDBDumpSnapshots(tg.ID)
 }
 
+// What a picked dump can be refused for, as sentinels so an import can name
+// the reason the page translates.
+var (
+	errDBDumpDamaged = errors.New("damaged and can only be deleted")
+	errNotADBDump    = errors.New("not a database dump of this container")
+	errDBDumpPath    = errors.New("does not hold this container's dump")
+)
+
 // dbDumpFor picks one of a container's dumps and refuses what neither a
 // download nor a save may touch: a snapshot that is not one of its dumps, one a
 // failed dump left behind, one that does not hold this container's stream.
@@ -904,13 +917,13 @@ func (s *Service) dbDumpFor(ctx context.Context, settings store.Settings, name, 
 		}
 		switch {
 		case d.view.Damaged:
-			return dbDumpSnapshot{}, dbDumpSource{}, fmt.Errorf("snapshot %s is damaged and can only be deleted", shortID(snapshotID))
+			return dbDumpSnapshot{}, dbDumpSource{}, fmt.Errorf("snapshot %s is %w", shortID(snapshotID), errDBDumpDamaged)
 		case !slices.Contains(d.paths, dbDumpStdinPath(name)):
-			return dbDumpSnapshot{}, dbDumpSource{}, fmt.Errorf("snapshot %s does not hold this container's dump", shortID(snapshotID))
+			return dbDumpSnapshot{}, dbDumpSource{}, fmt.Errorf("snapshot %s %w", shortID(snapshotID), errDBDumpPath)
 		}
 		return d, src, nil
 	}
-	return dbDumpSnapshot{}, dbDumpSource{}, fmt.Errorf("snapshot %s is not a database dump of this container", shortID(snapshotID))
+	return dbDumpSnapshot{}, dbDumpSource{}, fmt.Errorf("snapshot %s is %w", shortID(snapshotID), errNotADBDump)
 }
 
 // DBDumpDownloadName names a dump on its way out of BombVault, so two dumps of
@@ -1041,7 +1054,7 @@ func (s *Service) StartSaveDBDumpToPath(ctx context.Context, name, source, snaps
 		defer cancel()
 		s.registerCancel(rkey, cancel)
 		defer s.unregisterCancel(rkey)
-		runID = s.beginDBDumpSaveRun(name)
+		runID = s.beginDBDumpRun(name, "dbdumpsave", "save database dump")
 		pctx, startedAt := s.progBegin(rctx, rkey, "restore")
 		serr := s.saveDBDump(pctx, plan, rkey, startedAt)
 		s.progEnd(rkey, "restore", serr == nil, startedAt)
@@ -1147,17 +1160,18 @@ func (c *countingWriter) Write(p []byte) (int, error) {
 	return n, err
 }
 
-// beginDBDumpSaveRun opens the save's own run row, so the run history says a
-// dump was saved instead of counting it as a restore.
-func (s *Service) beginDBDumpSaveRun(name string) string {
+// beginDBDumpRun opens a run row of its own kind for work on a dump, so the
+// run history says a dump was saved or imported instead of counting it as a
+// restore. what names the work in the log.
+func (s *Service) beginDBDumpRun(name, kind, what string) string {
 	tg, err := s.store.GetTargetByContainer(name)
 	if err != nil {
-		log.Printf("api: save database dump: no target row for %q, the outcome stays out of the run history: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		log.Printf("api: %s: no target row for %q, the outcome stays out of the run history: %v", what, name, err) //nolint:gosec // G706: name is %q-quoted
 		return ""
 	}
-	runID, err := runsAdapter{st: s.store, ctx: context.Background()}.Start(tg.ID, "dbdumpsave")
+	runID, err := runsAdapter{st: s.store, ctx: context.Background()}.Start(tg.ID, kind)
 	if err != nil {
-		log.Printf("api: save database dump: record the run start for %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		log.Printf("api: %s: record the run start for %q failed: %v", what, name, err) //nolint:gosec // G706: name is %q-quoted
 		return ""
 	}
 	return runID
