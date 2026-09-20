@@ -421,14 +421,16 @@ func (h *Handler) handleDeleteNamedRepo(w http.ResponseWriter, r *http.Request) 
 	// Counted and deleted in ONE transaction, so an item that starts pointing
 	// here while this request is in flight blocks the delete instead of being
 	// put back on its domain repository without a word.
-	n, err := h.store.DeleteNamedRepoIfUnused(id)
+	use, err := h.store.DeleteNamedRepoIfUnused(id)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	if n > 0 {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false,
-			"error": "this repository is still in use; point those items somewhere else first"})
+	if use.InUse() {
+		placementFail(w, errRepoInUse, map[string]any{
+			"items":          use.Items,
+			"defaultDomains": append([]string{}, use.DefaultDomains...),
+		})
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true})

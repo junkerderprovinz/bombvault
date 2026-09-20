@@ -1,6 +1,7 @@
 package store_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -48,15 +49,35 @@ func TestDeleteNamedRepoIfUnusedRefusesWhileAnItemPointsAtIt(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	n, err := r.DeleteNamedRepoIfUnused(repo.ID)
+	use, err := r.DeleteNamedRepoIfUnused(repo.ID)
 	if err != nil {
 		t.Fatalf("DeleteNamedRepoIfUnused: %v", err)
 	}
-	if n != 1 {
-		t.Fatalf("in-use count = %d, want 1", n)
+	if use.Items != 1 {
+		t.Fatalf("in-use count = %d, want 1", use.Items)
 	}
 	if _, err := r.GetNamedRepo(repo.ID); err != nil {
 		t.Fatalf("a refused delete must leave the row in place, got %v", err)
+	}
+}
+
+// TestDeleteNamedRepoIfUnusedRefusesWhileADefaultPointsAtIt is the same refusal
+// for a placement default's home, which points at a repository without a row in
+// any item table.
+func TestDeleteNamedRepoIfUnusedRefusesWhileADefaultPointsAtIt(t *testing.T) {
+	r := namedRepoStore(t)
+	repo := aNamedRepo(t, r, "Cold", "backups/cold")
+	store.SeedDefault(t, r, "vms", repo.ID)
+	store.SeedDefault(t, r, "containers", repo.ID)
+	use, err := r.DeleteNamedRepoIfUnused(repo.ID)
+	if err != nil {
+		t.Fatalf("DeleteNamedRepoIfUnused: %v", err)
+	}
+	if !use.InUse() || use.Items != 0 || !slices.Equal(use.DefaultDomains, []string{"containers", "vms"}) {
+		t.Fatalf("use = %+v, want the two defaults and no item", use)
+	}
+	if _, err := r.GetNamedRepo(repo.ID); err != nil {
+		t.Fatalf("a refused delete must leave the row: %v", err)
 	}
 }
 
@@ -66,12 +87,12 @@ func TestDeleteNamedRepoIfUnusedDeletesWhenNothingPointsAtIt(t *testing.T) {
 	r := namedRepoStore(t)
 	repo := aNamedRepo(t, r, "Cold", "backups/cold")
 
-	n, err := r.DeleteNamedRepoIfUnused(repo.ID)
+	use, err := r.DeleteNamedRepoIfUnused(repo.ID)
 	if err != nil {
 		t.Fatalf("DeleteNamedRepoIfUnused: %v", err)
 	}
-	if n != 0 {
-		t.Fatalf("in-use count = %d, want 0", n)
+	if use.InUse() {
+		t.Fatalf("use = %+v, want nothing", use)
 	}
 	if _, err := r.GetNamedRepo(repo.ID); err == nil {
 		t.Fatal("the row must be gone once nothing points at it")
@@ -156,12 +177,12 @@ func TestTheGuardedWritesCountEveryDomain(t *testing.T) {
 			if err := tc.point(r, repo.ID); err != nil {
 				t.Fatal(err)
 			}
-			n, err := r.DeleteNamedRepoIfUnused(repo.ID)
+			use, err := r.DeleteNamedRepoIfUnused(repo.ID)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if n != 1 {
-				t.Fatalf("a %s item pointing at the repository must block the delete, count = %d", tc.domain, n)
+			if use.Items != 1 {
+				t.Fatalf("a %s item pointing at the repository must block the delete, count = %d", tc.domain, use.Items)
 			}
 		})
 	}

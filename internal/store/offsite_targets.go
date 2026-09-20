@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 )
@@ -388,36 +389,42 @@ const itemsUsingNamedRepoQ = `
 		     + (SELECT COUNT(*) FROM vms       WHERE repo = ?)
 		     + (SELECT COUNT(*) FROM file_sets WHERE repo = ?)`
 
-// DeleteNamedRepoIfUnused deletes a named repository ONLY while nothing points
-// at it, counting and deleting in ONE transaction. It returns the count it saw:
-// 0 means the row is gone, anything else means nothing was written.
-//
-// The count and the delete were two separate statements, which left a window:
-// an item pointed at the repository between them was silently put back on its
-// domain repository, and its next backup landed there looking exactly like a
-// working backup. The window is small and a single operator will rarely hit it -
-// but the whole point of the refusal is that this particular mistake is
-// invisible afterwards, so it must not have a race that reproduces it.
-func (r *Repo) DeleteNamedRepoIfUnused(id string) (int, error) {
+// NamedRepoUse is what still points at a named repository.
+type NamedRepoUse struct {
+	Items          int
+	DefaultDomains []string // domains whose placement default has home = the repository, sorted
+}
+
+// InUse reports whether anything still points at the repository.
+func (u NamedRepoUse) InUse() bool { return u.Items > 0 || len(u.DefaultDomains) > 0 }
+
+// DeleteNamedRepoIfUnused deletes a named repository only while no item and no
+// default points at it, counting and deleting in one transaction so nothing can
+// start pointing at it in between.
+func (r *Repo) DeleteNamedRepoIfUnused(id string) (NamedRepoUse, error) {
+	var use NamedRepoUse
 	tx, err := r.db.Begin()
 	if err != nil {
-		return 0, fmt.Errorf("DeleteNamedRepoIfUnused: %w", err)
+		return use, fmt.Errorf("DeleteNamedRepoIfUnused: %w", err)
 	}
 	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
-	var n int
-	if err := tx.QueryRow(itemsUsingNamedRepoQ, id, id, id).Scan(&n); err != nil {
-		return 0, fmt.Errorf("DeleteNamedRepoIfUnused count: %w", err)
+	if err := tx.QueryRow(itemsUsingNamedRepoQ, id, id, id).Scan(&use.Items); err != nil {
+		return use, fmt.Errorf("DeleteNamedRepoIfUnused count: %w", err)
 	}
-	if n > 0 {
-		return n, nil
+	if use.DefaultDomains, err = placementDomainsUsingRepoTx(tx, id); err != nil {
+		return use, fmt.Errorf("DeleteNamedRepoIfUnused defaults: %w", err)
+	}
+	slices.Sort(use.DefaultDomains)
+	if use.InUse() {
+		return use, nil
 	}
 	if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleRepo); err != nil {
-		return 0, fmt.Errorf("DeleteNamedRepoIfUnused: %w", err)
+		return use, fmt.Errorf("DeleteNamedRepoIfUnused: %w", err)
 	}
 	if err := tx.Commit(); err != nil {
-		return 0, fmt.Errorf("DeleteNamedRepoIfUnused commit: %w", err)
+		return use, fmt.Errorf("DeleteNamedRepoIfUnused commit: %w", err)
 	}
-	return 0, nil
+	return use, nil
 }
 
 // SetNamedRepoLocationIfUnused moves a named repository's location ONLY while
