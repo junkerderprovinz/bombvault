@@ -3102,7 +3102,7 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 		// Marked before the row turns green, so no reader sees a success that
 		// counts for the currency and is none.
 		if agingOnly {
-			if mErr := s.store.MarkOffsiteRunAgingOnly(target.ID, runStarted); mErr != nil {
+			if mErr := s.store.MarkOffsiteRunAgingOnly(domain, target.ID, runStarted); mErr != nil {
 				log.Printf("api: offsite %s: could not mark the run as aging only: %v", domain, mErr) //nolint:gosec // G706: domain is a fixed literal
 			}
 		}
