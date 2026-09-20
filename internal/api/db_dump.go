@@ -1,18 +1,23 @@
 package api
 
 import (
+	"compress/gzip"
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/ageseal"
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/dbdump"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
@@ -29,6 +34,16 @@ import (
 const dbDumpIdentityPrefix = "dbdump:"
 
 func dbDumpIdentity(name string) string { return dbDumpIdentityPrefix + name }
+
+// The describing tags of a dump snapshot. None of them is an identity: they say
+// what was dumped and which backup run the dump belongs to.
+const (
+	dbDumpEngineTagPrefix  = "dbengine:"
+	dbDumpImageTagPrefix   = "dbimage:"
+	dbDumpVersionTagPrefix = "dbversion:"
+	dbDumpNameTagPrefix    = "dbname:"
+	dbDumpRunTagPrefix     = "bvrun:"
+)
 
 // dbDumpStdinPath is the path the dump stream is stored under inside the
 // snapshot. A restore reads the file back by exactly this name.
@@ -492,10 +507,10 @@ func (a *dbDumpAdapter) probeTags(ctx context.Context, engine dbdump.Engine) []s
 	}
 	var tags []string
 	if p.Version != "" {
-		tags = append(tags, "dbversion:"+p.Version)
+		tags = append(tags, dbDumpVersionTagPrefix+p.Version)
 	}
 	for _, db := range p.Databases {
-		tags = append(tags, "dbname:"+db)
+		tags = append(tags, dbDumpNameTagPrefix+db)
 	}
 	return tags
 }
@@ -534,16 +549,22 @@ func (a *dbDumpAdapter) publishBytes() restic.ProgressWatcher {
 // publishStage goes straight to the progress store rather than through the
 // context's sink, which carries the surrounding backup's percentage.
 func (a *dbDumpAdapter) publishStage(stage string, bytes int64) {
-	if a.svc.progress == nil {
+	a.svc.publishDBDumpStage(a.progressKey, "backup", stage, a.startedAt, bytes)
+}
+
+// publishDBDumpStage marks a container's progress entry with the dump step that
+// is running and how many bytes of the stream have moved.
+func (s *Service) publishDBDumpStage(key, phase, stage string, startedAt, bytes int64) {
+	if s.progress == nil {
 		return
 	}
-	a.svc.progress.Publish(progress.Event{
-		Key:       a.progressKey,
-		Phase:     "backup",
+	s.progress.Publish(progress.Event{
+		Key:       key,
+		Phase:     phase,
 		Stage:     stage,
 		Bytes:     bytes,
 		Active:    true,
-		StartedAt: a.startedAt,
+		StartedAt: startedAt,
 	})
 }
 
@@ -730,4 +751,414 @@ func dbDumpReasonHead(reason string) string {
 // head every dump failure shares and without the tool's own message.
 func dbDumpFailureSentence(reason string) string {
 	return strings.TrimPrefix(dbDumpReasonHead(reason), "database dump failed: ")
+}
+
+// DBDumpView is one database dump as the container's dump list shows it.
+type DBDumpView struct {
+	ID        string   `json:"id"`
+	Time      string   `json:"time"`
+	Engine    string   `json:"engine"`
+	Image     string   `json:"image"`
+	Version   string   `json:"version"`
+	Databases []string `json:"databases"`
+	Bytes     int64    `json:"bytes"`
+	// Damaged marks a snapshot a failed dump left behind: it can be deleted and
+	// nothing else.
+	Damaged bool `json:"damaged"`
+	// PairedSnapshotID is the local volume snapshot taken in the same backup.
+	// The client matches it against a snapshot's original, else its id, so the
+	// pairing also shows on an off-site source, where every snapshot was copied
+	// under a new id.
+	PairedSnapshotID string `json:"pairedSnapshotId,omitempty"`
+}
+
+// dbDumpSnapshot is a dump as the list shows it plus what only the download
+// needs: the paths restic stored, which say whether the snapshot really holds
+// this container's stream.
+type dbDumpSnapshot struct {
+	view  DBDumpView
+	paths []string
+	runID string
+}
+
+// dbDumpSource is the repository a container's dumps were resolved to, carried
+// along so a download does not resolve it a second time.
+type dbDumpSource struct {
+	repo string
+	mode restic.Mode
+}
+
+// DBDumps lists a container's database dumps in the given source, newest first.
+func (s *Service) DBDumps(ctx context.Context, name, source string) ([]DBDumpView, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, fmt.Errorf("read settings: %w", err)
+	}
+	dumps, _, err := s.dbDumpsOf(ctx, settings, name, source)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]DBDumpView, 0, len(dumps))
+	for _, d := range dumps {
+		out = append(out, d.view)
+	}
+	return out, nil
+}
+
+func (s *Service) dbDumpsOf(ctx context.Context, settings store.Settings, name, source string) ([]dbDumpSnapshot, dbDumpSource, error) {
+	if !validResourceName(name) {
+		return nil, dbDumpSource{}, errors.New("invalid container name")
+	}
+	if source != "local" && !isOffsiteSource(source) {
+		return nil, dbDumpSource{}, errors.New("invalid source (must be local or offsite)")
+	}
+	repo, err := s.containerRepoForName(settings, name, source)
+	if err != nil {
+		return nil, dbDumpSource{}, err
+	}
+	src := dbDumpSource{repo: repo, mode: s.repoModeFor(settings, "containers", source, repo)}
+	snaps, err := s.snapshotsForTags(ctx, repo, src.mode, dbDumpIdentity(name))
+	if err != nil {
+		return nil, dbDumpSource{}, err
+	}
+	damaged, err := s.damagedDBDumpSnapshots(name)
+	if err != nil {
+		return nil, dbDumpSource{}, err
+	}
+
+	dumps := make([]dbDumpSnapshot, 0, len(snaps))
+	runIDs := make([]string, 0, len(snaps))
+	// restic reports oldest first and the list reads newest first.
+	for i := len(snaps) - 1; i >= 0; i-- {
+		sn := snaps[i]
+		view, runID := dbDumpViewOf(sn)
+		view.Damaged = damaged[sn.ID] || (sn.Original != "" && damaged[sn.Original])
+		dumps = append(dumps, dbDumpSnapshot{view: view, paths: sn.Paths, runID: runID})
+		if runID != "" {
+			runIDs = append(runIDs, runID)
+		}
+	}
+
+	paired, err := s.store.BackupSnapshotsOfRuns(runIDs)
+	if err != nil {
+		return nil, dbDumpSource{}, err
+	}
+	for i := range dumps {
+		dumps[i].view.PairedSnapshotID = paired[dumps[i].runID]
+	}
+	return dumps, src, nil
+}
+
+// dbDumpViewOf reads a dump snapshot's tags into its row and returns the id of
+// the backup run the dump was taken for.
+func dbDumpViewOf(sn restic.Snapshot) (DBDumpView, string) {
+	v := DBDumpView{ID: sn.ID, Time: sn.Time, Databases: []string{}}
+	if sn.Summary != nil {
+		v.Bytes = int64(sn.Summary.TotalBytesProcessed) //nolint:gosec // G115: one dump stream, nowhere near MaxInt64
+	}
+	var runID string
+	for _, t := range sn.Tags {
+		switch {
+		case strings.HasPrefix(t, dbDumpEngineTagPrefix):
+			v.Engine = strings.TrimPrefix(t, dbDumpEngineTagPrefix)
+		case strings.HasPrefix(t, dbDumpImageTagPrefix):
+			v.Image = strings.TrimPrefix(t, dbDumpImageTagPrefix)
+		case strings.HasPrefix(t, dbDumpVersionTagPrefix):
+			v.Version = strings.TrimPrefix(t, dbDumpVersionTagPrefix)
+		case strings.HasPrefix(t, dbDumpNameTagPrefix):
+			v.Databases = append(v.Databases, strings.TrimPrefix(t, dbDumpNameTagPrefix))
+		case strings.HasPrefix(t, dbDumpRunTagPrefix):
+			runID = strings.TrimPrefix(t, dbDumpRunTagPrefix)
+		}
+	}
+	return v, runID
+}
+
+// damagedDBDumpSnapshots are the snapshots this container's failed dumps left
+// behind. A container without a target row has no runs and so no leftovers.
+func (s *Service) damagedDBDumpSnapshots(name string) (map[string]bool, error) {
+	tg, err := s.store.GetTargetByContainer(name)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("read this container's dump runs: %w", err)
+	}
+	return s.store.FailedDBDumpSnapshots(tg.ID)
+}
+
+// dbDumpFor picks one of a container's dumps and refuses what neither a
+// download nor a save may touch: a snapshot that is not one of its dumps, one a
+// failed dump left behind, one that does not hold this container's stream.
+func (s *Service) dbDumpFor(ctx context.Context, settings store.Settings, name, source, snapshotID string) (dbDumpSnapshot, dbDumpSource, error) {
+	if !backup.ValidSnapshotID(snapshotID) {
+		return dbDumpSnapshot{}, dbDumpSource{}, backup.ErrInvalidSnapshotID
+	}
+	dumps, src, err := s.dbDumpsOf(ctx, settings, name, source)
+	if err != nil {
+		return dbDumpSnapshot{}, dbDumpSource{}, err
+	}
+	for _, d := range dumps {
+		if d.view.ID != snapshotID {
+			continue
+		}
+		switch {
+		case d.view.Damaged:
+			return dbDumpSnapshot{}, dbDumpSource{}, fmt.Errorf("snapshot %s is damaged and can only be deleted", shortID(snapshotID))
+		case !slices.Contains(d.paths, dbDumpStdinPath(name)):
+			return dbDumpSnapshot{}, dbDumpSource{}, fmt.Errorf("snapshot %s does not hold this container's dump", shortID(snapshotID))
+		}
+		return d, src, nil
+	}
+	return dbDumpSnapshot{}, dbDumpSource{}, fmt.Errorf("snapshot %s is not a database dump of this container", shortID(snapshotID))
+}
+
+// DBDumpDownloadName names a dump on its way out of BombVault, so two dumps of
+// one container never collide in a download folder.
+func DBDumpDownloadName(name string, v DBDumpView, gz, sealed bool) string {
+	out := name
+	if at, err := time.Parse(time.RFC3339, v.Time); err == nil {
+		out += "-" + at.Format("20060102-150405")
+	}
+	out += "-" + shortID(v.ID) + ".sql"
+	if gz {
+		out += ".gz"
+	}
+	if sealed {
+		out += ".age"
+	}
+	return out
+}
+
+// DownloadDBDump streams one dump to w, gzip-compressed in the stream when
+// asked and age-sealed around that when export encryption is on. onResolved is
+// called with the dump once every refusal has passed, so the handler can name
+// the attachment before the first byte leaves. check runs the refusals and
+// returns without streaming, which is what the browser asks before it starts a
+// native download.
+func (s *Service) DownloadDBDump(ctx context.Context, name, source, snapshotID string, gz, check bool, onResolved func(v DBDumpView, sealed bool), w io.Writer) error {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return fmt.Errorf("read settings: %w", err)
+	}
+	// The recipients are resolved before anything else: with sealing on but
+	// broken, a plaintext stream must never start under a sealed name.
+	recipients, sealed, err := s.exportRecipients(settings)
+	if err != nil {
+		return err
+	}
+	dump, src, err := s.dbDumpFor(ctx, settings, name, source, snapshotID)
+	if err != nil {
+		return err
+	}
+	if check {
+		return nil
+	}
+	if onResolved != nil {
+		onResolved(dump.view, sealed)
+	}
+
+	dst := w
+	var ageW io.WriteCloser
+	if sealed {
+		ageW, err = ageseal.WrapWriter(dst, recipients)
+		if err != nil {
+			return err
+		}
+		dst = ageW
+	}
+	var gzW *gzip.Writer
+	if gz {
+		gzW = gzip.NewWriter(dst)
+		dst = gzW
+	}
+
+	log.Printf("api: database dump of %q: streaming snapshot %s to a download", name, shortID(snapshotID)) //nolint:gosec // G706: name is %q-quoted
+	if err := s.engine.DumpRaw(ctx, src.repo, snapshotID, dbDumpStdinPath(name), dst, src.mode); err != nil {
+		return err
+	}
+	if gzW != nil {
+		if err := gzW.Close(); err != nil {
+			return err
+		}
+	}
+	if ageW != nil {
+		return ageW.Close()
+	}
+	return nil
+}
+
+// A saved dump belongs to Unraid's nobody:users like everything else on a
+// share, so it opens over SMB without a detour through the console.
+const (
+	dbDumpFileUID  = 99
+	dbDumpFileGID  = 100
+	dbDumpFileMode = 0o640
+)
+
+func (s *Service) dbDumpChownFn() func(string, int, int) error {
+	if s.dbDumpChown != nil {
+		return s.dbDumpChown
+	}
+	return os.Chown
+}
+
+// dbDumpSavePlan is everything StartSaveDBDumpToPath resolved while the request
+// was still open, so the detached run only has to write.
+type dbDumpSavePlan struct {
+	src   dbDumpSource
+	dump  DBDumpView
+	path  string
+	final string
+	gz    bool
+}
+
+// StartSaveDBDumpToPath writes one dump into a folder on the server. It runs
+// under its own run kind, so a failed save does not colour the container's
+// backup history; validation happens before it returns and the writing runs
+// detached, like a restore into a folder. It returns the file the dump will
+// appear as.
+func (s *Service) StartSaveDBDumpToPath(ctx context.Context, name, source, snapshotID, targetSubPath string, gz bool) (string, bool, error) {
+	if !s.batchActive.CompareAndSwap(false, true) {
+		return "", false, nil
+	}
+	plan, err := s.prepareSaveDBDump(ctx, name, source, snapshotID, targetSubPath, gz)
+	if err != nil {
+		s.batchActive.Store(false)
+		return "", false, err
+	}
+	bctx := context.WithoutCancel(ctx)
+	rkey := "container:" + name
+	go func() {
+		var runID string
+		defer s.recoverOperation("save database dump: "+name, nil, func(msg string) {
+			s.finishRestoreRun(runID, "", errors.New(msg))
+		})
+		defer s.batchActive.Store(false)
+		tctx, tcancel := context.WithTimeout(bctx, restoreTimeout)
+		defer tcancel()
+		rctx, cancel := context.WithCancel(tctx)
+		defer cancel()
+		s.registerCancel(rkey, cancel)
+		defer s.unregisterCancel(rkey)
+		runID = s.beginDBDumpSaveRun(name)
+		pctx, startedAt := s.progBegin(rctx, rkey, "restore")
+		serr := s.saveDBDump(pctx, plan, rkey, startedAt)
+		s.progEnd(rkey, "restore", serr == nil, startedAt)
+		s.finishRestoreRun(runID, plan.dump.ID, serr)
+		if serr != nil {
+			log.Printf("api: save database dump of %q failed: %v", name, serr) //nolint:gosec // G706: name is %q-quoted
+		}
+	}()
+	return plan.final, true, nil
+}
+
+func (s *Service) prepareSaveDBDump(ctx context.Context, name, source, snapshotID, targetSubPath string, gz bool) (dbDumpSavePlan, error) {
+	target, err := paths.Resolve(s.cfg.HostMountRoot, targetSubPath)
+	if err != nil {
+		return dbDumpSavePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return dbDumpSavePlan{}, fmt.Errorf("read settings: %w", err)
+	}
+	dump, src, err := s.dbDumpFor(ctx, settings, name, source, snapshotID)
+	if err != nil {
+		return dbDumpSavePlan{}, err
+	}
+	if err := paths.EnsureDir(target); err != nil {
+		return dbDumpSavePlan{}, fmt.Errorf("create target folder: %w", err)
+	}
+	final := filepath.Join(target, DBDumpDownloadName(name, dump.view, gz, false))
+	if _, err := os.Stat(final); err == nil {
+		return dbDumpSavePlan{}, fmt.Errorf("%s already exists in that folder", filepath.Base(final))
+	}
+	return dbDumpSavePlan{src: src, dump: dump.view, path: dbDumpStdinPath(name), final: final, gz: gz}, nil
+}
+
+// saveDBDump writes the dump beside its final name and publishes it with a
+// rename, so a half-written file is never mistaken for a dump.
+func (s *Service) saveDBDump(ctx context.Context, plan dbDumpSavePlan, key string, startedAt int64) error {
+	unlock := s.lockDomainFor("containers", "restore")
+	defer unlock()
+
+	partial := plan.final + ".partial"
+	f, err := os.OpenFile(partial, os.O_CREATE|os.O_EXCL|os.O_WRONLY, dbDumpFileMode) //nolint:gosec // G304: a name built from the container and the snapshot, inside a folder paths.Resolve contained
+	if err != nil {
+		return err
+	}
+	if cErr := s.dbDumpChownFn()(partial, dbDumpFileUID, dbDumpFileGID); cErr != nil {
+		log.Printf("api: save database dump: %s keeps this process's ownership: %v", filepath.Base(partial), cErr) //nolint:gosec // G706: a name this process built
+	}
+
+	err = s.streamDBDumpInto(ctx, plan, f, key, startedAt)
+	if cErr := f.Close(); err == nil {
+		err = cErr
+	}
+	if err == nil {
+		err = os.Rename(partial, plan.final)
+	}
+	if err != nil {
+		if rErr := os.Remove(partial); rErr != nil && !errors.Is(rErr, os.ErrNotExist) {
+			log.Printf("api: save database dump: the unfinished file could not be removed: %v", rErr)
+		}
+		return err
+	}
+	return nil
+}
+
+func (s *Service) streamDBDumpInto(ctx context.Context, plan dbDumpSavePlan, f *os.File, key string, startedAt int64) error {
+	counted := &countingWriter{w: f, publish: func(n int64) {
+		s.publishDBDumpStage(key, "restore", "dbdumpsave", startedAt, n)
+	}}
+	var dst io.Writer = counted
+	var gzW *gzip.Writer
+	if plan.gz {
+		gzW = gzip.NewWriter(counted)
+		dst = gzW
+	}
+	if err := s.engine.DumpRaw(ctx, plan.src.repo, plan.dump.ID, plan.path, dst, plan.src.mode); err != nil {
+		return err
+	}
+	if gzW != nil {
+		if err := gzW.Close(); err != nil {
+			return err
+		}
+	}
+	return f.Sync()
+}
+
+// countingWriter reports how far a stream has come, throttled, so a save of a
+// multi-gigabyte dump shows movement on the container's card.
+type countingWriter struct {
+	w       io.Writer
+	publish func(bytes int64)
+	written int64
+	last    time.Time
+}
+
+func (c *countingWriter) Write(p []byte) (int, error) {
+	n, err := c.w.Write(p)
+	c.written += int64(n)
+	if now := time.Now(); now.Sub(c.last) >= dbDumpProgressEvery {
+		c.last = now
+		c.publish(c.written)
+	}
+	return n, err
+}
+
+// beginDBDumpSaveRun opens the save's own run row, so the run history says a
+// dump was saved instead of counting it as a restore.
+func (s *Service) beginDBDumpSaveRun(name string) string {
+	tg, err := s.store.GetTargetByContainer(name)
+	if err != nil {
+		log.Printf("api: save database dump: no target row for %q, the outcome stays out of the run history: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		return ""
+	}
+	runID, err := runsAdapter{st: s.store, ctx: context.Background()}.Start(tg.ID, "dbdumpsave")
+	if err != nil {
+		log.Printf("api: save database dump: record the run start for %q failed: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		return ""
+	}
+	return runID
 }
