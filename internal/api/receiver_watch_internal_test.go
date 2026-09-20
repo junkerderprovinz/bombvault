@@ -277,3 +277,22 @@ func TestReceiverWatchMutedPolicyStillPersists(t *testing.T) {
 		t.Fatal("the check must persist a verdict even under a muted policy")
 	}
 }
+
+// A dump series stops on purpose whenever the toggle, the global switch or a
+// stopped database says so, and the container's own item already answers "this
+// box stopped sending". Treating a dump as a dead-man source turns every one of
+// those decisions into a nightly alert.
+func TestDeadManSkipsDBDumpItems(t *testing.T) {
+	snaps := []restic.Snapshot{
+		{Hostname: "tower", Time: "2026-07-01T10:00:00Z", Tags: []string{"container:pg", "p1"}},
+		{Hostname: "tower", Time: "2026-07-01T10:05:00Z", Tags: []string{"dbdump:pg", "p1"}},
+	}
+
+	got := receiverDeadManSourcesOf(snaps)
+	if len(got) != 1 {
+		t.Fatalf("sources = %+v, want the container alone", got)
+	}
+	if got[0].source != "container:pg @ tower" {
+		t.Fatalf("source = %q, want the container item", got[0].source)
+	}
+}

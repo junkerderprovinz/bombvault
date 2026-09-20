@@ -45,12 +45,13 @@ type ForeignItem struct {
 }
 
 // ForeignInventory groups a foreign repository's snapshots by the same tag
-// prefixes Discover cuts (container:/vm:/fileset:), so the Recovery UI can
-// offer a browse-and-restore tree without any local state.
+// prefixes Discover cuts (container:/vm:/fileset:/dbdump:), so the Recovery UI
+// can offer a browse-and-restore tree without any local state.
 type ForeignInventory struct {
 	Containers []ForeignItem `json:"containers"`
 	VMs        []ForeignItem `json:"vms"`
 	FileSets   []ForeignItem `json:"fileSets"`
+	DBDumps    []ForeignItem `json:"dbDumps"`
 }
 
 // foreignSession is one open read-only session onto a foreign repository. It
@@ -350,8 +351,8 @@ func (s *Service) sweepForeign() {
 }
 
 // foreignInventory lists the repo ONCE and groups the snapshots by the
-// container:/vm:/fileset: tag prefixes (the same prefixes Discover cuts).
-// Items are sorted by name; slices are non-nil so the JSON is always [].
+// container:/vm:/fileset:/dbdump: tag prefixes (the same prefixes Discover
+// cuts). Items are sorted by name; slices are non-nil so the JSON is always [].
 func (s *Service) foreignInventory(ctx context.Context, repo string, mode restic.Mode) (ForeignInventory, error) {
 	snaps, err := s.listSnapshots(ctx, repo, mode)
 	if err != nil {
@@ -360,6 +361,7 @@ func (s *Service) foreignInventory(ctx context.Context, repo string, mode restic
 	containers := map[string][]restic.Snapshot{}
 	vms := map[string][]restic.Snapshot{}
 	fileSets := map[string][]restic.Snapshot{}
+	dbDumps := map[string][]restic.Snapshot{}
 	for _, snap := range snaps {
 		for _, tag := range snap.Tags {
 			if rest, ok := strings.CutPrefix(tag, "container:"); ok && rest != "" {
@@ -371,12 +373,16 @@ func (s *Service) foreignInventory(ctx context.Context, repo string, mode restic
 			if rest, ok := strings.CutPrefix(tag, "fileset:"); ok && rest != "" {
 				fileSets[rest] = append(fileSets[rest], snap)
 			}
+			if rest, ok := strings.CutPrefix(tag, dbDumpIdentityPrefix); ok && rest != "" {
+				dbDumps[rest] = append(dbDumps[rest], snap)
+			}
 		}
 	}
 	return ForeignInventory{
 		Containers: foreignItems(containers),
 		VMs:        foreignItems(vms),
 		FileSets:   foreignItems(fileSets),
+		DBDumps:    foreignItems(dbDumps),
 	}, nil
 }
 

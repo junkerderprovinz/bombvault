@@ -216,3 +216,25 @@ func TestReceiverOpenKeepsRemoteLocations(t *testing.T) {
 		}
 	}
 }
+
+// A received dump snapshot belongs to its container, not to the untagged pile
+// the receiver table shows when it cannot name a sender's item.
+func TestReceiverItemTagRecognisesDBDump(t *testing.T) {
+	cases := []struct {
+		name string
+		tags []string
+		want string
+	}{
+		{name: "a dump", tags: []string{"dbdump:pg", "p1", "dbengine:postgres"}, want: "dbdump:pg"},
+		{name: "a container", tags: []string{"container:web", "p1"}, want: "container:web"},
+		{name: "a prefix without a name", tags: []string{"dbdump:"}, want: "untagged"},
+		{name: "a describing tag alone", tags: []string{"dbengine:postgres"}, want: "untagged"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := receiverItemTag(restic.Snapshot{Tags: tc.tags}); got != tc.want {
+				t.Fatalf("receiverItemTag(%v) = %q, want %q", tc.tags, got, tc.want)
+			}
+		})
+	}
+}

@@ -181,7 +181,7 @@ func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 // alias's target_id resolves to the entry's current name.
 func (r *Repo) GetTargetByID(id string) (Target, error) {
 	row := r.db.QueryRow(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence, repo
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence, repo, db_dump_off, db_dump_engine
 		FROM targets WHERE id = ?`, id)
 	return scanTarget(row)
 }

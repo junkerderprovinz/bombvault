@@ -20,9 +20,11 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -80,6 +82,16 @@ func (s *Service) receiverDeadManSources(ctx context.Context, rr store.ReceivedR
 	if err != nil {
 		return nil, err
 	}
+	return receiverDeadManSourcesOf(snaps), nil
+}
+
+// receiverDeadManSourcesOf groups snapshots into the sources the sweep watches:
+// one per host and item tag, with its newest snapshot time.
+//
+// A database dump is not one of them. Its series stops whenever the toggle, the
+// global switch or a stopped database says so, and the container's own item
+// already answers the question the sweep asks: has this box stopped sending?
+func receiverDeadManSourcesOf(snaps []restic.Snapshot) []receiverDeadManSource {
 	type agg struct {
 		host, item string
 		newest     time.Time
@@ -88,6 +100,9 @@ func (s *Service) receiverDeadManSources(ctx context.Context, rr store.ReceivedR
 	groups := map[string]*agg{}
 	for _, snap := range snaps {
 		item := receiverItemTag(snap)
+		if strings.HasPrefix(item, dbDumpIdentityPrefix) {
+			continue
+		}
 		key := snap.Hostname + "\x00" + item
 		g := groups[key]
 		if g == nil {
@@ -108,7 +123,7 @@ func (s *Service) receiverDeadManSources(ctx context.Context, rr store.ReceivedR
 			newest: g.newest.Unix(),
 		})
 	}
-	return out, nil
+	return out
 }
 
 // RunReceiverChecks runs the daily receiver watch across every enabled

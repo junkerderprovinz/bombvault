@@ -6,12 +6,15 @@ import (
 	"errors"
 	"io"
 	"log"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
+	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dbdump"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
@@ -599,4 +602,66 @@ func TestDBDumpAdapterProbeTags(t *testing.T) {
 			t.Fatalf("%d dumps after a failed probe, want one", eng.backupCall)
 		}
 	})
+}
+
+func TestIdentityTagsIncludeDBDump(t *testing.T) {
+	snaps := []restic.Snapshot{{Tags: []string{
+		"dbdump:pg", "p1", "bvrun:x", "dbengine:postgres", "dbimage:postgres:16", "dbversion:16.4", "dbname:immich",
+	}}}
+
+	got := identityTags(snaps)
+	if len(got) != 1 || got[0] != "dbdump:pg" {
+		t.Fatalf("identityTags = %v, want only the dump identity: every other dump tag describes\n"+
+			"the snapshot and would get a retention series of its own", got)
+	}
+}
+
+// serviceWithContainersRepo builds a Service over a real store whose containers
+// repository exists on disk, so a snapshot listing reaches the engine.
+func serviceWithContainersRepo(t *testing.T, eng ResticEngine) *Service {
+	t.Helper()
+	db, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatalf("open mem store: %v", err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	if err := store.Migrate(db); err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	st := store.New(db)
+	dir := t.TempDir()
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	repo := filepath.Join(dir, "backups", "containers")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return &Service{store: st, engine: eng, cfg: config.Config{HostMountRoot: dir, AppKey: strings.Repeat("a", 64)}}
+}
+
+func TestContainerHasBackupsCountsDumps(t *testing.T) {
+	eng := &previewEngine{snaps: []restic.Snapshot{snapWithTags("aaaa1111", "dbdump:pg", "p1")}}
+	s := serviceWithContainersRepo(t, eng)
+
+	has, err := s.containerHasBackups(context.Background(), "pg")
+	if err != nil {
+		t.Fatalf("containerHasBackups: %v", err)
+	}
+	if !has {
+		t.Error("a container whose only backups are database dumps must count as backed up:\n" +
+			"a repository override would otherwise orphan those dumps without a word")
+	}
+	if eng.snapsCalls != 1 {
+		t.Errorf("the repository was listed %d times, want once: Discover and the repository\n"+
+			"override ask this per container", eng.snapsCalls)
+	}
 }

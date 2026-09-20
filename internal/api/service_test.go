@@ -8815,3 +8815,203 @@ func TestUnlinkContainerAliasMovesDRDrillTargetBack(t *testing.T) {
 		t.Fatalf("DRDrillTarget = %q, want %q (moved back)", got.DRDrillTarget, "radarr-movies")
 	}
 }
+
+// A dump snapshot lives in the container's own repository, so a named
+// repository holds it next to the volume snapshots. Narrowing the off-site copy
+// to "container:" alone leaves every dump behind, and nobody notices until the
+// off-site copy is the only one left.
+func TestOffsiteCopyNarrowingKeepsDumps(t *testing.T) {
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "1111aaaa", Tags: []string{"container:plex"}},
+		{ID: "2222bbbb", Tags: []string{"dbdump:plex"}},
+		{ID: "3333cccc", Tags: []string{"vm:win11"}},
+	}}
+	svc, st, _, cold := twoRepoDomain(t, eng)
+	eng.snapsByRepo = map[string][]restic.Snapshot{
+		"rest:http://192.168.1.2:8000/containers": nil,
+	}
+
+	s := mustSettings(t, st)
+	s.ContainersOffsite = "rest:http://192.168.1.2:8000/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	narrowed := false
+	for i, c := range eng.copied {
+		src := filepath.ToSlash(strings.SplitN(c, "->", 2)[0])
+		if src != filepath.ToSlash(cold) {
+			continue
+		}
+		narrowed = true
+		got := eng.copiedIDs[i]
+		if len(got) != 2 || !contains(got, "1111aaaa") || !contains(got, "2222bbbb") {
+			t.Fatalf("the named repository was copied with ids %v, want the container snapshot and its dump.\n"+
+				"A dump that never reaches off-site is missing exactly when the off-site copy is all there is.", got)
+		}
+	}
+	if !narrowed {
+		t.Fatalf("the named repository was never copied: %v", eng.copied)
+	}
+}
+
+// A database container whose data sits under a compose working directory has no
+// volume backup of its own. Its dumps are the only trace it leaves, so a
+// discovery that reads "container:" alone cannot rebuild it after a /config
+// loss.
+func TestDiscoverFindsDumpOnlyContainer(t *testing.T) {
+	eng := &fakeResticEngine{snapsByRepo: map[string][]restic.Snapshot{}}
+	svc, st, own, _ := twoRepoDomain(t, eng)
+	eng.snapsByRepo[filepath.ToSlash(own)] = []restic.Snapshot{
+		{ID: "1111aaaa", Tags: []string{"dbdump:immich_pg"}},
+	}
+	writeDiscoverableDef(t, filepath.Join(own, "def"), "immich_pg")
+
+	n, _, err := svc.Discover(context.Background(), false)
+	if err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	if n != 1 {
+		t.Fatalf("Discover found %d items, want the dump-only container", n)
+	}
+	if _, err := st.GetTargetByContainer("immich_pg"); err != nil {
+		t.Fatalf("the rebuilt target is missing: %v", err)
+	}
+}
+
+// Newest wins across both identities, not within each: a container whose volume
+// backup is old and whose dumps are current belongs to the repository the dumps
+// are in, which is where its next backup goes.
+func TestDiscoverNewestWinsAcrossPrefixes(t *testing.T) {
+	eng := &fakeResticEngine{snapsByRepo: map[string][]restic.Snapshot{}}
+	svc, st, own, cold := twoRepoDomain(t, eng)
+	eng.snapsByRepo[filepath.ToSlash(own)] = []restic.Snapshot{
+		{ID: "1111aaaa", Time: "2026-01-01T00:00:00Z", Tags: []string{"container:sonarr"}},
+	}
+	eng.snapsByRepo[filepath.ToSlash(cold)] = []restic.Snapshot{
+		{ID: "2222bbbb", Time: "2026-09-01T00:00:00Z", Tags: []string{"dbdump:sonarr"}},
+	}
+	writeDiscoverableDef(t, filepath.Join(own, "def"), "sonarr")
+
+	if _, _, err := svc.Discover(context.Background(), false); err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	tg, err := st.GetTargetByContainer("sonarr")
+	if err != nil {
+		t.Fatalf("the rebuilt target is missing: %v", err)
+	}
+	named, err := st.ListNamedRepos()
+	if err != nil || len(named) != 1 {
+		t.Fatalf("ListNamedRepos: %v (%d rows)", err, len(named))
+	}
+	if tg.Repo != named[0].ID {
+		t.Errorf("sonarr was attributed to repository %q, want the named one %q holding its newest snapshot",
+			tg.Repo, named[0].ID)
+	}
+}
+
+// "Add tag" writes a tag onto a snapshot of the operator's choosing. A tag with
+// a prefix BombVault reads as an identity would put a volume snapshot into a
+// dump list or into another item's retention series.
+func TestTagSnapshotRefusesReservedPrefixes(t *testing.T) {
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:plex"}},
+	}}
+	svc := diffTagTestService(t, eng)
+
+	reserved := []string{
+		"dbdump:x", "bvrun:1", "dbengine:postgres", "dbimage:postgres:16", "dbversion:1",
+		"dbname:x", "container:y", "vm:y", "fileset:y", "stack:z", "vmrun:1",
+	}
+	for _, tag := range reserved {
+		err := svc.TagSnapshot(context.Background(), "plex", "local", "aaaa1111", []string{tag})
+		if err == nil || !strings.Contains(err.Error(), "reserved") {
+			t.Errorf("tag %q was accepted (%v), want a refusal naming the reserved prefix", tag, err)
+		}
+	}
+	if len(eng.taggedSnaps) != 0 {
+		t.Fatalf("a refused tag must not reach the engine, got %v", eng.taggedSnaps)
+	}
+	if err := svc.TagSnapshot(context.Background(), "plex", "local", "aaaa1111", []string{"keep"}); err != nil {
+		t.Fatalf("an ordinary tag must still be accepted: %v", err)
+	}
+}
+
+// Deleting a container's backups leaves nothing behind, dumps included: a dump
+// left in the repository is invisible in the interface and pruned by nothing.
+func TestDeleteBackupsForgetsDumps(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo := filepath.Join(dir, "backups", "containers")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "pg", AppdataPaths: []string{"/x"}}); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:pg", "p1"}},
+		{ID: "bbbb2222", Tags: []string{"dbdump:pg", "p1"}},
+		{ID: "cccc3333", Tags: []string{"container:sonarr", "p1"}},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	if err := svc.DeleteBackups(context.Background(), "pg"); err != nil {
+		t.Fatalf("DeleteBackups: %v", err)
+	}
+	if len(eng.forgotten) != 2 || !contains(eng.forgotten, "aaaa1111") || !contains(eng.forgotten, "bbbb2222") {
+		t.Fatalf("forgot %v, want the container's snapshots and its dumps", eng.forgotten)
+	}
+}
+
+// A container that exists only as dumps must hit the append-only refusal before
+// the delete takes the domain lock or clears a lock file: the function's own
+// comment names a guaranteed-refused write against a protected repository as
+// the defect.
+func TestDeleteBackupsDumpOnlyRefusedBeforeAnyLock(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	const repo = "rest:http://192.168.1.9:8000/containers"
+	s.ContainersPath = repo
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "pg", AppdataPaths: []string{"/x"}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertPrimaryRemoteTarget("containers", store.OffsiteTarget{Repo: repo, Immutable: true, Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "bbbb2222", Tags: []string{"dbdump:pg", "p1"}},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	err := svc.DeleteBackups(context.Background(), "pg")
+	if err == nil || !strings.Contains(err.Error(), "append-only") {
+		t.Fatalf("delete = %v, want an append-only refusal", err)
+	}
+	if len(eng.unlockedRepos) != 0 {
+		t.Errorf("a refused delete cleared locks on %v", eng.unlockedRepos)
+	}
+	if len(eng.forgotten) != 0 {
+		t.Errorf("a refused delete forgot %v", eng.forgotten)
+	}
+	if _, err := st.GetTargetByContainer("pg"); err != nil {
+		t.Fatalf("a refused delete must not drop the container target: %v", err)
+	}
+}

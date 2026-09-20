@@ -103,7 +103,7 @@ func dbDumpImageTagValue(name, image string) string {
 	if image == "" {
 		return ""
 	}
-	if _, err := sanitizeTags([]string{image}); err != nil || len(image) > maxTagValue {
+	if tagValueError(image) != nil || len(image) > maxTagValue {
 		log.Printf("api: database dump of %q: image reference is not usable as a tag, leaving it off the snapshot", name) //nolint:gosec // G706: name is %q-quoted
 		return ""
 	}
@@ -417,13 +417,18 @@ func dbDumpReasonText(reasonID, detail string) string {
 
 // forgetDBDumpSeries applies the retention policy to a container's dumps as
 // their own series and without pruning: the container's own pass right after
-// it reclaims the space of both in one go.
+// it reclaims the space of both in one go. A renamed container's dumps age
+// with it, under the same tags its volume snapshots are forgotten by.
 func (s *Service) forgetDBDumpSeries(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, name string) {
 	p := s.retentionPolicy(settings)
 	if !p.Any() || s.primaryIsImmutable("containers", repo) {
 		return
 	}
-	if err := s.forgetWithLockHeal(ctx, repo, p, mode, []string{dbDumpIdentity(name)}, false); err != nil {
+	tags, ok := s.retentionTagsFor(ctx, repo, mode, s.containerDumpIdentity(name))
+	if !ok {
+		return
+	}
+	if err := s.forgetWithLockHeal(ctx, repo, p, mode, tags, false); err != nil {
 		log.Printf("api: retention of the database dumps of %q failed (the backup is safe): %v", name, err) //nolint:gosec // G706: name is %q-quoted
 	}
 }
