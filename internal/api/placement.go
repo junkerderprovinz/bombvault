@@ -597,6 +597,14 @@ func skipsEverything(skip []string) bool {
 	return len(skip) == 1 && skip[0] == store.SkipAll
 }
 
+// withDefaultSkip is p as it reads once the default's skip is skip.
+func (p placementRead) withDefaultSkip(skip []string) placementRead {
+	p.State.HasDefault = true
+	p.State.Default.Domain = p.Domain
+	p.State.Default.Skip = skip
+	return p
+}
+
 // withCopies is p as it reads once copies is written for identity.
 func (p placementRead) withCopies(identity string, copies *store.CopiesWrite) placementRead {
 	if copies == nil {

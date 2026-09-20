@@ -258,6 +258,9 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("PUT /api/offsite/targets/{id}", h.handleUpdateOffsiteTarget)
 	mux.HandleFunc("DELETE /api/offsite/targets/{id}", h.handleDeleteOffsiteTarget)
 	mux.HandleFunc("POST /api/offsite/targets/{id}/test", h.handleTestOffsiteTarget)
+	mux.HandleFunc("GET /api/placement/defaults", h.handleListPlacementDefaults)
+	mux.HandleFunc("POST /api/placement/default/{domain}/preview", h.handlePreviewPlacementDefault)
+	mux.HandleFunc("PUT /api/placement/default/{domain}", h.handlePutPlacementDefault)
 	mux.HandleFunc("POST /api/offsite/{domain}", h.handleReplicateOffsite)
 	// Primary-target probe; the per-target one is the /targets/{id}/test route above.
 	mux.HandleFunc("POST /api/offsite/{domain}/test", h.handleTestOffsite)
