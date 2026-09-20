@@ -95,7 +95,7 @@ func (s *Service) writeItemPlacement(ctx context.Context, item store.ItemRef, ch
 	}
 	next := read
 	if home != nil {
-		if err := s.checkHomeChange(ctx, item, p, read, *home); err != nil {
+		if err := s.checkHomeChange(ctx, item, read, *home); err != nil {
 			return res, err
 		}
 		next = store.HomeState{Exists: true, Repo: home.Repo, Choice: home.Choice}
@@ -171,12 +171,12 @@ func validSkip(skip []string) bool {
 
 // checkHomeChange refuses a new location for an item with history where it
 // is, and a repository that could not take its next backup. "Where it is"
-// means the row's effective home, the repository its next backup actually
-// lands on: an open item with a default is already there in every way that
-// matters, whatever its own (empty) repo field reads.
-func (s *Service) checkHomeChange(ctx context.Context, item store.ItemRef, p placementRead, read store.HomeState, home store.HomeWrite) error {
+// means the row's own repo field, the same place itemBackups looks: an open
+// item's history, if it has any, sits at the domain path, whatever its
+// default currently names.
+func (s *Service) checkHomeChange(ctx context.Context, item store.ItemRef, read store.HomeState, home store.HomeWrite) error {
 	if home.Choice == store.RepoChosen {
-		if before, _ := p.effectiveHome(read); before == home.Repo {
+		if read.Repo == home.Repo {
 			return nil
 		}
 		if err := s.validateItemRepoID(home.Repo); err != nil {
@@ -216,7 +216,7 @@ func (s *Service) checkPlacementChange(ctx context.Context, item store.ItemRef, 
 	}
 	next := read
 	if home != nil {
-		if err := s.checkHomeChange(ctx, item, p, read, *home); err != nil {
+		if err := s.checkHomeChange(ctx, item, read, *home); err != nil {
 			return err
 		}
 		next = store.HomeState{Exists: true, Repo: home.Repo, Choice: home.Choice}
