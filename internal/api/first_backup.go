@@ -154,14 +154,22 @@ func (s *Service) prepareHome(ctx context.Context, settings store.Settings, item
 // that lock forever.
 const homeSettleAttempts = 3
 
+// errHomeSettleExhausted means the item's row kept changing out from under
+// every attempt to record its settled location, so recordHome gave up rather
+// than hold the domain lock without end.
+var errHomeSettleExhausted = errors.New("its location kept changing while the first backup tried to settle it")
+
 // recordHome writes the settled location, starting the step over from the
 // row's current state when it changed since it was read. It gives up after a
-// few turns and returns the last attempt rather than retry without end.
+// few turns rather than retry without end.
 func (s *Service) recordHome(ctx context.Context, settings store.Settings, item store.ItemRef, step homeStep) (homeStep, error) {
 	for attempt := 1; ; attempt++ {
 		ok, err := step.commit()
-		if err != nil || ok || attempt == homeSettleAttempts {
+		if err != nil || ok {
 			return step, err
+		}
+		if attempt == homeSettleAttempts {
+			return step, fmt.Errorf("%s %q: %w", item.Domain, item.Key, errHomeSettleExhausted)
 		}
 		if step, err = s.prepareHome(ctx, settings, item); err != nil {
 			return step, err
