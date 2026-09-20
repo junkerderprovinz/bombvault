@@ -11119,83 +11119,18 @@ func (s *Service) SetFileSetSelectedPaths(_ context.Context, id string, entries 
 	return nil
 }
 
-// fileSetHasBackups reports whether the file set id already has at least one
-// recorded successful backup run — i.e. fileset:<Name>-tagged snapshots exist in
-// the repo. Cheap: a single indexed runs lookup, no restic call. Renaming such a
-// set would silently orphan those snapshots (they stay tagged with the OLD name
-// and are never re-tagged), so handlePatchFileSet refuses a name change when this
-// is true (change path/excludes/enabled freely; create a new set to rename).
+// fileSetHasBackups, containerHasBackups and vmHasBackups decide whether an
+// item may still move. An unreadable location counts as having backups.
 func (s *Service) fileSetHasBackups(ctx context.Context, id string) (bool, error) {
-	run, err := s.store.LastSuccessfulBackup(id)
-	if err != nil {
-		return false, err
-	}
-	if run != nil {
-		return true, nil
-	}
-	// The runs table alone misses a Discover-rebuilt set: it has real
-	// fileset:<Name> snapshots in the repo but a fresh id with NO run rows.
-	// Confirm against the repo tags so such a set can't be renamed (which would
-	// strand those snapshots). A brand-new set with no repo yet lists empty
-	// (localRepoMissing -> nil); a set whose share is established but unmounted
-	// errors, and we then refuse the rename conservatively rather than risk
-	// stranding snapshots we cannot see.
-	snaps, err := s.SnapshotsFileSet(ctx, id, "local")
-	if err != nil {
-		if errors.Is(err, errFileSetNotFound) {
-			return false, err
-		}
-		return true, nil
-	}
-	return len(snaps) > 0, nil
+	return countsAsBackedUp(s.itemBackups(ctx, store.ItemRef{Domain: "files", Key: id}))
 }
 
-// containerHasBackups / vmHasBackups are fileSetHasBackups for the other two
-// domains (#204), and they exist because the review found their absence: the
-// has-backups refusal was described in applyItemRepo's own doc comment, in the
-// picker, and in the API client, and was implemented for the file set only.
-//
-// Why it has to exist at all: an item's snapshots stay in the repository they
-// were written to and nothing re-homes them. Re-pointing an item that already
-// has some splits its history across two places, and the interface then shows
-// only the new half - the old snapshots are still there, invisible, never
-// pruned, and unreachable except through restic by hand.
-//
-// The runs table alone is not enough, exactly as the file-set twin documents: an
-// item rebuilt by Discover after a /config loss has real snapshots in the repo
-// and a fresh id with no run rows. That is the very case where the answer must
-// be "yes, it has backups" - and it is also the case the interface's own
-// lastBackup lock misses, which is why the server has to be the one that
-// refuses.
 func (s *Service) containerHasBackups(ctx context.Context, name string) (bool, error) {
-	tg, err := s.store.GetTargetByContainer(name)
-	if err == nil {
-		if run, rErr := s.store.LastSuccessfulBackup(tg.ID); rErr == nil && run != nil {
-			return true, nil
-		}
-	}
-	snaps, err := s.Snapshots(ctx, name, "local")
-	if err != nil {
-		// Unreadable is not "empty": refusing conservatively is the safe way
-		// round, because the cost of being wrong the other way is a split
-		// history nobody can see.
-		return true, nil //nolint:nilerr // deliberate: unknown counts as "has backups"
-	}
-	return len(snaps) > 0, nil
+	return countsAsBackedUp(s.itemBackups(ctx, store.ItemRef{Domain: "containers", Key: name}))
 }
 
 func (s *Service) vmHasBackups(ctx context.Context, name string) (bool, error) {
-	vm, err := s.store.GetVMTargetByName(name)
-	if err == nil {
-		if run, rErr := s.store.LastSuccessfulBackup(vm.ID); rErr == nil && run != nil {
-			return true, nil
-		}
-	}
-	snaps, err := s.SnapshotsVM(ctx, name, "local")
-	if err != nil {
-		return true, nil //nolint:nilerr // see containerHasBackups
-	}
-	return len(snaps) > 0, nil
+	return countsAsBackedUp(s.itemBackups(ctx, store.ItemRef{Domain: "vms", Key: name}))
 }
 
 // SnapshotsFileSet lists restic snapshots for a single file set, filtered by

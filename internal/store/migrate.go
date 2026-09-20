@@ -49,7 +49,7 @@ func columnPresent(table, column string) func(*sql.Tx) (bool, error) {
 
 // columnPresentOnAll reports whether every one of tables already has column. It
 // backs an alreadySatisfied guard whose body alters more than one table: the
-// guard can only call the body's intent met once none of those tables is
+// guard can only call the body's intent as met once none of those tables is
 // still missing what the body would add.
 func columnPresentOnAll(column string, tables ...string) func(*sql.Tx) (bool, error) {
 	return func(tx *sql.Tx) (bool, error) {

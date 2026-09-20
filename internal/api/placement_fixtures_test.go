@@ -471,3 +471,18 @@ func (d *placementDocker) List(context.Context) ([]dockercli.ContainerInfo, erro
 	}
 	return out, nil
 }
+
+// openContainer adds a container row whose location is still open.
+func (f *placementFixture) openContainer(name string) {
+	f.t.Helper()
+	if _, err := f.st.UpsertTarget(store.Target{ContainerName: name}); err != nil {
+		f.t.Fatalf("open container %s: %v", name, err)
+	}
+}
+
+func (f *placementFixture) openVM(name string) {
+	f.t.Helper()
+	if _, err := f.st.UpsertVMTarget(store.VMTarget{Name: name}); err != nil {
+		f.t.Fatalf("open vm %s: %v", name, err)
+	}
+}
