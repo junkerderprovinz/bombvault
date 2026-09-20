@@ -274,6 +274,7 @@ var branchMigrations = []struct {
 	{"offsite_observations", tablePresent("offsite_observations")},
 	{"offsite_runs_aging_only", columnPresent("offsite_runs", "aging_only")},
 	{"items_repo_chosen", columnPresent("targets", "repo_chosen")},
+	{"placement_confirmed_manually", columnPresent("placement_defaults", "confirmed_manually")},
 }
 
 func probeOnce(t *testing.T, db *sql.DB, probe func(*sql.Tx) (bool, error)) bool {
@@ -388,6 +389,37 @@ func TestAnExistingDatabaseKeepsItsReplicationThroughConfirmedDefaults(t *testin
 	}
 	if !slices.Equal(domains, []string{"containers", "files", "vms"}) {
 		t.Fatalf("defaults for %v, want containers, files and vms", domains)
+	}
+}
+
+func TestExistingConfirmedDefaultsBackfillTheManualMarker(t *testing.T) {
+	db := OpenMem(t)
+	seedV8111(t, db)
+	if err := Migrate(db); err != nil {
+		t.Fatalf("Migrate: %v", err)
+	}
+	rows, err := db.Query(`SELECT domain, confirmed_manually FROM placement_defaults`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close() //nolint:errcheck // test cleanup
+	n := 0
+	for rows.Next() {
+		var domain string
+		var manual int
+		if err := rows.Scan(&domain, &manual); err != nil {
+			t.Fatal(err)
+		}
+		if manual != 1 {
+			t.Errorf("%s: confirmed_manually = %d, want 1: an install already replicating is not a rebuild to guard against", domain, manual)
+		}
+		n++
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatal(err)
+	}
+	if n == 0 {
+		t.Fatal("seedV8111 left no placement_defaults rows to check")
 	}
 }
 
