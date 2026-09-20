@@ -479,3 +479,63 @@ func (s *Service) listTargetOnce(ctx context.Context, domain, targetID string) e
 	_, err = s.pauseOnOlderSources(ctx, settings, pass, sources)
 	return err
 }
+
+// targetCurrency is one enabled target's side of the replication currency.
+type targetCurrency struct {
+	lastBackupAt      int64 // newest successful backup among the items copied there
+	lastReplicationAt int64 // its last successful copy
+}
+
+// placementCurrency is what the status needs from a domain's placement: whether
+// it is paused, and with copy rules each target items are copied to. Without
+// rules, or while the placement cannot be read, the domain is judged as a whole.
+func (s *Service) placementCurrency(settings store.Settings, domain string) (paused, byTarget bool, targets []targetCurrency) {
+	if !validPlacementDomain(domain) {
+		return false, false, nil
+	}
+	p, err := s.readPlacement(settings, domain)
+	if err != nil {
+		return false, false, nil
+	}
+	if p.State.Paused() {
+		return true, false, nil
+	}
+	if p.TargetsUncertain || !p.State.HasRules() {
+		return false, false, nil
+	}
+	items, err := s.placedItems(settings, domain)
+	if err != nil {
+		return false, false, nil
+	}
+	return false, true, s.targetCurrencies(domain, p, items)
+}
+
+// targetCurrencies judges each enabled target by the items copied there. Project
+// folders do not count: they are written in the same run as their containers.
+func (s *Service) targetCurrencies(domain string, p placementRead, items []placedItem) []targetCurrency {
+	out := []targetCurrency{}
+	for _, t := range p.enabledTargets() {
+		var ids []string
+		for _, it := range items {
+			if it.Kind.copySource() && containsTarget(p.effectiveTargets(it.Identity), t.ID) {
+				ids = append(ids, it.ID)
+			}
+		}
+		if len(ids) == 0 {
+			continue
+		}
+		var c targetCurrency
+		if last, err := s.store.LastSuccessfulBackupAmong(ids); err == nil && !last.IsZero() {
+			c.lastBackupAt = last.Unix()
+		}
+		if run, found, err := s.store.LatestSuccessfulOffsiteRunForTarget(domain, t.ID); err == nil && found {
+			c.lastReplicationAt = run.StartedAt
+		}
+		out = append(out, c)
+	}
+	return out
+}
+
+func containsTarget(targets []store.OffsiteTarget, id string) bool {
+	return slices.ContainsFunc(targets, func(t store.OffsiteTarget) bool { return t.ID == id })
+}

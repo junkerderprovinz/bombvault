@@ -1987,7 +1987,7 @@ type DomainStatusEntry struct {
 	// PruneStrategySet are the two config-level facts the card also renders, moved
 	// server-side so the card needs no separate /api/settings round-trip.
 	TamperState      string `json:"tamperState"`      // "" | "never" | "failed" | "stale" | "ok"
-	ReplicationState string `json:"replicationState"` // "" | "never" | "overdue" | "ok"
+	ReplicationState string `json:"replicationState"` // "" | "never" | "overdue" | "ok" | "paused"
 	DrillState       string `json:"drillState"`       // "" | "never" | "failed" | "overdue" | "ok"
 	EncryptionOn     bool   `json:"encryptionOn"`     // repo encryption is enabled
 	PruneStrategySet bool   `json:"pruneStrategySet"` // an off-site retention strategy is configured
@@ -2081,8 +2081,11 @@ type protInputs struct {
 	lastBackupAt      int64 // last SUCCESSFUL backup (coupled-replication currency basis)
 	backupPeriod      int64 // seconds; the domain's backup RPO period (coupled-grace basis)
 	lastDRDrillAt     int64
-	lastDRDrillOK     bool  // outcome of the latest DR drill (only meaningful when lastDRDrillAt != 0)
-	drillPeriod       int64 // seconds; 0 = no drill schedule
+	lastDRDrillOK     bool             // outcome of the latest DR drill (only meaningful when lastDRDrillAt != 0)
+	drillPeriod       int64            // seconds; 0 = no drill schedule
+	paused            bool             // replication waits for the placement default to be confirmed
+	byTarget          bool             // copy rules decide per target; targets replaces the domain-wide pair above
+	targets           []targetCurrency // the enabled targets items are copied to
 }
 
 // replicationState decides the off-site replication currency (""/never/overdue/ok)
@@ -2100,12 +2103,34 @@ type protInputs struct {
 //     (conservative: a backup replicating shortly after is fine; a never-replicated
 //     backup is flagged only once it has sat unreplicated beyond the grace). Amber,
 //     never red.
+//
+// A paused domain reports "paused". With copy rules each enabled target is judged
+// by the items copied there, and the worst of them counts; a target no item is
+// copied to has no claim to make.
 func replicationState(now int64, in protInputs) string {
 	if !in.offsiteConfigured {
 		return ""
 	}
+	if in.paused {
+		return "paused"
+	}
+	if !in.byTarget {
+		return targetReplicationState(now, in, in.lastBackupAt, in.lastReplicationAt)
+	}
+	worst := ""
+	for _, t := range in.targets {
+		if st := targetReplicationState(now, in, t.lastBackupAt, t.lastReplicationAt); replicationRank(st) > replicationRank(worst) {
+			worst = st
+		}
+	}
+	return worst
+}
+
+// targetReplicationState is the currency of one target, or of the domain as a
+// whole, from the last successful backup and the last successful copy.
+func targetReplicationState(now int64, in protInputs, lastBackupAt, lastReplicationAt int64) string {
 	if in.offsitePeriod > 0 {
-		switch rpoStatus(now, in.lastReplicationAt, in.offsitePeriod, true) {
+		switch rpoStatus(now, lastReplicationAt, in.offsitePeriod, true) {
 		case "overdue":
 			return "overdue"
 		case "never":
@@ -2115,22 +2140,35 @@ func replicationState(now int64, in protInputs) string {
 		}
 	}
 	// Coupled path: only meaningful once a backup exists and there is an RPO basis.
-	if in.lastBackupAt == 0 || in.backupPeriod <= 0 {
+	if lastBackupAt == 0 || in.backupPeriod <= 0 {
 		return ""
 	}
 	grace := in.backupPeriod * 2
-	if in.lastReplicationAt == 0 {
+	if lastReplicationAt == 0 {
 		// Never replicated: overdue only once the backup has sat unreplicated > grace
 		// (a just-made first backup replicating shortly after must not instantly flag).
-		if now-in.lastBackupAt > grace {
+		if now-lastBackupAt > grace {
 			return "overdue"
 		}
 		return "ok"
 	}
-	if in.lastReplicationAt < in.lastBackupAt && in.lastBackupAt-in.lastReplicationAt > grace {
+	if lastReplicationAt < lastBackupAt && lastBackupAt-lastReplicationAt > grace {
 		return "overdue"
 	}
 	return "ok"
+}
+
+// replicationRank orders the states from nothing to claim up to overdue.
+func replicationRank(state string) int {
+	switch state {
+	case "overdue":
+		return 3
+	case "never":
+		return 2
+	case "ok":
+		return 1
+	}
+	return 0
 }
 
 // protectionLevel aggregates a domain's ransomware-protection posture into a
@@ -2175,7 +2213,8 @@ func protectionLevel(now int64, in protInputs) string {
 	// schedule; coupled (default) off-sites are checked against the last backup with
 	// a conservative grace (see replicationState) so off-site health is no longer
 	// invisible in the config most users run.
-	if replicationState(now, in) == "overdue" {
+	// A paused replication copies nothing at all, which is amber as well.
+	if st := replicationState(now, in); st == "overdue" || st == "paused" {
 		return "amber"
 	}
 	// A recorded DR drill that FAILED downgrades the chip to amber (never green over
@@ -2201,7 +2240,7 @@ func protectionLevel(now int64, in protInputs) string {
 // makes no claim (and so is rendered muted, not as a failure).
 type protChecks struct {
 	Tamper      string // "" | "never" | "failed" | "stale" | "ok"
-	Replication string // "" | "never" | "overdue" | "ok"
+	Replication string // "" | "never" | "overdue" | "ok" | "paused"
 	Drill       string // "" | "never" | "failed" | "overdue" | "ok"
 }
 
@@ -2393,6 +2432,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			lastDRDrillOK:     lastDRDrillOK,
 			drillPeriod:       drillPeriod,
 		}
+		in.paused, in.byTarget, in.targets = s.placementCurrency(settings, d.name)
 		// protection (the chip) and checks (each row) are derived from the SAME
 		// protInputs. Tamper/Replication rows mirror the chip's red/amber branches
 		// exactly. The Drill row additionally honors the latest drill's OUTCOME (a
