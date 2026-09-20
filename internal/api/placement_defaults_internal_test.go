@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -200,5 +201,137 @@ func TestADefaultRouteForAnotherDomainIsABadRequest(t *testing.T) {
 	f.h.Router().ServeHTTP(rec, jsonReq(http.MethodPut, "/api/placement/default/flash", strings.NewReader(`{}`)))
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("status = %d, want 400", rec.Code)
+	}
+}
+
+func candidatesByKey(res map[string]any) (map[string]map[string]any, map[string]string) {
+	reset := map[string]map[string]any{}
+	for _, c := range res["reset"].([]any) {
+		m := c.(map[string]any)
+		reset[m["key"].(string)] = m
+	}
+	kept := map[string]string{}
+	for _, k := range res["kept"].([]any) {
+		m := k.(map[string]any)
+		kept[m["key"].(string)] = m["reason"].(string)
+	}
+	return reset, kept
+}
+
+func TestApplyPreviewSortsResetFromKept(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	cold := f.namedRepo("Cold", "cold")
+	f.target("containers", "B2", "b2:bucket/containers")
+	f.setDefault("containers", "")
+	f.container("moved", nas.ID)
+	f.openContainer("excluded")
+	f.rule("containers", "container:excluded", store.SkipAll)
+	done := f.container("done", "")
+	f.backupRun(done.ID, 100)
+	f.container("unseen", cold.ID)
+	f.eng.listErr = map[string]error{f.root + "/cold": errors.New("share not mounted")}
+	f.openContainer("plain")
+
+	reset, kept := candidatesByKey(f.do(http.MethodGet, "/api/placement/default/containers/apply", nil))
+	if len(reset) != 2 || reset["moved"]["losesHome"] != true || reset["excluded"]["losesRule"] != true {
+		t.Fatalf("reset = %v, want moved losing its home and excluded losing its rule", reset)
+	}
+	if len(kept) != 2 || kept["done"] != "has-backups" || kept["unseen"] != "unreadable" {
+		t.Fatalf("kept = %v, want done with backups and unseen unreadable", kept)
+	}
+}
+
+func TestApplyPreviewCountsARuledOutNameInEveryCopySource(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	paperless := f.namedRepo("Paperless", "paperless")
+	b2 := f.target("containers", "B2", "b2:bucket/containers")
+	f.setDefault("containers", "")
+	f.container("immich", nas.ID)
+	f.container("paperless", paperless.ID)
+	f.openContainer("vaultwarden")
+	f.rule("containers", "container:vaultwarden", store.SkipAll)
+	f.hold(f.root+"/nas", snap("aaaa0001", 100, "container:vaultwarden"), snap("aaaa0002", 200, "container:vaultwarden"))
+	f.eng.listErr = map[string]error{f.root + "/paperless": errors.New("share not mounted")}
+	f.listing("containers", b2.ID, 300)
+
+	reset, _ := candidatesByKey(f.do(http.MethodGet, "/api/placement/default/containers/apply", nil))
+	uploads, _ := reset["vaultwarden"]["uploads"].([]any)
+	if len(uploads) != 1 {
+		t.Fatalf("vaultwarden = %v, want one upload", reset["vaultwarden"])
+	}
+	u := uploads[0].(map[string]any)
+	if u["targetId"] != b2.ID || u["snapshots"] != float64(2) || !strings.Contains(fmt.Sprint(u["uncheckable"]), "Paperless") {
+		t.Fatalf("upload = %v, want about 2 for B2 and Paperless named as not checkable", u)
+	}
+}
+
+// TestApplyPreviewJudgesAnOpenItemsCopiesByItsEffectiveHome guards against
+// reading an open item's raw repo field, which is always empty, in place of
+// its effective home: that would make the domain path look like a copy
+// source even though the item's next backup actually lands on the default's
+// remote repository, where nothing is copied at all.
+func TestApplyPreviewJudgesAnOpenItemsCopiesByItsEffectiveHome(t *testing.T) {
+	f := newPlacementFixture(t)
+	box := f.namedRepo("Storagebox", "sftp:u1@box.example:/bv")
+	f.target("containers", "B2", "b2:bucket/containers")
+	f.setDefault("containers", box.ID)
+	f.openContainer("vaultwarden")
+	f.rule("containers", "container:vaultwarden", store.SkipAll)
+
+	reset, _ := candidatesByKey(f.do(http.MethodGet, "/api/placement/default/containers/apply", nil))
+	if len(reset) != 1 {
+		t.Fatalf("reset = %v, want vaultwarden alone", reset)
+	}
+	uploads, _ := reset["vaultwarden"]["uploads"].([]any)
+	if len(uploads) != 0 {
+		t.Fatalf("vaultwarden = %v, want no upload: it is already homed on Storagebox, not the domain path", reset["vaultwarden"])
+	}
+}
+
+func TestApplyResetsBothAxesAndNamesWhatStays(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.setDefault("containers", "")
+	f.container("moved", nas.ID)
+	f.rule("containers", "container:moved", store.SkipAll)
+	done := f.container("done", "")
+	f.backupRun(done.ID, 100)
+
+	res := f.do(http.MethodPost, "/api/placement/default/containers/apply", map[string]any{"keys": []string{"moved", "done", "gone"}})
+	if res["ok"] != true {
+		t.Fatalf("apply = %v", res)
+	}
+	if reset := res["reset"].([]any); len(reset) != 1 || reset[0] != "moved" {
+		t.Fatalf("reset = %v, want moved", reset)
+	}
+	_, kept := candidatesByKey(map[string]any{"reset": []any{}, "kept": res["kept"]})
+	if kept["done"] != "has-backups" || kept["gone"] != "changed" {
+		t.Fatalf("kept = %v", kept)
+	}
+	if got := f.home(store.ItemRef{Domain: "containers", Key: "moved"}); got.Repo != "" || got.Choice != store.RepoOpen {
+		t.Fatalf("home = %+v, want open", got)
+	}
+	if _, found, err := f.st.CopyRuleFor("containers", "container:moved"); err != nil || found {
+		t.Fatalf("rule found = %v, %v, want it gone", found, err)
+	}
+}
+
+func TestApplyIsRefusedWhileABackupHoldsTheDomain(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.container("moved", nas.ID)
+	unlock, ok := f.svc.tryLockDomainFor("containers", "backup")
+	if !ok {
+		t.Fatal("could not take the containers lock")
+	}
+	res := f.do(http.MethodPost, "/api/placement/default/containers/apply", map[string]any{"keys": []string{"moved"}})
+	unlock()
+	if res["code"] != "domain-busy" {
+		t.Fatalf("apply = %v, want domain-busy", res)
+	}
+	if got := f.home(store.ItemRef{Domain: "containers", Key: "moved"}); got.Repo != nas.ID {
+		t.Fatalf("home = %+v, want it untouched", got)
 	}
 }

@@ -438,6 +438,189 @@ func (s *Service) putDefault(ctx context.Context, domain string, change defaultC
 	return row, impact, err
 }
 
+// applyCandidate is one item the "apply to entries without backups" button
+// would reset, with what it would give up and pick up.
+type applyCandidate struct {
+	Key       string           `json:"key"`
+	Label     string           `json:"label"`
+	LosesHome bool             `json:"losesHome"`
+	LosesRule bool             `json:"losesRule"`
+	Uploads   []uploadEstimate `json:"uploads"`
+}
+
+// keptItem is one item the button leaves alone, with why.
+type keptItem struct {
+	Key    string `json:"key"`
+	Label  string `json:"label"`
+	Reason string `json:"reason"` // "has-backups" | "unreadable" | "changed"
+}
+
+// keptReason is why the button leaves an item alone, "" when it may reset it.
+func (s *Service) keptReason(ctx context.Context, item store.ItemRef) (string, error) {
+	presence, err := s.itemBackups(ctx, item)
+	switch {
+	case presence == backupsUnreadable:
+		return "unreadable", nil
+	case err != nil:
+		return "", err
+	case presence == backupsPresent:
+		return "has-backups", nil
+	}
+	return "", nil
+}
+
+// resetCopyTargets is the item's copy targets before and after the reset
+// applyDefault makes: open, with no rule of its own. Judged by effective home
+// rather than the row's raw repo field, since an open item already takes the
+// default's location, not its own empty one.
+func (s *Service) resetCopyTargets(settings store.Settings, p placementRead, named map[string]store.OffsiteTarget, it domainItem) (before, after []store.OffsiteTarget) {
+	beforeRepo, _ := p.effectiveHome(it.home)
+	before = s.itemCopyTargets(settings, p, named, beforeRepo, it.identity)
+	after = s.itemCopyTargets(settings, p.withCopies(it.identity, &store.CopiesWrite{Follow: true}), named, p.State.Default.Home, it.identity)
+	return before, after
+}
+
+// applyDefaultPreview is every item the button would touch: what it would
+// reset, and what it leaves alone because it has backups, sits at a location
+// that could not be read, or has neither its own rule nor a chosen home.
+func (s *Service) applyDefaultPreview(ctx context.Context, domain string) ([]applyCandidate, []keptItem, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, nil, err
+	}
+	p, err := s.readPlacement(settings, domain)
+	if err != nil {
+		return nil, nil, err
+	}
+	named, err := s.namedRepoIndex()
+	if err != nil {
+		return nil, nil, err
+	}
+	items, err := s.domainItems(domain)
+	if err != nil {
+		return nil, nil, err
+	}
+	var listing *sourceListing
+	var observed []store.ItemCopies
+	reset, kept := []applyCandidate{}, []keptItem{}
+	for _, it := range items {
+		rule, own := p.State.Rules[it.identity]
+		if it.home.Choice == store.RepoOpen && !own {
+			continue
+		}
+		why, err := s.keptReason(ctx, it.ref)
+		if err != nil {
+			return nil, nil, err
+		}
+		if why != "" {
+			kept = append(kept, keptItem{Key: it.ref.Key, Label: it.label, Reason: why})
+			continue
+		}
+		c := applyCandidate{
+			Key:       it.ref.Key,
+			Label:     it.label,
+			LosesHome: it.home.Choice != store.RepoOpen && it.home.Repo != p.State.Default.Home,
+			LosesRule: own && !slices.Equal(rule.Skip, p.State.Default.Skip),
+			Uploads:   []uploadEstimate{},
+		}
+		before, after := s.resetCopyTargets(settings, p, named, it)
+		for _, t := range after {
+			if containsTarget(before, t.ID) {
+				continue
+			}
+			if listing == nil {
+				l, err := s.listCopySources(ctx, settings, domain)
+				if err != nil {
+					return nil, nil, err
+				}
+				if observed, err = s.store.ItemCopiesForDomain(domain); err != nil {
+					return nil, nil, err
+				}
+				listing = &l
+			}
+			c.Uploads = append(c.Uploads, uploadEstimate{
+				TargetID:    t.ID,
+				Name:        placementTargetName(t),
+				Snapshots:   listing.uploadEstimate(it.identity, observedFor(observed, it.identity), t.ID),
+				Uncheckable: append([]string{}, listing.Unreadable...),
+			})
+		}
+		reset = append(reset, c)
+	}
+	return reset, kept, nil
+}
+
+// applyDefault resets both axes of the named items that still have no backups.
+// Each write compares against the row as read under the lock, so an item that
+// changed since is reported instead of overwritten.
+func (s *Service) applyDefault(ctx context.Context, domain string, keys []string) ([]string, []keptItem, error) {
+	unlock, ok := s.tryLockDomainFor(domain, placementLockReason)
+	if !ok {
+		return nil, nil, errPlacementBusy
+	}
+	defer unlock()
+	s.placementMu.Lock()
+	defer s.placementMu.Unlock()
+
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, nil, err
+	}
+	p, err := s.readPlacement(settings, domain)
+	if err != nil {
+		return nil, nil, err
+	}
+	named, err := s.namedRepoIndex()
+	if err != nil {
+		return nil, nil, err
+	}
+	items, err := s.domainItems(domain)
+	if err != nil {
+		return nil, nil, err
+	}
+	byKey := make(map[string]domainItem, len(items))
+	for _, it := range items {
+		byKey[it.ref.Key] = it
+	}
+	reset, kept := []string{}, []keptItem{}
+	for _, key := range keys {
+		it, found := byKey[key]
+		if !found {
+			kept = append(kept, keptItem{Key: key, Label: key, Reason: "changed"})
+			continue
+		}
+		why, err := s.keptReason(ctx, it.ref)
+		if err != nil {
+			return nil, nil, err
+		}
+		if why != "" {
+			kept = append(kept, keptItem{Key: key, Label: it.label, Reason: why})
+			continue
+		}
+		follow := &store.CopiesWrite{Follow: true}
+		before, after := s.resetCopyTargets(settings, p, named, it)
+		dropped, err := s.droppedTargets(domain, it.identity, before, after)
+		if err != nil {
+			return nil, nil, err
+		}
+		wrote, err := s.store.WritePlacement(it.ref, &store.HomeWrite{Choice: store.RepoOpen}, follow, &it.home)
+		if err != nil {
+			return nil, nil, err
+		}
+		if !wrote {
+			kept = append(kept, keptItem{Key: key, Label: it.label, Reason: "changed"})
+			continue
+		}
+		reset = append(reset, key)
+		for _, d := range dropped {
+			if d.Copies == nil {
+				s.listTargetInBackground(domain, d.TargetID)
+			}
+		}
+	}
+	return reset, kept, nil
+}
+
 // defaultDomainParam reads {domain} of a /api/placement/default route and writes
 // the 400 itself.
 func defaultDomainParam(w http.ResponseWriter, r *http.Request) (string, bool) {
@@ -494,4 +677,36 @@ func (h *Handler) handlePutPlacementDefault(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"default": row, "impact": impact}))
+}
+
+func (h *Handler) handleApplyDefaultPreview(w http.ResponseWriter, r *http.Request) {
+	domain, ok := defaultDomainParam(w, r)
+	if !ok {
+		return
+	}
+	reset, kept, err := h.svc.applyDefaultPreview(r.Context(), domain)
+	if err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"reset": reset, "kept": kept}))
+}
+
+func (h *Handler) handleApplyDefault(w http.ResponseWriter, r *http.Request) {
+	domain, ok := defaultDomainParam(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		Keys []string `json:"keys"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	reset, kept, err := h.svc.applyDefault(r.Context(), domain, body.Keys)
+	if err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"reset": reset, "kept": kept}))
 }
