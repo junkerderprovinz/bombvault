@@ -1,9 +1,17 @@
 package restic
 
 import (
+	"context"
 	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"reflect"
+	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 )
 
 func TestStatusPercent(t *testing.T) {
@@ -289,5 +297,115 @@ func TestRunErrorTagsMetadataOnlyRestore(t *testing.T) {
 	backup := runError([]string{"-r", "/repo", "backup"}, "ignoring error for /x: operation not permitted\nFatal: There were 1 errors")
 	if errors.Is(backup, ErrRestoreMetadataOnly) {
 		t.Fatalf("only the restore subcommand may be tagged metadata-only, got %v", backup)
+	}
+}
+
+// TestWithAddedWatcherChains checks that a second watcher joins the one already
+// on the context instead of replacing it. A dump reports to the stall guard and
+// to the byte publisher on the same restic call.
+func TestWithAddedWatcherChains(t *testing.T) {
+	t.Run("nil leaves the context alone", func(t *testing.T) {
+		ctx := context.Background()
+		if WithAddedWatcher(ctx, nil) != ctx {
+			t.Fatal("a nil watcher must return the same context")
+		}
+		first := func(Progress) {}
+		withFirst := WithWatcher(ctx, first)
+		if watcherFrom(WithAddedWatcher(withFirst, nil)) == nil {
+			t.Fatal("a nil watcher must leave the existing one in place")
+		}
+	})
+	t.Run("both watchers see every line in order", func(t *testing.T) {
+		var seen []string
+		ctx := WithWatcher(context.Background(), func(p Progress) {
+			seen = append(seen, fmt.Sprintf("first:%d", p.BytesDone))
+		})
+		ctx = WithAddedWatcher(ctx, func(p Progress) {
+			seen = append(seen, fmt.Sprintf("second:%d", p.BytesDone))
+		})
+		watch := watcherFrom(ctx)
+		for _, done := range []uint64{10, 20} {
+			p, ok := ParseProgress([]byte(fmt.Sprintf(`{"message_type":"status","bytes_done":%d}`, done)))
+			if !ok {
+				t.Fatalf("status line for %d did not parse", done)
+			}
+			watch(p)
+		}
+		want := []string{"first:10", "second:10", "first:20", "second:20"}
+		if !reflect.DeepEqual(seen, want) {
+			t.Fatalf("watchers saw %v, want %v", seen, want)
+		}
+	})
+	t.Run("an added watcher alone is reachable", func(t *testing.T) {
+		var got uint64
+		ctx := WithAddedWatcher(context.Background(), func(p Progress) { got = p.BytesDone })
+		p, _ := ParseProgress([]byte(`{"message_type":"status","bytes_done":7}`))
+		watcherFrom(ctx)(p)
+		if got != 7 {
+			t.Fatalf("bytes_done = %d, want 7", got)
+		}
+	})
+}
+
+// TestParseBackupSummaryReadsTotalBytesProcessed covers the field a dump is
+// measured by: it must equal the byte count the helper reported.
+func TestParseBackupSummaryReadsTotalBytesProcessed(t *testing.T) {
+	out := []byte(`{"message_type":"status","percent_done":0.5}
+{"message_type":"summary","files_new":1,"files_changed":0,"data_added":4096,"total_bytes_processed":1048576,"snapshot_id":"deadbeef"}
+`)
+	sum, err := ParseBackupSummary(out)
+	if err != nil {
+		t.Fatalf("ParseBackupSummary: %v", err)
+	}
+	if sum.TotalBytesProcessed != 1048576 {
+		t.Fatalf("TotalBytesProcessed = %d, want 1048576", sum.TotalBytesProcessed)
+	}
+	if sum.SnapshotID != "deadbeef" {
+		t.Fatalf("SnapshotID = %q, want deadbeef", sum.SnapshotID)
+	}
+}
+
+// TestBackupFromCommandNeverFeedsTheSink checks that a dump's status lines
+// reach the watcher but not the progress sink on the context. The sink carries
+// the container backup's own percentage, and a stage-less event from the dump
+// call would wipe the card's dump stage.
+func TestBackupFromCommandNeverFeedsTheSink(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("needs a POSIX shell to exec a shebang script as the fake restic binary")
+	}
+
+	dir := t.TempDir()
+	script := filepath.Join(dir, "fake-restic.sh")
+	body := "#!/bin/sh\n" +
+		"echo '{\"message_type\":\"status\",\"percent_done\":0.25,\"bytes_done\":100}'\n" +
+		"echo '{\"message_type\":\"status\",\"percent_done\":0.75,\"bytes_done\":300}'\n" +
+		"echo '{\"message_type\":\"summary\",\"snapshot_id\":\"abc123\",\"total_bytes_processed\":300}'\n" +
+		"echo 'subprocess bombvault: bombvault-dbdump-pid 4711' >&2\n"
+	if err := os.WriteFile(script, []byte(body), 0o700); err != nil { //nolint:gosec // G306: test-only helper script, needs the exec bit
+		t.Fatalf("write fake restic script: %v", err)
+	}
+
+	var sinkCalls int
+	var watched []uint64
+	ctx := progress.WithSink(context.Background(), func(float64) { sinkCalls++ })
+	ctx = WithWatcher(ctx, func(p Progress) { watched = append(watched, p.BytesDone) })
+
+	r := Restic{Bin: script}
+	sum, lines, err := r.BackupFromCommand(ctx, "/repo", "/dbdump/pg.sql", []string{"dbdump:pg"},
+		[]string{"/usr/local/bin/bombvault", "dbdump-stream"}, Mode{Encrypted: false})
+	if err != nil {
+		t.Fatalf("BackupFromCommand: %v", err)
+	}
+	if sum.SnapshotID != "abc123" || sum.TotalBytesProcessed != 300 {
+		t.Fatalf("summary = %+v, want snapshot abc123 and 300 bytes", sum)
+	}
+	if !reflect.DeepEqual(watched, []uint64{100, 300}) {
+		t.Fatalf("watcher saw %v, want every status line", watched)
+	}
+	if sinkCalls != 0 {
+		t.Fatalf("the sink was called %d times, want none", sinkCalls)
+	}
+	if !reflect.DeepEqual(lines, []string{"subprocess bombvault: bombvault-dbdump-pid 4711"}) {
+		t.Fatalf("subprocess lines = %v", lines)
 	}
 }
