@@ -38,8 +38,8 @@ func TestItemBackupsKeepsAnUnreadableLocationApart(t *testing.T) {
 	if got != backupsUnreadable || err == nil {
 		t.Fatalf("itemBackups = %v, %v, want unreadable with its cause", got, err)
 	}
-	if had, err := f.svc.vmHasBackups(context.Background(), "win11"); err != nil || !had {
-		t.Fatalf("vmHasBackups = %v, %v, want an unreadable location to count as backed up", had, err)
+	if had, err := countsAsBackedUp(f.svc.itemBackups(context.Background(), store.ItemRef{Domain: "vms", Key: "win11"})); err != nil || !had {
+		t.Fatalf("countsAsBackedUp = %v, %v, want an unreadable location to count as backed up", had, err)
 	}
 }
 

@@ -170,6 +170,9 @@ func TestDiscoverAfterABackupDoesNotPause(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if res.Found != 1 {
+		t.Fatalf("Found = %d, want the one container the pass rediscovered", res.Found)
+	}
 	if res.Paused {
 		t.Fatal("a database that has backed up this domain was paused")
 	}
@@ -184,5 +187,24 @@ func TestAProbeNeverPauses(t *testing.T) {
 	res, err := f.svc.DiscoverFileSets(context.Background(), true)
 	if err != nil || res.Paused || res.Found != 1 {
 		t.Fatalf("probe = %+v, %v, want one found and no pause", res, err)
+	}
+}
+
+// TestDiscoverFailureEnvelopeCarriesPausedAndLeftOpen pins that a failing pass
+// still answers with the same paused/leftOpen shape as a successful one, so the
+// caller never has to branch on ok to read them.
+func TestDiscoverFailureEnvelopeCarriesPausedAndLeftOpen(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.eng.listErr = map[string]error{f.domainPath("containers"): errors.New("wrong password or no key found")}
+	res := f.do(http.MethodPost, "/api/discover", nil)
+	if res["ok"] != false {
+		t.Fatalf("discover = %v, want a failure envelope", res)
+	}
+	if _, ok := res["paused"].(bool); !ok {
+		t.Fatalf("discover = %v, want a paused field even on failure", res)
+	}
+	left, ok := res["leftOpen"].([]any)
+	if !ok || len(left) != 0 {
+		t.Fatalf("leftOpen = %v, want an empty list, not null", res["leftOpen"])
 	}
 }
