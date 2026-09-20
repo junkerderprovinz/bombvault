@@ -421,7 +421,7 @@ func TestItemsRepoChosenMarksEveryExistingRowChosen(t *testing.T) {
 	}
 	for _, table := range []string{"targets", "vms", "file_sets"} {
 		var rows, chosen int
-		if err := db.QueryRow(`SELECT COUNT(*), COALESCE(SUM(repo_chosen = 1), 0) FROM ` + table).Scan(&rows, &chosen); err != nil {
+		if err := db.QueryRow(`SELECT COUNT(*), COALESCE(SUM(repo_chosen = 1), 0) FROM `+table).Scan(&rows, &chosen); err != nil {
 			t.Fatal(err)
 		}
 		if rows == 0 || chosen != rows {
