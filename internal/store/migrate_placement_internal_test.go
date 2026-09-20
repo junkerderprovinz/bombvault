@@ -109,11 +109,18 @@ func TestPrimarySlotMigrationMovesAV8111MeshRowBehind(t *testing.T) {
 	}
 }
 
+// slotRow is one offsite_targets row a slotCase seeds.
+type slotRow struct {
+	id, domain, repo     string
+	createdAt, sortOrder int
+	enabled              int
+}
+
 // slotCase is one layout of a domain's targets before the primary slot is settled.
 type slotCase struct {
 	name  string
 	field string
-	rows  string // VALUES list for offsite_targets (id, domain, repo, created_at, sort_order, enabled)
+	rows  []slotRow
 	want  map[string]int
 }
 
@@ -121,44 +128,68 @@ var slotCases = []slotCase{
 	{
 		name:  "field row first, mesh row later on zero",
 		field: "s3:b2",
-		rows:  `('a', 'containers', 's3:b2', 1000, 0, 1), ('b', 'containers', 'sftp:h', 1100, 1, 1), ('m', 'containers', 'rest:m', 1200, 0, 1)`,
-		want:  map[string]int{"a": 0, "b": 1, "m": 2},
+		rows: []slotRow{
+			{"a", "containers", "s3:b2", 1000, 0, 1},
+			{"b", "containers", "sftp:h", 1100, 1, 1},
+			{"m", "containers", "rest:m", 1200, 0, 1},
+		},
+		want: map[string]int{"a": 0, "b": 1, "m": 2},
 	},
 	{
 		name:  "field row deleted by an earlier clear, mesh row alone on zero",
 		field: "s3:b2",
-		rows:  `('b', 'containers', 'sftp:h', 1100, 1, 1), ('m', 'containers', 'rest:m', 1200, 0, 1)`,
-		want:  map[string]int{"b": 1, "m": 2},
+		rows: []slotRow{
+			{"b", "containers", "sftp:h", 1100, 1, 1},
+			{"m", "containers", "rest:m", 1200, 0, 1},
+		},
+		want: map[string]int{"b": 1, "m": 2},
 	},
 	{
 		name:  "field row moved behind by a PUT",
 		field: "s3:b2",
-		rows:  `('m', 'containers', 'rest:m', 900, 0, 1), ('a', 'containers', 's3:b2', 1000, 3, 1), ('n', 'containers', 'rest:n', 1300, 0, 1)`,
-		want:  map[string]int{"a": 0, "m": 4, "n": 5},
+		rows: []slotRow{
+			{"m", "containers", "rest:m", 900, 0, 1},
+			{"a", "containers", "s3:b2", 1000, 3, 1},
+			{"n", "containers", "rest:n", 1300, 0, 1},
+		},
+		want: map[string]int{"a": 0, "m": 4, "n": 5},
 	},
 	{
 		name:  "two rows name the field",
 		field: "s3:b2",
-		rows:  `('late', 'containers', 's3:b2', 2000, 0, 1), ('early', 'containers', 's3:b2', 1000, 0, 1)`,
-		want:  map[string]int{"early": 0, "late": 1},
+		rows: []slotRow{
+			{"late", "containers", "s3:b2", 2000, 0, 1},
+			{"early", "containers", "s3:b2", 1000, 0, 1},
+		},
+		want: map[string]int{"early": 0, "late": 1},
 	},
 	{
 		name:  "empty field, enabled row on zero moves away",
 		field: "",
-		rows:  `('a', 'containers', 's3:b2', 1000, 0, 1), ('b', 'containers', 'sftp:h', 1100, 1, 1)`,
-		want:  map[string]int{"a": 2, "b": 1},
+		rows: []slotRow{
+			{"a", "containers", "s3:b2", 1000, 0, 1},
+			{"b", "containers", "sftp:h", 1100, 1, 1},
+		},
+		want: map[string]int{"a": 2, "b": 1},
 	},
 	{
 		name:  "empty field, switched-off row on zero keeps its slot",
 		field: "",
-		rows:  `('a', 'containers', 's3:b2', 1000, 0, 0), ('b', 'containers', 'sftp:h', 1100, 1, 1)`,
-		want:  map[string]int{"a": 0, "b": 1},
+		rows: []slotRow{
+			{"a", "containers", "s3:b2", 1000, 0, 0},
+			{"b", "containers", "sftp:h", 1100, 1, 1},
+		},
+		want: map[string]int{"a": 0, "b": 1},
 	},
 	{
 		name:  "same creation time decided by id",
 		field: "",
-		rows:  `('y', 'containers', 'rest:y', 1000, 0, 1), ('x', 'containers', 'rest:x', 1000, 0, 1), ('z', 'containers', 'sftp:z', 1000, 4, 1)`,
-		want:  map[string]int{"x": 5, "y": 6, "z": 4},
+		rows: []slotRow{
+			{"y", "containers", "rest:y", 1000, 0, 1},
+			{"x", "containers", "rest:x", 1000, 0, 1},
+			{"z", "containers", "sftp:z", 1000, 4, 1},
+		},
+		want: map[string]int{"x": 5, "y": 6, "z": 4},
 	},
 }
 
@@ -167,8 +198,11 @@ func seedSlotCase(t *testing.T, db *sql.DB, c slotCase) {
 	if _, err := db.Exec(`UPDATE settings SET containers_offsite = ? WHERE id = 1`, c.field); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.Exec(`INSERT INTO offsite_targets (id, domain, repo, created_at, sort_order, enabled) VALUES ` + c.rows); err != nil {
-		t.Fatal(err)
+	for _, row := range c.rows {
+		if _, err := db.Exec(`INSERT INTO offsite_targets (id, domain, repo, created_at, sort_order, enabled) VALUES (?, ?, ?, ?, ?, ?)`,
+			row.id, row.domain, row.repo, row.createdAt, row.sortOrder, row.enabled); err != nil {
+			t.Fatal(err)
+		}
 	}
 }
 
