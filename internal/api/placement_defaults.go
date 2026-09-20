@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"maps"
 	"net/http"
 	"slices"
@@ -144,6 +145,7 @@ func (s *Service) defaultRowFor(settings store.Settings, named map[string]store.
 	row := defaultRow{Domain: domain, Skip: []string{}}
 	p, err := s.readPlacement(settings, domain)
 	if err != nil {
+		log.Printf("api: placement %s: could not read its placement, marking the default row unreadable: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 		row.Unreadable = true
 		return row, nil
 	}
