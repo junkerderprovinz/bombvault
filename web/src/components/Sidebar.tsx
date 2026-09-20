@@ -33,6 +33,7 @@ export {
   IconFolder,
   IconLocal,
   IconCloud,
+  IconDatabase,
   IconAdd,
   IconDownload,
   IconBackupNow,

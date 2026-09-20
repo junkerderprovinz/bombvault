@@ -16,9 +16,9 @@ import {
 } from "../../lib/api";
 import { Advanced } from "../../lib/advanced";
 import { useBackupWatch } from "../../lib/backupWatch";
-import { ENGINE_NAMES } from "../../lib/dbdump";
+import { ENGINE_NAMES, importRefusedKey } from "../../lib/dbdump";
 import { humanBytes } from "../../lib/forecast";
-import { useT, type TranslationKey } from "../../lib/i18n";
+import { useT } from "../../lib/i18n";
 import { useProgress } from "../../lib/progress";
 import { useConfirm } from "../../lib/useConfirm";
 import { useToast } from "../../lib/toast";
@@ -39,17 +39,6 @@ const FORMAT_STORAGE_KEY = "bombvault.dbdump.format";
 // The browser owns the download once the anchor is clicked, so the button only
 // shows that something started. Long enough for a large dump to begin streaming.
 const DOWNLOAD_PREPARING_MS = 20_000;
-
-/** The refusal ids of POST /dbdumps/{id}/import, each sentence its own key. */
-const IMPORT_REFUSED: Record<string, TranslationKey> = {
-  busy: "dbdump.importRefused.busy",
-  notRunning: "dbdump.importRefused.notRunning",
-  engineMismatch: "dbdump.importRefused.engineMismatch",
-  noDataMount: "dbdump.importRefused.noDataMount",
-  version: "dbdump.importRefused.version",
-  damaged: "dbdump.importRefused.damaged",
-  notADump: "dbdump.importRefused.notADump",
-};
 
 function storedFormat(): DumpFormat {
   try {
@@ -152,7 +141,7 @@ function DumpRow({
     start: async () => {
       const res = await importDbDump(containerName, dump.id, source);
       if (!res.ok) {
-        const key = IMPORT_REFUSED[res.code ?? ""];
+        const key = importRefusedKey(res.code);
         if (key) {
           push(
             t(key).replace("{server}", res.server ?? "").replace("{dump}", res.dump ?? ""),

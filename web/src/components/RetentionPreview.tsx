@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { previewRetention, type RetentionPreview as Preview } from "../lib/api";
+import { dbDumpNameOf, isDbDumpIdentity } from "../lib/dbdump";
 import { useT } from "../lib/i18n";
 
 import { Button } from "./Button";
@@ -17,6 +18,13 @@ const DOMAINS = [
   { key: "config", labelKey: "settings.configEnabled" },
   { key: "files", labelKey: "settings.filesEnabled" },
 ] as const satisfies readonly { key: Domain; labelKey: string }[];
+
+/** The group's name: its identity tag, the dumps of a container in words, or
+ *  the whole-repository fallback the legacy pass has no tag for. */
+function itemLabel(tag: string, t: ReturnType<typeof useT>["t"]): string {
+  if (isDbDumpIdentity(tag)) return t("dbdump.retentionItem").replace("{name}", dbDumpNameOf(tag));
+  return tag || t("retentionPreview.wholeRepo");
+}
 
 /** A short, readable stamp: the date and time, without the timezone tail. */
 function stamp(iso: string): string {
@@ -126,8 +134,7 @@ export function RetentionPreview({
           {repo.items.map((item) => (
             <div key={item.tag || "__repo"} className="mt-2">
               <div className="text-xs text-carbon-textSub">
-                {item.tag || t("retentionPreview.wholeRepo")} ·{" "}
-                {t("retentionPreview.keeps")}: {item.keep?.length ?? 0}
+                {itemLabel(item.tag, t)} · {t("retentionPreview.keeps")}: {item.keep?.length ?? 0}
               </div>
               {(item.remove?.length ?? 0) > 0 && (
                 <ul className="mt-1 flex flex-col gap-0.5">

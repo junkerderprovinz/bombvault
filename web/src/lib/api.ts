@@ -84,6 +84,9 @@ export interface Container {
   /** The container's pre-backup hook already runs a dump tool. */
   dbDumpHookOverlap: boolean;
   lastDbDump?: LastDBDump;
+  /** The repositories hold dumps of this container and no files backup, so
+   *  restoring it alone brings back an empty database. */
+  dumpOnly: boolean;
 }
 
 /** The engines BombVault can dump; "" for a container that is not a database. */
@@ -3026,6 +3029,9 @@ export interface ForeignInventory {
   containers: ForeignItem[];
   vms: ForeignItem[];
   fileSets: ForeignItem[];
+  /** Database dumps. They are not restored from here: the recovery kit says
+   *  how to get one out with the restic CLI. */
+  dbDumps: ForeignItem[];
 }
 
 export interface ForeignOpenResponse extends OkEnvelope {

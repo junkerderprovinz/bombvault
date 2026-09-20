@@ -7798,7 +7798,7 @@ func TestLatestContainerBackupTimesFoldsAlias(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := times["radarr"]; got != want.Unix() {
+	if got := times["radarr"].Newest(); got != want.Unix() {
 		t.Fatalf("radarr should fold in the alias's newer snapshot, want %d got %d (%+v)", want.Unix(), got, times)
 	}
 	if _, ok := times["sonarr"]; !ok {
@@ -7811,7 +7811,7 @@ func TestLatestContainerBackupTimesFoldsAlias(t *testing.T) {
 // name "radarr" up again. Under that name, a snapshot from the link on is
 // B's and one from before it is A's, whichever of them is newer.
 func TestLatestContainerBackupTimesDoesNotStealReusedAliasName(t *testing.T) {
-	latest := func(t *testing.T, snaps []restic.Snapshot) map[string]int64 {
+	latest := func(t *testing.T, snaps []restic.Snapshot) map[string]api.ContainerSnapshotTimes {
 		t.Helper()
 		dir := t.TempDir()
 		cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
@@ -7845,19 +7845,19 @@ func TestLatestContainerBackupTimesDoesNotStealReusedAliasName(t *testing.T) {
 
 	t.Run("a snapshot after the link counts for B", func(t *testing.T) {
 		times := latest(t, []restic.Snapshot{own, post})
-		if got, want := times["radarr"], unixOf(t, post.Time); got != want {
+		if got, want := times["radarr"].Newest(), unixOf(t, post.Time); got != want {
 			t.Fatalf("radarr = %d, want B's own %d (%+v)", got, want, times)
 		}
-		if got, want := times["radarr-old"], unixOf(t, own.Time); got != want {
+		if got, want := times["radarr-old"].Newest(), unixOf(t, own.Time); got != want {
 			t.Fatalf("radarr-old = %d, want A's own %d (%+v)", got, want, times)
 		}
 	})
 	t.Run("a snapshot before the link counts for A", func(t *testing.T) {
 		times := latest(t, []restic.Snapshot{own, pre})
-		if got, ok := times["radarr"]; ok {
+		if got := times["radarr"].Newest(); got > 0 {
 			t.Fatalf("radarr = %d, want no date: its only snapshot is A's (%+v)", got, times)
 		}
-		if got, want := times["radarr-old"], unixOf(t, pre.Time); got != want {
+		if got, want := times["radarr-old"].Newest(), unixOf(t, pre.Time); got != want {
 			t.Fatalf("radarr-old = %d, want its pre-link %d (%+v)", got, want, times)
 		}
 	})

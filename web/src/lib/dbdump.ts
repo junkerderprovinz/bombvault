@@ -54,6 +54,22 @@ export function importHadErrors(note: string | null | undefined): boolean {
   return (note ?? "").startsWith("database imported with errors");
 }
 
+/** The refusal ids POST /dbdumps/{id}/import answers with, one sentence each. */
+const IMPORT_REFUSED: Record<string, TranslationKey> = {
+  busy: "dbdump.importRefused.busy",
+  notRunning: "dbdump.importRefused.notRunning",
+  engineMismatch: "dbdump.importRefused.engineMismatch",
+  noDataMount: "dbdump.importRefused.noDataMount",
+  version: "dbdump.importRefused.version",
+  damaged: "dbdump.importRefused.damaged",
+  notADump: "dbdump.importRefused.notADump",
+};
+
+/** The sentence for a refused import, or null for a failure of another kind. */
+export function importRefusedKey(code: string | undefined): TranslationKey | null {
+  return IMPORT_REFUSED[code ?? ""] ?? null;
+}
+
 const COVERAGE_KEYS: Record<string, TranslationKey> = {
   stopped: "dbdump.coverageStopped",
   live: "dbdump.coverageLive",

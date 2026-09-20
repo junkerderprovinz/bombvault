@@ -623,6 +623,9 @@ type containerView struct {
 	// tool, so the container would be dumped twice.
 	DBDumpHookOverlap bool            `json:"dbDumpHookOverlap"`
 	LastDBDump        *lastDBDumpView `json:"lastDbDump,omitempty"`
+	// DumpOnly: the repositories hold database dumps of this container and no
+	// files backup, so restoring it alone brings back an empty database.
+	DumpOnly bool `json:"dumpOnly"`
 }
 
 // lastDBDumpView is the container's most recent dump attempt. Error carries the
@@ -682,7 +685,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 	// One listing dates every row and tells the rename pass whether a live
 	// container has backups under its own name; snapTimesFailed keeps that pass
 	// from guessing off a partial read.
-	var snapTimes map[string]int64
+	var snapTimes map[string]ContainerSnapshotTimes
 	snapTimesFailed := false
 	if m, sErr := h.svc.LatestContainerBackupTimes(r.Context()); sErr != nil {
 		log.Printf("api: list containers: latest backup times: %v", sErr)
@@ -739,7 +742,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			v.Repo = t.Repo
 			run, _ = h.store.LastSuccessfulBackup(t.ID)
 		}
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(c.Name, run, snapTimes, snapTimesFailed)
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[c.Name].Newest(), snapTimesFailed)
 		own := v.LastBackup != nil
 		hasOwnBackup[c.Name] = own
 		if !own {
@@ -802,33 +805,37 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			v.DBDumpHookOverlap = dumpToolRe.MatchString(t.PreHook)
 			v.LastDBDump = h.lastDBDump(t.ID)
 		}
+		// A container the repositories hold as dumps alone comes back with an
+		// empty database, which the recovery wizard says before it restores
+		// everything.
+		v.DumpOnly = snapTimes[t.ContainerName].DumpOnly()
 		run, _ := h.store.LastSuccessfulBackup(t.ID)
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(t.ContainerName, run, snapTimes, snapTimesFailed)
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[t.ContainerName].Newest(), snapTimesFailed)
 		views = append(views, v)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "containers": views})
 }
 
-// lastBackupDate is the newest backup name owns, so a card's date agrees with
-// the list of backups under it. The run stands in only while the repository
-// could not be listed, because an unreachable repository must not read as
-// "never backed up". The start time comes from the run that wrote that backup
-// and from no other, since the dashboard measures a duration from the pair.
-func lastBackupDate(name string, run *store.Run, times map[string]int64, unreadable bool) (finished, started *int64) {
+// lastBackupDate is the newest backup an entry owns, so a card's date agrees
+// with the list of backups under it. newest is when that backup was taken, 0
+// for none. The run stands in only while the repository could not be listed,
+// because an unreachable repository must not read as "never backed up". The
+// start time comes from the run that wrote that backup and from no other,
+// since the dashboard measures a duration from the pair.
+func lastBackupDate(run *store.Run, newest int64, unreadable bool) (finished, started *int64) {
 	if unreadable {
 		if run == nil {
 			return nil, nil
 		}
 		return run.FinishedAt, &run.StartedAt
 	}
-	ts, ok := times[name]
-	if !ok || ts <= 0 {
+	if newest <= 0 {
 		return nil, nil
 	}
-	if run != nil && run.FinishedAt != nil && run.StartedAt <= ts && ts <= *run.FinishedAt {
-		return &ts, &run.StartedAt
+	if run != nil && run.FinishedAt != nil && run.StartedAt <= newest && newest <= *run.FinishedAt {
+		return &newest, &run.StartedAt
 	}
-	return &ts, nil
+	return &newest, nil
 }
 
 // aliasIndex holds former names by the ID of the entry they belong to.
