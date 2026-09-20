@@ -46,6 +46,7 @@ import { useReveal } from "../lib/useReveal";
 import type { Settings, Container, VM, FileSetView, RegistryAuthEntry } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { useToast } from "../lib/toast";
+import { useConfirm } from "../lib/useConfirm";
 import { REPO_LOCAL_HINT_LTR_FRAGMENTS, tLtr, withLtrFragments } from "../lib/ltrFragments";
 import { randomId } from "../lib/uuid";
 import { useAdvanced } from "../lib/advanced";
@@ -1114,6 +1115,7 @@ const TAB_ICON: Record<TabKey, ReactNode> = {
 // reordering, nothing to get wrong.
 export function SettingsPage() {
   const { t } = useT();
+  const { confirm, confirmDialog } = useConfirm();
   const { advanced } = useAdvanced();
   const { push, quiet, setQuiet } = useToast();
 
@@ -1407,7 +1409,8 @@ export function SettingsPage() {
     | "configEnabled"
     | "receiverEnabled"
     | "pullEnabled"
-    | "fleetEnabled";
+    | "fleetEnabled"
+    | "dbDumpsEnabled";
   const [domainToggleBusy, setDomainToggleBusy] = useState<Partial<Record<DomainToggleKey, boolean>>>({});
   const [domainToggleShake, setDomainToggleShake] = useState<Partial<Record<DomainToggleKey, number>>>({});
 
@@ -1825,6 +1828,21 @@ export function SettingsPage() {
       setSettings((s) => (s ? { ...s, [key]: prev ?? !next } : s));
       setDomainToggleShake((sh) => ({ ...sh, [key]: (sh[key] ?? 0) + 1 }));
     }
+  }
+
+  // Switching every dump off at once can leave a database with no consistent
+  // copy at all, and the containers it happens to are named before it does.
+  async function toggleDbDumps(next: boolean) {
+    if (!next) {
+      const atRisk = containers
+        .filter((c) => c.dbTier !== "" && ["live", "none", "unknown"].includes(c.dbDataCoverage))
+        .map((c) => c.name);
+      const question = atRisk.length
+        ? t("settings.dbDumpsOffConfirm").replace("{names}", atRisk.join(", "))
+        : t("settings.dbDumpsOffConfirmPlain");
+      if (!(await confirm(question, { confirmKey: "common.confirm" }))) return;
+    }
+    await toggleDomainEnabled("dbDumpsEnabled", next);
   }
 
   // autoSaveField (GlimStone follow-up round, Paths & Storage tab rework,
@@ -2935,6 +2953,19 @@ export function SettingsPage() {
           pulseNonce={fieldPulse.containersEnabled}
           hueIndex={0}
         />
+        {/* Indented under Containers: it only acts on containers, and reads as
+            a sub-option of that domain rather than a domain of its own. */}
+        <div className="ps-6">
+          <ToggleRow
+            label={t("settings.dbDumps")}
+            hint={t("settings.dbDumpsHint")}
+            checked={settings.dbDumpsEnabled}
+            onChange={(v) => void toggleDbDumps(v)}
+            disabled={domainToggleBusy.dbDumpsEnabled}
+            shakeNonce={domainToggleShake.dbDumpsEnabled}
+            pulseNonce={fieldPulse.dbDumpsEnabled}
+          />
+        </div>
         <ToggleRow
           label={t("settings.vmsEnabled")}
           hint={t("settings.vmsEnabledHint")}
@@ -5179,6 +5210,7 @@ export function SettingsPage() {
         <AboutCard hueIndex={nextHue()} />
       )}
       </div>
+      {confirmDialog}
 
     </div>
   );
