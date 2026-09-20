@@ -44,7 +44,7 @@ func (r *Repo) inTx(fn func(*sql.Tx) error) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback() //nolint:errcheck,gosec // rollback after a successful commit is a no-op
+	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
 	if err := fn(tx); err != nil {
 		return err
 	}
