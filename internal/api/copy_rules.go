@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -443,4 +444,48 @@ func (s *Service) moveFileSetRule(from, to string) error {
 	s.placementMu.Lock()
 	defer s.placementMu.Unlock()
 	return s.store.MoveCopyRule("files", "fileset:"+from, "fileset:"+to)
+}
+
+// createFileSet creates a set and the copy rule it was created with. The rule
+// hangs on the set's name, so it follows the row, and the row goes again when
+// the rule cannot be written.
+func (s *Service) createFileSet(fs store.FileSet, choice *copiesChoice) (store.FileSet, error) {
+	if err := s.validateItemRepoID(fs.Repo); err != nil {
+		return store.FileSet{}, fmt.Errorf("%w: %w", errRepoInvalid, err)
+	}
+	var copies *store.CopiesWrite
+	if choice != nil {
+		var err error
+		if _, copies, err = placementWrites(placementChange{Copies: choice}); err != nil {
+			return store.FileSet{}, err
+		}
+		s.placementMu.Lock()
+		defer s.placementMu.Unlock()
+		settings, err := s.store.GetSettings()
+		if err != nil {
+			return store.FileSet{}, err
+		}
+		p, err := s.readPlacement(settings, "files")
+		if err != nil {
+			return store.FileSet{}, err
+		}
+		named, err := s.namedRepoIndex()
+		if err != nil {
+			return store.FileSet{}, err
+		}
+		if err := s.checkCopies(settings, p, named, fs.Repo, *copies); err != nil {
+			return store.FileSet{}, err
+		}
+	}
+	created, err := s.store.CreateFileSet(fs)
+	if err != nil || copies == nil {
+		return created, err
+	}
+	if _, err := s.store.WritePlacement(store.ItemRef{Domain: "files", Key: created.ID}, nil, copies, nil); err != nil {
+		if dErr := s.store.DeleteFileSet(created.ID); dErr != nil {
+			log.Printf("api: create file set %q: removing it after its copy rule failed: %v", fs.Name, dErr) //nolint:gosec // G706: name is %q-quoted
+		}
+		return store.FileSet{}, err
+	}
+	return created, nil
 }
