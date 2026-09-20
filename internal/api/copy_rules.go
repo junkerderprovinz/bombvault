@@ -48,72 +48,125 @@ type uploadEstimate struct {
 	Uncheckable []string `json:"uncheckable"` // copy sources that could not be listed
 }
 
-// applyPlacement validates and writes the home and copies of one item. It writes
-// its own refusal and reports whether the request may go on.
-func (h *Handler) applyPlacement(w http.ResponseWriter, _ *http.Request, item store.ItemRef, change placementChange) (placementResult, bool) {
-	res, err := h.svc.setItemCopies(item, change.Copies)
-	if err != nil {
-		placementFail(w, err, nil)
-		return placementResult{}, false
-	}
-	return res, true
+// pendingCopies is a copies change validateItemCopies approved but has not yet
+// written: an item PATCH applies its other fields first and commits this last,
+// via commitPlacement, so a later field's failure never leaves the rule behind
+// and a rename in the same request resolves the identity under the name it
+// leaves things under.
+type pendingCopies struct {
+	placementResult
+	item store.ItemRef
+	skip []string // nil for follow; meaningless unless set
+	set  bool
 }
 
-// setItemCopies writes an item's copy rule and names the targets it stops
-// going to. A target never listed for the domain is listed in the background, so
-// the card can say how many copies stay there.
-func (s *Service) setItemCopies(item store.ItemRef, copies *copiesChoice) (placementResult, error) {
-	res := placementResult{Dropped: []droppedTarget{}}
+// applyPlacement validates a copies change against the item's home: repoOverride
+// when the same request also moves the item, so the skip is judged against
+// where it is going rather than where it has been; the item's stored repo when
+// repoOverride is nil. It writes its own refusal and reports whether the
+// request may go on. The change itself is written later, by commitPlacement.
+func (h *Handler) applyPlacement(w http.ResponseWriter, item store.ItemRef, copies *copiesChoice, repoOverride *string) (pendingCopies, bool) {
+	p, err := h.svc.validateItemCopies(item, copies, repoOverride)
+	if err != nil {
+		placementFail(w, err, nil)
+		return pendingCopies{}, false
+	}
+	return p, true
+}
+
+// commitPlacement writes a copies change applyPlacement approved and names the
+// targets it stops going to. A target never listed for the domain is listed in
+// the background, so the card can say how many copies stay there. It writes
+// its own refusal and reports whether the request succeeded.
+func (h *Handler) commitPlacement(w http.ResponseWriter, p pendingCopies) bool {
+	if err := h.svc.writeItemCopies(p); err != nil {
+		placementFail(w, err, nil)
+		return false
+	}
+	return true
+}
+
+// validateItemCopies checks a copies change without writing it.
+func (s *Service) validateItemCopies(item store.ItemRef, copies *copiesChoice, repoOverride *string) (pendingCopies, error) {
+	p := pendingCopies{item: item, placementResult: placementResult{Dropped: []droppedTarget{}}}
 	if copies == nil {
-		return res, nil
+		return p, nil
 	}
 	skip, err := copiesSkip(*copies)
 	if err != nil {
-		return res, err
+		return p, err
 	}
+	p.set, p.skip = true, skip
+
 	s.placementMu.Lock()
 	defer s.placementMu.Unlock()
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return res, err
+		return p, err
 	}
-	p, err := s.readPlacement(settings, item.Domain)
+	placement, err := s.readPlacement(settings, item.Domain)
 	if err != nil {
-		return res, err
+		return p, err
 	}
 	named, err := s.namedRepoIndex()
 	if err != nil {
-		return res, err
+		return p, err
 	}
 	identity, err := s.itemIdentity(item)
 	if err != nil {
-		return res, err
+		return p, err
 	}
-	repoID, err := s.currentItemRepo(item)
+	repoID, err := s.itemRepoForPlacement(item, repoOverride)
 	if err != nil {
-		return res, err
+		return p, err
 	}
-	before, after, err := s.copiesChange(settings, p, named, repoID, identity, skip)
+	before, after, err := s.copiesChange(settings, placement, named, repoID, identity, skip)
 	if err != nil {
-		return res, err
+		return p, err
 	}
-	if res.Dropped, err = s.droppedTargets(item.Domain, identity, before, after); err != nil {
-		return res, err
+	if p.Dropped, err = s.droppedTargets(item.Domain, identity, before, after); err != nil {
+		return p, err
 	}
-	if skip == nil {
-		err = s.store.DeleteCopyRule(item.Domain, identity)
+	return p, nil
+}
+
+// itemRepoForPlacement is the repository a copies change is judged against:
+// repoOverride when the request names one, the item's stored repo otherwise.
+func (s *Service) itemRepoForPlacement(item store.ItemRef, repoOverride *string) (string, error) {
+	if repoOverride != nil {
+		return strings.TrimSpace(*repoOverride), nil
+	}
+	return s.currentItemRepo(item)
+}
+
+// writeItemCopies writes a copies change validateItemCopies approved. The
+// identity is resolved fresh, after the rest of the request's fields have
+// already been applied, so a rename earlier in the same request carries the
+// rule to the name it leaves things under.
+func (s *Service) writeItemCopies(p pendingCopies) error {
+	if !p.set {
+		return nil
+	}
+	s.placementMu.Lock()
+	defer s.placementMu.Unlock()
+	identity, err := s.itemIdentity(p.item)
+	if err != nil {
+		return err
+	}
+	if p.skip == nil {
+		err = s.store.DeleteCopyRule(p.item.Domain, identity)
 	} else {
-		err = s.store.SetCopyRule(item.Domain, identity, skip)
+		err = s.store.SetCopyRule(p.item.Domain, identity, p.skip)
 	}
 	if err != nil {
-		return res, err
+		return err
 	}
-	for _, d := range res.Dropped {
+	for _, d := range p.Dropped {
 		if d.Copies == nil {
-			s.listTargetInBackground(item.Domain, d.TargetID)
+			s.listTargetInBackground(p.item.Domain, d.TargetID)
 		}
 	}
-	return res, nil
+	return nil
 }
 
 // copiesSkip is the skip a copies field asks for, nil for follow. Follow and a

@@ -105,6 +105,65 @@ func TestAnItemOnARemoteRepositoryTakesNoCopies(t *testing.T) {
 	}
 }
 
+func TestAPatchWhoseLaterFieldFailsLeavesNoRuleAndNoChangedField(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	tg := f.container("nginx", "")
+	f.backupRun(tg.ID, 100)
+	nas := f.namedRepo("NAS", "nas")
+
+	res := f.do(http.MethodPatch, "/api/containers/nginx", map[string]any{
+		"copies": map[string]any{"skip": []string{b2.ID}},
+		"repo":   nas.ID,
+	})
+	if res["ok"] != false {
+		t.Fatalf("PATCH = %v, want a refusal (the container already has backups)", res)
+	}
+	if _, found := ruleOf(t, f, "containers", "container:nginx"); found {
+		t.Fatal("a PATCH that failed on a later field still wrote the rule")
+	}
+	if got, err := f.st.GetTargetByContainer("nginx"); err != nil || strings.TrimSpace(got.Repo) != "" {
+		t.Fatalf("repo = %+v, %v, want it unchanged", got, err)
+	}
+}
+
+func TestAMoveToARemoteNamedRepositoryWithCopiesIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	box := f.namedRepo("Storagebox", "sftp:u@box:/bv")
+	f.container("nginx", "")
+
+	res := f.do(http.MethodPatch, "/api/containers/nginx", map[string]any{
+		"repo":   box.ID,
+		"copies": map[string]any{"skip": []string{}},
+	})
+	if res["code"] != "copies-not-allowed" {
+		t.Fatalf("PATCH = %v, want copies-not-allowed", res)
+	}
+	if got, err := f.st.GetTargetByContainer("nginx"); err != nil || strings.TrimSpace(got.Repo) != "" {
+		t.Fatalf("repo = %+v, %v, want it unchanged by the refusal", got, err)
+	}
+}
+
+func TestAMoveToTheDomainPathWithCopiesIsAccepted(t *testing.T) {
+	f := newPlacementFixture(t)
+	box := f.namedRepo("Storagebox", "sftp:u@box:/bv")
+	f.container("nginx", box.ID)
+
+	res := f.do(http.MethodPatch, "/api/containers/nginx", map[string]any{
+		"repo":   "",
+		"copies": map[string]any{"skip": []string{}},
+	})
+	if res["ok"] != true {
+		t.Fatalf("PATCH = %v, want ok", res)
+	}
+	if got, err := f.st.GetTargetByContainer("nginx"); err != nil || strings.TrimSpace(got.Repo) != "" {
+		t.Fatalf("repo = %+v, %v, want the domain path", got, err)
+	}
+	if skip, found := ruleOf(t, f, "containers", "container:nginx"); !found || len(skip) != 0 {
+		t.Fatalf("rule = %v found=%v, want an empty skip", skip, found)
+	}
+}
+
 func TestFollowingTheDefaultDeletesTheRule(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.target("containers", "B2", "b2:bucket:containers")

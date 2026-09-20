@@ -1366,7 +1366,7 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	placed, ok := h.applyPlacement(w, r, store.ItemRef{Domain: "containers", Key: name}, placementChange{Copies: body.Copies})
+	pending, ok := h.applyPlacement(w, store.ItemRef{Domain: "containers", Key: name}, body.Copies, body.Repo)
 	if !ok {
 		return
 	}
@@ -1451,7 +1451,10 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dropped": placed.Dropped}))
+	if !h.commitPlacement(w, pending) {
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dropped": pending.Dropped}))
 }
 
 // reloadScheduler re-reads the settings and re-registers every schedule entry,
@@ -4549,7 +4552,7 @@ func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	placed, ok := h.applyPlacement(w, r, store.ItemRef{Domain: "vms", Key: name}, placementChange{Copies: body.Copies})
+	pending, ok := h.applyPlacement(w, store.ItemRef{Domain: "vms", Key: name}, body.Copies, body.Repo)
 	if !ok {
 		return
 	}
@@ -4590,7 +4593,10 @@ func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dropped": placed.Dropped}))
+	if !h.commitPlacement(w, pending) {
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dropped": pending.Dropped}))
 }
 
 // handleVMScheduleIncludeAll sets the include_in_schedule flag for every VM on
@@ -4990,7 +4996,7 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "file set not found"})
 		return
 	}
-	placed, ok := h.applyPlacement(w, r, store.ItemRef{Domain: "files", Key: id}, placementChange{Copies: body.Copies})
+	pending, ok := h.applyPlacement(w, store.ItemRef{Domain: "files", Key: id}, body.Copies, body.Repo)
 	if !ok {
 		return
 	}
@@ -5143,7 +5149,10 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dropped": placed.Dropped}))
+	if !h.commitPlacement(w, pending) {
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dropped": pending.Dropped}))
 }
 
 // handleDeleteFileSet removes a file set (row + run history) WITHOUT touching
