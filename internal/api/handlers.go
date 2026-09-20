@@ -270,6 +270,10 @@ func scrubBypassMessage(err error) (string, bool) {
 		// Same deal again: the ZFS dataset/pool names ARE the message, and
 		// necessarily contain "/" — see errZvolRebaseFailed.
 		return err.Error(), true
+	case errors.Is(err, errDBImportFolders):
+		// The data folders an import set aside are what the operator has to act
+		// on, so they must survive the scrubber (see errDBImportFolders).
+		return err.Error(), true
 	case errors.Is(err, errRestPathUser):
 		// This one is here for a different reason than its neighbours: the
 		// message holds no path-shaped content at all (two htpasswd-user words,
@@ -1605,6 +1609,41 @@ func (h *Handler) handleSaveDBDumpTo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true, "target": target}))
+}
+
+// handleImportDBDump imports one database dump into a freshly initialised
+// database. POST /api/containers/{name}/dbdumps/{id}/import?source=
+//
+// Asynchronous like the to-folder restore: every refusal is answered here, with
+// the reason id the page translates, and the work itself runs detached.
+func (h *Handler) handleImportDBDump(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
+	started, err := h.svc.StartImportDBDump(r.Context(), name, sourceParam(r), r.PathValue("id"))
+	switch {
+	case err != nil:
+		writeJSON(w, http.StatusOK, importRefusalEnvelope(err))
+	case !started:
+		writeJSON(w, http.StatusOK, codedFailEnvelope(errors.New("a backup or restore is already running"), importRefusedBusy))
+	default:
+		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
+	}
+}
+
+// importRefusalEnvelope answers a refused import: the reason id the page turns
+// into a sentence, plus the two major versions a version mismatch names.
+func importRefusalEnvelope(err error) map[string]any {
+	var refusal *importRefusal
+	if !errors.As(err, &refusal) {
+		return failEnvelope(err)
+	}
+	out := codedFailEnvelope(err, refusal.code)
+	if refusal.code == importRefusedVersion {
+		out["server"], out["dump"] = refusal.server, refusal.dump
+	}
+	return out
 }
 
 // handleDiff compares two of a container's snapshots and returns the summary of
