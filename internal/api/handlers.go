@@ -4835,22 +4835,16 @@ func (h *Handler) handleListFileSets(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleCreateFileSet creates a file set. POST /api/files/sets
-// body {name, path, excludes, enabled, repo}. Path is required here (only
-// DiscoverFileSets may store a path-less set) and, like the name, is fully
-// validated before the row is written.
+// body {name, path, excludes, enabled, repo, copies}. Without repo the set is
+// open and takes the Folders default at its first backup.
 func (h *Handler) handleCreateFileSet(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Name     string   `json:"name"`
-		Path     string   `json:"path"`
-		Excludes []string `json:"excludes"`
-		Enabled  *bool    `json:"enabled"`
-		// The named repository (#204) this set writes to, "" for the domain's
-		// own. Accepted at CREATE, not only on the later PATCH: the new-set
-		// dialog shows the picker, so a choice made there has to arrive. Without
-		// it the set was created on the domain repository and the picker's
-		// answer was thrown away silently - the field even read back correctly
-		// afterwards, because it re-rendered from the same discarded state.
-		Repo string `json:"repo"`
+		Name     string        `json:"name"`
+		Path     string        `json:"path"`
+		Excludes []string      `json:"excludes"`
+		Enabled  *bool         `json:"enabled"`
+		Repo     *string       `json:"repo"`
+		Copies   *copiesChoice `json:"copies"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -4860,12 +4854,14 @@ func (h *Handler) handleCreateFileSet(w http.ResponseWriter, r *http.Request) {
 		enabled = *body.Enabled
 	}
 	fs := store.FileSet{
-		Name:       strings.TrimSpace(body.Name),
-		Path:       strings.TrimSpace(body.Path),
-		Excludes:   body.Excludes,
-		Enabled:    enabled,
-		Repo:       strings.TrimSpace(body.Repo),
-		RepoChosen: store.RepoChosen,
+		Name:     strings.TrimSpace(body.Name),
+		Path:     strings.TrimSpace(body.Path),
+		Excludes: body.Excludes,
+		Enabled:  enabled,
+	}
+	if body.Repo != nil {
+		fs.Repo = strings.TrimSpace(*body.Repo)
+		fs.RepoChosen = store.RepoChosen
 	}
 	if fs.Path == "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "path is required"})
@@ -4875,25 +4871,16 @@ func (h *Handler) handleCreateFileSet(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	// The same check the PATCH path applies: the repository has to exist and be
-	// switched on, refused here rather than at the first backup.
-	if err := h.svc.validateItemRepoID(fs.Repo); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	created, err := h.store.CreateFileSet(fs)
+	created, err := h.svc.createFileSet(fs, body.Copies)
 	if err != nil {
-		// A duplicate name violates the UNIQUE constraint — report it clearly.
+		// A duplicate name violates the UNIQUE constraint: report it clearly.
 		if strings.Contains(err.Error(), "UNIQUE") {
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a file set with this name already exists"})
 			return
 		}
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		placementFail(w, err, nil)
 		return
 	}
-	// The repository rides along in the INSERT (see CreateFileSet), so there is no
-	// window in which the set exists on the domain repository while the caller
-	// believes it is on the chosen one.
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"id": created.ID}))
 }
 
