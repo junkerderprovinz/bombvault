@@ -40,6 +40,8 @@ interface RestoreProgressProps {
   /** The ref the caller's useBackupWatch received, passed on to
    *  RestoreCancelButton. */
   cancelledRef?: MutableRefObject<boolean>;
+  /** Passed to the cancel button where the standing warning does not fit. */
+  cancelConfirm?: string;
   /** Localized success text. */
   successMessage: string;
   /** Shows the restore.started and restore.bgHint lines. Default true. */
@@ -55,6 +57,7 @@ export function RestoreProgress({
   inPlace,
   name,
   cancelledRef,
+  cancelConfirm,
   successMessage,
   showStartedHint = true,
   t,
@@ -76,6 +79,7 @@ export function RestoreProgress({
             cancelKey={cancelKey}
             inPlace={inPlace}
             name={name}
+            confirmText={cancelConfirm}
             t={t}
             cancelledRef={cancelledRef}
           />

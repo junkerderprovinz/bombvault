@@ -282,6 +282,22 @@ export function IconCloud() {
   );
 }
 
+/** A database. */
+export function IconDatabase() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 14 14"
+      fill="currentColor"
+      className="shrink-0"
+      aria-hidden="true"
+    >
+      <ellipse cx="7" cy="3.3" rx="5.4" ry="1.8" /><path d="M1.6 5.7Q7 9.3 12.4 5.7L12.4 7.7Q7 11.3 1.6 7.7Z" /><path d="M1.6 8.7Q7 12.3 12.4 8.7L12.4 10.7Q7 14.3 1.6 10.7Z" />
+    </svg>
+  );
+}
+
 /** Add. */
 export function IconAdd() {
   return (

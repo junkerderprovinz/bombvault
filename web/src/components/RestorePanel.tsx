@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { listSnapshots, restore, listSnapshotFiles, restoreContainerFiles, restoreContainerToPath, deleteSnapshot, diffSnapshots, tagSnapshot, getSettings } from "../lib/api";
-import type { Snapshot, FileEntry, SnapshotDiff } from "../lib/api";
+import type { Snapshot, FileEntry, SnapshotDiff, DBDumpView, DbDataCoverage } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { Advanced, useAdvanced } from "../lib/advanced";
 import { useBackupWatch } from "../lib/backupWatch";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { RestoreProgress } from "./restore/RestoreProgress";
 import { RestoreAction } from "./restore/RestoreAction";
+import { DatabaseDumpList } from "./restore/DatabaseDumpList";
+import { pairsWith } from "../lib/dbdump";
+import { Badge } from "./Badge";
 import { SourceToggle, type RepoSource } from "./SourceToggle";
 import { FolderBrowser } from "./FolderBrowser";
 import { RecentRunsList } from "./RecentRunsList";
@@ -37,11 +40,20 @@ function humanBytes(n: number): string {
 }
 
 // displayTags hides the ownership tags under the entry's own or a former name,
-// the formerly: takeover marker and the orchestrator's internal marker tags.
+// the formerly: takeover marker, the orchestrator's internal marker tags and
+// the machine-readable prefixes that pair a backup with its database dump and
+// describe the dumped server.
 const INTERNAL_TAGS = new Set(["p1"]);
+const INTERNAL_PREFIXES = ["bvrun:", "dbengine:", "dbimage:", "dbversion:", "dbname:"];
 function displayTags(snap: Snapshot, containerName: string, aliases: string[]): string[] {
   const owners = new Set([containerName, ...aliases].map((n) => `container:${n}`));
-  return (snap.tags ?? []).filter((tg) => !owners.has(tg) && !INTERNAL_TAGS.has(tg) && !tg.startsWith("formerly:"));
+  return (snap.tags ?? []).filter(
+    (tg) =>
+      !owners.has(tg) &&
+      !INTERNAL_TAGS.has(tg) &&
+      !tg.startsWith("formerly:") &&
+      !INTERNAL_PREFIXES.some((p) => tg.startsWith(p))
+  );
 }
 
 // SnapshotFileBrowser restores ticked files and folders from a snapshot, in
@@ -231,6 +243,13 @@ interface RestorePanelProps {
   installed?: boolean;
   /** Whether the panel is shown. The caller owns the toggle. */
   open: boolean;
+  /** The container is a database BombVault dumps, so an empty dump list is
+   *  news rather than noise. */
+  isDatabase?: boolean;
+  /** What the files backup of the database's data folder is worth. */
+  dbCoverage?: DbDataCoverage;
+  /** The container is up, which the import needs. */
+  containerRunning?: boolean;
 }
 
 // RecreateButton recreates a container that is not installed from its saved
@@ -606,6 +625,8 @@ function SnapshotRow({
   source,
   hostMountRoot,
   defaultFolder,
+  paired,
+  coverage,
   onDeleted,
   onTagged,
   t,
@@ -616,6 +637,10 @@ function SnapshotRow({
   source: RepoSource;
   hostMountRoot: string;
   defaultFolder: string;
+  /** A database dump was taken in the same backup as this snapshot. */
+  paired: boolean;
+  /** What the files in this snapshot are worth, for the restore warning. */
+  coverage: DbDataCoverage;
   onDeleted: () => void;
   onTagged: () => void;
   t: T;
@@ -668,6 +693,16 @@ function SnapshotRow({
         <span className="text-carbon-textMuted text-xs flex-1">
           {new Date(snap.time).toLocaleString()}
         </span>
+        {/* The tip repeats in a bubble: a title alone is out of reach for
+            touch and keyboard. */}
+        {paired && (
+          <span className="flex items-center gap-1">
+            <Badge tone="neutral" size="small" title={t("dbdump.pairedTip")}>
+              {t("dbdump.pairedBadge")}
+            </Badge>
+            <InfoBubble tip={t("dbdump.pairedTip")} />
+          </span>
+        )}
         <Advanced>
           <div className="hidden sm:flex">
             <SnapshotTags snap={snap} containerName={containerName} aliases={aliases} source={source} onTagged={onTagged} t={t} />
@@ -739,6 +774,11 @@ function SnapshotRow({
           {effectiveMode === "inPlace" && (
             <div className="flex flex-col gap-2 border-t border-carbon-border pt-2">
               <p className="text-caption text-carbon-textMuted">{t("restore.inPlaceHint")}</p>
+              {(coverage === "live" || coverage === "none") && (
+                <p className="text-xs text-statusWarn">
+                  {t(coverage === "live" ? "dbdump.restoreLiveWarn" : "dbdump.restoreNoneWarn")}
+                </p>
+              )}
               <RestoreAction
                 domain="container"
                 name={containerName}
@@ -787,7 +827,16 @@ function SnapshotRow({
 // setting is empty. It matches the backend column default.
 export const DEFAULT_RESTORE_FOLDER = "user/bombvault/restore";
 
-export function RestorePanel({ name, aliases = [], t, installed = true, open }: RestorePanelProps) {
+export function RestorePanel({
+  name,
+  aliases = [],
+  t,
+  installed = true,
+  open,
+  isDatabase = false,
+  dbCoverage = "",
+  containerRunning = false,
+}: RestorePanelProps) {
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(false);
@@ -798,6 +847,9 @@ export function RestorePanel({ name, aliases = [], t, installed = true, open }: 
   const [hostMountRoot, setHostMountRoot] = useState("/host/user");
 
   const [reloadTick, setReloadTick] = useState(0);
+  // Held here as well as in the list, because the pairing badge sits on the
+  // snapshot rows above it.
+  const [dumps, setDumps] = useState<DBDumpView[]>([]);
 
   // Seeds the restore-to-folder pickers once the panel opens.
   useEffect(() => {
@@ -883,11 +935,24 @@ export function RestorePanel({ name, aliases = [], t, installed = true, open }: 
           source={source}
           hostMountRoot={hostMountRoot}
           defaultFolder={restoreFolder}
+          paired={dumps.some((dump) => pairsWith(dump, snap))}
+          coverage={dbCoverage}
           onDeleted={() => setReloadTick((n) => n + 1)}
           onTagged={() => setReloadTick((n) => n + 1)}
           t={t}
         />
       ))}
+      <DatabaseDumpList
+        containerName={name}
+        source={source}
+        recognised={isDatabase}
+        canImport={installed && containerRunning}
+        hostMountRoot={hostMountRoot}
+        defaultFolder={restoreFolder}
+        reloadTick={reloadTick}
+        onDumps={setDumps}
+        t={t}
+      />
     </div>
   );
 }
