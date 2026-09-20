@@ -1,6 +1,7 @@
 package api
 
 import (
+	"strings"
 	"testing"
 	"time"
 )
@@ -138,6 +139,21 @@ func TestAnAgingRunDoesNotMakeATargetCurrent(t *testing.T) {
 
 	if st := statusFor(t, f, "containers"); st.ReplicationState != "overdue" {
 		t.Fatalf("state %q, want overdue: Hetzner's last copy is five days old", st.ReplicationState)
+	}
+}
+
+func TestAnUnreadablePlacementLeavesATraceInsteadOfReadingAsUnruled(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("containers", "B2", "b2:bucket:containers")
+	breakRule(t, f, "containers", "container:nginx")
+	logs := captureLog(t)
+
+	paused, byTarget, targets := f.svc.placementCurrency(settingsOf(t, f.svc), "containers")
+	if paused || byTarget || targets != nil {
+		t.Fatalf("placementCurrency = %v, %v, %v, want the same blank answer as a healthy install without rules", paused, byTarget, targets)
+	}
+	if !strings.Contains(logs.String(), "containers") {
+		t.Fatalf("an unreadable placement left no trace in the log:\n%s", logs.String())
 	}
 }
 
