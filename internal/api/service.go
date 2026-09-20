@@ -411,12 +411,10 @@ type Service struct {
 	// placementMu guards a domain's placement state across a read-then-write: two
 	// callers pausing the same domain at once (a replication pass and a
 	// background listing, say) do not both try to insert its row and only one
-	// notification fires. confirmPlacement, writeItemCopies and moveFileSetRule
-	// each hold it for one read-then-write of their own, but an item PATCH's
-	// earlier validateItemCopies read and its later writeItemCopies write are two
-	// separate acquisitions, so a copy rule's read-modify-write is not atomic
-	// across a whole request and another PATCH to the same item can land
-	// between them.
+	// notification fires. confirmPlacement, moveFileSetRule and an item PATCH's
+	// writeItemPlacement each hold it for one read-then-write of their own, so a
+	// PATCH's home and copies land as a single atomic step and another PATCH to
+	// the same item never lands in between.
 	placementMu sync.Mutex
 
 	// listingMu guards listing, the (domain, target) pairs being listed in the

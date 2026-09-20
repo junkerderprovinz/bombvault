@@ -328,6 +328,9 @@ type placementEngine struct {
 	deletes []forgetIDsCall
 	prunes  []string
 	ensured []string // Init calls: the repositories EnsureRepo had to create
+	// onSnapshots, when set, runs synchronously after every Snapshots call, so a
+	// test can rewrite state a caller already captured before it listed.
+	onSnapshots func()
 }
 
 type copyCall struct {
@@ -370,13 +373,19 @@ func (e *placementEngine) RepoOpensErr(ctx context.Context, repo string, mode re
 
 func (e *placementEngine) Snapshots(_ context.Context, repo string, _ restic.Mode) ([]restic.Snapshot, error) {
 	e.mu.Lock()
-	defer e.mu.Unlock()
 	key := filepath.ToSlash(repo)
 	e.lists[key]++
-	if err := e.listErr[key]; err != nil {
+	err := e.listErr[key]
+	snaps := slices.Clone(e.snaps[key])
+	hook := e.onSnapshots
+	e.mu.Unlock()
+	if hook != nil {
+		hook()
+	}
+	if err != nil {
 		return nil, err
 	}
-	return slices.Clone(e.snaps[key]), nil
+	return snaps, nil
 }
 
 // Copy puts a copy with a new id and the source's identity at the destination

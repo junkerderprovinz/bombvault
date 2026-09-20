@@ -48,125 +48,156 @@ type uploadEstimate struct {
 	Uncheckable []string `json:"uncheckable"` // copy sources that could not be listed
 }
 
-// pendingCopies is a copies change validateItemCopies approved but has not yet
-// written: an item PATCH applies its other fields first and commits this last,
-// via commitPlacement, so a later field's failure never leaves the rule behind
-// and a rename in the same request resolves the identity under the name it
-// leaves things under.
-type pendingCopies struct {
-	placementResult
-	item store.ItemRef
-	skip []string // nil for follow; meaningless unless set
-	set  bool
-}
-
-// applyPlacement validates a copies change against the item's home: repoOverride
-// when the same request also moves the item, so the skip is judged against
-// where it is going rather than where it has been; the item's stored repo when
-// repoOverride is nil. It writes its own refusal and reports whether the
-// request may go on. The change itself is written later, by commitPlacement.
-func (h *Handler) applyPlacement(w http.ResponseWriter, item store.ItemRef, copies *copiesChoice, repoOverride *string) (pendingCopies, bool) {
-	p, err := h.svc.validateItemCopies(item, copies, repoOverride)
+// applyPlacement validates and writes the home and copies of one item. It
+// writes its own refusal and reports whether the request may go on.
+func (h *Handler) applyPlacement(w http.ResponseWriter, r *http.Request, item store.ItemRef, change placementChange) (placementResult, bool) {
+	res, err := h.svc.writeItemPlacement(r.Context(), item, change)
 	if err != nil {
 		placementFail(w, err, nil)
-		return pendingCopies{}, false
+		return placementResult{}, false
 	}
-	return p, true
+	return res, true
 }
 
-// commitPlacement writes a copies change applyPlacement approved and names the
-// targets it stops going to. A target never listed for the domain is listed in
-// the background, so the card can say how many copies stay there. It writes
-// its own refusal and reports whether the request succeeded.
-func (h *Handler) commitPlacement(w http.ResponseWriter, p pendingCopies) bool {
-	if err := h.svc.writeItemCopies(p); err != nil {
-		placementFail(w, err, nil)
-		return false
+// writeItemPlacement writes an item's home and copies in one transaction. A
+// home change holds the domain lock, so it cannot land while the item's first
+// backup settles its location.
+func (s *Service) writeItemPlacement(ctx context.Context, item store.ItemRef, change placementChange) (placementResult, error) {
+	res := placementResult{Dropped: []droppedTarget{}}
+	home, copies, err := placementWrites(change)
+	if err != nil || (home == nil && copies == nil) {
+		return res, err
 	}
-	return true
-}
-
-// validateItemCopies checks a copies change without writing it.
-func (s *Service) validateItemCopies(item store.ItemRef, copies *copiesChoice, repoOverride *string) (pendingCopies, error) {
-	p := pendingCopies{item: item, placementResult: placementResult{Dropped: []droppedTarget{}}}
-	if copies == nil {
-		return p, nil
+	if home != nil {
+		unlock, ok := s.tryLockDomainFor(item.Domain, placementLockReason)
+		if !ok {
+			return res, errPlacementBusy
+		}
+		defer unlock()
 	}
-	skip, err := copiesSkip(*copies)
-	if err != nil {
-		return p, err
-	}
-	p.set, p.skip = true, skip
-
 	s.placementMu.Lock()
 	defer s.placementMu.Unlock()
+
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return p, err
+		return res, err
 	}
-	placement, err := s.readPlacement(settings, item.Domain)
+	p, err := s.readPlacement(settings, item.Domain)
 	if err != nil {
-		return p, err
+		return res, err
 	}
 	named, err := s.namedRepoIndex()
 	if err != nil {
-		return p, err
+		return res, err
+	}
+	read, err := s.store.ItemHome(item)
+	if err != nil {
+		return res, err
+	}
+	next := read
+	if home != nil {
+		if err := s.checkHomeChange(ctx, item, read, *home); err != nil {
+			return res, err
+		}
+		next = store.HomeState{Exists: true, Repo: home.Repo, Choice: home.Choice}
+	}
+	// The copy side is judged by where an item's backups actually land, not by
+	// its row's raw repo field: an open item with a default goes to the
+	// default's repository, and that is the repository its copy rule has to
+	// answer to.
+	beforeRepo, _ := p.effectiveHome(read)
+	afterRepo, _ := p.effectiveHome(next)
+	if copies != nil {
+		if err := s.checkCopies(settings, p, named, afterRepo, *copies); err != nil {
+			return res, err
+		}
 	}
 	identity, err := s.itemIdentity(item)
 	if err != nil {
-		return p, err
+		return res, err
 	}
-	repoID, err := s.itemRepoForPlacement(item, repoOverride)
-	if err != nil {
-		return p, err
+	before := s.itemCopyTargets(settings, p, named, beforeRepo, identity)
+	after := s.itemCopyTargets(settings, p.withCopies(identity, copies), named, afterRepo, identity)
+	if res.Dropped, err = s.droppedTargets(item.Domain, identity, before, after); err != nil {
+		return res, err
 	}
-	before, after, err := s.copiesChange(settings, placement, named, repoID, identity, skip, repoOverride != nil)
-	if err != nil {
-		return p, err
+	if _, err := s.store.WritePlacement(item, home, copies, nil); err != nil {
+		return res, err
 	}
-	if p.Dropped, err = s.droppedTargets(item.Domain, identity, before, after); err != nil {
-		return p, err
-	}
-	return p, nil
-}
-
-// itemRepoForPlacement is the repository a copies change is judged against:
-// repoOverride when the request names one, the item's stored repo otherwise.
-func (s *Service) itemRepoForPlacement(item store.ItemRef, repoOverride *string) (string, error) {
-	if repoOverride != nil {
-		return strings.TrimSpace(*repoOverride), nil
-	}
-	return s.currentItemRepo(item)
-}
-
-// writeItemCopies writes a copies change validateItemCopies approved. The
-// identity is resolved fresh, after the rest of the request's fields have
-// already been applied, so a rename earlier in the same request carries the
-// rule to the name it leaves things under.
-func (s *Service) writeItemCopies(p pendingCopies) error {
-	if !p.set {
-		return nil
-	}
-	s.placementMu.Lock()
-	defer s.placementMu.Unlock()
-	identity, err := s.itemIdentity(p.item)
-	if err != nil {
-		return err
-	}
-	if p.skip == nil {
-		err = s.store.DeleteCopyRule(p.item.Domain, identity)
-	} else {
-		err = s.store.SetCopyRule(p.item.Domain, identity, p.skip)
-	}
-	if err != nil {
-		return err
-	}
-	for _, d := range p.Dropped {
+	for _, d := range res.Dropped {
 		if d.Copies == nil {
-			s.listTargetInBackground(p.item.Domain, d.TargetID)
+			s.listTargetInBackground(item.Domain, d.TargetID)
 		}
 	}
+	return res, nil
+}
+
+// placementWrites turns the request fields into store writes. Each field
+// takes follow or one value, never both and never neither.
+func placementWrites(change placementChange) (*store.HomeWrite, *store.CopiesWrite, error) {
+	var home *store.HomeWrite
+	if c := change.Home; c != nil {
+		switch {
+		case c.Follow && c.Repo == nil:
+			home = &store.HomeWrite{Choice: store.RepoOpen}
+		case !c.Follow && c.Repo != nil:
+			home = &store.HomeWrite{Repo: strings.TrimSpace(*c.Repo), Choice: store.RepoChosen}
+		default:
+			return nil, nil, errInvalidPlacement
+		}
+	}
+	var copies *store.CopiesWrite
+	if c := change.Copies; c != nil {
+		switch {
+		case c.Follow && c.Skip == nil:
+			copies = &store.CopiesWrite{Follow: true}
+		case !c.Follow && c.Skip != nil && validSkip(*c.Skip):
+			copies = &store.CopiesWrite{Skip: *c.Skip}
+		default:
+			return nil, nil, errInvalidPlacement
+		}
+	}
+	return home, copies, nil
+}
+
+// validSkip is what store.ValidSkipList accepts: [], ["*"] or a list of
+// target ids.
+func validSkip(skip []string) bool {
+	return store.ValidSkipList(skip) == nil
+}
+
+// checkHomeChange refuses a new location for an item with history where it
+// is, and a repository that could not take its next backup.
+func (s *Service) checkHomeChange(ctx context.Context, item store.ItemRef, read store.HomeState, home store.HomeWrite) error {
+	if home.Choice == store.RepoChosen {
+		if home.Repo == read.Repo {
+			return nil
+		}
+		if err := s.validateItemRepoID(home.Repo); err != nil {
+			return fmt.Errorf("%w: %w", errRepoInvalid, err)
+		}
+	}
+	had, err := countsAsBackedUp(s.itemBackups(ctx, item))
+	if err != nil {
+		return err
+	}
+	if had {
+		return errHomeHasBackups
+	}
 	return nil
+}
+
+// withLegacyRepo folds the older repo field into home; both together are
+// refused.
+func withLegacyRepo(change placementChange, repo *string) (placementChange, error) {
+	if repo == nil {
+		return change, nil
+	}
+	if change.Home != nil {
+		return change, errInvalidPlacement
+	}
+	change.Home = &homeChoice{Repo: repo}
+	return change, nil
 }
 
 // copiesSkip is the skip a copies field asks for, nil for follow. Follow and a
@@ -239,16 +270,32 @@ func (s *Service) copiesChange(settings store.Settings, p placementRead, named m
 	return p.effectiveTargets(identity), after, nil
 }
 
-// checkSkip is the store's rule for what a skip may hold, plus the rule that
-// every id names a target of the domain, switched on or off.
+// checkSkip is validSkip plus the rule that every id names a target of the
+// domain, switched on or off.
 func checkSkip(p placementRead, skip []string) error {
-	if err := store.ValidSkipList(skip); err != nil {
+	if !validSkip(skip) {
 		return errInvalidPlacement
 	}
 	for _, id := range skip {
 		if id != store.SkipAll && !containsTarget(p.Targets, id) {
 			return errNotATarget
 		}
+	}
+	return nil
+}
+
+// checkCopies refuses a copy rule the item's home cannot carry: restic copy
+// has only the target's own credentials, so a remote or direct repository
+// gets none.
+func (s *Service) checkCopies(settings store.Settings, p placementRead, named map[string]store.OffsiteTarget, repoID string, copies store.CopiesWrite) error {
+	if copies.Follow {
+		return nil
+	}
+	if err := checkSkip(p, copies.Skip); err != nil {
+		return err
+	}
+	if !s.homeKindOf(settings, p.Domain, repoID, named).copySource() && !skipsEverything(copies.Skip) {
+		return errCopiesNotAllowed
 	}
 	return nil
 }

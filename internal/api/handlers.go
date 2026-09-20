@@ -1289,59 +1289,6 @@ func (h *Handler) handleTagSnapshot(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// applyItemRepo applies a per-item repository choice (#204) for one item, and
-// reports whether the request may continue. It writes its own failure envelope.
-//
-// One function for containers, VMs and folder sets because the rules are the
-// same in all three and the consequence of getting them wrong is the same: a
-// repository that moves is indistinguishable from one that works, until somebody
-// goes looking for a snapshot that is in the other place.
-//
-//   - unchanged is a no-op, so a form that re-sends the current value never
-//     trips the has-backups refusal below;
-//   - the choice is validated here rather than at the next backup;
-//   - an item that ALREADY has backups keeps its repository: the snapshots
-//     written so far stay where they are and nothing moves them, so pointing
-//     the item elsewhere would split its history across two places with no
-//     sign of it on screen.
-func (h *Handler) applyItemRepo(w http.ResponseWriter, want string, current func() (string, error), hasBackups func() (bool, error), set func(string) error) bool {
-	want = strings.TrimSpace(want)
-	now, err := current()
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return false
-	}
-	if want == strings.TrimSpace(now) {
-		return true
-	}
-	if err := h.svc.validateItemRepoID(want); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return false
-	}
-	// The has-backups refusal. It was described here and in two other places and
-	// implemented for the file set only, so a container or VM with forty
-	// snapshots could be re-pointed through the API with ok:true - the review
-	// proved it by doing it. The interface's own lock is not a substitute: an
-	// item rebuilt by Discover after a /config loss has snapshots in the repo and
-	// no run rows, so lastBackup is null and the control stands open on exactly
-	// the item that must not move.
-	had, bErr := hasBackups()
-	if bErr != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(bErr))
-		return false
-	}
-	if had {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false,
-			"error": "cannot change the repository of an item that already has backups; they stay in the repository they were written to and nothing moves them. Delete its backups first"})
-		return false
-	}
-	if err := set(want); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return false
-	}
-	return true
-}
-
 func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
 	if !ok {
@@ -1377,12 +1324,11 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		ExcludeCaches     map[string]bool `json:"excludeCaches"`
 		UpdateAfterBackup *bool           `json:"updateAfterBackup"`
 		ScheduleCadence   *string         `json:"scheduleCadence"`
-		// Repo is this item's OWN repository (#204): the ID of a named
-		// repository from Settings, or "" to put it back on the domain's. A
-		// pointer for the same reason as the fields above - a form that does
-		// not know about it must not clear it by omitting it, and clearing it
-		// MOVES where the next backup lands.
+		// Repo is the older spelling of home {repo}.
 		Repo *string `json:"repo"`
+		// Home is this item's own location: a named repository from Settings,
+		// or follow to take the domain's default.
+		Home *homeChoice `json:"home"`
 		// Copies is the item's own copy rule: which off-site targets it goes to,
 		// or follow to take the domain's default.
 		Copies *copiesChoice `json:"copies"`
@@ -1390,7 +1336,12 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	pending, ok := h.applyPlacement(w, store.ItemRef{Domain: "containers", Key: name}, body.Copies, body.Repo)
+	change, err := withLegacyRepo(placementChange{Home: body.Home, Copies: body.Copies}, body.Repo)
+	if err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	placed, ok := h.applyPlacement(w, r, store.ItemRef{Domain: "containers", Key: name}, change)
 	if !ok {
 		return
 	}
@@ -1404,22 +1355,6 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		pre, post := strOr(body.PreHook), strOr(body.PostHook)
 		if err := h.svc.SetContainerHooks(r.Context(), name, pre, post); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
-			return
-		}
-	}
-	if body.Repo != nil {
-		if !h.applyItemRepo(w, *body.Repo, func() (string, error) {
-			// A container that has never been backed up has no target row, and
-			// that is not an error here: it simply has no override yet. Reading
-			// it as one refused the very case somebody most wants - choosing the
-			// destination BEFORE the first run puts data in the wrong place.
-			tg, tErr := h.store.GetTargetByContainer(name)
-			if tErr != nil {
-				return "", nil
-			}
-			return tg.Repo, nil
-		}, func() (bool, error) { return h.svc.containerHasBackups(r.Context(), name) },
-			func(id string) error { return h.store.SetTargetRepo(name, id) }) {
 			return
 		}
 	}
@@ -1475,10 +1410,7 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if !h.commitPlacement(w, pending) {
-		return
-	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dropped": pending.Dropped}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dropped": placed.Dropped}))
 }
 
 // reloadScheduler re-reads the settings and re-registers every schedule entry,
@@ -4563,12 +4495,11 @@ func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 		Method            *string `json:"method"`
 		IncludeInSchedule *bool   `json:"includeInSchedule"`
 		ScheduleCadence   *string `json:"scheduleCadence"`
-		// Repo is this item's OWN repository (#204): the ID of a named
-		// repository from Settings, or "" to put it back on the domain's. A
-		// pointer for the same reason as the fields above - a form that does
-		// not know about it must not clear it by omitting it, and clearing it
-		// MOVES where the next backup lands.
+		// Repo is the older spelling of home {repo}.
 		Repo *string `json:"repo"`
+		// Home is this item's own location: a named repository from Settings,
+		// or follow to take the domain's default.
+		Home *homeChoice `json:"home"`
 		// Copies is the item's own copy rule: which off-site targets it goes to,
 		// or follow to take the domain's default.
 		Copies *copiesChoice `json:"copies"`
@@ -4576,22 +4507,14 @@ func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	pending, ok := h.applyPlacement(w, store.ItemRef{Domain: "vms", Key: name}, body.Copies, body.Repo)
-	if !ok {
+	change, err := withLegacyRepo(placementChange{Home: body.Home, Copies: body.Copies}, body.Repo)
+	if err != nil {
+		placementFail(w, err, nil)
 		return
 	}
-	if body.Repo != nil {
-		if !h.applyItemRepo(w, *body.Repo, func() (string, error) {
-			// Same as the container twin: no row yet means no override yet.
-			vm, vErr := h.store.GetVMTargetByName(name)
-			if vErr != nil {
-				return "", nil
-			}
-			return vm.Repo, nil
-		}, func() (bool, error) { return h.svc.vmHasBackups(r.Context(), name) },
-			func(id string) error { return h.store.SetVMRepo(name, id) }) {
-			return
-		}
+	placed, ok := h.applyPlacement(w, r, store.ItemRef{Domain: "vms", Key: name}, change)
+	if !ok {
+		return
 	}
 	if body.Method != nil {
 		if err := h.svc.SetVMMethod(r.Context(), name, *body.Method); err != nil {
@@ -4617,10 +4540,7 @@ func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if !h.commitPlacement(w, pending) {
-		return
-	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dropped": pending.Dropped}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dropped": placed.Dropped}))
 }
 
 // handleVMScheduleIncludeAll sets the include_in_schedule flag for every VM on
@@ -5004,11 +4924,11 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		// must never clear a selection by omitting it. [] decodes non-nil and
 		// is refused downstream (D-06), never silently stored.
 		SelectedPaths *[]string `json:"selectedPaths"`
-		// The set's OWN repository (#204); empty puts it back on the Folders
-		// domain repository. A pointer for the same reason as the two fields
-		// above: a form that does not know about it must not clear it by
-		// omitting it, and clearing it MOVES where the next backup lands.
+		// Repo is the older spelling of home {repo}.
 		Repo *string `json:"repo"`
+		// Home is this item's own location: a named repository from Settings,
+		// or follow to take the domain's default.
+		Home *homeChoice `json:"home"`
 		// Copies is the item's own copy rule: which off-site targets it goes to,
 		// or follow to take the domain's default.
 		Copies *copiesChoice `json:"copies"`
@@ -5021,7 +4941,14 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "file set not found"})
 		return
 	}
-	pending, ok := h.applyPlacement(w, store.ItemRef{Domain: "files", Key: id}, body.Copies, body.Repo)
+	// Written before the rename below, so a copy rule the store still keys by
+	// the old name is carried to the new one by moveFileSetRule.
+	change, err := withLegacyRepo(placementChange{Home: body.Home, Copies: body.Copies}, body.Repo)
+	if err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	placed, ok := h.applyPlacement(w, r, store.ItemRef{Domain: "files", Key: id}, change)
 	if !ok {
 		return
 	}
@@ -5059,41 +4986,6 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		if hasBackups {
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "cannot rename a file set that already has backups; create a new set instead"})
 			return
-		}
-	}
-	// The repository override (#204), applied here and NOT through UpdateFileSet
-	// (the store setter is separate on purpose).
-	//
-	// Refused once the set has backups, for the same reason a rename is refused
-	// twelve lines up and with more at stake: its snapshots live in the repo it
-	// used, nothing re-homes them, and afterwards the set would look healthy
-	// while its history sat in a repository nothing points at any more. Unlike a
-	// rename, the damage is invisible - a backup to the new repo succeeds, so
-	// nothing ever reports an error.
-	if body.Repo != nil {
-		want := strings.TrimSpace(*body.Repo)
-		if want != strings.TrimSpace(fs.Repo) {
-			hasBackups, bErr := h.svc.fileSetHasBackups(r.Context(), id)
-			if bErr != nil {
-				writeJSON(w, http.StatusOK, failEnvelope(bErr))
-				return
-			}
-			if hasBackups {
-				writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "cannot change the repository of a file set that already has backups; delete its backups first, or create a new set"})
-				return
-			}
-			// Checked once here so an unusable choice is refused at the
-			// boundary rather than at the next backup, where it would surface as
-			// a restic error in a run record nobody is watching.
-			if vErr := h.svc.validateItemRepoID(want); vErr != nil {
-				writeJSON(w, http.StatusOK, failEnvelope(vErr))
-				return
-			}
-			if sErr := h.store.SetFileSetRepo(id, want); sErr != nil {
-				writeJSON(w, http.StatusOK, failEnvelope(sErr))
-				return
-			}
-			fs.Repo = want
 		}
 	}
 	// Selection handling (Phase 4 plan 02; review WR-01). A path change moves
@@ -5174,10 +5066,7 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if !h.commitPlacement(w, pending) {
-		return
-	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dropped": pending.Dropped}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dropped": placed.Dropped}))
 }
 
 // handleDeleteFileSet removes a file set (row + run history) WITHOUT touching

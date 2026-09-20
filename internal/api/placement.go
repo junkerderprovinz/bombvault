@@ -24,7 +24,17 @@ var (
 	errInvalidPlacement    = errors.New("home and copies each take follow or one value")
 	errCopiesNotAllowed    = errors.New("an item on a remote or direct repository takes no copies")
 	errNotATarget          = errors.New("that is not an off-site target of this domain")
+	errPlacementBusy       = errors.New("a backup is running in this domain; try again once it has finished")
+	errHomeHasBackups      = errors.New("cannot change the repository of an item that already has backups; they stay where they were written")
+	errPlacementStale      = errors.New("the numbers changed since they were shown; check them again")
+	errRepoInUse           = errors.New("this repository is still in use")
+	errRepoInvalid         = errors.New("that repository cannot take backups")
+	errDefaultRepoMissing  = errors.New("a default in the file points at a repository that is neither in the file nor here")
 )
+
+// placementLockReason labels the domain lock an item's home change holds
+// while it writes.
+const placementLockReason = "placement"
 
 // placementCodes is searched in order and the first match wins, so an error that
 // can arrive wrapped in a broader one keeps its row above that one's.
@@ -40,6 +50,12 @@ var placementCodes = []struct {
 	{errUnknownOffsiteTarget, "unknown-target"},
 	{store.ErrStackCopyRule, "stack-rule"},
 	{store.ErrCopyRuleTaken, "copy-rule-taken"},
+	{errPlacementBusy, "domain-busy"},
+	{errHomeHasBackups, "has-backups"},
+	{errPlacementStale, "stale"},
+	{errRepoInvalid, "repo-invalid"},
+	{errRepoInUse, "repo-in-use"},
+	{errDefaultRepoMissing, "default-repo-missing"},
 }
 
 // placementCode returns the code the interface translates err by, "" for none.
@@ -577,4 +593,30 @@ func containsTarget(targets []store.OffsiteTarget, id string) bool {
 
 func skipsEverything(skip []string) bool {
 	return len(skip) == 1 && skip[0] == store.SkipAll
+}
+
+// withCopies is p as it reads once copies is written for identity.
+func (p placementRead) withCopies(identity string, copies *store.CopiesWrite) placementRead {
+	if copies == nil {
+		return p
+	}
+	rules := make(map[string]store.CopyRule, len(p.State.Rules)+1)
+	maps.Copy(rules, p.State.Rules)
+	if copies.Follow {
+		delete(rules, identity)
+	} else {
+		rules[identity] = store.CopyRule{Domain: p.Domain, Identity: identity, Skip: copies.Skip}
+	}
+	p.State.Rules = rules
+	return p
+}
+
+// itemCopyTargets is where an item's snapshots go at the next run: nothing
+// from a location that is not a copy source, otherwise the targets its rule
+// leaves in.
+func (s *Service) itemCopyTargets(settings store.Settings, p placementRead, named map[string]store.OffsiteTarget, repoID, identity string) []store.OffsiteTarget {
+	if !s.homeKindOf(settings, p.Domain, repoID, named).copySource() {
+		return nil
+	}
+	return p.effectiveTargets(identity)
 }

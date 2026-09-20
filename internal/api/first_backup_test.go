@@ -163,6 +163,56 @@ func TestASkippedBackupLeavesTheContainerOpen(t *testing.T) {
 	}
 }
 
+func TestASkippedBackupLeavesTheVMOpen(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.VMsPath = "backups/vms"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	nas, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Role: store.RoleRepo, Name: "NAS", Repo: "nas", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.PutPlacementDefault("vms", nas.ID, nil); err != nil {
+		t.Fatal(err)
+	}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, notInstalledVirsh{}, &fakeResticEngine{})
+
+	if _, err := svc.BackupVM(context.Background(), "win11"); !errors.Is(err, backup.ErrVMNotInstalled) {
+		t.Fatalf("BackupVM = %v, want ErrVMNotInstalled", err)
+	}
+	h, err := st.ItemHome(store.ItemRef{Domain: "vms", Key: "win11"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if h.Choice != store.RepoOpen {
+		t.Fatalf("home = %+v, want it still open", h)
+	}
+}
+
+// TestAMissingSourcePathLeavesTheFileSetOpen mirrors the container and VM
+// skip guards for the one domain with no not-installed sentinel of its own
+// (see everythingRunFiles): a vanished source folder fails the backup before
+// recordHome ever runs, so the set's home must stay untouched.
+func TestAMissingSourcePathLeavesTheFileSetOpen(t *testing.T) {
+	rig := newFirstBackupRig(t)
+	nas := rig.named(t, "NAS", "nas")
+	rig.setDefault(t, "files", nas.ID)
+	set, err := rig.st.CreateFileSet(store.FileSet{Name: "docs", Path: "missing", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := rig.svc.BackupFileSet(context.Background(), set.ID); err == nil {
+		t.Fatal("BackupFileSet ran although its source path does not exist")
+	}
+	if got := rig.home(t, "files", set.ID); got.Choice != store.RepoOpen {
+		t.Fatalf("home = %+v, want it still open", got)
+	}
+}
+
 func TestAFailedEnsureRepoLeavesTheContainerOpen(t *testing.T) {
 	rig := newFirstBackupRig(t)
 	nas, err := rig.st.UpsertOffsiteTarget(store.OffsiteTarget{Role: store.RoleRepo, Name: "NAS", Repo: "nas", Enabled: true})
