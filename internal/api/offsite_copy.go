@@ -500,7 +500,7 @@ func (s *Service) pauseOnFirstListing(ctx context.Context, settings store.Settin
 	if !validPlacementDomain(r.p.Domain) {
 		return false, nil
 	}
-	if r.p.State.HasDefault && !r.p.State.Default.Paused() {
+	if r.p.State.Confirmed() {
 		return false, nil
 	}
 	var first []store.OffsiteTarget
@@ -518,7 +518,7 @@ func (s *Service) pauseOnFirstListing(ctx context.Context, settings store.Settin
 	for _, t := range first {
 		held, err := s.listTarget(ctx, settings, t)
 		if err != nil {
-			continue // the pass lists it again and reports the failure there
+			continue // the normal pass lists this target again; a failure there is only logged, and the copy still goes ahead handing restic every id
 		}
 		s.recordListing(r.p.Domain, t, r.owners, held, nil)
 		if r.owners.ownsAny(held) {
@@ -554,7 +554,7 @@ func (s *Service) pauseOnOlderSources(ctx context.Context, settings store.Settin
 		for _, sn := range snaps {
 			at := parseSnapshotTime(sn.Time)
 			if len(owners[sn.ID].Possible) > 0 && !at.IsZero() && at.Before(born) {
-				return true, s.pausePlacement(ctx, r.p.Domain, "found-history")
+				return true, s.pausePlacement(ctx, r.p.Domain, "older-source")
 			}
 		}
 	}

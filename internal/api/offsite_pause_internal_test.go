@@ -170,3 +170,38 @@ func TestABackgroundListingLooksForHistoryToo(t *testing.T) {
 		t.Fatalf("the background listing was not recorded (listed=%v err=%v)", listed, err)
 	}
 }
+
+func TestAConfirmedDomainDoesNotPauseWhenANewTargetIsListedFirst(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.st.ConfirmPlacement("containers", nil); err != nil {
+		t.Fatal(err)
+	}
+	f.target("containers", "B2", "b2:bucket:containers")
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:nginx"))
+
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatal(err)
+	}
+	if pausedDefault(t, f, "containers") || len(f.eng.copies) != 1 {
+		t.Fatalf("paused=%v copies=%+v, want a copy and no pause", pausedDefault(t, f, "containers"), f.eng.copies)
+	}
+}
+
+func TestAConfirmedDomainDoesNotPauseWhenTheBackgroundListingFindsHistory(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.st.ConfirmPlacement("containers", nil); err != nil {
+		t.Fatal(err)
+	}
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	f.hold("b2:bucket:containers", copied("b1", "a1", 100, "container:nginx"))
+
+	f.svc.listTargetInBackground("containers", b2.ID)
+	waitForListings(t, f)
+
+	if pausedDefault(t, f, "containers") {
+		t.Fatal("a confirmed domain paused again from a background listing")
+	}
+	if _, listed, err := f.st.TargetObservationFor("containers", b2.ID); err != nil || !listed {
+		t.Fatalf("the background listing was not recorded (listed=%v err=%v)", listed, err)
+	}
+}

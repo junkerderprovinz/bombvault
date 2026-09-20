@@ -42,6 +42,10 @@ type PlacementState struct {
 // domain without a default is not paused.
 func (s PlacementState) Paused() bool { return s.HasDefault && s.Default.Paused() }
 
+// Confirmed reports whether the domain has a default and it has been
+// confirmed, the state a first-listing pause check must stay out of.
+func (s PlacementState) Confirmed() bool { return s.HasDefault && !s.Default.Paused() }
+
 // HasRules reports whether anything may keep an item from a target: a rule of
 // its own, or a default that leaves a target out.
 func (s PlacementState) HasRules() bool {

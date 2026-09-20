@@ -388,6 +388,7 @@ func (s *Service) pausePlacement(ctx context.Context, domain, why string) error 
 // pauseReasons says, by the why of pausePlacement, what made a domain pause.
 var pauseReasons = map[string]string{
 	"found-history": "its first listing found backups this database never replicated, so the database may have been rebuilt without the rules that kept items from being copied",
+	"older-source":  "one of its sources holds a snapshot older than this database, so the database may have been rebuilt without the rules that kept items from being copied",
 	"discover":      "Discover rebuilt its items in a database that never backed them up or replicated them, so the rules that kept items from being copied are gone",
 }
 
@@ -436,8 +437,9 @@ func (s *Service) listTargetInBackground(domain, targetID string) {
 	}()
 }
 
-// listTargetOnce lists the target and records what it holds. A domain that never
-// replicated looks at the listing for history first, as its passes do.
+// listTargetOnce lists the target and records what it holds. A domain that
+// never replicated, and whose default is not already confirmed, looks at the
+// listing for history first, as its passes do.
 func (s *Service) listTargetOnce(ctx context.Context, domain, targetID string) error {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -460,6 +462,9 @@ func (s *Service) listTargetOnce(ctx context.Context, domain, targetID string) e
 		return err
 	}
 	s.recordListing(domain, p.Targets[i], pass.owners, held, nil)
+	if p.State.Confirmed() {
+		return nil
+	}
 	if _, listed := pass.listed[targetID]; listed {
 		return nil
 	}
