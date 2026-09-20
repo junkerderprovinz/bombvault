@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestConfirmPlacementResumesAPausedDomain(t *testing.T) {
@@ -33,6 +34,30 @@ func TestConfirmPlacementResumesAPausedDomain(t *testing.T) {
 	}
 	if len(f.eng.copies) != 1 {
 		t.Fatalf("copies = %+v, want one copy after the confirmation", f.eng.copies)
+	}
+}
+
+func TestConfirmingAHealthyDomainDoesNotSilenceALaterFirstListingPause(t *testing.T) {
+	f := newPlacementFixture(t)
+	if res := f.do(http.MethodPost, "/api/placement/containers/confirm", map[string]any{}); res["ok"] != true {
+		t.Fatalf("confirm = %v, want ok", res)
+	}
+
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	now := time.Now().Unix()
+	f.hold(f.domainPath("containers"), snap("a9", now, "container:nginx"))
+	f.hold("b2:bucket:containers", copied("b1", "a1", now-86400, "container:nginx"))
+
+	for range 2 {
+		if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if !pausedDefault(t, f, "containers") {
+		t.Fatal("confirming a domain that was never paused silenced its later first-listing pause")
+	}
+	if _, listed, err := f.st.TargetObservationFor("containers", b2.ID); err != nil || !listed {
+		t.Fatalf("the listing that found it was not recorded (listed=%v err=%v)", listed, err)
 	}
 }
 
