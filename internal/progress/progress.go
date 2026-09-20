@@ -75,13 +75,18 @@ func CopySinkFrom(ctx context.Context) CopySink {
 // computes because restic reports no total. Both stay 0 until the first pack
 // is copied.
 type Event struct {
-	Key           string  `json:"key"`
-	Phase         string  `json:"phase"`
-	Percent       float64 `json:"percent"`
-	Active        bool    `json:"active"`
-	StartedAt     int64   `json:"startedAt,omitempty"`
-	SnapshotIndex int     `json:"snapshotIndex,omitempty"`
-	SnapshotTotal int     `json:"snapshotTotal,omitempty"`
+	Key     string  `json:"key"`
+	Phase   string  `json:"phase"`
+	Percent float64 `json:"percent"`
+	Active  bool    `json:"active"`
+	// Stage names a step inside the phase that reports bytes instead of a
+	// percentage, such as a database dump inside a container backup. Empty for
+	// the phase itself.
+	Stage         string `json:"stage,omitempty"`
+	Bytes         int64  `json:"bytes,omitempty"`
+	StartedAt     int64  `json:"startedAt,omitempty"`
+	SnapshotIndex int    `json:"snapshotIndex,omitempty"`
+	SnapshotTotal int    `json:"snapshotTotal,omitempty"`
 }
 
 // Store is an in-process fan-out of progress Events. It keeps the latest active

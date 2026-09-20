@@ -1143,7 +1143,7 @@ func (r Restic) run(ctx context.Context, args []string, m Mode) ([]byte, error) 
 		// TTY or RESTIC_PROGRESS_FPS is set. Our stdout is a pipe, so without this
 		// restic prints only the final summary and the bar would never fill.
 		cmd.Env = append(env, "RESTIC_PROGRESS_FPS=3")
-		out, err = runStreaming(cmd, args, sink, watcherFrom(ctx))
+		out, err = runStreaming(cmd, args, sink, WatcherFrom(ctx))
 	} else {
 		cmd.Env = env
 		out, err = runBuffered(cmd, args)
@@ -2129,7 +2129,7 @@ func (r Restic) BackupFromCommand(ctx context.Context, repo, stdinPath string, t
 	// the stall guard needs those lines to see a dump that stopped moving.
 	cmd.Env = append(r.authEnv(m), "RESTIC_PROGRESS_FPS=3")
 
-	watch := watcherFrom(ctx)
+	watch := WatcherFrom(ctx)
 	out, stderr, err := scanLinesStderr(cmd, args, func(line []byte) {
 		if watch == nil {
 			return

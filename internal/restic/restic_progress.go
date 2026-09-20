@@ -111,7 +111,7 @@ func WithWatcher(ctx context.Context, w ProgressWatcher) context.Context {
 // replacing it. A database dump reports to the stall guard and to the byte
 // publisher on the same restic call. A nil w returns ctx unchanged.
 func WithAddedWatcher(ctx context.Context, w ProgressWatcher) context.Context {
-	prev := watcherFrom(ctx)
+	prev := WatcherFrom(ctx)
 	if w == nil || prev == nil {
 		return WithWatcher(ctx, w)
 	}
@@ -121,8 +121,8 @@ func WithAddedWatcher(ctx context.Context, w ProgressWatcher) context.Context {
 	})
 }
 
-// watcherFrom returns the watcher on ctx, or nil.
-func watcherFrom(ctx context.Context) ProgressWatcher {
+// WatcherFrom returns the watcher on ctx, or nil.
+func WatcherFrom(ctx context.Context) ProgressWatcher {
 	w, _ := ctx.Value(watcherKey{}).(ProgressWatcher)
 	return w
 }

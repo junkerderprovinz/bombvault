@@ -5319,6 +5319,14 @@ func TestDiscoverSkipsUnsafeFormerNameAlias(t *testing.T) {
 	}
 }
 
+// commandBackup is one restic backup taken from a command's stdout.
+type commandBackup struct {
+	Repo      string
+	StdinPath string
+	Tags      []string
+	Command   []string
+}
+
 type fakeResticEngine struct {
 	inited         []string
 	backedUp       []string
@@ -5336,6 +5344,10 @@ type fakeResticEngine struct {
 	forgotModes []restic.Mode
 	prunedRepos []string
 	forgetTags  []string // identity tags passed to ForgetPolicy
+	// forgetPolicyPruned is the prune flag of each ForgetPolicy call, parallel
+	// to forgetTags. A backup of a database container runs two passes and only
+	// the second may prune, which is invisible without it.
+	forgetPolicyPruned []bool
 	// The read-only retention preview, kept apart from the slices above so a
 	// preview can never satisfy an assertion that retention actually ran.
 	previewRepos  []string
@@ -5473,6 +5485,15 @@ type fakeResticEngine struct {
 	// disk backup path.
 	stdinBackups   []string
 	stdinBackupErr error
+	// The database dump path. commandBackups records every BackupFromCommand
+	// call; onCommandBackup runs at its entry, which is how a test reads what
+	// had already happened when the dump began (the container must still be
+	// running).
+	commandBackups     []commandBackup
+	commandBackupSum   restic.Summary
+	commandBackupLines []string
+	commandBackupErr   error
+	onCommandBackup    func()
 	// dumpRawCalls records each DumpRaw call ("snapshotID:path"), the restic side
 	// of a zvol VM disk restore.
 	dumpRawCalls []string
@@ -5571,6 +5592,25 @@ func (f *fakeResticEngine) BackupStdin(_ context.Context, _ string, rd io.Reader
 		return restic.Summary{}, f.stdinBackupErr
 	}
 	return restic.Summary{SnapshotID: fmt.Sprintf("zvolSnap%d", len(f.stdinBackups)), BytesAdded: 1024}, nil
+}
+
+// BackupFromCommand records each database dump's restic call and answers with
+// the scripted summary, forwarded command lines and error.
+func (f *fakeResticEngine) BackupFromCommand(_ context.Context, repo, stdinPath string, tags, command []string, _ restic.Mode) (restic.Summary, []string, error) {
+	if f.onCommandBackup != nil {
+		f.onCommandBackup()
+	}
+	f.commandBackups = append(f.commandBackups, commandBackup{
+		Repo: repo, StdinPath: stdinPath, Tags: tags, Command: command,
+	})
+	if f.commandBackupErr != nil {
+		return restic.Summary{}, f.commandBackupLines, f.commandBackupErr
+	}
+	sum := f.commandBackupSum
+	if sum.SnapshotID == "" {
+		sum = restic.Summary{SnapshotID: "dbdump00deadbeef", TotalBytesProcessed: 4096}
+	}
+	return sum, f.commandBackupLines, nil
 }
 
 // DumpRaw records each zvol disk's restore-side dump call.
@@ -5673,11 +5713,12 @@ func (f *fakeResticEngine) Forget(_ context.Context, repo string, snapshotIDs []
 	return nil
 }
 
-func (f *fakeResticEngine) ForgetPolicy(_ context.Context, repo string, p restic.RetentionPolicy, _ restic.Mode, tags []string, _ bool) error {
+func (f *fakeResticEngine) ForgetPolicy(_ context.Context, repo string, p restic.RetentionPolicy, _ restic.Mode, tags []string, prune bool) error {
 	if p.Any() {
 		f.prunedRepos = append(f.prunedRepos, repo)
 		// One entry per call, so the tags of a folded alias count as one group.
 		f.forgetTags = append(f.forgetTags, strings.Join(tags, ","))
+		f.forgetPolicyPruned = append(f.forgetPolicyPruned, prune)
 	}
 	return f.forgetPolicyErr
 }

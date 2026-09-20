@@ -100,6 +100,11 @@ type ResticEngine interface {
 	// straight into `restic backup --stdin`, no local staging file. See
 	// backup.ZvolRestic's doc comment (resticZvolAdapter below satisfies it).
 	BackupStdin(ctx context.Context, repo string, rd io.Reader, path string, tags []string, mode restic.Mode) (restic.Summary, error)
+	// BackupFromCommand backs up the stdout of command as the single file
+	// stdinPath. It also returns what command wrote to stderr, which is where a
+	// database dump reports its own verdict and the pid it runs under inside
+	// the container.
+	BackupFromCommand(ctx context.Context, repo, stdinPath string, tags, command []string, mode restic.Mode) (restic.Summary, []string, error)
 	RestorePath(ctx context.Context, repo, snapshotID, path string, mode restic.Mode) error
 	// DumpRaw streams the synthetic file at path, from the given snapshot, into
 	// w — the restore-side counterpart of BackupStdin, feeding a `zfs receive`
@@ -227,6 +232,10 @@ type Service struct {
 	// execHostShell adapter in NewService, so it is never nil in production;
 	// SetHostShell overrides it for tests.
 	hostShell HostShell
+	// dbDumpHelper is the path of this binary, which restic runs as the
+	// dbdump-stream subcommand to get a dump on its stdin. Resolved in
+	// NewService; tests set it directly.
+	dbDumpHelper string
 	// platform is the detected/injected Platform adapter (Unraid/generic/…)
 	// for the appdata-fallback convention, cross-instance restore-destination
 	// defaults, and the Unraid update-status reconcile step. Optional; nil
@@ -454,7 +463,8 @@ func (s *Service) lockTamper(domain string) func() {
 func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcli.Virsh, eng ResticEngine) *Service {
 	return &Service{
 		cfg: cfg, store: st, docker: d, virsh: v, engine: eng,
-		hostShell: execHostShell{},
+		hostShell:    execHostShell{},
+		dbDumpHelper: helperBinaryPath(),
 		repoMu: map[string]*sync.Mutex{
 			"containers": {},
 			"vms":        {},
@@ -5091,6 +5101,15 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// BackupContainer now owns run bookkeeping (it records its own failed/success run),
 	// so the pre-flight failure finisher above must stand down to avoid a double record.
 	orchestrated = true
+	dumpPlan := s.dbDumpPlanFor(settings, tg, name, in)
+	var dumper backup.DBDumper
+	var dumpOutcome backup.DBDumpOutcome
+	if dumpPlan != nil {
+		dumper = &dbDumpAdapter{
+			svc: s, engine: s.engine, docker: s.docker, mode: mode,
+			container: name, progressKey: pkey, startedAt: startedAt,
+		}
+	}
 	sum, err := backup.BackupContainer(bctx, backup.BackupDeps{
 		ContainerRef:           name,
 		FormerNames:            aliasOldNames(aliases),
@@ -5118,14 +5137,20 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		// positional from another is a snapshot nobody asked for. Patterns
 		// travel as typed builder arguments into BackupArgs (excludes before
 		// --, positionals after) — never through a shell.
-		Excludes:  append(s.resolveExcludePatterns(tg.Excludes, in), excludedBranches(selection)...),
-		Docker:    s.docker,
-		Restic:    &resticAdapter{engine: s.engine, mode: mode},
-		Templates: templatesAdapter{},
-		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "container:" + name},
+		Excludes:     append(s.resolveExcludePatterns(tg.Excludes, in), excludedBranches(selection)...),
+		Docker:       s.docker,
+		Restic:       &resticAdapter{engine: s.engine, mode: mode},
+		Templates:    templatesAdapter{},
+		Runs:         runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "container:" + name},
+		DBDump:       dumpPlan,
+		DBDumper:     dumper,
+		OnDBDumpDone: func(o backup.DBDumpOutcome) { dumpOutcome = o },
 	})
 	s.progEnd(pkey, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "container", name, err == nil, sum, err)
+	// After the backup's own outcome is known, so the dump's message can say
+	// whether the files around it made it.
+	s.notifyDBDumpFailed(ctx, tg.ID, name, dumpOutcome, err == nil)
 	if err != nil {
 		return backup.Summary{}, err
 	}
@@ -5160,6 +5185,11 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 			// Logged, never fatal: the container's own data is already safe.
 			log.Printf("api: backup: %v", err)
 		}
+	}
+	// The dumps are their own retention series, forgotten without a prune so
+	// the container's pass below reclaims both at once.
+	if dumpPlan != nil {
+		s.forgetDBDumpSeries(ctx, repo, settings, mode, name)
 	}
 	// A renamed container's "keep last N" counts across the rename, as long as
 	// no other machine has used the old name since.
@@ -16693,6 +16723,14 @@ func (s *Service) ScheduledNotifyResult(ctx context.Context, domain string, atte
 	} else {
 		summary = fmt.Sprintf("Scheduled %s backup: %d of %d items failed.\n%s",
 			domain, failed, attempted, formatItemFailures(failures))
+	}
+	// A dump fails without failing the backup around it, so the round's balance
+	// says nothing about it and the summary has to name it separately.
+	if tally := dbDumpTallyFrom(ctx); tally != nil {
+		if line := tally.line(); line != "" {
+			summary += "\n" + line
+			ok = false
+		}
 	}
 	// Reuse Send for the message channels with the Healthchecks ping suppressed
 	// (ScheduledHealthchecksResult already sent the one aggregate HC ping). The summary
