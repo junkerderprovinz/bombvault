@@ -122,6 +122,60 @@ const (
 	ReasonCancelled = "cancelled by the user"
 )
 
+// Why a database dump did not produce a snapshot. Each of these may carry a
+// detail after a ": " separator, the scrubbed tail of the tool's own output;
+// the frontend translates the head by prefix and shows the detail verbatim.
+// None of them may begin another one, or a detail could not be told from a
+// longer reason (TestRunReasonsAreDistinct).
+const (
+	ReasonDBDumpAuth          = "database dump failed: the database refused the login"
+	ReasonDBDumpPrivileges    = "database dump failed: the database user lacks a privilege the dump needs"
+	ReasonDBDumpUnreachable   = "database dump failed: the database server did not accept a connection"
+	ReasonDBDumpNoClient      = "database dump failed: no dump tool found in the container"
+	ReasonDBDumpSecret        = "database dump failed: a password file could not be read"
+	ReasonDBDumpNoCredentials = "database dump failed: no usable credentials in the container settings"
+	ReasonDBDumpNotRunning    = "database dump failed: the container is paused or restarting"
+	ReasonDBDumpNeedsUpgrade  = "database dump failed: the database's system tables need an upgrade"
+	ReasonDBDumpTimeout       = "database dump failed: time limit reached"
+	ReasonDBDumpBackupCap     = "database dump failed: the backup's own time limit was reached"
+	ReasonDBDumpStalled       = "database dump failed: no progress"
+	ReasonDBDumpEmpty         = "database dump failed: the dump was empty"
+	ReasonDBDumpIncomplete    = "database dump failed: the dump ended before its completion marker"
+	ReasonDBDumpTool          = "database dump failed: the dump tool reported an error"
+	ReasonDBDumpDocker        = "database dump failed: Docker refused the command"
+	ReasonDBDumpRepository    = "database dump failed: the repository did not accept it"
+	ReasonDBDumpHelper        = "database dump failed: the dump helper gave no result"
+	ReasonDBDumpMismatch      = "database dump failed: the stored size does not match what was dumped"
+
+	// ReasonDBDumpLeftover is the one dump failure whose run carries a
+	// snapshot_id: restic wrote a snapshot that could not be removed again, and
+	// the dump list marks that one as damaged. Its detail is the short id.
+	ReasonDBDumpLeftover = "database dump failed: a damaged dump snapshot could not be removed"
+)
+
+// Notes on a successful run, shown in a warning tone: the work was done, but
+// not as completely as the user would expect.
+const (
+	// NoteDBDumpOneDatabase says the credentials in the container reach one
+	// database rather than the whole server.
+	NoteDBDumpOneDatabase = "database dump covers one database only"
+
+	// NoteDBDumpNotRecorded sits on the backup run, because it is written
+	// exactly when the dump's own run could not be started.
+	NoteDBDumpNotRecorded = "database dump skipped: its run could not be recorded"
+
+	NoteDBImportKeptOld = "database imported; the previous data folder was kept"
+	NoteDBImportErrors  = "database imported with errors"
+)
+
+// Why importing a dump back into a container did not finish. The detail says
+// which folder holds the data that is still there.
+const (
+	ReasonDBImportPrepare  = "database import failed before it started, the old data is back in place"
+	ReasonDBImportRollback = "database import failed and the old data could not be put back"
+	ReasonDBImportFailed   = "database import failed: the import tool reported an error"
+)
+
 // ReapInterruptedRuns marks every run still in 'running' as failed and returns
 // how many it changed. It runs once at startup: BombVault is a single process,
 // so such a run was orphaned by a crash or an update. The finished_at it
@@ -387,6 +441,139 @@ func (r *Repo) ListRuns(limit int) ([]Run, error) {
 	return out, rows.Err()
 }
 
+// RecentRunsOfKind returns up to limit finished runs of one kind for a target,
+// newest first. A running row is left out: it has no outcome yet, and the
+// callers ask for the last thing that happened. Ties on started_at keep their
+// insertion order, so a dump and the backup that triggered it stay in sequence
+// however coarse the clock is.
+func (r *Repo) RecentRunsOfKind(targetID, kind string, limit int) ([]Run, error) {
+	rows, err := r.db.Query(`
+		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id
+		FROM runs
+		WHERE target_id = ? AND kind = ? AND status <> 'running'
+		ORDER BY started_at DESC, rowid DESC
+		LIMIT ?`, targetID, kind, limit)
+	if err != nil {
+		return nil, fmt.Errorf("RecentRunsOfKind: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	var out []Run
+	for rows.Next() {
+		run, err := scanRun(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, run)
+	}
+	return out, rows.Err()
+}
+
+// LastRunOfKind returns the most recent finished run of one kind for a target,
+// or nil when there is none.
+func (r *Repo) LastRunOfKind(targetID, kind string) (*Run, error) {
+	runs, err := r.RecentRunsOfKind(targetID, kind, 1)
+	if err != nil {
+		return nil, err
+	}
+	if len(runs) == 0 {
+		return nil, nil
+	}
+	return &runs[0], nil
+}
+
+// LastSuccessOfKind returns when a target last had a successful run of one
+// kind, as unix seconds, or 0 when it never did.
+func (r *Repo) LastSuccessOfKind(targetID, kind string) (int64, error) {
+	row := r.db.QueryRow(`
+		SELECT finished_at
+		FROM runs
+		WHERE target_id = ? AND kind = ? AND status = 'success' AND finished_at IS NOT NULL`+sanePastStamp+`
+		ORDER BY finished_at DESC
+		LIMIT 1`, targetID, kind, saneStampCutoff())
+	var at sql.NullInt64
+	err := row.Scan(&at)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, fmt.Errorf("LastSuccessOfKind: %w", err)
+	}
+	return at.Int64, nil
+}
+
+// BackupSnapshotsOfRuns maps each of the given run ids to its snapshot, for the
+// successful backup runs among them. It pairs a dump with the files backup it
+// was taken for; ids of another kind and of failed runs are absent.
+func (r *Repo) BackupSnapshotsOfRuns(ids []string) (map[string]string, error) {
+	out := map[string]string{}
+	for start := 0; start < len(ids); start += lastBackupAmongChunk {
+		end := min(start+lastBackupAmongChunk, len(ids))
+		if err := r.backupSnapshotsOfChunk(ids[start:end], out); err != nil {
+			return nil, err
+		}
+	}
+	return out, nil
+}
+
+// backupSnapshotsOfChunk collects one IN (...) clause worth of run ids into
+// out, keeping each query under SQLite's parameter limit.
+func (r *Repo) backupSnapshotsOfChunk(ids []string, out map[string]string) error {
+	placeholders := strings.TrimSuffix(strings.Repeat("?,", len(ids)), ",")
+	args := make([]any, 0, len(ids))
+	for _, id := range ids {
+		args = append(args, id)
+	}
+	//nolint:gosec // G202: `placeholders` is a generated "?,?,…" list sized from
+	// len(ids), never user text; every id travels as a bound parameter in args.
+	rows, err := r.db.Query(`
+		SELECT id, snapshot_id
+		FROM runs
+		WHERE kind = 'backup' AND status = 'success' AND snapshot_id IS NOT NULL AND snapshot_id <> ''
+		  AND id IN (`+placeholders+`)`, args...)
+	if err != nil {
+		return fmt.Errorf("BackupSnapshotsOfRuns: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	for rows.Next() {
+		var id, snap string
+		if sErr := rows.Scan(&id, &snap); sErr != nil {
+			return fmt.Errorf("BackupSnapshotsOfRuns: %w", sErr)
+		}
+		out[id] = snap
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("BackupSnapshotsOfRuns: %w", err)
+	}
+	return nil
+}
+
+// FailedDBDumpSnapshots returns the snapshots a failed dump of this target left
+// behind: restic wrote them and they could not be removed again, so the dump
+// list marks exactly those as damaged.
+func (r *Repo) FailedDBDumpSnapshots(targetID string) (map[string]bool, error) {
+	rows, err := r.db.Query(`
+		SELECT snapshot_id
+		FROM runs
+		WHERE target_id = ? AND kind = 'dbdump' AND status = 'failed'
+		  AND snapshot_id IS NOT NULL AND snapshot_id <> ''`, targetID)
+	if err != nil {
+		return nil, fmt.Errorf("FailedDBDumpSnapshots: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	out := map[string]bool{}
+	for rows.Next() {
+		var snap string
+		if sErr := rows.Scan(&snap); sErr != nil {
+			return nil, fmt.Errorf("FailedDBDumpSnapshots: %w", sErr)
+		}
+		out[snap] = true
+	}
+	return out, rows.Err()
+}
+
 // RunsSince returns all runs started at or after since (unix seconds), newest
 // first, for the dashboard's backup-health heatmap.
 func (r *Repo) RunsSince(since int64) ([]Run, error) {
@@ -449,6 +636,12 @@ func (r *Repo) AcknowledgeAllFailed() (int64, error) {
 // then by status ("success" or "failed"), for the Prometheus
 // `bombvault_runs_total` counter. A missing entry means 0.
 func (r *Repo) RunCounts() (map[string]map[string]int, error) {
+	return r.RunCountsOfKind("backup")
+}
+
+// RunCountsOfKind is RunCounts for another kind of run, such as the database
+// dumps, which get counters of their own.
+func (r *Repo) RunCountsOfKind(kind string) (map[string]map[string]int, error) {
 	rows, err := r.db.Query(`
 		SELECT
 		  CASE
@@ -462,10 +655,10 @@ func (r *Repo) RunCounts() (map[string]map[string]int, error) {
 		  status,
 		  count(*) AS n
 		FROM runs
-		WHERE kind = 'backup' AND status IN ('success', 'failed')
-		GROUP BY domain, status`, ConfigTargetID, FlashTargetID)
+		WHERE kind = ? AND status IN ('success', 'failed')
+		GROUP BY domain, status`, ConfigTargetID, FlashTargetID, kind)
 	if err != nil {
-		return nil, fmt.Errorf("RunCounts: %w", err)
+		return nil, fmt.Errorf("RunCountsOfKind: %w", err)
 	}
 	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
 
@@ -474,7 +667,7 @@ func (r *Repo) RunCounts() (map[string]map[string]int, error) {
 		var domain, status string
 		var n int
 		if sErr := rows.Scan(&domain, &status, &n); sErr != nil {
-			return nil, fmt.Errorf("RunCounts: %w", sErr)
+			return nil, fmt.Errorf("RunCountsOfKind: %w", sErr)
 		}
 		if domain == "" {
 			continue // deleted or unknown target

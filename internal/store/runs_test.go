@@ -1,6 +1,9 @@
 package store_test
 
 import (
+	"database/sql"
+	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
@@ -658,5 +661,217 @@ func TestLastSuccessfulConfigBackupAndCounts(t *testing.T) {
 	}
 	if counts["config"]["success"] != 1 {
 		t.Fatalf("expected 1 config success, got %v", counts["config"])
+	}
+}
+
+// insertRun writes a finished run directly, so a test can choose started_at and
+// the insertion order that decides ties.
+func insertRun(t *testing.T, db *sql.DB, id, targetID, kind, status string, startedAt int64, snapshotID, errMsg string) {
+	t.Helper()
+	_, err := db.Exec(`
+		INSERT INTO runs (id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error)
+		VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)`,
+		id, targetID, kind, status, startedAt, startedAt+1, snapshotID, errMsg)
+	if err != nil {
+		t.Fatalf("insert run %s: %v", id, err)
+	}
+}
+
+func TestRecentRunsOfKind(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	tg, err := r.UpsertTarget(store.Target{ContainerName: "pg"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	other, err := r.UpsertTarget(store.Target{ContainerName: "maria"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	insertRun(t, db, "old", tg.ID, "dbdump", "success", 100, "s1", "")
+	insertRun(t, db, "tie-a", tg.ID, "dbdump", "failed", 200, "", "boom")
+	insertRun(t, db, "tie-b", tg.ID, "dbdump", "success", 200, "s2", "")
+	insertRun(t, db, "backup", tg.ID, "backup", "success", 300, "s3", "")
+	insertRun(t, db, "foreign", other.ID, "dbdump", "success", 400, "s4", "")
+	if _, err := r.StartRun(tg.ID, "dbdump"); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := r.RecentRunsOfKind(tg.ID, "dbdump", 10)
+	if err != nil {
+		t.Fatalf("RecentRunsOfKind: %v", err)
+	}
+	var ids []string
+	for _, run := range got {
+		ids = append(ids, run.ID)
+	}
+	want := []string{"tie-b", "tie-a", "old"}
+	if !reflect.DeepEqual(ids, want) {
+		t.Fatalf("RecentRunsOfKind = %v, want %v", ids, want)
+	}
+
+	got, err = r.RecentRunsOfKind(tg.ID, "dbdump", 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 || got[0].ID != "tie-b" {
+		t.Fatalf("limit not honoured: %v", got)
+	}
+
+	got, err = r.RecentRunsOfKind(tg.ID, "dbimport", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 0 {
+		t.Fatalf("a kind without runs returned %v", got)
+	}
+}
+
+func TestLastRunOfKind(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	tg, err := r.UpsertTarget(store.Target{ContainerName: "pg"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	last, err := r.LastRunOfKind(tg.ID, "dbdump")
+	if err != nil {
+		t.Fatalf("LastRunOfKind: %v", err)
+	}
+	if last != nil {
+		t.Fatalf("expected nil without any run, got %+v", last)
+	}
+	at, err := r.LastSuccessOfKind(tg.ID, "dbdump")
+	if err != nil {
+		t.Fatalf("LastSuccessOfKind: %v", err)
+	}
+	if at != 0 {
+		t.Fatalf("LastSuccessOfKind = %d without any run, want 0", at)
+	}
+
+	insertRun(t, db, "ok", tg.ID, "dbdump", "success", 100, "s1", "")
+	insertRun(t, db, "bad", tg.ID, "dbdump", "failed", 200, "", "boom")
+	insertRun(t, db, "backup", tg.ID, "backup", "success", 300, "s3", "")
+
+	last, err = r.LastRunOfKind(tg.ID, "dbdump")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if last == nil || last.ID != "bad" {
+		t.Fatalf("LastRunOfKind = %+v, want the failed dump", last)
+	}
+
+	at, err = r.LastSuccessOfKind(tg.ID, "dbdump")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if at != 101 {
+		t.Fatalf("LastSuccessOfKind = %d, want the successful dump's finished_at 101", at)
+	}
+}
+
+func TestRunCountsOfKind(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	tg, err := r.UpsertTarget(store.Target{ContainerName: "pg"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	insertRun(t, db, "d1", tg.ID, "dbdump", "success", 100, "s1", "")
+	insertRun(t, db, "d2", tg.ID, "dbdump", "success", 200, "s2", "")
+	insertRun(t, db, "d3", tg.ID, "dbdump", "failed", 300, "", "boom")
+	insertRun(t, db, "b1", tg.ID, "backup", "failed", 400, "", "boom")
+	if _, err := r.StartRun(tg.ID, "dbdump"); err != nil {
+		t.Fatal(err)
+	}
+
+	counts, err := r.RunCountsOfKind("dbdump")
+	if err != nil {
+		t.Fatalf("RunCountsOfKind: %v", err)
+	}
+	if counts["containers"]["success"] != 2 || counts["containers"]["failed"] != 1 {
+		t.Fatalf("counts = %v, want 2 success and 1 failed for containers", counts)
+	}
+}
+
+func TestBackupSnapshotsOfRuns(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	tg, err := r.UpsertTarget(store.Target{ContainerName: "pg"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := r.BackupSnapshotsOfRuns(nil)
+	if err != nil {
+		t.Fatalf("BackupSnapshotsOfRuns: %v", err)
+	}
+	if len(got) != 0 {
+		t.Fatalf("an empty list returned %v", got)
+	}
+
+	insertRun(t, db, "ok", tg.ID, "backup", "success", 100, "snap-ok", "")
+	insertRun(t, db, "failed", tg.ID, "backup", "failed", 200, "snap-failed", "boom")
+	insertRun(t, db, "dump", tg.ID, "dbdump", "success", 300, "snap-dump", "")
+
+	// More ids than fit in one IN clause, so the chunking is exercised.
+	ids := []string{"ok", "failed", "dump"}
+	for i := range 900 {
+		ids = append(ids, fmt.Sprintf("absent-%d", i))
+	}
+
+	got, err = r.BackupSnapshotsOfRuns(ids)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]string{"ok": "snap-ok"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("BackupSnapshotsOfRuns = %v, want %v", got, want)
+	}
+}
+
+func TestFailedDBDumpSnapshots(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	tg, err := r.UpsertTarget(store.Target{ContainerName: "pg"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	other, err := r.UpsertTarget(store.Target{ContainerName: "maria"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	insertRun(t, db, "leftover", tg.ID, "dbdump", "failed", 100, "damaged", "boom")
+	insertRun(t, db, "clean-failure", tg.ID, "dbdump", "failed", 200, "", "boom")
+	insertRun(t, db, "good", tg.ID, "dbdump", "success", 300, "healthy", "")
+	insertRun(t, db, "backup", tg.ID, "backup", "failed", 400, "other-snap", "boom")
+	insertRun(t, db, "foreign", other.ID, "dbdump", "failed", 500, "not-mine", "boom")
+
+	got, err := r.FailedDBDumpSnapshots(tg.ID)
+	if err != nil {
+		t.Fatalf("FailedDBDumpSnapshots: %v", err)
+	}
+	want := map[string]bool{"damaged": true}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("FailedDBDumpSnapshots = %v, want %v", got, want)
 	}
 }

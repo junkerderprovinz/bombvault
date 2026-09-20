@@ -1606,7 +1606,40 @@ CREATE INDEX IF NOT EXISTS idx_target_aliases_target ON target_aliases(domain, t
 		sql:              `ALTER TABLE target_aliases ADD COLUMN prev_definition TEXT NOT NULL DEFAULT '';`,
 		alreadySatisfied: columnPresent("target_aliases", "prev_definition"),
 	},
+	{
+		// Per-container opt-out of the automatic database dump. Polarity "off" so
+		// that the column default, and a container that has no target row yet,
+		// both mean the dump is on, which is the product default for recognised
+		// database images. Owned by SetDBDumpOff, never touched by UpsertTarget's
+		// ON CONFLICT clause.
+		version:          dbDumpMigrationBase,
+		name:             "targets_db_dump_off",
+		sql:              `ALTER TABLE targets ADD COLUMN db_dump_off INTEGER NOT NULL DEFAULT 0;`,
+		alreadySatisfied: columnPresent("targets", "db_dump_off"),
+	},
+	{
+		// Global switch for the automatic database dumps, one place to stop them
+		// for every container at once. Default on.
+		version:          dbDumpMigrationBase + 1,
+		name:             "settings_db_dumps_enabled",
+		sql:              `ALTER TABLE settings ADD COLUMN db_dumps_enabled INTEGER NOT NULL DEFAULT 1;`,
+		alreadySatisfied: columnPresent("settings", "db_dumps_enabled"),
+	},
+	{
+		// The engine a user chose for a container that only looks like a database
+		// (image name and variable prefix, not the curated list). Empty means no
+		// choice: curated images dump by default, lookalikes do not. Owned by
+		// SetDBDumpEngine, never touched by UpsertTarget's ON CONFLICT clause.
+		version:          dbDumpMigrationBase + 2,
+		name:             "targets_db_dump_engine",
+		sql:              `ALTER TABLE targets ADD COLUMN db_dump_engine TEXT NOT NULL DEFAULT '';`,
+		alreadySatisfied: columnPresent("targets", "db_dump_engine"),
+	},
 }
+
+// dbDumpMigrationBase numbers the three database-dump columns from one place,
+// so they keep their order if the base has to move before release.
+const dbDumpMigrationBase = 123
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.

@@ -23,6 +23,48 @@ func TestMigrateIdempotent(t *testing.T) {
 	}
 }
 
+func TestDBDumpColumnsMigrate(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO targets (id, container_name, appdata_paths, include_in_schedule, created_at)
+		VALUES ('t1', 'pg', '[]', 0, 1)`); err != nil {
+		t.Fatalf("insert target: %v", err)
+	}
+	var off int
+	var engine string
+	if err := db.QueryRow(`SELECT db_dump_off, db_dump_engine FROM targets WHERE id = 't1'`).Scan(&off, &engine); err != nil {
+		t.Fatalf("read dump columns: %v", err)
+	}
+	if off != 0 || engine != "" {
+		t.Fatalf("defaults are db_dump_off=%d db_dump_engine=%q, want 0 and empty", off, engine)
+	}
+	var enabled int
+	if err := db.QueryRow(`SELECT db_dumps_enabled FROM settings WHERE id = 1`).Scan(&enabled); err != nil {
+		t.Fatalf("read settings column: %v", err)
+	}
+	if enabled != 1 {
+		t.Fatalf("db_dumps_enabled default = %d, want 1", enabled)
+	}
+}
+
+// A database born under a different numbering already carries the columns, and
+// SQLite has no idempotent ADD COLUMN, so the guards have to recognise them.
+func TestDBDumpColumnsMigrateOverExistingColumns(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	if _, err := db.Exec(`DELETE FROM schema_migrations WHERE name IN
+		('targets_db_dump_off', 'settings_db_dumps_enabled', 'targets_db_dump_engine')`); err != nil {
+		t.Fatalf("forget the dump migrations: %v", err)
+	}
+	if err := store.Migrate(db); err != nil {
+		t.Fatalf("migrate over existing columns: %v", err)
+	}
+}
+
 func TestMigrateCreatesVMsTable(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {

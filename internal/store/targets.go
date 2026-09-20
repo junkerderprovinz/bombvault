@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"time"
 )
@@ -70,6 +71,16 @@ type Target struct {
 	// per-item-schedules feature toggle is on. Owned by SetScheduleCadence (never
 	// reset by Upsert).
 	ScheduleCadence string
+	// DBDumpOff opts this container out of the automatic database dump. The
+	// polarity is "off" so that a container without a target row dumps, which is
+	// the default for a recognised database image. Owned by SetDBDumpOff (never
+	// reset by Upsert).
+	DBDumpOff bool
+	// DBDumpEngine is the engine chosen for a container that only looks like a
+	// database: '', 'postgres', 'mysql' or 'mariadb'. Empty means no choice, so
+	// a lookalike is not dumped while a curated image dumps by its own
+	// recognition. Owned by SetDBDumpEngine (never reset by Upsert).
+	DBDumpEngine string
 }
 
 // ContainerOrder pairs a container name with its explicit backup order (#119).
@@ -142,13 +153,13 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 	// setter and intentionally NOT in the ON CONFLICT update set, so a backup's
 	// UpsertTarget never clobbers the user's chosen sequence.
 	_, err = r.db.Exec(`
-		INSERT INTO targets (id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, backup_order, schedule_cadence)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO targets (id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, backup_order, schedule_cadence, db_dump_off, db_dump_engine)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(container_name) DO UPDATE SET
 		  appdata_paths = excluded.appdata_paths,
 		  definition    = excluded.definition`,
 		t.ID, t.ContainerName, string(pathsJSON),
-		boolInt(t.IncludeInSchedule), t.CreatedAt, t.Definition, t.PreHook, t.PostHook, string(selJSON), string(stopJSON), string(exJSON), string(ecJSON), boolInt(t.UpdateAfterBackup), t.BackupOrder, t.ScheduleCadence,
+		boolInt(t.IncludeInSchedule), t.CreatedAt, t.Definition, t.PreHook, t.PostHook, string(selJSON), string(stopJSON), string(exJSON), string(ecJSON), boolInt(t.UpdateAfterBackup), t.BackupOrder, t.ScheduleCadence, boolInt(t.DBDumpOff), t.DBDumpEngine,
 	)
 	if err != nil {
 		return Target{}, fmt.Errorf("UpsertTarget: %w", err)
@@ -161,7 +172,7 @@ func (r *Repo) UpsertTarget(t Target) (Target, error) {
 // GetTargetByContainer returns the target for the named container.
 func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 	row := r.db.QueryRow(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence, repo
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence, repo, db_dump_off, db_dump_engine
 		FROM targets WHERE container_name = ?`, name)
 	return scanTarget(row)
 }
@@ -178,7 +189,7 @@ func (r *Repo) GetTargetByID(id string) (Target, error) {
 // ListTargets returns all known targets.
 func (r *Repo) ListTargets() ([]Target, error) {
 	rows, err := r.db.Query(`
-		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence, repo
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence, repo, db_dump_off, db_dump_engine
 		FROM targets ORDER BY container_name`)
 	if err != nil {
 		return nil, fmt.Errorf("ListTargets: %w", err)
@@ -220,7 +231,7 @@ func (r *Repo) ListTargetsScheduleOrder() ([]Target, error) {
 	// there is and drifts to the end of the queue for good — quietly, since the
 	// ordering is a preference rather than an error.
 	rows, err := r.db.Query(`
-		SELECT t.id, t.container_name, t.appdata_paths, t.include_in_schedule, t.created_at, t.definition, t.pre_hook, t.post_hook, t.selected_paths, t.stop_containers, t.excludes, t.exclude_caches, t.update_after_backup, t.last_update_check, t.last_update_result, t.backup_order, t.schedule_cadence, t.repo
+		SELECT t.id, t.container_name, t.appdata_paths, t.include_in_schedule, t.created_at, t.definition, t.pre_hook, t.post_hook, t.selected_paths, t.stop_containers, t.excludes, t.exclude_caches, t.update_after_backup, t.last_update_check, t.last_update_result, t.backup_order, t.schedule_cadence, t.repo, t.db_dump_off, t.db_dump_engine
 		FROM targets t
 		LEFT JOIN (
 			SELECT target_id, MAX(finished_at) AS last_ok
@@ -294,6 +305,51 @@ func (r *Repo) SetUpdateAfterBackup(containerName string, updateAfterBackup bool
 	if n, _ := res.RowsAffected(); n == 0 {
 		if _, err := r.UpsertTarget(Target{ContainerName: containerName, UpdateAfterBackup: updateAfterBackup}); err != nil {
 			return fmt.Errorf("SetUpdateAfterBackup create target: %w", err)
+		}
+	}
+	return nil
+}
+
+// SetDBDumpOff opts a container out of (or back into) the automatic database
+// dump, creating the target row if it does not exist yet, so the choice can be
+// made before the first backup. Never reset by UpsertTarget.
+func (r *Repo) SetDBDumpOff(containerName string, off bool) error {
+	res, err := r.db.Exec(
+		`UPDATE targets SET db_dump_off = ? WHERE container_name = ?`,
+		boolInt(off), containerName)
+	if err != nil {
+		return fmt.Errorf("SetDBDumpOff: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		if _, err := r.UpsertTarget(Target{ContainerName: containerName, DBDumpOff: off}); err != nil {
+			return fmt.Errorf("SetDBDumpOff create target: %w", err)
+		}
+	}
+	return nil
+}
+
+// DBDumpEngines are the engines a dump can be taken with; empty means the user
+// made no choice.
+var DBDumpEngines = []string{"postgres", "mysql", "mariadb"}
+
+// SetDBDumpEngine records the engine chosen for a container that only looks
+// like a database, creating the target row if it does not exist yet. An engine
+// BombVault has no dump command for is refused rather than stored, because the
+// dump would fail once per backup with nothing to point at. Never reset by
+// UpsertTarget.
+func (r *Repo) SetDBDumpEngine(containerName, engine string) error {
+	if engine != "" && !slices.Contains(DBDumpEngines, engine) {
+		return fmt.Errorf("SetDBDumpEngine: unknown engine %q", engine)
+	}
+	res, err := r.db.Exec(
+		`UPDATE targets SET db_dump_engine = ? WHERE container_name = ?`,
+		engine, containerName)
+	if err != nil {
+		return fmt.Errorf("SetDBDumpEngine: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		if _, err := r.UpsertTarget(Target{ContainerName: containerName, DBDumpEngine: engine}); err != nil {
+			return fmt.Errorf("SetDBDumpEngine create target: %w", err)
 		}
 	}
 	return nil
@@ -652,8 +708,8 @@ type scanner interface {
 func scanTarget(s scanner) (Target, error) {
 	var t Target
 	var pathsJSON, selJSON, stopJSON, exJSON, ecJSON string
-	var include, updateAfter int
-	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition, &t.PreHook, &t.PostHook, &selJSON, &stopJSON, &exJSON, &ecJSON, &updateAfter, &t.LastUpdateCheck, &t.LastUpdateResult, &t.BackupOrder, &t.ScheduleCadence, &t.Repo)
+	var include, updateAfter, dbDumpOff int
+	err := s.Scan(&t.ID, &t.ContainerName, &pathsJSON, &include, &t.CreatedAt, &t.Definition, &t.PreHook, &t.PostHook, &selJSON, &stopJSON, &exJSON, &ecJSON, &updateAfter, &t.LastUpdateCheck, &t.LastUpdateResult, &t.BackupOrder, &t.ScheduleCadence, &t.Repo, &dbDumpOff, &t.DBDumpEngine)
 	if err != nil {
 		return Target{}, fmt.Errorf("scanTarget: %w", err)
 	}
@@ -676,6 +732,7 @@ func scanTarget(s scanner) (Target, error) {
 	}
 	t.IncludeInSchedule = include != 0
 	t.UpdateAfterBackup = updateAfter != 0
+	t.DBDumpOff = dbDumpOff != 0
 	return t, nil
 }
 

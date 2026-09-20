@@ -208,6 +208,9 @@ type Settings struct {
 	// into this one. Off by default: unlike the receiver and fleet views, it
 	// writes to this box's own repository.
 	PullEnabled bool
+	// DBDumpsEnabled is the global switch for the automatic database dumps, the
+	// one place to stop the feature for every container at once. Default on.
+	DBDumpsEnabled bool
 	// RestartHealthWait makes the ordered restart after a backup wait until each
 	// dependency is healthy, or running plus a short grace when it has no
 	// healthcheck, before starting what depends on it. Default on.
@@ -284,7 +287,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		       reconcile_unraid_update_status,
 		       per_item_schedules,
 		       cloud_cred_sets,
-		       fleet_enabled, pull_enabled, instance_name, fleet_token,
+		       fleet_enabled, pull_enabled, db_dumps_enabled, instance_name, fleet_token,
 		       everything_schedule, everything_pre_hook, everything_post_hook,
 		       backup_cores, display_prefs,
 		       totp_secret, totp_enabled, totp_recovery
@@ -296,7 +299,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 	var flashZipExportEnabled, pruneImageAfterUpdate, digestEnabled int
 	var catchUpMissed, watchdogEnabled, exportEncryptEnabled, receiverEnabled int
 	var restartHealthWait, reconcileUnraidUpdateStatus, perItemSchedules int
-	var fleetEnabled, pullEnabled, totpEnabled int
+	var fleetEnabled, pullEnabled, dbDumpsEnabled, totpEnabled int
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled, &configEnabled, &filesEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.ConfigPath, &s.FilesPath, &s.RestoreFolder,
@@ -323,7 +326,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		&reconcileUnraidUpdateStatus,
 		&perItemSchedules,
 		&s.CloudCredSets,
-		&fleetEnabled, &pullEnabled, &s.InstanceName, &s.FleetToken,
+		&fleetEnabled, &pullEnabled, &dbDumpsEnabled, &s.InstanceName, &s.FleetToken,
 		&s.EverythingSchedule, &s.EverythingPreHook, &s.EverythingPostHook,
 		&s.BackupCores, &s.DisplayPrefs,
 		&s.TOTPSecret, &totpEnabled, &s.TOTPRecovery,
@@ -362,6 +365,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 	s.PerItemSchedules = perItemSchedules != 0
 	s.FleetEnabled = fleetEnabled != 0
 	s.PullEnabled = pullEnabled != 0
+	s.DBDumpsEnabled = dbDumpsEnabled != 0
 	return s, nil
 }
 
@@ -499,6 +503,7 @@ func updateSettings(e settingsExecer, s Settings) error {
 		  cloud_cred_sets              = ?,
 		  fleet_enabled                = ?,
 		  pull_enabled                 = ?,
+		  db_dumps_enabled             = ?,
 		  instance_name                = ?,
 		  fleet_token                  = ?,
 		  everything_schedule          = ?,
@@ -542,6 +547,7 @@ func updateSettings(e settingsExecer, s Settings) error {
 		s.CloudCredSets,
 		boolInt(s.FleetEnabled),
 		boolInt(s.PullEnabled),
+		boolInt(s.DBDumpsEnabled),
 		s.InstanceName,
 		s.FleetToken,
 		s.EverythingSchedule,

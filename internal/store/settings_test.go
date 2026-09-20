@@ -440,3 +440,31 @@ func TestSettingsAuthPasswordHashRoundtrip(t *testing.T) {
 		t.Fatalf("auth_password_hash not cleared: %q", s3.AuthPasswordHash)
 	}
 }
+
+func TestDBDumpsEnabledRoundTrip(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	s, err := r.GetSettings()
+	if err != nil {
+		t.Fatalf("GetSettings: %v", err)
+	}
+	if !s.DBDumpsEnabled {
+		t.Fatal("automatic database dumps must be on for an existing install")
+	}
+
+	s.DBDumpsEnabled = false
+	if err := r.UpdateSettings(s); err != nil {
+		t.Fatalf("UpdateSettings: %v", err)
+	}
+	s, err = r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.DBDumpsEnabled {
+		t.Fatal("the global switch did not stay off")
+	}
+}
