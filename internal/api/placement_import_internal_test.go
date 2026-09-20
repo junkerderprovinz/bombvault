@@ -147,6 +147,30 @@ func TestAnImportKeepsARepositoryADefaultPointsAt(t *testing.T) {
 	}
 }
 
+func TestAnImportKeepsAConfirmedDomainConfirmed(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	b2 := f.target("containers", "B2", "b2:bucket/containers")
+	f.setDefault("containers", nas.ID, b2.ID)
+	f.paused("containers")
+	if res := f.do(http.MethodPost, "/api/placement/default/containers/confirm", map[string]any{}); res["ok"] != true {
+		t.Fatalf("confirm = %v", res)
+	}
+	if d, found, err := f.st.PlacementDefaultFor("containers"); err != nil || !found || !d.ConfirmedManually || d.Paused() {
+		t.Fatalf("containers after confirm = %+v, %v, %v, want the manual marker set and the pause ended", d, found, err)
+	}
+
+	exp := f.do(http.MethodGet, "/api/settings/export", nil)
+	if res := f.do(http.MethodPost, "/api/settings/import?apply=true", exp); res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+
+	d, found, err := f.st.PlacementDefaultFor("containers")
+	if err != nil || !found || !d.ConfirmedManually || d.Paused() {
+		t.Fatalf("containers after import = %+v, %v, %v, want the manual marker kept and the domain still unpaused", d, found, err)
+	}
+}
+
 func TestTheImportPreviewCountsBothBlocks(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.setDefault("containers", "")
