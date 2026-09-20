@@ -88,19 +88,32 @@ func (id entryIdentity) owns(snap restic.Snapshot) bool {
 	return false
 }
 
-// owned keeps the snapshots of listed the entry owns, in listed's order. A nil
-// listing stays nil ("no repository yet").
-func (id entryIdentity) owned(listed []restic.Snapshot) []restic.Snapshot {
+// ownedByAny keeps the snapshots of listed that one of ids owns, in listed's
+// order. A nil listing stays nil ("no repository yet"). A container is asked
+// under both of its identities where its dumps count as its backups.
+func ownedByAny(listed []restic.Snapshot, ids ...entryIdentity) []restic.Snapshot {
 	if listed == nil {
 		return nil
 	}
 	out := make([]restic.Snapshot, 0, len(listed))
 	for _, snap := range listed {
-		if id.owns(snap) {
+		if slices.ContainsFunc(ids, func(id entryIdentity) bool { return id.owns(snap) }) {
 			out = append(out, snap)
 		}
 	}
 	return out
+}
+
+// partialIdentityErr is the read failure of the first identity that is
+// partial, for the gates that must refuse where a reader shows what it could
+// read.
+func partialIdentityErr(ids ...entryIdentity) error {
+	for _, id := range ids {
+		if id.readErr != nil {
+			return id.readErr
+		}
+	}
+	return nil
 }
 
 // retentionTags splits the entry's tags for restic forget, which selects by

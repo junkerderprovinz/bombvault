@@ -1685,15 +1685,18 @@ func (s *Service) forgetWithLockHeal(ctx context.Context, repo string, p restic.
 }
 
 // identityTags returns the distinct item-identity tags present in snaps:
-// container:<name>, vm:<name>, fileset:<name>, and the fixed flash/config tags.
-// Profile/marker tags (p1, p2, live) are not identities.
+// container:<name>, vm:<name>, fileset:<name>, dbdump:<name>, and the fixed
+// flash/config tags. Profile/marker tags (p1, p2, live) are not identities, and
+// neither are the tags describing a dump (engine, image, version, database
+// names, the run it belongs to).
 func identityTags(snaps []restic.Snapshot) []string {
 	seen := map[string]bool{}
 	var out []string
 	for _, sn := range snaps {
 		for _, t := range sn.Tags {
 			isIdentity := t == "flash" || t == "config" ||
-				strings.HasPrefix(t, "container:") || strings.HasPrefix(t, "vm:") || strings.HasPrefix(t, "fileset:")
+				strings.HasPrefix(t, "container:") || strings.HasPrefix(t, "vm:") ||
+				strings.HasPrefix(t, "fileset:") || strings.HasPrefix(t, dbDumpIdentityPrefix)
 			if isIdentity && !seen[t] {
 				seen[t] = true
 				out = append(out, t)
@@ -1808,7 +1811,12 @@ func (s *Service) aliasFoldDomains() []aliasFoldDomain {
 			v.liveNames[t.Name] = true
 		}
 	}
-	return []aliasFoldDomain{c, v}
+	// The dumps carry the container's name under their own prefix, so the same
+	// rows answer for them; they fold as a series of their own because that is
+	// how they are forgotten.
+	d := c
+	d.prefix = dbDumpIdentityPrefix
+	return []aliasFoldDomain{c, v, d}
 }
 
 // foldTag is foldAliasedIdentityTags's decision for one tag: the group it
@@ -1879,7 +1887,15 @@ func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo string, 
 			errs = append(errs, fmt.Errorf("%s: %w", tag, pErr))
 			continue
 		}
-		out = append(out, groups...)
+		for _, g := range groups {
+			// restic reports an ungrouped forget's group with no tags of its own
+			// (cmd_forget.go copies the grouping key, and --group-by "" has none),
+			// so without this every item is labelled as the whole repository.
+			if len(g.Tags) == 0 {
+				g.Tags = []string{tag}
+			}
+			out = append(out, g)
+		}
 	}
 	return out, errors.Join(errs...)
 }
@@ -3307,21 +3323,18 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 		// another domain's snapshots too, and the copy leaves those where they
 		// are; counting them made the bar stop short of its own total for the
 		// whole run and the remaining-time reading wrong with it.
-		prefix := domainTagPrefix(domain)
+		prefixes := domainTagPrefixes(domain)
 		for _, src := range localRepos {
 			srcSnaps, sErr := s.listSnapshots(ctx, src.Loc, mode)
 			if sErr != nil {
 				log.Printf("api: offsite %s: could not estimate pending snapshot count (continuing without it): %v", domain, sErr) //nolint:gosec // G706: domain is a fixed literal
 				continue
 			}
-			if !src.Own && prefix != "" {
+			if !src.Own && len(prefixes) > 0 {
 				mine := make([]restic.Snapshot, 0, len(srcSnaps))
 				for _, sn := range srcSnaps {
-					for _, tag := range sn.Tags {
-						if strings.HasPrefix(tag, prefix) {
-							mine = append(mine, sn)
-							break
-						}
+					if snapshotInDomain(sn, prefixes) {
+						mine = append(mine, sn)
 					}
 				}
 				srcSnaps = mine
@@ -3412,7 +3425,7 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 		// filter can lift a named repository to the head. Either made a named
 		// repository look like the domain's own and copied it whole.
 		ids := []string(nil)
-		if !src.Own && domainTagPrefix(domain) != "" {
+		if !src.Own && len(domainTagPrefixes(domain)) > 0 {
 			mine, nErr := s.snapshotIDsForDomain(ctx, src.Loc, mode, domain)
 			if nErr != nil {
 				log.Printf("api: offsite %s: could not narrow %s to this domain, skipping it this pass: %v", domain, shortRepoName(src.Loc), scrubError(nErr)) //nolint:gosec // G706: domain is a fixed literal, the name is shortened and the error scrubbed here
@@ -6249,13 +6262,16 @@ func (s *Service) Discover(ctx context.Context, dryRun bool) (int, []repoSkip, e
 	if err != nil {
 		return 0, nil, fmt.Errorf("read settings: %w", err)
 	}
-	// The distinct container names from the container:<name> tags, across every
-	// repository this domain writes to, each with the named repository (#204) it
-	// was found in. A not-yet-created repo yields nothing. A read failure comes
-	// back as readErr together with whatever the named repositories yielded, so
-	// an install whose domain repository is unreadable is still rebuilt as far
-	// as it can be; the Recovery wizard classifies on that error.
-	names, formerNames, skipped, readErr := s.discoverNamesAcrossRepos(ctx, settings, "containers", "container:")
+	// The distinct container names from the container:<name> and dbdump:<name>
+	// tags, across every repository this domain writes to, each with the named
+	// repository (#204) it was found in. A stack member whose data sits under
+	// the compose working directory has no volume backup at all, so its dumps
+	// are the only evidence that it exists. A not-yet-created repo yields
+	// nothing. A read failure comes back as readErr together with whatever the
+	// named repositories yielded, so an install whose domain repository is
+	// unreadable is still rebuilt as far as it can be; the Recovery wizard
+	// classifies on that error.
+	names, formerNames, skipped, readErr := s.discoverNamesAcrossRepos(ctx, settings, "containers", "container:", dbDumpIdentityPrefix)
 
 	dir, err := s.defsDir(settings)
 	if err != nil {
@@ -7456,19 +7472,44 @@ func (s *Service) domainReposInUse(settings store.Settings, domain string) ([]do
 	return out, skipped, nil
 }
 
-// domainTagPrefix is the identity-tag prefix every snapshot of a domain carries
-// ("container:<name>", "vm:<name>", "fileset:<name>"). Empty for flash and
-// config, which have no per-item repositories and therefore cannot share one.
-func domainTagPrefix(domain string) string {
+// domainTagPrefixes are the identity-tag prefixes a domain's snapshots carry.
+// Containers have two: the volume backup and the database dump, which is a
+// snapshot of its own in the same repository. Empty for flash and config, which
+// have no per-item repositories and therefore cannot share one.
+func domainTagPrefixes(domain string) []string {
 	switch domain {
 	case "containers":
-		return "container:"
+		return []string{"container:", dbDumpIdentityPrefix}
 	case "vms":
-		return "vm:"
+		return []string{"vm:"}
 	case "files":
-		return "fileset:"
+		return []string{"fileset:"}
+	}
+	return nil
+}
+
+// nameAfterAnyPrefix returns the item name a tag carries under one of prefixes,
+// or "" when it carries none.
+func nameAfterAnyPrefix(tag string, prefixes []string) string {
+	for _, prefix := range prefixes {
+		if rest, ok := strings.CutPrefix(tag, prefix); ok && rest != "" {
+			return rest
+		}
 	}
 	return ""
+}
+
+// snapshotInDomain reports whether sn carries one of the domain's identity
+// prefixes.
+func snapshotInDomain(sn restic.Snapshot, prefixes []string) bool {
+	for _, tag := range sn.Tags {
+		for _, prefix := range prefixes {
+			if strings.HasPrefix(tag, prefix) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // pendingOf narrows a list of source snapshots to the ids the destination does
@@ -7501,11 +7542,11 @@ func (s *Service) pendingOf(ctx context.Context, dest string, mode restic.Mode, 
 
 // snapshotIDsForDomain lists the snapshots in repo that belong to domain, by
 // their identity tag. Used to narrow a copy out of a repository that more than
-// one domain may write to; an empty prefix (flash, config) returns nil, which
-// means "no narrowing" to the caller.
+// one domain may write to; a domain without identity prefixes (flash, config)
+// returns nil, which means "no narrowing" to the caller.
 func (s *Service) snapshotIDsForDomain(ctx context.Context, repo string, mode restic.Mode, domain string) ([]restic.Snapshot, error) {
-	prefix := domainTagPrefix(domain)
-	if prefix == "" {
+	prefixes := domainTagPrefixes(domain)
+	if len(prefixes) == 0 {
 		return nil, nil
 	}
 	snaps, err := s.listSnapshots(ctx, repo, mode)
@@ -7514,11 +7555,8 @@ func (s *Service) snapshotIDsForDomain(ctx context.Context, repo string, mode re
 	}
 	var out []restic.Snapshot
 	for _, sn := range snaps {
-		for _, tag := range sn.Tags {
-			if strings.HasPrefix(tag, prefix) {
-				out = append(out, sn)
-				break
-			}
+		if snapshotInDomain(sn, prefixes) {
+			out = append(out, sn)
 		}
 	}
 	return out, nil
@@ -7724,9 +7762,11 @@ func nothingCoveredError(skipped []repoSkip) error {
 }
 
 // discoverNamesAcrossRepos collects the item names a domain's snapshots carry
-// (from the tagPrefix tag, e.g. "container:") across EVERY repository the domain
-// writes to, and remembers WHICH repository each name was found in: the value is
-// the named repository's id (#204), or "" for the domain's own.
+// (from any of tagPrefixes, e.g. "container:") across every repository the
+// domain writes to, and remembers which repository each name was found in: the
+// value is the named repository's id (#204), or "" for the domain's own. An
+// item with more than one identity is one name, and the newest snapshot of any
+// of them decides where it belongs.
 //
 // Discover is the path back from a lost /config: it rebuilds items out of the
 // snapshots that still exist. Reading only the domain repository made an item
@@ -7775,7 +7815,7 @@ func nothingCoveredError(skipped []repoSkip) error {
 // The second result maps a discovered name to the formerly: names on its own
 // snapshots, so Discover can name each one no stored definition records as a
 // link. Only container and VM backups write that tag.
-func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.Settings, domain, tagPrefix string) (map[string]string, map[string][]string, []repoSkip, error) {
+func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.Settings, domain string, tagPrefixes ...string) (map[string]string, map[string][]string, []repoSkip, error) {
 	own, err := s.repoFor(settings, domain, "local")
 	if err != nil {
 		return nil, nil, nil, err
@@ -7943,8 +7983,8 @@ func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.S
 				}
 			}
 			for _, tag := range snap.Tags {
-				rest, ok := strings.CutPrefix(tag, tagPrefix)
-				if !ok || rest == "" {
+				rest := nameAfterAnyPrefix(tag, tagPrefixes)
+				if rest == "" {
 					continue
 				}
 				if len(formerHere) > 0 {
@@ -8249,9 +8289,9 @@ func (s *Service) Snapshots(ctx context.Context, name, source string) ([]restic.
 	return s.containerSnapshotsOf(ctx, name, source, s.containerIdentity(name))
 }
 
-// containerSnapshotsOf is Snapshots for an identity the caller has already
-// built, so a gate lists with the one it checked.
-func (s *Service) containerSnapshotsOf(ctx context.Context, name, source string, id entryIdentity) ([]restic.Snapshot, error) {
+// containerSnapshotsOf is Snapshots for the identities the caller has already
+// built, so a gate lists with the ones it checked.
+func (s *Service) containerSnapshotsOf(ctx context.Context, name, source string, ids ...entryIdentity) ([]restic.Snapshot, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return nil, fmt.Errorf("read settings: %w", err)
@@ -8260,7 +8300,7 @@ func (s *Service) containerSnapshotsOf(ctx context.Context, name, source string,
 	if err != nil {
 		return nil, err
 	}
-	return s.snapshotsOwnedBy(ctx, repo, s.repoModeFor(settings, "containers", source, repo), id)
+	return s.snapshotsOwnedBy(ctx, repo, s.repoModeFor(settings, "containers", source, repo), ids...)
 }
 
 // containerIdentity is the container entry that answers to name, with every
@@ -8276,6 +8316,20 @@ func (s *Service) containerIdentity(name string) entryIdentity {
 		ownID = tg.ID
 	}
 	return withRowReadErr(s.aliasedIdentity("container", "container:", name, ownID), err)
+}
+
+// containerDumpIdentity is the same container entry under the tag its database
+// dumps carry. A dump is a snapshot of its own beside the volume backups, and
+// a rename moves both: the entry's aliases name the container, not one kind of
+// snapshot. The two stay separate identities because each ages under its own
+// retention series.
+func (s *Service) containerDumpIdentity(name string) entryIdentity {
+	ownID := ""
+	tg, err := s.store.GetTargetByContainer(name)
+	if err == nil {
+		ownID = tg.ID
+	}
+	return withRowReadErr(s.aliasedIdentity("container", dbDumpIdentityPrefix, name, ownID), err)
 }
 
 // vmIdentity is containerIdentity for VMs. name is the libvirt name: on
@@ -8373,17 +8427,22 @@ func (s *Service) snapshotsForTag(ctx context.Context, repo string, mode restic.
 	return s.snapshotsForTags(ctx, repo, mode, []string{tag})
 }
 
-// snapshotsOwnedBy lists repo and keeps the snapshots id owns: those under its
-// current tag that no other entry's alias claims, plus each alias's from
-// before that alias was linked. Every reader of an entry's history goes
-// through here, so neither a renamed entry nor a machine that took its old
-// name up again can reach the other's snapshots.
-func (s *Service) snapshotsOwnedBy(ctx context.Context, repo string, mode restic.Mode, id entryIdentity) ([]restic.Snapshot, error) {
-	listed, err := s.snapshotsForTags(ctx, repo, mode, id.listTags())
+// snapshotsOwnedBy lists repo once and keeps the snapshots ids own: those
+// under an identity's current tag that no other entry's alias claims, plus
+// each alias's from before that alias was linked. Every reader of an entry's
+// history goes through here, so neither a renamed entry nor a machine that
+// took its old name up again can reach the other's snapshots. A container is
+// passed both of its identities where its dumps count as its backups.
+func (s *Service) snapshotsOwnedBy(ctx context.Context, repo string, mode restic.Mode, ids ...entryIdentity) ([]restic.Snapshot, error) {
+	var tags []string
+	for _, id := range ids {
+		tags = append(tags, id.listTags()...)
+	}
+	listed, err := s.snapshotsForTags(ctx, repo, mode, tags)
 	if err != nil {
 		return nil, err
 	}
-	return id.owned(listed), nil
+	return ownedByAny(listed, ids...), nil
 }
 
 // snapshotsForTags is snapshotsForTag for several tags: a snapshot is included
@@ -9215,10 +9274,32 @@ func vmrunGroupSnapshot(group []restic.Snapshot, tag string) (restic.Snapshot, b
 	return restic.Snapshot{}, false
 }
 
-// sanitizeTags trims each tag, drops empties, and rejects any tag containing a
-// comma or a control character. restic stores tags as a comma-separated list, so
-// a comma would split one tag into two; control characters could corrupt argv or
-// the snapshot metadata. Returns an error naming the offending tag.
+// reservedTagPrefixes are the prefixes BombVault writes itself. A hand-written
+// tag carrying one would put the snapshot into an item's retention series or
+// into a database dump listing, which is why "add tag" refuses them.
+var reservedTagPrefixes = []string{
+	"container:", "vm:", "fileset:", "stack:", "vmrun:",
+	dbDumpIdentityPrefix, "dbengine:", "dbimage:", "dbversion:", "dbname:", "bvrun:",
+}
+
+// tagValueError reports why a string cannot be a restic tag. restic stores tags
+// as a comma-separated list, so a comma would split one tag into two; control
+// characters could corrupt argv or the snapshot metadata.
+func tagValueError(tag string) error {
+	if strings.ContainsRune(tag, ',') {
+		return fmt.Errorf("invalid tag %q: tags cannot contain a comma", tag)
+	}
+	for _, r := range tag {
+		if r < 0x20 || r == 0x7f {
+			return fmt.Errorf("invalid tag %q: tags cannot contain control characters", tag)
+		}
+	}
+	return nil
+}
+
+// sanitizeTags trims each tag, drops empties, and rejects any tag restic cannot
+// carry or BombVault reserves for itself. Returns an error naming the offending
+// tag.
 func sanitizeTags(in []string) ([]string, error) {
 	out := make([]string, 0, len(in))
 	for _, raw := range in {
@@ -9226,12 +9307,12 @@ func sanitizeTags(in []string) ([]string, error) {
 		if tag == "" {
 			continue
 		}
-		if strings.ContainsRune(tag, ',') {
-			return nil, fmt.Errorf("invalid tag %q: tags cannot contain a comma", tag)
+		if err := tagValueError(tag); err != nil {
+			return nil, err
 		}
-		for _, r := range tag {
-			if r < 0x20 || r == 0x7f {
-				return nil, fmt.Errorf("invalid tag %q: tags cannot contain control characters", tag)
+		for _, prefix := range reservedTagPrefixes {
+			if strings.HasPrefix(tag, prefix) {
+				return nil, fmt.Errorf("invalid tag %q: this prefix is reserved for BombVault", tag)
 			}
 		}
 		out = append(out, tag)
@@ -9240,11 +9321,12 @@ func sanitizeTags(in []string) ([]string, error) {
 }
 
 // DeleteBackups removes all backups of a container, every restic snapshot its
-// identity owns with the freed data pruned, and forgets the container from the
-// store (target and run history). It cleans up containers that are not
-// installed any more. The repo is shared, so the snapshots are forgotten by ID
-// as Snapshots returned them, and prune never touches data other containers'
-// snapshots still reference.
+// identities own with the freed data pruned, and forgets the container from
+// the store (target and run history). Volume backups and database dumps both
+// go: a container asked to leave takes everything it owns with it. It cleans
+// up containers that are not installed any more. The repo is shared, so the
+// snapshots are forgotten by ID as the listing returned them, and prune never
+// touches data other containers' snapshots still reference.
 //
 // Off-site copies are left. With the aliases gone their pre-link part falls to
 // whichever entry uses an old name next, which is acceptable because the user
@@ -9279,8 +9361,10 @@ func (s *Service) DeleteBackups(ctx context.Context, name string) error {
 	protection := s.primaryAppendOnly("containers", repo)
 	if protection != appendOnlyNone {
 		// A read, and it answers the only question left: is there anything in here
-		// for the flag to protect?
-		snaps, sErr := s.Snapshots(ctx, name, "")
+		// for the flag to protect? Both identities count, or a container that
+		// exists only as dumps takes the lock and runs a forget that is refused
+		// anyway.
+		snaps, sErr := s.containerSnapshotsOf(ctx, name, "", s.containerIdentity(name), s.containerDumpIdentity(name))
 		if sErr != nil {
 			return sErr
 		}
@@ -9299,10 +9383,11 @@ func (s *Service) DeleteBackups(ctx context.Context, name string) error {
 	}
 
 	id := s.containerIdentity(name)
-	if err := refuseDeleteWithPartialIdentity(name, id); err != nil {
+	dumps := s.containerDumpIdentity(name)
+	if err := refuseDeleteWithPartialIdentity(name, id, dumps); err != nil {
 		return err
 	}
-	snaps, err := s.containerSnapshotsOf(ctx, name, "", id)
+	snaps, err := s.containerSnapshotsOf(ctx, name, "", id, dumps)
 	if err != nil {
 		return err
 	}
@@ -9503,21 +9588,21 @@ func (s *Service) ForgetVMTarget(ctx context.Context, name string) error {
 	return nil
 }
 
-// refuseRowRemovalWithBackups refuses to remove the row of name while its
-// identity id owns a snapshot in repo or any off-site target of domain, or
-// while one of them cannot be read. The row carries the aliases that make its
-// older backups its own; without them those backups would fall to whichever
+// refuseRowRemovalWithBackups refuses to remove the row of name while one of
+// its identities ids owns a snapshot in repo or any off-site target of domain,
+// or while one of them cannot be read. The row carries the aliases that make
+// its older backups its own; without them those backups would fall to whichever
 // entry takes the name next.
-func (s *Service) refuseRowRemovalWithBackups(ctx context.Context, settings store.Settings, domain, name, repo string, id entryIdentity) error {
-	if id.readErr != nil {
-		return fmt.Errorf("%q keeps its entry: its backups could not be checked: %w", name, id.readErr)
+func (s *Service) refuseRowRemovalWithBackups(ctx context.Context, settings store.Settings, domain, name, repo string, ids ...entryIdentity) error {
+	if readErr := partialIdentityErr(ids...); readErr != nil {
+		return fmt.Errorf("%q keeps its entry: its backups could not be checked: %w", name, readErr)
 	}
 	places, err := s.backupPlaces(settings, domain, []string{repo})
 	if err != nil {
 		return fmt.Errorf("%q keeps its entry until its backups can be ruled out: %w", name, err)
 	}
 	for _, p := range places {
-		owned, err := s.snapshotsOwnedBy(ctx, p.repo, p.mode, id)
+		owned, err := s.snapshotsOwnedBy(ctx, p.repo, p.mode, ids...)
 		if err != nil {
 			return fmt.Errorf("%q keeps its entry until its backups can be ruled out: %s could not be read: %w", name, p.name, err)
 		}
@@ -9528,14 +9613,15 @@ func (s *Service) refuseRowRemovalWithBackups(ctx context.Context, settings stor
 	return nil
 }
 
-// refuseDeleteWithPartialIdentity refuses delete-all while id is partial,
-// because it would forget only part of the entry's backups and then drop the
-// aliases that make the rest its own.
-func refuseDeleteWithPartialIdentity(name string, id entryIdentity) error {
-	if id.readErr == nil {
+// refuseDeleteWithPartialIdentity refuses delete-all while one of ids is
+// partial, because it would forget only part of the entry's backups and then
+// drop the aliases that make the rest its own.
+func refuseDeleteWithPartialIdentity(name string, ids ...entryIdentity) error {
+	readErr := partialIdentityErr(ids...)
+	if readErr == nil {
 		return nil
 	}
-	return fmt.Errorf("nothing was deleted: the backups of %q could not be checked: %w", name, id.readErr)
+	return fmt.Errorf("nothing was deleted: the backups of %q could not be checked: %w", name, readErr)
 }
 
 // refuseDefinedVM answers an error when the VM is defined on the host, asked the
@@ -9590,7 +9676,7 @@ func (s *Service) ForgetTarget(ctx context.Context, name string) error {
 	if err != nil {
 		return fmt.Errorf("%q keeps its entry: its repository could not be resolved to check for backups: %w", name, err)
 	}
-	if err := s.refuseRowRemovalWithBackups(ctx, settings, "containers", name, repo, s.containerIdentity(name)); err != nil {
+	if err := s.refuseRowRemovalWithBackups(ctx, settings, "containers", name, repo, s.containerIdentity(name), s.containerDumpIdentity(name)); err != nil {
 		return err
 	}
 	if err := s.store.DeleteTarget(name); err != nil {
@@ -12832,10 +12918,11 @@ func (s *Service) containerHasBackups(ctx context.Context, name string) (bool, e
 		}
 	}
 	id := s.containerIdentity(name)
-	if id.readErr != nil {
-		return false, fmt.Errorf("its backups could not be checked: %w", id.readErr)
+	dumps := s.containerDumpIdentity(name)
+	if readErr := partialIdentityErr(id, dumps); readErr != nil {
+		return false, fmt.Errorf("its backups could not be checked: %w", readErr)
 	}
-	snaps, err := s.containerSnapshotsOf(ctx, name, "local", id)
+	snaps, err := s.containerSnapshotsOf(ctx, name, "local", id, dumps)
 	if err != nil {
 		// Unreadable is not "empty": refusing conservatively is the safe way
 		// round, because the cost of being wrong the other way is a split

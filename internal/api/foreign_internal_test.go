@@ -556,8 +556,36 @@ func TestForeignInventoryGrouping(t *testing.T) {
 	if err != nil {
 		t.Fatalf("marshal: %v", err)
 	}
-	if string(raw) != `{"containers":[],"vms":[],"fileSets":[]}` {
-		t.Fatalf("empty inventory JSON = %s, want exact containers/vms/fileSets keys with []", raw)
+	if string(raw) != `{"containers":[],"vms":[],"fileSets":[],"dbDumps":[]}` {
+		t.Fatalf("empty inventory JSON = %s, want exact containers/vms/fileSets/dbDumps keys with []", raw)
+	}
+}
+
+// A foreign repository holds the dumps of its containers next to their volume
+// snapshots. Without a group of their own the Recovery page reads a
+// dump-only repository as empty.
+func TestForeignInventoryListsDBDumps(t *testing.T) {
+	snaps := []restic.Snapshot{
+		{ID: "aaaaaaaa11111111", Time: "2026-07-01T10:00:00Z", Tags: []string{"container:web"}},
+		{ID: "bbbbbbbb22222222", Time: "2026-07-02T10:00:00Z", Tags: []string{"dbdump:pg", "dbengine:postgres"}},
+		{ID: "cccccccc33333333", Time: "2026-07-03T10:00:00Z", Tags: []string{"dbdump:pg"}},
+		{ID: "dddddddd44444444", Time: "2026-07-04T10:00:00Z", Tags: []string{"dbdump:immich_pg"}},
+	}
+	eng := &foreignRecordingEngine{opens: opensEncrypted, snaps: snaps}
+	s := newForeignTestService(t, eng)
+
+	_, inv, err := s.OpenForeign(context.Background(), "backups/other", foreignTestKey, nil)
+	if err != nil {
+		t.Fatalf("OpenForeign: %v", err)
+	}
+	if len(inv.DBDumps) != 2 || inv.DBDumps[0].Name != "immich_pg" || inv.DBDumps[1].Name != "pg" {
+		t.Fatalf("dbDumps must be name-sorted [immich_pg pg], got %+v", inv.DBDumps)
+	}
+	if len(inv.DBDumps[1].Snapshots) != 2 {
+		t.Fatalf("pg must keep both of its dumps, got %+v", inv.DBDumps[1].Snapshots)
+	}
+	if len(inv.Containers) != 1 || inv.Containers[0].Name != "web" {
+		t.Fatalf("containers = %+v, want the volume backups alone", inv.Containers)
 	}
 }
 

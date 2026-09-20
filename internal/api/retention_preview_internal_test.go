@@ -44,8 +44,9 @@ func TestPreviewRetentionTakesNoLockAndKeepsNoRecord(t *testing.T) {
 type previewEngine struct {
 	ResticEngine // nil — any non-overridden call panics loudly
 
-	snaps    []restic.Snapshot
-	snapsErr error
+	snaps      []restic.Snapshot
+	snapsErr   error
+	snapsCalls int
 
 	previewTags   []string
 	previewRepos  []string
@@ -54,6 +55,7 @@ type previewEngine struct {
 }
 
 func (e *previewEngine) Snapshots(_ context.Context, _ string, _ restic.Mode) ([]restic.Snapshot, error) {
+	e.snapsCalls++
 	return e.snaps, e.snapsErr
 }
 
@@ -170,5 +172,54 @@ func TestPreviewRetentionSurvivesOneFailingTag(t *testing.T) {
 	}
 	if len(eng.previewTags) != 2 {
 		t.Fatalf("a failing tag must not stop the remaining ones, got %v", eng.previewTags)
+	}
+}
+
+// TestPreviewStampsQueriedIdentity pins that a per-identity preview item is
+// labelled with the identity it was asked about. restic reports the group of an
+// ungrouped, tag-scoped forget with no tags of its own, so without the stamp
+// the panel labels every item as the whole repository and a dump series has no
+// name at all.
+func TestPreviewStampsQueriedIdentity(t *testing.T) {
+	eng := &previewEngine{
+		snaps: []restic.Snapshot{
+			snapWithTags("a1", "container:pg"),
+			snapWithTags("b2", "dbdump:pg"),
+		},
+		previewGroups: []restic.ForgetGroup{{Keep: []restic.Snapshot{snapWithTags("a1")}}},
+	}
+	s := &Service{engine: eng}
+
+	groups, err := s.previewRetentionPerIdentity(context.Background(),
+		"/repo", restic.RetentionPolicy{KeepLast: 5}, restic.Mode{})
+	if err != nil {
+		t.Fatalf("previewRetentionPerIdentity: %v", err)
+	}
+	if len(groups) != 2 {
+		t.Fatalf("got %d groups, want one per identity", len(groups))
+	}
+	for i, want := range []string{"container:pg", "dbdump:pg"} {
+		if got := previewTagOf(groups[i]); got != want {
+			t.Errorf("group %d is labelled %q, want %q", i, got, want)
+		}
+	}
+}
+
+// A group restic did label keeps its own tag: the stamping fills a gap, it does
+// not overwrite what the repository reported.
+func TestPreviewKeepsATagResticReported(t *testing.T) {
+	eng := &previewEngine{
+		snaps:         []restic.Snapshot{snapWithTags("a1", "container:pg")},
+		previewGroups: []restic.ForgetGroup{{Tags: []string{"container:pg", "p1"}}},
+	}
+	s := &Service{engine: eng}
+
+	groups, err := s.previewRetentionPerIdentity(context.Background(),
+		"/repo", restic.RetentionPolicy{KeepLast: 5}, restic.Mode{})
+	if err != nil {
+		t.Fatalf("previewRetentionPerIdentity: %v", err)
+	}
+	if len(groups) != 1 || len(groups[0].Tags) != 2 {
+		t.Fatalf("groups = %+v, want the reported tags untouched", groups)
 	}
 }
