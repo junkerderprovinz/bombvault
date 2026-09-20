@@ -121,8 +121,12 @@ func (s *Service) writeItemPlacement(ctx context.Context, item store.ItemRef, ch
 	if res.Dropped, err = s.droppedTargets(item.Domain, identity, before, after); err != nil {
 		return res, err
 	}
-	if _, err := s.store.WritePlacement(item, home, copies, nil); err != nil {
+	ok, err := s.store.WritePlacement(item, home, copies, &read)
+	if err != nil {
 		return res, err
+	}
+	if !ok {
+		return res, errPlacementStale
 	}
 	for _, d := range res.Dropped {
 		if d.Copies == nil {
