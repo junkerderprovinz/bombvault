@@ -145,6 +145,15 @@ func (p placementRead) enabledTargets() []store.OffsiteTarget {
 	return out
 }
 
+// effectiveHome is where an item's next backup goes: its own location once
+// chosen, the default's while it is open.
+func (p placementRead) effectiveHome(home store.HomeState) (string, bool) {
+	if home.Choice != store.RepoOpen {
+		return home.Repo, false
+	}
+	return p.State.Default.Home, true
+}
+
 // defaultSkip is what an item without a rule of its own leaves out.
 func (p placementRead) defaultSkip() []string {
 	if p.State.HasDefault {
