@@ -822,7 +822,7 @@ func (s *Service) dbDumpsOf(ctx context.Context, settings store.Settings, name, 
 		return nil, dbDumpSource{}, err
 	}
 	src := dbDumpSource{repo: repo, mode: s.repoModeFor(settings, "containers", source, repo)}
-	snaps, err := s.snapshotsForTags(ctx, repo, src.mode, dbDumpIdentity(name))
+	snaps, err := s.snapshotsOwnedBy(ctx, repo, src.mode, s.containerDumpIdentity(name))
 	if err != nil {
 		return nil, dbDumpSource{}, err
 	}

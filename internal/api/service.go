@@ -7237,12 +7237,32 @@ func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source str
 	return true, nil
 }
 
+// ContainerSnapshotTimes is what the repositories hold for one container: the
+// unix time of its newest files snapshot and of its newest database dump.
+type ContainerSnapshotTimes struct {
+	Files int64
+	Dump  int64
+}
+
+// Newest is the time of this container's most recent snapshot of either kind.
+func (c ContainerSnapshotTimes) Newest() int64 {
+	return max(c.Files, c.Dump)
+}
+
+// DumpOnly reports a container that exists in the repositories as database
+// dumps alone. Restoring it brings back a container with an empty database, so
+// a bulk restore has to leave it out and say so.
+func (c ContainerSnapshotTimes) DumpOnly() bool {
+	return c.Dump > 0 && c.Files == 0
+}
+
 // LatestContainerBackupTimes returns, per container name, the unix time of the
-// newest backup that name owns. A card's date is read from here rather than
-// from the run history, so it agrees with the list of backups under it: an
-// entry rebuilt by Discover has no run at all (#44), and a run stays with the
-// entry while a backup stays with the name it was written under.
-func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]int64, error) {
+// newest backup that name owns, under each identity a container has: its files
+// snapshots and its database dumps. A card's date is read from here rather
+// than from the run history, so it agrees with the list of backups under it:
+// an entry rebuilt by Discover has no run at all (#44), and a run stays with
+// the entry while a backup stays with the name it was written under.
+func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]ContainerSnapshotTimes, error) {
 	// When the targets cannot be read nothing folds, and each old name keeps
 	// its own date.
 	idToName := map[string]string{}
@@ -7253,7 +7273,21 @@ func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]in
 			idToName[t.ID] = t.ContainerName
 		}
 	}
-	return s.latestBackupTimes(ctx, "containers", "container", idToName)
+	out := map[string]ContainerSnapshotTimes{}
+	err := s.eachBackupTime(ctx, "containers", "container", idToName, []string{"container:", dbDumpIdentityPrefix},
+		func(prefix, name string, unix int64) {
+			times := out[name]
+			if prefix == dbDumpIdentityPrefix {
+				times.Dump = max(times.Dump, unix)
+			} else {
+				times.Files = max(times.Files, unix)
+			}
+			out[name] = times
+		})
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 // LatestFileSetBackupTimes is LatestContainerBackupTimes for the folder sets.
@@ -7261,7 +7295,7 @@ func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]in
 // backups left under a name no set carries any more come back as their own set
 // through Discover.
 func (s *Service) LatestFileSetBackupTimes(ctx context.Context) (map[string]int64, error) {
-	return s.latestBackupTimes(ctx, "files", "fileset", nil)
+	return s.latestBackupTimes(ctx, "files", "fileset", "fileset:", nil)
 }
 
 // LatestVMBackupTimes is LatestContainerBackupTimes for the VMs domain.
@@ -7274,16 +7308,30 @@ func (s *Service) LatestVMBackupTimes(ctx context.Context) (map[string]int64, er
 			idToName[t.ID] = t.Name
 		}
 	}
-	return s.latestBackupTimes(ctx, "vms", "vm", idToName)
+	return s.latestBackupTimes(ctx, "vms", "vm", "vm:", idToName)
 }
 
-// latestBackupTimes reads one snapshot listing per repository of domain and
-// keeps, per name, the newest time under that name's tag. idToName carries the
-// current name of every entry, for the alias fold.
-func (s *Service) latestBackupTimes(ctx context.Context, domain, aliasDomain string, idToName map[string]string) (map[string]int64, error) {
+// latestBackupTimes keeps, per name, the newest time under that name's tag,
+// for a domain whose items have one identity each.
+func (s *Service) latestBackupTimes(ctx context.Context, domain, aliasDomain, prefix string, idToName map[string]string) (map[string]int64, error) {
+	out := map[string]int64{}
+	err := s.eachBackupTime(ctx, domain, aliasDomain, idToName, []string{prefix}, func(_, name string, unix int64) {
+		out[name] = max(out[name], unix)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// eachBackupTime reads one snapshot listing per repository of domain and calls
+// fn for every snapshot carrying one of prefixes, with the prefix, the name
+// the tag folds to and the snapshot's unix time. idToName carries the current
+// name of every entry, for the alias fold.
+func (s *Service) eachBackupTime(ctx context.Context, domain, aliasDomain string, idToName map[string]string, prefixes []string, fn func(prefix, name string, unix int64)) error {
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return nil, fmt.Errorf("read settings: %w", err)
+		return fmt.Errorf("read settings: %w", err)
 	}
 	// EVERY repository this domain's containers write to, not just the domain's
 	// own (#204). A container pointed at a named repository keeps its snapshots
@@ -7298,10 +7346,8 @@ func (s *Service) latestBackupTimes(ctx context.Context, domain, aliasDomain str
 	// answers "shared" when it cannot tell.
 	repos, _, err := s.domainReposInUse(settings, domain)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	prefix := aliasDomain + ":"
-	out := make(map[string]int64)
 	for _, repo := range repos {
 		if localRepoMissing(repo.Loc) {
 			continue
@@ -7327,26 +7373,27 @@ func (s *Service) latestBackupTimes(ctx context.Context, domain, aliasDomain str
 			}
 			unix := ts.Unix()
 			for _, tag := range snap.Tags {
-				name, ok := strings.CutPrefix(tag, prefix)
-				if !ok || name == "" {
-					continue
-				}
-				// A rename leaves the old tag on snapshots already written. One
-				// from before the link is the renamed entry's and counts for its
-				// current name, whoever holds the old name today; a later one
-				// stays under the old name.
-				if a, aErr := s.store.AliasByOldName(aliasDomain, name); aErr == nil {
-					if cur := idToName[a.TargetID]; cur != "" && newAliasClaim(prefix, a).claims(snap) {
-						name = cur
+				for _, prefix := range prefixes {
+					name, ok := strings.CutPrefix(tag, prefix)
+					if !ok || name == "" {
+						continue
 					}
-				}
-				if unix > out[name] {
-					out[name] = unix
+					// A rename leaves the old tag on snapshots already written. One
+					// from before the link is the renamed entry's and counts for its
+					// current name, whoever holds the old name today; a later one
+					// stays under the old name. A dump follows its container the
+					// same way, under its own prefix.
+					if a, aErr := s.store.AliasByOldName(aliasDomain, name); aErr == nil {
+						if cur := idToName[a.TargetID]; cur != "" && newAliasClaim(prefix, a).claims(snap) {
+							name = cur
+						}
+					}
+					fn(prefix, name, unix)
 				}
 			}
 		}
 	}
-	return out, nil
+	return nil
 }
 
 // domainReposForOp is domainRepoSource for an operation that has to reach ALL of
@@ -10812,7 +10859,7 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 			v.Repo = t.Repo
 			run, _ = s.store.LastSuccessfulBackup(t.ID)
 		}
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(vm.Name, run, snapTimes, snapTimesFailed)
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[vm.Name], snapTimesFailed)
 		own := v.LastBackup != nil
 		hasOwnBackup[vm.Name] = own
 		if !own {
@@ -10838,7 +10885,7 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 	for _, t := range orphanTargets {
 		v := VMView{Name: t.Name, LibvirtName: t.Name, State: "not-installed", Method: t.Method, IncludeInSchedule: t.IncludeInSchedule, ScheduleCadence: t.ScheduleCadence, Repo: t.Repo, AliasConflicts: aliasConflicts.of(t.ID), Aliases: formerNames.of(t.ID)}
 		run, _ := s.store.LastSuccessfulBackup(t.ID)
-		v.LastBackup, v.LastBackupStarted = lastBackupDate(t.Name, run, snapTimes, snapTimesFailed)
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(run, snapTimes[t.Name], snapTimesFailed)
 		views = append(views, v)
 	}
 	return views, nil
@@ -12688,7 +12735,7 @@ func (s *Service) ListFileSetViews(ctx context.Context) ([]FileSetView, error) {
 		// nil so omitempty drops the key (the NULL legacy switch).
 		v.SelectedPaths = set.SelectedPaths
 		run, _ := s.store.LastSuccessfulBackup(set.ID)
-		if finished, _ := lastBackupDate(set.Name, run, snapTimes, snapTimesFailed); finished != nil {
+		if finished, _ := lastBackupDate(run, snapTimes[set.Name], snapTimesFailed); finished != nil {
 			v.LastBackup = *finished
 		}
 		if resolved, rErr := paths.Resolve(s.cfg.HostMountRoot, set.Path); rErr == nil {

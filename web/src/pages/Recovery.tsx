@@ -10,7 +10,7 @@ import { withLtrIsolates, FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS } from "../lib
 import { StepCard, type StepState } from "../components/recovery/StepCard";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
-import { IconRestore } from "../components/Sidebar";
+import { IconDatabase, IconRestore } from "../components/Sidebar";
 import { InfoBubble } from "../components/InfoBubble";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
@@ -20,6 +20,7 @@ import { ToggleRow } from "./settings/shared";
 import { Selector } from "../components/Selector";
 import { RestoreAction } from "../components/restore/RestoreAction";
 import { fireAndWaitRun } from "../lib/backupWatch";
+import { importRefusedKey } from "../lib/dbdump";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import {
   discover,
@@ -31,6 +32,8 @@ import {
   listContainers,
   listVMs,
   listFileSets,
+  listDbDumps,
+  importDbDump,
   fileSetSnapshots,
   restore,
   restoreVM,
@@ -137,6 +140,97 @@ function RestoreRow({
         }
         t={t}
       />
+    </div>
+  );
+}
+
+// DumpOnlyRow restores a container the repositories hold as dumps alone and
+// imports its newest dump into it. The container comes back running, because
+// the import writes through the started server, and the two runs are watched
+// one after the other so the row can say which of them failed.
+function DumpOnlyRow({
+  name,
+  t,
+  otherActive,
+  hueIndex,
+}: {
+  name: string;
+  t: ReturnType<typeof useT>["t"];
+  otherActive: boolean;
+  hueIndex: number;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [outcome, setOutcome] = useState<{ ok: boolean; message: string } | null>(null);
+
+  async function run() {
+    setBusy(true);
+    setOutcome(null);
+    try {
+      const restored = await fireAndWaitRun({
+        kind: "restore",
+        matchRun: (r) => r.domain === "container" && r.target === name,
+        start: () => restore(name, "latest", false),
+        t,
+      });
+      if (!restored.ok) {
+        setOutcome({ ok: false, message: restored.error ?? t("common.restoreFailed") });
+        return;
+      }
+      const list = await listDbDumps(name);
+      const newest = (list.dumps ?? []).find((d) => !d.damaged);
+      if (!newest) {
+        setOutcome({ ok: false, message: t("dbdump.none") });
+        return;
+      }
+      // The refusal id is read inside start(), the only place it reaches: the
+      // watch reports a refused start as its plain message.
+      const refused = { message: "" };
+      const imported = await fireAndWaitRun({
+        kind: "dbimport",
+        matchRun: (r) => r.domain === "container" && r.target === name,
+        start: async () => {
+          const res = await importDbDump(name, newest.id);
+          const key = res.ok ? null : importRefusedKey(res.code);
+          if (key) {
+            refused.message = t(key).replace("{server}", res.server ?? "").replace("{dump}", res.dump ?? "");
+          }
+          return res;
+        },
+        t,
+      });
+      setOutcome(
+        imported.ok
+          ? { ok: true, message: t("dbdump.importDone") }
+          : { ok: false, message: refused.message || imported.error || t("common.actionFailed") }
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div
+      className="flex flex-col gap-1 py-2 border-b border-carbon-border last:border-0 glim-hue"
+      style={hueVars(hueIndex) as CSSProperties}
+    >
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-carbon-text font-medium flex-1 min-w-0 truncate">{name}</span>
+        <Button
+          label={t("recovery.restoreAndImport")}
+          labelKey="recovery.restoreAndImport"
+          glyph={<IconDatabase />}
+          tone="accent"
+          onClick={() => void run()}
+          disabled={busy || otherActive}
+          busy={busy}
+          title={busy ? t("dbdump.busyImporting") : undefined}
+        />
+      </div>
+      {outcome && (
+        <p className={`text-xs wrap-break-word ${outcome.ok ? "text-statusOk" : "text-statusFail"}`}>
+          {outcome.message}
+        </p>
+      )}
     </div>
   );
 }
@@ -705,7 +799,7 @@ function ForeignRestoreCard({
       setLocalNames(names);
       setLocalKnown(known);
       setSession(res.session);
-      setInventory(res.inventory ?? { containers: [], vms: [], fileSets: [] });
+      setInventory(res.inventory ?? { containers: [], vms: [], fileSets: [], dbDumps: [] });
       setPhase("connected");
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -744,8 +838,10 @@ function ForeignRestoreCard({
 
   const connectState: StepState =
     phase === "connected" ? "ok" : phase === "error" ? "bad" : "idle";
+  // The dumps count towards the total: a repository that holds only them is
+  // not empty, it holds the only copy of those databases.
   const total = inventory
-    ? inventory.containers.length + inventory.vms.length + inventory.fileSets.length
+    ? inventory.containers.length + inventory.vms.length + inventory.fileSets.length + inventory.dbDumps.length
     : 0;
   const browseState: StepState = !session ? "idle" : sessionGone ? "warn" : total > 0 ? "ok" : "warn";
 
@@ -961,6 +1057,13 @@ function ForeignRestoreCard({
                   ))}
                 </div>
               ))
+            )}
+            {/* Named, not offered: a dump is restored with the restic CLI, and
+                the recovery kit carries the commands. */}
+            {inventory && inventory.dbDumps.length > 0 && (
+              <p className="text-xs text-carbon-textMuted leading-relaxed">
+                {t("recovery.foreignDbDumps").replace("{count}", String(inventory.dbDumps.length))}
+              </p>
             )}
           </>
         )}
@@ -1539,14 +1642,19 @@ export default function Recovery() {
   // never rejects the next one as already running.
   const restoreAll = useCallback(async () => {
     if (restoreAllBusy) return;
-    if (containers.length === 0 && vms.length === 0) return;
-    if (!(await confirm(t("containers.restoreSelectedConfirm")))) return;
+    const withFiles = containers.filter((c) => !c.dumpOnly);
+    const dumpOnly = containers.length - withFiles.length;
+    if (withFiles.length === 0 && vms.length === 0) return;
+    const question = dumpOnly
+      ? `${t("containers.restoreSelectedConfirm")} ${t("recovery.dumpOnlySkipped").replace("{count}", String(dumpOnly))}`
+      : t("containers.restoreSelectedConfirm");
+    if (!(await confirm(question))) return;
     setRestoreAllBusy(true);
     setRestoreAllResult(null);
     let ok = 0;
     let fail = 0;
     try {
-      for (const c of containers) {
+      for (const c of withFiles) {
         const res = await fireAndWaitRun({
           kind: "restore",
           matchRun: (r) => r.domain === "container" && r.target === c.name,
@@ -1574,6 +1682,10 @@ export default function Recovery() {
     }
   }, [restoreAllBusy, containers, vms, t, confirm]);
 
+  // A container rebuilt from dumps alone restores into an empty database, so it
+  // is listed apart and imports its dump in the same step.
+  const containersWithFiles = containers.filter((c) => !c.dumpOnly);
+  const dumpOnlyContainers = containers.filter((c) => c.dumpOnly);
   const anyDiscovered = containers.length > 0 || vms.length > 0 || fileSets.length > 0;
   const restoreStepState: StepState = restoreAllResult
     ? restoreAllResult.fail > 0
@@ -1891,7 +2003,7 @@ export default function Recovery() {
           <>
             {/* File sets carry no original path, so restoreAll() skips them and
                 they restore per row into a chosen folder. */}
-            {(containers.length > 0 || vms.length > 0) && (
+            {(containersWithFiles.length > 0 || vms.length > 0) && (
               <div className="flex flex-wrap items-center gap-3">
                 {running.active && !restoreAllBusy && (
                   <span className="text-xs text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
@@ -1923,17 +2035,34 @@ export default function Recovery() {
               </div>
             )}
 
-            {containers.length > 0 && (
+            {containersWithFiles.length > 0 && (
               <div className="flex flex-col">
                 <span className="text-xs font-medium text-carbon-textSub pt-1 pb-1">
                   {t("nav.containers")}
                 </span>
-                {containers.map((c) => (
+                {containersWithFiles.map((c) => (
                   <RestoreRow
                     key={`container:${c.name}`}
                     domain="container"
                     name={c.name}
                     lastBackup={c.lastBackup}
+                    t={t}
+                    otherActive={rowOtherActive}
+                    hueIndex={nextHue()}
+                  />
+                ))}
+              </div>
+            )}
+            {dumpOnlyContainers.length > 0 && (
+              <div className="flex flex-col">
+                <span className="inline-flex items-center gap-1 self-start text-xs font-medium text-carbon-textSub pt-2 pb-1">
+                  {t("recovery.dumpOnlyTitle")}
+                  <InfoBubble tip={t("recovery.dumpOnlyHint")} />
+                </span>
+                {dumpOnlyContainers.map((c) => (
+                  <DumpOnlyRow
+                    key={`dbdump:${c.name}`}
+                    name={c.name}
                     t={t}
                     otherActive={rowOtherActive}
                     hueIndex={nextHue()}
