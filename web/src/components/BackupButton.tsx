@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { backupNow } from "../lib/api";
 import { useBackupWatch } from "../lib/backupWatch";
 import { useConfirm } from "../lib/useConfirm";
-import { busyPhraseKey } from "../lib/progress";
+import { busyPhraseKey, type ProgressStage, type ProgressState } from "../lib/progress";
+import { humanBytes } from "../lib/forecast";
 import type { useT } from "../lib/i18n";
 import { Button } from "./Button";
 import { groupStage } from "../lib/controls";
@@ -18,14 +19,16 @@ interface BackupButtonProps {
   onBackedUp?: () => void;
   /** Another operation is running (anyActive). Disables the button with a
    *  hint, except while this button's own backup is the one running. */
-  running?: { active: boolean; phase?: string };
+  running?: { active: boolean; phase?: string; stage?: ProgressStage };
+  /** This container's own live progress, for the step the busy hint names. */
+  progress?: ProgressState;
 }
 
 // Per-browser acknowledgement of the stop warning. Storage keys keep the bv-
 // prefix, since renaming one resets every user's stored state.
 const STOP_ACK_KEY = "bv-container-stop-ack";
 
-export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps) {
+export function BackupButton({ name, t, onBackedUp, running, progress }: BackupButtonProps) {
   // The server runs the backup detached and answers at once; the outcome comes
   // from the progress stream and the recorded run. Awaiting the backup itself
   // would break when the container is the proxy this UI runs through.
@@ -88,11 +91,14 @@ export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps
   }, [confirm, fire, t]);
 
   // The label stays fixed and busy states go into the tooltip; a changing
-  // label would resize the button mid-action.
+  // label would resize the button mid-action. A database dump reports bytes
+  // and no percentage, so its count is the only sign it is moving.
   const stateTip = isPending
-    ? t("common.backingUp")
+    ? progress?.stage === "dbdump"
+      ? t("dbdump.progress").replace("{bytes}", humanBytes(progress.bytes ?? 0))
+      : t("common.backingUp")
     : blockedByOther
-      ? t(busyPhraseKey(running?.phase))
+      ? t(busyPhraseKey(running?.phase, running?.stage))
       : undefined;
 
   return (

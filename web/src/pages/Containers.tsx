@@ -31,6 +31,7 @@ import { FormerNames } from "../components/FormerNames";
 import { containerTakeover } from "../lib/useTakeOver";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { Button } from "../components/Button";
+import { DatabaseDumpRow } from "../components/DatabaseDumpRow";
 import { groupStage } from "../lib/controls";
 import { ToggleRow } from "./settings/shared";
 import { BackupCancelButton } from "../components/BackupCancelButton";
@@ -282,6 +283,9 @@ type BackupFilterKey = "all" | "backedUp" | "neverBackedUp";
 
 const SCHEDULE_FILTER_STORAGE_KEY = "bv-containers-schedule-filter";
 const BACKUP_FILTER_STORAGE_KEY = "bv-containers-backup-filter";
+// Per browser, not per user: the note introduces the dump switch once, and
+// has done its job as soon as someone has read it.
+const DBDUMP_INTRO_KEY = "bv-dbdump-intro-seen";
 
 function loadScheduleFilterKey(): ScheduleFilterKey {
   const v = localStorage.getItem(SCHEDULE_FILTER_STORAGE_KEY);
@@ -531,7 +535,7 @@ function HooksEditor({
           setPre(nextPre);
           debouncedSave(() => void saveHooks(nextPre, post));
         }} spellCheck={false}
-          placeholder="mysqldump -uroot -p$PW db > /config/dump.sql" className={inputCls} />
+          placeholder="redis-cli SAVE" className={inputCls} />
       </label>
       <label className="flex flex-col gap-1">
         <span className="text-xs text-carbon-textSub">{t("hooks.post")}</span>
@@ -570,12 +574,15 @@ function UpdateAfterBackupRow({
   initial,
   lastUpdateCheck,
   lastUpdateResult,
+  database,
   t,
 }: {
   name: string;
   initial: boolean;
   lastUpdateCheck: number;
   lastUpdateResult: string;
+  /** A recognised database, whose major version an update can move. */
+  database: boolean;
   t: T;
 }) {
   const [enabled, setEnabled] = useState(initial);
@@ -613,7 +620,7 @@ function UpdateAfterBackupRow({
         // (issue #193, after a first night with this on for every container).
         // Said here rather than only in the docs, because this toggle is where
         // someone decides to switch it on.
-        hint={`${t("update.afterBackupHint")} ${t("update.afterBackupOrphans")}`}
+        hint={`${t("update.afterBackupHint")} ${t("update.afterBackupOrphans")}${database ? ` ${t("dbdump.updateWarn")}` : ""}`}
         checked={enabled}
         onChange={(next) => void handle(next)}
         disabled={busy}
@@ -2362,6 +2369,7 @@ export function ContainerRow({
 
   return (
     <div
+      id={`container-${container.name}`}
       style={{ ...hueVars(index), "--row-i": String(index) } as CSSProperties}
       // glim-hue owns the position; glim-tint washes the WHOLE card with it
       // (trap #2, design-language.md's "Rainbow" section) — without the wash
@@ -2445,7 +2453,7 @@ export function ContainerRow({
             </span>
           ) : (
             <>
-              <BackupButton name={container.name} t={t} onBackedUp={onDeleted} running={running} />
+              <BackupButton name={container.name} t={t} onBackedUp={onDeleted} running={running} progress={progress} />
               {/* Plain tar+xml export is an advanced-only extra. */}
               <Advanced><ExportButton name={container.name} t={t} /></Advanced>
             </>
@@ -2491,12 +2499,16 @@ export function ContainerRow({
             name={container.name}
             initial={container.includeInSchedule}
           />
+          {/* The dump row shows in both views: it is on by default and changes
+              what a backup does, so it must not hide behind advanced. */}
+          <DatabaseDumpRow container={container} t={t} />
           <Advanced when={installed}>
             <UpdateAfterBackupRow
               name={container.name}
               initial={container.updateAfterBackup ?? false}
               lastUpdateCheck={container.lastUpdateCheck}
               lastUpdateResult={container.lastUpdateResult}
+              database={container.dbTier !== ""}
               t={t}
             />
           </Advanced>
@@ -2695,6 +2707,11 @@ interface StackGroup {
   members: Container[];
 }
 
+/** Joins names the way the reader's language joins a list, "a, b and c". */
+function listSeparated(lang: string, names: string[]): string {
+  return new Intl.ListFormat(lang, { style: "long", type: "conjunction" }).format(names);
+}
+
 // groupStacks buckets BACKED-UP containers by their non-empty compose project and
 // keeps only groups with 2+ members (a lone container isn't a "stack" worth its
 // own card). A member is included when it is backed up — orphans (deleted, so
@@ -2752,6 +2769,7 @@ function StackCard({
   const [source, setSource] = useState<RepoSource>("local");
   const [startInOrder, setStartInOrder] = useState(true);
   const [busy, setBusy] = useState(false);
+  const { lang } = useT();
   const { push } = useToast();
   // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
   // the Restore button when the restore fails to even START (see run()'s own
@@ -2796,7 +2814,13 @@ function StackCard({
   }, [started, anyMemberActive]);
 
   async function run() {
-    if (!(await confirm(t("stack.restoreConfirm")))) return;
+    // A member whose data folder is copied while the stack runs comes back as
+    // files that may not start, so the question names it.
+    const live = group.members.filter((m) => m.dbDataCoverage === "live").map((m) => m.name);
+    const question = live.length
+      ? `${t("stack.restoreConfirm")} ${t("dbdump.stackRestoreWarn").replace("{names}", listSeparated(lang, live))}`
+      : t("stack.restoreConfirm");
+    if (!(await confirm(question))) return;
     setBusy(true);
     setStarted(false);
     setFinished(false);
@@ -3332,6 +3356,13 @@ export function Containers() {
   // the Discover / "Backup selected" buttons alongside their existing toasts.
   const [shakeDiscover, setShakeDiscover] = useState(0);
   const [shakeBackupSelected, setShakeBackupSelected] = useState(0);
+  const [introDismissed, setIntroDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(DBDUMP_INTRO_KEY) === "1";
+    } catch {
+      return false; // without storage the note shows again, which is the harmless way to be wrong
+    }
+  });
   // Overall server-side batch-backup progress (independent of this browser).
   const progress = useProgress();
   const batch = progress["batch:containers"];
@@ -3625,6 +3656,17 @@ export function Containers() {
   let hueSeq = 0;
   const nextHue = () => hueSeq++;
 
+  const recognisedDatabases = containers.filter((c) => c.dbTier === "curated");
+
+  function dismissIntro() {
+    setIntroDismissed(true);
+    try {
+      localStorage.setItem(DBDUMP_INTRO_KEY, "1");
+    } catch {
+      /* the note comes back next time */
+    }
+  }
+
   return (
     // PAGE_SHELL (jdp live-review, "Können wir die nicht überall gleich breit
     // machen?"): was `gap-6 max-w-5xl` — 1024px wide on a 24px Card rhythm,
@@ -3664,6 +3706,24 @@ export function Containers() {
           />
         </div>
       </div>
+
+      {/* The databases BombVault recognised on this box, said once. It names a
+          count and points at the first card, so the switch is one click away. */}
+      {!introDismissed && recognisedDatabases.length > 0 && (
+        <div className="flex items-start gap-3 rounded-card bg-carbon-surface p-4 flex-wrap">
+          <p className="min-w-0 flex-1 text-sm text-carbon-textSub">
+            {t("dbdump.introNotice").replace("{count}", String(recognisedDatabases.length))}{" "}
+            <a className="text-accentText underline hover:no-underline" href={`#container-${recognisedDatabases[0].name}`}>
+              {recognisedDatabases[0].name}
+            </a>
+          </p>
+          <Button
+            label={t("dbdump.introDismiss")}
+            labelKey="dbdump.introDismiss"
+            onClick={dismissIntro}
+          />
+        </div>
+      )}
 
       {/* Server-side batch-backup banner — visible while a "back up all" run is in
           flight, even if it was started from another tab/session. */}

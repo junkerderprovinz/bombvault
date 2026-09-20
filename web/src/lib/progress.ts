@@ -37,7 +37,17 @@ export interface ProgressState {
   // source tree and for every other phase.
   snapshotIndex?: number;
   snapshotTotal?: number;
+  // A step inside the phase that has no percentage of its own: a database dump
+  // streams straight into the repository, so `bytes` is all there is to show
+  // and `percent` stays 0.
+  stage?: ProgressStage;
+  bytes?: number;
 }
+
+/** The steps that report bytes instead of a percentage. */
+export type ProgressStage = "dbdump" | "dbdumpsave" | "dbimport";
+
+const STAGES: ProgressStage[] = ["dbdump", "dbdumpsave", "dbimport"];
 
 export type ProgressMap = Record<string, ProgressState>;
 
@@ -91,7 +101,7 @@ export function offsiteRunProgress(state: ProgressState | undefined): OffsiteRun
 
 // Shape of a single SSE payload. lastSeen is stamped locally in applyEvent, so
 // it is not part of the wire shape.
-type ProgressEvent = Omit<ProgressState, "lastSeen"> & { key: string };
+type ProgressFrame = Omit<ProgressState, "lastSeen"> & { key: string };
 
 // How long an inactive (completed) entry lingers so the bar can visibly reach
 // 100% before it fades out, then gets dropped from the map entirely.
@@ -114,7 +124,7 @@ function emit(): void {
   for (const listener of listeners) listener(current);
 }
 
-function applyEvent(ev: ProgressEvent): void {
+function applyEvent(ev: ProgressFrame): void {
   // An existing drop timer for this key is stale once a fresh event arrives.
   const pending = dropTimers.get(ev.key);
   if (pending) {
@@ -134,6 +144,8 @@ function applyEvent(ev: ProgressEvent): void {
     startedAt: ev.startedAt,
     snapshotIndex: ev.snapshotIndex,
     snapshotTotal: ev.snapshotTotal,
+    stage: ev.stage,
+    bytes: ev.bytes,
   };
 
   current = { ...current, [ev.key]: entry };
@@ -151,41 +163,50 @@ function applyEvent(ev: ProgressEvent): void {
   }
 }
 
-function handleMessage(e: MessageEvent<string>): void {
+/**
+ * parseProgressFrame narrows one SSE payload to what this client understands,
+ * or returns null for a line it cannot place. A stage from a newer backend is
+ * dropped rather than carried, so nothing renders a step it has no words for.
+ */
+export function parseProgressFrame(data: string): ProgressFrame | null {
   let parsed: unknown;
   try {
-    parsed = JSON.parse(e.data);
+    parsed = JSON.parse(data);
   } catch {
-    return; // ignore malformed lines
+    return null;
   }
-  if (
-    parsed &&
-    typeof parsed === "object" &&
-    typeof (parsed as ProgressEvent).key === "string"
-  ) {
-    const ev = parsed as ProgressEvent;
-    applyEvent({
-      key: ev.key,
-      // "replicate" stays distinct so anyActive can word the busy hint (a
-      // backup is refused while a replication runs). "maintenance" (prune,
-      // verify, drill, tamper check, flash ZIP export) stays distinct so it is
-      // not mistaken for a backup; anyActive ignores it. Anything else counts
-      // as "backup".
-      phase:
-        ev.phase === "restore"
-          ? "restore"
-          : ev.phase === "replicate"
-            ? "replicate"
-            : ev.phase === "maintenance"
-              ? "maintenance"
-              : "backup",
-      percent: typeof ev.percent === "number" ? ev.percent : 0,
-      active: !!ev.active,
-      startedAt: typeof ev.startedAt === "number" ? ev.startedAt : undefined,
-      snapshotIndex: typeof ev.snapshotIndex === "number" ? ev.snapshotIndex : undefined,
-      snapshotTotal: typeof ev.snapshotTotal === "number" ? ev.snapshotTotal : undefined,
-    });
+  if (!parsed || typeof parsed !== "object" || typeof (parsed as ProgressFrame).key !== "string") {
+    return null;
   }
+  const ev = parsed as ProgressFrame;
+  return {
+    key: ev.key,
+    // "replicate" stays distinct so anyActive can word the busy hint (a
+    // backup is refused while a replication runs). "maintenance" (prune,
+    // verify, drill, tamper check, flash ZIP export) stays distinct so it is
+    // not mistaken for a backup; anyActive ignores it. Anything else counts
+    // as "backup".
+    phase:
+      ev.phase === "restore"
+        ? "restore"
+        : ev.phase === "replicate"
+          ? "replicate"
+          : ev.phase === "maintenance"
+            ? "maintenance"
+            : "backup",
+    percent: typeof ev.percent === "number" ? ev.percent : 0,
+    active: !!ev.active,
+    startedAt: typeof ev.startedAt === "number" ? ev.startedAt : undefined,
+    snapshotIndex: typeof ev.snapshotIndex === "number" ? ev.snapshotIndex : undefined,
+    snapshotTotal: typeof ev.snapshotTotal === "number" ? ev.snapshotTotal : undefined,
+    stage: ev.stage && STAGES.includes(ev.stage) ? ev.stage : undefined,
+    bytes: typeof ev.bytes === "number" ? ev.bytes : undefined,
+  };
+}
+
+function handleMessage(e: MessageEvent<string>): void {
+  const frame = parseProgressFrame(e.data);
+  if (frame) applyEvent(frame);
 }
 
 function openSource(): void {
@@ -220,8 +241,8 @@ function closeSource(): void {
  * busy cleanly, so it must not disable the start buttons app-wide.
  */
 export function anyActive(
-  map: Record<string, { phase: string; active: boolean; lastSeen?: number }>
-): { active: boolean; phase?: string } {
+  map: Record<string, { phase: string; active: boolean; lastSeen?: number; stage?: ProgressStage }>
+): { active: boolean; phase?: string; stage?: ProgressStage } {
   const now = Date.now();
   for (const k of Object.keys(map)) {
     const e = map[k];
@@ -230,20 +251,31 @@ export function anyActive(
     // shapes can be passed in; applyEvent always sets it.
     const stale = e.lastSeen !== undefined && now - e.lastSeen > STALE_MS;
     if (e.active && !stale && (e.phase === "backup" || e.phase === "restore" || e.phase === "replicate")) {
-      return { active: true, phase: e.phase };
+      return { active: true, phase: e.phase, stage: e.stage };
     }
   }
   return { active: false };
 }
 
+/** The busy hints, from the most precise step to the phase around it. */
+export type BusyPhraseKey =
+  | "dbdump.busyDumping"
+  | "dbdump.busySaving"
+  | "dbdump.busyImporting"
+  | "common.restoreRunning"
+  | "common.replicateRunning"
+  | "common.backupRunning";
+
 /**
  * busyPhraseKey maps an anyActive() phase to the i18n key for the busy hint, so
  * every hint (bulk bars, per-item buttons) words it the same way, including the
- * off-site "replication is running" case.
+ * off-site "replication is running" case. A stage names the step inside the
+ * phase, so an hour of "a backup is running" reads as the dump it is.
  */
-export function busyPhraseKey(
-  phase?: string
-): "common.restoreRunning" | "common.replicateRunning" | "common.backupRunning" {
+export function busyPhraseKey(phase?: string, stage?: ProgressStage): BusyPhraseKey {
+  if (stage === "dbdump") return "dbdump.busyDumping";
+  if (stage === "dbdumpsave") return "dbdump.busySaving";
+  if (stage === "dbimport") return "dbdump.busyImporting";
   if (phase === "restore") return "common.restoreRunning";
   if (phase === "replicate") return "common.replicateRunning";
   return "common.backupRunning";

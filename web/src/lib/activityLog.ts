@@ -5,10 +5,12 @@
 // React, i18n or a live stream.
 
 import type { Run, ScheduleNext } from "./api";
-import type { ProgressMap, ProgressState } from "./progress";
+import { dumpWasCancelled, importHadErrors } from "./dbdump";
+import type { ProgressMap, ProgressStage, ProgressState } from "./progress";
 import { offsiteRunProgress, STALE_MS } from "./progress";
 import { elapsedSince, formatClockTime, formatDuration } from "./reltime";
-import { RUN_REASONS } from "./runReason";
+import type { TranslationKey } from "./i18n";
+import { runReason } from "./runReason";
 
 /** Picks a line's glyph and colour in ActivityLog.tsx. */
 export type LogStatus = "running" | "success" | "failed" | "offsite" | "info";
@@ -23,7 +25,7 @@ export type LogDomain = "containers" | "vms" | "flash" | "config" | "files" | "e
  *  backup) has no filter chip but still carries a kind for search. "drill" is
  *  the local restore drill and "drdrill" the off-site DR check; rows recorded
  *  before the two were split stay "drill". */
-export type LogKind = "backup" | "restore" | "prune" | "verify" | "offsite" | "update" | "drill" | "drdrill" | "tamper" | "export" | "";
+export type LogKind = "backup" | "restore" | "prune" | "verify" | "offsite" | "update" | "drill" | "drdrill" | "tamper" | "export" | "dbdump" | "";
 
 export interface LogLine {
   /** Stable React key. */
@@ -52,14 +54,14 @@ export interface LogLine {
 export type ResolveName = (key: string, params?: Record<string, string>) => string;
 
 /**
- * reasonText translates a run's error when it is one of our own sentences
- * (RUN_REASONS), so a "…failed: {error}" line does not start in German and
- * end in English. Messages from restic, rclone or Docker pass through as is.
+ * reasonText translates a run's error when it is one of our own sentences, so a
+ * "…failed: {error}" line does not start in German and end in English. A tool's
+ * own message behind ours stays as it was stored, and a message from restic,
+ * rclone or Docker passes through whole.
  */
 function reasonText(raw: string | undefined, resolveName: ResolveName): string {
   if (!raw) return "";
-  const key = RUN_REASONS[raw.trim()];
-  return key ? resolveName(key) : raw;
+  return runReason(raw, (key: TranslationKey) => resolveName(key));
 }
 
 const DOMAIN_KEYS: Record<string, string> = {
@@ -178,6 +180,13 @@ function itemDisplayName(resolveName: ResolveName, parsed: Extract<ParsedKey, { 
   return parsed.name;
 }
 
+/** The live line of a step that counts bytes instead of a percentage. */
+const STAGE_LINE_KEYS: Record<ProgressStage, string> = {
+  dbdump: "activityLog.lineDumpingItem",
+  dbdumpsave: "activityLog.lineSavingDumpItem",
+  dbimport: "activityLog.lineImportingItem",
+};
+
 interface LiveResult {
   lines: LogLine[];
   /** Signatures of currently-active operations, used to suppress the
@@ -274,16 +283,19 @@ function buildLiveLines(
     if (parsed.scope === "item") {
       const name = itemDisplayName(resolveName, parsed);
       const domain = normalizeDomain(parsed.domain);
-      const kind: LogKind = state.phase === "restore" ? "restore" : "backup";
+      // A dump, a dump save and an import each record a run of their own kind,
+      // so the signature follows the stage rather than the phase around it.
+      const runKind = state.stage ?? (state.phase === "restore" ? "restore" : "backup");
       const pct = displayPercent(state.percent);
-      const text =
-        kind === "restore"
+      const text = state.stage
+        ? resolveName(STAGE_LINE_KEYS[state.stage], { name, bytes: formatBytesShort(state.bytes ?? 0) })
+        : runKind === "restore"
           ? resolveName("activityLog.lineRestoringItem", { name, percent: String(pct) })
           : resolveName("activityLog.lineBackingUpItem", { name, percent: String(pct) });
-      const sig = itemSignature(kind, domain, name);
+      const sig = itemSignature(runKind, domain, name);
       if (!keep(sig)) continue;
       signatures.add(sig);
-      lines.push({ id: `live:${key}`, atMs: state.lastSeen, status: "running", text, domain, kind, live: true });
+      lines.push({ id: `live:${key}`, atMs: state.lastSeen, status: "running", text, domain, kind: asLogKind(runKind), live: true });
       continue;
     }
 
@@ -396,6 +408,42 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
         : { status: "info", text: resolveName("activityLog.lineOther", { name: domainText, kind: run.kind, status: run.status }) };
   }
 
+  if (run.kind === "dbdump") {
+    if (dumpWasCancelled(run.error)) {
+      return { status: "info", text: resolveName("activityLog.lineDbDumpCancelled", { name }) };
+    }
+    if (run.status === "success") {
+      const bytes = formatBytesShort(run.bytes);
+      return run.error
+        ? { status: "success", text: resolveName("activityLog.lineDbDumpNote", { name, bytes, duration, note: reasonText(run.error, resolveName) }) }
+        : { status: "success", text: resolveName("activityLog.lineDbDumpSuccess", { name, bytes, duration }) };
+    }
+    return run.status === "failed"
+      ? { status: "failed", text: resolveName("activityLog.lineDbDumpFailed", { name, error: reasonText(run.error, resolveName) }) }
+      : { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
+  }
+
+  if (run.kind === "dbdumpsave") {
+    return run.status === "success"
+      ? { status: "success", text: resolveName("activityLog.lineDbDumpSaved", { name, bytes: formatBytesShort(run.bytes) }) }
+      : run.status === "failed"
+        ? { status: "failed", text: resolveName("activityLog.lineDbDumpSaveFailed", { name, error: reasonText(run.error, resolveName) }) }
+        : run.status === "cancelled"
+          ? { status: "info", text: resolveName("activityLog.lineDbDumpSaveCancelled", { name }) }
+          : { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
+  }
+
+  if (run.kind === "dbimport") {
+    if (run.status === "success") {
+      return importHadErrors(run.error)
+        ? { status: "success", text: resolveName("activityLog.lineDbImportedErrors", { name, note: reasonText(run.error, resolveName) }) }
+        : { status: "success", text: resolveName("activityLog.lineDbImported", { name }) };
+    }
+    return run.status === "failed"
+      ? { status: "failed", text: resolveName("activityLog.lineDbImportFailed", { name, error: reasonText(run.error, resolveName) }) }
+      : { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
+  }
+
   if (run.kind === "restore") {
     return run.status === "success"
       ? { status: "success", text: resolveName("activityLog.lineRestoreSuccess", { name, duration }) }
@@ -426,8 +474,12 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
 }
 
 /** Narrows a raw Run.kind string to LogKind; an unknown kind becomes ""
- *  rather than a filter value nothing offers. */
+ *  rather than a filter value nothing offers. Saving a dump to a folder and
+ *  importing one are restore-side work, and that is the filter someone reaches
+ *  for to find them. */
 function asLogKind(kind: string): LogKind {
+  if (kind === "dbdumpsave" || kind === "dbimport") return "restore";
+  if (kind === "dbdump") return "dbdump";
   if (
     kind === "backup" ||
     kind === "restore" ||
@@ -569,7 +621,7 @@ export type LogFilterDomain = "all" | "containers" | "vms" | "flash" | "config" 
  *  leaves out "update". "drill" and "drdrill" are separate values (local
  *  subset check and off-site DR restore check); DR rows recorded before the
  *  split say "drill" and keep matching the drill filter. */
-export type LogFilterKind = "all" | "backup" | "restore" | "prune" | "verify" | "offsite" | "drill" | "drdrill" | "tamper" | "export";
+export type LogFilterKind = "all" | "backup" | "restore" | "dbdump" | "prune" | "verify" | "offsite" | "drill" | "drdrill" | "tamper" | "export";
 
 /** The filter bar's options as value and translation-key pairs. The activity
  *  log's bar and the error panel's both read them from here, so a new kind
@@ -588,6 +640,7 @@ export const LOG_FILTER_KINDS: { value: LogFilterKind; key: string }[] = [
   { value: "all", key: "activityLog.filterAllTypes" },
   { value: "backup", key: "activityLog.typeBackup" },
   { value: "restore", key: "activityLog.typeRestore" },
+  { value: "dbdump", key: "run.kindDbDump" },
   { value: "prune", key: "activityLog.typePrune" },
   { value: "verify", key: "activityLog.typeVerify" },
   { value: "offsite", key: "activityLog.typeOffsite" },

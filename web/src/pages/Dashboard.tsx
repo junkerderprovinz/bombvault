@@ -8,6 +8,7 @@ import { ErrorDetailPanel } from "../components/ErrorDetailPanel";
 import { useT } from "../lib/i18n";
 import { SelectField } from "../components/SelectField";
 import { isOwnReason, runReason } from "../lib/runReason";
+import { runKindLabel } from "../lib/runKind";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { useAdvanced } from "../lib/advanced";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
@@ -61,34 +62,6 @@ function runDomainLabel(t: ReturnType<typeof useT>["t"], domain: string): string
       return t("activityLog.domainFiles");
     default:
       return domain;
-  }
-}
-
-function runKindLabel(t: ReturnType<typeof useT>["t"], kind: string): string {
-  switch (kind) {
-    case "backup":
-      return t("run.kindBackup");
-    case "restore":
-      return t("run.kindRestore");
-    case "update":
-      return t("run.kindUpdate");
-    case "prune":
-      return t("activityLog.typePrune");
-    case "verify":
-      return t("activityLog.typeVerify");
-    case "offsite":
-      return t("activityLog.typeOffsite");
-    case "drill":
-      return t("activityLog.jobDrill");
-    case "drdrill":
-      return t("run.kindDRDrill");
-    case "tamper":
-      return t("activityLog.jobTamper");
-    case "export":
-      return t("run.kindExport");
-    default:
-      // An unknown future kind shows its raw literal rather than a wrong label.
-      return kind;
   }
 }
 

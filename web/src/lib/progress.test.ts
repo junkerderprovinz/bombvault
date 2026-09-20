@@ -4,7 +4,7 @@
 // Node environment: importing ./progress only defines functions, the
 // EventSource is created inside them.
 import { describe, expect, it } from "vitest";
-import { offsiteRunProgress } from "./progress";
+import { anyActive, busyPhraseKey, offsiteRunProgress, parseProgressFrame } from "./progress";
 import type { ProgressState } from "./progress";
 
 function state(over: Partial<ProgressState>): ProgressState {
@@ -83,5 +83,60 @@ describe("offsiteRunProgress", () => {
     for (let i = 1; i < seq.length; i++) {
       expect(seq[i]).toBeGreaterThanOrEqual(seq[i - 1]);
     }
+  });
+});
+
+describe("parseProgressFrame", () => {
+  it("carries the dump stage and its byte count", () => {
+    expect(parseProgressFrame('{"key":"container:immich","phase":"backup","percent":0,"active":true,"stage":"dbdump","bytes":4096}')).toEqual({
+      key: "container:immich",
+      phase: "backup",
+      percent: 0,
+      active: true,
+      startedAt: undefined,
+      snapshotIndex: undefined,
+      snapshotTotal: undefined,
+      stage: "dbdump",
+      bytes: 4096,
+    });
+  });
+
+  it("carries the save and import stages", () => {
+    expect(parseProgressFrame('{"key":"container:immich","phase":"restore","active":true,"stage":"dbdumpsave"}')?.stage).toBe("dbdumpsave");
+    expect(parseProgressFrame('{"key":"container:immich","phase":"restore","active":true,"stage":"dbimport"}')?.stage).toBe("dbimport");
+  });
+
+  it("drops a stage this client does not know", () => {
+    const frame = parseProgressFrame('{"key":"container:immich","phase":"backup","active":true,"stage":"dbvacuum"}');
+    expect(frame?.stage).toBeUndefined();
+  });
+
+  it("keeps rejecting a frame without a key", () => {
+    expect(parseProgressFrame('{"phase":"backup","active":true}')).toBeNull();
+    expect(parseProgressFrame("not json")).toBeNull();
+  });
+});
+
+describe("busyPhraseKey", () => {
+  it("words the phase when nothing more precise is running", () => {
+    expect(busyPhraseKey("backup")).toBe("common.backupRunning");
+    expect(busyPhraseKey("restore")).toBe("common.restoreRunning");
+    expect(busyPhraseKey("replicate")).toBe("common.replicateRunning");
+  });
+
+  it("names the database step instead of the phase around it", () => {
+    expect(busyPhraseKey("backup", "dbdump")).toBe("dbdump.busyDumping");
+    expect(busyPhraseKey("restore", "dbdumpsave")).toBe("dbdump.busySaving");
+    expect(busyPhraseKey("restore", "dbimport")).toBe("dbdump.busyImporting");
+  });
+});
+
+describe("anyActive", () => {
+  it("reports the stage of the run it found, so the hint can name it", () => {
+    expect(anyActive({ "container:immich": { phase: "backup", active: true, stage: "dbdump" } })).toEqual({
+      active: true,
+      phase: "backup",
+      stage: "dbdump",
+    });
   });
 });
