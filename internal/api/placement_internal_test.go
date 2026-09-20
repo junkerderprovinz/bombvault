@@ -250,7 +250,7 @@ func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
 }
 
 func TestPauseReasonsCoverExactlyWhatPausePlacementPasses(t *testing.T) {
-	want := []pauseReason{reasonFoundHistory, reasonOlderSource}
+	want := []pauseReason{reasonFoundHistory, reasonOlderSource, reasonDiscover}
 	if len(pauseReasons) != len(want) {
 		t.Fatalf("pauseReasons has %d entries, want exactly %v", len(pauseReasons), want)
 	}

@@ -434,7 +434,8 @@ func TestDiscoverSearchesBothRepositories(t *testing.T) {
 	writeDiscoverableDef(t, filepath.Join(cold, "def"), "plex")
 
 	// probe=true: read-only, so nothing is written back to the store.
-	n, skipped, err := svc.Discover(context.Background(), true)
+	res, err := svc.Discover(context.Background(), true)
+	n, skipped := res.Found, res.Skipped
 	if err != nil {
 		t.Fatalf("Discover: %v", err)
 	}
@@ -487,7 +488,7 @@ func TestDiscoverFailsWhenTheDomainRepositoryCannotBeRead(t *testing.T) {
 	eng.snapsByRepo[filepath.ToSlash(cold)] = []restic.Snapshot{{ID: "2222bbbb", Tags: []string{"container:plex"}}}
 	eng.snapsErrFor[filepath.ToSlash(own)] = errWrongKey
 
-	_, _, err := svc.Discover(context.Background(), true)
+	_, err := svc.Discover(context.Background(), true)
 	if err == nil {
 		t.Fatal("a domain repository that cannot be opened must reach the caller as an ERROR:\n" +
 			"the Recovery wizard reads it to tell a wrong APP_KEY from an empty archive, and a\n" +
@@ -527,7 +528,8 @@ func TestAPartialDiscoverRebuildsTheRowButNotItsRepository(t *testing.T) {
 	eng.snapsErrFor[filepath.ToSlash(own)] = errWrongKey
 	writeDiscoverableDef(t, filepath.Join(cold, "def"), "sonarr")
 
-	n, _, err := svc.Discover(context.Background(), false)
+	res, err := svc.Discover(context.Background(), false)
+	n := res.Found
 	if err == nil {
 		t.Fatal("the domain repository failed to open, so the pass must still report that")
 	}
@@ -574,7 +576,8 @@ func TestAnUnmountedDomainRepositoryAlsoWithholdsTheAttribution(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	n, _, err := svc.Discover(context.Background(), false)
+	res, err := svc.Discover(context.Background(), false)
+	n := res.Found
 	if err == nil {
 		t.Fatal("a domain repository that was there and is not reachable now must reach the caller as an ERROR.\n" +
 			"It is the same fact as a listing that failed - the repository was not opened - and the\n" +
@@ -621,7 +624,8 @@ func TestAPartialDiscoverOfVMsWithholdsTheAttributionToo(t *testing.T) {
 	eng.snapsErrFor[filepath.ToSlash(own)] = errWrongKey
 	writeDiscoverableDef(t, filepath.Join(cold, "vm-def"), "win11")
 
-	n, _, dErr := svc.DiscoverVMs(context.Background(), false)
+	res, dErr := svc.DiscoverVMs(context.Background(), false)
+	n := res.Found
 	if dErr == nil {
 		t.Fatal("the domain repository failed to open, so the pass must still report that")
 	}
@@ -660,7 +664,8 @@ func TestAnAllNamedDomainStillDiscoversWithoutItsOwnRepository(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	n, skipped, err := svc.Discover(context.Background(), false)
+	res, err := svc.Discover(context.Background(), false)
+	n, skipped := res.Found, res.Skipped
 	if err != nil {
 		t.Fatalf("an all-named domain has no repository of its own; that is not a failure: %v", err)
 	}

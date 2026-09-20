@@ -401,6 +401,7 @@ type pauseReason string
 const (
 	reasonFoundHistory pauseReason = "found-history"
 	reasonOlderSource  pauseReason = "older-source"
+	reasonDiscover     pauseReason = "discover"
 )
 
 // pausePlacement pauses the domain's replication until its default is confirmed,
@@ -439,6 +440,7 @@ func (s *Service) confirmPlacement(domain string, exclude []string) error {
 var pauseReasons = map[pauseReason]string{
 	reasonFoundHistory: "its first listing found backups this database never replicated, so the database may have been rebuilt without the rules that kept items from being copied",
 	reasonOlderSource:  "one of its sources holds a snapshot older than this database, so the database may have been rebuilt without the rules that kept items from being copied",
+	reasonDiscover:     "Discover rebuilt its items in a database that never backed them up or replicated them, so the rules that kept items from being copied are gone",
 }
 
 // notifyPlacementPaused says that a domain's replication waits for its default

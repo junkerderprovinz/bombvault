@@ -176,3 +176,76 @@ func (s *Service) recordHome(ctx context.Context, settings store.Settings, item 
 		}
 	}
 }
+
+// DiscoverResult is what one Discover pass found and did besides the rows it wrote.
+type DiscoverResult struct {
+	Found    int
+	Skipped  []repoSkip
+	Paused   bool     // this pass paused the domain's replication
+	LeftOpen []string // names whose repo stayed unset because a backup held the domain
+}
+
+// discoverWrite is the location a row Discover creates starts with. From a pass
+// that could not read the domain path the evidence is incomplete, so the row
+// stays on the domain path and a later full pass may still place it.
+func discoverWrite(found string, readErr error) store.HomeWrite {
+	if readErr != nil {
+		return store.HomeWrite{Choice: store.RepoChosenUnread}
+	}
+	return store.HomeWrite{Repo: found, Choice: store.RepoChosen}
+}
+
+// discoverHome gives an existing row the location Discover found, while the row
+// is open or was left empty by an unreadable pass. It needs the domain lock and
+// reports true when the row stays as it is because a backup held the domain.
+func (s *Service) discoverHome(ctx context.Context, item store.ItemRef, found string, readErr error, locked bool) (bool, error) {
+	read, err := s.store.ItemHome(item)
+	if err != nil || read.Choice == store.RepoChosen {
+		return false, err
+	}
+	if !locked {
+		return true, nil
+	}
+	want := discoverWrite(found, readErr)
+	if readErr == nil {
+		presence, err := s.itemBackups(ctx, item)
+		switch {
+		case presence == backupsUnreadable:
+			want = store.HomeWrite{Choice: store.RepoChosenUnread}
+		case err != nil:
+			return false, err
+		case presence == backupsPresent:
+			want = store.HomeWrite{Choice: store.RepoChosen}
+		}
+	}
+	_, err = s.store.WritePlacement(item, &want, nil, &read)
+	return false, err
+}
+
+// discoverLock takes the domain lock for a pass that writes. Without it the pass
+// still rebuilds rows but leaves open locations alone.
+func (s *Service) discoverLock(domain string, dryRun bool) (func(), bool) {
+	if dryRun {
+		return func() {}, false
+	}
+	unlock, ok := s.tryLockDomainFor(domain, placementLockReason)
+	if !ok {
+		return func() {}, false
+	}
+	return unlock, true
+}
+
+// pauseAfterDiscover pauses the domain's replication when Discover rebuilt rows
+// in a database that never backed up or copied anything for it: the rules that
+// kept items off site were lost with the old one.
+func (s *Service) pauseAfterDiscover(ctx context.Context, domain string, res *DiscoverResult) error {
+	backedUp, copied, err := s.store.DomainHasHistory(domain)
+	if err != nil || backedUp || copied {
+		return err
+	}
+	if err := s.pausePlacement(ctx, domain, reasonDiscover); err != nil {
+		return err
+	}
+	res.Paused = true
+	return nil
+}
