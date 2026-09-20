@@ -292,8 +292,8 @@ func TestRecordHomeGivesUpAfterAFewTurns(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := f.svc.recordHome(context.Background(), settings, item, step); err != nil {
-		t.Fatalf("recordHome = %v, want it to give up quietly", err)
+	if _, err := f.svc.recordHome(context.Background(), settings, item, step); !errors.Is(err, errHomeSettleExhausted) {
+		t.Fatalf("recordHome = %v, want errHomeSettleExhausted", err)
 	}
 	if turns > 3 {
 		t.Fatalf("recordHome took %d turns against a row in constant contention, want a small bounded number", turns)
