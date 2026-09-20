@@ -70,6 +70,27 @@ func TestConfirmPlacementRefusesAnUnknownDomain(t *testing.T) {
 	}
 }
 
+func TestConfirmPlacementAcceptsAnEmptyBody(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("containers", "B2", "b2:bucket:containers")
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:nginx"))
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatal(err)
+	}
+	if !pausedDefault(t, f, "containers") {
+		t.Fatal("setup: the domain did not pause")
+	}
+
+	rec := httptest.NewRecorder()
+	f.h.Router().ServeHTTP(rec, jsonReq(http.MethodPost, "/api/placement/containers/confirm", nil))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("confirm with no body = %d: %s", rec.Code, rec.Body.String())
+	}
+	if pausedDefault(t, f, "containers") {
+		t.Fatal("the domain is still paused after a bodyless confirm")
+	}
+}
+
 func TestConfirmPlacementIsIdempotentOnADomainNeverPaused(t *testing.T) {
 	f := newPlacementFixture(t)
 	if res := f.do(http.MethodPost, "/api/placement/containers/confirm", map[string]any{}); res["ok"] != true {

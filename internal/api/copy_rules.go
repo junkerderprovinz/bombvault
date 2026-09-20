@@ -430,7 +430,7 @@ func (h *Handler) handleConfirmPlacement(w http.ResponseWriter, r *http.Request)
 	var body struct {
 		Skip []string `json:"skip"`
 	}
-	if !decodeBody(w, r, &body) {
+	if !decodeOptionalBody(w, r, &body) {
 		return
 	}
 	if err := h.svc.confirmPlacement(domain, body.Skip); err != nil {
