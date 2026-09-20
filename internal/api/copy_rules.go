@@ -373,3 +373,11 @@ func (h *Handler) handlePreviewItemPlacement(w http.ResponseWriter, r *http.Requ
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"added": added, "dropped": dropped}))
 }
+
+// moveFileSetRule carries a file set's copy rule to its new name. A file set
+// renamed before its first backup keeps what it was copied to.
+func (s *Service) moveFileSetRule(from, to string) error {
+	s.placementMu.Lock()
+	defer s.placementMu.Unlock()
+	return s.store.MoveCopyRule("files", "fileset:"+from, "fileset:"+to)
+}

@@ -5087,6 +5087,12 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 	// leave the new path live while the response reports failure with the
 	// old-anchor selection still stored (WR-01): either the whole save lands
 	// or the row is untouched.
+	if fs.Name != oldName {
+		if err := h.svc.moveFileSetRule(oldName, fs.Name); err != nil {
+			placementFail(w, err, nil)
+			return
+		}
+	}
 	var upErr error
 	if pathChanged {
 		upErr = h.store.UpdateFileSetClearingSelection(fs)
@@ -5094,6 +5100,11 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		upErr = h.store.UpdateFileSet(fs)
 	}
 	if upErr != nil {
+		if fs.Name != oldName {
+			if err := h.svc.moveFileSetRule(fs.Name, oldName); err != nil {
+				log.Printf("api: file set %q: its copy rule stays under the new name after the rename failed: %v", oldName, err) //nolint:gosec // G706: the name is %q-quoted
+			}
+		}
 		if strings.Contains(upErr.Error(), "UNIQUE") {
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a file set with this name already exists"})
 			return

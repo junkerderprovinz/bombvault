@@ -187,6 +187,55 @@ func TestThePreviewCountsTheUploadAndWritesNothing(t *testing.T) {
 	}
 }
 
+func TestARenamedFileSetCarriesItsRule(t *testing.T) {
+	f := newPlacementFixture(t)
+	docs := f.fileSet("Docs", "")
+	f.rule("files", "fileset:Docs", store.SkipAll)
+
+	if res := f.do(http.MethodPatch, "/api/files/sets/"+docs.ID, map[string]any{"name": "Papers"}); res["ok"] != true {
+		t.Fatalf("rename = %v", res)
+	}
+	if skip, found := ruleOf(t, f, "files", "fileset:Papers"); !found || !slices.Equal(skip, []string{store.SkipAll}) {
+		t.Fatalf("rule of the new name = %v found=%v, want [*]", skip, found)
+	}
+	if _, found := ruleOf(t, f, "files", "fileset:Docs"); found {
+		t.Fatal("the old name kept its rule")
+	}
+}
+
+func TestARenameOntoANameWithARuleIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	docs := f.fileSet("Docs", "")
+	f.rule("files", "fileset:Docs", store.SkipAll)
+	f.rule("files", "fileset:Papers")
+
+	res := f.do(http.MethodPatch, "/api/files/sets/"+docs.ID, map[string]any{"name": "Papers"})
+	if res["code"] != "copy-rule-taken" {
+		t.Fatalf("rename = %v, want copy-rule-taken", res)
+	}
+	if fs, err := f.st.GetFileSet(docs.ID); err != nil || fs.Name != "Docs" {
+		t.Fatalf("set = %+v, %v, want the name unchanged", fs, err)
+	}
+}
+
+func TestAFailedRenamePutsTheRuleBack(t *testing.T) {
+	f := newPlacementFixture(t)
+	docs := f.fileSet("Docs", "")
+	f.fileSet("Papers", "")
+	f.rule("files", "fileset:Docs", store.SkipAll)
+
+	res := f.do(http.MethodPatch, "/api/files/sets/"+docs.ID, map[string]any{"name": "Papers"})
+	if res["ok"] != false {
+		t.Fatalf("rename onto an existing set = %v, want a refusal", res)
+	}
+	if _, found := ruleOf(t, f, "files", "fileset:Docs"); !found {
+		t.Fatal("the rule did not come back to Docs")
+	}
+	if _, found := ruleOf(t, f, "files", "fileset:Papers"); found {
+		t.Fatal("Papers kept a rule it never had")
+	}
+}
+
 func TestMalformedItemPathsAre400(t *testing.T) {
 	f := newPlacementFixture(t)
 	for _, c := range []struct{ method, path string }{
