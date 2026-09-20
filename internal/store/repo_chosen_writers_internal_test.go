@@ -52,7 +52,7 @@ func TestEveryRepoWriterSetsRepoChosen(t *testing.T) {
 		}
 	}
 	slices.Sort(writers)
-	want := []string{"CreateFileSet", "SetFileSetRepo", "SetTargetRepo", "SetVMRepo", "UpsertTarget", "UpsertVMTarget", "itemHomeSQL"}
+	want := []string{"CreateFileSet", "UpsertTarget", "UpsertVMTarget", "itemHomeSQL"}
 	if !slices.Equal(writers, want) {
 		t.Errorf("repo writers = %v, want %v; a new writer sets repo_chosen in the same statement and joins this list", writers, want)
 	}

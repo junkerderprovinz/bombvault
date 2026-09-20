@@ -30,6 +30,11 @@ func aNamedRepo(t *testing.T, r *store.Repo, name, loc string) store.OffsiteTarg
 	return row
 }
 
+func chooseRepo(r *store.Repo, domain, key, repo string) error {
+	_, err := r.WritePlacement(store.ItemRef{Domain: domain, Key: key}, &store.HomeWrite{Repo: repo, Choice: store.RepoChosen}, nil, nil)
+	return err
+}
+
 // TestDeleteNamedRepoIfUnusedRefusesWhileAnItemPointsAtIt pins the refusal that
 // keeps an item from silently falling back to its domain repository - where its
 // next backup would land looking exactly like a working one.
@@ -39,7 +44,7 @@ func TestDeleteNamedRepoIfUnusedRefusesWhileAnItemPointsAtIt(t *testing.T) {
 	if _, err := r.UpsertTarget(store.Target{ContainerName: "plex"}); err != nil {
 		t.Fatal(err)
 	}
-	if err := r.SetTargetRepo("plex", repo.ID); err != nil {
+	if err := chooseRepo(r, "containers", "plex", repo.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -82,7 +87,7 @@ func TestSetNamedRepoLocationIfUnusedRefusesWhileInUse(t *testing.T) {
 	if _, err := r.UpsertVMTarget(store.VMTarget{Name: "win11"}); err != nil {
 		t.Fatal(err)
 	}
-	if err := r.SetVMRepo("win11", repo.ID); err != nil {
+	if err := chooseRepo(r, "vms", "win11", repo.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -132,23 +137,17 @@ func TestTheGuardedWritesCountEveryDomain(t *testing.T) {
 		point  func(*store.Repo, string) error
 	}{
 		{"containers", func(r *store.Repo, id string) error {
-			if _, err := r.UpsertTarget(store.Target{ContainerName: "plex"}); err != nil {
-				return err
-			}
-			return r.SetTargetRepo("plex", id)
+			return chooseRepo(r, "containers", "plex", id)
 		}},
 		{"vms", func(r *store.Repo, id string) error {
-			if _, err := r.UpsertVMTarget(store.VMTarget{Name: "win11"}); err != nil {
-				return err
-			}
-			return r.SetVMRepo("win11", id)
+			return chooseRepo(r, "vms", "win11", id)
 		}},
 		{"files", func(r *store.Repo, id string) error {
 			set, err := r.CreateFileSet(store.FileSet{Name: "docs", Path: "user/docs", Enabled: true})
 			if err != nil {
 				return err
 			}
-			return r.SetFileSetRepo(set.ID, id)
+			return chooseRepo(r, "files", set.ID, id)
 		}},
 	} {
 		t.Run(tc.domain, func(t *testing.T) {

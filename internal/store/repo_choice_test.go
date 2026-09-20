@@ -67,17 +67,3 @@ func TestARepositoryWithoutAChoiceIsRefused(t *testing.T) {
 		t.Errorf("CreateFileSet with a repository and no choice: %v, want ErrRepoChoice", err)
 	}
 }
-
-func TestSettingARepositoryMarksTheRowChosen(t *testing.T) {
-	r := repoChoiceStore(t)
-	if err := r.SetTargetRepo("nginx", ""); err != nil {
-		t.Fatal(err)
-	}
-	tg, err := r.GetTargetByContainer("nginx")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if tg.RepoChosen != store.RepoChosen {
-		t.Fatalf("choosing the domain repository left the row at %d, want chosen", tg.RepoChosen)
-	}
-}

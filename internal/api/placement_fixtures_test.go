@@ -171,10 +171,7 @@ func (f *placementFixture) namedRepo(name, location string) store.OffsiteTarget 
 
 func (f *placementFixture) container(name, repoID string) store.Target {
 	f.t.Helper()
-	if _, err := f.st.UpsertTarget(store.Target{ContainerName: name}); err != nil {
-		f.t.Fatalf("container %s: %v", name, err)
-	}
-	if err := f.st.SetTargetRepo(name, repoID); err != nil {
+	if _, err := f.st.WritePlacement(store.ItemRef{Domain: "containers", Key: name}, &store.HomeWrite{Repo: repoID, Choice: store.RepoChosen}, nil, nil); err != nil {
 		f.t.Fatalf("container %s: %v", name, err)
 	}
 	tg, err := f.st.GetTargetByContainer(name)
@@ -186,10 +183,7 @@ func (f *placementFixture) container(name, repoID string) store.Target {
 
 func (f *placementFixture) vm(name, repoID string) store.VMTarget {
 	f.t.Helper()
-	if _, err := f.st.UpsertVMTarget(store.VMTarget{Name: name}); err != nil {
-		f.t.Fatalf("vm %s: %v", name, err)
-	}
-	if err := f.st.SetVMRepo(name, repoID); err != nil {
+	if _, err := f.st.WritePlacement(store.ItemRef{Domain: "vms", Key: name}, &store.HomeWrite{Repo: repoID, Choice: store.RepoChosen}, nil, nil); err != nil {
 		f.t.Fatalf("vm %s: %v", name, err)
 	}
 	vm, err := f.st.GetVMTargetByName(name)

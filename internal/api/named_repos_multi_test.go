@@ -66,7 +66,7 @@ func twoRepoDomain(t *testing.T, eng *fakeResticEngine) (*api.Service, *store.Re
 	if _, err := st.UpsertTarget(store.Target{ContainerName: "plex"}); err != nil {
 		t.Fatal(err)
 	}
-	if err := st.SetTargetRepo("plex", named.ID); err != nil {
+	if _, err := st.WritePlacement(store.ItemRef{Domain: "containers", Key: "plex"}, &store.HomeWrite{Repo: named.ID, Choice: store.RepoChosen}, nil, nil); err != nil {
 		t.Fatal(err)
 	}
 	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng), st, own, cold
@@ -159,7 +159,7 @@ func TestUnlockNamesTheSharedRepositoryItCouldOnlyClearStaleLocksOn(t *testing.T
 	if _, err := st.UpsertVMTarget(store.VMTarget{Name: "win11"}); err != nil {
 		t.Fatal(err)
 	}
-	if err := st.SetVMRepo("win11", named[0].ID); err != nil {
+	if _, err := st.WritePlacement(store.ItemRef{Domain: "vms", Key: "win11"}, &store.HomeWrite{Repo: named[0].ID, Choice: store.RepoChosen}, nil, nil); err != nil {
 		t.Fatal(err)
 	}
 

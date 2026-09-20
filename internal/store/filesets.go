@@ -44,10 +44,9 @@ type FileSet struct {
 	// clears any value that is not the id of an existing named repository. The
 	// id is turned into a location by the API tier (itemRepoPath), never here.
 	//
-	// Owned by SetFileSetRepo, never by UpdateFileSet, for the same reason
-	// ScheduleCadence is: a save from the edit dialog must not be able to
-	// silently move a set's backups to another repository as a side effect of
-	// renaming it.
+	// CreateFileSet writes it with the row and WritePlacement afterwards, never
+	// UpdateFileSet: a save from the edit dialog must not move where a set's
+	// backups go.
 	Repo string
 	// RepoChosen says whether Repo is settled. An open row has an empty Repo and
 	// takes the default's location at its first backup.
@@ -236,34 +235,6 @@ func (r *Repo) SetFileSetScheduleCadence(id, cadence string) error {
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
 		return fmt.Errorf("SetFileSetScheduleCadence: no file set %q", id)
-	}
-	return nil
-}
-
-// SetFileSetRepo writes a file set's per-item repository override (#204).
-// An empty string clears it, putting the set back on the Folders domain
-// repository (Settings.FilesPath).
-//
-// Its own statement rather than a field on UpdateFileSet, for exactly the
-// reason SetFileSetScheduleCadence is: the destination of a set's backups must
-// never move as a SIDE EFFECT of a rename or a path edit. A form that did not
-// know about the field would otherwise clear the override and silently send the
-// next backup somewhere else - and unlike a cleared schedule, which announces
-// itself the next time a run does not happen, a moved repository looks exactly
-// like a working one until somebody goes looking for a snapshot that is in the
-// other repo.
-//
-// repo is the ID of a named repository (a RoleRepo row in offsite_targets), not
-// a location. The value is stored verbatim: whether that id exists and is
-// switched on is the API tier's question (validateItemRepoID, itemRepoPath),
-// not this package's.
-func (r *Repo) SetFileSetRepo(id, repo string) error {
-	res, err := r.db.Exec(`UPDATE file_sets SET repo = ?, repo_chosen = 1 WHERE id = ?`, repo, id)
-	if err != nil {
-		return fmt.Errorf("SetFileSetRepo: %w", err)
-	}
-	if n, _ := res.RowsAffected(); n == 0 {
-		return fmt.Errorf("SetFileSetRepo: no file set %q", id)
 	}
 	return nil
 }
