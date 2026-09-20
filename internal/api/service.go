@@ -2789,7 +2789,7 @@ var offsiteProgressHeartbeat = 5 * time.Second
 func (s *Service) copyToOffsite(ctx context.Context, domain string, settings store.Settings, _ restic.Mode, localRepos []domainRepoRef, skipped []repoSkip) (err error) {
 	targets := s.offsiteReplicationTargets(domain, settings)
 	if len(targets) == 0 {
-		return errors.New("no off-site repo configured for this domain")
+		return errNoOffsiteRepo
 	}
 	if len(localRepos) == 0 {
 		// With the skip list, when there is one. offsiteReplicationSources builds a
@@ -3674,7 +3674,7 @@ func (s *Service) ReplicateOffsite(ctx context.Context, domain string) error {
 		return fmt.Errorf("read settings: %w", err)
 	}
 	if s.offsiteRepoFor(domain, settings) == "" {
-		return errors.New("no off-site repo configured for this domain")
+		return errNoOffsiteRepo
 	}
 	defer s.lockDomainFor(domain, "replicate")()
 	// The skip list goes IN, so the run row this opens records it too rather than
@@ -3699,7 +3699,7 @@ func (s *Service) StartReplicateOffsite(domain string) error {
 		return err
 	}
 	if s.offsiteRepoFor(domain, settings) == "" {
-		return errors.New("no off-site repo configured for this domain")
+		return errNoOffsiteRepo
 	}
 	unlock, ok := s.tryLockDomainFor(domain, "replicate")
 	if !ok {
@@ -3795,7 +3795,7 @@ func (s *Service) TestOffsite(ctx context.Context, domain string) (reachable, in
 	}
 	loc := s.offsiteRepoFor(domain, settings)
 	if loc == "" {
-		return false, false, errors.New("no off-site repo configured for this domain")
+		return false, false, errNoOffsiteRepo
 	}
 	repo, err := s.resolveRepo(loc)
 	if err != nil {

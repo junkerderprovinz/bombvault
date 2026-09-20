@@ -87,7 +87,7 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 		// error directly, and the schedule only dispatches domains flagged immutable
 		// (immutableOffsiteDomains) — a flag without a repo is a misconfiguration the
 		// scheduler already logs, not a nightly no-op worth a log line each fire.
-		return TamperVerdict{}, errors.New("no off-site repo configured for this domain")
+		return TamperVerdict{}, errNoOffsiteRepo
 	}
 	// Open the run row NOW (mirroring verify/prune) and settle it from the named
 	// returns in the deferred finish below, so EVERY outcome past this point —
