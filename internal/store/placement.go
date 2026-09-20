@@ -107,7 +107,7 @@ func (r *Repo) ListPlacementDefaults() ([]PlacementDefault, error) {
 }
 
 // PutPlacementDefault writes a domain's home and skip. A new row starts
-// confirmed; an existing one keeps its pause.
+// unpaused; an existing one keeps its pause.
 func (r *Repo) PutPlacementDefault(domain, home string, skip []string) (PlacementDefault, error) {
 	if err := checkPlacementDomain(domain); err != nil {
 		return PlacementDefault{}, err
