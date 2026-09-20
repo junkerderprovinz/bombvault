@@ -796,6 +796,10 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, fileSettings 
 	for _, t := range current {
 		currentRepo[t.ID] = t.Repo
 	}
+	kept, err := h.svc.observationsToKeep(current, views)
+	if err != nil {
+		return err
+	}
 	for _, t := range current {
 		if err := h.store.DeleteOffsiteTarget(t.ID); err != nil {
 			return err
@@ -809,6 +813,9 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, fileSettings 
 		if _, err := h.store.UpsertOffsiteTarget(t); err != nil {
 			return err
 		}
+	}
+	if err := h.svc.restoreObservations(kept); err != nil {
+		return err
 	}
 	for _, d := range offsiteConfigDomains {
 		if err := h.store.NormalizeOffsiteSortOrder(d, offsiteRepoFromView(d, fileSettings)); err != nil {
