@@ -193,6 +193,45 @@ func (s *Service) checkHomeChange(ctx context.Context, item store.ItemRef, p pla
 	return nil
 }
 
+// checkPlacementChange previews a home or copies change against the current
+// placement without writing it, so a handler can refuse an invalid one before
+// any of its other fields land. writeItemPlacement runs the same checks again
+// under lock right before the write, which stays authoritative.
+func (s *Service) checkPlacementChange(ctx context.Context, item store.ItemRef, change placementChange) error {
+	home, copies, err := placementWrites(change)
+	if err != nil || (home == nil && copies == nil) {
+		return err
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return err
+	}
+	p, err := s.readPlacement(settings, item.Domain)
+	if err != nil {
+		return err
+	}
+	read, err := s.store.ItemHome(item)
+	if err != nil {
+		return err
+	}
+	next := read
+	if home != nil {
+		if err := s.checkHomeChange(ctx, item, p, read, *home); err != nil {
+			return err
+		}
+		next = store.HomeState{Exists: true, Repo: home.Repo, Choice: home.Choice}
+	}
+	if copies == nil {
+		return nil
+	}
+	named, err := s.namedRepoIndex()
+	if err != nil {
+		return err
+	}
+	afterRepo, _ := p.effectiveHome(next)
+	return s.checkCopies(settings, p, named, afterRepo, *copies)
+}
+
 // withLegacyRepo folds the older repo field into home; both together are
 // refused.
 func withLegacyRepo(change placementChange, repo *string) (placementChange, error) {

@@ -241,13 +241,22 @@ func TestCopiesOnAnOpenItemAreCheckedAgainstItsEffectiveHome(t *testing.T) {
 // compares against the same read checkHomeChange judged against: the hook
 // here mutates the row from another write between that read and the write
 // below it, exactly the window store.WritePlacement's expect argument closes.
+// The PATCH now checks the home twice (the top-of-handler preview, then the
+// authoritative pass right before the write), so the item is listed twice;
+// the race is timed onto the second listing, the one the write's expect
+// actually stands on.
 func TestHomeWriteIsRefusedOverARowChangedMeanwhile(t *testing.T) {
 	f := newPlacementFixture(t)
 	nas := f.namedRepo("NAS", "nas")
 	other := f.namedRepo("Backup2", "nas2")
 	f.openContainer("nginx")
 	item := store.ItemRef{Domain: "containers", Key: "nginx"}
+	listings := 0
 	f.eng.onSnapshots = func() {
+		listings++
+		if listings < 2 {
+			return
+		}
 		if _, err := f.st.WritePlacement(item, &store.HomeWrite{Repo: other.ID, Choice: store.RepoChosen}, nil, nil); err != nil {
 			t.Fatal(err)
 		}
@@ -295,6 +304,51 @@ func TestALaterFieldFailingLeavesHomeAndTheRuleUntouched(t *testing.T) {
 		if _, found, err := f.st.CopyRuleFor(tc.domain, tc.identity); err != nil || found {
 			t.Errorf("%s: rule found = %v, %v, want none", tc.path, found, err)
 		}
+	}
+}
+
+// TestAHomeRefusalLeavesOtherFieldsUntouched pins the other half of the PATCH
+// ordering: home and copies are validated before anything else in the request
+// is written, not after. An item that already has backups refuses the home
+// change up front, so a field earlier in the same request body never lands.
+func TestAHomeRefusalLeavesOtherFieldsUntouched(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	web := f.container("web", "")
+	f.backupRun(web.ID, 100)
+	win := f.vm("win11", "")
+	f.backupRun(win.ID, 100)
+	docs := f.fileSet("docs", "")
+	f.backupRun(docs.ID, 100)
+
+	res := f.do(http.MethodPatch, "/api/containers/web", map[string]any{
+		"home": map[string]any{"repo": nas.ID}, "preHook": "echo hi",
+	})
+	if res["code"] != "has-backups" {
+		t.Fatalf("containers PATCH = %v, want has-backups", res)
+	}
+	if tg, err := f.st.GetTargetByContainer("web"); err != nil || tg.PreHook != "" {
+		t.Fatalf("PreHook = %q, %v, want untouched", tg.PreHook, err)
+	}
+
+	res = f.do(http.MethodPatch, "/api/vms/win11", map[string]any{
+		"home": map[string]any{"repo": nas.ID}, "method": "acpi",
+	})
+	if res["code"] != "has-backups" {
+		t.Fatalf("vms PATCH = %v, want has-backups", res)
+	}
+	if vm, err := f.st.GetVMTargetByName("win11"); err != nil || vm.Method != "graceful" {
+		t.Fatalf("Method = %q, %v, want untouched", vm.Method, err)
+	}
+
+	res = f.do(http.MethodPatch, "/api/files/sets/"+docs.ID, map[string]any{
+		"home": map[string]any{"repo": nas.ID}, "excludes": []string{"*.tmp"},
+	})
+	if res["code"] != "has-backups" {
+		t.Fatalf("files PATCH = %v, want has-backups", res)
+	}
+	if got, err := f.st.GetFileSet(docs.ID); err != nil || len(got.Excludes) != 0 {
+		t.Fatalf("Excludes = %v, %v, want untouched", got.Excludes, err)
 	}
 }
 
