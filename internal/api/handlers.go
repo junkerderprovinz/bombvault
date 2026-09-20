@@ -24,6 +24,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/ageseal"
 	"github.com/junkerderprovinz/bombvault/internal/backup"
+	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/releasenotes"
@@ -797,7 +798,8 @@ func (idx aliasIndex) of(targetID string) []string {
 // extra ".." check forbids parent-dir traversal even within the charset. The
 // Go 1.22 router decodes "%2f"/"%2e%2e" into the path value, so an unvalidated
 // {name} could otherwise carry "../" into the template/XML file sinks (CWE-22).
-var resourceNameRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`)
+// The dump helper's --container flag matches against the same pattern.
+var resourceNameRe = regexp.MustCompile(model.ResourceNamePattern)
 
 func validResourceName(name string) bool {
 	return resourceNameRe.MatchString(name) && !strings.Contains(name, "..")

@@ -549,6 +549,50 @@ func TestBackupStdinArgsUnencrypted(t *testing.T) {
 	}
 }
 
+// TestBackupCommandArgs pins the argv of a database dump: restic runs the
+// helper itself (`--stdin-from-command`) so a command that exits non-zero
+// leaves no snapshot behind. The command follows the separator, and the
+// builder keeps BackupArgs' flag ordering so a remote primary's limits and
+// storage class still apply.
+func TestBackupCommandArgs(t *testing.T) {
+	command := []string{"/usr/local/bin/bombvault", "dbdump-stream", "--container", "pg", "--engine", "postgres", "--max-seconds", "21600"}
+
+	t.Run("encrypted", func(t *testing.T) {
+		got := BackupCommandArgs("/repo", "/dbdump/pg.sql", []string{"dbdump:pg", "p1"}, Mode{Encrypted: true}, command)
+		want := []string{"-r", "/repo", "--retry-lock", "5m", "backup", "--json", "--host", "bombvault",
+			"--tag", "dbdump:pg", "--tag", "p1", "--stdin-filename", "/dbdump/pg.sql", "--stdin-from-command", "--",
+			"/usr/local/bin/bombvault", "dbdump-stream", "--container", "pg", "--engine", "postgres", "--max-seconds", "21600"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("unencrypted names the insecure flag right after the verb", func(t *testing.T) {
+		got := BackupCommandArgs("/repo", "/dbdump/pg.sql", []string{"dbdump:pg"}, Mode{Encrypted: false}, command)
+		want := []string{"-r", "/repo", "--retry-lock", "5m", "backup", "--insecure-no-password", "--json", "--host", "bombvault",
+			"--tag", "dbdump:pg", "--stdin-filename", "/dbdump/pg.sql", "--stdin-from-command", "--",
+			"/usr/local/bin/bombvault", "dbdump-stream", "--container", "pg", "--engine", "postgres", "--max-seconds", "21600"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("limits keep the global slot", func(t *testing.T) {
+		got := BackupCommandArgs("rest:http://host:8000/repo", "/dbdump/pg.sql", nil,
+			Mode{Encrypted: true, Limits: Limits{UploadKBps: 500, DownloadKBps: 250}}, command)
+		want := []string{"-r", "rest:http://host:8000/repo", "--retry-lock", "5m", "--limit-upload", "500", "--limit-download", "250",
+			"backup", "--json", "--host", "bombvault", "--stdin-filename", "/dbdump/pg.sql", "--stdin-from-command", "--",
+			"/usr/local/bin/bombvault", "dbdump-stream", "--container", "pg", "--engine", "postgres", "--max-seconds", "21600"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("a dump walks no filesystem, so it never excludes caches", func(t *testing.T) {
+		got := BackupCommandArgs("/repo", "/dbdump/pg.sql", nil, Mode{Encrypted: true, ExcludeCaches: true}, command)
+		if argsContain(got, "--exclude-caches") {
+			t.Fatalf("got %v, want no --exclude-caches", got)
+		}
+	})
+}
+
 // TestDumpRawArgs pins the restore-side counterpart of BackupStdinArgs: no
 // -a/--archive flag (unlike DumpZipArgs), which streams a single matched
 // file's raw bytes unmodified — the exact bytes BackupStdin wrote — verified

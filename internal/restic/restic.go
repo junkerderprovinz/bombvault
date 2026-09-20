@@ -206,6 +206,14 @@ type Summary struct {
 	FilesNew     int     `json:"files_new"`
 	FilesChanged int     `json:"files_changed"`
 	BytesAdded   float64 `json:"data_added"`
+	// TotalBytesProcessed is what restic read, before deduplication. For a
+	// backup taken from a command it is the size of the stream itself.
+	TotalBytesProcessed uint64 `json:"total_bytes_processed"`
+}
+
+// SnapshotSummary is the counter set restic stores with a snapshot since 0.17.
+type SnapshotSummary struct {
+	TotalBytesProcessed uint64 `json:"total_bytes_processed"`
 }
 
 // Snapshot holds a subset of the restic snapshot JSON. Original is the hex id
@@ -222,6 +230,8 @@ type Snapshot struct {
 	Tags     []string `json:"tags"`
 	Hostname string   `json:"hostname"`
 	Original string   `json:"original,omitempty"`
+	// Summary is absent on snapshots written by restic before 0.17.
+	Summary *SnapshotSummary `json:"summary,omitempty"`
 }
 
 // PendingCopyIDs returns the SOURCE snapshot ids (from src) that have no
@@ -505,6 +515,32 @@ func BackupStdinArgs(repo, path string, tags []string, m Mode) []string {
 	}
 	args = append(args, "--stdin", "--stdin-filename", path)
 	return args
+}
+
+// BackupCommandArgs returns the argv slice for `restic backup
+// --stdin-from-command`, which has restic start the command itself and store
+// its stdout under stdinPath. restic checks the command's exit code and saves
+// no snapshot at all when it is non-zero (verified against restic 0.17.3), so a
+// dump that dies halfway leaves nothing behind that looks like a backup.
+//
+// The command takes the positional slot BackupArgs uses for paths. A dump walks
+// no filesystem, so there is no --exclude-caches.
+func BackupCommandArgs(repo, stdinPath string, tags []string, m Mode, command []string) []string {
+	args := repoFlag(repo)
+	args = append(args, storageClassFlags(repo, m.StorageClass)...)
+	args = append(args, retryLockFlags()...)
+	args = append(args, limitFlags(m.Limits)...)
+	args = append(args, "backup")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	args = append(args, "--json")
+	args = append(args, "--host", backupHost)
+	for _, tag := range tags {
+		args = append(args, "--tag", tag)
+	}
+	args = append(args, "--stdin-filename", stdinPath, "--stdin-from-command", "--")
+	return append(args, command...)
 }
 
 // DumpRawArgs returns the argv slice for `restic dump <snapshotID> <path>` —
@@ -1198,8 +1234,43 @@ func scanLines(cmd *exec.Cmd, args []string, onLine func(line []byte)) ([]byte, 
 		return nil, runError(args, stderr.String())
 	}
 
+	out := scanStdout(stdout, args, onLine)
+	if err := cmd.Wait(); err != nil {
+		if werr := backupExit3Err(args, err, stderr.String()); werr != nil {
+			return out, werr
+		}
+		return nil, runError(args, stderr.String())
+	}
+	return out, nil
+}
+
+// scanLinesStderr is scanLines for the one caller that needs restic's stderr as
+// well: a backup taken from a command, whose child's own output arrives there
+// prefixed with "subprocess ". Exit 3 stays a hard failure, because a snapshot
+// restic wrote from a stream it could not read to the end must not be trusted.
+func scanLinesStderr(cmd *exec.Cmd, args []string, onLine func(line []byte)) ([]byte, string, error) {
+	stderr := &headTailBuffer{max: subprocessStderrCap}
+	cmd.Stderr = stderr
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, "", fmt.Errorf("restic %s: stdout pipe: %w", subcommand(args), err)
+	}
+	if err := cmd.Start(); err != nil {
+		return nil, stderr.String(), runError(args, stderr.String())
+	}
+
+	out := scanStdout(stdout, args, onLine)
+	if err := cmd.Wait(); err != nil {
+		return out, stderr.String(), runError(args, stderr.String())
+	}
+	return out, stderr.String(), nil
+}
+
+// scanStdout hands every complete line of r to onLine and returns the whole
+// output, so a trailing summary line can be parsed afterwards.
+func scanStdout(r io.Reader, args []string, onLine func(line []byte)) []byte {
 	var out bytes.Buffer
-	sc := bufio.NewScanner(stdout)
+	sc := bufio.NewScanner(r)
 	// Status/summary lines are normally small, but a status line embeds the
 	// current file path, which can be very long. Allow up to 16 MiB so a giant
 	// path can't overflow the scanner and make a successful backup look failed
@@ -1216,16 +1287,50 @@ func scanLines(cmd *exec.Cmd, args []string, onLine func(line []byte)) ([]byte, 
 	if scErr := sc.Err(); scErr != nil {
 		log.Printf("restic %s: stdout scan: %v", subcommand(args), scErr)
 		// Drain the rest of stdout so restic doesn't block writing to a full pipe,
-		// which would hang cmd.Wait below.
-		_, _ = io.Copy(io.Discard, stdout)
+		// which would hang the caller's cmd.Wait.
+		_, _ = io.Copy(io.Discard, r)
 	}
-	if err := cmd.Wait(); err != nil {
-		if werr := backupExit3Err(args, err, stderr.String()); werr != nil {
-			return out.Bytes(), werr
-		}
-		return nil, runError(args, stderr.String())
+	return out.Bytes()
+}
+
+// subprocessStderrCap is how much of each end of restic's stderr a backup taken
+// from a command keeps. The head holds the dump's pid line, which the orphan
+// stop needs, the tail holds whatever explained a failure.
+const subprocessStderrCap = 128 << 10
+
+// headTailBuffer keeps the first and the last max bytes written to it. A
+// newline is inserted where content was dropped, so a line from the head is
+// never fused with one from the tail.
+type headTailBuffer struct {
+	max     int
+	written int
+	head    []byte
+	tail    []byte
+}
+
+func (b *headTailBuffer) Write(p []byte) (int, error) {
+	n := len(p)
+	b.written += n
+	if room := b.max - len(b.head); room > 0 {
+		take := min(len(p), room)
+		b.head = append(b.head, p[:take]...)
+		p = p[take:]
 	}
-	return out.Bytes(), nil
+	if len(p) > b.max {
+		p = p[len(p)-b.max:]
+	}
+	b.tail = append(b.tail, p...)
+	if extra := len(b.tail) - b.max; extra > 0 {
+		b.tail = b.tail[:copy(b.tail, b.tail[extra:])]
+	}
+	return n, nil
+}
+
+func (b *headTailBuffer) String() string {
+	if len(b.head)+len(b.tail) == b.written {
+		return string(b.head) + string(b.tail)
+	}
+	return string(b.head) + "\n" + string(b.tail)
 }
 
 // streamLines is scanLines without the accumulating buffer: it runs cmd with
@@ -1989,6 +2094,71 @@ func (r Restic) BackupStdin(ctx context.Context, repo string, rd io.Reader, path
 		return Summary{}, err
 	}
 	return ParseBackupSummary(out)
+}
+
+// CommandSnapshotPartialError reports a backup taken from a command that
+// exited 3: restic saved a snapshot although it could not read the command's
+// output to the end, so the snapshot holds a truncated dump.
+type CommandSnapshotPartialError struct{ SnapshotID string }
+
+func (e *CommandSnapshotPartialError) Error() string {
+	if e.SnapshotID == "" {
+		return "restic backup: the dump stream could not be read to the end"
+	}
+	return fmt.Sprintf("restic backup: the dump stream could not be read to the end; snapshot %s is incomplete", e.SnapshotID)
+}
+
+// subprocessLinePrefix is how restic labels a line its child wrote to stderr.
+const subprocessLinePrefix = "subprocess "
+
+// BackupFromCommand backs up the stdout of command into repo under stdinPath
+// and returns the lines restic forwarded from the command, on success as well
+// as on failure: the dump reports its pid and its own verdict there, and the
+// pid is what stops a dump left running inside the container.
+//
+// Exit 3 is a failure here rather than the success-with-warning Backup makes of
+// it, wrapped in a CommandSnapshotPartialError that names the snapshot restic
+// saved anyway. Status lines reach a watcher on ctx but never the progress
+// sink: the sink carries the surrounding backup's own percentage, and a
+// stage-less event from this call would wipe the card's dump stage.
+func (r Restic) BackupFromCommand(ctx context.Context, repo, stdinPath string, tags, command []string, m Mode) (Summary, []string, error) {
+	args := BackupCommandArgs(repo, stdinPath, tags, m, command)
+	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; the command is this binary with validated flags
+	configureProcGroup(cmd)
+	// restic emits periodic --json status only to a TTY or with this set, and
+	// the stall guard needs those lines to see a dump that stopped moving.
+	cmd.Env = append(r.authEnv(m), "RESTIC_PROGRESS_FPS=3")
+
+	watch := watcherFrom(ctx)
+	out, stderr, err := scanLinesStderr(cmd, args, func(line []byte) {
+		if watch == nil {
+			return
+		}
+		if p, ok := ParseProgress(line); ok {
+			watch(p)
+		}
+	})
+	lines := subprocessLines(stderr)
+	if err != nil {
+		if cmd.ProcessState != nil && cmd.ProcessState.ExitCode() == 3 {
+			sum, _ := ParseBackupSummary(out)
+			err = &CommandSnapshotPartialError{SnapshotID: sum.SnapshotID}
+		}
+		return Summary{}, lines, ctxCancelErr(ctx, args, err)
+	}
+	sum, err := ParseBackupSummary(out)
+	return sum, lines, err
+}
+
+// subprocessLines picks out what restic forwarded from the command it ran.
+func subprocessLines(stderr string) []string {
+	var lines []string
+	for _, line := range strings.Split(stderr, "\n") {
+		if line = strings.TrimRight(line, "\r"); strings.HasPrefix(line, subprocessLinePrefix) {
+			lines = append(lines, line)
+		}
+	}
+	return lines
 }
 
 // DumpRaw streams a single backed-up path's raw bytes (no zip/tar wrapping)

@@ -41,6 +41,12 @@ func main() {
 	if len(os.Args) > 1 && os.Args[1] == "healthcheck" {
 		os.Exit(healthcheck())
 	}
+	// The database dump helper restic starts for `backup --stdin-from-command`.
+	// Handled here for the same reason as the healthcheck: it must touch no
+	// config, no store and no log ring, and its stdout belongs to the dump.
+	if len(os.Args) > 1 && os.Args[1] == "dbdump-stream" {
+		os.Exit(runDBDumpStream(context.Background(), os.Args[2:], os.Stdout, os.Stderr, defaultDBDumpDeps()))
+	}
 	if err := run(); err != nil {
 		log.Printf("fatal: %v", err)
 		os.Exit(1)

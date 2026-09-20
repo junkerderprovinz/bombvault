@@ -107,6 +107,20 @@ func WithWatcher(ctx context.Context, w ProgressWatcher) context.Context {
 	return context.WithValue(ctx, watcherKey{}, w)
 }
 
+// WithAddedWatcher chains w after the watcher already on ctx instead of
+// replacing it. A database dump reports to the stall guard and to the byte
+// publisher on the same restic call. A nil w returns ctx unchanged.
+func WithAddedWatcher(ctx context.Context, w ProgressWatcher) context.Context {
+	prev := watcherFrom(ctx)
+	if w == nil || prev == nil {
+		return WithWatcher(ctx, w)
+	}
+	return WithWatcher(ctx, func(p Progress) {
+		prev(p)
+		w(p)
+	})
+}
+
 // watcherFrom returns the watcher on ctx, or nil.
 func watcherFrom(ctx context.Context) ProgressWatcher {
 	w, _ := ctx.Value(watcherKey{}).(ProgressWatcher)
