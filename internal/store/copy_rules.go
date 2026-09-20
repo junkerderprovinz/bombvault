@@ -107,7 +107,7 @@ func (r *Repo) DeleteCopyRule(domain, identity string) error {
 // it does nothing; a rule already at to is ErrCopyRuleTaken.
 func (r *Repo) MoveCopyRule(domain, from, to string) error {
 	for _, identity := range []string{from, to} {
-		if err := checkRuleIdentity(domain, identity); err != nil {
+		if err := CheckRuleIdentity(domain, identity); err != nil {
 			return fmt.Errorf("MoveCopyRule: %w", err)
 		}
 	}
@@ -153,7 +153,7 @@ func scanCopyRules(rows *sql.Rows) ([]CopyRule, error) {
 }
 
 func setCopyRuleTx(tx *sql.Tx, domain, identity string, skip []string, now int64) error {
-	if err := checkRuleIdentity(domain, identity); err != nil {
+	if err := CheckRuleIdentity(domain, identity); err != nil {
 		return err
 	}
 	raw, err := encodeSkip(skip)
@@ -229,9 +229,9 @@ func ValidSkipList(skip []string) error {
 	return nil
 }
 
-// checkRuleIdentity refuses a name a domain's rules cannot hold. Project folders
+// CheckRuleIdentity refuses a name a domain's rules cannot hold. Project folders
 // follow the containers default and never take a rule of their own.
-func checkRuleIdentity(domain, identity string) error {
+func CheckRuleIdentity(domain, identity string) error {
 	if strings.HasPrefix(identity, "stack:") {
 		return ErrStackCopyRule
 	}

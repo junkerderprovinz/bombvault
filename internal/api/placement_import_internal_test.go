@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"reflect"
 	"testing"
@@ -112,6 +113,14 @@ func TestADefaultOnAnUnknownRepositoryRefusesTheImport(t *testing.T) {
 	}
 	if _, found, _ := f.st.CopyRuleFor("vms", "vm:win11"); !found {
 		t.Error("a refused import still cleared the rules")
+	}
+}
+
+func TestAnImportRefusesARuleWhoseIdentityMismatchesItsDomain(t *testing.T) {
+	f := newPlacementFixture(t)
+	exp := settingsExport{CopyRules: []copyRuleExport{{Domain: "containers", Identity: "vm:win11"}}}
+	if err := f.h.checkImportedPlacement(exp); !errors.Is(err, store.ErrRuleDomain) {
+		t.Fatalf("checkImportedPlacement = %v, want store.ErrRuleDomain", err)
 	}
 }
 
