@@ -915,24 +915,60 @@ func importedPlacement(exp settingsExport) store.PlacementImport {
 }
 
 // checkImportedPlacement refuses the defaults and rules an import could not
-// write whole, before anything of the file is written.
+// write whole, before anything of the file is written: one entry per domain,
+// a skip that names real targets, and a home that could take a backup, all
+// checked the way the PUT route checks them, but against the repositories and
+// targets the file itself is about to create as well as the stored ones.
 func (h *Handler) checkImportedPlacement(exp settingsExport) error {
-	inFile := make(map[string]bool, len(exp.NamedRepos))
+	inFileRepo := make(map[string]bool, len(exp.NamedRepos))
 	for _, tv := range exp.NamedRepos {
-		inFile[strings.TrimSpace(tv.ID)] = true
+		inFileRepo[strings.TrimSpace(tv.ID)] = true
 	}
+	inFileTarget := make(map[string]map[string]bool, len(exp.OffsiteTargets))
+	for _, tv := range exp.OffsiteTargets {
+		if inFileTarget[tv.Domain] == nil {
+			inFileTarget[tv.Domain] = map[string]bool{}
+		}
+		inFileTarget[tv.Domain][strings.TrimSpace(tv.ID)] = true
+	}
+	settings, err := h.store.GetSettings()
+	if err != nil {
+		return err
+	}
+	placements := map[string]placementRead{}
+	seenDomain := map[string]bool{}
 	for _, d := range exp.PlacementDefaults {
 		if !validPlacementDomain(d.Domain) || !validSkip(d.Skip) {
 			return errInvalidPlacement
 		}
+		if seenDomain[d.Domain] {
+			return errInvalidPlacement
+		}
+		seenDomain[d.Domain] = true
+		p, ok := placements[d.Domain]
+		if !ok {
+			if p, err = h.svc.readPlacement(settings, d.Domain); err != nil {
+				return err
+			}
+			placements[d.Domain] = p
+		}
+		for _, id := range d.Skip {
+			if id == store.SkipAll || containsTarget(p.Targets, id) || inFileTarget[d.Domain][id] {
+				continue
+			}
+			return errNotATarget
+		}
 		home := strings.TrimSpace(d.Home)
-		if home == "" || inFile[home] {
+		if home == "" || inFileRepo[home] {
 			continue
 		}
 		if _, err := h.store.GetNamedRepo(home); errors.Is(err, sql.ErrNoRows) {
 			return errDefaultRepoMissing
 		} else if err != nil {
 			return err
+		}
+		if err := h.svc.validateItemRepoID(home); err != nil {
+			return fmt.Errorf("%w: %w", errRepoInvalid, err)
 		}
 	}
 	for _, r := range exp.CopyRules {
