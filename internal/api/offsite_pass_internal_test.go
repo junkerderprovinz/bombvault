@@ -52,6 +52,18 @@ func offsiteRuns(t *testing.T, f *placementFixture, domain string) []string {
 	return out
 }
 
+// domainActivityStatus is the status of a domain's most recent kind="offsite"
+// row in the shared runs table, the one the dashboard's Activity Log renders.
+func domainActivityStatus(t *testing.T, f *placementFixture, domain string) string {
+	t.Helper()
+	var status string
+	err := f.db.QueryRow(`SELECT status FROM runs WHERE target_id = ? AND kind = 'offsite' ORDER BY rowid DESC LIMIT 1`, domain).Scan(&status)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return status
+}
+
 // placementWebhook sends the notifications to a local webhook and returns what
 // it has received so far.
 func placementWebhook(t *testing.T, f *placementFixture) func() []string {
