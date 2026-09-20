@@ -362,6 +362,43 @@ func TestDeleteFileSetRemovesRuns(t *testing.T) {
 	}
 }
 
+func TestDeleteFileSetRemovesItsCopyRule(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	fs, err := r.CreateFileSet(store.FileSet{Name: "keepme", Path: "user/keepme", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetCopyRule("files", "fileset:keepme", []string{"target-1"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.DeleteFileSet(fs.ID); err != nil {
+		t.Fatalf("delete: %v", err)
+	}
+
+	state, err := r.ReadPlacement("files")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if state.HasRules() {
+		t.Fatalf("a deleted file set's copy rule must not linger: %+v", state.Rules)
+	}
+
+	if _, err := r.CreateFileSet(store.FileSet{Name: "other", Path: "user/other", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetCopyRule("files", "fileset:other", []string{"target-1"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.MoveCopyRule("files", "fileset:other", "fileset:keepme"); err != nil {
+		t.Fatalf("a rename onto the freed name must not be refused: %v", err)
+	}
+}
+
 func TestDeleteFileSetNotFoundIsNoop(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
