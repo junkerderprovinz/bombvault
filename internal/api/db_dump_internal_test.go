@@ -665,3 +665,90 @@ func TestContainerHasBackupsCountsDumps(t *testing.T) {
 			"override ask this per container", eng.snapsCalls)
 	}
 }
+
+func TestDBDataCoverage(t *testing.T) {
+	toContainer := func(host string) (string, bool) {
+		if rest, ok := strings.CutPrefix(host, "/mnt/"); ok {
+			return "/host/" + rest, true
+		}
+		return "", false
+	}
+	stackMount := []model.Mount{{Source: "/mnt/user/stacks/immich/pgdata", Destination: "/var/lib/postgresql/data"}}
+
+	tests := []struct {
+		name       string
+		engine     dbdump.Engine
+		env        []string
+		mounts     []model.Mount
+		stackDir   string
+		effective  []string
+		folderSets []string
+		want       string
+	}{
+		{
+			name:     "datadir inside the compose project directory",
+			engine:   dbdump.EnginePostgres,
+			mounts:   stackMount,
+			stackDir: "/host/user/stacks/immich",
+			want:     "live",
+		},
+		{
+			name:      "datadir under a backed-up path",
+			engine:    dbdump.EnginePostgres,
+			mounts:    stackMount,
+			stackDir:  "/host/user/stacks/immich",
+			effective: []string{"/host/user/stacks/immich/pgdata"},
+			want:      "stopped",
+		},
+		{
+			name:       "datadir under a folder set",
+			engine:     dbdump.EnginePostgres,
+			mounts:     stackMount,
+			folderSets: []string{"/host/user/stacks"},
+			want:       "live",
+		},
+		{
+			name:   "datadir outside every backup path",
+			engine: dbdump.EnginePostgres,
+			mounts: []model.Mount{{Source: "/mnt/user/databases/pg", Destination: "/var/lib/postgresql/data"}},
+			want:   "none",
+		},
+		{
+			name:      "volume on the parent of PGDATA",
+			engine:    dbdump.EnginePostgres,
+			env:       []string{"PGDATA=/var/lib/postgresql/data/pgdata"},
+			mounts:    []model.Mount{{Source: "/mnt/user/appdata/pg", Destination: "/var/lib/postgresql/data"}},
+			effective: []string{"/host/user/appdata/pg"},
+			want:      "stopped",
+		},
+		{
+			name:   "bind below the mount holding PGDATA",
+			engine: dbdump.EnginePostgres,
+			env:    []string{"PGDATA=/data/pg"},
+			mounts: []model.Mount{{Source: "/mnt/user/databases/x", Destination: "/data"}},
+			want:   "none",
+		},
+		{
+			name:   "no data mount",
+			engine: dbdump.EngineMariaDB,
+			mounts: []model.Mount{{Source: "/mnt/user/appdata/x", Destination: "/logs"}},
+			want:   "unknown",
+		},
+		{
+			name:   "datadir outside the host mount",
+			engine: dbdump.EnginePostgres,
+			mounts: []model.Mount{{Source: "/srv/pg", Destination: "/var/lib/postgresql/data"}},
+			want:   "none",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			in := model.Inspect{Config: model.Config{Env: tc.env}, Mounts: tc.mounts}
+			got := dbDataCoverage(in, tc.engine, toContainer, tc.stackDir, tc.effective, tc.folderSets)
+			if got != tc.want {
+				t.Fatalf("coverage = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}

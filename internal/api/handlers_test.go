@@ -4281,3 +4281,304 @@ func TestUnlinkContainerAliasRoute(t *testing.T) {
 		t.Fatal("the taken-over name must no longer have an entry of its own")
 	}
 }
+
+// TestPatchContainerDBDumpFields pins the write side of the per-container dump
+// switches: both fields are pointers, so a PATCH that carries one leaves the
+// other alone, a container without a target row gets one, and an engine the
+// dump scripts do not know is refused at the boundary rather than stored.
+func TestPatchContainerDBDumpFields(t *testing.T) {
+	stored := func(t *testing.T, st *store.Repo) store.Target {
+		t.Helper()
+		tg, err := st.GetTargetByContainer("pg")
+		if err != nil {
+			t.Fatal(err)
+		}
+		return tg
+	}
+
+	t.Run("the toggle persists for a container with no target row", func(t *testing.T) {
+		h, st := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+		_, m := doJSON(t, h, http.MethodPatch, "/api/containers/pg", `{"dbDumpOff":true}`)
+		if m["ok"] != true {
+			t.Fatalf("patch must succeed, got %v", m)
+		}
+		if !stored(t, st).DBDumpOff {
+			t.Fatal("the stored target must carry the opt-out")
+		}
+	})
+
+	t.Run("the engine persists and the toggle stays untouched", func(t *testing.T) {
+		h, st := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+		if _, m := doJSON(t, h, http.MethodPatch, "/api/containers/pg", `{"dbDumpOff":true}`); m["ok"] != true {
+			t.Fatalf("seed patch must succeed, got %v", m)
+		}
+		_, m := doJSON(t, h, http.MethodPatch, "/api/containers/pg", `{"dbDumpEngine":"mariadb"}`)
+		if m["ok"] != true {
+			t.Fatalf("patch must succeed, got %v", m)
+		}
+		tg := stored(t, st)
+		if tg.DBDumpEngine != "mariadb" {
+			t.Errorf("stored engine = %q, want mariadb", tg.DBDumpEngine)
+		}
+		if !tg.DBDumpOff {
+			t.Error("a patch that names only the engine must leave the opt-out alone")
+		}
+	})
+
+	t.Run("an unknown engine is refused with 400", func(t *testing.T) {
+		h, st := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+		w, m := doJSON(t, h, http.MethodPatch, "/api/containers/pg", `{"dbDumpEngine":"oracle"}`)
+		if w.Code != http.StatusBadRequest {
+			t.Fatalf("status = %d, want 400", w.Code)
+		}
+		if m["ok"] == true {
+			t.Fatal("an engine no dump script knows must not be stored")
+		}
+		if _, err := st.GetTargetByContainer("pg"); err == nil {
+			t.Fatal("a refused engine must not create a target row")
+		}
+	})
+
+	t.Run("the engine can be cleared", func(t *testing.T) {
+		h, st := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+		if _, m := doJSON(t, h, http.MethodPatch, "/api/containers/pg", `{"dbDumpEngine":"postgres"}`); m["ok"] != true {
+			t.Fatalf("seed patch must succeed, got %v", m)
+		}
+		if _, m := doJSON(t, h, http.MethodPatch, "/api/containers/pg", `{"dbDumpEngine":""}`); m["ok"] != true {
+			t.Fatalf("patch must succeed, got %v", m)
+		}
+		if got := stored(t, st).DBDumpEngine; got != "" {
+			t.Fatalf("stored engine = %q, want it cleared", got)
+		}
+	})
+}
+
+// dbFieldsRouterHarness wires a router over a host mount that really holds the
+// appdata folder of one database container, so the data coverage of that row is
+// computed from paths that exist rather than from a fake answer.
+func dbFieldsRouterHarness(t *testing.T, d *fakeServiceDocker) (http.Handler, *store.Repo) {
+	t.Helper()
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, "user", "appdata", "immich_postgres"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	cfg := config.Config{
+		AppKey: strings.Repeat("a", 64), DataDir: dir,
+		HostMountRoot: dir, HostSourceRoot: "/mnt", DataRootSegments: []string{"appdata"},
+	}
+	st := newMemStore(t)
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
+	return api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router(), st
+}
+
+// containerRows indexes the list response by container name.
+func containerRows(t *testing.T, m map[string]any) map[string]map[string]any {
+	t.Helper()
+	rows, _ := m["containers"].([]any)
+	out := make(map[string]map[string]any, len(rows))
+	for _, r := range rows {
+		row, _ := r.(map[string]any)
+		name, _ := row["name"].(string)
+		out[name] = row
+	}
+	return out
+}
+
+// TestListContainersDBFields pins the read side of the Containers page: every
+// row says what would be dumped and what stands in the way, the rows that
+// cannot be a database are never inspected, and a container whose image is a
+// bare digest after an update is resolved through the one inspect it gets.
+func TestListContainersDBFields(t *testing.T) {
+	d := &fakeServiceDocker{
+		listOut: []dockercli.ContainerInfo{
+			{Name: "immich_postgres", Image: "ghcr.io/immich-app/postgres:14-vectorchord0.4.3"},
+			{Name: "plex", Image: "plexinc/pms-docker:latest"},
+			{Name: "nextcloud_db", Image: "acme/my-mariadb:1"},
+			{Name: "wiki_db", Image: "postgres:16", Labels: map[string]string{"bombvault.dbdump": "false"}},
+			{Name: "dangling_db", Image: "sha256:9f2c1e"},
+		},
+		inspects: map[string]model.Inspect{
+			"immich_postgres": {Running: true, Config: model.Config{
+				Image: "ghcr.io/immich-app/postgres:14-vectorchord0.4.3",
+				Env:   []string{"POSTGRES_PASSWORD=secret"},
+			}, Mounts: []model.Mount{
+				{Type: "bind", Source: "/mnt/user/appdata/immich_postgres", Destination: "/var/lib/postgresql/data"},
+			}},
+			"nextcloud_db": {Running: true, Config: model.Config{
+				Image: "acme/my-mariadb:1",
+				Env:   []string{"MARIADB_ROOT_PASSWORD=secret"},
+			}},
+			"wiki_db": {Running: true, Config: model.Config{
+				Image:  "postgres:16",
+				Labels: map[string]string{"bombvault.dbdump": "false"},
+			}},
+			"dangling_db": {Running: true, Config: model.Config{Image: "postgres:16"}},
+		},
+	}
+	h, st := dbFieldsRouterHarness(t, d)
+
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "immich_postgres", PreHook: "pg_dump -U postgres app > /tmp/x.sql"}); err != nil {
+		t.Fatal(err)
+	}
+	tg, err := st.GetTargetByContainer("immich_postgres")
+	if err != nil {
+		t.Fatal(err)
+	}
+	runID, err := st.StartRun(tg.ID, "dbdump")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishRun(runID, "failed", "", 0, "database dump failed: the database refused the login: role does not exist"); err != nil {
+		t.Fatal(err)
+	}
+
+	_, m := doJSON(t, h, http.MethodGet, "/api/containers", "")
+	if m["ok"] != true {
+		t.Fatalf("list must succeed, got %v", m)
+	}
+	rows := containerRows(t, m)
+
+	t.Run("a curated database carries engine, tier, coverage and its last dump", func(t *testing.T) {
+		row := rows["immich_postgres"]
+		if row["dbEngine"] != "postgres" || row["dbTier"] != "curated" {
+			t.Fatalf("engine/tier = %v/%v, want postgres/curated", row["dbEngine"], row["dbTier"])
+		}
+		if row["dbDataCoverage"] != "stopped" {
+			t.Errorf("coverage = %v, want stopped: the data folder is inside the container's own backup", row["dbDataCoverage"])
+		}
+		if row["dbDumpHookOverlap"] != true {
+			t.Error("a stored pre-hook that already runs pg_dump must be reported")
+		}
+		last, _ := row["lastDbDump"].(map[string]any)
+		if last == nil || last["status"] != "failed" {
+			t.Fatalf("lastDbDump = %v, want the failed run", row["lastDbDump"])
+		}
+		if detail, _ := last["error"].(string); !strings.HasPrefix(detail, "database dump failed: ") {
+			t.Errorf("lastDbDump error = %q", detail)
+		}
+	})
+
+	t.Run("a container that cannot be a database carries zero values", func(t *testing.T) {
+		row := rows["plex"]
+		for _, field := range []string{"dbEngine", "dbSuggestedEngine", "dbTier", "dbDumpEngine", "dbDataCoverage"} {
+			if row[field] != "" {
+				t.Errorf("%s = %v, want empty", field, row[field])
+			}
+		}
+		if row["dbDumpOff"] != false || row["dbDumpLabelOff"] != false || row["dbDumpHookOverlap"] != false {
+			t.Error("a non-database row must carry no switch state")
+		}
+		if _, ok := row["lastDbDump"]; ok {
+			t.Error("a non-database row must not carry a last dump")
+		}
+		for _, call := range d.calls {
+			if call == "inspect:plex" {
+				t.Fatal("a row that cannot be a database must not cost an inspect")
+			}
+		}
+	})
+
+	t.Run("a lookalike offers its guess until an engine is chosen", func(t *testing.T) {
+		row := rows["nextcloud_db"]
+		if row["dbEngine"] != "" || row["dbSuggestedEngine"] != "mariadb" || row["dbTier"] != "lookalike" {
+			t.Fatalf("engine/suggested/tier = %v/%v/%v", row["dbEngine"], row["dbSuggestedEngine"], row["dbTier"])
+		}
+		if row["dbDataCoverage"] != "unknown" {
+			t.Errorf("coverage = %v, want unknown: no mount holds the data directory", row["dbDataCoverage"])
+		}
+	})
+
+	t.Run("a label that switches the dump off is reported", func(t *testing.T) {
+		row := rows["wiki_db"]
+		if row["dbDumpLabelOff"] != true {
+			t.Fatal("the label veto must reach the row, or the page shows a toggle that does nothing")
+		}
+		if row["dbEngine"] != "postgres" {
+			t.Errorf("engine = %v, want the image's engine even with the label off", row["dbEngine"])
+		}
+	})
+
+	t.Run("a dangling image is resolved through the inspect", func(t *testing.T) {
+		row := rows["dangling_db"]
+		if row["dbEngine"] != "postgres" || row["dbTier"] != "curated" {
+			t.Fatalf("engine/tier = %v/%v, want the image the inspect names", row["dbEngine"], row["dbTier"])
+		}
+		inspects := 0
+		for _, call := range d.calls {
+			if call == "inspect:dangling_db" {
+				inspects++
+			}
+		}
+		if inspects != 1 {
+			t.Fatalf("%d inspects of one row, want one", inspects)
+		}
+	})
+
+	t.Run("the global switch reaches every row", func(t *testing.T) {
+		if rows["immich_postgres"]["dbDumpsGlobalOff"] != false {
+			t.Fatal("dumps are on by default")
+		}
+		s, err := st.GetSettings()
+		if err != nil {
+			t.Fatal(err)
+		}
+		s.DBDumpsEnabled = false
+		if err := st.UpdateSettings(s); err != nil {
+			t.Fatal(err)
+		}
+		_, m := doJSON(t, h, http.MethodGet, "/api/containers", "")
+		if containerRows(t, m)["immich_postgres"]["dbDumpsGlobalOff"] != true {
+			t.Fatal("the Containers page never loads settings, so the row has to carry the global switch")
+		}
+	})
+}
+
+// TestPutSettingsWithoutDBDumpsFieldKeepsIt: the GET always names the switch,
+// but a tab that was loaded before this release submits the old shape, and
+// every other bool in the body is copied as it stands. Absent has to mean keep,
+// or an unrelated save switches the dumps off.
+func TestPutSettingsWithoutDBDumpsFieldKeepsIt(t *testing.T) {
+	h, st := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+
+	_, m := doJSON(t, h, http.MethodGet, "/api/settings", "")
+	settings, _ := m["settings"].(map[string]any)
+	if settings["dbDumpsEnabled"] != true {
+		t.Fatalf("dbDumpsEnabled = %v, want true by default", settings["dbDumpsEnabled"])
+	}
+
+	const oldShape = `{
+		"containersPath": "backups/c",
+		"containersSchedule": "off",
+		"vmsSchedule": "off",
+		"flashSchedule": "off"
+	}`
+	if w, env := doJSON(t, h, http.MethodPut, "/api/settings", oldShape); w.Code != http.StatusOK || env["ok"] != true {
+		t.Fatalf("put status = %d body = %v", w.Code, env)
+	}
+	stored, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !stored.DBDumpsEnabled {
+		t.Fatal("a body that does not know the switch must leave it on")
+	}
+
+	const off = `{
+		"containersPath": "backups/c",
+		"containersSchedule": "off",
+		"vmsSchedule": "off",
+		"flashSchedule": "off",
+		"dbDumpsEnabled": false
+	}`
+	if w, env := doJSON(t, h, http.MethodPut, "/api/settings", off); w.Code != http.StatusOK || env["ok"] != true {
+		t.Fatalf("put status = %d body = %v", w.Code, env)
+	}
+	stored, err = st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stored.DBDumpsEnabled {
+		t.Fatal("a body that names the switch must be able to switch it off")
+	}
+}

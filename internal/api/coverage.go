@@ -43,6 +43,17 @@ const (
 	// its domain schedule nor Backup Everything is switched on, so nothing ever
 	// fires. This one is invisible on the item's own page.
 	CoverageNoSchedule = "no-schedule"
+	// CoverageDBNotScheduled: the container runs a database server and no
+	// automatic run backs it up, so neither its files nor its dumps are kept.
+	CoverageDBNotScheduled = "db-not-scheduled"
+	// CoverageDBDumpFailing: the container is backed up and its latest database
+	// dump did not succeed. Acknowledging the failure clears the dashboard
+	// badge and does nothing about the missing dump.
+	CoverageDBDumpFailing = "db-dump-failing"
+	// CoverageDBDumpOnlyCopyOff: the dump is switched off although the files
+	// backup copies the data while the server runs, so nothing holds a
+	// consistent copy of this database.
+	CoverageDBDumpOnlyCopyOff = "db-dump-only-copy-off"
 )
 
 // CoverageItem is one unprotected item.
@@ -140,6 +151,8 @@ func (s *Service) coverContainers(ctx context.Context, settings store.Settings) 
 		}
 	}
 
+	dbRows := s.dbDumpRows(ctx, live, rows)
+
 	for _, c := range live {
 		if c.Name == "" || (self != "" && c.Name == self) {
 			continue
@@ -152,18 +165,54 @@ func (s *Service) coverContainers(ctx context.Context, settings store.Settings) 
 			})
 			continue
 		}
+		db, isDB := dbRows[c.Name]
 		eff := schedule.EffectiveContainerSchedule(row, settings)
-		if eff.Kind != schedule.EffectiveNone {
-			out.Protected++
+		if eff.Kind == schedule.EffectiveNone {
+			reason := reasonFor(row.IncludeInSchedule, row.ScheduleCadence, settings.PerItemSchedules)
+			if isDB {
+				reason = CoverageDBNotScheduled
+			}
+			out.Unprotected = append(out.Unprotected, CoverageItem{
+				Name: c.Name, Reason: reason, NeverBackedUp: s.neverBackedUp(row.ID),
+			})
 			continue
 		}
-		out.Unprotected = append(out.Unprotected, CoverageItem{
-			Name:          c.Name,
-			Reason:        reasonFor(row.IncludeInSchedule, row.ScheduleCadence, settings.PerItemSchedules),
-			NeverBackedUp: s.neverBackedUp(row.ID),
-		})
+		// A database whose dumps are missing counts as unprotected although the
+		// schedule reaches it: for these containers the files alone are not an
+		// answer to what is backed up.
+		if gap := s.dbDumpGap(settings, row, db); gap != "" {
+			out.Unprotected = append(out.Unprotected, CoverageItem{
+				Name: c.Name, Reason: gap, NeverBackedUp: s.neverBackedUp(row.ID),
+			})
+			continue
+		}
+		out.Protected++
 	}
 	return out
+}
+
+// dbDumpGap names what is missing from a scheduled database container's dumps,
+// or "" when nothing is. A container that is no database, or one nobody has
+// named an engine for yet, has no gap: there is nothing to dump it with.
+func (s *Service) dbDumpGap(settings store.Settings, tg store.Target, db dbDumpRow) string {
+	if db.Engine == "" {
+		return ""
+	}
+	if !settings.DBDumpsEnabled || tg.DBDumpOff || db.LabelOff {
+		if db.Coverage != dbCoverageStopped {
+			return CoverageDBDumpOnlyCopyOff
+		}
+		return ""
+	}
+	run, err := s.store.LastRunOfKind(tg.ID, "dbdump")
+	if err != nil {
+		log.Printf("api: coverage: reading the last database dump of %q failed: %v", tg.ContainerName, err) //nolint:gosec // G706: name is %q-quoted
+		return ""
+	}
+	if run != nil && run.Status != "success" {
+		return CoverageDBDumpFailing
+	}
+	return ""
 }
 
 // coverVMs reads the STORED VM rows rather than asking libvirt.

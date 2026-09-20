@@ -671,8 +671,11 @@ func settingsGroups(v settingsView) []string {
 			groups = append(groups, name)
 		}
 	}
+	// The dump switch counts when it is off, the mirror image of the flags
+	// above: it is on by default, so switching it off is what an apply imposes.
 	add("domains", v.ContainersEnabled || v.VMsEnabled || v.FlashEnabled || v.ConfigEnabled || v.FilesEnabled ||
-		v.ContainersPath != "" || v.VMsPath != "" || v.FlashPath != "" || v.ConfigPath != "" || v.FilesPath != "")
+		v.ContainersPath != "" || v.VMsPath != "" || v.FlashPath != "" || v.ConfigPath != "" || v.FilesPath != "" ||
+		(v.DBDumpsEnabled != nil && !*v.DBDumpsEnabled))
 	add("schedules", v.ContainersSchedule != "" || v.VMsSchedule != "" || v.FlashSchedule != "" ||
 		v.ConfigSchedule != "" || v.FilesSchedule != "")
 	// The whole-server pass is its own area, not part of "schedules": it is the
@@ -1029,6 +1032,12 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.RestartHealthWait = v.RestartHealthWait
 	out.RestartHealthTimeoutSec = clampHealthTimeoutSec(v.RestartHealthTimeoutSec)
 	out.PerItemSchedules = v.PerItemSchedules
+	// An export written before the switch existed carries no value for it, and
+	// taking that as "off" would stop dumping databases on the instance the
+	// file is applied to.
+	if v.DBDumpsEnabled != nil {
+		out.DBDumpsEnabled = *v.DBDumpsEnabled
+	}
 
 	return out
 }

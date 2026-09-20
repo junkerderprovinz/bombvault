@@ -34,7 +34,11 @@ type fakeServiceDocker struct {
 	listOut []dockercli.ContainerInfo
 	listErr error
 
-	inspect    model.Inspect
+	inspect model.Inspect
+	// inspects answers per container name, for the tests that list several and
+	// care which one was asked about. A name that is not in it falls back to
+	// inspect.
+	inspects   map[string]model.Inspect
 	inspectErr error
 
 	liveName    string
@@ -79,6 +83,9 @@ func (f *fakeServiceDocker) Inspect(_ context.Context, name string) (model.Inspe
 	f.calls = append(f.calls, "inspect:"+name)
 	if f.inspectErr != nil {
 		return model.Inspect{}, f.inspectErr
+	}
+	if in, ok := f.inspects[name]; ok {
+		return in, nil
 	}
 	return f.inspect, nil
 }

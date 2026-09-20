@@ -531,3 +531,68 @@ func TestImportDoesNotTouchRunHistory(t *testing.T) {
 		t.Fatalf("import must not create run history: before=%d after=%d", len(before), len(after))
 	}
 }
+
+// TestExportImportCarriesDBDumpsEnabled: the global dump switch is portable
+// like every other domain setting, so a rebuilt instance dumps what the old one
+// dumped.
+func TestExportImportCarriesDBDumpsEnabled(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	s, err := srcStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.DBDumpsEnabled = false
+	if err := srcStore.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	body, exp := doExport(t, src, "")
+	if exp.Settings.DBDumpsEnabled == nil || *exp.Settings.DBDumpsEnabled {
+		t.Fatalf("the export must name the switch, got %v", exp.Settings.DBDumpsEnabled)
+	}
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply envelope wrong: %v", env)
+	}
+	got, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.DBDumpsEnabled {
+		t.Fatal("an imported off switch must reach the row")
+	}
+}
+
+// TestImportWithoutDBDumpsFieldKeepsIt: every other bool in the import view is
+// copied unconditionally, so a file written before the switch existed would
+// switch a default-on safety feature off without a word. Absent means keep.
+func TestImportWithoutDBDumpsFieldKeepsIt(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	body, _ := doExport(t, src, "")
+
+	var raw map[string]any
+	if err := json.Unmarshal(body, &raw); err != nil {
+		t.Fatal(err)
+	}
+	settings := raw["settings"].(map[string]any)
+	delete(settings, "dbDumpsEnabled")
+	older, err := json.Marshal(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	if env := doImport(t, dst, older, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply envelope wrong: %v", env)
+	}
+	got, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.DBDumpsEnabled {
+		t.Fatal("an export file that predates the switch must leave it alone")
+	}
+}
