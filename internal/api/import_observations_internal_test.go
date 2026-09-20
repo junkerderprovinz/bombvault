@@ -1,6 +1,10 @@
 package api
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/junkerderprovinz/bombvault/internal/store"
+)
 
 func TestAnImportKeepsWhatWasObservedAtAnUnchangedTarget(t *testing.T) {
 	f := newPlacementFixture(t)
@@ -28,5 +32,23 @@ func TestAnImportKeepsWhatWasObservedAtAnUnchangedTarget(t *testing.T) {
 	}
 	if _, listed, err := f.st.TargetObservationFor("files", hz.ID); err != nil || listed {
 		t.Fatalf("Hetzner moved and kept its observation (listed=%v err=%v)", listed, err)
+	}
+}
+
+func TestRestoreObservationsSkipsAFailureAndKeepsGoing(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("files", "B2", "b2:bucket:files")
+
+	kept := []keptObservation{
+		{obs: store.TargetObservation{Domain: "files", TargetID: "", ListedAt: 500}},
+		{
+			obs:    store.TargetObservation{Domain: "files", TargetID: b2.ID, ListedAt: 600},
+			copies: []store.ItemCopies{copiesRow("fileset:Photos", 3, 400)},
+		},
+	}
+	f.svc.restoreObservations(kept)
+
+	if _, listed, err := f.st.TargetObservationFor("files", b2.ID); err != nil || !listed {
+		t.Fatalf("the observation after a failed one = listed=%v err=%v, want it restored anyway", listed, err)
 	}
 }

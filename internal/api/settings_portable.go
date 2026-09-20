@@ -814,9 +814,7 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, fileSettings 
 			return err
 		}
 	}
-	if err := h.svc.restoreObservations(kept); err != nil {
-		return err
-	}
+	h.svc.restoreObservations(kept)
 	for _, d := range offsiteConfigDomains {
 		if err := h.store.NormalizeOffsiteSortOrder(d, offsiteRepoFromView(d, fileSettings)); err != nil {
 			return err

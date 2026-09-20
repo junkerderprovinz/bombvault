@@ -666,17 +666,20 @@ func (s *Service) observationsToKeep(current []store.OffsiteTarget, views []offs
 	return out, nil
 }
 
-// restoreObservations writes the kept observations back after the import.
-func (s *Service) restoreObservations(kept []keptObservation) error {
+// restoreObservations writes the kept observations back after the import. A
+// write that fails is logged and skipped, like its twin in the replication
+// pass (recordListing): the targets are already replaced by the time this
+// runs, and one target's lost history must not undo that.
+func (s *Service) restoreObservations(kept []keptObservation) {
 	for _, k := range kept {
 		if err := s.store.RecordTargetListing(k.obs.Domain, k.obs.TargetID, k.obs.ListedAt, k.copies); err != nil {
-			return err
+			log.Printf("api: settings import: could not restore what %q last held: %v", k.obs.TargetID, err) //nolint:gosec // G706: the id is %q-quoted (a settings import can carry an id from the file, so it is not necessarily store-generated)
+			continue
 		}
 		if k.obs.AgedAt > 0 {
 			if err := s.store.MarkTargetAged(k.obs.Domain, k.obs.TargetID, k.obs.RulesRev, k.obs.AgedAt); err != nil {
-				return err
+				log.Printf("api: settings import: could not restore the aging mark of %q: %v", k.obs.TargetID, err) //nolint:gosec // G706: the id is %q-quoted (a settings import can carry an id from the file, so it is not necessarily store-generated)
 			}
 		}
 	}
-	return nil
 }
