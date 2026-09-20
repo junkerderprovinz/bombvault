@@ -158,14 +158,16 @@ type copyOutcome struct {
 	accounted     int // sources that answered for the domain: copied, or already held there
 	destIsASource bool
 	landed        []restic.Snapshot // source snapshots this pass put at the target
+	uncertain     bool              // a whole copy went ahead without knowing what it sent; landed does not cover it
 }
 
 // sourceCopy is one source planned for one target.
 type sourceCopy struct {
-	src     domainRepoRef
-	whole   bool              // hand restic no ids; the unfiltered domain path, where restic decides
-	send    []restic.Snapshot // what goes; with whole, what restic is expected to take
-	answers bool              // the source holds snapshots of the domain
+	src        domainRepoRef
+	whole      bool              // hand restic no ids; the unfiltered domain path, where restic decides
+	send       []restic.Snapshot // what goes; with whole, what restic is expected to take
+	answers    bool              // the source holds snapshots of the domain
+	unmeasured bool              // whole, and its own listing failed; send is not a real estimate
 }
 
 // copySources copies every source to one target; dst is the target's listing
@@ -224,6 +226,9 @@ func (s *Service) copySources(ctx context.Context, domain, dest string, mode res
 		if c.whole {
 			if err = s.engine.Copy(withIndexOffset(copyCtx, done), dest, c.src.Loc, nil, lim, mode); err == nil {
 				landed = c.send
+				if c.unmeasured {
+					out.uncertain = true
+				}
 			}
 		} else {
 			landed, err = s.copyInChunks(copyCtx, dest, c.src.Loc, c.send, lim, mode, done)
@@ -248,8 +253,10 @@ func (s *Service) planSource(ctx context.Context, domain string, mode restic.Mod
 	snaps, err := s.listSnapshots(ctx, src.Loc, mode)
 	if err != nil {
 		if c.whole {
-			// restic reads the source itself; the listing only fed the estimate.
+			// restic reads the source itself; the listing only fed the estimate, so
+			// the copy still goes ahead, but what it takes cannot be counted.
 			log.Printf("api: offsite %s: could not estimate pending snapshot count (continuing without it): %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+			c.unmeasured = true
 			return c, nil
 		}
 		return c, err
@@ -496,12 +503,17 @@ func (r replicationPass) copyingRepos() map[string]bool {
 // until its default is confirmed. Once that default is confirmed, this check
 // stays out of it for good: the confirmation is what ends the pause, and a
 // target still unlisted after it must not start a new one.
-func (s *Service) pauseOnFirstListing(ctx context.Context, settings store.Settings, r replicationPass, targets []store.OffsiteTarget, sources []domainRepoRef) (bool, error) {
+//
+// pending names the targets the check could not list: left out of this pass
+// entirely, with a failed run row of their own, so the check runs again at the
+// next one instead of the normal copy loop listing the target itself and
+// closing the check for good.
+func (s *Service) pauseOnFirstListing(ctx context.Context, settings store.Settings, r replicationPass, targets []store.OffsiteTarget, sources []domainRepoRef) (paused bool, pending []string, err error) {
 	if !validPlacementDomain(r.p.Domain) {
-		return false, nil
+		return false, nil, nil
 	}
 	if r.p.State.Confirmed() {
-		return false, nil
+		return false, nil, nil
 	}
 	var first []store.OffsiteTarget
 	for _, t := range targets {
@@ -510,22 +522,27 @@ func (s *Service) pauseOnFirstListing(ctx context.Context, settings store.Settin
 		}
 	}
 	if len(first) == 0 {
-		return false, nil
+		return false, nil, nil
 	}
 	if never, err := s.neverReplicated(r.p.Domain); err != nil || !never {
-		return false, err
+		return false, nil, err
 	}
 	for _, t := range first {
-		held, err := s.listTarget(ctx, settings, t)
-		if err != nil {
-			continue // the normal pass lists this target again; a failure there is only logged, and the copy still goes ahead handing restic every id
+		held, lErr := s.listTarget(ctx, settings, t)
+		if lErr != nil {
+			log.Printf("api: offsite %s: could not list %s for its first-listing check, trying again next pass: %v", r.p.Domain, placementTargetName(t), scrubError(lErr)) //nolint:gosec // G706: domain is a fixed literal, the name is the row's own and the error scrubbed here
+			_ = s.failPass(r.p.Domain, []store.OffsiteTarget{t}, lErr)
+			pending = append(pending, t.ID)
+			continue
 		}
 		s.recordListing(r.p.Domain, t, r.owners, held, nil)
 		if r.owners.ownsAny(held) {
-			return true, s.pausePlacement(ctx, r.p.Domain, "found-history")
+			paused, err = true, s.pausePlacement(ctx, r.p.Domain, "found-history")
+			return paused, nil, err
 		}
 	}
-	return s.pauseOnOlderSources(ctx, settings, r, sources)
+	paused, err = s.pauseOnOlderSources(ctx, settings, r, sources)
+	return paused, pending, err
 }
 
 // neverReplicated reports whether the domain has no successful off-site run in

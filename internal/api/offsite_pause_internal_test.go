@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"strings"
 	"testing"
@@ -70,6 +71,36 @@ func TestASourceOlderThanTheDatabasePauses(t *testing.T) {
 	}
 	if !pausedDefault(t, f, "containers") || len(f.eng.copies) != 0 {
 		t.Fatalf("paused=%v copies=%+v, want a pause and no copy", pausedDefault(t, f, "containers"), f.eng.copies)
+	}
+}
+
+func TestAFailedFirstListingStaysPendingForTheNextPass(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	f.hold(f.domainPath("containers"), snap("a1", time.Now().Unix(), "container:nginx"))
+	f.eng.listErr["b2:bucket:containers"] = errors.New("503 service unavailable")
+
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatal(err)
+	}
+	if len(f.eng.copies) != 0 {
+		t.Fatalf("copied %+v to a target whose first listing failed", f.eng.copies)
+	}
+	if _, listed, err := f.st.TargetObservationFor("containers", b2.ID); err != nil {
+		t.Fatal(err)
+	} else if listed {
+		t.Fatal("a target that could not be listed for its first check must not be recorded as listed")
+	}
+	if runs := offsiteRuns(t, f, "containers"); len(runs) != 1 || !strings.HasPrefix(runs[0], b2.ID+" ok=0 ") {
+		t.Fatalf("runs = %v, want one failed run at B2", runs)
+	}
+
+	f.eng.listErr = map[string]error{}
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatal(err)
+	}
+	if len(f.eng.copies) != 1 {
+		t.Fatalf("copies = %+v, want the next pass to try B2 again", f.eng.copies)
 	}
 }
 
