@@ -408,10 +408,11 @@ type Service struct {
 	detectMu     sync.Mutex
 	detectFlight *encryptionDetectFlight
 
-	// placementMu guards pausePlacement's read-then-write of a domain's placement
-	// default, so two callers pausing the same domain at once (a replication pass
-	// and a background listing, say) do not both try to insert its row and only
-	// one notification fires.
+	// placementMu guards a domain's placement state across a read-then-write: two
+	// callers pausing the same domain at once (a replication pass and a
+	// background listing, say) do not both try to insert its row and only one
+	// notification fires, and a copy rule's read-modify-write in setItemCopies
+	// does not race against another PATCH to the same item.
 	placementMu sync.Mutex
 
 	// listingMu guards listing, the (domain, target) pairs being listed in the

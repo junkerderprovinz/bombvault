@@ -137,6 +137,7 @@ func TestVMAndFileSetRoutesTakeCopies(t *testing.T) {
 			t.Errorf("rule of %s = %v found=%v, want [*]", identity, skip, found)
 		}
 	}
+	waitForListings(t, f)
 }
 
 func TestUnreadableRulesRefuseTheChange(t *testing.T) {
