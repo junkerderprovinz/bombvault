@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -84,4 +85,39 @@ func countsAsBackedUp(p backupPresence, err error) (bool, error) {
 		return true, nil
 	}
 	return p == backupsPresent, err
+}
+
+// settleHome is the step before an open item's first backup. It returns the repo
+// id the backup writes to and a commit the entry point calls once EnsureRepo
+// succeeded and the item exists; commit reports false when the row changed.
+func (s *Service) settleHome(ctx context.Context, settings store.Settings, item store.ItemRef) (string, func() (bool, error), error) {
+	read, err := s.store.ItemHome(item)
+	if err != nil {
+		return "", nil, err
+	}
+	if read.Choice != store.RepoOpen {
+		return read.Repo, func() (bool, error) { return true, nil }, nil
+	}
+	presence, err := s.itemBackups(ctx, item)
+	switch {
+	case presence == backupsUnreadable:
+		return "", nil, fmt.Errorf("the %s repository could not be read, so this item gets no location yet: %w", item.Domain, err)
+	case err != nil:
+		return "", nil, err
+	}
+	repoID := ""
+	if presence == backupsNone {
+		p, err := s.readPlacement(settings, item.Domain)
+		if err != nil {
+			return "", nil, err
+		}
+		repoID, _ = p.effectiveHome(read)
+		if err := s.validateItemRepoID(repoID); err != nil {
+			return "", nil, fmt.Errorf("the %s default points at a repository that cannot take this backup: %w", item.Domain, err)
+		}
+	}
+	commit := func() (bool, error) {
+		return s.store.WritePlacement(item, &store.HomeWrite{Repo: repoID, Choice: store.RepoChosen}, nil, &read)
+	}
+	return repoID, commit, nil
 }

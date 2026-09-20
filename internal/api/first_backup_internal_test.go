@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -60,5 +61,167 @@ func TestItemBackupsOfAMissingFileSetIsAnError(t *testing.T) {
 	_, err := f.svc.itemBackups(context.Background(), store.ItemRef{Domain: "files", Key: "no-such-set"})
 	if !errors.Is(err, errFileSetNotFound) {
 		t.Fatalf("err = %v, want errFileSetNotFound", err)
+	}
+}
+
+func TestEffectiveHomeOfAnOpenItemIsTheDefault(t *testing.T) {
+	p := placementRead{Domain: "containers", State: store.PlacementState{
+		Domain: "containers", HasDefault: true,
+		Default: store.PlacementDefault{Domain: "containers", Home: "repo-nas"},
+	}}
+	if repo, fromDefault := p.effectiveHome(store.HomeState{}); repo != "repo-nas" || !fromDefault {
+		t.Errorf("missing row = %q, %v, want the default", repo, fromDefault)
+	}
+	if repo, fromDefault := p.effectiveHome(store.HomeState{Exists: true, Choice: store.RepoChosenUnread}); repo != "" || fromDefault {
+		t.Errorf("unread row = %q, %v, want the domain path as chosen", repo, fromDefault)
+	}
+	if repo, fromDefault := p.effectiveHome(store.HomeState{Exists: true, Repo: "repo-old", Choice: store.RepoChosen}); repo != "repo-old" || fromDefault {
+		t.Errorf("chosen row = %q, %v, want its own repository", repo, fromDefault)
+	}
+	if repo, _ := (placementRead{}).effectiveHome(store.HomeState{}); repo != "" {
+		t.Errorf("without a default an open item lands on %q, want the domain path", repo)
+	}
+}
+
+func settle(t *testing.T, f *placementFixture, item store.ItemRef) (string, func() (bool, error), error) {
+	t.Helper()
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return f.svc.settleHome(context.Background(), settings, item)
+}
+
+func TestSettleHomeTakesTheDefaultForAnOpenItem(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.setDefault("containers", nas.ID)
+	f.openContainer("nginx")
+	item := store.ItemRef{Domain: "containers", Key: "nginx"}
+	repoID, commit, err := settle(t, f, item)
+	if err != nil || repoID != nas.ID {
+		t.Fatalf("settleHome = %q, %v, want NAS", repoID, err)
+	}
+	if got := f.home(item); got.Choice != store.RepoOpen {
+		t.Fatalf("the step wrote before its commit: %+v", got)
+	}
+	if ok, err := commit(); err != nil || !ok {
+		t.Fatalf("commit = %v, %v", ok, err)
+	}
+	if got := f.home(item); got.Repo != nas.ID || got.Choice != store.RepoChosen {
+		t.Fatalf("home after commit = %+v, want NAS chosen", got)
+	}
+}
+
+func TestSettleHomeKeepsAnItemWithHistoryOnTheDomainPath(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.setDefault("containers", nas.ID)
+	f.openContainer("nginx")
+	f.hold(f.domainPath("containers"), snap("aaaa0001", 100, "container:nginx"))
+	item := store.ItemRef{Domain: "containers", Key: "nginx"}
+	repoID, commit, err := settle(t, f, item)
+	if err != nil || repoID != "" {
+		t.Fatalf("settleHome = %q, %v, want the domain path", repoID, err)
+	}
+	if _, err := commit(); err != nil {
+		t.Fatal(err)
+	}
+	if got := f.home(item); got.Repo != "" || got.Choice != store.RepoChosen {
+		t.Fatalf("home = %+v, want the domain path chosen", got)
+	}
+}
+
+func TestSettleHomeStopsWhenTheDomainPathCannotBeRead(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.setDefault("containers", nas.ID)
+	f.openContainer("nginx")
+	f.eng.listErr = map[string]error{f.domainPath("containers"): errors.New("share not mounted")}
+	item := store.ItemRef{Domain: "containers", Key: "nginx"}
+	if _, _, err := settle(t, f, item); err == nil {
+		t.Fatal("an unreadable domain path let the first backup pick a location")
+	}
+	if got := f.home(item); got.Choice != store.RepoOpen {
+		t.Fatalf("home = %+v, want it still open", got)
+	}
+}
+
+func TestSettleHomeRefusesADefaultOnASwitchedOffRepository(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	nas.Enabled = false
+	if _, err := f.st.UpsertOffsiteTarget(nas); err != nil {
+		t.Fatal(err)
+	}
+	f.setDefault("vms", nas.ID)
+	f.openVM("win11")
+	_, _, err := settle(t, f, store.ItemRef{Domain: "vms", Key: "win11"})
+	if err == nil || !strings.Contains(err.Error(), "default") {
+		t.Fatalf("err = %v, want a refusal that names the default", err)
+	}
+}
+
+func TestSettleHomeWithoutADefaultUsesTheDomainPath(t *testing.T) {
+	f := newPlacementFixture(t)
+	set := f.openFileSet("docs")
+	repoID, _, err := settle(t, f, store.ItemRef{Domain: "files", Key: set.ID})
+	if err != nil || repoID != "" {
+		t.Fatalf("settleHome = %q, %v, want the domain path", repoID, err)
+	}
+}
+
+func TestSettleHomeLeavesAChosenItemWhereItIs(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.setDefault("containers", "")
+	f.container("web", nas.ID)
+	repoID, commit, err := settle(t, f, store.ItemRef{Domain: "containers", Key: "web"})
+	if err != nil || repoID != nas.ID {
+		t.Fatalf("settleHome = %q, %v, want its own NAS", repoID, err)
+	}
+	if ok, err := commit(); err != nil || !ok {
+		t.Fatalf("commit for a chosen item = %v, %v", ok, err)
+	}
+	if len(f.eng.lists) != 0 {
+		t.Errorf("a chosen item listed repositories: %v", f.eng.lists)
+	}
+}
+
+func TestSettleHomeCreatesTheRowOfANewContainer(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.setDefault("containers", nas.ID)
+	item := store.ItemRef{Domain: "containers", Key: "fresh"}
+	_, commit, err := settle(t, f, item)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok, err := commit(); err != nil || !ok {
+		t.Fatalf("commit = %v, %v", ok, err)
+	}
+	if got := f.home(item); got != (store.HomeState{Exists: true, Repo: nas.ID, Choice: store.RepoChosen}) {
+		t.Fatalf("home = %+v, want a new row on NAS", got)
+	}
+}
+
+func TestSettleCommitReportsARowChosenMeanwhile(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.setDefault("containers", nas.ID)
+	f.openContainer("nginx")
+	item := store.ItemRef{Domain: "containers", Key: "nginx"}
+	_, commit, err := settle(t, f, item)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.st.WritePlacement(item, &store.HomeWrite{Choice: store.RepoChosen}, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+	if ok, err := commit(); err != nil || ok {
+		t.Fatalf("commit over a changed row = %v, %v, want false", ok, err)
+	}
+	if got := f.home(item); got.Repo != "" {
+		t.Fatalf("home = %+v, want the choice made in between", got)
 	}
 }

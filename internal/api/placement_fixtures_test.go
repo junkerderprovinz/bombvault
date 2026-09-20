@@ -486,3 +486,21 @@ func (f *placementFixture) openVM(name string) {
 		f.t.Fatalf("open vm %s: %v", name, err)
 	}
 }
+
+func (f *placementFixture) openFileSet(name string) store.FileSet {
+	f.t.Helper()
+	set, err := f.st.CreateFileSet(store.FileSet{Name: name, Path: "sets/" + name, Enabled: true})
+	if err != nil {
+		f.t.Fatalf("open file set %s: %v", name, err)
+	}
+	return set
+}
+
+func (f *placementFixture) home(item store.ItemRef) store.HomeState {
+	f.t.Helper()
+	h, err := f.st.ItemHome(item)
+	if err != nil {
+		f.t.Fatalf("home of %+v: %v", item, err)
+	}
+	return h
+}
