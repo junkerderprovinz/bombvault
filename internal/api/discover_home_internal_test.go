@@ -181,6 +181,35 @@ func TestDiscoverAfterABackupDoesNotPause(t *testing.T) {
 	}
 }
 
+func TestARepeatDiscoverDoesNotRepauseAConfirmedDomain(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.hold(f.domainPath("containers"), snap("aaaa0001", 200, "container:nginx"))
+	writeContainerDef(t, f, f.domainPath("containers"), "nginx")
+	if res, err := f.svc.Discover(context.Background(), false); err != nil || !res.Paused {
+		t.Fatalf("Discover = %+v, %v, want the fresh database paused", res, err)
+	}
+	if err := f.st.ConfirmPlacement("containers", nil); err != nil {
+		t.Fatal(err)
+	}
+
+	// A restore rebuilds the same rows without writing a backup run, so
+	// DomainHasHistory looks exactly as it did before the confirmation.
+	sent := placementWebhook(t, f)
+	res, err := f.svc.Discover(context.Background(), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Paused {
+		t.Fatal("a repeat Discover repaused a domain the operator already confirmed")
+	}
+	if pausedDefault(t, f, "containers") {
+		t.Fatal("the confirmed domain paused again")
+	}
+	if msgs := sent(); len(msgs) != 0 {
+		t.Fatalf("notifications = %q, want none: the operator already confirmed this domain", msgs)
+	}
+}
+
 func TestAProbeNeverPauses(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.hold(f.domainPath("files"), snap("aaaa0001", 200, "fileset:Photos"))

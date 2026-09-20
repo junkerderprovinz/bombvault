@@ -24,7 +24,11 @@ type PlacementDefault struct {
 	Home        string // named repository id, "" for the domain path
 	Skip        []string
 	ConfirmedAt int64 // 0 while replication waits for the default to be confirmed
-	UpdatedAt   int64
+	// ConfirmedManually is set only by ConfirmPlacement, never by
+	// PutPlacementDefault: saving a default answers where an item's next
+	// backup goes, not whether an operator has looked at a rebuilt box.
+	ConfirmedManually bool
+	UpdatedAt         int64
 }
 
 // Paused reports whether replication waits for this default to be confirmed.
@@ -42,9 +46,11 @@ type PlacementState struct {
 // domain without a default is not paused.
 func (s PlacementState) Paused() bool { return s.HasDefault && s.Default.Paused() }
 
-// Confirmed reports whether the domain has a default and it has been
-// confirmed, the state a first-listing pause check must stay out of.
-func (s PlacementState) Confirmed() bool { return s.HasDefault && !s.Default.Paused() }
+// Confirmed reports whether an operator has confirmed the domain's default
+// through ConfirmPlacement, the state that retires the rebuild-detection
+// pause checks for good. Saving a default through PutPlacementDefault never
+// sets this, so it grants no immunity from them.
+func (s PlacementState) Confirmed() bool { return s.HasDefault && s.Default.ConfirmedManually }
 
 // HasRules reports whether anything may keep an item from a target: a rule of
 // its own, or a default that leaves a target out.
@@ -84,7 +90,7 @@ func (r *Repo) PlacementDefaultFor(domain string) (PlacementDefault, bool, error
 
 // ListPlacementDefaults returns every stored default, by domain.
 func (r *Repo) ListPlacementDefaults() ([]PlacementDefault, error) {
-	rows, err := r.db.Query(`SELECT domain, home, skip, confirmed_at, updated_at FROM placement_defaults ORDER BY domain`)
+	rows, err := r.db.Query(`SELECT domain, home, skip, confirmed_at, confirmed_manually, updated_at FROM placement_defaults ORDER BY domain`)
 	if err != nil {
 		return nil, fmt.Errorf("ListPlacementDefaults: %w", err)
 	}
@@ -152,8 +158,9 @@ func (r *Repo) PausePlacement(domain string) (bool, error) {
 	return started, nil
 }
 
-// ConfirmPlacement ends a domain's pause. Every name in exclude gets the rule
-// ["*"] in the same transaction; such a name needs no item row.
+// ConfirmPlacement ends a domain's pause and marks the default manually
+// confirmed for good. Every name in exclude gets the rule ["*"] in the same
+// transaction; such a name needs no item row.
 func (r *Repo) ConfirmPlacement(domain string, exclude []string) error {
 	if err := checkPlacementDomain(domain); err != nil {
 		return err
@@ -165,8 +172,9 @@ func (r *Repo) ConfirmPlacement(domain string, exclude []string) error {
 				return err
 			}
 		}
-		_, err := tx.Exec(`INSERT INTO placement_defaults (domain, home, skip, confirmed_at, updated_at) VALUES (?, '', '[]', ?, ?)
-			ON CONFLICT(domain) DO UPDATE SET confirmed_at = excluded.confirmed_at, updated_at = excluded.updated_at`,
+		_, err := tx.Exec(`INSERT INTO placement_defaults (domain, home, skip, confirmed_at, confirmed_manually, updated_at)
+			VALUES (?, '', '[]', ?, 1, ?)
+			ON CONFLICT(domain) DO UPDATE SET confirmed_at = excluded.confirmed_at, confirmed_manually = 1, updated_at = excluded.updated_at`,
 			domain, now, now)
 		return err
 	})
@@ -210,7 +218,7 @@ func placementDomainsUsingRepoTx(tx *sql.Tx, repoID string) ([]string, error) {
 }
 
 func placementDefaultQ(q queryer, domain string) (PlacementDefault, bool, error) {
-	d, err := scanPlacementDefault(q.QueryRow(`SELECT domain, home, skip, confirmed_at, updated_at
+	d, err := scanPlacementDefault(q.QueryRow(`SELECT domain, home, skip, confirmed_at, confirmed_manually, updated_at
 		FROM placement_defaults WHERE domain = ?`, domain))
 	if errors.Is(err, sql.ErrNoRows) {
 		return PlacementDefault{}, false, nil
@@ -224,7 +232,7 @@ func placementDefaultQ(q queryer, domain string) (PlacementDefault, bool, error)
 func scanPlacementDefault(s scanner) (PlacementDefault, error) {
 	var d PlacementDefault
 	var raw string
-	if err := s.Scan(&d.Domain, &d.Home, &raw, &d.ConfirmedAt, &d.UpdatedAt); err != nil {
+	if err := s.Scan(&d.Domain, &d.Home, &raw, &d.ConfirmedAt, &d.ConfirmedManually, &d.UpdatedAt); err != nil {
 		return PlacementDefault{}, err
 	}
 	skip, err := decodeSkip(raw)

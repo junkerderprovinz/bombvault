@@ -1741,6 +1741,18 @@ UPDATE targets   SET repo_chosen = 1;
 UPDATE vms       SET repo_chosen = 1;
 UPDATE file_sets SET repo_chosen = 1;`,
 	},
+	{
+		// Confirmed_at alone cannot tell an operator's confirmation from a default
+		// PutPlacementDefault just saved, so an install already replicating before
+		// this column existed is grandfathered here: its seeded defaults count as
+		// confirmed, the same as if ConfirmPlacement had run.
+		version:          116,
+		name:             "placement_confirmed_manually",
+		alreadySatisfied: columnPresent("placement_defaults", "confirmed_manually"),
+		sql: `
+ALTER TABLE placement_defaults ADD COLUMN confirmed_manually INTEGER NOT NULL DEFAULT 0;
+UPDATE placement_defaults SET confirmed_manually = 1 WHERE confirmed_at <> 0;`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

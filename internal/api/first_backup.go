@@ -237,8 +237,17 @@ func (s *Service) discoverLock(domain string, dryRun bool) (func(), bool) {
 
 // pauseAfterDiscover pauses the domain's replication when Discover rebuilt rows
 // in a database that never backed up or copied anything for it: the rules that
-// kept items off site were lost with the old one.
+// kept items off site were lost with the old one. A domain the operator
+// already confirmed stays out of this for good, since a restore can rebuild
+// its rows again without writing a backup run.
 func (s *Service) pauseAfterDiscover(ctx context.Context, domain string, res *DiscoverResult) error {
+	d, _, err := s.store.PlacementDefaultFor(domain)
+	if err != nil {
+		return err
+	}
+	if d.ConfirmedManually {
+		return nil
+	}
 	backedUp, copied, err := s.store.DomainHasHistory(domain)
 	if err != nil || backedUp || copied {
 		return err

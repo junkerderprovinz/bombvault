@@ -224,6 +224,44 @@ func TestAConfirmedDomainDoesNotPauseWhenANewTargetIsListedFirst(t *testing.T) {
 	}
 }
 
+func TestASavedDefaultDoesNotSilenceAFirstListingPause(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.setDefault("containers", "")
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	now := time.Now().Unix()
+	f.hold(f.domainPath("containers"), snap("a9", now, "container:nginx"))
+	f.hold("b2:bucket:containers", copied("b1", "a1", now-86400, "container:nginx"))
+
+	for range 2 {
+		if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if !pausedDefault(t, f, "containers") {
+		t.Fatal("a default saved but never confirmed silenced the rebuild-detection pause")
+	}
+	if _, listed, err := f.st.TargetObservationFor("containers", b2.ID); err != nil || !listed {
+		t.Fatalf("the listing that found it was not recorded (listed=%v err=%v)", listed, err)
+	}
+	if len(f.eng.copies) != 0 {
+		t.Fatalf("copied %+v to a target holding history this database never wrote", f.eng.copies)
+	}
+}
+
+func TestASavedDefaultDoesNotSilenceABackgroundListingPause(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.setDefault("containers", "")
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	f.hold("b2:bucket:containers", copied("b1", "a1", 100, "container:nginx"))
+
+	f.svc.listTargetInBackground("containers", b2.ID)
+	waitForListings(t, f)
+
+	if !pausedDefault(t, f, "containers") {
+		t.Fatal("a default saved but never confirmed silenced the background listing's rebuild-detection pause")
+	}
+}
+
 func TestAConfirmedDomainDoesNotPauseWhenTheBackgroundListingFindsHistory(t *testing.T) {
 	f := newPlacementFixture(t)
 	if err := f.st.ConfirmPlacement("containers", nil); err != nil {

@@ -117,3 +117,28 @@ func TestDomainHistorySeesBackupsAndReplicationsOfItsDomainOnly(t *testing.T) {
 		t.Error("flash has no placement history to ask about")
 	}
 }
+
+func TestPutPlacementDefaultDoesNotConfirmManually(t *testing.T) {
+	r := newRepo(t)
+	d := store.SeedDefault(t, r, "vms", "repo-1")
+	if d.ConfirmedManually {
+		t.Fatalf("a saved default is manually confirmed: %+v", d)
+	}
+	if d, _, err := r.PlacementDefaultFor("vms"); err != nil || d.ConfirmedManually {
+		t.Fatalf("PlacementDefaultFor = %+v, %v, want the marker unset", d, err)
+	}
+}
+
+func TestConfirmPlacementSetsTheManualMarker(t *testing.T) {
+	r := newRepo(t)
+	if _, err := r.PausePlacement("containers"); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ConfirmPlacement("containers", nil); err != nil {
+		t.Fatal(err)
+	}
+	d, found, err := r.PlacementDefaultFor("containers")
+	if err != nil || !found || !d.ConfirmedManually {
+		t.Fatalf("PlacementDefaultFor after ConfirmPlacement = %+v, %v, %v, want the manual marker set", d, found, err)
+	}
+}
