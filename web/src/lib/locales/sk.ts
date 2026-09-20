@@ -436,8 +436,8 @@ const sk: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Uchovávanie snímok",
   "settings.retentionHint": "Koľko záloh sa má uchovávať pre každú položku. Po každej zálohe restic podľa tejto zásady vyčistí staršie snímky. Všetko nula = uchovať všetko (vypnuté).",
-  "excludes.advisoryImmichDb": "Immich uchováva albumy, tváre a dátumy každej fotografie v databáze PostgreSQL, ktorá beží vo vlastnom, samostatnom kontajneri, takže táto záloha ju neobsahuje. Obnovenie odtiaľto vráti obrázky, ale bez toho všetkého. Vytvorte pre túto databázu jej vlastnú zálohu alebo zapnite vstavaný export databázy v Immichu, aby skončil v priečinku, ktorý táto záloha pokrýva.",
-  "excludes.advisoryNextcloudDb": "Nextcloud uchováva účty, zdieľania a značky v databáze, ktorá zvyčajne beží v samostatnom kontajneri, takže táto záloha ju neobsahuje. Súbory sa vrátia, zdieľania nie. Zálohujte aj túto databázu.",
+  "excludes.advisoryImmichDb": "Immich uchováva albumy, tváre a dátumy každej fotografie v databáze PostgreSQL, ktorá beží vo vlastnom, samostatnom kontajneri, takže táto záloha ju neobsahuje. Obnovenie odtiaľto vráti obrázky, ale bez toho všetkého. BombVault kontajner tejto databázy dumpuje sám, keď ho zálohuje, takže skontrolujte, či je vo vašom pláne.",
+  "excludes.advisoryNextcloudDb": "Nextcloud uchováva účty, zdieľania a značky v databáze, ktorá zvyčajne beží v samostatnom kontajneri, takže táto záloha ju neobsahuje. Súbory sa vrátia, zdieľania nie. BombVault kontajner tejto databázy dumpuje sám, keď ho zálohuje, takže skontrolujte, či je vo vašom pláne.",
   "rcloneRemote.heading": "Pridať cieľ SMB alebo WebDAV",
   "rcloneRemote.hint": "Dostane sa k zdieľaniu Windows alebo Samba, prípadne k serveru WebDAV, napríklad Nextcloud, BEZ toho, aby ho bolo nutné pripojiť na hostiteľovi. Nie je to len otázka pohodlia: restic neodporúča mať repozitár na pripojenom zdieľaní CIFS a tento spôsob sa pripojeniu úplne vyhne. Heslo sa odovzdá rclone, ktorý si ho uloží vo vlastnej podobe, a nikdy sa neukladá v čistom texte. NFS sa tu neponúka, pretože ho nevie používať ani restic, ani rclone: pre NFS pripojte export v Unraid a nastavte naň Cestu zálohovania.",
   "rcloneRemote.type": "Druh",
@@ -683,7 +683,7 @@ const sk: Partial<Translations> = {
 
   // Pre/post-backup hooks
   "hooks.title": "Háčiky zálohovania",
-  "hooks.hint": "Príkazy bežia vnútri kontajnera pomocou sh -c. Predbežný príkaz beží pred zálohou; použite ho na prípravu dát, ktoré sa majú zálohovať, napríklad na vloženie databázy do appdata kontajnera. Ak predbežný príkaz zlyhá, zálohovanie sa preruší. Následný príkaz beží po opätovnom spustení kontajnera a jeho zlyhanie sa iba zaznamená. Háčiky iba spúšťajú príkazy, nepridávajú do zálohy žiadne ďalšie priečinky.",
+  "hooks.hint": "Príkazy bežia vnútri kontajnera pomocou sh -c. Predbežný príkaz beží pred zálohou; použite ho na prípravu dát, ktoré sa majú zálohovať, napríklad na zapísanie vyrovnávacej pamäte na disk. Rozpoznané databázy sa dumpujú samy a hák na ne netreba. Ak predbežný príkaz zlyhá, zálohovanie sa preruší. Následný príkaz beží po opätovnom spustení kontajnera a jeho zlyhanie sa iba zaznamená. Háčiky iba spúšťajú príkazy, nepridávajú do zálohy žiadne ďalšie priečinky.",
   "hooks.pre": "Príkaz pred zálohou",
   "hooks.post": "Príkaz po zálohe",
   "folders.title": "Zálohované priečinky",

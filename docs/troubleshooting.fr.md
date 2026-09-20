@@ -43,6 +43,24 @@ Avant que quoi que ce soit ne soit arrêté ou supprimé, la restauration exécu
 
 Si le chiffrement age est activé (Paramètres) mais qu'aucun destinataire valide n'est défini, un export échoue avec une erreur claire au lieu d'écrire du texte en clair. Ajoutez un destinataire valide (une clé publique age ou une clé publique SSH), ou désactivez le chiffrement si vous voulez que l'export soit en clair. Voir [Fonctionnalités](features.md).
 
+## Un dump de base de données a échoué
+
+Un dump en échec ne fait jamais échouer la sauvegarde qui l'entoure ; il est enregistré comme une exécution en échec à lui seul, et la raison indique quoi corriger.
+
+- **Connexion refusée.** Le dump se connecte avec les variables de mot de passe du conteneur lui-même (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` ou leurs versions `_FILE`). Vérifiez-les sur le conteneur de base de données. Une variable `_FILE` pointant vers un secret que l'utilisateur du conteneur ne peut pas lire échoue de la même façon.
+- **Privilèges manquants.** Avec un mot de passe root aléatoire, le dump ne peut se connecter que comme utilisateur applicatif, il ne contient donc que cette seule base, et MySQL 8.4 et plus récent peut le refuser purement et simplement. Donnez au conteneur un vrai mot de passe root, ou désactivez son dump.
+- **Les tables système doivent être mises à niveau.** MariaDB refuse de se laisser vidanger quand ses tables système viennent d'une version plus ancienne (erreur 1558). Ajoutez la variable `MARIADB_AUTO_UPGRADE=1` et redémarrez le conteneur, ou lancez `mariadb-upgrade` une fois à l'intérieur.
+- **Aucun outil de dump.** Une image allégée ou construite maison sans `pg_dump`, `mysqldump` ni `mariadb-dump` ne peut pas être vidangée. Utilisez l'image officielle, ou désactivez le dump.
+- **Une limite de temps.** Un dump dispose de `DB_DUMP_MAX_HOURS` (6 par défaut), la sauvegarde autour de lui de `BACKUP_MAX_HOURS`, et un dump qui cesse d'avancer est coupé après `BACKUP_STALL_HOURS`. Ce dernier cas vient le plus souvent d'un verrou tenu par l'application. Relevez la limite qui s'est déclenchée, ou faites le dump pendant que l'application est calme.
+- **Le conteneur est en pause ou redémarre.** Le dump parle au serveur en marche. Si le conteneur redémarre en boucle, son propre journal dit pourquoi.
+- **Un dump endommagé n'a pas pu être supprimé.** Un dump que BombVault n'a pas pu terminer est supprimé. Quand cette suppression échoue, le dump reste dans la liste marqué comme endommagé et vous pouvez l'y supprimer.
+
+## Un import a échoué
+
+Un import arrête le conteneur, met son dossier de données de côté et laisse l'image en créer un vide à sa place. Si une étape avant l'import lui-même échoue, l'ancien dossier est remis en place tout seul. Si c'est l'import qui échoue, le conteneur garde le dossier neuf et l'ancien reste à côté sous le nom `<dossier de données>.bombvault-before-import-<horodatage>` ; le message d'erreur de l'exécution donne le chemin exact.
+
+Pour le remettre à la main : arrêtez le conteneur, renommez le dossier de données actuel pour le dégager, renommez le dossier conservé sous son nom d'origine, puis démarrez le conteneur. Sur Unraid, le gestionnaire de fichiers de l'onglet Shares fait cela.
+
 ## Le conteneur redémarre sans cesse ou semble non sain
 
 BombVault se signale sain/non sain depuis son propre `/api/health`. Un outil d'auto-réparation (comme Autoheal) peut le redémarrer automatiquement si le moteur venait à se coincer. Vérifiez le journal du conteneur et le rapport `/spike` pour la cause sous-jacente.

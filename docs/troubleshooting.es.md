@@ -43,6 +43,24 @@ Antes de detener o eliminar nada, la restauración ejecuta una comprobación de 
 
 Si el cifrado age está activado (Ajustes) pero no hay ningún destinatario válido definido, una exportación falla con un error claro en lugar de escribir texto plano. Añade un destinatario válido (una clave pública age o una clave pública SSH), o desactiva el cifrado si quieres que la exportación sea en texto plano. Consulta [Funciones](features.md).
 
+## Un volcado de base de datos falló
+
+Un volcado fallido nunca hace fallar la copia que lo rodea; queda registrado como una ejecución fallida propia, y el motivo dice qué arreglar.
+
+- **Acceso rechazado.** El volcado entra con las variables de contraseña del propio contenedor (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` o sus versiones `_FILE`). Revísalas en el contenedor de la base de datos. Una variable `_FILE` que apunta a un secreto que el usuario del contenedor no puede leer falla igual.
+- **Faltan privilegios.** Con una contraseña de root aleatoria, el volcado solo puede entrar como usuario de la aplicación, así que contiene esa única base, y MySQL 8.4 y posteriores pueden rechazarlo del todo. Dale al contenedor una contraseña de root de verdad, o apágale el volcado.
+- **Las tablas del sistema necesitan una actualización.** MariaDB se niega a volcarse cuando sus tablas del sistema vienen de una versión anterior (error 1558). Añade la variable `MARIADB_AUTO_UPGRADE=1` y reinicia el contenedor, o ejecuta `mariadb-upgrade` dentro una vez.
+- **Sin herramienta de volcado.** Una imagen ligera o hecha a mano sin `pg_dump`, `mysqldump` ni `mariadb-dump` no se puede volcar. Usa la imagen oficial, o apaga el volcado.
+- **Un límite de tiempo.** Un volcado tiene `DB_DUMP_MAX_HOURS` (6 por defecto), la copia que lo rodea tiene `BACKUP_MAX_HOURS`, y un volcado que deja de avanzar se corta tras `BACKUP_STALL_HOURS`. Lo último suele deberse a un bloqueo que mantiene la aplicación. Sube el límite que saltó, o vuelca mientras la aplicación está tranquila.
+- **El contenedor está pausado o reiniciándose.** El volcado habla con el servidor en marcha. Si el contenedor se reinicia una y otra vez, su propio registro dice por qué.
+- **Un volcado dañado no se pudo eliminar.** Un volcado que BombVault no pudo terminar se borra. Cuando ese borrado falla, el volcado se queda en la lista marcado como dañado y puedes eliminarlo ahí.
+
+## Una importación falló
+
+Una importación para el contenedor, aparta su carpeta de datos y deja que la imagen cree una vacía en su lugar. Si falla un paso previo a la importación en sí, la carpeta antigua se devuelve sola. Si falla la importación, el contenedor se queda con la carpeta nueva y la antigua permanece al lado como `<carpeta de datos>.bombvault-before-import-<marca de tiempo>`; el mensaje de error de la ejecución nombra la ruta exacta.
+
+Para devolverla a mano: para el contenedor, renombra la carpeta de datos actual para quitarla de en medio, renombra la carpeta guardada a su nombre original y arranca el contenedor. En Unraid, el gestor de archivos de la pestaña Shares hace esto.
+
 ## El contenedor se reinicia constantemente o parece no saludable
 
 BombVault informa de saludable/no saludable desde su propio `/api/health`. Una herramienta de autorreparación (como Autoheal) puede reiniciarlo automáticamente si el motor se atasca alguna vez. Comprueba el registro del contenedor y el informe de `/spike` para conocer la causa subyacente.

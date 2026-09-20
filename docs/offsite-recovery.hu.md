@@ -157,3 +157,27 @@ Ez HMAC-SHA256 a rögzített `bombvault:restic-repo` karakterlánc fölött, kul
     Az a tároló, amely külső telephelyi replikációval érkezett ide, a küldő gépen jött létre, annak **saját** `APP_KEY` kulcsával. A fogadó gép kulcsából származtatva olyan jelszót kapsz, amelyet a restic elutasít, és ez pontosan úgy néz ki, mint egy sérült tároló, holott nem az. Ez a szokásos oka annak, hogy a `restic check` egy fogadott tárolón újra és újra jelszót kér.
 
 Mivel a helyreállítási definíciók minden tárolón **belül** élnek (`<repo>/def`, `<repo>/vm-def`), egy másolt tárolómappa teljesen önálló, így a csomag plusz a tároló minden, amire egy bare-metal visszaállításnak szüksége van.
+
+## Adatbázis-dump visszaszerzése {#database-dumps}
+
+Egy adatbázis-dump önálló visszaállítási pont a konténerek tárolójában, `dbdump:<container>` címkével és egyetlen fájllal, `/dbdump/<container>.sql`. A BombVault a **Mentések** alatt listázza, letölti és importálja őket; alább ugyanezek a lépések pusztán a restickel, arra a napra, amikor a BombVault nincs kéznél.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Az egyes dumpokon a `dbversion:` és `dbname:` címke megmondja, melyik kiszolgálóverzióból való és mely adatbázisokat tartalmazza. A teljes fájl vége `-- PostgreSQL database cluster dump complete` vagy `-- Dump completed`.
+
+Importáld egy azonos vagy újabb verziójú (PostgreSQL), illetve azonos főverziójú (MySQL és MariaDB) konténerbe, amelyet egyszer üres adatmappával indítottál, hogy feltöltse magát. A gazdagépnek nem kell adatbázis-kliens, a konténerben van:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+Ha egy teljes dumpból csak egy adatbázis kell, a MySQL és a MariaDB elfogadja a `--one-database <name>` kapcsolót a kliens parancsán. A PostgreSQL-dumpban adatbázisonként egy szakasz van, mindegyik egy `\connect <name>` sorral kezdődik: másold a szakaszt külön fájlba, és az adatbázis létrehozása után `-d <name>` kapcsolóval importáld.
+
+!!! warning "A rootként készült dump magával viszi a kiszolgáló felhasználóit"
+    A rootként készült teljes MySQL- vagy MariaDB-dump tartalmazza a `mysql` rendszeradatbázist, így az importálás az új kiszolgáló fiókjait, a root jelszavát is beleértve, a dumpban lévőkre cseréli. PostgreSQL-en a konténer által létrehozott felhasználóra kapott `role ... already exists` üzenet várható és ártalmatlan.

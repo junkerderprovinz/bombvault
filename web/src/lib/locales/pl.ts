@@ -488,8 +488,8 @@ const pl: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Przechowywanie migawek",
   "settings.retentionHint": "Ile kopii zapasowych zachować dla każdego elementu. Po każdej kopii restic usuwa starsze migawki zgodnie z tą zasadą. Wszystkie zero = zachowaj wszystko (wyłączone).",
-  "excludes.advisoryImmichDb": "Immich trzyma albumy, twarze i daty każdego zdjęcia w bazie danych PostgreSQL, która działa w osobnym kontenerze, nie w tym, więc ta kopia zapasowa jej nie zawiera. Odtworzenie stąd przywróci zdjęcia, ale bez albumów, twarzy i dat. Zrób tej bazie danych własną kopię zapasową albo włącz wbudowany w Immich eksport bazy danych, tak aby trafiał do folderu objętego tą kopią zapasową.",
-  "excludes.advisoryNextcloudDb": "Nextcloud trzyma konta, udostępnienia i tagi w bazie danych, która zwykle działa w osobnym kontenerze, więc ta kopia zapasowa jej nie zawiera. Pliki wrócą, udostępnienia nie. Zrób kopię zapasową także tej bazy danych.",
+  "excludes.advisoryImmichDb": "Immich trzyma albumy, twarze i daty każdego zdjęcia w bazie danych PostgreSQL, która działa w osobnym kontenerze, nie w tym, więc ta kopia zapasowa jej nie zawiera. Odtworzenie stąd przywróci zdjęcia, ale bez albumów, twarzy i dat. BombVault sam zrzuca kontener tej bazy danych, gdy robi jego kopię, więc sprawdź, czy jest w twoim harmonogramie.",
+  "excludes.advisoryNextcloudDb": "Nextcloud trzyma konta, udostępnienia i tagi w bazie danych, która zwykle działa w osobnym kontenerze, więc ta kopia zapasowa jej nie zawiera. Pliki wrócą, udostępnienia nie. BombVault sam zrzuca kontener tej bazy danych, gdy robi jego kopię, więc sprawdź, czy jest w twoim harmonogramie.",
   "rcloneRemote.heading": "Dodaj cel SMB lub WebDAV",
   "rcloneRemote.hint": "Łączy się z udziałem Windows lub Samba albo z serwerem WebDAV, takim jak Nextcloud, BEZ montowania go na hoście. Chodzi o coś więcej niż wygodę: restic odradza trzymanie repozytorium na zamontowanym udziale CIFS, a ta droga całkowicie omija montowanie. Hasło trafia do rclone, który zapisuje je we własnej postaci, i nigdy nie jest przechowywane otwartym tekstem. NFS nie jest tu dostępny, bo ani restic, ani rclone go nie obsługują: w przypadku NFS zamontuj eksport w Unraid i wskaż na niego ścieżkę kopii zapasowych.",
   "rcloneRemote.type": "Rodzaj",
@@ -598,7 +598,7 @@ const pl: Partial<Translations> = {
 
   // Backup hooks
   "hooks.title": "Hooki kopii zapasowych",
-  "hooks.hint": "Polecenia uruchamiane wewnątrz kontenera (sh -c). Pre działa przed kopią (np. zrzut DB do appdata, aby ją uwzględnić). Błąd przerywa kopię. Post działa po przywróceniu kontenera; jego błąd jest tylko zapisywany w logach.",
+  "hooks.hint": "Polecenia uruchamiane wewnątrz kontenera (sh -c). Pre działa przed kopią (np. zrzucenie pamięci podręcznej na dysk; rozpoznane bazy danych zrzucają się same). Błąd przerywa kopię. Post działa po przywróceniu kontenera; jego błąd jest tylko zapisywany w logach.",
   "hooks.pre": "Polecenie przed kopią",
   "hooks.post": "Polecenie po kopii",
 

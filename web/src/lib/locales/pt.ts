@@ -493,8 +493,8 @@ const pt: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Retenção de instantâneos",
   "settings.retentionHint": "Quantos backups manter por item. Após cada backup, o restic elimina os instantâneos mais antigos segundo esta política. Tudo a zero = manter tudo (desativado).",
-  "excludes.advisoryImmichDb": "O Immich guarda os álbuns, os rostos e as datas de cada fotografia numa base de dados PostgreSQL que corre noutro container, não neste, por isso este backup não a contém. Restaurar a partir daqui devolve as fotografias, mas sem os álbuns, os rostos e as datas. Dê a essa base de dados um backup próprio, ou ligue a exportação de base de dados integrada no Immich para que fique numa pasta que este backup cobre.",
-  "excludes.advisoryNextcloudDb": "O Nextcloud guarda as contas, as partilhas e as etiquetas numa base de dados que normalmente corre noutro container, por isso este backup não a contém. Os ficheiros voltam, as partilhas não. Faça também backup dessa base de dados.",
+  "excludes.advisoryImmichDb": "O Immich guarda os álbuns, os rostos e as datas de cada fotografia numa base de dados PostgreSQL que corre noutro container, não neste, por isso este backup não a contém. Restaurar a partir daqui devolve as fotografias, mas sem os álbuns, os rostos e as datas. O BombVault faz dump desse container de base de dados sozinho quando lhe faz backup, por isso confirme que está no seu agendamento.",
+  "excludes.advisoryNextcloudDb": "O Nextcloud guarda as contas, as partilhas e as etiquetas numa base de dados que normalmente corre noutro container, por isso este backup não a contém. Os ficheiros voltam, as partilhas não. O BombVault faz dump desse container de base de dados sozinho quando lhe faz backup, por isso confirme que está no seu agendamento.",
   "rcloneRemote.heading": "Adicionar um destino SMB ou WebDAV",
   "rcloneRemote.hint": "Acede a uma partilha Windows ou Samba, ou a um servidor WebDAV como o Nextcloud, SEM montar nada no host. Isto vai além da comodidade: o restic desaconselha manter um repositório numa partilha CIFS montada, e esta via evita a montagem por completo. A palavra-passe é entregue ao rclone, que a guarda no seu próprio formato, e nunca fica guardada em texto simples. O NFS não é oferecido aqui porque nem o restic nem o rclone o suportam: para NFS, monte a exportação no Unraid e defina-lhe um caminho de backup.",
   "rcloneRemote.type": "Tipo",
@@ -603,7 +603,7 @@ const pt: Partial<Translations> = {
 
   // Pre/post-backup hooks
   "hooks.title": "Hooks de backup",
-  "hooks.hint": "Os comandos são executados dentro do container (sh -c). Pre é executado antes do backup (p. ex. exportar uma BD para appdata para a incluir). Uma falha aborta o backup. Post é executado quando o container está de novo ativo; a sua falha é apenas registada.",
+  "hooks.hint": "Os comandos são executados dentro do container (sh -c). Pre é executado antes do backup (p. ex. despejar uma cache para disco; as bases de dados reconhecidas são despejadas sozinhas). Uma falha aborta o backup. Post é executado quando o container está de novo ativo; a sua falha é apenas registada.",
   "hooks.pre": "Comando pré-backup",
   "hooks.post": "Comando pós-backup",
 

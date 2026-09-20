@@ -157,3 +157,27 @@ Das ist HMAC-SHA256 über die feste Zeichenkette `bombvault:restic-repo`, als Sc
     Ein Repository, das über die Off-site-Replikation hier gelandet ist, wurde von der sendenden Maschine mit **deren** `APP_KEY` angelegt. Leitest du aus dem Schlüssel der empfangenden Kiste ab, kommt ein Passwort heraus, das restic ablehnt. Das liest sich genau wie ein kaputtes Repository und ist keines. Das ist der übliche Grund, warum `restic check` auf einem empfangenen Repo immer wieder nach dem Passwort fragt.
 
 Weil Recovery-Definitionen **in** jedem Repo liegen (`<repo>/def`, `<repo>/vm-def`), ist ein kopierter Repo-Ordner vollständig eigenständig, sodass das Kit plus das Repo alles ist, was eine Bare-Metal-Wiederherstellung braucht.
+
+## Einen Datenbank-Dump zurückholen {#database-dumps}
+
+Ein Datenbank-Dump ist ein eigener Wiederherstellungspunkt im Container-Repository, mit der Marke `dbdump:<container>` und der einen Datei `/dbdump/<container>.sql`. BombVault listet, lädt und importiert sie unter **Backups**; unten stehen dieselben Schritte mit restic allein, für den Tag, an dem BombVault nicht da ist.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Die Marken `dbversion:` und `dbname:` an jedem Dump sagen, aus welcher Serverversion er stammt und welche Datenbanken er enthält. Eine vollständige Datei endet mit `-- PostgreSQL database cluster dump complete` oder `-- Dump completed`.
+
+Spiele ihn in einen Container derselben oder einer neueren Version (PostgreSQL) beziehungsweise derselben Hauptversion (MySQL und MariaDB) ein, der einmal mit leerem Datenordner gestartet wurde, damit er sich einrichtet. Der Host braucht keinen Datenbank-Client, der Container hat einen:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+Für eine einzelne Datenbank aus einem vollen Dump nehmen MySQL und MariaDB `--one-database <name>` am Client-Befehl. Ein PostgreSQL-Dump hat je Datenbank einen Abschnitt, der mit einer Zeile `\connect <name>` beginnt: kopiere diesen Abschnitt in eine eigene Datei und spiele sie nach dem Anlegen der Datenbank mit `-d <name>` ein.
+
+!!! warning "Ein Root-Dump bringt die Benutzer des Servers mit"
+    Ein voller MySQL- oder MariaDB-Dump, als root genommen, enthält die Systemdatenbank `mysql`. Beim Einspielen ersetzt er damit die Konten des neuen Servers, das Root-Passwort eingeschlossen, durch die aus dem Dump. Bei PostgreSQL ist `role ... already exists` für den Benutzer, den der Container angelegt hat, zu erwarten und harmlos.

@@ -496,8 +496,8 @@ const fi: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Tilannevedosten säilytys",
   "settings.retentionHint": "Kuinka monta varmuuskopiota säilytetään kohdetta kohden. Jokaisen varmuuskopion jälkeen restic karsii vanhemmat tilannekuvat tämän käytännön mukaisesti. Kaikki nolla = säilytä kaikki (pois).",
-  "excludes.advisoryImmichDb": "Immich säilyttää jokaisen kuvan albumit, kasvot ja päivämäärät PostgreSQL-tietokannassa, joka pyörii omassa erillisessä kontissaan, joten tämä varmuuskopio ei sisällä sitä. Täältä palauttaminen tuo kuvat takaisin ilman niitä. Anna sille tietokannalle oma varmuuskopionsa tai kytke päälle Immichin sisäänrakennettu tietokannan dumppaus, jotta se päätyy kansioon, jonka tämä varmuuskopio kattaa.",
-  "excludes.advisoryNextcloudDb": "Nextcloud säilyttää tilinsä, jakonsa ja tunnisteensa tietokannassa, joka pyörii yleensä erillisessä kontissa, joten tämä varmuuskopio ei sisällä sitä. Tiedostot palaavat, jaot eivät. Varmuuskopioi myös se tietokanta.",
+  "excludes.advisoryImmichDb": "Immich säilyttää jokaisen kuvan albumit, kasvot ja päivämäärät PostgreSQL-tietokannassa, joka pyörii omassa erillisessä kontissaan, joten tämä varmuuskopio ei sisällä sitä. Täältä palauttaminen tuo kuvat takaisin ilman niitä. BombVault ottaa sen tietokantakontin vedoksen itsestään, kun kontti varmuuskopioidaan, joten tarkista, että se on aikataulussasi.",
+  "excludes.advisoryNextcloudDb": "Nextcloud säilyttää tilinsä, jakonsa ja tunnisteensa tietokannassa, joka pyörii yleensä erillisessä kontissa, joten tämä varmuuskopio ei sisällä sitä. Tiedostot palaavat, jaot eivät. BombVault ottaa sen tietokantakontin vedoksen itsestään, kun kontti varmuuskopioidaan, joten tarkista, että se on aikataulussasi.",
   "rcloneRemote.heading": "Lisää SMB- tai WebDAV-kohde",
   "rcloneRemote.hint": "Tavoittaa Windows- tai Samba-jaon tai WebDAV-palvelimen, kuten Nextcloudin, ILMAN että sitä liitetään isäntään. Kyse ei ole pelkästä mukavuudesta: restic ei suosittele arkiston säilyttämistä liitetyllä CIFS-jaolla, ja tämä reitti välttää liitoksen kokonaan. Salasana annetaan rclonelle, joka tallentaa sen omassa muodossaan, eikä sitä koskaan säilytetä selväkielisenä. NFS:ää ei tarjota tässä, koska restic ja rclone eivät kumpikaan tue sitä: liitä NFS-jako Unraidiin ja osoita varmuuskopiopolku siihen.",
   "rcloneRemote.type": "Tyyppi",
@@ -606,7 +606,7 @@ const fi: Partial<Translations> = {
 
   // Pre/post-backup hooks
   "hooks.title": "Varmuuskopiokoukut",
-  "hooks.hint": "Komennot suoritetaan kontin sisällä (sh -c). Pre suoritetaan ennen varmuuskopiota (esim. tietokannan dumppaus appdataan, jotta se sisältyy). Virhe keskeyttää varmuuskopion. Post suoritetaan kontin käynnistyttyä uudelleen; sen virhe vain kirjataan lokiin.",
+  "hooks.hint": "Komennot suoritetaan kontin sisällä (sh -c). Pre suoritetaan ennen varmuuskopiota (esim. välimuistin kirjoitus levylle; tunnistetut tietokannat vedostetaan itsestään). Virhe keskeyttää varmuuskopion. Post suoritetaan kontin käynnistyttyä uudelleen; sen virhe vain kirjataan lokiin.",
   "hooks.pre": "Varmuuskopiota edeltävä komento",
   "hooks.post": "Varmuuskopion jälkeinen komento",
 

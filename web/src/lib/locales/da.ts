@@ -496,8 +496,8 @@ const da: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Opbevaring af snapshots",
   "settings.retentionHint": "Hvor mange sikkerhedskopier der beholdes pr. element. Efter hver sikkerhedskopiering renser restic ældre øjebliksbilleder efter denne politik. Alt 0 = behold alt (fra).",
-  "excludes.advisoryImmichDb": "Immich gemmer hvert billedes album, ansigter og datoer i en PostgreSQL-database, der kører i sin egen, separate container, så denne sikkerhedskopi indeholder den ikke. En gendannelse herfra henter billederne tilbage uden alt det. Giv den database sin egen sikkerhedskopi, eller slå Immichs indbyggede database-dump til, så den havner i en mappe, som denne sikkerhedskopi dækker.",
-  "excludes.advisoryNextcloudDb": "Nextcloud gemmer konti, delinger og tags i en database, der som regel kører i en separat container, så denne sikkerhedskopi indeholder den ikke. Filerne kommer tilbage, delingerne gør ikke. Sikkerhedskopier også den database.",
+  "excludes.advisoryImmichDb": "Immich gemmer hvert billedes album, ansigter og datoer i en PostgreSQL-database, der kører i sin egen, separate container, så denne sikkerhedskopi indeholder den ikke. En gendannelse herfra henter billederne tilbage uden alt det. BombVault dumper den databasecontainer automatisk, når den bliver sikkerhedskopieret, så tjek at den er med i din plan.",
+  "excludes.advisoryNextcloudDb": "Nextcloud gemmer konti, delinger og tags i en database, der som regel kører i en separat container, så denne sikkerhedskopi indeholder den ikke. Filerne kommer tilbage, delingerne gør ikke. BombVault dumper den databasecontainer automatisk, når den bliver sikkerhedskopieret, så tjek at den er med i din plan.",
   "rcloneRemote.heading": "Tilføj en SMB- eller WebDAV-destination",
   "rcloneRemote.hint": "Giver adgang til en Windows- eller Samba-deling eller en WebDAV-server som Nextcloud, UDEN at den monteres på hosten. Det betyder mere end bekvemmelighed: restic fraråder at have et repository på en monteret CIFS-deling, og denne vej undgår monteringen helt. Adgangskoden gives til rclone, som gemmer den i sit eget format, og den opbevares aldrig i klartekst. NFS tilbydes ikke her, fordi hverken restic eller rclone understøtter det: til NFS skal du montere eksporten på Unraid og sætte en sikkerhedskopisti til den.",
   "rcloneRemote.type": "Type",
@@ -606,7 +606,7 @@ const da: Partial<Translations> = {
 
   // Pre/post-backup hooks
   "hooks.title": "Sikkerhedskopi-hooks",
-  "hooks.hint": "Kommandoer kører inde i containeren (sh -c). Pre kører før sikkerhedskopieringen (f.eks. dump en DB til appdata, så den inkluderes). En fejl afbryder sikkerhedskopieringen. Post kører, når containeren er oppe igen; dens fejl logges blot.",
+  "hooks.hint": "Kommandoer kører inde i containeren (sh -c). Pre kører før sikkerhedskopieringen (f.eks. skriv en cache til disk; genkendte databaser dumpes af sig selv). En fejl afbryder sikkerhedskopieringen. Post kører, når containeren er oppe igen; dens fejl logges blot.",
   "hooks.pre": "Pre-sikkerhedskopikommando",
   "hooks.post": "Post-sikkerhedskopikommando",
 

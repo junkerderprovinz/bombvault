@@ -20,6 +20,7 @@
 | `PLATFORM` | 否 | 强制指定 BombVault 认为自己运行在哪个平台上，而不进行自动检测：`unraid`、`generic` 或 `truenas`（默认未设置，会通过在闪存挂载下探测 `dockerMan` 标记来自动检测 Unraid，否则为 `generic`；无法识别的值同样回退为 `generic`，并记录到日志）。请在通用 Docker 主机或 TrueNAS Scale 上显式设置它，而不要依赖仅适用于 Unraid 的自动探测；通用 compose 文件正是这样做的。它会改变 appdata 回退约定、跨实例还原目标的默认值，以及是否会尝试仅适用于 Unraid 的通知/配套插件步骤（参见 `internal/platform`）。 |
 | `BOMBVAULT_SELF_CONTAINER` | 否 | BombVault 容器自身的名称，以便它绝不会备份（从而停止）自己。 |
 | `BACKUP_MAX_HOURS` | 否 | 单次备份运行在被强制取消前可持有其域锁的最长挂钟小时数（一道防护，防止卡死的运行永久阻塞该域）。留空（默认）使用 `48`。对于非常大或缓慢的云备份可调高它（在上限处被取消的运行会以 `context deadline exceeded` 失败）。设为 `0` 可完全禁用该上限。 |
+| `DB_DUMP_MAX_HOURS` | 否 | 一次自动数据库转储在被停止前可以运行的小时数。留空（默认）使用 `6`；允许 `1` 到 `48`，并且该上限始终比 `BACKUP_MAX_HOURS` 至少低一小时，好让长转储被自己的上限截断并如实上报，而不是把备份一起拖垮。不再有进展的转储会更早停止，在 `BACKUP_STALL_HOURS` 之后。被停止的转储只算它自己失败，容器备份继续进行。在 Unraid 上，用 **Add another Path, Port, Variable** 把该变量加到 BombVault 容器。 |
 | `TZ` | 否 | 计划任务的时区（例如 `Europe/Berlin`）。 **未设置时，所有计划均按 UTC 运行**：设为 02:30 的计划将在 02:30 UTC 启动，而不是本地时间。 在 Unraid 上无需自行设置：系统会将自身时区传递给每个容器。 |
 
 ## 挂载
@@ -39,6 +40,7 @@
 - **Docker 具名卷** 一律纳入，因为它们没有可丢弃的对应物，也就没什么可过滤的，**但仅当该卷在宿主机上的真实存储路径本身能通过 Host Data 挂载抵达时才算**，这和 BombVault 备份的其他宿主机路径条件完全一致。默认的本地卷驱动会把卷放在守护进程自己的数据根目录下，即未做修改时的 `/var/lib/docker/volumes/<name>/_data`（可用 `docker info -f '{{.DockerRootDir}}'` 查看）。这个位置并不在通用 `docker-compose.yml` 默认使用的那个只含单个目录的窄 Host Data 挂载里。抵达不到的卷会被静默跳过，这不算错误。要在通用主机上真正备份具名卷，请把 Host Data（以及 `HOST_SOURCE_ROOT`）指向一个同时覆盖 Docker 数据根目录的共同上级目录，取舍见 compose 文件里的 Host Data 注释（Unraid 出于同样的原因，直接挂载整个 `/mnt`，也就是它自己的顶层通用约定，从而绕开了这个问题）。
 - **Docker Compose 项目目录：** 若容器带有标准标签 `com.docker.compose.project.working_dir`（由 `docker compose up` 自动设置），该目录也会一并加入，无论是否有绑定命中了数据根目录片段。
 - **用标签 `bombvault.data` 覆盖：** 给容器设上标签 `bombvault.data=true`，即可纳入它的全部绑定挂载，适用于上面两条约定都抓不到的布局（例如没有 Compose 项目、只有单个 `/srv/plex/config` 绑定）。除 `false` 之外任何非空值都算作真；没有该标签或 `bombvault.data=false` 则什么也不改变。
+- **标签 `bombvault.dbdump`：** 给容器设置 `bombvault.dbdump=false` 即可关闭它的自动数据库转储（`0`、`no`、`off` 效果相同），或者写上引擎名（`postgres`、`mysql`、`mariadb`），让 BombVault 转储它自己认不出来的容器。标签优先于容器卡片上的开关，而在 Unraid 上通常就用那个开关。
 
 ## 安全模型
 

@@ -490,8 +490,8 @@ const nl: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Bewaarbeleid voor snapshots",
   "settings.retentionHint": "Hoeveel back-ups per item worden bewaard. Na elke back-up ruimt restic oudere snapshots op volgens dit beleid. Alles 0 = alles bewaren (uit).",
-  "excludes.advisoryImmichDb": "Immich bewaart de albums, gezichten en datums van elke foto in een PostgreSQL-database die in een andere container draait dan deze, dus deze back-up bevat die niet. Herstellen vanaf hier brengt de foto's terug, maar zonder albums, gezichten en datums. Geef die database een eigen back-up, of zet Immichs ingebouwde database-export aan zodat die in een map belandt die deze back-up wel meeneemt.",
-  "excludes.advisoryNextcloudDb": "Nextcloud bewaart accounts, gedeelde items en tags in een database die meestal in een aparte container draait, dus deze back-up bevat die niet. De bestanden komen terug, het delen niet. Maak ook van die database een back-up.",
+  "excludes.advisoryImmichDb": "Immich bewaart de albums, gezichten en datums van elke foto in een PostgreSQL-database die in een andere container draait dan deze, dus deze back-up bevat die niet. Herstellen vanaf hier brengt de foto's terug, maar zonder albums, gezichten en datums. BombVault dumpt die databasecontainer vanzelf zodra er een back-up van wordt gemaakt, dus controleer of hij in je planning staat.",
+  "excludes.advisoryNextcloudDb": "Nextcloud bewaart accounts, gedeelde items en tags in een database die meestal in een aparte container draait, dus deze back-up bevat die niet. De bestanden komen terug, het delen niet. BombVault dumpt die databasecontainer vanzelf zodra er een back-up van wordt gemaakt, dus controleer of hij in je planning staat.",
   "rcloneRemote.heading": "SMB- of WebDAV-bestemming toevoegen",
   "rcloneRemote.hint": "Bereikt een gedeelde Windows- of Samba-map, of een WebDAV-server zoals Nextcloud, ZONDER die op de host te mounten. Dat is meer dan gemak: restic raadt af een repository in een gemounte gedeelde CIFS-map te bewaren, en deze route vermijdt de mount helemaal. Het wachtwoord gaat naar rclone, dat het in een eigen vorm opslaat, en wordt nooit in leesbare tekst bewaard. NFS wordt hier niet aangeboden omdat restic en rclone het geen van beide ondersteunen: mount voor NFS de export op Unraid en stel er een back-uppad op in.",
   "rcloneRemote.type": "Soort",
@@ -600,7 +600,7 @@ const nl: Partial<Translations> = {
 
   // Pre/post-backup hooks
   "hooks.title": "Back-uphooks",
-  "hooks.hint": "Commando's draaien in de container (sh -c). Pre draait vóór de back-up (bijv. een DB naar appdata dumpen zodat die wordt meegenomen). Een fout breekt de back-up af. Post draait nadat de container weer draait; een fout daarvan wordt alleen gelogd.",
+  "hooks.hint": "Commando's draaien in de container (sh -c). Pre draait vóór de back-up (bijv. een cache naar schijf wegschrijven; herkende databases worden vanzelf gedumpt). Een fout breekt de back-up af. Post draait nadat de container weer draait; een fout daarvan wordt alleen gelogd.",
   "hooks.pre": "Pre-back-upcommando",
   "hooks.post": "Post-back-upcommando",
 

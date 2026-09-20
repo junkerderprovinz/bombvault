@@ -157,3 +157,27 @@ printf 'bombvault:restic-repo' \
     Ένα αποθετήριο που έφτασε εδώ μέσω αναπαραγωγής εκτός έδρας δημιουργήθηκε από τη μηχανή που το έστειλε, με το **δικό της** `APP_KEY`. Η παραγωγή από το κλειδί της μηχανής που λαμβάνει δίνει κωδικό που το restic απορρίπτει, κάτι που μοιάζει ακριβώς με χαλασμένο αποθετήριο χωρίς να είναι. Αυτός είναι ο συνήθης λόγος που το `restic check` σε ληφθέν αποθετήριο ζητά ξανά και ξανά τον κωδικό.
 
 Επειδή οι ορισμοί ανάκτησης ζουν **μέσα** σε κάθε αποθετήριο (`<repo>/def`, `<repo>/vm-def`), ένας αντιγραμμένος φάκελος αποθετηρίου είναι πλήρως αυτοτελής, οπότε το κιτ μαζί με το αποθετήριο είναι ό,τι χρειάζεται μια επαναφορά σε γυμνό υλικό.
+
+## Ανάκτηση ενός dump βάσης δεδομένων {#database-dumps}
+
+Ένα dump βάσης δεδομένων είναι δικό του σημείο επαναφοράς στο αποθετήριο των containers, με την ετικέτα `dbdump:<container>` και ένα μόνο αρχείο, το `/dbdump/<container>.sql`. Το BombVault τα εμφανίζει, τα κατεβάζει και τα εισάγει στα **Αντίγραφα**· παρακάτω είναι τα ίδια βήματα μόνο με restic, για τη μέρα που το BombVault δεν είναι εκεί.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Οι ετικέτες `dbversion:` και `dbname:` σε κάθε dump λένε από ποια έκδοση διακομιστή προέρχεται και ποιες βάσεις περιέχει. Ένα πλήρες αρχείο τελειώνει με `-- PostgreSQL database cluster dump complete` ή `-- Dump completed`.
+
+Εισαγάγετέ το σε ένα container ίδιας ή νεότερης έκδοσης (PostgreSQL), ή ίδιας κύριας έκδοσης (MySQL και MariaDB), που ξεκίνησε μία φορά με άδειο φάκελο δεδομένων ώστε να αρχικοποιηθεί. Ο host δεν χρειάζεται πελάτη βάσης, το container έχει έναν:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+Για μία μόνο βάση μέσα από ένα πλήρες dump, η MySQL και η MariaDB δέχονται `--one-database <name>` στην εντολή του πελάτη. Ένα dump PostgreSQL έχει μία ενότητα ανά βάση, καθεμιά ξεκινά με μια γραμμή `\connect <name>`: αντιγράψτε την ενότητα σε δικό της αρχείο και εισαγάγετέ το με `-d <name>` αφού δημιουργήσετε τη βάση.
+
+!!! warning "Ένα dump ως root φέρνει μαζί τους χρήστες του διακομιστή"
+    Ένα πλήρες dump MySQL ή MariaDB παρμένο ως root περιέχει τη βάση συστήματος `mysql`, οπότε η εισαγωγή του αντικαθιστά τους λογαριασμούς του νέου διακομιστή, μαζί με τον κωδικό του root, με εκείνους του dump. Στην PostgreSQL, το `role ... already exists` για τον χρήστη που δημιούργησε το container είναι αναμενόμενο και αβλαβές.

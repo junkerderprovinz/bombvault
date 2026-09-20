@@ -172,3 +172,27 @@ That is HMAC-SHA256 over the fixed string `bombvault:restic-repo`, keyed with th
     A repository that arrived here through off-site replication was created by the machine that sent it, with **its** `APP_KEY`. Deriving from the receiving box's key produces a password restic will reject, which reads exactly like a corrupt repository and is not. This is the usual reason `restic check` on a received repo asks for a password over and over.
 
 Because recovery definitions live **inside** each repo (`<repo>/def`, `<repo>/vm-def`), a copied repo folder is fully self-contained, so the kit plus the repo is everything a bare-metal restore needs.
+
+## Getting a database dump back {#database-dumps}
+
+A database dump is a restore point of its own in the containers repository, tagged `dbdump:<container>`, holding the single file `/dbdump/<container>.sql`. BombVault lists, downloads and imports them under **Backups**; below are the same steps with restic alone, for the day BombVault is not there.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+The tags `dbversion:` and `dbname:` on each dump say which server version it came from and which databases it holds. A complete file ends with `-- PostgreSQL database cluster dump complete` or `-- Dump completed`.
+
+Import it into a container of the same or a newer version (PostgreSQL), or the same major version (MySQL and MariaDB), started once with an empty data folder so it initialises. The host needs no database client, the container has one:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+For a single database out of a full dump, MySQL and MariaDB take `--one-database <name>` on the client command. A PostgreSQL dump has one section per database, each starting with a `\connect <name>` line: copy that section into its own file and import it with `-d <name>` after creating the database.
+
+!!! warning "A root dump carries the server's users"
+    A full MySQL or MariaDB dump taken as root contains the `mysql` system database, so importing it replaces the new server's accounts, including root's password, with the ones from the dump. On PostgreSQL, `role ... already exists` for the user the container created is expected and harmless.

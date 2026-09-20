@@ -43,6 +43,24 @@ Ennen kuin mitään pysäytetään tai poistetaan, palautus ajaa esitarkastuksen
 
 Jos age-salaus on päällä (Asetukset) mutta kelvollista vastaanottajaa ei ole asetettu, vienti epäonnistuu selkeällä virheellä selkotekstin kirjoittamisen sijaan. Lisää kelvollinen vastaanottaja (age-julkinen avain tai SSH-julkinen avain), tai kytke salaus pois päältä, jos tarkoitat viennin olevan selkotekstiä. Katso [Ominaisuudet](features.md).
 
+## Tietokantavedos epäonnistui
+
+Epäonnistunut vedos ei koskaan kaada ympärillään olevaa varmuuskopiota; se kirjataan omaksi epäonnistuneeksi ajokseen, ja syy kertoo, mitä korjata.
+
+- **Kirjautuminen hylättiin.** Vedos kirjautuu kontin omilla salasanamuuttujilla (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` tai niiden `_FILE`-versioilla). Tarkista ne tietokantakontista. `_FILE`-muuttuja, joka osoittaa salaisuuteen, jota kontin oma käyttäjä ei saa lukea, epäonnistuu samalla tavalla.
+- **Puuttuvat oikeudet.** Satunnaisella root-salasanalla vedos pääsee kirjautumaan vain sovelluskäyttäjänä, jolloin se sisältää vain sen yhden tietokannan, ja MySQL 8.4 ja uudemmat voivat kieltäytyä kokonaan. Anna kontille oikea root-salasana tai kytke sen vedos pois.
+- **Järjestelmätaulut vaativat päivityksen.** MariaDB kieltäytyy vedostamasta, kun sen järjestelmätaulut ovat vanhemmasta versiosta (virhe 1558). Lisää muuttuja `MARIADB_AUTO_UPGRADE=1` ja käynnistä kontti uudelleen, tai aja `mariadb-upgrade` sen sisällä kerran.
+- **Ei vedostustyökalua.** Riisuttua tai itse rakennettua levykuvaa ilman `pg_dump`-, `mysqldump`- tai `mariadb-dump`-työkalua ei voi vedostaa. Käytä virallista levykuvaa tai kytke vedos pois.
+- **Aikaraja.** Vedos saa `DB_DUMP_MAX_HOURS` (oletuksena 6), sen ympärillä oleva varmuuskopio saa `BACKUP_MAX_HOURS`, ja vedos, joka lakkaa edistymästä, katkaistaan `BACKUP_STALL_HOURS`-ajan jälkeen. Viimeisen takana on yleensä sovelluksen pitämä lukko. Nosta sitä rajaa, joka laukesi, tai vedosta silloin kun sovellus on rauhallinen.
+- **Kontti on pysäytetty tauolle tai käynnistyy uudelleen.** Vedos puhuu käynnissä olevan palvelimen kanssa. Jos kontti käynnistyy yhä uudelleen, sen oma loki kertoo miksi.
+- **Vaurioitunutta vedosta ei saatu poistettua.** Vedos, jota BombVault ei saanut valmiiksi, poistetaan. Kun poisto epäonnistuu, vedos jää listalle merkittynä vaurioituneeksi ja voit poistaa sen sieltä.
+
+## Tuonti epäonnistui
+
+Tuonti pysäyttää kontin, siirtää sen datakansion sivuun ja antaa levykuvan luoda tilalle tyhjän. Jos jokin vaihe ennen varsinaista tuontia epäonnistuu, vanha kansio palautetaan itsestään. Jos tuonti epäonnistuu, kontille jää tuore kansio ja vanha jää sen viereen nimellä `<datakansio>.bombvault-before-import-<aikaleima>`; ajon virheilmoitus kertoo tarkan polun.
+
+Käsin palautus: pysäytä kontti, nimeä nykyinen datakansio pois tieltä, nimeä säilytetty kansio takaisin alkuperäiselle nimelleen ja käynnistä kontti. Unraidissa tämän hoitaa Shares-välilehden tiedostonhallinta.
+
 ## Kontti käynnistyy jatkuvasti uudelleen tai näyttää epäterveeltä
 
 BombVault raportoi terve/epäterve omasta `/api/health`-päätepisteestään. Automaattinen korjaustyökalu (kuten Autoheal) voi käynnistää sen uudelleen automaattisesti, jos moottori koskaan jumiutuu. Tarkista kontin loki ja `/spike`-raportti taustalla olevan syyn selvittämiseksi.

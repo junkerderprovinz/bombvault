@@ -157,3 +157,27 @@ printf 'bombvault:restic-repo' \
     Kho đến đây qua nhân bản ngoại vi được tạo bởi máy đã gửi nó, bằng `APP_KEY` của **chính máy đó**. Suy ra từ khóa của máy nhận sẽ cho một mật khẩu mà restic từ chối, trông y hệt một kho bị hỏng mà thực ra không hỏng. Đây là lý do thường gặp khiến `restic check` trên kho đã nhận cứ hỏi mật khẩu mãi.
 
 Vì các định nghĩa khôi phục nằm **bên trong** mỗi kho (`<repo>/def`, `<repo>/vm-def`), một thư mục kho được sao chép hoàn toàn tự chứa, nên bộ khôi phục cộng với kho là tất cả những gì một lần khôi phục bare-metal cần.
+
+## Lấy lại một bản kết xuất cơ sở dữ liệu {#database-dumps}
+
+Bản kết xuất cơ sở dữ liệu là một điểm khôi phục riêng trong kho của các container, mang nhãn `dbdump:<container>` và chỉ chứa một tệp duy nhất, `/dbdump/<container>.sql`. BombVault liệt kê, tải về và nhập chúng ở mục **Sao lưu**; dưới đây là cùng các bước ấy chỉ với restic, dành cho ngày không có BombVault.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Các nhãn `dbversion:` và `dbname:` trên mỗi bản kết xuất cho biết nó đến từ phiên bản máy chủ nào và chứa những cơ sở dữ liệu nào. Một tệp trọn vẹn kết thúc bằng `-- PostgreSQL database cluster dump complete` hoặc `-- Dump completed`.
+
+Hãy nhập nó vào một container cùng phiên bản hoặc mới hơn (PostgreSQL), hoặc cùng phiên bản chính (MySQL và MariaDB), đã được khởi động một lần với thư mục dữ liệu trống để nó tự khởi tạo. Máy chủ vật lý không cần trình khách cơ sở dữ liệu, container đã có sẵn:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+Để lấy một cơ sở dữ liệu duy nhất từ bản kết xuất đầy đủ, MySQL và MariaDB nhận `--one-database <name>` trên lệnh trình khách. Bản kết xuất PostgreSQL có một phần cho mỗi cơ sở dữ liệu, mỗi phần mở đầu bằng dòng `\connect <name>`: chép phần đó ra tệp riêng rồi nhập bằng `-d <name>` sau khi đã tạo cơ sở dữ liệu.
+
+!!! warning "Bản kết xuất lấy bằng root mang theo người dùng của máy chủ"
+    Bản kết xuất đầy đủ của MySQL hay MariaDB lấy bằng root có chứa cơ sở dữ liệu hệ thống `mysql`, nên khi nhập, các tài khoản của máy chủ mới, kể cả mật khẩu root, sẽ bị thay bằng tài khoản trong bản kết xuất. Trên PostgreSQL, thông báo `role ... already exists` về người dùng do chính container tạo là chuyện bình thường và vô hại.

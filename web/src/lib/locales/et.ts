@@ -436,8 +436,8 @@ const et: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Hetktõmmiste säilitamine",
   "settings.retentionHint": "Mitu varundust iga üksuse kohta säilitatakse. Pärast iga varundust puhastab restic vanemad hetktõmmised selle reegli järgi. Kõik nullid = säilita kõik (väljas).",
-  "excludes.advisoryImmichDb": "Immich hoiab iga foto albumeid, nägusid ja kuupäevi PostgreSQLi andmebaasis, mis töötab omaette, eraldi konteineris, nii et see varundus seda ei sisalda. Siit taastamine toob pildid tagasi, aga ilma kõige selleta. Anna sellele andmebaasile oma varundus või lülita sisse Immichi enda andmebaasi dumpimine, et see satuks kausta, mille see varundus katab.",
-  "excludes.advisoryNextcloudDb": "Nextcloud hoiab kontosid, jagamisi ja silte andmebaasis, mis tavaliselt töötab eraldi konteineris, nii et see varundus seda ei sisalda. Failid tulevad tagasi, jagamised mitte. Varunda ka see andmebaas.",
+  "excludes.advisoryImmichDb": "Immich hoiab iga foto albumeid, nägusid ja kuupäevi PostgreSQLi andmebaasis, mis töötab omaette, eraldi konteineris, nii et see varundus seda ei sisalda. Siit taastamine toob pildid tagasi, aga ilma kõige selleta. BombVault dumbib selle andmebaasi konteineri automaatselt, kui seda varundatakse, nii et kontrolli, et see oleks sinu ajakavas.",
+  "excludes.advisoryNextcloudDb": "Nextcloud hoiab kontosid, jagamisi ja silte andmebaasis, mis tavaliselt töötab eraldi konteineris, nii et see varundus seda ei sisalda. Failid tulevad tagasi, jagamised mitte. BombVault dumbib selle andmebaasi konteineri automaatselt, kui seda varundatakse, nii et kontrolli, et see oleks sinu ajakavas.",
   "rcloneRemote.heading": "Lisa SMB- või WebDAV-sihtkoht",
   "rcloneRemote.hint": "Jõuab Windowsi või Samba jagatud kaustani või WebDAV-serverini, näiteks Nextcloudini, ILMA seda hostis haakimata. See on olulisem kui pelk mugavus: restic ei soovita hoidlat haagitud CIFS-i jagatud kaustas hoida ja see lahendus väldib haakimist täielikult. Parool antakse rclone'ile, mis salvestab selle oma vormingus, ja seda ei hoita kunagi avatekstina. NFS-i siin ei pakuta, sest ei restic ega rclone toeta seda: NFS-i jaoks haagi eksport Unraidis ja määra varunduse rada sellele.",
   "rcloneRemote.type": "Liik",
@@ -683,7 +683,7 @@ const et: Partial<Translations> = {
 
   // Pre/post-backup hooks
   "hooks.title": "Varunduse hookid",
-  "hooks.hint": "Käsud töötavad konteineris käsuga sh -c. Eelkäsk töötab enne varundust; kasuta seda varundatavate andmete ettevalmistamiseks, näiteks andmebaasi dumpimiseks konteineri appdata kausta. Kui eelkäsk ebaõnnestub, katkestatakse varundus. Järelkäsk töötab pärast konteineri uuesti käivitamist ja selle tõrget ainult logitakse. Hookid ainult käivitavad käske, need ei lisa varundusse täiendavaid kaustu.",
+  "hooks.hint": "Käsud töötavad konteineris käsuga sh -c. Eelkäsk töötab enne varundust; kasuta seda varundatavate andmete ettevalmistamiseks, näiteks vahemälu kettale kirjutamiseks. Tuntud andmebaasid dumbitakse automaatselt ja neile pole hooki vaja. Kui eelkäsk ebaõnnestub, katkestatakse varundus. Järelkäsk töötab pärast konteineri uuesti käivitamist ja selle tõrget ainult logitakse. Hookid ainult käivitavad käske, need ei lisa varundusse täiendavaid kaustu.",
   "hooks.pre": "Varunduse-eelne käsk",
   "hooks.post": "Varundusjärgne käsk",
   "folders.title": "Varundatavad kaustad",

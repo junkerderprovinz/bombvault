@@ -157,3 +157,27 @@ To HMAC-SHA256 po stałym ciągu `bombvault:restic-repo`, z surowymi bajtami sze
     Repozytorium, które trafiło tu przez replikację poza siedzibę, utworzyła maszyna, która je wysłała, swoim **własnym** `APP_KEY`. Wyprowadzenie z klucza maszyny odbierającej daje hasło, które restic odrzuca, co wygląda dokładnie jak uszkodzone repozytorium, choć nim nie jest. To zwykły powód, dla którego `restic check` na otrzymanym repozytorium wciąż pyta o hasło.
 
 Ponieważ definicje odzyskiwania znajdują się **wewnątrz** każdego repozytorium (`<repo>/def`, `<repo>/vm-def`), skopiowany folder repozytorium jest w pełni samowystarczalny, więc zestaw plus repozytorium to wszystko, czego potrzebuje przywracanie na goły metal.
+
+## Odzyskiwanie zrzutu bazy danych {#database-dumps}
+
+Zrzut bazy danych jest osobnym punktem przywracania w repozytorium kontenerów, z etykietą `dbdump:<container>` i jednym plikiem, `/dbdump/<container>.sql`. BombVault wypisuje je, pobiera i importuje w sekcji **Kopie**; poniżej te same kroki z samym resticiem, na dzień, w którym BombVaulta nie ma.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Etykiety `dbversion:` i `dbname:` przy każdym zrzucie mówią, z jakiej wersji serwera pochodzi i jakie bazy zawiera. Kompletny plik kończy się linią `-- PostgreSQL database cluster dump complete` albo `-- Dump completed`.
+
+Zaimportuj go do kontenera w tej samej lub nowszej wersji (PostgreSQL) albo w tej samej wersji głównej (MySQL i MariaDB), uruchomionego raz z pustym folderem danych, żeby się zainicjował. Host nie potrzebuje klienta bazy, kontener go ma:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+Po jedną bazę z pełnego zrzutu: MySQL i MariaDB przyjmują `--one-database <name>` w poleceniu klienta. Zrzut PostgreSQL ma jedną sekcję na bazę, każda zaczyna się linią `\connect <name>`: skopiuj tę sekcję do osobnego pliku i zaimportuj go z `-d <name>` po utworzeniu bazy.
+
+!!! warning "Zrzut zrobiony jako root niesie ze sobą użytkowników serwera"
+    Pełny zrzut MySQL-a lub MariaDB zrobiony jako root zawiera bazę systemową `mysql`, więc jego import zastępuje konta nowego serwera, łącznie z hasłem roota, kontami ze zrzutu. W PostgreSQL komunikat `role ... already exists` o użytkowniku utworzonym przez kontener jest spodziewany i nieszkodliwy.

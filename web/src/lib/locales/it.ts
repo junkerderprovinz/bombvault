@@ -496,8 +496,8 @@ const it: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Conservazione degli snapshot",
   "settings.retentionHint": "Quanti backup conservare per elemento. Dopo ogni backup, restic elimina gli snapshot più vecchi secondo questa regola. Tutto a zero = conserva tutto (disattivato).",
-  "excludes.advisoryImmichDb": "Immich tiene gli album, i volti e le date di ogni foto in un database PostgreSQL che gira in un container del tutto separato, quindi questo backup non lo contiene. Un ripristino da qui riporta le immagini, ma senza niente di tutto questo. Dai a quel database un backup suo, oppure attiva l'esportazione del database integrata in Immich, così finisce in una cartella coperta da questo backup.",
-  "excludes.advisoryNextcloudDb": "Nextcloud tiene account, condivisioni e tag in un database che di solito gira in un container separato, quindi questo backup non lo contiene. I file tornano, le condivisioni no. Fai il backup anche di quel database.",
+  "excludes.advisoryImmichDb": "Immich tiene gli album, i volti e le date di ogni foto in un database PostgreSQL che gira in un container del tutto separato, quindi questo backup non lo contiene. Un ripristino da qui riporta le immagini, ma senza niente di tutto questo. BombVault dumpa da solo il container di quel database quando ne fa il backup, quindi controlla che sia nella tua pianificazione.",
+  "excludes.advisoryNextcloudDb": "Nextcloud tiene account, condivisioni e tag in un database che di solito gira in un container separato, quindi questo backup non lo contiene. I file tornano, le condivisioni no. BombVault dumpa da solo il container di quel database quando ne fa il backup, quindi controlla che sia nella tua pianificazione.",
   "rcloneRemote.heading": "Aggiungi una destinazione SMB o WebDAV",
   "rcloneRemote.hint": "Raggiunge una condivisione Windows o Samba, oppure un server WebDAV come Nextcloud, SENZA montare nulla sull'host. Non è solo una questione di comodità: restic sconsiglia di tenere un repository su una condivisione CIFS montata, e questa via evita del tutto il mount. La password viene passata a rclone, che la memorizza nel proprio formato, e non viene mai conservata in chiaro. NFS non è disponibile qui perché né restic né rclone lo supportano: per NFS, monta l'export su Unraid e impostavi un percorso di backup.",
   "rcloneRemote.type": "Tipo",
@@ -606,7 +606,7 @@ const it: Partial<Translations> = {
 
   // Pre/post-backup hooks
   "hooks.title": "Hook di backup",
-  "hooks.hint": "I comandi vengono eseguiti dentro il container (sh -c). Pre viene eseguito prima del backup (es. esportare un DB in appdata per includerlo). Un errore annulla il backup. Post viene eseguito quando il container è di nuovo attivo; il suo errore viene solo registrato.",
+  "hooks.hint": "I comandi vengono eseguiti dentro il container (sh -c). Pre viene eseguito prima del backup (es. scaricare una cache su disco; i database riconosciuti vengono dumpati da soli). Un errore annulla il backup. Post viene eseguito quando il container è di nuovo attivo; il suo errore viene solo registrato.",
   "hooks.pre": "Comando pre-backup",
   "hooks.post": "Comando post-backup",
 

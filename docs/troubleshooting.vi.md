@@ -43,6 +43,24 @@ Trước khi bất cứ thứ gì bị dừng hoặc xóa, việc khôi phục c
 
 Nếu bật mã hóa age (Settings) nhưng không đặt người nhận hợp lệ nào, một bản xuất sẽ thất bại với một lỗi rõ ràng thay vì ghi văn bản thô. Thêm một người nhận hợp lệ (một khóa công khai age hoặc một khóa công khai SSH), hoặc tắt mã hóa nếu bạn có ý định bản xuất là văn bản thô. Xem [Tính năng](features.md).
 
+## Một bản kết xuất cơ sở dữ liệu đã thất bại
+
+Bản kết xuất thất bại không bao giờ làm hỏng bản sao lưu bao quanh nó; nó được ghi lại như một lần chạy thất bại của riêng mình, và lý do cho biết phải sửa gì.
+
+- **Bị từ chối đăng nhập.** Bản kết xuất đăng nhập bằng chính các biến mật khẩu của container (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` hoặc bản `_FILE` của chúng). Hãy kiểm tra chúng trên container cơ sở dữ liệu. Một biến `_FILE` trỏ tới bí mật mà người dùng của chính container không đọc được cũng thất bại y như vậy.
+- **Thiếu quyền.** Với mật khẩu root ngẫu nhiên, bản kết xuất chỉ đăng nhập được với tư cách người dùng ứng dụng nên chỉ chứa đúng cơ sở dữ liệu đó, còn MySQL 8.4 trở lên có thể từ chối hẳn. Hãy đặt cho container một mật khẩu root thật, hoặc tắt kết xuất của nó.
+- **Các bảng hệ thống cần nâng cấp.** MariaDB từ chối kết xuất khi bảng hệ thống của nó đến từ phiên bản cũ hơn (lỗi 1558). Thêm biến `MARIADB_AUTO_UPGRADE=1` rồi khởi động lại container, hoặc chạy `mariadb-upgrade` một lần bên trong.
+- **Không có công cụ kết xuất.** Một image rút gọn hay tự dựng mà thiếu `pg_dump`, `mysqldump` hoặc `mariadb-dump` thì không kết xuất được. Hãy dùng image chính thức, hoặc tắt kết xuất.
+- **Giới hạn thời gian.** Một bản kết xuất có `DB_DUMP_MAX_HOURS` (mặc định 6), bản sao lưu bao quanh có `BACKUP_MAX_HOURS`, còn bản kết xuất ngừng tiến triển sẽ bị cắt sau `BACKUP_STALL_HOURS`. Trường hợp cuối thường do một khóa mà ứng dụng đang giữ. Hãy nâng giới hạn đã kích hoạt, hoặc kết xuất lúc ứng dụng rảnh rỗi.
+- **Container đang tạm dừng hoặc đang khởi động lại.** Bản kết xuất nói chuyện với máy chủ đang chạy. Nếu container cứ khởi động lại, nhật ký của chính nó sẽ nói vì sao.
+- **Không xóa được một bản kết xuất hỏng.** Bản kết xuất mà BombVault không hoàn tất được sẽ bị xóa đi. Khi lần xóa đó thất bại, bản kết xuất vẫn nằm trong danh sách với dấu hỏng, và bạn có thể xóa nó ở đó.
+
+## Một lần nhập đã thất bại
+
+Việc nhập sẽ dừng container, dời thư mục dữ liệu của nó sang một bên và để image tạo một thư mục trống vào chỗ đó. Nếu một bước trước khi nhập thất bại, thư mục cũ được đặt trở lại một cách tự động. Nếu chính việc nhập thất bại, container giữ thư mục mới còn thư mục cũ nằm bên cạnh với tên `<thư mục dữ liệu>.bombvault-before-import-<dấu thời gian>`; thông báo lỗi của lần chạy nêu đúng đường dẫn.
+
+Để đặt lại bằng tay: dừng container, đổi tên thư mục dữ liệu hiện tại cho khuất lối, đổi tên thư mục được giữ về tên gốc, rồi khởi động container. Trên Unraid, trình quản lý tệp ở thẻ Shares làm được việc này.
+
 ## Container cứ khởi động lại hoặc trông không khỏe mạnh
 
 BombVault báo khỏe mạnh/không khỏe mạnh từ `/api/health` của chính nó. Một công cụ tự phục hồi (chẳng hạn Autoheal) có thể khởi động lại nó tự động nếu công cụ có bao giờ bị kẹt. Kiểm tra nhật ký container và báo cáo `/spike` để tìm nguyên nhân cơ bản.

@@ -493,8 +493,8 @@ const vi: Partial<Translations> = {
 
   "settings.retentionTitle": "Lưu giữ ảnh chụp nhanh",
   "settings.retentionHint": "Số bản sao lưu cần giữ cho mỗi mục. Sau mỗi lần sao lưu, restic sẽ dọn các snapshot cũ theo chính sách này. Tất cả bằng 0 = giữ tất cả (tắt).",
-  "excludes.advisoryImmichDb": "Immich lưu album, khuôn mặt và ngày tháng của từng ảnh trong một cơ sở dữ liệu PostgreSQL chạy trong một container riêng, không phải container này, nên bản sao lưu này không chứa nó. Khôi phục từ đây sẽ đưa ảnh trở lại nhưng không có những thứ đó. Hãy tạo bản sao lưu riêng cho cơ sở dữ liệu đó, hoặc bật tính năng xuất cơ sở dữ liệu có sẵn của Immich để nó rơi vào một thư mục mà bản sao lưu này bao phủ.",
-  "excludes.advisoryNextcloudDb": "Nextcloud lưu tài khoản, chia sẻ và thẻ trong một cơ sở dữ liệu thường chạy trong một container riêng, nên bản sao lưu này không chứa nó. Tập tin sẽ trở lại, còn chia sẻ thì không. Hãy sao lưu cả cơ sở dữ liệu đó.",
+  "excludes.advisoryImmichDb": "Immich lưu album, khuôn mặt và ngày tháng của từng ảnh trong một cơ sở dữ liệu PostgreSQL chạy trong một container riêng, không phải container này, nên bản sao lưu này không chứa nó. Khôi phục từ đây sẽ đưa ảnh trở lại nhưng không có những thứ đó. BombVault tự kết xuất container cơ sở dữ liệu đó khi sao lưu nó, nên hãy kiểm tra xem container ấy có trong lịch của bạn không.",
+  "excludes.advisoryNextcloudDb": "Nextcloud lưu tài khoản, chia sẻ và thẻ trong một cơ sở dữ liệu thường chạy trong một container riêng, nên bản sao lưu này không chứa nó. Tập tin sẽ trở lại, còn chia sẻ thì không. BombVault tự kết xuất container cơ sở dữ liệu đó khi sao lưu nó, nên hãy kiểm tra xem container ấy có trong lịch của bạn không.",
   "rcloneRemote.heading": "Thêm đích SMB hoặc WebDAV",
   "rcloneRemote.hint": "Kết nối tới một chia sẻ Windows hoặc Samba, hay một máy chủ WebDAV như Nextcloud, mà KHÔNG cần gắn kết nó vào host. Điều này quan trọng không chỉ vì tiện lợi: restic khuyên không nên đặt kho lưu trữ trên một chia sẻ CIFS đã gắn kết, và cách này hoàn toàn không cần gắn kết. Mật khẩu được chuyển cho rclone để lưu theo định dạng riêng của nó và không bao giờ được lưu dưới dạng văn bản thuần. NFS không có ở đây vì cả restic lẫn rclone đều không hỗ trợ giao thức này: với NFS, hãy gắn kết chia sẻ NFS trên Unraid và đặt Đường dẫn sao lưu trỏ tới đó.",
   "rcloneRemote.type": "Loại",
@@ -600,7 +600,7 @@ const vi: Partial<Translations> = {
   "integrity.appendOnlyNever": "bảo vệ append-only · chưa từng kiểm tra",
 
   "hooks.title": "Hook sao lưu",
-  "hooks.hint": "Lệnh chạy bên trong container (sh -c). Pre chạy trước khi sao lưu (ví dụ: dump một CSDL vào appdata để được bao gồm). Lỗi sẽ hủy việc sao lưu. Post chạy sau khi container hoạt động trở lại; lỗi của nó chỉ được ghi log.",
+  "hooks.hint": "Lệnh chạy bên trong container (sh -c). Pre chạy trước khi sao lưu (ví dụ: ghi bộ nhớ đệm xuống đĩa; các CSDL được nhận ra sẽ tự được kết xuất). Lỗi sẽ hủy việc sao lưu. Post chạy sau khi container hoạt động trở lại; lỗi của nó chỉ được ghi log.",
   "hooks.pre": "Lệnh trước sao lưu",
   "hooks.post": "Lệnh sau sao lưu",
 

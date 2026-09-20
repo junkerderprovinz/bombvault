@@ -493,8 +493,8 @@ const zh: Partial<Translations> = {
 
   "settings.retentionTitle": "快照保留",
   "settings.retentionHint": "每个项目保留的备份数量。每次备份后，restic 会按此策略清理较旧的快照。全部为 0 = 全部保留（关闭）。",
-  "excludes.advisoryImmichDb": "Immich 把每张照片的相册、人脸和日期都存放在一个 PostgreSQL 数据库里，而这个数据库跑在另一个单独的容器中，不在这个容器里，所以这份备份并不包含它。从这里还原会把照片找回来，却没有这些信息。请给那个数据库单独做一份备份，或者打开 Immich 自带的数据库导出，让它落在这份备份覆盖得到的文件夹里。",
-  "excludes.advisoryNextcloudDb": "Nextcloud 把账户、共享和标签存放在一个数据库里，它通常跑在单独的容器中，所以这份备份并不包含它。文件会回来，共享不会。请把那个数据库也一并备份。",
+  "excludes.advisoryImmichDb": "Immich 把每张照片的相册、人脸和日期都存放在一个 PostgreSQL 数据库里，而这个数据库跑在另一个单独的容器中，不在这个容器里，所以这份备份并不包含它。从这里还原会把照片找回来，却没有这些信息。BombVault 在备份那个数据库容器时会自动为它做转储，所以请确认它在你的计划里。",
+  "excludes.advisoryNextcloudDb": "Nextcloud 把账户、共享和标签存放在一个数据库里，它通常跑在单独的容器中，所以这份备份并不包含它。文件会回来，共享不会。BombVault 在备份那个数据库容器时会自动为它做转储，所以请确认它在你的计划里。",
   "rcloneRemote.heading": "添加 SMB 或 WebDAV 目标",
   "rcloneRemote.hint": "无需在主机上挂载，即可访问 Windows 或 Samba 共享，或 Nextcloud 等 WebDAV 服务器。这不只是为了方便：restic 不建议把仓库放在已挂载的 CIFS 共享上，而这种方式完全不需要挂载。密码交给 rclone 以它自己的格式保存，绝不会以明文存放。此处不提供 NFS，因为 restic 和 rclone 都不支持它：如需使用 NFS，请在 Unraid 上挂载该 NFS 导出，并将备份路径指向它。",
   "rcloneRemote.type": "类型",
@@ -600,7 +600,7 @@ const zh: Partial<Translations> = {
   "integrity.appendOnlyNever": "append-only 保护 · 从未检查",
 
   "hooks.title": "备份钩子",
-  "hooks.hint": "命令在容器内运行（sh -c）。Pre 在备份前运行（例如将数据库导出到 appdata 以便一起备份）。失败会中止备份。Post 在容器恢复运行后执行；其失败仅记录日志。",
+  "hooks.hint": "命令在容器内运行（sh -c）。Pre 在备份前运行（例如把缓存写入磁盘；识别出的数据库会自动转储）。失败会中止备份。Post 在容器恢复运行后执行；其失败仅记录日志。",
   "hooks.pre": "备份前命令",
   "hooks.post": "备份后命令",
 

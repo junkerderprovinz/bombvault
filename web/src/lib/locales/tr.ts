@@ -496,8 +496,8 @@ const tr: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Anlık görüntü saklama",
   "settings.retentionHint": "Öğe başına kaç yedek tutulacağı. Her yedeklemeden sonra restic, eski anlık görüntüleri bu ilkeye göre budar. Tümü sıfır = her şeyi tut (kapalı).",
-  "excludes.advisoryImmichDb": "Immich her fotoğrafın albümlerini, yüzlerini ve tarihlerini kendi ayrı konteynerinde çalışan bir PostgreSQL veritabanında tutar, bu yüzden bu yedek onu içermez. Buradan geri yükleme resimleri bunlar olmadan geri getirir. O veritabanına kendi yedeğini verin ya da Immich'in yerleşik veritabanı dışa aktarmasını açın, böylece bu yedeğin kapsadığı bir klasöre düşer.",
-  "excludes.advisoryNextcloudDb": "Nextcloud hesapları, paylaşımları ve etiketleri genellikle ayrı bir konteynerde çalışan bir veritabanında tutar, bu yüzden bu yedek onu içermez. Dosyalar geri gelir, paylaşımlar gelmez. O veritabanını da yedekleyin.",
+  "excludes.advisoryImmichDb": "Immich her fotoğrafın albümlerini, yüzlerini ve tarihlerini kendi ayrı konteynerinde çalışan bir PostgreSQL veritabanında tutar, bu yüzden bu yedek onu içermez. Buradan geri yükleme resimleri bunlar olmadan geri getirir. BombVault o veritabanı konteynerini yedeklerken dökümünü kendiliğinden alır, bu yüzden onun programınızda olduğundan emin olun.",
+  "excludes.advisoryNextcloudDb": "Nextcloud hesapları, paylaşımları ve etiketleri genellikle ayrı bir konteynerde çalışan bir veritabanında tutar, bu yüzden bu yedek onu içermez. Dosyalar geri gelir, paylaşımlar gelmez. BombVault o veritabanı konteynerini yedeklerken dökümünü kendiliğinden alır, bu yüzden onun programınızda olduğundan emin olun.",
   "rcloneRemote.heading": "SMB veya WebDAV hedefi ekle",
   "rcloneRemote.hint": "Bir Windows veya Samba paylaşımına ya da Nextcloud gibi bir WebDAV sunucusuna, onu Host'a BAĞLAMADAN erişir. Bu, kolaylıktan öte bir önem taşır: restic, bir deponun bağlanmış bir CIFS paylaşımında tutulmasını önermez ve bu yol bağlamaya hiç gerek bırakmaz. Parola, kendi biçiminde saklaması için rclone'a verilir ve hiçbir zaman açık metin olarak tutulmaz. NFS burada sunulmaz, çünkü ne restic ne de rclone NFS ile çalışabilir: NFS için paylaşımı Unraid'e bağlayın ve bir Yedekleme Yolunu oraya yönlendirin.",
   "rcloneRemote.type": "Tür",
@@ -606,7 +606,7 @@ const tr: Partial<Translations> = {
 
   // Pre/post-backup hooks
   "hooks.title": "Yedekleme kancaları",
-  "hooks.hint": "Komutlar konteynerin içinde çalışır (sh -c). Pre, yedeklemeden önce çalışır (örn. dahil edilmesi için bir veritabanını appdata'ya döker). Bir hata yedeklemeyi iptal eder. Post, konteyner tekrar açıldıktan sonra çalışır; hatası yalnızca günlüğe kaydedilir.",
+  "hooks.hint": "Komutlar konteynerin içinde çalışır (sh -c). Pre, yedeklemeden önce çalışır (örn. bir önbelleği diske yazar; tanınan veritabanlarının dökümü kendiliğinden alınır). Bir hata yedeklemeyi iptal eder. Post, konteyner tekrar açıldıktan sonra çalışır; hatası yalnızca günlüğe kaydedilir.",
   "hooks.pre": "Yedekleme öncesi komut",
   "hooks.post": "Yedekleme sonrası komut",
 

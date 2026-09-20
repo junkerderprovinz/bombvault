@@ -436,8 +436,8 @@ const ms: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Pengekalan snapshot",
   "settings.retentionHint": "Berapa banyak sandaran untuk disimpan bagi setiap item. Selepas setiap sandaran, restic mem-prune snapshot yang lebih lama mengikut polisi ini. Semua sifar = simpan semua (mati).",
-  "excludes.advisoryImmichDb": "Immich menyimpan album, wajah dan tarikh bagi setiap foto dalam pangkalan data PostgreSQL yang berjalan dalam bekas yang berasingan, bukan bekas ini, jadi sandaran ini tidak mengandunginya. Pemulihan dari sini mengembalikan gambar, tetapi tanpa album, wajah dan tarikh. Beri pangkalan data itu sandarannya sendiri, atau hidupkan eksport pangkalan data terbina dalam Immich supaya ia disimpan dalam folder yang diliputi sandaran ini.",
-  "excludes.advisoryNextcloudDb": "Nextcloud menyimpan akaun, perkongsian dan tag dalam pangkalan data yang biasanya berjalan dalam bekas yang berasingan, jadi sandaran ini tidak mengandunginya. Fail kembali, perkongsian tidak. Sandarkan pangkalan data itu juga.",
+  "excludes.advisoryImmichDb": "Immich menyimpan album, wajah dan tarikh bagi setiap foto dalam pangkalan data PostgreSQL yang berjalan dalam bekas yang berasingan, bukan bekas ini, jadi sandaran ini tidak mengandunginya. Pemulihan dari sini mengembalikan gambar, tetapi tanpa album, wajah dan tarikh. BombVault membuang pangkalan data bekas itu secara automatik apabila bekas tersebut disandarkan, jadi pastikan ia ada dalam jadual anda.",
+  "excludes.advisoryNextcloudDb": "Nextcloud menyimpan akaun, perkongsian dan tag dalam pangkalan data yang biasanya berjalan dalam bekas yang berasingan, jadi sandaran ini tidak mengandunginya. Fail kembali, perkongsian tidak. BombVault membuang pangkalan data bekas itu secara automatik apabila bekas tersebut disandarkan, jadi pastikan ia ada dalam jadual anda.",
   "rcloneRemote.heading": "Tambah destinasi SMB atau WebDAV",
   "rcloneRemote.hint": "Mencapai perkongsian Windows atau Samba, atau pelayan WebDAV seperti Nextcloud, TANPA perlu dimount pada hos. Ini penting bukan sekadar untuk kemudahan: restic tidak menggalakkan penyimpanan repositori pada perkongsian CIFS yang dimount, dan cara ini mengelakkan mount sepenuhnya. Kata laluan diserahkan kepada rclone untuk disimpan dalam bentuknya sendiri dan tidak pernah disimpan sebagai teks biasa. NFS tidak ditawarkan di sini kerana kedua-dua restic dan rclone tidak menyokongnya: untuk NFS, mount eksport tersebut dalam Unraid dan tetapkan Laluan Sandaran kepadanya.",
   "rcloneRemote.type": "Jenis",
@@ -683,7 +683,7 @@ const ms: Partial<Translations> = {
 
   // Pre/post-backup hooks
   "hooks.title": "Hook sandaran",
-  "hooks.hint": "Arahan dijalankan di dalam bekas dengan sh -c. Arahan pra berjalan sebelum sandaran; gunakannya untuk menyediakan data yang perlu disandarkan, contohnya membuang pangkalan data ke dalam appdata bekas. Jika arahan pra gagal, sandaran dibatalkan. Arahan pasca berjalan selepas bekas dimulakan semula dan kegagalannya hanya direkodkan. Hook hanya menjalankan arahan, ia tidak menambah folder tambahan pada sandaran.",
+  "hooks.hint": "Arahan dijalankan di dalam bekas dengan sh -c. Arahan pra berjalan sebelum sandaran; gunakannya untuk menyediakan data yang perlu disandarkan, contohnya menulis cache ke cakera. Pangkalan data yang dikenali dibuang secara automatik dan tidak memerlukan hook. Jika arahan pra gagal, sandaran dibatalkan. Arahan pasca berjalan selepas bekas dimulakan semula dan kegagalannya hanya direkodkan. Hook hanya menjalankan arahan, ia tidak menambah folder tambahan pada sandaran.",
   "hooks.pre": "Arahan sebelum sandaran",
   "hooks.post": "Arahan selepas sandaran",
   "folders.title": "Folder sandaran",

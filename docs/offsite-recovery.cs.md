@@ -157,3 +157,27 @@ Je to HMAC-SHA256 nad pevným řetězcem `bombvault:restic-repo`, klíčem jsou 
     Úložiště, které sem přišlo replikací mimo lokalitu, vytvořil stroj, který je odeslal, svým **vlastním** `APP_KEY`. Odvození z klíče přijímajícího stroje dá heslo, které restic odmítne, což vypadá přesně jako poškozené úložiště, aniž by jím bylo. To je obvyklý důvod, proč se `restic check` na přijatém úložišti stále dokola ptá na heslo.
 
 Protože definice pro obnovu žijí **uvnitř** každého repozitáře (`<repo>/def`, `<repo>/vm-def`), je zkopírovaná složka repozitáře plně soběstačná, takže sada plus repozitář jsou vším, co obnova na holém železe potřebuje.
+
+## Získání dumpu databáze zpět {#database-dumps}
+
+Dump databáze je vlastní bod obnovy v repozitáři kontejnerů, se štítkem `dbdump:<container>` a jediným souborem `/dbdump/<container>.sql`. BombVault je vypisuje, stahuje a importuje v sekci **Zálohy**; níže jsou tytéž kroky se samotným resticem, pro den, kdy BombVault k ruce není.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Štítky `dbversion:` a `dbname:` u každého dumpu říkají, z jaké verze serveru pochází a jaké databáze obsahuje. Úplný soubor končí řádkem `-- PostgreSQL database cluster dump complete` nebo `-- Dump completed`.
+
+Naimportujte ho do kontejneru ve stejné nebo novější verzi (PostgreSQL), případně ve stejné hlavní verzi (MySQL a MariaDB), jednou spuštěného s prázdnou datovou složkou, aby se inicializoval. Hostitel žádného databázového klienta nepotřebuje, kontejner ho má:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+Pro jednu databázi z úplného dumpu berou MySQL a MariaDB `--one-database <name>` v příkazu klienta. Dump PostgreSQL má na každou databázi jednu sekci, každá začíná řádkem `\connect <name>`: zkopírujte tu svou do vlastního souboru a po vytvoření databáze ho naimportujte s `-d <name>`.
+
+!!! warning "Dump pořízený jako root nese uživatele serveru"
+    Úplný dump MySQL nebo MariaDB pořízený jako root obsahuje systémovou databázi `mysql`, takže jeho import nahradí účty nového serveru, včetně hesla roota, účty z dumpu. U PostgreSQL je `role ... already exists` pro uživatele, kterého vytvořil kontejner, očekávané a neškodné.

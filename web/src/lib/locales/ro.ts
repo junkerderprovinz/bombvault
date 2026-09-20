@@ -493,8 +493,8 @@ const ro: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Retenția instantaneelor",
   "settings.retentionHint": "Câte copii de rezervă să se păstreze per element. După fiecare backup, restic curăță instantaneele mai vechi conform acestei politici. Toate zero = păstrează tot (oprit).",
-  "excludes.advisoryImmichDb": "Immich ține albumele, fețele și data fiecărei fotografii într-o bază de date PostgreSQL care rulează în alt container, nu în acesta, așa că acest backup nu o conține. O restaurare de aici aduce pozele înapoi, dar fără toate acestea. Fă-i acelei baze de date un backup separat sau pornește exportul de bază de date integrat în Immich, ca să ajungă într-un folder acoperit de acest backup.",
-  "excludes.advisoryNextcloudDb": "Nextcloud ține conturile, partajările și etichetele într-o bază de date care de obicei rulează în alt container, așa că acest backup nu o conține. Fișierele revin, partajările nu. Fă backup și acelei baze de date.",
+  "excludes.advisoryImmichDb": "Immich ține albumele, fețele și data fiecărei fotografii într-o bază de date PostgreSQL care rulează în alt container, nu în acesta, așa că acest backup nu o conține. O restaurare de aici aduce pozele înapoi, dar fără toate acestea. BombVault face singur dump containerului acelei baze de date când îi face backup, așa că verifică dacă este în programul tău.",
+  "excludes.advisoryNextcloudDb": "Nextcloud ține conturile, partajările și etichetele într-o bază de date care de obicei rulează în alt container, așa că acest backup nu o conține. Fișierele revin, partajările nu. BombVault face singur dump containerului acelei baze de date când îi face backup, așa că verifică dacă este în programul tău.",
   "rcloneRemote.heading": "Adaugă o destinație SMB sau WebDAV",
   "rcloneRemote.hint": "Ajunge la o partajare Windows sau Samba, ori la un server WebDAV precum Nextcloud, FĂRĂ montare pe gazdă. Contează mai mult decât comoditatea: restic nu recomandă păstrarea unui depozit pe o partajare CIFS montată, iar această variantă evită complet montarea. Parola este predată lui rclone, care o stochează în propriul format, și nu este niciodată păstrată în clar. NFS nu este oferit aici, pentru că nici restic, nici rclone nu îl suportă: pentru NFS, montează exportul pe Unraid și setează o cale de copiere de rezervă către el.",
   "rcloneRemote.type": "Tip",
@@ -603,7 +603,7 @@ const ro: Partial<Translations> = {
 
   // Pre/post-backup hooks
   "hooks.title": "Hook-uri de backup",
-  "hooks.hint": "Comenzile rulează în interiorul containerului (sh -c). Pre rulează înainte de backup (de ex. exportă o bază de date în appdata pentru a fi inclusă). O eroare anulează backupul. Post rulează după ce containerul a revenit; eroarea sa este doar înregistrată în jurnal.",
+  "hooks.hint": "Comenzile rulează în interiorul containerului (sh -c). Pre rulează înainte de backup (de ex. scrie un cache pe disc; bazele de date recunoscute sunt dumpate singure). O eroare anulează backupul. Post rulează după ce containerul a revenit; eroarea sa este doar înregistrată în jurnal.",
   "hooks.pre": "Comandă pre-backup",
   "hooks.post": "Comandă post-backup",
 

@@ -43,6 +43,24 @@ Mielőtt bármit is leállítanának vagy eltávolítanának, a visszaállítás
 
 Ha az age-titkosítás be van kapcsolva (Beállítások), de nincs beállítva érvényes címzett, egy export világos hibával leáll, ahelyett hogy nyílt szöveget írna. Adj hozzá egy érvényes címzettet (egy age nyilvános kulcs vagy egy SSH nyilvános kulcs), vagy kapcsold ki a titkosítást, ha az exportot nyílt szövegnek szánod. Lásd: [Funkciók](features.md).
 
+## Egy adatbázis-dump sikertelen volt
+
+A sikertelen dump sosem buktatja el a körülötte futó mentést; saját sikertelen futásként kerül be, és az ok megmondja, mit kell javítani.
+
+- **Elutasított bejelentkezés.** A dump a konténer saját jelszóváltozóival lép be (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` vagy ezek `_FILE` változatai). Ellenőrizd őket az adatbázis-konténeren. Ugyanígy bukik el az a `_FILE` változó, amely olyan titokra mutat, amelyet a konténer saját felhasználója nem olvashat.
+- **Hiányzó jogosultságok.** Véletlenszerű root-jelszó mellett a dump csak az alkalmazás felhasználójaként tud belépni, így csak azt az egy adatbázist tartalmazza, a MySQL 8.4 és újabb pedig teljesen elutasíthatja. Adj a konténernek valódi root-jelszót, vagy kapcsold ki nála a dumpot.
+- **A rendszertáblák frissítést kérnek.** A MariaDB megtagadja a dumpot, ha a rendszertáblái régebbi verzióból valók (1558-as hiba). Vedd fel a `MARIADB_AUTO_UPGRADE=1` változót és indítsd újra a konténert, vagy futtasd benne egyszer a `mariadb-upgrade` parancsot.
+- **Nincs dump eszköz.** Egy lecsupaszított vagy saját kezűleg épített képfájlból `pg_dump`, `mysqldump` vagy `mariadb-dump` nélkül nem lehet dumpot készíteni. Válts a hivatalos képfájlra, vagy kapcsold ki a dumpot.
+- **Időkorlát.** Egy dump a `DB_DUMP_MAX_HOURS` keretet kapja (alapból 6), a körülötte futó mentés a `BACKUP_MAX_HOURS` keretet, és az a dump, amelyik nem halad tovább, `BACKUP_STALL_HOURS` után elvágódik. Az utóbbi mögött rendszerint az alkalmazás által tartott zár áll. Emeld meg azt a korlátot, amelyik életbe lépett, vagy akkor dumpolj, amikor az alkalmazás nyugton van.
+- **A konténer szünetel vagy újraindul.** A dump a futó kiszolgálóval beszél. Ha a konténer folyton újraindul, a saját naplója megmondja, miért.
+- **Egy sérült dumpot nem lehetett eltávolítani.** Azt a dumpot, amelyet a BombVault nem tudott befejezni, törli. Ha ez a törlés nem sikerül, a dump sérültként megjelölve a listában marad, és onnan törölheted.
+
+## Egy import sikertelen volt
+
+Az import leállítja a konténert, félreteszi az adatmappáját, és hagyja, hogy a képfájl a helyére egy üreset hozzon létre. Ha az import előtti lépések egyike hiúsul meg, a régi mappa magától visszakerül. Ha maga az import bukik el, a konténernél marad a friss mappa, a régi pedig mellette marad `<adatmappa>.bombvault-before-import-<időbélyeg>` néven; a futás hibaüzenete megnevezi a pontos elérési utat.
+
+Kézi visszaállítás: állítsd le a konténert, nevezd át az aktuális adatmappát az útból, nevezd vissza a megőrzött mappát az eredeti nevére, majd indítsd el a konténert. Unraidon ezt a Shares fül fájlkezelője elvégzi.
+
 ## A konténer folyamatosan újraindul vagy egészségtelennek tűnik
 
 A BombVault a saját `/api/health`-jéből jelent egészségeset/egészségtelent. Egy automatikus gyógyító eszköz (mint az Autoheal) automatikusan újraindíthatja, ha a motor valaha beragadna. Ellenőrizd a konténer naplóját és a `/spike` jelentést a mögöttes okért.
