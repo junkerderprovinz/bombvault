@@ -252,3 +252,50 @@ func TestRecordHomeStartsOverWhenTheRowAppearedMeanwhile(t *testing.T) {
 		t.Fatalf("the backup goes to %q, want NAS", step.repo)
 	}
 }
+
+// TestRecordHomeGivesUpAfterAFewTurns pins a bound on the retry loop: a row
+// under constant contention must not hold the domain lock and spend restic
+// calls forever. onSnapshots fires synchronously inside settleHome, right
+// after it captures the row a commit will later compare against, so a write
+// made from the hook always lands behind that turn's read and the mismatch
+// is guaranteed, never raced. A chosen home settles a step unconditionally,
+// so the one way to keep every turn genuinely contested is toggling whether
+// the open item's row exists at all. The hook stops after a generous number
+// of turns, so the unfixed loop still terminates instead of hanging the
+// test, just well past any reasonable cap.
+func TestRecordHomeGivesUpAfterAFewTurns(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.setDefault("containers", "")
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	item := store.ItemRef{Domain: "containers", Key: "nginx"}
+	turns := 0
+	f.eng.onSnapshots = func() {
+		turns++
+		if turns > 6 {
+			return
+		}
+		if turns%2 == 1 {
+			if _, err := f.st.WritePlacement(item, &store.HomeWrite{Choice: store.RepoOpen}, nil, nil); err != nil {
+				t.Fatal(err)
+			}
+			return
+		}
+		if _, err := f.db.Exec(`DELETE FROM targets WHERE container_name = ?`, "nginx"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	step, err := f.svc.prepareHome(context.Background(), settings, item)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := f.svc.recordHome(context.Background(), settings, item, step); err != nil {
+		t.Fatalf("recordHome = %v, want it to give up quietly", err)
+	}
+	if turns > 3 {
+		t.Fatalf("recordHome took %d turns against a row in constant contention, want a small bounded number", turns)
+	}
+}

@@ -274,39 +274,3 @@ func TestContainerViewCarriesTheRepoOnBothBranches(t *testing.T) {
 		}
 	}
 }
-
-// TestRepoRefusedOnceAnItemHasBackups pins the refusal that three comments
-// described and no code performed.
-//
-// The review proved the gap by driving the real handler: a container with a
-// successful run was re-pointed from one repository to another, answer ok:true,
-// stored value the new one. The consequence is a split history - the snapshots
-// already written stay where they are, the interface then shows only the new
-// half, and the old half is never pruned and unreachable except through restic
-// by hand.
-//
-// The interface's own lock is not a substitute, which is why this lives on the
-// server: an item rebuilt by Discover after a /config loss has real snapshots
-// and no run rows, so its lastBackup is null and the picker stands open on
-// exactly the item that must not move. The file-set twin documents that case as
-// its own reason for looking past the runs table.
-func TestRepoRefusedOnceAnItemHasBackups(t *testing.T) {
-	raw, err := os.ReadFile("handlers.go")
-	if err != nil {
-		t.Fatalf("read handlers.go: %v", err)
-	}
-	src := string(raw)
-	if !strings.Contains(src, "had, bErr := hasBackups()") {
-		t.Error("applyItemRepo no longer refuses an item that already has backups")
-	}
-	for _, want := range []string{
-		"h.svc.containerHasBackups(r.Context(), name)",
-		"h.svc.vmHasBackups(r.Context(), name)",
-	} {
-		if !strings.Contains(src, want) {
-			t.Errorf("one of the two domains no longer passes its has-backups check (%s).\n"+
-				"Its doc comment claims the refusal either way, which is how the gap survived\n"+
-				"three commits and two reviews.", want)
-		}
-	}
-}

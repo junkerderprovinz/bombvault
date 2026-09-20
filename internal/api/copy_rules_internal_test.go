@@ -152,8 +152,8 @@ func TestAMoveToAnUnknownRepositoryWithCopiesGetsTheRepositoryError(t *testing.T
 		"repo":   "no-such-repo",
 		"copies": map[string]any{"skip": []string{}},
 	})
-	if res["ok"] != false || res["code"] != nil {
-		t.Fatalf("PATCH = %v, want a plain repository refusal, not a coded copies refusal", res)
+	if res["ok"] != false || res["code"] != "repo-invalid" {
+		t.Fatalf("PATCH = %v, want repo-invalid, not a coded copies refusal", res)
 	}
 	errText, _ := res["error"].(string)
 	if !strings.Contains(errText, "no such repository") {

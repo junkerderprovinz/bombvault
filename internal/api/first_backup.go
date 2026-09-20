@@ -148,12 +148,19 @@ func (s *Service) prepareHome(ctx context.Context, settings store.Settings, item
 	return homeStep{repo: repo, mode: mode, commit: commit}, nil
 }
 
-// recordHome writes the settled location. When the row changed after it was
-// read, the step starts over from the new row.
+// homeSettleAttempts caps recordHome's retry loop. Each retry re-derives the
+// item's location and probes its repository again, both under the domain
+// lock, so a row under constant outside contention must not be able to hold
+// that lock forever.
+const homeSettleAttempts = 3
+
+// recordHome writes the settled location, starting the step over from the
+// row's current state when it changed since it was read. It gives up after a
+// few turns and returns the last attempt rather than retry without end.
 func (s *Service) recordHome(ctx context.Context, settings store.Settings, item store.ItemRef, step homeStep) (homeStep, error) {
-	for {
+	for attempt := 1; ; attempt++ {
 		ok, err := step.commit()
-		if err != nil || ok {
+		if err != nil || ok || attempt == homeSettleAttempts {
 			return step, err
 		}
 		if step, err = s.prepareHome(ctx, settings, item); err != nil {
