@@ -200,3 +200,58 @@ func TestMetricsLabelEscaping(t *testing.T) {
 		t.Errorf("label not escaped per Prometheus rules; want %q in:\n%s", want, out)
 	}
 }
+
+func TestMetricsExportDBDumpCounts(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ContainersEnabled = true
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "pg", AppdataPaths: []string{"/x"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	okRun, err := st.StartRun(tg.ID, "dbdump")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishRun(okRun, "success", "dbdump00deadbeef", 4096, ""); err != nil {
+		t.Fatal(err)
+	}
+	failRun, err := st.StartRun(tg.ID, "dbdump")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishRun(failRun, "failed", "", 0, store.ReasonDBDumpAuth); err != nil {
+		t.Fatal(err)
+	}
+
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	out, err := svc.Metrics()
+	if err != nil {
+		t.Fatalf("Metrics: %v", err)
+	}
+
+	for _, want := range []string{
+		"# TYPE bombvault_dbdump_runs_total counter",
+		`bombvault_dbdump_runs_total{status="success"} 1`,
+		`bombvault_dbdump_runs_total{status="failed"} 1`,
+		"# TYPE bombvault_dbdump_last_success_timestamp_seconds gauge",
+		`bombvault_dbdump_last_success_timestamp_seconds{container="pg"} `,
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("metrics output missing %q\n--- output ---\n%s", want, out)
+		}
+	}
+	if strings.Contains(out, `bombvault_dbdump_last_success_timestamp_seconds{container="pg"} 0`) {
+		t.Errorf("the last dump succeeded, so its timestamp must not be 0:\n%s", out)
+	}
+}

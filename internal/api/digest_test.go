@@ -110,3 +110,48 @@ func TestSendDigestRespectsNeverPolicy(t *testing.T) {
 		t.Fatal("a muted policy must send NO digest")
 	}
 }
+
+// seedRunOfKind records one finished run of any kind for the target.
+func seedRunOfKind(t *testing.T, st *store.Repo, targetID, kind, status string) {
+	t.Helper()
+	id, err := st.StartRun(targetID, kind)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishRun(id, status, "", 0, ""); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestDigestListsDBDumpKind(t *testing.T) {
+	svc, st, body := digestTestService(t, "always")
+
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "pg", AppdataPaths: []string{"/host/user/appdata/pg"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	seedBackupRun(t, st, tg.ID, "success", "", 1024)
+	seedRunOfKind(t, st, tg.ID, "dbdump", "success")
+	seedRunOfKind(t, st, tg.ID, "dbdumpsave", "success")
+	seedRunOfKind(t, st, tg.ID, "dbimport", "success")
+
+	if err := svc.SendDigest(context.Background()); err != nil {
+		t.Fatalf("SendDigest: %v", err)
+	}
+
+	got := body()
+	for _, want := range []string{"dbdump: 1 ok, 0 failed", "dbdumpsave: 1 ok, 0 failed", "dbimport: 1 ok, 0 failed"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("digest is missing %q:\n%s", want, got)
+		}
+	}
+	order := []string{"- backup:", "- dbdump:", "- dbdumpsave:", "- dbimport:"}
+	at := 0
+	for _, line := range order {
+		i := strings.Index(got[at:], line)
+		if i < 0 {
+			t.Fatalf("digest is missing %q:\n%s", line, got)
+		}
+		at += i
+	}
+}

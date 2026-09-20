@@ -196,3 +196,44 @@ func firstDeclValue(t *testing.T, src, prefix string) string {
 	}
 	return hex[:7]
 }
+
+// TestWidgetDBDumpLines checks that the widget words a database dump as one
+// instead of letting it fall through to the backup shape, where a failed dump
+// would read "<name> backup failed".
+func TestWidgetDBDumpLines(t *testing.T) {
+	page := string(widgetPage)
+
+	for _, kind := range []string{"dbdump", "dbdumpsave", "dbimport"} {
+		if !strings.Contains(page, `case "`+kind+`":`) {
+			t.Fatalf("widget.html has no line shape for %q, so it reads as a backup", kind)
+		}
+	}
+
+	dump := widgetCaseBody(t, page, "dbdump")
+	for _, want := range []string{"database dumped", "one database only", "database dump failed: "} {
+		if !strings.Contains(dump, want) {
+			t.Errorf("the dump line is missing %q:\n%s", want, dump)
+		}
+	}
+	if strings.ContainsAny(dump, "\u2014\u2013") {
+		t.Errorf("the dump line uses a dash instead of a hyphen:\n%s", dump)
+	}
+	if !strings.Contains(page, `"database dump failed: "`) {
+		t.Error("widget.html repeats the stored reason head instead of stripping it")
+	}
+}
+
+// widgetCaseBody returns the body of one `case "<kind>":` branch of the
+// widget's line composition.
+func widgetCaseBody(t *testing.T, page, kind string) string {
+	t.Helper()
+	start := strings.Index(page, `case "`+kind+`":`)
+	if start < 0 {
+		t.Fatalf("no case for %q", kind)
+	}
+	rest := page[start+len(`case "`+kind+`":`):]
+	if end := strings.Index(rest, "case \""); end >= 0 {
+		return rest[:end]
+	}
+	return rest
+}

@@ -135,7 +135,48 @@ func (s *Service) Metrics() (string, error) {
 		}
 	}
 
+	if err := s.writeDBDumpMetrics(&b); err != nil {
+		return "", err
+	}
 	return b.String(), nil
+}
+
+// writeDBDumpMetrics adds the database dump families. A dump never turns its
+// container red, so alerting on a database that stopped being dumped needs
+// series of its own.
+func (s *Service) writeDBDumpMetrics(b *strings.Builder) error {
+	dumpCounts, err := s.store.RunCountsOfKind("dbdump")
+	if err != nil {
+		return fmt.Errorf("metrics: database dump counts: %w", err)
+	}
+	b.WriteString("# HELP bombvault_dbdump_runs_total Total number of finished database dump runs per status.\n")
+	b.WriteString("# TYPE bombvault_dbdump_runs_total counter\n")
+	for _, status := range []string{"success", "failed"} {
+		fmt.Fprintf(b, "bombvault_dbdump_runs_total{status=\"%s\"} %d\n", status, dumpCounts["containers"][status])
+	}
+
+	targets, err := s.store.ListTargets()
+	if err != nil {
+		return fmt.Errorf("metrics: targets: %w", err)
+	}
+	var body strings.Builder
+	for _, t := range targets {
+		at, lErr := s.store.LastSuccessOfKind(t.ID, "dbdump")
+		if lErr != nil {
+			return fmt.Errorf("metrics: last database dump of %s: %w", t.ContainerName, lErr)
+		}
+		if at == 0 {
+			continue
+		}
+		fmt.Fprintf(&body, "bombvault_dbdump_last_success_timestamp_seconds{container=\"%s\"} %d\n",
+			escapeLabelValue(t.ContainerName), at)
+	}
+	if body.Len() > 0 {
+		b.WriteString("# HELP bombvault_dbdump_last_success_timestamp_seconds Unix time of the last successful database dump per container.\n")
+		b.WriteString("# TYPE bombvault_dbdump_last_success_timestamp_seconds gauge\n")
+		b.WriteString(body.String())
+	}
+	return nil
 }
 
 func boolMetric(v bool) int {

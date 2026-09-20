@@ -182,6 +182,11 @@
     return b === "ok" ? "ok" : b === "fail" ? "fail" : b === "offsite" ? "offsite" : "info";
   }
   function other(name, r) { return name + " " + r.kind + " — " + r.status; }
+  // The stored reason repeats what the line already says.
+  function dumpReason(msg) {
+    var head = "database dump failed: ";
+    return msg.indexOf(head) === 0 ? msg.slice(head.length) : msg;
+  }
   function lineText(r) {
     var dur = fmtDur(((r.finishedAt != null ? r.finishedAt : r.startedAt) - r.startedAt));
     var dom = domainLabel(r.domain);
@@ -210,6 +215,16 @@
       case "export":
         return ok ? "Flash ZIP export done — " + fmtBytes(r.bytes) + " (" + dur + ")" :
           failed ? "Flash ZIP export failed — " + r.error : other(dom, r);
+      case "dbdump":
+        if (ok) return r.error ? name + " database dumped (one database only)" :
+          name + " database dumped - " + fmtBytes(r.bytes);
+        return failed ? name + " database dump failed: " + dumpReason(r.error) : other(name, r);
+      case "dbdumpsave":
+        return ok ? name + " database dump saved - " + fmtBytes(r.bytes) :
+          failed ? name + " database dump save failed: " + r.error : other(name, r);
+      case "dbimport":
+        return ok ? name + " database imported" :
+          failed ? name + " database import failed: " + r.error : other(name, r);
       case "restore":
         return ok ? name + " restored — " + dur :
           failed ? name + " restore failed — " + r.error : other(name, r);

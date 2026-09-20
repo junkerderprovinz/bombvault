@@ -230,6 +230,9 @@ func (s *Service) everythingRunContainers(ctx context.Context, runID string, set
 		return everythingDomainIdle(domain)
 	}
 
+	// The items and the summary below share one tally, so a dump that failed in
+	// summary mode is named in the one message the round sends.
+	ctx = withDBDumpTally(ctx)
 	runCtx := everythingRunCtx(ctx, runID)
 
 	s.ScheduledHealthchecksStart(ctx, domain)

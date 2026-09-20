@@ -311,7 +311,7 @@ func TestWithAddedWatcherChains(t *testing.T) {
 		}
 		first := func(Progress) {}
 		withFirst := WithWatcher(ctx, first)
-		if watcherFrom(WithAddedWatcher(withFirst, nil)) == nil {
+		if WatcherFrom(WithAddedWatcher(withFirst, nil)) == nil {
 			t.Fatal("a nil watcher must leave the existing one in place")
 		}
 	})
@@ -323,7 +323,7 @@ func TestWithAddedWatcherChains(t *testing.T) {
 		ctx = WithAddedWatcher(ctx, func(p Progress) {
 			seen = append(seen, fmt.Sprintf("second:%d", p.BytesDone))
 		})
-		watch := watcherFrom(ctx)
+		watch := WatcherFrom(ctx)
 		for _, done := range []uint64{10, 20} {
 			p, ok := ParseProgress([]byte(fmt.Sprintf(`{"message_type":"status","bytes_done":%d}`, done)))
 			if !ok {
@@ -340,7 +340,7 @@ func TestWithAddedWatcherChains(t *testing.T) {
 		var got uint64
 		ctx := WithAddedWatcher(context.Background(), func(p Progress) { got = p.BytesDone })
 		p, _ := ParseProgress([]byte(`{"message_type":"status","bytes_done":7}`))
-		watcherFrom(ctx)(p)
+		WatcherFrom(ctx)(p)
 		if got != 7 {
 			t.Fatalf("bytes_done = %d, want 7", got)
 		}

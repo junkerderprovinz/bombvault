@@ -20,7 +20,7 @@ const digestWindow = 7 * 24 * time.Hour
 const digestMaxFailures = 5
 
 // digestKindOrder keeps the count lines in the same order every week.
-var digestKindOrder = []string{"backup", "restore", "update", "prune", "verify", "offsite", "drill", "drdrill", "tamper", "export"}
+var digestKindOrder = []string{"backup", "dbdump", "dbdumpsave", "dbimport", "restore", "update", "prune", "verify", "offsite", "drill", "drdrill", "tamper", "export"}
 
 // digestKindCount is one kind's finished-run tally inside the digest window.
 type digestKindCount struct {
