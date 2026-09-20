@@ -1553,7 +1553,7 @@ func (s *Service) retentionPolicyForSource(settings store.Settings, source strin
 // applies to a local path as readily as to a cloud bucket. Anything with no
 // append-only flag anywhere is unaffected.
 func (s *Service) applyRetention(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, tag, domain string) {
-	p := s.retentionPolicy(settings)
+	p := s.retentionPolicyForRef(settings, s.refFor(settings, domain, repo))
 	if !p.Any() {
 		return
 	}
@@ -13931,8 +13931,8 @@ func (s *Service) PruneAfterBulk(ctx context.Context, domain string) {
 		log.Printf("api: prune %s: batched prune: read settings: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 		return
 	}
-	if !s.retentionPolicy(settings).Any() {
-		return // no retention policy → the per-item passes forgot nothing (applyRetention's gate)
+	if !s.domainHasRetention(settings, domain) {
+		return // no repository of this domain ages by a policy, so nothing was forgotten
 	}
 	// applyPolicy=false: the per-item tag-scoped forgets already ran inline during
 	// the loop (without --prune), so this pass is a plain space-reclaim.
@@ -14055,13 +14055,17 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 	// The batched post-bulk pass skips this (applyPolicy=false): its per-item
 	// forgets already ran inline, so re-running them would only cost 44 more
 	// exclusive-lock round-trips for nothing.
-	policy := restic.RetentionPolicy{}
-	if applyPolicy {
-		policy = s.retentionPolicyForSource(settings, source)
-	}
 	for _, r := range repos {
 		rMode := s.repoModeFor(settings, domain, source, r.Loc)
 		s.unlockStale(ctx, r.Loc, rMode)
+		policy := restic.RetentionPolicy{}
+		switch {
+		case !applyPolicy:
+		case isOffsiteSource(source):
+			policy = s.retentionPolicyForSource(settings, source)
+		default:
+			policy = s.retentionPolicyForRef(settings, r)
+		}
 		if policy.Any() {
 			// Per-identity: tag-scoped, ungrouped forget per item + one prune —
 			// also drains frozen path-groups left by the old grouping (issue #91).

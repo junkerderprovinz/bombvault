@@ -282,3 +282,18 @@ func (s *Service) itemIdentity(item store.ItemRef) (string, error) {
 	}
 	return "", fmt.Errorf("%q has no placement", item.Domain)
 }
+
+// retentionPolicyForRef is the keep-policy a repository ages by.
+func (s *Service) retentionPolicyForRef(settings store.Settings, _ domainRepoRef) restic.RetentionPolicy {
+	return s.retentionPolicy(settings)
+}
+
+// domainHasRetention reports whether any repository of the domain ages by a
+// keep-policy, which is what makes the prune after a round worth it.
+func (s *Service) domainHasRetention(settings store.Settings, domain string) bool {
+	repos, _, err := s.domainReposInUse(settings, domain)
+	if err != nil {
+		return s.retentionPolicy(settings).Any()
+	}
+	return slices.ContainsFunc(repos, func(r domainRepoRef) bool { return s.retentionPolicyForRef(settings, r).Any() })
+}
