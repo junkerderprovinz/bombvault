@@ -203,9 +203,9 @@ func TestDiscoverLooksInEveryRepository(t *testing.T) {
 	// which is better than the setter it replaced and would have failed a guard
 	// that pinned the call.
 	for _, tc := range []struct{ fn, writes string }{
-		{"Discover", "s.store.SetTargetRepo("},
-		{"DiscoverVMs", "s.store.SetVMRepo("},
-		{"DiscoverFileSets", "Repo: repoID"},
+		{"Discover", "discoverWrite(repoID, readErr)"},
+		{"DiscoverVMs", "discoverWrite(repoID, readErr)"},
+		{"DiscoverFileSets", "discoverWrite(repoID, readErr)"},
 	} {
 		if !strings.Contains(funcBody(t, src, tc.fn), tc.writes) {
 			t.Errorf("%s no longer restores a rediscovered item's repository (%s).\n"+

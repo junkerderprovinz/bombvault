@@ -5911,8 +5911,8 @@ func defFileName(name string) (string, error) {
 // Discover rebuilds BombVault's target list from the backup storage — used after
 // a fresh install / loss of /config. It lists the containers repo's snapshots
 // (tagged container:<name>), reads + decrypts each container's mirrored
-// definition, and upserts a target so the container can be restored. Returns the
-// number of containers discovered. Containers whose definition is missing or
+// definition, and upserts a target so the container can be restored. The result
+// counts the containers discovered. Containers whose definition is missing or
 // undecryptable are skipped (logged).
 //
 // dryRun makes it READ-ONLY: it opens the repo and decrypts the definitions
@@ -5920,10 +5920,10 @@ func defFileName(name string) (string, error) {
 // same count, but writes NO targets. The Recovery tab's readability probe uses
 // this so merely checking "is my backup readable?" never resurrects orphan
 // entries; only the explicit "Discover backups" action rebuilds targets (#44).
-func (s *Service) Discover(ctx context.Context, dryRun bool) (int, []repoSkip, error) {
+func (s *Service) Discover(ctx context.Context, dryRun bool) (DiscoverResult, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return 0, nil, fmt.Errorf("read settings: %w", err)
+		return DiscoverResult{}, fmt.Errorf("read settings: %w", err)
 	}
 	// The distinct container names from the container:<name> tags, across every
 	// repository this domain writes to, each with the named repository (#204) it
@@ -5937,13 +5937,15 @@ func (s *Service) Discover(ctx context.Context, dryRun bool) (int, []repoSkip, e
 
 	dir, err := s.defsDir(settings)
 	if err != nil {
-		return 0, nil, err
+		return DiscoverResult{}, err
 	}
 	legacyDir, err := s.legacyDefsDir(settings)
 	if err != nil {
-		return 0, nil, err
+		return DiscoverResult{}, err
 	}
-	discovered := 0
+	res := DiscoverResult{Skipped: skipped, LeftOpen: []string{}}
+	unlock, locked := s.discoverLock("containers", dryRun)
+	defer unlock()
 	for name, repoID := range names {
 		fn, fnErr := defFileName(name)
 		if fnErr != nil {
@@ -5975,88 +5977,33 @@ func (s *Service) Discover(ctx context.Context, dryRun bool) (int, []repoSkip, e
 			continue
 		}
 		if !dryRun {
-			// Was this item already configured? Asked BEFORE the upsert, because
-			// the upsert is what would make the answer yes.
-			// "This pass created the row" OR "the row has no repository of its own".
-			// Gating on the first alone meant a placeholder row - one the tree editor,
-			// a schedule change or a previous discovery had already created - could
-			// never have its repository restored, which is precisely the item the
-			// restore is for. What must never happen is OVERWRITING a choice somebody
-			// made, and an empty column is not a choice.
-			existing, kErr := s.store.GetTargetByContainer(name)
-			isNewRow := errors.Is(kErr, sql.ErrNoRows)
-			maySetRepo := isNewRow || (kErr == nil && strings.TrimSpace(existing.Repo) == "")
-			// …and never from evidence this pass knows is incomplete. readErr means
-			// exactly one thing: the domain's OWN repository could not be listed. The
-			// named repositories are searched FIRST and the domain's own LAST, so
-			// `names` then holds named-repository evidence alone, and the
-			// newest-snapshot-wins rule the whole attribution rests on was decided
-			// without ever looking at the repository most items are actually in.
-			//
-			// The ROW is still rebuilt from such a pass - the item exists, its stored
-			// definition proves it, and an upsert is idempotent. The repository column
-			// is the part that must wait, because it LATCHES: a later Discover finds
-			// it non-empty and leaves it alone (that refusal exists to protect a
-			// choice somebody made), the PATCH route refuses to clear it for an item
-			// that has backups, and no route deletes it. So a wrong attribution
-			// written from half the evidence is permanent, the next scheduled backup
-			// follows it, and that repository's retention then ages the archive the
-			// item was re-homed onto - the exact mechanism the comment on
-			// discoverNamesAcrossRepos records as having cost a data-loss finding.
-			//
-			// An empty column is not a guess: it means the domain's own repository,
-			// which is where the primary history is and where the next Discover can
-			// still correct it from.
-			if maySetRepo && readErr != nil {
-				log.Printf("api: discover: the domain's own repository could not be read, so %q keeps the default repository until a pass that can see every repository", name) //nolint:gosec // G706: %q-quoted
-				maySetRepo = false
-			}
-			// …and the same has-backups refusal PATCH /api/containers/<name>
-			// enforces. A row that already exists with an empty repository column is
-			// pointed at the DOMAIN repository, and it may well have snapshots there;
-			// moving it to a named repository orphans that history and sends the next
-			// backup somewhere else, which is exactly the transition the HTTP path
-			// refuses. Asked only for a row that already existed: there is nothing to
-			// orphan for one this pass created, and the question costs a listing.
-			//
-			// The question it can actually answer is "has this item EVER been backed
-			// up", not "…in the repository it points at now": the runs table carries
-			// no repository column, so one surviving run row answers yes wherever it
-			// wrote. That over-refuses rather than under-refuses, which is the safe
-			// direction here - re-homing an item with history somewhere orphans it.
-			if maySetRepo && !isNewRow && repoID != "" {
-				if had, hErr := s.containerHasBackups(ctx, name); hErr != nil || had {
-					log.Printf("api: discover: %q has backups already; leaving its repository alone", name) //nolint:gosec // G706: %q-quoted
-					maySetRepo = false
-				}
-			}
+			write := discoverWrite(repoID, readErr)
 			if _, uErr := s.store.UpsertTarget(store.Target{
 				ContainerName: name,
 				AppdataPaths:  def.AppdataPaths,
 				Definition:    string(plain),
+				Repo:          write.Repo,
+				RepoChosen:    write.Choice,
 			}); uErr != nil {
 				log.Printf("api: discover: could not upsert target %q: %v", name, uErr) //nolint:gosec // G706: %q-quoted
 				continue
 			}
-			// Put it back on the repository its snapshots are actually in (#204) -
-			// for a row this pass created, or an existing one whose repository
-			// column is empty AND which has no backups where it is pointed now.
-			// Discovery is a REBUILD, not a reassignment: an existing item's
-			// repository is the operator's own choice, and a silent move would
-			// orphan the snapshots it already has and send the next backup
-			// somewhere else looking like a success.
-			if repoID != "" && maySetRepo {
-				if rErr := s.store.SetTargetRepo(name, repoID); rErr != nil {
-					log.Printf("api: discover: could not restore the repository of %q: %v", name, rErr) //nolint:gosec // G706: %q-quoted
-				}
+			left, hErr := s.discoverHome(ctx, store.ItemRef{Domain: "containers", Key: name}, repoID, readErr, locked)
+			if hErr != nil {
+				log.Printf("api: discover: could not restore the repository of %q: %v", name, hErr) //nolint:gosec // G706: %q-quoted
+			}
+			if left {
+				res.LeftOpen = append(res.LeftOpen, name)
 			}
 		}
-		discovered++
+		res.Found++
 	}
-	// The count and the skip list first, the read failure last: a caller that
-	// branches on err still sees it, and one that shows a partial rebuild now
-	// has something to show.
-	return discovered, skipped, readErr
+	if !dryRun && res.Found > 0 {
+		if err := s.pauseAfterDiscover(ctx, "containers", &res); err != nil {
+			readErr = errors.Join(readErr, err)
+		}
+	}
+	return res, readErr
 }
 
 // vmDefsDir returns the directory INSIDE the vms repo (repo/vm-def) where the
@@ -6129,13 +6076,14 @@ func (s *Service) writeVMDefToStorage(settings store.Settings, name, itemRepo st
 // again. It lists the vms repo's snapshots (tagged vm:<name>), reads + decrypts
 // each VM's mirrored definition, and upserts a target. VMs whose definition is
 // missing (backed up before mirroring existed) or undecryptable are skipped.
-// Returns the number of VMs discovered. dryRun makes it READ-ONLY (open + decrypt
-// to prove readability + APP_KEY, return the count, but write no targets) — used
-// by the Recovery readability probe so it never resurrects orphan VM entries (#44).
-func (s *Service) DiscoverVMs(ctx context.Context, dryRun bool) (int, []repoSkip, error) {
+// The result counts the VMs discovered. dryRun makes it read-only: it opens the
+// repo and decrypts the definitions to prove readability and the APP_KEY, and
+// returns the same count, but writes no targets. The Recovery readability probe
+// uses this so it never resurrects orphan VM entries (#44).
+func (s *Service) DiscoverVMs(ctx context.Context, dryRun bool) (DiscoverResult, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return 0, nil, fmt.Errorf("read settings: %w", err)
+		return DiscoverResult{}, fmt.Errorf("read settings: %w", err)
 	}
 	// Every repository this domain writes to (#204), with the one each name was
 	// found in; a not-yet-created repo yields nothing quietly, as before.
@@ -6148,13 +6096,15 @@ func (s *Service) DiscoverVMs(ctx context.Context, dryRun bool) (int, []repoSkip
 
 	dir, err := s.vmDefsDir(settings)
 	if err != nil {
-		return 0, nil, err
+		return DiscoverResult{}, err
 	}
 	legacyDir, err := s.legacyVMDefsDir(settings)
 	if err != nil {
-		return 0, nil, err
+		return DiscoverResult{}, err
 	}
-	discovered := 0
+	res := DiscoverResult{Skipped: skipped, LeftOpen: []string{}}
+	unlock, locked := s.discoverLock("vms", dryRun)
+	defer unlock()
 	for name, repoID := range names {
 		fn, fnErr := defFileName(name)
 		if fnErr != nil {
@@ -6189,48 +6139,33 @@ func (s *Service) DiscoverVMs(ctx context.Context, dryRun bool) (int, []repoSkip
 			method = "graceful"
 		}
 		if !dryRun {
-			// Same rule as Discover: a row without a repository of its own may have
-			// one restored; a row that carries a choice keeps it.
-			existing, kErr := s.store.GetVMTargetByName(name)
-			isNewRow := errors.Is(kErr, sql.ErrNoRows)
-			maySetRepo := isNewRow || (kErr == nil && strings.TrimSpace(existing.Repo) == "")
-			// Never attributed from an incomplete pass - see Discover for why the row
-			// may be rebuilt while the repository column has to wait.
-			if maySetRepo && readErr != nil {
-				log.Printf("api: discover vms: the domain's own repository could not be read, so %q keeps the default repository until a pass that can see every repository", name) //nolint:gosec // G706: %q-quoted
-				maySetRepo = false
-			}
-			// The has-backups refusal PATCH /api/vms/<name> enforces - see Discover,
-			// including why the question it answers is "ever" rather than "here".
-			if maySetRepo && !isNewRow && repoID != "" {
-				if had, hErr := s.vmHasBackups(ctx, name); hErr != nil || had {
-					log.Printf("api: discover vms: %q has backups already; leaving its repository alone", name) //nolint:gosec // G706: %q-quoted
-					maySetRepo = false
-				}
-			}
+			write := discoverWrite(repoID, readErr)
 			if _, uErr := s.store.UpsertVMTarget(store.VMTarget{
 				Name:       name,
 				Method:     method,
 				Definition: string(plain),
+				Repo:       write.Repo,
+				RepoChosen: write.Choice,
 			}); uErr != nil {
 				log.Printf("api: discover vms: could not upsert target %q: %v", name, uErr) //nolint:gosec // G706: %q-quoted
 				continue
 			}
-			// Back onto the repository its snapshots are in (#204), under the same
-			// rule as Discover: a row with no repository of its own and no backups
-			// where it is pointed now.
-			if repoID != "" && maySetRepo {
-				if rErr := s.store.SetVMRepo(name, repoID); rErr != nil {
-					log.Printf("api: discover vms: could not restore the repository of %q: %v", name, rErr) //nolint:gosec // G706: %q-quoted
-				}
+			left, hErr := s.discoverHome(ctx, store.ItemRef{Domain: "vms", Key: name}, repoID, readErr, locked)
+			if hErr != nil {
+				log.Printf("api: discover vms: could not restore the repository of %q: %v", name, hErr) //nolint:gosec // G706: %q-quoted
+			}
+			if left {
+				res.LeftOpen = append(res.LeftOpen, name)
 			}
 		}
-		discovered++
+		res.Found++
 	}
-	// The count and the skip list first, the read failure last: a caller that
-	// branches on err still sees it, and one that shows a partial rebuild now
-	// has something to show.
-	return discovered, skipped, readErr
+	if !dryRun && res.Found > 0 {
+		if err := s.pauseAfterDiscover(ctx, "vms", &res); err != nil {
+			readErr = errors.Join(readErr, err)
+		}
+	}
+	return res, readErr
 }
 
 // containerRestorePlan carries everything prepareRestore validated and resolved
@@ -11110,14 +11045,10 @@ func (s *Service) SetFileSetSelectedPaths(_ context.Context, id string, entries 
 	return nil
 }
 
-// fileSetHasBackups, containerHasBackups and vmHasBackups decide whether an
-// item may still move. An unreadable location counts as having backups.
+// fileSetHasBackups and vmHasBackups decide whether an item may still move. An
+// unreadable location counts as having backups.
 func (s *Service) fileSetHasBackups(ctx context.Context, id string) (bool, error) {
 	return countsAsBackedUp(s.itemBackups(ctx, store.ItemRef{Domain: "files", Key: id}))
-}
-
-func (s *Service) containerHasBackups(ctx context.Context, name string) (bool, error) {
-	return countsAsBackedUp(s.itemBackups(ctx, store.ItemRef{Domain: "containers", Key: name}))
 }
 
 func (s *Service) vmHasBackups(ctx context.Context, name string) (bool, error) {
@@ -11752,18 +11683,17 @@ func (s *Service) DeleteBackupsFileSet(ctx context.Context, id string) error {
 // restore-to-folder already works.
 //
 // An existing set keeps its path, excludes and enabled state: those are the
-// operator's own configuration. Its REPOSITORY column is the one exception, and
-// only while it is EMPTY, which carries no choice - it means "the domain's own".
-// Such a set with no backups where it is pointed now is put back on the
+// operator's own configuration. Its repository is the one exception, and only
+// while it is still open or left unread by an earlier pass. Such a set with no
+// backups where it is pointed now is put back on the
 // repository its snapshots were actually found in, the same repair Discover and
-// DiscoverVMs make and the file sets went without. Returns the number of
-// file sets found in the repo. dryRun makes it READ-ONLY (list + count, write
-// nothing) — used by the Recovery readability probe so it never resurrects
-// orphan entries (#44).
-func (s *Service) DiscoverFileSets(ctx context.Context, dryRun bool) (int, []repoSkip, error) {
+// DiscoverVMs make and the file sets went without. The result counts the file
+// sets found. dryRun makes it read-only: it lists and counts but writes nothing.
+// The Recovery readability probe uses this so it never resurrects orphan entries (#44).
+func (s *Service) DiscoverFileSets(ctx context.Context, dryRun bool) (DiscoverResult, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return 0, nil, fmt.Errorf("read settings: %w", err)
+		return DiscoverResult{}, fmt.Errorf("read settings: %w", err)
 	}
 	// Every repository this domain writes to (#204), with the one each name was
 	// found in; a not-yet-created repo yields nothing quietly, as before.
@@ -11774,7 +11704,9 @@ func (s *Service) DiscoverFileSets(ctx context.Context, dryRun bool) (int, []rep
 	// what the Recovery wizard classifies on.
 	names, skipped, readErr := s.discoverNamesAcrossRepos(ctx, settings, "files", "fileset:")
 
-	discovered := 0
+	res := DiscoverResult{Skipped: skipped, LeftOpen: []string{}}
+	unlock, locked := s.discoverLock("files", dryRun)
+	defer unlock()
 	for name, repoID := range names {
 		// Defense-in-depth: only our own backups write fileset: tags, but a name
 		// that fails the boundary charset (it feeds tags + progress keys) is
@@ -11784,58 +11716,37 @@ func (s *Service) DiscoverFileSets(ctx context.Context, dryRun bool) (int, []rep
 			continue
 		}
 		if dryRun {
-			discovered++ // probe: count what a real discover would surface, write nothing
+			res.Found++ // probe: count what a real discover would surface, write nothing
 			continue
 		}
-		// Never attributed from an incomplete pass - see Discover for why the set may
-		// be rebuilt while the repository column has to wait. Here the attribution
-		// rides along in the INSERT as well as in the repair, so the id is blanked
-		// once, above both.
-		if readErr != nil && repoID != "" {
-			log.Printf("api: discover files: the domain's own repository could not be read, so %q keeps the default repository until a pass that can see every repository", name) //nolint:gosec // G706: %q-quoted
-			repoID = ""
-		}
-		if existing, gErr := s.store.GetFileSetByName(name); gErr == nil {
-			// Already configured: never clobber the operator's own choice. But a row
-			// whose repository column is EMPTY carries no choice - it is pointed at
-			// the domain repository by default - and a path-less placeholder is
-			// exactly what the foreign-repo restore creates. Leaving it empty forever
-			// meant that once somebody gave it a path, it backed up to the domain
-			// repository while its whole history sat in the named one. Discover and
-			// DiscoverVMs gained this repair; the file sets never had it.
-			//
-			// Same refusal as the other two: only when the set has no backups at all.
-			// "At all", not "in the repository it points at now" - the runs table has
-			// no repository column, so that finer question cannot be asked. It
-			// over-refuses, which is the safe direction.
-			if repoID != "" && strings.TrimSpace(existing.Repo) == "" {
-				had, hErr := s.fileSetHasBackups(ctx, existing.ID)
-				switch {
-				case hErr != nil || had:
-					log.Printf("api: discover files: %q has backups already; leaving its repository alone", name) //nolint:gosec // G706: %q-quoted
-				default:
-					if rErr := s.store.SetFileSetRepo(existing.ID, repoID); rErr != nil {
-						log.Printf("api: discover files: could not restore the repository of %q: %v", name, rErr) //nolint:gosec // G706: %q-quoted
-					}
-				}
+		write := discoverWrite(repoID, readErr)
+		existing, gErr := s.store.GetFileSetByName(name)
+		switch {
+		case errors.Is(gErr, sql.ErrNoRows):
+			if _, cErr := s.store.CreateFileSet(store.FileSet{Name: name, Enabled: false, Repo: write.Repo, RepoChosen: write.Choice}); cErr != nil {
+				log.Printf("api: discover files: could not create set %q: %v", name, cErr) //nolint:gosec // G706: %q-quoted
+				continue
 			}
-			discovered++
+		case gErr != nil:
+			log.Printf("api: discover files: could not read set %q: %v", name, gErr) //nolint:gosec // G706: %q-quoted
 			continue
+		default:
+			left, hErr := s.discoverHome(ctx, store.ItemRef{Domain: "files", Key: existing.ID}, repoID, readErr, locked)
+			if hErr != nil {
+				log.Printf("api: discover files: could not restore the repository of %q: %v", name, hErr) //nolint:gosec // G706: %q-quoted
+			}
+			if left {
+				res.LeftOpen = append(res.LeftOpen, name)
+			}
 		}
-		// The repository rides along in the INSERT, as the HTTP create does: an
-		// insert-then-setter pair leaves a window in which the set exists on the
-		// domain repository while the caller believes otherwise, and a failure of
-		// the second half left it there for good while the count said "found".
-		if _, cErr := s.store.CreateFileSet(store.FileSet{Name: name, Path: "", Enabled: false, Repo: repoID, RepoChosen: store.RepoChosen}); cErr != nil {
-			log.Printf("api: discover files: could not create set %q: %v", name, cErr) //nolint:gosec // G706: %q-quoted
-			continue
-		}
-		discovered++
+		res.Found++
 	}
-	// The count and the skip list first, the read failure last: a caller that
-	// branches on err still sees it, and one that shows a partial rebuild now
-	// has something to show.
-	return discovered, skipped, readErr
+	if !dryRun && res.Found > 0 {
+		if err := s.pauseAfterDiscover(ctx, "files", &res); err != nil {
+			readErr = errors.Join(readErr, err)
+		}
+	}
+	return res, readErr
 }
 
 // resticAdapter also satisfies the config domain's backup surface.

@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/fs"
 	"log"
+	"maps"
 	"mime"
 	"net"
 	"net/http"
@@ -833,6 +834,23 @@ func (h *Handler) handleForgetVM(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+// discoverFields is what every Discover answer carries, success or not.
+// skippedNeedsAction flags only skips that need action: a repository somebody
+// switched off is named, but it is not a fault.
+func discoverFields(res DiscoverResult) map[string]any {
+	leftOpen := res.LeftOpen
+	if leftOpen == nil {
+		leftOpen = []string{}
+	}
+	return map[string]any{
+		"discovered":         res.Found,
+		"skipped":            skipNames(res.Skipped),
+		"skippedNeedsAction": len(actionableSkips(res.Skipped)) > 0,
+		"paused":             res.Paused,
+		"leftOpen":           leftOpen,
+	}
+}
+
 // handleDiscover rebuilds the target list from the backup storage (disaster
 // recovery after a fresh install / loss of /config).
 func (h *Handler) handleDiscover(w http.ResponseWriter, r *http.Request) {
@@ -840,7 +858,7 @@ func (h *Handler) handleDiscover(w http.ResponseWriter, r *http.Request) {
 	// to prove the repo/APP_KEY, but write no targets — so a readiness check never
 	// resurrects orphan entries. The default (no probe) is the real rebuild (#44).
 	probe := r.URL.Query().Get("probe") == "true"
-	n, skipped, err := h.svc.Discover(r.Context(), probe)
+	res, err := h.svc.Discover(r.Context(), probe)
 	if err != nil {
 		// The failure envelope carries the partial result too. The pass searches
 		// the named repositories BEFORE the domain's own, so when the domain's own
@@ -849,9 +867,7 @@ func (h *Handler) handleDiscover(w http.ResponseWriter, r *http.Request) {
 		// configuration. "Could not open the domain repository" and "…and nothing
 		// was rebuilt" are two different answers.
 		body := failEnvelope(err)
-		body["discovered"] = n
-		body["skipped"] = skipNames(skipped)
-		body["skippedNeedsAction"] = len(actionableSkips(skipped)) > 0
+		maps.Copy(body, discoverFields(res))
 		writeJSON(w, http.StatusOK, body)
 		return
 	}
@@ -864,24 +880,16 @@ func (h *Handler) handleDiscover(w http.ResponseWriter, r *http.Request) {
 	// loss looked identical whether the repositories were empty or unreachable -
 	// in the one screen whose entire job is to tell somebody their backups are
 	// still there.
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"discovered": n,
-		"repo":       h.svc.DiscoverSource("containers"),
-		"skipped":    skipNames(skipped),
-		// What to SAY and what to FLAG are two lists. A repository switched off on
-		// purpose belongs in the sentence - after a /config loss the operator has
-		// every reason to know it was not searched - but it is not a fault, so it
-		// must not hold the readability pill amber forever and swallow the
-		// save-success toast behind it. See repoSkip.Note.
-		"skippedNeedsAction": len(actionableSkips(skipped)) > 0,
-	}))
+	fields := discoverFields(res)
+	fields["repo"] = h.svc.DiscoverSource("containers")
+	writeJSON(w, http.StatusOK, okEnvelope(fields))
 }
 
 // handleDiscoverVMs rebuilds the VM target list from backup storage, so a VM
 // deleted from the host (or lost with the database) becomes restorable again.
 func (h *Handler) handleDiscoverVMs(w http.ResponseWriter, r *http.Request) {
 	probe := r.URL.Query().Get("probe") == "true" // read-only readiness check, see handleDiscover (#44)
-	n, skipped, err := h.svc.DiscoverVMs(r.Context(), probe)
+	res, err := h.svc.DiscoverVMs(r.Context(), probe)
 	if err != nil {
 		// The failure envelope carries the partial result too. The pass searches
 		// the named repositories BEFORE the domain's own, so when the domain's own
@@ -890,26 +898,16 @@ func (h *Handler) handleDiscoverVMs(w http.ResponseWriter, r *http.Request) {
 		// configuration. "Could not open the domain repository" and "…and nothing
 		// was rebuilt" are two different answers.
 		body := failEnvelope(err)
-		body["discovered"] = n
-		body["skipped"] = skipNames(skipped)
-		body["skippedNeedsAction"] = len(actionableSkips(skipped)) > 0
+		maps.Copy(body, discoverFields(res))
 		writeJSON(w, http.StatusOK, body)
 		return
 	}
 	// `repo` names the folder this pass actually read (#196): the wizard asks
 	// for an off-site repository a step earlier and then reads the PRIMARY
 	// path, and an empty answer about an unnamed folder is unreadable.
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"discovered": n,
-		"repo":       h.svc.DiscoverSource("vms"),
-		"skipped":    skipNames(skipped),
-		// What to SAY and what to FLAG are two lists. A repository switched off on
-		// purpose belongs in the sentence - after a /config loss the operator has
-		// every reason to know it was not searched - but it is not a fault, so it
-		// must not hold the readability pill amber forever and swallow the
-		// save-success toast behind it. See repoSkip.Note.
-		"skippedNeedsAction": len(actionableSkips(skipped)) > 0,
-	}))
+	fields := discoverFields(res)
+	fields["repo"] = h.svc.DiscoverSource("vms")
+	writeJSON(w, http.StatusOK, okEnvelope(fields))
 }
 
 // handleBackup starts a single container backup ON THE SERVER and returns
@@ -5254,7 +5252,7 @@ func (h *Handler) handleRestoreFileSetFiles(w http.ResponseWriter, r *http.Reque
 // sets lost with the database become restorable again. POST /api/files/discover
 func (h *Handler) handleDiscoverFiles(w http.ResponseWriter, r *http.Request) {
 	probe := r.URL.Query().Get("probe") == "true" // read-only readiness check, see handleDiscover (#44)
-	n, skipped, err := h.svc.DiscoverFileSets(r.Context(), probe)
+	res, err := h.svc.DiscoverFileSets(r.Context(), probe)
 	if err != nil {
 		// The failure envelope carries the partial result too. The pass searches
 		// the named repositories BEFORE the domain's own, so when the domain's own
@@ -5263,26 +5261,16 @@ func (h *Handler) handleDiscoverFiles(w http.ResponseWriter, r *http.Request) {
 		// configuration. "Could not open the domain repository" and "…and nothing
 		// was rebuilt" are two different answers.
 		body := failEnvelope(err)
-		body["discovered"] = n
-		body["skipped"] = skipNames(skipped)
-		body["skippedNeedsAction"] = len(actionableSkips(skipped)) > 0
+		maps.Copy(body, discoverFields(res))
 		writeJSON(w, http.StatusOK, body)
 		return
 	}
 	// `repo` names the folder this pass actually read (#196): the wizard asks
 	// for an off-site repository a step earlier and then reads the PRIMARY
 	// path, and an empty answer about an unnamed folder is unreadable.
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"discovered": n,
-		"repo":       h.svc.DiscoverSource("files"),
-		"skipped":    skipNames(skipped),
-		// What to SAY and what to FLAG are two lists. A repository switched off on
-		// purpose belongs in the sentence - after a /config loss the operator has
-		// every reason to know it was not searched - but it is not a fault, so it
-		// must not hold the readability pill amber forever and swallow the
-		// save-success toast behind it. See repoSkip.Note.
-		"skippedNeedsAction": len(actionableSkips(skipped)) > 0,
-	}))
+	fields := discoverFields(res)
+	fields["repo"] = h.svc.DiscoverSource("files")
+	writeJSON(w, http.StatusOK, okEnvelope(fields))
 }
 
 // handleForeignOpen opens ANOTHER BombVault instance's repository READ-ONLY

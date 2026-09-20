@@ -4611,16 +4611,17 @@ func TestDiscoverRebuildsTargetsFromStorage(t *testing.T) {
 	// dryRun=true first: a readability probe must report the same count WITHOUT
 	// writing any target (#44 — the Recovery readiness check must not resurrect
 	// orphan entries).
-	if pn, _, pErr := svc.Discover(context.Background(), true); pErr != nil {
+	if probe, pErr := svc.Discover(context.Background(), true); pErr != nil {
 		t.Fatalf("discover probe: %v", pErr)
-	} else if pn != 1 {
-		t.Fatalf("probe discovered = %d, want 1", pn)
+	} else if probe.Found != 1 {
+		t.Fatalf("probe discovered = %d, want 1", probe.Found)
 	}
 	if _, err := st.GetTargetByContainer("plex"); err == nil {
 		t.Fatalf("probe (dryRun) must NOT create the plex target, but it exists")
 	}
 
-	n, _, err := svc.Discover(context.Background(), false)
+	res, err := svc.Discover(context.Background(), false)
+	n := res.Found
 	if err != nil {
 		t.Fatalf("discover: %v", err)
 	}
@@ -6428,16 +6429,17 @@ func TestDiscoverVMsRebuildsTargetFromStorage(t *testing.T) {
 
 	// dryRun=true first: the readability probe reports the count but must NOT
 	// recreate the VM target (#44).
-	if pn, _, pErr := svc.DiscoverVMs(context.Background(), true); pErr != nil {
+	if probe, pErr := svc.DiscoverVMs(context.Background(), true); pErr != nil {
 		t.Fatalf("DiscoverVMs probe: %v", pErr)
-	} else if pn != 1 {
-		t.Fatalf("probe discovered = %d, want 1", pn)
+	} else if probe.Found != 1 {
+		t.Fatalf("probe discovered = %d, want 1", probe.Found)
 	}
 	if _, err := st.GetVMTargetByName("Tailscale"); err == nil {
 		t.Fatalf("probe (dryRun) must NOT create the Tailscale VM target, but it exists")
 	}
 
-	n, _, err := svc.DiscoverVMs(context.Background(), false)
+	res, err := svc.DiscoverVMs(context.Background(), false)
+	n := res.Found
 	if err != nil {
 		t.Fatalf("DiscoverVMs: %v", err)
 	}

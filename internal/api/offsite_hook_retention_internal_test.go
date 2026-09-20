@@ -187,7 +187,8 @@ func TestAnAllNamedDiscoverNamesItsMissingRepositoryWithoutFlaggingIt(t *testing
 	}
 	_ = st
 
-	_, skipped, err := svc.Discover(context.Background(), true)
+	res, err := svc.Discover(context.Background(), true)
+	skipped := res.Skipped
 	if err != nil {
 		t.Fatalf("an all-named domain has no repository of its own; that is not a failure: %v", err)
 	}
@@ -227,7 +228,8 @@ func TestAPartialDiscoverOfFileSetsWithholdsTheAttributionToo(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	n, _, dErr := svc.DiscoverFileSets(context.Background(), false)
+	res, dErr := svc.DiscoverFileSets(context.Background(), false)
+	n := res.Found
 	if dErr == nil {
 		t.Fatal("a files repository that was there and is gone must reach the caller as an error")
 	}
