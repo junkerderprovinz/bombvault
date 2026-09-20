@@ -772,6 +772,7 @@ const sk: Partial<Translations> = {
   "ransomware.replicationCurrent": "replikácia aktuálna",
   "ransomware.replicationOverdue": "replikácia po termíne",
   "ransomware.replicationNever": "zatiaľ nereplikované",
+  "ransomware.replicationPaused": "kopírovanie mimo lokality pozastavené: potvrďte umiestnenie",
   "ransomware.drillOffsite": "test obnovenia (externý)",
   "ransomware.drillOverdue": "test obnovenia po termíne",
   "ransomware.drillFailed": "test obnovenia zlyhal",

@@ -415,7 +415,7 @@ export interface DomainStatus {
   // never contradict the chip. encryptionOn/pruneStrategySet are the two config
   // facts the card also renders (no separate /api/settings round-trip needed).
   tamperState: string; // "" | "never" | "failed" | "stale" | "ok"
-  replicationState: string; // "" | "never" | "overdue" | "ok"
+  replicationState: string; // "" | "never" | "overdue" | "ok" | "paused"
   drillState: string; // "" | "never" | "failed" | "overdue" | "ok"
   encryptionOn: boolean; // repo encryption is enabled
   pruneStrategySet: boolean; // an off-site retention strategy is configured

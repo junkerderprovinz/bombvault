@@ -772,6 +772,7 @@ const id: Partial<Translations> = {
   "ransomware.replicationCurrent": "replikasi terbaru",
   "ransomware.replicationOverdue": "replikasi terlambat",
   "ransomware.replicationNever": "belum pernah direplikasi",
+  "ransomware.replicationPaused": "salinan luar lokasi dijeda: konfirmasikan penempatan",
   "ransomware.drillOffsite": "uji pemulihan (off-site)",
   "ransomware.drillOverdue": "uji pemulihan terlambat",
   "ransomware.drillFailed": "uji pemulihan gagal",

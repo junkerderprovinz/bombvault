@@ -1042,6 +1042,7 @@ const nl: Partial<Translations> = {
   "ransomware.replicationCurrent": "replicatie actueel",
   "ransomware.replicationOverdue": "replicatie te laat",
   "ransomware.replicationNever": "nog niet gerepliceerd",
+  "ransomware.replicationPaused": "kopie op afstand gepauzeerd: bevestig de plaatsing",
   "ransomware.drillOffsite": "hersteltest (off-site)",
   "ransomware.drillOverdue": "hersteltest te laat",
   "ransomware.drillFailed": "hersteltest mislukt",

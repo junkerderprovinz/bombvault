@@ -1052,6 +1052,7 @@ const hu: Partial<Translations> = {
   "ransomware.replicationCurrent": "replikáció naprakész",
   "ransomware.replicationOverdue": "replikáció késésben",
   "ransomware.replicationNever": "még nincs replikálva",
+  "ransomware.replicationPaused": "a telephelyen kívüli másolás szünetel: erősítsd meg az elhelyezést",
   "ransomware.drillOffsite": "visszaállítási próba (telephelyen kívüli)",
   "ransomware.drillOverdue": "visszaállítási próba késésben",
   "ransomware.drillFailed": "visszaállítási próba sikertelen",

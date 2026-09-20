@@ -772,6 +772,7 @@ const bg: Partial<Translations> = {
   "ransomware.replicationCurrent": "репликацията е актуална",
   "ransomware.replicationOverdue": "репликацията е просрочена",
   "ransomware.replicationNever": "все още не е реплицирано",
+  "ransomware.replicationPaused": "външното копиране е на пауза: потвърдете разположението",
   "ransomware.drillOffsite": "проверка на възстановяването (извън обекта)",
   "ransomware.drillOverdue": "проверката на възстановяването е просрочена",
   "ransomware.drillFailed": "проверката на възстановяването е неуспешна",

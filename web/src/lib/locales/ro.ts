@@ -1048,6 +1048,7 @@ const ro: Partial<Translations> = {
   "ransomware.replicationCurrent": "replicare la zi",
   "ransomware.replicationOverdue": "replicare restantă",
   "ransomware.replicationNever": "nereplicat încă",
+  "ransomware.replicationPaused": "copierea în afara locației este în pauză: confirmă amplasarea",
   "ransomware.drillOffsite": "test de restaurare (off-site)",
   "ransomware.drillOverdue": "test de restaurare restant",
   "ransomware.drillFailed": "test de restaurare eșuat",

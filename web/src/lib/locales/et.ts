@@ -772,6 +772,7 @@ const et: Partial<Translations> = {
   "ransomware.replicationCurrent": "replitseerimine ajakohane",
   "ransomware.replicationOverdue": "replitseerimine hilinenud",
   "ransomware.replicationNever": "pole veel replitseeritud",
+  "ransomware.replicationPaused": "väliskopeerimine peatatud: kinnita paigutus",
   "ransomware.drillOffsite": "taastekontroll (väline)",
   "ransomware.drillOverdue": "taastekontroll hilinenud",
   "ransomware.drillFailed": "taastekontroll ebaõnnestus",

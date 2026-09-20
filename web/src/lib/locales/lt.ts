@@ -772,6 +772,7 @@ const lt: Partial<Translations> = {
   "ransomware.replicationCurrent": "replikavimas atnaujintas",
   "ransomware.replicationOverdue": "replikavimas vėluoja",
   "ransomware.replicationNever": "dar nereplikuota",
+  "ransomware.replicationPaused": "kopijavimas kitoje vietoje pristabdytas: patvirtinkite vietą",
   "ransomware.drillOffsite": "atkūrimo patikra (nuotolinė)",
   "ransomware.drillOverdue": "atkūrimo patikra vėluoja",
   "ransomware.drillFailed": "atkūrimo patikra nepavyko",

@@ -1040,6 +1040,7 @@ const pl: Partial<Translations> = {
   "ransomware.replicationCurrent": "replikacja aktualna",
   "ransomware.replicationOverdue": "replikacja zaległa",
   "ransomware.replicationNever": "jeszcze nie replikowano",
+  "ransomware.replicationPaused": "kopiowanie poza lokalizację wstrzymane: potwierdź umiejscowienie",
   "ransomware.drillOffsite": "próba przywracania (poza siedzibą)",
   "ransomware.drillOverdue": "próba przywracania zaległa",
   "ransomware.drillFailed": "próba przywracania nieudana",

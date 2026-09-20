@@ -1040,6 +1040,7 @@ const ru: Partial<Translations> = {
   "ransomware.replicationCurrent": "репликация актуальна",
   "ransomware.replicationOverdue": "репликация просрочена",
   "ransomware.replicationNever": "ещё не реплицировано",
+  "ransomware.replicationPaused": "внешнее копирование приостановлено: подтвердите размещение",
   "ransomware.drillOffsite": "проверка восстановления (внешняя)",
   "ransomware.drillOverdue": "проверка восстановления просрочена",
   "ransomware.drillFailed": "проверка восстановления не пройдена",

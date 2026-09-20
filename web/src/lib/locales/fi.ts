@@ -1069,6 +1069,7 @@ const fi: Partial<Translations> = {
   "ransomware.replicationCurrent": "replikointi ajan tasalla",
   "ransomware.replicationOverdue": "replikointi myöhässä",
   "ransomware.replicationNever": "ei vielä replikoitu",
+  "ransomware.replicationPaused": "etäkopiointi keskeytetty: vahvista sijoitus",
   "ransomware.drillOffsite": "palautusharjoitus (etä)",
   "ransomware.drillOverdue": "palautusharjoitus myöhässä",
   "ransomware.drillFailed": "palautusharjoitus epäonnistui",

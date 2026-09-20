@@ -1069,6 +1069,7 @@ const tr: Partial<Translations> = {
   "ransomware.replicationCurrent": "çoğaltma güncel",
   "ransomware.replicationOverdue": "çoğaltma gecikmiş",
   "ransomware.replicationNever": "henüz çoğaltılmadı",
+  "ransomware.replicationPaused": "tesis dışı kopyalama duraklatıldı: yerleşimi onaylayın",
   "ransomware.drillOffsite": "geri yükleme tatbikatı (site dışı)",
   "ransomware.drillOverdue": "geri yükleme tatbikatı gecikmiş",
   "ransomware.drillFailed": "geri yükleme tatbikatı başarısız",

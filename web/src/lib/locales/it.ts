@@ -1049,6 +1049,7 @@ const it: Partial<Translations> = {
   "ransomware.replicationCurrent": "replica aggiornata",
   "ransomware.replicationOverdue": "replica in ritardo",
   "ransomware.replicationNever": "non ancora replicato",
+  "ransomware.replicationPaused": "copia off-site in pausa: conferma la collocazione",
   "ransomware.drillOffsite": "prova di ripristino (off-site)",
   "ransomware.drillOverdue": "prova di ripristino in ritardo",
   "ransomware.drillFailed": "prova di ripristino fallita",

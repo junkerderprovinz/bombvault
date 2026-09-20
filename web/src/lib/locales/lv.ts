@@ -772,6 +772,7 @@ const lv: Partial<Translations> = {
   "ransomware.replicationCurrent": "replicēšana aktuāla",
   "ransomware.replicationOverdue": "replicēšana nokavēta",
   "ransomware.replicationNever": "vēl nav replicēts",
+  "ransomware.replicationPaused": "kopēšana ārpus vietas apturēta: apstipriniet izvietojumu",
   "ransomware.drillOffsite": "atjaunošanas pārbaude (attālināta)",
   "ransomware.drillOverdue": "atjaunošanas pārbaude nokavēta",
   "ransomware.drillFailed": "atjaunošanas pārbaude neizdevās",

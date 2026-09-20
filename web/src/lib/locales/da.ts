@@ -1069,6 +1069,7 @@ const da: Partial<Translations> = {
   "ransomware.replicationCurrent": "replikering opdateret",
   "ransomware.replicationOverdue": "replikering forfalden",
   "ransomware.replicationNever": "endnu ikke replikeret",
+  "ransomware.replicationPaused": "ekstern kopiering sat på pause: bekræft placeringen",
   "ransomware.drillOffsite": "gendannelsestest (off-site)",
   "ransomware.drillOverdue": "gendannelsestest forfalden",
   "ransomware.drillFailed": "gendannelsestest mislykkedes",

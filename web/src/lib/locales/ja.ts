@@ -1041,6 +1041,7 @@ const ja: Partial<Translations> = {
   "ransomware.replicationCurrent": "複製は最新",
   "ransomware.replicationOverdue": "複製が期限切れ",
   "ransomware.replicationNever": "未複製",
+  "ransomware.replicationPaused": "オフサイトの複製は一時停止中: 配置を確認してください",
   "ransomware.drillOffsite": "復元ドリル（オフサイト）",
   "ransomware.drillOverdue": "復元ドリルが期限切れ",
   "ransomware.drillFailed": "復元ドリル失敗",

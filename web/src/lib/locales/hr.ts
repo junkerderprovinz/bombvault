@@ -772,6 +772,7 @@ const hr: Partial<Translations> = {
   "ransomware.replicationCurrent": "repliciranje ažurno",
   "ransomware.replicationOverdue": "repliciranje zakašnjelo",
   "ransomware.replicationNever": "još nije replicirano",
+  "ransomware.replicationPaused": "kopiranje izvan lokacije pauzirano: potvrdite smještaj",
   "ransomware.drillOffsite": "provjera vraćanja (izvanmrežno)",
   "ransomware.drillOverdue": "provjera vraćanja zakašnjela",
   "ransomware.drillFailed": "provjera vraćanja nije uspjela",

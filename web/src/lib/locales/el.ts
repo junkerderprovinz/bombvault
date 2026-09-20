@@ -1069,6 +1069,7 @@ const el: Partial<Translations> = {
   "ransomware.replicationCurrent": "αναπαραγωγή ενημερωμένη",
   "ransomware.replicationOverdue": "αναπαραγωγή εκπρόθεσμη",
   "ransomware.replicationNever": "δεν έχει αναπαραχθεί ακόμα",
+  "ransomware.replicationPaused": "η αντιγραφή εκτός τοποθεσίας σε παύση: επιβεβαιώστε την τοποθέτηση",
   "ransomware.drillOffsite": "δοκιμή επαναφοράς (εκτός τόπου)",
   "ransomware.drillOverdue": "δοκιμή επαναφοράς εκπρόθεσμη",
   "ransomware.drillFailed": "αποτυχία δοκιμής επαναφοράς",

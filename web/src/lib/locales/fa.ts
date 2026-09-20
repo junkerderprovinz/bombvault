@@ -772,6 +772,7 @@ const fa: Partial<Translations> = {
   "ransomware.replicationCurrent": "همانندسازی به‌روز است",
   "ransomware.replicationOverdue": "همانندسازی معوق است",
   "ransomware.replicationNever": "هنوز همانندسازی نشده",
+  "ransomware.replicationPaused": "نسخه‌برداری خارج از محل متوقف است: جای‌گذاری را تأیید کنید",
   "ransomware.drillOffsite": "بررسی بازیابی (خارج از محل)",
   "ransomware.drillOverdue": "بررسی بازیابی معوق است",
   "ransomware.drillFailed": "بررسی بازیابی ناموفق بود",

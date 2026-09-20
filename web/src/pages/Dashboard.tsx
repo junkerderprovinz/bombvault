@@ -1055,6 +1055,8 @@ export function RansomwareCard({
         return { label: t("ransomware.replicationOverdue"), state: "amber", at: d.lastReplicationAt };
       case "never":
         return { label: t("ransomware.replicationNever"), state: "muted" };
+      case "paused":
+        return { label: t("ransomware.replicationPaused"), state: "amber" };
       default:
         // "" — replication is coupled to each backup (no independent expectation).
         return { label: t("ransomware.replicationCurrent"), state: "muted" };

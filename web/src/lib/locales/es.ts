@@ -1067,6 +1067,7 @@ const es: Partial<Translations> = {
   "ransomware.replicationCurrent": "replicación al día",
   "ransomware.replicationOverdue": "replicación atrasada",
   "ransomware.replicationNever": "aún sin replicar",
+  "ransomware.replicationPaused": "copia externa en pausa: confirma la ubicación",
   "ransomware.drillOffsite": "simulacro de restauración (externo)",
   "ransomware.drillOverdue": "simulacro de restauración atrasado",
   "ransomware.drillFailed": "simulacro de restauración fallido",

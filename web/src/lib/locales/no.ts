@@ -1045,6 +1045,7 @@ const no: Partial<Translations> = {
   "ransomware.replicationCurrent": "replikering oppdatert",
   "ransomware.replicationOverdue": "replikering forfalt",
   "ransomware.replicationNever": "ikke replikert ennå",
+  "ransomware.replicationPaused": "ekstern kopiering satt på pause: bekreft plasseringen",
   "ransomware.drillOffsite": "gjenopprettingsøvelse (off-site)",
   "ransomware.drillOverdue": "gjenopprettingsøvelse forfalt",
   "ransomware.drillFailed": "gjenopprettingsøvelse mislyktes",

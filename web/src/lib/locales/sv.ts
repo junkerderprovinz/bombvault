@@ -1069,6 +1069,7 @@ const sv: Partial<Translations> = {
   "ransomware.replicationCurrent": "replikering aktuell",
   "ransomware.replicationOverdue": "replikering försenad",
   "ransomware.replicationNever": "inte replikerad än",
+  "ransomware.replicationPaused": "kopiering utanför platsen pausad: bekräfta placeringen",
   "ransomware.drillOffsite": "återställningsövning (off-site)",
   "ransomware.drillOverdue": "återställningsövning försenad",
   "ransomware.drillFailed": "återställningsövning misslyckades",

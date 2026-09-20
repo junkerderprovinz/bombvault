@@ -1072,6 +1072,7 @@ const ar: Partial<Translations> = {
   "ransomware.replicationCurrent": "النسخ محدَّث",
   "ransomware.replicationOverdue": "النسخ متأخر",
   "ransomware.replicationNever": "لم يُنسخ بعد",
+  "ransomware.replicationPaused": "النسخ خارج الموقع متوقف مؤقتًا: أكّد مكان الحفظ",
   "ransomware.drillOffsite": "تمرين الاستعادة (خارج الموقع)",
   "ransomware.drillOverdue": "تمرين الاستعادة متأخر",
   "ransomware.drillFailed": "فشل تمرين الاستعادة",

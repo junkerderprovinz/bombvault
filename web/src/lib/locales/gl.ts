@@ -772,6 +772,7 @@ const gl: Partial<Translations> = {
   "ransomware.replicationCurrent": "replicación ao día",
   "ransomware.replicationOverdue": "replicación vencida",
   "ransomware.replicationNever": "aínda non replicado",
+  "ransomware.replicationPaused": "copia externa en pausa: confirma a localización",
   "ransomware.drillOffsite": "proba de restauración (externa)",
   "ransomware.drillOverdue": "proba de restauración vencida",
   "ransomware.drillFailed": "proba de restauración fallida",

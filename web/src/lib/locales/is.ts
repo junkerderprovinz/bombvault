@@ -772,6 +772,7 @@ const is: Partial<Translations> = {
   "ransomware.replicationCurrent": "fjarafritun uppfærð",
   "ransomware.replicationOverdue": "fjarafritun á gjalddaga",
   "ransomware.replicationNever": "ekki fjarafritað ennþá",
+  "ransomware.replicationPaused": "afritun utan staðar í bið: staðfestu staðsetningu",
   "ransomware.drillOffsite": "endurheimtarprófun (fjarlægt)",
   "ransomware.drillOverdue": "endurheimtarprófun á gjalddaga",
   "ransomware.drillFailed": "endurheimtarprófun mistókst",

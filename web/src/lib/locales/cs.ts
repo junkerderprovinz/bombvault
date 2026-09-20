@@ -1067,6 +1067,7 @@ const cs: Partial<Translations> = {
   "ransomware.replicationCurrent": "replikace aktuální",
   "ransomware.replicationOverdue": "replikace po termínu",
   "ransomware.replicationNever": "zatím nereplikováno",
+  "ransomware.replicationPaused": "kopírování mimo lokalitu pozastaveno: potvrďte umístění",
   "ransomware.drillOffsite": "cvičení obnovy (mimo lokalitu)",
   "ransomware.drillOverdue": "cvičení obnovy po termínu",
   "ransomware.drillFailed": "cvičení obnovy selhalo",

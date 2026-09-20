@@ -1041,6 +1041,7 @@ const ko: Partial<Translations> = {
   "ransomware.replicationCurrent": "복제 최신",
   "ransomware.replicationOverdue": "복제 기한 초과",
   "ransomware.replicationNever": "아직 복제 안 됨",
+  "ransomware.replicationPaused": "외부 사본 일시 중지됨: 배치를 확인하세요",
   "ransomware.drillOffsite": "복원 훈련 (오프사이트)",
   "ransomware.drillOverdue": "복원 훈련 기한 초과",
   "ransomware.drillFailed": "복원 훈련 실패",

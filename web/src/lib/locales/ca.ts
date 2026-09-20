@@ -772,6 +772,7 @@ const ca: Partial<Translations> = {
   "ransomware.replicationCurrent": "replicació al dia",
   "ransomware.replicationOverdue": "replicació vençuda",
   "ransomware.replicationNever": "encara no replicat",
+  "ransomware.replicationPaused": "còpia externa en pausa: confirmeu la ubicació",
   "ransomware.drillOffsite": "prova de restauració (extern)",
   "ransomware.drillOverdue": "prova de restauració vençuda",
   "ransomware.drillFailed": "prova de restauració fallida",

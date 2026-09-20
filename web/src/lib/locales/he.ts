@@ -1049,6 +1049,7 @@ const he: Partial<Translations> = {
   "ransomware.replicationCurrent": "השכפול עדכני",
   "ransomware.replicationOverdue": "השכפול באיחור",
   "ransomware.replicationNever": "טרם שוכפל",
+  "ransomware.replicationPaused": "ההעתקה מחוץ לאתר מושהית: אשרו את המיקום",
   "ransomware.drillOffsite": "תרגיל שחזור (מחוץ לאתר)",
   "ransomware.drillOverdue": "תרגיל השחזור באיחור",
   "ransomware.drillFailed": "תרגיל השחזור נכשל",

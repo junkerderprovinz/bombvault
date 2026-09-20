@@ -107,3 +107,13 @@ describe("RansomwareCard, append-only not enabled", () => {
     expect(screen.getByText(en["ransomware.appendOnlyNever"])).toBeTruthy();
   });
 });
+
+describe("RansomwareCard, paused replication", () => {
+  afterEach(cleanup);
+
+  it("shows a paused replication as its own amber row", () => {
+    renderCard([domain({ replicationState: "paused", protection: "amber" })]);
+    const row = screen.getByText(en["ransomware.replicationPaused"]);
+    expect(row.className).toContain("text-statusWarn");
+  });
+});

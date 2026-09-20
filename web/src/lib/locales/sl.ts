@@ -770,6 +770,7 @@ const sl: Partial<Translations> = {
   "ransomware.replicationCurrent": "podvajanje tekoče",
   "ransomware.replicationOverdue": "podvajanje zamuja",
   "ransomware.replicationNever": "še ni podvojeno",
+  "ransomware.replicationPaused": "kopiranje zunaj lokacije je začasno ustavljeno: potrdite umestitev",
   "ransomware.drillOffsite": "obnovitvena vaja (zunanja)",
   "ransomware.drillOverdue": "obnovitvena vaja zamuja",
   "ransomware.drillFailed": "obnovitvena vaja ni uspela",

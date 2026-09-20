@@ -772,6 +772,7 @@ const eu: Partial<Translations> = {
   "ransomware.replicationCurrent": "errepikapena eguneratuta",
   "ransomware.replicationOverdue": "errepikapena atzeratuta",
   "ransomware.replicationNever": "oraindik errepikatu gabe",
+  "ransomware.replicationPaused": "kanpoko kopia pausatuta: berretsi kokapena",
   "ransomware.drillOffsite": "berrezarpen-proba (kanpokoa)",
   "ransomware.drillOverdue": "berrezarpen-proba atzeratuta",
   "ransomware.drillFailed": "berrezarpen-probak huts egin du",
