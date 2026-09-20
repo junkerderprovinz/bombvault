@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
+	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -185,4 +186,165 @@ func mustCoverage(t *testing.T, h http.Handler) map[string]any {
 		t.Fatalf("status = %d body = %s", w.Code, w.Body.String())
 	}
 	return m
+}
+
+// coverageReasons pulls the reason of every unprotected item, keyed by name.
+func coverageReasons(t *testing.T, m map[string]any) map[string]string {
+	t.Helper()
+	out := map[string]string{}
+	report, _ := m["coverage"].(map[string]any)
+	domains, _ := report["domains"].([]any)
+	for _, d := range domains {
+		dm, _ := d.(map[string]any)
+		items, _ := dm["unprotected"].([]any)
+		for _, it := range items {
+			im, _ := it.(map[string]any)
+			name, _ := im["name"].(string)
+			reason, _ := im["reason"].(string)
+			out[name] = reason
+		}
+	}
+	return out
+}
+
+// TestCoverageNamesDatabaseDumpGaps: a database whose dump is the only
+// consistent copy is unprotected in a way no schedule reports. An acknowledged
+// failure clears the dashboard badge and leaves the database without a fresh
+// dump, so the card has to keep saying so.
+func TestCoverageNamesDatabaseDumpGaps(t *testing.T) {
+	stackLabels := map[string]string{
+		"com.docker.compose.project":             "immich",
+		"com.docker.compose.project.working_dir": "/mnt/user/stacks/immich",
+	}
+	pgMount := []model.Mount{{Type: "bind", Source: "/mnt/user/stacks/immich/pgdata", Destination: "/var/lib/postgresql/data"}}
+
+	d := &fakeServiceDocker{
+		listOut: []dockercli.ContainerInfo{
+			{Name: "failing_db", Image: "postgres:16"},
+			{Name: "switched_off_db", Image: "postgres:16"},
+			{Name: "unscheduled_db", Image: "postgres:16"},
+			{Name: "healthy_db", Image: "postgres:16"},
+		},
+		inspects: map[string]model.Inspect{
+			"failing_db": {Running: true, Config: model.Config{
+				Image: "postgres:16", Env: []string{"POSTGRES_PASSWORD=x"}, Labels: stackLabels,
+			}, Mounts: pgMount},
+			"switched_off_db": {Running: true, Config: model.Config{
+				Image: "postgres:16", Env: []string{"POSTGRES_PASSWORD=x"}, Labels: stackLabels,
+			}, Mounts: pgMount},
+			"unscheduled_db": {Running: true, Config: model.Config{
+				Image: "postgres:16", Env: []string{"POSTGRES_PASSWORD=x"},
+			}},
+			"healthy_db": {Running: true, Config: model.Config{
+				Image: "postgres:16", Env: []string{"POSTGRES_PASSWORD=x"}, Labels: stackLabels,
+			}, Mounts: pgMount},
+		},
+	}
+	h, st := dbFieldsRouterHarness(t, d)
+
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ContainersEnabled = true
+	s.ContainersSchedule = "daily 02:00"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, name := range []string{"failing_db", "switched_off_db", "healthy_db"} {
+		if _, err := st.UpsertTarget(store.Target{ContainerName: name, IncludeInSchedule: true}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "unscheduled_db", IncludeInSchedule: false}); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SetDBDumpOff("switched_off_db", true); err != nil {
+		t.Fatal(err)
+	}
+
+	failing, err := st.GetTargetByContainer("failing_db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	runID, err := st.StartRun(failing.ID, "dbdump")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishRun(runID, "failed", "", 0, "database dump failed: no progress"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.AcknowledgeRuns([]string{runID}); err != nil {
+		t.Fatal(err)
+	}
+	healthy, err := st.GetTargetByContainer("healthy_db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	okRun, err := st.StartRun(healthy.ID, "dbdump")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishRun(okRun, "success", "aaaa1111", 42, ""); err != nil {
+		t.Fatal(err)
+	}
+
+	_, m := doJSON(t, h, http.MethodGet, "/api/coverage", "")
+	if m["ok"] != true {
+		t.Fatalf("coverage must succeed, got %v", m)
+	}
+	reasons := coverageReasons(t, m)
+
+	if reasons["failing_db"] != "db-dump-failing" {
+		t.Errorf("failing_db reason = %q, want db-dump-failing", reasons["failing_db"])
+	}
+	if reasons["switched_off_db"] != "db-dump-only-copy-off" {
+		t.Errorf("switched_off_db reason = %q, want db-dump-only-copy-off", reasons["switched_off_db"])
+	}
+	if reasons["unscheduled_db"] != "db-not-scheduled" {
+		t.Errorf("unscheduled_db reason = %q, want db-not-scheduled", reasons["unscheduled_db"])
+	}
+	if got, listed := reasons["healthy_db"]; listed {
+		t.Errorf("a scheduled database with a fresh dump must not be listed, got %q", got)
+	}
+}
+
+// TestCoverageLeavesADumpingDatabaseAloneWhenTheFilesAreConsistent: a dump that
+// is switched off matters because the files copy is taken while the server
+// runs. Where the data folder is inside the container's own backup, the switch
+// is a decision, not a gap.
+func TestCoverageLeavesADumpingDatabaseAloneWhenTheFilesAreConsistent(t *testing.T) {
+	d := &fakeServiceDocker{
+		listOut: []dockercli.ContainerInfo{{Name: "immich_postgres", Image: "postgres:16"}},
+		inspects: map[string]model.Inspect{
+			"immich_postgres": {Running: true, Config: model.Config{
+				Image: "postgres:16", Env: []string{"POSTGRES_PASSWORD=x"},
+			}, Mounts: []model.Mount{
+				{Type: "bind", Source: "/mnt/user/appdata/immich_postgres", Destination: "/var/lib/postgresql/data"},
+			}},
+		},
+	}
+	h, st := dbFieldsRouterHarness(t, d)
+
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ContainersEnabled = true
+	s.ContainersSchedule = "daily 02:00"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "immich_postgres", IncludeInSchedule: true}); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SetDBDumpOff("immich_postgres", true); err != nil {
+		t.Fatal(err)
+	}
+
+	_, m := doJSON(t, h, http.MethodGet, "/api/coverage", "")
+	if got, listed := coverageReasons(t, m)["immich_postgres"]; listed {
+		t.Fatalf("reason = %q, want no entry: the files backup stops the server and copies its data", got)
+	}
 }

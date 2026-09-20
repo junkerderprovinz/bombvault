@@ -24,6 +24,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/ageseal"
 	"github.com/junkerderprovinz/bombvault/internal/backup"
+	"github.com/junkerderprovinz/bombvault/internal/dbdump"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
@@ -597,6 +598,37 @@ type containerView struct {
 	AliasConflicts []string `json:"aliasConflicts"`
 	// Aliases are the names this entry had before, oldest link first.
 	Aliases []string `json:"aliases"`
+	// The database fields are all empty or false for a container that is not
+	// recognised as a database server. DBEngine is what would be dumped,
+	// DBSuggestedEngine the guess for a container that only looks like one, and
+	// DBTier how it was recognised ("" | curated | lookalike | label).
+	DBEngine          string `json:"dbEngine"`
+	DBSuggestedEngine string `json:"dbSuggestedEngine"`
+	DBTier            string `json:"dbTier"`
+	DBDumpOff         bool   `json:"dbDumpOff"`
+	DBDumpEngine      string `json:"dbDumpEngine"`
+	// DBDumpLabelOff is the bombvault.dbdump=false label, which wins over the
+	// toggle, and DBDumpsGlobalOff the switch in Settings. The page never loads
+	// settings, so the row has to carry it.
+	DBDumpLabelOff   bool `json:"dbDumpLabelOff"`
+	DBDumpsGlobalOff bool `json:"dbDumpsGlobalOff"`
+	// DBDataCoverage says what the files backup of this container is worth:
+	// "stopped", "live", "none" or "unknown".
+	DBDataCoverage string `json:"dbDataCoverage"`
+	// DBDumpHookOverlap reports that the stored pre-hook already runs a dump
+	// tool, so the container would be dumped twice.
+	DBDumpHookOverlap bool            `json:"dbDumpHookOverlap"`
+	LastDBDump        *lastDBDumpView `json:"lastDbDump,omitempty"`
+}
+
+// lastDBDumpView is the container's most recent dump attempt. Error carries the
+// stored run reason, which is a constant plus an optional detail, or a success
+// note.
+type lastDBDumpView struct {
+	At     int64  `json:"at"`
+	Status string `json:"status"`
+	Bytes  int64  `json:"bytes"`
+	Error  string `json:"error"`
 }
 
 func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
@@ -613,6 +645,13 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	self := h.svc.SelfContainerName(r.Context())
+
+	settings, sErr := h.store.GetSettings()
+	if sErr != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(sErr))
+		return
+	}
+	dbRows := h.svc.dbDumpRows(r.Context(), infos, byName)
 
 	live := make(map[string]bool, len(infos))
 	for _, c := range infos {
@@ -665,10 +704,24 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			AliasConflicts: []string{},
 			Aliases:        []string{},
 		}
+		if db, ok := dbRows[c.Name]; ok {
+			v.DBEngine = db.Engine
+			v.DBSuggestedEngine = db.Suggested
+			v.DBTier = db.Tier
+			v.DBDumpLabelOff = db.LabelOff
+			v.DBDataCoverage = db.Coverage
+			v.DBDumpHookOverlap = db.HookOverlap
+			v.DBDumpsGlobalOff = !settings.DBDumpsEnabled
+		}
 		var run *store.Run
 		if t, ok := byName[c.Name]; ok {
 			v.AliasConflicts = aliasConflicts.of(t.ID)
 			v.Aliases = formerNames.of(t.ID)
+			if v.DBTier != "" {
+				v.DBDumpOff = t.DBDumpOff
+				v.DBDumpEngine = t.DBDumpEngine
+				v.LastDBDump = h.lastDBDump(t.ID)
+			}
 			v.IncludeInSchedule = t.IncludeInSchedule
 			v.PreHook = t.PreHook
 			v.PostHook = t.PostHook
@@ -726,7 +779,24 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			if json.Unmarshal([]byte(t.Definition), &def) == nil {
 				v.Image = def.Inspect.Config.Image
 				v.Stack = def.Inspect.Config.Labels["com.docker.compose.project"]
+				// The definition is all there is to recognise an uninstalled
+				// container by; its dumps are still in the repository and the
+				// row says what they are.
+				chosen, _ := dbdump.ParseEngine(t.DBDumpEngine)
+				cfg := def.Inspect.Config
+				rec := dbdump.Resolve(cfg.Image, envNames(cfg.Env), cfg.Labels, chosen)
+				v.DBEngine = string(rec.Engine)
+				v.DBSuggestedEngine = string(rec.Suggested)
+				v.DBTier = string(rec.Tier)
+				v.DBDumpLabelOff = rec.LabelOff
 			}
+		}
+		if v.DBTier != "" {
+			v.DBDumpOff = t.DBDumpOff
+			v.DBDumpEngine = t.DBDumpEngine
+			v.DBDumpsGlobalOff = !settings.DBDumpsEnabled
+			v.DBDumpHookOverlap = dumpToolRe.MatchString(t.PreHook)
+			v.LastDBDump = h.lastDBDump(t.ID)
 		}
 		run, _ := h.store.LastSuccessfulBackup(t.ID)
 		v.LastBackup, v.LastBackupStarted = lastBackupDate(t.ContainerName, run, snapTimes, snapTimesFailed)
@@ -790,6 +860,26 @@ func (idx aliasIndex) of(targetID string) []string {
 		return names
 	}
 	return []string{}
+}
+
+// lastDBDump reads the target's most recent dump attempt, or nil when there is
+// none. A read failure is nil too: the row's job is the dump state, and a
+// container card that refuses to render because one query failed is worse than
+// one that leaves the line out.
+func (h *Handler) lastDBDump(targetID string) *lastDBDumpView {
+	run, err := h.store.LastRunOfKind(targetID, "dbdump")
+	if err != nil {
+		log.Printf("api: list containers: reading the last database dump failed: %v", err)
+		return nil
+	}
+	if run == nil {
+		return nil
+	}
+	at := run.StartedAt
+	if run.FinishedAt != nil {
+		at = *run.FinishedAt
+	}
+	return &lastDBDumpView{At: at, Status: run.Status, Bytes: run.Bytes, Error: run.Error}
 }
 
 // resourceNameRe matches a safe Docker container / libvirt VM name: it starts
@@ -1561,6 +1651,12 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		ExcludeCaches     map[string]bool `json:"excludeCaches"`
 		UpdateAfterBackup *bool           `json:"updateAfterBackup"`
 		ScheduleCadence   *string         `json:"scheduleCadence"`
+		// DBDumpOff opts the container out of the automatic database dump;
+		// DBDumpEngine names the engine a container that only looks like a
+		// database is dumped with. Pointers like their neighbours: the card
+		// saves one field at a time.
+		DBDumpOff    *bool   `json:"dbDumpOff"`
+		DBDumpEngine *string `json:"dbDumpEngine"`
 		// Repo is this item's OWN repository (#204): the ID of a named
 		// repository from Settings, or "" to put it back on the domain's. A
 		// pointer for the same reason as the fields above - a form that does
@@ -1636,6 +1732,22 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	if body.UpdateAfterBackup != nil {
 		if err := h.svc.SetUpdateAfterBackup(r.Context(), name, *body.UpdateAfterBackup); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	if body.DBDumpOff != nil {
+		if err := h.svc.SetDBDumpOff(r.Context(), name, *body.DBDumpOff); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
+	if body.DBDumpEngine != nil {
+		if err := h.svc.SetDBDumpEngine(r.Context(), name, *body.DBDumpEngine); err != nil {
+			status := http.StatusOK
+			if errors.Is(err, errUnknownDBDumpEngine) {
+				status = http.StatusBadRequest
+			}
+			writeJSON(w, status, failEnvelope(err))
 			return
 		}
 	}
@@ -2001,6 +2113,13 @@ type settingsView struct {
 	// repository (#227). Default false (opt-in) like the two flags above, and the
 	// only one of the three that writes data here rather than reading.
 	PullEnabled bool `json:"pullEnabled"`
+	// DBDumpsEnabled is the emergency stop for the automatic database dumps,
+	// on by default. A pointer where its neighbours are plain bools: the GET
+	// always fills it, and on PUT or import nil means keep. Every other bool
+	// here is copied as it stands, so an export file or a browser tab that
+	// predates the switch would otherwise turn a safety feature off without a
+	// word.
+	DBDumpsEnabled *bool `json:"dbDumpsEnabled"`
 	// InstanceName is this instance's own display name, reported to polling
 	// fleet peers so a peer's Fleet page can label this box. Not a secret.
 	InstanceName string `json:"instanceName"`
@@ -2128,6 +2247,7 @@ func toView(s store.Settings) settingsView {
 		PerItemSchedules:            s.PerItemSchedules,
 		FleetEnabled:                s.FleetEnabled,
 		PullEnabled:                 s.PullEnabled,
+		DBDumpsEnabled:              &s.DBDumpsEnabled,
 		InstanceName:                s.InstanceName,
 		FleetToken:                  "", // secret — never echoed; FleetTokenSet reports presence
 		FleetTokenSet:               s.FleetToken != "",
@@ -2571,6 +2691,12 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.PerItemSchedules = v.PerItemSchedules
 		cur.FleetEnabled = v.FleetEnabled
 		cur.PullEnabled = v.PullEnabled
+		// An absent switch keeps the stored one: an older tab posts a body
+		// without it, and reading that as "off" would stop dumping databases
+		// on a save of an unrelated card.
+		if v.DBDumpsEnabled != nil {
+			cur.DBDumpsEnabled = *v.DBDumpsEnabled
+		}
 		cur.InstanceName = strings.TrimSpace(v.InstanceName)
 		cur.EverythingSchedule = v.EverythingSchedule
 		// Blank keeps the stored command, same contract as the three tokens

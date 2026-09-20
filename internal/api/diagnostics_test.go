@@ -17,7 +17,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/logring"
+	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // zipMembers unpacks the response and returns each member's name and contents,
@@ -163,5 +166,65 @@ func TestDiagnosticsScrubsTheLog(t *testing.T) {
 	if strings.Contains(members["log.txt"], "LOGGED-PASSWORD") {
 		t.Fatalf("log.txt carries a password that was logged during a failure.\n" +
 			"The runs table is scrubbed for exactly this reason; the log has to be too.")
+	}
+}
+
+// TestDiagnosticsCarriesDBDumpState: a dump that keeps failing is what a
+// support thread opens with, so the bundle names every recognised database and
+// how its last dump went. The reason detail stays out: it is the dump tool's
+// own message and can quote a row.
+func TestDiagnosticsCarriesDBDumpState(t *testing.T) {
+	d := &fakeServiceDocker{
+		listOut: []dockercli.ContainerInfo{
+			{Name: "immich_postgres", Image: "postgres:16"},
+			{Name: "plex", Image: "plexinc/pms-docker:latest"},
+		},
+		inspects: map[string]model.Inspect{
+			"immich_postgres": {Running: true, Config: model.Config{
+				Image: "postgres:16", Env: []string{"POSTGRES_PASSWORD=x"},
+			}, Mounts: []model.Mount{
+				{Type: "bind", Source: "/mnt/user/appdata/immich_postgres", Destination: "/var/lib/postgresql/data"},
+			}},
+		},
+	}
+	h, st := dbFieldsRouterHarness(t, d)
+
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "immich_postgres"}); err != nil {
+		t.Fatal(err)
+	}
+	tg, err := st.GetTargetByContainer("immich_postgres")
+	if err != nil {
+		t.Fatal(err)
+	}
+	runID, err := st.StartRun(tg.ID, "dbdump")
+	if err != nil {
+		t.Fatal(err)
+	}
+	const detail = "role \"postgres\" does not exist"
+	if err := st.FinishRun(runID, "failed", "", 0, "database dump failed: the database refused the login: "+detail); err != nil {
+		t.Fatal(err)
+	}
+
+	cookie := loginCookie(t, h, "correct horse battery staple")
+	w := getRaw(t, h, "/api/diagnostics", cookie)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body = %s", w.Code, w.Body.String())
+	}
+
+	members := zipMembers(t, w.Body.Bytes())
+	dump, ok := members["dbdump.json"]
+	if !ok {
+		t.Fatalf("the bundle is missing dbdump.json. Members present: %v", memberNames(members))
+	}
+	for _, want := range []string{"immich_postgres", "curated", "postgres", "stopped", "failed", "the database refused the login"} {
+		if !strings.Contains(dump, want) {
+			t.Errorf("dbdump.json does not name %q: %s", want, dump)
+		}
+	}
+	if strings.Contains(dump, detail) {
+		t.Errorf("dbdump.json carries the dump tool's own message, which can quote a row: %s", dump)
+	}
+	if strings.Contains(dump, "plex") {
+		t.Errorf("dbdump.json lists a container that is not a database: %s", dump)
 	}
 }

@@ -3,14 +3,18 @@ package api
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/logring"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // diagFile is one member of the bundle: a name and the bytes behind it.
@@ -36,6 +40,63 @@ type diagManifest struct {
 // bundle carries, chosen so the file stays mailable.
 const diagLogCap = 128 << 10
 
+// diagDBDump is one recognised database container: what would be dumped, what
+// stands in the way, and how the last attempt ended. LastReason is the stored
+// reason constant without the detail behind it, which is the dump tool's own
+// message and can quote a row of the database.
+type diagDBDump struct {
+	Container       string `json:"container"`
+	Tier            string `json:"tier"`
+	Engine          string `json:"engine"`
+	SuggestedEngine string `json:"suggestedEngine,omitempty"`
+	ChosenEngine    string `json:"chosenEngine,omitempty"`
+	DumpOff         bool   `json:"dumpOff"`
+	LabelOff        bool   `json:"labelOff"`
+	GlobalOff       bool   `json:"globalOff"`
+	DataCoverage    string `json:"dataCoverage"`
+	PreHookDumps    bool   `json:"preHookDumps"`
+	LastStatus      string `json:"lastStatus,omitempty"`
+	LastAt          int64  `json:"lastAt,omitempty"`
+	LastReason      string `json:"lastReason,omitempty"`
+}
+
+// dbDumpDiagnostics describes every container this host runs a database in,
+// sorted by name so two bundles of the same box can be diffed.
+func (h *Handler) dbDumpDiagnostics(ctx context.Context) ([]diagDBDump, error) {
+	settings, err := h.store.GetSettings()
+	if err != nil {
+		return nil, err
+	}
+	infos, err := h.docker.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	targets, err := h.store.ListTargets()
+	if err != nil {
+		return nil, err
+	}
+	byName := make(map[string]store.Target, len(targets))
+	for _, t := range targets {
+		byName[t.ContainerName] = t
+	}
+
+	out := []diagDBDump{}
+	for name, db := range h.svc.dbDumpRows(ctx, infos, byName) {
+		t := byName[name]
+		row := diagDBDump{
+			Container: name, Tier: db.Tier, Engine: db.Engine, SuggestedEngine: db.Suggested,
+			ChosenEngine: t.DBDumpEngine, DumpOff: t.DBDumpOff, LabelOff: db.LabelOff,
+			GlobalOff: !settings.DBDumpsEnabled, DataCoverage: db.Coverage, PreHookDumps: db.HookOverlap,
+		}
+		if last := h.lastDBDump(t.ID); last != nil {
+			row.LastStatus, row.LastAt, row.LastReason = last.Status, last.At, dbDumpReasonHead(last.Error)
+		}
+		out = append(out, row)
+	}
+	slices.SortFunc(out, func(a, b diagDBDump) int { return strings.Compare(a.Container, b.Container) })
+	return out, nil
+}
+
 // handleDiagnostics streams a redacted support bundle as a ZIP.
 // GET /api/diagnostics
 //
@@ -59,7 +120,7 @@ func (h *Handler) handleDiagnostics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	files, err := h.buildDiagnostics()
+	files, err := h.buildDiagnostics(r.Context())
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -100,7 +161,7 @@ func (h *Handler) handleDiagnostics(w http.ResponseWriter, r *http.Request) {
 // produced because one query returned an error is worthless precisely when it
 // is needed, so a failure is recorded as the member's content and the rest is
 // still collected.
-func (h *Handler) buildDiagnostics() ([]diagFile, error) {
+func (h *Handler) buildDiagnostics(ctx context.Context) ([]diagFile, error) {
 	var files []diagFile
 
 	add := func(name string, v any, err error) {
@@ -158,6 +219,10 @@ func (h *Handler) buildDiagnostics() ([]diagFile, error) {
 		redactExportLocations(&exp)
 		add("settings.json", exp.Settings, nil)
 	}
+
+	// dbdump.json holds which databases are dumped and how the last dump went.
+	dumps, dErr := h.dbDumpDiagnostics(ctx)
+	add("dbdump.json", dumps, dErr)
 
 	// runs.json — recent history. Run.Error holds raw restic/rclone/Docker
 	// output, which handleRuns can serve as-is because it sits behind the

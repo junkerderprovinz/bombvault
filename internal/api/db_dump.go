@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -17,6 +18,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -121,6 +123,178 @@ func envNames(env []string) []string {
 		}
 	}
 	return names
+}
+
+// The data coverage values say what a files backup of a database container is
+// worth: a copy taken while the server was stopped, one taken while it was
+// running, none at all, or a data directory that could not be located.
+const (
+	dbCoverageStopped = "stopped"
+	dbCoverageLive    = "live"
+	dbCoverageNone    = "none"
+	dbCoverageUnknown = "unknown"
+)
+
+// dbDataCoverage locates the engine's data directory on the host and reports
+// which of those a files backup makes of it. toContainer translates a host path
+// into this process's view; stackDir, effective and folderSetPaths are already
+// in it.
+func dbDataCoverage(in model.Inspect, e dbdump.Engine, toContainer func(string) (string, bool), stackDir string, effective, folderSetPaths []string) string {
+	mounts := make([]dbdump.Mount, 0, len(in.Mounts))
+	for _, m := range in.Mounts {
+		mounts = append(mounts, dbdump.Mount{Source: m.Source, Destination: m.Destination})
+	}
+	host, found := dbdump.DataMount(e, in.Config.Env, mounts)
+	if !found {
+		return dbCoverageUnknown
+	}
+	dir, reachable := toContainer(host)
+	if !reachable {
+		return dbCoverageNone
+	}
+	if isUnderAny(dir, effective) {
+		return dbCoverageStopped
+	}
+	// An empty stackDir would match every absolute path, so it never reaches
+	// isUnderAny.
+	if isUnderAny(dir, folderSetPaths) || (stackDir != "" && isUnderAny(dir, []string{stackDir})) {
+		return dbCoverageLive
+	}
+	return dbCoverageNone
+}
+
+// dbDumpRow is one container's database picture as the Containers page reads
+// it. It carries no value out of the container's environment: the variables are
+// read for their names inside dbDumpRows and dropped there.
+type dbDumpRow struct {
+	Engine      string
+	Suggested   string
+	Tier        string
+	LabelOff    bool
+	Coverage    string
+	HookOverlap bool
+}
+
+// dumpToolRe finds a dump tool in a stored pre-hook, so the card can say that
+// this container would be dumped twice.
+var dumpToolRe = regexp.MustCompile(`\b(pg_dump|pg_dumpall|mysqldump|mariadb-dump)\b`)
+
+// dbDumpRows describes the database containers among the listed rows, keyed by
+// name. Only a row that can be a database at all is inspected: a host runs
+// hundreds of containers and the page asks for all of them at once.
+func (s *Service) dbDumpRows(ctx context.Context, infos []dockercli.ContainerInfo, byName map[string]store.Target) map[string]dbDumpRow {
+	out := map[string]dbDumpRow{}
+	folderSets := sync.OnceValue(s.folderSetPaths)
+
+	for _, c := range infos {
+		tg := byName[c.Name]
+		if !mayHoldADatabase(c, tg) {
+			continue
+		}
+		chosen, _ := dbdump.ParseEngine(tg.DBDumpEngine)
+		row := dbDumpRow{HookOverlap: dumpToolRe.MatchString(tg.PreHook)}
+
+		in, err := s.docker.Inspect(ctx, c.Name)
+		if err != nil {
+			log.Printf("api: list containers: inspecting %q for its database failed, its data coverage is unknown: %v", c.Name, err) //nolint:gosec // G706: name is %q-quoted
+			rec := dbdump.Resolve(c.Image, nil, c.Labels, chosen)
+			if rec.Tier == dbdump.TierNone {
+				continue
+			}
+			row.Engine, row.Suggested, row.Tier = string(rec.Engine), string(rec.Suggested), string(rec.Tier)
+			row.LabelOff, row.Coverage = rec.LabelOff, dbCoverageUnknown
+			out[c.Name] = row
+			continue
+		}
+
+		image := in.Config.Image
+		if image == "" {
+			image = in.Image
+		}
+		rec := dbdump.Resolve(image, envNames(in.Config.Env), in.Config.Labels, chosen)
+		if rec.Tier == dbdump.TierNone {
+			continue
+		}
+		// A container the user has not decided about yet is located by the
+		// guessed engine: the coverage line is what tells them whether the dump
+		// would be the only consistent copy.
+		engine := rec.Engine
+		if engine == dbdump.EngineNone {
+			engine = rec.Suggested
+		}
+		effective, _ := s.effectiveBackupPathsWithSelection(c.Name, in)
+		_, stackDir, _ := s.stackDirFor(in)
+
+		row.Engine, row.Suggested, row.Tier = string(rec.Engine), string(rec.Suggested), string(rec.Tier)
+		row.LabelOff = rec.LabelOff
+		row.Coverage = dbDataCoverage(in, engine, s.toContainerPath, stackDir, effective, folderSets())
+		out[c.Name] = row
+	}
+	return out
+}
+
+// dbDumpRepoWords are the words a repository path carries when an image might
+// be a database server.
+var dbDumpRepoWords = []string{"postgres", "mysql", "mariadb"}
+
+// mayHoldADatabase decides from the list row alone whether a container is worth
+// an inspect. An image that is a bare digest, which is what a container carries
+// after its image was replaced, is inspected because the row says nothing at
+// all about it.
+func mayHoldADatabase(c dockercli.ContainerInfo, tg store.Target) bool {
+	if tg.DBDumpEngine != "" || strings.HasPrefix(c.Image, "sha256:") {
+		return true
+	}
+	if decision, _ := dbdump.LabelDecisionFor(c.Labels); decision != dbdump.LabelDefault {
+		return true
+	}
+	if dbdump.EngineFor(c.Image) != dbdump.EngineNone {
+		return true
+	}
+	repo := dbdump.CanonicalRepo(c.Image)
+	for _, word := range dbDumpRepoWords {
+		if strings.Contains(repo, word) {
+			return true
+		}
+	}
+	return false
+}
+
+// folderSetPaths are the folder sets' roots in this process's view, the second
+// way a database's data directory ends up in a backup taken while the server
+// runs.
+func (s *Service) folderSetPaths() []string {
+	sets, err := s.store.ListFileSets()
+	if err != nil {
+		log.Printf("api: database dumps: listing the folder sets failed, their paths do not count towards data coverage: %v", err)
+		return nil
+	}
+	out := make([]string, 0, len(sets))
+	for _, set := range sets {
+		if resolved, rErr := paths.Resolve(s.cfg.HostMountRoot, set.Path); rErr == nil {
+			out = append(out, resolved)
+		}
+	}
+	return out
+}
+
+// SetDBDumpOff opts a container out of the automatic database dump, or back in.
+func (s *Service) SetDBDumpOff(_ context.Context, name string, off bool) error {
+	return s.store.SetDBDumpOff(name, off)
+}
+
+// errUnknownDBDumpEngine is the refusal the PATCH route answers with 400: an
+// engine outside the three the dump scripts speak is a client mistake, not a
+// state this instance could reach.
+var errUnknownDBDumpEngine = errors.New("unknown database engine")
+
+// SetDBDumpEngine records the engine a container that only looks like a
+// database is dumped with. An empty engine leaves it to the image again.
+func (s *Service) SetDBDumpEngine(_ context.Context, name, engine string) error {
+	if _, ok := dbdump.ParseEngine(engine); engine != "" && !ok {
+		return fmt.Errorf("%w %q", errUnknownDBDumpEngine, engine)
+	}
+	return s.store.SetDBDumpEngine(name, engine)
 }
 
 // imageBinaryPath is where the binary sits in BombVault's own image, the
