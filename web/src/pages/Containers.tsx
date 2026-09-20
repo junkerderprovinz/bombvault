@@ -2608,7 +2608,16 @@ export function ContainerRow({
             t={t}
           />
         </Advanced>
-        <RestorePanel name={container.name} aliases={aliases} t={t} installed={installed} open={openSections.has("backups")} />
+        <RestorePanel
+          name={container.name}
+          aliases={aliases}
+          t={t}
+          installed={installed}
+          open={openSections.has("backups")}
+          isDatabase={container.dbTier !== ""}
+          dbCoverage={container.dbDataCoverage}
+          containerRunning={container.state === "running"}
+        />
       </div>
 
       {/* Stop a running backup, gated as on the Folders page: not on a

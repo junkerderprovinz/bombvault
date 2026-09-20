@@ -188,6 +188,18 @@ CROSS = '<g transform="rotate(45 7 7)">%s</g>' % _CROSS_BARS
 PLUS_BOX = "0 0 14 14"
 CROSS_BOX = "2 2 10 10"
 
+# The database cylinder. Every database glyph in Streamline's free set carries
+# a second mark (a check, a cog, a cross) and both of those already mean
+# something else here, so this one is drawn on the same 14-unit grid: a cap and
+# two bands, each gap as wide at the centre as at the sides, which is what makes
+# a single-colour stack read as a stack.
+DATABASE = (
+    '<ellipse cx="7" cy="3.3" rx="5.4" ry="1.8" />'
+    '<path d="M1.6 5.7Q7 9.3 12.4 5.7L12.4 7.7Q7 11.3 1.6 7.7Z" />'
+    '<path d="M1.6 8.7Q7 12.3 12.4 8.7L12.4 10.7Q7 14.3 1.6 10.7Z" />'
+)
+DATABASE_BOX = "0 0 14 14"
+
 # Multi-line notes become block comments in the generated files; see doc().
 CLOSE_NOTE = """Close
 
@@ -218,6 +230,7 @@ EXTRA_NAV = [
     ),
     ("IconTabOffsite", "Off-site tab", CLOUD_BOX, CLOUD),
     ("IconCloud", "Off-site or cloud", CLOUD_BOX, CLOUD),
+    ("IconDatabase", "A database", DATABASE_BOX, DATABASE),
     ("IconAdd", "Add", PLUS_BOX, PLUS),
     ("IconClose", CLOSE_NOTE, CROSS_BOX, CROSS),
     # Imported whole and cropped to their measured ink. Sources and licences,

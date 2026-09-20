@@ -36,9 +36,9 @@ export type BackupWatchState =
   | { phase: "error"; message: string };
 
 /** The run kind being watched (matches the recorded run's `kind` field). */
-export type WatchKind = "backup" | "restore";
+export type WatchKind = "backup" | "restore" | "dbdumpsave" | "dbimport";
 
-/** How long a backup success stays shown. A restore result is sticky; see
+/** How long a backup success stays shown. Every other result is sticky; see
  *  finish(). */
 const SUCCESS_CLEAR_MS = 4000;
 /** Poll the runs list at this cadence while watching for completion. */
@@ -54,7 +54,7 @@ const RUNLESS_GRACE_POLLS = 3;
 
 /** The watch deadline for a run kind (matches the server's detached-run cap). */
 function watchTimeoutMs(kind: WatchKind): number {
-  return kind === "restore" ? WATCH_TIMEOUT_RESTORE_MS : WATCH_TIMEOUT_BACKUP_MS;
+  return kind === "backup" ? WATCH_TIMEOUT_BACKUP_MS : WATCH_TIMEOUT_RESTORE_MS;
 }
 
 /** A function that POSTs the start request (backup or restore). */
@@ -123,10 +123,10 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
     setState(next);
     if (next.phase === "success") {
       onDoneRef.current?.();
-      // A restore is rare and destructive, so its success stays until
-      // reset(), which the pages call when the selection or destination
-      // changes.
-      if (kindRef.current !== "restore") {
+      // A restore, a saved dump and an import are rare and each one's result
+      // has to stay readable, so it stays until reset(), which the pages call
+      // when the selection or destination changes.
+      if (kindRef.current === "backup") {
         setTimeout(() => setState({ phase: "idle" }), SUCCESS_CLEAR_MS);
       }
     }
@@ -160,7 +160,7 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
           phase: "error",
           message:
             run.error ||
-            (kindRef.current === "restore" ? t("common.restoreFailed") : t("common.backupFailed")),
+            (kindRef.current === "backup" ? t("common.backupFailed") : t("common.restoreFailed")),
         });
         return "resolved";
       }
@@ -222,7 +222,7 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
       setState({
         phase: "error",
         message:
-          res.error ?? (kindRef.current === "restore" ? t("common.restoreFailed") : t("common.backupFailed")),
+          res.error ?? (kindRef.current === "backup" ? t("common.backupFailed") : t("common.restoreFailed")),
       });
       return;
     }
