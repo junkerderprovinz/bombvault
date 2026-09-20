@@ -26,7 +26,7 @@ func seedNamedRepoInUse(t *testing.T, st *store.Repo, name, loc string) store.Of
 	if _, err := st.UpsertTarget(store.Target{ContainerName: "plex"}); err != nil {
 		t.Fatal(err)
 	}
-	if err := st.SetTargetRepo("plex", r.ID); err != nil {
+	if _, err := st.WritePlacement(store.ItemRef{Domain: "containers", Key: "plex"}, &store.HomeWrite{Repo: r.ID, Choice: store.RepoChosen}, nil, nil); err != nil {
 		t.Fatal(err)
 	}
 	return r

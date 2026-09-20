@@ -122,7 +122,7 @@ func hookSvc(t *testing.T, eng *hookFakeEngine) (*Service, *store.Repo, string, 
 	if _, err := st.UpsertTarget(store.Target{ContainerName: "plex"}); err != nil {
 		t.Fatal(err)
 	}
-	if err := st.SetTargetRepo("plex", named.ID); err != nil {
+	if _, err := st.WritePlacement(store.ItemRef{Domain: "containers", Key: "plex"}, &store.HomeWrite{Repo: named.ID, Choice: store.RepoChosen}, nil, nil); err != nil {
 		t.Fatal(err)
 	}
 

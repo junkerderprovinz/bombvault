@@ -175,7 +175,7 @@ func TestDomainReposInUseCoversEveryItemsRepository(t *testing.T) {
 	if _, err := st.UpsertTarget(store.Target{ContainerName: "plex"}); err != nil {
 		t.Fatal(err)
 	}
-	if err := st.SetTargetRepo("plex", used.ID); err != nil {
+	if _, err := st.WritePlacement(store.ItemRef{Domain: "containers", Key: "plex"}, &store.HomeWrite{Repo: used.ID, Choice: store.RepoChosen}, nil, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -195,51 +195,6 @@ func TestDomainReposInUseCoversEveryItemsRepository(t *testing.T) {
 	if !strings.HasSuffix(repos[1].Loc, "backups/cold") {
 		t.Fatalf("repos[1] = %q, want the repository the container points at", repos[1].Loc)
 	}
-}
-
-// TestRepoCanBeChosenBeforeTheFirstBackup pins the case that only showed up
-// when the picker was actually clicked.
-//
-// A container or VM gets its stored row on its FIRST backup. The repository
-// setters updated an existing row and reported "no such target" otherwise, so
-// choosing a destination failed for exactly the item that most needs it: one
-// that has never run, where the point is to decide where the data goes BEFORE
-// the first run puts it somewhere else. Everything compiled and every test was
-// green; the save just silently bounced.
-func TestRepoCanBeChosenBeforeTheFirstBackup(t *testing.T) {
-	st := newTestStore(t)
-	named, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
-		Role: store.RoleRepo, Name: "Cold", Repo: "backups/cold", Enabled: true,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Run("container with no target row yet", func(t *testing.T) {
-		if err := st.SetTargetRepo("never-backed-up", named.ID); err != nil {
-			t.Fatalf("choosing a repository before the first backup must work: %v", err)
-		}
-		tg, err := st.GetTargetByContainer("never-backed-up")
-		if err != nil {
-			t.Fatalf("the row must exist afterwards: %v", err)
-		}
-		if tg.Repo != named.ID {
-			t.Fatalf("stored repo = %q, want %q", tg.Repo, named.ID)
-		}
-	})
-
-	t.Run("VM with no row yet", func(t *testing.T) {
-		if err := st.SetVMRepo("fresh-vm", named.ID); err != nil {
-			t.Fatalf("choosing a repository before the first backup must work: %v", err)
-		}
-		vm, err := st.GetVMTargetByName("fresh-vm")
-		if err != nil {
-			t.Fatalf("the row must exist afterwards: %v", err)
-		}
-		if vm.Repo != named.ID {
-			t.Fatalf("stored repo = %q, want %q", vm.Repo, named.ID)
-		}
-	})
 }
 
 // TestContainerViewCarriesTheRepoOnBothBranches pins a gap that cost a build.

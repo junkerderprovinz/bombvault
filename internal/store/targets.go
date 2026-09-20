@@ -20,7 +20,7 @@ type Target struct {
 	Definition string
 	// Repo is this container's own repository: the ID of a named repository, or
 	// "" for the Containers domain repository. UpsertTarget writes it when it
-	// creates the row and SetTargetRepo afterwards, never another edit.
+	// creates the row and WritePlacement afterwards, never another edit.
 	Repo string
 	// RepoChosen says whether Repo is settled. An open row has an empty Repo and
 	// takes the default's location at its first backup.
@@ -309,42 +309,6 @@ func (r *Repo) SetUpdateCheck(containerName string, at int64, result string) err
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
 		return fmt.Errorf("SetUpdateCheck: container %q not found", containerName)
-	}
-	return nil
-}
-
-// SetTargetRepo writes a container's per-item repository override (#204): the ID of
-// a named repository from Settings, or "" to put it back on the Containers domain
-// repository.
-//
-// Its own statement rather than a field on Upsert, for the same reason
-// SetFileSetRepo is: the destination of an item's backups must never move as a
-// SIDE EFFECT of some other edit. A form that did not know about the field would
-// clear the override and send the next backup somewhere else - and unlike a
-// cleared schedule, which announces itself the next time a run does not happen,
-// a moved repository looks exactly like a working one until somebody goes
-// looking for a snapshot that is in the other repo.
-//
-// An ID, not a location. Locations are written down once in Settings and picked
-// here, which is the whole difference between configuring ten items and typing
-// the same bucket path ten times.
-// A container with no stored target row yet gets one, exactly as SetBackupPaths
-// does. That row only appears on the first backup or the first setting, so
-// without this a container that has never been backed up could not be pointed at
-// a repository at all - which is precisely when somebody would want to, BEFORE
-// the first run puts data in the wrong place. Found by clicking it.
-func (r *Repo) SetTargetRepo(containerName, repo string) error {
-	res, err := r.db.Exec(`UPDATE targets SET repo = ?, repo_chosen = 1 WHERE container_name = ?`, repo, containerName)
-	if err != nil {
-		return fmt.Errorf("SetTargetRepo: %w", err)
-	}
-	if n, _ := res.RowsAffected(); n == 0 {
-		if _, err := r.UpsertTarget(Target{ContainerName: containerName}); err != nil {
-			return fmt.Errorf("SetTargetRepo create target: %w", err)
-		}
-		if _, err := r.db.Exec(`UPDATE targets SET repo = ?, repo_chosen = 1 WHERE container_name = ?`, repo, containerName); err != nil {
-			return fmt.Errorf("SetTargetRepo: %w", err)
-		}
 	}
 	return nil
 }
