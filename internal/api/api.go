@@ -351,6 +351,7 @@ func (h *Handler) Router() http.Handler {
 
 	// Placement of one container, VM or file set.
 	mux.HandleFunc("POST /api/items/{domain}/{name}/placement/preview", h.handlePreviewItemPlacement)
+	mux.HandleFunc("POST /api/placement/{domain}/confirm", h.handleConfirmPlacement)
 
 	// Foreign-repo read-only session endpoints (restore from ANOTHER BombVault
 	// instance's repo, #61). Sessions are in-memory with a TTL — never persisted
