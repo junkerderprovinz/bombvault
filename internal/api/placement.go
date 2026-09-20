@@ -60,6 +60,10 @@ func placementFail(w http.ResponseWriter, err error, extra map[string]any) {
 	writeJSON(w, http.StatusOK, env)
 }
 
+// validPlacementDomain reports whether domain takes a placement, the check an
+// item route runs before it touches the store.
+//
+//nolint:unused // called by the item routes
 func validPlacementDomain(domain string) bool {
 	return slices.Contains(store.PlacementDomains, domain)
 }
@@ -209,10 +213,10 @@ func (p placementRead) anyCopiesTo(targetID string) bool {
 func (p placementRead) rulesRev(target store.OffsiteTarget) string {
 	h := sha256.New()
 	for _, id := range slices.Sorted(maps.Keys(p.State.Rules)) {
-		fmt.Fprintf(h, "rule %s %q\n", id, p.State.Rules[id].Skip)
+		_, _ = fmt.Fprintf(h, "rule %s %q\n", id, p.State.Rules[id].Skip)
 	}
-	fmt.Fprintf(h, "default %q\n", p.defaultSkip())
-	fmt.Fprintf(h, "keep %d %d %d %d\n", target.RetentionKeepLast, target.RetentionKeepDaily,
+	_, _ = fmt.Fprintf(h, "default %q\n", p.defaultSkip())
+	_, _ = fmt.Fprintf(h, "keep %d %d %d %d\n", target.RetentionKeepLast, target.RetentionKeepDaily,
 		target.RetentionKeepWeekly, target.RetentionKeepMonthly)
 	return hex.EncodeToString(h.Sum(nil))
 }
