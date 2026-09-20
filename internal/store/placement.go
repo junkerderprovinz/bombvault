@@ -263,58 +263,49 @@ var ErrUnknownDomain = errors.New("that domain has no placement")
 // file still names it: saving a default, imported or typed, never earns that
 // marker on its own.
 func (r *Repo) ImportPlacement(in PlacementImport) error {
-	tx, err := r.db.Begin()
-	if err != nil {
-		return fmt.Errorf("ImportPlacement: %w", err)
-	}
-	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
 	now := time.Now().Unix()
-	if in.HasDefaults {
-		paused, confirmed, err := placementMarkersTx(tx)
-		if err != nil {
-			return fmt.Errorf("ImportPlacement paused: %w", err)
-		}
-		if _, err := tx.Exec(`DELETE FROM placement_defaults WHERE confirmed_at <> 0`); err != nil {
-			return fmt.Errorf("ImportPlacement defaults: %w", err)
-		}
-		for _, d := range in.Defaults {
-			if !slices.Contains(PlacementDomains, d.Domain) {
-				return fmt.Errorf("ImportPlacement %s: %w", d.Domain, ErrUnknownDomain)
-			}
-			skip, err := encodeSkip(d.Skip)
+	return r.inTx(func(tx *sql.Tx) error {
+		if in.HasDefaults {
+			paused, confirmed, err := placementMarkersTx(tx)
 			if err != nil {
-				return fmt.Errorf("ImportPlacement %s: %w", d.Domain, err)
+				return fmt.Errorf("ImportPlacement paused: %w", err)
 			}
-			switch {
-			case paused[d.Domain]:
-				_, err = tx.Exec(`UPDATE placement_defaults SET home = ?, skip = ?, updated_at = ? WHERE domain = ?`, d.Home, skip, now, d.Domain)
-			case confirmed[d.Domain]:
-				_, err = tx.Exec(`INSERT INTO placement_defaults (domain, home, skip, confirmed_at, confirmed_manually, updated_at) VALUES (?, ?, ?, ?, 1, ?)`, d.Domain, d.Home, skip, now, now)
-			default:
-				_, err = tx.Exec(`INSERT INTO placement_defaults (domain, home, skip, confirmed_at, updated_at) VALUES (?, ?, ?, ?, ?)`, d.Domain, d.Home, skip, now, now)
+			if _, err := tx.Exec(`DELETE FROM placement_defaults WHERE confirmed_at <> 0`); err != nil {
+				return fmt.Errorf("ImportPlacement defaults: %w", err)
 			}
-			if err != nil {
-				return fmt.Errorf("ImportPlacement %s: %w", d.Domain, err)
+			for _, d := range in.Defaults {
+				if !slices.Contains(PlacementDomains, d.Domain) {
+					return fmt.Errorf("ImportPlacement %s: %w", d.Domain, ErrUnknownDomain)
+				}
+				skip, err := encodeSkip(d.Skip)
+				if err != nil {
+					return fmt.Errorf("ImportPlacement %s: %w", d.Domain, err)
+				}
+				switch {
+				case paused[d.Domain]:
+					_, err = tx.Exec(`UPDATE placement_defaults SET home = ?, skip = ?, updated_at = ? WHERE domain = ?`, d.Home, skip, now, d.Domain)
+				case confirmed[d.Domain]:
+					_, err = tx.Exec(`INSERT INTO placement_defaults (domain, home, skip, confirmed_at, confirmed_manually, updated_at) VALUES (?, ?, ?, ?, 1, ?)`, d.Domain, d.Home, skip, now, now)
+				default:
+					_, err = tx.Exec(`INSERT INTO placement_defaults (domain, home, skip, confirmed_at, updated_at) VALUES (?, ?, ?, ?, ?)`, d.Domain, d.Home, skip, now, now)
+				}
+				if err != nil {
+					return fmt.Errorf("ImportPlacement %s: %w", d.Domain, err)
+				}
 			}
 		}
-	}
-	if in.HasRules {
-		if _, err := tx.Exec(`DELETE FROM offsite_copy_rules`); err != nil {
-			return fmt.Errorf("ImportPlacement rules: %w", err)
-		}
-		for _, rule := range in.Rules {
-			if err := checkRuleIdentity(rule.Domain, rule.Identity); err != nil {
-				return fmt.Errorf("ImportPlacement %s: %w", rule.Identity, err)
+		if in.HasRules {
+			if _, err := tx.Exec(`DELETE FROM offsite_copy_rules`); err != nil {
+				return fmt.Errorf("ImportPlacement rules: %w", err)
 			}
-			if err := setCopyRuleTx(tx, rule.Domain, rule.Identity, rule.Skip, now); err != nil {
-				return fmt.Errorf("ImportPlacement %s: %w", rule.Identity, err)
+			for _, rule := range in.Rules {
+				if err := setCopyRuleTx(tx, rule.Domain, rule.Identity, rule.Skip, now); err != nil {
+					return fmt.Errorf("ImportPlacement %s: %w", rule.Identity, err)
+				}
 			}
 		}
-	}
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("ImportPlacement commit: %w", err)
-	}
-	return nil
+		return nil
+	})
 }
 
 // placementMarkersTx reads every stored default's pause and manual-confirmation
