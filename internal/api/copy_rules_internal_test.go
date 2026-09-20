@@ -144,6 +144,29 @@ func TestAMoveToARemoteNamedRepositoryWithCopiesIsRefused(t *testing.T) {
 	}
 }
 
+func TestAMoveToAnUnknownRepositoryWithCopiesGetsTheRepositoryError(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("nginx", "")
+
+	res := f.do(http.MethodPatch, "/api/containers/nginx", map[string]any{
+		"repo":   "no-such-repo",
+		"copies": map[string]any{"skip": []string{}},
+	})
+	if res["ok"] != false || res["code"] != nil {
+		t.Fatalf("PATCH = %v, want a plain repository refusal, not a coded copies refusal", res)
+	}
+	errText, _ := res["error"].(string)
+	if !strings.Contains(errText, "no such repository") {
+		t.Fatalf("error = %q, want the repository message, not copies-not-allowed", errText)
+	}
+	if _, found := ruleOf(t, f, "containers", "container:nginx"); found {
+		t.Fatal("the refused PATCH wrote a rule")
+	}
+	if got, err := f.st.GetTargetByContainer("nginx"); err != nil || strings.TrimSpace(got.Repo) != "" {
+		t.Fatalf("repo = %+v, %v, want it unchanged", got, err)
+	}
+}
+
 func TestAMoveToTheDomainPathWithCopiesIsAccepted(t *testing.T) {
 	f := newPlacementFixture(t)
 	box := f.namedRepo("Storagebox", "sftp:u@box:/bv")
