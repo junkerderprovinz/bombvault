@@ -402,14 +402,16 @@ func (s *Service) ageTarget(ctx context.Context, domain, dest string, mode resti
 }
 
 // noteAged keeps the aging mark: set after a pass that only aged the target,
-// cleared once items are copied there again. A new state of the rules needs no
-// clearing, because its fingerprint differs.
-func (s *Service) noteAged(domain string, target store.OffsiteTarget, v targetVisit, agingOnly, settled bool) {
+// cleared once something lands there again, predicted or not, since an
+// untracked snapshot can slip through a pass the rules still call
+// aging-only. A new state of the rules needs no clearing, because its
+// fingerprint differs.
+func (s *Service) noteAged(domain string, target store.OffsiteTarget, v targetVisit, agingOnly, settled, landed bool) {
 	var err error
 	switch {
 	case agingOnly && settled:
 		err = s.store.MarkTargetAged(domain, target.ID, v.p.rulesRev(target), time.Now().Unix())
-	case !v.agingOnly && v.wasAged:
+	case (landed || !v.agingOnly) && v.wasAged:
 		err = s.store.ResetTargetAged(domain, target.ID)
 	}
 	if err != nil {

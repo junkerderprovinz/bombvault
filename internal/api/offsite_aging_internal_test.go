@@ -167,3 +167,56 @@ func TestAnEmptiedTargetLosesItsRows(t *testing.T) {
 		t.Fatalf("ItemCopiesFor = %+v, %v, want nothing after B2 listed empty", rows, err)
 	}
 }
+
+func TestATargetGettingRealContentAgainClearsItsAgingMark(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := photosOnTheNAS(t, f)
+	// Docs lives at the domain path and copies to Hetzner, not B2, so the
+	// domain path is a real read source while the rules still predict
+	// nothing of it reaches B2.
+	f.target("files", "Hetzner", "sftp:u@box:/files")
+	f.fileSet("Docs", "")
+	f.rule("files", "fileset:Docs", b2.ID)
+
+	if err := f.svc.ReplicateOffsite(context.Background(), "files"); err != nil {
+		t.Fatal(err)
+	}
+	if obs, found, err := f.st.TargetObservationFor("files", b2.ID); err != nil || !found || obs.AgedAt == 0 {
+		t.Fatalf("B2's observation = %+v found=%v err=%v, want an aging mark after the first pass", obs, found, err)
+	}
+
+	// An untracked snapshot at the domain path: no file set claims its tag,
+	// so the rules still predict B2 as aging-only even though this lands
+	// there for real.
+	f.hold(f.domainPath("files"), snap("orphan1", 9000, "misc"))
+
+	if err := f.svc.ReplicateOffsite(context.Background(), "files"); err != nil {
+		t.Fatal(err)
+	}
+	if n := len(heldAt(t, f, "b2:bucket:files")); n != 8 {
+		t.Fatalf("B2 holds %d, want the 7 kept photos plus the untracked snapshot", n)
+	}
+	if obs, found, err := f.st.TargetObservationFor("files", b2.ID); err != nil || !found || obs.AgedAt != 0 {
+		t.Fatalf("B2's observation = %+v found=%v err=%v, want the aging mark cleared once something landed", obs, found, err)
+	}
+}
+
+func TestChangedRetentionAgesAMarkedTargetAgain(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := photosOnTheNAS(t, f)
+
+	if err := f.svc.ReplicateOffsite(context.Background(), "files"); err != nil {
+		t.Fatal(err)
+	}
+	if n := len(heldAt(t, f, "b2:bucket:files")); n != 7 {
+		t.Fatalf("B2 holds %d after the first pass, want 7", n)
+	}
+
+	keepLast(t, f, b2, 5)
+	if err := f.svc.ReplicateOffsite(context.Background(), "files"); err != nil {
+		t.Fatal(err)
+	}
+	if n := len(heldAt(t, f, "b2:bucket:files")); n != 5 {
+		t.Fatalf("B2 holds %d once its keep-policy tightened, want 5", n)
+	}
+}

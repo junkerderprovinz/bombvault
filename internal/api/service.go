@@ -3083,10 +3083,13 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	}
 	out := s.copySources(ctx, domain, dest, mode, target, visit, localRepos, dstSnaps, dstErr, startedAt, lastCopy)
 	copied, accounted, destIsASource := out.copied, out.accounted, out.destIsASource
-	agingOnly = visit.agingOnly && copied == 0
 	// Carried past the maintenance below: whatever did arrive is aged, sampled and
 	// measured against the budget, and the joined error still reaches the run row.
 	copyErr := errors.Join(out.errs...)
+	// Gated on copyErr too: a pass that errored out before the keep-policy ran
+	// must not stamp the run aging-only, or its history claims a maintenance
+	// pass that never happened.
+	agingOnly = visit.agingOnly && copied == 0 && copyErr == nil
 	if visit.observe && dstErr == nil {
 		s.recordListing(domain, target, visit.owners, dstSnaps, out.landed)
 	}
@@ -3161,7 +3164,7 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	default:
 		settled = s.ageTarget(ctx, domain, dest, mode, target, visit, dstSnaps, dstErr, out.landed)
 	}
-	s.noteAged(domain, target, visit, agingOnly, settled)
+	s.noteAged(domain, target, visit, agingOnly, settled, len(out.landed) > 0)
 	// Sample the off-site repo size into the repo_stats time series and evaluate the
 	// growth budget. When a budget is set we sample SYNCHRONOUSLY first so the check
 	// sees THIS replication's fresh size — including the very first replication,
