@@ -209,3 +209,58 @@ func TestAHookForAnItemOnLocalLeavesNoRun(t *testing.T) {
 		t.Fatalf("an item on Local copied %+v and wrote %v", f.eng.copies, offsiteRuns(t, f, "containers"))
 	}
 }
+
+// TestTheHookSamplesTheTargetItActuallyCopiedTo pins that a hook pass narrowed to
+// one target (by a rule that skips the domain's other targets) samples that
+// target's own size. The domain's bare "offsite" source resolves to the first
+// enabled target regardless of which one a pass actually reaches, so treating a
+// narrowed pass as single-destination attributes the sample to the wrong
+// repository and leaves the copied-to target's own trend stale.
+func TestTheHookSamplesTheTargetItActuallyCopiedTo(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	hz := f.target("containers", "Hetzner", "sftp:u@box:/containers")
+	b2.GrowthBudgetGB = 1
+	if _, err := f.st.UpsertOffsiteTarget(b2); err != nil {
+		t.Fatal(err)
+	}
+	hz.GrowthBudgetGB = 1
+	if _, err := f.st.UpsertOffsiteTarget(hz); err != nil {
+		t.Fatal(err)
+	}
+	settings := settingsOf(t, f.svc)
+	settings.OffsiteGrowthBudgetGB = 1
+	if err := f.st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	f.replicated("containers")
+	f.rule("containers", "container:plex", b2.ID) // plex skips B2, so only Hetzner is copied to
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:plex"))
+	f.hold("b2:bucket:containers", snap("old", 50, "container:plex")) // B2 already holds an earlier copy
+
+	beforeDomain, err := f.st.ListRepoStats("containers", "offsite", 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	beforeHZ, err := f.st.ListRepoStats("containers", offsiteStatSource(hz.ID), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	f.svc.replicateOffsite(context.Background(), "containers", settingsOf(t, f.svc), f.domainPath("containers"), "container:plex")
+
+	afterDomain, err := f.st.ListRepoStats("containers", "offsite", 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	afterHZ, err := f.st.ListRepoStats("containers", offsiteStatSource(hz.ID), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(afterHZ) != len(beforeHZ)+1 {
+		t.Fatalf("Hetzner's own size samples = %d, want %d: the target this pass copied to must get its own sample", len(afterHZ), len(beforeHZ)+1)
+	}
+	if len(afterDomain) != len(beforeDomain) {
+		t.Fatalf("the domain's bare offsite source samples = %d, want %d unchanged: B2 was never copied to by this pass", len(afterDomain), len(beforeDomain))
+	}
+}

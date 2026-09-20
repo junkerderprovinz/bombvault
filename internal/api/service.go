@@ -2928,9 +2928,14 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	// multiTarget is false for a single-destination (N=1) domain: the budget then
 	// stays on the byte-identical DOMAIN path (source "offsite", the global
 	// OffsiteGrowthBudgetGB, latch keyed by domain). Only with 2+ destinations does
-	// each carry its OWN growth budget + per-target size sample + latch — dormant
-	// until the stage-5 UI can add a second destination.
-	multiTarget := len(targets) > 1
+	// each carry its own growth budget + per-target size sample + latch.
+	//
+	// Counted over the domain's enabled targets, not the (possibly item-narrowed)
+	// targets this pass visits: a hook pass narrowed to one target of a
+	// multi-destination domain still has to sample and budget-check under that
+	// target's own source, not the domain's bare "offsite" one, which resolves to
+	// the first enabled target regardless of which one this pass reached.
+	multiTarget := len(p.enabledTargets()) > 1
 	var errs []error
 	for _, t := range targets {
 		// The skip list travels WITH the sources. It names repositories this domain
