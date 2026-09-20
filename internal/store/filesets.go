@@ -1,7 +1,9 @@
 package store
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 )
@@ -298,6 +300,14 @@ func (r *Repo) DeleteFileSet(id string) error {
 	if err != nil {
 		return fmt.Errorf("DeleteFileSet begin: %w", err)
 	}
+	// The name, read before the row goes: its copy rule is keyed by identity
+	// (fileset:<Name>), not by id, and a rule surviving the set would block a
+	// later set from taking the freed name.
+	var name string
+	if err := tx.QueryRow(`SELECT name FROM file_sets WHERE id = ?`, id).Scan(&name); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
+		return fmt.Errorf("DeleteFileSet name: %w", err)
+	}
 	if _, err := tx.Exec(`DELETE FROM runs WHERE target_id = ?`, id); err != nil {
 		tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
 		return fmt.Errorf("DeleteFileSet runs: %w", err)
@@ -305,6 +315,12 @@ func (r *Repo) DeleteFileSet(id string) error {
 	if _, err := tx.Exec(`DELETE FROM file_sets WHERE id = ?`, id); err != nil {
 		tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
 		return fmt.Errorf("DeleteFileSet: %w", err)
+	}
+	if name != "" {
+		if _, err := tx.Exec(`DELETE FROM offsite_copy_rules WHERE domain = 'files' AND identity = ?`, "fileset:"+name); err != nil {
+			tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
+			return fmt.Errorf("DeleteFileSet copy rule: %w", err)
+		}
 	}
 	return tx.Commit()
 }
