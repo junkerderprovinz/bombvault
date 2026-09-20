@@ -121,3 +121,43 @@ func (s *Service) settleHome(ctx context.Context, settings store.Settings, item 
 	}
 	return repoID, commit, nil
 }
+
+// homeStep is where an entry point backs up and the write that records it there.
+type homeStep struct {
+	repo   string
+	mode   restic.Mode
+	commit func() (bool, error)
+}
+
+// prepareHome settles the item's location and makes sure a repository exists
+// there. The location is written by recordHome, once the item is known to exist.
+func (s *Service) prepareHome(ctx context.Context, settings store.Settings, item store.ItemRef) (homeStep, error) {
+	repoID, commit, err := s.settleHome(ctx, settings, item)
+	if err != nil {
+		return homeStep{}, err
+	}
+	repo, err := s.itemRepoPath(repoID, func() (string, error) { return s.repoFor(settings, item.Domain, "local") })
+	if err != nil {
+		return homeStep{}, err
+	}
+	mode := s.primaryModeFor(settings, item.Domain, repo)
+	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
+		return homeStep{}, err
+	}
+	s.unlockStale(ctx, repo, mode)
+	return homeStep{repo: repo, mode: mode, commit: commit}, nil
+}
+
+// recordHome writes the settled location. When the row changed after it was
+// read, the step starts over from the new row.
+func (s *Service) recordHome(ctx context.Context, settings store.Settings, item store.ItemRef, step homeStep) (homeStep, error) {
+	for {
+		ok, err := step.commit()
+		if err != nil || ok {
+			return step, err
+		}
+		if step, err = s.prepareHome(ctx, settings, item); err != nil {
+			return step, err
+		}
+	}
+}
