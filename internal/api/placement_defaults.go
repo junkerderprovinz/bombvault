@@ -621,6 +621,167 @@ func (s *Service) applyDefault(ctx context.Context, domain string, keys []string
 	return reset, kept, nil
 }
 
+type excludedItem struct {
+	Identity string   `json:"identity"`
+	Skip     []string `json:"skip"`
+}
+
+// targetPreview is what a target receives at its next run.
+type targetPreview struct {
+	Items            int            `json:"items"`
+	FormerlyExcluded []excludedItem `json:"formerlyExcluded"`
+	DefaultExcludes  bool           `json:"defaultExcludes"`
+	Snapshots        int            `json:"snapshots"`
+	Bytes            *int64         `json:"bytes"`
+	Unreadable       []string       `json:"unreadable"`
+}
+
+type targetPreviewRow struct {
+	TargetID string        `json:"targetId"`
+	Name     string        `json:"name"`
+	Preview  targetPreview `json:"preview"`
+}
+
+type unmatchedName struct {
+	Identity  string `json:"identity"`
+	Snapshots int    `json:"snapshots"`
+}
+
+// confirmPreview is what the domain copies once its default is confirmed, per
+// enabled target, and the names in its copy sources that no row knows.
+func (s *Service) confirmPreview(ctx context.Context, domain string) ([]targetPreviewRow, []unmatchedName, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, nil, err
+	}
+	p, err := s.readPlacement(settings, domain)
+	if err != nil {
+		return nil, nil, err
+	}
+	named, err := s.namedRepoIndex()
+	if err != nil {
+		return nil, nil, err
+	}
+	items, err := s.domainItems(domain)
+	if err != nil {
+		return nil, nil, err
+	}
+	listing, err := s.listCopySources(ctx, settings, domain)
+	if err != nil {
+		return nil, nil, err
+	}
+	observed, err := s.store.ItemCopiesForDomain(domain)
+	if err != nil {
+		return nil, nil, err
+	}
+	subjects := s.copySubjects(settings, p, named, items, listing, observed, true)
+	rules := slices.SortedFunc(maps.Values(p.State.Rules), func(a, b store.CopyRule) int { return strings.Compare(a.Identity, b.Identity) })
+	rows := []targetPreviewRow{}
+	for _, t := range p.enabledTargets() {
+		pv := targetPreview{FormerlyExcluded: []excludedItem{}, Unreadable: append([]string{}, listing.Unreadable...)}
+		for _, id := range subjects {
+			if containsTarget(p.effectiveTargets(id), t.ID) {
+				pv.Items++
+				pv.Snapshots += listing.uploadEstimate(id, observedFor(observed, id), t.ID)
+			}
+		}
+		for _, r := range rules {
+			if len(r.Skip) > 0 && !skipsEverything(r.Skip) && !slices.Contains(r.Skip, t.ID) {
+				pv.FormerlyExcluded = append(pv.FormerlyExcluded, excludedItem{Identity: r.Identity, Skip: r.Skip})
+			}
+		}
+		skip := p.State.Default.Skip
+		pv.DefaultExcludes = len(skip) > 0 && !skipsEverything(skip) && !slices.Contains(skip, t.ID)
+		rows = append(rows, targetPreviewRow{TargetID: t.ID, Name: placementTargetName(t), Preview: pv})
+	}
+	return rows, unmatchedNames(p, items, listing), nil
+}
+
+// unmatchedNames are the identities in the copy sources that no row and no rule
+// knows, with their snapshot counts. Project folders follow the default and are
+// never listed.
+func unmatchedNames(p placementRead, items []domainItem, listing sourceListing) []unmatchedName {
+	known := map[string]bool{}
+	for _, it := range items {
+		known[it.identity] = true
+	}
+	for id := range p.State.Rules {
+		known[id] = true
+	}
+	out := []unmatchedName{}
+	for id, snaps := range listing.ByIdentity {
+		if !known[id] && !strings.HasPrefix(id, "stack:") {
+			out = append(out, unmatchedName{Identity: id, Snapshots: len(snaps)})
+		}
+	}
+	slices.SortFunc(out, func(a, b unmatchedName) int { return strings.Compare(a.Identity, b.Identity) })
+	return out
+}
+
+// confirmDefault ends the domain's pause and leaves each excluded name out of
+// every target with a rule of its own. A domain that was never paused is left
+// untouched, so confirming a healthy domain cannot take the rebuild check out
+// of service.
+func (s *Service) confirmDefault(_ context.Context, domain string, exclude []string) error {
+	prefix := domainTagPrefix(domain)
+	for _, id := range exclude {
+		if !strings.HasPrefix(id, prefix) || id == prefix {
+			return errInvalidPlacement
+		}
+	}
+	s.placementMu.Lock()
+	defer s.placementMu.Unlock()
+	d, found, err := s.store.PlacementDefaultFor(domain)
+	if err != nil {
+		return err
+	}
+	if !found || !d.Paused() {
+		return nil
+	}
+	return s.store.ConfirmPlacement(domain, exclude)
+}
+
+func (h *Handler) handleConfirmPreview(w http.ResponseWriter, r *http.Request) {
+	domain, ok := defaultDomainParam(w, r)
+	if !ok {
+		return
+	}
+	settings, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	p, err := h.svc.readPlacement(settings, domain)
+	if err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	targets, unmatched, err := h.svc.confirmPreview(r.Context(), domain)
+	if err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"paused": p.State.Paused(), "targets": targets, "unmatched": unmatched}))
+}
+
+func (h *Handler) handleConfirmDefault(w http.ResponseWriter, r *http.Request) {
+	domain, ok := defaultDomainParam(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		Exclude []string `json:"exclude"`
+	}
+	if !decodeOptionalBody(w, r, &body) {
+		return
+	}
+	if err := h.svc.confirmDefault(r.Context(), domain, body.Exclude); err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
 // defaultDomainParam reads {domain} of a /api/placement/default route and writes
 // the 400 itself.
 func defaultDomainParam(w http.ResponseWriter, r *http.Request) (string, bool) {

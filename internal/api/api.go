@@ -263,6 +263,8 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("PUT /api/placement/default/{domain}", h.handlePutPlacementDefault)
 	mux.HandleFunc("GET /api/placement/default/{domain}/apply", h.handleApplyDefaultPreview)
 	mux.HandleFunc("POST /api/placement/default/{domain}/apply", h.handleApplyDefault)
+	mux.HandleFunc("GET /api/placement/default/{domain}/confirm", h.handleConfirmPreview)
+	mux.HandleFunc("POST /api/placement/default/{domain}/confirm", h.handleConfirmDefault)
 	mux.HandleFunc("POST /api/offsite/{domain}", h.handleReplicateOffsite)
 	// Primary-target probe; the per-target one is the /targets/{id}/test route above.
 	mux.HandleFunc("POST /api/offsite/{domain}/test", h.handleTestOffsite)
@@ -356,7 +358,6 @@ func (h *Handler) Router() http.Handler {
 
 	// Placement of one container, VM or file set.
 	mux.HandleFunc("POST /api/items/{domain}/{name}/placement/preview", h.handlePreviewItemPlacement)
-	mux.HandleFunc("POST /api/placement/{domain}/confirm", h.handleConfirmPlacement)
 
 	// Foreign-repo read-only session endpoints (restore from ANOTHER BombVault
 	// instance's repo, #61). Sessions are in-memory with a TTL — never persisted

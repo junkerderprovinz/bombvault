@@ -499,6 +499,15 @@ func (f *placementFixture) openFileSet(name string) store.FileSet {
 	return set
 }
 
+// paused pauses the domain the way a rebuild-detection check would, without a
+// listing having to find the history itself.
+func (f *placementFixture) paused(domain string) {
+	f.t.Helper()
+	if _, err := f.st.PausePlacement(domain); err != nil {
+		f.t.Fatalf("paused %s: %v", domain, err)
+	}
+}
+
 func (f *placementFixture) home(item store.ItemRef) store.HomeState {
 	f.t.Helper()
 	h, err := f.st.ItemHome(item)

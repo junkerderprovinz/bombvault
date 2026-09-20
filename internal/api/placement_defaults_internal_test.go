@@ -1,12 +1,15 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -333,5 +336,206 @@ func TestApplyIsRefusedWhileABackupHoldsTheDomain(t *testing.T) {
 	}
 	if got := f.home(store.ItemRef{Domain: "containers", Key: "moved"}); got.Repo != nas.ID {
 		t.Fatalf("home = %+v, want it untouched", got)
+	}
+}
+
+// pausedContainers is a rebuilt containers domain: paused, one row, and a name in
+// the domain path that no row knows.
+func pausedContainers(t *testing.T) (*placementFixture, store.OffsiteTarget) {
+	t.Helper()
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket/containers")
+	f.paused("containers")
+	f.container("nginx", "")
+	f.hold(f.domainPath("containers"),
+		snap("aaaa0001", 100, "container:nginx"),
+		snap("bbbb0001", 100, "container:old-app"),
+		snap("bbbb0002", 200, "container:old-app"))
+	return f, b2
+}
+
+func TestConfirmPreviewListsWhatCopiesAndNamesWithoutARow(t *testing.T) {
+	f, b2 := pausedContainers(t)
+	res := f.do(http.MethodGet, "/api/placement/default/containers/confirm", nil)
+	if res["paused"] != true {
+		t.Fatalf("confirm preview = %v, want paused", res)
+	}
+	targets := res["targets"].([]any)
+	if len(targets) != 1 {
+		t.Fatalf("targets = %v, want B2", targets)
+	}
+	row := targets[0].(map[string]any)
+	preview := row["preview"].(map[string]any)
+	if row["targetId"] != b2.ID || preview["items"] != float64(1) || preview["snapshots"] != float64(1) {
+		t.Fatalf("B2 = %v, want one item with one snapshot", row)
+	}
+	unmatched := res["unmatched"].([]any)
+	if len(unmatched) != 1 {
+		t.Fatalf("unmatched = %v, want old-app", unmatched)
+	}
+	if u := unmatched[0].(map[string]any); u["identity"] != "container:old-app" || u["snapshots"] != float64(2) {
+		t.Fatalf("unmatched = %v", u)
+	}
+}
+
+func TestConfirmEndsThePauseAndLeavesTheTickedNamesOut(t *testing.T) {
+	f, b2 := pausedContainers(t)
+	res := f.do(http.MethodPost, "/api/placement/default/containers/confirm", map[string]any{"exclude": []string{"container:old-app"}})
+	if res["ok"] != true {
+		t.Fatalf("confirm = %v", res)
+	}
+	d, found, err := f.st.PlacementDefaultFor("containers")
+	if err != nil || !found || d.Paused() {
+		t.Fatalf("default = %+v, %v, %v, want confirmed", d, found, err)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := f.svc.readPlacement(settings, "containers")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.copiesTo(b2.ID, []string{"container:old-app"}) {
+		t.Fatal("old-app is still copied to B2 after it was left out")
+	}
+	if !p.copiesTo(b2.ID, []string{"container:nginx"}) {
+		t.Fatal("nginx is no longer copied to B2")
+	}
+}
+
+func TestConfirmLeavesATickedNameOutOfTheNextRun(t *testing.T) {
+	f, b2 := pausedContainers(t)
+	// A first listing of B2 would find these old snapshots and pause the domain again.
+	f.listing("containers", b2.ID, 300)
+	if res := f.do(http.MethodPost, "/api/placement/default/containers/confirm", map[string]any{"exclude": []string{"container:old-app"}}); res["ok"] != true {
+		t.Fatalf("confirm = %v", res)
+	}
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	var copied []string
+	for _, c := range f.eng.copies {
+		if c.IDs == nil {
+			t.Fatalf("a whole-repository copy from %s takes old-app along", c.Src)
+		}
+		copied = append(copied, c.IDs...)
+	}
+	if !slices.Contains(copied, "aaaa0001") {
+		t.Fatalf("copied %v, want nginx's snapshot", copied)
+	}
+	if slices.Contains(copied, "bbbb0001") || slices.Contains(copied, "bbbb0002") {
+		t.Fatalf("copied %v, want nothing of old-app", copied)
+	}
+}
+
+func TestConfirmRefusesANameOfAnotherDomain(t *testing.T) {
+	f, _ := pausedContainers(t)
+	res := f.do(http.MethodPost, "/api/placement/default/containers/confirm", map[string]any{"exclude": []string{"vm:win11"}})
+	if res["code"] != "invalid-placement" {
+		t.Fatalf("confirm = %v, want invalid-placement", res)
+	}
+	if d, _, _ := f.st.PlacementDefaultFor("containers"); !d.Paused() {
+		t.Fatal("a refused confirmation ended the pause")
+	}
+}
+
+func TestConfirmPlacementResumesAPausedDomain(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("containers", "B2", "b2:bucket:containers")
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:nginx"))
+
+	// The first pass finds unreplicated history and pauses.
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatal(err)
+	}
+	if !pausedDefault(t, f, "containers") {
+		t.Fatal("setup: the domain did not pause")
+	}
+
+	if res := f.do(http.MethodPost, "/api/placement/default/containers/confirm", map[string]any{}); res["ok"] != true {
+		t.Fatalf("confirm = %v, want ok", res)
+	}
+	if pausedDefault(t, f, "containers") {
+		t.Fatal("the domain is still paused after confirm")
+	}
+	f.eng.copies = nil
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatal(err)
+	}
+	if len(f.eng.copies) != 1 {
+		t.Fatalf("copies = %+v, want one copy after the confirmation", f.eng.copies)
+	}
+}
+
+func TestConfirmingAHealthyDomainDoesNotSilenceALaterFirstListingPause(t *testing.T) {
+	f := newPlacementFixture(t)
+	if res := f.do(http.MethodPost, "/api/placement/default/containers/confirm", map[string]any{}); res["ok"] != true {
+		t.Fatalf("confirm = %v, want ok", res)
+	}
+
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	now := time.Now().Unix()
+	f.hold(f.domainPath("containers"), snap("a9", now, "container:nginx"))
+	f.hold("b2:bucket:containers", copied("b1", "a1", now-86400, "container:nginx"))
+
+	for range 2 {
+		if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if !pausedDefault(t, f, "containers") {
+		t.Fatal("confirming a domain that was never paused silenced its later first-listing pause")
+	}
+	if _, listed, err := f.st.TargetObservationFor("containers", b2.ID); err != nil || !listed {
+		t.Fatalf("the listing that found it was not recorded (listed=%v err=%v)", listed, err)
+	}
+}
+
+func TestConfirmPlacementRefusesAnUnknownDomain(t *testing.T) {
+	f := newPlacementFixture(t)
+	rec := httptest.NewRecorder()
+	f.h.Router().ServeHTTP(rec, jsonReq(http.MethodPost, "/api/placement/default/flash/confirm", strings.NewReader(`{}`)))
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("confirm flash = %d, want 400", rec.Code)
+	}
+}
+
+func TestConfirmPlacementAcceptsAnEmptyBody(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("containers", "B2", "b2:bucket:containers")
+	f.hold(f.domainPath("containers"), snap("a1", 100, "container:nginx"))
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatal(err)
+	}
+	if !pausedDefault(t, f, "containers") {
+		t.Fatal("setup: the domain did not pause")
+	}
+
+	rec := httptest.NewRecorder()
+	f.h.Router().ServeHTTP(rec, jsonReq(http.MethodPost, "/api/placement/default/containers/confirm", nil))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("confirm with no body = %d: %s", rec.Code, rec.Body.String())
+	}
+	if pausedDefault(t, f, "containers") {
+		t.Fatal("the domain is still paused after a bodyless confirm")
+	}
+}
+
+func TestConfirmPlacementIsIdempotentOnADomainNeverPaused(t *testing.T) {
+	f := newPlacementFixture(t)
+	if res := f.do(http.MethodPost, "/api/placement/default/containers/confirm", map[string]any{"exclude": []string{"container:old-app"}}); res["ok"] != true {
+		t.Fatalf("confirm = %v, want ok", res)
+	}
+	if _, found, err := f.st.PlacementDefaultFor("containers"); err != nil {
+		t.Fatal(err)
+	} else if found {
+		t.Fatal("confirming a domain that was never paused wrote a placement default")
+	}
+	if _, found := ruleOf(t, f, "containers", "container:old-app"); found {
+		t.Fatal("confirming a domain that was never paused wrote a copy rule from its skip list")
+	}
+	if res := f.do(http.MethodPost, "/api/placement/default/containers/confirm", map[string]any{}); res["ok"] != true {
+		t.Fatalf("second confirm = %v, want ok", res)
 	}
 }
