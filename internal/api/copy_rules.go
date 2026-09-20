@@ -415,29 +415,6 @@ func (h *Handler) handlePreviewItemPlacement(w http.ResponseWriter, r *http.Requ
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"added": added, "dropped": dropped}))
 }
 
-// handleConfirmPlacement ends a domain's placement pause: replication resumes
-// on the next run. The optional body names identities to leave out for good,
-// the same identities and meaning ConfirmPlacement's exclude argument takes.
-// POST /api/placement/{domain}/confirm
-func (h *Handler) handleConfirmPlacement(w http.ResponseWriter, r *http.Request) {
-	domain := r.PathValue("domain")
-	if !validPlacementDomain(domain) {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
-		return
-	}
-	var body struct {
-		Skip []string `json:"skip"`
-	}
-	if !decodeOptionalBody(w, r, &body) {
-		return
-	}
-	if err := h.svc.confirmPlacement(domain, body.Skip); err != nil {
-		placementFail(w, err, nil)
-		return
-	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
-}
-
 // moveFileSetRule carries a file set's copy rule to its new name. A file set
 // renamed before its first backup keeps what it was copied to.
 func (s *Service) moveFileSetRule(from, to string) error {

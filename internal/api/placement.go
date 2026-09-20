@@ -419,23 +419,6 @@ func (s *Service) pausePlacement(ctx context.Context, domain string, why pauseRe
 	return nil
 }
 
-// confirmPlacement ends a domain's pause under the lock pausePlacement takes,
-// so the two writes to a domain's placement default never race. A domain that
-// was never paused is left untouched, so calling it on a healthy domain
-// cannot take pauseOnFirstListing's rebuild check out of service.
-func (s *Service) confirmPlacement(domain string, exclude []string) error {
-	s.placementMu.Lock()
-	defer s.placementMu.Unlock()
-	d, found, err := s.store.PlacementDefaultFor(domain)
-	if err != nil {
-		return err
-	}
-	if !found || !d.Paused() {
-		return nil
-	}
-	return s.store.ConfirmPlacement(domain, exclude)
-}
-
 // pauseReasons says, by the reason pausePlacement paused a domain, what made it pause.
 var pauseReasons = map[pauseReason]string{
 	reasonFoundHistory: "its first listing found backups this database never replicated, so the database may have been rebuilt without the rules that kept items from being copied",

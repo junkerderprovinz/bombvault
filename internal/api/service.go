@@ -411,7 +411,7 @@ type Service struct {
 	// placementMu guards a domain's placement state across a read-then-write: two
 	// callers pausing the same domain at once (a replication pass and a
 	// background listing, say) do not both try to insert its row and only one
-	// notification fires. confirmPlacement, moveFileSetRule and an item PATCH's
+	// notification fires. confirmDefault, moveFileSetRule and an item PATCH's
 	// writeItemPlacement each hold it for one read-then-write of their own, so a
 	// PATCH's home and copies land as a single atomic step and another PATCH to
 	// the same item never lands in between.
