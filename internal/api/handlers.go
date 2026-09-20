@@ -1336,15 +1336,6 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	change, err := withLegacyRepo(placementChange{Home: body.Home, Copies: body.Copies}, body.Repo)
-	if err != nil {
-		placementFail(w, err, nil)
-		return
-	}
-	placed, ok := h.applyPlacement(w, r, store.ItemRef{Domain: "containers", Key: name}, change)
-	if !ok {
-		return
-	}
 	if body.IncludeInSchedule != nil {
 		if err := h.svc.SetInclude(r.Context(), name, *body.IncludeInSchedule); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -1409,6 +1400,15 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}
+	}
+	change, err := withLegacyRepo(placementChange{Home: body.Home, Copies: body.Copies}, body.Repo)
+	if err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	placed, ok := h.applyPlacement(w, r, store.ItemRef{Domain: "containers", Key: name}, change)
+	if !ok {
+		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dropped": placed.Dropped}))
 }
@@ -4507,15 +4507,6 @@ func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	change, err := withLegacyRepo(placementChange{Home: body.Home, Copies: body.Copies}, body.Repo)
-	if err != nil {
-		placementFail(w, err, nil)
-		return
-	}
-	placed, ok := h.applyPlacement(w, r, store.ItemRef{Domain: "vms", Key: name}, change)
-	if !ok {
-		return
-	}
 	if body.Method != nil {
 		if err := h.svc.SetVMMethod(r.Context(), name, *body.Method); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -4539,6 +4530,15 @@ func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}
+	}
+	change, err := withLegacyRepo(placementChange{Home: body.Home, Copies: body.Copies}, body.Repo)
+	if err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	placed, ok := h.applyPlacement(w, r, store.ItemRef{Domain: "vms", Key: name}, change)
+	if !ok {
+		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dropped": placed.Dropped}))
 }
@@ -4941,17 +4941,6 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "file set not found"})
 		return
 	}
-	// Written before the rename below, so a copy rule the store still keys by
-	// the old name is carried to the new one by moveFileSetRule.
-	change, err := withLegacyRepo(placementChange{Home: body.Home, Copies: body.Copies}, body.Repo)
-	if err != nil {
-		placementFail(w, err, nil)
-		return
-	}
-	placed, ok := h.applyPlacement(w, r, store.ItemRef{Domain: "files", Key: id}, change)
-	if !ok {
-		return
-	}
 	oldName := fs.Name
 	// Captured before the merge — the path edit below overwrites fs.Path, and
 	// the clear-on-path-edit rule needs the OLD value as the anchor the stored
@@ -5065,6 +5054,18 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}
+	}
+	// Written last, after every other field landed: WritePlacement reads the
+	// set's name fresh inside its own transaction, so it keys the copy rule by
+	// the new name on its own when this same request also renamed the set.
+	change, err := withLegacyRepo(placementChange{Home: body.Home, Copies: body.Copies}, body.Repo)
+	if err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	placed, ok := h.applyPlacement(w, r, store.ItemRef{Domain: "files", Key: id}, change)
+	if !ok {
+		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dropped": placed.Dropped}))
 }
