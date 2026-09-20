@@ -394,10 +394,19 @@ func (s *Service) pausePlacement(ctx context.Context, domain string, why pauseRe
 }
 
 // confirmPlacement ends a domain's pause under the lock pausePlacement takes,
-// so the two writes to a domain's placement default never race.
+// so the two writes to a domain's placement default never race. A domain that
+// was never paused is left untouched, so calling it on a healthy domain
+// cannot take pauseOnFirstListing's rebuild check out of service.
 func (s *Service) confirmPlacement(domain string, exclude []string) error {
 	s.placementMu.Lock()
 	defer s.placementMu.Unlock()
+	d, found, err := s.store.PlacementDefaultFor(domain)
+	if err != nil {
+		return err
+	}
+	if !found || !d.Paused() {
+		return nil
+	}
 	return s.store.ConfirmPlacement(domain, exclude)
 }
 
