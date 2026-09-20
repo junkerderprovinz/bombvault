@@ -503,6 +503,7 @@ func (s *Service) placementCurrency(settings store.Settings, domain string) (pau
 	}
 	p, err := s.readPlacement(settings, domain)
 	if err != nil {
+		log.Printf("api: placement %s: could not read its placement, judging replication currency as unruled: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 		return false, false, nil
 	}
 	if p.State.Paused() {
@@ -513,6 +514,7 @@ func (s *Service) placementCurrency(settings store.Settings, domain string) (pau
 	}
 	items, err := s.placedItems(settings, domain)
 	if err != nil {
+		log.Printf("api: placement %s: could not read its items, judging replication currency as unruled: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 		return false, false, nil
 	}
 	return false, true, s.targetCurrencies(domain, p, items)
