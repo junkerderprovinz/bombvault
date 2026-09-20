@@ -76,6 +76,42 @@ func TestAPausedDomainStaysPausedThroughAnImport(t *testing.T) {
 	}
 }
 
+func TestAConfirmedDefaultKeepsItsManualMarkerThroughAnImportThatNamesIt(t *testing.T) {
+	r := repoChoiceStore(t)
+	if _, err := r.PausePlacement("containers"); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ConfirmPlacement("containers", nil); err != nil {
+		t.Fatal(err)
+	}
+	err := r.ImportPlacement(store.PlacementImport{HasDefaults: true, Defaults: []store.PlacementDefault{
+		{Domain: "containers", Home: "repo-nas", Skip: []string{store.SkipAll}},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	d, found, err := r.PlacementDefaultFor("containers")
+	if err != nil || !found || !d.ConfirmedManually {
+		t.Fatalf("containers = %+v, %v, %v, want the manual marker kept", d, found, err)
+	}
+}
+
+func TestAConfirmedDefaultIsDroppedByAnImportThatDoesNotNameIt(t *testing.T) {
+	r := repoChoiceStore(t)
+	if _, err := r.PausePlacement("containers"); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ConfirmPlacement("containers", nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ImportPlacement(store.PlacementImport{HasDefaults: true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, found, _ := r.PlacementDefaultFor("containers"); found {
+		t.Fatal("a confirmed default the file does not name survived")
+	}
+}
+
 func TestAProjectFolderRuleRefusesTheWholeImport(t *testing.T) {
 	r := repoChoiceStore(t)
 	store.SeedCopyRule(t, r, "vms", "vm:win11", store.SkipAll)
