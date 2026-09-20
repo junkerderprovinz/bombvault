@@ -2813,13 +2813,20 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	}
 	var pass replicationPass
 	if perr == nil {
-		pass, perr = s.newPass(p)
+		pass, perr = s.newPass(settings, p)
+	}
+	if perr == nil {
+		localRepos, skipped = pass.placeSources(domain, localRepos, skipped)
 	}
 	if perr == nil && len(localRepos) == 0 {
 		// nothingCoveredError, not skippedError: there are no sources at all, so
 		// "covered only part of this domain" would be false.
 		if sErr := nothingCoveredError(skipped); sErr != nil {
 			return sErr
+		}
+		if len(skipped) > 0 {
+			log.Printf("api: offsite %s: nothing to replicate: %s", domain, strings.Join(skipNames(skipped), ", ")) //nolint:gosec // G706: domain is a fixed literal and the names are the rows' own
+			return nil
 		}
 		return errors.New("no repository to replicate")
 	}
@@ -6863,6 +6870,9 @@ type domainRepoRef struct {
 	Own bool
 	// Named is the named repository's row (#204). Zero value when Own.
 	Named store.OffsiteTarget
+	// CountOnly marks a source no item is copied from. It is listed, so a
+	// target's keep-policy knows its items still exist here, and never copied.
+	CountOnly bool
 }
 
 // ownRef and namedRef are the two ways a reference is created, so nobody has to
@@ -6950,6 +6960,9 @@ type repoSkip struct {
 	// repository to never have its off-site destination aged again, on an install
 	// where the post-backup hook is the only replication there is.
 	Unreachable bool
+	// Ref is the repository the skip is about, when there is one, so a pass that
+	// reads the placement later can tell whether anything is copied from it.
+	Ref domainRepoRef
 }
 
 // skipNames renders a skip list for a JSON response: the repository's own name
@@ -7402,17 +7415,16 @@ func (s *Service) offsiteReplicationSources(settings store.Settings, domain stri
 		// got no copy at all. Same rule as reposThatExist.
 		switch s.repoEstablishmentOf(r.Loc) {
 		case repoWasEstablished:
-			skipped = append(skipped, repoSkip{Name: s.refName(r), Reason: "it was there before and is not reachable now", Unreachable: true})
+			skipped = append(skipped, repoSkip{Name: s.refName(r), Reason: "it was there before and is not reachable now", Unreachable: true, Ref: r})
 		case repoEstablishmentUnknown:
-			skipped = append(skipped, repoSkip{Name: s.refName(r), Reason: "it is not reachable now, and whether it ever held backups could not be read", Unreachable: true})
+			skipped = append(skipped, repoSkip{Name: s.refName(r), Reason: "it is not reachable now, and whether it ever held backups could not be read", Unreachable: true, Ref: r})
 		case repoNeverEstablished:
 		}
 	}
-	// A domain with ONE repository that has not been created yet keeps it, so the
-	// caller still gets restic's own error rather than a silent no-op - what every
-	// caller expected before named repositories existed.
+	// Nothing left to copy from: every source is already off site or was never
+	// created. That is a domain whose items are not copied, not a failure.
 	if len(present) == 0 {
-		return out, skipped
+		return nil, append(skipped, nothingCopiedNote(domain))
 	}
 	return present, skipped
 }

@@ -41,6 +41,18 @@ func offsiteBatchTestService(t *testing.T) (*api.Service, *fakeResticEngine, *st
 			t.Fatal(err)
 		}
 	}
+	// Both domains' own repos, as an earlier backup would have left them: a
+	// domain whose local repo was never created has nothing to replicate off
+	// site.
+	for _, p := range []string{"backups/containers", "backups/files"} {
+		repo := filepath.Join(dir, filepath.FromSlash(p))
+		if err := os.MkdirAll(repo, 0o750); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
 	d := &fakeServiceDocker{inspect: model.Inspect{Name: "/app", Image: "app:latest", Running: true}}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)

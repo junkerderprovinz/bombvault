@@ -49,16 +49,38 @@ const copyChunkSize = 500
 type replicationPass struct {
 	p      placementRead
 	owners ownerContext
+	listed map[string]store.TargetObservation // by target id; a target missing here was never listed
+	items  []placedItem                       // read while the domain has rules
+	copies []store.ItemCopies                 // read while the domain has rules
 }
 
-// newPass reads what deciding a snapshot's owner needs. Without it no rule can
-// be applied, so a failed read is an unreadable placement.
-func (s *Service) newPass(p placementRead) (replicationPass, error) {
-	owners, err := s.ownerContextFor(p.Domain)
-	if err != nil {
+// newPass reads what applying the rules needs. Without it no rule can be
+// applied, so any failed read is an unreadable placement.
+func (s *Service) newPass(settings store.Settings, p placementRead) (replicationPass, error) {
+	r := replicationPass{p: p}
+	unreadable := func(err error) (replicationPass, error) {
 		return replicationPass{}, fmt.Errorf("%w: %v", errPlacementUnreadable, err)
 	}
-	return replicationPass{p: p, owners: owners}, nil
+	var err error
+	if r.owners, err = s.ownerContextFor(p.Domain); err != nil {
+		return unreadable(err)
+	}
+	if !validPlacementDomain(p.Domain) {
+		return r, nil
+	}
+	if r.listed, err = s.store.TargetObservationsForDomain(p.Domain); err != nil {
+		return unreadable(err)
+	}
+	if !p.State.HasRules() {
+		return r, nil
+	}
+	if r.items, err = s.placedItems(settings, p.Domain); err != nil {
+		return unreadable(err)
+	}
+	if r.copies, err = s.store.ItemCopiesForDomain(p.Domain); err != nil {
+		return unreadable(err)
+	}
+	return r, nil
 }
 
 // targetVisit is what a pass does at one target.
@@ -193,7 +215,7 @@ func (s *Service) copySources(ctx context.Context, domain, dest string, mode res
 // planSource lists one source and decides what it sends to the target. held is
 // what the target holds plus what earlier sources of this pass send it.
 func (s *Service) planSource(ctx context.Context, domain string, mode restic.Mode, v targetVisit, src domainRepoRef, held []restic.Snapshot, heldKnown bool) (sourceCopy, error) {
-	c := sourceCopy{src: src, whole: !v.filtered && (src.Own || domainTagPrefix(domain) == "")}
+	c := sourceCopy{src: src, whole: !v.filtered && !src.CountOnly && (src.Own || domainTagPrefix(domain) == "")}
 	snaps, err := s.listSnapshots(ctx, src.Loc, mode)
 	if err != nil {
 		if c.whole {
@@ -208,6 +230,7 @@ func (s *Service) planSource(ctx context.Context, domain string, mode restic.Mod
 	}
 	c.answers = len(snaps) > 0
 	switch {
+	case src.CountOnly:
 	case v.filtered:
 		c.send = pendingSnapshots(v.sends(snaps), held)
 	case heldKnown:
@@ -347,4 +370,94 @@ func (s *Service) ageTarget(ctx context.Context, domain, dest string, mode resti
 		return
 	}
 	s.recordListing(domain, target, v.owners, after, nil)
+}
+
+// nothingCopiedNote says a domain's pass had no source to copy from, which
+// follows from where its items live and is no failure.
+func nothingCopiedNote(domain string) repoSkip {
+	return repoSkip{Name: domain, Reason: "nothing in it is copied off site", Note: true}
+}
+
+// placeSources applies the rules to the pass's sources: one nothing is copied
+// from stays as a counted source while a target may still hold its items, and
+// drops out once none does. An unreachable one becomes a note, since it cannot
+// leave the pass incomplete, while the keep-policy still stops for it.
+func (r replicationPass) placeSources(domain string, sources []domainRepoRef, skipped []repoSkip) ([]domainRepoRef, []repoSkip) {
+	if !r.p.State.HasRules() {
+		return sources, skipped
+	}
+	copying := r.copyingRepos()
+	out := make([]domainRepoRef, 0, len(sources))
+	for _, src := range sources {
+		switch {
+		case copying[repoKey(src)]:
+			out = append(out, src)
+		case r.stillHeld(src):
+			src.CountOnly = true
+			out = append(out, src)
+		default:
+			log.Printf("api: offsite %s: nothing of %s is copied and no target holds any of it; not reading it", domain, shortRepoName(src.Loc)) //nolint:gosec // G706: domain is a fixed literal, the name is shortened
+		}
+	}
+	skipped = slices.Clone(skipped)
+	for i, sk := range skipped {
+		if sk.Ref.Loc != "" && !copying[repoKey(sk.Ref)] {
+			skipped[i].Note = true
+		}
+	}
+	if len(out) == 0 && len(sources) > 0 {
+		skipped = append(skipped, nothingCopiedNote(domain))
+	}
+	return out, skipped
+}
+
+// repoKey names a source the way item rows name their home: "" for the domain
+// path, the named repository's id otherwise.
+func repoKey(ref domainRepoRef) string {
+	if ref.Own {
+		return ""
+	}
+	return ref.Named.ID
+}
+
+// copyingRepos are the sources, by repoKey, that at least one item is copied
+// from. The containers domain path also copies while the default does, because
+// project folders live there and follow it.
+func (r replicationPass) copyingRepos() map[string]bool {
+	out := map[string]bool{}
+	for _, it := range r.items {
+		if it.Kind.copySource() && len(r.p.effectiveTargets(it.Identity)) > 0 {
+			out[it.RepoID] = true
+		}
+	}
+	if r.p.Domain == "containers" && len(r.p.targetsFor(r.p.defaultSkip())) > 0 {
+		out[""] = true
+	}
+	return out
+}
+
+// stillHeld reports whether an enabled target may still hold items of the
+// source: one never listed for the domain, or one whose listing counted copies
+// of them.
+func (r replicationPass) stillHeld(src domainRepoRef) bool {
+	enabled := map[string]bool{}
+	for _, t := range r.p.enabledTargets() {
+		if _, listed := r.listed[t.ID]; !listed {
+			return true
+		}
+		enabled[t.ID] = true
+	}
+	names := map[string]bool{}
+	for _, it := range r.items {
+		if it.RepoID == repoKey(src) {
+			names[it.Identity] = true
+		}
+	}
+	for _, c := range r.copies {
+		ofSource := names[c.Identity] || (src.Own && strings.HasPrefix(c.Identity, "stack:"))
+		if enabled[c.TargetID] && c.SnapshotCount > 0 && ofSource {
+			return true
+		}
+	}
+	return false
 }

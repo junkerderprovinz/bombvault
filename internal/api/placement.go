@@ -62,8 +62,6 @@ func placementFail(w http.ResponseWriter, err error, extra map[string]any) {
 
 // validPlacementDomain reports whether domain takes a placement, the check an
 // item route runs before it touches the store.
-//
-//nolint:unused // called by the item routes
 func validPlacementDomain(domain string) bool {
 	return slices.Contains(store.PlacementDomains, domain)
 }
@@ -305,4 +303,65 @@ func placementTargetName(t store.OffsiteTarget) string {
 		return t.Name
 	}
 	return scrubRepoLocation(t.Repo)
+}
+
+// placedItem is one item row as the copy path sees it.
+type placedItem struct {
+	ID       string // the row id runs are recorded under
+	Identity string
+	RepoID   string // named repository id, "" for the domain path
+	Kind     homeKind
+}
+
+// placedItems lists a domain's item rows with the kind of their home.
+func (s *Service) placedItems(settings store.Settings, domain string) ([]placedItem, error) {
+	named, err := s.namedRepoIndex()
+	if err != nil {
+		return nil, err
+	}
+	var out []placedItem
+	add := func(id, identity, repo string) {
+		repo = strings.TrimSpace(repo)
+		out = append(out, placedItem{ID: id, Identity: identity, RepoID: repo, Kind: s.homeKindOf(settings, domain, repo, named)})
+	}
+	switch domain {
+	case "containers":
+		rows, err := s.store.ListTargets()
+		if err != nil {
+			return nil, err
+		}
+		for _, t := range rows {
+			add(t.ID, "container:"+t.ContainerName, t.Repo)
+		}
+	case "vms":
+		rows, err := s.store.ListVMTargets()
+		if err != nil {
+			return nil, err
+		}
+		for _, v := range rows {
+			add(v.ID, "vm:"+v.Name, v.Repo)
+		}
+	case "files":
+		rows, err := s.store.ListFileSets()
+		if err != nil {
+			return nil, err
+		}
+		for _, fs := range rows {
+			add(fs.ID, "fileset:"+fs.Name, fs.Repo)
+		}
+	}
+	return out, nil
+}
+
+// namedRepoIndex is ListNamedRepos by id, read once per request.
+func (s *Service) namedRepoIndex() (map[string]store.OffsiteTarget, error) {
+	rows, err := s.store.ListNamedRepos()
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string]store.OffsiteTarget, len(rows))
+	for _, r := range rows {
+		out[r.ID] = r
+	}
+	return out, nil
 }

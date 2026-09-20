@@ -67,6 +67,15 @@ func TestScheduledFilesRunReplicatesOffsite(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+	// The domain's own repo, as an earlier backup would have left it: a domain
+	// whose local repo was never created has nothing to replicate off site.
+	filesRepo := filepath.Join(dir, "backups", "files")
+	if err := os.MkdirAll(filesRepo, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(filesRepo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	if _, err := st.CreateFileSet(store.FileSet{Name: "docs", Path: "data/docs", Enabled: true}); err != nil {
 		t.Fatal(err)
 	}

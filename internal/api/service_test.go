@@ -744,6 +744,16 @@ func TestOffsiteScheduleDecouplesFromBackup(t *testing.T) {
 	if len(eng.copied) != 0 {
 		t.Fatalf("with a separate off-site schedule, backup must NOT replicate, got %v", eng.copied)
 	}
+	// The fake engine does not touch disk, so the backup above leaves no config
+	// marker; write the one a real backup would to keep flash's own repo present
+	// for the replication below.
+	flashRepo := filepath.Join(dir, "backups", "flash")
+	if err := os.MkdirAll(flashRepo, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(flashRepo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	// The scheduled/on-demand path replicates explicitly.
 	if err := svc.ReplicateOffsite(context.Background(), "flash"); err != nil {
@@ -768,6 +778,13 @@ func TestReplicateOffsiteAppliesOffsiteRetention(t *testing.T) {
 
 	// First: NO off-site policy → copy only, no off-site prune.
 	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	flashRepo := filepath.Join(dir, "backups", "flash")
+	if err := os.MkdirAll(flashRepo, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(flashRepo, "config"), []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	eng := &fakeResticEngine{}
@@ -811,6 +828,13 @@ func TestReplicateOffsiteImmutableSkipsRetention(t *testing.T) {
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
+	flashRepo := filepath.Join(dir, "backups", "flash")
+	if err := os.MkdirAll(flashRepo, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(flashRepo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
@@ -838,6 +862,15 @@ func offsiteReplTestService(t *testing.T, eng *fakeResticEngine) (*api.Service, 
 	s.FlashPath = "backups/flash"
 	s.FlashOffsite = "rest:http://192.168.1.2:8000/flash"
 	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// Flash's own repo, as an earlier backup would have left it: a domain
+	// whose local repo was never created has nothing to replicate off site.
+	repo := filepath.Join(dir, "backups", "flash")
+	if err := os.MkdirAll(repo, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng), st
