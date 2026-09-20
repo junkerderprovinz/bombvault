@@ -305,3 +305,88 @@ func TestSetUpdateCheckRoundTripAndUpsertPreserves(t *testing.T) {
 		t.Fatal("SetUpdateCheck on an unknown container must error")
 	}
 }
+
+func TestDBDumpTargetFieldsSurviveUpsert(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	if _, err := r.UpsertTarget(store.Target{ContainerName: "pg", AppdataPaths: []string{"/host/user/appdata/pg"}}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := r.SetDBDumpOff("pg", true); err != nil {
+		t.Fatalf("SetDBDumpOff: %v", err)
+	}
+	if err := r.SetDBDumpEngine("pg", "mariadb"); err != nil {
+		t.Fatalf("SetDBDumpEngine: %v", err)
+	}
+
+	// A backup runs UpsertTarget on every pass; it must not reset the choice.
+	if _, err := r.UpsertTarget(store.Target{ContainerName: "pg", AppdataPaths: []string{"/host/user/appdata/pg"}, Definition: "{}"}); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := r.GetTargetByContainer("pg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.DBDumpOff || got.DBDumpEngine != "mariadb" {
+		t.Fatalf("GetTargetByContainer: off=%v engine=%q, want true and mariadb", got.DBDumpOff, got.DBDumpEngine)
+	}
+
+	list, err := r.ListTargets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(list) != 1 || !list[0].DBDumpOff || list[0].DBDumpEngine != "mariadb" {
+		t.Fatalf("ListTargets dropped the dump fields: %+v", list)
+	}
+
+	ordered, err := r.ListTargetsScheduleOrder()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ordered) != 1 || !ordered[0].DBDumpOff || ordered[0].DBDumpEngine != "mariadb" {
+		t.Fatalf("ListTargetsScheduleOrder dropped the dump fields: %+v", ordered)
+	}
+
+	if err := r.SetDBDumpEngine("pg", "oracle"); err == nil {
+		t.Fatal("SetDBDumpEngine must refuse an engine BombVault cannot dump")
+	}
+	got, _ = r.GetTargetByContainer("pg")
+	if got.DBDumpEngine != "mariadb" {
+		t.Fatalf("a refused engine changed the row: %q", got.DBDumpEngine)
+	}
+}
+
+func TestSetDBDumpOffCreatesTargetRow(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	if err := r.SetDBDumpOff("pg", true); err != nil {
+		t.Fatalf("SetDBDumpOff: %v", err)
+	}
+	got, err := r.GetTargetByContainer("pg")
+	if err != nil {
+		t.Fatalf("GetTargetByContainer: %v", err)
+	}
+	if !got.DBDumpOff {
+		t.Fatal("the created row does not carry the opt-out")
+	}
+
+	if err := r.SetDBDumpEngine("maria", "mysql"); err != nil {
+		t.Fatalf("SetDBDumpEngine: %v", err)
+	}
+	got, err = r.GetTargetByContainer("maria")
+	if err != nil {
+		t.Fatalf("GetTargetByContainer: %v", err)
+	}
+	if got.DBDumpEngine != "mysql" {
+		t.Fatalf("the created row carries engine %q, want mysql", got.DBDumpEngine)
+	}
+}

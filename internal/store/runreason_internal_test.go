@@ -1,8 +1,9 @@
 package store
 
-// The frontend translates a run reason by matching the exact English string in
-// RUN_REASONS (web/src/lib/runReason.ts). Rewording a constant here breaks no
-// build, it only leaves the reason untranslated, so these tests read that table.
+// The frontend translates a run reason by matching the exact English string,
+// or the head of one that carries a detail, against the tables in
+// web/src/lib/runReason.ts. Rewording a constant here breaks no build, it only
+// leaves the reason untranslated, so these tests read those tables.
 
 import (
 	"os"
@@ -10,6 +11,42 @@ import (
 	"strings"
 	"testing"
 )
+
+// namedReasons returns every reason and note the frontend has to recognise.
+func namedReasons() map[string]string {
+	return map[string]string{
+		"ReasonInterrupted":         ReasonInterrupted,
+		"ReasonShutdown":            ReasonShutdown,
+		"ReasonContainerGone":       ReasonContainerGone,
+		"ReasonCancelled":           ReasonCancelled,
+		"ReasonDBDumpAuth":          ReasonDBDumpAuth,
+		"ReasonDBDumpPrivileges":    ReasonDBDumpPrivileges,
+		"ReasonDBDumpUnreachable":   ReasonDBDumpUnreachable,
+		"ReasonDBDumpNoClient":      ReasonDBDumpNoClient,
+		"ReasonDBDumpSecret":        ReasonDBDumpSecret,
+		"ReasonDBDumpNoCredentials": ReasonDBDumpNoCredentials,
+		"ReasonDBDumpNotRunning":    ReasonDBDumpNotRunning,
+		"ReasonDBDumpNeedsUpgrade":  ReasonDBDumpNeedsUpgrade,
+		"ReasonDBDumpTimeout":       ReasonDBDumpTimeout,
+		"ReasonDBDumpBackupCap":     ReasonDBDumpBackupCap,
+		"ReasonDBDumpStalled":       ReasonDBDumpStalled,
+		"ReasonDBDumpEmpty":         ReasonDBDumpEmpty,
+		"ReasonDBDumpIncomplete":    ReasonDBDumpIncomplete,
+		"ReasonDBDumpTool":          ReasonDBDumpTool,
+		"ReasonDBDumpDocker":        ReasonDBDumpDocker,
+		"ReasonDBDumpRepository":    ReasonDBDumpRepository,
+		"ReasonDBDumpHelper":        ReasonDBDumpHelper,
+		"ReasonDBDumpMismatch":      ReasonDBDumpMismatch,
+		"ReasonDBDumpLeftover":      ReasonDBDumpLeftover,
+		"NoteDBDumpOneDatabase":     NoteDBDumpOneDatabase,
+		"NoteDBDumpNotRecorded":     NoteDBDumpNotRecorded,
+		"ReasonDBImportPrepare":     ReasonDBImportPrepare,
+		"ReasonDBImportRollback":    ReasonDBImportRollback,
+		"ReasonDBImportFailed":      ReasonDBImportFailed,
+		"NoteDBImportKeptOld":       NoteDBImportKeptOld,
+		"NoteDBImportErrors":        NoteDBImportErrors,
+	}
+}
 
 func TestRunReasonsMatchTheFrontend(t *testing.T) {
 	path := filepath.Join("..", "..", "web", "src", "lib", "runReason.ts")
@@ -19,29 +56,23 @@ func TestRunReasonsMatchTheFrontend(t *testing.T) {
 	}
 	table := string(raw)
 
-	for _, tc := range []struct{ name, reason string }{
-		{"ReasonInterrupted", ReasonInterrupted},
-		{"ReasonShutdown", ReasonShutdown},
-		{"ReasonContainerGone", ReasonContainerGone},
-		{"ReasonCancelled", ReasonCancelled},
-	} {
+	for name, reason := range namedReasons() {
 		// A bare substring check would still pass after a partial reword.
-		if !strings.Contains(table, `"`+tc.reason+`"`) {
+		if !strings.Contains(table, `"`+reason+`"`) {
 			t.Errorf("%s = %q is not in runReason.ts, so the UI will show it untranslated.\n"+
-				"Change both, or neither.", tc.name, tc.reason)
+				"Change both, or neither.", name, reason)
 		}
 	}
 }
 
 func TestRunReasonsAreDistinct(t *testing.T) {
 	// The frontend keys off the string itself, so two reasons that are equal
-	// would silently collapse into one translation.
+	// would silently collapse into one translation. A reason that is the
+	// beginning of another one is just as bad: the reasons that carry a detail
+	// are matched by prefix, and the shorter one would swallow the longer.
+	reasons := namedReasons()
 	seen := map[string]string{}
-	for name, r := range map[string]string{
-		"ReasonInterrupted":   ReasonInterrupted,
-		"ReasonShutdown":      ReasonShutdown,
-		"ReasonContainerGone": ReasonContainerGone,
-	} {
+	for name, r := range reasons {
 		if r == "" {
 			t.Errorf("%s is empty", name)
 		}
@@ -49,6 +80,17 @@ func TestRunReasonsAreDistinct(t *testing.T) {
 			t.Errorf("%s and %s are the same string %q", name, prev, r)
 		}
 		seen[r] = name
+	}
+	for name, r := range reasons {
+		for otherName, other := range reasons {
+			if name == otherName || r == other {
+				continue
+			}
+			if strings.HasPrefix(other, r) {
+				t.Errorf("%s = %q begins %s = %q, so a detail cannot be told from a longer reason",
+					name, r, otherName, other)
+			}
+		}
 	}
 }
 
