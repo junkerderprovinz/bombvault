@@ -157,3 +157,27 @@ printf 'bombvault:restic-repo' \
     オフサイト複製でここに届いたリポジトリは、送ってきたマシンが**自分の** `APP_KEY` で作ったものです。受信側の鍵から導出すると restic が拒否するパスワードになり、それは壊れたリポジトリとまったく同じように見えますが壊れてはいません。受信したリポジトリで `restic check` が何度もパスワードを聞いてくる、いつもの原因がこれです。
 
 リカバリー定義は各リポジトリの**内側**に存在するため（`<repo>/def`、`<repo>/vm-def`）、コピーされたリポジトリフォルダーは完全に自己完結しています。つまり、キットとリポジトリがあれば、ベアメタル復元に必要なものはすべて揃います。
+
+## データベースダンプを取り戻す {#database-dumps}
+
+データベースダンプはコンテナ用リポジトリの中の独立した復元ポイントで、タグ `dbdump:<container>` を持ち、`/dbdump/<container>.sql` というファイルを 1 つだけ含みます。BombVault は **バックアップ** で一覧、ダウンロード、取り込みができますが、以下は restic だけで同じことを行う手順です。BombVault が手元にない日のためのものです。
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+各ダンプのタグ `dbversion:` と `dbname:` は、どのサーバーバージョンから取られたか、どのデータベースを含むかを示します。完全なファイルは `-- PostgreSQL database cluster dump complete` または `-- Dump completed` で終わります。
+
+同じかそれより新しいバージョン（PostgreSQL）、あるいは同じメジャーバージョン（MySQL と MariaDB）のコンテナに取り込みます。コンテナは空のデータフォルダーで一度起動し、初期化を済ませておきます。ホストにデータベースクライアントは要りません。コンテナが持っています。
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+全体のダンプから 1 つのデータベースだけを入れる場合、MySQL と MariaDB はクライアントのコマンドに `--one-database <name>` を取ります。PostgreSQL のダンプはデータベースごとに区画があり、それぞれ `\connect <name>` の行で始まります。その区画を別ファイルにコピーし、データベースを作ってから `-d <name>` で取り込んでください。
+
+!!! warning "root で取ったダンプはサーバーの利用者も連れてくる"
+    root で取った MySQL や MariaDB の完全なダンプにはシステムデータベース `mysql` が入っているため、取り込むと新しいサーバーのアカウントが、root のパスワードも含めてダンプのものに置き換わります。PostgreSQL では、コンテナ自身が作った利用者に対する `role ... already exists` は想定どおりで害はありません。

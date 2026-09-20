@@ -493,8 +493,8 @@ const ko: Partial<Translations> = {
 
   "settings.retentionTitle": "스냅샷 보존",
   "settings.retentionHint": "항목별로 유지할 백업 수입니다. 백업할 때마다 restic이 이 정책에 따라 오래된 스냅샷을 정리합니다. 모두 0 = 전부 보존(끔).",
-  "excludes.advisoryImmichDb": "Immich는 사진마다 앨범, 얼굴, 날짜를 PostgreSQL 데이터베이스에 보관합니다. 그 데이터베이스는 이 컨테이너가 아니라 별도의 컨테이너에서 실행되므로 이 백업에는 들어 있지 않습니다. 여기서 복원하면 사진은 돌아오지만 앨범과 얼굴, 날짜는 돌아오지 않습니다. 그 데이터베이스는 따로 백업하거나, Immich에 내장된 데이터베이스 내보내기를 켜서 이 백업이 다루는 폴더에 저장되도록 하세요.",
-  "excludes.advisoryNextcloudDb": "Nextcloud는 계정, 공유, 태그를 데이터베이스에 보관합니다. 그 데이터베이스는 보통 별도의 컨테이너에서 실행되므로 이 백업에는 들어 있지 않습니다. 파일은 돌아오지만 공유는 돌아오지 않습니다. 그 데이터베이스도 함께 백업하세요.",
+  "excludes.advisoryImmichDb": "Immich는 사진마다 앨범, 얼굴, 날짜를 PostgreSQL 데이터베이스에 보관합니다. 그 데이터베이스는 이 컨테이너가 아니라 별도의 컨테이너에서 실행되므로 이 백업에는 들어 있지 않습니다. 여기서 복원하면 사진은 돌아오지만 앨범과 얼굴, 날짜는 돌아오지 않습니다. BombVault는 그 데이터베이스 컨테이너를 백업할 때 자동으로 덤프를 뜨므로, 일정에 들어 있는지 확인하세요.",
+  "excludes.advisoryNextcloudDb": "Nextcloud는 계정, 공유, 태그를 데이터베이스에 보관합니다. 그 데이터베이스는 보통 별도의 컨테이너에서 실행되므로 이 백업에는 들어 있지 않습니다. 파일은 돌아오지만 공유는 돌아오지 않습니다. BombVault는 그 데이터베이스 컨테이너를 백업할 때 자동으로 덤프를 뜨므로, 일정에 들어 있는지 확인하세요.",
   "rcloneRemote.heading": "SMB 또는 WebDAV 대상 추가",
   "rcloneRemote.hint": "Windows 또는 Samba 공유나 Nextcloud 같은 WebDAV 서버에 호스트에 마운트하지 않고 연결합니다. 이는 편의성 이상의 의미가 있습니다. restic은 마운트된 CIFS 공유에 저장소를 두지 않도록 권고하며, 이 방식은 마운트 자체를 거치지 않습니다. 비밀번호는 rclone에 전달되어 rclone 고유의 형식으로 저장되며, 평문으로 보관되지 않습니다. restic과 rclone 모두 NFS를 지원하지 않으므로 여기서는 NFS를 제공하지 않습니다. NFS를 사용하려면 익스포트를 Unraid에 마운트하고 백업 경로를 그곳으로 설정하세요.",
   "rcloneRemote.type": "종류",
@@ -600,7 +600,7 @@ const ko: Partial<Translations> = {
   "integrity.appendOnlyNever": "append-only 보호 · 검사한 적 없음",
 
   "hooks.title": "백업 훅",
-  "hooks.hint": "명령은 컨테이너 내부(sh -c)에서 실행됩니다. Pre는 백업 전에 실행되며(예: DB를 appdata로 덤프하여 포함) 실패 시 백업이 중단됩니다. Post는 컨테이너가 다시 가동된 후 실행되며 그 실패는 로그에만 기록됩니다.",
+  "hooks.hint": "명령은 컨테이너 내부(sh -c)에서 실행됩니다. Pre는 백업 전에 실행되며(예: 캐시를 디스크로 내보내기, 인식된 데이터베이스는 자동으로 덤프됨) 실패 시 백업이 중단됩니다. Post는 컨테이너가 다시 가동된 후 실행되며 그 실패는 로그에만 기록됩니다.",
   "hooks.pre": "백업 전 명령",
   "hooks.post": "백업 후 명령",
 

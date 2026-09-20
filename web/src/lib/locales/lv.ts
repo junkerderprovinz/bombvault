@@ -436,8 +436,8 @@ const lv: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Momentuzņēmumu saglabāšana",
   "settings.retentionHint": "Cik rezerves kopiju saglabāt katram vienumam. Pēc katras rezerves kopijas restic pēc šīs politikas iztīra vecākus momentuzņēmumus. Viss uz nulli = saglabāt visu (izslēgts).",
-  "excludes.advisoryImmichDb": "Immich katras fotogrāfijas albumus, sejas un datumus glabā PostgreSQL datubāzē, kas darbojas nevis šajā, bet atsevišķā konteinerā, tāpēc šajā rezerves kopijā tās nav. Atjaunojot no šejienes, attēli atgriezīsies, bet bez visa tā. Izveidojiet šai datubāzei atsevišķu rezerves kopiju vai ieslēdziet Immich iebūvēto datubāzes eksportu, lai tas nonāktu mapē, ko šī rezerves kopija aptver.",
-  "excludes.advisoryNextcloudDb": "Nextcloud kontus, koplietojumus un birkas glabā datubāzē, kas parasti darbojas atsevišķā konteinerā, tāpēc šajā rezerves kopijā tās nav. Faili atgriezīsies, koplietojumi ne. Izveidojiet rezerves kopiju arī šai datubāzei.",
+  "excludes.advisoryImmichDb": "Immich katras fotogrāfijas albumus, sejas un datumus glabā PostgreSQL datubāzē, kas darbojas nevis šajā, bet atsevišķā konteinerā, tāpēc šajā rezerves kopijā tās nav. Atjaunojot no šejienes, attēli atgriezīsies, bet bez visa tā. BombVault šīs datubāzes konteineru izgāž automātiski, kad tam veido rezerves kopiju, tāpēc pārbaudiet, vai tas ir jūsu grafikā.",
+  "excludes.advisoryNextcloudDb": "Nextcloud kontus, koplietojumus un birkas glabā datubāzē, kas parasti darbojas atsevišķā konteinerā, tāpēc šajā rezerves kopijā tās nav. Faili atgriezīsies, koplietojumi ne. BombVault šīs datubāzes konteineru izgāž automātiski, kad tam veido rezerves kopiju, tāpēc pārbaudiet, vai tas ir jūsu grafikā.",
   "rcloneRemote.heading": "Pievienot SMB vai WebDAV mērķi",
   "rcloneRemote.hint": "Piekļūst Windows vai Samba koplietojumam vai WebDAV serverim, piemēram, Nextcloud, NEPIESAISTOT to saimniekdatoram. Tas ir svarīgi ne tikai ērtības dēļ: restic neiesaka glabāt repozitoriju piesaistītā CIFS koplietojumā, un šis veids piesaisti pilnībā apiet. Parole tiek nodota rclone, kas to saglabā savā formā, tāpēc tā nekad netiek glabāta atklātā tekstā. NFS šeit netiek piedāvāts, jo to neatbalsta ne restic, ne rclone: NFS gadījumā piesaistiet eksportu Unraid un iestatiet uz to rezerves kopēšanas ceļu.",
   "rcloneRemote.type": "Veids",
@@ -683,7 +683,7 @@ const lv: Partial<Translations> = {
 
   // Pre/post-backup hooks
   "hooks.title": "Rezerves kopēšanas āķi",
-  "hooks.hint": "Komandas darbojas konteinerī ar sh -c. Iepriekšējā komanda darbojas pirms rezerves kopijas; izmantojiet to, lai sagatavotu datus, kas jādublē, piem., izgāžot datubāzi konteinera appdata. Ja iepriekšējā komanda neizdodas, rezerves kopēšana tiek pārtraukta. Nākamā komanda darbojas pēc tam, kad konteiners atkal ir palaists, un tās neveiksme tiek tikai reģistrēta. Āķi tikai izpilda komandas, tie nepievieno papildu mapes rezerves kopijai.",
+  "hooks.hint": "Komandas darbojas konteinerī ar sh -c. Iepriekšējā komanda darbojas pirms rezerves kopijas; izmantojiet to, lai sagatavotu datus, kas jādublē, piem., izrakstot kešatmiņu diskā. Atpazītās datubāzes tiek izgāztas automātiski, un āķis tām nav vajadzīgs. Ja iepriekšējā komanda neizdodas, rezerves kopēšana tiek pārtraukta. Nākamā komanda darbojas pēc tam, kad konteiners atkal ir palaists, un tās neveiksme tiek tikai reģistrēta. Āķi tikai izpilda komandas, tie nepievieno papildu mapes rezerves kopijai.",
   "hooks.pre": "Komanda pirms rezerves kopijas",
   "hooks.post": "Komanda pēc rezerves kopijas",
   "folders.title": "Rezerves kopēšanas mapes",

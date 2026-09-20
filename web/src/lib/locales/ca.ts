@@ -436,8 +436,8 @@ const ca: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Retenció d'instantanis",
   "settings.retentionHint": "Quantes còpies conservar per element. Després de cada còpia, restic neteja instantanis més antics segons aquesta política. Tot a 0 = conserva-ho tot (desactivat).",
-  "excludes.advisoryImmichDb": "Immich desa els àlbums, les cares i les dates de cada foto en una base de dades PostgreSQL que s'executa en un contenidor propi, a part, de manera que aquesta còpia no la conté. Restaurar des d'aquí torna les imatges, però sense res d'això. Fes una còpia de seguretat pròpia d'aquesta base de dades, o activa el bolcat de base de dades integrat d'Immich perquè acabi en una carpeta que aquesta còpia sí que cobreix.",
-  "excludes.advisoryNextcloudDb": "Nextcloud desa els comptes, les comparticions i les etiquetes en una base de dades que normalment s'executa en un contenidor a part, de manera que aquesta còpia no la conté. Els fitxers tornen, les comparticions no. Fes també una còpia de seguretat d'aquesta base de dades.",
+  "excludes.advisoryImmichDb": "Immich desa els àlbums, les cares i les dates de cada foto en una base de dades PostgreSQL que s'executa en un contenidor propi, a part, de manera que aquesta còpia no la conté. Restaurar des d'aquí torna les imatges, però sense res d'això. BombVault bolca el contenidor d'aquesta base de dades automàticament quan se'n fa la còpia, així que comprova que sigui dins de la teva planificació.",
+  "excludes.advisoryNextcloudDb": "Nextcloud desa els comptes, les comparticions i les etiquetes en una base de dades que normalment s'executa en un contenidor a part, de manera que aquesta còpia no la conté. Els fitxers tornen, les comparticions no. BombVault bolca el contenidor d'aquesta base de dades automàticament quan se'n fa la còpia, així que comprova que sigui dins de la teva planificació.",
   "rcloneRemote.heading": "Afegeix un destí SMB o WebDAV",
   "rcloneRemote.hint": "Arriba a una compartició de Windows o Samba, o a un servidor WebDAV com Nextcloud, SENSE haver de muntar res a l'amfitrió. Això importa més enllà de la comoditat: restic desaconsella tenir un repositori en una compartició CIFS muntada, i aquesta via evita el muntatge del tot. La contrasenya es passa a rclone, que la desa en el seu propi format, i mai no es guarda en clar. NFS no s'ofereix aquí perquè ni restic ni rclone el suporten: per a NFS, munta l'exportació a Unraid i apunta un camí de còpia cap a ella.",
   "rcloneRemote.type": "Tipus",
@@ -683,7 +683,7 @@ const ca: Partial<Translations> = {
 
   // Pre/post-backup hooks
   "hooks.title": "Ganxos de còpia",
-  "hooks.hint": "Les ordres s'executen dins del contenidor amb sh -c. L'ordre prèvia s'executa abans de la còpia; fes-la servir per preparar dades que s'han de copiar, per exemple bolcant una base de dades a l'appdata del contenidor. Si l'ordre prèvia falla, la còpia s'avorta. L'ordre posterior s'executa després que el contenidor sigui reiniciat i el seu error només es registra. Els ganxos només executen ordres, no afegeixen carpetes addicionals a la còpia.",
+  "hooks.hint": "Les ordres s'executen dins del contenidor amb sh -c. L'ordre prèvia s'executa abans de la còpia; fes-la servir per preparar dades que s'han de copiar, per exemple bolcant una memòria cau al disc. Les bases de dades reconegudes es bolquen automàticament i no necessiten cap ganxo. Si l'ordre prèvia falla, la còpia s'avorta. L'ordre posterior s'executa després que el contenidor sigui reiniciat i el seu error només es registra. Els ganxos només executen ordres, no afegeixen carpetes addicionals a la còpia.",
   "hooks.pre": "Ordre prèvia a la còpia",
   "hooks.post": "Ordre posterior a la còpia",
   "folders.title": "Carpetes de la còpia",

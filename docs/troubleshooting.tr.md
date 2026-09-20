@@ -43,6 +43,24 @@ Herhangi bir şey durdurulmadan ya da kaldırılmadan önce, geri yükleme bir u
 
 age şifrelemesi açıksa (Ayarlar) ama geçerli bir alıcı ayarlanmamışsa, bir dışa aktarma düz metin yazmak yerine açık bir hatayla başarısız olur. Geçerli bir alıcı ekleyin (bir age genel anahtarı ya da bir SSH genel anahtarı) ya da dışa aktarmanın düz metin olmasını istiyorsanız şifrelemeyi kapatın. Bkz. [Özellikler](features.md).
 
+## Bir veritabanı dökümü başarısız oldu
+
+Başarısız bir döküm, çevresindeki yedeklemeyi asla düşürmez; kendi başına başarısız bir çalışma olarak kaydedilir ve nedeni neyin düzeltileceğini söyler.
+
+- **Giriş reddedildi.** Döküm, konteynerin kendi parola değişkenleriyle oturum açar (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` ya da bunların `_FILE` sürümleri). Bunları veritabanı konteynerinde denetleyin. Konteynerin kendi kullanıcısının okuyamadığı bir sırrı gösteren `_FILE` değişkeni de aynı şekilde başarısız olur.
+- **Eksik yetkiler.** Rastgele bir root parolasıyla döküm yalnızca uygulama kullanıcısı olarak girebilir, dolayısıyla yalnızca o tek veritabanını içerir; MySQL 8.4 ve sonrası ise büsbütün reddedebilir. Konteynere gerçek bir root parolası verin ya da dökümünü kapatın.
+- **Sistem tabloları yükseltme istiyor.** MariaDB, sistem tabloları daha eski bir sürümden geliyorsa dökümü reddeder (hata 1558). `MARIADB_AUTO_UPGRADE=1` değişkenini ekleyip konteyneri yeniden başlatın ya da içinde bir kez `mariadb-upgrade` çalıştırın.
+- **Döküm aracı yok.** `pg_dump`, `mysqldump` veya `mariadb-dump` içermeyen ince ya da elde yapılmış bir imajın dökümü alınamaz. Resmi imajı kullanın ya da dökümü kapatın.
+- **Bir süre sınırı.** Bir döküme `DB_DUMP_MAX_HOURS` (varsayılan 6), çevresindeki yedeklemeye `BACKUP_MAX_HOURS` tanınır; ilerlemeyi kesen bir döküm ise `BACKUP_STALL_HOURS` sonunda kesilir. Sonuncusunun ardında genellikle uygulamanın tuttuğu bir kilit vardır. Devreye giren sınırı yükseltin ya da uygulama sakinken döküm alın.
+- **Konteyner duraklatılmış ya da yeniden başlıyor.** Döküm, çalışan sunucuyla konuşur. Konteyner sürekli yeniden başlıyorsa nedenini kendi günlüğü söyler.
+- **Bozuk bir döküm kaldırılamadı.** BombVault'un tamamlayamadığı bir döküm yeniden silinir. Bu silme başarısız olduğunda döküm, bozuk olarak işaretli biçimde listede kalır ve oradan silebilirsiniz.
+
+## Bir içe aktarma başarısız oldu
+
+İçe aktarma konteyneri durdurur, veri klasörünü kenara alır ve yerine imajın boş bir klasör oluşturmasına izin verir. İçe aktarmanın kendisinden önceki bir adım başarısız olursa eski klasör kendiliğinden geri konur. İçe aktarma başarısız olursa konteyner yeni klasörle kalır, eskisi de yanında `<veri klasörü>.bombvault-before-import-<zaman damgası>` adıyla durur; çalışmanın hata iletisi tam yolu belirtir.
+
+Elle geri koymak için: konteyneri durdurun, mevcut veri klasörünün adını değiştirip yoldan çekin, saklanan klasörü özgün adına geri döndürün ve konteyneri başlatın. Unraid'de bunu Shares sekmesindeki dosya yöneticisi yapar.
+
 ## Konteyner sürekli yeniden başlıyor ya da sağlıksız görünüyor
 
 BombVault, kendi `/api/health`'inden sağlıklı/sağlıksız bildirir. Motor bir şekilde sıkışırsa bir otomatik onarma aracı (Autoheal gibi) onu otomatik olarak yeniden başlatabilir. Altta yatan neden için konteyner günlüğünü ve `/spike` raporunu denetleyin.

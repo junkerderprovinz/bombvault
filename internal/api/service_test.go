@@ -7413,6 +7413,28 @@ func TestRecoveryKit(t *testing.T) {
 			t.Error("kit must list the config off-site location when one is set")
 		}
 	})
+
+	t.Run("database dumps: the kit says where a dump is and how to feed it back", func(t *testing.T) {
+		dir := t.TempDir()
+		cfg := config.Config{AppKey: strings.Repeat("c", 64), DataDir: dir, HostMountRoot: dir}
+		svc := api.NewService(cfg, newMemStore(t), &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+
+		kit, err := svc.RecoveryKit()
+		if err != nil {
+			t.Fatalf("RecoveryKit: %v", err)
+		}
+		for _, want := range []string{
+			"Database dumps without BombVault",
+			"--tag dbdump:<container>",
+			"/dbdump/<container>.sql",
+			"docker exec -i <container>",
+			"--one-database",
+		} {
+			if !strings.Contains(kit, want) {
+				t.Errorf("the kit does not mention %q, so a dump cannot be read back with restic alone", want)
+			}
+		}
+	})
 }
 
 func TestRecoveryKitCredentials(t *testing.T) {

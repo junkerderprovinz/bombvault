@@ -157,3 +157,27 @@ Det er HMAC-SHA256 over den faste streng `bombvault:restic-repo`, med de rå byt
     Et arkiv, der er landet her via off-site-replikering, blev oprettet af maskinen, der sendte det, med **dens** `APP_KEY`. Udleder du fra den modtagende maskines nøgle, får du en adgangskode, restic afviser, hvilket ligner et ødelagt arkiv til forveksling uden at være det. Det er den sædvanlige grund til, at `restic check` på et modtaget arkiv bliver ved med at spørge om adgangskoden.
 
 Fordi gendannelsesdefinitioner lever **inde** i hvert repo (`<repo>/def`, `<repo>/vm-def`), er en kopieret repo-mappe fuldt selvstændig, så kittet plus repoet er alt, hvad en bare-metal-gendannelse har brug for.
+
+## Hent et databasedump tilbage {#database-dumps}
+
+Et databasedump er sit eget gendannelsespunkt i container-repositoriet, med etiketten `dbdump:<container>` og den ene fil `/dbdump/<container>.sql`. BombVault viser, henter og importerer dem under **Sikkerhedskopier**; nedenfor er de samme trin med restic alene, til den dag BombVault ikke er der.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Etiketterne `dbversion:` og `dbname:` på hvert dump fortæller, hvilken serverversion det kommer fra, og hvilke databaser det rummer. En komplet fil slutter med `-- PostgreSQL database cluster dump complete` eller `-- Dump completed`.
+
+Importér det i en container med samme eller en nyere version (PostgreSQL) eller samme hovedversion (MySQL og MariaDB), startet én gang med en tom datamappe, så den initialiserer sig. Værten har ikke brug for en databaseklient, containeren har en:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+For en enkelt database ud af et fuldt dump tager MySQL og MariaDB `--one-database <name>` på klientkommandoen. Et PostgreSQL-dump har én sektion per database, hver indledt med en linje `\connect <name>`: kopiér den sektion over i sin egen fil, og importér den med `-d <name>`, efter at databasen er oprettet.
+
+!!! warning "Et dump taget som root bringer serverens brugere med"
+    Et fuldt MySQL- eller MariaDB-dump taget som root indeholder systemdatabasen `mysql`, så en import erstatter den nye servers konti, root-adgangskoden inklusive, med dem fra dumpet. På PostgreSQL er `role ... already exists` for den bruger, containeren selv oprettede, forventet og harmløst.

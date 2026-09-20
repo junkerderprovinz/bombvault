@@ -436,8 +436,8 @@ const hr: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Zadržavanje snimki",
   "settings.retentionHint": "Koliko sigurnosnih kopija zadržati po stavci. Nakon svake sigurnosne kopije, restic čisti starije snimke prema ovoj politici. Sve nula = zadrži sve (isključeno).",
-  "excludes.advisoryImmichDb": "Immich čuva albume, lica i datume svake fotografije u PostgreSQL bazi podataka koja radi u posve zasebnom kontejneru, pa je ova sigurnosna kopija ne sadrži. Vraćanje odavde vraća slike, ali bez svega toga. Napravite zasebnu sigurnosnu kopiju te baze podataka ili uključite Immichov ugrađeni izvoz baze podataka kako bi završio u mapi koju ova kopija obuhvaća.",
-  "excludes.advisoryNextcloudDb": "Nextcloud čuva svoje račune, dijeljenja i oznake u bazi podataka koja obično radi u zasebnom kontejneru, pa je ova sigurnosna kopija ne sadrži. Datoteke se vraćaju, dijeljenja ne. Sigurnosno kopirajte i tu bazu podataka.",
+  "excludes.advisoryImmichDb": "Immich čuva albume, lica i datume svake fotografije u PostgreSQL bazi podataka koja radi u posve zasebnom kontejneru, pa je ova sigurnosna kopija ne sadrži. Vraćanje odavde vraća slike, ali bez svega toga. BombVault automatski radi dump kontejnera te baze podataka kad se on sigurnosno kopira, pa provjerite je li u vašem rasporedu.",
+  "excludes.advisoryNextcloudDb": "Nextcloud čuva svoje račune, dijeljenja i oznake u bazi podataka koja obično radi u zasebnom kontejneru, pa je ova sigurnosna kopija ne sadrži. Datoteke se vraćaju, dijeljenja ne. BombVault automatski radi dump kontejnera te baze podataka kad se on sigurnosno kopira, pa provjerite je li u vašem rasporedu.",
   "rcloneRemote.heading": "Dodaj SMB ili WebDAV odredište",
   "rcloneRemote.hint": "Povezuje se s Windows ili Samba dijeljenom mapom, ili s WebDAV poslužiteljem kao što je Nextcloud, BEZ montiranja na hostu. To nije samo pitanje udobnosti: restic ne preporučuje držanje repozitorija na montiranoj CIFS dijeljenoj mapi, a ovaj put potpuno zaobilazi montiranje. Lozinka se predaje rcloneu, koji je sprema u vlastitom obliku, i nikad se ne čuva kao otvoreni tekst. NFS se ovdje ne nudi jer ga ne podržavaju ni restic ni rclone: za NFS montirajte izvoz u Unraidu i postavite putanju sigurnosne kopije prema njemu.",
   "rcloneRemote.type": "Vrsta",
@@ -683,7 +683,7 @@ const hr: Partial<Translations> = {
 
   // Pre/post-backup hooks
   "hooks.title": "Kuke sigurnosne kopije",
-  "hooks.hint": "Naredbe se izvršavaju unutar kontejnera sa sh -c. Prethodna naredba izvršava se prije sigurnosne kopije; koristite je za pripremu podataka koji trebaju biti sigurnosno kopirani, npr. za odlaganje baze podataka u appdata kontejnera. Ako prethodna naredba ne uspije, sigurnosna kopija se prekida. Naknadna naredba izvršava se nakon što se kontejner ponovno pokrene, a njezin neuspjeh samo se zapisuje. Kuke samo izvršavaju naredbe, ne dodaju dodatne mape sigurnosnoj kopiji.",
+  "hooks.hint": "Naredbe se izvršavaju unutar kontejnera sa sh -c. Prethodna naredba izvršava se prije sigurnosne kopije; koristite je za pripremu podataka koji trebaju biti sigurnosno kopirani, npr. za zapisivanje predmemorije na disk. Prepoznate baze podataka dumpaju se same i za njih kuka nije potrebna. Ako prethodna naredba ne uspije, sigurnosna kopija se prekida. Naknadna naredba izvršava se nakon što se kontejner ponovno pokrene, a njezin neuspjeh samo se zapisuje. Kuke samo izvršavaju naredbe, ne dodaju dodatne mape sigurnosnoj kopiji.",
   "hooks.pre": "Naredba prije sigurnosne kopije",
   "hooks.post": "Naredba nakon sigurnosne kopije",
   "folders.title": "Mape sigurnosne kopije",

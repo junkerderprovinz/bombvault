@@ -157,3 +157,27 @@ printf 'bombvault:restic-repo' \
     المستودع الذي وصل إلى هنا عبر النسخ خارج الموقع أنشأته الآلة التي أرسلته، بـ`APP_KEY` **الخاص بها**. والاشتقاق من مفتاح الآلة المستقبِلة يعطي كلمة مرور يرفضها restic، وهو ما يبدو تمامًا كمستودع تالف دون أن يكون كذلك. هذا هو السبب المعتاد لأن يظل `restic check` على مستودع مستلَم يسأل عن كلمة المرور مرارًا.
 
 لأن تعريفات الاستعادة تعيش **داخل** كل مستودع (`<repo>/def`، `<repo>/vm-def`)، يكون مجلد مستودع منسوخ مكتفياً ذاتياً بالكامل، فالحقيبة مع المستودع هما كل ما تحتاجه استعادة من الصفر.
+
+## استرجاع تفريغ قاعدة بيانات {#database-dumps}
+
+تفريغ قاعدة البيانات نقطة استعادة قائمة بذاتها في مستودع الحاويات، يحمل الوسم `dbdump:<container>` ويضم ملفاً واحداً هو `/dbdump/<container>.sql`. يعرض BombVault هذه التفريغات وينزّلها ويستوردها ضمن **النسخ الاحتياطية**؛ وفي ما يلي الخطوات نفسها بـ restic وحده، ليوم لا يكون فيه BombVault حاضراً.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+يقول الوسمان `dbversion:` و`dbname:` على كل تفريغ من أي إصدار خادم جاء وأي قواعد بيانات يحتوي. وينتهي الملف الكامل بـ `-- PostgreSQL database cluster dump complete` أو `-- Dump completed`.
+
+استورده إلى حاوية بالإصدار نفسه أو أحدث (PostgreSQL)، أو بالإصدار الرئيسي نفسه (MySQL وMariaDB)، بعد تشغيلها مرة واحدة بمجلد بيانات فارغ حتى تهيّئ نفسها. لا يحتاج المضيف إلى عميل قاعدة بيانات، فالحاوية تملك واحداً:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+ولاستخراج قاعدة بيانات واحدة من تفريغ كامل، يقبل MySQL وMariaDB الخيار `--one-database <name>` في أمر العميل. أما تفريغ PostgreSQL فله قسم لكل قاعدة بيانات، يبدأ كل قسم بسطر `\connect <name>`: انسخ القسم إلى ملف خاص به واستورده بـ `-d <name>` بعد إنشاء قاعدة البيانات.
+
+!!! warning "التفريغ المأخوذ بحساب root يحمل معه مستخدمي الخادم"
+    التفريغ الكامل لـ MySQL أو MariaDB المأخوذ بحساب root يحتوي قاعدة النظام `mysql`، فاستيراده يستبدل حسابات الخادم الجديد، وكلمة مرور root بينها، بحسابات التفريغ. وفي PostgreSQL، رسالة `role ... already exists` عن المستخدم الذي أنشأته الحاوية نفسها متوقعة وغير ضارة.

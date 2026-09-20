@@ -157,3 +157,27 @@ Es un HMAC-SHA256 sobre la cadena fija `bombvault:restic-repo`, con los bytes cr
     Un repositorio que llegó aquí por replicación fuera de sede lo creó la máquina que lo envió, con **su** `APP_KEY`. Derivar desde la clave de la máquina receptora produce una contraseña que restic rechaza, lo que se lee exactamente como un repositorio corrupto sin serlo. Esa es la razón habitual de que `restic check` sobre un repositorio recibido pida la contraseña una y otra vez.
 
 Como las definiciones de recuperación viven **dentro** de cada repo (`<repo>/def`, `<repo>/vm-def`), una carpeta de repo copiada es totalmente autocontenida, de modo que el kit más el repo es todo lo que una restauración desde cero necesita.
+
+## Recuperar un volcado de base de datos {#database-dumps}
+
+Un volcado de base de datos es un punto de restauración propio en el repositorio de contenedores, con la etiqueta `dbdump:<container>` y un único archivo, `/dbdump/<container>.sql`. BombVault los lista, los descarga y los importa en **Copias**; abajo están los mismos pasos solo con restic, para el día en que BombVault no esté.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Las etiquetas `dbversion:` y `dbname:` de cada volcado dicen de qué versión de servidor viene y qué bases contiene. Un archivo completo termina con `-- PostgreSQL database cluster dump complete` o `-- Dump completed`.
+
+Impórtalo en un contenedor de la misma versión o una más reciente (PostgreSQL), o de la misma versión mayor (MySQL y MariaDB), arrancado una vez con la carpeta de datos vacía para que se inicialice. El anfitrión no necesita cliente de base de datos, el contenedor ya tiene uno:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+Para una sola base dentro de un volcado completo, MySQL y MariaDB aceptan `--one-database <name>` en el comando del cliente. Un volcado de PostgreSQL tiene una sección por base, cada una empezando por una línea `\connect <name>`: copia esa sección a un archivo aparte e impórtalo con `-d <name>` después de crear la base.
+
+!!! warning "Un volcado hecho como root lleva las cuentas del servidor"
+    Un volcado completo de MySQL o MariaDB hecho como root contiene la base de sistema `mysql`, así que importarlo reemplaza las cuentas del servidor nuevo, incluida la contraseña de root, por las del volcado. En PostgreSQL, `role ... already exists` para el usuario que creó el contenedor es esperable e inofensivo.

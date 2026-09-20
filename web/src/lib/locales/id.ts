@@ -436,8 +436,8 @@ const id: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Retensi snapshot",
   "settings.retentionHint": "Berapa banyak cadangan yang disimpan per item. Setelah setiap pencadangan, restic melakukan prune snapshot lama sesuai kebijakan ini. Semua nol = simpan semuanya (mati).",
-  "excludes.advisoryImmichDb": "Immich menyimpan album, wajah, dan tanggal setiap foto di database PostgreSQL yang berjalan di container yang sama sekali terpisah, jadi pencadangan ini tidak memuatnya. Pemulihan dari sini mengembalikan fotonya tanpa semua itu. Beri database tersebut pencadangannya sendiri, atau aktifkan dump database bawaan Immich agar hasilnya tersimpan di folder yang dicakup pencadangan ini.",
-  "excludes.advisoryNextcloudDb": "Nextcloud menyimpan akun, data berbagi, dan tag di database yang biasanya berjalan di container terpisah, jadi pencadangan ini tidak memuatnya. File kembali, data berbagi tidak. Cadangkan juga database itu.",
+  "excludes.advisoryImmichDb": "Immich menyimpan album, wajah, dan tanggal setiap foto di database PostgreSQL yang berjalan di container yang sama sekali terpisah, jadi pencadangan ini tidak memuatnya. Pemulihan dari sini mengembalikan fotonya tanpa semua itu. BombVault melakukan dump container database itu secara otomatis saat container tersebut dicadangkan, jadi pastikan ia ada di jadwalmu.",
+  "excludes.advisoryNextcloudDb": "Nextcloud menyimpan akun, data berbagi, dan tag di database yang biasanya berjalan di container terpisah, jadi pencadangan ini tidak memuatnya. File kembali, data berbagi tidak. BombVault melakukan dump container database itu secara otomatis saat container tersebut dicadangkan, jadi pastikan ia ada di jadwalmu.",
   "rcloneRemote.heading": "Tambah target SMB atau WebDAV",
   "rcloneRemote.hint": "Menjangkau folder bersama Windows atau Samba, atau server WebDAV seperti Nextcloud, TANPA me-mount apa pun di host. Ini lebih dari sekadar soal kemudahan: restic tidak menyarankan menyimpan repositori di folder bersama CIFS yang di-mount, dan cara ini sama sekali menghindari mount. Kata sandi diserahkan ke rclone untuk disimpan dalam bentuknya sendiri dan tidak pernah disimpan sebagai teks polos. NFS tidak ditawarkan di sini karena baik restic maupun rclone tidak mendukungnya: untuk NFS, mount export di Unraid dan atur Jalur Pencadangan ke sana.",
   "rcloneRemote.type": "Jenis",
@@ -683,7 +683,7 @@ const id: Partial<Translations> = {
 
   // Pre/post-backup hooks
   "hooks.title": "Hook pencadangan",
-  "hooks.hint": "Perintah dijalankan di dalam container dengan sh -c. Perintah pre berjalan sebelum pencadangan; gunakan untuk menyiapkan data yang harus dicadangkan, misalnya melakukan dump database ke appdata container. Jika perintah pre gagal, pencadangan dibatalkan. Perintah post berjalan setelah container dijalankan kembali dan kegagalannya hanya dicatat. Hook hanya menjalankan perintah, tidak menambahkan folder tambahan ke pencadangan.",
+  "hooks.hint": "Perintah dijalankan di dalam container dengan sh -c. Perintah pre berjalan sebelum pencadangan; gunakan untuk menyiapkan data yang harus dicadangkan, misalnya menulis cache ke disk. Database yang dikenali di-dump secara otomatis dan tidak memerlukan hook. Jika perintah pre gagal, pencadangan dibatalkan. Perintah post berjalan setelah container dijalankan kembali dan kegagalannya hanya dicatat. Hook hanya menjalankan perintah, tidak menambahkan folder tambahan ke pencadangan.",
   "hooks.pre": "Perintah sebelum pencadangan",
   "hooks.post": "Perintah setelah pencadangan",
   "folders.title": "Folder pencadangan",

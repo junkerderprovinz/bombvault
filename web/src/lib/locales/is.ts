@@ -436,8 +436,8 @@ const is: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Varðveisla snapshotta",
   "settings.retentionHint": "Hversu mörg afrit eru geymd fyrir hvern hlut. Eftir hverja afritun hreinsar restic eldri snapshot samkvæmt þessari stefnu. Allt núll = geyma allt (slökkt).",
-  "excludes.advisoryImmichDb": "Immich geymir albúm, andlit og dagsetningar hverrar myndar í PostgreSQL-gagnagrunni sem keyrir í alveg sérstökum gámi, svo þetta afrit inniheldur hann ekki. Endurheimt héðan skilar myndunum aftur án alls þessa. Gefðu þeim gagnagrunni sitt eigið afrit, eða kveiktu á innbyggðum gagnagrunnsútflutningi Immich svo hann lendi í möppu sem þetta afrit nær yfir.",
-  "excludes.advisoryNextcloudDb": "Nextcloud geymir reikninga, deilingar og merki í gagnagrunni sem keyrir yfirleitt í sérstökum gámi, svo þetta afrit inniheldur hann ekki. Skrárnar koma aftur, deilingarnar ekki. Taktu líka afrit af þeim gagnagrunni.",
+  "excludes.advisoryImmichDb": "Immich geymir albúm, andlit og dagsetningar hverrar myndar í PostgreSQL-gagnagrunni sem keyrir í alveg sérstökum gámi, svo þetta afrit inniheldur hann ekki. Endurheimt héðan skilar myndunum aftur án alls þessa. BombVault dumpar gám þess gagnagrunns sjálfkrafa þegar afrit er tekið af honum, svo athugaðu hvort hann sé í áætluninni þinni.",
+  "excludes.advisoryNextcloudDb": "Nextcloud geymir reikninga, deilingar og merki í gagnagrunni sem keyrir yfirleitt í sérstökum gámi, svo þetta afrit inniheldur hann ekki. Skrárnar koma aftur, deilingarnar ekki. BombVault dumpar gám þess gagnagrunns sjálfkrafa þegar afrit er tekið af honum, svo athugaðu hvort hann sé í áætluninni þinni.",
   "rcloneRemote.heading": "Bæta við SMB- eða WebDAV-áfangastað",
   "rcloneRemote.hint": "Nær sambandi við Windows- eða Samba-sameign, eða WebDAV-netþjón á borð við Nextcloud, ÁN þess að tengja neitt við hýsilinn. Það skiptir meira máli en bara þægindin: restic mælir gegn því að geyma geymslusafn á tengdri CIFS-sameign, og þessi leið sleppir tengingunni alveg. Lykilorðið er afhent rclone, sem geymir það á eigin formi, og það er aldrei geymt sem hreinn texti. NFS er ekki í boði hér því hvorki restic né rclone styður það: fyrir NFS skaltu tengja sameignina í Unraid og setja afritunarslóð á hana.",
   "rcloneRemote.type": "Tegund",
@@ -683,7 +683,7 @@ const is: Partial<Translations> = {
 
   // Pre/post-backup hooks
   "hooks.title": "Krókar afritunar",
-  "hooks.hint": "Skipanir keyra inni í gáminum með sh -c. Undirbúningsskipunin keyrir fyrir afritun; notaðu hana til að undirbúa gögn sem á að afrita, t.d. að dumpa gagnagrunn í appdata gámsins. Ef undirbúningsskipunin mistekst er afrituninni hætt við. Eftirfylgnisskipunin keyrir eftir að gámurinn er ræstur aftur og mistök hennar eru aðeins skráð. Krókarnir keyra aðeins skipanir, þeir bæta engum aukamöppum við afritunina.",
+  "hooks.hint": "Skipanir keyra inni í gáminum með sh -c. Undirbúningsskipunin keyrir fyrir afritun; notaðu hana til að undirbúa gögn sem á að afrita, t.d. að skrifa skyndiminni á disk. Þekktir gagnagrunnar eru dumpaðir sjálfkrafa og þurfa engan krók. Ef undirbúningsskipunin mistekst er afrituninni hætt við. Eftirfylgnisskipunin keyrir eftir að gámurinn er ræstur aftur og mistök hennar eru aðeins skráð. Krókarnir keyra aðeins skipanir, þeir bæta engum aukamöppum við afritunina.",
   "hooks.pre": "Skipun fyrir afritun",
   "hooks.post": "Skipun eftir afritun",
   "folders.title": "Afritaðar möppur",

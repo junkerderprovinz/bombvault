@@ -20,6 +20,7 @@
 | `PLATFORM` | 아니요 | 자동 감지 대신 BombVault가 자신이 실행 중이라고 판단할 플랫폼을 강제로 지정합니다: `unraid`, `generic`, `truenas` 중 하나입니다(기본값은 설정되지 않음입니다. 플래시 마운트 아래의 `dockerMan` 표시를 찾아 Unraid를 자동 감지하고, 찾지 못하면 `generic`으로 처리합니다. 인식되지 않는 값도 `generic`으로 대체되며 이때 로그가 남습니다). 일반 Docker 호스트나 TrueNAS Scale에서는 Unraid 전용 자동 감지에 의존하지 말고 명시적으로 설정하세요. 일반용 compose 파일이 이렇게 되어 있습니다. 이 값은 appdata 대체 규칙, 인스턴스 간 복원 대상 기본값, Unraid 전용 알림/컴패니언 플러그인 단계 시도 여부를 바꿉니다(`internal/platform` 참고). |
 | `BOMBVAULT_SELF_CONTAINER` | 아니요 | BombVault 컨테이너 자체의 이름으로, 자기 자신을 절대 백업(따라서 중지)하지 않도록 합니다. |
 | `BACKUP_MAX_HOURS` | 아니요 | 단일 백업 실행이 강제 취소되기 전에 도메인 잠금을 유지할 수 있는 최대 실제 경과 시간(멈춘 실행이 도메인을 영원히 차단하지 못하게 하는 보호 장치). 비어 있으면(기본값) `48`을 사용합니다. 매우 크거나 느린 클라우드 백업에는 이를 높이세요(상한에서 취소된 실행은 `context deadline exceeded`로 실패함). 상한을 완전히 비활성화하려면 `0`으로 설정하세요. |
+| `DB_DUMP_MAX_HOURS` | 아니요 | 자동 데이터베이스 덤프 한 번이 중단되기 전까지 실행될 수 있는 시간. 비워 두면(기본값) `6`을 씁니다. 허용 범위는 `1`부터 `48`까지이며, 이 한도는 언제나 `BACKUP_MAX_HOURS`보다 최소 한 시간 낮게 유지됩니다. 긴 덤프가 백업을 함께 쓰러뜨리지 않고 자기 한도에서 끊겨 그렇게 보고되도록 하기 위해서입니다. 더 이상 진행되지 않는 덤프는 `BACKUP_STALL_HOURS` 뒤에 그보다 일찍 중단됩니다. 중단된 덤프는 그 자체로 실패하고 컨테이너 백업은 계속됩니다. Unraid에서는 **Add another Path, Port, Variable** 로 BombVault 컨테이너에 추가합니다. |
 | `TZ` | 아니요 | 스케줄러용 시간대(예: `Europe/Berlin`). **설정하지 않으면 모든 일정이 UTC로 실행됩니다**: 02:30으로 설정한 일정은 현지 시간이 아니라 02:30 UTC에 시작됩니다. Unraid에서는 직접 설정하지 않습니다. 시스템이 자체 시간대를 모든 컨테이너에 전달합니다. |
 
 ## 마운트
@@ -39,6 +40,7 @@ CA 템플릿에 표시된 대로 Docker 소켓, 플래시(`/boot`), **Host Data*
 - **Docker의 명명된 볼륨**은 항상 포함됩니다. 버려도 되는 대응물이 없어 걸러낼 것이 없기 때문입니다. **다만 그 볼륨의 실제 호스트 저장 경로 자체가 Host Data 마운트를 통해 닿을 수 있을 때만** 해당하며, 이는 BombVault가 백업하는 다른 호스트 경로와 똑같은 조건입니다. 기본 로컬 볼륨 드라이버는 볼륨을 데몬 자신의 데이터 루트 아래, 즉 바꾸지 않았다면 `/var/lib/docker/volumes/<name>/_data`에 둡니다(`docker info -f '{{.DockerRootDir}}'`로 확인하세요). 이 위치는 일반 `docker-compose.yml`이 기본으로 쓰는 단일 디렉터리의 좁은 Host Data 마운트에 포함되지 않습니다. 닿을 수 없는 볼륨은 조용히 건너뛰며 오류가 아닙니다. 일반 호스트에서 명명된 볼륨을 실제로 백업하려면 Host Data(그리고 `HOST_SOURCE_ROOT`)를 Docker 데이터 루트까지 아우르는 공통 상위 디렉터리로 지정하세요. 그 대가는 compose 파일의 Host Data 주석을 보십시오(Unraid는 같은 이유로 자체 최상위 관례인 `/mnt` 전체를 마운트해 이 문제를 비껴갑니다).
 - **Docker Compose 프로젝트 디렉터리:** 컨테이너에 표준 레이블 `com.docker.compose.project.working_dir`(`docker compose up`이 자동으로 붙임)이 있으면, 어떤 바인드가 데이터 루트 구간에 맞았는지와 무관하게 그 디렉터리도 추가됩니다.
 - **레이블 `bombvault.data`로 덮어쓰기:** 컨테이너에 `bombvault.data=true` 레이블을 붙이면 그 바인드 마운트를 전부 포함합니다. 위 두 관례 어느 쪽도 잡지 못하는 구성(예: Compose 프로젝트 없이 `/srv/plex/config` 바인드 하나만 있는 경우)을 위한 것입니다. `false`가 아닌 비어 있지 않은 값은 모두 참으로 치며, 레이블이 없거나 `bombvault.data=false`이면 아무것도 달라지지 않습니다.
+- **레이블 `bombvault.dbdump`:** 컨테이너에 `bombvault.dbdump=false`를 달면 그 컨테이너의 자동 데이터베이스 덤프가 꺼집니다(`0`, `no`, `off`도 같습니다). 엔진 이름(`postgres`, `mysql`, `mariadb`)을 적으면 BombVault가 스스로 인식하지 못하는 컨테이너도 덤프합니다. 레이블은 컨테이너 카드의 스위치보다 우선하며, Unraid에서는 그 스위치가 일반적인 방법입니다.
 
 ## 보안 모델
 

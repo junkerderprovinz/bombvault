@@ -43,6 +43,24 @@ Než se cokoli zastaví nebo odebere, obnova spustí předletovou kontrolu konfl
 
 Pokud je šifrování age zapnuto (Nastavení), ale není nastaven platný příjemce, export selže s jasnou chybou místo zapsání prostého textu. Přidejte platného příjemce (veřejný klíč age nebo veřejný klíč SSH), nebo vypněte šifrování, pokud zamýšlíte, aby export byl prostý text. Viz [Funkce](features.md).
 
+## Dump databáze selhal
+
+Neúspěšný dump nikdy nepoloží zálohu kolem sebe; zapíše se jako vlastní neúspěšný běh a důvod říká, co spravit.
+
+- **Odmítnuté přihlášení.** Dump se přihlašuje proměnnými s heslem samotného kontejneru (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` nebo jejich verzemi `_FILE`). Zkontrolujte je na kontejneru s databází. Proměnná `_FILE` ukazující na tajemství, které uživatel kontejneru nesmí číst, dopadne stejně.
+- **Chybějící oprávnění.** S náhodným heslem roota se dump přihlásí jen jako uživatel aplikace, obsáhne tedy jen tu jednu databázi, a MySQL 8.4 a novější ho může odmítnout úplně. Dejte kontejneru skutečné heslo roota, nebo mu dump vypněte.
+- **Systémové tabulky potřebují povýšit.** MariaDB odmítá dump, když její systémové tabulky pocházejí ze starší verze (chyba 1558). Přidejte proměnnou `MARIADB_AUTO_UPGRADE=1` a restartujte kontejner, nebo v něm jednou spusťte `mariadb-upgrade`.
+- **Žádný nástroj pro dump.** Odlehčený nebo vlastnoručně sestavený image bez `pg_dump`, `mysqldump` či `mariadb-dump` dumpovat nejde. Vezměte oficiální image, nebo dump vypněte.
+- **Časový limit.** Dump dostane `DB_DUMP_MAX_HOURS` (výchozí 6), záloha kolem něj `BACKUP_MAX_HOURS`, a dump, který přestane postupovat, se utne po `BACKUP_STALL_HOURS`. Za posledním případem bývá zámek držený aplikací. Zvedněte limit, který zabral, nebo dumpujte, když je aplikace v klidu.
+- **Kontejner je pozastavený nebo se restartuje.** Dump mluví s běžícím serverem. Pokud se kontejner restartuje pořád dokola, jeho vlastní log řekne proč.
+- **Poškozený dump se nepodařilo odstranit.** Dump, který BombVault nedokázal dokončit, se zase smaže. Když se to smazání nepovede, dump zůstane v seznamu označený jako poškozený a můžete ho tam smazat.
+
+## Import selhal
+
+Import zastaví kontejner, odsune jeho datovou složku stranou a nechá image vytvořit na jejím místě prázdnou. Selže-li krok před samotným importem, stará složka se vrátí sama. Selže-li import, kontejner si nechá čerstvou složku a stará zůstane vedle jako `<datová složka>.bombvault-before-import-<časová značka>`; chybová hláška běhu uvádí přesnou cestu.
+
+Ruční návrat: zastavte kontejner, přejmenujte současnou datovou složku stranou, přejmenujte zachovanou složku zpět na původní název a kontejner spusťte. Na Unraidu to zvládne správce souborů na kartě Shares.
+
 ## Kontejner se stále restartuje nebo vypadá unhealthy
 
 BombVault hlásí healthy/unhealthy ze svého vlastního `/api/health`. Nástroj pro automatické hojení (například Autoheal) jej může restartovat automaticky, pokud se engine kdy zasekne. Zkontrolujte log kontejneru a report `/spike` pro základní příčinu.

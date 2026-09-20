@@ -43,6 +43,24 @@ Voordat er iets wordt gestopt of verwijderd, draait herstel een pre-flight confl
 
 Als age-versleuteling aan is (Instellingen) maar er geen geldige ontvanger is ingesteld, mislukt een export met een duidelijke fout in plaats van platte tekst te schrijven. Voeg een geldige ontvanger toe (een age-publieke sleutel of een SSH-publieke sleutel), of zet versleuteling uit als je bedoelt dat de export platte tekst is. Zie [Functies](features.md).
 
+## Een databasedump is mislukt
+
+Een mislukte dump laat de back-up eromheen nooit mislukken; hij wordt als een eigen mislukte run vastgelegd, en de reden noemt wat je moet verhelpen.
+
+- **Aanmelden geweigerd.** De dump meldt zich aan met de wachtwoordvariabelen van de container zelf (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` of hun `_FILE`-versies). Controleer ze op de databasecontainer. Een `_FILE`-variabele die naar een secret wijst dat de gebruiker van de container niet mag lezen, mislukt op dezelfde manier.
+- **Ontbrekende rechten.** Met een willekeurig root-wachtwoord kan de dump alleen als de app-gebruiker inloggen, zodat hij alleen die ene database bevat, en MySQL 8.4 en nieuwer kan hem helemaal weigeren. Geef de container een echt root-wachtwoord, of zet zijn dump uit.
+- **De systeemtabellen moeten worden bijgewerkt.** MariaDB weigert te dumpen wanneer zijn systeemtabellen uit een oudere versie komen (fout 1558). Voeg de variabele `MARIADB_AUTO_UPGRADE=1` toe en herstart de container, of draai `mariadb-upgrade` er één keer in.
+- **Geen dumpgereedschap.** Een slanke of zelfgebouwde image zonder `pg_dump`, `mysqldump` of `mariadb-dump` kan niet gedumpt worden. Gebruik de officiële image, of zet de dump uit.
+- **Een tijdslimiet.** Een dump krijgt `DB_DUMP_MAX_HOURS` (standaard 6), de back-up eromheen krijgt `BACKUP_MAX_HOURS`, en een dump die niet meer vordert wordt na `BACKUP_STALL_HOURS` afgekapt. Achter dat laatste zit meestal een lock die de applicatie vasthoudt. Verhoog de limiet die aansloeg, of dump terwijl de applicatie rustig is.
+- **De container is gepauzeerd of herstart.** De dump praat met de draaiende server. Als de container steeds opnieuw start, zegt zijn eigen log waarom.
+- **Een beschadigde dump kon niet worden verwijderd.** Een dump die BombVault niet kon afmaken, wordt weer verwijderd. Lukt dat verwijderen niet, dan blijft de dump als beschadigd in de lijst staan en kun je hem daar verwijderen.
+
+## Een import is mislukt
+
+Een import stopt de container, zet zijn datamap opzij en laat de image er een lege voor in de plaats maken. Mislukt een stap vóór de import zelf, dan wordt de oude map vanzelf teruggezet. Mislukt de import, dan houdt de container de verse map en blijft de oude ernaast staan als `<datamap>.bombvault-before-import-<tijdstempel>`; de foutmelding van de run noemt het exacte pad.
+
+Met de hand terugzetten: stop de container, hernoem de huidige datamap uit de weg, hernoem de bewaarde map terug naar de oorspronkelijke naam en start de container. Op Unraid doet de bestandsbeheerder op het tabblad Shares dit.
+
 ## De container blijft herstarten of ziet er unhealthy uit
 
 BombVault meldt healthy/unhealthy vanuit zijn eigen `/api/health`. Een auto-heal-tool (zoals Autoheal) kan hem automatisch herstarten als de engine ooit vastloopt. Controleer het containerlog en het `/spike`-rapport voor de onderliggende oorzaak.

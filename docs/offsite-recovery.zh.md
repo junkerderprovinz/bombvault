@@ -157,3 +157,27 @@ printf 'bombvault:restic-repo' \
     通过异地复制到达这里的仓库，是发送它的机器用**它自己的** `APP_KEY` 创建的。用接收方的密钥去派生会得到一个 restic 拒绝的密码，那看起来和仓库损坏一模一样，其实并没有损坏。这正是 `restic check` 在接收到的仓库上反复索要密码的常见原因。
 
 由于恢复定义存放在每个仓库**内部**（`<repo>/def`、`<repo>/vm-def`），被复制的仓库文件夹是完全自包含的，因此工具包加上仓库就是一次裸机还原所需的全部。
+
+## 取回数据库转储 {#database-dumps}
+
+数据库转储是容器仓库中一个独立的还原点，带有标签 `dbdump:<container>`，里面只有一个文件 `/dbdump/<container>.sql`。BombVault 在 **备份** 里列出、下载并导入它们；下面是只用 restic 完成同样步骤的方法，为 BombVault 不在身边的那一天准备。
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+每个转储上的 `dbversion:` 和 `dbname:` 标签说明它来自哪个服务器版本、包含哪些数据库。完整的文件以 `-- PostgreSQL database cluster dump complete` 或 `-- Dump completed` 结尾。
+
+把它导入一个相同或更新版本（PostgreSQL）、或相同大版本（MySQL 和 MariaDB）的容器，该容器要先用空数据目录启动一次完成初始化。宿主机不需要数据库客户端，容器里就有：
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+若只想从完整转储里取一个数据库，MySQL 和 MariaDB 的客户端命令接受 `--one-database <name>`。PostgreSQL 的转储每个数据库一段，每段以一行 `\connect <name>` 开头：把那一段复制成单独的文件，先创建数据库，再用 `-d <name>` 导入。
+
+!!! warning "以 root 取的转储会带上服务器的用户"
+    以 root 取的 MySQL 或 MariaDB 完整转储包含系统数据库 `mysql`，导入它会把新服务器的账号，连同 root 的密码，替换为转储里的那些。在 PostgreSQL 上，针对容器自己创建的用户出现 `role ... already exists` 属于预期，无害。

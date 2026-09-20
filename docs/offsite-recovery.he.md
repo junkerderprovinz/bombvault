@@ -157,3 +157,27 @@ printf 'bombvault:restic-repo' \
     מאגר שהגיע לכאן דרך שכפול מחוץ לאתר נוצר על ידי המכונה ששלחה אותו, עם ה-`APP_KEY` **שלה**. גזירה מהמפתח של המכונה המקבלת נותנת סיסמה ש-restic דוחה, וזה נראה בדיוק כמו מאגר פגום בלי להיות כזה. זו הסיבה הרגילה לכך ש-`restic check` על מאגר שהתקבל מבקש את הסיסמה שוב ושוב.
 
 מכיוון שהגדרות השחזור חיות **בתוך** כל מאגר (`<repo>/def`, `<repo>/vm-def`), תיקיית מאגר מועתקת עצמאית לחלוטין, כך שהערכה בתוספת המאגר הם כל מה שנדרש לשחזור bare-metal.
+
+## החזרת דאמפ של מסד נתונים {#database-dumps}
+
+דאמפ של מסד נתונים הוא נקודת שחזור משל עצמו במאגר הקונטיינרים, עם התווית `dbdump:<container>` ועם קובץ יחיד, `/dbdump/<container>.sql`. BombVault מציג, מוריד ומייבא אותם תחת **גיבויים**; להלן אותם צעדים עם restic בלבד, ליום שבו BombVault איננו.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+התוויות `dbversion:` ו-`dbname:` שעל כל דאמפ אומרות מאיזו גרסת שרת הוא הגיע ואילו מסדי נתונים הוא מכיל. קובץ שלם מסתיים ב-`-- PostgreSQL database cluster dump complete` או ב-`-- Dump completed`.
+
+ייבא אותו לקונטיינר בגרסה זהה או חדשה יותר (PostgreSQL), או באותה גרסה ראשית (MySQL ו-MariaDB), שהופעל פעם אחת עם תיקיית נתונים ריקה כדי שיאתחל את עצמו. המארח אינו זקוק ללקוח מסד נתונים, לקונטיינר יש אחד:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+עבור מסד נתונים יחיד מתוך דאמפ מלא, MySQL ו-MariaDB מקבלים `--one-database <name>` בפקודת הלקוח. בדאמפ של PostgreSQL יש קטע לכל מסד נתונים, וכל קטע נפתח בשורה `\connect <name>`: העתק את הקטע לקובץ נפרד וייבא אותו עם `-d <name>` אחרי יצירת מסד הנתונים.
+
+!!! warning "דאמפ שנלקח כ-root מביא איתו את משתמשי השרת"
+    דאמפ מלא של MySQL או MariaDB שנלקח כ-root מכיל את מסד הנתונים המערכתי `mysql`, ולכן ייבוא שלו מחליף את החשבונות של השרת החדש, כולל סיסמת ה-root, בחשבונות מן הדאמפ. ב-PostgreSQL, ההודעה `role ... already exists` על המשתמש שהקונטיינר עצמו יצר היא צפויה ובלתי מזיקה.

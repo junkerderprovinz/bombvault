@@ -436,8 +436,8 @@ const sl: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Hramba posnetkov",
   "settings.retentionHint": "Koliko varnostnih kopij ohraniti na posamezen element. Po vsaki varnostni kopiji restic po tej politiki počisti starejše posnetke. Vse ničle = ohrani vse (izklopljeno).",
-  "excludes.advisoryImmichDb": "Immich hrani albume, obraze in datume vsake fotografije v bazi podatkov PostgreSQL, ki teče v svojem lastnem, ločenem vsebniku, zato je ta varnostna kopija ne vsebuje. Obnovitev od tod vrne slike, a brez vsega tega. Tej bazi podatkov naredi lastno varnostno kopijo ali vklopi Immichev vgrajeni izvoz baze podatkov, da pristane v mapi, ki jo ta varnostna kopija zajema.",
-  "excludes.advisoryNextcloudDb": "Nextcloud hrani račune, deljenja in oznake v bazi podatkov, ki običajno teče v ločenem vsebniku, zato je ta varnostna kopija ne vsebuje. Datoteke se vrnejo, deljenja ne. Varnostno kopiraj tudi to bazo podatkov.",
+  "excludes.advisoryImmichDb": "Immich hrani albume, obraze in datume vsake fotografije v bazi podatkov PostgreSQL, ki teče v svojem lastnem, ločenem vsebniku, zato je ta varnostna kopija ne vsebuje. Obnovitev od tod vrne slike, a brez vsega tega. BombVault vsebnik te baze podatkov izpiše sam, ko ga varnostno kopira, zato preveri, da je v tvojem urniku.",
+  "excludes.advisoryNextcloudDb": "Nextcloud hrani račune, deljenja in oznake v bazi podatkov, ki običajno teče v ločenem vsebniku, zato je ta varnostna kopija ne vsebuje. Datoteke se vrnejo, deljenja ne. BombVault vsebnik te baze podatkov izpiše sam, ko ga varnostno kopira, zato preveri, da je v tvojem urniku.",
   "rcloneRemote.heading": "Dodaj cilj SMB ali WebDAV",
   "rcloneRemote.hint": "Doseže souporabo Windows ali Samba oziroma strežnik WebDAV, na primer Nextcloud, BREZ priklopa na gostitelju. To ni le stvar udobja: restic odsvetuje hranjenje repozitorija na priklopljeni souporabi CIFS, ta način pa se priklopu povsem izogne. Geslo prejme rclone, ki ga shrani v svoji obliki, in nikoli ni shranjeno kot golo besedilo. NFS tu ni na voljo, ker ga ne podpirata ne restic ne rclone: za NFS priklopi izvoz na Unraidu in nanj nastavi pot za varnostno kopiranje.",
   "rcloneRemote.type": "Vrsta",
@@ -683,7 +683,7 @@ const sl: Partial<Translations> = {
 
   // Pre/post-backup hooks
   "hooks.title": "Kljuke varnostnega kopiranja",
-  "hooks.hint": "Ukazi tečejo znotraj vsebnika s sh -c. Predhodni ukaz teče pred varnostnim kopiranjem; uporabi ga za pripravo podatkov, ki naj bodo varnostno kopirani, na primer za izpis baze podatkov v appdata vsebnika. Če predhodni ukaz spodleti, se varnostno kopiranje prekine. Naknadni ukaz teče po ponovnem zagonu vsebnika, njegov neuspeh pa se samo zabeleži. Kljuke samo zaganjajo ukaze, ne dodajajo dodatnih map v varnostno kopijo.",
+  "hooks.hint": "Ukazi tečejo znotraj vsebnika s sh -c. Predhodni ukaz teče pred varnostnim kopiranjem; uporabi ga za pripravo podatkov, ki naj bodo varnostno kopirani, na primer za zapis predpomnilnika na disk. Prepoznane baze podatkov se izpišejo same in zanje kljuka ni potrebna. Če predhodni ukaz spodleti, se varnostno kopiranje prekine. Naknadni ukaz teče po ponovnem zagonu vsebnika, njegov neuspeh pa se samo zabeleži. Kljuke samo zaganjajo ukaze, ne dodajajo dodatnih map v varnostno kopijo.",
   "hooks.pre": "Predhodni ukaz",
   "hooks.post": "Naknadni ukaz",
   "folders.title": "Mape za varnostno kopiranje",

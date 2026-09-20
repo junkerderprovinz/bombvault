@@ -16648,8 +16648,70 @@ func (s *Service) RecoveryKit() (string, error) {
 	w("  (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY for S3, RESTIC_REST_USERNAME /\n")
 	w("  RESTIC_REST_PASSWORD for a REST server) and use the repo verbatim.\n")
 
+	b.WriteString(dbDumpKitSection)
+
 	return b.String(), nil
 }
+
+// dbDumpKitSection explains how to get a database dump back with restic and the
+// database's own client. It is written to be pasted into a terminal, so it uses
+// plain quotes and no typographic dashes.
+const dbDumpKitSection = `
+## Database dumps without BombVault
+
+Recognised database containers are dumped before each backup into the containers
+repository as snapshots of their own, tagged dbdump:<container>. Each holds one
+file, /dbdump/<container>.sql.
+
+1. List the dumps of one container (the tags dbversion:<version> and
+   dbname:<database> show the server version and the databases each dump holds):
+
+       restic -r <repo> snapshots --tag dbdump:<container>
+
+2. Write the newest dump to a file (or replace "latest" with a snapshot id). A
+   complete file ends with "-- PostgreSQL database cluster dump complete" or
+   "-- Dump completed":
+
+       restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+
+3. Create the database container again with an empty data folder and the same or
+   a newer version (PostgreSQL), or the same major version (MySQL, MariaDB). Let
+   it start once so it initialises. The host has no database client; run the
+   import through the container, with the container's own variables:
+
+       PostgreSQL:
+         docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+       MariaDB:
+         docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+       MySQL (and MariaDB images before 11):
+         docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+
+   A dump taken with an app user instead of root (it holds one database) is
+   imported the same way with that user and its password variable.
+
+4. Only one database out of a full dump:
+
+       MySQL/MariaDB: add --one-database <name> to the client command above; the
+         client then skips every statement for other databases.
+       PostgreSQL: the dump has one section per database, each starting with a
+         line "\connect <name>". Copy the section for your database into its own
+         file and import that file with -d <name> after creating the database.
+
+Notes:
+- A dump is never loaded back automatically. Restoring a container restores its
+  files, which are newer than the dump when they were saved with the container
+  stopped. Use a dump when those files cannot be used. BombVault's "Import into
+  a fresh database" does step 3 for you and keeps the old data folder.
+- PostgreSQL: "role ... already exists" for the user the container created is
+  expected and harmless. Other errors are real.
+- MySQL/MariaDB: a full (root) dump contains the mysql system database, users
+  and their password hashes; importing it replaces the new server's users,
+  including root's password, with the ones from the dump.
+- A PostgreSQL dump from a server with the 2025 security update starts with
+  \restrict; import it with a psql of the same or a newer patch release.
+- The file contains every table and the password hashes of the database users.
+  Keep it private.
+`
 
 // orNone returns s, or "(not resolved)" when s is empty, so a blank repo line in
 // the recovery kit reads clearly instead of trailing off.

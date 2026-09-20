@@ -43,6 +43,24 @@ Replicarea off-site este best-effort prin design, așa că o problemă off-site 
 
 Dacă criptarea age este activată (Setări) dar niciun destinatar valid nu este setat, un export eșuează cu o eroare clară în loc să scrie text în clar. Adaugă un destinatar valid (o cheie publică age sau o cheie publică SSH), sau dezactivează criptarea dacă intenționezi ca exportul să fie în clar. Vezi [Funcționalități](features.md).
 
+## Un dump de bază de date a eșuat
+
+Un dump eșuat nu duce niciodată la eșec backupul din jurul lui; este consemnat ca o rulare eșuată de sine stătătoare, iar motivul spune ce trebuie reparat.
+
+- **Autentificare refuzată.** Dumpul se autentifică cu variabilele de parolă ale containerului însuși (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` sau versiunile lor `_FILE`). Verifică-le pe containerul bazei de date. O variabilă `_FILE` care arată spre un secret pe care utilizatorul containerului nu îl poate citi eșuează la fel.
+- **Privilegii lipsă.** Cu o parolă de root aleatoare, dumpul se poate autentifica doar ca utilizator al aplicației, deci conține doar acea bază, iar MySQL 8.4 și mai nou îl poate refuza cu totul. Dă containerului o parolă de root adevărată, sau oprește-i dumpul.
+- **Tabelele de sistem au nevoie de o actualizare.** MariaDB refuză dumpul când tabelele sale de sistem vin dintr-o versiune mai veche (eroarea 1558). Adaugă variabila `MARIADB_AUTO_UPGRADE=1` și repornește containerul, sau rulează o dată `mariadb-upgrade` înăuntru.
+- **Niciun instrument de dump.** O imagine subțiată sau făcută în casă, fără `pg_dump`, `mysqldump` sau `mariadb-dump`, nu poate fi dumpată. Folosește imaginea oficială, sau oprește dumpul.
+- **O limită de timp.** Un dump primește `DB_DUMP_MAX_HOURS` (6 implicit), backupul din jur primește `BACKUP_MAX_HOURS`, iar un dump care nu mai avansează este tăiat după `BACKUP_STALL_HOURS`. În spatele ultimului caz stă de obicei un lacăt ținut de aplicație. Ridică limita care s-a declanșat, sau fă dumpul cât aplicația e liniștită.
+- **Containerul este în pauză sau repornește.** Dumpul vorbește cu serverul în funcțiune. Dacă containerul repornește la nesfârșit, jurnalul lui spune de ce.
+- **Un dump deteriorat nu a putut fi înlăturat.** Un dump pe care BombVault nu l-a putut termina este șters. Când ștergerea aceea eșuează, dumpul rămâne în listă marcat ca deteriorat și îl poți șterge de acolo.
+
+## Un import a eșuat
+
+Un import oprește containerul, pune deoparte folderul lui de date și lasă imaginea să creeze unul gol în loc. Dacă eșuează un pas de dinaintea importului propriu-zis, folderul vechi este pus la loc de la sine. Dacă eșuează importul, containerul rămâne cu folderul proaspăt, iar cel vechi stă alături ca `<folder de date>.bombvault-before-import-<marcaj de timp>`; mesajul de eroare al rulării numește calea exactă.
+
+Ca să îl pui la loc manual: oprește containerul, redenumește folderul de date curent ca să îl dai la o parte, redenumește folderul păstrat înapoi la numele original și pornește containerul. Pe Unraid, managerul de fișiere din fila Shares face asta.
+
 ## Containerul se tot repornește sau pare nesănătos
 
 BombVault raportează sănătos/nesănătos din propriul `/api/health`. Un instrument de auto-vindecare (precum Autoheal) îl poate reporni automat dacă motorul se blochează vreodată. Verifică jurnalul containerului și raportul `/spike` pentru cauza de bază.

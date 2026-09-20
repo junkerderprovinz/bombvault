@@ -494,8 +494,8 @@ const cs: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Uchovávání snímků",
   "settings.retentionHint": "Kolik záloh ponechat pro každou položku. Po každé záloze restic prořeže starší snímky podle této zásady. Vše nula = ponechat vše (vypnuto).",
-  "excludes.advisoryImmichDb": "Immich ukládá alba, tváře a data pořízení ke každé fotce do databáze PostgreSQL, která běží ve vlastním, odděleném kontejneru, takže tato záloha ji neobsahuje. Obnova odsud vrátí obrázky, ale bez toho všeho. Zálohujte tuto databázi zvlášť, nebo zapněte vestavěný dump databáze v Immichi, aby skončil ve složce, kterou tato záloha pokrývá.",
-  "excludes.advisoryNextcloudDb": "Nextcloud ukládá účty, sdílení a štítky do databáze, která obvykle běží v odděleném kontejneru, takže tato záloha ji neobsahuje. Soubory se vrátí, sdílení ne. Zálohujte i tuto databázi.",
+  "excludes.advisoryImmichDb": "Immich ukládá alba, tváře a data pořízení ke každé fotce do databáze PostgreSQL, která běží ve vlastním, odděleném kontejneru, takže tato záloha ji neobsahuje. Obnova odsud vrátí obrázky, ale bez toho všeho. BombVault dumpuje kontejner té databáze automaticky, jakmile se zálohuje, takže ověřte, že je ve vašem plánu.",
+  "excludes.advisoryNextcloudDb": "Nextcloud ukládá účty, sdílení a štítky do databáze, která obvykle běží v odděleném kontejneru, takže tato záloha ji neobsahuje. Soubory se vrátí, sdílení ne. BombVault dumpuje kontejner té databáze automaticky, jakmile se zálohuje, takže ověřte, že je ve vašem plánu.",
   "rcloneRemote.heading": "Přidat cíl SMB nebo WebDAV",
   "rcloneRemote.hint": "Zpřístupní sdílenou složku Windows nebo Samba nebo server WebDAV, jako je Nextcloud, a to BEZ připojování na hostiteli. Nejde jen o pohodlí: restic nedoporučuje mít repozitář na připojené sdílené složce CIFS a tento způsob se připojení úplně vyhne. Heslo se předá rclone, který si ho uloží ve vlastním formátu, a nikdy se neuchovává v otevřené podobě. NFS se zde nenabízí, protože ho neumí ani restic, ani rclone: pro NFS připojte export v Unraidu a nastavte na něj Zálohovací cestu.",
   "rcloneRemote.type": "Typ",
@@ -604,7 +604,7 @@ const cs: Partial<Translations> = {
 
   // Backup hooks
   "hooks.title": "Zálohovací hooky",
-  "hooks.hint": "Příkazy běží uvnitř kontejneru (sh -c). Pre běží před zálohou (např. dump DB do appdata, aby byla zahrnuta). Selhání zruší zálohu. Post běží po opětovném spuštění kontejneru; jeho selhání se pouze zaznamená.",
+  "hooks.hint": "Příkazy běží uvnitř kontejneru (sh -c). Pre běží před zálohou (např. vyprázdnění cache na disk; rozpoznané databáze se dumpují samy). Selhání zruší zálohu. Post běží po opětovném spuštění kontejneru; jeho selhání se pouze zaznamená.",
   "hooks.pre": "Příkaz před zálohou",
   "hooks.post": "Příkaz po záloze",
 

@@ -43,6 +43,24 @@ Before anything is stopped or removed, restore runs a pre-flight conflict check:
 
 If age encryption is on (Settings) but no valid recipient is set, an export fails with a clear error instead of writing plaintext. Add a valid recipient (an age public key or an SSH public key), or turn encryption off if you intend the export to be plaintext. See [Features](features.md).
 
+## A database dump failed
+
+A failed dump never fails the backup around it; it is recorded as its own failed run, and the reason names what to fix.
+
+- **Login refused.** The dump signs in with the container's own password variables (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` or their `_FILE` versions). Check them on the database container. A `_FILE` variable pointing at a secret the container's own user cannot read fails the same way.
+- **Missing privileges.** With a random root password the dump can only sign in as the app user, so it holds that one database, and MySQL 8.4 and newer may refuse it outright. Give the container a real root password, or switch the dump off for it.
+- **The system tables need an upgrade.** MariaDB refuses to dump when its system tables come from an older version (error 1558). Add the variable `MARIADB_AUTO_UPGRADE=1` and restart the container, or run `mariadb-upgrade` inside it once.
+- **No dump tool.** A slim or self-built image without `pg_dump`, `mysqldump` or `mariadb-dump` cannot be dumped. Use the official image, or switch the dump off.
+- **A time limit.** A dump gets `DB_DUMP_MAX_HOURS` (6 by default), the backup around it gets `BACKUP_MAX_HOURS`, and a dump that stops making progress is cut after `BACKUP_STALL_HOURS`. The usual cause of the last one is a lock the application holds. Raise the limit that fired, or dump while the application is quiet.
+- **The container is paused or restarting.** The dump talks to the running server. If the container keeps restarting, its own log says why.
+- **A damaged dump could not be removed.** A dump BombVault could not finish is deleted again. When that delete fails, the dump stays in the list marked as damaged, and you can delete it there.
+
+## An import failed
+
+An import stops the container, moves its data folder aside and lets the image create an empty one in its place. If a step before the import itself fails, the old folder is put back automatically. If the import fails, the container keeps the fresh folder and the old one stays beside it as `<data folder>.bombvault-before-import-<timestamp>`; the run's error message names the exact path.
+
+To put it back by hand: stop the container, rename the current data folder out of the way, rename the kept folder back to the original name, and start the container. On Unraid, the file manager does this from the Shares tab.
+
 ## The container keeps restarting or looks unhealthy
 
 BombVault reports healthy/unhealthy from its own `/api/health`. An auto-heal tool (such as Autoheal) can restart it automatically if the engine ever wedges. Check the container log and the `/spike` report for the underlying cause.

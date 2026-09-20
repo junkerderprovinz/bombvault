@@ -496,8 +496,8 @@ const fr: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Rétention des instantanés",
   "settings.retentionHint": "Combien de sauvegardes conserver par élément. Après chaque sauvegarde, restic élague les instantanés plus anciens selon cette règle. Tout à zéro = tout conserver (désactivé).",
-  "excludes.advisoryImmichDb": "Immich conserve les albums, les visages et les dates de chaque photo dans une base de données PostgreSQL qui tourne dans un tout autre conteneur, donc cette sauvegarde ne la contient pas. Une restauration depuis ici ramène les photos, mais sans rien de tout cela. Donnez à cette base de données sa propre sauvegarde, ou activez le dump de base de données intégré à Immich pour qu'il se retrouve dans un dossier couvert par cette sauvegarde.",
-  "excludes.advisoryNextcloudDb": "Nextcloud conserve ses comptes, ses partages et ses tags dans une base de données qui tourne en général dans un conteneur distinct, donc cette sauvegarde ne la contient pas. Les fichiers reviennent, pas les partages. Sauvegardez aussi cette base de données.",
+  "excludes.advisoryImmichDb": "Immich conserve les albums, les visages et les dates de chaque photo dans une base de données PostgreSQL qui tourne dans un tout autre conteneur, donc cette sauvegarde ne la contient pas. Une restauration depuis ici ramène les photos, mais sans rien de tout cela. BombVault vidange ce conteneur de base de données automatiquement quand il est sauvegardé, alors vérifiez qu'il figure dans votre planification.",
+  "excludes.advisoryNextcloudDb": "Nextcloud conserve ses comptes, ses partages et ses tags dans une base de données qui tourne en général dans un conteneur distinct, donc cette sauvegarde ne la contient pas. Les fichiers reviennent, pas les partages. BombVault vidange ce conteneur de base de données automatiquement quand il est sauvegardé, alors vérifiez qu'il figure dans votre planification.",
   "rcloneRemote.heading": "Ajouter une destination SMB ou WebDAV",
   "rcloneRemote.hint": "Accède à un partage Windows ou Samba, ou à un serveur WebDAV comme Nextcloud, SANS le monter sur l'hôte. L'intérêt va au-delà du confort : restic déconseille de garder un dépôt sur un partage CIFS monté, et cette voie évite complètement le montage. Le mot de passe est transmis à rclone, qui le stocke sous sa propre forme, et n'est jamais conservé en clair. NFS n'est pas proposé ici, car ni restic ni rclone ne le prennent en charge : pour NFS, montez l'export sur Unraid et pointez-y un chemin de sauvegarde.",
   "rcloneRemote.type": "Type",
@@ -606,7 +606,7 @@ const fr: Partial<Translations> = {
 
   // Pre/post-backup hooks
   "hooks.title": "Hooks de sauvegarde",
-  "hooks.hint": "Les commandes s'exécutent dans le conteneur (sh -c). Pre s'exécute avant la sauvegarde (p. ex. dumper une BD dans appdata pour l'inclure) : un échec annule la sauvegarde. Post s'exécute une fois le conteneur de nouveau actif ; son échec est seulement journalisé.",
+  "hooks.hint": "Les commandes s'exécutent dans le conteneur (sh -c). Pre s'exécute avant la sauvegarde (p. ex. vider un cache sur le disque ; les bases reconnues sont vidangées toutes seules) : un échec annule la sauvegarde. Post s'exécute une fois le conteneur de nouveau actif ; son échec est seulement journalisé.",
   "hooks.pre": "Commande pré-sauvegarde",
   "hooks.post": "Commande post-sauvegarde",
 

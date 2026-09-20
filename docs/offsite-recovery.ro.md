@@ -157,3 +157,27 @@ Este HMAC-SHA256 peste șirul fix `bombvault:restic-repo`, cu octeții bruți ai
     Un depozit ajuns aici prin replicare în afara sediului a fost creat de mașina care l-a trimis, cu `APP_KEY`-ul **ei**. Derivarea din cheia mașinii care primește dă o parolă pe care restic o refuză, ceea ce arată exact ca un depozit corupt fără să fie. Acesta e motivul obișnuit pentru care `restic check` pe un depozit primit cere parola iar și iar.
 
 Deoarece definițiile de recuperare se află **în interiorul** fiecărui depozit (`<repo>/def`, `<repo>/vm-def`), un folder de depozit copiat este complet autonom, așa că kitul plus depozitul este tot ce are nevoie o restaurare bare-metal.
+
+## Recuperarea unui dump de bază de date {#database-dumps}
+
+Un dump de bază de date este un punct de restaurare de sine stătător în depozitul containerelor, cu eticheta `dbdump:<container>` și un singur fișier, `/dbdump/<container>.sql`. BombVault le listează, le descarcă și le importă la **Backupuri**; mai jos sunt aceiași pași doar cu restic, pentru ziua în care BombVault nu este la îndemână.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Etichetele `dbversion:` și `dbname:` de pe fiecare dump spun din ce versiune de server provine și ce baze conține. Un fișier complet se termină cu `-- PostgreSQL database cluster dump complete` sau `-- Dump completed`.
+
+Importă-l într-un container de aceeași versiune sau una mai nouă (PostgreSQL), ori de aceeași versiune majoră (MySQL și MariaDB), pornit o dată cu folderul de date gol ca să se inițializeze. Gazda nu are nevoie de client de bază de date, containerul are unul:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+Pentru o singură bază dintr-un dump complet, MySQL și MariaDB acceptă `--one-database <name>` în comanda clientului. Un dump PostgreSQL are câte o secțiune pentru fiecare bază, fiecare începând cu o linie `\connect <name>`: copiază secțiunea într-un fișier propriu și importă-l cu `-d <name>` după ce ai creat baza.
+
+!!! warning "Un dump luat ca root aduce cu el utilizatorii serverului"
+    Un dump complet MySQL sau MariaDB luat ca root conține baza de sistem `mysql`, așa că importul înlocuiește conturile serverului nou, inclusiv parola de root, cu cele din dump. Pe PostgreSQL, `role ... already exists` pentru utilizatorul creat de container este de așteptat și inofensiv.

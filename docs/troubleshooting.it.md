@@ -43,6 +43,24 @@ Prima che qualcosa venga fermato o rimosso, il ripristino esegue una verifica de
 
 Se la cifratura age è attiva (Impostazioni) ma non è impostato alcun destinatario valido, un'esportazione fallisce con un errore chiaro invece di scrivere testo in chiaro. Aggiungi un destinatario valido (una chiave pubblica age o una chiave pubblica SSH), oppure disattiva la cifratura se intendi che l'esportazione sia in chiaro. Vedi [Funzionalità](features.md).
 
+## Un dump del database è fallito
+
+Un dump fallito non fa mai fallire il backup che lo circonda: viene registrato come esecuzione fallita a sé, e il motivo dice cosa sistemare.
+
+- **Accesso rifiutato.** Il dump entra con le variabili di password del container stesso (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` o le loro versioni `_FILE`). Controllale sul container del database. Una variabile `_FILE` che punta a un segreto illeggibile per l'utente del container fallisce allo stesso modo.
+- **Privilegi mancanti.** Con una password di root casuale il dump può entrare solo come utente dell'applicazione, quindi contiene quel singolo database, e MySQL 8.4 e successivi possono rifiutarlo del tutto. Dai al container una vera password di root, oppure spegni il suo dump.
+- **Le tabelle di sistema vanno aggiornate.** MariaDB rifiuta il dump quando le sue tabelle di sistema vengono da una versione più vecchia (errore 1558). Aggiungi la variabile `MARIADB_AUTO_UPGRADE=1` e riavvia il container, oppure esegui `mariadb-upgrade` una volta al suo interno.
+- **Nessuno strumento di dump.** Un'immagine snella o costruita in casa senza `pg_dump`, `mysqldump` o `mariadb-dump` non si può dumpare. Usa l'immagine ufficiale, o spegni il dump.
+- **Un limite di tempo.** Un dump ha `DB_DUMP_MAX_HOURS` (6 di default), il backup attorno ha `BACKUP_MAX_HOURS`, e un dump che smette di avanzare viene tagliato dopo `BACKUP_STALL_HOURS`. L'ultimo caso nasce quasi sempre da un lock tenuto dall'applicazione. Alza il limite che è scattato, oppure fai il dump mentre l'applicazione è tranquilla.
+- **Il container è in pausa o si sta riavviando.** Il dump parla con il server in funzione. Se il container si riavvia di continuo, il suo log dice perché.
+- **Un dump danneggiato non si è potuto rimuovere.** Un dump che BombVault non è riuscito a completare viene cancellato. Quando quella cancellazione fallisce, il dump resta nell'elenco segnato come danneggiato e lo puoi eliminare da lì.
+
+## Un import è fallito
+
+Un import ferma il container, sposta di lato la sua cartella dati e lascia che l'immagine ne crei una vuota al suo posto. Se fallisce un passo prima dell'import vero e proprio, la vecchia cartella torna al suo posto da sola. Se fallisce l'import, il container tiene la cartella nuova e quella vecchia resta accanto come `<cartella dati>.bombvault-before-import-<data e ora>`; il messaggio di errore dell'esecuzione indica il percorso esatto.
+
+Per rimetterla a mano: ferma il container, rinomina la cartella dati attuale per toglierla di mezzo, rinomina la cartella conservata al nome originale e avvia il container. Su Unraid lo fa il gestore file nella scheda Shares.
+
 ## Il container continua a riavviarsi o sembra non sano
 
 BombVault segnala sano/non sano dal proprio `/api/health`. Uno strumento di auto-heal (come Autoheal) può riavviarlo automaticamente se il motore dovesse mai incepparsi. Controlla il log del container e il report `/spike` per la causa sottostante.

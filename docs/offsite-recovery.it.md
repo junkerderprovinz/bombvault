@@ -157,3 +157,27 @@ printf 'bombvault:restic-repo' \
     Un repository arrivato qui tramite replica off-site è stato creato dalla macchina che lo ha inviato, con la **sua** `APP_KEY`. Derivare dalla chiave della macchina ricevente produce una password che restic rifiuta, il che sembra esattamente un repository corrotto senza esserlo. È il motivo abituale per cui `restic check` su un repository ricevuto continua a chiedere la password.
 
 Poiché le definizioni di ripristino risiedono **dentro** ogni repo (`<repo>/def`, `<repo>/vm-def`), una cartella di repo copiata è completamente autonoma, così il kit più il repo sono tutto ciò che serve per un ripristino bare-metal.
+
+## Recuperare un dump del database {#database-dumps}
+
+Un dump del database è un punto di ripristino a sé nel repository dei container, con l'etichetta `dbdump:<container>` e un solo file, `/dbdump/<container>.sql`. BombVault li elenca, li scarica e li importa sotto **Backup**; qui sotto ci sono gli stessi passi con il solo restic, per il giorno in cui BombVault non c'è.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Le etichette `dbversion:` e `dbname:` su ogni dump dicono da quale versione del server proviene e quali database contiene. Un file completo termina con `-- PostgreSQL database cluster dump complete` oppure `-- Dump completed`.
+
+Importalo in un container della stessa versione o di una più recente (PostgreSQL), o della stessa versione maggiore (MySQL e MariaDB), avviato una volta con la cartella dati vuota perché si inizializzi. L'host non ha bisogno di un client del database, il container ne ha uno:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+Per un singolo database dentro un dump completo, MySQL e MariaDB accettano `--one-database <name>` sul comando del client. Un dump PostgreSQL ha una sezione per database, ciascuna aperta da una riga `\connect <name>`: copia quella sezione in un file a parte e importalo con `-d <name>` dopo aver creato il database.
+
+!!! warning "Un dump preso come root porta con sé gli utenti del server"
+    Un dump completo di MySQL o MariaDB preso come root contiene il database di sistema `mysql`, quindi importarlo sostituisce gli account del nuovo server, password di root compresa, con quelli del dump. Su PostgreSQL, `role ... already exists` per l'utente creato dal container è previsto e innocuo.

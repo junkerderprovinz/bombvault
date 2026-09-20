@@ -496,8 +496,8 @@ const hu: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Pillanatképek megőrzése",
   "settings.retentionHint": "Hány mentést tartson meg elemenként. Minden mentés után a restic a régebbi pillanatképeket ehhez a szabályhoz igazítva törli. Minden nulla = minden megtartása (ki).",
-  "excludes.advisoryImmichDb": "Az Immich minden fénykép albumait, arcait és dátumait egy PostgreSQL adatbázisban tartja, amely egy teljesen külön konténerben fut, így ez a mentés nem tartalmazza. Az innen való visszaállítás visszahozza a képeket, csak mindezek nélkül. Adj annak az adatbázisnak saját mentést, vagy kapcsold be az Immich beépített adatbázis-kiírását, hogy olyan mappába kerüljön, amelyre ez a mentés kiterjed.",
-  "excludes.advisoryNextcloudDb": "A Nextcloud a fiókjait, megosztásait és címkéit egy adatbázisban tartja, amely általában külön konténerben fut, így ez a mentés nem tartalmazza. A fájlok visszajönnek, a megosztások nem. Mentsd el azt az adatbázist is.",
+  "excludes.advisoryImmichDb": "Az Immich minden fénykép albumait, arcait és dátumait egy PostgreSQL adatbázisban tartja, amely egy teljesen külön konténerben fut, így ez a mentés nem tartalmazza. Az innen való visszaállítás visszahozza a képeket, csak mindezek nélkül. A BombVault annak az adatbázisnak a konténeréről magától készít dumpot, amikor azt menti, ezért ellenőrizd, hogy benne van-e az ütemezésedben.",
+  "excludes.advisoryNextcloudDb": "A Nextcloud a fiókjait, megosztásait és címkéit egy adatbázisban tartja, amely általában külön konténerben fut, így ez a mentés nem tartalmazza. A fájlok visszajönnek, a megosztások nem. A BombVault annak az adatbázisnak a konténeréről magától készít dumpot, amikor azt menti, ezért ellenőrizd, hogy benne van-e az ütemezésedben.",
   "rcloneRemote.heading": "SMB- vagy WebDAV-cél hozzáadása",
   "rcloneRemote.hint": "Windows- vagy Samba-megosztást, illetve WebDAV-kiszolgálót, például Nextcloudot ér el, ANÉLKÜL, hogy bármit csatolni kellene a gazdagépen. Ez több puszta kényelmi kérdésnél: a restic nem javasolja, hogy a tároló csatolt CIFS-megosztáson legyen, ez az út pedig teljesen elkerüli a csatolást. A jelszót az rclone kapja meg, amely a saját formájában tárolja, így nyílt szövegként soha nem marad meg. Az NFS itt nem választható, mert sem a restic, sem az rclone nem kezeli: NFS esetén csatold az exportot az Unraidben, és állíts rá egy mentési útvonalat.",
   "rcloneRemote.type": "Típus",
@@ -606,7 +606,7 @@ const hu: Partial<Translations> = {
 
   // Pre/post-backup hooks
   "hooks.title": "Mentési horgok",
-  "hooks.hint": "A parancsok a konténeren belül futnak (sh -c). A Pre a mentés előtt fut (pl. egy adatbázis kiírása az appdata-ba, hogy az is bekerüljön). A hiba megszakítja a mentést. A Post a konténer újraindulása után fut; annak hibáját csak naplózza.",
+  "hooks.hint": "A parancsok a konténeren belül futnak (sh -c). A Pre a mentés előtt fut (pl. egy gyorsítótár lemezre írása; a felismert adatbázisokról magától készül dump). A hiba megszakítja a mentést. A Post a konténer újraindulása után fut; annak hibáját csak naplózza.",
   "hooks.pre": "Mentés előtti parancs",
   "hooks.post": "Mentés utáni parancs",
 

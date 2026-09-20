@@ -552,8 +552,8 @@ export const en = {
   // Retention
   "settings.retentionTitle": "Snapshot retention",
   "settings.retentionHint": "How many backups to keep per item. After each backup, restic prunes older snapshots to this policy. All zero = keep everything (off).",
-  "excludes.advisoryImmichDb": "Immich keeps every photo's albums, faces and dates in a PostgreSQL database that runs in a SEPARATE container, so this backup does not contain it. Restoring from here brings the pictures back without them. Give that database its own backup, or turn on Immich's built-in database dump so it lands in a folder this backup covers.",
-  "excludes.advisoryNextcloudDb": "Nextcloud keeps its accounts, shares and tags in a database that usually runs in a separate container, so this backup does not contain it. The files come back, the sharing does not. Back that database up as well.",
+  "excludes.advisoryImmichDb": "Immich keeps every photo's albums, faces and dates in a PostgreSQL database that runs in a SEPARATE container, so this backup does not contain it. Restoring from here brings the pictures back without them. BombVault dumps that database container automatically when it is backed up, so check that it is included in your schedule.",
+  "excludes.advisoryNextcloudDb": "Nextcloud keeps its accounts, shares and tags in a database that usually runs in a separate container, so this backup does not contain it. The files come back, the sharing does not. BombVault dumps that database container automatically when it is backed up, so check that it is included in your schedule.",
   "rcloneRemote.heading": "Add an SMB or WebDAV destination",
   "rcloneRemote.hint": "Reaches a Windows or Samba share, or a WebDAV server such as Nextcloud, WITHOUT mounting it on the host. That matters beyond convenience: restic advises against keeping a repository on a mounted CIFS share, and this route avoids the mount entirely. The password is handed to rclone to store in its own form and is never kept in the clear. NFS is not offered here because neither restic nor rclone can speak it: for NFS, mount the export on Unraid and point a backup path at it.",
   "rcloneRemote.type": "Kind",
@@ -808,7 +808,7 @@ export const en = {
 
   // Pre/post-backup hooks
   "hooks.title": "Backup hooks",
-  "hooks.hint": "Commands run inside the container with sh -c. The pre-command runs before the backup; use it to prepare data that should be backed up, for example dumping a database into the container's appdata. If the pre-command fails, the backup is aborted. The post-command runs after the container is started again and its failure is only logged. Hooks only run commands, they do not add extra folders to the backup.",
+  "hooks.hint": "Commands run inside the container with sh -c. The pre-command runs before the backup; use it to prepare data that should be backed up, for example flushing a cache to disk. Recognised databases are dumped automatically and need no hook. If the pre-command fails, the backup is aborted. The post-command runs after the container is started again and its failure is only logged. Hooks only run commands, they do not add extra folders to the backup.",
   "hooks.pre": "Pre-backup command",
   "hooks.post": "Post-backup command",
   "folders.title": "Backup folders",
@@ -2642,8 +2642,8 @@ export const de: Translations = {
   // Retention
   "settings.retentionTitle": "Snapshot-Aufbewahrung",
   "settings.retentionHint": "Wie viele Backups pro Objekt behalten werden. Nach jedem Backup räumt restic ältere Snapshots gemäß dieser Regel auf. Alles 0 = alles behalten (aus).",
-  "excludes.advisoryImmichDb": "Immich speichert Alben, Gesichter und Datumsangaben zu jedem Foto in einer PostgreSQL-Datenbank, die in einem EIGENEN Container läuft. Dieses Backup enthält sie nicht. Eine Wiederherstellung von hier bringt die Bilder zurück, aber ohne all das. Sichere diese Datenbank getrennt, oder schalte Immichs eingebauten Datenbank-Export ein, damit er in einem Ordner landet, den dieses Backup erfasst.",
-  "excludes.advisoryNextcloudDb": "Nextcloud speichert Konten, Freigaben und Schlagworte in einer Datenbank, die meist in einem eigenen Container läuft. Dieses Backup enthält sie nicht. Die Dateien kommen zurück, die Freigaben nicht. Sichere diese Datenbank zusätzlich.",
+  "excludes.advisoryImmichDb": "Immich speichert Alben, Gesichter und Datumsangaben zu jedem Foto in einer PostgreSQL-Datenbank, die in einem EIGENEN Container läuft. Dieses Backup enthält sie nicht. Eine Wiederherstellung von hier bringt die Bilder zurück, aber ohne all das. BombVault dumpt den Container dieser Datenbank automatisch, sobald er gesichert wird; prüfe also, dass er in deinem Zeitplan enthalten ist.",
+  "excludes.advisoryNextcloudDb": "Nextcloud speichert Konten, Freigaben und Schlagworte in einer Datenbank, die meist in einem eigenen Container läuft. Dieses Backup enthält sie nicht. Die Dateien kommen zurück, die Freigaben nicht. BombVault dumpt den Container dieser Datenbank automatisch, sobald er gesichert wird; prüfe also, dass er in deinem Zeitplan enthalten ist.",
   "rcloneRemote.heading": "SMB- oder WebDAV-Ziel hinzufügen",
   "rcloneRemote.hint": "Erreicht eine Windows- oder Samba-Freigabe oder einen WebDAV-Server wie Nextcloud, OHNE sie auf dem Host einzuhängen. Das ist mehr als bequem: restic rät davon ab, ein Depot auf einer eingehängten CIFS-Freigabe zu halten, und dieser Weg umgeht das Einhängen ganz. Das Passwort übernimmt rclone in seiner eigenen Form, im Klartext wird es nie abgelegt. NFS steht hier nicht zur Wahl, weil weder restic noch rclone es sprechen: Dafür die Freigabe in Unraid einhängen und einen Backup-Pfad daraufzeigen.",
   "rcloneRemote.type": "Art",
@@ -2889,7 +2889,7 @@ export const de: Translations = {
 
   // Pre/post-backup hooks
   "hooks.title": "Backup-Hooks",
-  "hooks.hint": "Befehle laufen im Container mit sh -c. Der Pre-Befehl läuft vor dem Backup; nutze ihn, um Daten vorzubereiten, die mitgesichert werden sollen, etwa eine Datenbank in die appdata des Containers zu dumpen. Schlägt der Pre-Befehl fehl, wird das Backup abgebrochen. Der Post-Befehl läuft, nachdem der Container wieder gestartet wurde, und sein Fehler wird nur geloggt. Hooks führen nur Befehle aus, sie fügen dem Backup keine zusätzlichen Ordner hinzu.",
+  "hooks.hint": "Befehle laufen im Container mit sh -c. Der Pre-Befehl läuft vor dem Backup; nutze ihn, um Daten vorzubereiten, die mitgesichert werden sollen, etwa einen Cache auf die Platte schreiben zu lassen. Erkannte Datenbanken werden automatisch gedumpt und brauchen dafür keinen Hook. Schlägt der Pre-Befehl fehl, wird das Backup abgebrochen. Der Post-Befehl läuft, nachdem der Container wieder gestartet wurde, und sein Fehler wird nur geloggt. Hooks führen nur Befehle aus, sie fügen dem Backup keine zusätzlichen Ordner hinzu.",
   "hooks.pre": "Pre-Backup-Befehl",
   "hooks.post": "Post-Backup-Befehl",
   "folders.title": "Gesicherte Ordner",

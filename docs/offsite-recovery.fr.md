@@ -157,3 +157,27 @@ C'est un HMAC-SHA256 sur la chaîne fixe `bombvault:restic-repo`, avec pour clé
     Un dépôt arrivé ici par réplication hors site a été créé par la machine qui l'a envoyé, avec **son** `APP_KEY`. Dériver depuis la clé de la machine réceptrice donne un mot de passe que restic refuse, ce qui ressemble exactement à un dépôt corrompu sans en être un. C'est la raison habituelle pour laquelle `restic check` sur un dépôt reçu redemande le mot de passe encore et encore.
 
 Parce que les définitions de récupération vivent **à l'intérieur** de chaque dépôt (`<repo>/def`, `<repo>/vm-def`), un dossier de dépôt copié est entièrement autonome, de sorte que le kit plus le dépôt sont tout ce dont une restauration sur machine nue a besoin.
+
+## Récupérer un dump de base de données {#database-dumps}
+
+Un dump de base de données est un point de restauration à part entière dans le dépôt des conteneurs, portant l'étiquette `dbdump:<container>` et contenant le seul fichier `/dbdump/<container>.sql`. BombVault les liste, les télécharge et les importe sous **Sauvegardes** ; voici les mêmes étapes avec restic seul, pour le jour où BombVault n'est pas là.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Les étiquettes `dbversion:` et `dbname:` de chaque dump indiquent la version du serveur d'où il vient et les bases qu'il contient. Un fichier complet se termine par `-- PostgreSQL database cluster dump complete` ou `-- Dump completed`.
+
+Importez-le dans un conteneur de la même version ou d'une plus récente (PostgreSQL), ou de la même version majeure (MySQL et MariaDB), démarré une fois avec un dossier de données vide pour qu'il s'initialise. L'hôte n'a besoin d'aucun client de base de données, le conteneur en a un :
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+Pour une seule base issue d'un dump complet, MySQL et MariaDB acceptent `--one-database <name>` sur la commande du client. Un dump PostgreSQL comporte une section par base, chacune commençant par une ligne `\connect <name>` : copiez cette section dans un fichier à part et importez-le avec `-d <name>` après avoir créé la base.
+
+!!! warning "Un dump pris en root emporte les comptes du serveur"
+    Un dump complet MySQL ou MariaDB pris en root contient la base système `mysql` : l'importer remplace donc les comptes du nouveau serveur, mot de passe root compris, par ceux du dump. Sur PostgreSQL, `role ... already exists` pour l'utilisateur créé par le conteneur est attendu et sans conséquence.

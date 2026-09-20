@@ -43,6 +43,24 @@ Bevor irgendetwas gestoppt oder entfernt wird, führt die Wiederherstellung eine
 
 Wenn die age-Verschlüsselung an ist (Einstellungen), aber kein gültiger Empfänger gesetzt ist, schlägt ein Export mit einem klaren Fehler fehl, statt Klartext zu schreiben. Füge einen gültigen Empfänger hinzu (einen age-Public-Key oder einen SSH-Public-Key), oder schalte die Verschlüsselung aus, wenn der Export Klartext sein soll. Siehe [Funktionen](features.md).
 
+## Ein Datenbank-Dump schlug fehl
+
+Ein fehlgeschlagener Dump lässt nie das Backup drumherum scheitern; er wird als eigener fehlgeschlagener Lauf festgehalten, und der Grund nennt, was zu tun ist.
+
+- **Anmeldung abgelehnt.** Der Dump meldet sich mit den Passwort-Variablen des Containers selbst an (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` oder deren `_FILE`-Varianten). Prüfe sie am Datenbank-Container. Eine `_FILE`-Variable, die auf ein Secret zeigt, das der Benutzer des Containers nicht lesen darf, scheitert genauso.
+- **Fehlende Rechte.** Mit einem zufälligen Root-Passwort kann sich der Dump nur als App-Benutzer anmelden und erfasst dann nur deren eine Datenbank; MySQL 8.4 und neuer lehnt ihn unter Umständen ganz ab. Gib dem Container ein echtes Root-Passwort, oder schalte den Dump für ihn ab.
+- **Die Systemtabellen brauchen ein Upgrade.** MariaDB verweigert den Dump, wenn seine Systemtabellen aus einer älteren Version stammen (Fehler 1558). Füge die Variable `MARIADB_AUTO_UPGRADE=1` hinzu und starte den Container neu, oder führe `mariadb-upgrade` einmal darin aus.
+- **Kein Dump-Werkzeug.** Ein schlankes oder selbst gebautes Image ohne `pg_dump`, `mysqldump` oder `mariadb-dump` lässt sich nicht dumpen. Nimm das offizielle Image, oder schalte den Dump ab.
+- **Ein Zeitlimit.** Ein Dump bekommt `DB_DUMP_MAX_HOURS` (voreingestellt 6), das Backup drumherum `BACKUP_MAX_HOURS`, und ein Dump, der nicht mehr vorankommt, wird nach `BACKUP_STALL_HOURS` abgebrochen. Hinter dem letzten Fall steckt meist eine Sperre, die die Anwendung hält. Erhöhe das Limit, das gegriffen hat, oder dumpe, während die Anwendung ruhig ist.
+- **Der Container ist pausiert oder startet neu.** Der Dump spricht mit dem laufenden Server. Startet der Container immer wieder neu, sagt sein eigenes Log, warum.
+- **Ein beschädigter Dump ließ sich nicht entfernen.** Einen Dump, den BombVault nicht zu Ende bringen konnte, löscht es wieder. Scheitert dieses Löschen, bleibt der Dump als beschädigt markiert in der Liste stehen und du kannst ihn dort löschen.
+
+## Ein Import schlug fehl
+
+Ein Import stoppt den Container, schiebt seinen Datenordner zur Seite und lässt das Image einen leeren an dessen Stelle anlegen. Scheitert ein Schritt vor dem eigentlichen Import, legt BombVault den alten Ordner von selbst zurück. Scheitert der Import, behält der Container den frischen Ordner, und der alte bleibt als `<Datenordner>.bombvault-before-import-<Zeitstempel>` daneben liegen; die Fehlermeldung des Laufs nennt den genauen Pfad.
+
+Von Hand zurücklegen: Container stoppen, den aktuellen Datenordner aus dem Weg umbenennen, den aufbewahrten Ordner auf den ursprünglichen Namen zurück umbenennen und den Container starten. Auf Unraid erledigt das der Dateimanager im Tab Shares.
+
 ## Der Container startet ständig neu oder wirkt ungesund
 
 BombVault meldet gesund/ungesund aus seinem eigenen `/api/health`. Ein Auto-Heal-Werkzeug (wie Autoheal) kann ihn automatisch neu starten, falls sich die Engine je verklemmt. Prüfe das Container-Log und den `/spike`-Bericht auf die zugrunde liegende Ursache.

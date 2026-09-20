@@ -43,6 +43,24 @@ Innan något stoppas eller tas bort kör återställningen en konfliktkontroll f
 
 Om age-kryptering är på (Inställningar) men ingen giltig mottagare är satt misslyckas en export med ett tydligt fel istället för att skriva klartext. Lägg till en giltig mottagare (en age-publik nyckel eller en SSH-publik nyckel), eller stäng av kryptering om du avser att exporten ska vara klartext. Se [Funktioner](features.md).
 
+## En databasdump misslyckades
+
+En misslyckad dump fäller aldrig säkerhetskopian omkring den; den bokförs som en egen misslyckad körning, och orsaken säger vad som ska åtgärdas.
+
+- **Inloggning nekad.** Dumpen loggar in med containerns egna lösenordsvariabler (`POSTGRES_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MYSQL_ROOT_PASSWORD` eller deras `_FILE`-varianter). Kontrollera dem på databascontainern. En `_FILE`-variabel som pekar på en hemlighet containerns egen användare inte får läsa misslyckas på samma sätt.
+- **Saknade rättigheter.** Med ett slumpmässigt root-lösenord kan dumpen bara logga in som appanvändaren och innehåller därmed bara den ena databasen, och MySQL 8.4 och senare kan neka den helt. Ge containern ett riktigt root-lösenord, eller stäng av dumpen för den.
+- **Systemtabellerna behöver uppgraderas.** MariaDB vägrar dumpas när dess systemtabeller kommer från en äldre version (fel 1558). Lägg till variabeln `MARIADB_AUTO_UPGRADE=1` och starta om containern, eller kör `mariadb-upgrade` inuti den en gång.
+- **Inget dumpverktyg.** En slimmad eller egenbyggd avbild utan `pg_dump`, `mysqldump` eller `mariadb-dump` går inte att dumpa. Använd den officiella avbilden, eller stäng av dumpen.
+- **En tidsgräns.** En dump får `DB_DUMP_MAX_HOURS` (6 som standard), säkerhetskopian omkring får `BACKUP_MAX_HOURS`, och en dump som slutar göra framsteg kapas efter `BACKUP_STALL_HOURS`. Det sista beror oftast på ett lås som applikationen håller. Höj den gräns som slog till, eller dumpa medan applikationen är lugn.
+- **Containern är pausad eller startar om.** Dumpen pratar med servern medan den kör. Om containern startar om gång på gång säger dess egen logg varför.
+- **En skadad dump gick inte att ta bort.** En dump som BombVault inte kunde slutföra raderas igen. När den raderingen misslyckas står dumpen kvar i listan märkt som skadad, och du kan ta bort den där.
+
+## En import misslyckades
+
+En import stoppar containern, flyttar undan dess datamapp och låter avbilden skapa en tom i stället. Misslyckas ett steg före själva importen läggs den gamla mappen tillbaka av sig själv. Misslyckas importen behåller containern den färska mappen, och den gamla ligger kvar bredvid som `<datamapp>.bombvault-before-import-<tidsstämpel>`; körningens felmeddelande namnger den exakta sökvägen.
+
+Så lägger du tillbaka den för hand: stoppa containern, byt namn på den nuvarande datamappen så att den är ur vägen, byt tillbaka den bevarade mappen till det ursprungliga namnet och starta containern. På Unraid gör filhanteraren under fliken Shares detta.
+
 ## Containern startar om hela tiden eller ser osund ut
 
 BombVault rapporterar frisk/osund från sin egen `/api/health`. Ett auto-heal-verktyg (som Autoheal) kan starta om den automatiskt om motorn någonsin skulle kärva. Kontrollera containerloggen och `/spike`-rapporten för den underliggande orsaken.

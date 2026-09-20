@@ -157,3 +157,27 @@ Det är HMAC-SHA256 över den fasta strängen `bombvault:restic-repo`, med de r�
     Ett arkiv som kommit hit via off-site-replikering skapades av maskinen som skickade det, med **dess** `APP_KEY`. Att härleda ur den mottagande maskinens nyckel ger ett lösenord som restic avvisar, vilket ser ut precis som ett trasigt arkiv utan att vara det. Det är den vanliga anledningen till att `restic check` på ett mottaget arkiv frågar efter lösenordet gång på gång.
 
 Eftersom återställningsdefinitioner ligger **inuti** varje repo (`<repo>/def`, `<repo>/vm-def`) är en kopierad repo-mapp helt självständig, så kitet plus repot är allt en bare-metal-återställning behöver.
+
+## Hämta tillbaka en databasdump {#database-dumps}
+
+En databasdump är en egen återställningspunkt i containerförrådet, med etiketten `dbdump:<container>` och den enda filen `/dbdump/<container>.sql`. BombVault listar, hämtar och importerar dem under **Säkerhetskopior**; nedan står samma steg med enbart restic, för dagen då BombVault inte finns till hands.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+Etiketterna `dbversion:` och `dbname:` på varje dump säger vilken serverversion den kommer från och vilka databaser den rymmer. En komplett fil slutar med `-- PostgreSQL database cluster dump complete` eller `-- Dump completed`.
+
+Importera den i en container med samma eller nyare version (PostgreSQL), eller samma huvudversion (MySQL och MariaDB), startad en gång med tom datamapp så att den initierar sig. Värden behöver ingen databasklient, containern har en:
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+För en enda databas ur en full dump tar MySQL och MariaDB `--one-database <name>` på klientkommandot. En PostgreSQL-dump har ett avsnitt per databas, vart och ett inlett med raden `\connect <name>`: kopiera det avsnittet till en egen fil och importera den med `-d <name>` efter att databasen skapats.
+
+!!! warning "En dump tagen som root bär med sig serverns användare"
+    En full MySQL- eller MariaDB-dump tagen som root innehåller systemdatabasen `mysql`, så en import ersätter den nya serverns konton, root-lösenordet inräknat, med dem från dumpen. På PostgreSQL är `role ... already exists` för användaren som containern själv skapade väntat och ofarligt.

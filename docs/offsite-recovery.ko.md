@@ -157,3 +157,27 @@ printf 'bombvault:restic-repo' \
     원격지 복제로 여기에 도착한 저장소는 그것을 보낸 기기가 **자신의** `APP_KEY`로 만든 것입니다. 받는 쪽 키로 파생하면 restic이 거부하는 비밀번호가 나오고, 그 모습은 손상된 저장소와 똑같지만 손상된 것이 아닙니다. 받은 저장소에서 `restic check`가 비밀번호를 계속 다시 묻는 흔한 이유가 바로 이것입니다.
 
 복구 정의는 각 저장소 **안**(`<repo>/def`, `<repo>/vm-def`)에 있으므로, 복사한 저장소 폴더는 완전히 자기 완결적입니다. 따라서 키트와 저장소만 있으면 베어메탈 복원에 필요한 모든 것이 갖춰집니다.
+
+## 데이터베이스 덤프 되찾기 {#database-dumps}
+
+데이터베이스 덤프는 컨테이너 저장소 안의 독립된 복원 지점으로, `dbdump:<container>` 태그를 달고 `/dbdump/<container>.sql` 파일 하나만 담고 있습니다. BombVault는 **백업**에서 이 덤프들을 나열하고 내려받고 가져옵니다. 아래는 restic만으로 하는 같은 절차로, BombVault가 없는 날을 위한 것입니다.
+
+```sh
+restic -r <repo> snapshots --tag dbdump:<container>
+restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+```
+
+각 덤프의 `dbversion:`과 `dbname:` 태그는 어느 서버 버전에서 왔고 어떤 데이터베이스를 담았는지 알려 줍니다. 온전한 파일은 `-- PostgreSQL database cluster dump complete` 또는 `-- Dump completed`로 끝납니다.
+
+같은 버전이거나 더 새로운 버전(PostgreSQL), 또는 같은 주 버전(MySQL과 MariaDB)의 컨테이너로 가져오세요. 그 컨테이너는 빈 데이터 폴더로 한 번 시작해 초기화를 마친 상태여야 합니다. 호스트에는 데이터베이스 클라이언트가 필요 없고, 컨테이너에 하나 있습니다.
+
+```sh
+docker exec -i <container> sh -c 'exec psql -X -U "${POSTGRES_USER:-postgres}" -d postgres' < <container>.sql
+docker exec -i <container> sh -c 'exec mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < <container>.sql
+docker exec -i <container> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < <container>.sql
+```
+
+전체 덤프에서 데이터베이스 하나만 넣으려면 MySQL과 MariaDB는 클라이언트 명령에 `--one-database <name>`을 받습니다. PostgreSQL 덤프는 데이터베이스마다 구획이 있고 각 구획은 `\connect <name>` 줄로 시작합니다. 그 구획을 별도 파일로 복사한 뒤, 데이터베이스를 만들고 `-d <name>`으로 가져오세요.
+
+!!! warning "root로 뜬 덤프는 서버의 사용자까지 데려옵니다"
+    root로 뜬 MySQL이나 MariaDB 전체 덤프에는 시스템 데이터베이스 `mysql`이 들어 있어, 가져오면 새 서버의 계정이 root 비밀번호를 포함해 덤프의 계정으로 바뀝니다. PostgreSQL에서는 컨테이너가 직접 만든 사용자에 대한 `role ... already exists` 메시지가 예상된 것이며 해롭지 않습니다.

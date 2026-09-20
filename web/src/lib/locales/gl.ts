@@ -436,8 +436,8 @@ const gl: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Retención de instantáneas",
   "settings.retentionHint": "Cantas copias conservar por elemento. Despois de cada copia, restic limpa instantáneas máis antigas segundo esta política. Todo a 0 = conservar todo (desactivado).",
-  "excludes.advisoryImmichDb": "Immich garda os álbums, as caras e as datas de cada foto nunha base de datos PostgreSQL que se executa nun contedor totalmente aparte, así que esta copia non a contén. Restaurar desde aquí devolve as imaxes sen nada diso. Dálle a esa base de datos a súa propia copia de seguranza, ou activa o volcado de base de datos integrado de Immich para que remate nun cartafol que esta copia si cubra.",
-  "excludes.advisoryNextcloudDb": "Nextcloud garda as contas, as comparticións e as etiquetas nunha base de datos que adoita executarse nun contedor á parte, así que esta copia non a contén. Os ficheiros volven, as comparticións non. Fai tamén unha copia de seguranza desa base de datos.",
+  "excludes.advisoryImmichDb": "Immich garda os álbums, as caras e as datas de cada foto nunha base de datos PostgreSQL que se executa nun contedor totalmente aparte, así que esta copia non a contén. Restaurar desde aquí devolve as imaxes sen nada diso. BombVault volca ese contedor de base de datos automaticamente cando se lle fai a copia, así que comproba que estea na túa planificación.",
+  "excludes.advisoryNextcloudDb": "Nextcloud garda as contas, as comparticións e as etiquetas nunha base de datos que adoita executarse nun contedor á parte, así que esta copia non a contén. Os ficheiros volven, as comparticións non. BombVault volca ese contedor de base de datos automaticamente cando se lle fai a copia, así que comproba que estea na túa planificación.",
   "rcloneRemote.heading": "Engadir un destino SMB ou WebDAV",
   "rcloneRemote.hint": "Accede a unha compartición de Windows ou Samba, ou a un servidor WebDAV como Nextcloud, SEN montar nada no host. Iso importa por algo máis que a comodidade: restic desaconsella gardar un repositorio nunha compartición CIFS montada, e esta vía evita a montaxe por completo. O contrasinal pásase a rclone, que o garda no seu propio formato, e nunca se almacena en claro. NFS non se ofrece aquí porque nin restic nin rclone o admiten: para NFS, monta a exportación en Unraid e apunta un camiño de copia cara a ela.",
   "rcloneRemote.type": "Tipo",
@@ -683,7 +683,7 @@ const gl: Partial<Translations> = {
 
   // Pre/post-backup hooks
   "hooks.title": "Ganchos de copia",
-  "hooks.hint": "As ordes execútanse dentro do contedor con sh -c. A orde previa execútase antes da copia; úsaa para preparar datos que deben copiarse, por exemplo volcando unha base de datos no appdata do contedor. Se a orde previa falla, a copia abórtase. A orde posterior execútase despois de que o contedor se inicie de novo e o seu erro só se rexistra. Os ganchos só executan ordes, non engaden cartafoles adicionais á copia.",
+  "hooks.hint": "As ordes execútanse dentro do contedor con sh -c. A orde previa execútase antes da copia; úsaa para preparar datos que deben copiarse, por exemplo volcando unha caché ao disco. As bases de datos recoñecidas vólcanse automaticamente e non precisan ningún gancho. Se a orde previa falla, a copia abórtase. A orde posterior execútase despois de que o contedor se inicie de novo e o seu erro só se rexistra. Os ganchos só executan ordes, non engaden cartafoles adicionais á copia.",
   "hooks.pre": "Orde previa á copia",
   "hooks.post": "Orde posterior á copia",
   "folders.title": "Cartafoles da copia",

@@ -436,8 +436,8 @@ const lt: Partial<Translations> = {
   // Retention
   "settings.retentionTitle": "Momentinių kopijų saugojimas",
   "settings.retentionHint": "Kiek atsarginių kopijų saugoti kiekvienam elementui. Po kiekvienos atsarginės kopijos restic pagal šią politiką išvalo senesnes momentines kopijas. Visi nuliai = saugoti viską (išjungta).",
-  "excludes.advisoryImmichDb": "Immich kiekvienos nuotraukos albumus, veidus ir datas laiko PostgreSQL duomenų bazėje. Ji veikia ne šiame, o atskirame konteineryje, todėl į šią atsarginę kopiją nepatenka. Atkūrus iš čia, nuotraukos sugrįš, bet be viso to. Pasidarykite atskirą šios duomenų bazės atsarginę kopiją arba įjunkite Immich integruotą duomenų bazės eksportą, kad jis atsidurtų aplanke, kurį ši atsarginė kopija apima.",
-  "excludes.advisoryNextcloudDb": "Nextcloud paskyras, bendrinimus ir žymes laiko duomenų bazėje, kuri paprastai veikia atskirame konteineryje, todėl į šią atsarginę kopiją nepatenka. Failai sugrįš, bendrinimai ne. Pasidarykite ir šios duomenų bazės atsarginę kopiją.",
+  "excludes.advisoryImmichDb": "Immich kiekvienos nuotraukos albumus, veidus ir datas laiko PostgreSQL duomenų bazėje. Ji veikia ne šiame, o atskirame konteineryje, todėl į šią atsarginę kopiją nepatenka. Atkūrus iš čia, nuotraukos sugrįš, bet be viso to. BombVault tos duomenų bazės konteinerį iškrauna automatiškai, kai jis kopijuojamas, tad patikrinkite, ar jis įtrauktas į jūsų tvarkaraštį.",
+  "excludes.advisoryNextcloudDb": "Nextcloud paskyras, bendrinimus ir žymes laiko duomenų bazėje, kuri paprastai veikia atskirame konteineryje, todėl į šią atsarginę kopiją nepatenka. Failai sugrįš, bendrinimai ne. BombVault tos duomenų bazės konteinerį iškrauna automatiškai, kai jis kopijuojamas, tad patikrinkite, ar jis įtrauktas į jūsų tvarkaraštį.",
   "rcloneRemote.heading": "Pridėti SMB arba WebDAV paskirtį",
   "rcloneRemote.hint": "Pasiekia Windows ar Samba bendrinamą aplanką arba WebDAV serverį, pvz., Nextcloud, NEPRIJUNGIANT jo prie pagrindinio kompiuterio. Tai svarbu ne tik dėl patogumo: restic nerekomenduoja laikyti saugyklos prijungtame CIFS bendrinamame aplanke, o šis būdas prijungimo visiškai išvengia. Slaptažodis perduodamas rclone, kuris jį išsaugo savo pavidalu, todėl jis niekada nelaikomas atviru tekstu. NFS čia nesiūlomas, nes jo nepalaiko nei restic, nei rclone: NFS atveju prijunkite eksportą prie Unraid ir nukreipkite į jį atsarginio kopijavimo kelią.",
   "rcloneRemote.type": "Tipas",
@@ -683,7 +683,7 @@ const lt: Partial<Translations> = {
 
   // Pre/post-backup hooks
   "hooks.title": "Atsarginio kopijavimo kabliukai",
-  "hooks.hint": "Komandos vykdomos konteinerio viduje su sh -c. Ankstesnė komanda vykdoma prieš atsarginę kopiją; naudokite ją duomenims, kuriuos reikia kopijuoti, paruošti, pvz., duomenų bazei iškrauti į konteinerio appdata. Jei ankstesnė komanda nepavyksta, atsarginis kopijavimas nutraukiamas. Vėlesnė komanda vykdoma iš naujo paleidus konteinerį, o jos nesėkmė tik registruojama žurnale. Kabliukai tik vykdo komandas, jie neprideda papildomų aplankų prie atsarginės kopijos.",
+  "hooks.hint": "Komandos vykdomos konteinerio viduje su sh -c. Ankstesnė komanda vykdoma prieš atsarginę kopiją; naudokite ją duomenims, kuriuos reikia kopijuoti, paruošti, pvz., podėliui įrašyti į diską. Atpažintos duomenų bazės iškraunamos automatiškai ir kabliuko joms nereikia. Jei ankstesnė komanda nepavyksta, atsarginis kopijavimas nutraukiamas. Vėlesnė komanda vykdoma iš naujo paleidus konteinerį, o jos nesėkmė tik registruojama žurnale. Kabliukai tik vykdo komandas, jie neprideda papildomų aplankų prie atsarginės kopijos.",
   "hooks.pre": "Komanda prieš atsarginę kopiją",
   "hooks.post": "Komanda po atsarginės kopijos",
   "folders.title": "Atsarginio kopijavimo aplankai",
