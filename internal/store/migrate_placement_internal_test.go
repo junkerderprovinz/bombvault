@@ -453,6 +453,29 @@ func TestItemsRepoChosenDoesNotRunAgainUnderANewNumber(t *testing.T) {
 	}
 }
 
+func TestItemsRepoChosenGuardNeedsAllThreeTables(t *testing.T) {
+	db := OpenMem(t)
+	migrateThrough(t, db, 114)
+	guard := migrationNamed(t, "items_repo_chosen").alreadySatisfied
+	if probeOnce(t, db, guard) {
+		t.Fatal("a v114 database already satisfies items_repo_chosen")
+	}
+	if _, err := db.Exec(`ALTER TABLE targets ADD COLUMN repo_chosen INTEGER NOT NULL DEFAULT 1`); err != nil {
+		t.Fatal(err)
+	}
+	if probeOnce(t, db, guard) {
+		t.Fatal("the guard is satisfied with the column on targets alone")
+	}
+	if _, err := db.Exec(`
+ALTER TABLE vms ADD COLUMN repo_chosen INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE file_sets ADD COLUMN repo_chosen INTEGER NOT NULL DEFAULT 1;`); err != nil {
+		t.Fatal(err)
+	}
+	if !probeOnce(t, db, guard) {
+		t.Fatal("the guard is not satisfied once every table has the column")
+	}
+}
+
 func TestDatabaseBornAtIsTheFirstRecordedMigration(t *testing.T) {
 	db := OpenMem(t)
 	if err := Migrate(db); err != nil {
