@@ -243,6 +243,82 @@ func scanPlacementDefault(s scanner) (PlacementDefault, error) {
 	return d, nil
 }
 
+// PlacementImport is the placementDefaults and copyRules blocks of a settings file.
+// A block that is absent leaves its table alone; a present one replaces it, empty or not.
+type PlacementImport struct {
+	Defaults    []PlacementDefault
+	HasDefaults bool
+	Rules       []CopyRule
+	HasRules    bool
+}
+
+// ImportPlacement replaces defaults and rules from a settings file in one
+// transaction. A paused domain keeps its pause and its row: only a confirmation
+// may end it, because its exclusions were lost with the old configuration.
+func (r *Repo) ImportPlacement(in PlacementImport) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("ImportPlacement: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
+	now := time.Now().Unix()
+	if in.HasDefaults {
+		paused := map[string]bool{}
+		rows, err := tx.Query(`SELECT domain FROM placement_defaults WHERE confirmed_at = 0`)
+		if err != nil {
+			return fmt.Errorf("ImportPlacement paused: %w", err)
+		}
+		for rows.Next() {
+			var domain string
+			if err := rows.Scan(&domain); err != nil {
+				rows.Close() //nolint:errcheck,gosec // the scan error takes priority
+				return fmt.Errorf("ImportPlacement paused: %w", err)
+			}
+			paused[domain] = true
+		}
+		if err := rows.Close(); err != nil {
+			return fmt.Errorf("ImportPlacement paused: %w", err)
+		}
+		if _, err := tx.Exec(`DELETE FROM placement_defaults WHERE confirmed_at <> 0`); err != nil {
+			return fmt.Errorf("ImportPlacement defaults: %w", err)
+		}
+		for _, d := range in.Defaults {
+			if !slices.Contains(PlacementDomains, d.Domain) {
+				return fmt.Errorf("ImportPlacement: unknown domain %q", d.Domain)
+			}
+			skip, err := encodeSkip(d.Skip)
+			if err != nil {
+				return fmt.Errorf("ImportPlacement %s: %w", d.Domain, err)
+			}
+			if paused[d.Domain] {
+				_, err = tx.Exec(`UPDATE placement_defaults SET home = ?, skip = ?, updated_at = ? WHERE domain = ?`, d.Home, skip, now, d.Domain)
+			} else {
+				_, err = tx.Exec(`INSERT INTO placement_defaults (domain, home, skip, confirmed_at, updated_at) VALUES (?, ?, ?, ?, ?)`, d.Domain, d.Home, skip, now, now)
+			}
+			if err != nil {
+				return fmt.Errorf("ImportPlacement %s: %w", d.Domain, err)
+			}
+		}
+	}
+	if in.HasRules {
+		if _, err := tx.Exec(`DELETE FROM offsite_copy_rules`); err != nil {
+			return fmt.Errorf("ImportPlacement rules: %w", err)
+		}
+		for _, rule := range in.Rules {
+			if err := checkRuleIdentity(rule.Domain, rule.Identity); err != nil {
+				return fmt.Errorf("ImportPlacement %s: %w", rule.Identity, err)
+			}
+			if err := setCopyRuleTx(tx, rule.Domain, rule.Identity, rule.Skip, now); err != nil {
+				return fmt.Errorf("ImportPlacement %s: %w", rule.Identity, err)
+			}
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("ImportPlacement commit: %w", err)
+	}
+	return nil
+}
+
 func checkPlacementDomain(domain string) error {
 	if !slices.Contains(PlacementDomains, domain) {
 		return fmt.Errorf("%q has no placement", domain)
