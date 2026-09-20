@@ -473,7 +473,11 @@ func (s *Service) createFileSet(fs store.FileSet, choice *copiesChoice) (store.F
 		if err != nil {
 			return store.FileSet{}, err
 		}
-		if err := s.checkCopies(settings, p, named, fs.Repo, *copies); err != nil {
+		// Judged by where the set's backups actually land, not by fs.Repo alone:
+		// a set created open goes to the domain default's repository, and that
+		// is the repository its copy rule has to answer to.
+		repoID, _ := p.effectiveHome(store.HomeState{Repo: fs.Repo, Choice: fs.RepoChosen})
+		if err := s.checkCopies(settings, p, named, repoID, *copies); err != nil {
 			return store.FileSet{}, err
 		}
 	}

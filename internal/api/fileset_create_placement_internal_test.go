@@ -67,3 +67,17 @@ func TestAFileSetOnARemoteRepositoryTakesNoCopies(t *testing.T) {
 		t.Fatal("the set was created although its copies were refused")
 	}
 }
+
+func TestAFileSetOpenUnderARemoteDefaultTakesNoCopies(t *testing.T) {
+	f := newPlacementFixture(t)
+	box := f.namedRepo("Storagebox", "sftp:u1@box.example:/bv")
+	f.target("files", "B2", "b2:bucket/files")
+	f.setDefault("files", box.ID)
+	res := createDocs(t, f, map[string]any{"copies": map[string]any{"skip": []string{}}})
+	if res["code"] != "copies-not-allowed" {
+		t.Fatalf("POST = %v, want copies-not-allowed", res)
+	}
+	if _, err := f.st.GetFileSetByName("docs"); err == nil {
+		t.Fatal("the set was created although its copies were refused")
+	}
+}
