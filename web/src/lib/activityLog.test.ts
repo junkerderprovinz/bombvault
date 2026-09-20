@@ -601,3 +601,134 @@ describe("domainLabel", () => {
     }
   });
 });
+
+// A dump is its own run against the container's target, so without lines of its
+// own the log would print the raw kind through lineOther.
+describe("dbdump runs", () => {
+  const dump = (over: Partial<Run>): Run =>
+    makeRun({ id: "d1", kind: "dbdump", target: "immich_postgres", bytes: 5_242_880, ...over });
+
+  it("reads a finished dump as a dump, not as a backup", () => {
+    const [line] = buildLogLines([dump({})], {}, [], resolveName, 2_000_000);
+    expect(line.status).toBe("success");
+    expect(line.kind).toBe("dbdump");
+    expect(line.text).toContain("activityLog.lineDbDumpSuccess");
+    expect(line.text).toContain("name=immich_postgres");
+    expect(line.text).toContain("bytes=5.0 MB");
+    expect(line.text).toContain("duration=30s");
+    expect(line.text).not.toContain("lineOther");
+  });
+
+  it("keeps a success note on the line instead of dropping it", () => {
+    const [line] = buildLogLines(
+      [dump({ error: "database dump covers one database only" })],
+      {},
+      [],
+      resolveName,
+      2_000_000
+    );
+    expect(line.text).toContain("activityLog.lineDbDumpNote");
+    expect(line.text).toContain("note=runReason.dbdumpOneDatabase");
+  });
+
+  it("translates a failure and keeps the tool's own message behind it", () => {
+    const [line] = buildLogLines(
+      [dump({ status: "failed", error: "database dump failed: the database refused the login: FATAL no" })],
+      {},
+      [],
+      resolveName,
+      2_000_000
+    );
+    expect(line.status).toBe("failed");
+    expect(line.text).toContain("activityLog.lineDbDumpFailed");
+    expect(line.text).toContain("error=runReason.dbdumpAuth: FATAL no");
+  });
+
+  // A cancelled dump is recorded as a failure carrying the cancellation as its
+  // reason, so the reason decides how the line reads, not the status.
+  it("says a cancelled dump was cancelled rather than that it failed", () => {
+    const [line] = buildLogLines(
+      [dump({ status: "failed", error: "cancelled by the user" })],
+      {},
+      [],
+      resolveName,
+      2_000_000
+    );
+    expect(line.text).toContain("activityLog.lineDbDumpCancelled");
+    expect(line.text).not.toContain("lineDbDumpFailed");
+  });
+
+  it("has its own lines for a saved dump and an import", () => {
+    const runs = [
+      dump({ id: "s1", kind: "dbdumpsave" }),
+      dump({ id: "s2", kind: "dbdumpsave", status: "failed", error: "no space left on device" }),
+      dump({ id: "s3", kind: "dbdumpsave", status: "cancelled" }),
+      dump({ id: "i1", kind: "dbimport" }),
+      dump({ id: "i2", kind: "dbimport", error: "database imported with errors" }),
+      dump({ id: "i3", kind: "dbimport", status: "failed", error: "database import failed: the import tool reported an error" }),
+    ];
+    const texts = buildLogLines(runs, {}, [], resolveName, 2_000_000).map((l) => l.text);
+    expect(texts[0]).toContain("activityLog.lineDbDumpSaved");
+    expect(texts[1]).toContain("activityLog.lineDbDumpSaveFailed");
+    expect(texts[2]).toContain("activityLog.lineDbDumpSaveCancelled");
+    expect(texts[3]).toContain("activityLog.lineDbImported");
+    expect(texts[4]).toContain("activityLog.lineDbImportedErrors");
+    expect(texts[4]).toContain("note=runReason.dbimportErrors");
+    expect(texts[5]).toContain("activityLog.lineDbImportFailed");
+    expect(texts.join(" ")).not.toContain("lineOther");
+  });
+
+  it("counts the dumped bytes on the live line, where there is no percentage", () => {
+    const progress: ProgressMap = {
+      "container:immich_postgres": {
+        phase: "backup",
+        percent: 0,
+        active: true,
+        lastSeen: 5_000_000,
+        stage: "dbdump",
+        bytes: 1_048_576,
+      },
+    };
+    const [line] = buildLogLines([], progress, [], resolveName, 5_000_000);
+    expect(line.text).toContain("activityLog.lineDumpingItem");
+    expect(line.text).toContain("bytes=1.0 MB");
+    expect(line.text).not.toContain("percent=");
+    expect(line.kind).toBe("dbdump");
+  });
+
+  it("names the save and the import while they run", () => {
+    const at = (stage: "dbdumpsave" | "dbimport"): ProgressMap => ({
+      "container:immich_postgres": { phase: "restore", percent: 0, active: true, lastSeen: 5_000_000, stage, bytes: 512 },
+    });
+    expect(buildLogLines([], at("dbdumpsave"), [], resolveName, 5_000_000)[0].text).toContain(
+      "activityLog.lineSavingDumpItem"
+    );
+    expect(buildLogLines([], at("dbimport"), [], resolveName, 5_000_000)[0].text).toContain(
+      "activityLog.lineImportingItem"
+    );
+  });
+
+  it("keeps only dump lines under the dump filter", () => {
+    const lines = buildLogLines(
+      [dump({}), makeRun({ id: "b1" }), dump({ id: "s1", kind: "dbdumpsave" })],
+      {},
+      [],
+      resolveName,
+      2_000_000
+    );
+    const filtered = filterLogLines(lines, { domain: "all", kind: "dbdump", text: "" });
+    expect(filtered.map((l) => l.id)).toEqual(["run:d1"]);
+  });
+
+  it("shows a save and an import under the restore filter, where a user looks for them", () => {
+    const lines = buildLogLines(
+      [dump({ id: "s1", kind: "dbdumpsave" }), dump({ id: "i1", kind: "dbimport" })],
+      {},
+      [],
+      resolveName,
+      2_000_000
+    );
+    const filtered = filterLogLines(lines, { domain: "all", kind: "restore", text: "" });
+    expect(filtered.map((l) => l.id)).toEqual(["run:s1", "run:i1"]);
+  });
+});

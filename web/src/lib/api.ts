@@ -65,6 +65,57 @@ export interface Container {
   aliases?: string[];
   /** The former names of this entry that a live container carries again, sorted. */
   aliasConflicts?: string[];
+  /** The engine BombVault would dump, empty when this is not a database. */
+  dbEngine: DbEngine;
+  /** The guess for a container that only looks like a database (tier 2). */
+  dbSuggestedEngine: DbEngine;
+  /** How the container was recognised: "" (not a database), "curated" (a known
+   *  image), "lookalike" (looks like one) or "label" (switched on by label). */
+  dbTier: "" | "curated" | "lookalike" | "label";
+  dbDumpOff: boolean;
+  /** The engine a lookalike was confirmed as; "" means the dump is off. */
+  dbDumpEngine: DbEngine;
+  /** The bombvault.dbdump=false label, which wins over the toggle. */
+  dbDumpLabelOff: boolean;
+  /** The Settings switch for every container. The Containers page loads no
+   *  settings, so each row carries it. */
+  dbDumpsGlobalOff: boolean;
+  dbDataCoverage: DbDataCoverage;
+  /** The container's pre-backup hook already runs a dump tool. */
+  dbDumpHookOverlap: boolean;
+  lastDbDump?: LastDBDump;
+}
+
+/** The engines BombVault can dump; "" for a container that is not a database. */
+export type DbEngine = "" | "postgres" | "mysql" | "mariadb";
+
+/** What the files backup of a database container is worth: taken while it was
+ *  stopped, copied while the server ran, not taken at all, or undetermined. */
+export type DbDataCoverage = "" | "stopped" | "live" | "none" | "unknown";
+
+/** One database dump from GET /api/containers/{name}/dbdumps */
+export interface DBDumpView {
+  id: string;
+  time: string;
+  engine: DbEngine;
+  image: string;
+  version: string;
+  databases: string[];
+  bytes: number;
+  /** Left behind by a failed dump: it can be deleted and nothing else. */
+  damaged: boolean;
+  /** The volume snapshot taken in the same backup, matched against a
+   *  snapshot's `original` before its `id` so off-site copies pair too. */
+  pairedSnapshotId?: string;
+}
+
+/** The container's most recent dump attempt, as its card shows it. `error`
+ *  carries the recorded run reason, which may be a success note. */
+export interface LastDBDump {
+  at: number;
+  status: "success" | "failed" | "cancelled";
+  bytes: number;
+  error: string;
 }
 
 export interface ListContainersResponse {
@@ -91,6 +142,9 @@ export interface Snapshot {
   paths: string[];
   tags: string[];
   hostname: string;
+  /** On an off-site source, the id this snapshot was copied from. A copy gets a
+   *  new id, so anything that refers to a local snapshot matches this first. */
+  original?: string;
 }
 
 export interface ListSnapshotsResponse {
@@ -133,6 +187,9 @@ export interface Settings {
   fleetEnabled: boolean;
   /** Fetching another instance's backups into this box's own repository (#227). */
   pullEnabled: boolean;
+  /** Dumping recognised database containers before their backup, for every
+   *  container at once. A container can still be switched off on its card. */
+  dbDumpsEnabled: boolean;
   containersPath: string;
   vmsPath: string;
   flashPath: string;
@@ -1140,6 +1197,84 @@ export function setUpdateAfterBackup(name: string, updateAfterBackup: boolean): 
     method: "PATCH",
     body: JSON.stringify({ updateAfterBackup }),
   });
+}
+
+/** PATCH /api/containers/{name}: switch the database dump off or back on. */
+export function setDbDumpOff(name: string, off: boolean): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ dbDumpOff: off }),
+  });
+}
+
+/** PATCH /api/containers/{name}: confirm what a lookalike container runs, or ""
+ *  to leave it undumped. */
+export function setDbDumpEngine(name: string, engine: DbEngine): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ dbDumpEngine: engine }),
+  });
+}
+
+/** GET /api/containers/{name}/dbdumps: the container's database dumps. */
+export function listDbDumps(
+  name: string,
+  source?: string
+): Promise<OkEnvelope & { dumps?: DBDumpView[] }> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/dbdumps${srcParam(source)}`);
+}
+
+/**
+ * GET /api/containers/{name}/dbdumps/{id}/download streams one dump to the
+ * browser. Used as a plain <a> link, like the flash download: the GET carries
+ * the session cookie, and the server's Content-Disposition names the file, so a
+ * sealed dump arrives as .sql.age.
+ */
+export function dbDumpDownloadURL(name: string, id: string, source?: string, gz?: boolean): string {
+  const path = `/api/containers/${encodeURIComponent(name)}/dbdumps/${encodeURIComponent(id)}/download`;
+  return `${path}${srcParam(source)}${gz ? (source ? "&" : "?") + "gz=1" : ""}`;
+}
+
+/**
+ * The same endpoint with check=1, which answers the envelope without streaming.
+ * A refusal can then be shown as a message instead of a failed download.
+ */
+export function checkDbDumpDownload(name: string, id: string, source?: string): Promise<OkEnvelope> {
+  const path = `/api/containers/${encodeURIComponent(name)}/dbdumps/${encodeURIComponent(id)}/download`;
+  return fetchJSON(`${path}${srcParam(source)}${source ? "&" : "?"}check=1`);
+}
+
+/**
+ * POST /api/containers/{name}/dbdumps/{id}/save writes a dump as a file into a
+ * folder on the server. ASYNC, like the other restore-to jobs: the ack carries
+ * the resolved folder and the work runs detached.
+ */
+export function saveDbDumpTo(
+  name: string,
+  id: string,
+  targetPath: string,
+  gz: boolean,
+  source?: string
+): Promise<RestoreToResponse> {
+  const path = `/api/containers/${encodeURIComponent(name)}/dbdumps/${encodeURIComponent(id)}/save`;
+  return fetchJSON(`${path}${srcParam(source)}`, {
+    method: "POST",
+    body: JSON.stringify({ targetPath, gz }),
+  });
+}
+
+/**
+ * POST /api/containers/{name}/dbdumps/{id}/import imports a dump into a freshly
+ * started, empty database. ASYNC. A refusal answers `code` with the reason id
+ * the page turns into a sentence, and a version mismatch the two versions.
+ */
+export function importDbDump(
+  name: string,
+  id: string,
+  source?: string
+): Promise<OkEnvelope & { started?: boolean; server?: string; dump?: string }> {
+  const path = `/api/containers/${encodeURIComponent(name)}/dbdumps/${encodeURIComponent(id)}/import`;
+  return fetchJSON(`${path}${srcParam(source)}`, { method: "POST" });
 }
 
 /** PATCH /api/containers/{name} — set this container's restic --exclude patterns. */
