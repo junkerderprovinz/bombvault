@@ -94,11 +94,12 @@ func TestHomeChangeIsRefusedOnceAnItemHasBackups(t *testing.T) {
 	}
 }
 
-// TestPinningAnOpenItemToTheDomainPathIsRefusedWhenItHasBackups pins that the
-// has-backups guard judges an open item by where its default actually sends
-// it, not by its row's raw (always empty) repo field: a raw compare would see
-// two empty strings and wave the pin through.
-func TestPinningAnOpenItemToTheDomainPathIsRefusedWhenItHasBackups(t *testing.T) {
+// TestPinningAnOpenItemToTheDomainPathIsAllowedWhenThatIsWhereItsBackupsAre
+// pins that the has-backups guard judges "nothing moves" by the row's raw
+// repo field, the same place itemBackups looks for an open item: pinning it
+// to the domain path it is already open on moves nothing, so the guard lets
+// it through despite the item's history.
+func TestPinningAnOpenItemToTheDomainPathIsAllowedWhenThatIsWhereItsBackupsAre(t *testing.T) {
 	f := newPlacementFixture(t)
 	nas := f.namedRepo("NAS", "nas")
 	f.setDefault("containers", nas.ID)
@@ -109,19 +110,19 @@ func TestPinningAnOpenItemToTheDomainPathIsRefusedWhenItHasBackups(t *testing.T)
 	}
 	f.backupRun(tg.ID, 100)
 	res := f.do(http.MethodPatch, "/api/containers/nginx", map[string]any{"home": map[string]any{"repo": ""}})
-	if res["code"] != "has-backups" {
-		t.Fatalf("PATCH = %v, want has-backups", res)
+	if res["ok"] != true {
+		t.Fatalf("PATCH = %v, want it allowed since nothing moves", res)
 	}
-	if got := f.home(store.ItemRef{Domain: "containers", Key: "nginx"}); got.Choice != store.RepoOpen {
-		t.Fatalf("home = %+v, want it left open", got)
+	if got := f.home(store.ItemRef{Domain: "containers", Key: "nginx"}); got.Repo != "" || got.Choice != store.RepoChosen {
+		t.Fatalf("home = %+v, want the domain path chosen", got)
 	}
 }
 
-// TestPinningAnOpenItemToItsEffectiveHomeIsAllowedEvenWithBackups is the
-// mirror of the above: pinning the item to the repository its default already
-// sends it to moves nothing, so the guard must let it through despite the
-// item's history.
-func TestPinningAnOpenItemToItsEffectiveHomeIsAllowedEvenWithBackups(t *testing.T) {
+// TestPinningAnOpenItemToTheDefaultIsRefusedWhenItsBackupsAreAtTheDomainPath
+// is the mirror of the above: the default names a repository the item has
+// never actually written to, so pinning it there strands the history that
+// itemBackups finds at the domain path, and the guard must refuse it.
+func TestPinningAnOpenItemToTheDefaultIsRefusedWhenItsBackupsAreAtTheDomainPath(t *testing.T) {
 	f := newPlacementFixture(t)
 	nas := f.namedRepo("NAS", "nas")
 	f.setDefault("containers", nas.ID)
@@ -132,11 +133,38 @@ func TestPinningAnOpenItemToItsEffectiveHomeIsAllowedEvenWithBackups(t *testing.
 	}
 	f.backupRun(tg.ID, 100)
 	res := f.do(http.MethodPatch, "/api/containers/nginx", map[string]any{"home": map[string]any{"repo": nas.ID}})
-	if res["ok"] != true {
-		t.Fatalf("PATCH = %v, want it allowed since nothing moves", res)
+	if res["code"] != "has-backups" {
+		t.Fatalf("PATCH = %v, want has-backups", res)
 	}
-	if got := f.home(store.ItemRef{Domain: "containers", Key: "nginx"}); got.Repo != nas.ID || got.Choice != store.RepoChosen {
-		t.Fatalf("home = %+v, want NAS chosen", got)
+	if got := f.home(store.ItemRef{Domain: "containers", Key: "nginx"}); got.Choice != store.RepoOpen {
+		t.Fatalf("home = %+v, want it left open", got)
+	}
+}
+
+// TestAForgottenAndReinstalledContainerKeepsItsHistoryOverTheDefault is the
+// scenario the guard exists for: a container backed up before any default
+// existed, was then removed and reinstalled (a fresh, open row), and only
+// afterwards got a default pointing at a named repository it never wrote to.
+// Its snapshots still sit at the domain path, found here by listing rather
+// than a recorded run, and the guard must judge by that, not by the default.
+func TestAForgottenAndReinstalledContainerKeepsItsHistoryOverTheDefault(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.hold(f.domainPath("containers"), snap("aaaa0001", 100, "container:nginx"))
+	f.setDefault("containers", nas.ID)
+	f.openContainer("nginx")
+
+	toDefault := f.do(http.MethodPatch, "/api/containers/nginx", map[string]any{"home": map[string]any{"repo": nas.ID}})
+	if toDefault["code"] != "has-backups" {
+		t.Fatalf("pin to the default = %v, want has-backups", toDefault)
+	}
+
+	toHistory := f.do(http.MethodPatch, "/api/containers/nginx", map[string]any{"home": map[string]any{"repo": ""}})
+	if toHistory["ok"] != true {
+		t.Fatalf("pin to the domain path = %v, want it allowed", toHistory)
+	}
+	if got := f.home(store.ItemRef{Domain: "containers", Key: "nginx"}); got.Repo != "" || got.Choice != store.RepoChosen {
+		t.Fatalf("home = %+v, want the domain path chosen", got)
 	}
 }
 
