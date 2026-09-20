@@ -235,6 +235,30 @@ func TestCopiesOnAnOpenItemAreCheckedAgainstItsEffectiveHome(t *testing.T) {
 	}
 }
 
+// TestHomeWriteIsRefusedOverARowChangedMeanwhile pins that the final write
+// compares against the same read checkHomeChange judged against: the hook
+// here mutates the row from another write between that read and the write
+// below it, exactly the window store.WritePlacement's expect argument closes.
+func TestHomeWriteIsRefusedOverARowChangedMeanwhile(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	other := f.namedRepo("Backup2", "nas2")
+	f.openContainer("nginx")
+	item := store.ItemRef{Domain: "containers", Key: "nginx"}
+	f.eng.onSnapshots = func() {
+		if _, err := f.st.WritePlacement(item, &store.HomeWrite{Repo: other.ID, Choice: store.RepoChosen}, nil, nil); err != nil {
+			t.Fatal(err)
+		}
+	}
+	res := f.do(http.MethodPatch, "/api/containers/nginx", map[string]any{"home": map[string]any{"repo": nas.ID}})
+	if res["code"] != "stale" {
+		t.Fatalf("PATCH = %v, want stale", res)
+	}
+	if got := f.home(item); got.Repo != other.ID {
+		t.Fatalf("home = %+v, want the concurrent write left standing", got)
+	}
+}
+
 // TestALaterFieldFailingLeavesHomeAndTheRuleUntouched pins that a PATCH writes
 // placement no earlier than every other field in the same request: the
 // schedule cadence here is invalid and refuses the request after home and

@@ -90,15 +90,12 @@ func TestAnItemOnARemoteRepositoryTakesNoCopies(t *testing.T) {
 	box := f.namedRepo("Storagebox", "sftp:u@box:/bv")
 	f.container("nginx", box.ID)
 
-	res := f.do(http.MethodPatch, "/api/containers/nginx", map[string]any{
-		"copies":            map[string]any{"skip": []string{}},
-		"includeInSchedule": true,
-	})
+	res := f.do(http.MethodPatch, "/api/containers/nginx", map[string]any{"copies": map[string]any{"skip": []string{}}})
 	if res["code"] != "copies-not-allowed" {
 		t.Fatalf("PATCH = %v, want copies-not-allowed", res)
 	}
-	if tg, err := f.st.GetTargetByContainer("nginx"); err != nil || tg.IncludeInSchedule {
-		t.Fatalf("the refused PATCH changed the schedule flag: %+v, %v", tg, err)
+	if _, found := ruleOf(t, f, "containers", "container:nginx"); found {
+		t.Fatal("a refused PATCH wrote a rule")
 	}
 	if res := f.do(http.MethodPatch, "/api/containers/nginx", map[string]any{"copies": map[string]any{"skip": []string{store.SkipAll}}}); res["ok"] != true {
 		t.Fatalf("Local on a remote repository = %v, want ok", res)
