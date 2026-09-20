@@ -169,16 +169,16 @@ func (s *Service) copySources(ctx context.Context, domain, dest string, mode res
 			continue
 		}
 		var err error
+		var landed []restic.Snapshot
 		if c.whole {
 			if err = s.engine.Copy(withIndexOffset(copyCtx, done), dest, c.src.Loc, nil, lim, mode); err == nil {
-				out.landed = append(out.landed, c.send...)
+				landed = c.send
 			}
 		} else {
-			var landed []restic.Snapshot
 			landed, err = s.copyInChunks(copyCtx, dest, c.src.Loc, c.send, lim, mode, done)
-			out.landed = append(out.landed, landed...)
 		}
-		done += len(c.send)
+		out.landed = append(out.landed, landed...)
+		done += len(landed)
 		if err != nil {
 			log.Printf("api: offsite %s: copying %s failed (continuing with the other sources): %v", domain, shortRepoName(c.src.Loc), scrubError(err)) //nolint:gosec // G706: domain is a fixed literal, the name is shortened and the error scrubbed here
 			out.errs = append(out.errs, fmt.Errorf("copying %s: %w", shortRepoName(c.src.Loc), err))

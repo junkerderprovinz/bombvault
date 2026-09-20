@@ -41,6 +41,30 @@ func namedScene(t *testing.T) (*placementFixture, string) {
 	return f, f.root + "/nas"
 }
 
+// TestASharedSnapshotIdentityDoesNotSuppressTheNamedSourcesCopy pins that a
+// source's own send narrows a later source of the same pass only when that
+// send is itself narrowed. The domain path is copied whole (restic decides
+// what it takes), so its own pending estimate must not count against a named
+// repository that happens to hold a snapshot of the same id: that named
+// source still has to hand its id to restic.
+func TestASharedSnapshotIdentityDoesNotSuppressTheNamedSourcesCopy(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("containers", "B2", "b2:bucket:containers")
+	nas := f.namedRepo("NAS", "nas")
+	f.container("nginx", nas.ID)
+	f.replicated("containers")
+	f.hold(f.domainPath("containers"), snap("shared1", 100, "container:plex"))
+	f.hold(f.root+"/nas", snap("shared1", 100, "container:nginx"))
+
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatal(err)
+	}
+	i := slices.IndexFunc(f.eng.copies, func(c copyCall) bool { return c.Src == f.root+"/nas" })
+	if i < 0 || !slices.Equal(f.eng.copies[i].IDs, []string{"shared1"}) {
+		t.Fatalf("copies = %+v, want the named source to still hand its id to restic", f.eng.copies)
+	}
+}
+
 func TestWithoutRulesTheCopyCallsStayAsTheyWere(t *testing.T) {
 	t.Run("run", func(t *testing.T) {
 		f, nas := namedScene(t)
