@@ -390,6 +390,12 @@ func (r replicationPass) placeSources(domain string, sources []domainRepoRef, sk
 	out := make([]domainRepoRef, 0, len(sources))
 	for _, src := range sources {
 		switch {
+		case !src.Own && src.Named.ID == "":
+			// Neither the domain path nor a known named repository: refFor's
+			// answer for a location it does not recognise, which is the
+			// post-backup hook's own source. It just received the write the
+			// hook exists to copy, so the rules never get a say in reading it.
+			out = append(out, src)
 		case copying[repoKey(src)]:
 			out = append(out, src)
 		case r.stillHeld(src):

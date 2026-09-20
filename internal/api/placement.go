@@ -60,8 +60,9 @@ func placementFail(w http.ResponseWriter, err error, extra map[string]any) {
 	writeJSON(w, http.StatusOK, env)
 }
 
-// validPlacementDomain reports whether domain takes a placement, the check an
-// item route runs before it touches the store.
+// validPlacementDomain reports whether domain is one of the three that carry
+// copy rules and named repositories (containers, vms, files); flash and config
+// replicate a single repository and never reach this.
 func validPlacementDomain(domain string) bool {
 	return slices.Contains(store.PlacementDomains, domain)
 }

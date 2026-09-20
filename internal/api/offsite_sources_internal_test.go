@@ -139,3 +139,55 @@ func TestADomainPathHoldingOnlyProjectFoldersIsACountedSource(t *testing.T) {
 		t.Fatalf("B2 holds %+v, want the newest project folder only: the domain path answered for it", held)
 	}
 }
+
+func TestASingleRepositoryDomainKeepsItsNeverCreatedSourceForRestic(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := os.RemoveAll(f.domainPath("files")); err != nil {
+		t.Fatal(err)
+	}
+
+	sources, skipped := f.svc.offsiteReplicationSources(settingsOf(t, f.svc), "files")
+
+	if len(sources) != 1 || !sources[0].Own {
+		t.Fatalf("sources = %+v, want the domain's own repository kept so the caller still opens it and hears restic's own error", sources)
+	}
+	if len(skipped) != 0 {
+		t.Fatalf("skipped = %+v, want none: a single missing repository is reported by the copy attempt itself, not noted here", skipped)
+	}
+}
+
+func TestADomainWithAMissingNamedRepositoryIdlesQuietly(t *testing.T) {
+	f := newPlacementFixture(t)
+	cold := f.namedRepo("Cold", "cold")
+	f.container("nginx", cold.ID)
+	if err := os.RemoveAll(f.root + "/cold"); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.RemoveAll(f.domainPath("containers")); err != nil {
+		t.Fatal(err)
+	}
+
+	sources, skipped := f.svc.offsiteReplicationSources(settingsOf(t, f.svc), "containers")
+
+	if len(sources) != 0 {
+		t.Fatalf("sources = %+v, want none: nothing this pass could reach exists yet", sources)
+	}
+	if i := slices.IndexFunc(skipped, func(s repoSkip) bool { return s.Note && s.Name == "containers" }); i < 0 {
+		t.Fatalf("skipped = %+v, want a quiet note that nothing in containers is copied off site", skipped)
+	}
+}
+
+func TestTheHookCopiesFromARepositoryItDoesNotRecognise(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("files", "B2", "b2:bucket:files")
+	f.listing("files", b2.ID, 1000)
+	f.rule("files", "fileset:Ghost", store.SkipAll)
+	orphan := f.root + "/orphan"
+	f.hold(orphan, snap("x1", 100, "fileset:Docs"))
+
+	f.svc.replicateOffsite(context.Background(), "files", settingsOf(t, f.svc), orphan, "")
+
+	if len(f.eng.copies) != 1 || f.eng.copies[0].Src != orphan {
+		t.Fatalf("copies = %+v, want the hook's own source copied even though it names no domain path and no named repository", f.eng.copies)
+	}
+}

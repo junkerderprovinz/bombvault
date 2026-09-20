@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -7354,6 +7355,10 @@ func (s *Service) offsiteReplicationSources(settings store.Settings, domain stri
 		}
 		repos = []domainRepoRef{ownRef(own)}
 	}
+	// Whether a named repository was among the candidates at all, before any of
+	// them is checked for presence: it decides what an all-missing pass means
+	// below.
+	namedCandidate := slices.ContainsFunc(repos, func(r domainRepoRef) bool { return !r.Own })
 	out := make([]domainRepoRef, 0, len(repos))
 	for _, r := range repos {
 		// A remote NAMED repository is left out. The domain's own is NOT, however
@@ -7421,9 +7426,15 @@ func (s *Service) offsiteReplicationSources(settings store.Settings, domain stri
 		case repoNeverEstablished:
 		}
 	}
-	// Nothing left to copy from: every source is already off site or was never
-	// created. That is a domain whose items are not copied, not a failure.
 	if len(present) == 0 {
+		if !namedCandidate {
+			// A domain with only its own repository, never created, keeps it, so
+			// the caller still gets restic's own error rather than a silent no-op
+			// - what every caller expected before named repositories existed.
+			return out, skipped
+		}
+		// A named repository was among the candidates and none of them is
+		// present: that is a domain whose items are not copied, not a failure.
 		return nil, append(skipped, nothingCopiedNote(domain))
 	}
 	return present, skipped
