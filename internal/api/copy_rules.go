@@ -120,7 +120,7 @@ func (s *Service) validateItemCopies(item store.ItemRef, copies *copiesChoice, r
 	if err != nil {
 		return p, err
 	}
-	before, after, err := s.copiesChange(settings, placement, named, repoID, identity, skip)
+	before, after, err := s.copiesChange(settings, placement, named, repoID, identity, skip, repoOverride != nil)
 	if err != nil {
 		return p, err
 	}
@@ -212,9 +212,15 @@ func repoOfRow(repo string, err error) (string, error) {
 
 // copiesChange checks a skip against the item's home and returns the targets the
 // item is copied to before and after it; skip nil is follow. An item whose home
-// is no copy source goes nowhere either way.
-func (s *Service) copiesChange(settings store.Settings, p placementRead, named map[string]store.OffsiteTarget, repoID, identity string, skip []string) (before, after []store.OffsiteTarget, err error) {
+// is no copy source goes nowhere either way. repoChanging is whether the same
+// request also names a new repository: an id that names no row is then left
+// for that repository change to refuse, rather than judged here as a home
+// that takes no copies.
+func (s *Service) copiesChange(settings store.Settings, p placementRead, named map[string]store.OffsiteTarget, repoID, identity string, skip []string, repoChanging bool) (before, after []store.OffsiteTarget, err error) {
 	kind := s.homeKindOf(settings, p.Domain, repoID, named)
+	if repoChanging && kind == homeMissing {
+		return nil, nil, nil
+	}
 	if skip != nil {
 		if err := checkSkip(p, skip); err != nil {
 			return nil, nil, err
@@ -365,7 +371,7 @@ func (s *Service) previewPlacement(ctx context.Context, item store.ItemRef, chan
 	if err != nil {
 		return added, dropped, err
 	}
-	before, after, err := s.copiesChange(settings, p, named, repoID, identity, skip)
+	before, after, err := s.copiesChange(settings, p, named, repoID, identity, skip, false)
 	if err != nil {
 		return added, dropped, err
 	}
