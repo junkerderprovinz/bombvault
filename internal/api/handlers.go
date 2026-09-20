@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
 	"mime"
@@ -477,6 +478,29 @@ func decodeBody(w http.ResponseWriter, r *http.Request, v any) bool {
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(v); err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid request body"})
+		return false
+	}
+	return true
+}
+
+// decodeOptionalBody is decodeBody for a route whose fields are all optional:
+// an absent body leaves v at its zero value instead of failing, so a caller
+// does not have to send an empty JSON object just to take the defaults.
+func decodeOptionalBody(w http.ResponseWriter, r *http.Request, v any) bool {
+	if !crossOriginGuard(w, r) {
+		return false
+	}
+	if r.Body == nil {
+		return true
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1 MiB
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(v); err != nil {
+		if errors.Is(err, io.EOF) {
+			return true
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid request body"})
 		return false
 	}
