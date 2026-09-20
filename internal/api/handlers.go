@@ -1517,6 +1517,96 @@ func (h *Handler) handleRestoreContainerTo(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true, "target": target}))
 }
 
+// handleListDBDumps lists a container's database dumps.
+// GET /api/containers/{name}/dbdumps?source=
+func (h *Handler) handleListDBDumps(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
+	dumps, err := h.svc.DBDumps(r.Context(), name, sourceParam(r))
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dumps": dumps}))
+}
+
+// handleDownloadDBDump streams one database dump to the browser.
+// GET /api/containers/{name}/dbdumps/{id}/download?source=&gz=1&check=1
+//
+// check=1 is the preflight the UI runs before it starts the native download: it
+// answers the envelope without streaming. The download itself refuses with 409
+// and no Content-Disposition, so a browser never saves an error envelope under
+// a .sql name.
+func (h *Handler) handleDownloadDBDump(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
+	id := r.PathValue("id")
+	gz := r.URL.Query().Get("gz") == "1"
+	if r.URL.Query().Get("check") == "1" {
+		if err := h.svc.DownloadDBDump(r.Context(), name, sourceParam(r), id, gz, true, nil, nil); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+		writeJSON(w, http.StatusOK, okEnvelope(nil))
+		return
+	}
+
+	var filename, contentType string
+	lw := &headerOnFirstWrite{w: w, header: func() {
+		w.Header().Set("Content-Type", contentType)
+		w.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("Cache-Control", "no-store")
+	}}
+	err := h.svc.DownloadDBDump(r.Context(), name, sourceParam(r), id, gz, false, func(v DBDumpView, sealed bool) {
+		filename = DBDumpDownloadName(name, v, gz, sealed)
+		switch {
+		case sealed:
+			contentType = "application/octet-stream"
+		case gz:
+			contentType = "application/gzip"
+		default:
+			contentType = "application/sql"
+		}
+	}, lw)
+	if err != nil && !lw.wrote {
+		writeJSON(w, http.StatusConflict, failEnvelope(err))
+	}
+}
+
+// handleSaveDBDumpTo writes one database dump into a folder on the server.
+// POST /api/containers/{name}/dbdumps/{id}/save?source=  body {targetPath, gz}
+//
+// Asynchronous like the to-folder restore: validation and the resolved file
+// name come back in the ack, the writing runs detached under its own run kind.
+func (h *Handler) handleSaveDBDumpTo(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.nameParam(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		TargetPath string `json:"targetPath"`
+		GZ         bool   `json:"gz"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	target, started, err := h.svc.StartSaveDBDumpToPath(r.Context(), name, sourceParam(r), r.PathValue("id"), body.TargetPath, body.GZ)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if !started {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup or restore is already running"})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true, "target": target}))
+}
+
 // handleDiff compares two of a container's snapshots and returns the summary of
 // what changed between them. GET /api/containers/{name}/diff?from=&to=&source=
 func (h *Handler) handleDiff(w http.ResponseWriter, r *http.Request) {
