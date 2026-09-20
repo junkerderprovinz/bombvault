@@ -228,6 +228,7 @@ func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
 		errPlacementUnreadable:  "placement-unreadable",
 		errInvalidPlacement:     "invalid-placement",
 		store.ErrRuleDomain:     "invalid-placement",
+		store.ErrUnknownDomain:  "invalid-placement",
 		errCopiesNotAllowed:     "copies-not-allowed",
 		errNotATarget:           "unknown-target",
 		errUnknownOffsiteTarget: "unknown-target",

@@ -252,9 +252,16 @@ type PlacementImport struct {
 	HasRules    bool
 }
 
+// ErrUnknownDomain is refused for a placement default naming a domain
+// PlacementDomains does not list.
+var ErrUnknownDomain = errors.New("that domain has no placement")
+
 // ImportPlacement replaces defaults and rules from a settings file in one
 // transaction. A paused domain keeps its pause and its row: only a confirmation
-// may end it, because its exclusions were lost with the old configuration.
+// may end it, because its exclusions were lost with the old configuration. A
+// domain an operator already confirmed keeps that marker too, as long as the
+// file still names it: saving a default, imported or typed, never earns that
+// marker on its own.
 func (r *Repo) ImportPlacement(in PlacementImport) error {
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -263,20 +270,8 @@ func (r *Repo) ImportPlacement(in PlacementImport) error {
 	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
 	now := time.Now().Unix()
 	if in.HasDefaults {
-		paused := map[string]bool{}
-		rows, err := tx.Query(`SELECT domain FROM placement_defaults WHERE confirmed_at = 0`)
+		paused, confirmed, err := placementMarkersTx(tx)
 		if err != nil {
-			return fmt.Errorf("ImportPlacement paused: %w", err)
-		}
-		for rows.Next() {
-			var domain string
-			if err := rows.Scan(&domain); err != nil {
-				rows.Close() //nolint:errcheck,gosec // the scan error takes priority
-				return fmt.Errorf("ImportPlacement paused: %w", err)
-			}
-			paused[domain] = true
-		}
-		if err := rows.Close(); err != nil {
 			return fmt.Errorf("ImportPlacement paused: %w", err)
 		}
 		if _, err := tx.Exec(`DELETE FROM placement_defaults WHERE confirmed_at <> 0`); err != nil {
@@ -284,15 +279,18 @@ func (r *Repo) ImportPlacement(in PlacementImport) error {
 		}
 		for _, d := range in.Defaults {
 			if !slices.Contains(PlacementDomains, d.Domain) {
-				return fmt.Errorf("ImportPlacement: unknown domain %q", d.Domain)
+				return fmt.Errorf("ImportPlacement %s: %w", d.Domain, ErrUnknownDomain)
 			}
 			skip, err := encodeSkip(d.Skip)
 			if err != nil {
 				return fmt.Errorf("ImportPlacement %s: %w", d.Domain, err)
 			}
-			if paused[d.Domain] {
+			switch {
+			case paused[d.Domain]:
 				_, err = tx.Exec(`UPDATE placement_defaults SET home = ?, skip = ?, updated_at = ? WHERE domain = ?`, d.Home, skip, now, d.Domain)
-			} else {
+			case confirmed[d.Domain]:
+				_, err = tx.Exec(`INSERT INTO placement_defaults (domain, home, skip, confirmed_at, confirmed_manually, updated_at) VALUES (?, ?, ?, ?, 1, ?)`, d.Domain, d.Home, skip, now, now)
+			default:
 				_, err = tx.Exec(`INSERT INTO placement_defaults (domain, home, skip, confirmed_at, updated_at) VALUES (?, ?, ?, ?, ?)`, d.Domain, d.Home, skip, now, now)
 			}
 			if err != nil {
@@ -317,6 +315,33 @@ func (r *Repo) ImportPlacement(in PlacementImport) error {
 		return fmt.Errorf("ImportPlacement commit: %w", err)
 	}
 	return nil
+}
+
+// placementMarkersTx reads every stored default's pause and manual-confirmation
+// state before ImportPlacement replaces the unpaused rows, so a domain that
+// keeps its row keeps whichever of the two applied to it.
+func placementMarkersTx(tx *sql.Tx) (paused, confirmed map[string]bool, err error) {
+	rows, err := tx.Query(`SELECT domain, confirmed_at, confirmed_manually FROM placement_defaults`)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+	paused, confirmed = map[string]bool{}, map[string]bool{}
+	for rows.Next() {
+		var domain string
+		var confirmedAt int64
+		var manually bool
+		if err := rows.Scan(&domain, &confirmedAt, &manually); err != nil {
+			return nil, nil, err
+		}
+		if confirmedAt == 0 {
+			paused[domain] = true
+		}
+		if manually {
+			confirmed[domain] = true
+		}
+	}
+	return paused, confirmed, rows.Err()
 }
 
 func checkPlacementDomain(domain string) error {
