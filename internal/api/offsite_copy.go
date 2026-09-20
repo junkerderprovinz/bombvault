@@ -20,6 +20,11 @@ import (
 // that target has none.
 var errTargetsUncertain = errors.New("the off-site targets could not be read by id, so nothing is copied while copy rules exist")
 
+// errNoTargetVisited is copyToOffsite's failure when pauseOnFirstListing left
+// every target of a pass pending: none of them could be listed, so the pass
+// reached nothing.
+var errNoTargetVisited = errors.New("no off-site target could be visited this pass")
+
 // failPass records a failed run at every target a pass would have visited and
 // returns cause, so the history shows the replication that did not happen.
 func (s *Service) failPass(domain string, targets []store.OffsiteTarget, cause error) error {

@@ -80,8 +80,11 @@ func TestAFailedFirstListingStaysPendingForTheNextPass(t *testing.T) {
 	f.hold(f.domainPath("containers"), snap("a1", time.Now().Unix(), "container:nginx"))
 	f.eng.listErr["b2:bucket:containers"] = errors.New("503 service unavailable")
 
-	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
-		t.Fatal(err)
+	// B2 is the domain's only target, so a pass that cannot even list it for
+	// the first-listing check reaches nothing: that is a failed pass, not a
+	// quiet no-op.
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err == nil {
+		t.Fatal("a pass that could visit no target returned nil, want the failure")
 	}
 	if len(f.eng.copies) != 0 {
 		t.Fatalf("copied %+v to a target whose first listing failed", f.eng.copies)
@@ -93,6 +96,9 @@ func TestAFailedFirstListingStaysPendingForTheNextPass(t *testing.T) {
 	}
 	if runs := offsiteRuns(t, f, "containers"); len(runs) != 1 || !strings.HasPrefix(runs[0], b2.ID+" ok=0 ") {
 		t.Fatalf("runs = %v, want one failed run at B2", runs)
+	}
+	if status := domainActivityStatus(t, f, "containers"); status != "failed" {
+		t.Fatalf("activity status = %q, want failed", status)
 	}
 
 	f.eng.listErr = map[string]error{}

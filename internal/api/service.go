@@ -2893,6 +2893,9 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 			targets = slices.DeleteFunc(slices.Clone(targets), func(t store.OffsiteTarget) bool {
 				return slices.Contains(pending, t.ID)
 			})
+			if len(targets) == 0 {
+				perr = errNoTargetVisited
+			}
 		}
 	}
 	// Additive kind="offsite" row in the SHARED runs table (StartRun/FinishRun on
