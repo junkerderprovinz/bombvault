@@ -1626,6 +1626,12 @@ func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo string, p 
 	if err != nil || len(tags) == 0 {
 		return s.forgetWithLockHeal(ctx, repo, p, mode, "", true)
 	}
+	return s.applyRetentionToTags(ctx, repo, p, mode, tags)
+}
+
+// applyRetentionToTags forgets per identity tag, ungrouped, and prunes once, for
+// a caller that already knows which tags the repository holds.
+func (s *Service) applyRetentionToTags(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tags []string) error {
 	var errs []error
 	for _, tag := range tags {
 		if fErr := s.forgetWithLockHeal(ctx, repo, p, mode, tag, false); fErr != nil {
@@ -2805,6 +2811,10 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	if perr == nil && p.TargetsUncertain && p.State.HasRules() {
 		perr = errTargetsUncertain
 	}
+	var pass replicationPass
+	if perr == nil {
+		pass, perr = s.newPass(p)
+	}
 	if perr == nil && len(localRepos) == 0 {
 		// nothingCoveredError, not skippedError: there are no sources at all, so
 		// "covered only part of this domain" would be false.
@@ -2946,7 +2956,7 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 		// items whose other copy is the unreachable one. Reporting it only at the
 		// end (skippedError, below) reaches the run row long after every target's
 		// retention has already run.
-		if cerr := s.copyToOffsiteTarget(ctx, domain, settings, t, localRepos, skipped, multiTarget, startedAt, lastCopy); cerr != nil {
+		if cerr := s.copyToOffsiteTarget(ctx, domain, settings, t, localRepos, skipped, multiTarget, startedAt, lastCopy, pass.visit(t)); cerr != nil {
 			log.Printf("api: offsite %s: copy to a destination failed (continuing): %v", domain, cerr) //nolint:gosec // G706: domain is a fixed literal
 			errs = append(errs, cerr)
 		}
@@ -2987,7 +2997,10 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 // decision below has to see it, because a source that was dropped before the
 // loop leaves no copyErr behind and would otherwise be indistinguishable from a
 // destination that is fully in sync.
-func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settings store.Settings, target store.OffsiteTarget, localRepos []domainRepoRef, skipped []repoSkip, multiTarget bool, startedAt int64, lastCopy *offsiteLastCopy) (err error) {
+//
+// visit is what the pass decided for this target: whether the rules choose the
+// ids, and whether what the target holds is recorded.
+func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settings store.Settings, target store.OffsiteTarget, localRepos []domainRepoRef, skipped []repoSkip, multiTarget bool, startedAt int64, lastCopy *offsiteLastCopy, visit targetVisit) (err error) {
 	// Persist this destination's replication attempt to the off-site run history
 	// (begin now, close on the way out via defer with outcome + scrubbed error).
 	// The offsite_runs row itself stays duration + outcome only (no percentage
@@ -3041,167 +3054,20 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	// sole writer, so an existing off-site lock is always stale — this self-heals the
 	// off-site repo on the next run (defence-in-depth for bug #29).
 	s.unlockStale(ctx, dest, mode)
-	// Best-effort upfront candidate count ("N") for the "snapshot k of N" live
-	// progress display (issue #159 — see restic.PendingCopyIDs's doc comment for
-	// the full reasoning). DISPLAY ONLY: the actual Copy call below still passes
-	// nil for snapshotIDs, so restic's own (stricter — it also compares full
-	// snapshot metadata) dedup remains the sole authority on what really gets
-	// copied. A stale/wrong estimate here can only make "of N" briefly off, never
-	// skip a real snapshot. listSnapshots (not a raw engine.Snapshots call) reuses
-	// the existing stale-lock self-heal and "repo not initialized yet = no
-	// snapshots" handling every other snapshot listing in this file already gets.
-	pendingTotal := 0
-	if dstSnaps, dErr := s.listSnapshots(ctx, dest, mode); dErr != nil {
-		log.Printf("api: offsite %s: could not estimate pending snapshot count (continuing without it): %v", domain, dErr) //nolint:gosec // G706: domain is a fixed literal
-	} else {
-		// Summed over every source repository (#204), so "snapshot k of N" counts
-		// the whole pass rather than restarting per source.
-		//
-		// NARROWED the same way the loop below narrows, or the denominator counts
-		// snapshots the copy will never carry. A shared named repository holds
-		// another domain's snapshots too, and the copy leaves those where they
-		// are; counting them made the bar stop short of its own total for the
-		// whole run and the remaining-time reading wrong with it.
-		prefix := domainTagPrefix(domain)
-		for _, src := range localRepos {
-			srcSnaps, sErr := s.listSnapshots(ctx, src.Loc, mode)
-			if sErr != nil {
-				log.Printf("api: offsite %s: could not estimate pending snapshot count (continuing without it): %v", domain, sErr) //nolint:gosec // G706: domain is a fixed literal
-				continue
-			}
-			if !src.Own && prefix != "" {
-				mine := make([]restic.Snapshot, 0, len(srcSnaps))
-				for _, sn := range srcSnaps {
-					for _, tag := range sn.Tags {
-						if strings.HasPrefix(tag, prefix) {
-							mine = append(mine, sn)
-							break
-						}
-					}
-				}
-				srcSnaps = mine
-			}
-			pendingTotal += len(restic.PendingCopyIDs(srcSnaps, dstSnaps))
-		}
+	// One listing of the destination serves the copy, the record of what it holds
+	// and the names its keep-policy ages.
+	dstSnaps, dstErr := s.listSnapshots(ctx, dest, mode)
+	if dstErr != nil {
+		log.Printf("api: offsite %s: could not list the destination before copying: %v", domain, scrubError(dstErr)) //nolint:gosec // G706: domain is a fixed literal, the error scrubbed here
 	}
-	// Cap the transfer rate so off-site replication doesn't saturate the WAN
-	// (zero limits = unlimited, the default). progBeginCopySink installs the
-	// live per-snapshot percentage sink restic.Copy now reports through (issue
-	// #159's real percentage — see its doc comment), publishing under the SAME
-	// "offsite:"+domain key/StartedAt copyToOffsite's begin/heartbeat/terminal
-	// events use, so it's one continuous indicator across a multiTarget loop.
-	copyCtx := s.progBeginCopySink(ctx, domain, startedAt, pendingTotal, lastCopy)
-	// One copy per SOURCE repository (#204): the domain's own, plus each local
-	// named repository its items point at. restic copy is additive - it writes
-	// the snapshots the destination does not have yet and touches nothing else -
-	// so replicating several sources into one destination is a union, never a
-	// sync that could remove anything.
-	//
-	// EVERY source is attempted even after one fails, and the failures are
-	// joined. Returning on the first meant one transiently unreachable source - an
-	// unmounted share, a repository that was never created - silently suppressed
-	// the copy of every source behind it, and the error named neither. The
-	// retention prune and the growth sample below still run, because whatever DID
-	// arrive is real and has to be maintained.
-	var copyErrs []error
-	// Counted, not inferred from the error count. It reports what actually landed,
-	// which the error slice cannot: a source that CONTINUES without an error -
-	// because it is the destination itself, or because the destination already
-	// holds everything it has - leaves no entry there and copied no bytes either.
-	//
-	// The retention gate below turns on the ERROR, not on this count, because a
-	// pass that moved nothing because everything was already in sync is the
-	// strongest evidence the far side is current. The count is what decides
-	// whether the pass has anything to report at all.
-	copied := 0
-	// …but "in sync" and "nothing here could speak for this domain" are also two
-	// different things, and copied==0 with copyErr==nil is both of them. accounted
-	// counts the sources that actually ANSWERED for this domain: one that copied,
-	// and one whose snapshots the destination already holds. A named source that
-	// narrows to nothing of this domain's is neither - it holds none of what the
-	// destination holds, so it says nothing about whether the destination is
-	// current - and an empty source list answers for nothing at all.
-	//
-	// Without this, an all-named domain whose only contributing source went away
-	// reached the retention with no error and no copy, and a tag-scoped forget
-	// plus prune ran over a destination that is by then the only copy left.
-	accounted := 0
-	// …and one shape switches the maintenance off entirely, however well the other
-	// sources did. A destination that is also a source is not a replica of itself:
-	// aging it under the off-site keep-policy deletes snapshots that have no
-	// second copy anywhere. Counting copies alone does not catch this - the OTHER
-	// source copies fine, so "something landed" is true while the thing being
-	// pruned is a primary.
-	destIsASource := false
-	for _, src := range localRepos {
-		// A source that IS the destination is refused outright, before anything
-		// below runs. It happens when a named repository was created on the very
-		// location this domain replicates TO: the copy would do nothing and stamp
-		// a success, the dashboard would show a primary plus an off-site copy for
-		// data that exists exactly once, and the retention block below would then
-		// run a tag-scoped forget plus prune over that only copy under the
-		// off-site keep-policy. validateNamedRepo refuses the combination when the
-		// repository is created; this catches the one created before that refusal
-		// existed, and any order of edits that slips past it.
-		if sameRepoLocation(src.Loc, dest) {
-			log.Printf("api: offsite %s: %s is this destination itself; not copying a repository onto itself, and not aging it either", domain, shortRepoName(src.Loc)) //nolint:gosec // G706: domain is a fixed literal, the name is shortened
-			copyErrs = append(copyErrs, fmt.Errorf("%s is this off-site destination itself, so it has no second copy", shortRepoName(src.Loc)))
-			destIsASource = true
-			continue
-		}
-		// The domain's OWN repository is copied WHOLE: everything in it belongs to
-		// this domain, and leaving snapshotIDs nil keeps restic's own dedup the
-		// sole authority on what really moves.
-		//
-		// A NAMED repository can be shared - nothing scopes one to a single
-		// domain, and the same picker offers it to containers, VMs and folder sets
-		// alike. Copying it whole would carry the OTHER domain's snapshots into
-		// this domain's off-site destination: duplicated egress and storage on
-		// every pass, and then applyRetentionPerIdentity below would age those
-		// foreign snapshots under THIS domain's keep-policy. So a named source is
-		// narrowed to the snapshots carrying this domain's own tag prefix.
-		//
-		// Asked of the REFERENCE, never of its position. This decision used to be
-		// `i > 0`, and both callers reshape the slice: the post-backup hook passes
-		// the single repository an item happens to use, and the never-created
-		// filter can lift a named repository to the head. Either made a named
-		// repository look like the domain's own and copied it whole.
-		ids := []string(nil)
-		if !src.Own && domainTagPrefix(domain) != "" {
-			mine, nErr := s.snapshotIDsForDomain(ctx, src.Loc, mode, domain)
-			if nErr != nil {
-				log.Printf("api: offsite %s: could not narrow %s to this domain, skipping it this pass: %v", domain, shortRepoName(src.Loc), scrubError(nErr)) //nolint:gosec // G706: domain is a fixed literal, the name is shortened and the error scrubbed here
-				copyErrs = append(copyErrs, fmt.Errorf("reading %s: %w", shortRepoName(src.Loc), nErr))
-				continue
-			}
-			if len(mine) == 0 {
-				continue // nothing of this domain's in there yet
-			}
-			// …and only the ones the destination does not have. Handing restic every
-			// historical id of this domain puts the whole history on argv on every
-			// pass - it grows without bound and hits the command-line limit on a
-			// long-lived repository - while restic would have skipped them anyway.
-			ids = s.pendingOf(ctx, dest, mode, mine)
-			if len(ids) == 0 {
-				accounted++
-				continue // the destination already holds all of them
-			}
-		}
-		if cErr := s.engine.Copy(copyCtx, dest, src.Loc, ids, targetOffsiteLimits(target), mode); cErr != nil {
-			log.Printf("api: offsite %s: copying %s failed (continuing with the other sources): %v", domain, shortRepoName(src.Loc), scrubError(cErr)) //nolint:gosec // G706: domain is a fixed literal, the name is shortened and the error scrubbed here
-			copyErrs = append(copyErrs, fmt.Errorf("copying %s: %w", shortRepoName(src.Loc), cErr))
-			continue
-		}
-		copied++
-		accounted++
+	out := s.copySources(ctx, domain, dest, mode, target, visit, localRepos, dstSnaps, dstErr, startedAt, lastCopy)
+	copied, accounted, destIsASource := out.copied, out.accounted, out.destIsASource
+	// Carried past the maintenance below: whatever did arrive is aged, sampled and
+	// measured against the budget, and the joined error still reaches the run row.
+	copyErr := errors.Join(out.errs...)
+	if visit.observe && dstErr == nil {
+		s.recordListing(domain, target, visit.owners, dstSnaps, out.landed)
 	}
-	// The failures are carried PAST the maintenance below rather than returned
-	// here. Whatever did arrive at the destination is real: it has to be aged by
-	// the retention policy, sampled into the size series and measured against the
-	// growth budget, or one unreachable source would silently switch all three off
-	// for the whole destination on every run. The joined error is returned at the
-	// end, so the run row and the notification still say the pass was incomplete.
-	copyErr := errors.Join(copyErrs...)
 	// Nothing arrived at all: the maintenance below is about what DID arrive, so
 	// running a forget and a prune over the destination after a completely failed
 	// pass ages a replica no fresh snapshot reached.
@@ -3268,15 +3134,7 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	case target.Immutable:
 		log.Printf("api: offsite %s: retention is enforced far-side (append-only)", domain) //nolint:gosec // G706: domain is a fixed literal
 	default:
-		op := targetOffsiteRetentionPolicy(target)
-		if !op.Any() {
-			break
-		}
-		// Per-identity: one tag-scoped, ungrouped forget per item, one prune —
-		// identity-stable like the local retention (issue #91).
-		if perr := s.applyRetentionPerIdentity(ctx, dest, op, mode); perr != nil {
-			log.Printf("api: offsite %s: retention prune failed (replica is safe): %v", domain, perr) //nolint:gosec // G706: domain is a fixed literal
-		}
+		s.ageTarget(ctx, domain, dest, mode, target, visit, dstSnaps, dstErr, out.landed)
 	}
 	// Sample the off-site repo size into the repo_stats time series and evaluate the
 	// growth budget. When a budget is set we sample SYNCHRONOUSLY first so the check
@@ -6983,59 +6841,6 @@ func domainTagPrefix(domain string) string {
 		return "fileset:"
 	}
 	return ""
-}
-
-// pendingOf narrows a list of source snapshots to the ids the destination does
-// not already hold. Display and argv both care: restic skips a snapshot that is
-// already there, but only after it has been named on the command line.
-//
-// The comparison is restic.PendingCopyIDs, the one place in this repository that
-// knows the rule, and it has to be: a copy lands at the destination under a NEW
-// id and records the source id in Original. Comparing the destination's own ids
-// against the source's own ids therefore matches nothing, ever, so the narrowing
-// was inert and the whole history went on argv on every pass. Two answers to one
-// question inside one function, sixty lines apart, since the progress estimate
-// above already called PendingCopyIDs.
-func (s *Service) pendingOf(ctx context.Context, dest string, mode restic.Mode, src []restic.Snapshot) []string {
-	if len(src) == 0 {
-		return nil
-	}
-	dstSnaps, err := s.listSnapshots(ctx, dest, mode)
-	if err != nil {
-		// Cannot tell: hand over every id and let restic's own dedup decide what
-		// moves. Over-supplying is safe, under-supplying would silently skip.
-		out := make([]string, 0, len(src))
-		for _, sn := range src {
-			out = append(out, sn.ID)
-		}
-		return out
-	}
-	return restic.PendingCopyIDs(src, dstSnaps)
-}
-
-// snapshotIDsForDomain lists the snapshots in repo that belong to domain, by
-// their identity tag. Used to narrow a copy out of a repository that more than
-// one domain may write to; an empty prefix (flash, config) returns nil, which
-// means "no narrowing" to the caller.
-func (s *Service) snapshotIDsForDomain(ctx context.Context, repo string, mode restic.Mode, domain string) ([]restic.Snapshot, error) {
-	prefix := domainTagPrefix(domain)
-	if prefix == "" {
-		return nil, nil
-	}
-	snaps, err := s.listSnapshots(ctx, repo, mode)
-	if err != nil {
-		return nil, err
-	}
-	var out []restic.Snapshot
-	for _, sn := range snaps {
-		for _, tag := range sn.Tags {
-			if strings.HasPrefix(tag, prefix) {
-				out = append(out, sn)
-				break
-			}
-		}
-	}
-	return out, nil
 }
 
 // domainRepoRef is ONE repository of a domain together with WHAT it is.

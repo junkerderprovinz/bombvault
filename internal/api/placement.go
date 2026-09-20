@@ -297,3 +297,12 @@ func (s *Service) domainHasRetention(settings store.Settings, domain string) boo
 	}
 	return slices.ContainsFunc(repos, func(r domainRepoRef) bool { return s.retentionPolicyForRef(settings, r).Any() })
 }
+
+// placementTargetName is a target as the interface names it: its name, or its
+// location without credentials when it has none.
+func placementTargetName(t store.OffsiteTarget) string {
+	if t.Name != "" {
+		return t.Name
+	}
+	return scrubRepoLocation(t.Repo)
+}
