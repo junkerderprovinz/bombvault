@@ -914,9 +914,6 @@ func importedPlacement(exp settingsExport) store.PlacementImport {
 	return in
 }
 
-// ruleTagPrefix is the snapshot tag prefix of the items a domain's rules name.
-var ruleTagPrefix = map[string]string{"containers": "container:", "vms": "vm:", "files": "fileset:"}
-
 // checkImportedPlacement refuses the defaults and rules an import could not
 // write whole, before anything of the file is written.
 func (h *Handler) checkImportedPlacement(exp settingsExport) error {
@@ -939,11 +936,10 @@ func (h *Handler) checkImportedPlacement(exp settingsExport) error {
 		}
 	}
 	for _, r := range exp.CopyRules {
-		if strings.HasPrefix(r.Identity, "stack:") {
-			return store.ErrStackCopyRule
+		if err := store.CheckRuleIdentity(r.Domain, r.Identity); err != nil {
+			return err
 		}
-		prefix, ok := ruleTagPrefix[r.Domain]
-		if !ok || !strings.HasPrefix(r.Identity, prefix) || r.Identity == prefix || !validSkip(r.Skip) {
+		if !validSkip(r.Skip) {
 			return errInvalidPlacement
 		}
 	}
