@@ -349,6 +349,9 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/files/sets/{id}/restore-files", h.handleRestoreFileSetFiles)
 	mux.HandleFunc("POST /api/files/discover", h.handleDiscoverFiles)
 
+	// Placement of one container, VM or file set.
+	mux.HandleFunc("POST /api/items/{domain}/{name}/placement/preview", h.handlePreviewItemPlacement)
+
 	// Foreign-repo read-only session endpoints (restore from ANOTHER BombVault
 	// instance's repo, #61). Sessions are in-memory with a TTL — never persisted
 	// to Settings. AuthGate-protected like every other /api route (the public

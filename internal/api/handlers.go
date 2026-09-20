@@ -1359,8 +1359,15 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 		// not know about it must not clear it by omitting it, and clearing it
 		// MOVES where the next backup lands.
 		Repo *string `json:"repo"`
+		// Copies is the item's own copy rule: which off-site targets it goes to,
+		// or follow to take the domain's default.
+		Copies *copiesChoice `json:"copies"`
 	}
 	if !decodeBody(w, r, &body) {
+		return
+	}
+	placed, ok := h.applyPlacement(w, r, store.ItemRef{Domain: "containers", Key: name}, placementChange{Copies: body.Copies})
+	if !ok {
 		return
 	}
 	if body.IncludeInSchedule != nil {
@@ -1444,7 +1451,7 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dropped": placed.Dropped}))
 }
 
 // reloadScheduler re-reads the settings and re-registers every schedule entry,
@@ -4535,8 +4542,15 @@ func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 		// not know about it must not clear it by omitting it, and clearing it
 		// MOVES where the next backup lands.
 		Repo *string `json:"repo"`
+		// Copies is the item's own copy rule: which off-site targets it goes to,
+		// or follow to take the domain's default.
+		Copies *copiesChoice `json:"copies"`
 	}
 	if !decodeBody(w, r, &body) {
+		return
+	}
+	placed, ok := h.applyPlacement(w, r, store.ItemRef{Domain: "vms", Key: name}, placementChange{Copies: body.Copies})
+	if !ok {
 		return
 	}
 	if body.Repo != nil {
@@ -4576,7 +4590,7 @@ func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dropped": placed.Dropped}))
 }
 
 // handleVMScheduleIncludeAll sets the include_in_schedule flag for every VM on
@@ -4964,6 +4978,9 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		// above: a form that does not know about it must not clear it by
 		// omitting it, and clearing it MOVES where the next backup lands.
 		Repo *string `json:"repo"`
+		// Copies is the item's own copy rule: which off-site targets it goes to,
+		// or follow to take the domain's default.
+		Copies *copiesChoice `json:"copies"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
@@ -4971,6 +4988,10 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 	fs, err := h.store.GetFileSet(id)
 	if err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "file set not found"})
+		return
+	}
+	placed, ok := h.applyPlacement(w, r, store.ItemRef{Domain: "files", Key: id}, placementChange{Copies: body.Copies})
+	if !ok {
 		return
 	}
 	oldName := fs.Name
@@ -5111,7 +5132,7 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dropped": placed.Dropped}))
 }
 
 // handleDeleteFileSet removes a file set (row + run history) WITHOUT touching

@@ -539,3 +539,7 @@ func (s *Service) targetCurrencies(domain string, p placementRead, items []place
 func containsTarget(targets []store.OffsiteTarget, id string) bool {
 	return slices.ContainsFunc(targets, func(t store.OffsiteTarget) bool { return t.ID == id })
 }
+
+func skipsEverything(skip []string) bool {
+	return len(skip) == 1 && skip[0] == store.SkipAll
+}
