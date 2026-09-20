@@ -60,6 +60,16 @@ func SeedDefault(t *testing.T, r *Repo, domain, home string, skip ...string) Pla
 	return d
 }
 
+// HomeOf reads an item's location columns or fails the test.
+func HomeOf(t *testing.T, r *Repo, item ItemRef) HomeState {
+	t.Helper()
+	h, err := r.ItemHome(item)
+	if err != nil {
+		t.Fatalf("ItemHome %+v: %v", item, err)
+	}
+	return h
+}
+
 // SeedListing records a listing of a target for a domain.
 func SeedListing(t *testing.T, r *Repo, domain, targetID string, listedAt int64, rows ...ItemCopies) {
 	t.Helper()
