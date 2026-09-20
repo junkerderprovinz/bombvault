@@ -4940,11 +4940,12 @@ func (h *Handler) handleCreateFileSet(w http.ResponseWriter, r *http.Request) {
 		enabled = *body.Enabled
 	}
 	fs := store.FileSet{
-		Name:     strings.TrimSpace(body.Name),
-		Path:     strings.TrimSpace(body.Path),
-		Excludes: body.Excludes,
-		Enabled:  enabled,
-		Repo:     strings.TrimSpace(body.Repo),
+		Name:       strings.TrimSpace(body.Name),
+		Path:       strings.TrimSpace(body.Path),
+		Excludes:   body.Excludes,
+		Enabled:    enabled,
+		Repo:       strings.TrimSpace(body.Repo),
+		RepoChosen: store.RepoChosen,
 	}
 	if fs.Path == "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "path is required"})

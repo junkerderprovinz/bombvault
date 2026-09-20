@@ -709,6 +709,9 @@ func TestForeignRestoreContainerRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("adopted target must exist locally: %v", err)
 	}
+	if tg.Repo != "" || tg.RepoChosen != store.RepoOpen {
+		t.Fatalf("an adopted container must stay open, its history is in the foreign repository: %+v", tg)
+	}
 	if !strings.Contains(tg.Definition, "nginx:latest") {
 		t.Fatalf("target definition must carry the FOREIGN def (decrypted with the session key), got %q", tg.Definition)
 	}
@@ -1035,6 +1038,9 @@ func TestForeignRestoreFileSetUsesSessionRepo(t *testing.T) {
 	}
 	if set.Enabled || set.Path != "" {
 		t.Fatalf("adopted set must be disabled and path-less, got %+v", set)
+	}
+	if set.Repo != "" || set.RepoChosen != store.RepoOpen {
+		t.Fatalf("an adopted set must stay open, its history is in the foreign repository: %+v", set)
 	}
 	runs, err := s.store.ListRuns(10)
 	if err != nil {

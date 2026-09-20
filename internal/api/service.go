@@ -11900,7 +11900,7 @@ func (s *Service) DiscoverFileSets(ctx context.Context, dryRun bool) (int, []rep
 		// insert-then-setter pair leaves a window in which the set exists on the
 		// domain repository while the caller believes otherwise, and a failure of
 		// the second half left it there for good while the count said "found".
-		if _, cErr := s.store.CreateFileSet(store.FileSet{Name: name, Path: "", Enabled: false, Repo: repoID}); cErr != nil {
+		if _, cErr := s.store.CreateFileSet(store.FileSet{Name: name, Path: "", Enabled: false, Repo: repoID, RepoChosen: store.RepoChosen}); cErr != nil {
 			log.Printf("api: discover files: could not create set %q: %v", name, cErr) //nolint:gosec // G706: %q-quoted
 			continue
 		}

@@ -49,6 +49,9 @@ type FileSet struct {
 	// silently move a set's backups to another repository as a side effect of
 	// renaming it.
 	Repo string
+	// RepoChosen says whether Repo is settled. An open row has an empty Repo and
+	// takes the default's location at its first backup.
+	RepoChosen RepoChoice
 	// SelectedPaths is the set's OPTIONAL tree selection (Phase 4 file-sets
 	// parity, D-03/D-05): the same flat encoding as the containers' flat
 	// backupPaths set — bare mount-root-space absolute paths are included
@@ -69,6 +72,9 @@ type FileSet struct {
 // CreateFileSet inserts a new file set. An empty ID is assigned via newID();
 // a duplicate name fails (name is UNIQUE). Returns the stored FileSet.
 func (r *Repo) CreateFileSet(fs FileSet) (FileSet, error) {
+	if err := checkRepoChoice(fs.Repo, fs.RepoChosen); err != nil {
+		return FileSet{}, fmt.Errorf("CreateFileSet: %w", err)
+	}
 	if fs.ID == "" {
 		fs.ID = newID()
 	}
@@ -90,9 +96,9 @@ func (r *Repo) CreateFileSet(fs FileSet) (FileSet, error) {
 	// the caller believed it was on the chosen one. Same shape, same fix, as
 	// UpdateFileSetClearingSelection in this file.
 	_, err = r.db.Exec(`
-		INSERT INTO file_sets (id, name, path, excludes, enabled, created_at, repo)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		fs.ID, fs.Name, fs.Path, string(exJSON), boolInt(fs.Enabled), fs.CreatedAt, fs.Repo,
+		INSERT INTO file_sets (id, name, path, excludes, enabled, created_at, repo, repo_chosen)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		fs.ID, fs.Name, fs.Path, string(exJSON), boolInt(fs.Enabled), fs.CreatedAt, fs.Repo, fs.RepoChosen,
 	)
 	if err != nil {
 		return FileSet{}, fmt.Errorf("CreateFileSet: %w", err)
@@ -165,7 +171,7 @@ func (r *Repo) UpdateFileSetClearingSelection(fs FileSet) error {
 // ListFileSets returns all file sets ordered by name.
 func (r *Repo) ListFileSets() ([]FileSet, error) {
 	rows, err := r.db.Query(`
-		SELECT id, name, path, excludes, enabled, schedule_cadence, selected_paths, repo, created_at
+		SELECT id, name, path, excludes, enabled, schedule_cadence, selected_paths, repo, repo_chosen, created_at
 		FROM file_sets ORDER BY name`)
 	if err != nil {
 		return nil, fmt.Errorf("ListFileSets: %w", err)
@@ -186,7 +192,7 @@ func (r *Repo) ListFileSets() ([]FileSet, error) {
 // GetFileSet returns the file set with the given id.
 func (r *Repo) GetFileSet(id string) (FileSet, error) {
 	row := r.db.QueryRow(`
-		SELECT id, name, path, excludes, enabled, schedule_cadence, selected_paths, repo, created_at
+		SELECT id, name, path, excludes, enabled, schedule_cadence, selected_paths, repo, repo_chosen, created_at
 		FROM file_sets WHERE id = ?`, id)
 	return scanFileSet(row)
 }
@@ -194,7 +200,7 @@ func (r *Repo) GetFileSet(id string) (FileSet, error) {
 // GetFileSetByName returns the file set with the given (unique) name.
 func (r *Repo) GetFileSetByName(name string) (FileSet, error) {
 	row := r.db.QueryRow(`
-		SELECT id, name, path, excludes, enabled, schedule_cadence, selected_paths, repo, created_at
+		SELECT id, name, path, excludes, enabled, schedule_cadence, selected_paths, repo, repo_chosen, created_at
 		FROM file_sets WHERE name = ?`, name)
 	return scanFileSet(row)
 }
@@ -252,7 +258,7 @@ func (r *Repo) SetFileSetScheduleCadence(id, cadence string) error {
 // switched on is the API tier's question (validateItemRepoID, itemRepoPath),
 // not this package's.
 func (r *Repo) SetFileSetRepo(id, repo string) error {
-	res, err := r.db.Exec(`UPDATE file_sets SET repo = ? WHERE id = ?`, repo, id)
+	res, err := r.db.Exec(`UPDATE file_sets SET repo = ?, repo_chosen = 1 WHERE id = ?`, repo, id)
 	if err != nil {
 		return fmt.Errorf("SetFileSetRepo: %w", err)
 	}
@@ -337,7 +343,7 @@ func scanFileSet(s scanner) (FileSet, error) {
 	// written value decodes as JSON below. Same nullable-scan precedent as
 	// received_repos.last_check_ok (migrate.go v76).
 	var selJSON *string
-	err := s.Scan(&fs.ID, &fs.Name, &fs.Path, &exJSON, &enabled, &fs.ScheduleCadence, &selJSON, &fs.Repo, &fs.CreatedAt)
+	err := s.Scan(&fs.ID, &fs.Name, &fs.Path, &exJSON, &enabled, &fs.ScheduleCadence, &selJSON, &fs.Repo, &fs.RepoChosen, &fs.CreatedAt)
 	if err != nil {
 		return FileSet{}, fmt.Errorf("scanFileSet: %w", err)
 	}

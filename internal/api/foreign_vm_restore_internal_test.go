@@ -655,4 +655,12 @@ func TestForeignRestoreVMLeavesStoppedAndRemaps(t *testing.T) {
 	if startCalled {
 		t.Fatal("a foreign-restored VM must be left STOPPED (Start must not be called)")
 	}
+
+	adopted, err := s.store.GetVMTargetByName("win10")
+	if err != nil {
+		t.Fatalf("adopted vm must exist locally: %v", err)
+	}
+	if adopted.Repo != "" || adopted.RepoChosen != store.RepoOpen {
+		t.Fatalf("an adopted vm must stay open, its history is in the foreign repository: %+v", adopted)
+	}
 }
