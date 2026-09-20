@@ -76,8 +76,15 @@ func TestATargetNoItemIsCopiedToDropsOut(t *testing.T) {
 	f.backupRun(nginx.ID, now-3*oneDay)
 	replicatedAt(t, f, "containers", b2.ID, now-3*oneDay+600, false)
 
-	if st := statusFor(t, f, "containers"); st.ReplicationState != "ok" {
-		t.Fatalf("state %q, want ok: Hetzner gets nothing and does not count", st.ReplicationState)
+	_, byTarget, targets := f.svc.placementCurrency(settingsOf(t, f.svc), "containers")
+	if !byTarget {
+		t.Fatal("a domain with copy rules is judged per target")
+	}
+	if len(targets) != 1 {
+		t.Fatalf("targets = %+v, want one entry: Hetzner gets nothing and does not count", targets)
+	}
+	if targets[0].lastBackupAt != now-3*oneDay {
+		t.Fatalf("the remaining entry has lastBackupAt %d, want nginx's backup: Hetzner's empty entry must not be the one that stays", targets[0].lastBackupAt)
 	}
 }
 
