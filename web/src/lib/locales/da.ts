@@ -1682,6 +1682,9 @@ const da: Partial<Translations> = {
   "placement.lockOwnCredentials": "Har egne loginoplysninger og ligger allerede uden for huset",
   "placement.lockAtTarget": "Ligger allerede ved målet",
   "placement.lockHomeFixed": "Fast siden første sikkerhedskopi: {home}",
+  "placement.droppedKeeps": "{target} beholder sine kopier ({n}) og beskærer dem til sin egen regel ved næste kørsel. Der tilføjes ingen nye.",
+  "placement.droppedKeepsUnknown": "{target} beholder sine kopier og beskærer dem til sin egen regel ved næste kørsel. Der tilføjes ingen nye.",
+  "placement.droppedAppendOnly": "{target} er append-only og beholder alle kopier. Der tilføjes ingen nye.",
 };
 
 export default da;

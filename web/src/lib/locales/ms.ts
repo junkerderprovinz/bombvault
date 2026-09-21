@@ -1693,6 +1693,9 @@ const ms: Partial<Translations> = {
   "placement.lockOwnCredentials": "Mempunyai kelayakan sendiri dan sudah berada di luar premis",
   "placement.lockAtTarget": "Sudah berada di sasaran",
   "placement.lockHomeFixed": "Tetap sejak sandaran pertama: {home}",
+  "placement.droppedKeeps": "{target} menyimpan salinannya ({n}) dan memangkasnya mengikut peraturannya sendiri pada larian seterusnya. Tiada salinan baharu ditambah.",
+  "placement.droppedKeepsUnknown": "{target} menyimpan salinannya dan memangkasnya mengikut peraturannya sendiri pada larian seterusnya. Tiada salinan baharu ditambah.",
+  "placement.droppedAppendOnly": "{target} bersifat tambah-sahaja dan menyimpan setiap salinan. Tiada salinan baharu ditambah.",
 };
 
 export default ms;

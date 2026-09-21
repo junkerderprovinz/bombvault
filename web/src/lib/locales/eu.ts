@@ -1693,6 +1693,9 @@ const eu: Partial<Translations> = {
   "placement.lockOwnCredentials": "Bere kredentzialak ditu eta jada instalazioetatik kanpo dago",
   "placement.lockAtTarget": "Jada helburuan dago",
   "placement.lockHomeFixed": "Finkatuta lehen babeskopiatik: {home}",
+  "placement.droppedKeeps": "{target}(e)k bere kopiak ({n}) gordetzen ditu eta hurrengo exekuzioan bere arautara murrizten ditu. Berririk ez da gehitzen.",
+  "placement.droppedKeepsUnknown": "{target}(e)k bere kopiak gordetzen ditu eta hurrengo exekuzioan bere arautara murrizten ditu. Berririk ez da gehitzen.",
+  "placement.droppedAppendOnly": "{target} gehitu-soilik da eta kopia guztiak gordetzen ditu. Berririk ez da gehitzen.",
 };
 
 export default eu;

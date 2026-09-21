@@ -1682,6 +1682,9 @@ const sv: Partial<Translations> = {
   "placement.lockOwnCredentials": "Har egna inloggningsuppgifter och ligger redan utanför lokalen",
   "placement.lockAtTarget": "Ligger redan vid målet",
   "placement.lockHomeFixed": "Fast sedan den första säkerhetskopian: {home}",
+  "placement.droppedKeeps": "{target} behåller sina kopior ({n}) och trimmar dem till sin egen regel vid nästa körning. Inga nya läggs till.",
+  "placement.droppedKeepsUnknown": "{target} behåller sina kopior och trimmar dem till sin egen regel vid nästa körning. Inga nya läggs till.",
+  "placement.droppedAppendOnly": "{target} är append-only och behåller varje kopia. Inga nya läggs till.",
 };
 
 export default sv;

@@ -1693,6 +1693,9 @@ const lv: Partial<Translations> = {
   "placement.lockOwnCredentials": "Tam ir savi piekļuves dati, un tas jau atrodas ārpus telpām",
   "placement.lockAtTarget": "Jau atrodas pie mērķa",
   "placement.lockHomeFixed": "Nemainīgs kopš pirmās dublēšanas: {home}",
+  "placement.droppedKeeps": "{target} saglabā savas kopijas ({n}) un nākamajā palaišanā tās samazina līdz savam noteikumam. Jaunas netiek pievienotas.",
+  "placement.droppedKeepsUnknown": "{target} saglabā savas kopijas un nākamajā palaišanā tās samazina līdz savam noteikumam. Jaunas netiek pievienotas.",
+  "placement.droppedAppendOnly": "{target} darbojas tikai-pievienot režīmā un saglabā katru kopiju. Jaunas netiek pievienotas.",
 };
 
 export default lv;

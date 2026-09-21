@@ -1682,6 +1682,9 @@ const he: Partial<Translations> = {
   "placement.lockOwnCredentials": "יש לו פרטי גישה משלו והוא כבר מחוץ למתחם",
   "placement.lockAtTarget": "כבר נמצא ביעד",
   "placement.lockHomeFixed": "קבוע מאז הגיבוי הראשון: {home}",
+  "placement.droppedKeeps": "{target} שומר את העותקים שלו ({n}) ומצמצם אותם לכלל שלו בהרצה הבאה. לא מתווספים עותקים חדשים.",
+  "placement.droppedKeepsUnknown": "{target} שומר את העותקים שלו ומצמצם אותם לכלל שלו בהרצה הבאה. לא מתווספים עותקים חדשים.",
+  "placement.droppedAppendOnly": "{target} הוא append-only ושומר כל עותק. לא מתווספים עותקים חדשים.",
 };
 
 export default he;

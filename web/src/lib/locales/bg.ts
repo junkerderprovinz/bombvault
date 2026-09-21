@@ -1693,6 +1693,9 @@ const bg: Partial<Translations> = {
   "placement.lockOwnCredentials": "Има собствени данни за достъп и вече е извън обекта",
   "placement.lockAtTarget": "Вече се намира при целта",
   "placement.lockHomeFixed": "Фиксирано от първото резервно копие: {home}",
+  "placement.droppedKeeps": "{target} пази копията си ({n}) и ги подрязва по своето правило при следващото изпълнение. Нови не се добавят.",
+  "placement.droppedKeepsUnknown": "{target} пази копията си и ги подрязва по своето правило при следващото изпълнение. Нови не се добавят.",
+  "placement.droppedAppendOnly": "{target} е от тип само-добавяне и пази всяко копие. Нови не се добавят.",
 };
 
 export default bg;

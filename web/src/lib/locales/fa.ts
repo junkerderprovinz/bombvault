@@ -1693,6 +1693,9 @@ const fa: Partial<Translations> = {
   "placement.lockOwnCredentials": "اطلاعات ورود خودش را دارد و از قبل خارج از محل است",
   "placement.lockAtTarget": "از قبل در مقصد قرار دارد",
   "placement.lockHomeFixed": "از اولین پشتیبان ثابت شده: {home}",
+  "placement.droppedKeeps": "{target} نسخه‌های خود ({n}) را نگه می‌دارد و در اجرای بعدی آن‌ها را طبق قاعدهٔ خودش کوتاه می‌کند. نسخهٔ جدیدی افزوده نمی‌شود.",
+  "placement.droppedKeepsUnknown": "{target} نسخه‌های خود را نگه می‌دارد و در اجرای بعدی آن‌ها را طبق قاعدهٔ خودش کوتاه می‌کند. نسخهٔ جدیدی افزوده نمی‌شود.",
+  "placement.droppedAppendOnly": "{target} فقط-افزودنی است و هر نسخه را نگه می‌دارد. نسخهٔ جدیدی افزوده نمی‌شود.",
 };
 
 export default fa;

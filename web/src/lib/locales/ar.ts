@@ -1685,6 +1685,9 @@ const ar: Partial<Translations> = {
   "placement.lockOwnCredentials": "له بيانات اعتماد خاصة به وهو بالفعل خارج المبنى",
   "placement.lockAtTarget": "موجود بالفعل عند الهدف",
   "placement.lockHomeFixed": "ثابت منذ أول نسخة احتياطية: {home}",
+  "placement.droppedKeeps": "{target} يحتفظ بنسخه ({n}) ويقلّصها إلى قاعدته الخاصة في التشغيل التالي. لا تُضاف نسخ جديدة.",
+  "placement.droppedKeepsUnknown": "{target} يحتفظ بنسخه ويقلّصها إلى قاعدته الخاصة في التشغيل التالي. لا تُضاف نسخ جديدة.",
+  "placement.droppedAppendOnly": "{target} append-only ويحتفظ بكل نسخة. لا تُضاف نسخ جديدة.",
 };
 
 export default ar;

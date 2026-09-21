@@ -1685,6 +1685,9 @@ const ro: Partial<Translations> = {
   "placement.lockOwnCredentials": "Are propriile date de acces și este deja în afara sediului",
   "placement.lockAtTarget": "Se află deja la țintă",
   "placement.lockHomeFixed": "Fixat de la prima copie de siguranță: {home}",
+  "placement.droppedKeeps": "{target} păstrează copiile ({n}) și le reduce la propria regulă la următoarea rulare. Nu se adaugă altele noi.",
+  "placement.droppedKeepsUnknown": "{target} păstrează copiile și le reduce la propria regulă la următoarea rulare. Nu se adaugă altele noi.",
+  "placement.droppedAppendOnly": "{target} este append-only și păstrează fiecare copie. Nu se adaugă altele noi.",
 };
 
 export default ro;

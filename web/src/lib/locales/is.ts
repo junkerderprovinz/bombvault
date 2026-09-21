@@ -1693,6 +1693,9 @@ const is: Partial<Translations> = {
   "placement.lockOwnCredentials": "Er með eigin auðkenni og er þegar utan húss",
   "placement.lockAtTarget": "Liggur þegar hjá markmiðinu",
   "placement.lockHomeFixed": "Fast frá fyrsta afriti: {home}",
+  "placement.droppedKeeps": "{target} heldur afritunum sínum ({n}) og sníður þau að eigin reglu í næstu keyrslu. Engin ný bætast við.",
+  "placement.droppedKeepsUnknown": "{target} heldur afritunum sínum og sníður þau að eigin reglu í næstu keyrslu. Engin ný bætast við.",
+  "placement.droppedAppendOnly": "{target} er aðeins-bæta-við og heldur öllum afritum. Engin ný bætast við.",
 };
 
 export default is;

@@ -1682,6 +1682,9 @@ const pt: Partial<Translations> = {
   "placement.lockOwnCredentials": "Tem credenciais próprias e já está fora das instalações",
   "placement.lockAtTarget": "Já está no destino",
   "placement.lockHomeFixed": "Fixo desde o primeiro backup: {home}",
+  "placement.droppedKeeps": "{target} conserva as suas cópias ({n}) e reduz-as à sua própria regra na próxima execução. Não são adicionadas cópias novas.",
+  "placement.droppedKeepsUnknown": "{target} conserva as suas cópias e reduz-as à sua própria regra na próxima execução. Não são adicionadas cópias novas.",
+  "placement.droppedAppendOnly": "{target} é append-only e conserva todas as cópias. Não são adicionadas cópias novas.",
 };
 
 export default pt;

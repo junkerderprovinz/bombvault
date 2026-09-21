@@ -1682,6 +1682,9 @@ const fr: Partial<Translations> = {
   "placement.lockOwnCredentials": "A ses propres identifiants et se trouve déjà hors des locaux",
   "placement.lockAtTarget": "Se trouve déjà à la cible",
   "placement.lockHomeFixed": "Fixé depuis la première sauvegarde : {home}",
+  "placement.droppedKeeps": "{target} conserve ses copies ({n}) et les ramène à sa propre règle au prochain passage. Aucune nouvelle copie n'est ajoutée.",
+  "placement.droppedKeepsUnknown": "{target} conserve ses copies et les ramène à sa propre règle au prochain passage. Aucune nouvelle copie n'est ajoutée.",
+  "placement.droppedAppendOnly": "{target} est en append-only et conserve toutes les copies. Aucune nouvelle copie n'est ajoutée.",
 };
 
 export default fr;

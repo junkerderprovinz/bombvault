@@ -1792,6 +1792,9 @@ export const en = {
   "placement.lockOwnCredentials": "Has its own credentials and is already off the premises",
   "placement.lockAtTarget": "Already lies at the target",
   "placement.lockHomeFixed": "Fixed since the first backup: {home}",
+  "placement.droppedKeeps": "{target} keeps its copies ({n}) and trims them to its own rules at the next run. No new ones are added.",
+  "placement.droppedKeepsUnknown": "{target} keeps its copies and trims them to its own rules at the next run. No new ones are added.",
+  "placement.droppedAppendOnly": "{target} is append-only and keeps every copy. No new ones are added.",
 
   "files.excludesCount": "Excludes: {n}",
   "files.enabled": "Include in schedule",
@@ -3544,6 +3547,9 @@ export const de: Translations = {
   "placement.lockOwnCredentials": "Hat eigene Zugangsdaten und liegt schon außer Haus",
   "placement.lockAtTarget": "Liegt schon beim Ziel",
   "placement.lockHomeFixed": "Fest seit dem ersten Backup: {home}",
+  "placement.droppedKeeps": "{target} behält seine Kopien ({n}) und kürzt sie beim nächsten Lauf auf seine Regel. Neue kommen nicht dazu.",
+  "placement.droppedKeepsUnknown": "{target} behält seine Kopien und kürzt sie beim nächsten Lauf auf seine Regel. Neue kommen nicht dazu.",
+  "placement.droppedAppendOnly": "{target} ist append-only und behält alle Kopien. Neue kommen nicht dazu.",
 
   "files.excludesCount": "Ausschlüsse: {n}",
   "files.enabled": "Im Zeitplan einschließen",

@@ -1677,6 +1677,9 @@ const sl: Partial<Translations> = {
   "placement.lockOwnCredentials": "Ima svoje poverilnice in je že zunaj prostorov",
   "placement.lockAtTarget": "Že leži pri cilju",
   "placement.lockHomeFixed": "Nespremenljivo od prve varnostne kopije: {home}",
+  "placement.droppedKeeps": "{target} hrani svoje kopije ({n}) in jih ob naslednjem zagonu skrči na svoje pravilo. Nove se ne dodajajo.",
+  "placement.droppedKeepsUnknown": "{target} hrani svoje kopije in jih ob naslednjem zagonu skrči na svoje pravilo. Nove se ne dodajajo.",
+  "placement.droppedAppendOnly": "{target} deluje v načinu samo-dodajanja in hrani vsako kopijo. Nove se ne dodajajo.",
 };
 
 export default sl;

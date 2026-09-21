@@ -1693,6 +1693,9 @@ const lt: Partial<Translations> = {
   "placement.lockOwnCredentials": "Turi savo prisijungimo duomenis ir jau yra už patalpų ribų",
   "placement.lockAtTarget": "Jau yra prie tikslo",
   "placement.lockHomeFixed": "Fiksuota nuo pirmos atsarginės kopijos: {home}",
+  "placement.droppedKeeps": "{target} saugo savo kopijas ({n}) ir per kitą paleidimą sutrumpina jas pagal savo taisyklę. Naujos nepridedamos.",
+  "placement.droppedKeepsUnknown": "{target} saugo savo kopijas ir per kitą paleidimą sutrumpina jas pagal savo taisyklę. Naujos nepridedamos.",
+  "placement.droppedAppendOnly": "{target} veikia tik pridėjimo režimu ir saugo kiekvieną kopiją. Naujos nepridedamos.",
 };
 
 export default lt;

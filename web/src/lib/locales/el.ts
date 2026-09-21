@@ -1682,6 +1682,9 @@ const el: Partial<Translations> = {
   "placement.lockOwnCredentials": "Έχει δικά του διαπιστευτήρια και βρίσκεται ήδη εκτός εγκαταστάσεων",
   "placement.lockAtTarget": "Βρίσκεται ήδη στον προορισμό",
   "placement.lockHomeFixed": "Σταθερό από το πρώτο αντίγραφο ασφαλείας: {home}",
+  "placement.droppedKeeps": "{target} διατηρεί τα αντίγραφά του ({n}) και τα περικόπτει στον δικό του κανόνα στην επόμενη εκτέλεση. Δεν προστίθενται νέα.",
+  "placement.droppedKeepsUnknown": "{target} διατηρεί τα αντίγραφά του και τα περικόπτει στον δικό του κανόνα στην επόμενη εκτέλεση. Δεν προστίθενται νέα.",
+  "placement.droppedAppendOnly": "{target} είναι append-only και διατηρεί κάθε αντίγραφο. Δεν προστίθενται νέα.",
 };
 
 export default el;

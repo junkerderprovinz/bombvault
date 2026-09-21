@@ -1674,6 +1674,9 @@ const ja: Partial<Translations> = {
   "placement.lockOwnCredentials": "独自の認証情報を持ち、すでに施設外にあります",
   "placement.lockAtTarget": "すでに送信先にあります",
   "placement.lockHomeFixed": "最初のバックアップ以降固定: {home}",
+  "placement.droppedKeeps": "{target}はコピー（{n}件）を保持し、次回の実行時に自身のルールまで減らします。新しいコピーは追加されません。",
+  "placement.droppedKeepsUnknown": "{target}はコピーを保持し、次回の実行時に自身のルールまで減らします。新しいコピーは追加されません。",
+  "placement.droppedAppendOnly": "{target}はappend-onlyで、すべてのコピーを保持します。新しいコピーは追加されません。",
 };
 
 export default ja;

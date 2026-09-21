@@ -1677,6 +1677,9 @@ const ru: Partial<Translations> = {
   "placement.lockOwnCredentials": "Имеет собственные учётные данные и уже находится вне помещения",
   "placement.lockAtTarget": "Уже находится у цели",
   "placement.lockHomeFixed": "Зафиксировано с первой резервной копии: {home}",
+  "placement.droppedKeeps": "{target} хранит свои копии ({n}) и при следующем запуске обрезает их до своего правила. Новые не добавляются.",
+  "placement.droppedKeepsUnknown": "{target} хранит свои копии и при следующем запуске обрезает их до своего правила. Новые не добавляются.",
+  "placement.droppedAppendOnly": "{target} работает в режиме append-only и хранит все копии. Новые не добавляются.",
 };
 
 export default ru;

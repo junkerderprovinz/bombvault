@@ -1693,6 +1693,9 @@ const gl: Partial<Translations> = {
   "placement.lockOwnCredentials": "Ten as súas propias credenciais e xa está fóra das instalacións",
   "placement.lockAtTarget": "Xa está no destino",
   "placement.lockHomeFixed": "Fixo dende a primeira copia de seguranza: {home}",
+  "placement.droppedKeeps": "{target} conserva as súas copias ({n}) e recórtaas á súa propia regra na próxima execución. Non se engaden copias novas.",
+  "placement.droppedKeepsUnknown": "{target} conserva as súas copias e recórtaas á súa propia regra na próxima execución. Non se engaden copias novas.",
+  "placement.droppedAppendOnly": "{target} é append-only e conserva todas as copias. Non se engaden copias novas.",
 };
 
 export default gl;
