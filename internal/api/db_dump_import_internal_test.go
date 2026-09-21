@@ -32,8 +32,12 @@ type importFakeDocker struct {
 	dockercli.Docker
 	inspect model.Inspect
 
-	stopErr  error
-	startErr error
+	stopErr error
+	// rollbackStopErr answers every stop after the first one.
+	rollbackStopErr error
+	stops           int
+	startErr        error
+	readyExit       int
 	// onStart runs inside Start, so a test can read the data folders at the
 	// moment the container comes back up.
 	onStart func()
@@ -58,6 +62,9 @@ func (f *importFakeDocker) Inspect(_ context.Context, name string) (model.Inspec
 
 func (f *importFakeDocker) Stop(_ context.Context, name string, _ time.Duration) error {
 	f.calls = append(f.calls, "stop:"+name)
+	if f.stops++; f.stops > 1 {
+		return f.rollbackStopErr
+	}
 	return f.stopErr
 }
 
@@ -75,7 +82,7 @@ func (f *importFakeDocker) ExecOutput(_ context.Context, name string, cmd []stri
 		return f.probeOut, 0, nil
 	}
 	f.calls = append(f.calls, "ready:"+name)
-	return "", 0, nil
+	return "", f.readyExit, nil
 }
 
 func (f *importFakeDocker) ExecStdin(_ context.Context, name string, _ []string, stdin io.Reader, _ int) (string, int, error) {
@@ -493,4 +500,75 @@ func TestImportRollsBackWhenStartFails(t *testing.T) {
 			t.Errorf("reason = %q, want both folder paths in it", reason)
 		}
 	})
+}
+
+func TestImportRollsBackWhenTheDatabaseNeverComesUp(t *testing.T) {
+	every, bound := dbImportReadyEvery, dbImportReadyFor
+	dbImportReadyEvery, dbImportReadyFor = time.Millisecond, 20*time.Millisecond
+	t.Cleanup(func() { dbImportReadyEvery, dbImportReadyFor = every, bound })
+
+	rig := newImportRig(t)
+	rig.dock.readyExit = 2
+
+	if _, err := rig.svc.StartImportDBDump(context.Background(), "pg", "local", importDumpID); err != nil {
+		t.Fatal(err)
+	}
+	waitForDetachedRun(t, rig.svc)
+
+	if got, err := os.ReadFile(filepath.Join(rig.dataDir, "PG_VERSION")); err != nil || string(got) != "16\n" {
+		t.Errorf("the data folder holds %q (%v), want the old data back", got, err)
+	}
+	if got := siblingsOf(t, rig.dataDir, ".bombvault-import-failed-*"); len(got) != 1 {
+		t.Errorf("failed folders = %v, want the fresh one kept aside", got)
+	}
+	calls := strings.Join(rig.dock.calls, " ")
+	if strings.Contains(calls, "import:") {
+		t.Errorf("calls = %q, want no import into a server that never answered", calls)
+	}
+	if got := strings.Count(calls, "start:pg"); got != 2 {
+		t.Errorf("the container was started %d times, want a second start after the rollback", got)
+	}
+
+	runs := runsOfKind(t, rig.svc.store, "dbimport")
+	if len(runs) != 1 || runs[0].Status != "failed" {
+		t.Fatalf("runs = %+v, want one failed import", runs)
+	}
+	if !strings.HasPrefix(runs[0].Error, store.ReasonDBImportPrepare) || !strings.Contains(runs[0].Error, "not ready") {
+		t.Errorf("reason = %q, want %q saying the database was not ready", runs[0].Error, store.ReasonDBImportPrepare)
+	}
+}
+
+func TestImportRollbackLeavesTheFoldersWhenTheServerCannotBeStopped(t *testing.T) {
+	every, bound := dbImportReadyEvery, dbImportReadyFor
+	dbImportReadyEvery, dbImportReadyFor = time.Millisecond, 20*time.Millisecond
+	t.Cleanup(func() { dbImportReadyEvery, dbImportReadyFor = every, bound })
+
+	rig := newImportRig(t)
+	rig.dock.readyExit = 2
+	rig.dock.rollbackStopErr = errors.New("dockercli: stop pg: context deadline exceeded")
+
+	if _, err := rig.svc.StartImportDBDump(context.Background(), "pg", "local", importDumpID); err != nil {
+		t.Fatal(err)
+	}
+	waitForDetachedRun(t, rig.svc)
+
+	if got := entryNames(t, rig.dataDir); len(got) != 0 {
+		t.Errorf("the running server's folder holds %v, want it left as the fresh one", got)
+	}
+	if got := siblingsOf(t, rig.dataDir, ".bombvault-import-failed-*"); len(got) != 0 {
+		t.Errorf("the folder under the running server was moved to %v", got)
+	}
+	kept := siblingsOf(t, rig.dataDir, ".bombvault-before-import-*")
+	if len(kept) != 1 {
+		t.Fatalf("kept folders = %v, want the old data still aside", kept)
+	}
+
+	runs := runsOfKind(t, rig.svc.store, "dbimport")
+	if len(runs) != 1 || runs[0].Status != "failed" {
+		t.Fatalf("runs = %+v, want one failed import", runs)
+	}
+	reason := runs[0].Error
+	if !strings.HasPrefix(reason, store.ReasonDBImportRollback) || !strings.Contains(reason, filepath.Base(kept[0])) {
+		t.Errorf("reason = %q, want %q naming the kept folder", reason, store.ReasonDBImportRollback)
+	}
 }
