@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { useT } from "./i18n";
@@ -64,7 +64,11 @@ import { useT } from "./i18n";
 // one is already open).
 export interface ConfirmOptions {
   confirmLabel?: string;
+  /** Translation key behind confirmLabel, so the confirm button shows its glyph. */
+  confirmLabelKey?: string;
   cancelLabel?: string;
+  /** Lines or switches the answer needs, shown under the question. */
+  extra?: ReactNode;
 }
 
 interface PendingConfirm extends ConfirmOptions {
@@ -111,15 +115,46 @@ export function useConfirm() {
     if (trigger && document.contains(trigger)) trigger.focus();
   }, []);
 
-  // Escape (document-level, so it works no matter where focus currently is)
-  // + the Tab/Shift+Tab focus trap. Both only need to exist while a
-  // confirmation is actually showing.
+  // Escape (works no matter where focus currently is) + the Tab/Shift+Tab
+  // focus trap, both only while a confirmation is actually showing. Shared
+  // with the direct window (see useDialogKeys below) so it isn't a copy.
+  const cancel = useCallback(() => settle(false), [settle]);
+  useDialogKeys(pending !== null, dialogRef, cancel);
+
+  // Portal-rendered to <body> (InfoBubble.tsx's fix for the same problem):
+  // any ancestor of the call site with a CSS transform (e.g. .glim-page-enter)
+  // creates a new containing block, so a `position: fixed` backdrop nested
+  // under it only covers that ancestor's box, not the real viewport.
+  const confirmDialog = pending
+    ? createPortal(
+        <ConfirmDialog
+          ref={dialogRef}
+          title={t("confirmDialog.title")}
+          message={pending.message}
+          confirmLabel={pending.confirmLabel ?? t("common.confirm")}
+          confirmLabelKey={pending.confirmLabelKey}
+          cancelLabel={pending.cancelLabel ?? t("common.cancel")}
+          closeLabel={t("common.close")}
+          extra={pending.extra}
+          onConfirm={() => settle(true)}
+          onCancel={() => settle(false)}
+        />,
+        document.body
+      )
+    : null;
+
+  return { confirm, confirmDialog };
+}
+
+/** useDialogKeys gives an open dialog Escape from anywhere and a Tab trap over
+ *  its own controls, so focus never reaches the page it covers. */
+export function useDialogKeys(open: boolean, dialogRef: RefObject<HTMLDivElement | null>, onCancel: () => void): void {
   useEffect(() => {
-    if (!pending) return;
+    if (!open) return;
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.preventDefault();
-        settle(false);
+        onCancel();
         return;
       }
       if (e.key !== "Tab") return;
@@ -136,36 +171,12 @@ export function useConfirm() {
           e.preventDefault();
           last.focus();
         }
-      } else {
-        if (!insideCard || active === last) {
-          e.preventDefault();
-          first.focus();
-        }
+      } else if (!insideCard || active === last) {
+        e.preventDefault();
+        first.focus();
       }
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [pending, settle]);
-
-  // Portal-rendered to <body> (InfoBubble.tsx's fix for the same problem):
-  // any ancestor of the call site with a CSS transform (e.g. .glim-page-enter)
-  // creates a new containing block, so a `position: fixed` backdrop nested
-  // under it only covers that ancestor's box, not the real viewport.
-  const confirmDialog = pending
-    ? createPortal(
-        <ConfirmDialog
-          ref={dialogRef}
-          title={t("confirmDialog.title")}
-          message={pending.message}
-          confirmLabel={pending.confirmLabel ?? t("common.confirm")}
-          cancelLabel={pending.cancelLabel ?? t("common.cancel")}
-          closeLabel={t("common.close")}
-          onConfirm={() => settle(true)}
-          onCancel={() => settle(false)}
-        />,
-        document.body
-      )
-    : null;
-
-  return { confirm, confirmDialog };
+  }, [open, dialogRef, onCancel]);
 }
