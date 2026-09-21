@@ -333,3 +333,32 @@ func TestTheImportPreviewCountsBothBlocks(t *testing.T) {
 		t.Fatalf("copyRules = %v, want null for a missing block", summary["copyRules"])
 	}
 }
+
+func TestTheImportPreviewNamesEachNewTargetCountedWithTheFilesRules(t *testing.T) {
+	src := newPlacementFixture(t)
+	b2 := src.target("containers", "B2", "b2:bucket:containers")
+	src.target("flash", "B2 flash", "b2:bucket:flash")
+	src.rule("containers", "container:plex", b2.ID)
+	exp := src.do(http.MethodGet, "/api/settings/export", nil)
+
+	dst := newPlacementFixture(t)
+	dst.container("nginx", "")
+	dst.container("plex", "")
+	dst.hold(dst.domainPath("containers"),
+		snap("aaaa0001", 100, "container:nginx"), snap("aaaa0002", 200, "container:plex"))
+	summary := dst.do(http.MethodPost, "/api/settings/import", exp)["summary"].(map[string]any)
+	rows := summary["newTargets"].([]any)
+	if len(rows) != 1 {
+		t.Fatalf("newTargets = %v, want B2 only", rows)
+	}
+	row := rows[0].(map[string]any)
+	pv := row["preview"].(map[string]any)
+	if row["id"] != b2.ID || row["domain"] != "containers" || row["name"] != "B2" || pv["items"] != float64(1) || pv["snapshots"] != float64(1) {
+		t.Fatalf("row = %v, want B2 with nginx only, plex left out by the file's rule", row)
+	}
+
+	again := src.do(http.MethodPost, "/api/settings/import", exp)["summary"].(map[string]any)
+	if list := again["newTargets"].([]any); len(list) != 0 {
+		t.Fatalf("newTargets = %v, want none for targets that already exist", list)
+	}
+}
