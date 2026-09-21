@@ -301,14 +301,15 @@ func (s *Service) defaultImpactFor(ctx context.Context, domain string, change de
 	return impact, nil
 }
 
-// setsOnlyHome reports whether change moves the default onto a remote named
+// setsOnlyHome reports whether change moves the default onto a home that is
+// not itself a copy source: a remote named repository or a direct
 // repository. Such a change sets only the location; the copy rule stays for
 // the items whose location is a copy source.
 func (s *Service) setsOnlyHome(settings store.Settings, domain string, named map[string]store.OffsiteTarget, change defaultChange) bool {
 	if change.Home == nil {
 		return false
 	}
-	return s.homeKindOf(settings, domain, strings.TrimSpace(*change.Home), named) == homeRemote
+	return !s.homeKindOf(settings, domain, strings.TrimSpace(*change.Home), named).copySource()
 }
 
 // ownRuleHandling says whether copySubjects counts an item that already
@@ -946,20 +947,29 @@ func importedPlacement(exp settingsExport) store.PlacementImport {
 // applyImport replaces every off-site target and, once the file carries any
 // named repository, every named repository too, so a database row absent
 // from the file is gone once the import lands. A home the file itself brings
-// carries whether it is switched off, which is checked the same way; whether
-// its location actually resolves is not, since a plain export redacts a
-// credential in it and a false failure there would refuse a good file.
+// carries whether it is switched off, which is checked the same way, and,
+// when it is a direct repository, which target it companions, so a home of
+// another domain is caught here too. Whether its location actually resolves
+// is not checked, since a plain export redacts a credential in it and a
+// false failure there would refuse a good file.
 func (h *Handler) checkImportedPlacement(exp settingsExport) error {
-	fileRepoEnabled := make(map[string]bool, len(exp.NamedRepos))
-	for _, tv := range exp.NamedRepos {
-		fileRepoEnabled[strings.TrimSpace(tv.ID)] = tv.Enabled
+	type fileRepo struct {
+		enabled     bool
+		companionOf string
 	}
+	fileRepos := make(map[string]fileRepo, len(exp.NamedRepos))
+	for _, tv := range exp.NamedRepos {
+		fileRepos[strings.TrimSpace(tv.ID)] = fileRepo{enabled: tv.Enabled, companionOf: strings.TrimSpace(tv.CompanionOf)}
+	}
+	fileTargetDomain := make(map[string]string, len(exp.OffsiteTargets))
 	inFileTarget := make(map[string]map[string]bool, len(exp.OffsiteTargets))
 	for _, tv := range exp.OffsiteTargets {
+		id := strings.TrimSpace(tv.ID)
+		fileTargetDomain[id] = tv.Domain
 		if inFileTarget[tv.Domain] == nil {
 			inFileTarget[tv.Domain] = map[string]bool{}
 		}
-		inFileTarget[tv.Domain][strings.TrimSpace(tv.ID)] = true
+		inFileTarget[tv.Domain][id] = true
 	}
 	seenDomain := map[string]bool{}
 	for _, d := range exp.PlacementDefaults {
@@ -980,9 +990,12 @@ func (h *Handler) checkImportedPlacement(exp settingsExport) error {
 		if home == "" {
 			continue
 		}
-		if enabled, inFile := fileRepoEnabled[home]; inFile {
-			if !enabled {
+		if repo, inFile := fileRepos[home]; inFile {
+			if !repo.enabled {
 				return fmt.Errorf("%w: the repository is switched off", errRepoInvalid)
+			}
+			if repo.companionOf != "" && fileTargetDomain[repo.companionOf] != d.Domain {
+				return fmt.Errorf("%w: %w", errRepoInvalid, errForeignDomain)
 			}
 			continue
 		}

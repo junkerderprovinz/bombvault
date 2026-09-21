@@ -152,6 +152,31 @@ func TestAnOffsiteOnlyHomeLeavesTheDefaultSkipAlone(t *testing.T) {
 	}
 }
 
+// TestADirectRepositoryOnlyHomeLeavesTheDefaultSkipAlone is the direct-
+// repository sibling of TestAnOffsiteOnlyHomeLeavesTheDefaultSkipAlone: a
+// direct repository is no copy source either, so moving the default onto one
+// must leave the skip list untouched the same way a remote named repository
+// does.
+func TestADirectRepositoryOnlyHomeLeavesTheDefaultSkipAlone(t *testing.T) {
+	f := newPlacementFixture(t)
+	repo := f.direct(f.target("containers", "NAS", "backups/nas-containers"))
+	f.setDefault("containers", "")
+	f.container("web", "")
+	body := map[string]any{"home": repo.ID, "skip": []string{store.SkipAll}}
+	impact := f.do(http.MethodPost, "/api/placement/default/containers/preview", body)["impact"].(map[string]any)
+	if len(impact["dropped"].([]any)) != 0 {
+		t.Fatalf("impact = %v, want no target to lose web", impact)
+	}
+	body["expect"] = impact
+	if res := f.do(http.MethodPut, "/api/placement/default/containers", body); res["ok"] != true {
+		t.Fatalf("PUT = %v", res)
+	}
+	d, found, err := f.st.PlacementDefaultFor("containers")
+	if err != nil || !found || d.Home != repo.ID || len(d.Skip) != 0 {
+		t.Fatalf("default = %+v, %v, %v, want the direct repository with skip still []", d, found, err)
+	}
+}
+
 func TestLocalForTheDefaultAsksForItemsAndProjectFolders(t *testing.T) {
 	f, b2 := fourteenContainers(t)
 	res := f.do(http.MethodPost, "/api/placement/default/containers/preview", map[string]any{"skip": []string{store.SkipAll}})
