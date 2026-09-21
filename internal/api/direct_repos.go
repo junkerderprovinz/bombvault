@@ -344,6 +344,17 @@ func (h *Handler) handleCreateDirectRepo(w http.ResponseWriter, r *http.Request,
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"repo": h.namedRepoViews([]store.OffsiteTarget{row})[0]}))
 }
 
+// directEditRefused reports whether an edit changes anything on a direct
+// repository besides its name and on/off switch.
+func directEditRefused(b namedRepoBody, row store.OffsiteTarget) bool {
+	differs := func(p *string, stored string) bool { return p != nil && strings.TrimSpace(*p) != stored }
+	return differs(b.Repo, row.Repo) || differs(b.CredsRef, row.CredsRef) ||
+		(b.StorageClass != nil && !strings.EqualFold(strings.TrimSpace(*b.StorageClass), row.StorageClass)) ||
+		(b.LimitUpload != nil && *b.LimitUpload != row.LimitUpload) ||
+		(b.LimitDownload != nil && *b.LimitDownload != row.LimitDownload) ||
+		(b.Immutable != nil && *b.Immutable != row.Immutable)
+}
+
 // handleConnectRepo serves POST /api/repos/{id}/connect.
 func (h *Handler) handleConnectRepo(w http.ResponseWriter, r *http.Request) {
 	var body struct {
