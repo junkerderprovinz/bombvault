@@ -530,6 +530,52 @@ func TestSaveDBDumpToPathContainedAndExclusive(t *testing.T) {
 		}
 	})
 
+	t.Run("a partial file a crashed save left behind is replaced", func(t *testing.T) {
+		svc, _ := downloadFixture(t, payload)
+		svc.dbDumpChown = func(string, int, int) error { return nil }
+		dir := filepath.Join(svc.cfg.HostMountRoot, "user", "restore")
+		if err := os.MkdirAll(dir, 0o750); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, savedName+".partial"), []byte("-- dump\nSEL"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+
+		target, started, err := svc.StartSaveDBDumpToPath(context.Background(), "pg", "local", "3f9c2a1be0d4aaaa", "user/restore", false)
+		if err != nil || !started {
+			t.Fatalf("started=%v err=%v", started, err)
+		}
+		waitForDetachedRun(t, svc)
+
+		if run := latestRunOfKind(t, svc.store, "dbdumpsave"); run.Status != "success" {
+			t.Fatalf("run = %+v, want success", run)
+		}
+		if got, err := os.ReadFile(target); err != nil || !bytes.Equal(got, payload) { //nolint:gosec // G304: a path this test built
+			t.Errorf("saved dump = %q (%v), want the raw dump", got, err)
+		}
+	})
+
+	t.Run("a folder the save creates opens for the share user", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("no unix permissions")
+		}
+		svc, _ := downloadFixture(t, payload)
+		svc.dbDumpChown = func(string, int, int) error { return nil }
+
+		if _, _, err := svc.StartSaveDBDumpToPath(context.Background(), "pg", "local", "3f9c2a1be0d4aaaa", "user/db-exports", false); err != nil {
+			t.Fatal(err)
+		}
+		waitForDetachedRun(t, svc)
+
+		info, err := os.Stat(filepath.Join(svc.cfg.HostMountRoot, "user", "db-exports"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.Mode().Perm() != 0o755 {
+			t.Errorf("mode = %v, want 0755 so the share user can reach the dump", info.Mode().Perm())
+		}
+	})
+
 	t.Run("a failed stream leaves nothing behind", func(t *testing.T) {
 		svc, eng := downloadFixture(t, payload)
 		eng.rawErr = errors.New("restic dump: exit status 1")
