@@ -22,6 +22,19 @@ var errMirroredField = errors.New("a direct repository takes this value from its
 
 var errForeignDomain = errors.New("that direct repository belongs to a target of another domain")
 
+var errTargetInUse = errors.New("this target's direct repository is still in use")
+
+// targetUseView is the JSON shape of the store.TargetUse a refused off-site
+// target delete carries back, so the SPA can point at what is still using the
+// direct repository.
+func targetUseView(u store.TargetUse) map[string]any {
+	domains := u.DefaultDomains
+	if domains == nil {
+		domains = []string{}
+	}
+	return map[string]any{"directRepoId": u.CompanionID, "items": u.Items, "defaultDomains": domains}
+}
+
 // repoLocationsOverlap reports whether two locations are the same place or one
 // lies inside the other, path element by path element.
 func repoLocationsOverlap(a, b string) bool {

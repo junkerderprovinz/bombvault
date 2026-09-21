@@ -62,6 +62,7 @@ var placementCodes = []struct {
 	{errMirroredField, "mirrored-field"},
 	{store.ErrCompanionTaken, "companion-taken"},
 	{store.ErrNotOffsiteTarget, "unknown-target"},
+	{errTargetInUse, "target-in-use"},
 }
 
 // placementCode returns the code the interface translates err by, "" for none.

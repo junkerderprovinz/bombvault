@@ -254,11 +254,18 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": offsiteTargetToView(stored)}))
 }
 
-// handleDeleteOffsiteTarget removes an off-site target by id (a no-op, still ok,
-// when it does not exist). DELETE /api/offsite/targets/{id}.
+// handleDeleteOffsiteTarget removes an off-site target and its direct
+// repository (a no-op, still ok, when the target does not exist), refused
+// while an item or a default still uses that direct repository.
+// DELETE /api/offsite/targets/{id}.
 func (h *Handler) handleDeleteOffsiteTarget(w http.ResponseWriter, r *http.Request) {
-	if err := h.store.DeleteOffsiteTarget(r.PathValue("id")); err != nil {
+	use, err := h.store.DeleteOffsiteTargetIfUnused(r.PathValue("id"))
+	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if use.InUse() {
+		placementFail(w, errTargetInUse, map[string]any{"use": targetUseView(use)})
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))

@@ -245,6 +245,7 @@ func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
 		errMirroredField:          "mirrored-field",
 		store.ErrCompanionTaken:   "companion-taken",
 		store.ErrNotOffsiteTarget: "unknown-target",
+		errTargetInUse:            "target-in-use",
 	}
 	if len(placementCodes) != len(want) {
 		t.Fatalf("placementCodes has %d rows, want %d: a sentinel is missing its row or its test", len(placementCodes), len(want))

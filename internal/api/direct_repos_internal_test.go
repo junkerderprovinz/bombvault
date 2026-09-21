@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"io"
@@ -56,6 +57,7 @@ func TestDirectRepositoryRefusalsCarryTheirCodes(t *testing.T) {
 		store.ErrNotOffsiteTarget:                              "unknown-target",
 		errForeignDomain:                                       "foreign-domain",
 		fmt.Errorf("%w: %w", errRepoInvalid, errForeignDomain): "foreign-domain",
+		errTargetInUse:                                         "target-in-use",
 	} {
 		if got := placementCode(err); got != want {
 			t.Errorf("placementCode(%v) = %q, want %q", err, got, want)
@@ -677,5 +679,112 @@ func TestEveryBackupEntryPointAsksForTheDirectTag(t *testing.T) {
 		if !strings.Contains(funcBody(t, src, fn), "s.directTags(") {
 			t.Errorf("%s writes into a direct repository without the %s tag, so its snapshots age by the local rule once the link is lost", fn, restic.DirectTag)
 		}
+	}
+}
+
+func TestDeletingATargetWhoseDirectRepositoryIsUsedIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	target := f.target("containers", "B2", "b2:bkt:containers")
+	d := f.direct(target)
+	f.container("web", d.ID)
+	res := f.do("DELETE", "/api/offsite/targets/"+target.ID, nil)
+	if res["ok"] != false || res["code"] != "target-in-use" {
+		t.Fatalf("delete while in use = %v", res)
+	}
+	use := res["use"].(map[string]any)
+	if use["directRepoId"] != d.ID || use["items"] != float64(1) || len(use["defaultDomains"].([]any)) != 0 {
+		t.Fatalf("use = %v", use)
+	}
+	item := store.ItemRef{Domain: "containers", Key: "web"}
+	if _, err := f.st.WritePlacement(item, &store.HomeWrite{Repo: "", Choice: store.RepoChosen}, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+	if res := f.do("DELETE", "/api/offsite/targets/"+target.ID, nil); res["ok"] != true {
+		t.Fatalf("delete once unused = %v", res)
+	}
+	if _, err := f.st.GetNamedRepo(d.ID); !errors.Is(err, sql.ErrNoRows) {
+		t.Fatalf("the direct repository outlived its target: %v", err)
+	}
+}
+
+func TestClearingTheOffsiteFieldKeepsItsDirectRepositoryLinked(t *testing.T) {
+	f := newPlacementFixture(t)
+	field := f.fieldTarget("containers", "b2:bkt:containers")
+	d := f.direct(field)
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersOffsite = ""
+	if err := f.st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.svc.syncPrimaryOffsiteTarget("containers", settings); err != nil {
+		t.Fatal(err)
+	}
+	got, found, err := f.st.CompanionFor(field.ID)
+	if err != nil || !found || got.ID != d.ID || got.CompanionLost {
+		t.Fatalf("after clearing the field: %+v, found %v, err %v", got, found, err)
+	}
+}
+
+func TestAnImportKeepsTheDirectRepositoryOfATargetItCarries(t *testing.T) {
+	f := newPlacementFixture(t)
+	kept := f.target("containers", "B2", "b2:bkt:containers")
+	gone := f.target("vms", "Hetzner", "sftp:u@box:/vms")
+	dk := f.direct(kept)
+	dg := f.direct(gone)
+	if err := f.h.replaceOffsiteTargets([]offsiteTargetView{offsiteTargetToView(kept)}, settingsView{}); err != nil {
+		t.Fatal(err)
+	}
+	k, err := f.st.GetNamedRepo(dk.ID)
+	if err != nil || k.CompanionOf != kept.ID || k.CompanionLost {
+		t.Fatalf("direct repository of a target in the file: %+v, %v", k, err)
+	}
+	g, err := f.st.GetNamedRepo(dg.ID)
+	if err != nil || g.CompanionOf != "" || !g.CompanionLost {
+		t.Fatalf("direct repository of a target missing from the file: %+v, %v", g, err)
+	}
+}
+
+func TestAnImportKeepsWhatAKeptTargetHasObserved(t *testing.T) {
+	f := newPlacementFixture(t)
+	kept := f.target("containers", "B2", "b2:bkt:containers")
+	gone := f.target("containers", "Hetzner", "sftp:u@box:/containers")
+	f.listing("containers", kept.ID, 100, copiesRow("container:web", 3, 90))
+	f.listing("containers", gone.ID, 100, copiesRow("container:web", 2, 90))
+	if err := f.h.replaceOffsiteTargets([]offsiteTargetView{offsiteTargetToView(kept)}, settingsView{}); err != nil {
+		t.Fatal(err)
+	}
+	copies, err := f.st.ItemCopiesForDomain("containers")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(copies) != 1 || copies[0].TargetID != kept.ID || copies[0].SnapshotCount != 3 {
+		t.Fatalf("offsite_item_copies after the import = %+v, want the kept target's row only", copies)
+	}
+	if _, listed, err := f.st.TargetObservationFor("containers", kept.ID); err != nil || !listed {
+		t.Fatalf("the kept target lost its listing: listed %v, err %v", listed, err)
+	}
+	if _, listed, err := f.st.TargetObservationFor("containers", gone.ID); err != nil || listed {
+		t.Fatalf("the dropped target kept its listing: listed %v, err %v", listed, err)
+	}
+}
+
+func TestAnImportWithoutTargetsLeavesTheDirectRepositoryAsAPlainOne(t *testing.T) {
+	f := newPlacementFixture(t)
+	target := f.target("containers", "B2", "b2:bkt:containers")
+	d := f.direct(target)
+	file := f.do("GET", "/api/settings/export", nil)
+	delete(file, "offsiteTargets")
+	if res := f.do("POST", "/api/settings/import?apply=true", file); res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+	got, err := f.st.GetNamedRepo(d.ID)
+	if err != nil || got.CompanionOf != "" || !got.CompanionLost || !got.MirroredEqual(target) {
+		t.Fatalf("direct repository after a file without targets: %+v, %v", got, err)
+	}
+	if _, found, _ := f.st.GetOffsiteTarget(target.ID); found {
+		t.Fatal("a target the file does not carry is still there")
 	}
 }
