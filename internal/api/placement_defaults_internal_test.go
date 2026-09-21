@@ -35,13 +35,38 @@ func TestDefaultRowsCountTheItemsOfEachDomain(t *testing.T) {
 		t.Fatalf("row = %v", containers)
 	}
 	counts := containers["counts"].(map[string]any)
-	for key, want := range map[string]float64{"follow": 3, "own": 1, "open": 2, "chosenNoBackup": 1} {
+	for key, want := range map[string]float64{"follow": 3, "own": 1, "open": 2, "chosenNoRun": 1} {
 		if counts[key] != want {
 			t.Errorf("%s = %v, want %v", key, counts[key], want)
 		}
 	}
 	if skip, ok := containers["skip"].([]any); !ok || len(skip) != 0 {
 		t.Errorf("skip = %v, want an empty list", containers["skip"])
+	}
+}
+
+// TestTheCardAndTheApplyButtonAgreeOnADiscoverRebuiltItem pins that the two
+// checks no longer contradict each other. The card counts an item under
+// chosenNoRun by the runs table alone; the apply button still refuses to
+// reset it once its own, fuller check finds the snapshot that never got a
+// run recorded, which is exactly what a row Discover rebuilds looks like.
+func TestTheCardAndTheApplyButtonAgreeOnADiscoverRebuiltItem(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.setDefault("containers", "")
+	f.container("rebuilt", "")
+	f.hold(f.domainPath("containers"), snap("aaaa0001", 100, "container:rebuilt"))
+
+	res := f.do(http.MethodGet, "/api/placement/defaults", nil)
+	rows, _ := res["defaults"].([]any)
+	containers := rows[0].(map[string]any)
+	counts := containers["counts"].(map[string]any)
+	if counts["chosenNoRun"] != float64(1) {
+		t.Fatalf("chosenNoRun = %v, want 1: the card has no recorded run for it", counts["chosenNoRun"])
+	}
+
+	_, kept := candidatesByKey(f.do(http.MethodGet, "/api/placement/default/containers/apply", nil))
+	if kept["rebuilt"] != "has-backups" {
+		t.Fatalf("kept = %v, want rebuilt refused as has-backups", kept)
 	}
 }
 

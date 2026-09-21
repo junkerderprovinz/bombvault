@@ -16,10 +16,10 @@ import (
 )
 
 type defaultCounts struct {
-	Follow         int `json:"follow"`         // items without an own rule
-	Own            int `json:"own"`            // items with an own rule
-	Open           int `json:"open"`           // repo_chosen = 0
-	ChosenNoBackup int `json:"chosenNoBackup"` // chosen, no successful run
+	Follow      int `json:"follow"`      // items without an own rule
+	Own         int `json:"own"`         // items with an own rule
+	Open        int `json:"open"`        // repo_chosen = 0
+	ChosenNoRun int `json:"chosenNoRun"` // chosen, no successful run recorded
 }
 
 type defaultRow struct {
@@ -163,6 +163,14 @@ func (s *Service) defaultRowFor(settings store.Settings, named map[string]store.
 	return row, err
 }
 
+// defaultCountsFor judges chosenNoRun by the runs table alone, not the fuller
+// check itemBackups gives the apply button: this runs for every item of a
+// domain on every card render, and a live snapshot listing per item would
+// make the card slow to the same degree the button's own check is expensive
+// per item it actually touches. The name says what it counts: a row Discover
+// rebuilt has snapshots but no recorded run, so it lands here too, and the
+// apply button still refuses it as has-backups when asked to reset it - the
+// two never claimed the same thing, so they cannot disagree.
 func (s *Service) defaultCountsFor(p placementRead) (defaultCounts, error) {
 	var c defaultCounts
 	items, err := s.domainItems(p.Domain)
@@ -184,7 +192,7 @@ func (s *Service) defaultCountsFor(p placementRead) (defaultCounts, error) {
 			return c, err
 		}
 		if run == nil {
-			c.ChosenNoBackup++
+			c.ChosenNoRun++
 		}
 	}
 	return c, nil
