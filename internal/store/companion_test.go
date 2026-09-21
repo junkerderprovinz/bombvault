@@ -162,3 +162,104 @@ func TestMirroredEqualSeesEachMirroredField(t *testing.T) {
 		t.Error("id, name, location, schedule and the switch belong to the row itself")
 	}
 }
+
+func TestSavingATargetMirrorsIntoItsDirectRepositoryButKeepsItsCredentials(t *testing.T) {
+	r, _ := migratedStore(t)
+	target := richTarget(t, r)
+	direct := store.SeedCompanion(t, r, target)
+	target.CredsRef = "set-2"
+	target.StorageClass = "GLACIER_IR"
+	target.Immutable = false
+	target.RetentionKeepLast, target.RetentionKeepDaily, target.RetentionKeepWeekly, target.RetentionKeepMonthly = 9, 8, 7, 6
+	target.LimitUpload, target.LimitDownload, target.GrowthBudgetGB = 30, 40, 50
+	if _, err := r.UpsertOffsiteTarget(target); err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.GetNamedRepo(direct.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := target
+	want.CredsRef = "set-1"
+	if !got.MirroredEqual(want) {
+		t.Fatalf("direct row after the save:\n%+v\nwant the target's fields with the old credentials:\n%+v", got, want)
+	}
+}
+
+func TestSavingATargetUnchangedLeavesItsDirectRowUntouched(t *testing.T) {
+	r, db := migratedStore(t)
+	target := richTarget(t, r)
+	store.SeedCompanion(t, r, target)
+	if _, err := db.Exec(`
+		CREATE TABLE direct_writes (n INTEGER);
+		CREATE TRIGGER count_direct_writes AFTER UPDATE ON offsite_targets WHEN old.companion_of <> ''
+		BEGIN INSERT INTO direct_writes VALUES (1); END;`); err != nil {
+		t.Fatal(err)
+	}
+	writes := func() int {
+		var n int
+		if err := db.QueryRow(`SELECT COUNT(*) FROM direct_writes`).Scan(&n); err != nil {
+			t.Fatal(err)
+		}
+		return n
+	}
+	target.Name = "B2 renamed"
+	if _, err := r.UpsertOffsiteTarget(target); err != nil {
+		t.Fatal(err)
+	}
+	if n := writes(); n != 0 {
+		t.Fatalf("a save that changed no mirrored field wrote the direct row %d times", n)
+	}
+	target.RetentionKeepLast++
+	if _, err := r.UpsertOffsiteTarget(target); err != nil {
+		t.Fatal(err)
+	}
+	if n := writes(); n != 1 {
+		t.Fatalf("a changed retention wrote the direct row %d times, want 1", n)
+	}
+}
+
+func TestUpdatingADirectRowKeepsWhatItTakesFromItsTarget(t *testing.T) {
+	r, _ := migratedStore(t)
+	target := richTarget(t, r)
+	direct := store.SeedCompanion(t, r, target)
+	edit := direct
+	edit.Name = "renamed"
+	edit.Enabled = false
+	edit.Immutable = !direct.Immutable
+	edit.RetentionKeepLast = 99
+	edit.CredsRef = "other"
+	edit.CompanionOf = ""
+	got, err := r.UpsertOffsiteTarget(edit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Name != "renamed" || got.Enabled {
+		t.Fatalf("name and switch were not saved: %+v", got)
+	}
+	if !got.MirroredEqual(direct) || got.CompanionOf != target.ID {
+		t.Fatalf("an update changed mirrored fields or the link: %+v", got)
+	}
+}
+
+func TestCompanionFieldsAreWrittenOnInsertOnly(t *testing.T) {
+	r, _ := migratedStore(t)
+	row, err := r.UpsertOffsiteTarget(store.OffsiteTarget{
+		Role: store.RoleRepo, Name: "Old", Repo: "b2:bkt:old", Enabled: true, CompanionLost: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !row.CompanionLost || row.CompanionOf != "" {
+		t.Fatalf("inserted row = %+v, want the lost label and no link", row)
+	}
+	row.CompanionOf = "t1"
+	row.CompanionLost = false
+	again, err := r.UpsertOffsiteTarget(row)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if again.CompanionOf != "" || !again.CompanionLost {
+		t.Fatalf("an update rewrote the link: %+v", again)
+	}
+}

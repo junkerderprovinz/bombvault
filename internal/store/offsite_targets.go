@@ -114,8 +114,13 @@ const (
 )
 
 // UpsertOffsiteTarget inserts t or updates the row with its id, keeping that
-// row's sort_order, and returns the row as stored. An empty ID gets a fresh one
-// and an empty Role means RoleOffsite.
+// row's sort_order and companion link, and returns the row as stored. An
+// empty ID gets a fresh one and an empty Role means RoleOffsite.
+//
+// A row that is already a direct repository (companion_of set) only takes
+// name, repo, schedule and enabled from t; its mirrored fields come from its
+// target instead. Saving a target mirrors its own fields, credentials aside,
+// into that companion in the same transaction.
 func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	if strings.TrimSpace(t.Repo) == "" {
 		return OffsiteTarget{}, ErrEmptyOffsiteRepo
@@ -134,34 +139,51 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
 	}
 	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
-	_, err = tx.Exec(`
-		INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
-		  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
-		  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-		ON CONFLICT(id) DO UPDATE SET
-		  domain                 = excluded.domain,
-		  name                   = excluded.name,
-		  repo                   = excluded.repo,
-		  role                   = excluded.role,
-		  creds_ref              = excluded.creds_ref,
-		  storage_class          = excluded.storage_class,
-		  immutable              = excluded.immutable,
-		  schedule               = excluded.schedule,
-		  retention_keep_last    = excluded.retention_keep_last,
-		  retention_keep_daily   = excluded.retention_keep_daily,
-		  retention_keep_weekly  = excluded.retention_keep_weekly,
-		  retention_keep_monthly = excluded.retention_keep_monthly,
-		  limit_upload           = excluded.limit_upload,
-		  limit_download         = excluded.limit_download,
-		  growth_budget_gb       = excluded.growth_budget_gb,
-		  enabled                = excluded.enabled`,
-		t.ID, t.Domain, t.Name, t.Repo, t.Role, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Schedule,
-		t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
-		t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB, boolInt(t.Enabled), t.CreatedAt, t.SortOrder,
-	)
+	var companionOf string
+	err = tx.QueryRow(`SELECT companion_of FROM offsite_targets WHERE id = ?`, t.ID).Scan(&companionOf)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
+	}
+	if companionOf != "" {
+		_, err = tx.Exec(`UPDATE offsite_targets SET name = ?, repo = ?, schedule = ?, enabled = ? WHERE id = ?`,
+			t.Name, t.Repo, t.Schedule, boolInt(t.Enabled), t.ID)
+	} else {
+		_, err = tx.Exec(`
+			INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
+			  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
+			  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order,
+			  companion_of, companion_lost)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			ON CONFLICT(id) DO UPDATE SET
+			  domain                 = excluded.domain,
+			  name                   = excluded.name,
+			  repo                   = excluded.repo,
+			  role                   = excluded.role,
+			  creds_ref              = excluded.creds_ref,
+			  storage_class          = excluded.storage_class,
+			  immutable              = excluded.immutable,
+			  schedule               = excluded.schedule,
+			  retention_keep_last    = excluded.retention_keep_last,
+			  retention_keep_daily   = excluded.retention_keep_daily,
+			  retention_keep_weekly  = excluded.retention_keep_weekly,
+			  retention_keep_monthly = excluded.retention_keep_monthly,
+			  limit_upload           = excluded.limit_upload,
+			  limit_download         = excluded.limit_download,
+			  growth_budget_gb       = excluded.growth_budget_gb,
+			  enabled                = excluded.enabled`,
+			t.ID, t.Domain, t.Name, t.Repo, t.Role, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Schedule,
+			t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
+			t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB, boolInt(t.Enabled), t.CreatedAt, t.SortOrder,
+			t.CompanionOf, boolInt(t.CompanionLost),
+		)
+	}
 	if err != nil {
 		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
+	}
+	if t.Role == RoleOffsite {
+		if err := mirrorTx(tx, t, false); err != nil {
+			return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget mirror: %w", err)
+		}
 	}
 	return commitStoredTargetTx(tx, t.ID)
 }
