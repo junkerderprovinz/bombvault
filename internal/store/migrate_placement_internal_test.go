@@ -361,6 +361,11 @@ func TestAFreshDatabaseHasNoPlacementDefaults(t *testing.T) {
 	}
 }
 
+// TestAnExistingDatabaseKeepsItsReplicationThroughConfirmedDefaults pins the
+// backfill against seedV8111's own shape: containers has a successful backup
+// run and a successful off-site run, vms and files have only an item row and
+// neither. Only containers may be grandfathered as confirmed; a domain that
+// never actually replicated must not have the rebuild check retired for it.
 func TestAnExistingDatabaseKeepsItsReplicationThroughConfirmedDefaults(t *testing.T) {
 	db := OpenMem(t)
 	seedV8111(t, db)
@@ -387,8 +392,8 @@ func TestAnExistingDatabaseKeepsItsReplicationThroughConfirmedDefaults(t *testin
 	if err := rows.Err(); err != nil {
 		t.Fatal(err)
 	}
-	if !slices.Equal(domains, []string{"containers", "files", "vms"}) {
-		t.Fatalf("defaults for %v, want containers, files and vms", domains)
+	if !slices.Equal(domains, []string{"containers"}) {
+		t.Fatalf("defaults for %v, want containers alone: vms and files have no run of their own in seedV8111", domains)
 	}
 }
 
