@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"testing/iotest"
 	"time"
 
 	cerrdefs "github.com/containerd/errdefs"
@@ -182,5 +183,52 @@ func (b *blockingAttach) CloseWrite() error { return nil }
 func (b *blockingAttach) Close() {
 	if b.closes.Add(1) == 1 {
 		close(b.blocked)
+	}
+}
+
+// A dump whose source fails partway gives the importer no end of input; the
+// feed has to end the exec itself and say why.
+func TestStdinFeedReportsASourceThatFails(t *testing.T) {
+	conn := newWaitingAttach()
+	lost := errors.New("restic dump: pack 5e1f not found")
+	stdin := io.MultiReader(strings.NewReader(strings.Repeat("INSERT;\n", 512)), iotest.ErrReader(lost))
+
+	done := make(chan error, 1)
+	go func() { done <- feedExecStdin(context.Background(), conn, stdin, io.Discard) }()
+
+	select {
+	case err := <-done:
+		if !errors.Is(err, lost) {
+			t.Fatalf("err = %v, want the source's error", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("the importer still waits for input the source will never send")
+	}
+}
+
+// waitingAttach is an exec attach that swallows its input and whose output
+// ends only once its input ends or the attach is closed, as an importer's does.
+type waitingAttach struct {
+	ended chan struct{}
+	once  atomic.Bool
+}
+
+func newWaitingAttach() *waitingAttach { return &waitingAttach{ended: make(chan struct{})} }
+
+func (w *waitingAttach) Read([]byte) (int, error) {
+	<-w.ended
+	return 0, io.EOF
+}
+
+func (w *waitingAttach) Write(p []byte) (int, error) { return len(p), nil }
+
+func (w *waitingAttach) CloseWrite() error {
+	w.Close()
+	return nil
+}
+
+func (w *waitingAttach) Close() {
+	if w.once.CompareAndSwap(false, true) {
+		close(w.ended)
 	}
 }

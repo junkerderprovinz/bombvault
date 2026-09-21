@@ -3,6 +3,7 @@ package dockercli
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 
@@ -146,20 +147,42 @@ func capturedOutput(ctx context.Context, r io.Reader, closeAttach func(), max in
 // feedExecStdin copies stdin into the attach, half-closes the write side at the
 // end of the input and keeps the command's stderr. The attach is closed before
 // the copy is waited for: a command that exits early leaves the write blocked,
-// and only the close releases it.
+// and only the close releases it. An input that fails never ends, so the attach
+// is closed at once and the input's error is the one reported.
 func feedExecStdin(ctx context.Context, conn execConn, stdin io.Reader, stderr io.Writer) error {
+	src := &sourceReader{r: stdin}
 	fed := make(chan struct{})
 	go func() {
 		defer close(fed)
-		if _, err := io.Copy(conn, stdin); err == nil {
-			_ = conn.CloseWrite()
+		if _, err := io.Copy(conn, src); err != nil {
+			conn.Close()
+			return
 		}
+		_ = conn.CloseWrite()
 	}()
 
 	err := drainExecStreams(ctx, conn, conn.Close, io.Discard, stderr)
 	conn.Close()
 	<-fed
+	if src.err != nil {
+		return fmt.Errorf("read the input: %w", src.err)
+	}
 	return err
+}
+
+// sourceReader keeps the input's own read error apart from a failed write
+// into an attach that was closed on purpose.
+type sourceReader struct {
+	r   io.Reader
+	err error
+}
+
+func (s *sourceReader) Read(p []byte) (int, error) {
+	n, err := s.r.Read(p)
+	if err != nil && !errors.Is(err, io.EOF) {
+		s.err = err
+	}
+	return n, err
 }
 
 // execConn is an exec attach as the stdin feed uses it: output to read, stdin
