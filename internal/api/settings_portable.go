@@ -487,9 +487,6 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 			}
 		}
 	}
-	if len(rows) == 0 {
-		return ""
-	}
 	resolve := func(loc string) (string, bool) {
 		loc = strings.TrimSpace(loc)
 		if loc == "" {
@@ -522,6 +519,16 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 		if loc, ok := resolve(tv.Repo); ok {
 			occupied = append(occupied, place{"an off-site destination", loc})
 		}
+	}
+	for i, a := range occupied {
+		for _, b := range occupied[i+1:] {
+			if repoLocationsOverlap(a.loc, b.loc) && !sameRepoLocation(a.loc, b.loc) {
+				log.Printf("api: settings import: %s lies inside or around %s; imported anyway so older files still load", a.label, b.label) //nolint:gosec // G706: the labels are fixed text
+			}
+		}
+	}
+	if len(rows) == 0 {
+		return ""
 	}
 	seen := make([]string, 0, len(rows))
 	for _, row := range rows {

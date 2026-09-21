@@ -2076,6 +2076,55 @@ func (h *Handler) rejectSettingsPathOnNamedRepo(v settingsView, cur store.Settin
 	return ""
 }
 
+// rejectNestedSettingsPath refuses a save that moves a domain path or an
+// off-site field into or around another repository or target. Like
+// rejectSettingsPathOnNamedRepo it checks only the fields this save changes.
+func (h *Handler) rejectNestedSettingsPath(v settingsView, cur store.Settings) string {
+	next := cur
+	next.ContainersPath, next.VMsPath, next.FlashPath, next.ConfigPath, next.FilesPath =
+		v.ContainersPath, v.VMsPath, v.FlashPath, v.ConfigPath, v.FilesPath
+	next.ContainersOffsite, next.VMsOffsite, next.FlashOffsite, next.ConfigOffsite, next.FilesOffsite =
+		v.ContainersOffsite, v.VMsOffsite, v.FlashOffsite, v.ConfigOffsite, v.FilesOffsite
+	for _, f := range []struct {
+		label, domain, loc, was string
+		field                   bool
+	}{
+		{"Containers", "containers", v.ContainersPath, cur.ContainersPath, false},
+		{"VMs", "vms", v.VMsPath, cur.VMsPath, false},
+		{"Flash", "flash", v.FlashPath, cur.FlashPath, false},
+		{"Config", "config", v.ConfigPath, cur.ConfigPath, false},
+		{"Folders", "files", v.FilesPath, cur.FilesPath, false},
+		{"Containers off-site", "containers", v.ContainersOffsite, cur.ContainersOffsite, true},
+		{"VMs off-site", "vms", v.VMsOffsite, cur.VMsOffsite, true},
+		{"Flash off-site", "flash", v.FlashOffsite, cur.FlashOffsite, true},
+		{"Config off-site", "config", v.ConfigOffsite, cur.ConfigOffsite, true},
+		{"Folders off-site", "files", v.FilesOffsite, cur.FilesOffsite, true},
+	} {
+		if strings.TrimSpace(f.loc) == "" || sameRepoLocation(strings.TrimSpace(f.loc), strings.TrimSpace(f.was)) {
+			continue
+		}
+		loc, err := h.svc.resolveRepo(f.loc)
+		if err != nil {
+			continue // rejectInvalidSettingsPaths already refused what cannot resolve
+		}
+		self := locationSelf{own: f.domain}
+		if f.field {
+			self = locationSelf{field: f.domain}
+			row, ok, err := h.store.FieldOffsiteTarget(f.domain)
+			if err != nil {
+				return "could not check this path against the off-site targets; try again"
+			}
+			if ok {
+				self.ids = []string{row.ID}
+			}
+		}
+		if err := h.svc.locationClash(next, loc, self); err != nil {
+			return fmt.Sprintf("the %s path: %s", f.label, scrubError(err))
+		}
+	}
+	return ""
+}
+
 // rejectInvalidSettingsPaths validates every repo location a settings row
 // carries: the restore folder is always local, a remote backend (rclone:/s3:/
 // rest:/sftp:/b2:) is accepted verbatim, an unprefixed remote-looking value is
@@ -2167,6 +2216,10 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if msg := h.rejectSettingsPathOnNamedRepo(v, cur); msg != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+		return
+	}
+	if msg := h.rejectNestedSettingsPath(v, cur); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
