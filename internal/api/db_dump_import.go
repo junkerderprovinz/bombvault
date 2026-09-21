@@ -112,10 +112,11 @@ func importToolFailure(kept, detail string) error {
 }
 
 // dbImportPlan is what an import resolved while the request was still open: the
-// dump, the engine, the data folder in this process's view and the role a
-// PostgreSQL dump always recreates.
+// container by name and by id, the dump, the engine, the data folder in this
+// process's view and the role a PostgreSQL dump always recreates.
 type dbImportPlan struct {
 	name    string
+	id      string
 	src     dbDumpSource
 	dump    DBDumpView
 	engine  dbdump.Engine
@@ -172,6 +173,13 @@ func (s *Service) prepareImportDBDump(ctx context.Context, name, source, snapsho
 	if err != nil {
 		return dbImportPlan{}, err
 	}
+	// Docker falls back to an id prefix when no container has the name, so a
+	// removed "db" could resolve to whichever container's id starts with db.
+	// Every step after this one goes by the id, which a container recreated in
+	// the meantime does not share.
+	if strings.TrimPrefix(in.Name, "/") != name {
+		return dbImportPlan{}, fmt.Errorf("no container is named %q", name)
+	}
 	if !in.Running {
 		return dbImportPlan{}, refuseImport(importRefusedNotRunning, "container %q is not running", name)
 	}
@@ -189,7 +197,7 @@ func (s *Service) prepareImportDBDump(ctx context.Context, name, source, snapsho
 		return dbImportPlan{}, refuseImport(importRefusedNoDataMount,
 			"the data folder of %q cannot be reached under the host mount", name)
 	}
-	server := s.databaseServerVersion(ctx, name, engine)
+	server := s.databaseServerVersion(ctx, name, in.ID, engine)
 	if !dbdump.VersionMajorOK(engine, dump.view.Version, server) {
 		return dbImportPlan{}, &importRefusal{
 			code:   importRefusedVersion,
@@ -200,6 +208,7 @@ func (s *Service) prepareImportDBDump(ctx context.Context, name, source, snapsho
 	}
 	return dbImportPlan{
 		name:    name,
+		id:      in.ID,
 		src:     src,
 		dump:    dump.view,
 		engine:  engine,
@@ -239,14 +248,14 @@ func (s *Service) databaseDataDir(in model.Inspect, e dbdump.Engine) (string, bo
 
 // databaseServerVersion asks the running server which version it is. An answer
 // that does not come is not a reason to refuse the import.
-func (s *Service) databaseServerVersion(ctx context.Context, name string, e dbdump.Engine) string {
+func (s *Service) databaseServerVersion(ctx context.Context, name, id string, e dbdump.Engine) string {
 	argv, err := dbdump.ProbeArgv(e)
 	if err != nil {
 		return ""
 	}
 	pctx, cancel := context.WithTimeout(ctx, dbDumpProbeTimeout)
 	defer cancel()
-	out, _, err := s.docker.ExecOutput(pctx, name, argv, 16<<10)
+	out, _, err := s.docker.ExecOutput(pctx, id, argv, 16<<10)
 	if err != nil {
 		log.Printf("api: import database dump into %q: the probe did not answer, importing without a version check: %v", name, err) //nolint:gosec // G706: name is %q-quoted
 		return ""
@@ -288,7 +297,7 @@ func (s *Service) importDBDump(ctx context.Context, plan dbImportPlan, key strin
 // freshDataDirFor stops the container, sets its data folder aside and lets the
 // image initialise an empty one in its place. It returns the folder it kept.
 func (s *Service) freshDataDirFor(ctx context.Context, plan dbImportPlan) (string, error) {
-	if err := s.docker.Stop(ctx, plan.name, dbImportStopTimeout); err != nil {
+	if err := s.docker.Stop(ctx, plan.id, dbImportStopTimeout); err != nil {
 		return "", importPrepareFailure(fmt.Errorf("stop the container: %w", err))
 	}
 	info, err := os.Stat(plan.dataDir)
@@ -303,7 +312,7 @@ func (s *Service) freshDataDirFor(ctx context.Context, plan dbImportPlan) (strin
 		return "", s.rollbackImport(ctx, plan, kept, err)
 	}
 	log.Printf("api: import database dump into %q: the previous data folder is kept at %s", plan.name, kept) //nolint:gosec // G706: name is %q-quoted
-	if err := s.docker.Start(ctx, plan.name); err != nil {
+	if err := s.docker.Start(ctx, plan.id); err != nil {
 		return "", s.rollbackImport(ctx, plan, kept, fmt.Errorf("start the container: %w", err))
 	}
 	if err := s.waitDatabaseReady(ctx, plan); err != nil {
@@ -337,7 +346,7 @@ func (s *Service) rollbackImport(ctx context.Context, plan dbImportPlan, kept st
 	if kept != "" {
 		// Moving the folders under a server that still runs would leave it
 		// writing into the one set aside while the run claims the old data is back.
-		if err := s.docker.Stop(ctx, plan.name, dbImportStopTimeout); err != nil {
+		if err := s.docker.Stop(ctx, plan.id, dbImportStopTimeout); err != nil {
 			return importRollbackFailure(plan.dataDir, kept, fmt.Errorf("%w; the container could not be stopped for the rollback: %w", cause, err))
 		}
 		failed := plan.dataDir + ".bombvault-import-failed-" + time.Now().Format(dbImportStamp)
@@ -348,7 +357,7 @@ func (s *Service) rollbackImport(ctx context.Context, plan dbImportPlan, kept st
 			return importRollbackFailure(failed, kept, cause)
 		}
 	}
-	if err := s.docker.Start(ctx, plan.name); err != nil {
+	if err := s.docker.Start(ctx, plan.id); err != nil {
 		log.Printf("api: import database dump into %q: the container could not be started again: %v", plan.name, err) //nolint:gosec // G706: name is %q-quoted
 	}
 	return importPrepareFailure(cause)
@@ -363,7 +372,7 @@ func (s *Service) waitDatabaseReady(ctx context.Context, plan dbImportPlan) erro
 	}
 	deadline := time.Now().Add(dbImportReadyFor)
 	for {
-		if s.databaseAnswers(ctx, plan.name, argv) {
+		if s.databaseAnswers(ctx, plan.id, argv) {
 			return nil
 		}
 		if time.Now().After(deadline) {
@@ -402,7 +411,7 @@ func (s *Service) feedDBImport(ctx context.Context, plan dbImportPlan, kept, key
 		read <- err
 	}()
 
-	tail, exit, err := s.docker.ExecStdin(ctx, plan.name, argv, pr, dbImportStderrTail)
+	tail, exit, err := s.docker.ExecStdin(ctx, plan.id, argv, pr, dbImportStderrTail)
 	// Closing the read side releases the dump stream when the client gives up
 	// before the last byte.
 	_ = pr.Close()

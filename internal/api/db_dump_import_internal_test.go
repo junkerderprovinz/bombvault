@@ -130,6 +130,8 @@ func newImportRig(t *testing.T) *importRig {
 
 	dock := &importFakeDocker{
 		inspect: model.Inspect{
+			ID:      "c0ffee1d",
+			Name:    "/pg",
 			Running: true,
 			Config:  model.Config{Image: "postgres:16.4", Env: []string{"POSTGRES_USER=immich"}},
 			Mounts:  []model.Mount{{Source: "/data/pg", Destination: "/var/lib/postgresql/data"}},
@@ -265,6 +267,15 @@ func TestImportRefusesBeforeTouchingAnything(t *testing.T) {
 			},
 			want: "notADump",
 		},
+		{
+			// A removed container's dumps are still listed, and Docker answers
+			// an unknown name with the container whose id starts with it.
+			name: "the name resolves to another container's id",
+			id:   importDumpID,
+			prepare: func(_ *testing.T, rig *importRig) {
+				rig.dock.inspect.Name = "/immich_postgres"
+			},
+		},
 	}
 
 	for _, tc := range refusals {
@@ -330,7 +341,7 @@ func TestImportStepsInOrder(t *testing.T) {
 		}
 		waitForDetachedRun(t, rig.svc)
 
-		want := "inspect:pg probe:pg stop:pg start:pg ready:pg import:pg"
+		want := "inspect:pg probe:c0ffee1d stop:c0ffee1d start:c0ffee1d ready:c0ffee1d import:c0ffee1d"
 		if got := strings.Join(rig.dock.calls, " "); got != want {
 			t.Fatalf("calls = %q, want %q", got, want)
 		}
@@ -452,7 +463,7 @@ func TestImportRollsBackWhenStartFails(t *testing.T) {
 		if got := siblingsOf(t, rig.dataDir, ".bombvault-before-import-*"); len(got) != 0 {
 			t.Errorf("the kept folder is still aside: %v", got)
 		}
-		if got := strings.Count(strings.Join(rig.dock.calls, " "), "start:pg"); got != 2 {
+		if got := strings.Count(strings.Join(rig.dock.calls, " "), "start:c0ffee1d"); got != 2 {
 			t.Errorf("the container was started %d times, want a second try after the rollback", got)
 		}
 
@@ -525,7 +536,7 @@ func TestImportRollsBackWhenTheDatabaseNeverComesUp(t *testing.T) {
 	if strings.Contains(calls, "import:") {
 		t.Errorf("calls = %q, want no import into a server that never answered", calls)
 	}
-	if got := strings.Count(calls, "start:pg"); got != 2 {
+	if got := strings.Count(calls, "start:c0ffee1d"); got != 2 {
 		t.Errorf("the container was started %d times, want a second start after the rollback", got)
 	}
 
