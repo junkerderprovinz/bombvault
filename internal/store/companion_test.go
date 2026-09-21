@@ -263,3 +263,62 @@ func TestCompanionFieldsAreWrittenOnInsertOnly(t *testing.T) {
 		t.Fatalf("an update rewrote the link: %+v", again)
 	}
 }
+
+func TestMirrorCompanionCredsCopiesTheTargetsCredentials(t *testing.T) {
+	r, _ := migratedStore(t)
+	target := richTarget(t, r)
+	direct := store.SeedCompanion(t, r, target)
+	target.CredsRef = "set-2"
+	if _, err := r.UpsertOffsiteTarget(target); err != nil {
+		t.Fatal(err)
+	}
+	changed, err := r.MirrorCompanionCreds(target.ID)
+	if err != nil || !changed {
+		t.Fatalf("MirrorCompanionCreds = %v, %v", changed, err)
+	}
+	got, err := r.GetNamedRepo(direct.ID)
+	if err != nil || got.CredsRef != "set-2" {
+		t.Fatalf("direct row = %+v, %v", got, err)
+	}
+	if changed, err := r.MirrorCompanionCreds(target.ID); err != nil || changed {
+		t.Fatalf("a second call changed something: %v, %v", changed, err)
+	}
+	if changed, err := r.MirrorCompanionCreds("missing"); err != nil || changed {
+		t.Fatalf("an unknown target changed something: %v, %v", changed, err)
+	}
+}
+
+func TestConnectCompanionLinksAndMirrorsInOneStep(t *testing.T) {
+	r, _ := migratedStore(t)
+	target := richTarget(t, r)
+	lost, err := r.UpsertOffsiteTarget(store.OffsiteTarget{
+		Role: store.RoleRepo, Name: "B2 old", Repo: "b2:bkt:containers-direct", Enabled: true, CompanionLost: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ConnectCompanion(lost.ID, target.ID); err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.GetNamedRepo(lost.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.CompanionOf != target.ID || got.CompanionLost || !got.MirroredEqual(target) {
+		t.Fatalf("connected row = %+v", got)
+	}
+	other, err := r.UpsertOffsiteTarget(store.OffsiteTarget{Role: store.RoleRepo, Name: "x", Repo: "b2:bkt:x", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ConnectCompanion(other.ID, target.ID); !errors.Is(err, store.ErrCompanionTaken) {
+		t.Fatalf("second repository for one target: %v", err)
+	}
+	if err := r.ConnectCompanion(other.ID, "missing"); !errors.Is(err, store.ErrNotOffsiteTarget) {
+		t.Fatalf("unknown target: %v", err)
+	}
+	vms := store.SeedOffsiteTarget(t, r, "vms", "b2:bkt:vms")
+	if err := r.ConnectCompanion("missing", vms.ID); !errors.Is(err, sql.ErrNoRows) {
+		t.Fatalf("unknown repository: %v", err)
+	}
+}

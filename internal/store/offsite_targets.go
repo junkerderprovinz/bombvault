@@ -521,6 +521,61 @@ func (r *Repo) CreateCompanionRepo(targetID, name, location string) (OffsiteTarg
 	return commitStoredTargetTx(tx, id)
 }
 
+// MirrorCompanionCreds copies the target's credential selector onto its direct
+// repository and reports whether the row changed. The caller has opened the
+// repository with those credentials first.
+func (r *Repo) MirrorCompanionCreds(targetID string) (bool, error) {
+	res, err := r.db.Exec(`
+		UPDATE offsite_targets
+		   SET creds_ref = (SELECT t.creds_ref FROM offsite_targets t WHERE t.id = ? AND t.role = ?)
+		 WHERE role = ? AND companion_of = ? AND companion_of <> ''
+		   AND creds_ref <> (SELECT t.creds_ref FROM offsite_targets t WHERE t.id = ? AND t.role = ?)`,
+		targetID, RoleOffsite, RoleRepo, targetID, targetID, RoleOffsite)
+	if err != nil {
+		return false, fmt.Errorf("MirrorCompanionCreds: %w", err)
+	}
+	n, err := res.RowsAffected()
+	return n > 0, err
+}
+
+// ConnectCompanion makes a named repository the direct repository of a target:
+// it sets the link, clears the lost label and mirrors every field, credentials
+// included, in one transaction.
+func (r *Repo) ConnectCompanion(repoID, targetID string) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("ConnectCompanion: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
+	target, err := offsiteTargetTx(tx, targetID)
+	if err != nil {
+		return err
+	}
+	var taken int
+	if err := tx.QueryRow(`SELECT COUNT(*) FROM offsite_targets WHERE companion_of = ? AND id <> ?`, targetID, repoID).Scan(&taken); err != nil {
+		return fmt.Errorf("ConnectCompanion: %w", err)
+	}
+	if taken > 0 {
+		return ErrCompanionTaken
+	}
+	res, err := tx.Exec(`UPDATE offsite_targets SET companion_of = ?, companion_lost = 0 WHERE id = ? AND role = ?`,
+		targetID, repoID, RoleRepo)
+	if err != nil {
+		return fmt.Errorf("ConnectCompanion: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("ConnectCompanion: %w", err)
+	}
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	if err := mirrorTx(tx, target, true); err != nil {
+		return fmt.Errorf("ConnectCompanion mirror: %w", err)
+	}
+	return tx.Commit()
+}
+
 // itemsUsingNamedRepoQ is the in-use count, written once and run against either
 // the database or an open transaction, so the guarded writes below cannot drift
 // from the count the interface shows.
