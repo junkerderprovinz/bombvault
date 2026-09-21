@@ -242,6 +242,26 @@ func TestAnImportRefusesARuleWhoseIdentityMismatchesItsDomain(t *testing.T) {
 	}
 }
 
+// TestAnImportJudgesTheFilesOwnDirectRepositoryByItsFileTarget pins that the
+// shortcut for a repository the file itself carries also judges the domain a
+// direct repository serves, using the target the same file describes, not
+// only whether the repository is switched off.
+func TestAnImportJudgesTheFilesOwnDirectRepositoryByItsFileTarget(t *testing.T) {
+	f := newPlacementFixture(t)
+	exp := settingsExport{
+		OffsiteTargets: []offsiteTargetView{{ID: "target1", Domain: "vms", Name: "B2", Repo: "b2:bkt:vms", Enabled: true}},
+		NamedRepos:     []offsiteTargetView{{ID: "repo1", Name: "VMs direct", Repo: "b2:bkt:vms-direct", Enabled: true, CompanionOf: "target1"}},
+	}
+	exp.PlacementDefaults = []placementDefaultExport{{Domain: "containers", Home: "repo1", Skip: []string{}}}
+	if err := f.h.checkImportedPlacement(exp); !errors.Is(err, errForeignDomain) {
+		t.Fatalf("a containers default on the file's own VMs direct repository = %v, want errForeignDomain", err)
+	}
+	exp.PlacementDefaults = []placementDefaultExport{{Domain: "vms", Home: "repo1", Skip: []string{}}}
+	if err := f.h.checkImportedPlacement(exp); err != nil {
+		t.Fatalf("a vms default on the file's own VMs direct repository = %v", err)
+	}
+}
+
 func TestAProjectFolderRuleRefusesTheImport(t *testing.T) {
 	f := newPlacementFixture(t)
 	res := importEdited(t, f, func(exp map[string]any) {

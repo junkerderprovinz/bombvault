@@ -35,6 +35,11 @@ type offsiteTargetView struct {
 	Enabled              bool   `json:"enabled"`
 	CreatedAt            int64  `json:"createdAt"`
 	SortOrder            int    `json:"sortOrder"`
+	// CompanionOf is set only on a NamedRepos row: the off-site target this
+	// repository is the direct repository of, "" for a plain one. Read-only,
+	// since toStoreTarget never maps it back: an import can read a companion
+	// link the file already describes, never create or change one.
+	CompanionOf string `json:"companionOf,omitempty"`
 }
 
 func offsiteTargetToView(t store.OffsiteTarget) offsiteTargetView {
@@ -57,6 +62,7 @@ func offsiteTargetToView(t store.OffsiteTarget) offsiteTargetView {
 		Enabled:              t.Enabled,
 		CreatedAt:            t.CreatedAt,
 		SortOrder:            t.SortOrder,
+		CompanionOf:          t.CompanionOf,
 	}
 }
 
