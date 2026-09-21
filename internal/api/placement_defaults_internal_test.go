@@ -45,6 +45,34 @@ func TestDefaultRowsCountTheItemsOfEachDomain(t *testing.T) {
 	}
 }
 
+// TestDefaultRowsCarryHomeOffPausedAndConfirmedAt pins the rest of the row the
+// card reads: a default naming a repository since switched off, and a domain
+// whose pause still waits on a confirmation.
+func TestDefaultRowsCarryHomeOffPausedAndConfirmedAt(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	nas.Enabled = false
+	if _, err := f.st.UpsertOffsiteTarget(nas); err != nil {
+		t.Fatal(err)
+	}
+	f.setDefault("containers", nas.ID)
+	f.paused("vms")
+
+	res := f.do(http.MethodGet, "/api/placement/defaults", nil)
+	rows, _ := res["defaults"].([]any)
+	containers := rows[0].(map[string]any)
+	if containers["homeOff"] != true || containers["home"] != nas.ID {
+		t.Fatalf("containers row = %v, want homeOff true on the switched-off NAS", containers)
+	}
+	if containers["paused"] != false || containers["confirmedAt"] == float64(0) {
+		t.Fatalf("containers row = %v, want it confirmed and unpaused", containers)
+	}
+	vms := rows[1].(map[string]any)
+	if vms["paused"] != true || vms["confirmedAt"] != float64(0) {
+		t.Fatalf("vms row = %v, want it paused with no confirmation stamp", vms)
+	}
+}
+
 // TestTheCardAndTheApplyButtonAgreeOnADiscoverRebuiltItem pins that the two
 // checks no longer contradict each other. The card counts an item under
 // chosenNoRun by the runs table alone; the apply button still refuses to
