@@ -8,10 +8,12 @@
 // has to stay visible, an error is often raw backend output worth copying, and
 // a success message can carry the restored-to path.
 
-import type { MutableRefObject } from "react";
+import type { MutableRefObject, ReactNode } from "react";
 import type { BackupWatchState } from "../../lib/backupWatch";
+import { humanBytes } from "../../lib/forecast";
 import type { ProgressState } from "../../lib/progress";
 import type { useT } from "../../lib/i18n";
+import { RunReasonText } from "../../lib/runReason";
 import { ProgressBar } from "../ProgressBar";
 import { RestoreCancelButton } from "../RestoreCancelButton";
 
@@ -19,8 +21,14 @@ type T = ReturnType<typeof useT>["t"];
 
 // restoreProgressCaption is the "Restoring… NN%" caption, or undefined (an
 // indeterminate bar) until the first percentage arrives, as on the backup bars.
-function restoreProgressCaption(t: T, prog: ProgressState | undefined): string | undefined {
-  if (!prog || prog.phase !== "restore" || prog.percent <= 0) return undefined;
+// Saving and importing a dump have no percentage, only the bytes moved so far.
+function restoreProgressCaption(t: T, prog: ProgressState | undefined, name: string): string | undefined {
+  if (!prog || prog.phase !== "restore") return undefined;
+  if ((prog.stage === "dbdumpsave" || prog.stage === "dbimport") && prog.bytes) {
+    const key = prog.stage === "dbdumpsave" ? "activityLog.lineSavingDumpItem" : "activityLog.lineImportingItem";
+    return t(key).replace("{name}", name).replace("{bytes}", humanBytes(prog.bytes));
+  }
+  if (prog.percent <= 0) return undefined;
   return t("restore.progress").replace("{pct}", String(Math.round(prog.percent)));
 }
 
@@ -42,8 +50,13 @@ interface RestoreProgressProps {
   cancelledRef?: MutableRefObject<boolean>;
   /** Passed to the cancel button where the standing warning does not fit. */
   cancelConfirm?: string;
+  /** False where the backend offers no cancel, so no button promises one.
+   *  Default true. */
+  cancellable?: boolean;
   /** Localized success text. */
-  successMessage: string;
+  successMessage: ReactNode;
+  /** Shows the success text in the warning tone. */
+  successWarn?: boolean;
   /** Shows the restore.started and restore.bgHint lines. Default true. */
   showStartedHint?: boolean;
   t: T;
@@ -58,7 +71,9 @@ export function RestoreProgress({
   name,
   cancelledRef,
   cancelConfirm,
+  cancellable = true,
   successMessage,
+  successWarn = false,
   showStartedHint = true,
   t,
 }: RestoreProgressProps) {
@@ -73,26 +88,30 @@ export function RestoreProgress({
             </>
           )}
           {prog?.phase === "restore" && prog.active && (
-            <ProgressBar percent={prog.percent} active inline label={restoreProgressCaption(t, prog)} />
+            <ProgressBar percent={prog.percent} active inline label={restoreProgressCaption(t, prog, name)} />
           )}
-          <RestoreCancelButton
-            cancelKey={cancelKey}
-            inPlace={inPlace}
-            name={name}
-            confirmText={cancelConfirm}
-            t={t}
-            cancelledRef={cancelledRef}
-          />
+          {cancellable && (
+            <RestoreCancelButton
+              cancelKey={cancelKey}
+              inPlace={inPlace}
+              name={name}
+              confirmText={cancelConfirm}
+              t={t}
+              cancelledRef={cancelledRef}
+            />
+          )}
         </div>
       )}
       {state.phase === "success" && (
-        <p className="text-xs text-statusOk wrap-break-word">{successMessage}</p>
+        <p className={`text-xs wrap-break-word ${successWarn ? "text-statusWarn" : "text-statusOk"}`}>{successMessage}</p>
       )}
       {state.phase === "cancelled" && (
         <p className="text-xs text-carbon-textSub wrap-break-word">{t("restore.cancelled")}</p>
       )}
       {state.phase === "error" && (
-        <p className="text-xs text-statusFail wrap-break-word">{state.message}</p>
+        <p className="text-xs text-statusFail wrap-break-word">
+          <RunReasonText reason={state.message} t={t} />
+        </p>
       )}
     </>
   );

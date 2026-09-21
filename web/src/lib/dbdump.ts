@@ -2,7 +2,7 @@
 // sentence for a container's data coverage, the advice for a failed dump and
 // the pairing between a dump and the volume snapshot taken with it.
 
-import type { DbDataCoverage } from "./api";
+import type { Container, DbDataCoverage, DbEngine } from "./api";
 import type { TranslationKey } from "./i18n";
 
 /** The engines as their makers write them, so no table translates a product name. */
@@ -65,9 +65,38 @@ const IMPORT_REFUSED: Record<string, TranslationKey> = {
   notADump: "dbdump.importRefused.notADump",
 };
 
-/** The sentence for a refused import, or null for a failure of another kind. */
-export function importRefusedKey(code: string | undefined): TranslationKey | null {
+/**
+ * The sentence for a refused import, or null for a failure of another kind.
+ * PostgreSQL reads a dump on the same or a newer major version, MySQL and
+ * MariaDB only on the same one, so a version refusal says which applies.
+ */
+export function importRefusedKey(code: string | undefined, engine: DbEngine): TranslationKey | null {
+  if (code === "version" && engine !== "postgres") return "dbdump.importRefused.versionSameMajor";
   return IMPORT_REFUSED[code ?? ""] ?? null;
+}
+
+/**
+ * The warning an image update carries for a database, or null for any other
+ * container. A dump taken before the update helps on the new version only
+ * where the engine reads an older dump, and MySQL and MariaDB do not across a
+ * major version.
+ */
+export function updateWarnKey(
+  c: Pick<Container, "dbTier" | "dbEngine" | "dbDumpEngine" | "dbSuggestedEngine">
+): TranslationKey | null {
+  if (c.dbTier === "") return null;
+  const engine = c.dbEngine || c.dbDumpEngine || c.dbSuggestedEngine;
+  return engine === "postgres" ? "dbdump.updateWarn" : "dbdump.updateWarnSameMajor";
+}
+
+/**
+ * The databases the one-time notice introduces: those recognised by their image
+ * whose dump runs. A dump switched off for every container, or for one on its
+ * card or by its label, is not news to whoever did it.
+ */
+export function introDatabases(containers: Container[]): Container[] {
+  if (containers.some((c) => c.dbDumpsGlobalOff)) return [];
+  return containers.filter((c) => c.dbTier === "curated" && !c.dbDumpOff && !c.dbDumpLabelOff);
 }
 
 const COVERAGE_KEYS: Record<string, TranslationKey> = {

@@ -27,7 +27,9 @@ type T = ReturnType<typeof useT>["t"];
 export type BackupWatchState =
   | { phase: "idle" }
   | { phase: "pending" }
-  | { phase: "success"; snapshotId?: string }
+  // note is what the run recorded beside its success, such as where an import
+  // kept the previous data folder.
+  | { phase: "success"; snapshotId?: string; note?: string }
   // A cancelled restore: neutral and sticky, no error banner.
   | { phase: "cancelled" }
   // The container was removed from the host but is still a target, so the run
@@ -152,7 +154,7 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
       const run = res.runs.find((r) => mine(r) && !base.has(r.id));
       if (!run) return "no-run";
       if (run.status === "success") {
-        finish({ phase: "success", snapshotId: run.snapshotId || undefined });
+        finish({ phase: "success", snapshotId: run.snapshotId || undefined, note: run.error || undefined });
         return "resolved";
       }
       if (run.status === "failed") {

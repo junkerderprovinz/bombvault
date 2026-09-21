@@ -13,6 +13,7 @@ const checkDbDumpDownload = vi.fn(() => Promise.resolve({ ok: true }));
 const importDbDump = vi.fn(() => Promise.resolve({ ok: true, started: true }));
 const saveDbDumpTo = vi.fn(() => Promise.resolve({ ok: true, started: true, target: "/host/user/dumps/pg.sql" }));
 const deleteSnapshot = vi.fn(() => Promise.resolve({ ok: true }));
+const listRuns = vi.fn(() => Promise.resolve({ ok: true, runs: [] as unknown[] }));
 
 vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
@@ -23,7 +24,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
     importDbDump: (...a: unknown[]) => importDbDump(...(a as [])),
     saveDbDumpTo: (...a: unknown[]) => saveDbDumpTo(...(a as [])),
     deleteSnapshot: (...a: unknown[]) => deleteSnapshot(...(a as [])),
-    listRuns: () => Promise.resolve({ ok: true, runs: [] }),
+    listRuns: (...a: unknown[]) => listRuns(...(a as [])),
   };
 });
 
@@ -88,6 +89,32 @@ function renderList() {
   );
 }
 
+/** The import run the backend records once the import has finished. */
+function importRun(status: string, error: string) {
+  return {
+    id: "run-import",
+    kind: "dbimport",
+    domain: "container",
+    target: "immich_postgres",
+    status,
+    error,
+    snapshotId: "",
+  };
+}
+
+/** Answers the pre-fire lookup with no runs and every later poll with run. */
+function recordAfterStart(run: unknown) {
+  listRuns.mockReset();
+  listRuns.mockImplementationOnce(() => Promise.resolve({ ok: true, runs: [] }));
+  listRuns.mockImplementation(() => Promise.resolve({ ok: true, runs: [run] }));
+}
+
+async function confirmImport() {
+  fireEvent.click(await screen.findByRole("button", { name: en["dbdump.import"] }));
+  await waitFor(() => expect(screen.getByRole("dialog")).toBeTruthy());
+  fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["dbdump.import"] }));
+}
+
 function filled(key: keyof typeof en, params: Record<string, string>): string {
   let text: string = en[key];
   for (const [token, value] of Object.entries(params)) text = text.replace(`{${token}}`, value);
@@ -113,6 +140,8 @@ afterEach(() => {
   saveDbDumpTo.mockClear();
   deleteSnapshot.mockClear();
   push.mockClear();
+  listRuns.mockReset();
+  listRuns.mockImplementation(() => Promise.resolve({ ok: true, runs: [] }));
   document.querySelectorAll("a[download]").forEach((a) => a.remove());
 });
 
@@ -179,7 +208,8 @@ describe("the database dump list", () => {
 
     await waitFor(() => expect(saveDbDumpTo).toHaveBeenCalled());
     expect(watched.some((w) => w.kind === "dbdumpsave")).toBe(true);
-    expect(await screen.findByText(en["restore.started"])).toBeTruthy();
+    expect(await screen.findByRole("button", { name: en["restore.cancel"] })).toBeTruthy();
+    expect(screen.queryByText(en["restore.started"])).toBeNull();
   });
 
   it("asks with the engine, the version and the container before importing", async () => {
@@ -196,31 +226,75 @@ describe("the database dump list", () => {
     await waitFor(() => expect(importDbDump).toHaveBeenCalledWith("immich_postgres", "aaaa1111bbbb2222", "local"));
   });
 
-  it("turns a refused import into its own sentence", async () => {
+  it("turns a refused import into its own sentence, said once", async () => {
     importDbDump.mockResolvedValueOnce({ ok: false, error: "not running", code: "notRunning" });
     renderList();
+    await confirmImport();
 
-    fireEvent.click(await screen.findByRole("button", { name: en["dbdump.import"] }));
-    await waitFor(() => expect(screen.getByRole("dialog")).toBeTruthy());
-    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["dbdump.import"] }));
-
-    await waitFor(() => expect(push).toHaveBeenCalledWith(en["dbdump.importRefused.notRunning"], "fail"));
+    expect(await screen.findByText(en["dbdump.importRefused.notRunning"])).toBeTruthy();
+    expect(document.body.textContent).not.toContain("not running");
+    expect(push).not.toHaveBeenCalled();
   });
 
   it("names the two versions a version mismatch refuses on", async () => {
     importDbDump.mockResolvedValueOnce({ ok: false, error: "too old", code: "version", server: "14", dump: "16" });
     renderList();
+    await confirmImport();
 
-    fireEvent.click(await screen.findByRole("button", { name: en["dbdump.import"] }));
-    await waitFor(() => expect(screen.getByRole("dialog")).toBeTruthy());
-    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["dbdump.import"] }));
+    expect(await screen.findByText(filled("dbdump.importRefused.version", { server: "14", dump: "16" }))).toBeTruthy();
+  });
 
-    await waitFor(() =>
-      expect(push).toHaveBeenCalledWith(
-        filled("dbdump.importRefused.version", { server: "14", dump: "16" }),
-        "fail"
-      )
+  it("asks a MariaDB dump for the major version it came from", async () => {
+    listDbDumps.mockResolvedValue({ ok: true, dumps: [makeDump({ engine: "mariadb", version: "10.11.9" })] });
+    importDbDump.mockResolvedValueOnce({ ok: false, error: "too new", code: "version", server: "11", dump: "10" });
+    renderList();
+    await confirmImport();
+
+    expect(
+      await screen.findByText(filled("dbdump.importRefused.versionSameMajor", { server: "11", dump: "10" }))
+    ).toBeTruthy();
+  });
+
+  it("offers no cancel for an import, which cannot be stopped once it runs", async () => {
+    renderList();
+    await confirmImport();
+
+    await waitFor(() => expect(importDbDump).toHaveBeenCalled());
+    expect(screen.queryByRole("button", { name: en["restore.cancel"] })).toBeNull();
+    expect(screen.queryByText(en["restore.started"])).toBeNull();
+  });
+
+  it("says where the import kept the previous data folder", async () => {
+    const kept = "/mnt/user/appdata/immich/pg.bombvault-before-import-20260921-031500";
+    recordAfterStart(importRun("success", `database imported; the previous data folder was kept: ${kept}`));
+    renderList();
+    await confirmImport();
+
+    const line = await screen.findByText(en["runReason.dbimportKeptOld"], { exact: false }, { timeout: 4000 });
+    expect(line.className).toContain("statusOk");
+    expect(line.querySelector('bdi[dir="ltr"]')?.textContent).toBe(kept);
+  });
+
+  it("reports an import that finished with errors as a warning", async () => {
+    recordAfterStart(
+      importRun("success", "database imported with errors: 3 errors, the previous data folder is kept at /mnt/x")
     );
+    renderList();
+    await confirmImport();
+
+    const line = await screen.findByText(en["runReason.dbimportErrors"], { exact: false }, { timeout: 4000 });
+    expect(line.className).toContain("statusWarn");
+    expect(document.body.textContent).not.toContain(en["dbdump.importDone"]);
+  });
+
+  it("reports a failed import in the reader's language", async () => {
+    recordAfterStart(importRun("failed", "database import failed: the import tool reported an error: ERROR: boom"));
+    renderList();
+    await confirmImport();
+
+    const line = await screen.findByText(en["runReason.dbimportFailed"], { exact: false }, { timeout: 4000 });
+    expect(line.className).toContain("statusFail");
+    expect(line.querySelector("bdi")?.textContent).toBe("ERROR: boom");
   });
 
   it("leaves out the version text and the import when the snapshot names no engine", async () => {

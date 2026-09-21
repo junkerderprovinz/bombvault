@@ -3,7 +3,18 @@
 // imported rather than copied: a reason added to runReason.ts without a remedy
 // fails here instead of showing an empty bubble.
 import { describe, expect, it } from "vitest";
-import { coverageKey, dbDumpNameOf, ENGINE_NAMES, isDbDumpIdentity, pairsWith, remedyKey } from "./dbdump";
+import type { Container } from "./api";
+import {
+  coverageKey,
+  dbDumpNameOf,
+  ENGINE_NAMES,
+  importRefusedKey,
+  introDatabases,
+  isDbDumpIdentity,
+  pairsWith,
+  remedyKey,
+  updateWarnKey,
+} from "./dbdump";
 import { RUN_REASON_PREFIXES } from "./runReason";
 
 describe("remedyKey", () => {
@@ -84,5 +95,61 @@ describe("ENGINE_NAMES", () => {
     expect(ENGINE_NAMES.postgres).toBe("PostgreSQL");
     expect(ENGINE_NAMES.mysql).toBe("MySQL");
     expect(ENGINE_NAMES.mariadb).toBe("MariaDB");
+  });
+});
+
+describe("importRefusedKey", () => {
+  it("offers a newer major version only where the engine reads an older dump", () => {
+    expect(importRefusedKey("version", "postgres")).toBe("dbdump.importRefused.version");
+    expect(importRefusedKey("version", "mariadb")).toBe("dbdump.importRefused.versionSameMajor");
+    expect(importRefusedKey("version", "mysql")).toBe("dbdump.importRefused.versionSameMajor");
+  });
+
+  it("words every other refusal the same for all engines", () => {
+    expect(importRefusedKey("busy", "mysql")).toBe("dbdump.importRefused.busy");
+    expect(importRefusedKey("tool failed", "postgres")).toBeNull();
+  });
+});
+
+describe("updateWarnKey", () => {
+  const db = { dbTier: "curated", dbEngine: "", dbDumpEngine: "", dbSuggestedEngine: "" } as const;
+
+  it("promises an import into the new version only for PostgreSQL", () => {
+    expect(updateWarnKey({ ...db, dbEngine: "postgres" })).toBe("dbdump.updateWarn");
+    expect(updateWarnKey({ ...db, dbEngine: "mariadb" })).toBe("dbdump.updateWarnSameMajor");
+    expect(updateWarnKey({ ...db, dbTier: "lookalike", dbDumpEngine: "mysql" })).toBe("dbdump.updateWarnSameMajor");
+    expect(updateWarnKey({ ...db, dbTier: "lookalike", dbSuggestedEngine: "postgres" })).toBe("dbdump.updateWarn");
+  });
+
+  it("says nothing for a container that is not a database", () => {
+    expect(updateWarnKey({ ...db, dbTier: "" })).toBeNull();
+  });
+});
+
+describe("introDatabases", () => {
+  function row(name: string, over: Partial<Container> = {}): Container {
+    return {
+      name,
+      dbTier: "curated",
+      dbDumpOff: false,
+      dbDumpLabelOff: false,
+      dbDumpsGlobalOff: false,
+      ...over,
+    } as Container;
+  }
+
+  it("introduces the recognised databases whose dump runs", () => {
+    const rows = [
+      row("immich_postgres"),
+      row("switched_off", { dbDumpOff: true }),
+      row("label_off", { dbDumpLabelOff: true }),
+      row("by_label", { dbTier: "label" }),
+      row("plex", { dbTier: "" }),
+    ];
+    expect(introDatabases(rows).map((c) => c.name)).toEqual(["immich_postgres"]);
+  });
+
+  it("introduces nothing while dumps are off for every container", () => {
+    expect(introDatabases([row("immich_postgres", { dbDumpsGlobalOff: true })])).toEqual([]);
   });
 });
