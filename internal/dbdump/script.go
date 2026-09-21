@@ -126,16 +126,33 @@ fi
 exit 0
 `
 
-// The ready checks go over TCP because the official entrypoints initialise a
+// The ready checks try TCP first because the official entrypoints initialise a
 // fresh data folder under a temporary server that listens on the socket alone
-// and is shut down again before the real one starts. ping answers 0 even when
-// the login is refused, so a real query proves the credentials are in place.
-const postgresReadyTail = `exec pg_isready -q -h localhost -d postgres
+// and is shut down again before the real one starts. A server set up to listen
+// on the socket or on another address only is asked over the socket once no
+// entrypoint script runs any more; the kernel names a script's process after
+// the script, cut to 15 bytes. ping answers 0 even when the login is refused,
+// so a real query proves the credentials are in place.
+const entrypointRunning = `entrypoint_running() {
+  for comm in /proc/[0-9]*/comm; do
+    read -r name 2>/dev/null <"$comm" || continue
+    case "$name" in docker-entrypoi*) return 0 ;; esac
+  done
+  return 1
+}
 `
 
-const mysqlReadyTail = `admin=$(command -v mariadb-admin 2>/dev/null || command -v mysqladmin 2>/dev/null) || exit 64
+const postgresReadyTail = entrypointRunning + `pg_isready -q -h localhost -d postgres && exit 0
+entrypoint_running && exit 1
+exec pg_isready -q -d postgres
+`
+
+const mysqlReadyTail = entrypointRunning + `admin=$(command -v mariadb-admin 2>/dev/null || command -v mysqladmin 2>/dev/null) || exit 64
 [ -n "$client" ] || exit 64
-"$admin" --protocol=TCP --host=127.0.0.1 ping >/dev/null 2>&1 || exit 1
+if ! "$admin" --protocol=TCP --host=127.0.0.1 ping >/dev/null 2>&1; then
+  entrypoint_running && exit 1
+  "$admin" ping >/dev/null 2>&1 || exit 1
+fi
 if [ "$scope" = all ]; then exec "$client" --user=root -N -B -e 'SELECT 1'; fi
 exec "$client" --user="$user" -N -B -e 'SELECT 1' "$db"
 `
