@@ -893,13 +893,13 @@ func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 	if err != nil {
 		return err
 	}
-	currentRepo := make(map[string]string, len(current))
+	stored := make(map[string]store.OffsiteTarget, len(current))
 	imported := make(map[string]bool, len(views))
 	for _, tv := range views {
 		imported[strings.TrimSpace(tv.ID)] = true
 	}
 	for _, t := range current {
-		currentRepo[t.ID] = t.Repo
+		stored[t.ID] = t
 		if imported[t.ID] {
 			continue // replaced below, id and all
 		}
@@ -923,18 +923,18 @@ func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 		t.Domain = ""           // a named repository belongs to no single domain
 		t.ID = strings.TrimSpace(tv.ID)
 		t.CreatedAt = tv.CreatedAt
-		wanted := importedLocation(currentRepo[t.ID], t.Repo)
+		wanted := importedLocation(stored[t.ID].Repo, t.Repo)
 		// The LOCATION is written through the guarded transaction, exactly as the
 		// delete half is. Writing it straight through the upsert made an import the
 		// way around the refusal the PATCH endpoint exists to enforce: everything
 		// already written stays where it is, so a moved location makes the next
 		// backup succeed into an empty repository. The rest of the row - name,
 		// limits, flags - moves no data and takes the ordinary upsert.
-		t.Repo = currentRepo[t.ID]
+		t.Repo = stored[t.ID].Repo
 		if t.Repo == "" {
 			t.Repo = wanted // a row this instance does not have yet: nothing to move
 		}
-		if currentRepo[t.ID] == "" {
+		if stored[t.ID].Repo == "" {
 			// Only a row this instance does not have yet may claim the target
 			// named in its file entry.
 			var err error
@@ -948,14 +948,22 @@ func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 		if _, err := h.store.UpsertOffsiteTarget(t); err != nil {
 			return err
 		}
-		if t.Repo != wanted {
-			use, mErr := h.store.SetNamedRepoLocationIfUnused(t.ID, wanted)
-			if mErr != nil {
-				return mErr
-			}
-			if use.InUse() {
-				log.Printf("api: settings import: repository %q is in use here (items: %d, defaults: %s), so its location was NOT moved to the one in the file; the backups already written stay where they are", t.Name, use.Items, strings.Join(use.DefaultDomains, ", ")) //nolint:gosec // G706: the name is %q-quoted
-			}
+		if t.Repo == wanted {
+			continue
+		}
+		// A direct repository keeps its location the way it keeps its other
+		// mirrored fields: its target writes there, and the PATCH refuses the
+		// same move.
+		if stored[t.ID].CompanionOf != "" {
+			log.Printf("api: settings import: repository %q takes its location from its target, so the file's %s was not applied", t.Name, shortRepoName(wanted)) //nolint:gosec // G706: the name is %q-quoted and the location is shortened
+			continue
+		}
+		use, mErr := h.store.SetNamedRepoLocationIfUnused(t.ID, wanted)
+		if mErr != nil {
+			return mErr
+		}
+		if use.InUse() {
+			log.Printf("api: settings import: repository %q is in use here (items: %d, defaults: %s), so its location was NOT moved to the one in the file; the backups already written stay where they are", t.Name, use.Items, strings.Join(use.DefaultDomains, ", ")) //nolint:gosec // G706: the name is %q-quoted
 		}
 	}
 	return nil
