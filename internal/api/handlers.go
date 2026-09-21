@@ -848,6 +848,7 @@ func discoverFields(res DiscoverResult) map[string]any {
 		"skippedNeedsAction": len(actionableSkips(res.Skipped)) > 0,
 		"paused":             res.Paused,
 		"leftOpen":           leftOpen,
+		"directRepos":        directRepoViews(res.Direct),
 	}
 }
 
