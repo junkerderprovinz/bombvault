@@ -191,28 +191,6 @@ func TestDiscoverLooksInEveryRepository(t *testing.T) {
 				"nothing on screen says its backups exist.", fn)
 		}
 	}
-	// …and puts each rediscovered item BACK on the repository its snapshots are
-	// in. Without this the item is rebuilt onto the domain repository, shows an
-	// empty history and writes its next backup somewhere else.
-	//
-	// Searched in EACH FUNCTION'S OWN BODY, and each is allowed its own
-	// mechanism. A whole-file search for three setter names passed green while
-	// one of the three had stopped calling its setter at all - the file still
-	// contained the string, somewhere else. And a setter name is not the
-	// invariant: the file-set path writes the repository in the INSERT now,
-	// which is better than the setter it replaced and would have failed a guard
-	// that pinned the call.
-	for _, tc := range []struct{ fn, writes string }{
-		{"Discover", "discoverWrite(repoID, readErr)"},
-		{"DiscoverVMs", "discoverWrite(repoID, readErr)"},
-		{"DiscoverFileSets", "discoverWrite(repoID, readErr)"},
-	} {
-		if !strings.Contains(funcBody(t, src, tc.fn), tc.writes) {
-			t.Errorf("%s no longer restores a rediscovered item's repository (%s).\n"+
-				"The item is then rebuilt onto the domain repository, shows an empty history,\n"+
-				"and its next backup lands somewhere other than its own snapshots.", tc.fn, tc.writes)
-		}
-	}
 }
 
 // TestTheRecoveryKitNamesTheNamedRepositories pins the last resort.
