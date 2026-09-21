@@ -1643,6 +1643,7 @@ const et: Partial<Translations> = {
   "repos.directOf": "kuulub sihtkohale {target} · kirjeid: {n}",
   "repos.companionLost": "kustutatud sihtkoha kõrval",
   "repos.mirroredLocked": "Üle võetud sihtkohalt {target}. Muuda seda seal.",
+  "repos.removeWithTarget": "Käib kaasa sihtkohaga {target}. Selle hoidla eemaldamiseks eemalda sihtkoht.",
 
   // Refusals
   "placementCode.unreadable": "Asukohareegleid ei õnnestunud lugeda, seega ei kopeerita midagi enne, kui neid saab jälle lugeda.",
@@ -1663,6 +1664,7 @@ const et: Partial<Translations> = {
   "placementCode.companionTaken": "Sellel sihtkohal on juba otsehoidla.",
   "placementCode.targetInUseItems": "Üksused varundavad endiselt selle sihtkoha otsehoidlasse: {n}. Suuna need kõigepealt mujale.",
   "placementCode.targetInUseDefault": "{domains} vaikeväärtus osutab selle sihtkoha otsehoidlale. Muuda kõigepealt vaikeväärtust.",
+  "placementCode.directRepo": "See hoidla käib kaasa sihtkohaga {target}. Eemalda selle asemel sihtkoht.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} otse säilitab nüüd vähem. Üksused, mille ainus koopia on seal: {n}.",

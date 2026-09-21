@@ -1643,6 +1643,7 @@ const sk: Partial<Translations> = {
   "repos.directOf": "patrí cieľu {target} · položky: {n}",
   "repos.companionLost": "vedľa vymazaného cieľa",
   "repos.mirroredLocked": "Prevzaté od {target}. Zmeň tam.",
+  "repos.removeWithTarget": "Patrí k cieľu {target}. Ak chceš tento repozitár odstrániť, odstráň cieľ.",
 
   // Refusals
   "placementCode.unreadable": "Pravidlá umiestnenia sa nepodarilo prečítať, takže sa nič nekopíruje, kým to opäť nepôjde.",
@@ -1663,6 +1664,7 @@ const sk: Partial<Translations> = {
   "placementCode.companionTaken": "Tento cieľ už má priamy repozitár.",
   "placementCode.targetInUseItems": "Do priameho repozitára tohto cieľa stále zálohujú položky: {n}. Najprv ich nasmeruj inam.",
   "placementCode.targetInUseDefault": "Predvolená hodnota pre {domains} ukazuje na priamy repozitár tohto cieľa. Najprv zmeň predvolenú hodnotu.",
+  "placementCode.directRepo": "Tento repozitár patrí k cieľu {target}. Odstráň namiesto neho cieľ.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} priamo teraz uchováva menej. Položky, ktorých jediná kópia je tam: {n}.",

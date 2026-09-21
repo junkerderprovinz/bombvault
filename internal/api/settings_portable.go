@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -905,6 +906,10 @@ func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 		// The same count-and-delete transaction the DELETE endpoint uses, so the
 		// import cannot become the way around its refusal.
 		use, dErr := h.store.DeleteNamedRepoIfUnused(t.ID)
+		if errors.Is(dErr, store.ErrDirectRepo) {
+			log.Printf("api: settings import: repository %q is the direct repository of a target here, so it stays", t.Name) //nolint:gosec // G706: the name is %q-quoted
+			continue
+		}
 		if dErr != nil {
 			return dErr
 		}

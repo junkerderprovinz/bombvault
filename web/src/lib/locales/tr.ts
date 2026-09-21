@@ -1632,6 +1632,7 @@ const tr: Partial<Translations> = {
   "repos.directOf": "{target} hedefine ait · öğeler: {n}",
   "repos.companionLost": "silinmiş bir hedefin yanında",
   "repos.mirroredLocked": "{target} kaynağından devralındı. Orada değiştir.",
+  "repos.removeWithTarget": "{target} hedefiyle birlikte gider. Bu depoyu kaldırmak için o hedefi kaldır.",
 
   // Refusals
   "placementCode.unreadable": "Yerleştirme kuralları okunamadı, bu yüzden tekrar okunabilene kadar hiçbir şey kopyalanmıyor.",
@@ -1652,6 +1653,7 @@ const tr: Partial<Translations> = {
   "placementCode.companionTaken": "Bu hedefin zaten doğrudan bir deposu var.",
   "placementCode.targetInUseItems": "Ögeler hâlâ bu hedefin doğrudan deposuna yedekleniyor: {n}. Önce onları başka bir yere yönlendir.",
   "placementCode.targetInUseDefault": "{domains} için varsayılan bu hedefin doğrudan deposunu gösteriyor. Önce varsayılanı değiştir.",
+  "placementCode.directRepo": "Bu depo {target} hedefiyle birlikte gider. Onun yerine o hedefi kaldır.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} doğrudan artık daha az tutuyor. Tek kopyası orada olan ögeler: {n}.",

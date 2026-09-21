@@ -1635,6 +1635,7 @@ const ro: Partial<Translations> = {
   "repos.directOf": "aparține țintei {target} · elemente: {n}",
   "repos.companionLost": "lângă o țintă ștearsă",
   "repos.mirroredLocked": "Preluat de la {target}. Schimbă-l acolo.",
+  "repos.removeWithTarget": "Merge împreună cu {target}. Ca să elimini acest depozit, elimină ținta.",
 
   // Refusals
   "placementCode.unreadable": "Regulile de plasare nu au putut fi citite, așa că nu se copiază nimic până când vor putea fi citite din nou.",
@@ -1655,6 +1656,7 @@ const ro: Partial<Translations> = {
   "placementCode.companionTaken": "Această țintă are deja un depozit direct.",
   "placementCode.targetInUseItems": "Elemente încă se salvează în depozitul direct al acestei ținte: {n}. Îndreaptă-le mai întâi în altă parte.",
   "placementCode.targetInUseDefault": "Valoarea implicită pentru {domains} indică spre depozitul direct al acestei ținte. Schimbă mai întâi valoarea implicită.",
+  "placementCode.directRepo": "Acest depozit merge împreună cu {target}. Elimină în schimb ținta.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct păstrează acum mai puțin. Elemente a căror unică copie este acolo: {n}.",

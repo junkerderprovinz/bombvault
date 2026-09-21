@@ -1643,6 +1643,7 @@ const lv: Partial<Translations> = {
   "repos.directOf": "pieder mērķim {target} · vienumi: {n}",
   "repos.companionLost": "blakus dzēstam mērķim",
   "repos.mirroredLocked": "Pārņemts no mērķa {target}. Mainiet to tur.",
+  "repos.removeWithTarget": "Iet kopā ar mērķi {target}. Lai noņemtu šo krātuvi, noņemiet mērķi.",
 
   // Refusals
   "placementCode.unreadable": "Izvietojuma noteikumus nevarēja nolasīt, tāpēc nekas netiek kopēts, kamēr tos atkal nevarēs nolasīt.",
@@ -1663,6 +1664,7 @@ const lv: Partial<Translations> = {
   "placementCode.companionTaken": "Šim mērķim jau ir tiešā krātuve.",
   "placementCode.targetInUseItems": "Vienumi joprojām dublējas šī mērķa tiešajā krātuvē: {n}. Vispirms novirziet tos citur.",
   "placementCode.targetInUseDefault": "{domains} noklusējuma vērtība norāda uz šī mērķa tiešo krātuvi. Vispirms mainiet noklusējuma vērtību.",
+  "placementCode.directRepo": "Šī krātuve iet kopā ar mērķi {target}. Noņemiet tā vietā mērķi.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} tieši tagad saglabā mazāk. Vienumi, kuru vienīgā kopija ir tur: {n}.",

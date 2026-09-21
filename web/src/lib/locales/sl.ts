@@ -1627,6 +1627,7 @@ const sl: Partial<Translations> = {
   "repos.directOf": "pripada cilju {target} · elementi: {n}",
   "repos.companionLost": "ob izbrisanem cilju",
   "repos.mirroredLocked": "Prevzeto od {target}. Spremeni tam.",
+  "repos.removeWithTarget": "Gre skupaj s ciljem {target}. Za odstranitev tega repozitorija odstrani cilj.",
 
   // Refusals
   "placementCode.unreadable": "Pravil za namestitev ni bilo mogoče prebrati, zato se ne kopira nič, dokler jih ni spet mogoče prebrati.",
@@ -1647,6 +1648,7 @@ const sl: Partial<Translations> = {
   "placementCode.companionTaken": "Ta cilj že ima neposredni repozitorij.",
   "placementCode.targetInUseItems": "Elementi še vedno izvajajo varnostno kopiranje v neposredni repozitorij tega cilja: {n}. Najprej jih preusmeri drugam.",
   "placementCode.targetInUseDefault": "Privzeta vrednost za {domains} kaže na neposredni repozitorij tega cilja. Najprej spremeni privzeto vrednost.",
+  "placementCode.directRepo": "Ta repozitorij gre skupaj s ciljem {target}. Namesto njega odstrani cilj.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} neposredno zdaj hrani manj. Elementi, katerih edina kopija je tam: {n}.",

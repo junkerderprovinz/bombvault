@@ -1,11 +1,11 @@
-import type { OkEnvelope, SaveWarning, TargetUse } from "./api";
+import type { OkEnvelope, RefusalTarget, SaveWarning, TargetUse } from "./api";
 import type { TranslationKey, useT } from "./i18n";
 import type { ToastSeverity } from "./toastEngine";
 
 type T = ReturnType<typeof useT>["t"];
 
 /** A refusal from the placement routes, with the fields some codes carry. */
-export type PlacementRefusal = OkEnvelope & { defaultDomains?: string[]; use?: TargetUse };
+export type PlacementRefusal = OkEnvelope & { defaultDomains?: string[]; use?: TargetUse; target?: RefusalTarget };
 
 const CODE_KEYS: Record<string, TranslationKey> = {
   "placement-unreadable": "placementCode.unreadable",
@@ -56,6 +56,9 @@ export function placementErrorText(t: T, lang: string, res: PlacementRefusal, fa
     return res.use.items > 0
       ? t("placementCode.targetInUseItems").replace("{n}", String(res.use.items))
       : t("placementCode.targetInUseDefault").replace("{domains}", domainNames(t, lang, res.use.defaultDomains));
+  }
+  if (res.code === "direct-repo" && res.target) {
+    return t("placementCode.directRepo").replace("{target}", res.target.name);
   }
   const key = res.code ? CODE_KEYS[res.code] : undefined;
   if (key) return t(key);

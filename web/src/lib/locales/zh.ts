@@ -1624,6 +1624,7 @@ const zh: Partial<Translations> = {
   "repos.directOf": "属于 {target} · 项目：{n}",
   "repos.companionLost": "紧邻已删除的目标",
   "repos.mirroredLocked": "从 {target} 接管。请在那里更改。",
+  "repos.removeWithTarget": "与 {target} 一同存在。要移除此存储库，请移除该目标。",
 
   // Refusals
   "placementCode.unreadable": "位置规则无法读取，因此在能够再次读取之前不会复制任何内容。",
@@ -1644,6 +1645,7 @@ const zh: Partial<Translations> = {
   "placementCode.companionTaken": "该目标已有直接存储库。",
   "placementCode.targetInUseItems": "仍有项目在备份到此目标的直接存储库：{n}。请先将它们指向别处。",
   "placementCode.targetInUseDefault": "{domains} 的默认设置指向此目标的直接存储库。请先更改默认设置。",
+  "placementCode.directRepo": "此存储库与 {target} 一同存在。请改为移除该目标。",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} 直接现在保留得更少。唯一副本在那里的项目：{n}。",

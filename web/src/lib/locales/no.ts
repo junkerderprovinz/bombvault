@@ -1632,6 +1632,7 @@ const no: Partial<Translations> = {
   "repos.directOf": "tilhører {target} · elementer: {n}",
   "repos.companionLost": "ved siden av et slettet mål",
   "repos.mirroredLocked": "Overtatt fra {target}. Endre det der.",
+  "repos.removeWithTarget": "Hører sammen med {target}. Fjern det målet for å fjerne dette depotet.",
 
   // Refusals
   "placementCode.unreadable": "Plasseringsreglene kunne ikke leses, så ingenting kopieres før de kan leses igjen.",
@@ -1652,6 +1653,7 @@ const no: Partial<Translations> = {
   "placementCode.companionTaken": "Dette målet har allerede et direkte depot.",
   "placementCode.targetInUseItems": "Elementer sikkerhetskopieres fortsatt til dette målets direkte depot: {n}. Pek dem et annet sted først.",
   "placementCode.targetInUseDefault": "Standardverdien for {domains} peker på dette målets direkte depot. Endre standardverdien først.",
+  "placementCode.directRepo": "Dette depotet hører sammen med {target}. Fjern målet i stedet.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkte beholder nå mindre. Elementer der eneste kopi ligger der: {n}.",

@@ -1630,6 +1630,7 @@ const cs: Partial<Translations> = {
   "repos.directOf": "patří cíli {target} · položky: {n}",
   "repos.companionLost": "vedle smazaného cíle",
   "repos.mirroredLocked": "Převzato od {target}. Změň tam.",
+  "repos.removeWithTarget": "Patří k cíli {target}. Chceš-li repozitář odstranit, odstraň ten cíl.",
 
   // Refusals
   "placementCode.unreadable": "Pravidla umístění se nepodařilo přečíst, takže se nic nekopíruje, dokud to zase půjde.",
@@ -1650,6 +1651,7 @@ const cs: Partial<Translations> = {
   "placementCode.companionTaken": "Tento cíl už má přímý repozitář.",
   "placementCode.targetInUseItems": "Do přímého repozitáře tohoto cíle stále zálohují položky: {n}. Nejdřív je nasměruj jinam.",
   "placementCode.targetInUseDefault": "Výchozí hodnota pro {domains} ukazuje na přímý repozitář tohoto cíle. Nejdřív změň výchozí hodnotu.",
+  "placementCode.directRepo": "Tento repozitář patří k cíli {target}. Odstraň místo něj ten cíl.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} přímo teď uchovává méně. Položky, jejichž jediná kopie je tam: {n}.",

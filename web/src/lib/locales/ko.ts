@@ -1624,6 +1624,7 @@ const ko: Partial<Translations> = {
   "repos.directOf": "{target}에 속함 · 항목: {n}",
   "repos.companionLost": "삭제된 대상 옆",
   "repos.mirroredLocked": "{target}에서 넘겨받음. 그곳에서 변경하세요.",
+  "repos.removeWithTarget": "{target}과(와) 함께 갑니다. 이 저장소를 없애려면 그 대상을 없애세요.",
 
   // Refusals
   "placementCode.unreadable": "배치 규칙을 읽을 수 없어 다시 읽을 수 있을 때까지 아무것도 복사되지 않습니다.",
@@ -1644,6 +1645,7 @@ const ko: Partial<Translations> = {
   "placementCode.companionTaken": "이 대상에는 이미 직접 저장소가 있습니다.",
   "placementCode.targetInUseItems": "항목이 아직 이 대상의 직접 저장소로 백업되고 있습니다: {n}개. 먼저 다른 곳으로 돌리세요.",
   "placementCode.targetInUseDefault": "{domains}의 기본값이 이 대상의 직접 저장소를 가리킵니다. 먼저 기본값을 바꾸세요.",
+  "placementCode.directRepo": "이 저장소는 {target}과(와) 함께 갑니다. 대신 그 대상을 없애세요.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} 직접은 이제 더 적게 보관합니다. 유일한 사본이 그곳에 있는 항목: {n}개.",

@@ -1627,6 +1627,7 @@ const ru: Partial<Translations> = {
   "repos.directOf": "принадлежит цели {target} · элементы: {n}",
   "repos.companionLost": "рядом с удалённой целью",
   "repos.mirroredLocked": "Перенято от {target}. Измени там.",
+  "repos.removeWithTarget": "Идёт вместе с целью {target}. Чтобы убрать этот репозиторий, убери цель.",
 
   // Refusals
   "placementCode.unreadable": "Правила размещения не удалось прочитать, поэтому ничего не копируется, пока их снова нельзя будет прочитать.",
@@ -1647,6 +1648,7 @@ const ru: Partial<Translations> = {
   "placementCode.companionTaken": "У этой цели уже есть прямой репозиторий.",
   "placementCode.targetInUseItems": "Элементы всё ещё резервируются в прямой репозиторий этой цели: {n}. Сначала перенаправь их в другое место.",
   "placementCode.targetInUseDefault": "Значение по умолчанию для {domains} указывает на прямой репозиторий этой цели. Сначала измени значение по умолчанию.",
+  "placementCode.directRepo": "Этот репозиторий идёт вместе с целью {target}. Убери вместо него цель.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} напрямую теперь хранит меньше. Элементы, чья единственная копия там: {n}.",

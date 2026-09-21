@@ -1643,6 +1643,7 @@ const is: Partial<Translations> = {
   "repos.directOf": "tilheyrir {target} · atriði: {n}",
   "repos.companionLost": "við hlið eydds áfangastaðar",
   "repos.mirroredLocked": "Tekið yfir frá {target}. Breyttu því þar.",
+  "repos.removeWithTarget": "Fylgir {target}. Fjarlægðu þann áfangastað til að fjarlægja þessa geymslu.",
 
   // Refusals
   "placementCode.unreadable": "Ekki tókst að lesa staðsetningarreglurnar, svo ekkert er afritað fyrr en hægt er að lesa þær aftur.",
@@ -1663,6 +1664,7 @@ const is: Partial<Translations> = {
   "placementCode.companionTaken": "Þessi áfangastaður hefur nú þegar beina geymslu.",
   "placementCode.targetInUseItems": "Atriði öryggisafrita enn í beinu geymsluna hjá þessum áfangastað: {n}. Beindu þeim annað fyrst.",
   "placementCode.targetInUseDefault": "Sjálfgefið gildi fyrir {domains} vísar á beinu geymsluna hjá þessum áfangastað. Breyttu sjálfgefna gildinu fyrst.",
+  "placementCode.directRepo": "Þessi geymsla fylgir {target}. Fjarlægðu áfangastaðinn í staðinn.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} beint varðveitir nú minna. Atriði sem eiga eina afritið þar: {n}.",

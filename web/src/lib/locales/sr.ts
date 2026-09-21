@@ -1627,6 +1627,7 @@ const sr: Partial<Translations> = {
   "repos.directOf": "припада циљу {target} · ставке: {n}",
   "repos.companionLost": "поред обрисаног циља",
   "repos.mirroredLocked": "Преузето од {target}. Промени тамо.",
+  "repos.removeWithTarget": "Иде заједно са циљем {target}. Да би уклонио овај репозиторијум, уклони циљ.",
 
   // Refusals
   "placementCode.unreadable": "Правила распоређивања нису могла да се прочитају, па се ништа не копира док поново не буде могуће.",
@@ -1647,6 +1648,7 @@ const sr: Partial<Translations> = {
   "placementCode.companionTaken": "Овај циљ већ има директни репозиторијум.",
   "placementCode.targetInUseItems": "Ставке и даље праве резервне копије у директни репозиторијум овог циља: {n}. Прво их усмери другде.",
   "placementCode.targetInUseDefault": "Подразумевана вредност за {domains} показује на директни репозиторијум овог циља. Прво промени подразумевану вредност.",
+  "placementCode.directRepo": "Овај репозиторијум иде заједно са циљем {target}. Уклони уместо њега циљ.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} директно сада чува мање. Ставке чија је једина копија тамо: {n}.",

@@ -63,6 +63,7 @@ var placementCodes = []struct {
 	{store.ErrCompanionTaken, "companion-taken"},
 	{store.ErrNotOffsiteTarget, "unknown-target"},
 	{errTargetInUse, "target-in-use"},
+	{store.ErrDirectRepo, "direct-repo"},
 }
 
 // placementCode returns the code the interface translates err by, "" for none.

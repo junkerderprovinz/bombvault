@@ -1635,6 +1635,7 @@ const hu: Partial<Translations> = {
   "repos.directOf": "a(z) {target} célhoz tartozik · elemek: {n}",
   "repos.companionLost": "törölt cél mellett",
   "repos.mirroredLocked": "Átvéve innen: {target}. Ott változtasd meg.",
+  "repos.removeWithTarget": "A(z) {target} céllal jár együtt. A tároló eltávolításához távolítsd el a célt.",
 
   // Refusals
   "placementCode.unreadable": "Az elhelyezési szabályokat nem sikerült beolvasni, ezért semmi nem másolódik, amíg ez újra nem sikerül.",
@@ -1655,6 +1656,7 @@ const hu: Partial<Translations> = {
   "placementCode.companionTaken": "Ennek a célnak már van közvetlen tárolója.",
   "placementCode.targetInUseItems": "Elemek még mindig ide mentenek e cél közvetlen tárolójába: {n}. Először irányítsd őket máshová.",
   "placementCode.targetInUseDefault": "A(z) {domains} alapértelmezése e cél közvetlen tárolójára mutat. Először változtasd meg az alapértelmezést.",
+  "placementCode.directRepo": "Ez a tároló a(z) {target} céllal jár együtt. Helyette a célt távolítsd el.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} közvetlenül most kevesebbet őriz meg. Elemek, amelyeknek egyetlen másolata ott van: {n}.",

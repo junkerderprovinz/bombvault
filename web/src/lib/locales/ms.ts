@@ -1643,6 +1643,7 @@ const ms: Partial<Translations> = {
   "repos.directOf": "milik {target} · item: {n}",
   "repos.companionLost": "di sebelah sasaran yang dipadam",
   "repos.mirroredLocked": "Diambil alih daripada {target}. Ubah di sana.",
+  "repos.removeWithTarget": "Pergi bersama {target}. Untuk membuang repositori ini, buang sasaran itu.",
 
   // Refusals
   "placementCode.unreadable": "Peraturan penempatan tidak dapat dibaca, jadi tiada apa disalin sehingga ia boleh dibaca semula.",
@@ -1663,6 +1664,7 @@ const ms: Partial<Translations> = {
   "placementCode.companionTaken": "Sasaran ini sudah mempunyai repositori langsung.",
   "placementCode.targetInUseItems": "Item masih membuat sandaran ke repositori langsung sasaran ini: {n}. Halakan ke tempat lain dahulu.",
   "placementCode.targetInUseDefault": "Lalai untuk {domains} menunjuk ke repositori langsung sasaran ini. Ubah lalai itu dahulu.",
+  "placementCode.directRepo": "Repositori ini pergi bersama {target}. Buang sasaran itu sebaliknya.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} terus kini menyimpan lebih sedikit. Item yang satu-satunya salinan ada di situ: {n}.",

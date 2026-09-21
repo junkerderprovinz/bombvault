@@ -1632,6 +1632,7 @@ const fr: Partial<Translations> = {
   "repos.directOf": "appartient à {target} · éléments : {n}",
   "repos.companionLost": "à côté d'une cible supprimée",
   "repos.mirroredLocked": "Repris de {target}. Modifiez-le là-bas.",
+  "repos.removeWithTarget": "Va avec {target}. Pour retirer ce dépôt, retirez cette cible.",
 
   // Refusals
   "placementCode.unreadable": "Les règles de placement n'ont pas pu être lues, rien n'est donc copié tant que ce n'est pas de nouveau possible.",
@@ -1652,6 +1653,7 @@ const fr: Partial<Translations> = {
   "placementCode.companionTaken": "Cette cible a déjà un dépôt direct.",
   "placementCode.targetInUseItems": "Des éléments sauvegardent encore vers le dépôt direct de cette cible : {n}. Pointez-les ailleurs d'abord.",
   "placementCode.targetInUseDefault": "La valeur par défaut de {domains} pointe vers le dépôt direct de cette cible. Changez d'abord la valeur par défaut.",
+  "placementCode.directRepo": "Ce dépôt va avec {target}. Retirez plutôt cette cible.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct conserve désormais moins. Éléments dont c'est la seule copie : {n}.",

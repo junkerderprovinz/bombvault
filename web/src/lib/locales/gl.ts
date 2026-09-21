@@ -1643,6 +1643,7 @@ const gl: Partial<Translations> = {
   "repos.directOf": "pertence a {target} · elementos: {n}",
   "repos.companionLost": "a carón dun destino eliminado",
   "repos.mirroredLocked": "Herdado de {target}. Cámbiao alí.",
+  "repos.removeWithTarget": "Vai con {target}. Para quitar este repositorio, quita ese destino.",
 
   // Refusals
   "placementCode.unreadable": "As regras de colocación non se puideron ler, así que non se copia nada ata que se poidan ler de novo.",
@@ -1663,6 +1664,7 @@ const gl: Partial<Translations> = {
   "placementCode.companionTaken": "Este destino xa ten un repositorio directo.",
   "placementCode.targetInUseItems": "Aínda hai elementos facendo copia de seguranza no repositorio directo deste destino: {n}. Apúntaos a outro lugar primeiro.",
   "placementCode.targetInUseDefault": "O valor predeterminado de {domains} apunta ao repositorio directo deste destino. Cambia primeiro o valor predeterminado.",
+  "placementCode.directRepo": "Este repositorio vai con {target}. Quita ese destino no seu lugar.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directo agora conserva menos. Elementos cuxa única copia está aí: {n}.",
