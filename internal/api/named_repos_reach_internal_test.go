@@ -221,7 +221,7 @@ func TestTheRecoveryKitNamesTheNamedRepositories(t *testing.T) {
 // fixed example, which is why the invariant is pinned rather than the wording.
 func TestTheUnprefixedRemoteAdviceSurvivesTheScrubber(t *testing.T) {
 	h := &Handler{}
-	err := h.validateNamedRepo(store.OffsiteTarget{Name: "Kalte Ablage", Repo: "BackBlaze:bucket/cold"}, true)
+	err := h.validateNamedRepo(store.OffsiteTarget{Name: "Kalte Ablage", Repo: "BackBlaze:bucket/cold"}, true, true)
 	if err == nil {
 		t.Fatal("an rclone remote name without a restic prefix is no longer refused")
 	}
