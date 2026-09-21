@@ -13,6 +13,8 @@ const eu: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Autobabeskopia",
   "nav.settings": "Ezarpenak",
+  "nav.more": "Gehiago",
+  "nav.mobileNavigation": "Mugikorreko nabigazioa",
 
   // Mode toggle
   "about.title": "BombVault-i buruz",
@@ -274,6 +276,9 @@ const eu: Partial<Translations> = {
   "run.colStarted": "Hasita",
   "run.colFinished": "Amaituta",
   "run.colContainer": "Edukiontzia",
+  "home.newBackupConfirm": "Aktibatutako domeinu guztien babeskopia hasi orain? Edukiontziak banan-banan gelditu eta berrabiarazten dira beren babeskopia exekutatzen den bitartean.",
+  "run.statVolume": "Datu-bolumena",
+  "run.statSnapshot": "Snapshot",
 
   // Settings
   "settings.title": "Ezarpenak",
@@ -727,6 +732,9 @@ const eu: Partial<Translations> = {
   "settings.labels.buttons": "Botoiak",
   "settings.labels.sidebar": "Alboko barra",
   "settings.labels.tabs": "Fitxak",
+  "settings.labels.bottombar": "Beheko barra",
+  "settings.axisBottombarHint": "Telefonoaren diseinuari bakarrik eragiten dio.",
+  "settings.axisSidebarHint": "Mahaigaineko diseinuari bakarrik eragiten dio.",
   "settings.labels.mode.text": "Testua",
   "settings.labels.mode.textGlyph": "Testua eta ikurra",
   "settings.labels.mode.glyph": "Ikurra",
@@ -770,6 +778,7 @@ const eu: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Babes-egoera",
   "dashboard.noOffsite": "Kanpoko kopiarik ez",
+  "dashboard.statusLoadFailed": "Ezin izan da egoera kargatu",
   "dashboard.neverExcluded": "Programatu gabe",
   "dashboard.neverExcludedTitle": "Nahita utzi da egutegitik kanpo, beraz hemen ez dago ezer babesteko.",
   "dashboard.neverSelf": "Bere edukiontzia",
@@ -995,6 +1004,10 @@ const eu: Partial<Translations> = {
   "common.restoring": "Berrezartzen…",
   "common.done": "Eginda",
   "common.close": "Itxi",
+  "common.expand": "Zabaldu",
+  "common.collapse": "Tolestu",
+  "common.back": "Atzera",
+  "common.loadMore": "Kargatu gehiago",
   "common.loadingBackups": "Babeskopiak kargatzen…",
   "common.saving": "Gordetzen…",
   "common.restoreRunning": "Berrezarpen bat exekutatzen ari da…",

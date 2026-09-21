@@ -15,11 +15,23 @@
 //      before firing and the newest run not among them is ours; comparing the
 //      client clock with the server's startedAt picks the wrong run under
 //      clock skew.
+//
+// The poll chain is visibility-gated for every caller (desktop included): it
+// never timer-polls while the page is hidden; a background tab must not hit
+// the runs API on a timer; pauses when the page hides, and on return
+// refetches immediately (the correlation moment lands there for a run fired
+// before the hide), then resumes the normal cadence from that refetch. Rapid
+// hide/show flips keep exactly one chain alive: the return-trip restart
+// cancels any pending tick before it can fire, because a surviving tick
+// beside the restarted chain would schedule its own successor and double the
+// cadence forever (the busy flag cannot prevent it; the two hops are
+// staggered, not concurrent).
 
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
 import { listRuns, type Run } from "./api";
 import { useProgress } from "./progress";
 import { useT } from "./i18n";
+import { isPageVisible } from "./useVisibilityGate";
 
 /** The translate function, same alias every page in this app uses. */
 type T = ReturnType<typeof useT>["t"];
@@ -75,6 +87,19 @@ interface UseBackupWatchArgs {
   /** Called once on successful completion so the caller can refresh its list. */
   onDone?: () => void;
   /**
+   * Called with the correlated run every time a poll finds it; the first
+   * call is the "on correlation" moment the mobile surfaces deep-link the
+   * RunDetailSheet into the live run at; later calls carry the freshest
+   * record (status moves running, then terminal) so a mounted sheet can render
+   * the true terminal state without its own polling. The open/close decision
+   * stays the consumer's (a dismissed sheet must not re-open; guard there,
+   * not here). Optional; desktop callers omit it and simply never receive
+   * calls; adding it changes nothing else about the watch. Its call rhythm
+   * is the visibility-gated poll rhythm described in the header: calls only
+   * while the page is visible, one cadence no matter how often the tab flips.
+   */
+  onRun?: (run: Run) => void;
+  /**
    * Set by a paired cancel button once its cancel POST succeeds. A cancelled
    * restore that records no run (a file or to-folder restore on a container
    * without a target) would otherwise end in the no-run success fallback and
@@ -88,7 +113,7 @@ interface UseBackupWatchArgs {
  * on click. Success or failure comes from the recorded run, never from the
  * POST response.
  */
-export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", onDone, cancelledRef }: UseBackupWatchArgs) {
+export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", onDone, onRun, cancelledRef }: UseBackupWatchArgs) {
   const [state, setState] = useState<BackupWatchState>({ phase: "idle" });
   const { t } = useT();
   const progress = useProgress();
@@ -109,10 +134,35 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
   const matchRef = useRef(matchRun);
   const kindRef = useRef(kind);
   const onDoneRef = useRef(onDone);
+  const onRunRef = useRef(onRun);
   const cancelledRefRef = useRef(cancelledRef);
+  // Re-entrancy gate for poll(): the visibilitychange restart below can fire
+  // while a poll hop is still in flight (its fetch is awaiting), and two
+  // concurrent hops would each schedule a successor; silently doubling the
+  // chain. One busy flag keeps the chain linear.
+  const pollBusy = useRef(false);
+  // The pending chain timer's id. The visibilitychange restart cancels it
+  // before refetching: a hide+show while a tick is pending would otherwise
+  // leave that tick alive beside the restarted chain, and both would schedule
+  // their own successors; two chains forever, doubling the runs traffic with
+  // a staggered-race the busy flag cannot see. Cleared again before every
+  // schedule so a spent id can never be double-cleared into a stranger's
+  // timeout. One stored id = exactly one live chain, however often the tab
+  // flips.
+  const chainTimer = useRef<number | null>(null);
+  const clearChainTimer = useCallback(() => {
+    if (chainTimer.current !== null) {
+      clearTimeout(chainTimer.current);
+      chainTimer.current = null;
+    }
+  }, []);
+  // The current poll fn, mirrored for the mount-once visibility listener below
+  // (poll is created inside fire(); the effect must always call the latest).
+  const pollRef = useRef<() => void>(() => {});
   matchRef.current = matchRun;
   kindRef.current = kind;
   onDoneRef.current = onDone;
+  onRunRef.current = onRun;
   cancelledRefRef.current = cancelledRef;
 
   const finish = useCallback((next: BackupWatchState) => {
@@ -151,6 +201,10 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
       // Runs come newest-first; the newest matching run absent at fire time is ours.
       const run = res.runs.find((r) => mine(r) && !base.has(r.id));
       if (!run) return "no-run";
+      // The baseline-id match is the correlation contract; report the run to
+      // the consumer at the moment it is identified (and on every later poll,
+      // with the refreshed record). See onRun's doc comment.
+      onRunRef.current?.(run);
       if (run.status === "success") {
         finish({ phase: "success", snapshotId: run.snapshotId || undefined });
         return "resolved";
@@ -234,34 +288,70 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
 
     const startedAt = Date.now();
     const poll = async () => {
-      if (!watching.current) return;
-      const outcome = await resolveFromRuns();
-      if (outcome === "resolved" || !watching.current) return;
-      // Some flows record no run at all (a file restore or restore-to on a
-      // container without a target row), so polling alone would never end.
-      // Once the progress entry was seen and has cleared, a few clean polls
-      // without a run end the watch as a success. A run that does turn up
-      // resolves above first.
-      if (progressVanished.current && outcome === "no-run") {
-        pollsSinceVanished.current += 1;
-        if (pollsSinceVanished.current >= RUNLESS_GRACE_POLLS) {
-          // A cancel without a recorded run must not end as a success.
-          finish(cancelledRefRef.current?.current ? { phase: "cancelled" } : { phase: "success" });
+      if (!watching.current || pollBusy.current) return;
+      pollBusy.current = true;
+      try {
+        // While the page is hidden the chain stops scheduling; a background
+        // tab must not poll the runs API on a timer. The visibilitychange
+        // effect below is the only thing that restarts the chain, and it
+        // restarts with the refetch itself: the return trip runs
+        // resolveFromRuns() first (whose baseline-id match is the correlation
+        // contract), then normal cadence resumes. The baseline seeding order
+        // in fire() is untouched, and fireAndWaitRun's bulk loop is not
+        // gated at all: a plain promise loop with its own deadline.
+        if (!isPageVisible()) return;
+        const outcome = await resolveFromRuns();
+        if (outcome === "resolved" || !watching.current) return;
+        // Some flows record no run at all (a file restore or restore-to on a
+        // container without a target row), so polling alone would never end.
+        // Once the progress entry was seen and has cleared, a few clean polls
+        // without a run end the watch as a success. A run that does turn up
+        // resolves above first.
+        if (progressVanished.current && outcome === "no-run") {
+          pollsSinceVanished.current += 1;
+          if (pollsSinceVanished.current >= RUNLESS_GRACE_POLLS) {
+            // A cancel without a recorded run must not end as a success.
+            finish(cancelledRefRef.current?.current ? { phase: "cancelled" } : { phase: "success" });
+            return;
+          }
+        }
+        if (Date.now() - startedAt > watchTimeoutMs(kindRef.current)) {
+          finish({
+            phase: "error",
+            message: `Timed out waiting for the ${kindRef.current} to finish`,
+          });
           return;
         }
+        clearChainTimer();
+        chainTimer.current = setTimeout(() => void poll(), POLL_INTERVAL_MS);
+      } finally {
+        pollBusy.current = false;
       }
-      if (Date.now() - startedAt > watchTimeoutMs(kindRef.current)) {
-        finish({
-          phase: "error",
-          message: `Timed out waiting for the ${kindRef.current} to finish`,
-        });
-        return;
-      }
-      setTimeout(() => void poll(), POLL_INTERVAL_MS);
     };
+    pollRef.current = () => void poll();
     // Kick the first poll soon; a very fast run may already be recorded.
-    setTimeout(() => void poll(), 600);
-  }, [start, resolveFromRuns, finish, t]);
+    clearChainTimer();
+    chainTimer.current = setTimeout(() => void poll(), 600);
+  }, [start, resolveFromRuns, finish, t, clearChainTimer]);
+
+  // The visibility gate's reconcile edge: on return to a visible page, a
+  // running watch refetches immediately (poll() opens with resolveFromRuns();
+  // the listRuns call that reconciles against the baseline ids), then the
+  // normal cadence resumes from there. Mount-once: it reads only refs, so it
+  // never re-subscribes, exactly like the poll chain itself. The pending
+  // chain timer is cancelled first; the refetch below replaces it as the
+  // chain's next hop; letting it also fire would fork the chain (see
+  // chainTimer above).
+  useEffect(() => {
+    if (typeof document === "undefined" || typeof document.addEventListener !== "function") return;
+    const onVisibility = () => {
+      if (!isPageVisible() || !watching.current) return;
+      clearChainTimer();
+      pollRef.current();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [clearChainTimer]);
 
   // Clears a finished result, e.g. when the selection changes and the result
   // would describe the wrong thing. Does nothing while a watch runs.

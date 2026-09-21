@@ -15,6 +15,7 @@ import type { LogFilterDomain, LogFilterKind, LogStatus, ResolveName } from "../
 import { Badge } from "./Badge";
 import { formatClockTime } from "../lib/reltime";
 import { Button } from "./Button";
+import { useIsDesktop } from "../lib/useMediaQuery";
 
 const POLL_RUNS_MS = 10000;
 const POLL_SCHEDULE_MS = 30000;
@@ -25,7 +26,7 @@ const LIVE_TICK_MS = 1000;
 // Rounding slack for "scrolled to the bottom".
 const BOTTOM_THRESHOLD_PX = 24;
 
-function glyphFor(status: LogStatus): string {
+export function glyphFor(status: LogStatus): string {
   switch (status) {
     case "running":
       return "⋯";
@@ -60,7 +61,7 @@ export function colorFor(status: LogStatus): string {
   }
 }
 
-function glyphLabelKey(status: LogStatus): TranslationKey {
+export function glyphLabelKey(status: LogStatus): TranslationKey {
   switch (status) {
     case "running":
       return "activityLog.glyphRunning";
@@ -147,6 +148,8 @@ export function ActivityLog({
     const id = setInterval(() => setNow(Date.now()), TICK_MS);
     return () => clearInterval(id);
   }, []);
+
+  const isDesktop = useIsDesktop();
 
   // A faster clock for the elapsed time of a live off-site line. The minute
   // clock can still be behind the run's server-side start, and a negative span
@@ -269,22 +272,45 @@ export function ActivityLog({
           onScroll={handleScroll}
           className="max-h-96 overflow-y-auto rounded-card bg-black/20 font-mono text-xs leading-relaxed px-3 py-2 flex flex-col gap-0.5"
         >
-          {filteredLines.map((l) => (
-            <div key={l.id} className="flex items-start gap-2">
-              <span className="text-carbon-textMuted shrink-0 tabular-nums">
-                {formatLogDate(l.atMs)} {formatClockTime(l.atMs / 1000, true)}
-              </span>
-              <span className={`shrink-0 w-4 text-center ${colorFor(l.status)}`} aria-label={t(glyphLabelKey(l.status))}>
-                {glyphFor(l.status)}
-              </span>
-              {/* A container and a folder set can share a name, so every line
-                  but the idle one names its domain. */}
-              {!l.idle && (
-                <span className="shrink-0 text-carbon-textMuted">{domainLabel(resolveName, l.domain)}</span>
-              )}
-              <span className={`flex-1 min-w-0 wrap-break-word ${colorFor(l.status)}`}>{l.text}</span>
-            </div>
-          ))}
+          {filteredLines.map((l) => {
+            // One line, two arrangements. The desktop face keeps everything
+            // on one row. At phone width the message moves to its own
+            // full-width line under the fixed prefix (date + clock + glyph +
+            // domain): a column as narrow as the space left after that prefix
+            // is what breaks words mid-word, and its own wrapping stays
+            // word-boundary (wrap-break-word, never break-all). The clock's
+            // seconds stay a desktop-only luxury; the phone prefix keeps
+            // minute precision.
+            const prefix = (
+              <>
+                <span className="text-carbon-textMuted shrink-0 tabular-nums">
+                  {formatLogDate(l.atMs)} {formatClockTime(l.atMs / 1000, isDesktop)}
+                </span>
+                <span className={`shrink-0 w-4 text-center ${colorFor(l.status)}`} aria-label={t(glyphLabelKey(l.status))}>
+                  {glyphFor(l.status)}
+                </span>
+                {/* A container and a folder set can share a name, so every line
+                    but the idle one names its domain. */}
+                {!l.idle && (
+                  <span className="shrink-0 text-carbon-textMuted">{domainLabel(resolveName, l.domain)}</span>
+                )}
+              </>
+            );
+            if (isDesktop) {
+              return (
+                <div key={l.id} className="flex items-start gap-2">
+                  {prefix}
+                  <span className={`flex-1 min-w-0 wrap-break-word ${colorFor(l.status)}`}>{l.text}</span>
+                </div>
+              );
+            }
+            return (
+              <div key={l.id} className="flex flex-col gap-0.5">
+                <div className="flex items-start gap-2">{prefix}</div>
+                <span className={`w-full min-w-0 wrap-break-word ${colorFor(l.status)}`}>{l.text}</span>
+              </div>
+            );
+          })}
         </div>
         {!autoFollow && (
           <Button

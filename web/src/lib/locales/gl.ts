@@ -13,6 +13,8 @@ const gl: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Autocopia",
   "nav.settings": "Configuración",
+  "nav.more": "Máis",
+  "nav.mobileNavigation": "Navegación móbil",
 
   // Mode toggle
   "about.title": "Sobre BombVault",
@@ -274,6 +276,9 @@ const gl: Partial<Translations> = {
   "run.colStarted": "Iniciado",
   "run.colFinished": "Rematado",
   "run.colContainer": "Contedor",
+  "home.newBackupConfirm": "Iniciar agora unha copia de seguranza de todos os dominios activados? Os contedores detense e reinícianse de un en un mentres se executa a súa copia.",
+  "run.statVolume": "Volume de datos",
+  "run.statSnapshot": "Instantánea",
 
   // Settings
   "settings.title": "Configuración",
@@ -727,6 +732,9 @@ const gl: Partial<Translations> = {
   "settings.labels.buttons": "Botóns",
   "settings.labels.sidebar": "Barra lateral",
   "settings.labels.tabs": "Lapelas",
+  "settings.labels.bottombar": "Barra inferior",
+  "settings.axisBottombarHint": "Afecta só ao deseño do teléfono.",
+  "settings.axisSidebarHint": "Afecta só ao deseño de escritorio.",
   "settings.labels.mode.text": "Texto",
   "settings.labels.mode.textGlyph": "Texto e símbolo",
   "settings.labels.mode.glyph": "Símbolo",
@@ -770,6 +778,7 @@ const gl: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Estado de protección",
   "dashboard.noOffsite": "Sen copia externa",
+  "dashboard.statusLoadFailed": "Non se puido cargar o estado",
   "dashboard.neverExcluded": "Sen programar",
   "dashboard.neverExcludedTitle": "Deixouse fóra da programación a propósito, así que aquí non hai nada que copiar.",
   "dashboard.neverSelf": "Contedor propio",
@@ -995,6 +1004,10 @@ const gl: Partial<Translations> = {
   "common.restoring": "Restaurando…",
   "common.done": "Feito",
   "common.close": "Pechar",
+  "common.expand": "Despregar",
+  "common.collapse": "Pregar",
+  "common.back": "Atrás",
+  "common.loadMore": "Cargar máis",
   "common.loadingBackups": "Cargando copias…",
   "common.saving": "Gardando…",
   "common.restoreRunning": "Hai unha restauración en execución…",

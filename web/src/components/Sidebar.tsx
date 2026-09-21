@@ -343,6 +343,7 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
     // would clip. A window shorter than the rows scrolls the rail rather than
     // cutting off the bottom group with Settings.
     <aside
+      data-testid="desktop-sidebar"
       className={`flex flex-col ${railNarrow ? "w-(--rail-narrow)" : "w-56"} shrink-0 h-full overflow-x-hidden overflow-y-auto rounded-card bg-carbon-sidebar`}
       style={{ scrollbarWidth: "thin", scrollbarColor: "var(--carbon-border) transparent" }}
     >
