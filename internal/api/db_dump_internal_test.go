@@ -112,7 +112,8 @@ func TestDBDumpMaxRuntime(t *testing.T) {
 		{name: "beyond the range", raw: "49", cap: noCap, want: 6 * time.Hour},
 		{name: "not a number", raw: "abc", cap: noCap, want: 6 * time.Hour},
 		{name: "backup cap leaves an hour", cap: 4 * time.Hour, want: 3 * time.Hour},
-		{name: "backup cap of one hour", cap: time.Hour, want: time.Hour},
+		{name: "backup cap of one hour leaves half of it", cap: time.Hour, want: 30 * time.Minute},
+		{name: "backup cap of two hours", cap: 2 * time.Hour, want: time.Hour},
 		{name: "backup cap above the default", cap: 48 * time.Hour, want: 6 * time.Hour},
 	}
 
