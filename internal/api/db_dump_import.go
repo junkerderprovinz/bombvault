@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
+	"github.com/junkerderprovinz/bombvault/internal/compose"
 	"github.com/junkerderprovinz/bombvault/internal/dbdump"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -287,11 +288,60 @@ func (s *Service) importDBDump(ctx context.Context, plan dbImportPlan, key strin
 	defer unlock()
 	s.publishDBDumpStage(key, "restore", "dbimport", startedAt, 0)
 
+	stopped := s.stopImportDependents(ctx, plan.name)
+	defer s.startImportDependents(context.WithoutCancel(ctx), stopped)
+
 	kept, err := s.freshDataDirFor(ctx, plan)
 	if err != nil {
 		return "", err
 	}
 	return s.feedDBImport(ctx, plan, kept, key, startedAt)
+}
+
+// stopImportDependents stops the running containers the database's backup
+// stops too. An app left running reconnects to the fresh database and can
+// create its own schema there before the dump arrives, and the dump then
+// collides with it.
+func (s *Service) stopImportDependents(ctx context.Context, name string) []backup.StopContainer {
+	tg, err := s.store.GetTargetByContainer(name)
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			log.Printf("api: import database dump into %q: read the containers to stop: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		}
+		return nil
+	}
+	var stopped []backup.StopContainer
+	for _, dep := range tg.StopContainers {
+		di, err := s.docker.Inspect(ctx, dep)
+		if err != nil || !di.Running {
+			continue
+		}
+		if err := s.docker.Stop(ctx, dep, dbImportStopTimeout); err != nil {
+			log.Printf("api: import database dump into %q: stop %q failed (continuing): %v", name, dep, err) //nolint:gosec // G706: names are %q-quoted
+			continue
+		}
+		stopped = append(stopped, backup.StopContainer{
+			Name:      dep,
+			Service:   composeService(di.Config.Labels),
+			DependsOn: parseDependsOn(di.Config.Labels),
+		})
+	}
+	return stopped
+}
+
+// startImportDependents brings the stopped containers back in depends_on
+// order, whether the import went through or was rolled back.
+func (s *Service) startImportDependents(ctx context.Context, deps []backup.StopContainer) {
+	services := make([]string, len(deps))
+	dependsOn := make([][]string, len(deps))
+	for i, dep := range deps {
+		services[i], dependsOn[i] = dep.Service, dep.DependsOn
+	}
+	for _, i := range compose.StartOrder(services, dependsOn) {
+		if err := s.docker.Start(ctx, deps[i].Name); err != nil {
+			log.Printf("api: import database dump: start %q again failed: %v", deps[i].Name, err) //nolint:gosec // G706: name is %q-quoted
+		}
+	}
 }
 
 // freshDataDirFor stops the container, sets its data folder aside and lets the

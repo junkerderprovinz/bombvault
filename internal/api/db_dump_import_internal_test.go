@@ -33,7 +33,9 @@ type importFakeDocker struct {
 	inspect model.Inspect
 
 	stopErr error
-	// rollbackStopErr answers every stop after the first one.
+	// others answers Inspect for the containers around the database.
+	others map[string]model.Inspect
+	// rollbackStopErr answers every stop of the database after the first one.
 	rollbackStopErr error
 	stops           int
 	startErr        error
@@ -57,11 +59,17 @@ type importFakeDocker struct {
 
 func (f *importFakeDocker) Inspect(_ context.Context, name string) (model.Inspect, error) {
 	f.calls = append(f.calls, "inspect:"+name)
+	if other, ok := f.others[name]; ok {
+		return other, nil
+	}
 	return f.inspect, nil
 }
 
 func (f *importFakeDocker) Stop(_ context.Context, name string, _ time.Duration) error {
 	f.calls = append(f.calls, "stop:"+name)
+	if name != f.inspect.ID {
+		return nil
+	}
 	if f.stops++; f.stops > 1 {
 		return f.rollbackStopErr
 	}
@@ -627,4 +635,58 @@ func TestImportRollbackReasonKeepsBothFoldersBehindALongCause(t *testing.T) {
 			t.Errorf("reason = %q, want the whole path %s in it", runs[0].Error, folder)
 		}
 	}
+}
+
+func TestImportStopsTheAppsOfTheDatabaseUntilItIsDone(t *testing.T) {
+	appsOf := func(t *testing.T, rig *importRig) {
+		t.Helper()
+		if err := rig.svc.store.SetStopContainers("pg", []string{"immich_server", "immich_ml", "old_app"}); err != nil {
+			t.Fatal(err)
+		}
+		rig.dock.others = map[string]model.Inspect{
+			"immich_server": {Name: "/immich_server", Running: true, Config: model.Config{Labels: map[string]string{
+				"com.docker.compose.service":    "immich-server",
+				"com.docker.compose.depends_on": "immich-machine-learning:service_started:false",
+			}}},
+			"immich_ml": {Name: "/immich_ml", Running: true, Config: model.Config{Labels: map[string]string{
+				"com.docker.compose.service": "immich-machine-learning",
+			}}},
+			"old_app": {Name: "/old_app"},
+		}
+	}
+
+	t.Run("an import that goes through", func(t *testing.T) {
+		rig := newImportRig(t)
+		appsOf(t, rig)
+
+		if _, err := rig.svc.StartImportDBDump(context.Background(), "pg", "local", importDumpID); err != nil {
+			t.Fatal(err)
+		}
+		waitForDetachedRun(t, rig.svc)
+
+		want := "inspect:pg probe:c0ffee1d inspect:immich_server stop:immich_server inspect:immich_ml stop:immich_ml inspect:old_app " +
+			"stop:c0ffee1d start:c0ffee1d ready:c0ffee1d import:c0ffee1d start:immich_ml start:immich_server"
+		if got := strings.Join(rig.dock.calls, " "); got != want {
+			t.Errorf("calls = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("an import that is rolled back", func(t *testing.T) {
+		rig := newImportRig(t)
+		appsOf(t, rig)
+		rig.dock.startErr = errors.New("dockercli: start pg: address already in use")
+
+		if _, err := rig.svc.StartImportDBDump(context.Background(), "pg", "local", importDumpID); err != nil {
+			t.Fatal(err)
+		}
+		waitForDetachedRun(t, rig.svc)
+
+		calls := strings.Join(rig.dock.calls, " ")
+		if !strings.HasSuffix(calls, "start:immich_ml start:immich_server") {
+			t.Errorf("calls = %q, want the apps started again after the rollback", calls)
+		}
+		if strings.Contains(calls, "start:old_app") {
+			t.Errorf("calls = %q, want the app that was stopped left stopped", calls)
+		}
+	})
 }
