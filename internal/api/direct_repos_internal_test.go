@@ -204,6 +204,24 @@ func TestATargetInsideOrAroundAnotherPlaceIsRefused(t *testing.T) {
 	}
 }
 
+// A row whose location does not resolve is not checked, and a clash nobody
+// finds is a second repository over one place, so the pass says so.
+func TestALocationThatDoesNotResolveIsReportedByTheClashCheck(t *testing.T) {
+	f := newPlacementFixture(t)
+	if _, err := f.st.UpsertOffsiteTarget(store.OffsiteTarget{
+		Role: store.RoleRepo, Name: "Broken", Repo: "../escape", Enabled: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	logs := captureLog(t)
+	if res := f.do("POST", "/api/repos", map[string]any{"name": "Cold", "repo": "backups/cold"}); res["ok"] != true {
+		t.Fatalf("a repository beside the unresolvable one: %v", res)
+	}
+	if !strings.Contains(logs.String(), "Broken") {
+		t.Errorf("the row that could not be resolved was not reported: %s", logs.String())
+	}
+}
+
 // Only a named repository owns its place alone. Domain paths, off-site fields
 // and targets may name one place between them, and only nesting is refused.
 func TestTwoDomainsMayNameOneOffsiteDestination(t *testing.T) {

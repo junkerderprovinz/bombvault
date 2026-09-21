@@ -6945,7 +6945,12 @@ func (s *Service) refFor(settings store.Settings, domain, loc string) domainRepo
 	if named, ok := s.namedRepoForLocation(loc); ok {
 		return namedRef(loc, named)
 	}
-	if own, err := s.repoFor(settings, domain, "local"); err == nil && sameRepoLocation(own, loc) {
+	// A domain repository that does not resolve leaves the location unidentified,
+	// and an unidentified direct repository loses its tag and its exclusion from
+	// the copies, so the failure is said rather than swallowed by the comparison.
+	if own, err := s.repoFor(settings, domain, "local"); err != nil {
+		log.Printf("api: %s: the domain repository does not resolve, so %s could not be identified: %v", domain, shortRepoName(loc), err) //nolint:gosec // G706: the domain is a fixed literal and the location is shortened
+	} else if sameRepoLocation(own, loc) {
 		return ownRef(loc)
 	}
 	// Neither the domain's own nor a known named row: an off-site destination or
