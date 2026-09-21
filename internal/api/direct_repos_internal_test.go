@@ -969,6 +969,7 @@ func TestNewCredentialsReachADirectRepositoryOnlyWhenTheyOpenIt(t *testing.T) {
 	f := newPlacementFixture(t)
 	target := f.target("containers", "B2", "b2:bkt:containers")
 	d := f.direct(target)
+	f.container("web", d.ID)
 	v := offsiteTargetToView(target)
 	v.CredsRef = "set-2"
 	f.eng.opens[d.Repo] = false
@@ -984,6 +985,15 @@ func TestNewCredentialsReachADirectRepositoryOnlyWhenTheyOpenIt(t *testing.T) {
 	}
 	if got, err := f.st.GetNamedRepo(d.ID); err != nil || got.CredsRef != "set-2" {
 		t.Fatalf("credentials that open it were not mirrored: %+v, %v", got, err)
+	}
+
+	empty := f.target("vms", "B2 vms", "b2:bkt:vms")
+	ed := f.direct(empty)
+	ev := offsiteTargetToView(empty)
+	ev.CredsRef = "set-3"
+	f.eng.opens[ed.Repo] = false
+	if codes := warningCodes(t, f.do("PUT", "/api/offsite/targets/"+empty.ID, ev)); len(codes) != 0 {
+		t.Fatalf("a direct repository nothing uses warned about kept credentials: %v", codes)
 	}
 }
 
@@ -1012,10 +1022,14 @@ func TestASettingsSaveWarnsWhenTheFieldTargetsDirectRepositoryKeepsLess(t *testi
 func TestSharedCloudCredentialsAreProbedOnDirectRepositories(t *testing.T) {
 	f := newPlacementFixture(t)
 	d := f.direct(f.target("containers", "B2", "b2:bkt:containers"))
+	f.container("web", d.ID)
+	empty := f.direct(f.target("vms", "B2 vms", "b2:bkt:vms"))
 	f.eng.opens[d.Repo] = false
+	f.eng.opens[empty.Repo] = false
 	res := f.do("POST", "/api/cloud", map[string]any{
 		"s3KeyId": "k", "s3Secret": "s", "s3Region": "", "restUser": "", "restPassword": "", "s3StorageClass": "",
 	})
+	// empty is probed too (same shared creds) but nothing uses it, so it stays quiet.
 	if codes := warningCodes(t, res); !slices.Equal(codes, []string{"direct-creds-kept"}) {
 		t.Fatalf("warnings = %v", codes)
 	}

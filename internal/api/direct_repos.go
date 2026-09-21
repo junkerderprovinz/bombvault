@@ -526,7 +526,7 @@ func (s *Service) mirrorDirectCreds(ctx context.Context, targetID string) (*save
 	}
 	if !s.opensWith(ctx, loc, s.offsiteModeForTarget(settings, target)) {
 		n, err := s.store.ItemsUsingNamedRepo(direct.ID)
-		if err != nil {
+		if err != nil || n == 0 {
 			return nil, err
 		}
 		return &saveWarning{Code: "direct-creds-kept", TargetID: target.ID, TargetName: placementTargetName(target), Items: n}, nil
