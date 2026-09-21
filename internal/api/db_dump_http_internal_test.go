@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"io"
@@ -42,6 +43,9 @@ func (e *httpDumpEngine) Snapshots(context.Context, string, restic.Mode) ([]rest
 
 func (e *httpDumpEngine) DumpRaw(_ context.Context, _, snapshotID, path string, w io.Writer, _ restic.Mode) error {
 	e.dumpedID, e.dumpedPath = snapshotID, path
+	if len(e.raw) == 0 {
+		return e.rawErr
+	}
 	if _, err := w.Write(e.raw); err != nil {
 		return err
 	}
@@ -248,6 +252,74 @@ func TestDownloadDBDumpStreamsAndNames(t *testing.T) {
 		}
 		if got := ageRoundTripDecrypt(t, w.Body.Bytes(), id); !bytes.Equal(got, payload) {
 			t.Errorf("decrypted body = %q, want the raw dump", got)
+		}
+	})
+}
+
+func TestDownloadDBDumpThatFailsMidStreamIsNotComplete(t *testing.T) {
+	sealed := func(t *testing.T, svc *Service) {
+		t.Helper()
+		id, err := age.GenerateX25519Identity()
+		if err != nil {
+			t.Fatal(err)
+		}
+		enableExportSealing(t, svc, id.Recipient().String())
+	}
+	for _, tc := range []struct {
+		name  string
+		query string
+		seal  bool
+	}{
+		{"plain", "", false},
+		{"gzip", "?gz=1", false},
+		{"sealed", "", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// Enough bytes that do not compress to push the headers and a part of
+			// the body out before the break.
+			partial := make([]byte, 256<<10)
+			if _, err := rand.Read(partial); err != nil {
+				t.Fatal(err)
+			}
+			svc, eng := downloadFixture(t, partial)
+			eng.rawErr = errors.New("restic dump failed: pack 5e1f not found")
+			if tc.seal {
+				sealed(t, svc)
+			}
+			h := dumpHandler(svc)
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				r.SetPathValue("name", "pg")
+				r.SetPathValue("id", "3f9c2a1be0d4aaaa")
+				h.handleDownloadDBDump(w, r)
+			}))
+			defer srv.Close()
+
+			resp, err := srv.Client().Get(srv.URL + tc.query)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer func() { _ = resp.Body.Close() }()
+			if resp.StatusCode != http.StatusOK {
+				t.Fatalf("status = %d, want the download under way when the dump breaks off", resp.StatusCode)
+			}
+			if _, err := io.ReadAll(resp.Body); err == nil {
+				t.Error("the body ended cleanly, so a browser saves the truncated dump as finished")
+			}
+		})
+	}
+
+	t.Run("sealed, failing before the first byte", func(t *testing.T) {
+		svc, eng := downloadFixture(t, nil)
+		eng.rawErr = errors.New("restic dump failed: repository is already locked exclusively")
+		sealed(t, svc)
+
+		w := httptest.NewRecorder()
+		dumpHandler(svc).handleDownloadDBDump(w, dumpDownloadRequest("pg", "3f9c2a1be0d4aaaa", ""))
+		if w.Code != http.StatusConflict {
+			t.Fatalf("status = %d, want 409 rather than a sealed file holding only its header", w.Code)
+		}
+		if got := w.Header().Get("Content-Disposition"); got != "" {
+			t.Errorf("Content-Disposition = %q, want none", got)
 		}
 	})
 }

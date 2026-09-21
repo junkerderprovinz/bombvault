@@ -1584,8 +1584,15 @@ func (h *Handler) handleDownloadDBDump(w http.ResponseWriter, r *http.Request) {
 			contentType = "application/sql"
 		}
 	}, lw)
-	if err != nil && !lw.wrote {
+	switch {
+	case err == nil:
+	case !lw.wrote:
 		writeJSON(w, http.StatusConflict, failEnvelope(err))
+	default:
+		// The attachment is under way, and a response that ends cleanly would be
+		// saved as a finished dump. Only a broken connection marks it failed.
+		log.Printf("api: download of a database dump of %q broke off: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		panic(http.ErrAbortHandler)
 	}
 }
 
