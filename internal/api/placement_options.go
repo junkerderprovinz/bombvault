@@ -17,6 +17,147 @@ type excludedItem struct {
 	Skip     []string `json:"skip"`
 }
 
+type homeOption struct {
+	ID       string   `json:"id"` // "" = domain path
+	Name     string   `json:"name"`
+	Location string   `json:"location"` // as stored, never resolved
+	Kind     homeKind `json:"kind"`     // domain, domain-remote, local
+	Scheme   string   `json:"scheme"`   // domain-remote: s3, b2, rest, sftp, ...
+}
+
+type targetOption struct {
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	Enabled    bool   `json:"enabled"`
+	Primary    bool   `json:"primary"` // sort_order 0
+	AppendOnly bool   `json:"appendOnly"`
+	Hint       string `json:"hint"` // "" | "creds-differ": the remote domain path carries other credentials
+}
+
+type sendToOption struct {
+	Kind     homeKind `json:"kind"`     // direct | remote
+	RepoID   string   `json:"repoId"`   // "" while the direct repository does not exist yet
+	TargetID string   `json:"targetId"` // direct only
+	Name     string   `json:"name"`
+	Location string   `json:"location"`
+}
+
+type placementOptions struct {
+	Domain       string            `json:"domain"`
+	Unreadable   bool              `json:"unreadable"`
+	Paused       bool              `json:"paused"`
+	Homes        []homeOption      `json:"homes"`
+	Targets      []targetOption    `json:"targets"`
+	SendTo       []sendToOption    `json:"sendTo"`
+	SegmentLocks map[string]string `json:"segmentLocks"`
+	Default      defaultRow        `json:"default"`
+}
+
+// placementOptionsFor is what a domain's placement bar offers, built from the
+// same places backup and replication read: the domain path, the named
+// repositories and the target rows.
+func (s *Service) placementOptionsFor(domain string) (placementOptions, error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return placementOptions{}, err
+	}
+	repos, err := s.store.ListNamedRepos()
+	if err != nil {
+		return placementOptions{}, err
+	}
+	named := make(map[string]store.OffsiteTarget, len(repos))
+	for _, r := range repos {
+		named[r.ID] = r
+	}
+	def, err := s.defaultRowFor(settings, named, domain)
+	if err != nil {
+		return placementOptions{}, err
+	}
+	opts := placementOptions{
+		Domain: domain, Homes: []homeOption{}, Targets: []targetOption{}, SendTo: []sendToOption{},
+		SegmentLocks: map[string]string{}, Default: def,
+	}
+	p, err := s.readPlacement(settings, domain)
+	if err != nil || p.TargetsUncertain {
+		opts.Unreadable = true
+		return opts, nil
+	}
+	opts.Paused = p.State.Paused()
+	opts.Homes = s.homeOptions(settings, domain, repos, named)
+	opts.Targets = s.targetOptions(settings, p, named)
+	opts.SendTo = s.sendToOptions(settings, p, repos, named)
+	opts.SegmentLocks = s.domainSegmentLocks(settings, p, named)
+	return opts, nil
+}
+
+func (s *Service) homeOptions(settings store.Settings, domain string, repos []store.OffsiteTarget, named map[string]store.OffsiteTarget) []homeOption {
+	path := domainPathRaw(domain, settings)
+	domainHome := homeOption{Location: path, Kind: s.homeKindOf(settings, domain, "", named)}
+	if domainHome.Kind == homeDomainRemote {
+		domainHome.Scheme, _, _ = strings.Cut(path, ":")
+	}
+	homes := []homeOption{domainHome}
+	for _, r := range repos {
+		if r.Enabled && s.homeKindOf(settings, domain, r.ID, named) == homeLocal {
+			homes = append(homes, homeOption{ID: r.ID, Name: r.Name, Location: r.Repo, Kind: homeLocal})
+		}
+	}
+	return homes
+}
+
+// targetOptions lists every target row of the domain. restic copy runs with the
+// target's own credentials only, so a remote domain path whose credentials
+// differ makes that target's copy fail, and the chip says so beforehand.
+func (s *Service) targetOptions(settings store.Settings, p placementRead, named map[string]store.OffsiteTarget) []targetOption {
+	remote := s.homeKindOf(settings, p.Domain, "", named) == homeDomainRemote
+	primary, _ := s.primaryRemoteTarget(p.Domain)
+	out := make([]targetOption, 0, len(p.Targets))
+	for _, t := range p.Targets {
+		o := targetOption{ID: t.ID, Name: placementTargetName(t), Enabled: t.Enabled, Primary: t.SortOrder == 0, AppendOnly: t.Immutable}
+		if remote && t.CredsRef != primary.CredsRef {
+			o.Hint = "creds-differ"
+		}
+		out = append(out, o)
+	}
+	return out
+}
+
+func (s *Service) sendToOptions(settings store.Settings, p placementRead, repos []store.OffsiteTarget, named map[string]store.OffsiteTarget) []sendToOption {
+	companions := map[string]store.OffsiteTarget{}
+	for _, r := range repos {
+		if r.CompanionOf != "" {
+			companions[r.CompanionOf] = r
+		}
+	}
+	out := []sendToOption{}
+	for _, t := range p.enabledTargets() {
+		d, has := companions[t.ID]
+		if has && !d.Enabled {
+			continue
+		}
+		out = append(out, sendToOption{Kind: homeDirect, RepoID: d.ID, TargetID: t.ID, Name: placementTargetName(t), Location: d.Repo})
+	}
+	for _, r := range repos {
+		if r.Enabled && s.homeKindOf(settings, p.Domain, r.ID, named) == homeRemote {
+			out = append(out, sendToOption{Kind: homeRemote, RepoID: r.ID, Name: r.Name, Location: r.Repo})
+		}
+	}
+	return out
+}
+
+func (h *Handler) handlePlacementOptions(w http.ResponseWriter, r *http.Request) {
+	domain, ok := placementDomainQuery(w, r)
+	if !ok {
+		return
+	}
+	opts, err := h.svc.placementOptionsFor(domain)
+	if err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"options": opts}))
+}
+
 // targetPreview is what a target receives at its next run.
 type targetPreview struct {
 	Items            int            `json:"items"`
