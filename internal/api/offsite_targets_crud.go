@@ -153,9 +153,9 @@ func (h *Handler) rejectOffsiteTargetOnNamedRepo(t store.OffsiteTarget) string {
 	return ""
 }
 
-// nestedTargetLocation refuses a target location that is, holds or lies inside
-// a domain repository, an off-site field, another target or a named
-// repository; id is "" for a new target.
+// nestedTargetLocation refuses a target location that holds or lies inside a
+// domain repository, an off-site field, another target or a named repository,
+// and one that is a named repository's place; id is "" for a new target.
 func (h *Handler) nestedTargetLocation(id string, t store.OffsiteTarget) error {
 	settings, err := h.store.GetSettings()
 	if err != nil {
@@ -165,7 +165,7 @@ func (h *Handler) nestedTargetLocation(id string, t store.OffsiteTarget) error {
 	if err != nil {
 		return err
 	}
-	self := locationSelf{}
+	self := locationSelf{target: true}
 	if id != "" {
 		self.ids = []string{id}
 		field, ok, err := h.store.FieldOffsiteTarget(t.Domain)
