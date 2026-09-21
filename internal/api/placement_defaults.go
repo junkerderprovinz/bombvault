@@ -674,31 +674,32 @@ type unmatchedName struct {
 }
 
 // confirmPreview is what the domain copies once its default is confirmed, per
-// enabled target, and the names in its copy sources that no row knows.
-func (s *Service) confirmPreview(ctx context.Context, domain string) ([]targetPreviewRow, []unmatchedName, error) {
+// enabled target, the names in its copy sources that no row knows, and
+// whether the domain is paused, all from the one placement read.
+func (s *Service) confirmPreview(ctx context.Context, domain string) ([]targetPreviewRow, []unmatchedName, bool, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, false, err
 	}
 	p, err := s.readPlacement(settings, domain)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, false, err
 	}
 	named, err := s.namedRepoIndex()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, false, err
 	}
 	items, err := s.domainItems(domain)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, false, err
 	}
 	listing, err := s.listCopySources(ctx, settings, domain)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, false, err
 	}
 	observed, err := s.store.ItemCopiesForDomain(domain)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, false, err
 	}
 	subjects := s.copySubjects(settings, p, named, items, listing, observed, includeOwnRules)
 	rules := slices.SortedFunc(maps.Values(p.State.Rules), func(a, b store.CopyRule) int { return strings.Compare(a.Identity, b.Identity) })
@@ -720,7 +721,7 @@ func (s *Service) confirmPreview(ctx context.Context, domain string) ([]targetPr
 		pv.DefaultExcludes = len(skip) > 0 && !skipsEverything(skip) && !slices.Contains(skip, t.ID)
 		rows = append(rows, targetPreviewRow{TargetID: t.ID, Name: placementTargetName(t), Preview: pv})
 	}
-	return rows, unmatchedNames(p, items, listing), nil
+	return rows, unmatchedNames(p, items, listing), p.State.Paused(), nil
 }
 
 // unmatchedNames are the identities in the copy sources that no row and no rule
@@ -751,7 +752,7 @@ func unmatchedNames(p placementRead, items []domainItem, listing sourceListing) 
 // written, since the confirm route is the only place they are, but keeps its
 // pause and confirmed state exactly as they are, so confirming a healthy
 // domain still cannot take the rebuild check out of service.
-func (s *Service) confirmDefault(_ context.Context, domain string, exclude []string) error {
+func (s *Service) confirmDefault(domain string, exclude []string) error {
 	prefix := domainTagPrefix(domain)
 	for _, id := range exclude {
 		if !strings.HasPrefix(id, prefix) || id == prefix {
@@ -778,22 +779,12 @@ func (h *Handler) handleConfirmPreview(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	settings, err := h.store.GetSettings()
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	p, err := h.svc.readPlacement(settings, domain)
+	targets, unmatched, paused, err := h.svc.confirmPreview(r.Context(), domain)
 	if err != nil {
 		placementFail(w, err, nil)
 		return
 	}
-	targets, unmatched, err := h.svc.confirmPreview(r.Context(), domain)
-	if err != nil {
-		placementFail(w, err, nil)
-		return
-	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"paused": p.State.Paused(), "targets": targets, "unmatched": unmatched}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"paused": paused, "targets": targets, "unmatched": unmatched}))
 }
 
 func (h *Handler) handleConfirmDefault(w http.ResponseWriter, r *http.Request) {
@@ -807,7 +798,7 @@ func (h *Handler) handleConfirmDefault(w http.ResponseWriter, r *http.Request) {
 	if !decodeOptionalBody(w, r, &body) {
 		return
 	}
-	if err := h.svc.confirmDefault(r.Context(), domain, body.Exclude); err != nil {
+	if err := h.svc.confirmDefault(domain, body.Exclude); err != nil {
 		placementFail(w, err, nil)
 		return
 	}

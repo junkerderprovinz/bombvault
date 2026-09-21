@@ -439,6 +439,15 @@ func TestConfirmPreviewListsWhatCopiesAndNamesWithoutARow(t *testing.T) {
 	}
 }
 
+func TestConfirmPreviewReportsAnUnpausedDomain(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.setDefault("containers", "")
+	res := f.do(http.MethodGet, "/api/placement/default/containers/confirm", nil)
+	if res["paused"] != false {
+		t.Fatalf("confirm preview = %v, want an unpaused domain", res)
+	}
+}
+
 func TestConfirmEndsThePauseAndLeavesTheTickedNamesOut(t *testing.T) {
 	f, b2 := pausedContainers(t)
 	res := f.do(http.MethodPost, "/api/placement/default/containers/confirm", map[string]any{"exclude": []string{"container:old-app"}})
