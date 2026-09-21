@@ -162,6 +162,73 @@ func TestAnImportWithNestedLocationsIsNotRefused(t *testing.T) {
 	}
 }
 
+func TestATargetInsideOrAroundAnotherPlaceIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bkt:containers")
+	for _, loc := range []string{"b2:bkt:containers/inner", "b2:bkt", "backups/containers/offsite", "backups"} {
+		res := f.do("POST", "/api/offsite/targets", map[string]any{"domain": "vms", "name": "x", "repo": loc, "enabled": true})
+		if res["ok"] != false || res["code"] != "nested-location" {
+			t.Errorf("new target at %s: %v", loc, res)
+		}
+	}
+	if res := f.do("POST", "/api/offsite/targets", map[string]any{"domain": "vms", "name": "beside", "repo": "b2:bkt:vms", "enabled": true}); res["ok"] != true {
+		t.Fatalf("a target beside another was refused: %v", res["error"])
+	}
+	v := offsiteTargetToView(b2)
+	v.Repo = "backups/vms/offsite"
+	if res := f.do("PUT", "/api/offsite/targets/"+b2.ID, v); res["code"] != "nested-location" {
+		t.Errorf("moving a target into a domain path: %v", res)
+	}
+	v.Repo = b2.Repo
+	v.Name = "B2 renamed"
+	if res := f.do("PUT", "/api/offsite/targets/"+b2.ID, v); res["ok"] != true {
+		t.Errorf("an edit that keeps the location: %v", res)
+	}
+}
+
+func TestASettingsSaveRefusesAPathInsideOrAroundAnotherPlace(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("vms", "NAS", "backups/nas-vms")
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, change := range map[string]func(v *settingsView){
+		"a domain path inside another":            func(v *settingsView) { v.VMsPath = "backups/containers/vms" },
+		"a domain path around the others":         func(v *settingsView) { v.FilesPath = "backups" },
+		"a domain path inside a target":           func(v *settingsView) { v.FlashPath = "backups/nas-vms/flash" },
+		"an off-site field inside its own domain": func(v *settingsView) { v.ContainersOffsite = "backups/containers/offsite" },
+		"an off-site field inside a target":       func(v *settingsView) { v.VMsOffsite = "backups/nas-vms/inner" },
+	} {
+		v := toView(settings)
+		change(&v)
+		res := f.do("PUT", "/api/settings", v)
+		if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, "lies inside") {
+			t.Errorf("%s: %v", name, res)
+		}
+	}
+	v := toView(settings)
+	v.VMsPath = "backups/containers"
+	if res := f.do("PUT", "/api/settings", v); res["ok"] != true {
+		t.Fatalf("two domains sharing one repository: %v", res["error"])
+	}
+}
+
+func TestAnImportWithATargetInsideADomainPathIsNotRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	exp := settingsExport{
+		Settings:       toView(settings),
+		OffsiteTargets: []offsiteTargetView{{Domain: "vms", Name: "inner", Repo: "backups/containers/offsite", Enabled: true}},
+	}
+	if msg := f.h.rejectImportCollisions(exp); msg != "" {
+		t.Fatalf("an older file with a target inside a domain path must still import: %s", msg)
+	}
+}
+
 func TestDirectLocationForSuggestsAPlaceBesideTheTarget(t *testing.T) {
 	cases := []struct {
 		repo string

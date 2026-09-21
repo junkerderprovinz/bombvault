@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -152,6 +153,32 @@ func (h *Handler) rejectOffsiteTargetOnNamedRepo(t store.OffsiteTarget) string {
 	return ""
 }
 
+// nestedTargetLocation refuses a target location that is, holds or lies inside
+// a domain repository, an off-site field, another target or a named
+// repository; id is "" for a new target.
+func (h *Handler) nestedTargetLocation(id string, t store.OffsiteTarget) error {
+	settings, err := h.store.GetSettings()
+	if err != nil {
+		return fmt.Errorf("read settings to check this location: %w", err)
+	}
+	loc, err := h.svc.resolveRepo(t.Repo)
+	if err != nil {
+		return err
+	}
+	self := locationSelf{}
+	if id != "" {
+		self.ids = []string{id}
+		field, ok, err := h.store.FieldOffsiteTarget(t.Domain)
+		if err != nil {
+			return err
+		}
+		if ok && field.ID == id {
+			self.field = t.Domain
+		}
+	}
+	return h.svc.locationClash(settings, loc, self)
+}
+
 // handleListOffsiteTargets lists off-site targets. GET /api/offsite/targets
 // (all, in stable per-domain order) or GET /api/offsite/targets?domain=<d> (one
 // domain). An unknown ?domain is rejected; an empty result is a valid [] list.
@@ -192,6 +219,10 @@ func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 	}
 	if msg := h.rejectOffsiteTargetOnNamedRepo(t); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+		return
+	}
+	if err := h.nestedTargetLocation("", t); err != nil {
+		placementFail(w, err, nil)
 		return
 	}
 	stored, err := h.store.CreateOffsiteTarget(t)
@@ -241,6 +272,10 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 	if !sameRepoLocation(strings.TrimSpace(t.Repo), strings.TrimSpace(existing.Repo)) {
 		if msg := h.rejectOffsiteTargetOnNamedRepo(t); msg != "" {
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
+			return
+		}
+		if err := h.nestedTargetLocation(existing.ID, t); err != nil {
+			placementFail(w, err, nil)
 			return
 		}
 	}
