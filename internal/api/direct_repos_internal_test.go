@@ -858,7 +858,9 @@ func TestAnOlderFileLeavesTheLinkOfAnExistingDirectRepository(t *testing.T) {
 }
 
 func TestRetentionLowered(t *testing.T) {
-	p := func(last, daily int) restic.RetentionPolicy { return restic.RetentionPolicy{KeepLast: last, KeepDaily: daily} }
+	p := func(last, daily int) restic.RetentionPolicy {
+		return restic.RetentionPolicy{KeepLast: last, KeepDaily: daily}
+	}
 	cases := []struct {
 		name          string
 		before, after restic.RetentionPolicy
