@@ -1764,6 +1764,20 @@ UPDATE file_sets SET repo_chosen = 1;`,
 ALTER TABLE placement_defaults ADD COLUMN confirmed_manually INTEGER NOT NULL DEFAULT 0;
 UPDATE placement_defaults SET confirmed_manually = 1 WHERE confirmed_at <> 0;`,
 	},
+	{
+		// A direct repository is a named repository written beside an off-site
+		// target. companion_of ties it to that target so the row can take the
+		// target's settings; companion_lost labels a row whose target an import
+		// removed.
+		version:          117,
+		name:             "offsite_targets_companion",
+		alreadySatisfied: columnPresent("offsite_targets", "companion_of"),
+		sql: `
+ALTER TABLE offsite_targets ADD COLUMN companion_of   TEXT    NOT NULL DEFAULT '';
+ALTER TABLE offsite_targets ADD COLUMN companion_lost INTEGER NOT NULL DEFAULT 0;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_offsite_targets_companion
+  ON offsite_targets(companion_of) WHERE companion_of <> '';`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.

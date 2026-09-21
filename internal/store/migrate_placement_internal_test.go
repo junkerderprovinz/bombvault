@@ -275,6 +275,7 @@ var branchMigrations = []struct {
 	{"offsite_runs_aging_only", columnPresent("offsite_runs", "aging_only")},
 	{"items_repo_chosen", columnPresent("targets", "repo_chosen")},
 	{"placement_confirmed_manually", columnPresent("placement_defaults", "confirmed_manually")},
+	{"offsite_targets_companion", columnPresent("offsite_targets", "companion_of")},
 }
 
 func probeOnce(t *testing.T, db *sql.DB, probe func(*sql.Tx) (bool, error)) bool {
