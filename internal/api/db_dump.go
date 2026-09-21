@@ -1130,11 +1130,80 @@ const (
 	dbDumpFileMode = 0o640
 )
 
-func (s *Service) dbDumpChownFn() func(string, int, int) error {
+// dbDumpDirMode lets every share user manage what a save puts into a folder
+// BombVault created for it.
+const dbDumpDirMode = 0o775
+
+func (s *Service) dbDumpChownFn() func(*os.File, int, int) error {
 	if s.dbDumpChown != nil {
 		return s.dbDumpChown
 	}
-	return os.Chown
+	return (*os.File).Chown
+}
+
+// openCreatedDir opens a directory this process has just created, refusing it
+// when the name no longer leads to that directory. A share user can swap the
+// entry for a link, and a mode or owner set by name would land on its target.
+func openCreatedDir(dir string) (*os.File, error) {
+	d, err := os.Open(dir) //nolint:gosec // G304: a directory this process created
+	if err != nil {
+		return nil, err
+	}
+	opened, err := d.Stat()
+	if err == nil {
+		var named os.FileInfo
+		named, err = os.Lstat(dir)
+		if err == nil && (!opened.IsDir() || !os.SameFile(opened, named)) {
+			err = fmt.Errorf("%s was replaced while it was set up", dir)
+		}
+	}
+	if err != nil {
+		_ = d.Close()
+		return nil, err
+	}
+	return d, nil
+}
+
+// ensureSaveFolder creates what is missing of target for the share user. A
+// folder that already exists is the user's own and keeps its mode and owner.
+func (s *Service) ensureSaveFolder(target string) error {
+	var missing []string
+	for dir := target; ; dir = filepath.Dir(dir) {
+		if _, err := os.Lstat(dir); err == nil {
+			break
+		} else if !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+		missing = append(missing, dir)
+	}
+	if len(missing) == 0 {
+		return nil
+	}
+	if err := os.MkdirAll(target, dbDumpDirMode); err != nil {
+		return err
+	}
+	for _, dir := range missing {
+		if err := s.giveToShareUser(dir); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Service) giveToShareUser(dir string) error {
+	d, err := openCreatedDir(dir)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = d.Close() }()
+	// The umask of this process would otherwise take the group's write away.
+	if err := d.Chmod(dbDumpDirMode); err != nil {
+		return err
+	}
+	if err := s.dbDumpChownFn()(d, dbDumpFileUID, dbDumpFileGID); err != nil {
+		log.Printf("api: save database dump: %s keeps this process's ownership: %v", dir, err) //nolint:gosec // G706: a folder under the host mount the user picked
+	}
+	return nil
 }
 
 // dbDumpSavePlan is everything StartSaveDBDumpToPath resolved while the request
@@ -1200,7 +1269,7 @@ func (s *Service) prepareSaveDBDump(ctx context.Context, name, source, snapshotI
 	if err != nil {
 		return dbDumpSavePlan{}, err
 	}
-	if err := paths.EnsureDirReadable(target); err != nil {
+	if err := s.ensureSaveFolder(target); err != nil {
 		return dbDumpSavePlan{}, fmt.Errorf("create target folder: %w", err)
 	}
 	final := filepath.Join(target, DBDumpDownloadName(name, dump.view, gz, false))
@@ -1226,7 +1295,7 @@ func (s *Service) saveDBDump(ctx context.Context, plan dbDumpSavePlan, key strin
 	if err != nil {
 		return err
 	}
-	if cErr := s.dbDumpChownFn()(partial, dbDumpFileUID, dbDumpFileGID); cErr != nil {
+	if cErr := s.dbDumpChownFn()(f, dbDumpFileUID, dbDumpFileGID); cErr != nil {
 		log.Printf("api: save database dump: %s keeps this process's ownership: %v", filepath.Base(partial), cErr) //nolint:gosec // G706: a name this process built
 	}
 

@@ -236,10 +236,11 @@ type Service struct {
 	// dbdump-stream subcommand to get a dump on its stdin. Resolved in
 	// NewService; tests set it directly.
 	dbDumpHelper string
-	// dbDumpChown gives a saved dump its owner: nil uses os.Chown, tests inject
-	// a fake because a developer machine refuses to hand a file to another user.
+	// dbDumpChown gives a saved dump or a folder BombVault created its owner
+	// through the open file: nil uses (*os.File).Chown, tests inject a fake
+	// because a developer machine refuses to hand a file to another user.
 	// Accessed via dbDumpChownFn.
-	dbDumpChown func(path string, uid, gid int) error
+	dbDumpChown func(f *os.File, uid, gid int) error
 	// platform is the detected/injected Platform adapter (Unraid/generic/…)
 	// for the appdata-fallback convention, cross-instance restore-destination
 	// defaults, and the Unraid update-status reconcile step. Optional; nil

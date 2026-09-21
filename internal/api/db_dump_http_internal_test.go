@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -464,9 +465,14 @@ func TestSaveDBDumpToPathContainedAndExclusive(t *testing.T) {
 
 	t.Run("the dump lands owned and through a partial file", func(t *testing.T) {
 		svc, _ := downloadFixture(t, payload)
+		if err := os.MkdirAll(filepath.Join(svc.cfg.HostMountRoot, "user", "restore"), 0o750); err != nil {
+			t.Fatal(err)
+		}
 		var chowned []int
-		svc.dbDumpChown = func(_ string, uid, gid int) error {
+		var through string
+		svc.dbDumpChown = func(f *os.File, uid, gid int) error {
 			chowned = append(chowned, uid, gid)
+			through = f.Name()
 			return nil
 		}
 
@@ -492,6 +498,9 @@ func TestSaveDBDumpToPathContainedAndExclusive(t *testing.T) {
 		}
 		if len(chowned) != 2 || chowned[0] != 99 || chowned[1] != 100 {
 			t.Errorf("chown got %v, want the file owned by 99:100", chowned)
+		}
+		if through != want+".partial" {
+			t.Errorf("chown went through %q, want the partial file this save opened", through)
 		}
 		if runtime.GOOS != "windows" {
 			info, sErr := os.Stat(want)
@@ -532,7 +541,7 @@ func TestSaveDBDumpToPathContainedAndExclusive(t *testing.T) {
 
 	t.Run("a partial file a crashed save left behind is replaced", func(t *testing.T) {
 		svc, _ := downloadFixture(t, payload)
-		svc.dbDumpChown = func(string, int, int) error { return nil }
+		svc.dbDumpChown = func(*os.File, int, int) error { return nil }
 		dir := filepath.Join(svc.cfg.HostMountRoot, "user", "restore")
 		if err := os.MkdirAll(dir, 0o750); err != nil {
 			t.Fatal(err)
@@ -560,26 +569,78 @@ func TestSaveDBDumpToPathContainedAndExclusive(t *testing.T) {
 			t.Skip("no unix permissions")
 		}
 		svc, _ := downloadFixture(t, payload)
-		svc.dbDumpChown = func(string, int, int) error { return nil }
+		share := filepath.Join(svc.cfg.HostMountRoot, "user")
+		if err := os.MkdirAll(share, 0o750); err != nil {
+			t.Fatal(err)
+		}
+		var owned []string
+		svc.dbDumpChown = func(f *os.File, uid, gid int) error {
+			if uid == 99 && gid == 100 {
+				owned = append(owned, f.Name())
+			}
+			return nil
+		}
 
-		if _, _, err := svc.StartSaveDBDumpToPath(context.Background(), "pg", "local", "3f9c2a1be0d4aaaa", "user/db-exports", false); err != nil {
+		if _, _, err := svc.StartSaveDBDumpToPath(context.Background(), "pg", "local", "3f9c2a1be0d4aaaa", "user/db-exports/pg", false); err != nil {
 			t.Fatal(err)
 		}
 		waitForDetachedRun(t, svc)
 
-		info, err := os.Stat(filepath.Join(svc.cfg.HostMountRoot, "user", "db-exports"))
-		if err != nil {
-			t.Fatal(err)
+		for _, dir := range []string{filepath.Join(share, "db-exports"), filepath.Join(share, "db-exports", "pg")} {
+			info, err := os.Stat(dir)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if info.Mode().Perm() != 0o775 {
+				t.Errorf("%s mode = %v, want 0775 so the share users can manage the dump", dir, info.Mode().Perm())
+			}
+			if !slices.Contains(owned, dir) {
+				t.Errorf("%s was not given to 99:100, owned: %v", dir, owned)
+			}
 		}
-		if info.Mode().Perm() != 0o755 {
-			t.Errorf("mode = %v, want 0755 so the share user can reach the dump", info.Mode().Perm())
+	})
+
+	t.Run("a folder that already exists keeps its permissions", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("no unix permissions")
+		}
+		for _, mode := range []os.FileMode{0o700, 0o777} {
+			svc, _ := downloadFixture(t, payload)
+			dir := filepath.Join(svc.cfg.HostMountRoot, "user", "appdata")
+			if err := os.MkdirAll(dir, 0o700); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Chmod(dir, mode); err != nil {
+				t.Fatal(err)
+			}
+			var owned []string
+			svc.dbDumpChown = func(f *os.File, _, _ int) error {
+				owned = append(owned, f.Name())
+				return nil
+			}
+
+			if _, _, err := svc.StartSaveDBDumpToPath(context.Background(), "pg", "local", "3f9c2a1be0d4aaaa", "user/appdata", false); err != nil {
+				t.Fatal(err)
+			}
+			waitForDetachedRun(t, svc)
+
+			info, err := os.Stat(dir)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if info.Mode().Perm() != mode {
+				t.Errorf("mode = %v, want the folder's own %v", info.Mode().Perm(), mode)
+			}
+			if slices.Contains(owned, dir) {
+				t.Errorf("the existing folder %s was given a new owner", dir)
+			}
 		}
 	})
 
 	t.Run("a failed stream leaves nothing behind", func(t *testing.T) {
 		svc, eng := downloadFixture(t, payload)
 		eng.rawErr = errors.New("restic dump: exit status 1")
-		svc.dbDumpChown = func(string, int, int) error { return nil }
+		svc.dbDumpChown = func(*os.File, int, int) error { return nil }
 
 		target, started, err := svc.StartSaveDBDumpToPath(context.Background(), "pg", "local", "3f9c2a1be0d4aaaa", "user/restore", false)
 		if err != nil || !started {

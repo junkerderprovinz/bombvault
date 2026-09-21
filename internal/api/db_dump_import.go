@@ -441,20 +441,25 @@ func (s *Service) freshDataDirFor(ctx context.Context, plan dbImportPlan) (strin
 
 // recreateDataDir puts an empty directory where the old one was, with the
 // permissions and the owner the server expects to find.
-func recreateDataDir(dir string, old os.FileInfo, chown func(string, int, int) error) error {
+func recreateDataDir(dir string, old os.FileInfo, chown func(*os.File, int, int) error) error {
 	mode := old.Mode().Perm()
 	if err := os.Mkdir(dir, mode); err != nil {
 		return err
 	}
+	d, err := openCreatedDir(dir)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = d.Close() }()
 	// The umask of this process would otherwise narrow what the server gets.
-	if err := os.Chmod(dir, mode); err != nil {
+	if err := d.Chmod(mode); err != nil {
 		return err
 	}
 	uid, gid, ok := dirOwner(old)
 	if !ok {
 		return nil
 	}
-	return chown(dir, uid, gid)
+	return chown(d, uid, gid)
 }
 
 // rollbackImport puts the container back the way it was after a step before the
