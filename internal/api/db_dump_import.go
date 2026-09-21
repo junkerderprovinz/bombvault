@@ -33,13 +33,17 @@ const (
 const (
 	// dbImportStopTimeout is the stop timeout a backup gives a container.
 	dbImportStopTimeout = 30 * time.Second
-	// dbImportReadyEvery and dbImportReadyFor bound the wait for the freshly
-	// initialised server. Without the cap the containers domain lock would be
-	// held by a server that never comes up.
+	dbImportStderrTail  = 64 << 10
+	dbImportStamp       = "20060102-150405"
+)
+
+// dbImportReadyEvery and dbImportReadyFor bound the wait for the freshly
+// initialised server. Without the cap the containers domain lock would be held
+// by a server that never comes up. Variables so a test can give up in
+// milliseconds.
+var (
 	dbImportReadyEvery = 2 * time.Second
 	dbImportReadyFor   = 5 * time.Minute
-	dbImportStderrTail = 64 << 10
-	dbImportStamp      = "20060102-150405"
 )
 
 // importRefusal is an import the server declines before it touches anything.
@@ -319,8 +323,10 @@ func recreateDataDir(dir string, old os.FileInfo, chown func(string, int, int) e
 // the move had not happened yet.
 func (s *Service) rollbackImport(ctx context.Context, plan dbImportPlan, kept string, cause error) error {
 	if kept != "" {
+		// Moving the folders under a server that still runs would leave it
+		// writing into the one set aside while the run claims the old data is back.
 		if err := s.docker.Stop(ctx, plan.name, dbImportStopTimeout); err != nil {
-			log.Printf("api: import database dump into %q: the container could not be stopped for the rollback: %v", plan.name, err) //nolint:gosec // G706: name is %q-quoted
+			return importRollbackFailure(plan.dataDir, kept, fmt.Errorf("%w; the container could not be stopped for the rollback: %w", cause, err))
 		}
 		failed := plan.dataDir + ".bombvault-import-failed-" + time.Now().Format(dbImportStamp)
 		if err := os.Rename(plan.dataDir, failed); err != nil && !errors.Is(err, os.ErrNotExist) {
