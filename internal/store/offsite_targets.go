@@ -117,6 +117,12 @@ const (
 // row's sort_order and companion link, and returns the row as stored. An
 // empty ID gets a fresh one and an empty Role means RoleOffsite.
 //
+// Every read and write here is scoped to t's role, like the rest of this
+// file: a stored row of the other role is left as it is. A settings file can
+// carry one id in both of its blocks, and writing it through would turn a
+// destination into a named repository, which stops replication, or move a
+// direct repository to wherever the file's target points.
+//
 // A row that is already a direct repository (companion_of set) only takes
 // name, repo, schedule and enabled from t; its mirrored fields come from its
 // target instead. Saving a target mirrors its own fields, credentials aside,
@@ -140,13 +146,13 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	}
 	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
 	var companionOf string
-	err = tx.QueryRow(`SELECT companion_of FROM offsite_targets WHERE id = ?`, t.ID).Scan(&companionOf)
+	err = tx.QueryRow(`SELECT companion_of FROM offsite_targets WHERE id = ? AND role = ?`, t.ID, t.Role).Scan(&companionOf)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return OffsiteTarget{}, fmt.Errorf("UpsertOffsiteTarget: %w", err)
 	}
 	if companionOf != "" {
-		_, err = tx.Exec(`UPDATE offsite_targets SET name = ?, repo = ?, schedule = ?, enabled = ? WHERE id = ?`,
-			t.Name, t.Repo, t.Schedule, boolInt(t.Enabled), t.ID)
+		_, err = tx.Exec(`UPDATE offsite_targets SET name = ?, repo = ?, schedule = ?, enabled = ? WHERE id = ? AND role = ?`,
+			t.Name, t.Repo, t.Schedule, boolInt(t.Enabled), t.ID, t.Role)
 	} else {
 		_, err = tx.Exec(`
 			INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
@@ -158,7 +164,6 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 			  domain                 = excluded.domain,
 			  name                   = excluded.name,
 			  repo                   = excluded.repo,
-			  role                   = excluded.role,
 			  creds_ref              = excluded.creds_ref,
 			  storage_class          = excluded.storage_class,
 			  immutable              = excluded.immutable,
@@ -170,7 +175,8 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 			  limit_upload           = excluded.limit_upload,
 			  limit_download         = excluded.limit_download,
 			  growth_budget_gb       = excluded.growth_budget_gb,
-			  enabled                = excluded.enabled`,
+			  enabled                = excluded.enabled
+			WHERE offsite_targets.role = excluded.role`,
 			t.ID, t.Domain, t.Name, t.Repo, t.Role, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Schedule,
 			t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
 			t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB, boolInt(t.Enabled), t.CreatedAt, t.SortOrder,

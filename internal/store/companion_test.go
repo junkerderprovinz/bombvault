@@ -265,6 +265,33 @@ func TestCompanionFieldsAreWrittenOnInsertOnly(t *testing.T) {
 	}
 }
 
+// A settings file can carry one id in both of its blocks. The upsert then
+// meets a stored row of the other role, and writing it would turn a target
+// into a named repository or move a direct repository past its guard.
+func TestAnUpsertLeavesARowOfAnotherRoleAlone(t *testing.T) {
+	r, _ := migratedStore(t)
+	target := richTarget(t, r)
+	direct := store.SeedCompanion(t, r, target)
+
+	asRepo := store.OffsiteTarget{ID: target.ID, Role: store.RoleRepo, Name: "stolen", Repo: "b2:bkt:elsewhere", Enabled: true}
+	if _, err := r.UpsertOffsiteTarget(asRepo); err != nil {
+		t.Fatal(err)
+	}
+	back, ok, err := r.GetOffsiteTarget(target.ID)
+	if err != nil || !ok || back.Name != target.Name || back.Repo != target.Repo {
+		t.Fatalf("the target was rewritten as a repository: %+v, ok %v, %v", back, ok, err)
+	}
+
+	asTarget := store.OffsiteTarget{ID: direct.ID, Domain: "containers", Name: "stolen", Repo: "b2:bkt:elsewhere", Enabled: true}
+	if _, err := r.UpsertOffsiteTarget(asTarget); err != nil {
+		t.Fatal(err)
+	}
+	row, err := r.GetNamedRepo(direct.ID)
+	if err != nil || row.Repo != direct.Repo || row.Name != direct.Name || row.CompanionOf != target.ID {
+		t.Fatalf("the direct repository was moved by a target upsert: %+v, %v", row, err)
+	}
+}
+
 func TestMirrorCompanionCredsCopiesTheTargetsCredentials(t *testing.T) {
 	r, _ := migratedStore(t)
 	target := richTarget(t, r)
