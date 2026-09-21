@@ -1680,6 +1680,11 @@ const uk: Partial<Translations> = {
   "placement.droppedKeeps": "{target} зберігає свої копії ({n}) і під час наступного запуску скорочує їх до власного правила. Нові не додаються.",
   "placement.droppedKeepsUnknown": "{target} зберігає свої копії і під час наступного запуску скорочує їх до власного правила. Нові не додаються.",
   "placement.droppedAppendOnly": "{target} працює в режимі append-only і зберігає всі копії. Нові не додаються.",
+  "placement.saveHome": "Встановити",
+  "placement.fixedSinceFirst": "фіксовано від першого резервного копіювання",
+  "placement.deleted": "(видалено)",
+  "placement.lastChip": "Вибрати Локально, щоб не копіювати",
+  "placement.credsDiffer": "Репозиторій домену віддалений і використовує інші облікові дані, ніж ця ціль. Копіювання не вдається, доки вони не збігатимуться.",
 };
 
 export default uk;

@@ -1795,6 +1795,11 @@ export const en = {
   "placement.droppedKeeps": "{target} keeps its copies ({n}) and trims them to its own rules at the next run. No new ones are added.",
   "placement.droppedKeepsUnknown": "{target} keeps its copies and trims them to its own rules at the next run. No new ones are added.",
   "placement.droppedAppendOnly": "{target} is append-only and keeps every copy. No new ones are added.",
+  "placement.saveHome": "Set",
+  "placement.fixedSinceFirst": "fixed since the first backup",
+  "placement.deleted": "(deleted)",
+  "placement.lastChip": "Choose Local for no copy",
+  "placement.credsDiffer": "The domain repository is remote and uses other credentials than this target. Copying to it fails until they match.",
 
   "files.excludesCount": "Excludes: {n}",
   "files.enabled": "Include in schedule",
@@ -3550,6 +3555,11 @@ export const de: Translations = {
   "placement.droppedKeeps": "{target} behält seine Kopien ({n}) und kürzt sie beim nächsten Lauf auf seine Regel. Neue kommen nicht dazu.",
   "placement.droppedKeepsUnknown": "{target} behält seine Kopien und kürzt sie beim nächsten Lauf auf seine Regel. Neue kommen nicht dazu.",
   "placement.droppedAppendOnly": "{target} ist append-only und behält alle Kopien. Neue kommen nicht dazu.",
+  "placement.saveHome": "Festlegen",
+  "placement.fixedSinceFirst": "fest seit dem ersten Backup",
+  "placement.deleted": "(gelöscht)",
+  "placement.lastChip": "Für keine Kopie Lokal wählen",
+  "placement.credsDiffer": "Das Domänen-Repository ist entfernt und nutzt andere Zugangsdaten als dieses Ziel. Die Kopie scheitert, bis sie zusammenpassen.",
 
   "files.excludesCount": "Ausschlüsse: {n}",
   "files.enabled": "Im Zeitplan einschließen",

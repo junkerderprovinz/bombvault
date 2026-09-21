@@ -1685,6 +1685,11 @@ const pt: Partial<Translations> = {
   "placement.droppedKeeps": "{target} conserva as suas cópias ({n}) e reduz-as à sua própria regra na próxima execução. Não são adicionadas cópias novas.",
   "placement.droppedKeepsUnknown": "{target} conserva as suas cópias e reduz-as à sua própria regra na próxima execução. Não são adicionadas cópias novas.",
   "placement.droppedAppendOnly": "{target} é append-only e conserva todas as cópias. Não são adicionadas cópias novas.",
+  "placement.saveHome": "Definir",
+  "placement.fixedSinceFirst": "fixo desde o primeiro backup",
+  "placement.deleted": "(eliminado)",
+  "placement.lastChip": "Escolher Local para não copiar",
+  "placement.credsDiffer": "O repositório do domínio é remoto e usa credenciais diferentes das deste destino. A cópia falha até corresponderem.",
 };
 
 export default pt;

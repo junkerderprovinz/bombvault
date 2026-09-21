@@ -1680,6 +1680,11 @@ const sl: Partial<Translations> = {
   "placement.droppedKeeps": "{target} hrani svoje kopije ({n}) in jih ob naslednjem zagonu skrči na svoje pravilo. Nove se ne dodajajo.",
   "placement.droppedKeepsUnknown": "{target} hrani svoje kopije in jih ob naslednjem zagonu skrči na svoje pravilo. Nove se ne dodajajo.",
   "placement.droppedAppendOnly": "{target} deluje v načinu samo-dodajanja in hrani vsako kopijo. Nove se ne dodajajo.",
+  "placement.saveHome": "Nastavi",
+  "placement.fixedSinceFirst": "nespremenljivo od prve varnostne kopije",
+  "placement.deleted": "(izbrisano)",
+  "placement.lastChip": "Izberite Lokalno, da ni kopije",
+  "placement.credsDiffer": "Repozitorij domene je oddaljen in uporablja druge poverilnice kot ta cilj. Kopiranje ne uspe, dokler se ne ujemata.",
 };
 
 export default sl;

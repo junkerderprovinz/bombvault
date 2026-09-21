@@ -1685,6 +1685,11 @@ const sv: Partial<Translations> = {
   "placement.droppedKeeps": "{target} behåller sina kopior ({n}) och trimmar dem till sin egen regel vid nästa körning. Inga nya läggs till.",
   "placement.droppedKeepsUnknown": "{target} behåller sina kopior och trimmar dem till sin egen regel vid nästa körning. Inga nya läggs till.",
   "placement.droppedAppendOnly": "{target} är append-only och behåller varje kopia. Inga nya läggs till.",
+  "placement.saveHome": "Ange",
+  "placement.fixedSinceFirst": "fast sedan den första säkerhetskopian",
+  "placement.deleted": "(borttagen)",
+  "placement.lastChip": "Välj Lokal för ingen kopia",
+  "placement.credsDiffer": "Domänens arkiv är fjärranslutet och använder andra inloggningsuppgifter än det här målet. Kopieringen misslyckas tills de stämmer överens.",
 };
 
 export default sv;

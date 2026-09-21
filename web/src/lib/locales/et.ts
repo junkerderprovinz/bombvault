@@ -1696,6 +1696,11 @@ const et: Partial<Translations> = {
   "placement.droppedKeeps": "{target} säilitab oma koopiad ({n}) ja kärbib need järgmisel käivitusel oma reeglile vastavaks. Uusi juurde ei lisata.",
   "placement.droppedKeepsUnknown": "{target} säilitab oma koopiad ja kärbib need järgmisel käivitusel oma reeglile vastavaks. Uusi juurde ei lisata.",
   "placement.droppedAppendOnly": "{target} töötab ainult-lisamise režiimis ja säilitab iga koopia. Uusi juurde ei lisata.",
+  "placement.saveHome": "Määra",
+  "placement.fixedSinceFirst": "fikseeritud alates esimesest varukoopiast",
+  "placement.deleted": "(kustutatud)",
+  "placement.lastChip": "Vali Kohalik koopia vältimiseks",
+  "placement.credsDiffer": "Domeeni hoidla on kauge ja kasutab teistsuguseid pöördumisandmeid kui see sihtkoht. Kopeerimine ebaõnnestub, kuni need ühtivad.",
 };
 
 export default et;

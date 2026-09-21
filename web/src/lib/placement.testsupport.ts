@@ -1,5 +1,5 @@
 import { createElement, type ReactElement } from "react";
-import { render, type RenderResult } from "@testing-library/react";
+import { act, render, type RenderResult } from "@testing-library/react";
 import type {
   DefaultImpact,
   DefaultRow,
@@ -242,10 +242,15 @@ export function renderWithProviders(ui: ReactElement): RenderResult {
   return render(createElement(I18nProvider, { children: createElement(ToastProvider, { children: ui }) }));
 }
 
-/** Sends wheel notches downwards to a picker's trigger, the way a mouse does. */
+/** Sends wheel notches downwards to a picker's trigger, the way a mouse does.
+ *  The listener is a real, non-passive one attached outside React (lib/
+ *  selectScroll), so each notch is wrapped in `act` to flush the state
+ *  change it causes before the next one fires. */
 export function wheel(el: Element, notches: number): void {
   for (let i = 0; i < notches; i++) {
-    el.dispatchEvent(new WheelEvent("wheel", { deltaY: 100, bubbles: true, cancelable: true }));
+    act(() => {
+      el.dispatchEvent(new WheelEvent("wheel", { deltaY: 100, bubbles: true, cancelable: true }));
+    });
   }
 }
 

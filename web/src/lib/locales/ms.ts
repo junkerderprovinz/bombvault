@@ -1696,6 +1696,11 @@ const ms: Partial<Translations> = {
   "placement.droppedKeeps": "{target} menyimpan salinannya ({n}) dan memangkasnya mengikut peraturannya sendiri pada larian seterusnya. Tiada salinan baharu ditambah.",
   "placement.droppedKeepsUnknown": "{target} menyimpan salinannya dan memangkasnya mengikut peraturannya sendiri pada larian seterusnya. Tiada salinan baharu ditambah.",
   "placement.droppedAppendOnly": "{target} bersifat tambah-sahaja dan menyimpan setiap salinan. Tiada salinan baharu ditambah.",
+  "placement.saveHome": "Tetapkan",
+  "placement.fixedSinceFirst": "tetap sejak sandaran pertama",
+  "placement.deleted": "(dipadam)",
+  "placement.lastChip": "Pilih Setempat supaya tiada salinan",
+  "placement.credsDiffer": "Repositori domain adalah jauh dan menggunakan kelayakan berbeza daripada sasaran ini. Penyalinan gagal sehingga ia sepadan.",
 };
 
 export default ms;

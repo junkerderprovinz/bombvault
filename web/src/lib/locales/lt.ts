@@ -1696,6 +1696,11 @@ const lt: Partial<Translations> = {
   "placement.droppedKeeps": "{target} saugo savo kopijas ({n}) ir per kitą paleidimą sutrumpina jas pagal savo taisyklę. Naujos nepridedamos.",
   "placement.droppedKeepsUnknown": "{target} saugo savo kopijas ir per kitą paleidimą sutrumpina jas pagal savo taisyklę. Naujos nepridedamos.",
   "placement.droppedAppendOnly": "{target} veikia tik pridėjimo režimu ir saugo kiekvieną kopiją. Naujos nepridedamos.",
+  "placement.saveHome": "Nustatyti",
+  "placement.fixedSinceFirst": "fiksuota nuo pirmos atsarginės kopijos",
+  "placement.deleted": "(ištrinta)",
+  "placement.lastChip": "Pasirinkite Vietinis, kad nebūtų kopijos",
+  "placement.credsDiffer": "Srities saugykla yra nuotolinė ir naudoja kitokius prisijungimo duomenis nei šis tikslas. Kopijavimas nepavyks, kol jie nesutaps.",
 };
 
 export default lt;

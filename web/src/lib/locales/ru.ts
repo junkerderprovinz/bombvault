@@ -1680,6 +1680,11 @@ const ru: Partial<Translations> = {
   "placement.droppedKeeps": "{target} хранит свои копии ({n}) и при следующем запуске обрезает их до своего правила. Новые не добавляются.",
   "placement.droppedKeepsUnknown": "{target} хранит свои копии и при следующем запуске обрезает их до своего правила. Новые не добавляются.",
   "placement.droppedAppendOnly": "{target} работает в режиме append-only и хранит все копии. Новые не добавляются.",
+  "placement.saveHome": "Задать",
+  "placement.fixedSinceFirst": "зафиксировано с первой резервной копии",
+  "placement.deleted": "(удалено)",
+  "placement.lastChip": "Выбрать Локально, чтобы не копировать",
+  "placement.credsDiffer": "Репозиторий домена удалённый и использует другие учётные данные, чем эта цель. Копирование не удаётся, пока они не совпадут.",
 };
 
 export default ru;

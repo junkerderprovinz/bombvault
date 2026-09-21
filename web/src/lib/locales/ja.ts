@@ -1677,6 +1677,11 @@ const ja: Partial<Translations> = {
   "placement.droppedKeeps": "{target}はコピー（{n}件）を保持し、次回の実行時に自身のルールまで減らします。新しいコピーは追加されません。",
   "placement.droppedKeepsUnknown": "{target}はコピーを保持し、次回の実行時に自身のルールまで減らします。新しいコピーは追加されません。",
   "placement.droppedAppendOnly": "{target}はappend-onlyで、すべてのコピーを保持します。新しいコピーは追加されません。",
+  "placement.saveHome": "設定",
+  "placement.fixedSinceFirst": "最初のバックアップ以降固定",
+  "placement.deleted": "（削除済み）",
+  "placement.lastChip": "コピーなしにするにはローカルを選択",
+  "placement.credsDiffer": "ドメインリポジトリはリモートで、この送信先とは異なる認証情報を使っています。一致するまでコピーは失敗します。",
 };
 
 export default ja;

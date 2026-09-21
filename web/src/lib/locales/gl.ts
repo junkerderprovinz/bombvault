@@ -1696,6 +1696,11 @@ const gl: Partial<Translations> = {
   "placement.droppedKeeps": "{target} conserva as súas copias ({n}) e recórtaas á súa propia regra na próxima execución. Non se engaden copias novas.",
   "placement.droppedKeepsUnknown": "{target} conserva as súas copias e recórtaas á súa propia regra na próxima execución. Non se engaden copias novas.",
   "placement.droppedAppendOnly": "{target} é append-only e conserva todas as copias. Non se engaden copias novas.",
+  "placement.saveHome": "Definir",
+  "placement.fixedSinceFirst": "fixo dende a primeira copia de seguranza",
+  "placement.deleted": "(eliminado)",
+  "placement.lastChip": "Escoller Local para non copiar",
+  "placement.credsDiffer": "O repositorio do dominio é remoto e usa credenciais distintas das deste destino. A copia falla ata que coincidan.",
 };
 
 export default gl;

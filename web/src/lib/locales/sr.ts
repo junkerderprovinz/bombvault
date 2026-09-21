@@ -1680,6 +1680,11 @@ const sr: Partial<Translations> = {
   "placement.droppedKeeps": "{target} чува своје копије ({n}) и приликом следећег покретања их своди на сопствено правило. Нове се не додају.",
   "placement.droppedKeepsUnknown": "{target} чува своје копије и приликом следећег покретања их своди на сопствено правило. Нове се не додају.",
   "placement.droppedAppendOnly": "{target} користи само додавање и чува сваку копију. Нове се не додају.",
+  "placement.saveHome": "Постави",
+  "placement.fixedSinceFirst": "фиксно од прве резервне копије",
+  "placement.deleted": "(избрисано)",
+  "placement.lastChip": "Изаберите Локално да не буде копије",
+  "placement.credsDiffer": "Репозиторијум домена је удаљен и користи друге податке за приступ од овог циља. Копирање не успева док се не поклопе.",
 };
 
 export default sr;

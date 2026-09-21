@@ -1696,6 +1696,11 @@ const bg: Partial<Translations> = {
   "placement.droppedKeeps": "{target} пази копията си ({n}) и ги подрязва по своето правило при следващото изпълнение. Нови не се добавят.",
   "placement.droppedKeepsUnknown": "{target} пази копията си и ги подрязва по своето правило при следващото изпълнение. Нови не се добавят.",
   "placement.droppedAppendOnly": "{target} е от тип само-добавяне и пази всяко копие. Нови не се добавят.",
+  "placement.saveHome": "Задай",
+  "placement.fixedSinceFirst": "фиксирано от първото резервно копие",
+  "placement.deleted": "(изтрито)",
+  "placement.lastChip": "Изберете Локално, за да няма копие",
+  "placement.credsDiffer": "Хранилището на домейна е отдалечено и използва други данни за достъп от тази цел. Копирането се проваля, докато не съвпаднат.",
 };
 
 export default bg;

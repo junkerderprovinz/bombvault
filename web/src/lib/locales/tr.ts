@@ -1685,6 +1685,11 @@ const tr: Partial<Translations> = {
   "placement.droppedKeeps": "{target} kopyalarını ({n}) tutar ve bir sonraki çalıştırmada kendi kuralına göre kırpar. Yenisi eklenmez.",
   "placement.droppedKeepsUnknown": "{target} kopyalarını tutar ve bir sonraki çalıştırmada kendi kuralına göre kırpar. Yenisi eklenmez.",
   "placement.droppedAppendOnly": "{target} append-only ve her kopyayı tutuyor. Yenisi eklenmez.",
+  "placement.saveHome": "Ayarla",
+  "placement.fixedSinceFirst": "ilk yedeklemeden beri sabit",
+  "placement.deleted": "(silindi)",
+  "placement.lastChip": "Kopya olmaması için Yerel'i seçin",
+  "placement.credsDiffer": "Alan deposu uzak ve bu hedeften farklı kimlik bilgileri kullanıyor. Eşleşene kadar kopyalama başarısız olur.",
 };
 
 export default tr;

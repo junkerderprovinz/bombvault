@@ -1688,6 +1688,11 @@ const ro: Partial<Translations> = {
   "placement.droppedKeeps": "{target} păstrează copiile ({n}) și le reduce la propria regulă la următoarea rulare. Nu se adaugă altele noi.",
   "placement.droppedKeepsUnknown": "{target} păstrează copiile și le reduce la propria regulă la următoarea rulare. Nu se adaugă altele noi.",
   "placement.droppedAppendOnly": "{target} este append-only și păstrează fiecare copie. Nu se adaugă altele noi.",
+  "placement.saveHome": "Stabilește",
+  "placement.fixedSinceFirst": "fixat de la prima copie de siguranță",
+  "placement.deleted": "(șters)",
+  "placement.lastChip": "Alege Local pentru nicio copie",
+  "placement.credsDiffer": "Depozitul domeniului este la distanță și folosește alte date de acces decât această țintă. Copierea eșuează până când acestea se potrivesc.",
 };
 
 export default ro;

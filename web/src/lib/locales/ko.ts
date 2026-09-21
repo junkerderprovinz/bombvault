@@ -1677,6 +1677,11 @@ const ko: Partial<Translations> = {
   "placement.droppedKeeps": "{target}은(는) 사본({n}개)을 유지하며 다음 실행 시 자체 규칙에 맞게 줄입니다. 새 사본은 추가되지 않습니다.",
   "placement.droppedKeepsUnknown": "{target}은(는) 사본을 유지하며 다음 실행 시 자체 규칙에 맞게 줄입니다. 새 사본은 추가되지 않습니다.",
   "placement.droppedAppendOnly": "{target}은(는) append-only이며 모든 사본을 유지합니다. 새 사본은 추가되지 않습니다.",
+  "placement.saveHome": "설정",
+  "placement.fixedSinceFirst": "첫 백업 이후 고정",
+  "placement.deleted": "(삭제됨)",
+  "placement.lastChip": "복사하지 않으려면 로컬을 선택하세요",
+  "placement.credsDiffer": "도메인 저장소는 원격이며 이 대상과 다른 자격 증명을 사용합니다. 서로 일치할 때까지 복사가 실패합니다.",
 };
 
 export default ko;

@@ -1682,6 +1682,11 @@ const nl: Partial<Translations> = {
   "placement.droppedKeeps": "{target} bewaart zijn kopieën ({n}) en brengt ze bij de volgende back-up terug naar zijn eigen regel. Er komen geen nieuwe bij.",
   "placement.droppedKeepsUnknown": "{target} bewaart zijn kopieën en brengt ze bij de volgende back-up terug naar zijn eigen regel. Er komen geen nieuwe bij.",
   "placement.droppedAppendOnly": "{target} is append-only en bewaart elke kopie. Er komen geen nieuwe bij.",
+  "placement.saveHome": "Instellen",
+  "placement.fixedSinceFirst": "vast sinds de eerste back-up",
+  "placement.deleted": "(verwijderd)",
+  "placement.lastChip": "Kies Lokaal voor geen kopie",
+  "placement.credsDiffer": "De repository van het domein is extern en gebruikt andere inloggegevens dan deze bestemming. Kopiëren mislukt totdat ze overeenkomen.",
 };
 
 export default nl;

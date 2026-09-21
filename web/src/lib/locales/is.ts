@@ -1696,6 +1696,11 @@ const is: Partial<Translations> = {
   "placement.droppedKeeps": "{target} heldur afritunum sínum ({n}) og sníður þau að eigin reglu í næstu keyrslu. Engin ný bætast við.",
   "placement.droppedKeepsUnknown": "{target} heldur afritunum sínum og sníður þau að eigin reglu í næstu keyrslu. Engin ný bætast við.",
   "placement.droppedAppendOnly": "{target} er aðeins-bæta-við og heldur öllum afritum. Engin ný bætast við.",
+  "placement.saveHome": "Setja",
+  "placement.fixedSinceFirst": "fast frá fyrsta afriti",
+  "placement.deleted": "(eytt)",
+  "placement.lastChip": "Veldu Staðbundið til að afrita ekkert",
+  "placement.credsDiffer": "Geymsla lénsins er fjartengd og notar önnur auðkenni en þetta markmið. Afritun mistekst þar til þau passa saman.",
 };
 
 export default is;

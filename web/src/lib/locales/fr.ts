@@ -1685,6 +1685,11 @@ const fr: Partial<Translations> = {
   "placement.droppedKeeps": "{target} conserve ses copies ({n}) et les ramène à sa propre règle au prochain passage. Aucune nouvelle copie n'est ajoutée.",
   "placement.droppedKeepsUnknown": "{target} conserve ses copies et les ramène à sa propre règle au prochain passage. Aucune nouvelle copie n'est ajoutée.",
   "placement.droppedAppendOnly": "{target} est en append-only et conserve toutes les copies. Aucune nouvelle copie n'est ajoutée.",
+  "placement.saveHome": "Définir",
+  "placement.fixedSinceFirst": "fixé depuis la première sauvegarde",
+  "placement.deleted": "(supprimé)",
+  "placement.lastChip": "Choisir Local pour ne rien copier",
+  "placement.credsDiffer": "Le dépôt du domaine est distant et utilise des identifiants différents de cette cible. La copie échoue tant qu'ils ne correspondent pas.",
 };
 
 export default fr;
