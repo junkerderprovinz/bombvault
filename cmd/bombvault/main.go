@@ -298,9 +298,10 @@ func run() error {
 	// aggregate start/success/fail ping — wired via SetHealthchecksAggregator below —
 	// represents the whole domain job, not each container/VM (#49). Every other
 	// notification channel still fires per item.
+	rounds := api.NewScheduledRounds()
 	scheduler := schedule.New(
 		func(name string) error {
-			ctx := api.WithBulkReplicateSuppressed(notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(context.Background())))
+			ctx := api.WithBulkReplicateSuppressed(notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(rounds.Context("containers"))))
 			_, bErr := svc.Backup(ctx, name)
 			if errors.Is(bErr, backup.ErrContainerNotInstalled) {
 				return nil // container no longer on the host: a skip (already recorded), not a job failure (#57)
@@ -323,10 +324,14 @@ func run() error {
 	// Aggregate the per-domain Healthchecks lifecycle for scheduled multi-item runs:
 	// one /start before the first item, one success/fail after the last (#49).
 	scheduler.SetHealthchecksAggregator(
-		func(domain string) { svc.ScheduledHealthchecksStart(context.Background(), domain) },
+		func(domain string) {
+			rounds.Begin(domain)
+			svc.ScheduledHealthchecksStart(context.Background(), domain)
+		},
 		func(domain string, attempted, failed int, failures []schedule.ItemFailure) {
-			svc.ScheduledHealthchecksResult(context.Background(), domain, attempted, failed)
-			svc.ScheduledNotifyResult(context.Background(), domain, attempted, failed, failures)
+			ctx := rounds.End(domain)
+			svc.ScheduledHealthchecksResult(ctx, domain, attempted, failed)
+			svc.ScheduledNotifyResult(ctx, domain, attempted, failed, failures)
 		},
 	)
 	scheduler.SetFlashJob(func() error {

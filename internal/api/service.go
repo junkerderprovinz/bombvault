@@ -16927,7 +16927,7 @@ func (s *Service) ScheduledNotifyResult(ctx context.Context, domain string, atte
 	// A dump fails without failing the backup around it, so the round's balance
 	// says nothing about it and the summary has to name it separately.
 	if tally := dbDumpTallyFrom(ctx); tally != nil {
-		if line := tally.line(); line != "" {
+		if line := tally.take(); line != "" {
 			summary += "\n" + line
 			ok = false
 		}
