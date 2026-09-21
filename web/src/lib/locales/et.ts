@@ -1675,6 +1675,9 @@ const et: Partial<Translations> = {
   "offsite.alsoDirect": "Kehtib ka {target} otse kohta. Üksused, mille ainus koopia on seal: {n}.",
   "offsite.directRetentionAsk": "Üksused, mille ainus koopia on {target} otse: {n}. Vähem säilitamine kustutab nende vanemad hetktõmmised jäädavalt järgmisel puhastamisel. Kas salvestada ikkagi?",
   "offsite.directAppendOnlyAsk": "Üksused, mille ainus koopia on {target} otse: {n}. Ilma ainult-lisamiseta võib see masin sealt kustutada. Kas salvestada ikkagi?",
+
+  // Placement
+  "placement.hostGeneric": "Host",
 };
 
 export default et;

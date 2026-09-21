@@ -1675,6 +1675,9 @@ const ca: Partial<Translations> = {
   "offsite.alsoDirect": "També s'aplica a {target} directe. Elements l'única còpia dels quals hi és: {n}.",
   "offsite.directRetentionAsk": "Elements l'única còpia dels quals és a {target} directe: {n}. Conservar-ne menys n'esborra permanentment les instantànies més antigues a la propera neteja. Desa igualment?",
   "offsite.directAppendOnlyAsk": "Elements l'única còpia dels quals és a {target} directe: {n}. Sense append-only, aquesta màquina pot esborrar-ne. Desa igualment?",
+
+  // Placement
+  "placement.hostGeneric": "Amfitrió",
 };
 
 export default ca;

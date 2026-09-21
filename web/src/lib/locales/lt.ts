@@ -1675,6 +1675,9 @@ const lt: Partial<Translations> = {
   "offsite.alsoDirect": "Tai galioja ir {target} tiesiogiai. Elementai, kurių vienintelė kopija yra ten: {n}.",
   "offsite.directRetentionAsk": "Elementai, kurių vienintelė kopija yra {target} tiesiogiai: {n}. Mažesnis saugojimas negrįžtamai ištrina senesnes jų momentines kopijas kitą kartą valant. Vis tiek išsaugoti?",
   "offsite.directAppendOnlyAsk": "Elementai, kurių vienintelė kopija yra {target} tiesiogiai: {n}. Be tik pridėjimo režimo šis kompiuteris gali trinti iš jos. Vis tiek išsaugoti?",
+
+  // Placement
+  "placement.hostGeneric": "Pagrindinis kompiuteris",
 };
 
 export default lt;

@@ -1664,6 +1664,9 @@ const it: Partial<Translations> = {
   "offsite.alsoDirect": "Vale anche per {target} diretto. Elementi la cui unica copia è lì: {n}.",
   "offsite.directRetentionAsk": "Elementi la cui unica copia è su {target} diretto: {n}. Conservarne meno elimina definitivamente i loro snapshot più vecchi alla prossima potatura. Salvare comunque?",
   "offsite.directAppendOnlyAsk": "Elementi la cui unica copia è su {target} diretto: {n}. Senza append-only questa macchina può eliminare da esso. Salvare comunque?",
+
+  // Placement
+  "placement.hostGeneric": "Host",
 };
 
 export default it;

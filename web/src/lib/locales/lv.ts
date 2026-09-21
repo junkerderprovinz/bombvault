@@ -1675,6 +1675,9 @@ const lv: Partial<Translations> = {
   "offsite.alsoDirect": "Attiecas arī uz {target} tieši. Vienumi, kuru vienīgā kopija ir tur: {n}.",
   "offsite.directRetentionAsk": "Vienumi, kuru vienīgā kopija ir {target} tieši: {n}. Mazāka saglabāšana neatgriezeniski dzēš to vecākos momentuzņēmumus nākamajā tīrīšanā. Vai tik un tā saglabāt?",
   "offsite.directAppendOnlyAsk": "Vienumi, kuru vienīgā kopija ir {target} tieši: {n}. Bez tikai-pievienot šis dators var dzēst no tās. Vai tik un tā saglabāt?",
+
+  // Placement
+  "placement.hostGeneric": "Saimniekdators",
 };
 
 export default lv;

@@ -1664,6 +1664,9 @@ const sv: Partial<Translations> = {
   "offsite.alsoDirect": "Gäller även för {target} direkt. Objekt vars enda kopia finns där: {n}.",
   "offsite.directRetentionAsk": "Objekt vars enda kopia finns i {target} direkt: {n}. Att behålla färre raderar deras äldre ögonblicksbilder permanent vid nästa rensning. Spara ändå?",
   "offsite.directAppendOnlyAsk": "Objekt vars enda kopia finns i {target} direkt: {n}. Utan append-only får den här maskinen radera från det. Spara ändå?",
+
+  // Placement
+  "placement.hostGeneric": "Värd",
 };
 
 export default sv;

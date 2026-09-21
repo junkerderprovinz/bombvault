@@ -1675,6 +1675,9 @@ const eu: Partial<Translations> = {
   "offsite.alsoDirect": "{target} zuzenari ere badagokio. Kopia bakarra hor duten elementuak: {n}.",
   "offsite.directRetentionAsk": "Kopia bakarra {target} zuzenean duten elementuak: {n}. Gutxiago gordetzeak haien argazki zaharragoak betiko ezabatzen ditu hurrengo garbiketan. Gorde dena den?",
   "offsite.directAppendOnlyAsk": "Kopia bakarra {target} zuzenean duten elementuak: {n}. Gehitu-soilik gabe, makina honek handik ezaba dezake. Gorde dena den?",
+
+  // Placement
+  "placement.hostGeneric": "Ostalari",
 };
 
 export default eu;

@@ -1667,6 +1667,9 @@ const hu: Partial<Translations> = {
   "offsite.alsoDirect": "Érvényes {target} közvetlenül elemre is. Elemek, amelyeknek egyetlen másolata ott van: {n}.",
   "offsite.directRetentionAsk": "Elemek, amelyeknek egyetlen másolata a {target} közvetlenül elemen van: {n}. A kevesebb megőrzés véglegesen törli régebbi pillanatképeiket a következő nyesésnél. Mégis menti?",
   "offsite.directAppendOnlyAsk": "Elemek, amelyeknek egyetlen másolata a {target} közvetlenül elemen van: {n}. Append-only nélkül ez a gép törölhet belőle. Mégis menti?",
+
+  // Placement
+  "placement.hostGeneric": "Host",
 };
 
 export default hu;

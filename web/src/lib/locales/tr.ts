@@ -1664,6 +1664,9 @@ const tr: Partial<Translations> = {
   "offsite.alsoDirect": "{target} doğrudan için de geçerlidir. Tek kopyası orada olan ögeler: {n}.",
   "offsite.directRetentionAsk": "Tek kopyası {target} doğrudan içinde olan ögeler: {n}. Daha azını tutmak, bir sonraki budamada daha eski anlık görüntülerini kalıcı olarak siler. Yine de kaydedilsin mi?",
   "offsite.directAppendOnlyAsk": "Tek kopyası {target} doğrudan içinde olan ögeler: {n}. Append-only olmadan bu makine oradan silebilir. Yine de kaydedilsin mi?",
+
+  // Placement
+  "placement.hostGeneric": "Host",
 };
 
 export default tr;

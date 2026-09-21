@@ -1659,6 +1659,9 @@ const ru: Partial<Translations> = {
   "offsite.alsoDirect": "Также относится к {target} напрямую. Элементы, чья единственная копия там: {n}.",
   "offsite.directRetentionAsk": "Элементы, чья единственная копия в {target} напрямую: {n}. Меньшее хранение безвозвратно удалит их более старые снимки при следующей очистке. Всё равно сохранить?",
   "offsite.directAppendOnlyAsk": "Элементы, чья единственная копия в {target} напрямую: {n}. Без append-only эта машина сможет удалять из него. Всё равно сохранить?",
+
+  // Placement
+  "placement.hostGeneric": "Хост",
 };
 
 export default ru;

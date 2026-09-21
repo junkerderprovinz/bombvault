@@ -1667,6 +1667,9 @@ const ro: Partial<Translations> = {
   "offsite.alsoDirect": "Se aplică și pentru {target} direct. Elemente a căror unică copie este acolo: {n}.",
   "offsite.directRetentionAsk": "Elemente a căror unică copie este în {target} direct: {n}. Păstrarea a mai puține șterge permanent instantaneele lor mai vechi la următoarea curățare. Salvați oricum?",
   "offsite.directAppendOnlyAsk": "Elemente a căror unică copie este în {target} direct: {n}. Fără append-only, această mașină poate șterge din el. Salvați oricum?",
+
+  // Placement
+  "placement.hostGeneric": "Host",
 };
 
 export default ro;

@@ -8,6 +8,7 @@ import { useConfirm } from "../../lib/useConfirm";
 import { useToast } from "../../lib/toast";
 import { createRepo, deleteRepo, listOffsiteTargets, listRepos, updateRepo, type NamedRepo } from "../../lib/api";
 import { useT } from "../../lib/i18n";
+import { reposChanged } from "../../lib/useNamedRepos";
 import { placementErrorText } from "../../lib/placementCodes";
 import { offsiteTargetLabel } from "../../lib/useOffsiteTargets";
 
@@ -82,6 +83,7 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
       setName("");
       setRepo("");
       nameRef.current?.focus();
+      reposChanged();
       await reload();
     } finally {
       setBusy(false);
@@ -107,6 +109,7 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
       push(r.error ?? t("settings.error"), "fail");
       return;
     }
+    reposChanged();
     await reload();
   }
 
@@ -116,6 +119,7 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
       push(r.error ?? t("settings.error"), "fail");
       return;
     }
+    reposChanged();
     await reload();
   }
 
@@ -138,6 +142,7 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
       push(placementErrorText(t, lang, r, "settings.error"), "fail");
       return;
     }
+    reposChanged();
     await reload();
   }
 

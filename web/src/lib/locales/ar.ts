@@ -1667,6 +1667,9 @@ const ar: Partial<Translations> = {
   "offsite.alsoDirect": "ينطبق أيضاً على {target} المباشر. العناصر التي نسختها الوحيدة هناك: {n}.",
   "offsite.directRetentionAsk": "العناصر التي نسختها الوحيدة في {target} المباشر: {n}. الاحتفاظ بعدد أقل يحذف لقطاتها الأقدم نهائياً عند التقليم التالي. احفظ على أي حال؟",
   "offsite.directAppendOnlyAsk": "العناصر التي نسختها الوحيدة في {target} المباشر: {n}. بدون append-only يمكن لهذا الجهاز الحذف منه. احفظ على أي حال؟",
+
+  // Placement
+  "placement.hostGeneric": "مضيف",
 };
 
 export default ar;

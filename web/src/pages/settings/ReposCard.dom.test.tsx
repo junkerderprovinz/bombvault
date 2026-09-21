@@ -109,4 +109,19 @@ describe("the Repositories card", () => {
       })
     );
   });
+
+  it("announces a repository change to the rest of the page", async () => {
+    const { subscribeRepos } = await import("../../lib/useNamedRepos");
+    const seen = vi.fn();
+    const off = subscribeRepos(seen);
+    api.listRepos.mockResolvedValue({ ok: true, repos: [repo({})] });
+    api.deleteRepo.mockResolvedValue({ ok: true });
+    render(<ReposCard />);
+    fireEvent.click(await screen.findByRole("button", { name: en["offsite.targets.remove"] }));
+    await act(async () => {
+      fireEvent.click(await screen.findByRole("button", { name: en["common.confirm"] }));
+    });
+    await waitFor(() => expect(seen).toHaveBeenCalledTimes(1));
+    off();
+  });
 });

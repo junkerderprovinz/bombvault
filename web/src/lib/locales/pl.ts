@@ -1659,6 +1659,9 @@ const pl: Partial<Translations> = {
   "offsite.alsoDirect": "Dotyczy też {target} bezpośrednio. Elementy, których jedyna kopia tam jest: {n}.",
   "offsite.directRetentionAsk": "Elementy, których jedyna kopia jest w {target} bezpośrednio: {n}. Mniejsze przechowywanie trwale usunie ich starsze migawki przy następnym przycinaniu. Zapisać mimo to?",
   "offsite.directAppendOnlyAsk": "Elementy, których jedyna kopia jest w {target} bezpośrednio: {n}. Bez append-only ta maszyna może z niego usuwać. Zapisać mimo to?",
+
+  // Placement
+  "placement.hostGeneric": "Host",
 };
 
 export default pl;

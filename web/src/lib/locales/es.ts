@@ -1662,6 +1662,9 @@ const es: Partial<Translations> = {
   "offsite.alsoDirect": "También se aplica a {target} directo. Elementos cuya única copia está ahí: {n}.",
   "offsite.directRetentionAsk": "Elementos cuya única copia está en {target} directo: {n}. Conservar menos elimina permanentemente sus instantáneas más antiguas en la próxima poda. ¿Guardar de todos modos?",
   "offsite.directAppendOnlyAsk": "Elementos cuya única copia está en {target} directo: {n}. Sin append-only, esta máquina puede borrar de él. ¿Guardar de todos modos?",
+
+  // Placement
+  "placement.hostGeneric": "Host",
 };
 
 export default es;

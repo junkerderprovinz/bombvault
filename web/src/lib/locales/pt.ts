@@ -1664,6 +1664,9 @@ const pt: Partial<Translations> = {
   "offsite.alsoDirect": "Também se aplica a {target} direto. Itens cuja única cópia está lá: {n}.",
   "offsite.directRetentionAsk": "Itens cuja única cópia está em {target} direto: {n}. Manter menos apaga permanentemente os instantâneos mais antigos na próxima poda. Salvar mesmo assim?",
   "offsite.directAppendOnlyAsk": "Itens cuja única cópia está em {target} direto: {n}. Sem append-only, esta máquina pode apagar dele. Salvar mesmo assim?",
+
+  // Placement
+  "placement.hostGeneric": "Host",
 };
 
 export default pt;
