@@ -1689,6 +1689,17 @@ const sr: Partial<Translations> = {
   "placement.storedOn": "Сачувано на",
   "placement.copyTo": "Копирај у",
   "placement.sendTo": "Пошаљи у",
+  // Direct repository
+  "directRepo.title": "Директни репозиторијум код {target}",
+  "directRepo.intro": "Ставке које га изаберу резервно се копирају директно у {target}, са његовим кључем, класом складиштења, ограничењима и подешавањем append-only. Чува своје снимке по правилима {target}. Отказивање ништа не оставља.",
+  "directRepo.test": "Тестирај везу",
+  "directRepo.testEmpty": "Доступно, празно",
+  "directRepo.testExisting": "Већ садржи репозиторијум",
+  "directRepo.testFailed": "Није доступно: {error}",
+  "directRepo.bucketRoot": "{target} се налази у корену своје кофе, па би сваки пут у тој кофи лежао унутар њега. Изабери другу кофу.",
+  "directRepo.pathNeeded": "Овај rest-server чува приватне репозиторијуме. Унеси путању за директни репозиторијум.",
+  "directRepo.addAndUse": "Направи и користи",
+  "directRepo.draftNote": "Прави се заједно са скупом фасцикли.",
 
   // Defaults
   "placementDefaults.copyLine": "Ставке чија је локација извор копија:",

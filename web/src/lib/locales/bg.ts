@@ -1705,6 +1705,17 @@ const bg: Partial<Translations> = {
   "placement.storedOn": "Съхранено в",
   "placement.copyTo": "Копирай в",
   "placement.sendTo": "Изпрати до",
+  // Direct repository
+  "directRepo.title": "Директно хранилище при {target}",
+  "directRepo.intro": "Елементите, които го изберат, се архивират направо в {target}, с неговия ключ, клас на съхранение, лимити и настройка за append-only. Пази снимките си по правилата на {target}. Отказът не оставя нищо след себе си.",
+  "directRepo.test": "Провери връзката",
+  "directRepo.testEmpty": "Достъпно, празно",
+  "directRepo.testExisting": "Вече съдържа хранилище",
+  "directRepo.testFailed": "Недостъпно: {error}",
+  "directRepo.bucketRoot": "{target} се намира в корена на своя bucket, затова всеки път в този bucket лежи вътре в него. Избери друг bucket.",
+  "directRepo.pathNeeded": "Този rest-server пази частни хранилища. Въведи пътя за директното хранилище.",
+  "directRepo.addAndUse": "Създай и използвай",
+  "directRepo.draftNote": "Създава се заедно с набора от папки.",
 
   // Defaults
   "placementDefaults.copyLine": "Елементи, чието място е източник на копия:",

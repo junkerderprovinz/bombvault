@@ -1705,6 +1705,17 @@ const fa: Partial<Translations> = {
   "placement.storedOn": "ذخیره‌شده در",
   "placement.copyTo": "کپی به",
   "placement.sendTo": "ارسال به",
+  // Direct repository
+  "directRepo.title": "مخزن مستقیم نزد {target}",
+  "directRepo.intro": "مواردی که آن را انتخاب می‌کنند مستقیماً در {target} پشتیبان‌گیری می‌شوند، با کلید، کلاس ذخیره‌سازی، محدودیت‌ها و تنظیم append-only. نسخه‌های خود را طبق قواعد {target} نگه می‌دارد. لغو چیزی باقی نمی‌گذارد.",
+  "directRepo.test": "آزمایش اتصال",
+  "directRepo.testEmpty": "در دسترس، خالی",
+  "directRepo.testExisting": "از قبل یک مخزن دارد",
+  "directRepo.testFailed": "در دسترس نیست: {error}",
+  "directRepo.bucketRoot": "{target} در ریشه bucket خود قرار دارد، بنابراین هر مسیری در آن bucket درون آن قرار می‌گیرد. bucket دیگری انتخاب کن.",
+  "directRepo.pathNeeded": "این rest-server مخزن‌های خصوصی نگه می‌دارد. مسیر مخزن مستقیم را وارد کنید.",
+  "directRepo.addAndUse": "ایجاد و استفاده",
+  "directRepo.draftNote": "همراه با مجموعه پوشه ساخته می‌شود.",
 
   // Defaults
   "placementDefaults.copyLine": "مواردی که مکان آن‌ها منبع کپی است:",

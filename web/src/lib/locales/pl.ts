@@ -1689,6 +1689,17 @@ const pl: Partial<Translations> = {
   "placement.storedOn": "Zapisane na",
   "placement.copyTo": "Kopiuj do",
   "placement.sendTo": "Wyślij do",
+  // Direct repository
+  "directRepo.title": "Bezpośrednie repozytorium przy {target}",
+  "directRepo.intro": "Elementy, które je wybiorą, są archiwizowane bezpośrednio do {target}, z jego kluczem, klasą pamięci, limitami i ustawieniem append-only. Zachowuje swoje migawki według zasad {target}. Anulowanie niczego nie zostawia.",
+  "directRepo.test": "Testuj połączenie",
+  "directRepo.testEmpty": "Dostępne, puste",
+  "directRepo.testExisting": "Zawiera już repozytorium",
+  "directRepo.testFailed": "Niedostępne: {error}",
+  "directRepo.bucketRoot": "{target} leży w katalogu głównym swojego zasobnika, więc każda ścieżka w tym zasobniku leżałaby wewnątrz niego. Wybierz inny zasobnik.",
+  "directRepo.pathNeeded": "Ten rest-server przechowuje prywatne repozytoria. Podaj ścieżkę dla bezpośredniego repozytorium.",
+  "directRepo.addAndUse": "Utwórz i użyj",
+  "directRepo.draftNote": "Zostanie utworzone razem z zestawem folderów.",
 
   // Defaults
   "placementDefaults.copyLine": "Elementy, których lokalizacja jest źródłem kopii:",

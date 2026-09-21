@@ -1705,6 +1705,17 @@ const eu: Partial<Translations> = {
   "placement.storedOn": "Gordelekua",
   "placement.copyTo": "Kopiaren helmuga",
   "placement.sendTo": "Bidalketaren helmuga",
+  // Direct repository
+  "directRepo.title": "Biltegi zuzena {target}(r)en ondoan",
+  "directRepo.intro": "Hautatzen duten elementuak zuzenean babesten dira {target}(e)n, bere gakoarekin, biltegiratze-klasearekin, mugekin eta gehitu-soilik ezarpenarekin. Bere argazkiak {target}(r)en arauen arabera gordetzen ditu. Ezeztatzeak ez du ezer uzten.",
+  "directRepo.test": "Probatu konexioa",
+  "directRepo.testEmpty": "Eskuragarri, hutsik",
+  "directRepo.testExisting": "Jada biltegi bat du",
+  "directRepo.testFailed": "Ez dago eskuragarri: {error}",
+  "directRepo.bucketRoot": "{target} bere bucketaren erroan dago, beraz bucket horretako bide oro barruan legoke. Aukeratu beste bucket bat.",
+  "directRepo.pathNeeded": "rest-server honek biltegi pribatuak dauzka. Sartu biltegi zuzenaren bidea.",
+  "directRepo.addAndUse": "Sortu eta erabili",
+  "directRepo.draftNote": "Karpeta-multzoarekin batera sortzen da.",
 
   // Defaults
   "placementDefaults.copyLine": "Beren kokapena kopia-iturri duten elementuak:",

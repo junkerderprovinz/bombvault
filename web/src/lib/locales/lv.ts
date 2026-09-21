@@ -1705,6 +1705,17 @@ const lv: Partial<Translations> = {
   "placement.storedOn": "Saglabāts",
   "placement.copyTo": "Kopēt uz",
   "placement.sendTo": "Sūtīt uz",
+  // Direct repository
+  "directRepo.title": "Tiešā krātuve pie {target}",
+  "directRepo.intro": "Vienumi, kas to izvēlas, tiek dublēti tieši uz {target}, izmantojot tā atslēgu, krātuves klasi, ierobežojumus un append-only iestatījumu. Tā glabā savus momentuzņēmumus pēc {target} noteikumiem. Atcelšana neatstāj neko.",
+  "directRepo.test": "Pārbaudīt savienojumu",
+  "directRepo.testEmpty": "Sasniedzams, tukšs",
+  "directRepo.testExisting": "Jau satur krātuvi",
+  "directRepo.testFailed": "Nav sasniedzams: {error}",
+  "directRepo.bucketRoot": "{target} atrodas sava bucket saknē, tāpēc jebkurš ceļš tajā bucket atrastos tā iekšpusē. Izvēlies citu bucket.",
+  "directRepo.pathNeeded": "Šis rest-server tur privātas krātuves. Ievadiet tiešās krātuves ceļu.",
+  "directRepo.addAndUse": "Izveidot un lietot",
+  "directRepo.draftNote": "Tiek izveidota kopā ar mapju kopu.",
 
   // Defaults
   "placementDefaults.copyLine": "Vienumi, kuru atrašanās vieta ir kopēšanas avots:",

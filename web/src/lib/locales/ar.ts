@@ -1697,6 +1697,17 @@ const ar: Partial<Translations> = {
   "placement.storedOn": "مخزَّن في",
   "placement.copyTo": "نسخ إلى",
   "placement.sendTo": "إرسال إلى",
+  // Direct repository
+  "directRepo.title": "مستودع مباشر عند {target}",
+  "directRepo.intro": "العناصر التي تختاره تُنسخ احتياطيًا مباشرة إلى {target}، بمفتاحه وفئة التخزين والحدود وإعداد append-only الخاص به. يحتفظ بلقطاته وفق قواعد {target}. الإلغاء لا يترك شيئًا وراءه.",
+  "directRepo.test": "اختبار الاتصال",
+  "directRepo.testEmpty": "قابل للوصول، فارغ",
+  "directRepo.testExisting": "يحتوي بالفعل على مستودع",
+  "directRepo.testFailed": "غير قابل للوصول: {error}",
+  "directRepo.bucketRoot": "{target} يقع عند جذر الـ bucket الخاص به، فكل مسار في ذلك الـ bucket يقع داخله. اختر bucket آخر.",
+  "directRepo.pathNeeded": "يحتفظ هذا الـ rest-server بمستودعات خاصة. أدخل المسار الخاص بالمستودع المباشر.",
+  "directRepo.addAndUse": "إنشاء واستخدام",
+  "directRepo.draftNote": "يُنشأ مع مجموعة المجلدات.",
 
   // Defaults
   "placementDefaults.copyLine": "العناصر التي يكون موقعها مصدر نسخ:",

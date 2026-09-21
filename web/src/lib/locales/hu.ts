@@ -1697,6 +1697,17 @@ const hu: Partial<Translations> = {
   "placement.storedOn": "Tárolva itt",
   "placement.copyTo": "Másolás ide",
   "placement.sendTo": "Küldés ide",
+  // Direct repository
+  "directRepo.title": "{target} közvetlen tárolója",
+  "directRepo.intro": "Az elemek, amelyek ezt választják, közvetlenül a(z) {target} célba mentenek, annak kulcsával, tárolási osztályával, korlátaival és append-only beállításával. A pillanatképeit a {target} szabályai szerint őrzi meg. A megszakítás semmit nem hagy hátra.",
+  "directRepo.test": "Kapcsolat tesztelése",
+  "directRepo.testEmpty": "Elérhető, üres",
+  "directRepo.testExisting": "Már tartalmaz egy tárolót",
+  "directRepo.testFailed": "Nem érhető el: {error}",
+  "directRepo.bucketRoot": "{target} a saját bucketjének gyökerén van, így az adott bucket minden útvonala ezen belülre esne. Válassz másik bucketet.",
+  "directRepo.pathNeeded": "Ez a rest-server privát tárolókat tart. Add meg a közvetlen tároló útvonalát.",
+  "directRepo.addAndUse": "Létrehozás és használat",
+  "directRepo.draftNote": "A mappakészlettel együtt jön létre.",
 
   // Defaults
   "placementDefaults.copyLine": "Elemek, amelyek helye másolási forrás:",

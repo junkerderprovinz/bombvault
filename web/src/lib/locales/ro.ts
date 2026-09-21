@@ -1697,6 +1697,17 @@ const ro: Partial<Translations> = {
   "placement.storedOn": "Stocat pe",
   "placement.copyTo": "Copiază în",
   "placement.sendTo": "Trimite către",
+  // Direct repository
+  "directRepo.title": "Depozit direct la {target}",
+  "directRepo.intro": "Elementele care îl aleg se salvează direct pe {target}, cu cheia, clasa de stocare, limitele și setarea append-only ale acestuia. Păstrează instantaneele sale după regulile {target}. Anularea nu lasă nimic în urmă.",
+  "directRepo.test": "Testează conexiunea",
+  "directRepo.testEmpty": "Accesibil, gol",
+  "directRepo.testExisting": "Conține deja un depozit",
+  "directRepo.testFailed": "Inaccesibil: {error}",
+  "directRepo.bucketRoot": "{target} se află la rădăcina bucket-ului său, deci orice cale din acel bucket ar sta în interiorul lui. Alege alt bucket.",
+  "directRepo.pathNeeded": "Acest rest-server păstrează depozite private. Introdu calea pentru depozitul direct.",
+  "directRepo.addAndUse": "Creează și folosește",
+  "directRepo.draftNote": "Creat împreună cu setul de foldere.",
 
   // Defaults
   "placementDefaults.copyLine": "Elemente a căror locație este o sursă de copiere:",

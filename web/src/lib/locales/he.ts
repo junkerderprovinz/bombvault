@@ -1694,6 +1694,17 @@ const he: Partial<Translations> = {
   "placement.storedOn": "מאוחסן ב",
   "placement.copyTo": "העתקה אל",
   "placement.sendTo": "שליחה אל",
+  // Direct repository
+  "directRepo.title": "מאגר ישיר אצל {target}",
+  "directRepo.intro": "פריטים שבוחרים בו מגובים ישירות אל {target}, עם המפתח, מחלקת האחסון, המגבלות וההגדרה append-only שלו. הוא שומר את התצלומים שלו לפי הכללים של {target}. ביטול לא משאיר כלום.",
+  "directRepo.test": "בדוק חיבור",
+  "directRepo.testEmpty": "נגיש, ריק",
+  "directRepo.testExisting": "כבר מכיל מאגר",
+  "directRepo.testFailed": "לא נגיש: {error}",
+  "directRepo.bucketRoot": "{target} נמצא בשורש ה-bucket שלו, כך שכל נתיב באותו bucket יימצא בתוכו. בחר bucket אחר.",
+  "directRepo.pathNeeded": "ה-rest-server הזה שומר מאגרים פרטיים. הזן את הנתיב למאגר הישיר.",
+  "directRepo.addAndUse": "צור והשתמש",
+  "directRepo.draftNote": "נוצר יחד עם ערכת התיקיות.",
 
   // Defaults
   "placementDefaults.copyLine": "פריטים שהמיקום שלהם הוא מקור להעתקה:",

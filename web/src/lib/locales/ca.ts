@@ -1705,6 +1705,17 @@ const ca: Partial<Translations> = {
   "placement.storedOn": "Emmagatzemat a",
   "placement.copyTo": "Còpia a",
   "placement.sendTo": "Envia a",
+  // Direct repository
+  "directRepo.title": "Repositori directe a {target}",
+  "directRepo.intro": "Els elements que el triïn es desen directament a {target}, amb la seva clau, classe d'emmagatzematge, límits i configuració d'append-only. Conserva les seves instantànies segons les regles de {target}. Cancel·lar no deixa res enrere.",
+  "directRepo.test": "Prova la connexió",
+  "directRepo.testEmpty": "Accessible, buit",
+  "directRepo.testExisting": "Ja conté un repositori",
+  "directRepo.testFailed": "No accessible: {error}",
+  "directRepo.bucketRoot": "{target} es troba a l'arrel del seu bucket, per la qual cosa tots els camins d'aquest bucket hi quedarien dins. Tria un altre bucket.",
+  "directRepo.pathNeeded": "Aquest rest-server manté repositoris privats. Introdueix el camí per al repositori directe.",
+  "directRepo.addAndUse": "Crea i utilitza",
+  "directRepo.draftNote": "Es crea juntament amb el conjunt de carpetes.",
 
   // Defaults
   "placementDefaults.copyLine": "Elements l'ubicació dels quals és origen de còpia:",

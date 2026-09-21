@@ -1689,6 +1689,17 @@ const sl: Partial<Translations> = {
   "placement.storedOn": "Shranjeno na",
   "placement.copyTo": "Kopiraj v",
   "placement.sendTo": "Pošlji v",
+  // Direct repository
+  "directRepo.title": "Neposredni repozitorij pri {target}",
+  "directRepo.intro": "Elementi, ki ga izberejo, se varnostno kopirajo neposredno v {target}, z njegovim ključem, razredom shrambe, omejitvami in nastavitvijo append-only. Svoje posnetke hrani po pravilih {target}. Preklic ne pusti ničesar za sabo.",
+  "directRepo.test": "Preizkusi povezavo",
+  "directRepo.testEmpty": "Dosegljivo, prazno",
+  "directRepo.testExisting": "Že vsebuje repozitorij",
+  "directRepo.testFailed": "Ni dosegljivo: {error}",
+  "directRepo.bucketRoot": "{target} leži na korenu svojega vedra, zato bi vsaka pot v tem vedru ležala znotraj njega. Izberi drugo vedro.",
+  "directRepo.pathNeeded": "Ta rest-server hrani zasebne repozitorije. Vnesi pot za neposredni repozitorij.",
+  "directRepo.addAndUse": "Ustvari in uporabi",
+  "directRepo.draftNote": "Ustvarjeno skupaj z naborom map.",
 
   // Defaults
   "placementDefaults.copyLine": "Elementi, katerih lokacija je vir kopij:",

@@ -1705,6 +1705,17 @@ const hr: Partial<Translations> = {
   "placement.storedOn": "Pohranjeno na",
   "placement.copyTo": "Kopiraj u",
   "placement.sendTo": "Pošalji u",
+  // Direct repository
+  "directRepo.title": "Izravni repozitorij kod {target}",
+  "directRepo.intro": "Stavke koje ga odaberu sigurnosno se kopiraju izravno na {target}, s njegovim ključem, klasom pohrane, ograničenjima i postavkom append-only. Čuva svoje snimke prema pravilima {target}. Otkazivanje ne ostavlja ništa za sobom.",
+  "directRepo.test": "Testiraj vezu",
+  "directRepo.testEmpty": "Dostupno, prazno",
+  "directRepo.testExisting": "Već sadrži repozitorij",
+  "directRepo.testFailed": "Nije dostupno: {error}",
+  "directRepo.bucketRoot": "{target} se nalazi u korijenu svog bucketa, pa bi svaka putanja u tom bucketu ležala unutar njega. Odaberi drugi bucket.",
+  "directRepo.pathNeeded": "Ovaj rest-server čuva privatne repozitorije. Unesite putanju za izravni repozitorij.",
+  "directRepo.addAndUse": "Stvori i koristi",
+  "directRepo.draftNote": "Stvara se zajedno sa skupom mapa.",
 
   // Defaults
   "placementDefaults.copyLine": "Stavke čija je lokacija izvor kopije:",

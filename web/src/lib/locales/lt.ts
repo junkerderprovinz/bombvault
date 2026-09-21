@@ -1705,6 +1705,17 @@ const lt: Partial<Translations> = {
   "placement.storedOn": "Saugoma",
   "placement.copyTo": "Kopijuoti į",
   "placement.sendTo": "Siųsti į",
+  // Direct repository
+  "directRepo.title": "Tiesioginė saugykla prie {target}",
+  "directRepo.intro": "Elementai, kurie ją pasirenka, atsargines kopijas daro tiesiai į {target}, naudodami jo raktą, saugyklos klasę, apribojimus ir append-only nustatymą. Ji saugo savo momentines kopijas pagal {target} taisykles. Atšaukimas nieko nepalieka.",
+  "directRepo.test": "Tikrinti ryšį",
+  "directRepo.testEmpty": "Pasiekiama, tuščia",
+  "directRepo.testExisting": "Jau turi saugyklą",
+  "directRepo.testFailed": "Nepasiekiama: {error}",
+  "directRepo.bucketRoot": "{target} yra savo bucket šaknyje, todėl kiekvienas kelias tame bucket atsidurtų jo viduje. Pasirink kitą bucket.",
+  "directRepo.pathNeeded": "Šis rest-server laiko privačias saugyklas. Įveskite tiesioginės saugyklos kelią.",
+  "directRepo.addAndUse": "Sukurti ir naudoti",
+  "directRepo.draftNote": "Sukuriama kartu su aplankų rinkiniu.",
 
   // Defaults
   "placementDefaults.copyLine": "Elementai, kurių vieta yra kopijavimo šaltinis:",

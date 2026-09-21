@@ -1689,6 +1689,17 @@ const uk: Partial<Translations> = {
   "placement.storedOn": "Збережено на",
   "placement.copyTo": "Копіювати в",
   "placement.sendTo": "Надіслати в",
+  // Direct repository
+  "directRepo.title": "Прямий репозиторій біля {target}",
+  "directRepo.intro": "Елементи, які його оберуть, резервуються напряму в {target}, з його ключем, класом сховища, лімітами та налаштуванням append-only. Він зберігає свої знімки за правилами {target}. Скасування нічого не залишає.",
+  "directRepo.test": "Перевірити з'єднання",
+  "directRepo.testEmpty": "Доступний, порожній",
+  "directRepo.testExisting": "Вже містить репозиторій",
+  "directRepo.testFailed": "Недоступний: {error}",
+  "directRepo.bucketRoot": "{target} лежить у корені свого бакета, тож будь-який шлях у цьому бакеті опиниться всередині нього. Обери інший бакет.",
+  "directRepo.pathNeeded": "Цей rest-server зберігає приватні репозиторії. Введіть шлях для прямого репозиторію.",
+  "directRepo.addAndUse": "Створити і використати",
+  "directRepo.draftNote": "Створюється разом із набором папок.",
 
   // Defaults
   "placementDefaults.copyLine": "Елементи, чиє розташування є джерелом копій:",

@@ -1697,6 +1697,17 @@ const th: Partial<Translations> = {
   "placement.storedOn": "จัดเก็บที่",
   "placement.copyTo": "คัดลอกไปยัง",
   "placement.sendTo": "ส่งไปยัง",
+  // Direct repository
+  "directRepo.title": "ที่เก็บข้อมูลโดยตรงที่ {target}",
+  "directRepo.intro": "รายการที่เลือกใช้จะสำรองข้อมูลตรงไปยัง {target} พร้อมคีย์ คลาสพื้นที่จัดเก็บ ขีดจำกัด และการตั้งค่า append-only เก็บสแนปช็อตตามกฎของ {target} การยกเลิกจะไม่เหลืออะไรไว้",
+  "directRepo.test": "ทดสอบการเชื่อมต่อ",
+  "directRepo.testEmpty": "เข้าถึงได้ ว่างเปล่า",
+  "directRepo.testExisting": "มีที่เก็บข้อมูลอยู่แล้ว",
+  "directRepo.testFailed": "เข้าถึงไม่ได้ {error}",
+  "directRepo.bucketRoot": "{target} อยู่ที่รากของ bucket ตัวเอง ดังนั้นทุกพาธใน bucket นั้นจะอยู่ภายในนี้ เลือก bucket อื่น",
+  "directRepo.pathNeeded": "rest-server นี้เก็บที่เก็บข้อมูลส่วนตัว กรอกพาธสำหรับที่เก็บข้อมูลโดยตรง",
+  "directRepo.addAndUse": "สร้างและใช้งาน",
+  "directRepo.draftNote": "จะสร้างพร้อมกับชุดโฟลเดอร์",
 
   // Defaults
   "placementDefaults.copyLine": "รายการที่ตำแหน่งเป็นแหล่งสำเนา:",

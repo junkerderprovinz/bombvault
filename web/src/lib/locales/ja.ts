@@ -1686,6 +1686,17 @@ const ja: Partial<Translations> = {
   "placement.storedOn": "保存先",
   "placement.copyTo": "コピー先",
   "placement.sendTo": "送信先",
+  // Direct repository
+  "directRepo.title": "{target} のダイレクトリポジトリ",
+  "directRepo.intro": "これを選んだ項目は {target} へ直接バックアップされ、そのキー、ストレージクラス、制限、append-only 設定を使います。スナップショットは {target} のルールで保持されます。キャンセルすれば何も残りません。",
+  "directRepo.test": "接続をテスト",
+  "directRepo.testEmpty": "到達可能、空です",
+  "directRepo.testExisting": "すでにリポジトリがあります",
+  "directRepo.testFailed": "到達不可：{error}",
+  "directRepo.bucketRoot": "{target} はバケットのルートにあるため、そのバケット内のどのパスもこの中に入ってしまいます。別のバケットを選んでください。",
+  "directRepo.pathNeeded": "この rest-server はプライベートリポジトリを保持します。ダイレクトリポジトリのパスを入力してください。",
+  "directRepo.addAndUse": "作成して使う",
+  "directRepo.draftNote": "フォルダーセットと一緒に作成されます。",
 
   // Defaults
   "placementDefaults.copyLine": "場所がコピー元になっている項目:",

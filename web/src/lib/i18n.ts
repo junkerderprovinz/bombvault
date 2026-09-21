@@ -1805,6 +1805,20 @@ export const en = {
   "placement.copyTo": "Copy to",
   "placement.sendTo": "Send to",
 
+  // Direct repository
+  "directRepo.title": "Direct repository at {target}",
+  "directRepo.intro":
+    "Items that choose it back up straight to {target}, with its key, storage class, limits and append-only setting. It keeps its snapshots by the rules of {target}. Cancelling leaves nothing behind.",
+  "directRepo.test": "Test connection",
+  "directRepo.testEmpty": "Reachable, empty",
+  "directRepo.testExisting": "Already holds a repository",
+  "directRepo.testFailed": "Not reachable: {error}",
+  "directRepo.bucketRoot":
+    "{target} sits at the root of its bucket, so every path in that bucket lies inside it. Choose another bucket.",
+  "directRepo.pathNeeded": "This rest-server keeps private repositories. Enter the path for the direct repository.",
+  "directRepo.addAndUse": "Create and use",
+  "directRepo.draftNote": "Created together with the folder set.",
+
   // Defaults
   "placementDefaults.copyLine": "Items whose location is a copy source:",
   "placementDefaults.copyLineContainers": "Project folders and items whose location is a copy source:",
@@ -3572,6 +3586,20 @@ export const de: Translations = {
   "placement.storedOn": "Gespeichert auf",
   "placement.copyTo": "Kopie nach",
   "placement.sendTo": "Senden an",
+
+  // Direct repository
+  "directRepo.title": "Direkt-Repository bei {target}",
+  "directRepo.intro":
+    "Einträge, die es wählen, sichern direkt nach {target}, mit Schlüssel, Speicherklasse, Grenzen und append-only von {target}. Es bewahrt seine Snapshots nach den Regeln von {target} auf. Abbrechen hinterlässt nichts.",
+  "directRepo.test": "Verbindung testen",
+  "directRepo.testEmpty": "Erreichbar, leer",
+  "directRepo.testExisting": "Enthält schon ein Repository",
+  "directRepo.testFailed": "Nicht erreichbar: {error}",
+  "directRepo.bucketRoot":
+    "{target} liegt an der Wurzel seines Buckets, jeder Pfad darin läge also im Ziel. Einen anderen Bucket wählen.",
+  "directRepo.pathNeeded": "Dieser rest-server hält private Repositories. Pfad für das Direkt-Repository eingeben.",
+  "directRepo.addAndUse": "Anlegen und nutzen",
+  "directRepo.draftNote": "Entsteht zusammen mit dem Ordner-Set.",
 
   // Defaults
   "placementDefaults.copyLine": "Einträge, deren Ort Kopierquelle ist:",
