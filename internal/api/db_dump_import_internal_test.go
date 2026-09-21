@@ -690,3 +690,26 @@ func TestImportStopsTheAppsOfTheDatabaseUntilItIsDone(t *testing.T) {
 		}
 	})
 }
+
+func TestImportFailureLogLeavesOutTheToolsMessage(t *testing.T) {
+	rig := newImportRig(t)
+	rig.dock.exit = 1
+	rig.dock.tail = "ERROR:  duplicate key value violates unique constraint \"users_email_key\"\nDETAIL:  Key (email)=(alice@example.com) already exists.\n"
+
+	logged := captureLog(t, func() {
+		if _, err := rig.svc.StartImportDBDump(context.Background(), "pg", "local", importDumpID); err != nil {
+			t.Fatal(err)
+		}
+		waitForDetachedRun(t, rig.svc)
+	})
+
+	if !strings.Contains(logged, store.ReasonDBImportFailed) {
+		t.Errorf("the log does not say the import failed:\n%s", logged)
+	}
+	if strings.Contains(logged, "alice@example.com") {
+		t.Errorf("the log carries a row the import tool quoted:\n%s", logged)
+	}
+	if runs := runsOfKind(t, rig.svc.store, "dbimport"); len(runs) != 1 || !strings.Contains(runs[0].Error, "alice@example.com") {
+		t.Errorf("runs = %+v, want the run history to keep the tool's message", runs)
+	}
+}

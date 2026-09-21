@@ -155,7 +155,7 @@ func (s *Service) StartImportDBDump(ctx context.Context, name, source, snapshotI
 		s.progEnd(rkey, "restore", ierr == nil, startedAt)
 		s.finishDBImportRun(runID, plan.dump.ID, note, ierr)
 		if ierr != nil {
-			log.Printf("api: import database dump into %q failed: %v", name, ierr) //nolint:gosec // G706: name is %q-quoted
+			log.Printf("api: import database dump into %q failed: %s", name, shareableRunError("dbimport", ierr.Error())) //nolint:gosec // G706: name is %q-quoted
 		}
 	}()
 	return true, nil

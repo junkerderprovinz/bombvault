@@ -150,7 +150,7 @@ func (h *Handler) handleWidgetData(w http.ResponseWriter, r *http.Request) {
 			Target:     name[run.TargetID],
 			Domain:     d,
 			Bytes:      run.Bytes,
-			Error:      truncateWidgetError(run.Error),
+			Error:      truncateWidgetError(shareableRunError(run.Kind, run.Error)),
 		})
 	}
 	var next []schedule.NextRun

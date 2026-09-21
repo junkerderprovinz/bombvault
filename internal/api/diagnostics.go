@@ -227,7 +227,8 @@ func (h *Handler) buildDiagnostics(ctx context.Context) ([]diagFile, error) {
 	// runs.json — recent history. Run.Error holds raw restic/rclone/Docker
 	// output, which handleRuns can serve as-is because it sits behind the
 	// session gate. A file meant to be attached to a public bug report cannot,
-	// so every error goes through scrubSecrets here.
+	// so every error goes through scrubSecrets here, and a dump or an import
+	// loses the database tool's own message.
 	runs, rErr := h.store.ListRuns(200)
 	if rErr != nil {
 		add("runs.json", nil, rErr)
@@ -235,7 +236,7 @@ func (h *Handler) buildDiagnostics(ctx context.Context) ([]diagFile, error) {
 		names, domains := h.runTargetMaps()
 		views := make([]runView, 0, len(runs))
 		for _, run := range runs {
-			run.Error = scrubSecrets(run.Error)
+			run.Error = scrubSecrets(shareableRunError(run.Kind, run.Error))
 			views = append(views, runView{Run: run, Target: names[run.TargetID], Domain: domains[run.TargetID]})
 		}
 		add("runs.json", views, nil)
