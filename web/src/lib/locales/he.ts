@@ -1632,6 +1632,7 @@ const he: Partial<Translations> = {
   "repos.directOf": "שייך ל{target} · פריטים: {n}",
   "repos.companionLost": "לצד יעד שנמחק",
   "repos.mirroredLocked": "הועבר מ{target}. שנה אותו שם.",
+  "repos.removeWithTarget": "הולך יחד עם {target}. כדי להסיר את המאגר הזה, הסר את היעד.",
 
   // Refusals
   "placementCode.unreadable": "לא ניתן היה לקרוא את כללי המיקום, לכן שום דבר לא מועתק עד שיהיה ניתן לקרוא אותם שוב.",
@@ -1652,6 +1653,7 @@ const he: Partial<Translations> = {
   "placementCode.companionTaken": "ליעד הזה כבר יש מאגר ישיר.",
   "placementCode.targetInUseItems": "פריטים עדיין מגבים אל המאגר הישיר של היעד הזה: {n}. הפנה אותם קודם למקום אחר.",
   "placementCode.targetInUseDefault": "ברירת המחדל של {domains} מצביעה על המאגר הישיר של היעד הזה. שנה קודם את ברירת המחדל.",
+  "placementCode.directRepo": "המאגר הזה הולך יחד עם {target}. הסר במקום זאת את היעד.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} ישיר שומר עכשיו פחות. פריטים שהעותק היחיד שלהם נמצא שם: {n}.",

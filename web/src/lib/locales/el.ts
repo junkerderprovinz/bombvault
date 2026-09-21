@@ -1632,6 +1632,7 @@ const el: Partial<Translations> = {
   "repos.directOf": "ανήκει σε {target} · στοιχεία: {n}",
   "repos.companionLost": "δίπλα σε διαγραμμένο προορισμό",
   "repos.mirroredLocked": "Ελήφθη από {target}. Άλλαξέ το εκεί.",
+  "repos.removeWithTarget": "Πηγαίνει μαζί με {target}. Για να αφαιρέσεις αυτό το αποθετήριο, αφαίρεσε τον προορισμό.",
 
   // Refusals
   "placementCode.unreadable": "Οι κανόνες τοποθέτησης δεν ήταν αναγνώσιμοι, οπότε δεν αντιγράφεται τίποτα μέχρι να ξαναγίνουν αναγνώσιμοι.",
@@ -1652,6 +1653,7 @@ const el: Partial<Translations> = {
   "placementCode.companionTaken": "Αυτός ο προορισμός έχει ήδη άμεσο αποθετήριο.",
   "placementCode.targetInUseItems": "Στοιχεία εξακολουθούν να αντιγράφονται στο άμεσο αποθετήριο αυτού του προορισμού: {n}. Στρέψε τα πρώτα αλλού.",
   "placementCode.targetInUseDefault": "Η προεπιλογή για {domains} δείχνει στο άμεσο αποθετήριο αυτού του προορισμού. Άλλαξε πρώτα την προεπιλογή.",
+  "placementCode.directRepo": "Αυτό το αποθετήριο πηγαίνει μαζί με {target}. Αφαίρεσε τον προορισμό αντ' αυτού.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "Το {target} άμεσο διατηρεί τώρα λιγότερα. Στοιχεία των οποίων το μοναδικό αντίγραφο βρίσκεται εκεί: {n}.",

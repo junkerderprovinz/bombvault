@@ -1,6 +1,7 @@
 package store_test
 
 import (
+	"errors"
 	"slices"
 	"testing"
 
@@ -96,6 +97,29 @@ func TestDeleteNamedRepoIfUnusedDeletesWhenNothingPointsAtIt(t *testing.T) {
 	}
 	if _, err := r.GetNamedRepo(repo.ID); err == nil {
 		t.Fatal("the row must be gone once nothing points at it")
+	}
+}
+
+// A direct repository goes with its target. Deleting it here would leave the
+// snapshots in the bucket with nothing on the box that names them.
+func TestDeleteNamedRepoIfUnusedRefusesADirectRepository(t *testing.T) {
+	r := namedRepoStore(t)
+	target, err := r.CreateOffsiteTarget(store.OffsiteTarget{
+		Domain: "containers", Name: "B2", Repo: "b2:bkt:containers", Enabled: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	direct, err := r.CreateCompanionRepo(target.ID, "B2 direct", "b2:bkt:containers-direct")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := r.DeleteNamedRepoIfUnused(direct.ID); !errors.Is(err, store.ErrDirectRepo) {
+		t.Fatalf("DeleteNamedRepoIfUnused = %v, want ErrDirectRepo", err)
+	}
+	if _, err := r.GetNamedRepo(direct.ID); err != nil {
+		t.Fatalf("a refused delete must leave the row: %v", err)
 	}
 }
 

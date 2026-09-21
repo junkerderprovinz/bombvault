@@ -230,6 +230,16 @@ func (h *Handler) offsiteTargetParam(w http.ResponseWriter, r *http.Request) (st
 	return target, ok
 }
 
+// offsiteTargetRef names a target for a refusal that has to point at it. A
+// name that cannot be read falls back to the id, the way the card does it.
+func (h *Handler) offsiteTargetRef(id string) directTargetRef {
+	ref := directTargetRef{ID: id, Name: id}
+	if target, ok, err := h.store.GetOffsiteTarget(id); err == nil && ok {
+		ref.Name = placementTargetName(target)
+	}
+	return ref
+}
+
 // handleGetDirectRepo serves GET /api/offsite/targets/{id}/direct: the target's
 // direct repository, null while there is none, and where the dialog starts.
 func (h *Handler) handleGetDirectRepo(w http.ResponseWriter, r *http.Request) {

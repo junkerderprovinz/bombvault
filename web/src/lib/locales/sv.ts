@@ -1632,6 +1632,7 @@ const sv: Partial<Translations> = {
   "repos.directOf": "tillhör {target} · objekt: {n}",
   "repos.companionLost": "bredvid ett borttaget mål",
   "repos.mirroredLocked": "Övertaget från {target}. Ändra det där.",
+  "repos.removeWithTarget": "Hör ihop med {target}. Ta bort det målet för att ta bort det här arkivet.",
 
   // Refusals
   "placementCode.unreadable": "Placeringsreglerna kunde inte läsas, så inget kopieras förrän de kan läsas igen.",
@@ -1652,6 +1653,7 @@ const sv: Partial<Translations> = {
   "placementCode.companionTaken": "Det här målet har redan ett direktarkiv.",
   "placementCode.targetInUseItems": "Objekt säkerhetskopieras fortfarande till det här målets direktarkiv: {n}. Peka om dem först.",
   "placementCode.targetInUseDefault": "Standardvärdet för {domains} pekar på det här målets direktarkiv. Ändra standardvärdet först.",
+  "placementCode.directRepo": "Det här arkivet hör ihop med {target}. Ta bort målet i stället.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkt behåller nu mindre. Objekt vars enda kopia finns där: {n}.",

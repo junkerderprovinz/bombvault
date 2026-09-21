@@ -1627,6 +1627,7 @@ const uk: Partial<Translations> = {
   "repos.directOf": "належить цілі {target} · елементи: {n}",
   "repos.companionLost": "поруч із видаленою ціллю",
   "repos.mirroredLocked": "Перейнято від {target}. Зміни там.",
+  "repos.removeWithTarget": "Іде разом із ціллю {target}. Щоб прибрати цей репозиторій, прибери ціль.",
 
   // Refusals
   "placementCode.unreadable": "Правила розміщення не вдалося прочитати, тому нічого не копіюється, доки їх знову не можна буде прочитати.",
@@ -1647,6 +1648,7 @@ const uk: Partial<Translations> = {
   "placementCode.companionTaken": "Ця ціль вже має прямий репозиторій.",
   "placementCode.targetInUseItems": "Елементи досі резервуються у прямий репозиторій цієї цілі: {n}. Спочатку спрямуй їх деінде.",
   "placementCode.targetInUseDefault": "Типове значення для {domains} вказує на прямий репозиторій цієї цілі. Спочатку зміни типове значення.",
+  "placementCode.directRepo": "Цей репозиторій іде разом із ціллю {target}. Прибери натомість ціль.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} напряму тепер зберігає менше. Елементи, чия єдина копія там: {n}.",

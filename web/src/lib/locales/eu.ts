@@ -1643,6 +1643,7 @@ const eu: Partial<Translations> = {
   "repos.directOf": "{target}ri dagokio · elementuak: {n}",
   "repos.companionLost": "ezabatutako helmuga baten ondoan",
   "repos.mirroredLocked": "{target}(e)tik hartua. Aldatu hor.",
+  "repos.removeWithTarget": "{target}(r)ekin doa. Biltegi hau kentzeko, kendu helmuga hori.",
 
   // Refusals
   "placementCode.unreadable": "Kokapen-arauak ezin izan dira irakurri, beraz ezer ez da kopiatzen berriro irakurri ahal izan arte.",
@@ -1663,6 +1664,7 @@ const eu: Partial<Translations> = {
   "placementCode.companionTaken": "Helmuga honek jada badu zuzeneko biltegi bat.",
   "placementCode.targetInUseItems": "Elementuak oraindik helmuga honen zuzeneko biltegian babesten dira: {n}. Zuzendu haiek lehenik beste nonbaitera.",
   "placementCode.targetInUseDefault": "{domains} arloaren balio lehenetsiak helmuga honen zuzeneko biltegira seinalatzen du. Aldatu lehenik balio lehenetsia.",
+  "placementCode.directRepo": "Biltegi hau {target}(r)ekin doa. Kendu helmuga hori horren ordez.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} zuzenak orain gutxiago gordetzen du. Kopia bakarra hor duten elementuak: {n}.",

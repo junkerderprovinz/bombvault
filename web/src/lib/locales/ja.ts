@@ -1624,6 +1624,7 @@ const ja: Partial<Translations> = {
   "repos.directOf": "{target}に属する · 項目: {n}",
   "repos.companionLost": "削除されたターゲットの隣",
   "repos.mirroredLocked": "{target}から引き継がれました。そちらで変更してください。",
+  "repos.removeWithTarget": "{target}と一緒に存在します。このリポジトリを削除するには、そのターゲットを削除してください。",
 
   // Refusals
   "placementCode.unreadable": "配置ルールを読み込めなかったため、再び読み込めるようになるまで何もコピーされません。",
@@ -1644,6 +1645,7 @@ const ja: Partial<Translations> = {
   "placementCode.companionTaken": "そのターゲットにはすでにダイレクトリポジトリがあります。",
   "placementCode.targetInUseItems": "項目はまだこのターゲットのダイレクトリポジトリにバックアップされています: {n}。先に別の場所を指定してください。",
   "placementCode.targetInUseDefault": "{domains} の既定値はこのターゲットのダイレクトリポジトリを指しています。まず既定値を変更してください。",
+  "placementCode.directRepo": "このリポジトリは{target}と一緒に存在します。代わりにそのターゲットを削除してください。",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} ダイレクトは今、保持量が減りました。唯一のコピーがそこにある項目: {n}。",

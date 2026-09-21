@@ -1629,6 +1629,7 @@ const nl: Partial<Translations> = {
   "repos.directOf": "hoort bij {target} · items: {n}",
   "repos.companionLost": "naast een verwijderde bestemming",
   "repos.mirroredLocked": "Overgenomen van {target}. Wijzig het daar.",
+  "repos.removeWithTarget": "Hoort bij {target}. Verwijder die bestemming om deze repository te verwijderen.",
 
   // Refusals
   "placementCode.unreadable": "De plaatsingsregels konden niet worden gelezen, dus wordt er niets gekopieerd totdat dat weer lukt.",
@@ -1649,6 +1650,7 @@ const nl: Partial<Translations> = {
   "placementCode.companionTaken": "Deze bestemming heeft al een directe repository.",
   "placementCode.targetInUseItems": "Er back-uppen nog items naar de directe repository van deze bestemming: {n}. Wijs ze eerst ergens anders naartoe.",
   "placementCode.targetInUseDefault": "De standaard voor {domains} wijst naar de directe repository van deze bestemming. Wijzig eerst de standaard.",
+  "placementCode.directRepo": "Deze repository hoort bij {target}. Verwijder in plaats daarvan die bestemming.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct bewaart nu minder. Items waarvan de enige kopie daar staat: {n}.",

@@ -1643,6 +1643,7 @@ const hi: Partial<Translations> = {
   "repos.directOf": "{target} की है · मदें: {n}",
   "repos.companionLost": "हटाए गए गंतव्य के पास",
   "repos.mirroredLocked": "{target} से लिया गया। इसे वहीं बदलें।",
+  "repos.removeWithTarget": "{target} के साथ जाती है। इस रिपॉज़िटरी को हटाने के लिए वह गंतव्य हटाएँ।",
 
   // Refusals
   "placementCode.unreadable": "प्लेसमेंट नियम पढ़े नहीं जा सके, इसलिए जब तक वे फिर से पढ़े नहीं जा सकते तब तक कुछ भी कॉपी नहीं होगा।",
@@ -1663,6 +1664,7 @@ const hi: Partial<Translations> = {
   "placementCode.companionTaken": "इस गंतव्य के पास पहले से ही एक डायरेक्ट रिपॉज़िटरी है।",
   "placementCode.targetInUseItems": "प्रविष्टियाँ अब भी इस गंतव्य की डायरेक्ट रिपॉज़िटरी में बैकअप ले रही हैं: {n}। पहले उन्हें कहीं और भेजें।",
   "placementCode.targetInUseDefault": "{domains} के लिए डिफ़ॉल्ट इस गंतव्य की डायरेक्ट रिपॉज़िटरी की ओर इशारा करता है। पहले डिफ़ॉल्ट बदलें।",
+  "placementCode.directRepo": "यह रिपॉज़िटरी {target} के साथ जाती है। इसके बजाय वह गंतव्य हटाएँ।",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} डायरेक्ट अब कम रखता है। जिन प्रविष्टियों की एकमात्र कॉपी वहाँ है: {n}।",

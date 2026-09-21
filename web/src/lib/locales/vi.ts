@@ -1624,6 +1624,7 @@ const vi: Partial<Translations> = {
   "repos.directOf": "thuộc về {target} · mục: {n}",
   "repos.companionLost": "cạnh một đích đã bị xóa",
   "repos.mirroredLocked": "Được tiếp quản từ {target}. Đổi nó ở đó.",
+  "repos.removeWithTarget": "Đi cùng với {target}. Để gỡ kho này, hãy gỡ đích đó.",
 
   // Refusals
   "placementCode.unreadable": "Không đọc được các quy tắc đặt vị trí, nên không có gì được sao chép cho đến khi đọc lại được.",
@@ -1644,6 +1645,7 @@ const vi: Partial<Translations> = {
   "placementCode.companionTaken": "Đích này đã có kho trực tiếp.",
   "placementCode.targetInUseItems": "Vẫn còn mục đang sao lưu vào kho trực tiếp của đích này: {n}. Trỏ chúng sang nơi khác trước.",
   "placementCode.targetInUseDefault": "Giá trị mặc định cho {domains} đang trỏ đến kho trực tiếp của đích này. Đổi giá trị mặc định trước.",
+  "placementCode.directRepo": "Kho này đi cùng với {target}. Hãy gỡ đích đó thay vì kho.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} trực tiếp giờ giữ ít hơn. Các mục có bản sao duy nhất ở đó: {n}.",

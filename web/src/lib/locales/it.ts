@@ -1632,6 +1632,7 @@ const it: Partial<Translations> = {
   "repos.directOf": "appartiene a {target} · elementi: {n}",
   "repos.companionLost": "accanto a una destinazione eliminata",
   "repos.mirroredLocked": "Preso in carico da {target}. Modificalo lì.",
+  "repos.removeWithTarget": "Va insieme a {target}. Per rimuovere questo repository, rimuovi quella destinazione.",
 
   // Refusals
   "placementCode.unreadable": "Le regole di posizionamento non sono state leggibili, quindi non viene copiato nulla finché non lo saranno di nuovo.",
@@ -1652,6 +1653,7 @@ const it: Partial<Translations> = {
   "placementCode.companionTaken": "Questa destinazione ha già un repository diretto.",
   "placementCode.targetInUseItems": "Elementi eseguono ancora il backup sul repository diretto di questa destinazione: {n}. Puntali altrove prima.",
   "placementCode.targetInUseDefault": "Il valore predefinito per {domains} punta al repository diretto di questa destinazione. Cambia prima il valore predefinito.",
+  "placementCode.directRepo": "Questo repository va insieme a {target}. Rimuovi invece quella destinazione.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} diretto ora conserva meno. Elementi la cui unica copia è lì: {n}.",

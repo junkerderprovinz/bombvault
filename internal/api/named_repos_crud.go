@@ -389,10 +389,12 @@ func (h *Handler) handleUpdateNamedRepo(w http.ResponseWriter, r *http.Request) 
 //
 // Refused while anything still points here. Deleting would put those items back
 // on their domain repository silently, and their next backup would land
-// somewhere else and look exactly like a working backup.
+// somewhere else and look exactly like a working backup. A direct repository is
+// refused outright and the answer names its target, which is where it goes.
 func (h *Handler) handleDeleteNamedRepo(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimSpace(r.PathValue("id"))
-	if _, err := h.store.GetNamedRepo(id); err != nil {
+	row, err := h.store.GetNamedRepo(id)
+	if err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "no such repository"})
 		return
 	}
@@ -400,6 +402,10 @@ func (h *Handler) handleDeleteNamedRepo(w http.ResponseWriter, r *http.Request) 
 	// here while this request is in flight blocks the delete instead of being
 	// put back on its domain repository without a word.
 	use, err := h.store.DeleteNamedRepoIfUnused(id)
+	if errors.Is(err, store.ErrDirectRepo) {
+		placementFail(w, err, map[string]any{"target": h.offsiteTargetRef(row.CompanionOf)})
+		return
+	}
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return

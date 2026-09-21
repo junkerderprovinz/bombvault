@@ -413,6 +413,7 @@ func (r *Repo) GetNamedRepo(id string) (OffsiteTarget, error) {
 var (
 	ErrCompanionTaken   = errors.New("offsite target already has a direct repository")
 	ErrNotOffsiteTarget = errors.New("no such offsite target")
+	ErrDirectRepo       = errors.New("a direct repository goes with its off-site target; remove the target instead")
 )
 
 // mirroredCols are the columns a direct repository takes from its target, in
@@ -595,7 +596,9 @@ func (u NamedRepoUse) InUse() bool { return u.Items > 0 || len(u.DefaultDomains)
 
 // DeleteNamedRepoIfUnused deletes a named repository only while no item and no
 // default points at it, counting and deleting in one transaction so nothing can
-// start pointing at it in between.
+// start pointing at it in between. A direct repository is refused outright: it
+// goes with its target, and removing the row alone would leave the snapshots in
+// the bucket with nothing that names them.
 func (r *Repo) DeleteNamedRepoIfUnused(id string) (NamedRepoUse, error) {
 	var use NamedRepoUse
 	tx, err := r.db.Begin()
@@ -603,6 +606,14 @@ func (r *Repo) DeleteNamedRepoIfUnused(id string) (NamedRepoUse, error) {
 		return use, fmt.Errorf("DeleteNamedRepoIfUnused: %w", err)
 	}
 	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
+	var companionOf string
+	if err := tx.QueryRow(`SELECT companion_of FROM offsite_targets WHERE id = ? AND role = ?`,
+		id, RoleRepo).Scan(&companionOf); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return use, fmt.Errorf("DeleteNamedRepoIfUnused companion: %w", err)
+	}
+	if companionOf != "" {
+		return use, ErrDirectRepo
+	}
 	if err := tx.QueryRow(itemsUsingNamedRepoQ, id, id, id).Scan(&use.Items); err != nil {
 		return use, fmt.Errorf("DeleteNamedRepoIfUnused count: %w", err)
 	}

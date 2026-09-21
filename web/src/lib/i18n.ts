@@ -1742,6 +1742,7 @@ export const en = {
   "repos.directOf": "belongs to {target} · items: {n}",
   "repos.companionLost": "next to a deleted target",
   "repos.mirroredLocked": "Taken over from {target}. Change it there.",
+  "repos.removeWithTarget": "Goes with {target}. Remove that target to remove this repository.",
 
   // Refusals
   "placementCode.unreadable": "The placement rules could not be read, so nothing is copied until they can.",
@@ -1762,6 +1763,7 @@ export const en = {
   "placementCode.companionTaken": "This target already has a direct repository.",
   "placementCode.targetInUseItems": "Items still back up to the direct repository of this target: {n}. Point them somewhere else first.",
   "placementCode.targetInUseDefault": "The default for {domains} points at the direct repository of this target. Change the default first.",
+  "placementCode.directRepo": "This repository goes with {target}. Remove that target instead.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct now keeps less. Items whose only copy is there: {n}.",
@@ -3473,6 +3475,7 @@ export const de: Translations = {
   "repos.directOf": "gehört zu {target} · Einträge: {n}",
   "repos.companionLost": "neben einem gelöschten Ziel",
   "repos.mirroredLocked": "Von {target} übernommen. Dort ändern.",
+  "repos.removeWithTarget": "Gehört zu {target}. Zum Entfernen dieses Repositorys das Ziel entfernen.",
 
   // Refusals
   "placementCode.unreadable": "Die Ablage-Regeln ließen sich nicht lesen. Bis das wieder geht, wird nichts kopiert.",
@@ -3493,6 +3496,7 @@ export const de: Translations = {
   "placementCode.companionTaken": "Dieses Ziel hat schon ein Direkt-Repository.",
   "placementCode.targetInUseItems": "Einträge sichern noch in das Direkt-Repository dieses Ziels: {n}. Zuerst woandershin zeigen.",
   "placementCode.targetInUseDefault": "Die Vorgabe für {domains} zeigt auf das Direkt-Repository dieses Ziels. Zuerst die Vorgabe ändern.",
+  "placementCode.directRepo": "Dieses Repository gehört zu {target}. Stattdessen das Ziel entfernen.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkt bewahrt jetzt weniger auf. Einträge, deren einzige Kopie dort liegt: {n}.",

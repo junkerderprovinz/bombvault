@@ -1627,6 +1627,7 @@ const pl: Partial<Translations> = {
   "repos.directOf": "należy do celu {target} · elementy: {n}",
   "repos.companionLost": "obok usuniętego celu",
   "repos.mirroredLocked": "Przejęte z celu {target}. Zmień tam.",
+  "repos.removeWithTarget": "Idzie razem z celem {target}. Aby usunąć to repozytorium, usuń ten cel.",
 
   // Refusals
   "placementCode.unreadable": "Reguł umieszczenia nie udało się odczytać, więc nic nie jest kopiowane, dopóki znowu nie da się ich odczytać.",
@@ -1647,6 +1648,7 @@ const pl: Partial<Translations> = {
   "placementCode.companionTaken": "Ten cel ma już repozytorium bezpośrednie.",
   "placementCode.targetInUseItems": "Elementy nadal tworzą kopie zapasowe w repozytorium bezpośrednim tego celu: {n}. Najpierw skieruj je gdzie indziej.",
   "placementCode.targetInUseDefault": "Wartość domyślna dla {domains} wskazuje repozytorium bezpośrednie tego celu. Najpierw zmień wartość domyślną.",
+  "placementCode.directRepo": "To repozytorium idzie razem z celem {target}. Usuń zamiast niego ten cel.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} bezpośrednio przechowuje teraz mniej. Elementy, których jedyna kopia tam jest: {n}.",

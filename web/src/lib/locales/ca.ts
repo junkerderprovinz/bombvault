@@ -1643,6 +1643,7 @@ const ca: Partial<Translations> = {
   "repos.directOf": "pertany a {target} · elements: {n}",
   "repos.companionLost": "al costat d'un destí eliminat",
   "repos.mirroredLocked": "Agafat de {target}. Canvia-ho allà.",
+  "repos.removeWithTarget": "Va amb {target}. Per treure aquest repositori, treu aquell destí.",
 
   // Refusals
   "placementCode.unreadable": "Les regles d'ubicació no s'han pogut llegir, així que no es copia res fins que es puguin tornar a llegir.",
@@ -1663,6 +1664,7 @@ const ca: Partial<Translations> = {
   "placementCode.companionTaken": "Aquest destí ja té un repositori directe.",
   "placementCode.targetInUseItems": "Encara hi ha elements que fan còpia de seguretat al repositori directe d'aquest destí: {n}. Apunta'ls a un altre lloc primer.",
   "placementCode.targetInUseDefault": "El valor predeterminat de {domains} apunta al repositori directe d'aquest destí. Canvia primer el valor predeterminat.",
+  "placementCode.directRepo": "Aquest repositori va amb {target}. Treu aquell destí en lloc d'això.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directe ara conserva menys. Elements l'única còpia dels quals hi és: {n}.",

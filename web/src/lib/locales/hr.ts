@@ -1643,6 +1643,7 @@ const hr: Partial<Translations> = {
   "repos.directOf": "pripada odredištu {target} · stavke: {n}",
   "repos.companionLost": "pored izbrisanog odredišta",
   "repos.mirroredLocked": "Preuzeto od odredišta {target}. Promijeni ondje.",
+  "repos.removeWithTarget": "Ide zajedno s odredištem {target}. Za uklanjanje ovog repozitorija ukloni odredište.",
 
   // Refusals
   "placementCode.unreadable": "Pravila razmještaja nije bilo moguće pročitati, pa se ništa ne kopira dok se ponovno ne mogu pročitati.",
@@ -1663,6 +1664,7 @@ const hr: Partial<Translations> = {
   "placementCode.companionTaken": "Ovo odredište već ima izravni repozitorij.",
   "placementCode.targetInUseItems": "Stavke se i dalje sigurnosno kopiraju u izravni repozitorij ovog odredišta: {n}. Prvo ih usmjeri drugamo.",
   "placementCode.targetInUseDefault": "Zadana vrijednost za {domains} pokazuje na izravni repozitorij ovog odredišta. Prvo promijeni zadanu vrijednost.",
+  "placementCode.directRepo": "Ovaj repozitorij ide zajedno s odredištem {target}. Ukloni umjesto njega odredište.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} izravno sada čuva manje. Stavke čija je jedina kopija ondje: {n}.",

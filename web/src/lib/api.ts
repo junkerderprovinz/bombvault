@@ -2016,7 +2016,9 @@ export function updateRepo(
 }
 
 /** DELETE /api/repos/{id}: refused while anything still points here. */
-export function deleteRepo(id: string): Promise<OkEnvelope & { items?: number; defaultDomains?: PlacementDomain[] }> {
+export function deleteRepo(
+  id: string
+): Promise<OkEnvelope & { items?: number; defaultDomains?: PlacementDomain[]; target?: RefusalTarget }> {
   return fetchJSON(`/api/repos/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
 
@@ -2074,6 +2076,12 @@ export interface TargetUse {
   directRepoId: string;
   items: number;
   defaultDomains: PlacementDomain[];
+}
+
+/** The off-site target a refusal sends the operator to. */
+export interface RefusalTarget {
+  id: string;
+  name: string;
 }
 
 /** DELETE /api/snapshots/{domain}/{id} — forget a single snapshot. */

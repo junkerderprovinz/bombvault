@@ -1643,6 +1643,7 @@ const fa: Partial<Translations> = {
   "repos.directOf": "متعلق به {target} است · موارد: {n}",
   "repos.companionLost": "کنار مقصدی حذف‌شده",
   "repos.mirroredLocked": "از {target} گرفته شده. همان‌جا تغییرش بده.",
+  "repos.removeWithTarget": "همراه {target} است. برای حذف این مخزن، آن مقصد را حذف کن.",
 
   // Refusals
   "placementCode.unreadable": "قوانین جایگذاری خوانده نشد، بنابراین تا وقتی دوباره قابل خواندن نشوند چیزی کپی نمی‌شود.",
@@ -1663,6 +1664,7 @@ const fa: Partial<Translations> = {
   "placementCode.companionTaken": "این مقصد از قبل مخزن مستقیم دارد.",
   "placementCode.targetInUseItems": "موردها هنوز به مخزن مستقیم این مقصد پشتیبان‌گیری می‌کنند: {n}. اول آن‌ها را به جای دیگری هدایت کن.",
   "placementCode.targetInUseDefault": "پیش‌فرض {domains} به مخزن مستقیم این مقصد اشاره دارد. اول پیش‌فرض را تغییر بده.",
+  "placementCode.directRepo": "این مخزن همراه {target} است. به جای آن، آن مقصد را حذف کن.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} مستقیم اکنون کمتر نگه می‌دارد. موردهایی که تنها نسخه‌شان همان‌جاست: {n}.",

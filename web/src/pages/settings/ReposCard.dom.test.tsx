@@ -75,6 +75,19 @@ describe("the Repositories card", () => {
     }
   });
 
+  it("offers no way to remove a direct repository", async () => {
+    api.listRepos.mockResolvedValue({
+      ok: true,
+      repos: [repo({ id: "d1", name: "B2 direct", companionOf: "t-b2" }), repo({})],
+    });
+    render(<ReposCard />);
+    await screen.findByText("B2 direct");
+    const remove = screen.getAllByRole("button", { name: en["offsite.targets.remove"] }) as HTMLButtonElement[];
+    expect(remove[0].disabled).toBe(true);
+    expect(remove[1].disabled).toBe(false);
+    expect(screen.getByLabelText("Goes with B2. Remove that target to remove this repository.")).toBeTruthy();
+  });
+
   it("labels a repository whose target an import removed", async () => {
     api.listRepos.mockResolvedValue({ ok: true, repos: [repo({ companionLost: true })] });
     render(<ReposCard />);

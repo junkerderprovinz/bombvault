@@ -1632,6 +1632,7 @@ const fi: Partial<Translations> = {
   "repos.directOf": "kuuluu kohteelle {target} · kohteita: {n}",
   "repos.companionLost": "poistetun kohteen vieressä",
   "repos.mirroredLocked": "Otettu kohteelta {target}. Muuta se siellä.",
+  "repos.removeWithTarget": "Kuuluu yhteen kohteen {target} kanssa. Poista kohde, jos haluat poistaa tämän arkiston.",
 
   // Refusals
   "placementCode.unreadable": "Sijoittelusääntöjä ei voitu lukea, joten mitään ei kopioida, ennen kuin ne voidaan taas lukea.",
@@ -1652,6 +1653,7 @@ const fi: Partial<Translations> = {
   "placementCode.companionTaken": "Tällä kohteella on jo suora arkisto.",
   "placementCode.targetInUseItems": "Kohteet varmuuskopioituvat yhä tämän kohteen suoraan arkistoon: {n}. Osoita ne ensin muualle.",
   "placementCode.targetInUseDefault": "{domains} oletusarvo osoittaa tämän kohteen suoraan arkistoon. Vaihda oletusarvo ensin.",
+  "placementCode.directRepo": "Tämä arkisto kuuluu yhteen kohteen {target} kanssa. Poista sen sijaan kohde.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} suoraan säilyttää nyt vähemmän. Kohteet, joiden ainoa kopio on siellä: {n}.",

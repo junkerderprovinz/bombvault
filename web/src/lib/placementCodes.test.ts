@@ -39,6 +39,13 @@ describe("placementErrorText", () => {
     );
   });
 
+  it("names the target a direct repository goes with", () => {
+    const refusal = { ok: false, error: "x", code: "direct-repo", target: { id: "t-b2", name: "B2" } };
+    expect(placementErrorText(t, "en", refusal, "settings.error")).toBe(
+      "This repository goes with B2. Remove that target instead."
+    );
+  });
+
   it("falls back to the server's text, then to the given key", () => {
     expect(placementErrorText(t, "en", { ok: false, error: "server text", code: "no-such-code" }, "settings.error")).toBe("server text");
     expect(placementErrorText(t, "en", { ok: false }, "settings.error")).toBe(en["settings.error"]);

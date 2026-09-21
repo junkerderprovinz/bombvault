@@ -1643,6 +1643,7 @@ const lt: Partial<Translations> = {
   "repos.directOf": "priklauso paskirčiai {target} · elementai: {n}",
   "repos.companionLost": "šalia ištrintos paskirties",
   "repos.mirroredLocked": "Perimta iš paskirties {target}. Pakeisk ten.",
+  "repos.removeWithTarget": "Eina kartu su paskirtimi {target}. Kad pašalintum šią saugyklą, pašalink paskirtį.",
 
   // Refusals
   "placementCode.unreadable": "Nepavyko perskaityti vietos nustatymo taisyklių, todėl niekas nekopijuojama, kol jų vėl nepavyks perskaityti.",
@@ -1663,6 +1664,7 @@ const lt: Partial<Translations> = {
   "placementCode.companionTaken": "Ši paskirtis jau turi tiesioginę saugyklą.",
   "placementCode.targetInUseItems": "Elementai vis dar kuria atsargines kopijas šios paskirties tiesioginėje saugykloje: {n}. Pirma nukreipk juos kitur.",
   "placementCode.targetInUseDefault": "{domains} numatytoji reikšmė rodo į šios paskirties tiesioginę saugyklą. Pirma pakeisk numatytąją reikšmę.",
+  "placementCode.directRepo": "Ši saugykla eina kartu su paskirtimi {target}. Pašalink vietoj jos paskirtį.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} tiesiogiai dabar saugo mažiau. Elementai, kurių vienintelė kopija yra ten: {n}.",

@@ -1630,6 +1630,7 @@ const es: Partial<Translations> = {
   "repos.directOf": "pertenece a {target} · elementos: {n}",
   "repos.companionLost": "junto a un destino eliminado",
   "repos.mirroredLocked": "Heredado de {target}. Cámbialo allí.",
+  "repos.removeWithTarget": "Va con {target}. Para quitar este repositorio, quita ese destino.",
 
   // Refusals
   "placementCode.unreadable": "Las reglas de ubicación no se pudieron leer, así que no se copia nada hasta que se puedan leer de nuevo.",
@@ -1650,6 +1651,7 @@ const es: Partial<Translations> = {
   "placementCode.companionTaken": "Este destino ya tiene un repositorio directo.",
   "placementCode.targetInUseItems": "Elementos siguen respaldando en el repositorio directo de este destino: {n}. Apúntalos a otro sitio primero.",
   "placementCode.targetInUseDefault": "El valor predeterminado de {domains} apunta al repositorio directo de este destino. Cambia primero el valor predeterminado.",
+  "placementCode.directRepo": "Este repositorio va con {target}. Quita ese destino en su lugar.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directo ahora conserva menos. Elementos cuya única copia está ahí: {n}.",

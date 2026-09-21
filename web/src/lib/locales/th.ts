@@ -1635,6 +1635,7 @@ const th: Partial<Translations> = {
   "repos.directOf": "เป็นของ {target} · รายการ: {n}",
   "repos.companionLost": "อยู่ข้างเป้าหมายที่ถูกลบ",
   "repos.mirroredLocked": "รับช่วงมาจาก {target} เปลี่ยนที่นั่น",
+  "repos.removeWithTarget": "ไปด้วยกันกับ {target} หากต้องการลบที่เก็บข้อมูลนี้ ให้ลบเป้าหมายนั้น",
 
   // Refusals
   "placementCode.unreadable": "อ่านกฎการจัดวางไม่ได้ จึงไม่มีการคัดลอกใดๆ จนกว่าจะอ่านได้อีกครั้ง",
@@ -1655,6 +1656,7 @@ const th: Partial<Translations> = {
   "placementCode.companionTaken": "เป้าหมายนี้มีที่เก็บข้อมูลโดยตรงอยู่แล้ว",
   "placementCode.targetInUseItems": "ยังมีรายการที่สำรองข้อมูลไปยังที่เก็บข้อมูลโดยตรงของเป้าหมายนี้: {n} รายการ ชี้ไปที่อื่นก่อน",
   "placementCode.targetInUseDefault": "ค่าเริ่มต้นสำหรับ {domains} ชี้ไปที่ที่เก็บข้อมูลโดยตรงของเป้าหมายนี้ เปลี่ยนค่าเริ่มต้นก่อน",
+  "placementCode.directRepo": "ที่เก็บข้อมูลนี้ไปด้วยกันกับ {target} ให้ลบเป้าหมายนั้นแทน",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} โดยตรงเก็บข้อมูลน้อยลงแล้ว รายการที่มีสำเนาเดียวอยู่ที่นั่น: {n} รายการ",

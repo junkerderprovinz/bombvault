@@ -58,6 +58,7 @@ func TestDirectRepositoryRefusalsCarryTheirCodes(t *testing.T) {
 		errForeignDomain:                                       "foreign-domain",
 		fmt.Errorf("%w: %w", errRepoInvalid, errForeignDomain): "foreign-domain",
 		errTargetInUse:                                         "target-in-use",
+		store.ErrDirectRepo:                                    "direct-repo",
 	} {
 		if got := placementCode(err); got != want {
 			t.Errorf("placementCode(%v) = %q, want %q", err, got, want)
@@ -817,6 +818,23 @@ func TestDeletingATargetWhoseDirectRepositoryIsUsedIsRefused(t *testing.T) {
 	}
 	if _, err := f.st.GetNamedRepo(d.ID); !errors.Is(err, sql.ErrNoRows) {
 		t.Fatalf("the direct repository outlived its target: %v", err)
+	}
+}
+
+func TestDeletingADirectRepositoryOnTheRepositoriesCardIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	target := f.target("containers", "B2", "b2:bkt:containers")
+	d := f.direct(target)
+	res := f.do("DELETE", "/api/repos/"+d.ID, nil)
+	if res["ok"] != false || res["code"] != "direct-repo" {
+		t.Fatalf("deleting a direct repository = %v", res)
+	}
+	named, _ := res["target"].(map[string]any)
+	if named["id"] != target.ID || named["name"] != placementTargetName(target) {
+		t.Errorf("the refusal does not name the target: %v", res["target"])
+	}
+	if _, err := f.st.GetNamedRepo(d.ID); err != nil {
+		t.Fatalf("a refused delete must leave the row: %v", err)
 	}
 }
 

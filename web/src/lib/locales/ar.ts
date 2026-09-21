@@ -1635,6 +1635,7 @@ const ar: Partial<Translations> = {
   "repos.directOf": "ينتمي إلى {target} · العناصر: {n}",
   "repos.companionLost": "بجانب هدف محذوف",
   "repos.mirroredLocked": "أُخذ من {target}. غيّره هناك.",
+  "repos.removeWithTarget": "مرتبط بـ {target}. لإزالة هذا المستودع أزل ذلك الهدف.",
 
   // Refusals
   "placementCode.unreadable": "تعذّرت قراءة قواعد وضع النسخ، لذا لا يُنسخ شيء حتى تصبح قابلة للقراءة مرة أخرى.",
@@ -1655,6 +1656,7 @@ const ar: Partial<Translations> = {
   "placementCode.companionTaken": "هذا الهدف لديه بالفعل مستودع مباشر.",
   "placementCode.targetInUseItems": "لا تزال عناصر تُنسخ احتياطيًا إلى المستودع المباشر لهذا الهدف: {n}. وجّهها إلى مكان آخر أولًا.",
   "placementCode.targetInUseDefault": "القيمة الافتراضية لـ {domains} تشير إلى المستودع المباشر لهذا الهدف. غيّر القيمة الافتراضية أولًا.",
+  "placementCode.directRepo": "هذا المستودع مرتبط بـ {target}. أزل ذلك الهدف بدلاً منه.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} المباشر يحتفظ الآن بأقل. العناصر التي نسختها الوحيدة هناك: {n}.",

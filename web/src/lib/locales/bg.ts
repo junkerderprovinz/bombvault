@@ -1643,6 +1643,7 @@ const bg: Partial<Translations> = {
   "repos.directOf": "принадлежи на {target} · елементи: {n}",
   "repos.companionLost": "до изтрита цел",
   "repos.mirroredLocked": "Взето от {target}. Промени го там.",
+  "repos.removeWithTarget": "Върви заедно с {target}. За да премахнеш това хранилище, премахни целта.",
 
   // Refusals
   "placementCode.unreadable": "Правилата за разполагане не можаха да се прочетат, затова нищо не се копира, докато отново не се прочетат.",
@@ -1663,6 +1664,7 @@ const bg: Partial<Translations> = {
   "placementCode.companionTaken": "Тази цел вече има директно хранилище.",
   "placementCode.targetInUseItems": "Елементи все още архивират в директното хранилище на тази цел: {n}. Първо ги насочи другаде.",
   "placementCode.targetInUseDefault": "Стойността по подразбиране за {domains} сочи към директното хранилище на тази цел. Първо смени стойността по подразбиране.",
+  "placementCode.directRepo": "Това хранилище върви заедно с {target}. Премахни вместо това целта.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} директно вече пази по-малко. Елементи, чието единствено копие е там: {n}.",
