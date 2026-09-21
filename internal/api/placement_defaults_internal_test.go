@@ -73,11 +73,12 @@ func TestDefaultRowsCarryHomeOffPausedAndConfirmedAt(t *testing.T) {
 	}
 }
 
-// TestTheCardAndTheApplyButtonAgreeOnADiscoverRebuiltItem pins that the two
-// checks no longer contradict each other. The card counts an item under
-// chosenNoRun by the runs table alone; the apply button still refuses to
-// reset it once its own, fuller check finds the snapshot that never got a
-// run recorded, which is exactly what a row Discover rebuilds looks like.
+// TestTheCardAndTheApplyButtonAgreeOnADiscoverRebuiltItem pins that the
+// card's count and the apply button's refusal describe the same item
+// consistently: the card counts it under chosenNoRun by the runs table
+// alone; the apply button still refuses to reset it once its own, fuller
+// check finds the snapshot that never got a run recorded, which is exactly
+// what a row Discover rebuilds looks like.
 func TestTheCardAndTheApplyButtonAgreeOnADiscoverRebuiltItem(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.setDefault("containers", "")

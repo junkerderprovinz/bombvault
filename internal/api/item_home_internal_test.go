@@ -252,8 +252,8 @@ func TestCopiesOnAnOpenItemAreCheckedAgainstItsEffectiveHome(t *testing.T) {
 // compares against the same read checkHomeChange judged against: the hook
 // here mutates the row from another write between that read and the write
 // below it, exactly the window store.WritePlacement's expect argument closes.
-// The PATCH now checks the home twice (the top-of-handler preview, then the
-// authoritative pass right before the write), so the item is listed twice;
+// The PATCH checks the home twice, the top-of-handler preview and the
+// authoritative pass right before the write, so the item is listed twice;
 // the race is timed onto the second listing, the one the write's expect
 // actually stands on.
 func TestHomeWriteIsRefusedOverARowChangedMeanwhile(t *testing.T) {
