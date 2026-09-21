@@ -385,6 +385,9 @@ func TestImportStepsInOrder(t *testing.T) {
 		if !strings.HasPrefix(runs[0].Error, store.NoteDBImportKeptOld+": ") || !strings.HasSuffix(runs[0].Error, filepath.Base(kept[0])) {
 			t.Errorf("note = %q, want %q naming the kept folder %q", runs[0].Error, store.NoteDBImportKeptOld, kept[0])
 		}
+		if want := store.NoteDBImportKeptOld + ": /data/pg.bombvault-before-import-"; !strings.HasPrefix(runs[0].Error, want) {
+			t.Errorf("note = %q, want the kept folder as the host names it, %q...", runs[0].Error, want)
+		}
 	})
 
 	t.Run("an error the import reports itself is counted", func(t *testing.T) {
@@ -422,6 +425,9 @@ func TestImportStepsInOrder(t *testing.T) {
 		}
 		if !strings.HasPrefix(runs[0].Error, store.ReasonDBImportFailed) || !strings.Contains(runs[0].Error, filepath.Base(kept[0])) {
 			t.Errorf("reason = %q, want %q naming the kept folder %q", runs[0].Error, store.ReasonDBImportFailed, kept[0])
+		}
+		if !strings.Contains(runs[0].Error, " kept at /data/pg.bombvault-before-import-") {
+			t.Errorf("reason = %q, want the kept folder as the host names it", runs[0].Error)
 		}
 	})
 }
@@ -629,10 +635,10 @@ func TestImportRollbackReasonKeepsBothFoldersBehindALongCause(t *testing.T) {
 	if len(runs) != 1 || !strings.HasPrefix(runs[0].Error, store.ReasonDBImportRollback) {
 		t.Fatalf("runs = %+v, want one import that could not roll back", runs)
 	}
-	reason := filepath.ToSlash(runs[0].Error)
 	for _, folder := range []string{failed[0], strings.TrimSuffix(gone[0], ".gone")} {
-		if !strings.Contains(reason, filepath.ToSlash(folder)) {
-			t.Errorf("reason = %q, want the whole path %s in it", runs[0].Error, folder)
+		onHost := "/data/" + filepath.ToSlash(filepath.Join(filepath.Dir(nested), filepath.Base(folder)))
+		if !strings.Contains(runs[0].Error, onHost) {
+			t.Errorf("reason = %q, want the whole host path %s in it", runs[0].Error, onHost)
 		}
 	}
 }
