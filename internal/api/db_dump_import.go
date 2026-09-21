@@ -80,7 +80,11 @@ func importRefusalFor(err error) error {
 // user's own folders and the message is worthless without them.
 var errDBImportFolders = errors.New("database import outcome")
 
-type dbImportErr struct{ msg string }
+type dbImportErr struct {
+	msg string
+	// dataBack says the container runs on its previous data folder again.
+	dataBack bool
+}
 
 func (e *dbImportErr) Error() string { return e.msg }
 
@@ -99,7 +103,7 @@ func importDetail(s string) string {
 }
 
 func importPrepareFailure(cause error) error {
-	return &dbImportErr{msg: store.ReasonDBImportPrepare + ": " + importDetail(cause.Error())}
+	return &dbImportErr{msg: store.ReasonDBImportPrepare + ": " + importDetail(cause.Error()), dataBack: true}
 }
 
 func importRollbackFailure(fresh, kept string, cause error) error {
@@ -289,20 +293,55 @@ func (s *Service) importDBDump(ctx context.Context, plan dbImportPlan, key strin
 	s.publishDBDumpStage(key, "restore", "dbimport", startedAt, 0)
 
 	stopped := s.stopImportDependents(ctx, plan.name)
-	defer s.startImportDependents(context.WithoutCancel(ctx), stopped)
-
+	var note string
 	kept, err := s.freshDataDirFor(ctx, plan)
-	if err != nil {
-		return "", err
+	if err == nil {
+		note, err = s.feedDBImport(ctx, plan, kept, key, startedAt)
 	}
-	return s.feedDBImport(ctx, plan, kept, key, startedAt)
+	var ierr *dbImportErr
+	if errors.As(err, &ierr) && !ierr.dataBack {
+		// An app started on a half-imported or empty database runs its
+		// migrations there and takes writes that are lost once the kept folder
+		// goes back.
+		if len(stopped) > 0 {
+			ierr.msg += "; these apps stay stopped until the data folder is sorted out: " + dependentNames(stopped)
+		}
+		return note, err
+	}
+	if down := s.startImportDependents(context.WithoutCancel(ctx), stopped); len(down) > 0 {
+		const suffix = "; could not start these apps again: "
+		if ierr != nil {
+			ierr.msg += suffix + dependentNames(down)
+		} else {
+			note += suffix + dependentNames(down)
+		}
+	}
+	return note, err
+}
+
+// importDependent is a container the import stopped. It is stopped and started
+// by id, so a name that meanwhile belongs to nothing cannot reach another
+// container.
+type importDependent struct {
+	name      string
+	id        string
+	service   string
+	dependsOn []string
+}
+
+func dependentNames(deps []importDependent) string {
+	names := make([]string, len(deps))
+	for i, d := range deps {
+		names[i] = d.name
+	}
+	return strings.Join(names, ", ")
 }
 
 // stopImportDependents stops the running containers the database's backup
 // stops too. An app left running reconnects to the fresh database and can
 // create its own schema there before the dump arrives, and the dump then
 // collides with it.
-func (s *Service) stopImportDependents(ctx context.Context, name string) []backup.StopContainer {
+func (s *Service) stopImportDependents(ctx context.Context, name string) []importDependent {
 	tg, err := s.store.GetTargetByContainer(name)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -310,38 +349,43 @@ func (s *Service) stopImportDependents(ctx context.Context, name string) []backu
 		}
 		return nil
 	}
-	var stopped []backup.StopContainer
+	var stopped []importDependent
 	for _, dep := range tg.StopContainers {
 		di, err := s.docker.Inspect(ctx, dep)
-		if err != nil || !di.Running {
+		// Docker resolves a name no container has to an id prefix.
+		if err != nil || !di.Running || strings.TrimPrefix(di.Name, "/") != dep {
 			continue
 		}
-		if err := s.docker.Stop(ctx, dep, dbImportStopTimeout); err != nil {
+		if err := s.docker.Stop(ctx, di.ID, dbImportStopTimeout); err != nil {
 			log.Printf("api: import database dump into %q: stop %q failed (continuing): %v", name, dep, err) //nolint:gosec // G706: names are %q-quoted
 			continue
 		}
-		stopped = append(stopped, backup.StopContainer{
-			Name:      dep,
-			Service:   composeService(di.Config.Labels),
-			DependsOn: parseDependsOn(di.Config.Labels),
+		stopped = append(stopped, importDependent{
+			name:      dep,
+			id:        di.ID,
+			service:   composeService(di.Config.Labels),
+			dependsOn: parseDependsOn(di.Config.Labels),
 		})
 	}
 	return stopped
 }
 
 // startImportDependents brings the stopped containers back in depends_on
-// order, whether the import went through or was rolled back.
-func (s *Service) startImportDependents(ctx context.Context, deps []backup.StopContainer) {
+// order and returns those that did not start.
+func (s *Service) startImportDependents(ctx context.Context, deps []importDependent) []importDependent {
 	services := make([]string, len(deps))
 	dependsOn := make([][]string, len(deps))
 	for i, dep := range deps {
-		services[i], dependsOn[i] = dep.Service, dep.DependsOn
+		services[i], dependsOn[i] = dep.service, dep.dependsOn
 	}
+	var down []importDependent
 	for _, i := range compose.StartOrder(services, dependsOn) {
-		if err := s.docker.Start(ctx, deps[i].Name); err != nil {
-			log.Printf("api: import database dump: start %q again failed: %v", deps[i].Name, err) //nolint:gosec // G706: name is %q-quoted
+		if err := s.docker.Start(ctx, deps[i].id); err != nil {
+			log.Printf("api: import database dump: start %q again failed: %v", deps[i].name, err) //nolint:gosec // G706: name is %q-quoted
+			down = append(down, deps[i])
 		}
 	}
+	return down
 }
 
 // freshDataDirFor stops the container, sets its data folder aside and lets the

@@ -43,6 +43,8 @@ type importFakeDocker struct {
 	// onStart runs inside Start, so a test can read the data folders at the
 	// moment the container comes back up.
 	onStart func()
+	// startErrs answers Start for the containers around the database.
+	startErrs map[string]error
 
 	probeOut string
 
@@ -78,6 +80,9 @@ func (f *importFakeDocker) Stop(_ context.Context, name string, _ time.Duration)
 
 func (f *importFakeDocker) Start(_ context.Context, name string) error {
 	f.calls = append(f.calls, "start:"+name)
+	if err, ok := f.startErrs[name]; ok {
+		return err
+	}
 	if f.onStart != nil {
 		f.onStart()
 	}
@@ -646,19 +651,34 @@ func TestImportRollbackReasonKeepsBothFoldersBehindALongCause(t *testing.T) {
 func TestImportStopsTheAppsOfTheDatabaseUntilItIsDone(t *testing.T) {
 	appsOf := func(t *testing.T, rig *importRig) {
 		t.Helper()
-		if err := rig.svc.store.SetStopContainers("pg", []string{"immich_server", "immich_ml", "old_app"}); err != nil {
+		if err := rig.svc.store.SetStopContainers("pg", []string{"immich_server", "immich_ml", "old_app", "cafe"}); err != nil {
 			t.Fatal(err)
 		}
 		rig.dock.others = map[string]model.Inspect{
-			"immich_server": {Name: "/immich_server", Running: true, Config: model.Config{Labels: map[string]string{
+			"immich_server": {ID: "5e7e7e01", Name: "/immich_server", Running: true, Config: model.Config{Labels: map[string]string{
 				"com.docker.compose.service":    "immich-server",
 				"com.docker.compose.depends_on": "immich-machine-learning:service_started:false",
 			}}},
-			"immich_ml": {Name: "/immich_ml", Running: true, Config: model.Config{Labels: map[string]string{
+			"immich_ml": {ID: "3a1a1a02", Name: "/immich_ml", Running: true, Config: model.Config{Labels: map[string]string{
 				"com.docker.compose.service": "immich-machine-learning",
 			}}},
-			"old_app": {Name: "/old_app"},
+			"old_app": {ID: "01d0a903", Name: "/old_app"},
+			// Docker answers a name no container has with the container whose id
+			// starts with it.
+			"cafe": {ID: "cafe0b0e", Name: "/unrelated", Running: true},
 		}
+	}
+	importFails := func(t *testing.T, rig *importRig) store.Run {
+		t.Helper()
+		if _, err := rig.svc.StartImportDBDump(context.Background(), "pg", "local", importDumpID); err != nil {
+			t.Fatal(err)
+		}
+		waitForDetachedRun(t, rig.svc)
+		runs := runsOfKind(t, rig.svc.store, "dbimport")
+		if len(runs) != 1 || runs[0].Status != "failed" {
+			t.Fatalf("runs = %+v, want one failed import", runs)
+		}
+		return runs[0]
 	}
 
 	t.Run("an import that goes through", func(t *testing.T) {
@@ -670,8 +690,8 @@ func TestImportStopsTheAppsOfTheDatabaseUntilItIsDone(t *testing.T) {
 		}
 		waitForDetachedRun(t, rig.svc)
 
-		want := "inspect:pg probe:c0ffee1d inspect:immich_server stop:immich_server inspect:immich_ml stop:immich_ml inspect:old_app " +
-			"stop:c0ffee1d start:c0ffee1d ready:c0ffee1d import:c0ffee1d start:immich_ml start:immich_server"
+		want := "inspect:pg probe:c0ffee1d inspect:immich_server stop:5e7e7e01 inspect:immich_ml stop:3a1a1a02 inspect:old_app inspect:cafe " +
+			"stop:c0ffee1d start:c0ffee1d ready:c0ffee1d import:c0ffee1d start:3a1a1a02 start:5e7e7e01"
 		if got := strings.Join(rig.dock.calls, " "); got != want {
 			t.Errorf("calls = %q, want %q", got, want)
 		}
@@ -681,18 +701,71 @@ func TestImportStopsTheAppsOfTheDatabaseUntilItIsDone(t *testing.T) {
 		rig := newImportRig(t)
 		appsOf(t, rig)
 		rig.dock.startErr = errors.New("dockercli: start pg: address already in use")
+		rig.dock.startErrs = map[string]error{"5e7e7e01": nil, "3a1a1a02": nil}
+
+		importFails(t, rig)
+
+		calls := strings.Join(rig.dock.calls, " ")
+		if !strings.HasSuffix(calls, "start:3a1a1a02 start:5e7e7e01") {
+			t.Errorf("calls = %q, want the apps started again after the rollback", calls)
+		}
+		if strings.Contains(calls, "start:01d0a903") {
+			t.Errorf("calls = %q, want the app that was stopped left stopped", calls)
+		}
+	})
+
+	t.Run("an import the tool gives up on", func(t *testing.T) {
+		rig := newImportRig(t)
+		appsOf(t, rig)
+		rig.dock.exit = 1
+		rig.dock.tail = "ERROR 1273 (HY000) at line 40: Unknown collation: 'utf8mb4_uca1400_ai_ci'\n"
+
+		run := importFails(t, rig)
+
+		if calls := strings.Join(rig.dock.calls, " "); strings.Contains(calls, "start:3a1a1a02") || strings.Contains(calls, "start:5e7e7e01") {
+			t.Errorf("calls = %q, want the apps kept away from a half-imported database", calls)
+		}
+		if !strings.HasSuffix(run.Error, "; these apps stay stopped until the data folder is sorted out: immich_server, immich_ml") {
+			t.Errorf("reason = %q, want the apps that stay stopped named", run.Error)
+		}
+	})
+
+	t.Run("an import whose rollback cannot stop the server", func(t *testing.T) {
+		every, bound := dbImportReadyEvery, dbImportReadyFor
+		dbImportReadyEvery, dbImportReadyFor = time.Millisecond, 20*time.Millisecond
+		t.Cleanup(func() { dbImportReadyEvery, dbImportReadyFor = every, bound })
+
+		rig := newImportRig(t)
+		appsOf(t, rig)
+		rig.dock.readyExit = 2
+		rig.dock.rollbackStopErr = errors.New("dockercli: stop pg: context deadline exceeded")
+
+		run := importFails(t, rig)
+
+		if calls := strings.Join(rig.dock.calls, " "); strings.Contains(calls, "start:3a1a1a02") || strings.Contains(calls, "start:5e7e7e01") {
+			t.Errorf("calls = %q, want the apps kept away from the empty database", calls)
+		}
+		if !strings.HasPrefix(run.Error, store.ReasonDBImportRollback) || !strings.Contains(run.Error, "immich_server, immich_ml") {
+			t.Errorf("reason = %q, want the apps that stay stopped named", run.Error)
+		}
+	})
+
+	t.Run("an app that does not start again", func(t *testing.T) {
+		rig := newImportRig(t)
+		appsOf(t, rig)
+		rig.dock.startErrs = map[string]error{"5e7e7e01": errors.New("dockercli: start immich_server: port is already allocated")}
 
 		if _, err := rig.svc.StartImportDBDump(context.Background(), "pg", "local", importDumpID); err != nil {
 			t.Fatal(err)
 		}
 		waitForDetachedRun(t, rig.svc)
 
-		calls := strings.Join(rig.dock.calls, " ")
-		if !strings.HasSuffix(calls, "start:immich_ml start:immich_server") {
-			t.Errorf("calls = %q, want the apps started again after the rollback", calls)
+		runs := runsOfKind(t, rig.svc.store, "dbimport")
+		if len(runs) != 1 || runs[0].Status != "success" {
+			t.Fatalf("runs = %+v, want one successful import", runs)
 		}
-		if strings.Contains(calls, "start:old_app") {
-			t.Errorf("calls = %q, want the app that was stopped left stopped", calls)
+		if !strings.HasPrefix(runs[0].Error, store.NoteDBImportKeptOld) || !strings.HasSuffix(runs[0].Error, "; could not start these apps again: immich_server") {
+			t.Errorf("note = %q, want the app that stayed down named", runs[0].Error)
 		}
 	})
 }
