@@ -314,8 +314,7 @@ func (s *Service) setsOnlyHome(settings store.Settings, domain string, named map
 // copySubjects are the identities a copy rule decides for: items whose
 // effective home is a copy source, without their own rule unless withOwn, and
 // for containers the project folders found in the copy sources or at a
-// target. An open item takes the default's home, not its own empty repo
-// field, so it is judged by where its next backup actually lands.
+// target.
 func (s *Service) copySubjects(settings store.Settings, p placementRead, named map[string]store.OffsiteTarget, items []domainItem, listing sourceListing, observed []store.ItemCopies, withOwn bool) []string {
 	var out []string
 	for _, it := range items {
@@ -489,9 +488,7 @@ func (s *Service) keptReason(ctx context.Context, item store.ItemRef) (string, e
 }
 
 // resetCopyTargets is the item's copy targets before and after the reset
-// applyDefault makes: open, with no rule of its own. Judged by effective home
-// rather than the row's raw repo field, since an open item already takes the
-// default's location, not its own empty one.
+// applyDefault makes: open, with no rule of its own.
 func (s *Service) resetCopyTargets(settings store.Settings, p placementRead, named map[string]store.OffsiteTarget, it domainItem) (before, after []store.OffsiteTarget) {
 	beforeRepo, _ := p.effectiveHome(it.home)
 	before = s.itemCopyTargets(settings, p, named, beforeRepo, it.identity)
