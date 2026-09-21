@@ -100,10 +100,6 @@ func (s *Service) writeItemPlacement(ctx context.Context, item store.ItemRef, ch
 		}
 		next = store.HomeState{Exists: true, Repo: home.Repo, Choice: home.Choice}
 	}
-	// The copy side is judged by where an item's backups actually land, not by
-	// its row's raw repo field: an open item with a default goes to the
-	// default's repository, and that is the repository its copy rule has to
-	// answer to.
 	beforeRepo, _ := p.effectiveHome(read)
 	afterRepo, _ := p.effectiveHome(next)
 	if copies != nil {
@@ -386,9 +382,6 @@ func (s *Service) previewPlacement(ctx context.Context, item store.ItemRef, chan
 	if home != nil {
 		next = store.HomeState{Exists: true, Repo: home.Repo, Choice: home.Choice}
 	}
-	// The copy side answers for where the item's backups actually land, the
-	// same effective home checkHomeChange and writeItemPlacement judge by, not
-	// the row's raw repo field.
 	beforeRepo, _ := p.effectiveHome(read)
 	afterRepo, _ := p.effectiveHome(next)
 	if copies != nil {
@@ -489,9 +482,6 @@ func (s *Service) createFileSet(fs store.FileSet, choice *copiesChoice) (store.F
 		if err != nil {
 			return store.FileSet{}, err
 		}
-		// Judged by where the set's backups actually land, not by fs.Repo alone:
-		// a set created open goes to the domain default's repository, and that
-		// is the repository its copy rule has to answer to.
 		repoID, _ := p.effectiveHome(store.HomeState{Repo: fs.Repo, Choice: fs.RepoChosen})
 		if err := s.checkCopies(settings, p, named, repoID, *copies); err != nil {
 			return store.FileSet{}, err

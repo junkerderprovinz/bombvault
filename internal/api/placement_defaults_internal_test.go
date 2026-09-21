@@ -333,11 +333,9 @@ func TestApplyPreviewCountsARuledOutNameInEveryCopySource(t *testing.T) {
 	}
 }
 
-// TestApplyPreviewJudgesAnOpenItemsCopiesByItsEffectiveHome guards against
-// reading an open item's raw repo field, which is always empty, in place of
-// its effective home: that would make the domain path look like a copy
-// source even though the item's next backup actually lands on the default's
-// remote repository, where nothing is copied at all.
+// TestApplyPreviewJudgesAnOpenItemsCopiesByItsEffectiveHome pins effectiveHome
+// against vaultwarden, open under a remote default: the preview must not read
+// its raw (empty) repo field and treat the domain path as a copy source.
 func TestApplyPreviewJudgesAnOpenItemsCopiesByItsEffectiveHome(t *testing.T) {
 	f := newPlacementFixture(t)
 	box := f.namedRepo("Storagebox", "sftp:u1@box.example:/bv")

@@ -164,8 +164,10 @@ func (p placementRead) enabledTargets() []store.OffsiteTarget {
 	return out
 }
 
-// effectiveHome is where an item's next backup goes: its own location once
-// chosen, the default's while it is open.
+// effectiveHome is where an item's next backup actually goes: its own
+// location once chosen, the default's while it stays open. Every copy
+// decision is judged by this, not by the row's raw repo field, which reads
+// empty for an open item however far its default points elsewhere.
 func (p placementRead) effectiveHome(home store.HomeState) (string, bool) {
 	if home.Choice != store.RepoOpen {
 		return home.Repo, false

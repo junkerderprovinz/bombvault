@@ -248,11 +248,9 @@ func TestCopiesAreCheckedAgainstTheNewHome(t *testing.T) {
 	}
 }
 
-// TestCopiesOnAnOpenItemAreCheckedAgainstItsEffectiveHome pins that the copy
-// side judges an open item by where its next backup actually lands, not by
-// the row's own (empty) repo field. nginx never had its home chosen, so a raw
-// read of its row says "domain path", but the domain's default sends it to
-// Storagebox, a remote repository that takes no copies.
+// TestCopiesOnAnOpenItemAreCheckedAgainstItsEffectiveHome pins effectiveHome
+// against nginx, which never had its home chosen: the domain's default sends
+// it to Storagebox, a remote repository that takes no copies.
 func TestCopiesOnAnOpenItemAreCheckedAgainstItsEffectiveHome(t *testing.T) {
 	f := newPlacementFixture(t)
 	box := f.namedRepo("Storagebox", "sftp:u1@box.example:/bv")
