@@ -1640,6 +1640,31 @@ const sk: Partial<Translations> = {
   "repos.disableWarnUnknown": "Server nedokázal zistiť, koľko položiek sem zálohuje. Vypnutie ich nepresunie: ich ďalšia záloha zlyhá so zrozumiteľnou správou namiesto toho, aby skončila inde. Vypnúť?",
   "repos.add": "Pridať repozitár",
   "repos.empty": "Zatiaľ žiadne repozitáre. Všetko používa repozitár svojej domény.",
+
+  // Refusals
+  "placementCode.unreadable": "Pravidlá umiestnenia sa nepodarilo prečítať, takže sa nič nekopíruje, kým to opäť nepôjde.",
+  "placementCode.invalid": "Táto voľba umiestnenia nie je platná.",
+  "placementCode.copiesNotAllowed": "Položka vo vzdialenom alebo priamom repozitári nedostáva kópie.",
+  "placementCode.unknownTarget": "Tento externý cieľ v tejto doméne neexistuje.",
+  "placementCode.stackRule": "Priečinky projektu sa riadia predvolenou hodnotou kontajnerov a nemajú vlastné pravidlo.",
+  "placementCode.copyRuleTaken": "Tento názov už má kopírovacie pravidlá. Zvoľ iný názov.",
+  "placementCode.domainBusy": "Prebieha zálohovanie. Zvoľ znova, keď skončí.",
+  "placementCode.hasBackups": "Umiestnenie sa už nedá zmeniť, keď má položka zálohy. Zostávajú tam, kam boli zapísané.",
+  "placementCode.stale": "Čísla sa od zobrazenia zmenili. Skontroluj ich znova.",
+  "placementCode.repoInvalid": "Tento repozitár chýba, je vypnutý alebo sa nedá vyriešiť.",
+  "placementCode.repoInUseDefault": "Predvolená hodnota pre {domains} ukazuje na tento repozitár. Najprv zmeň predvolenú hodnotu.",
+  "placementCode.defaultRepoMissing": "Predvolená hodnota v súbore ukazuje na repozitár, ktorý nie je ani v súbore, ani tu.",
+  "placementCode.nestedLocation": "Toto umiestnenie leží vnútri iného repozitára alebo cieľa, alebo nejaký obsahuje.",
+  "placementCode.foreignDomain": "Tento priamy repozitár patrí cieľu z inej domény.",
+  "placementCode.mirroredField": "Táto hodnota pochádza z cieľa. Zmeň ju tam.",
+  "placementCode.companionTaken": "Tento cieľ už má priamy repozitár.",
+  "placementCode.targetInUseItems": "Do priameho repozitára tohto cieľa stále zálohujú položky: {n}. Najprv ich nasmeruj inam.",
+  "placementCode.targetInUseDefault": "Predvolená hodnota pre {domains} ukazuje na priamy repozitár tohto cieľa. Najprv zmeň predvolenú hodnotu.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} priamo teraz uchováva menej. Položky, ktorých jediná kópia je tam: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} priamo už nie je append-only. Položky, ktorých jediná kópia je tam: {n}.",
+  "saveWarning.directCredsKept": "{target} priamo sa nedá otvoriť novým kľúčom a ponecháva si starý.",
 };
 
 export default sk;

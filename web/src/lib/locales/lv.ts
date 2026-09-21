@@ -1640,6 +1640,31 @@ const lv: Partial<Translations> = {
   "repos.disableWarnUnknown": "Serveris nevarēja nolasīt, cik vienumu veido dublējumu šeit. Izslēgšana tos nepārvieto: nākamais dublējums neizdosies ar skaidru ziņojumu, nevis nonāks citur. Izslēgt?",
   "repos.add": "Pievienot krātuvi",
   "repos.empty": "Krātuvju vēl nav. Viss izmanto sava domēna krātuvi.",
+
+  // Refusals
+  "placementCode.unreadable": "Izvietojuma noteikumus nevarēja nolasīt, tāpēc nekas netiek kopēts, kamēr tos atkal nevarēs nolasīt.",
+  "placementCode.invalid": "Šī izvietojuma izvēle nav derīga.",
+  "placementCode.copiesNotAllowed": "Vienums attālinātā vai tiešā krātuvē kopijas nesaņem.",
+  "placementCode.unknownTarget": "Šis attālinātais mērķis šajā domēnā neeksistē.",
+  "placementCode.stackRule": "Projekta mapes seko konteineru noklusējuma vērtībai un savu noteikumu nesaņem.",
+  "placementCode.copyRuleTaken": "Šim nosaukumam jau ir kopēšanas noteikumi. Izvēlies citu nosaukumu.",
+  "placementCode.domainBusy": "Notiek dublēšana. Izvēlies vēlreiz, kad tā pabeigta.",
+  "placementCode.hasBackups": "Atrašanās vietu vairs nevar mainīt, tiklīdz vienumam ir dublējumi. Tie paliek tur, kur bija rakstīti.",
+  "placementCode.stale": "Skaitļi ir mainījušies kopš parādīšanas. Pārbaudi tos vēlreiz.",
+  "placementCode.repoInvalid": "Šīs krātuves trūkst, tā ir izslēgta vai to nevar atrisināt.",
+  "placementCode.repoInUseDefault": "{domains} noklusējuma vērtība norāda uz šo krātuvi. Vispirms mainiet noklusējuma vērtību.",
+  "placementCode.defaultRepoMissing": "Faila noklusējuma vērtība norāda uz krātuvi, kuras nav ne failā, ne šeit.",
+  "placementCode.nestedLocation": "Šī atrašanās vieta atrodas citā krātuvē vai mērķī, vai satur tādu.",
+  "placementCode.foreignDomain": "Šī tiešā krātuve pieder cita domēna mērķim.",
+  "placementCode.mirroredField": "Šī vērtība nāk no mērķa. Mainiet to tur.",
+  "placementCode.companionTaken": "Šim mērķim jau ir tiešā krātuve.",
+  "placementCode.targetInUseItems": "Vienumi joprojām dublējas šī mērķa tiešajā krātuvē: {n}. Vispirms novirziet tos citur.",
+  "placementCode.targetInUseDefault": "{domains} noklusējuma vērtība norāda uz šī mērķa tiešo krātuvi. Vispirms mainiet noklusējuma vērtību.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} tieši tagad saglabā mazāk. Vienumi, kuru vienīgā kopija ir tur: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} tieši vairs nav tikai-pievienot. Vienumi, kuru vienīgā kopija ir tur: {n}.",
+  "saveWarning.directCredsKept": "{target} tieši nevar atvērt ar jauno atslēgu, tāpēc paliek vecā.",
 };
 
 export default lv;

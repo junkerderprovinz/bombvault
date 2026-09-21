@@ -1629,6 +1629,31 @@ const pt: Partial<Translations> = {
   "repos.disableWarnUnknown": "O servidor não conseguiu ler quantos itens fazem cópia neste repositório. Desativá-lo não os move: a próxima cópia falha com uma mensagem clara em vez de ir parar a outro sítio. Desativar?",
   "repos.add": "Adicionar repositório",
   "repos.empty": "Ainda sem repositórios. Tudo usa o repositório do seu próprio domínio.",
+
+  // Refusals
+  "placementCode.unreadable": "As regras de colocação não puderam ser lidas, por isso nada é copiado até que voltem a poder ser lidas.",
+  "placementCode.invalid": "Esta escolha de colocação não é válida.",
+  "placementCode.copiesNotAllowed": "Um item num repositório remoto ou direto não recebe cópias.",
+  "placementCode.unknownTarget": "Esse destino externo não existe neste domínio.",
+  "placementCode.stackRule": "As pastas de projeto seguem o padrão de contentores e não têm regra própria.",
+  "placementCode.copyRuleTaken": "Esse nome já tem regras de cópia. Escolhe outro nome.",
+  "placementCode.domainBusy": "Uma cópia de segurança está em curso. Escolhe novamente quando terminar.",
+  "placementCode.hasBackups": "O local não pode mudar depois de o item ter cópias de segurança. Ficam onde foram escritas.",
+  "placementCode.stale": "Os números mudaram desde que foram mostrados. Verifica-os novamente.",
+  "placementCode.repoInvalid": "Esse repositório está em falta, desativado ou não pode ser resolvido.",
+  "placementCode.repoInUseDefault": "O padrão para {domains} aponta para este repositório. Muda primeiro o padrão.",
+  "placementCode.defaultRepoMissing": "Um padrão no ficheiro aponta para um repositório que não está nem no ficheiro nem aqui.",
+  "placementCode.nestedLocation": "Este local está dentro de outro repositório ou destino, ou contém um.",
+  "placementCode.foreignDomain": "Esse repositório direto pertence a um destino de outro domínio.",
+  "placementCode.mirroredField": "Este valor vem do destino. Muda-o lá.",
+  "placementCode.companionTaken": "Este destino já tem um repositório direto.",
+  "placementCode.targetInUseItems": "Ainda há itens a fazer cópia de segurança para o repositório direto deste destino: {n}. Aponta-os para outro lado primeiro.",
+  "placementCode.targetInUseDefault": "O padrão para {domains} aponta para o repositório direto deste destino. Muda primeiro o padrão.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} direto agora conserva menos. Itens cuja única cópia está lá: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} direto já não é append-only. Itens cuja única cópia está lá: {n}.",
+  "saveWarning.directCredsKept": "{target} direto não pode ser aberto com a nova chave e mantém a antiga.",
 };
 
 export default pt;

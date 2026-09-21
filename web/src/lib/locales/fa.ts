@@ -1640,6 +1640,31 @@ const fa: Partial<Translations> = {
   "repos.disableWarnUnknown": "سرور نتوانست بخواند چند مورد در این مخزن پشتیبان‌گیری می‌کنند. خاموش کردن آن‌ها را جابه‌جا نمی‌کند: پشتیبان بعدی با پیامی روشن شکست می‌خورد، به جای آنکه جای دیگری برود. خاموش شود؟",
   "repos.add": "افزودن مخزن",
   "repos.empty": "هنوز مخزنی نیست. همه‌چیز از مخزن دامنه خود استفاده می‌کند.",
+
+  // Refusals
+  "placementCode.unreadable": "قوانین جایگذاری خوانده نشد، بنابراین تا وقتی دوباره قابل خواندن نشوند چیزی کپی نمی‌شود.",
+  "placementCode.invalid": "این انتخاب جایگذاری معتبر نیست.",
+  "placementCode.copiesNotAllowed": "موردی در مخزن دوردست یا مستقیم کپی دریافت نمی‌کند.",
+  "placementCode.unknownTarget": "آن مقصد خارج از محل در این دامنه وجود ندارد.",
+  "placementCode.stackRule": "پوشه‌های پروژه از پیش‌فرض کانتینرها پیروی می‌کنند و قاعده‌ی خاص خود را ندارند.",
+  "placementCode.copyRuleTaken": "این نام از قبل قوانین کپی دارد. نام دیگری انتخاب کن.",
+  "placementCode.domainBusy": "یک پشتیبان‌گیری در حال اجراست. پس از پایان آن دوباره انتخاب کن.",
+  "placementCode.hasBackups": "پس از اینکه مورد پشتیبان داشته باشد، مکان دیگر قابل تغییر نیست. آن‌ها همان‌جا که نوشته شده‌اند باقی می‌مانند.",
+  "placementCode.stale": "اعداد از زمان نمایش تغییر کرده‌اند. دوباره بررسی‌شان کن.",
+  "placementCode.repoInvalid": "آن مخزن یا وجود ندارد، یا خاموش است، یا قابل حل نیست.",
+  "placementCode.repoInUseDefault": "پیش‌فرض {domains} به این مخزن اشاره دارد. اول پیش‌فرض را تغییر بده.",
+  "placementCode.defaultRepoMissing": "یک پیش‌فرض در فایل به مخزنی اشاره دارد که نه در فایل است و نه اینجا.",
+  "placementCode.nestedLocation": "این مکان درون مخزن یا مقصد دیگری قرار دارد، یا یکی را در خود دارد.",
+  "placementCode.foreignDomain": "آن مخزن مستقیم متعلق به مقصدی در دامنه‌ی دیگر است.",
+  "placementCode.mirroredField": "این مقدار از مقصد می‌آید. آن را همان‌جا تغییر بده.",
+  "placementCode.companionTaken": "این مقصد از قبل مخزن مستقیم دارد.",
+  "placementCode.targetInUseItems": "موردها هنوز به مخزن مستقیم این مقصد پشتیبان‌گیری می‌کنند: {n}. اول آن‌ها را به جای دیگری هدایت کن.",
+  "placementCode.targetInUseDefault": "پیش‌فرض {domains} به مخزن مستقیم این مقصد اشاره دارد. اول پیش‌فرض را تغییر بده.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} مستقیم اکنون کمتر نگه می‌دارد. موردهایی که تنها نسخه‌شان همان‌جاست: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} مستقیم دیگر فقط-افزودنی نیست. موردهایی که تنها نسخه‌شان همان‌جاست: {n}.",
+  "saveWarning.directCredsKept": "{target} مستقیم با کلید جدید باز نمی‌شود و کلید قدیمی را نگه می‌دارد.",
 };
 
 export default fa;

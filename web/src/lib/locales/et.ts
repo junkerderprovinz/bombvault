@@ -1640,6 +1640,31 @@ const et: Partial<Translations> = {
   "repos.disableWarnUnknown": "Server ei suutnud lugeda, mitu kirjet siia varundab. Väljalülitamine ei teisalda neid: nende järgmine varundus ebaõnnestub selge teatega, selle asemel et mujale sattuda. Lülitada välja?",
   "repos.add": "Lisa hoidla",
   "repos.empty": "Hoidlaid veel pole. Kõik kasutab oma domeeni hoidlat.",
+
+  // Refusals
+  "placementCode.unreadable": "Asukohareegleid ei õnnestunud lugeda, seega ei kopeerita midagi enne, kui neid saab jälle lugeda.",
+  "placementCode.invalid": "See asukohavalik ei ole kehtiv.",
+  "placementCode.copiesNotAllowed": "Kauge- või otsehoidlas olev üksus koopiaid ei saa.",
+  "placementCode.unknownTarget": "Seda kaugsihtkohta ei ole selles domeenis.",
+  "placementCode.stackRule": "Projektikaustad järgivad konteinerite vaikeväärtust ega saa oma reeglit.",
+  "placementCode.copyRuleTaken": "Sellel nimel on juba kopeerimisreeglid. Vali teine nimi.",
+  "placementCode.domainBusy": "Varundamine on käimas. Vali uuesti, kui see on lõppenud.",
+  "placementCode.hasBackups": "Asukohta ei saa enam muuta, kui üksusel on varukoopiaid. Need jäävad sinna, kuhu need kirjutati.",
+  "placementCode.stale": "Numbrid on pärast kuvamist muutunud. Kontrolli neid uuesti.",
+  "placementCode.repoInvalid": "See hoidla puudub, on välja lülitatud või seda ei õnnestu lahendada.",
+  "placementCode.repoInUseDefault": "{domains} vaikeväärtus osutab sellele hoidlale. Muuda kõigepealt vaikeväärtust.",
+  "placementCode.defaultRepoMissing": "Faili vaikeväärtus osutab hoidlale, mida pole ei failis ega siin.",
+  "placementCode.nestedLocation": "See asukoht asub teise hoidla või sihtkoha sees või sisaldab sellist.",
+  "placementCode.foreignDomain": "See otsehoidla kuulub teise domeeni sihtkohale.",
+  "placementCode.mirroredField": "See väärtus tuleb sihtkohast. Muuda seda seal.",
+  "placementCode.companionTaken": "Sellel sihtkohal on juba otsehoidla.",
+  "placementCode.targetInUseItems": "Üksused varundavad endiselt selle sihtkoha otsehoidlasse: {n}. Suuna need kõigepealt mujale.",
+  "placementCode.targetInUseDefault": "{domains} vaikeväärtus osutab selle sihtkoha otsehoidlale. Muuda kõigepealt vaikeväärtust.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} otse säilitab nüüd vähem. Üksused, mille ainus koopia on seal: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} otse ei ole enam ainult-lisamise režiimis. Üksused, mille ainus koopia on seal: {n}.",
+  "saveWarning.directCredsKept": "{target} otse ei saa avada uue võtmega ja säilitab vana.",
 };
 
 export default et;

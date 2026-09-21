@@ -1640,6 +1640,31 @@ const ms: Partial<Translations> = {
   "repos.disableWarnUnknown": "Pelayan tidak dapat membaca berapa banyak item yang membuat sandaran ke repositori ini. Mematikannya tidak memindahkannya: sandaran seterusnya gagal dengan mesej yang jelas dan bukannya mendarat di tempat lain. Matikan?",
   "repos.add": "Tambah repositori",
   "repos.empty": "Belum ada repositori. Semuanya menggunakan repositori domainnya sendiri.",
+
+  // Refusals
+  "placementCode.unreadable": "Peraturan penempatan tidak dapat dibaca, jadi tiada apa disalin sehingga ia boleh dibaca semula.",
+  "placementCode.invalid": "Pilihan penempatan ini tidak sah.",
+  "placementCode.copiesNotAllowed": "Item pada repositori jauh atau langsung tidak menerima salinan.",
+  "placementCode.unknownTarget": "Sasaran luar tapak itu tidak wujud dalam domain ini.",
+  "placementCode.stackRule": "Folder projek mengikut lalai bekas dan tidak mempunyai peraturan sendiri.",
+  "placementCode.copyRuleTaken": "Nama itu sudah mempunyai peraturan salinan. Pilih nama lain.",
+  "placementCode.domainBusy": "Sandaran sedang berjalan. Pilih semula selepas ia selesai.",
+  "placementCode.hasBackups": "Lokasi tidak boleh berubah lagi sebaik sahaja item mempunyai sandaran. Ia kekal di tempat ia ditulis.",
+  "placementCode.stale": "Nombor telah berubah sejak ia dipaparkan. Semak semula.",
+  "placementCode.repoInvalid": "Repositori itu hilang, dimatikan atau tidak dapat diselesaikan.",
+  "placementCode.repoInUseDefault": "Lalai untuk {domains} menunjuk ke repositori ini. Ubah lalai itu dahulu.",
+  "placementCode.defaultRepoMissing": "Satu lalai dalam fail menunjuk ke repositori yang tiada dalam fail mahupun di sini.",
+  "placementCode.nestedLocation": "Lokasi ini terletak di dalam repositori atau sasaran lain, atau mengandungi satu.",
+  "placementCode.foreignDomain": "Repositori langsung itu milik sasaran domain lain.",
+  "placementCode.mirroredField": "Nilai ini datang daripada sasaran. Ubah di sana.",
+  "placementCode.companionTaken": "Sasaran ini sudah mempunyai repositori langsung.",
+  "placementCode.targetInUseItems": "Item masih membuat sandaran ke repositori langsung sasaran ini: {n}. Halakan ke tempat lain dahulu.",
+  "placementCode.targetInUseDefault": "Lalai untuk {domains} menunjuk ke repositori langsung sasaran ini. Ubah lalai itu dahulu.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} terus kini menyimpan lebih sedikit. Item yang satu-satunya salinan ada di situ: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} terus tidak lagi tambah-sahaja. Item yang satu-satunya salinan ada di situ: {n}.",
+  "saveWarning.directCredsKept": "{target} terus tidak dapat dibuka dengan kunci baharu dan mengekalkan yang lama.",
 };
 
 export default ms;

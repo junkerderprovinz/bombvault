@@ -1640,6 +1640,31 @@ const lt: Partial<Translations> = {
   "repos.disableWarnUnknown": "Serveris negalėjo perskaityti, kiek elementų kuria kopijas čia. Išjungimas jų neperkelia: kita jų kopija nepavyks su aiškiu pranešimu, užuot atsidūrusi kitur. Išjungti?",
   "repos.add": "Pridėti saugyklą",
   "repos.empty": "Saugyklų dar nėra. Viskas naudoja savo srities saugyklą.",
+
+  // Refusals
+  "placementCode.unreadable": "Nepavyko perskaityti vietos nustatymo taisyklių, todėl niekas nekopijuojama, kol jų vėl nepavyks perskaityti.",
+  "placementCode.invalid": "Šis vietos pasirinkimas negalioja.",
+  "placementCode.copiesNotAllowed": "Elementas nuotolinėje ar tiesioginėje saugykloje kopijų negauna.",
+  "placementCode.unknownTarget": "Ši nuotolinė paskirtis šioje srityje neegzistuoja.",
+  "placementCode.stackRule": "Projekto aplankai seka konteinerių numatytąja reikšme ir neturi savo taisyklės.",
+  "placementCode.copyRuleTaken": "Šis pavadinimas jau turi kopijavimo taisykles. Pasirink kitą pavadinimą.",
+  "placementCode.domainBusy": "Vyksta atsarginė kopija. Pasirink dar kartą, kai ji baigsis.",
+  "placementCode.hasBackups": "Vieta nebegali keistis, kai elementas turi atsargines kopijas. Jos lieka ten, kur buvo įrašytos.",
+  "placementCode.stale": "Skaičiai pasikeitė nuo tada, kai buvo parodyti. Patikrink juos dar kartą.",
+  "placementCode.repoInvalid": "Šios saugyklos trūksta, ji išjungta arba jos nepavyksta išspręsti.",
+  "placementCode.repoInUseDefault": "{domains} numatytoji reikšmė rodo į šią saugyklą. Pirma pakeisk numatytąją reikšmę.",
+  "placementCode.defaultRepoMissing": "Numatytoji reikšmė faile rodo į saugyklą, kurios nėra nei faile, nei čia.",
+  "placementCode.nestedLocation": "Ši vieta yra kitos saugyklos ar paskirties viduje arba tokią turi savyje.",
+  "placementCode.foreignDomain": "Ši tiesioginė saugykla priklauso kitos srities paskirčiai.",
+  "placementCode.mirroredField": "Ši reikšmė ateina iš paskirties. Pakeisk ją ten.",
+  "placementCode.companionTaken": "Ši paskirtis jau turi tiesioginę saugyklą.",
+  "placementCode.targetInUseItems": "Elementai vis dar kuria atsargines kopijas šios paskirties tiesioginėje saugykloje: {n}. Pirma nukreipk juos kitur.",
+  "placementCode.targetInUseDefault": "{domains} numatytoji reikšmė rodo į šios paskirties tiesioginę saugyklą. Pirma pakeisk numatytąją reikšmę.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} tiesiogiai dabar saugo mažiau. Elementai, kurių vienintelė kopija yra ten: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} tiesiogiai nebėra tik pridėjimo režimo. Elementai, kurių vienintelė kopija yra ten: {n}.",
+  "saveWarning.directCredsKept": "{target} tiesiogiai nepavyksta atverti nauju raktu, todėl paliekamas senasis.",
 };
 
 export default lt;

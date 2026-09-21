@@ -1629,6 +1629,31 @@ const it: Partial<Translations> = {
   "repos.disableWarnUnknown": "Il server non è riuscito a leggere quanti elementi eseguono il backup in questo repository. Spegnerlo non li sposta: il prossimo backup fallisce con un messaggio chiaro invece di finire altrove. Spegnerlo?",
   "repos.add": "Aggiungi repository",
   "repos.empty": "Ancora nessun repository. Tutto usa il repository del proprio dominio.",
+
+  // Refusals
+  "placementCode.unreadable": "Le regole di posizionamento non sono state leggibili, quindi non viene copiato nulla finché non lo saranno di nuovo.",
+  "placementCode.invalid": "Questa scelta di posizionamento non è valida.",
+  "placementCode.copiesNotAllowed": "Un elemento su un repository remoto o diretto non riceve copie.",
+  "placementCode.unknownTarget": "Quella destinazione off-site non esiste in questo dominio.",
+  "placementCode.stackRule": "Le cartelle di progetto seguono il valore predefinito dei container e non hanno una regola propria.",
+  "placementCode.copyRuleTaken": "Quel nome ha già regole di copia. Scegli un altro nome.",
+  "placementCode.domainBusy": "È in corso un backup. Scegli di nuovo quando sarà terminato.",
+  "placementCode.hasBackups": "La posizione non può più cambiare una volta che l'elemento ha backup. Restano dove sono stati scritti.",
+  "placementCode.stale": "I numeri sono cambiati da quando sono stati mostrati. Controllali di nuovo.",
+  "placementCode.repoInvalid": "Quel repository manca, è disattivato o non può essere risolto.",
+  "placementCode.repoInUseDefault": "Il valore predefinito per {domains} punta a questo repository. Cambia prima il valore predefinito.",
+  "placementCode.defaultRepoMissing": "Un valore predefinito nel file punta a un repository che non è né nel file né qui.",
+  "placementCode.nestedLocation": "Questa posizione si trova dentro un altro repository o destinazione, o ne contiene uno.",
+  "placementCode.foreignDomain": "Quel repository diretto appartiene a una destinazione di un altro dominio.",
+  "placementCode.mirroredField": "Questo valore proviene dalla destinazione. Modificalo lì.",
+  "placementCode.companionTaken": "Questa destinazione ha già un repository diretto.",
+  "placementCode.targetInUseItems": "Elementi eseguono ancora il backup sul repository diretto di questa destinazione: {n}. Puntali altrove prima.",
+  "placementCode.targetInUseDefault": "Il valore predefinito per {domains} punta al repository diretto di questa destinazione. Cambia prima il valore predefinito.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} diretto ora conserva meno. Elementi la cui unica copia è lì: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} diretto non è più append-only. Elementi la cui unica copia è lì: {n}.",
+  "saveWarning.directCredsKept": "{target} diretto non può essere aperto con la nuova chiave e mantiene quella vecchia.",
 };
 
 export default it;

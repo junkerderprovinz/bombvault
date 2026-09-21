@@ -1058,7 +1058,7 @@ export interface CloudCreds {
    *  ONEZONE_IA, INTELLIGENT_TIERING, GLACIER_IR). */
   s3StorageClass: string;
 }
-export function setCloud(c: CloudCreds): Promise<OkEnvelope> {
+export function setCloud(c: CloudCreds): Promise<OkEnvelope & { warnings?: SaveWarning[] }> {
   return fetchJSON("/api/cloud", { method: "POST", body: JSON.stringify(c) });
 }
 
@@ -1094,7 +1094,7 @@ export function getCloudCredSets(): Promise<OkEnvelope & { sets?: CloudCredSetIn
 
 /** POST /api/cloud/creds-sets — replace the whole list. A blank secret on a
  *  set matched by id (against the previously stored set) keeps the stored one. */
-export function setCloudCredSets(sets: CloudCredSet[]): Promise<OkEnvelope> {
+export function setCloudCredSets(sets: CloudCredSet[]): Promise<OkEnvelope & { warnings?: SaveWarning[] }> {
   return fetchJSON("/api/cloud/creds-sets", { method: "POST", body: JSON.stringify({ sets }) });
 }
 
@@ -1439,13 +1439,12 @@ export function getSettings(): Promise<GetSettingsResponse> {
 }
 
 /**
- * PUT /api/settings — persist the settings object. `warnings` is a
- * backward-compatible extension of the ok envelope: non-fatal advisories (e.g.
- * an off-site retention policy that is inert because the repo is append-only).
+ * PUT /api/settings: persist the settings object. `warnings` says what the
+ * save means for used direct repositories, `notes` carries non-fatal advisories.
  */
 export function putSettings(
   settings: Settings
-): Promise<OkEnvelope & { warnings?: string[] }> {
+): Promise<OkEnvelope & { warnings?: SaveWarning[]; notes?: string[] }> {
   return fetchJSON("/api/settings", {
     method: "PUT",
     body: JSON.stringify(settings),
@@ -1982,6 +1981,10 @@ export interface NamedRepo {
   immutable: boolean;
   enabled: boolean;
   inUse: number;
+  /** The off-site target this is the direct repository of, "" for a plain one. */
+  companionOf: string;
+  /** An import deleted its target, which leaves it a plain repository. */
+  companionLost: boolean;
 }
 
 /** GET /api/repos — every named repository, in picker order. */
@@ -1991,7 +1994,7 @@ export function listRepos(): Promise<OkEnvelope & { repos?: NamedRepo[] }> {
 
 /** POST /api/repos — create one (the id is minted server-side). */
 export function createRepo(
-  body: Partial<Omit<NamedRepo, "id" | "inUse">>
+  body: Partial<Omit<NamedRepo, "id" | "inUse" | "companionLost">>
 ): Promise<OkEnvelope & { repo?: NamedRepo }> {
   return fetchJSON("/api/repos", { method: "POST", body: JSON.stringify(body) });
 }
@@ -2004,7 +2007,7 @@ export function createRepo(
  *  on/off switch stay editable, because none of those move any data. */
 export function updateRepo(
   id: string,
-  body: Partial<Omit<NamedRepo, "id" | "inUse">>
+  body: Partial<Omit<NamedRepo, "id" | "inUse" | "companionOf" | "companionLost">>
 ): Promise<OkEnvelope & { repo?: NamedRepo }> {
   return fetchJSON(`/api/repos/${encodeURIComponent(id)}`, {
     method: "PATCH",
@@ -2012,8 +2015,8 @@ export function updateRepo(
   });
 }
 
-/** DELETE /api/repos/{id} — refused while anything still points here. */
-export function deleteRepo(id: string): Promise<OkEnvelope> {
+/** DELETE /api/repos/{id}: refused while anything still points here. */
+export function deleteRepo(id: string): Promise<OkEnvelope & { items?: number; defaultDomains?: PlacementDomain[] }> {
   return fetchJSON(`/api/repos/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
 
@@ -2043,18 +2046,34 @@ export function createOffsiteTarget(
 export function updateOffsiteTarget(
   id: string,
   target: OffsiteTarget
-): Promise<OkEnvelope & { target?: OffsiteTarget }> {
+): Promise<OkEnvelope & { target?: OffsiteTarget; warnings?: SaveWarning[] }> {
   return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}`, {
     method: "PUT",
     body: JSON.stringify(target),
   });
 }
 
-/** DELETE /api/offsite/targets/{id} — remove a target (no-op success when absent). */
-export function deleteOffsiteTarget(id: string): Promise<OkEnvelope> {
+/** DELETE /api/offsite/targets/{id}: refused while its direct repository is in use. */
+export function deleteOffsiteTarget(id: string): Promise<OkEnvelope & { use?: TargetUse }> {
   return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
+}
+
+/** Placement: which domains have it, and what the direct repository routes answer. */
+export type PlacementDomain = "containers" | "vms" | "files";
+
+export interface SaveWarning {
+  code: "direct-retention-lowered" | "direct-append-only-off" | "direct-creds-kept";
+  targetId: string;
+  targetName: string;
+  items: number;
+}
+
+export interface TargetUse {
+  directRepoId: string;
+  items: number;
+  defaultDomains: PlacementDomain[];
 }
 
 /** DELETE /api/snapshots/{domain}/{id} — forget a single snapshot. */

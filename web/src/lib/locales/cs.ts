@@ -1627,6 +1627,31 @@ const cs: Partial<Translations> = {
   "repos.disableWarnUnknown": "Server nedokázal zjistit, kolik položek sem zálohuje. Vypnutí je nepřesune: jejich další záloha selže se srozumitelnou zprávou, místo aby skončila jinde. Vypnout?",
   "repos.add": "Přidat repozitář",
   "repos.empty": "Zatím žádné repozitáře. Všechno používá repozitář své domény.",
+
+  // Refusals
+  "placementCode.unreadable": "Pravidla umístění se nepodařilo přečíst, takže se nic nekopíruje, dokud to zase půjde.",
+  "placementCode.invalid": "Tato volba umístění není platná.",
+  "placementCode.copiesNotAllowed": "Položka ve vzdáleném nebo přímém repozitáři nedostává kopie.",
+  "placementCode.unknownTarget": "Tento vzdálený cíl v této doméně neexistuje.",
+  "placementCode.stackRule": "Složky projektu se řídí výchozí hodnotou kontejnerů a nemají vlastní pravidlo.",
+  "placementCode.copyRuleTaken": "Tento název už má kopírovací pravidla. Zvol jiný název.",
+  "placementCode.domainBusy": "Probíhá zálohování. Zvol znovu, až skončí.",
+  "placementCode.hasBackups": "Umístění se už nedá změnit, jakmile má položka zálohy. Zůstávají tam, kam byly zapsány.",
+  "placementCode.stale": "Čísla se od zobrazení změnila. Zkontroluj je znovu.",
+  "placementCode.repoInvalid": "Tento repozitář chybí, je vypnutý nebo se nedá vyřešit.",
+  "placementCode.repoInUseDefault": "Výchozí hodnota pro {domains} ukazuje na tento repozitář. Nejdřív změň výchozí hodnotu.",
+  "placementCode.defaultRepoMissing": "Výchozí hodnota v souboru ukazuje na repozitář, který není ani v souboru, ani tady.",
+  "placementCode.nestedLocation": "Toto umístění leží uvnitř jiného repozitáře nebo cíle, nebo nějaký obsahuje.",
+  "placementCode.foreignDomain": "Tento přímý repozitář patří cíli jiné domény.",
+  "placementCode.mirroredField": "Tato hodnota pochází z cíle. Změň ji tam.",
+  "placementCode.companionTaken": "Tento cíl už má přímý repozitář.",
+  "placementCode.targetInUseItems": "Do přímého repozitáře tohoto cíle stále zálohují položky: {n}. Nejdřív je nasměruj jinam.",
+  "placementCode.targetInUseDefault": "Výchozí hodnota pro {domains} ukazuje na přímý repozitář tohoto cíle. Nejdřív změň výchozí hodnotu.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} přímo teď uchovává méně. Položky, jejichž jediná kopie je tam: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} přímo už není append-only. Položky, jejichž jediná kopie je tam: {n}.",
+  "saveWarning.directCredsKept": "{target} přímo se nedá otevřít novým klíčem a ponechává si starý.",
 };
 
 export default cs;

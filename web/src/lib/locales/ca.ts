@@ -1640,6 +1640,31 @@ const ca: Partial<Translations> = {
   "repos.disableWarnUnknown": "El servidor no ha pogut llegir quants elements copien en aquest repositori. Desactivar-lo no els mou: la propera còpia falla amb un missatge clar en lloc d'anar a un altre lloc. El desactives?",
   "repos.add": "Afegeix un repositori",
   "repos.empty": "Encara no hi ha repositoris. Tot fa servir el repositori del seu domini.",
+
+  // Refusals
+  "placementCode.unreadable": "Les regles d'ubicació no s'han pogut llegir, així que no es copia res fins que es puguin tornar a llegir.",
+  "placementCode.invalid": "Aquesta tria d'ubicació no és vàlida.",
+  "placementCode.copiesNotAllowed": "Un element en un repositori remot o directe no rep còpies.",
+  "placementCode.unknownTarget": "Aquest destí extern no existeix en aquest domini.",
+  "placementCode.stackRule": "Les carpetes de projecte segueixen el valor predeterminat de contenidors i no tenen regla pròpia.",
+  "placementCode.copyRuleTaken": "Aquest nom ja té regles de còpia. Tria un altre nom.",
+  "placementCode.domainBusy": "Hi ha una còpia de seguretat en curs. Torna a triar quan hagi acabat.",
+  "placementCode.hasBackups": "La ubicació no pot canviar un cop l'element té còpies de seguretat. Es queden on es van escriure.",
+  "placementCode.stale": "Els números han canviat des que es van mostrar. Comprova'ls de nou.",
+  "placementCode.repoInvalid": "Aquest repositori falta, està desactivat o no es pot resoldre.",
+  "placementCode.repoInUseDefault": "El valor predeterminat de {domains} apunta a aquest repositori. Canvia primer el valor predeterminat.",
+  "placementCode.defaultRepoMissing": "Un valor predeterminat del fitxer apunta a un repositori que no és ni al fitxer ni aquí.",
+  "placementCode.nestedLocation": "Aquesta ubicació és dins d'un altre repositori o destí, o en conté un.",
+  "placementCode.foreignDomain": "Aquest repositori directe pertany a un destí d'un altre domini.",
+  "placementCode.mirroredField": "Aquest valor ve del destí. Canvia'l allà.",
+  "placementCode.companionTaken": "Aquest destí ja té un repositori directe.",
+  "placementCode.targetInUseItems": "Encara hi ha elements que fan còpia de seguretat al repositori directe d'aquest destí: {n}. Apunta'ls a un altre lloc primer.",
+  "placementCode.targetInUseDefault": "El valor predeterminat de {domains} apunta al repositori directe d'aquest destí. Canvia primer el valor predeterminat.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} directe ara conserva menys. Elements l'única còpia dels quals hi és: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} directe ja no és append-only. Elements l'única còpia dels quals hi és: {n}.",
+  "saveWarning.directCredsKept": "{target} directe no es pot obrir amb la nova clau i conserva l'antiga.",
 };
 
 export default ca;

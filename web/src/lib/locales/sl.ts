@@ -1624,6 +1624,31 @@ const sl: Partial<Translations> = {
   "repos.disableWarnUnknown": "Strežnik ni mogel prebrati, koliko elementov se varnostno kopira sem. Izklop jih ne premakne: njihova naslednja kopija spodleti z jasnim sporočilom, namesto da bi pristala drugje. Izklopiti?",
   "repos.add": "Dodaj repozitorij",
   "repos.empty": "Repozitorijev še ni. Vse uporablja repozitorij svoje domene.",
+
+  // Refusals
+  "placementCode.unreadable": "Pravil za namestitev ni bilo mogoče prebrati, zato se ne kopira nič, dokler jih ni spet mogoče prebrati.",
+  "placementCode.invalid": "Ta izbira namestitve ni veljavna.",
+  "placementCode.copiesNotAllowed": "Element v oddaljenem ali neposrednem repozitoriju ne dobiva kopij.",
+  "placementCode.unknownTarget": "Ta zunanji cilj v tej domeni ne obstaja.",
+  "placementCode.stackRule": "Projektne mape sledijo privzeti vrednosti za vsebnike in nimajo lastnega pravila.",
+  "placementCode.copyRuleTaken": "To ime že ima pravila kopiranja. Izberi drugo ime.",
+  "placementCode.domainBusy": "Varnostno kopiranje je v teku. Izberi znova, ko se konča.",
+  "placementCode.hasBackups": "Lokacije ni več mogoče spremeniti, ko ima element varnostne kopije. Ostanejo tam, kjer so bile zapisane.",
+  "placementCode.stale": "Številke so se od prikaza spremenile. Preveri jih znova.",
+  "placementCode.repoInvalid": "Ta repozitorij manjka, je onemogočen ali ga ni mogoče razrešiti.",
+  "placementCode.repoInUseDefault": "Privzeta vrednost za {domains} kaže na ta repozitorij. Najprej spremeni privzeto vrednost.",
+  "placementCode.defaultRepoMissing": "Privzeta vrednost v datoteki kaže na repozitorij, ki ga ni ne v datoteki ne tukaj.",
+  "placementCode.nestedLocation": "Ta lokacija leži znotraj drugega repozitorija ali cilja, ali pa ga vsebuje.",
+  "placementCode.foreignDomain": "Ta neposredni repozitorij pripada cilju druge domene.",
+  "placementCode.mirroredField": "Ta vrednost prihaja s cilja. Spremeni jo tam.",
+  "placementCode.companionTaken": "Ta cilj že ima neposredni repozitorij.",
+  "placementCode.targetInUseItems": "Elementi še vedno izvajajo varnostno kopiranje v neposredni repozitorij tega cilja: {n}. Najprej jih preusmeri drugam.",
+  "placementCode.targetInUseDefault": "Privzeta vrednost za {domains} kaže na neposredni repozitorij tega cilja. Najprej spremeni privzeto vrednost.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} neposredno zdaj hrani manj. Elementi, katerih edina kopija je tam: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} neposredno ne uporablja več načina samo-dodajanja. Elementi, katerih edina kopija je tam: {n}.",
+  "saveWarning.directCredsKept": "{target} neposredno ni mogoče odpreti z novim ključem in obdrži starega.",
 };
 
 export default sl;

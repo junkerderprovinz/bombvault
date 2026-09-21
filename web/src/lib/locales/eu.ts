@@ -1640,6 +1640,31 @@ const eu: Partial<Translations> = {
   "repos.disableWarnUnknown": "Zerbitzariak ezin izan du irakurri zenbat elementuk egiten duten babeskopia hona. Itzaltzeak ez ditu lekuz aldatzen: hurrengo babeskopiak huts egingo du mezu argi batekin, beste nonbait bukatu ordez. Itzali?",
   "repos.add": "Gehitu biltegia",
   "repos.empty": "Oraindik biltegirik ez. Dena bere domeinuaren biltegia erabiltzen ari da.",
+
+  // Refusals
+  "placementCode.unreadable": "Kokapen-arauak ezin izan dira irakurri, beraz ezer ez da kopiatzen berriro irakurri ahal izan arte.",
+  "placementCode.invalid": "Kokapen-aukera hau ez da baliozkoa.",
+  "placementCode.copiesNotAllowed": "Urruneko edo zuzeneko biltegi bateko elementu batek ez du koparik jasotzen.",
+  "placementCode.unknownTarget": "Kanpoko helmuga hori ez dago domeinu honetan.",
+  "placementCode.stackRule": "Proiektu-karpetek edukiontzien balio lehenetsia jarraitzen dute eta ez dute beren arau propiorik.",
+  "placementCode.copyRuleTaken": "Izen horrek jada baditu kopiatze-arauak. Aukeratu beste izen bat.",
+  "placementCode.domainBusy": "Babeskopia bat ari da egiten. Aukeratu berriro amaitzen denean.",
+  "placementCode.hasBackups": "Kokapena ezin da gehiago aldatu elementuak babeskopiak dituenean. Idatzi ziren tokian gelditzen dira.",
+  "placementCode.stale": "Zenbakiak aldatu egin dira erakutsi zirenetik. Egiaztatu berriro.",
+  "placementCode.repoInvalid": "Biltegi hori falta da, itzalita dago edo ezin da ebatzi.",
+  "placementCode.repoInUseDefault": "{domains} arloaren balio lehenetsiak biltegi honetara seinalatzen du. Aldatu lehenik balio lehenetsia.",
+  "placementCode.defaultRepoMissing": "Fitxategiko balio lehenetsi batek fitxategian ez dagoen eta hemen ere ez dagoen biltegi batera seinalatzen du.",
+  "placementCode.nestedLocation": "Kokapen hau beste biltegi edo helmuga baten barruan dago, edo bat barnean du.",
+  "placementCode.foreignDomain": "Zuzeneko biltegi hori beste domeinu bateko helmuga bati dagokio.",
+  "placementCode.mirroredField": "Balio hau helmugatik dator. Aldatu hor.",
+  "placementCode.companionTaken": "Helmuga honek jada badu zuzeneko biltegi bat.",
+  "placementCode.targetInUseItems": "Elementuak oraindik helmuga honen zuzeneko biltegian babesten dira: {n}. Zuzendu haiek lehenik beste nonbaitera.",
+  "placementCode.targetInUseDefault": "{domains} arloaren balio lehenetsiak helmuga honen zuzeneko biltegira seinalatzen du. Aldatu lehenik balio lehenetsia.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} zuzenak orain gutxiago gordetzen du. Kopia bakarra hor duten elementuak: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} zuzena jada ez da gehitu-soilik. Kopia bakarra hor duten elementuak: {n}.",
+  "saveWarning.directCredsKept": "{target} zuzena ezin da gako berriarekin ireki, eta zaharra mantentzen du.",
 };
 
 export default eu;

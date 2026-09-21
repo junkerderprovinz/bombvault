@@ -1629,6 +1629,31 @@ const tr: Partial<Translations> = {
   "repos.disableWarnUnknown": "Sunucu bu depoya kaç öğenin yedeklendiğini okuyamadı. Kapatmak onları taşımaz: sonraki yedekleri başka bir yere düşmek yerine açık bir iletiyle başarısız olur. Kapatılsın mı?",
   "repos.add": "Depo ekle",
   "repos.empty": "Henüz depo yok. Her şey kendi alanının deposunu kullanıyor.",
+
+  // Refusals
+  "placementCode.unreadable": "Yerleştirme kuralları okunamadı, bu yüzden tekrar okunabilene kadar hiçbir şey kopyalanmıyor.",
+  "placementCode.invalid": "Bu yerleştirme seçimi geçerli değil.",
+  "placementCode.copiesNotAllowed": "Uzak veya doğrudan bir depodaki öge kopya almaz.",
+  "placementCode.unknownTarget": "Bu dış hedef bu alanda yok.",
+  "placementCode.stackRule": "Proje klasörleri konteynerlerin varsayılanını izler ve kendi kuralına sahip değildir.",
+  "placementCode.copyRuleTaken": "Bu adın zaten kopyalama kuralları var. Başka bir ad seç.",
+  "placementCode.domainBusy": "Bir yedekleme çalışıyor. Bittiğinde tekrar seç.",
+  "placementCode.hasBackups": "Öge yedeklere sahip olduktan sonra konum artık değişemez. Yazıldıkları yerde kalırlar.",
+  "placementCode.stale": "Sayılar gösterildikten sonra değişti. Onları tekrar kontrol et.",
+  "placementCode.repoInvalid": "Bu depo eksik, kapalı veya çözülemiyor.",
+  "placementCode.repoInUseDefault": "{domains} için varsayılan bu depoyu gösteriyor. Önce varsayılanı değiştir.",
+  "placementCode.defaultRepoMissing": "Dosyadaki bir varsayılan, ne dosyada ne de burada bulunan bir depoyu gösteriyor.",
+  "placementCode.nestedLocation": "Bu konum başka bir depo veya hedefin içinde yer alıyor ya da birini içeriyor.",
+  "placementCode.foreignDomain": "Bu doğrudan depo başka bir alanın hedefine ait.",
+  "placementCode.mirroredField": "Bu değer hedeften geliyor. Onu orada değiştir.",
+  "placementCode.companionTaken": "Bu hedefin zaten doğrudan bir deposu var.",
+  "placementCode.targetInUseItems": "Ögeler hâlâ bu hedefin doğrudan deposuna yedekleniyor: {n}. Önce onları başka bir yere yönlendir.",
+  "placementCode.targetInUseDefault": "{domains} için varsayılan bu hedefin doğrudan deposunu gösteriyor. Önce varsayılanı değiştir.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} doğrudan artık daha az tutuyor. Tek kopyası orada olan ögeler: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} doğrudan artık append-only değil. Tek kopyası orada olan ögeler: {n}.",
+  "saveWarning.directCredsKept": "{target} doğrudan yeni anahtarla açılamıyor ve eskisini koruyor.",
 };
 
 export default tr;

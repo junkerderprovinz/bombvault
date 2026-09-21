@@ -1621,6 +1621,31 @@ const ja: Partial<Translations> = {
   "repos.disableWarnUnknown": "このリポジトリにバックアップしている項目の数を、サーバーが読み取れませんでした。オフにしても移動はしません。次のバックアップは別の場所に入るのではなく、明確なメッセージで失敗します。オフにしますか？",
   "repos.add": "リポジトリを追加",
   "repos.empty": "リポジトリはまだありません。すべて各ドメインのリポジトリを使っています。",
+
+  // Refusals
+  "placementCode.unreadable": "配置ルールを読み込めなかったため、再び読み込めるようになるまで何もコピーされません。",
+  "placementCode.invalid": "この配置の選択は無効です。",
+  "placementCode.copiesNotAllowed": "リモートまたは直接のリポジトリ上の項目はコピーを受け取りません。",
+  "placementCode.unknownTarget": "そのオフサイトターゲットはこのドメインに存在しません。",
+  "placementCode.stackRule": "プロジェクトフォルダーはコンテナの既定値に従い、独自のルールを持ちません。",
+  "placementCode.copyRuleTaken": "その名前にはすでにコピールールがあります。別の名前を選んでください。",
+  "placementCode.domainBusy": "バックアップが実行中です。完了したらもう一度選んでください。",
+  "placementCode.hasBackups": "項目にバックアップがあると、場所はもう変更できません。書き込まれた場所にとどまります。",
+  "placementCode.stale": "表示されてから数値が変わりました。もう一度確認してください。",
+  "placementCode.repoInvalid": "そのリポジトリが見つからないか、無効か、解決できません。",
+  "placementCode.repoInUseDefault": "{domains} の既定値はこのリポジトリを指しています。まず既定値を変更してください。",
+  "placementCode.defaultRepoMissing": "ファイル内の既定値が、ファイルにもここにも存在しないリポジトリを指しています。",
+  "placementCode.nestedLocation": "この場所は別のリポジトリまたはターゲットの内側にあるか、その中に含んでいます。",
+  "placementCode.foreignDomain": "そのダイレクトリポジトリは別のドメインのターゲットに属しています。",
+  "placementCode.mirroredField": "この値はターゲットから来ています。そちらで変更してください。",
+  "placementCode.companionTaken": "そのターゲットにはすでにダイレクトリポジトリがあります。",
+  "placementCode.targetInUseItems": "項目はまだこのターゲットのダイレクトリポジトリにバックアップされています: {n}。先に別の場所を指定してください。",
+  "placementCode.targetInUseDefault": "{domains} の既定値はこのターゲットのダイレクトリポジトリを指しています。まず既定値を変更してください。",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} ダイレクトは今、保持量が減りました。唯一のコピーがそこにある項目: {n}。",
+  "saveWarning.directAppendOnlyOff": "{target} ダイレクトはもう append-only ではありません。唯一のコピーがそこにある項目: {n}。",
+  "saveWarning.directCredsKept": "{target} ダイレクトは新しい鍵では開けず、古い鍵を保持しています。",
 };
 
 export default ja;

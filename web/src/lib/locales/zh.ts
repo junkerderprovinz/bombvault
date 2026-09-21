@@ -1621,6 +1621,31 @@ const zh: Partial<Translations> = {
   "repos.disableWarnUnknown": "服务器无法读取有多少项目备份到此仓库。关闭它并不会移动它们：下一次备份会带着明确的提示失败，而不是落到别处。要关闭吗？",
   "repos.add": "添加存储库",
   "repos.empty": "还没有存储库。所有内容都使用各自域的存储库。",
+
+  // Refusals
+  "placementCode.unreadable": "位置规则无法读取，因此在能够再次读取之前不会复制任何内容。",
+  "placementCode.invalid": "此位置选择无效。",
+  "placementCode.copiesNotAllowed": "远程或直接存储库上的项目不会获得副本。",
+  "placementCode.unknownTarget": "该异地目标在此域中不存在。",
+  "placementCode.stackRule": "项目文件夹遵循容器的默认设置，没有自己的规则。",
+  "placementCode.copyRuleTaken": "该名称已有复制规则。请选择其他名称。",
+  "placementCode.domainBusy": "备份正在进行。完成后请重新选择。",
+  "placementCode.hasBackups": "项目一旦有了备份，位置就不能再更改。它们保留在写入时的位置。",
+  "placementCode.stale": "数字自显示以来已发生变化。请重新检查。",
+  "placementCode.repoInvalid": "该存储库缺失、已关闭或无法解析。",
+  "placementCode.repoInUseDefault": "{domains} 的默认设置指向此存储库。请先更改默认设置。",
+  "placementCode.defaultRepoMissing": "文件中的一个默认设置指向的存储库既不在文件中，也不在此处。",
+  "placementCode.nestedLocation": "此位置位于另一个存储库或目标内部，或包含其中一个。",
+  "placementCode.foreignDomain": "该直接存储库属于另一个域的目标。",
+  "placementCode.mirroredField": "此值来自目标。请在那里更改它。",
+  "placementCode.companionTaken": "该目标已有直接存储库。",
+  "placementCode.targetInUseItems": "仍有项目在备份到此目标的直接存储库：{n}。请先将它们指向别处。",
+  "placementCode.targetInUseDefault": "{domains} 的默认设置指向此目标的直接存储库。请先更改默认设置。",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} 直接现在保留得更少。唯一副本在那里的项目：{n}。",
+  "saveWarning.directAppendOnlyOff": "{target} 直接不再是 append-only。唯一副本在那里的项目：{n}。",
+  "saveWarning.directCredsKept": "{target} 直接无法用新密钥打开，因此保留旧密钥。",
 };
 
 export default zh;

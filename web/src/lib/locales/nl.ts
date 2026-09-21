@@ -1626,6 +1626,31 @@ const nl: Partial<Translations> = {
   "repos.disableWarnUnknown": "De server kon niet lezen hoeveel items naar deze repository back-uppen. Uitschakelen verplaatst ze niet: hun volgende back-up mislukt met een duidelijke melding in plaats van ergens anders te belanden. Uitschakelen?",
   "repos.add": "Repository toevoegen",
   "repos.empty": "Nog geen repository's. Alles gebruikt de repository van het eigen domein.",
+
+  // Refusals
+  "placementCode.unreadable": "De plaatsingsregels konden niet worden gelezen, dus wordt er niets gekopieerd totdat dat weer lukt.",
+  "placementCode.invalid": "Deze plaatsingskeuze is niet geldig.",
+  "placementCode.copiesNotAllowed": "Een item op een externe of directe repository krijgt geen kopieën.",
+  "placementCode.unknownTarget": "Die off-site bestemming bestaat niet in dit domein.",
+  "placementCode.stackRule": "Projectmappen volgen de standaard van containers en hebben geen eigen regel.",
+  "placementCode.copyRuleTaken": "Die naam heeft al kopieerregels. Kies een andere naam.",
+  "placementCode.domainBusy": "Er loopt een back-up. Kies opnieuw zodra die klaar is.",
+  "placementCode.hasBackups": "De locatie kan niet meer wijzigen zodra het item back-ups heeft. Ze blijven staan waar ze geschreven zijn.",
+  "placementCode.stale": "De getallen zijn veranderd sinds ze werden getoond. Controleer ze opnieuw.",
+  "placementCode.repoInvalid": "Die repository ontbreekt, staat uit of kan niet worden herleid.",
+  "placementCode.repoInUseDefault": "De standaard voor {domains} wijst naar deze repository. Wijzig eerst de standaard.",
+  "placementCode.defaultRepoMissing": "Een standaard in het bestand wijst naar een repository die noch in het bestand, noch hier bestaat.",
+  "placementCode.nestedLocation": "Deze locatie ligt binnen een andere repository of bestemming, of bevat er een.",
+  "placementCode.foreignDomain": "Die directe repository hoort bij een bestemming van een ander domein.",
+  "placementCode.mirroredField": "Deze waarde komt van de bestemming. Wijzig ze daar.",
+  "placementCode.companionTaken": "Deze bestemming heeft al een directe repository.",
+  "placementCode.targetInUseItems": "Er back-uppen nog items naar de directe repository van deze bestemming: {n}. Wijs ze eerst ergens anders naartoe.",
+  "placementCode.targetInUseDefault": "De standaard voor {domains} wijst naar de directe repository van deze bestemming. Wijzig eerst de standaard.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} direct bewaart nu minder. Items waarvan de enige kopie daar staat: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} direct is niet meer append-only. Items waarvan de enige kopie daar staat: {n}.",
+  "saveWarning.directCredsKept": "{target} direct kan niet worden geopend met de nieuwe sleutel en behoudt de oude.",
 };
 
 export default nl;

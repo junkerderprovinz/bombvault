@@ -1640,6 +1640,31 @@ const is: Partial<Translations> = {
   "repos.disableWarnUnknown": "Þjónninn gat ekki lesið hversu mörg atriði taka afrit hingað. Að slökkva færir þau ekki: næsta afrit þeirra mistekst með skýrum skilaboðum í stað þess að lenda annars staðar. Slökkva?",
   "repos.add": "Bæta við geymslu",
   "repos.empty": "Engar geymslur enn. Allt notar geymslu síns eigin léns.",
+
+  // Refusals
+  "placementCode.unreadable": "Ekki tókst að lesa staðsetningarreglurnar, svo ekkert er afritað fyrr en hægt er að lesa þær aftur.",
+  "placementCode.invalid": "Þetta staðsetningarval er ekki gilt.",
+  "placementCode.copiesNotAllowed": "Atriði í fjarlægri eða beinni geymslu fær engin afrit.",
+  "placementCode.unknownTarget": "Þessi fjarlægi áfangastaður er ekki til í þessu léni.",
+  "placementCode.stackRule": "Verkefnamöppur fylgja sjálfgefnu gildi gáma og fá enga eigin reglu.",
+  "placementCode.copyRuleTaken": "Þetta nafn hefur nú þegar afritunarreglur. Veldu annað nafn.",
+  "placementCode.domainBusy": "Öryggisafritun er í gangi. Veldu aftur þegar henni er lokið.",
+  "placementCode.hasBackups": "Staðsetningin getur ekki breyst eftir að atriðið hefur öryggisafrit. Þau verða áfram þar sem þau voru skrifuð.",
+  "placementCode.stale": "Tölurnar hafa breyst síðan þær voru sýndar. Athugaðu þær aftur.",
+  "placementCode.repoInvalid": "Þessa geymslu vantar, hún er óvirk eða ekki hægt að leysa hana.",
+  "placementCode.repoInUseDefault": "Sjálfgefið gildi fyrir {domains} vísar á þessa geymslu. Breyttu sjálfgefna gildinu fyrst.",
+  "placementCode.defaultRepoMissing": "Sjálfgefið gildi í skránni vísar á geymslu sem er hvorki í skránni né hér.",
+  "placementCode.nestedLocation": "Þessi staðsetning er innan í annarri geymslu eða áfangastað, eða inniheldur eina.",
+  "placementCode.foreignDomain": "Þessi beina geymsla tilheyrir áfangastað í öðru léni.",
+  "placementCode.mirroredField": "Þetta gildi kemur frá áfangastaðnum. Breyttu því þar.",
+  "placementCode.companionTaken": "Þessi áfangastaður hefur nú þegar beina geymslu.",
+  "placementCode.targetInUseItems": "Atriði öryggisafrita enn í beinu geymsluna hjá þessum áfangastað: {n}. Beindu þeim annað fyrst.",
+  "placementCode.targetInUseDefault": "Sjálfgefið gildi fyrir {domains} vísar á beinu geymsluna hjá þessum áfangastað. Breyttu sjálfgefna gildinu fyrst.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} beint varðveitir nú minna. Atriði sem eiga eina afritið þar: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} beint er ekki lengur aðeins-bæta-við. Atriði sem eiga eina afritið þar: {n}.",
+  "saveWarning.directCredsKept": "{target} beint er ekki hægt að opna með nýja lyklinum og heldur þeim gamla.",
 };
 
 export default is;

@@ -1627,6 +1627,31 @@ const es: Partial<Translations> = {
   "repos.disableWarnUnknown": "El servidor no pudo leer cuántos elementos respaldan en este repositorio. Desactivarlo no los mueve: su próxima copia falla con un mensaje claro en lugar de acabar en otro sitio. ¿Desactivarlo?",
   "repos.add": "Añadir repositorio",
   "repos.empty": "Aún no hay repositorios. Todo usa el repositorio de su propio dominio.",
+
+  // Refusals
+  "placementCode.unreadable": "Las reglas de ubicación no se pudieron leer, así que no se copia nada hasta que se puedan leer de nuevo.",
+  "placementCode.invalid": "Esta elección de ubicación no es válida.",
+  "placementCode.copiesNotAllowed": "Un elemento en un repositorio remoto o directo no recibe copias.",
+  "placementCode.unknownTarget": "Ese destino externo no existe en este dominio.",
+  "placementCode.stackRule": "Las carpetas de proyecto siguen el valor predeterminado de contenedores y no tienen una regla propia.",
+  "placementCode.copyRuleTaken": "Ese nombre ya tiene reglas de copia. Elige otro nombre.",
+  "placementCode.domainBusy": "Hay una copia de seguridad en curso. Vuelve a elegir cuando termine.",
+  "placementCode.hasBackups": "La ubicación no se puede cambiar una vez que el elemento tiene copias de seguridad. Permanecen donde se escribieron.",
+  "placementCode.stale": "Los números cambiaron desde que se mostraron. Compruébalos de nuevo.",
+  "placementCode.repoInvalid": "Ese repositorio falta, está desactivado o no se puede resolver.",
+  "placementCode.repoInUseDefault": "El valor predeterminado de {domains} apunta a este repositorio. Cambia primero el valor predeterminado.",
+  "placementCode.defaultRepoMissing": "Un valor predeterminado del archivo apunta a un repositorio que no está ni en el archivo ni aquí.",
+  "placementCode.nestedLocation": "Esta ubicación está dentro de otro repositorio o destino, o contiene uno.",
+  "placementCode.foreignDomain": "Ese repositorio directo pertenece a un destino de otro dominio.",
+  "placementCode.mirroredField": "Este valor viene del destino. Cámbialo allí.",
+  "placementCode.companionTaken": "Este destino ya tiene un repositorio directo.",
+  "placementCode.targetInUseItems": "Elementos siguen respaldando en el repositorio directo de este destino: {n}. Apúntalos a otro sitio primero.",
+  "placementCode.targetInUseDefault": "El valor predeterminado de {domains} apunta al repositorio directo de este destino. Cambia primero el valor predeterminado.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} directo ahora conserva menos. Elementos cuya única copia está ahí: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} directo ya no es append-only. Elementos cuya única copia está ahí: {n}.",
+  "saveWarning.directCredsKept": "{target} directo no se puede abrir con la nueva clave y conserva la anterior.",
 };
 
 export default es;

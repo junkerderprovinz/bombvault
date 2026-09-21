@@ -1629,6 +1629,31 @@ const he: Partial<Translations> = {
   "repos.disableWarnUnknown": "השרת לא הצליח לקרוא כמה פריטים מגובים למאגר הזה. כיבוי אינו מעביר אותם: הגיבוי הבא שלהם ייכשל עם הודעה ברורה במקום להגיע למקום אחר. לכבות?",
   "repos.add": "הוספת מאגר",
   "repos.empty": "אין עדיין מאגרים. הכול משתמש במאגר של התחום שלו.",
+
+  // Refusals
+  "placementCode.unreadable": "לא ניתן היה לקרוא את כללי המיקום, לכן שום דבר לא מועתק עד שיהיה ניתן לקרוא אותם שוב.",
+  "placementCode.invalid": "בחירת המיקום הזו אינה חוקית.",
+  "placementCode.copiesNotAllowed": "פריט במאגר מרוחק או ישיר אינו מקבל עותקים.",
+  "placementCode.unknownTarget": "היעד החיצוני הזה לא קיים בתחום הזה.",
+  "placementCode.stackRule": "תיקיות פרויקט עוקבות אחרי ברירת המחדל של המכולות ואין להן כלל משלהן.",
+  "placementCode.copyRuleTaken": "לשם הזה כבר יש כללי העתקה. בחר שם אחר.",
+  "placementCode.domainBusy": "מתבצע כרגע גיבוי. בחר שוב לאחר שיסתיים.",
+  "placementCode.hasBackups": "המיקום כבר לא יכול להשתנות ברגע שיש לפריט גיבויים. הם נשארים היכן שנכתבו.",
+  "placementCode.stale": "המספרים השתנו מאז שהוצגו. בדוק אותם שוב.",
+  "placementCode.repoInvalid": "המאגר הזה חסר, כבוי, או שלא ניתן לפתור אותו.",
+  "placementCode.repoInUseDefault": "ברירת המחדל של {domains} מצביעה על המאגר הזה. שנה קודם את ברירת המחדל.",
+  "placementCode.defaultRepoMissing": "ברירת מחדל בקובץ מצביעה על מאגר שאינו נמצא לא בקובץ ולא כאן.",
+  "placementCode.nestedLocation": "המיקום הזה נמצא בתוך מאגר או יעד אחר, או מכיל אחד.",
+  "placementCode.foreignDomain": "המאגר הישיר הזה שייך ליעד בתחום אחר.",
+  "placementCode.mirroredField": "הערך הזה מגיע מהיעד. שנה אותו שם.",
+  "placementCode.companionTaken": "ליעד הזה כבר יש מאגר ישיר.",
+  "placementCode.targetInUseItems": "פריטים עדיין מגבים אל המאגר הישיר של היעד הזה: {n}. הפנה אותם קודם למקום אחר.",
+  "placementCode.targetInUseDefault": "ברירת המחדל של {domains} מצביעה על המאגר הישיר של היעד הזה. שנה קודם את ברירת המחדל.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} ישיר שומר עכשיו פחות. פריטים שהעותק היחיד שלהם נמצא שם: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} ישיר כבר לא append-only. פריטים שהעותק היחיד שלהם נמצא שם: {n}.",
+  "saveWarning.directCredsKept": "{target} ישיר לא ניתן לפתיחה עם המפתח החדש ושומר על הישן.",
 };
 
 export default he;

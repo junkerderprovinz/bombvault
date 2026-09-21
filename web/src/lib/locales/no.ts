@@ -1629,6 +1629,31 @@ const no: Partial<Translations> = {
   "repos.disableWarnUnknown": "Serveren kunne ikke lese hvor mange elementer som sikkerhetskopierer hit. Å slå det av flytter dem ikke: neste sikkerhetskopi feiler med en tydelig melding i stedet for å havne et annet sted. Slå av?",
   "repos.add": "Legg til depot",
   "repos.empty": "Ingen depoter ennå. Alt bruker sitt eget domenes depot.",
+
+  // Refusals
+  "placementCode.unreadable": "Plasseringsreglene kunne ikke leses, så ingenting kopieres før de kan leses igjen.",
+  "placementCode.invalid": "Dette plasseringsvalget er ikke gyldig.",
+  "placementCode.copiesNotAllowed": "Et element i et eksternt eller direkte depot får ingen kopier.",
+  "placementCode.unknownTarget": "Det eksterne målet finnes ikke i dette domenet.",
+  "placementCode.stackRule": "Prosjektmapper følger standardverdien for containere og har ingen egen regel.",
+  "placementCode.copyRuleTaken": "Det navnet har allerede kopieringsregler. Velg et annet navn.",
+  "placementCode.domainBusy": "En sikkerhetskopiering pågår. Velg på nytt når den er ferdig.",
+  "placementCode.hasBackups": "Plasseringen kan ikke endres når elementet har sikkerhetskopier. De blir værende der de ble skrevet.",
+  "placementCode.stale": "Tallene har endret seg siden de ble vist. Sjekk dem på nytt.",
+  "placementCode.repoInvalid": "Det depotet mangler, er slått av eller kan ikke løses opp.",
+  "placementCode.repoInUseDefault": "Standardverdien for {domains} peker på dette depotet. Endre standardverdien først.",
+  "placementCode.defaultRepoMissing": "En standardverdi i filen peker på et depot som verken finnes i filen eller her.",
+  "placementCode.nestedLocation": "Denne plasseringen ligger inni et annet depot eller mål, eller inneholder ett.",
+  "placementCode.foreignDomain": "Det direkte depotet tilhører et mål i et annet domene.",
+  "placementCode.mirroredField": "Denne verdien kommer fra målet. Endre den der.",
+  "placementCode.companionTaken": "Dette målet har allerede et direkte depot.",
+  "placementCode.targetInUseItems": "Elementer sikkerhetskopieres fortsatt til dette målets direkte depot: {n}. Pek dem et annet sted først.",
+  "placementCode.targetInUseDefault": "Standardverdien for {domains} peker på dette målets direkte depot. Endre standardverdien først.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} direkte beholder nå mindre. Elementer der eneste kopi ligger der: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} direkte er ikke lenger append-only. Elementer der eneste kopi ligger der: {n}.",
+  "saveWarning.directCredsKept": "{target} direkte kan ikke åpnes med den nye nøkkelen og beholder den gamle.",
 };
 
 export default no;
