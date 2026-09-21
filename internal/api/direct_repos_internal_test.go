@@ -374,3 +374,48 @@ func TestMirroredFieldRefusalNamesTheField(t *testing.T) {
 		t.Fatalf("fields = %v, want [credsRef]", res["fields"])
 	}
 }
+
+func TestAlreadyOffSiteCountsADirectRepositoryWhereverItLies(t *testing.T) {
+	direct := store.OffsiteTarget{ID: "d", CompanionOf: "t"}
+	plain := store.OffsiteTarget{ID: "n"}
+	cases := []struct {
+		name string
+		ref  domainRepoRef
+		want bool
+	}{
+		{"local direct repository", namedRef("/mnt/user/nas-direct", direct), true},
+		{"remote direct repository", namedRef("b2:bkt:x-direct", direct), true},
+		{"local named repository", namedRef("/mnt/user/nas", plain), false},
+		{"remote named repository", namedRef("b2:bkt:cold", plain), true},
+		{"remote domain path", ownRef("s3:host/bkt/containers"), false},
+	}
+	for _, c := range cases {
+		if got := alreadyOffSite(c.ref); got != c.want {
+			t.Errorf("%s: alreadyOffSite = %v, want %v", c.name, got, c.want)
+		}
+	}
+}
+
+func TestADirectRepositoryIsNeverACopySource(t *testing.T) {
+	f := newPlacementFixture(t)
+	d := f.direct(f.target("containers", "NAS", "backups/nas-offsite"))
+	f.container("web", d.ID)
+	f.container("db", "")
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	loc, err := f.svc.resolveRepo(d.Repo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	refs, _ := f.svc.offsiteReplicationSources(settings, "containers")
+	if len(refs) == 0 {
+		t.Fatal("the domain path is no longer a source")
+	}
+	for _, r := range refs {
+		if sameRepoLocation(r.Loc, loc) {
+			t.Fatalf("the direct repository %s is a copy source", r.Loc)
+		}
+	}
+}
