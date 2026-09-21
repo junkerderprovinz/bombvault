@@ -939,13 +939,19 @@ func importedPlacement(exp settingsExport) store.PlacementImport {
 
 // checkImportedPlacement refuses the defaults and rules an import could not
 // write whole, before anything of the file is written: one entry per domain,
-// a skip that names real targets, and a home that could take a backup, all
-// checked the way the PUT route checks them, but against the repositories and
-// targets the file itself is about to create as well as the stored ones.
+// a skip that names a target the import itself is about to create, and a home
+// that could take a backup, checked the way the PUT route checks them but
+// against the file's own repositories and targets, not the stored ones.
+// applyImport replaces every off-site target and, once the file carries any
+// named repository, every named repository too, so a database row absent
+// from the file is gone once the import lands. A home the file itself brings
+// carries whether it is switched off, which is checked the same way; whether
+// its location actually resolves is not, since a plain export redacts a
+// credential in it and a false failure there would refuse a good file.
 func (h *Handler) checkImportedPlacement(exp settingsExport) error {
-	inFileRepo := make(map[string]bool, len(exp.NamedRepos))
+	fileRepoEnabled := make(map[string]bool, len(exp.NamedRepos))
 	for _, tv := range exp.NamedRepos {
-		inFileRepo[strings.TrimSpace(tv.ID)] = true
+		fileRepoEnabled[strings.TrimSpace(tv.ID)] = tv.Enabled
 	}
 	inFileTarget := make(map[string]map[string]bool, len(exp.OffsiteTargets))
 	for _, tv := range exp.OffsiteTargets {
@@ -954,11 +960,6 @@ func (h *Handler) checkImportedPlacement(exp settingsExport) error {
 		}
 		inFileTarget[tv.Domain][strings.TrimSpace(tv.ID)] = true
 	}
-	settings, err := h.store.GetSettings()
-	if err != nil {
-		return err
-	}
-	placements := map[string]placementRead{}
 	seenDomain := map[string]bool{}
 	for _, d := range exp.PlacementDefaults {
 		if !validPlacementDomain(d.Domain) || !validSkip(d.Skip) {
@@ -968,21 +969,20 @@ func (h *Handler) checkImportedPlacement(exp settingsExport) error {
 			return errInvalidPlacement
 		}
 		seenDomain[d.Domain] = true
-		p, ok := placements[d.Domain]
-		if !ok {
-			if p, err = h.svc.readPlacement(settings, d.Domain); err != nil {
-				return err
-			}
-			placements[d.Domain] = p
-		}
 		for _, id := range d.Skip {
-			if id == store.SkipAll || containsTarget(p.Targets, id) || inFileTarget[d.Domain][id] {
+			if id == store.SkipAll || inFileTarget[d.Domain][id] {
 				continue
 			}
 			return errNotATarget
 		}
 		home := strings.TrimSpace(d.Home)
-		if home == "" || inFileRepo[home] {
+		if home == "" {
+			continue
+		}
+		if enabled, inFile := fileRepoEnabled[home]; inFile {
+			if !enabled {
+				return fmt.Errorf("%w: the repository is switched off", errRepoInvalid)
+			}
 			continue
 		}
 		if _, err := h.store.GetNamedRepo(home); errors.Is(err, sql.ErrNoRows) {
