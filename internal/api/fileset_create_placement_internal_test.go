@@ -32,14 +32,28 @@ func TestAFileSetCreatedWithoutARepositoryStaysOpen(t *testing.T) {
 	}
 }
 
-func TestAFileSetCreatedWithARepositoryIsChosen(t *testing.T) {
+// An empty repo is a dialog that offered no choice, not a choice of the
+// domain path: the set is open and settles its home at the first backup.
+func TestAFileSetCreatedWithAnEmptyRepositoryStaysOpen(t *testing.T) {
 	f := newPlacementFixture(t)
 	res := createDocs(t, f, map[string]any{"repo": ""})
 	if res["ok"] != true {
 		t.Fatalf("POST = %v", res)
 	}
-	if got := f.home(store.ItemRef{Domain: "files", Key: res["id"].(string)}); got.Choice != store.RepoChosen {
-		t.Fatalf("home = %+v, want the domain path chosen", got)
+	if got := f.home(store.ItemRef{Domain: "files", Key: res["id"].(string)}); got.Repo != "" || got.Choice != store.RepoOpen {
+		t.Fatalf("home = %+v, want open", got)
+	}
+}
+
+func TestAFileSetCreatedWithARepositoryIsChosen(t *testing.T) {
+	f := newPlacementFixture(t)
+	cold := f.namedRepo("Cold", "backups/cold")
+	res := createDocs(t, f, map[string]any{"repo": cold.ID})
+	if res["ok"] != true {
+		t.Fatalf("POST = %v", res)
+	}
+	if got := f.home(store.ItemRef{Domain: "files", Key: res["id"].(string)}); got.Repo != cold.ID || got.Choice != store.RepoChosen {
+		t.Fatalf("home = %+v, want the chosen repository", got)
 	}
 }
 

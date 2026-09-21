@@ -4932,7 +4932,7 @@ func (h *Handler) handleCreateFileSet(w http.ResponseWriter, r *http.Request) {
 		Excludes: body.Excludes,
 		Enabled:  enabled,
 	}
-	if body.Repo != nil {
+	if body.Repo != nil && strings.TrimSpace(*body.Repo) != "" {
 		fs.Repo = strings.TrimSpace(*body.Repo)
 		fs.RepoChosen = store.RepoChosen
 	}
