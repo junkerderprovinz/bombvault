@@ -150,6 +150,23 @@ func TestADefaultSkipNamingATargetTheFileItselfBringsIsAccepted(t *testing.T) {
 	}
 }
 
+// TestADefaultSkipNamingATargetOnlyTheDatabaseHasRefusesTheImport is the
+// mirror of TestADefaultSkipNamingATargetTheFileItselfBringsIsAccepted: the
+// import always replaces every off-site target with the file's own set, so a
+// skip entry naming a target that only the current database still has, and
+// the file no longer carries, would exclude nothing once the import lands.
+func TestADefaultSkipNamingATargetOnlyTheDatabaseHasRefusesTheImport(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket/containers")
+	f.setDefault("containers", "", b2.ID)
+	res := importEdited(t, f, func(exp map[string]any) {
+		exp["offsiteTargets"] = []any{}
+	})
+	if res["code"] != "unknown-target" {
+		t.Fatalf("import = %v, want unknown-target", res)
+	}
+}
+
 // TestTwoDefaultsForTheSameDomainRefuseTheImport pins that the pre-flight
 // catches a duplicate domain itself: ImportPlacement's insert refuses the
 // second row only after settings and the off-site targets have already been
@@ -192,6 +209,26 @@ func TestADefaultOnADisabledRepositoryRefusesTheImport(t *testing.T) {
 		}
 		exp["namedRepos"] = keep
 	})
+	if res["code"] != "repo-invalid" {
+		t.Fatalf("import = %v, want repo-invalid", res)
+	}
+}
+
+// TestADefaultOnAFileOwnDisabledRepositoryRefusesTheImport is the mirror of
+// TestADefaultOnADisabledRepositoryRefusesTheImport: NAS is not yet in the
+// database, so the check has only the file's own namedRepos block to judge
+// it by, and that block carries whether a repository is switched off too.
+func TestADefaultOnAFileOwnDisabledRepositoryRefusesTheImport(t *testing.T) {
+	src := newPlacementFixture(t)
+	nas := src.namedRepo("NAS", "nas")
+	src.setDefault("containers", nas.ID)
+	exp := src.do(http.MethodGet, "/api/settings/export", nil)
+	for _, row := range exp["namedRepos"].([]any) {
+		row.(map[string]any)["enabled"] = false
+	}
+
+	dst := newPlacementFixture(t)
+	res := dst.do(http.MethodPost, "/api/settings/import?apply=true", exp)
 	if res["code"] != "repo-invalid" {
 		t.Fatalf("import = %v, want repo-invalid", res)
 	}
