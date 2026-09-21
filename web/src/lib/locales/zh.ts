@@ -1677,6 +1677,11 @@ const zh: Partial<Translations> = {
   "placement.droppedKeeps": "{target} 保留其副本（{n}），并在下次运行时按自己的规则精简。不会添加新的副本。",
   "placement.droppedKeepsUnknown": "{target} 保留其副本，并在下次运行时按自己的规则精简。不会添加新的副本。",
   "placement.droppedAppendOnly": "{target} 是 append-only，保留所有副本。不会添加新的副本。",
+  "placement.saveHome": "设置",
+  "placement.fixedSinceFirst": "自首次备份以来固定",
+  "placement.deleted": "（已删除）",
+  "placement.lastChip": "选择本地以不复制",
+  "placement.credsDiffer": "域存储库是远程的，使用与此目标不同的凭据。复制会失败，直到它们匹配。",
 };
 
 export default zh;

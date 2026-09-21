@@ -1696,6 +1696,11 @@ const id: Partial<Translations> = {
   "placement.droppedKeeps": "{target} menyimpan salinannya ({n}) dan memangkasnya sesuai aturannya sendiri pada proses berikutnya. Tidak ada salinan baru yang ditambahkan.",
   "placement.droppedKeepsUnknown": "{target} menyimpan salinannya dan memangkasnya sesuai aturannya sendiri pada proses berikutnya. Tidak ada salinan baru yang ditambahkan.",
   "placement.droppedAppendOnly": "{target} bersifat append-only dan menyimpan setiap salinan. Tidak ada salinan baru yang ditambahkan.",
+  "placement.saveHome": "Tetapkan",
+  "placement.fixedSinceFirst": "tetap sejak backup pertama",
+  "placement.deleted": "(dihapus)",
+  "placement.lastChip": "Pilih Lokal agar tidak ada salinan",
+  "placement.credsDiffer": "Repositori domain bersifat jarak jauh dan menggunakan kredensial yang berbeda dari target ini. Penyalinan gagal sampai keduanya cocok.",
 };
 
 export default id;

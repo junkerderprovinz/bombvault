@@ -1688,6 +1688,11 @@ const hu: Partial<Translations> = {
   "placement.droppedKeeps": "{target} megőrzi a másolatait ({n}), és a következő futtatáskor a saját szabálya szerint vágja vissza őket. Új nem kerül hozzá.",
   "placement.droppedKeepsUnknown": "{target} megőrzi a másolatait, és a következő futtatáskor a saját szabálya szerint vágja vissza őket. Új nem kerül hozzá.",
   "placement.droppedAppendOnly": "{target} append-only, és megőriz minden másolatot. Új nem kerül hozzá.",
+  "placement.saveHome": "Beállítás",
+  "placement.fixedSinceFirst": "rögzítve az első biztonsági mentés óta",
+  "placement.deleted": "(törölve)",
+  "placement.lastChip": "Válassza a Helyit, hogy ne legyen másolat",
+  "placement.credsDiffer": "A tartomány tárolója távoli, és más hitelesítő adatokat használ, mint ez a cél. A másolás addig sikertelen, amíg nem egyeznek.",
 };
 
 export default hu;

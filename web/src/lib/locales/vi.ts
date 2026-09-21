@@ -1677,6 +1677,11 @@ const vi: Partial<Translations> = {
   "placement.droppedKeeps": "{target} giữ các bản sao ({n}) và cắt bớt theo quy tắc riêng vào lần chạy tiếp theo. Không có bản sao mới nào được thêm vào.",
   "placement.droppedKeepsUnknown": "{target} giữ các bản sao và cắt bớt theo quy tắc riêng vào lần chạy tiếp theo. Không có bản sao mới nào được thêm vào.",
   "placement.droppedAppendOnly": "{target} là append-only và giữ mọi bản sao. Không có bản sao mới nào được thêm vào.",
+  "placement.saveHome": "Đặt",
+  "placement.fixedSinceFirst": "cố định từ bản sao lưu đầu tiên",
+  "placement.deleted": "(đã xóa)",
+  "placement.lastChip": "Chọn Cục bộ để không sao chép",
+  "placement.credsDiffer": "Kho của miền là từ xa và dùng thông tin xác thực khác với đích này. Việc sao chép sẽ thất bại cho đến khi chúng khớp nhau.",
 };
 
 export default vi;

@@ -1696,6 +1696,11 @@ const eu: Partial<Translations> = {
   "placement.droppedKeeps": "{target}(e)k bere kopiak ({n}) gordetzen ditu eta hurrengo exekuzioan bere arautara murrizten ditu. Berririk ez da gehitzen.",
   "placement.droppedKeepsUnknown": "{target}(e)k bere kopiak gordetzen ditu eta hurrengo exekuzioan bere arautara murrizten ditu. Berririk ez da gehitzen.",
   "placement.droppedAppendOnly": "{target} gehitu-soilik da eta kopia guztiak gordetzen ditu. Berririk ez da gehitzen.",
+  "placement.saveHome": "Ezarri",
+  "placement.fixedSinceFirst": "finkatuta lehen babeskopiatik",
+  "placement.deleted": "(ezabatuta)",
+  "placement.lastChip": "Aukeratu Lokala kopiarik ez izateko",
+  "placement.credsDiffer": "Domeinuaren biltegia urrunekoa da eta helburu honetakoak ez bezalako kredentzialak erabiltzen ditu. Kopia egiteak huts egingo du bat etorri arte.",
 };
 
 export default eu;

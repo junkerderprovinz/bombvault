@@ -1683,6 +1683,11 @@ const cs: Partial<Translations> = {
   "placement.droppedKeeps": "{target} uchovává své kopie ({n}) a při dalším běhu je zkrátí podle vlastního pravidla. Nové se nepřidávají.",
   "placement.droppedKeepsUnknown": "{target} uchovává své kopie a při dalším běhu je zkrátí podle vlastního pravidla. Nové se nepřidávají.",
   "placement.droppedAppendOnly": "{target} je append-only a uchovává každou kopii. Nové se nepřidávají.",
+  "placement.saveHome": "Nastavit",
+  "placement.fixedSinceFirst": "pevné od první zálohy",
+  "placement.deleted": "(smazáno)",
+  "placement.lastChip": "Zvolit Místní, aby se nekopírovalo",
+  "placement.credsDiffer": "Repozitář domény je vzdálený a používá jiné přístupové údaje než tento cíl. Kopírování selže, dokud se neshodnou.",
 };
 
 export default cs;

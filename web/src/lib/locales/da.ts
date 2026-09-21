@@ -1685,6 +1685,11 @@ const da: Partial<Translations> = {
   "placement.droppedKeeps": "{target} beholder sine kopier ({n}) og beskærer dem til sin egen regel ved næste kørsel. Der tilføjes ingen nye.",
   "placement.droppedKeepsUnknown": "{target} beholder sine kopier og beskærer dem til sin egen regel ved næste kørsel. Der tilføjes ingen nye.",
   "placement.droppedAppendOnly": "{target} er append-only og beholder alle kopier. Der tilføjes ingen nye.",
+  "placement.saveHome": "Angiv",
+  "placement.fixedSinceFirst": "fast siden første sikkerhedskopi",
+  "placement.deleted": "(slettet)",
+  "placement.lastChip": "Vælg Lokal for ingen kopi",
+  "placement.credsDiffer": "Domænedepotet er fjernt og bruger andre loginoplysninger end dette mål. Kopiering mislykkes, indtil de stemmer overens.",
 };
 
 export default da;

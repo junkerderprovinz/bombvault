@@ -1688,6 +1688,11 @@ const ar: Partial<Translations> = {
   "placement.droppedKeeps": "{target} يحتفظ بنسخه ({n}) ويقلّصها إلى قاعدته الخاصة في التشغيل التالي. لا تُضاف نسخ جديدة.",
   "placement.droppedKeepsUnknown": "{target} يحتفظ بنسخه ويقلّصها إلى قاعدته الخاصة في التشغيل التالي. لا تُضاف نسخ جديدة.",
   "placement.droppedAppendOnly": "{target} append-only ويحتفظ بكل نسخة. لا تُضاف نسخ جديدة.",
+  "placement.saveHome": "تعيين",
+  "placement.fixedSinceFirst": "ثابت منذ أول نسخة احتياطية",
+  "placement.deleted": "(محذوف)",
+  "placement.lastChip": "اختر محلي لعدم النسخ",
+  "placement.credsDiffer": "مستودع النطاق عن بُعد ويستخدم بيانات اعتماد مختلفة عن هذا الهدف. تفشل النسخة إلى أن تتطابق.",
 };
 
 export default ar;

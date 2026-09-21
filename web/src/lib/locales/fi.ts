@@ -1685,6 +1685,11 @@ const fi: Partial<Translations> = {
   "placement.droppedKeeps": "{target} säilyttää kopionsa ({n}) ja typistää ne omaan sääntöönsä seuraavalla ajolla. Uusia ei lisätä.",
   "placement.droppedKeepsUnknown": "{target} säilyttää kopionsa ja typistää ne omaan sääntöönsä seuraavalla ajolla. Uusia ei lisätä.",
   "placement.droppedAppendOnly": "{target} on append-only ja säilyttää jokaisen kopion. Uusia ei lisätä.",
+  "placement.saveHome": "Aseta",
+  "placement.fixedSinceFirst": "kiinteä ensimmäisestä varmuuskopiosta lähtien",
+  "placement.deleted": "(poistettu)",
+  "placement.lastChip": "Valitse Paikallinen, jos et halua kopiota",
+  "placement.credsDiffer": "Toimialueen arkisto on etäarkisto ja käyttää eri tunnuksia kuin tämä kohde. Kopiointi epäonnistuu, kunnes ne täsmäävät.",
 };
 
 export default fi;

@@ -1688,6 +1688,11 @@ const th: Partial<Translations> = {
   "placement.droppedKeeps": "{target} เก็บสำเนาไว้ ({n}) และตัดให้เหลือตามกฎของตัวเองในการทำงานครั้งถัดไป ไม่มีการเพิ่มสำเนาใหม่",
   "placement.droppedKeepsUnknown": "{target} เก็บสำเนาไว้ และตัดให้เหลือตามกฎของตัวเองในการทำงานครั้งถัดไป ไม่มีการเพิ่มสำเนาใหม่",
   "placement.droppedAppendOnly": "{target} เป็น append-only และเก็บสำเนาทุกชุดไว้ ไม่มีการเพิ่มสำเนาใหม่",
+  "placement.saveHome": "ตั้งค่า",
+  "placement.fixedSinceFirst": "คงที่ตั้งแต่การสำรองข้อมูลครั้งแรก",
+  "placement.deleted": "(ถูกลบ)",
+  "placement.lastChip": "เลือกในเครื่องเพื่อไม่ให้มีการคัดลอก",
+  "placement.credsDiffer": "ที่เก็บข้อมูลของโดเมนเป็นระยะไกลและใช้ข้อมูลรับรองต่างจากปลายทางนี้ การคัดลอกจะล้มเหลวจนกว่าข้อมูลจะตรงกัน",
 };
 
 export default th;

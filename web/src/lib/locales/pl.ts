@@ -1680,6 +1680,11 @@ const pl: Partial<Translations> = {
   "placement.droppedKeeps": "{target} przechowuje swoje kopie ({n}) i przy następnej kopii zapasowej przycina je do własnej reguły. Nowe nie są dodawane.",
   "placement.droppedKeepsUnknown": "{target} przechowuje swoje kopie i przy następnej kopii zapasowej przycina je do własnej reguły. Nowe nie są dodawane.",
   "placement.droppedAppendOnly": "{target} jest typu append-only i zachowuje każdą kopię. Nowe nie są dodawane.",
+  "placement.saveHome": "Ustaw",
+  "placement.fixedSinceFirst": "ustalone od pierwszej kopii zapasowej",
+  "placement.deleted": "(usunięte)",
+  "placement.lastChip": "Wybierz Lokalne, aby nie kopiować",
+  "placement.credsDiffer": "Repozytorium domeny jest zdalne i używa innych danych dostępowych niż to miejsce docelowe. Kopiowanie nie powiedzie się, dopóki się nie zgodzą.",
 };
 
 export default pl;

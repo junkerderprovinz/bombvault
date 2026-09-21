@@ -1685,6 +1685,11 @@ const he: Partial<Translations> = {
   "placement.droppedKeeps": "{target} שומר את העותקים שלו ({n}) ומצמצם אותם לכלל שלו בהרצה הבאה. לא מתווספים עותקים חדשים.",
   "placement.droppedKeepsUnknown": "{target} שומר את העותקים שלו ומצמצם אותם לכלל שלו בהרצה הבאה. לא מתווספים עותקים חדשים.",
   "placement.droppedAppendOnly": "{target} הוא append-only ושומר כל עותק. לא מתווספים עותקים חדשים.",
+  "placement.saveHome": "קביעה",
+  "placement.fixedSinceFirst": "קבוע מאז הגיבוי הראשון",
+  "placement.deleted": "(נמחק)",
+  "placement.lastChip": "בחר מקומי כדי שלא יהיה עותק",
+  "placement.credsDiffer": "מאגר התחום מרוחק ומשתמש בפרטי גישה שונים מאלה של היעד הזה. ההעתקה נכשלת עד שהם יתאימו.",
 };
 
 export default he;

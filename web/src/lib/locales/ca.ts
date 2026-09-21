@@ -1696,6 +1696,11 @@ const ca: Partial<Translations> = {
   "placement.droppedKeeps": "{target} conserva les seves còpies ({n}) i les retalla a la seva pròpia regla en la propera execució. No s'afegeixen còpies noves.",
   "placement.droppedKeepsUnknown": "{target} conserva les seves còpies i les retalla a la seva pròpia regla en la propera execució. No s'afegeixen còpies noves.",
   "placement.droppedAppendOnly": "{target} és append-only i conserva totes les còpies. No s'afegeixen còpies noves.",
+  "placement.saveHome": "Establir",
+  "placement.fixedSinceFirst": "fix des de la primera còpia de seguretat",
+  "placement.deleted": "(eliminat)",
+  "placement.lastChip": "Tria Local per no copiar",
+  "placement.credsDiffer": "El repositori del domini és remot i fa servir credencials diferents d'aquest destí. La còpia falla fins que coincideixin.",
 };
 
 export default ca;

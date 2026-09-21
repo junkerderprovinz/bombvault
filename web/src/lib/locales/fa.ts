@@ -1696,6 +1696,11 @@ const fa: Partial<Translations> = {
   "placement.droppedKeeps": "{target} نسخه‌های خود ({n}) را نگه می‌دارد و در اجرای بعدی آن‌ها را طبق قاعدهٔ خودش کوتاه می‌کند. نسخهٔ جدیدی افزوده نمی‌شود.",
   "placement.droppedKeepsUnknown": "{target} نسخه‌های خود را نگه می‌دارد و در اجرای بعدی آن‌ها را طبق قاعدهٔ خودش کوتاه می‌کند. نسخهٔ جدیدی افزوده نمی‌شود.",
   "placement.droppedAppendOnly": "{target} فقط-افزودنی است و هر نسخه را نگه می‌دارد. نسخهٔ جدیدی افزوده نمی‌شود.",
+  "placement.saveHome": "تنظیم",
+  "placement.fixedSinceFirst": "از اولین پشتیبان ثابت شده",
+  "placement.deleted": "(حذف‌شده)",
+  "placement.lastChip": "برای عدم کپی، محلی را انتخاب کنید",
+  "placement.credsDiffer": "مخزن دامنه از راه دور است و اطلاعات ورود متفاوتی نسبت به این مقصد استفاده می‌کند. کپی تا زمانی که این اطلاعات مطابقت نداشته باشند شکست می‌خورد.",
 };
 
 export default fa;

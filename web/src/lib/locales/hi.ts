@@ -1696,6 +1696,11 @@ const hi: Partial<Translations> = {
   "placement.droppedKeeps": "{target} अपनी प्रतियाँ ({n}) रखता है और अगले रन में उन्हें अपने नियम के अनुसार घटा देता है। कोई नई प्रति नहीं जोड़ी जाती।",
   "placement.droppedKeepsUnknown": "{target} अपनी प्रतियाँ रखता है और अगले रन में उन्हें अपने नियम के अनुसार घटा देता है। कोई नई प्रति नहीं जोड़ी जाती।",
   "placement.droppedAppendOnly": "{target} अपेंड-ओनली है और हर प्रति रखता है। कोई नई प्रति नहीं जोड़ी जाती।",
+  "placement.saveHome": "सेट करें",
+  "placement.fixedSinceFirst": "पहले बैकअप से तय",
+  "placement.deleted": "(हटाया गया)",
+  "placement.lastChip": "कोई कॉपी न हो, इसके लिए लोकल चुनें",
+  "placement.credsDiffer": "डोमेन रिपॉज़िटरी रिमोट है और इस लक्ष्य से अलग क्रेडेंशियल इस्तेमाल करती है। जब तक वे मेल नहीं खाते, कॉपी करना विफल रहता है।",
 };
 
 export default hi;

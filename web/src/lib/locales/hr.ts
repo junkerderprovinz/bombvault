@@ -1696,6 +1696,11 @@ const hr: Partial<Translations> = {
   "placement.droppedKeeps": "{target} čuva svoje kopije ({n}) i pri sljedećem pokretanju ih svodi na vlastito pravilo. Nove se ne dodaju.",
   "placement.droppedKeepsUnknown": "{target} čuva svoje kopije i pri sljedećem pokretanju ih svodi na vlastito pravilo. Nove se ne dodaju.",
   "placement.droppedAppendOnly": "{target} koristi način samo-dodavanja i čuva svaku kopiju. Nove se ne dodaju.",
+  "placement.saveHome": "Postavi",
+  "placement.fixedSinceFirst": "fiksno od prve sigurnosne kopije",
+  "placement.deleted": "(izbrisano)",
+  "placement.lastChip": "Odaberite Lokalno da nema kopije",
+  "placement.credsDiffer": "Repozitorij domene je udaljen i koristi druge podatke za pristup od ovog cilja. Kopiranje ne uspijeva dok se ne podudaraju.",
 };
 
 export default hr;

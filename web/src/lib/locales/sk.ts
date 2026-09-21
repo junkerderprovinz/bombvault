@@ -1696,6 +1696,11 @@ const sk: Partial<Translations> = {
   "placement.droppedKeeps": "{target} uchováva svoje kópie ({n}) a pri ďalšom behu ich skráti podľa vlastného pravidla. Nové sa nepridávajú.",
   "placement.droppedKeepsUnknown": "{target} uchováva svoje kópie a pri ďalšom behu ich skráti podľa vlastného pravidla. Nové sa nepridávajú.",
   "placement.droppedAppendOnly": "{target} je append-only a uchováva každú kópiu. Nové sa nepridávajú.",
+  "placement.saveHome": "Nastaviť",
+  "placement.fixedSinceFirst": "pevné od prvej zálohy",
+  "placement.deleted": "(zmazané)",
+  "placement.lastChip": "Vyberte Lokálny, aby sa nekopírovalo",
+  "placement.credsDiffer": "Repozitár domény je vzdialený a používa iné prístupové údaje než tento cieľ. Kopírovanie zlyhá, kým sa nezhodujú.",
 };
 
 export default sk;

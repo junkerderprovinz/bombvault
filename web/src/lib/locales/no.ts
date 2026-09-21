@@ -1685,6 +1685,11 @@ const no: Partial<Translations> = {
   "placement.droppedKeeps": "{target} beholder kopiene sine ({n}) og trimmer dem til sin egen regel ved neste kjøring. Ingen nye legges til.",
   "placement.droppedKeepsUnknown": "{target} beholder kopiene sine og trimmer dem til sin egen regel ved neste kjøring. Ingen nye legges til.",
   "placement.droppedAppendOnly": "{target} er append-only og beholder alle kopiene. Ingen nye legges til.",
+  "placement.saveHome": "Angi",
+  "placement.fixedSinceFirst": "fast siden den første sikkerhetskopien",
+  "placement.deleted": "(slettet)",
+  "placement.lastChip": "Velg Lokal for ingen kopi",
+  "placement.credsDiffer": "Domenets depot er fjernt og bruker andre påloggingsdetaljer enn dette målet. Kopiering mislykkes til de stemmer overens.",
 };
 
 export default no;

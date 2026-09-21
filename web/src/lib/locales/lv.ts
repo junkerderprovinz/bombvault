@@ -1696,6 +1696,11 @@ const lv: Partial<Translations> = {
   "placement.droppedKeeps": "{target} saglabā savas kopijas ({n}) un nākamajā palaišanā tās samazina līdz savam noteikumam. Jaunas netiek pievienotas.",
   "placement.droppedKeepsUnknown": "{target} saglabā savas kopijas un nākamajā palaišanā tās samazina līdz savam noteikumam. Jaunas netiek pievienotas.",
   "placement.droppedAppendOnly": "{target} darbojas tikai-pievienot režīmā un saglabā katru kopiju. Jaunas netiek pievienotas.",
+  "placement.saveHome": "Iestatīt",
+  "placement.fixedSinceFirst": "nemainīgs kopš pirmās dublēšanas",
+  "placement.deleted": "(dzēsts)",
+  "placement.lastChip": "Izvēlieties Vietējs, lai nekopētu",
+  "placement.credsDiffer": "Domēna krātuve ir attālināta un izmanto citus piekļuves datus nekā šis mērķis. Kopēšana neizdodas, kamēr tie nesakrīt.",
 };
 
 export default lv;
