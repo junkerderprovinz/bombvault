@@ -43,8 +43,8 @@ var (
 	// its start. restic starts it only once the repository is open, so the
 	// dump's own limit plus a minute covers the whole run.
 	dbdumpHelperDeadline = func(max time.Duration) time.Duration { return max + time.Minute }
-	// dbdumpWriteStall is how long no write to stdout may complete before the
-	// helper stops waiting for a reader that has gone away.
+	// dbdumpWriteStall is how long one write to stdout may stay blocked before
+	// the helper stops waiting for a reader that has gone away.
 	dbdumpWriteStall = 10 * time.Minute
 )
 
@@ -72,7 +72,7 @@ type dbdumpStreamOptions struct {
 // say goes to stderr, which restic forwards line by line.
 //
 // It gives up on its own on the hard deadline and on a stdout write that has
-// not completed for dbdumpWriteStall, both from a timer goroutine that never
+// been blocked for dbdumpWriteStall, both from a timer goroutine that never
 // touches the writer: restic 0.17.3 waits forever for a child blocked in a
 // write it has stopped reading (restic #5683), and the containers domain would
 // stay locked behind it until the whole backup's cap runs out.
@@ -109,17 +109,16 @@ func runDBDumpStream(ctx context.Context, args []string, stdout, stderr io.Write
 	deadline := time.AfterFunc(dbdumpHelperDeadline(opts.max), func() { giveUp(dbdump.ReasonTimeout) })
 	defer deadline.Stop()
 
-	state := &dbdump.StreamState{}
+	watched := &stallWatch{w: stdout}
 	stalled := make(chan struct{})
 	defer close(stalled)
-	go watchWrites(stalled, state, time.Now(), dbdumpWriteStall, func() { giveUp(dbdump.ReasonWrite) })
+	go watchWrites(stalled, watched, dbdumpWriteStall, func() { giveUp(dbdump.ReasonWrite) })
 
-	out := bufio.NewWriterSize(stdout, dbdumpStdoutBuffer)
+	out := bufio.NewWriterSize(watched, dbdumpStdoutBuffer)
 	res := dbdump.Stream(ctx, ex, dbdump.StreamOptions{
 		Container: opts.container,
 		Engine:    opts.engine,
 		Max:       opts.max,
-		State:     state,
 	}, out, errs)
 	if err := out.Flush(); err != nil && res.OK {
 		res = dbdump.Result{V: 1, Reason: dbdump.ReasonWrite, Bytes: res.Bytes, Scope: res.Scope, Detail: dbdump.ScrubDetail(err.Error())}
@@ -173,10 +172,10 @@ func validContainerName(name string) bool {
 	return containerNameRe.MatchString(name) && !strings.Contains(name, "..")
 }
 
-// watchWrites fires once no write to stdout has completed for stall. While a
-// write is blocked the dump's last completed write stands still, which is the
-// only sign of a reader that has stopped reading.
-func watchWrites(done <-chan struct{}, state *dbdump.StreamState, start time.Time, stall time.Duration, fire func()) {
+// watchWrites fires once a single write to stdout has been blocked for stall.
+// A dump that merely produces nothing, such as one waiting on a lock inside
+// the database, has no write in flight and is left to its own time limit.
+func watchWrites(done <-chan struct{}, w *stallWatch, stall time.Duration, fire func()) {
 	tick := time.NewTicker(stall / 4)
 	defer tick.Stop()
 	for {
@@ -184,16 +183,39 @@ func watchWrites(done <-chan struct{}, state *dbdump.StreamState, start time.Tim
 		case <-done:
 			return
 		case now := <-tick.C:
-			last := state.LastWrite()
-			if last.IsZero() {
-				last = start
-			}
-			if now.Sub(last) >= stall {
+			if since := w.blockedSince(); !since.IsZero() && now.Sub(since) >= stall {
 				fire()
 				return
 			}
 		}
 	}
+}
+
+// stallWatch remembers when the write to stdout that has not yet returned
+// began.
+type stallWatch struct {
+	w io.Writer
+
+	mu    sync.Mutex
+	since time.Time
+}
+
+func (s *stallWatch) Write(p []byte) (int, error) {
+	s.mark(time.Now())
+	defer s.mark(time.Time{})
+	return s.w.Write(p)
+}
+
+func (s *stallWatch) mark(t time.Time) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.since = t
+}
+
+func (s *stallWatch) blockedSince() time.Time {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.since
 }
 
 // stopOrphan signals the dump the helper is about to leave running inside the
