@@ -363,6 +363,65 @@ func TestAHomeRefusalLeavesOtherFieldsUntouched(t *testing.T) {
 	}
 }
 
+// TestABusyDomainLeavesOtherFieldsUntouched pins the busy half of the same
+// ordering TestAHomeRefusalLeavesOtherFieldsUntouched pins for has-backups: a
+// home change refuses up front while a backup holds the domain, so a field
+// earlier in the same request body never lands either. The authoritative
+// lock inside writeItemPlacement still catches the busy domain, but only
+// after those fields would already have been written.
+func TestABusyDomainLeavesOtherFieldsUntouched(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.openContainer("web")
+	f.openVM("win11")
+	docs := f.openFileSet("docs")
+
+	unlock, ok := f.svc.tryLockDomainFor("containers", "backup")
+	if !ok {
+		t.Fatal("could not take the containers lock")
+	}
+	res := f.do(http.MethodPatch, "/api/containers/web", map[string]any{
+		"home": map[string]any{"repo": nas.ID}, "preHook": "echo hi",
+	})
+	unlock()
+	if res["code"] != "domain-busy" {
+		t.Fatalf("containers PATCH = %v, want domain-busy", res)
+	}
+	if tg, err := f.st.GetTargetByContainer("web"); err != nil || tg.PreHook != "" {
+		t.Fatalf("PreHook = %q, %v, want untouched", tg.PreHook, err)
+	}
+
+	unlock, ok = f.svc.tryLockDomainFor("vms", "backup")
+	if !ok {
+		t.Fatal("could not take the vms lock")
+	}
+	res = f.do(http.MethodPatch, "/api/vms/win11", map[string]any{
+		"home": map[string]any{"repo": nas.ID}, "method": "acpi",
+	})
+	unlock()
+	if res["code"] != "domain-busy" {
+		t.Fatalf("vms PATCH = %v, want domain-busy", res)
+	}
+	if vm, err := f.st.GetVMTargetByName("win11"); err != nil || vm.Method != "graceful" {
+		t.Fatalf("Method = %q, %v, want untouched", vm.Method, err)
+	}
+
+	unlock, ok = f.svc.tryLockDomainFor("files", "backup")
+	if !ok {
+		t.Fatal("could not take the files lock")
+	}
+	res = f.do(http.MethodPatch, "/api/files/sets/"+docs.ID, map[string]any{
+		"home": map[string]any{"repo": nas.ID}, "excludes": []string{"*.tmp"},
+	})
+	unlock()
+	if res["code"] != "domain-busy" {
+		t.Fatalf("files PATCH = %v, want domain-busy", res)
+	}
+	if got, err := f.st.GetFileSet(docs.ID); err != nil || len(got.Excludes) != 0 {
+		t.Fatalf("Excludes = %v, %v, want untouched", got.Excludes, err)
+	}
+}
+
 func TestResetPreviewCountsTheNameInEveryCopySource(t *testing.T) {
 	f := newPlacementFixture(t)
 	nas := f.namedRepo("NAS", "nas")

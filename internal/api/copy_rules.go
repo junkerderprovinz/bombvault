@@ -190,13 +190,19 @@ func (s *Service) checkHomeChange(ctx context.Context, item store.ItemRef, read 
 }
 
 // checkPlacementChange previews a home or copies change against the current
-// placement without writing it, so a handler can refuse an invalid one before
-// any of its other fields land. writeItemPlacement runs the same checks again
-// under lock right before the write, which stays authoritative.
+// placement without writing it, including a probe of the domain lock a home
+// change needs, so a handler can refuse an invalid or busy one before any of
+// its other fields land. writeItemPlacement runs the same checks again under
+// lock right before the write, which stays authoritative.
 func (s *Service) checkPlacementChange(ctx context.Context, item store.ItemRef, change placementChange) error {
 	home, copies, err := placementWrites(change)
 	if err != nil || (home == nil && copies == nil) {
 		return err
+	}
+	if home != nil {
+		if _, busy := s.domainBusy(item.Domain); busy {
+			return errPlacementBusy
+		}
 	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
