@@ -65,26 +65,24 @@ var dbDumpMaxRuntime = sync.OnceValue(func() time.Duration {
 })
 
 // dbDumpMaxRuntimeFrom reads the configured limit and keeps it an hour below
-// the whole backup's cap, so a dump is cut by its own limit and reported as
-// such rather than being killed with the backup around it.
+// the whole backup's cap, or at half a cap too short for that, so a dump is cut
+// by its own limit and reported as such rather than being killed with the
+// backup around it.
 func dbDumpMaxRuntimeFrom(raw string, backupCap time.Duration) time.Duration {
-	max := dbDumpDefaultMaxRuntime
+	limit := dbDumpDefaultMaxRuntime
 	if raw = strings.TrimSpace(raw); raw != "" {
 		n, err := strconv.Atoi(raw)
 		if err != nil || time.Duration(n)*time.Hour < dbDumpMinMaxRuntime || time.Duration(n)*time.Hour > dbDumpMaxMaxRuntime {
-			log.Printf("api: invalid DB_DUMP_MAX_HOURS=%q (want 1..48 hours), using %v", raw, max) //nolint:gosec // G706: %q-quoted
+			log.Printf("api: invalid DB_DUMP_MAX_HOURS=%q (want 1..48 hours), using %v", raw, limit) //nolint:gosec // G706: %q-quoted
 		} else {
-			max = time.Duration(n) * time.Hour
+			limit = time.Duration(n) * time.Hour
 		}
 	}
-	if backupCap > 0 && max >= backupCap {
-		max = backupCap - time.Hour
-		if max < dbDumpMinMaxRuntime {
-			max = dbDumpMinMaxRuntime
-		}
-		log.Printf("api: database dump limit shortened to %v so it stays below BACKUP_MAX_HOURS", max)
+	if backupCap > 0 && limit >= backupCap {
+		limit = max(backupCap-time.Hour, backupCap/2)
+		log.Printf("api: database dump limit shortened to %v so it stays below BACKUP_MAX_HOURS", limit)
 	}
-	return max
+	return limit
 }
 
 // dbDumpPlanFor decides whether this backup dumps the container's database,
