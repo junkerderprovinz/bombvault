@@ -603,7 +603,8 @@ type containerView struct {
 	Stack string `json:"stack"`
 	// Self marks BombVault's own container: the UI hides its backup action and
 	// excludes it from "select all" so a batch can never stop the app itself.
-	Self bool `json:"self"`
+	Self      bool          `json:"self"`
+	Placement placementView `json:"placement"`
 }
 
 func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
@@ -704,6 +705,21 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			v.LastBackup = &tsCopy
 		}
 		views = append(views, v)
+	}
+	items := make([]placementItem, 0, len(views))
+	for _, v := range views {
+		it := placementItem{Key: v.Name, Identity: "container:" + v.Name}
+		if t, ok := byName[v.Name]; ok {
+			it.Home = store.HomeState{Exists: true, Repo: t.Repo, Choice: t.RepoChosen}
+		}
+		if v.LastBackupStarted != nil {
+			it.LastSuccess = *v.LastBackupStarted
+		}
+		items = append(items, it)
+	}
+	placements := h.svc.listPlacements("containers", items)
+	for i := range views {
+		views[i].Placement = placements[views[i].Name]
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "containers": views})
 }
@@ -1414,7 +1430,10 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dropped": placed.Dropped}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"dropped":   placed.Dropped,
+		"placement": h.svc.placementViewOf(store.ItemRef{Domain: "containers", Key: name}),
+	}))
 }
 
 // reloadScheduler re-reads the settings and re-registers every schedule entry,
@@ -4346,6 +4365,26 @@ func (h *Handler) handleListVMs(w http.ResponseWriter, r *http.Request) {
 	if views == nil {
 		views = []VMView{}
 	}
+	targets, _ := h.store.ListVMTargets()
+	byName := make(map[string]store.VMTarget, len(targets))
+	for _, t := range targets {
+		byName[t.Name] = t
+	}
+	items := make([]placementItem, 0, len(views))
+	for _, v := range views {
+		it := placementItem{Key: v.LibvirtName, Identity: "vm:" + v.LibvirtName}
+		if t, ok := byName[v.LibvirtName]; ok {
+			it.Home = store.HomeState{Exists: true, Repo: t.Repo, Choice: t.RepoChosen}
+		}
+		if v.LastBackupStarted != nil {
+			it.LastSuccess = *v.LastBackupStarted
+		}
+		items = append(items, it)
+	}
+	placements := h.svc.listPlacements("vms", items)
+	for i := range views {
+		views[i].Placement = placements[views[i].LibvirtName]
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "vms": views})
 }
 
@@ -4613,7 +4652,10 @@ func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dropped": placed.Dropped}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"dropped":   placed.Dropped,
+		"placement": h.svc.placementViewOf(store.ItemRef{Domain: "vms", Key: name}),
+	}))
 }
 
 // handleVMScheduleIncludeAll sets the include_in_schedule flag for every VM on
@@ -4904,6 +4946,27 @@ func (h *Handler) handleListFileSets(w http.ResponseWriter, r *http.Request) {
 	if views == nil {
 		views = []FileSetView{}
 	}
+	sets, _ := h.store.ListFileSets()
+	byID := make(map[string]store.FileSet, len(sets))
+	for _, fs := range sets {
+		byID[fs.ID] = fs
+	}
+	items := make([]placementItem, 0, len(views))
+	for _, v := range views {
+		fs := byID[v.ID]
+		it := placementItem{
+			Key: v.ID, Identity: "fileset:" + v.Name,
+			Home: store.HomeState{Exists: true, Repo: fs.Repo, Choice: fs.RepoChosen},
+		}
+		if run, _ := h.store.LastSuccessfulBackup(v.ID); run != nil {
+			it.LastSuccess = run.StartedAt
+		}
+		items = append(items, it)
+	}
+	placements := h.svc.listPlacements("files", items)
+	for i := range views {
+		views[i].Placement = placements[views[i].ID]
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "fileSets": views})
 }
 
@@ -5132,7 +5195,10 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"dropped": placed.Dropped}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"dropped":   placed.Dropped,
+		"placement": h.svc.placementViewOf(store.ItemRef{Domain: "files", Key: id}),
+	}))
 }
 
 // handleDeleteFileSet removes a file set (row + run history) WITHOUT touching

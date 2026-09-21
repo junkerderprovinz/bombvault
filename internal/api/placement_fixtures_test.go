@@ -500,6 +500,10 @@ func (d *placementDocker) List(context.Context) ([]dockercli.ContainerInfo, erro
 	return out, nil
 }
 
+// Self reports no own container: the placement fixture never runs as BombVault
+// itself, and the list routes must not panic on the embedded nil Docker.
+func (d *placementDocker) Self(context.Context) (string, error) { return "", nil }
+
 // openContainer adds a container row whose location is still open.
 func (f *placementFixture) openContainer(name string) {
 	f.t.Helper()
