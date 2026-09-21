@@ -1256,12 +1256,12 @@ func scanLinesStderr(cmd *exec.Cmd, args []string, onLine func(line []byte)) ([]
 		return nil, "", fmt.Errorf("restic %s: stdout pipe: %w", subcommand(args), err)
 	}
 	if err := cmd.Start(); err != nil {
-		return nil, stderr.String(), runError(args, stderr.String())
+		return nil, stderr.String(), commandRunError(args, stderr.String())
 	}
 
 	out := scanStdout(stdout, args, onLine)
 	if err := cmd.Wait(); err != nil {
-		return out, stderr.String(), runError(args, stderr.String())
+		return out, stderr.String(), commandRunError(args, stderr.String())
 	}
 	return out, stderr.String(), nil
 }
@@ -1584,8 +1584,30 @@ func backupExit3Err(args []string, err error, stderr string) error {
 // reason to the caller so the UI shows WHY restic failed (e.g. "repository is
 // already locked") instead of a generic message.
 func runError(args []string, stderr string) error {
+	log.Printf("restic %s stderr: %s", subcommand(args), stderr)
+	return stderrError(args, stderr)
+}
+
+// commandRunError is runError for a backup taken from a command. The lines
+// restic forwarded from the command can quote a database row and the log ends
+// up in the diagnostics bundle, so the log keeps restic's own lines only.
+func commandRunError(args []string, stderr string) error {
+	var own []string
+	left := 0
+	for _, line := range strings.Split(stderr, "\n") {
+		if strings.HasPrefix(line, subprocessLinePrefix) {
+			left++
+			continue
+		}
+		own = append(own, line)
+	}
+	log.Printf("restic %s stderr (%d lines from the command left out): %s", subcommand(args), left, strings.Join(own, "\n"))
+	return stderrError(args, stderr)
+}
+
+// stderrError is the concise, path-scrubbed error runError returns.
+func stderrError(args []string, stderr string) error {
 	sub := subcommand(args)
-	log.Printf("restic %s stderr: %s", sub, stderr)
 	msg := fmt.Sprintf("restic %s failed", sub)
 	if reason := lastReason(stderr); reason != "" {
 		msg = fmt.Sprintf("restic %s failed: %s", sub, reason)

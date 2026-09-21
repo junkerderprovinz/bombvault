@@ -1,9 +1,11 @@
 package restic
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -408,4 +410,61 @@ func TestBackupFromCommandNeverFeedsTheSink(t *testing.T) {
 	if !reflect.DeepEqual(lines, []string{"subprocess bombvault: bombvault-dbdump-pid 4711"}) {
 		t.Fatalf("subprocess lines = %v", lines)
 	}
+}
+
+// TestFailedCommandBackupLogsOnlyResticsOwnLines checks that the log of a
+// failed dump backup leaves out what the dump command wrote, which can quote a
+// database row, while every other subcommand still logs its whole stderr.
+func TestFailedCommandBackupLogsOnlyResticsOwnLines(t *testing.T) {
+	const row = "subprocess bombvault: ERROR: duplicate key (email)=(alice@example.com)"
+	logged := func(fn func()) string {
+		var buf bytes.Buffer
+		prev, flags := log.Writer(), log.Flags()
+		log.SetOutput(&buf)
+		log.SetFlags(0)
+		defer func() { log.SetOutput(prev); log.SetFlags(flags) }()
+		fn()
+		return buf.String()
+	}
+
+	t.Run("other subcommands", func(t *testing.T) {
+		out := logged(func() { _ = runError([]string{"-r", "/repo", "backup"}, row+"\nFatal: unable to save snapshot") })
+		if !strings.Contains(out, "alice@example.com") {
+			t.Fatalf("a plain backup's log lost part of its stderr:\n%s", out)
+		}
+	})
+
+	t.Run("a backup from a command", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("needs a POSIX shell to exec a shebang script as the fake restic binary")
+		}
+		script := filepath.Join(t.TempDir(), "fake-restic.sh")
+		body := "#!/bin/sh\n" +
+			"echo 'subprocess bombvault: bombvault-dbdump-pid 4711' >&2\n" +
+			"echo '" + row + "' >&2\n" +
+			"echo 'Fatal: unable to save snapshot: repository is already locked' >&2\n" +
+			"exit 1\n"
+		if err := os.WriteFile(script, []byte(body), 0o700); err != nil { //nolint:gosec // G306: test-only helper script, needs the exec bit
+			t.Fatalf("write fake restic script: %v", err)
+		}
+
+		var lines []string
+		var err error
+		out := logged(func() {
+			_, lines, err = Restic{Bin: script}.BackupFromCommand(context.Background(), "/repo", "/dbdump/pg.sql", nil,
+				[]string{"/usr/local/bin/bombvault", "dbdump-stream"}, Mode{Encrypted: false})
+		})
+		if err == nil {
+			t.Fatal("BackupFromCommand succeeded, want the failure the fake restic reported")
+		}
+		if strings.Contains(out, "alice@example.com") || strings.Contains(out, "dbdump-pid") {
+			t.Errorf("the log carries a line the dump command wrote:\n%s", out)
+		}
+		if !strings.Contains(out, "repository is already locked") {
+			t.Errorf("the log lost restic's own line:\n%s", out)
+		}
+		if len(lines) != 2 {
+			t.Errorf("subprocess lines = %v, want both for the caller", lines)
+		}
+	})
 }

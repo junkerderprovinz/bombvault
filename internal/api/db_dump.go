@@ -484,7 +484,7 @@ func (a *dbDumpAdapter) forget(ctx context.Context, repo, snapshotID, reason str
 	fctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), dbDumpForgetTimeout)
 	defer cancel()
 	if err := a.engine.Forget(fctx, repo, []string{snapshotID}, false, a.mode); err != nil {
-		log.Printf("api: database dump of %q: %s, and snapshot %s could not be removed: %v", a.container, reason, shortID(snapshotID), err) //nolint:gosec // G706: name is %q-quoted
+		log.Printf("api: database dump of %q: %s, and snapshot %s could not be removed: %v", a.container, shareableRunError("dbdump", reason), shortID(snapshotID), err) //nolint:gosec // G706: name is %q-quoted
 		return backup.DBDumpResult{}, &backup.DBDumpError{
 			Reason:     store.ReasonDBDumpLeftover + ": " + shortID(snapshotID),
 			SnapshotID: snapshotID,
