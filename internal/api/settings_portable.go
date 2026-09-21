@@ -875,6 +875,11 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, fileSettings 
 // would put those items silently back on their domain repository and send their
 // next backup somewhere else, which is exactly the failure the delete endpoint
 // refuses outright; an import must not be the way around that refusal.
+//
+// A row the file introduces may become a target's direct repository again,
+// through importedLink; an existing row keeps its own link no matter what
+// the file says, since the upsert below never rewrites companion_of for an
+// id that is already stored.
 func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 	current, err := h.store.ListNamedRepos()
 	if err != nil {
@@ -916,6 +921,17 @@ func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 		t.Repo = currentRepo[t.ID]
 		if t.Repo == "" {
 			t.Repo = wanted // a row this instance does not have yet: nothing to move
+		}
+		if currentRepo[t.ID] == "" {
+			// Only a row this instance does not have yet may claim the target
+			// named in its file entry.
+			var err error
+			if t.CompanionOf, t.CompanionLost, err = h.importedLink(tv.CompanionOf); err != nil {
+				return err
+			}
+			if t.CompanionLost {
+				log.Printf("api: settings import: repository %q belonged to a target that is not here; imported as a plain repository", t.Name) //nolint:gosec // G706: the name is %q-quoted
+			}
 		}
 		if _, err := h.store.UpsertOffsiteTarget(t); err != nil {
 			return err

@@ -336,6 +336,28 @@ func (s *Service) connectDirectRepo(ctx context.Context, repoID, targetID string
 	return s.store.GetNamedRepo(repoID)
 }
 
+// importedLink is the link a new row from a settings file gets: its target,
+// when that target exists here and has no direct repository yet, otherwise
+// none, with lost true when the file named a target that could not be used.
+func (h *Handler) importedLink(companionOf string) (id string, lost bool, err error) {
+	companionOf = strings.TrimSpace(companionOf)
+	if companionOf == "" {
+		return "", false, nil
+	}
+	_, isTarget, err := h.store.GetOffsiteTarget(companionOf)
+	if err != nil {
+		return "", false, err
+	}
+	_, taken, err := h.store.CompanionFor(companionOf)
+	if err != nil {
+		return "", false, err
+	}
+	if !isTarget || taken {
+		return "", true, nil
+	}
+	return companionOf, false, nil
+}
+
 // handleCreateDirectRepo is POST /api/repos with companionOf. Everything but the
 // name and the location comes from the target.
 func (h *Handler) handleCreateDirectRepo(w http.ResponseWriter, r *http.Request, body namedRepoBody) {
