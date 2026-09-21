@@ -483,3 +483,47 @@ func TestDBDumpFailureNotifiesAfterTheBackup(t *testing.T) {
 		}
 	})
 }
+
+func TestScheduledRoundNamesAFailedDumpInItsSummary(t *testing.T) {
+	failedDump := func(runID string) backup.DBDumpOutcome {
+		return backup.DBDumpOutcome{RunID: runID, Status: "failed", Reason: store.ReasonDBDumpAuth}
+	}
+
+	t.Run("the items and the summary share the round", func(t *testing.T) {
+		ssh := &fakeHostSSH{}
+		s, targetID := dumpNotifyService(t, ssh, notify.Config{On: "failure", Unraid: true, ScheduledSummary: true})
+		rounds := NewScheduledRounds()
+
+		rounds.Begin("containers")
+		item := notify.WithMessagesSuppressed(rounds.Context("containers"))
+		s.notifyDBDumpFailed(item, targetID, "pg", failedDump(recordDumpRun(t, s, targetID, "failed", store.ReasonDBDumpAuth)), true)
+		if len(ssh.runs) != 0 {
+			t.Fatalf("a per-item message went out in summary mode: %v", ssh.runs)
+		}
+		s.ScheduledNotifyResult(rounds.End("containers"), "containers", 1, 0, nil)
+
+		if len(ssh.runs) != 1 {
+			t.Fatalf("%d summaries, want one", len(ssh.runs))
+		}
+		if sent := strings.Join(ssh.runs[0], " "); !strings.Contains(sent, "1 database dumps failed: pg") {
+			t.Errorf("summary = %s", sent)
+		}
+	})
+
+	t.Run("overlapping rounds name the dump once", func(t *testing.T) {
+		ssh := &fakeHostSSH{}
+		s, targetID := dumpNotifyService(t, ssh, notify.Config{On: "failure", Unraid: true, ScheduledSummary: true})
+		rounds := NewScheduledRounds()
+
+		rounds.Begin("containers")
+		rounds.Begin("containers")
+		item := notify.WithMessagesSuppressed(rounds.Context("containers"))
+		s.notifyDBDumpFailed(item, targetID, "pg", failedDump(recordDumpRun(t, s, targetID, "failed", store.ReasonDBDumpAuth)), true)
+		s.ScheduledNotifyResult(rounds.End("containers"), "containers", 1, 0, nil)
+		s.ScheduledNotifyResult(rounds.End("containers"), "containers", 1, 0, nil)
+
+		if len(ssh.runs) != 1 {
+			t.Fatalf("%d summaries, want the dump named in exactly one", len(ssh.runs))
+		}
+	})
+}

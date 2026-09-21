@@ -660,20 +660,76 @@ func (t *dbDumpTally) add(name string) {
 	t.failed = append(t.failed, name)
 }
 
-// line is what the round's summary appends, empty when every dump went
-// through.
-func (t *dbDumpTally) line() string {
+// take is what the round's summary appends, empty when every dump went
+// through. It empties the tally, so rounds that overlap and share it name each
+// failure once.
+func (t *dbDumpTally) take() string {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	if len(t.failed) == 0 {
+	all := t.failed
+	t.failed = nil
+	if len(all) == 0 {
 		return ""
 	}
-	names := t.failed
-	tail := ""
+	names, tail := all, ""
 	if len(names) > maxListedFailures {
 		names, tail = names[:maxListedFailures], fmt.Sprintf(", +%d more", len(names)-maxListedFailures)
 	}
-	return fmt.Sprintf("%d database dumps failed: %s%s", len(t.failed), strings.Join(names, ", "), tail)
+	return fmt.Sprintf("%d database dumps failed: %s%s", len(all), strings.Join(names, ", "), tail)
+}
+
+// ScheduledRounds hands the scheduler's per-domain rounds the context their
+// items and their summary share, which is where a failed dump is tallied in
+// summary mode. Rounds of one domain that overlap, such as a per-item schedule
+// firing during the domain run, share one tally.
+type ScheduledRounds struct {
+	mu   sync.Mutex
+	open map[string]*scheduledRound
+}
+
+type scheduledRound struct {
+	ctx  context.Context
+	open int
+}
+
+func NewScheduledRounds() *ScheduledRounds {
+	return &ScheduledRounds{open: map[string]*scheduledRound{}}
+}
+
+// Begin opens a round of domain.
+func (r *ScheduledRounds) Begin(domain string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if round, ok := r.open[domain]; ok {
+		round.open++
+		return
+	}
+	r.open[domain] = &scheduledRound{ctx: withDBDumpTally(context.Background()), open: 1}
+}
+
+// Context is the base context for an item of domain's open round.
+func (r *ScheduledRounds) Context(domain string) context.Context {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if round, ok := r.open[domain]; ok {
+		return round.ctx
+	}
+	return context.Background()
+}
+
+// End closes a round of domain and returns the context its summary goes out
+// with.
+func (r *ScheduledRounds) End(domain string) context.Context {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	round, ok := r.open[domain]
+	if !ok {
+		return context.Background()
+	}
+	if round.open--; round.open == 0 {
+		delete(r.open, domain)
+	}
+	return round.ctx
 }
 
 // notifyDBDumpFailed reports a failed dump once the backup around it has its
@@ -705,7 +761,7 @@ func (s *Service) notifyDBDumpFailed(ctx context.Context, targetID, name string,
 	// chat room and a mailbox are not where a database error belongs.
 	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "containers",
 		notify.Event{Title: "BombVault: database dump FAILED", Message: msg, OK: false})
-	if s.unraidGate(c.Unraid) {
+	if s.unraidGate(c.Unraid) && (!notify.MessagesSuppressed(ctx) || !c.ScheduledSummary) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: database dump FAILED", msg, "warning"); e != nil {
 			log.Printf("notify: unraid: %v", e)
 		}
