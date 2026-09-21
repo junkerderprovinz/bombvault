@@ -2043,7 +2043,7 @@ func TestFileSetRenameRefusedWhenBackedUp(t *testing.T) {
 // TestFileSetRenameRefusedWhenSnapshotsExistWithoutRuns pins the completeness
 // of the rename guard: a Discover-rebuilt set has real fileset:<Name> snapshots
 // in the repo but NO run rows, so a runs-only check would wrongly allow the
-// rename and strand the snapshots. fileSetHasBackups must also see the tags.
+// rename and strand the snapshots. itemBackups must also see the tags.
 func TestFileSetRenameRefusedWhenSnapshotsExistWithoutRuns(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{
 		{ID: "deadbeef12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:orphan"}},

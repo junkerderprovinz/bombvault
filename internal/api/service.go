@@ -11058,12 +11058,6 @@ func (s *Service) SetFileSetSelectedPaths(_ context.Context, id string, entries 
 	return nil
 }
 
-// fileSetHasBackups decides whether a file set may still move. An unreadable
-// location counts as having backups.
-func (s *Service) fileSetHasBackups(ctx context.Context, id string) (bool, error) {
-	return countsAsBackedUp(s.itemBackups(ctx, store.ItemRef{Domain: "files", Key: id}))
-}
-
 // SnapshotsFileSet lists restic snapshots for a single file set, filtered by
 // the "fileset:<Name>" tag its backups write — the files counterpart of
 // SnapshotsVM. id is the set's stable store id; source selects the local or

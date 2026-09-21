@@ -356,7 +356,7 @@ func placementMarkersTx(tx *sql.Tx) (paused, confirmed map[string]bool, err erro
 
 func checkPlacementDomain(domain string) error {
 	if !slices.Contains(PlacementDomains, domain) {
-		return fmt.Errorf("%q has no placement", domain)
+		return fmt.Errorf("%q: %w", domain, ErrUnknownDomain)
 	}
 	return nil
 }

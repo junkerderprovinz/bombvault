@@ -46,8 +46,8 @@ func TestOnlyTheCallThatStartsAPauseSaysSo(t *testing.T) {
 	if err != nil || !found || !d.Paused() || d.Home != "" || len(d.Skip) != 0 {
 		t.Fatalf("PlacementDefaultFor = %+v found=%v err=%v, want a paused row on the domain path", d, found, err)
 	}
-	if _, err := r.PausePlacement("flash"); err == nil {
-		t.Error("flash has no placement to pause")
+	if _, err := r.PausePlacement("flash"); !errors.Is(err, store.ErrUnknownDomain) {
+		t.Errorf("PausePlacement(flash) = %v, want ErrUnknownDomain", err)
 	}
 }
 
