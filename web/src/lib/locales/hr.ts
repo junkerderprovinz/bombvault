@@ -925,6 +925,8 @@ const hr: Partial<Translations> = {
   "dbdump.importConfirm": "Uvesti ovaj {engine} {version} ispis u {container}? BombVault zaustavlja kontejner, njegovu mapu s podacima miče u stranu (ostaje sačuvana, ništa se ne briše), pokreće kontejner s praznom mapom i uvozi ispis. Aplikacije koje koriste ovu bazu vidjet će njezino stanje iz trenutka ispisa.",
   "dbdump.importConfirmNoVersion": "Uvesti ovaj {engine} ispis u {container}? BombVault zaustavlja kontejner, njegovu mapu s podacima miče u stranu (ostaje sačuvana, ništa se ne briše), pokreće kontejner s praznom mapom i uvozi ispis. Aplikacije koje koriste ovu bazu vidjet će njezino stanje iz trenutka ispisa.",
   "dbdump.importNoVersion": "Ovaj ispis ne bilježi verziju svoje baze podataka. Uvoz ne uspijeva ako ga poslužitelj ne može pročitati.",
+  "dbdump.importStopsOne": "Tijekom uvoza BombVault zaustavlja i {app} te ga nakon toga ponovno pokreće.",
+  "dbdump.importStopsMany": "Tijekom uvoza BombVault zaustavlja i ove aplikacije te ih nakon toga ponovno pokreće: {apps}.",
   "dbdump.importDone": "Baza podataka uvezena.",
   "dbdump.importRefused.busy": "Upravo traje druga sigurnosna kopija ili vraćanje. Pokušaj ponovno kad završi.",
   "dbdump.importRefused.notRunning": "Prvo pokreni kontejner; uvoz treba poslužitelj u radu.",

@@ -250,6 +250,8 @@ interface RestorePanelProps {
   dbCoverage?: DbDataCoverage;
   /** The container is up, which the import needs. */
   containerRunning?: boolean;
+  /** The running apps an import stops while it runs. */
+  importStops?: string[];
 }
 
 // RecreateButton recreates a container that is not installed from its saved
@@ -836,6 +838,7 @@ export function RestorePanel({
   isDatabase = false,
   dbCoverage = "",
   containerRunning = false,
+  importStops,
 }: RestorePanelProps) {
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
@@ -947,6 +950,7 @@ export function RestorePanel({
         source={source}
         recognised={isDatabase}
         canImport={installed && containerRunning}
+        importStops={importStops}
         hostMountRoot={hostMountRoot}
         defaultFolder={restoreFolder}
         reloadTick={reloadTick}

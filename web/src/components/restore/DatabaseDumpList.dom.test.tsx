@@ -70,7 +70,7 @@ function makeDump(over: Partial<DBDumpView> = {}): DBDumpView {
   };
 }
 
-function renderList() {
+function renderList(importStops: string[] = []) {
   return render(
     <I18nProvider>
       <AdvancedProvider>
@@ -79,6 +79,7 @@ function renderList() {
           source="local"
           recognised
           canImport
+          importStops={importStops}
           hostMountRoot="/host/user"
           defaultFolder="user/bombvault/restore"
           reloadTick={0}
@@ -224,6 +225,24 @@ describe("the database dump list", () => {
     await waitFor(() => expect(screen.getByText(question)).toBeTruthy());
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["dbdump.import"] }));
     await waitFor(() => expect(importDbDump).toHaveBeenCalledWith("immich_postgres", "aaaa1111bbbb2222", "local"));
+  });
+
+  it("names the one app the import stops while it runs", async () => {
+    renderList(["immich_server"]);
+
+    fireEvent.click(await screen.findByRole("button", { name: en["dbdump.import"] }));
+    await waitFor(() => expect(screen.getByRole("dialog")).toBeTruthy());
+    expect(screen.getByRole("dialog").textContent).toContain(filled("dbdump.importStopsOne", { app: "immich_server" }));
+  });
+
+  it("names every app the import stops while it runs", async () => {
+    renderList(["immich_server", "immich_machine_learning"]);
+
+    fireEvent.click(await screen.findByRole("button", { name: en["dbdump.import"] }));
+    await waitFor(() => expect(screen.getByRole("dialog")).toBeTruthy());
+    expect(screen.getByRole("dialog").textContent).toContain(
+      filled("dbdump.importStopsMany", { apps: "immich_server, immich_machine_learning" })
+    );
   });
 
   it("turns a refused import into its own sentence, said once", async () => {

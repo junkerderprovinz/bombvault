@@ -925,6 +925,8 @@ const gl: Partial<Translations> = {
   "dbdump.importConfirm": "Importar este volcado de {engine} {version} en {container}? BombVault para o contedor, aparta o seu cartafol de datos (consérvase, non se borra nada), arrinca o contedor cun cartafol de datos baleiro e importa o volcado. As aplicacións que usan esta base verán o seu estado do momento do volcado.",
   "dbdump.importConfirmNoVersion": "Importar este volcado de {engine} en {container}? BombVault para o contedor, aparta o seu cartafol de datos (consérvase, non se borra nada), arrinca o contedor cun cartafol de datos baleiro e importa o volcado. As aplicacións que usan esta base verán o seu estado do momento do volcado.",
   "dbdump.importNoVersion": "Este volcado non rexistra a versión da súa base de datos. A importación falla se o servidor non a pode ler.",
+  "dbdump.importStopsOne": "Mentres importa, BombVault tamén detén {app} e despois volve inicialo.",
+  "dbdump.importStopsMany": "Mentres importa, BombVault tamén detén estas aplicacións e despois volve inicialas: {apps}.",
   "dbdump.importDone": "Base de datos importada.",
   "dbdump.importRefused.busy": "Hai outra copia ou restauración en marcha. Téntao de novo cando remate.",
   "dbdump.importRefused.notRunning": "Arrinca primeiro o contedor; a importación precisa o servidor en marcha.",

@@ -1057,6 +1057,8 @@ const tr: Partial<Translations> = {
   "dbdump.importConfirm": "Bu {engine} {version} dökümü {container} kapsayıcısına aktarılsın mı? BombVault kapsayıcıyı durdurur, veri klasörünü kenara alır (saklanır, hiçbir şey silinmez), kapsayıcıyı boş bir veri klasörüyle başlatır ve dökümü aktarır. Bu veritabanını kullanan uygulamalar onun döküm anındaki halini görür.",
   "dbdump.importConfirmNoVersion": "Bu {engine} dökümü {container} kapsayıcısına aktarılsın mı? BombVault kapsayıcıyı durdurur, veri klasörünü kenara alır (saklanır, hiçbir şey silinmez), kapsayıcıyı boş bir veri klasörüyle başlatır ve dökümü aktarır. Bu veritabanını kullanan uygulamalar onun döküm anındaki halini görür.",
   "dbdump.importNoVersion": "Bu döküm veritabanı sürümünü kaydetmiyor. Sunucu okuyamazsa aktarma başarısız olur.",
+  "dbdump.importStopsOne": "Aktarma sürerken BombVault {app} uygulamasını da durdurur ve ardından yeniden başlatır.",
+  "dbdump.importStopsMany": "Aktarma sürerken BombVault şu uygulamaları da durdurur ve ardından yeniden başlatır: {apps}.",
   "dbdump.importDone": "Veritabanı aktarıldı.",
   "dbdump.importRefused.busy": "Başka bir yedekleme veya geri yükleme sürüyor. Bitince yeniden dene.",
   "dbdump.importRefused.notRunning": "Önce kapsayıcıyı başlat; aktarma çalışan sunucuya ihtiyaç duyar.",

@@ -1034,6 +1034,8 @@ const pt: Partial<Translations> = {
   "dbdump.importConfirm": "Importar este despejo {engine} {version} para {container}? O BombVault para o contentor, afasta a sua pasta de dados (fica guardada, nada é apagado), arranca o contentor com uma pasta de dados vazia e importa o despejo. As aplicações que usam esta base verão o estado dela no momento do despejo.",
   "dbdump.importConfirmNoVersion": "Importar este despejo {engine} para {container}? O BombVault para o contentor, afasta a sua pasta de dados (fica guardada, nada é apagado), arranca o contentor com uma pasta de dados vazia e importa o despejo. As aplicações que usam esta base verão o estado dela no momento do despejo.",
   "dbdump.importNoVersion": "Este despejo não regista a versão da sua base de dados. A importação falha se o servidor não o conseguir ler.",
+  "dbdump.importStopsOne": "Durante a importação, o BombVault também para {app} e volta a iniciá-lo depois.",
+  "dbdump.importStopsMany": "Durante a importação, o BombVault também para estas aplicações e volta a iniciá-las depois: {apps}.",
   "dbdump.importDone": "Base de dados importada.",
   "dbdump.importRefused.busy": "Está a decorrer outra cópia de segurança ou restauro. Tenta de novo quando terminar.",
   "dbdump.importRefused.notRunning": "Arranca primeiro o contentor; a importação precisa do servidor a trabalhar.",

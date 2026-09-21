@@ -925,6 +925,8 @@ const sk: Partial<Translations> = {
   "dbdump.importConfirm": "Importovať tento výpis {engine} {version} do {container}? BombVault zastaví kontajner, jeho dátový priečinok odsunie nabok (zostáva zachovaný, nič sa nemaže), spustí kontajner s prázdnym dátovým priečinkom a výpis naimportuje. Aplikácie, ktoré túto databázu používajú, uvidia jej stav z času výpisu.",
   "dbdump.importConfirmNoVersion": "Importovať tento výpis {engine} do {container}? BombVault zastaví kontajner, jeho dátový priečinok odsunie nabok (zostáva zachovaný, nič sa nemaže), spustí kontajner s prázdnym dátovým priečinkom a výpis naimportuje. Aplikácie, ktoré túto databázu používajú, uvidia jej stav z času výpisu.",
   "dbdump.importNoVersion": "Tento výpis neuvádza verziu svojej databázy. Import zlyhá, ak ho server nedokáže prečítať.",
+  "dbdump.importStopsOne": "Počas importu BombVault zastaví aj {app} a potom ho znova spustí.",
+  "dbdump.importStopsMany": "Počas importu BombVault zastaví aj tieto aplikácie a potom ich znova spustí: {apps}.",
   "dbdump.importDone": "Databáza naimportovaná.",
   "dbdump.importRefused.busy": "Práve beží iná záloha alebo obnova. Skús to znova, keď skončí.",
   "dbdump.importRefused.notRunning": "Najprv spusti kontajner; import potrebuje bežiaci server.",

@@ -925,6 +925,8 @@ const et: Partial<Translations> = {
   "dbdump.importConfirm": "Kas importida see {engine} {version} tõmmis konteinerisse {container}? BombVault peatab konteineri, lükkab selle andmekausta kõrvale (see jääb alles, midagi ei kustutata), käivitab konteineri tühja andmekaustaga ja impordib tõmmise. Seda andmebaasi kasutavad rakendused näevad selle olekut tõmmise võtmise ajast.",
   "dbdump.importConfirmNoVersion": "Kas importida see {engine} tõmmis konteinerisse {container}? BombVault peatab konteineri, lükkab selle andmekausta kõrvale (see jääb alles, midagi ei kustutata), käivitab konteineri tühja andmekaustaga ja impordib tõmmise. Seda andmebaasi kasutavad rakendused näevad selle olekut tõmmise võtmise ajast.",
   "dbdump.importNoVersion": "See tõmmis ei märgi oma andmebaasi versiooni. Import ebaõnnestub, kui server seda lugeda ei suuda.",
+  "dbdump.importStopsOne": "Importimise ajaks peatab BombVault ka {app} ja käivitab selle pärast uuesti.",
+  "dbdump.importStopsMany": "Importimise ajaks peatab BombVault ka need rakendused ja käivitab need pärast uuesti: {apps}.",
   "dbdump.importDone": "Andmebaas imporditud.",
   "dbdump.importRefused.busy": "Parasjagu käib teine varundus või taaste. Proovi uuesti, kui see on lõppenud.",
   "dbdump.importRefused.notRunning": "Käivita kõigepealt konteiner; import vajab töötavat serverit.",

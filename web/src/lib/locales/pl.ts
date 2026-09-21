@@ -1029,6 +1029,8 @@ const pl: Partial<Translations> = {
   "dbdump.importConfirm": "Zaimportować ten zrzut {engine} {version} do {container}? BombVault zatrzymuje kontener, odsuwa jego folder danych na bok (zostaje zachowany, nic nie jest kasowane), uruchamia kontener z pustym folderem danych i importuje zrzut. Aplikacje korzystające z tej bazy zobaczą jej stan z chwili wykonania zrzutu.",
   "dbdump.importConfirmNoVersion": "Zaimportować ten zrzut {engine} do {container}? BombVault zatrzymuje kontener, odsuwa jego folder danych na bok (zostaje zachowany, nic nie jest kasowane), uruchamia kontener z pustym folderem danych i importuje zrzut. Aplikacje korzystające z tej bazy zobaczą jej stan z chwili wykonania zrzutu.",
   "dbdump.importNoVersion": "Ten zrzut nie zapisuje wersji swojej bazy danych. Import się nie uda, jeśli serwer nie zdoła go odczytać.",
+  "dbdump.importStopsOne": "Na czas importu BombVault zatrzymuje też {app} i potem uruchamia go ponownie.",
+  "dbdump.importStopsMany": "Na czas importu BombVault zatrzymuje też te aplikacje i potem uruchamia je ponownie: {apps}.",
   "dbdump.importDone": "Baza danych zaimportowana.",
   "dbdump.importRefused.busy": "Trwa już inna kopia zapasowa albo przywracanie. Spróbuj ponownie, gdy się zakończy.",
   "dbdump.importRefused.notRunning": "Najpierw uruchom kontener; import potrzebuje działającego serwera.",

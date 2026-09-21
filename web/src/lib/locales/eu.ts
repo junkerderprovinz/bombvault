@@ -925,6 +925,8 @@ const eu: Partial<Translations> = {
   "dbdump.importConfirm": "{engine} {version} iraulketa hau {container}-en inportatu? BombVault-ek edukiontzia gelditzen du, bere datuen karpeta alde batera eramaten du (gorde egiten da, ez da ezer ezabatzen), edukiontzia datuen karpeta hutsarekin abiarazten du eta iraulketa inportatzen du. Datu-base hau erabiltzen duten aplikazioek iraulketaren uneko egoera ikusiko dute.",
   "dbdump.importConfirmNoVersion": "{engine} iraulketa hau {container}-en inportatu? BombVault-ek edukiontzia gelditzen du, bere datuen karpeta alde batera eramaten du (gorde egiten da, ez da ezer ezabatzen), edukiontzia datuen karpeta hutsarekin abiarazten du eta iraulketa inportatzen du. Datu-base hau erabiltzen duten aplikazioek iraulketaren uneko egoera ikusiko dute.",
   "dbdump.importNoVersion": "Iraulketa honek ez du bere datu-basearen bertsioa jasotzen. Inportazioak huts egingo du zerbitzariak irakurri ezin badu.",
+  "dbdump.importStopsOne": "Inportatzen duen bitartean, BombVault-ek {app} ere gelditzen du eta gero berriro abiarazten du.",
+  "dbdump.importStopsMany": "Inportatzen duen bitartean, BombVault-ek aplikazio hauek ere gelditzen ditu eta gero berriro abiarazten ditu: {apps}.",
   "dbdump.importDone": "Datu-basea inportatu da.",
   "dbdump.importRefused.busy": "Beste babeskopia edo leheneratze bat martxan dago. Saiatu berriro amaitzean.",
   "dbdump.importRefused.notRunning": "Abiarazi edukiontzia lehenik; inportazioak zerbitzaria martxan behar du.",

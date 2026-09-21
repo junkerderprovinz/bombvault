@@ -925,6 +925,8 @@ const lt: Partial<Translations> = {
   "dbdump.importConfirm": "Importuoti šią {engine} {version} išklotinę į {container}? BombVault sustabdo konteinerį, jo duomenų aplanką patraukia į šalį (jis išsaugomas, niekas netrinama), paleidžia konteinerį su tuščiu duomenų aplanku ir importuoja išklotinę. Šią duomenų bazę naudojančios programos matys jos būseną iš išklotinės laiko.",
   "dbdump.importConfirmNoVersion": "Importuoti šią {engine} išklotinę į {container}? BombVault sustabdo konteinerį, jo duomenų aplanką patraukia į šalį (jis išsaugomas, niekas netrinama), paleidžia konteinerį su tuščiu duomenų aplanku ir importuoja išklotinę. Šią duomenų bazę naudojančios programos matys jos būseną iš išklotinės laiko.",
   "dbdump.importNoVersion": "Ši išklotinė neužrašo savo duomenų bazės versijos. Importas nepavyks, jei serveris jos nesugebės perskaityti.",
+  "dbdump.importStopsOne": "Importo metu BombVault taip pat sustabdo {app} ir po to vėl jį paleidžia.",
+  "dbdump.importStopsMany": "Importo metu BombVault taip pat sustabdo šias programas ir po to vėl jas paleidžia: {apps}.",
   "dbdump.importDone": "Duomenų bazė importuota.",
   "dbdump.importRefused.busy": "Šiuo metu vyksta kita atsarginė kopija ar atkūrimas. Pabandyk dar kartą, kai baigsis.",
   "dbdump.importRefused.notRunning": "Pirma paleisk konteinerį; importui reikia veikiančio serverio.",

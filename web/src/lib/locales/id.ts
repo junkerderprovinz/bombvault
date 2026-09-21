@@ -925,6 +925,8 @@ const id: Partial<Translations> = {
   "dbdump.importConfirm": "Impor dump {engine} {version} ini ke {container}? BombVault menghentikan kontainer, memindahkan folder datanya ke samping (tetap disimpan, tidak ada yang dihapus), menjalankan kontainer dengan folder data kosong, lalu mengimpor dump. Aplikasi yang memakai basis data ini akan melihat keadaannya pada saat dump diambil.",
   "dbdump.importConfirmNoVersion": "Impor dump {engine} ini ke {container}? BombVault menghentikan kontainer, memindahkan folder datanya ke samping (tetap disimpan, tidak ada yang dihapus), menjalankan kontainer dengan folder data kosong, lalu mengimpor dump. Aplikasi yang memakai basis data ini akan melihat keadaannya pada saat dump diambil.",
   "dbdump.importNoVersion": "Dump ini tidak mencatat versi basis datanya. Impor gagal bila server tidak bisa membacanya.",
+  "dbdump.importStopsOne": "Selama impor, BombVault juga menghentikan {app} lalu menyalakannya lagi sesudahnya.",
+  "dbdump.importStopsMany": "Selama impor, BombVault juga menghentikan aplikasi berikut lalu menyalakannya lagi sesudahnya: {apps}.",
   "dbdump.importDone": "Basis data diimpor.",
   "dbdump.importRefused.busy": "Ada pencadangan atau pemulihan lain yang berjalan. Coba lagi setelah selesai.",
   "dbdump.importRefused.notRunning": "Jalankan kontainer dulu; impor butuh server yang berjalan.",

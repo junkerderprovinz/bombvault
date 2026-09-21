@@ -90,6 +90,7 @@ function DumpRow({
   containerName,
   source,
   canImport,
+  importStops,
   hostMountRoot,
   defaultFolder,
   format,
@@ -101,6 +102,7 @@ function DumpRow({
   containerName: string;
   source: string;
   canImport: boolean;
+  importStops: string[];
   hostMountRoot: string;
   defaultFolder: string;
   format: DumpFormat;
@@ -187,7 +189,9 @@ function DumpRow({
     const question = dump.version
       ? t("dbdump.importConfirm").replace("{version}", dump.version)
       : `${t("dbdump.importConfirmNoVersion")} ${t("dbdump.importNoVersion")}`;
-    const asked = question.replace("{engine}", engineName).replace("{container}", containerName);
+    let asked = question.replace("{engine}", engineName).replace("{container}", containerName);
+    if (importStops.length === 1) asked += " " + t("dbdump.importStopsOne").replace("{app}", importStops[0]);
+    if (importStops.length > 1) asked += " " + t("dbdump.importStopsMany").replace("{apps}", importStops.join(", "));
     if (!(await confirm(asked, { confirmKey: "dbdump.import" }))) return;
     void fireImport();
   }
@@ -365,6 +369,7 @@ export function DatabaseDumpList({
   source,
   recognised,
   canImport,
+  importStops = [],
   hostMountRoot,
   defaultFolder,
   reloadTick,
@@ -377,6 +382,9 @@ export function DatabaseDumpList({
   recognised: boolean;
   /** Installed and running: the import needs the server it writes into. */
   canImport: boolean;
+  /** The running apps the import stops while it runs, from the container's
+   *  stop list. */
+  importStops?: string[];
   hostMountRoot: string;
   defaultFolder: string;
   /** Bumped by the panel around it when something changed the repository. */
@@ -452,6 +460,7 @@ export function DatabaseDumpList({
           containerName={containerName}
           source={source}
           canImport={canImport}
+          importStops={importStops}
           hostMountRoot={hostMountRoot}
           defaultFolder={defaultFolder}
           format={format}

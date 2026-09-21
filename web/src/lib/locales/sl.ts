@@ -923,6 +923,8 @@ const sl: Partial<Translations> = {
   "dbdump.importConfirm": "Uvozim ta izvoz {engine} {version} v {container}? BombVault ustavi vsebnik, njegovo podatkovno mapo odmakne vstran (ostane shranjena, nič se ne izbriše), zažene vsebnik s prazno podatkovno mapo in uvozi izvoz. Programi, ki uporabljajo to bazo, bodo videli njeno stanje iz časa izvoza.",
   "dbdump.importConfirmNoVersion": "Uvozim ta izvoz {engine} v {container}? BombVault ustavi vsebnik, njegovo podatkovno mapo odmakne vstran (ostane shranjena, nič se ne izbriše), zažene vsebnik s prazno podatkovno mapo in uvozi izvoz. Programi, ki uporabljajo to bazo, bodo videli njeno stanje iz časa izvoza.",
   "dbdump.importNoVersion": "Ta izvoz ne zabeleži različice svoje baze podatkov. Uvoz spodleti, če ga strežnik ne zna prebrati.",
+  "dbdump.importStopsOne": "Med uvozom BombVault ustavi tudi {app} in ga nato znova zažene.",
+  "dbdump.importStopsMany": "Med uvozom BombVault ustavi tudi te aplikacije in jih nato znova zažene: {apps}.",
   "dbdump.importDone": "Baza podatkov je uvožena.",
   "dbdump.importRefused.busy": "Trenutno teče druga varnostna kopija ali obnovitev. Poskusi znova, ko se konča.",
   "dbdump.importRefused.notRunning": "Najprej zaženi vsebnik; uvoz potrebuje delujoč strežnik.",
