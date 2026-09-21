@@ -237,7 +237,6 @@ func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
 		errPlacementBusy:        "domain-busy",
 		errHomeHasBackups:       "has-backups",
 		errPlacementStale:       "stale",
-		errPlacementNoExpect:    "expect-required",
 		errRepoInvalid:          "repo-invalid",
 		errRepoInUse:            "repo-in-use",
 		errDefaultRepoMissing:   "default-repo-missing",

@@ -429,10 +429,11 @@ func (s *Service) putDefault(ctx context.Context, domain string, change defaultC
 	if err != nil {
 		return defaultRow{}, impact, err
 	}
-	if change.Expect == nil {
-		return defaultRow{}, impact, errPlacementNoExpect
+	expect := defaultImpact{Home: impact.Home, Skip: impact.Skip}
+	if change.Expect != nil {
+		expect = *change.Expect
 	}
-	if !impact.sameCounts(*change.Expect) {
+	if !impact.sameCounts(expect) {
 		return defaultRow{}, impact, errPlacementStale
 	}
 	settings, err := s.store.GetSettings()

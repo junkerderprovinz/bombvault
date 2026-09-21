@@ -222,14 +222,34 @@ func TestASecondTabsHomeChangeIsRefusedOnceTheFirstHasLanded(t *testing.T) {
 	}
 }
 
-// TestAPutWithoutAnExpectBlockGetsItsOwnAnswer pins that a caller who never
-// saw any numbers gets told to fetch them, not that its (nonexistent) numbers
-// went stale.
-func TestAPutWithoutAnExpectBlockGetsItsOwnAnswer(t *testing.T) {
+// TestAPutWithoutAnExpectBlockSucceedsWhenNothingWouldChange pins the
+// contract's own answer for a missing expect block: it stands for an empty
+// impact, so a change that really has none is confirmed by it.
+func TestAPutWithoutAnExpectBlockSucceedsWhenNothingWouldChange(t *testing.T) {
 	f := newPlacementFixture(t)
 	res := f.do(http.MethodPut, "/api/placement/default/containers", map[string]any{"home": ""})
-	if res["code"] != "expect-required" {
-		t.Fatalf("PUT without expect = %v, want expect-required", res)
+	if res["ok"] != true {
+		t.Fatalf("PUT without expect = %v, want the empty impact to confirm it", res)
+	}
+	d, found, err := f.st.PlacementDefaultFor("containers")
+	if err != nil || !found || d.Home != "" {
+		t.Fatalf("default = %+v, %v, %v, want it written", d, found, err)
+	}
+}
+
+// TestAPutWithoutAnExpectBlockIsRefusedWhenSomethingWould is the other half:
+// a missing expect block only stands for an empty impact, not for any impact
+// at all, so a change with real consequences is still refused, with those
+// consequences in the answer.
+func TestAPutWithoutAnExpectBlockIsRefusedWhenSomethingWould(t *testing.T) {
+	f, b2 := fourteenContainers(t)
+	res := f.do(http.MethodPut, "/api/placement/default/containers", map[string]any{"skip": []string{store.SkipAll}})
+	if res["ok"] != false || res["code"] != "stale" {
+		t.Fatalf("PUT without expect = %v, want stale", res)
+	}
+	dropped := res["impact"].(map[string]any)["dropped"].([]any)
+	if len(dropped) != 1 || dropped[0].(map[string]any)["targetId"] != b2.ID {
+		t.Fatalf("impact = %v, want B2 named", res["impact"])
 	}
 }
 
