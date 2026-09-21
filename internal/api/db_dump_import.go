@@ -85,18 +85,30 @@ func (e *dbImportErr) Error() string { return e.msg }
 
 func (e *dbImportErr) Is(target error) bool { return target == errDBImportFolders }
 
+// dbImportDetailMax caps the cause behind an import outcome. The run reason is
+// not cut as a whole, because the folder paths ahead of the cause are the part
+// the user needs.
+const dbImportDetailMax = 300
+
+func importDetail(s string) string {
+	if len(s) > dbImportDetailMax {
+		return s[:dbImportDetailMax]
+	}
+	return s
+}
+
 func importPrepareFailure(cause error) error {
-	return &dbImportErr{msg: store.ReasonDBImportPrepare + ": " + cause.Error()}
+	return &dbImportErr{msg: store.ReasonDBImportPrepare + ": " + importDetail(cause.Error())}
 }
 
 func importRollbackFailure(fresh, kept string, cause error) error {
-	return &dbImportErr{msg: fmt.Sprintf("%s: %v; the fresh data folder is at %s and the previous one at %s",
-		store.ReasonDBImportRollback, cause, fresh, kept)}
+	return &dbImportErr{msg: fmt.Sprintf("%s: the previous data folder is at %s and the fresh one at %s; %s",
+		store.ReasonDBImportRollback, kept, fresh, importDetail(cause.Error()))}
 }
 
 func importToolFailure(kept, detail string) error {
 	return &dbImportErr{msg: fmt.Sprintf("%s: the previous data folder is kept at %s; %s",
-		store.ReasonDBImportFailed, kept, detail)}
+		store.ReasonDBImportFailed, kept, importDetail(detail))}
 }
 
 // dbImportPlan is what an import resolved while the request was still open: the

@@ -8911,6 +8911,10 @@ func truncateRunErr(err error) string {
 	}
 	msg := err.Error()
 	if bypass, ok := scrubBypassMessage(err); ok {
+		// An import bounds its own cause, and its folder paths must stay whole.
+		if errors.Is(err, errDBImportFolders) {
+			return bypass
+		}
 		msg = bypass
 	} else {
 		msg = scrubSecrets(msg)
