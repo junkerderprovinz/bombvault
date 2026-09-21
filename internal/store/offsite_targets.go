@@ -388,6 +388,116 @@ func (r *Repo) GetNamedRepo(id string) (OffsiteTarget, error) {
 	return scanOffsiteTarget(row)
 }
 
+var (
+	ErrCompanionTaken   = errors.New("offsite target already has a direct repository")
+	ErrNotOffsiteTarget = errors.New("no such offsite target")
+)
+
+// mirroredCols are the columns a direct repository takes from its target, in
+// the order mirroredValues returns them. creds_ref leads because a plain
+// target save skips it: new credentials reach the direct repository only
+// once they open it.
+var mirroredCols = []string{
+	"creds_ref", "storage_class", "immutable",
+	"retention_keep_last", "retention_keep_daily", "retention_keep_weekly", "retention_keep_monthly",
+	"limit_upload", "limit_download", "growth_budget_gb",
+}
+
+func mirroredValues(t OffsiteTarget) []any {
+	return []any{
+		t.CredsRef, t.StorageClass, boolInt(t.Immutable),
+		t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
+		t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB,
+	}
+}
+
+// MirroredEqual reports whether two rows agree on every field a direct
+// repository takes from its target, credentials included.
+func (t OffsiteTarget) MirroredEqual(o OffsiteTarget) bool {
+	return slices.Equal(mirroredValues(t), mirroredValues(o))
+}
+
+// mirrorTx copies the target's mirrored fields onto its direct repository.
+// The row is written only when a field differs, so a save that changes none
+// of them leaves it as it was.
+func mirrorTx(tx *sql.Tx, target OffsiteTarget, withCreds bool) error {
+	cols, vals := mirroredCols, mirroredValues(target)
+	if !withCreds {
+		cols, vals = cols[1:], vals[1:]
+	}
+	set := make([]string, len(cols))
+	differs := make([]string, len(cols))
+	for i, c := range cols {
+		set[i] = c + " = ?"
+		differs[i] = c + " <> ?"
+	}
+	args := slices.Concat(vals, []any{RoleRepo, target.ID}, vals)
+	_, err := tx.Exec(`UPDATE offsite_targets SET `+strings.Join(set, ", ")+`
+		WHERE role = ? AND companion_of = ? AND companion_of <> '' AND (`+strings.Join(differs, " OR ")+`)`, args...)
+	return err
+}
+
+// offsiteTargetTx reads a replication destination inside a transaction.
+func offsiteTargetTx(tx *sql.Tx, id string) (OffsiteTarget, error) {
+	t, err := scanOffsiteTarget(tx.QueryRow(`SELECT `+offsiteTargetCols+`
+		FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleOffsite))
+	if errors.Is(err, sql.ErrNoRows) {
+		return OffsiteTarget{}, ErrNotOffsiteTarget
+	}
+	return t, err
+}
+
+// CompanionFor returns the direct repository of an off-site target.
+func (r *Repo) CompanionFor(targetID string) (OffsiteTarget, bool, error) {
+	t, err := scanOffsiteTarget(r.db.QueryRow(`SELECT `+offsiteTargetCols+`
+		FROM offsite_targets WHERE role = ? AND companion_of = ? AND companion_of <> ''`, RoleRepo, targetID))
+	if errors.Is(err, sql.ErrNoRows) {
+		return OffsiteTarget{}, false, nil
+	}
+	if err != nil {
+		return OffsiteTarget{}, false, err
+	}
+	return t, true, nil
+}
+
+// CreateCompanionRepo writes a target's direct repository: an enabled named
+// repository at location, behind the other named repositories, carrying
+// every mirrored field of the target, credentials included.
+func (r *Repo) CreateCompanionRepo(targetID, name, location string) (OffsiteTarget, error) {
+	location = strings.TrimSpace(location)
+	if location == "" {
+		return OffsiteTarget{}, ErrEmptyOffsiteRepo
+	}
+	tx, err := r.db.Begin()
+	if err != nil {
+		return OffsiteTarget{}, fmt.Errorf("CreateCompanionRepo: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
+	target, err := offsiteTargetTx(tx, targetID)
+	if err != nil {
+		return OffsiteTarget{}, err
+	}
+	var taken int
+	if err := tx.QueryRow(`SELECT COUNT(*) FROM offsite_targets WHERE companion_of = ?`, targetID).Scan(&taken); err != nil {
+		return OffsiteTarget{}, fmt.Errorf("CreateCompanionRepo: %w", err)
+	}
+	if taken > 0 {
+		return OffsiteTarget{}, ErrCompanionTaken
+	}
+	id := newID()
+	if _, err := tx.Exec(`
+		INSERT INTO offsite_targets (id, domain, name, repo, role, enabled, created_at, sort_order, companion_of)
+		VALUES (?, '', ?, ?, ?, 1, ?,
+		        (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM offsite_targets WHERE role = ?), ?)`,
+		id, strings.TrimSpace(name), location, RoleRepo, time.Now().Unix(), RoleRepo, targetID); err != nil {
+		return OffsiteTarget{}, fmt.Errorf("CreateCompanionRepo: %w", err)
+	}
+	if err := mirrorTx(tx, target, true); err != nil {
+		return OffsiteTarget{}, fmt.Errorf("CreateCompanionRepo mirror: %w", err)
+	}
+	return commitStoredTargetTx(tx, id)
+}
+
 // itemsUsingNamedRepoQ is the in-use count, written once and run against either
 // the database or an open transaction, so the guarded writes below cannot drift
 // from the count the interface shows.
