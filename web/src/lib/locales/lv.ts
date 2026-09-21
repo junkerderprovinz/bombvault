@@ -1701,6 +1701,14 @@ const lv: Partial<Translations> = {
   "placement.deleted": "(dzēsts)",
   "placement.lastChip": "Izvēlieties Vietējs, lai nekopētu",
   "placement.credsDiffer": "Domēna krātuve ir attālināta un izmanto citus piekļuves datus nekā šis mērķis. Kopēšana neizdodas, kamēr tie nesakrīt.",
+  "placement.title": "Novietojums",
+  "placement.storedOn": "Saglabāts",
+  "placement.copyTo": "Kopēt uz",
+  "placement.sendTo": "Sūtīt uz",
+
+  // Defaults
+  "placementDefaults.copyLine": "Vienumi, kuru atrašanās vieta ir kopēšanas avots:",
+  "placementDefaults.copyLineContainers": "Projekta mapes un vienumi, kuru atrašanās vieta ir kopēšanas avots:",
 };
 
 export default lv;

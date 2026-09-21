@@ -1701,6 +1701,14 @@ const is: Partial<Translations> = {
   "placement.deleted": "(eytt)",
   "placement.lastChip": "Veldu Staðbundið til að afrita ekkert",
   "placement.credsDiffer": "Geymsla lénsins er fjartengd og notar önnur auðkenni en þetta markmið. Afritun mistekst þar til þau passa saman.",
+  "placement.title": "Staðsetning",
+  "placement.storedOn": "Vistað á",
+  "placement.copyTo": "Afrita á",
+  "placement.sendTo": "Senda á",
+
+  // Defaults
+  "placementDefaults.copyLine": "Atriði þar sem staðsetningin er afritunaruppspretta:",
+  "placementDefaults.copyLineContainers": "Verkefnamöppur og atriði þar sem staðsetningin er afritunaruppspretta:",
 };
 
 export default is;

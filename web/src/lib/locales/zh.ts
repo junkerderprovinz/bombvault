@@ -1682,6 +1682,14 @@ const zh: Partial<Translations> = {
   "placement.deleted": "（已删除）",
   "placement.lastChip": "选择本地以不复制",
   "placement.credsDiffer": "域存储库是远程的，使用与此目标不同的凭据。复制会失败，直到它们匹配。",
+  "placement.title": "存放位置",
+  "placement.storedOn": "存放于",
+  "placement.copyTo": "复制到",
+  "placement.sendTo": "发送到",
+
+  // Defaults
+  "placementDefaults.copyLine": "位置为复制来源的项目：",
+  "placementDefaults.copyLineContainers": "项目文件夹和位置为复制来源的项目：",
 };
 
 export default zh;

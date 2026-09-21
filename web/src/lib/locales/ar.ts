@@ -1693,6 +1693,14 @@ const ar: Partial<Translations> = {
   "placement.deleted": "(محذوف)",
   "placement.lastChip": "اختر محلي لعدم النسخ",
   "placement.credsDiffer": "مستودع النطاق عن بُعد ويستخدم بيانات اعتماد مختلفة عن هذا الهدف. تفشل النسخة إلى أن تتطابق.",
+  "placement.title": "الموضع",
+  "placement.storedOn": "مخزَّن في",
+  "placement.copyTo": "نسخ إلى",
+  "placement.sendTo": "إرسال إلى",
+
+  // Defaults
+  "placementDefaults.copyLine": "العناصر التي يكون موقعها مصدر نسخ:",
+  "placementDefaults.copyLineContainers": "مجلدات المشروع والعناصر التي يكون موقعها مصدر نسخ:",
 };
 
 export default ar;

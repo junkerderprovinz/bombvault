@@ -1701,6 +1701,14 @@ const eu: Partial<Translations> = {
   "placement.deleted": "(ezabatuta)",
   "placement.lastChip": "Aukeratu Lokala kopiarik ez izateko",
   "placement.credsDiffer": "Domeinuaren biltegia urrunekoa da eta helburu honetakoak ez bezalako kredentzialak erabiltzen ditu. Kopia egiteak huts egingo du bat etorri arte.",
+  "placement.title": "Kokapena",
+  "placement.storedOn": "Gordelekua",
+  "placement.copyTo": "Kopiaren helmuga",
+  "placement.sendTo": "Bidalketaren helmuga",
+
+  // Defaults
+  "placementDefaults.copyLine": "Beren kokapena kopia-iturri duten elementuak:",
+  "placementDefaults.copyLineContainers": "Proiektu-karpetak eta beren kokapena kopia-iturri duten elementuak:",
 };
 
 export default eu;

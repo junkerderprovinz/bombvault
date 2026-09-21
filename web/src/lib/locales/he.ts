@@ -1690,6 +1690,14 @@ const he: Partial<Translations> = {
   "placement.deleted": "(נמחק)",
   "placement.lastChip": "בחר מקומי כדי שלא יהיה עותק",
   "placement.credsDiffer": "מאגר התחום מרוחק ומשתמש בפרטי גישה שונים מאלה של היעד הזה. ההעתקה נכשלת עד שהם יתאימו.",
+  "placement.title": "מיקום",
+  "placement.storedOn": "מאוחסן ב",
+  "placement.copyTo": "העתקה אל",
+  "placement.sendTo": "שליחה אל",
+
+  // Defaults
+  "placementDefaults.copyLine": "פריטים שהמיקום שלהם הוא מקור להעתקה:",
+  "placementDefaults.copyLineContainers": "תיקיות פרויקט ופריטים שהמיקום שלהם הוא מקור להעתקה:",
 };
 
 export default he;

@@ -1685,6 +1685,14 @@ const ru: Partial<Translations> = {
   "placement.deleted": "(удалено)",
   "placement.lastChip": "Выбрать Локально, чтобы не копировать",
   "placement.credsDiffer": "Репозиторий домена удалённый и использует другие учётные данные, чем эта цель. Копирование не удаётся, пока они не совпадут.",
+  "placement.title": "Размещение",
+  "placement.storedOn": "Сохранено на",
+  "placement.copyTo": "Копировать в",
+  "placement.sendTo": "Отправить в",
+
+  // Defaults
+  "placementDefaults.copyLine": "Элементы, чьё расположение является источником копий:",
+  "placementDefaults.copyLineContainers": "Папки проектов и элементы, чьё расположение является источником копий:",
 };
 
 export default ru;

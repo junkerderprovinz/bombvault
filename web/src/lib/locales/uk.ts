@@ -1685,6 +1685,14 @@ const uk: Partial<Translations> = {
   "placement.deleted": "(видалено)",
   "placement.lastChip": "Вибрати Локально, щоб не копіювати",
   "placement.credsDiffer": "Репозиторій домену віддалений і використовує інші облікові дані, ніж ця ціль. Копіювання не вдається, доки вони не збігатимуться.",
+  "placement.title": "Розміщення",
+  "placement.storedOn": "Збережено на",
+  "placement.copyTo": "Копіювати в",
+  "placement.sendTo": "Надіслати в",
+
+  // Defaults
+  "placementDefaults.copyLine": "Елементи, чиє розташування є джерелом копій:",
+  "placementDefaults.copyLineContainers": "Папки проєктів і елементи, чиє розташування є джерелом копій:",
 };
 
 export default uk;

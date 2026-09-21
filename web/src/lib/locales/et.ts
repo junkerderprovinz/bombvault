@@ -1701,6 +1701,14 @@ const et: Partial<Translations> = {
   "placement.deleted": "(kustutatud)",
   "placement.lastChip": "Vali Kohalik koopia vältimiseks",
   "placement.credsDiffer": "Domeeni hoidla on kauge ja kasutab teistsuguseid pöördumisandmeid kui see sihtkoht. Kopeerimine ebaõnnestub, kuni need ühtivad.",
+  "placement.title": "Paigutus",
+  "placement.storedOn": "Asukoht",
+  "placement.copyTo": "Koopia sihtkoht",
+  "placement.sendTo": "Saatmise sihtkoht",
+
+  // Defaults
+  "placementDefaults.copyLine": "Üksused, mille asukoht on koopia allikas:",
+  "placementDefaults.copyLineContainers": "Projektikaustad ja üksused, mille asukoht on koopia allikas:",
 };
 
 export default et;

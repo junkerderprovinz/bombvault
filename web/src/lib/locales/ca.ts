@@ -1701,6 +1701,14 @@ const ca: Partial<Translations> = {
   "placement.deleted": "(eliminat)",
   "placement.lastChip": "Tria Local per no copiar",
   "placement.credsDiffer": "El repositori del domini és remot i fa servir credencials diferents d'aquest destí. La còpia falla fins que coincideixin.",
+  "placement.title": "Emplaçament",
+  "placement.storedOn": "Emmagatzemat a",
+  "placement.copyTo": "Còpia a",
+  "placement.sendTo": "Envia a",
+
+  // Defaults
+  "placementDefaults.copyLine": "Elements l'ubicació dels quals és origen de còpia:",
+  "placementDefaults.copyLineContainers": "Carpetes de projecte i elements l'ubicació dels quals és origen de còpia:",
 };
 
 export default ca;

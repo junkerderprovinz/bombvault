@@ -1682,6 +1682,14 @@ const ja: Partial<Translations> = {
   "placement.deleted": "（削除済み）",
   "placement.lastChip": "コピーなしにするにはローカルを選択",
   "placement.credsDiffer": "ドメインリポジトリはリモートで、この送信先とは異なる認証情報を使っています。一致するまでコピーは失敗します。",
+  "placement.title": "配置",
+  "placement.storedOn": "保存先",
+  "placement.copyTo": "コピー先",
+  "placement.sendTo": "送信先",
+
+  // Defaults
+  "placementDefaults.copyLine": "場所がコピー元になっている項目:",
+  "placementDefaults.copyLineContainers": "プロジェクトフォルダーと、場所がコピー元になっている項目:",
 };
 
 export default ja;

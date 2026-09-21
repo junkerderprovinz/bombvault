@@ -1685,6 +1685,14 @@ const sr: Partial<Translations> = {
   "placement.deleted": "(избрисано)",
   "placement.lastChip": "Изаберите Локално да не буде копије",
   "placement.credsDiffer": "Репозиторијум домена је удаљен и користи друге податке за приступ од овог циља. Копирање не успева док се не поклопе.",
+  "placement.title": "Размештај",
+  "placement.storedOn": "Сачувано на",
+  "placement.copyTo": "Копирај у",
+  "placement.sendTo": "Пошаљи у",
+
+  // Defaults
+  "placementDefaults.copyLine": "Ставке чија је локација извор копија:",
+  "placementDefaults.copyLineContainers": "Фасцикле пројекта и ставке чија је локација извор копија:",
 };
 
 export default sr;

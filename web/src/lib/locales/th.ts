@@ -1693,6 +1693,14 @@ const th: Partial<Translations> = {
   "placement.deleted": "(ถูกลบ)",
   "placement.lastChip": "เลือกในเครื่องเพื่อไม่ให้มีการคัดลอก",
   "placement.credsDiffer": "ที่เก็บข้อมูลของโดเมนเป็นระยะไกลและใช้ข้อมูลรับรองต่างจากปลายทางนี้ การคัดลอกจะล้มเหลวจนกว่าข้อมูลจะตรงกัน",
+  "placement.title": "การจัดวาง",
+  "placement.storedOn": "จัดเก็บที่",
+  "placement.copyTo": "คัดลอกไปยัง",
+  "placement.sendTo": "ส่งไปยัง",
+
+  // Defaults
+  "placementDefaults.copyLine": "รายการที่ตำแหน่งเป็นแหล่งสำเนา:",
+  "placementDefaults.copyLineContainers": "โฟลเดอร์โปรเจกต์และรายการที่ตำแหน่งเป็นแหล่งสำเนา:",
 };
 
 export default th;

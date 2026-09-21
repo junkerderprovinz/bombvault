@@ -1693,6 +1693,14 @@ const hu: Partial<Translations> = {
   "placement.deleted": "(törölve)",
   "placement.lastChip": "Válassza a Helyit, hogy ne legyen másolat",
   "placement.credsDiffer": "A tartomány tárolója távoli, és más hitelesítő adatokat használ, mint ez a cél. A másolás addig sikertelen, amíg nem egyeznek.",
+  "placement.title": "Elhelyezés",
+  "placement.storedOn": "Tárolva itt",
+  "placement.copyTo": "Másolás ide",
+  "placement.sendTo": "Küldés ide",
+
+  // Defaults
+  "placementDefaults.copyLine": "Elemek, amelyek helye másolási forrás:",
+  "placementDefaults.copyLineContainers": "Projektmappák és elemek, amelyek helye másolási forrás:",
 };
 
 export default hu;

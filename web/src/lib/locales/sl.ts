@@ -1685,6 +1685,14 @@ const sl: Partial<Translations> = {
   "placement.deleted": "(izbrisano)",
   "placement.lastChip": "Izberite Lokalno, da ni kopije",
   "placement.credsDiffer": "Repozitorij domene je oddaljen in uporablja druge poverilnice kot ta cilj. Kopiranje ne uspe, dokler se ne ujemata.",
+  "placement.title": "Postavitev",
+  "placement.storedOn": "Shranjeno na",
+  "placement.copyTo": "Kopiraj v",
+  "placement.sendTo": "Pošlji v",
+
+  // Defaults
+  "placementDefaults.copyLine": "Elementi, katerih lokacija je vir kopij:",
+  "placementDefaults.copyLineContainers": "Projektne mape in elementi, katerih lokacija je vir kopij:",
 };
 
 export default sl;

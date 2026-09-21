@@ -1693,6 +1693,14 @@ const ro: Partial<Translations> = {
   "placement.deleted": "(șters)",
   "placement.lastChip": "Alege Local pentru nicio copie",
   "placement.credsDiffer": "Depozitul domeniului este la distanță și folosește alte date de acces decât această țintă. Copierea eșuează până când acestea se potrivesc.",
+  "placement.title": "Amplasare",
+  "placement.storedOn": "Stocat pe",
+  "placement.copyTo": "Copiază în",
+  "placement.sendTo": "Trimite către",
+
+  // Defaults
+  "placementDefaults.copyLine": "Elemente a căror locație este o sursă de copiere:",
+  "placementDefaults.copyLineContainers": "Foldere de proiect și elemente a căror locație este o sursă de copiere:",
 };
 
 export default ro;

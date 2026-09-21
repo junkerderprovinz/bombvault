@@ -1682,6 +1682,14 @@ const ko: Partial<Translations> = {
   "placement.deleted": "(삭제됨)",
   "placement.lastChip": "복사하지 않으려면 로컬을 선택하세요",
   "placement.credsDiffer": "도메인 저장소는 원격이며 이 대상과 다른 자격 증명을 사용합니다. 서로 일치할 때까지 복사가 실패합니다.",
+  "placement.title": "배치",
+  "placement.storedOn": "저장 위치",
+  "placement.copyTo": "복사 대상",
+  "placement.sendTo": "전송 대상",
+
+  // Defaults
+  "placementDefaults.copyLine": "위치가 복사 소스인 항목:",
+  "placementDefaults.copyLineContainers": "프로젝트 폴더와 위치가 복사 소스인 항목:",
 };
 
 export default ko;

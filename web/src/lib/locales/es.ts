@@ -1688,6 +1688,14 @@ const es: Partial<Translations> = {
   "placement.deleted": "(eliminado)",
   "placement.lastChip": "Elegir Local para no copiar",
   "placement.credsDiffer": "El repositorio del dominio es remoto y usa credenciales distintas a las de este destino. La copia falla hasta que coincidan.",
+  "placement.title": "Ubicación",
+  "placement.storedOn": "Almacenado en",
+  "placement.copyTo": "Copiar a",
+  "placement.sendTo": "Enviar a",
+
+  // Defaults
+  "placementDefaults.copyLine": "Elementos cuya ubicación es origen de copia:",
+  "placementDefaults.copyLineContainers": "Carpetas de proyecto y elementos cuya ubicación es origen de copia:",
 };
 
 export default es;

@@ -1701,6 +1701,14 @@ const hi: Partial<Translations> = {
   "placement.deleted": "(हटाया गया)",
   "placement.lastChip": "कोई कॉपी न हो, इसके लिए लोकल चुनें",
   "placement.credsDiffer": "डोमेन रिपॉज़िटरी रिमोट है और इस लक्ष्य से अलग क्रेडेंशियल इस्तेमाल करती है। जब तक वे मेल नहीं खाते, कॉपी करना विफल रहता है।",
+  "placement.title": "प्लेसमेंट",
+  "placement.storedOn": "संग्रहण स्थान",
+  "placement.copyTo": "कॉपी गंतव्य",
+  "placement.sendTo": "भेजने का गंतव्य",
+
+  // Defaults
+  "placementDefaults.copyLine": "वे प्रविष्टियाँ जिनकी जगह कॉपी का स्रोत है:",
+  "placementDefaults.copyLineContainers": "प्रोजेक्ट फ़ोल्डर और वे प्रविष्टियाँ जिनकी जगह कॉपी का स्रोत है:",
 };
 
 export default hi;

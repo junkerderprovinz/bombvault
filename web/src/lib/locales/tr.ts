@@ -1690,6 +1690,14 @@ const tr: Partial<Translations> = {
   "placement.deleted": "(silindi)",
   "placement.lastChip": "Kopya olmaması için Yerel'i seçin",
   "placement.credsDiffer": "Alan deposu uzak ve bu hedeften farklı kimlik bilgileri kullanıyor. Eşleşene kadar kopyalama başarısız olur.",
+  "placement.title": "Yerleşim",
+  "placement.storedOn": "Depolama konumu",
+  "placement.copyTo": "Kopyalama hedefi",
+  "placement.sendTo": "Gönderim hedefi",
+
+  // Defaults
+  "placementDefaults.copyLine": "Konumu kopya kaynağı olan ögeler:",
+  "placementDefaults.copyLineContainers": "Proje klasörleri ve konumu kopya kaynağı olan ögeler:",
 };
 
 export default tr;

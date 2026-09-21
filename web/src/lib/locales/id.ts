@@ -1701,6 +1701,14 @@ const id: Partial<Translations> = {
   "placement.deleted": "(dihapus)",
   "placement.lastChip": "Pilih Lokal agar tidak ada salinan",
   "placement.credsDiffer": "Repositori domain bersifat jarak jauh dan menggunakan kredensial yang berbeda dari target ini. Penyalinan gagal sampai keduanya cocok.",
+  "placement.title": "Penempatan",
+  "placement.storedOn": "Disimpan di",
+  "placement.copyTo": "Salin ke",
+  "placement.sendTo": "Kirim ke",
+
+  // Defaults
+  "placementDefaults.copyLine": "Item yang lokasinya adalah sumber salinan:",
+  "placementDefaults.copyLineContainers": "Folder proyek dan item yang lokasinya adalah sumber salinan:",
 };
 
 export default id;

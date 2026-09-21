@@ -1690,6 +1690,14 @@ const fi: Partial<Translations> = {
   "placement.deleted": "(poistettu)",
   "placement.lastChip": "Valitse Paikallinen, jos et halua kopiota",
   "placement.credsDiffer": "Toimialueen arkisto on etäarkisto ja käyttää eri tunnuksia kuin tämä kohde. Kopiointi epäonnistuu, kunnes ne täsmäävät.",
+  "placement.title": "Sijoittelu",
+  "placement.storedOn": "Tallennuspaikka",
+  "placement.copyTo": "Kopiointikohteet",
+  "placement.sendTo": "Lähetyskohde",
+
+  // Defaults
+  "placementDefaults.copyLine": "Kohteet, joiden sijainti on kopion lähde:",
+  "placementDefaults.copyLineContainers": "Projektikansiot ja kohteet, joiden sijainti on kopion lähde:",
 };
 
 export default fi;

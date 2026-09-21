@@ -1701,6 +1701,14 @@ const bg: Partial<Translations> = {
   "placement.deleted": "(изтрито)",
   "placement.lastChip": "Изберете Локално, за да няма копие",
   "placement.credsDiffer": "Хранилището на домейна е отдалечено и използва други данни за достъп от тази цел. Копирането се проваля, докато не съвпаднат.",
+  "placement.title": "Разположение",
+  "placement.storedOn": "Съхранено в",
+  "placement.copyTo": "Копирай в",
+  "placement.sendTo": "Изпрати до",
+
+  // Defaults
+  "placementDefaults.copyLine": "Елементи, чието място е източник на копия:",
+  "placementDefaults.copyLineContainers": "Папки на проекти и елементи, чието място е източник на копия:",
 };
 
 export default bg;
