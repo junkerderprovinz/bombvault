@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/compose"
@@ -96,8 +97,29 @@ func (e *dbImportErr) Is(target error) bool { return target == errDBImportFolder
 const dbImportDetailMax = 300
 
 func importDetail(s string) string {
-	if len(s) > dbImportDetailMax {
-		return s[:dbImportDetailMax]
+	if len(s) <= dbImportDetailMax {
+		return s
+	}
+	end := dbImportDetailMax
+	for end > 0 && !utf8.RuneStart(s[end]) {
+		end--
+	}
+	return s[:end]
+}
+
+// importToolTail keeps the end of what the import tool wrote, where the line
+// that made it exit is, and starts at a whole line where one fits.
+func importToolTail(s string) string {
+	s = strings.TrimRight(s, "\n")
+	if len(s) <= dbImportDetailMax {
+		return s
+	}
+	s = s[len(s)-dbImportDetailMax:]
+	if i := strings.IndexByte(s, '\n'); i >= 0 {
+		return s[i+1:]
+	}
+	for len(s) > 0 && !utf8.RuneStart(s[0]) {
+		s = s[1:]
 	}
 	return s
 }
@@ -111,9 +133,11 @@ func importRollbackFailure(fresh, kept string, cause error) error {
 		store.ReasonDBImportRollback, kept, fresh, importDetail(cause.Error()))}
 }
 
+// importToolFailure takes a detail its caller has already bounded, because
+// only the caller knows which end of it matters.
 func importToolFailure(kept, detail string) error {
 	return &dbImportErr{msg: fmt.Sprintf("%s: the previous data folder is kept at %s; %s",
-		store.ReasonDBImportFailed, kept, importDetail(detail))}
+		store.ReasonDBImportFailed, kept, detail)}
 }
 
 // dbImportPlan is what an import resolved while the request was still open: the
@@ -516,11 +540,11 @@ func (s *Service) feedDBImport(ctx context.Context, plan dbImportPlan, keptHere,
 	readErr := <-read
 	switch {
 	case err != nil:
-		return "", importToolFailure(kept, err.Error())
+		return "", importToolFailure(kept, importDetail(err.Error()))
 	case exit != 0:
-		return "", importToolFailure(kept, fmt.Sprintf("exit %d: %s", exit, tail))
+		return "", importToolFailure(kept, fmt.Sprintf("exit %d: %s", exit, importToolTail(tail)))
 	case readErr != nil:
-		return "", importToolFailure(kept, "read the dump: "+readErr.Error())
+		return "", importToolFailure(kept, importDetail("read the dump: "+readErr.Error()))
 	}
 	if n := dbdump.CountImportErrors(plan.engine, tail, plan.pgUser); n > 0 {
 		return fmt.Sprintf("%s: %d errors, the previous data folder is kept at %s", store.NoteDBImportErrors, n, kept), nil
