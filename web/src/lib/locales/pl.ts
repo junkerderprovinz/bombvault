@@ -1624,6 +1624,31 @@ const pl: Partial<Translations> = {
   "repos.disableWarnUnknown": "Serwer nie mógł odczytać, ile elementów tworzy kopie w tym repozytorium. Wyłączenie ich nie przenosi: ich następna kopia zakończy się czytelnym błędem, zamiast trafić gdzie indziej. Wyłączyć?",
   "repos.add": "Dodaj repozytorium",
   "repos.empty": "Jeszcze brak repozytoriów. Wszystko używa repozytorium własnej domeny.",
+
+  // Refusals
+  "placementCode.unreadable": "Reguł umieszczenia nie udało się odczytać, więc nic nie jest kopiowane, dopóki znowu nie da się ich odczytać.",
+  "placementCode.invalid": "Ten wybór umieszczenia jest nieprawidłowy.",
+  "placementCode.copiesNotAllowed": "Element w repozytorium zdalnym lub bezpośrednim nie otrzymuje kopii.",
+  "placementCode.unknownTarget": "Ten zdalny cel nie istnieje w tej domenie.",
+  "placementCode.stackRule": "Foldery projektu podążają za wartością domyślną kontenerów i nie mają własnej reguły.",
+  "placementCode.copyRuleTaken": "Ta nazwa ma już reguły kopiowania. Wybierz inną nazwę.",
+  "placementCode.domainBusy": "Trwa tworzenie kopii zapasowej. Wybierz ponownie, gdy się zakończy.",
+  "placementCode.hasBackups": "Lokalizacji nie można już zmienić, gdy element ma kopie zapasowe. Pozostają tam, gdzie zostały zapisane.",
+  "placementCode.stale": "Liczby zmieniły się od czasu wyświetlenia. Sprawdź je ponownie.",
+  "placementCode.repoInvalid": "Tego repozytorium brakuje, jest wyłączone lub nie da się go rozpoznać.",
+  "placementCode.repoInUseDefault": "Wartość domyślna dla {domains} wskazuje to repozytorium. Najpierw zmień wartość domyślną.",
+  "placementCode.defaultRepoMissing": "Wartość domyślna w pliku wskazuje repozytorium, którego nie ma ani w pliku, ani tutaj.",
+  "placementCode.nestedLocation": "Ta lokalizacja leży wewnątrz innego repozytorium lub celu albo taki zawiera.",
+  "placementCode.foreignDomain": "To repozytorium bezpośrednie należy do celu innej domeny.",
+  "placementCode.mirroredField": "Ta wartość pochodzi z celu. Zmień ją tam.",
+  "placementCode.companionTaken": "Ten cel ma już repozytorium bezpośrednie.",
+  "placementCode.targetInUseItems": "Elementy nadal tworzą kopie zapasowe w repozytorium bezpośrednim tego celu: {n}. Najpierw skieruj je gdzie indziej.",
+  "placementCode.targetInUseDefault": "Wartość domyślna dla {domains} wskazuje repozytorium bezpośrednie tego celu. Najpierw zmień wartość domyślną.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} bezpośrednio przechowuje teraz mniej. Elementy, których jedyna kopia tam jest: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} bezpośrednio nie jest już append-only. Elementy, których jedyna kopia tam jest: {n}.",
+  "saveWarning.directCredsKept": "{target} bezpośrednio nie da się otworzyć nowym kluczem i zachowuje stary.",
 };
 
 export default pl;

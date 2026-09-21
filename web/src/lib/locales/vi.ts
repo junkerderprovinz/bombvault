@@ -1621,6 +1621,31 @@ const vi: Partial<Translations> = {
   "repos.disableWarnUnknown": "Máy chủ không đọc được có bao nhiêu mục sao lưu vào kho này. Tắt nó không di chuyển chúng: bản sao lưu tiếp theo sẽ thất bại kèm thông báo rõ ràng thay vì rơi vào nơi khác. Tắt chứ?",
   "repos.add": "Thêm kho lưu trữ",
   "repos.empty": "Chưa có kho nào. Mọi thứ dùng kho của miền mình.",
+
+  // Refusals
+  "placementCode.unreadable": "Không đọc được các quy tắc đặt vị trí, nên không có gì được sao chép cho đến khi đọc lại được.",
+  "placementCode.invalid": "Lựa chọn vị trí này không hợp lệ.",
+  "placementCode.copiesNotAllowed": "Mục trên kho từ xa hoặc kho trực tiếp không nhận bản sao.",
+  "placementCode.unknownTarget": "Đích ngoại vi đó không tồn tại trong miền này.",
+  "placementCode.stackRule": "Thư mục dự án theo mặc định của container và không có quy tắc riêng.",
+  "placementCode.copyRuleTaken": "Tên đó đã có quy tắc sao chép. Chọn tên khác.",
+  "placementCode.domainBusy": "Đang sao lưu. Chọn lại khi hoàn tất.",
+  "placementCode.hasBackups": "Vị trí không thể thay đổi nữa khi mục đã có bản sao lưu. Chúng vẫn ở nơi đã được ghi.",
+  "placementCode.stale": "Các con số đã thay đổi kể từ khi hiển thị. Kiểm tra lại.",
+  "placementCode.repoInvalid": "Kho đó bị thiếu, đã tắt, hoặc không thể phân giải.",
+  "placementCode.repoInUseDefault": "Giá trị mặc định cho {domains} đang trỏ đến kho này. Đổi giá trị mặc định trước.",
+  "placementCode.defaultRepoMissing": "Một giá trị mặc định trong tệp trỏ đến kho không có trong tệp lẫn ở đây.",
+  "placementCode.nestedLocation": "Vị trí này nằm bên trong một kho hoặc đích khác, hoặc chứa một cái trong đó.",
+  "placementCode.foreignDomain": "Kho trực tiếp đó thuộc về một đích của miền khác.",
+  "placementCode.mirroredField": "Giá trị này đến từ đích. Đổi nó ở đó.",
+  "placementCode.companionTaken": "Đích này đã có kho trực tiếp.",
+  "placementCode.targetInUseItems": "Vẫn còn mục đang sao lưu vào kho trực tiếp của đích này: {n}. Trỏ chúng sang nơi khác trước.",
+  "placementCode.targetInUseDefault": "Giá trị mặc định cho {domains} đang trỏ đến kho trực tiếp của đích này. Đổi giá trị mặc định trước.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} trực tiếp giờ giữ ít hơn. Các mục có bản sao duy nhất ở đó: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} trực tiếp không còn append-only nữa. Các mục có bản sao duy nhất ở đó: {n}.",
+  "saveWarning.directCredsKept": "{target} trực tiếp không thể mở bằng khóa mới và giữ lại khóa cũ.",
 };
 
 export default vi;

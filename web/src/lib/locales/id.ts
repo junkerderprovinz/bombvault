@@ -1640,6 +1640,31 @@ const id: Partial<Translations> = {
   "repos.disableWarnUnknown": "Server tidak dapat membaca berapa banyak item yang dicadangkan ke repositori ini. Mematikannya tidak memindahkannya: pencadangan berikutnya gagal dengan pesan yang jelas alih-alih mendarat di tempat lain. Matikan?",
   "repos.add": "Tambah repositori",
   "repos.empty": "Belum ada repositori. Semuanya memakai repositori domainnya sendiri.",
+
+  // Refusals
+  "placementCode.unreadable": "Aturan penempatan tidak dapat dibaca, jadi tidak ada yang disalin sampai bisa dibaca lagi.",
+  "placementCode.invalid": "Pilihan penempatan ini tidak valid.",
+  "placementCode.copiesNotAllowed": "Item pada repositori jarak jauh atau langsung tidak menerima salinan.",
+  "placementCode.unknownTarget": "Target off-site itu tidak ada di domain ini.",
+  "placementCode.stackRule": "Folder proyek mengikuti nilai bawaan container dan tidak punya aturan sendiri.",
+  "placementCode.copyRuleTaken": "Nama itu sudah punya aturan penyalinan. Pilih nama lain.",
+  "placementCode.domainBusy": "Sedang berlangsung pencadangan. Pilih lagi setelah selesai.",
+  "placementCode.hasBackups": "Lokasi tidak bisa lagi berubah setelah item memiliki cadangan. Cadangan tetap di tempat ia ditulis.",
+  "placementCode.stale": "Angkanya berubah sejak ditampilkan. Periksa lagi.",
+  "placementCode.repoInvalid": "Repositori itu hilang, dimatikan, atau tidak dapat diselesaikan.",
+  "placementCode.repoInUseDefault": "Bawaan untuk {domains} menunjuk ke repositori ini. Ubah dulu bawaannya.",
+  "placementCode.defaultRepoMissing": "Sebuah bawaan dalam berkas menunjuk ke repositori yang tidak ada di berkas maupun di sini.",
+  "placementCode.nestedLocation": "Lokasi ini berada di dalam repositori atau target lain, atau berisi salah satunya.",
+  "placementCode.foreignDomain": "Repositori langsung itu milik target dari domain lain.",
+  "placementCode.mirroredField": "Nilai ini berasal dari target. Ubah di sana.",
+  "placementCode.companionTaken": "Target ini sudah punya repositori langsung.",
+  "placementCode.targetInUseItems": "Item masih dicadangkan ke repositori langsung target ini: {n}. Arahkan dulu ke tempat lain.",
+  "placementCode.targetInUseDefault": "Bawaan untuk {domains} menunjuk ke repositori langsung target ini. Ubah dulu bawaannya.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} langsung sekarang menyimpan lebih sedikit. Item yang satu-satunya salinannya ada di sana: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} langsung tidak lagi append-only. Item yang satu-satunya salinannya ada di sana: {n}.",
+  "saveWarning.directCredsKept": "{target} langsung tidak bisa dibuka dengan kunci baru dan tetap memakai yang lama.",
 };
 
 export default id;

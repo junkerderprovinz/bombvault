@@ -1629,6 +1629,31 @@ const fr: Partial<Translations> = {
   "repos.disableWarnUnknown": "Le serveur n'a pas pu lire combien d'éléments sauvegardent dans ce dépôt. Le désactiver ne les déplace pas : leur prochaine sauvegarde échoue avec un message clair au lieu d'atterrir ailleurs. Le désactiver ?",
   "repos.add": "Ajouter un dépôt",
   "repos.empty": "Aucun dépôt pour l'instant. Tout utilise le dépôt de son propre domaine.",
+
+  // Refusals
+  "placementCode.unreadable": "Les règles de placement n'ont pas pu être lues, rien n'est donc copié tant que ce n'est pas de nouveau possible.",
+  "placementCode.invalid": "Ce choix de placement n'est pas valide.",
+  "placementCode.copiesNotAllowed": "Un élément sur un dépôt distant ou direct ne reçoit pas de copies.",
+  "placementCode.unknownTarget": "Cette cible hors site n'existe pas dans ce domaine.",
+  "placementCode.stackRule": "Les dossiers de projet suivent la valeur par défaut des conteneurs et n'ont pas de règle propre.",
+  "placementCode.copyRuleTaken": "Ce nom a déjà des règles de copie. Choisissez un autre nom.",
+  "placementCode.domainBusy": "Une sauvegarde est en cours. Choisissez de nouveau une fois qu'elle est terminée.",
+  "placementCode.hasBackups": "L'emplacement ne peut plus changer une fois que l'élément a des sauvegardes. Elles restent là où elles ont été écrites.",
+  "placementCode.stale": "Les chiffres ont changé depuis leur affichage. Vérifiez-les de nouveau.",
+  "placementCode.repoInvalid": "Ce dépôt est manquant, désactivé ou ne peut pas être résolu.",
+  "placementCode.repoInUseDefault": "La valeur par défaut de {domains} pointe vers ce dépôt. Changez d'abord la valeur par défaut.",
+  "placementCode.defaultRepoMissing": "Une valeur par défaut du fichier pointe vers un dépôt qui n'est ni dans le fichier ni ici.",
+  "placementCode.nestedLocation": "Cet emplacement se trouve dans un autre dépôt ou une autre cible, ou en contient un.",
+  "placementCode.foreignDomain": "Ce dépôt direct appartient à une cible d'un autre domaine.",
+  "placementCode.mirroredField": "Cette valeur vient de la cible. Modifiez-la là-bas.",
+  "placementCode.companionTaken": "Cette cible a déjà un dépôt direct.",
+  "placementCode.targetInUseItems": "Des éléments sauvegardent encore vers le dépôt direct de cette cible : {n}. Pointez-les ailleurs d'abord.",
+  "placementCode.targetInUseDefault": "La valeur par défaut de {domains} pointe vers le dépôt direct de cette cible. Changez d'abord la valeur par défaut.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} direct conserve désormais moins. Éléments dont c'est la seule copie : {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} direct n'est plus append-only. Éléments dont c'est la seule copie : {n}.",
+  "saveWarning.directCredsKept": "{target} direct ne peut pas s'ouvrir avec la nouvelle clé et garde l'ancienne.",
 };
 
 export default fr;

@@ -1621,6 +1621,31 @@ const ko: Partial<Translations> = {
   "repos.disableWarnUnknown": "이 저장소로 백업하는 항목이 몇 개인지 서버가 읽지 못했습니다. 끄더라도 옮겨지지 않습니다. 다음 백업은 다른 곳에 들어가는 대신 분명한 메시지와 함께 실패합니다. 끄시겠습니까?",
   "repos.add": "저장소 추가",
   "repos.empty": "아직 저장소가 없습니다. 모두 각자 도메인의 저장소를 사용합니다.",
+
+  // Refusals
+  "placementCode.unreadable": "배치 규칙을 읽을 수 없어 다시 읽을 수 있을 때까지 아무것도 복사되지 않습니다.",
+  "placementCode.invalid": "이 배치 선택은 유효하지 않습니다.",
+  "placementCode.copiesNotAllowed": "원격 또는 직접 저장소의 항목은 사본을 받지 않습니다.",
+  "placementCode.unknownTarget": "해당 오프사이트 대상이 이 도메인에 존재하지 않습니다.",
+  "placementCode.stackRule": "프로젝트 폴더는 컨테이너의 기본값을 따르며 자체 규칙이 없습니다.",
+  "placementCode.copyRuleTaken": "그 이름에는 이미 복사 규칙이 있습니다. 다른 이름을 선택하세요.",
+  "placementCode.domainBusy": "백업이 진행 중입니다. 끝나면 다시 선택하세요.",
+  "placementCode.hasBackups": "항목에 백업이 있으면 위치를 더 이상 변경할 수 없습니다. 백업은 기록된 곳에 그대로 남습니다.",
+  "placementCode.stale": "표시된 이후 숫자가 바뀌었습니다. 다시 확인하세요.",
+  "placementCode.repoInvalid": "해당 저장소가 없거나, 꺼져 있거나, 확인할 수 없습니다.",
+  "placementCode.repoInUseDefault": "{domains}의 기본값이 이 저장소를 가리킵니다. 먼저 기본값을 바꾸세요.",
+  "placementCode.defaultRepoMissing": "파일의 기본값이 파일에도 여기에도 없는 저장소를 가리킵니다.",
+  "placementCode.nestedLocation": "이 위치는 다른 저장소나 대상 안에 있거나, 하나를 포함하고 있습니다.",
+  "placementCode.foreignDomain": "해당 직접 저장소는 다른 도메인의 대상에 속합니다.",
+  "placementCode.mirroredField": "이 값은 대상에서 가져옵니다. 그곳에서 변경하세요.",
+  "placementCode.companionTaken": "이 대상에는 이미 직접 저장소가 있습니다.",
+  "placementCode.targetInUseItems": "항목이 아직 이 대상의 직접 저장소로 백업되고 있습니다: {n}개. 먼저 다른 곳으로 돌리세요.",
+  "placementCode.targetInUseDefault": "{domains}의 기본값이 이 대상의 직접 저장소를 가리킵니다. 먼저 기본값을 바꾸세요.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} 직접은 이제 더 적게 보관합니다. 유일한 사본이 그곳에 있는 항목: {n}개.",
+  "saveWarning.directAppendOnlyOff": "{target} 직접은 더 이상 append-only가 아닙니다. 유일한 사본이 그곳에 있는 항목: {n}개.",
+  "saveWarning.directCredsKept": "{target} 직접은 새 키로 열 수 없어 이전 키를 유지합니다.",
 };
 
 export default ko;

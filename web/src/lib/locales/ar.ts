@@ -1632,6 +1632,31 @@ const ar: Partial<Translations> = {
   "repos.disableWarnUnknown": "تعذّر على الخادم قراءة عدد العناصر التي تُنسخ إلى هذا المستودع. الإيقاف لا ينقلها: ستفشل نسختها التالية برسالة واضحة بدلًا من أن تذهب إلى مكان آخر. إيقافه؟",
   "repos.add": "إضافة مستودع",
   "repos.empty": "لا توجد مستودعات بعد. كل شيء يستخدم مستودع نطاقه.",
+
+  // Refusals
+  "placementCode.unreadable": "تعذّرت قراءة قواعد وضع النسخ، لذا لا يُنسخ شيء حتى تصبح قابلة للقراءة مرة أخرى.",
+  "placementCode.invalid": "اختيار الوضع هذا غير صالح.",
+  "placementCode.copiesNotAllowed": "عنصر في مستودع بعيد أو مباشر لا يحصل على نسخ.",
+  "placementCode.unknownTarget": "هذا الهدف الخارجي غير موجود في هذا النطاق.",
+  "placementCode.stackRule": "مجلدات المشروع تتبع القيمة الافتراضية للحاويات ولا تملك قاعدة خاصة بها.",
+  "placementCode.copyRuleTaken": "هذا الاسم لديه بالفعل قواعد نسخ. اختر اسمًا آخر.",
+  "placementCode.domainBusy": "يجري تنفيذ نسخة احتياطية الآن. اختر مجددًا بعد انتهائها.",
+  "placementCode.hasBackups": "لا يمكن تغيير الموقع بعد أن يصبح للعنصر نسخ احتياطية. تبقى حيث كُتبت.",
+  "placementCode.stale": "تغيّرت الأرقام منذ عرضها. تحقّق منها مجددًا.",
+  "placementCode.repoInvalid": "هذا المستودع مفقود أو معطّل أو يتعذّر تحليله.",
+  "placementCode.repoInUseDefault": "القيمة الافتراضية لـ {domains} تشير إلى هذا المستودع. غيّر القيمة الافتراضية أولًا.",
+  "placementCode.defaultRepoMissing": "قيمة افتراضية في الملف تشير إلى مستودع غير موجود لا في الملف ولا هنا.",
+  "placementCode.nestedLocation": "هذا الموقع يقع داخل مستودع أو هدف آخر، أو يحتوي على واحد.",
+  "placementCode.foreignDomain": "هذا المستودع المباشر ينتمي إلى هدف في نطاق آخر.",
+  "placementCode.mirroredField": "هذه القيمة تأتي من الهدف. غيّرها هناك.",
+  "placementCode.companionTaken": "هذا الهدف لديه بالفعل مستودع مباشر.",
+  "placementCode.targetInUseItems": "لا تزال عناصر تُنسخ احتياطيًا إلى المستودع المباشر لهذا الهدف: {n}. وجّهها إلى مكان آخر أولًا.",
+  "placementCode.targetInUseDefault": "القيمة الافتراضية لـ {domains} تشير إلى المستودع المباشر لهذا الهدف. غيّر القيمة الافتراضية أولًا.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} المباشر يحتفظ الآن بأقل. العناصر التي نسختها الوحيدة هناك: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} المباشر لم يعد append-only. العناصر التي نسختها الوحيدة هناك: {n}.",
+  "saveWarning.directCredsKept": "{target} المباشر يتعذّر فتحه بالمفتاح الجديد ويحتفظ بالقديم.",
 };
 
 export default ar;

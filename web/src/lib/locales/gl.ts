@@ -1640,6 +1640,31 @@ const gl: Partial<Translations> = {
   "repos.disableWarnUnknown": "O servidor non puido ler cantos elementos fan copia neste repositorio. Desactivalo non os move: a súa vindeira copia falla cunha mensaxe clara en lugar de acabar noutro sitio. Desactívalo?",
   "repos.add": "Engadir repositorio",
   "repos.empty": "Aínda non hai repositorios. Todo usa o repositorio do seu propio dominio.",
+
+  // Refusals
+  "placementCode.unreadable": "As regras de colocación non se puideron ler, así que non se copia nada ata que se poidan ler de novo.",
+  "placementCode.invalid": "Esta elección de colocación non é válida.",
+  "placementCode.copiesNotAllowed": "Un elemento nun repositorio remoto ou directo non recibe copias.",
+  "placementCode.unknownTarget": "Ese destino externo non existe neste dominio.",
+  "placementCode.stackRule": "Os cartafoles de proxecto seguen o valor predeterminado de contedores e non teñen regra propia.",
+  "placementCode.copyRuleTaken": "Ese nome xa ten regras de copia. Escolle outro nome.",
+  "placementCode.domainBusy": "Hai unha copia de seguranza en curso. Escolle de novo cando remate.",
+  "placementCode.hasBackups": "O lugar non pode cambiar unha vez que o elemento ten copias de seguranza. Quedan onde foron escritas.",
+  "placementCode.stale": "Os números cambiaron desde que se mostraron. Compróbaos de novo.",
+  "placementCode.repoInvalid": "Ese repositorio falta, está desactivado ou non se pode resolver.",
+  "placementCode.repoInUseDefault": "O valor predeterminado de {domains} apunta a este repositorio. Cambia primeiro o valor predeterminado.",
+  "placementCode.defaultRepoMissing": "Un valor predeterminado do ficheiro apunta a un repositorio que non está nin no ficheiro nin aquí.",
+  "placementCode.nestedLocation": "Este lugar está dentro doutro repositorio ou destino, ou contén un.",
+  "placementCode.foreignDomain": "Ese repositorio directo pertence a un destino doutro dominio.",
+  "placementCode.mirroredField": "Este valor vén do destino. Cámbiao alí.",
+  "placementCode.companionTaken": "Este destino xa ten un repositorio directo.",
+  "placementCode.targetInUseItems": "Aínda hai elementos facendo copia de seguranza no repositorio directo deste destino: {n}. Apúntaos a outro lugar primeiro.",
+  "placementCode.targetInUseDefault": "O valor predeterminado de {domains} apunta ao repositorio directo deste destino. Cambia primeiro o valor predeterminado.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} directo agora conserva menos. Elementos cuxa única copia está aí: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} directo xa non é append-only. Elementos cuxa única copia está aí: {n}.",
+  "saveWarning.directCredsKept": "{target} directo non se pode abrir coa nova clave e conserva a antiga.",
 };
 
 export default gl;

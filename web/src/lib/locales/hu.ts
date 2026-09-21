@@ -1632,6 +1632,31 @@ const hu: Partial<Translations> = {
   "repos.disableWarnUnknown": "A kiszolgáló nem tudta kiolvasni, hány elem ment ide. A kikapcsolás nem mozgatja el őket: a következő mentésük érthető üzenettel hiúsul meg, ahelyett hogy máshová kerülne. Kikapcsolod?",
   "repos.add": "Tároló hozzáadása",
   "repos.empty": "Még nincs tároló. Minden a saját tartományának tárolóját használja.",
+
+  // Refusals
+  "placementCode.unreadable": "Az elhelyezési szabályokat nem sikerült beolvasni, ezért semmi nem másolódik, amíg ez újra nem sikerül.",
+  "placementCode.invalid": "Ez az elhelyezési választás nem érvényes.",
+  "placementCode.copiesNotAllowed": "Egy távoli vagy közvetlen tárolón lévő elem nem kap másolatot.",
+  "placementCode.unknownTarget": "Ez a külső cél nem létezik ebben a tartományban.",
+  "placementCode.stackRule": "A projektmappák a konténerek alapértelmezését követik, és nincs saját szabályuk.",
+  "placementCode.copyRuleTaken": "Ennek a névnek már vannak másolási szabályai. Válassz másik nevet.",
+  "placementCode.domainBusy": "Éppen mentés folyik. Válassz újra, ha befejeződött.",
+  "placementCode.hasBackups": "A hely már nem változtatható, ha az elemnek mentései vannak. Ott maradnak, ahová írták őket.",
+  "placementCode.stale": "A számok a megjelenítésük óta megváltoztak. Ellenőrizd őket újra.",
+  "placementCode.repoInvalid": "Ez a tároló hiányzik, ki van kapcsolva, vagy nem oldható fel.",
+  "placementCode.repoInUseDefault": "A(z) {domains} alapértelmezése erre a tárolóra mutat. Először változtasd meg az alapértelmezést.",
+  "placementCode.defaultRepoMissing": "A fájl egy alapértelmezése olyan tárolóra mutat, amely sem a fájlban, sem itt nem létezik.",
+  "placementCode.nestedLocation": "Ez a hely egy másik tárolón vagy célon belül van, vagy tartalmaz egyet.",
+  "placementCode.foreignDomain": "Ez a közvetlen tároló egy másik tartomány céljához tartozik.",
+  "placementCode.mirroredField": "Ez az érték a céltól származik. Ott változtasd meg.",
+  "placementCode.companionTaken": "Ennek a célnak már van közvetlen tárolója.",
+  "placementCode.targetInUseItems": "Elemek még mindig ide mentenek e cél közvetlen tárolójába: {n}. Először irányítsd őket máshová.",
+  "placementCode.targetInUseDefault": "A(z) {domains} alapértelmezése e cél közvetlen tárolójára mutat. Először változtasd meg az alapértelmezést.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} közvetlenül most kevesebbet őriz meg. Elemek, amelyeknek egyetlen másolata ott van: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} közvetlenül már nem append-only. Elemek, amelyeknek egyetlen másolata ott van: {n}.",
+  "saveWarning.directCredsKept": "{target} közvetlenül nem nyitható meg az új kulccsal, és megtartja a régit.",
 };
 
 export default hu;

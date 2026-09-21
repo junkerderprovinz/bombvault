@@ -1632,6 +1632,31 @@ const ro: Partial<Translations> = {
   "repos.disableWarnUnknown": "Serverul nu a putut citi câte elemente fac copii în acest depozit. Dezactivarea nu le mută: următoarea copie eșuează cu un mesaj clar în loc să ajungă în altă parte. Îl dezactivezi?",
   "repos.add": "Adaugă depozit",
   "repos.empty": "Încă niciun depozit. Totul folosește depozitul domeniului propriu.",
+
+  // Refusals
+  "placementCode.unreadable": "Regulile de plasare nu au putut fi citite, așa că nu se copiază nimic până când vor putea fi citite din nou.",
+  "placementCode.invalid": "Această alegere de plasare nu este validă.",
+  "placementCode.copiesNotAllowed": "Un element dintr-un depozit la distanță sau direct nu primește copii.",
+  "placementCode.unknownTarget": "Acea țintă externă nu există în acest domeniu.",
+  "placementCode.stackRule": "Folderele de proiect urmează valoarea implicită a containerelor și nu au regulă proprie.",
+  "placementCode.copyRuleTaken": "Acel nume are deja reguli de copiere. Alege alt nume.",
+  "placementCode.domainBusy": "O copie de siguranță este în curs. Alege din nou după ce se termină.",
+  "placementCode.hasBackups": "Locația nu se mai poate schimba după ce elementul are copii de siguranță. Rămân unde au fost scrise.",
+  "placementCode.stale": "Numerele s-au schimbat de când au fost afișate. Verifică-le din nou.",
+  "placementCode.repoInvalid": "Acel depozit lipsește, este dezactivat sau nu poate fi rezolvat.",
+  "placementCode.repoInUseDefault": "Valoarea implicită pentru {domains} indică spre acest depozit. Schimbă mai întâi valoarea implicită.",
+  "placementCode.defaultRepoMissing": "O valoare implicită din fișier indică spre un depozit care nu este nici în fișier, nici aici.",
+  "placementCode.nestedLocation": "Această locație se află în alt depozit sau altă țintă, sau conține unul.",
+  "placementCode.foreignDomain": "Acel depozit direct aparține unei ținte din alt domeniu.",
+  "placementCode.mirroredField": "Această valoare vine de la țintă. Schimbă-o acolo.",
+  "placementCode.companionTaken": "Această țintă are deja un depozit direct.",
+  "placementCode.targetInUseItems": "Elemente încă se salvează în depozitul direct al acestei ținte: {n}. Îndreaptă-le mai întâi în altă parte.",
+  "placementCode.targetInUseDefault": "Valoarea implicită pentru {domains} indică spre depozitul direct al acestei ținte. Schimbă mai întâi valoarea implicită.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} direct păstrează acum mai puțin. Elemente a căror unică copie este acolo: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} direct nu mai este append-only. Elemente a căror unică copie este acolo: {n}.",
+  "saveWarning.directCredsKept": "{target} direct nu se poate deschide cu noua cheie și o păstrează pe cea veche.",
 };
 
 export default ro;

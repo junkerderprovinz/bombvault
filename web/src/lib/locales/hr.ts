@@ -1640,6 +1640,31 @@ const hr: Partial<Translations> = {
   "repos.disableWarnUnknown": "Poslužitelj nije mogao pročitati koliko se stavki kopira ovamo. Isključivanje ih ne premješta: sljedeća kopija neuspjet će uz jasnu poruku umjesto da završi drugdje. Isključiti?",
   "repos.add": "Dodaj repozitorij",
   "repos.empty": "Još nema repozitorija. Sve koristi repozitorij svoje domene.",
+
+  // Refusals
+  "placementCode.unreadable": "Pravila razmještaja nije bilo moguće pročitati, pa se ništa ne kopira dok se ponovno ne mogu pročitati.",
+  "placementCode.invalid": "Ovaj izbor razmještaja nije valjan.",
+  "placementCode.copiesNotAllowed": "Stavka u udaljenom ili izravnom repozitoriju ne prima kopije.",
+  "placementCode.unknownTarget": "To izvanmrežno odredište ne postoji u ovoj domeni.",
+  "placementCode.stackRule": "Mape projekta prate zadanu vrijednost kontejnera i nemaju vlastito pravilo.",
+  "placementCode.copyRuleTaken": "Taj naziv već ima pravila kopiranja. Odaberi drugi naziv.",
+  "placementCode.domainBusy": "Sigurnosno kopiranje je u tijeku. Odaberi ponovno kad završi.",
+  "placementCode.hasBackups": "Lokacija se više ne može promijeniti kad stavka ima sigurnosne kopije. Ostaju ondje gdje su zapisane.",
+  "placementCode.stale": "Brojevi su se promijenili otkad su prikazani. Provjeri ih ponovno.",
+  "placementCode.repoInvalid": "Taj repozitorij nedostaje, isključen je ili se ne može razriješiti.",
+  "placementCode.repoInUseDefault": "Zadana vrijednost za {domains} pokazuje na ovaj repozitorij. Prvo promijeni zadanu vrijednost.",
+  "placementCode.defaultRepoMissing": "Zadana vrijednost u datoteci pokazuje na repozitorij kojeg nema ni u datoteci ni ovdje.",
+  "placementCode.nestedLocation": "Ova lokacija leži unutar drugog repozitorija ili odredišta, ili ga sadrži.",
+  "placementCode.foreignDomain": "Taj izravni repozitorij pripada odredištu druge domene.",
+  "placementCode.mirroredField": "Ova vrijednost dolazi s odredišta. Promijeni je ondje.",
+  "placementCode.companionTaken": "Ovo odredište već ima izravni repozitorij.",
+  "placementCode.targetInUseItems": "Stavke se i dalje sigurnosno kopiraju u izravni repozitorij ovog odredišta: {n}. Prvo ih usmjeri drugamo.",
+  "placementCode.targetInUseDefault": "Zadana vrijednost za {domains} pokazuje na izravni repozitorij ovog odredišta. Prvo promijeni zadanu vrijednost.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} izravno sada čuva manje. Stavke čija je jedina kopija ondje: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} izravno više ne koristi način samo-dodavanja. Stavke čija je jedina kopija ondje: {n}.",
+  "saveWarning.directCredsKept": "{target} izravno se ne može otvoriti novim ključem i zadržava stari.",
 };
 
 export default hr;

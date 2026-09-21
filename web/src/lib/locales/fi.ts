@@ -1629,6 +1629,31 @@ const fi: Partial<Translations> = {
   "repos.disableWarnUnknown": "Palvelin ei voinut lukea, kuinka moni kohde varmuuskopioi tänne. Sen sammuttaminen ei siirrä niitä: seuraava varmuuskopio epäonnistuu selkeällä viestillä sen sijaan, että päätyisi muualle. Sammutetaanko?",
   "repos.add": "Lisää arkisto",
   "repos.empty": "Ei vielä arkistoja. Kaikki käyttää oman toimialueensa arkistoa.",
+
+  // Refusals
+  "placementCode.unreadable": "Sijoittelusääntöjä ei voitu lukea, joten mitään ei kopioida, ennen kuin ne voidaan taas lukea.",
+  "placementCode.invalid": "Tämä sijoitteluvalinta ei ole kelvollinen.",
+  "placementCode.copiesNotAllowed": "Etä- tai suora-arkistossa oleva kohde ei saa kopioita.",
+  "placementCode.unknownTarget": "Tätä etäkohdetta ei ole tässä toimialueessa.",
+  "placementCode.stackRule": "Projektikansiot noudattavat konttien oletusarvoa eikä niillä ole omaa sääntöä.",
+  "placementCode.copyRuleTaken": "Tällä nimellä on jo kopiointisääntöjä. Valitse toinen nimi.",
+  "placementCode.domainBusy": "Varmuuskopiointi on käynnissä. Valitse uudelleen, kun se on valmis.",
+  "placementCode.hasBackups": "Sijaintia ei voi enää muuttaa, kun kohteella on varmuuskopioita. Ne pysyvät siellä, minne ne kirjoitettiin.",
+  "placementCode.stale": "Luvut ovat muuttuneet niiden näyttämisen jälkeen. Tarkista ne uudelleen.",
+  "placementCode.repoInvalid": "Tämä arkisto puuttuu, on pois käytöstä tai sitä ei voida ratkaista.",
+  "placementCode.repoInUseDefault": "{domains} oletusarvo osoittaa tähän arkistoon. Vaihda oletusarvo ensin.",
+  "placementCode.defaultRepoMissing": "Tiedoston oletusarvo osoittaa arkistoon, jota ei ole tiedostossa eikä täällä.",
+  "placementCode.nestedLocation": "Tämä sijainti on toisen arkiston tai kohteen sisällä, tai sisältää sellaisen.",
+  "placementCode.foreignDomain": "Tämä suora arkisto kuuluu toisen toimialueen kohteelle.",
+  "placementCode.mirroredField": "Tämä arvo tulee kohteesta. Muuta se siellä.",
+  "placementCode.companionTaken": "Tällä kohteella on jo suora arkisto.",
+  "placementCode.targetInUseItems": "Kohteet varmuuskopioituvat yhä tämän kohteen suoraan arkistoon: {n}. Osoita ne ensin muualle.",
+  "placementCode.targetInUseDefault": "{domains} oletusarvo osoittaa tämän kohteen suoraan arkistoon. Vaihda oletusarvo ensin.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} suoraan säilyttää nyt vähemmän. Kohteet, joiden ainoa kopio on siellä: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} suoraan ei ole enää append-only. Kohteet, joiden ainoa kopio on siellä: {n}.",
+  "saveWarning.directCredsKept": "{target} suoraan ei voi avata uudella avaimella, ja se säilyttää vanhan.",
 };
 
 export default fi;

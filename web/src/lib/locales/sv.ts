@@ -1629,6 +1629,31 @@ const sv: Partial<Translations> = {
   "repos.disableWarnUnknown": "Servern kunde inte läsa hur många objekt som säkerhetskopierar hit. Att stänga av det flyttar dem inte: nästa säkerhetskopia misslyckas med ett tydligt meddelande i stället för att hamna någon annanstans. Stänga av?",
   "repos.add": "Lägg till arkiv",
   "repos.empty": "Inga arkiv ännu. Allt använder sin egen domäns arkiv.",
+
+  // Refusals
+  "placementCode.unreadable": "Placeringsreglerna kunde inte läsas, så inget kopieras förrän de kan läsas igen.",
+  "placementCode.invalid": "Det här placeringsvalet är inte giltigt.",
+  "placementCode.copiesNotAllowed": "Ett objekt i ett fjärr- eller direktarkiv får inga kopior.",
+  "placementCode.unknownTarget": "Det externa målet finns inte i den här domänen.",
+  "placementCode.stackRule": "Projektmappar följer standardvärdet för containrar och har ingen egen regel.",
+  "placementCode.copyRuleTaken": "Det namnet har redan kopieringsregler. Välj ett annat namn.",
+  "placementCode.domainBusy": "En säkerhetskopiering pågår. Välj igen när den är klar.",
+  "placementCode.hasBackups": "Platsen kan inte ändras när objektet har säkerhetskopior. De stannar där de skrevs.",
+  "placementCode.stale": "Siffrorna har ändrats sedan de visades. Kontrollera dem igen.",
+  "placementCode.repoInvalid": "Det arkivet saknas, är avstängt eller kan inte matchas.",
+  "placementCode.repoInUseDefault": "Standardvärdet för {domains} pekar på det här arkivet. Ändra standardvärdet först.",
+  "placementCode.defaultRepoMissing": "Ett standardvärde i filen pekar på ett arkiv som varken finns i filen eller här.",
+  "placementCode.nestedLocation": "Den här platsen ligger inuti ett annat arkiv eller mål, eller innehåller ett.",
+  "placementCode.foreignDomain": "Det direktarkivet tillhör ett mål i en annan domän.",
+  "placementCode.mirroredField": "Det här värdet kommer från målet. Ändra det där.",
+  "placementCode.companionTaken": "Det här målet har redan ett direktarkiv.",
+  "placementCode.targetInUseItems": "Objekt säkerhetskopieras fortfarande till det här målets direktarkiv: {n}. Peka om dem först.",
+  "placementCode.targetInUseDefault": "Standardvärdet för {domains} pekar på det här målets direktarkiv. Ändra standardvärdet först.",
+
+  // Warnings
+  "saveWarning.directRetentionLowered": "{target} direkt behåller nu mindre. Objekt vars enda kopia finns där: {n}.",
+  "saveWarning.directAppendOnlyOff": "{target} direkt är inte längre append-only. Objekt vars enda kopia finns där: {n}.",
+  "saveWarning.directCredsKept": "{target} direkt kan inte öppnas med den nya nyckeln och behåller den gamla.",
 };
 
 export default sv;
