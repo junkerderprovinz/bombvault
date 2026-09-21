@@ -849,6 +849,7 @@ const id: Partial<Translations> = {
   "runReason.dbdumpHelper": "pembantu dump tidak memberi hasil",
   "runReason.dbdumpMismatch": "ukuran yang tersimpan tidak cocok dengan yang di-dump",
   "runReason.dbdumpLeftover": "dump yang rusak tidak bisa dihapus dari repositori",
+  "runReason.dbdumpOrphan": "dump mungkin masih berjalan di dalam kontainer sampai batas waktunya",
   "runReason.dbdumpOneDatabase": "dengan kredensial di kontainer hanya satu basis data yang bisa di-dump",
   "runReason.dbdumpNotRecorded": "dump basis data dilewati, karena jalannya tidak bisa dicatat",
   "runReason.dbimportPrepare": "impor gagal sebelum dimulai; data lama sudah kembali di tempatnya",

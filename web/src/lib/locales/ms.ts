@@ -849,6 +849,7 @@ const ms: Partial<Translations> = {
   "runReason.dbdumpHelper": "pembantu dump tidak memberi sebarang hasil",
   "runReason.dbdumpMismatch": "saiz yang disimpan tidak sepadan dengan apa yang di-dump",
   "runReason.dbdumpLeftover": "dump yang rosak tidak dapat dibuang daripada repositori",
+  "runReason.dbdumpOrphan": "dump mungkin masih berjalan di dalam bekas sehingga had masanya",
   "runReason.dbdumpOneDatabase": "dengan kelayakan dalam bekas hanya satu pangkalan data dapat di-dump",
   "runReason.dbdumpNotRecorded": "dump pangkalan data dilangkau, kerana larinya tidak dapat direkodkan",
   "runReason.dbimportPrepare": "import gagal sebelum ia bermula; data lama sudah kembali di tempatnya",

@@ -953,6 +953,7 @@ const ko: Partial<Translations> = {
   "runReason.dbdumpHelper": "덤프 도우미가 아무 결과도 주지 않았습니다",
   "runReason.dbdumpMismatch": "저장된 크기가 덤프한 내용과 맞지 않습니다",
   "runReason.dbdumpLeftover": "손상된 덤프를 저장소에서 지우지 못했습니다",
+  "runReason.dbdumpOrphan": "덤프가 시간 제한까지 컨테이너 안에서 아직 실행 중일 수 있습니다",
   "runReason.dbdumpOneDatabase": "컨테이너의 자격 증명으로는 데이터베이스 하나만 덤프할 수 있었습니다",
   "runReason.dbdumpNotRecorded": "데이터베이스 덤프를 건너뛰었습니다. 그 실행을 기록하지 못했기 때문입니다",
   "runReason.dbimportPrepare": "가져오기가 시작되기도 전에 실패했습니다. 이전 데이터는 제자리로 돌아왔습니다",

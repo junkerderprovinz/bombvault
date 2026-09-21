@@ -849,6 +849,7 @@ const ca: Partial<Translations> = {
   "runReason.dbdumpHelper": "l'ajudant de bolcat no ha retornat cap resultat",
   "runReason.dbdumpMismatch": "la mida desada no coincideix amb el que s'ha bolcat",
   "runReason.dbdumpLeftover": "no s'ha pogut treure del repositori un bolcat malmès",
+  "runReason.dbdumpOrphan": "és possible que el bolcat encara s'executi dins del contenidor fins al seu límit de temps",
   "runReason.dbdumpOneDatabase": "amb les credencials del contenidor només s'ha pogut bolcar una base de dades",
   "runReason.dbdumpNotRecorded": "bolcat de la base de dades omès, perquè no s'ha pogut registrar la seva execució",
   "runReason.dbimportPrepare": "la importació ha fallat abans de començar; les dades anteriors tornen a ser al seu lloc",

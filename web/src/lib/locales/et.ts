@@ -849,6 +849,7 @@ const et: Partial<Translations> = {
   "runReason.dbdumpHelper": "tõmmise abiline ei andnud tulemust",
   "runReason.dbdumpMismatch": "salvestatud suurus ei klapi sellega, mis tõmmati",
   "runReason.dbdumpLeftover": "kahjustatud tõmmist ei õnnestunud hoidlast eemaldada",
+  "runReason.dbdumpOrphan": "tõmmis võib konteineris veel kuni oma ajapiirini töötada",
   "runReason.dbdumpOneDatabase": "konteineri mandaatidega sai tõmmata ainult ühe andmebaasi",
   "runReason.dbdumpNotRecorded": "andmebaasi tõmmis jäeti vahele, sest selle käiku ei saanud kirja panna",
   "runReason.dbimportPrepare": "import ebaõnnestus enne algust; vanad andmed on jälle omal kohal",

@@ -973,6 +973,7 @@ const vi: Partial<Translations> = {
   "runReason.dbdumpHelper": "trình trợ giúp kết xuất không trả về kết quả nào",
   "runReason.dbdumpMismatch": "kích thước đã lưu không khớp với những gì đã kết xuất",
   "runReason.dbdumpLeftover": "không thể gỡ một bản kết xuất hỏng khỏi kho lưu trữ",
+  "runReason.dbdumpOrphan": "bản kết xuất có thể vẫn đang chạy trong container cho đến giới hạn thời gian của nó",
   "runReason.dbdumpOneDatabase": "với thông tin đăng nhập trong container chỉ kết xuất được một cơ sở dữ liệu",
   "runReason.dbdumpNotRecorded": "đã bỏ qua kết xuất cơ sở dữ liệu, vì không ghi lại được lần chạy của nó",
   "runReason.dbimportPrepare": "việc nhập đã thất bại trước khi bắt đầu; dữ liệu cũ đã trở lại chỗ cũ",

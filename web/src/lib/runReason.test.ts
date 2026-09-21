@@ -65,6 +65,20 @@ describe("runReason", () => {
     });
   });
 
+  it("translates the note that a dump may still be running", () => {
+    expect(runReasonParts("cancelled by the user: orphan stop failed", t)).toEqual({
+      head: "runReason.cancelled",
+      detail: "",
+      note: "runReason.dbdumpOrphan",
+    });
+    expect(runReason("database dump failed: the dump tool reported an error: ERROR 1045; orphan stop failed", t)).toBe(
+      "runReason.dbdumpTool: ERROR 1045; runReason.dbdumpOrphan"
+    );
+    expect(runReason("database dump failed: time limit reached: orphan stop failed", t)).toBe(
+      "runReason.dbdumpTimeout; runReason.dbdumpOrphan"
+    );
+  });
+
   it("hands back a reason it does not know", () => {
     expect(runReason("Fatal: repository is already locked", t)).toBe("Fatal: repository is already locked");
     expect(runReasonParts("Fatal: repository is already locked", t)).toEqual({
@@ -90,6 +104,15 @@ describe("RunReasonText", () => {
     expect(detail.type).toBe("bdi");
     expect(detail.props?.dir).toBe("ltr");
     expect(detail.props?.children).toBe("ERROR 1045");
+  });
+
+  it("follows the page direction for the note that a dump may still be running", () => {
+    const parts = children(
+      RunReasonText({ reason: "database dump failed: the dump tool reported an error: ERROR 1045; orphan stop failed", t })
+    );
+    expect(parts[0]).toBe("runReason.dbdumpTool");
+    expect((parts[2] as ElementNode).props?.children).toBe("ERROR 1045");
+    expect(parts.slice(3)).toEqual(["; ", "runReason.dbdumpOrphan"]);
   });
 
   it("renders a reason without a detail as bare text", () => {

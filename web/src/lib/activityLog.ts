@@ -5,7 +5,7 @@
 // React, i18n or a live stream.
 
 import type { Run, ScheduleNext } from "./api";
-import { dumpWasCancelled, importHadErrors } from "./dbdump";
+import { dumpLeftRunning, dumpWasCancelled, importHadErrors } from "./dbdump";
 import type { ProgressMap, ProgressStage, ProgressState } from "./progress";
 import { offsiteRunProgress, STALE_MS } from "./progress";
 import { elapsedSince, formatClockTime, formatDuration } from "./reltime";
@@ -409,7 +409,8 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
   }
 
   if (run.kind === "dbdump") {
-    if (dumpWasCancelled(run.error)) {
+    // A dump that may still be running is worth a look even when it was cancelled.
+    if (dumpWasCancelled(run.error) && !dumpLeftRunning(run.error)) {
       return { status: "info", text: resolveName("activityLog.lineDbDumpCancelled", { name }) };
     }
     if (run.status === "success") {

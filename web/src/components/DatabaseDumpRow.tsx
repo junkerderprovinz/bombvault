@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { setDbDumpEngine, setDbDumpOff, type Container, type DbEngine } from "../lib/api";
 import { useAdvanced } from "../lib/advanced";
-import { coverageKey, dumpWasCancelled, ENGINE_NAMES, remedyKey } from "../lib/dbdump";
+import { coverageKey, dumpLeftRunning, dumpWasCancelled, ENGINE_NAMES, remedyKey } from "../lib/dbdump";
 import { humanBytes } from "../lib/forecast";
 import type { TranslationKey, useT } from "../lib/i18n";
 import { relativeTime } from "../lib/reltime";
@@ -105,7 +105,20 @@ export function DatabaseDumpRow({ container, t }: { container: Container; t: T }
   function lastResult(): { node: ReactNode; remedy: TranslationKey | null } {
     if (!last) return { node: null, remedy: null };
     if (dumpWasCancelled(last.error)) {
-      return { node: <span className="text-carbon-textMuted">{t("dbdump.resultCancelled")}</span>, remedy: null };
+      return {
+        node: (
+          <>
+            <span className="text-carbon-textMuted">{t("dbdump.resultCancelled")}</span>
+            {dumpLeftRunning(last.error) && (
+              <>
+                {" · "}
+                <span className="text-statusWarn">{t("runReason.dbdumpOrphan")}</span>
+              </>
+            )}
+          </>
+        ),
+        remedy: null,
+      };
     }
     if (last.status === "failed") {
       return {

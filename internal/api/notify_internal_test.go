@@ -421,6 +421,26 @@ func TestDBDumpFailureNotifiesAfterTheBackup(t *testing.T) {
 		}
 	})
 
+	t.Run("a dump left running in the container", func(t *testing.T) {
+		ssh := &fakeHostSSH{}
+		s, targetID := dumpNotifyService(t, ssh, notify.Config{On: "failure", Unraid: true})
+
+		reason := withOrphanStopFailed(store.ReasonDBDumpTool + ": pg_dumpall: error: query failed")
+		runID := recordDumpRun(t, s, targetID, "failed", reason)
+		s.notifyDBDumpFailed(context.Background(), targetID, "pg", failed(runID, reason), true)
+
+		if len(ssh.runs) != 1 {
+			t.Fatalf("%d messages, want one", len(ssh.runs))
+		}
+		sent := strings.Join(ssh.runs[0], " ")
+		if !strings.Contains(sent, "The dump may still be running inside the container until its time limit.") {
+			t.Errorf("message does not say the dump may still run: %s", sent)
+		}
+		if strings.Contains(sent, "query failed") {
+			t.Errorf("the tool's own message left the box: %s", sent)
+		}
+	})
+
 	t.Run("the same failure twice", func(t *testing.T) {
 		ssh := &fakeHostSSH{}
 		s, targetID := dumpNotifyService(t, ssh, notify.Config{On: "failure", Unraid: true})

@@ -981,6 +981,7 @@ const tr: Partial<Translations> = {
   "runReason.dbdumpHelper": "döküm yardımcısı sonuç vermedi",
   "runReason.dbdumpMismatch": "kayıtlı boyut, dökülenle uyuşmuyor",
   "runReason.dbdumpLeftover": "bozuk bir döküm depodan kaldırılamadı",
+  "runReason.dbdumpOrphan": "döküm, süre sınırına kadar kapsayıcının içinde hâlâ çalışıyor olabilir",
   "runReason.dbdumpOneDatabase": "kapsayıcıdaki kimlik bilgileriyle yalnızca bir veritabanının dökümü alınabildi",
   "runReason.dbdumpNotRecorded": "veritabanı dökümü atlandı, çünkü çalışması kaydedilemedi",
   "runReason.dbimportPrepare": "içe aktarma daha başlamadan başarısız oldu; eski veriler yeniden yerinde",

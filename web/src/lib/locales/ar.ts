@@ -984,6 +984,7 @@ const ar: Partial<Translations> = {
   "runReason.dbdumpHelper": "لم يُرجع مساعد التفريغ أي نتيجة",
   "runReason.dbdumpMismatch": "الحجم المخزَّن لا يطابق ما جرى تفريغه",
   "runReason.dbdumpLeftover": "تعذّرت إزالة تفريغ تالف من المستودع",
+  "runReason.dbdumpOrphan": "قد يظل التفريغ يعمل داخل الحاوية حتى حدّه الزمني",
   "runReason.dbdumpOneDatabase": "بيانات الاعتماد الموجودة في الحاوية سمحت بتفريغ قاعدة بيانات واحدة فقط",
   "runReason.dbdumpNotRecorded": "جرى تخطي تفريغ قاعدة البيانات، لأنه تعذّر تسجيل تشغيله",
   "runReason.dbimportPrepare": "فشل الاستيراد قبل أن يبدأ؛ البيانات القديمة عادت إلى مكانها",

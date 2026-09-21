@@ -849,6 +849,7 @@ const eu: Partial<Translations> = {
   "runReason.dbdumpHelper": "iraulketa-laguntzaileak ez du emaitzarik eman",
   "runReason.dbdumpMismatch": "gordetako tamaina ez dator bat irauli denarekin",
   "runReason.dbdumpLeftover": "hondatutako iraulketa bat ezin izan da biltegitik kendu",
+  "runReason.dbdumpOrphan": "baliteke iraulketa edukiontziaren barruan exekutatzen egotea oraindik bere denbora-mugara arte",
   "runReason.dbdumpOneDatabase": "edukiontziko kredentzialekin datu-base bakarra irauli ahal izan da",
   "runReason.dbdumpNotRecorded": "datu-basearen iraulketa saltatu da, haren exekuzioa ezin izan delako erregistratu",
   "runReason.dbimportPrepare": "inportazioak huts egin du hasi aurretik; datu zaharrak berriro daude bere lekuan",

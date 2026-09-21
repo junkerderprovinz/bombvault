@@ -37,12 +37,24 @@ export function pairsWith(
   return dump.pairedSnapshotId === (snap.original || snap.id);
 }
 
+const CANCELLED = "cancelled by the user";
+
 /**
  * A cancelled dump is recorded as a failed run whose reason is the
  * cancellation, so the reason decides how it is worded, not the status.
  */
 export function dumpWasCancelled(reason: string | null | undefined): boolean {
-  return reason?.trim() === "cancelled by the user";
+  const text = reason?.trim() ?? "";
+  return text === CANCELLED || text.startsWith(CANCELLED + ": ");
+}
+
+/** What the server adds to a dump's reason when the dump may still be running in the container. */
+export const ORPHAN_NOTE = "orphan stop failed";
+
+/** Whether a dump's reason says its process may still be running in the container. */
+export function dumpLeftRunning(reason: string | null | undefined): boolean {
+  const text = reason?.trim() ?? "";
+  return text.endsWith(": " + ORPHAN_NOTE) || text.endsWith("; " + ORPHAN_NOTE);
 }
 
 /**

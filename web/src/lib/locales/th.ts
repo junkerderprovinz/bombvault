@@ -984,6 +984,7 @@ const th: Partial<Translations> = {
   "runReason.dbdumpHelper": "ตัวช่วยดัมป์ไม่ให้ผลลัพธ์ใด",
   "runReason.dbdumpMismatch": "ขนาดที่บันทึกไว้ไม่ตรงกับสิ่งที่ดัมป์ออกมา",
   "runReason.dbdumpLeftover": "นำดัมป์ที่เสียหายออกจากที่เก็บไม่ได้",
+  "runReason.dbdumpOrphan": "ดัมป์อาจยังทำงานอยู่ในคอนเทนเนอร์จนถึงขีดจำกัดเวลาของมัน",
   "runReason.dbdumpOneDatabase": "ด้วยข้อมูลรับรองในคอนเทนเนอร์ ดัมป์ได้เพียงฐานข้อมูลเดียว",
   "runReason.dbdumpNotRecorded": "ข้ามการดัมป์ฐานข้อมูล เพราะบันทึกรอบการทำงานของมันไม่ได้",
   "runReason.dbimportPrepare": "การนำเข้าล้มเหลวก่อนเริ่ม ข้อมูลเดิมกลับเข้าที่แล้ว",

@@ -958,6 +958,7 @@ const no: Partial<Translations> = {
   "runReason.dbdumpHelper": "dumphjelperen ga ikke noe resultat",
   "runReason.dbdumpMismatch": "den lagrede størrelsen stemmer ikke med det som ble dumpet",
   "runReason.dbdumpLeftover": "en skadet dump kunne ikke fjernes fra arkivet",
+  "runReason.dbdumpOrphan": "dumpen kjører kanskje fortsatt i containeren til tidsgrensen er nådd",
   "runReason.dbdumpOneDatabase": "med påloggingsdetaljene i beholderen kunne bare én database dumpes",
   "runReason.dbdumpNotRecorded": "databasedumpen ble hoppet over, fordi kjøringen ikke kunne registreres",
   "runReason.dbimportPrepare": "importen mislyktes før den kom i gang; de gamle dataene er på plass igjen",

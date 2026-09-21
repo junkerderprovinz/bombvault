@@ -981,6 +981,7 @@ const sv: Partial<Translations> = {
   "runReason.dbdumpHelper": "dumphjälpen gav inget resultat",
   "runReason.dbdumpMismatch": "den sparade storleken stämmer inte med det som dumpades",
   "runReason.dbdumpLeftover": "en skadad dump gick inte att ta bort ur arkivet",
+  "runReason.dbdumpOrphan": "dumpen kan fortfarande köras i containern tills dess tidsgräns nås",
   "runReason.dbdumpOneDatabase": "med inloggningsuppgifterna i behållaren gick bara en databas att dumpa",
   "runReason.dbdumpNotRecorded": "databasdumpen hoppades över, eftersom körningen inte kunde registreras",
   "runReason.dbimportPrepare": "importen misslyckades innan den kom igång; de gamla data ligger på plats igen",

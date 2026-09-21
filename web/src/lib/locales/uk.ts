@@ -976,6 +976,7 @@ const uk: Partial<Translations> = {
   "runReason.dbdumpHelper": "помічник дампу не дав результату",
   "runReason.dbdumpMismatch": "збережений розмір не збігається з тим, що було вивантажено",
   "runReason.dbdumpLeftover": "пошкоджений дамп не вдалося прибрати з репозиторію",
+  "runReason.dbdumpOrphan": "дамп, можливо, ще виконується в контейнері до своєї межі часу",
   "runReason.dbdumpOneDatabase": "з обліковими даними з контейнера вдалося вивантажити лише одну базу даних",
   "runReason.dbdumpNotRecorded": "дамп бази даних пропущено, бо його запуск не вдалося записати",
   "runReason.dbimportPrepare": "імпорт не вдався, ще не почавшись; старі дані знову на місці",

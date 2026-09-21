@@ -658,6 +658,18 @@ describe("dbdump runs", () => {
     expect(line.text).not.toContain("lineDbDumpFailed");
   });
 
+  it("flags a cancelled dump that may still be running in the container", () => {
+    const [line] = buildLogLines(
+      [dump({ status: "failed", error: "cancelled by the user: orphan stop failed" })],
+      {},
+      [],
+      resolveName,
+      2_000_000
+    );
+    expect(line.status).toBe("failed");
+    expect(line.text).toContain("error=runReason.cancelled; runReason.dbdumpOrphan");
+  });
+
   it("has its own lines for a saved dump and an import", () => {
     const runs = [
       dump({ id: "s1", kind: "dbdumpsave" }),

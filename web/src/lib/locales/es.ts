@@ -979,6 +979,7 @@ const es: Partial<Translations> = {
   "runReason.dbdumpHelper": "el ayudante de volcado no devolvió ningún resultado",
   "runReason.dbdumpMismatch": "el tamaño guardado no coincide con lo que se volcó",
   "runReason.dbdumpLeftover": "no se pudo quitar del repositorio un volcado dañado",
+  "runReason.dbdumpOrphan": "es posible que el volcado siga ejecutándose en el contenedor hasta su límite de tiempo",
   "runReason.dbdumpOneDatabase": "con las credenciales del contenedor solo se pudo volcar una base de datos",
   "runReason.dbdumpNotRecorded": "volcado de la base de datos omitido, porque no se pudo registrar su ejecución",
   "runReason.dbimportPrepare": "la importación falló antes de empezar; los datos anteriores están de vuelta en su sitio",

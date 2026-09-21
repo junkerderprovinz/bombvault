@@ -9,6 +9,7 @@
 // it also covers rows written by older versions without a migration.
 
 import { createElement, Fragment, type ReactElement } from "react";
+import { dumpLeftRunning, ORPHAN_NOTE } from "./dbdump";
 import type { TranslationKey, useT } from "./i18n";
 
 type T = ReturnType<typeof useT>["t"];
@@ -77,10 +78,14 @@ export function isWarningNote(raw: string | null | undefined): boolean {
   return WARNING_NOTES.some((note) => text === note || text.startsWith(note + ": "));
 }
 
-/** A reason split into its translated head and the raw detail behind it. */
+/**
+ * A reason split into its translated head, the raw detail behind it and, for a
+ * dump that may still be running in the container, the translated note saying so.
+ */
 export interface RunReasonParts {
   head: string;
   detail: string;
+  note?: string;
 }
 
 /**
@@ -90,6 +95,10 @@ export interface RunReasonParts {
  */
 export function runReasonParts(raw: string | null | undefined, t: T): RunReasonParts {
   const text = raw?.trim() ?? "";
+  if (dumpLeftRunning(text)) {
+    const parts = runReasonParts(text.slice(0, -(ORPHAN_NOTE.length + 2)), t);
+    return { ...parts, note: t("runReason.dbdumpOrphan") };
+  }
   if (!text) return { head: "", detail: "" };
 
   const exact = RUN_REASONS[text] ?? RUN_REASON_PREFIXES[text];
@@ -110,8 +119,9 @@ export function runReasonParts(raw: string | null | undefined, t: T): RunReasonP
  * the activity log; RunReasonText is the rendered form.
  */
 export function runReason(raw: string | null | undefined, t: T): string {
-  const { head, detail } = runReasonParts(raw, t);
-  return detail ? `${head}: ${detail}` : head;
+  const { head, detail, note } = runReasonParts(raw, t);
+  const reason = detail ? `${head}: ${detail}` : head;
+  return note ? `${reason}; ${note}` : reason;
 }
 
 /**
@@ -127,9 +137,10 @@ export function RunReasonText({
   reason: string | null | undefined;
   t: T;
 }): ReactElement {
-  const { head, detail } = runReasonParts(reason, t);
-  if (!detail) return createElement(Fragment, null, head);
-  return createElement(Fragment, null, head, ": ", createElement("bdi", { dir: "ltr" }, detail));
+  const { head, detail, note } = runReasonParts(reason, t);
+  const tail = note ? ["; ", note] : [];
+  if (!detail) return createElement(Fragment, null, head, ...tail);
+  return createElement(Fragment, null, head, ": ", createElement("bdi", { dir: "ltr" }, detail), ...tail);
 }
 
 /**
