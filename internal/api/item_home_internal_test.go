@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -248,33 +249,27 @@ func TestCopiesOnAnOpenItemAreCheckedAgainstItsEffectiveHome(t *testing.T) {
 	}
 }
 
-// TestHomeWriteIsRefusedOverARowChangedMeanwhile pins that the final write
-// compares against the same read checkHomeChange judged against: the hook
-// here mutates the row from another write between that read and the write
-// below it, exactly the window store.WritePlacement's expect argument closes.
-// The PATCH checks the home twice, the top-of-handler preview and the
-// authoritative pass right before the write, so the item is listed twice;
-// the race is timed onto the second listing, the one the write's expect
-// actually stands on.
+// TestHomeWriteIsRefusedOverARowChangedMeanwhile pins that writeItemPlacement's
+// write compares against the same read checkHomeChange judged against: the
+// hook here mutates the row from another write between that read and the
+// write below it, exactly the window store.WritePlacement's expect argument
+// closes. It calls writeItemPlacement directly, bypassing the handler's own
+// preview check, so its one itemBackups listing is unambiguously the
+// authoritative one the race belongs on.
 func TestHomeWriteIsRefusedOverARowChangedMeanwhile(t *testing.T) {
 	f := newPlacementFixture(t)
 	nas := f.namedRepo("NAS", "nas")
 	other := f.namedRepo("Backup2", "nas2")
 	f.openContainer("nginx")
 	item := store.ItemRef{Domain: "containers", Key: "nginx"}
-	listings := 0
 	f.eng.onSnapshots = func() {
-		listings++
-		if listings < 2 {
-			return
-		}
 		if _, err := f.st.WritePlacement(item, &store.HomeWrite{Repo: other.ID, Choice: store.RepoChosen}, nil, nil); err != nil {
 			t.Fatal(err)
 		}
 	}
-	res := f.do(http.MethodPatch, "/api/containers/nginx", map[string]any{"home": map[string]any{"repo": nas.ID}})
-	if res["code"] != "stale" {
-		t.Fatalf("PATCH = %v, want stale", res)
+	_, err := f.svc.writeItemPlacement(context.Background(), item, placementChange{Home: &homeChoice{Repo: &nas.ID}})
+	if !errors.Is(err, errPlacementStale) {
+		t.Fatalf("writeItemPlacement = %v, want errPlacementStale", err)
 	}
 	if got := f.home(item); got.Repo != other.ID {
 		t.Fatalf("home = %+v, want the concurrent write left standing", got)
