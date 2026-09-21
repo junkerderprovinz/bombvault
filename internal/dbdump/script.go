@@ -126,12 +126,18 @@ fi
 exit 0
 `
 
-const postgresReadyTail = `exec pg_isready -q -d postgres
+// The ready checks go over TCP because the official entrypoints initialise a
+// fresh data folder under a temporary server that listens on the socket alone
+// and is shut down again before the real one starts. ping answers 0 even when
+// the login is refused, so a real query proves the credentials are in place.
+const postgresReadyTail = `exec pg_isready -q -h localhost -d postgres
 `
 
 const mysqlReadyTail = `admin=$(command -v mariadb-admin 2>/dev/null || command -v mysqladmin 2>/dev/null) || exit 64
-if [ "$scope" = all ]; then exec "$admin" --user=root ping; fi
-exec "$admin" --user="$user" ping
+[ -n "$client" ] || exit 64
+"$admin" --protocol=TCP --host=127.0.0.1 ping >/dev/null 2>&1 || exit 1
+if [ "$scope" = all ]; then exec "$client" --user=root -N -B -e 'SELECT 1'; fi
+exec "$client" --user="$user" -N -B -e 'SELECT 1' "$db"
 `
 
 // ON_ERROR_STOP stays off: pg_dumpall's role section always collides with the

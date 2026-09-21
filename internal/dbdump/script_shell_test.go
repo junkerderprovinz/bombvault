@@ -566,6 +566,84 @@ func TestProbeScriptPrintsVersionAndDatabases(t *testing.T) {
 	})
 }
 
+func TestReadyScriptWaitsForTheRealServer(t *testing.T) {
+	ready := func(t *testing.T, c *shellCase, engine dbdump.Engine, env []string) shellResult {
+		t.Helper()
+		argv, err := dbdump.ReadyArgv(engine)
+		if err != nil {
+			t.Fatalf("ReadyArgv: %v", err)
+		}
+		return c.run(argv, env, "")
+	}
+	// The entrypoint's temporary server answers on the socket and not over TCP.
+	const socketOnly = `for a in "$@"; do case "$a" in -h|--protocol=TCP) exit 2 ;; esac; done
+exit 0`
+	rootEnv := []string{"MARIADB_ROOT_PASSWORD=r"}
+
+	t.Run("postgres during initialisation", func(t *testing.T) {
+		c := newShellCase(t)
+		c.stub("pg_dumpall", "exit 0")
+		c.stub("pg_isready", socketOnly)
+
+		if res := ready(t, c, dbdump.EnginePostgres, nil); res.exit == 0 {
+			t.Error("the temporary server passed the ready check")
+		}
+	})
+
+	t.Run("postgres once the real server listens", func(t *testing.T) {
+		c := newShellCase(t)
+		c.stub("pg_dumpall", "exit 0")
+		c.stub("pg_isready", "exit 0")
+
+		if res := ready(t, c, dbdump.EnginePostgres, nil); res.exit != 0 {
+			t.Fatalf("exit %d, stderr %q", res.exit, res.stderr)
+		}
+		if got := c.call("pg_isready"); !got.hasArg("-h") {
+			t.Errorf("pg_isready argv = %q, want a TCP host", got.args)
+		}
+	})
+
+	t.Run("mariadb during initialisation", func(t *testing.T) {
+		c := newShellCase(t)
+		c.stub("mariadb-dump", "exit 0")
+		c.stub("mariadb-admin", socketOnly)
+		c.stub("mariadb", "exit 0")
+
+		if res := ready(t, c, dbdump.EngineMariaDB, rootEnv); res.exit == 0 {
+			t.Error("the temporary server passed the ready check")
+		}
+	})
+
+	t.Run("mariadb that answers but refuses the login", func(t *testing.T) {
+		c := newShellCase(t)
+		c.stub("mariadb-dump", "exit 0")
+		c.stub("mariadb-admin", "exit 0")
+		c.stub("mariadb", "echo 'ERROR 1045 (28000): Access denied' >&2; exit 1")
+
+		if res := ready(t, c, dbdump.EngineMariaDB, rootEnv); res.exit == 0 {
+			t.Error("a refused login passed the ready check")
+		}
+	})
+
+	t.Run("mariadb ready", func(t *testing.T) {
+		c := newShellCase(t)
+		c.stub("mariadb-dump", "exit 0")
+		c.stub("mariadb-admin", "exit 0")
+		c.stub("mariadb", "exit 0")
+
+		if res := ready(t, c, dbdump.EngineMariaDB, rootEnv); res.exit != 0 {
+			t.Fatalf("exit %d, stderr %q", res.exit, res.stderr)
+		}
+		got := c.call("mariadb")
+		if !got.hasArg("--user=root") || !got.hasArg("SELECT 1") {
+			t.Errorf("mariadb argv = %q, want a query as root", got.args)
+		}
+		if got.env["MYSQL_PWD"] != "r" {
+			t.Errorf("MYSQL_PWD = %q, want r", got.env["MYSQL_PWD"])
+		}
+	})
+}
+
 func TestImportScriptReadsStdin(t *testing.T) {
 	dump := "-- PostgreSQL database cluster dump\nCREATE ROLE immich;\n-- PostgreSQL database cluster dump complete\n"
 
