@@ -17,6 +17,8 @@ import (
 	"sync"
 	"time"
 
+	"filippo.io/age"
+
 	"github.com/junkerderprovinz/bombvault/internal/ageseal"
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/dbdump"
@@ -1028,12 +1030,9 @@ func (s *Service) DownloadDBDump(ctx context.Context, name, source, snapshotID s
 	}
 
 	dst := w
-	var ageW io.WriteCloser
+	var ageW *sealOnFirstWrite
 	if sealed {
-		ageW, err = ageseal.WrapWriter(dst, recipients)
-		if err != nil {
-			return err
-		}
+		ageW = &sealOnFirstWrite{dst: dst, recipients: recipients}
 		dst = ageW
 	}
 	var gzW *gzip.Writer
@@ -1055,6 +1054,39 @@ func (s *Service) DownloadDBDump(ctx context.Context, name, source, snapshotID s
 		return ageW.Close()
 	}
 	return nil
+}
+
+// sealOnFirstWrite starts the age stream with the first byte restic delivers.
+// age writes its header at once, and a header sent before restic has read a
+// byte turns a dump that cannot be read into a download that looks finished.
+type sealOnFirstWrite struct {
+	dst        io.Writer
+	recipients []age.Recipient
+	w          io.WriteCloser
+}
+
+func (s *sealOnFirstWrite) open() error {
+	if s.w != nil {
+		return nil
+	}
+	w, err := ageseal.WrapWriter(s.dst, s.recipients)
+	s.w = w
+	return err
+}
+
+func (s *sealOnFirstWrite) Write(p []byte) (int, error) {
+	if err := s.open(); err != nil {
+		return 0, err
+	}
+	return s.w.Write(p)
+}
+
+// Close seals an empty dump too, so it still decrypts to nothing.
+func (s *sealOnFirstWrite) Close() error {
+	if err := s.open(); err != nil {
+		return err
+	}
+	return s.w.Close()
 }
 
 // A saved dump belongs to Unraid's nobody:users like everything else on a
