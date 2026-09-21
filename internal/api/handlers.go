@@ -2245,6 +2245,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// here (the VM SSH test between them can burn its whole timeout), and writing
 	// its auth hash / session epoch back would revert a password change made
 	// meanwhile.
+	before := h.svc.fieldTargets()
 	s, err := h.store.MutateSettings(func(cur *store.Settings) error {
 		cur.EncryptionEnabled = v.EncryptionEnabled
 		cur.ContainersEnabled = v.ContainersEnabled
@@ -2413,21 +2414,25 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
 		return
 	}
-	// Immutable off-site + an off-site retention policy both set: warn, don't
+	// Immutable off-site + an off-site retention policy both set: note it, don't
 	// fail. BombVault never prunes an append-only repo, so the policy is inert
-	// until enforced far-side. The "warnings" array is a backward-compatible
-	// extension of the ok envelope (absent when there is nothing to warn about).
-	var warnings []string
+	// until enforced far-side.
+	notes := []string{}
 	if (s.ContainersOffsiteImmutable || s.VMsOffsiteImmutable || s.FlashOffsiteImmutable || s.ConfigOffsiteImmutable || s.FilesOffsiteImmutable) &&
 		(s.OffsiteRetentionKeepLast > 0 || s.OffsiteRetentionKeepDaily > 0 ||
 			s.OffsiteRetentionKeepWeekly > 0 || s.OffsiteRetentionKeepMonthly > 0) {
-		warnings = append(warnings, "The off-site repo is append-only (immutable), so BombVault will not apply the off-site retention policy — enforce retention far-side (e.g. a rest-server prune cron) or use a maintenance window.")
+		notes = append(notes, "The off-site repo is append-only (immutable), so BombVault will not apply the off-site retention policy; enforce retention far-side (e.g. a rest-server prune cron) or use a maintenance window.")
 	}
-	if len(warnings) > 0 {
-		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"warnings": warnings}))
-		return
+	warnings := []saveWarning{}
+	after := h.svc.fieldTargets()
+	for _, d := range offsiteConfigDomains {
+		b, hadRow := before[d]
+		a, hasRow := after[d]
+		if hadRow && hasRow {
+			warnings = append(warnings, h.svc.targetSaveWarnings(r.Context(), b, a)...)
+		}
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"warnings": warnings, "notes": notes}))
 }
 
 // handleDetectEncryption probes the configured repositories and reports which
@@ -2925,7 +2930,9 @@ func (h *Handler) handleSetCloud(w http.ResponseWriter, r *http.Request) {
 	if settings, sErr := h.store.GetSettings(); sErr == nil {
 		h.svc.syncAllPrimaryOffsiteTargets(settings)
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"warnings": h.svc.directCredsWarnings(r.Context(), func(direct, _ store.OffsiteTarget) bool { return direct.CredsRef == "" }),
+	}))
 }
 
 // handleGetCloudCredSets returns the additional named credential sets (#141
@@ -2968,7 +2975,11 @@ func (h *Handler) handleSetCloudCredSets(w http.ResponseWriter, r *http.Request)
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"warnings": h.svc.directCredsWarnings(r.Context(), func(direct, target store.OffsiteTarget) bool {
+			return direct.CredsRef != "" || target.CredsRef != ""
+		}),
+	}))
 }
 
 // handleTestNotify sends a test notification using the POSTed config (so the

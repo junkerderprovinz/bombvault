@@ -251,7 +251,10 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": offsiteTargetToView(stored)}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"target":   offsiteTargetToView(stored),
+		"warnings": h.svc.targetSaveWarnings(r.Context(), existing, stored),
+	}))
 }
 
 // handleDeleteOffsiteTarget removes an off-site target and its direct

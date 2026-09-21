@@ -856,3 +856,122 @@ func TestAnOlderFileLeavesTheLinkOfAnExistingDirectRepository(t *testing.T) {
 		t.Fatalf("direct repository after a file without companionOf: %+v, %v", got, err)
 	}
 }
+
+func TestRetentionLowered(t *testing.T) {
+	p := func(last, daily int) restic.RetentionPolicy { return restic.RetentionPolicy{KeepLast: last, KeepDaily: daily} }
+	cases := []struct {
+		name          string
+		before, after restic.RetentionPolicy
+		want          bool
+	}{
+		{"everything to a count", p(0, 0), p(5, 0), true},
+		{"a count to everything", p(5, 0), p(0, 0), false},
+		{"a smaller count", p(7, 0), p(3, 0), true},
+		{"a larger count", p(7, 0), p(9, 0), false},
+		{"a second dimension added", p(7, 0), p(7, 3), false},
+		{"a dimension dropped", p(7, 3), p(7, 0), true},
+		{"unchanged", p(7, 3), p(7, 3), false},
+	}
+	for _, c := range cases {
+		if got := retentionLowered(c.before, c.after); got != c.want {
+			t.Errorf("%s: retentionLowered = %v, want %v", c.name, got, c.want)
+		}
+	}
+}
+
+func warningCodes(t *testing.T, res map[string]any) []string {
+	t.Helper()
+	list, ok := res["warnings"].([]any)
+	if !ok {
+		t.Fatalf("no warnings list in %v", res)
+	}
+	codes := make([]string, 0, len(list))
+	for _, w := range list {
+		codes = append(codes, w.(map[string]any)["code"].(string))
+	}
+	return codes
+}
+
+func TestSavingATargetWarnsAboutItsUsedDirectRepository(t *testing.T) {
+	f := newPlacementFixture(t)
+	target := f.target("containers", "B2", "b2:bkt:containers")
+	target.RetentionKeepLast, target.Immutable = 7, true
+	target, err := f.st.UpsertOffsiteTarget(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.container("web", f.direct(target).ID)
+	v := offsiteTargetToView(target)
+	v.RetentionKeepLast, v.Immutable = 3, false
+	res := f.do("PUT", "/api/offsite/targets/"+target.ID, v)
+	if codes := warningCodes(t, res); !slices.Equal(codes, []string{"direct-retention-lowered", "direct-append-only-off"}) {
+		t.Fatalf("warnings = %v", codes)
+	}
+	w := res["warnings"].([]any)[0].(map[string]any)
+	if w["targetId"] != target.ID || w["targetName"] != "B2" || w["items"] != float64(1) {
+		t.Fatalf("warning = %v", w)
+	}
+	v.RetentionKeepLast = 9
+	if codes := warningCodes(t, f.do("PUT", "/api/offsite/targets/"+target.ID, v)); len(codes) != 0 {
+		t.Fatalf("keeping more warned: %v", codes)
+	}
+}
+
+func TestNewCredentialsReachADirectRepositoryOnlyWhenTheyOpenIt(t *testing.T) {
+	f := newPlacementFixture(t)
+	target := f.target("containers", "B2", "b2:bkt:containers")
+	d := f.direct(target)
+	v := offsiteTargetToView(target)
+	v.CredsRef = "set-2"
+	f.eng.opens[d.Repo] = false
+	if codes := warningCodes(t, f.do("PUT", "/api/offsite/targets/"+target.ID, v)); !slices.Equal(codes, []string{"direct-creds-kept"}) {
+		t.Fatalf("warnings = %v", codes)
+	}
+	if got, err := f.st.GetNamedRepo(d.ID); err != nil || got.CredsRef != "" {
+		t.Fatalf("credentials that do not open it were mirrored: %+v, %v", got, err)
+	}
+	f.eng.opens[d.Repo] = true
+	if codes := warningCodes(t, f.do("PUT", "/api/offsite/targets/"+target.ID, v)); len(codes) != 0 {
+		t.Fatalf("warnings = %v", codes)
+	}
+	if got, err := f.st.GetNamedRepo(d.ID); err != nil || got.CredsRef != "set-2" {
+		t.Fatalf("credentials that open it were not mirrored: %+v, %v", got, err)
+	}
+}
+
+func TestASettingsSaveWarnsWhenTheFieldTargetsDirectRepositoryKeepsLess(t *testing.T) {
+	f := newPlacementFixture(t)
+	field := f.fieldTarget("containers", "b2:bkt:containers")
+	f.container("web", f.direct(field).ID)
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	v := toView(settings)
+	v.OffsiteRetentionKeepLast = 5
+	res := f.do("PUT", "/api/settings", v)
+	if res["ok"] != true {
+		t.Fatalf("save = %v", res)
+	}
+	if codes := warningCodes(t, res); !slices.Equal(codes, []string{"direct-retention-lowered"}) {
+		t.Fatalf("warnings = %v", codes)
+	}
+	if _, ok := res["notes"].([]any); !ok {
+		t.Fatalf("no notes list in %v", res)
+	}
+}
+
+func TestSharedCloudCredentialsAreProbedOnDirectRepositories(t *testing.T) {
+	f := newPlacementFixture(t)
+	d := f.direct(f.target("containers", "B2", "b2:bkt:containers"))
+	f.eng.opens[d.Repo] = false
+	res := f.do("POST", "/api/cloud", map[string]any{
+		"s3KeyId": "k", "s3Secret": "s", "s3Region": "", "restUser": "", "restPassword": "", "s3StorageClass": "",
+	})
+	if codes := warningCodes(t, res); !slices.Equal(codes, []string{"direct-creds-kept"}) {
+		t.Fatalf("warnings = %v", codes)
+	}
+	if codes := warningCodes(t, f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": []any{}})); len(codes) != 0 {
+		t.Fatalf("a direct repository on the shared credentials was probed for a set change: %v", codes)
+	}
+}
