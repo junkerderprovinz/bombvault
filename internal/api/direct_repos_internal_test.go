@@ -1010,6 +1010,33 @@ func TestAnOlderFileLeavesTheLinkOfAnExistingDirectRepository(t *testing.T) {
 	}
 }
 
+func TestAnImportLeavesADirectRepositoryWhereItsTargetWrites(t *testing.T) {
+	f := newPlacementFixture(t)
+	target := f.target("containers", "B2", "b2:bkt:containers")
+	d := f.direct(target)
+	logs := captureLog(t)
+	view := offsiteTargetToView(d)
+	view.Repo = "b2:bkt:somewhere-else"
+	view.Name = "B2 direct renamed"
+	view.Enabled = false
+	if err := f.h.replaceNamedRepos([]offsiteTargetView{view}); err != nil {
+		t.Fatal(err)
+	}
+	got, err := f.st.GetNamedRepo(d.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Repo != d.Repo {
+		t.Errorf("location = %q, want the one its target writes to, %q", got.Repo, d.Repo)
+	}
+	if got.Name != "B2 direct renamed" || got.Enabled {
+		t.Errorf("the fields the file may change were not applied: %+v", got)
+	}
+	if !strings.Contains(logs.String(), "B2 direct") {
+		t.Errorf("the refused move was not logged: %s", logs.String())
+	}
+}
+
 func TestDiscoverNamesAPlainRepositoryHoldingDirectSnapshots(t *testing.T) {
 	f := newPlacementFixture(t)
 	b2 := f.target("containers", "B2", "b2:bkt:containers")
