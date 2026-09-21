@@ -1685,6 +1685,9 @@ const hu: Partial<Translations> = {
   "placement.lockOwnCredentials": "Saját hitelesítő adatai vannak, és már telephelyen kívül van",
   "placement.lockAtTarget": "Már a célnál van",
   "placement.lockHomeFixed": "Rögzítve az első biztonsági mentés óta: {home}",
+  "placement.droppedKeeps": "{target} megőrzi a másolatait ({n}), és a következő futtatáskor a saját szabálya szerint vágja vissza őket. Új nem kerül hozzá.",
+  "placement.droppedKeepsUnknown": "{target} megőrzi a másolatait, és a következő futtatáskor a saját szabálya szerint vágja vissza őket. Új nem kerül hozzá.",
+  "placement.droppedAppendOnly": "{target} append-only, és megőriz minden másolatot. Új nem kerül hozzá.",
 };
 
 export default hu;

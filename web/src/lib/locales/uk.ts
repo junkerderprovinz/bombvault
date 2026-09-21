@@ -1677,6 +1677,9 @@ const uk: Partial<Translations> = {
   "placement.lockOwnCredentials": "Має власні облікові дані і вже перебуває поза приміщенням",
   "placement.lockAtTarget": "Вже перебуває біля цілі",
   "placement.lockHomeFixed": "Фіксовано від першого резервного копіювання: {home}",
+  "placement.droppedKeeps": "{target} зберігає свої копії ({n}) і під час наступного запуску скорочує їх до власного правила. Нові не додаються.",
+  "placement.droppedKeepsUnknown": "{target} зберігає свої копії і під час наступного запуску скорочує їх до власного правила. Нові не додаються.",
+  "placement.droppedAppendOnly": "{target} працює в режимі append-only і зберігає всі копії. Нові не додаються.",
 };
 
 export default uk;

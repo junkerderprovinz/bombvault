@@ -1693,6 +1693,9 @@ const et: Partial<Translations> = {
   "placement.lockOwnCredentials": "Sellel on oma pöördumisandmed ja see asub juba väljaspool asukohta",
   "placement.lockAtTarget": "Asub juba sihtkohas",
   "placement.lockHomeFixed": "Fikseeritud alates esimesest varukoopiast: {home}",
+  "placement.droppedKeeps": "{target} säilitab oma koopiad ({n}) ja kärbib need järgmisel käivitusel oma reeglile vastavaks. Uusi juurde ei lisata.",
+  "placement.droppedKeepsUnknown": "{target} säilitab oma koopiad ja kärbib need järgmisel käivitusel oma reeglile vastavaks. Uusi juurde ei lisata.",
+  "placement.droppedAppendOnly": "{target} töötab ainult-lisamise režiimis ja säilitab iga koopia. Uusi juurde ei lisata.",
 };
 
 export default et;

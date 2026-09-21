@@ -1693,6 +1693,9 @@ const sk: Partial<Translations> = {
   "placement.lockOwnCredentials": "Má vlastné prístupové údaje a už je mimo priestorov",
   "placement.lockAtTarget": "Už sa nachádza pri cieli",
   "placement.lockHomeFixed": "Pevné od prvej zálohy: {home}",
+  "placement.droppedKeeps": "{target} uchováva svoje kópie ({n}) a pri ďalšom behu ich skráti podľa vlastného pravidla. Nové sa nepridávajú.",
+  "placement.droppedKeepsUnknown": "{target} uchováva svoje kópie a pri ďalšom behu ich skráti podľa vlastného pravidla. Nové sa nepridávajú.",
+  "placement.droppedAppendOnly": "{target} je append-only a uchováva každú kópiu. Nové sa nepridávajú.",
 };
 
 export default sk;

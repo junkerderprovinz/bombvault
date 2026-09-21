@@ -1674,6 +1674,9 @@ const ko: Partial<Translations> = {
   "placement.lockOwnCredentials": "자체 자격 증명이 있고 이미 부지 밖에 있습니다",
   "placement.lockAtTarget": "이미 대상에 있습니다",
   "placement.lockHomeFixed": "첫 백업 이후 고정됨: {home}",
+  "placement.droppedKeeps": "{target}은(는) 사본({n}개)을 유지하며 다음 실행 시 자체 규칙에 맞게 줄입니다. 새 사본은 추가되지 않습니다.",
+  "placement.droppedKeepsUnknown": "{target}은(는) 사본을 유지하며 다음 실행 시 자체 규칙에 맞게 줄입니다. 새 사본은 추가되지 않습니다.",
+  "placement.droppedAppendOnly": "{target}은(는) append-only이며 모든 사본을 유지합니다. 새 사본은 추가되지 않습니다.",
 };
 
 export default ko;

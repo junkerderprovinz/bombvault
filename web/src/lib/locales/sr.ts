@@ -1677,6 +1677,9 @@ const sr: Partial<Translations> = {
   "placement.lockOwnCredentials": "Има сопствене податке за приступ и већ је ван просторија",
   "placement.lockAtTarget": "Већ се налази код циља",
   "placement.lockHomeFixed": "Фиксно од прве резервне копије: {home}",
+  "placement.droppedKeeps": "{target} чува своје копије ({n}) и приликом следећег покретања их своди на сопствено правило. Нове се не додају.",
+  "placement.droppedKeepsUnknown": "{target} чува своје копије и приликом следећег покретања их своди на сопствено правило. Нове се не додају.",
+  "placement.droppedAppendOnly": "{target} користи само додавање и чува сваку копију. Нове се не додају.",
 };
 
 export default sr;

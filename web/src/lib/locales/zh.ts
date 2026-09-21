@@ -1674,6 +1674,9 @@ const zh: Partial<Translations> = {
   "placement.lockOwnCredentials": "拥有自己的凭据，并且已经在场外",
   "placement.lockAtTarget": "已经在目标处",
   "placement.lockHomeFixed": "自首次备份以来固定：{home}",
+  "placement.droppedKeeps": "{target} 保留其副本（{n}），并在下次运行时按自己的规则精简。不会添加新的副本。",
+  "placement.droppedKeepsUnknown": "{target} 保留其副本，并在下次运行时按自己的规则精简。不会添加新的副本。",
+  "placement.droppedAppendOnly": "{target} 是 append-only，保留所有副本。不会添加新的副本。",
 };
 
 export default zh;

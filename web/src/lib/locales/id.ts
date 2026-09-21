@@ -1693,6 +1693,9 @@ const id: Partial<Translations> = {
   "placement.lockOwnCredentials": "Punya kredensial sendiri dan sudah berada di luar lokasi",
   "placement.lockAtTarget": "Sudah berada di target",
   "placement.lockHomeFixed": "Tetap sejak backup pertama: {home}",
+  "placement.droppedKeeps": "{target} menyimpan salinannya ({n}) dan memangkasnya sesuai aturannya sendiri pada proses berikutnya. Tidak ada salinan baru yang ditambahkan.",
+  "placement.droppedKeepsUnknown": "{target} menyimpan salinannya dan memangkasnya sesuai aturannya sendiri pada proses berikutnya. Tidak ada salinan baru yang ditambahkan.",
+  "placement.droppedAppendOnly": "{target} bersifat append-only dan menyimpan setiap salinan. Tidak ada salinan baru yang ditambahkan.",
 };
 
 export default id;

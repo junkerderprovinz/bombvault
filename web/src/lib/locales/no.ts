@@ -1682,6 +1682,9 @@ const no: Partial<Translations> = {
   "placement.lockOwnCredentials": "Har egne påloggingsdetaljer og ligger allerede utenfor lokalet",
   "placement.lockAtTarget": "Ligger allerede ved målet",
   "placement.lockHomeFixed": "Fast siden den første sikkerhetskopien: {home}",
+  "placement.droppedKeeps": "{target} beholder kopiene sine ({n}) og trimmer dem til sin egen regel ved neste kjøring. Ingen nye legges til.",
+  "placement.droppedKeepsUnknown": "{target} beholder kopiene sine og trimmer dem til sin egen regel ved neste kjøring. Ingen nye legges til.",
+  "placement.droppedAppendOnly": "{target} er append-only og beholder alle kopiene. Ingen nye legges til.",
 };
 
 export default no;

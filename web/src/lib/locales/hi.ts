@@ -1693,6 +1693,9 @@ const hi: Partial<Translations> = {
   "placement.lockOwnCredentials": "इसके अपने क्रेडेंशियल हैं और यह पहले से ही परिसर से बाहर है",
   "placement.lockAtTarget": "पहले से ही लक्ष्य पर मौजूद है",
   "placement.lockHomeFixed": "पहले बैकअप से तय: {home}",
+  "placement.droppedKeeps": "{target} अपनी प्रतियाँ ({n}) रखता है और अगले रन में उन्हें अपने नियम के अनुसार घटा देता है। कोई नई प्रति नहीं जोड़ी जाती।",
+  "placement.droppedKeepsUnknown": "{target} अपनी प्रतियाँ रखता है और अगले रन में उन्हें अपने नियम के अनुसार घटा देता है। कोई नई प्रति नहीं जोड़ी जाती।",
+  "placement.droppedAppendOnly": "{target} अपेंड-ओनली है और हर प्रति रखता है। कोई नई प्रति नहीं जोड़ी जाती।",
 };
 
 export default hi;

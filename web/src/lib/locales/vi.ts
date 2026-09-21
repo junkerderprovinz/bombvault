@@ -1674,6 +1674,9 @@ const vi: Partial<Translations> = {
   "placement.lockOwnCredentials": "Có thông tin xác thực riêng và đã ở ngoài cơ sở",
   "placement.lockAtTarget": "Đã nằm ở đích",
   "placement.lockHomeFixed": "Cố định từ bản sao lưu đầu tiên: {home}",
+  "placement.droppedKeeps": "{target} giữ các bản sao ({n}) và cắt bớt theo quy tắc riêng vào lần chạy tiếp theo. Không có bản sao mới nào được thêm vào.",
+  "placement.droppedKeepsUnknown": "{target} giữ các bản sao và cắt bớt theo quy tắc riêng vào lần chạy tiếp theo. Không có bản sao mới nào được thêm vào.",
+  "placement.droppedAppendOnly": "{target} là append-only và giữ mọi bản sao. Không có bản sao mới nào được thêm vào.",
 };
 
 export default vi;

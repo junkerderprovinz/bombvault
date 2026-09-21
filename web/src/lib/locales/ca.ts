@@ -1693,6 +1693,9 @@ const ca: Partial<Translations> = {
   "placement.lockOwnCredentials": "Té credencials pròpies i ja és fora de les instal·lacions",
   "placement.lockAtTarget": "Ja es troba al destí",
   "placement.lockHomeFixed": "Fix des de la primera còpia de seguretat: {home}",
+  "placement.droppedKeeps": "{target} conserva les seves còpies ({n}) i les retalla a la seva pròpia regla en la propera execució. No s'afegeixen còpies noves.",
+  "placement.droppedKeepsUnknown": "{target} conserva les seves còpies i les retalla a la seva pròpia regla en la propera execució. No s'afegeixen còpies noves.",
+  "placement.droppedAppendOnly": "{target} és append-only i conserva totes les còpies. No s'afegeixen còpies noves.",
 };
 
 export default ca;

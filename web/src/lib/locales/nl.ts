@@ -1679,6 +1679,9 @@ const nl: Partial<Translations> = {
   "placement.lockOwnCredentials": "Heeft eigen inloggegevens en staat al buiten de locatie",
   "placement.lockAtTarget": "Staat al bij de bestemming",
   "placement.lockHomeFixed": "Vast sinds de eerste back-up: {home}",
+  "placement.droppedKeeps": "{target} bewaart zijn kopieën ({n}) en brengt ze bij de volgende back-up terug naar zijn eigen regel. Er komen geen nieuwe bij.",
+  "placement.droppedKeepsUnknown": "{target} bewaart zijn kopieën en brengt ze bij de volgende back-up terug naar zijn eigen regel. Er komen geen nieuwe bij.",
+  "placement.droppedAppendOnly": "{target} is append-only en bewaart elke kopie. Er komen geen nieuwe bij.",
 };
 
 export default nl;

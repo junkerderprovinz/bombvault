@@ -1685,6 +1685,9 @@ const th: Partial<Translations> = {
   "placement.lockOwnCredentials": "มีข้อมูลรับรองของตัวเองและอยู่นอกสถานที่แล้ว",
   "placement.lockAtTarget": "อยู่ที่ปลายทางแล้ว",
   "placement.lockHomeFixed": "คงที่ตั้งแต่การสำรองข้อมูลครั้งแรก: {home}",
+  "placement.droppedKeeps": "{target} เก็บสำเนาไว้ ({n}) และตัดให้เหลือตามกฎของตัวเองในการทำงานครั้งถัดไป ไม่มีการเพิ่มสำเนาใหม่",
+  "placement.droppedKeepsUnknown": "{target} เก็บสำเนาไว้ และตัดให้เหลือตามกฎของตัวเองในการทำงานครั้งถัดไป ไม่มีการเพิ่มสำเนาใหม่",
+  "placement.droppedAppendOnly": "{target} เป็น append-only และเก็บสำเนาทุกชุดไว้ ไม่มีการเพิ่มสำเนาใหม่",
 };
 
 export default th;

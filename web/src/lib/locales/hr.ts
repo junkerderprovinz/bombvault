@@ -1693,6 +1693,9 @@ const hr: Partial<Translations> = {
   "placement.lockOwnCredentials": "Ima vlastite podatke za pristup i već je izvan prostorija",
   "placement.lockAtTarget": "Već se nalazi na cilju",
   "placement.lockHomeFixed": "Fiksno od prve sigurnosne kopije: {home}",
+  "placement.droppedKeeps": "{target} čuva svoje kopije ({n}) i pri sljedećem pokretanju ih svodi na vlastito pravilo. Nove se ne dodaju.",
+  "placement.droppedKeepsUnknown": "{target} čuva svoje kopije i pri sljedećem pokretanju ih svodi na vlastito pravilo. Nove se ne dodaju.",
+  "placement.droppedAppendOnly": "{target} koristi način samo-dodavanja i čuva svaku kopiju. Nove se ne dodaju.",
 };
 
 export default hr;

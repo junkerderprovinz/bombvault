@@ -1682,6 +1682,9 @@ const tr: Partial<Translations> = {
   "placement.lockOwnCredentials": "Kendi kimlik bilgilerine sahip ve zaten tesis dışında",
   "placement.lockAtTarget": "Zaten hedefte bulunuyor",
   "placement.lockHomeFixed": "İlk yedeklemeden beri sabit: {home}",
+  "placement.droppedKeeps": "{target} kopyalarını ({n}) tutar ve bir sonraki çalıştırmada kendi kuralına göre kırpar. Yenisi eklenmez.",
+  "placement.droppedKeepsUnknown": "{target} kopyalarını tutar ve bir sonraki çalıştırmada kendi kuralına göre kırpar. Yenisi eklenmez.",
+  "placement.droppedAppendOnly": "{target} append-only ve her kopyayı tutuyor. Yenisi eklenmez.",
 };
 
 export default tr;

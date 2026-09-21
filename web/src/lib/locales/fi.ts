@@ -1682,6 +1682,9 @@ const fi: Partial<Translations> = {
   "placement.lockOwnCredentials": "Sillä on omat tunnukset ja se on jo tilojen ulkopuolella",
   "placement.lockAtTarget": "On jo kohteessa",
   "placement.lockHomeFixed": "Kiinteä ensimmäisestä varmuuskopiosta lähtien: {home}",
+  "placement.droppedKeeps": "{target} säilyttää kopionsa ({n}) ja typistää ne omaan sääntöönsä seuraavalla ajolla. Uusia ei lisätä.",
+  "placement.droppedKeepsUnknown": "{target} säilyttää kopionsa ja typistää ne omaan sääntöönsä seuraavalla ajolla. Uusia ei lisätä.",
+  "placement.droppedAppendOnly": "{target} on append-only ja säilyttää jokaisen kopion. Uusia ei lisätä.",
 };
 
 export default fi;

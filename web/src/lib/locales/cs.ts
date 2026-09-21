@@ -1680,6 +1680,9 @@ const cs: Partial<Translations> = {
   "placement.lockOwnCredentials": "Má vlastní přístupové údaje a už je mimo areál",
   "placement.lockAtTarget": "Už leží u cíle",
   "placement.lockHomeFixed": "Pevné od první zálohy: {home}",
+  "placement.droppedKeeps": "{target} uchovává své kopie ({n}) a při dalším běhu je zkrátí podle vlastního pravidla. Nové se nepřidávají.",
+  "placement.droppedKeepsUnknown": "{target} uchovává své kopie a při dalším běhu je zkrátí podle vlastního pravidla. Nové se nepřidávají.",
+  "placement.droppedAppendOnly": "{target} je append-only a uchovává každou kopii. Nové se nepřidávají.",
 };
 
 export default cs;
