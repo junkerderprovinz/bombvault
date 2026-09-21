@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -504,4 +505,70 @@ func (s *Service) createFileSet(fs store.FileSet, choice *copiesChoice) (store.F
 		return store.FileSet{}, err
 	}
 	return created, nil
+}
+
+// newTargetExclusion is "leave these out here too" from the new-target question.
+type newTargetExclusion struct {
+	Identities []string `json:"identities"` // items with an own rule; each gets the target id added to its skip
+	Default    bool     `json:"default"`    // add the target id to the default's skip as well
+}
+
+// checkExclusion refuses an answer the new-target question could not have
+// offered, before the target it belongs to is written.
+func checkExclusion(domain string, ex newTargetExclusion) error {
+	prefix := domainTagPrefix(domain)
+	if prefix == "" {
+		return errInvalidPlacement
+	}
+	for _, id := range ex.Identities {
+		if strings.HasPrefix(id, "stack:") {
+			return store.ErrStackCopyRule
+		}
+		if !strings.HasPrefix(id, prefix) || id == prefix {
+			return errInvalidPlacement
+		}
+	}
+	return nil
+}
+
+// excludeFromTarget leaves the named items, and with ex.Default the default, out
+// of a target they would otherwise start copying to.
+func (s *Service) excludeFromTarget(domain, targetID string, ex newTargetExclusion) error {
+	if err := checkExclusion(domain, ex); err != nil {
+		return err
+	}
+	s.placementMu.Lock()
+	defer s.placementMu.Unlock()
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return err
+	}
+	p, err := s.readPlacement(settings, domain)
+	if err != nil {
+		return err
+	}
+	if !containsTarget(p.Targets, targetID) {
+		return errNotATarget
+	}
+	for _, id := range ex.Identities {
+		skip, _ := p.resolvedSkip(id)
+		if err := s.store.SetCopyRule(domain, id, withTarget(skip, targetID)); err != nil {
+			return err
+		}
+	}
+	if ex.Default {
+		d := p.State.Default
+		if _, err := s.store.PutPlacementDefault(domain, d.Home, withTarget(d.Skip, targetID)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// withTarget adds a target to a skip list; ["*"] already leaves everything out.
+func withTarget(skip []string, targetID string) []string {
+	if skipsEverything(skip) || slices.Contains(skip, targetID) {
+		return skip
+	}
+	return append(slices.Clone(skip), targetID)
 }
