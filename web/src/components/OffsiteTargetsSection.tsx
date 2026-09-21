@@ -19,6 +19,10 @@ import { Button } from "./Button";
 import { IconAdd } from "./Sidebar";
 import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useToast } from "../lib/toast";
+import { useConfirm } from "../lib/useConfirm";
+import { useNamedRepos } from "../lib/useNamedRepos";
+import { placementErrorText, pushSaveWarnings } from "../lib/placementCodes";
+import { alsoDirectText, directAsk, directUse, retentionLowered } from "../lib/directRepo";
 
 // The storage-class/immutable badges AND the Test/Edit/Remove buttons in a
 // target row render through Badge at this ONE shared stage, so their heights
@@ -206,6 +210,26 @@ export function OffsiteTargetsSection({
   // CloudCredSetsCard), so a private copy went stale the moment a set was
   // added and the new set stayed unselectable until a reload — issue #173.
   const credSets = useCloudCredSets();
+  const repos = useNamedRepos();
+  const { confirm, confirmDialog } = useConfirm();
+  const { lang } = useT();
+  const saved = draft ? targets.find((x) => x.id === draft.id) : undefined;
+  const savedUse = saved ? directUse(saved, repos) : undefined;
+
+  // A save that lowers retention or turns off append-only prunes the direct
+  // repository's own backups the same way it would the target's, so it asks
+  // before either change goes through, once for each risk that applies.
+  async function confirmDirectChanges(before: OffsiteTarget, after: OffsiteTarget): Promise<boolean> {
+    const use = directUse(before, repos);
+    if (!use) return true;
+    if (retentionLowered(before, after) && !(await confirm(directAsk(t, lang, "offsite.directRetentionAsk", [use])))) {
+      return false;
+    }
+    if (before.immutable && !after.immutable && !(await confirm(directAsk(t, lang, "offsite.directAppendOnlyAsk", [use])))) {
+      return false;
+    }
+    return true;
+  }
 
   function refresh() {
     listOffsiteTargets(domain)
@@ -262,6 +286,7 @@ export function OffsiteTargetsSection({
       setSaveShake((n) => n + 1);
       return;
     }
+    if (saved && !(await confirmDirectChanges(saved, draft))) return;
     setSaveState("saving");
     try {
       if (draft.id === "") {
@@ -295,6 +320,7 @@ export function OffsiteTargetsSection({
           repo: draft.repo.trim(),
         });
         if (!r.ok) throw new Error(r.error ?? t("settings.error"));
+        pushSaveWarnings(push, t, r.warnings);
       }
       push(t("settings.saved"), "success");
       closeEditor();
@@ -318,7 +344,7 @@ export function OffsiteTargetsSection({
     try {
       const r = await deleteOffsiteTarget(id);
       if (!r.ok) {
-        push(r.error ?? t("settings.error"), "fail");
+        push(placementErrorText(t, lang, r, "settings.error"), "fail");
         setRemoveShake((n) => n + 1);
         return;
       }
@@ -339,6 +365,7 @@ export function OffsiteTargetsSection({
 
   return (
     <div className="mt-2 flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
+      {confirmDialog}
       <div className="flex flex-col gap-0.5">
         <span className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
           {t("offsite.targets.title")}
@@ -430,6 +457,7 @@ export function OffsiteTargetsSection({
       {/* Editor form (new or edit) */}
       {draft && (
         <div className="flex flex-col gap-3 rounded-card bg-carbon-surface p-3">
+          {savedUse && <p className="text-xs text-carbon-textMuted">{alsoDirectText(t, savedUse)}</p>}
           <label className="flex flex-col gap-1">
             <span className="text-xs text-carbon-textSub">{t("offsite.targets.name")}</span>
             <input

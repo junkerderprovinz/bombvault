@@ -1649,6 +1649,11 @@ const ja: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} ダイレクトは今、保持量が減りました。唯一のコピーがそこにある項目: {n}。",
   "saveWarning.directAppendOnlyOff": "{target} ダイレクトはもう append-only ではありません。唯一のコピーがそこにある項目: {n}。",
   "saveWarning.directCredsKept": "{target} ダイレクトは新しい鍵では開けず、古い鍵を保持しています。",
+
+  // Direct
+  "offsite.alsoDirect": "{target} ダイレクトにも適用されます。唯一のコピーがそこにある項目: {n}。",
+  "offsite.directRetentionAsk": "唯一のコピーが{target} ダイレクトにある項目: {n}。保持数を減らすと、次の整理でその古いスナップショットが完全に削除されます。それでも保存しますか？",
+  "offsite.directAppendOnlyAsk": "唯一のコピーが{target} ダイレクトにある項目: {n}。append-only なしでは、この機械はそこから削除できます。それでも保存しますか？",
 };
 
 export default ja;

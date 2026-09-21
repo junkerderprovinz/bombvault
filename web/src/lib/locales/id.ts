@@ -1668,6 +1668,11 @@ const id: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} langsung sekarang menyimpan lebih sedikit. Item yang satu-satunya salinannya ada di sana: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} langsung tidak lagi append-only. Item yang satu-satunya salinannya ada di sana: {n}.",
   "saveWarning.directCredsKept": "{target} langsung tidak bisa dibuka dengan kunci baru dan tetap memakai yang lama.",
+
+  // Direct
+  "offsite.alsoDirect": "Berlaku juga untuk {target} langsung. Item yang satu-satunya salinannya ada di sana: {n}.",
+  "offsite.directRetentionAsk": "Item yang satu-satunya salinannya ada di {target} langsung: {n}. Menyimpan lebih sedikit menghapus snapshot yang lebih lama secara permanen pada prune berikutnya. Tetap simpan?",
+  "offsite.directAppendOnlyAsk": "Item yang satu-satunya salinannya ada di {target} langsung: {n}. Tanpa append-only, mesin ini bisa menghapus darinya. Tetap simpan?",
 };
 
 export default id;

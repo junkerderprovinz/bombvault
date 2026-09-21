@@ -1660,6 +1660,11 @@ const hu: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} közvetlenül most kevesebbet őriz meg. Elemek, amelyeknek egyetlen másolata ott van: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} közvetlenül már nem append-only. Elemek, amelyeknek egyetlen másolata ott van: {n}.",
   "saveWarning.directCredsKept": "{target} közvetlenül nem nyitható meg az új kulccsal, és megtartja a régit.",
+
+  // Direct
+  "offsite.alsoDirect": "Érvényes {target} közvetlenül elemre is. Elemek, amelyeknek egyetlen másolata ott van: {n}.",
+  "offsite.directRetentionAsk": "Elemek, amelyeknek egyetlen másolata a {target} közvetlenül elemen van: {n}. A kevesebb megőrzés véglegesen törli régebbi pillanatképeiket a következő nyesésnél. Mégis menti?",
+  "offsite.directAppendOnlyAsk": "Elemek, amelyeknek egyetlen másolata a {target} közvetlenül elemen van: {n}. Append-only nélkül ez a gép törölhet belőle. Mégis menti?",
 };
 
 export default hu;

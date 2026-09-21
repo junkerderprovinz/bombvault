@@ -1668,6 +1668,11 @@ const hi: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} डायरेक्ट अब कम रखता है। जिन प्रविष्टियों की एकमात्र कॉपी वहाँ है: {n}।",
   "saveWarning.directAppendOnlyOff": "{target} डायरेक्ट अब अपेंड-ओनली नहीं है। जिन प्रविष्टियों की एकमात्र कॉपी वहाँ है: {n}।",
   "saveWarning.directCredsKept": "{target} डायरेक्ट नई कुंजी से खुल नहीं सकता और पुरानी कुंजी बनाए रखता है।",
+
+  // Direct
+  "offsite.alsoDirect": "यह {target} डायरेक्ट पर भी लागू होता है। जिन प्रविष्टियों की एकमात्र कॉपी वहाँ है: {n}।",
+  "offsite.directRetentionAsk": "जिन प्रविष्टियों की एकमात्र कॉपी {target} डायरेक्ट में है: {n}। कम रखने से उनके पुराने स्नैपशॉट अगली प्रूनिंग में स्थायी रूप से मिट जाएँगे। फिर भी सहेजें?",
+  "offsite.directAppendOnlyAsk": "जिन प्रविष्टियों की एकमात्र कॉपी {target} डायरेक्ट में है: {n}। अपेंड-ओनली के बिना, यह मशीन उसमें से मिटा सकती है। फिर भी सहेजें?",
 };
 
 export default hi;

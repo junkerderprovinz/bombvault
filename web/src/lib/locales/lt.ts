@@ -1668,6 +1668,11 @@ const lt: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} tiesiogiai dabar saugo mažiau. Elementai, kurių vienintelė kopija yra ten: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} tiesiogiai nebėra tik pridėjimo režimo. Elementai, kurių vienintelė kopija yra ten: {n}.",
   "saveWarning.directCredsKept": "{target} tiesiogiai nepavyksta atverti nauju raktu, todėl paliekamas senasis.",
+
+  // Direct
+  "offsite.alsoDirect": "Tai galioja ir {target} tiesiogiai. Elementai, kurių vienintelė kopija yra ten: {n}.",
+  "offsite.directRetentionAsk": "Elementai, kurių vienintelė kopija yra {target} tiesiogiai: {n}. Mažesnis saugojimas negrįžtamai ištrina senesnes jų momentines kopijas kitą kartą valant. Vis tiek išsaugoti?",
+  "offsite.directAppendOnlyAsk": "Elementai, kurių vienintelė kopija yra {target} tiesiogiai: {n}. Be tik pridėjimo režimo šis kompiuteris gali trinti iš jos. Vis tiek išsaugoti?",
 };
 
 export default lt;

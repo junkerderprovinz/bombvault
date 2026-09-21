@@ -1652,6 +1652,11 @@ const sr: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} директно сада чува мање. Ставке чија је једина копија тамо: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} директно више не користи само додавање. Ставке чија је једина копија тамо: {n}.",
   "saveWarning.directCredsKept": "{target} директно не може да се отвори новим кључем и задржава стари.",
+
+  // Direct
+  "offsite.alsoDirect": "Важи и за {target} директно. Ставке чија је једина копија тамо: {n}.",
+  "offsite.directRetentionAsk": "Ставке чија је једина копија у {target} директно: {n}. Мање чување трајно брише њихове старије снимке при следећем чишћењу. Ипак сачувам?",
+  "offsite.directAppendOnlyAsk": "Ставке чија је једина копија у {target} директно: {n}. Без само додавања ова машина може да брише из њега. Ипак сачувам?",
 };
 
 export default sr;

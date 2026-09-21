@@ -1668,6 +1668,11 @@ const gl: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} directo agora conserva menos. Elementos cuxa única copia está aí: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} directo xa non é append-only. Elementos cuxa única copia está aí: {n}.",
   "saveWarning.directCredsKept": "{target} directo non se pode abrir coa nova clave e conserva a antiga.",
+
+  // Direct
+  "offsite.alsoDirect": "Tamén se aplica a {target} directo. Elementos cuxa única copia está aí: {n}.",
+  "offsite.directRetentionAsk": "Elementos cuxa única copia está en {target} directo: {n}. Conservar menos elimina para sempre as súas instantáneas máis antigas na seguinte limpeza. Gardar de todos os xeitos?",
+  "offsite.directAppendOnlyAsk": "Elementos cuxa única copia está en {target} directo: {n}. Sen append-only, esta máquina pode borrar del. Gardar de todos os xeitos?",
 };
 
 export default gl;

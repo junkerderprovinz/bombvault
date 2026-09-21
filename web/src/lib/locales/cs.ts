@@ -1655,6 +1655,11 @@ const cs: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} přímo teď uchovává méně. Položky, jejichž jediná kopie je tam: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} přímo už není append-only. Položky, jejichž jediná kopie je tam: {n}.",
   "saveWarning.directCredsKept": "{target} přímo se nedá otevřít novým klíčem a ponechává si starý.",
+
+  // Direct
+  "offsite.alsoDirect": "Platí i pro {target} přímo. Položky, jejichž jediná kopie je tam: {n}.",
+  "offsite.directRetentionAsk": "Položky, jejichž jediná kopie je v {target} přímo: {n}. Nižší uchovávání trvale smaže jejich starší snímky při příštím vyčištění. Přesto uložit?",
+  "offsite.directAppendOnlyAsk": "Položky, jejichž jediná kopie je v {target} přímo: {n}. Bez append-only smí tento stroj z něj mazat. Přesto uložit?",
 };
 
 export default cs;

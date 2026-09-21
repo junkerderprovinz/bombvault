@@ -1668,6 +1668,11 @@ const fa: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} مستقیم اکنون کمتر نگه می‌دارد. موردهایی که تنها نسخه‌شان همان‌جاست: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} مستقیم دیگر فقط-افزودنی نیست. موردهایی که تنها نسخه‌شان همان‌جاست: {n}.",
   "saveWarning.directCredsKept": "{target} مستقیم با کلید جدید باز نمی‌شود و کلید قدیمی را نگه می‌دارد.",
+
+  // Direct
+  "offsite.alsoDirect": "برای {target} مستقیم هم اعمال می‌شود. موردهایی که تنها نسخه‌شان همان‌جاست: {n}.",
+  "offsite.directRetentionAsk": "موردهایی که تنها نسخه‌شان در {target} مستقیم است: {n}. نگه داشتن کمتر، اسنپ‌شات‌های قدیمی‌تر آنها را در پاک‌سازی بعدی برای همیشه حذف می‌کند. با این حال ذخیره شود؟",
+  "offsite.directAppendOnlyAsk": "موردهایی که تنها نسخه‌شان در {target} مستقیم است: {n}. بدون فقط-افزودنی، این دستگاه می‌تواند از آن حذف کند. با این حال ذخیره شود؟",
 };
 
 export default fa;

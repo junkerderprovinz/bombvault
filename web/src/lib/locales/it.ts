@@ -1657,6 +1657,11 @@ const it: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} diretto ora conserva meno. Elementi la cui unica copia è lì: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} diretto non è più append-only. Elementi la cui unica copia è lì: {n}.",
   "saveWarning.directCredsKept": "{target} diretto non può essere aperto con la nuova chiave e mantiene quella vecchia.",
+
+  // Direct
+  "offsite.alsoDirect": "Vale anche per {target} diretto. Elementi la cui unica copia è lì: {n}.",
+  "offsite.directRetentionAsk": "Elementi la cui unica copia è su {target} diretto: {n}. Conservarne meno elimina definitivamente i loro snapshot più vecchi alla prossima potatura. Salvare comunque?",
+  "offsite.directAppendOnlyAsk": "Elementi la cui unica copia è su {target} diretto: {n}. Senza append-only questa macchina può eliminare da esso. Salvare comunque?",
 };
 
 export default it;

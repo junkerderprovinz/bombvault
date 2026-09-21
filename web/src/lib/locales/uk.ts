@@ -1652,6 +1652,11 @@ const uk: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} напряму тепер зберігає менше. Елементи, чия єдина копія там: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} напряму більше не append-only. Елементи, чия єдина копія там: {n}.",
   "saveWarning.directCredsKept": "{target} напряму не можна відкрити новим ключем, і зберігається старий.",
+
+  // Direct
+  "offsite.alsoDirect": "Стосується також {target} напряму. Елементи, чия єдина копія там: {n}.",
+  "offsite.directRetentionAsk": "Елементи, чия єдина копія в {target} напряму: {n}. Менше збереження безповоротно видалить їхні старіші знімки під час наступного очищення. Усе одно зберегти?",
+  "offsite.directAppendOnlyAsk": "Елементи, чия єдина копія в {target} напряму: {n}. Без append-only ця машина зможе видаляти з нього. Усе одно зберегти?",
 };
 
 export default uk;

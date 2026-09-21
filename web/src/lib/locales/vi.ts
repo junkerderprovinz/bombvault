@@ -1649,6 +1649,11 @@ const vi: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} trực tiếp giờ giữ ít hơn. Các mục có bản sao duy nhất ở đó: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} trực tiếp không còn append-only nữa. Các mục có bản sao duy nhất ở đó: {n}.",
   "saveWarning.directCredsKept": "{target} trực tiếp không thể mở bằng khóa mới và giữ lại khóa cũ.",
+
+  // Direct
+  "offsite.alsoDirect": "Cũng áp dụng cho {target} trực tiếp. Các mục có bản sao duy nhất ở đó: {n}.",
+  "offsite.directRetentionAsk": "Các mục có bản sao duy nhất ở {target} trực tiếp: {n}. Giữ ít hơn sẽ xóa vĩnh viễn các snapshot cũ hơn của chúng vào lần dọn bớt tiếp theo. Vẫn lưu chứ?",
+  "offsite.directAppendOnlyAsk": "Các mục có bản sao duy nhất ở {target} trực tiếp: {n}. Nếu không có append-only, máy này có thể xóa khỏi đó. Vẫn lưu chứ?",
 };
 
 export default vi;

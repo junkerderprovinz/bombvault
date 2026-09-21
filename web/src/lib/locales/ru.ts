@@ -1652,6 +1652,11 @@ const ru: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} напрямую теперь хранит меньше. Элементы, чья единственная копия там: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} напрямую больше не append-only. Элементы, чья единственная копия там: {n}.",
   "saveWarning.directCredsKept": "{target} напрямую нельзя открыть новым ключом, и сохраняется старый.",
+
+  // Direct
+  "offsite.alsoDirect": "Также относится к {target} напрямую. Элементы, чья единственная копия там: {n}.",
+  "offsite.directRetentionAsk": "Элементы, чья единственная копия в {target} напрямую: {n}. Меньшее хранение безвозвратно удалит их более старые снимки при следующей очистке. Всё равно сохранить?",
+  "offsite.directAppendOnlyAsk": "Элементы, чья единственная копия в {target} напрямую: {n}. Без append-only эта машина сможет удалять из него. Всё равно сохранить?",
 };
 
 export default ru;

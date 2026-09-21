@@ -1668,6 +1668,11 @@ const is: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} beint varðveitir nú minna. Atriði sem eiga eina afritið þar: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} beint er ekki lengur aðeins-bæta-við. Atriði sem eiga eina afritið þar: {n}.",
   "saveWarning.directCredsKept": "{target} beint er ekki hægt að opna með nýja lyklinum og heldur þeim gamla.",
+
+  // Direct
+  "offsite.alsoDirect": "Gildir líka um {target} beint. Atriði sem eiga eina afritið þar: {n}.",
+  "offsite.directRetentionAsk": "Atriði sem eiga eina afritið í {target} beint: {n}. Að geyma minna eyðir eldri myndatökum þeirra varanlega við næstu hreinsun. Vista samt?",
+  "offsite.directAppendOnlyAsk": "Atriði sem eiga eina afritið í {target} beint: {n}. Án aðeins-bæta-við má þessi vél eyða úr því. Vista samt?",
 };
 
 export default is;

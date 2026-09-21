@@ -1767,6 +1767,11 @@ export const en = {
   "saveWarning.directRetentionLowered": "{target} direct now keeps less. Items whose only copy is there: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} direct is no longer append-only. Items whose only copy is there: {n}.",
   "saveWarning.directCredsKept": "{target} direct cannot be opened with the new key and keeps the old one.",
+
+  // Direct
+  "offsite.alsoDirect": "Also applies to {target} direct. Items whose only copy is there: {n}.",
+  "offsite.directRetentionAsk": "Items whose only copy is in {target} direct: {n}. Keeping less deletes their older snapshots for good at the next prune. Save anyway?",
+  "offsite.directAppendOnlyAsk": "Items whose only copy is in {target} direct: {n}. Without append-only this box may delete from it. Save anyway?",
   "files.excludesCount": "Excludes: {n}",
   "files.enabled": "Include in schedule",
   "files.effectiveLabel": "Result",
@@ -3493,6 +3498,11 @@ export const de: Translations = {
   "saveWarning.directRetentionLowered": "{target} direkt bewahrt jetzt weniger auf. Einträge, deren einzige Kopie dort liegt: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} direkt ist nicht mehr append-only. Einträge, deren einzige Kopie dort liegt: {n}.",
   "saveWarning.directCredsKept": "{target} direkt lässt sich mit dem neuen Schlüssel nicht öffnen und behält den alten.",
+
+  // Direct
+  "offsite.alsoDirect": "Gilt auch für {target} direkt. Einträge, deren einzige Kopie dort liegt: {n}.",
+  "offsite.directRetentionAsk": "Einträge, deren einzige Kopie in {target} direkt liegt: {n}. Weniger aufzubewahren löscht deren ältere Snapshots beim nächsten Aufräumen endgültig. Trotzdem speichern?",
+  "offsite.directAppendOnlyAsk": "Einträge, deren einzige Kopie in {target} direkt liegt: {n}. Ohne append-only darf dieser Rechner dort löschen. Trotzdem speichern?",
   "files.excludesCount": "Ausschlüsse: {n}",
   "files.enabled": "Im Zeitplan einschließen",
   "files.effectiveLabel": "Ergebnis",
