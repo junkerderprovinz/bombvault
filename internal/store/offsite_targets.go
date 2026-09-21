@@ -83,6 +83,12 @@ type OffsiteTarget struct {
 	Enabled              bool
 	CreatedAt            int64
 	SortOrder            int
+	// CompanionOf is the id of the off-site target this RoleRepo row is the
+	// direct repository of.
+	CompanionOf string
+	// CompanionLost marks a row whose target an import deleted, which leaves
+	// it a plain remote repository.
+	CompanionLost bool
 }
 
 // Off-site target roles (see OffsiteTarget.Role's doc comment).
@@ -300,7 +306,8 @@ func targetSlotsTx(tx *sql.Tx, domain string) ([]targetSlot, error) {
 
 const offsiteTargetCols = `id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 	retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
-	limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order`
+	limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order,
+	companion_of, companion_lost`
 
 // ListOffsiteTargets returns all off-site REPLICATION DESTINATIONS (role =
 // 'offsite'; a domain's "primary" safety-config row, if any, is never among
@@ -576,16 +583,18 @@ func (r *Repo) DeletePrimaryRemoteTarget(domain string) error {
 
 func scanOffsiteTarget(s scanner) (OffsiteTarget, error) {
 	var t OffsiteTarget
-	var immutable, enabled int
+	var immutable, enabled, lost int
 	err := s.Scan(
 		&t.ID, &t.Domain, &t.Name, &t.Repo, &t.Role, &t.CredsRef, &t.StorageClass, &immutable, &t.Schedule,
 		&t.RetentionKeepLast, &t.RetentionKeepDaily, &t.RetentionKeepWeekly, &t.RetentionKeepMonthly,
 		&t.LimitUpload, &t.LimitDownload, &t.GrowthBudgetGB, &enabled, &t.CreatedAt, &t.SortOrder,
+		&t.CompanionOf, &lost,
 	)
 	if err != nil {
 		return OffsiteTarget{}, fmt.Errorf("scanOffsiteTarget: %w", err)
 	}
 	t.Immutable = immutable != 0
 	t.Enabled = enabled != 0
+	t.CompanionLost = lost != 0
 	return t, nil
 }
