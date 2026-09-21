@@ -384,6 +384,23 @@ func mirroredFieldsChanged(b namedRepoBody, row store.OffsiteTarget) []string {
 	return fields
 }
 
+// directTags is DirectTag for a backup into a direct repository, so every
+// retention that is not the row's own keeps the snapshot.
+func (s *Service) directTags(settings store.Settings, domain, repo string) []string {
+	if s.refFor(settings, domain, repo).Named.CompanionOf != "" {
+		return []string{restic.DirectTag}
+	}
+	return nil
+}
+
+// withTags appends extra in a fresh slice; the orchestrators reuse theirs.
+func withTags(tags, extra []string) []string {
+	if len(extra) == 0 {
+		return tags
+	}
+	return append(slices.Clone(tags), extra...)
+}
+
 // handleConnectRepo serves POST /api/repos/{id}/connect.
 func (h *Handler) handleConnectRepo(w http.ResponseWriter, r *http.Request) {
 	var body struct {

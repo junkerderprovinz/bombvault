@@ -4849,7 +4849,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		// --, positionals after) — never through a shell.
 		Excludes:  append(s.resolveExcludePatterns(tg.Excludes, in), excludedBranches(selection)...),
 		Docker:    s.docker,
-		Restic:    &resticAdapter{engine: s.engine, mode: mode},
+		Restic:    &resticAdapter{engine: s.engine, mode: mode, extraTags: s.directTags(settings, "containers", repo)},
 		Templates: templatesAdapter{},
 		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "container:" + name},
 	})
@@ -8895,12 +8895,15 @@ func (s *Service) ContainerPath() string {
 type resticAdapter struct {
 	engine ResticEngine
 	mode   restic.Mode
+	// extraTags go on every snapshot the adapter writes, after the
+	// orchestrator's own.
+	extraTags []string
 }
 
 var _ backup.Restic = (*resticAdapter)(nil)
 
 func (a *resticAdapter) Backup(ctx context.Context, repo string, paths, tags []string, excludes ...string) (backup.Summary, error) {
-	sum, err := a.engine.Backup(ctx, repo, paths, tags, a.mode, excludes...)
+	sum, err := a.engine.Backup(ctx, repo, paths, withTags(tags, a.extraTags), a.mode, excludes...)
 	if err != nil {
 		return backup.Summary{}, err
 	}
@@ -9131,12 +9134,15 @@ func (h sshZFSHost) StreamReceive(ctx context.Context, rd io.Reader, targetDatas
 type resticZvolAdapter struct {
 	engine ResticEngine
 	mode   restic.Mode
+	// extraTags go on every snapshot the adapter writes, after the
+	// orchestrator's own.
+	extraTags []string
 }
 
 var _ backup.ZvolRestic = (*resticZvolAdapter)(nil)
 
 func (a *resticZvolAdapter) BackupStdin(ctx context.Context, repo string, rd io.Reader, path string, tags []string) (backup.Summary, error) {
-	sum, err := a.engine.BackupStdin(ctx, repo, rd, path, tags, a.mode)
+	sum, err := a.engine.BackupStdin(ctx, repo, rd, path, withTags(tags, a.extraTags), a.mode)
 	if err != nil {
 		return backup.Summary{}, err
 	}
@@ -9604,10 +9610,10 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		TargetID:         tg.ID,
 		DataDir:          s.cfg.DataDir,
 		VM:               s.virsh,
-		Restic:           &resticAdapter{engine: s.engine, mode: mode},
+		Restic:           &resticAdapter{engine: s.engine, mode: mode, extraTags: s.directTags(settings, "vms", repo)},
 		BlockDisks:       vmBlockDisks,
 		ZFSHost:          sshZFSHost{ssh: s.ssh},
-		ZvolRestic:       &resticZvolAdapter{engine: s.engine, mode: mode},
+		ZvolRestic:       &resticZvolAdapter{engine: s.engine, mode: mode, extraTags: s.directTags(settings, "vms", repo)},
 	}
 	live := false
 	if method == "live" {
@@ -10845,7 +10851,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 		SetName:     set.Name,
 		Excludes: append(append([]string{}, set.Excludes...),
 			excludedBranches(anchored)...),
-		Restic: &resticAdapter{engine: s.engine, mode: mode},
+		Restic: &resticAdapter{engine: s.engine, mode: mode, extraTags: s.directTags(settings, "files", repo)},
 		Runs:   runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "files:" + set.Name},
 	})
 	s.progEnd(key, "backup", err == nil, startedAt)
