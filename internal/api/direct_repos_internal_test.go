@@ -272,3 +272,34 @@ func TestConnectingARepositoryAlreadyLinkedToAnotherTargetIsRefused(t *testing.T
 		t.Fatalf("the original link was not kept: %+v, %v", companion, found)
 	}
 }
+
+func TestADirectRepositoryChangesOnlyItsNameAndSwitch(t *testing.T) {
+	f := newPlacementFixture(t)
+	target := f.target("containers", "B2", "b2:bkt:containers")
+	d := f.direct(target)
+	path := "/api/repos/" + d.ID
+	if res := f.do("PATCH", path, map[string]any{"name": "B2 straight", "enabled": false}); res["ok"] != true {
+		t.Fatalf("rename and switch off = %v", res)
+	}
+	for field, value := range map[string]any{
+		"repo": "b2:bkt:elsewhere", "credsRef": "set-9", "storageClass": "GLACIER_IR",
+		"limitUpload": 5, "limitDownload": 5, "immutable": !d.Immutable,
+	} {
+		if res := f.do("PATCH", path, map[string]any{field: value}); res["ok"] != false || res["code"] != "mirrored-field" {
+			t.Errorf("%s = %v", field, res)
+		}
+	}
+	if res := f.do("PATCH", path, map[string]any{"immutable": d.Immutable, "repo": d.Repo}); res["ok"] != true {
+		t.Fatalf("sending the stored values back is no change: %v", res)
+	}
+	if res := f.do("PATCH", path, map[string]any{"companionOf": target.ID}); res["ok"] != false {
+		t.Fatalf("a link set by an edit = %v", res)
+	}
+	got, err := f.st.GetNamedRepo(d.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Name != "B2 straight" || got.Enabled || !got.MirroredEqual(target) {
+		t.Fatalf("after the edits: %+v", got)
+	}
+}

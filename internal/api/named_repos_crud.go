@@ -318,6 +318,15 @@ func (h *Handler) handleUpdateNamedRepo(w http.ResponseWriter, r *http.Request) 
 	if !decodeBody(w, r, &body) {
 		return
 	}
+	if body.CompanionOf != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false,
+			"error": "a repository is tied to a target when it is created or connected, not by an edit"})
+		return
+	}
+	if row.CompanionOf != "" && directEditRefused(body, row) {
+		placementFail(w, errMirroredField, nil)
+		return
+	}
 	current := strings.TrimSpace(row.Repo)
 	moving := body.Repo != nil && strings.TrimSpace(*body.Repo) != current
 	body.applyTo(&row)

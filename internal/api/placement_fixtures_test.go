@@ -171,7 +171,7 @@ func (f *placementFixture) namedRepo(name, location string) store.OffsiteTarget 
 
 // direct creates the target's direct repository at the suggested location, with
 // the config marker a local repository there would have.
-func (f *placementFixture) direct(target store.OffsiteTarget) store.OffsiteTarget { //nolint:unused // sets up a target whose direct repository already exists, for tests that check one
+func (f *placementFixture) direct(target store.OffsiteTarget) store.OffsiteTarget {
 	f.t.Helper()
 	loc := directLocationFor(target).Location
 	row, err := f.st.CreateCompanionRepo(target.ID, placementTargetName(target)+" direct", loc)
