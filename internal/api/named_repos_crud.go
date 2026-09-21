@@ -323,9 +323,11 @@ func (h *Handler) handleUpdateNamedRepo(w http.ResponseWriter, r *http.Request) 
 			"error": "a repository is tied to a target when it is created or connected, not by an edit"})
 		return
 	}
-	if row.CompanionOf != "" && directEditRefused(body, row) {
-		placementFail(w, errMirroredField, nil)
-		return
+	if row.CompanionOf != "" {
+		if fields := mirroredFieldsChanged(body, row); len(fields) > 0 {
+			placementFail(w, errMirroredField, map[string]any{"fields": fields})
+			return
+		}
 	}
 	current := strings.TrimSpace(row.Repo)
 	moving := body.Repo != nil && strings.TrimSpace(*body.Repo) != current
