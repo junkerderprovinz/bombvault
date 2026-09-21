@@ -12,6 +12,8 @@ const ja: Partial<Translations> = {
   "nav.vms": "VM",
   "nav.flash": "フラッシュ",
   "nav.settings": "設定",
+  "nav.more": "その他",
+  "nav.mobileNavigation": "モバイルナビゲーション",
   "about.title": "BombVault について",
   "about.body": "騎士はひとり、遠征もひとつ。欲しかった形では存在しなかった、見栄えのするオープンソースの道具を、足りないものがなくなるまで作り続けています。すべて無料で、アカウントも、テレメトリも、広告も、有料プランもありません。どこにも注釈の星印はありません。読めるものがあなたの城壁の外へ出ることは決してありません。夜と週末に、心と意地で鍛えました。",
   "about.coffee": "BombVault があなたのサーバーやパソコンに置く価値を示せたなら、騎士にコインを一枚。費用の足しになり、プロジェクトを生かし続けます。そしてこの騎士の心臓も少し速く打ちます。下に三つの道があります、好きなものをどうぞ。",
@@ -204,6 +206,9 @@ const ja: Partial<Translations> = {
   "run.colStarted": "開始",
   "run.colFinished": "完了",
   "run.colContainer": "コンテナ",
+  "home.newBackupConfirm": "有効なすべてのドメインのバックアップを今すぐ開始しますか？コンテナーは、バックアップの実行中に1つずつ停止して再起動されます。",
+  "run.statVolume": "データ量",
+  "run.statSnapshot": "スナップショット",
 
   // Settings
   "settings.title": "設定",
@@ -274,6 +279,9 @@ const ja: Partial<Translations> = {
   "settings.labels.buttons": "ボタン",
   "settings.labels.sidebar": "サイドバー",
   "settings.labels.tabs": "タブ",
+  "settings.labels.bottombar": "ボトムバー",
+  "settings.axisBottombarHint": "スマートフォンのレイアウトにのみ適用されます。",
+  "settings.axisSidebarHint": "デスクトップのレイアウトにのみ適用されます。",
   "settings.labels.mode.text": "文字",
   "settings.labels.mode.textGlyph": "文字と記号",
   "settings.labels.mode.glyph": "記号",
@@ -876,6 +884,7 @@ const ja: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "保護ステータス",
   "dashboard.noOffsite": "オフサイトの複製なし",
+  "dashboard.statusLoadFailed": "状態を読み込めませんでした",
   "dashboard.neverExcluded": "予定なし",
   "dashboard.neverExcludedTitle": "意図的に予定から外してあるため、ここに保存するものはありません。",
   "dashboard.neverSelf": "自身のコンテナー",

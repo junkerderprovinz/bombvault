@@ -13,6 +13,8 @@ const sk: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Vlastná záloha",
   "nav.settings": "Nastavenia",
+  "nav.more": "Viac",
+  "nav.mobileNavigation": "Mobilná navigácia",
 
   // Mode toggle
   "about.title": "O aplikácii BombVault",
@@ -274,6 +276,9 @@ const sk: Partial<Translations> = {
   "run.colStarted": "Spustené",
   "run.colFinished": "Dokončené",
   "run.colContainer": "Kontajner",
+  "home.newBackupConfirm": "Spustiť teraz zálohu všetkých povolených oblastí? Kontajnery sa po jednom zastavia a znova spustia, kým beží ich záloha.",
+  "run.statVolume": "Objem dát",
+  "run.statSnapshot": "Snímka",
 
   // Settings
   "settings.title": "Nastavenia",
@@ -727,6 +732,9 @@ const sk: Partial<Translations> = {
   "settings.labels.buttons": "Tlačidlá",
   "settings.labels.sidebar": "Bočný panel",
   "settings.labels.tabs": "Karty",
+  "settings.labels.bottombar": "Spodný panel",
+  "settings.axisBottombarHint": "Vzťahuje sa iba na rozloženie telefónu.",
+  "settings.axisSidebarHint": "Vzťahuje sa iba na rozloženie na počítači.",
   "settings.labels.mode.text": "Text",
   "settings.labels.mode.textGlyph": "Text a symbol",
   "settings.labels.mode.glyph": "Symbol",
@@ -770,6 +778,7 @@ const sk: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Stav ochrany",
   "dashboard.noOffsite": "Žiadna kópia mimo lokality",
+  "dashboard.statusLoadFailed": "Stav sa nepodarilo načítať",
   "dashboard.neverExcluded": "Nie je naplánované",
   "dashboard.neverExcludedTitle": "Zámerne vynechané z plánu, takže tu nie je čo zálohovať.",
   "dashboard.neverSelf": "Vlastný kontajner",

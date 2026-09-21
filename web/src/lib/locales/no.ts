@@ -12,6 +12,8 @@ const no: Partial<Translations> = {
   "nav.vms": "VM-er",
   "nav.flash": "Flash",
   "nav.settings": "Innstillinger",
+  "nav.more": "Mer",
+  "nav.mobileNavigation": "Mobil navigasjon",
   "about.title": "Om BombVault",
   "about.body": "Én ridder, ett korstog: pene åpen kildekode-verktøy som ikke fantes i den formen jeg ville ha, bygget til ingenting mangler. Alt gratis, uten kontoer, uten telemetri, uten reklame og uten betalte nivåer. Ingen stjerne noe sted. Ingenting lesbart forlater noen gang dine egne murer. Smidd på kvelder og helger, med hjerte og stahet.",
   "about.coffee": "Hvis BombVault har fortjent en plass på serveren eller maskinen din, kast en mynt til ridderen din: det hjelper med å dekke kostnadene og holder prosjektet i live. Og det får hjertet til denne ridderen til å slå litt raskere. Nedenfor er det tre veier, ta den som passer deg.",
@@ -203,6 +205,9 @@ const no: Partial<Translations> = {
   "run.colStarted": "Startet",
   "run.colFinished": "Fullført",
   "run.colContainer": "Kontainer",
+  "home.newBackupConfirm": "Start en sikkerhetskopi av alle aktiverte domener nå? Containere stoppes og startes på nytt én om gangen mens sikkerhetskopien deres kjører.",
+  "run.statVolume": "Datamengde",
+  "run.statSnapshot": "Snapshot",
 
   // Settings
   "settings.title": "Innstillinger",
@@ -271,6 +276,9 @@ const no: Partial<Translations> = {
   "settings.labels.buttons": "Knapper",
   "settings.labels.sidebar": "Sidefelt",
   "settings.labels.tabs": "Faner",
+  "settings.labels.bottombar": "Bunnfelt",
+  "settings.axisBottombarHint": "Påvirker kun telefonlayouten.",
+  "settings.axisSidebarHint": "Påvirker kun skrivebordslayouten.",
   "settings.labels.mode.text": "Tekst",
   "settings.labels.mode.textGlyph": "Tekst og symbol",
   "settings.labels.mode.glyph": "Symbol",
@@ -881,6 +889,7 @@ const no: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Beskyttelsesstatus",
   "dashboard.noOffsite": "Ingen ekstern kopi",
+  "dashboard.statusLoadFailed": "Kunne ikke laste inn status",
   "dashboard.neverExcluded": "Ikke planlagt",
   "dashboard.neverExcludedTitle": "Bevisst holdt utenfor planen, så her er det ingenting å sikkerhetskopiere.",
   "dashboard.neverSelf": "Egen beholder",

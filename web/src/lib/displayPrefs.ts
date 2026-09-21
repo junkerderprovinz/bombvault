@@ -19,6 +19,7 @@ const KEYS = [
   "bv-labels-buttons",
   "bv-labels-sidebar",
   "bv-labels-tabs",
+  "bv-labels-bottombar",
   "bv-lang",
   "bombvault.advanced",
   // Whether a Fleet peer card shows its scorecard. Unlike a filter, losing it on

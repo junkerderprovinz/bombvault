@@ -223,9 +223,11 @@ export function ErrorDetailPanel({
             <p className="text-sm text-carbon-textMuted">{t("errorPanel.empty")}</p>
           )}
           {!loading && groups.length > 0 && (
-            <div className="divide-y divide-carbon-border">
+            // Rows separated by shade (soft tiles), never divider lines; the
+            // same surface token every other Dashboard list uses.
+            <div className="flex flex-col gap-1">
               {groups.map((g) => (
-                <div key={g.key || "(none)"} className="flex flex-col gap-1.5 py-3">
+                <div key={g.key || "(none)"} className="flex flex-col gap-1.5 rounded-control bg-carbon-surface2 px-2 py-2.5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 items-start gap-2">
                       <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-statusFailSolid" />

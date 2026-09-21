@@ -12,6 +12,8 @@ const ar: Partial<Translations> = {
   "nav.vms": "VMs",
   "nav.flash": "Flash",
   "nav.settings": "الإعدادات",
+  "nav.more": "المزيد",
+  "nav.mobileNavigation": "التنقل عبر الجوال",
   "about.title": "حول BombVault",
   "about.body": "فارس واحد وحملة واحدة: أدوات مفتوحة المصدر أنيقة لم تكن موجودة بالشكل الذي أردته، تُبنى حتى لا ينقصها شيء. كل شيء مجاني، بلا حسابات، بلا قياس عن بُعد، بلا إعلانات وبلا باقات مدفوعة. لا نجمة في أي مكان. لا شيء مقروء يغادر أسوارك أبدًا. طُرق على المسامير في الأمسيات وعطل نهاية الأسبوع، بقلب وعناد.",
   "about.coffee": "إذا استحق BombVault مكانًا على خادمك أو حاسوبك، فألقِ عملة لفارسك: تساعد في تغطية التكاليف وتبقي المشروع حيًا. كما تجعل قلب هذا الفارس ينبض أسرع قليلًا. في الأسفل ثلاث طرق، اختر ما يناسبك.",
@@ -204,6 +206,9 @@ const ar: Partial<Translations> = {
   "run.colStarted": "بدأ",
   "run.colFinished": "انتهى",
   "run.colContainer": "Container",
+  "home.newBackupConfirm": "هل تريد بدء نسخة احتياطية لكل نطاق ممكّن الآن؟ تُوقف الحاويات وتُعاد تشغيلها واحدًا تلو الآخر أثناء تشغيل النسخ الاحتياطي لها.",
+  "run.statVolume": "حجم البيانات",
+  "run.statSnapshot": "لقطة",
 
   // Settings
   "settings.title": "الإعدادات",
@@ -274,6 +279,9 @@ const ar: Partial<Translations> = {
   "settings.labels.buttons": "الأزرار",
   "settings.labels.sidebar": "الشريط الجانبي",
   "settings.labels.tabs": "علامات التبويب",
+  "settings.labels.bottombar": "الشريط السفلي",
+  "settings.axisBottombarHint": "يؤثر على تخطيط الهاتف فقط.",
+  "settings.axisSidebarHint": "يؤثر على تخطيط سطح المكتب فقط.",
   "settings.labels.mode.text": "نص",
   "settings.labels.mode.textGlyph": "نص ورمز",
   "settings.labels.mode.glyph": "رمز",
@@ -907,6 +915,7 @@ const ar: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "حالة الحماية",
   "dashboard.noOffsite": "لا توجد نسخة خارج الموقع",
+  "dashboard.statusLoadFailed": "تعذر تحميل الحالة",
   "dashboard.neverExcluded": "غير مجدول",
   "dashboard.neverExcludedTitle": "استُثني من الجدول عن قصد، فلا شيء هنا لنسخه احتياطياً.",
   "dashboard.neverSelf": "الحاوية الخاصة",

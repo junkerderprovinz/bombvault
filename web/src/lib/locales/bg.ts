@@ -13,6 +13,8 @@ const bg: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Самобекъп",
   "nav.settings": "Настройки",
+  "nav.more": "Още",
+  "nav.mobileNavigation": "Мобилна навигация",
 
   // Mode toggle
   "about.title": "Относно BombVault",
@@ -274,6 +276,9 @@ const bg: Partial<Translations> = {
   "run.colStarted": "Започнато",
   "run.colFinished": "Завършено",
   "run.colContainer": "Контейнер",
+  "home.newBackupConfirm": "Да започна ли резервно копие на всички активирани области сега? Контейнерите се спират и рестартират един по един, докато върви тяхното резервно копие.",
+  "run.statVolume": "Обем данни",
+  "run.statSnapshot": "Снимка",
 
   // Settings
   "settings.title": "Настройки",
@@ -727,6 +732,9 @@ const bg: Partial<Translations> = {
   "settings.labels.buttons": "Бутони",
   "settings.labels.sidebar": "Странична лента",
   "settings.labels.tabs": "Раздели",
+  "settings.labels.bottombar": "Долна лента",
+  "settings.axisBottombarHint": "Отнася се само за оформлението на телефона.",
+  "settings.axisSidebarHint": "Отнася се само за оформлението на настолния компютър.",
   "settings.labels.mode.text": "Текст",
   "settings.labels.mode.textGlyph": "Текст и символ",
   "settings.labels.mode.glyph": "Символ",
@@ -770,6 +778,7 @@ const bg: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Статус на защитата",
   "dashboard.noOffsite": "Няма външно копие",
+  "dashboard.statusLoadFailed": "Състоянието не може да бъде заредено",
   "dashboard.neverExcluded": "Не е планирано",
   "dashboard.neverExcludedTitle": "Съзнателно е извън графика, така че тук няма какво да се архивира.",
   "dashboard.neverSelf": "Собствен контейнер",

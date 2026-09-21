@@ -12,6 +12,8 @@ const pt: Partial<Translations> = {
   "nav.vms": "VMs",
   "nav.flash": "Flash",
   "nav.settings": "Definições",
+  "nav.more": "Mais",
+  "nav.mobileNavigation": "Navegação móvel",
   "about.title": "Sobre o BombVault",
   "about.body": "Um único cavaleiro, uma cruzada: ferramentas de código aberto bem feitas que não existiam na forma que eu queria, construídas até não faltar nada. Tudo gratuito, sem contas, sem telemetria, sem anúncios e sem planos pagos. Nenhum asterisco em lugar nenhum. Nada legível sai das tuas próprias muralhas. Forjado em noites e fins de semana, com coração e teimosia.",
   "about.coffee": "Se BombVault conquistou um lugar no teu servidor ou computador, atira uma moeda ao teu cavaleiro: ajuda a cobrir os custos e mantém o projeto vivo. E faz o coração deste cavaleiro bater um pouco mais depressa. Há três caminhos aqui em baixo, escolhe o que te der jeito.",
@@ -203,6 +205,9 @@ const pt: Partial<Translations> = {
   "run.colStarted": "Iniciado",
   "run.colFinished": "Terminado",
   "run.colContainer": "Container",
+  "home.newBackupConfirm": "Iniciar agora uma cópia de segurança de todos os domínios ativados? Os contentores são parados e reiniciados um a um, enquanto a sua cópia de segurança é executada.",
+  "run.statVolume": "Volume de dados",
+  "run.statSnapshot": "Instantâneo",
 
   // Settings
   "settings.title": "Definições",
@@ -271,6 +276,9 @@ const pt: Partial<Translations> = {
   "settings.labels.buttons": "Botões",
   "settings.labels.sidebar": "Barra lateral",
   "settings.labels.tabs": "Separadores",
+  "settings.labels.bottombar": "Barra inferior",
+  "settings.axisBottombarHint": "Afeta apenas o esquema do telefone.",
+  "settings.axisSidebarHint": "Afeta apenas o esquema do computador.",
   "settings.labels.mode.text": "Texto",
   "settings.labels.mode.textGlyph": "Texto e símbolo",
   "settings.labels.mode.glyph": "Símbolo",
@@ -881,6 +889,7 @@ const pt: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Estado de proteção",
   "dashboard.noOffsite": "Sem cópia externa",
+  "dashboard.statusLoadFailed": "Não foi possível carregar o estado",
   "dashboard.neverExcluded": "Sem agendamento",
   "dashboard.neverExcludedTitle": "Ficou de fora do agendamento de propósito, por isso não há nada para copiar aqui.",
   "dashboard.neverSelf": "Contentor próprio",

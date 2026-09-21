@@ -402,3 +402,19 @@ export function IconTabStorage() {
     </svg>
   );
 }
+
+/** More, the overflow destination. */
+export function IconEllipsis() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="1.4 1.4 11.2 11.2"
+      fill="currentColor"
+      className="shrink-0"
+      aria-hidden="true"
+    >
+      <circle cx="2.5" cy="7" r="1.1" /><circle cx="7" cy="7" r="1.1" /><circle cx="11.5" cy="7" r="1.1" />
+    </svg>
+  );
+}

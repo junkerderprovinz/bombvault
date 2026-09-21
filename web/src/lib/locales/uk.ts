@@ -12,6 +12,8 @@ const uk: Partial<Translations> = {
   "nav.vms": "Віртуальні машини",
   "nav.flash": "Flash",
   "nav.settings": "Налаштування",
+  "nav.more": "Більше",
+  "nav.mobileNavigation": "Мобільна навігація",
   "about.title": "Про BombVault",
   "about.body": "Один лицар, один похід: охайні відкриті інструменти, яких не було в тому вигляді, який я хотів, і вони будуються, доки нічого не бракуватиме. Усе безкоштовно, без облікових записів, без телеметрії, без реклами і без платних тарифів. Ніде жодної зірочки. Нічого читабельного ніколи не полишає твоїх стін. Викуто вечорами й на вихідних, із серцем і впертістю.",
   "about.coffee": "Якщо BombVault заслужив місце на твоєму сервері чи комп'ютері, кинь монету своєму лицарю: вона допомагає покрити витрати й тримає проєкт живим. І серце цього лицаря б'ється трохи швидше. Нижче три шляхи, обери той, що тобі до вподоби.",
@@ -203,6 +205,9 @@ const uk: Partial<Translations> = {
   "run.colStarted": "Початок",
   "run.colFinished": "Завершення",
   "run.colContainer": "Контейнер",
+  "home.newBackupConfirm": "Запустити резервне копіювання всіх увімкнених областей зараз? Контейнери зупиняються та запускаються заново по одному, поки триває їхнє резервне копіювання.",
+  "run.statVolume": "Обсяг даних",
+  "run.statSnapshot": "Знімок",
 
   // Settings
   "settings.title": "Налаштування",
@@ -272,6 +277,9 @@ const uk: Partial<Translations> = {
   "settings.labels.buttons": "Кнопки",
   "settings.labels.sidebar": "Бічна панель",
   "settings.labels.tabs": "Вкладки",
+  "settings.labels.bottombar": "Нижня панель",
+  "settings.axisBottombarHint": "Впливає лише на макет телефону.",
+  "settings.axisSidebarHint": "Впливає лише на макет комп'ютера.",
   "settings.labels.mode.text": "Текст",
   "settings.labels.mode.textGlyph": "Текст і символ",
   "settings.labels.mode.glyph": "Символ",
@@ -899,6 +907,7 @@ const uk: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Стан захисту",
   "dashboard.noOffsite": "Немає зовнішньої копії",
+  "dashboard.statusLoadFailed": "Не вдалося завантажити стан",
   "dashboard.neverExcluded": "Не заплановано",
   "dashboard.neverExcludedTitle": "Свідомо залишено поза розкладом, тож тут нема чого копіювати.",
   "dashboard.neverSelf": "Власний контейнер",

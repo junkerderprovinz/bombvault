@@ -12,6 +12,8 @@ const nl: Partial<Translations> = {
   "nav.vms": "VM's",
   "nav.flash": "Flash",
   "nav.settings": "Instellingen",
+  "nav.more": "Meer",
+  "nav.mobileNavigation": "Mobiele navigatie",
   "about.title": "Over BombVault",
   "about.body": "Eén ridder, één kruistocht: verzorgde opensourcetools die niet bestonden in de vorm die ik wilde, gebouwd tot er niets meer ontbreekt. Alles gratis, zonder accounts, zonder telemetrie, zonder advertenties en zonder betaalde versie. Nergens een sterretje. Niets leesbaars verlaat ooit je eigen muren. Gesmeed op avonden en weekenden, met hart en koppigheid.",
   "about.coffee": "Als BombVault een plek op je server of computer heeft verdiend, gooi dan een munt naar je ridder: het helpt de kosten te dekken en houdt het project in leven. En het laat het hart van deze ridder wat sneller kloppen. Hieronder staan drie wegen, kies er een die je bevalt.",
@@ -202,6 +204,9 @@ const nl: Partial<Translations> = {
   "run.colStarted": "Gestart",
   "run.colFinished": "Voltooid",
   "run.colContainer": "Container",
+  "home.newBackupConfirm": "Nu een back-up van alle ingeschakelde domeinen starten? Containers worden één voor één gestopt en opnieuw gestart terwijl hun back-up loopt.",
+  "run.statVolume": "Datavolume",
+  "run.statSnapshot": "Momentopname",
 
   // Settings
   "settings.title": "Instellingen",
@@ -269,6 +274,9 @@ const nl: Partial<Translations> = {
   "settings.labels.buttons": "Knoppen",
   "settings.labels.sidebar": "Zijbalk",
   "settings.labels.tabs": "Tabbladen",
+  "settings.labels.bottombar": "Onderbalk",
+  "settings.axisBottombarHint": "Geldt alleen voor de telefoonlay-out.",
+  "settings.axisSidebarHint": "Geldt alleen voor de desktoplay-out.",
   "settings.labels.mode.text": "Tekst",
   "settings.labels.mode.textGlyph": "Tekst en symbool",
   "settings.labels.mode.glyph": "Symbool",
@@ -878,6 +886,7 @@ const nl: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Beschermingsstatus",
   "dashboard.noOffsite": "Geen kopie op afstand",
+  "dashboard.statusLoadFailed": "Kan de status niet laden",
   "dashboard.neverExcluded": "Niet ingepland",
   "dashboard.neverExcludedTitle": "Bewust buiten de planning gelaten, dus hier valt niets te back-uppen.",
   "dashboard.neverSelf": "Eigen container",

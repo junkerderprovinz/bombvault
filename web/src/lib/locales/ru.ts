@@ -12,6 +12,8 @@ const ru: Partial<Translations> = {
   "nav.vms": "Виртуальные машины",
   "nav.flash": "Flash",
   "nav.settings": "Настройки",
+  "nav.more": "Ещё",
+  "nav.mobileNavigation": "Мобильная навигация",
   "about.title": "О программе BombVault",
   "about.body": "Один рыцарь, один поход: аккуратные открытые инструменты, которых не было в том виде, в каком я хотел, и они строятся, пока ничего не будет не хватать. Всё бесплатно, без аккаунтов, без телеметрии, без рекламы и без платных тарифов. Нигде ни одной звёздочки. Ничего читаемого никогда не покидает твоих стен. Выковано вечерами и по выходным, с сердцем и упрямством.",
   "about.coffee": "Если BombVault заслужил место на твоём сервере или компьютере, брось монету своему рыцарю: она помогает покрыть расходы и держит проект живым. И сердце этого рыцаря бьётся немного быстрее. Ниже три пути, выбери тот, что тебе подходит.",
@@ -202,6 +204,9 @@ const ru: Partial<Translations> = {
   "run.colStarted": "Начало",
   "run.colFinished": "Завершение",
   "run.colContainer": "Контейнер",
+  "home.newBackupConfirm": "Запустить резервное копирование всех включённых областей сейчас? Контейнеры останавливаются и запускаются заново по одному, пока идёт их резервное копирование.",
+  "run.statVolume": "Объём данных",
+  "run.statSnapshot": "Снимок",
 
   // Settings
   "settings.title": "Настройки",
@@ -269,6 +274,9 @@ const ru: Partial<Translations> = {
   "settings.labels.buttons": "Кнопки",
   "settings.labels.sidebar": "Боковая панель",
   "settings.labels.tabs": "Вкладки",
+  "settings.labels.bottombar": "Нижняя панель",
+  "settings.axisBottombarHint": "Влияет только на макет телефона.",
+  "settings.axisSidebarHint": "Влияет только на макет компьютера.",
   "settings.labels.mode.text": "Текст",
   "settings.labels.mode.textGlyph": "Текст и символ",
   "settings.labels.mode.glyph": "Символ",
@@ -876,6 +884,7 @@ const ru: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Состояние защиты",
   "dashboard.noOffsite": "Нет внешней копии",
+  "dashboard.statusLoadFailed": "Не удалось загрузить состояние",
   "dashboard.neverExcluded": "Не запланировано",
   "dashboard.neverExcludedTitle": "Намеренно оставлено вне расписания, поэтому здесь нечего копировать.",
   "dashboard.neverSelf": "Собственный контейнер",

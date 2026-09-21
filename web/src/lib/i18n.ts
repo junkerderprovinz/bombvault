@@ -65,6 +65,11 @@ export const en = {
   "nav.flash": "Flash",
   "nav.config": "Self-Backup",
   "nav.settings": "Settings",
+  "nav.more": "More",
+  // The bottom bar's landmark name: the bar is the mobile counterpart of
+  // the desktop Sidebar's nav, and a <nav> landmark needs an accessible
+  // name even though exactly one of the two mounts at a time.
+  "nav.mobileNavigation": "Mobile navigation",
   "about.title": "About BombVault",
   "about.body":
     "A one-knight crusade: good-looking open-source tools that did not exist in the shape I wanted, built until nothing is missing. It is free, with no accounts, no telemetry, no ads and no paid tier. No asterisk anywhere. Nothing readable ever leaves your own walls. Forged on evenings and weekends, with heart and stubbornness.",
@@ -332,6 +337,13 @@ export const en = {
   "run.colStarted": "Started",
   "run.colFinished": "Finished",
   "run.colContainer": "Container",
+  // Phone Dashboard additions: home.newBackupConfirm drives the "back up
+  // everything now" confirm (the trigger button itself reads the existing
+  // settings.everythingTitle; one name for the one action); run.statVolume/
+  // run.statSnapshot label the run-detail sheet's stat tiles.
+  "home.newBackupConfirm": "Start a backup of every enabled domain now? Containers are stopped and restarted one at a time while their backup runs.",
+  "run.statVolume": "Data volume",
+  "run.statSnapshot": "Snapshot",
 
   // Settings
   "settings.title": "Settings",
@@ -925,6 +937,9 @@ export const en = {
   "settings.labels.buttons": "Buttons",
   "settings.labels.sidebar": "Sidebar",
   "settings.labels.tabs": "Tabs",
+  "settings.labels.bottombar": "Bottom bar",
+  "settings.axisBottombarHint": "Affects the phone layout only.",
+  "settings.axisSidebarHint": "Affects the desktop layout only.",
   "settings.labels.mode.text": "Text",
   "settings.labels.mode.textGlyph": "Text and symbol",
   "settings.labels.mode.glyph": "Symbol",
@@ -1002,6 +1017,7 @@ export const en = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Protection status",
   "dashboard.noOffsite": "No off-site copy",
+  "dashboard.statusLoadFailed": "Could not load status",
   "dashboard.neverExcluded": "Not scheduled",
   "dashboard.neverExcludedTitle": "Left out of the schedule on purpose, so there is nothing to back up here.",
   "dashboard.neverSelf": "Own container",
@@ -2041,6 +2057,8 @@ export const de: Translations = {
   "nav.flash": "Flash",
   "nav.config": "Selbst-Backup",
   "nav.settings": "Einstellungen",
+  "nav.more": "Mehr",
+  "nav.mobileNavigation": "Mobile Navigation",
   "about.title": "Über BombVault",
   "about.body":
     "Ein einzelner Ritter, ein Feldzug: ansehnliche quelloffene Werkzeuge, die es in der Form, die ich wollte, nicht gab, gebaut, bis nichts mehr fehlt. Alles kostenlos, ohne Konten, ohne Telemetrie, ohne Werbung, ohne Bezahlstufen. Nirgends ein Sternchen. Nichts Lesbares verlässt je deine eigenen Mauern. An Abenden und Wochenenden geschmiedet, mit Herz und Dickkopf.",
@@ -2299,6 +2317,9 @@ export const de: Translations = {
   "run.colStarted": "Gestartet",
   "run.colFinished": "Abgeschlossen",
   "run.colContainer": "Container",
+  "home.newBackupConfirm": "Jetzt ein Backup aller aktivierten Bereiche starten? Container werden während ihrer Sicherung nacheinander gestoppt und neu gestartet.",
+  "run.statVolume": "Datenmenge",
+  "run.statSnapshot": "Snapshot",
 
   "settings.title": "Einstellungen",
   "settings.encryptionLabel": "Passwort",
@@ -2757,6 +2778,9 @@ export const de: Translations = {
   "settings.labels.buttons": "Buttons",
   "settings.labels.sidebar": "Seitenleiste",
   "settings.labels.tabs": "Tabs",
+  "settings.labels.bottombar": "Untere Leiste",
+  "settings.axisBottombarHint": "Betrifft nur das Telefon-Layout.",
+  "settings.axisSidebarHint": "Betrifft nur das Desktop-Layout.",
   "settings.labels.mode.text": "Text",
   "settings.labels.mode.textGlyph": "Text und Symbol",
   "settings.labels.mode.glyph": "Symbol",
@@ -2800,6 +2824,7 @@ export const de: Translations = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Schutzstatus",
   "dashboard.noOffsite": "Keine Off-site-Kopie",
+  "dashboard.statusLoadFailed": "Status konnte nicht geladen werden",
   "dashboard.neverExcluded": "Nicht eingeplant",
   "dashboard.neverExcludedTitle": "Bewusst aus dem Zeitplan gelassen, hier gibt es also nichts zu sichern.",
   "dashboard.neverSelf": "Eigener Container",

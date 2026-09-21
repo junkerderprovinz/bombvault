@@ -13,6 +13,8 @@ const is: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Sjálfvirk afritun",
   "nav.settings": "Stillingar",
+  "nav.more": "Meira",
+  "nav.mobileNavigation": "Farsímaflakk",
 
   // Mode toggle
   "about.title": "Um BombVault",
@@ -274,6 +276,9 @@ const is: Partial<Translations> = {
   "run.colStarted": "Hafið",
   "run.colFinished": "Lokið",
   "run.colContainer": "Gámur",
+  "home.newBackupConfirm": "Hefja öryggisafrit af öllum virkum svæðum núna? Gámar eru stöðvaðir og endurræstir einn í senn á meðan öryggisafrit þeirra stendur.",
+  "run.statVolume": "Gagnamagn",
+  "run.statSnapshot": "Skyndimynd",
 
   // Settings
   "settings.title": "Stillingar",
@@ -727,6 +732,9 @@ const is: Partial<Translations> = {
   "settings.labels.buttons": "Hnappar",
   "settings.labels.sidebar": "Hliðarstika",
   "settings.labels.tabs": "Flipar",
+  "settings.labels.bottombar": "Neðri stika",
+  "settings.axisBottombarHint": "Gildir aðeins um útlit símans.",
+  "settings.axisSidebarHint": "Gildir aðeins um útlit skjáborðsins.",
   "settings.labels.mode.text": "Texti",
   "settings.labels.mode.textGlyph": "Texti og tákn",
   "settings.labels.mode.glyph": "Tákn",
@@ -770,6 +778,7 @@ const is: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Verndarstaða",
   "dashboard.noOffsite": "Ekkert afrit utan staðar",
+  "dashboard.statusLoadFailed": "Ekki tókst að hlaða stöðu",
   "dashboard.neverExcluded": "Ekki á áætlun",
   "dashboard.neverExcludedTitle": "Vísvitandi skilið eftir utan áætlunar, svo hér er ekkert að afrita.",
   "dashboard.neverSelf": "Eigin gámur",

@@ -1,0 +1,14 @@
+{
+  // The Playwright harness as its own tsc program: the specs and
+  // playwright.config.ts run in node (node:path, process), so they need
+  // @types/node - pinned to the same major as the Node 24 the build and CI
+  // run. It must be named explicitly (the native TS 7 compiler does not
+  // auto-include node_modules/@types), and it must stay OUT of the app
+  // program: node's setTimeout global would shadow the DOM's inside src/
+  // (backupWatch's timer refs type as number on purpose).
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["e2e", "playwright.config.ts"]
+}

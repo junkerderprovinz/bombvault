@@ -12,6 +12,8 @@ const hu: Partial<Translations> = {
   "nav.vms": "VM-ek",
   "nav.flash": "Flash",
   "nav.settings": "Beállítások",
+  "nav.more": "Több",
+  "nav.mobileNavigation": "Mobil navigáció",
   "about.title": "A BombVault névjegye",
   "about.body": "Egy lovag, egy hadjárat: igényes nyílt forráskódú eszközök, amelyek abban a formában, ahogy én akartam, nem léteztek, addig építve, amíg semmi nem hiányzik. Minden ingyenes, fiókok, telemetria, hirdetések és fizetős szintek nélkül. Sehol egyetlen csillag sem. Semmi olvasható nem hagyja el a saját falaidat. Esténként és hétvégenként kovácsolva, szívvel és makacssággal.",
   "about.coffee": "Ha a BombVault kiérdemelte a helyét a szervereden vagy a gépeden, dobj egy érmét a lovagodnak: segít fedezni a költségeket, és életben tartja a projektet. És ettől ennek a lovagnak a szíve kicsit gyorsabban ver. Lent három út van, válaszd, amelyik kézre esik.",
@@ -204,6 +206,9 @@ const hu: Partial<Translations> = {
   "run.colStarted": "Indítva",
   "run.colFinished": "Befejezve",
   "run.colContainer": "Konténer",
+  "home.newBackupConfirm": "Elindítod most az összes engedélyezett terület biztonsági mentését? A konténerek a saját mentésük alatt egyenként leállnak és újraindulnak.",
+  "run.statVolume": "Adatmennyiség",
+  "run.statSnapshot": "Pillanatkép",
 
   // Settings
   "settings.title": "Beállítások",
@@ -274,6 +279,9 @@ const hu: Partial<Translations> = {
   "settings.labels.buttons": "Gombok",
   "settings.labels.sidebar": "Oldalsáv",
   "settings.labels.tabs": "Lapok",
+  "settings.labels.bottombar": "Alsó sáv",
+  "settings.axisBottombarHint": "Csak a telefon elrendezésére vonatkozik.",
+  "settings.axisSidebarHint": "Csak az asztali elrendezésre vonatkozik.",
   "settings.labels.mode.text": "Szöveg",
   "settings.labels.mode.textGlyph": "Szöveg és szimbólum",
   "settings.labels.mode.glyph": "Szimbólum",
@@ -887,6 +895,7 @@ const hu: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Védelmi állapot",
   "dashboard.noOffsite": "Nincs telephelyen kívüli másolat",
+  "dashboard.statusLoadFailed": "Az állapot nem tölthető be",
   "dashboard.neverExcluded": "Nincs ütemezve",
   "dashboard.neverExcludedTitle": "Szándékosan kimaradt az ütemezésből, így itt nincs mit menteni.",
   "dashboard.neverSelf": "Saját konténer",

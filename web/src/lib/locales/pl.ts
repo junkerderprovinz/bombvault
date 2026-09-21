@@ -12,6 +12,8 @@ const pl: Partial<Translations> = {
   "nav.vms": "Maszyny wirtualne",
   "nav.flash": "Flash",
   "nav.settings": "Ustawienia",
+  "nav.more": "Więcej",
+  "nav.mobileNavigation": "Nawigacja mobilna",
   "about.title": "O programie BombVault",
   "about.body": "Jeden rycerz, jedna krucjata: dopracowane narzędzia open source, których nie było w takiej postaci, jakiej chciałem, budowane, aż niczego nie zabraknie. Wszystko za darmo, bez kont, bez telemetrii, bez reklam i bez płatnych wersji. Nigdzie żadnej gwiazdki. Nic czytelnego nigdy nie opuszcza twoich własnych murów. Kute wieczorami i w weekendy, z sercem i uporem.",
   "about.coffee": "Jeśli BombVault zasłużył na miejsce na twoim serwerze lub komputerze, grosza daj rycerzowi: pomaga pokryć koszty i utrzymuje projekt przy życiu. I sprawia, że serce tego rycerza bije trochę szybciej. Poniżej są trzy drogi, wybierz tę, która ci pasuje.",
@@ -202,6 +204,9 @@ const pl: Partial<Translations> = {
   "run.colStarted": "Uruchomiono",
   "run.colFinished": "Zakończono",
   "run.colContainer": "Kontener",
+  "home.newBackupConfirm": "Rozpocząć teraz kopię zapasową wszystkich włączonych obszarów? Kontenery są zatrzymywane i ponownie uruchamiane pojedynczo, podczas gdy ich kopia zapasowa działa.",
+  "run.statVolume": "Ilość danych",
+  "run.statSnapshot": "Migawka",
 
   // Settings
   "settings.title": "Ustawienia",
@@ -269,6 +274,9 @@ const pl: Partial<Translations> = {
   "settings.labels.buttons": "Przyciski",
   "settings.labels.sidebar": "Panel boczny",
   "settings.labels.tabs": "Karty",
+  "settings.labels.bottombar": "Panel dolny",
+  "settings.axisBottombarHint": "Dotyczy tylko układu telefonu.",
+  "settings.axisSidebarHint": "Dotyczy tylko układu na komputerze.",
   "settings.labels.mode.text": "Tekst",
   "settings.labels.mode.textGlyph": "Tekst i symbol",
   "settings.labels.mode.glyph": "Symbol",
@@ -876,6 +884,7 @@ const pl: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Stan ochrony",
   "dashboard.noOffsite": "Brak kopii poza lokalizacją",
+  "dashboard.statusLoadFailed": "Nie udało się wczytać stanu",
   "dashboard.neverExcluded": "Niezaplanowane",
   "dashboard.neverExcludedTitle": "Celowo pominięte w harmonogramie, więc nie ma tu czego kopiować.",
   "dashboard.neverSelf": "Własny kontener",

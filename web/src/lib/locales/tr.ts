@@ -12,6 +12,8 @@ const tr: Partial<Translations> = {
   "nav.vms": "VM'ler",
   "nav.flash": "Flash",
   "nav.settings": "Ayarlar",
+  "nav.more": "Diğer",
+  "nav.mobileNavigation": "Mobil navigasyon",
   "about.title": "BombVault hakkında",
   "about.body": "Tek şövalye, tek sefer: istediğim biçimde var olmayan, düzgün görünen açık kaynak araçlar, hiçbir şey eksik kalmayana kadar inşa ediliyor. Hepsi ücretsiz, hesap yok, telemetri yok, reklam yok, ücretli katman yok. Hiçbir yerde yıldız işareti yok. Okunabilir hiçbir şey kendi duvarlarından dışarı çıkmaz. Akşamları ve hafta sonları, yürekle ve inatla dövüldü.",
   "about.coffee": "BombVault sunucunda ya da bilgisayarında yerini hak ettiyse şövalyene bir sikke at: masrafları karşılamaya yardım eder ve projeyi ayakta tutar. Ayrıca bu şövalyenin kalbini biraz daha hızlı çarptırır. Aşağıda üç yol var, sana uyanı seç.",
@@ -204,6 +206,9 @@ const tr: Partial<Translations> = {
   "run.colStarted": "Başladı",
   "run.colFinished": "Bitti",
   "run.colContainer": "Konteyner",
+  "home.newBackupConfirm": "Şimdi etkinleştirilmiş tüm alanların yedeğini başlat? Kapsayıcılar, yedeklemeleri çalışırken tek tek durdurulup yeniden başlatılır.",
+  "run.statVolume": "Veri hacmi",
+  "run.statSnapshot": "Anlık görüntü",
 
   // Settings
   "settings.title": "Ayarlar",
@@ -274,6 +279,9 @@ const tr: Partial<Translations> = {
   "settings.labels.buttons": "Düğmeler",
   "settings.labels.sidebar": "Kenar çubuğu",
   "settings.labels.tabs": "Sekmeler",
+  "settings.labels.bottombar": "Alt çubuk",
+  "settings.axisBottombarHint": "Yalnızca telefon düzenini etkiler.",
+  "settings.axisSidebarHint": "Yalnızca masaüstü düzenini etkiler.",
   "settings.labels.mode.text": "Metin",
   "settings.labels.mode.textGlyph": "Metin ve simge",
   "settings.labels.mode.glyph": "Simge",
@@ -904,6 +912,7 @@ const tr: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Koruma durumu",
   "dashboard.noOffsite": "Tesis dışı kopya yok",
+  "dashboard.statusLoadFailed": "Durum yüklenemedi",
   "dashboard.neverExcluded": "Zamanlanmadı",
   "dashboard.neverExcludedTitle": "Bilerek zamanlamanın dışında bırakıldı, burada yedeklenecek bir şey yok.",
   "dashboard.neverSelf": "Kendi kapsayıcısı",
