@@ -11,6 +11,7 @@ import { RevealInput } from "../../components/RevealInput";
 import { setCloudCredSets, type CloudCredSet, type CloudCredSetInfo } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
+import { pushSaveWarnings } from "../../lib/placementCodes";
 import { credSetsChanged, useCloudCredSets } from "../../lib/useCloudCredSets";
 import { useReveal } from "../../lib/useReveal";
 import { randomId } from "../../lib/uuid";
@@ -118,6 +119,7 @@ export function CloudCredSetsCard({ t, hueIndex }: { t: ReturnType<typeof useT>[
         closeEditor();
         credSetsChanged();
         push(t("settings.saved"), "success");
+        pushSaveWarnings(push, t, r.warnings);
       } else {
         setState("idle");
         push(r.error ?? t("settings.error"), "fail");

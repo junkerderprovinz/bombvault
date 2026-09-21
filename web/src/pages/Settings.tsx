@@ -1,6 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { ApiError, backupEverythingNow, downloadRecoveryKit, getAuth, getSettings, importSettingsApply, listContainers, listFileSets, listVMs, patchFileSet, putSettings, replicateOffsite, setAuthPassword, setScheduleCadence, setVMScheduleCadence, testOffsite } from "../lib/api";
-import { useOffsiteTargets, type OffsiteDomain } from "../lib/useOffsiteTargets";
+import { ApiError, backupEverythingNow, downloadRecoveryKit, getAuth, getSettings, importSettingsApply, listContainers, listFileSets, listOffsiteTargets, listVMs, patchFileSet, putSettings, replicateOffsite, setAuthPassword, setScheduleCadence, setVMScheduleCadence, testOffsite, type OffsiteTarget } from "../lib/api";
+import { subscribeOffsiteTargets, useOffsiteTargets, type OffsiteDomain } from "../lib/useOffsiteTargets";
+import { useNamedRepos } from "../lib/useNamedRepos";
+import { useConfirm } from "../lib/useConfirm";
+import { pushSaveWarnings } from "../lib/placementCodes";
+import { alsoDirectText, directAsk, primaryDirects, retentionLowered } from "../lib/directRepo";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { AccentCard, IconResetArrow } from "./settings/AccentCard";
 import { PasskeyCard } from "./settings/PasskeyCard";
@@ -1111,10 +1115,41 @@ const TAB_ICON: Record<TabKey, ReactNode> = {
 // its own reasons, it moves to pages/settings/ then. Seven did this round, each
 // a byte-identical move of a module-level, prop-driven component — no seam, no
 // reordering, nothing to get wrong.
+
+type OffsiteRetentionKey =
+  | "offsiteRetentionKeepLast"
+  | "offsiteRetentionKeepDaily"
+  | "offsiteRetentionKeepWeekly"
+  | "offsiteRetentionKeepMonthly";
+
+function offsiteRetentionOf(s: Settings) {
+  return {
+    retentionKeepLast: s.offsiteRetentionKeepLast,
+    retentionKeepDaily: s.offsiteRetentionKeepDaily,
+    retentionKeepWeekly: s.offsiteRetentionKeepWeekly,
+    retentionKeepMonthly: s.offsiteRetentionKeepMonthly,
+  };
+}
+
 export function SettingsPage() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { advanced } = useAdvanced();
   const { push, quiet, setQuiet } = useToast();
+  const { confirm, confirmDialog } = useConfirm();
+  const namedRepos = useNamedRepos();
+  const [allTargets, setAllTargets] = useState<OffsiteTarget[]>([]);
+  useEffect(() => {
+    const load = () => {
+      listOffsiteTargets()
+        .then((r) => {
+          if (r.ok) setAllTargets(r.targets ?? []);
+        })
+        .catch(() => undefined);
+    };
+    load();
+    return subscribeOffsiteTargets(load);
+  }, []);
+  const fieldDirects = primaryDirects(allTargets, namedRepos);
 
   const [tab, setTab] = useState<TabKey>("general");
   // Settings tab slide (GlimStone motion-engine animation 7) — 1 = the tab
@@ -1784,6 +1819,7 @@ export function SettingsPage() {
         // tab appears or vanishes immediately — no page reload needed.
         window.dispatchEvent(new Event("bv:settings-changed"));
         push(t("settings.saved"), "success");
+        pushSaveWarnings(push, t, res.warnings);
         return true;
       }
       setSaveState("idle");
@@ -1794,6 +1830,22 @@ export function SettingsPage() {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
       return false;
     }
+  }
+
+  // The global off-site retention is copied onto every domain's field target, so
+  // a lowered value reaches each of their direct repositories at once.
+  async function saveOffsiteRetention(key: OffsiteRetentionKey, n: number) {
+    const before = savedBaseline.current;
+    if (
+      before &&
+      fieldDirects.length > 0 &&
+      retentionLowered(offsiteRetentionOf(before), offsiteRetentionOf({ ...before, [key]: n } as Settings)) &&
+      !(await confirm(directAsk(t, lang, "offsite.directRetentionAsk", fieldDirects)))
+    ) {
+      setSettings((prev) => (prev ? { ...prev, [key]: before[key] } : prev));
+      return;
+    }
+    await save({ [key]: n } as Partial<Settings>, setOffRetSaveState, setOffRetSaveError);
   }
 
   // toggleDomainEnabled (#142 — "Bei Domänen der Speichern-Button entfernen, es
@@ -2429,6 +2481,7 @@ export function SettingsPage() {
     // shared cap. That is a change to a deliberate prior decision, so it is
     // flagged for jdp rather than taken here. See lib/pageShell.ts.
     <div className={PAGE_SHELL_TABBED}>
+      {confirmDialog}
       {/* Heading + tab strip, grouped in their own gap-6 column (GlimStone
           follow-up pass, live-review round — the width-mismatch fix below
           needed a wrapper here to isolate this pair's own 24px gap from the
@@ -4079,13 +4132,18 @@ export function SettingsPage() {
                 onChange={(e) => {
                   const n = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
-                  debouncedSave(key, () => void save({ [key]: n } as Partial<Settings>, setOffRetSaveState, setOffRetSaveError));
+                  debouncedSave(key, () => void saveOffsiteRetention(key, n));
                 }}
                 className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
               />
             </label>
           ))}
         </div>
+        {fieldDirects.map((u) => (
+          <p key={u.target.id} className="mt-2 text-xs text-carbon-textMuted">
+            {alsoDirectText(t, u)}
+          </p>
+        ))}
       </Card>
       )}
 

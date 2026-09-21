@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { NamedRepo, OffsiteTarget } from "./api";
-import { directAsk, directUse, itemsText, retentionLowered } from "./directRepo";
+import { directAsk, directUse, itemsText, primaryDirects, retentionLowered } from "./directRepo";
 import { en, type TranslationKey } from "./i18n";
 
 const t = (key: TranslationKey) => en[key];
@@ -55,5 +55,12 @@ describe("direct repositories in use", () => {
     expect(directAsk(t, "en", "offsite.directAppendOnlyAsk", uses)).toBe(
       "Items whose only copy is in B2 and Hetzner direct: 3. Without append-only this box may delete from it. Save anyway?"
     );
+  });
+
+  it("find the field targets whose direct repository is used", () => {
+    const field = target({ id: "t-f", sortOrder: 0 });
+    const extra = target({ id: "t-x", sortOrder: 1 });
+    const repos = [repo({ companionOf: "t-f", inUse: 1 }), repo({ id: "d2", companionOf: "t-x", inUse: 4 })];
+    expect(primaryDirects([field, extra], repos).map((u) => u.target.id)).toEqual(["t-f"]);
   });
 });
