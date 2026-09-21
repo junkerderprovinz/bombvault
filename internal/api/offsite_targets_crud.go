@@ -136,12 +136,12 @@ func (h *Handler) rejectOffsiteTargetOnNamedRepo(t store.OffsiteTarget) string {
 	}
 	for _, r := range rows {
 		other, oErr := h.svc.resolveRepo(r.Repo)
-		if oErr != nil || !sameRepoLocation(other, loc) {
+		if oErr != nil || !repoLocationsOverlap(other, loc) {
 			continue
 		}
 		// The row's NAME is not echoed: it is free text, and a name carrying a
 		// slash comes out of scrubError as "[path]". The interface has the list.
-		return "that location is already a named repository; backups written there would be their own off-site copy, and the off-site retention would then age the only copy"
+		return "that location is a named repository, or lies inside or around one; backups written there would be their own off-site copy, and the off-site retention would then age the only copy"
 	}
 	return ""
 }

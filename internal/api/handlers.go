@@ -2066,10 +2066,10 @@ func (h *Handler) rejectSettingsPathOnNamedRepo(v settingsView, cur store.Settin
 		}
 		for _, r := range rows {
 			other, oErr := h.svc.resolveRepo(r.Repo)
-			if oErr != nil || !sameRepoLocation(other, loc) {
+			if oErr != nil || !repoLocationsOverlap(other, loc) {
 				continue
 			}
-			return fmt.Sprintf("the %s path is the repository %q you set up under Repositories; pick a different folder, or remove that repository first", f.label, r.Name)
+			return fmt.Sprintf("the %s path is, holds or lies inside the repository %q you set up under Repositories; pick a different folder, or remove that repository first", f.label, r.Name)
 		}
 	}
 	return ""

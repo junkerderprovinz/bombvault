@@ -206,22 +206,12 @@ func (h *Handler) validateNamedRepo(t store.OffsiteTarget, checkClass bool) erro
 	if err != nil {
 		return err
 	}
-	// A named repository may not sit on a DOMAIN's own repository either. The row
-	// would then answer for that domain: namedRepoForLocation matches on the
-	// resolved location and both primaryModeFor and primaryIsImmutable consult it
-	// first, so every backup of the domain would silently take the named row's
-	// (empty) credential set instead of the domain's saved one, and the #152
-	// append-only interlock would read the named row's flag in place of the
-	// domain's - two rows over one repository, and the operator with no way to
-	// tell which of them the next prune will obey.
-	//
-	// The same refusal covers a domain's OFF-SITE DESTINATION, and that one is
-	// worse than it sounds. A destination is often a local share, so a named
-	// repository could legally be created on it; the items pointed there then
-	// write their ONLY copy into the place replication treats as the second copy.
-	// copyToOffsiteTarget would find source and destination identical, copy
-	// nothing, stamp the run a success - and then run the OFF-SITE retention
-	// policy, a tag-scoped forget plus prune, over that only copy.
+	// A named repository may not sit on, in or around a domain's own repository,
+	// a domain's off-site destination, an off-site target or another named
+	// repository. Two rows over one place, or one inside the other, would give
+	// every question about that place two answers, and a destination that is
+	// really a named repository would take an item's only copy while
+	// replication still treats it as a second one.
 	//
 	// A settings read that fails takes the whole validation with it rather than
 	// dropping the guard: a refusal that quietly does not apply when the database
@@ -230,54 +220,7 @@ func (h *Handler) validateNamedRepo(t store.OffsiteTarget, checkClass bool) erro
 	if sErr != nil {
 		return fmt.Errorf("read settings to check this location: %w", sErr)
 	}
-	for _, d := range []string{"containers", "vms", "flash", "config", "files"} {
-		if own, oErr := h.svc.repoFor(settings, d, "local"); oErr == nil && sameRepoLocation(own, loc) {
-			return fmt.Errorf("that is already the %s domain's own repository; a named repository has to be a different place", d)
-		}
-		if off := h.svc.offsiteRepoFor(d, settings); off != "" {
-			if offLoc, rErr := h.svc.resolveRepo(off); rErr == nil && sameRepoLocation(offLoc, loc) {
-				return fmt.Errorf("that is already the %s domain's off-site destination; backups written there would be their own off-site copy", d)
-			}
-		}
-	}
-	// Every off-site DESTINATION row too, not only the per-domain setting: a
-	// domain can carry several.
-	if targets, tErr := h.store.ListOffsiteTargets(); tErr == nil {
-		for _, t := range targets {
-			if tLoc, rErr := h.svc.resolveRepo(t.Repo); rErr == nil && sameRepoLocation(tLoc, loc) {
-				return fmt.Errorf("that is already the off-site destination %q; backups written there would be their own off-site copy", t.Name)
-			}
-		}
-	}
-	// No two named repositories may name the SAME place. Two rows over one
-	// repository is not a second repository, it is two labels for one, and every
-	// question asked about it afterwards - whose credentials, whose bandwidth
-	// caps, is it append-only, is it still in use - would have two answers. It
-	// is also how the location-in-use refusal would be walked around: add a
-	// second row with the same location, point the items at it, delete the
-	// first.
-	rows, lErr := h.store.ListNamedRepos()
-	if lErr != nil {
-		return lErr
-	}
-	for _, r := range rows {
-		if r.ID == t.ID {
-			continue
-		}
-		// Compared NORMALISED. A remote location is a URL-ish string, so
-		// "b2:bucket/cold" and "b2:bucket/cold/" name the same place while
-		// differing as bytes, and the trailing slash was enough to register a
-		// second row over one repository - which is precisely the walk-around this
-		// refusal exists to close.
-		if other, oErr := h.svc.resolveRepo(r.Repo); oErr == nil && sameRepoLocation(other, loc) {
-			// The NAME is not echoed: it is free text, a name carrying a slash is
-			// redacted by scrubError on the way out, and the sentence then points
-			// at "[path]". Saying which repository it is happens in the interface,
-			// which has the list.
-			return errors.New("another repository already points at that location; two rows over one place would give every question about it two answers")
-		}
-	}
-	return nil
+	return h.svc.locationClash(settings, loc, locationSelf{ids: []string{t.ID}})
 }
 
 // sameRepoLocation reports whether two RESOLVED locations name the same place.
