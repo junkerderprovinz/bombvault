@@ -167,6 +167,44 @@ func TestPutWithStaleNumbersIsRefusedWithTheNewOnes(t *testing.T) {
 	}
 }
 
+// TestASecondTabsHomeChangeIsRefusedOnceTheFirstHasLanded pins the gap
+// sameCounts left open: a home-only change with no skip in the body always
+// answers an empty impact regardless of which home it names, so two tabs
+// that each preview a different home from the same starting point see the
+// identical (empty) numbers. Comparing only those numbers would let the
+// second tab's PUT win silently over the first's.
+func TestASecondTabsHomeChangeIsRefusedOnceTheFirstHasLanded(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	cold := f.namedRepo("Cold", "cold")
+
+	implA := f.do(http.MethodPost, "/api/placement/default/containers/preview", map[string]any{"home": nas.ID})["impact"]
+	implB := f.do(http.MethodPost, "/api/placement/default/containers/preview", map[string]any{"home": cold.ID})["impact"]
+
+	if res := f.do(http.MethodPut, "/api/placement/default/containers", map[string]any{"home": nas.ID, "expect": implA}); res["ok"] != true {
+		t.Fatalf("first PUT = %v", res)
+	}
+	res := f.do(http.MethodPut, "/api/placement/default/containers", map[string]any{"home": cold.ID, "expect": implB})
+	if res["ok"] != false || res["code"] != "stale" {
+		t.Fatalf("second PUT = %v, want stale: NAS already replaced the home this tab previewed against", res)
+	}
+	d, _, err := f.st.PlacementDefaultFor("containers")
+	if err != nil || d.Home != nas.ID {
+		t.Fatalf("default = %+v, %v, want NAS to survive the second PUT", d, err)
+	}
+}
+
+// TestAPutWithoutAnExpectBlockGetsItsOwnAnswer pins that a caller who never
+// saw any numbers gets told to fetch them, not that its (nonexistent) numbers
+// went stale.
+func TestAPutWithoutAnExpectBlockGetsItsOwnAnswer(t *testing.T) {
+	f := newPlacementFixture(t)
+	res := f.do(http.MethodPut, "/api/placement/default/containers", map[string]any{"home": ""})
+	if res["code"] != "expect-required" {
+		t.Fatalf("PUT without expect = %v, want expect-required", res)
+	}
+}
+
 func TestOpenItemsWithoutHistoryTakeTheNewHome(t *testing.T) {
 	f := newPlacementFixture(t)
 	nas := f.namedRepo("NAS", "nas")

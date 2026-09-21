@@ -27,6 +27,7 @@ var (
 	errPlacementBusy       = errors.New("a backup is running in this domain; try again once it has finished")
 	errHomeHasBackups      = errors.New("cannot change the repository of an item that already has backups; they stay where they were written")
 	errPlacementStale      = errors.New("the numbers changed since they were shown; check them again")
+	errPlacementNoExpect   = errors.New("send the numbers the preview showed, so a change based on stale ones can be caught")
 	errRepoInUse           = errors.New("this repository is still in use")
 	errRepoInvalid         = errors.New("that repository cannot take backups")
 	errDefaultRepoMissing  = errors.New("a default in the file points at a repository that is neither in the file nor here")
@@ -54,6 +55,7 @@ var placementCodes = []struct {
 	{errPlacementBusy, "domain-busy"},
 	{errHomeHasBackups, "has-backups"},
 	{errPlacementStale, "stale"},
+	{errPlacementNoExpect, "expect-required"},
 	{errRepoInvalid, "repo-invalid"},
 	{errRepoInUse, "repo-in-use"},
 	{errDefaultRepoMissing, "default-repo-missing"},
