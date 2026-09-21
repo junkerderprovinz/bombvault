@@ -5977,7 +5977,14 @@ func (s *Service) Discover(ctx context.Context, dryRun bool) (DiscoverResult, er
 			continue
 		}
 		if !dryRun {
-			write := discoverWrite(repoID, readErr)
+			// A row this call is about to create takes its home from the pass only
+			// while the domain lock was taken; otherwise it starts open, the same
+			// as an existing row the lock refused, so discoverHome below reports it
+			// in LeftOpen instead of the insert setting it straight through.
+			write := store.HomeWrite{Choice: store.RepoOpen}
+			if locked {
+				write = discoverWrite(repoID, readErr)
+			}
 			if _, uErr := s.store.UpsertTarget(store.Target{
 				ContainerName: name,
 				AppdataPaths:  def.AppdataPaths,
@@ -6139,7 +6146,13 @@ func (s *Service) DiscoverVMs(ctx context.Context, dryRun bool) (DiscoverResult,
 			method = "graceful"
 		}
 		if !dryRun {
-			write := discoverWrite(repoID, readErr)
+			// See Discover: a row this call is about to create starts open unless
+			// the domain lock was taken, so discoverHome reports it in LeftOpen
+			// instead of the insert setting its home straight through.
+			write := store.HomeWrite{Choice: store.RepoOpen}
+			if locked {
+				write = discoverWrite(repoID, readErr)
+			}
 			if _, uErr := s.store.UpsertVMTarget(store.VMTarget{
 				Name:       name,
 				Method:     method,
@@ -11716,13 +11729,23 @@ func (s *Service) DiscoverFileSets(ctx context.Context, dryRun bool) (DiscoverRe
 			res.Found++ // probe: count what a real discover would surface, write nothing
 			continue
 		}
-		write := discoverWrite(repoID, readErr)
+		// A set this pass is about to create starts open unless the domain lock
+		// was taken, the same rule the existing-row branch below gets from
+		// discoverHome, so a create under a running backup is reported in
+		// LeftOpen instead of getting its home straight through the insert.
+		write := store.HomeWrite{Choice: store.RepoOpen}
+		if locked {
+			write = discoverWrite(repoID, readErr)
+		}
 		existing, gErr := s.store.GetFileSetByName(name)
 		switch {
 		case errors.Is(gErr, sql.ErrNoRows):
 			if _, cErr := s.store.CreateFileSet(store.FileSet{Name: name, Enabled: false, Repo: write.Repo, RepoChosen: write.Choice}); cErr != nil {
 				log.Printf("api: discover files: could not create set %q: %v", name, cErr) //nolint:gosec // G706: %q-quoted
 				continue
+			}
+			if !locked {
+				res.LeftOpen = append(res.LeftOpen, name)
 			}
 		case gErr != nil:
 			log.Printf("api: discover files: could not read set %q: %v", name, gErr) //nolint:gosec // G706: %q-quoted
