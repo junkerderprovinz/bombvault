@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -189,9 +190,17 @@ type DiscoverResult struct {
 // discoverWrite is the location a row Discover creates starts with. From a pass
 // that could not read the domain path the evidence is incomplete, so the row
 // stays on the domain path and a later full pass may still place it.
-func discoverWrite(found string, readErr error) store.HomeWrite {
+//
+// A repository the item may not use leaves the row open. What the pass found
+// is evidence of where snapshots lie, and settling a home no interactive route
+// would accept gives the item a location every later edit refuses.
+func (s *Service) discoverWrite(domain, name, found string, readErr error) store.HomeWrite {
 	if readErr != nil {
 		return store.HomeWrite{Choice: store.RepoChosenUnread}
+	}
+	if err := s.validateItemRepoID(domain, found); err != nil {
+		log.Printf("api: discover %s: %q was found in a repository it may not use, so its location stays open: %v", domain, name, err) //nolint:gosec // G706: domain is a fixed literal and the name is %q-quoted
+		return store.HomeWrite{Choice: store.RepoOpen}
 	}
 	return store.HomeWrite{Repo: found, Choice: store.RepoChosen}
 }
@@ -207,7 +216,7 @@ func (s *Service) discoverHome(ctx context.Context, item store.ItemRef, found st
 	if !locked {
 		return true, nil
 	}
-	want := discoverWrite(found, readErr)
+	want := s.discoverWrite(item.Domain, item.Key, found, readErr)
 	if readErr == nil {
 		presence, err := s.itemBackups(ctx, item)
 		switch {
