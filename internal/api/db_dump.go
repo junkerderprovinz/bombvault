@@ -403,8 +403,9 @@ func (a *dbDumpAdapter) Dump(ctx context.Context, req backup.DBDumpRequest) (bac
 		a.svc.dbDumpHelperArgv(a.container, req.Plan), a.mode)
 
 	res, dumpErr := a.decide(ctx, dumpCtx, req, sum, lines, err)
-	if dumpErr != nil {
-		a.stopOrphan(ctx, lines)
+	var fail *backup.DBDumpError
+	if errors.As(dumpErr, &fail) && a.stopOrphan(ctx, lines) != nil {
+		fail.Reason = withOrphanStopFailed(fail.Reason)
 	}
 	a.publishStage("", 0)
 	return res, dumpErr
@@ -522,21 +523,34 @@ func (a *dbDumpAdapter) probeTags(ctx context.Context, engine dbdump.Engine) []s
 
 // stopOrphan signals a dump still running inside the container after restic
 // left without a snapshot. Docker keeps an exec alive when its attach closes,
-// so nothing else ends that transaction.
-func (a *dbDumpAdapter) stopOrphan(ctx context.Context, lines []string) {
+// so nothing else ends that transaction. It fails only when a dump may still
+// be running.
+func (a *dbDumpAdapter) stopOrphan(ctx context.Context, lines []string) error {
 	pid, ok := dbdump.ParsePID(lines)
 	if !ok {
-		return
+		return nil
 	}
 	argv, err := dbdump.OrphanStopArgv(pid)
 	if err != nil {
-		return
+		return nil
 	}
 	stopCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), dbDumpOrphanStopTimeout)
 	defer cancel()
 	if err := a.docker.Exec(stopCtx, a.container, argv); err != nil {
 		log.Printf("api: database dump of %q: the dump inside the container could not be stopped and may run until its time limit: %v", a.container, err) //nolint:gosec // G706: name is %q-quoted
+		return err
 	}
+	return nil
+}
+
+// withOrphanStopFailed adds to a dump's reason that its process may still be
+// running inside the container, after the reason's own detail if it has one.
+func withOrphanStopFailed(reason string) string {
+	const note = "orphan stop failed"
+	if dbDumpReasonHead(reason) == reason {
+		return reason + ": " + note
+	}
+	return reason + "; " + note
 }
 
 // publishBytes sends the stream's byte counter to the container's card,

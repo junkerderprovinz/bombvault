@@ -490,6 +490,41 @@ func TestDBDumpAdapterStopsOrphanFromForwardedPid(t *testing.T) {
 	})
 }
 
+func TestDBDumpAdapterNamesAnOrphanItCouldNotStop(t *testing.T) {
+	pidLine := "subprocess /usr/local/bin/bombvault: bombvault-dbdump-pid 4242"
+	stopErr := errors.New("dockercli: exec create: container is paused")
+
+	t.Run("behind the reason alone", func(t *testing.T) {
+		eng := &dumpFakeEngine{lines: []string{pidLine}, err: context.Canceled}
+		a := dumpAdapter(eng, &dumpFakeDocker{execErr: stopErr})
+		parent, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		res, err := a.Dump(parent, dumpRequest())
+		fail := dumpFailure(t, res, err)
+		if want := store.ReasonCancelled + ": orphan stop failed"; fail.Reason != want {
+			t.Fatalf("reason = %q, want %q", fail.Reason, want)
+		}
+	})
+
+	t.Run("behind the tool's own message", func(t *testing.T) {
+		eng := &dumpFakeEngine{
+			lines: []string{pidLine, resultLine(dbdump.Result{V: 1, Reason: dbdump.ReasonTool, Exit: 1, Detail: "tool said so"})},
+			err:   errors.New("restic backup: exit status 1"),
+		}
+		a := dumpAdapter(eng, &dumpFakeDocker{execErr: stopErr})
+
+		res, err := a.Dump(context.Background(), dumpRequest())
+		fail := dumpFailure(t, res, err)
+		if want := store.ReasonDBDumpTool + ": tool said so; orphan stop failed"; fail.Reason != want {
+			t.Fatalf("reason = %q, want %q", fail.Reason, want)
+		}
+		if head := dbDumpReasonHead(fail.Reason); head != store.ReasonDBDumpTool {
+			t.Errorf("head = %q, want the remedy and the debounce to still see %q", head, store.ReasonDBDumpTool)
+		}
+	})
+}
+
 func TestDBDumpAdapterParentEnds(t *testing.T) {
 	blockUntilDone := func(ctx context.Context) (restic.Summary, []string, error) {
 		<-ctx.Done()
