@@ -629,13 +629,7 @@ func serviceWithContainersRepo(t *testing.T, eng ResticEngine) *Service {
 		t.Fatalf("migrate: %v", err)
 	}
 	st := store.New(db)
-	// The import tests find folder paths in a run reason capped at 500 bytes, and
-	// t.TempDir would spend a good part of that on the test's name.
-	dir, err := os.MkdirTemp("", "bv")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.RemoveAll(dir) })
+	dir := t.TempDir()
 	settings, err := st.GetSettings()
 	if err != nil {
 		t.Fatal(err)

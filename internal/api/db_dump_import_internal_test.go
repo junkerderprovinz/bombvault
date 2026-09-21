@@ -572,3 +572,48 @@ func TestImportRollbackLeavesTheFoldersWhenTheServerCannotBeStopped(t *testing.T
 		t.Errorf("reason = %q, want %q naming the kept folder", reason, store.ReasonDBImportRollback)
 	}
 }
+
+func TestImportRollbackReasonKeepsBothFoldersBehindALongCause(t *testing.T) {
+	rig := newImportRig(t)
+	nested := filepath.Join("appdata", "immich", strings.Repeat("postgres-cluster-", 4), "pg")
+	deepDir := filepath.Join(rig.svc.cfg.HostMountRoot, nested)
+	if err := os.MkdirAll(filepath.Dir(deepDir), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(rig.dataDir, deepDir); err != nil {
+		t.Fatal(err)
+	}
+	rig.dataDir = deepDir
+	rig.dock.inspect.Mounts = []model.Mount{{Source: "/data/" + filepath.ToSlash(nested), Destination: "/var/lib/postgresql/data"}}
+	rig.dock.startErr = errors.New("dockercli: start pg: driver failed programming external connectivity on endpoint pg (" +
+		strings.Repeat("0123456789abcdef", 4) + "): " + strings.Repeat("Bind for 0.0.0.0:5432 failed: port is already allocated; ", 5))
+	rig.dock.onStart = func() {
+		kept := siblingsOf(t, rig.dataDir, ".bombvault-before-import-*")
+		if len(kept) == 1 {
+			if err := os.Rename(kept[0], kept[0]+".gone"); err != nil {
+				t.Error(err)
+			}
+		}
+	}
+
+	if _, err := rig.svc.StartImportDBDump(context.Background(), "pg", "local", importDumpID); err != nil {
+		t.Fatal(err)
+	}
+	waitForDetachedRun(t, rig.svc)
+
+	failed := siblingsOf(t, rig.dataDir, ".bombvault-import-failed-*")
+	gone := siblingsOf(t, rig.dataDir, ".bombvault-before-import-*.gone")
+	if len(failed) != 1 || len(gone) != 1 {
+		t.Fatalf("failed=%v gone=%v, want both folders on disk", failed, gone)
+	}
+	runs := runsOfKind(t, rig.svc.store, "dbimport")
+	if len(runs) != 1 || !strings.HasPrefix(runs[0].Error, store.ReasonDBImportRollback) {
+		t.Fatalf("runs = %+v, want one import that could not roll back", runs)
+	}
+	reason := filepath.ToSlash(runs[0].Error)
+	for _, folder := range []string{failed[0], strings.TrimSuffix(gone[0], ".gone")} {
+		if !strings.Contains(reason, filepath.ToSlash(folder)) {
+			t.Errorf("reason = %q, want the whole path %s in it", runs[0].Error, folder)
+		}
+	}
+}
