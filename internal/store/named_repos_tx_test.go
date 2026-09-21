@@ -112,12 +112,39 @@ func TestSetNamedRepoLocationIfUnusedRefusesWhileInUse(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	n, err := r.SetNamedRepoLocationIfUnused(repo.ID, "backups/elsewhere")
+	use, err := r.SetNamedRepoLocationIfUnused(repo.ID, "backups/elsewhere")
 	if err != nil {
 		t.Fatalf("SetNamedRepoLocationIfUnused: %v", err)
 	}
-	if n != 1 {
-		t.Fatalf("in-use count = %d, want 1", n)
+	if use.Items != 1 {
+		t.Fatalf("in-use count = %d, want 1", use.Items)
+	}
+	back, err := r.GetNamedRepo(repo.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if back.Repo != "backups/cold" {
+		t.Fatalf("a refused move must leave the location alone, got %q", back.Repo)
+	}
+}
+
+// TestSetNamedRepoLocationIfUnusedRefusesWhileADefaultPointsAtIt is the move's
+// side of the same gap DeleteNamedRepoIfUnused already closed: a default that
+// names this repository as home has no row in an item table, so the item count
+// alone would wave the move through and leave every open item of that domain
+// starting a fresh repository at the new place while its snapshots stay behind.
+func TestSetNamedRepoLocationIfUnusedRefusesWhileADefaultPointsAtIt(t *testing.T) {
+	r := namedRepoStore(t)
+	repo := aNamedRepo(t, r, "Cold", "backups/cold")
+	store.SeedDefault(t, r, "vms", repo.ID)
+	store.SeedDefault(t, r, "containers", repo.ID)
+
+	use, err := r.SetNamedRepoLocationIfUnused(repo.ID, "backups/elsewhere")
+	if err != nil {
+		t.Fatalf("SetNamedRepoLocationIfUnused: %v", err)
+	}
+	if !use.InUse() || use.Items != 0 || !slices.Equal(use.DefaultDomains, []string{"containers", "vms"}) {
+		t.Fatalf("use = %+v, want the two defaults and no item", use)
 	}
 	back, err := r.GetNamedRepo(repo.ID)
 	if err != nil {
@@ -133,12 +160,12 @@ func TestSetNamedRepoLocationIfUnusedWritesWhenUnused(t *testing.T) {
 	r := namedRepoStore(t)
 	repo := aNamedRepo(t, r, "Cold", "backups/cold")
 
-	n, err := r.SetNamedRepoLocationIfUnused(repo.ID, "backups/elsewhere")
+	use, err := r.SetNamedRepoLocationIfUnused(repo.ID, "backups/elsewhere")
 	if err != nil {
 		t.Fatalf("SetNamedRepoLocationIfUnused: %v", err)
 	}
-	if n != 0 {
-		t.Fatalf("in-use count = %d, want 0", n)
+	if use.InUse() {
+		t.Fatalf("use = %+v, want nothing", use)
 	}
 	back, err := r.GetNamedRepo(repo.ID)
 	if err != nil {
