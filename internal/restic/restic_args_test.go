@@ -100,7 +100,8 @@ func TestForgetPolicyArgs(t *testing.T) {
 	t.Run("legacy repo-wide pass: paths grouping, emits only set dimensions + prune", func(t *testing.T) {
 		got := ForgetPolicyArgs("/repo",
 			RetentionPolicy{KeepLast: 5, KeepMonthly: 6}, Mode{Encrypted: true}, "", true)
-		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--group-by", "paths", "--keep-last", "5", "--keep-monthly", "6", "--prune"}
+		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--group-by", "paths", "--keep-last", "5", "--keep-monthly", "6",
+			"--keep-tag", "bv:direct", "--prune"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
@@ -110,7 +111,7 @@ func TestForgetPolicyArgs(t *testing.T) {
 			RetentionPolicy{KeepLast: 3, KeepDaily: 7, KeepWeekly: 4, KeepMonthly: 12},
 			Mode{Encrypted: false}, "", true)
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--insecure-no-password", "--group-by", "paths",
-			"--keep-last", "3", "--keep-daily", "7", "--keep-weekly", "4", "--keep-monthly", "12", "--prune"}
+			"--keep-last", "3", "--keep-daily", "7", "--keep-weekly", "4", "--keep-monthly", "12", "--keep-tag", "bv:direct", "--prune"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
@@ -123,7 +124,7 @@ func TestForgetPolicyArgs(t *testing.T) {
 		got := ForgetPolicyArgs("/repo",
 			RetentionPolicy{KeepLast: 5}, Mode{Encrypted: true}, "container:plex", true)
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--tag", "container:plex", "--group-by", "",
-			"--keep-last", "5", "--prune"}
+			"--keep-last", "5", "--keep-tag", "bv:direct", "--prune"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
@@ -132,7 +133,16 @@ func TestForgetPolicyArgs(t *testing.T) {
 		got := ForgetPolicyArgs("/repo",
 			RetentionPolicy{KeepDaily: 7}, Mode{Encrypted: true}, "vm:win11", false)
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--tag", "vm:win11", "--group-by", "",
-			"--keep-daily", "7"}
+			"--keep-daily", "7", "--keep-tag", "bv:direct"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("a direct repository's own rules age its direct snapshots", func(t *testing.T) {
+		got := ForgetPolicyArgs("/repo",
+			RetentionPolicy{KeepLast: 3, Direct: true}, Mode{Encrypted: true}, "vm:win11", true)
+		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--tag", "vm:win11", "--group-by", "",
+			"--keep-last", "3", "--prune"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}

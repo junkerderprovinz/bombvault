@@ -843,6 +843,11 @@ func ForgetArgs(repo string, snapshotIDs []string, prune bool, m Mode) []string 
 	return args
 }
 
+// DirectTag marks a snapshot written into a target's direct repository. Every
+// forget under other rules keeps it, so a direct repository that lost its
+// link never ages by the local policy.
+const DirectTag = "bv:direct"
+
 // RetentionPolicy is a restic forget keep-policy. A count of 0 omits that
 // dimension. When no dimension is set the policy is inert (Any reports false).
 type RetentionPolicy struct {
@@ -850,6 +855,9 @@ type RetentionPolicy struct {
 	KeepDaily   int
 	KeepWeekly  int
 	KeepMonthly int
+	// Direct marks the rules of a direct repository row; without it every
+	// forget keeps DirectTag snapshots.
+	Direct bool
 }
 
 // Any reports whether at least one keep dimension is set, i.e. retention is on.
@@ -858,7 +866,8 @@ func (p RetentionPolicy) Any() bool {
 }
 
 // ForgetPolicyArgs returns the argv for `restic forget --keep-* [--prune]`.
-// Only the set dimensions are emitted.
+// Only the set dimensions are emitted. Unless p.Direct is set, --keep-tag
+// DirectTag keeps every snapshot written into a direct repository.
 //
 // tag selects IDENTITY-STABLE retention (issue #91): with a tag (e.g.
 // "container:plex") the policy is restricted to that item's snapshots via
@@ -900,6 +909,9 @@ func ForgetPolicyArgs(repo string, p RetentionPolicy, m Mode, tag string, prune 
 	}
 	if p.KeepMonthly > 0 {
 		args = append(args, "--keep-monthly", strconv.Itoa(p.KeepMonthly))
+	}
+	if !p.Direct {
+		args = append(args, "--keep-tag", DirectTag)
 	}
 	if prune {
 		args = append(args, "--prune")
