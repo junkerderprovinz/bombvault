@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import { useReveal } from "../../lib/useReveal";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
+import { pushSaveWarnings } from "../../lib/placementCodes";
 import { SelectField } from "../../components/SelectField";
 import { STORAGE_CLASSES } from "../../lib/storageClasses";
 
@@ -118,6 +119,7 @@ export function CloudCard({
         if (patch.s3Secret) setSecretSet(true);
         if (patch.restPassword) setPwSet(true);
         push(t("settings.saved"), "success");
+        pushSaveWarnings(push, t, r.warnings);
       } else {
         setState("idle");
         push(r.error ?? t("settings.error"), "fail");

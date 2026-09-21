@@ -17,6 +17,10 @@ import { useCloudCredSets } from "../lib/useCloudCredSets";
 import { restPathUserMismatch } from "../lib/restRepo";
 import { SelectField } from "./SelectField";
 import { useT } from "../lib/i18n";
+import { directAsk, directUse } from "../lib/directRepo";
+import { useNamedRepos } from "../lib/useNamedRepos";
+import { useOffsiteTargets } from "../lib/useOffsiteTargets";
+import { useConfirm } from "../lib/useConfirm";
 import { InfoBubble } from "./InfoBubble";
 import { NumberField } from "./NumberField";
 import { Toggle } from "./Toggle";
@@ -248,6 +252,11 @@ export function OffsiteWizard({
   const [backend, setBackend] = useState<Backend>(() => inferBackend(repoURL));
 
   const { push } = useToast();
+
+  const fieldTarget = useOffsiteTargets(domain).find((x) => x.sortOrder === 0);
+  const namedRepos = useNamedRepos();
+  const { confirm, confirmDialog } = useConfirm();
+  const { lang } = useT();
 
   // Full-page Speichern-Button sweep (jdp, live review, emphatic: "Die
   // Speicher-Buttons sollen in allen Tabs weg. Überall soll es automatisch
@@ -632,6 +641,8 @@ export function OffsiteWizard({
       }
       return;
     }
+    const use = !next && fieldTarget ? directUse(fieldTarget, namedRepos) : undefined;
+    if (use && !(await confirm(directAsk(t, lang, "offsite.directAppendOnlyAsk", [use])))) return;
     setSettings((prev) => (prev ? { ...prev, [immKey]: next } : prev));
     const ok = await save({ [immKey]: next } as Partial<Settings>, setImmState, () => undefined);
     if (!ok) {
@@ -702,6 +713,7 @@ export function OffsiteWizard({
 
   return (
     <div className="mt-2 flex flex-col gap-4 rounded-card bg-carbon-surface2 p-4">
+      {confirmDialog}
       {/* Step 1 — backend choice */}
       <div className="flex flex-col gap-2">
         <span className={stepTitle}>{t("offsite.wizard.step1")}</span>
