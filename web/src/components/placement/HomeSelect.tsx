@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "../Button";
 import { SelectField, type SelectOption } from "../SelectField";
 import { useT } from "../../lib/i18n";
 
 /** HomeSelect picks a location as a draft; only Set hands it on, so the wheel
- *  can browse the list without writing anything. */
+ *  can browse the list without writing anything. A stored value that changes
+ *  underneath (placement refreshes live) only pulls the draft along while the
+ *  user has not diverged from it; a pending pick survives, and Set then meets
+ *  the save route's own stale check rather than being silently overwritten. */
 export function HomeSelect({
   label,
   value,
@@ -22,9 +25,11 @@ export function HomeSelect({
 }) {
   const { t } = useT();
   const [draft, setDraft] = useState(value);
-  useEffect(() => {
-    setDraft(value);
-  }, [value]);
+  const [synced, setSynced] = useState(value);
+  if (value !== synced) {
+    setSynced(value);
+    if (draft === synced) setDraft(value);
+  }
 
   if (locked || options.length < 2) {
     return (
