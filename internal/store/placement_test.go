@@ -129,6 +129,17 @@ func TestPutPlacementDefaultDoesNotConfirmManually(t *testing.T) {
 	}
 }
 
+// TestSetExcludeRulesRefusesAnUnknownDomain pins the guard its sibling
+// ConfirmPlacement already has: with nothing to exclude, the loop that writes
+// each rule runs zero times, so without the guard an unknown domain silently
+// succeeds instead of naming the problem.
+func TestSetExcludeRulesRefusesAnUnknownDomain(t *testing.T) {
+	r := newRepo(t)
+	if err := r.SetExcludeRules("flash", nil); !errors.Is(err, store.ErrUnknownDomain) {
+		t.Errorf("SetExcludeRules(flash, nil) = %v, want ErrUnknownDomain", err)
+	}
+}
+
 func TestConfirmPlacementSetsTheManualMarker(t *testing.T) {
 	r := newRepo(t)
 	if _, err := r.PausePlacement("containers"); err != nil {
