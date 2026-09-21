@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -610,5 +611,71 @@ func TestDirectSnapshotsOutliveTheLocalRuleUntilTheirTargetClaimsThem(t *testing
 	f.svc.applyRetention(ctx, loc, settings, restic.Mode{}, "container:web", "containers")
 	if got := heldIDs(f, loc); !slices.Equal(got, []string{"d3", "n2"}) {
 		t.Fatalf("the target's rules left %v, want the two newest", got)
+	}
+}
+
+type backupTagsEngine struct {
+	ResticEngine
+	tags [][]string
+}
+
+func (e *backupTagsEngine) Backup(_ context.Context, _ string, _, tags []string, _ restic.Mode, _ ...string) (restic.Summary, error) {
+	e.tags = append(e.tags, tags)
+	return restic.Summary{}, nil
+}
+
+func (e *backupTagsEngine) BackupStdin(_ context.Context, _ string, _ io.Reader, _ string, tags []string, _ restic.Mode) (restic.Summary, error) {
+	e.tags = append(e.tags, tags)
+	return restic.Summary{}, nil
+}
+
+func TestBackupsIntoADirectRepositoryCarryTheDirectTag(t *testing.T) {
+	f := newPlacementFixture(t)
+	d := f.direct(f.target("containers", "B2", "b2:bkt:containers"))
+	plain := f.namedRepo("NAS", "backups/nas")
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	plainLoc, err := f.svc.resolveRepo(plain.Repo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := f.svc.directTags(settings, "containers", d.Repo); !slices.Equal(got, []string{restic.DirectTag}) {
+		t.Fatalf("direct repository: %v", got)
+	}
+	for _, loc := range []string{plainLoc, f.domainPath("containers")} {
+		if got := f.svc.directTags(settings, "containers", loc); got != nil {
+			t.Fatalf("%s: %v", loc, got)
+		}
+	}
+
+	eng := &backupTagsEngine{}
+	tags := make([]string, 2, 8)
+	tags[0], tags[1] = "container:web", "p1"
+	a := &resticAdapter{engine: eng, extraTags: []string{restic.DirectTag}}
+	if _, err := a.Backup(context.Background(), "/repo", nil, tags); err != nil {
+		t.Fatal(err)
+	}
+	z := &resticZvolAdapter{engine: eng, extraTags: []string{restic.DirectTag}}
+	if _, err := z.BackupStdin(context.Background(), "/repo", nil, "/disk", tags); err != nil {
+		t.Fatal(err)
+	}
+	for _, got := range eng.tags {
+		if !slices.Equal(got, []string{"container:web", "p1", restic.DirectTag}) {
+			t.Fatalf("tags = %v", got)
+		}
+	}
+	if spare := tags[:3]; spare[2] != "" { //nolint:gosec // G602: 3 is within tags' cap of 8, not out of bounds
+		t.Fatalf("the caller's slice was written past its length: %v", spare)
+	}
+}
+
+func TestEveryBackupEntryPointAsksForTheDirectTag(t *testing.T) {
+	src := mustReadService(t)
+	for _, fn := range []string{"Backup", "BackupVM", "BackupFileSet"} {
+		if !strings.Contains(funcBody(t, src, fn), "s.directTags(") {
+			t.Errorf("%s writes into a direct repository without the %s tag, so its snapshots age by the local rule once the link is lost", fn, restic.DirectTag)
+		}
 	}
 }
