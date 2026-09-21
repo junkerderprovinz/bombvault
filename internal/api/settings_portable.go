@@ -533,10 +533,16 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 			if sameRepoLocation(p.loc, loc) {
 				return fmt.Sprintf("%s is at %s; a repository has to be a different place", row.label, p.label)
 			}
+			if repoLocationsOverlap(p.loc, loc) {
+				log.Printf("api: settings import: %s lies inside or around %s; imported anyway so older files still load", row.label, p.label) //nolint:gosec // G706: the labels are fixed text around %q-quoted names
+			}
 		}
 		for _, other := range seen {
 			if sameRepoLocation(other, loc) {
 				return fmt.Sprintf("%s names the same place as an earlier one; two rows over one repository would give every question about it two answers", row.label)
+			}
+			if repoLocationsOverlap(other, loc) {
+				log.Printf("api: settings import: %s lies inside or around an earlier repository; imported anyway so older files still load", row.label) //nolint:gosec // G706: the label is fixed text around a %q-quoted name
 			}
 		}
 		seen = append(seen, loc)

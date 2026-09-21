@@ -57,6 +57,7 @@ var placementCodes = []struct {
 	{errRepoInvalid, "repo-invalid"},
 	{errRepoInUse, "repo-in-use"},
 	{errDefaultRepoMissing, "default-repo-missing"},
+	{errNestedLocation, "nested-location"},
 }
 
 // placementCode returns the code the interface translates err by, "" for none.
