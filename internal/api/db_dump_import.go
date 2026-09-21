@@ -397,14 +397,14 @@ func (s *Service) rollbackImport(ctx context.Context, plan dbImportPlan, kept st
 		// Moving the folders under a server that still runs would leave it
 		// writing into the one set aside while the run claims the old data is back.
 		if err := s.docker.Stop(ctx, plan.id, dbImportStopTimeout); err != nil {
-			return importRollbackFailure(plan.dataDir, kept, fmt.Errorf("%w; the container could not be stopped for the rollback: %w", cause, err))
+			return importRollbackFailure(s.toHostPath(plan.dataDir), s.toHostPath(kept), fmt.Errorf("%w; the container could not be stopped for the rollback: %w", cause, err))
 		}
 		failed := plan.dataDir + ".bombvault-import-failed-" + time.Now().Format(dbImportStamp)
 		if err := os.Rename(plan.dataDir, failed); err != nil && !errors.Is(err, os.ErrNotExist) {
-			return importRollbackFailure(plan.dataDir, kept, cause)
+			return importRollbackFailure(s.toHostPath(plan.dataDir), s.toHostPath(kept), cause)
 		}
 		if err := os.Rename(kept, plan.dataDir); err != nil {
-			return importRollbackFailure(failed, kept, cause)
+			return importRollbackFailure(s.toHostPath(failed), s.toHostPath(kept), cause)
 		}
 	}
 	if err := s.docker.Start(ctx, plan.id); err != nil {
@@ -445,7 +445,9 @@ func (s *Service) databaseAnswers(ctx context.Context, name string, argv []strin
 
 // feedDBImport streams the dump into the engine's client and reads the outcome
 // off its stderr.
-func (s *Service) feedDBImport(ctx context.Context, plan dbImportPlan, kept, key string, startedAt int64) (string, error) {
+func (s *Service) feedDBImport(ctx context.Context, plan dbImportPlan, keptHere, key string, startedAt int64) (string, error) {
+	// The user looks for the kept folder on the host, not in this process.
+	kept := s.toHostPath(keptHere)
 	argv, err := dbdump.ImportArgv(plan.engine)
 	if err != nil {
 		return "", importToolFailure(kept, err.Error())
