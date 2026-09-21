@@ -1678,6 +1678,21 @@ const id: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Host",
+  "placement.segLocal": "Lokal",
+  "placement.segLocalOffsite": "Lokal + off-site",
+  "placement.segOffsiteOnly": "Hanya off-site",
+  "placement.homeDomain": "{host} · repositori domain · {path}",
+  "placement.homeDomainRemote": "Repositori domain · jarak jauh · {scheme}",
+  "placement.homeLocal": "{name} · terpasang",
+  "placement.homeRemote": "{name} · jarak jauh",
+  "placement.homeDirect": "{target} · langsung",
+  "placement.directNotYet": "dibuat saat pertama kali dipilih",
+  "placement.off": "{name} (mati)",
+  "placement.unknown": "{name} (tidak diketahui)",
+  "placement.noTarget": "Belum ada target off-site yang disiapkan",
+  "placement.lockOwnCredentials": "Punya kredensial sendiri dan sudah berada di luar lokasi",
+  "placement.lockAtTarget": "Sudah berada di target",
+  "placement.lockHomeFixed": "Tetap sejak backup pertama: {home}",
 };
 
 export default id;

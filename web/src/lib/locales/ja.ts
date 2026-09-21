@@ -1659,6 +1659,21 @@ const ja: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "ホスト",
+  "placement.segLocal": "ローカル",
+  "placement.segLocalOffsite": "ローカル + オフサイト",
+  "placement.segOffsiteOnly": "オフサイトのみ",
+  "placement.homeDomain": "{host} · ドメインリポジトリ · {path}",
+  "placement.homeDomainRemote": "ドメインリポジトリ · リモート · {scheme}",
+  "placement.homeLocal": "{name} · マウント済み",
+  "placement.homeRemote": "{name} · リモート",
+  "placement.homeDirect": "{target} · ダイレクト",
+  "placement.directNotYet": "初めて選んだときに作成されます",
+  "placement.off": "{name}（オフ）",
+  "placement.unknown": "{name}（不明）",
+  "placement.noTarget": "オフサイト先が設定されていません",
+  "placement.lockOwnCredentials": "独自の認証情報を持ち、すでに施設外にあります",
+  "placement.lockAtTarget": "すでに送信先にあります",
+  "placement.lockHomeFixed": "最初のバックアップ以降固定: {home}",
 };
 
 export default ja;

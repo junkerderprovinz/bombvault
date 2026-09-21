@@ -1678,6 +1678,21 @@ const gl: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Host",
+  "placement.segLocal": "Local",
+  "placement.segLocalOffsite": "Local + externa",
+  "placement.segOffsiteOnly": "Só externa",
+  "placement.homeDomain": "{host} · repositorio do dominio · {path}",
+  "placement.homeDomainRemote": "Repositorio do dominio · remoto · {scheme}",
+  "placement.homeLocal": "{name} · montado",
+  "placement.homeRemote": "{name} · remoto",
+  "placement.homeDirect": "{target} · directo",
+  "placement.directNotYet": "créase ao escollelo por primeira vez",
+  "placement.off": "{name} (apagado)",
+  "placement.unknown": "{name} (descoñecido)",
+  "placement.noTarget": "Non hai ningún destino externo configurado",
+  "placement.lockOwnCredentials": "Ten as súas propias credenciais e xa está fóra das instalacións",
+  "placement.lockAtTarget": "Xa está no destino",
+  "placement.lockHomeFixed": "Fixo dende a primeira copia de seguranza: {home}",
 };
 
 export default gl;

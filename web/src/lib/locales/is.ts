@@ -1678,6 +1678,21 @@ const is: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Hýsill",
+  "placement.segLocal": "Staðbundið",
+  "placement.segLocalOffsite": "Staðbundið + fjarlægt",
+  "placement.segOffsiteOnly": "Aðeins fjarlægt",
+  "placement.homeDomain": "{host} · geymsla lénsins · {path}",
+  "placement.homeDomainRemote": "Geymsla lénsins · fjartengd · {scheme}",
+  "placement.homeLocal": "{name} · tengt",
+  "placement.homeRemote": "{name} · fjartengt",
+  "placement.homeDirect": "{target} · beint",
+  "placement.directNotYet": "verður til við fyrsta val",
+  "placement.off": "{name} (slökkt)",
+  "placement.unknown": "{name} (óþekkt)",
+  "placement.noTarget": "Ekkert fjarlægt markmið sett upp",
+  "placement.lockOwnCredentials": "Er með eigin auðkenni og er þegar utan húss",
+  "placement.lockAtTarget": "Liggur þegar hjá markmiðinu",
+  "placement.lockHomeFixed": "Fast frá fyrsta afriti: {home}",
 };
 
 export default is;

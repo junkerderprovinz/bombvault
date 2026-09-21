@@ -1659,6 +1659,21 @@ const ko: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "호스트",
+  "placement.segLocal": "로컬",
+  "placement.segLocalOffsite": "로컬 + 오프사이트",
+  "placement.segOffsiteOnly": "오프사이트만",
+  "placement.homeDomain": "{host} · 도메인 저장소 · {path}",
+  "placement.homeDomainRemote": "도메인 저장소 · 원격 · {scheme}",
+  "placement.homeLocal": "{name} · 마운트됨",
+  "placement.homeRemote": "{name} · 원격",
+  "placement.homeDirect": "{target} · 직접",
+  "placement.directNotYet": "처음 선택할 때 생성됨",
+  "placement.off": "{name} (꺼짐)",
+  "placement.unknown": "{name} (알 수 없음)",
+  "placement.noTarget": "설정된 오프사이트 대상이 없습니다",
+  "placement.lockOwnCredentials": "자체 자격 증명이 있고 이미 부지 밖에 있습니다",
+  "placement.lockAtTarget": "이미 대상에 있습니다",
+  "placement.lockHomeFixed": "첫 백업 이후 고정됨: {home}",
 };
 
 export default ko;

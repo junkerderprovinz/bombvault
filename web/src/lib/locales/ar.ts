@@ -1670,6 +1670,21 @@ const ar: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "مضيف",
+  "placement.segLocal": "محلي",
+  "placement.segLocalOffsite": "محلي + خارج الموقع",
+  "placement.segOffsiteOnly": "خارج الموقع فقط",
+  "placement.homeDomain": "{host} · مستودع النطاق · {path}",
+  "placement.homeDomainRemote": "مستودع النطاق · عن بُعد · {scheme}",
+  "placement.homeLocal": "{name} · مثبَّت",
+  "placement.homeRemote": "{name} · عن بُعد",
+  "placement.homeDirect": "{target} · مباشر",
+  "placement.directNotYet": "يُنشأ عند أول اختيار",
+  "placement.off": "{name} (مطفأ)",
+  "placement.unknown": "{name} (غير معروف)",
+  "placement.noTarget": "لا يوجد هدف خارج الموقع معدّ",
+  "placement.lockOwnCredentials": "له بيانات اعتماد خاصة به وهو بالفعل خارج المبنى",
+  "placement.lockAtTarget": "موجود بالفعل عند الهدف",
+  "placement.lockHomeFixed": "ثابت منذ أول نسخة احتياطية: {home}",
 };
 
 export default ar;

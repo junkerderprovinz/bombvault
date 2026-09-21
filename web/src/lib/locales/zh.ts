@@ -1659,6 +1659,21 @@ const zh: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "主机",
+  "placement.segLocal": "本地",
+  "placement.segLocalOffsite": "本地 + 异地",
+  "placement.segOffsiteOnly": "仅异地",
+  "placement.homeDomain": "{host} · 域存储库 · {path}",
+  "placement.homeDomainRemote": "域存储库 · 远程 · {scheme}",
+  "placement.homeLocal": "{name} · 已挂载",
+  "placement.homeRemote": "{name} · 远程",
+  "placement.homeDirect": "{target} · 直接",
+  "placement.directNotYet": "首次选择时创建",
+  "placement.off": "{name}（已关闭）",
+  "placement.unknown": "{name}（未知）",
+  "placement.noTarget": "尚未设置异地目标",
+  "placement.lockOwnCredentials": "拥有自己的凭据，并且已经在场外",
+  "placement.lockAtTarget": "已经在目标处",
+  "placement.lockHomeFixed": "自首次备份以来固定：{home}",
 };
 
 export default zh;

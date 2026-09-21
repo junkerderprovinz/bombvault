@@ -1678,6 +1678,21 @@ const bg: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Хост",
+  "placement.segLocal": "Локално",
+  "placement.segLocalOffsite": "Локално + извън обекта",
+  "placement.segOffsiteOnly": "Само извън обекта",
+  "placement.homeDomain": "{host} · хранилище на домейна · {path}",
+  "placement.homeDomainRemote": "Хранилище на домейна · отдалечено · {scheme}",
+  "placement.homeLocal": "{name} · монтирано",
+  "placement.homeRemote": "{name} · отдалечено",
+  "placement.homeDirect": "{target} · директно",
+  "placement.directNotYet": "създава се при първия избор",
+  "placement.off": "{name} (изключено)",
+  "placement.unknown": "{name} (неизвестно)",
+  "placement.noTarget": "Няма зададена цел извън обекта",
+  "placement.lockOwnCredentials": "Има собствени данни за достъп и вече е извън обекта",
+  "placement.lockAtTarget": "Вече се намира при целта",
+  "placement.lockHomeFixed": "Фиксирано от първото резервно копие: {home}",
 };
 
 export default bg;

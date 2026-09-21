@@ -1667,6 +1667,21 @@ const da: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Vært",
+  "placement.segLocal": "Lokal",
+  "placement.segLocalOffsite": "Lokal + ekstern",
+  "placement.segOffsiteOnly": "Kun ekstern",
+  "placement.homeDomain": "{host} · domænedepot · {path}",
+  "placement.homeDomainRemote": "Domænedepot · fjern · {scheme}",
+  "placement.homeLocal": "{name} · monteret",
+  "placement.homeRemote": "{name} · fjern",
+  "placement.homeDirect": "{target} · direkte",
+  "placement.directNotYet": "oprettes ved første valg",
+  "placement.off": "{name} (fra)",
+  "placement.unknown": "{name} (ukendt)",
+  "placement.noTarget": "Intet eksternt mål sat op",
+  "placement.lockOwnCredentials": "Har egne loginoplysninger og ligger allerede uden for huset",
+  "placement.lockAtTarget": "Ligger allerede ved målet",
+  "placement.lockHomeFixed": "Fast siden første sikkerhedskopi: {home}",
 };
 
 export default da;

@@ -1678,6 +1678,21 @@ const et: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Host",
+  "placement.segLocal": "Kohalik",
+  "placement.segLocalOffsite": "Kohalik + väline",
+  "placement.segOffsiteOnly": "Ainult väline",
+  "placement.homeDomain": "{host} · domeeni hoidla · {path}",
+  "placement.homeDomainRemote": "Domeeni hoidla · kauge · {scheme}",
+  "placement.homeLocal": "{name} · ühendatud",
+  "placement.homeRemote": "{name} · kauge",
+  "placement.homeDirect": "{target} · otse",
+  "placement.directNotYet": "luuakse esimesel valimisel",
+  "placement.off": "{name} (väljas)",
+  "placement.unknown": "{name} (teadmata)",
+  "placement.noTarget": "Ühtegi välist sihtkohta pole seadistatud",
+  "placement.lockOwnCredentials": "Sellel on oma pöördumisandmed ja see asub juba väljaspool asukohta",
+  "placement.lockAtTarget": "Asub juba sihtkohas",
+  "placement.lockHomeFixed": "Fikseeritud alates esimesest varukoopiast: {home}",
 };
 
 export default et;

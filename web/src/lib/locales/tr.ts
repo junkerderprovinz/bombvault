@@ -1667,6 +1667,21 @@ const tr: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Host",
+  "placement.segLocal": "Yerel",
+  "placement.segLocalOffsite": "Yerel + site dışı",
+  "placement.segOffsiteOnly": "Yalnızca site dışı",
+  "placement.homeDomain": "{host} · alan deposu · {path}",
+  "placement.homeDomainRemote": "Alan deposu · uzak · {scheme}",
+  "placement.homeLocal": "{name} · bağlı",
+  "placement.homeRemote": "{name} · uzak",
+  "placement.homeDirect": "{target} · doğrudan",
+  "placement.directNotYet": "ilk seçildiğinde oluşturulur",
+  "placement.off": "{name} (kapalı)",
+  "placement.unknown": "{name} (bilinmiyor)",
+  "placement.noTarget": "Kurulu bir site dışı hedef yok",
+  "placement.lockOwnCredentials": "Kendi kimlik bilgilerine sahip ve zaten tesis dışında",
+  "placement.lockAtTarget": "Zaten hedefte bulunuyor",
+  "placement.lockHomeFixed": "İlk yedeklemeden beri sabit: {home}",
 };
 
 export default tr;

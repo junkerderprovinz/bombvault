@@ -1662,6 +1662,21 @@ const sr: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Хост",
+  "placement.segLocal": "Локално",
+  "placement.segLocalOffsite": "Локално + спољно",
+  "placement.segOffsiteOnly": "Само спољно",
+  "placement.homeDomain": "{host} · репозиторијум домена · {path}",
+  "placement.homeDomainRemote": "Репозиторијум домена · удаљено · {scheme}",
+  "placement.homeLocal": "{name} · монтирано",
+  "placement.homeRemote": "{name} · удаљено",
+  "placement.homeDirect": "{target} · директно",
+  "placement.directNotYet": "прави се при првом избору",
+  "placement.off": "{name} (искључено)",
+  "placement.unknown": "{name} (непознато)",
+  "placement.noTarget": "Није подешен ниједан спољни циљ",
+  "placement.lockOwnCredentials": "Има сопствене податке за приступ и већ је ван просторија",
+  "placement.lockAtTarget": "Већ се налази код циља",
+  "placement.lockHomeFixed": "Фиксно од прве резервне копије: {home}",
 };
 
 export default sr;

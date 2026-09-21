@@ -1664,6 +1664,21 @@ const nl: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Host",
+  "placement.segLocal": "Lokaal",
+  "placement.segLocalOffsite": "Lokaal + off-site",
+  "placement.segOffsiteOnly": "Alleen off-site",
+  "placement.homeDomain": "{host} · repository van het domein · {path}",
+  "placement.homeDomainRemote": "Repository van het domein · extern · {scheme}",
+  "placement.homeLocal": "{name} · gekoppeld",
+  "placement.homeRemote": "{name} · extern",
+  "placement.homeDirect": "{target} · direct",
+  "placement.directNotYet": "wordt aangemaakt bij de eerste keuze",
+  "placement.off": "{name} (uit)",
+  "placement.unknown": "{name} (onbekend)",
+  "placement.noTarget": "Geen off-site bestemming ingesteld",
+  "placement.lockOwnCredentials": "Heeft eigen inloggegevens en staat al buiten de locatie",
+  "placement.lockAtTarget": "Staat al bij de bestemming",
+  "placement.lockHomeFixed": "Vast sinds de eerste back-up: {home}",
 };
 
 export default nl;

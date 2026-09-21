@@ -1659,6 +1659,21 @@ const vi: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Máy chủ",
+  "placement.segLocal": "Cục bộ",
+  "placement.segLocalOffsite": "Cục bộ + ngoài site",
+  "placement.segOffsiteOnly": "Chỉ ngoài site",
+  "placement.homeDomain": "{host} · kho của miền · {path}",
+  "placement.homeDomainRemote": "Kho của miền · từ xa · {scheme}",
+  "placement.homeLocal": "{name} · đã gắn",
+  "placement.homeRemote": "{name} · từ xa",
+  "placement.homeDirect": "{target} · trực tiếp",
+  "placement.directNotYet": "được tạo khi chọn lần đầu",
+  "placement.off": "{name} (tắt)",
+  "placement.unknown": "{name} (không rõ)",
+  "placement.noTarget": "Chưa thiết lập đích ngoài site nào",
+  "placement.lockOwnCredentials": "Có thông tin xác thực riêng và đã ở ngoài cơ sở",
+  "placement.lockAtTarget": "Đã nằm ở đích",
+  "placement.lockHomeFixed": "Cố định từ bản sao lưu đầu tiên: {home}",
 };
 
 export default vi;

@@ -1667,6 +1667,21 @@ const sv: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Värd",
+  "placement.segLocal": "Lokal",
+  "placement.segLocalOffsite": "Lokal + utanför platsen",
+  "placement.segOffsiteOnly": "Endast utanför platsen",
+  "placement.homeDomain": "{host} · domänens arkiv · {path}",
+  "placement.homeDomainRemote": "Domänens arkiv · fjärr · {scheme}",
+  "placement.homeLocal": "{name} · monterad",
+  "placement.homeRemote": "{name} · fjärr",
+  "placement.homeDirect": "{target} · direkt",
+  "placement.directNotYet": "skapas vid första valet",
+  "placement.off": "{name} (av)",
+  "placement.unknown": "{name} (okänd)",
+  "placement.noTarget": "Inget mål utanför platsen är konfigurerat",
+  "placement.lockOwnCredentials": "Har egna inloggningsuppgifter och ligger redan utanför lokalen",
+  "placement.lockAtTarget": "Ligger redan vid målet",
+  "placement.lockHomeFixed": "Fast sedan den första säkerhetskopian: {home}",
 };
 
 export default sv;

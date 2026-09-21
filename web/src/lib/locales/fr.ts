@@ -1667,6 +1667,21 @@ const fr: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Hôte",
+  "placement.segLocal": "Local",
+  "placement.segLocalOffsite": "Local + hors site",
+  "placement.segOffsiteOnly": "Hors site uniquement",
+  "placement.homeDomain": "{host} · dépôt du domaine · {path}",
+  "placement.homeDomainRemote": "Dépôt du domaine · distant · {scheme}",
+  "placement.homeLocal": "{name} · monté",
+  "placement.homeRemote": "{name} · distant",
+  "placement.homeDirect": "{target} · direct",
+  "placement.directNotYet": "créé au premier choix",
+  "placement.off": "{name} (éteint)",
+  "placement.unknown": "{name} (inconnu)",
+  "placement.noTarget": "Aucune cible hors site configurée",
+  "placement.lockOwnCredentials": "A ses propres identifiants et se trouve déjà hors des locaux",
+  "placement.lockAtTarget": "Se trouve déjà à la cible",
+  "placement.lockHomeFixed": "Fixé depuis la première sauvegarde : {home}",
 };
 
 export default fr;

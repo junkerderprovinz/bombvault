@@ -1667,6 +1667,21 @@ const he: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "מארח",
+  "placement.segLocal": "מקומי",
+  "placement.segLocalOffsite": "מקומי + מחוץ לאתר",
+  "placement.segOffsiteOnly": "מחוץ לאתר בלבד",
+  "placement.homeDomain": "{host} · מאגר התחום · {path}",
+  "placement.homeDomainRemote": "מאגר התחום · מרוחק · {scheme}",
+  "placement.homeLocal": "{name} · מותקן",
+  "placement.homeRemote": "{name} · מרוחק",
+  "placement.homeDirect": "{target} · ישיר",
+  "placement.directNotYet": "נוצר בבחירה הראשונה",
+  "placement.off": "{name} (כבוי)",
+  "placement.unknown": "{name} (לא ידוע)",
+  "placement.noTarget": "לא הוגדר יעד מחוץ לאתר",
+  "placement.lockOwnCredentials": "יש לו פרטי גישה משלו והוא כבר מחוץ למתחם",
+  "placement.lockAtTarget": "כבר נמצא ביעד",
+  "placement.lockHomeFixed": "קבוע מאז הגיבוי הראשון: {home}",
 };
 
 export default he;

@@ -1678,6 +1678,21 @@ const ms: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Hos",
+  "placement.segLocal": "Setempat",
+  "placement.segLocalOffsite": "Setempat + luar tapak",
+  "placement.segOffsiteOnly": "Luar tapak sahaja",
+  "placement.homeDomain": "{host} · repositori domain · {path}",
+  "placement.homeDomainRemote": "Repositori domain · jauh · {scheme}",
+  "placement.homeLocal": "{name} · terpasang",
+  "placement.homeRemote": "{name} · jauh",
+  "placement.homeDirect": "{target} · terus",
+  "placement.directNotYet": "dicipta apabila dipilih buat kali pertama",
+  "placement.off": "{name} (mati)",
+  "placement.unknown": "{name} (tidak diketahui)",
+  "placement.noTarget": "Tiada sasaran luar tapak disediakan",
+  "placement.lockOwnCredentials": "Mempunyai kelayakan sendiri dan sudah berada di luar premis",
+  "placement.lockAtTarget": "Sudah berada di sasaran",
+  "placement.lockHomeFixed": "Tetap sejak sandaran pertama: {home}",
 };
 
 export default ms;

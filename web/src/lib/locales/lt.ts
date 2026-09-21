@@ -1678,6 +1678,21 @@ const lt: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Pagrindinis kompiuteris",
+  "placement.segLocal": "Vietinis",
+  "placement.segLocalOffsite": "Vietinis + nuotolinis",
+  "placement.segOffsiteOnly": "Tik nuotolinis",
+  "placement.homeDomain": "{host} · srities saugykla · {path}",
+  "placement.homeDomainRemote": "Srities saugykla · nuotolinė · {scheme}",
+  "placement.homeLocal": "{name} · prijungtas",
+  "placement.homeRemote": "{name} · nuotolinis",
+  "placement.homeDirect": "{target} · tiesiogiai",
+  "placement.directNotYet": "sukuriamas pirmą kartą pasirinkus",
+  "placement.off": "{name} (išjungta)",
+  "placement.unknown": "{name} (nežinoma)",
+  "placement.noTarget": "Nenustatytas joks nuotolinis tikslas",
+  "placement.lockOwnCredentials": "Turi savo prisijungimo duomenis ir jau yra už patalpų ribų",
+  "placement.lockAtTarget": "Jau yra prie tikslo",
+  "placement.lockHomeFixed": "Fiksuota nuo pirmos atsarginės kopijos: {home}",
 };
 
 export default lt;
