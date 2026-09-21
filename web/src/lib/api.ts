@@ -55,6 +55,8 @@ export interface Container {
    *  Settings and picked here, so the same bucket path is never typed into ten
    *  items and can be corrected in one place. */
   repo?: string;
+  /** Where the backups go and where they are copied, as the card shows it. */
+  placement: PlacementView;
 }
 
 export interface ListContainersResponse {
@@ -329,6 +331,11 @@ export interface ImportSettingsSummary {
    *  absent from the file, which is kept, and a location that would move an
    *  in-use repository, which is declined. The server logs both. */
   namedRepos: number;
+  /** null when the file lacks the block and the table stays as it is. */
+  placementDefaults: number | null;
+  copyRules: number | null;
+  /** Targets the file adds, with what each would receive at its first run. */
+  newTargets: NewTargetPreview[];
   credentials: {
     present: boolean;
     cloud: boolean;
@@ -1250,6 +1257,9 @@ export type DiscoverEnvelope = OkEnvelope & {
   repo?: string;
   skipped?: string[];
   skippedNeedsAction?: boolean;
+  paused?: boolean;
+  leftOpen?: string[];
+  directRepos?: DirectRepoFinding[];
 };
 
 /**
@@ -1287,12 +1297,16 @@ export async function discoverAll(): Promise<{
   error?: string;
   skipped: string[];
   skippedNeedsAction: boolean;
+  paused: PlacementDomain[];
+  leftOpen: string[];
+  directRepos: DirectRepoFinding[];
 }> {
   const [c, v, f] = await Promise.all([discover(), discoverVMs(), discoverFiles()]);
   const failed = [c, v, f].find((r) => !r.ok);
   // De-duplicated: the same named repository is searched by all three domains, so
   // one unmounted share would otherwise be named three times in one sentence.
   const skipped = [...new Set([c, v, f].flatMap((r) => r.skipped ?? []))];
+  const answers: [PlacementDomain, DiscoverEnvelope][] = [["containers", c], ["vms", v], ["files", f]];
   return {
     containers: c.discovered ?? 0,
     vms: v.discovered ?? 0,
@@ -1302,7 +1316,27 @@ export async function discoverAll(): Promise<{
     // ANY domain that hit something actionable. The sentence lists all three
     // domains' skips together, so the flag has to be the union too.
     skippedNeedsAction: [c, v, f].some((r) => r.skippedNeedsAction === true),
+    paused: answers.filter(([, r]) => r.paused === true).map(([d]) => d),
+    leftOpen: [...new Set(answers.flatMap(([, r]) => r.leftOpen ?? []))],
+    directRepos: mergeDirectFindings(answers.flatMap(([, r]) => r.directRepos ?? [])),
   };
+}
+
+// mergeDirectFindings keeps one entry per repository, with the targets every
+// domain offered for it.
+function mergeDirectFindings(found: DirectRepoFinding[]): DirectRepoFinding[] {
+  const byRepo = new Map<string, DirectRepoFinding>();
+  for (const f of found) {
+    const seen = byRepo.get(f.repoId);
+    if (!seen) {
+      byRepo.set(f.repoId, { ...f, targets: [...f.targets] });
+      continue;
+    }
+    for (const target of f.targets) {
+      if (!seen.targets.some((x) => x.id === target.id)) seen.targets.push(target);
+    }
+  }
+  return [...byRepo.values()];
 }
 
 /** Delete ALL backups of a container and forget it from the store. */
@@ -2036,24 +2070,27 @@ export function listOffsiteTargets(
   return fetchJSON(`/api/offsite/targets${qs}`);
 }
 
-/** POST /api/offsite/targets — create a target (id/createdAt are minted server-side). */
+/** POST /api/offsite/targets: create a target. `alsoExclude` is the answer to
+ *  the new-target question and goes along only when there is one. */
 export function createOffsiteTarget(
-  target: Omit<OffsiteTarget, "id" | "createdAt">
+  target: Omit<OffsiteTarget, "id" | "createdAt">,
+  alsoExclude?: NewTargetExclusion
 ): Promise<OkEnvelope & { target?: OffsiteTarget }> {
   return fetchJSON("/api/offsite/targets", {
     method: "POST",
-    body: JSON.stringify(target),
+    body: JSON.stringify(alsoExclude ? { ...target, alsoExclude } : target),
   });
 }
 
 /** PUT /api/offsite/targets/{id} — replace a target (createdAt is preserved; unknown id → 404). */
 export function updateOffsiteTarget(
   id: string,
-  target: OffsiteTarget
+  target: OffsiteTarget,
+  alsoExclude?: NewTargetExclusion
 ): Promise<OkEnvelope & { target?: OffsiteTarget; warnings?: SaveWarning[] }> {
   return fetchJSON(`/api/offsite/targets/${encodeURIComponent(id)}`, {
     method: "PUT",
-    body: JSON.stringify(target),
+    body: JSON.stringify(alsoExclude ? { ...target, alsoExclude } : target),
   });
 }
 
@@ -2078,6 +2115,347 @@ export interface TargetUse {
   directRepoId: string;
   items: number;
   defaultDomains: PlacementDomain[];
+}
+
+export const PLACEMENT_DOMAINS: readonly PlacementDomain[] = ["containers", "vms", "files"];
+
+export type SegmentId = "local" | "local-offsite" | "offsite-only";
+export type HomeKind = "domain" | "domain-remote" | "local" | "remote" | "direct" | "missing";
+export type SegmentLockReason = "no-target" | "own-credentials" | "at-target" | "home-fixed";
+export type SegmentLocks = Partial<Record<SegmentId, SegmentLockReason>>;
+
+export interface ItemRef {
+  domain: PlacementDomain;
+  /** The container name, the VM's libvirtName, or the file set's id. */
+  key: string;
+}
+
+export type HomeChoice = { follow: true } | { repo: string };
+export type CopiesChoice = { follow: true } | { skip: string[] };
+
+export interface PlacementChange {
+  home?: HomeChoice;
+  copies?: CopiesChoice;
+}
+
+export interface DroppedTarget {
+  targetId: string;
+  name: string;
+  /** Copies that stay at the target; null while its first listing runs. */
+  copies: number | null;
+  appendOnly: boolean;
+}
+
+export interface UploadEstimate {
+  targetId: string;
+  name: string;
+  snapshots: number;
+  uncheckable: string[];
+}
+
+export interface PlacementView {
+  segment: SegmentId | "";
+  repo: string;
+  repoLabel: string;
+  repoKind: HomeKind | "";
+  repoOff: boolean;
+  homeFollows: boolean;
+  copiesFollow: boolean;
+  skip: string[];
+  locked: boolean;
+  lockReason: "first-backup" | "";
+  segmentLocks: SegmentLocks;
+  paused: boolean;
+  unreadable: boolean;
+}
+
+export type PlacementPatchResponse = OkEnvelope & {
+  dropped?: DroppedTarget[];
+  placement?: PlacementView;
+};
+
+function itemPath(item: ItemRef): string {
+  const key = encodeURIComponent(item.key);
+  switch (item.domain) {
+    case "containers":
+      return `/api/containers/${key}`;
+    case "vms":
+      return `/api/vms/${key}`;
+    case "files":
+      return `/api/files/sets/${key}`;
+  }
+}
+
+/** Writes an item's home and copies; the answer carries its new card view. */
+export function setItemPlacement(item: ItemRef, change: PlacementChange): Promise<PlacementPatchResponse> {
+  return fetchJSON(itemPath(item), { method: "PATCH", body: JSON.stringify(change) });
+}
+
+/** What a change would upload and leave behind, without writing it. */
+export function previewItemPlacement(
+  item: ItemRef,
+  change: PlacementChange
+): Promise<OkEnvelope & { added?: UploadEstimate[]; dropped?: DroppedTarget[] }> {
+  return fetchJSON(
+    `/api/items/${encodeURIComponent(item.domain)}/${encodeURIComponent(item.key)}/placement/preview`,
+    { method: "POST", body: JSON.stringify(change) }
+  );
+}
+
+export interface DefaultCounts {
+  follow: number;
+  own: number;
+  open: number;
+  chosenNoRun: number;
+}
+
+export interface DefaultRow {
+  domain: PlacementDomain;
+  exists: boolean;
+  home: string;
+  homeKind: HomeKind;
+  homeOff: boolean;
+  skip: string[];
+  paused: boolean;
+  confirmedAt: number;
+  counts: DefaultCounts;
+  unreadable: boolean;
+}
+
+export interface TargetImpact {
+  targetId: string;
+  name: string;
+  items: number;
+  snapshots: number;
+  unknown: boolean;
+  uncheckable: string[];
+}
+
+export interface DefaultImpact {
+  dropped: TargetImpact[];
+  added: TargetImpact[];
+  openTakeHome: number;
+  /** The home and skip this impact was computed against, so a stale PUT can
+   *  be told from one whose numbers just happen to match. */
+  home: string;
+  skip: string[];
+}
+
+export interface DefaultChange {
+  home?: string;
+  skip?: string[];
+}
+
+function defaultPath(domain: PlacementDomain, rest = ""): string {
+  return `/api/placement/default/${encodeURIComponent(domain)}${rest}`;
+}
+
+export function listPlacementDefaults(): Promise<OkEnvelope & { defaults?: DefaultRow[] }> {
+  return fetchJSON("/api/placement/defaults");
+}
+
+export function previewPlacementDefault(
+  domain: PlacementDomain,
+  change: DefaultChange
+): Promise<OkEnvelope & { impact?: DefaultImpact }> {
+  return fetchJSON(defaultPath(domain, "/preview"), { method: "POST", body: JSON.stringify(change) });
+}
+
+/** Writes a default. `expect` is the impact the question showed; code "stale"
+ *  answers with the new one. */
+export function putPlacementDefault(
+  domain: PlacementDomain,
+  change: DefaultChange,
+  expect: DefaultImpact
+): Promise<OkEnvelope & { default?: DefaultRow; impact?: DefaultImpact }> {
+  return fetchJSON(defaultPath(domain), { method: "PUT", body: JSON.stringify({ ...change, expect }) });
+}
+
+export interface ApplyCandidate {
+  key: string;
+  label: string;
+  losesHome: boolean;
+  losesRule: boolean;
+  uploads: UploadEstimate[];
+}
+
+export interface KeptItem {
+  key: string;
+  label: string;
+  reason: "has-backups" | "unreadable" | "changed";
+}
+
+export function getApplyDefaultPreview(
+  domain: PlacementDomain
+): Promise<OkEnvelope & { reset?: ApplyCandidate[]; kept?: KeptItem[] }> {
+  return fetchJSON(defaultPath(domain, "/apply"));
+}
+
+export function applyPlacementDefault(
+  domain: PlacementDomain,
+  keys: string[]
+): Promise<OkEnvelope & { reset?: string[]; kept?: KeptItem[] }> {
+  return fetchJSON(defaultPath(domain, "/apply"), { method: "POST", body: JSON.stringify({ keys }) });
+}
+
+export interface ExcludedItem {
+  identity: string;
+  skip: string[];
+}
+
+export interface TargetPreview {
+  items: number;
+  formerlyExcluded: ExcludedItem[];
+  defaultExcludes: boolean;
+  snapshots: number;
+  /** An upper bound from the last measurement; null when a source has none. */
+  bytes: number | null;
+  unreadable: string[];
+}
+
+export interface TargetPreviewRow {
+  targetId: string;
+  name: string;
+  preview: TargetPreview;
+}
+
+export interface UnmatchedName {
+  identity: string;
+  snapshots: number;
+}
+
+export function getConfirmPreview(
+  domain: PlacementDomain
+): Promise<OkEnvelope & { paused?: boolean; targets?: TargetPreviewRow[]; unmatched?: UnmatchedName[] }> {
+  return fetchJSON(defaultPath(domain, "/confirm"));
+}
+
+export function confirmPlacementDefault(domain: PlacementDomain, exclude: string[]): Promise<OkEnvelope> {
+  return fetchJSON(defaultPath(domain, "/confirm"), { method: "POST", body: JSON.stringify({ exclude }) });
+}
+
+export interface HomeOption {
+  id: string;
+  name: string;
+  location: string;
+  kind: "domain" | "domain-remote" | "local";
+  scheme: string;
+}
+
+export interface TargetOption {
+  id: string;
+  name: string;
+  enabled: boolean;
+  primary: boolean;
+  appendOnly: boolean;
+  hint: "" | "creds-differ";
+}
+
+export interface SendToOption {
+  kind: "direct" | "remote";
+  /** "" while the direct repository does not exist yet. */
+  repoId: string;
+  targetId: string;
+  name: string;
+  location: string;
+}
+
+export interface PlacementOptions {
+  domain: PlacementDomain;
+  unreadable: boolean;
+  paused: boolean;
+  homes: HomeOption[];
+  targets: TargetOption[];
+  sendTo: SendToOption[];
+  segmentLocks: SegmentLocks;
+  default: DefaultRow;
+}
+
+export function getPlacementOptions(domain: PlacementDomain): Promise<OkEnvelope & { options?: PlacementOptions }> {
+  return fetchJSON(`/api/placement/options?domain=${encodeURIComponent(domain)}`);
+}
+
+export function getNewTargetPreview(
+  domain: PlacementDomain,
+  repo: string,
+  targetId?: string
+): Promise<OkEnvelope & { preview?: TargetPreview }> {
+  const target = targetId ? `&target=${encodeURIComponent(targetId)}` : "";
+  return fetchJSON(
+    `/api/placement/new-target-preview?domain=${encodeURIComponent(domain)}&repo=${encodeURIComponent(repo)}${target}`
+  );
+}
+
+export interface NewTargetExclusion {
+  identities: string[];
+  default: boolean;
+}
+
+/** Either targetId or field, never both: field means the row the off-site field edits. */
+export interface PlacementExcludeBody {
+  domain: PlacementDomain;
+  targetId?: string;
+  field?: boolean;
+  identities: string[];
+  default: boolean;
+}
+
+export function excludeFromTarget(body: PlacementExcludeBody): Promise<OkEnvelope> {
+  return fetchJSON("/api/placement/exclude", { method: "POST", body: JSON.stringify(body) });
+}
+
+export interface NewTargetPreview {
+  id: string;
+  domain: PlacementDomain;
+  name: string;
+  preview: TargetPreview;
+}
+
+export interface DirectSuggestion {
+  location: string;
+  note: "" | "bucket-root" | "path-needed";
+}
+
+export interface DirectRepoFinding {
+  repoId: string;
+  name: string;
+  targets: { id: string; name: string }[];
+}
+
+export function getDirectRepo(
+  targetId: string
+): Promise<OkEnvelope & { repo?: NamedRepo | null; suggestion?: DirectSuggestion }> {
+  return fetchJSON(`/api/offsite/targets/${encodeURIComponent(targetId)}/direct`);
+}
+
+/** Probes a place for a direct repository with the target's credentials; creates nothing. */
+export function testDirectLocation(
+  targetId: string,
+  location: string
+): Promise<OkEnvelope & { reachable?: boolean; initialized?: boolean }> {
+  return fetchJSON(`/api/offsite/targets/${encodeURIComponent(targetId)}/direct/test`, {
+    method: "POST",
+    body: JSON.stringify({ location }),
+  });
+}
+
+/** An empty name leaves the naming to the server, which calls it "<target> direct". */
+export function createDirectRepo(
+  targetId: string,
+  name: string,
+  location: string
+): Promise<OkEnvelope & { repo?: NamedRepo }> {
+  return fetchJSON("/api/repos", {
+    method: "POST",
+    body: JSON.stringify({ name, repo: location, companionOf: targetId }),
+  });
+}
+
+export function connectRepo(repoId: string, targetId: string): Promise<OkEnvelope & { repo?: NamedRepo }> {
+  return fetchJSON(`/api/repos/${encodeURIComponent(repoId)}/connect`, {
+    method: "POST",
+    body: JSON.stringify({ targetId }),
+  });
 }
 
 /** The off-site target a refusal sends the operator to. */
@@ -2281,6 +2659,8 @@ export interface VM {
   /** Optional per-item repository override (#204): the ID of a named
    *  repository from Settings, "" for the VMs domain repository. */
   repo?: string;
+  /** Where the backups go and where they are copied, as the card shows it. */
+  placement: PlacementView;
 }
 
 export interface ListVMsResponse {
@@ -2506,6 +2886,8 @@ export interface FileSetView {
    *  compiles to the single whole-folder positional), deliberately
    *  distinguishable from a written selection. */
   selectedPaths?: string[];
+  /** Where the backups go and where they are copied, as the card shows it. */
+  placement: PlacementView;
 }
 
 /** The resolved outcome for one folder set (schedule.EffectiveFileSetSchedule).
@@ -2555,18 +2937,17 @@ export function getFileSetPreset(): Promise<FileSetPresetResponse> {
   return fetchJSON("/api/files/sets/preset");
 }
 
-/** POST /api/files/sets — create a file set (path required; validated
- *  server-side). repo picks the named repository (#204) the set writes to. */
+/** POST /api/files/sets: create a file set. The path is required and checked on the server. */
 export function createFileSet(set: {
   name: string;
   path: string;
   excludes: string[];
   enabled?: boolean;
-  /** The named repository (#204) the set writes to, "" for the domain's own.
-   *  The create dialog shows the picker, so the choice has to travel with the
-   *  create - it used to be dropped here and the set landed on the domain
-   *  repository with nothing on screen saying so. */
+  /** Absent leaves the set open, so it takes the default's location at its
+   *  first backup; present, "" included, chooses that repository. */
   repo?: string;
+  /** Absent follows the default's copies. */
+  copies?: CopiesChoice;
 }): Promise<OkEnvelope & { id?: string }> {
   return fetchJSON("/api/files/sets", {
     method: "POST",
@@ -3282,11 +3663,12 @@ export function listMeshOffers(): Promise<OkEnvelope & { offers?: MeshOffer[] }>
  */
 export function acceptMeshOffer(
   id: string,
-  domain: string
+  domain: string,
+  alsoExclude?: NewTargetExclusion
 ): Promise<OkEnvelope & { target?: OffsiteTarget }> {
   return fetchJSON(`/api/fleet/mesh-offers/${encodeURIComponent(id)}/accept`, {
     method: "POST",
-    body: JSON.stringify({ domain }),
+    body: JSON.stringify(alsoExclude ? { domain, alsoExclude } : { domain }),
   });
 }
 

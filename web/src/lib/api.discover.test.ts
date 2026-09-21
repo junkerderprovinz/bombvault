@@ -94,4 +94,21 @@ describe("discoverAll", () => {
     const res = await discoverAll();
     expect(res.skippedNeedsAction).toBe(true);
   });
+
+  it("names the paused domains in order and merges what the three passes left open or found direct", async () => {
+    const { discoverAll } = await import("./api");
+    const replies = [
+      { ok: true, discovered: 1, paused: true, leftOpen: ["nginx"], directRepos: [{ repoId: "r1", name: "B2 old", targets: [{ id: "t1", name: "B2" }] }] },
+      { ok: true, discovered: 0, paused: false, leftOpen: [], directRepos: [{ repoId: "r1", name: "B2 old", targets: [{ id: "t2", name: "B2 VMs" }] }] },
+      { ok: true, discovered: 2, paused: true, leftOpen: ["nginx", "Photos"], directRepos: [] },
+    ];
+    let n = 0;
+    fetchMock.mockImplementation(() => answer(replies[n++]));
+    const res = await discoverAll();
+    expect(res.paused).toEqual(["containers", "files"]);
+    expect(res.leftOpen).toEqual(["nginx", "Photos"]);
+    expect(res.directRepos).toEqual([
+      { repoId: "r1", name: "B2 old", targets: [{ id: "t1", name: "B2" }, { id: "t2", name: "B2 VMs" }] },
+    ]);
+  });
 });
