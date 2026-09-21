@@ -1705,6 +1705,17 @@ const gl: Partial<Translations> = {
   "placement.storedOn": "Gardado en",
   "placement.copyTo": "Copiar a",
   "placement.sendTo": "Enviar a",
+  // Direct repository
+  "directRepo.title": "Repositorio directo en {target}",
+  "directRepo.intro": "Os elementos que o escollan gárdanse directamente en {target}, coa súa clave, clase de almacenamento, límites e configuración de append-only. Conserva as súas instantáneas segundo as regras de {target}. Cancelar non deixa nada.",
+  "directRepo.test": "Probar conexión",
+  "directRepo.testEmpty": "Accesible, baleiro",
+  "directRepo.testExisting": "Xa contén un repositorio",
+  "directRepo.testFailed": "Non accesible: {error}",
+  "directRepo.bucketRoot": "{target} está na raíz do seu bucket, así que calquera camiño dese bucket quedaría dentro del. Escolle outro bucket.",
+  "directRepo.pathNeeded": "Este rest-server mantén repositorios privados. Introduce o camiño do repositorio directo.",
+  "directRepo.addAndUse": "Crear e usar",
+  "directRepo.draftNote": "Créase xunto co conxunto de cartafoles.",
 
   // Defaults
   "placementDefaults.copyLine": "Elementos cuxo lugar é orixe de copia:",

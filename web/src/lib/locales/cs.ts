@@ -1692,6 +1692,17 @@ const cs: Partial<Translations> = {
   "placement.storedOn": "Uloženo na",
   "placement.copyTo": "Kopírovat do",
   "placement.sendTo": "Odeslat do",
+  // Direct repository
+  "directRepo.title": "Přímý repozitář u {target}",
+  "directRepo.intro": "Položky, které si ho zvolí, se zálohují přímo do {target}, s jeho klíčem, třídou úložiště, limity a nastavením append-only. Uchovává své snímky podle pravidel {target}. Zrušení nezanechá nic.",
+  "directRepo.test": "Otestovat připojení",
+  "directRepo.testEmpty": "Dostupné, prázdné",
+  "directRepo.testExisting": "Už obsahuje repozitář",
+  "directRepo.testFailed": "Nedostupné: {error}",
+  "directRepo.bucketRoot": "{target} leží v kořeni svého bucketu, takže každá cesta v tomto bucketu by ležela uvnitř něj. Zvol jiný bucket.",
+  "directRepo.pathNeeded": "Tento rest-server drží privátní repozitáře. Zadejte cestu pro přímý repozitář.",
+  "directRepo.addAndUse": "Vytvořit a použít",
+  "directRepo.draftNote": "Vytvoří se spolu se sadou složek.",
 
   // Defaults
   "placementDefaults.copyLine": "Položky, jejichž umístění je zdrojem kopií:",

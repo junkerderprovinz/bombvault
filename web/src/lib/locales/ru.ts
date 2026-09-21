@@ -1689,6 +1689,17 @@ const ru: Partial<Translations> = {
   "placement.storedOn": "Сохранено на",
   "placement.copyTo": "Копировать в",
   "placement.sendTo": "Отправить в",
+  // Direct repository
+  "directRepo.title": "Прямой репозиторий у {target}",
+  "directRepo.intro": "Элементы, которые его выбирают, копируются напрямую в {target}, с его ключом, классом хранения, лимитами и настройкой append-only. Он хранит свои снимки по правилам {target}. Отмена не оставляет ничего.",
+  "directRepo.test": "Проверить соединение",
+  "directRepo.testEmpty": "Доступен, пуст",
+  "directRepo.testExisting": "Уже содержит репозиторий",
+  "directRepo.testFailed": "Недоступен: {error}",
+  "directRepo.bucketRoot": "{target} находится в корне своего бакета, поэтому любой путь в этом бакете окажется внутри него. Выбери другой бакет.",
+  "directRepo.pathNeeded": "Этот rest-server хранит частные репозитории. Введите путь для прямого репозитория.",
+  "directRepo.addAndUse": "Создать и использовать",
+  "directRepo.draftNote": "Создаётся вместе с набором папок.",
 
   // Defaults
   "placementDefaults.copyLine": "Элементы, чьё расположение является источником копий:",

@@ -1694,6 +1694,17 @@ const no: Partial<Translations> = {
   "placement.storedOn": "Lagret på",
   "placement.copyTo": "Kopier til",
   "placement.sendTo": "Send til",
+  // Direct repository
+  "directRepo.title": "Direkte depot hos {target}",
+  "directRepo.intro": "Elementer som velger det, sikkerhetskopieres direkte til {target}, med nøkkelen, lagringsklassen, grensene og append-only-innstillingen. Det beholder øyeblikksbildene sine etter {target}s regler. Avbryt etterlater ingenting.",
+  "directRepo.test": "Test tilkobling",
+  "directRepo.testEmpty": "Tilgjengelig, tom",
+  "directRepo.testExisting": "Inneholder allerede et depot",
+  "directRepo.testFailed": "Ikke tilgjengelig: {error}",
+  "directRepo.bucketRoot": "{target} ligger ved roten av sin bucket, så enhver sti i den bucketen ville ligge inni det. Velg en annen bucket.",
+  "directRepo.pathNeeded": "Denne rest-serveren holder private depoter. Angi stien til det direkte depotet.",
+  "directRepo.addAndUse": "Opprett og bruk",
+  "directRepo.draftNote": "Opprettes sammen med mappesettet.",
 
   // Defaults
   "placementDefaults.copyLine": "Elementer der plasseringen er en kopikilde:",

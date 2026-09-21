@@ -1694,6 +1694,17 @@ const fr: Partial<Translations> = {
   "placement.storedOn": "Stocké sur",
   "placement.copyTo": "Copier vers",
   "placement.sendTo": "Envoyer vers",
+  // Direct repository
+  "directRepo.title": "Dépôt direct chez {target}",
+  "directRepo.intro": "Les éléments qui le choisissent sont sauvegardés directement vers {target}, avec sa clé, sa classe de stockage, ses limites et son réglage append-only. Il conserve ses snapshots selon les règles de {target}. Annuler ne laisse rien derrière.",
+  "directRepo.test": "Tester la connexion",
+  "directRepo.testEmpty": "Joignable, vide",
+  "directRepo.testExisting": "Contient déjà un dépôt",
+  "directRepo.testFailed": "Non joignable : {error}",
+  "directRepo.bucketRoot": "{target} se trouve à la racine de son bucket, donc tout chemin de ce bucket se trouverait à l'intérieur. Choisissez un autre bucket.",
+  "directRepo.pathNeeded": "Ce rest-server garde des dépôts privés. Saisissez le chemin du dépôt direct.",
+  "directRepo.addAndUse": "Créer et utiliser",
+  "directRepo.draftNote": "Créé en même temps que le jeu de dossiers.",
 
   // Defaults
   "placementDefaults.copyLine": "Éléments dont l'emplacement est une source de copie :",

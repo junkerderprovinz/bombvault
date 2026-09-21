@@ -1686,6 +1686,17 @@ const zh: Partial<Translations> = {
   "placement.storedOn": "存放于",
   "placement.copyTo": "复制到",
   "placement.sendTo": "发送到",
+  // Direct repository
+  "directRepo.title": "{target} 处的直接存储库",
+  "directRepo.intro": "选择它的项目会直接备份到 {target}，使用它的密钥、存储类别、限制和 append-only 设置。它按照 {target} 的规则保留快照。取消不会留下任何东西。",
+  "directRepo.test": "测试连接",
+  "directRepo.testEmpty": "可达，为空",
+  "directRepo.testExisting": "已经包含一个存储库",
+  "directRepo.testFailed": "不可达：{error}",
+  "directRepo.bucketRoot": "{target} 位于其桶的根部，因此该桶中的每个路径都会落在它里面。选择另一个桶。",
+  "directRepo.pathNeeded": "这个 rest-server 保存私有存储库。输入直接存储库的路径。",
+  "directRepo.addAndUse": "创建并使用",
+  "directRepo.draftNote": "与文件夹集一起创建。",
 
   // Defaults
   "placementDefaults.copyLine": "位置为复制来源的项目：",

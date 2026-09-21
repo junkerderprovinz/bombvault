@@ -1705,6 +1705,17 @@ const hi: Partial<Translations> = {
   "placement.storedOn": "संग्रहण स्थान",
   "placement.copyTo": "कॉपी गंतव्य",
   "placement.sendTo": "भेजने का गंतव्य",
+  // Direct repository
+  "directRepo.title": "{target} पर डायरेक्ट रिपॉज़िटरी",
+  "directRepo.intro": "जो प्रविष्टियाँ इसे चुनती हैं, वे सीधे {target} में बैकअप होती हैं, इसकी कुंजी, स्टोरेज क्लास, सीमाओं और append-only सेटिंग के साथ। यह अपने स्नैपशॉट {target} के नियमों के अनुसार रखता है। रद्द करने पर कुछ नहीं बचता।",
+  "directRepo.test": "कनेक्शन जाँचें",
+  "directRepo.testEmpty": "पहुँच योग्य, खाली",
+  "directRepo.testExisting": "इसमें पहले से एक रिपॉज़िटरी है",
+  "directRepo.testFailed": "पहुँच योग्य नहीं: {error}",
+  "directRepo.bucketRoot": "{target} अपने bucket की जड़ में है, इसलिए उस bucket में हर पथ उसके अंदर होगा। कोई और bucket चुनें।",
+  "directRepo.pathNeeded": "यह rest-server निजी रिपॉज़िटरी रखता है। डायरेक्ट रिपॉज़िटरी के लिए पथ दर्ज करें।",
+  "directRepo.addAndUse": "बनाएँ और उपयोग करें",
+  "directRepo.draftNote": "फ़ोल्डर सेट के साथ बनेगा।",
 
   // Defaults
   "placementDefaults.copyLine": "वे प्रविष्टियाँ जिनकी जगह कॉपी का स्रोत है:",

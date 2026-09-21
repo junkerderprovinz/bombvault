@@ -1705,6 +1705,17 @@ const id: Partial<Translations> = {
   "placement.storedOn": "Disimpan di",
   "placement.copyTo": "Salin ke",
   "placement.sendTo": "Kirim ke",
+  // Direct repository
+  "directRepo.title": "Repositori langsung di {target}",
+  "directRepo.intro": "Item yang memilihnya dicadangkan langsung ke {target}, dengan kunci, kelas penyimpanan, batas, dan pengaturan append-only miliknya. Snapshot-nya disimpan sesuai aturan {target}. Membatalkan tidak meninggalkan apa pun.",
+  "directRepo.test": "Uji koneksi",
+  "directRepo.testEmpty": "Dapat dijangkau, kosong",
+  "directRepo.testExisting": "Sudah berisi repositori",
+  "directRepo.testFailed": "Tidak dapat dijangkau: {error}",
+  "directRepo.bucketRoot": "{target} berada di root bucket-nya, jadi setiap jalur di bucket itu akan berada di dalamnya. Pilih bucket lain.",
+  "directRepo.pathNeeded": "rest-server ini menyimpan repositori pribadi. Masukkan jalur untuk repositori langsung.",
+  "directRepo.addAndUse": "Buat dan gunakan",
+  "directRepo.draftNote": "Dibuat bersama set folder.",
 
   // Defaults
   "placementDefaults.copyLine": "Item yang lokasinya adalah sumber salinan:",

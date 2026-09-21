@@ -1694,6 +1694,17 @@ const tr: Partial<Translations> = {
   "placement.storedOn": "Depolama konumu",
   "placement.copyTo": "Kopyalama hedefi",
   "placement.sendTo": "Gönderim hedefi",
+  // Direct repository
+  "directRepo.title": "{target} yanında doğrudan depo",
+  "directRepo.intro": "Bunu seçen ögeler doğrudan {target} hedefine yedeklenir, onun anahtarı, depolama sınıfı, sınırları ve append-only ayarıyla. Anlık görüntülerini {target} kurallarına göre saklar. İptal hiçbir şey bırakmaz.",
+  "directRepo.test": "Bağlantıyı test et",
+  "directRepo.testEmpty": "Erişilebilir, boş",
+  "directRepo.testExisting": "Zaten bir depo içeriyor",
+  "directRepo.testFailed": "Erişilemiyor: {error}",
+  "directRepo.bucketRoot": "{target}, kendi bucket'ının kökünde, bu yüzden o bucket'taki her yol bunun içinde kalır. Başka bir bucket seç.",
+  "directRepo.pathNeeded": "Bu rest-server özel depolar tutar. Doğrudan depo için yolu girin.",
+  "directRepo.addAndUse": "Oluştur ve kullan",
+  "directRepo.draftNote": "Klasör setiyle birlikte oluşturulur.",
 
   // Defaults
   "placementDefaults.copyLine": "Konumu kopya kaynağı olan ögeler:",

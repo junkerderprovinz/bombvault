@@ -1705,6 +1705,17 @@ const sk: Partial<Translations> = {
   "placement.storedOn": "Uložené na",
   "placement.copyTo": "Kopírovať do",
   "placement.sendTo": "Odoslať do",
+  // Direct repository
+  "directRepo.title": "Priamy repozitár pri {target}",
+  "directRepo.intro": "Položky, ktoré si ho zvolia, sa zálohujú priamo do {target}, s jeho kľúčom, triedou úložiska, limitmi a nastavením append-only. Uchováva svoje snímky podľa pravidiel {target}. Zrušenie nič nezanechá.",
+  "directRepo.test": "Otestovať pripojenie",
+  "directRepo.testEmpty": "Dostupné, prázdne",
+  "directRepo.testExisting": "Už obsahuje repozitár",
+  "directRepo.testFailed": "Nedostupné: {error}",
+  "directRepo.bucketRoot": "{target} leží v koreni svojho bucketu, takže každá cesta v tomto buckete by ležala vnútri neho. Zvoľ iný bucket.",
+  "directRepo.pathNeeded": "Tento rest-server drží súkromné repozitáre. Zadajte cestu pre priamy repozitár.",
+  "directRepo.addAndUse": "Vytvoriť a použiť",
+  "directRepo.draftNote": "Vytvorí sa spolu so sadou priečinkov.",
 
   // Defaults
   "placementDefaults.copyLine": "Položky, ktorých umiestnenie je zdrojom kópií:",

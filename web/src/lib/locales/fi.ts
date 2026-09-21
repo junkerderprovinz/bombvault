@@ -1694,6 +1694,17 @@ const fi: Partial<Translations> = {
   "placement.storedOn": "Tallennuspaikka",
   "placement.copyTo": "Kopiointikohteet",
   "placement.sendTo": "Lähetyskohde",
+  // Direct repository
+  "directRepo.title": "Suora arkisto kohteessa {target}",
+  "directRepo.intro": "Kohteet, jotka valitsevat sen, varmuuskopioituvat suoraan kohteeseen {target}, sen avaimella, tallennusluokalla, rajoilla ja append-only-asetuksella. Se säilyttää tilannevedoksensa kohteen {target} sääntöjen mukaan. Peruminen ei jätä mitään jälkeensä.",
+  "directRepo.test": "Testaa yhteys",
+  "directRepo.testEmpty": "Tavoitettavissa, tyhjä",
+  "directRepo.testExisting": "Sisältää jo arkiston",
+  "directRepo.testFailed": "Ei tavoitettavissa: {error}",
+  "directRepo.bucketRoot": "{target} on oman bucketinsa juuressa, joten jokainen polku siinä bucketissa olisi sen sisällä. Valitse toinen bucket.",
+  "directRepo.pathNeeded": "Tämä rest-server pitää yksityisiä arkistoja. Anna suoran arkiston polku.",
+  "directRepo.addAndUse": "Luo ja käytä",
+  "directRepo.draftNote": "Luodaan yhdessä kansiojoukon kanssa.",
 
   // Defaults
   "placementDefaults.copyLine": "Kohteet, joiden sijainti on kopion lähde:",

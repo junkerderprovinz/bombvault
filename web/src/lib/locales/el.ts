@@ -1694,6 +1694,17 @@ const el: Partial<Translations> = {
   "placement.storedOn": "Αποθηκευμένο σε",
   "placement.copyTo": "Αντιγραφή σε",
   "placement.sendTo": "Αποστολή σε",
+  // Direct repository
+  "directRepo.title": "Άμεσο αποθετήριο στο {target}",
+  "directRepo.intro": "Τα στοιχεία που το επιλέγουν αντιγράφονται απευθείας στο {target}, με το κλειδί, την κλάση αποθήκευσης, τα όρια και τη ρύθμιση append-only του. Κρατά τα στιγμιότυπά του σύμφωνα με τους κανόνες του {target}. Η ακύρωση δεν αφήνει τίποτα πίσω.",
+  "directRepo.test": "Δοκιμή σύνδεσης",
+  "directRepo.testEmpty": "Προσβάσιμο, άδειο",
+  "directRepo.testExisting": "Περιέχει ήδη αποθετήριο",
+  "directRepo.testFailed": "Μη προσβάσιμο: {error}",
+  "directRepo.bucketRoot": "Το {target} βρίσκεται στη ρίζα του bucket του, οπότε κάθε διαδρομή σε αυτό το bucket βρίσκεται μέσα του. Διάλεξε άλλο bucket.",
+  "directRepo.pathNeeded": "Αυτός ο rest-server κρατά ιδιωτικά αποθετήρια. Εισαγάγετε τη διαδρομή για το άμεσο αποθετήριο.",
+  "directRepo.addAndUse": "Δημιουργία και χρήση",
+  "directRepo.draftNote": "Δημιουργείται μαζί με το σύνολο φακέλων.",
 
   // Defaults
   "placementDefaults.copyLine": "Στοιχεία των οποίων η θέση είναι πηγή αντιγράφων:",

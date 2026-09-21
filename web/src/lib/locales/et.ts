@@ -1705,6 +1705,17 @@ const et: Partial<Translations> = {
   "placement.storedOn": "Asukoht",
   "placement.copyTo": "Koopia sihtkoht",
   "placement.sendTo": "Saatmise sihtkoht",
+  // Direct repository
+  "directRepo.title": "Otsehoidla {target} juures",
+  "directRepo.intro": "Üksused, mis selle valivad, varundatakse otse hoidlasse {target}, selle võtme, salvestusklassi, piirangute ja append-only seadistusega. See säilitab oma hetktõmmiseid {target} reeglite järgi. Tühistamine ei jäta midagi maha.",
+  "directRepo.test": "Testi ühendust",
+  "directRepo.testEmpty": "Kättesaadav, tühi",
+  "directRepo.testExisting": "Sisaldab juba hoidlat",
+  "directRepo.testFailed": "Pole kättesaadav: {error}",
+  "directRepo.bucketRoot": "{target} asub oma bucketi juures, seega iga tee selles bucketis jääb selle sisse. Vali mõni teine bucket.",
+  "directRepo.pathNeeded": "See rest-server hoiab privaatseid hoidlaid. Sisesta otsehoidla tee.",
+  "directRepo.addAndUse": "Loo ja kasuta",
+  "directRepo.draftNote": "Luuakse koos kaustakomplektiga.",
 
   // Defaults
   "placementDefaults.copyLine": "Üksused, mille asukoht on koopia allikas:",

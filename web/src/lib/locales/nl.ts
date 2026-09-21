@@ -1691,6 +1691,17 @@ const nl: Partial<Translations> = {
   "placement.storedOn": "Opgeslagen op",
   "placement.copyTo": "Kopieer naar",
   "placement.sendTo": "Verstuur naar",
+  // Direct repository
+  "directRepo.title": "Directe repository bij {target}",
+  "directRepo.intro": "Items die deze kiezen back-uppen rechtstreeks naar {target}, met de sleutel, opslagklasse, limieten en append-only-instelling daarvan. Het bewaart zijn snapshots volgens de regels van {target}. Annuleren laat niets achter.",
+  "directRepo.test": "Verbinding testen",
+  "directRepo.testEmpty": "Bereikbaar, leeg",
+  "directRepo.testExisting": "Bevat al een repository",
+  "directRepo.testFailed": "Niet bereikbaar: {error}",
+  "directRepo.bucketRoot": "{target} ligt aan de root van zijn bucket, dus elk pad in die bucket zou daarbinnen liggen. Kies een andere bucket.",
+  "directRepo.pathNeeded": "Deze rest-server bewaart privérepositories. Voer het pad voor de directe repository in.",
+  "directRepo.addAndUse": "Aanmaken en gebruiken",
+  "directRepo.draftNote": "Wordt samen met de mappenset aangemaakt.",
 
   // Defaults
   "placementDefaults.copyLine": "Items waarvan de locatie een kopiebron is:",

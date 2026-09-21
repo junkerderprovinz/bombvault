@@ -1692,6 +1692,17 @@ const es: Partial<Translations> = {
   "placement.storedOn": "Almacenado en",
   "placement.copyTo": "Copiar a",
   "placement.sendTo": "Enviar a",
+  // Direct repository
+  "directRepo.title": "Repositorio directo en {target}",
+  "directRepo.intro": "Los elementos que lo elijan se respaldan directamente en {target}, con su clave, clase de almacenamiento, límites y configuración de append-only. Conserva sus snapshots según las reglas de {target}. Cancelar no deja nada.",
+  "directRepo.test": "Probar conexión",
+  "directRepo.testEmpty": "Accesible, vacío",
+  "directRepo.testExisting": "Ya contiene un repositorio",
+  "directRepo.testFailed": "No accesible: {error}",
+  "directRepo.bucketRoot": "{target} está en la raíz de su bucket, así que cualquier ruta en ese bucket quedaría dentro de él. Elige otro bucket.",
+  "directRepo.pathNeeded": "Este rest-server mantiene repositorios privados. Introduce la ruta para el repositorio directo.",
+  "directRepo.addAndUse": "Crear y usar",
+  "directRepo.draftNote": "Se crea junto con el conjunto de carpetas.",
 
   // Defaults
   "placementDefaults.copyLine": "Elementos cuya ubicación es origen de copia:",

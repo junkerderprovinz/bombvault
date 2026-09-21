@@ -1686,6 +1686,17 @@ const vi: Partial<Translations> = {
   "placement.storedOn": "Lưu tại",
   "placement.copyTo": "Sao chép đến",
   "placement.sendTo": "Gửi đến",
+  // Direct repository
+  "directRepo.title": "Kho trực tiếp tại {target}",
+  "directRepo.intro": "Các mục chọn kho này sẽ sao lưu thẳng vào {target}, dùng khóa, lớp lưu trữ, giới hạn và cài đặt append-only của nó. Kho giữ các snapshot theo quy tắc của {target}. Hủy sẽ không để lại gì.",
+  "directRepo.test": "Kiểm tra kết nối",
+  "directRepo.testEmpty": "Có thể truy cập, trống",
+  "directRepo.testExisting": "Đã có sẵn một kho",
+  "directRepo.testFailed": "Không thể truy cập: {error}",
+  "directRepo.bucketRoot": "{target} nằm ở gốc bucket của nó, nên mọi đường dẫn trong bucket đó đều nằm bên trong. Chọn bucket khác.",
+  "directRepo.pathNeeded": "rest-server này giữ các kho riêng tư. Nhập đường dẫn cho kho trực tiếp.",
+  "directRepo.addAndUse": "Tạo và dùng",
+  "directRepo.draftNote": "Được tạo cùng với bộ thư mục.",
 
   // Defaults
   "placementDefaults.copyLine": "Các mục có vị trí là nguồn sao chép:",
