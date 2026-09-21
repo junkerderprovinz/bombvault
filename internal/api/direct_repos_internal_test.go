@@ -203,6 +203,35 @@ func TestATargetInsideOrAroundAnotherPlaceIsRefused(t *testing.T) {
 	}
 }
 
+// Only a named repository owns its place alone. Domain paths, off-site fields
+// and targets may name one place between them, and only nesting is refused.
+func TestTwoDomainsMayNameOneOffsiteDestination(t *testing.T) {
+	f := newPlacementFixture(t)
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	v := toView(settings)
+	v.ContainersOffsite = "backups/shared-offsite"
+	v.VMsOffsite = "backups/shared-offsite"
+	if res := f.do("PUT", "/api/settings", v); res["ok"] != true {
+		t.Fatalf("two domains on one off-site destination: %v", res["error"])
+	}
+	f.target("containers", "B2", "b2:bkt:shared")
+	res := f.do("POST", "/api/offsite/targets", map[string]any{
+		"domain": "vms", "name": "B2 too", "repo": "b2:bkt:shared", "enabled": true,
+	})
+	if res["ok"] != true {
+		t.Fatalf("two targets on one place: %v", res["error"])
+	}
+	res = f.do("POST", "/api/offsite/targets", map[string]any{
+		"domain": "vms", "name": "inner", "repo": "backups/containers/offsite", "enabled": true,
+	})
+	if res["ok"] != false || res["code"] != "nested-location" {
+		t.Errorf("a target inside another domain's path: %v", res)
+	}
+}
+
 func TestASettingsSaveRefusesAPathInsideOrAroundAnotherPlace(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.target("vms", "NAS", "backups/nas-vms")

@@ -93,27 +93,36 @@ func pathElements(p string) []string {
 }
 
 // locationSelf is what the location being checked already stands for, so
-// locationClash does not hold a place against itself: rows by id, and the
-// domain whose own repository or off-site field it is.
+// locationClash does not hold a place against itself: rows by id, the domain
+// whose own repository or off-site field it is, and whether it is a target.
 type locationSelf struct {
-	ids   []string
-	own   string
-	field string
+	ids    []string
+	own    string
+	field  string
+	target bool
 }
 
-// locationClash refuses a location that is, holds or lies inside a domain
-// repository, an off-site field, an off-site target or a named repository.
-// Two rows over one place, or one inside the other, would give every question
-// about that place two answers.
+// shared reports whether this is a place other rows may name as well: a
+// domain's own repository, a domain's off-site destination or an off-site
+// target. A named repository owns its place alone, so that every question
+// asked about that place has one answer.
+func (s locationSelf) shared() bool { return s.own != "" || s.field != "" || s.target }
+
+// locationClash refuses a location that holds or lies inside a domain
+// repository, an off-site field, an off-site target or a named repository, and
+// a second row over a named repository's place.
 func (s *Service) locationClash(settings store.Settings, loc string, self locationSelf) error {
+	// Two domains on one destination is a setup people run today, so only
+	// nesting is refused between places that may be shared.
+	clashes := func(other string) bool {
+		return repoLocationsOverlap(other, loc) && (!self.shared() || !sameRepoLocation(other, loc))
+	}
 	for _, d := range offsiteConfigDomains {
-		// Two domains may share one repository; one inside the other may not.
-		if own, err := s.repoFor(settings, d, "local"); err == nil && d != self.own && repoLocationsOverlap(own, loc) &&
-			(self.own == "" || !sameRepoLocation(own, loc)) {
+		if own, err := s.repoFor(settings, d, "local"); err == nil && d != self.own && clashes(own) {
 			return fmt.Errorf("%w: the %s domain's own repository", errNestedLocation, d)
 		}
 		if off := offsiteRepoFromSettings(d, settings); off != "" && d != self.field {
-			if offLoc, err := s.resolveRepo(off); err == nil && repoLocationsOverlap(offLoc, loc) {
+			if offLoc, err := s.resolveRepo(off); err == nil && clashes(offLoc) {
 				return fmt.Errorf("%w: the %s domain's off-site destination", errNestedLocation, d)
 			}
 		}
@@ -126,7 +135,7 @@ func (s *Service) locationClash(settings store.Settings, loc string, self locati
 		if slices.Contains(self.ids, t.ID) {
 			continue
 		}
-		if tLoc, rErr := s.resolveRepo(t.Repo); rErr == nil && repoLocationsOverlap(tLoc, loc) {
+		if tLoc, rErr := s.resolveRepo(t.Repo); rErr == nil && clashes(tLoc) {
 			return fmt.Errorf("%w: the off-site destination %q", errNestedLocation, t.Name)
 		}
 	}
