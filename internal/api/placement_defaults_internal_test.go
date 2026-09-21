@@ -222,6 +222,30 @@ func TestASecondTabsHomeChangeIsRefusedOnceTheFirstHasLanded(t *testing.T) {
 	}
 }
 
+// TestASuccessfulPutReturnsTheHomeAndSkipItWrote pins that a PUT's answer
+// describes the write that just landed, not the default it replaced: a
+// client that reuses the answer as its next expect must not be told its own
+// change went stale.
+func TestASuccessfulPutReturnsTheHomeAndSkipItWrote(t *testing.T) {
+	f := newPlacementFixture(t)
+	old := f.namedRepo("Old", "old")
+	nas := f.namedRepo("NAS", "nas")
+	b2 := f.target("containers", "B2", "b2:bucket/containers")
+	f.setDefault("containers", old.ID, b2.ID)
+
+	res := f.do(http.MethodPut, "/api/placement/default/containers", map[string]any{"home": nas.ID, "skip": []string{}})
+	if res["ok"] != true {
+		t.Fatalf("PUT = %v", res)
+	}
+	impact := res["impact"].(map[string]any)
+	if impact["home"] != nas.ID {
+		t.Fatalf("impact home = %v, want %q", impact["home"], nas.ID)
+	}
+	if skip := impact["skip"].([]any); len(skip) != 0 {
+		t.Fatalf("impact skip = %v, want empty", skip)
+	}
+}
+
 // TestAPutWithoutAnExpectBlockSucceedsWhenNothingWouldChange pins the
 // contract's own answer for a missing expect block: it stands for an empty
 // impact, so a change that really has none is confirmed by it.

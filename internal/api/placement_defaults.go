@@ -458,6 +458,7 @@ func (s *Service) putDefault(ctx context.Context, domain string, change defaultC
 	if _, err := s.store.PutPlacementDefault(domain, home, skip); err != nil {
 		return defaultRow{}, impact, err
 	}
+	impact.Home, impact.Skip = home, append([]string{}, skip...)
 	for _, t := range impact.Dropped {
 		if t.Unknown {
 			s.listTargetInBackground(domain, t.TargetID)
