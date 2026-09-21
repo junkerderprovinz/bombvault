@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -450,4 +451,158 @@ func (h *Handler) handleConnectRepo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"repo": h.namedRepoViews([]store.OffsiteTarget{row})[0]}))
+}
+
+// saveWarning is a warning the answer of a save carries about a direct repository.
+type saveWarning struct {
+	Code       string `json:"code"` // "direct-retention-lowered" | "direct-append-only-off" | "direct-creds-kept"
+	TargetID   string `json:"targetId"`
+	TargetName string `json:"targetName"`
+	Items      int    `json:"items"`
+}
+
+// retentionLowered reports whether after keeps fewer snapshots than before. All
+// zero keeps everything, and the dimensions add up, so any one that shrinks
+// keeps less.
+func retentionLowered(before, after restic.RetentionPolicy) bool {
+	if !after.Any() {
+		return false
+	}
+	if !before.Any() {
+		return true
+	}
+	return after.KeepLast < before.KeepLast || after.KeepDaily < before.KeepDaily ||
+		after.KeepWeekly < before.KeepWeekly || after.KeepMonthly < before.KeepMonthly
+}
+
+// directSaveWarnings compares a target before and after a save and reports what
+// the change means for items whose only copy is in its direct repository.
+func (s *Service) directSaveWarnings(before, after store.OffsiteTarget) ([]saveWarning, error) {
+	out := []saveWarning{}
+	lowered := retentionLowered(targetOffsiteRetentionPolicy(before), targetOffsiteRetentionPolicy(after))
+	appendOnlyOff := before.Immutable && !after.Immutable
+	if !lowered && !appendOnlyOff {
+		return out, nil
+	}
+	direct, ok, err := s.store.CompanionFor(after.ID)
+	if err != nil || !ok {
+		return out, err
+	}
+	n, err := s.store.ItemsUsingNamedRepo(direct.ID)
+	if err != nil || n == 0 {
+		return out, err
+	}
+	w := saveWarning{TargetID: after.ID, TargetName: placementTargetName(after), Items: n}
+	if lowered {
+		w.Code = "direct-retention-lowered"
+		out = append(out, w)
+	}
+	if appendOnlyOff {
+		w.Code = "direct-append-only-off"
+		out = append(out, w)
+	}
+	return out, nil
+}
+
+// mirrorDirectCreds opens a target's direct repository with the target's
+// current credentials and mirrors them when it opens. When it does not, the row
+// keeps what it has and the answer is a direct-creds-kept warning.
+func (s *Service) mirrorDirectCreds(ctx context.Context, targetID string) (*saveWarning, error) {
+	target, ok, err := s.store.GetOffsiteTarget(targetID)
+	if err != nil || !ok {
+		return nil, err
+	}
+	direct, ok, err := s.store.CompanionFor(targetID)
+	if err != nil || !ok {
+		return nil, err
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, fmt.Errorf("read settings: %w", err)
+	}
+	loc, err := s.resolveRepo(direct.Repo)
+	if err != nil {
+		return nil, err
+	}
+	if !s.opensWith(ctx, loc, s.offsiteModeForTarget(settings, target)) {
+		n, err := s.store.ItemsUsingNamedRepo(direct.ID)
+		if err != nil {
+			return nil, err
+		}
+		return &saveWarning{Code: "direct-creds-kept", TargetID: target.ID, TargetName: placementTargetName(target), Items: n}, nil
+	}
+	_, err = s.store.MirrorCompanionCreds(targetID)
+	return nil, err
+}
+
+// targetSaveWarnings is what a saved target means for its direct repository.
+// The save stands either way, so a failed read is logged, not returned.
+func (s *Service) targetSaveWarnings(ctx context.Context, before, after store.OffsiteTarget) []saveWarning {
+	out, err := s.directSaveWarnings(before, after)
+	if err != nil {
+		log.Printf("api: target %s: could not check its direct repository after a save: %v", after.ID, err) //nolint:gosec // G706: the id is store-generated
+		out = []saveWarning{}
+	}
+	direct, ok, err := s.store.CompanionFor(after.ID)
+	if err != nil || !ok || direct.CredsRef == after.CredsRef {
+		return out
+	}
+	w, err := s.mirrorDirectCreds(ctx, after.ID)
+	if err != nil {
+		log.Printf("api: target %s: could not probe its direct repository with the new credentials: %v", after.ID, err) //nolint:gosec // G706: the id is store-generated
+		return out
+	}
+	if w != nil {
+		out = append(out, *w)
+	}
+	return out
+}
+
+// directCredsWarnings runs mirrorDirectCreds for the direct repositories pick
+// selects after a credential save.
+func (s *Service) directCredsWarnings(ctx context.Context, pick func(direct, target store.OffsiteTarget) bool) []saveWarning {
+	out := []saveWarning{}
+	repos, err := s.store.ListNamedRepos()
+	if err != nil {
+		log.Printf("api: could not read the direct repositories after a credential save: %v", err)
+		return out
+	}
+	for _, d := range repos {
+		if d.CompanionOf == "" {
+			continue
+		}
+		target, ok, err := s.store.GetOffsiteTarget(d.CompanionOf)
+		if err != nil {
+			log.Printf("api: repository %s: could not read its target: %v", d.ID, err) //nolint:gosec // G706: the id is store-generated
+			continue
+		}
+		if !ok || !pick(d, target) {
+			continue
+		}
+		w, err := s.mirrorDirectCreds(ctx, target.ID)
+		if err != nil {
+			log.Printf("api: repository %s: could not probe it with the new credentials: %v", d.ID, err) //nolint:gosec // G706: the id is store-generated
+			continue
+		}
+		if w != nil {
+			out = append(out, *w)
+		}
+	}
+	return out
+}
+
+// fieldTargets reads the row each domain's off-site settings field edits.
+func (s *Service) fieldTargets() map[string]store.OffsiteTarget {
+	out := map[string]store.OffsiteTarget{}
+	for _, d := range offsiteConfigDomains {
+		t, ok, err := s.store.FieldOffsiteTarget(d)
+		if err != nil {
+			log.Printf("api: settings: could not read the %s field target: %v", d, err) //nolint:gosec // G706: domain is a fixed literal
+			continue
+		}
+		if ok {
+			out[d] = t
+		}
+	}
+	return out
 }
