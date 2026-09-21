@@ -525,6 +525,39 @@ func TestDBDumpAdapterNamesAnOrphanItCouldNotStop(t *testing.T) {
 	})
 }
 
+func TestDBDumpAdapterForgetsASnapshotTheHelperDisowns(t *testing.T) {
+	disowned := func() *dumpFakeEngine {
+		return &dumpFakeEngine{
+			sum:   restic.Summary{SnapshotID: "aaaa1111bbbb2222", TotalBytesProcessed: 4096},
+			lines: []string{resultLine(dbdump.Result{V: 1, Reason: dbdump.ReasonIncomplete, Exit: 1, Bytes: 4096})},
+		}
+	}
+
+	t.Run("the snapshot goes", func(t *testing.T) {
+		eng := disowned()
+		res, err := dumpAdapter(eng, &dumpFakeDocker{}).Dump(context.Background(), dumpRequest())
+		fail := dumpFailure(t, res, err)
+
+		if fail.Reason != store.ReasonDBDumpIncomplete {
+			t.Fatalf("reason = %q, want %q", fail.Reason, store.ReasonDBDumpIncomplete)
+		}
+		if len(eng.forgotten) != 1 || eng.forgotten[0] != "aaaa1111bbbb2222" {
+			t.Fatalf("forgotten = %v, want the snapshot the helper called incomplete", eng.forgotten)
+		}
+	})
+
+	t.Run("a snapshot that cannot go is the leftover", func(t *testing.T) {
+		eng := disowned()
+		eng.forgetErr = errors.New("repository is append-only")
+		res, err := dumpAdapter(eng, &dumpFakeDocker{}).Dump(context.Background(), dumpRequest())
+		fail := dumpFailure(t, res, err)
+
+		if fail.Reason != store.ReasonDBDumpLeftover+": aaaa1111" || fail.SnapshotID != "aaaa1111bbbb2222" {
+			t.Fatalf("failure = %+v, want the leftover reason naming the snapshot", fail)
+		}
+	})
+}
+
 func TestDBDumpAdapterParentEnds(t *testing.T) {
 	blockUntilDone := func(ctx context.Context) (restic.Summary, []string, error) {
 		<-ctx.Done()
