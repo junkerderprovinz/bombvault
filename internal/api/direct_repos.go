@@ -326,9 +326,8 @@ func (s *Service) connectDirectRepo(ctx context.Context, repoID, targetID string
 // handleCreateDirectRepo is POST /api/repos with companionOf. Everything but the
 // name and the location comes from the target.
 func (h *Handler) handleCreateDirectRepo(w http.ResponseWriter, r *http.Request, body namedRepoBody) {
-	if body.CredsRef != nil || body.StorageClass != nil || body.LimitUpload != nil ||
-		body.LimitDownload != nil || body.Immutable != nil || body.Enabled != nil {
-		placementFail(w, errMirroredField, nil)
+	if fields := lockedFieldsSet(body); len(fields) > 0 {
+		placementFail(w, errMirroredField, map[string]any{"fields": fields})
 		return
 	}
 	var name, loc string
@@ -346,15 +345,43 @@ func (h *Handler) handleCreateDirectRepo(w http.ResponseWriter, r *http.Request,
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"repo": h.namedRepoViews([]store.OffsiteTarget{row})[0]}))
 }
 
-// directEditRefused reports whether an edit changes anything on a direct
-// repository besides its name and on/off switch.
-func directEditRefused(b namedRepoBody, row store.OffsiteTarget) bool {
+// lockedFieldsSet names the mirrored fields a direct repository's create body
+// sets; only its name and location are the caller's to choose, everything
+// else has to be set on the target instead.
+func lockedFieldsSet(b namedRepoBody) []string {
+	var fields []string
+	add := func(name string, set bool) {
+		if set {
+			fields = append(fields, name)
+		}
+	}
+	add("credsRef", b.CredsRef != nil)
+	add("storageClass", b.StorageClass != nil)
+	add("limitUpload", b.LimitUpload != nil)
+	add("limitDownload", b.LimitDownload != nil)
+	add("immutable", b.Immutable != nil)
+	add("enabled", b.Enabled != nil)
+	return fields
+}
+
+// mirroredFieldsChanged names the fields an edit to a direct repository sends
+// that differ from the stored row: everything but its name and on/off switch,
+// which come from the target rather than the edit.
+func mirroredFieldsChanged(b namedRepoBody, row store.OffsiteTarget) []string {
 	differs := func(p *string, stored string) bool { return p != nil && strings.TrimSpace(*p) != stored }
-	return differs(b.Repo, row.Repo) || differs(b.CredsRef, row.CredsRef) ||
-		(b.StorageClass != nil && !strings.EqualFold(strings.TrimSpace(*b.StorageClass), row.StorageClass)) ||
-		(b.LimitUpload != nil && *b.LimitUpload != row.LimitUpload) ||
-		(b.LimitDownload != nil && *b.LimitDownload != row.LimitDownload) ||
-		(b.Immutable != nil && *b.Immutable != row.Immutable)
+	var fields []string
+	add := func(name string, changed bool) {
+		if changed {
+			fields = append(fields, name)
+		}
+	}
+	add("repo", differs(b.Repo, row.Repo))
+	add("credsRef", differs(b.CredsRef, row.CredsRef))
+	add("storageClass", b.StorageClass != nil && !strings.EqualFold(strings.TrimSpace(*b.StorageClass), row.StorageClass))
+	add("limitUpload", b.LimitUpload != nil && *b.LimitUpload != row.LimitUpload)
+	add("limitDownload", b.LimitDownload != nil && *b.LimitDownload != row.LimitDownload)
+	add("immutable", b.Immutable != nil && *b.Immutable != row.Immutable)
+	return fields
 }
 
 // handleConnectRepo serves POST /api/repos/{id}/connect.

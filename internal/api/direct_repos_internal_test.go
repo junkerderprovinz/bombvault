@@ -342,3 +342,35 @@ func TestADirectRepositoryChangesOnlyItsNameAndSwitch(t *testing.T) {
 		t.Fatalf("after the edits: %+v", got)
 	}
 }
+
+func TestMirroredFieldRefusalNamesTheField(t *testing.T) {
+	f := newPlacementFixture(t)
+	target := f.target("containers", "B2", "b2:bkt:containers")
+	d := f.direct(target)
+	path := "/api/repos/" + d.ID
+
+	res := f.do("PATCH", path, map[string]any{"repo": "b2:bkt:elsewhere"})
+	if res["ok"] != false || res["code"] != "mirrored-field" {
+		t.Fatalf("repo = %v", res)
+	}
+	if got, _ := res["fields"].([]any); len(got) != 1 || got[0] != "repo" {
+		t.Fatalf("fields = %v, want [repo]", res["fields"])
+	}
+
+	res = f.do("PATCH", path, map[string]any{"credsRef": "set-9", "immutable": !d.Immutable})
+	if res["ok"] != false || res["code"] != "mirrored-field" {
+		t.Fatalf("credsRef+immutable = %v", res)
+	}
+	if got, _ := res["fields"].([]any); len(got) != 2 || got[0] != "credsRef" || got[1] != "immutable" {
+		t.Fatalf("fields = %v, want [credsRef immutable]", res["fields"])
+	}
+
+	vms := f.target("vms", "B2 vms", "b2:bkt:vms")
+	res = f.do("POST", "/api/repos", map[string]any{"name": "x", "repo": "b2:bkt:vms-direct", "companionOf": vms.ID, "credsRef": "set-2"})
+	if res["ok"] != false || res["code"] != "mirrored-field" {
+		t.Fatalf("create with credsRef = %v", res)
+	}
+	if got, _ := res["fields"].([]any); len(got) != 1 || got[0] != "credsRef" {
+		t.Fatalf("fields = %v, want [credsRef]", res["fields"])
+	}
+}
