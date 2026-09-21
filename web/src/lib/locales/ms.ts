@@ -925,6 +925,8 @@ const ms: Partial<Translations> = {
   "dbdump.importConfirm": "Import dump {engine} {version} ini ke {container}? BombVault menghentikan bekas, mengetepikan folder datanya (ia dikekalkan, tiada apa dipadam), memulakan bekas dengan folder data kosong dan mengimport dump. Aplikasi yang menggunakan pangkalan data ini akan melihat keadaannya pada masa dump diambil.",
   "dbdump.importConfirmNoVersion": "Import dump {engine} ini ke {container}? BombVault menghentikan bekas, mengetepikan folder datanya (ia dikekalkan, tiada apa dipadam), memulakan bekas dengan folder data kosong dan mengimport dump. Aplikasi yang menggunakan pangkalan data ini akan melihat keadaannya pada masa dump diambil.",
   "dbdump.importNoVersion": "Dump ini tidak merekodkan versi pangkalan datanya. Import akan gagal jika pelayan tidak dapat membacanya.",
+  "dbdump.importStopsOne": "Semasa import, BombVault juga menghentikan {app} dan memulakannya semula selepas itu.",
+  "dbdump.importStopsMany": "Semasa import, BombVault juga menghentikan aplikasi berikut dan memulakannya semula selepas itu: {apps}.",
   "dbdump.importDone": "Pangkalan data telah diimport.",
   "dbdump.importRefused.busy": "Ada sandaran atau pemulihan lain sedang berjalan. Cuba lagi selepas ia selesai.",
   "dbdump.importRefused.notRunning": "Mulakan bekas dahulu; import memerlukan pelayan yang berjalan.",

@@ -1057,6 +1057,8 @@ const da: Partial<Translations> = {
   "dbdump.importConfirm": "Importér dette {engine} {version}-dump i {container}? BombVault stopper containeren, flytter dens datamappe til side (den beholdes, intet slettes), starter containeren med en tom datamappe og importerer dumpet. De programmer, der bruger databasen, ser dens tilstand fra det tidspunkt, dumpet blev taget.",
   "dbdump.importConfirmNoVersion": "Importér dette {engine}-dump i {container}? BombVault stopper containeren, flytter dens datamappe til side (den beholdes, intet slettes), starter containeren med en tom datamappe og importerer dumpet. De programmer, der bruger databasen, ser dens tilstand fra det tidspunkt, dumpet blev taget.",
   "dbdump.importNoVersion": "Dette dump noterer ikke sin databaseversion. Importen fejler, hvis serveren ikke kan læse den.",
+  "dbdump.importStopsOne": "Under importen stopper BombVault også {app} og starter den igen bagefter.",
+  "dbdump.importStopsMany": "Under importen stopper BombVault også disse apps og starter dem igen bagefter: {apps}.",
   "dbdump.importDone": "Databasen er importeret.",
   "dbdump.importRefused.busy": "En anden backup eller gendannelse kører. Prøv igen, når den er færdig.",
   "dbdump.importRefused.notRunning": "Start containeren først; importen skal bruge den kørende server.",

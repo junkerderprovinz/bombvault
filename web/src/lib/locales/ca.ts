@@ -925,6 +925,8 @@ const ca: Partial<Translations> = {
   "dbdump.importConfirm": "Vols importar aquest bolcat de {engine} {version} a {container}? BombVault atura el contenidor, aparta la seva carpeta de dades (es conserva, no s'esborra res), engega el contenidor amb una carpeta de dades buida i importa el bolcat. Les aplicacions que fan servir aquesta base de dades en veuran l'estat del moment del bolcat.",
   "dbdump.importConfirmNoVersion": "Vols importar aquest bolcat de {engine} a {container}? BombVault atura el contenidor, aparta la seva carpeta de dades (es conserva, no s'esborra res), engega el contenidor amb una carpeta de dades buida i importa el bolcat. Les aplicacions que fan servir aquesta base de dades en veuran l'estat del moment del bolcat.",
   "dbdump.importNoVersion": "Aquest bolcat no registra la versió de la seva base de dades. La importació falla si el servidor no la pot llegir.",
+  "dbdump.importStopsOne": "Mentre importa, BombVault també atura {app} i després el torna a iniciar.",
+  "dbdump.importStopsMany": "Mentre importa, BombVault també atura aquestes aplicacions i després les torna a iniciar: {apps}.",
   "dbdump.importDone": "Base de dades importada.",
   "dbdump.importRefused.busy": "Hi ha una altra còpia o restauració en marxa. Torna-ho a provar quan hagi acabat.",
   "dbdump.importRefused.notRunning": "Engega primer el contenidor; la importació necessita el servidor en marxa.",

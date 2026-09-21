@@ -1049,6 +1049,8 @@ const vi: Partial<Translations> = {
   "dbdump.importConfirm": "Nhập bản kết xuất {engine} {version} này vào {container}? BombVault dừng vùng chứa, đưa thư mục dữ liệu của nó sang một bên (vẫn được giữ, không xóa gì cả), khởi động vùng chứa với thư mục dữ liệu trống rồi nhập bản kết xuất. Các ứng dụng dùng cơ sở dữ liệu này sẽ thấy trạng thái của nó tại thời điểm kết xuất.",
   "dbdump.importConfirmNoVersion": "Nhập bản kết xuất {engine} này vào {container}? BombVault dừng vùng chứa, đưa thư mục dữ liệu của nó sang một bên (vẫn được giữ, không xóa gì cả), khởi động vùng chứa với thư mục dữ liệu trống rồi nhập bản kết xuất. Các ứng dụng dùng cơ sở dữ liệu này sẽ thấy trạng thái của nó tại thời điểm kết xuất.",
   "dbdump.importNoVersion": "Bản kết xuất này không ghi lại phiên bản cơ sở dữ liệu. Việc nhập sẽ thất bại nếu máy chủ không đọc được nó.",
+  "dbdump.importStopsOne": "Trong lúc nhập, BombVault cũng dừng {app} rồi khởi động lại sau đó.",
+  "dbdump.importStopsMany": "Trong lúc nhập, BombVault cũng dừng các ứng dụng sau rồi khởi động lại sau đó: {apps}.",
   "dbdump.importDone": "Đã nhập cơ sở dữ liệu.",
   "dbdump.importRefused.busy": "Đang có một lần sao lưu hoặc khôi phục khác chạy. Hãy thử lại khi nó xong.",
   "dbdump.importRefused.notRunning": "Hãy khởi động vùng chứa trước; việc nhập cần máy chủ đang chạy.",

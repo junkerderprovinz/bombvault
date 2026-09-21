@@ -1031,6 +1031,8 @@ const nl: Partial<Translations> = {
   "dbdump.importConfirm": "Deze {engine} {version}-dump in {container} importeren? BombVault stopt de container, zet zijn datamap opzij (die blijft behouden, er wordt niets verwijderd), start de container met een lege datamap en importeert de dump. De toepassingen die deze database gebruiken zien de stand van het moment van de dump.",
   "dbdump.importConfirmNoVersion": "Deze {engine}-dump in {container} importeren? BombVault stopt de container, zet zijn datamap opzij (die blijft behouden, er wordt niets verwijderd), start de container met een lege datamap en importeert de dump. De toepassingen die deze database gebruiken zien de stand van het moment van de dump.",
   "dbdump.importNoVersion": "Deze dump legt zijn databaseversie niet vast. Het importeren mislukt als de server hem niet kan lezen.",
+  "dbdump.importStopsOne": "Tijdens het importeren stopt BombVault ook {app} en start die daarna weer.",
+  "dbdump.importStopsMany": "Tijdens het importeren stopt BombVault ook deze apps en start ze daarna weer: {apps}.",
   "dbdump.importDone": "Database geïmporteerd.",
   "dbdump.importRefused.busy": "Er loopt al een andere back-up of herstelactie. Probeer het opnieuw zodra die klaar is.",
   "dbdump.importRefused.notRunning": "Start eerst de container; het importeren heeft de draaiende server nodig.",

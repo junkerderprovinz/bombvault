@@ -1037,6 +1037,8 @@ const ro: Partial<Translations> = {
   "dbdump.importConfirm": "Se importă această copie {engine} {version} în {container}? BombVault oprește containerul, mută dosarul lui de date deoparte (se păstrează, nu se șterge nimic), pornește containerul cu un dosar de date gol și importă copia. Aplicațiile care folosesc această bază îi vor vedea starea din momentul copiei.",
   "dbdump.importConfirmNoVersion": "Se importă această copie {engine} în {container}? BombVault oprește containerul, mută dosarul lui de date deoparte (se păstrează, nu se șterge nimic), pornește containerul cu un dosar de date gol și importă copia. Aplicațiile care folosesc această bază îi vor vedea starea din momentul copiei.",
   "dbdump.importNoVersion": "Această copie nu consemnează versiunea bazei sale de date. Importul eșuează dacă serverul nu o poate citi.",
+  "dbdump.importStopsOne": "Pe durata importului, BombVault oprește și {app} și îl pornește din nou după aceea.",
+  "dbdump.importStopsMany": "Pe durata importului, BombVault oprește și aceste aplicații și le pornește din nou după aceea: {apps}.",
   "dbdump.importDone": "Baza de date a fost importată.",
   "dbdump.importRefused.busy": "Rulează deja altă copie de rezervă sau restaurare. Încearcă din nou după ce se termină.",
   "dbdump.importRefused.notRunning": "Pornește mai întâi containerul; importul are nevoie de serverul pornit.",

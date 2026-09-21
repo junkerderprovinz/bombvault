@@ -2619,6 +2619,9 @@ export function ContainerRow({
           isDatabase={container.dbTier !== ""}
           dbCoverage={container.dbDataCoverage}
           containerRunning={container.state === "running"}
+          importStops={(container.stopContainers ?? []).filter((dep) =>
+            installedContainers.some((c) => c.name === dep && c.state === "running")
+          )}
         />
       </div>
 

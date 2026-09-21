@@ -1040,6 +1040,8 @@ const hu: Partial<Translations> = {
   "dbdump.importConfirm": "Importálod ezt a {engine} {version} mentést ide: {container}? A BombVault leállítja a konténert, az adatmappáját félreteszi (megmarad, semmi nem törlődik), üres adatmappával elindítja a konténert, és importálja a mentést. Az adatbázist használó alkalmazások a mentés időpontjának állapotát látják majd.",
   "dbdump.importConfirmNoVersion": "Importálod ezt a {engine} mentést ide: {container}? A BombVault leállítja a konténert, az adatmappáját félreteszi (megmarad, semmi nem törlődik), üres adatmappával elindítja a konténert, és importálja a mentést. Az adatbázist használó alkalmazások a mentés időpontjának állapotát látják majd.",
   "dbdump.importNoVersion": "Ez a mentés nem rögzíti az adatbázisa verzióját. Az importálás meghiúsul, ha a kiszolgáló nem tudja olvasni.",
+  "dbdump.importStopsOne": "Az importálás idejére a BombVault a(z) {app} alkalmazást is leállítja, utána pedig újraindítja.",
+  "dbdump.importStopsMany": "Az importálás idejére a BombVault ezeket az alkalmazásokat is leállítja, utána pedig újraindítja őket: {apps}.",
   "dbdump.importDone": "Az adatbázis importálva.",
   "dbdump.importRefused.busy": "Épp másik mentés vagy visszaállítás fut. Próbáld újra, ha befejeződött.",
   "dbdump.importRefused.notRunning": "Előbb indítsd el a konténert; az importáláshoz futó kiszolgáló kell.",
