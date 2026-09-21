@@ -322,8 +322,15 @@ func (s *Service) itemIdentity(item store.ItemRef) (string, error) {
 	return "", fmt.Errorf("%q has no placement", item.Domain)
 }
 
-// retentionPolicyForRef is the keep-policy a repository ages by.
-func (s *Service) retentionPolicyForRef(settings store.Settings, _ domainRepoRef) restic.RetentionPolicy {
+// retentionPolicyForRef is the keep-policy a repository ages by. A direct
+// repository takes its target's rules as mirrored onto its row, word for word,
+// so all zero keeps everything; every other repository takes the local policy.
+func (s *Service) retentionPolicyForRef(settings store.Settings, ref domainRepoRef) restic.RetentionPolicy {
+	if ref.Named.CompanionOf != "" {
+		p := targetOffsiteRetentionPolicy(ref.Named)
+		p.Direct = true
+		return p
+	}
 	return s.retentionPolicy(settings)
 }
 

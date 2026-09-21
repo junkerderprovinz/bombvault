@@ -13738,9 +13738,10 @@ func (s *Service) PruneDomain(ctx context.Context, domain, source string) error 
 // records a kind="prune" run — visible in Run History/Activity Log exactly like
 // a manual prune. LOCAL repo only: off-site retention stays inside
 // copyToOffsite, and an immutable off-site repo is never pruned from this box.
-// Skipped silently when no local retention policy is configured (mirroring
-// applyRetention's own gate — nothing was forgotten, so there is nothing to
-// reclaim). Best-effort: failures are logged, never propagated.
+// Skipped silently when no repository of the domain ages by a keep-policy,
+// its own local repository, a named one, or a direct repository under its
+// target's mirrored rules: nothing was forgotten, so there is nothing to
+// reclaim. Best-effort: failures are logged, never propagated.
 func (s *Service) PruneAfterBulk(ctx context.Context, domain string) {
 	settings, err := s.store.GetSettings()
 	if err != nil {

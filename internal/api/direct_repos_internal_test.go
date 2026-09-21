@@ -1,14 +1,17 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -417,5 +420,195 @@ func TestADirectRepositoryIsNeverACopySource(t *testing.T) {
 		if sameRepoLocation(r.Loc, loc) {
 			t.Fatalf("the direct repository %s is a copy source", r.Loc)
 		}
+	}
+}
+
+func forgetsAt(f *placementFixture, loc string) []forgetCall {
+	f.eng.mu.Lock()
+	defer f.eng.mu.Unlock()
+	var out []forgetCall
+	for _, c := range f.eng.forgets {
+		if filepath.ToSlash(c.Repo) == filepath.ToSlash(loc) {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
+func prunedAt(f *placementFixture, loc string) bool {
+	f.eng.mu.Lock()
+	defer f.eng.mu.Unlock()
+	for _, p := range f.eng.prunes {
+		if filepath.ToSlash(p) == filepath.ToSlash(loc) {
+			return true
+		}
+	}
+	return false
+}
+
+func directWithRules(t *testing.T, f *placementFixture, domain string, last, daily int, immutable bool) (store.OffsiteTarget, string) {
+	t.Helper()
+	target := f.target(domain, "NAS "+domain, "backups/nas-"+domain)
+	target.RetentionKeepLast, target.RetentionKeepDaily, target.Immutable = last, daily, immutable
+	target, err := f.st.UpsertOffsiteTarget(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := f.direct(target)
+	loc, err := f.svc.resolveRepo(d.Repo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return d, loc
+}
+
+func TestADirectRepositoryAgesByItsTargetsRules(t *testing.T) {
+	f := newPlacementFixture(t)
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.RetentionKeepLast = 7
+	if err := f.st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	d, loc := directWithRules(t, f, "containers", 3, 2, false)
+	f.container("web", d.ID)
+	ctx := context.Background()
+
+	f.svc.applyRetention(ctx, loc, settings, restic.Mode{}, "container:web", "containers")
+	want := restic.RetentionPolicy{KeepLast: 3, KeepDaily: 2, Direct: true}
+	if got := forgetsAt(f, loc); len(got) != 1 || got[0].Policy != want {
+		t.Fatalf("after a backup the direct repository forgot with %+v, want %+v", got, want)
+	}
+	f.svc.applyRetention(ctx, f.domainPath("containers"), settings, restic.Mode{}, "container:db", "containers")
+	if got := forgetsAt(f, f.domainPath("containers")); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 7}) {
+		t.Fatalf("the domain path forgot with %+v, want the local rule", got)
+	}
+
+	f.hold(loc, snap("a1", 100, "container:web", restic.DirectTag))
+	if err := f.svc.pruneDomain(ctx, "containers", "local", true); err != nil {
+		t.Fatal(err)
+	}
+	pruned := forgetsAt(f, loc)
+	if len(pruned) < 2 {
+		t.Fatalf("a manual prune did not forget in the direct repository: %+v", pruned)
+	}
+	for _, c := range pruned[1:] {
+		if c.Policy != want {
+			t.Fatalf("a manual prune forgot the direct repository with %+v, want %+v", c.Policy, want)
+		}
+	}
+
+	v, vLoc := directWithRules(t, f, "vms", 3, 0, true)
+	f.vm("win11", v.ID)
+	f.svc.applyRetention(ctx, vLoc, settings, restic.Mode{}, "vm:win11", "vms")
+	if got := forgetsAt(f, vLoc); len(got) != 0 {
+		t.Fatalf("an append-only direct repository was forgotten: %+v", got)
+	}
+}
+
+func TestABulkRunPrunesADirectRepositoryWithoutALocalRule(t *testing.T) {
+	f := newPlacementFixture(t)
+	d, loc := directWithRules(t, f, "containers", 3, 0, false)
+	f.container("web", d.ID)
+	f.svc.PruneAfterBulk(context.Background(), "containers")
+	if !prunedAt(f, loc) {
+		t.Fatal("the direct repository was not pruned after a bulk run although its rules forgot snapshots")
+	}
+}
+
+func TestTheDirectTagIsNoIdentity(t *testing.T) {
+	got := identityTags([]restic.Snapshot{{Tags: []string{"container:web", restic.DirectTag}}})
+	if len(got) != 1 || got[0] != "container:web" {
+		t.Fatalf("identityTags = %v", got)
+	}
+}
+
+// keepTagEngine forgets the way restic does with --keep-tag bv:direct: a policy
+// that is not a direct repository's own keeps every DirectTag snapshot.
+type keepTagEngine struct {
+	*placementEngine
+}
+
+func (e keepTagEngine) ForgetPolicy(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tag string, prune bool) error {
+	loc := filepath.ToSlash(repo)
+	var kept []restic.Snapshot
+	if !p.Direct {
+		e.mu.Lock()
+		for _, sn := range e.snaps[loc] {
+			if slices.Contains(sn.Tags, restic.DirectTag) {
+				kept = append(kept, sn)
+			}
+		}
+		e.mu.Unlock()
+	}
+	if err := e.placementEngine.ForgetPolicy(ctx, repo, p, mode, tag, prune); err != nil {
+		return err
+	}
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	for _, sn := range kept {
+		if !slices.ContainsFunc(e.snaps[loc], func(o restic.Snapshot) bool { return o.ID == sn.ID }) {
+			e.snaps[loc] = append(e.snaps[loc], sn)
+		}
+	}
+	return nil
+}
+
+func heldIDs(f *placementFixture, loc string) []string {
+	f.eng.mu.Lock()
+	defer f.eng.mu.Unlock()
+	var ids []string
+	for _, sn := range f.eng.snaps[filepath.ToSlash(loc)] {
+		ids = append(ids, sn.ID)
+	}
+	slices.Sort(ids)
+	return ids
+}
+
+func TestDirectSnapshotsOutliveTheLocalRuleUntilTheirTargetClaimsThem(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.svc.engine = keepTagEngine{f.eng}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.RetentionKeepLast = 1
+	if err := f.st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	target := f.target("containers", "NAS", "backups/nas-containers")
+	target.RetentionKeepLast = 2
+	target, err = f.st.UpsertOffsiteTarget(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	old := f.namedRepo("NAS old", "backups/nas-containers-direct")
+	f.container("web", old.ID)
+	loc, err := f.svc.resolveRepo(old.Repo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.hold(loc,
+		snap("d1", 100, "container:web", restic.DirectTag),
+		snap("d2", 200, "container:web", restic.DirectTag),
+		snap("d3", 300, "container:web", restic.DirectTag),
+		snap("n1", 400, "container:web"),
+		snap("n2", 500, "container:web"),
+	)
+	ctx := context.Background()
+
+	f.svc.applyRetention(ctx, loc, settings, restic.Mode{}, "container:web", "containers")
+	if got := heldIDs(f, loc); !slices.Equal(got, []string{"d1", "d2", "d3", "n2"}) {
+		t.Fatalf("the local rule on a repository that lost its link left %v, want every direct snapshot and the newest", got)
+	}
+
+	if err := f.st.ConnectCompanion(old.ID, target.ID); err != nil {
+		t.Fatal(err)
+	}
+	f.svc.applyRetention(ctx, loc, settings, restic.Mode{}, "container:web", "containers")
+	if got := heldIDs(f, loc); !slices.Equal(got, []string{"d3", "n2"}) {
+		t.Fatalf("the target's rules left %v, want the two newest", got)
 	}
 }
