@@ -144,6 +144,73 @@ func TestDiscoverLeavesAnOpenRowAloneWhileABackupHoldsTheDomain(t *testing.T) {
 	}
 }
 
+// TestDiscoverLeavesANewRowOpenWhileABackupHoldsTheDomain is the other half
+// of TestDiscoverLeavesAnOpenRowAloneWhileABackupHoldsTheDomain: a row
+// Discover CREATES, not one it finds already sitting open, must not get its
+// home straight through the insert while a backup holds the domain.
+func TestDiscoverLeavesANewRowOpenWhileABackupHoldsTheDomain(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.hold(f.root+"/nas", snap("aaaa0001", 200, "container:nginx"))
+	writeContainerDef(t, f, f.root+"/nas", "nginx")
+	unlock, ok := f.svc.tryLockDomainFor("containers", "backup")
+	if !ok {
+		t.Fatal("could not take the containers lock")
+	}
+	res, err := f.svc.Discover(context.Background(), false)
+	unlock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.LeftOpen) != 1 || res.LeftOpen[0] != "nginx" {
+		t.Fatalf("leftOpen = %v, want nginx", res.LeftOpen)
+	}
+	item := store.ItemRef{Domain: "containers", Key: "nginx"}
+	if got := f.home(item); got.Choice != store.RepoOpen {
+		t.Fatalf("home = %+v, want it left open", got)
+	}
+	if _, err := f.svc.Discover(context.Background(), false); err != nil {
+		t.Fatal(err)
+	}
+	if got := f.home(item); got.Repo != nas.ID || got.Choice != store.RepoChosen {
+		t.Fatalf("home = %+v, want NAS once the domain is free", got)
+	}
+}
+
+// TestDiscoverLeavesANewFileSetOpenWhileABackupHoldsTheDomain covers the file
+// set shape of the same guard, which creates its row through a different
+// store call than containers and VMs do.
+func TestDiscoverLeavesANewFileSetOpenWhileABackupHoldsTheDomain(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.hold(f.root+"/nas", snap("aaaa0001", 200, "fileset:Photos"))
+	unlock, ok := f.svc.tryLockDomainFor("files", "backup")
+	if !ok {
+		t.Fatal("could not take the files lock")
+	}
+	res, err := f.svc.DiscoverFileSets(context.Background(), false)
+	unlock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.LeftOpen) != 1 || res.LeftOpen[0] != "Photos" {
+		t.Fatalf("leftOpen = %v, want Photos", res.LeftOpen)
+	}
+	set, err := f.st.GetFileSetByName("Photos")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := f.home(store.ItemRef{Domain: "files", Key: set.ID}); got.Choice != store.RepoOpen {
+		t.Fatalf("home = %+v, want it left open", got)
+	}
+	if _, err := f.svc.DiscoverFileSets(context.Background(), false); err != nil {
+		t.Fatal(err)
+	}
+	if got := f.home(store.ItemRef{Domain: "files", Key: set.ID}); got.Repo != nas.ID {
+		t.Fatalf("home = %+v, want NAS once the domain is free", got)
+	}
+}
+
 func TestDiscoverInAFreshDatabasePausesTheDomain(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.hold(f.domainPath("files"), snap("aaaa0001", 200, "fileset:Photos"))
