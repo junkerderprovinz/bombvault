@@ -9237,7 +9237,8 @@ type VMView struct {
 	ScheduleCadence string `json:"scheduleCadence"`
 	// Repo is the VM's optional per-item repository override (#204): the ID of a
 	// named repository from Settings, "" for the VMs domain repository.
-	Repo string `json:"repo"`
+	Repo      string        `json:"repo"`
+	Placement placementView `json:"placement"`
 }
 
 // ListVMs returns all known VMs (from virsh) merged with the DB targets.
@@ -10944,6 +10945,7 @@ type FileSetView struct {
 	// (#199: three controls that all read like scheduling, and the combination
 	// that looks most sensible silently protects nothing).
 	EffectiveSchedule schedule.EffectiveSchedule `json:"effectiveSchedule"`
+	Placement         placementView              `json:"placement"`
 }
 
 // ListFileSetViews returns all configured file sets with their last-backup
