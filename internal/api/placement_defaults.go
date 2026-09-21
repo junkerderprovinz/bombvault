@@ -650,21 +650,6 @@ func (s *Service) applyDefault(ctx context.Context, domain string, keys []string
 	return reset, kept, nil
 }
 
-type excludedItem struct {
-	Identity string   `json:"identity"`
-	Skip     []string `json:"skip"`
-}
-
-// targetPreview is what a target receives at its next run.
-type targetPreview struct {
-	Items            int            `json:"items"`
-	FormerlyExcluded []excludedItem `json:"formerlyExcluded"`
-	DefaultExcludes  bool           `json:"defaultExcludes"`
-	Snapshots        int            `json:"snapshots"`
-	Bytes            *int64         `json:"bytes"`
-	Unreadable       []string       `json:"unreadable"`
-}
-
 type targetPreviewRow struct {
 	TargetID string        `json:"targetId"`
 	Name     string        `json:"name"`
