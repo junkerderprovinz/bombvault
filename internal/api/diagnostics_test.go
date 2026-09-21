@@ -204,6 +204,15 @@ func TestDiagnosticsCarriesDBDumpState(t *testing.T) {
 	if err := st.FinishRun(runID, "failed", "", 0, "database dump failed: the database refused the login: "+detail); err != nil {
 		t.Fatal(err)
 	}
+	importID, err := st.StartRun(tg.ID, "dbimport")
+	if err != nil {
+		t.Fatal(err)
+	}
+	const row = "Duplicate entry 'alice@example.com' for key 'email'"
+	if err := st.FinishRun(importID, "failed", "", 0, store.ReasonDBImportFailed+
+		": the previous data folder is kept at /host/mnt/user/appdata/immich_postgres.bombvault-before-import-20260917-021403; exit 1: ERROR 1062 (23000) at line 812: "+row); err != nil {
+		t.Fatal(err)
+	}
 
 	cookie := loginCookie(t, h, "correct horse battery staple")
 	w := getRaw(t, h, "/api/diagnostics", cookie)
@@ -226,5 +235,17 @@ func TestDiagnosticsCarriesDBDumpState(t *testing.T) {
 	}
 	if strings.Contains(dump, "plex") {
 		t.Errorf("dbdump.json lists a container that is not a database: %s", dump)
+	}
+
+	runs := members["runs.json"]
+	for _, want := range []string{"the database refused the login", store.ReasonDBImportFailed} {
+		if !strings.Contains(runs, want) {
+			t.Errorf("runs.json does not name %q: %s", want, runs)
+		}
+	}
+	for _, quoted := range []string{detail, "alice@example.com"} {
+		if strings.Contains(runs, quoted) {
+			t.Errorf("runs.json carries %q, which a database tool said and which can quote a row: %s", quoted, runs)
+		}
 	}
 }

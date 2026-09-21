@@ -822,6 +822,26 @@ func dbDumpReasonHead(reason string) string {
 	return reason
 }
 
+// dbImportFailedHead matches an import the tool refused up to the folder it
+// kept; the tool's own stderr follows.
+var dbImportFailedHead = regexp.MustCompile(`^` + regexp.QuoteMeta(store.ReasonDBImportFailed) + `: .*?\.bombvault-before-import-\d{8}-\d{6}`)
+
+// shareableRunError is a run's error as it may leave the session gate, in the
+// diagnostics bundle, the log and the widget feed. What a database tool says
+// itself can quote a row, so a dump or an import keeps only what BombVault
+// wrote.
+func shareableRunError(kind, text string) string {
+	switch kind {
+	case "dbdump":
+		return dbDumpReasonHead(text)
+	case "dbimport":
+		if head := dbImportFailedHead.FindString(text); head != "" {
+			return head
+		}
+	}
+	return text
+}
+
 // dbDumpFailureSentence is the reason as a notification says it, without the
 // head every dump failure shares and without the tool's own message.
 func dbDumpFailureSentence(reason string) string {
