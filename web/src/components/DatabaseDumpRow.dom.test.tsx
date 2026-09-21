@@ -339,6 +339,14 @@ describe("DatabaseDumpRow", () => {
     expect(hints()).not.toContain(en["dbdump.fixAuth"]);
   });
 
+  it("says a cancelled dump may still be running in the container", () => {
+    renderRow({
+      lastDbDump: { at: 1_700_000_000, status: "failed", bytes: 0, error: "cancelled by the user: orphan stop failed" },
+    });
+    expect(screen.getByText(en["dbdump.resultCancelled"])).toBeTruthy();
+    expect(screen.getByText(en["runReason.dbdumpOrphan"]).className).toContain("statusWarn");
+  });
+
   it("puts the switch back and says so when the setting could not be saved", async () => {
     setDbDumpOff.mockResolvedValueOnce({ ok: false, error: "" });
     renderRow();

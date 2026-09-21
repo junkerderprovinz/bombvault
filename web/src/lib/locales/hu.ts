@@ -964,6 +964,7 @@ const hu: Partial<Translations> = {
   "runReason.dbdumpHelper": "a mentési segéd nem adott eredményt",
   "runReason.dbdumpMismatch": "a tárolt méret nem egyezik azzal, amit kimentettünk",
   "runReason.dbdumpLeftover": "egy sérült mentést nem sikerült eltávolítani a tárolóból",
+  "runReason.dbdumpOrphan": "a mentés az időkorlátjáig még futhat a konténerben",
   "runReason.dbdumpOneDatabase": "a konténer hitelesítő adataival csak egy adatbázist lehetett kimenteni",
   "runReason.dbdumpNotRecorded": "adatbázismentés kihagyva, mert a futását nem sikerült rögzíteni",
   "runReason.dbimportPrepare": "az importálás még az indulás előtt meghiúsult; a régi adatok újra a helyükön vannak",

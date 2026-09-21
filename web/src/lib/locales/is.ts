@@ -849,6 +849,7 @@ const is: Partial<Translations> = {
   "runReason.dbdumpHelper": "afritunarhjálpin skilaði engri niðurstöðu",
   "runReason.dbdumpMismatch": "vistaða stærðin passar ekki við það sem var afritað",
   "runReason.dbdumpLeftover": "ekki tókst að fjarlægja skemmt afrit úr safninu",
+  "runReason.dbdumpOrphan": "afritið gæti enn verið í gangi í gámnum þar til tímamörkum þess er náð",
   "runReason.dbdumpOneDatabase": "með auðkennunum í gámnum tókst aðeins að afrita einn gagnagrunn",
   "runReason.dbdumpNotRecorded": "gagnagrunnsafrit sleppt, því ekki tókst að skrá keyrslu þess",
   "runReason.dbimportPrepare": "innflutningurinn brást áður en hann hófst; gömlu gögnin eru komin á sinn stað aftur",

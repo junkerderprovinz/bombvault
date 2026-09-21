@@ -953,6 +953,7 @@ const ru: Partial<Translations> = {
   "runReason.dbdumpHelper": "помощник дампа не дал результата",
   "runReason.dbdumpMismatch": "сохранённый размер не совпадает с тем, что было выгружено",
   "runReason.dbdumpLeftover": "повреждённый дамп не удалось убрать из репозитория",
+  "runReason.dbdumpOrphan": "дамп, возможно, ещё выполняется в контейнере до своего предела времени",
   "runReason.dbdumpOneDatabase": "с учётными данными из контейнера удалось выгрузить только одну базу данных",
   "runReason.dbdumpNotRecorded": "дамп базы данных пропущен, потому что его запуск не удалось записать",
   "runReason.dbimportPrepare": "импорт не удался, не начавшись; старые данные снова на месте",

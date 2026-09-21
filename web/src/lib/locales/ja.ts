@@ -953,6 +953,7 @@ const ja: Partial<Translations> = {
   "runReason.dbdumpHelper": "ダンプヘルパーが結果を返しませんでした",
   "runReason.dbdumpMismatch": "保存されたサイズがダンプした内容と一致しません",
   "runReason.dbdumpLeftover": "壊れたダンプをリポジトリから取り除けませんでした",
+  "runReason.dbdumpOrphan": "ダンプは制限時間までコンテナ内でまだ動いている可能性があります",
   "runReason.dbdumpOneDatabase": "コンテナー内の資格情報ではデータベース 1 つしかダンプできませんでした",
   "runReason.dbdumpNotRecorded": "データベースダンプを省きました。その実行を記録できなかったためです",
   "runReason.dbimportPrepare": "インポートは始まる前に失敗しました。以前のデータは元に戻っています",

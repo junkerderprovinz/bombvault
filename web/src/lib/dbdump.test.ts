@@ -7,6 +7,8 @@ import type { Container } from "./api";
 import {
   coverageKey,
   dbDumpNameOf,
+  dumpLeftRunning,
+  dumpWasCancelled,
   ENGINE_NAMES,
   importRefusedKey,
   introDatabases,
@@ -16,6 +18,24 @@ import {
   updateWarnKey,
 } from "./dbdump";
 import { RUN_REASON_PREFIXES } from "./runReason";
+
+describe("dumpWasCancelled", () => {
+  it("knows a cancelled dump by its reason, with or without a note behind it", () => {
+    expect(dumpWasCancelled("cancelled by the user")).toBe(true);
+    expect(dumpWasCancelled("cancelled by the user: orphan stop failed")).toBe(true);
+    expect(dumpWasCancelled("database dump failed: no progress")).toBe(false);
+    expect(dumpWasCancelled(null)).toBe(false);
+  });
+});
+
+describe("dumpLeftRunning", () => {
+  it("finds the note behind a reason alone and behind a tool's message", () => {
+    expect(dumpLeftRunning("cancelled by the user: orphan stop failed")).toBe(true);
+    expect(dumpLeftRunning("database dump failed: the dump tool reported an error: x; orphan stop failed")).toBe(true);
+    expect(dumpLeftRunning("database dump failed: the dump tool reported an error: orphan stop failed was said")).toBe(false);
+    expect(dumpLeftRunning("cancelled by the user")).toBe(false);
+  });
+});
 
 describe("remedyKey", () => {
   it("every dump failure has a remedy", () => {

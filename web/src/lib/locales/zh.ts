@@ -973,6 +973,7 @@ const zh: Partial<Translations> = {
   "runReason.dbdumpHelper": "转储助手没有给出结果",
   "runReason.dbdumpMismatch": "保存的大小与转储出来的内容不符",
   "runReason.dbdumpLeftover": "损坏的转储无法从仓库中移除",
+  "runReason.dbdumpOrphan": "转储可能仍在容器内运行，直到其时间上限",
   "runReason.dbdumpOneDatabase": "用容器里的凭据只能转储一个数据库",
   "runReason.dbdumpNotRecorded": "已跳过数据库转储，因为无法记录它的运行",
   "runReason.dbimportPrepare": "导入在开始之前就失败了，旧数据已回到原处",

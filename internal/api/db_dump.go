@@ -376,6 +376,7 @@ type dbDumpAdapter struct {
 	docker      dockercli.Docker
 	mode        restic.Mode
 	container   string
+	containerID string
 	progressKey string
 	startedAt   int64
 	// guard arms the dump-scoped stall guard; nil means armStallGuard. A field
@@ -538,20 +539,43 @@ func (a *dbDumpAdapter) stopOrphan(ctx context.Context, lines []string) error {
 	stopCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), dbDumpOrphanStopTimeout)
 	defer cancel()
 	if err := a.docker.Exec(stopCtx, a.container, argv); err != nil {
+		if a.containerGone(ctx) {
+			return nil
+		}
 		log.Printf("api: database dump of %q: the dump inside the container could not be stopped and may run until its time limit: %v", a.container, err) //nolint:gosec // G706: name is %q-quoted
 		return err
 	}
 	return nil
 }
 
+// containerGone reports whether the container the dump ran in has stopped or
+// been replaced since, which ended every process the dump left in it. A paused
+// container still counts as running, and so does its frozen dump.
+func (a *dbDumpAdapter) containerGone(ctx context.Context) bool {
+	ictx, cancel := context.WithTimeout(context.WithoutCancel(ctx), dbDumpOrphanStopTimeout)
+	defer cancel()
+	in, err := a.docker.Inspect(ictx, a.container)
+	if err != nil {
+		return dockercli.IsNotFound(err)
+	}
+	return !in.Running || in.ID != a.containerID
+}
+
 // withOrphanStopFailed adds to a dump's reason that its process may still be
 // running inside the container, after the reason's own detail if it has one.
 func withOrphanStopFailed(reason string) string {
-	const note = "orphan stop failed"
 	if dbDumpReasonHead(reason) == reason {
-		return reason + ": " + note
+		return reason + ": " + dbDumpOrphanNote
 	}
-	return reason + "; " + note
+	return reason + "; " + dbDumpOrphanNote
+}
+
+// dbDumpOrphanNote ends the reason of a dump whose process may still be
+// running inside the container. The page translates it by this exact text.
+const dbDumpOrphanNote = "orphan stop failed"
+
+func dbDumpLeftRunning(reason string) bool {
+	return strings.HasSuffix(reason, ": "+dbDumpOrphanNote) || strings.HasSuffix(reason, "; "+dbDumpOrphanNote)
 }
 
 // publishBytes sends the stream's byte counter to the container's card,
@@ -772,6 +796,9 @@ func (s *Service) notifyDBDumpFailed(ctx context.Context, targetID, name string,
 		outcome = "The files backup of the container failed as well; see its own message."
 	}
 	msg := fmt.Sprintf("Database dump of container %q failed: %s. %s", name, dbDumpFailureSentence(o.Reason), outcome)
+	if dbDumpLeftRunning(o.Reason) {
+		msg += " The dump may still be running inside the container until its time limit."
+	}
 	// The detail can quote row data, so it stays in the run row: a webhook, a
 	// chat room and a mailbox are not where a database error belongs.
 	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "containers",

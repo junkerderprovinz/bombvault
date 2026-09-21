@@ -5125,7 +5125,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	if dumpPlan != nil {
 		dumper = &dbDumpAdapter{
 			svc: s, engine: s.engine, docker: s.docker, mode: mode,
-			container: name, progressKey: pkey, startedAt: startedAt,
+			container: name, containerID: in.ID, progressKey: pkey, startedAt: startedAt,
 		}
 	}
 	sum, err := backup.BackupContainer(bctx, backup.BackupDeps{

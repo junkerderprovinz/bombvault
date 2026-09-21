@@ -847,6 +847,7 @@ const sl: Partial<Translations> = {
   "runReason.dbdumpHelper": "pomočnik za izvoz ni dal nobenega rezultata",
   "runReason.dbdumpMismatch": "shranjena velikost se ne ujema s tem, kar je bilo izvoženo",
   "runReason.dbdumpLeftover": "poškodovanega izvoza ni bilo mogoče odstraniti iz repozitorija",
+  "runReason.dbdumpOrphan": "izvoz se morda še izvaja v vsebniku do svoje časovne omejitve",
   "runReason.dbdumpOneDatabase": "s poverilnicami v vsebniku je bilo mogoče izvoziti samo eno podatkovno bazo",
   "runReason.dbdumpNotRecorded": "izvoz podatkovne baze je bil izpuščen, ker njegovega teka ni bilo mogoče zabeležiti",
   "runReason.dbimportPrepare": "uvoz ni uspel, preden se je začel; stari podatki so spet na svojem mestu",

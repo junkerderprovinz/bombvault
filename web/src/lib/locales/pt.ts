@@ -958,6 +958,7 @@ const pt: Partial<Translations> = {
   "runReason.dbdumpHelper": "o auxiliar de dump não devolveu qualquer resultado",
   "runReason.dbdumpMismatch": "o tamanho guardado não corresponde ao que foi extraído",
   "runReason.dbdumpLeftover": "não foi possível remover do repositório um dump danificado",
+  "runReason.dbdumpOrphan": "o dump pode ainda estar em execução no contêiner até ao seu limite de tempo",
   "runReason.dbdumpOneDatabase": "com as credenciais do contentor só foi possível extrair uma base de dados",
   "runReason.dbdumpNotRecorded": "dump da base de dados ignorado, porque não foi possível registar a sua execução",
   "runReason.dbimportPrepare": "a importação falhou antes de começar; os dados anteriores estão de novo no lugar",

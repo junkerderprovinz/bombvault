@@ -849,6 +849,7 @@ const lv: Partial<Translations> = {
   "runReason.dbdumpHelper": "izraksta palīgs nedeva nekādu rezultātu",
   "runReason.dbdumpMismatch": "saglabātais izmērs neatbilst tam, kas tika izrakstīts",
   "runReason.dbdumpLeftover": "bojātu izrakstu neizdevās izņemt no krātuves",
+  "runReason.dbdumpOrphan": "izraksts konteinerā, iespējams, vēl darbojas līdz savam laika ierobežojumam",
   "runReason.dbdumpOneDatabase": "ar konteinera akreditācijas datiem izdevās izrakstīt tikai vienu datubāzi",
   "runReason.dbdumpNotRecorded": "datubāzes izraksts izlaists, jo tā izpildi neizdevās pierakstīt",
   "runReason.dbimportPrepare": "imports neizdevās, pirms tas sākās; vecie dati atkal ir savā vietā",

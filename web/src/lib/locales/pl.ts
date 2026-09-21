@@ -953,6 +953,7 @@ const pl: Partial<Translations> = {
   "runReason.dbdumpHelper": "pomocnik zrzutu nie dał żadnego wyniku",
   "runReason.dbdumpMismatch": "zapisany rozmiar nie zgadza się z tym, co zostało zrzucone",
   "runReason.dbdumpLeftover": "uszkodzonego zrzutu nie dało się usunąć z repozytorium",
+  "runReason.dbdumpOrphan": "zrzut może nadal działać w kontenerze aż do swojego limitu czasu",
   "runReason.dbdumpOneDatabase": "z poświadczeniami z kontenera udało się zrzucić tylko jedną bazę danych",
   "runReason.dbdumpNotRecorded": "zrzut bazy danych pominięty, bo nie udało się zapisać jego przebiegu",
   "runReason.dbimportPrepare": "import nie powiódł się, zanim się zaczął; stare dane są z powrotem na miejscu",

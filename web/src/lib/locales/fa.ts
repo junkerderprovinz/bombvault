@@ -849,6 +849,7 @@ const fa: Partial<Translations> = {
   "runReason.dbdumpHelper": "یاور تخلیه هیچ نتیجه‌ای نداد",
   "runReason.dbdumpMismatch": "اندازه ذخیره‌شده با آنچه تخلیه شد همخوانی ندارد",
   "runReason.dbdumpLeftover": "تخلیه آسیب‌دیده از مخزن برداشته نشد",
+  "runReason.dbdumpOrphan": "ممکن است تخلیه تا پایان مهلت زمانی‌اش همچنان درون کانتینر در حال اجرا باشد",
   "runReason.dbdumpOneDatabase": "با اعتبارنامه‌های داخل کانتینر تنها یک پایگاه داده تخلیه شد",
   "runReason.dbdumpNotRecorded": "تخلیه پایگاه داده نادیده گرفته شد، چون اجرای آن ثبت نشد",
   "runReason.dbimportPrepare": "درون‌ریزی پیش از آغاز شکست خورد؛ داده‌های پیشین دوباره سر جای خود هستند",

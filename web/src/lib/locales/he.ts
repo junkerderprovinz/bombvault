@@ -961,6 +961,7 @@ const he: Partial<Translations> = {
   "runReason.dbdumpHelper": "עוזר ההעתקה לא החזיר תוצאה",
   "runReason.dbdumpMismatch": "הגודל השמור אינו תואם למה שהועתק",
   "runReason.dbdumpLeftover": "לא ניתן היה להסיר מהמאגר העתק פגום",
+  "runReason.dbdumpOrphan": "ייתכן שההעתק עדיין רץ בתוך הקונטיינר עד מגבלת הזמן שלו",
   "runReason.dbdumpOneDatabase": "עם פרטי הגישה שבמכולה ניתן היה להעתיק מסד נתונים אחד בלבד",
   "runReason.dbdumpNotRecorded": "העתקת מסד הנתונים דולגה, משום שלא ניתן היה לתעד את הריצה שלה",
   "runReason.dbimportPrepare": "הייבוא נכשל לפני שהתחיל; הנתונים הישנים חזרו למקומם",

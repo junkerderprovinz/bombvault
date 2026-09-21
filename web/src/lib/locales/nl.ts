@@ -955,6 +955,7 @@ const nl: Partial<Translations> = {
   "runReason.dbdumpHelper": "de dumphelper gaf geen resultaat",
   "runReason.dbdumpMismatch": "de opgeslagen grootte komt niet overeen met wat er gedumpt is",
   "runReason.dbdumpLeftover": "een beschadigde dump kon niet uit de repository worden verwijderd",
+  "runReason.dbdumpOrphan": "de dump draait mogelijk nog in de container tot zijn tijdslimiet",
   "runReason.dbdumpOneDatabase": "met de inloggegevens in de container kon maar één database gedumpt worden",
   "runReason.dbdumpNotRecorded": "databasedump overgeslagen, omdat de uitvoering niet vastgelegd kon worden",
   "runReason.dbimportPrepare": "het importeren mislukte voordat het begon; de oude gegevens staan weer op hun plaats",

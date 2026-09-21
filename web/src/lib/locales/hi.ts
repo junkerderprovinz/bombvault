@@ -849,6 +849,7 @@ const hi: Partial<Translations> = {
   "runReason.dbdumpHelper": "डंप सहायक ने कोई परिणाम नहीं दिया",
   "runReason.dbdumpMismatch": "संग्रहित आकार उससे मेल नहीं खाता जो डंप किया गया था",
   "runReason.dbdumpLeftover": "एक क्षतिग्रस्त डंप रिपॉज़िटरी से हटाया नहीं जा सका",
+  "runReason.dbdumpOrphan": "डंप शायद अपनी समय सीमा तक कंटेनर के अंदर अब भी चल रहा है",
   "runReason.dbdumpOneDatabase": "कंटेनर के क्रेडेंशियल से केवल एक ही डेटाबेस डंप किया जा सका",
   "runReason.dbdumpNotRecorded": "डेटाबेस डंप छोड़ दिया गया, क्योंकि उसका रन दर्ज नहीं किया जा सका",
   "runReason.dbimportPrepare": "आयात शुरू होने से पहले ही विफल हो गया; पुराना डेटा फिर अपनी जगह पर है",

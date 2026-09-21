@@ -961,6 +961,7 @@ const ro: Partial<Translations> = {
   "runReason.dbdumpHelper": "asistentul de dump nu a dat niciun rezultat",
   "runReason.dbdumpMismatch": "dimensiunea salvată nu se potrivește cu ce a fost extras",
   "runReason.dbdumpLeftover": "un dump deteriorat nu a putut fi șters din depozit",
+  "runReason.dbdumpOrphan": "dumpul poate rula în continuare în container până la limita sa de timp",
   "runReason.dbdumpOneDatabase": "cu acreditările din container s-a putut extrage o singură bază de date",
   "runReason.dbdumpNotRecorded": "dumpul bazei de date a fost omis, pentru că rularea lui nu a putut fi înregistrată",
   "runReason.dbimportPrepare": "importul a eșuat înainte să înceapă; datele vechi sunt din nou la locul lor",

@@ -849,6 +849,7 @@ const sk: Partial<Translations> = {
   "runReason.dbdumpHelper": "pomocník výpisu nevrátil žiadny výsledok",
   "runReason.dbdumpMismatch": "uložená veľkosť nezodpovedá tomu, čo sa vypísalo",
   "runReason.dbdumpLeftover": "poškodený výpis sa nepodarilo odstrániť z repozitára",
+  "runReason.dbdumpOrphan": "výpis môže v kontajneri ešte bežať až do svojho časového limitu",
   "runReason.dbdumpOneDatabase": "s prihlasovacími údajmi v kontajneri sa podarilo vypísať len jednu databázu",
   "runReason.dbdumpNotRecorded": "výpis databázy preskočený, pretože sa nepodarilo zaznamenať jeho beh",
   "runReason.dbimportPrepare": "import zlyhal, skôr než sa začal; staré dáta sú zase na svojom mieste",

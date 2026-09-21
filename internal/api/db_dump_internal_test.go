@@ -204,6 +204,9 @@ type dumpFakeDocker struct {
 	probeOut string
 	probeErr error
 	execErr  error
+	// inspect is the dump's container as it is after the dump.
+	inspect    model.Inspect
+	inspectErr error
 
 	execArgv    [][]string
 	execCtxDone []bool
@@ -223,7 +226,7 @@ func (f *dumpFakeDocker) Exec(ctx context.Context, _ string, cmd []string) error
 }
 
 func (f *dumpFakeDocker) Inspect(context.Context, string) (model.Inspect, error) {
-	return model.Inspect{}, nil
+	return f.inspect, f.inspectErr
 }
 
 func (f *dumpFakeDocker) ExecStdin(context.Context, string, []string, io.Reader, int) (string, int, error) {
@@ -237,6 +240,7 @@ func dumpAdapter(eng *dumpFakeEngine, dock *dumpFakeDocker) *dbDumpAdapter {
 		engine:      eng,
 		docker:      dock,
 		container:   "pg",
+		containerID: "c0ffee1d",
 		progressKey: "container:pg",
 		startedAt:   1700000000,
 	}
@@ -493,10 +497,11 @@ func TestDBDumpAdapterStopsOrphanFromForwardedPid(t *testing.T) {
 func TestDBDumpAdapterNamesAnOrphanItCouldNotStop(t *testing.T) {
 	pidLine := "subprocess /usr/local/bin/bombvault: bombvault-dbdump-pid 4242"
 	stopErr := errors.New("dockercli: exec create: container is paused")
+	paused := model.Inspect{ID: "c0ffee1d", Name: "/pg", Running: true}
 
 	t.Run("behind the reason alone", func(t *testing.T) {
 		eng := &dumpFakeEngine{lines: []string{pidLine}, err: context.Canceled}
-		a := dumpAdapter(eng, &dumpFakeDocker{execErr: stopErr})
+		a := dumpAdapter(eng, &dumpFakeDocker{execErr: stopErr, inspect: paused})
 		parent, cancel := context.WithCancel(context.Background())
 		cancel()
 
@@ -512,7 +517,7 @@ func TestDBDumpAdapterNamesAnOrphanItCouldNotStop(t *testing.T) {
 			lines: []string{pidLine, resultLine(dbdump.Result{V: 1, Reason: dbdump.ReasonTool, Exit: 1, Detail: "tool said so"})},
 			err:   errors.New("restic backup: exit status 1"),
 		}
-		a := dumpAdapter(eng, &dumpFakeDocker{execErr: stopErr})
+		a := dumpAdapter(eng, &dumpFakeDocker{execErr: stopErr, inspect: paused})
 
 		res, err := a.Dump(context.Background(), dumpRequest())
 		fail := dumpFailure(t, res, err)
@@ -523,6 +528,25 @@ func TestDBDumpAdapterNamesAnOrphanItCouldNotStop(t *testing.T) {
 			t.Errorf("head = %q, want the remedy and the debounce to still see %q", head, store.ReasonDBDumpTool)
 		}
 	})
+
+	// Every process a dump left in a container ends with the container.
+	gone := map[string]*dumpFakeDocker{
+		"stopped":   {execErr: stopErr, inspect: model.Inspect{ID: "c0ffee1d", Name: "/pg"}},
+		"recreated": {execErr: stopErr, inspect: model.Inspect{ID: "5eed0001", Name: "/pg", Running: true}},
+		"removed":   {execErr: stopErr, inspectErr: errors.New("dockercli: inspect: Error response from daemon: No such container: pg")},
+	}
+	for name, dock := range gone {
+		t.Run("not in a container that was "+name, func(t *testing.T) {
+			eng := &dumpFakeEngine{lines: []string{pidLine}, err: context.Canceled}
+			parent, cancel := context.WithCancel(context.Background())
+			cancel()
+
+			res, err := dumpAdapter(eng, dock).Dump(parent, dumpRequest())
+			if fail := dumpFailure(t, res, err); fail.Reason != store.ReasonCancelled {
+				t.Errorf("reason = %q, want %q alone", fail.Reason, store.ReasonCancelled)
+			}
+		})
+	}
 }
 
 func TestDBDumpAdapterForgetsASnapshotTheHelperDisowns(t *testing.T) {

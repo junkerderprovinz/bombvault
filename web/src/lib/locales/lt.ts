@@ -849,6 +849,7 @@ const lt: Partial<Translations> = {
   "runReason.dbdumpHelper": "išrašo pagalbininkas nedavė jokio rezultato",
   "runReason.dbdumpMismatch": "įrašytas dydis neatitinka to, kas buvo išrašyta",
   "runReason.dbdumpLeftover": "sugadinto išrašo nepavyko pašalinti iš saugyklos",
+  "runReason.dbdumpOrphan": "išrašas konteineryje gali vis dar veikti iki savo laiko ribos",
   "runReason.dbdumpOneDatabase": "su konteinerio prisijungimo duomenimis pavyko išrašyti tik vieną duomenų bazę",
   "runReason.dbdumpNotRecorded": "duomenų bazės išrašas praleistas, nes nepavyko įrašyti jo vykdymo",
   "runReason.dbimportPrepare": "importas nepavyko dar neprasidėjęs; seni duomenys vėl savo vietoje",

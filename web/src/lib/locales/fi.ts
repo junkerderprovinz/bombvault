@@ -981,6 +981,7 @@ const fi: Partial<Translations> = {
   "runReason.dbdumpHelper": "vedostusapuri ei antanut tulosta",
   "runReason.dbdumpMismatch": "tallennettu koko ei vastaa sitä, mitä vedostettiin",
   "runReason.dbdumpLeftover": "vaurioitunutta vedosta ei saatu poistettua arkistosta",
+  "runReason.dbdumpOrphan": "vedos saattaa olla yhä käynnissä kontissa aikarajaansa asti",
   "runReason.dbdumpOneDatabase": "säiliön tunnuksilla saatiin vedostettua vain yksi tietokanta",
   "runReason.dbdumpNotRecorded": "tietokannan vedostus ohitettiin, koska sen ajoa ei voitu kirjata",
   "runReason.dbimportPrepare": "tuonti epäonnistui ennen alkamistaan; vanhat tiedot ovat taas paikallaan",
