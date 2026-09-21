@@ -788,3 +788,71 @@ func TestAnImportWithoutTargetsLeavesTheDirectRepositoryAsAPlainOne(t *testing.T
 		t.Fatal("a target the file does not carry is still there")
 	}
 }
+
+func TestTheExportCarriesTheLinkOfADirectRepository(t *testing.T) {
+	f := newPlacementFixture(t)
+	target := f.target("containers", "B2", "b2:bkt:containers")
+	d := f.direct(target)
+	f.namedRepo("NAS", "backups/nas")
+	res := f.do("GET", "/api/settings/export", nil)
+	links := map[string]any{}
+	for _, r := range res["namedRepos"].([]any) {
+		row := r.(map[string]any)
+		links[row["id"].(string)] = row["companionOf"]
+	}
+	if len(links) != 2 || links[d.ID] != target.ID {
+		t.Fatalf("namedRepos links = %v", links)
+	}
+	for id, link := range links {
+		if id != d.ID && link != nil {
+			t.Fatalf("a plain repository carries a link: %v", link)
+		}
+	}
+}
+
+func TestAnImportedDirectRepositoryIsLinkedOrLabelledLost(t *testing.T) {
+	f := newPlacementFixture(t)
+	target := f.target("containers", "B2", "b2:bkt:containers")
+	missing := "0123456789abcdef0123456789abcdef"
+	views := []offsiteTargetView{
+		{ID: "11111111111111111111111111111111", Name: "B2 direct", Repo: "b2:bkt:containers-direct", Enabled: true, CompanionOf: target.ID},
+		{ID: "22222222222222222222222222222222", Name: "Gone direct", Repo: "b2:bkt:gone-direct", Enabled: true, CompanionOf: missing},
+		{ID: "33333333333333333333333333333333", Name: "NAS", Repo: "backups/nas", Enabled: true},
+	}
+	if err := f.h.replaceNamedRepos(views); err != nil {
+		t.Fatal(err)
+	}
+	for id, want := range map[string]struct {
+		link string
+		lost bool
+	}{
+		views[0].ID: {target.ID, false},
+		views[1].ID: {"", true},
+		views[2].ID: {"", false},
+	} {
+		got, err := f.st.GetNamedRepo(id)
+		if err != nil || got.CompanionOf != want.link || got.CompanionLost != want.lost {
+			t.Errorf("%s = %+v, %v; want link %q lost %v", id, got, err, want.link, want.lost)
+		}
+	}
+}
+
+// TestAnOlderFileLeavesTheLinkOfAnExistingDirectRepository pins that an import
+// never reads companionOf for a repository already stored here: the field is
+// only ever consulted for a row the file introduces.
+func TestAnOlderFileLeavesTheLinkOfAnExistingDirectRepository(t *testing.T) {
+	f := newPlacementFixture(t)
+	target := f.target("containers", "B2", "b2:bkt:containers")
+	d := f.direct(target)
+	file := f.do("GET", "/api/settings/export", nil)
+	for _, row := range file["namedRepos"].([]any) {
+		delete(row.(map[string]any), "companionOf")
+	}
+	if res := f.do("POST", "/api/settings/import?apply=true", file); res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+	got, err := f.st.GetNamedRepo(d.ID)
+	if err != nil || got.CompanionOf != target.ID || got.CompanionLost {
+		t.Fatalf("direct repository after a file without companionOf: %+v, %v", got, err)
+	}
+}
