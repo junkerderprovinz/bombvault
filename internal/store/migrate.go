@@ -1659,10 +1659,14 @@ CREATE TABLE IF NOT EXISTS offsite_copy_rules (
 		alreadySatisfied: tablePresent("offsite_copy_rules"),
 	},
 	{
-		// A database that already backs something up gets a confirmed default per
-		// domain that keeps its replication as it is: domain path, every target. A
-		// fresh one gets none. confirmed_at has no default, so every writer has to
-		// say whether it confirms or pauses.
+		// A domain that already replicates gets a confirmed default that keeps it
+		// as it is: domain path, every target. Each domain is judged on its own
+		// history, a successful backup of one of its own items or a successful
+		// off-site run of its own, not on whether anything anywhere has run, so an
+		// install that only ever backed up containers does not grandfather vms and
+		// files, which never replicated a thing. A fresh domain gets none.
+		// confirmed_at has no default, so every writer has to say whether it
+		// confirms or pauses.
 		version: 111,
 		name:    "placement_defaults",
 		sql: `
@@ -1675,12 +1679,19 @@ CREATE TABLE IF NOT EXISTS placement_defaults (
 );
 
 INSERT INTO placement_defaults (domain, home, skip, confirmed_at, updated_at)
-SELECT d.domain, '', '[]', strftime('%s', 'now'), strftime('%s', 'now')
-  FROM (SELECT 'containers' AS domain UNION ALL SELECT 'vms' UNION ALL SELECT 'files') d
- WHERE EXISTS (SELECT 1 FROM targets)
-    OR EXISTS (SELECT 1 FROM vms)
-    OR EXISTS (SELECT 1 FROM file_sets)
-    OR EXISTS (SELECT 1 FROM runs);`,
+SELECT 'containers', '', '[]', strftime('%s', 'now'), strftime('%s', 'now')
+ WHERE EXISTS (SELECT 1 FROM runs WHERE kind = 'backup' AND status = 'success' AND target_id IN (SELECT id FROM targets))
+    OR EXISTS (SELECT 1 FROM offsite_runs WHERE domain = 'containers' AND ok = 1);
+
+INSERT INTO placement_defaults (domain, home, skip, confirmed_at, updated_at)
+SELECT 'vms', '', '[]', strftime('%s', 'now'), strftime('%s', 'now')
+ WHERE EXISTS (SELECT 1 FROM runs WHERE kind = 'backup' AND status = 'success' AND target_id IN (SELECT id FROM vms))
+    OR EXISTS (SELECT 1 FROM offsite_runs WHERE domain = 'vms' AND ok = 1);
+
+INSERT INTO placement_defaults (domain, home, skip, confirmed_at, updated_at)
+SELECT 'files', '', '[]', strftime('%s', 'now'), strftime('%s', 'now')
+ WHERE EXISTS (SELECT 1 FROM runs WHERE kind = 'backup' AND status = 'success' AND target_id IN (SELECT id FROM file_sets))
+    OR EXISTS (SELECT 1 FROM offsite_runs WHERE domain = 'files' AND ok = 1);`,
 		alreadySatisfied: tablePresent("placement_defaults"),
 	},
 	{
