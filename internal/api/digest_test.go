@@ -155,3 +155,41 @@ func TestDigestListsDBDumpKind(t *testing.T) {
 		at += i
 	}
 }
+
+func TestDigestLeavesOutWhatADatabaseToolSaid(t *testing.T) {
+	svc, st, body := digestTestService(t, "always")
+
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "pg", AppdataPaths: []string{"/host/user/appdata/pg"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	quoted := "pg_dump: error: DETAIL: Key (email)=(alice@example.com) already exists"
+	seedFailedRunOfKind(t, st, tg.ID, "dbdump", store.ReasonDBDumpTool+": "+quoted)
+	seedFailedRunOfKind(t, st, tg.ID, "dbimport",
+		store.ReasonDBImportFailed+": the previous data folder is kept at /data/pg.bombvault-before-import-20260917-021403; exit 1: "+quoted)
+
+	if err := svc.SendDigest(context.Background()); err != nil {
+		t.Fatalf("SendDigest: %v", err)
+	}
+
+	got := body()
+	if strings.Contains(got, "alice@example.com") {
+		t.Fatalf("the digest carries a row a database tool quoted:\n%s", got)
+	}
+	for _, want := range []string{"dbdump pg: " + store.ReasonDBDumpTool, "pg.bombvault-before-import-20260917-021403"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("digest is missing %q:\n%s", want, got)
+		}
+	}
+}
+
+func seedFailedRunOfKind(t *testing.T, st *store.Repo, targetID, kind, reason string) {
+	t.Helper()
+	id, err := st.StartRun(targetID, kind)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishRun(id, "failed", "", 0, reason); err != nil {
+		t.Fatal(err)
+	}
+}

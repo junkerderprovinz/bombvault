@@ -129,7 +129,7 @@ func (s *Service) collectDigestStats(now time.Time) (digestStats, error) {
 					// Domain-scoped runs use the domain name as their target id.
 					name = run.TargetID
 				}
-				reason := run.Error
+				reason := shareableRunError(run.Kind, run.Error)
 				const maxReason = 160
 				if len(reason) > maxReason {
 					reason = reason[:maxReason]
