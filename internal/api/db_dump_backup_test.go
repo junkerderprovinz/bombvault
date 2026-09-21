@@ -2,15 +2,20 @@ package api_test
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dbdump"
 	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -255,3 +260,67 @@ func hasPrefixIn(ss []string, prefix string) bool {
 type errorString string
 
 func (e errorString) Error() string { return string(e) }
+
+// webhookMessages points the service's notifications at a webhook and returns
+// what arrived there.
+func webhookMessages(t *testing.T, svc *api.Service) func() []notify.Event {
+	t.Helper()
+	var (
+		mu  sync.Mutex
+		got []notify.Event
+	)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var ev notify.Event
+		if err := json.NewDecoder(r.Body).Decode(&ev); err != nil {
+			t.Errorf("decode webhook: %v", err)
+		}
+		mu.Lock()
+		got = append(got, ev)
+		mu.Unlock()
+	}))
+	t.Cleanup(srv.Close)
+	if err := svc.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
+		t.Fatal(err)
+	}
+	return func() []notify.Event {
+		mu.Lock()
+		defer mu.Unlock()
+		return append([]notify.Event(nil), got...)
+	}
+}
+
+func TestBackupSendsTheDumpFailureAfterTheBackup(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		backupErr error
+		want      string
+	}{
+		{"the files backup succeeded", nil, "The files backup of the container succeeded."},
+		{"the files backup failed as well", errorString("restic backup failed: repository is locked"), "failed as well"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newDumpBackupFixture(t, "postgres:16")
+			f.eng.commandBackupErr = errorString("restic backup: exit status 1")
+			f.eng.commandBackupLines = []string{
+				"subprocess /usr/local/bin/bombvault: " + dbdump.Result{V: 1, Reason: dbdump.ReasonAuth, Exit: 1}.Line(),
+			}
+			f.eng.backupErr = tc.backupErr
+			messages := webhookMessages(t, f.svc)
+
+			_, _ = f.svc.Backup(context.Background(), "pg")
+
+			var dumps []notify.Event
+			for _, ev := range messages() {
+				if ev.Title == "BombVault: database dump FAILED" {
+					dumps = append(dumps, ev)
+				}
+			}
+			if len(dumps) != 1 {
+				t.Fatalf("dump messages = %+v, want exactly one", dumps)
+			}
+			if msg := dumps[0].Message; !strings.Contains(msg, `Database dump of container "pg" failed`) || !strings.Contains(msg, tc.want) {
+				t.Errorf("message = %q, want it to name the dump and say %q", msg, tc.want)
+			}
+		})
+	}
+}
