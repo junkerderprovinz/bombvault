@@ -5998,7 +5998,7 @@ func (s *Service) Discover(ctx context.Context, dryRun bool) (DiscoverResult, er
 			// in LeftOpen instead of the insert setting it straight through.
 			write := store.HomeWrite{Choice: store.RepoOpen}
 			if locked {
-				write = discoverWrite(repoID, readErr)
+				write = s.discoverWrite("containers", name, repoID, readErr)
 			}
 			if _, uErr := s.store.UpsertTarget(store.Target{
 				ContainerName: name,
@@ -6170,7 +6170,7 @@ func (s *Service) DiscoverVMs(ctx context.Context, dryRun bool) (DiscoverResult,
 			// instead of the insert setting its home straight through.
 			write := store.HomeWrite{Choice: store.RepoOpen}
 			if locked {
-				write = discoverWrite(repoID, readErr)
+				write = s.discoverWrite("vms", name, repoID, readErr)
 			}
 			if _, uErr := s.store.UpsertVMTarget(store.VMTarget{
 				Name:       name,
@@ -11774,7 +11774,7 @@ func (s *Service) DiscoverFileSets(ctx context.Context, dryRun bool) (DiscoverRe
 		// LeftOpen instead of getting its home straight through the insert.
 		write := store.HomeWrite{Choice: store.RepoOpen}
 		if locked {
-			write = discoverWrite(repoID, readErr)
+			write = s.discoverWrite("files", name, repoID, readErr)
 		}
 		existing, gErr := s.store.GetFileSetByName(name)
 		switch {

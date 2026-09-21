@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/secret"
@@ -54,6 +55,28 @@ func TestDiscoverWritesTheFoundLocationChosen(t *testing.T) {
 	}
 	if len(f.eng.deletes) != 1 || filepath.ToSlash(f.eng.deletes[0].Repo) != f.root+"/nas" {
 		t.Fatalf("deletes = %+v, want one on NAS", f.eng.deletes)
+	}
+}
+
+// What Discover finds is evidence, and a repository every interactive route
+// refuses is no home: a containers item cannot live in the direct repository
+// of a VMs target.
+func TestDiscoverLeavesAnItemOpenWhenItsRepositoryIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	direct := f.direct(f.target("vms", "NAS VMs", "backups/nas-vms"))
+	loc := f.root + "/backups/nas-vms-direct"
+	f.hold(loc, snap("aaaa0001", 200, "container:nginx"))
+	writeContainerDef(t, f, loc, "nginx")
+	logs := captureLog(t)
+	res, err := f.svc.Discover(context.Background(), false)
+	if err != nil || res.Found != 1 {
+		t.Fatalf("Discover = %+v, %v", res, err)
+	}
+	if got := f.home(store.ItemRef{Domain: "containers", Key: "nginx"}); got.Repo != "" || got.Choice != store.RepoOpen {
+		t.Fatalf("home = %+v, want open: %s belongs to a VMs target", got, direct.Name)
+	}
+	if !strings.Contains(logs.String(), "nginx") {
+		t.Errorf("the pass did not report it: %s", logs.String())
 	}
 }
 
