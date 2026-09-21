@@ -914,12 +914,12 @@ func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 			return err
 		}
 		if t.Repo != wanted {
-			n, mErr := h.store.SetNamedRepoLocationIfUnused(t.ID, wanted)
+			use, mErr := h.store.SetNamedRepoLocationIfUnused(t.ID, wanted)
 			if mErr != nil {
 				return mErr
 			}
-			if n != 0 {
-				log.Printf("api: settings import: repository %q is in use here, so its location was NOT moved to the one in the file; the backups already written stay where they are", t.Name) //nolint:gosec // G706: the name is %q-quoted
+			if use.InUse() {
+				log.Printf("api: settings import: repository %q is in use here (items: %d, defaults: %s), so its location was NOT moved to the one in the file; the backups already written stay where they are", t.Name, use.Items, strings.Join(use.DefaultDomains, ", ")) //nolint:gosec // G706: the name is %q-quoted
 			}
 		}
 	}

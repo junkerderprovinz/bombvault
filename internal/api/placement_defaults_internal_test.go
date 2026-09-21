@@ -555,3 +555,23 @@ func TestDeletingARepositoryADefaultPointsAtNamesTheDomain(t *testing.T) {
 		t.Fatalf("the repository is gone: %v", err)
 	}
 }
+
+// TestMovingARepositoryADefaultPointsAtNamesTheDomain is the move's side of
+// the above: a default that homes open items on this repository has no row in
+// an item table, so the guard has to catch it the same way the delete does.
+func TestMovingARepositoryADefaultPointsAtNamesTheDomain(t *testing.T) {
+	f := newPlacementFixture(t)
+	nas := f.namedRepo("NAS", "nas")
+	f.setDefault("containers", nas.ID)
+	res := f.do(http.MethodPatch, "/api/repos/"+nas.ID, map[string]any{"repo": "elsewhere"})
+	if res["code"] != "repo-in-use" || res["items"] != float64(0) {
+		t.Fatalf("PATCH = %v, want repo-in-use without items", res)
+	}
+	if domains, _ := res["defaultDomains"].([]any); len(domains) != 1 || domains[0] != "containers" {
+		t.Fatalf("defaultDomains = %v, want containers", res["defaultDomains"])
+	}
+	back, err := f.st.GetNamedRepo(nas.ID)
+	if err != nil || back.Repo != "nas" {
+		t.Fatalf("repo = %+v, %v, want the location untouched", back, err)
+	}
+}

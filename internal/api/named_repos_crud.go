@@ -386,20 +386,23 @@ func (h *Handler) handleUpdateNamedRepo(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if moving {
-		n, mErr := h.store.SetNamedRepoLocationIfUnused(id, newLocation)
+		use, mErr := h.store.SetNamedRepoLocationIfUnused(id, newLocation)
 		if mErr != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(mErr))
 			return
 		}
-		if n != 0 {
+		if use.InUse() {
 			// The rest of the edit IS saved - name, limits, flags - and the answer
 			// says so. Reporting a bare failure over a request that did write
 			// something leaves the operator with a screen that disagrees with the
 			// database, which is how a "failed" save gets repeated until it does
 			// something unintended.
-			writeJSON(w, http.StatusOK, map[string]any{"ok": false,
-				"error": "this repository is in use, so its location was NOT moved; the backups already written stay where they are. Everything else you changed was saved. Create a second repository and point the items at it instead",
-				"repo":  h.namedRepoViews([]store.OffsiteTarget{saved})[0]})
+			placementFail(w, errRepoInUse, map[string]any{
+				"error":          "this repository is in use, so its location was NOT moved; the backups already written stay where they are. Everything else you changed was saved. Create a second repository and point the items at it instead",
+				"items":          use.Items,
+				"defaultDomains": append([]string{}, use.DefaultDomains...),
+				"repo":           h.namedRepoViews([]store.OffsiteTarget{saved})[0],
+			})
 			return
 		}
 		saved.Repo = newLocation

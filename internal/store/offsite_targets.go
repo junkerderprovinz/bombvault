@@ -430,29 +430,33 @@ func (r *Repo) DeleteNamedRepoIfUnused(id string) (NamedRepoUse, error) {
 // SetNamedRepoLocationIfUnused moves a named repository's location ONLY while
 // nothing points at it, in one transaction, for the same reason
 // DeleteNamedRepoIfUnused does it that way: everything already written stays
-// where it is, so a move under a live item makes its next backup succeed into
-// an empty repository. Returns the in-use count it saw; 0 means the move was
-// written.
-func (r *Repo) SetNamedRepoLocationIfUnused(id, location string) (int, error) {
+// where it is, so a move under a live item, or under a default that homes open
+// items on this repository, makes the next backup succeed into an empty
+// repository.
+func (r *Repo) SetNamedRepoLocationIfUnused(id, location string) (NamedRepoUse, error) {
+	var use NamedRepoUse
 	tx, err := r.db.Begin()
 	if err != nil {
-		return 0, fmt.Errorf("SetNamedRepoLocationIfUnused: %w", err)
+		return use, fmt.Errorf("SetNamedRepoLocationIfUnused: %w", err)
 	}
 	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
-	var n int
-	if err := tx.QueryRow(itemsUsingNamedRepoQ, id, id, id).Scan(&n); err != nil {
-		return 0, fmt.Errorf("SetNamedRepoLocationIfUnused count: %w", err)
+	if err := tx.QueryRow(itemsUsingNamedRepoQ, id, id, id).Scan(&use.Items); err != nil {
+		return use, fmt.Errorf("SetNamedRepoLocationIfUnused count: %w", err)
 	}
-	if n > 0 {
-		return n, nil
+	if use.DefaultDomains, err = placementDomainsUsingRepoTx(tx, id); err != nil {
+		return use, fmt.Errorf("SetNamedRepoLocationIfUnused defaults: %w", err)
+	}
+	slices.Sort(use.DefaultDomains)
+	if use.InUse() {
+		return use, nil
 	}
 	if _, err := tx.Exec(`UPDATE offsite_targets SET repo = ? WHERE id = ? AND role = ?`, location, id, RoleRepo); err != nil {
-		return 0, fmt.Errorf("SetNamedRepoLocationIfUnused: %w", err)
+		return use, fmt.Errorf("SetNamedRepoLocationIfUnused: %w", err)
 	}
 	if err := tx.Commit(); err != nil {
-		return 0, fmt.Errorf("SetNamedRepoLocationIfUnused commit: %w", err)
+		return use, fmt.Errorf("SetNamedRepoLocationIfUnused commit: %w", err)
 	}
-	return 0, nil
+	return use, nil
 }
 
 // ItemsUsingNamedRepo counts the containers, VMs and file sets that currently
