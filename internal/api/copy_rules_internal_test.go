@@ -219,6 +219,38 @@ func TestVMAndFileSetRoutesTakeCopies(t *testing.T) {
 	waitForListings(t, f)
 }
 
+// TestCopiesOnlyPATCHSurvivesTheHomeGuards pins the part's headline rule:
+// copies may change at any time, even on an item with backups and while a
+// backup holds the domain, because only a home change is ever refused then.
+func TestCopiesOnlyPATCHSurvivesTheHomeGuards(t *testing.T) {
+	f := newPlacementFixture(t)
+	web := f.container("web", "")
+	f.backupRun(web.ID, 100)
+	win := f.vm("win11", "")
+	f.backupRun(win.ID, 100)
+	docs := f.fileSet("docs", "")
+	f.backupRun(docs.ID, 100)
+	body := map[string]any{"copies": map[string]any{"skip": []string{}}}
+	for _, tc := range []struct{ domain, path string }{
+		{"containers", "/api/containers/web"},
+		{"vms", "/api/vms/win11"},
+		{"files", "/api/files/sets/" + docs.ID},
+	} {
+		if res := f.do(http.MethodPatch, tc.path, body); res["ok"] != true {
+			t.Errorf("%s with backups = %v, want ok", tc.path, res)
+		}
+		unlock, ok := f.svc.tryLockDomainFor(tc.domain, "backup")
+		if !ok {
+			t.Fatalf("%s: could not take the domain lock", tc.domain)
+		}
+		res := f.do(http.MethodPatch, tc.path, body)
+		unlock()
+		if res["ok"] != true {
+			t.Errorf("%s while the domain is locked = %v, want ok", tc.path, res)
+		}
+	}
+}
+
 func TestUnreadableRulesRefuseTheChange(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.target("containers", "B2", "b2:bucket:containers")
