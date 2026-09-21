@@ -575,7 +575,8 @@ func TestReadyScriptWaitsForTheRealServer(t *testing.T) {
 		}
 		return c.run(argv, env, "")
 	}
-	// The entrypoint's temporary server answers on the socket and not over TCP.
+	// The entrypoint's temporary server answers on the socket and not over TCP,
+	// and so does a server configured to listen on the socket alone.
 	const socketOnly = `for a in "$@"; do case "$a" in -h|--protocol=TCP) exit 2 ;; esac; done
 exit 0`
 	rootEnv := []string{"MARIADB_ROOT_PASSWORD=r"}
@@ -584,6 +585,7 @@ exit 0`
 		c := newShellCase(t)
 		c.stub("pg_dumpall", "exit 0")
 		c.stub("pg_isready", socketOnly)
+		runEntrypoint(t)
 
 		if res := ready(t, c, dbdump.EnginePostgres, nil); res.exit == 0 {
 			t.Error("the temporary server passed the ready check")
@@ -603,14 +605,39 @@ exit 0`
 		}
 	})
 
+	t.Run("postgres that listens on the socket alone", func(t *testing.T) {
+		c := newShellCase(t)
+		c.stub("pg_dumpall", "exit 0")
+		c.stub("pg_isready", socketOnly)
+
+		if res := ready(t, c, dbdump.EnginePostgres, nil); res.exit != 0 {
+			t.Fatalf("exit %d, stderr %q", res.exit, res.stderr)
+		}
+	})
+
 	t.Run("mariadb during initialisation", func(t *testing.T) {
 		c := newShellCase(t)
 		c.stub("mariadb-dump", "exit 0")
 		c.stub("mariadb-admin", socketOnly)
 		c.stub("mariadb", "exit 0")
+		runEntrypoint(t)
 
 		if res := ready(t, c, dbdump.EngineMariaDB, rootEnv); res.exit == 0 {
 			t.Error("the temporary server passed the ready check")
+		}
+	})
+
+	t.Run("mariadb that listens on the socket alone", func(t *testing.T) {
+		c := newShellCase(t)
+		c.stub("mariadb-dump", "exit 0")
+		c.stub("mariadb-admin", socketOnly)
+		c.stub("mariadb", "exit 0")
+
+		if res := ready(t, c, dbdump.EngineMariaDB, rootEnv); res.exit != 0 {
+			t.Fatalf("exit %d, stderr %q", res.exit, res.stderr)
+		}
+		if got := c.call("mariadb"); !got.hasArg("SELECT 1") {
+			t.Errorf("mariadb argv = %q, want the query that proves the login", got.args)
 		}
 	})
 
@@ -641,6 +668,28 @@ exit 0`
 		if got.env["MYSQL_PWD"] != "r" {
 			t.Errorf("MYSQL_PWD = %q, want r", got.env["MYSQL_PWD"])
 		}
+	})
+}
+
+// runEntrypoint keeps a process named like the official images' entrypoint
+// script running until the test ends, as one runs while it initialises a data
+// folder.
+func runEntrypoint(t *testing.T) {
+	t.Helper()
+	if _, err := os.Stat("/proc/self/comm"); err != nil {
+		t.Skip("no /proc to find the entrypoint in")
+	}
+	script := filepath.Join(t.TempDir(), "docker-entrypoint.sh")
+	if err := os.WriteFile(script, []byte("#!/bin/sh\nwhile :; do sleep 1; done\n"), 0o755); err != nil { //nolint:gosec // G306: the script has to be executable
+		t.Fatal(err)
+	}
+	cmd := exec.Command(script) //nolint:gosec // G204: a script this test wrote
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = cmd.Process.Kill()
+		_ = cmd.Wait()
 	})
 }
 
