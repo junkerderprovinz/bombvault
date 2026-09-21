@@ -1,11 +1,15 @@
 package api
 
 import (
+	"cmp"
 	"context"
+	"log"
 	"maps"
 	"net/http"
 	"slices"
 	"strings"
+
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 type excludedItem struct {
@@ -123,6 +127,75 @@ func (h *Handler) handleNewTargetPreview(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"preview": pv}))
+}
+
+type newTargetRow struct {
+	ID      string        `json:"id"`
+	Domain  string        `json:"domain"`
+	Name    string        `json:"name"`
+	Preview targetPreview `json:"preview"`
+}
+
+// importNewTargets previews each enabled target a settings file adds, counted with
+// the defaults and rules the file leaves behind.
+func (s *Service) importNewTargets(ctx context.Context, exp settingsExport) []newTargetRow {
+	rows := []newTargetRow{}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		log.Printf("api: import preview: %v", err)
+		return rows
+	}
+	for _, tv := range exp.OffsiteTargets {
+		if !validPlacementDomain(tv.Domain) || !tv.Enabled {
+			continue
+		}
+		if _, known, err := s.store.GetOffsiteTarget(tv.ID); err != nil || known {
+			continue
+		}
+		from, err := s.importedPlacementFor(settings, exp, tv.Domain)
+		var pv targetPreview
+		if err == nil {
+			pv, err = s.newTargetPreview(ctx, tv.Domain, tv.ID, &from)
+		}
+		if err != nil {
+			log.Printf("api: import preview of %s: %v", tv.Domain, err) //nolint:gosec // G706: the domain passed validPlacementDomain
+			continue
+		}
+		rows = append(rows, newTargetRow{ID: tv.ID, Domain: tv.Domain, Name: cmp.Or(tv.Name, scrubRepoLocation(tv.Repo)), Preview: pv})
+	}
+	return rows
+}
+
+// importedPlacementFor is a domain's placement as the file leaves it: the file's
+// default and rules where it carries those blocks, this instance's otherwise.
+// A paused domain keeps its row when the file does not name it, as the import does.
+func (s *Service) importedPlacementFor(settings store.Settings, exp settingsExport, domain string) (placementRead, error) {
+	p, err := s.readPlacement(settings, domain)
+	if err != nil {
+		return p, err
+	}
+	if exp.PlacementDefaults != nil {
+		i := slices.IndexFunc(exp.PlacementDefaults, func(d placementDefaultExport) bool { return d.Domain == domain })
+		switch {
+		case i >= 0:
+			d := exp.PlacementDefaults[i]
+			p.State.HasDefault = true
+			p.State.Default.Home, p.State.Default.Skip = d.Home, d.Skip
+		case !p.State.Paused():
+			p.State.HasDefault = false
+			p.State.Default = store.PlacementDefault{Domain: domain}
+		}
+	}
+	if exp.CopyRules != nil {
+		rules := map[string]store.CopyRule{}
+		for _, r := range exp.CopyRules {
+			if r.Domain == domain {
+				rules[r.Identity] = store.CopyRule{Domain: domain, Identity: r.Identity, Skip: r.Skip}
+			}
+		}
+		p.State.Rules = rules
+	}
+	return p, nil
 }
 
 type placementExcludeBody struct {

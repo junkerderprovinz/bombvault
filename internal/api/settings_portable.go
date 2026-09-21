@@ -294,6 +294,7 @@ type importSummary struct {
 	NamedRepos        int                 `json:"namedRepos"`
 	PlacementDefaults *int                `json:"placementDefaults"`
 	CopyRules         *int                `json:"copyRules"`
+	NewTargets        []newTargetRow      `json:"newTargets"`
 	Credentials       importCredsPresence `json:"credentials"`
 	SettingsGroups    []string            `json:"settingsGroups"`
 }
@@ -339,9 +340,11 @@ func (h *Handler) handleImportSettings(w http.ResponseWriter, r *http.Request) {
 
 	apply := truthy(r.URL.Query().Get("apply"))
 	if !apply {
+		summary := summarizeExport(exp)
+		summary.NewTargets = h.svc.importNewTargets(r.Context(), exp)
 		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 			"preview": true,
-			"summary": summarizeExport(exp),
+			"summary": summary,
 		}))
 		return
 	}
@@ -667,6 +670,7 @@ func summarizeExport(exp settingsExport) importSummary {
 		NamedRepos:        len(exp.NamedRepos),
 		PlacementDefaults: countIfPresent(exp.PlacementDefaults),
 		CopyRules:         countIfPresent(exp.CopyRules),
+		NewTargets:        []newTargetRow{},
 		Credentials:       credsPresence(exp.Credentials),
 		SettingsGroups:    settingsGroups(exp.Settings),
 	}

@@ -10,6 +10,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -33,7 +34,11 @@ func newPortableHandler(t *testing.T, appKey string) (*Handler, *store.Repo) {
 	// containment the settings save does, and a handler without a root would
 	// refuse every relative path this file seeds.
 	cfg := config.Config{AppKey: appKey, DataDir: t.TempDir(), HostMountRoot: "/host/user"}
-	svc := &Service{cfg: cfg, store: st}
+	// An empty restic engine, not nil: the import preview lists each enabled
+	// domain's copy sources to describe the targets a file adds, and that
+	// walk reaches the engine even with nothing ever run here.
+	eng := &placementEngine{snaps: map[string][]restic.Snapshot{}, listErr: map[string]error{}, opens: map[string]bool{}, lists: map[string]int{}}
+	svc := &Service{cfg: cfg, store: st, engine: eng}
 	return &Handler{cfg: cfg, store: st, svc: svc}, st
 }
 
