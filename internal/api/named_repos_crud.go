@@ -197,7 +197,11 @@ func staticNamedRepoRefusals(loc, mountRoot string) string {
 // such a row could otherwise never be edited again, and the two safety toggles
 // that ARE on the card would be unreachable on exactly the repository somebody
 // most wants to protect.
-func (h *Handler) validateNamedRepo(t store.OffsiteTarget, checkClass bool) error {
+// checkLocation is true for a create and for an edit that moves the location,
+// the same scoping handleUpdateOffsiteTarget uses. A row that already sits
+// inside another place, which an import can install, would otherwise be refused
+// every edit over a field the request does not touch, down to switching it off.
+func (h *Handler) validateNamedRepo(t store.OffsiteTarget, checkClass, checkLocation bool) error {
 	if t.Name == "" {
 		return errors.New("a repository needs a name, so it can be told apart in the picker")
 	}
@@ -215,6 +219,9 @@ func (h *Handler) validateNamedRepo(t store.OffsiteTarget, checkClass bool) erro
 	loc, err := h.svc.resolveRepo(t.Repo)
 	if err != nil {
 		return err
+	}
+	if !checkLocation {
+		return nil
 	}
 	// A named repository may not sit on, in or around a domain's own repository,
 	// a domain's off-site destination, an off-site target or another named
@@ -287,7 +294,7 @@ func (h *Handler) handleCreateNamedRepo(w http.ResponseWriter, r *http.Request) 
 	// created one means to use it.
 	row := store.OffsiteTarget{Role: store.RoleRepo, Enabled: true}
 	body.applyTo(&row)
-	if err := h.validateNamedRepo(row, body.StorageClass != nil); err != nil {
+	if err := h.validateNamedRepo(row, body.StorageClass != nil, true); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -332,7 +339,7 @@ func (h *Handler) handleUpdateNamedRepo(w http.ResponseWriter, r *http.Request) 
 	current := strings.TrimSpace(row.Repo)
 	moving := body.Repo != nil && strings.TrimSpace(*body.Repo) != current
 	body.applyTo(&row)
-	if err := h.validateNamedRepo(row, body.StorageClass != nil); err != nil {
+	if err := h.validateNamedRepo(row, body.StorageClass != nil, moving); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}

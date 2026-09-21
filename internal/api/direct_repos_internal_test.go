@@ -142,6 +142,23 @@ func TestALocationInsideOrAroundAnotherIsRefused(t *testing.T) {
 	}
 }
 
+// A repository inside a domain path is a state an import can install, so the
+// nesting rule may not lock the row against the edits it is not about.
+func TestAnEditThatKeepsTheLocationPassesTheNestingCheck(t *testing.T) {
+	f := newPlacementFixture(t)
+	cold := f.namedRepo("Cold", "backups/containers/cold")
+	if res := f.do("PATCH", "/api/repos/"+cold.ID, map[string]any{"enabled": false}); res["ok"] != true {
+		t.Errorf("switching off a repository inside a domain path: %v", res)
+	}
+	if res := f.do("PATCH", "/api/repos/"+cold.ID, map[string]any{"name": "Cold store"}); res["ok"] != true {
+		t.Errorf("renaming a repository inside a domain path: %v", res)
+	}
+	res := f.do("PATCH", "/api/repos/"+cold.ID, map[string]any{"repo": "backups/vms/cold"})
+	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, "lies inside") {
+		t.Errorf("moving it to another nested place: %v", res)
+	}
+}
+
 func TestAnImportWithNestedLocationsIsNotRefused(t *testing.T) {
 	f := newPlacementFixture(t)
 	settings, err := f.st.GetSettings()
