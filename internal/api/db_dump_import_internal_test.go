@@ -829,3 +829,23 @@ func TestImportCauseIsCutBetweenCharacters(t *testing.T) {
 		t.Errorf("cause cut to %q, want it to end before the character the limit falls into", msg[len(msg)-8:])
 	}
 }
+
+func TestACreatedFolderSwappedForALinkIsLeftAlone(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("links need privileges on Windows")
+	}
+	root := t.TempDir()
+	elsewhere := filepath.Join(root, "config")
+	if err := os.Mkdir(elsewhere, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	created := filepath.Join(root, "pg")
+	if err := os.Symlink(elsewhere, created); err != nil {
+		t.Fatal(err)
+	}
+
+	if d, err := openCreatedDir(created); err == nil {
+		_ = d.Close()
+		t.Fatal("a folder swapped for a link was opened for its mode and owner")
+	}
+}
