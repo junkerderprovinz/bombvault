@@ -44,6 +44,9 @@ type importFakeDocker struct {
 	exit    int
 	execErr error
 	fed     string
+	// swallowInputErr makes the import exit cleanly on a truncated input, as
+	// psql does when it reads a script that simply stops.
+	swallowInputErr bool
 
 	calls []string
 }
@@ -78,7 +81,7 @@ func (f *importFakeDocker) ExecOutput(_ context.Context, name string, cmd []stri
 func (f *importFakeDocker) ExecStdin(_ context.Context, name string, _ []string, stdin io.Reader, _ int) (string, int, error) {
 	f.calls = append(f.calls, "import:"+name)
 	fed, err := io.ReadAll(stdin)
-	if err != nil {
+	if err != nil && !f.swallowInputErr {
 		return "", 0, err
 	}
 	f.fed = string(fed)
@@ -395,6 +398,31 @@ func TestImportStepsInOrder(t *testing.T) {
 			t.Errorf("reason = %q, want %q naming the kept folder %q", runs[0].Error, store.ReasonDBImportFailed, kept[0])
 		}
 	})
+}
+
+func TestImportFailsWhenTheDumpCannotBeRead(t *testing.T) {
+	rig := newImportRig(t)
+	rig.eng.rawErr = errors.New("restic dump: pack 5e1f not found")
+	rig.dock.swallowInputErr = true
+
+	if _, err := rig.svc.StartImportDBDump(context.Background(), "pg", "local", importDumpID); err != nil {
+		t.Fatal(err)
+	}
+	waitForDetachedRun(t, rig.svc)
+
+	kept := siblingsOf(t, rig.dataDir, ".bombvault-before-import-*")
+	if len(kept) != 1 {
+		t.Fatalf("kept folders = %v, want exactly one", kept)
+	}
+	runs := runsOfKind(t, rig.svc.store, "dbimport")
+	if len(runs) != 1 || runs[0].Status != "failed" {
+		t.Fatalf("runs = %+v, want one failed import", runs)
+	}
+	reason := runs[0].Error
+	if !strings.HasPrefix(reason, store.ReasonDBImportFailed) || !strings.Contains(reason, filepath.Base(kept[0])) ||
+		!strings.Contains(reason, "pack 5e1f not found") {
+		t.Errorf("reason = %q, want %q naming the kept folder and the read error", reason, store.ReasonDBImportFailed)
+	}
 }
 
 func TestImportRollsBackWhenStartFails(t *testing.T) {

@@ -377,19 +377,27 @@ func (s *Service) feedDBImport(ctx context.Context, plan dbImportPlan, kept, key
 	counted := &countingWriter{w: pw, publish: func(n int64) {
 		s.publishDBDumpStage(key, "restore", "dbimport", startedAt, n)
 	}}
+	read := make(chan error, 1)
 	go func() {
-		_ = pw.CloseWithError(s.engine.DumpRaw(ctx, plan.src.repo, plan.dump.ID, dbDumpStdinPath(plan.name), counted, plan.src.mode))
+		err := s.engine.DumpRaw(ctx, plan.src.repo, plan.dump.ID, dbDumpStdinPath(plan.name), counted, plan.src.mode)
+		_ = pw.CloseWithError(err)
+		read <- err
 	}()
-	// Closing the read side releases the dump stream when the client gives up
-	// before the last byte.
-	defer func() { _ = pr.Close() }()
 
 	tail, exit, err := s.docker.ExecStdin(ctx, plan.name, argv, pr, dbImportStderrTail)
+	// Closing the read side releases the dump stream when the client gives up
+	// before the last byte.
+	_ = pr.Close()
+	// A client handed a script that just stops can exit 0 on it, so a dump
+	// that could not be read fails the import whatever the client said.
+	readErr := <-read
 	switch {
 	case err != nil:
 		return "", importToolFailure(kept, err.Error())
 	case exit != 0:
 		return "", importToolFailure(kept, fmt.Sprintf("exit %d: %s", exit, tail))
+	case readErr != nil:
+		return "", importToolFailure(kept, "read the dump: "+readErr.Error())
 	}
 	if n := dbdump.CountImportErrors(plan.engine, tail, plan.pgUser); n > 0 {
 		return fmt.Sprintf("%s: %d errors, the previous data folder is kept at %s", store.NoteDBImportErrors, n, kept), nil
