@@ -10,12 +10,15 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 var errNestedLocation = errors.New("this location lies inside another repository or target, or contains one")
+
+var errMirroredField = errors.New("a direct repository takes this value from its target; change it there")
 
 // repoLocationsOverlap reports whether two locations are the same place or one
 // lies inside the other, path element by path element.
@@ -239,4 +242,120 @@ func (h *Handler) handleTestDirectLocation(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"reachable": reachable, "initialized": initialized}))
+}
+
+// opensWith is one bounded RepoOpens, so a dead backend cannot hold a request.
+func (s *Service) opensWith(ctx context.Context, loc string, mode restic.Mode) bool {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	return s.engine.RepoOpens(ctx, loc, mode)
+}
+
+// createDirectRepo is "Create and use" in the create dialog. It sets up the
+// restic repository with the target's credentials and only then writes the row,
+// so a dialog that is cancelled leaves nothing in the bucket.
+func (s *Service) createDirectRepo(ctx context.Context, targetID, name, location string) (store.OffsiteTarget, error) {
+	target, ok, err := s.store.GetOffsiteTarget(targetID)
+	if err != nil {
+		return store.OffsiteTarget{}, err
+	}
+	if !ok || !validPlacementDomain(target.Domain) {
+		return store.OffsiteTarget{}, errUnknownOffsiteTarget
+	}
+	_, taken, err := s.store.CompanionFor(targetID)
+	if err != nil {
+		return store.OffsiteTarget{}, err
+	}
+	if taken {
+		return store.OffsiteTarget{}, store.ErrCompanionTaken
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return store.OffsiteTarget{}, fmt.Errorf("read settings: %w", err)
+	}
+	loc, err := s.directLocation(settings, location)
+	if err != nil {
+		return store.OffsiteTarget{}, err
+	}
+	if err := s.EnsureRepo(ctx, loc, s.offsiteModeForTarget(settings, target)); err != nil {
+		return store.OffsiteTarget{}, err
+	}
+	if strings.TrimSpace(name) == "" {
+		name = placementTargetName(target) + " direct"
+	}
+	return s.store.CreateCompanionRepo(targetID, name, location)
+}
+
+// connectDirectRepo is "Connect with <target>" after Discover found bv:direct
+// snapshots in a plain named repository. The repository has to open with the
+// target's credentials before it is linked.
+func (s *Service) connectDirectRepo(ctx context.Context, repoID, targetID string) (store.OffsiteTarget, error) {
+	repo, err := s.store.GetNamedRepo(repoID)
+	if err != nil {
+		return store.OffsiteTarget{}, errors.New("no such repository")
+	}
+	if repo.CompanionOf != "" && repo.CompanionOf != targetID {
+		return store.OffsiteTarget{}, errors.New("this repository already belongs to another target")
+	}
+	target, ok, err := s.store.GetOffsiteTarget(targetID)
+	if err != nil {
+		return store.OffsiteTarget{}, err
+	}
+	if !ok {
+		return store.OffsiteTarget{}, errUnknownOffsiteTarget
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return store.OffsiteTarget{}, fmt.Errorf("read settings: %w", err)
+	}
+	loc, err := s.resolveRepo(repo.Repo)
+	if err != nil {
+		return store.OffsiteTarget{}, err
+	}
+	if !s.opensWith(ctx, loc, s.offsiteModeForTarget(settings, target)) {
+		return store.OffsiteTarget{}, errors.New("the repository does not open with the target's credentials, so it was not connected")
+	}
+	if err := s.store.ConnectCompanion(repoID, targetID); err != nil {
+		return store.OffsiteTarget{}, err
+	}
+	return s.store.GetNamedRepo(repoID)
+}
+
+// handleCreateDirectRepo is POST /api/repos with companionOf. Everything but the
+// name and the location comes from the target.
+func (h *Handler) handleCreateDirectRepo(w http.ResponseWriter, r *http.Request, body namedRepoBody) {
+	if body.CredsRef != nil || body.StorageClass != nil || body.LimitUpload != nil ||
+		body.LimitDownload != nil || body.Immutable != nil || body.Enabled != nil {
+		placementFail(w, errMirroredField, nil)
+		return
+	}
+	var name, loc string
+	if body.Name != nil {
+		name = *body.Name
+	}
+	if body.Repo != nil {
+		loc = *body.Repo
+	}
+	row, err := h.svc.createDirectRepo(r.Context(), strings.TrimSpace(*body.CompanionOf), name, loc)
+	if err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"repo": h.namedRepoViews([]store.OffsiteTarget{row})[0]}))
+}
+
+// handleConnectRepo serves POST /api/repos/{id}/connect.
+func (h *Handler) handleConnectRepo(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		TargetID string `json:"targetId"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	row, err := h.svc.connectDirectRepo(r.Context(), strings.TrimSpace(r.PathValue("id")), strings.TrimSpace(body.TargetID))
+	if err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"repo": h.namedRepoViews([]store.OffsiteTarget{row})[0]}))
 }
