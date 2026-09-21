@@ -1211,11 +1211,13 @@ export function setDbDumpOff(name: string, off: boolean): Promise<OkEnvelope> {
 }
 
 /** PATCH /api/containers/{name}: confirm what a lookalike container runs, or ""
- *  to leave it undumped. */
+ *  to leave it undumped. Confirming an engine switches the dump on, so it also
+ *  lifts an opt-out the row kept from a time the container was recognised by
+ *  its image or label. */
 export function setDbDumpEngine(name: string, engine: DbEngine): Promise<OkEnvelope> {
   return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
     method: "PATCH",
-    body: JSON.stringify({ dbDumpEngine: engine }),
+    body: JSON.stringify(engine ? { dbDumpEngine: engine, dbDumpOff: false } : { dbDumpEngine: "" }),
   });
 }
 

@@ -72,6 +72,12 @@ function toggle(): HTMLElement {
   return screen.getByRole("switch", { name: en["dbdump.toggle"] });
 }
 
+/** The engine the picker shows; the other labels only size the trigger. */
+function shownEngine(): string {
+  const picker = screen.getByRole("combobox", { name: en["dbdump.engineLabel"] });
+  return picker.querySelector('span[aria-hidden="false"]')?.textContent ?? "";
+}
+
 /** The hints and the coverage explanation sit in (i) bubbles, which carry their
  *  text as the accessible name. */
 function hints(): string[] {
@@ -234,6 +240,37 @@ describe("DatabaseDumpRow", () => {
       fireEvent.click(screen.getByRole("option", { name: "MariaDB" }));
     });
     await waitFor(() => expect(setDbDumpEngine).toHaveBeenCalledWith("immich_postgres", "mariadb"));
+  });
+
+  it("shows a lookalike's dump as off while an earlier opt-out still stops it", () => {
+    renderRow({ dbTier: "lookalike", dbEngine: "", dbSuggestedEngine: "mysql", dbDumpEngine: "mysql", dbDumpOff: true });
+    expect(toggle().getAttribute("aria-checked")).toBe("false");
+    expect(screen.queryByText(en["dbdump.noDumpYet"])).toBeNull();
+  });
+
+  it("shows the engine a lookalike is dumped with, and the one picked last", async () => {
+    localStorage.setItem("bombvault.advanced", "1");
+    renderRow({ dbTier: "lookalike", dbEngine: "", dbSuggestedEngine: "mysql", dbDumpEngine: "" });
+    await act(async () => {
+      fireEvent.click(toggle());
+    });
+    const picker = await screen.findByRole("combobox", { name: en["dbdump.engineLabel"] });
+    expect(shownEngine()).toBe("MySQL");
+    await act(async () => {
+      fireEvent.click(picker);
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("option", { name: "MariaDB" }));
+    });
+    await waitFor(() => expect(setDbDumpEngine).toHaveBeenCalledWith("immich_postgres", "mariadb"));
+    expect(shownEngine()).toBe("MariaDB");
+  });
+
+  it("keeps the dump on where the container's label names the engine", () => {
+    renderRow({ dbTier: "label", dbEngine: "mariadb", dbDumpOff: true, dbDataCoverage: "live" });
+    expect(toggle().getAttribute("aria-checked")).toBe("true");
+    expect(toggle().hasAttribute("disabled")).toBe(true);
+    expect(hints()).toContain(filled("dbdump.toggleHintLabel", { engine: "MariaDB" }));
   });
 
   it("leaves the switch alone where the container's own label decides", () => {

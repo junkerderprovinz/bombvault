@@ -184,6 +184,40 @@ describe("the switch for every database dump", () => {
     expect(putBodies).toHaveLength(0);
   });
 
+  it("names only the databases whose dump runs and is the only consistent copy", async () => {
+    containersOnServer = [
+      container({ name: "immich_postgres", dbDataCoverage: "live" }),
+      container({ name: "switched_off_db", dbDataCoverage: "live", dbDumpOff: true }),
+      container({ name: "label_off_db", dbDataCoverage: "none", dbDumpLabelOff: true }),
+      container({
+        name: "unconfirmed_db",
+        dbTier: "lookalike",
+        dbEngine: "",
+        dbSuggestedEngine: "mysql",
+        dbDataCoverage: "live",
+      }),
+      container({
+        name: "confirmed_db",
+        dbTier: "lookalike",
+        dbEngine: "",
+        dbSuggestedEngine: "mysql",
+        dbDumpEngine: "mysql",
+        dbDataCoverage: "none",
+      }),
+      container({ name: "unknown_db", dbDataCoverage: "unknown" }),
+      container({ name: "by_label_db", dbTier: "label", dbDumpOff: true, dbDataCoverage: "live" }),
+    ];
+    await renderGeneralTab();
+
+    fireEvent.click(dumpsToggle());
+    const question = await screen.findByText(/immich_postgres/);
+    expect(question.textContent).toContain("confirmed_db");
+    expect(question.textContent).toContain("by_label_db");
+    for (const quiet of ["switched_off_db", "label_off_db", "unconfirmed_db", "unknown_db"]) {
+      expect(question.textContent).not.toContain(quiet);
+    }
+  });
+
   it("asks plainly when no database depends on its dump", async () => {
     containersOnServer = [container({ dbDataCoverage: "stopped" })];
     await renderGeneralTab();

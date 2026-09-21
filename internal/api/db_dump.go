@@ -87,9 +87,10 @@ func dbDumpMaxRuntimeFrom(raw string, backupCap time.Duration) time.Duration {
 
 // dbDumpPlanFor decides whether this backup dumps the container's database,
 // and with which engine. It returns nil for everything that is not a
-// recognised, running, dump-enabled database.
+// recognised, running, dump-enabled database. A label naming the engine wins
+// over the switch on the card, as the label switching the dump off does.
 func (s *Service) dbDumpPlanFor(settings store.Settings, tg store.Target, name string, in model.Inspect) *backup.DBDumpPlan {
-	if !settings.DBDumpsEnabled || tg.DBDumpOff || !in.Running {
+	if !settings.DBDumpsEnabled || !in.Running {
 		return nil
 	}
 	image := in.Config.Image
@@ -98,7 +99,7 @@ func (s *Service) dbDumpPlanFor(settings store.Settings, tg store.Target, name s
 	}
 	chosen, _ := dbdump.ParseEngine(tg.DBDumpEngine)
 	rec := dbdump.Resolve(image, envNames(in.Config.Env), in.Config.Labels, chosen)
-	if !rec.Default {
+	if !rec.Default || (tg.DBDumpOff && rec.Tier != dbdump.TierLabel) {
 		return nil
 	}
 	return &backup.DBDumpPlan{

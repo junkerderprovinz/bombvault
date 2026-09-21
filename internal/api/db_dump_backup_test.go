@@ -212,6 +212,21 @@ func TestBackupDumpSwitches(t *testing.T) {
 		f.wantNoDump(t)
 	})
 
+	t.Run("a label naming the engine wins over the card switch", func(t *testing.T) {
+		f := newDumpBackupFixture(t, "acme/warehouse:1")
+		f.doc.inspect.Config.Labels = map[string]string{"bombvault.dbdump": "postgres"}
+		if _, err := f.st.UpsertTarget(store.Target{ContainerName: "pg"}); err != nil {
+			t.Fatal(err)
+		}
+		if err := f.st.SetDBDumpOff("pg", true); err != nil {
+			t.Fatal(err)
+		}
+		f.mustBackup(t)
+		if len(f.eng.commandBackups) != 1 {
+			t.Fatalf("%d dumps, want one", len(f.eng.commandBackups))
+		}
+	})
+
 	t.Run("a lookalike nobody decided about", func(t *testing.T) {
 		f := newDumpBackupFixture(t, "acme/my-postgres:1")
 		f.mustBackup(t)

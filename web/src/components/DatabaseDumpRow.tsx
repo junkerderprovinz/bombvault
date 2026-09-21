@@ -34,14 +34,19 @@ export function DatabaseDumpRow({ container, t }: { container: Container; t: T }
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const lookalike = container.dbTier === "lookalike";
-  const stored = lookalike ? container.dbDumpEngine !== "" : !container.dbDumpOff;
+  // A lookalike keeps the opt-out of a time it was recognised by its image or
+  // label, and that opt-out still stops the dump.
+  const stored = lookalike ? container.dbDumpEngine !== "" && !container.dbDumpOff : !container.dbDumpOff;
+  const storedEngine = container.dbDumpEngine || container.dbSuggestedEngine;
   const [on, setOn] = useState(stored);
+  const [chosenEngine, setChosenEngine] = useState(storedEngine);
   const [busy, setBusy] = useState(false);
   const [shake, setShake] = useState(0);
 
   // Rows are keyed by name and do not remount, so a value reloaded from the
   // server has to be copied in.
   useEffect(() => setOn(stored), [stored]);
+  useEffect(() => setChosenEngine(storedEngine), [storedEngine]);
 
   if (container.dbTier === "") return null;
 
@@ -52,25 +57,29 @@ export function DatabaseDumpRow({ container, t }: { container: Container; t: T }
   // The label and the global switch both win over the stored value, so the row
   // shows what actually happens rather than what was stored.
   const forcedOff = container.dbDumpLabelOff || container.dbDumpsGlobalOff;
+  const forcedOn = !forcedOff && container.dbTier === "label";
+  const shownOn = forcedOn || (!forcedOff && on);
 
   function hintKey(): TranslationKey {
     if (container.dbDumpLabelOff) return "dbdump.labelOff";
     if (container.dbDumpsGlobalOff) return "dbdump.globalOff";
     if (lookalike) return "dbdump.lookalikeHint";
+    if (forcedOn) return "dbdump.toggleHintLabel";
     if (coverage === "live" || coverage === "none") return "dbdump.toggleHintOnlyCopy";
     if (coverage === "unknown") return "dbdump.toggleHintUnknown";
-    if (container.dbTier === "label") return "dbdump.toggleHintLabel";
     return "dbdump.toggleHint";
   }
 
   async function save(next: boolean, chosen?: DbEngine) {
     setBusy(true);
+    const picked = chosen ?? chosenEngine;
     try {
       const res = lookalike
-        ? await setDbDumpEngine(container.name, next ? (chosen ?? container.dbSuggestedEngine) : "")
+        ? await setDbDumpEngine(container.name, next ? picked : "")
         : await setDbDumpOff(container.name, !next);
       if (res.ok) {
         setOn(next);
+        if (next) setChosenEngine(picked);
       } else {
         push(res.error || t("dbdump.settingFailed"), "fail");
         setShake((n) => n + 1);
@@ -138,15 +147,15 @@ export function DatabaseDumpRow({ container, t }: { container: Container; t: T }
       <ToggleRow
         label={t("dbdump.toggle")}
         hint={t(hintKey()).replace("{engine}", engineName)}
-        checked={!forcedOff && on}
+        checked={shownOn}
         onChange={(next) => void handleChange(next)}
-        disabled={busy || forcedOff}
+        disabled={busy || forcedOff || forcedOn}
         shakeNonce={shake}
       />
       {lookalike && on && advanced && (
         <SelectField
           label={t("dbdump.engineLabel")}
-          value={container.dbDumpEngine}
+          value={chosenEngine}
           onChange={(next) => void save(true, next as DbEngine)}
           options={Object.entries(ENGINE_NAMES).map(([value, label]) => ({ value, label }))}
           disabled={busy}
@@ -172,7 +181,7 @@ export function DatabaseDumpRow({ container, t }: { container: Container; t: T }
           {result.remedy && <InfoBubble tip={t(result.remedy)} />}
         </p>
       )}
-      {!last && !forcedOff && on && (
+      {!last && shownOn && (
         <p className="text-xs text-carbon-textMuted text-end">{t("dbdump.noDumpYet")}</p>
       )}
     </div>
