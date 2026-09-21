@@ -20,6 +20,8 @@ var errNestedLocation = errors.New("this location lies inside another repository
 
 var errMirroredField = errors.New("a direct repository takes this value from its target; change it there")
 
+var errForeignDomain = errors.New("that direct repository belongs to a target of another domain")
+
 // repoLocationsOverlap reports whether two locations are the same place or one
 // lies inside the other, path element by path element.
 func repoLocationsOverlap(a, b string) bool {

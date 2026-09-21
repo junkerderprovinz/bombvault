@@ -212,7 +212,7 @@ func (s *Service) defaultCountsFor(p placementRead) (defaultCounts, error) {
 // target of another domain.
 func (s *Service) checkDefaultChange(p placementRead, change defaultChange) error {
 	if change.Home != nil {
-		if err := s.validateItemRepoID(strings.TrimSpace(*change.Home)); err != nil {
+		if err := s.validateItemRepoID(p.Domain, strings.TrimSpace(*change.Home)); err != nil {
 			return fmt.Errorf("%w: %w", errRepoInvalid, err)
 		}
 	}
@@ -991,7 +991,7 @@ func (h *Handler) checkImportedPlacement(exp settingsExport) error {
 		} else if err != nil {
 			return err
 		}
-		if err := h.svc.validateItemRepoID(home); err != nil {
+		if err := h.svc.validateItemRepoID(d.Domain, home); err != nil {
 			return fmt.Errorf("%w: %w", errRepoInvalid, err)
 		}
 	}

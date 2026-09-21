@@ -46,14 +46,53 @@ func TestRepoLocationsOverlapComparesPathElements(t *testing.T) {
 
 func TestDirectRepositoryRefusalsCarryTheirCodes(t *testing.T) {
 	for err, want := range map[error]string{
-		fmt.Errorf("x: %w", errNestedLocation): "nested-location",
-		errMirroredField:                       "mirrored-field",
-		store.ErrCompanionTaken:                "companion-taken",
-		store.ErrNotOffsiteTarget:              "unknown-target",
+		fmt.Errorf("x: %w", errNestedLocation):                 "nested-location",
+		errMirroredField:                                       "mirrored-field",
+		store.ErrCompanionTaken:                                "companion-taken",
+		store.ErrNotOffsiteTarget:                              "unknown-target",
+		errForeignDomain:                                       "foreign-domain",
+		fmt.Errorf("%w: %w", errRepoInvalid, errForeignDomain): "foreign-domain",
 	} {
 		if got := placementCode(err); got != want {
 			t.Errorf("placementCode(%v) = %q, want %q", err, got, want)
 		}
+	}
+}
+
+func TestADirectRepositoryServesOnlyItsTargetsDomain(t *testing.T) {
+	f := newPlacementFixture(t)
+	vms := f.direct(f.target("vms", "B2", "b2:bkt:vms"))
+	files := f.direct(f.target("files", "B2 files", "b2:bkt:files"))
+	if err := f.svc.validateItemRepoID("containers", vms.ID); !errors.Is(err, errForeignDomain) {
+		t.Fatalf("a containers item on the VMs direct repository: %v", err)
+	}
+	if err := f.svc.validateItemRepoID("vms", vms.ID); err != nil {
+		t.Fatalf("a VM on its own domain's direct repository: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(f.root, "photos"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if res := f.do("POST", "/api/files/sets", map[string]any{"name": "Photos", "path": "photos", "repo": vms.ID}); res["code"] != "foreign-domain" {
+		t.Fatalf("folder set on the VMs direct repository = %v", res)
+	}
+	if res := f.do("POST", "/api/files/sets", map[string]any{"name": "Photos", "path": "photos", "repo": files.ID}); res["ok"] != true {
+		t.Fatalf("folder set on the files direct repository = %v", res)
+	}
+	if res := f.do("PUT", "/api/placement/default/containers", map[string]any{"home": vms.ID}); res["code"] != "foreign-domain" {
+		t.Fatalf("containers default on the VMs direct repository = %v", res)
+	}
+}
+
+func TestADirectRepositoryIsItsOwnKindOfHomeWhereverItLies(t *testing.T) {
+	f := newPlacementFixture(t)
+	d := f.direct(f.target("containers", "NAS", "backups/nas-offsite"))
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	kind := f.svc.homeKindOf(settings, "containers", d.ID, map[string]store.OffsiteTarget{d.ID: d})
+	if kind != homeDirect || kind.copySource() {
+		t.Fatalf("homeKindOf = %q, copy source %v", kind, kind.copySource())
 	}
 }
 

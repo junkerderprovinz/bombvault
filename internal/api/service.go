@@ -1099,7 +1099,9 @@ func (s *Service) containerRepoPath(settings store.Settings, tg store.Target) (s
 // still work when the backup runs, unless somebody deletes the repository in
 // between, which is what DeleteNamedRepoIfUnused prevents - counting and
 // deleting in one transaction, so there is no window between the two.
-func (s *Service) validateItemRepoID(id string) error {
+//
+// A direct repository serves only the domain of its target.
+func (s *Service) validateItemRepoID(domain, id string) error {
 	id = strings.TrimSpace(id)
 	if id == "" {
 		return nil
@@ -1110,6 +1112,15 @@ func (s *Service) validateItemRepoID(id string) error {
 	}
 	if !named.Enabled {
 		return fmt.Errorf("the repository %q is switched off", named.Name)
+	}
+	if named.CompanionOf != "" {
+		target, _, err := s.store.GetOffsiteTarget(named.CompanionOf)
+		if err != nil {
+			return fmt.Errorf("read the target of %q: %w", named.Name, err)
+		}
+		if target.Domain != domain {
+			return errForeignDomain
+		}
 	}
 	if _, err := s.resolveRepo(named.Repo); err != nil {
 		return fmt.Errorf("the repository %q does not resolve to a usable location: %w", named.Name, err)
