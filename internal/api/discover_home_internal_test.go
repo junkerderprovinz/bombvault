@@ -211,6 +211,27 @@ func TestDiscoverLeavesANewFileSetOpenWhileABackupHoldsTheDomain(t *testing.T) {
 	}
 }
 
+// TestDiscoverLocksTheDomainAsDiscoverNotPlacement pins what a batch backup
+// refused during a Discover pass tells the operator: Discover, not the item
+// PATCH's placement reason, since nothing about the pass changes an item's
+// placement.
+func TestDiscoverLocksTheDomainAsDiscoverNotPlacement(t *testing.T) {
+	f := newPlacementFixture(t)
+	unlock, ok := f.svc.discoverLock("containers", false)
+	if !ok {
+		t.Fatal("could not take the discover lock")
+	}
+	defer unlock()
+
+	started, err := f.svc.StartBackupAll(context.Background(), []string{"plex"})
+	if err == nil || started {
+		t.Fatalf("StartBackupAll during Discover = started=%v err=%v, want it refused", started, err)
+	}
+	if got := err.Error(); got != "discover is running on containers" {
+		t.Fatalf("busy error = %q, want it to name discover", got)
+	}
+}
+
 func TestDiscoverInAFreshDatabasePausesTheDomain(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.hold(f.domainPath("files"), snap("aaaa0001", 200, "fileset:Photos"))

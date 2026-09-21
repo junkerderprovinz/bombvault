@@ -222,13 +222,18 @@ func (s *Service) discoverHome(ctx context.Context, item store.ItemRef, found st
 	return false, err
 }
 
+// discoverLockReason labels the domain lock a Discover pass holds while it
+// writes, so a backup refused during the pass names Discover rather than the
+// unrelated item-PATCH placement reason.
+const discoverLockReason = "discover"
+
 // discoverLock takes the domain lock for a pass that writes. Without it the pass
 // still rebuilds rows but leaves open locations alone.
 func (s *Service) discoverLock(domain string, dryRun bool) (func(), bool) {
 	if dryRun {
 		return func() {}, false
 	}
-	unlock, ok := s.tryLockDomainFor(domain, placementLockReason)
+	unlock, ok := s.tryLockDomainFor(domain, discoverLockReason)
 	if !ok {
 		return func() {}, false
 	}
