@@ -2004,11 +2004,13 @@ export function createRepo(
  *  The LOCATION of a repository that is in use is refused: the backups already
  *  written stay where they are, so the next one would succeed into an empty
  *  repository, which looks exactly like a working backup. Name, limits and the
- *  on/off switch stay editable, because none of those move any data. */
+ *  on/off switch stay editable, because none of those move any data. The
+ *  refusal carries the same `items`/`defaultDomains` the delete refusal below
+ *  does, so the caller can name what is still pointed at this repository. */
 export function updateRepo(
   id: string,
   body: Partial<Omit<NamedRepo, "id" | "inUse" | "companionOf" | "companionLost">>
-): Promise<OkEnvelope & { repo?: NamedRepo }> {
+): Promise<OkEnvelope & { repo?: NamedRepo; items?: number; defaultDomains?: PlacementDomain[] }> {
   return fetchJSON(`/api/repos/${encodeURIComponent(id)}`, {
     method: "PATCH",
     body: JSON.stringify(body),

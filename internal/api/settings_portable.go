@@ -862,8 +862,12 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, fileSettings 
 		t.ID = strings.TrimSpace(tv.ID) // preserve the exported id (empty → store mints one)
 		t.CreatedAt = tv.CreatedAt      // preserve the exported timestamp (0 → store stamps now)
 		t.Repo = importedLocation(currentRepo[t.ID], t.Repo)
-		if _, err := h.store.UpsertOffsiteTarget(t); err != nil {
+		saved, err := h.store.UpsertOffsiteTarget(t)
+		if err != nil {
 			return err
+		}
+		if saved.Role != store.RoleOffsite {
+			log.Printf("api: settings import: off-site target %q has the id of a named repository here, so the file's copy was left unapplied", t.Name) //nolint:gosec // G706: the name is %q-quoted
 		}
 	}
 	for _, d := range offsiteConfigDomains {
@@ -945,8 +949,12 @@ func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 				log.Printf("api: settings import: repository %q belonged to a target that is not here; imported as a plain repository", t.Name) //nolint:gosec // G706: the name is %q-quoted
 			}
 		}
-		if _, err := h.store.UpsertOffsiteTarget(t); err != nil {
+		saved, err := h.store.UpsertOffsiteTarget(t)
+		if err != nil {
 			return err
+		}
+		if saved.Role != store.RoleRepo {
+			log.Printf("api: settings import: repository %q has the id of an off-site target here, so the file's copy was left unapplied", t.Name) //nolint:gosec // G706: the name is %q-quoted
 		}
 		if t.Repo == wanted {
 			continue

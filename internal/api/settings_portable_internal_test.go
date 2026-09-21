@@ -709,3 +709,57 @@ func TestImportDoesNotTouchRunHistory(t *testing.T) {
 		t.Fatalf("import must not create run history: before=%d after=%d", len(before), len(after))
 	}
 }
+
+// TestImportLogsWhenAFileIDCollidesAcrossRoles pins the case the role guard
+// leaves silent: a file that carries the same id in both its offsiteTargets
+// and namedRepos blocks meets a stored row of the other role, and the upsert
+// leaves that row alone. The import must say so, the way it already says so
+// for every other row it cannot apply, and both the target and the repository
+// must come out of the apply unchanged.
+func TestImportLogsWhenAFileIDCollidesAcrossRoles(t *testing.T) {
+	h, st := newPortableHandler(t, appKeyA)
+	target, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		Domain: "containers", Name: "Primary", Repo: "s3:offsite-containers", Enabled: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		Role: store.RoleRepo, Name: "Cold", Repo: "backups/cold", Enabled: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	buf := captureLog(t)
+	exp := settingsExport{
+		OffsiteTargets: []offsiteTargetView{
+			{ID: target.ID, Domain: "containers", Name: target.Name, Repo: target.Repo, Enabled: true},
+			{ID: repo.ID, Domain: "containers", Name: "claim-offsite", Repo: "s3:claim", Enabled: true},
+		},
+		NamedRepos: []offsiteTargetView{
+			{ID: repo.ID, Name: repo.Name, Repo: repo.Repo, Enabled: true},
+			{ID: target.ID, Name: "claim-repo", Repo: "backups/claim", Enabled: true},
+		},
+	}
+	if err := h.applyImport(nil, exp); err != nil {
+		t.Fatal(err)
+	}
+
+	logged := buf.String()
+	if !strings.Contains(logged, `off-site target "claim-offsite" has the id of a named repository here`) {
+		t.Errorf("no log line for the repository's id claimed as an off-site target, got:\n%s", logged)
+	}
+	if !strings.Contains(logged, `repository "claim-repo" has the id of an off-site target here`) {
+		t.Errorf("no log line for the target's id claimed as a repository, got:\n%s", logged)
+	}
+
+	backTarget, ok, err := st.GetOffsiteTarget(target.ID)
+	if err != nil || !ok || backTarget.Name != target.Name || backTarget.Repo != target.Repo {
+		t.Fatalf("the off-site target was rewritten by the colliding repository entry: %+v, ok %v, %v", backTarget, ok, err)
+	}
+	backRepo, err := st.GetNamedRepo(repo.ID)
+	if err != nil || backRepo.Name != repo.Name || backRepo.Repo != repo.Repo {
+		t.Fatalf("the named repository was rewritten by the colliding target entry: %+v, %v", backRepo, err)
+	}
+}
