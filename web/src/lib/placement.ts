@@ -288,6 +288,6 @@ export function stepForDefaultSegment(seg: SegmentId, row: DefaultRow, options: 
     return first.repoId ? { kind: "change", change: { home: first.repoId } } : { kind: "direct", target: first };
   }
   const change: DefaultChange = { skip: seg === "local" ? [ALL] : [] };
-  if (row.homeKind === "remote" || row.homeKind === "direct") change.home = "";
+  if (!copySource(row.homeKind)) change.home = "";
   return { kind: "change", change };
 }

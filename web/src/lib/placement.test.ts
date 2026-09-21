@@ -211,6 +211,13 @@ describe("defaults", () => {
     });
   });
 
+  it("also brings back a home that points at a deleted repository, not only a remote or direct one", () => {
+    expect(stepForDefaultSegment("local", defaultRow({ home: "repo-gone", homeKind: "missing" }), opts)).toEqual({
+      kind: "change",
+      change: { skip: ["*"], home: "" },
+    });
+  });
+
   it("starts a draft at the default, following both axes", () => {
     const view = draftView(placementOptions({ default: defaultRow({ home: "repo-nas", homeKind: "local" }) }));
     expect(view).toMatchObject({ repo: "repo-nas", repoLabel: "NAS Keller", homeFollows: true, copiesFollow: true, segment: "local-offsite" });
