@@ -67,14 +67,10 @@
 //      (no target path picked yet) and SourceToggle needs the whole strip
 //      disabled mid-restore, so this is a genuine BombVault addition rather
 //      than something dropped from the reference.
-//   4. No `href`/anchor variant, no `badge` slot, no `after` slot, no
-//      `activateOnFocus` override. None of BombVault's twelve call sites are
-//      real links, show a count, need trailing content inside the strip, or
-//      want arrow-key movement without selecting — carrying that surface
-//      area over unused would just be dead code with no exerciser, so `auto`
-//      (arrow-selects-as-it-moves) is hard-wired to `!many`, matching the
-//      reference's own default for select="one" (a JTabbedPane-style tab
-//      strip) without exposing a knob nothing here turns.
+//   4. No `href`/anchor variant, no `badge` slot, no `after` slot. For
+//      select="one" the arrow keys choose as they move, the reference's own
+//      default for a tab strip; `activation="manual"` turns that off for a
+//      strip whose choice is saved, where each step would be a write.
 //   5b. `equalWidth` (default false; "chip"-only when introduced, both
 //      variants since round 8 — see item 6). Live-review follow-up:
 //      Settings.tsx's 7-tab strip is content-hugging chips (each badge only
@@ -263,7 +259,7 @@
 //
 // No wrapping container (design-language.md: "the container is gone
 // entirely, the gap alone carries the separation") — this renders a bare
-// `role="tablist"|"group"` flex row with no background, no padding, no
+// `role="tablist"|"toolbar"|"group"` flex row with no background, no padding, no
 // border of its own. A caller's leading caption ("Sort by:", "Filter:")
 // stays a plain `<span>` OUTSIDE this component, exactly as every migrated
 // call site already rendered it — NEVER a `<label>` wrapping the row (the
@@ -463,6 +459,9 @@ interface SelectorCommon {
   /** Disables every item (e.g. SourceToggle mid-restore). A per-item
    *  `disabled` still applies on top of this. */
   disabled?: boolean;
+  /** "manual" moves focus with the arrow keys, Home and End and chooses only on
+   *  Space, Enter or a click, as a toolbar of pressed buttons. For select="one". */
+  activation?: "auto" | "manual";
   className?: string;
 }
 
@@ -479,11 +478,10 @@ interface SelectorCommon {
  * palette. So the sequence is a table, and pages/settings/hueOffsets.test.ts
  * requires every hued selector in that tree to name an entry in it.
  *
- * The palette holds eight colours and the tree holds nine selectors, so
- * exactly one start is shared: `drillKind` reuses the first label row's.
- * That is arithmetic rather than oversight - the two are in different tabs
- * (Integrity and Appearance) and cannot be on screen together, and the only
- * hued selector the Integrity tab does show is the tab strip at 0.
+ * The palette holds eight colours and the tree holds twelve selectors, so some
+ * starts are shared, always between selectors on different tabs: `drillKind`
+ * (Integrity) and the placement rows (Paths & Storage) reuse starts of the
+ * Appearance tab, and each of those tabs shows only the tab strip at 0 besides.
  */
 export const HUE_OFFSET = {
   /** The Settings tab strip, which every tab shows. */
@@ -496,6 +494,8 @@ export const HUE_OFFSET = {
   theme: 6,
   notifyOn: 7,
   drillKind: 1,
+  /** The three placement default rows, +3 per row: 1, 4 and 7. */
+  placement: 1,
 } as const;
 
 export type SelectorProps =
@@ -666,7 +666,8 @@ export function rovedIndex(disabled: boolean[], activeIndex: number): number {
 // ---------------------------------------------------------------------------
 interface SelectorTabProps {
   item: SelectorItem;
-  many: boolean;
+  /** A tab of a tablist; otherwise a pressed button. */
+  tab: boolean;
   on: boolean;
   disabled: boolean;
   roved: boolean;
@@ -680,7 +681,7 @@ interface SelectorTabProps {
 
 function SelectorTab({
   item,
-  many,
+  tab,
   on,
   disabled,
   roved,
@@ -752,9 +753,9 @@ function SelectorTab({
           }}
           type="button"
           data-sel-id={item.id}
-          role={many ? undefined : "tab"}
-          aria-selected={many ? undefined : on}
-          aria-pressed={many ? on : undefined}
+          role={tab ? "tab" : undefined}
+          aria-selected={tab ? on : undefined}
+          aria-pressed={tab ? undefined : on}
           aria-label={nameHidden ? item.label : undefined}
           aria-describedby={tooltip.describedBy}
           disabled={disabled}
@@ -806,6 +807,7 @@ export function Selector(props: SelectorProps) {
   segmentWidth,
     raised = false,
     disabled = false,
+    activation = "auto",
     className = "",
   } = props;
   const well = variant === "well";
@@ -956,7 +958,8 @@ export function Selector(props: SelectorProps) {
   const chosen = props.select === "many" ? props.active : null;
   const only = props.select === "many" ? null : props.active;
   const { onChange } = props;
-  const auto = !many;
+  const manual = activation === "manual";
+  const auto = !many && !manual;
 
   const strip = useRef<HTMLDivElement>(null);
   const isOn = (id: string) => (chosen ? chosen.has(id) : only === id);
@@ -1004,7 +1007,7 @@ export function Selector(props: SelectorProps) {
   return (
     <div
       ref={strip}
-      role={many ? "group" : "tablist"}
+      role={many ? "group" : manual ? "toolbar" : "tablist"}
       aria-label={label}
       aria-orientation="horizontal"
       onKeyDown={onKeyDown}
@@ -1250,7 +1253,7 @@ export function Selector(props: SelectorProps) {
             key={item.id}
             item={item}
             axis={labelAxis}
-            many={many}
+            tab={!many && !manual}
             on={on}
             disabled={itemDisabled}
             roved={i === roved}

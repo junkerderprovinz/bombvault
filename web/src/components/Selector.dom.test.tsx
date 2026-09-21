@@ -879,3 +879,54 @@ describe("Selector — hueOffset", () => {
     }
   });
 });
+
+describe("Selector with activation=\"manual\"", () => {
+  function Manual({ spy }: { spy: (id: string) => void }) {
+    const [active, setActive] = useState("a");
+    return (
+      <Selector
+        items={ITEMS}
+        label="Placement"
+        activation="manual"
+        active={active}
+        onChange={(id) => {
+          setActive(id);
+          spy(id);
+        }}
+      />
+    );
+  }
+
+  it("renders a toolbar of pressed buttons rather than a tablist", () => {
+    render(<Manual spy={vi.fn()} />);
+    expect(screen.queryByRole("tablist")).toBeNull();
+    expect(screen.getByRole("toolbar", { name: "Placement" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Alpha" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("button", { name: "Beta" }).getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("moves focus with the arrow keys, Home and End without choosing", () => {
+    const spy = vi.fn();
+    render(<Manual spy={spy} />);
+    screen.getByRole("button", { name: "Alpha" }).focus();
+    const bar = screen.getByRole("toolbar");
+    fireEvent.keyDown(bar, { key: "ArrowRight" });
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Beta" }));
+    fireEvent.keyDown(bar, { key: "End" });
+    fireEvent.keyDown(bar, { key: "Home" });
+    fireEvent.keyDown(bar, { key: "ArrowLeft" });
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Gamma" }));
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("chooses once for Enter and the click the browser sends with it", () => {
+    const spy = vi.fn();
+    render(<Manual spy={spy} />);
+    const beta = screen.getByRole("button", { name: "Beta" });
+    beta.focus();
+    fireEvent.keyDown(screen.getByRole("toolbar"), { key: "Enter" });
+    fireEvent.click(beta);
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledWith("b");
+  });
+});
