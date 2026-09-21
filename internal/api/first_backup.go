@@ -182,9 +182,9 @@ func (s *Service) recordHome(ctx context.Context, settings store.Settings, item 
 type DiscoverResult struct {
 	Found    int
 	Skipped  []repoSkip
-	Paused   bool     // this pass paused the domain's replication
-	LeftOpen []string // names whose repo stayed unset because a backup held the domain
-	Direct   []directFinding
+	Paused   bool            // this pass paused the domain's replication
+	LeftOpen []string        // names whose repo stayed unset because a backup held the domain
+	Direct   []directFinding // plain repositories found holding direct snapshots, each paired with the targets that could take it back
 }
 
 // discoverWrite is the location a row Discover creates starts with. From a pass
