@@ -1,6 +1,9 @@
 package store
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 // SeedOffsiteTarget adds an enabled replication destination behind the domain's last one.
 func SeedOffsiteTarget(t *testing.T, r *Repo, domain, location string) OffsiteTarget {
@@ -30,6 +33,16 @@ func SeedNamedRepo(t *testing.T, r *Repo, name, location string) OffsiteTarget {
 		t.Fatalf("seed named repo %s: %v", name, err)
 	}
 	return tg
+}
+
+// SeedCompanion creates the target's direct repository beside it.
+func SeedCompanion(t *testing.T, r *Repo, target OffsiteTarget) OffsiteTarget {
+	t.Helper()
+	row, err := r.CreateCompanionRepo(target.ID, target.Name+" direct", strings.TrimRight(target.Repo, "/:")+"-direct")
+	if err != nil {
+		t.Fatalf("SeedCompanion: %v", err)
+	}
+	return row
 }
 
 // SeedCopyRule stores a copy rule; no skip means every target.
