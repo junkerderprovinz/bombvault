@@ -1832,10 +1832,20 @@ export function SettingsPage() {
 
   // Switching every dump off at once can leave a database with no consistent
   // copy at all, and the containers it happens to are named before it does.
+  // Only a dump that runs today can be lost, and "unknown" coverage cannot
+  // carry the claim that the dump is the only consistent copy. A label naming
+  // the engine wins over the switch on the card.
   async function toggleDbDumps(next: boolean) {
     if (!next) {
       const atRisk = containers
-        .filter((c) => c.dbTier !== "" && ["live", "none", "unknown"].includes(c.dbDataCoverage))
+        .filter(
+          (c) =>
+            c.dbTier !== "" &&
+            (!c.dbDumpOff || c.dbTier === "label") &&
+            !c.dbDumpLabelOff &&
+            (c.dbTier !== "lookalike" || c.dbDumpEngine !== "") &&
+            (c.dbDataCoverage === "live" || c.dbDataCoverage === "none")
+        )
         .map((c) => c.name);
       const question = atRisk.length
         ? t("settings.dbDumpsOffConfirm").replace("{names}", atRisk.join(", "))

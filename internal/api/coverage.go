@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/junkerderprovinz/bombvault/internal/dbdump"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -198,7 +199,8 @@ func (s *Service) dbDumpGap(settings store.Settings, tg store.Target, db dbDumpR
 	if db.Engine == "" {
 		return ""
 	}
-	if !settings.DBDumpsEnabled || tg.DBDumpOff || db.LabelOff {
+	optedOut := tg.DBDumpOff && db.Tier != string(dbdump.TierLabel)
+	if !settings.DBDumpsEnabled || optedOut || db.LabelOff {
 		if db.Coverage != dbCoverageStopped {
 			return CoverageDBDumpOnlyCopyOff
 		}
