@@ -35,11 +35,15 @@ type defaultRow struct {
 	Unreadable  bool          `json:"unreadable"`
 }
 
-// defaultImpact is what a default change does to the items that follow it.
+// defaultImpact is what a default change does to the items that follow it,
+// plus the domain's home and skip as read for this answer, so a PUT can tell
+// a change based on them from one based on a default that has since moved.
 type defaultImpact struct {
 	Dropped      []targetImpact `json:"dropped"`
 	Added        []targetImpact `json:"added"`
 	OpenTakeHome int            `json:"openTakeHome"` // open items that take the new home at their first backup
+	Home         string         `json:"home"`
+	Skip         []string       `json:"skip"`
 }
 
 type targetImpact struct {
@@ -53,13 +57,18 @@ type targetImpact struct {
 
 // sameCounts compares what the question named, not the snapshot numbers: every
 // backup changes those, and comparing them would refuse a PUT during any run.
+// It also compares the home and skip the answer was read against: a home-only
+// change with no skip of its own always answers an empty impact whatever home
+// it names, so two different changes from the same starting point can carry
+// identical counts, and only the home and skip tell them apart.
 func (d defaultImpact) sameCounts(o defaultImpact) bool {
 	same := func(a, b []targetImpact) bool {
 		return slices.EqualFunc(a, b, func(x, y targetImpact) bool {
 			return x.TargetID == y.TargetID && x.Items == y.Items
 		})
 	}
-	return d.OpenTakeHome == o.OpenTakeHome && same(d.Dropped, o.Dropped) && same(d.Added, o.Added)
+	return d.OpenTakeHome == o.OpenTakeHome && same(d.Dropped, o.Dropped) && same(d.Added, o.Added) &&
+		d.Home == o.Home && slices.Equal(d.Skip, o.Skip)
 }
 
 type defaultChange struct {
@@ -223,6 +232,8 @@ func (s *Service) defaultImpactFor(ctx context.Context, domain string, change de
 	if err != nil {
 		return impact, err
 	}
+	impact.Home = p.State.Default.Home
+	impact.Skip = append([]string{}, p.State.Default.Skip...)
 	if err := s.checkDefaultChange(p, change); err != nil {
 		return impact, err
 	}
@@ -409,11 +420,10 @@ func (s *Service) putDefault(ctx context.Context, domain string, change defaultC
 	if err != nil {
 		return defaultRow{}, impact, err
 	}
-	expect := defaultImpact{}
-	if change.Expect != nil {
-		expect = *change.Expect
+	if change.Expect == nil {
+		return defaultRow{}, impact, errPlacementNoExpect
 	}
-	if !impact.sameCounts(expect) {
+	if !impact.sameCounts(*change.Expect) {
 		return defaultRow{}, impact, errPlacementStale
 	}
 	settings, err := s.store.GetSettings()
