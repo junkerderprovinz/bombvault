@@ -17,6 +17,7 @@ const (
 const (
 	lockNoTarget       = "no-target"
 	lockOwnCredentials = "own-credentials"
+	lockAtTarget       = "at-target"
 	lockHomeFixed      = "home-fixed"
 )
 
@@ -88,8 +89,11 @@ func (s *Service) itemPlacementView(settings store.Settings, p placementRead, na
 	if r, ok := named[repo]; ok {
 		v.RepoLabel, v.RepoOff = r.Name, !r.Enabled
 	}
-	if kind == homeRemote {
+	switch kind {
+	case homeRemote:
 		v.SegmentLocks[segmentLocalOffsite] = lockOwnCredentials
+	case homeDirect:
+		v.SegmentLocks[segmentLocalOffsite] = lockAtTarget
 	}
 	if v.Locked {
 		v.LockReason = "first-backup"
@@ -106,7 +110,7 @@ func (s *Service) itemPlacementView(settings store.Settings, p placementRead, na
 // resolves to, so an item whose only target is switched off keeps its choice.
 func segmentOf(kind homeKind, skip []string, hasTargets bool) string {
 	switch {
-	case kind == homeRemote:
+	case kind == homeRemote || kind == homeDirect:
 		return segmentOffsiteOnly
 	case !hasTargets || skipsEverything(skip):
 		return segmentLocal
