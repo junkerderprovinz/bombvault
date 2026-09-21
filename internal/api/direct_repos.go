@@ -108,6 +108,18 @@ type locationSelf struct {
 // asked about that place has one answer.
 func (s locationSelf) shared() bool { return s.own != "" || s.field != "" || s.target }
 
+// clashCandidate resolves one place locationClash holds a location against.
+// A place that does not resolve is left out of the check and said out loud: a
+// clash nobody finds is a second row over one place.
+func (s *Service) clashCandidate(kind, name, location string) (string, bool) {
+	loc, err := s.resolveRepo(location)
+	if err != nil {
+		log.Printf("api: location check: the %s %q does not resolve, so this location was not held against it: %v", kind, name, err) //nolint:gosec // G706: the kind is fixed text and the name is %q-quoted
+		return "", false
+	}
+	return loc, true
+}
+
 // locationClash refuses a location that holds or lies inside a domain
 // repository, an off-site field, an off-site target or a named repository, and
 // a second row over a named repository's place.
@@ -118,11 +130,15 @@ func (s *Service) locationClash(settings store.Settings, loc string, self locati
 		return repoLocationsOverlap(other, loc) && (!self.shared() || !sameRepoLocation(other, loc))
 	}
 	for _, d := range offsiteConfigDomains {
-		if own, err := s.repoFor(settings, d, "local"); err == nil && d != self.own && clashes(own) {
+		own, oErr := s.repoFor(settings, d, "local")
+		switch {
+		case oErr != nil:
+			log.Printf("api: location check: the %s domain's own repository does not resolve, so this location was not held against it: %v", d, oErr) //nolint:gosec // G706: the domain is a fixed literal
+		case d != self.own && clashes(own):
 			return fmt.Errorf("%w: the %s domain's own repository", errNestedLocation, d)
 		}
 		if off := offsiteRepoFromSettings(d, settings); off != "" && d != self.field {
-			if offLoc, err := s.resolveRepo(off); err == nil && clashes(offLoc) {
+			if offLoc, ok := s.clashCandidate("off-site destination of the domain", d, off); ok && clashes(offLoc) {
 				return fmt.Errorf("%w: the %s domain's off-site destination", errNestedLocation, d)
 			}
 		}
@@ -135,7 +151,7 @@ func (s *Service) locationClash(settings store.Settings, loc string, self locati
 		if slices.Contains(self.ids, t.ID) {
 			continue
 		}
-		if tLoc, rErr := s.resolveRepo(t.Repo); rErr == nil && clashes(tLoc) {
+		if tLoc, ok := s.clashCandidate("off-site destination", t.Name, t.Repo); ok && clashes(tLoc) {
 			return fmt.Errorf("%w: the off-site destination %q", errNestedLocation, t.Name)
 		}
 	}
@@ -147,7 +163,7 @@ func (s *Service) locationClash(settings store.Settings, loc string, self locati
 		if slices.Contains(self.ids, r.ID) {
 			continue
 		}
-		if other, rErr := s.resolveRepo(r.Repo); rErr == nil && repoLocationsOverlap(other, loc) {
+		if other, ok := s.clashCandidate("repository", r.Name, r.Repo); ok && repoLocationsOverlap(other, loc) {
 			return fmt.Errorf("%w: another repository", errNestedLocation)
 		}
 	}
