@@ -1629,6 +1629,9 @@ const he: Partial<Translations> = {
   "repos.disableWarnUnknown": "השרת לא הצליח לקרוא כמה פריטים מגובים למאגר הזה. כיבוי אינו מעביר אותם: הגיבוי הבא שלהם ייכשל עם הודעה ברורה במקום להגיע למקום אחר. לכבות?",
   "repos.add": "הוספת מאגר",
   "repos.empty": "אין עדיין מאגרים. הכול משתמש במאגר של התחום שלו.",
+  "repos.directOf": "שייך ל{target} · פריטים: {n}",
+  "repos.companionLost": "לצד יעד שנמחק",
+  "repos.mirroredLocked": "הועבר מ{target}. שנה אותו שם.",
 
   // Refusals
   "placementCode.unreadable": "לא ניתן היה לקרוא את כללי המיקום, לכן שום דבר לא מועתק עד שיהיה ניתן לקרוא אותם שוב.",

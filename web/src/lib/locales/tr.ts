@@ -1629,6 +1629,9 @@ const tr: Partial<Translations> = {
   "repos.disableWarnUnknown": "Sunucu bu depoya kaç öğenin yedeklendiğini okuyamadı. Kapatmak onları taşımaz: sonraki yedekleri başka bir yere düşmek yerine açık bir iletiyle başarısız olur. Kapatılsın mı?",
   "repos.add": "Depo ekle",
   "repos.empty": "Henüz depo yok. Her şey kendi alanının deposunu kullanıyor.",
+  "repos.directOf": "{target} hedefine ait · öğeler: {n}",
+  "repos.companionLost": "silinmiş bir hedefin yanında",
+  "repos.mirroredLocked": "{target} kaynağından devralındı. Orada değiştir.",
 
   // Refusals
   "placementCode.unreadable": "Yerleştirme kuralları okunamadı, bu yüzden tekrar okunabilene kadar hiçbir şey kopyalanmıyor.",

@@ -1621,6 +1621,9 @@ const zh: Partial<Translations> = {
   "repos.disableWarnUnknown": "服务器无法读取有多少项目备份到此仓库。关闭它并不会移动它们：下一次备份会带着明确的提示失败，而不是落到别处。要关闭吗？",
   "repos.add": "添加存储库",
   "repos.empty": "还没有存储库。所有内容都使用各自域的存储库。",
+  "repos.directOf": "属于 {target} · 项目：{n}",
+  "repos.companionLost": "紧邻已删除的目标",
+  "repos.mirroredLocked": "从 {target} 接管。请在那里更改。",
 
   // Refusals
   "placementCode.unreadable": "位置规则无法读取，因此在能够再次读取之前不会复制任何内容。",

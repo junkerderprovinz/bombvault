@@ -1640,6 +1640,9 @@ const lv: Partial<Translations> = {
   "repos.disableWarnUnknown": "Serveris nevarēja nolasīt, cik vienumu veido dublējumu šeit. Izslēgšana tos nepārvieto: nākamais dublējums neizdosies ar skaidru ziņojumu, nevis nonāks citur. Izslēgt?",
   "repos.add": "Pievienot krātuvi",
   "repos.empty": "Krātuvju vēl nav. Viss izmanto sava domēna krātuvi.",
+  "repos.directOf": "pieder mērķim {target} · vienumi: {n}",
+  "repos.companionLost": "blakus dzēstam mērķim",
+  "repos.mirroredLocked": "Pārņemts no mērķa {target}. Mainiet to tur.",
 
   // Refusals
   "placementCode.unreadable": "Izvietojuma noteikumus nevarēja nolasīt, tāpēc nekas netiek kopēts, kamēr tos atkal nevarēs nolasīt.",

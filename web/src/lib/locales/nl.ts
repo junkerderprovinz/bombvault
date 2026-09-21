@@ -1626,6 +1626,9 @@ const nl: Partial<Translations> = {
   "repos.disableWarnUnknown": "De server kon niet lezen hoeveel items naar deze repository back-uppen. Uitschakelen verplaatst ze niet: hun volgende back-up mislukt met een duidelijke melding in plaats van ergens anders te belanden. Uitschakelen?",
   "repos.add": "Repository toevoegen",
   "repos.empty": "Nog geen repository's. Alles gebruikt de repository van het eigen domein.",
+  "repos.directOf": "hoort bij {target} · items: {n}",
+  "repos.companionLost": "naast een verwijderde bestemming",
+  "repos.mirroredLocked": "Overgenomen van {target}. Wijzig het daar.",
 
   // Refusals
   "placementCode.unreadable": "De plaatsingsregels konden niet worden gelezen, dus wordt er niets gekopieerd totdat dat weer lukt.",

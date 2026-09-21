@@ -1629,6 +1629,9 @@ const it: Partial<Translations> = {
   "repos.disableWarnUnknown": "Il server non è riuscito a leggere quanti elementi eseguono il backup in questo repository. Spegnerlo non li sposta: il prossimo backup fallisce con un messaggio chiaro invece di finire altrove. Spegnerlo?",
   "repos.add": "Aggiungi repository",
   "repos.empty": "Ancora nessun repository. Tutto usa il repository del proprio dominio.",
+  "repos.directOf": "appartiene a {target} · elementi: {n}",
+  "repos.companionLost": "accanto a una destinazione eliminata",
+  "repos.mirroredLocked": "Preso in carico da {target}. Modificalo lì.",
 
   // Refusals
   "placementCode.unreadable": "Le regole di posizionamento non sono state leggibili, quindi non viene copiato nulla finché non lo saranno di nuovo.",

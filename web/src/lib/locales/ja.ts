@@ -1621,6 +1621,9 @@ const ja: Partial<Translations> = {
   "repos.disableWarnUnknown": "このリポジトリにバックアップしている項目の数を、サーバーが読み取れませんでした。オフにしても移動はしません。次のバックアップは別の場所に入るのではなく、明確なメッセージで失敗します。オフにしますか？",
   "repos.add": "リポジトリを追加",
   "repos.empty": "リポジトリはまだありません。すべて各ドメインのリポジトリを使っています。",
+  "repos.directOf": "{target}に属する · 項目: {n}",
+  "repos.companionLost": "削除されたターゲットの隣",
+  "repos.mirroredLocked": "{target}から引き継がれました。そちらで変更してください。",
 
   // Refusals
   "placementCode.unreadable": "配置ルールを読み込めなかったため、再び読み込めるようになるまで何もコピーされません。",

@@ -1629,6 +1629,9 @@ const fr: Partial<Translations> = {
   "repos.disableWarnUnknown": "Le serveur n'a pas pu lire combien d'éléments sauvegardent dans ce dépôt. Le désactiver ne les déplace pas : leur prochaine sauvegarde échoue avec un message clair au lieu d'atterrir ailleurs. Le désactiver ?",
   "repos.add": "Ajouter un dépôt",
   "repos.empty": "Aucun dépôt pour l'instant. Tout utilise le dépôt de son propre domaine.",
+  "repos.directOf": "appartient à {target} · éléments : {n}",
+  "repos.companionLost": "à côté d'une cible supprimée",
+  "repos.mirroredLocked": "Repris de {target}. Modifiez-le là-bas.",
 
   // Refusals
   "placementCode.unreadable": "Les règles de placement n'ont pas pu être lues, rien n'est donc copié tant que ce n'est pas de nouveau possible.",

@@ -1621,6 +1621,9 @@ const ko: Partial<Translations> = {
   "repos.disableWarnUnknown": "이 저장소로 백업하는 항목이 몇 개인지 서버가 읽지 못했습니다. 끄더라도 옮겨지지 않습니다. 다음 백업은 다른 곳에 들어가는 대신 분명한 메시지와 함께 실패합니다. 끄시겠습니까?",
   "repos.add": "저장소 추가",
   "repos.empty": "아직 저장소가 없습니다. 모두 각자 도메인의 저장소를 사용합니다.",
+  "repos.directOf": "{target}에 속함 · 항목: {n}",
+  "repos.companionLost": "삭제된 대상 옆",
+  "repos.mirroredLocked": "{target}에서 넘겨받음. 그곳에서 변경하세요.",
 
   // Refusals
   "placementCode.unreadable": "배치 규칙을 읽을 수 없어 다시 읽을 수 있을 때까지 아무것도 복사되지 않습니다.",

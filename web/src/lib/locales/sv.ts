@@ -1629,6 +1629,9 @@ const sv: Partial<Translations> = {
   "repos.disableWarnUnknown": "Servern kunde inte läsa hur många objekt som säkerhetskopierar hit. Att stänga av det flyttar dem inte: nästa säkerhetskopia misslyckas med ett tydligt meddelande i stället för att hamna någon annanstans. Stänga av?",
   "repos.add": "Lägg till arkiv",
   "repos.empty": "Inga arkiv ännu. Allt använder sin egen domäns arkiv.",
+  "repos.directOf": "tillhör {target} · objekt: {n}",
+  "repos.companionLost": "bredvid ett borttaget mål",
+  "repos.mirroredLocked": "Övertaget från {target}. Ändra det där.",
 
   // Refusals
   "placementCode.unreadable": "Placeringsreglerna kunde inte läsas, så inget kopieras förrän de kan läsas igen.",

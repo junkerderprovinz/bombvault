@@ -1640,6 +1640,9 @@ const lt: Partial<Translations> = {
   "repos.disableWarnUnknown": "Serveris negalėjo perskaityti, kiek elementų kuria kopijas čia. Išjungimas jų neperkelia: kita jų kopija nepavyks su aiškiu pranešimu, užuot atsidūrusi kitur. Išjungti?",
   "repos.add": "Pridėti saugyklą",
   "repos.empty": "Saugyklų dar nėra. Viskas naudoja savo srities saugyklą.",
+  "repos.directOf": "priklauso paskirčiai {target} · elementai: {n}",
+  "repos.companionLost": "šalia ištrintos paskirties",
+  "repos.mirroredLocked": "Perimta iš paskirties {target}. Pakeisk ten.",
 
   // Refusals
   "placementCode.unreadable": "Nepavyko perskaityti vietos nustatymo taisyklių, todėl niekas nekopijuojama, kol jų vėl nepavyks perskaityti.",

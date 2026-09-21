@@ -1640,6 +1640,9 @@ const eu: Partial<Translations> = {
   "repos.disableWarnUnknown": "Zerbitzariak ezin izan du irakurri zenbat elementuk egiten duten babeskopia hona. Itzaltzeak ez ditu lekuz aldatzen: hurrengo babeskopiak huts egingo du mezu argi batekin, beste nonbait bukatu ordez. Itzali?",
   "repos.add": "Gehitu biltegia",
   "repos.empty": "Oraindik biltegirik ez. Dena bere domeinuaren biltegia erabiltzen ari da.",
+  "repos.directOf": "{target}ri dagokio · elementuak: {n}",
+  "repos.companionLost": "ezabatutako helmuga baten ondoan",
+  "repos.mirroredLocked": "{target}(e)tik hartua. Aldatu hor.",
 
   // Refusals
   "placementCode.unreadable": "Kokapen-arauak ezin izan dira irakurri, beraz ezer ez da kopiatzen berriro irakurri ahal izan arte.",

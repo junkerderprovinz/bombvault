@@ -6,8 +6,10 @@ import { InfoBubble } from "../../components/InfoBubble";
 import { Toggle } from "../../components/Toggle";
 import { useConfirm } from "../../lib/useConfirm";
 import { useToast } from "../../lib/toast";
-import { createRepo, deleteRepo, listRepos, updateRepo, type NamedRepo } from "../../lib/api";
+import { createRepo, deleteRepo, listOffsiteTargets, listRepos, updateRepo, type NamedRepo } from "../../lib/api";
 import { useT } from "../../lib/i18n";
+import { placementErrorText } from "../../lib/placementCodes";
+import { offsiteTargetLabel } from "../../lib/useOffsiteTargets";
 
 // ReposCard — where the named repositories of #204 are written down.
 //
@@ -31,16 +33,18 @@ import { useT } from "../../lib/i18n";
 // The interface says so BEFORE the attempt (the in-use count is on every row)
 // rather than only in the error afterwards.
 export function ReposCard({ hueIndex }: { hueIndex?: number }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const [repos, setRepos] = useState<NamedRepo[]>([]);
+  const [targetNames, setTargetNames] = useState<Record<string, string>>({});
   const [loaded, setLoaded] = useState(false);
   const [name, setName] = useState("");
   const [repo, setRepo] = useState("");
   const [busy, setBusy] = useState(false);
   const [shake, setShake] = useState(0);
   const nameRef = useRef<HTMLInputElement>(null);
+  const targetOf = (row: NamedRepo) => targetNames[row.companionOf] ?? row.companionOf;
 
   // A failed list leaves the card empty and LOADED, the same answer the picker
   // gives: the alternative is a discarded rejection (void on a promise that can
@@ -50,6 +54,10 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
     try {
       const r = await listRepos();
       setRepos(r.ok ? (r.repos ?? []) : []);
+      const targets = await listOffsiteTargets().catch(() => null);
+      if (targets?.ok) {
+        setTargetNames(Object.fromEntries((targets.targets ?? []).map((x) => [x.id, offsiteTargetLabel(x)])));
+      }
     } catch {
       setRepos([]);
     } finally {
@@ -127,7 +135,7 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
     if (!(await confirm(`${row.name} - ${row.repo}`))) return;
     const r = await deleteRepo(row.id);
     if (!r.ok) {
-      push(r.error ?? t("settings.error"), "fail");
+      push(placementErrorText(t, lang, r, "settings.error"), "fail");
       return;
     }
     await reload();
@@ -151,8 +159,15 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
                 <span className="text-sm text-carbon-text font-semibold truncate">{r.name}</span>
                 {/* A negative count means the server could not read it. That is
                     treated as IN USE everywhere below: an unknown answer must
-                    not be the one that unlocks deleting. */}
-                {r.inUse < 0 ? (
+                    not be the one that unlocks deleting. A direct repository
+                    shows its target instead of a plain use count. */}
+                {r.companionOf ? (
+                  <Badge tone="neutral" wrap>
+                    {t("repos.directOf")
+                      .replace("{target}", targetOf(r))
+                      .replace("{n}", r.inUse < 0 ? "?" : String(r.inUse))}
+                  </Badge>
+                ) : r.inUse < 0 ? (
                   <Badge tone="neutral" wrap>
                     {t("repos.inUseUnknown")}
                   </Badge>
@@ -163,6 +178,11 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
                 ) : (
                   <Badge tone="neutral" wrap>
                     {t("repos.unused")}
+                  </Badge>
+                )}
+                {r.companionLost && (
+                  <Badge tone="neutral" wrap>
+                    {t("repos.companionLost")}
                   </Badge>
                 )}
               </div>
@@ -177,12 +197,15 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
                 own doc comment promised could not be reached. */}
             <label className="flex items-center gap-2 text-xs text-carbon-textSub">
               {t("repos.immutable")}
-              <InfoBubble tip={t("repos.immutableHint")} />
+              <InfoBubble
+                tip={r.companionOf ? t("repos.mirroredLocked").replace("{target}", targetOf(r)) : t("repos.immutableHint")}
+              />
               <Toggle
                 checked={r.immutable}
                 onChange={(v) => void setImmutable(r, v)}
                 label={t("repos.immutable")}
                 hideLabel
+                disabled={r.companionOf !== ""}
               />
             </label>
             <label className="flex items-center gap-2 text-xs text-carbon-textSub">

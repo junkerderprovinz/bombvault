@@ -1624,6 +1624,9 @@ const pl: Partial<Translations> = {
   "repos.disableWarnUnknown": "Serwer nie mógł odczytać, ile elementów tworzy kopie w tym repozytorium. Wyłączenie ich nie przenosi: ich następna kopia zakończy się czytelnym błędem, zamiast trafić gdzie indziej. Wyłączyć?",
   "repos.add": "Dodaj repozytorium",
   "repos.empty": "Jeszcze brak repozytoriów. Wszystko używa repozytorium własnej domeny.",
+  "repos.directOf": "należy do celu {target} · elementy: {n}",
+  "repos.companionLost": "obok usuniętego celu",
+  "repos.mirroredLocked": "Przejęte z celu {target}. Zmień tam.",
 
   // Refusals
   "placementCode.unreadable": "Reguł umieszczenia nie udało się odczytać, więc nic nie jest kopiowane, dopóki znowu nie da się ich odczytać.",
