@@ -492,10 +492,11 @@ func TestItemsRepoChosenDoesNotRunAgainUnderANewNumber(t *testing.T) {
 
 func TestItemsRepoChosenGuardNeedsAllThreeTables(t *testing.T) {
 	db := OpenMem(t)
-	migrateThrough(t, db, 114)
-	guard := migrationNamed(t, "items_repo_chosen").alreadySatisfied
+	itemsRepoChosen := migrationNamed(t, "items_repo_chosen")
+	migrateThrough(t, db, itemsRepoChosen.version-1)
+	guard := itemsRepoChosen.alreadySatisfied
 	if probeOnce(t, db, guard) {
-		t.Fatal("a v114 database already satisfies items_repo_chosen")
+		t.Fatal("the guard is satisfied before any of the three tables has the column")
 	}
 	if _, err := db.Exec(`ALTER TABLE targets ADD COLUMN repo_chosen INTEGER NOT NULL DEFAULT 1`); err != nil {
 		t.Fatal(err)
