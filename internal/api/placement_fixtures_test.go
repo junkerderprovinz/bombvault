@@ -169,6 +169,31 @@ func (f *placementFixture) namedRepo(name, location string) store.OffsiteTarget 
 	return r
 }
 
+// direct creates the target's direct repository at the suggested location, with
+// the config marker a local repository there would have.
+func (f *placementFixture) direct(target store.OffsiteTarget) store.OffsiteTarget { //nolint:unused // sets up a target whose direct repository already exists, for tests that check one
+	f.t.Helper()
+	loc := directLocationFor(target).Location
+	row, err := f.st.CreateCompanionRepo(target.ID, placementTargetName(target)+" direct", loc)
+	if err != nil {
+		f.t.Fatalf("CreateCompanionRepo: %v", err)
+	}
+	if restic.IsRemoteRepo(loc) {
+		return row
+	}
+	dir, err := f.svc.resolveRepo(loc)
+	if err != nil {
+		f.t.Fatalf("resolve %s: %v", loc, err)
+	}
+	if err := os.MkdirAll(dir, 0o750); err != nil {
+		f.t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "config"), nil, 0o600); err != nil {
+		f.t.Fatal(err)
+	}
+	return row
+}
+
 func (f *placementFixture) container(name, repoID string) store.Target {
 	f.t.Helper()
 	if _, err := f.st.WritePlacement(store.ItemRef{Domain: "containers", Key: name}, &store.HomeWrite{Repo: repoID, Choice: store.RepoChosen}, nil, nil); err != nil {

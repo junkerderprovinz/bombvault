@@ -1,8 +1,12 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"io/fs"
+	"net/http"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -120,4 +124,119 @@ func (s *Service) locationClash(settings store.Settings, loc string, self locati
 		}
 	}
 	return nil
+}
+
+// directSuggestion is the location the create dialog starts from.
+type directSuggestion struct {
+	Location string `json:"location"`
+	Note     string `json:"note"` // "" | "bucket-root" | "path-needed"
+}
+
+// directLocationFor derives where a target's direct repository goes: beside the
+// target, never inside it. A bucket root has nothing beside it in its bucket,
+// and a rest-server user root may forbid everything outside it, so those two
+// get a note instead of a plain suggestion.
+func directLocationFor(target store.OffsiteTarget) directSuggestion {
+	loc := strings.TrimRight(strings.TrimSpace(target.Repo), "/:")
+	place, elems := locationParts(loc)
+	scheme, _, _ := strings.Cut(place, ":")
+	switch {
+	case scheme == "rest" && len(elems) < 2,
+		(scheme == "sftp" || scheme == "rclone") && len(elems) == 0:
+		return directSuggestion{Note: "path-needed"}
+	case scheme == "s3" && len(elems) < 2,
+		(scheme == "b2" || scheme == "gs" || scheme == "azure" || scheme == "swift") && len(elems) == 0:
+		return directSuggestion{Location: loc + "-direct", Note: "bucket-root"}
+	}
+	return directSuggestion{Location: loc + "-direct"}
+}
+
+// directLocation checks a direct repository location the way the Repositories
+// card checks any named one, plus the overlap rule, and returns it resolved.
+func (s *Service) directLocation(settings store.Settings, location string) (string, error) {
+	if msg := staticNamedRepoRefusals(location, s.cfg.HostMountRoot); msg != "" {
+		return "", errors.New(msg)
+	}
+	loc, err := s.resolveRepo(strings.TrimSpace(location))
+	if err != nil {
+		return "", err
+	}
+	if err := s.locationClash(settings, loc, locationSelf{}); err != nil {
+		return "", err
+	}
+	return loc, nil
+}
+
+// probeDirectLocation is the create dialog's connection test. It opens location
+// with the target's credentials and writes nothing; a local path that does not
+// exist yet, or is empty, counts as reachable and empty.
+func (s *Service) probeDirectLocation(ctx context.Context, target store.OffsiteTarget, location string) (reachable, initialized bool, err error) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return false, false, fmt.Errorf("read settings: %w", err)
+	}
+	loc, err := s.directLocation(settings, location)
+	if err != nil {
+		return false, false, err
+	}
+	if !restic.IsRemoteRepo(loc) {
+		entries, rErr := os.ReadDir(loc)
+		if errors.Is(rErr, fs.ErrNotExist) || (rErr == nil && len(entries) == 0) {
+			return true, false, nil
+		}
+	}
+	return s.probeOffsiteRepo(ctx, loc, s.offsiteModeForTarget(settings, target))
+}
+
+// offsiteTargetParam reads {id} as an off-site target and writes the refusal
+// itself when there is none.
+func (h *Handler) offsiteTargetParam(w http.ResponseWriter, r *http.Request) (store.OffsiteTarget, bool) {
+	target, ok, err := h.store.GetOffsiteTarget(r.PathValue("id"))
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return store.OffsiteTarget{}, false
+	}
+	if !ok {
+		placementFail(w, errUnknownOffsiteTarget, nil)
+	}
+	return target, ok
+}
+
+// handleGetDirectRepo serves GET /api/offsite/targets/{id}/direct: the target's
+// direct repository, null while there is none, and where the dialog starts.
+func (h *Handler) handleGetDirectRepo(w http.ResponseWriter, r *http.Request) {
+	target, ok := h.offsiteTargetParam(w, r)
+	if !ok {
+		return
+	}
+	direct, found, err := h.store.CompanionFor(target.ID)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	var repo any
+	if found {
+		repo = h.namedRepoViews([]store.OffsiteTarget{direct})[0]
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"repo": repo, "suggestion": directLocationFor(target)}))
+}
+
+// handleTestDirectLocation serves POST /api/offsite/targets/{id}/direct/test.
+func (h *Handler) handleTestDirectLocation(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Location string `json:"location"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	target, ok := h.offsiteTargetParam(w, r)
+	if !ok {
+		return
+	}
+	reachable, initialized, err := h.svc.probeDirectLocation(r.Context(), target, body.Location)
+	if err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"reachable": reachable, "initialized": initialized}))
 }
