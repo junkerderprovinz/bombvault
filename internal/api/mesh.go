@@ -137,7 +137,8 @@ func (h *Handler) handleListMeshOffers(w http.ResponseWriter, _ *http.Request) {
 // meshOfferAcceptInput is the accept request body: which of THIS instance's
 // domains the accepted offer's storage should back up.
 type meshOfferAcceptInput struct {
-	Domain string `json:"domain"`
+	Domain      string              `json:"domain"`
+	AlsoExclude *newTargetExclusion `json:"alsoExclude"`
 }
 
 // handleAcceptMeshOffer turns a pending offer into a real, working off-site
@@ -168,6 +169,12 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 	if !validOffsiteDomain(in.Domain) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid domain: must be one of containers, vms, flash, config, files"})
 		return
+	}
+	if in.AlsoExclude != nil {
+		if err := checkExclusion(in.Domain, *in.AlsoExclude); err != nil {
+			placementFail(w, err, nil)
+			return
+		}
 	}
 	password, err := secret.Decrypt(h.cfg.AppKey, offer.RESTPasswordEnc)
 	if err != nil {
@@ -209,6 +216,12 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
+	}
+	if in.AlsoExclude != nil {
+		if err := h.svc.excludeFromTarget(stored.Domain, stored.ID, *in.AlsoExclude); err != nil {
+			placementFail(w, err, nil)
+			return
+		}
 	}
 	if err := h.store.UpdateMeshOfferStatus(offer.ID, "accepted"); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))

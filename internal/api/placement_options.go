@@ -124,3 +124,43 @@ func (h *Handler) handleNewTargetPreview(w http.ResponseWriter, r *http.Request)
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"preview": pv}))
 }
+
+type placementExcludeBody struct {
+	Domain     string   `json:"domain"`
+	TargetID   string   `json:"targetId"`
+	Field      bool     `json:"field"`
+	Identities []string `json:"identities"`
+	Default    bool     `json:"default"`
+}
+
+// handlePlacementExclude takes the new-target answer for writes whose body has no
+// place for it: the off-site settings field and the settings import.
+func (h *Handler) handlePlacementExclude(w http.ResponseWriter, r *http.Request) {
+	var body placementExcludeBody
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if !validPlacementDomain(body.Domain) || body.Field == (body.TargetID != "") {
+		placementFail(w, errInvalidPlacement, nil)
+		return
+	}
+	targetID := body.TargetID
+	if body.Field {
+		row, found, err := h.store.FieldOffsiteTarget(body.Domain)
+		if err != nil {
+			placementFail(w, err, nil)
+			return
+		}
+		if !found {
+			placementFail(w, errNotATarget, nil)
+			return
+		}
+		targetID = row.ID
+	}
+	ex := newTargetExclusion{Identities: body.Identities, Default: body.Default}
+	if err := h.svc.excludeFromTarget(body.Domain, targetID, ex); err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}

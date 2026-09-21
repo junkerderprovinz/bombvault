@@ -75,6 +75,14 @@ func offsiteTargetsToViews(ts []store.OffsiteTarget) []offsiteTargetView {
 	return out
 }
 
+// offsiteTargetBody is a target as the Off-site tab sends it. The answer to the
+// new-target question rides here rather than on offsiteTargetView, which the
+// settings file uses too.
+type offsiteTargetBody struct {
+	offsiteTargetView
+	AlsoExclude *newTargetExclusion `json:"alsoExclude"`
+}
+
 // toStoreTarget maps the view to the storage type. Numeric fields are floored at
 // zero (a negative retention/limit/budget is meaningless), the storage class is
 // normalized (trim+upper), and the id/created_at are NOT taken from the body —
@@ -208,7 +216,7 @@ func (h *Handler) handleListOffsiteTargets(w http.ResponseWriter, r *http.Reques
 // domain's last one. POST /api/offsite/targets; the body's id, createdAt and
 // sortOrder are ignored.
 func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Request) {
-	var v offsiteTargetView
+	var v offsiteTargetBody
 	if !decodeBody(w, r, &v) {
 		return
 	}
@@ -225,10 +233,22 @@ func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		placementFail(w, err, nil)
 		return
 	}
+	if v.AlsoExclude != nil {
+		if err := checkExclusion(t.Domain, *v.AlsoExclude); err != nil {
+			placementFail(w, err, nil)
+			return
+		}
+	}
 	stored, err := h.store.CreateOffsiteTarget(t)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
+	}
+	if v.AlsoExclude != nil {
+		if err := h.svc.excludeFromTarget(stored.Domain, stored.ID, *v.AlsoExclude); err != nil {
+			placementFail(w, err, nil)
+			return
+		}
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": offsiteTargetToView(stored)}))
 }
@@ -248,7 +268,7 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "error": "no such off-site target"})
 		return
 	}
-	var v offsiteTargetView
+	var v offsiteTargetBody
 	if !decodeBody(w, r, &v) {
 		return
 	}
@@ -269,12 +289,19 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 	// import, or carried in from an older build - would otherwise refuse every
 	// later edit over a field the request does not touch, so the target could not
 	// be disabled, renamed or capped, only deleted.
-	if !sameRepoLocation(strings.TrimSpace(t.Repo), strings.TrimSpace(existing.Repo)) {
+	moved := !sameRepoLocation(strings.TrimSpace(t.Repo), strings.TrimSpace(existing.Repo))
+	if moved {
 		if msg := h.rejectOffsiteTargetOnNamedRepo(t); msg != "" {
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 			return
 		}
 		if err := h.nestedTargetLocation(existing.ID, t); err != nil {
+			placementFail(w, err, nil)
+			return
+		}
+	}
+	if moved && v.AlsoExclude != nil {
+		if err := checkExclusion(t.Domain, *v.AlsoExclude); err != nil {
 			placementFail(w, err, nil)
 			return
 		}
@@ -285,6 +312,12 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
+	}
+	if moved && v.AlsoExclude != nil {
+		if err := h.svc.excludeFromTarget(stored.Domain, stored.ID, *v.AlsoExclude); err != nil {
+			placementFail(w, err, nil)
+			return
+		}
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 		"target":   offsiteTargetToView(stored),
