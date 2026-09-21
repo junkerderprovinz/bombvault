@@ -1661,6 +1661,9 @@ const nl: Partial<Translations> = {
   "offsite.alsoDirect": "Geldt ook voor {target} direct. Items waarvan de enige kopie daar staat: {n}.",
   "offsite.directRetentionAsk": "Items waarvan de enige kopie op {target} direct staat: {n}. Minder bewaren verwijdert hun oudere snapshots permanent bij de volgende opschoning. Toch opslaan?",
   "offsite.directAppendOnlyAsk": "Items waarvan de enige kopie op {target} direct staat: {n}. Zonder append-only mag deze machine er dingen uit verwijderen. Toch opslaan?",
+
+  // Placement
+  "placement.hostGeneric": "Host",
 };
 
 export default nl;

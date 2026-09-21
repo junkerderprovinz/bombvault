@@ -1664,6 +1664,9 @@ const fi: Partial<Translations> = {
   "offsite.alsoDirect": "Koskee myös kohdetta {target} suoraan. Kohteet, joiden ainoa kopio on siellä: {n}.",
   "offsite.directRetentionAsk": "Kohteet, joiden ainoa kopio on kohteessa {target} suoraan: {n}. Vähemmän säilyttäminen poistaa niiden vanhemmat tilannevedokset pysyvästi seuraavassa karsinnassa. Tallennetaanko silti?",
   "offsite.directAppendOnlyAsk": "Kohteet, joiden ainoa kopio on kohteessa {target} suoraan: {n}. Ilman append-onlya tämä kone voi poistaa siitä. Tallennetaanko silti?",
+
+  // Placement
+  "placement.hostGeneric": "Isäntä",
 };
 
 export default fi;

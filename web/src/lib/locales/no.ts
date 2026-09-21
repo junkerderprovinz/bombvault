@@ -1664,6 +1664,9 @@ const no: Partial<Translations> = {
   "offsite.alsoDirect": "Gjelder også for {target} direkte. Elementer der eneste kopi ligger der: {n}.",
   "offsite.directRetentionAsk": "Elementer der eneste kopi ligger i {target} direkte: {n}. Å beholde færre sletter eldre øyeblikksbilder permanent ved neste beskjæring. Lagre likevel?",
   "offsite.directAppendOnlyAsk": "Elementer der eneste kopi ligger i {target} direkte: {n}. Uten append-only kan denne maskinen slette fra det. Lagre likevel?",
+
+  // Placement
+  "placement.hostGeneric": "Vert",
 };
 
 export default no;

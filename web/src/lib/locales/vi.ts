@@ -1656,6 +1656,9 @@ const vi: Partial<Translations> = {
   "offsite.alsoDirect": "Cũng áp dụng cho {target} trực tiếp. Các mục có bản sao duy nhất ở đó: {n}.",
   "offsite.directRetentionAsk": "Các mục có bản sao duy nhất ở {target} trực tiếp: {n}. Giữ ít hơn sẽ xóa vĩnh viễn các snapshot cũ hơn của chúng vào lần dọn bớt tiếp theo. Vẫn lưu chứ?",
   "offsite.directAppendOnlyAsk": "Các mục có bản sao duy nhất ở {target} trực tiếp: {n}. Nếu không có append-only, máy này có thể xóa khỏi đó. Vẫn lưu chứ?",
+
+  // Placement
+  "placement.hostGeneric": "Máy chủ",
 };
 
 export default vi;

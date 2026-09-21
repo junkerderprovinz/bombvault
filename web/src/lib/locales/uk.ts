@@ -1659,6 +1659,9 @@ const uk: Partial<Translations> = {
   "offsite.alsoDirect": "Стосується також {target} напряму. Елементи, чия єдина копія там: {n}.",
   "offsite.directRetentionAsk": "Елементи, чия єдина копія в {target} напряму: {n}. Менше збереження безповоротно видалить їхні старіші знімки під час наступного очищення. Усе одно зберегти?",
   "offsite.directAppendOnlyAsk": "Елементи, чия єдина копія в {target} напряму: {n}. Без append-only ця машина зможе видаляти з нього. Усе одно зберегти?",
+
+  // Placement
+  "placement.hostGeneric": "Хост",
 };
 
 export default uk;

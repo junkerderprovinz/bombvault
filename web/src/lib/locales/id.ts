@@ -1675,6 +1675,9 @@ const id: Partial<Translations> = {
   "offsite.alsoDirect": "Berlaku juga untuk {target} langsung. Item yang satu-satunya salinannya ada di sana: {n}.",
   "offsite.directRetentionAsk": "Item yang satu-satunya salinannya ada di {target} langsung: {n}. Menyimpan lebih sedikit menghapus snapshot yang lebih lama secara permanen pada prune berikutnya. Tetap simpan?",
   "offsite.directAppendOnlyAsk": "Item yang satu-satunya salinannya ada di {target} langsung: {n}. Tanpa append-only, mesin ini bisa menghapus darinya. Tetap simpan?",
+
+  // Placement
+  "placement.hostGeneric": "Host",
 };
 
 export default id;

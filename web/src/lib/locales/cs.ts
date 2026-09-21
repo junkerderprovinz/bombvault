@@ -1662,6 +1662,9 @@ const cs: Partial<Translations> = {
   "offsite.alsoDirect": "Platí i pro {target} přímo. Položky, jejichž jediná kopie je tam: {n}.",
   "offsite.directRetentionAsk": "Položky, jejichž jediná kopie je v {target} přímo: {n}. Nižší uchovávání trvale smaže jejich starší snímky při příštím vyčištění. Přesto uložit?",
   "offsite.directAppendOnlyAsk": "Položky, jejichž jediná kopie je v {target} přímo: {n}. Bez append-only smí tento stroj z něj mazat. Přesto uložit?",
+
+  // Placement
+  "placement.hostGeneric": "Hostitel",
 };
 
 export default cs;

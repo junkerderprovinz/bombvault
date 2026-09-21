@@ -1656,6 +1656,9 @@ const zh: Partial<Translations> = {
   "offsite.alsoDirect": "同样适用于 {target} 直接。唯一副本在那里的项目：{n}。",
   "offsite.directRetentionAsk": "唯一副本在 {target} 直接的项目：{n}。保留更少会在下次清理时永久删除它们更早的快照。仍要保存吗？",
   "offsite.directAppendOnlyAsk": "唯一副本在 {target} 直接的项目：{n}。没有 append-only，本机可以从中删除。仍要保存吗？",
+
+  // Placement
+  "placement.hostGeneric": "主机",
 };
 
 export default zh;

@@ -1774,6 +1774,10 @@ export const en = {
   "offsite.alsoDirect": "Also applies to {target} direct. Items whose only copy is there: {n}.",
   "offsite.directRetentionAsk": "Items whose only copy is in {target} direct: {n}. Keeping less deletes their older snapshots for good at the next prune. Save anyway?",
   "offsite.directAppendOnlyAsk": "Items whose only copy is in {target} direct: {n}. Without append-only this box may delete from it. Save anyway?",
+
+  // Placement
+  "placement.hostGeneric": "Host",
+
   "files.excludesCount": "Excludes: {n}",
   "files.enabled": "Include in schedule",
   "files.effectiveLabel": "Result",
@@ -3507,6 +3511,10 @@ export const de: Translations = {
   "offsite.alsoDirect": "Gilt auch für {target} direkt. Einträge, deren einzige Kopie dort liegt: {n}.",
   "offsite.directRetentionAsk": "Einträge, deren einzige Kopie in {target} direkt liegt: {n}. Weniger aufzubewahren löscht deren ältere Snapshots beim nächsten Aufräumen endgültig. Trotzdem speichern?",
   "offsite.directAppendOnlyAsk": "Einträge, deren einzige Kopie in {target} direkt liegt: {n}. Ohne append-only darf dieser Rechner dort löschen. Trotzdem speichern?",
+
+  // Placement
+  "placement.hostGeneric": "Host",
+
   "files.excludesCount": "Ausschlüsse: {n}",
   "files.enabled": "Im Zeitplan einschließen",
   "files.effectiveLabel": "Ergebnis",

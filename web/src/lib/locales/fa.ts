@@ -1675,6 +1675,9 @@ const fa: Partial<Translations> = {
   "offsite.alsoDirect": "برای {target} مستقیم هم اعمال می‌شود. موردهایی که تنها نسخه‌شان همان‌جاست: {n}.",
   "offsite.directRetentionAsk": "موردهایی که تنها نسخه‌شان در {target} مستقیم است: {n}. نگه داشتن کمتر، اسنپ‌شات‌های قدیمی‌تر آنها را در پاک‌سازی بعدی برای همیشه حذف می‌کند. با این حال ذخیره شود؟",
   "offsite.directAppendOnlyAsk": "موردهایی که تنها نسخه‌شان در {target} مستقیم است: {n}. بدون فقط-افزودنی، این دستگاه می‌تواند از آن حذف کند. با این حال ذخیره شود؟",
+
+  // Placement
+  "placement.hostGeneric": "میزبان",
 };
 
 export default fa;

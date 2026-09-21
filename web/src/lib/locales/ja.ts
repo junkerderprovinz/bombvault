@@ -1656,6 +1656,9 @@ const ja: Partial<Translations> = {
   "offsite.alsoDirect": "{target} ダイレクトにも適用されます。唯一のコピーがそこにある項目: {n}。",
   "offsite.directRetentionAsk": "唯一のコピーが{target} ダイレクトにある項目: {n}。保持数を減らすと、次の整理でその古いスナップショットが完全に削除されます。それでも保存しますか？",
   "offsite.directAppendOnlyAsk": "唯一のコピーが{target} ダイレクトにある項目: {n}。append-only なしでは、この機械はそこから削除できます。それでも保存しますか？",
+
+  // Placement
+  "placement.hostGeneric": "ホスト",
 };
 
 export default ja;

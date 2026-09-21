@@ -1656,6 +1656,9 @@ const ko: Partial<Translations> = {
   "offsite.alsoDirect": "{target} 직접에도 적용됩니다. 유일한 사본이 그곳에 있는 항목: {n}개.",
   "offsite.directRetentionAsk": "유일한 사본이 {target} 직접에 있는 항목: {n}개. 더 적게 보관하면 다음 정리 때 이전 스냅샷이 영구적으로 삭제됩니다. 그래도 저장하시겠습니까?",
   "offsite.directAppendOnlyAsk": "유일한 사본이 {target} 직접에 있는 항목: {n}개. append-only가 없으면 이 장비가 여기서 삭제할 수 있습니다. 그래도 저장하시겠습니까?",
+
+  // Placement
+  "placement.hostGeneric": "호스트",
 };
 
 export default ko;

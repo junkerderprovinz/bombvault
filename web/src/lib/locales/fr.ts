@@ -1664,6 +1664,9 @@ const fr: Partial<Translations> = {
   "offsite.alsoDirect": "S'applique aussi à {target} direct. Éléments dont c'est la seule copie : {n}.",
   "offsite.directRetentionAsk": "Éléments dont l'unique copie est sur {target} direct : {n}. Conserver moins supprime définitivement leurs anciens instantanés au prochain élagage. Enregistrer quand même ?",
   "offsite.directAppendOnlyAsk": "Éléments dont l'unique copie est sur {target} direct : {n}. Sans append-only, cette machine peut y supprimer. Enregistrer quand même ?",
+
+  // Placement
+  "placement.hostGeneric": "Hôte",
 };
 
 export default fr;

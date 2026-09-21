@@ -1659,6 +1659,9 @@ const sl: Partial<Translations> = {
   "offsite.alsoDirect": "Velja tudi za {target} neposredno. Elementi, katerih edina kopija je tam: {n}.",
   "offsite.directRetentionAsk": "Elementi, katerih edina kopija je v {target} neposredno: {n}. Manjše hranjenje trajno izbriše njihove starejše posnetke ob naslednjem čiščenju. Vseeno shranim?",
   "offsite.directAppendOnlyAsk": "Elementi, katerih edina kopija je v {target} neposredno: {n}. Brez načina samo-dodajanja lahko ta računalnik briše iz njega. Vseeno shranim?",
+
+  // Placement
+  "placement.hostGeneric": "Gostitelj",
 };
 
 export default sl;

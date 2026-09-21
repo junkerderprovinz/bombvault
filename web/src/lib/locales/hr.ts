@@ -1675,6 +1675,9 @@ const hr: Partial<Translations> = {
   "offsite.alsoDirect": "Vrijedi i za {target} izravno. Stavke čija je jedina kopija ondje: {n}.",
   "offsite.directRetentionAsk": "Stavke čija je jedina kopija na {target} izravno: {n}. Manje čuvanja trajno briše njihove starije snimke kod sljedećeg čišćenja. Ipak spremiti?",
   "offsite.directAppendOnlyAsk": "Stavke čija je jedina kopija na {target} izravno: {n}. Bez načina samo-dodavanja, ovo računalo može brisati iz njega. Ipak spremiti?",
+
+  // Placement
+  "placement.hostGeneric": "Host",
 };
 
 export default hr;

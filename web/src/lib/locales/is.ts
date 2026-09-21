@@ -1675,6 +1675,9 @@ const is: Partial<Translations> = {
   "offsite.alsoDirect": "Gildir líka um {target} beint. Atriði sem eiga eina afritið þar: {n}.",
   "offsite.directRetentionAsk": "Atriði sem eiga eina afritið í {target} beint: {n}. Að geyma minna eyðir eldri myndatökum þeirra varanlega við næstu hreinsun. Vista samt?",
   "offsite.directAppendOnlyAsk": "Atriði sem eiga eina afritið í {target} beint: {n}. Án aðeins-bæta-við má þessi vél eyða úr því. Vista samt?",
+
+  // Placement
+  "placement.hostGeneric": "Hýsill",
 };
 
 export default is;

@@ -1659,6 +1659,9 @@ const sr: Partial<Translations> = {
   "offsite.alsoDirect": "Важи и за {target} директно. Ставке чија је једина копија тамо: {n}.",
   "offsite.directRetentionAsk": "Ставке чија је једина копија у {target} директно: {n}. Мање чување трајно брише њихове старије снимке при следећем чишћењу. Ипак сачувам?",
   "offsite.directAppendOnlyAsk": "Ставке чија је једина копија у {target} директно: {n}. Без само додавања ова машина може да брише из њега. Ипак сачувам?",
+
+  // Placement
+  "placement.hostGeneric": "Хост",
 };
 
 export default sr;

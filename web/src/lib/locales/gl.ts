@@ -1675,6 +1675,9 @@ const gl: Partial<Translations> = {
   "offsite.alsoDirect": "Tamén se aplica a {target} directo. Elementos cuxa única copia está aí: {n}.",
   "offsite.directRetentionAsk": "Elementos cuxa única copia está en {target} directo: {n}. Conservar menos elimina para sempre as súas instantáneas máis antigas na seguinte limpeza. Gardar de todos os xeitos?",
   "offsite.directAppendOnlyAsk": "Elementos cuxa única copia está en {target} directo: {n}. Sen append-only, esta máquina pode borrar del. Gardar de todos os xeitos?",
+
+  // Placement
+  "placement.hostGeneric": "Host",
 };
 
 export default gl;

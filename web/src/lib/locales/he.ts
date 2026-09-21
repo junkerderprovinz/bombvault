@@ -1664,6 +1664,9 @@ const he: Partial<Translations> = {
   "offsite.alsoDirect": "חל גם על {target} ישיר. פריטים שהעותק היחיד שלהם נמצא שם: {n}.",
   "offsite.directRetentionAsk": "פריטים שהעותק היחיד שלהם ב-{target} ישיר: {n}. שמירה על פחות תמחק לצמיתות את ה-snapshots הישנים יותר שלהם בגיזום הבא. לשמור בכל זאת?",
   "offsite.directAppendOnlyAsk": "פריטים שהעותק היחיד שלהם ב-{target} ישיר: {n}. בלי append-only, המכונה הזו עשויה למחוק ממנו. לשמור בכל זאת?",
+
+  // Placement
+  "placement.hostGeneric": "מארח",
 };
 
 export default he;
