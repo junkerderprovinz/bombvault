@@ -188,6 +188,9 @@ func (r *Repo) ConfirmPlacement(domain string, exclude []string) error {
 // half for a domain that is already confirmed: it has no pause to retire, so
 // only the exclusions land, and placement_defaults is left untouched.
 func (r *Repo) SetExcludeRules(domain string, exclude []string) error {
+	if err := checkPlacementDomain(domain); err != nil {
+		return err
+	}
 	now := time.Now().Unix()
 	err := r.inTx(func(tx *sql.Tx) error {
 		for _, identity := range exclude {
