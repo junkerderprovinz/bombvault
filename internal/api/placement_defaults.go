@@ -270,7 +270,7 @@ func (s *Service) defaultImpactFor(ctx context.Context, domain string, change de
 	}
 	next := p.withDefaultSkip(*change.Skip)
 	dropped, added := map[string]*targetImpact{}, map[string]*targetImpact{}
-	for _, id := range s.copySubjects(settings, p, named, items, listing, observed, false) {
+	for _, id := range s.copySubjects(settings, p, named, items, listing, observed, excludeOwnRules) {
 		before, after := p.effectiveTargets(id), next.effectiveTargets(id)
 		for _, t := range before {
 			if !containsTarget(after, t.ID) {
@@ -311,14 +311,24 @@ func (s *Service) setsOnlyHome(settings store.Settings, domain string, named map
 	return s.homeKindOf(settings, domain, strings.TrimSpace(*change.Home), named) == homeRemote
 }
 
+// ownRuleHandling says whether copySubjects counts an item that already
+// carries a copy rule of its own, or only the ones that would still follow a
+// default change.
+type ownRuleHandling bool
+
+const (
+	excludeOwnRules ownRuleHandling = false
+	includeOwnRules ownRuleHandling = true
+)
+
 // copySubjects are the identities a copy rule decides for: items whose
-// effective home is a copy source, without their own rule unless withOwn, and
-// for containers the project folders found in the copy sources or at a
-// target.
-func (s *Service) copySubjects(settings store.Settings, p placementRead, named map[string]store.OffsiteTarget, items []domainItem, listing sourceListing, observed []store.ItemCopies, withOwn bool) []string {
+// effective home is a copy source, without their own rule unless own is
+// includeOwnRules, and for containers the project folders found in the copy
+// sources or at a target.
+func (s *Service) copySubjects(settings store.Settings, p placementRead, named map[string]store.OffsiteTarget, items []domainItem, listing sourceListing, observed []store.ItemCopies, own ownRuleHandling) []string {
 	var out []string
 	for _, it := range items {
-		if _, own := p.State.Rules[it.identity]; own && !withOwn {
+		if _, hasRule := p.State.Rules[it.identity]; hasRule && own == excludeOwnRules {
 			continue
 		}
 		repo, _ := p.effectiveHome(it.home)
@@ -690,7 +700,7 @@ func (s *Service) confirmPreview(ctx context.Context, domain string) ([]targetPr
 	if err != nil {
 		return nil, nil, err
 	}
-	subjects := s.copySubjects(settings, p, named, items, listing, observed, true)
+	subjects := s.copySubjects(settings, p, named, items, listing, observed, includeOwnRules)
 	rules := slices.SortedFunc(maps.Values(p.State.Rules), func(a, b store.CopyRule) int { return strings.Compare(a.Identity, b.Identity) })
 	rows := []targetPreviewRow{}
 	for _, t := range p.enabledTargets() {
