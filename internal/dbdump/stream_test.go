@@ -76,11 +76,7 @@ func TestStreamSuccess(t *testing.T) {
 	}}
 
 	var stdout, stderr bytes.Buffer
-	state := &dbdump.StreamState{}
-	opts := streamOpts()
-	opts.State = state
-	before := time.Now()
-	res := dbdump.Stream(context.Background(), ex, opts, &stdout, &stderr)
+	res := dbdump.Stream(context.Background(), ex, streamOpts(), &stdout, &stderr)
 
 	if !res.OK || res.Reason != "" {
 		t.Fatalf("result = %+v, want ok", res)
@@ -96,9 +92,6 @@ func TestStreamSuccess(t *testing.T) {
 	}
 	if stdout.String() != dump {
 		t.Errorf("stdout has %d bytes, want the %d bytes of the dump", stdout.Len(), len(dump))
-	}
-	if got := state.LastWrite(); got.IsZero() || got.Before(before) {
-		t.Errorf("last write = %v, want a time from while the dump ran (it started %v)", got, before)
 	}
 	if ex.container != "pg" {
 		t.Errorf("container = %q, want pg", ex.container)

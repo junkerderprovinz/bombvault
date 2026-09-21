@@ -6,7 +6,6 @@ import (
 	"errors"
 	"io"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -38,29 +37,6 @@ type StreamOptions struct {
 	Engine    Engine
 	// Max is the time limit the dump tool gets inside the container.
 	Max time.Duration
-	// State is where Stream reports the progress of its stdout writer. A
-	// caller with a write watchdog passes one in.
-	State *StreamState
-}
-
-// StreamState carries what a watcher may read while a dump is running.
-type StreamState struct {
-	mu        sync.Mutex
-	lastWrite time.Time
-}
-
-// LastWrite reports when the dump last completed a write to stdout. A dump
-// whose writer blocks leaves this standing still while the process is healthy.
-func (s *StreamState) LastWrite() time.Time {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.lastWrite
-}
-
-func (s *StreamState) wrote() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.lastWrite = time.Now()
 }
 
 // Stream takes one dump and always returns a Result: never a success without
@@ -72,11 +48,7 @@ func Stream(ctx context.Context, ex Execer, opts StreamOptions, stdout, stderr i
 	if err != nil {
 		return Result{V: 1, Reason: ReasonUsage, Detail: ScrubDetail(err.Error())}
 	}
-	state := opts.State
-	if state == nil {
-		state = &StreamState{}
-	}
-	dump := &dumpWriter{out: stdout, state: state, tail: tailKeeper{max: markerTailBytes}}
+	dump := &dumpWriter{out: stdout, tail: tailKeeper{max: markerTailBytes}}
 	errs := &logWriter{out: stderr, detail: tailKeeper{max: detailTailBytes}}
 
 	exit, execErr := ex.ExecStream(ctx, opts.Container, argv, dump, errs)
@@ -110,7 +82,6 @@ func Stream(ctx context.Context, ex Execer, opts StreamOptions, stdout, stderr i
 // completion marker stands.
 type dumpWriter struct {
 	out   io.Writer
-	state *StreamState
 	tail  tailKeeper
 	bytes int64
 	err   error
@@ -122,10 +93,8 @@ func (w *dumpWriter) Write(p []byte) (int, error) {
 	w.tail.add(p[:n])
 	if err != nil {
 		w.err = err
-		return n, err
 	}
-	w.state.wrote()
-	return n, nil
+	return n, err
 }
 
 // logWriter forwards the container's stderr line by line, so the pid line

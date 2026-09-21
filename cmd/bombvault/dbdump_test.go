@@ -360,6 +360,41 @@ func TestDBDumpStreamWriteWatchdog(t *testing.T) {
 	<-done
 }
 
+// A database that sends nothing for a while, say behind a lock, is not a
+// reader that has stopped reading.
+func TestDBDumpStreamWriteWatchdogLeavesAQuietDumpAlone(t *testing.T) {
+	shrinkDeadline(t, time.Hour)
+	shrinkWriteStall(t, 40*time.Millisecond)
+
+	dump := postgresDump(64 << 10)
+	ex := &fakeExecer{run: func(_ context.Context, stdout, stderr io.Writer) (int, error) {
+		_, _ = io.WriteString(stderr, dbdump.PIDLinePrefix+"4711\n")
+		if _, err := io.WriteString(stdout, dump[:1<<10]); err != nil {
+			return 1, err
+		}
+		time.Sleep(200 * time.Millisecond)
+		_, err := io.WriteString(stdout, dump[1<<10:])
+		return 0, err
+	}}
+
+	var stdout recordedStdout
+	stderr := &recordedStderr{}
+	deps := testDeps(ex)
+	deps.exit = func(code int) { t.Errorf("the helper gave up with exit %d on a dump that was only quiet", code) }
+
+	code := runDBDumpStream(context.Background(), helperArgs(), &stdout, stderr, deps)
+
+	if code != 0 {
+		t.Fatalf("exit code = %d, want 0; stderr=%q", code, stderr.String())
+	}
+	if res := lastResult(t, stderr.String()); !res.OK {
+		t.Errorf("result = %+v, want ok", res)
+	}
+	if stdout.String() != dump {
+		t.Errorf("stdout has %d bytes, want the %d bytes of the dump", len(stdout.String()), len(dump))
+	}
+}
+
 // TestDBDumpStreamSignalCancels checks the one thing the helper still does on a
 // stop signal. It does not stop the dump inside the container: restic kills the
 // helper milliseconds later, and an exec round trip would lose that race.
