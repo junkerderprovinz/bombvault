@@ -857,6 +857,52 @@ func TestAnOlderFileLeavesTheLinkOfAnExistingDirectRepository(t *testing.T) {
 	}
 }
 
+func TestDiscoverNamesAPlainRepositoryHoldingDirectSnapshots(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bkt:containers")
+	other := f.target("containers", "Hetzner", "sftp:u@box:/containers")
+	old := f.namedRepo("B2 old", "b2:bkt:containers-direct")
+	linked := f.direct(f.target("vms", "B2 vms", "b2:bkt:vms"))
+	f.hold("b2:bkt:containers-direct", snap("a1", 100, "container:web", restic.DirectTag))
+	f.hold(linked.Repo, snap("b1", 100, "vm:win11", restic.DirectTag))
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _, rows, err := f.svc.discoverNamesAcrossRepos(context.Background(), settings, "containers", "container:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 1 || rows[0].ID != old.ID {
+		t.Fatalf("rows = %+v", rows)
+	}
+	findings, err := f.svc.directFindings("containers", rows)
+	if err != nil || len(findings) != 1 {
+		t.Fatalf("findings = %+v, %v", findings, err)
+	}
+	got := findings[0]
+	if got.RepoID != old.ID || len(got.Candidates) != 2 || got.Candidates[0].ID != b2.ID || got.Candidates[1].ID != other.ID {
+		t.Fatalf("finding = %+v", got)
+	}
+}
+
+func TestTheDiscoverAnswerNamesDirectRepositories(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bkt:containers")
+	old := f.namedRepo("B2 old", "b2:bkt:containers-direct")
+	f.hold("b2:bkt:containers-direct", snap("a1", 100, "container:web", restic.DirectTag))
+	res := f.do("POST", "/api/discover?probe=true", nil)
+	list, ok := res["directRepos"].([]any)
+	if !ok || len(list) != 1 {
+		t.Fatalf("directRepos = %v", res["directRepos"])
+	}
+	got := list[0].(map[string]any)
+	targets := got["targets"].([]any)
+	if got["repoId"] != old.ID || got["name"] != "B2 old" || targets[0].(map[string]any)["id"] != b2.ID || targets[0].(map[string]any)["name"] != "B2" {
+		t.Fatalf("finding = %v", got)
+	}
+}
+
 func TestRetentionLowered(t *testing.T) {
 	p := func(last, daily int) restic.RetentionPolicy {
 		return restic.RetentionPolicy{KeepLast: last, KeepDaily: daily}

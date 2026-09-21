@@ -5944,17 +5944,21 @@ func (s *Service) Discover(ctx context.Context, dryRun bool) (DiscoverResult, er
 	// so an install whose domain repository is unreadable is still rebuilt as
 	// far as it can be. The error still reaches the caller at the end, which is
 	// what the Recovery wizard classifies on.
-	names, skipped, readErr := s.discoverNamesAcrossRepos(ctx, settings, "containers", "container:")
+	names, skipped, directRows, readErr := s.discoverNamesAcrossRepos(ctx, settings, "containers", "container:")
+	findings, fErr := s.directFindings("containers", directRows)
+	if fErr != nil {
+		log.Printf("api: discover containers: could not match direct repositories to targets: %v", fErr)
+	}
 
 	dir, err := s.defsDir(settings)
 	if err != nil {
-		return DiscoverResult{}, err
+		return DiscoverResult{Direct: findings}, err
 	}
 	legacyDir, err := s.legacyDefsDir(settings)
 	if err != nil {
-		return DiscoverResult{}, err
+		return DiscoverResult{Direct: findings}, err
 	}
-	res := DiscoverResult{Skipped: skipped, LeftOpen: []string{}}
+	res := DiscoverResult{Skipped: skipped, LeftOpen: []string{}, Direct: findings}
 	unlock, locked := s.discoverLock("containers", dryRun)
 	defer unlock()
 	for name, repoID := range names {
@@ -6110,17 +6114,21 @@ func (s *Service) DiscoverVMs(ctx context.Context, dryRun bool) (DiscoverResult,
 	// so an install whose domain repository is unreadable is still rebuilt as
 	// far as it can be. The error still reaches the caller at the end, which is
 	// what the Recovery wizard classifies on.
-	names, skipped, readErr := s.discoverNamesAcrossRepos(ctx, settings, "vms", "vm:")
+	names, skipped, directRows, readErr := s.discoverNamesAcrossRepos(ctx, settings, "vms", "vm:")
+	findings, fErr := s.directFindings("vms", directRows)
+	if fErr != nil {
+		log.Printf("api: discover vms: could not match direct repositories to targets: %v", fErr)
+	}
 
 	dir, err := s.vmDefsDir(settings)
 	if err != nil {
-		return DiscoverResult{}, err
+		return DiscoverResult{Direct: findings}, err
 	}
 	legacyDir, err := s.legacyVMDefsDir(settings)
 	if err != nil {
-		return DiscoverResult{}, err
+		return DiscoverResult{Direct: findings}, err
 	}
-	res := DiscoverResult{Skipped: skipped, LeftOpen: []string{}}
+	res := DiscoverResult{Skipped: skipped, LeftOpen: []string{}, Direct: findings}
 	unlock, locked := s.discoverLock("vms", dryRun)
 	defer unlock()
 	for name, repoID := range names {
@@ -7151,16 +7159,20 @@ func nothingCoveredError(skipped []repoSkip) error {
 // all searched first and only then does the domain's own error end the pass, so
 // the abort costs nothing it used to cost and the error still reaches the
 // caller who classifies on it.
-func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.Settings, domain, tagPrefix string) (map[string]string, []repoSkip, error) {
+//
+// The third result is every plain named repository holding bv:direct snapshots
+// of the domain: a direct repository that lost its link.
+func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.Settings, domain, tagPrefix string) (map[string]string, []repoSkip, []store.OffsiteTarget, error) {
 	own, err := s.repoFor(settings, domain, "local")
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	// Every enabled named repository that resolves somewhere else FIRST, then the
 	// domain's own last: the domain's listing failure ends the pass, so putting it
 	// last means the named repositories have already been searched when it does.
 	var refs []domainRepoRef
 	var skipped []repoSkip
+	var direct []store.OffsiteTarget
 	named, nErr := s.store.ListNamedRepos()
 	if nErr != nil {
 		skipped = append(skipped, repoSkip{Name: "the named repositories", Reason: "their list could not be read", Unreachable: true})
@@ -7233,7 +7245,7 @@ func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.S
 				for name, c := range best {
 					out[name] = c.id
 				}
-				return out, skipped, errors.New("the " + domain + " repository is not reachable: " + reason)
+				return out, skipped, direct, errors.New("the " + domain + " repository is not reachable: " + reason)
 			}
 			switch est {
 			case repoWasEstablished:
@@ -7290,11 +7302,14 @@ func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.S
 				for name, c := range best {
 					out[name] = c.id
 				}
-				return out, skipped, sErr
+				return out, skipped, direct, sErr
 			}
 			skipped = append(skipped, repoSkip{Name: s.refName(ref), Reason: scrubError(sErr), Unreachable: true})
 			log.Printf("api: discover %s: could not read %s (continuing): %v", domain, s.refName(ref), scrubError(sErr)) //nolint:gosec // G706: domain is a fixed literal, the name is the row's own and the error scrubbed
 			continue
+		}
+		if !ref.Own && ref.Named.CompanionOf == "" && holdsDirect(snaps, tagPrefix) {
+			direct = append(direct, ref.Named)
 		}
 		id := ""
 		if !ref.Own {
@@ -7341,7 +7356,7 @@ func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.S
 	for name, c := range best {
 		out[name] = c.id
 	}
-	return out, skipped, nil
+	return out, skipped, direct, nil
 }
 
 // offsiteReplicationSources returns the repositories a domain's off-site
@@ -11732,9 +11747,13 @@ func (s *Service) DiscoverFileSets(ctx context.Context, dryRun bool) (DiscoverRe
 	// so an install whose domain repository is unreadable is still rebuilt as
 	// far as it can be. The error still reaches the caller at the end, which is
 	// what the Recovery wizard classifies on.
-	names, skipped, readErr := s.discoverNamesAcrossRepos(ctx, settings, "files", "fileset:")
+	names, skipped, directRows, readErr := s.discoverNamesAcrossRepos(ctx, settings, "files", "fileset:")
+	findings, fErr := s.directFindings("files", directRows)
+	if fErr != nil {
+		log.Printf("api: discover files: could not match direct repositories to targets: %v", fErr)
+	}
 
-	res := DiscoverResult{Skipped: skipped, LeftOpen: []string{}}
+	res := DiscoverResult{Skipped: skipped, LeftOpen: []string{}, Direct: findings}
 	unlock, locked := s.discoverLock("files", dryRun)
 	defer unlock()
 	for name, repoID := range names {

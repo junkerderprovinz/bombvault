@@ -183,6 +183,7 @@ type DiscoverResult struct {
 	Skipped  []repoSkip
 	Paused   bool     // this pass paused the domain's replication
 	LeftOpen []string // names whose repo stayed unset because a backup held the domain
+	Direct   []directFinding
 }
 
 // discoverWrite is the location a row Discover creates starts with. From a pass

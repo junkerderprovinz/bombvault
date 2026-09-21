@@ -591,6 +591,87 @@ func (s *Service) directCredsWarnings(ctx context.Context, pick func(direct, tar
 	return out
 }
 
+type directFinding struct {
+	RepoID     string
+	Name       string
+	Candidates []store.OffsiteTarget // the domain's targets without a direct repository, <location>-direct first
+}
+
+// holdsDirect reports whether a listing has a snapshot of this domain that was
+// written straight into a direct repository.
+func holdsDirect(snaps []restic.Snapshot, tagPrefix string) bool {
+	for _, sn := range snaps {
+		if !slices.Contains(sn.Tags, restic.DirectTag) {
+			continue
+		}
+		for _, tag := range sn.Tags {
+			if strings.HasPrefix(tag, tagPrefix) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// directFindings pairs each plain repository holding bv:direct snapshots of a
+// domain with the domain's targets that could take it back, the one whose
+// derived location it matches first.
+func (s *Service) directFindings(domain string, rows []store.OffsiteTarget) ([]directFinding, error) {
+	out := []directFinding{}
+	if len(rows) == 0 {
+		return out, nil
+	}
+	targets, err := s.store.OffsiteTargetsForDomain(domain)
+	if err != nil {
+		return out, err
+	}
+	var free []store.OffsiteTarget
+	for _, t := range targets {
+		_, taken, err := s.store.CompanionFor(t.ID)
+		if err != nil {
+			return out, err
+		}
+		if !taken {
+			free = append(free, t)
+		}
+	}
+	for _, r := range rows {
+		var match, rest []store.OffsiteTarget
+		for _, t := range free {
+			if sameRepoLocation(directLocationFor(t).Location, r.Repo) {
+				match = append(match, t)
+			} else {
+				rest = append(rest, t)
+			}
+		}
+		out = append(out, directFinding{RepoID: r.ID, Name: r.Name, Candidates: append(match, rest...)})
+	}
+	return out, nil
+}
+
+type directTargetRef struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type directRepoView struct {
+	RepoID  string            `json:"repoId"`
+	Name    string            `json:"name"`
+	Targets []directTargetRef `json:"targets"`
+}
+
+func directRepoViews(findings []directFinding) []directRepoView {
+	out := make([]directRepoView, 0, len(findings))
+	for _, f := range findings {
+		v := directRepoView{RepoID: f.RepoID, Name: f.Name, Targets: make([]directTargetRef, 0, len(f.Candidates))}
+		for _, t := range f.Candidates {
+			v.Targets = append(v.Targets, directTargetRef{ID: t.ID, Name: placementTargetName(t)})
+		}
+		out = append(out, v)
+	}
+	return out
+}
+
 // fieldTargets reads the row each domain's off-site settings field edits.
 func (s *Service) fieldTargets() map[string]store.OffsiteTarget {
 	out := map[string]store.OffsiteTarget{}
