@@ -54,6 +54,12 @@ type namedRepoView struct {
 	// The interface needs it to explain why a repository cannot be deleted
 	// BEFORE the attempt, rather than only in the error afterwards.
 	InUse int `json:"inUse"`
+	// CompanionOf is the off-site target this repository is the direct
+	// repository of, "" for a plain named repository.
+	CompanionOf string `json:"companionOf"`
+	// CompanionLost marks a direct repository whose target an import deleted:
+	// it still holds backups, but nothing on this box links to it anymore.
+	CompanionLost bool `json:"companionLost"`
 }
 
 func (h *Handler) namedRepoViews(rows []store.OffsiteTarget) []namedRepoView {
@@ -73,6 +79,7 @@ func (h *Handler) namedRepoViews(rows []store.OffsiteTarget) []namedRepoView {
 			ID: t.ID, Name: t.Name, Repo: t.Repo, CredsRef: t.CredsRef,
 			StorageClass: t.StorageClass, LimitUpload: t.LimitUpload,
 			LimitDownload: t.LimitDownload, Immutable: t.Immutable, Enabled: t.Enabled, InUse: n,
+			CompanionOf: t.CompanionOf, CompanionLost: t.CompanionLost,
 		})
 	}
 	return out
@@ -101,6 +108,9 @@ type namedRepoBody struct {
 	LimitDownload *int    `json:"limitDownload"`
 	Immutable     *bool   `json:"immutable"`
 	Enabled       *bool   `json:"enabled"`
+	// CompanionOf routes the create to handleCreateDirectRepo instead: a direct
+	// repository takes everything but its name and location from the target.
+	CompanionOf *string `json:"companionOf"`
 }
 
 // applyTo merges the sent fields onto a row.
@@ -267,6 +277,10 @@ func sameRepoLocation(a, b string) bool {
 func (h *Handler) handleCreateNamedRepo(w http.ResponseWriter, r *http.Request) {
 	var body namedRepoBody
 	if !decodeBody(w, r, &body) {
+		return
+	}
+	if body.CompanionOf != nil && strings.TrimSpace(*body.CompanionOf) != "" {
+		h.handleCreateDirectRepo(w, r, body)
 		return
 	}
 	// A new repository is ON unless the caller says otherwise: somebody who just

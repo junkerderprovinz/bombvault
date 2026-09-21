@@ -253,6 +253,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/repos", h.handleCreateNamedRepo)
 	mux.HandleFunc("PATCH /api/repos/{id}", h.handleUpdateNamedRepo)
 	mux.HandleFunc("DELETE /api/repos/{id}", h.handleDeleteNamedRepo)
+	mux.HandleFunc("POST /api/repos/{id}/connect", h.handleConnectRepo)
 	mux.HandleFunc("GET /api/offsite/targets", h.handleListOffsiteTargets)
 	mux.HandleFunc("POST /api/offsite/targets", h.handleCreateOffsiteTarget)
 	mux.HandleFunc("PUT /api/offsite/targets/{id}", h.handleUpdateOffsiteTarget)

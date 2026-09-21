@@ -47,6 +47,9 @@ func TestRepoLocationsOverlapComparesPathElements(t *testing.T) {
 func TestDirectRepositoryRefusalsCarryTheirCodes(t *testing.T) {
 	for err, want := range map[error]string{
 		fmt.Errorf("x: %w", errNestedLocation): "nested-location",
+		errMirroredField:                       "mirrored-field",
+		store.ErrCompanionTaken:                "companion-taken",
+		store.ErrNotOffsiteTarget:              "unknown-target",
 	} {
 		if got := placementCode(err); got != want {
 			t.Errorf("placementCode(%v) = %q, want %q", err, got, want)
@@ -72,6 +75,15 @@ func TestALocationInsideOrAroundAnotherIsRefused(t *testing.T) {
 	})
 	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, "named repository") {
 		t.Errorf("target inside a named repository: %v", res)
+	}
+	res = f.do("POST", "/api/repos", map[string]any{"name": "x", "repo": "backups/containers/inner"})
+	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, "domain's own repository") {
+		t.Errorf("named repository inside a domain's own repository: %v", res)
+	}
+	f.fieldTarget("flash", "b2:bkt:flash-offsite")
+	res = f.do("POST", "/api/repos", map[string]any{"name": "x", "repo": "b2:bkt:flash-offsite/inner"})
+	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, "domain's off-site destination") {
+		t.Errorf("named repository inside a domain's off-site field: %v", res)
 	}
 	settings, err := f.st.GetSettings()
 	if err != nil {
@@ -173,5 +185,90 @@ func TestTestingADirectLocationReportsWhatIsThere(t *testing.T) {
 	}
 	if res := f.do("POST", "/api/offsite/targets/unknown/direct/test", map[string]any{"location": "b2:bkt:x"}); res["code"] != "unknown-target" {
 		t.Fatalf("an unknown target = %v", res)
+	}
+}
+
+func TestCreatingADirectRepositoryEnsuresItOnlyThen(t *testing.T) {
+	f := newPlacementFixture(t)
+	target := f.target("containers", "NAS", "backups/nas-offsite")
+	dir := filepath.Join(f.root, "backups", "nas-offsite-direct")
+	f.eng.opens[filepath.ToSlash(dir)] = false
+	res := f.do("POST", "/api/repos", map[string]any{"name": "", "repo": "backups/nas-offsite-direct", "companionOf": target.ID})
+	if res["ok"] != true {
+		t.Fatalf("create = %v", res)
+	}
+	if _, err := os.Stat(dir); err != nil {
+		t.Fatalf("the repository was not set up: %v", err)
+	}
+	repo := res["repo"].(map[string]any)
+	if repo["name"] != "NAS direct" || repo["companionOf"] != target.ID || repo["companionLost"] != false {
+		t.Fatalf("repo = %v", repo)
+	}
+	res = f.do("POST", "/api/repos", map[string]any{"name": "again", "repo": "backups/nas-offsite-direct2", "companionOf": target.ID})
+	if res["code"] != "companion-taken" {
+		t.Fatalf("a second direct repository = %v", res)
+	}
+}
+
+func TestCreatingADirectRepositoryRefusesWhatTheTargetDecides(t *testing.T) {
+	f := newPlacementFixture(t)
+	target := f.target("vms", "B2", "b2:bkt:vms")
+	flash := f.target("flash", "B2 flash", "b2:bkt:flash")
+	for _, c := range []struct {
+		body map[string]any
+		code string
+	}{
+		{map[string]any{"name": "x", "repo": "b2:bkt:vms-direct", "companionOf": target.ID, "immutable": true}, "mirrored-field"},
+		{map[string]any{"name": "x", "repo": "b2:bkt:vms-direct", "companionOf": target.ID, "credsRef": "set-2"}, "mirrored-field"},
+		{map[string]any{"name": "x", "repo": "b2:bkt:vms-direct", "companionOf": "missing"}, "unknown-target"},
+		{map[string]any{"name": "x", "repo": "b2:bkt:flash-direct", "companionOf": flash.ID}, "unknown-target"},
+		{map[string]any{"name": "x", "repo": "b2:bkt:vms/inside", "companionOf": target.ID}, "nested-location"},
+	} {
+		if res := f.do("POST", "/api/repos", c.body); res["ok"] != false || res["code"] != c.code {
+			t.Errorf("%v = %v, want code %s", c.body, res, c.code)
+		}
+	}
+	rows, err := f.st.ListNamedRepos()
+	if err != nil || len(rows) != 0 {
+		t.Fatalf("a refused create wrote %v, %v", rows, err)
+	}
+}
+
+func TestConnectingARepositoryNeedsTheTargetsCredentialsToOpenIt(t *testing.T) {
+	f := newPlacementFixture(t)
+	target := f.target("containers", "B2", "b2:bkt:containers")
+	old := f.namedRepo("B2 old", "b2:bkt:containers-direct")
+	path := "/api/repos/" + old.ID + "/connect"
+	f.eng.opens["b2:bkt:containers-direct"] = false
+	if res := f.do("POST", path, map[string]any{"targetId": target.ID}); res["ok"] != false {
+		t.Fatalf("connect without opening = %v", res)
+	}
+	if _, found, _ := f.st.CompanionFor(target.ID); found {
+		t.Fatal("a repository that did not open was connected")
+	}
+	f.eng.opens["b2:bkt:containers-direct"] = true
+	res := f.do("POST", path, map[string]any{"targetId": target.ID})
+	if res["ok"] != true || res["repo"].(map[string]any)["companionOf"] != target.ID {
+		t.Fatalf("connect = %v", res)
+	}
+	other := f.namedRepo("other", "b2:bkt:other")
+	if res := f.do("POST", "/api/repos/"+other.ID+"/connect", map[string]any{"targetId": target.ID}); res["code"] != "companion-taken" {
+		t.Fatalf("a second repository for one target = %v", res)
+	}
+}
+
+func TestConnectingARepositoryAlreadyLinkedToAnotherTargetIsRefused(t *testing.T) {
+	f := newPlacementFixture(t)
+	first := f.target("containers", "B2", "b2:bkt:containers")
+	second := f.target("containers", "B2 two", "b2:bkt:containers-two")
+	repo := f.namedRepo("B2 direct", "b2:bkt:containers-direct")
+	if res := f.do("POST", "/api/repos/"+repo.ID+"/connect", map[string]any{"targetId": first.ID}); res["ok"] != true {
+		t.Fatalf("connect = %v", res)
+	}
+	if res := f.do("POST", "/api/repos/"+repo.ID+"/connect", map[string]any{"targetId": second.ID}); res["ok"] != false {
+		t.Fatalf("connecting an already-linked repository to another target = %v", res)
+	}
+	if companion, found, _ := f.st.CompanionFor(first.ID); !found || companion.ID != repo.ID {
+		t.Fatalf("the original link was not kept: %+v, %v", companion, found)
 	}
 }
