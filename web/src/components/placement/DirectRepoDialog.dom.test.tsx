@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { renderWithProviders } from "../../lib/placement.testsupport";
 
 const fake = await vi.hoisted(async () => (await import("../../lib/placement.testsupport")).createPlacementApi());
@@ -39,6 +39,21 @@ describe("DirectRepoDialog", () => {
     fake.reply("getDirectRepo", { ok: true, repo: null, suggestion: { location: "b2:other-direct", note } });
     renderDialog();
     expect(await screen.findByText(text)).toBeTruthy();
+  });
+
+  it("says why the suggestion could not be loaded", async () => {
+    fake.reply("getDirectRepo", { ok: false, error: "unknown target" });
+    renderDialog();
+    expect(await screen.findByText("unknown target")).toBeTruthy();
+  });
+
+  it("keeps a location typed before the suggestion arrives", async () => {
+    const release = fake.hold("getDirectRepo");
+    renderDialog();
+    fireEvent.change(screen.getByLabelText("Location"), { target: { value: "custom/path" } });
+    await act(async () => release());
+    expect(screen.getByDisplayValue("custom/path")).toBeTruthy();
+    expect(screen.queryByDisplayValue("b2:bucket:containers-direct")).toBeNull();
   });
 
   it("tests the place without creating anything", async () => {
