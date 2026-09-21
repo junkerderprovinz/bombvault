@@ -44,6 +44,7 @@ export function DirectRepoDialog({
   const { push } = useToast();
   const dialogRef = useRef<HTMLDivElement>(null);
   const creating = useRef(false);
+  const locationTouched = useRef(false);
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [note, setNote] = useState<DirectSuggestion["note"]>("");
@@ -54,13 +55,19 @@ export function DirectRepoDialog({
   useEffect(() => {
     let alive = true;
     void getDirectRepo(target.id).then((r) => {
-      if (!alive || !r.ok || !r.suggestion) return;
+      if (!alive) return;
+      if (!r.ok) {
+        push(placementErrorText(t, lang, r, "settings.error"), "fail");
+        return;
+      }
+      if (!r.suggestion || locationTouched.current) return;
       setLocation(r.suggestion.location);
       setNote(r.suggestion.note);
     });
     return () => {
       alive = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target.id]);
 
   const withTarget = (text: string) => text.replace(/\{target\}/g, () => target.name);
@@ -117,7 +124,10 @@ export function DirectRepoDialog({
             {t("repos.location")}
             <input
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={(e) => {
+                locationTouched.current = true;
+                setLocation(e.target.value);
+              }}
               spellCheck={false}
               autoComplete="off"
               dir="ltr"
