@@ -1701,6 +1701,14 @@ const fa: Partial<Translations> = {
   "placement.deleted": "(حذف‌شده)",
   "placement.lastChip": "برای عدم کپی، محلی را انتخاب کنید",
   "placement.credsDiffer": "مخزن دامنه از راه دور است و اطلاعات ورود متفاوتی نسبت به این مقصد استفاده می‌کند. کپی تا زمانی که این اطلاعات مطابقت نداشته باشند شکست می‌خورد.",
+  "placement.title": "مکان‌گذاری",
+  "placement.storedOn": "ذخیره‌شده در",
+  "placement.copyTo": "کپی به",
+  "placement.sendTo": "ارسال به",
+
+  // Defaults
+  "placementDefaults.copyLine": "مواردی که مکان آن‌ها منبع کپی است:",
+  "placementDefaults.copyLineContainers": "پوشه‌های پروژه و مواردی که مکان آن‌ها منبع کپی است:",
 };
 
 export default fa;

@@ -1685,6 +1685,14 @@ const pl: Partial<Translations> = {
   "placement.deleted": "(usunięte)",
   "placement.lastChip": "Wybierz Lokalne, aby nie kopiować",
   "placement.credsDiffer": "Repozytorium domeny jest zdalne i używa innych danych dostępowych niż to miejsce docelowe. Kopiowanie nie powiedzie się, dopóki się nie zgodzą.",
+  "placement.title": "Rozmieszczenie",
+  "placement.storedOn": "Zapisane na",
+  "placement.copyTo": "Kopiuj do",
+  "placement.sendTo": "Wyślij do",
+
+  // Defaults
+  "placementDefaults.copyLine": "Elementy, których lokalizacja jest źródłem kopii:",
+  "placementDefaults.copyLineContainers": "Foldery projektu i elementy, których lokalizacja jest źródłem kopii:",
 };
 
 export default pl;

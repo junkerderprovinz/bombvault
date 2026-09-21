@@ -1688,6 +1688,14 @@ const cs: Partial<Translations> = {
   "placement.deleted": "(smazáno)",
   "placement.lastChip": "Zvolit Místní, aby se nekopírovalo",
   "placement.credsDiffer": "Repozitář domény je vzdálený a používá jiné přístupové údaje než tento cíl. Kopírování selže, dokud se neshodnou.",
+  "placement.title": "Umístění",
+  "placement.storedOn": "Uloženo na",
+  "placement.copyTo": "Kopírovat do",
+  "placement.sendTo": "Odeslat do",
+
+  // Defaults
+  "placementDefaults.copyLine": "Položky, jejichž umístění je zdrojem kopií:",
+  "placementDefaults.copyLineContainers": "Složky projektu a položky, jejichž umístění je zdrojem kopií:",
 };
 
 export default cs;

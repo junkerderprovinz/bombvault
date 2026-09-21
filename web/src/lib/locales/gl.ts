@@ -1701,6 +1701,14 @@ const gl: Partial<Translations> = {
   "placement.deleted": "(eliminado)",
   "placement.lastChip": "Escoller Local para non copiar",
   "placement.credsDiffer": "O repositorio do dominio é remoto e usa credenciais distintas das deste destino. A copia falla ata que coincidan.",
+  "placement.title": "Colocación",
+  "placement.storedOn": "Gardado en",
+  "placement.copyTo": "Copiar a",
+  "placement.sendTo": "Enviar a",
+
+  // Defaults
+  "placementDefaults.copyLine": "Elementos cuxo lugar é orixe de copia:",
+  "placementDefaults.copyLineContainers": "Cartafoles de proxecto e elementos cuxo lugar é orixe de copia:",
 };
 
 export default gl;

@@ -1690,6 +1690,14 @@ const no: Partial<Translations> = {
   "placement.deleted": "(slettet)",
   "placement.lastChip": "Velg Lokal for ingen kopi",
   "placement.credsDiffer": "Domenets depot er fjernt og bruker andre påloggingsdetaljer enn dette målet. Kopiering mislykkes til de stemmer overens.",
+  "placement.title": "Plassering",
+  "placement.storedOn": "Lagret på",
+  "placement.copyTo": "Kopier til",
+  "placement.sendTo": "Send til",
+
+  // Defaults
+  "placementDefaults.copyLine": "Elementer der plasseringen er en kopikilde:",
+  "placementDefaults.copyLineContainers": "Prosjektmapper og elementer der plasseringen er en kopikilde:",
 };
 
 export default no;

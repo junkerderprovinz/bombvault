@@ -1800,6 +1800,14 @@ export const en = {
   "placement.deleted": "(deleted)",
   "placement.lastChip": "Choose Local for no copy",
   "placement.credsDiffer": "The domain repository is remote and uses other credentials than this target. Copying to it fails until they match.",
+  "placement.title": "Placement",
+  "placement.storedOn": "Stored on",
+  "placement.copyTo": "Copy to",
+  "placement.sendTo": "Send to",
+
+  // Defaults
+  "placementDefaults.copyLine": "Items whose location is a copy source:",
+  "placementDefaults.copyLineContainers": "Project folders and items whose location is a copy source:",
 
   "files.excludesCount": "Excludes: {n}",
   "files.enabled": "Include in schedule",
@@ -3560,6 +3568,14 @@ export const de: Translations = {
   "placement.deleted": "(gelöscht)",
   "placement.lastChip": "Für keine Kopie Lokal wählen",
   "placement.credsDiffer": "Das Domänen-Repository ist entfernt und nutzt andere Zugangsdaten als dieses Ziel. Die Kopie scheitert, bis sie zusammenpassen.",
+  "placement.title": "Ablage",
+  "placement.storedOn": "Gespeichert auf",
+  "placement.copyTo": "Kopie nach",
+  "placement.sendTo": "Senden an",
+
+  // Defaults
+  "placementDefaults.copyLine": "Einträge, deren Ort Kopierquelle ist:",
+  "placementDefaults.copyLineContainers": "Projektordner und Einträge, deren Ort Kopierquelle ist:",
 
   "files.excludesCount": "Ausschlüsse: {n}",
   "files.enabled": "Im Zeitplan einschließen",

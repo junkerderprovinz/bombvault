@@ -1687,6 +1687,14 @@ const nl: Partial<Translations> = {
   "placement.deleted": "(verwijderd)",
   "placement.lastChip": "Kies Lokaal voor geen kopie",
   "placement.credsDiffer": "De repository van het domein is extern en gebruikt andere inloggegevens dan deze bestemming. Kopiëren mislukt totdat ze overeenkomen.",
+  "placement.title": "Plaatsing",
+  "placement.storedOn": "Opgeslagen op",
+  "placement.copyTo": "Kopieer naar",
+  "placement.sendTo": "Verstuur naar",
+
+  // Defaults
+  "placementDefaults.copyLine": "Items waarvan de locatie een kopiebron is:",
+  "placementDefaults.copyLineContainers": "Projectmappen en items waarvan de locatie een kopiebron is:",
 };
 
 export default nl;

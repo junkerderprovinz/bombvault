@@ -1701,6 +1701,14 @@ const lt: Partial<Translations> = {
   "placement.deleted": "(ištrinta)",
   "placement.lastChip": "Pasirinkite Vietinis, kad nebūtų kopijos",
   "placement.credsDiffer": "Srities saugykla yra nuotolinė ir naudoja kitokius prisijungimo duomenis nei šis tikslas. Kopijavimas nepavyks, kol jie nesutaps.",
+  "placement.title": "Išdėstymas",
+  "placement.storedOn": "Saugoma",
+  "placement.copyTo": "Kopijuoti į",
+  "placement.sendTo": "Siųsti į",
+
+  // Defaults
+  "placementDefaults.copyLine": "Elementai, kurių vieta yra kopijavimo šaltinis:",
+  "placementDefaults.copyLineContainers": "Projekto aplankai ir elementai, kurių vieta yra kopijavimo šaltinis:",
 };
 
 export default lt;

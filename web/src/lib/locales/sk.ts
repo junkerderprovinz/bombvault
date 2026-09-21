@@ -1701,6 +1701,14 @@ const sk: Partial<Translations> = {
   "placement.deleted": "(zmazané)",
   "placement.lastChip": "Vyberte Lokálny, aby sa nekopírovalo",
   "placement.credsDiffer": "Repozitár domény je vzdialený a používa iné prístupové údaje než tento cieľ. Kopírovanie zlyhá, kým sa nezhodujú.",
+  "placement.title": "Rozmiestnenie",
+  "placement.storedOn": "Uložené na",
+  "placement.copyTo": "Kopírovať do",
+  "placement.sendTo": "Odoslať do",
+
+  // Defaults
+  "placementDefaults.copyLine": "Položky, ktorých umiestnenie je zdrojom kópií:",
+  "placementDefaults.copyLineContainers": "Priečinky projektu a položky, ktorých umiestnenie je zdrojom kópií:",
 };
 
 export default sk;

@@ -1701,6 +1701,14 @@ const hr: Partial<Translations> = {
   "placement.deleted": "(izbrisano)",
   "placement.lastChip": "Odaberite Lokalno da nema kopije",
   "placement.credsDiffer": "Repozitorij domene je udaljen i koristi druge podatke za pristup od ovog cilja. Kopiranje ne uspijeva dok se ne podudaraju.",
+  "placement.title": "Smještaj",
+  "placement.storedOn": "Pohranjeno na",
+  "placement.copyTo": "Kopiraj u",
+  "placement.sendTo": "Pošalji u",
+
+  // Defaults
+  "placementDefaults.copyLine": "Stavke čija je lokacija izvor kopije:",
+  "placementDefaults.copyLineContainers": "Mape projekta i stavke čija je lokacija izvor kopije:",
 };
 
 export default hr;

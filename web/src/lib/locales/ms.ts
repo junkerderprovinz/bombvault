@@ -1701,6 +1701,14 @@ const ms: Partial<Translations> = {
   "placement.deleted": "(dipadam)",
   "placement.lastChip": "Pilih Setempat supaya tiada salinan",
   "placement.credsDiffer": "Repositori domain adalah jauh dan menggunakan kelayakan berbeza daripada sasaran ini. Penyalinan gagal sehingga ia sepadan.",
+  "placement.title": "Penempatan",
+  "placement.storedOn": "Disimpan di",
+  "placement.copyTo": "Salin ke",
+  "placement.sendTo": "Hantar ke",
+
+  // Defaults
+  "placementDefaults.copyLine": "Item yang lokasinya sumber salinan:",
+  "placementDefaults.copyLineContainers": "Folder projek dan item yang lokasinya sumber salinan:",
 };
 
 export default ms;

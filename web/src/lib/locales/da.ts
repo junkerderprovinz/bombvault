@@ -1690,6 +1690,14 @@ const da: Partial<Translations> = {
   "placement.deleted": "(slettet)",
   "placement.lastChip": "Vælg Lokal for ingen kopi",
   "placement.credsDiffer": "Domænedepotet er fjernt og bruger andre loginoplysninger end dette mål. Kopiering mislykkes, indtil de stemmer overens.",
+  "placement.title": "Placering",
+  "placement.storedOn": "Gemt på",
+  "placement.copyTo": "Kopiér til",
+  "placement.sendTo": "Send til",
+
+  // Defaults
+  "placementDefaults.copyLine": "Elementer, hvis placering er en kopikilde:",
+  "placementDefaults.copyLineContainers": "Projektmapper og elementer, hvis placering er en kopikilde:",
 };
 
 export default da;

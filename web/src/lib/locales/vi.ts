@@ -1682,6 +1682,14 @@ const vi: Partial<Translations> = {
   "placement.deleted": "(đã xóa)",
   "placement.lastChip": "Chọn Cục bộ để không sao chép",
   "placement.credsDiffer": "Kho của miền là từ xa và dùng thông tin xác thực khác với đích này. Việc sao chép sẽ thất bại cho đến khi chúng khớp nhau.",
+  "placement.title": "Nơi lưu trữ",
+  "placement.storedOn": "Lưu tại",
+  "placement.copyTo": "Sao chép đến",
+  "placement.sendTo": "Gửi đến",
+
+  // Defaults
+  "placementDefaults.copyLine": "Các mục có vị trí là nguồn sao chép:",
+  "placementDefaults.copyLineContainers": "Thư mục dự án và các mục có vị trí là nguồn sao chép:",
 };
 
 export default vi;

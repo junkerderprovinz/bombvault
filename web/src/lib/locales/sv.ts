@@ -1690,6 +1690,14 @@ const sv: Partial<Translations> = {
   "placement.deleted": "(borttagen)",
   "placement.lastChip": "Välj Lokal för ingen kopia",
   "placement.credsDiffer": "Domänens arkiv är fjärranslutet och använder andra inloggningsuppgifter än det här målet. Kopieringen misslyckas tills de stämmer överens.",
+  "placement.title": "Placering",
+  "placement.storedOn": "Sparad på",
+  "placement.copyTo": "Kopiera till",
+  "placement.sendTo": "Skicka till",
+
+  // Defaults
+  "placementDefaults.copyLine": "Objekt vars plats är en kopieringskälla:",
+  "placementDefaults.copyLineContainers": "Projektmappar och objekt vars plats är en kopieringskälla:",
 };
 
 export default sv;

@@ -1690,6 +1690,14 @@ const el: Partial<Translations> = {
   "placement.deleted": "(διαγραμμένο)",
   "placement.lastChip": "Επιλέξτε Τοπικό ώστε να μην γίνεται αντιγραφή",
   "placement.credsDiffer": "Το αποθετήριο τομέα είναι απομακρυσμένο και χρησιμοποιεί διαφορετικά διαπιστευτήρια από αυτόν τον προορισμό. Η αντιγραφή αποτυγχάνει μέχρι να ταιριάξουν.",
+  "placement.title": "Τοποθέτηση",
+  "placement.storedOn": "Αποθηκευμένο σε",
+  "placement.copyTo": "Αντιγραφή σε",
+  "placement.sendTo": "Αποστολή σε",
+
+  // Defaults
+  "placementDefaults.copyLine": "Στοιχεία των οποίων η θέση είναι πηγή αντιγράφων:",
+  "placementDefaults.copyLineContainers": "Φάκελοι έργων και στοιχεία των οποίων η θέση είναι πηγή αντιγράφων:",
 };
 
 export default el;
