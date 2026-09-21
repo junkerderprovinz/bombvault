@@ -720,9 +720,12 @@ func unmatchedNames(p placementRead, items []domainItem, listing sourceListing) 
 }
 
 // confirmDefault ends the domain's pause and leaves each excluded name out of
-// every target with a rule of its own. A domain that was never paused is left
-// untouched, so confirming a healthy domain cannot take the rebuild check out
-// of service.
+// every target with a rule of its own. A domain without a default is left
+// untouched: there is nothing yet for an exclusion to answer to. A domain
+// that already has one but was never paused still gets its exclusions
+// written, since the confirm route is the only place they are, but keeps its
+// pause and confirmed state exactly as they are, so confirming a healthy
+// domain still cannot take the rebuild check out of service.
 func (s *Service) confirmDefault(_ context.Context, domain string, exclude []string) error {
 	prefix := domainTagPrefix(domain)
 	for _, id := range exclude {
@@ -736,8 +739,11 @@ func (s *Service) confirmDefault(_ context.Context, domain string, exclude []str
 	if err != nil {
 		return err
 	}
-	if !found || !d.Paused() {
+	if !found {
 		return nil
+	}
+	if !d.Paused() {
+		return s.store.SetExcludeRules(domain, exclude)
 	}
 	return s.store.ConfirmPlacement(domain, exclude)
 }

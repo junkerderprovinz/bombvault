@@ -184,6 +184,25 @@ func (r *Repo) ConfirmPlacement(domain string, exclude []string) error {
 	return nil
 }
 
+// SetExcludeRules writes each name's rule as ["*"], the confirm route's other
+// half for a domain that is already confirmed: it has no pause to retire, so
+// only the exclusions land, and placement_defaults is left untouched.
+func (r *Repo) SetExcludeRules(domain string, exclude []string) error {
+	now := time.Now().Unix()
+	err := r.inTx(func(tx *sql.Tx) error {
+		for _, identity := range exclude {
+			if err := setCopyRuleTx(tx, domain, identity, []string{SkipAll}, now); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("SetExcludeRules %s: %w", domain, err)
+	}
+	return nil
+}
+
 // DomainHasHistory reports whether an item of the domain was ever backed up
 // successfully, and whether the domain was ever replicated successfully.
 func (r *Repo) DomainHasHistory(domain string) (backup, offsite bool, err error) {

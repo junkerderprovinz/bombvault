@@ -540,6 +540,49 @@ func TestConfirmPlacementIsIdempotentOnADomainNeverPaused(t *testing.T) {
 	}
 }
 
+// TestASecondConfirmationWritesItsExclusion pins the fix: the confirm route is
+// the only way an exclusion rule is written, so a domain that is already
+// confirmed must not silently drop what a later confirmation asks to exclude.
+func TestASecondConfirmationWritesItsExclusion(t *testing.T) {
+	f, _ := pausedContainers(t)
+	if res := f.do(http.MethodPost, "/api/placement/default/containers/confirm", map[string]any{"exclude": []string{"container:old-app"}}); res["ok"] != true {
+		t.Fatalf("first confirm = %v", res)
+	}
+	if pausedDefault(t, f, "containers") {
+		t.Fatal("setup: the domain is still paused after the first confirm")
+	}
+	res := f.do(http.MethodPost, "/api/placement/default/containers/confirm", map[string]any{"exclude": []string{"container:nginx"}})
+	if res["ok"] != true {
+		t.Fatalf("second confirm = %v, want ok", res)
+	}
+	if _, found := ruleOf(t, f, "containers", "container:nginx"); !found {
+		t.Fatal("a second confirmation dropped the exclusion it asked for")
+	}
+}
+
+// TestASecondConfirmationDoesNotGrantAPutDefaultManualImmunity is the other
+// half: a domain that has a default only because it was saved through the PUT
+// route, never through an actual confirmation, must not gain the manual
+// marker just because a later confirm call wrote its exclusion.
+func TestASecondConfirmationDoesNotGrantAPutDefaultManualImmunity(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.setDefault("containers", "")
+	res := f.do(http.MethodPost, "/api/placement/default/containers/confirm", map[string]any{"exclude": []string{"container:old-app"}})
+	if res["ok"] != true {
+		t.Fatalf("confirm = %v, want ok", res)
+	}
+	if _, found := ruleOf(t, f, "containers", "container:old-app"); !found {
+		t.Fatal("confirming a domain with a PUT default dropped the exclusion it asked for")
+	}
+	d, found, err := f.st.PlacementDefaultFor("containers")
+	if err != nil || !found {
+		t.Fatalf("default = %+v, %v, %v", d, found, err)
+	}
+	if d.ConfirmedManually {
+		t.Fatal("confirming a domain that was never paused granted its PUT default manual-confirmation immunity")
+	}
+}
+
 func TestDeletingARepositoryADefaultPointsAtNamesTheDomain(t *testing.T) {
 	f := newPlacementFixture(t)
 	nas := f.namedRepo("NAS", "nas")
