@@ -416,6 +416,28 @@ func TestConnectingARepositoryNeedsTheTargetsCredentialsToOpenIt(t *testing.T) {
 	}
 }
 
+func TestConnectingARepositoryChecksTheTargetAndWhatUsesIt(t *testing.T) {
+	f := newPlacementFixture(t)
+	flash := f.target("flash", "Flash B2", "b2:bkt:flash")
+	repo := f.namedRepo("NAS", "backups/nas")
+	if res := f.do("POST", "/api/repos/"+repo.ID+"/connect", map[string]any{"targetId": flash.ID}); res["code"] != "unknown-target" {
+		t.Errorf("connecting to a flash target = %v", res)
+	}
+	target := f.target("containers", "B2", "b2:bkt:containers")
+	f.container("web", repo.ID)
+	res := f.do("POST", "/api/repos/"+repo.ID+"/connect", map[string]any{"targetId": target.ID})
+	if res["code"] != "repo-in-use" || res["items"] != float64(1) {
+		t.Errorf("connecting a repository an item uses = %v", res)
+	}
+	if _, found, _ := f.st.CompanionFor(target.ID); found {
+		t.Fatal("a repository in use was connected")
+	}
+	free := f.namedRepo("Cold", "backups/cold")
+	if res := f.do("POST", "/api/repos/"+free.ID+"/connect", map[string]any{"targetId": target.ID}); res["ok"] != true {
+		t.Fatalf("connecting a free repository = %v", res)
+	}
+}
+
 func TestConnectingARepositoryAlreadyLinkedToAnotherTargetIsRefused(t *testing.T) {
 	f := newPlacementFixture(t)
 	first := f.target("containers", "B2", "b2:bkt:containers")

@@ -216,18 +216,21 @@ func (s *Service) probeDirectLocation(ctx context.Context, target store.OffsiteT
 	return s.probeOffsiteRepo(ctx, loc, s.offsiteModeForTarget(settings, target))
 }
 
-// offsiteTargetParam reads {id} as an off-site target and writes the refusal
-// itself when there is none.
+// offsiteTargetParam reads {id} as an off-site target of a domain that can
+// have a direct repository, and writes the refusal itself when there is none.
+// The domain is checked here rather than only on the create, so the dialog
+// cannot suggest and probe a location for a target that can never take one.
 func (h *Handler) offsiteTargetParam(w http.ResponseWriter, r *http.Request) (store.OffsiteTarget, bool) {
 	target, ok, err := h.store.GetOffsiteTarget(r.PathValue("id"))
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return store.OffsiteTarget{}, false
 	}
-	if !ok {
+	if !ok || !validPlacementDomain(target.Domain) {
 		placementFail(w, errUnknownOffsiteTarget, nil)
+		return store.OffsiteTarget{}, false
 	}
-	return target, ok
+	return target, true
 }
 
 // offsiteTargetRef names a target for a refusal that has to point at it. A
@@ -321,9 +324,42 @@ func (s *Service) createDirectRepo(ctx context.Context, targetID, name, location
 	return s.store.CreateCompanionRepo(targetID, name, location)
 }
 
+// repoInUseErr is a repo-in-use refusal carrying what still points at the
+// repository, so the answer can name it the way the delete route does.
+type repoInUseErr struct{ use store.NamedRepoUse }
+
+func (e *repoInUseErr) Error() string { return errRepoInUse.Error() }
+
+func (e *repoInUseErr) Is(target error) bool { return target == errRepoInUse }
+
+// namedRepoUse counts what points at a named repository: the same two
+// questions the guarded writes ask inside their own transaction.
+func (s *Service) namedRepoUse(repoID string) (store.NamedRepoUse, error) {
+	items, err := s.store.ItemsUsingNamedRepo(repoID)
+	if err != nil {
+		return store.NamedRepoUse{}, err
+	}
+	defaults, err := s.store.ListPlacementDefaults()
+	if err != nil {
+		return store.NamedRepoUse{}, err
+	}
+	use := store.NamedRepoUse{Items: items, DefaultDomains: []string{}}
+	for _, d := range defaults {
+		if d.Home == repoID {
+			use.DefaultDomains = append(use.DefaultDomains, d.Domain)
+		}
+	}
+	slices.Sort(use.DefaultDomains)
+	return use, nil
+}
+
 // connectDirectRepo is "Connect with <target>" after Discover found bv:direct
 // snapshots in a plain named repository. The repository has to open with the
 // target's credentials before it is linked.
+//
+// A repository an item or a default still uses is refused: linking it would
+// age its whole history under the target's rules and stop its off-site copies,
+// without anybody having chosen either.
 func (s *Service) connectDirectRepo(ctx context.Context, repoID, targetID string) (store.OffsiteTarget, error) {
 	repo, err := s.store.GetNamedRepo(repoID)
 	if err != nil {
@@ -336,8 +372,15 @@ func (s *Service) connectDirectRepo(ctx context.Context, repoID, targetID string
 	if err != nil {
 		return store.OffsiteTarget{}, err
 	}
-	if !ok {
+	if !ok || !validPlacementDomain(target.Domain) {
 		return store.OffsiteTarget{}, errUnknownOffsiteTarget
+	}
+	use, err := s.namedRepoUse(repoID)
+	if err != nil {
+		return store.OffsiteTarget{}, err
+	}
+	if use.InUse() {
+		return store.OffsiteTarget{}, &repoInUseErr{use: use}
 	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -465,6 +508,11 @@ func (h *Handler) handleConnectRepo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	row, err := h.svc.connectDirectRepo(r.Context(), strings.TrimSpace(r.PathValue("id")), strings.TrimSpace(body.TargetID))
+	var inUse *repoInUseErr
+	if errors.As(err, &inUse) {
+		placementFail(w, err, map[string]any{"items": inUse.use.Items, "defaultDomains": inUse.use.DefaultDomains})
+		return
+	}
 	if err != nil {
 		placementFail(w, err, nil)
 		return
