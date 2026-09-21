@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
@@ -790,5 +791,41 @@ func TestImportFailureLogLeavesOutTheToolsMessage(t *testing.T) {
 	}
 	if runs := runsOfKind(t, rig.svc.store, "dbimport"); len(runs) != 1 || !strings.Contains(runs[0].Error, "alice@example.com") {
 		t.Errorf("runs = %+v, want the run history to keep the tool's message", runs)
+	}
+}
+
+func TestImportFailureNamesTheLineTheToolEndedOn(t *testing.T) {
+	rig := newImportRig(t)
+	rig.dock.exit = 2
+	rig.dock.tail = "ERROR:  role \"immich\" already exists\n" +
+		strings.Repeat("ERROR:  relation \"asset_faces\" already exists\nCONTEXT:  Ausführung der Zeile 4711\n", 12) +
+		"psql: error: server closed the connection unexpectedly\n"
+
+	if _, err := rig.svc.StartImportDBDump(context.Background(), "pg", "local", importDumpID); err != nil {
+		t.Fatal(err)
+	}
+	waitForDetachedRun(t, rig.svc)
+
+	runs := runsOfKind(t, rig.svc.store, "dbimport")
+	if len(runs) != 1 || runs[0].Status != "failed" {
+		t.Fatalf("runs = %+v, want one failed import", runs)
+	}
+	reason := runs[0].Error
+	if !strings.Contains(reason, "exit 2: ") || !strings.Contains(reason, "server closed the connection unexpectedly") {
+		t.Errorf("reason = %q, want the exit code and the line the tool ended on", reason)
+	}
+	if strings.Contains(reason, "role \"immich\"") {
+		t.Errorf("reason = %q, want the start of a long output left out", reason)
+	}
+	if !utf8.ValidString(reason) {
+		t.Errorf("reason = %q, want valid UTF-8", reason)
+	}
+}
+
+func TestImportCauseIsCutBetweenCharacters(t *testing.T) {
+	cause := errors.New(strings.Repeat("a", dbImportDetailMax-1) + "äöü")
+	msg := importPrepareFailure(cause).Error()
+	if !utf8.ValidString(msg) || !strings.HasSuffix(msg, strings.Repeat("a", dbImportDetailMax-1)) {
+		t.Errorf("cause cut to %q, want it to end before the character the limit falls into", msg[len(msg)-8:])
 	}
 }
