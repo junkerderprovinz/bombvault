@@ -32,6 +32,7 @@ import { containerTakeover } from "../lib/useTakeOver";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { Button } from "../components/Button";
 import { DatabaseDumpRow } from "../components/DatabaseDumpRow";
+import { introDatabases, updateWarnKey } from "../lib/dbdump";
 import { groupStage } from "../lib/controls";
 import { ToggleRow } from "./settings/shared";
 import { BackupCancelButton } from "../components/BackupCancelButton";
@@ -574,15 +575,16 @@ function UpdateAfterBackupRow({
   initial,
   lastUpdateCheck,
   lastUpdateResult,
-  database,
+  databaseWarn,
   t,
 }: {
   name: string;
   initial: boolean;
   lastUpdateCheck: number;
   lastUpdateResult: string;
-  /** A recognised database, whose major version an update can move. */
-  database: boolean;
+  /** What an update means for a recognised database, whose major version it
+   *  can move; null for any other container. */
+  databaseWarn: TranslationKey | null;
   t: T;
 }) {
   const [enabled, setEnabled] = useState(initial);
@@ -620,7 +622,7 @@ function UpdateAfterBackupRow({
         // (issue #193, after a first night with this on for every container).
         // Said here rather than only in the docs, because this toggle is where
         // someone decides to switch it on.
-        hint={`${t("update.afterBackupHint")} ${t("update.afterBackupOrphans")}${database ? ` ${t("dbdump.updateWarn")}` : ""}`}
+        hint={`${t("update.afterBackupHint")} ${t("update.afterBackupOrphans")}${databaseWarn ? ` ${t(databaseWarn)}` : ""}`}
         checked={enabled}
         onChange={(next) => void handle(next)}
         disabled={busy}
@@ -2508,7 +2510,7 @@ export function ContainerRow({
               initial={container.updateAfterBackup ?? false}
               lastUpdateCheck={container.lastUpdateCheck}
               lastUpdateResult={container.lastUpdateResult}
-              database={container.dbTier !== ""}
+              databaseWarn={updateWarnKey(container)}
               t={t}
             />
           </Advanced>
@@ -3665,7 +3667,10 @@ export function Containers() {
   let hueSeq = 0;
   const nextHue = () => hueSeq++;
 
-  const recognisedDatabases = containers.filter((c) => c.dbTier === "curated");
+  const recognisedDatabases = introDatabases(containers);
+  const [introBefore, introAfter] = t("dbdump.introNotice")
+    .replace("{count}", String(recognisedDatabases.length))
+    .split("{name}");
 
   function dismissIntro() {
     setIntroDismissed(true);
@@ -3721,10 +3726,11 @@ export function Containers() {
       {!introDismissed && recognisedDatabases.length > 0 && (
         <div className="flex items-start gap-3 rounded-card bg-carbon-surface p-4 flex-wrap">
           <p className="min-w-0 flex-1 text-sm text-carbon-textSub">
-            {t("dbdump.introNotice").replace("{count}", String(recognisedDatabases.length))}{" "}
+            {introBefore}
             <a className="text-accentText underline hover:no-underline" href={`#container-${recognisedDatabases[0].name}`}>
-              {recognisedDatabases[0].name}
+              <bdi>{recognisedDatabases[0].name}</bdi>
             </a>
+            {introAfter}
           </p>
           <Button
             label={t("dbdump.introDismiss")}

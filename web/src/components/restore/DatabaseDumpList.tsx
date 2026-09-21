@@ -20,6 +20,7 @@ import { ENGINE_NAMES, importRefusedKey } from "../../lib/dbdump";
 import { humanBytes } from "../../lib/forecast";
 import { useT } from "../../lib/i18n";
 import { useProgress } from "../../lib/progress";
+import { isWarningNote, RunReasonText } from "../../lib/runReason";
 import { useConfirm } from "../../lib/useConfirm";
 import { useToast } from "../../lib/toast";
 import { Badge } from "../Badge";
@@ -140,22 +141,20 @@ function DumpRow({
     kind: "dbimport",
     start: async () => {
       const res = await importDbDump(containerName, dump.id, source);
-      if (!res.ok) {
-        const key = importRefusedKey(res.code);
-        if (key) {
-          push(
-            t(key).replace("{server}", res.server ?? "").replace("{dump}", res.dump ?? ""),
-            "fail"
-          );
-          setShake((n) => n + 1);
-        }
-      }
-      return res;
+      if (res.ok) return res;
+      const key = importRefusedKey(res.code, dump.engine);
+      if (!key) return res;
+      setShake((n) => n + 1);
+      return {
+        ...res,
+        error: t(key).replace("{server}", res.server ?? "").replace("{dump}", res.dump ?? ""),
+      };
     },
     matchRun: (r) => r.domain === "container" && r.target === containerName,
     cancelledRef: importCancelled,
   });
 
+  const importNote = importState.phase === "success" ? importState.note : undefined;
   const engineName = dump.engine ? ENGINE_NAMES[dump.engine] : "";
   // Without the engine the import has no tool to pick and the server refuses
   // it, so the row offers everything else and says only that this is a database.
@@ -334,6 +333,7 @@ function DumpRow({
             cancelledRef={saveCancelled}
             cancelConfirm={t("dbdump.saveCancelHint")}
             successMessage={t("dbdump.savedTo").replace("{path}", savedPath)}
+            showStartedHint={false}
             t={t}
           />
         </div>
@@ -348,7 +348,10 @@ function DumpRow({
           inPlace
           name={containerName}
           cancelledRef={importCancelled}
-          successMessage={t("dbdump.importDone")}
+          cancellable={false}
+          successMessage={importNote ? <RunReasonText reason={importNote} t={t} /> : t("dbdump.importDone")}
+          successWarn={isWarningNote(importNote)}
+          showStartedHint={false}
           t={t}
         />
       )}
