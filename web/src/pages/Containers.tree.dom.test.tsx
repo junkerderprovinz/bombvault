@@ -566,7 +566,8 @@ describe("FoldersEditor tree integration (INTEG-01, D-02, D-04, D-05)", () => {
   it("persists only the 64 most recent expansions through the component path (D-05 cap)", async () => {
     // 66 reachable mounts, expanded one by one through real clicks; every
     // browse reply defaults to an empty listing (dirs: []) so each expansion
-    // is honest and cheap.
+    // is honest and cheap. That many clicks outlast the default budget while
+    // the rest of the suite runs alongside.
     const mounts: MountInfo[] = Array.from({ length: 66 }, (_, i) => ({
       source: `${HOST_ROOT}/user/appdata/d${String(i).padStart(2, "0")}`,
       dest: `/d${i}`,
@@ -608,7 +609,7 @@ describe("FoldersEditor tree integration (INTEG-01, D-02, D-04, D-05)", () => {
     expect(stored).toContain(mounts[2].source);
     expect(stored[63]).toBe(mounts[65].source); // newest last (recency order)
     expect(browseCalls).toHaveLength(66);
-  });
+  }, 15000);
 });
 
 // ---------------------------------------------------------------------------
