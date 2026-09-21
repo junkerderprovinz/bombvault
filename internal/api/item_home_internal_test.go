@@ -10,21 +10,6 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-func TestPlacementCodesOfTheDefaultRefusals(t *testing.T) {
-	for err, want := range map[error]string{
-		errPlacementBusy:      "domain-busy",
-		errHomeHasBackups:     "has-backups",
-		errPlacementStale:     "stale",
-		errRepoInvalid:        "repo-invalid",
-		errRepoInUse:          "repo-in-use",
-		errDefaultRepoMissing: "default-repo-missing",
-	} {
-		if got := placementCode(fmt.Errorf("wrapped: %w", err)); got != want {
-			t.Errorf("placementCode(%v) = %q, want %q", err, got, want)
-		}
-	}
-}
-
 func TestHomeOnAnOpenItemIsWrittenChosen(t *testing.T) {
 	f := newPlacementFixture(t)
 	nas := f.namedRepo("NAS", "nas")

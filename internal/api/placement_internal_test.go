@@ -224,7 +224,7 @@ func TestItemIdentityIsTheSnapshotTag(t *testing.T) {
 }
 
 func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
-	for err, want := range map[error]string{
+	want := map[error]string{
 		errPlacementUnreadable:  "placement-unreadable",
 		errInvalidPlacement:     "invalid-placement",
 		store.ErrRuleDomain:     "invalid-placement",
@@ -234,9 +234,20 @@ func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
 		errUnknownOffsiteTarget: "unknown-target",
 		store.ErrStackCopyRule:  "stack-rule",
 		store.ErrCopyRuleTaken:  "copy-rule-taken",
-	} {
-		if got := placementCode(fmt.Errorf("wrapped: %w", err)); got != want {
-			t.Errorf("placementCode(%v) = %q, want %q", err, got, want)
+		errPlacementBusy:        "domain-busy",
+		errHomeHasBackups:       "has-backups",
+		errPlacementStale:       "stale",
+		errPlacementNoExpect:    "expect-required",
+		errRepoInvalid:          "repo-invalid",
+		errRepoInUse:            "repo-in-use",
+		errDefaultRepoMissing:   "default-repo-missing",
+	}
+	if len(placementCodes) != len(want) {
+		t.Fatalf("placementCodes has %d rows, want %d: a sentinel is missing its row or its test", len(placementCodes), len(want))
+	}
+	for err, code := range want {
+		if got := placementCode(fmt.Errorf("wrapped: %w", err)); got != code {
+			t.Errorf("placementCode(%v) = %q, want %q", err, got, code)
 		}
 	}
 	if got := placementCode(errors.New("something else")); got != "" {
