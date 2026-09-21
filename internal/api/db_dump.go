@@ -828,9 +828,9 @@ func dbDumpReasonHead(reason string) string {
 var dbImportFailedHead = regexp.MustCompile(`^` + regexp.QuoteMeta(store.ReasonDBImportFailed) + `: .*?\.bombvault-before-import-\d{8}-\d{6}`)
 
 // shareableRunError is a run's error as it may leave the session gate, in the
-// diagnostics bundle, the log and the widget feed. What a database tool says
-// itself can quote a row, so a dump or an import keeps only what BombVault
-// wrote.
+// diagnostics bundle, the log, the widget feed and the weekly digest. What a
+// database tool says itself can quote a row, so a dump or an import keeps only
+// what BombVault wrote.
 func shareableRunError(kind, text string) string {
 	switch kind {
 	case "dbdump":
