@@ -1654,6 +1654,11 @@ const nl: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} direct bewaart nu minder. Items waarvan de enige kopie daar staat: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} direct is niet meer append-only. Items waarvan de enige kopie daar staat: {n}.",
   "saveWarning.directCredsKept": "{target} direct kan niet worden geopend met de nieuwe sleutel en behoudt de oude.",
+
+  // Direct
+  "offsite.alsoDirect": "Geldt ook voor {target} direct. Items waarvan de enige kopie daar staat: {n}.",
+  "offsite.directRetentionAsk": "Items waarvan de enige kopie op {target} direct staat: {n}. Minder bewaren verwijdert hun oudere snapshots permanent bij de volgende opschoning. Toch opslaan?",
+  "offsite.directAppendOnlyAsk": "Items waarvan de enige kopie op {target} direct staat: {n}. Zonder append-only mag deze machine er dingen uit verwijderen. Toch opslaan?",
 };
 
 export default nl;

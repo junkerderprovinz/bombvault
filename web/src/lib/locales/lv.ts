@@ -1668,6 +1668,11 @@ const lv: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} tieši tagad saglabā mazāk. Vienumi, kuru vienīgā kopija ir tur: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} tieši vairs nav tikai-pievienot. Vienumi, kuru vienīgā kopija ir tur: {n}.",
   "saveWarning.directCredsKept": "{target} tieši nevar atvērt ar jauno atslēgu, tāpēc paliek vecā.",
+
+  // Direct
+  "offsite.alsoDirect": "Attiecas arī uz {target} tieši. Vienumi, kuru vienīgā kopija ir tur: {n}.",
+  "offsite.directRetentionAsk": "Vienumi, kuru vienīgā kopija ir {target} tieši: {n}. Mazāka saglabāšana neatgriezeniski dzēš to vecākos momentuzņēmumus nākamajā tīrīšanā. Vai tik un tā saglabāt?",
+  "offsite.directAppendOnlyAsk": "Vienumi, kuru vienīgā kopija ir {target} tieši: {n}. Bez tikai-pievienot šis dators var dzēst no tās. Vai tik un tā saglabāt?",
 };
 
 export default lv;

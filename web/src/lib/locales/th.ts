@@ -1660,6 +1660,11 @@ const th: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} โดยตรงเก็บข้อมูลน้อยลงแล้ว รายการที่มีสำเนาเดียวอยู่ที่นั่น: {n} รายการ",
   "saveWarning.directAppendOnlyOff": "{target} โดยตรงไม่ใช่ append-only อีกต่อไป รายการที่มีสำเนาเดียวอยู่ที่นั่น: {n} รายการ",
   "saveWarning.directCredsKept": "{target} โดยตรงเปิดด้วยคีย์ใหม่ไม่ได้ และยังคงใช้คีย์เดิม",
+
+  // Direct
+  "offsite.alsoDirect": "ใช้กับ {target} โดยตรงด้วย รายการที่มีสำเนาเดียวอยู่ที่นั่น: {n} รายการ",
+  "offsite.directRetentionAsk": "รายการที่มีสำเนาเดียวอยู่ใน {target} โดยตรง: {n} รายการ การเก็บน้อยลงจะลบสแนปช็อตเก่าของรายการเหล่านั้นอย่างถาวรในการตัดทิ้งครั้งถัดไป บันทึกต่อไปหรือไม่?",
+  "offsite.directAppendOnlyAsk": "รายการที่มีสำเนาเดียวอยู่ใน {target} โดยตรง: {n} รายการ หากไม่มี append-only เครื่องนี้อาจลบจากที่นั่นได้ บันทึกต่อไปหรือไม่?",
 };
 
 export default th;

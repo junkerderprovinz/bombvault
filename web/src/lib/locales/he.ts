@@ -1657,6 +1657,11 @@ const he: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} ישיר שומר עכשיו פחות. פריטים שהעותק היחיד שלהם נמצא שם: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} ישיר כבר לא append-only. פריטים שהעותק היחיד שלהם נמצא שם: {n}.",
   "saveWarning.directCredsKept": "{target} ישיר לא ניתן לפתיחה עם המפתח החדש ושומר על הישן.",
+
+  // Direct
+  "offsite.alsoDirect": "חל גם על {target} ישיר. פריטים שהעותק היחיד שלהם נמצא שם: {n}.",
+  "offsite.directRetentionAsk": "פריטים שהעותק היחיד שלהם ב-{target} ישיר: {n}. שמירה על פחות תמחק לצמיתות את ה-snapshots הישנים יותר שלהם בגיזום הבא. לשמור בכל זאת?",
+  "offsite.directAppendOnlyAsk": "פריטים שהעותק היחיד שלהם ב-{target} ישיר: {n}. בלי append-only, המכונה הזו עשויה למחוק ממנו. לשמור בכל זאת?",
 };
 
 export default he;

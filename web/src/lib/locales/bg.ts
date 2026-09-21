@@ -1668,6 +1668,11 @@ const bg: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} директно вече пази по-малко. Елементи, чието единствено копие е там: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} директно вече не е само-добавяне. Елементи, чието единствено копие е там: {n}.",
   "saveWarning.directCredsKept": "{target} директно не може да се отвори с новия ключ и запазва стария.",
+
+  // Direct
+  "offsite.alsoDirect": "Важи също и за {target} директно. Елементи, чието единствено копие е там: {n}.",
+  "offsite.directRetentionAsk": "Елементи, чието единствено копие е в {target} директно: {n}. По-малкото съхранение изтрива завинаги по-старите им снапшоти при следващото прочистване. Запази въпреки това?",
+  "offsite.directAppendOnlyAsk": "Елементи, чието единствено копие е в {target} директно: {n}. Без само-добавяне тази машина може да изтрива от него. Запази въпреки това?",
 };
 
 export default bg;

@@ -1657,6 +1657,11 @@ const no: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} direkte beholder nå mindre. Elementer der eneste kopi ligger der: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} direkte er ikke lenger append-only. Elementer der eneste kopi ligger der: {n}.",
   "saveWarning.directCredsKept": "{target} direkte kan ikke åpnes med den nye nøkkelen og beholder den gamle.",
+
+  // Direct
+  "offsite.alsoDirect": "Gjelder også for {target} direkte. Elementer der eneste kopi ligger der: {n}.",
+  "offsite.directRetentionAsk": "Elementer der eneste kopi ligger i {target} direkte: {n}. Å beholde færre sletter eldre øyeblikksbilder permanent ved neste beskjæring. Lagre likevel?",
+  "offsite.directAppendOnlyAsk": "Elementer der eneste kopi ligger i {target} direkte: {n}. Uten append-only kan denne maskinen slette fra det. Lagre likevel?",
 };
 
 export default no;

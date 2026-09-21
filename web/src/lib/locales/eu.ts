@@ -1668,6 +1668,11 @@ const eu: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} zuzenak orain gutxiago gordetzen du. Kopia bakarra hor duten elementuak: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} zuzena jada ez da gehitu-soilik. Kopia bakarra hor duten elementuak: {n}.",
   "saveWarning.directCredsKept": "{target} zuzena ezin da gako berriarekin ireki, eta zaharra mantentzen du.",
+
+  // Direct
+  "offsite.alsoDirect": "{target} zuzenari ere badagokio. Kopia bakarra hor duten elementuak: {n}.",
+  "offsite.directRetentionAsk": "Kopia bakarra {target} zuzenean duten elementuak: {n}. Gutxiago gordetzeak haien argazki zaharragoak betiko ezabatzen ditu hurrengo garbiketan. Gorde dena den?",
+  "offsite.directAppendOnlyAsk": "Kopia bakarra {target} zuzenean duten elementuak: {n}. Gehitu-soilik gabe, makina honek handik ezaba dezake. Gorde dena den?",
 };
 
 export default eu;

@@ -1652,6 +1652,11 @@ const sl: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} neposredno zdaj hrani manj. Elementi, katerih edina kopija je tam: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} neposredno ne uporablja več načina samo-dodajanja. Elementi, katerih edina kopija je tam: {n}.",
   "saveWarning.directCredsKept": "{target} neposredno ni mogoče odpreti z novim ključem in obdrži starega.",
+
+  // Direct
+  "offsite.alsoDirect": "Velja tudi za {target} neposredno. Elementi, katerih edina kopija je tam: {n}.",
+  "offsite.directRetentionAsk": "Elementi, katerih edina kopija je v {target} neposredno: {n}. Manjše hranjenje trajno izbriše njihove starejše posnetke ob naslednjem čiščenju. Vseeno shranim?",
+  "offsite.directAppendOnlyAsk": "Elementi, katerih edina kopija je v {target} neposredno: {n}. Brez načina samo-dodajanja lahko ta računalnik briše iz njega. Vseeno shranim?",
 };
 
 export default sl;

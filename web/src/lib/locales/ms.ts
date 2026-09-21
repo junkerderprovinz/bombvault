@@ -1668,6 +1668,11 @@ const ms: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} terus kini menyimpan lebih sedikit. Item yang satu-satunya salinan ada di situ: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} terus tidak lagi tambah-sahaja. Item yang satu-satunya salinan ada di situ: {n}.",
   "saveWarning.directCredsKept": "{target} terus tidak dapat dibuka dengan kunci baharu dan mengekalkan yang lama.",
+
+  // Direct
+  "offsite.alsoDirect": "Turut terpakai untuk {target} terus. Item yang satu-satunya salinan ada di situ: {n}.",
+  "offsite.directRetentionAsk": "Item yang satu-satunya salinan ada di {target} terus: {n}. Menyimpan lebih sedikit memadam snapshot yang lebih lama secara kekal pada prune seterusnya. Tetap simpan?",
+  "offsite.directAppendOnlyAsk": "Item yang satu-satunya salinan ada di {target} terus: {n}. Tanpa tambah-sahaja, mesin ini boleh memadam daripadanya. Tetap simpan?",
 };
 
 export default ms;

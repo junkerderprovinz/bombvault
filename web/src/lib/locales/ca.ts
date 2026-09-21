@@ -1668,6 +1668,11 @@ const ca: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} directe ara conserva menys. Elements l'única còpia dels quals hi és: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} directe ja no és append-only. Elements l'única còpia dels quals hi és: {n}.",
   "saveWarning.directCredsKept": "{target} directe no es pot obrir amb la nova clau i conserva l'antiga.",
+
+  // Direct
+  "offsite.alsoDirect": "També s'aplica a {target} directe. Elements l'única còpia dels quals hi és: {n}.",
+  "offsite.directRetentionAsk": "Elements l'única còpia dels quals és a {target} directe: {n}. Conservar-ne menys n'esborra permanentment les instantànies més antigues a la propera neteja. Desa igualment?",
+  "offsite.directAppendOnlyAsk": "Elements l'única còpia dels quals és a {target} directe: {n}. Sense append-only, aquesta màquina pot esborrar-ne. Desa igualment?",
 };
 
 export default ca;

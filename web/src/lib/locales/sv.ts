@@ -1657,6 +1657,11 @@ const sv: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} direkt behåller nu mindre. Objekt vars enda kopia finns där: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} direkt är inte längre append-only. Objekt vars enda kopia finns där: {n}.",
   "saveWarning.directCredsKept": "{target} direkt kan inte öppnas med den nya nyckeln och behåller den gamla.",
+
+  // Direct
+  "offsite.alsoDirect": "Gäller även för {target} direkt. Objekt vars enda kopia finns där: {n}.",
+  "offsite.directRetentionAsk": "Objekt vars enda kopia finns i {target} direkt: {n}. Att behålla färre raderar deras äldre ögonblicksbilder permanent vid nästa rensning. Spara ändå?",
+  "offsite.directAppendOnlyAsk": "Objekt vars enda kopia finns i {target} direkt: {n}. Utan append-only får den här maskinen radera från det. Spara ändå?",
 };
 
 export default sv;

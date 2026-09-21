@@ -1652,6 +1652,11 @@ const pl: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} bezpośrednio przechowuje teraz mniej. Elementy, których jedyna kopia tam jest: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} bezpośrednio nie jest już append-only. Elementy, których jedyna kopia tam jest: {n}.",
   "saveWarning.directCredsKept": "{target} bezpośrednio nie da się otworzyć nowym kluczem i zachowuje stary.",
+
+  // Direct
+  "offsite.alsoDirect": "Dotyczy też {target} bezpośrednio. Elementy, których jedyna kopia tam jest: {n}.",
+  "offsite.directRetentionAsk": "Elementy, których jedyna kopia jest w {target} bezpośrednio: {n}. Mniejsze przechowywanie trwale usunie ich starsze migawki przy następnym przycinaniu. Zapisać mimo to?",
+  "offsite.directAppendOnlyAsk": "Elementy, których jedyna kopia jest w {target} bezpośrednio: {n}. Bez append-only ta maszyna może z niego usuwać. Zapisać mimo to?",
 };
 
 export default pl;

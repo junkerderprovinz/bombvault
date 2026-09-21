@@ -1668,6 +1668,11 @@ const et: Partial<Translations> = {
   "saveWarning.directRetentionLowered": "{target} otse säilitab nüüd vähem. Üksused, mille ainus koopia on seal: {n}.",
   "saveWarning.directAppendOnlyOff": "{target} otse ei ole enam ainult-lisamise režiimis. Üksused, mille ainus koopia on seal: {n}.",
   "saveWarning.directCredsKept": "{target} otse ei saa avada uue võtmega ja säilitab vana.",
+
+  // Direct
+  "offsite.alsoDirect": "Kehtib ka {target} otse kohta. Üksused, mille ainus koopia on seal: {n}.",
+  "offsite.directRetentionAsk": "Üksused, mille ainus koopia on {target} otse: {n}. Vähem säilitamine kustutab nende vanemad hetktõmmised jäädavalt järgmisel puhastamisel. Kas salvestada ikkagi?",
+  "offsite.directAppendOnlyAsk": "Üksused, mille ainus koopia on {target} otse: {n}. Ilma ainult-lisamiseta võib see masin sealt kustutada. Kas salvestada ikkagi?",
 };
 
 export default et;
