@@ -1629,6 +1629,9 @@ const no: Partial<Translations> = {
   "repos.disableWarnUnknown": "Serveren kunne ikke lese hvor mange elementer som sikkerhetskopierer hit. Å slå det av flytter dem ikke: neste sikkerhetskopi feiler med en tydelig melding i stedet for å havne et annet sted. Slå av?",
   "repos.add": "Legg til depot",
   "repos.empty": "Ingen depoter ennå. Alt bruker sitt eget domenes depot.",
+  "repos.directOf": "tilhører {target} · elementer: {n}",
+  "repos.companionLost": "ved siden av et slettet mål",
+  "repos.mirroredLocked": "Overtatt fra {target}. Endre det der.",
 
   // Refusals
   "placementCode.unreadable": "Plasseringsreglene kunne ikke leses, så ingenting kopieres før de kan leses igjen.",

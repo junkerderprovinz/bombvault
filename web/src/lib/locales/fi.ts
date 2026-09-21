@@ -1629,6 +1629,9 @@ const fi: Partial<Translations> = {
   "repos.disableWarnUnknown": "Palvelin ei voinut lukea, kuinka moni kohde varmuuskopioi tänne. Sen sammuttaminen ei siirrä niitä: seuraava varmuuskopio epäonnistuu selkeällä viestillä sen sijaan, että päätyisi muualle. Sammutetaanko?",
   "repos.add": "Lisää arkisto",
   "repos.empty": "Ei vielä arkistoja. Kaikki käyttää oman toimialueensa arkistoa.",
+  "repos.directOf": "kuuluu kohteelle {target} · kohteita: {n}",
+  "repos.companionLost": "poistetun kohteen vieressä",
+  "repos.mirroredLocked": "Otettu kohteelta {target}. Muuta se siellä.",
 
   // Refusals
   "placementCode.unreadable": "Sijoittelusääntöjä ei voitu lukea, joten mitään ei kopioida, ennen kuin ne voidaan taas lukea.",

@@ -1627,6 +1627,9 @@ const es: Partial<Translations> = {
   "repos.disableWarnUnknown": "El servidor no pudo leer cuántos elementos respaldan en este repositorio. Desactivarlo no los mueve: su próxima copia falla con un mensaje claro en lugar de acabar en otro sitio. ¿Desactivarlo?",
   "repos.add": "Añadir repositorio",
   "repos.empty": "Aún no hay repositorios. Todo usa el repositorio de su propio dominio.",
+  "repos.directOf": "pertenece a {target} · elementos: {n}",
+  "repos.companionLost": "junto a un destino eliminado",
+  "repos.mirroredLocked": "Heredado de {target}. Cámbialo allí.",
 
   // Refusals
   "placementCode.unreadable": "Las reglas de ubicación no se pudieron leer, así que no se copia nada hasta que se puedan leer de nuevo.",

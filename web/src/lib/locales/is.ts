@@ -1640,6 +1640,9 @@ const is: Partial<Translations> = {
   "repos.disableWarnUnknown": "Þjónninn gat ekki lesið hversu mörg atriði taka afrit hingað. Að slökkva færir þau ekki: næsta afrit þeirra mistekst með skýrum skilaboðum í stað þess að lenda annars staðar. Slökkva?",
   "repos.add": "Bæta við geymslu",
   "repos.empty": "Engar geymslur enn. Allt notar geymslu síns eigin léns.",
+  "repos.directOf": "tilheyrir {target} · atriði: {n}",
+  "repos.companionLost": "við hlið eydds áfangastaðar",
+  "repos.mirroredLocked": "Tekið yfir frá {target}. Breyttu því þar.",
 
   // Refusals
   "placementCode.unreadable": "Ekki tókst að lesa staðsetningarreglurnar, svo ekkert er afritað fyrr en hægt er að lesa þær aftur.",

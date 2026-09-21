@@ -1739,6 +1739,9 @@ export const en = {
   "repos.disableWarnUnknown": "The server could not read how many items back up to this repository. Switching it off does not move them: their next backup fails with a clear message instead of landing somewhere else. Switch it off?",
   "repos.add": "Add repository",
   "repos.empty": "No repositories yet. Everything uses its own domain's repository.",
+  "repos.directOf": "belongs to {target} · items: {n}",
+  "repos.companionLost": "next to a deleted target",
+  "repos.mirroredLocked": "Taken over from {target}. Change it there.",
 
   // Refusals
   "placementCode.unreadable": "The placement rules could not be read, so nothing is copied until they can.",
@@ -3462,6 +3465,9 @@ export const de: Translations = {
   "repos.disableWarnUnknown": "Der Server konnte nicht lesen, wie viele Einträge hierher sichern. Ausschalten holt sie nicht weg: ihre nächste Sicherung schlägt mit einer klaren Meldung fehl, statt woanders zu landen. Ausschalten?",
   "repos.add": "Repository hinzufügen",
   "repos.empty": "Noch keine Repositories. Alles nutzt das Repository seiner eigenen Domäne.",
+  "repos.directOf": "gehört zu {target} · Einträge: {n}",
+  "repos.companionLost": "neben einem gelöschten Ziel",
+  "repos.mirroredLocked": "Von {target} übernommen. Dort ändern.",
 
   // Refusals
   "placementCode.unreadable": "Die Ablage-Regeln ließen sich nicht lesen. Bis das wieder geht, wird nichts kopiert.",

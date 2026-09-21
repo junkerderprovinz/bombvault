@@ -1640,6 +1640,9 @@ const ms: Partial<Translations> = {
   "repos.disableWarnUnknown": "Pelayan tidak dapat membaca berapa banyak item yang membuat sandaran ke repositori ini. Mematikannya tidak memindahkannya: sandaran seterusnya gagal dengan mesej yang jelas dan bukannya mendarat di tempat lain. Matikan?",
   "repos.add": "Tambah repositori",
   "repos.empty": "Belum ada repositori. Semuanya menggunakan repositori domainnya sendiri.",
+  "repos.directOf": "milik {target} · item: {n}",
+  "repos.companionLost": "di sebelah sasaran yang dipadam",
+  "repos.mirroredLocked": "Diambil alih daripada {target}. Ubah di sana.",
 
   // Refusals
   "placementCode.unreadable": "Peraturan penempatan tidak dapat dibaca, jadi tiada apa disalin sehingga ia boleh dibaca semula.",

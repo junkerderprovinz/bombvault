@@ -1640,6 +1640,9 @@ const et: Partial<Translations> = {
   "repos.disableWarnUnknown": "Server ei suutnud lugeda, mitu kirjet siia varundab. Väljalülitamine ei teisalda neid: nende järgmine varundus ebaõnnestub selge teatega, selle asemel et mujale sattuda. Lülitada välja?",
   "repos.add": "Lisa hoidla",
   "repos.empty": "Hoidlaid veel pole. Kõik kasutab oma domeeni hoidlat.",
+  "repos.directOf": "kuulub sihtkohale {target} · kirjeid: {n}",
+  "repos.companionLost": "kustutatud sihtkoha kõrval",
+  "repos.mirroredLocked": "Üle võetud sihtkohalt {target}. Muuda seda seal.",
 
   // Refusals
   "placementCode.unreadable": "Asukohareegleid ei õnnestunud lugeda, seega ei kopeerita midagi enne, kui neid saab jälle lugeda.",

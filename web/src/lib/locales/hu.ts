@@ -1632,6 +1632,9 @@ const hu: Partial<Translations> = {
   "repos.disableWarnUnknown": "A kiszolgáló nem tudta kiolvasni, hány elem ment ide. A kikapcsolás nem mozgatja el őket: a következő mentésük érthető üzenettel hiúsul meg, ahelyett hogy máshová kerülne. Kikapcsolod?",
   "repos.add": "Tároló hozzáadása",
   "repos.empty": "Még nincs tároló. Minden a saját tartományának tárolóját használja.",
+  "repos.directOf": "a(z) {target} célhoz tartozik · elemek: {n}",
+  "repos.companionLost": "törölt cél mellett",
+  "repos.mirroredLocked": "Átvéve innen: {target}. Ott változtasd meg.",
 
   // Refusals
   "placementCode.unreadable": "Az elhelyezési szabályokat nem sikerült beolvasni, ezért semmi nem másolódik, amíg ez újra nem sikerül.",

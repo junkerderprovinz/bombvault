@@ -1640,6 +1640,9 @@ const ca: Partial<Translations> = {
   "repos.disableWarnUnknown": "El servidor no ha pogut llegir quants elements copien en aquest repositori. Desactivar-lo no els mou: la propera còpia falla amb un missatge clar en lloc d'anar a un altre lloc. El desactives?",
   "repos.add": "Afegeix un repositori",
   "repos.empty": "Encara no hi ha repositoris. Tot fa servir el repositori del seu domini.",
+  "repos.directOf": "pertany a {target} · elements: {n}",
+  "repos.companionLost": "al costat d'un destí eliminat",
+  "repos.mirroredLocked": "Agafat de {target}. Canvia-ho allà.",
 
   // Refusals
   "placementCode.unreadable": "Les regles d'ubicació no s'han pogut llegir, així que no es copia res fins que es puguin tornar a llegir.",

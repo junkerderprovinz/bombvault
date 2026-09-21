@@ -1640,6 +1640,9 @@ const hr: Partial<Translations> = {
   "repos.disableWarnUnknown": "Poslužitelj nije mogao pročitati koliko se stavki kopira ovamo. Isključivanje ih ne premješta: sljedeća kopija neuspjet će uz jasnu poruku umjesto da završi drugdje. Isključiti?",
   "repos.add": "Dodaj repozitorij",
   "repos.empty": "Još nema repozitorija. Sve koristi repozitorij svoje domene.",
+  "repos.directOf": "pripada odredištu {target} · stavke: {n}",
+  "repos.companionLost": "pored izbrisanog odredišta",
+  "repos.mirroredLocked": "Preuzeto od odredišta {target}. Promijeni ondje.",
 
   // Refusals
   "placementCode.unreadable": "Pravila razmještaja nije bilo moguće pročitati, pa se ništa ne kopira dok se ponovno ne mogu pročitati.",

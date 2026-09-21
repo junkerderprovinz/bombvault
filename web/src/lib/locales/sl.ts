@@ -1624,6 +1624,9 @@ const sl: Partial<Translations> = {
   "repos.disableWarnUnknown": "Strežnik ni mogel prebrati, koliko elementov se varnostno kopira sem. Izklop jih ne premakne: njihova naslednja kopija spodleti z jasnim sporočilom, namesto da bi pristala drugje. Izklopiti?",
   "repos.add": "Dodaj repozitorij",
   "repos.empty": "Repozitorijev še ni. Vse uporablja repozitorij svoje domene.",
+  "repos.directOf": "pripada cilju {target} · elementi: {n}",
+  "repos.companionLost": "ob izbrisanem cilju",
+  "repos.mirroredLocked": "Prevzeto od {target}. Spremeni tam.",
 
   // Refusals
   "placementCode.unreadable": "Pravil za namestitev ni bilo mogoče prebrati, zato se ne kopira nič, dokler jih ni spet mogoče prebrati.",

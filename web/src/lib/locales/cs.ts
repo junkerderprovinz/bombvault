@@ -1627,6 +1627,9 @@ const cs: Partial<Translations> = {
   "repos.disableWarnUnknown": "Server nedokázal zjistit, kolik položek sem zálohuje. Vypnutí je nepřesune: jejich další záloha selže se srozumitelnou zprávou, místo aby skončila jinde. Vypnout?",
   "repos.add": "Přidat repozitář",
   "repos.empty": "Zatím žádné repozitáře. Všechno používá repozitář své domény.",
+  "repos.directOf": "patří cíli {target} · položky: {n}",
+  "repos.companionLost": "vedle smazaného cíle",
+  "repos.mirroredLocked": "Převzato od {target}. Změň tam.",
 
   // Refusals
   "placementCode.unreadable": "Pravidla umístění se nepodařilo přečíst, takže se nic nekopíruje, dokud to zase půjde.",

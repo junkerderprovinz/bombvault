@@ -1640,6 +1640,9 @@ const sk: Partial<Translations> = {
   "repos.disableWarnUnknown": "Server nedokázal zistiť, koľko položiek sem zálohuje. Vypnutie ich nepresunie: ich ďalšia záloha zlyhá so zrozumiteľnou správou namiesto toho, aby skončila inde. Vypnúť?",
   "repos.add": "Pridať repozitár",
   "repos.empty": "Zatiaľ žiadne repozitáre. Všetko používa repozitár svojej domény.",
+  "repos.directOf": "patrí cieľu {target} · položky: {n}",
+  "repos.companionLost": "vedľa vymazaného cieľa",
+  "repos.mirroredLocked": "Prevzaté od {target}. Zmeň tam.",
 
   // Refusals
   "placementCode.unreadable": "Pravidlá umiestnenia sa nepodarilo prečítať, takže sa nič nekopíruje, kým to opäť nepôjde.",

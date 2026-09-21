@@ -1632,6 +1632,9 @@ const ro: Partial<Translations> = {
   "repos.disableWarnUnknown": "Serverul nu a putut citi câte elemente fac copii în acest depozit. Dezactivarea nu le mută: următoarea copie eșuează cu un mesaj clar în loc să ajungă în altă parte. Îl dezactivezi?",
   "repos.add": "Adaugă depozit",
   "repos.empty": "Încă niciun depozit. Totul folosește depozitul domeniului propriu.",
+  "repos.directOf": "aparține țintei {target} · elemente: {n}",
+  "repos.companionLost": "lângă o țintă ștearsă",
+  "repos.mirroredLocked": "Preluat de la {target}. Schimbă-l acolo.",
 
   // Refusals
   "placementCode.unreadable": "Regulile de plasare nu au putut fi citite, așa că nu se copiază nimic până când vor putea fi citite din nou.",

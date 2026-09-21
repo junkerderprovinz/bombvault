@@ -1621,6 +1621,9 @@ const vi: Partial<Translations> = {
   "repos.disableWarnUnknown": "Máy chủ không đọc được có bao nhiêu mục sao lưu vào kho này. Tắt nó không di chuyển chúng: bản sao lưu tiếp theo sẽ thất bại kèm thông báo rõ ràng thay vì rơi vào nơi khác. Tắt chứ?",
   "repos.add": "Thêm kho lưu trữ",
   "repos.empty": "Chưa có kho nào. Mọi thứ dùng kho của miền mình.",
+  "repos.directOf": "thuộc về {target} · mục: {n}",
+  "repos.companionLost": "cạnh một đích đã bị xóa",
+  "repos.mirroredLocked": "Được tiếp quản từ {target}. Đổi nó ở đó.",
 
   // Refusals
   "placementCode.unreadable": "Không đọc được các quy tắc đặt vị trí, nên không có gì được sao chép cho đến khi đọc lại được.",
