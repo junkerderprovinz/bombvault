@@ -432,6 +432,7 @@ func mirrorTx(tx *sql.Tx, target OffsiteTarget, withCreds bool) error {
 		differs[i] = c + " <> ?"
 	}
 	args := slices.Concat(vals, []any{RoleRepo, target.ID}, vals)
+	//nolint:gosec // G202: set and differs are built from the fixed mirroredCols column names, never user text; every value travels in args.
 	_, err := tx.Exec(`UPDATE offsite_targets SET `+strings.Join(set, ", ")+`
 		WHERE role = ? AND companion_of = ? AND companion_of <> '' AND (`+strings.Join(differs, " OR ")+`)`, args...)
 	return err
