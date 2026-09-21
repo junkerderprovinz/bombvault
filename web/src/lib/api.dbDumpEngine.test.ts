@@ -1,6 +1,6 @@
 // A lookalike's dump is switched on by naming its engine. The row keeps any
 // opt-out from a time the container was recognised by its image, and that
-// opt-out would stop the dump the card now shows as on.
+// opt-out would stop the dump the card shows as on.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const fetchMock = vi.fn();
