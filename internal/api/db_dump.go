@@ -1167,7 +1167,7 @@ func (s *Service) prepareSaveDBDump(ctx context.Context, name, source, snapshotI
 	if err != nil {
 		return dbDumpSavePlan{}, err
 	}
-	if err := paths.EnsureDir(target); err != nil {
+	if err := paths.EnsureDirReadable(target); err != nil {
 		return dbDumpSavePlan{}, fmt.Errorf("create target folder: %w", err)
 	}
 	final := filepath.Join(target, DBDumpDownloadName(name, dump.view, gz, false))
@@ -1184,6 +1184,11 @@ func (s *Service) saveDBDump(ctx context.Context, plan dbDumpSavePlan, key strin
 	defer unlock()
 
 	partial := plan.final + ".partial"
+	// A partial file here is what a save killed with the process left behind:
+	// batchActive admits no second save that could be writing it.
+	if err := os.Remove(partial); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
 	f, err := os.OpenFile(partial, os.O_CREATE|os.O_EXCL|os.O_WRONLY, dbDumpFileMode) //nolint:gosec // G304: a name built from the container and the snapshot, inside a folder paths.Resolve contained
 	if err != nil {
 		return err
