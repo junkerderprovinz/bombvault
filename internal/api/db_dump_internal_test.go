@@ -821,3 +821,22 @@ func TestDBDataCoverage(t *testing.T) {
 		})
 	}
 }
+
+func TestDBDumpAdapterLogLeavesOutTheToolsMessageWhenTheSnapshotStays(t *testing.T) {
+	eng := &dumpFakeEngine{
+		sum:       restic.Summary{SnapshotID: "aaaa1111bbbb2222", TotalBytesProcessed: 4096},
+		lines:     []string{resultLine(dbdump.Result{V: 1, Reason: dbdump.ReasonPrivileges, Exit: 1, Detail: "permission denied for table users, row (alice@example.com)"})},
+		forgetErr: errors.New("repository is append-only"),
+	}
+
+	logged := captureLog(t, func() {
+		_, _ = dumpAdapter(eng, &dumpFakeDocker{}).Dump(context.Background(), dumpRequest())
+	})
+
+	if !strings.Contains(logged, store.ReasonDBDumpPrivileges) {
+		t.Errorf("the log does not say why the snapshot had to go:\n%s", logged)
+	}
+	if strings.Contains(logged, "alice@example.com") {
+		t.Errorf("the log carries what the database tool said:\n%s", logged)
+	}
+}
