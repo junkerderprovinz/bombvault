@@ -3,6 +3,7 @@ package store_test
 import (
 	"database/sql"
 	"errors"
+	"slices"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -320,5 +321,78 @@ func TestConnectCompanionLinksAndMirrorsInOneStep(t *testing.T) {
 	vms := store.SeedOffsiteTarget(t, r, "vms", "b2:bkt:vms")
 	if err := r.ConnectCompanion("missing", vms.ID); !errors.Is(err, sql.ErrNoRows) {
 		t.Fatalf("unknown repository: %v", err)
+	}
+}
+
+func TestDeleteOffsiteTargetIfUnusedRefusesWhileAnItemUsesItsDirectRepository(t *testing.T) {
+	r, _ := migratedStore(t)
+	target := store.SeedOffsiteTarget(t, r, "containers", "b2:bkt:containers")
+	direct := store.SeedCompanion(t, r, target)
+	item := store.ItemRef{Domain: "containers", Key: "web"}
+	if _, err := r.WritePlacement(item, &store.HomeWrite{Repo: direct.ID, Choice: store.RepoChosen}, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+	use, err := r.DeleteOffsiteTargetIfUnused(target.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !use.InUse() || use.Items != 1 || use.CompanionID != direct.ID {
+		t.Fatalf("use = %+v", use)
+	}
+	if _, found, _ := r.GetOffsiteTarget(target.ID); !found {
+		t.Fatal("the target was deleted while its direct repository is in use")
+	}
+}
+
+func TestDeleteOffsiteTargetIfUnusedRefusesWhileADefaultPointsAtItsDirectRepository(t *testing.T) {
+	r, _ := migratedStore(t)
+	target := store.SeedOffsiteTarget(t, r, "vms", "b2:bkt:vms")
+	direct := store.SeedCompanion(t, r, target)
+	store.SeedDefault(t, r, "vms", direct.ID)
+	use, err := r.DeleteOffsiteTargetIfUnused(target.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !use.InUse() || use.Items != 0 || !slices.Equal(use.DefaultDomains, []string{"vms"}) {
+		t.Fatalf("use = %+v", use)
+	}
+}
+
+func TestDeleteOffsiteTargetIfUnusedTakesTheUnusedDirectRepositoryWithIt(t *testing.T) {
+	r, _ := migratedStore(t)
+	target := store.SeedOffsiteTarget(t, r, "files", "b2:bkt:files")
+	direct := store.SeedCompanion(t, r, target)
+	use, err := r.DeleteOffsiteTargetIfUnused(target.ID)
+	if err != nil || use.InUse() {
+		t.Fatalf("use = %+v, err %v", use, err)
+	}
+	if _, found, _ := r.GetOffsiteTarget(target.ID); found {
+		t.Fatal("the target is still there")
+	}
+	if _, err := r.GetNamedRepo(direct.ID); !errors.Is(err, sql.ErrNoRows) {
+		t.Fatalf("the direct repository: %v", err)
+	}
+	plain := store.SeedOffsiteTarget(t, r, "files", "b2:bkt:plain")
+	if use, err := r.DeleteOffsiteTargetIfUnused(plain.ID); err != nil || use.InUse() {
+		t.Fatalf("a target without a direct repository: %+v, %v", use, err)
+	}
+	if _, found, _ := r.GetOffsiteTarget(plain.ID); found {
+		t.Fatal("a target without a direct repository was not deleted")
+	}
+}
+
+func TestDeleteOffsiteTargetLeavesItsDirectRepositoryAsAPlainOne(t *testing.T) {
+	r, _ := migratedStore(t)
+	target := richTarget(t, r)
+	direct := store.SeedCompanion(t, r, target)
+	if err := r.DeleteOffsiteTarget(target.ID); err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.GetNamedRepo(direct.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.CompanionOf != "" || !got.CompanionLost || !got.MirroredEqual(target) {
+		t.Fatalf("after the import path the row is %+v", got)
 	}
 }

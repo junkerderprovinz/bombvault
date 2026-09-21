@@ -694,18 +694,77 @@ func (r *Repo) GetOffsiteTarget(id string) (OffsiteTarget, bool, error) {
 // exist, or if id names a "primary" row — the off-site delete handler must
 // never be able to remove a domain's remote-primary safety-config row (that
 // row is removed only via DeletePrimaryRemoteTarget, keyed by domain).
-// What the observation tables recorded for the target goes with it.
+// What the observation tables recorded for the target goes with it, and a
+// direct repository beside the target stays behind as a plain one, labelled
+// lost, rather than pointing at a target that is gone.
 func (r *Repo) DeleteOffsiteTarget(id string) error {
 	err := r.inTx(func(tx *sql.Tx) error {
 		if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
 			return err
 		}
-		return deleteTargetObservationsTx(tx, id)
+		if err := deleteTargetObservationsTx(tx, id); err != nil {
+			return err
+		}
+		_, err := tx.Exec(`UPDATE offsite_targets SET companion_of = '', companion_lost = 1
+			WHERE role = ? AND companion_of = ? AND companion_of <> ''`, RoleRepo, id)
+		return err
 	})
 	if err != nil {
 		return fmt.Errorf("DeleteOffsiteTarget: %w", err)
 	}
 	return nil
+}
+
+// TargetUse is what keeps an offsite target from being deleted in the Off-site tab.
+type TargetUse struct {
+	CompanionID    string
+	Items          int
+	DefaultDomains []string
+}
+
+// InUse reports whether an item or a placement default still points at the
+// target's direct repository.
+func (u TargetUse) InUse() bool { return u.Items > 0 || len(u.DefaultDomains) > 0 }
+
+// DeleteOffsiteTargetIfUnused is the Off-site tab's delete: in one transaction
+// it removes the target, its direct repository and the target's observations,
+// and writes nothing while an item or a default uses that repository.
+func (r *Repo) DeleteOffsiteTargetIfUnused(id string) (TargetUse, error) {
+	var use TargetUse
+	tx, err := r.db.Begin()
+	if err != nil {
+		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
+	err = tx.QueryRow(`SELECT id FROM offsite_targets WHERE role = ? AND companion_of = ? AND companion_of <> ''`,
+		RoleRepo, id).Scan(&use.CompanionID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
+	}
+	if c := use.CompanionID; c != "" {
+		if err := tx.QueryRow(itemsUsingNamedRepoQ, c, c, c).Scan(&use.Items); err != nil {
+			return use, fmt.Errorf("DeleteOffsiteTargetIfUnused count: %w", err)
+		}
+		if use.DefaultDomains, err = placementDomainsUsingRepoTx(tx, c); err != nil {
+			return use, fmt.Errorf("DeleteOffsiteTargetIfUnused defaults: %w", err)
+		}
+		if use.InUse() {
+			return use, nil
+		}
+		if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, c, RoleRepo); err != nil {
+			return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
+		}
+	}
+	if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
+		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
+	}
+	if err := deleteTargetObservationsTx(tx, id); err != nil {
+		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused: %w", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return use, fmt.Errorf("DeleteOffsiteTargetIfUnused commit: %w", err)
+	}
+	return use, nil
 }
 
 // PrimaryRemoteTarget returns the domain's "primary" row (issue #152: the
