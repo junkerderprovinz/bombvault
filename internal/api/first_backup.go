@@ -112,7 +112,7 @@ func (s *Service) settleHome(ctx context.Context, settings store.Settings, item 
 			return "", nil, err
 		}
 		repoID, _ = p.effectiveHome(read)
-		if err := s.validateItemRepoID(repoID); err != nil {
+		if err := s.validateItemRepoID(item.Domain, repoID); err != nil {
 			return "", nil, fmt.Errorf("the %s default points at a repository that cannot take this backup: %w", item.Domain, err)
 		}
 	}

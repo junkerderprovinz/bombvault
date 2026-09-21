@@ -54,6 +54,7 @@ var placementCodes = []struct {
 	{errPlacementBusy, "domain-busy"},
 	{errHomeHasBackups, "has-backups"},
 	{errPlacementStale, "stale"},
+	{errForeignDomain, "foreign-domain"},
 	{errRepoInvalid, "repo-invalid"},
 	{errRepoInUse, "repo-in-use"},
 	{errDefaultRepoMissing, "default-repo-missing"},
@@ -268,6 +269,7 @@ const (
 	homeDomainRemote homeKind = "domain-remote" // remote domain path, still a copy source
 	homeLocal        homeKind = "local"         // local named repository
 	homeRemote       homeKind = "remote"        // remote named repository with its own credentials
+	homeDirect       homeKind = "direct"        // a target's own direct repository
 	homeMissing      homeKind = "missing"       // an id without a row
 )
 
@@ -280,13 +282,16 @@ func (k homeKind) copySource() bool {
 // homeKindOf is the kind of home a repo id names. named is ListNamedRepos by id,
 // read once per request.
 func (s *Service) homeKindOf(settings store.Settings, domain, repoID string, named map[string]store.OffsiteTarget) homeKind {
+	row, ok := named[repoID]
+	if ok && row.CompanionOf != "" {
+		return homeDirect
+	}
 	if repoID == "" {
 		if own, err := s.repoFor(settings, domain, "local"); err == nil && restic.IsRemoteRepo(own) {
 			return homeDomainRemote
 		}
 		return homeDomain
 	}
-	row, ok := named[repoID]
 	switch {
 	case !ok:
 		return homeMissing

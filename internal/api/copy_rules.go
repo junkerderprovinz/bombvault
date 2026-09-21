@@ -175,7 +175,7 @@ func (s *Service) checkHomeChange(ctx context.Context, item store.ItemRef, read 
 		if read.Repo == home.Repo {
 			return nil
 		}
-		if err := s.validateItemRepoID(home.Repo); err != nil {
+		if err := s.validateItemRepoID(item.Domain, home.Repo); err != nil {
 			return fmt.Errorf("%w: %w", errRepoInvalid, err)
 		}
 	}
@@ -465,7 +465,7 @@ func (s *Service) moveFileSetRule(from, to string) error {
 // hangs on the set's name, so it follows the row, and the row goes again when
 // the rule cannot be written.
 func (s *Service) createFileSet(fs store.FileSet, choice *copiesChoice) (store.FileSet, error) {
-	if err := s.validateItemRepoID(fs.Repo); err != nil {
+	if err := s.validateItemRepoID("files", fs.Repo); err != nil {
 		return store.FileSet{}, fmt.Errorf("%w: %w", errRepoInvalid, err)
 	}
 	var copies *store.CopiesWrite
