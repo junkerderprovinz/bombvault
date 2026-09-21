@@ -1667,6 +1667,21 @@ const fi: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Isäntä",
+  "placement.segLocal": "Paikallinen",
+  "placement.segLocalOffsite": "Paikallinen + etä",
+  "placement.segOffsiteOnly": "Vain etä",
+  "placement.homeDomain": "{host} · toimialueen arkisto · {path}",
+  "placement.homeDomainRemote": "Toimialueen arkisto · etä · {scheme}",
+  "placement.homeLocal": "{name} · liitetty",
+  "placement.homeRemote": "{name} · etä",
+  "placement.homeDirect": "{target} · suora",
+  "placement.directNotYet": "luodaan ensimmäisellä valinnalla",
+  "placement.off": "{name} (pois päältä)",
+  "placement.unknown": "{name} (tuntematon)",
+  "placement.noTarget": "Ei asetettua etäkohdetta",
+  "placement.lockOwnCredentials": "Sillä on omat tunnukset ja se on jo tilojen ulkopuolella",
+  "placement.lockAtTarget": "On jo kohteessa",
+  "placement.lockHomeFixed": "Kiinteä ensimmäisestä varmuuskopiosta lähtien: {home}",
 };
 
 export default fi;

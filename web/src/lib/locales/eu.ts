@@ -1678,6 +1678,21 @@ const eu: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Ostalari",
+  "placement.segLocal": "Lokala",
+  "placement.segLocalOffsite": "Lokala + kanpokoa",
+  "placement.segOffsiteOnly": "Kanpokoa bakarrik",
+  "placement.homeDomain": "{host} · domeinuaren biltegia · {path}",
+  "placement.homeDomainRemote": "Domeinuaren biltegia · urrunekoa · {scheme}",
+  "placement.homeLocal": "{name} · muntatuta",
+  "placement.homeRemote": "{name} · urrunekoa",
+  "placement.homeDirect": "{target} · zuzena",
+  "placement.directNotYet": "lehen aldiz hautatzean sortzen da",
+  "placement.off": "{name} (itzalita)",
+  "placement.unknown": "{name} (ezezaguna)",
+  "placement.noTarget": "Ez dago kanpoko helbururik konfiguratuta",
+  "placement.lockOwnCredentials": "Bere kredentzialak ditu eta jada instalazioetatik kanpo dago",
+  "placement.lockAtTarget": "Jada helburuan dago",
+  "placement.lockHomeFixed": "Finkatuta lehen babeskopiatik: {home}",
 };
 
 export default eu;

@@ -1678,6 +1678,21 @@ const sk: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Hostiteľ",
+  "placement.segLocal": "Lokálny",
+  "placement.segLocalOffsite": "Lokálny + externý",
+  "placement.segOffsiteOnly": "Len externý",
+  "placement.homeDomain": "{host} · repozitár domény · {path}",
+  "placement.homeDomainRemote": "Repozitár domény · vzdialený · {scheme}",
+  "placement.homeLocal": "{name} · pripojené",
+  "placement.homeRemote": "{name} · vzdialené",
+  "placement.homeDirect": "{target} · priamo",
+  "placement.directNotYet": "vytvorí sa pri prvom výbere",
+  "placement.off": "{name} (vypnuté)",
+  "placement.unknown": "{name} (neznáme)",
+  "placement.noTarget": "Nie je nastavený žiadny externý cieľ",
+  "placement.lockOwnCredentials": "Má vlastné prístupové údaje a už je mimo priestorov",
+  "placement.lockAtTarget": "Už sa nachádza pri cieli",
+  "placement.lockHomeFixed": "Pevné od prvej zálohy: {home}",
 };
 
 export default sk;

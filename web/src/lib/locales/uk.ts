@@ -1662,6 +1662,21 @@ const uk: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Хост",
+  "placement.segLocal": "Локально",
+  "placement.segLocalOffsite": "Локально + зовнішнє",
+  "placement.segOffsiteOnly": "Лише зовнішнє",
+  "placement.homeDomain": "{host} · репозиторій домену · {path}",
+  "placement.homeDomainRemote": "Репозиторій домену · віддалений · {scheme}",
+  "placement.homeLocal": "{name} · змонтовано",
+  "placement.homeRemote": "{name} · віддалено",
+  "placement.homeDirect": "{target} · напряму",
+  "placement.directNotYet": "створюється при першому виборі",
+  "placement.off": "{name} (вимкнено)",
+  "placement.unknown": "{name} (невідомо)",
+  "placement.noTarget": "Не налаштовано жодної зовнішньої цілі",
+  "placement.lockOwnCredentials": "Має власні облікові дані і вже перебуває поза приміщенням",
+  "placement.lockAtTarget": "Вже перебуває біля цілі",
+  "placement.lockHomeFixed": "Фіксовано від першого резервного копіювання: {home}",
 };
 
 export default uk;

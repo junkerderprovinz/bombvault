@@ -1667,6 +1667,21 @@ const el: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Κεντρικός υπολογιστής",
+  "placement.segLocal": "Τοπικό",
+  "placement.segLocalOffsite": "Τοπικό + εκτός τόπου",
+  "placement.segOffsiteOnly": "Μόνο εκτός τόπου",
+  "placement.homeDomain": "{host} · αποθετήριο τομέα · {path}",
+  "placement.homeDomainRemote": "Αποθετήριο τομέα · απομακρυσμένο · {scheme}",
+  "placement.homeLocal": "{name} · προσαρτημένο",
+  "placement.homeRemote": "{name} · απομακρυσμένο",
+  "placement.homeDirect": "{target} · άμεσο",
+  "placement.directNotYet": "δημιουργείται με την πρώτη επιλογή",
+  "placement.off": "{name} (ανενεργό)",
+  "placement.unknown": "{name} (άγνωστο)",
+  "placement.noTarget": "Δεν έχει οριστεί προορισμός εκτός τόπου",
+  "placement.lockOwnCredentials": "Έχει δικά του διαπιστευτήρια και βρίσκεται ήδη εκτός εγκαταστάσεων",
+  "placement.lockAtTarget": "Βρίσκεται ήδη στον προορισμό",
+  "placement.lockHomeFixed": "Σταθερό από το πρώτο αντίγραφο ασφαλείας: {home}",
 };
 
 export default el;

@@ -1678,6 +1678,21 @@ const fa: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "میزبان",
+  "placement.segLocal": "محلی",
+  "placement.segLocalOffsite": "محلی + خارج از محل",
+  "placement.segOffsiteOnly": "فقط خارج از محل",
+  "placement.homeDomain": "{host} · مخزن دامنه · {path}",
+  "placement.homeDomainRemote": "مخزن دامنه · از راه دور · {scheme}",
+  "placement.homeLocal": "{name} · مانت‌شده",
+  "placement.homeRemote": "{name} · از راه دور",
+  "placement.homeDirect": "{target} · مستقیم",
+  "placement.directNotYet": "با اولین انتخاب ساخته می‌شود",
+  "placement.off": "{name} (خاموش)",
+  "placement.unknown": "{name} (نامشخص)",
+  "placement.noTarget": "هیچ مقصد خارج از محلی تنظیم نشده است",
+  "placement.lockOwnCredentials": "اطلاعات ورود خودش را دارد و از قبل خارج از محل است",
+  "placement.lockAtTarget": "از قبل در مقصد قرار دارد",
+  "placement.lockHomeFixed": "از اولین پشتیبان ثابت شده: {home}",
 };
 
 export default fa;

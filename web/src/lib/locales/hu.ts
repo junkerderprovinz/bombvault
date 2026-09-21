@@ -1670,6 +1670,21 @@ const hu: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Host",
+  "placement.segLocal": "Helyi",
+  "placement.segLocalOffsite": "Helyi + telephelyen kívüli",
+  "placement.segOffsiteOnly": "Csak telephelyen kívüli",
+  "placement.homeDomain": "{host} · tartomány tárolója · {path}",
+  "placement.homeDomainRemote": "Tartomány tárolója · távoli · {scheme}",
+  "placement.homeLocal": "{name} · csatolt",
+  "placement.homeRemote": "{name} · távoli",
+  "placement.homeDirect": "{target} · közvetlen",
+  "placement.directNotYet": "az első kiválasztáskor jön létre",
+  "placement.off": "{name} (kikapcsolva)",
+  "placement.unknown": "{name} (ismeretlen)",
+  "placement.noTarget": "Nincs beállítva telephelyen kívüli cél",
+  "placement.lockOwnCredentials": "Saját hitelesítő adatai vannak, és már telephelyen kívül van",
+  "placement.lockAtTarget": "Már a célnál van",
+  "placement.lockHomeFixed": "Rögzítve az első biztonsági mentés óta: {home}",
 };
 
 export default hu;

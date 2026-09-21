@@ -1670,6 +1670,21 @@ const ro: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Host",
+  "placement.segLocal": "Local",
+  "placement.segLocalOffsite": "Local + extern",
+  "placement.segOffsiteOnly": "Doar extern",
+  "placement.homeDomain": "{host} · depozitul domeniului · {path}",
+  "placement.homeDomainRemote": "Depozitul domeniului · la distanță · {scheme}",
+  "placement.homeLocal": "{name} · montat",
+  "placement.homeRemote": "{name} · la distanță",
+  "placement.homeDirect": "{target} · direct",
+  "placement.directNotYet": "creat la prima alegere",
+  "placement.off": "{name} (oprit)",
+  "placement.unknown": "{name} (necunoscut)",
+  "placement.noTarget": "Nu este configurată nicio țintă externă",
+  "placement.lockOwnCredentials": "Are propriile date de acces și este deja în afara sediului",
+  "placement.lockAtTarget": "Se află deja la țintă",
+  "placement.lockHomeFixed": "Fixat de la prima copie de siguranță: {home}",
 };
 
 export default ro;

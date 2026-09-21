@@ -1678,6 +1678,21 @@ const lv: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Saimniekdators",
+  "placement.segLocal": "Vietējs",
+  "placement.segLocalOffsite": "Vietējs + attālināts",
+  "placement.segOffsiteOnly": "Tikai attālināts",
+  "placement.homeDomain": "{host} · domēna krātuve · {path}",
+  "placement.homeDomainRemote": "Domēna krātuve · attālināta · {scheme}",
+  "placement.homeLocal": "{name} · pievienots",
+  "placement.homeRemote": "{name} · attālināts",
+  "placement.homeDirect": "{target} · tieši",
+  "placement.directNotYet": "tiek izveidots, izvēloties pirmo reizi",
+  "placement.off": "{name} (izslēgts)",
+  "placement.unknown": "{name} (nezināms)",
+  "placement.noTarget": "Nav iestatīts neviens attālināts mērķis",
+  "placement.lockOwnCredentials": "Tam ir savi piekļuves dati, un tas jau atrodas ārpus telpām",
+  "placement.lockAtTarget": "Jau atrodas pie mērķa",
+  "placement.lockHomeFixed": "Nemainīgs kopš pirmās dublēšanas: {home}",
 };
 
 export default lv;

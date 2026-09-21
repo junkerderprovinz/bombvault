@@ -1678,6 +1678,21 @@ const ca: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Amfitrió",
+  "placement.segLocal": "Local",
+  "placement.segLocalOffsite": "Local + extern",
+  "placement.segOffsiteOnly": "Només extern",
+  "placement.homeDomain": "{host} · repositori del domini · {path}",
+  "placement.homeDomainRemote": "Repositori del domini · remot · {scheme}",
+  "placement.homeLocal": "{name} · muntat",
+  "placement.homeRemote": "{name} · remot",
+  "placement.homeDirect": "{target} · directe",
+  "placement.directNotYet": "es crea en triar-lo per primer cop",
+  "placement.off": "{name} (apagat)",
+  "placement.unknown": "{name} (desconegut)",
+  "placement.noTarget": "No hi ha cap destí extern configurat",
+  "placement.lockOwnCredentials": "Té credencials pròpies i ja és fora de les instal·lacions",
+  "placement.lockAtTarget": "Ja es troba al destí",
+  "placement.lockHomeFixed": "Fix des de la primera còpia de seguretat: {home}",
 };
 
 export default ca;

@@ -1665,6 +1665,21 @@ const cs: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Hostitel",
+  "placement.segLocal": "Místní",
+  "placement.segLocalOffsite": "Místní + mimo lokalitu",
+  "placement.segOffsiteOnly": "Jen mimo lokalitu",
+  "placement.homeDomain": "{host} · repozitář domény · {path}",
+  "placement.homeDomainRemote": "Repozitář domény · vzdálený · {scheme}",
+  "placement.homeLocal": "{name} · připojeno",
+  "placement.homeRemote": "{name} · vzdálené",
+  "placement.homeDirect": "{target} · přímo",
+  "placement.directNotYet": "vytvoří se při prvním výběru",
+  "placement.off": "{name} (vypnuto)",
+  "placement.unknown": "{name} (neznámé)",
+  "placement.noTarget": "Není nastaven žádný cíl mimo lokalitu",
+  "placement.lockOwnCredentials": "Má vlastní přístupové údaje a už je mimo areál",
+  "placement.lockAtTarget": "Už leží u cíle",
+  "placement.lockHomeFixed": "Pevné od první zálohy: {home}",
 };
 
 export default cs;

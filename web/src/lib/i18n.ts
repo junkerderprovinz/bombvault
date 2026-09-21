@@ -1777,6 +1777,21 @@ export const en = {
 
   // Placement
   "placement.hostGeneric": "Host",
+  "placement.segLocal": "Local",
+  "placement.segLocalOffsite": "Local + off-site",
+  "placement.segOffsiteOnly": "Off-site only",
+  "placement.homeDomain": "{host} · domain repository · {path}",
+  "placement.homeDomainRemote": "Domain repository · remote · {scheme}",
+  "placement.homeLocal": "{name} · mounted",
+  "placement.homeRemote": "{name} · remote",
+  "placement.homeDirect": "{target} · direct",
+  "placement.directNotYet": "created when first chosen",
+  "placement.off": "{name} (off)",
+  "placement.unknown": "{name} (unknown)",
+  "placement.noTarget": "No off-site target set up",
+  "placement.lockOwnCredentials": "Has its own credentials and is already off the premises",
+  "placement.lockAtTarget": "Already lies at the target",
+  "placement.lockHomeFixed": "Fixed since the first backup: {home}",
 
   "files.excludesCount": "Excludes: {n}",
   "files.enabled": "Include in schedule",
@@ -3514,6 +3529,21 @@ export const de: Translations = {
 
   // Placement
   "placement.hostGeneric": "Host",
+  "placement.segLocal": "Lokal",
+  "placement.segLocalOffsite": "Lokal + Off-site",
+  "placement.segOffsiteOnly": "Nur Off-site",
+  "placement.homeDomain": "{host} · Domänen-Repository · {path}",
+  "placement.homeDomainRemote": "Domänen-Repository · entfernt · {scheme}",
+  "placement.homeLocal": "{name} · eingehängt",
+  "placement.homeRemote": "{name} · entfernt",
+  "placement.homeDirect": "{target} · direkt",
+  "placement.directNotYet": "wird beim ersten Wählen angelegt",
+  "placement.off": "{name} (aus)",
+  "placement.unknown": "{name} (unbekannt)",
+  "placement.noTarget": "Kein Off-site-Ziel eingerichtet",
+  "placement.lockOwnCredentials": "Hat eigene Zugangsdaten und liegt schon außer Haus",
+  "placement.lockAtTarget": "Liegt schon beim Ziel",
+  "placement.lockHomeFixed": "Fest seit dem ersten Backup: {home}",
 
   "files.excludesCount": "Ausschlüsse: {n}",
   "files.enabled": "Im Zeitplan einschließen",

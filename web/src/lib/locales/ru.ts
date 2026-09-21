@@ -1662,6 +1662,21 @@ const ru: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Хост",
+  "placement.segLocal": "Локально",
+  "placement.segLocalOffsite": "Локально + внешнее",
+  "placement.segOffsiteOnly": "Только внешнее",
+  "placement.homeDomain": "{host} · репозиторий домена · {path}",
+  "placement.homeDomainRemote": "Репозиторий домена · удалённый · {scheme}",
+  "placement.homeLocal": "{name} · смонтирован",
+  "placement.homeRemote": "{name} · удалённый",
+  "placement.homeDirect": "{target} · напрямую",
+  "placement.directNotYet": "создаётся при первом выборе",
+  "placement.off": "{name} (выключен)",
+  "placement.unknown": "{name} (неизвестно)",
+  "placement.noTarget": "Внешняя цель не настроена",
+  "placement.lockOwnCredentials": "Имеет собственные учётные данные и уже находится вне помещения",
+  "placement.lockAtTarget": "Уже находится у цели",
+  "placement.lockHomeFixed": "Зафиксировано с первой резервной копии: {home}",
 };
 
 export default ru;

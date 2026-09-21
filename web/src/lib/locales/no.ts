@@ -1667,6 +1667,21 @@ const no: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "Vert",
+  "placement.segLocal": "Lokal",
+  "placement.segLocalOffsite": "Lokal + ekstern",
+  "placement.segOffsiteOnly": "Kun ekstern",
+  "placement.homeDomain": "{host} · domenets depot · {path}",
+  "placement.homeDomainRemote": "Domenets depot · fjern · {scheme}",
+  "placement.homeLocal": "{name} · montert",
+  "placement.homeRemote": "{name} · fjern",
+  "placement.homeDirect": "{target} · direkte",
+  "placement.directNotYet": "opprettes ved første valg",
+  "placement.off": "{name} (av)",
+  "placement.unknown": "{name} (ukjent)",
+  "placement.noTarget": "Ingen eksternt mål er satt opp",
+  "placement.lockOwnCredentials": "Har egne påloggingsdetaljer og ligger allerede utenfor lokalet",
+  "placement.lockAtTarget": "Ligger allerede ved målet",
+  "placement.lockHomeFixed": "Fast siden den første sikkerhetskopien: {home}",
 };
 
 export default no;

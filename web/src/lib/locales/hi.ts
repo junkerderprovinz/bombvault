@@ -1678,6 +1678,21 @@ const hi: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "होस्ट",
+  "placement.segLocal": "लोकल",
+  "placement.segLocalOffsite": "लोकल + ऑफ़-साइट",
+  "placement.segOffsiteOnly": "सिर्फ़ ऑफ़-साइट",
+  "placement.homeDomain": "{host} · डोमेन रिपॉज़िटरी · {path}",
+  "placement.homeDomainRemote": "डोमेन रिपॉज़िटरी · रिमोट · {scheme}",
+  "placement.homeLocal": "{name} · माउंटेड",
+  "placement.homeRemote": "{name} · रिमोट",
+  "placement.homeDirect": "{target} · डायरेक्ट",
+  "placement.directNotYet": "पहली बार चुनने पर बनेगा",
+  "placement.off": "{name} (बंद)",
+  "placement.unknown": "{name} (अज्ञात)",
+  "placement.noTarget": "कोई ऑफ़-साइट लक्ष्य सेट नहीं है",
+  "placement.lockOwnCredentials": "इसके अपने क्रेडेंशियल हैं और यह पहले से ही परिसर से बाहर है",
+  "placement.lockAtTarget": "पहले से ही लक्ष्य पर मौजूद है",
+  "placement.lockHomeFixed": "पहले बैकअप से तय: {home}",
 };
 
 export default hi;

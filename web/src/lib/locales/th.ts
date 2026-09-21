@@ -1670,6 +1670,21 @@ const th: Partial<Translations> = {
 
   // Placement
   "placement.hostGeneric": "โฮสต์",
+  "placement.segLocal": "ในเครื่อง",
+  "placement.segLocalOffsite": "ในเครื่อง + นอกสถานที่",
+  "placement.segOffsiteOnly": "นอกสถานที่เท่านั้น",
+  "placement.homeDomain": "{host} · ที่เก็บข้อมูลของโดเมน · {path}",
+  "placement.homeDomainRemote": "ที่เก็บข้อมูลของโดเมน · ระยะไกล · {scheme}",
+  "placement.homeLocal": "{name} · เมานต์แล้ว",
+  "placement.homeRemote": "{name} · ระยะไกล",
+  "placement.homeDirect": "{target} · โดยตรง",
+  "placement.directNotYet": "จะสร้างเมื่อเลือกครั้งแรก",
+  "placement.off": "{name} (ปิด)",
+  "placement.unknown": "{name} (ไม่ทราบ)",
+  "placement.noTarget": "ยังไม่ได้ตั้งค่าปลายทางนอกสถานที่",
+  "placement.lockOwnCredentials": "มีข้อมูลรับรองของตัวเองและอยู่นอกสถานที่แล้ว",
+  "placement.lockAtTarget": "อยู่ที่ปลายทางแล้ว",
+  "placement.lockHomeFixed": "คงที่ตั้งแต่การสำรองข้อมูลครั้งแรก: {home}",
 };
 
 export default th;
