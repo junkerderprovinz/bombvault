@@ -3610,7 +3610,7 @@ func (s *Service) replicateOffsite(ctx context.Context, domain string, settings 
 	// narrowed at all: a one-element slice is always "index 0".
 	ref := s.refFor(settings, domain, localRepo)
 	if alreadyOffSite(ref) {
-		log.Printf("api: offsite %s: this item's repository is remote and is already off site; not copied again", domain) //nolint:gosec // G706: domain is a fixed literal
+		log.Printf("api: offsite %s: this item's repository %s; not copied again", domain, offSiteReason(ref)) //nolint:gosec // G706: domain is a fixed literal
 		return
 	}
 	// The skip list of the WHOLE domain, even though this hook copies exactly one
@@ -7439,7 +7439,7 @@ func (s *Service) offsiteReplicationSources(settings store.Settings, domain stri
 			// operator can do makes b2: stop being remote, so reporting it as an
 			// incomplete pass condemns a supported configuration to fail forever
 			// over a repository that was never meant to be copied.
-			log.Printf("api: offsite %s: named repository %s is remote and is already off site; not copied again", domain, scrubRepoLocation(r.Loc)) //nolint:gosec // G706: domain is a fixed literal, the location has any embedded credential redacted
+			log.Printf("api: offsite %s: named repository %s %s; not copied again", domain, scrubRepoLocation(r.Loc), offSiteReason(r)) //nolint:gosec // G706: domain is a fixed literal, the location has any embedded credential redacted
 			continue
 		}
 		out = append(out, r)
@@ -7535,8 +7535,9 @@ func (s *Service) repoSharedWithAnotherDomain(settings store.Settings, domain st
 	return false
 }
 
-// alreadyOffSite reports whether a source is one the off-site copy deliberately
-// leaves out: a repository that is not the domain's own and is remote.
+// alreadyOffSite reports whether a source is one the off-site copy leaves out:
+// a direct repository, which lies at its target already, or a repository that
+// is not the domain's own and is remote.
 //
 // ONE predicate, shared by the post-backup hook and the whole-domain pass, and
 // it is shared because they drifted. The hook additionally required a non-empty
@@ -7552,7 +7553,15 @@ func (s *Service) repoSharedWithAnotherDomain(settings store.Settings, domain st
 // ownership: see offsiteReplicationSources for why a domain's OWN remote primary
 // stays in.
 func alreadyOffSite(r domainRepoRef) bool {
-	return !r.Own && restic.IsRemoteRepo(r.Loc)
+	return r.Named.CompanionOf != "" || (!r.Own && restic.IsRemoteRepo(r.Loc))
+}
+
+// offSiteReason says in a log line why alreadyOffSite left a source out.
+func offSiteReason(r domainRepoRef) string {
+	if r.Named.CompanionOf != "" {
+		return "is the direct repository of an off-site target"
+	}
+	return "is remote and is already off site"
 }
 
 // refName names a repository for a message: a named repository by its NAME, the
