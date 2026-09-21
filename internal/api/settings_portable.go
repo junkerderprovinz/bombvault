@@ -816,9 +816,10 @@ func offsiteRepoFromView(domain string, v settingsView) string {
 	return ""
 }
 
-// replaceOffsiteTargets drops all current off-site targets and re-inserts the
-// imported set, preserving each id + created_at for an exact round-trip. The
-// file's sort orders are then settled the way the offsite_targets_primary_slot
+// replaceOffsiteTargets makes the off-site targets the file's set: a target
+// the file carries is updated in place and keeps its id, created_at,
+// observations and direct repository, one it lacks is deleted. The file's
+// sort orders are then settled the way the offsite_targets_primary_slot
 // migration settles them, against fileSettings, the file's own off-site fields,
 // rather than the merged settings just written: a redacted field can be kept at
 // this instance's working location by importedLocation while the row for it
@@ -831,18 +832,19 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, fileSettings 
 	if err != nil {
 		return err
 	}
-	// Remember each row's location BEFORE the rows are dropped: a location the
-	// file carries redacted must not overwrite the working one this instance
-	// already has for that id (see importedLocation).
+	inFile := make(map[string]bool, len(views))
+	for _, tv := range views {
+		inFile[strings.TrimSpace(tv.ID)] = true
+	}
+	// Remember each row's location before any row changes: a location the file
+	// carries redacted must not overwrite the working one this instance already
+	// has for that id (see importedLocation).
 	currentRepo := make(map[string]string, len(current))
 	for _, t := range current {
 		currentRepo[t.ID] = t.Repo
-	}
-	kept, err := h.svc.observationsToKeep(current, views)
-	if err != nil {
-		return err
-	}
-	for _, t := range current {
+		if inFile[t.ID] {
+			continue
+		}
 		if err := h.store.DeleteOffsiteTarget(t.ID); err != nil {
 			return err
 		}
@@ -856,7 +858,6 @@ func (h *Handler) replaceOffsiteTargets(views []offsiteTargetView, fileSettings 
 			return err
 		}
 	}
-	h.svc.restoreObservations(kept)
 	for _, d := range offsiteConfigDomains {
 		if err := h.store.NormalizeOffsiteSortOrder(d, offsiteRepoFromView(d, fileSettings)); err != nil {
 			return err
