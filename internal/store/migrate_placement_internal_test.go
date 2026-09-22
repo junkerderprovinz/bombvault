@@ -2,9 +2,12 @@ package store
 
 import (
 	"database/sql"
+	"fmt"
 	"maps"
 	"slices"
 	"testing"
+
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
 // v8111Schema is the last migration a v8.11.1 database has recorded.
@@ -276,6 +279,7 @@ var branchMigrations = []struct {
 	{"items_repo_chosen", columnPresent("targets", "repo_chosen")},
 	{"placement_confirmed_manually", columnPresent("placement_defaults", "confirmed_manually")},
 	{"offsite_targets_companion", columnPresent("offsite_targets", "companion_of")},
+	{"offsite_targets_off_premises", columnPresent("offsite_targets", "off_premises")},
 }
 
 func probeOnce(t *testing.T, db *sql.DB, probe func(*sql.Tx) (bool, error)) bool {
@@ -526,5 +530,96 @@ func TestDatabaseBornAtIsTheFirstRecordedMigration(t *testing.T) {
 	born, err := New(db).DatabaseBornAt()
 	if err != nil || born.Unix() != 1000 {
 		t.Fatalf("DatabaseBornAt = %v, %v, want 1000", born, err)
+	}
+}
+
+func TestOffPremisesBackfillMatchesIsRemoteRepo(t *testing.T) {
+	db := OpenMem(t)
+	migrateThrough(t, db, migrationNamed(t, "offsite_targets_off_premises").version-1)
+	locations := []string{
+		"s3:https://s3.example.com/bv", "b2:bucket:bv", "rest:https://nas:8000/bv",
+		"sftp:u@host:/bv", "rclone:remote:bv", "azure:container:/bv", "gs:bucket:/bv",
+		"swift:container:/bv", "backups/named", "/mnt/remotes/nas/bv",
+		"S3:https://s3.example.com/upper", "BackBlaze:bucket/cold",
+	}
+	for i, loc := range locations {
+		if _, err := db.Exec(`INSERT INTO offsite_targets (id, domain, name, repo, role) VALUES (?, '', ?, ?, 'repo')`,
+			fmt.Sprintf("repo-%d", i), loc, loc); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := db.Exec(`INSERT INTO offsite_targets (id, domain, name, repo, role)
+		VALUES ('t1', 'containers', 'B2', 'b2:bucket:containers', 'offsite')`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`INSERT INTO offsite_targets (id, domain, name, repo, role, companion_of)
+		VALUES ('d1', '', 'B2 direct', 'b2:bucket:containers-direct', 'repo', 't1')`); err != nil {
+		t.Fatal(err)
+	}
+	if err := Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+
+	rows, err := db.Query(`SELECT id, repo, role, companion_of, off_premises FROM offsite_targets`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close() //nolint:errcheck // test cleanup
+	for rows.Next() {
+		var id, repo, role, companion string
+		var marked int
+		if err := rows.Scan(&id, &repo, &role, &companion, &marked); err != nil {
+			t.Fatal(err)
+		}
+		want := role == RoleRepo && companion == "" && restic.IsRemoteRepo(repo)
+		if (marked != 0) != want {
+			t.Errorf("%s (%s): off_premises = %d, want %v", id, repo, marked, want)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestOffPremisesMigrationMarksTheRemoteRepositoryOfAV8111Database(t *testing.T) {
+	db := OpenMem(t)
+	seedV8111(t, db)
+	if err := Migrate(db); err != nil {
+		t.Fatalf("Migrate: %v", err)
+	}
+	for id, want := range map[string]int{"r-box": 1, "r-nas": 0, "c-hetzner": 0} {
+		var marked int
+		if err := db.QueryRow(`SELECT off_premises FROM offsite_targets WHERE id = ?`, id).Scan(&marked); err != nil {
+			t.Fatal(err)
+		}
+		if marked != want {
+			t.Errorf("%s: off_premises = %d, want %d", id, marked, want)
+		}
+	}
+}
+
+func TestOffPremisesMigrationLeavesASwitchedOffMarkWhenRenumbered(t *testing.T) {
+	v := migrationNamed(t, "offsite_targets_off_premises").version
+	db := OpenMem(t)
+	migrateThrough(t, db, v)
+	if _, err := db.Exec(`INSERT INTO offsite_targets (id, domain, name, repo, role, off_premises)
+		VALUES ('lan', '', 'LAN rest', 'rest:http://nas:8000/bv', 'repo', 0)`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`DELETE FROM schema_migrations WHERE version = ?`, v); err != nil {
+		t.Fatal(err)
+	}
+	if err := Migrate(db); err != nil {
+		t.Fatalf("a body already applied under another number must not run again: %v", err)
+	}
+	var marked int
+	if err := db.QueryRow(`SELECT off_premises FROM offsite_targets WHERE id = 'lan'`).Scan(&marked); err != nil {
+		t.Fatal(err)
+	}
+	if marked != 0 {
+		t.Fatal("the backfill ran again and marked a repository somebody had switched off")
+	}
+	if got := appliedVersions(t, db)[v]; got != "offsite_targets_off_premises" {
+		t.Fatalf("version %d recorded as %q", v, got)
 	}
 }
