@@ -1539,10 +1539,7 @@ func TestDeleteBackupsVMPrimaryImmutableRefused(t *testing.T) {
 // TestDeleteBackupsPrimaryImmutableRefused pins issue #152's SECOND gate for
 // DeleteBackups (the containers bulk delete), mirroring
 // TestDeleteSnapshotPrimaryImmutableRefused above: a remote PRIMARY flagged
-// immutable must refuse the bulk purge too. Unlike DeleteSnapshot/
-// DeleteBackupsVM, DeleteBackups has no source parameter — it always targets
-// the primary/local repo — so only the primary half of the gate applies here;
-// there is no offsite half to check. This path is especially severe left
+// immutable must refuse the bulk purge too. This path is especially severe left
 // unguarded: it runs Forget with prune=true (irreversible, immediate space
 // reclaim) against a repo the operator explicitly flagged append-only.
 func TestDeleteBackupsPrimaryImmutableRefused(t *testing.T) {
@@ -1564,7 +1561,7 @@ func TestDeleteBackupsPrimaryImmutableRefused(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Tags: []string{"container:plex"}}}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	err := svc.DeleteBackups(context.Background(), "plex")
+	err := svc.DeleteBackups(context.Background(), "plex", "")
 	if err == nil || !strings.Contains(err.Error(), "append-only") {
 		t.Fatalf("bulk delete on an immutable remote PRIMARY must fail with an append-only error, got %v", err)
 	}
@@ -1581,7 +1578,7 @@ func TestDeleteBackupsPrimaryImmutableRefused(t *testing.T) {
 	if _, err := st.UpsertPrimaryRemoteTarget("containers", store.OffsiteTarget{Repo: repo, Immutable: false, Enabled: true}); err != nil {
 		t.Fatal(err)
 	}
-	if err := svc.DeleteBackups(context.Background(), "plex"); err != nil {
+	if err := svc.DeleteBackups(context.Background(), "plex", ""); err != nil {
 		t.Fatalf("a non-immutable remote primary must stay deletable: %v", err)
 	}
 	if len(eng.forgotten) != 1 {
@@ -1615,7 +1612,7 @@ func TestDeleteBackupsFileSetPrimaryImmutableRefused(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Tags: []string{"fileset:docs"}}}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	err = svc.DeleteBackupsFileSet(context.Background(), set.ID)
+	err = svc.DeleteBackupsFileSet(context.Background(), set.ID, "")
 	if err == nil || !strings.Contains(err.Error(), "append-only") {
 		t.Fatalf("bulk delete on an immutable remote PRIMARY must fail with an append-only error, got %v", err)
 	}
@@ -1632,7 +1629,7 @@ func TestDeleteBackupsFileSetPrimaryImmutableRefused(t *testing.T) {
 	if _, err := st.UpsertPrimaryRemoteTarget("files", store.OffsiteTarget{Repo: repo, Immutable: false, Enabled: true}); err != nil {
 		t.Fatal(err)
 	}
-	if err := svc.DeleteBackupsFileSet(context.Background(), set.ID); err != nil {
+	if err := svc.DeleteBackupsFileSet(context.Background(), set.ID, ""); err != nil {
 		t.Fatalf("a non-immutable remote primary must stay deletable: %v", err)
 	}
 	if len(eng.forgotten) != 1 {
@@ -3988,7 +3985,7 @@ func TestDeleteBackupsRefusedWhileDomainLocked(t *testing.T) {
 	// domain lock — proving the lock is genuinely checked (before the fix this
 	// call went straight through to Forget with zero serialization).
 	deleteErr := make(chan error, 1)
-	go func() { deleteErr <- svc.DeleteBackups(ctx, "plex") }()
+	go func() { deleteErr <- svc.DeleteBackups(ctx, "plex", "") }()
 	select {
 	case err := <-deleteErr:
 		if err == nil || !strings.Contains(err.Error(), "currently running") {
@@ -4005,7 +4002,7 @@ func TestDeleteBackupsRefusedWhileDomainLocked(t *testing.T) {
 	// normally — the fix serializes, it does not permanently wedge the domain.
 	close(eng.blockRestore)
 	waitForBackupDone(t, svc)
-	if err := svc.DeleteBackups(ctx, "plex"); err != nil {
+	if err := svc.DeleteBackups(ctx, "plex", ""); err != nil {
 		t.Fatalf("DeleteBackups after the lock was released: %v", err)
 	}
 	if len(eng.forgotten) != 1 {
@@ -4230,7 +4227,7 @@ func TestDeleteBackupsForgetsSnapshotsAndTarget(t *testing.T) {
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	if err := svc.DeleteBackups(context.Background(), "plex"); err != nil {
+	if err := svc.DeleteBackups(context.Background(), "plex", ""); err != nil {
 		t.Fatalf("DeleteBackups: %v", err)
 	}
 

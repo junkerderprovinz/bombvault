@@ -914,7 +914,7 @@ func TestAppendOnlyTurnedOnMidDeleteIsHonoured(t *testing.T) {
 		}
 	}
 
-	err := svc.DeleteBackups(context.Background(), "plex")
+	err := svc.DeleteBackups(context.Background(), "plex", "")
 	if err == nil {
 		t.Fatal("the delete went ahead although Append-only was switched on while it ran.\n" +
 			"The gate inside the domain lock replayed the answer from before the lock, so the\n" +
@@ -1159,7 +1159,7 @@ func TestEveryAppendOnlyGateRefusesALocalNamedRepository(t *testing.T) {
 	}
 
 	// The bulk delete of the item that lives there.
-	if err := svc.DeleteBackups(context.Background(), "plex"); err == nil {
+	if err := svc.DeleteBackups(context.Background(), "plex", ""); err == nil {
 		t.Error("DeleteBackups went ahead on an append-only repository")
 	}
 	// …and the retention that runs after every backup, which is the gate that
@@ -1197,7 +1197,7 @@ func TestAnEmptyContainerRowCanStillBeCleared(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := svc.DeleteBackups(context.Background(), "plex"); err != nil {
+	if err := svc.DeleteBackups(context.Background(), "plex", ""); err != nil {
 		t.Fatalf("a container with NO snapshots must still be removable from the list: %v", err)
 	}
 	if len(eng.forgotRepos) != 0 {

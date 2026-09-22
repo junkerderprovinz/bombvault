@@ -784,14 +784,14 @@ func (h *Handler) vmNameParam(w http.ResponseWriter, r *http.Request) (string, b
 	return name, true
 }
 
-// handleDeleteBackups removes ALL backups of a container and forgets it from the
-// store. Used for containers that are no longer installed.
+// handleDeleteBackups removes every backup of a container from the selected
+// source. DELETE /api/containers/{name}/backups?source=
 func (h *Handler) handleDeleteBackups(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
 	if !ok {
 		return
 	}
-	if err := h.svc.DeleteBackups(r.Context(), name); err != nil {
+	if err := h.svc.DeleteBackups(r.Context(), name, sourceParam(r)); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -5212,15 +5212,14 @@ func (h *Handler) handleDeleteFileSet(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleDeleteBackupsFileSet removes ALL backups of a file set (every
-// fileset:<Name>-tagged snapshot, pruned) and forgets the set from the store.
-// DELETE /api/files/sets/{id}/backups
+// handleDeleteBackupsFileSet removes every backup of a file set from the
+// selected source. DELETE /api/files/sets/{id}/backups?source=
 func (h *Handler) handleDeleteBackupsFileSet(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.fileSetIDParam(w, r)
 	if !ok {
 		return
 	}
-	if err := h.svc.DeleteBackupsFileSet(r.Context(), id); err != nil {
+	if err := h.svc.DeleteBackupsFileSet(r.Context(), id, sourceParam(r)); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}

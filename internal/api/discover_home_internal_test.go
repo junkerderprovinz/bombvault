@@ -50,7 +50,7 @@ func TestDiscoverWritesTheFoundLocationChosen(t *testing.T) {
 	if repoID, _, err := f.svc.settleHome(context.Background(), settings, item); err != nil || repoID != nas.ID {
 		t.Fatalf("after a default on the domain path the item goes to %q, %v, want NAS", repoID, err)
 	}
-	if err := f.svc.DeleteBackups(context.Background(), "nginx"); err != nil {
+	if err := f.svc.DeleteBackups(context.Background(), "nginx", ""); err != nil {
 		t.Fatal(err)
 	}
 	if len(f.eng.deletes) != 1 || filepath.ToSlash(f.eng.deletes[0].Repo) != f.root+"/nas" {
