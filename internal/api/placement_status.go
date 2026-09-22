@@ -154,6 +154,86 @@ func homeOffPremises(kind homeKind, repoID string, named map[string]store.Offsit
 	return false
 }
 
+// placementCoverage answers what placement adds to a domain's status: whether
+// anything is copied to an enabled target, and whether every item already lives
+// off the premises. Without copy rules the first answer is yes, as it was before
+// there were any.
+func (s *Service) placementCoverage(settings store.Settings, domain string) (copied, offPremises bool, err error) {
+	p, err := s.readPlacement(settings, domain)
+	if err != nil {
+		return false, false, err
+	}
+	named, err := s.namedRepoIndex()
+	if err != nil {
+		return false, false, err
+	}
+	homes, err := s.itemHomes(domain)
+	if err != nil {
+		return false, false, err
+	}
+	copied = !p.State.HasRules()
+	offPremises = len(homes) > 0
+	for identity, state := range homes {
+		repoID, _ := p.effectiveHome(state)
+		home := s.homeKindOf(settings, domain, repoID, named)
+		if home.copySource() && len(p.effectiveTargets(identity)) > 0 {
+			copied = true
+		}
+		if !homeOffPremises(home, repoID, named) {
+			offPremises = false
+		}
+	}
+	if copied {
+		return true, offPremises, nil
+	}
+	observed, err := s.store.ItemCopiesForDomain(domain)
+	if err != nil {
+		return false, false, err
+	}
+	for _, c := range observed {
+		if _, isItem := homes[c.Identity]; isItem {
+			continue
+		}
+		if slices.ContainsFunc(p.effectiveTargets(c.Identity), func(t store.OffsiteTarget) bool { return t.ID == c.TargetID }) {
+			return true, offPremises, nil
+		}
+	}
+	return false, offPremises, nil
+}
+
+// itemHomes returns the home columns of every item row in a placement domain, by
+// identity.
+func (s *Service) itemHomes(domain string) (map[string]store.HomeState, error) {
+	out := map[string]store.HomeState{}
+	switch domain {
+	case "containers":
+		rows, err := s.store.ListTargets()
+		if err != nil {
+			return nil, err
+		}
+		for _, t := range rows {
+			out["container:"+t.ContainerName] = store.HomeState{Exists: true, Repo: t.Repo, Choice: t.RepoChosen}
+		}
+	case "vms":
+		rows, err := s.store.ListVMTargets()
+		if err != nil {
+			return nil, err
+		}
+		for _, v := range rows {
+			out["vm:"+v.Name] = store.HomeState{Exists: true, Repo: v.Repo, Choice: v.RepoChosen}
+		}
+	case "files":
+		rows, err := s.store.ListFileSets()
+		if err != nil {
+			return nil, err
+		}
+		for _, fs := range rows {
+			out["fileset:"+fs.Name] = store.HomeState{Exists: true, Repo: fs.Repo, Choice: fs.RepoChosen}
+		}
+	}
+	return out, nil
+}
+
 // stackNoteFor names the project folder when its copies differ from the member's.
 // Project folders always land on the domain path and follow the containers default.
 func stackNoteFor(p placementRead, item placementItem, plan *placementPlan) *stackNote {
