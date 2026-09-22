@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import type { PlacementView } from "./api";
 import { droppedTarget, placementView, renderWithProviders } from "./placement.testsupport";
+import { subscribePlacement } from "./placementEvents";
 
 const fake = await vi.hoisted(async () => (await import("./placement.testsupport")).createPlacementApi());
 
@@ -33,6 +34,32 @@ function Harness({ onView }: { onView: (next: PlacementView) => void }) {
       <button type="button" onClick={() => send(["*"])}>
         three
       </button>
+    </div>
+  );
+}
+
+// A page like the container list: a read that started before a change answers
+// with what it saw then, and the read the card's announcement starts answers
+// with what the card wrote.
+function Page({ older, stored }: { older: PlacementView; stored: PlacementView }) {
+  const [view, setView] = useState(older);
+  const [announced, setAnnounced] = useState(false);
+  useEffect(() => subscribePlacement(() => setAnnounced(true)), []);
+  const { shown, save } = usePlacementSave(item, view, () => undefined);
+  return (
+    <div>
+      <span data-testid="home">{shown.repoLabel || "none"}</span>
+      <button type="button" onClick={() => save({ home: { repo: "repo-nas" } }, { repo: "repo-nas", repoLabel: "NAS Keller" })}>
+        home
+      </button>
+      <button type="button" onClick={() => setView({ ...older })}>
+        older read
+      </button>
+      {announced && (
+        <button type="button" onClick={() => setView({ ...stored })}>
+          later read
+        </button>
+      )}
     </div>
   );
 }
@@ -80,6 +107,17 @@ describe("usePlacementSave", () => {
     await waitFor(() => expect(fake.callsTo("setItemPlacement")).toHaveLength(2));
     expect(fake.maxInFlight("setItemPlacement")).toBe(1);
     expect(fake.callsTo("setItemPlacement")[1]).toEqual([item, { copies: { skip: ["*"] } }]);
+  });
+
+  it("is set right again when a list answer from before the change lands after it", async () => {
+    const nas = placementView({ repo: "repo-nas", repoLabel: "NAS Keller", repoKind: "local" });
+    fake.reply("setItemPlacement", { ok: true, placement: nas });
+    renderWithProviders(<Page older={base} stored={nas} />);
+    fireEvent.click(screen.getByText("home"));
+    const later = await screen.findByText("later read");
+    fireEvent.click(screen.getByText("older read"));
+    fireEvent.click(later);
+    expect(screen.getByTestId("home").textContent).toBe("NAS Keller");
   });
 
   it("goes back and shakes when the server refuses", async () => {
