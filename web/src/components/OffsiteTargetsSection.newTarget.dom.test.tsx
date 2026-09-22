@@ -68,6 +68,23 @@ describe("the off-site targets and a new location", () => {
     expect(fake.callsTo("createOffsiteTarget")).toEqual([]);
   });
 
+  it("locks Save while the question is still being prepared", async () => {
+    const answer = fake.hold("getNewTargetPreview");
+    renderWithProviders(<OffsiteTargetsSection domain="containers" t={t} />);
+    fireEvent.click(await screen.findByRole("button", { name: en["offsite.targets.add"] }));
+    fireEvent.change(repoField(), { target: { value: "b2:bucket:containers" } });
+    const saveButton = () => screen.getByRole("button", { name: en["offsite.targets.save"] });
+
+    save();
+
+    await waitFor(() => expect(fake.callsTo("getNewTargetPreview")).toHaveLength(1));
+    expect(saveButton().hasAttribute("disabled")).toBe(true);
+
+    answer();
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(saveButton().hasAttribute("disabled")).toBe(false));
+  });
+
   it("asks about the whole history when a saved target moves", async () => {
     listed.targets = [hetzner];
     renderWithProviders(<OffsiteTargetsSection domain="containers" t={t} />);
