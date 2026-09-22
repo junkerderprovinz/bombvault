@@ -79,6 +79,16 @@ func (f *placementFixture) credSetsChangeWhenATargetIsWritten(sets []CloudCredSe
 	}
 }
 
+// keepEveryTarget makes taking a target back fail the way a database error
+// would.
+func (f *placementFixture) keepEveryTarget() {
+	f.t.Helper()
+	if _, err := f.db.Exec(`CREATE TRIGGER targets_stay BEFORE DELETE ON offsite_targets
+		BEGIN SELECT RAISE(ABORT, 'targets stay'); END`); err != nil {
+		f.t.Fatal(err)
+	}
+}
+
 func TestAnExclusionAddsTheNewTargetToWhatEachItemSkips(t *testing.T) {
 	f := newPlacementFixture(t)
 	b2 := f.target("containers", "B2", "b2:bucket:containers")
@@ -307,5 +317,32 @@ func TestTakingBackAMeshCredentialSetLeavesTheSetsAnotherRequestWrote(t *testing
 	sets, dErr := f.svc.decodeCloudCredSets(settings)
 	if dErr != nil || !reflect.DeepEqual(sets, want) {
 		t.Fatalf("credential sets = %v, %v, want %v", sets, dErr, want)
+	}
+}
+
+func TestAnAcceptedOfferKeepsItsCredentialsWhileItsTargetStays(t *testing.T) {
+	f := newPlacementFixture(t)
+	offer := f.meshOffer()
+	f.brokenRule("containers", "container:nginx")
+	f.keepEveryTarget()
+
+	res := f.do(http.MethodPost, "/api/fleet/mesh-offers/"+offer.ID+"/accept", map[string]any{
+		"domain": "containers", "alsoExclude": map[string]any{"identities": []string{"container:plex"}, "default": false},
+	})
+	msg, _ := res["error"].(string)
+	if res["ok"] != false || !strings.Contains(msg, "the target and its credentials are still there") {
+		t.Fatalf("accept = %v, want a refusal that names what is left behind", res)
+	}
+	targets, tErr := f.st.OffsiteTargetsForDomain("containers")
+	if tErr != nil || len(targets) != 1 {
+		t.Fatalf("targets = %v, %v, want the one that could not be taken back", targets, tErr)
+	}
+	settings, sErr := f.st.GetSettings()
+	if sErr != nil {
+		t.Fatal(sErr)
+	}
+	sets, dErr := f.svc.decodeCloudCredSets(settings)
+	if dErr != nil || len(sets) != 1 || sets[0].ID != targets[0].CredsRef {
+		t.Fatalf("credential sets = %v, %v, want the set %q points at", sets, dErr, targets[0].CredsRef)
 	}
 }
