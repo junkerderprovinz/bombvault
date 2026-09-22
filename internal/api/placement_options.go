@@ -351,7 +351,7 @@ type placementExcludeBody struct {
 }
 
 // handlePlacementExclude takes the new-target answer for writes whose body has no
-// place for it: the off-site settings field and the settings import.
+// place for it, and for a target save that could not store it.
 func (h *Handler) handlePlacementExclude(w http.ResponseWriter, r *http.Request) {
 	var body placementExcludeBody
 	if !decodeBody(w, r, &body) {
