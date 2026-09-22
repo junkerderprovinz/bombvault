@@ -1626,6 +1626,8 @@ const da: Partial<Translations> = {
   "repos.companionLost": "ved siden af et slettet mål",
   "repos.mirroredLocked": "Overtaget fra {target}. Skift det der.",
   "repos.removeWithTarget": "Hører sammen med {target}. Fjern det mål for at fjerne dette depot.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Placeringsreglerne kunne ikke læses, så der kopieres intet, før de kan læses igen.",

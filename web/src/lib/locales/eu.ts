@@ -1637,6 +1637,8 @@ const eu: Partial<Translations> = {
   "repos.companionLost": "ezabatutako helmuga baten ondoan",
   "repos.mirroredLocked": "{target}(e)tik hartua. Aldatu hor.",
   "repos.removeWithTarget": "{target}(r)ekin doa. Biltegi hau kentzeko, kendu helmuga hori.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Kokapen-arauak ezin izan dira irakurri, beraz ezer ez da kopiatzen berriro irakurri ahal izan arte.",

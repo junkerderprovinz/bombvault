@@ -1618,6 +1618,8 @@ const ja: Partial<Translations> = {
   "repos.companionLost": "削除されたターゲットの隣",
   "repos.mirroredLocked": "{target}から引き継がれました。そちらで変更してください。",
   "repos.removeWithTarget": "{target}と一緒に存在します。このリポジトリを削除するには、そのターゲットを削除してください。",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "配置ルールを読み込めなかったため、再び読み込めるようになるまで何もコピーされません。",

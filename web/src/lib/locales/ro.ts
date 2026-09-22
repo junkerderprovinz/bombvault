@@ -1629,6 +1629,8 @@ const ro: Partial<Translations> = {
   "repos.companionLost": "lângă o țintă ștearsă",
   "repos.mirroredLocked": "Preluat de la {target}. Schimbă-l acolo.",
   "repos.removeWithTarget": "Merge împreună cu {target}. Ca să elimini acest depozit, elimină ținta.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Regulile de plasare nu au putut fi citite, așa că nu se copiază nimic până când vor putea fi citite din nou.",

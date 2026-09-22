@@ -1621,6 +1621,8 @@ const sl: Partial<Translations> = {
   "repos.companionLost": "ob izbrisanem cilju",
   "repos.mirroredLocked": "Prevzeto od {target}. Spremeni tam.",
   "repos.removeWithTarget": "Gre skupaj s ciljem {target}. Za odstranitev tega repozitorija odstrani cilj.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Pravil za namestitev ni bilo mogoče prebrati, zato se ne kopira nič, dokler jih ni spet mogoče prebrati.",

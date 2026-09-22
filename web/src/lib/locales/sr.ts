@@ -1621,6 +1621,8 @@ const sr: Partial<Translations> = {
   "repos.companionLost": "поред обрисаног циља",
   "repos.mirroredLocked": "Преузето од {target}. Промени тамо.",
   "repos.removeWithTarget": "Иде заједно са циљем {target}. Да би уклонио овај репозиторијум, уклони циљ.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Правила распоређивања нису могла да се прочитају, па се ништа не копира док поново не буде могуће.",

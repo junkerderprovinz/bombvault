@@ -1637,6 +1637,8 @@ const ms: Partial<Translations> = {
   "repos.companionLost": "di sebelah sasaran yang dipadam",
   "repos.mirroredLocked": "Diambil alih daripada {target}. Ubah di sana.",
   "repos.removeWithTarget": "Pergi bersama {target}. Untuk membuang repositori ini, buang sasaran itu.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Peraturan penempatan tidak dapat dibaca, jadi tiada apa disalin sehingga ia boleh dibaca semula.",

@@ -1618,6 +1618,8 @@ const vi: Partial<Translations> = {
   "repos.companionLost": "cạnh một đích đã bị xóa",
   "repos.mirroredLocked": "Được tiếp quản từ {target}. Đổi nó ở đó.",
   "repos.removeWithTarget": "Đi cùng với {target}. Để gỡ kho này, hãy gỡ đích đó.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Không đọc được các quy tắc đặt vị trí, nên không có gì được sao chép cho đến khi đọc lại được.",

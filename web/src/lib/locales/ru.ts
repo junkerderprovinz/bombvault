@@ -1621,6 +1621,8 @@ const ru: Partial<Translations> = {
   "repos.companionLost": "рядом с удалённой целью",
   "repos.mirroredLocked": "Перенято от {target}. Измени там.",
   "repos.removeWithTarget": "Идёт вместе с целью {target}. Чтобы убрать этот репозиторий, убери цель.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Правила размещения не удалось прочитать, поэтому ничего не копируется, пока их снова нельзя будет прочитать.",

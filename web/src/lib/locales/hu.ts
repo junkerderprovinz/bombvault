@@ -1629,6 +1629,8 @@ const hu: Partial<Translations> = {
   "repos.companionLost": "törölt cél mellett",
   "repos.mirroredLocked": "Átvéve innen: {target}. Ott változtasd meg.",
   "repos.removeWithTarget": "A(z) {target} céllal jár együtt. A tároló eltávolításához távolítsd el a célt.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Az elhelyezési szabályokat nem sikerült beolvasni, ezért semmi nem másolódik, amíg ez újra nem sikerül.",

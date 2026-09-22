@@ -1626,6 +1626,8 @@ const sv: Partial<Translations> = {
   "repos.companionLost": "bredvid ett borttaget mål",
   "repos.mirroredLocked": "Övertaget från {target}. Ändra det där.",
   "repos.removeWithTarget": "Hör ihop med {target}. Ta bort det målet för att ta bort det här arkivet.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Placeringsreglerna kunde inte läsas, så inget kopieras förrän de kan läsas igen.",

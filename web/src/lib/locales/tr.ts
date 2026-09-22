@@ -1626,6 +1626,8 @@ const tr: Partial<Translations> = {
   "repos.companionLost": "silinmiş bir hedefin yanında",
   "repos.mirroredLocked": "{target} kaynağından devralındı. Orada değiştir.",
   "repos.removeWithTarget": "{target} hedefiyle birlikte gider. Bu depoyu kaldırmak için o hedefi kaldır.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Yerleştirme kuralları okunamadı, bu yüzden tekrar okunabilene kadar hiçbir şey kopyalanmıyor.",

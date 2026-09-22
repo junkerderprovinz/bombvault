@@ -1637,6 +1637,8 @@ const ca: Partial<Translations> = {
   "repos.companionLost": "al costat d'un destí eliminat",
   "repos.mirroredLocked": "Agafat de {target}. Canvia-ho allà.",
   "repos.removeWithTarget": "Va amb {target}. Per treure aquest repositori, treu aquell destí.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Les regles d'ubicació no s'han pogut llegir, així que no es copia res fins que es puguin tornar a llegir.",

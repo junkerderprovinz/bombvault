@@ -123,6 +123,16 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
     await reload();
   }
 
+  async function setOffPremises(row: NamedRepo, next: boolean) {
+    const r = await updateRepo(row.id, { offPremises: next });
+    if (!r.ok) {
+      push(r.error ?? t("settings.error"), "fail");
+      return;
+    }
+    reposChanged();
+    await reload();
+  }
+
   async function remove(row: NamedRepo) {
     // An UNKNOWN count gets its own sentence. "Still in use" is a statement of
     // fact the server did not make: it could not read the count at all, and
@@ -213,6 +223,18 @@ export function ReposCard({ hueIndex }: { hueIndex?: number }) {
                 disabled={r.companionOf !== ""}
               />
             </label>
+            {r.companionOf === "" && (
+              <label className="flex items-center gap-2 text-xs text-carbon-textSub">
+                {t("repos.offPremises")}
+                <InfoBubble tip={t("repos.offPremisesHint")} />
+                <Toggle
+                  checked={r.offPremises}
+                  onChange={(v) => void setOffPremises(r, v)}
+                  label={t("repos.offPremises")}
+                  hideLabel
+                />
+              </label>
+            )}
             <label className="flex items-center gap-2 text-xs text-carbon-textSub">
               {t("repos.enabled")}
               <Toggle

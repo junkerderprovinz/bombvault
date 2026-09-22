@@ -1637,6 +1637,8 @@ const et: Partial<Translations> = {
   "repos.companionLost": "kustutatud sihtkoha kõrval",
   "repos.mirroredLocked": "Üle võetud sihtkohalt {target}. Muuda seda seal.",
   "repos.removeWithTarget": "Käib kaasa sihtkohaga {target}. Selle hoidla eemaldamiseks eemalda sihtkoht.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Asukohareegleid ei õnnestunud lugeda, seega ei kopeerita midagi enne, kui neid saab jälle lugeda.",
