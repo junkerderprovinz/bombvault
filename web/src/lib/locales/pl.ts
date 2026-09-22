@@ -1788,6 +1788,14 @@ const pl: Partial<Translations> = {
   "placement.noBackup": "Jeszcze bez kopii zapasowej.",
   "placement.stackNote": "Folder projektu {project}: na {home}, skopiowano do {targets} (podąża za domyślnym ustawieniem kontenerów)",
   "placement.stackNoteNoCopy": "Folder projektu {project}: na {home}, nie skopiowano (podąża za domyślnym ustawieniem kontenerów)",
+
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
 };
 
 export default pl;

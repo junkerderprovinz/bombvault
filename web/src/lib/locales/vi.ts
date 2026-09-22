@@ -1785,6 +1785,14 @@ const vi: Partial<Translations> = {
   "placement.noBackup": "Chưa có bản sao lưu nào.",
   "placement.stackNote": "Thư mục dự án {project}: tại {home}, đã sao chép đến {targets} (theo mặc định của container)",
   "placement.stackNoteNoCopy": "Thư mục dự án {project}: tại {home}, chưa sao chép (theo mặc định của container)",
+
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
 };
 
 export default vi;

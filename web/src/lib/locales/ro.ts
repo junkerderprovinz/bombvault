@@ -1796,6 +1796,14 @@ const ro: Partial<Translations> = {
   "placement.noBackup": "Încă nicio copie de siguranță.",
   "placement.stackNote": "Folder de proiect {project}: pe {home}, copiat pe {targets} (urmează valoarea implicită a containerelor)",
   "placement.stackNoteNoCopy": "Folder de proiect {project}: pe {home}, necopiat (urmează valoarea implicită a containerelor)",
+
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
 };
 
 export default ro;

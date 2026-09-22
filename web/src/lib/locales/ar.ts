@@ -1796,6 +1796,14 @@ const ar: Partial<Translations> = {
   "placement.noBackup": "لا يوجد نسخ احتياطي بعد.",
   "placement.stackNote": "مجلد المشروع {project}: على {home}، نُسخ إلى {targets} (يتبع افتراضي Containers)",
   "placement.stackNoteNoCopy": "مجلد المشروع {project}: على {home}، دون نسخ (يتبع افتراضي Containers)",
+
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
 };
 
 export default ar;

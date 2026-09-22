@@ -1804,6 +1804,14 @@ const et: Partial<Translations> = {
   "placement.noBackup": "Varukoopiat veel pole.",
   "placement.stackNote": "Projektikaust {project}: kohas {home}, kopeeritud kohta {targets} (järgib konteinerite vaikeväärtust)",
   "placement.stackNoteNoCopy": "Projektikaust {project}: kohas {home}, kopeerimata (järgib konteinerite vaikeväärtust)",
+
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
 };
 
 export default et;

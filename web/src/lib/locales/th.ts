@@ -1796,6 +1796,14 @@ const th: Partial<Translations> = {
   "placement.noBackup": "ยังไม่มีการสำรองข้อมูล",
   "placement.stackNote": "โฟลเดอร์โปรเจกต์ {project}: ที่ {home} คัดลอกไปยัง {targets} (เป็นไปตามค่าเริ่มต้นของคอนเทนเนอร์)",
   "placement.stackNoteNoCopy": "โฟลเดอร์โปรเจกต์ {project}: ที่ {home} ไม่ได้คัดลอก (เป็นไปตามค่าเริ่มต้นของคอนเทนเนอร์)",
+
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
 };
 
 export default th;

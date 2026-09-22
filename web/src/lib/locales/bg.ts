@@ -1804,6 +1804,14 @@ const bg: Partial<Translations> = {
   "placement.noBackup": "Все още няма резервно копие.",
   "placement.stackNote": "Папка на проекта {project}: на {home}, копирано в {targets} (следва подразбирането за контейнерите)",
   "placement.stackNoteNoCopy": "Папка на проекта {project}: на {home}, без копиране (следва подразбирането за контейнерите)",
+
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
 };
 
 export default bg;

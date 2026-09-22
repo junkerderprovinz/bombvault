@@ -1804,6 +1804,14 @@ const lv: Partial<Translations> = {
   "placement.noBackup": "Vēl nav dublējuma.",
   "placement.stackNote": "Projekta mape {project}: vietā {home}, kopēts uz {targets} (seko konteineru noklusējumam)",
   "placement.stackNoteNoCopy": "Projekta mape {project}: vietā {home}, nekopēts (seko konteineru noklusējumam)",
+
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
 };
 
 export default lv;

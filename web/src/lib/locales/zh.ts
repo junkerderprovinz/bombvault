@@ -1785,6 +1785,14 @@ const zh: Partial<Translations> = {
   "placement.noBackup": "尚无备份。",
   "placement.stackNote": "项目文件夹 {project}：位于 {home}，已复制到 {targets}（遵循容器默认值）",
   "placement.stackNoteNoCopy": "项目文件夹 {project}：位于 {home}，未复制（遵循容器默认值）",
+
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
 };
 
 export default zh;

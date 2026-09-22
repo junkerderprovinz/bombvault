@@ -1905,6 +1905,14 @@ export const en = {
   "placement.stackNote": "Project folder {project}: on {home}, copied to {targets} (follows the containers default)",
   "placement.stackNoteNoCopy": "Project folder {project}: on {home}, not copied (follows the containers default)",
 
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
+
   "files.excludesCount": "Excludes: {n}",
   "files.enabled": "Include in schedule",
   "files.effectiveLabel": "Result",
@@ -3775,6 +3783,14 @@ export const de: Translations = {
   "placement.noBackup": "Noch kein Backup.",
   "placement.stackNote": "Projektordner {project}: auf {home}, kopiert nach {targets} (folgt der Container-Vorgabe)",
   "placement.stackNoteNoCopy": "Projektordner {project}: auf {home}, keine Kopie (folgt der Container-Vorgabe)",
+
+  // Removal
+  "offsiteRemoval.delete": "In {target} löschen",
+  "offsiteRemoval.ask": "Alle Kopien von {name} in {target} löschen? Kopien: {n}.",
+  "offsiteRemoval.onlyThere": "Diese Snapshots liegen sonst nirgends und sind danach endgültig weg:",
+  "offsiteRemoval.homeUnreadable": "Ob {home} sie noch hat, ließ sich nicht prüfen.",
+  "offsiteRemoval.typeName": "Zum Bestätigen {name} eintippen",
+  "offsiteRemoval.done": "In {target} gelöscht: {n}",
 
   "files.excludesCount": "Ausschlüsse: {n}",
   "files.enabled": "Im Zeitplan einschließen",

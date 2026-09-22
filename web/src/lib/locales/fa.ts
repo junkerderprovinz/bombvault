@@ -1804,6 +1804,14 @@ const fa: Partial<Translations> = {
   "placement.noBackup": "هنوز پشتیبانی گرفته نشده است.",
   "placement.stackNote": "پوشهٔ پروژهٔ {project}: در {home}، کپی‌شده به {targets} (از پیش‌فرض کانتینرها پیروی می‌کند)",
   "placement.stackNoteNoCopy": "پوشهٔ پروژهٔ {project}: در {home}، بدون کپی (از پیش‌فرض کانتینرها پیروی می‌کند)",
+
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
 };
 
 export default fa;

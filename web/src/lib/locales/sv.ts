@@ -1793,6 +1793,14 @@ const sv: Partial<Translations> = {
   "placement.noBackup": "Ingen säkerhetskopia ännu.",
   "placement.stackNote": "Projektmapp {project}: på {home}, kopierad till {targets} (följer standarden för containrar)",
   "placement.stackNoteNoCopy": "Projektmapp {project}: på {home}, inte kopierad (följer standarden för containrar)",
+
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
 };
 
 export default sv;

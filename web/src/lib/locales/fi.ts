@@ -1793,6 +1793,14 @@ const fi: Partial<Translations> = {
   "placement.noBackup": "Ei vielä varmuuskopiota.",
   "placement.stackNote": "Projektikansio {project}: kohteessa {home}, kopioitu kohteeseen {targets} (noudattaa konttien oletusta)",
   "placement.stackNoteNoCopy": "Projektikansio {project}: kohteessa {home}, ei kopioitu (noudattaa konttien oletusta)",
+
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
 };
 
 export default fi;

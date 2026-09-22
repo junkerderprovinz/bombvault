@@ -1785,6 +1785,14 @@ const ko: Partial<Translations> = {
   "placement.noBackup": "아직 백업이 없습니다.",
   "placement.stackNote": "프로젝트 폴더 {project}: {home}에, {targets}에 복사됨 (컨테이너 기본값을 따름)",
   "placement.stackNoteNoCopy": "프로젝트 폴더 {project}: {home}에, 복사되지 않음 (컨테이너 기본값을 따름)",
+
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
 };
 
 export default ko;

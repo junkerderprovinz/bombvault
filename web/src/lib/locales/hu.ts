@@ -1796,6 +1796,14 @@ const hu: Partial<Translations> = {
   "placement.noBackup": "Még nincs mentés.",
   "placement.stackNote": "Projektmappa {project}: itt: {home}, másolva ide: {targets} (a konténerek alapértelmezését követi)",
   "placement.stackNoteNoCopy": "Projektmappa {project}: itt: {home}, nincs másolva (a konténerek alapértelmezését követi)",
+
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
 };
 
 export default hu;
