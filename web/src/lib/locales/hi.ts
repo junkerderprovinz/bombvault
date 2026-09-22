@@ -1804,6 +1804,7 @@ const hi: Partial<Translations> = {
   "placement.noBackup": "अभी तक कोई बैकअप नहीं।",
   "placement.stackNote": "प्रोजेक्ट फ़ोल्डर {project}: {home} पर, {targets} में कॉपी किया गया (कंटेनर डिफ़ॉल्ट का अनुसरण करता है)",
   "placement.stackNoteNoCopy": "प्रोजेक्ट फ़ोल्डर {project}: {home} पर, कॉपी नहीं किया गया (कंटेनर डिफ़ॉल्ट का अनुसरण करता है)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1812,6 +1813,7 @@ const hi: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default hi;

@@ -1804,6 +1804,7 @@ const sk: Partial<Translations> = {
   "placement.noBackup": "Zatiaľ žiadna záloha.",
   "placement.stackNote": "Priečinok projektu {project}: na {home}, skopírované do {targets} (riadi sa predvoleným nastavením kontajnerov)",
   "placement.stackNoteNoCopy": "Priečinok projektu {project}: na {home}, nekopírované (riadi sa predvoleným nastavením kontajnerov)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1812,6 +1813,7 @@ const sk: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default sk;

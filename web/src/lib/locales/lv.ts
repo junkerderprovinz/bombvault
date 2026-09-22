@@ -1804,6 +1804,7 @@ const lv: Partial<Translations> = {
   "placement.noBackup": "Vēl nav dublējuma.",
   "placement.stackNote": "Projekta mape {project}: vietā {home}, kopēts uz {targets} (seko konteineru noklusējumam)",
   "placement.stackNoteNoCopy": "Projekta mape {project}: vietā {home}, nekopēts (seko konteineru noklusējumam)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1812,6 +1813,7 @@ const lv: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default lv;

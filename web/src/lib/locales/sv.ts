@@ -1793,6 +1793,7 @@ const sv: Partial<Translations> = {
   "placement.noBackup": "Ingen säkerhetskopia ännu.",
   "placement.stackNote": "Projektmapp {project}: på {home}, kopierad till {targets} (följer standarden för containrar)",
   "placement.stackNoteNoCopy": "Projektmapp {project}: på {home}, inte kopierad (följer standarden för containrar)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1801,6 +1802,7 @@ const sv: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default sv;

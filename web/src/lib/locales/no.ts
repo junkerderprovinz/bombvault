@@ -1793,6 +1793,7 @@ const no: Partial<Translations> = {
   "placement.noBackup": "Ingen sikkerhetskopi ennå.",
   "placement.stackNote": "Prosjektmappe {project}: på {home}, kopiert til {targets} (følger standarden for containere)",
   "placement.stackNoteNoCopy": "Prosjektmappe {project}: på {home}, ikke kopiert (følger standarden for containere)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1801,6 +1802,7 @@ const no: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default no;

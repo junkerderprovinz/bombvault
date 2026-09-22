@@ -1804,6 +1804,7 @@ const id: Partial<Translations> = {
   "placement.noBackup": "Belum ada backup.",
   "placement.stackNote": "Folder proyek {project}: di {home}, disalin ke {targets} (mengikuti bawaan kontainer)",
   "placement.stackNoteNoCopy": "Folder proyek {project}: di {home}, tidak disalin (mengikuti bawaan kontainer)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1812,6 +1813,7 @@ const id: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default id;

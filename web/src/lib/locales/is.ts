@@ -1804,6 +1804,7 @@ const is: Partial<Translations> = {
   "placement.noBackup": "Ekkert afrit ennþá.",
   "placement.stackNote": "Verkefnamappa {project}: á {home}, afritað í {targets} (fylgir sjálfgefnu íláta)",
   "placement.stackNoteNoCopy": "Verkefnamappa {project}: á {home}, ekki afritað (fylgir sjálfgefnu íláta)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1812,6 +1813,7 @@ const is: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default is;

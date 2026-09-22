@@ -1793,6 +1793,7 @@ const he: Partial<Translations> = {
   "placement.noBackup": "עדיין אין גיבוי.",
   "placement.stackNote": "תיקיית פרויקט {project}: ב-{home}, הועתק אל {targets} (עוקב אחרי ברירת המחדל של המכולות)",
   "placement.stackNoteNoCopy": "תיקיית פרויקט {project}: ב-{home}, לא הועתק (עוקב אחרי ברירת המחדל של המכולות)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1801,6 +1802,7 @@ const he: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default he;
