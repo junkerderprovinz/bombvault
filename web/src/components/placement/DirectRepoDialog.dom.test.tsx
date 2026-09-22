@@ -47,6 +47,12 @@ describe("DirectRepoDialog", () => {
     expect(await screen.findByText("unknown target")).toBeTruthy();
   });
 
+  it("says why the suggestion could not be asked for at all", async () => {
+    fake.reply("getDirectRepo", new Error("the server did not answer"));
+    renderDialog();
+    expect(await screen.findByText("the server did not answer")).toBeTruthy();
+  });
+
   it("keeps a location typed before the suggestion arrives", async () => {
     const release = fake.hold("getDirectRepo");
     renderDialog();
