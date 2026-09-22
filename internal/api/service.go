@@ -8476,13 +8476,14 @@ func sanitizeTags(in []string) ([]string, error) {
 	return out, nil
 }
 
-// DeleteBackups removes ALL backups of a container — every restic snapshot
-// tagged container:<name>, pruning the freed data — and forgets the container
-// from the store (target + run history). Used to clean up containers that are no
-// longer installed. The repo is shared, so only this container's snapshots
-// (filtered by tag in Snapshots) are forgotten; prune never touches data still
-// referenced by other containers' snapshots.
-func (s *Service) DeleteBackups(ctx context.Context, name string) error {
+// DeleteBackups removes every backup of a container. From the local source it
+// also forgets the container's entry; from an off-site source it deletes at that
+// target only and the entry stays.
+func (s *Service) DeleteBackups(ctx context.Context, name, source string) error {
+	if isOffsiteSource(source) {
+		_, err := s.forgetAtTarget(ctx, "containers", "container:"+name, source, nil)
+		return err
+	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return fmt.Errorf("read settings: %w", err)
@@ -8580,17 +8581,14 @@ func (s *Service) DeleteBackups(ctx context.Context, name string) error {
 	return nil
 }
 
-// DeleteBackupsVM removes ALL backups of a VM in one go — every restic snapshot
-// tagged vm:<name>, pruning the freed data — from the selected source (local or
-// off-site). It is the VM counterpart to DeleteBackups, but source-aware: on the
-// LOCAL source it also forgets the VM from the store (target + run history) so it
-// disappears from the "not installed (backups only)" list; on the OFF-SITE source
-// the target is kept so the VM stays restorable from local. The repo is shared,
-// so only this VM's tagged snapshots are forgotten; prune never touches data
-// still referenced by other VMs' snapshots. Serialised against VM backups via the
-// domain lock, and stale locks are cleared first (so it can't fail on a leftover
-// lock — the same reason PruneDomain needs it).
+// DeleteBackupsVM removes every backup of a VM. From the local source it also
+// forgets the VM's entry; from an off-site source it deletes at that target only,
+// the VM's disks included, and the entry stays.
 func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) error {
+	if isOffsiteSource(source) {
+		_, err := s.forgetAtTarget(ctx, "vms", "vm:"+name, source, nil)
+		return err
+	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return fmt.Errorf("read settings: %w", err)
@@ -8602,34 +8600,14 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 	if err != nil {
 		return err
 	}
-	// Deleting from an append-only off-site target is refused, the same gate as
-	// DeleteSnapshot and pruneDomain: this path forgets with prune, exactly what
-	// append-only exists to block. The flag is the one of the target the source
-	// names.
-	if isOffsiteSource(source) {
-		immutable, err := s.offsiteSourceImmutable(settings, "vms", source)
-		if err != nil {
-			return err
-		}
-		if immutable {
-			return errAppendOnlyOffsiteTarget
-		}
-	}
-	// Issue #152: the SAME refusal applies when the "local" source IS actually a
-	// remote primary flagged append-only in its saved safety settings (same gate
-	// as pruneDomain) — there is no separate off-site copy in that shape, so
-	// refusing here is the only thing standing between an on-box credential and
-	// deleting the sole backup. This path also runs Forget with prune=true, so
-	// skipping it here (unlike PruneDomain/DeleteSnapshot) would have let a
-	// compromised on-box credential irreversibly reclaim space on an immutable
-	// primary.
-	if f := s.primaryAppendOnly("vms", repo); !isOffsiteSource(source) && f != appendOnlyNone {
+	// The same refusal applies when the local source is a remote primary flagged
+	// append-only in its safety settings (#152). There is no separate off-site
+	// copy in that shape, so this is the only thing between an on-box credential
+	// and a Forget with prune against the sole backup.
+	if f := s.primaryAppendOnly("vms", repo); f != appendOnlyNone {
 		return appendOnlyRefusal(f)
 	}
 	if err := s.requireExistingRepo(repo, "no backups to delete yet"); err != nil {
-		if isOffsiteSource(source) {
-			return err
-		}
 		// A repository that was never created holds no backups, and nothing is
 		// left to delete but the entry (#232). Refusing here left a not-installed
 		// card whose one removal button could never succeed. snapshotsForTag tells
@@ -8686,13 +8664,8 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 		}
 	}
 
-	// Only drop the store target when clearing the PRIMARY (local) copy: the target
-	// keeps the VM restorable from off-site, so purging any off-site replica
-	// must not strand it.
-	if !isOffsiteSource(source) {
-		if err := s.store.DeleteVMTarget(name); err != nil {
-			return fmt.Errorf("delete vm target: %w", err)
-		}
+	if err := s.store.DeleteVMTarget(name); err != nil {
+		return fmt.Errorf("delete vm target: %w", err)
 	}
 	return nil
 }
@@ -11650,14 +11623,10 @@ func (s *Service) StartRestoreFileSetFiles(ctx context.Context, id, source, snap
 	return plan.target, true, nil
 }
 
-// DeleteBackupsFileSet removes ALL backups of a file set in one go — every
-// restic snapshot tagged fileset:<Name>, pruning the freed data — and forgets
-// the set from the store (row + run history), mirroring DeleteBackupsVM's
-// local-source behaviour. The repo is shared by all sets, so only this set's
-// tagged snapshots are forgotten; prune never touches data still referenced by
-// other sets' snapshots. Serialised against files backups via the domain lock,
-// and stale locks are cleared first (so it can't fail on a leftover lock).
-func (s *Service) DeleteBackupsFileSet(ctx context.Context, id string) error {
+// DeleteBackupsFileSet removes every backup of a file set. From the local source
+// it also forgets the set; from an off-site source it deletes at that target only
+// and the set stays.
+func (s *Service) DeleteBackupsFileSet(ctx context.Context, id, source string) error {
 	// Loaded first for its repository override (#204): this deletes the
 	// snapshots of ONE set, and they live wherever that set backs up. Reading
 	// the domain repository would report "no backups to delete yet" for a set
@@ -11665,6 +11634,10 @@ func (s *Service) DeleteBackupsFileSet(ctx context.Context, id string) error {
 	set, err := s.store.GetFileSet(id)
 	if err != nil {
 		return errFileSetNotFound
+	}
+	if isOffsiteSource(source) {
+		_, err := s.forgetAtTarget(ctx, "files", "fileset:"+set.Name, source, nil)
+		return err
 	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -11674,14 +11647,9 @@ func (s *Service) DeleteBackupsFileSet(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	// Issue #152: refused when this repo IS a remote primary flagged append-only
-	// in its saved safety settings (same gate as pruneDomain/DeleteSnapshot/
-	// DeleteBackupsVM) — this function has no source parameter, so it always
-	// targets the primary/local repo and only the primary half of the gate
-	// applies (there is no separate off-site source to check here). This path
-	// runs Forget with prune=true, so skipping it here would have let a
-	// compromised on-box credential irreversibly reclaim space on an immutable
-	// primary.
+	// Refused when this repo is a remote primary flagged append-only in its
+	// safety settings (#152), the same gate pruneDomain and DeleteSnapshot use:
+	// this path runs Forget with prune, which reclaims space irreversibly.
 	if f := s.primaryAppendOnly("files", repo); f != appendOnlyNone {
 		return appendOnlyRefusal(f)
 	}

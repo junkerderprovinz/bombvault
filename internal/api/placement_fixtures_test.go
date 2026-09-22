@@ -208,6 +208,20 @@ func (f *placementFixture) offPremises(repoID string) {
 	}
 }
 
+// appendOnly flags an existing off-site target append-only, for a test that
+// needs one without going through the API.
+func (f *placementFixture) appendOnly(targetID string) {
+	f.t.Helper()
+	t, ok, err := f.st.GetOffsiteTarget(targetID)
+	if err != nil || !ok {
+		f.t.Fatalf("appendOnly %s: found %v, %v", targetID, ok, err)
+	}
+	t.Immutable = true
+	if _, err := f.st.UpsertOffsiteTarget(t); err != nil {
+		f.t.Fatalf("appendOnly %s: %v", targetID, err)
+	}
+}
+
 func (f *placementFixture) container(name, repoID string) store.Target {
 	f.t.Helper()
 	if _, err := f.st.WritePlacement(store.ItemRef{Domain: "containers", Key: name}, &store.HomeWrite{Repo: repoID, Choice: store.RepoChosen}, nil, nil); err != nil {
