@@ -4,6 +4,7 @@ import { InfoBubble } from "../InfoBubble";
 import {
   previewItemPlacement,
   type ItemRef,
+  type OkEnvelope,
   type PlacementChange,
   type PlacementView,
   type SendToOption,
@@ -24,6 +25,7 @@ import {
   type FollowLine,
   type PlacementStep,
 } from "../../lib/placement";
+import { placementErrorText } from "../../lib/placementCodes";
 import { useConfirm } from "../../lib/useConfirm";
 import { useHostLabel } from "../../lib/useHostLabel";
 import { usePlacementOptions } from "../../lib/usePlacementOptions";
@@ -75,10 +77,22 @@ export function PlacementRow({
   const [direct, setDirect] = useState<SendToOption | null>(null);
 
   async function uploadsAgreed(change: PlacementChange): Promise<boolean> {
-    const res = await previewItemPlacement(item, change);
+    let res: OkEnvelope & { added?: UploadEstimate[] };
+    try {
+      res = await previewItemPlacement(item, change);
+    } catch (err) {
+      res = { ok: false, error: err instanceof Error ? err.message : undefined };
+    }
+    const intro = t("placement.uploadIntro").replace("{name}", () => name);
+    // Without an estimate the question is all that stands between the click and
+    // a whole history going up, so it is asked with the reason instead.
+    if (!res.ok) {
+      const reason = <p className="text-sm text-carbon-textSub">{placementErrorText(t, lang, res, "settings.error")}</p>;
+      return confirm(intro, { extra: reason });
+    }
     const added = (res.added ?? []).filter((a) => a.snapshots > 0);
-    if (!res.ok || added.length === 0) return true;
-    return confirm(t("placement.uploadIntro").replace("{name}", () => name), { extra: <UploadLines added={added} /> });
+    if (added.length === 0) return true;
+    return confirm(intro, { extra: <UploadLines added={added} /> });
   }
 
   async function run(step: PlacementStep) {

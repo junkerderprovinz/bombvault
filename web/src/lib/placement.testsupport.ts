@@ -183,6 +183,7 @@ export interface PlacementApiFake {
   api: Record<string, (...args: unknown[]) => Promise<unknown>>;
   calls: ApiCall[];
   callsTo: (fn: string) => unknown[][];
+  /** Queues the next answers for a call; an Error is thrown rather than returned. */
   reply: (fn: string, ...replies: unknown[]) => void;
   hold: (fn: string) => (reply?: unknown) => void;
   maxInFlight: (fn: string) => number;
@@ -207,7 +208,9 @@ export function createPlacementApi(): PlacementApiFake {
       peak.set(fn, Math.max(peak.get(fn) ?? 0, now));
       try {
         const released = gate ? await gate : undefined;
-        return released ?? reply;
+        const answer = released ?? reply;
+        if (answer instanceof Error) throw answer;
+        return answer;
       } finally {
         inFlight.set(fn, (inFlight.get(fn) ?? 1) - 1);
       }
