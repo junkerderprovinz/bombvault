@@ -4940,6 +4940,22 @@ func (s *Service) ScheduleSelfRestart() bool {
 	return true
 }
 
+// inspectNamed inspects the container called name and fails when none is. Docker
+// falls back to an id prefix for a name no container has, so a removed "db"
+// would otherwise resolve to whichever container's id starts with db. Callers
+// act on the returned id, which a container recreated in the meantime does not
+// share.
+func (s *Service) inspectNamed(ctx context.Context, name string) (model.Inspect, error) {
+	in, err := s.docker.Inspect(ctx, name)
+	if err != nil {
+		return model.Inspect{}, err
+	}
+	if strings.TrimPrefix(in.Name, "/") != name {
+		return model.Inspect{}, fmt.Errorf("no container is named %q", name)
+	}
+	return in, nil
+}
+
 // Backup runs a full container backup: resolve repo + mode, ensure the repo,
 // inspect the container, find-or-create its target, and drive the orchestrator.
 func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, retErr error) {
@@ -5082,7 +5098,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// cannot inspect (e.g. removed) is logged and left untouched.
 	var deps []backup.StopContainer
 	for _, dep := range tg.StopContainers {
-		di, dErr := s.docker.Inspect(ctx, dep)
+		di, dErr := s.inspectNamed(ctx, dep)
 		if dErr != nil {
 			log.Printf("api: backup: inspect dependency %q: %v (leaving as-is)", dep, dErr) //nolint:gosec // G706: dep is %q-quoted
 			continue
@@ -5092,6 +5108,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		// and, when enabled, wait for each to be healthy before its dependents (#119).
 		deps = append(deps, backup.StopContainer{
 			Name:       dep,
+			ID:         di.ID,
 			WasRunning: di.Running,
 			Service:    composeService(di.Config.Labels),
 			DependsOn:  parseDependsOn(di.Config.Labels),

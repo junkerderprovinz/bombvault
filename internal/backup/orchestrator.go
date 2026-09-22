@@ -140,7 +140,11 @@ type Runs interface {
 // that was already stopped is left exactly as it was — neither stopped nor
 // restarted — so a backup never starts a container the user had off (#33).
 type StopContainer struct {
-	Name       string
+	Name string
+	// ID is the container the service found under Name. Stop and start go by
+	// it, so a name that meanwhile belongs to nothing cannot reach another
+	// container through Docker's id prefix match.
+	ID         string
 	WasRunning bool
 	// Service and DependsOn carry the container's compose identity (the
 	// com.docker.compose.service label and the service names it depends_on) so the
@@ -151,6 +155,13 @@ type StopContainer struct {
 	// themselves.
 	Service   string
 	DependsOn []string
+}
+
+func (c StopContainer) ref() string {
+	if c.ID != "" {
+		return c.ID
+	}
+	return c.Name
 }
 
 // BackupDeps bundles everything BackupContainer needs.
@@ -505,7 +516,7 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 			if !dep.WasRunning {
 				continue // already stopped: leave it exactly as it was (#33)
 			}
-			if stopErr := d.Docker.Stop(ctx, dep.Name, stopTimeout); stopErr != nil {
+			if stopErr := d.Docker.Stop(ctx, dep.ref(), stopTimeout); stopErr != nil {
 				log.Printf("backup: stop dependency %q failed (continuing): %v", dep.Name, stopErr)
 				continue
 			}
@@ -620,12 +631,12 @@ func restartStoppedDeps(ctx context.Context, d BackupDeps, deps []StopContainer)
 		if d.HealthWait {
 			for _, j := range graph[i] {
 				if !resolved[j] {
-					waitHealthy(ctx, d, deps[j].Name, timeout)
+					waitHealthy(ctx, d, deps[j].ref(), timeout)
 					resolved[j] = true
 				}
 			}
 		}
-		if startErr := d.Docker.Start(ctx, deps[i].Name); startErr != nil {
+		if startErr := d.Docker.Start(ctx, deps[i].ref()); startErr != nil {
 			log.Printf("backup: restart dependency %q failed: %v", deps[i].Name, startErr)
 			resolved[i] = true // never let a dependent block on a container that failed to start
 		}
