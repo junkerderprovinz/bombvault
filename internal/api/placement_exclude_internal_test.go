@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"reflect"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/secret"
@@ -21,6 +22,16 @@ func (f *placementFixture) skipOf(domain, identity string) []string {
 
 func sortedIDs(ids ...string) []string {
 	return slices.Sorted(slices.Values(ids))
+}
+
+// brokenRule leaves a rule the placement read cannot decode, so an exclusion
+// fails only once its target has been written.
+func (f *placementFixture) brokenRule(domain, identity string) {
+	f.t.Helper()
+	if _, err := f.db.Exec(`INSERT INTO offsite_copy_rules (domain, identity, skip) VALUES (?, ?, 'not json')`,
+		domain, identity); err != nil {
+		f.t.Fatal(err)
+	}
 }
 
 func TestAnExclusionAddsTheNewTargetToWhatEachItemSkips(t *testing.T) {
@@ -123,6 +134,21 @@ func TestAnAnswerThatCannotBeWrittenCreatesNoTarget(t *testing.T) {
 	}
 }
 
+func TestAnExclusionThatFailsAfterTheWriteLeavesNoTargetBehind(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.brokenRule("containers", "container:nginx")
+	res := f.do(http.MethodPost, "/api/offsite/targets", map[string]any{
+		"domain": "containers", "name": "B2", "repo": "b2:bucket:containers", "enabled": true,
+		"alsoExclude": map[string]any{"identities": []string{"container:plex"}, "default": false},
+	})
+	if res["ok"] != false {
+		t.Fatalf("create = %v, want a refusal", res)
+	}
+	if targets, err := f.st.OffsiteTargetsForDomain("containers"); err != nil || len(targets) != 0 {
+		t.Fatalf("targets = %v, %v, want none, so pressing Save again does not add a second one", targets, err)
+	}
+}
+
 func TestMovingATargetTakesTheAnswerOnlyWithANewLocation(t *testing.T) {
 	f := newPlacementFixture(t)
 	b2 := f.target("containers", "B2", "b2:bucket:containers")
@@ -142,6 +168,24 @@ func TestMovingATargetTakesTheAnswerOnlyWithANewLocation(t *testing.T) {
 	}
 	if got := f.skipOf("containers", "container:plex"); !reflect.DeepEqual(got, []string{b2.ID}) {
 		t.Fatalf("plex = %v, want B2 after the move", got)
+	}
+}
+
+func TestAMovedTargetSaysItWasSavedWhenOnlyTheExclusionFailed(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	f.brokenRule("containers", "container:nginx")
+	res := f.do(http.MethodPut, "/api/offsite/targets/"+b2.ID, map[string]any{
+		"domain": "containers", "name": "B2", "repo": "b2:other:containers", "enabled": true,
+		"alsoExclude": map[string]any{"identities": []string{"container:plex"}, "default": false},
+	})
+	msg, _ := res["error"].(string)
+	if res["ok"] != false || !strings.Contains(msg, "the target was saved") {
+		t.Fatalf("PUT = %v, want a refusal that says the target itself was saved", res)
+	}
+	stored, ok, err := f.st.GetOffsiteTarget(b2.ID)
+	if err != nil || !ok || stored.Repo != "b2:other:containers" {
+		t.Fatalf("target = %v, %v, %v, want the new location kept", stored, ok, err)
 	}
 }
 
@@ -168,5 +212,47 @@ func TestAcceptingAMeshOfferTakesTheAnswerAlong(t *testing.T) {
 	}
 	if got := f.skipOf("containers", "container:plex"); !reflect.DeepEqual(got, []string{id}) {
 		t.Fatalf("plex = %v, want the mesh target", got)
+	}
+}
+
+func TestAFailedExclusionLeavesAnAcceptedOfferAsItWas(t *testing.T) {
+	f := newPlacementFixture(t)
+	enc, err := secret.Encrypt(f.h.cfg.AppKey, []byte("peer-password"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	offer, err := f.st.CreateMeshOffer(store.MeshOffer{
+		From: "tower-a", SuggestedDomain: "containers",
+		Repo: "rest:http://192.0.2.10:8000/bv/containers", RESTUser: "bv", RESTPasswordEnc: enc,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	kept := CloudCredSet{ID: "cs-1", Name: "Wasabi", CloudCreds: CloudCreds{RESTUser: "bv", RESTPassword: "keep-me"}}
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{kept}); err != nil {
+		t.Fatal(err)
+	}
+	f.brokenRule("containers", "container:nginx")
+
+	res := f.do(http.MethodPost, "/api/fleet/mesh-offers/"+offer.ID+"/accept", map[string]any{
+		"domain": "containers", "alsoExclude": map[string]any{"identities": []string{"container:plex"}, "default": false},
+	})
+	if res["ok"] != false {
+		t.Fatalf("accept = %v, want a refusal", res)
+	}
+	if targets, tErr := f.st.OffsiteTargetsForDomain("containers"); tErr != nil || len(targets) != 0 {
+		t.Fatalf("targets = %v, %v, want none, so accepting again does not add a second one", targets, tErr)
+	}
+	settings, sErr := f.st.GetSettings()
+	if sErr != nil {
+		t.Fatal(sErr)
+	}
+	sets, dErr := f.svc.decodeCloudCredSets(settings)
+	if dErr != nil || len(sets) != 1 || sets[0] != kept {
+		t.Fatalf("credential sets = %v, %v, want only %v", sets, dErr, kept)
+	}
+	again, _, gErr := f.st.GetMeshOffer(offer.ID)
+	if gErr != nil || again.Status != "pending" {
+		t.Fatalf("offer status = %q, %v, want pending", again.Status, gErr)
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/secret"
@@ -187,12 +188,12 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 		label = "mesh peer"
 	}
 	setID := newMeshCredSetID()
-	sets, err := h.svc.CloudCredSets()
+	before, err := h.svc.CloudCredSets()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	sets = append(sets, CloudCredSet{
+	sets := append(slices.Clone(before), CloudCredSet{
 		ID:   setID,
 		Name: "mesh: " + label,
 		CloudCreds: CloudCreds{
@@ -219,7 +220,11 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 	}
 	if in.AlsoExclude != nil {
 		if err := h.svc.excludeFromTarget(stored.Domain, stored.ID, *in.AlsoExclude); err != nil {
-			placementFail(w, err, nil)
+			fail := h.removeHalfMadeTarget(stored.ID, err)
+			if sErr := h.svc.SetCloudCredSets(before); sErr != nil {
+				fail = fmt.Errorf("%w; the credential set could not be taken back either: %v", fail, sErr)
+			}
+			placementFail(w, fail, nil)
 			return
 		}
 	}

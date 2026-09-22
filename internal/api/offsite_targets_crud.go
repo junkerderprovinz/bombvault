@@ -187,6 +187,17 @@ func (h *Handler) nestedTargetLocation(id string, t store.OffsiteTarget) error {
 	return h.svc.locationClash(settings, loc, self)
 }
 
+// removeHalfMadeTarget takes back a target whose exclusions could not be
+// written and returns the error to answer with. Nothing on screen shows that
+// target, so the next move is to press the button again, and
+// CreateOffsiteTarget mints a fresh id every time.
+func (h *Handler) removeHalfMadeTarget(id string, cause error) error {
+	if err := h.store.DeleteOffsiteTarget(id); err != nil {
+		return fmt.Errorf("%w; the target could not be taken back either: %v", cause, err)
+	}
+	return cause
+}
+
 // handleListOffsiteTargets lists off-site targets. GET /api/offsite/targets
 // (all, in stable per-domain order) or GET /api/offsite/targets?domain=<d> (one
 // domain). An unknown ?domain is rejected; an empty result is a valid [] list.
@@ -246,7 +257,7 @@ func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 	}
 	if v.AlsoExclude != nil {
 		if err := h.svc.excludeFromTarget(stored.Domain, stored.ID, *v.AlsoExclude); err != nil {
-			placementFail(w, err, nil)
+			placementFail(w, h.removeHalfMadeTarget(stored.ID, err), nil)
 			return
 		}
 	}
@@ -315,7 +326,9 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 	}
 	if moved && v.AlsoExclude != nil {
 		if err := h.svc.excludeFromTarget(stored.Domain, stored.ID, *v.AlsoExclude); err != nil {
-			placementFail(w, err, nil)
+			// The row keeps its id, so there is nothing to take back here; the
+			// answer says which half of the save went through.
+			placementFail(w, fmt.Errorf("the target was saved; what it should leave out was not: %w", err), nil)
 			return
 		}
 	}
