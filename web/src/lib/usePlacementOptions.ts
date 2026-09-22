@@ -7,7 +7,6 @@ import { subscribeOffsiteTargets } from "./useOffsiteTargets";
 export interface PlacementOptionsState {
   options: PlacementOptions | null;
   error: string | null;
-  reload: () => void;
 }
 
 interface Entry {
@@ -22,7 +21,7 @@ interface Entry {
 const entries = new Map<PlacementDomain, Entry>();
 
 const PENDING = Object.fromEntries(
-  PLACEMENT_DOMAINS.map((d) => [d, { options: null, error: null, reload: () => load(d) }])
+  PLACEMENT_DOMAINS.map((d) => [d, { options: null, error: null }])
 ) as Record<PlacementDomain, PlacementOptionsState>;
 
 function publish(entry: Entry, next: Partial<PlacementOptionsState>): void {

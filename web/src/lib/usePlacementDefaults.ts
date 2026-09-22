@@ -6,7 +6,7 @@ import { subscribeOffsiteTargets } from "./useOffsiteTargets";
 
 /** usePlacementDefaults reads the three defaults, and again after every write
  *  they depend on. A failed read keeps the rows it had. */
-export function usePlacementDefaults(): { rows: DefaultRow[] | null; error: string | null; reload: () => void } {
+export function usePlacementDefaults(): { rows: DefaultRow[] | null; error: string | null } {
   const [rows, setRows] = useState<DefaultRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Only the newest read may land; an older answer arriving late would undo it.
@@ -35,5 +35,5 @@ export function usePlacementDefaults(): { rows: DefaultRow[] | null; error: stri
     return () => offs.forEach((off) => off());
   }, [reload]);
 
-  return { rows, error, reload };
+  return { rows, error };
 }
