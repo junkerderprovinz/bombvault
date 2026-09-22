@@ -154,6 +154,20 @@ func (h *Handler) dropCredSet(id string) error {
 	return h.svc.SetCloudCredSets(slices.DeleteFunc(sets, func(s CloudCredSet) bool { return s.ID == id }))
 }
 
+// undoAcceptedOffer takes back the target and the credential set an accepted
+// offer wrote, once its exclusions failed, and returns the error to answer
+// with. The credentials go only with the target, since a target that stays
+// behind would otherwise point at a set that is gone.
+func (h *Handler) undoAcceptedOffer(targetID, setID string, cause error) error {
+	if err := h.store.DeleteOffsiteTarget(targetID); err != nil {
+		return fmt.Errorf("%w; the target and its credentials are still there: %v", cause, err)
+	}
+	if err := h.dropCredSet(setID); err != nil {
+		return fmt.Errorf("%w; the credential set is still there: %v", cause, err)
+	}
+	return cause
+}
+
 // handleAcceptMeshOffer turns a pending offer into a real, working off-site
 // target: a new named CloudCredSet (holding the peer-generated REST
 // credentials) plus a new OffsiteTarget for the chosen domain pointing at the
@@ -232,11 +246,7 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 	}
 	if in.AlsoExclude != nil {
 		if err := h.svc.excludeFromTarget(stored.Domain, stored.ID, *in.AlsoExclude); err != nil {
-			fail := h.removeHalfMadeTarget(stored.ID, err)
-			if sErr := h.dropCredSet(setID); sErr != nil {
-				fail = fmt.Errorf("%w; the credential set could not be taken back either: %v", fail, sErr)
-			}
-			placementFail(w, fail, nil)
+			placementFail(w, h.undoAcceptedOffer(stored.ID, setID, err), nil)
 			return
 		}
 	}
