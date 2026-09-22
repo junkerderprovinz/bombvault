@@ -1776,6 +1776,30 @@ const hr: Partial<Translations> = {
   "discover.directFound": "{name} sadrži sigurnosne kopije zapisane izravno na odredište. Njegovo zadržavanje je pauzirano.",
   "discover.connectDirect": "Poveži se s {target}",
   "discover.connected": "{name} je sada izravni repozitorij odredišta {target}.",
+
+  // Status
+  "placement.planHome": "Na {home}.",
+  "placement.planStays": "Ostaje na {home}: ondje se nalaze sigurnosne kopije ovog imena.",
+  "placement.planDefaultHome": "Na {home} (zadano, vrijedi od prve sigurnosne kopije).",
+  "placement.planDecides": "Lokacija se određuje pri prvoj sigurnosnoj kopiji.",
+  "placement.planNotBackedUpOff": "Nema sigurnosne kopije: zadano pokazuje na {home}, koje je isključeno.",
+  "placement.planNotBackedUpMissing": "Nema sigurnosne kopije: zadano pokazuje na repozitorij koji više ne postoji.",
+  "placement.planCopied": "Kopirano u {targets}.",
+  "placement.planNoCopy": "Nema kopije izvan prostorija.",
+  "placement.planNoTarget": "Za {domain} nije postavljena kopija izvan lokacije.",
+  "placement.sitesOne": "Na jednoj lokaciji",
+  "placement.sites": "Na {n} lokacija",
+  "placement.seen": "{place} zadnji put viđeno {time}",
+  "placement.unreachable": "{place} nedostupno od {since}, zadnji put viđeno {time}",
+  "placement.stateUnknown": "{place}: stanje nepoznato od {since}",
+  "placement.oldCopy": "{place}: zadnja kopija od {date}",
+  "placement.rule321Met": "3-2-1 ispunjeno",
+  "placement.rule321OneCopy": "3-2-1 nije ispunjeno: jedna sigurnosna kopija",
+  "placement.rule321NothingOff": "3-2-1 nije ispunjeno: ništa izvan prostorija",
+  "placement.rule321Unconfirmed": "3-2-1 nepotvrđeno",
+  "placement.noBackup": "Još nema sigurnosne kopije.",
+  "placement.stackNote": "Mapa projekta {project}: na {home}, kopirano u {targets} (slijedi zadano za kontejnere)",
+  "placement.stackNoteNoCopy": "Mapa projekta {project}: na {home}, nije kopirano (slijedi zadano za kontejnere)",
 };
 
 export default hr;

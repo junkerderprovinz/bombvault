@@ -14,8 +14,11 @@ import {
   lockedSegments,
   lockHint,
   noCopyNow,
+  observedLine,
+  planLines,
   segmentItems,
   sendToLabel,
+  stackNoteText,
   stepForChip,
   stepForDefaultSegment,
   stepForHome,
@@ -24,7 +27,19 @@ import {
   stepForSendTo,
   viewHomeLabel,
 } from "./placement";
-import { defaultRow, homeOption, placementOptions, placementView, sendToOption, targetOption } from "./placement.testsupport";
+import {
+  defaultRow,
+  homeOption,
+  observedPlace,
+  placementObserved,
+  placementOptions,
+  placementPlan,
+  placementView,
+  sendToOption,
+  stackNote,
+  targetOption,
+} from "./placement.testsupport";
+import { formatTs } from "./reltime";
 
 const t = ((key: string) => en[key as keyof typeof en] ?? key) as never;
 const LRI = "⁦";
@@ -237,5 +252,144 @@ describe("defaults", () => {
   it("starts a draft at the default, following both axes", () => {
     const view = draftView(placementOptions({ default: defaultRow({ home: "repo-nas", homeKind: "local" }) }));
     expect(view).toMatchObject({ repo: "repo-nas", repoLabel: "NAS Keller", homeFollows: true, copiesFollow: true, segment: "local-offsite" });
+  });
+});
+
+const tEn = ((k: string) => en[k as keyof typeof en] ?? k) as never;
+
+describe("planLines", () => {
+  it("names the home and the targets in two sentences", () => {
+    expect(
+      planLines(tEn, "en", "Unraid", "vms", placementPlan({ home: "NAS Keller", targets: ["B2", "Hetzner"] }), false)
+    ).toEqual([
+      { text: "On NAS Keller.", tone: "normal" },
+      { text: "Copied to B2 and Hetzner.", tone: "normal" },
+    ]);
+  });
+
+  it("puts the server's name in for the domain path and warns when nothing leaves", () => {
+    expect(planLines(tEn, "en", "Unraid", "vms", placementPlan({ targets: [], warn: true, noCopy: true }), false)).toEqual([
+      { text: "On Unraid.", tone: "warn" },
+      { text: "No copy off the premises.", tone: "warn" },
+    ]);
+  });
+
+  it("says when the domain has no off-site copy set up at all", () => {
+    const lines = planLines(tEn, "en", "Unraid", "vms", placementPlan({ targets: [], warn: true, noCopy: true }), true);
+    expect(lines[1]).toEqual({ text: "No off-site copy is set up for VMs.", tone: "warn" });
+  });
+
+  it("tells an open item's default from its first-backup question", () => {
+    expect(
+      planLines(tEn, "en", "Unraid", "vms", placementPlan({ kind: "default-home", home: "NAS Keller" }), false)[0].text
+    ).toBe("On NAS Keller (the default, applies from the first backup).");
+    expect(planLines(tEn, "en", "Unraid", "vms", placementPlan({ kind: "stays-domain" }), false)[0].text).toBe(
+      "Stays on Unraid: backups of this name are there."
+    );
+    expect(
+      planLines(tEn, "en", "Unraid", "vms", placementPlan({ kind: "decides-at-first-backup", targets: [] }), false)
+    ).toEqual([{ text: "The location is decided at the first backup.", tone: "normal" }]);
+  });
+
+  it("says only the pause while the domain is paused", () => {
+    expect(
+      planLines(tEn, "en", "Unraid", "vms", placementPlan({ kind: "paused", targets: [], warn: true }), false)
+    ).toEqual([{ text: "Off-site paused until the default is confirmed.", tone: "warn" }]);
+  });
+
+  it("names a default that cannot be used", () => {
+    const off = placementPlan({ kind: "not-backed-up", home: "NAS Keller", targets: [], warn: true, reason: "default-off" });
+    expect(planLines(tEn, "en", "Unraid", "vms", off, false)).toEqual([
+      { text: "Not backed up: the default points at NAS Keller, which is switched off.", tone: "warn" },
+    ]);
+    const missing = placementPlan({ kind: "not-backed-up", targets: [], warn: true, reason: "default-missing" });
+    expect(planLines(tEn, "en", "Unraid", "vms", missing, false)[0].text).toBe(
+      "Not backed up: the default points at a repository that no longer exists."
+    );
+  });
+});
+
+describe("observedLine", () => {
+  it("reads sites, each target and the 3-2-1 mark", () => {
+    expect(observedLine(tEn, "en", placementObserved())).toEqual([
+      { text: "At 2 sites", tone: "normal" },
+      { text: `B2 last seen ${formatTs(1_758_170_400)}`, tone: "normal" },
+      { text: "3-2-1 met", tone: "normal" },
+    ]);
+  });
+
+  it("says one site in words of its own", () => {
+    expect(observedLine(tEn, "en", placementObserved({ sites: 1, places: [], rule321: "one-copy", tone: "warn" }))).toEqual([
+      { text: "At one site", tone: "normal" },
+      { text: "3-2-1 not met: one backup", tone: "warn" },
+    ]);
+  });
+
+  it("warns about a target that could not be reached", () => {
+    const lines = observedLine(
+      tEn,
+      "en",
+      placementObserved({
+        places: [observedPlace({ state: "unreachable", since: 1_758_200_000, counts: false })],
+        rule321: "one-copy",
+      })
+    );
+    expect(lines[1]).toEqual({
+      text: `B2 unreachable since ${formatTs(1_758_200_000)}, last seen ${formatTs(1_758_170_400)}`,
+      tone: "warn",
+    });
+  });
+
+  it("dims a target whose state is unknown and marks 3-2-1 unconfirmed", () => {
+    const lines = observedLine(
+      tEn,
+      "en",
+      placementObserved({
+        places: [observedPlace({ state: "unknown", since: 1_758_000_000, stale: true, counts: false })],
+        rule321: "unconfirmed",
+        tone: "unconfirmed",
+      })
+    );
+    expect(lines.slice(1)).toEqual([
+      { text: `B2: state unknown since ${formatTs(1_758_000_000)}`, tone: "muted" },
+      { text: "3-2-1 unconfirmed", tone: "unconfirmed" },
+    ]);
+  });
+
+  it("dates a copy that is too old and names a switched-off target", () => {
+    const lines = observedLine(
+      tEn,
+      "en",
+      placementObserved({
+        places: [
+          observedPlace({ state: "old-copy", latest: 1_757_000_000, stale: true, counts: false }),
+          observedPlace({ place: "offsite:t-hz", label: "Hetzner", state: "off", counts: false }),
+        ],
+      })
+    );
+    expect(lines.slice(1, 3)).toEqual([
+      { text: `B2: latest copy from ${new Date(1_757_000_000 * 1000).toLocaleDateString("en")}`, tone: "muted" },
+      { text: "Hetzner (off)", tone: "muted" },
+    ]);
+  });
+
+  it("says no backup yet before the first one", () => {
+    expect(observedLine(tEn, "en", placementObserved({ noBackup: true }))).toEqual([
+      { text: "No backup yet.", tone: "muted" },
+    ]);
+  });
+});
+
+describe("stackNoteText", () => {
+  it("names the project folder, its home and where it is copied", () => {
+    expect(stackNoteText(tEn, "en", "Unraid", stackNote())).toBe(
+      "Project folder immich: on Unraid, copied to B2 (follows the containers default)"
+    );
+  });
+
+  it("says when the project folder is not copied", () => {
+    expect(stackNoteText(tEn, "en", "Unraid", stackNote({ targets: [] }))).toBe(
+      "Project folder immich: on Unraid, not copied (follows the containers default)"
+    );
   });
 });

@@ -1765,6 +1765,30 @@ const no: Partial<Translations> = {
   "discover.directFound": "{name} inneholder sikkerhetskopier skrevet direkte til et mål. Oppbevaringen er satt på pause.",
   "discover.connectDirect": "Koble til {target}",
   "discover.connected": "{name} er nå det direkte depotet til {target}.",
+
+  // Status
+  "placement.planHome": "På {home}.",
+  "placement.planStays": "Blir på {home}: sikkerhetskopier med dette navnet ligger der.",
+  "placement.planDefaultHome": "På {home} (standarden, gjelder fra første sikkerhetskopi).",
+  "placement.planDecides": "Plasseringen avgjøres ved første sikkerhetskopi.",
+  "placement.planNotBackedUpOff": "Sikkerhetskopieres ikke: standarden peker på {home}, som er avslått.",
+  "placement.planNotBackedUpMissing": "Sikkerhetskopieres ikke: standarden peker på et depot som ikke lenger finnes.",
+  "placement.planCopied": "Kopiert til {targets}.",
+  "placement.planNoCopy": "Ingen kopi utenfor lokalet.",
+  "placement.planNoTarget": "Det er ikke satt opp noen ekstern kopi for {domain}.",
+  "placement.sitesOne": "På ett sted",
+  "placement.sites": "På {n} steder",
+  "placement.seen": "{place} sist sett {time}",
+  "placement.unreachable": "{place} utilgjengelig siden {since}, sist sett {time}",
+  "placement.stateUnknown": "{place}: tilstand ukjent siden {since}",
+  "placement.oldCopy": "{place}: siste kopi fra {date}",
+  "placement.rule321Met": "3-2-1 oppfylt",
+  "placement.rule321OneCopy": "3-2-1 ikke oppfylt: én sikkerhetskopi",
+  "placement.rule321NothingOff": "3-2-1 ikke oppfylt: ingenting utenfor lokalet",
+  "placement.rule321Unconfirmed": "3-2-1 ubekreftet",
+  "placement.noBackup": "Ingen sikkerhetskopi ennå.",
+  "placement.stackNote": "Prosjektmappe {project}: på {home}, kopiert til {targets} (følger standarden for containere)",
+  "placement.stackNoteNoCopy": "Prosjektmappe {project}: på {home}, ikke kopiert (følger standarden for containere)",
 };
 
 export default no;

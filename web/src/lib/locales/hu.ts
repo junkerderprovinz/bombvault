@@ -1768,6 +1768,30 @@ const hu: Partial<Translations> = {
   "discover.directFound": "A(z) {name} közvetlenül egy célra írt mentéseket tartalmaz. A megőrzése szünetel.",
   "discover.connectDirect": "Kapcsolódás ehhez: {target}",
   "discover.connected": "A(z) {name} mostantól a(z) {target} közvetlen tárolója.",
+
+  // Status
+  "placement.planHome": "Itt: {home}.",
+  "placement.planStays": "{home} helyen marad: ott vannak ennek a névnek a mentései.",
+  "placement.planDefaultHome": "Itt: {home} (alapértelmezés, az első mentéstől érvényes).",
+  "placement.planDecides": "A hely az első mentéskor dől el.",
+  "placement.planNotBackedUpOff": "Nincs mentve: az alapértelmezés a(z) {home} helyre mutat, ami ki van kapcsolva.",
+  "placement.planNotBackedUpMissing": "Nincs mentve: az alapértelmezés egy már nem létező tárolóra mutat.",
+  "placement.planCopied": "Másolva ide: {targets}.",
+  "placement.planNoCopy": "Nincs telephelyen kívüli másolat.",
+  "placement.planNoTarget": "A(z) {domain} esetén nincs beállítva telephelyen kívüli másolat.",
+  "placement.sitesOne": "Egy helyszínen",
+  "placement.sites": "{n} helyszínen",
+  "placement.seen": "{place}, utoljára látva: {time}",
+  "placement.unreachable": "{place} nem elérhető {since} óta, utoljára látva: {time}",
+  "placement.stateUnknown": "{place}: állapot ismeretlen {since} óta",
+  "placement.oldCopy": "{place}: legutóbbi másolat: {date}",
+  "placement.rule321Met": "3-2-1 teljesül",
+  "placement.rule321OneCopy": "3-2-1 nem teljesül: egyetlen mentés",
+  "placement.rule321NothingOff": "3-2-1 nem teljesül: semmi a telephelyen kívül",
+  "placement.rule321Unconfirmed": "3-2-1 megerősítetlen",
+  "placement.noBackup": "Még nincs mentés.",
+  "placement.stackNote": "Projektmappa {project}: itt: {home}, másolva ide: {targets} (a konténerek alapértelmezését követi)",
+  "placement.stackNoteNoCopy": "Projektmappa {project}: itt: {home}, nincs másolva (a konténerek alapértelmezését követi)",
 };
 
 export default hu;

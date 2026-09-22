@@ -1763,6 +1763,30 @@ const es: Partial<Translations> = {
   "discover.directFound": "{name} contiene copias de seguridad escritas directamente en un destino. Su retención está en pausa.",
   "discover.connectDirect": "Conectar con {target}",
   "discover.connected": "{name} es ahora el repositorio directo de {target}.",
+
+  // Status
+  "placement.planHome": "En {home}.",
+  "placement.planStays": "Se queda en {home}: allí están las copias de seguridad de este nombre.",
+  "placement.planDefaultHome": "En {home} (el valor predeterminado, se aplica desde la primera copia de seguridad).",
+  "placement.planDecides": "La ubicación se decide en la primera copia de seguridad.",
+  "placement.planNotBackedUpOff": "No se respalda: el valor predeterminado apunta a {home}, que está apagado.",
+  "placement.planNotBackedUpMissing": "No se respalda: el valor predeterminado apunta a un repositorio que ya no existe.",
+  "placement.planCopied": "Copiado a {targets}.",
+  "placement.planNoCopy": "Sin copia fuera de las instalaciones.",
+  "placement.planNoTarget": "No hay ninguna copia externa configurada para {domain}.",
+  "placement.sitesOne": "En un sitio",
+  "placement.sites": "En {n} sitios",
+  "placement.seen": "{place}, visto por última vez {time}",
+  "placement.unreachable": "{place} inaccesible desde {since}, visto por última vez {time}",
+  "placement.stateUnknown": "{place}: estado desconocido desde {since}",
+  "placement.oldCopy": "{place}: última copia del {date}",
+  "placement.rule321Met": "3-2-1 cumplido",
+  "placement.rule321OneCopy": "3-2-1 no cumplido: una copia de seguridad",
+  "placement.rule321NothingOff": "3-2-1 no cumplido: nada fuera de las instalaciones",
+  "placement.rule321Unconfirmed": "3-2-1 sin confirmar",
+  "placement.noBackup": "Aún no hay copia de seguridad.",
+  "placement.stackNote": "Carpeta de proyecto {project}: en {home}, copiado a {targets} (sigue el valor predeterminado de los contenedores)",
+  "placement.stackNoteNoCopy": "Carpeta de proyecto {project}: en {home}, sin copiar (sigue el valor predeterminado de los contenedores)",
 };
 
 export default es;

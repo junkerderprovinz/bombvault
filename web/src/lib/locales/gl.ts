@@ -1776,6 +1776,30 @@ const gl: Partial<Translations> = {
   "discover.directFound": "{name} contén copias de seguranza escritas directamente nun destino. A súa retención está en pausa.",
   "discover.connectDirect": "Conectar con {target}",
   "discover.connected": "{name} é agora o repositorio directo de {target}.",
+
+  // Status
+  "placement.planHome": "En {home}.",
+  "placement.planStays": "Queda en {home}: alí están as copias de seguranza deste nome.",
+  "placement.planDefaultHome": "En {home} (o valor por defecto, aplícase dende a primeira copia de seguranza).",
+  "placement.planDecides": "A localización decídese na primeira copia de seguranza.",
+  "placement.planNotBackedUpOff": "Non se fai copia: o valor por defecto apunta a {home}, que está apagado.",
+  "placement.planNotBackedUpMissing": "Non se fai copia: o valor por defecto apunta a un repositorio que xa non existe.",
+  "placement.planCopied": "Copiado a {targets}.",
+  "placement.planNoCopy": "Sen copia fóra das instalacións.",
+  "placement.planNoTarget": "Non hai ningunha copia externa configurada para {domain}.",
+  "placement.sitesOne": "Nunha localización",
+  "placement.sites": "En {n} localizacións",
+  "placement.seen": "{place}, visto por última vez {time}",
+  "placement.unreachable": "{place} inaccesible dende {since}, visto por última vez {time}",
+  "placement.stateUnknown": "{place}: estado descoñecido dende {since}",
+  "placement.oldCopy": "{place}: última copia do {date}",
+  "placement.rule321Met": "3-2-1 cumprida",
+  "placement.rule321OneCopy": "3-2-1 non cumprida: unha copia de seguranza",
+  "placement.rule321NothingOff": "3-2-1 non cumprida: nada fóra das instalacións",
+  "placement.rule321Unconfirmed": "3-2-1 sen confirmar",
+  "placement.noBackup": "Aínda non hai copia de seguranza.",
+  "placement.stackNote": "Cartafol de proxecto {project}: en {home}, copiado a {targets} (segue o valor por defecto dos contedores)",
+  "placement.stackNoteNoCopy": "Cartafol de proxecto {project}: en {home}, sen copiar (segue o valor por defecto dos contedores)",
 };
 
 export default gl;

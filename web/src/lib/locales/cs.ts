@@ -1763,6 +1763,30 @@ const cs: Partial<Translations> = {
   "discover.directFound": "{name} obsahuje zálohy zapsané přímo do cíle. Jeho uchovávání je pozastaveno.",
   "discover.connectDirect": "Připojit k {target}",
   "discover.connected": "{name} je nyní přímý repozitář cíle {target}.",
+
+  // Status
+  "placement.planHome": "Na {home}.",
+  "placement.planStays": "Zůstává na {home}: jsou tam zálohy tohoto jména.",
+  "placement.planDefaultHome": "Na {home} (výchozí, platí od první zálohy).",
+  "placement.planDecides": "Umístění se rozhoduje při první záloze.",
+  "placement.planNotBackedUpOff": "Nezálohuje se: výchozí nastavení ukazuje na {home}, které je vypnuté.",
+  "placement.planNotBackedUpMissing": "Nezálohuje se: výchozí nastavení ukazuje na repozitář, který už neexistuje.",
+  "placement.planCopied": "Kopírováno do {targets}.",
+  "placement.planNoCopy": "Žádná kopie mimo areál.",
+  "placement.planNoTarget": "Pro {domain} není nastavena žádná kopie mimo lokalitu.",
+  "placement.sitesOne": "Na jednom místě",
+  "placement.sites": "Na {n} místech",
+  "placement.seen": "{place} naposledy viděno {time}",
+  "placement.unreachable": "{place} nedostupné od {since}, naposledy viděno {time}",
+  "placement.stateUnknown": "{place}: stav neznámý od {since}",
+  "placement.oldCopy": "{place}: poslední kopie z {date}",
+  "placement.rule321Met": "3-2-1 splněno",
+  "placement.rule321OneCopy": "3-2-1 nesplněno: jedna záloha",
+  "placement.rule321NothingOff": "3-2-1 nesplněno: nic mimo areál",
+  "placement.rule321Unconfirmed": "3-2-1 nepotvrzeno",
+  "placement.noBackup": "Zatím žádná záloha.",
+  "placement.stackNote": "Projektová složka {project}: na {home}, kopírováno do {targets} (řídí se výchozím nastavením kontejnerů)",
+  "placement.stackNoteNoCopy": "Projektová složka {project}: na {home}, bez kopírování (řídí se výchozím nastavením kontejnerů)",
 };
 
 export default cs;

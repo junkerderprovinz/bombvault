@@ -1776,6 +1776,30 @@ const et: Partial<Translations> = {
   "discover.directFound": "{name} sisaldab otse sihtkohta kirjutatud varundusi. Selle säilitamine on peatatud.",
   "discover.connectDirect": "Ühenda sihtkohaga {target}",
   "discover.connected": "{name} on nüüd sihtkoha {target} otsehoidla.",
+
+  // Status
+  "placement.planHome": "Kohas {home}.",
+  "placement.planStays": "Jääb kohta {home}: seal on selle nime varukoopiad.",
+  "placement.planDefaultHome": "Kohas {home} (vaikeväärtus, kehtib alates esimesest varukoopiast).",
+  "placement.planDecides": "Asukoht otsustatakse esimese varukoopiaga.",
+  "placement.planNotBackedUpOff": "Ei varundata: vaikeväärtus osutab kohale {home}, mis on välja lülitatud.",
+  "placement.planNotBackedUpMissing": "Ei varundata: vaikeväärtus osutab hoidlale, mida enam ei ole.",
+  "placement.planCopied": "Kopeeritud kohta {targets}.",
+  "placement.planNoCopy": "Koopiat väljaspool asukohta pole.",
+  "placement.planNoTarget": "Domeenile {domain} pole väliskoopiat seadistatud.",
+  "placement.sitesOne": "Ühes kohas",
+  "placement.sites": "{n} kohas",
+  "placement.seen": "{place} viimati nähtud {time}",
+  "placement.unreachable": "{place} pole kättesaadav alates {since}, viimati nähtud {time}",
+  "placement.stateUnknown": "{place}: olek teadmata alates {since}",
+  "placement.oldCopy": "{place}: viimane koopia kuupäevast {date}",
+  "placement.rule321Met": "3-2-1 täidetud",
+  "placement.rule321OneCopy": "3-2-1 täitmata: üks varukoopia",
+  "placement.rule321NothingOff": "3-2-1 täitmata: midagi pole väljaspool asukohta",
+  "placement.rule321Unconfirmed": "3-2-1 kinnitamata",
+  "placement.noBackup": "Varukoopiat veel pole.",
+  "placement.stackNote": "Projektikaust {project}: kohas {home}, kopeeritud kohta {targets} (järgib konteinerite vaikeväärtust)",
+  "placement.stackNoteNoCopy": "Projektikaust {project}: kohas {home}, kopeerimata (järgib konteinerite vaikeväärtust)",
 };
 
 export default et;

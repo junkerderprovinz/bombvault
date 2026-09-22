@@ -1765,6 +1765,30 @@ const he: Partial<Translations> = {
   "discover.directFound": "{name} מכיל גיבויים שנכתבו ישירות ליעד. השמירה שלו מושהית.",
   "discover.connectDirect": "התחבר אל {target}",
   "discover.connected": "{name} הוא כעת המאגר הישיר של {target}.",
+
+  // Status
+  "placement.planHome": "ב-{home}.",
+  "placement.planStays": "נשאר ב-{home}: הגיבויים של השם הזה נמצאים שם.",
+  "placement.planDefaultHome": "ב-{home} (ברירת המחדל, חלה מהגיבוי הראשון).",
+  "placement.planDecides": "המיקום נקבע בגיבוי הראשון.",
+  "placement.planNotBackedUpOff": "לא מגובה: ברירת המחדל מצביעה על {home}, שכבוי.",
+  "placement.planNotBackedUpMissing": "לא מגובה: ברירת המחדל מצביעה על מאגר שכבר לא קיים.",
+  "placement.planCopied": "הועתק אל {targets}.",
+  "placement.planNoCopy": "אין עותק מחוץ למתחם.",
+  "placement.planNoTarget": "לא הוגדר עותק מחוץ לאתר עבור {domain}.",
+  "placement.sitesOne": "באתר אחד",
+  "placement.sites": "ב-{n} אתרים",
+  "placement.seen": "{place} נראה לאחרונה {time}",
+  "placement.unreachable": "{place} לא נגיש מאז {since}, נראה לאחרונה {time}",
+  "placement.stateUnknown": "{place}: מצב לא ידוע מאז {since}",
+  "placement.oldCopy": "{place}: העותק האחרון מ-{date}",
+  "placement.rule321Met": "3-2-1 מתקיים",
+  "placement.rule321OneCopy": "3-2-1 לא מתקיים: גיבוי אחד",
+  "placement.rule321NothingOff": "3-2-1 לא מתקיים: שום דבר מחוץ למתחם",
+  "placement.rule321Unconfirmed": "3-2-1 לא מאושר",
+  "placement.noBackup": "עדיין אין גיבוי.",
+  "placement.stackNote": "תיקיית פרויקט {project}: ב-{home}, הועתק אל {targets} (עוקב אחרי ברירת המחדל של המכולות)",
+  "placement.stackNoteNoCopy": "תיקיית פרויקט {project}: ב-{home}, לא הועתק (עוקב אחרי ברירת המחדל של המכולות)",
 };
 
 export default he;

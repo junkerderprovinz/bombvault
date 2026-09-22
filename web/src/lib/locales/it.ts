@@ -1765,6 +1765,30 @@ const it: Partial<Translations> = {
   "discover.directFound": "{name} contiene backup scritti direttamente su una destinazione. La sua conservazione è in pausa.",
   "discover.connectDirect": "Connetti a {target}",
   "discover.connected": "{name} è ora il repository diretto di {target}.",
+
+  // Status
+  "placement.planHome": "Su {home}.",
+  "placement.planStays": "Resta su {home}: lì si trovano i backup di questo nome.",
+  "placement.planDefaultHome": "Su {home} (il valore predefinito, si applica dal primo backup).",
+  "placement.planDecides": "La posizione si decide al primo backup.",
+  "placement.planNotBackedUpOff": "Non salvato: il valore predefinito punta a {home}, che è spento.",
+  "placement.planNotBackedUpMissing": "Non salvato: il valore predefinito punta a un repository che non esiste più.",
+  "placement.planCopied": "Copiato su {targets}.",
+  "placement.planNoCopy": "Nessuna copia fuori sede.",
+  "placement.planNoTarget": "Nessuna copia off-site configurata per {domain}.",
+  "placement.sitesOne": "In un sito",
+  "placement.sites": "In {n} siti",
+  "placement.seen": "{place} visto l'ultima volta {time}",
+  "placement.unreachable": "{place} non raggiungibile da {since}, visto l'ultima volta {time}",
+  "placement.stateUnknown": "{place}: stato sconosciuto da {since}",
+  "placement.oldCopy": "{place}: ultima copia del {date}",
+  "placement.rule321Met": "3-2-1 rispettata",
+  "placement.rule321OneCopy": "3-2-1 non rispettata: un solo backup",
+  "placement.rule321NothingOff": "3-2-1 non rispettata: niente fuori sede",
+  "placement.rule321Unconfirmed": "3-2-1 non confermata",
+  "placement.noBackup": "Ancora nessun backup.",
+  "placement.stackNote": "Cartella di progetto {project}: su {home}, copiato su {targets} (segue il valore predefinito dei container)",
+  "placement.stackNoteNoCopy": "Cartella di progetto {project}: su {home}, non copiato (segue il valore predefinito dei container)",
 };
 
 export default it;

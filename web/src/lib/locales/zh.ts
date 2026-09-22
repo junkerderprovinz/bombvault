@@ -1757,6 +1757,30 @@ const zh: Partial<Translations> = {
   "discover.directFound": "{name} 中有直接写入目标的备份。它的保留已暂停。",
   "discover.connectDirect": "连接到 {target}",
   "discover.connected": "{name} 现在是 {target} 的直接存储库。",
+
+  // Status
+  "placement.planHome": "位于 {home}。",
+  "placement.planStays": "保留在 {home}：此名称的备份就在那里。",
+  "placement.planDefaultHome": "位于 {home}（默认值，自首次备份起生效）。",
+  "placement.planDecides": "位置在首次备份时确定。",
+  "placement.planNotBackedUpOff": "未备份：默认值指向 {home}，该位置已关闭。",
+  "placement.planNotBackedUpMissing": "未备份：默认值指向一个已不存在的存储库。",
+  "placement.planCopied": "已复制到 {targets}。",
+  "placement.planNoCopy": "没有场外副本。",
+  "placement.planNoTarget": "{domain} 尚未设置异地副本。",
+  "placement.sitesOne": "位于一个站点",
+  "placement.sites": "位于 {n} 个站点",
+  "placement.seen": "{place} 最后一次看到于 {time}",
+  "placement.unreachable": "{place} 自 {since} 起无法访问，最后一次看到于 {time}",
+  "placement.stateUnknown": "{place}：状态自 {since} 起未知",
+  "placement.oldCopy": "{place}：最新副本来自 {date}",
+  "placement.rule321Met": "满足 3-2-1",
+  "placement.rule321OneCopy": "不满足 3-2-1：只有一份备份",
+  "placement.rule321NothingOff": "不满足 3-2-1：没有场外副本",
+  "placement.rule321Unconfirmed": "3-2-1 未确认",
+  "placement.noBackup": "尚无备份。",
+  "placement.stackNote": "项目文件夹 {project}：位于 {home}，已复制到 {targets}（遵循容器默认值）",
+  "placement.stackNoteNoCopy": "项目文件夹 {project}：位于 {home}，未复制（遵循容器默认值）",
 };
 
 export default zh;

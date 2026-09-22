@@ -1776,6 +1776,30 @@ const is: Partial<Translations> = {
   "discover.directFound": "{name} inniheldur afrit sem voru skrifuð beint á áfangastað. Varðveisla þess er í bið.",
   "discover.connectDirect": "Tengjast {target}",
   "discover.connected": "{name} er nú bein geymsla fyrir {target}.",
+
+  // Status
+  "placement.planHome": "Á {home}.",
+  "placement.planStays": "Er áfram á {home}: afrit með þessu nafni eru þar.",
+  "placement.planDefaultHome": "Á {home} (sjálfgefið, gildir frá fyrsta afriti).",
+  "placement.planDecides": "Staðsetningin ræðst við fyrsta afritið.",
+  "placement.planNotBackedUpOff": "Ekki afritað: sjálfgefið vísar á {home}, sem er slökkt.",
+  "placement.planNotBackedUpMissing": "Ekki afritað: sjálfgefið vísar á geymslu sem er ekki lengur til.",
+  "placement.planCopied": "Afritað í {targets}.",
+  "placement.planNoCopy": "Ekkert afrit utan húss.",
+  "placement.planNoTarget": "Ekkert fjarafrit er sett upp fyrir {domain}.",
+  "placement.sitesOne": "Á einum stað",
+  "placement.sites": "Á {n} stöðum",
+  "placement.seen": "{place} síðast séð {time}",
+  "placement.unreachable": "{place} óaðgengilegt frá {since}, síðast séð {time}",
+  "placement.stateUnknown": "{place}: staða óþekkt frá {since}",
+  "placement.oldCopy": "{place}: nýjasta afrit frá {date}",
+  "placement.rule321Met": "3-2-1 uppfyllt",
+  "placement.rule321OneCopy": "3-2-1 ekki uppfyllt: eitt afrit",
+  "placement.rule321NothingOff": "3-2-1 ekki uppfyllt: ekkert utan húss",
+  "placement.rule321Unconfirmed": "3-2-1 óstaðfest",
+  "placement.noBackup": "Ekkert afrit ennþá.",
+  "placement.stackNote": "Verkefnamappa {project}: á {home}, afritað í {targets} (fylgir sjálfgefnu íláta)",
+  "placement.stackNoteNoCopy": "Verkefnamappa {project}: á {home}, ekki afritað (fylgir sjálfgefnu íláta)",
 };
 
 export default is;

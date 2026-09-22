@@ -1776,6 +1776,30 @@ const sk: Partial<Translations> = {
   "discover.directFound": "{name} obsahuje zálohy zapísané priamo do cieľa. Jeho uchovávanie je pozastavené.",
   "discover.connectDirect": "Pripojiť k {target}",
   "discover.connected": "{name} je teraz priamy repozitár cieľa {target}.",
+
+  // Status
+  "placement.planHome": "Na {home}.",
+  "placement.planStays": "Zostáva na {home}: sú tam zálohy tohto názvu.",
+  "placement.planDefaultHome": "Na {home} (predvolené, platí od prvej zálohy).",
+  "placement.planDecides": "Umiestnenie sa rozhoduje pri prvej zálohe.",
+  "placement.planNotBackedUpOff": "Nezálohuje sa: predvolené nastavenie ukazuje na {home}, ktoré je vypnuté.",
+  "placement.planNotBackedUpMissing": "Nezálohuje sa: predvolené nastavenie ukazuje na repozitár, ktorý už neexistuje.",
+  "placement.planCopied": "Skopírované do {targets}.",
+  "placement.planNoCopy": "Žiadna kópia mimo priestorov.",
+  "placement.planNoTarget": "Pre {domain} nie je nastavená kópia mimo lokality.",
+  "placement.sitesOne": "Na jednom mieste",
+  "placement.sites": "Na {n} miestach",
+  "placement.seen": "{place} naposledy videné {time}",
+  "placement.unreachable": "{place} nedostupné od {since}, naposledy videné {time}",
+  "placement.stateUnknown": "{place}: stav neznámy od {since}",
+  "placement.oldCopy": "{place}: posledná kópia z {date}",
+  "placement.rule321Met": "3-2-1 splnené",
+  "placement.rule321OneCopy": "3-2-1 nesplnené: jedna záloha",
+  "placement.rule321NothingOff": "3-2-1 nesplnené: nič mimo priestorov",
+  "placement.rule321Unconfirmed": "3-2-1 nepotvrdené",
+  "placement.noBackup": "Zatiaľ žiadna záloha.",
+  "placement.stackNote": "Priečinok projektu {project}: na {home}, skopírované do {targets} (riadi sa predvoleným nastavením kontajnerov)",
+  "placement.stackNoteNoCopy": "Priečinok projektu {project}: na {home}, nekopírované (riadi sa predvoleným nastavením kontajnerov)",
 };
 
 export default sk;

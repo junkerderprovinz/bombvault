@@ -1776,6 +1776,30 @@ const ms: Partial<Translations> = {
   "discover.directFound": "{name} mengandungi sandaran yang ditulis terus ke sasaran. Pengekalannya sedang ditahan.",
   "discover.connectDirect": "Sambung dengan {target}",
   "discover.connected": "{name} kini repositori langsung bagi {target}.",
+
+  // Status
+  "placement.planHome": "Di {home}.",
+  "placement.planStays": "Kekal di {home}: sandaran nama ini berada di sana.",
+  "placement.planDefaultHome": "Di {home} (lalai, berkuat kuasa sejak sandaran pertama).",
+  "placement.planDecides": "Lokasi ditentukan pada sandaran pertama.",
+  "placement.planNotBackedUpOff": "Tidak disandarkan: lalai menunjuk ke {home}, yang dimatikan.",
+  "placement.planNotBackedUpMissing": "Tidak disandarkan: lalai menunjuk ke repositori yang tidak lagi wujud.",
+  "placement.planCopied": "Disalin ke {targets}.",
+  "placement.planNoCopy": "Tiada salinan di luar premis.",
+  "placement.planNoTarget": "Tiada salinan luar tapak disediakan untuk {domain}.",
+  "placement.sitesOne": "Di satu tapak",
+  "placement.sites": "Di {n} tapak",
+  "placement.seen": "{place} kali terakhir dilihat {time}",
+  "placement.unreachable": "{place} tidak dapat dicapai sejak {since}, kali terakhir dilihat {time}",
+  "placement.stateUnknown": "{place}: status tidak diketahui sejak {since}",
+  "placement.oldCopy": "{place}: salinan terkini dari {date}",
+  "placement.rule321Met": "3-2-1 dipenuhi",
+  "placement.rule321OneCopy": "3-2-1 tidak dipenuhi: satu sandaran",
+  "placement.rule321NothingOff": "3-2-1 tidak dipenuhi: tiada apa-apa di luar premis",
+  "placement.rule321Unconfirmed": "3-2-1 belum disahkan",
+  "placement.noBackup": "Belum ada sandaran.",
+  "placement.stackNote": "Folder projek {project}: di {home}, disalin ke {targets} (mengikut lalai kontena)",
+  "placement.stackNoteNoCopy": "Folder projek {project}: di {home}, tidak disalin (mengikut lalai kontena)",
 };
 
 export default ms;

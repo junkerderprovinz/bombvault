@@ -1757,6 +1757,30 @@ const vi: Partial<Translations> = {
   "discover.directFound": "{name} chứa các bản sao lưu được ghi trực tiếp vào một đích. Việc lưu giữ của nó đang tạm dừng.",
   "discover.connectDirect": "Kết nối với {target}",
   "discover.connected": "{name} giờ là kho trực tiếp của {target}.",
+
+  // Status
+  "placement.planHome": "Tại {home}.",
+  "placement.planStays": "Vẫn ở {home}: các bản sao lưu của tên này nằm ở đó.",
+  "placement.planDefaultHome": "Tại {home} (mặc định, áp dụng từ bản sao lưu đầu tiên).",
+  "placement.planDecides": "Vị trí được quyết định tại bản sao lưu đầu tiên.",
+  "placement.planNotBackedUpOff": "Chưa được sao lưu: mặc định trỏ đến {home}, nơi đã tắt.",
+  "placement.planNotBackedUpMissing": "Chưa được sao lưu: mặc định trỏ đến một kho lưu trữ không còn tồn tại.",
+  "placement.planCopied": "Đã sao chép đến {targets}.",
+  "placement.planNoCopy": "Không có bản sao ngoài cơ sở.",
+  "placement.planNoTarget": "Chưa thiết lập bản sao ngoài site cho {domain}.",
+  "placement.sitesOne": "Tại một nơi",
+  "placement.sites": "Tại {n} nơi",
+  "placement.seen": "{place} lần cuối thấy {time}",
+  "placement.unreachable": "{place} không thể truy cập kể từ {since}, lần cuối thấy {time}",
+  "placement.stateUnknown": "{place}: trạng thái không rõ kể từ {since}",
+  "placement.oldCopy": "{place}: bản sao mới nhất từ {date}",
+  "placement.rule321Met": "Đáp ứng quy tắc 3-2-1",
+  "placement.rule321OneCopy": "Không đáp ứng quy tắc 3-2-1: chỉ một bản sao lưu",
+  "placement.rule321NothingOff": "Không đáp ứng quy tắc 3-2-1: không có gì ngoài cơ sở",
+  "placement.rule321Unconfirmed": "Quy tắc 3-2-1 chưa xác nhận",
+  "placement.noBackup": "Chưa có bản sao lưu nào.",
+  "placement.stackNote": "Thư mục dự án {project}: tại {home}, đã sao chép đến {targets} (theo mặc định của container)",
+  "placement.stackNoteNoCopy": "Thư mục dự án {project}: tại {home}, chưa sao chép (theo mặc định của container)",
 };
 
 export default vi;

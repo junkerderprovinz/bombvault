@@ -5,17 +5,23 @@ import {
   type DefaultRow,
   type HomeKind,
   type HomeOption,
+  type ObservedPlace,
   type PlacementChange,
   type PlacementDomain,
+  type PlacementObserved,
   type PlacementOptions,
+  type PlacementPlan,
   type PlacementView,
+  type PlanKind,
   type SegmentId,
   type SegmentLockReason,
   type SegmentLocks,
   type SendToOption,
+  type StackNote,
 } from "./api";
 import type { TranslationKey, useT } from "./i18n";
 import { withLtrIsolates } from "./ltrFragments";
+import { formatTs } from "./reltime";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -301,4 +307,116 @@ export function stepForDefaultSegment(seg: SegmentId, row: DefaultRow, options: 
   const change: DefaultChange = { skip: seg === "local" ? [ALL] : [] };
   if (!copySource(row.homeKind)) change.home = "";
   return { kind: "change", change };
+}
+
+export interface StatusLine {
+  text: string;
+  tone: "normal" | "warn" | "unconfirmed" | "muted";
+}
+
+const WHERE: Record<Exclude<PlanKind, "paused" | "not-backed-up">, TranslationKey> = {
+  home: "placement.planHome",
+  "stays-domain": "placement.planStays",
+  "default-home": "placement.planDefaultHome",
+  "decides-at-first-backup": "placement.planDecides",
+};
+
+export function planLines(
+  t: T,
+  lang: string,
+  host: string,
+  domain: PlacementDomain,
+  plan: PlacementPlan,
+  noTargets: boolean
+): StatusLine[] {
+  const home = plan.home || host;
+  const kind = plan.kind;
+  if (kind === "paused") return [{ text: t("placement.paused"), tone: "warn" }];
+  if (kind === "not-backed-up") {
+    const text =
+      plan.reason === "default-off"
+        ? t("placement.planNotBackedUpOff").replace("{home}", () => home)
+        : t("placement.planNotBackedUpMissing");
+    return [{ text, tone: "warn" }];
+  }
+  const tone: StatusLine["tone"] = plan.warn ? "warn" : "normal";
+  const lines: StatusLine[] = [{ text: t(WHERE[kind]).replace("{home}", () => home), tone }];
+  if (plan.targets.length > 0) {
+    lines.push({
+      text: t("placement.planCopied").replace("{targets}", () => formatList(lang, plan.targets)),
+      tone: "normal",
+    });
+  } else if (noTargets) {
+    lines.push({ text: t("placement.planNoTarget").replace("{domain}", () => domainLabel(t, domain)), tone });
+  } else if (plan.noCopy) {
+    lines.push({ text: t("placement.planNoCopy"), tone: "warn" });
+  }
+  return lines;
+}
+
+const RULE_321: Record<PlacementObserved["rule321"], { key: TranslationKey; tone: StatusLine["tone"] }> = {
+  met: { key: "placement.rule321Met", tone: "normal" },
+  "one-copy": { key: "placement.rule321OneCopy", tone: "warn" },
+  "nothing-off-premises": { key: "placement.rule321NothingOff", tone: "warn" },
+  unconfirmed: { key: "placement.rule321Unconfirmed", tone: "unconfirmed" },
+};
+
+export function observedLine(t: T, lang: string, observed: PlacementObserved): StatusLine[] {
+  if (observed.noBackup) return [{ text: t("placement.noBackup"), tone: "muted" }];
+  const lines: StatusLine[] = [
+    {
+      text:
+        observed.sites === 1
+          ? t("placement.sitesOne")
+          : t("placement.sites").replace("{n}", String(observed.sites)),
+      tone: "normal",
+    },
+  ];
+  for (const p of observed.places) {
+    if (p.place !== "local") lines.push(placeLine(t, lang, p));
+  }
+  const rule = RULE_321[observed.rule321];
+  lines.push({ text: t(rule.key), tone: rule.tone });
+  return lines;
+}
+
+function placeLine(t: T, lang: string, p: ObservedPlace): StatusLine {
+  const at = (key: TranslationKey) => t(key).replace("{place}", () => p.label);
+  switch (p.state) {
+    case "counts":
+      return { text: at("placement.seen").replace("{time}", () => formatTs(p.seenAt)), tone: "normal" };
+    case "unreachable":
+      return {
+        text:
+          p.seenAt > 0
+            ? at("placement.unreachable")
+                .replace("{since}", () => formatTs(p.since))
+                .replace("{time}", () => formatTs(p.seenAt))
+            : at("placement.stateUnknown").replace("{since}", () => formatTs(p.since)),
+        tone: "warn",
+      };
+    case "unknown":
+      return {
+        text: p.since > 0 ? at("placement.stateUnknown").replace("{since}", () => formatTs(p.since)) : p.label,
+        tone: "muted",
+      };
+    case "old-copy":
+      return {
+        text:
+          p.latest > 0
+            ? at("placement.oldCopy").replace("{date}", () => new Date(p.latest * 1000).toLocaleDateString(lang))
+            : p.label,
+        tone: "muted",
+      };
+    case "off":
+      return { text: t("placement.off").replace("{name}", () => p.label), tone: "muted" };
+  }
+}
+
+export function stackNoteText(t: T, lang: string, host: string, note: StackNote): string {
+  const text =
+    note.targets.length > 0
+      ? t("placement.stackNote").replace("{targets}", () => formatList(lang, note.targets))
+      : t("placement.stackNoteNoCopy");
+  return text.replace("{project}", () => note.project).replace("{home}", () => note.home || host);
 }

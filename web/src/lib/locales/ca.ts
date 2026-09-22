@@ -1776,6 +1776,30 @@ const ca: Partial<Translations> = {
   "discover.directFound": "{name} conté còpies de seguretat escrites directament a un destí. La seva retenció està en pausa.",
   "discover.connectDirect": "Connecta amb {target}",
   "discover.connected": "{name} ara és el repositori directe de {target}.",
+
+  // Status
+  "placement.planHome": "A {home}.",
+  "placement.planStays": "Es queda a {home}: allà hi ha còpies de seguretat amb aquest nom.",
+  "placement.planDefaultHome": "A {home} (el valor per defecte, s'aplica a partir de la primera còpia de seguretat).",
+  "placement.planDecides": "La ubicació es decideix a la primera còpia de seguretat.",
+  "placement.planNotBackedUpOff": "No es fa còpia de seguretat: el valor per defecte apunta a {home}, que està apagat.",
+  "placement.planNotBackedUpMissing": "No es fa còpia de seguretat: el valor per defecte apunta a un repositori que ja no existeix.",
+  "placement.planCopied": "Copiat a {targets}.",
+  "placement.planNoCopy": "Cap còpia fora de les instal·lacions.",
+  "placement.planNoTarget": "No hi ha cap còpia externa configurada per a {domain}.",
+  "placement.sitesOne": "En una ubicació",
+  "placement.sites": "En {n} ubicacions",
+  "placement.seen": "{place}, vist per última vegada {time}",
+  "placement.unreachable": "{place} inaccessible des de {since}, vist per última vegada {time}",
+  "placement.stateUnknown": "{place}: estat desconegut des de {since}",
+  "placement.oldCopy": "{place}: última còpia del {date}",
+  "placement.rule321Met": "3-2-1 complert",
+  "placement.rule321OneCopy": "3-2-1 no complert: una còpia de seguretat",
+  "placement.rule321NothingOff": "3-2-1 no complert: res fora de les instal·lacions",
+  "placement.rule321Unconfirmed": "3-2-1 sense confirmar",
+  "placement.noBackup": "Encara no hi ha cap còpia de seguretat.",
+  "placement.stackNote": "Carpeta de projecte {project}: a {home}, copiat a {targets} (segueix el valor per defecte dels contenidors)",
+  "placement.stackNoteNoCopy": "Carpeta de projecte {project}: a {home}, sense copiar (segueix el valor per defecte dels contenidors)",
 };
 
 export default ca;

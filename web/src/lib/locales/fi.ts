@@ -1765,6 +1765,30 @@ const fi: Partial<Translations> = {
   "discover.directFound": "{name} sisältää suoraan kohteeseen kirjoitettuja varmuuskopioita. Sen säilytys on tauolla.",
   "discover.connectDirect": "Yhdistä kohteeseen {target}",
   "discover.connected": "{name} on nyt kohteen {target} suora arkisto.",
+
+  // Status
+  "placement.planHome": "Kohteessa {home}.",
+  "placement.planStays": "Pysyy kohteessa {home}: tämän nimen varmuuskopiot ovat siellä.",
+  "placement.planDefaultHome": "Kohteessa {home} (oletus, voimassa ensimmäisestä varmuuskopiosta lähtien).",
+  "placement.planDecides": "Sijainti päätetään ensimmäisellä varmuuskopiolla.",
+  "placement.planNotBackedUpOff": "Ei varmuuskopioida: oletus osoittaa kohteeseen {home}, joka on pois päältä.",
+  "placement.planNotBackedUpMissing": "Ei varmuuskopioida: oletus osoittaa arkistoon, jota ei enää ole.",
+  "placement.planCopied": "Kopioitu kohteeseen {targets}.",
+  "placement.planNoCopy": "Ei kopiota tilojen ulkopuolella.",
+  "placement.planNoTarget": "Kohteelle {domain} ei ole asetettu etäkopiota.",
+  "placement.sitesOne": "Yhdessä paikassa",
+  "placement.sites": "{n} paikassa",
+  "placement.seen": "{place} nähty viimeksi {time}",
+  "placement.unreachable": "{place} ei tavoitettavissa alkaen {since}, nähty viimeksi {time}",
+  "placement.stateUnknown": "{place}: tila tuntematon alkaen {since}",
+  "placement.oldCopy": "{place}: viimeisin kopio {date}",
+  "placement.rule321Met": "3-2-1 täyttyy",
+  "placement.rule321OneCopy": "3-2-1 ei täyty: yksi varmuuskopio",
+  "placement.rule321NothingOff": "3-2-1 ei täyty: ei mitään tilojen ulkopuolella",
+  "placement.rule321Unconfirmed": "3-2-1 vahvistamatta",
+  "placement.noBackup": "Ei vielä varmuuskopiota.",
+  "placement.stackNote": "Projektikansio {project}: kohteessa {home}, kopioitu kohteeseen {targets} (noudattaa konttien oletusta)",
+  "placement.stackNoteNoCopy": "Projektikansio {project}: kohteessa {home}, ei kopioitu (noudattaa konttien oletusta)",
 };
 
 export default fi;
