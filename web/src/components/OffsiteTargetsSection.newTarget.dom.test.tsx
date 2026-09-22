@@ -99,6 +99,16 @@ describe("the off-site targets and a new location", () => {
     expect(fake.callsTo("updateOffsiteTarget")[0][2]).toBeUndefined();
   });
 
+  it("says a refused create in the language the rest of the page speaks", async () => {
+    fake.reply("createOffsiteTarget", { ok: false, code: "nested-location", error: "the server's own sentence" });
+    renderWithProviders(<OffsiteTargetsSection domain="containers" t={t} />);
+    fireEvent.click(await screen.findByRole("button", { name: en["offsite.targets.add"] }));
+    fireEvent.change(repoField(), { target: { value: "b2:bucket:containers" } });
+    save();
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Confirm" }));
+    expect(await screen.findByText(en["placementCode.nestedLocation"])).toBeTruthy();
+  });
+
   it("says which half of the save went through when the exclusions failed", async () => {
     listed.targets = [hetzner];
     fake.reply("updateOffsiteTarget", { ok: false, code: "exclusion-unsaved", error: "the server's own sentence" });
