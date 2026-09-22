@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import type { PlacementView } from "./api";
@@ -31,6 +32,23 @@ function Harness({ onView }: { onView: (next: PlacementView) => void }) {
       </button>
       <button type="button" onClick={() => send(["*"])}>
         three
+      </button>
+    </div>
+  );
+}
+
+// A card whose page hands it a new view, the way a list reload does.
+function Reloading({ first, later }: { first: PlacementView; later: PlacementView }) {
+  const [view, setView] = useState(first);
+  const { shown, save } = usePlacementSave(item, view, () => undefined);
+  return (
+    <div>
+      <span data-testid="home">{shown.repoLabel || "none"}</span>
+      <button type="button" onClick={() => save({ copies: { skip: ["t-b2"] } }, { skip: ["t-b2"], copiesFollow: false })}>
+        chip
+      </button>
+      <button type="button" onClick={() => setView(later)}>
+        list
       </button>
     </div>
   );
@@ -81,6 +99,16 @@ describe("usePlacementSave", () => {
     unmount();
     await act(async () => release());
     expect(onView).not.toHaveBeenCalled();
+  });
+
+  it("keeps the home it is on when an older list answer lands during a save", async () => {
+    const release = fake.hold("setItemPlacement");
+    const nas = placementView({ repo: "repo-nas", repoLabel: "NAS Keller", repoKind: "local" });
+    renderWithProviders(<Reloading first={nas} later={base} />);
+    fireEvent.click(screen.getByText("chip"));
+    fireEvent.click(screen.getByText("list"));
+    expect(screen.getByTestId("home").textContent).toBe("NAS Keller");
+    await act(async () => release());
   });
 
   it("says what each dropped target keeps", async () => {
