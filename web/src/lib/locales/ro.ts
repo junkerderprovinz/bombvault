@@ -1702,6 +1702,7 @@ const ro: Partial<Translations> = {
   "placement.confirmHome": "Se face de acum copie de siguranță pentru {name} în {home}? Locația este fixă de la prima copie de siguranță.",
   "placement.paused": "Extern suspendat până la confirmarea valorii implicite.",
   "placement.uploadIntro": "La următoarea rulare vor fi încărcate instantanee ale {name}:",
+  "placement.uploadUnknown": "Nu s-a putut calcula cât din {name} va fi încărcat.",
   "placement.uploadLine": "{target}: aproximativ {n}",
   "placement.uploadCost": "Încărcările pot costa bani la furnizor.",
   "placement.uncheckable": "Nu s-a putut verifica: {list}",

@@ -1702,6 +1702,7 @@ const th: Partial<Translations> = {
   "placement.confirmHome": "สำรองข้อมูล {name} ไปยัง {home} ตั้งแต่นี้เป็นต้นไปหรือไม่? ตำแหน่งจะคงที่ตั้งแต่การสำรองข้อมูลครั้งแรก",
   "placement.paused": "นอกสถานที่หยุดชั่วคราวจนกว่าจะยืนยันค่าเริ่มต้น",
   "placement.uploadIntro": "ในการทำงานครั้งถัดไป จะอัปโหลดสแนปช็อตของ {name}:",
+  "placement.uploadUnknown": "ไม่สามารถคำนวณได้ว่าจะอัปโหลด {name} มากเพียงใด",
   "placement.uploadLine": "{target}: ประมาณ {n}",
   "placement.uploadCost": "การอัปโหลดอาจมีค่าใช้จ่ายที่ผู้ให้บริการ",
   "placement.uncheckable": "ตรวจสอบไม่ได้: {list}",

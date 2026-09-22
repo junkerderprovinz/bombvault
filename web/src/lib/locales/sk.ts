@@ -1710,6 +1710,7 @@ const sk: Partial<Translations> = {
   "placement.confirmHome": "Zálohovať {name} od teraz do {home}? Umiestnenie je pevné od prvej zálohy.",
   "placement.paused": "Externý je pozastavený, kým sa nepotvrdí predvolené nastavenie.",
   "placement.uploadIntro": "Pri ďalšom behu sa nahrajú snímky {name}:",
+  "placement.uploadUnknown": "Nepodarilo sa zistiť, koľko z {name} sa nahrá.",
   "placement.uploadLine": "{target}: asi {n}",
   "placement.uploadCost": "Nahrávanie môže u poskytovateľa stáť peniaze.",
   "placement.uncheckable": "Nepodarilo sa skontrolovať: {list}",

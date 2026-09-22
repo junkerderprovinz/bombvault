@@ -1710,6 +1710,7 @@ const gl: Partial<Translations> = {
   "placement.confirmHome": "Facer copia de seguranza de {name} en {home} a partir de agora? A localización queda fixa desde a primeira copia de seguranza.",
   "placement.paused": "Externa en pausa ata que se confirme o valor por defecto.",
   "placement.uploadIntro": "Na próxima execución subiranse instantáneas de {name}:",
+  "placement.uploadUnknown": "Non se puido determinar canto de {name} se vai subir.",
   "placement.uploadLine": "{target}: unhas {n}",
   "placement.uploadCost": "As subidas poden custar cartos no provedor.",
   "placement.uncheckable": "Non se puido comprobar: {list}",

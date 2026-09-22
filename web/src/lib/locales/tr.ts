@@ -1699,6 +1699,7 @@ const tr: Partial<Translations> = {
   "placement.confirmHome": "{name} bundan sonra {home} konumuna yedeklensin mi? Konum ilk yedeklemeden itibaren sabittir.",
   "placement.paused": "Varsayılan onaylanana kadar site dışı duraklatıldı.",
   "placement.uploadIntro": "Bir sonraki çalıştırmada {name} ögesinin anlık görüntüleri yüklenecek:",
+  "placement.uploadUnknown": "{name} ögesinden ne kadarının yükleneceği hesaplanamadı.",
   "placement.uploadLine": "{target}: yaklaşık {n}",
   "placement.uploadCost": "Yüklemeler sağlayıcıda ücrete tabi olabilir.",
   "placement.uncheckable": "Denetlenemedi: {list}",

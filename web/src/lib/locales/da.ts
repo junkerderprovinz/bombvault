@@ -1699,6 +1699,7 @@ const da: Partial<Translations> = {
   "placement.confirmHome": "Sikkerhedskopiér {name} til {home} fra nu af? Placeringen er fast fra første sikkerhedskopi.",
   "placement.paused": "Ekstern sat på pause, indtil standarden er bekræftet.",
   "placement.uploadIntro": "Ved næste kørsel uploades øjeblikksbilleder af {name}:",
+  "placement.uploadUnknown": "Det kunne ikke beregnes, hvor meget af {name} der bliver uploadet.",
   "placement.uploadLine": "{target}: cirka {n}",
   "placement.uploadCost": "Upload kan koste penge hos udbyderen.",
   "placement.uncheckable": "Kunne ikke tjekkes: {list}",

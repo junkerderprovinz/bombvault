@@ -1699,6 +1699,7 @@ const it: Partial<Translations> = {
   "placement.confirmHome": "Eseguire da ora in poi il backup di {name} su {home}? La posizione è fissa dal primo backup.",
   "placement.paused": "Off-site in pausa finché il valore predefinito non viene confermato.",
   "placement.uploadIntro": "Alla prossima esecuzione verranno caricati gli snapshot di {name}:",
+  "placement.uploadUnknown": "Non è stato possibile calcolare quanto di {name} verrà caricato.",
   "placement.uploadLine": "{target}: circa {n}",
   "placement.uploadCost": "I caricamenti possono avere un costo presso il provider.",
   "placement.uncheckable": "Impossibile controllare: {list}",

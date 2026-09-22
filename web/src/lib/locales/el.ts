@@ -1699,6 +1699,7 @@ const el: Partial<Translations> = {
   "placement.confirmHome": "Δημιουργία αντιγράφων ασφαλείας του {name} στο {home} από τώρα και στο εξής; Η τοποθεσία είναι σταθερή από το πρώτο αντίγραφο ασφαλείας.",
   "placement.paused": "Το εκτός τόπου είναι σε παύση μέχρι να επιβεβαιωθεί η προεπιλογή.",
   "placement.uploadIntro": "Στην επόμενη εκτέλεση θα μεταφορτωθούν στιγμιότυπα του {name}:",
+  "placement.uploadUnknown": "Δεν ήταν δυνατό να υπολογιστεί πόσο από το {name} θα μεταφορτωθεί.",
   "placement.uploadLine": "{target}: περίπου {n}",
   "placement.uploadCost": "Οι μεταφορτώσεις μπορεί να κοστίσουν χρήματα στον πάροχο.",
   "placement.uncheckable": "Δεν ήταν δυνατός ο έλεγχος: {list}",

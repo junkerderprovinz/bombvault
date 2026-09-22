@@ -1710,6 +1710,7 @@ const et: Partial<Translations> = {
   "placement.confirmHome": "Kas varundada {name} edaspidi asukohta {home}? Asukoht on fikseeritud alates esimesest varukoopiast.",
   "placement.paused": "Väline on peatatud, kuni vaikeväärtus on kinnitatud.",
   "placement.uploadIntro": "Järgmisel käivitusel laaditakse üles {name} hetktõmmised:",
+  "placement.uploadUnknown": "Ei õnnestunud välja selgitada, kui palju {name} sisust üles laaditakse.",
   "placement.uploadLine": "{target}: umbes {n}",
   "placement.uploadCost": "Üleslaadimine võib pakkuja juures raha maksta.",
   "placement.uncheckable": "Ei õnnestunud kontrollida: {list}",

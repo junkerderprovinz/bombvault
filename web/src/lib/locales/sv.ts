@@ -1699,6 +1699,7 @@ const sv: Partial<Translations> = {
   "placement.confirmHome": "Säkerhetskopiera {name} till {home} från och med nu? Platsen är fast från den första säkerhetskopian.",
   "placement.paused": "Utanför platsen är pausad tills standarden bekräftas.",
   "placement.uploadIntro": "Vid nästa körning laddas ögonblicksbilder av {name} upp:",
+  "placement.uploadUnknown": "Det gick inte att räkna ut hur mycket av {name} som laddas upp.",
   "placement.uploadLine": "{target}: cirka {n}",
   "placement.uploadCost": "Uppladdningar kan kosta pengar hos leverantören.",
   "placement.uncheckable": "Kunde inte kontrolleras: {list}",

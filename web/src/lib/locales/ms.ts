@@ -1710,6 +1710,7 @@ const ms: Partial<Translations> = {
   "placement.confirmHome": "Sandarkan {name} ke {home} mulai sekarang? Lokasi tetap sejak sandaran pertama.",
   "placement.paused": "Luar tapak dijeda sehingga lalai disahkan.",
   "placement.uploadIntro": "Pada larian seterusnya, snapshot {name} akan dimuat naik:",
+  "placement.uploadUnknown": "Tidak dapat ditentukan berapa banyak daripada {name} yang akan dimuat naik.",
   "placement.uploadLine": "{target}: kira-kira {n}",
   "placement.uploadCost": "Muat naik boleh dikenakan bayaran di penyedia.",
   "placement.uncheckable": "Tidak dapat disemak: {list}",

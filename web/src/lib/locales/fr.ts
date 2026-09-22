@@ -1699,6 +1699,7 @@ const fr: Partial<Translations> = {
   "placement.confirmHome": "Sauvegarder {name} vers {home} à partir de maintenant ? L'emplacement est fixé dès la première sauvegarde.",
   "placement.paused": "Hors site en pause jusqu'à confirmation de la valeur par défaut.",
   "placement.uploadIntro": "Au prochain passage, les instantanés de {name} seront envoyés :",
+  "placement.uploadUnknown": "Impossible de déterminer la quantité de {name} qui sera envoyée.",
   "placement.uploadLine": "{target} : environ {n}",
   "placement.uploadCost": "Les envois peuvent coûter de l'argent chez le fournisseur.",
   "placement.uncheckable": "Impossible de vérifier : {list}",

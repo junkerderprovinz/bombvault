@@ -1710,6 +1710,7 @@ const lt: Partial<Translations> = {
   "placement.confirmHome": "Nuo šiol kurti {name} atsargines kopijas į {home}? Vieta nustatoma nuo pirmos atsarginės kopijos.",
   "placement.paused": "Nuotolinis pristabdytas, kol bus patvirtinta numatytoji.",
   "placement.uploadIntro": "Per kitą paleidimą bus įkeltos {name} momentinės kopijos:",
+  "placement.uploadUnknown": "Nepavyko nustatyti, kiek iš {name} bus įkelta.",
   "placement.uploadLine": "{target}: apie {n}",
   "placement.uploadCost": "Įkėlimai gali kainuoti pas teikėją.",
   "placement.uncheckable": "Nepavyko patikrinti: {list}",

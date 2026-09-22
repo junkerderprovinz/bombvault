@@ -1702,6 +1702,7 @@ const ar: Partial<Translations> = {
   "placement.confirmHome": "نسخ {name} احتياطيًا إلى {home} من الآن فصاعدًا؟ الموقع ثابت منذ أول نسخة احتياطية.",
   "placement.paused": "خارج الموقع موقوف حتى يُؤكَّد الافتراضي.",
   "placement.uploadIntro": "في التشغيل التالي، تُرفع لقطات {name}:",
+  "placement.uploadUnknown": "تعذّر تحديد حجم ما سيُرفع من {name}.",
   "placement.uploadLine": "{target}: نحو {n}",
   "placement.uploadCost": "قد تكلّف الرفعات مالًا لدى المزود.",
   "placement.uncheckable": "تعذّر التحقق: {list}",

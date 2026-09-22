@@ -1710,6 +1710,7 @@ const is: Partial<Translations> = {
   "placement.confirmHome": "Öryggisafrita {name} í {home} héðan í frá? Staðsetningin er föst frá fyrsta afritinu.",
   "placement.paused": "Fjarlægt er í bið þar til sjálfgefið er staðfest.",
   "placement.uploadIntro": "Í næstu keyrslu verða myndatökur af {name} sendar upp:",
+  "placement.uploadUnknown": "Ekki tókst að reikna út hversu mikið af {name} verður hlaðið upp.",
   "placement.uploadLine": "{target}: um {n}",
   "placement.uploadCost": "Innsendingar geta kostað fé hjá þjónustuveitanda.",
   "placement.uncheckable": "Ekki tókst að athuga: {list}",

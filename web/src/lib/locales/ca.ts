@@ -1710,6 +1710,7 @@ const ca: Partial<Translations> = {
   "placement.confirmHome": "Fer còpia de seguretat de {name} a {home} a partir d'ara? La ubicació queda fixada des de la primera còpia de seguretat.",
   "placement.paused": "Extern en pausa fins que es confirmi el valor per defecte.",
   "placement.uploadIntro": "A la propera execució es pujaran instantànies de {name}:",
+  "placement.uploadUnknown": "No s'ha pogut determinar quant de {name} es pujarà.",
   "placement.uploadLine": "{target}: unes {n}",
   "placement.uploadCost": "Les pujades poden costar diners al proveïdor.",
   "placement.uncheckable": "No s'ha pogut comprovar: {list}",

@@ -1710,6 +1710,7 @@ const hr: Partial<Translations> = {
   "placement.confirmHome": "Sigurnosno kopirati {name} u {home} od sada nadalje? Lokacija je fiksna od prve sigurnosne kopije.",
   "placement.paused": "Izvan lokacije pauzirano dok se ne potvrdi zadano.",
   "placement.uploadIntro": "Kod sljedećeg pokretanja učitat će se snimke stavke {name}:",
+  "placement.uploadUnknown": "Nije se moglo utvrditi koliko će se od {name} prenijeti.",
   "placement.uploadLine": "{target}: oko {n}",
   "placement.uploadCost": "Prijenosi mogu koštati kod pružatelja usluge.",
   "placement.uncheckable": "Nije bilo moguće provjeriti: {list}",

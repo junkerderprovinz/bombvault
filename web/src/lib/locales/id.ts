@@ -1710,6 +1710,7 @@ const id: Partial<Translations> = {
   "placement.confirmHome": "Cadangkan {name} ke {home} mulai sekarang? Lokasi tetap sejak cadangan pertama.",
   "placement.paused": "Off-site dijeda sampai bawaan dikonfirmasi.",
   "placement.uploadIntro": "Pada proses berikutnya, snapshot {name} akan diunggah:",
+  "placement.uploadUnknown": "Tidak dapat diketahui berapa banyak dari {name} yang akan diunggah.",
   "placement.uploadLine": "{target}: sekitar {n}",
   "placement.uploadCost": "Unggahan bisa dikenai biaya di penyedia.",
   "placement.uncheckable": "Tidak dapat diperiksa: {list}",

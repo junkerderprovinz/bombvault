@@ -1710,6 +1710,7 @@ const hi: Partial<Translations> = {
   "placement.confirmHome": "अब से {name} का बैकअप {home} में लिया जाए? स्थान पहले बैकअप से तय हो जाता है।",
   "placement.paused": "ऑफ़-साइट रुका है, जब तक डिफ़ॉल्ट की पुष्टि न हो।",
   "placement.uploadIntro": "अगले रन में {name} के स्नैपशॉट अपलोड होंगे:",
+  "placement.uploadUnknown": "यह पता नहीं चल सका कि {name} में से कितना अपलोड होगा।",
   "placement.uploadLine": "{target}: लगभग {n}",
   "placement.uploadCost": "अपलोड से प्रोवाइडर पर पैसे खर्च हो सकते हैं।",
   "placement.uncheckable": "जाँचा नहीं जा सका: {list}",
