@@ -701,6 +701,21 @@ describe("dbdump runs", () => {
     expect(line.text).toContain("runReason.dbimportAppsDown");
   });
 
+  it("colours a successful run as a warning only when its note asks for action", () => {
+    const runs = [
+      dump({ id: "i1", kind: "dbimport", error: "database imported; the previous data folder was kept: /mnt/pg.old" }),
+      dump({
+        id: "i2",
+        kind: "dbimport",
+        error: "database imported; the previous data folder was kept: /mnt/pg.old; could not start these apps again: immich_server",
+      }),
+    ];
+    const lines = buildLogLines(runs, {}, [], resolveName, 2_000_000);
+    expect(lines.find((l) => l.id === "run:i1")?.warn).toBeUndefined();
+    expect(lines.find((l) => l.id === "run:i2")?.warn).toBe(true);
+    expect(lines.find((l) => l.id === "run:i2")?.status).toBe("success");
+  });
+
   it("counts the dumped bytes on the live line, where there is no percentage", () => {
     const progress: ProgressMap = {
       "container:immich_postgres": {

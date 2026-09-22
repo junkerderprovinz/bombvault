@@ -282,7 +282,7 @@ export function ActivityLog({
               {!l.idle && (
                 <span className="shrink-0 text-carbon-textMuted">{domainLabel(resolveName, l.domain)}</span>
               )}
-              <span className={`flex-1 min-w-0 wrap-break-word ${colorFor(l.status)}`}>{l.text}</span>
+              <span className={`flex-1 min-w-0 wrap-break-word ${l.warn ? "text-statusWarn" : colorFor(l.status)}`}>{l.text}</span>
             </div>
           ))}
         </div>

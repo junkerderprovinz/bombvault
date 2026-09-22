@@ -10,7 +10,7 @@ import type { ProgressMap, ProgressStage, ProgressState } from "./progress";
 import { offsiteRunProgress, STALE_MS } from "./progress";
 import { elapsedSince, formatClockTime, formatDuration } from "./reltime";
 import type { TranslationKey } from "./i18n";
-import { runReason, runReasonParts } from "./runReason";
+import { isWarningNote, runReason, runReasonParts } from "./runReason";
 
 /** Picks a line's glyph and colour in ActivityLog.tsx. */
 export type LogStatus = "running" | "success" | "failed" | "offsite" | "info";
@@ -44,6 +44,9 @@ export interface LogLine {
    *  so filterLogLines exempts it from the quick filters; otherwise an active
    *  filter chip could hide it. */
   idle?: boolean;
+  /** A run that succeeded with a note worth acting on, coloured like the run
+   *  history colours that note. */
+  warn?: boolean;
 }
 
 /**
@@ -522,7 +525,9 @@ function buildHistoryLines(runs: Run[], resolveName: ResolveName, liveSignatures
     if (liveSignatures.has(signature)) continue;
 
     const { status, text } = finishedLineText(resolveName, run, domain, name);
-    lines.push({ id: `run:${run.id}`, atMs: run.finishedAt * 1000, status, text, domain, kind: asLogKind(run.kind), live: false });
+    const line: LogLine = { id: `run:${run.id}`, atMs: run.finishedAt * 1000, status, text, domain, kind: asLogKind(run.kind), live: false };
+    if (run.status === "success" && isWarningNote(run.error)) line.warn = true;
+    lines.push(line);
   }
   return lines;
 }
