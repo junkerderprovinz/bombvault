@@ -1626,6 +1626,8 @@ const el: Partial<Translations> = {
   "repos.companionLost": "δίπλα σε διαγραμμένο προορισμό",
   "repos.mirroredLocked": "Ελήφθη από {target}. Άλλαξέ το εκεί.",
   "repos.removeWithTarget": "Πηγαίνει μαζί με {target}. Για να αφαιρέσεις αυτό το αποθετήριο, αφαίρεσε τον προορισμό.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Οι κανόνες τοποθέτησης δεν ήταν αναγνώσιμοι, οπότε δεν αντιγράφεται τίποτα μέχρι να ξαναγίνουν αναγνώσιμοι.",

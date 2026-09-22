@@ -1629,6 +1629,8 @@ const th: Partial<Translations> = {
   "repos.companionLost": "อยู่ข้างเป้าหมายที่ถูกลบ",
   "repos.mirroredLocked": "รับช่วงมาจาก {target} เปลี่ยนที่นั่น",
   "repos.removeWithTarget": "ไปด้วยกันกับ {target} หากต้องการลบที่เก็บข้อมูลนี้ ให้ลบเป้าหมายนั้น",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "อ่านกฎการจัดวางไม่ได้ จึงไม่มีการคัดลอกใดๆ จนกว่าจะอ่านได้อีกครั้ง",

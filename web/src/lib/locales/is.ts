@@ -1637,6 +1637,8 @@ const is: Partial<Translations> = {
   "repos.companionLost": "við hlið eydds áfangastaðar",
   "repos.mirroredLocked": "Tekið yfir frá {target}. Breyttu því þar.",
   "repos.removeWithTarget": "Fylgir {target}. Fjarlægðu þann áfangastað til að fjarlægja þessa geymslu.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Ekki tókst að lesa staðsetningarreglurnar, svo ekkert er afritað fyrr en hægt er að lesa þær aftur.",

@@ -1624,6 +1624,8 @@ const es: Partial<Translations> = {
   "repos.companionLost": "junto a un destino eliminado",
   "repos.mirroredLocked": "Heredado de {target}. Cámbialo allí.",
   "repos.removeWithTarget": "Va con {target}. Para quitar este repositorio, quita ese destino.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Las reglas de ubicación no se pudieron leer, así que no se copia nada hasta que se puedan leer de nuevo.",

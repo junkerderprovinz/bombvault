@@ -1623,6 +1623,8 @@ const nl: Partial<Translations> = {
   "repos.companionLost": "naast een verwijderde bestemming",
   "repos.mirroredLocked": "Overgenomen van {target}. Wijzig het daar.",
   "repos.removeWithTarget": "Hoort bij {target}. Verwijder die bestemming om deze repository te verwijderen.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "De plaatsingsregels konden niet worden gelezen, dus wordt er niets gekopieerd totdat dat weer lukt.",

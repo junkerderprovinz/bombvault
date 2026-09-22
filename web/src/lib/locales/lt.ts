@@ -1637,6 +1637,8 @@ const lt: Partial<Translations> = {
   "repos.companionLost": "šalia ištrintos paskirties",
   "repos.mirroredLocked": "Perimta iš paskirties {target}. Pakeisk ten.",
   "repos.removeWithTarget": "Eina kartu su paskirtimi {target}. Kad pašalintum šią saugyklą, pašalink paskirtį.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Nepavyko perskaityti vietos nustatymo taisyklių, todėl niekas nekopijuojama, kol jų vėl nepavyks perskaityti.",

@@ -125,3 +125,29 @@ describe("the Repositories card", () => {
     off();
   });
 });
+
+describe("the off-premises switch", () => {
+  beforeEach(() => {
+    api.updateRepo.mockReset();
+    api.updateRepo.mockResolvedValue({ ok: true });
+  });
+
+  it("shows its caption once and sends only the mark", async () => {
+    api.listRepos.mockResolvedValue({ ok: true, repos: [repo({ name: "NAS Keller" })] });
+    render(<ReposCard />);
+    const toggle = await screen.findByRole("switch", { name: "Off the premises" });
+    expect(screen.getAllByText("Off the premises")).toHaveLength(1);
+    fireEvent.click(toggle);
+    await waitFor(() => expect(api.updateRepo.mock.calls).toEqual([["n1", { offPremises: true }]]));
+  });
+
+  it("offers no such switch on a direct repository", async () => {
+    api.listRepos.mockResolvedValue({
+      ok: true,
+      repos: [repo({ id: "d1", name: "B2 direct", repo: "b2:bkt:containers-direct", companionOf: "t-b2" })],
+    });
+    render(<ReposCard />);
+    await screen.findByText("B2 direct");
+    expect(screen.queryByRole("switch", { name: "Off the premises" })).toBeNull();
+  });
+});

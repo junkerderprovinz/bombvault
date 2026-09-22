@@ -1618,6 +1618,8 @@ const ko: Partial<Translations> = {
   "repos.companionLost": "삭제된 대상 옆",
   "repos.mirroredLocked": "{target}에서 넘겨받음. 그곳에서 변경하세요.",
   "repos.removeWithTarget": "{target}과(와) 함께 갑니다. 이 저장소를 없애려면 그 대상을 없애세요.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "배치 규칙을 읽을 수 없어 다시 읽을 수 있을 때까지 아무것도 복사되지 않습니다.",

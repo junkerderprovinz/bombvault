@@ -1729,6 +1729,8 @@ export const en = {
   "repos.companionLost": "next to a deleted target",
   "repos.mirroredLocked": "Taken over from {target}. Change it there.",
   "repos.removeWithTarget": "Goes with {target}. Remove that target to remove this repository.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "The placement rules could not be read, so nothing is copied until they can.",
@@ -3610,6 +3612,8 @@ export const de: Translations = {
   "repos.companionLost": "neben einem gelöschten Ziel",
   "repos.mirroredLocked": "Von {target} übernommen. Dort ändern.",
   "repos.removeWithTarget": "Gehört zu {target}. Zum Entfernen dieses Repositorys das Ziel entfernen.",
+  "repos.offPremises": "Außer Haus",
+  "repos.offPremisesHint": "Zählt auf den Karten als eigener Standort für Standorte und 3-2-1. An den Kopien ändert das nichts. Ein rest-server im selben Haus sollte das aus haben.",
 
   // Refusals
   "placementCode.unreadable": "Die Ablage-Regeln ließen sich nicht lesen. Bis das wieder geht, wird nichts kopiert.",

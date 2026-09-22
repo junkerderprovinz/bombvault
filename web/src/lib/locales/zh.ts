@@ -1618,6 +1618,8 @@ const zh: Partial<Translations> = {
   "repos.companionLost": "紧邻已删除的目标",
   "repos.mirroredLocked": "从 {target} 接管。请在那里更改。",
   "repos.removeWithTarget": "与 {target} 一同存在。要移除此存储库，请移除该目标。",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "位置规则无法读取，因此在能够再次读取之前不会复制任何内容。",

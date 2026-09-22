@@ -1626,6 +1626,8 @@ const fr: Partial<Translations> = {
   "repos.companionLost": "à côté d'une cible supprimée",
   "repos.mirroredLocked": "Repris de {target}. Modifiez-le là-bas.",
   "repos.removeWithTarget": "Va avec {target}. Pour retirer ce dépôt, retirez cette cible.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Les règles de placement n'ont pas pu être lues, rien n'est donc copié tant que ce n'est pas de nouveau possible.",

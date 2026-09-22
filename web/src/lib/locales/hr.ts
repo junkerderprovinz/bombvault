@@ -1637,6 +1637,8 @@ const hr: Partial<Translations> = {
   "repos.companionLost": "pored izbrisanog odredišta",
   "repos.mirroredLocked": "Preuzeto od odredišta {target}. Promijeni ondje.",
   "repos.removeWithTarget": "Ide zajedno s odredištem {target}. Za uklanjanje ovog repozitorija ukloni odredište.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Pravila razmještaja nije bilo moguće pročitati, pa se ništa ne kopira dok se ponovno ne mogu pročitati.",

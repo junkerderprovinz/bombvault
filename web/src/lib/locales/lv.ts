@@ -1637,6 +1637,8 @@ const lv: Partial<Translations> = {
   "repos.companionLost": "blakus dzēstam mērķim",
   "repos.mirroredLocked": "Pārņemts no mērķa {target}. Mainiet to tur.",
   "repos.removeWithTarget": "Iet kopā ar mērķi {target}. Lai noņemtu šo krātuvi, noņemiet mērķi.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Izvietojuma noteikumus nevarēja nolasīt, tāpēc nekas netiek kopēts, kamēr tos atkal nevarēs nolasīt.",

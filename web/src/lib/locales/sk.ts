@@ -1637,6 +1637,8 @@ const sk: Partial<Translations> = {
   "repos.companionLost": "vedľa vymazaného cieľa",
   "repos.mirroredLocked": "Prevzaté od {target}. Zmeň tam.",
   "repos.removeWithTarget": "Patrí k cieľu {target}. Ak chceš tento repozitár odstrániť, odstráň cieľ.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Pravidlá umiestnenia sa nepodarilo prečítať, takže sa nič nekopíruje, kým to opäť nepôjde.",

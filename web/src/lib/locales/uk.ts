@@ -1621,6 +1621,8 @@ const uk: Partial<Translations> = {
   "repos.companionLost": "поруч із видаленою ціллю",
   "repos.mirroredLocked": "Перейнято від {target}. Зміни там.",
   "repos.removeWithTarget": "Іде разом із ціллю {target}. Щоб прибрати цей репозиторій, прибери ціль.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Правила розміщення не вдалося прочитати, тому нічого не копіюється, доки їх знову не можна буде прочитати.",

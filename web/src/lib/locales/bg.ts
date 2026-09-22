@@ -1637,6 +1637,8 @@ const bg: Partial<Translations> = {
   "repos.companionLost": "до изтрита цел",
   "repos.mirroredLocked": "Взето от {target}. Промени го там.",
   "repos.removeWithTarget": "Върви заедно с {target}. За да премахнеш това хранилище, премахни целта.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "Правилата за разполагане не можаха да се прочетат, затова нищо не се копира, докато отново не се прочетат.",

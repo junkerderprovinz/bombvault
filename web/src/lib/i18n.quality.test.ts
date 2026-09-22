@@ -78,6 +78,8 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   "offsiteRemoval.done",
   "offsiteRemoval.appendOnly",
   "placement.older",
+  "repos.offPremises",
+  "repos.offPremisesHint",
 ]);
 
 /** A value nobody would translate: a unit, a number, a protocol, a symbol. */

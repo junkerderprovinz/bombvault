@@ -1626,6 +1626,8 @@ const he: Partial<Translations> = {
   "repos.companionLost": "לצד יעד שנמחק",
   "repos.mirroredLocked": "הועבר מ{target}. שנה אותו שם.",
   "repos.removeWithTarget": "הולך יחד עם {target}. כדי להסיר את המאגר הזה, הסר את היעד.",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "לא ניתן היה לקרוא את כללי המיקום, לכן שום דבר לא מועתק עד שיהיה ניתן לקרוא אותם שוב.",

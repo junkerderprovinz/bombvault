@@ -1637,6 +1637,8 @@ const hi: Partial<Translations> = {
   "repos.companionLost": "हटाए गए गंतव्य के पास",
   "repos.mirroredLocked": "{target} से लिया गया। इसे वहीं बदलें।",
   "repos.removeWithTarget": "{target} के साथ जाती है। इस रिपॉज़िटरी को हटाने के लिए वह गंतव्य हटाएँ।",
+  "repos.offPremises": "Off the premises",
+  "repos.offPremisesHint": "Counts as a site of its own for the sites and 3-2-1 on the cards. Copies are not affected. A rest-server in the same building should have this off.",
 
   // Refusals
   "placementCode.unreadable": "प्लेसमेंट नियम पढ़े नहीं जा सके, इसलिए जब तक वे फिर से पढ़े नहीं जा सकते तब तक कुछ भी कॉपी नहीं होगा।",
