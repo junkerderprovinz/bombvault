@@ -1804,6 +1804,7 @@ export const en = {
   "placement.uploadLine": "{target}: about {n}",
   "placement.uploadCost": "Uploads can cost money at the provider.",
   "placement.uncheckable": "Could not be checked: {list}",
+  "placement.flow": "{from} → {to}",
 
   // Direct repository
   "directRepo.title": "Direct repository at {target}",
@@ -3637,6 +3638,7 @@ export const de: Translations = {
   "placement.uploadLine": "{target}: etwa {n}",
   "placement.uploadCost": "Uploads können beim Anbieter Geld kosten.",
   "placement.uncheckable": "Nicht prüfbar: {list}",
+  "placement.flow": "{from} → {to}",
 
   // Direct repository
   "directRepo.title": "Direkt-Repository bei {target}",

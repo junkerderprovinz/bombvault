@@ -1712,6 +1712,7 @@ const et: Partial<Translations> = {
   "placement.uploadLine": "{target}: umbes {n}",
   "placement.uploadCost": "Üleslaadimine võib pakkuja juures raha maksta.",
   "placement.uncheckable": "Ei õnnestunud kontrollida: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Otsehoidla {target} juures",
   "directRepo.intro": "Üksused, mis selle valivad, varundatakse otse hoidlasse {target}, selle võtme, salvestusklassi, piirangute ja append-only seadistusega. See säilitab oma hetktõmmiseid {target} reeglite järgi. Tühistamine ei jäta midagi maha.",

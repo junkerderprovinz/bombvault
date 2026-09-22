@@ -1704,6 +1704,7 @@ const ro: Partial<Translations> = {
   "placement.uploadLine": "{target}: aproximativ {n}",
   "placement.uploadCost": "Încărcările pot costa bani la furnizor.",
   "placement.uncheckable": "Nu s-a putut verifica: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Depozit direct la {target}",
   "directRepo.intro": "Elementele care îl aleg se salvează direct pe {target}, cu cheia, clasa de stocare, limitele și setarea append-only ale acestuia. Păstrează instantaneele sale după regulile {target}. Anularea nu lasă nimic în urmă.",

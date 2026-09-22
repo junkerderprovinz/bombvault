@@ -1712,6 +1712,7 @@ const eu: Partial<Translations> = {
   "placement.uploadLine": "{target}: {n} inguru",
   "placement.uploadCost": "Igoerek dirua kosta dezakete hornitzailearengan.",
   "placement.uncheckable": "Ezin izan da egiaztatu: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Biltegi zuzena {target}(r)en ondoan",
   "directRepo.intro": "Hautatzen duten elementuak zuzenean babesten dira {target}(e)n, bere gakoarekin, biltegiratze-klasearekin, mugekin eta gehitu-soilik ezarpenarekin. Bere argazkiak {target}(r)en arauen arabera gordetzen ditu. Ezeztatzeak ez du ezer uzten.",

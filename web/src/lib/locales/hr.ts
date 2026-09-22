@@ -1712,6 +1712,7 @@ const hr: Partial<Translations> = {
   "placement.uploadLine": "{target}: oko {n}",
   "placement.uploadCost": "Prijenosi mogu koštati kod pružatelja usluge.",
   "placement.uncheckable": "Nije bilo moguće provjeriti: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Izravni repozitorij kod {target}",
   "directRepo.intro": "Stavke koje ga odaberu sigurnosno se kopiraju izravno na {target}, s njegovim ključem, klasom pohrane, ograničenjima i postavkom append-only. Čuva svoje snimke prema pravilima {target}. Otkazivanje ne ostavlja ništa za sobom.",

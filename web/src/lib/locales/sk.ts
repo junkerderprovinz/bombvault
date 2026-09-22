@@ -1712,6 +1712,7 @@ const sk: Partial<Translations> = {
   "placement.uploadLine": "{target}: asi {n}",
   "placement.uploadCost": "Nahrávanie môže u poskytovateľa stáť peniaze.",
   "placement.uncheckable": "Nepodarilo sa skontrolovať: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Priamy repozitár pri {target}",
   "directRepo.intro": "Položky, ktoré si ho zvolia, sa zálohujú priamo do {target}, s jeho kľúčom, triedou úložiska, limitmi a nastavením append-only. Uchováva svoje snímky podľa pravidiel {target}. Zrušenie nič nezanechá.",

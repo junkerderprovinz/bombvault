@@ -1704,6 +1704,7 @@ const hu: Partial<Translations> = {
   "placement.uploadLine": "{target}: kb. {n}",
   "placement.uploadCost": "A feltöltések pénzbe kerülhetnek a szolgáltatónál.",
   "placement.uncheckable": "Nem sikerült ellenőrizni: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "{target} közvetlen tárolója",
   "directRepo.intro": "Az elemek, amelyek ezt választják, közvetlenül a(z) {target} célba mentenek, annak kulcsával, tárolási osztályával, korlátaival és append-only beállításával. A pillanatképeit a {target} szabályai szerint őrzi meg. A megszakítás semmit nem hagy hátra.",

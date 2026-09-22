@@ -1701,6 +1701,7 @@ const tr: Partial<Translations> = {
   "placement.uploadLine": "{target}: yaklaşık {n}",
   "placement.uploadCost": "Yüklemeler sağlayıcıda ücrete tabi olabilir.",
   "placement.uncheckable": "Denetlenemedi: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "{target} yanında doğrudan depo",
   "directRepo.intro": "Bunu seçen ögeler doğrudan {target} hedefine yedeklenir, onun anahtarı, depolama sınıfı, sınırları ve append-only ayarıyla. Anlık görüntülerini {target} kurallarına göre saklar. İptal hiçbir şey bırakmaz.",

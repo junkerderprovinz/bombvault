@@ -1712,6 +1712,7 @@ const is: Partial<Translations> = {
   "placement.uploadLine": "{target}: um {n}",
   "placement.uploadCost": "Innsendingar geta kostað fé hjá þjónustuveitanda.",
   "placement.uncheckable": "Ekki tókst að athuga: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Bein geymsla hjá {target}",
   "directRepo.intro": "Atriði sem velja hana taka öryggisafrit beint í {target}, með lykli þess, geymsluflokki, mörkum og aðeins-bæta-við stillingu. Hún varðveitir sínar skyndimyndir eftir reglum {target}. Hætt við skilur ekkert eftir.",

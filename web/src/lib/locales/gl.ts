@@ -1712,6 +1712,7 @@ const gl: Partial<Translations> = {
   "placement.uploadLine": "{target}: unhas {n}",
   "placement.uploadCost": "As subidas poden custar cartos no provedor.",
   "placement.uncheckable": "Non se puido comprobar: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Repositorio directo en {target}",
   "directRepo.intro": "Os elementos que o escollan gárdanse directamente en {target}, coa súa clave, clase de almacenamento, límites e configuración de append-only. Conserva as súas instantáneas segundo as regras de {target}. Cancelar non deixa nada.",

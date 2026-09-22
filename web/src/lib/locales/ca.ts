@@ -1712,6 +1712,7 @@ const ca: Partial<Translations> = {
   "placement.uploadLine": "{target}: unes {n}",
   "placement.uploadCost": "Les pujades poden costar diners al proveïdor.",
   "placement.uncheckable": "No s'ha pogut comprovar: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Repositori directe a {target}",
   "directRepo.intro": "Els elements que el triïn es desen directament a {target}, amb la seva clau, classe d'emmagatzematge, límits i configuració d'append-only. Conserva les seves instantànies segons les regles de {target}. Cancel·lar no deixa res enrere.",

@@ -1712,6 +1712,7 @@ const lv: Partial<Translations> = {
   "placement.uploadLine": "{target}: apmēram {n}",
   "placement.uploadCost": "Augšupielādes var maksāt naudu pie sniedzēja.",
   "placement.uncheckable": "Neizdevās pārbaudīt: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Tiešā krātuve pie {target}",
   "directRepo.intro": "Vienumi, kas to izvēlas, tiek dublēti tieši uz {target}, izmantojot tā atslēgu, krātuves klasi, ierobežojumus un append-only iestatījumu. Tā glabā savus momentuzņēmumus pēc {target} noteikumiem. Atcelšana neatstāj neko.",
