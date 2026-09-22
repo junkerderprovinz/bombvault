@@ -3,6 +3,7 @@ package api
 import (
 	"cmp"
 	"context"
+	"slices"
 	"sync"
 	"time"
 
@@ -151,6 +152,22 @@ func homeOffPremises(kind homeKind, repoID string, named map[string]store.Offsit
 		return named[repoID].OffPremises
 	}
 	return false
+}
+
+// stackNoteFor names the project folder when its copies differ from the member's.
+// Project folders always land on the domain path and follow the containers default.
+func stackNoteFor(p placementRead, item placementItem, plan *placementPlan) *stackNote {
+	if item.Stack == "" || plan.Kind == "paused" {
+		return nil
+	}
+	targets := []string{}
+	for _, t := range p.effectiveTargets("stack:" + item.Stack) {
+		targets = append(targets, placementTargetName(t))
+	}
+	if slices.Equal(targets, plan.Targets) {
+		return nil
+	}
+	return &stackNote{Project: item.Stack, Home: "", Targets: targets}
 }
 
 // placementStatus is one item's result line. The home is resolved once here and

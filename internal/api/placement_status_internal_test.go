@@ -1,10 +1,12 @@
 package api
 
 import (
+	"context"
 	"reflect"
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -291,5 +293,71 @@ func TestObservedSaysNoBackupBeforeTheFirstOne(t *testing.T) {
 	f.container("nginx", "")
 	if o := f.cardOf("containers", "nginx", 0).Observed; !o.NoBackup {
 		t.Fatalf("observed = %+v, want noBackup", o)
+	}
+}
+
+// stackListDocker lists the containers in stacks as installed members of
+// their compose project.
+type stackListDocker struct {
+	dockercli.Docker
+	stacks map[string]string
+}
+
+func (d stackListDocker) List(context.Context) ([]dockercli.ContainerInfo, error) {
+	infos := make([]dockercli.ContainerInfo, 0, len(d.stacks))
+	for name, stack := range d.stacks {
+		infos = append(infos, dockercli.ContainerInfo{Name: name, State: "running", Stack: stack})
+	}
+	return infos, nil
+}
+
+func TestContainerListNamesTheProjectFolderOfInstalledAndRemovedMembers(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("containers", "B2", "b2:bucket:containers")
+	f.container("immich-server", "")
+	removed := f.container("immich-ml", "")
+	removed.Definition = `{"inspect":{"Config":{"Labels":{"com.docker.compose.project":"immich"}}}}`
+	if _, err := f.st.UpsertTarget(removed); err != nil {
+		t.Fatal(err)
+	}
+	f.rule("containers", "container:immich-server", "*")
+	f.rule("containers", "container:immich-ml", "*")
+	f.h.docker = stackListDocker{Docker: f.dock, stacks: map[string]string{"immich-server": "immich"}}
+
+	rows := f.do("GET", "/api/containers", nil)["containers"].([]any)
+	if len(rows) != 2 {
+		t.Fatalf("containers = %v, want the installed and the removed member", rows)
+	}
+	for _, row := range rows {
+		c := row.(map[string]any)
+		note, _ := c["placement"].(map[string]any)["stackNote"].(map[string]any)
+		if note["project"] != "immich" {
+			t.Errorf("%s: stack note = %v, want the immich project folder", c["name"], note)
+		}
+	}
+}
+
+func TestStackNoteAppearsWhenTheProjectFolderIsCopiedElsewhere(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("containers", "B2", "b2:bucket:containers")
+	f.container("immich-server", "")
+	f.rule("containers", "container:immich-server", "*")
+	it := f.item("containers", "immich-server", 0)
+	it.Stack = "immich"
+	got := f.views("containers", it)["immich-server"].StackNote
+	want := &stackNote{Project: "immich", Home: "", Targets: []string{"B2"}}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("stack note = %+v, want %+v", got, want)
+	}
+}
+
+func TestStackNoteStaysAwayWhileMemberAndFolderGoToTheSameTargets(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("containers", "B2", "b2:bucket:containers")
+	f.container("immich-server", "")
+	it := f.item("containers", "immich-server", 0)
+	it.Stack = "immich"
+	if got := f.views("containers", it)["immich-server"].StackNote; got != nil {
+		t.Fatalf("stack note = %+v, want none", got)
 	}
 }
