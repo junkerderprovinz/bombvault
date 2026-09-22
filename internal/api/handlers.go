@@ -702,7 +702,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 	}
 	items := make([]placementItem, 0, len(views))
 	for _, v := range views {
-		it := placementItem{Key: v.Name, Identity: "container:" + v.Name}
+		it := placementItem{Key: v.Name, Identity: "container:" + v.Name, Stack: v.Stack}
 		if t, ok := byName[v.Name]; ok {
 			it.Home = store.HomeState{Exists: true, Repo: t.Repo, Choice: t.RepoChosen}
 		}

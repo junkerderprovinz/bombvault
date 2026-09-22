@@ -51,6 +51,7 @@ type placementItem struct {
 	Identity    string
 	Home        store.HomeState
 	LastSuccess int64
+	Stack       string // compose project of a container, "" otherwise
 }
 
 // placementViews builds the block for every item of a list in one pass: one
@@ -79,6 +80,7 @@ func (s *Service) placementViews(ctx context.Context, settings store.Settings, d
 	for _, it := range items {
 		v := views[it.Key]
 		v.Plan, v.Observed = s.placementStatus(settings, p, it, facts)
+		v.StackNote = stackNoteFor(p, it, v.Plan)
 		views[it.Key] = v
 	}
 	return views, nil
