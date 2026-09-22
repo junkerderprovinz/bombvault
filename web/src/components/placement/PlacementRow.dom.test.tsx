@@ -171,6 +171,23 @@ describe("PlacementRow", () => {
     await waitFor(() => expect(fake.callsTo("setItemPlacement")).toEqual([[item, { copies: { skip: [] } }]]));
   });
 
+  it("takes no second choice while the question is being prepared", async () => {
+    fake.reply("getPlacementOptions", { ok: true, options: twoTargets });
+    const release = fake.hold("previewItemPlacement");
+    fake.reply("previewItemPlacement", { ok: true, added: [uploadEstimate()], dropped: [] });
+    renderRow(placementView({ skip: ["t-b2"], copiesFollow: false }));
+    fireEvent.click(await screen.findByRole("button", { name: "B2" }));
+    await waitFor(() => expect(fake.callsTo("previewItemPlacement")).toHaveLength(1));
+    expect((await segment("Local")).disabled).toBe(true);
+    fireEvent.click(await segment("Local"));
+    await act(async () => release());
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect((screen.getByRole("button", { name: "Local" }) as HTMLButtonElement).disabled).toBe(false));
+    expect(fake.callsTo("previewItemPlacement")).toHaveLength(1);
+    expect(fake.callsTo("setItemPlacement")).toEqual([]);
+  });
+
   it("still asks, with the reason, when the upload cannot be estimated", async () => {
     fake.reply("getPlacementOptions", { ok: true, options: twoTargets });
     fake.reply("previewItemPlacement", { ok: false, error: "unreadable", code: "placement-unreadable" });

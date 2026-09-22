@@ -75,6 +75,7 @@ export function PlacementRow({
   const { shown, shake, save } = usePlacementSave(item, view, onView);
   const { confirm, confirmDialog } = useConfirm();
   const [direct, setDirect] = useState<SendToOption | null>(null);
+  const [asking, setAsking] = useState(false);
 
   async function uploadsAgreed(change: PlacementChange): Promise<boolean> {
     let res: OkEnvelope & { added?: UploadEstimate[] };
@@ -101,12 +102,19 @@ export function PlacementRow({
       setDirect(step.target);
       return;
     }
-    const home = step.confirmHome;
-    if (home !== null) {
-      const question = t("placement.confirmHome").replace("{name}", () => name).replace("{home}", () => home);
-      if (!(await confirm(question, { confirmLabel: t("placement.saveHome"), confirmLabelKey: "placement.saveHome" }))) return;
+    // The bar stays put until the question is answered: a second choice would
+    // take the dialog over and leave the first one hanging.
+    setAsking(true);
+    try {
+      const home = step.confirmHome;
+      if (home !== null) {
+        const question = t("placement.confirmHome").replace("{name}", () => name).replace("{home}", () => home);
+        if (!(await confirm(question, { confirmLabel: t("placement.saveHome"), confirmLabelKey: "placement.saveHome" }))) return;
+      }
+      if (addsTargets(shown, step.change) && !(await uploadsAgreed(step.change))) return;
+    } finally {
+      setAsking(false);
     }
-    if (addsTargets(shown, step.change) && !(await uploadsAgreed(step.change))) return;
     save(step.change, step.optimistic);
   }
 
@@ -132,6 +140,7 @@ export function PlacementRow({
                 view={shown}
                 options={options}
                 host={host}
+                disabled={asking}
                 onSegment={(seg) => void run(stepForSegment(seg, shown, options, t, host))}
                 onHome={(id) => void run(stepForHome(id, shown, options, t, host))}
                 onSendTo={(opt) => void run(stepForSendTo(opt, shown, t))}
