@@ -817,7 +817,7 @@ export function ProtectionCard({
                           advanced detail about a backup, it is the first fact
                           about one, so it belongs in the view most people
                           actually run. */}
-                      {!d.offsiteConfigured ? (
+                      {!d.offsiteConfigured && !d.offPremisesCovered ? (
                         <div className="col-start-6 @[44rem]:col-span-2 min-w-0">
                           <Badge tone="fail" wrap className="max-w-full" title={t("dashboard.noOffsiteTitle")}>
                             ✗ {t("dashboard.noOffsite")}
