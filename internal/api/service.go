@@ -9234,11 +9234,8 @@ type VMView struct {
 	// ScheduleCadence is the VM's optional per-item schedule override (#121); ""
 	// means it follows the VMs domain schedule. Only takes effect when the
 	// perItemSchedules setting is on.
-	ScheduleCadence string `json:"scheduleCadence"`
-	// Repo is the VM's optional per-item repository override (#204): the ID of a
-	// named repository from Settings, "" for the VMs domain repository.
-	Repo      string        `json:"repo"`
-	Placement placementView `json:"placement"`
+	ScheduleCadence string        `json:"scheduleCadence"`
+	Placement       placementView `json:"placement"`
 }
 
 // ListVMs returns all known VMs (from virsh) merged with the DB targets.
@@ -9291,7 +9288,6 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 			v.Method = t.Method
 			v.IncludeInSchedule = t.IncludeInSchedule
 			v.ScheduleCadence = t.ScheduleCadence
-			v.Repo = t.Repo
 			if run, _ := s.store.LastSuccessfulBackup(t.ID); run != nil {
 				v.LastBackup = run.FinishedAt
 				v.LastBackupStarted = &run.StartedAt
@@ -9304,7 +9300,7 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 		if live[t.Name] {
 			continue
 		}
-		v := VMView{Name: t.Name, LibvirtName: t.Name, State: "not-installed", Method: t.Method, IncludeInSchedule: t.IncludeInSchedule, ScheduleCadence: t.ScheduleCadence, Repo: t.Repo}
+		v := VMView{Name: t.Name, LibvirtName: t.Name, State: "not-installed", Method: t.Method, IncludeInSchedule: t.IncludeInSchedule, ScheduleCadence: t.ScheduleCadence}
 		if run, _ := s.store.LastSuccessfulBackup(t.ID); run != nil {
 			v.LastBackup = run.FinishedAt
 			v.LastBackupStarted = &run.StartedAt

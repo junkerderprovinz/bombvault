@@ -50,11 +50,6 @@ export interface Container {
    *  the containers domain schedule for this container. "" means it follows the
    *  domain schedule. Only takes effect when the perItemSchedules setting is on. */
   scheduleCadence?: string;
-  /** Optional per-item repository override (#204): the ID of a named repository
-   *  from Settings, "" for the domain's own. A location is written down once in
-   *  Settings and picked here, so the same bucket path is never typed into ten
-   *  items and can be corrected in one place. */
-  repo?: string;
   /** Where the backups go and where they are copied, as the card shows it. */
   placement: PlacementView;
 }
@@ -2636,9 +2631,6 @@ export interface VM {
    *  the VMs domain schedule for this VM. "" means it follows the domain schedule.
    *  Only takes effect when the perItemSchedules setting is on. */
   scheduleCadence?: string;
-  /** Optional per-item repository override (#204): the ID of a named
-   *  repository from Settings, "" for the VMs domain repository. */
-  repo?: string;
   /** Where the backups go and where they are copied, as the card shows it. */
   placement: PlacementView;
 }

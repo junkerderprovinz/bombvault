@@ -588,10 +588,6 @@ type containerView struct {
 	// "" means it follows the containers domain schedule. Only takes effect when the
 	// perItemSchedules setting is on.
 	ScheduleCadence string `json:"scheduleCadence"`
-	// Repo is the container's optional per-item repository override (#204): the
-	// ID of a named repository from Settings, "" for the Containers domain
-	// repository. The interface needs it to show what the picker currently says.
-	Repo string `json:"repo"`
 	// LastUpdateCheck / LastUpdateResult: when the post-backup update check last
 	// completed (unix seconds, 0 = never) and its outcome ('' | 'up-to-date' |
 	// 'updated' | 'failed') — so "checked, up to date" is visible without a
@@ -648,7 +644,6 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			v.LastUpdateResult = t.LastUpdateResult
 			v.BackupOrder = t.BackupOrder
 			v.ScheduleCadence = t.ScheduleCadence
-			v.Repo = t.Repo
 			if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
 				v.LastBackup = run.FinishedAt
 				v.LastBackupStarted = &run.StartedAt
@@ -686,7 +681,6 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 			Installed:         false,
 			IncludeInSchedule: t.IncludeInSchedule,
 			ScheduleCadence:   t.ScheduleCadence,
-			Repo:              t.Repo,
 		}
 		if t.Definition != "" {
 			var def containerDefinition

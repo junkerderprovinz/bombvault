@@ -1,8 +1,6 @@
 package api
 
 import (
-	"os"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -194,38 +192,5 @@ func TestDomainReposInUseCoversEveryItemsRepository(t *testing.T) {
 	}
 	if !strings.HasSuffix(repos[1].Loc, "backups/cold") {
 		t.Fatalf("repos[1] = %q, want the repository the container points at", repos[1].Loc)
-	}
-}
-
-// TestContainerViewCarriesTheRepoOnBothBranches pins a gap that cost a build.
-//
-// The container list assembles its view in TWO places: one for containers Docker
-// reports, one for stored targets Docker no longer knows about. Only the second
-// carried the new field, so the picker on a LIVE container always read back "the
-// domain repository" no matter what was stored - the save landed, the interface
-// said it had not, and clicking it was the only way to find out.
-//
-// A source scan because the two branches sit forty lines apart in one function
-// and are edited for different reasons; a behavioural test would have to build a
-// fake Docker to reach the first one.
-func TestContainerViewCarriesTheRepoOnBothBranches(t *testing.T) {
-	raw, err := os.ReadFile("handlers.go")
-	if err != nil {
-		t.Fatalf("read handlers.go: %v", err)
-	}
-	src := string(raw)
-	// Matched with the run of spaces left OPEN. A struct literal's field values
-	// are aligned by gofmt, so pinning the exact column would make this guard
-	// fail the day somebody adds a longer field name beside it - a failure about
-	// nothing, in a test whose whole job is to be believed when it speaks.
-	for _, want := range []*regexp.Regexp{
-		regexp.MustCompile(`v\.Repo\s*=\s*t\.Repo`), // the live-container merge
-		regexp.MustCompile(`Repo:\s+t\.Repo,`),      // the not-installed literal
-	} {
-		if !want.MatchString(src) {
-			t.Errorf("the container view no longer carries the per-item repository on one of its two branches (%s).\n"+
-				"The picker then reads back the domain repository for an item that is not on it, which is the\n"+
-				"exact misreading the control exists to prevent.", want)
-		}
 	}
 }
