@@ -128,6 +128,8 @@ describe("ContainerRow placement", () => {
     expect(bar.compareDocumentPosition(sections) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  // The label is there from the row's first render, the toolbar only once the
+  // options resolve, so a missing toolbar would prove nothing here.
   it("gives BombVault's own container no placement", () => {
     render(
       <ContainerRow
@@ -139,6 +141,6 @@ describe("ContainerRow placement", () => {
         index={0}
       />
     );
-    expect(screen.queryByRole("toolbar")).toBeNull();
+    expect(screen.queryByText(en["placement.title"])).toBeNull();
   });
 });
