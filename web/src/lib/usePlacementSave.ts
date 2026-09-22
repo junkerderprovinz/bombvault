@@ -41,8 +41,10 @@ export function usePlacementSave(item: ItemRef, view: PlacementView, onView: (ne
     };
   }, []);
 
+  // A list read that started before this card's change answers with the state
+  // the change has already left behind, so it must not reseed the card.
   useEffect(() => {
-    setConfirmed(view);
+    if (!running.current) setConfirmed(view);
   }, [view]);
 
   async function drain(first: PlacementChange) {
