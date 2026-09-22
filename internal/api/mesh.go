@@ -142,6 +142,18 @@ type meshOfferAcceptInput struct {
 	AlsoExclude *newTargetExclusion `json:"alsoExclude"`
 }
 
+// dropCredSet takes one credential set out of the stored list. It reads that
+// list itself, because writing back a copy read earlier would drop whatever
+// another request added or renamed in between, along with its password; the
+// write merges blanked secrets back by id.
+func (h *Handler) dropCredSet(id string) error {
+	sets, err := h.svc.CloudCredSets()
+	if err != nil {
+		return err
+	}
+	return h.svc.SetCloudCredSets(slices.DeleteFunc(sets, func(s CloudCredSet) bool { return s.ID == id }))
+}
+
 // handleAcceptMeshOffer turns a pending offer into a real, working off-site
 // target: a new named CloudCredSet (holding the peer-generated REST
 // credentials) plus a new OffsiteTarget for the chosen domain pointing at the
@@ -188,12 +200,12 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 		label = "mesh peer"
 	}
 	setID := newMeshCredSetID()
-	before, err := h.svc.CloudCredSets()
+	sets, err := h.svc.CloudCredSets()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	sets := append(slices.Clone(before), CloudCredSet{
+	sets = append(sets, CloudCredSet{
 		ID:   setID,
 		Name: "mesh: " + label,
 		CloudCreds: CloudCreds{
@@ -221,7 +233,7 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 	if in.AlsoExclude != nil {
 		if err := h.svc.excludeFromTarget(stored.Domain, stored.ID, *in.AlsoExclude); err != nil {
 			fail := h.removeHalfMadeTarget(stored.ID, err)
-			if sErr := h.svc.SetCloudCredSets(before); sErr != nil {
+			if sErr := h.dropCredSet(setID); sErr != nil {
 				fail = fmt.Errorf("%w; the credential set could not be taken back either: %v", fail, sErr)
 			}
 			placementFail(w, fail, nil)

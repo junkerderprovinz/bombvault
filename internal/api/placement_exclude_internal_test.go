@@ -1,6 +1,8 @@
 package api
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"net/http"
 	"reflect"
 	"slices"
@@ -30,6 +32,49 @@ func (f *placementFixture) brokenRule(domain, identity string) {
 	f.t.Helper()
 	if _, err := f.db.Exec(`INSERT INTO offsite_copy_rules (domain, identity, skip) VALUES (?, ?, 'not json')`,
 		domain, identity); err != nil {
+		f.t.Fatal(err)
+	}
+}
+
+// meshOffer leaves a pending offer of a peer's rest-server for containers.
+func (f *placementFixture) meshOffer() store.MeshOffer {
+	f.t.Helper()
+	enc, err := secret.Encrypt(f.h.cfg.AppKey, []byte("peer-password"))
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	offer, err := f.st.CreateMeshOffer(store.MeshOffer{
+		From: "tower-a", SuggestedDomain: "containers",
+		Repo: "rest:http://192.0.2.10:8000/bv/containers", RESTUser: "bv", RESTPasswordEnc: enc,
+	})
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	return offer
+}
+
+// credSetsChangeWhenATargetIsWritten stands in for another request that saves
+// the whole credential set list while this one sits between reading that list
+// and taking its own set back.
+func (f *placementFixture) credSetsChangeWhenATargetIsWritten(sets []CloudCredSet) {
+	f.t.Helper()
+	blob, err := json.Marshal(sets)
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	enc, err := secret.Encrypt(f.h.cfg.AppKey, blob)
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	if _, err := f.db.Exec(`CREATE TABLE other_request (sets TEXT)`); err != nil {
+		f.t.Fatal(err)
+	}
+	if _, err := f.db.Exec(`INSERT INTO other_request (sets) VALUES (?)`,
+		base64.StdEncoding.EncodeToString(enc)); err != nil {
+		f.t.Fatal(err)
+	}
+	if _, err := f.db.Exec(`CREATE TRIGGER other_request_saves AFTER INSERT ON offsite_targets
+		BEGIN UPDATE settings SET cloud_cred_sets = (SELECT sets FROM other_request); END`); err != nil {
 		f.t.Fatal(err)
 	}
 }
@@ -191,17 +236,7 @@ func TestAMovedTargetSaysItWasSavedWhenOnlyTheExclusionFailed(t *testing.T) {
 
 func TestAcceptingAMeshOfferTakesTheAnswerAlong(t *testing.T) {
 	f := newPlacementFixture(t)
-	enc, err := secret.Encrypt(f.h.cfg.AppKey, []byte("peer-password"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	offer, err := f.st.CreateMeshOffer(store.MeshOffer{
-		From: "tower-a", SuggestedDomain: "containers",
-		Repo: "rest:http://192.0.2.10:8000/bv/containers", RESTUser: "bv", RESTPasswordEnc: enc,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	offer := f.meshOffer()
 	res := f.do(http.MethodPost, "/api/fleet/mesh-offers/"+offer.ID+"/accept", map[string]any{
 		"domain": "containers", "alsoExclude": map[string]any{"identities": []string{"container:plex"}, "default": false},
 	})
@@ -217,17 +252,7 @@ func TestAcceptingAMeshOfferTakesTheAnswerAlong(t *testing.T) {
 
 func TestAFailedExclusionLeavesAnAcceptedOfferAsItWas(t *testing.T) {
 	f := newPlacementFixture(t)
-	enc, err := secret.Encrypt(f.h.cfg.AppKey, []byte("peer-password"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	offer, err := f.st.CreateMeshOffer(store.MeshOffer{
-		From: "tower-a", SuggestedDomain: "containers",
-		Repo: "rest:http://192.0.2.10:8000/bv/containers", RESTUser: "bv", RESTPasswordEnc: enc,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	offer := f.meshOffer()
 	kept := CloudCredSet{ID: "cs-1", Name: "Wasabi", CloudCreds: CloudCreds{RESTUser: "bv", RESTPassword: "keep-me"}}
 	if err := f.svc.SetCloudCredSets([]CloudCredSet{kept}); err != nil {
 		t.Fatal(err)
@@ -254,5 +279,33 @@ func TestAFailedExclusionLeavesAnAcceptedOfferAsItWas(t *testing.T) {
 	again, _, gErr := f.st.GetMeshOffer(offer.ID)
 	if gErr != nil || again.Status != "pending" {
 		t.Fatalf("offer status = %q, %v, want pending", again.Status, gErr)
+	}
+}
+
+func TestTakingBackAMeshCredentialSetLeavesTheSetsAnotherRequestWrote(t *testing.T) {
+	f := newPlacementFixture(t)
+	offer := f.meshOffer()
+	kept := CloudCredSet{ID: "cs-1", Name: "Wasabi", CloudCreds: CloudCreds{RESTUser: "bv", RESTPassword: "keep-me"}}
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{kept}); err != nil {
+		t.Fatal(err)
+	}
+	added := CloudCredSet{ID: "cs-2", Name: "Backblaze", CloudCreds: CloudCreds{RESTUser: "bv", RESTPassword: "mine"}}
+	f.credSetsChangeWhenATargetIsWritten([]CloudCredSet{kept, added})
+	f.brokenRule("containers", "container:nginx")
+
+	res := f.do(http.MethodPost, "/api/fleet/mesh-offers/"+offer.ID+"/accept", map[string]any{
+		"domain": "containers", "alsoExclude": map[string]any{"identities": []string{"container:plex"}, "default": false},
+	})
+	if res["ok"] != false {
+		t.Fatalf("accept = %v, want a refusal", res)
+	}
+	settings, sErr := f.st.GetSettings()
+	if sErr != nil {
+		t.Fatal(sErr)
+	}
+	want := []CloudCredSet{kept, added}
+	sets, dErr := f.svc.decodeCloudCredSets(settings)
+	if dErr != nil || !reflect.DeepEqual(sets, want) {
+		t.Fatalf("credential sets = %v, %v, want %v", sets, dErr, want)
 	}
 }
