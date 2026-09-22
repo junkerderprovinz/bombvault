@@ -413,11 +413,16 @@ func (s *Service) namedRepoIndex() (map[string]store.OffsiteTarget, error) {
 	if err != nil {
 		return nil, err
 	}
+	return namedReposByID(rows), nil
+}
+
+// namedReposByID is namedRepoIndex for a caller that already holds the rows.
+func namedReposByID(rows []store.OffsiteTarget) map[string]store.OffsiteTarget {
 	out := make(map[string]store.OffsiteTarget, len(rows))
 	for _, r := range rows {
 		out[r.ID] = r
 	}
-	return out, nil
+	return out
 }
 
 // pauseReason names why pausePlacement started a pause, for the notification text.

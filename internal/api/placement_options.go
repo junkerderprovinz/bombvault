@@ -65,10 +65,7 @@ func (s *Service) placementOptionsFor(domain string) (placementOptions, error) {
 	if err != nil {
 		return placementOptions{}, err
 	}
-	named := make(map[string]store.OffsiteTarget, len(repos))
-	for _, r := range repos {
-		named[r.ID] = r
-	}
+	named := namedReposByID(repos)
 	def, err := s.defaultRowFor(settings, named, domain)
 	if err != nil {
 		return placementOptions{}, err
@@ -86,7 +83,7 @@ func (s *Service) placementOptionsFor(domain string) (placementOptions, error) {
 	opts.Homes = s.homeOptions(settings, domain, repos, named)
 	opts.Targets = s.targetOptions(settings, p, named)
 	opts.SendTo = s.sendToOptions(settings, p, repos, named)
-	opts.SegmentLocks = s.domainSegmentLocks(settings, p, named)
+	opts.SegmentLocks = domainSegmentLocks(p, opts.SendTo)
 	return opts, nil
 }
 
