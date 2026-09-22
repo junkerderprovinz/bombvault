@@ -105,6 +105,18 @@ describe("PlacementDefaultsCard", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
+  it("writes nothing when the one open segment of a domain without a target is clicked", async () => {
+    const locks = { "local-offsite": "no-target", "offsite-only": "no-target" } as const;
+    const noTarget = { ok: true, options: placementOptions({ targets: [], sendTo: [], segmentLocks: locks }) };
+    fake.reply("getPlacementOptions", noTarget, noTarget, noTarget);
+    const row = await containersRow();
+    const local = within(row).getByRole("button", { name: "Local" });
+    expect(local.getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(local);
+    expect(fake.callsTo("previewPlacementDefault")).toEqual([]);
+    expect(fake.callsTo("putPlacementDefault")).toEqual([]);
+  });
+
   it("opens the direct repository window for Off-site only and moves the default there", async () => {
     const row = await containersRow();
     fireEvent.click(within(row).getByRole("button", { name: "Off-site only" }));

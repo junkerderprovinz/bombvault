@@ -11,6 +11,7 @@ import {
   formatList,
   homeOptionLabel,
   lastChipLocked,
+  lockedSegments,
   lockHint,
   noCopyNow,
   segmentItems,
@@ -121,6 +122,14 @@ describe("steps", () => {
     });
   });
 
+  it("locks Off-site only with nothing to send to, and a click that slips through changes nothing", () => {
+    const empty = placementOptions({ sendTo: [] });
+    expect(lockedSegments(placementView(), empty)).toEqual({ "offsite-only": "no-target" });
+    expect(lockedSegments(placementView(), opts)).toEqual({});
+    expect(stepForSegment("offsite-only", placementView(), empty, t, "Unraid")).toEqual({ kind: "none" });
+    expect(stepForDefaultSegment("offsite-only", defaultRow(), empty)).toEqual({ kind: "none" });
+  });
+
   it("Stored on asks with the new home, and a chosen home picked again sends nothing", () => {
     expect(stepForHome("repo-nas", placementView(), opts, t, "Unraid")).toMatchObject({
       change: { home: { repo: "repo-nas" } },
@@ -190,9 +199,16 @@ describe("chips and lines", () => {
 
 describe("defaults", () => {
   it("reads the segment of a default", () => {
-    expect(defaultSegment(defaultRow())).toBe("local-offsite");
-    expect(defaultSegment(defaultRow({ skip: ["*"] }))).toBe("local");
-    expect(defaultSegment(defaultRow({ home: "repo-direct", homeKind: "direct" }))).toBe("offsite-only");
+    expect(defaultSegment(defaultRow(), opts)).toBe("local-offsite");
+    expect(defaultSegment(defaultRow({ skip: ["*"] }), opts)).toBe("local");
+    expect(defaultSegment(defaultRow({ home: "repo-direct", homeKind: "direct" }), opts)).toBe("offsite-only");
+  });
+
+  it("gives a domain without a target the segment the bar shows for it", () => {
+    const none = placementOptions({ targets: [], sendTo: [] });
+    expect(defaultSegment(defaultRow(), none)).toBe("local");
+    expect(defaultView(defaultRow(), none).segment).toBe("local");
+    expect(stepForDefaultSegment("local", defaultRow(), none)).toEqual({ kind: "none" });
   });
 
   it("changes only the home of a default for Off-site only", () => {
@@ -221,6 +237,5 @@ describe("defaults", () => {
   it("starts a draft at the default, following both axes", () => {
     const view = draftView(placementOptions({ default: defaultRow({ home: "repo-nas", homeKind: "local" }) }));
     expect(view).toMatchObject({ repo: "repo-nas", repoLabel: "NAS Keller", homeFollows: true, copiesFollow: true, segment: "local-offsite" });
-    expect(defaultView(defaultRow(), placementOptions({ targets: [] })).segment).toBe("local");
   });
 });

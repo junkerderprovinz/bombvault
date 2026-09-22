@@ -45,6 +45,11 @@ describe("PlacementBar", () => {
     expect(screen.getByRole("button", { name: "Off-site only" }).getAttribute("aria-pressed")).toBe("false");
   });
 
+  it("locks Off-site only while the options offer nothing to send to", () => {
+    renderBar(placementView(), placementOptions({ sendTo: [] }));
+    expect((screen.getByRole("button", { name: "Off-site only" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
   it("puts Stored on and the chips under Local + off-site", () => {
     renderBar(placementView());
     expect(screen.getByRole("combobox", { name: "Stored on" })).toBeTruthy();

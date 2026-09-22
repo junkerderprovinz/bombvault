@@ -2,7 +2,7 @@ import { Selector } from "../Selector";
 import type { SelectOption } from "../SelectField";
 import type { PlacementDomain, PlacementOptions, PlacementView, SegmentId, SendToOption } from "../../lib/api";
 import { useT } from "../../lib/i18n";
-import { homeOptionLabel, segmentItems, sendToLabel, viewHomeLabel } from "../../lib/placement";
+import { homeOptionLabel, lockedSegments, segmentItems, sendToLabel, viewHomeLabel } from "../../lib/placement";
 import { HomeSelect } from "./HomeSelect";
 import { TargetChips } from "./TargetChips";
 
@@ -64,7 +64,7 @@ export function PlacementBar({
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <Selector
-        items={segmentItems(t, view.segmentLocks, home)}
+        items={segmentItems(t, lockedSegments(view, options), home)}
         label={t("placement.title")}
         select="one"
         activation="manual"
