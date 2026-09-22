@@ -169,6 +169,27 @@ func TestADirectRepositoryOfASwitchedOffTargetLeavesOffsiteOnlyLocked(t *testing
 	}
 }
 
+// Copies go to the target itself, off-site only to its direct repository, so
+// switching that repository off takes one segment away and leaves the other.
+func TestASwitchedOffDirectRepositoryLocksOffsiteOnlyAndLeavesCopies(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	direct := f.direct(b2)
+	direct.Enabled = false
+	if _, err := f.st.UpsertOffsiteTarget(direct); err != nil {
+		t.Fatal(err)
+	}
+	f.container("nginx", "")
+
+	if got := rowsOf(f.options("containers")["sendTo"]); len(got) != 0 {
+		t.Fatalf("sendTo = %v, want nothing to send to", got)
+	}
+	want := map[string]string{"offsite-only": "no-target"}
+	if got := f.cardOf("containers", "nginx", 0).SegmentLocks; !reflect.DeepEqual(got, want) {
+		t.Fatalf("locks = %v, want %v", got, want)
+	}
+}
+
 func TestAHomeWithItsOwnCredentialsOrAtTheTargetTakesNoCopies(t *testing.T) {
 	f := newPlacementFixture(t)
 	b2 := f.target("containers", "B2", "b2:bucket:containers")

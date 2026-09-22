@@ -58,11 +58,12 @@ func (s *Service) placementViews(settings store.Settings, domain string, items [
 	if err != nil || p.TargetsUncertain {
 		return unreadablePlacements(items), nil
 	}
-	named, err := s.namedRepoIndex()
+	repos, err := s.store.ListNamedRepos()
 	if err != nil {
 		return nil, err
 	}
-	locks := s.domainSegmentLocks(settings, p, named)
+	named := namedReposByID(repos)
+	locks := domainSegmentLocks(p, s.sendToOptions(settings, p, repos, named))
 	views := make(map[string]placementView, len(items))
 	for _, it := range items {
 		views[it.Key] = s.itemPlacementView(settings, p, named, locks, it)
@@ -126,19 +127,17 @@ func segmentsMovingHome(segment string) []string {
 }
 
 // domainSegmentLocks is what no item of the domain can choose: copies need an
-// enabled target, off-site only a target or a remote repository to send to.
-func (s *Service) domainSegmentLocks(settings store.Settings, p placementRead, named map[string]store.OffsiteTarget) map[string]string {
+// enabled target, off-site only somewhere to send to. It reads that step off
+// the list the options route offers, so the bar cannot open a step whose
+// window would be empty.
+func domainSegmentLocks(p placementRead, sendTo []sendToOption) map[string]string {
 	locks := map[string]string{}
-	if len(p.enabledTargets()) > 0 {
-		return locks
+	if len(p.enabledTargets()) == 0 {
+		locks[segmentLocalOffsite] = lockNoTarget
 	}
-	locks[segmentLocalOffsite] = lockNoTarget
-	for id, r := range named {
-		if r.Enabled && s.homeKindOf(settings, p.Domain, id, named) == homeRemote {
-			return locks
-		}
+	if len(sendTo) == 0 {
+		locks[segmentOffsiteOnly] = lockNoTarget
 	}
-	locks[segmentOffsiteOnly] = lockNoTarget
 	return locks
 }
 
