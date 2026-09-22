@@ -26,19 +26,22 @@ const (
 // with: where the item lives, what it follows, and what the placement bar
 // must show as locked.
 type placementView struct {
-	Segment      string            `json:"segment"`
-	Repo         string            `json:"repo"`      // effectiveHome
-	RepoLabel    string            `json:"repoLabel"` // name of the repository, "" for the domain path
-	RepoKind     homeKind          `json:"repoKind"`
-	RepoOff      bool              `json:"repoOff"`
-	HomeFollows  bool              `json:"homeFollows"`  // repo_chosen = 0
-	CopiesFollow bool              `json:"copiesFollow"` // no own rule
-	Skip         []string          `json:"skip"`         // resolvedSkip, never null
-	Locked       bool              `json:"locked"`       // a successful run exists
-	LockReason   string            `json:"lockReason"`   // "first-backup" | ""
-	SegmentLocks map[string]string `json:"segmentLocks"` // segment -> reason, never null
-	Paused       bool              `json:"paused"`
-	Unreadable   bool              `json:"unreadable"`
+	Segment      string             `json:"segment"`
+	Repo         string             `json:"repo"`      // effectiveHome
+	RepoLabel    string             `json:"repoLabel"` // name of the repository, "" for the domain path
+	RepoKind     homeKind           `json:"repoKind"`
+	RepoOff      bool               `json:"repoOff"`
+	HomeFollows  bool               `json:"homeFollows"`  // repo_chosen = 0
+	CopiesFollow bool               `json:"copiesFollow"` // no own rule
+	Skip         []string           `json:"skip"`         // resolvedSkip, never null
+	Locked       bool               `json:"locked"`       // a successful run exists
+	LockReason   string             `json:"lockReason"`   // "first-backup" | ""
+	SegmentLocks map[string]string  `json:"segmentLocks"` // segment -> reason, never null
+	Paused       bool               `json:"paused"`
+	Unreadable   bool               `json:"unreadable"`
+	Plan         *placementPlan     `json:"plan,omitempty"`
+	Observed     *placementObserved `json:"observed,omitempty"`
+	StackNote    *stackNote         `json:"stackNote,omitempty"`
 }
 
 // placementItem is one item as a placement read needs it: its location, its
@@ -68,6 +71,12 @@ func (s *Service) placementViews(ctx context.Context, settings store.Settings, d
 	views := make(map[string]placementView, len(items))
 	for _, it := range items {
 		views[it.Key] = s.itemPlacementView(settings, p, named, locks, it)
+	}
+	facts := s.statusFactsFor(ctx, settings, p, named)
+	for _, it := range items {
+		v := views[it.Key]
+		v.Plan, v.Observed = s.placementStatus(settings, p, it, facts)
+		views[it.Key] = v
 	}
 	return views, nil
 }
