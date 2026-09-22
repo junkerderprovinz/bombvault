@@ -203,4 +203,11 @@ describe("PlacementRow", () => {
     expect(await screen.findByText("Placement could not be read")).toBeTruthy();
     expect(screen.queryByRole("toolbar")).toBeNull();
   });
+
+  it("shows only its sentence when the domain's options cannot be read", async () => {
+    fake.reply("getPlacementOptions", { ok: false, error: "the repository list could not be read" });
+    renderRow(placementView());
+    expect(await screen.findByText("Placement could not be read")).toBeTruthy();
+    expect(screen.queryByRole("toolbar")).toBeNull();
+  });
 });
