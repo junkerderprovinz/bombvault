@@ -1843,9 +1843,15 @@ export function Files() {
   // Containers.tsx's backupSelected/shakeBackupSelected.
   const [shakeBackupAll, setShakeBackupAll] = useState(0);
 
+  // Only the newest read may land; an older answer arriving late would undo the
+  // placement a card wrote while it was in flight.
+  const read = useRef(0);
+
   function loadSets() {
+    const n = ++read.current;
     return listFileSets()
       .then((res) => {
+        if (n !== read.current) return;
         if (res.ok) {
           setSets(res.fileSets ?? []);
           // Clear any stale banner from a previous failed load — a later success
@@ -1853,7 +1859,9 @@ export function Files() {
           setError(null);
         } else setError(res.error ?? t("files.loadSetsFailed"));
       })
-      .catch(() => setError(t("files.loadSetsFailed")));
+      .catch(() => {
+        if (n === read.current) setError(t("files.loadSetsFailed"));
+      });
   }
 
   useEffect(() => {

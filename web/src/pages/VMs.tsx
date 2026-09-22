@@ -1527,9 +1527,15 @@ export function VMs() {
     }
   }
 
+  // Only the newest read may land; an older answer arriving late would undo the
+  // placement a card wrote while it was in flight.
+  const read = useRef(0);
+
   function loadVMs() {
+    const n = ++read.current;
     return listVMs()
       .then((res) => {
+        if (n !== read.current) return;
         if (res.ok) {
           setVMs(res.vms ?? []);
           // Clear on success, which nothing in this file did. A red banner set by
@@ -1541,7 +1547,9 @@ export function VMs() {
           setError(null);
         } else setError(t("vms.loadFailed"));
       })
-      .catch(() => setError(t("vms.loadFailed")));
+      .catch(() => {
+        if (n === read.current) setError(t("vms.loadFailed"));
+      });
   }
 
   useEffect(() => {
