@@ -2153,6 +2153,43 @@ func TestServiceBackupResolvesAppdataFromMounts(t *testing.T) {
 	}
 }
 
+func TestServiceBackupStopsOnlyContainersOfThatExactName(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SetStopContainers("plex", []string{"mariadb", "db"}); err != nil {
+		t.Fatal(err)
+	}
+	// "db" was removed, and Docker answers the bare name with the container
+	// whose id starts with it.
+	d := &fakeServiceDocker{
+		inspect: model.Inspect{Name: "/plex", ID: "91e7", Running: true},
+		inspects: map[string]model.Inspect{
+			"mariadb": {Name: "/mariadb", ID: "5eed", Running: true},
+			"db":      {Name: "/immich_postgres", ID: "db7a", Running: true},
+		},
+	}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+
+	if _, err := svc.Backup(context.Background(), "plex"); err != nil {
+		t.Fatalf("backup: %v", err)
+	}
+	calls := strings.Join(d.calls, " ")
+	if strings.Contains(calls, "stop:db") || strings.Contains(calls, "start:db") {
+		t.Errorf("calls = %q, want the container another name resolves to left alone", calls)
+	}
+	if !strings.Contains(calls, "stop:5eed") || !strings.Contains(calls, "start:5eed") {
+		t.Errorf("calls = %q, want mariadb stopped and started by its id", calls)
+	}
+}
+
 // TestServiceBackupNoAppdataDefinitionOnly pins the forum fix: a stateless
 // container with no existing source paths is backed up "definition-only" (its
 // recreate recipe is captured) instead of failing with restic's "all source

@@ -198,16 +198,9 @@ func (s *Service) prepareImportDBDump(ctx context.Context, name, source, snapsho
 	if err != nil {
 		return dbImportPlan{}, importRefusalFor(err)
 	}
-	in, err := s.docker.Inspect(ctx, name)
+	in, err := s.inspectNamed(ctx, name)
 	if err != nil {
 		return dbImportPlan{}, err
-	}
-	// Docker falls back to an id prefix when no container has the name, so a
-	// removed "db" could resolve to whichever container's id starts with db.
-	// Every step after this one goes by the id, which a container recreated in
-	// the meantime does not share.
-	if strings.TrimPrefix(in.Name, "/") != name {
-		return dbImportPlan{}, fmt.Errorf("no container is named %q", name)
 	}
 	if !in.Running {
 		return dbImportPlan{}, refuseImport(importRefusedNotRunning, "container %q is not running", name)
@@ -375,9 +368,8 @@ func (s *Service) stopImportDependents(ctx context.Context, name string) []impor
 	}
 	var stopped []importDependent
 	for _, dep := range tg.StopContainers {
-		di, err := s.docker.Inspect(ctx, dep)
-		// Docker resolves a name no container has to an id prefix.
-		if err != nil || !di.Running || strings.TrimPrefix(di.Name, "/") != dep {
+		di, err := s.inspectNamed(ctx, dep)
+		if err != nil || !di.Running {
 			continue
 		}
 		if err := s.docker.Stop(ctx, di.ID, dbImportStopTimeout); err != nil {
