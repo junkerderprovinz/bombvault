@@ -421,8 +421,9 @@ export function OffsiteWizard({
 
   useEffect(() => {
     refreshPrimaryTarget();
-    // Re-reads when the repo URL changes, because saving a repo for the first
-    // time is what CREATES the row this selector edits.
+    // Re-reads when the repo URL changes, wherever that change came from:
+    // saving a repo for the first time is what creates the row this selector
+    // edits.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [offsiteDomain, primary, repoURL]);
 
@@ -448,12 +449,8 @@ export function OffsiteWizard({
     }
   }
 
-  // Saving a repo for the first time creates the row the credential selector
-  // binds to, so the row is read again after every save.
-  async function saveRepo(v: string): Promise<boolean> {
-    const ok = await save({ [repoKey]: v } as Partial<Settings>, setRepoState, () => undefined);
-    refreshPrimaryTarget();
-    return ok;
+  function saveRepo(v: string): Promise<boolean> {
+    return save({ [repoKey]: v } as Partial<Settings>, setRepoState, () => undefined);
   }
 
   async function genSnippet() {

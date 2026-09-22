@@ -14,6 +14,7 @@
 // only a test each keeps them from drifting apart again. See
 // Settings.cloudCard.dom.test.tsx for the full story.
 // ---------------------------------------------------------------------------
+import { useState } from "react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { I18nProvider, en, useT } from "../lib/i18n";
@@ -98,14 +99,21 @@ function settingsWith(repo: string = REST_REPO): Settings {
   } as unknown as Settings;
 }
 
+// The page keeps the settings and a save writes the field back into them, which
+// is what makes a saved repo URL reach the wizard again.
 function Harness({ repo }: { repo: string }) {
   const { t } = useT();
+  const [settings, setSettings] = useState<Settings | null>(settingsWith(repo));
   return (
     <OffsiteWizard
       domain="containers"
-      settings={settingsWith(repo)}
-      setSettings={() => {}}
-      save={() => { saveCalls++; return Promise.resolve(true); }}
+      settings={settings as Settings}
+      setSettings={setSettings}
+      save={(patch) => {
+        saveCalls++;
+        setSettings((prev) => (prev ? { ...prev, ...patch } : prev));
+        return Promise.resolve(true);
+      }}
       t={t}
     />
   );
