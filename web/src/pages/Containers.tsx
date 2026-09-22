@@ -3303,9 +3303,15 @@ export function Containers() {
   // hint, instead of relying on the 409 round-trip.
   const running = anyActive(progress);
 
+  // Only the newest read may land; an older answer arriving late would undo the
+  // placement a card wrote while it was in flight.
+  const read = useRef(0);
+
   function loadContainers() {
+    const n = ++read.current;
     return listContainers()
       .then((res) => {
+        if (n !== read.current) return;
         if (res.ok) {
           setContainers(res.containers ?? []);
           // Clear on success, which nothing in this file did. A red banner set by
@@ -3317,7 +3323,9 @@ export function Containers() {
           setError(null);
         } else setError(t("containers.loadFailed"));
       })
-      .catch(() => setError(t("containers.loadFailed")));
+      .catch(() => {
+        if (n === read.current) setError(t("containers.loadFailed"));
+      });
   }
 
   useEffect(() => {
