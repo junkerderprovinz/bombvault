@@ -884,26 +884,6 @@ export function tagSnapshot(
 }
 
 /** PATCH /api/containers/{name} — set pre/post-backup hook commands. */
-/** PATCH /api/containers/{name} with just `repo` (#204): point this container at
- *  a named repository, or "" to put it back on the Containers domain repository.
- *  Refused once the container has backups - they stay in the repository they
- *  were written to and nothing re-homes them. */
-export function setContainerRepo(name: string, repo: string): Promise<OkEnvelope> {
-  return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
-    method: "PATCH",
-    body: JSON.stringify({ repo }),
-  });
-}
-
-/** PATCH /api/vms/{name} with just `repo` (#204); same contract as the container
- *  twin above. */
-export function setVMRepo(name: string, repo: string): Promise<OkEnvelope> {
-  return fetchJSON(`/api/vms/${encodeURIComponent(name)}`, {
-    method: "PATCH",
-    body: JSON.stringify({ repo }),
-  });
-}
-
 export function setContainerHooks(
   name: string,
   preHook: string,

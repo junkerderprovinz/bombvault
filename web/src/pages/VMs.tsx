@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMIncludeAll, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM, getVmBackupOrder, setVmBackupOrder, setVMRepo } from "../lib/api";
+import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMIncludeAll, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM, getVmBackupOrder, setVmBackupOrder } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FilterPopover } from "../components/FilterPopover";
 import { IconTipButton } from "../components/IconTipButton";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
-import type { VM, Snapshot, VmOrder } from "../lib/api";
+import type { VM, Snapshot, VmOrder, PlacementView } from "../lib/api";
 import { BULK_HUE } from "../lib/bulkHue";
 import { useT, stateLabel } from "../lib/i18n";
 import { PAGE_SHELL } from "../lib/pageShell";
@@ -31,7 +31,9 @@ import { hueVars, rainbowAt } from "../lib/appearance";
 import { useRainbow } from "../lib/useRainbow";
 import { Selector } from "../components/Selector";
 import { useToast } from "../lib/toast";
-import { RepoPicker } from "../components/RepoPicker";
+import { PlacementRow } from "../components/placement/PlacementRow";
+import { subscribePlacement } from "../lib/placementEvents";
+import { subscribeRepos } from "../lib/useNamedRepos";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -806,6 +808,7 @@ export function VMRow({
   vm,
   t,
   onRefresh,
+  onPlacement,
   selected,
   onToggleSelect,
   index,
@@ -813,6 +816,8 @@ export function VMRow({
   vm: VM;
   t: T;
   onRefresh: () => void;
+  /** Takes the card view a placement change answered with. */
+  onPlacement: (next: PlacementView) => void;
   selected?: boolean;
   onToggleSelect?: () => void;
   /** Position in the rendered list — the rainbow palette position (GlimStone
@@ -840,14 +845,6 @@ export function VMRow({
   // rows converging instead of drifting again the moment VMs grow a second
   // expandable section.
   const [openSections, setOpenSections] = useState<Set<string>>(() => new Set());
-  const { push } = useToast();
-  // The repository picker's optimistic state (#204): seeded from the row and put
-  // back on a failed save, so the control never shows a destination the server
-  // did not accept.
-  const [repoChoice, setRepoChoice] = useState(vm.repo ?? "");
-  useEffect(() => {
-    setRepoChoice(vm.repo ?? "");
-  }, [vm.repo]);
   function toggleSection(id: string) {
     setOpenSections((prev) => {
       const next = new Set(prev);
@@ -987,6 +984,13 @@ export function VMRow({
         </div>
       </div>
 
+      <PlacementRow
+        item={{ domain: "vms", key: vm.libvirtName }}
+        name={vm.name}
+        view={vm.placement}
+        onView={onPlacement}
+      />
+
       {/* Backups / Restore disclosure — ContainerRow's exact block: a chip row
           holding the section Selector with the last-backup summary pushed to
           its trailing edge (`ms-auto`), then the content pane below, driven by
@@ -1015,32 +1019,6 @@ export function VMRow({
             {lastBackupText}
           </span>
         </div>
-
-        {/* Where this VM's backups go (#204). Inline rather than behind a
-            section chip: a VM card has no folder tree to sit above, and the
-            destination is a one-line answer. Advanced only, like the other
-            per-item controls on this card - a basic view does not offer a
-            second repository to choose between. Locked once the VM has
-            backups: they stay in the repository they were written to and
-            nothing re-homes them. */}
-        <Advanced>
-          <RepoPicker
-            value={repoChoice}
-            onChange={(next) => {
-              const before = repoChoice;
-              setRepoChoice(next);
-              void setVMRepo(vm.libvirtName, next).then((r) => {
-                if (r.ok) {
-                  push(t("folders.saved"), "success");
-                  return;
-                }
-                push(r.error ?? t("settings.error"), "fail");
-                setRepoChoice(before);
-              });
-            }}
-            locked={vm.lastBackup != null}
-          />
-        </Advanced>
 
         <VMRestorePanel
           name={vm.libvirtName}
@@ -1570,6 +1548,15 @@ export function VMs() {
     void loadVMs().finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
 
+  useEffect(() => {
+    const offs = [subscribeRepos(() => void loadVMs()), subscribePlacement(() => void loadVMs())];
+    return () => offs.forEach((off) => off());
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- loadVMs is stable for this page's lifetime; adding it would re-run the effect on every render
+
+  function placeVM(libvirtName: string, next: PlacementView) {
+    setVMs((prev) => prev.map((v) => (v.libvirtName === libvirtName ? { ...v, placement: next } : v)));
+  }
+
   function handleSortChange(k: SortKey) {
     setSortKey(k);
     localStorage.setItem(SORT_STORAGE_KEY, k);
@@ -1903,6 +1890,7 @@ export function VMs() {
               vm={v}
               t={t}
               onRefresh={() => void loadVMs()}
+              onPlacement={(next) => placeVM(v.libvirtName, next)}
               selected={selected.has(v.libvirtName)}
               onToggleSelect={() => toggleSelect(v.libvirtName)}
               index={i}
@@ -1935,7 +1923,14 @@ export function VMs() {
               i % palette.length); that is intended, because a repeat then
               lands a full palette apart rather than adjacent. */}
           {orphans.map((v, i) => (
-            <VMRow key={v.libvirtName} vm={v} t={t} onRefresh={() => void loadVMs()} index={live.length + i} />
+            <VMRow
+              key={v.libvirtName}
+              vm={v}
+              t={t}
+              onRefresh={() => void loadVMs()}
+              onPlacement={(next) => placeVM(v.libvirtName, next)}
+              index={live.length + i}
+            />
           ))}
         </div>
       )}
