@@ -97,4 +97,9 @@ describe("ProtectionCard, off-site", () => {
     ]);
     expect(screen.getAllByText(/No off-site copy/)).toHaveLength(2);
   });
+
+  it("stays quiet when every item already lives off the premises", () => {
+    renderCard([domain({ offPremisesCovered: true })]);
+    expect(screen.queryByText(/No off-site copy/)).toBeNull();
+  });
 });
