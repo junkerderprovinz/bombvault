@@ -251,15 +251,3 @@ export function wheel(el: Element, notches: number): void {
     fireEvent.wheel(el, { deltaY: 100 });
   }
 }
-
-class NoopEventSource {
-  onmessage: ((e: MessageEvent) => void) | null = null;
-  close() {}
-  addEventListener() {}
-  removeEventListener() {}
-}
-
-/** jsdom has no EventSource, and cards subscribe to the progress stream. */
-export function stubEventSource(): void {
-  (globalThis as unknown as { EventSource: unknown }).EventSource = NoopEventSource;
-}
