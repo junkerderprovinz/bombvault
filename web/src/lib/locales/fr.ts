@@ -1648,6 +1648,10 @@ const fr: Partial<Translations> = {
   "placementCode.targetInUseItems": "Des éléments sauvegardent encore vers le dépôt direct de cette cible : {n}. Pointez-les ailleurs d'abord.",
   "placementCode.targetInUseDefault": "La valeur par défaut de {domains} pointe vers le dépôt direct de cette cible. Changez d'abord la valeur par défaut.",
   "placementCode.directRepo": "Ce dépôt va avec {target}. Retirez plutôt cette cible.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct conserve désormais moins. Éléments dont c'est la seule copie : {n}.",

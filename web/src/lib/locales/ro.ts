@@ -1651,6 +1651,10 @@ const ro: Partial<Translations> = {
   "placementCode.targetInUseItems": "Elemente încă se salvează în depozitul direct al acestei ținte: {n}. Îndreaptă-le mai întâi în altă parte.",
   "placementCode.targetInUseDefault": "Valoarea implicită pentru {domains} indică spre depozitul direct al acestei ținte. Schimbă mai întâi valoarea implicită.",
   "placementCode.directRepo": "Acest depozit merge împreună cu {target}. Elimină în schimb ținta.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct păstrează acum mai puțin. Elemente a căror unică copie este acolo: {n}.",

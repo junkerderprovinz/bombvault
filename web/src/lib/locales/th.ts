@@ -1651,6 +1651,10 @@ const th: Partial<Translations> = {
   "placementCode.targetInUseItems": "ยังมีรายการที่สำรองข้อมูลไปยังที่เก็บข้อมูลโดยตรงของเป้าหมายนี้: {n} รายการ ชี้ไปที่อื่นก่อน",
   "placementCode.targetInUseDefault": "ค่าเริ่มต้นสำหรับ {domains} ชี้ไปที่ที่เก็บข้อมูลโดยตรงของเป้าหมายนี้ เปลี่ยนค่าเริ่มต้นก่อน",
   "placementCode.directRepo": "ที่เก็บข้อมูลนี้ไปด้วยกันกับ {target} ให้ลบเป้าหมายนั้นแทน",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} โดยตรงเก็บข้อมูลน้อยลงแล้ว รายการที่มีสำเนาเดียวอยู่ที่นั่น: {n} รายการ",

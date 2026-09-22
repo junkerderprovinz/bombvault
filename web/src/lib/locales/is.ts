@@ -1659,6 +1659,10 @@ const is: Partial<Translations> = {
   "placementCode.targetInUseItems": "Atriði öryggisafrita enn í beinu geymsluna hjá þessum áfangastað: {n}. Beindu þeim annað fyrst.",
   "placementCode.targetInUseDefault": "Sjálfgefið gildi fyrir {domains} vísar á beinu geymsluna hjá þessum áfangastað. Breyttu sjálfgefna gildinu fyrst.",
   "placementCode.directRepo": "Þessi geymsla fylgir {target}. Fjarlægðu áfangastaðinn í staðinn.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} beint varðveitir nú minna. Atriði sem eiga eina afritið þar: {n}.",

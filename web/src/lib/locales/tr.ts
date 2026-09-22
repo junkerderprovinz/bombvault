@@ -1648,6 +1648,10 @@ const tr: Partial<Translations> = {
   "placementCode.targetInUseItems": "Ögeler hâlâ bu hedefin doğrudan deposuna yedekleniyor: {n}. Önce onları başka bir yere yönlendir.",
   "placementCode.targetInUseDefault": "{domains} için varsayılan bu hedefin doğrudan deposunu gösteriyor. Önce varsayılanı değiştir.",
   "placementCode.directRepo": "Bu depo {target} hedefiyle birlikte gider. Onun yerine o hedefi kaldır.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} doğrudan artık daha az tutuyor. Tek kopyası orada olan ögeler: {n}.",

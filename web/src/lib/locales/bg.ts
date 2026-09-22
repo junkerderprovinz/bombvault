@@ -1659,6 +1659,10 @@ const bg: Partial<Translations> = {
   "placementCode.targetInUseItems": "Елементи все още архивират в директното хранилище на тази цел: {n}. Първо ги насочи другаде.",
   "placementCode.targetInUseDefault": "Стойността по подразбиране за {domains} сочи към директното хранилище на тази цел. Първо смени стойността по подразбиране.",
   "placementCode.directRepo": "Това хранилище върви заедно с {target}. Премахни вместо това целта.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} директно вече пази по-малко. Елементи, чието единствено копие е там: {n}.",

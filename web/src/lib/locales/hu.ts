@@ -1651,6 +1651,10 @@ const hu: Partial<Translations> = {
   "placementCode.targetInUseItems": "Elemek még mindig ide mentenek e cél közvetlen tárolójába: {n}. Először irányítsd őket máshová.",
   "placementCode.targetInUseDefault": "A(z) {domains} alapértelmezése e cél közvetlen tárolójára mutat. Először változtasd meg az alapértelmezést.",
   "placementCode.directRepo": "Ez a tároló a(z) {target} céllal jár együtt. Helyette a célt távolítsd el.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} közvetlenül most kevesebbet őriz meg. Elemek, amelyeknek egyetlen másolata ott van: {n}.",

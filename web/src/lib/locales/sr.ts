@@ -1643,6 +1643,10 @@ const sr: Partial<Translations> = {
   "placementCode.targetInUseItems": "Ставке и даље праве резервне копије у директни репозиторијум овог циља: {n}. Прво их усмери другде.",
   "placementCode.targetInUseDefault": "Подразумевана вредност за {domains} показује на директни репозиторијум овог циља. Прво промени подразумевану вредност.",
   "placementCode.directRepo": "Овај репозиторијум иде заједно са циљем {target}. Уклони уместо њега циљ.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} директно сада чува мање. Ставке чија је једина копија тамо: {n}.",

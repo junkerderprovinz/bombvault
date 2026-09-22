@@ -24,6 +24,10 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "mirrored-field": "placementCode.mirroredField",
   "companion-taken": "placementCode.companionTaken",
   "exclusion-unsaved": "placementCode.exclusionUnsaved",
+  "append-only": "placementCode.appendOnly",
+  "removal-grown": "placementCode.removalGrown",
+  "name-mismatch": "placementCode.nameMismatch",
+  "home-unreadable": "placementCode.homeUnreadable",
 };
 
 const WARNING_KEYS: Record<SaveWarning["code"], TranslationKey> = {

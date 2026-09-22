@@ -1659,6 +1659,10 @@ const gl: Partial<Translations> = {
   "placementCode.targetInUseItems": "Aínda hai elementos facendo copia de seguranza no repositorio directo deste destino: {n}. Apúntaos a outro lugar primeiro.",
   "placementCode.targetInUseDefault": "O valor predeterminado de {domains} apunta ao repositorio directo deste destino. Cambia primeiro o valor predeterminado.",
   "placementCode.directRepo": "Este repositorio vai con {target}. Quita ese destino no seu lugar.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directo agora conserva menos. Elementos cuxa única copia está aí: {n}.",

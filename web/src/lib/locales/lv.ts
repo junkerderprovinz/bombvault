@@ -1659,6 +1659,10 @@ const lv: Partial<Translations> = {
   "placementCode.targetInUseItems": "Vienumi joprojām dublējas šī mērķa tiešajā krātuvē: {n}. Vispirms novirziet tos citur.",
   "placementCode.targetInUseDefault": "{domains} noklusējuma vērtība norāda uz šī mērķa tiešo krātuvi. Vispirms mainiet noklusējuma vērtību.",
   "placementCode.directRepo": "Šī krātuve iet kopā ar mērķi {target}. Noņemiet tā vietā mērķi.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} tieši tagad saglabā mazāk. Vienumi, kuru vienīgā kopija ir tur: {n}.",

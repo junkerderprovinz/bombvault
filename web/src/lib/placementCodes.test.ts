@@ -52,6 +52,17 @@ describe("placementErrorText", () => {
   });
 });
 
+describe("placementErrorText for deleting at a target", () => {
+  it.each([
+    ["append-only", "The target is append-only. Nothing here may delete from it."],
+    ["removal-grown", "More snapshots now exist only there than were shown. Check the list again."],
+    ["name-mismatch", "The typed name does not match."],
+    ["home-unreadable", "The item's location could not be read, so nothing was deleted."],
+  ])("translates %s instead of showing the server's sentence", (code, text) => {
+    expect(placementErrorText(t, "en", { ok: false, code, error: "server sentence" }, "settings.error")).toBe(text);
+  });
+});
+
 describe("save warnings", () => {
   it("fill in the target and the count and go out as warnings", () => {
     const w = { code: "direct-retention-lowered" as const, targetId: "t", targetName: "B2", items: 3 };

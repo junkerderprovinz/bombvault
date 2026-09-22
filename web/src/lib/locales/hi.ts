@@ -1659,6 +1659,10 @@ const hi: Partial<Translations> = {
   "placementCode.targetInUseItems": "प्रविष्टियाँ अब भी इस गंतव्य की डायरेक्ट रिपॉज़िटरी में बैकअप ले रही हैं: {n}। पहले उन्हें कहीं और भेजें।",
   "placementCode.targetInUseDefault": "{domains} के लिए डिफ़ॉल्ट इस गंतव्य की डायरेक्ट रिपॉज़िटरी की ओर इशारा करता है। पहले डिफ़ॉल्ट बदलें।",
   "placementCode.directRepo": "यह रिपॉज़िटरी {target} के साथ जाती है। इसके बजाय वह गंतव्य हटाएँ।",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} डायरेक्ट अब कम रखता है। जिन प्रविष्टियों की एकमात्र कॉपी वहाँ है: {n}।",

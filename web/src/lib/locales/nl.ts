@@ -1645,6 +1645,10 @@ const nl: Partial<Translations> = {
   "placementCode.targetInUseItems": "Er back-uppen nog items naar de directe repository van deze bestemming: {n}. Wijs ze eerst ergens anders naartoe.",
   "placementCode.targetInUseDefault": "De standaard voor {domains} wijst naar de directe repository van deze bestemming. Wijzig eerst de standaard.",
   "placementCode.directRepo": "Deze repository hoort bij {target}. Verwijder in plaats daarvan die bestemming.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct bewaart nu minder. Items waarvan de enige kopie daar staat: {n}.",

@@ -1640,6 +1640,10 @@ const ko: Partial<Translations> = {
   "placementCode.targetInUseItems": "항목이 아직 이 대상의 직접 저장소로 백업되고 있습니다: {n}개. 먼저 다른 곳으로 돌리세요.",
   "placementCode.targetInUseDefault": "{domains}의 기본값이 이 대상의 직접 저장소를 가리킵니다. 먼저 기본값을 바꾸세요.",
   "placementCode.directRepo": "이 저장소는 {target}과(와) 함께 갑니다. 대신 그 대상을 없애세요.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} 직접은 이제 더 적게 보관합니다. 유일한 사본이 그곳에 있는 항목: {n}개.",

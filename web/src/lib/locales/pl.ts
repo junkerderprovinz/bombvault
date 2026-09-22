@@ -1643,6 +1643,10 @@ const pl: Partial<Translations> = {
   "placementCode.targetInUseItems": "Elementy nadal tworzą kopie zapasowe w repozytorium bezpośrednim tego celu: {n}. Najpierw skieruj je gdzie indziej.",
   "placementCode.targetInUseDefault": "Wartość domyślna dla {domains} wskazuje repozytorium bezpośrednie tego celu. Najpierw zmień wartość domyślną.",
   "placementCode.directRepo": "To repozytorium idzie razem z celem {target}. Usuń zamiast niego ten cel.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} bezpośrednio przechowuje teraz mniej. Elementy, których jedyna kopia tam jest: {n}.",

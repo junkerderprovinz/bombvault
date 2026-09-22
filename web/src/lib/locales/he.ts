@@ -1648,6 +1648,10 @@ const he: Partial<Translations> = {
   "placementCode.targetInUseItems": "פריטים עדיין מגבים אל המאגר הישיר של היעד הזה: {n}. הפנה אותם קודם למקום אחר.",
   "placementCode.targetInUseDefault": "ברירת המחדל של {domains} מצביעה על המאגר הישיר של היעד הזה. שנה קודם את ברירת המחדל.",
   "placementCode.directRepo": "המאגר הזה הולך יחד עם {target}. הסר במקום זאת את היעד.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} ישיר שומר עכשיו פחות. פריטים שהעותק היחיד שלהם נמצא שם: {n}.",

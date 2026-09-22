@@ -1651,6 +1651,10 @@ const ar: Partial<Translations> = {
   "placementCode.targetInUseItems": "لا تزال عناصر تُنسخ احتياطيًا إلى المستودع المباشر لهذا الهدف: {n}. وجّهها إلى مكان آخر أولًا.",
   "placementCode.targetInUseDefault": "القيمة الافتراضية لـ {domains} تشير إلى المستودع المباشر لهذا الهدف. غيّر القيمة الافتراضية أولًا.",
   "placementCode.directRepo": "هذا المستودع مرتبط بـ {target}. أزل ذلك الهدف بدلاً منه.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} المباشر يحتفظ الآن بأقل. العناصر التي نسختها الوحيدة هناك: {n}.",

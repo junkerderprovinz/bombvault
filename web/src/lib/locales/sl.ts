@@ -1643,6 +1643,10 @@ const sl: Partial<Translations> = {
   "placementCode.targetInUseItems": "Elementi še vedno izvajajo varnostno kopiranje v neposredni repozitorij tega cilja: {n}. Najprej jih preusmeri drugam.",
   "placementCode.targetInUseDefault": "Privzeta vrednost za {domains} kaže na neposredni repozitorij tega cilja. Najprej spremeni privzeto vrednost.",
   "placementCode.directRepo": "Ta repozitorij gre skupaj s ciljem {target}. Namesto njega odstrani cilj.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} neposredno zdaj hrani manj. Elementi, katerih edina kopija je tam: {n}.",

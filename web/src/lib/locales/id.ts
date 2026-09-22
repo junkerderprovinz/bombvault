@@ -1659,6 +1659,10 @@ const id: Partial<Translations> = {
   "placementCode.targetInUseItems": "Item masih dicadangkan ke repositori langsung target ini: {n}. Arahkan dulu ke tempat lain.",
   "placementCode.targetInUseDefault": "Bawaan untuk {domains} menunjuk ke repositori langsung target ini. Ubah dulu bawaannya.",
   "placementCode.directRepo": "Repositori ini menyertai {target}. Hapus target itu sebagai gantinya.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} langsung sekarang menyimpan lebih sedikit. Item yang satu-satunya salinannya ada di sana: {n}.",

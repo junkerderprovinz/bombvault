@@ -1659,6 +1659,10 @@ const lt: Partial<Translations> = {
   "placementCode.targetInUseItems": "Elementai vis dar kuria atsargines kopijas šios paskirties tiesioginėje saugykloje: {n}. Pirma nukreipk juos kitur.",
   "placementCode.targetInUseDefault": "{domains} numatytoji reikšmė rodo į šios paskirties tiesioginę saugyklą. Pirma pakeisk numatytąją reikšmę.",
   "placementCode.directRepo": "Ši saugykla eina kartu su paskirtimi {target}. Pašalink vietoj jos paskirtį.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} tiesiogiai dabar saugo mažiau. Elementai, kurių vienintelė kopija yra ten: {n}.",

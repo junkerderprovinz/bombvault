@@ -1659,6 +1659,10 @@ const eu: Partial<Translations> = {
   "placementCode.targetInUseItems": "Elementuak oraindik helmuga honen zuzeneko biltegian babesten dira: {n}. Zuzendu haiek lehenik beste nonbaitera.",
   "placementCode.targetInUseDefault": "{domains} arloaren balio lehenetsiak helmuga honen zuzeneko biltegira seinalatzen du. Aldatu lehenik balio lehenetsia.",
   "placementCode.directRepo": "Biltegi hau {target}(r)ekin doa. Kendu helmuga hori horren ordez.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} zuzenak orain gutxiago gordetzen du. Kopia bakarra hor duten elementuak: {n}.",

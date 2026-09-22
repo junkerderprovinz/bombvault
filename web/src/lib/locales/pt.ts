@@ -1648,6 +1648,10 @@ const pt: Partial<Translations> = {
   "placementCode.targetInUseItems": "Ainda há itens a fazer cópia de segurança para o repositório direto deste destino: {n}. Aponta-os para outro lado primeiro.",
   "placementCode.targetInUseDefault": "O padrão para {domains} aponta para o repositório direto deste destino. Muda primeiro o padrão.",
   "placementCode.directRepo": "Este repositório vai com {target}. Remove esse destino em vez disso.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direto agora conserva menos. Itens cuja única cópia está lá: {n}.",

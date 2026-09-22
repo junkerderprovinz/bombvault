@@ -1648,6 +1648,10 @@ const fi: Partial<Translations> = {
   "placementCode.targetInUseItems": "Kohteet varmuuskopioituvat yhä tämän kohteen suoraan arkistoon: {n}. Osoita ne ensin muualle.",
   "placementCode.targetInUseDefault": "{domains} oletusarvo osoittaa tämän kohteen suoraan arkistoon. Vaihda oletusarvo ensin.",
   "placementCode.directRepo": "Tämä arkisto kuuluu yhteen kohteen {target} kanssa. Poista sen sijaan kohde.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} suoraan säilyttää nyt vähemmän. Kohteet, joiden ainoa kopio on siellä: {n}.",
