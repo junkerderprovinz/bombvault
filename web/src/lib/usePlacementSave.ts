@@ -32,6 +32,14 @@ export function usePlacementSave(item: ItemRef, view: PlacementView, onView: (ne
   const waiting = useRef<PlacementChange | null>(null);
   const latest = useRef({ item, onView, t, lang, push });
   latest.current = { item, onView, t, lang, push };
+  const alive = useRef(false);
+
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     setConfirmed(view);
@@ -49,6 +57,9 @@ export function usePlacementSave(item: ItemRef, view: PlacementView, onView: (ne
       } catch (err) {
         res = { ok: false, error: err instanceof Error ? err.message : undefined };
       }
+      // The card can be gone by the time the answer lands, and then there is
+      // nothing left to correct, shake or tell the page about.
+      if (!alive.current) return;
       if (!res.ok) {
         waiting.current = null;
         setOptimistic(null);
