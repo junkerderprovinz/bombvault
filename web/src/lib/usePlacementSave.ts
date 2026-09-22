@@ -21,7 +21,8 @@ function droppedText(t: T, d: DroppedTarget): string {
 }
 
 /** usePlacementSave writes one card's placement: every change shows at once,
- *  one PATCH runs at a time, and only the newest change waits behind it. */
+ *  one PATCH runs at a time, and what arrives while it runs waits behind it as
+ *  one change. */
 export function usePlacementSave(item: ItemRef, view: PlacementView, onView: (next: PlacementView) => void) {
   const { t, lang } = useT();
   const { push } = useToast();
@@ -92,7 +93,9 @@ export function usePlacementSave(item: ItemRef, view: PlacementView, onView: (ne
   function save(change: PlacementChange, opt: Partial<PlacementView>) {
     setOptimistic((prev) => ({ ...prev, ...opt }));
     if (running.current) {
-      waiting.current = change;
+      // A change carries only what it touches, so a later one takes over the
+      // home or the copies it names and leaves the rest of the wait standing.
+      waiting.current = { ...waiting.current, ...change };
       return;
     }
     void drain(change);
