@@ -101,6 +101,13 @@ const SEGMENTS: readonly [SegmentId, TranslationKey][] = [
   ["offsite-only", "placement.segOffsiteOnly"],
 ];
 
+/** lockedSegments is what the bar disables: the locks the server sent, and
+ *  off-site only whenever the options offer nothing to send to. */
+export function lockedSegments(view: PlacementView, options: PlacementOptions): SegmentLocks {
+  if (options.sendTo.length > 0) return view.segmentLocks;
+  return { ...view.segmentLocks, "offsite-only": "no-target" };
+}
+
 export function segmentItems(t: T, locks: SegmentLocks, home: string): SelectorItem[] {
   return SEGMENTS.map(([id, key]) => {
     const reason = locks[id];
@@ -114,8 +121,8 @@ export function viewSegment(kind: HomeKind | "", skip: string[], hasTargets: boo
   return !hasTargets || skipsAll(skip) ? "local" : "local-offsite";
 }
 
-export function defaultSegment(row: DefaultRow): SegmentId {
-  return viewSegment(row.homeKind, row.skip, true);
+export function defaultSegment(row: DefaultRow, options: PlacementOptions): SegmentId {
+  return viewSegment(row.homeKind, row.skip, options.targets.length > 0);
 }
 
 function repoName(repoId: string, options: PlacementOptions): string {
@@ -127,7 +134,7 @@ function repoName(repoId: string, options: PlacementOptions): string {
 /** defaultView is a default as the bar shows it. */
 export function defaultView(row: DefaultRow, options: PlacementOptions): PlacementView {
   return {
-    segment: viewSegment(row.homeKind, row.skip, options.targets.length > 0),
+    segment: defaultSegment(row, options),
     repo: row.home,
     repoLabel: repoName(row.home, options),
     repoKind: row.homeKind,
@@ -178,7 +185,10 @@ function homeBack(view: PlacementView, options: PlacementOptions, t: T, host: st
 export function stepForSegment(seg: SegmentId, view: PlacementView, options: PlacementOptions, t: T, host: string): PlacementStep {
   if (seg === view.segment) return NONE;
   if (seg === "offsite-only") {
+    // The bar locks this step while the list is empty, so a click can only
+    // come from a list that emptied after it was drawn.
     const first = options.sendTo[0];
+    if (!first) return NONE;
     if (!first.repoId) return { kind: "direct", target: first };
     return {
       kind: "save",
@@ -282,9 +292,10 @@ export type DefaultStep = { kind: "change"; change: DefaultChange } | { kind: "d
 /** stepForDefaultSegment changes a default. Off-site only moves only its home;
  *  the copies it gives items on a copy source stay as they are. */
 export function stepForDefaultSegment(seg: SegmentId, row: DefaultRow, options: PlacementOptions): DefaultStep {
-  if (seg === defaultSegment(row)) return { kind: "none" };
+  if (seg === defaultSegment(row, options)) return { kind: "none" };
   if (seg === "offsite-only") {
     const first = options.sendTo[0];
+    if (!first) return { kind: "none" };
     return first.repoId ? { kind: "change", change: { home: first.repoId } } : { kind: "direct", target: first };
   }
   const change: DefaultChange = { skip: seg === "local" ? [ALL] : [] };
