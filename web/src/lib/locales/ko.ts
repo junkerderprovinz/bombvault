@@ -1757,6 +1757,30 @@ const ko: Partial<Translations> = {
   "discover.directFound": "{name}에는 대상에 직접 기록된 백업이 있습니다. 보존이 보류 중입니다.",
   "discover.connectDirect": "{target}에 연결",
   "discover.connected": "{name}은(는) 이제 {target}의 직접 저장소입니다.",
+
+  // Status
+  "placement.planHome": "{home}에.",
+  "placement.planStays": "{home}에 유지됩니다. 이 이름의 백업이 그곳에 있습니다.",
+  "placement.planDefaultHome": "{home}에 (기본값, 첫 백업부터 적용).",
+  "placement.planDecides": "위치는 첫 백업 때 결정됩니다.",
+  "placement.planNotBackedUpOff": "백업되지 않습니다: 기본값이 꺼져 있는 {home}을(를) 가리킵니다.",
+  "placement.planNotBackedUpMissing": "백업되지 않습니다: 기본값이 더 이상 존재하지 않는 저장소를 가리킵니다.",
+  "placement.planCopied": "{targets}에 복사됨.",
+  "placement.planNoCopy": "부지 밖에 사본이 없습니다.",
+  "placement.planNoTarget": "{domain}에 설정된 오프사이트 사본이 없습니다.",
+  "placement.sitesOne": "한 곳에",
+  "placement.sites": "{n}곳에",
+  "placement.seen": "{place} 마지막으로 확인됨: {time}",
+  "placement.unreachable": "{place}은(는) {since}부터 접근 불가, 마지막으로 확인됨: {time}",
+  "placement.stateUnknown": "{place}: {since}부터 상태 알 수 없음",
+  "placement.oldCopy": "{place}: 최신 사본 {date}",
+  "placement.rule321Met": "3-2-1 충족",
+  "placement.rule321OneCopy": "3-2-1 미충족: 백업 하나",
+  "placement.rule321NothingOff": "3-2-1 미충족: 부지 밖에 아무것도 없음",
+  "placement.rule321Unconfirmed": "3-2-1 미확인",
+  "placement.noBackup": "아직 백업이 없습니다.",
+  "placement.stackNote": "프로젝트 폴더 {project}: {home}에, {targets}에 복사됨 (컨테이너 기본값을 따름)",
+  "placement.stackNoteNoCopy": "프로젝트 폴더 {project}: {home}에, 복사되지 않음 (컨테이너 기본값을 따름)",
 };
 
 export default ko;

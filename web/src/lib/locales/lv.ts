@@ -1776,6 +1776,30 @@ const lv: Partial<Translations> = {
   "discover.directFound": "{name} satur rezerves kopijas, kas rakstītas tieši mērķī. Tās saglabāšana ir pauzēta.",
   "discover.connectDirect": "Izveidot savienojumu ar {target}",
   "discover.connected": "{name} tagad ir {target} tiešā krātuve.",
+
+  // Status
+  "placement.planHome": "{home}.",
+  "placement.planStays": "Paliek vietā {home}: tur ir šī nosaukuma dublējumi.",
+  "placement.planDefaultHome": "{home} (noklusējums, spēkā no pirmās dublēšanas).",
+  "placement.planDecides": "Vieta tiek izlemta pirmajā dublēšanā.",
+  "placement.planNotBackedUpOff": "Netiek dublēts: noklusējums norāda uz {home}, kas ir izslēgts.",
+  "placement.planNotBackedUpMissing": "Netiek dublēts: noklusējums norāda uz krātuvi, kuras vairs nav.",
+  "placement.planCopied": "Kopēts uz {targets}.",
+  "placement.planNoCopy": "Nav kopijas ārpus telpām.",
+  "placement.planNoTarget": "{domain} nav iestatīta kopija ārpus vietas.",
+  "placement.sitesOne": "Vienā vietā",
+  "placement.sites": "{n} vietās",
+  "placement.seen": "{place} pēdējoreiz redzēts {time}",
+  "placement.unreachable": "{place} nesasniedzams kopš {since}, pēdējoreiz redzēts {time}",
+  "placement.stateUnknown": "{place}: statuss nezināms kopš {since}",
+  "placement.oldCopy": "{place}: jaunākā kopija no {date}",
+  "placement.rule321Met": "3-2-1 izpildīts",
+  "placement.rule321OneCopy": "3-2-1 nav izpildīts: viena dublēšana",
+  "placement.rule321NothingOff": "3-2-1 nav izpildīts: nekā ārpus telpām",
+  "placement.rule321Unconfirmed": "3-2-1 neapstiprināts",
+  "placement.noBackup": "Vēl nav dublējuma.",
+  "placement.stackNote": "Projekta mape {project}: vietā {home}, kopēts uz {targets} (seko konteineru noklusējumam)",
+  "placement.stackNoteNoCopy": "Projekta mape {project}: vietā {home}, nekopēts (seko konteineru noklusējumam)",
 };
 
 export default lv;

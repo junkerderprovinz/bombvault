@@ -1776,6 +1776,30 @@ const id: Partial<Translations> = {
   "discover.directFound": "{name} berisi cadangan yang ditulis langsung ke target. Retensinya sedang ditahan.",
   "discover.connectDirect": "Hubungkan dengan {target}",
   "discover.connected": "{name} sekarang menjadi repositori langsung dari {target}.",
+
+  // Status
+  "placement.planHome": "Di {home}.",
+  "placement.planStays": "Tetap di {home}: cadangan dengan nama ini ada di sana.",
+  "placement.planDefaultHome": "Di {home} (bawaan, berlaku sejak backup pertama).",
+  "placement.planDecides": "Lokasi ditentukan pada backup pertama.",
+  "placement.planNotBackedUpOff": "Tidak dicadangkan: bawaan menunjuk ke {home}, yang dimatikan.",
+  "placement.planNotBackedUpMissing": "Tidak dicadangkan: bawaan menunjuk ke repositori yang sudah tidak ada.",
+  "placement.planCopied": "Disalin ke {targets}.",
+  "placement.planNoCopy": "Tidak ada salinan di luar lokasi.",
+  "placement.planNoTarget": "Belum ada salinan off-site yang disiapkan untuk {domain}.",
+  "placement.sitesOne": "Di satu lokasi",
+  "placement.sites": "Di {n} lokasi",
+  "placement.seen": "{place} terakhir terlihat {time}",
+  "placement.unreachable": "{place} tidak terjangkau sejak {since}, terakhir terlihat {time}",
+  "placement.stateUnknown": "{place}: status tidak diketahui sejak {since}",
+  "placement.oldCopy": "{place}: salinan terakhir dari {date}",
+  "placement.rule321Met": "3-2-1 terpenuhi",
+  "placement.rule321OneCopy": "3-2-1 tidak terpenuhi: satu backup",
+  "placement.rule321NothingOff": "3-2-1 tidak terpenuhi: tidak ada yang di luar lokasi",
+  "placement.rule321Unconfirmed": "3-2-1 belum dikonfirmasi",
+  "placement.noBackup": "Belum ada backup.",
+  "placement.stackNote": "Folder proyek {project}: di {home}, disalin ke {targets} (mengikuti bawaan kontainer)",
+  "placement.stackNoteNoCopy": "Folder proyek {project}: di {home}, tidak disalin (mengikuti bawaan kontainer)",
 };
 
 export default id;

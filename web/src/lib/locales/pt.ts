@@ -1765,6 +1765,30 @@ const pt: Partial<Translations> = {
   "discover.directFound": "{name} contém cópias de segurança escritas diretamente num destino. A sua retenção está em pausa.",
   "discover.connectDirect": "Ligar a {target}",
   "discover.connected": "{name} é agora o repositório direto de {target}.",
+
+  // Status
+  "placement.planHome": "Em {home}.",
+  "placement.planStays": "Fica em {home}: os backups deste nome estão lá.",
+  "placement.planDefaultHome": "Em {home} (o padrão, aplica-se a partir do primeiro backup).",
+  "placement.planDecides": "A localização é decidida no primeiro backup.",
+  "placement.planNotBackedUpOff": "Não é copiado: o padrão aponta para {home}, que está desligado.",
+  "placement.planNotBackedUpMissing": "Não é copiado: o padrão aponta para um repositório que já não existe.",
+  "placement.planCopied": "Copiado para {targets}.",
+  "placement.planNoCopy": "Sem cópia fora das instalações.",
+  "placement.planNoTarget": "Não há cópia externa configurada para {domain}.",
+  "placement.sitesOne": "Num local",
+  "placement.sites": "Em {n} locais",
+  "placement.seen": "{place} visto pela última vez {time}",
+  "placement.unreachable": "{place} inacessível desde {since}, visto pela última vez {time}",
+  "placement.stateUnknown": "{place}: estado desconhecido desde {since}",
+  "placement.oldCopy": "{place}: última cópia de {date}",
+  "placement.rule321Met": "3-2-1 cumprido",
+  "placement.rule321OneCopy": "3-2-1 não cumprido: um backup",
+  "placement.rule321NothingOff": "3-2-1 não cumprido: nada fora das instalações",
+  "placement.rule321Unconfirmed": "3-2-1 não confirmado",
+  "placement.noBackup": "Ainda sem backup.",
+  "placement.stackNote": "Pasta do projeto {project}: em {home}, copiado para {targets} (segue o padrão dos contentores)",
+  "placement.stackNoteNoCopy": "Pasta do projeto {project}: em {home}, não copiado (segue o padrão dos contentores)",
 };
 
 export default pt;

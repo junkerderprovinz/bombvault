@@ -1760,6 +1760,30 @@ const uk: Partial<Translations> = {
   "discover.directFound": "{name} містить резервні копії, записані напряму в ціль. Його зберігання призупинено.",
   "discover.connectDirect": "З'єднати з {target}",
   "discover.connected": "{name} тепер прямий репозиторій цілі {target}.",
+
+  // Status
+  "placement.planHome": "На {home}.",
+  "placement.planStays": "Залишається на {home}: там знаходяться резервні копії цього імені.",
+  "placement.planDefaultHome": "На {home} (за замовчуванням, діє з першої резервної копії).",
+  "placement.planDecides": "Розташування визначається при першій резервній копії.",
+  "placement.planNotBackedUpOff": "Резервна копія не створюється: значення за замовчуванням вказує на {home}, яке вимкнено.",
+  "placement.planNotBackedUpMissing": "Резервна копія не створюється: значення за замовчуванням вказує на репозиторій, якого більше немає.",
+  "placement.planCopied": "Скопійовано до {targets}.",
+  "placement.planNoCopy": "Немає копії поза приміщенням.",
+  "placement.planNoTarget": "Для {domain} не налаштовано зовнішню копію.",
+  "placement.sitesOne": "В одному місці",
+  "placement.sites": "У {n} місцях",
+  "placement.seen": "{place} востаннє бачили {time}",
+  "placement.unreachable": "{place} недоступний з {since}, востаннє бачили {time}",
+  "placement.stateUnknown": "{place}: стан невідомий з {since}",
+  "placement.oldCopy": "{place}: остання копія від {date}",
+  "placement.rule321Met": "3-2-1 дотримано",
+  "placement.rule321OneCopy": "3-2-1 не дотримано: одна резервна копія",
+  "placement.rule321NothingOff": "3-2-1 не дотримано: нічого поза приміщенням",
+  "placement.rule321Unconfirmed": "3-2-1 непідтверджено",
+  "placement.noBackup": "Резервної копії ще немає.",
+  "placement.stackNote": "Папка проєкту {project}: на {home}, скопійовано до {targets} (слідує значенню контейнерів за замовчуванням)",
+  "placement.stackNoteNoCopy": "Папка проєкту {project}: на {home}, не скопійовано (слідує значенню контейнерів за замовчуванням)",
 };
 
 export default uk;

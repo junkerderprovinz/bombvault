@@ -1776,6 +1776,30 @@ const fa: Partial<Translations> = {
   "discover.directFound": "{name} شامل پشتیبان‌هایی است که مستقیماً در یک مقصد نوشته شده‌اند. نگه‌داری آن متوقف است.",
   "discover.connectDirect": "اتصال به {target}",
   "discover.connected": "{name} اکنون مخزن مستقیم {target} است.",
+
+  // Status
+  "placement.planHome": "در {home}.",
+  "placement.planStays": "روی {home} می‌ماند: پشتیبان‌های این نام آنجا هستند.",
+  "placement.planDefaultHome": "در {home} (پیش‌فرض، از اولین پشتیبان اعمال می‌شود).",
+  "placement.planDecides": "مکان در اولین پشتیبان تعیین می‌شود.",
+  "placement.planNotBackedUpOff": "پشتیبان‌گیری نمی‌شود: پیش‌فرض به {home} اشاره دارد که خاموش است.",
+  "placement.planNotBackedUpMissing": "پشتیبان‌گیری نمی‌شود: پیش‌فرض به مخزنی اشاره دارد که دیگر وجود ندارد.",
+  "placement.planCopied": "به {targets} کپی شد.",
+  "placement.planNoCopy": "نسخه‌ای خارج از محل وجود ندارد.",
+  "placement.planNoTarget": "برای {domain} نسخه‌ای خارج از محل تنظیم نشده است.",
+  "placement.sitesOne": "در یک مکان",
+  "placement.sites": "در {n} مکان",
+  "placement.seen": "{place} آخرین بار {time} دیده شد",
+  "placement.unreachable": "{place} از {since} در دسترس نیست، آخرین بار {time} دیده شد",
+  "placement.stateUnknown": "{place}: وضعیت از {since} نامشخص است",
+  "placement.oldCopy": "{place}: آخرین نسخه از {date}",
+  "placement.rule321Met": "3-2-1 برآورده شد",
+  "placement.rule321OneCopy": "3-2-1 برآورده نشد: یک پشتیبان",
+  "placement.rule321NothingOff": "3-2-1 برآورده نشد: چیزی خارج از محل نیست",
+  "placement.rule321Unconfirmed": "3-2-1 تأیید نشده",
+  "placement.noBackup": "هنوز پشتیبانی گرفته نشده است.",
+  "placement.stackNote": "پوشهٔ پروژهٔ {project}: در {home}، کپی‌شده به {targets} (از پیش‌فرض کانتینرها پیروی می‌کند)",
+  "placement.stackNoteNoCopy": "پوشهٔ پروژهٔ {project}: در {home}، بدون کپی (از پیش‌فرض کانتینرها پیروی می‌کند)",
 };
 
 export default fa;

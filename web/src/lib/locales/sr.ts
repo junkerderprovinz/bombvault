@@ -1760,6 +1760,30 @@ const sr: Partial<Translations> = {
   "discover.directFound": "{name} садржи резервне копије уписане директно на циљ. Његово задржавање је паузирано.",
   "discover.connectDirect": "Повежи се са {target}",
   "discover.connected": "{name} је сада директни репозиторијум циља {target}.",
+
+  // Status
+  "placement.planHome": "На {home}.",
+  "placement.planStays": "Остаје на {home}: тамо су резервне копије овог имена.",
+  "placement.planDefaultHome": "На {home} (подразумевано, важи од прве резервне копије).",
+  "placement.planDecides": "Локација се одређује при првој резервној копији.",
+  "placement.planNotBackedUpOff": "Не прави се резервна копија: подразумевано показује на {home}, које је искључено.",
+  "placement.planNotBackedUpMissing": "Не прави се резервна копија: подразумевано показује на репозиторијум који више не постоји.",
+  "placement.planCopied": "Копирано на {targets}.",
+  "placement.planNoCopy": "Нема копије ван просторија.",
+  "placement.planNoTarget": "За {domain} није подешена копија ван локације.",
+  "placement.sitesOne": "На једној локацији",
+  "placement.sites": "На {n} локација",
+  "placement.seen": "{place} последњи пут виђено {time}",
+  "placement.unreachable": "{place} недоступно од {since}, последњи пут виђено {time}",
+  "placement.stateUnknown": "{place}: стање непознато од {since}",
+  "placement.oldCopy": "{place}: последња копија од {date}",
+  "placement.rule321Met": "3-2-1 испуњено",
+  "placement.rule321OneCopy": "3-2-1 није испуњено: једна резервна копија",
+  "placement.rule321NothingOff": "3-2-1 није испуњено: ништа ван просторија",
+  "placement.rule321Unconfirmed": "3-2-1 непотврђено",
+  "placement.noBackup": "Још увек нема резервне копије.",
+  "placement.stackNote": "Фасцикла пројекта {project}: на {home}, копирано на {targets} (прати подразумевано за контејнере)",
+  "placement.stackNoteNoCopy": "Фасцикла пројекта {project}: на {home}, није копирано (прати подразумевано за контејнере)",
 };
 
 export default sr;

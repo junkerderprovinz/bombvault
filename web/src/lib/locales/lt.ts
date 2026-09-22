@@ -1776,6 +1776,30 @@ const lt: Partial<Translations> = {
   "discover.directFound": "{name} turi atsargines kopijas, įrašytas tiesiai į paskirtį. Jos saugojimas pristabdytas.",
   "discover.connectDirect": "Prisijungti prie {target}",
   "discover.connected": "{name} dabar yra {target} tiesioginė saugykla.",
+
+  // Status
+  "placement.planHome": "Vietoje {home}.",
+  "placement.planStays": "Lieka {home}: ten yra šio pavadinimo atsarginės kopijos.",
+  "placement.planDefaultHome": "Vietoje {home} (numatytoji, galioja nuo pirmos atsarginės kopijos).",
+  "placement.planDecides": "Vieta nusprendžiama darant pirmą atsarginę kopiją.",
+  "placement.planNotBackedUpOff": "Nekuriama atsarginė kopija: numatytoji rodo į {home}, kuri yra išjungta.",
+  "placement.planNotBackedUpMissing": "Nekuriama atsarginė kopija: numatytoji rodo į saugyklą, kurios nebėra.",
+  "placement.planCopied": "Nukopijuota į {targets}.",
+  "placement.planNoCopy": "Nėra kopijos už patalpų ribų.",
+  "placement.planNoTarget": "{domain} nenustatyta kopija kitoje vietoje.",
+  "placement.sitesOne": "Vienoje vietoje",
+  "placement.sites": "{n} vietose",
+  "placement.seen": "{place} paskutinį kartą matyta {time}",
+  "placement.unreachable": "{place} nepasiekiama nuo {since}, paskutinį kartą matyta {time}",
+  "placement.stateUnknown": "{place}: būsena nežinoma nuo {since}",
+  "placement.oldCopy": "{place}: naujausia kopija nuo {date}",
+  "placement.rule321Met": "3-2-1 įvykdyta",
+  "placement.rule321OneCopy": "3-2-1 neįvykdyta: viena atsarginė kopija",
+  "placement.rule321NothingOff": "3-2-1 neįvykdyta: nieko už patalpų ribų",
+  "placement.rule321Unconfirmed": "3-2-1 nepatvirtinta",
+  "placement.noBackup": "Atsarginės kopijos dar nėra.",
+  "placement.stackNote": "Projekto aplankas {project}: vietoje {home}, nukopijuota į {targets} (seka konteinerių numatytąją)",
+  "placement.stackNoteNoCopy": "Projekto aplankas {project}: vietoje {home}, nekopijuota (seka konteinerių numatytąją)",
 };
 
 export default lt;

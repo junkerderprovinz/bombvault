@@ -1762,6 +1762,30 @@ const nl: Partial<Translations> = {
   "discover.directFound": "{name} bevat back-ups die rechtstreeks naar een bestemming zijn geschreven. Het bewaarbeleid staat op pauze.",
   "discover.connectDirect": "Verbinden met {target}",
   "discover.connected": "{name} is nu de directe repository van {target}.",
+
+  // Status
+  "placement.planHome": "Op {home}.",
+  "placement.planStays": "Blijft op {home}: back-ups van deze naam staan daar.",
+  "placement.planDefaultHome": "Op {home} (de standaard, geldt vanaf de eerste back-up).",
+  "placement.planDecides": "De locatie wordt bepaald bij de eerste back-up.",
+  "placement.planNotBackedUpOff": "Wordt niet geback-upt: de standaard wijst naar {home}, dat uit staat.",
+  "placement.planNotBackedUpMissing": "Wordt niet geback-upt: de standaard wijst naar een repository die niet meer bestaat.",
+  "placement.planCopied": "Gekopieerd naar {targets}.",
+  "placement.planNoCopy": "Geen kopie buiten de locatie.",
+  "placement.planNoTarget": "Er is geen off-site kopie ingesteld voor {domain}.",
+  "placement.sitesOne": "Op één locatie",
+  "placement.sites": "Op {n} locaties",
+  "placement.seen": "{place} voor het laatst gezien {time}",
+  "placement.unreachable": "{place} onbereikbaar sinds {since}, voor het laatst gezien {time}",
+  "placement.stateUnknown": "{place}: status onbekend sinds {since}",
+  "placement.oldCopy": "{place}: laatste kopie van {date}",
+  "placement.rule321Met": "3-2-1 behaald",
+  "placement.rule321OneCopy": "3-2-1 niet behaald: één back-up",
+  "placement.rule321NothingOff": "3-2-1 niet behaald: niets buiten de locatie",
+  "placement.rule321Unconfirmed": "3-2-1 onbevestigd",
+  "placement.noBackup": "Nog geen back-up.",
+  "placement.stackNote": "Projectmap {project}: op {home}, gekopieerd naar {targets} (volgt de standaard van de containers)",
+  "placement.stackNoteNoCopy": "Projectmap {project}: op {home}, niet gekopieerd (volgt de standaard van de containers)",
 };
 
 export default nl;

@@ -1765,6 +1765,30 @@ const tr: Partial<Translations> = {
   "discover.directFound": "{name}, doğrudan bir hedefe yazılmış yedekler içeriyor. Saklama süresi askıda.",
   "discover.connectDirect": "{target} ile bağlan",
   "discover.connected": "{name} artık {target} hedefinin doğrudan deposu.",
+
+  // Status
+  "placement.planHome": "{home} üzerinde.",
+  "placement.planStays": "{home} üzerinde kalır: bu adın yedekleri orada.",
+  "placement.planDefaultHome": "{home} üzerinde (varsayılan, ilk yedeklemeden itibaren geçerli).",
+  "placement.planDecides": "Konum ilk yedeklemede belirlenir.",
+  "placement.planNotBackedUpOff": "Yedeklenmiyor: varsayılan, kapalı olan {home} konumunu gösteriyor.",
+  "placement.planNotBackedUpMissing": "Yedeklenmiyor: varsayılan, artık var olmayan bir depoyu gösteriyor.",
+  "placement.planCopied": "{targets} konumuna kopyalandı.",
+  "placement.planNoCopy": "Tesis dışında kopya yok.",
+  "placement.planNoTarget": "{domain} için site dışı kopya kurulmadı.",
+  "placement.sitesOne": "Bir konumda",
+  "placement.sites": "{n} konumda",
+  "placement.seen": "{place} son görülme {time}",
+  "placement.unreachable": "{place} {since} tarihinden beri erişilemiyor, son görülme {time}",
+  "placement.stateUnknown": "{place}: durum {since} tarihinden beri bilinmiyor",
+  "placement.oldCopy": "{place}: en son kopya {date} tarihinden",
+  "placement.rule321Met": "3-2-1 karşılanıyor",
+  "placement.rule321OneCopy": "3-2-1 karşılanmıyor: tek yedek",
+  "placement.rule321NothingOff": "3-2-1 karşılanmıyor: tesis dışında hiçbir şey yok",
+  "placement.rule321Unconfirmed": "3-2-1 doğrulanmadı",
+  "placement.noBackup": "Henüz yedek yok.",
+  "placement.stackNote": "Proje klasörü {project}: {home} üzerinde, {targets} konumuna kopyalandı (konteyner varsayılanını izler)",
+  "placement.stackNoteNoCopy": "Proje klasörü {project}: {home} üzerinde, kopyalanmadı (konteyner varsayılanını izler)",
 };
 
 export default tr;

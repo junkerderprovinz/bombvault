@@ -1776,6 +1776,30 @@ const bg: Partial<Translations> = {
   "discover.directFound": "{name} съдържа резервни копия, записани директно в цел. Задържането е спряно.",
   "discover.connectDirect": "Свържи с {target}",
   "discover.connected": "{name} вече е директното хранилище на {target}.",
+
+  // Status
+  "placement.planHome": "На {home}.",
+  "placement.planStays": "Остава на {home}: там се намират резервните копия с това име.",
+  "placement.planDefaultHome": "На {home} (по подразбиране, важи от първото резервно копие).",
+  "placement.planDecides": "Мястото се определя при първото резервно копие.",
+  "placement.planNotBackedUpOff": "Не се архивира: подразбирането сочи към {home}, което е изключено.",
+  "placement.planNotBackedUpMissing": "Не се архивира: подразбирането сочи към хранилище, което вече не съществува.",
+  "placement.planCopied": "Копирано в {targets}.",
+  "placement.planNoCopy": "Няма копие извън обекта.",
+  "placement.planNoTarget": "За {domain} не е зададено копие извън обекта.",
+  "placement.sitesOne": "На едно място",
+  "placement.sites": "На {n} места",
+  "placement.seen": "{place} видяно за последно {time}",
+  "placement.unreachable": "{place} недостъпно от {since}, видяно за последно {time}",
+  "placement.stateUnknown": "{place}: състоянието е неизвестно от {since}",
+  "placement.oldCopy": "{place}: последно копие от {date}",
+  "placement.rule321Met": "3-2-1 изпълнено",
+  "placement.rule321OneCopy": "3-2-1 не е изпълнено: едно резервно копие",
+  "placement.rule321NothingOff": "3-2-1 не е изпълнено: нищо извън обекта",
+  "placement.rule321Unconfirmed": "3-2-1 непотвърдено",
+  "placement.noBackup": "Все още няма резервно копие.",
+  "placement.stackNote": "Папка на проекта {project}: на {home}, копирано в {targets} (следва подразбирането за контейнерите)",
+  "placement.stackNoteNoCopy": "Папка на проекта {project}: на {home}, без копиране (следва подразбирането за контейнерите)",
 };
 
 export default bg;

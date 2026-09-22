@@ -1776,6 +1776,30 @@ const eu: Partial<Translations> = {
   "discover.directFound": "{name}(e)k zuzenean helmuga batera idatzitako babeskopiak ditu. Bere mantentzea pausatuta dago.",
   "discover.connectDirect": "Konektatu {target}(r)ekin",
   "discover.connected": "{name} {target}(r)en zuzeneko biltegia da orain.",
+
+  // Status
+  "placement.planHome": "{home} kokapenean.",
+  "placement.planStays": "{home} kokapenean geratzen da: izen honetako babeskopiak han daude.",
+  "placement.planDefaultHome": "{home} kokapenean (lehenetsia, lehen babeskopiatik aplikatzen da).",
+  "placement.planDecides": "Kokapena lehen babeskopian erabakitzen da.",
+  "placement.planNotBackedUpOff": "Ez da babesten: lehenetsiak {home} seinalatzen du, eta hori itzalita dago.",
+  "placement.planNotBackedUpMissing": "Ez da babesten: lehenetsiak jada existitzen ez den biltegi bat seinalatzen du.",
+  "placement.planCopied": "{targets}(e)ra kopiatuta.",
+  "placement.planNoCopy": "Ez dago kopiarik instalazioetatik kanpo.",
+  "placement.planNoTarget": "{domain} domeinurako ez dago kanpoko kopiarik konfiguratuta.",
+  "placement.sitesOne": "Kokapen batean",
+  "placement.sites": "{n} kokapenetan",
+  "placement.seen": "{place}, azken aldiz ikusia {time}",
+  "placement.unreachable": "{place} eskuraezin {since}(e)tik, azken aldiz ikusia {time}",
+  "placement.stateUnknown": "{place}: egoera ezezaguna {since}(e)tik",
+  "placement.oldCopy": "{place}: azken kopia {date}(e)koa",
+  "placement.rule321Met": "3-2-1 betea",
+  "placement.rule321OneCopy": "3-2-1 bete gabe: babeskopia bat",
+  "placement.rule321NothingOff": "3-2-1 bete gabe: ezer ez instalazioetatik kanpo",
+  "placement.rule321Unconfirmed": "3-2-1 berretsi gabe",
+  "placement.noBackup": "Oraindik ez dago babeskopiarik.",
+  "placement.stackNote": "{project} proiektu-karpeta: {home} kokapenean, {targets}(e)ra kopiatuta (edukiontzien lehenetsia jarraitzen du)",
+  "placement.stackNoteNoCopy": "{project} proiektu-karpeta: {home} kokapenean, kopiatu gabe (edukiontzien lehenetsia jarraitzen du)",
 };
 
 export default eu;

@@ -1760,6 +1760,30 @@ const pl: Partial<Translations> = {
   "discover.directFound": "{name} zawiera kopie zapasowe zapisane bezpośrednio do celu. Jego przechowywanie jest wstrzymane.",
   "discover.connectDirect": "Połącz z {target}",
   "discover.connected": "{name} jest teraz bezpośrednim repozytorium celu {target}.",
+
+  // Status
+  "placement.planHome": "Na {home}.",
+  "placement.planStays": "Pozostaje na {home}: tam znajdują się kopie zapasowe tej nazwy.",
+  "placement.planDefaultHome": "Na {home} (wartość domyślna, obowiązuje od pierwszej kopii zapasowej).",
+  "placement.planDecides": "Lokalizacja jest ustalana przy pierwszej kopii zapasowej.",
+  "placement.planNotBackedUpOff": "Nie jest tworzona kopia zapasowa: wartość domyślna wskazuje na {home}, które jest wyłączone.",
+  "placement.planNotBackedUpMissing": "Nie jest tworzona kopia zapasowa: wartość domyślna wskazuje na repozytorium, którego już nie ma.",
+  "placement.planCopied": "Skopiowano do {targets}.",
+  "placement.planNoCopy": "Brak kopii poza siedzibą.",
+  "placement.planNoTarget": "Dla {domain} nie skonfigurowano kopii poza lokalizacją.",
+  "placement.sitesOne": "W jednej lokalizacji",
+  "placement.sites": "W {n} lokalizacjach",
+  "placement.seen": "{place} ostatnio widziane {time}",
+  "placement.unreachable": "{place} niedostępne od {since}, ostatnio widziane {time}",
+  "placement.stateUnknown": "{place}: stan nieznany od {since}",
+  "placement.oldCopy": "{place}: najnowsza kopia z {date}",
+  "placement.rule321Met": "3-2-1 spełnione",
+  "placement.rule321OneCopy": "3-2-1 niespełnione: jedna kopia zapasowa",
+  "placement.rule321NothingOff": "3-2-1 niespełnione: nic poza siedzibą",
+  "placement.rule321Unconfirmed": "3-2-1 niepotwierdzone",
+  "placement.noBackup": "Jeszcze bez kopii zapasowej.",
+  "placement.stackNote": "Folder projektu {project}: na {home}, skopiowano do {targets} (podąża za domyślnym ustawieniem kontenerów)",
+  "placement.stackNoteNoCopy": "Folder projektu {project}: na {home}, nie skopiowano (podąża za domyślnym ustawieniem kontenerów)",
 };
 
 export default pl;

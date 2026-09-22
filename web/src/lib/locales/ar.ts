@@ -1768,6 +1768,30 @@ const ar: Partial<Translations> = {
   "discover.directFound": "{name} يحتوي على نسخ احتياطية كُتبت مباشرة إلى هدف. الاحتفاظ به متوقف مؤقتًا.",
   "discover.connectDirect": "اتصل بـ {target}",
   "discover.connected": "{name} أصبح الآن المستودع المباشر لـ {target}.",
+
+  // Status
+  "placement.planHome": "على {home}.",
+  "placement.planStays": "يبقى على {home}: توجد هناك نسخ احتياطية بهذا الاسم.",
+  "placement.planDefaultHome": "على {home} (الافتراضي، يسري من أول نسخة احتياطية).",
+  "placement.planDecides": "يتحدد الموقع عند أول نسخة احتياطية.",
+  "placement.planNotBackedUpOff": "لا يُنسخ احتياطيًا: يشير الافتراضي إلى {home}، وهو مطفأ.",
+  "placement.planNotBackedUpMissing": "لا يُنسخ احتياطيًا: يشير الافتراضي إلى مستودع لم يعد موجودًا.",
+  "placement.planCopied": "نُسخ إلى {targets}.",
+  "placement.planNoCopy": "لا نسخة خارج الموقع.",
+  "placement.planNoTarget": "لا توجد نسخة خارج الموقع معدّة لـ {domain}.",
+  "placement.sitesOne": "في موقع واحد",
+  "placement.sites": "في {n} مواقع",
+  "placement.seen": "آخر ظهور لـ {place} كان {time}",
+  "placement.unreachable": "{place} غير قابل للوصول منذ {since}، وآخر ظهور له كان {time}",
+  "placement.stateUnknown": "{place}: الحالة غير معروفة منذ {since}",
+  "placement.oldCopy": "{place}: آخر نسخة من {date}",
+  "placement.rule321Met": "3-2-1 مستوفى",
+  "placement.rule321OneCopy": "3-2-1 غير مستوفى: نسخة احتياطية واحدة",
+  "placement.rule321NothingOff": "3-2-1 غير مستوفى: لا شيء خارج الموقع",
+  "placement.rule321Unconfirmed": "3-2-1 غير مؤكد",
+  "placement.noBackup": "لا يوجد نسخ احتياطي بعد.",
+  "placement.stackNote": "مجلد المشروع {project}: على {home}، نُسخ إلى {targets} (يتبع افتراضي Containers)",
+  "placement.stackNoteNoCopy": "مجلد المشروع {project}: على {home}، دون نسخ (يتبع افتراضي Containers)",
 };
 
 export default ar;

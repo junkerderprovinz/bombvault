@@ -1765,6 +1765,30 @@ const el: Partial<Translations> = {
   "discover.directFound": "Το {name} περιέχει αντίγραφα ασφαλείας που γράφτηκαν απευθείας σε έναν προορισμό. Η διατήρησή του είναι σε αναμονή.",
   "discover.connectDirect": "Σύνδεση με {target}",
   "discover.connected": "Το {name} είναι πλέον το άμεσο αποθετήριο του {target}.",
+
+  // Status
+  "placement.planHome": "Στο {home}.",
+  "placement.planStays": "Παραμένει στο {home}: εκεί βρίσκονται τα αντίγραφα ασφαλείας με αυτό το όνομα.",
+  "placement.planDefaultHome": "Στο {home} (η προεπιλογή, ισχύει από το πρώτο αντίγραφο ασφαλείας).",
+  "placement.planDecides": "Η τοποθεσία αποφασίζεται στο πρώτο αντίγραφο ασφαλείας.",
+  "placement.planNotBackedUpOff": "Δεν δημιουργείται αντίγραφο ασφαλείας: η προεπιλογή δείχνει στο {home}, το οποίο είναι ανενεργό.",
+  "placement.planNotBackedUpMissing": "Δεν δημιουργείται αντίγραφο ασφαλείας: η προεπιλογή δείχνει σε αποθετήριο που δεν υπάρχει πια.",
+  "placement.planCopied": "Αντιγράφηκε στο {targets}.",
+  "placement.planNoCopy": "Κανένα αντίγραφο εκτός εγκαταστάσεων.",
+  "placement.planNoTarget": "Δεν έχει οριστεί αντίγραφο εκτός τοποθεσίας για {domain}.",
+  "placement.sitesOne": "Σε μία τοποθεσία",
+  "placement.sites": "Σε {n} τοποθεσίες",
+  "placement.seen": "{place}: εθεάθη τελευταία φορά {time}",
+  "placement.unreachable": "{place} μη προσβάσιμο από {since}, εθεάθη τελευταία φορά {time}",
+  "placement.stateUnknown": "{place}: άγνωστη κατάσταση από {since}",
+  "placement.oldCopy": "{place}: τελευταίο αντίγραφο από {date}",
+  "placement.rule321Met": "3-2-1 πληρείται",
+  "placement.rule321OneCopy": "3-2-1 δεν πληρείται: ένα αντίγραφο ασφαλείας",
+  "placement.rule321NothingOff": "3-2-1 δεν πληρείται: τίποτα εκτός εγκαταστάσεων",
+  "placement.rule321Unconfirmed": "3-2-1 ανεπιβεβαίωτο",
+  "placement.noBackup": "Δεν υπάρχει ακόμη αντίγραφο ασφαλείας.",
+  "placement.stackNote": "Φάκελος έργου {project}: στο {home}, αντιγράφηκε στο {targets} (ακολουθεί την προεπιλογή των Containers)",
+  "placement.stackNoteNoCopy": "Φάκελος έργου {project}: στο {home}, χωρίς αντιγραφή (ακολουθεί την προεπιλογή των Containers)",
 };
 
 export default el;

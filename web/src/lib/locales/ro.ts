@@ -1768,6 +1768,30 @@ const ro: Partial<Translations> = {
   "discover.directFound": "{name} conține copii de rezervă scrise direct pe o țintă. Retenția sa este în pauză.",
   "discover.connectDirect": "Conectează-te la {target}",
   "discover.connected": "{name} este acum depozitul direct al {target}.",
+
+  // Status
+  "placement.planHome": "Pe {home}.",
+  "placement.planStays": "Rămâne pe {home}: copiile de siguranță cu acest nume sunt acolo.",
+  "placement.planDefaultHome": "Pe {home} (valoarea implicită, se aplică de la prima copie de siguranță).",
+  "placement.planDecides": "Locația se decide la prima copie de siguranță.",
+  "placement.planNotBackedUpOff": "Nu se face copie: valoarea implicită indică spre {home}, care este oprit.",
+  "placement.planNotBackedUpMissing": "Nu se face copie: valoarea implicită indică spre un depozit care nu mai există.",
+  "placement.planCopied": "Copiat pe {targets}.",
+  "placement.planNoCopy": "Nicio copie în afara sediului.",
+  "placement.planNoTarget": "Nu este configurată nicio copie externă pentru {domain}.",
+  "placement.sitesOne": "Într-o locație",
+  "placement.sites": "În {n} locații",
+  "placement.seen": "{place} văzut ultima dată {time}",
+  "placement.unreachable": "{place} inaccesibil de la {since}, văzut ultima dată {time}",
+  "placement.stateUnknown": "{place}: stare necunoscută de la {since}",
+  "placement.oldCopy": "{place}: ultima copie din {date}",
+  "placement.rule321Met": "3-2-1 îndeplinită",
+  "placement.rule321OneCopy": "3-2-1 neîndeplinită: o singură copie de siguranță",
+  "placement.rule321NothingOff": "3-2-1 neîndeplinită: nimic în afara sediului",
+  "placement.rule321Unconfirmed": "3-2-1 neconfirmată",
+  "placement.noBackup": "Încă nicio copie de siguranță.",
+  "placement.stackNote": "Folder de proiect {project}: pe {home}, copiat pe {targets} (urmează valoarea implicită a containerelor)",
+  "placement.stackNoteNoCopy": "Folder de proiect {project}: pe {home}, necopiat (urmează valoarea implicită a containerelor)",
 };
 
 export default ro;

@@ -1776,6 +1776,30 @@ const hi: Partial<Translations> = {
   "discover.directFound": "{name} में सीधे किसी गंतव्य में लिखे गए बैकअप हैं। इसका रिटेंशन रुका हुआ है।",
   "discover.connectDirect": "{target} से कनेक्ट करें",
   "discover.connected": "{name} अब {target} का डायरेक्ट रिपॉज़िटरी है।",
+
+  // Status
+  "placement.planHome": "{home} पर।",
+  "placement.planStays": "{home} पर रहता है: इस नाम के बैकअप वहीं हैं।",
+  "placement.planDefaultHome": "{home} पर (डिफ़ॉल्ट, पहले बैकअप से लागू होता है)।",
+  "placement.planDecides": "स्थान पहले बैकअप पर तय होता है।",
+  "placement.planNotBackedUpOff": "बैकअप नहीं होता: डिफ़ॉल्ट {home} की ओर इशारा करता है, जो बंद है।",
+  "placement.planNotBackedUpMissing": "बैकअप नहीं होता: डिफ़ॉल्ट एक ऐसे रिपॉज़िटरी की ओर इशारा करता है जो अब मौजूद नहीं है।",
+  "placement.planCopied": "{targets} में कॉपी किया गया।",
+  "placement.planNoCopy": "परिसर से बाहर कोई प्रति नहीं।",
+  "placement.planNoTarget": "{domain} के लिए कोई ऑफ़-साइट प्रति सेट नहीं है।",
+  "placement.sitesOne": "एक स्थान पर",
+  "placement.sites": "{n} स्थानों पर",
+  "placement.seen": "{place} आख़िरी बार {time} देखा गया",
+  "placement.unreachable": "{place} {since} से पहुंच से बाहर है, आख़िरी बार {time} देखा गया",
+  "placement.stateUnknown": "{place}: स्थिति {since} से अज्ञात है",
+  "placement.oldCopy": "{place}: नवीनतम प्रति {date} की",
+  "placement.rule321Met": "3-2-1 पूरा",
+  "placement.rule321OneCopy": "3-2-1 पूरा नहीं: एक बैकअप",
+  "placement.rule321NothingOff": "3-2-1 पूरा नहीं: परिसर से बाहर कुछ नहीं",
+  "placement.rule321Unconfirmed": "3-2-1 अपुष्ट",
+  "placement.noBackup": "अभी तक कोई बैकअप नहीं।",
+  "placement.stackNote": "प्रोजेक्ट फ़ोल्डर {project}: {home} पर, {targets} में कॉपी किया गया (कंटेनर डिफ़ॉल्ट का अनुसरण करता है)",
+  "placement.stackNoteNoCopy": "प्रोजेक्ट फ़ोल्डर {project}: {home} पर, कॉपी नहीं किया गया (कंटेनर डिफ़ॉल्ट का अनुसरण करता है)",
 };
 
 export default hi;

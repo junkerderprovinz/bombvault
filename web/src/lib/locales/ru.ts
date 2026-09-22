@@ -1760,6 +1760,30 @@ const ru: Partial<Translations> = {
   "discover.directFound": "{name} содержит резервные копии, записанные напрямую в цель. Его хранение приостановлено.",
   "discover.connectDirect": "Подключить к {target}",
   "discover.connected": "{name} теперь прямой репозиторий {target}.",
+
+  // Status
+  "placement.planHome": "На {home}.",
+  "placement.planStays": "Остаётся на {home}: там находятся резервные копии с этим именем.",
+  "placement.planDefaultHome": "На {home} (по умолчанию, действует с первой резервной копии).",
+  "placement.planDecides": "Расположение определяется при первой резервной копии.",
+  "placement.planNotBackedUpOff": "Резервная копия не создаётся: значение по умолчанию указывает на {home}, который выключен.",
+  "placement.planNotBackedUpMissing": "Резервная копия не создаётся: значение по умолчанию указывает на репозиторий, которого больше нет.",
+  "placement.planCopied": "Скопировано в {targets}.",
+  "placement.planNoCopy": "Нет копии вне помещения.",
+  "placement.planNoTarget": "Для {domain} не настроена внешняя копия.",
+  "placement.sitesOne": "В одном месте",
+  "placement.sites": "В {n} местах",
+  "placement.seen": "{place} последний раз видели {time}",
+  "placement.unreachable": "{place} недоступен с {since}, последний раз видели {time}",
+  "placement.stateUnknown": "{place}: состояние неизвестно с {since}",
+  "placement.oldCopy": "{place}: последняя копия от {date}",
+  "placement.rule321Met": "3-2-1 соблюдено",
+  "placement.rule321OneCopy": "3-2-1 не соблюдено: одна резервная копия",
+  "placement.rule321NothingOff": "3-2-1 не соблюдено: ничего вне помещения",
+  "placement.rule321Unconfirmed": "3-2-1 не подтверждено",
+  "placement.noBackup": "Резервной копии пока нет.",
+  "placement.stackNote": "Папка проекта {project}: на {home}, скопировано в {targets} (следует значению контейнеров по умолчанию)",
+  "placement.stackNoteNoCopy": "Папка проекта {project}: на {home}, не скопировано (следует значению контейнеров по умолчанию)",
 };
 
 export default ru;

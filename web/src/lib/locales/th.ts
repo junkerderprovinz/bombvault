@@ -1768,6 +1768,30 @@ const th: Partial<Translations> = {
   "discover.directFound": "{name} มีข้อมูลสำรองที่เขียนตรงไปยังเป้าหมาย การเก็บรักษาถูกระงับไว้",
   "discover.connectDirect": "เชื่อมต่อกับ {target}",
   "discover.connected": "{name} เป็นที่เก็บข้อมูลโดยตรงของ {target} แล้ว",
+
+  // Status
+  "placement.planHome": "ที่ {home}",
+  "placement.planStays": "อยู่ที่ {home} ต่อไป: การสำรองข้อมูลของชื่อนี้อยู่ที่นั่น",
+  "placement.planDefaultHome": "ที่ {home} (ค่าเริ่มต้น มีผลตั้งแต่การสำรองข้อมูลครั้งแรก)",
+  "placement.planDecides": "ตำแหน่งจะถูกกำหนดเมื่อสำรองข้อมูลครั้งแรก",
+  "placement.planNotBackedUpOff": "ไม่ได้สำรองข้อมูล: ค่าเริ่มต้นชี้ไปที่ {home} ซึ่งปิดอยู่",
+  "placement.planNotBackedUpMissing": "ไม่ได้สำรองข้อมูล: ค่าเริ่มต้นชี้ไปที่ที่เก็บข้อมูลที่ไม่มีอยู่แล้ว",
+  "placement.planCopied": "คัดลอกไปยัง {targets} แล้ว",
+  "placement.planNoCopy": "ไม่มีสำเนานอกสถานที่",
+  "placement.planNoTarget": "ยังไม่ได้ตั้งค่าสำเนานอกสถานที่สำหรับ {domain}",
+  "placement.sitesOne": "ที่หนึ่งแห่ง",
+  "placement.sites": "ที่ {n} แห่ง",
+  "placement.seen": "{place} พบล่าสุด {time}",
+  "placement.unreachable": "{place} ไม่สามารถเข้าถึงได้ตั้งแต่ {since} พบล่าสุด {time}",
+  "placement.stateUnknown": "{place}: ไม่ทราบสถานะตั้งแต่ {since}",
+  "placement.oldCopy": "{place}: สำเนาล่าสุดจาก {date}",
+  "placement.rule321Met": "เป็นไปตามกฎ 3-2-1",
+  "placement.rule321OneCopy": "ไม่เป็นไปตามกฎ 3-2-1: มีการสำรองข้อมูลเดียว",
+  "placement.rule321NothingOff": "ไม่เป็นไปตามกฎ 3-2-1: ไม่มีอะไรอยู่นอกสถานที่",
+  "placement.rule321Unconfirmed": "กฎ 3-2-1 ยังไม่ได้รับการยืนยัน",
+  "placement.noBackup": "ยังไม่มีการสำรองข้อมูล",
+  "placement.stackNote": "โฟลเดอร์โปรเจกต์ {project}: ที่ {home} คัดลอกไปยัง {targets} (เป็นไปตามค่าเริ่มต้นของคอนเทนเนอร์)",
+  "placement.stackNoteNoCopy": "โฟลเดอร์โปรเจกต์ {project}: ที่ {home} ไม่ได้คัดลอก (เป็นไปตามค่าเริ่มต้นของคอนเทนเนอร์)",
 };
 
 export default th;

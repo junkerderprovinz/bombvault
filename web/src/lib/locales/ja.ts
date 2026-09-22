@@ -1757,6 +1757,30 @@ const ja: Partial<Translations> = {
   "discover.directFound": "{name} にはターゲットへ直接書き込まれたバックアップがあります。保持は保留中です。",
   "discover.connectDirect": "{target} に接続",
   "discover.connected": "{name} は {target} のダイレクトリポジトリになりました。",
+
+  // Status
+  "placement.planHome": "{home} に保存。",
+  "placement.planStays": "{home} に留まる。この名前のバックアップはそこにあります。",
+  "placement.planDefaultHome": "{home} に保存（既定値、最初のバックアップから適用）。",
+  "placement.planDecides": "保存先は最初のバックアップで決まります。",
+  "placement.planNotBackedUpOff": "バックアップされていません。既定値は {home} を指していますが、オフになっています。",
+  "placement.planNotBackedUpMissing": "バックアップされていません。既定値はもう存在しないリポジトリを指しています。",
+  "placement.planCopied": "{targets} にコピー済み。",
+  "placement.planNoCopy": "施設外への複製はありません。",
+  "placement.planNoTarget": "{domain} にはオフサイトの複製が設定されていません。",
+  "placement.sitesOne": "1 か所に",
+  "placement.sites": "{n} か所に",
+  "placement.seen": "{place} 最終確認 {time}",
+  "placement.unreachable": "{place} は {since} から到達不能、最終確認 {time}",
+  "placement.stateUnknown": "{place}：状態不明（{since} から）",
+  "placement.oldCopy": "{place}：最新の複製は {date}",
+  "placement.rule321Met": "3-2-1 を満たしています",
+  "placement.rule321OneCopy": "3-2-1 未達成：バックアップが1つのみ",
+  "placement.rule321NothingOff": "3-2-1 未達成：施設外に何もありません",
+  "placement.rule321Unconfirmed": "3-2-1 未確認",
+  "placement.noBackup": "まだバックアップがありません。",
+  "placement.stackNote": "プロジェクトフォルダ {project}：{home} に保存、{targets} にコピー（コンテナの既定値に従う）",
+  "placement.stackNoteNoCopy": "プロジェクトフォルダ {project}：{home} に保存、コピーなし（コンテナの既定値に従う）",
 };
 
 export default ja;

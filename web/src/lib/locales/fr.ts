@@ -1765,6 +1765,30 @@ const fr: Partial<Translations> = {
   "discover.directFound": "{name} contient des sauvegardes écrites directement dans une cible. Sa rétention est en pause.",
   "discover.connectDirect": "Se connecter à {target}",
   "discover.connected": "{name} est maintenant le dépôt direct de {target}.",
+
+  // Status
+  "placement.planHome": "Sur {home}.",
+  "placement.planStays": "Reste sur {home} : les sauvegardes de ce nom s'y trouvent.",
+  "placement.planDefaultHome": "Sur {home} (valeur par défaut, s'applique à partir de la première sauvegarde).",
+  "placement.planDecides": "L'emplacement est décidé à la première sauvegarde.",
+  "placement.planNotBackedUpOff": "Pas de sauvegarde : la valeur par défaut pointe vers {home}, qui est éteint.",
+  "placement.planNotBackedUpMissing": "Pas de sauvegarde : la valeur par défaut pointe vers un dépôt qui n'existe plus.",
+  "placement.planCopied": "Copié vers {targets}.",
+  "placement.planNoCopy": "Aucune copie hors des locaux.",
+  "placement.planNoTarget": "Aucune copie hors site n'est configurée pour {domain}.",
+  "placement.sitesOne": "Sur un site",
+  "placement.sites": "Sur {n} sites",
+  "placement.seen": "{place} vu pour la dernière fois {time}",
+  "placement.unreachable": "{place} injoignable depuis {since}, vu pour la dernière fois {time}",
+  "placement.stateUnknown": "{place} : état inconnu depuis {since}",
+  "placement.oldCopy": "{place} : dernière copie du {date}",
+  "placement.rule321Met": "3-2-1 respectée",
+  "placement.rule321OneCopy": "3-2-1 non respectée : une seule sauvegarde",
+  "placement.rule321NothingOff": "3-2-1 non respectée : rien hors des locaux",
+  "placement.rule321Unconfirmed": "3-2-1 non confirmée",
+  "placement.noBackup": "Pas encore de sauvegarde.",
+  "placement.stackNote": "Dossier de projet {project} : sur {home}, copié vers {targets} (suit la valeur par défaut des conteneurs)",
+  "placement.stackNoteNoCopy": "Dossier de projet {project} : sur {home}, non copié (suit la valeur par défaut des conteneurs)",
 };
 
 export default fr;
