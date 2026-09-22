@@ -1694,6 +1694,7 @@ const sl: Partial<Translations> = {
   "placement.confirmHome": "Ali naj se {name} odslej varnostno kopira v {home}? Lokacija je nespremenljiva od prve varnostne kopije.",
   "placement.paused": "Zunanje je zaustavljeno, dokler privzeto ni potrjeno.",
   "placement.uploadIntro": "Ob naslednjem zagonu bodo naloženi posnetki {name}:",
+  "placement.uploadUnknown": "Ni bilo mogoče ugotoviti, koliko od {name} bo naloženo.",
   "placement.uploadLine": "{target}: približno {n}",
   "placement.uploadCost": "Nalaganje lahko pri ponudniku stane denar.",
   "placement.uncheckable": "Ni bilo mogoče preveriti: {list}",

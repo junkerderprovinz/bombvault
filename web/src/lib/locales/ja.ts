@@ -1691,6 +1691,7 @@ const ja: Partial<Translations> = {
   "placement.confirmHome": "今後 {name} を {home} にバックアップしますか? 保存先は最初のバックアップ以降固定されます。",
   "placement.paused": "既定が確認されるまでオフサイトは一時停止します。",
   "placement.uploadIntro": "次回の実行時に {name} のスナップショットがアップロードされます:",
+  "placement.uploadUnknown": "{name} からどれだけアップロードされるかを算出できませんでした。",
   "placement.uploadLine": "{target}: 約{n}",
   "placement.uploadCost": "アップロードはプロバイダー側で料金がかかることがあります。",
   "placement.uncheckable": "チェックできませんでした: {list}",

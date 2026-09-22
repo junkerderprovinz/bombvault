@@ -84,15 +84,20 @@ export function PlacementRow({
     } catch (err) {
       res = { ok: false, error: err instanceof Error ? err.message : undefined };
     }
-    const intro = t("placement.uploadIntro").replace("{name}", () => name);
     // Without an estimate the question is all that stands between the click and
     // a whole history going up, so it is asked with the reason instead.
     if (!res.ok) {
-      const reason = <p className="text-sm text-carbon-textSub">{placementErrorText(t, lang, res, "settings.error")}</p>;
-      return confirm(intro, { extra: reason });
+      const extra = (
+        <div className="flex flex-col gap-1 text-sm text-carbon-textSub">
+          <p>{placementErrorText(t, lang, res, "settings.error")}</p>
+          <p>{t("placement.uploadCost")}</p>
+        </div>
+      );
+      return confirm(t("placement.uploadUnknown").replace("{name}", () => name), { extra });
     }
     const added = (res.added ?? []).filter((a) => a.snapshots > 0);
     if (added.length === 0) return true;
+    const intro = t("placement.uploadIntro").replace("{name}", () => name);
     return confirm(intro, { extra: <UploadLines added={added} /> });
   }
 
@@ -163,6 +168,7 @@ export function PlacementRow({
                 label={t("placement.reset")}
                 labelKey="placement.reset"
                 tone="neutral"
+                disabled={asking}
                 onClick={() => void run(stepForReset(shown))}
               />
             )}

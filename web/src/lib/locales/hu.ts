@@ -1702,6 +1702,7 @@ const hu: Partial<Translations> = {
   "placement.confirmHome": "Mentődjön {name} mostantól ide: {home}? A hely az első biztonsági mentéstől fogva rögzített.",
   "placement.paused": "A telephelyen kívüli szünetel, amíg az alapértelmezés meg nem erősítést nyer.",
   "placement.uploadIntro": "A következő futtatáskor feltöltődnek a(z) {name} pillanatképei:",
+  "placement.uploadUnknown": "Nem sikerült kiszámolni, mennyi töltődik fel ebből: {name}.",
   "placement.uploadLine": "{target}: kb. {n}",
   "placement.uploadCost": "A feltöltések pénzbe kerülhetnek a szolgáltatónál.",
   "placement.uncheckable": "Nem sikerült ellenőrizni: {list}",

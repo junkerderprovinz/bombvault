@@ -1699,6 +1699,7 @@ const pt: Partial<Translations> = {
   "placement.confirmHome": "Fazer backup de {name} para {home} a partir de agora? A localização fica fixa desde o primeiro backup.",
   "placement.paused": "Externo em pausa até o padrão ser confirmado.",
   "placement.uploadIntro": "Na próxima execução, os instantâneos de {name} serão enviados:",
+  "placement.uploadUnknown": "Não foi possível calcular quanto de {name} será enviado.",
   "placement.uploadLine": "{target}: cerca de {n}",
   "placement.uploadCost": "Os envios podem custar dinheiro no provedor.",
   "placement.uncheckable": "Não foi possível verificar: {list}",

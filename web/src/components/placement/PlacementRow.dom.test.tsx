@@ -194,8 +194,10 @@ describe("PlacementRow", () => {
     renderRow(placementView({ skip: ["t-b2"], copiesFollow: false }));
     fireEvent.click(await screen.findByRole("button", { name: "B2" }));
     const dialog = await screen.findByRole("dialog");
-    expect(dialog.textContent).toContain("At the next run, snapshots of nginx are uploaded:");
+    expect(dialog.textContent).toContain("It could not be worked out how much of nginx would be uploaded.");
+    expect(dialog.textContent).not.toContain("At the next run, snapshots of nginx are uploaded:");
     expect(dialog.textContent).toContain("The placement rules could not be read, so nothing is copied until they can.");
+    expect(dialog.textContent).toContain("Uploads can cost money at the provider.");
     fireEvent.click(within(dialog).getByRole("button", { name: "Confirm" }));
     await waitFor(() => expect(fake.callsTo("setItemPlacement")).toEqual([[item, { copies: { skip: [] } }]]));
   });
@@ -206,7 +208,9 @@ describe("PlacementRow", () => {
     renderRow(placementView({ skip: ["t-b2"], copiesFollow: false }));
     fireEvent.click(await screen.findByRole("button", { name: "B2" }));
     const dialog = await screen.findByRole("dialog");
+    expect(dialog.textContent).toContain("It could not be worked out how much of nginx would be uploaded.");
     expect(dialog.textContent).toContain("the server did not answer");
+    expect(dialog.textContent).toContain("Uploads can cost money at the provider.");
     fireEvent.click(within(dialog).getByRole("button", { name: "Confirm" }));
     await waitFor(() => expect(fake.callsTo("setItemPlacement")).toEqual([[item, { copies: { skip: [] } }]]));
   });
@@ -225,6 +229,22 @@ describe("PlacementRow", () => {
     await waitFor(() =>
       expect(fake.callsTo("setItemPlacement")).toEqual([[item, { home: { follow: true }, copies: { follow: true } }]])
     );
+  });
+
+  it("takes no second reset while the first one's question is being prepared", async () => {
+    const release = fake.hold("previewItemPlacement");
+    fake.reply("previewItemPlacement", { ok: true, added: [uploadEstimate()], dropped: [] });
+    renderRow(placementView({ repo: "repo-nas", repoKind: "local", repoLabel: "NAS Keller" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Reset" }));
+    await waitFor(() => expect(fake.callsTo("previewItemPlacement")).toHaveLength(1));
+    const reset = screen.getByRole("button", { name: "Reset" }) as HTMLButtonElement;
+    expect(reset.disabled).toBe(true);
+    fireEvent.click(reset);
+    await act(async () => release());
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect((screen.getByRole("button", { name: "Reset" }) as HTMLButtonElement).disabled).toBe(false));
+    expect(fake.callsTo("previewItemPlacement")).toHaveLength(1);
   });
 
   it("follows the default while nothing is chosen", async () => {

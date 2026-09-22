@@ -1710,6 +1710,7 @@ const lv: Partial<Translations> = {
   "placement.confirmHome": "Vai no šī brīža dublēt {name} uz {home}? Atrašanās vieta ir nemainīga kopš pirmās dublēšanas.",
   "placement.paused": "Attālinātais ir pauzēts, kamēr netiek apstiprināts noklusējums.",
   "placement.uploadIntro": "Nākamajā palaišanā tiks augšupielādēti {name} momentuzņēmumi:",
+  "placement.uploadUnknown": "Neizdevās noteikt, cik daudz no {name} tiks augšupielādēts.",
   "placement.uploadLine": "{target}: apmēram {n}",
   "placement.uploadCost": "Augšupielādes var maksāt naudu pie sniedzēja.",
   "placement.uncheckable": "Neizdevās pārbaudīt: {list}",

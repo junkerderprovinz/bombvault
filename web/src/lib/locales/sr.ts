@@ -1694,6 +1694,7 @@ const sr: Partial<Translations> = {
   "placement.confirmHome": "Да ли од сада правити резервну копију {name} у {home}? Локација је фиксна од прве резервне копије.",
   "placement.paused": "Спољно је паузирано док се подразумевано не потврди.",
   "placement.uploadIntro": "Приликом следећег покретања биће отпремљени снимци ставке {name}:",
+  "placement.uploadUnknown": "Није било могуће утврдити колико ће се од {name} отпремити.",
   "placement.uploadLine": "{target}: око {n}",
   "placement.uploadCost": "Отпремања могу коштати новца код провајдера.",
   "placement.uncheckable": "Није могло да се провери: {list}",

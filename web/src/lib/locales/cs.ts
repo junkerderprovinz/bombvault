@@ -1697,6 +1697,7 @@ const cs: Partial<Translations> = {
   "placement.confirmHome": "Zálohovat {name} od teď do {home}? Umístění je pevné od první zálohy.",
   "placement.paused": "Mimo lokalitu pozastaveno, dokud se nepotvrdí výchozí nastavení.",
   "placement.uploadIntro": "Při dalším běhu se nahrají snímky {name}:",
+  "placement.uploadUnknown": "Nepodařilo se zjistit, kolik z {name} se nahraje.",
   "placement.uploadLine": "{target}: asi {n}",
   "placement.uploadCost": "Nahrávání může u poskytovatele stát peníze.",
   "placement.uncheckable": "Nepodařilo se zkontrolovat: {list}",

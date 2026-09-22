@@ -1694,6 +1694,7 @@ const pl: Partial<Translations> = {
   "placement.confirmHome": "Tworzyć odtąd kopię zapasową {name} w {home}? Lokalizacja jest ustalona od pierwszej kopii zapasowej.",
   "placement.paused": "Poza siedzibą wstrzymane do potwierdzenia domyślnego.",
   "placement.uploadIntro": "Przy następnej kopii zapasowej zostaną przesłane migawki {name}:",
+  "placement.uploadUnknown": "Nie udało się ustalić, ile z {name} zostanie wysłane.",
   "placement.uploadLine": "{target}: około {n}",
   "placement.uploadCost": "Przesyłanie może kosztować u dostawcy.",
   "placement.uncheckable": "Nie udało się sprawdzić: {list}",

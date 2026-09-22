@@ -1694,6 +1694,7 @@ const uk: Partial<Translations> = {
   "placement.confirmHome": "Резервувати {name} у {home} відтепер? Розташування фіксується від першого резервного копіювання.",
   "placement.paused": "Зовнішнє призупинено, доки не підтверджено значення за замовчуванням.",
   "placement.uploadIntro": "Під час наступного запуску буде завантажено знімки {name}:",
+  "placement.uploadUnknown": "Не вдалося визначити, скільки з {name} буде вивантажено.",
   "placement.uploadLine": "{target}: близько {n}",
   "placement.uploadCost": "Завантаження можуть коштувати грошей у провайдера.",
   "placement.uncheckable": "Не вдалося перевірити: {list}",

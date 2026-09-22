@@ -1691,6 +1691,7 @@ const ko: Partial<Translations> = {
   "placement.confirmHome": "지금부터 {name}을(를) {home}에 백업할까요? 위치는 첫 백업 이후 고정됩니다.",
   "placement.paused": "기본값이 확인될 때까지 오프사이트가 일시 중지됩니다.",
   "placement.uploadIntro": "다음 실행 시 {name}의 스냅샷이 업로드됩니다:",
+  "placement.uploadUnknown": "{name}에서 얼마나 업로드될지 계산하지 못했습니다.",
   "placement.uploadLine": "{target}: 약 {n}개",
   "placement.uploadCost": "업로드는 제공자에게 비용이 들 수 있습니다.",
   "placement.uncheckable": "확인할 수 없음: {list}",

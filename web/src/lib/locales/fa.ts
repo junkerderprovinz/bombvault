@@ -1710,6 +1710,7 @@ const fa: Partial<Translations> = {
   "placement.confirmHome": "از این پس {name} در {home} پشتیبان‌گیری شود؟ مکان از اولین پشتیبان به بعد ثابت است.",
   "placement.paused": "خارج از محل متوقف است تا پیش‌فرض تأیید شود.",
   "placement.uploadIntro": "در اجرای بعدی، اسنپ‌شات‌های {name} بارگذاری می‌شوند:",
+  "placement.uploadUnknown": "مشخص نشد چه مقدار از {name} بارگذاری می‌شود.",
   "placement.uploadLine": "{target}: حدود {n}",
   "placement.uploadCost": "بارگذاری‌ها ممکن است نزد ارائه‌دهنده هزینه داشته باشند.",
   "placement.uncheckable": "بررسی نشد: {list}",

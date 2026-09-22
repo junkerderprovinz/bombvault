@@ -1697,6 +1697,7 @@ const es: Partial<Translations> = {
   "placement.confirmHome": "¿Hacer copia de seguridad de {name} en {home} a partir de ahora? La ubicación queda fija desde la primera copia de seguridad.",
   "placement.paused": "Externo en pausa hasta que se confirme el valor predeterminado.",
   "placement.uploadIntro": "En la próxima ejecución se subirán instantáneas de {name}:",
+  "placement.uploadUnknown": "No se ha podido calcular cuánto de {name} se subirá.",
   "placement.uploadLine": "{target}: unas {n}",
   "placement.uploadCost": "Las subidas pueden costar dinero en el proveedor.",
   "placement.uncheckable": "No se pudo comprobar: {list}",

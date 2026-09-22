@@ -1691,6 +1691,7 @@ const zh: Partial<Translations> = {
   "placement.confirmHome": "从现在起将 {name} 备份到 {home} 吗？位置自首次备份起固定。",
   "placement.paused": "异地已暂停，直到默认被确认。",
   "placement.uploadIntro": "下次运行时，将上传 {name} 的快照：",
+  "placement.uploadUnknown": "无法计算 {name} 会上传多少。",
   "placement.uploadLine": "{target}：约 {n}",
   "placement.uploadCost": "上传可能会在提供商处产生费用。",
   "placement.uncheckable": "无法检查：{list}",

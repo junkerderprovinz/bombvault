@@ -1699,6 +1699,7 @@ const he: Partial<Translations> = {
   "placement.confirmHome": "לגבות את {name} אל {home} מעכשיו והלאה? המיקום קבוע מהגיבוי הראשון.",
   "placement.paused": "מחוץ לאתר מושהה עד לאישור ברירת המחדל.",
   "placement.uploadIntro": "בהרצה הבאה יועלו snapshots של {name}:",
+  "placement.uploadUnknown": "לא ניתן היה לחשב כמה מתוך {name} יועלה.",
   "placement.uploadLine": "{target}: כ-{n}",
   "placement.uploadCost": "העלאות עלולות לעלות כסף אצל הספק.",
   "placement.uncheckable": "לא ניתן היה לבדוק: {list}",

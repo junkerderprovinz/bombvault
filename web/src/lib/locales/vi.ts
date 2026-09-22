@@ -1691,6 +1691,7 @@ const vi: Partial<Translations> = {
   "placement.confirmHome": "Từ giờ sao lưu {name} vào {home}? Vị trí cố định kể từ bản sao lưu đầu tiên.",
   "placement.paused": "Ngoài site tạm dừng cho đến khi mặc định được xác nhận.",
   "placement.uploadIntro": "Ở lần chạy tiếp theo, các snapshot của {name} sẽ được tải lên:",
+  "placement.uploadUnknown": "Không xác định được sẽ tải lên bao nhiêu từ {name}.",
   "placement.uploadLine": "{target}: khoảng {n}",
   "placement.uploadCost": "Việc tải lên có thể tốn phí ở nhà cung cấp.",
   "placement.uncheckable": "Không thể kiểm tra: {list}",

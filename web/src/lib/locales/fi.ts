@@ -1699,6 +1699,7 @@ const fi: Partial<Translations> = {
   "placement.confirmHome": "Varmuuskopioidaanko {name} tästä lähtien kohteeseen {home}? Sijainti on kiinteä ensimmäisestä varmuuskopiosta lähtien.",
   "placement.paused": "Etä on tauolla, kunnes oletus on vahvistettu.",
   "placement.uploadIntro": "Seuraavalla ajolla ladataan kohteen {name} tilannevedokset:",
+  "placement.uploadUnknown": "Ei voitu selvittää, kuinka paljon kohteesta {name} ladataan.",
   "placement.uploadLine": "{target}: noin {n}",
   "placement.uploadCost": "Lataukset voivat maksaa palveluntarjoajalla.",
   "placement.uncheckable": "Ei voitu tarkistaa: {list}",

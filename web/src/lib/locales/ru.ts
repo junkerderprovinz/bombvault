@@ -1694,6 +1694,7 @@ const ru: Partial<Translations> = {
   "placement.confirmHome": "Резервировать {name} в {home} отныне? Расположение фиксируется с первой резервной копии.",
   "placement.paused": "Внешнее приостановлено, пока значение по умолчанию не подтверждено.",
   "placement.uploadIntro": "При следующем запуске будут загружены снимки {name}:",
+  "placement.uploadUnknown": "Не удалось определить, сколько из {name} будет загружено.",
   "placement.uploadLine": "{target}: около {n}",
   "placement.uploadCost": "Загрузки могут стоить денег у провайдера.",
   "placement.uncheckable": "Не удалось проверить: {list}",

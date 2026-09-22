@@ -1696,6 +1696,7 @@ const nl: Partial<Translations> = {
   "placement.confirmHome": "{name} vanaf nu naar {home} back-uppen? De locatie ligt vast vanaf de eerste back-up.",
   "placement.paused": "Off-site gepauzeerd totdat de standaard is bevestigd.",
   "placement.uploadIntro": "Bij de volgende back-up worden snapshots van {name} geüpload:",
+  "placement.uploadUnknown": "Er kon niet worden bepaald hoeveel van {name} wordt geüpload.",
   "placement.uploadLine": "{target}: ongeveer {n}",
   "placement.uploadCost": "Uploads kunnen geld kosten bij de provider.",
   "placement.uncheckable": "Kon niet worden gecontroleerd: {list}",

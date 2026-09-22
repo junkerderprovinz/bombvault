@@ -1710,6 +1710,7 @@ const eu: Partial<Translations> = {
   "placement.confirmHome": "{name} hemendik aurrera {home}(e)n babeskopiatu? Kokapena finkoa da lehen babeskopiatik aurrera.",
   "placement.paused": "Kanpokoa pausatuta dago lehenetsia berretsi arte.",
   "placement.uploadIntro": "Hurrengo exekuzioan {name}(r)en argazkiak igoko dira:",
+  "placement.uploadUnknown": "Ezin izan da zehaztu {name} zenbat igoko den.",
   "placement.uploadLine": "{target}: {n} inguru",
   "placement.uploadCost": "Igoerek dirua kosta dezakete hornitzailearengan.",
   "placement.uncheckable": "Ezin izan da egiaztatu: {list}",

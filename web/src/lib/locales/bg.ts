@@ -1710,6 +1710,7 @@ const bg: Partial<Translations> = {
   "placement.confirmHome": "Да архивира ли {name} в {home} отсега нататък? Местоположението е фиксирано от първото резервно копие.",
   "placement.paused": "Извън обекта е паузирано, докато подразбирането не бъде потвърдено.",
   "placement.uploadIntro": "При следващото изпълнение ще бъдат качени снапшоти на {name}:",
+  "placement.uploadUnknown": "Не можа да се установи колко от {name} ще бъде качено.",
   "placement.uploadLine": "{target}: около {n}",
   "placement.uploadCost": "Качванията могат да струват пари при доставчика.",
   "placement.uncheckable": "Не можа да се провери: {list}",
