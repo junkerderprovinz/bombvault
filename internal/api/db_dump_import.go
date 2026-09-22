@@ -369,7 +369,11 @@ func (s *Service) stopImportDependents(ctx context.Context, name string) []impor
 	var stopped []importDependent
 	for _, dep := range tg.StopContainers {
 		di, err := s.inspectNamed(ctx, dep)
-		if err != nil || !di.Running {
+		if err != nil {
+			log.Printf("api: import database dump into %q: inspect %q: %v (leaving as-is)", name, dep, err) //nolint:gosec // G706: names are %q-quoted
+			continue
+		}
+		if !di.Running {
 			continue
 		}
 		if err := s.docker.Stop(ctx, di.ID, dbImportStopTimeout); err != nil {

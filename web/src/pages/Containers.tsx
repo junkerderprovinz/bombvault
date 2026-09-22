@@ -1620,6 +1620,7 @@ function StopContainersEditor({
   // with the existing `containers.notInstalled` badge text rather than a
   // second bespoke "stale" label.
   const candidateNames = new Set(candidates.map((c) => c.name));
+  const installedNames = new Set(installedContainers.map((c) => c.name));
 
   // Discrete boolean toggle — optimistic flip, immediate save, revert +
   // `.glim-shake` (keyed by container name) on failure. Same shape as
@@ -1766,6 +1767,11 @@ function StopContainersEditor({
               className={`inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-2 py-0.5 text-xs text-carbon-textSub${rowShake[n] ? " glim-shake" : ""}`}
             >
               {n}
+              {/* A backup or an import passes over a name no container has, so
+                  the chip says so without opening the picker. */}
+              {!installedNames.has(n) && (
+                <span className="text-caption text-statusFail">{t("containers.notInstalled")}</span>
+              )}
               <Button
                 label={t("stophook.remove").replace("{name}", n)}
                 labelKey="stophook.remove"
