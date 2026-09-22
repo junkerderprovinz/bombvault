@@ -4,10 +4,19 @@ import (
 	"errors"
 	"net/http"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
+
+// unreadableTarget leaves a row the target read cannot scan.
+func (f *placementFixture) unreadableTarget(id string) {
+	f.t.Helper()
+	if _, err := f.db.Exec(`UPDATE offsite_targets SET sort_order = 'not a number' WHERE id = ?`, id); err != nil {
+		f.t.Fatal(err)
+	}
+}
 
 func importEdited(t *testing.T, f *placementFixture, edit func(exp map[string]any)) map[string]any {
 	t.Helper()
@@ -360,5 +369,21 @@ func TestTheImportPreviewNamesEachNewTargetCountedWithTheFilesRules(t *testing.T
 	again := src.do(http.MethodPost, "/api/settings/import", exp)["summary"].(map[string]any)
 	if list := again["newTargets"].([]any); len(list) != 0 {
 		t.Fatalf("newTargets = %v, want none for targets that already exist", list)
+	}
+}
+
+func TestTheImportPreviewLogsATargetItCannotLookUp(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	exp := f.do(http.MethodGet, "/api/settings/export", nil)
+	f.unreadableTarget(b2.ID)
+	logged := captureLog(t)
+
+	summary := f.do(http.MethodPost, "/api/settings/import", exp)["summary"].(map[string]any)
+	if list := summary["newTargets"].([]any); len(list) != 0 {
+		t.Fatalf("newTargets = %v, want none while the lookup fails", list)
+	}
+	if !strings.Contains(logged.String(), "import preview of containers") {
+		t.Fatalf("log = %q, want the failed lookup named", logged.String())
 	}
 }
