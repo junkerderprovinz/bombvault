@@ -5,6 +5,7 @@ import {
   createOffsiteTarget,
   updateOffsiteTarget,
   deleteOffsiteTarget,
+  excludeFromTarget,
   testOffsiteTarget,
 } from "../lib/api";
 import type { NewTargetExclusion } from "../lib/api";
@@ -22,6 +23,7 @@ import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragm
 import { useToast } from "../lib/toast";
 import { useConfirm } from "../lib/useConfirm";
 import { useNamedRepos } from "../lib/useNamedRepos";
+import { isPlacementDomain } from "../lib/placement";
 import { placementErrorText, pushSaveWarnings } from "../lib/placementCodes";
 import { placementChanged } from "../lib/placementEvents";
 import { alsoDirectText, directAsk, directUse, retentionLowered } from "../lib/directRepo";
@@ -349,7 +351,15 @@ export function OffsiteTargetsSection({
           },
           alsoExclude
         );
-        if (!r.ok) throw new Error(placementErrorText(t, lang, r, "settings.error"));
+        if (!r.ok) {
+          // The target itself is stored behind this code, so the save counts as
+          // done and only what it should leave out still has to be written.
+          if (r.code !== "exclusion-unsaved" || !alsoExclude || !isPlacementDomain(domain)) {
+            throw new Error(placementErrorText(t, lang, r, "settings.error"));
+          }
+          const ex = await excludeFromTarget({ domain, targetId: draft.id, ...alsoExclude });
+          if (!ex.ok) push(placementErrorText(t, lang, ex, "placementCode.exclusionUnsaved"), "fail");
+        }
         pushSaveWarnings(push, t, r.warnings);
       }
       push(t("settings.saved"), "success");
