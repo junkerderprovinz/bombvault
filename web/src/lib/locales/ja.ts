@@ -1748,6 +1748,13 @@ const ja: Partial<Translations> = {
   "newTarget.excludeHere": "ここでも除外する",
   "newTarget.excludeDefault": "{target} を既定値でも除外する",
   "newTarget.importHeading": "{domain} 用の新しいターゲット {target}",
+
+  // Discover
+  "discover.paused": "{domains} のオフサイトコピーは、{where} で既定値が確認されるまで一時停止しています。",
+  "discover.leftOpen": "バックアップが実行中だったため保存先を未設定のままにしました: {list}",
+  "discover.directFound": "{name} にはターゲットへ直接書き込まれたバックアップがあります。保持は保留中です。",
+  "discover.connectDirect": "{target} に接続",
+  "discover.connected": "{name} は {target} のダイレクトリポジトリになりました。",
 };
 
 export default ja;

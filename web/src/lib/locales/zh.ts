@@ -1748,6 +1748,13 @@ const zh: Partial<Translations> = {
   "newTarget.excludeHere": "此处也排除",
   "newTarget.excludeDefault": "也在默认设置中排除 {target}",
   "newTarget.importHeading": "{domain} 的新目标 {target}",
+
+  // Discover
+  "discover.paused": "{domains} 的异地副本已暂停，直到在 {where} 下确认默认值为止。",
+  "discover.leftOpen": "因为备份正在进行，位置保持未设置：{list}",
+  "discover.directFound": "{name} 中有直接写入目标的备份。它的保留已暂停。",
+  "discover.connectDirect": "连接到 {target}",
+  "discover.connected": "{name} 现在是 {target} 的直接存储库。",
 };
 
 export default zh;

@@ -1759,6 +1759,13 @@ const th: Partial<Translations> = {
   "newTarget.excludeHere": "ยกเว้นที่นี่ด้วย",
   "newTarget.excludeDefault": "ยกเว้น {target} จากค่าเริ่มต้นด้วย",
   "newTarget.importHeading": "ปลายทางใหม่ {target} สำหรับ {domain}",
+
+  // Discover
+  "discover.paused": "สำเนานอกสถานที่สำหรับ {domains} หยุดชั่วคราวจนกว่าค่าเริ่มต้นจะได้รับการยืนยันภายใต้ {where}",
+  "discover.leftOpen": "ปล่อยตำแหน่งไว้ว่างเพราะกำลังสำรองข้อมูลอยู่: {list}",
+  "discover.directFound": "{name} มีข้อมูลสำรองที่เขียนตรงไปยังเป้าหมาย การเก็บรักษาถูกระงับไว้",
+  "discover.connectDirect": "เชื่อมต่อกับ {target}",
+  "discover.connected": "{name} เป็นที่เก็บข้อมูลโดยตรงของ {target} แล้ว",
 };
 
 export default th;

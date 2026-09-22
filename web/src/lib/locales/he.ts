@@ -1756,6 +1756,13 @@ const he: Partial<Translations> = {
   "newTarget.excludeHere": "להחריג גם כאן",
   "newTarget.excludeDefault": "להחריג גם את {target} מברירת המחדל",
   "newTarget.importHeading": "יעד חדש {target} עבור {domain}",
+
+  // Discover
+  "discover.paused": "עותקים חיצוניים עבור {domains} מושהים עד שברירת המחדל תאושר תחת {where}.",
+  "discover.leftOpen": "המיקום נשאר פתוח כי גיבוי היה בתהליך: {list}",
+  "discover.directFound": "{name} מכיל גיבויים שנכתבו ישירות ליעד. השמירה שלו מושהית.",
+  "discover.connectDirect": "התחבר אל {target}",
+  "discover.connected": "{name} הוא כעת המאגר הישיר של {target}.",
 };
 
 export default he;

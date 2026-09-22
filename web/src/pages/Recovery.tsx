@@ -60,6 +60,8 @@ import {
 import { SnapshotFileTree } from "../components/SnapshotFileTree";
 import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
+import { DiscoverFindings } from "../components/placement/DiscoverFindings";
+import { placementChanged } from "../lib/placementEvents";
 
 import { Toggle } from "../components/Toggle";
 // classifyReadable's probe: discover() + discoverVMs() OPEN the encrypted repo
@@ -1871,13 +1873,7 @@ export default function Recovery() {
   // ping — the same "what did the last check say" reasoning as
   // IntegrityCard's persisted results.
   const [discovering, setDiscovering] = useState(false);
-  const [discovered, setDiscovered] = useState<{
-    containers: number;
-    vms: number;
-    files: number;
-    skipped: string[];
-    skippedNeedsAction: boolean;
-  } | null>(null);
+  const [discovered, setDiscovered] = useState<Awaited<ReturnType<typeof discoverAll>> | null>(null);
   const [discoverError, setDiscoverError] = useState<string | null>(null);
   // Reconstructed target lists — populated by Discover, read by the review step.
   const [containers, setContainers] = useState<Container[]>([]);
@@ -1909,6 +1905,7 @@ export default function Recovery() {
       setVMs(vs.vms ?? []);
       setFileSets(fs.ok ? fs.fileSets ?? [] : []);
       setDiscovered(counts);
+      if (counts.paused.length > 0 || counts.leftOpen.length > 0) placementChanged();
     } catch (err) {
       setDiscoverError(err instanceof Error ? err.message : String(err));
       setDiscovered(null);
@@ -2495,6 +2492,9 @@ export default function Recovery() {
           <p className="text-sm text-statusWarn">
             {t("common.discoverSkipped").replace("{list}", discovered.skipped.join(", "))}
           </p>
+        )}
+        {discovered && (
+          <DiscoverFindings paused={discovered.paused} leftOpen={discovered.leftOpen} directRepos={discovered.directRepos} />
         )}
         {discoverError && (
           <div className="rounded-card bg-statusFailBgSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed wrap-break-word">

@@ -1868,6 +1868,13 @@ export const en = {
   "newTarget.excludeDefault": "Leave {target} out of the default too",
   "newTarget.importHeading": "New target {target} for {domain}",
 
+  // Discover
+  "discover.paused": "Off-site copies for {domains} are paused until the default is confirmed under {where}.",
+  "discover.leftOpen": "Location left open because a backup was running: {list}",
+  "discover.directFound": "{name} holds backups written directly to a target. Its retention is on hold.",
+  "discover.connectDirect": "Connect with {target}",
+  "discover.connected": "{name} is now the direct repository of {target}.",
+
   "files.excludesCount": "Excludes: {n}",
   "files.enabled": "Include in schedule",
   "files.effectiveLabel": "Result",
@@ -3701,6 +3708,13 @@ export const de: Translations = {
   "newTarget.excludeHere": "Auch hier ausnehmen",
   "newTarget.excludeDefault": "{target} auch in der Vorgabe ausnehmen",
   "newTarget.importHeading": "Neues Ziel {target} für {domain}",
+
+  // Discover
+  "discover.paused": "Off-site-Kopien für {domains} ruhen, bis die Vorgabe unter {where} bestätigt ist.",
+  "discover.leftOpen": "Ort offen gelassen, weil ein Backup lief: {list}",
+  "discover.directFound": "{name} enthält direkt geschriebene Sicherungen. Die Aufbewahrung ist angehalten.",
+  "discover.connectDirect": "Mit {target} verbinden",
+  "discover.connected": "{name} ist jetzt das Direkt-Repository von {target}.",
 
   "files.excludesCount": "Ausschlüsse: {n}",
   "files.enabled": "Im Zeitplan einschließen",

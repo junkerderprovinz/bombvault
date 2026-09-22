@@ -1767,6 +1767,13 @@ const gl: Partial<Translations> = {
   "newTarget.excludeHere": "Excluír tamén aquí",
   "newTarget.excludeDefault": "Excluír tamén {target} do valor predeterminado",
   "newTarget.importHeading": "Novo destino {target} para {domain}",
+
+  // Discover
+  "discover.paused": "As copias externas de {domains} están en pausa ata que se confirme o valor por defecto en {where}.",
+  "discover.leftOpen": "Localización deixada aberta porque había unha copia de seguranza en curso: {list}",
+  "discover.directFound": "{name} contén copias de seguranza escritas directamente nun destino. A súa retención está en pausa.",
+  "discover.connectDirect": "Conectar con {target}",
+  "discover.connected": "{name} é agora o repositorio directo de {target}.",
 };
 
 export default gl;

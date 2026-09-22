@@ -1759,6 +1759,13 @@ const hu: Partial<Translations> = {
   "newTarget.excludeHere": "Kizárás itt is",
   "newTarget.excludeDefault": "{target} kizárása az alapértelmezésből is",
   "newTarget.importHeading": "Új cél: {target} a(z) {domain} számára",
+
+  // Discover
+  "discover.paused": "A(z) {domains} telephelyen kívüli másolatai szüneteltetve vannak, amíg az alapértelmezést meg nem erősítik a következő helyen: {where}.",
+  "discover.leftOpen": "A hely nyitva maradt, mert mentés volt folyamatban: {list}",
+  "discover.directFound": "A(z) {name} közvetlenül egy célra írt mentéseket tartalmaz. A megőrzése szünetel.",
+  "discover.connectDirect": "Kapcsolódás ehhez: {target}",
+  "discover.connected": "A(z) {name} mostantól a(z) {target} közvetlen tárolója.",
 };
 
 export default hu;

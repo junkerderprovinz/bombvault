@@ -1767,6 +1767,13 @@ const ms: Partial<Translations> = {
   "newTarget.excludeHere": "Kecualikan di sini juga",
   "newTarget.excludeDefault": "Kecualikan {target} daripada lalai juga",
   "newTarget.importHeading": "Sasaran baharu {target} untuk {domain}",
+
+  // Discover
+  "discover.paused": "Salinan off-site untuk {domains} dijeda sehingga lalai disahkan di bawah {where}.",
+  "discover.leftOpen": "Lokasi dibiarkan terbuka kerana sandaran sedang berjalan: {list}",
+  "discover.directFound": "{name} mengandungi sandaran yang ditulis terus ke sasaran. Pengekalannya sedang ditahan.",
+  "discover.connectDirect": "Sambung dengan {target}",
+  "discover.connected": "{name} kini repositori langsung bagi {target}.",
 };
 
 export default ms;

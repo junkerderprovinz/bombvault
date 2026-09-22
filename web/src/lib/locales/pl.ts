@@ -1751,6 +1751,13 @@ const pl: Partial<Translations> = {
   "newTarget.excludeHere": "Wyklucz też tutaj",
   "newTarget.excludeDefault": "Wyklucz {target} też z wartości domyślnej",
   "newTarget.importHeading": "Nowy cel {target} dla {domain}",
+
+  // Discover
+  "discover.paused": "Kopie off-site dla {domains} są wstrzymane, dopóki wartość domyślna nie zostanie potwierdzona pod {where}.",
+  "discover.leftOpen": "Lokalizacja pozostawiona otwarta, bo trwała kopia zapasowa: {list}",
+  "discover.directFound": "{name} zawiera kopie zapasowe zapisane bezpośrednio do celu. Jego przechowywanie jest wstrzymane.",
+  "discover.connectDirect": "Połącz z {target}",
+  "discover.connected": "{name} jest teraz bezpośrednim repozytorium celu {target}.",
 };
 
 export default pl;

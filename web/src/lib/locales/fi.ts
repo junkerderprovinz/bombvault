@@ -1756,6 +1756,13 @@ const fi: Partial<Translations> = {
   "newTarget.excludeHere": "Jätä pois myös täällä",
   "newTarget.excludeDefault": "Jätä {target} pois myös oletusarvosta",
   "newTarget.importHeading": "Uusi kohde {target} alueelle {domain}",
+
+  // Discover
+  "discover.paused": "Alueen {domains} etäkopiot ovat tauolla, kunnes oletus on vahvistettu kohdassa {where}.",
+  "discover.leftOpen": "Sijainti jätettiin auki, koska varmuuskopiointi oli käynnissä: {list}",
+  "discover.directFound": "{name} sisältää suoraan kohteeseen kirjoitettuja varmuuskopioita. Sen säilytys on tauolla.",
+  "discover.connectDirect": "Yhdistä kohteeseen {target}",
+  "discover.connected": "{name} on nyt kohteen {target} suora arkisto.",
 };
 
 export default fi;

@@ -1767,6 +1767,13 @@ const et: Partial<Translations> = {
   "newTarget.excludeHere": "Jäta ka siin välja",
   "newTarget.excludeDefault": "Jäta {target} ka vaikeväärtusest välja",
   "newTarget.importHeading": "Uus sihtkoht {target} domeenile {domain}",
+
+  // Discover
+  "discover.paused": "{domains} väliskoopiad seisavad, kuni vaikeväärtus on kinnitatud: {where}.",
+  "discover.leftOpen": "Asukoht jäeti lahtiseks, sest varundus oli käimas: {list}",
+  "discover.directFound": "{name} sisaldab otse sihtkohta kirjutatud varundusi. Selle säilitamine on peatatud.",
+  "discover.connectDirect": "Ühenda sihtkohaga {target}",
+  "discover.connected": "{name} on nüüd sihtkoha {target} otsehoidla.",
 };
 
 export default et;

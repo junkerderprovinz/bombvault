@@ -1767,6 +1767,13 @@ const hi: Partial<Translations> = {
   "newTarget.excludeHere": "यहाँ भी एक्सक्लूड करें",
   "newTarget.excludeDefault": "{target} को डिफ़ॉल्ट में भी एक्सक्लूड करें",
   "newTarget.importHeading": "{domain} के लिए नया लक्ष्य {target}",
+
+  // Discover
+  "discover.paused": "{domains} के लिए ऑफ़-साइट कॉपी तब तक रुकी हैं, जब तक डिफ़ॉल्ट {where} के तहत पुष्टि नहीं हो जाता।",
+  "discover.leftOpen": "जगह खुली छोड़ी गई क्योंकि बैकअप चल रहा था: {list}",
+  "discover.directFound": "{name} में सीधे किसी गंतव्य में लिखे गए बैकअप हैं। इसका रिटेंशन रुका हुआ है।",
+  "discover.connectDirect": "{target} से कनेक्ट करें",
+  "discover.connected": "{name} अब {target} का डायरेक्ट रिपॉज़िटरी है।",
 };
 
 export default hi;

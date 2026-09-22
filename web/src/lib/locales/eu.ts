@@ -1767,6 +1767,13 @@ const eu: Partial<Translations> = {
   "newTarget.excludeHere": "Baztertu hemen ere",
   "newTarget.excludeDefault": "Baztertu {target} lehenetsitik ere",
   "newTarget.importHeading": "{target} helburu berria {domain} eremurako",
+
+  // Discover
+  "discover.paused": "{domains}(r)en kanpoko kopiak pausatuta daude, lehenespena {where} atalean berretsi arte.",
+  "discover.leftOpen": "Kokapena irekita utzi da babeskopia bat exekutatzen ari zelako: {list}",
+  "discover.directFound": "{name}(e)k zuzenean helmuga batera idatzitako babeskopiak ditu. Bere mantentzea pausatuta dago.",
+  "discover.connectDirect": "Konektatu {target}(r)ekin",
+  "discover.connected": "{name} {target}(r)en zuzeneko biltegia da orain.",
 };
 
 export default eu;

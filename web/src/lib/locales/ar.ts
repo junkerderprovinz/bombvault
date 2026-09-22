@@ -1759,6 +1759,13 @@ const ar: Partial<Translations> = {
   "newTarget.excludeHere": "استبعادها هنا أيضًا",
   "newTarget.excludeDefault": "استبعاد {target} من القيمة الافتراضية أيضًا",
   "newTarget.importHeading": "هدف جديد {target} لـ {domain}",
+
+  // Discover
+  "discover.paused": "نسخ خارج الموقع لـ {domains} متوقفة مؤقتًا حتى يتم تأكيد الافتراضي تحت {where}.",
+  "discover.leftOpen": "تُرك الموقع مفتوحًا لأن نسخة احتياطية كانت قيد التشغيل: {list}",
+  "discover.directFound": "{name} يحتوي على نسخ احتياطية كُتبت مباشرة إلى هدف. الاحتفاظ به متوقف مؤقتًا.",
+  "discover.connectDirect": "اتصل بـ {target}",
+  "discover.connected": "{name} أصبح الآن المستودع المباشر لـ {target}.",
 };
 
 export default ar;

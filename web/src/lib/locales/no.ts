@@ -1756,6 +1756,13 @@ const no: Partial<Translations> = {
   "newTarget.excludeHere": "Utelukk også her",
   "newTarget.excludeDefault": "Utelukk også {target} fra standarden",
   "newTarget.importHeading": "Nytt mål {target} for {domain}",
+
+  // Discover
+  "discover.paused": "Eksterne kopier for {domains} er satt på pause til standarden er bekreftet under {where}.",
+  "discover.leftOpen": "Plassering latt åpen fordi en sikkerhetskopi kjørte: {list}",
+  "discover.directFound": "{name} inneholder sikkerhetskopier skrevet direkte til et mål. Oppbevaringen er satt på pause.",
+  "discover.connectDirect": "Koble til {target}",
+  "discover.connected": "{name} er nå det direkte depotet til {target}.",
 };
 
 export default no;

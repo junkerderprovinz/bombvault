@@ -1748,6 +1748,13 @@ const vi: Partial<Translations> = {
   "newTarget.excludeHere": "Loại trừ ở đây luôn",
   "newTarget.excludeDefault": "Loại trừ {target} khỏi mặc định luôn",
   "newTarget.importHeading": "Đích mới {target} cho {domain}",
+
+  // Discover
+  "discover.paused": "Bản sao off-site cho {domains} đang tạm dừng cho đến khi mặc định được xác nhận tại {where}.",
+  "discover.leftOpen": "Vị trí được để trống vì bản sao lưu đang chạy: {list}",
+  "discover.directFound": "{name} chứa các bản sao lưu được ghi trực tiếp vào một đích. Việc lưu giữ của nó đang tạm dừng.",
+  "discover.connectDirect": "Kết nối với {target}",
+  "discover.connected": "{name} giờ là kho trực tiếp của {target}.",
 };
 
 export default vi;
