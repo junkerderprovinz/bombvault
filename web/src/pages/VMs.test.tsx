@@ -15,7 +15,7 @@
 // pure-logic test cannot observe; hence the jsdom opt-in here.
 // ---------------------------------------------------------------------------
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, cleanup, within } from "@testing-library/react";
 import { VMRow } from "./VMs";
 import type { VM } from "../lib/api";
 import { homeOption, placementOptions, placementView } from "../lib/placement.testsupport";
@@ -161,8 +161,9 @@ describe("VMRow matches the container card's structure", () => {
   it("offers the backup method as two icon-only badges, with the stored one active", () => {
     render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} onPlacement={noop} index={0} />);
 
-    // A native <select> would expose a combobox and NO per-option segments.
-    expect(screen.queryByRole("combobox")).toBeNull();
+    // A native <select> would expose a combobox here instead of the segments.
+    const method = screen.getByRole("tablist", { name: "vm.method" });
+    expect(within(method).queryByRole("combobox")).toBeNull();
 
     // Selector's single-select segments are role="tab"/aria-selected (its
     // multi-select ones, like the backups chip above, are button/aria-pressed)
