@@ -73,6 +73,32 @@ describe("DirectRepoDialog", () => {
     expect(await screen.findByText("Not reachable: connection refused")).toBeTruthy();
   });
 
+  it("says why the test could not be made", async () => {
+    fake.reply("testDirectLocation", new Error("network unreachable"));
+    renderDialog();
+    await screen.findByDisplayValue("b2:bucket:containers-direct");
+    fireEvent.click(screen.getByRole("button", { name: "Test connection" }));
+    expect(await screen.findByText("Not reachable: network unreachable")).toBeTruthy();
+  });
+
+  it("drops the verdict once the place is edited", async () => {
+    renderDialog();
+    await screen.findByDisplayValue("b2:bucket:containers-direct");
+    fireEvent.click(screen.getByRole("button", { name: "Test connection" }));
+    expect(await screen.findByText("Reachable, empty")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Location"), { target: { value: "b2:bucket:other" } });
+    expect(screen.queryByText("Reachable, empty")).toBeNull();
+  });
+
+  it("says why the repository could not be created", async () => {
+    fake.reply("createDirectRepo", new Error("bucket gone"));
+    const { onDone } = renderDialog();
+    await screen.findByDisplayValue("b2:bucket:containers-direct");
+    fireEvent.click(screen.getByRole("button", { name: "Create and use" }));
+    expect(await screen.findByText("bucket gone")).toBeTruthy();
+    expect(onDone).not.toHaveBeenCalled();
+  });
+
   it("leaves nothing behind when cancelled", async () => {
     const { onClose } = renderDialog();
     await screen.findByDisplayValue("b2:bucket:containers-direct");
