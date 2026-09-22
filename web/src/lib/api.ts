@@ -2242,6 +2242,8 @@ export function previewItemPlacement(
 
 export interface RemovalPreview {
   target: { id: string; name: string; appendOnly: boolean };
+  /** The name the delete compares the typed text with: a VM's libvirt name, not its display name. */
+  name: string;
   count: number;
   onlyThere: { id: string; time: string }[];
   homeUnreadable: boolean;
@@ -2261,7 +2263,8 @@ export function getOffsiteRemoval(
 }
 
 /** Deletes them. `onlyThere` are the snapshots the preview listed as existing
- *  nowhere else; `typedName` is "" when that list was empty. */
+ *  nowhere else; `typedName` is the preview's `name`, or "" when that list was
+ *  empty. */
 export function deleteAtTarget(
   item: ItemRef,
   targetId: string,
