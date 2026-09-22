@@ -4966,7 +4966,8 @@ func (h *Handler) handleListFileSets(w http.ResponseWriter, r *http.Request) {
 
 // handleCreateFileSet creates a file set. POST /api/files/sets
 // body {name, path, excludes, enabled, repo, copies}. Without repo the set is
-// open and takes the Folders default at its first backup.
+// open and takes the Folders default at its first backup; with it, the empty
+// string for the domain repository included, it stays where it is put.
 func (h *Handler) handleCreateFileSet(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Name     string        `json:"name"`
@@ -4989,7 +4990,7 @@ func (h *Handler) handleCreateFileSet(w http.ResponseWriter, r *http.Request) {
 		Excludes: body.Excludes,
 		Enabled:  enabled,
 	}
-	if body.Repo != nil && strings.TrimSpace(*body.Repo) != "" {
+	if body.Repo != nil {
 		fs.Repo = strings.TrimSpace(*body.Repo)
 		fs.RepoChosen = store.RepoChosen
 	}
