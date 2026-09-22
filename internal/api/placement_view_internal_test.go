@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"reflect"
 	"testing"
@@ -28,7 +29,7 @@ func (f *placementFixture) views(domain string, items ...placementItem) map[stri
 	if err != nil {
 		f.t.Fatal(err)
 	}
-	views, err := f.svc.placementViews(settings, domain, items)
+	views, err := f.svc.placementViews(context.Background(), settings, domain, items)
 	if err != nil {
 		f.t.Fatal(err)
 	}

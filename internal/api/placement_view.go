@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"log"
 	"maps"
 
@@ -53,7 +54,7 @@ type placementItem struct {
 // readPlacement, one ListNamedRepos. Without a readable placement and a
 // certain target list every card is unreadable, since chips and locks need
 // target ids.
-func (s *Service) placementViews(settings store.Settings, domain string, items []placementItem) (map[string]placementView, error) {
+func (s *Service) placementViews(ctx context.Context, settings store.Settings, domain string, items []placementItem) (map[string]placementView, error) {
 	p, err := s.readPlacement(settings, domain)
 	if err != nil || p.TargetsUncertain {
 		return unreadablePlacements(items), nil
@@ -155,11 +156,11 @@ func unreadablePlacements(items []placementItem) map[string]placementView {
 
 // listPlacements is the placement block of every row of a list. A list is never
 // refused over its placement; a failure shows every card as unreadable.
-func (s *Service) listPlacements(domain string, items []placementItem) map[string]placementView {
+func (s *Service) listPlacements(ctx context.Context, domain string, items []placementItem) map[string]placementView {
 	settings, err := s.store.GetSettings()
 	if err == nil {
 		var views map[string]placementView
-		if views, err = s.placementViews(settings, domain, items); err == nil {
+		if views, err = s.placementViews(ctx, settings, domain, items); err == nil {
 			return views
 		}
 	}
@@ -193,11 +194,11 @@ func (s *Service) placementItemOf(item store.ItemRef) (placementItem, error) {
 }
 
 // placementViewOf is one item's card view after a change.
-func (s *Service) placementViewOf(item store.ItemRef) placementView {
+func (s *Service) placementViewOf(ctx context.Context, item store.ItemRef) placementView {
 	it, err := s.placementItemOf(item)
 	if err != nil {
 		log.Printf("api: %s placement of %q: %v", item.Domain, item.Key, err) //nolint:gosec // G706: the key is %q-quoted
 		return unreadablePlacement()
 	}
-	return s.listPlacements(item.Domain, []placementItem{it})[item.Key]
+	return s.listPlacements(ctx, item.Domain, []placementItem{it})[item.Key]
 }
