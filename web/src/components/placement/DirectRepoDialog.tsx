@@ -8,6 +8,7 @@ import {
   testDirectLocation,
   type DirectSuggestion,
   type NamedRepo,
+  type OkEnvelope,
 } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { placementErrorText } from "../../lib/placementCodes";
@@ -74,16 +75,19 @@ export function DirectRepoDialog({
 
   async function test() {
     setTesting(true);
+    let r: OkEnvelope & { initialized?: boolean };
     try {
-      const r = await testDirectLocation(target.id, location.trim());
-      if (!r.ok) {
-        setResult(t("directRepo.testFailed").replace("{error}", () => placementErrorText(t, lang, r, "settings.error")));
-        return;
-      }
-      setResult(r.initialized ? t("directRepo.testExisting") : t("directRepo.testEmpty"));
+      r = await testDirectLocation(target.id, location.trim());
+    } catch (err) {
+      r = { ok: false, error: err instanceof Error ? err.message : undefined };
     } finally {
       setTesting(false);
     }
+    if (!r.ok) {
+      setResult(t("directRepo.testFailed").replace("{error}", () => placementErrorText(t, lang, r, "settings.error")));
+      return;
+    }
+    setResult(r.initialized ? t("directRepo.testExisting") : t("directRepo.testEmpty"));
   }
 
   async function confirm() {
@@ -93,17 +97,20 @@ export function DirectRepoDialog({
     }
     if (creating.current) return;
     creating.current = true;
+    let r: OkEnvelope & { repo?: NamedRepo };
     try {
-      const r = await createDirectRepo(target.id, name.trim(), location.trim());
-      if (!r.ok || !r.repo) {
-        push(placementErrorText(t, lang, r, "settings.error"), "fail");
-        return;
-      }
-      reposChanged();
-      onDone({ kind: "created", repo: r.repo });
+      r = await createDirectRepo(target.id, name.trim(), location.trim());
+    } catch (err) {
+      r = { ok: false, error: err instanceof Error ? err.message : undefined };
     } finally {
       creating.current = false;
     }
+    if (!r.ok || !r.repo) {
+      push(placementErrorText(t, lang, r, "settings.error"), "fail");
+      return;
+    }
+    reposChanged();
+    onDone({ kind: "created", repo: r.repo });
   }
 
   return createPortal(
@@ -127,6 +134,7 @@ export function DirectRepoDialog({
               onChange={(e) => {
                 locationTouched.current = true;
                 setLocation(e.target.value);
+                setResult(null);
               }}
               spellCheck={false}
               autoComplete="off"
