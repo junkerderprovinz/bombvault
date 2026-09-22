@@ -210,7 +210,7 @@ func TestObservedCallsACopyTooFarBehindTheLastBackupOld(t *testing.T) {
 	}
 }
 
-func TestObservedLeavesOutATargetThatHoldsNothingOfTheItem(t *testing.T) {
+func TestObservedSaysATargetHoldsNoCopyOfTheItemYet(t *testing.T) {
 	f := newPlacementFixture(t)
 	dailyContainerBackups(f)
 	b2 := f.target("containers", "B2", "b2:bucket:containers")
@@ -220,11 +220,34 @@ func TestObservedLeavesOutATargetThatHoldsNothingOfTheItem(t *testing.T) {
 	f.listing("containers", b2.ID, now-hour, copiesRow("container:plex", 20, now-2*hour))
 
 	o := f.cardOf("containers", "nginx", now-2*hour).Observed
-	if len(o.Places) != 1 || o.Places[0].Place != "local" {
-		t.Fatalf("places = %+v, want only the home", o.Places)
+	want := observedPlace{Place: "offsite:" + b2.ID, Label: "B2", State: "no-copy"}
+	if got := placeAt(o, "offsite:"+b2.ID); got != want {
+		t.Fatalf("B2 = %+v, want %+v", got, want)
 	}
 	if o.Sites != 1 || o.Rule321 != "one-copy" || o.Tone != "warn" {
 		t.Fatalf("observed = %+v, want one site and 3-2-1 not met", o)
+	}
+}
+
+func TestObservedHasNoSightingAtAnUnreachableTargetThatHoldsNothing(t *testing.T) {
+	f := newPlacementFixture(t)
+	dailyContainerBackups(f)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	f.container("nginx", "")
+	f.container("plex", "")
+	now := time.Now().Unix()
+	f.listing("containers", b2.ID, now-10*hour, copiesRow("container:plex", 20, now-11*hour))
+	id, err := f.st.RecordOffsiteRunForTarget("containers", b2.ID, now-hour)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := f.st.FinishOffsiteRun(id, false, "connection refused"); err != nil {
+		t.Fatal(err)
+	}
+
+	got := placeAt(f.cardOf("containers", "nginx", now-2*hour).Observed, "offsite:"+b2.ID)
+	if got.State != "unreachable" || got.Since != now-hour || got.SeenAt != 0 {
+		t.Fatalf("B2 = %+v, want unreachable without a sighting of a copy", got)
 	}
 }
 
