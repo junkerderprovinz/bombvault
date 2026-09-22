@@ -1392,6 +1392,8 @@ const nl: Partial<Translations> = {
   "settingsIO.previewAppVersion": "Van BombVault-versie",
   "settingsIO.previewOffsiteTargets": "Off-site-bestemmingen",
   "settingsIO.previewNamedRepos": "Repositories",
+  "settingsIO.previewCopyRules": "Kopieerregels",
+  "settingsIO.previewNotInFile": "niet in het bestand, blijft zoals het is",
   "settingsIO.previewCredentials": "Inloggegevens",
   "settingsIO.previewCredsIncluded": "inbegrepen",
   "settingsIO.previewCredsNotIncluded": "niet inbegrepen",
@@ -1749,6 +1751,7 @@ const nl: Partial<Translations> = {
   "newTarget.formerly": "Tot nu toe uitgesloten bij andere bestemmingen: {list}",
   "newTarget.excludeHere": "Ook hier uitsluiten",
   "newTarget.excludeDefault": "{target} ook van de standaard uitsluiten",
+  "newTarget.importHeading": "Nieuw doel {target} voor {domain}",
 };
 
 export default nl;

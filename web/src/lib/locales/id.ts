@@ -1565,6 +1565,8 @@ const id: Partial<Translations> = {
   "settingsIO.previewAppVersion": "Dari versi BombVault",
   "settingsIO.previewOffsiteTargets": "Target off-site",
   "settingsIO.previewNamedRepos": "Repositori",
+  "settingsIO.previewCopyRules": "Aturan salin",
+  "settingsIO.previewNotInFile": "tidak ada di file, tetap seperti semula",
   "settingsIO.previewCredentials": "Kredensial",
   "settingsIO.previewCredsIncluded": "disertakan",
   "settingsIO.previewCredsNotIncluded": "tidak disertakan",
@@ -1763,6 +1765,7 @@ const id: Partial<Translations> = {
   "newTarget.formerly": "Sejauh ini dikecualikan di target lain: {list}",
   "newTarget.excludeHere": "Kecualikan di sini juga",
   "newTarget.excludeDefault": "Kecualikan {target} dari bawaan juga",
+  "newTarget.importHeading": "Target baru {target} untuk {domain}",
 };
 
 export default id;

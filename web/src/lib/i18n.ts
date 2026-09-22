@@ -1865,6 +1865,7 @@ export const en = {
   "newTarget.formerly": "Left out of other targets so far: {list}",
   "newTarget.excludeHere": "Leave these out here too",
   "newTarget.excludeDefault": "Leave {target} out of the default too",
+  "newTarget.importHeading": "New target {target} for {domain}",
 
   "files.excludesCount": "Excludes: {n}",
   "files.enabled": "Include in schedule",
@@ -2072,6 +2073,8 @@ export const en = {
   "settingsIO.previewAppVersion": "From BombVault version",
   "settingsIO.previewOffsiteTargets": "Off-site targets",
   "settingsIO.previewNamedRepos": "Repositories",
+  "settingsIO.previewCopyRules": "Copy rules",
+  "settingsIO.previewNotInFile": "not in the file, stays as it is",
   "settingsIO.previewCredentials": "Credentials",
   "settingsIO.previewCredsIncluded": "included",
   "settingsIO.previewCredsNotIncluded": "not included",
@@ -3695,6 +3698,7 @@ export const de: Translations = {
   "newTarget.formerly": "Bisher bei anderen Zielen ausgenommen: {list}",
   "newTarget.excludeHere": "Auch hier ausnehmen",
   "newTarget.excludeDefault": "{target} auch in der Vorgabe ausnehmen",
+  "newTarget.importHeading": "Neues Ziel {target} für {domain}",
 
   "files.excludesCount": "Ausschlüsse: {n}",
   "files.enabled": "Im Zeitplan einschließen",
@@ -3874,6 +3878,8 @@ export const de: Translations = {
   "settingsIO.previewAppVersion": "Aus BombVault-Version",
   "settingsIO.previewOffsiteTargets": "Off-site-Ziele",
   "settingsIO.previewNamedRepos": "Repositories",
+  "settingsIO.previewCopyRules": "Kopierregeln",
+  "settingsIO.previewNotInFile": "nicht in der Datei, bleibt wie es ist",
   "settingsIO.previewCredentials": "Zugangsdaten",
   "settingsIO.previewCredsIncluded": "enthalten",
   "settingsIO.previewCredsNotIncluded": "nicht enthalten",

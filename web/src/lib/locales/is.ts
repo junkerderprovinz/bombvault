@@ -1565,6 +1565,8 @@ const is: Partial<Translations> = {
   "settingsIO.previewAppVersion": "Frá BombVault-útgáfu",
   "settingsIO.previewOffsiteTargets": "Fjarlægir áfangastaðir",
   "settingsIO.previewNamedRepos": "Söfn",
+  "settingsIO.previewCopyRules": "Afritunarreglur",
+  "settingsIO.previewNotInFile": "ekki í skránni, helst óbreytt",
   "settingsIO.previewCredentials": "Aðgangsgögn",
   "settingsIO.previewCredsIncluded": "meðtalið",
   "settingsIO.previewCredsNotIncluded": "ekki meðtalið",
@@ -1763,6 +1765,7 @@ const is: Partial<Translations> = {
   "newTarget.formerly": "Hingað til útilokað hjá öðrum markmiðum: {list}",
   "newTarget.excludeHere": "Útiloka einnig hér",
   "newTarget.excludeDefault": "Útiloka {target} einnig úr sjálfgefnu",
+  "newTarget.importHeading": "Nýtt markmið {target} fyrir {domain}",
 };
 
 export default is;

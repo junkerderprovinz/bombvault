@@ -1565,6 +1565,8 @@ const fa: Partial<Translations> = {
   "settingsIO.previewAppVersion": "از نسخه BombVault",
   "settingsIO.previewOffsiteTargets": "مقصدهای خارج از محل",
   "settingsIO.previewNamedRepos": "مخزن‌ها",
+  "settingsIO.previewCopyRules": "قوانین کپی",
+  "settingsIO.previewNotInFile": "در فایل نیست، همان‌طور که هست باقی می‌ماند",
   "settingsIO.previewCredentials": "اطلاعات ورود",
   "settingsIO.previewCredsIncluded": "شامل شده",
   "settingsIO.previewCredsNotIncluded": "شامل نشده",
@@ -1763,6 +1765,7 @@ const fa: Partial<Translations> = {
   "newTarget.formerly": "تاکنون در مقصدهای دیگر مستثنی شده: {list}",
   "newTarget.excludeHere": "اینجا هم مستثنی شود",
   "newTarget.excludeDefault": "{target} در پیش‌فرض هم مستثنی شود",
+  "newTarget.importHeading": "مقصد جدید {target} برای {domain}",
 };
 
 export default fa;

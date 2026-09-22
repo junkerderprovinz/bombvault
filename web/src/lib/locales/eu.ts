@@ -1565,6 +1565,8 @@ const eu: Partial<Translations> = {
   "settingsIO.previewAppVersion": "BombVaulten bertsiotik",
   "settingsIO.previewOffsiteTargets": "Kanpoko helmugak",
   "settingsIO.previewNamedRepos": "Biltegiak",
+  "settingsIO.previewCopyRules": "Kopiatze-arauak",
+  "settingsIO.previewNotInFile": "ez dago fitxategian, dagoen bezala geratzen da",
   "settingsIO.previewCredentials": "Kredentzialak",
   "settingsIO.previewCredsIncluded": "sartuta",
   "settingsIO.previewCredsNotIncluded": "sartu gabe",
@@ -1763,6 +1765,7 @@ const eu: Partial<Translations> = {
   "newTarget.formerly": "Orain arte beste helburu batzuetan baztertuta: {list}",
   "newTarget.excludeHere": "Baztertu hemen ere",
   "newTarget.excludeDefault": "Baztertu {target} lehenetsitik ere",
+  "newTarget.importHeading": "{target} helburu berria {domain} eremurako",
 };
 
 export default eu;

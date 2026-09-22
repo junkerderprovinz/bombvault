@@ -1395,6 +1395,8 @@ const pt: Partial<Translations> = {
   "settingsIO.previewAppVersion": "Da versão do BombVault",
   "settingsIO.previewOffsiteTargets": "Destinos externos",
   "settingsIO.previewNamedRepos": "Repositórios",
+  "settingsIO.previewCopyRules": "Regras de cópia",
+  "settingsIO.previewNotInFile": "não está no arquivo, permanece como está",
   "settingsIO.previewCredentials": "Credenciais",
   "settingsIO.previewCredsIncluded": "incluídas",
   "settingsIO.previewCredsNotIncluded": "não incluídas",
@@ -1752,6 +1754,7 @@ const pt: Partial<Translations> = {
   "newTarget.formerly": "Excluído até agora de outros destinos: {list}",
   "newTarget.excludeHere": "Excluir também aqui",
   "newTarget.excludeDefault": "Excluir também {target} do padrão",
+  "newTarget.importHeading": "Novo destino {target} para {domain}",
 };
 
 export default pt;

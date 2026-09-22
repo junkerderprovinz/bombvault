@@ -1390,6 +1390,8 @@ const uk: Partial<Translations> = {
   "settingsIO.previewAppVersion": "З версії BombVault",
   "settingsIO.previewOffsiteTargets": "Зовнішні призначення",
   "settingsIO.previewNamedRepos": "Сховища",
+  "settingsIO.previewCopyRules": "Правила копіювання",
+  "settingsIO.previewNotInFile": "немає у файлі, залишається без змін",
   "settingsIO.previewCredentials": "Облікові дані",
   "settingsIO.previewCredsIncluded": "включені",
   "settingsIO.previewCredsNotIncluded": "не включені",
@@ -1747,6 +1749,7 @@ const uk: Partial<Translations> = {
   "newTarget.formerly": "Дотепер виключено в інших цілях: {list}",
   "newTarget.excludeHere": "Виключити і тут",
   "newTarget.excludeDefault": "Виключити {target} і з типового значення",
+  "newTarget.importHeading": "Нова ціль {target} для {domain}",
 };
 
 export default uk;

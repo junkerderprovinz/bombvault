@@ -1565,6 +1565,8 @@ const lt: Partial<Translations> = {
   "settingsIO.previewAppVersion": "Iš BombVault versijos",
   "settingsIO.previewOffsiteTargets": "Nuotolinės paskirties vietos",
   "settingsIO.previewNamedRepos": "Saugyklos",
+  "settingsIO.previewCopyRules": "Kopijavimo taisyklės",
+  "settingsIO.previewNotInFile": "nėra faile, lieka nepakitęs",
   "settingsIO.previewCredentials": "Prisijungimo duomenys",
   "settingsIO.previewCredsIncluded": "įtraukti",
   "settingsIO.previewCredsNotIncluded": "neįtraukti",
@@ -1763,6 +1765,7 @@ const lt: Partial<Translations> = {
   "newTarget.formerly": "Iki šiol išskirta kituose tiksluose: {list}",
   "newTarget.excludeHere": "Išskirti ir čia",
   "newTarget.excludeDefault": "Išskirti {target} ir iš numatytosios reikšmės",
+  "newTarget.importHeading": "Naujas tikslas {target}, skirtas {domain}",
 };
 
 export default lt;

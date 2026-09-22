@@ -1395,6 +1395,8 @@ const sv: Partial<Translations> = {
   "settingsIO.previewAppVersion": "Från BombVault-version",
   "settingsIO.previewOffsiteTargets": "Externa mål",
   "settingsIO.previewNamedRepos": "Förvar",
+  "settingsIO.previewCopyRules": "Kopieringsregler",
+  "settingsIO.previewNotInFile": "inte i filen, förblir oförändrat",
   "settingsIO.previewCredentials": "Autentiseringsuppgifter",
   "settingsIO.previewCredsIncluded": "inkluderade",
   "settingsIO.previewCredsNotIncluded": "ej inkluderade",
@@ -1752,6 +1754,7 @@ const sv: Partial<Translations> = {
   "newTarget.formerly": "Hittills uteslutet hos andra mål: {list}",
   "newTarget.excludeHere": "Uteslut även här",
   "newTarget.excludeDefault": "Uteslut även {target} från standarden",
+  "newTarget.importHeading": "Nytt mål {target} för {domain}",
 };
 
 export default sv;

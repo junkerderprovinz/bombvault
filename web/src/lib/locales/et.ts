@@ -1565,6 +1565,8 @@ const et: Partial<Translations> = {
   "settingsIO.previewAppVersion": "BombVaulti versioonist",
   "settingsIO.previewOffsiteTargets": "Välised sihtkohad",
   "settingsIO.previewNamedRepos": "Hoidlad",
+  "settingsIO.previewCopyRules": "Kopeerimisreeglid",
+  "settingsIO.previewNotInFile": "failis pole, jääb samaks",
   "settingsIO.previewCredentials": "Mandaadid",
   "settingsIO.previewCredsIncluded": "kaasatud",
   "settingsIO.previewCredsNotIncluded": "pole kaasatud",
@@ -1763,6 +1765,7 @@ const et: Partial<Translations> = {
   "newTarget.formerly": "Seni teistelt sihtkohtadelt välja jäetud: {list}",
   "newTarget.excludeHere": "Jäta ka siin välja",
   "newTarget.excludeDefault": "Jäta {target} ka vaikeväärtusest välja",
+  "newTarget.importHeading": "Uus sihtkoht {target} domeenile {domain}",
 };
 
 export default et;

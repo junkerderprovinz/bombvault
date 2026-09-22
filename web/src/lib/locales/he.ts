@@ -1395,6 +1395,8 @@ const he: Partial<Translations> = {
   "settingsIO.previewAppVersion": "מגרסת BombVault",
   "settingsIO.previewOffsiteTargets": "יעדים חיצוניים",
   "settingsIO.previewNamedRepos": "מאגרים",
+  "settingsIO.previewCopyRules": "כללי העתקה",
+  "settingsIO.previewNotInFile": "לא בקובץ, נשאר כפי שהוא",
   "settingsIO.previewCredentials": "אישורים",
   "settingsIO.previewCredsIncluded": "כלולים",
   "settingsIO.previewCredsNotIncluded": "לא כלולים",
@@ -1752,6 +1754,7 @@ const he: Partial<Translations> = {
   "newTarget.formerly": "הוחרג עד כה מיעדים אחרים: {list}",
   "newTarget.excludeHere": "להחריג גם כאן",
   "newTarget.excludeDefault": "להחריג גם את {target} מברירת המחדל",
+  "newTarget.importHeading": "יעד חדש {target} עבור {domain}",
 };
 
 export default he;

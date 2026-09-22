@@ -4,10 +4,21 @@ import { CheckDraw } from "../../components/CheckDraw";
 import { InfoBubble } from "../../components/InfoBubble";
 import { IconDownload } from "../../components/Sidebar";
 import { IconUpload } from "../../components/glyphs";
-import { exportSettings, importSettingsPreview, type ImportSettingsResponse, type ImportSettingsSummary } from "../../lib/api";
+import {
+  excludeFromTarget,
+  exportSettings,
+  importSettingsPreview,
+  type ImportSettingsResponse,
+  type ImportSettingsSummary,
+  type NewTargetExclusion,
+} from "../../lib/api";
 import { type TranslationKey, useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
 import { Card, ToggleRow } from "./shared";
+import { NewTargetPreviewLines } from "../../components/placement/NewTargetQuestion";
+import { domainLabel } from "../../lib/placement";
+import { placementErrorText } from "../../lib/placementCodes";
+import { placementChanged } from "../../lib/placementEvents";
 import { useRef, useState } from "react";
 
 const IMPORT_GROUP_KEYS: Record<string, TranslationKey> = {
@@ -64,11 +75,14 @@ export function SettingsPortabilityCard({
   // The parsed preview and the raw file text held for the confirmed apply.
   const [preview, setPreview] = useState<ImportSettingsSummary | null>(null);
   const [pendingText, setPendingText] = useState<string | null>(null);
+  const { lang } = useT();
+  const [exclusions, setExclusions] = useState<Record<string, NewTargetExclusion>>({});
 
   function resetImport() {
     setPreview(null);
     setPendingText(null);
     setImportDone(false);
+    setExclusions({});
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -89,6 +103,7 @@ export function SettingsPortabilityCard({
     if (!file) return;
     setImportDone(false);
     setPreview(null);
+    setExclusions({});
     setImportBusy("reading");
     try {
       const text = await file.text();
@@ -108,8 +123,23 @@ export function SettingsPortabilityCard({
     }
   }
 
+  // The file's targets exist only once the import is applied, so what their
+  // question left out is written afterwards, under the ids the import keeps.
+  async function excludeChosen(applied: ImportSettingsSummary) {
+    let wrote = applied.placementDefaults !== null || applied.copyRules !== null;
+    for (const target of applied.newTargets) {
+      const ex = exclusions[target.id];
+      if (!ex || (ex.identities.length === 0 && !ex.default)) continue;
+      const r = await excludeFromTarget({ domain: target.domain, targetId: target.id, ...ex });
+      if (r.ok) wrote = true;
+      else push(placementErrorText(t, lang, r, "settings.error"), "fail");
+    }
+    if (wrote) placementChanged();
+  }
+
   async function handleConfirmImport() {
-    if (!pendingText) return;
+    if (!pendingText || !preview) return;
+    const applied = preview;
     setImportBusy("applying");
     try {
       const res = await applyImport(pendingText);
@@ -118,6 +148,7 @@ export function SettingsPortabilityCard({
         setPreview(null);
         setPendingText(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
+        await excludeChosen(applied);
       } else {
         push(res.error ?? t("settingsIO.importFailed"), "fail");
         bumpShake("import");
@@ -239,6 +270,14 @@ export function SettingsPortabilityCard({
                 <dd dir="ltr" className="font-mono text-start">{preview.namedRepos ?? 0}</dd>
               </div>
               <div className="flex justify-between gap-3">
+                <dt className="text-carbon-textMuted">{t("placementDefaults.title")}</dt>
+                <dd className="text-end">{preview.placementDefaults ?? t("settingsIO.previewNotInFile")}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-carbon-textMuted">{t("settingsIO.previewCopyRules")}</dt>
+                <dd className="text-end">{preview.copyRules ?? t("settingsIO.previewNotInFile")}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
                 <dt className="text-carbon-textMuted">{t("settingsIO.previewCredentials")}</dt>
                 <dd className="text-end">
                   {preview.credentials.present
@@ -257,6 +296,21 @@ export function SettingsPortabilityCard({
                 </dd>
               </div>
             </dl>
+            {preview.newTargets.map((target) => (
+              <div key={target.id} className="flex flex-col gap-1">
+                <span className="text-xs font-semibold text-carbon-textSub">
+                  {t("newTarget.importHeading")
+                    .replace("{target}", () => target.name)
+                    .replace("{domain}", () => domainLabel(t, target.domain))}
+                </span>
+                <NewTargetPreviewLines
+                  target={target.name}
+                  preview={target.preview}
+                  exclusion={exclusions[target.id]}
+                  onExclusion={(next) => setExclusions((prev) => ({ ...prev, [target.id]: next }))}
+                />
+              </div>
+            ))}
             <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
               {t("settingsIO.confirmWarning")}
             </div>

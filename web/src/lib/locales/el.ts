@@ -1395,6 +1395,8 @@ const el: Partial<Translations> = {
   "settingsIO.previewAppVersion": "Από την έκδοση BombVault",
   "settingsIO.previewOffsiteTargets": "Προορισμοί εκτός έδρας",
   "settingsIO.previewNamedRepos": "Αποθετήρια",
+  "settingsIO.previewCopyRules": "Κανόνες αντιγραφής",
+  "settingsIO.previewNotInFile": "δεν υπάρχει στο αρχείο, παραμένει όπως είναι",
   "settingsIO.previewCredentials": "Διαπιστευτήρια",
   "settingsIO.previewCredsIncluded": "περιλαμβάνονται",
   "settingsIO.previewCredsNotIncluded": "δεν περιλαμβάνονται",
@@ -1752,6 +1754,7 @@ const el: Partial<Translations> = {
   "newTarget.formerly": "Μέχρι τώρα εξαιρέθηκε από άλλους προορισμούς: {list}",
   "newTarget.excludeHere": "Εξαίρεση και εδώ",
   "newTarget.excludeDefault": "Εξαίρεση του {target} και από την προεπιλογή",
+  "newTarget.importHeading": "Νέος προορισμός {target} για {domain}",
 };
 
 export default el;

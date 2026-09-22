@@ -1387,6 +1387,8 @@ const zh: Partial<Translations> = {
   "settingsIO.previewAppVersion": "来自 BombVault 版本",
   "settingsIO.previewOffsiteTargets": "异地目标",
   "settingsIO.previewNamedRepos": "仓库",
+  "settingsIO.previewCopyRules": "复制规则",
+  "settingsIO.previewNotInFile": "文件中没有，保持不变",
   "settingsIO.previewCredentials": "凭据",
   "settingsIO.previewCredsIncluded": "已包含",
   "settingsIO.previewCredsNotIncluded": "未包含",
@@ -1744,6 +1746,7 @@ const zh: Partial<Translations> = {
   "newTarget.formerly": "目前已在其他目标中排除：{list}",
   "newTarget.excludeHere": "此处也排除",
   "newTarget.excludeDefault": "也在默认设置中排除 {target}",
+  "newTarget.importHeading": "{domain} 的新目标 {target}",
 };
 
 export default zh;

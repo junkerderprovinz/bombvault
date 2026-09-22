@@ -1395,6 +1395,8 @@ const tr: Partial<Translations> = {
   "settingsIO.previewAppVersion": "BombVault sürümünden",
   "settingsIO.previewOffsiteTargets": "Tesis dışı hedefler",
   "settingsIO.previewNamedRepos": "Depolar",
+  "settingsIO.previewCopyRules": "Kopyalama kuralları",
+  "settingsIO.previewNotInFile": "dosyada yok, olduğu gibi kalır",
   "settingsIO.previewCredentials": "Kimlik bilgileri",
   "settingsIO.previewCredsIncluded": "dahil",
   "settingsIO.previewCredsNotIncluded": "dahil değil",
@@ -1752,6 +1754,7 @@ const tr: Partial<Translations> = {
   "newTarget.formerly": "Şimdiye kadar diğer hedeflerde hariç tutuldu: {list}",
   "newTarget.excludeHere": "Burada da hariç tut",
   "newTarget.excludeDefault": "{target} varsayılandan da hariç tut",
+  "newTarget.importHeading": "{domain} için yeni hedef {target}",
 };
 
 export default tr;

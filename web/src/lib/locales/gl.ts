@@ -1565,6 +1565,8 @@ const gl: Partial<Translations> = {
   "settingsIO.previewAppVersion": "Desde a versión de BombVault",
   "settingsIO.previewOffsiteTargets": "Destinos externos",
   "settingsIO.previewNamedRepos": "Repositorios",
+  "settingsIO.previewCopyRules": "Regras de copia",
+  "settingsIO.previewNotInFile": "non está no ficheiro, mantense igual",
   "settingsIO.previewCredentials": "Credenciais",
   "settingsIO.previewCredsIncluded": "incluídas",
   "settingsIO.previewCredsNotIncluded": "non incluídas",
@@ -1763,6 +1765,7 @@ const gl: Partial<Translations> = {
   "newTarget.formerly": "Excluído ata agora doutros destinos: {list}",
   "newTarget.excludeHere": "Excluír tamén aquí",
   "newTarget.excludeDefault": "Excluír tamén {target} do valor predeterminado",
+  "newTarget.importHeading": "Novo destino {target} para {domain}",
 };
 
 export default gl;

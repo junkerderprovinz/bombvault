@@ -1565,6 +1565,8 @@ const lv: Partial<Translations> = {
   "settingsIO.previewAppVersion": "No BombVault versijas",
   "settingsIO.previewOffsiteTargets": "Attālinātie mērķi",
   "settingsIO.previewNamedRepos": "Krātuves",
+  "settingsIO.previewCopyRules": "Kopēšanas noteikumi",
+  "settingsIO.previewNotInFile": "nav failā, paliek nemainīgs",
   "settingsIO.previewCredentials": "Akreditācijas dati",
   "settingsIO.previewCredsIncluded": "iekļauti",
   "settingsIO.previewCredsNotIncluded": "nav iekļauti",
@@ -1763,6 +1765,7 @@ const lv: Partial<Translations> = {
   "newTarget.formerly": "Līdz šim izslēgts citos mērķos: {list}",
   "newTarget.excludeHere": "Izslēgt arī šeit",
   "newTarget.excludeDefault": "Izslēgt {target} arī no noklusējuma vērtības",
+  "newTarget.importHeading": "Jauns mērķis {target} domēnam {domain}",
 };
 
 export default lv;
