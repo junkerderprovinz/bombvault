@@ -1643,6 +1643,10 @@ const uk: Partial<Translations> = {
   "placementCode.targetInUseItems": "Елементи досі резервуються у прямий репозиторій цієї цілі: {n}. Спочатку спрямуй їх деінде.",
   "placementCode.targetInUseDefault": "Типове значення для {domains} вказує на прямий репозиторій цієї цілі. Спочатку зміни типове значення.",
   "placementCode.directRepo": "Цей репозиторій іде разом із ціллю {target}. Прибери натомість ціль.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} напряму тепер зберігає менше. Елементи, чия єдина копія там: {n}.",

@@ -1646,6 +1646,10 @@ const cs: Partial<Translations> = {
   "placementCode.targetInUseItems": "Do přímého repozitáře tohoto cíle stále zálohují položky: {n}. Nejdřív je nasměruj jinam.",
   "placementCode.targetInUseDefault": "Výchozí hodnota pro {domains} ukazuje na přímý repozitář tohoto cíle. Nejdřív změň výchozí hodnotu.",
   "placementCode.directRepo": "Tento repozitář patří k cíli {target}. Odstraň místo něj ten cíl.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} přímo teď uchovává méně. Položky, jejichž jediná kopie je tam: {n}.",

@@ -1648,6 +1648,10 @@ const no: Partial<Translations> = {
   "placementCode.targetInUseItems": "Elementer sikkerhetskopieres fortsatt til dette målets direkte depot: {n}. Pek dem et annet sted først.",
   "placementCode.targetInUseDefault": "Standardverdien for {domains} peker på dette målets direkte depot. Endre standardverdien først.",
   "placementCode.directRepo": "Dette depotet hører sammen med {target}. Fjern målet i stedet.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkte beholder nå mindre. Elementer der eneste kopi ligger der: {n}.",

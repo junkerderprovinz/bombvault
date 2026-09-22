@@ -1648,6 +1648,10 @@ const el: Partial<Translations> = {
   "placementCode.targetInUseItems": "Στοιχεία εξακολουθούν να αντιγράφονται στο άμεσο αποθετήριο αυτού του προορισμού: {n}. Στρέψε τα πρώτα αλλού.",
   "placementCode.targetInUseDefault": "Η προεπιλογή για {domains} δείχνει στο άμεσο αποθετήριο αυτού του προορισμού. Άλλαξε πρώτα την προεπιλογή.",
   "placementCode.directRepo": "Αυτό το αποθετήριο πηγαίνει μαζί με {target}. Αφαίρεσε τον προορισμό αντ' αυτού.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "Το {target} άμεσο διατηρεί τώρα λιγότερα. Στοιχεία των οποίων το μοναδικό αντίγραφο βρίσκεται εκεί: {n}.",

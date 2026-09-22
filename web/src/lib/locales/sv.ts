@@ -1648,6 +1648,10 @@ const sv: Partial<Translations> = {
   "placementCode.targetInUseItems": "Objekt säkerhetskopieras fortfarande till det här målets direktarkiv: {n}. Peka om dem först.",
   "placementCode.targetInUseDefault": "Standardvärdet för {domains} pekar på det här målets direktarkiv. Ändra standardvärdet först.",
   "placementCode.directRepo": "Det här arkivet hör ihop med {target}. Ta bort målet i stället.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkt behåller nu mindre. Objekt vars enda kopia finns där: {n}.",

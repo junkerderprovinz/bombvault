@@ -1659,6 +1659,10 @@ const ca: Partial<Translations> = {
   "placementCode.targetInUseItems": "Encara hi ha elements que fan còpia de seguretat al repositori directe d'aquest destí: {n}. Apunta'ls a un altre lloc primer.",
   "placementCode.targetInUseDefault": "El valor predeterminat de {domains} apunta al repositori directe d'aquest destí. Canvia primer el valor predeterminat.",
   "placementCode.directRepo": "Aquest repositori va amb {target}. Treu aquell destí en lloc d'això.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directe ara conserva menys. Elements l'única còpia dels quals hi és: {n}.",

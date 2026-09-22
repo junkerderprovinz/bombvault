@@ -1643,6 +1643,10 @@ const ru: Partial<Translations> = {
   "placementCode.targetInUseItems": "Элементы всё ещё резервируются в прямой репозиторий этой цели: {n}. Сначала перенаправь их в другое место.",
   "placementCode.targetInUseDefault": "Значение по умолчанию для {domains} указывает на прямой репозиторий этой цели. Сначала измени значение по умолчанию.",
   "placementCode.directRepo": "Этот репозиторий идёт вместе с целью {target}. Убери вместо него цель.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} напрямую теперь хранит меньше. Элементы, чья единственная копия там: {n}.",

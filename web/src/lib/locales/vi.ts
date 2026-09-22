@@ -1640,6 +1640,10 @@ const vi: Partial<Translations> = {
   "placementCode.targetInUseItems": "Vẫn còn mục đang sao lưu vào kho trực tiếp của đích này: {n}. Trỏ chúng sang nơi khác trước.",
   "placementCode.targetInUseDefault": "Giá trị mặc định cho {domains} đang trỏ đến kho trực tiếp của đích này. Đổi giá trị mặc định trước.",
   "placementCode.directRepo": "Kho này đi cùng với {target}. Hãy gỡ đích đó thay vì kho.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} trực tiếp giờ giữ ít hơn. Các mục có bản sao duy nhất ở đó: {n}.",

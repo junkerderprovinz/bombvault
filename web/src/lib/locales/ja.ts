@@ -1640,6 +1640,10 @@ const ja: Partial<Translations> = {
   "placementCode.targetInUseItems": "項目はまだこのターゲットのダイレクトリポジトリにバックアップされています: {n}。先に別の場所を指定してください。",
   "placementCode.targetInUseDefault": "{domains} の既定値はこのターゲットのダイレクトリポジトリを指しています。まず既定値を変更してください。",
   "placementCode.directRepo": "このリポジトリは{target}と一緒に存在します。代わりにそのターゲットを削除してください。",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} ダイレクトは今、保持量が減りました。唯一のコピーがそこにある項目: {n}。",

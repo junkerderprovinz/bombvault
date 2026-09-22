@@ -1659,6 +1659,10 @@ const fa: Partial<Translations> = {
   "placementCode.targetInUseItems": "موردها هنوز به مخزن مستقیم این مقصد پشتیبان‌گیری می‌کنند: {n}. اول آن‌ها را به جای دیگری هدایت کن.",
   "placementCode.targetInUseDefault": "پیش‌فرض {domains} به مخزن مستقیم این مقصد اشاره دارد. اول پیش‌فرض را تغییر بده.",
   "placementCode.directRepo": "این مخزن همراه {target} است. به جای آن، آن مقصد را حذف کن.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} مستقیم اکنون کمتر نگه می‌دارد. موردهایی که تنها نسخه‌شان همان‌جاست: {n}.",

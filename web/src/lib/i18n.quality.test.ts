@@ -61,6 +61,15 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   // consistency INSIDE the language decides, not whether the string looks
   // English from outside.
   "stack.members",
+
+  // Genuinely untranslated, not a loanword: these 40 locales carry the
+  // English sentence as a placeholder until the next translation sweep.
+  // en and de already have their own wording; shrink this group when the
+  // rest follow.
+  "placementCode.appendOnly",
+  "placementCode.removalGrown",
+  "placementCode.nameMismatch",
+  "placementCode.homeUnreadable",
 ]);
 
 /** A value nobody would translate: a unit, a number, a protocol, a symbol. */

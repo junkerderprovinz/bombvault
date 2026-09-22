@@ -1659,6 +1659,10 @@ const ms: Partial<Translations> = {
   "placementCode.targetInUseItems": "Item masih membuat sandaran ke repositori langsung sasaran ini: {n}. Halakan ke tempat lain dahulu.",
   "placementCode.targetInUseDefault": "Lalai untuk {domains} menunjuk ke repositori langsung sasaran ini. Ubah lalai itu dahulu.",
   "placementCode.directRepo": "Repositori ini pergi bersama {target}. Buang sasaran itu sebaliknya.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} terus kini menyimpan lebih sedikit. Item yang satu-satunya salinan ada di situ: {n}.",

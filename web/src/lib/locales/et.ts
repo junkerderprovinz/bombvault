@@ -1659,6 +1659,10 @@ const et: Partial<Translations> = {
   "placementCode.targetInUseItems": "Üksused varundavad endiselt selle sihtkoha otsehoidlasse: {n}. Suuna need kõigepealt mujale.",
   "placementCode.targetInUseDefault": "{domains} vaikeväärtus osutab selle sihtkoha otsehoidlale. Muuda kõigepealt vaikeväärtust.",
   "placementCode.directRepo": "See hoidla käib kaasa sihtkohaga {target}. Eemalda selle asemel sihtkoht.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} otse säilitab nüüd vähem. Üksused, mille ainus koopia on seal: {n}.",

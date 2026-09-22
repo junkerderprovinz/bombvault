@@ -1640,6 +1640,10 @@ const zh: Partial<Translations> = {
   "placementCode.targetInUseItems": "仍有项目在备份到此目标的直接存储库：{n}。请先将它们指向别处。",
   "placementCode.targetInUseDefault": "{domains} 的默认设置指向此目标的直接存储库。请先更改默认设置。",
   "placementCode.directRepo": "此存储库与 {target} 一同存在。请改为移除该目标。",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} 直接现在保留得更少。唯一副本在那里的项目：{n}。",

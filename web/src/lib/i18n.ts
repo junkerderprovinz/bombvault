@@ -1751,6 +1751,10 @@ export const en = {
   "placementCode.targetInUseItems": "Items still back up to the direct repository of this target: {n}. Point them somewhere else first.",
   "placementCode.targetInUseDefault": "The default for {domains} points at the direct repository of this target. Change the default first.",
   "placementCode.directRepo": "This repository goes with {target}. Remove that target instead.",
+  "placementCode.appendOnly": "The target is append-only. Nothing here may delete from it.",
+  "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
+  "placementCode.nameMismatch": "The typed name does not match.",
+  "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct now keeps less. Items whose only copy is there: {n}.",
@@ -3618,6 +3622,10 @@ export const de: Translations = {
   "placementCode.targetInUseItems": "Einträge sichern noch in das Direkt-Repository dieses Ziels: {n}. Zuerst woandershin zeigen.",
   "placementCode.targetInUseDefault": "Die Vorgabe für {domains} zeigt auf das Direkt-Repository dieses Ziels. Zuerst die Vorgabe ändern.",
   "placementCode.directRepo": "Dieses Repository gehört zu {target}. Stattdessen das Ziel entfernen.",
+  "placementCode.appendOnly": "Das Ziel ist append-only. Von hier darf dort nichts gelöscht werden.",
+  "placementCode.removalGrown": "Inzwischen liegen dort mehr Snapshots nur an diesem Ort als angezeigt. Bitte die Liste noch einmal prüfen.",
+  "placementCode.nameMismatch": "Der eingetippte Name stimmt nicht.",
+  "placementCode.homeUnreadable": "Der Ort des Eintrags ließ sich nicht lesen, deshalb wurde nichts gelöscht.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkt bewahrt jetzt weniger auf. Einträge, deren einzige Kopie dort liegt: {n}.",
