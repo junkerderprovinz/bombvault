@@ -89,6 +89,7 @@ type OffsiteTarget struct {
 	// CompanionLost marks a row whose target an import deleted, which leaves
 	// it a plain remote repository.
 	CompanionLost bool
+	OffPremises   bool // counts as a site of its own for sites and 3-2-1, never for replication
 }
 
 // Off-site target roles (see OffsiteTarget.Role's doc comment).
@@ -158,8 +159,8 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 			INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 			  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 			  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order,
-			  companion_of, companion_lost)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			  companion_of, companion_lost, off_premises)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 			ON CONFLICT(id) DO UPDATE SET
 			  domain                 = excluded.domain,
 			  name                   = excluded.name,
@@ -175,12 +176,13 @@ func (r *Repo) UpsertOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 			  limit_upload           = excluded.limit_upload,
 			  limit_download         = excluded.limit_download,
 			  growth_budget_gb       = excluded.growth_budget_gb,
-			  enabled                = excluded.enabled
+			  enabled                = excluded.enabled,
+			  off_premises           = excluded.off_premises
 			WHERE offsite_targets.role = excluded.role`,
 			t.ID, t.Domain, t.Name, t.Repo, t.Role, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Schedule,
 			t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
 			t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB, boolInt(t.Enabled), t.CreatedAt, t.SortOrder,
-			t.CompanionOf, boolInt(t.CompanionLost),
+			t.CompanionOf, boolInt(t.CompanionLost), boolInt(t.Role == RoleRepo && t.CompanionOf == "" && t.OffPremises),
 		)
 	}
 	if err != nil {
@@ -335,7 +337,7 @@ func targetSlotsTx(tx *sql.Tx, domain string) ([]targetSlot, error) {
 const offsiteTargetCols = `id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 	retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 	limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order,
-	companion_of, companion_lost`
+	companion_of, companion_lost, off_premises`
 
 // ListOffsiteTargets returns all off-site REPLICATION DESTINATIONS (role =
 // 'offsite'; a domain's "primary" safety-config row, if any, is never among
@@ -565,8 +567,8 @@ func (r *Repo) ConnectCompanion(repoID, targetID string) error {
 	if taken > 0 {
 		return ErrCompanionTaken
 	}
-	res, err := tx.Exec(`UPDATE offsite_targets SET companion_of = ?, companion_lost = 0 WHERE id = ? AND role = ?`,
-		targetID, repoID, RoleRepo)
+	res, err := tx.Exec(`UPDATE offsite_targets SET companion_of = ?, companion_lost = 0, off_premises = 0
+		WHERE id = ? AND role = ?`, targetID, repoID, RoleRepo)
 	if err != nil {
 		return fmt.Errorf("ConnectCompanion: %w", err)
 	}
@@ -711,9 +713,9 @@ func (r *Repo) GetOffsiteTarget(id string) (OffsiteTarget, bool, error) {
 // exist, or if id names a "primary" row — the off-site delete handler must
 // never be able to remove a domain's remote-primary safety-config row (that
 // row is removed only via DeletePrimaryRemoteTarget, keyed by domain).
-// What the observation tables recorded for the target goes with it, and a
-// direct repository beside the target stays behind as a plain one, labelled
-// lost, rather than pointing at a target that is gone.
+// It is the import's path: a direct repository beside the target stays as a
+// plain named repository, labelled lost and, at a remote location, off the
+// premises.
 func (r *Repo) DeleteOffsiteTarget(id string) error {
 	err := r.inTx(func(tx *sql.Tx) error {
 		if _, err := tx.Exec(`DELETE FROM offsite_targets WHERE id = ? AND role = ?`, id, RoleOffsite); err != nil {
@@ -722,7 +724,10 @@ func (r *Repo) DeleteOffsiteTarget(id string) error {
 		if err := deleteTargetObservationsTx(tx, id); err != nil {
 			return err
 		}
-		_, err := tx.Exec(`UPDATE offsite_targets SET companion_of = '', companion_lost = 1
+		_, err := tx.Exec(`UPDATE offsite_targets SET companion_of = '', companion_lost = 1,
+			  off_premises = (repo GLOB 's3:*'   OR repo GLOB 'b2:*'     OR repo GLOB 'rest:*'
+			               OR repo GLOB 'sftp:*' OR repo GLOB 'rclone:*' OR repo GLOB 'azure:*'
+			               OR repo GLOB 'gs:*'   OR repo GLOB 'swift:*')
 			WHERE role = ? AND companion_of = ? AND companion_of <> ''`, RoleRepo, id)
 		return err
 	})
@@ -847,12 +852,12 @@ func (r *Repo) DeletePrimaryRemoteTarget(domain string) error {
 
 func scanOffsiteTarget(s scanner) (OffsiteTarget, error) {
 	var t OffsiteTarget
-	var immutable, enabled, lost int
+	var immutable, enabled, lost, offPremises int
 	err := s.Scan(
 		&t.ID, &t.Domain, &t.Name, &t.Repo, &t.Role, &t.CredsRef, &t.StorageClass, &immutable, &t.Schedule,
 		&t.RetentionKeepLast, &t.RetentionKeepDaily, &t.RetentionKeepWeekly, &t.RetentionKeepMonthly,
 		&t.LimitUpload, &t.LimitDownload, &t.GrowthBudgetGB, &enabled, &t.CreatedAt, &t.SortOrder,
-		&t.CompanionOf, &lost,
+		&t.CompanionOf, &lost, &offPremises,
 	)
 	if err != nil {
 		return OffsiteTarget{}, fmt.Errorf("scanOffsiteTarget: %w", err)
@@ -860,5 +865,6 @@ func scanOffsiteTarget(s scanner) (OffsiteTarget, error) {
 	t.Immutable = immutable != 0
 	t.Enabled = enabled != 0
 	t.CompanionLost = lost != 0
+	t.OffPremises = offPremises != 0
 	return t, nil
 }

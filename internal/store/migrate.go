@@ -1778,6 +1778,22 @@ ALTER TABLE offsite_targets ADD COLUMN companion_lost INTEGER NOT NULL DEFAULT 0
 CREATE UNIQUE INDEX IF NOT EXISTS idx_offsite_targets_companion
   ON offsite_targets(companion_of) WHERE companion_of <> '';`,
 	},
+	{
+		// A named repository marked off the premises counts as a site of its own for
+		// sites and 3-2-1 and never changes replication. Remote ones start marked,
+		// with restic.IsRemoteRepo's scheme list; a direct repository counts with its
+		// target instead.
+		version:          118,
+		name:             "offsite_targets_off_premises",
+		alreadySatisfied: columnPresent("offsite_targets", "off_premises"),
+		sql: `
+ALTER TABLE offsite_targets ADD COLUMN off_premises INTEGER NOT NULL DEFAULT 0;
+UPDATE offsite_targets SET off_premises = 1
+ WHERE role = 'repo' AND companion_of = ''
+   AND (repo GLOB 's3:*'     OR repo GLOB 'b2:*'     OR repo GLOB 'rest:*'
+     OR repo GLOB 'sftp:*'   OR repo GLOB 'rclone:*' OR repo GLOB 'azure:*'
+     OR repo GLOB 'gs:*'     OR repo GLOB 'swift:*');`,
+	},
 }
 
 // Migrate applies any pending forward-only migrations to db.
