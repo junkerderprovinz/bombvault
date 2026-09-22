@@ -1793,6 +1793,14 @@ const fr: Partial<Translations> = {
   "placement.noBackup": "Pas encore de sauvegarde.",
   "placement.stackNote": "Dossier de projet {project} : sur {home}, copié vers {targets} (suit la valeur par défaut des conteneurs)",
   "placement.stackNoteNoCopy": "Dossier de projet {project} : sur {home}, non copié (suit la valeur par défaut des conteneurs)",
+
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
 };
 
 export default fr;

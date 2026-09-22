@@ -1785,6 +1785,14 @@ const ja: Partial<Translations> = {
   "placement.noBackup": "まだバックアップがありません。",
   "placement.stackNote": "プロジェクトフォルダ {project}：{home} に保存、{targets} にコピー（コンテナの既定値に従う）",
   "placement.stackNoteNoCopy": "プロジェクトフォルダ {project}：{home} に保存、コピーなし（コンテナの既定値に従う）",
+
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
 };
 
 export default ja;

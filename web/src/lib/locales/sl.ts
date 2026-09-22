@@ -1788,6 +1788,14 @@ const sl: Partial<Translations> = {
   "placement.noBackup": "Še ni varnostne kopije.",
   "placement.stackNote": "Mapa projekta {project}: na {home}, kopirano v {targets} (sledi privzeti vrednosti zabojnikov)",
   "placement.stackNoteNoCopy": "Mapa projekta {project}: na {home}, ni kopirano (sledi privzeti vrednosti zabojnikov)",
+
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
 };
 
 export default sl;

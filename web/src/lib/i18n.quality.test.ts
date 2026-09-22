@@ -70,6 +70,12 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   "placementCode.removalGrown",
   "placementCode.nameMismatch",
   "placementCode.homeUnreadable",
+  "offsiteRemoval.delete",
+  "offsiteRemoval.ask",
+  "offsiteRemoval.onlyThere",
+  "offsiteRemoval.homeUnreadable",
+  "offsiteRemoval.typeName",
+  "offsiteRemoval.done",
 ]);
 
 /** A value nobody would translate: a unit, a number, a protocol, a symbol. */

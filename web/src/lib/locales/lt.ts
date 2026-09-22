@@ -1804,6 +1804,14 @@ const lt: Partial<Translations> = {
   "placement.noBackup": "Atsarginės kopijos dar nėra.",
   "placement.stackNote": "Projekto aplankas {project}: vietoje {home}, nukopijuota į {targets} (seka konteinerių numatytąją)",
   "placement.stackNoteNoCopy": "Projekto aplankas {project}: vietoje {home}, nekopijuota (seka konteinerių numatytąją)",
+
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
 };
 
 export default lt;

@@ -1804,6 +1804,14 @@ const sk: Partial<Translations> = {
   "placement.noBackup": "Zatiaľ žiadna záloha.",
   "placement.stackNote": "Priečinok projektu {project}: na {home}, skopírované do {targets} (riadi sa predvoleným nastavením kontajnerov)",
   "placement.stackNoteNoCopy": "Priečinok projektu {project}: na {home}, nekopírované (riadi sa predvoleným nastavením kontajnerov)",
+
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
 };
 
 export default sk;

@@ -1804,6 +1804,14 @@ const ms: Partial<Translations> = {
   "placement.noBackup": "Belum ada sandaran.",
   "placement.stackNote": "Folder projek {project}: di {home}, disalin ke {targets} (mengikut lalai kontena)",
   "placement.stackNoteNoCopy": "Folder projek {project}: di {home}, tidak disalin (mengikut lalai kontena)",
+
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
 };
 
 export default ms;

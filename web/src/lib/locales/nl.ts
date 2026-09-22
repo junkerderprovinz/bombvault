@@ -1790,6 +1790,14 @@ const nl: Partial<Translations> = {
   "placement.noBackup": "Nog geen back-up.",
   "placement.stackNote": "Projectmap {project}: op {home}, gekopieerd naar {targets} (volgt de standaard van de containers)",
   "placement.stackNoteNoCopy": "Projectmap {project}: op {home}, niet gekopieerd (volgt de standaard van de containers)",
+
+  // Removal
+  "offsiteRemoval.delete": "Delete in {target}",
+  "offsiteRemoval.ask": "Delete every copy of {name} in {target}? Copies: {n}.",
+  "offsiteRemoval.onlyThere": "These snapshots exist nowhere else and are gone for good afterwards:",
+  "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
+  "offsiteRemoval.typeName": "Type {name} to confirm",
+  "offsiteRemoval.done": "Deleted in {target}: {n}",
 };
 
 export default nl;
