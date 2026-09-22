@@ -776,3 +776,14 @@ describe("FileSetDialog path-change disclosure (A3, plan 02 PATCH-time clear rul
     ).toBeTruthy();
   });
 });
+
+describe("FileSetRow placement", () => {
+  it("carries the placement bar, the same row the container card has", async () => {
+    render(
+      <Providers>
+        <RowHarness set={setView()} />
+      </Providers>,
+    );
+    expect(await screen.findByRole("toolbar", { name: "Placement" })).toBeTruthy();
+  });
+});
