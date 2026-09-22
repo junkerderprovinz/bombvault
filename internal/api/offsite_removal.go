@@ -142,6 +142,7 @@ func (s *Service) forgetAtTarget(ctx context.Context, domain, identity, source s
 // removalPreview is what deleting one item's copies at one target would remove.
 type removalPreview struct {
 	Target         store.OffsiteTarget
+	Name           string            // the item's name as the delete compares it, not the one a card shows
 	Snapshots      []restic.Snapshot // the item's snapshots at the target
 	OnlyThere      []restic.Snapshot // their restic.Identity is missing at the home
 	HomeUnreadable bool
@@ -171,7 +172,7 @@ func (s *Service) offsiteRemovalPreview(ctx context.Context, item store.ItemRef,
 	if err != nil {
 		return removalPreview{}, err
 	}
-	return s.removalPreviewOf(ctx, settings, item, at)
+	return s.removalPreviewOf(ctx, settings, item, identity, at)
 }
 
 // removeFromTarget deletes an item's copies at one target once the confirmed list
@@ -182,9 +183,8 @@ func (s *Service) removeFromTarget(ctx context.Context, item store.ItemRef, targ
 	if err != nil {
 		return 0, err
 	}
-	_, name, _ := strings.Cut(identity, ":")
 	return s.forgetAtTarget(ctx, item.Domain, identity, offsiteSourcePrefix+targetID, func(settings store.Settings, at itemAtTarget) error {
-		p, err := s.removalPreviewOf(ctx, settings, item, at)
+		p, err := s.removalPreviewOf(ctx, settings, item, identity, at)
 		if err != nil {
 			return err
 		}
@@ -197,7 +197,7 @@ func (s *Service) removeFromTarget(ctx context.Context, item store.ItemRef, targ
 			}
 			return &removalChanged{err: errRemovalGrown, preview: p}
 		}
-		if len(p.OnlyThere) > 0 && strings.TrimSpace(typedName) != name {
+		if len(p.OnlyThere) > 0 && strings.TrimSpace(typedName) != p.Name {
 			return errNameMismatch
 		}
 		return nil
@@ -206,12 +206,13 @@ func (s *Service) removeFromTarget(ctx context.Context, item store.ItemRef, targ
 
 // removalPreviewOf compares the item's snapshots at the target with its home. A
 // home that cannot be read leaves every copy counted as the only one.
-func (s *Service) removalPreviewOf(ctx context.Context, settings store.Settings, item store.ItemRef, at itemAtTarget) (removalPreview, error) {
+func (s *Service) removalPreviewOf(ctx context.Context, settings store.Settings, item store.ItemRef, identity string, at itemAtTarget) (removalPreview, error) {
 	home, err := s.store.ItemHome(item)
 	if err != nil {
 		return removalPreview{}, err
 	}
-	p := removalPreview{Target: at.Target, Snapshots: at.Snaps}
+	_, name, _ := strings.Cut(identity, ":")
+	p := removalPreview{Target: at.Target, Name: name, Snapshots: at.Snaps}
 	if home.Repo != "" {
 		if named, nErr := s.store.GetNamedRepo(home.Repo); nErr == nil {
 			p.HomeLabel = named.Name
@@ -256,6 +257,7 @@ func removalJSON(p removalPreview) map[string]any {
 	}
 	return map[string]any{
 		"target":         map[string]any{"id": p.Target.ID, "name": placementTargetName(p.Target), "appendOnly": p.Target.Immutable},
+		"name":           p.Name,
 		"count":          len(p.Snapshots),
 		"onlyThere":      only,
 		"homeUnreadable": p.HomeUnreadable,

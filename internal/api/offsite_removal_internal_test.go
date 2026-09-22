@@ -61,6 +61,13 @@ func TestRemovalPreviewNamesWhatExistsOnlyAtTheTarget(t *testing.T) {
 	}
 }
 
+func TestRemovalPreviewNamesTheItemTheTypedNameIsComparedWith(t *testing.T) {
+	f, b2 := vaultwardenAtB2(t)
+	if m := f.do("GET", removalPath(b2.ID), nil); m["name"] != "vaultwarden" {
+		t.Fatalf("preview = %v, want the name out of the item's identity", m)
+	}
+}
+
 func TestRemovalPreviewCountsEveryCopyWhenTheHomeCannotBeRead(t *testing.T) {
 	f, b2 := vaultwardenAtB2(t)
 	f.eng.listErr[f.domainPath("containers")] = errors.New("permission denied")
