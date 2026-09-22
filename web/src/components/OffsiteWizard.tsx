@@ -28,6 +28,7 @@ import { Badge } from "./Badge";
 import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
 import { useToast } from "../lib/toast";
 import { Button } from "./Button";
+import { OffsiteLocationInput } from "./placement/OffsiteLocationInput";
 
 // ---------------------------------------------------------------------------
 // OffsiteWizard — guided per-domain off-site setup.
@@ -258,19 +259,8 @@ export function OffsiteWizard({
   const { confirm, confirmDialog } = useConfirm();
   const { lang } = useT();
 
-  // Full-page Speichern-Button sweep (jdp, live review, emphatic: "Die
-  // Speicher-Buttons sollen in allen Tabs weg. Überall soll es automatisch
-  // speichern."): this wizard's own repo-URL/credentials/bandwidth-budget
-  // fields used to batch into their own per-step Save buttons. None of them
-  // are a "draft not meant to take effect until applied" the way
-  // CloudCredSetsCard's/OffsiteTargetsSection's own add-or-edit forms are
-  // (both kept as genuine exceptions — see their own header comments): every
-  // field here already binds straight to a real persisted value (the SAME
-  // shared `settings` object in off-site mode, or the primary-remote config
-  // fetched by getPrimaryRemote below), with no separate "Close = discard"
-  // affordance to protect. Local debounce mirrors FlashZipExportCard's own
-  // mechanism in Settings.tsx — this component has no access to
-  // SettingsPage's shared debouncedSave.
+  // The number fields save themselves after a pause. The repo URL does not:
+  // a new location starts uploads, so it waits for Enter, Save or leaving it.
   const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   function debounced(key: string, run: () => void) {
     const existing = debounceTimers.current[key];
@@ -338,12 +328,10 @@ export function OffsiteWizard({
   // ok/uninit/fail shape (see runTest below) — so only busy/idle is left.
   const [testBusy, setTestBusy] = useState(false);
 
-  // Repo URL save state. Full-page Speichern-Button sweep: the "Save
-  // repository" button is gone (see patchRepo below) — only the setter
-  // survives, threaded into the SHARED `save` prop (Settings.tsx's own
-  // save()), which still requires a `(s: SaveState) => void` callback even
-  // though save() itself never actually produces "saved"/"error" (see its
-  // own comment in Settings.tsx).
+  // Repo URL save state. Threaded into the SHARED `save` prop (Settings.tsx's
+  // own save()), which still requires a `(s: SaveState) => void` callback even
+  // though save() itself never actually produces "saved"/"error" (see its own
+  // comment in Settings.tsx).
   const [, setRepoState] = useState<SaveState>("idle");
 
   // Step 4 — immutable flag + tamper verdict. `immState` is SHARED by both
@@ -460,22 +448,12 @@ export function OffsiteWizard({
     }
   }
 
-  // Full-page Speichern-Button sweep: patchRepo used to only update local
-  // state, relying on the "Save repository" button (now gone) to persist it.
-  // It now debounce-auto-saves through the SAME shared `save` prop the off-
-  // site Card's own repo-URL field (Settings.tsx) already converted to.
-  function patchRepo(v: string) {
-    setSettings((prev) => (prev ? { ...prev, [repoKey]: v } : prev));
-    debounced(String(repoKey), () => {
-      // Re-read the destination AFTER the save completes, not only when repoURL
-      // changes. Saving a repo for the first time is what CREATES the row the
-      // credential selector binds to, and the keystroke that triggered this save
-      // happened while it did not exist yet — so without this the selector stays
-      // hidden until the wizard is next opened. Seen live on a first-time setup.
-      void Promise.resolve(
-        save({ [repoKey]: v } as Partial<Settings>, setRepoState, () => undefined)
-      ).then(() => refreshPrimaryTarget());
-    });
+  // Saving a repo for the first time creates the row the credential selector
+  // binds to, so the row is read again after every save.
+  async function saveRepo(v: string): Promise<boolean> {
+    const ok = await save({ [repoKey]: v } as Partial<Settings>, setRepoState, () => undefined);
+    refreshPrimaryTarget();
+    return ok;
   }
 
   async function genSnippet() {
@@ -873,13 +851,14 @@ export function OffsiteWizard({
                 {t("offsite.wizard.repoUrl")}
                 <InfoBubble tip={t("offsite.wizard.repoUrlInfo")} />
               </span>
-              <input
+              <OffsiteLocationInput
+                domain={offsiteDomain}
                 value={repoURL}
-                spellCheck={false}
-                onChange={(e) => patchRepo(e.target.value)}
+                targetId={primaryTarget?.id}
+                targetName={primaryTarget?.name}
                 placeholder={t("offsite.wizard.repoUrlPlaceholder")}
-                dir="ltr"
                 className={`${inputCls} text-start`}
+                onSave={saveRepo}
               />
               <span className="text-xs text-carbon-textMuted">
                 {withLtrFragments(t("offsite.repoLocalHint"), REPO_LOCAL_HINT_LTR_FRAGMENTS)}
@@ -901,11 +880,8 @@ export function OffsiteWizard({
                 </span>
               )}
             </label>
-            {/* The off-site schedule is edited in Settings › Schedules now; the wizard
-                saves only the repo URL so it can never clobber that cadence.
-                  Full-page Speichern-Button sweep: the "Save repository"
-                button that used to sit here is gone — patchRepo (above)
-                debounce-auto-saves the field itself now. */}
+            {/* The off-site schedule is edited in Settings › Schedules; the wizard
+                saves only the repo URL so it can never clobber that cadence. */}
           </>
         )}
 

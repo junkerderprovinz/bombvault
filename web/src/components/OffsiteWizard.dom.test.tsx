@@ -16,7 +16,7 @@
 // ---------------------------------------------------------------------------
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { I18nProvider, useT } from "../lib/i18n";
+import { I18nProvider, en, useT } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { Settings } from "../lib/api";
 
@@ -66,6 +66,11 @@ vi.mock("../lib/api", async (importOriginal) => {
         restPasswordSet: false,
       }),
     setCloud: () => Promise.resolve({ ok: true }),
+    getNewTargetPreview: () =>
+      Promise.resolve({
+        ok: true,
+        preview: { items: 3, formerlyExcluded: [], defaultExcludes: false, snapshots: 40, bytes: null, unreadable: [] },
+      }),
     listOffsiteTargets: () => {
       listTargetCalls++;
       return Promise.resolve({ ok: true, targets: [PRIMARY_TARGET] });
@@ -203,29 +208,35 @@ it("never shows credential FIELDS, only the selector, whichever set is chosen", 
   expect(screen.queryByLabelText(/RESTIC_REST_PASSWORD/)).toBeNull();
 });
 
-// Saving a repo for the first time is what CREATES the destination row the
-// selector binds to, and the keystroke that triggered the save happened before
-// it existed. Without a re-read after the save the selector stays hidden until
-// the wizard is next opened - seen live during a first-time setup.
-it("re-reads the destination after saving the repository", async () => {
+// Saving a repo for the first time is what creates the destination row the
+// selector binds to, so the save itself has to produce a read of it.
+it("saves the repository only when told to, after the question, and reads the destination again", async () => {
   await renderWizard();
 
   const repo = screen.getByLabelText(/Off-site-Repository-URL|Off-site repository URL/) as HTMLInputElement;
   await act(async () => {
     fireEvent.change(repo, { target: { value: "rest:http://192.0.2.99:8000/new" } });
   });
-  // Typing alone does not re-read here (this harness keeps settings constant),
-  // so pin the count now and require the SAVE itself to produce the read.
-  const beforeSave = listTargetCalls;
-
   await act(async () => {
     await vi.advanceTimersByTimeAsync(900);
   });
-  // The re-read hangs off the save promise, so let the microtasks settle.
-  await act(async () => {
-    await Promise.resolve();
-  });
+  expect(saveCalls).toBe(0);
+  const beforeSave = listTargetCalls;
 
+  await act(async () => {
+    fireEvent.keyDown(repo, { key: "Enter" });
+  });
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(0);
+  });
+  expect(screen.getByRole("dialog").textContent).toContain("The new location of Primary receives the whole history.");
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: en["common.confirm"] }));
+  });
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(0);
+  });
   expect(saveCalls).toBe(1);
   expect(listTargetCalls).toBe(beforeSave + 1);
 });
