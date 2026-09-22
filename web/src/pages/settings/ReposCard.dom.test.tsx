@@ -32,7 +32,7 @@ const b2 = { id: "t-b2", domain: "containers", name: "B2", repo: "b2:bkt:contain
 function repo(over: Partial<NamedRepo>): NamedRepo {
   return {
     id: "n1", name: "NAS", repo: "backups/nas", credsRef: "", storageClass: "", limitUpload: 0, limitDownload: 0,
-    immutable: false, enabled: true, inUse: 0, companionOf: "", companionLost: false, ...over,
+    immutable: false, enabled: true, offPremises: false, inUse: 0, companionOf: "", companionLost: false, ...over,
   };
 }
 

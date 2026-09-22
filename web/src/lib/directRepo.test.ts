@@ -17,7 +17,7 @@ function target(over: Partial<OffsiteTarget>): OffsiteTarget {
 function repo(over: Partial<NamedRepo>): NamedRepo {
   return {
     id: "d1", name: "B2 direct", repo: "b2:bkt:containers-direct", credsRef: "", storageClass: "", limitUpload: 0,
-    limitDownload: 0, immutable: false, enabled: true, inUse: 0, companionOf: "t-b2", companionLost: false, ...over,
+    limitDownload: 0, immutable: false, enabled: true, offPremises: false, inUse: 0, companionOf: "t-b2", companionLost: false, ...over,
   };
 }
 
