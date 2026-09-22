@@ -162,6 +162,19 @@ describe("PlacementDefaultsCard", () => {
     expect(await screen.findByText("Changed in the meantime and left alone: redis")).toBeTruthy();
   });
 
+  it("says to apply again once a running backup has finished", async () => {
+    fake.reply("getApplyDefaultPreview", {
+      ok: true,
+      reset: [{ key: "nginx", label: "nginx", losesHome: false, losesRule: false, uploads: [] }],
+      kept: [],
+    });
+    fake.reply("applyPlacementDefault", { ok: false, error: "a backup is running", code: "domain-busy" });
+    const row = await containersRow();
+    fireEvent.click(within(row).getByRole("button", { name: "Apply to items without backups" }));
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Confirm" }));
+    expect(await screen.findByText("A backup is running. Apply again once it has finished.")).toBeTruthy();
+  });
+
   it("says so when no item without backups differs from the default", async () => {
     const row = await containersRow();
     fireEvent.click(within(row).getByRole("button", { name: "Apply to items without backups" }));
