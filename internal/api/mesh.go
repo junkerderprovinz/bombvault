@@ -155,9 +155,9 @@ func (h *Handler) dropCredSet(id string) error {
 }
 
 // undoAcceptedOffer takes back the target and the credential set an accepted
-// offer wrote, once its exclusions failed, and returns the error to answer
-// with. The credentials go only with the target, since a target that stays
-// behind would otherwise point at a set that is gone.
+// offer wrote, once a later write of the same accept failed, and returns the
+// error to answer with. The credentials go only with the target, since a
+// target that stays behind would otherwise point at a set that is gone.
 func (h *Handler) undoAcceptedOffer(targetID, setID string, cause error) error {
 	if err := h.store.DeleteOffsiteTarget(targetID); err != nil {
 		return fmt.Errorf("%w; the target and its credentials are still there: %v", cause, err)
@@ -251,7 +251,7 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 	if err := h.store.UpdateMeshOfferStatus(offer.ID, "accepted"); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		writeJSON(w, http.StatusOK, failEnvelope(h.undoAcceptedOffer(stored.ID, setID, err)))
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": offsiteTargetToView(stored)}))

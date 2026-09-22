@@ -89,6 +89,16 @@ func (f *placementFixture) keepEveryTarget() {
 	}
 }
 
+// offerStatusStays makes the write that marks an offer accepted fail, after
+// everything that accept wrote before it.
+func (f *placementFixture) offerStatusStays() {
+	f.t.Helper()
+	if _, err := f.db.Exec(`CREATE TRIGGER offers_keep_their_status BEFORE UPDATE ON mesh_offers
+		BEGIN SELECT RAISE(ABORT, 'the status stays'); END`); err != nil {
+		f.t.Fatal(err)
+	}
+}
+
 func TestAnExclusionAddsTheNewTargetToWhatEachItemSkips(t *testing.T) {
 	f := newPlacementFixture(t)
 	b2 := f.target("containers", "B2", "b2:bucket:containers")
@@ -316,6 +326,31 @@ func TestTakingBackAMeshCredentialSetLeavesTheSetsAnotherRequestWrote(t *testing
 	sets, dErr := f.svc.decodeCloudCredSets(settings)
 	if dErr != nil || !reflect.DeepEqual(sets, want) {
 		t.Fatalf("credential sets = %v, %v, want %v", sets, dErr, want)
+	}
+}
+
+func TestAnOfferThatCannotBeMarkedAcceptedTakesBackWhatItWrote(t *testing.T) {
+	f := newPlacementFixture(t)
+	offer := f.meshOffer()
+	f.offerStatusStays()
+
+	res := f.do(http.MethodPost, "/api/fleet/mesh-offers/"+offer.ID+"/accept", map[string]any{"domain": "containers"})
+	if res["ok"] != false {
+		t.Fatalf("accept = %v, want a refusal", res)
+	}
+	if targets, tErr := f.st.OffsiteTargetsForDomain("containers"); tErr != nil || len(targets) != 0 {
+		t.Fatalf("targets = %v, %v, want none, so accepting again does not add a second one", targets, tErr)
+	}
+	settings, sErr := f.st.GetSettings()
+	if sErr != nil {
+		t.Fatal(sErr)
+	}
+	if sets, dErr := f.svc.decodeCloudCredSets(settings); dErr != nil || len(sets) != 0 {
+		t.Fatalf("credential sets = %v, %v, want none", sets, dErr)
+	}
+	again, _, gErr := f.st.GetMeshOffer(offer.ID)
+	if gErr != nil || again.Status != "pending" {
+		t.Fatalf("offer status = %q, %v, want pending", again.Status, gErr)
 	}
 }
 
