@@ -1767,6 +1767,13 @@ const fa: Partial<Translations> = {
   "newTarget.excludeHere": "اینجا هم مستثنی شود",
   "newTarget.excludeDefault": "{target} در پیش‌فرض هم مستثنی شود",
   "newTarget.importHeading": "مقصد جدید {target} برای {domain}",
+
+  // Discover
+  "discover.paused": "نسخه‌های خارج از سایت برای {domains} تا زمانی که پیش‌فرض زیر {where} تأیید شود، متوقف هستند.",
+  "discover.leftOpen": "مکان باز نگه داشته شد زیرا یک پشتیبان در حال اجرا بود: {list}",
+  "discover.directFound": "{name} شامل پشتیبان‌هایی است که مستقیماً در یک مقصد نوشته شده‌اند. نگه‌داری آن متوقف است.",
+  "discover.connectDirect": "اتصال به {target}",
+  "discover.connected": "{name} اکنون مخزن مستقیم {target} است.",
 };
 
 export default fa;

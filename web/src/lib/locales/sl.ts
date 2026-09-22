@@ -1751,6 +1751,13 @@ const sl: Partial<Translations> = {
   "newTarget.excludeHere": "Izključi tudi tukaj",
   "newTarget.excludeDefault": "Izključi {target} tudi iz privzete vrednosti",
   "newTarget.importHeading": "Nov cilj {target} za {domain}",
+
+  // Discover
+  "discover.paused": "Zunanje kopije za {domains} so v premoru, dokler privzeta vrednost ni potrjena pod {where}.",
+  "discover.leftOpen": "Lokacija puščena odprta, ker je potekala varnostna kopija: {list}",
+  "discover.directFound": "{name} vsebuje varnostne kopije, zapisane neposredno v cilj. Njegova hramba je v premoru.",
+  "discover.connectDirect": "Poveži se s {target}",
+  "discover.connected": "{name} je zdaj neposredni repozitorij cilja {target}.",
 };
 
 export default sl;

@@ -1751,6 +1751,13 @@ const sr: Partial<Translations> = {
   "newTarget.excludeHere": "Изузми и овде",
   "newTarget.excludeDefault": "Изузми {target} и из подразумеване вредности",
   "newTarget.importHeading": "Нови циљ {target} за {domain}",
+
+  // Discover
+  "discover.paused": "Спољне копије за {domains} су паузиране док подразумевано не буде потврђено под {where}.",
+  "discover.leftOpen": "Локација остављена отворена јер је резервна копија била у току: {list}",
+  "discover.directFound": "{name} садржи резервне копије уписане директно на циљ. Његово задржавање је паузирано.",
+  "discover.connectDirect": "Повежи се са {target}",
+  "discover.connected": "{name} је сада директни репозиторијум циља {target}.",
 };
 
 export default sr;

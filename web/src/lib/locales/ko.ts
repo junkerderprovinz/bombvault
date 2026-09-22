@@ -1748,6 +1748,13 @@ const ko: Partial<Translations> = {
   "newTarget.excludeHere": "여기서도 제외",
   "newTarget.excludeDefault": "{target}을(를) 기본값에서도 제외",
   "newTarget.importHeading": "{domain}용 새 대상 {target}",
+
+  // Discover
+  "discover.paused": "{domains}의 오프사이트 복사본은 {where}에서 기본값이 확인될 때까지 일시 중지됩니다.",
+  "discover.leftOpen": "백업이 진행 중이어서 위치를 비워 두었습니다: {list}",
+  "discover.directFound": "{name}에는 대상에 직접 기록된 백업이 있습니다. 보존이 보류 중입니다.",
+  "discover.connectDirect": "{target}에 연결",
+  "discover.connected": "{name}은(는) 이제 {target}의 직접 저장소입니다.",
 };
 
 export default ko;

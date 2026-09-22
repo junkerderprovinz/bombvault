@@ -1767,6 +1767,13 @@ const id: Partial<Translations> = {
   "newTarget.excludeHere": "Kecualikan di sini juga",
   "newTarget.excludeDefault": "Kecualikan {target} dari bawaan juga",
   "newTarget.importHeading": "Target baru {target} untuk {domain}",
+
+  // Discover
+  "discover.paused": "Salinan off-site untuk {domains} dijeda sampai bawaan dikonfirmasi di {where}.",
+  "discover.leftOpen": "Lokasi dibiarkan terbuka karena pencadangan sedang berjalan: {list}",
+  "discover.directFound": "{name} berisi cadangan yang ditulis langsung ke target. Retensinya sedang ditahan.",
+  "discover.connectDirect": "Hubungkan dengan {target}",
+  "discover.connected": "{name} sekarang menjadi repositori langsung dari {target}.",
 };
 
 export default id;

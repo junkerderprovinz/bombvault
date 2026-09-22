@@ -1756,6 +1756,13 @@ const it: Partial<Translations> = {
   "newTarget.excludeHere": "Escludi anche qui",
   "newTarget.excludeDefault": "Escludi anche {target} dal valore predefinito",
   "newTarget.importHeading": "Nuova destinazione {target} per {domain}",
+
+  // Discover
+  "discover.paused": "Le copie off-site per {domains} sono in pausa finché il valore predefinito non viene confermato in {where}.",
+  "discover.leftOpen": "Posizione lasciata aperta perché era in corso un backup: {list}",
+  "discover.directFound": "{name} contiene backup scritti direttamente su una destinazione. La sua conservazione è in pausa.",
+  "discover.connectDirect": "Connetti a {target}",
+  "discover.connected": "{name} è ora il repository diretto di {target}.",
 };
 
 export default it;

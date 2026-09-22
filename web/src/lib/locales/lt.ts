@@ -1767,6 +1767,13 @@ const lt: Partial<Translations> = {
   "newTarget.excludeHere": "Išskirti ir čia",
   "newTarget.excludeDefault": "Išskirti {target} ir iš numatytosios reikšmės",
   "newTarget.importHeading": "Naujas tikslas {target}, skirtas {domain}",
+
+  // Discover
+  "discover.paused": "{domains} išorinės kopijos yra pristabdytos, kol numatytoji reikšmė bus patvirtinta vietoje {where}.",
+  "discover.leftOpen": "Vieta palikta neužpildyta, nes vyko atsarginė kopija: {list}",
+  "discover.directFound": "{name} turi atsargines kopijas, įrašytas tiesiai į paskirtį. Jos saugojimas pristabdytas.",
+  "discover.connectDirect": "Prisijungti prie {target}",
+  "discover.connected": "{name} dabar yra {target} tiesioginė saugykla.",
 };
 
 export default lt;

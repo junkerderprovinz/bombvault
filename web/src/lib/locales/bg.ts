@@ -1767,6 +1767,13 @@ const bg: Partial<Translations> = {
   "newTarget.excludeHere": "Изключи и тук",
   "newTarget.excludeDefault": "Изключи {target} и от подразбирането",
   "newTarget.importHeading": "Нова цел {target} за {domain}",
+
+  // Discover
+  "discover.paused": "Извънофисните копия за {domains} са спрени до потвърждаване на подразбирането под {where}.",
+  "discover.leftOpen": "Мястото е оставено отворено, защото вървеше архивиране: {list}",
+  "discover.directFound": "{name} съдържа резервни копия, записани директно в цел. Задържането е спряно.",
+  "discover.connectDirect": "Свържи с {target}",
+  "discover.connected": "{name} вече е директното хранилище на {target}.",
 };
 
 export default bg;

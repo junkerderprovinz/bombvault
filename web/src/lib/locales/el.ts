@@ -1756,6 +1756,13 @@ const el: Partial<Translations> = {
   "newTarget.excludeHere": "Εξαίρεση και εδώ",
   "newTarget.excludeDefault": "Εξαίρεση του {target} και από την προεπιλογή",
   "newTarget.importHeading": "Νέος προορισμός {target} για {domain}",
+
+  // Discover
+  "discover.paused": "Τα αντίγραφα εκτός τόπου για {domains} είναι σε παύση μέχρι να επιβεβαιωθεί η προεπιλογή στο {where}.",
+  "discover.leftOpen": "Η τοποθεσία παρέμεινε ανοιχτή επειδή εκτελούνταν αντίγραφο ασφαλείας: {list}",
+  "discover.directFound": "Το {name} περιέχει αντίγραφα ασφαλείας που γράφτηκαν απευθείας σε έναν προορισμό. Η διατήρησή του είναι σε αναμονή.",
+  "discover.connectDirect": "Σύνδεση με {target}",
+  "discover.connected": "Το {name} είναι πλέον το άμεσο αποθετήριο του {target}.",
 };
 
 export default el;

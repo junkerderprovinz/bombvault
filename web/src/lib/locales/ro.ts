@@ -1759,6 +1759,13 @@ const ro: Partial<Translations> = {
   "newTarget.excludeHere": "Exclude și aici",
   "newTarget.excludeDefault": "Exclude {target} și din valoarea implicită",
   "newTarget.importHeading": "Țintă nouă {target} pentru {domain}",
+
+  // Discover
+  "discover.paused": "Copiile externe pentru {domains} sunt în pauză până când valoarea implicită este confirmată sub {where}.",
+  "discover.leftOpen": "Locație lăsată deschisă pentru că o copie de rezervă era în curs: {list}",
+  "discover.directFound": "{name} conține copii de rezervă scrise direct pe o țintă. Retenția sa este în pauză.",
+  "discover.connectDirect": "Conectează-te la {target}",
+  "discover.connected": "{name} este acum depozitul direct al {target}.",
 };
 
 export default ro;

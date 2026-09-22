@@ -1767,6 +1767,13 @@ const lv: Partial<Translations> = {
   "newTarget.excludeHere": "Izslēgt arī šeit",
   "newTarget.excludeDefault": "Izslēgt {target} arī no noklusējuma vērtības",
   "newTarget.importHeading": "Jauns mērķis {target} domēnam {domain}",
+
+  // Discover
+  "discover.paused": "{domains} attālinātās kopijas ir pauzētas, kamēr noklusējums nav apstiprināts sadaļā {where}.",
+  "discover.leftOpen": "Vieta atstāta neaizpildīta, jo darbojās rezerves kopēšana: {list}",
+  "discover.directFound": "{name} satur rezerves kopijas, kas rakstītas tieši mērķī. Tās saglabāšana ir pauzēta.",
+  "discover.connectDirect": "Izveidot savienojumu ar {target}",
+  "discover.connected": "{name} tagad ir {target} tiešā krātuve.",
 };
 
 export default lv;

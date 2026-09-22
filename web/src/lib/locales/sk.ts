@@ -1767,6 +1767,13 @@ const sk: Partial<Translations> = {
   "newTarget.excludeHere": "Vylúčiť aj tu",
   "newTarget.excludeDefault": "Vylúčiť {target} aj z predvolenej hodnoty",
   "newTarget.importHeading": "Nový cieľ {target} pre {domain}",
+
+  // Discover
+  "discover.paused": "Externé kópie pre {domains} sú pozastavené, kým sa predvolené nastavenie nepotvrdí pod {where}.",
+  "discover.leftOpen": "Umiestnenie ponechané otvorené, pretože prebiehala záloha: {list}",
+  "discover.directFound": "{name} obsahuje zálohy zapísané priamo do cieľa. Jeho uchovávanie je pozastavené.",
+  "discover.connectDirect": "Pripojiť k {target}",
+  "discover.connected": "{name} je teraz priamy repozitár cieľa {target}.",
 };
 
 export default sk;

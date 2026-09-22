@@ -1756,6 +1756,13 @@ const sv: Partial<Translations> = {
   "newTarget.excludeHere": "Uteslut även här",
   "newTarget.excludeDefault": "Uteslut även {target} från standarden",
   "newTarget.importHeading": "Nytt mål {target} för {domain}",
+
+  // Discover
+  "discover.paused": "Externa kopior för {domains} är pausade tills standarden bekräftas under {where}.",
+  "discover.leftOpen": "Plats lämnad öppen eftersom en säkerhetskopiering pågick: {list}",
+  "discover.directFound": "{name} innehåller säkerhetskopior skrivna direkt till ett mål. Dess kvarhållning är pausad.",
+  "discover.connectDirect": "Anslut till {target}",
+  "discover.connected": "{name} är nu det direkta arkivet för {target}.",
 };
 
 export default sv;

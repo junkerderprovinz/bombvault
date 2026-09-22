@@ -1751,6 +1751,13 @@ const uk: Partial<Translations> = {
   "newTarget.excludeHere": "Виключити і тут",
   "newTarget.excludeDefault": "Виключити {target} і з типового значення",
   "newTarget.importHeading": "Нова ціль {target} для {domain}",
+
+  // Discover
+  "discover.paused": "Зовнішні копії для {domains} призупинено, доки значення за замовчуванням не буде підтверджено в {where}.",
+  "discover.leftOpen": "Розташування залишено відкритим, бо виконувалося резервне копіювання: {list}",
+  "discover.directFound": "{name} містить резервні копії, записані напряму в ціль. Його зберігання призупинено.",
+  "discover.connectDirect": "З'єднати з {target}",
+  "discover.connected": "{name} тепер прямий репозиторій цілі {target}.",
 };
 
 export default uk;

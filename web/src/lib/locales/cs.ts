@@ -1754,6 +1754,13 @@ const cs: Partial<Translations> = {
   "newTarget.excludeHere": "Vyloučit i tady",
   "newTarget.excludeDefault": "Vyloučit {target} i z výchozí hodnoty",
   "newTarget.importHeading": "Nový cíl {target} pro {domain}",
+
+  // Discover
+  "discover.paused": "Off-site kopie pro {domains} jsou pozastavené, dokud se nepotvrdí výchozí nastavení pod {where}.",
+  "discover.leftOpen": "Umístění ponecháno otevřené, protože probíhala záloha: {list}",
+  "discover.directFound": "{name} obsahuje zálohy zapsané přímo do cíle. Jeho uchovávání je pozastaveno.",
+  "discover.connectDirect": "Připojit k {target}",
+  "discover.connected": "{name} je nyní přímý repozitář cíle {target}.",
 };
 
 export default cs;

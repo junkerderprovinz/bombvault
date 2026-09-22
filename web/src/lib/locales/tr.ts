@@ -1756,6 +1756,13 @@ const tr: Partial<Translations> = {
   "newTarget.excludeHere": "Burada da hariç tut",
   "newTarget.excludeDefault": "{target} varsayılandan da hariç tut",
   "newTarget.importHeading": "{domain} için yeni hedef {target}",
+
+  // Discover
+  "discover.paused": "{domains} için site dışı kopyalar, varsayılan {where} altında onaylanana kadar duraklatıldı.",
+  "discover.leftOpen": "Bir yedekleme çalıştığı için konum boş bırakıldı: {list}",
+  "discover.directFound": "{name}, doğrudan bir hedefe yazılmış yedekler içeriyor. Saklama süresi askıda.",
+  "discover.connectDirect": "{target} ile bağlan",
+  "discover.connected": "{name} artık {target} hedefinin doğrudan deposu.",
 };
 
 export default tr;

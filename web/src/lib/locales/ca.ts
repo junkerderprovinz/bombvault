@@ -1767,6 +1767,13 @@ const ca: Partial<Translations> = {
   "newTarget.excludeHere": "Exclou-ho també aquí",
   "newTarget.excludeDefault": "Exclou {target} també del valor predeterminat",
   "newTarget.importHeading": "Objectiu nou {target} per a {domain}",
+
+  // Discover
+  "discover.paused": "Les còpies externes de {domains} estan en pausa fins que es confirmi el valor per defecte a {where}.",
+  "discover.leftOpen": "Ubicació deixada oberta perquè s'estava executant una còpia de seguretat: {list}",
+  "discover.directFound": "{name} conté còpies de seguretat escrites directament a un destí. La seva retenció està en pausa.",
+  "discover.connectDirect": "Connecta amb {target}",
+  "discover.connected": "{name} ara és el repositori directe de {target}.",
 };
 
 export default ca;

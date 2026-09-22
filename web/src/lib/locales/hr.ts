@@ -1767,6 +1767,13 @@ const hr: Partial<Translations> = {
   "newTarget.excludeHere": "Izuzmi i ovdje",
   "newTarget.excludeDefault": "Izuzmi i {target} iz zadanog",
   "newTarget.importHeading": "Novi cilj {target} za {domain}",
+
+  // Discover
+  "discover.paused": "Izvanmrežne kopije za {domains} su pauzirane dok se zadano ne potvrdi pod {where}.",
+  "discover.leftOpen": "Lokacija ostavljena otvorenom jer je sigurnosna kopija bila u tijeku: {list}",
+  "discover.directFound": "{name} sadrži sigurnosne kopije zapisane izravno na odredište. Njegovo zadržavanje je pauzirano.",
+  "discover.connectDirect": "Poveži se s {target}",
+  "discover.connected": "{name} je sada izravni repozitorij odredišta {target}.",
 };
 
 export default hr;

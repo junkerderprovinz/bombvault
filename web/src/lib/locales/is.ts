@@ -1767,6 +1767,13 @@ const is: Partial<Translations> = {
   "newTarget.excludeHere": "Útiloka einnig hér",
   "newTarget.excludeDefault": "Útiloka {target} einnig úr sjálfgefnu",
   "newTarget.importHeading": "Nýtt markmið {target} fyrir {domain}",
+
+  // Discover
+  "discover.paused": "Fjarafrit fyrir {domains} eru í bið þar til sjálfgefið er staðfest undir {where}.",
+  "discover.leftOpen": "Staðsetning skilin eftir opin því afrit var í gangi: {list}",
+  "discover.directFound": "{name} inniheldur afrit sem voru skrifuð beint á áfangastað. Varðveisla þess er í bið.",
+  "discover.connectDirect": "Tengjast {target}",
+  "discover.connected": "{name} er nú bein geymsla fyrir {target}.",
 };
 
 export default is;

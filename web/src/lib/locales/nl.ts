@@ -1753,6 +1753,13 @@ const nl: Partial<Translations> = {
   "newTarget.excludeHere": "Ook hier uitsluiten",
   "newTarget.excludeDefault": "{target} ook van de standaard uitsluiten",
   "newTarget.importHeading": "Nieuw doel {target} voor {domain}",
+
+  // Discover
+  "discover.paused": "Externe kopieën voor {domains} zijn gepauzeerd totdat de standaard is bevestigd onder {where}.",
+  "discover.leftOpen": "Locatie open gelaten omdat er een back-up liep: {list}",
+  "discover.directFound": "{name} bevat back-ups die rechtstreeks naar een bestemming zijn geschreven. Het bewaarbeleid staat op pauze.",
+  "discover.connectDirect": "Verbinden met {target}",
+  "discover.connected": "{name} is nu de directe repository van {target}.",
 };
 
 export default nl;

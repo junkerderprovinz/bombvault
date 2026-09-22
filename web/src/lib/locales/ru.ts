@@ -1751,6 +1751,13 @@ const ru: Partial<Translations> = {
   "newTarget.excludeHere": "Исключить и здесь",
   "newTarget.excludeDefault": "Исключить {target} и из значения по умолчанию",
   "newTarget.importHeading": "Новая цель {target} для {domain}",
+
+  // Discover
+  "discover.paused": "Внешние копии для {domains} приостановлены, пока значение по умолчанию не будет подтверждено в {where}.",
+  "discover.leftOpen": "Расположение оставлено открытым, потому что выполнялось резервное копирование: {list}",
+  "discover.directFound": "{name} содержит резервные копии, записанные напрямую в цель. Его хранение приостановлено.",
+  "discover.connectDirect": "Подключить к {target}",
+  "discover.connected": "{name} теперь прямой репозиторий {target}.",
 };
 
 export default ru;
