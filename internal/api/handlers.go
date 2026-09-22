@@ -711,7 +711,7 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 		}
 		items = append(items, it)
 	}
-	placements := h.svc.listPlacements("containers", items)
+	placements := h.svc.listPlacements(r.Context(), "containers", items)
 	for i := range views {
 		views[i].Placement = placements[views[i].Name]
 	}
@@ -1426,7 +1426,7 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 		"dropped":   placed.Dropped,
-		"placement": h.svc.placementViewOf(store.ItemRef{Domain: "containers", Key: name}),
+		"placement": h.svc.placementViewOf(r.Context(), store.ItemRef{Domain: "containers", Key: name}),
 	}))
 }
 
@@ -4375,7 +4375,7 @@ func (h *Handler) handleListVMs(w http.ResponseWriter, r *http.Request) {
 		}
 		items = append(items, it)
 	}
-	placements := h.svc.listPlacements("vms", items)
+	placements := h.svc.listPlacements(r.Context(), "vms", items)
 	for i := range views {
 		views[i].Placement = placements[views[i].LibvirtName]
 	}
@@ -4648,7 +4648,7 @@ func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 		"dropped":   placed.Dropped,
-		"placement": h.svc.placementViewOf(store.ItemRef{Domain: "vms", Key: name}),
+		"placement": h.svc.placementViewOf(r.Context(), store.ItemRef{Domain: "vms", Key: name}),
 	}))
 }
 
@@ -4957,7 +4957,7 @@ func (h *Handler) handleListFileSets(w http.ResponseWriter, r *http.Request) {
 		}
 		items = append(items, it)
 	}
-	placements := h.svc.listPlacements("files", items)
+	placements := h.svc.listPlacements(r.Context(), "files", items)
 	for i := range views {
 		views[i].Placement = placements[views[i].ID]
 	}
@@ -5192,7 +5192,7 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 		"dropped":   placed.Dropped,
-		"placement": h.svc.placementViewOf(store.ItemRef{Domain: "files", Key: id}),
+		"placement": h.svc.placementViewOf(r.Context(), store.ItemRef{Domain: "files", Key: id}),
 	}))
 }
 
