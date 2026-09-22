@@ -857,6 +857,8 @@ const lt: Partial<Translations> = {
   "runReason.dbimportFailed": "importo įrankis pranešė apie klaidą",
   "runReason.dbimportKeptOld": "ankstesnis duomenų aplankas paliktas",
   "runReason.dbimportErrors": "importas baigėsi su klaidomis",
+  "runReason.dbimportAppsDown": "šių programų nepavyko vėl paleisti: {apps}",
+  "runReason.dbimportAppsStopped": "šios programos lieka sustabdytos, kol bus sutvarkytas duomenų aplankas: {apps}",
   "dbdump.toggle": "Duomenų bazės išklotinė prieš kiekvieną atsarginę kopiją",
   "dbdump.toggleHint": "BombVault atpažino šį konteinerį kaip {engine} duomenų bazę. Prieš kiekvieną atsarginę kopiją jis paprašo veikiančio serverio pilnos SQL išklotinės ir padeda ją kaip atskirą atkūrimo tašką tiesiai į kopijų saugyklą, nerašydamas jokio failo į tavo diskus. Atkūrimas naudoja failų kopiją, padarytą sustabdžius konteinerį; išklotinė yra antra kopija, kurią gali atsisiųsti arba įkelti. Nepavykusi išklotinė niekada nenuverčia atsarginės kopijos, ji rodoma kaip atskiras nepavykęs paleidimas.",
   "dbdump.toggleHintLabel": "Konteinerio žyma bombvault.dbdump įjungia išklotinę šiai {engine} duomenų bazei. Prieš kiekvieną atsarginę kopiją BombVault paprašo veikiančio serverio pilnos SQL išklotinės ir padeda ją kaip atskirą atkūrimo tašką. Nepavykusi išklotinė niekada nenuverčia atsarginės kopijos, ji rodoma kaip atskiras nepavykęs paleidimas.",

@@ -857,6 +857,8 @@ const gl: Partial<Translations> = {
   "runReason.dbimportFailed": "a ferramenta de importación informou dun erro",
   "runReason.dbimportKeptOld": "conservouse o cartafol de datos anterior",
   "runReason.dbimportErrors": "a importación rematou con erros",
+  "runReason.dbimportAppsDown": "estas aplicacións non se puideron volver iniciar: {apps}",
+  "runReason.dbimportAppsStopped": "estas aplicacións seguen detidas ata que se resolva o cartafol de datos: {apps}",
   "dbdump.toggle": "Envorcado da base de datos antes de cada copia",
   "dbdump.toggleHint": "BombVault recoñeceu este contedor como unha base de datos {engine}. Antes de cada copia de seguranza pídelle ao servidor en marcha un envorcado SQL completo e gárdao como punto de restauración propio, directamente no repositorio de copias, sen escribir ningún ficheiro nos teus discos. Unha restauración usa a copia dos ficheiros feita despois de deter o contedor; o envorcado é unha segunda copia que podes descargar ou importar. Un envorcado fallido nunca fai fallar a copia, aparece como unha execución fallida á parte.",
   "dbdump.toggleHintLabel": "A etiqueta de contedor bombvault.dbdump activa o envorcado desta base de datos {engine}. Antes de cada copia BombVault pídelle ao servidor en marcha un envorcado SQL completo e gárdao como punto de restauración propio. Un envorcado fallido nunca fai fallar a copia, aparece como unha execución fallida á parte.",

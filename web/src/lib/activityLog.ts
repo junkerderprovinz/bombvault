@@ -10,7 +10,7 @@ import type { ProgressMap, ProgressStage, ProgressState } from "./progress";
 import { offsiteRunProgress, STALE_MS } from "./progress";
 import { elapsedSince, formatClockTime, formatDuration } from "./reltime";
 import type { TranslationKey } from "./i18n";
-import { runReason } from "./runReason";
+import { runReason, runReasonParts } from "./runReason";
 
 /** Picks a line's glyph and colour in ActivityLog.tsx. */
 export type LogStatus = "running" | "success" | "failed" | "offsite" | "info";
@@ -436,9 +436,12 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
 
   if (run.kind === "dbimport") {
     if (run.status === "success") {
-      return importHadErrors(run.error)
-        ? { status: "success", text: resolveName("activityLog.lineDbImportedErrors", { name, note: reasonText(run.error, resolveName) }) }
-        : { status: "success", text: resolveName("activityLog.lineDbImported", { name }) };
+      if (importHadErrors(run.error)) {
+        return { status: "success", text: resolveName("activityLog.lineDbImportedErrors", { name, note: reasonText(run.error, resolveName) }) };
+      }
+      const text = resolveName("activityLog.lineDbImported", { name });
+      const { note } = runReasonParts(run.error, (key: TranslationKey) => resolveName(key));
+      return { status: "success", text: note ? `${text}; ${note}` : text };
     }
     return run.status === "failed"
       ? { status: "failed", text: resolveName("activityLog.lineDbImportFailed", { name, error: reasonText(run.error, resolveName) }) }

@@ -857,6 +857,8 @@ const id: Partial<Translations> = {
   "runReason.dbimportFailed": "alat impor melaporkan sebuah kesalahan",
   "runReason.dbimportKeptOld": "folder data sebelumnya disimpan",
   "runReason.dbimportErrors": "impor berakhir dengan kesalahan",
+  "runReason.dbimportAppsDown": "aplikasi berikut tidak bisa dinyalakan lagi: {apps}",
+  "runReason.dbimportAppsStopped": "aplikasi berikut tetap berhenti sampai folder data dibereskan: {apps}",
   "dbdump.toggle": "Dump basis data sebelum setiap pencadangan",
   "dbdump.toggleHint": "BombVault mengenali kontainer ini sebagai basis data {engine}. Sebelum setiap pencadangan, ia meminta dump SQL lengkap dari server yang sedang berjalan dan menyimpannya sebagai titik pemulihan tersendiri, langsung ke penyimpanan cadangan, tanpa menulis berkas apa pun ke diskmu. Pemulihan memakai cadangan berkas yang diambil setelah kontainer berhenti; dump adalah salinan kedua yang bisa kamu unduh atau impor. Dump yang gagal tidak pernah menggagalkan pencadangan, ia muncul sebagai proses gagal tersendiri.",
   "dbdump.toggleHintLabel": "Label kontainer bombvault.dbdump menyalakan dump untuk basis data {engine} ini. Sebelum setiap pencadangan, BombVault meminta dump SQL lengkap dari server yang sedang berjalan dan menyimpannya sebagai titik pemulihan tersendiri. Dump yang gagal tidak pernah menggagalkan pencadangan, ia muncul sebagai proses gagal tersendiri.",

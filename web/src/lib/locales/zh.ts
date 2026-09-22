@@ -981,6 +981,8 @@ const zh: Partial<Translations> = {
   "runReason.dbimportFailed": "导入工具报告了一个错误",
   "runReason.dbimportKeptOld": "已保留之前的数据文件夹",
   "runReason.dbimportErrors": "导入结束时带有错误",
+  "runReason.dbimportAppsDown": "以下应用未能重新启动：{apps}",
+  "runReason.dbimportAppsStopped": "在数据文件夹处理好之前，以下应用保持停止：{apps}",
   "dbdump.toggle": "每次备份前转储数据库",
   "dbdump.toggleHint": "BombVault 已把这个容器识别为 {engine} 数据库。每次备份前，它会向运行中的服务器要一份完整的 SQL 转储，并作为独立的还原点直接存进备份仓库，不会往你的磁盘写任何文件。还原使用容器停止后拍下的文件备份；转储是第二份副本，你可以下载或导入。转储失败绝不会让备份失败，它会显示为一次独立的失败运行。",
   "dbdump.toggleHintLabel": "容器标签 bombvault.dbdump 为这个 {engine} 数据库开启了转储。每次备份前，BombVault 会向运行中的服务器要一份完整的 SQL 转储，并作为独立的还原点存下。转储失败绝不会让备份失败，它会显示为一次独立的失败运行。",

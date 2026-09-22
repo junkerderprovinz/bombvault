@@ -961,6 +961,8 @@ const ko: Partial<Translations> = {
   "runReason.dbimportFailed": "가져오기 도구가 오류를 알렸습니다",
   "runReason.dbimportKeptOld": "이전 데이터 폴더를 남겨 두었습니다",
   "runReason.dbimportErrors": "가져오기가 오류와 함께 끝났습니다",
+  "runReason.dbimportAppsDown": "다음 앱을 다시 시작하지 못했습니다: {apps}",
+  "runReason.dbimportAppsStopped": "데이터 폴더가 정리될 때까지 다음 앱은 중지된 상태로 남습니다: {apps}",
   "dbdump.toggle": "백업마다 데이터베이스 덤프",
   "dbdump.toggleHint": "BombVault가 이 컨테이너를 {engine} 데이터베이스로 인식했습니다. 백업할 때마다 실행 중인 서버에 전체 SQL 덤프를 요청해, 디스크에 파일을 쓰지 않고 백업 저장소에 바로 독립된 복원 지점으로 넣습니다. 복원은 컨테이너를 멈춘 뒤 찍은 파일 백업을 쓰고, 덤프는 내려받거나 가져올 수 있는 두 번째 사본입니다. 덤프가 실패해도 백업이 실패하는 일은 없고, 별도의 실패한 실행으로 표시됩니다.",
   "dbdump.toggleHintLabel": "컨테이너 라벨 bombvault.dbdump가 이 {engine} 데이터베이스의 덤프를 켭니다. 백업할 때마다 BombVault가 실행 중인 서버에 전체 SQL 덤프를 요청해 독립된 복원 지점으로 넣습니다. 덤프가 실패해도 백업이 실패하는 일은 없고, 별도의 실패한 실행으로 표시됩니다.",

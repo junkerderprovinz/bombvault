@@ -969,6 +969,8 @@ const fr: Partial<Translations> = {
   "runReason.dbimportFailed": "l'outil d'import a signalé une erreur",
   "runReason.dbimportKeptOld": "le dossier de données précédent a été conservé",
   "runReason.dbimportErrors": "l'import s'est terminé avec des erreurs",
+  "runReason.dbimportAppsDown": "ces applications n'ont pas pu redémarrer : {apps}",
+  "runReason.dbimportAppsStopped": "ces applications restent arrêtées tant que le dossier de données n'est pas réglé : {apps}",
   "dbdump.toggle": "Dump de la base de données avant chaque sauvegarde",
   "dbdump.toggleHint": "BombVault a reconnu ce conteneur comme une base de données {engine}. Avant chaque sauvegarde, il demande au serveur en marche un dump SQL complet et le range comme point de restauration à part entière, directement dans le dépôt de sauvegarde, sans écrire de fichier sur vos disques. Une restauration utilise la sauvegarde des fichiers prise après l'arrêt du conteneur ; le dump est une deuxième copie que vous pouvez télécharger ou importer. Un dump en échec ne fait jamais échouer la sauvegarde, il apparaît comme une exécution en échec à part.",
   "dbdump.toggleHintLabel": "Le label de conteneur bombvault.dbdump active le dump pour cette base de données {engine}. Avant chaque sauvegarde, BombVault demande au serveur en marche un dump SQL complet et le range comme point de restauration à part entière. Un dump en échec ne fait jamais échouer la sauvegarde, il apparaît comme une exécution en échec à part.",

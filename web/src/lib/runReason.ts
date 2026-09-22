@@ -63,8 +63,28 @@ export const RUN_REASON_PREFIXES: Record<string, TranslationKey> = {
 };
 
 /**
+ * What an import appends after "; " to name the apps it stopped, followed by
+ * ": " and their names. Keep in step with the ImportTail* constants in
+ * internal/store/runs.go.
+ */
+const IMPORT_APP_TAILS: Record<string, TranslationKey> = {
+  "could not start these apps again": "runReason.dbimportAppsDown",
+  "these apps stay stopped until the data folder is sorted out": "runReason.dbimportAppsStopped",
+};
+
+/** Splits the tail naming the apps an import stopped off a note or reason. */
+function importAppTail(text: string): { rest: string; key: TranslationKey; apps: string } | undefined {
+  for (const [tail, key] of Object.entries(IMPORT_APP_TAILS)) {
+    const at = text.lastIndexOf(`; ${tail}: `);
+    if (at >= 0) return { rest: text.slice(0, at), key, apps: text.slice(at + tail.length + 4) };
+  }
+  return undefined;
+}
+
+/**
  * The notes a successful run can carry that ask the reader to do something
- * about them. Every other note only records what was kept or skipped.
+ * about them. Every other note only records what was kept or skipped, unless
+ * it also names an app the import could not start again.
  */
 const WARNING_NOTES = [
   "database dump covers one database only",
@@ -75,6 +95,7 @@ const WARNING_NOTES = [
 /** Whether a note of a successful run reports something worth acting on. */
 export function isWarningNote(raw: string | null | undefined): boolean {
   const text = raw?.trim() ?? "";
+  if (importAppTail(text)) return true;
   return WARNING_NOTES.some((note) => text === note || text.startsWith(note + ": "));
 }
 
@@ -98,6 +119,10 @@ export function runReasonParts(raw: string | null | undefined, t: T): RunReasonP
   if (dumpLeftRunning(text)) {
     const parts = runReasonParts(text.slice(0, -(ORPHAN_NOTE.length + 2)), t);
     return { ...parts, note: t("runReason.dbdumpOrphan") };
+  }
+  const apps = importAppTail(text);
+  if (apps) {
+    return { ...runReasonParts(apps.rest, t), note: t(apps.key).replace("{apps}", apps.apps) };
   }
   if (!text) return { head: "", detail: "" };
 

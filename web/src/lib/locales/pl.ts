@@ -961,6 +961,8 @@ const pl: Partial<Translations> = {
   "runReason.dbimportFailed": "narzędzie do importu zgłosiło błąd",
   "runReason.dbimportKeptOld": "poprzedni folder z danymi został zachowany",
   "runReason.dbimportErrors": "import zakończył się błędami",
+  "runReason.dbimportAppsDown": "nie udało się ponownie uruchomić tych aplikacji: {apps}",
+  "runReason.dbimportAppsStopped": "te aplikacje pozostają zatrzymane, dopóki folder danych nie zostanie uporządkowany: {apps}",
   "dbdump.toggle": "Zrzut bazy danych przed każdą kopią",
   "dbdump.toggleHint": "BombVault rozpoznał ten kontener jako bazę danych {engine}. Przed każdą kopią prosi działający serwer o pełny zrzut SQL i odkłada go jako osobny punkt przywracania, prosto do repozytorium kopii, bez zapisywania pliku na twoich dyskach. Przywracanie korzysta z kopii plików wykonanej po zatrzymaniu kontenera; zrzut to druga kopia, którą możesz pobrać lub zaimportować. Nieudany zrzut nigdy nie powoduje niepowodzenia kopii, pojawia się jako osobne nieudane uruchomienie.",
   "dbdump.toggleHintLabel": "Etykieta kontenera bombvault.dbdump włącza zrzut dla tej bazy danych {engine}. Przed każdą kopią BombVault prosi działający serwer o pełny zrzut SQL i odkłada go jako osobny punkt przywracania. Nieudany zrzut nigdy nie powoduje niepowodzenia kopii, pojawia się jako osobne nieudane uruchomienie.",

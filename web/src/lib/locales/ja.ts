@@ -961,6 +961,8 @@ const ja: Partial<Translations> = {
   "runReason.dbimportFailed": "インポートツールがエラーを報告しました",
   "runReason.dbimportKeptOld": "以前のデータフォルダーを残しました",
   "runReason.dbimportErrors": "インポートはエラーを伴って終わりました",
+  "runReason.dbimportAppsDown": "次のアプリを再び起動できませんでした: {apps}",
+  "runReason.dbimportAppsStopped": "データフォルダーが片付くまで、次のアプリは停止したままです: {apps}",
   "dbdump.toggle": "バックアップごとのデータベースダンプ",
   "dbdump.toggleHint": "BombVault はこのコンテナを {engine} データベースとして認識しました。バックアップのたびに、稼働中のサーバーへ完全な SQL ダンプを要求し、ディスクにファイルを書かずにバックアップリポジトリへ直接、独立した復元ポイントとして収めます。復元はコンテナ停止後に取得したファイルバックアップを使い、ダンプはダウンロードや取り込みができる二つ目の控えです。ダンプが失敗してもバックアップは決して失敗せず、独立した失敗実行として表示されます。",
   "dbdump.toggleHintLabel": "コンテナラベル bombvault.dbdump がこの {engine} データベースのダンプを有効にしています。バックアップのたびに BombVault は稼働中のサーバーへ完全な SQL ダンプを要求し、独立した復元ポイントとして収めます。ダンプが失敗してもバックアップは決して失敗せず、独立した失敗実行として表示されます。",

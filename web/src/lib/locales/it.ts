@@ -959,6 +959,8 @@ const it: Partial<Translations> = {
   "runReason.dbimportFailed": "lo strumento di importazione ha segnalato un errore",
   "runReason.dbimportKeptOld": "la cartella dati precedente è stata conservata",
   "runReason.dbimportErrors": "l'importazione è terminata con errori",
+  "runReason.dbimportAppsDown": "non è stato possibile riavviare queste applicazioni: {apps}",
+  "runReason.dbimportAppsStopped": "queste applicazioni restano ferme finché la cartella dei dati non è sistemata: {apps}",
   "dbdump.toggle": "Dump del database prima di ogni backup",
   "dbdump.toggleHint": "BombVault ha riconosciuto questo container come un database {engine}. Prima di ogni backup chiede al server in esecuzione un dump SQL completo e lo conserva come punto di ripristino a sé stante, direttamente nel repository di backup, senza scrivere file sui tuoi dischi. Un ripristino usa il backup dei file preso dopo l'arresto del container; il dump è una seconda copia che puoi scaricare o importare. Un dump fallito non fa mai fallire il backup, compare come esecuzione fallita a sé stante.",
   "dbdump.toggleHintLabel": "L'etichetta del container bombvault.dbdump attiva il dump per questo database {engine}. Prima di ogni backup BombVault chiede al server in esecuzione un dump SQL completo e lo conserva come punto di ripristino a sé stante. Un dump fallito non fa mai fallire il backup, compare come esecuzione fallita a sé stante.",

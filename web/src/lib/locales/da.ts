@@ -989,6 +989,8 @@ const da: Partial<Translations> = {
   "runReason.dbimportFailed": "importværktøjet meldte en fejl",
   "runReason.dbimportKeptOld": "den tidligere datamappe blev beholdt",
   "runReason.dbimportErrors": "importen sluttede med fejl",
+  "runReason.dbimportAppsDown": "disse apps kunne ikke startes igen: {apps}",
+  "runReason.dbimportAppsStopped": "disse apps forbliver stoppet, indtil datamappen er bragt i orden: {apps}",
   "dbdump.toggle": "Databasedump før hver sikkerhedskopi",
   "dbdump.toggleHint": "BombVault har genkendt denne container som en {engine}-database. Før hver sikkerhedskopi beder den den kørende server om en fuld SQL-dump og lægger den som sit eget gendannelsespunkt direkte i sikkerhedskopi-arkivet, uden at skrive en fil på dine diske. En gendannelse bruger filkopien, der tages efter containeren er stoppet; dumpen er en anden kopi, som du kan hente eller importere. En mislykket dump får aldrig sikkerhedskopien til at mislykkes, den vises som sin egen mislykkede kørsel.",
   "dbdump.toggleHintLabel": "Containermærkatet bombvault.dbdump slår dumpen til for denne {engine}-database. Før hver sikkerhedskopi beder BombVault den kørende server om en fuld SQL-dump og lægger den som sit eget gendannelsespunkt. En mislykket dump får aldrig sikkerhedskopien til at mislykkes, den vises som sin egen mislykkede kørsel.",

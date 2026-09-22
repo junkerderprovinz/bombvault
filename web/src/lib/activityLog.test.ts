@@ -690,6 +690,17 @@ describe("dbdump runs", () => {
     expect(texts.join(" ")).not.toContain("lineOther");
   });
 
+  it("names an app an import could not start again", () => {
+    const run = dump({
+      id: "i1",
+      kind: "dbimport",
+      error: "database imported; the previous data folder was kept: /mnt/pg.old; could not start these apps again: immich_server",
+    });
+    const [line] = buildLogLines([run], {}, [], resolveName, 2_000_000);
+    expect(line.text).toContain("activityLog.lineDbImported");
+    expect(line.text).toContain("runReason.dbimportAppsDown");
+  });
+
   it("counts the dumped bytes on the live line, where there is no percentage", () => {
     const progress: ProgressMap = {
       "container:immich_postgres": {

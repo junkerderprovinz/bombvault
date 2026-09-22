@@ -857,6 +857,8 @@ const ms: Partial<Translations> = {
   "runReason.dbimportFailed": "alat import melaporkan satu ralat",
   "runReason.dbimportKeptOld": "folder data sebelumnya dikekalkan",
   "runReason.dbimportErrors": "import berakhir dengan ralat",
+  "runReason.dbimportAppsDown": "aplikasi berikut tidak dapat dimulakan semula: {apps}",
+  "runReason.dbimportAppsStopped": "aplikasi berikut kekal berhenti sehingga folder data dibereskan: {apps}",
   "dbdump.toggle": "Longgokan pangkalan data sebelum setiap sandaran",
   "dbdump.toggleHint": "BombVault mengenali bekas ini sebagai pangkalan data {engine}. Sebelum setiap sandaran, ia meminta longgokan SQL penuh daripada pelayan yang sedang berjalan dan menyimpannya sebagai titik pemulihan tersendiri, terus ke simpanan sandaran, tanpa menulis sebarang fail ke cakera anda. Pemulihan menggunakan sandaran fail yang diambil selepas bekas dihentikan; longgokan ialah salinan kedua yang boleh anda muat turun atau import. Longgokan yang gagal tidak pernah menggagalkan sandaran, ia muncul sebagai larian gagal tersendiri.",
   "dbdump.toggleHintLabel": "Label bekas bombvault.dbdump menghidupkan longgokan untuk pangkalan data {engine} ini. Sebelum setiap sandaran, BombVault meminta longgokan SQL penuh daripada pelayan yang sedang berjalan dan menyimpannya sebagai titik pemulihan tersendiri. Longgokan yang gagal tidak pernah menggagalkan sandaran, ia muncul sebagai larian gagal tersendiri.",

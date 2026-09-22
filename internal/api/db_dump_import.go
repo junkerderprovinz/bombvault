@@ -321,12 +321,12 @@ func (s *Service) importDBDump(ctx context.Context, plan dbImportPlan, key strin
 		// migrations there and takes writes that are lost once the kept folder
 		// goes back.
 		if len(stopped) > 0 {
-			ierr.msg += "; these apps stay stopped until the data folder is sorted out: " + dependentNames(stopped)
+			ierr.msg += "; " + store.ImportTailAppsStopped + ": " + dependentNames(stopped)
 		}
 		return note, err
 	}
 	if down := s.startImportDependents(context.WithoutCancel(ctx), stopped); len(down) > 0 {
-		const suffix = "; could not start these apps again: "
+		const suffix = "; " + store.ImportTailAppsDown + ": "
 		if ierr != nil {
 			ierr.msg += suffix + dependentNames(down)
 		} else {

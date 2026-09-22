@@ -857,6 +857,8 @@ const hr: Partial<Translations> = {
   "runReason.dbimportFailed": "alat za uvoz prijavio je pogrešku",
   "runReason.dbimportKeptOld": "prethodna mapa s podacima je zadržana",
   "runReason.dbimportErrors": "uvoz je završio s pogreškama",
+  "runReason.dbimportAppsDown": "ove aplikacije nije bilo moguće ponovno pokrenuti: {apps}",
+  "runReason.dbimportAppsStopped": "ove aplikacije ostaju zaustavljene dok se ne riješi mapa s podacima: {apps}",
   "dbdump.toggle": "Ispis baze podataka prije svake sigurnosne kopije",
   "dbdump.toggleHint": "BombVault je prepoznao ovaj kontejner kao {engine} bazu podataka. Prije svake sigurnosne kopije traži od pokrenutog poslužitelja potpuni SQL ispis i sprema ga kao zasebnu točku obnove, izravno u repozitorij kopija, bez pisanja datoteke na tvoje diskove. Obnova koristi kopiju datoteka napravljenu nakon zaustavljanja kontejnera; ispis je druga kopija koju možeš preuzeti ili uvesti. Neuspjeli ispis nikada ne ruši sigurnosnu kopiju, prikazuje se kao zasebno neuspjelo izvođenje.",
   "dbdump.toggleHintLabel": "Oznaka kontejnera bombvault.dbdump uključuje ispis za ovu {engine} bazu podataka. Prije svake sigurnosne kopije BombVault traži od pokrenutog poslužitelja potpuni SQL ispis i sprema ga kao zasebnu točku obnove. Neuspjeli ispis nikada ne ruši sigurnosnu kopiju, prikazuje se kao zasebno neuspjelo izvođenje.",

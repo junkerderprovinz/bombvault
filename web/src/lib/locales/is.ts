@@ -857,6 +857,8 @@ const is: Partial<Translations> = {
   "runReason.dbimportFailed": "innflutningstólið tilkynnti villu",
   "runReason.dbimportKeptOld": "fyrri gagnamöppunni var haldið",
   "runReason.dbimportErrors": "innflutningnum lauk með villum",
+  "runReason.dbimportAppsDown": "ekki tókst að ræsa þessi forrit aftur: {apps}",
+  "runReason.dbimportAppsStopped": "þessi forrit verða áfram stöðvuð þar til gengið hefur verið frá gagnamöppunni: {apps}",
   "dbdump.toggle": "Gagnagrunnsafrit fyrir hvert öryggisafrit",
   "dbdump.toggleHint": "BombVault þekkti þennan gám sem {engine}-gagnagrunn. Fyrir hvert öryggisafrit biður það þjóninn sem er í gangi um fullt SQL-afrit og geymir það sem sjálfstæðan endurheimtupunkt, beint í afritasafninu, án þess að skrifa skrá á diskana þína. Endurheimt notar skráaafritið sem er tekið eftir að gámurinn stöðvast; gagnagrunnsafritið er önnur eintak sem þú getur sótt eða flutt inn. Misheppnað gagnagrunnsafrit lætur öryggisafritið aldrei mistakast, það birtist sem sjálfstæð misheppnuð keyrsla.",
   "dbdump.toggleHintLabel": "Gámamerkið bombvault.dbdump kveikir á gagnagrunnsafriti fyrir þennan {engine}-gagnagrunn. Fyrir hvert öryggisafrit biður BombVault þjóninn sem er í gangi um fullt SQL-afrit og geymir það sem sjálfstæðan endurheimtupunkt. Misheppnað gagnagrunnsafrit lætur öryggisafritið aldrei mistakast, það birtist sem sjálfstæð misheppnuð keyrsla.",

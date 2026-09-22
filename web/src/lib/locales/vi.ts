@@ -981,6 +981,8 @@ const vi: Partial<Translations> = {
   "runReason.dbimportFailed": "công cụ nhập báo một lỗi",
   "runReason.dbimportKeptOld": "thư mục dữ liệu trước đó được giữ lại",
   "runReason.dbimportErrors": "việc nhập kết thúc với lỗi",
+  "runReason.dbimportAppsDown": "không thể khởi động lại các ứng dụng sau: {apps}",
+  "runReason.dbimportAppsStopped": "các ứng dụng sau vẫn dừng cho đến khi thư mục dữ liệu được xử lý xong: {apps}",
   "dbdump.toggle": "Kết xuất cơ sở dữ liệu trước mỗi lần sao lưu",
   "dbdump.toggleHint": "BombVault đã nhận ra container này là cơ sở dữ liệu {engine}. Trước mỗi lần sao lưu, nó yêu cầu máy chủ đang chạy một bản kết xuất SQL đầy đủ và cất nó thành một điểm khôi phục riêng, thẳng vào kho sao lưu, không ghi tệp nào lên ổ đĩa của bạn. Việc khôi phục dùng bản sao lưu tệp được lấy sau khi container dừng; bản kết xuất là bản sao thứ hai mà bạn có thể tải về hoặc nhập lại. Một bản kết xuất thất bại không bao giờ làm hỏng bản sao lưu, nó hiện ra như một lần chạy thất bại riêng.",
   "dbdump.toggleHintLabel": "Nhãn container bombvault.dbdump bật kết xuất cho cơ sở dữ liệu {engine} này. Trước mỗi lần sao lưu, BombVault yêu cầu máy chủ đang chạy một bản kết xuất SQL đầy đủ và cất nó thành một điểm khôi phục riêng. Một bản kết xuất thất bại không bao giờ làm hỏng bản sao lưu, nó hiện ra như một lần chạy thất bại riêng.",
