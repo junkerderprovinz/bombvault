@@ -171,6 +171,29 @@ describe("PlacementRow", () => {
     await waitFor(() => expect(fake.callsTo("setItemPlacement")).toEqual([[item, { copies: { skip: [] } }]]));
   });
 
+  it("still asks, with the reason, when the upload cannot be estimated", async () => {
+    fake.reply("getPlacementOptions", { ok: true, options: twoTargets });
+    fake.reply("previewItemPlacement", { ok: false, error: "unreadable", code: "placement-unreadable" });
+    renderRow(placementView({ skip: ["t-b2"], copiesFollow: false }));
+    fireEvent.click(await screen.findByRole("button", { name: "B2" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.textContent).toContain("At the next run, snapshots of nginx are uploaded:");
+    expect(dialog.textContent).toContain("The placement rules could not be read, so nothing is copied until they can.");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Confirm" }));
+    await waitFor(() => expect(fake.callsTo("setItemPlacement")).toEqual([[item, { copies: { skip: [] } }]]));
+  });
+
+  it("still asks when the upload estimate does not answer at all", async () => {
+    fake.reply("getPlacementOptions", { ok: true, options: twoTargets });
+    fake.reply("previewItemPlacement", new Error("the server did not answer"));
+    renderRow(placementView({ skip: ["t-b2"], copiesFollow: false }));
+    fireEvent.click(await screen.findByRole("button", { name: "B2" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.textContent).toContain("the server did not answer");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Confirm" }));
+    await waitFor(() => expect(fake.callsTo("setItemPlacement")).toEqual([[item, { copies: { skip: [] } }]]));
+  });
+
   it("opens the direct repository window instead of saving Off-site only", async () => {
     renderRow(placementView());
     fireEvent.click(await segment("Off-site only"));
