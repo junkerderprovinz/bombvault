@@ -396,6 +396,7 @@ export interface DomainStatus {
   // Ransomware-protection scorecard facts (v4). Protection is the red/amber/green
   // aggregate; "" for a disabled domain (the dashboard card renders nothing for it).
   offsiteConfigured: boolean; // an off-site repo is configured for this domain
+  offPremisesCovered: boolean; // every item lives somewhere that is a site of its own
   offsiteImmutable: boolean; // the off-site repo is flagged append-only (immutable)
   lastTamperAt: number; // unix seconds of the last off-site tamper test; 0 = never
   lastTamperOK: boolean; // whether that test proved append-only protection
@@ -1314,9 +1315,10 @@ function mergeDirectFindings(found: DirectRepoFinding[]): DirectRepoFinding[] {
   return [...byRepo.values()];
 }
 
-/** Delete ALL backups of a container and forget it from the store. */
-export function deleteBackups(name: string): Promise<OkEnvelope> {
-  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/backups`, {
+/** Delete every backup of a container from the selected source. Local also
+ *  forgets the container; off-site keeps it. */
+export function deleteBackups(name: string, source?: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/containers/${encodeURIComponent(name)}/backups${srcParam(source)}`, {
     method: "DELETE",
   });
 }
@@ -1989,6 +1991,9 @@ export interface NamedRepo {
    *  delete refuse rather than repack it. */
   immutable: boolean;
   enabled: boolean;
+  /** Counts as a site of its own for sites and 3-2-1 on the cards. Changes no
+   *  copy. Always false on a direct repository. */
+  offPremises: boolean;
   inUse: number;
   /** The off-site target this is the direct repository of, "" for a plain one. */
   companionOf: string;
@@ -2128,6 +2133,61 @@ export interface UploadEstimate {
   uncheckable: string[];
 }
 
+export type PlanKind =
+  | "home"
+  | "stays-domain"
+  | "default-home"
+  | "decides-at-first-backup"
+  | "paused"
+  | "not-backed-up";
+
+/** The result line's plan half: where an item's backups go and why. */
+export interface PlacementPlan {
+  kind: PlanKind;
+  home: string;
+  targets: string[];
+  warn: boolean;
+  reason: "" | "default-off" | "default-missing";
+  noCopy: boolean;
+}
+
+export interface ObservedPlace {
+  place: string;
+  label: string;
+  count: number;
+  latest: number;
+  seenAt: number;
+  stale: boolean;
+  state: "counts" | "unreachable" | "unknown" | "old-copy" | "off";
+  since: number;
+  counts: boolean;
+}
+
+export interface OlderCopies {
+  targetId: string;
+  name: string;
+  count: number;
+  seenAt: number;
+  appendOnly: boolean;
+}
+
+/** The result line's observed half: where an item's backups actually are. */
+export interface PlacementObserved {
+  noBackup: boolean;
+  places: ObservedPlace[];
+  sites: number;
+  tone: "ok" | "warn" | "unconfirmed";
+  rule321: "met" | "one-copy" | "nothing-off-premises" | "unconfirmed";
+  older: OlderCopies[];
+}
+
+/** Names the project folder when its copies differ from a member's own. */
+export interface StackNote {
+  project: string;
+  home: string;
+  targets: string[];
+}
+
 export interface PlacementView {
   segment: SegmentId | "";
   repo: string;
@@ -2142,6 +2202,9 @@ export interface PlacementView {
   segmentLocks: SegmentLocks;
   paused: boolean;
   unreadable: boolean;
+  plan?: PlacementPlan;
+  observed?: PlacementObserved;
+  stackNote?: StackNote;
 }
 
 export type PlacementPatchResponse = OkEnvelope & {
@@ -2175,6 +2238,40 @@ export function previewItemPlacement(
     `/api/items/${encodeURIComponent(item.domain)}/${encodeURIComponent(item.key)}/placement/preview`,
     { method: "POST", body: JSON.stringify(change) }
   );
+}
+
+export interface RemovalPreview {
+  target: { id: string; name: string; appendOnly: boolean };
+  count: number;
+  onlyThere: { id: string; time: string }[];
+  homeUnreadable: boolean;
+  homeLabel: string;
+}
+
+function removalPath(item: ItemRef, targetId: string): string {
+  return `/api/items/${encodeURIComponent(item.domain)}/${encodeURIComponent(item.key)}/offsite/${encodeURIComponent(targetId)}/removal`;
+}
+
+/** What deleting one item's copies at one target would remove. */
+export function getOffsiteRemoval(
+  item: ItemRef,
+  targetId: string
+): Promise<OkEnvelope & Partial<RemovalPreview>> {
+  return fetchJSON(removalPath(item, targetId));
+}
+
+/** Deletes them. `onlyThere` are the snapshots the preview listed as existing
+ *  nowhere else; `typedName` is "" when that list was empty. */
+export function deleteAtTarget(
+  item: ItemRef,
+  targetId: string,
+  onlyThere: string[],
+  typedName: string
+): Promise<OkEnvelope & { deleted?: number; preview?: RemovalPreview }> {
+  return fetchJSON(removalPath(item, targetId), {
+    method: "DELETE",
+    body: JSON.stringify({ onlyThere, typedName }),
+  });
 }
 
 export interface DefaultCounts {
@@ -2960,10 +3057,10 @@ export function deleteFileSet(id: string): Promise<OkEnvelope> {
   });
 }
 
-/** DELETE /api/files/sets/{id}/backups — delete ALL backups of a file set
- *  (every fileset-tagged snapshot, pruned) and forget the set. */
-export function deleteFileSetBackups(id: string): Promise<OkEnvelope> {
-  return fetchJSON(`/api/files/sets/${encodeURIComponent(id)}/backups`, {
+/** DELETE /api/files/sets/{id}/backups: every backup of a file set from the
+ *  selected source. Local also forgets the set; off-site keeps it. */
+export function deleteFileSetBackups(id: string, source?: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/files/sets/${encodeURIComponent(id)}/backups${srcParam(source)}`, {
     method: "DELETE",
   });
 }

@@ -12,7 +12,7 @@ const FIELD_TARGET: OffsiteTarget = {
 };
 const DIRECT: NamedRepo = {
   id: "d1", name: "B2 direct", repo: "b2:bkt:containers-direct", credsRef: "", storageClass: "", limitUpload: 0,
-  limitDownload: 0, immutable: false, enabled: true, inUse: 2, companionOf: "t-f", companionLost: false,
+  limitDownload: 0, immutable: false, enabled: true, offPremises: false, inUse: 2, companionOf: "t-f", companionLost: false,
 };
 
 function baseSettings(): Settings {

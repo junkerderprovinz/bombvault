@@ -6,10 +6,16 @@ import type {
   DroppedTarget,
   HomeOption,
   NamedRepo,
+  ObservedPlace,
+  OlderCopies,
   PlacementChange,
+  PlacementObserved,
   PlacementOptions,
+  PlacementPlan,
   PlacementView,
+  RemovalPreview,
   SendToOption,
+  StackNote,
   TargetImpact,
   TargetOption,
   TargetPreview,
@@ -110,9 +116,63 @@ export function namedRepo(over?: Partial<NamedRepo>): NamedRepo {
     limitDownload: 0,
     immutable: false,
     enabled: true,
+    offPremises: false,
     inUse: 0,
     companionOf: "",
     companionLost: false,
+    ...over,
+  };
+}
+
+export function placementPlan(over?: Partial<PlacementPlan>): PlacementPlan {
+  return { kind: "home", home: "", targets: ["B2"], warn: false, reason: "", noCopy: false, ...over };
+}
+
+export function observedPlace(over?: Partial<ObservedPlace>): ObservedPlace {
+  return {
+    place: "offsite:t-b2",
+    label: "B2",
+    count: 20,
+    latest: 1_758_166_800,
+    seenAt: 1_758_170_400,
+    stale: false,
+    state: "counts",
+    since: 0,
+    counts: true,
+    ...over,
+  };
+}
+
+export function placementObserved(over?: Partial<PlacementObserved>): PlacementObserved {
+  return {
+    noBackup: false,
+    places: [
+      observedPlace({ place: "local", label: "", count: 0, latest: 1_758_166_800, seenAt: 1_758_166_800 }),
+      observedPlace(),
+    ],
+    sites: 2,
+    tone: "ok",
+    rule321: "met",
+    older: [],
+    ...over,
+  };
+}
+
+export function olderCopies(over?: Partial<OlderCopies>): OlderCopies {
+  return { targetId: "t-hz", name: "Hetzner", count: 14, seenAt: 1_758_000_000, appendOnly: false, ...over };
+}
+
+export function stackNote(over?: Partial<StackNote>): StackNote {
+  return { project: "immich", home: "", targets: ["B2"], ...over };
+}
+
+export function removalPreview(over?: Partial<RemovalPreview>): RemovalPreview {
+  return {
+    target: { id: "t-b2", name: "B2", appendOnly: false },
+    count: 14,
+    onlyThere: [],
+    homeUnreadable: false,
+    homeLabel: "NAS Keller",
     ...over,
   };
 }
@@ -167,6 +227,8 @@ const DEFAULTS: Record<string, Reply> = {
   }),
   connectRepo: (...args) => ({ ok: true, repo: namedRepo({ id: args[0] as string, companionOf: args[1] as string }) }),
   listRepos: () => ({ ok: true, repos: [] }),
+  getOffsiteRemoval: () => ({ ok: true, ...removalPreview() }),
+  deleteAtTarget: () => ({ ok: true, deleted: 14 }),
   createFileSet: () => ({ ok: true, id: "set-new" }),
   createOffsiteTarget: (...args) => ({ ok: true, target: { ...(args[0] as object), id: "t-new", createdAt: 1 } }),
   updateOffsiteTarget: (...args) => ({ ok: true, target: args[1], warnings: [] }),

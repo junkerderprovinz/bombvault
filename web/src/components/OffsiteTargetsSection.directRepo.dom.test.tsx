@@ -40,7 +40,7 @@ const b2: OffsiteTarget = {
 };
 const direct: NamedRepo = {
   id: "d1", name: "B2 direct", repo: "b2:bkt:containers-direct", credsRef: "", storageClass: "", limitUpload: 0,
-  limitDownload: 0, immutable: true, enabled: true, inUse: 2, companionOf: "t-b2", companionLost: false,
+  limitDownload: 0, immutable: true, enabled: true, offPremises: false, inUse: 2, companionOf: "t-b2", companionLost: false,
 };
 
 beforeEach(() => {

@@ -33,6 +33,7 @@ function domain(over: Partial<DomainStatus> = {}): DomainStatus {
     verifiedDetail: "",
     drillDetail: "",
     offsiteConfigured: false,
+    offPremisesCovered: false,
     offsiteImmutable: false,
     lastTamperAt: 0,
     lastTamperOK: false,
