@@ -9,6 +9,7 @@ import {
 } from "./api";
 import { useT } from "./i18n";
 import { placementErrorText } from "./placementCodes";
+import { placementChanged } from "./placementEvents";
 import { useToast } from "./toast";
 
 type T = ReturnType<typeof useT>["t"];
@@ -50,6 +51,7 @@ export function usePlacementSave(item: ItemRef, view: PlacementView, onView: (ne
   async function drain(first: PlacementChange) {
     running.current = true;
     setSaving(true);
+    let wrote = false;
     let next: PlacementChange | null = first;
     while (next) {
       const now = latest.current;
@@ -69,6 +71,7 @@ export function usePlacementSave(item: ItemRef, view: PlacementView, onView: (ne
         now.push(placementErrorText(now.t, now.lang, res, "settings.error"), "fail");
         break;
       }
+      wrote = true;
       const placed = res.placement;
       if (placed) {
         setConfirmed(placed);
@@ -81,6 +84,9 @@ export function usePlacementSave(item: ItemRef, view: PlacementView, onView: (ne
     }
     running.current = false;
     setSaving(false);
+    // The list is read again once the write is through, so an answer to a read
+    // that started before it cannot keep the last word.
+    if (wrote) placementChanged();
   }
 
   function save(change: PlacementChange, opt: Partial<PlacementView>) {
