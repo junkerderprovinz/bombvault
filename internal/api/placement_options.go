@@ -287,10 +287,13 @@ func (s *Service) importNewTargets(ctx context.Context, exp settingsExport) []ne
 		if !validPlacementDomain(tv.Domain) || !tv.Enabled {
 			continue
 		}
-		if _, known, err := s.store.GetOffsiteTarget(tv.ID); err != nil || known {
-			if err != nil {
-				log.Printf("api: import preview of %s: %v", tv.Domain, err) //nolint:gosec // G706: the domain passed validPlacementDomain
-			}
+		// A failed lookup keeps the row: a target named in error costs a line,
+		// one left out hides what the import starts copying.
+		_, known, err := s.store.GetOffsiteTarget(tv.ID)
+		if err != nil {
+			log.Printf("api: import preview of %s: %v", tv.Domain, err) //nolint:gosec // G706: the domain passed validPlacementDomain
+		}
+		if known {
 			continue
 		}
 		from, err := s.importedPlacementFor(settings, exp, tv.Domain)
