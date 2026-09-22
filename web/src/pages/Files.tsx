@@ -27,10 +27,13 @@ import {
   getSettings,
   getFileSetPreset,
 } from "../lib/api";
-import type { BrowseResponse, FileSetView, Snapshot, FileEntry, FileSetPresetResponse } from "../lib/api";
+import type { BrowseResponse, FileSetView, PlacementView, Snapshot, FileEntry, FileSetPresetResponse } from "../lib/api";
 import { applyToggle, browseRelToHost, splitFlatSet, toFlatList } from "../lib/selectionTree";
 import { SelectionTree } from "../components/SelectionTree";
 import { RepoPicker } from "../components/RepoPicker";
+import { PlacementRow } from "../components/placement/PlacementRow";
+import { subscribePlacement } from "../lib/placementEvents";
+import { subscribeRepos } from "../lib/useNamedRepos";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
@@ -1531,6 +1534,7 @@ export function FileSetRow({
   t,
   onRefresh,
   onEdit,
+  onPlacement,
   index,
 }: {
   set: FileSetView;
@@ -1539,6 +1543,8 @@ export function FileSetRow({
   t: T;
   onRefresh: () => void;
   onEdit: () => void;
+  /** Takes the card view a placement change answered with. */
+  onPlacement: (next: PlacementView) => void;
   /** Position in the rendered list — the rainbow palette position (GlimStone
    *  form-engine Phase 2, Task 2). Assigned by LIST INDEX, never a hash of
    *  `set.id`/name — see the caller below. */
@@ -1723,6 +1729,13 @@ export function FileSetRow({
           anyway: a consequence after the control, not before it. */}
       <EffectiveScheduleLine effective={set.effectiveSchedule} />
 
+      <PlacementRow
+        item={{ domain: "files", key: set.id }}
+        name={set.name}
+        view={set.placement}
+        onView={onPlacement}
+      />
+
       {/* Backups / Restore disclosure, with the last-backup date on its own
           row — the container card's shape. See `trailing`'s own doc. */}
       <FileSetRestorePanel
@@ -1870,6 +1883,15 @@ export function Files() {
       .catch(() => undefined);
     void Promise.all([sets, settings]).finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
+
+  useEffect(() => {
+    const offs = [subscribeRepos(() => void loadSets()), subscribePlacement(() => void loadSets())];
+    return () => offs.forEach((off) => off());
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- loadSets is stable for this page's lifetime; adding it would re-run the effect on every render
+
+  function placeSet(id: string, next: PlacementView) {
+    setSets((prev) => prev.map((s) => (s.id === id ? { ...s, placement: next } : s)));
+  }
 
   /** Opens the create dialog pre-filled with the "Host system config" preset
    *  (still fully editable — Save persists through the SAME create-file-set
@@ -2132,6 +2154,7 @@ export function Files() {
               t={t}
               onRefresh={() => void loadSets()}
               onEdit={() => setDialog(s)}
+              onPlacement={(next) => placeSet(s.id, next)}
               index={i}
             />
           ))}

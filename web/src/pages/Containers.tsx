@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { listContainers, deleteBackups, forgetContainer, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setContainerRepo, setContainerTargets, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError, type ContainerTargetsBody } from "../lib/api";
-import type { Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse } from "../lib/api";
+import { listContainers, deleteBackups, forgetContainer, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setContainerTargets, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError, type ContainerTargetsBody } from "../lib/api";
+import type { Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse, PlacementView } from "../lib/api";
 import { applyToggle, browseRelToHost, classifyNode, isAtOrUnder, partitionCustomPaths, toFlatList } from "../lib/selectionTree";
 import { SelectionTree } from "../components/SelectionTree";
-import { RepoPicker } from "../components/RepoPicker";
+import { PlacementRow } from "../components/placement/PlacementRow";
+import { subscribePlacement } from "../lib/placementEvents";
+import { subscribeRepos } from "../lib/useNamedRepos";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { humanBytes } from "../lib/forecast";
 import { FilterPopover } from "../components/FilterPopover";
@@ -694,17 +696,11 @@ export function FoldersEditor({
   open,
   t,
   lastBackup = null,
-  repo = "",
 }: {
   name: string;
   stack: string;
   open: boolean;
   t: T;
-  /** This container's own repository (#204), "" for the Containers domain
-   *  repository. It lives in this section because "where do the backups go" is
-   *  the same question as "which folders go into them", and the two answers
-   *  belong beside each other. */
-  repo?: string;
   /** Unix seconds of the container's last successful backup, null when none
    *  exists (Container.lastBackup verbatim). The D-02 narrowing gate: a
    *  narrowing selection only warns when there is at least one prior
@@ -727,13 +723,6 @@ export function FoldersEditor({
   // The folder picker works in paths relative to the host mount (like File Sets);
   // browseValue stages one pick before it is translated to a host path and added.
   const [browseValue, setBrowseValue] = useState("");
-  // The picker's own optimistic state (#204). Seeded from the prop and put back
-  // on a failed save, so the control never shows a destination the server did
-  // not accept - the one thing a repository field must not do.
-  const [repoChoice, setRepoChoice] = useState(repo);
-  useEffect(() => {
-    setRepoChoice(repo);
-  }, [repo]);
   const [hostMountRoot, setHostMountRoot] = useState("/host/user");
   const [hostSourceRoot, setHostSourceRoot] = useState("/mnt");
   const { push } = useToast();
@@ -1389,31 +1378,6 @@ export function FoldersEditor({
       {!loading && mounts.length === 0 && custom.length === 0 && (
         <p className="text-xs text-carbon-textMuted">{t("folders.empty")}</p>
       )}
-      {/* Where this container's backups go (#204). Above the tree, because a
-          reader who has not decided the destination cannot judge the selection
-          under it. Locked once the container has backups: they stay in the
-          repository they were written to and nothing re-homes them. */}
-      {!loading && (
-        <RepoPicker
-          value={repoChoice}
-          onChange={(next) => {
-            const before = repoChoice;
-            setRepoChoice(next);
-            void setContainerRepo(name, next).then((r) => {
-              if (r.ok) {
-                push(t("folders.saved"), "success");
-                return;
-              }
-              // Same discipline as every other save on this panel: the server's
-              // own words, and the control goes back to what is actually stored.
-              push(r.error ?? t("settings.error"), "fail");
-              setRepoChoice(before);
-            });
-          }}
-          locked={lastBackup !== null}
-        />
-      )}
-
       {/* D-02: the mount rows and custom rows ARE the tree's level-1 items —
           rendered by SelectionTree with lazy children under each, per-node
           state derived from the (includes, exclusions) mirror. The row's
@@ -2239,6 +2203,7 @@ export function ContainerRow({
   installedContainers,
   t,
   onDeleted,
+  onPlacement,
   selected,
   onToggleSelect,
   index,
@@ -2254,6 +2219,8 @@ export function ContainerRow({
   installedContainers: Container[];
   t: T;
   onDeleted: () => void;
+  /** Takes the card view a placement change answered with. */
+  onPlacement: (next: PlacementView) => void;
   selected?: boolean;
   onToggleSelect?: () => void;
   /** Position in the rendered list — the rainbow palette position (GlimStone
@@ -2458,6 +2425,15 @@ export function ContainerRow({
         </div>
       </div>
 
+      {!container.self && (
+        <PlacementRow
+          item={{ domain: "containers", key: container.name }}
+          name={container.name}
+          view={container.placement}
+          onView={onPlacement}
+        />
+      )}
+
       {/* Disclosure-section trigger row (GlimStone follow-up round, jdp
           live-review, screenshot of the five stacked full-width triggers
           below: "Können wir hier Buttons machen die alle in einer Zeile
@@ -2528,7 +2504,6 @@ export function ContainerRow({
             open={openSections.has("folders")}
             t={t}
             lastBackup={container.lastBackup}
-            repo={container.repo ?? ""}
           />
           <StopContainersEditor
             name={container.name}
@@ -3349,6 +3324,15 @@ export function Containers() {
     void loadContainers().finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
 
+  useEffect(() => {
+    const offs = [subscribeRepos(() => void loadContainers()), subscribePlacement(() => void loadContainers())];
+    return () => offs.forEach((off) => off());
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- loadContainers is stable for this page's lifetime; adding it would re-run the effect on every render
+
+  function placeContainer(name: string, next: PlacementView) {
+    setContainers((prev) => prev.map((c) => (c.name === name ? { ...c, placement: next } : c)));
+  }
+
   // Reload when the last operation finishes.
   // ---------------------------------------------------------------------------
   // The fetch above ran once, on mount, and nothing refreshed it afterwards. So
@@ -3864,6 +3848,7 @@ export function Containers() {
               installedContainers={installedContainers}
               t={t}
               onDeleted={() => void loadContainers()}
+              onPlacement={(next) => placeContainer(c.name, next)}
               selected={selected.has(c.name)}
               onToggleSelect={c.self ? undefined : () => toggleSelect(c.name)}
               index={i}
@@ -3903,7 +3888,15 @@ export function Containers() {
               i % palette.length); that is intended, because a repeat then
               lands a full palette apart rather than adjacent. */}
           {orphans.map((c, i) => (
-            <ContainerRow key={c.name} container={c} installedContainers={installedContainers} t={t} onDeleted={() => void loadContainers()} index={live.length + i} />
+            <ContainerRow
+              key={c.name}
+              container={c}
+              installedContainers={installedContainers}
+              t={t}
+              onDeleted={() => void loadContainers()}
+              onPlacement={(next) => placeContainer(c.name, next)}
+              index={live.length + i}
+            />
           ))}
         </div>
       )}
