@@ -311,7 +311,10 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 			return
 		}
 	}
-	if moved && v.AlsoExclude != nil {
+	// The answer is kept whether or not this save moves the target: the client
+	// asks as soon as the field changed, and two spellings of one location are
+	// no reason to drop what the user chose to leave out.
+	if v.AlsoExclude != nil {
 		if err := checkExclusion(t.Domain, *v.AlsoExclude); err != nil {
 			placementFail(w, err, nil)
 			return
@@ -324,7 +327,7 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	if moved && v.AlsoExclude != nil {
+	if v.AlsoExclude != nil {
 		if err := h.svc.excludeFromTarget(stored.Domain, stored.ID, *v.AlsoExclude); err != nil {
 			// The row keeps its id, so there is nothing to take back here; the
 			// answer says which half of the save went through.

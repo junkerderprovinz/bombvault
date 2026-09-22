@@ -214,18 +214,18 @@ func TestAnExclusionThatFailsAfterTheWriteLeavesNoTargetBehind(t *testing.T) {
 	}
 }
 
-func TestMovingATargetTakesTheAnswerOnlyWithANewLocation(t *testing.T) {
+func TestSavingATargetTakesTheAnswerAlongWhateverTheLocationDoes(t *testing.T) {
 	f := newPlacementFixture(t)
 	b2 := f.target("containers", "B2", "b2:bucket:containers")
 	body := map[string]any{
-		"domain": "containers", "name": "B2", "repo": "b2:bucket:containers", "enabled": true,
+		"domain": "containers", "name": "B2", "repo": "b2:bucket:containers/", "enabled": true,
 		"alsoExclude": map[string]any{"identities": []string{"container:plex"}, "default": false},
 	}
 	if res := f.do(http.MethodPut, "/api/offsite/targets/"+b2.ID, body); res["ok"] != true {
 		t.Fatalf("PUT = %v", res)
 	}
-	if _, found, _ := f.st.CopyRuleFor("containers", "container:plex"); found {
-		t.Fatal("a PUT on the same location wrote the exclusion")
+	if got := f.skipOf("containers", "container:plex"); !reflect.DeepEqual(got, []string{b2.ID}) {
+		t.Fatalf("plex = %v, want B2 although the location is the same place", got)
 	}
 	body["repo"] = "b2:other:containers"
 	if res := f.do(http.MethodPut, "/api/offsite/targets/"+b2.ID, body); res["ok"] != true {
