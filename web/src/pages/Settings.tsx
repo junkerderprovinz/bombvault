@@ -11,6 +11,7 @@ import { PasskeyCard } from "./settings/PasskeyCard";
 import { TwoFactorCard } from "./settings/TwoFactorCard";
 import { LanguageCard } from "./settings/LanguageCard";
 import { ReposCard } from "./settings/ReposCard";
+import { PlacementDefaultsCard } from "./settings/PlacementDefaultsCard";
 import { ThemeCard } from "./settings/ThemeCard";
 import { RestoreChecksSection } from "./settings/RestoreChecksSection";
 import { RcloneCard } from "./settings/RcloneCard";
@@ -3168,6 +3169,7 @@ export function SettingsPage() {
           container, VM or folder set can be pointed at instead of the domain
           path below, so the more specific answer is read first. */}
       {tab === "storage" && <ReposCard hueIndex={nextHue()} />}
+      {tab === "storage" && <PlacementDefaultsCard hueIndex={nextHue()} />}
 
       {/* ------------------------------------------------------------------ */}
       {/* STORAGE — Backup paths                                             */}
