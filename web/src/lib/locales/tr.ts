@@ -989,6 +989,8 @@ const tr: Partial<Translations> = {
   "runReason.dbimportFailed": "içe aktarma aracı bir hata bildirdi",
   "runReason.dbimportKeptOld": "önceki veri klasörü korundu",
   "runReason.dbimportErrors": "içe aktarma hatalarla bitti",
+  "runReason.dbimportAppsDown": "şu uygulamalar yeniden başlatılamadı: {apps}",
+  "runReason.dbimportAppsStopped": "veri klasörü düzene girene kadar şu uygulamalar durdurulmuş kalır: {apps}",
   "dbdump.toggle": "Her yedeklemeden önce veritabanı dökümü",
   "dbdump.toggleHint": "BombVault bu konteyneri bir {engine} veritabanı olarak tanıdı. Her yedeklemeden önce çalışan sunucudan tam bir SQL dökümü ister ve bunu kendi başına bir geri yükleme noktası olarak, doğrudan yedek deposuna koyar; disklerine hiçbir dosya yazmaz. Geri yükleme, konteyner durduktan sonra alınan dosya yedeğini kullanır; döküm ise indirebileceğin veya içe aktarabileceğin ikinci bir kopyadır. Başarısız bir döküm yedeklemeyi asla düşürmez, kendi başına başarısız bir çalışma olarak görünür.",
   "dbdump.toggleHintLabel": "bombvault.dbdump konteyner etiketi bu {engine} veritabanı için dökümü açar. Her yedeklemeden önce BombVault çalışan sunucudan tam bir SQL dökümü ister ve bunu kendi başına bir geri yükleme noktası olarak saklar. Başarısız bir döküm yedeklemeyi asla düşürmez, kendi başına başarısız bir çalışma olarak görünür.",

@@ -857,6 +857,8 @@ const lv: Partial<Translations> = {
   "runReason.dbimportFailed": "importa rīks ziņoja par kļūdu",
   "runReason.dbimportKeptOld": "iepriekšējā datu mape tika paturēta",
   "runReason.dbimportErrors": "imports beidzās ar kļūdām",
+  "runReason.dbimportAppsDown": "šīs lietotnes neizdevās atkal palaist: {apps}",
+  "runReason.dbimportAppsStopped": "šīs lietotnes paliek apturētas, līdz datu mape būs sakārtota: {apps}",
   "dbdump.toggle": "Datubāzes izraksts pirms katras rezerves kopijas",
   "dbdump.toggleHint": "BombVault atpazina šo konteineru kā {engine} datubāzi. Pirms katras rezerves kopijas tas palūdz strādājošajam serverim pilnu SQL izrakstu un noliek to kā atsevišķu atjaunošanas punktu tieši kopiju krātuvē, nerakstot nevienu failu uz taviem diskiem. Atjaunošana izmanto failu kopiju, kas uzņemta pēc konteinera apturēšanas; izraksts ir otra kopija, ko vari lejupielādēt vai ievietot atpakaļ. Neizdevies izraksts nekad nenogāž rezerves kopiju, tas parādās kā atsevišķa neizdevusies izpilde.",
   "dbdump.toggleHintLabel": "Konteinera birka bombvault.dbdump ieslēdz izrakstu šai {engine} datubāzei. Pirms katras rezerves kopijas BombVault palūdz strādājošajam serverim pilnu SQL izrakstu un noliek to kā atsevišķu atjaunošanas punktu. Neizdevies izraksts nekad nenogāž rezerves kopiju, tas parādās kā atsevišķa neizdevusies izpilde.",

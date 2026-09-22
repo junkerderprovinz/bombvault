@@ -168,6 +168,13 @@ const (
 	NoteDBImportErrors  = "database imported with errors"
 )
 
+// What an import appends to its note or reason, after "; " and before ": " and
+// the names of the apps it stopped for the import.
+const (
+	ImportTailAppsDown    = "could not start these apps again"
+	ImportTailAppsStopped = "these apps stay stopped until the data folder is sorted out"
+)
+
 // Why importing a dump back into a container did not finish. The detail says
 // which folder holds the data that is still there.
 const (

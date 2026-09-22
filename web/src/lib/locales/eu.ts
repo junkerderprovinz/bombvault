@@ -857,6 +857,8 @@ const eu: Partial<Translations> = {
   "runReason.dbimportFailed": "inportazio-tresnak errore bat eman du",
   "runReason.dbimportKeptOld": "aurreko datu-karpeta gorde da",
   "runReason.dbimportErrors": "inportazioa erroreekin amaitu da",
+  "runReason.dbimportAppsDown": "aplikazio hauek ezin izan dira berriro abiarazi: {apps}",
+  "runReason.dbimportAppsStopped": "aplikazio hauek geldituta geratzen dira datu-karpeta konpondu arte: {apps}",
   "dbdump.toggle": "Datu-basearen iraulketa babeskopia bakoitzaren aurretik",
   "dbdump.toggleHint": "BombVaultek edukiontzi hau {engine} datu-base gisa ezagutu du. Babeskopia bakoitzaren aurretik martxan dagoen zerbitzariari SQL iraulketa oso bat eskatzen dio eta bere kabuzko leheneratze-puntu gisa gordetzen du, zuzenean kopien biltegian, zure diskoetan fitxategirik idatzi gabe. Leheneratzeak edukiontzia gelditu ondoren hartutako fitxategi-kopia erabiltzen du; iraulketa bigarren kopia bat da, deskargatu edo inportatu dezakezuna. Huts egindako iraulketak ez du inoiz babeskopia erortzen, bere kabuzko exekuzio huts gisa agertzen da.",
   "dbdump.toggleHintLabel": "bombvault.dbdump edukiontzi-etiketak iraulketa pizten du {engine} datu-base honetarako. Babeskopia bakoitzaren aurretik BombVaultek martxan dagoen zerbitzariari SQL iraulketa oso bat eskatzen dio eta bere kabuzko leheneratze-puntu gisa gordetzen du. Huts egindako iraulketak ez du inoiz babeskopia erortzen, bere kabuzko exekuzio huts gisa agertzen da.",

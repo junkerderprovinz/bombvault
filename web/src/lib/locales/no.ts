@@ -966,6 +966,8 @@ const no: Partial<Translations> = {
   "runReason.dbimportFailed": "importverktøyet meldte en feil",
   "runReason.dbimportKeptOld": "den forrige datamappen ble beholdt",
   "runReason.dbimportErrors": "importen sluttet med feil",
+  "runReason.dbimportAppsDown": "disse appene kunne ikke startes igjen: {apps}",
+  "runReason.dbimportAppsStopped": "disse appene forblir stoppet til datamappen er ordnet: {apps}",
   "dbdump.toggle": "Databasedump før hver sikkerhetskopi",
   "dbdump.toggleHint": "BombVault har kjent igjen denne containeren som en {engine}-database. Før hver sikkerhetskopi ber den den kjørende serveren om en full SQL-dump og legger den som sitt eget gjenopprettingspunkt rett i sikkerhetskopi-arkivet, uten å skrive en fil på diskene dine. En gjenoppretting bruker filkopien som tas etter at containeren er stoppet; dumpen er en andre kopi som du kan laste ned eller importere. En mislykket dump gjør aldri at sikkerhetskopien mislykkes, den vises som sin egen mislykkede kjøring.",
   "dbdump.toggleHintLabel": "Containeretiketten bombvault.dbdump slår på dumpen for denne {engine}-databasen. Før hver sikkerhetskopi ber BombVault den kjørende serveren om en full SQL-dump og legger den som sitt eget gjenopprettingspunkt. En mislykket dump gjør aldri at sikkerhetskopien mislykkes, den vises som sin egen mislykkede kjøring.",

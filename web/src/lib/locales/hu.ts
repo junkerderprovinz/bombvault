@@ -972,6 +972,8 @@ const hu: Partial<Translations> = {
   "runReason.dbimportFailed": "az importáló eszköz hibát jelzett",
   "runReason.dbimportKeptOld": "a korábbi adatmappa megmaradt",
   "runReason.dbimportErrors": "az importálás hibákkal ért véget",
+  "runReason.dbimportAppsDown": "ezeket az alkalmazásokat nem sikerült újraindítani: {apps}",
+  "runReason.dbimportAppsStopped": "ezek az alkalmazások leállítva maradnak, amíg az adatmappa rendbe nem kerül: {apps}",
   "dbdump.toggle": "Adatbázismentés minden biztonsági mentés előtt",
   "dbdump.toggleHint": "A BombVault {engine} adatbázisként ismerte fel ezt a konténert. Minden biztonsági mentés előtt teljes SQL mentést kér a futó kiszolgálótól, és saját visszaállítási pontként teszi el, egyenesen a mentési tárolóba, anélkül hogy fájlt írna a lemezeidre. A visszaállítás a konténer leállítása után készült fájlmentést használja; az adatbázismentés egy második példány, amit letölthetsz vagy betölthetsz. A sikertelen adatbázismentés soha nem buktatja el a biztonsági mentést, saját sikertelen futásként jelenik meg.",
   "dbdump.toggleHintLabel": "A bombvault.dbdump konténercímke bekapcsolja az adatbázismentést ennél a {engine} adatbázisnál. Minden biztonsági mentés előtt a BombVault teljes SQL mentést kér a futó kiszolgálótól, és saját visszaállítási pontként teszi el. A sikertelen adatbázismentés soha nem buktatja el a biztonsági mentést, saját sikertelen futásként jelenik meg.",

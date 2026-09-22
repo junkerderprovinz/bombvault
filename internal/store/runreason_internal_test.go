@@ -45,6 +45,8 @@ func namedReasons() map[string]string {
 		"ReasonDBImportFailed":      ReasonDBImportFailed,
 		"NoteDBImportKeptOld":       NoteDBImportKeptOld,
 		"NoteDBImportErrors":        NoteDBImportErrors,
+		"ImportTailAppsDown":        ImportTailAppsDown,
+		"ImportTailAppsStopped":     ImportTailAppsStopped,
 	}
 }
 

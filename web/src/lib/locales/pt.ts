@@ -966,6 +966,8 @@ const pt: Partial<Translations> = {
   "runReason.dbimportFailed": "a ferramenta de importação comunicou um erro",
   "runReason.dbimportKeptOld": "a pasta de dados anterior foi mantida",
   "runReason.dbimportErrors": "a importação terminou com erros",
+  "runReason.dbimportAppsDown": "não foi possível voltar a iniciar estas aplicações: {apps}",
+  "runReason.dbimportAppsStopped": "estas aplicações ficam paradas até a pasta de dados ser resolvida: {apps}",
   "dbdump.toggle": "Dump da base de dados antes de cada cópia",
   "dbdump.toggleHint": "O BombVault reconheceu este contentor como uma base de dados {engine}. Antes de cada cópia pede ao servidor em execução um dump SQL completo e guarda-o como um ponto de restauro próprio, directamente no repositório de cópias, sem escrever nenhum ficheiro nos teus discos. Um restauro usa a cópia dos ficheiros feita depois de o contentor parar; o dump é uma segunda cópia que podes descarregar ou importar. Um dump falhado nunca faz falhar a cópia, aparece como uma execução falhada à parte.",
   "dbdump.toggleHintLabel": "A etiqueta de contentor bombvault.dbdump liga o dump desta base de dados {engine}. Antes de cada cópia o BombVault pede ao servidor em execução um dump SQL completo e guarda-o como um ponto de restauro próprio. Um dump falhado nunca faz falhar a cópia, aparece como uma execução falhada à parte.",

@@ -987,6 +987,8 @@ const es: Partial<Translations> = {
   "runReason.dbimportFailed": "la herramienta de importación informó de un error",
   "runReason.dbimportKeptOld": "se conservó la carpeta de datos anterior",
   "runReason.dbimportErrors": "la importación terminó con errores",
+  "runReason.dbimportAppsDown": "estas aplicaciones no se pudieron volver a iniciar: {apps}",
+  "runReason.dbimportAppsStopped": "estas aplicaciones siguen detenidas hasta que se resuelva la carpeta de datos: {apps}",
   "dbdump.toggle": "Volcado de la base de datos antes de cada copia",
   "dbdump.toggleHint": "BombVault ha reconocido este contenedor como una base de datos {engine}. Antes de cada copia le pide al servidor en marcha un volcado SQL completo y lo guarda como un punto de restauración propio, directamente en el repositorio de copias, sin escribir ningún archivo en tus discos. Una restauración usa la copia de archivos tomada tras detener el contenedor; el volcado es una segunda copia que puedes descargar o importar. Un volcado fallido nunca hace fallar la copia, aparece como una ejecución fallida aparte.",
   "dbdump.toggleHintLabel": "La etiqueta de contenedor bombvault.dbdump activa el volcado de esta base de datos {engine}. Antes de cada copia, BombVault le pide al servidor en marcha un volcado SQL completo y lo guarda como un punto de restauración propio. Un volcado fallido nunca hace fallar la copia, aparece como una ejecución fallida aparte.",

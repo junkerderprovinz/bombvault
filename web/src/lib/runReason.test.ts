@@ -4,6 +4,7 @@
 import { describe, expect, it } from "vitest";
 import {
   isOwnReason,
+  isWarningNote,
   runReason,
   runReasonParts,
   RunReasonText,
@@ -79,6 +80,26 @@ describe("runReason", () => {
     );
   });
 
+  it("names the apps an import left stopped in the reader's language", () => {
+    const withApps = (key: TranslationKey): string => `${key} {apps}`;
+    expect(
+      runReasonParts(
+        "database imported; the previous data folder was kept: /mnt/pg.old; could not start these apps again: immich_server, immich_ml",
+        withApps
+      )
+    ).toEqual({
+      head: "runReason.dbimportKeptOld {apps}",
+      detail: "/mnt/pg.old",
+      note: "runReason.dbimportAppsDown immich_server, immich_ml",
+    });
+    expect(
+      runReason(
+        "database import failed: the import tool reported an error: exit 1: x; these apps stay stopped until the data folder is sorted out: immich_server",
+        withApps
+      )
+    ).toBe("runReason.dbimportFailed {apps}: exit 1: x; runReason.dbimportAppsStopped immich_server");
+  });
+
   it("hands back a reason it does not know", () => {
     expect(runReason("Fatal: repository is already locked", t)).toBe("Fatal: repository is already locked");
     expect(runReasonParts("Fatal: repository is already locked", t)).toEqual({
@@ -118,5 +139,14 @@ describe("RunReasonText", () => {
   it("renders a reason without a detail as bare text", () => {
     const parts = children(RunReasonText({ reason: "database dump failed: no progress", t }));
     expect(parts).toEqual(["runReason.dbdumpStalled"]);
+  });
+});
+
+describe("isWarningNote", () => {
+  it("warns about a successful import that left an app stopped", () => {
+    expect(isWarningNote("database imported; the previous data folder was kept: /mnt/pg.old")).toBe(false);
+    expect(
+      isWarningNote("database imported; the previous data folder was kept: /mnt/pg.old; could not start these apps again: immich_server")
+    ).toBe(true);
   });
 });

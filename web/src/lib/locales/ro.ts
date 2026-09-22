@@ -969,6 +969,8 @@ const ro: Partial<Translations> = {
   "runReason.dbimportFailed": "instrumentul de import a raportat o eroare",
   "runReason.dbimportKeptOld": "dosarul de date anterior a fost păstrat",
   "runReason.dbimportErrors": "importul s-a încheiat cu erori",
+  "runReason.dbimportAppsDown": "aceste aplicații nu au putut fi pornite din nou: {apps}",
+  "runReason.dbimportAppsStopped": "aceste aplicații rămân oprite până se rezolvă folderul de date: {apps}",
   "dbdump.toggle": "Dump al bazei de date înainte de fiecare copie",
   "dbdump.toggleHint": "BombVault a recunoscut acest container ca bază de date {engine}. Înainte de fiecare copie de siguranță cere serverului pornit un dump SQL complet și îl păstrează ca punct de restaurare de sine stătător, direct în depozitul de copii, fără să scrie vreun fișier pe discurile tale. O restaurare folosește copia fișierelor luată după oprirea containerului; dumpul este o a doua copie pe care o poți descărca sau importa. Un dump eșuat nu face niciodată copia să eșueze, apare ca o rulare eșuată separată.",
   "dbdump.toggleHintLabel": "Eticheta de container bombvault.dbdump pornește dumpul pentru această bază de date {engine}. Înainte de fiecare copie BombVault cere serverului pornit un dump SQL complet și îl păstrează ca punct de restaurare de sine stătător. Un dump eșuat nu face niciodată copia să eșueze, apare ca o rulare eșuată separată.",

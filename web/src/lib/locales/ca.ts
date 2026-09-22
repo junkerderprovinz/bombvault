@@ -857,6 +857,8 @@ const ca: Partial<Translations> = {
   "runReason.dbimportFailed": "l'eina d'importació ha informat d'un error",
   "runReason.dbimportKeptOld": "s'ha conservat la carpeta de dades anterior",
   "runReason.dbimportErrors": "la importació ha acabat amb errors",
+  "runReason.dbimportAppsDown": "aquestes aplicacions no s'han pogut tornar a iniciar: {apps}",
+  "runReason.dbimportAppsStopped": "aquestes aplicacions queden aturades fins que es resolgui la carpeta de dades: {apps}",
   "dbdump.toggle": "Bolcat de la base de dades abans de cada còpia",
   "dbdump.toggleHint": "BombVault ha reconegut aquest contenidor com una base de dades {engine}. Abans de cada còpia de seguretat demana al servidor en marxa un bolcat SQL complet i el desa com un punt de restauració propi, directament al dipòsit de còpies, sense escriure cap fitxer als teus discos. Una restauració fa servir la còpia dels fitxers presa després d'aturar el contenidor; el bolcat és una segona còpia que pots descarregar o importar. Un bolcat fallit no fa fallar mai la còpia, apareix com una execució fallida a part.",
   "dbdump.toggleHintLabel": "L'etiqueta de contenidor bombvault.dbdump activa el bolcat d'aquesta base de dades {engine}. Abans de cada còpia BombVault demana al servidor en marxa un bolcat SQL complet i el desa com un punt de restauració propi. Un bolcat fallit no fa fallar mai la còpia, apareix com una execució fallida a part.",

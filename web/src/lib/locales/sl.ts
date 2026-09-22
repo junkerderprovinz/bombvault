@@ -855,6 +855,8 @@ const sl: Partial<Translations> = {
   "runReason.dbimportFailed": "orodje za uvoz je javilo napako",
   "runReason.dbimportKeptOld": "prejšnja mapa s podatki je bila ohranjena",
   "runReason.dbimportErrors": "uvoz se je končal z napakami",
+  "runReason.dbimportAppsDown": "teh aplikacij ni bilo mogoče znova zagnati: {apps}",
+  "runReason.dbimportAppsStopped": "te aplikacije ostanejo ustavljene, dokler mapa s podatki ni urejena: {apps}",
   "dbdump.toggle": "Izvoz podatkovne baze pred vsako varnostno kopijo",
   "dbdump.toggleHint": "BombVault je ta vsebnik prepoznal kot podatkovno bazo {engine}. Pred vsako varnostno kopijo od delujočega strežnika zahteva celoten izvoz SQL in ga shrani kot samostojno obnovitveno točko, naravnost v skladišče kopij, ne da bi na tvoje diske zapisal datoteko. Obnovitev uporabi kopijo datotek, narejeno po zaustavitvi vsebnika; izvoz je druga kopija, ki jo lahko preneseš ali uvoziš. Neuspel izvoz nikoli ne podre varnostne kopije, prikaže se kot samostojen neuspel zagon.",
   "dbdump.toggleHintLabel": "Oznaka vsebnika bombvault.dbdump vklopi izvoz za to podatkovno bazo {engine}. Pred vsako varnostno kopijo BombVault od delujočega strežnika zahteva celoten izvoz SQL in ga shrani kot samostojno obnovitveno točko. Neuspel izvoz nikoli ne podre varnostne kopije, prikaže se kot samostojen neuspel zagon.",

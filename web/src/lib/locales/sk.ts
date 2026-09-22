@@ -857,6 +857,8 @@ const sk: Partial<Translations> = {
   "runReason.dbimportFailed": "nástroj na import ohlásil chybu",
   "runReason.dbimportKeptOld": "predchádzajúci priečinok s dátami zostal zachovaný",
   "runReason.dbimportErrors": "import sa skončil s chybami",
+  "runReason.dbimportAppsDown": "tieto aplikácie sa nepodarilo znova spustiť: {apps}",
+  "runReason.dbimportAppsStopped": "tieto aplikácie zostanú zastavené, kým sa nevyrieši priečinok s dátami: {apps}",
   "dbdump.toggle": "Výpis databázy pred každou zálohou",
   "dbdump.toggleHint": "BombVault rozpoznal tento kontajner ako databázu {engine}. Pred každou zálohou požiada bežiaci server o úplný SQL výpis a uloží ho ako samostatný bod obnovy priamo do úložiska záloh, bez zápisu súboru na tvoje disky. Obnova používa zálohu súborov urobenú po zastavení kontajnera; výpis je druhá kópia, ktorú si môžeš stiahnuť alebo naimportovať. Neúspešný výpis nikdy nespôsobí zlyhanie zálohy, objaví sa ako samostatný neúspešný beh.",
   "dbdump.toggleHintLabel": "Štítok kontajnera bombvault.dbdump zapína výpis pre túto databázu {engine}. Pred každou zálohou požiada BombVault bežiaci server o úplný SQL výpis a uloží ho ako samostatný bod obnovy. Neúspešný výpis nikdy nespôsobí zlyhanie zálohy, objaví sa ako samostatný neúspešný beh.",

@@ -857,6 +857,8 @@ const et: Partial<Translations> = {
   "runReason.dbimportFailed": "imporditööriist teatas veast",
   "runReason.dbimportKeptOld": "varasem andmekaust jäeti alles",
   "runReason.dbimportErrors": "import lõppes vigadega",
+  "runReason.dbimportAppsDown": "neid rakendusi ei õnnestunud uuesti käivitada: {apps}",
+  "runReason.dbimportAppsStopped": "need rakendused jäävad peatatuks, kuni andmekaust on korda tehtud: {apps}",
   "dbdump.toggle": "Andmebaasi tõmmis enne iga varukoopiat",
   "dbdump.toggleHint": "BombVault tundis selle konteineri ära {engine} andmebaasina. Enne iga varukoopiat küsib ta töötavalt serverilt täieliku SQL-tõmmise ja paneb selle omaette taastepunktina otse varukoopiate hoidlasse, kirjutamata su ketastele ühtki faili. Taastamine kasutab failide koopiat, mis tehakse pärast konteineri peatamist; tõmmis on teine koopia, mille saad alla laadida või sisse lugeda. Ebaõnnestunud tõmmis ei aja varukoopiat kunagi untsu, see ilmub omaette ebaõnnestunud käivitusena.",
   "dbdump.toggleHintLabel": "Konteineri silt bombvault.dbdump lülitab tõmmise sisse selle {engine} andmebaasi jaoks. Enne iga varukoopiat küsib BombVault töötavalt serverilt täieliku SQL-tõmmise ja paneb selle omaette taastepunktina kõrvale. Ebaõnnestunud tõmmis ei aja varukoopiat kunagi untsu, see ilmub omaette ebaõnnestunud käivitusena.",

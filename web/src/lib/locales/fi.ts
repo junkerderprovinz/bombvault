@@ -989,6 +989,8 @@ const fi: Partial<Translations> = {
   "runReason.dbimportFailed": "tuontityökalu ilmoitti virheestä",
   "runReason.dbimportKeptOld": "aiempi datakansio säilytettiin",
   "runReason.dbimportErrors": "tuonti päättyi virheisiin",
+  "runReason.dbimportAppsDown": "näitä sovelluksia ei saatu käynnistettyä uudelleen: {apps}",
+  "runReason.dbimportAppsStopped": "nämä sovellukset pysyvät pysäytettyinä, kunnes datakansio on selvitetty: {apps}",
   "dbdump.toggle": "Tietokannan vedos ennen jokaista varmuuskopiota",
   "dbdump.toggleHint": "BombVault tunnisti tämän kontin {engine}-tietokannaksi. Ennen jokaista varmuuskopiota se pyytää käynnissä olevalta palvelimelta täyden SQL-vedoksen ja tallettaa sen omaksi palautuspisteekseen suoraan varmuuskopiovarastoon kirjoittamatta tiedostoa levyillesi. Palautus käyttää tiedostovarmuuskopiota, joka otetaan kontin pysäyttämisen jälkeen; vedos on toinen kopio, jonka voit ladata tai tuoda. Epäonnistunut vedos ei koskaan kaada varmuuskopiota, se näkyy omana epäonnistuneena ajonaan.",
   "dbdump.toggleHintLabel": "Kontin tunniste bombvault.dbdump kytkee vedoksen päälle tälle {engine}-tietokannalle. Ennen jokaista varmuuskopiota BombVault pyytää käynnissä olevalta palvelimelta täyden SQL-vedoksen ja tallettaa sen omaksi palautuspisteekseen. Epäonnistunut vedos ei koskaan kaada varmuuskopiota, se näkyy omana epäonnistuneena ajonaan.",

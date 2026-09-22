@@ -963,6 +963,8 @@ const nl: Partial<Translations> = {
   "runReason.dbimportFailed": "het importgereedschap meldde een fout",
   "runReason.dbimportKeptOld": "de vorige gegevensmap is bewaard",
   "runReason.dbimportErrors": "het importeren eindigde met fouten",
+  "runReason.dbimportAppsDown": "deze apps konden niet opnieuw starten: {apps}",
+  "runReason.dbimportAppsStopped": "deze apps blijven gestopt tot de datamap is uitgezocht: {apps}",
   "dbdump.toggle": "Databasedump voor elke back-up",
   "dbdump.toggleHint": "BombVault heeft deze container herkend als een {engine}-database. Voor elke back-up vraagt het de draaiende server om een volledige SQL-dump en legt die als eigen herstelpunt weg, rechtstreeks in de back-upopslag, zonder een bestand op je schijven te schrijven. Een herstel gebruikt de bestandsback-up die na het stoppen van de container is gemaakt; de dump is een tweede kopie die je kunt downloaden of importeren. Een mislukte dump laat de back-up nooit mislukken, hij verschijnt als een eigen mislukte uitvoering.",
   "dbdump.toggleHintLabel": "Het containerlabel bombvault.dbdump zet de dump aan voor deze {engine}-database. Voor elke back-up vraagt BombVault de draaiende server om een volledige SQL-dump en legt die als eigen herstelpunt weg. Een mislukte dump laat de back-up nooit mislukken, hij verschijnt als een eigen mislukte uitvoering.",
