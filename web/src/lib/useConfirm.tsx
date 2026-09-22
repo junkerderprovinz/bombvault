@@ -69,6 +69,10 @@ export interface ConfirmOptions {
   cancelLabel?: string;
   /** Lines or switches the answer needs, shown under the question. */
   extra?: ReactNode;
+  /** The confirm button stays locked until exactly this has been typed. */
+  requireText?: string;
+  /** Label of the field requireText is typed into. */
+  requirePrompt?: string;
 }
 
 interface PendingConfirm extends ConfirmOptions {
@@ -88,6 +92,7 @@ function focusableElements(root: HTMLElement): HTMLElement[] {
 export function useConfirm() {
   const { t } = useT();
   const [pending, setPending] = useState<PendingConfirm | null>(null);
+  const [typed, setTyped] = useState("");
   const resolveRef = useRef<((value: boolean) => void) | null>(null);
   // The dialog card's DOM node (for the Tab trap) and whatever had focus the
   // moment confirm() was called (to restore it once the dialog closes).
@@ -100,6 +105,7 @@ export function useConfirm() {
     // already be the dialog, not the button that opened it.
     const active = document.activeElement;
     triggerRef.current = active instanceof HTMLElement && active !== document.body ? active : null;
+    setTyped("");
     return new Promise<boolean>((resolve) => {
       resolveRef.current = resolve;
       setPending({ message, ...options });
@@ -121,6 +127,29 @@ export function useConfirm() {
   const cancel = useCallback(() => settle(false), [settle]);
   useDialogKeys(pending !== null, dialogRef, cancel);
 
+  // Locked while a required text is still unmatched; undefined for every
+  // caller that never asked for one, so the ordinary dialog stays unaffected.
+  const locked = pending?.requireText !== undefined && typed !== pending.requireText;
+  const extra =
+    pending?.requireText === undefined ? (
+      pending?.extra
+    ) : (
+      <>
+        {pending.extra}
+        <label className="mt-3 flex flex-col gap-1 text-xs text-carbon-textSub">
+          {pending.requirePrompt}
+          <input
+            type="text"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            autoComplete="off"
+            spellCheck={false}
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
+          />
+        </label>
+      </>
+    );
+
   // Portal-rendered to <body> (InfoBubble.tsx's fix for the same problem):
   // any ancestor of the call site with a CSS transform (e.g. .glim-page-enter)
   // creates a new containing block, so a `position: fixed` backdrop nested
@@ -135,7 +164,8 @@ export function useConfirm() {
           confirmLabelKey={pending.confirmLabelKey}
           cancelLabel={pending.cancelLabel ?? t("common.cancel")}
           closeLabel={t("common.close")}
-          extra={pending.extra}
+          extra={extra}
+          confirmDisabled={locked}
           onConfirm={() => settle(true)}
           onCancel={() => settle(false)}
         />,

@@ -78,6 +78,8 @@ export interface ConfirmDialogProps {
    *  question about an action already taken. Keep it to a switch or two; a
    *  dialog with a form in it is a page. */
   extra?: ReactNode;
+  /** Keeps the confirm button locked while the question still wants an answer. */
+  confirmDisabled?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
   /** The dialog card's root DOM node, for useConfirm.tsx's focus trap. */
@@ -92,6 +94,7 @@ export function ConfirmDialog({
   closeLabel,
   confirmGlyph,
   extra,
+  confirmDisabled,
   onConfirm,
   onCancel,
   ref,
@@ -191,6 +194,7 @@ export function ConfirmDialog({
             labelKey={confirmLabelKey ?? null}
             glyph={confirmGlyph}
             tone="neutral"
+            disabled={confirmDisabled}
             onClick={onConfirm}
           />
         </div>
