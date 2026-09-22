@@ -17,6 +17,7 @@ import { RcloneCard } from "./settings/RcloneCard";
 import { CloudCard } from "./settings/CloudCard";
 import { NumberField } from "../components/NumberField";
 import { OffsiteWizard } from "../components/OffsiteWizard";
+import { OffsiteLocationInput } from "../components/placement/OffsiteLocationInput";
 import { PathModeSwitch } from "../components/PathModeSwitch";
 import {
   CONTROL_AXES,
@@ -3996,6 +3997,7 @@ export function SettingsPage() {
         // aufnehmen") — not four independent nextHue() calls, which would
         // desync a domain's own action buttons from its own Card's colour.
         const hueIdx = nextHue();
+        const fieldTarget = allTargets.find((x) => x.domain === domain && x.sortOrder === 0);
         return (
         <Card key={repoKey} title={t("offsite.copyDomainTitle").replace("{domain}", t(label))} hueIndex={hueIdx}>
           {/* GlimStone follow-up pass: the one genuine toss-up in this pass —
@@ -4063,23 +4065,14 @@ export function SettingsPage() {
               />
             ) : (
               <>
-                <input
+                <OffsiteLocationInput
+                  domain={domain}
                   value={settings[repoKey]}
-                  spellCheck={false}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setSettings((prev) => (prev ? { ...prev, [repoKey]: v } : prev));
-                    // Full-page Speichern-Button sweep: this Card's own bottom
-                    // SaveBar is gone — each repo URL debounce-auto-saves
-                    // itself, keyed by its own field name (the off-site
-                    // *cadences* stay owned by the Schedules tab, unaffected).
-                    debouncedSave(repoKey, () =>
-                      void save({ [repoKey]: v } as Partial<Settings>, setOffsiteSaveState, setOffsiteSaveError)
-                    );
-                  }}
+                  targetId={fieldTarget?.id}
+                  targetName={fieldTarget?.name}
                   placeholder="rest:http://host:8000/repo"
-                  dir="ltr"
                   className="rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono glim-field-focus text-start"
+                  onSave={(v) => save({ [repoKey]: v } as Partial<Settings>, setOffsiteSaveState, setOffsiteSaveError)}
                 />
                 {/* A mounted share is a perfectly valid off-site target, but the
                     placeholder only ever showed a REST URL — so nothing told the
