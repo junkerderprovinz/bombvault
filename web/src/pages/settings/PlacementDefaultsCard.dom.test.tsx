@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import type { DefaultRow } from "../../lib/api";
 import {
   defaultImpact,
@@ -23,6 +23,7 @@ vi.mock("../../lib/api", async (importOriginal) => ({
 }));
 
 const { PlacementDefaultsCard } = await import("./PlacementDefaultsCard");
+const { placementChanged } = await import("../../lib/placementEvents");
 
 function withContainers(over: Partial<DefaultRow>) {
   fake.reply("listPlacementDefaults", {
@@ -204,6 +205,14 @@ describe("PlacementDefaultsCard", () => {
         "Cold is switched off. Items without a location are not backed up until it is on again or the default changes."
       )
     ).toBeTruthy();
+  });
+
+  it("says so when the list cannot be read again, and keeps the rows it has", async () => {
+    const row = await containersRow();
+    fake.reply("listPlacementDefaults", { ok: false, error: "database is locked" });
+    act(() => placementChanged());
+    expect(await screen.findByText("Placement could not be read")).toBeTruthy();
+    expect(within(row).getByRole("toolbar", { name: "Placement" })).toBeTruthy();
   });
 
   it("shows only its sentence for a default that cannot be read", async () => {

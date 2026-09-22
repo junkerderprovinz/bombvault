@@ -381,7 +381,7 @@ export function PlacementDefaultsCard({ hueIndex }: { hueIndex?: number }) {
   return (
     <Card title={t("placementDefaults.title")} hint={t("placementDefaults.hint")} hueIndex={hueIndex}>
       <div className="flex flex-col gap-3">
-        {rows === null && error !== null && <p className="text-xs text-statusWarn">{t("placement.unreadable")}</p>}
+        {error !== null && <p className="text-xs text-statusWarn">{t("placement.unreadable")}</p>}
         {rows?.map((row, i) => (
           <DefaultLine key={row.domain} row={row} hueOffset={HUE_OFFSET.placement + 3 * i} />
         ))}
