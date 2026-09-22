@@ -1807,6 +1807,7 @@ const fa: Partial<Translations> = {
   "placement.stackNote": "پوشهٔ پروژهٔ {project}: در {home}، کپی‌شده به {targets} (از پیش‌فرض کانتینرها پیروی می‌کند)",
   "placement.stackNoteNoCopy": "پوشهٔ پروژهٔ {project}: در {home}، بدون کپی (از پیش‌فرض کانتینرها پیروی می‌کند)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

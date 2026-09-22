@@ -1788,6 +1788,7 @@ const ko: Partial<Translations> = {
   "placement.stackNote": "프로젝트 폴더 {project}: {home}에, {targets}에 복사됨 (컨테이너 기본값을 따름)",
   "placement.stackNoteNoCopy": "프로젝트 폴더 {project}: {home}에, 복사되지 않음 (컨테이너 기본값을 따름)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

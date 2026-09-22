@@ -1807,6 +1807,7 @@ const bg: Partial<Translations> = {
   "placement.stackNote": "Папка на проекта {project}: на {home}, копирано в {targets} (следва подразбирането за контейнерите)",
   "placement.stackNoteNoCopy": "Папка на проекта {project}: на {home}, без копиране (следва подразбирането за контейнерите)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

@@ -1796,6 +1796,7 @@ const el: Partial<Translations> = {
   "placement.stackNote": "Φάκελος έργου {project}: στο {home}, αντιγράφηκε στο {targets} (ακολουθεί την προεπιλογή των Containers)",
   "placement.stackNoteNoCopy": "Φάκελος έργου {project}: στο {home}, χωρίς αντιγραφή (ακολουθεί την προεπιλογή των Containers)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

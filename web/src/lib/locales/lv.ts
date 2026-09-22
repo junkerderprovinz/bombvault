@@ -1807,6 +1807,7 @@ const lv: Partial<Translations> = {
   "placement.stackNote": "Projekta mape {project}: vietā {home}, kopēts uz {targets} (seko konteineru noklusējumam)",
   "placement.stackNoteNoCopy": "Projekta mape {project}: vietā {home}, nekopēts (seko konteineru noklusējumam)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

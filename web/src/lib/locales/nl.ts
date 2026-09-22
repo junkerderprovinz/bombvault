@@ -1793,6 +1793,7 @@ const nl: Partial<Translations> = {
   "placement.stackNote": "Projectmap {project}: op {home}, gekopieerd naar {targets} (volgt de standaard van de containers)",
   "placement.stackNoteNoCopy": "Projectmap {project}: op {home}, niet gekopieerd (volgt de standaard van de containers)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

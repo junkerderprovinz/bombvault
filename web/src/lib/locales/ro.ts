@@ -1799,6 +1799,7 @@ const ro: Partial<Translations> = {
   "placement.stackNote": "Folder de proiect {project}: pe {home}, copiat pe {targets} (urmează valoarea implicită a containerelor)",
   "placement.stackNoteNoCopy": "Folder de proiect {project}: pe {home}, necopiat (urmează valoarea implicită a containerelor)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

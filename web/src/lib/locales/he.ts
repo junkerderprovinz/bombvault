@@ -1796,6 +1796,7 @@ const he: Partial<Translations> = {
   "placement.stackNote": "תיקיית פרויקט {project}: ב-{home}, הועתק אל {targets} (עוקב אחרי ברירת המחדל של המכולות)",
   "placement.stackNoteNoCopy": "תיקיית פרויקט {project}: ב-{home}, לא הועתק (עוקב אחרי ברירת המחדל של המכולות)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

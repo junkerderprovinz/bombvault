@@ -1799,6 +1799,7 @@ const ar: Partial<Translations> = {
   "placement.stackNote": "مجلد المشروع {project}: على {home}، نُسخ إلى {targets} (يتبع افتراضي Containers)",
   "placement.stackNoteNoCopy": "مجلد المشروع {project}: على {home}، دون نسخ (يتبع افتراضي Containers)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

@@ -1807,6 +1807,7 @@ const lt: Partial<Translations> = {
   "placement.stackNote": "Projekto aplankas {project}: vietoje {home}, nukopijuota į {targets} (seka konteinerių numatytąją)",
   "placement.stackNoteNoCopy": "Projekto aplankas {project}: vietoje {home}, nekopijuota (seka konteinerių numatytąją)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

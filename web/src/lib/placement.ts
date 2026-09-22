@@ -402,12 +402,11 @@ function placeLine(t: T, lang: string, p: ObservedPlace): StatusLine {
       };
     case "old-copy":
       return {
-        text:
-          p.latest > 0
-            ? at("placement.oldCopy").replace("{date}", () => new Date(p.latest * 1000).toLocaleDateString(lang))
-            : p.label,
+        text: at("placement.oldCopy").replace("{date}", () => new Date(p.latest * 1000).toLocaleDateString(lang)),
         tone: "muted",
       };
+    case "no-copy":
+      return { text: at("placement.noCopyYet"), tone: "muted" };
     case "off":
       return { text: t("placement.off").replace("{name}", () => p.label), tone: "muted" };
   }

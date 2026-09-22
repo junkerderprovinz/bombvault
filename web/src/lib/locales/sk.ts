@@ -1807,6 +1807,7 @@ const sk: Partial<Translations> = {
   "placement.stackNote": "Priečinok projektu {project}: na {home}, skopírované do {targets} (riadi sa predvoleným nastavením kontajnerov)",
   "placement.stackNoteNoCopy": "Priečinok projektu {project}: na {home}, nekopírované (riadi sa predvoleným nastavením kontajnerov)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

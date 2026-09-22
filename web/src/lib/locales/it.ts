@@ -1796,6 +1796,7 @@ const it: Partial<Translations> = {
   "placement.stackNote": "Cartella di progetto {project}: su {home}, copiato su {targets} (segue il valore predefinito dei container)",
   "placement.stackNoteNoCopy": "Cartella di progetto {project}: su {home}, non copiato (segue il valore predefinito dei container)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

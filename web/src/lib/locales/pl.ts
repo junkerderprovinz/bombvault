@@ -1791,6 +1791,7 @@ const pl: Partial<Translations> = {
   "placement.stackNote": "Folder projektu {project}: na {home}, skopiowano do {targets} (podąża za domyślnym ustawieniem kontenerów)",
   "placement.stackNoteNoCopy": "Folder projektu {project}: na {home}, nie skopiowano (podąża za domyślnym ustawieniem kontenerów)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

@@ -1807,6 +1807,7 @@ const hr: Partial<Translations> = {
   "placement.stackNote": "Mapa projekta {project}: na {home}, kopirano u {targets} (slijedi zadano za kontejnere)",
   "placement.stackNoteNoCopy": "Mapa projekta {project}: na {home}, nije kopirano (slijedi zadano za kontejnere)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

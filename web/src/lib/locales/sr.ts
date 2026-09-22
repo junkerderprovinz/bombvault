@@ -1791,6 +1791,7 @@ const sr: Partial<Translations> = {
   "placement.stackNote": "Фасцикла пројекта {project}: на {home}, копирано на {targets} (прати подразумевано за контејнере)",
   "placement.stackNoteNoCopy": "Фасцикла пројекта {project}: на {home}, није копирано (прати подразумевано за контејнере)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

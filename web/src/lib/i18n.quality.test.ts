@@ -78,6 +78,7 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   "offsiteRemoval.done",
   "offsiteRemoval.appendOnly",
   "placement.older",
+  "placement.noCopyYet",
   "repos.offPremises",
   "repos.offPremisesHint",
 ]);

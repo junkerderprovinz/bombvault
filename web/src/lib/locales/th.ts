@@ -1799,6 +1799,7 @@ const th: Partial<Translations> = {
   "placement.stackNote": "โฟลเดอร์โปรเจกต์ {project}: ที่ {home} คัดลอกไปยัง {targets} (เป็นไปตามค่าเริ่มต้นของคอนเทนเนอร์)",
   "placement.stackNoteNoCopy": "โฟลเดอร์โปรเจกต์ {project}: ที่ {home} ไม่ได้คัดลอก (เป็นไปตามค่าเริ่มต้นของคอนเทนเนอร์)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

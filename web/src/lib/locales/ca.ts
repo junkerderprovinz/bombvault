@@ -1807,6 +1807,7 @@ const ca: Partial<Translations> = {
   "placement.stackNote": "Carpeta de projecte {project}: a {home}, copiat a {targets} (segueix el valor per defecte dels contenidors)",
   "placement.stackNoteNoCopy": "Carpeta de projecte {project}: a {home}, sense copiar (segueix el valor per defecte dels contenidors)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
