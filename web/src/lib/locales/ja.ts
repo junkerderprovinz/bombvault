@@ -1706,6 +1706,16 @@ const ja: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "場所がコピー元になっている項目:",
   "placementDefaults.copyLineContainers": "プロジェクトフォルダーと、場所がコピー元になっている項目:",
+
+  // New target
+  "newTarget.intro": "初回実行時、{target} はローカルに設定されていないすべての項目を受け取ります。",
+  "newTarget.moved": "{target} の新しい保存先は履歴全体を受け取ります。",
+  "newTarget.items": "項目とプロジェクトフォルダー: {n}",
+  "newTarget.snapshots": "スナップショット: 最大{n}",
+  "newTarget.size": "サイズ: 最大{size}",
+  "newTarget.formerly": "これまで他の送信先で除外: {list}",
+  "newTarget.excludeHere": "ここでも除外する",
+  "newTarget.excludeDefault": "{target} を既定値でも除外する",
 };
 
 export default ja;

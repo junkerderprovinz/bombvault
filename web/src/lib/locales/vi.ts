@@ -1706,6 +1706,16 @@ const vi: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Các mục có vị trí là nguồn sao chép:",
   "placementDefaults.copyLineContainers": "Thư mục dự án và các mục có vị trí là nguồn sao chép:",
+
+  // New target
+  "newTarget.intro": "Ở lần chạy đầu tiên, {target} nhận mọi mục không được đặt thành Cục bộ.",
+  "newTarget.moved": "Vị trí mới của {target} nhận toàn bộ lịch sử.",
+  "newTarget.items": "Các mục và thư mục dự án: {n}",
+  "newTarget.snapshots": "Snapshot: tối đa {n}",
+  "newTarget.size": "Kích thước: tối đa {size}",
+  "newTarget.formerly": "Đã bị loại trừ ở các đích khác cho đến nay: {list}",
+  "newTarget.excludeHere": "Loại trừ ở đây luôn",
+  "newTarget.excludeDefault": "Loại trừ {target} khỏi mặc định luôn",
 };
 
 export default vi;

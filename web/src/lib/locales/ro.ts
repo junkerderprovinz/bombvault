@@ -1717,6 +1717,16 @@ const ro: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Elemente a căror locație este o sursă de copiere:",
   "placementDefaults.copyLineContainers": "Foldere de proiect și elemente a căror locație este o sursă de copiere:",
+
+  // New target
+  "newTarget.intro": "La prima rulare, {target} primește fiecare element care nu este setat pe Local.",
+  "newTarget.moved": "Noua locație a {target} primește întregul istoric.",
+  "newTarget.items": "Elemente și foldere de proiect: {n}",
+  "newTarget.snapshots": "Instantanee: până la {n}",
+  "newTarget.size": "Dimensiune: până la {size}",
+  "newTarget.formerly": "Exclus până acum la alte ținte: {list}",
+  "newTarget.excludeHere": "Exclude și aici",
+  "newTarget.excludeDefault": "Exclude {target} și din valoarea implicită",
 };
 
 export default ro;

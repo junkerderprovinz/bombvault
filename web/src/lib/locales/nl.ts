@@ -1711,6 +1711,16 @@ const nl: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Items waarvan de locatie een kopiebron is:",
   "placementDefaults.copyLineContainers": "Projectmappen en items waarvan de locatie een kopiebron is:",
+
+  // New target
+  "newTarget.intro": "Bij zijn eerste back-up ontvangt {target} elk item dat niet op Lokaal staat.",
+  "newTarget.moved": "De nieuwe locatie van {target} ontvangt de volledige geschiedenis.",
+  "newTarget.items": "Items en projectmappen: {n}",
+  "newTarget.snapshots": "Snapshots: tot {n}",
+  "newTarget.size": "Grootte: tot {size}",
+  "newTarget.formerly": "Tot nu toe uitgesloten bij andere bestemmingen: {list}",
+  "newTarget.excludeHere": "Ook hier uitsluiten",
+  "newTarget.excludeDefault": "{target} ook van de standaard uitsluiten",
 };
 
 export default nl;

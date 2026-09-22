@@ -1725,6 +1725,16 @@ const lv: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Vienumi, kuru atrašanās vieta ir kopēšanas avots:",
   "placementDefaults.copyLineContainers": "Projekta mapes un vienumi, kuru atrašanās vieta ir kopēšanas avots:",
+
+  // New target
+  "newTarget.intro": "Pirmajā palaišanas reizē {target} saņem katru vienumu, kas nav iestatīts uz Vietējs.",
+  "newTarget.moved": "Jaunā {target} vieta saņem visu vēsturi.",
+  "newTarget.items": "Vienumi un projekta mapes: {n}",
+  "newTarget.snapshots": "Momentuzņēmumi: līdz {n}",
+  "newTarget.size": "Izmērs: līdz {size}",
+  "newTarget.formerly": "Līdz šim izslēgts citos mērķos: {list}",
+  "newTarget.excludeHere": "Izslēgt arī šeit",
+  "newTarget.excludeDefault": "Izslēgt {target} arī no noklusējuma vērtības",
 };
 
 export default lv;

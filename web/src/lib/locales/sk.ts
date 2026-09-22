@@ -1725,6 +1725,16 @@ const sk: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Položky, ktorých umiestnenie je zdrojom kópií:",
   "placementDefaults.copyLineContainers": "Priečinky projektu a položky, ktorých umiestnenie je zdrojom kópií:",
+
+  // New target
+  "newTarget.intro": "Pri prvom behu dostane {target} každú položku, ktorá nie je nastavená na Lokálny.",
+  "newTarget.moved": "Nové umiestnenie {target} dostane celú históriu.",
+  "newTarget.items": "Položky a priečinky projektu: {n}",
+  "newTarget.snapshots": "Snímky: až {n}",
+  "newTarget.size": "Veľkosť: až {size}",
+  "newTarget.formerly": "Doteraz vylúčené pri iných cieľoch: {list}",
+  "newTarget.excludeHere": "Vylúčiť aj tu",
+  "newTarget.excludeDefault": "Vylúčiť {target} aj z predvolenej hodnoty",
 };
 
 export default sk;

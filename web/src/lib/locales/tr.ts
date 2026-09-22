@@ -1714,6 +1714,16 @@ const tr: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Konumu kopya kaynağı olan ögeler:",
   "placementDefaults.copyLineContainers": "Proje klasörleri ve konumu kopya kaynağı olan ögeler:",
+
+  // New target
+  "newTarget.intro": "İlk çalıştırmasında {target}, Yerel olarak ayarlanmamış her ögeyi alır.",
+  "newTarget.moved": "{target} için yeni konum tüm geçmişi alır.",
+  "newTarget.items": "Ögeler ve proje klasörleri: {n}",
+  "newTarget.snapshots": "Anlık görüntüler: en fazla {n}",
+  "newTarget.size": "Boyut: en fazla {size}",
+  "newTarget.formerly": "Şimdiye kadar diğer hedeflerde hariç tutuldu: {list}",
+  "newTarget.excludeHere": "Burada da hariç tut",
+  "newTarget.excludeDefault": "{target} varsayılandan da hariç tut",
 };
 
 export default tr;

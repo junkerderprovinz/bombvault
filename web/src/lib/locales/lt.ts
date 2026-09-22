@@ -1725,6 +1725,16 @@ const lt: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Elementai, kurių vieta yra kopijavimo šaltinis:",
   "placementDefaults.copyLineContainers": "Projekto aplankai ir elementai, kurių vieta yra kopijavimo šaltinis:",
+
+  // New target
+  "newTarget.intro": "Pirmojo paleidimo metu {target} gauna kiekvieną elementą, kuris nenustatytas į Vietinis.",
+  "newTarget.moved": "Nauja {target} vieta gauna visą istoriją.",
+  "newTarget.items": "Elementai ir projekto aplankai: {n}",
+  "newTarget.snapshots": "Momentinės kopijos: iki {n}",
+  "newTarget.size": "Dydis: iki {size}",
+  "newTarget.formerly": "Iki šiol išskirta kituose tiksluose: {list}",
+  "newTarget.excludeHere": "Išskirti ir čia",
+  "newTarget.excludeDefault": "Išskirti {target} ir iš numatytosios reikšmės",
 };
 
 export default lt;

@@ -1725,6 +1725,16 @@ const eu: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Beren kokapena kopia-iturri duten elementuak:",
   "placementDefaults.copyLineContainers": "Proiektu-karpetak eta beren kokapena kopia-iturri duten elementuak:",
+
+  // New target
+  "newTarget.intro": "Lehen aldiz exekutatzean, {target}(e)k Lokala ez duen elementu oro jasotzen du.",
+  "newTarget.moved": "{target}(r)en kokapen berriak historia osoa jasotzen du.",
+  "newTarget.items": "Elementuak eta proiektu-karpetak: {n}",
+  "newTarget.snapshots": "Argazkiak: gehienez {n}",
+  "newTarget.size": "Tamaina: gehienez {size}",
+  "newTarget.formerly": "Orain arte beste helburu batzuetan baztertuta: {list}",
+  "newTarget.excludeHere": "Baztertu hemen ere",
+  "newTarget.excludeDefault": "Baztertu {target} lehenetsitik ere",
 };
 
 export default eu;

@@ -1714,6 +1714,16 @@ const sv: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Objekt vars plats är en kopieringskälla:",
   "placementDefaults.copyLineContainers": "Projektmappar och objekt vars plats är en kopieringskälla:",
+
+  // New target
+  "newTarget.intro": "Vid sin första körning tar {target} emot varje objekt som inte är satt till Lokal.",
+  "newTarget.moved": "Den nya platsen för {target} tar emot hela historiken.",
+  "newTarget.items": "Objekt och projektmappar: {n}",
+  "newTarget.snapshots": "Ögonblicksbilder: upp till {n}",
+  "newTarget.size": "Storlek: upp till {size}",
+  "newTarget.formerly": "Hittills uteslutet hos andra mål: {list}",
+  "newTarget.excludeHere": "Uteslut även här",
+  "newTarget.excludeDefault": "Uteslut även {target} från standarden",
 };
 
 export default sv;

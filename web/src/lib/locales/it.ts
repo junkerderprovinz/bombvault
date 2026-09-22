@@ -1714,6 +1714,16 @@ const it: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Elementi la cui posizione è un'origine di copia:",
   "placementDefaults.copyLineContainers": "Cartelle di progetto ed elementi la cui posizione è un'origine di copia:",
+
+  // New target
+  "newTarget.intro": "Alla sua prima esecuzione, {target} riceve ogni elemento non impostato su Locale.",
+  "newTarget.moved": "La nuova posizione di {target} riceve l'intera cronologia.",
+  "newTarget.items": "Elementi e cartelle di progetto: {n}",
+  "newTarget.snapshots": "Snapshot: fino a {n}",
+  "newTarget.size": "Dimensione: fino a {size}",
+  "newTarget.formerly": "Finora escluso da altre destinazioni: {list}",
+  "newTarget.excludeHere": "Escludi anche qui",
+  "newTarget.excludeDefault": "Escludi anche {target} dal valore predefinito",
 };
 
 export default it;

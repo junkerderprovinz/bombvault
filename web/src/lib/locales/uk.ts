@@ -1709,6 +1709,16 @@ const uk: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Елементи, чиє розташування є джерелом копій:",
   "placementDefaults.copyLineContainers": "Папки проєктів і елементи, чиє розташування є джерелом копій:",
+
+  // New target
+  "newTarget.intro": "При першому запуску {target} отримує кожен елемент, що не встановлений на Локально.",
+  "newTarget.moved": "Нове розташування {target} отримує всю історію.",
+  "newTarget.items": "Елементи та папки проєктів: {n}",
+  "newTarget.snapshots": "Знімки: до {n}",
+  "newTarget.size": "Розмір: до {size}",
+  "newTarget.formerly": "Дотепер виключено в інших цілях: {list}",
+  "newTarget.excludeHere": "Виключити і тут",
+  "newTarget.excludeDefault": "Виключити {target} і з типового значення",
 };
 
 export default uk;

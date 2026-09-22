@@ -1823,6 +1823,16 @@ export const en = {
   "placementDefaults.copyLine": "Items whose location is a copy source:",
   "placementDefaults.copyLineContainers": "Project folders and items whose location is a copy source:",
 
+  // New target
+  "newTarget.intro": "At its first run {target} receives every item not set to Local.",
+  "newTarget.moved": "The new location of {target} receives the whole history.",
+  "newTarget.items": "Items and project folders: {n}",
+  "newTarget.snapshots": "Snapshots: up to {n}",
+  "newTarget.size": "Size: up to {size}",
+  "newTarget.formerly": "Left out of other targets so far: {list}",
+  "newTarget.excludeHere": "Leave these out here too",
+  "newTarget.excludeDefault": "Leave {target} out of the default too",
+
   "files.excludesCount": "Excludes: {n}",
   "files.enabled": "Include in schedule",
   "files.effectiveLabel": "Result",
@@ -3609,6 +3619,16 @@ export const de: Translations = {
   // Defaults
   "placementDefaults.copyLine": "Einträge, deren Ort Kopierquelle ist:",
   "placementDefaults.copyLineContainers": "Projektordner und Einträge, deren Ort Kopierquelle ist:",
+
+  // New target
+  "newTarget.intro": "Beim ersten Lauf bekommt {target} jeden Eintrag, der nicht auf Lokal steht.",
+  "newTarget.moved": "Der neue Ort von {target} bekommt den ganzen Verlauf.",
+  "newTarget.items": "Einträge und Projektordner: {n}",
+  "newTarget.snapshots": "Snapshots: bis zu {n}",
+  "newTarget.size": "Größe: bis zu {size}",
+  "newTarget.formerly": "Bisher bei anderen Zielen ausgenommen: {list}",
+  "newTarget.excludeHere": "Auch hier ausnehmen",
+  "newTarget.excludeDefault": "{target} auch in der Vorgabe ausnehmen",
 
   "files.excludesCount": "Ausschlüsse: {n}",
   "files.enabled": "Im Zeitplan einschließen",

@@ -1712,6 +1712,16 @@ const cs: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Položky, jejichž umístění je zdrojem kopií:",
   "placementDefaults.copyLineContainers": "Složky projektu a položky, jejichž umístění je zdrojem kopií:",
+
+  // New target
+  "newTarget.intro": "Při prvním běhu dostane {target} každou položku, která není nastavena na Místní.",
+  "newTarget.moved": "Nové umístění {target} dostane celou historii.",
+  "newTarget.items": "Položky a projektové složky: {n}",
+  "newTarget.snapshots": "Snímky: až {n}",
+  "newTarget.size": "Velikost: až {size}",
+  "newTarget.formerly": "Dosud vyloučeno u jiných cílů: {list}",
+  "newTarget.excludeHere": "Vyloučit i tady",
+  "newTarget.excludeDefault": "Vyloučit {target} i z výchozí hodnoty",
 };
 
 export default cs;

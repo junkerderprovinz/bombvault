@@ -1714,6 +1714,16 @@ const el: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Στοιχεία των οποίων η θέση είναι πηγή αντιγράφων:",
   "placementDefaults.copyLineContainers": "Φάκελοι έργων και στοιχεία των οποίων η θέση είναι πηγή αντιγράφων:",
+
+  // New target
+  "newTarget.intro": "Στην πρώτη του εκτέλεση, το {target} λαμβάνει κάθε στοιχείο που δεν έχει οριστεί σε Τοπικό.",
+  "newTarget.moved": "Η νέα τοποθεσία του {target} λαμβάνει όλο το ιστορικό.",
+  "newTarget.items": "Στοιχεία και φάκελοι έργων: {n}",
+  "newTarget.snapshots": "Στιγμιότυπα: έως {n}",
+  "newTarget.size": "Μέγεθος: έως {size}",
+  "newTarget.formerly": "Μέχρι τώρα εξαιρέθηκε από άλλους προορισμούς: {list}",
+  "newTarget.excludeHere": "Εξαίρεση και εδώ",
+  "newTarget.excludeDefault": "Εξαίρεση του {target} και από την προεπιλογή",
 };
 
 export default el;

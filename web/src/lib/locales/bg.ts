@@ -1725,6 +1725,16 @@ const bg: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Елементи, чието място е източник на копия:",
   "placementDefaults.copyLineContainers": "Папки на проекти и елементи, чието място е източник на копия:",
+
+  // New target
+  "newTarget.intro": "При първото си изпълнение {target} получава всеки елемент, който не е зададен на Локално.",
+  "newTarget.moved": "Новото място на {target} получава цялата история.",
+  "newTarget.items": "Елементи и папки на проекти: {n}",
+  "newTarget.snapshots": "Снапшоти: до {n}",
+  "newTarget.size": "Размер: до {size}",
+  "newTarget.formerly": "Досега изключено при други цели: {list}",
+  "newTarget.excludeHere": "Изключи и тук",
+  "newTarget.excludeDefault": "Изключи {target} и от подразбирането",
 };
 
 export default bg;

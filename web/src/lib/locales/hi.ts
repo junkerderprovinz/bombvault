@@ -1725,6 +1725,16 @@ const hi: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "वे प्रविष्टियाँ जिनकी जगह कॉपी का स्रोत है:",
   "placementDefaults.copyLineContainers": "प्रोजेक्ट फ़ोल्डर और वे प्रविष्टियाँ जिनकी जगह कॉपी का स्रोत है:",
+
+  // New target
+  "newTarget.intro": "पहली बार चलने पर {target} हर वह प्रविष्टि पाता है, जो लोकल पर सेट नहीं है।",
+  "newTarget.moved": "{target} की नई जगह पूरा इतिहास पाती है।",
+  "newTarget.items": "प्रविष्टियाँ और प्रोजेक्ट फ़ोल्डर: {n}",
+  "newTarget.snapshots": "स्नैपशॉट: अधिकतम {n}",
+  "newTarget.size": "आकार: अधिकतम {size}",
+  "newTarget.formerly": "अब तक अन्य लक्ष्यों में एक्सक्लूड: {list}",
+  "newTarget.excludeHere": "यहाँ भी एक्सक्लूड करें",
+  "newTarget.excludeDefault": "{target} को डिफ़ॉल्ट में भी एक्सक्लूड करें",
 };
 
 export default hi;

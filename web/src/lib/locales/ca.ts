@@ -1725,6 +1725,16 @@ const ca: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Elements l'ubicació dels quals és origen de còpia:",
   "placementDefaults.copyLineContainers": "Carpetes de projecte i elements l'ubicació dels quals és origen de còpia:",
+
+  // New target
+  "newTarget.intro": "En la seva primera execució, {target} rep tots els elements que no estan establerts a Local.",
+  "newTarget.moved": "La nova ubicació de {target} rep tot l'historial.",
+  "newTarget.items": "Elements i carpetes de projecte: {n}",
+  "newTarget.snapshots": "Instantànies: fins a {n}",
+  "newTarget.size": "Mida: fins a {size}",
+  "newTarget.formerly": "Exclòs fins ara d'altres destins: {list}",
+  "newTarget.excludeHere": "Exclou-ho també aquí",
+  "newTarget.excludeDefault": "Exclou {target} també del valor predeterminat",
 };
 
 export default ca;

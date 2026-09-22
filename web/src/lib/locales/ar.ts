@@ -1717,6 +1717,16 @@ const ar: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "العناصر التي يكون موقعها مصدر نسخ:",
   "placementDefaults.copyLineContainers": "مجلدات المشروع والعناصر التي يكون موقعها مصدر نسخ:",
+
+  // New target
+  "newTarget.intro": "عند أول تشغيل يحصل {target} على كل عنصر غير معيَّن على محلي.",
+  "newTarget.moved": "الموقع الجديد لـ {target} يحصل على كامل السجل.",
+  "newTarget.items": "العناصر ومجلدات المشروع: {n}",
+  "newTarget.snapshots": "اللقطات: حتى {n}",
+  "newTarget.size": "الحجم: حتى {size}",
+  "newTarget.formerly": "مُستبعد من أهداف أخرى حتى الآن: {list}",
+  "newTarget.excludeHere": "استبعادها هنا أيضًا",
+  "newTarget.excludeDefault": "استبعاد {target} من القيمة الافتراضية أيضًا",
 };
 
 export default ar;

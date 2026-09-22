@@ -1709,6 +1709,16 @@ const sl: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Elementi, katerih lokacija je vir kopij:",
   "placementDefaults.copyLineContainers": "Projektne mape in elementi, katerih lokacija je vir kopij:",
+
+  // New target
+  "newTarget.intro": "Ob prvem zagonu {target} prejme vsak element, ki ni nastavljen na Lokalno.",
+  "newTarget.moved": "Nova lokacija {target} prejme celotno zgodovino.",
+  "newTarget.items": "Elementi in projektne mape: {n}",
+  "newTarget.snapshots": "Posnetki: do {n}",
+  "newTarget.size": "Velikost: do {size}",
+  "newTarget.formerly": "Doslej izključeno pri drugih ciljih: {list}",
+  "newTarget.excludeHere": "Izključi tudi tukaj",
+  "newTarget.excludeDefault": "Izključi {target} tudi iz privzete vrednosti",
 };
 
 export default sl;

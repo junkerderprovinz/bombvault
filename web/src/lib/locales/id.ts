@@ -1725,6 +1725,16 @@ const id: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Item yang lokasinya adalah sumber salinan:",
   "placementDefaults.copyLineContainers": "Folder proyek dan item yang lokasinya adalah sumber salinan:",
+
+  // New target
+  "newTarget.intro": "Pada proses pertamanya, {target} menerima setiap item yang tidak diatur ke Lokal.",
+  "newTarget.moved": "Lokasi baru {target} menerima seluruh riwayat.",
+  "newTarget.items": "Item dan folder proyek: {n}",
+  "newTarget.snapshots": "Snapshot: hingga {n}",
+  "newTarget.size": "Ukuran: hingga {size}",
+  "newTarget.formerly": "Sejauh ini dikecualikan di target lain: {list}",
+  "newTarget.excludeHere": "Kecualikan di sini juga",
+  "newTarget.excludeDefault": "Kecualikan {target} dari bawaan juga",
 };
 
 export default id;

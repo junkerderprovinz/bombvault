@@ -1714,6 +1714,16 @@ const fr: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Éléments dont l'emplacement est une source de copie :",
   "placementDefaults.copyLineContainers": "Dossiers de projet et éléments dont l'emplacement est une source de copie :",
+
+  // New target
+  "newTarget.intro": "À sa première exécution, {target} reçoit tous les éléments qui ne sont pas réglés sur Local.",
+  "newTarget.moved": "Le nouvel emplacement de {target} reçoit tout l'historique.",
+  "newTarget.items": "Éléments et dossiers de projet : {n}",
+  "newTarget.snapshots": "Instantanés : jusqu'à {n}",
+  "newTarget.size": "Taille : jusqu'à {size}",
+  "newTarget.formerly": "Jusqu'ici exclu d'autres cibles : {list}",
+  "newTarget.excludeHere": "Exclure aussi ici",
+  "newTarget.excludeDefault": "Exclure aussi {target} de la valeur par défaut",
 };
 
 export default fr;

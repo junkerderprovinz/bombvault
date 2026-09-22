@@ -1725,6 +1725,16 @@ const hr: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Stavke čija je lokacija izvor kopije:",
   "placementDefaults.copyLineContainers": "Mape projekta i stavke čija je lokacija izvor kopije:",
+
+  // New target
+  "newTarget.intro": "Pri prvom pokretanju {target} prima svaku stavku koja nije postavljena na Lokalno.",
+  "newTarget.moved": "Nova lokacija za {target} prima cijelu povijest.",
+  "newTarget.items": "Stavke i mape projekta: {n}",
+  "newTarget.snapshots": "Snimke: do {n}",
+  "newTarget.size": "Veličina: do {size}",
+  "newTarget.formerly": "Dosad izuzeto kod drugih ciljeva: {list}",
+  "newTarget.excludeHere": "Izuzmi i ovdje",
+  "newTarget.excludeDefault": "Izuzmi i {target} iz zadanog",
 };
 
 export default hr;

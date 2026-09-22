@@ -1706,6 +1706,16 @@ const zh: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "位置为复制来源的项目：",
   "placementDefaults.copyLineContainers": "项目文件夹和位置为复制来源的项目：",
+
+  // New target
+  "newTarget.intro": "首次运行时，{target} 会接收每个未设为本地的项目。",
+  "newTarget.moved": "{target} 的新位置会接收全部历史记录。",
+  "newTarget.items": "项目和项目文件夹：{n}",
+  "newTarget.snapshots": "快照：最多 {n}",
+  "newTarget.size": "大小：最多 {size}",
+  "newTarget.formerly": "目前已在其他目标中排除：{list}",
+  "newTarget.excludeHere": "此处也排除",
+  "newTarget.excludeDefault": "也在默认设置中排除 {target}",
 };
 
 export default zh;

@@ -1709,6 +1709,16 @@ const ru: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Элементы, чьё расположение является источником копий:",
   "placementDefaults.copyLineContainers": "Папки проектов и элементы, чьё расположение является источником копий:",
+
+  // New target
+  "newTarget.intro": "При первом запуске {target} получает каждый элемент, не установленный на Локально.",
+  "newTarget.moved": "Новое расположение {target} получает всю историю.",
+  "newTarget.items": "Элементы и папки проектов: {n}",
+  "newTarget.snapshots": "Снимки: до {n}",
+  "newTarget.size": "Размер: до {size}",
+  "newTarget.formerly": "До сих пор исключено у других целей: {list}",
+  "newTarget.excludeHere": "Исключить и здесь",
+  "newTarget.excludeDefault": "Исключить {target} и из значения по умолчанию",
 };
 
 export default ru;

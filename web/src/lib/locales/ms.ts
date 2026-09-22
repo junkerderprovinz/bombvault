@@ -1725,6 +1725,16 @@ const ms: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Item yang lokasinya sumber salinan:",
   "placementDefaults.copyLineContainers": "Folder projek dan item yang lokasinya sumber salinan:",
+
+  // New target
+  "newTarget.intro": "Pada larian pertamanya, {target} menerima setiap item yang tidak ditetapkan kepada Setempat.",
+  "newTarget.moved": "Lokasi baharu {target} menerima seluruh sejarah.",
+  "newTarget.items": "Item dan folder projek: {n}",
+  "newTarget.snapshots": "Snapshot: sehingga {n}",
+  "newTarget.size": "Saiz: sehingga {size}",
+  "newTarget.formerly": "Setakat ini dikecualikan di sasaran lain: {list}",
+  "newTarget.excludeHere": "Kecualikan di sini juga",
+  "newTarget.excludeDefault": "Kecualikan {target} daripada lalai juga",
 };
 
 export default ms;
