@@ -51,10 +51,7 @@ export function OffsiteLocationInput({
       let alsoExclude: NewTargetExclusion | null = null;
       if (next !== "") {
         const answer = await ask({ domain, location: next, targetId, name: targetName || next, moved: value.trim() !== "" });
-        if (!answer.go) {
-          setDraft(value);
-          return;
-        }
+        if (!answer.go) return;
         alsoExclude = answer.alsoExclude;
       }
       if (!(await onSave(next)) || !alsoExclude || !isPlacementDomain(domain)) return;

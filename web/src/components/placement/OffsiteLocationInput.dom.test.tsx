@@ -61,6 +61,29 @@ describe("OffsiteLocationInput", () => {
     expect(screen.queryByRole("button")).toBeNull();
   });
 
+  it("keeps the typed location when the question is answered with no", async () => {
+    const onSave = vi.fn().mockResolvedValue(true);
+    renderWithProviders(
+      <OffsiteLocationInput
+        domain="containers"
+        value=""
+        targetId="t-b2"
+        targetName="B2"
+        placeholder={PLACEHOLDER}
+        className=""
+        onSave={onSave}
+      />
+    );
+    const field = screen.getByPlaceholderText(PLACEHOLDER);
+    fireEvent.change(field, { target: { value: "b2:bucket:containers" } });
+    fireEvent.keyDown(field, { key: "Enter" });
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(screen.getByPlaceholderText<HTMLInputElement>(PLACEHOLDER).value).toBe("b2:bucket:containers");
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
   it("leaves nothing out and keeps the typed location when the server refuses the save", async () => {
     fake.reply("getNewTargetPreview", { ok: true, preview: targetPreview({ defaultExcludes: true }) });
     const onSave = vi.fn().mockResolvedValue(false);
