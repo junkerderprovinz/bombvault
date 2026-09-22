@@ -1701,6 +1701,7 @@ const sv: Partial<Translations> = {
   "placement.uploadLine": "{target}: cirka {n}",
   "placement.uploadCost": "Uppladdningar kan kosta pengar hos leverantören.",
   "placement.uncheckable": "Kunde inte kontrolleras: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Direkt arkiv hos {target}",
   "directRepo.intro": "Objekt som väljer det säkerhetskopieras direkt till {target}, med dess nyckel, lagringsklass, gränser och append-only-inställning. Det behåller sina ögonblicksbilder enligt {target}s regler. Avbryt lämnar inget kvar.",

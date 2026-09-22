@@ -1696,6 +1696,7 @@ const sl: Partial<Translations> = {
   "placement.uploadLine": "{target}: približno {n}",
   "placement.uploadCost": "Nalaganje lahko pri ponudniku stane denar.",
   "placement.uncheckable": "Ni bilo mogoče preveriti: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Neposredni repozitorij pri {target}",
   "directRepo.intro": "Elementi, ki ga izberejo, se varnostno kopirajo neposredno v {target}, z njegovim ključem, razredom shrambe, omejitvami in nastavitvijo append-only. Svoje posnetke hrani po pravilih {target}. Preklic ne pusti ničesar za sabo.",

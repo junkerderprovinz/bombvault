@@ -1696,6 +1696,7 @@ const pl: Partial<Translations> = {
   "placement.uploadLine": "{target}: około {n}",
   "placement.uploadCost": "Przesyłanie może kosztować u dostawcy.",
   "placement.uncheckable": "Nie udało się sprawdzić: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Bezpośrednie repozytorium przy {target}",
   "directRepo.intro": "Elementy, które je wybiorą, są archiwizowane bezpośrednio do {target}, z jego kluczem, klasą pamięci, limitami i ustawieniem append-only. Zachowuje swoje migawki według zasad {target}. Anulowanie niczego nie zostawia.",

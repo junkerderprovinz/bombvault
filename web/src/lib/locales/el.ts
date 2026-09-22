@@ -1701,6 +1701,7 @@ const el: Partial<Translations> = {
   "placement.uploadLine": "{target}: περίπου {n}",
   "placement.uploadCost": "Οι μεταφορτώσεις μπορεί να κοστίσουν χρήματα στον πάροχο.",
   "placement.uncheckable": "Δεν ήταν δυνατός ο έλεγχος: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Άμεσο αποθετήριο στο {target}",
   "directRepo.intro": "Τα στοιχεία που το επιλέγουν αντιγράφονται απευθείας στο {target}, με το κλειδί, την κλάση αποθήκευσης, τα όρια και τη ρύθμιση append-only του. Κρατά τα στιγμιότυπά του σύμφωνα με τους κανόνες του {target}. Η ακύρωση δεν αφήνει τίποτα πίσω.",

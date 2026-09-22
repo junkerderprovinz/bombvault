@@ -1712,6 +1712,7 @@ const id: Partial<Translations> = {
   "placement.uploadLine": "{target}: sekitar {n}",
   "placement.uploadCost": "Unggahan bisa dikenai biaya di penyedia.",
   "placement.uncheckable": "Tidak dapat diperiksa: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Repositori langsung di {target}",
   "directRepo.intro": "Item yang memilihnya dicadangkan langsung ke {target}, dengan kunci, kelas penyimpanan, batas, dan pengaturan append-only miliknya. Snapshot-nya disimpan sesuai aturan {target}. Membatalkan tidak meninggalkan apa pun.",

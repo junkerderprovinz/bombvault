@@ -1701,6 +1701,7 @@ const no: Partial<Translations> = {
   "placement.uploadLine": "{target}: rundt {n}",
   "placement.uploadCost": "Opplasting kan koste penger hos leverandøren.",
   "placement.uncheckable": "Kunne ikke sjekkes: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Direkte depot hos {target}",
   "directRepo.intro": "Elementer som velger det, sikkerhetskopieres direkte til {target}, med nøkkelen, lagringsklassen, grensene og append-only-innstillingen. Det beholder øyeblikksbildene sine etter {target}s regler. Avbryt etterlater ingenting.",

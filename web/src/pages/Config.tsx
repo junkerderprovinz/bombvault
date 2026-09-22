@@ -15,6 +15,7 @@ import { ProgressBar } from "../components/ProgressBar";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
+import { PlacementFlow } from "../components/placement/PlacementFlow";
 import { ToggleRow } from "./settings/shared";
 import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
@@ -294,6 +295,7 @@ function ConfigSettingsCard({
           test, replicate-now, extra destinations and per-destination
           credentials. Only the enable toggle lives here now. */}
       <p className="text-xs text-carbon-textMuted">{t("config.offsiteMoved")}</p>
+      <PlacementFlow domain="config" />
 
     </div>
   );

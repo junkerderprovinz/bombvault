@@ -1712,6 +1712,7 @@ const lt: Partial<Translations> = {
   "placement.uploadLine": "{target}: apie {n}",
   "placement.uploadCost": "Įkėlimai gali kainuoti pas teikėją.",
   "placement.uncheckable": "Nepavyko patikrinti: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Tiesioginė saugykla prie {target}",
   "directRepo.intro": "Elementai, kurie ją pasirenka, atsargines kopijas daro tiesiai į {target}, naudodami jo raktą, saugyklos klasę, apribojimus ir append-only nustatymą. Ji saugo savo momentines kopijas pagal {target} taisykles. Atšaukimas nieko nepalieka.",

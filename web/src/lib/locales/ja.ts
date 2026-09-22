@@ -1693,6 +1693,7 @@ const ja: Partial<Translations> = {
   "placement.uploadLine": "{target}: 約{n}",
   "placement.uploadCost": "アップロードはプロバイダー側で料金がかかることがあります。",
   "placement.uncheckable": "チェックできませんでした: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "{target} のダイレクトリポジトリ",
   "directRepo.intro": "これを選んだ項目は {target} へ直接バックアップされ、そのキー、ストレージクラス、制限、append-only 設定を使います。スナップショットは {target} のルールで保持されます。キャンセルすれば何も残りません。",

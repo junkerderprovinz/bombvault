@@ -1696,6 +1696,7 @@ const uk: Partial<Translations> = {
   "placement.uploadLine": "{target}: близько {n}",
   "placement.uploadCost": "Завантаження можуть коштувати грошей у провайдера.",
   "placement.uncheckable": "Не вдалося перевірити: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Прямий репозиторій біля {target}",
   "directRepo.intro": "Елементи, які його оберуть, резервуються напряму в {target}, з його ключем, класом сховища, лімітами та налаштуванням append-only. Він зберігає свої знімки за правилами {target}. Скасування нічого не залишає.",

@@ -1696,6 +1696,7 @@ const ru: Partial<Translations> = {
   "placement.uploadLine": "{target}: около {n}",
   "placement.uploadCost": "Загрузки могут стоить денег у провайдера.",
   "placement.uncheckable": "Не удалось проверить: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Прямой репозиторий у {target}",
   "directRepo.intro": "Элементы, которые его выбирают, копируются напрямую в {target}, с его ключом, классом хранения, лимитами и настройкой append-only. Он хранит свои снимки по правилам {target}. Отмена не оставляет ничего.",

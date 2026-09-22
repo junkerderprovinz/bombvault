@@ -1712,6 +1712,7 @@ const ms: Partial<Translations> = {
   "placement.uploadLine": "{target}: kira-kira {n}",
   "placement.uploadCost": "Muat naik boleh dikenakan bayaran di penyedia.",
   "placement.uncheckable": "Tidak dapat disemak: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Repositori terus di {target}",
   "directRepo.intro": "Item yang memilihnya disandarkan terus ke {target}, dengan kunci, kelas storan, had dan tetapan append-only miliknya. Ia menyimpan snapshot mengikut peraturan {target}. Batal tidak meninggalkan apa-apa.",

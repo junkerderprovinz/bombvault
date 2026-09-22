@@ -1699,6 +1699,7 @@ const es: Partial<Translations> = {
   "placement.uploadLine": "{target}: unas {n}",
   "placement.uploadCost": "Las subidas pueden costar dinero en el proveedor.",
   "placement.uncheckable": "No se pudo comprobar: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Repositorio directo en {target}",
   "directRepo.intro": "Los elementos que lo elijan se respaldan directamente en {target}, con su clave, clase de almacenamiento, límites y configuración de append-only. Conserva sus snapshots según las reglas de {target}. Cancelar no deja nada.",

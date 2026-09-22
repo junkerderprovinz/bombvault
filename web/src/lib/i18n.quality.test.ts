@@ -45,6 +45,7 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   // there is no prose to translate.
   "activityLog.lineOther",
   "cadence.fmtCron",
+  "placement.flow",
 
   // Protocol and product names every locale writes in Latin script anyway.
   // Checked rather than assumed: each of these appears untranslated in the

@@ -1701,6 +1701,7 @@ const fi: Partial<Translations> = {
   "placement.uploadLine": "{target}: noin {n}",
   "placement.uploadCost": "Lataukset voivat maksaa palveluntarjoajalla.",
   "placement.uncheckable": "Ei voitu tarkistaa: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Suora arkisto kohteessa {target}",
   "directRepo.intro": "Kohteet, jotka valitsevat sen, varmuuskopioituvat suoraan kohteeseen {target}, sen avaimella, tallennusluokalla, rajoilla ja append-only-asetuksella. Se säilyttää tilannevedoksensa kohteen {target} sääntöjen mukaan. Peruminen ei jätä mitään jälkeensä.",

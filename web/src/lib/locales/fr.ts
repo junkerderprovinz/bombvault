@@ -1701,6 +1701,7 @@ const fr: Partial<Translations> = {
   "placement.uploadLine": "{target} : environ {n}",
   "placement.uploadCost": "Les envois peuvent coûter de l'argent chez le fournisseur.",
   "placement.uncheckable": "Impossible de vérifier : {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Dépôt direct chez {target}",
   "directRepo.intro": "Les éléments qui le choisissent sont sauvegardés directement vers {target}, avec sa clé, sa classe de stockage, ses limites et son réglage append-only. Il conserve ses snapshots selon les règles de {target}. Annuler ne laisse rien derrière.",

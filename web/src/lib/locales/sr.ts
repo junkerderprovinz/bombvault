@@ -1696,6 +1696,7 @@ const sr: Partial<Translations> = {
   "placement.uploadLine": "{target}: око {n}",
   "placement.uploadCost": "Отпремања могу коштати новца код провајдера.",
   "placement.uncheckable": "Није могло да се провери: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Директни репозиторијум код {target}",
   "directRepo.intro": "Ставке које га изаберу резервно се копирају директно у {target}, са његовим кључем, класом складиштења, ограничењима и подешавањем append-only. Чува своје снимке по правилима {target}. Отказивање ништа не оставља.",

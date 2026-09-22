@@ -1712,6 +1712,7 @@ const bg: Partial<Translations> = {
   "placement.uploadLine": "{target}: около {n}",
   "placement.uploadCost": "Качванията могат да струват пари при доставчика.",
   "placement.uncheckable": "Не можа да се провери: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Директно хранилище при {target}",
   "directRepo.intro": "Елементите, които го изберат, се архивират направо в {target}, с неговия ключ, клас на съхранение, лимити и настройка за append-only. Пази снимките си по правилата на {target}. Отказът не оставя нищо след себе си.",

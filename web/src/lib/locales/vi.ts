@@ -1693,6 +1693,7 @@ const vi: Partial<Translations> = {
   "placement.uploadLine": "{target}: khoảng {n}",
   "placement.uploadCost": "Việc tải lên có thể tốn phí ở nhà cung cấp.",
   "placement.uncheckable": "Không thể kiểm tra: {list}",
+  "placement.flow": "{from} → {to}",
   // Direct repository
   "directRepo.title": "Kho trực tiếp tại {target}",
   "directRepo.intro": "Các mục chọn kho này sẽ sao lưu thẳng vào {target}, dùng khóa, lớp lưu trữ, giới hạn và cài đặt append-only của nó. Kho giữ các snapshot theo quy tắc của {target}. Hủy sẽ không để lại gì.",

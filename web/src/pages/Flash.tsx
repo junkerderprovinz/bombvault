@@ -10,6 +10,7 @@ import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
+import { PlacementFlow } from "../components/placement/PlacementFlow";
 import { useConfirm } from "../lib/useConfirm";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
@@ -325,7 +326,10 @@ export function Flash() {
       <div>
         <h1 className="text-2xl font-semibold text-carbon-text">{t("flash.title")}</h1>
         <p className="mt-1 text-sm text-carbon-textSub">{tLtr(t, "flash.subtitle")}</p>
-        <div className="mt-2"><OffsiteIndicator domain="flash" /></div>
+        <div className="mt-2 flex flex-col gap-1">
+          <OffsiteIndicator domain="flash" />
+          <PlacementFlow domain="flash" />
+        </div>
       </div>
 
       {/* Backup card. GlimStone follow-up pass ("half-overlap card notch"):

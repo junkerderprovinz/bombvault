@@ -1704,6 +1704,7 @@ const ar: Partial<Translations> = {
   "placement.uploadLine": "{target}: نحو {n}",
   "placement.uploadCost": "قد تكلّف الرفعات مالًا لدى المزود.",
   "placement.uncheckable": "تعذّر التحقق: {list}",
+  "placement.flow": "{from} ← {to}",
   // Direct repository
   "directRepo.title": "مستودع مباشر عند {target}",
   "directRepo.intro": "العناصر التي تختاره تُنسخ احتياطيًا مباشرة إلى {target}، بمفتاحه وفئة التخزين والحدود وإعداد append-only الخاص به. يحتفظ بلقطاته وفق قواعد {target}. الإلغاء لا يترك شيئًا وراءه.",

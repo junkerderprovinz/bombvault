@@ -1701,6 +1701,7 @@ const he: Partial<Translations> = {
   "placement.uploadLine": "{target}: כ-{n}",
   "placement.uploadCost": "העלאות עלולות לעלות כסף אצל הספק.",
   "placement.uncheckable": "לא ניתן היה לבדוק: {list}",
+  "placement.flow": "{from} ← {to}",
   // Direct repository
   "directRepo.title": "מאגר ישיר אצל {target}",
   "directRepo.intro": "פריטים שבוחרים בו מגובים ישירות אל {target}, עם המפתח, מחלקת האחסון, המגבלות וההגדרה append-only שלו. הוא שומר את התצלומים שלו לפי הכללים של {target}. ביטול לא משאיר כלום.",

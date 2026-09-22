@@ -1712,6 +1712,7 @@ const fa: Partial<Translations> = {
   "placement.uploadLine": "{target}: حدود {n}",
   "placement.uploadCost": "بارگذاری‌ها ممکن است نزد ارائه‌دهنده هزینه داشته باشند.",
   "placement.uncheckable": "بررسی نشد: {list}",
+  "placement.flow": "{from} ← {to}",
   // Direct repository
   "directRepo.title": "مخزن مستقیم نزد {target}",
   "directRepo.intro": "مواردی که آن را انتخاب می‌کنند مستقیماً در {target} پشتیبان‌گیری می‌شوند، با کلید، کلاس ذخیره‌سازی، محدودیت‌ها و تنظیم append-only. نسخه‌های خود را طبق قواعد {target} نگه می‌دارد. لغو چیزی باقی نمی‌گذارد.",
