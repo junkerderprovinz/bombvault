@@ -372,7 +372,9 @@ func TestTheImportPreviewNamesEachNewTargetCountedWithTheFilesRules(t *testing.T
 	}
 }
 
-func TestTheImportPreviewLogsATargetItCannotLookUp(t *testing.T) {
+// A target the lookup cannot judge may well be new, and leaving it out would
+// promise an import that copies less than it will.
+func TestTheImportPreviewNamesATargetItCannotLookUp(t *testing.T) {
 	f := newPlacementFixture(t)
 	b2 := f.target("containers", "B2", "b2:bucket:containers")
 	exp := f.do(http.MethodGet, "/api/settings/export", nil)
@@ -380,8 +382,12 @@ func TestTheImportPreviewLogsATargetItCannotLookUp(t *testing.T) {
 	logged := captureLog(t)
 
 	summary := f.do(http.MethodPost, "/api/settings/import", exp)["summary"].(map[string]any)
-	if list := summary["newTargets"].([]any); len(list) != 0 {
-		t.Fatalf("newTargets = %v, want none while the lookup fails", list)
+	list := summary["newTargets"].([]any)
+	if len(list) != 1 {
+		t.Fatalf("newTargets = %v, want B2 named although the lookup failed", list)
+	}
+	if row := list[0].(map[string]any); row["id"] != b2.ID || row["name"] != "B2" {
+		t.Fatalf("row = %v, want B2", row)
 	}
 	if !strings.Contains(logged.String(), "import preview of containers") {
 		t.Fatalf("log = %q, want the failed lookup named", logged.String())
