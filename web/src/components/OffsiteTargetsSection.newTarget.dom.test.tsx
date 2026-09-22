@@ -109,6 +109,47 @@ describe("the off-site targets and a new location", () => {
     expect(await screen.findByText(en["placementCode.nestedLocation"])).toBeTruthy();
   });
 
+  it("writes the exclusions on their own route when the target was saved without them", async () => {
+    listed.targets = [hetzner];
+    fake.reply("getNewTargetPreview", {
+      ok: true,
+      preview: targetPreview({ formerlyExcluded: [{ identity: "container:plex", skip: ["t-b2"] }] }),
+    });
+    fake.reply("updateOffsiteTarget", { ok: false, code: "exclusion-unsaved", error: "the server's own sentence" });
+    renderWithProviders(<OffsiteTargetsSection domain="containers" t={t} />);
+    fireEvent.click(await screen.findByText(en["offsite.targets.edit"]));
+    fireEvent.change(repoField(), { target: { value: "sftp:u1@box:/containers-new" } });
+    save();
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("switch", { name: "Leave these out here too" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Confirm" }));
+    await waitFor(() =>
+      expect(fake.callsTo("excludeFromTarget")).toEqual([
+        [{ domain: "containers", targetId: "t-hz", identities: ["container:plex"], default: false }],
+      ])
+    );
+    expect(await screen.findByText(en["settings.saved"])).toBeTruthy();
+    expect(screen.queryByPlaceholderText(en["offsite.wizard.repoUrlPlaceholder"])).toBeNull();
+  });
+
+  it("says so when the exclusions are refused on their own route too", async () => {
+    listed.targets = [hetzner];
+    fake.reply("getNewTargetPreview", {
+      ok: true,
+      preview: targetPreview({ formerlyExcluded: [{ identity: "container:plex", skip: ["t-b2"] }] }),
+    });
+    fake.reply("updateOffsiteTarget", { ok: false, code: "exclusion-unsaved", error: "the server's own sentence" });
+    fake.reply("excludeFromTarget", { ok: false, code: "unknown-target", error: "no such target" });
+    renderWithProviders(<OffsiteTargetsSection domain="containers" t={t} />);
+    fireEvent.click(await screen.findByText(en["offsite.targets.edit"]));
+    fireEvent.change(repoField(), { target: { value: "sftp:u1@box:/containers-new" } });
+    save();
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("switch", { name: "Leave these out here too" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Confirm" }));
+    expect(await screen.findByText(en["placementCode.unknownTarget"])).toBeTruthy();
+  });
+
   it("says which half of the save went through when the exclusions failed", async () => {
     listed.targets = [hetzner];
     fake.reply("updateOffsiteTarget", { ok: false, code: "exclusion-unsaved", error: "the server's own sentence" });
