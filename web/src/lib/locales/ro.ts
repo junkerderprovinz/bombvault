@@ -1647,6 +1647,7 @@ const ro: Partial<Translations> = {
   "placementCode.foreignDomain": "Acel depozit direct aparține unei ținte din alt domeniu.",
   "placementCode.mirroredField": "Această valoare vine de la țintă. Schimbă-o acolo.",
   "placementCode.companionTaken": "Această țintă are deja un depozit direct.",
+  "placementCode.exclusionUnsaved": "Ținta a fost salvată. Ce trebuie exclus, nu.",
   "placementCode.targetInUseItems": "Elemente încă se salvează în depozitul direct al acestei ținte: {n}. Îndreaptă-le mai întâi în altă parte.",
   "placementCode.targetInUseDefault": "Valoarea implicită pentru {domains} indică spre depozitul direct al acestei ținte. Schimbă mai întâi valoarea implicită.",
   "placementCode.directRepo": "Acest depozit merge împreună cu {target}. Elimină în schimb ținta.",

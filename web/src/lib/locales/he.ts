@@ -1644,6 +1644,7 @@ const he: Partial<Translations> = {
   "placementCode.foreignDomain": "המאגר הישיר הזה שייך ליעד בתחום אחר.",
   "placementCode.mirroredField": "הערך הזה מגיע מהיעד. שנה אותו שם.",
   "placementCode.companionTaken": "ליעד הזה כבר יש מאגר ישיר.",
+  "placementCode.exclusionUnsaved": "היעד נשמר. מה שצריך להחריג, לא.",
   "placementCode.targetInUseItems": "פריטים עדיין מגבים אל המאגר הישיר של היעד הזה: {n}. הפנה אותם קודם למקום אחר.",
   "placementCode.targetInUseDefault": "ברירת המחדל של {domains} מצביעה על המאגר הישיר של היעד הזה. שנה קודם את ברירת המחדל.",
   "placementCode.directRepo": "המאגר הזה הולך יחד עם {target}. הסר במקום זאת את היעד.",

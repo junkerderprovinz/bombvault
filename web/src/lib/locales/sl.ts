@@ -1639,6 +1639,7 @@ const sl: Partial<Translations> = {
   "placementCode.foreignDomain": "Ta neposredni repozitorij pripada cilju druge domene.",
   "placementCode.mirroredField": "Ta vrednost prihaja s cilja. Spremeni jo tam.",
   "placementCode.companionTaken": "Ta cilj že ima neposredni repozitorij.",
+  "placementCode.exclusionUnsaved": "Cilj je shranjen. To, kar naj izpusti, ni.",
   "placementCode.targetInUseItems": "Elementi še vedno izvajajo varnostno kopiranje v neposredni repozitorij tega cilja: {n}. Najprej jih preusmeri drugam.",
   "placementCode.targetInUseDefault": "Privzeta vrednost za {domains} kaže na neposredni repozitorij tega cilja. Najprej spremeni privzeto vrednost.",
   "placementCode.directRepo": "Ta repozitorij gre skupaj s ciljem {target}. Namesto njega odstrani cilj.",

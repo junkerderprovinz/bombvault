@@ -30,6 +30,7 @@ var (
 	errRepoInUse           = errors.New("this repository is still in use")
 	errRepoInvalid         = errors.New("that repository cannot take backups")
 	errDefaultRepoMissing  = errors.New("a default in the file points at a repository that is neither in the file nor here")
+	errExclusionUnsaved    = errors.New("the target was saved; what it should leave out was not")
 )
 
 // placementLockReason labels the domain lock an item's home change holds
@@ -42,6 +43,9 @@ var placementCodes = []struct {
 	err  error
 	code string
 }{
+	// Above the codes of the error it wraps: which half of the save went
+	// through is what the answer has to say first.
+	{errExclusionUnsaved, "exclusion-unsaved"},
 	{errPlacementUnreadable, "placement-unreadable"},
 	{errInvalidPlacement, "invalid-placement"},
 	{store.ErrRuleDomain, "invalid-placement"},

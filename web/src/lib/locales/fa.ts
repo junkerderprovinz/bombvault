@@ -1655,6 +1655,7 @@ const fa: Partial<Translations> = {
   "placementCode.foreignDomain": "آن مخزن مستقیم متعلق به مقصدی در دامنه‌ی دیگر است.",
   "placementCode.mirroredField": "این مقدار از مقصد می‌آید. آن را همان‌جا تغییر بده.",
   "placementCode.companionTaken": "این مقصد از قبل مخزن مستقیم دارد.",
+  "placementCode.exclusionUnsaved": "مقصد ذخیره شد. آنچه باید مستثنی شود، نه.",
   "placementCode.targetInUseItems": "موردها هنوز به مخزن مستقیم این مقصد پشتیبان‌گیری می‌کنند: {n}. اول آن‌ها را به جای دیگری هدایت کن.",
   "placementCode.targetInUseDefault": "پیش‌فرض {domains} به مخزن مستقیم این مقصد اشاره دارد. اول پیش‌فرض را تغییر بده.",
   "placementCode.directRepo": "این مخزن همراه {target} است. به جای آن، آن مقصد را حذف کن.",

@@ -1655,6 +1655,7 @@ const lv: Partial<Translations> = {
   "placementCode.foreignDomain": "Šī tiešā krātuve pieder cita domēna mērķim.",
   "placementCode.mirroredField": "Šī vērtība nāk no mērķa. Mainiet to tur.",
   "placementCode.companionTaken": "Šim mērķim jau ir tiešā krātuve.",
+  "placementCode.exclusionUnsaved": "Mērķis tika saglabāts. Tas, kas jāizslēdz, netika.",
   "placementCode.targetInUseItems": "Vienumi joprojām dublējas šī mērķa tiešajā krātuvē: {n}. Vispirms novirziet tos citur.",
   "placementCode.targetInUseDefault": "{domains} noklusējuma vērtība norāda uz šī mērķa tiešo krātuvi. Vispirms mainiet noklusējuma vērtību.",
   "placementCode.directRepo": "Šī krātuve iet kopā ar mērķi {target}. Noņemiet tā vietā mērķi.",

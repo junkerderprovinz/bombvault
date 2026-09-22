@@ -1644,6 +1644,7 @@ const tr: Partial<Translations> = {
   "placementCode.foreignDomain": "Bu doğrudan depo başka bir alanın hedefine ait.",
   "placementCode.mirroredField": "Bu değer hedeften geliyor. Onu orada değiştir.",
   "placementCode.companionTaken": "Bu hedefin zaten doğrudan bir deposu var.",
+  "placementCode.exclusionUnsaved": "Hedef kaydedildi. Hariç tutulacaklar kaydedilmedi.",
   "placementCode.targetInUseItems": "Ögeler hâlâ bu hedefin doğrudan deposuna yedekleniyor: {n}. Önce onları başka bir yere yönlendir.",
   "placementCode.targetInUseDefault": "{domains} için varsayılan bu hedefin doğrudan deposunu gösteriyor. Önce varsayılanı değiştir.",
   "placementCode.directRepo": "Bu depo {target} hedefiyle birlikte gider. Onun yerine o hedefi kaldır.",

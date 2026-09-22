@@ -1636,6 +1636,7 @@ const zh: Partial<Translations> = {
   "placementCode.foreignDomain": "该直接存储库属于另一个域的目标。",
   "placementCode.mirroredField": "此值来自目标。请在那里更改它。",
   "placementCode.companionTaken": "该目标已有直接存储库。",
+  "placementCode.exclusionUnsaved": "目标已保存，但需要排除的内容没有保存。",
   "placementCode.targetInUseItems": "仍有项目在备份到此目标的直接存储库：{n}。请先将它们指向别处。",
   "placementCode.targetInUseDefault": "{domains} 的默认设置指向此目标的直接存储库。请先更改默认设置。",
   "placementCode.directRepo": "此存储库与 {target} 一同存在。请改为移除该目标。",

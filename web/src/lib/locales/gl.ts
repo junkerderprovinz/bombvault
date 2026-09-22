@@ -1655,6 +1655,7 @@ const gl: Partial<Translations> = {
   "placementCode.foreignDomain": "Ese repositorio directo pertence a un destino doutro dominio.",
   "placementCode.mirroredField": "Este valor vén do destino. Cámbiao alí.",
   "placementCode.companionTaken": "Este destino xa ten un repositorio directo.",
+  "placementCode.exclusionUnsaved": "O destino gardouse. O que debe excluír, non.",
   "placementCode.targetInUseItems": "Aínda hai elementos facendo copia de seguranza no repositorio directo deste destino: {n}. Apúntaos a outro lugar primeiro.",
   "placementCode.targetInUseDefault": "O valor predeterminado de {domains} apunta ao repositorio directo deste destino. Cambia primeiro o valor predeterminado.",
   "placementCode.directRepo": "Este repositorio vai con {target}. Quita ese destino no seu lugar.",

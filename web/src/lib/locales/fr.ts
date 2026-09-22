@@ -1644,6 +1644,7 @@ const fr: Partial<Translations> = {
   "placementCode.foreignDomain": "Ce dépôt direct appartient à une cible d'un autre domaine.",
   "placementCode.mirroredField": "Cette valeur vient de la cible. Modifiez-la là-bas.",
   "placementCode.companionTaken": "Cette cible a déjà un dépôt direct.",
+  "placementCode.exclusionUnsaved": "La cible a été enregistrée. Ce qu'elle doit exclure, non.",
   "placementCode.targetInUseItems": "Des éléments sauvegardent encore vers le dépôt direct de cette cible : {n}. Pointez-les ailleurs d'abord.",
   "placementCode.targetInUseDefault": "La valeur par défaut de {domains} pointe vers le dépôt direct de cette cible. Changez d'abord la valeur par défaut.",
   "placementCode.directRepo": "Ce dépôt va avec {target}. Retirez plutôt cette cible.",

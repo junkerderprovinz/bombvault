@@ -1655,6 +1655,7 @@ const id: Partial<Translations> = {
   "placementCode.foreignDomain": "Repositori langsung itu milik target dari domain lain.",
   "placementCode.mirroredField": "Nilai ini berasal dari target. Ubah di sana.",
   "placementCode.companionTaken": "Target ini sudah punya repositori langsung.",
+  "placementCode.exclusionUnsaved": "Target tersimpan. Yang harus dikecualikan tidak.",
   "placementCode.targetInUseItems": "Item masih dicadangkan ke repositori langsung target ini: {n}. Arahkan dulu ke tempat lain.",
   "placementCode.targetInUseDefault": "Bawaan untuk {domains} menunjuk ke repositori langsung target ini. Ubah dulu bawaannya.",
   "placementCode.directRepo": "Repositori ini menyertai {target}. Hapus target itu sebagai gantinya.",

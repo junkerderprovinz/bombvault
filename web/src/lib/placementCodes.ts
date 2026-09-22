@@ -23,6 +23,7 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "foreign-domain": "placementCode.foreignDomain",
   "mirrored-field": "placementCode.mirroredField",
   "companion-taken": "placementCode.companionTaken",
+  "exclusion-unsaved": "placementCode.exclusionUnsaved",
 };
 
 const WARNING_KEYS: Record<SaveWarning["code"], TranslationKey> = {

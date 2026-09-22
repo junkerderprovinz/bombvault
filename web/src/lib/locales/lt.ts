@@ -1655,6 +1655,7 @@ const lt: Partial<Translations> = {
   "placementCode.foreignDomain": "Ši tiesioginė saugykla priklauso kitos srities paskirčiai.",
   "placementCode.mirroredField": "Ši reikšmė ateina iš paskirties. Pakeisk ją ten.",
   "placementCode.companionTaken": "Ši paskirtis jau turi tiesioginę saugyklą.",
+  "placementCode.exclusionUnsaved": "Paskirtis išsaugota. Tai, ką ji turi praleisti, ne.",
   "placementCode.targetInUseItems": "Elementai vis dar kuria atsargines kopijas šios paskirties tiesioginėje saugykloje: {n}. Pirma nukreipk juos kitur.",
   "placementCode.targetInUseDefault": "{domains} numatytoji reikšmė rodo į šios paskirties tiesioginę saugyklą. Pirma pakeisk numatytąją reikšmę.",
   "placementCode.directRepo": "Ši saugykla eina kartu su paskirtimi {target}. Pašalink vietoj jos paskirtį.",

@@ -1655,6 +1655,7 @@ const bg: Partial<Translations> = {
   "placementCode.foreignDomain": "Това директно хранилище принадлежи на цел от друг домейн.",
   "placementCode.mirroredField": "Тази стойност идва от целта. Смени я там.",
   "placementCode.companionTaken": "Тази цел вече има директно хранилище.",
+  "placementCode.exclusionUnsaved": "Целта беше запазена. Това, което трябва да се изключи, не.",
   "placementCode.targetInUseItems": "Елементи все още архивират в директното хранилище на тази цел: {n}. Първо ги насочи другаде.",
   "placementCode.targetInUseDefault": "Стойността по подразбиране за {domains} сочи към директното хранилище на тази цел. Първо смени стойността по подразбиране.",
   "placementCode.directRepo": "Това хранилище върви заедно с {target}. Премахни вместо това целта.",

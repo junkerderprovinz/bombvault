@@ -1647,6 +1647,7 @@ const th: Partial<Translations> = {
   "placementCode.foreignDomain": "ที่เก็บข้อมูลโดยตรงนั้นเป็นของเป้าหมายในโดเมนอื่น",
   "placementCode.mirroredField": "ค่านี้มาจากเป้าหมาย เปลี่ยนที่นั่น",
   "placementCode.companionTaken": "เป้าหมายนี้มีที่เก็บข้อมูลโดยตรงอยู่แล้ว",
+  "placementCode.exclusionUnsaved": "บันทึกเป้าหมายแล้ว แต่สิ่งที่ต้องยกเว้นยังไม่ได้บันทึก",
   "placementCode.targetInUseItems": "ยังมีรายการที่สำรองข้อมูลไปยังที่เก็บข้อมูลโดยตรงของเป้าหมายนี้: {n} รายการ ชี้ไปที่อื่นก่อน",
   "placementCode.targetInUseDefault": "ค่าเริ่มต้นสำหรับ {domains} ชี้ไปที่ที่เก็บข้อมูลโดยตรงของเป้าหมายนี้ เปลี่ยนค่าเริ่มต้นก่อน",
   "placementCode.directRepo": "ที่เก็บข้อมูลนี้ไปด้วยกันกับ {target} ให้ลบเป้าหมายนั้นแทน",

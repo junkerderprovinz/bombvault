@@ -1655,6 +1655,7 @@ const ca: Partial<Translations> = {
   "placementCode.foreignDomain": "Aquest repositori directe pertany a un destí d'un altre domini.",
   "placementCode.mirroredField": "Aquest valor ve del destí. Canvia'l allà.",
   "placementCode.companionTaken": "Aquest destí ja té un repositori directe.",
+  "placementCode.exclusionUnsaved": "El destí s'ha desat. El que ha d'excloure, no.",
   "placementCode.targetInUseItems": "Encara hi ha elements que fan còpia de seguretat al repositori directe d'aquest destí: {n}. Apunta'ls a un altre lloc primer.",
   "placementCode.targetInUseDefault": "El valor predeterminat de {domains} apunta al repositori directe d'aquest destí. Canvia primer el valor predeterminat.",
   "placementCode.directRepo": "Aquest repositori va amb {target}. Treu aquell destí en lloc d'això.",

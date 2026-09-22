@@ -1655,6 +1655,7 @@ const sk: Partial<Translations> = {
   "placementCode.foreignDomain": "Tento priamy repozitár patrí cieľu z inej domény.",
   "placementCode.mirroredField": "Táto hodnota pochádza z cieľa. Zmeň ju tam.",
   "placementCode.companionTaken": "Tento cieľ už má priamy repozitár.",
+  "placementCode.exclusionUnsaved": "Cieľ bol uložený. To, čo má vynechať, nie.",
   "placementCode.targetInUseItems": "Do priameho repozitára tohto cieľa stále zálohujú položky: {n}. Najprv ich nasmeruj inam.",
   "placementCode.targetInUseDefault": "Predvolená hodnota pre {domains} ukazuje na priamy repozitár tohto cieľa. Najprv zmeň predvolenú hodnotu.",
   "placementCode.directRepo": "Tento repozitár patrí k cieľu {target}. Odstráň namiesto neho cieľ.",

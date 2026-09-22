@@ -1642,6 +1642,7 @@ const cs: Partial<Translations> = {
   "placementCode.foreignDomain": "Tento přímý repozitář patří cíli jiné domény.",
   "placementCode.mirroredField": "Tato hodnota pochází z cíle. Změň ji tam.",
   "placementCode.companionTaken": "Tento cíl už má přímý repozitář.",
+  "placementCode.exclusionUnsaved": "Cíl byl uložen. To, co má vynechat, ne.",
   "placementCode.targetInUseItems": "Do přímého repozitáře tohoto cíle stále zálohují položky: {n}. Nejdřív je nasměruj jinam.",
   "placementCode.targetInUseDefault": "Výchozí hodnota pro {domains} ukazuje na přímý repozitář tohoto cíle. Nejdřív změň výchozí hodnotu.",
   "placementCode.directRepo": "Tento repozitář patří k cíli {target}. Odstraň místo něj ten cíl.",

@@ -1639,6 +1639,7 @@ const ru: Partial<Translations> = {
   "placementCode.foreignDomain": "Этот прямой репозиторий принадлежит цели другого домена.",
   "placementCode.mirroredField": "Это значение приходит от цели. Измени его там.",
   "placementCode.companionTaken": "У этой цели уже есть прямой репозиторий.",
+  "placementCode.exclusionUnsaved": "Цель сохранена. То, что она должна исключить, нет.",
   "placementCode.targetInUseItems": "Элементы всё ещё резервируются в прямой репозиторий этой цели: {n}. Сначала перенаправь их в другое место.",
   "placementCode.targetInUseDefault": "Значение по умолчанию для {domains} указывает на прямой репозиторий этой цели. Сначала измени значение по умолчанию.",
   "placementCode.directRepo": "Этот репозиторий идёт вместе с целью {target}. Убери вместо него цель.",
