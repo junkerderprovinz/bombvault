@@ -148,6 +148,27 @@ func TestARemoteRepositoryOpensOffsiteOnlyWithoutATarget(t *testing.T) {
 	}
 }
 
+// A direct repository is offered through its target, never on its own, so a
+// switched off target leaves Send to empty and the segment has to stay locked.
+func TestADirectRepositoryOfASwitchedOffTargetLeavesOffsiteOnlyLocked(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	f.direct(b2)
+	b2.Enabled = false
+	if _, err := f.st.UpsertOffsiteTarget(b2); err != nil {
+		t.Fatal(err)
+	}
+	f.container("nginx", "")
+
+	if got := rowsOf(f.options("containers")["sendTo"]); len(got) != 0 {
+		t.Fatalf("sendTo = %v, want nothing to send to", got)
+	}
+	want := map[string]string{"local-offsite": "no-target", "offsite-only": "no-target"}
+	if got := f.cardOf("containers", "nginx", 0).SegmentLocks; !reflect.DeepEqual(got, want) {
+		t.Fatalf("locks = %v, want %v", got, want)
+	}
+}
+
 func TestAHomeWithItsOwnCredentialsOrAtTheTargetTakesNoCopies(t *testing.T) {
 	f := newPlacementFixture(t)
 	b2 := f.target("containers", "B2", "b2:bucket:containers")
