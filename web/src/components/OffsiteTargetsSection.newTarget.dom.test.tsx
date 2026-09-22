@@ -148,6 +148,8 @@ describe("the off-site targets and a new location", () => {
     fireEvent.click(within(dialog).getByRole("switch", { name: "Leave these out here too" }));
     fireEvent.click(within(dialog).getByRole("button", { name: "Confirm" }));
     expect(await screen.findByText(en["placementCode.unknownTarget"])).toBeTruthy();
+    expect(await screen.findByText(en["placementCode.exclusionUnsaved"])).toBeTruthy();
+    expect(screen.queryByText(en["settings.saved"])).toBeNull();
   });
 
   it("says which half of the save went through when the exclusions failed", async () => {

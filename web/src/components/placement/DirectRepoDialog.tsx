@@ -55,16 +55,20 @@ export function DirectRepoDialog({
 
   useEffect(() => {
     let alive = true;
-    void getDirectRepo(target.id).then((r) => {
-      if (!alive) return;
-      if (!r.ok) {
-        push(placementErrorText(t, lang, r, "settings.error"), "fail");
-        return;
-      }
-      if (!r.suggestion || locationTouched.current) return;
-      setLocation(r.suggestion.location);
-      setNote(r.suggestion.note);
-    });
+    void getDirectRepo(target.id)
+      .then((r) => {
+        if (!alive) return;
+        if (!r.ok) {
+          push(placementErrorText(t, lang, r, "settings.error"), "fail");
+          return;
+        }
+        if (!r.suggestion || locationTouched.current) return;
+        setLocation(r.suggestion.location);
+        setNote(r.suggestion.note);
+      })
+      .catch((err: unknown) => {
+        if (alive) push(err instanceof Error ? err.message : t("settings.error"), "fail");
+      });
     return () => {
       alive = false;
     };

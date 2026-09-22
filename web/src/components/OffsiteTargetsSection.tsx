@@ -313,6 +313,7 @@ export function OffsiteTargetsSection({
       }
       alsoExclude = answer.alsoExclude ?? undefined;
     }
+    let exclusionsWritten = true;
     try {
       if (draft.id === "") {
         // New target: give it a sortOrder strictly greater than 0 (and above any
@@ -358,11 +359,17 @@ export function OffsiteTargetsSection({
             throw new Error(placementErrorText(t, lang, r, "settings.error"));
           }
           const ex = await excludeFromTarget({ domain, targetId: draft.id, ...alsoExclude });
-          if (!ex.ok) push(placementErrorText(t, lang, ex, "placementCode.exclusionUnsaved"), "fail");
+          if (!ex.ok) {
+            exclusionsWritten = false;
+            push(placementErrorText(t, lang, ex, "settings.error"), "fail");
+          }
         }
         pushSaveWarnings(push, t, r.warnings);
       }
-      push(t("settings.saved"), "success");
+      // The target is stored and its exclusions are not, so the line names that
+      // instead of reporting a save that went through whole.
+      if (exclusionsWritten) push(t("settings.saved"), "success");
+      else push(t("placementCode.exclusionUnsaved"), "warn");
       closeEditor();
       offsiteTargetsChanged();
       if (alsoExclude) placementChanged();
