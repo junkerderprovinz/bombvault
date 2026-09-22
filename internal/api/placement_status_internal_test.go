@@ -3,9 +3,12 @@ package api
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
+
+const hour = int64(3600)
 
 func (f *placementFixture) settings(change func(*store.Settings)) {
 	f.t.Helper()
@@ -111,4 +114,182 @@ func TestPlanOfAPausedDomainIsThePause(t *testing.T) {
 	f.paused("containers")
 	assertPlan(t, f.cardOf("containers", "nginx", 0).Plan,
 		&placementPlan{Kind: "paused", Targets: []string{}, Warn: true})
+}
+
+func dailyContainerBackups(f *placementFixture) {
+	f.settings(func(s *store.Settings) {
+		s.ContainersSchedule = "daily 03:00"
+		s.ContainersOffsiteSchedule = ""
+		s.EverythingSchedule = "off"
+	})
+}
+
+func placeAt(o *placementObserved, place string) observedPlace {
+	for _, pl := range o.Places {
+		if pl.Place == place {
+			return pl
+		}
+	}
+	return observedPlace{}
+}
+
+func TestObservedCountsAFreshCopyAtTheTarget(t *testing.T) {
+	f := newPlacementFixture(t)
+	dailyContainerBackups(f)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	f.container("nginx", "")
+	now := time.Now().Unix()
+	f.listing("containers", b2.ID, now-hour, copiesRow("container:nginx", 20, now-2*hour))
+
+	o := f.cardOf("containers", "nginx", now-2*hour).Observed
+	if o.Sites != 2 || o.Rule321 != "met" || o.Tone != "ok" {
+		t.Fatalf("observed = %+v, want two sites, 3-2-1 met", o)
+	}
+	want := observedPlace{Place: "offsite:" + b2.ID, Label: "B2", Count: 20, Latest: now - 2*hour, SeenAt: now - hour, State: "counts", Counts: true}
+	if got := placeAt(o, "offsite:"+b2.ID); got != want {
+		t.Fatalf("B2 = %+v, want %+v", got, want)
+	}
+}
+
+func TestObservedSaysATargetFailedAfterItsLastListing(t *testing.T) {
+	f := newPlacementFixture(t)
+	dailyContainerBackups(f)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	f.container("nginx", "")
+	now := time.Now().Unix()
+	f.listing("containers", b2.ID, now-10*hour, copiesRow("container:nginx", 20, now-11*hour))
+	id, err := f.st.RecordOffsiteRunForTarget("containers", b2.ID, now-hour)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := f.st.FinishOffsiteRun(id, false, "connection refused"); err != nil {
+		t.Fatal(err)
+	}
+
+	o := f.cardOf("containers", "nginx", now-2*hour).Observed
+	got := placeAt(o, "offsite:"+b2.ID)
+	if got.State != "unreachable" || got.Since != now-hour || got.SeenAt != now-10*hour || got.Counts {
+		t.Fatalf("B2 = %+v, want unreachable since the failed run", got)
+	}
+	if o.Tone != "warn" || o.Rule321 != "one-copy" || o.Sites != 1 {
+		t.Fatalf("observed = %+v", o)
+	}
+}
+
+func TestObservedIsUnconfirmedWhenTheListingIsOlderThanTheGrace(t *testing.T) {
+	f := newPlacementFixture(t)
+	dailyContainerBackups(f)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	f.container("nginx", "")
+	now := time.Now().Unix()
+	f.listing("containers", b2.ID, now-72*hour, copiesRow("container:nginx", 20, now-73*hour))
+
+	o := f.cardOf("containers", "nginx", now-73*hour).Observed
+	got := placeAt(o, "offsite:"+b2.ID)
+	if got.State != "unknown" || got.Since != now-72*hour || !got.Stale {
+		t.Fatalf("B2 = %+v, want state unknown since the last listing", got)
+	}
+	if o.Rule321 != "unconfirmed" || o.Tone != "unconfirmed" {
+		t.Fatalf("observed = %+v, want 3-2-1 unconfirmed", o)
+	}
+}
+
+func TestObservedCallsACopyTooFarBehindTheLastBackupOld(t *testing.T) {
+	f := newPlacementFixture(t)
+	dailyContainerBackups(f)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	f.container("nginx", "")
+	now := time.Now().Unix()
+	f.listing("containers", b2.ID, now-hour, copiesRow("container:nginx", 20, now-96*hour))
+
+	got := placeAt(f.cardOf("containers", "nginx", now-hour).Observed, "offsite:"+b2.ID)
+	if got.State != "old-copy" || !got.Stale || got.Counts {
+		t.Fatalf("B2 = %+v, want old-copy", got)
+	}
+}
+
+func TestObservedIsStrictWithoutAnySchedule(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	f.container("nginx", "")
+	f.container("plex", "")
+	now := time.Now().Unix()
+	f.listing("containers", b2.ID, now-30*24*hour,
+		copiesRow("container:nginx", 5, now-31*24*hour),
+		copiesRow("container:plex", 5, now-31*24*hour-1),
+	)
+	views := f.views("containers",
+		f.item("containers", "nginx", now-31*24*hour),
+		f.item("containers", "plex", now-31*24*hour),
+	)
+	if got := placeAt(views["nginx"].Observed, "offsite:"+b2.ID); got.State != "counts" {
+		t.Fatalf("a copy of the last backup counts however old the listing: %+v", got)
+	}
+	if got := placeAt(views["plex"].Observed, "offsite:"+b2.ID); got.State != "old-copy" {
+		t.Fatalf("a copy one second older than the last backup does not count: %+v", got)
+	}
+}
+
+func TestObservedListsOlderCopiesAtATargetNoLongerTicked(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	f.appendOnly(b2.ID)
+	f.container("nginx", "")
+	f.rule("containers", "container:nginx", "*")
+	f.listing("containers", b2.ID, 1_758_000_000, copiesRow("container:nginx", 20, 1_757_900_000))
+
+	o := f.cardOf("containers", "nginx", 1_758_100_000).Observed
+	want := []olderCopies{{TargetID: b2.ID, Name: "B2", Count: 20, SeenAt: 1_758_000_000, AppendOnly: true}}
+	if !reflect.DeepEqual(o.Older, want) {
+		t.Fatalf("older = %+v, want %+v", o.Older, want)
+	}
+	if len(o.Places) != 1 || o.Sites != 1 || o.Rule321 != "one-copy" {
+		t.Fatalf("observed = %+v, want only the home", o)
+	}
+}
+
+func TestObservedCountsAHomeMarkedOffThePremisesAsASite(t *testing.T) {
+	f := newPlacementFixture(t)
+	dailyContainerBackups(f)
+	nas := f.namedRepo("NAS Keller", "nas/bv")
+	f.offPremises(nas.ID)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	f.container("nginx", nas.ID)
+	f.container("plex", nas.ID)
+	f.rule("containers", "container:plex", "*")
+	now := time.Now().Unix()
+	f.listing("containers", b2.ID, now-hour, copiesRow("container:nginx", 20, now-2*hour))
+
+	views := f.views("containers", f.item("containers", "nginx", now-2*hour), f.item("containers", "plex", now-2*hour))
+	if o := views["nginx"].Observed; o.Sites != 3 || o.Rule321 != "met" {
+		t.Fatalf("NAS off the premises plus B2 = %+v, want three sites, 3-2-1 met", o)
+	}
+	if o := views["plex"].Observed; o.Sites != 2 || o.Rule321 != "one-copy" {
+		t.Fatalf("NAS off the premises alone = %+v, want two sites, one copy", o)
+	}
+}
+
+func TestObservedDimsASwitchedOffTargetThatStillHoldsCopies(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	b2.Enabled = false
+	if _, err := f.st.UpsertOffsiteTarget(b2); err != nil {
+		t.Fatal(err)
+	}
+	f.container("nginx", "")
+	f.listing("containers", b2.ID, 1_758_000_000, copiesRow("container:nginx", 3, 1_757_900_000))
+
+	got := placeAt(f.cardOf("containers", "nginx", 1_757_900_000).Observed, "offsite:"+b2.ID)
+	if got.State != "off" || got.Counts {
+		t.Fatalf("B2 = %+v, want off and not counting", got)
+	}
+}
+
+func TestObservedSaysNoBackupBeforeTheFirstOne(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("containers", "B2", "b2:bucket:containers")
+	f.container("nginx", "")
+	if o := f.cardOf("containers", "nginx", 0).Observed; !o.NoBackup {
+		t.Fatalf("observed = %+v, want noBackup", o)
+	}
 }

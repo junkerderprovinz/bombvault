@@ -72,7 +72,10 @@ func (s *Service) placementViews(ctx context.Context, settings store.Settings, d
 	for _, it := range items {
 		views[it.Key] = s.itemPlacementView(settings, p, named, locks, it)
 	}
-	facts := s.statusFactsFor(ctx, settings, p, named)
+	facts, err := s.statusFactsFor(ctx, settings, p, named)
+	if err != nil {
+		return nil, err
+	}
 	for _, it := range items {
 		v := views[it.Key]
 		v.Plan, v.Observed = s.placementStatus(settings, p, it, facts)
