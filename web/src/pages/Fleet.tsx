@@ -215,6 +215,10 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
   const [shakeDecline, setShakeDecline] = useState(0);
 
   async function handleAccept() {
+    // The question does a round trip of its own before its dialog appears, and
+    // a disabled button is all that keeps a second accept from minting a
+    // second target.
+    setBusy(true);
     const answer = await ask({
       // The select offers only MESH_DOMAINS, all of them off-site domains.
       domain: domain as OffsiteDomain,
@@ -222,8 +226,10 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
       name: offer.from || t("fleet.mesh.unknownPeer"),
       moved: false,
     });
-    if (!answer.go) return;
-    setBusy(true);
+    if (!answer.go) {
+      setBusy(false);
+      return;
+    }
     try {
       const res = await acceptMeshOffer(offer.id, domain, answer.alsoExclude ?? undefined);
       if (res.ok) {

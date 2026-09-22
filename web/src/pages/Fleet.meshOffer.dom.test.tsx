@@ -51,6 +51,21 @@ describe("accepting a mesh offer", () => {
     expect(fake.callsTo("getNewTargetPreview")).toEqual([["vms", "rest:http://192.0.2.5:8000/vms", undefined]]);
   });
 
+  it("locks Accept while the question is still being prepared", async () => {
+    const answer = fake.hold("getNewTargetPreview");
+    renderWithProviders(<Fleet />);
+    const button = await screen.findByRole("button", { name: "Accept" });
+
+    fireEvent.click(button);
+
+    await waitFor(() => expect(fake.callsTo("getNewTargetPreview")).toHaveLength(1));
+    expect(button.hasAttribute("disabled")).toBe(true);
+
+    answer();
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(button.hasAttribute("disabled")).toBe(false));
+  });
+
   it("accepts nothing when the question is cancelled", async () => {
     renderWithProviders(<Fleet />);
     fireEvent.click(await screen.findByRole("button", { name: "Accept" }));

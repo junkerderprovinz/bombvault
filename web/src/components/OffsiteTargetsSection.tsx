@@ -293,6 +293,10 @@ export function OffsiteTargetsSection({
     if (saved && !(await confirmDirectChanges(saved, draft))) return;
     const location = draft.repo.trim();
     let alsoExclude: NewTargetExclusion | undefined;
+    // The question does a round trip of its own before its dialog appears, and
+    // a disabled Save is all that keeps a second click from writing a second
+    // target.
+    setSaveState("saving");
     if (!saved || saved.repo.trim() !== location) {
       const answer = await ask({
         domain,
@@ -301,10 +305,12 @@ export function OffsiteTargetsSection({
         name: draft.name.trim() || location,
         moved: saved !== undefined,
       });
-      if (!answer.go) return;
+      if (!answer.go) {
+        setSaveState("idle");
+        return;
+      }
       alsoExclude = answer.alsoExclude ?? undefined;
     }
-    setSaveState("saving");
     try {
       if (draft.id === "") {
         // New target: give it a sortOrder strictly greater than 0 (and above any
