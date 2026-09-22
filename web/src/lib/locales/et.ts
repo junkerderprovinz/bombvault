@@ -1725,6 +1725,16 @@ const et: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Üksused, mille asukoht on koopia allikas:",
   "placementDefaults.copyLineContainers": "Projektikaustad ja üksused, mille asukoht on koopia allikas:",
+
+  // New target
+  "newTarget.intro": "Esimesel käivitusel saab {target} iga üksuse, mis ei ole seatud Kohalikuks.",
+  "newTarget.moved": "{target} uus asukoht saab kogu ajaloo.",
+  "newTarget.items": "Üksused ja projektikaustad: {n}",
+  "newTarget.snapshots": "Hetktõmmised: kuni {n}",
+  "newTarget.size": "Suurus: kuni {size}",
+  "newTarget.formerly": "Seni teistelt sihtkohtadelt välja jäetud: {list}",
+  "newTarget.excludeHere": "Jäta ka siin välja",
+  "newTarget.excludeDefault": "Jäta {target} ka vaikeväärtusest välja",
 };
 
 export default et;

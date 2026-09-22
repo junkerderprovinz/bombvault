@@ -1706,6 +1706,16 @@ const ko: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "위치가 복사 소스인 항목:",
   "placementDefaults.copyLineContainers": "프로젝트 폴더와 위치가 복사 소스인 항목:",
+
+  // New target
+  "newTarget.intro": "첫 실행 시 {target}은(는) 로컬로 설정되지 않은 모든 항목을 받습니다.",
+  "newTarget.moved": "{target}의 새 위치는 전체 기록을 받습니다.",
+  "newTarget.items": "항목 및 프로젝트 폴더: {n}개",
+  "newTarget.snapshots": "스냅샷: 최대 {n}개",
+  "newTarget.size": "크기: 최대 {size}",
+  "newTarget.formerly": "지금까지 다른 대상에서 제외됨: {list}",
+  "newTarget.excludeHere": "여기서도 제외",
+  "newTarget.excludeDefault": "{target}을(를) 기본값에서도 제외",
 };
 
 export default ko;

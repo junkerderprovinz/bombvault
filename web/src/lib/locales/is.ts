@@ -1725,6 +1725,16 @@ const is: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Atriði þar sem staðsetningin er afritunaruppspretta:",
   "placementDefaults.copyLineContainers": "Verkefnamöppur og atriði þar sem staðsetningin er afritunaruppspretta:",
+
+  // New target
+  "newTarget.intro": "Við fyrstu keyrslu fær {target} hvert atriði sem er ekki stillt á Staðbundið.",
+  "newTarget.moved": "Nýja staðsetning {target} fær alla söguna.",
+  "newTarget.items": "Atriði og verkefnamöppur: {n}",
+  "newTarget.snapshots": "Myndatökur: allt að {n}",
+  "newTarget.size": "Stærð: allt að {size}",
+  "newTarget.formerly": "Hingað til útilokað hjá öðrum markmiðum: {list}",
+  "newTarget.excludeHere": "Útiloka einnig hér",
+  "newTarget.excludeDefault": "Útiloka {target} einnig úr sjálfgefnu",
 };
 
 export default is;

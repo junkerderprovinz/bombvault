@@ -1714,6 +1714,16 @@ const he: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "פריטים שהמיקום שלהם הוא מקור להעתקה:",
   "placementDefaults.copyLineContainers": "תיקיות פרויקט ופריטים שהמיקום שלהם הוא מקור להעתקה:",
+
+  // New target
+  "newTarget.intro": "בהרצה הראשונה שלו, {target} מקבל כל פריט שלא מוגדר למקומי.",
+  "newTarget.moved": "המיקום החדש של {target} מקבל את כל ההיסטוריה.",
+  "newTarget.items": "פריטים ותיקיות פרויקט: {n}",
+  "newTarget.snapshots": "תצלומים: עד {n}",
+  "newTarget.size": "גודל: עד {size}",
+  "newTarget.formerly": "הוחרג עד כה מיעדים אחרים: {list}",
+  "newTarget.excludeHere": "להחריג גם כאן",
+  "newTarget.excludeDefault": "להחריג גם את {target} מברירת המחדל",
 };
 
 export default he;

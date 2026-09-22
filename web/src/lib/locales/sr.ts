@@ -1709,6 +1709,16 @@ const sr: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Ставке чија је локација извор копија:",
   "placementDefaults.copyLineContainers": "Фасцикле пројекта и ставке чија је локација извор копија:",
+
+  // New target
+  "newTarget.intro": "При првом покретању {target} добија сваку ставку која није постављена на Локално.",
+  "newTarget.moved": "Нова локација за {target} добија целу историју.",
+  "newTarget.items": "Ставке и фасцикле пројекта: {n}",
+  "newTarget.snapshots": "Снимци: до {n}",
+  "newTarget.size": "Величина: до {size}",
+  "newTarget.formerly": "До сада изузето код других циљева: {list}",
+  "newTarget.excludeHere": "Изузми и овде",
+  "newTarget.excludeDefault": "Изузми {target} и из подразумеване вредности",
 };
 
 export default sr;

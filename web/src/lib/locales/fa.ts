@@ -1725,6 +1725,16 @@ const fa: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "مواردی که مکان آن‌ها منبع کپی است:",
   "placementDefaults.copyLineContainers": "پوشه‌های پروژه و مواردی که مکان آن‌ها منبع کپی است:",
+
+  // New target
+  "newTarget.intro": "در اولین اجرا، {target} هر مورد که روی محلی تنظیم نشده را دریافت می‌کند.",
+  "newTarget.moved": "مکان جدید {target} کل تاریخچه را دریافت می‌کند.",
+  "newTarget.items": "موردها و پوشه‌های پروژه: {n}",
+  "newTarget.snapshots": "اسنپ‌شات‌ها: تا {n}",
+  "newTarget.size": "حجم: تا {size}",
+  "newTarget.formerly": "تاکنون در مقصدهای دیگر مستثنی شده: {list}",
+  "newTarget.excludeHere": "اینجا هم مستثنی شود",
+  "newTarget.excludeDefault": "{target} در پیش‌فرض هم مستثنی شود",
 };
 
 export default fa;

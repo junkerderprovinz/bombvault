@@ -1712,6 +1712,16 @@ const es: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Elementos cuya ubicación es origen de copia:",
   "placementDefaults.copyLineContainers": "Carpetas de proyecto y elementos cuya ubicación es origen de copia:",
+
+  // New target
+  "newTarget.intro": "En su primera ejecución, {target} recibe todos los elementos que no están en Local.",
+  "newTarget.moved": "La nueva ubicación de {target} recibe todo el historial.",
+  "newTarget.items": "Elementos y carpetas de proyecto: {n}",
+  "newTarget.snapshots": "Instantáneas: hasta {n}",
+  "newTarget.size": "Tamaño: hasta {size}",
+  "newTarget.formerly": "Excluido hasta ahora de otros destinos: {list}",
+  "newTarget.excludeHere": "Excluir también aquí",
+  "newTarget.excludeDefault": "Excluir también {target} del valor predeterminado",
 };
 
 export default es;

@@ -1714,6 +1714,16 @@ const fi: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Kohteet, joiden sijainti on kopion lähde:",
   "placementDefaults.copyLineContainers": "Projektikansiot ja kohteet, joiden sijainti on kopion lähde:",
+
+  // New target
+  "newTarget.intro": "Ensimmäisellä ajolla {target} saa jokaisen kohteen, jota ei ole asetettu Paikalliseksi.",
+  "newTarget.moved": "Kohteen {target} uusi sijainti saa koko historian.",
+  "newTarget.items": "Kohteet ja projektikansiot: {n}",
+  "newTarget.snapshots": "Tilannevedokset: enintään {n}",
+  "newTarget.size": "Koko: enintään {size}",
+  "newTarget.formerly": "Tähän asti jätetty pois muista kohteista: {list}",
+  "newTarget.excludeHere": "Jätä pois myös täällä",
+  "newTarget.excludeDefault": "Jätä {target} pois myös oletusarvosta",
 };
 
 export default fi;

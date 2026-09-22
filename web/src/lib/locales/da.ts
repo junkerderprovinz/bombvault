@@ -1714,6 +1714,16 @@ const da: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Elementer, hvis placering er en kopikilde:",
   "placementDefaults.copyLineContainers": "Projektmapper og elementer, hvis placering er en kopikilde:",
+
+  // New target
+  "newTarget.intro": "Ved sin første kørsel modtager {target} alle elementer, der ikke er sat til Lokal.",
+  "newTarget.moved": "Den nye placering for {target} modtager hele historikken.",
+  "newTarget.items": "Elementer og projektmapper: {n}",
+  "newTarget.snapshots": "Øjeblikksbilleder: op til {n}",
+  "newTarget.size": "Størrelse: op til {size}",
+  "newTarget.formerly": "Hidtil udelukket hos andre mål: {list}",
+  "newTarget.excludeHere": "Udeluk også her",
+  "newTarget.excludeDefault": "Udeluk også {target} fra standarden",
 };
 
 export default da;

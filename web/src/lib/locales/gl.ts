@@ -1725,6 +1725,16 @@ const gl: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Elementos cuxo lugar é orixe de copia:",
   "placementDefaults.copyLineContainers": "Cartafoles de proxecto e elementos cuxo lugar é orixe de copia:",
+
+  // New target
+  "newTarget.intro": "Na súa primeira execución, {target} recibe cada elemento que non está en Local.",
+  "newTarget.moved": "A nova localización de {target} recibe todo o historial.",
+  "newTarget.items": "Elementos e cartafoles de proxecto: {n}",
+  "newTarget.snapshots": "Instantáneas: ata {n}",
+  "newTarget.size": "Tamaño: ata {size}",
+  "newTarget.formerly": "Excluído ata agora doutros destinos: {list}",
+  "newTarget.excludeHere": "Excluír tamén aquí",
+  "newTarget.excludeDefault": "Excluír tamén {target} do valor predeterminado",
 };
 
 export default gl;

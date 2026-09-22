@@ -1709,6 +1709,16 @@ const pl: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Elementy, których lokalizacja jest źródłem kopii:",
   "placementDefaults.copyLineContainers": "Foldery projektu i elementy, których lokalizacja jest źródłem kopii:",
+
+  // New target
+  "newTarget.intro": "Przy pierwszym uruchomieniu {target} otrzymuje każdy element, który nie jest ustawiony na Lokalne.",
+  "newTarget.moved": "Nowa lokalizacja {target} otrzymuje całą historię.",
+  "newTarget.items": "Elementy i foldery projektu: {n}",
+  "newTarget.snapshots": "Migawki: do {n}",
+  "newTarget.size": "Rozmiar: do {size}",
+  "newTarget.formerly": "Dotychczas wykluczone w innych celach: {list}",
+  "newTarget.excludeHere": "Wyklucz też tutaj",
+  "newTarget.excludeDefault": "Wyklucz {target} też z wartości domyślnej",
 };
 
 export default pl;

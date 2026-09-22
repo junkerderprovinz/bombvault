@@ -1717,6 +1717,16 @@ const hu: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "Elemek, amelyek helye másolási forrás:",
   "placementDefaults.copyLineContainers": "Projektmappák és elemek, amelyek helye másolási forrás:",
+
+  // New target
+  "newTarget.intro": "Az első futáskor {target} minden olyan elemet megkap, amely nincs Helyire állítva.",
+  "newTarget.moved": "A(z) {target} új helye megkapja a teljes előzményt.",
+  "newTarget.items": "Elemek és projektmappák: {n}",
+  "newTarget.snapshots": "Pillanatképek: legfeljebb {n}",
+  "newTarget.size": "Méret: legfeljebb {size}",
+  "newTarget.formerly": "Eddig más céloknál kizárva: {list}",
+  "newTarget.excludeHere": "Kizárás itt is",
+  "newTarget.excludeDefault": "{target} kizárása az alapértelmezésből is",
 };
 
 export default hu;

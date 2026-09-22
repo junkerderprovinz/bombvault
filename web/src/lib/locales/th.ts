@@ -1717,6 +1717,16 @@ const th: Partial<Translations> = {
   // Defaults
   "placementDefaults.copyLine": "รายการที่ตำแหน่งเป็นแหล่งสำเนา:",
   "placementDefaults.copyLineContainers": "โฟลเดอร์โปรเจกต์และรายการที่ตำแหน่งเป็นแหล่งสำเนา:",
+
+  // New target
+  "newTarget.intro": "ในการทำงานครั้งแรก {target} จะได้รับทุกรายการที่ไม่ได้ตั้งเป็นในเครื่อง",
+  "newTarget.moved": "ตำแหน่งใหม่ของ {target} จะได้รับประวัติทั้งหมด",
+  "newTarget.items": "รายการและโฟลเดอร์โปรเจกต์: {n}",
+  "newTarget.snapshots": "สแนปช็อต: สูงสุด {n}",
+  "newTarget.size": "ขนาด: สูงสุด {size}",
+  "newTarget.formerly": "ถูกยกเว้นในปลายทางอื่นมาแล้ว: {list}",
+  "newTarget.excludeHere": "ยกเว้นที่นี่ด้วย",
+  "newTarget.excludeDefault": "ยกเว้น {target} จากค่าเริ่มต้นด้วย",
 };
 
 export default th;
