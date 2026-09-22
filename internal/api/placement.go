@@ -68,6 +68,11 @@ var placementCodes = []struct {
 	{store.ErrNotOffsiteTarget, "unknown-target"},
 	{errTargetInUse, "target-in-use"},
 	{store.ErrDirectRepo, "direct-repo"},
+	{errAppendOnlyOffsiteTarget, "append-only"},
+	{errRemovalGrown, "removal-grown"},
+	{errNameMismatch, "name-mismatch"},
+	{errHomeUnreadable, "home-unreadable"},
+	{errDomainBusy, "domain-busy"},
 }
 
 // placementCode returns the code the interface translates err by, "" for none.
