@@ -29,9 +29,11 @@ import {
   proposeMeshOffer,
 } from "../lib/api";
 import { IconDisclosure } from "../components/IconDisclosure";
-import type { FleetPeer, FleetPeerInput, DomainStatus, MeshOffer, DeploySnippetData } from "../lib/api";
+import type { FleetPeer, FleetPeerInput, DomainStatus, MeshOffer, DeploySnippetData, OffsiteDomain } from "../lib/api";
 import { credSetsChanged } from "../lib/useCloudCredSets";
 import { offsiteTargetsChanged } from "../lib/useOffsiteTargets";
+import { placementChanged } from "../lib/placementEvents";
+import { useNewTargetQuestion } from "../components/placement/NewTargetQuestion";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { PAGE_SHELL, PAGE_SHELL_TABBED } from "../lib/pageShell";
 import { SelectField } from "../components/SelectField";
@@ -205,6 +207,7 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
   const [domain, setDomain] = useState<string>(offer.suggestedDomain || "containers");
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
+  const { ask, dialog } = useNewTargetQuestion();
   // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
   // whichever button was actually clicked — separate nonces since Accept/
   // Decline are two different failable actions.
@@ -212,9 +215,17 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
   const [shakeDecline, setShakeDecline] = useState(0);
 
   async function handleAccept() {
+    const answer = await ask({
+      // The select offers only MESH_DOMAINS, all of them off-site domains.
+      domain: domain as OffsiteDomain,
+      location: offer.repo,
+      name: offer.from || t("fleet.mesh.unknownPeer"),
+      moved: false,
+    });
+    if (!answer.go) return;
     setBusy(true);
     try {
-      const res = await acceptMeshOffer(offer.id, domain);
+      const res = await acceptMeshOffer(offer.id, domain, answer.alsoExclude ?? undefined);
       if (res.ok) {
         // Accepting mints BOTH a named credential set (holding the peer's REST
         // credentials) and an off-site target — announce both so any mounted
@@ -222,6 +233,7 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
         // (#173's invalidation contract; see useCloudCredSets).
         credSetsChanged();
         offsiteTargetsChanged();
+        if (answer.alsoExclude) placementChanged();
         onChanged();
       } else {
         push(res.error ?? t("fleet.mesh.saveError"), "fail");
@@ -256,6 +268,7 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
 
   return (
     <div className="rounded-card bg-carbon-surface2 p-3 flex flex-col gap-2">
+      {dialog}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="font-semibold text-carbon-text text-sm truncate">{offer.from || t("fleet.mesh.unknownPeer")}</span>
         <Badge tone={meshStatusTone(offer.status)}>{t(meshStatusLabelKey(offer.status))}</Badge>
