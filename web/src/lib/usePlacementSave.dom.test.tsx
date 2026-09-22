@@ -73,6 +73,16 @@ describe("usePlacementSave", () => {
     expect(screen.getByTestId("shake").textContent).toBe("1");
   });
 
+  it("tells the page nothing once the card is gone", async () => {
+    const release = fake.hold("setItemPlacement");
+    const onView = vi.fn();
+    const { unmount } = renderWithProviders(<Harness onView={onView} />);
+    fireEvent.click(screen.getByText("one"));
+    unmount();
+    await act(async () => release());
+    expect(onView).not.toHaveBeenCalled();
+  });
+
   it("says what each dropped target keeps", async () => {
     fake.reply(
       "setItemPlacement",
