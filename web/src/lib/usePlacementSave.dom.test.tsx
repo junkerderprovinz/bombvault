@@ -34,6 +34,9 @@ function Harness({ onView }: { onView: (next: PlacementView) => void }) {
       <button type="button" onClick={() => send(["*"])}>
         three
       </button>
+      <button type="button" onClick={() => save({ home: { repo: "repo-nas" } }, { repo: "repo-nas", repoLabel: "NAS Keller" })}>
+        home
+      </button>
     </div>
   );
 }
@@ -107,6 +110,17 @@ describe("usePlacementSave", () => {
     await waitFor(() => expect(fake.callsTo("setItemPlacement")).toHaveLength(2));
     expect(fake.maxInFlight("setItemPlacement")).toBe(1);
     expect(fake.callsTo("setItemPlacement")[1]).toEqual([item, { copies: { skip: ["*"] } }]);
+  });
+
+  it("keeps a waiting home when a later change carries only copies", async () => {
+    const release = fake.hold("setItemPlacement");
+    renderWithProviders(<Harness onView={vi.fn()} />);
+    fireEvent.click(screen.getByText("one"));
+    fireEvent.click(screen.getByText("home"));
+    fireEvent.click(screen.getByText("two"));
+    await act(async () => release());
+    await waitFor(() => expect(fake.callsTo("setItemPlacement")).toHaveLength(2));
+    expect(fake.callsTo("setItemPlacement")[1]).toEqual([item, { home: { repo: "repo-nas" }, copies: { skip: [] } }]);
   });
 
   it("is set right again when a list answer from before the change lands after it", async () => {
