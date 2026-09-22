@@ -291,6 +291,9 @@ func (s *Service) importNewTargets(ctx context.Context, exp settingsExport) []ne
 			continue
 		}
 		if _, known, err := s.store.GetOffsiteTarget(tv.ID); err != nil || known {
+			if err != nil {
+				log.Printf("api: import preview of %s: %v", tv.Domain, err) //nolint:gosec // G706: the domain passed validPlacementDomain
+			}
 			continue
 		}
 		from, err := s.importedPlacementFor(settings, exp, tv.Domain)
