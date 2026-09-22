@@ -7,6 +7,7 @@ import {
   deleteOffsiteTarget,
   testOffsiteTarget,
 } from "../lib/api";
+import type { NewTargetExclusion } from "../lib/api";
 import { useCloudCredSets } from "../lib/useCloudCredSets";
 import { offsiteTargetsChanged, subscribeOffsiteTargets, type OffsiteDomain } from "../lib/useOffsiteTargets";
 import { useT } from "../lib/i18n";
@@ -22,7 +23,9 @@ import { useToast } from "../lib/toast";
 import { useConfirm } from "../lib/useConfirm";
 import { useNamedRepos } from "../lib/useNamedRepos";
 import { placementErrorText, pushSaveWarnings } from "../lib/placementCodes";
+import { placementChanged } from "../lib/placementEvents";
 import { alsoDirectText, directAsk, directUse, retentionLowered } from "../lib/directRepo";
+import { useNewTargetQuestion } from "./placement/NewTargetQuestion";
 
 // The storage-class/immutable badges AND the Test/Edit/Remove buttons in a
 // target row render through Badge at this ONE shared stage, so their heights
@@ -212,6 +215,7 @@ export function OffsiteTargetsSection({
   const credSets = useCloudCredSets();
   const repos = useNamedRepos();
   const { confirm, confirmDialog } = useConfirm();
+  const { ask, dialog: newTargetDialog } = useNewTargetQuestion();
   const { lang } = useT();
   const saved = draft ? targets.find((x) => x.id === draft.id) : undefined;
   const savedUse = saved ? directUse(saved, repos) : undefined;
@@ -287,6 +291,19 @@ export function OffsiteTargetsSection({
       return;
     }
     if (saved && !(await confirmDirectChanges(saved, draft))) return;
+    const location = draft.repo.trim();
+    let alsoExclude: NewTargetExclusion | undefined;
+    if (!saved || saved.repo.trim() !== location) {
+      const answer = await ask({
+        domain,
+        location,
+        targetId: saved?.id,
+        name: draft.name.trim() || location,
+        moved: saved !== undefined,
+      });
+      if (!answer.go) return;
+      alsoExclude = answer.alsoExclude ?? undefined;
+    }
     setSaveState("saving");
     try {
       if (draft.id === "") {
@@ -294,37 +311,45 @@ export function OffsiteTargetsSection({
         // existing additional target) so a later Settings save can never mistake
         // it for the primary and overwrite it.
         const maxSort = targets.reduce((m, x) => Math.max(m, x.sortOrder), 0);
-        const r = await createOffsiteTarget({
-          domain: draft.domain,
-          name: draft.name.trim(),
-          repo: draft.repo.trim(),
-          credsRef: draft.credsRef,
-          storageClass: draft.storageClass,
-          immutable: draft.immutable,
-          schedule: draft.schedule,
-          retentionKeepLast: draft.retentionKeepLast,
-          retentionKeepDaily: draft.retentionKeepDaily,
-          retentionKeepWeekly: draft.retentionKeepWeekly,
-          retentionKeepMonthly: draft.retentionKeepMonthly,
-          limitUpload: draft.limitUpload,
-          limitDownload: draft.limitDownload,
-          growthBudgetGb: draft.growthBudgetGb,
-          enabled: draft.enabled,
-          sortOrder: maxSort + 1,
-        });
+        const r = await createOffsiteTarget(
+          {
+            domain: draft.domain,
+            name: draft.name.trim(),
+            repo: location,
+            credsRef: draft.credsRef,
+            storageClass: draft.storageClass,
+            immutable: draft.immutable,
+            schedule: draft.schedule,
+            retentionKeepLast: draft.retentionKeepLast,
+            retentionKeepDaily: draft.retentionKeepDaily,
+            retentionKeepWeekly: draft.retentionKeepWeekly,
+            retentionKeepMonthly: draft.retentionKeepMonthly,
+            limitUpload: draft.limitUpload,
+            limitDownload: draft.limitDownload,
+            growthBudgetGb: draft.growthBudgetGb,
+            enabled: draft.enabled,
+            sortOrder: maxSort + 1,
+          },
+          alsoExclude
+        );
         if (!r.ok) throw new Error(r.error ?? t("settings.error"));
       } else {
-        const r = await updateOffsiteTarget(draft.id, {
-          ...draft,
-          name: draft.name.trim(),
-          repo: draft.repo.trim(),
-        });
+        const r = await updateOffsiteTarget(
+          draft.id,
+          {
+            ...draft,
+            name: draft.name.trim(),
+            repo: location,
+          },
+          alsoExclude
+        );
         if (!r.ok) throw new Error(r.error ?? t("settings.error"));
         pushSaveWarnings(push, t, r.warnings);
       }
       push(t("settings.saved"), "success");
       closeEditor();
       offsiteTargetsChanged();
+      if (alsoExclude) placementChanged();
     } catch (e) {
       setSaveState("idle");
       push(e instanceof Error ? e.message : t("settings.error"), "fail");
@@ -366,6 +391,7 @@ export function OffsiteTargetsSection({
   return (
     <div className="mt-2 flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
       {confirmDialog}
+      {newTargetDialog}
       <div className="flex flex-col gap-0.5">
         <span className="text-xs font-semibold text-carbon-textSub uppercase tracking-widest">
           {t("offsite.targets.title")}
