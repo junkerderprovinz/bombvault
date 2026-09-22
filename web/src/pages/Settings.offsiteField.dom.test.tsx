@@ -168,7 +168,7 @@ describe("the off-site field", () => {
     );
   });
 
-  it("puts the stored location back when the question is cancelled", async () => {
+  it("keeps the typed location when the question is cancelled", async () => {
     await renderOffsiteTab();
     await type(0, "b2:bucket:containers");
     await act(async () => {
@@ -177,7 +177,7 @@ describe("the off-site field", () => {
     await act(async () => {
       fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: en["common.cancel"] }));
     });
-    await waitFor(() => expect(field(0).value).toBe(""));
+    expect(field(0).value).toBe("b2:bucket:containers");
     expect(stored.puts).toHaveLength(0);
   });
 
