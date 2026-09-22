@@ -210,6 +210,41 @@ func TestObservedCallsACopyTooFarBehindTheLastBackupOld(t *testing.T) {
 	}
 }
 
+func TestObservedLeavesOutATargetThatHoldsNothingOfTheItem(t *testing.T) {
+	f := newPlacementFixture(t)
+	dailyContainerBackups(f)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	f.container("nginx", "")
+	f.container("plex", "")
+	now := time.Now().Unix()
+	f.listing("containers", b2.ID, now-hour, copiesRow("container:plex", 20, now-2*hour))
+
+	o := f.cardOf("containers", "nginx", now-2*hour).Observed
+	if len(o.Places) != 1 || o.Places[0].Place != "local" {
+		t.Fatalf("places = %+v, want only the home", o.Places)
+	}
+	if o.Sites != 1 || o.Rule321 != "one-copy" || o.Tone != "warn" {
+		t.Fatalf("observed = %+v, want one site and 3-2-1 not met", o)
+	}
+}
+
+func TestObservedCannotConfirmATargetItHasNeverListed(t *testing.T) {
+	f := newPlacementFixture(t)
+	dailyContainerBackups(f)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	f.container("nginx", "")
+	now := time.Now().Unix()
+
+	o := f.cardOf("containers", "nginx", now-2*hour).Observed
+	got := placeAt(o, "offsite:"+b2.ID)
+	if got.State != "unknown" || !got.Stale {
+		t.Fatalf("B2 = %+v, want state unknown", got)
+	}
+	if o.Rule321 != "unconfirmed" || o.Tone != "unconfirmed" {
+		t.Fatalf("observed = %+v, want 3-2-1 unconfirmed", o)
+	}
+}
+
 func TestObservedIsStrictWithoutAnySchedule(t *testing.T) {
 	f := newPlacementFixture(t)
 	b2 := f.target("containers", "B2", "b2:bucket:containers")

@@ -345,7 +345,9 @@ func observedState(p placementRead, item placementItem, f *statusFacts, repoID s
 		case !ticked[t.ID] && has:
 			o.Older = append(o.Older, olderCopies{TargetID: t.ID, Name: placementTargetName(t), Count: c.SnapshotCount, SeenAt: c.ObservedAt, AppendOnly: t.Immutable})
 		case ticked[t.ID] && (t.Enabled || has):
-			o.Places = append(o.Places, f.targetPlace(t, c, item.LastSuccess))
+			if pl, ok := f.targetPlace(t, c, has, item.LastSuccess); ok {
+				o.Places = append(o.Places, pl)
+			}
 		}
 	}
 
@@ -376,8 +378,10 @@ func tickedTargets(p placementRead, identity string, home homeKind) map[string]b
 
 // targetPlace judges one ticked target. Switched off, a failed run since its
 // last listing, a listing that lags by more than the grace or a newest copy
-// that far behind the last backup each keep it from counting.
-func (f *statusFacts) targetPlace(t store.OffsiteTarget, c store.ItemCopies, lastBackup int64) observedPlace {
+// that far behind the last backup each keep it from counting. A target that
+// holds nothing of the item, and was listed recently enough to prove it, is no
+// place of the item at all.
+func (f *statusFacts) targetPlace(t store.OffsiteTarget, c store.ItemCopies, holds bool, lastBackup int64) (observedPlace, bool) {
 	obs, listed := f.observed[t.ID]
 	pl := observedPlace{
 		Place: offsiteSourcePrefix + t.ID, Label: placementTargetName(t),
@@ -392,12 +396,14 @@ func (f *statusFacts) targetPlace(t store.OffsiteTarget, c store.ItemCopies, las
 		pl.State, pl.Stale = "unknown", true
 	case f.grace > 0 && f.now-obs.ListedAt > f.grace:
 		pl.State, pl.Since, pl.Stale = "unknown", obs.ListedAt, true
+	case !holds:
+		return observedPlace{}, false
 	case lastBackup-c.LatestSnapshotAt > f.grace:
 		pl.State, pl.Stale = "old-copy", true
 	default:
 		pl.State, pl.Counts = "counts", true
 	}
-	return pl
+	return pl, true
 }
 
 // score fills in sites, 3-2-1 and tone. The server holding the original data is
