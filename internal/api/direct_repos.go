@@ -475,6 +475,7 @@ func lockedFieldsSet(b namedRepoBody) []string {
 	add("limitDownload", b.LimitDownload != nil)
 	add("immutable", b.Immutable != nil)
 	add("enabled", b.Enabled != nil)
+	add("offPremises", b.OffPremises != nil)
 	return fields
 }
 
@@ -495,6 +496,7 @@ func mirroredFieldsChanged(b namedRepoBody, row store.OffsiteTarget) []string {
 	add("limitUpload", b.LimitUpload != nil && *b.LimitUpload != row.LimitUpload)
 	add("limitDownload", b.LimitDownload != nil && *b.LimitDownload != row.LimitDownload)
 	add("immutable", b.Immutable != nil && *b.Immutable != row.Immutable)
+	add("offPremises", b.OffPremises != nil && *b.OffPremises != row.OffPremises)
 	return fields
 }
 

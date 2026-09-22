@@ -41,10 +41,14 @@ type offsiteTargetView struct {
 	// since toStoreTarget never maps it back: an import can read a companion
 	// link the file already describes, never create or change one.
 	CompanionOf string `json:"companionOf,omitempty"`
+	// OffPremises is set only on a named repository (RoleRepo): a destination
+	// carries no meaning for it, so the export leaves the field off entirely
+	// rather than send a value that means nothing there.
+	OffPremises *bool `json:"offPremises,omitempty"`
 }
 
 func offsiteTargetToView(t store.OffsiteTarget) offsiteTargetView {
-	return offsiteTargetView{
+	v := offsiteTargetView{
 		ID:                   t.ID,
 		Domain:               t.Domain,
 		Name:                 t.Name,
@@ -65,6 +69,10 @@ func offsiteTargetToView(t store.OffsiteTarget) offsiteTargetView {
 		SortOrder:            t.SortOrder,
 		CompanionOf:          t.CompanionOf,
 	}
+	if t.Role == store.RoleRepo {
+		v.OffPremises = &t.OffPremises
+	}
+	return v
 }
 
 func offsiteTargetsToViews(ts []store.OffsiteTarget) []offsiteTargetView {
@@ -88,7 +96,7 @@ type offsiteTargetBody struct {
 // normalized (trim+upper), and the id/created_at are NOT taken from the body —
 // the handlers own those (create mints them, update preserves the existing row's).
 func (v offsiteTargetView) toStoreTarget() store.OffsiteTarget {
-	return store.OffsiteTarget{
+	t := store.OffsiteTarget{
 		Domain:               v.Domain,
 		Name:                 v.Name,
 		Repo:                 strings.TrimSpace(v.Repo),
@@ -106,6 +114,10 @@ func (v offsiteTargetView) toStoreTarget() store.OffsiteTarget {
 		Enabled:              v.Enabled,
 		SortOrder:            v.SortOrder,
 	}
+	if v.OffPremises != nil {
+		t.OffPremises = *v.OffPremises
+	}
+	return t
 }
 
 // validateOffsiteTargetInput enforces the create/update contract: a valid domain,

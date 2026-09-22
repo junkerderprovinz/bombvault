@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -932,6 +933,16 @@ func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 		t.ID = strings.TrimSpace(tv.ID)
 		t.CreatedAt = tv.CreatedAt
 		wanted := importedLocation(stored[t.ID].Repo, t.Repo)
+		if tv.OffPremises == nil {
+			// The file carries no opinion: an id this instance already has keeps
+			// its stored mark, a brand new row takes the same default a plain
+			// POST would.
+			if _, known := stored[t.ID]; known {
+				t.OffPremises = stored[t.ID].OffPremises
+			} else {
+				t.OffPremises = restic.IsRemoteRepo(wanted)
+			}
+		}
 		// The LOCATION is written through the guarded transaction, exactly as the
 		// delete half is. Writing it straight through the upsert made an import the
 		// way around the refusal the PATCH endpoint exists to enforce: everything

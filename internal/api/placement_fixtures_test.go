@@ -194,6 +194,20 @@ func (f *placementFixture) direct(target store.OffsiteTarget) store.OffsiteTarge
 	return row
 }
 
+// offPremises marks an existing named repository as standing off the
+// premises, for a test that needs one without going through the API.
+func (f *placementFixture) offPremises(repoID string) {
+	f.t.Helper()
+	r, err := f.st.GetNamedRepo(repoID)
+	if err != nil {
+		f.t.Fatalf("offPremises %s: %v", repoID, err)
+	}
+	r.OffPremises = true
+	if _, err := f.st.UpsertOffsiteTarget(r); err != nil {
+		f.t.Fatalf("offPremises %s: %v", repoID, err)
+	}
+}
+
 func (f *placementFixture) container(name, repoID string) store.Target {
 	f.t.Helper()
 	if _, err := f.st.WritePlacement(store.ItemRef{Domain: "containers", Key: name}, &store.HomeWrite{Repo: repoID, Choice: store.RepoChosen}, nil, nil); err != nil {

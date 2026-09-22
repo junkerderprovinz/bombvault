@@ -50,6 +50,9 @@ type namedRepoView struct {
 	// short-circuited past it on a local path.
 	Immutable bool `json:"immutable"`
 	Enabled   bool `json:"enabled"`
+	// OffPremises counts the repository as a site of its own for sites and 3-2-1
+	// on the cards. It never changes what is copied.
+	OffPremises bool `json:"offPremises"`
 	// InUse is how many containers, VMs and folder sets currently point here.
 	// The interface needs it to explain why a repository cannot be deleted
 	// BEFORE the attempt, rather than only in the error afterwards.
@@ -78,7 +81,8 @@ func (h *Handler) namedRepoViews(rows []store.OffsiteTarget) []namedRepoView {
 		out = append(out, namedRepoView{
 			ID: t.ID, Name: t.Name, Repo: t.Repo, CredsRef: t.CredsRef,
 			StorageClass: t.StorageClass, LimitUpload: t.LimitUpload,
-			LimitDownload: t.LimitDownload, Immutable: t.Immutable, Enabled: t.Enabled, InUse: n,
+			LimitDownload: t.LimitDownload, Immutable: t.Immutable, Enabled: t.Enabled,
+			OffPremises: t.OffPremises, InUse: n,
 			CompanionOf: t.CompanionOf, CompanionLost: t.CompanionLost,
 		})
 	}
@@ -111,6 +115,7 @@ type namedRepoBody struct {
 	// CompanionOf routes the create to handleCreateDirectRepo instead: a direct
 	// repository takes everything but its name and location from the target.
 	CompanionOf *string `json:"companionOf"`
+	OffPremises *bool   `json:"offPremises"`
 }
 
 // applyTo merges the sent fields onto a row.
@@ -149,6 +154,9 @@ func (b namedRepoBody) applyTo(t *store.OffsiteTarget) {
 	}
 	if b.Enabled != nil {
 		t.Enabled = *b.Enabled
+	}
+	if b.OffPremises != nil {
+		t.OffPremises = *b.OffPremises
 	}
 }
 
@@ -294,6 +302,9 @@ func (h *Handler) handleCreateNamedRepo(w http.ResponseWriter, r *http.Request) 
 	// created one means to use it.
 	row := store.OffsiteTarget{Role: store.RoleRepo, Enabled: true}
 	body.applyTo(&row)
+	if body.OffPremises == nil {
+		row.OffPremises = restic.IsRemoteRepo(row.Repo)
+	}
 	if err := h.validateNamedRepo(row, body.StorageClass != nil, true); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
