@@ -1,8 +1,10 @@
 package api
 
 import (
+	"cmp"
 	"context"
 	"sync"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -54,17 +56,58 @@ type stackNote struct {
 // statusFacts is what the result line of every item in one list needs, read
 // once per request.
 type statusFacts struct {
+	now        int64
+	grace      int64 // how far a listing or a copy may lag before a target stops counting, 0 for the strict reading
 	named      map[string]store.OffsiteTarget
-	domainTags func() (map[string]bool, error) // tags at the local domain path, listed at most once
+	copies     map[string][]store.ItemCopies      // by identity
+	observed   map[string]store.TargetObservation // by target id
+	failedAt   map[string]int64                   // first failed run after the last listing, by target id
+	domainTags func() (map[string]bool, error)    // tags at the local domain path, listed at most once
 }
 
-func (s *Service) statusFactsFor(ctx context.Context, settings store.Settings, p placementRead, named map[string]store.OffsiteTarget) *statusFacts {
-	return &statusFacts{
-		named: named,
+// statusFactsFor reads what every item of one list is judged against. It runs
+// only behind a certain target list, so every target it asks about has a row
+// and an id of its own.
+func (s *Service) statusFactsFor(ctx context.Context, settings store.Settings, p placementRead, named map[string]store.OffsiteTarget) (*statusFacts, error) {
+	f := &statusFacts{
+		now:      time.Now().Unix(),
+		grace:    s.statusGrace(settings, p.Domain),
+		named:    named,
+		copies:   map[string][]store.ItemCopies{},
+		failedAt: map[string]int64{},
 		domainTags: sync.OnceValues(func() (map[string]bool, error) {
 			return s.domainPathTags(ctx, settings, p.Domain)
 		}),
 	}
+	rows, err := s.store.ItemCopiesForDomain(p.Domain)
+	if err != nil {
+		return nil, err
+	}
+	for _, c := range rows {
+		f.copies[c.Identity] = append(f.copies[c.Identity], c)
+	}
+	if f.observed, err = s.store.TargetObservationsForDomain(p.Domain); err != nil {
+		return nil, err
+	}
+	for _, t := range p.Targets {
+		at, err := s.store.FirstOffsiteFailureAfter(t.ID, f.observed[t.ID].ListedAt)
+		if err != nil {
+			return nil, err
+		}
+		f.failedAt[t.ID] = at
+	}
+	return f, nil
+}
+
+// statusGrace is how far a listing or a copy may lag: twice the domain's
+// off-site cadence, else twice how often it is backed up, and nothing at all
+// when it has neither.
+func (s *Service) statusGrace(settings store.Settings, domain string) int64 {
+	if period := cadencePeriodSeconds(s.offsiteScheduleFor(domain, settings)); period > 0 {
+		return 2 * period
+	}
+	period, _ := domainCoverage(digestBackupScheduleFor(domain, settings), settings.EverythingSchedule)
+	return 2 * period
 }
 
 func (f *statusFacts) label(repoID string) string {
@@ -110,15 +153,21 @@ func homeOffPremises(kind homeKind, repoID string, named map[string]store.Offsit
 	return false
 }
 
+// placementStatus is one item's result line. The home is resolved once here and
+// handed to both halves, so the sentence cannot name one repository while the
+// state scores another.
 func (s *Service) placementStatus(settings store.Settings, p placementRead, item placementItem, f *statusFacts) (*placementPlan, *placementObserved) {
-	return s.planFor(settings, p, item, f), nil
+	kind, repoID := s.plannedHome(settings, p, item, f)
+	home := s.homeKindOf(settings, p.Domain, repoID, f.named)
+	return planFor(p, item, f, kind, repoID, home), observedState(p, item, f, repoID, home)
 }
 
-// planFor is the plan half of the result line: where the next backup goes and
-// where it is copied, asked the way the step before the first backup asks.
-func (s *Service) planFor(settings store.Settings, p placementRead, item placementItem, f *statusFacts) *placementPlan {
+// plannedHome is where an item's next backup goes and how the plan phrases it:
+// its own repository once chosen, otherwise what the default and the local
+// domain path make of an open one.
+func (s *Service) plannedHome(settings store.Settings, p placementRead, item placementItem, f *statusFacts) (kind, repoID string) {
 	repoID, fromDefault := p.effectiveHome(item.Home)
-	kind := "home"
+	kind = "home"
 	switch {
 	case fromDefault && repoID != "":
 		kind = s.openKind(settings, p.Domain, item.Identity, f)
@@ -128,7 +177,12 @@ func (s *Service) planFor(settings store.Settings, p placementRead, item placeme
 	if kind == "stays-domain" {
 		repoID = ""
 	}
-	home := s.homeKindOf(settings, p.Domain, repoID, f.named)
+	return kind, repoID
+}
+
+// planFor is the plan half of the result line: where the next backup goes and
+// where it is copied, asked the way the step before the first backup asks.
+func planFor(p placementRead, item placementItem, f *statusFacts, kind, repoID string, home homeKind) *placementPlan {
 	if kind == "default-home" && repoID != "" {
 		switch {
 		case home == homeMissing:
@@ -166,4 +220,129 @@ func (s *Service) openKind(settings store.Settings, domain, identity string, f *
 		return "stays-domain"
 	}
 	return "default-home"
+}
+
+// observedState is the state half of the result line: the last successful
+// backup at the home and what the targets held at their last listing.
+func observedState(p placementRead, item placementItem, f *statusFacts, repoID string, home homeKind) *placementObserved {
+	copies := f.copies[item.Identity]
+	if item.LastSuccess == 0 && len(copies) == 0 {
+		return &placementObserved{NoBackup: true, Places: []observedPlace{}, Tone: "warn", Rule321: "one-copy", Older: []olderCopies{}}
+	}
+	o := &placementObserved{Places: []observedPlace{}, Older: []olderCopies{}}
+
+	local := observedPlace{Place: "local", Label: f.label(repoID), Latest: item.LastSuccess, SeenAt: item.LastSuccess, State: "unknown"}
+	if item.LastSuccess > 0 {
+		local.State, local.Counts = "counts", true
+	}
+	o.Places = append(o.Places, local)
+
+	held := make(map[string]store.ItemCopies, len(copies))
+	for _, c := range copies {
+		held[c.TargetID] = c
+	}
+	ticked := tickedTargets(p, item.Identity, home)
+	for _, t := range p.Targets {
+		c, has := held[t.ID]
+		switch {
+		case !ticked[t.ID] && has:
+			o.Older = append(o.Older, olderCopies{TargetID: t.ID, Name: placementTargetName(t), Count: c.SnapshotCount, SeenAt: c.ObservedAt, AppendOnly: t.Immutable})
+		case ticked[t.ID] && (t.Enabled || has):
+			o.Places = append(o.Places, f.targetPlace(t, c, item.LastSuccess))
+		}
+	}
+
+	homeSite := "host"
+	switch {
+	case home == homeDirect:
+		homeSite = offsiteSourcePrefix + f.named[repoID].CompanionOf
+	case homeOffPremises(home, repoID, f.named):
+		homeSite = "home"
+	}
+	o.score(homeSite)
+	return o
+}
+
+// tickedTargets are the targets an item's rule copies to, switched off or not.
+// An item whose home is not a copy source has none.
+func tickedTargets(p placementRead, identity string, home homeKind) map[string]bool {
+	ticked := map[string]bool{}
+	if !home.copySource() {
+		return ticked
+	}
+	skip, _ := p.resolvedSkip(identity)
+	for _, t := range p.Targets {
+		ticked[t.ID] = !skipsTarget(skip, t.ID)
+	}
+	return ticked
+}
+
+// targetPlace judges one ticked target. Switched off, a failed run since its
+// last listing, a listing that lags by more than the grace or a newest copy
+// that far behind the last backup each keep it from counting.
+func (f *statusFacts) targetPlace(t store.OffsiteTarget, c store.ItemCopies, lastBackup int64) observedPlace {
+	obs, listed := f.observed[t.ID]
+	pl := observedPlace{
+		Place: offsiteSourcePrefix + t.ID, Label: placementTargetName(t),
+		Count: c.SnapshotCount, Latest: c.LatestSnapshotAt, SeenAt: cmp.Or(c.ObservedAt, obs.ListedAt),
+	}
+	switch {
+	case !t.Enabled:
+		pl.State = "off"
+	case f.failedAt[t.ID] > 0:
+		pl.State, pl.Since = "unreachable", f.failedAt[t.ID]
+	case !listed:
+		pl.State, pl.Stale = "unknown", true
+	case f.grace > 0 && f.now-obs.ListedAt > f.grace:
+		pl.State, pl.Since, pl.Stale = "unknown", obs.ListedAt, true
+	case lastBackup-c.LatestSnapshotAt > f.grace:
+		pl.State, pl.Stale = "old-copy", true
+	default:
+		pl.State, pl.Counts = "counts", true
+	}
+	return pl
+}
+
+// score fills in sites, 3-2-1 and tone. The server holding the original data is
+// always a site; a counting place off the premises adds its own.
+func (o *placementObserved) score(homeSite string) {
+	sites := map[string]bool{"host": true}
+	counting, stale := 0, 0
+	offSite, staleOffSite, unreachable := false, false, false
+	for _, pl := range o.Places {
+		site := pl.Place
+		if pl.Place == "local" {
+			site = homeSite
+		}
+		switch {
+		case pl.Counts:
+			counting++
+			sites[site] = true
+			offSite = offSite || site != "host"
+		case pl.Stale:
+			stale++
+			staleOffSite = staleOffSite || site != "host"
+		case pl.State == "unreachable":
+			unreachable = true
+		}
+	}
+	o.Sites = len(sites)
+	switch {
+	case counting >= 2 && offSite:
+		o.Rule321 = "met"
+	case counting+stale >= 2 && (offSite || staleOffSite):
+		o.Rule321 = "unconfirmed"
+	case counting < 2:
+		o.Rule321 = "one-copy"
+	default:
+		o.Rule321 = "nothing-off-premises"
+	}
+	switch {
+	case unreachable || o.Rule321 == "one-copy" || o.Rule321 == "nothing-off-premises":
+		o.Tone = "warn"
+	case o.Rule321 == "unconfirmed":
+		o.Tone = "unconfirmed"
+	default:
+		o.Tone = "ok"
+	}
 }
