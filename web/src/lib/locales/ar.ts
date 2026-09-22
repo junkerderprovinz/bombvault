@@ -1398,6 +1398,8 @@ const ar: Partial<Translations> = {
   "settingsIO.previewAppVersion": "من إصدار BombVault",
   "settingsIO.previewOffsiteTargets": "الوجهات الخارجية",
   "settingsIO.previewNamedRepos": "المستودعات",
+  "settingsIO.previewCopyRules": "قواعد النسخ",
+  "settingsIO.previewNotInFile": "غير موجود في الملف، يبقى كما هو",
   "settingsIO.previewCredentials": "بيانات الاعتماد",
   "settingsIO.previewCredsIncluded": "مضمّنة",
   "settingsIO.previewCredsNotIncluded": "غير مضمّنة",
@@ -1755,6 +1757,7 @@ const ar: Partial<Translations> = {
   "newTarget.formerly": "مُستبعد من أهداف أخرى حتى الآن: {list}",
   "newTarget.excludeHere": "استبعادها هنا أيضًا",
   "newTarget.excludeDefault": "استبعاد {target} من القيمة الافتراضية أيضًا",
+  "newTarget.importHeading": "هدف جديد {target} لـ {domain}",
 };
 
 export default ar;

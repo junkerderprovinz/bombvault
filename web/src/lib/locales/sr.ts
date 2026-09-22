@@ -1549,6 +1549,8 @@ const sr: Partial<Translations> = {
   "settingsIO.previewAppVersion": "Из BombVault верзије",
   "settingsIO.previewOffsiteTargets": "Спољни циљеви",
   "settingsIO.previewNamedRepos": "Складишта",
+  "settingsIO.previewCopyRules": "Правила копирања",
+  "settingsIO.previewNotInFile": "није у датотеци, остаје непромењено",
   "settingsIO.previewCredentials": "Акредитиви",
   "settingsIO.previewCredsIncluded": "укључени",
   "settingsIO.previewCredsNotIncluded": "нису укључени",
@@ -1747,6 +1749,7 @@ const sr: Partial<Translations> = {
   "newTarget.formerly": "До сада изузето код других циљева: {list}",
   "newTarget.excludeHere": "Изузми и овде",
   "newTarget.excludeDefault": "Изузми {target} и из подразумеване вредности",
+  "newTarget.importHeading": "Нови циљ {target} за {domain}",
 };
 
 export default sr;

@@ -1398,6 +1398,8 @@ const th: Partial<Translations> = {
   "settingsIO.previewAppVersion": "จากเวอร์ชัน BombVault",
   "settingsIO.previewOffsiteTargets": "ปลายทางนอกสถานที่",
   "settingsIO.previewNamedRepos": "ที่เก็บ",
+  "settingsIO.previewCopyRules": "กฎการคัดลอก",
+  "settingsIO.previewNotInFile": "ไม่มีในไฟล์ คงไว้ตามเดิม",
   "settingsIO.previewCredentials": "ข้อมูลรับรอง",
   "settingsIO.previewCredsIncluded": "รวมอยู่",
   "settingsIO.previewCredsNotIncluded": "ไม่รวม",
@@ -1755,6 +1757,7 @@ const th: Partial<Translations> = {
   "newTarget.formerly": "ถูกยกเว้นในปลายทางอื่นมาแล้ว: {list}",
   "newTarget.excludeHere": "ยกเว้นที่นี่ด้วย",
   "newTarget.excludeDefault": "ยกเว้น {target} จากค่าเริ่มต้นด้วย",
+  "newTarget.importHeading": "ปลายทางใหม่ {target} สำหรับ {domain}",
 };
 
 export default th;

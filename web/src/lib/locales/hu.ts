@@ -1398,6 +1398,8 @@ const hu: Partial<Translations> = {
   "settingsIO.previewAppVersion": "BombVault verzióból",
   "settingsIO.previewOffsiteTargets": "Külső célok",
   "settingsIO.previewNamedRepos": "Tárolók",
+  "settingsIO.previewCopyRules": "Másolási szabályok",
+  "settingsIO.previewNotInFile": "nincs a fájlban, változatlan marad",
   "settingsIO.previewCredentials": "Hitelesítő adatok",
   "settingsIO.previewCredsIncluded": "tartalmazza",
   "settingsIO.previewCredsNotIncluded": "nem tartalmazza",
@@ -1755,6 +1757,7 @@ const hu: Partial<Translations> = {
   "newTarget.formerly": "Eddig más céloknál kizárva: {list}",
   "newTarget.excludeHere": "Kizárás itt is",
   "newTarget.excludeDefault": "{target} kizárása az alapértelmezésből is",
+  "newTarget.importHeading": "Új cél: {target} a(z) {domain} számára",
 };
 
 export default hu;

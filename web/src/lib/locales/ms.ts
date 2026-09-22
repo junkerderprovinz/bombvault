@@ -1565,6 +1565,8 @@ const ms: Partial<Translations> = {
   "settingsIO.previewAppVersion": "Daripada versi BombVault",
   "settingsIO.previewOffsiteTargets": "Sasaran luar tapak",
   "settingsIO.previewNamedRepos": "Repositori",
+  "settingsIO.previewCopyRules": "Peraturan salinan",
+  "settingsIO.previewNotInFile": "tiada dalam fail, kekal seperti sedia ada",
   "settingsIO.previewCredentials": "Kelayakan",
   "settingsIO.previewCredsIncluded": "disertakan",
   "settingsIO.previewCredsNotIncluded": "tidak disertakan",
@@ -1763,6 +1765,7 @@ const ms: Partial<Translations> = {
   "newTarget.formerly": "Setakat ini dikecualikan di sasaran lain: {list}",
   "newTarget.excludeHere": "Kecualikan di sini juga",
   "newTarget.excludeDefault": "Kecualikan {target} daripada lalai juga",
+  "newTarget.importHeading": "Sasaran baharu {target} untuk {domain}",
 };
 
 export default ms;

@@ -1387,6 +1387,8 @@ const ko: Partial<Translations> = {
   "settingsIO.previewAppVersion": "BombVault 버전",
   "settingsIO.previewOffsiteTargets": "오프사이트 대상",
   "settingsIO.previewNamedRepos": "저장소",
+  "settingsIO.previewCopyRules": "복사 규칙",
+  "settingsIO.previewNotInFile": "파일에 없어 그대로 유지됨",
   "settingsIO.previewCredentials": "자격 증명",
   "settingsIO.previewCredsIncluded": "포함됨",
   "settingsIO.previewCredsNotIncluded": "포함되지 않음",
@@ -1744,6 +1746,7 @@ const ko: Partial<Translations> = {
   "newTarget.formerly": "지금까지 다른 대상에서 제외됨: {list}",
   "newTarget.excludeHere": "여기서도 제외",
   "newTarget.excludeDefault": "{target}을(를) 기본값에서도 제외",
+  "newTarget.importHeading": "{domain}용 새 대상 {target}",
 };
 
 export default ko;

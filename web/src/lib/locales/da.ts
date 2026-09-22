@@ -1395,6 +1395,8 @@ const da: Partial<Translations> = {
   "settingsIO.previewAppVersion": "Fra BombVault-version",
   "settingsIO.previewOffsiteTargets": "Eksterne destinationer",
   "settingsIO.previewNamedRepos": "Repositories",
+  "settingsIO.previewCopyRules": "Kopieringsregler",
+  "settingsIO.previewNotInFile": "ikke i filen, forbliver uændret",
   "settingsIO.previewCredentials": "Legitimationsoplysninger",
   "settingsIO.previewCredsIncluded": "inkluderet",
   "settingsIO.previewCredsNotIncluded": "ikke inkluderet",
@@ -1752,6 +1754,7 @@ const da: Partial<Translations> = {
   "newTarget.formerly": "Hidtil udelukket hos andre mål: {list}",
   "newTarget.excludeHere": "Udeluk også her",
   "newTarget.excludeDefault": "Udeluk også {target} fra standarden",
+  "newTarget.importHeading": "Nyt mål {target} til {domain}",
 };
 
 export default da;

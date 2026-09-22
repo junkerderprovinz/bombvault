@@ -1387,6 +1387,8 @@ const ja: Partial<Translations> = {
   "settingsIO.previewAppVersion": "BombVault バージョン",
   "settingsIO.previewOffsiteTargets": "オフサイトの宛先",
   "settingsIO.previewNamedRepos": "リポジトリ",
+  "settingsIO.previewCopyRules": "コピールール",
+  "settingsIO.previewNotInFile": "ファイルにないため変更なし",
   "settingsIO.previewCredentials": "認証情報",
   "settingsIO.previewCredsIncluded": "含まれる",
   "settingsIO.previewCredsNotIncluded": "含まれない",
@@ -1744,6 +1746,7 @@ const ja: Partial<Translations> = {
   "newTarget.formerly": "これまで他の送信先で除外: {list}",
   "newTarget.excludeHere": "ここでも除外する",
   "newTarget.excludeDefault": "{target} を既定値でも除外する",
+  "newTarget.importHeading": "{domain} 用の新しいターゲット {target}",
 };
 
 export default ja;

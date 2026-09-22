@@ -1565,6 +1565,8 @@ const bg: Partial<Translations> = {
   "settingsIO.previewAppVersion": "От версия на BombVault",
   "settingsIO.previewOffsiteTargets": "Цели извън обекта",
   "settingsIO.previewNamedRepos": "Хранилища",
+  "settingsIO.previewCopyRules": "Правила за копиране",
+  "settingsIO.previewNotInFile": "не е във файла, остава непроменено",
   "settingsIO.previewCredentials": "Данни за достъп",
   "settingsIO.previewCredsIncluded": "включени",
   "settingsIO.previewCredsNotIncluded": "не са включени",
@@ -1763,6 +1765,7 @@ const bg: Partial<Translations> = {
   "newTarget.formerly": "Досега изключено при други цели: {list}",
   "newTarget.excludeHere": "Изключи и тук",
   "newTarget.excludeDefault": "Изключи {target} и от подразбирането",
+  "newTarget.importHeading": "Нова цел {target} за {domain}",
 };
 
 export default bg;

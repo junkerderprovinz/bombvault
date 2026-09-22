@@ -1565,6 +1565,8 @@ const sk: Partial<Translations> = {
   "settingsIO.previewAppVersion": "Z verzie BombVault",
   "settingsIO.previewOffsiteTargets": "Externé ciele",
   "settingsIO.previewNamedRepos": "Úložiská",
+  "settingsIO.previewCopyRules": "Pravidlá kopírovania",
+  "settingsIO.previewNotInFile": "nie je v súbore, zostáva bez zmeny",
   "settingsIO.previewCredentials": "Poverenia",
   "settingsIO.previewCredsIncluded": "zahrnuté",
   "settingsIO.previewCredsNotIncluded": "nezahrnuté",
@@ -1763,6 +1765,7 @@ const sk: Partial<Translations> = {
   "newTarget.formerly": "Doteraz vylúčené pri iných cieľoch: {list}",
   "newTarget.excludeHere": "Vylúčiť aj tu",
   "newTarget.excludeDefault": "Vylúčiť {target} aj z predvolenej hodnoty",
+  "newTarget.importHeading": "Nový cieľ {target} pre {domain}",
 };
 
 export default sk;

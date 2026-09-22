@@ -1398,6 +1398,8 @@ const ro: Partial<Translations> = {
   "settingsIO.previewAppVersion": "Din versiunea BombVault",
   "settingsIO.previewOffsiteTargets": "Destinații externe",
   "settingsIO.previewNamedRepos": "Depozite",
+  "settingsIO.previewCopyRules": "Reguli de copiere",
+  "settingsIO.previewNotInFile": "lipsește din fișier, rămâne neschimbat",
   "settingsIO.previewCredentials": "Acreditări",
   "settingsIO.previewCredsIncluded": "incluse",
   "settingsIO.previewCredsNotIncluded": "neincluse",
@@ -1755,6 +1757,7 @@ const ro: Partial<Translations> = {
   "newTarget.formerly": "Exclus până acum la alte ținte: {list}",
   "newTarget.excludeHere": "Exclude și aici",
   "newTarget.excludeDefault": "Exclude {target} și din valoarea implicită",
+  "newTarget.importHeading": "Țintă nouă {target} pentru {domain}",
 };
 
 export default ro;

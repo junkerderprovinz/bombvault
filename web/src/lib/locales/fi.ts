@@ -1395,6 +1395,8 @@ const fi: Partial<Translations> = {
   "settingsIO.previewAppVersion": "BombVault-versiosta",
   "settingsIO.previewOffsiteTargets": "Etäkohteet",
   "settingsIO.previewNamedRepos": "Arkistot",
+  "settingsIO.previewCopyRules": "Kopiointisäännöt",
+  "settingsIO.previewNotInFile": "ei tiedostossa, pysyy ennallaan",
   "settingsIO.previewCredentials": "Tunnistetiedot",
   "settingsIO.previewCredsIncluded": "sisältyy",
   "settingsIO.previewCredsNotIncluded": "ei sisälly",
@@ -1752,6 +1754,7 @@ const fi: Partial<Translations> = {
   "newTarget.formerly": "Tähän asti jätetty pois muista kohteista: {list}",
   "newTarget.excludeHere": "Jätä pois myös täällä",
   "newTarget.excludeDefault": "Jätä {target} pois myös oletusarvosta",
+  "newTarget.importHeading": "Uusi kohde {target} alueelle {domain}",
 };
 
 export default fi;

@@ -1565,6 +1565,8 @@ const hi: Partial<Translations> = {
   "settingsIO.previewAppVersion": "BombVault वर्ज़न से",
   "settingsIO.previewOffsiteTargets": "ऑफ़-साइट गंतव्य",
   "settingsIO.previewNamedRepos": "रिपॉज़िटरी",
+  "settingsIO.previewCopyRules": "कॉपी नियम",
+  "settingsIO.previewNotInFile": "फ़ाइल में नहीं है, जैसा है वैसा ही रहता है",
   "settingsIO.previewCredentials": "क्रेडेंशियल्स",
   "settingsIO.previewCredsIncluded": "शामिल",
   "settingsIO.previewCredsNotIncluded": "शामिल नहीं",
@@ -1763,6 +1765,7 @@ const hi: Partial<Translations> = {
   "newTarget.formerly": "अब तक अन्य लक्ष्यों में एक्सक्लूड: {list}",
   "newTarget.excludeHere": "यहाँ भी एक्सक्लूड करें",
   "newTarget.excludeDefault": "{target} को डिफ़ॉल्ट में भी एक्सक्लूड करें",
+  "newTarget.importHeading": "{domain} के लिए नया लक्ष्य {target}",
 };
 
 export default hi;

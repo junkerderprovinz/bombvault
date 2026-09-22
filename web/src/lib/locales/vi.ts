@@ -1387,6 +1387,8 @@ const vi: Partial<Translations> = {
   "settingsIO.previewAppVersion": "Từ phiên bản BombVault",
   "settingsIO.previewOffsiteTargets": "Đích ngoài site",
   "settingsIO.previewNamedRepos": "Kho",
+  "settingsIO.previewCopyRules": "Quy tắc sao chép",
+  "settingsIO.previewNotInFile": "không có trong tệp, giữ nguyên",
   "settingsIO.previewCredentials": "Thông tin xác thực",
   "settingsIO.previewCredsIncluded": "có bao gồm",
   "settingsIO.previewCredsNotIncluded": "không bao gồm",
@@ -1744,6 +1746,7 @@ const vi: Partial<Translations> = {
   "newTarget.formerly": "Đã bị loại trừ ở các đích khác cho đến nay: {list}",
   "newTarget.excludeHere": "Loại trừ ở đây luôn",
   "newTarget.excludeDefault": "Loại trừ {target} khỏi mặc định luôn",
+  "newTarget.importHeading": "Đích mới {target} cho {domain}",
 };
 
 export default vi;
