@@ -1704,22 +1704,9 @@ export const en = {
   "files.pathHint": "The folder to back up, a relative subpath under the host mount root.",
   "files.excludes": "Exclude patterns",
   "files.excludesHint": "One pattern per line, passed to restic as --exclude (e.g. *.tmp, cache/).",
-  // #204: a folder set's own repository. Only the English strings are added
-  // here; every other language falls back to English for a missing key, so the
-  // feature works everywhere from the first build and the 41-language pass is
-  // its own mechanical round rather than a blocker.
-  "files.repo": "Repository for this set",
-  "files.repoPlaceholder": "leave empty to use the Folders repository",
-  "files.repoHint": "Where this set's backups are stored. Leave it empty and it uses the Folders repository. The list holds the repositories you set up under Settings, so a location is written down once and picked here.",
-  "files.repoLocked": "This cannot be changed once the set has backups: they stay in the repository they were written to, and nothing moves them. Delete this set's backups first, or create a new set.",
-  // Named repositories (#204). One vocabulary for all three domains, because the
-  // control is the same on a container, a VM and a folder set.
+  // Named repositories
   "repos.title": "Repositories",
   "repos.intro": "Places backups can be written to. Set one up here, then pick it on an individual container, VM or folder set instead of using that domain's own repository.",
-  "repos.itemLabel": "Repository",
-  "repos.itemDefault": "the domain repository",
-  "repos.itemHint": "Where this item's backups go. Leave it on the domain repository unless this one needs its own - a large, rarely changing item that only wants an off-site copy is the usual reason. The list holds what you set up under Settings, so a location is written down once and picked here.",
-  "repos.itemLocked": "This cannot be changed once the item has backups: they stay in the repository they were written to, and nothing moves them. Delete its backups first.",
   "repos.name": "Name",
   "repos.namePlaceholder": "Cold storage",
   "repos.location": "Location",
@@ -1732,7 +1719,6 @@ export const en = {
   "repos.inUse": "{n} in use",
   "repos.unused": "not in use",
   "repos.inUseUnknown": "in use: unknown",
-  "repos.off": "switched off",
   "repos.disableWarn": "Items backing up to this repository: {n}. Switching it off does not move them: their next backup fails with a clear message instead of landing somewhere else. Switch it off?",
   "repos.deleteBlocked": "Still in use. Point those items somewhere else first.",
   "repos.deleteBlockedUnknown": "The server could not read whether anything still uses this repository, so it was not deleted. Try again in a moment.",
@@ -3506,16 +3492,8 @@ export const de: Translations = {
   "files.pathHint": "Der zu sichernde Ordner, ein relativer Unterpfad unter dem Host-Mount-Root.",
   "files.excludes": "Ausschlussmuster",
   "files.excludesHint": "Ein Muster pro Zeile, wird als --exclude an restic übergeben (z. B. *.tmp, cache/).",
-  "files.repo": "Repository für diesen Satz",
-  "files.repoPlaceholder": "leer lassen für das Ordner-Repository",
-  "files.repoHint": "Wo die Sicherungen dieses Satzes liegen. Leer bedeutet: das Ordner-Repository. In der Liste stehen die Repositories, die du in den Einstellungen angelegt hast, ein Ort wird also einmal aufgeschrieben und hier nur ausgewählt.",
-  "files.repoLocked": "Das lässt sich nicht mehr ändern, sobald der Satz Sicherungen hat: sie bleiben in dem Repository, in das sie geschrieben wurden, und nichts holt sie dort weg. Lösche erst die Sicherungen dieses Satzes oder lege einen neuen an.",
   "repos.title": "Repositories",
   "repos.intro": "Orte, an die Sicherungen geschrieben werden können. Lege hier einen an und wähle ihn dann bei einem einzelnen Container, einer VM oder einem Ordner-Satz aus, statt das Repository der Domäne zu nutzen.",
-  "repos.itemLabel": "Repository",
-  "repos.itemDefault": "das Repository der Domäne",
-  "repos.itemHint": "Wohin die Sicherungen dieses Eintrags gehen. Lass es beim Repository der Domäne, außer dieser Eintrag braucht ein eigenes - der übliche Grund ist ein großer, selten veränderter Eintrag, von dem nur eine Off-site-Kopie gebraucht wird. In der Liste steht, was du in den Einstellungen angelegt hast.",
-  "repos.itemLocked": "Das lässt sich nicht mehr ändern, sobald der Eintrag Sicherungen hat: sie bleiben in dem Repository, in das sie geschrieben wurden, und nichts holt sie dort weg. Lösche erst seine Sicherungen.",
   "repos.name": "Name",
   "repos.namePlaceholder": "Kalte Ablage",
   "repos.location": "Ort",
@@ -3528,7 +3506,6 @@ export const de: Translations = {
   "repos.inUse": "{n}× in Verwendung",
   "repos.unused": "nicht in Verwendung",
   "repos.inUseUnknown": "in Verwendung: unbekannt",
-  "repos.off": "ausgeschaltet",
   "repos.disableWarn": "Einträge, die hierher sichern: {n}. Ausschalten holt sie nicht weg: ihre nächste Sicherung schlägt mit einer klaren Meldung fehl, statt woanders zu landen. Ausschalten?",
   "repos.deleteBlocked": "Wird noch verwendet. Zeig mit diesen Einträgen zuerst woandershin.",
   "repos.deleteBlockedUnknown": "Der Server konnte nicht lesen, ob dieses Repository noch benutzt wird, deshalb wurde es nicht gelöscht. Versuch es gleich noch einmal.",

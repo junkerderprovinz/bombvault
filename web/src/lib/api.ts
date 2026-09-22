@@ -2952,13 +2952,6 @@ export function patchFileSet(
      *  server with code "empty-selection" (a set cannot mean "back up
      *  nothing"; remove the set instead), and the stored selection is kept. */
     selectedPaths?: string[];
-    /** This set's own repository (#204). Sent alone by the repository editor.
-     *  An empty string clears the override and puts the set back on the Folders
-     *  domain repository. The server refuses a change once the set HAS backups:
-     *  its snapshots live in the repo it used, nothing re-homes them, and a
-     *  later backup to a new repo would succeed while the history sat in a
-     *  repository nothing points at any more. */
-    repo?: string;
   }
 ): Promise<OkEnvelope> {
   return fetchJSON(`/api/files/sets/${encodeURIComponent(id)}`, {

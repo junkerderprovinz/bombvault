@@ -13,6 +13,7 @@ import { createPortal } from "react-dom";
 import {
   listFileSets,
   createFileSet,
+  createDirectRepo,
   patchFileSet,
   deleteFileSet,
   deleteFileSetBackups,
@@ -27,13 +28,22 @@ import {
   getSettings,
   getFileSetPreset,
 } from "../lib/api";
-import type { BrowseResponse, FileSetView, PlacementView, Snapshot, FileEntry, FileSetPresetResponse } from "../lib/api";
+import type {
+  BrowseResponse,
+  FileSetView,
+  OkEnvelope,
+  PlacementView,
+  Snapshot,
+  FileEntry,
+  FileSetPresetResponse,
+} from "../lib/api";
 import { applyToggle, browseRelToHost, splitFlatSet, toFlatList } from "../lib/selectionTree";
 import { SelectionTree } from "../components/SelectionTree";
-import { RepoPicker } from "../components/RepoPicker";
+import { PlacementDraft, type PlacementDraftValue } from "../components/placement/PlacementDraft";
 import { PlacementRow } from "../components/placement/PlacementRow";
+import { placementErrorText } from "../lib/placementCodes";
 import { subscribePlacement } from "../lib/placementEvents";
-import { subscribeRepos } from "../lib/useNamedRepos";
+import { reposChanged, subscribeRepos } from "../lib/useNamedRepos";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
@@ -992,26 +1002,42 @@ export function FileSetDialog({
   onSaved: () => void;
 }) {
   const { push } = useToast();
+  const { lang } = useT();
   const [name, setName] = useState(initial?.name ?? presetSeed?.name ?? "");
   const [path, setPath] = useState(initial?.path ?? presetSeed?.path ?? "");
   const [excludesText, setExcludesText] = useState(
     (initial?.excludes ?? presetSeed?.excludes ?? []).join("\n")
   );
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
-  // #204. Empty is the normal value and means "use the Folders repository";
-  // a create starts empty because a brand-new set has nothing to move.
-  const [repo, setRepo] = useState(initial?.repo ?? "");
-  // A set with backups cannot change repository - its snapshots live where
-  // they were written and nothing re-homes them. Disabled HERE as well as
-  // refused on the server, so the reason is read before the attempt rather
-  // than after it.
-  const repoLocked = Boolean(initial) && (initial?.lastBackup ?? 0) > 0;
+  const [placement, setPlacement] = useState<PlacementDraftValue>({});
   const [saving, setSaving] = useState(false);
   // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
   // the Save button alongside the toast on a failed save.
   const [shake, setShake] = useState(0);
 
   const canSave = name.trim() !== "" && path.trim() !== "" && !saving;
+
+  // A remembered direct repository is made before the set. If the set then
+  // fails, the draft keeps the new id so a second try does not make another.
+  async function createSet(excludes: string[]): Promise<OkEnvelope & { id?: string }> {
+    let home = placement.home;
+    if (home && "direct" in home) {
+      const made = await createDirectRepo(home.direct.targetId, home.direct.name, home.direct.location);
+      if (!made.ok || !made.repo) return { ok: false, error: placementErrorText(t, lang, made, "settings.error") };
+      reposChanged();
+      const created = { repo: made.repo.id };
+      setPlacement((prev) => ({ ...prev, home: created }));
+      home = created;
+    }
+    return createFileSet({
+      name: name.trim(),
+      path: path.trim(),
+      excludes,
+      enabled,
+      ...(home ? { repo: home.repo } : {}),
+      ...(placement.copies ? { copies: placement.copies } : {}),
+    });
+  }
 
   // GlimStone follow-up pass (v8.0.0): the "error" flash below is now a toast
   // — same shape as Settings.tsx's CloudCredSetsCard.save() (a dialog editor
@@ -1026,25 +1052,8 @@ export function FileSetDialog({
       .filter((line) => line !== "");
     try {
       const res = initial
-        ? await patchFileSet(initial.id, {
-            name: name.trim(),
-            path: path.trim(),
-            excludes,
-            enabled,
-            // Only sent when it actually differs: the server refuses a CHANGE
-            // once the set has backups, and sending the unchanged value would
-            // turn every ordinary save of such a set into a refusal.
-            ...(repo.trim() !== (initial.repo ?? "").trim() ? { repo: repo.trim() } : {}),
-          })
-        : await createFileSet({
-            name: name.trim(),
-            path: path.trim(),
-            excludes,
-            enabled,
-            // A new set has no backups, so the picker is live here and its
-            // answer travels with the create.
-            repo: repo.trim(),
-          });
+        ? await patchFileSet(initial.id, { name: name.trim(), path: path.trim(), excludes, enabled })
+        : await createSet(excludes);
       if (res.ok) {
         push(t("settings.saved"), "success");
         onSaved();
@@ -1160,21 +1169,9 @@ export function FileSetDialog({
             rechtsbuendig sein, der text linksbuendig". Fixed at the shared
             component rather than by hand-matching classes here, the same reason
             IncludeToggle.tsx gives for its own switch to ToggleRow. */}
-        {/* #204: this set's own repository. Empty = the Folders repository,
-            which is what every set did before this existed.
-            A PICKER, not a text field: the locations live in Settings and are
-            chosen here, so the same bucket path is never typed into ten items
-            and can be corrected in one place. The explanation rides in an info
-            bubble beside the label, the house shape for it. */}
-        <RepoPicker
-          value={repo}
-          onChange={setRepo}
-          locked={repoLocked}
-          labelKey="files.repo"
-          hintKey="files.repoHint"
-          defaultLabelKey="files.repoPlaceholder"
-          lockedKey="files.repoLocked"
-        />
+        {/* A new set has no card yet, so its placement is chosen here; an
+            existing set changes it on its card. */}
+        {!initial && <PlacementDraft value={placement} onChange={setPlacement} />}
 
         <ToggleRow checked={enabled} onChange={setEnabled} label={t("files.enabled")} />
 
