@@ -1807,6 +1807,7 @@ const hi: Partial<Translations> = {
   "placement.stackNote": "प्रोजेक्ट फ़ोल्डर {project}: {home} पर, {targets} में कॉपी किया गया (कंटेनर डिफ़ॉल्ट का अनुसरण करता है)",
   "placement.stackNoteNoCopy": "प्रोजेक्ट फ़ोल्डर {project}: {home} पर, कॉपी नहीं किया गया (कंटेनर डिफ़ॉल्ट का अनुसरण करता है)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

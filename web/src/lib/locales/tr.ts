@@ -1796,6 +1796,7 @@ const tr: Partial<Translations> = {
   "placement.stackNote": "Proje klasörü {project}: {home} üzerinde, {targets} konumuna kopyalandı (konteyner varsayılanını izler)",
   "placement.stackNoteNoCopy": "Proje klasörü {project}: {home} üzerinde, kopyalanmadı (konteyner varsayılanını izler)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

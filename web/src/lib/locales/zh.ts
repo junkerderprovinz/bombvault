@@ -1788,6 +1788,7 @@ const zh: Partial<Translations> = {
   "placement.stackNote": "项目文件夹 {project}：位于 {home}，已复制到 {targets}（遵循容器默认值）",
   "placement.stackNoteNoCopy": "项目文件夹 {project}：位于 {home}，未复制（遵循容器默认值）",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

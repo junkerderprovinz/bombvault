@@ -2158,7 +2158,7 @@ export interface ObservedPlace {
   latest: number;
   seenAt: number;
   stale: boolean;
-  state: "counts" | "unreachable" | "unknown" | "old-copy" | "off";
+  state: "counts" | "unreachable" | "unknown" | "old-copy" | "no-copy" | "off";
   since: number;
   counts: boolean;
 }

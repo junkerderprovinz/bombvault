@@ -1788,6 +1788,7 @@ const ja: Partial<Translations> = {
   "placement.stackNote": "プロジェクトフォルダ {project}：{home} に保存、{targets} にコピー（コンテナの既定値に従う）",
   "placement.stackNoteNoCopy": "プロジェクトフォルダ {project}：{home} に保存、コピーなし（コンテナの既定値に従う）",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

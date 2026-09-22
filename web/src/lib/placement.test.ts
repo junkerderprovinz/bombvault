@@ -373,6 +373,20 @@ describe("observedLine", () => {
     ]);
   });
 
+  it("says a ticked target holds no copy yet and dates nothing", () => {
+    const lines = observedLine(
+      tEn,
+      "en",
+      placementObserved({
+        places: [observedPlace({ state: "no-copy", count: 0, latest: 0, seenAt: 0, counts: false })],
+        sites: 1,
+        rule321: "one-copy",
+        tone: "warn",
+      })
+    );
+    expect(lines[1]).toEqual({ text: "B2: no copy yet", tone: "muted" });
+  });
+
   it("says no backup yet before the first one", () => {
     expect(observedLine(tEn, "en", placementObserved({ noBackup: true }))).toEqual([
       { text: "No backup yet.", tone: "muted" },

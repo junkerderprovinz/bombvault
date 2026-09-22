@@ -1807,6 +1807,7 @@ const et: Partial<Translations> = {
   "placement.stackNote": "Projektikaust {project}: kohas {home}, kopeeritud kohta {targets} (järgib konteinerite vaikeväärtust)",
   "placement.stackNoteNoCopy": "Projektikaust {project}: kohas {home}, kopeerimata (järgib konteinerite vaikeväärtust)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

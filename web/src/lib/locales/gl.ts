@@ -1807,6 +1807,7 @@ const gl: Partial<Translations> = {
   "placement.stackNote": "Cartafol de proxecto {project}: en {home}, copiado a {targets} (segue o valor por defecto dos contedores)",
   "placement.stackNoteNoCopy": "Cartafol de proxecto {project}: en {home}, sen copiar (segue o valor por defecto dos contedores)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

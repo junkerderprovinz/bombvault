@@ -1799,6 +1799,7 @@ const hu: Partial<Translations> = {
   "placement.stackNote": "Projektmappa {project}: itt: {home}, másolva ide: {targets} (a konténerek alapértelmezését követi)",
   "placement.stackNoteNoCopy": "Projektmappa {project}: itt: {home}, nincs másolva (a konténerek alapértelmezését követi)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

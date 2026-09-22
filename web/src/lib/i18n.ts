@@ -1907,6 +1907,7 @@ export const en = {
   "placement.stackNote": "Project folder {project}: on {home}, copied to {targets} (follows the containers default)",
   "placement.stackNoteNoCopy": "Project folder {project}: on {home}, not copied (follows the containers default)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -3790,6 +3791,7 @@ export const de: Translations = {
   "placement.stackNote": "Projektordner {project}: auf {home}, kopiert nach {targets} (folgt der Container-Vorgabe)",
   "placement.stackNoteNoCopy": "Projektordner {project}: auf {home}, keine Kopie (folgt der Container-Vorgabe)",
   "placement.older": "Ältere Kopien bei {target}: {n}, zuletzt gesehen {date}",
+  "placement.noCopyYet": "{place}: noch keine Kopie",
 
   // Removal
   "offsiteRemoval.delete": "In {target} löschen",

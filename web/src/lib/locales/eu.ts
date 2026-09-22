@@ -1807,6 +1807,7 @@ const eu: Partial<Translations> = {
   "placement.stackNote": "{project} proiektu-karpeta: {home} kokapenean, {targets}(e)ra kopiatuta (edukiontzien lehenetsia jarraitzen du)",
   "placement.stackNoteNoCopy": "{project} proiektu-karpeta: {home} kokapenean, kopiatu gabe (edukiontzien lehenetsia jarraitzen du)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

@@ -1796,6 +1796,7 @@ const fi: Partial<Translations> = {
   "placement.stackNote": "Projektikansio {project}: kohteessa {home}, kopioitu kohteeseen {targets} (noudattaa konttien oletusta)",
   "placement.stackNoteNoCopy": "Projektikansio {project}: kohteessa {home}, ei kopioitu (noudattaa konttien oletusta)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

@@ -1788,6 +1788,7 @@ const vi: Partial<Translations> = {
   "placement.stackNote": "Thư mục dự án {project}: tại {home}, đã sao chép đến {targets} (theo mặc định của container)",
   "placement.stackNoteNoCopy": "Thư mục dự án {project}: tại {home}, chưa sao chép (theo mặc định của container)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

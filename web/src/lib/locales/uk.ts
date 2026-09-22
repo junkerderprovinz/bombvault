@@ -1791,6 +1791,7 @@ const uk: Partial<Translations> = {
   "placement.stackNote": "Папка проєкту {project}: на {home}, скопійовано до {targets} (слідує значенню контейнерів за замовчуванням)",
   "placement.stackNoteNoCopy": "Папка проєкту {project}: на {home}, не скопійовано (слідує значенню контейнерів за замовчуванням)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

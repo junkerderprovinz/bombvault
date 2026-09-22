@@ -1807,6 +1807,7 @@ const is: Partial<Translations> = {
   "placement.stackNote": "Verkefnamappa {project}: á {home}, afritað í {targets} (fylgir sjálfgefnu íláta)",
   "placement.stackNoteNoCopy": "Verkefnamappa {project}: á {home}, ekki afritað (fylgir sjálfgefnu íláta)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

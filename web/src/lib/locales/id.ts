@@ -1807,6 +1807,7 @@ const id: Partial<Translations> = {
   "placement.stackNote": "Folder proyek {project}: di {home}, disalin ke {targets} (mengikuti bawaan kontainer)",
   "placement.stackNoteNoCopy": "Folder proyek {project}: di {home}, tidak disalin (mengikuti bawaan kontainer)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

@@ -1796,6 +1796,7 @@ const sv: Partial<Translations> = {
   "placement.stackNote": "Projektmapp {project}: på {home}, kopierad till {targets} (följer standarden för containrar)",
   "placement.stackNoteNoCopy": "Projektmapp {project}: på {home}, inte kopierad (följer standarden för containrar)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

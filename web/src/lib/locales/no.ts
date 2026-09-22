@@ -1796,6 +1796,7 @@ const no: Partial<Translations> = {
   "placement.stackNote": "Prosjektmappe {project}: på {home}, kopiert til {targets} (følger standarden for containere)",
   "placement.stackNoteNoCopy": "Prosjektmappe {project}: på {home}, ikke kopiert (følger standarden for containere)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
+  "placement.noCopyYet": "{place}: no copy yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
