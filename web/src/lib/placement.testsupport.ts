@@ -169,6 +169,7 @@ export function stackNote(over?: Partial<StackNote>): StackNote {
 export function removalPreview(over?: Partial<RemovalPreview>): RemovalPreview {
   return {
     target: { id: "t-b2", name: "B2", appendOnly: false },
+    name: "vaultwarden",
     count: 14,
     onlyThere: [],
     homeUnreadable: false,

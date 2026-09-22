@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import type { ItemRef } from "../../lib/api";
 import { formatTs } from "../../lib/reltime";
 import { removalPreview, renderWithProviders } from "../../lib/placement.testsupport";
 
@@ -15,13 +16,19 @@ vi.mock("../../lib/api", async (importOriginal) => ({
 
 const { OffsiteRemovalDialog } = await import("./OffsiteRemovalDialog");
 
-const item = { domain: "containers", key: "vaultwarden" } as const;
+const item: ItemRef = { domain: "containers", key: "vaultwarden" };
 
-function open() {
+function open(shown?: { item: ItemRef; name: string }) {
   const onDone = vi.fn();
   const onClose = vi.fn();
   renderWithProviders(
-    <OffsiteRemovalDialog item={item} name="vaultwarden" target={{ id: "t-b2", name: "B2" }} onDone={onDone} onClose={onClose} />
+    <OffsiteRemovalDialog
+      item={shown?.item ?? item}
+      name={shown?.name ?? "vaultwarden"}
+      target={{ id: "t-b2", name: "B2" }}
+      onDone={onDone}
+      onClose={onClose}
+    />
   );
   return { onDone, onClose };
 }
@@ -58,6 +65,20 @@ describe("OffsiteRemovalDialog", () => {
     fireEvent.click(button);
     await waitFor(() => expect(onDone).toHaveBeenCalled());
     expect(fake.callsTo("deleteAtTarget")).toEqual([[item, "t-b2", ["b9aa"], "vaultwarden"]]);
+  });
+
+  it("asks for the name the server compares, not the one on the card", async () => {
+    const vm: ItemRef = { domain: "vms", key: "win10-gaming" };
+    fake.reply("getOffsiteRemoval", {
+      ok: true,
+      ...removalPreview({ name: "win10-gaming", onlyThere: [{ id: "b9aa", time: "2026-09-01T03:00:00Z" }] }),
+    });
+    const { onDone } = open({ item: vm, name: "Windows 10" });
+    expect(await screen.findByText("Delete every copy of Windows 10 in B2? Copies: 14.")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Type win10-gaming to confirm"), { target: { value: "win10-gaming" } });
+    fireEvent.click(screen.getByRole("button", { name: "Delete in B2" }));
+    await waitFor(() => expect(onDone).toHaveBeenCalled());
+    expect(fake.callsTo("deleteAtTarget")).toEqual([[vm, "t-b2", ["b9aa"], "win10-gaming"]]);
   });
 
   it("says when the home could not be checked", async () => {

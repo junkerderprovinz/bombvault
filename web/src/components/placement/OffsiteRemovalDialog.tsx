@@ -27,7 +27,8 @@ function OnlyThere({ preview }: { preview: RemovalPreview }) {
 
 /** OffsiteRemovalDialog deletes one item's copies at one target: a plain count
  *  when nothing there is the only copy, otherwise the snapshots listed with
- *  their time and the confirm button locked until the item's name is typed. */
+ *  their time and the confirm button locked until the name the server compares
+ *  is typed. */
 export function OffsiteRemovalDialog({
   item,
   name,
@@ -36,6 +37,7 @@ export function OffsiteRemovalDialog({
   onClose,
 }: {
   item: ItemRef;
+  /** What the card calls the item, for the question; the name to type comes with the preview. */
   name: string;
   target: { id: string; name: string };
   onDone: (deleted: number) => void;
@@ -57,6 +59,7 @@ export function OffsiteRemovalDialog({
         }
         const preview: RemovalPreview = {
           target: res.target,
+          name: res.name ?? "",
           count: res.count ?? 0,
           onlyThere: res.onlyThere ?? [],
           homeUnreadable: res.homeUnreadable ?? false,
@@ -72,8 +75,8 @@ export function OffsiteRemovalDialog({
             confirmLabel: t("offsiteRemoval.delete").replace("{target}", () => target.name),
             confirmLabelKey: "common.delete",
             extra: only ? <OnlyThere preview={preview} /> : undefined,
-            requireText: only ? name : undefined,
-            requirePrompt: t("offsiteRemoval.typeName").replace("{name}", () => name),
+            requireText: only ? preview.name : undefined,
+            requirePrompt: t("offsiteRemoval.typeName").replace("{name}", () => preview.name),
           }
         );
         if (!live) return;
@@ -85,7 +88,7 @@ export function OffsiteRemovalDialog({
           item,
           target.id,
           preview.onlyThere.map((s) => s.id),
-          only ? name : ""
+          only ? preview.name : ""
         );
         if (!live) return;
         if (del.ok) {
