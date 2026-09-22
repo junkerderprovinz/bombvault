@@ -281,3 +281,19 @@ func (r *Repo) LatestSuccessfulOffsiteRunForTarget(domain, targetID string) (Off
 	run.OK = ok != 0
 	return run, true, nil
 }
+
+// FirstOffsiteFailureAfter returns when the earliest finished, failed run to the
+// target began after since, or 0 when there is none. A run that failed because the
+// copy rules could not be read says nothing about the target and is left out.
+func (r *Repo) FirstOffsiteFailureAfter(targetID string, since int64) (int64, error) {
+	var at sql.NullInt64
+	err := r.db.QueryRow(`
+		SELECT MIN(started_at) FROM offsite_runs
+		 WHERE offsite_target_id = ? AND started_at > ?
+		   AND finished_at IS NOT NULL AND ok = 0 AND error <> ?`,
+		targetID, since, ReasonCopyRulesUnreadable).Scan(&at)
+	if err != nil {
+		return 0, fmt.Errorf("FirstOffsiteFailureAfter: %w", err)
+	}
+	return at.Int64, nil
+}
