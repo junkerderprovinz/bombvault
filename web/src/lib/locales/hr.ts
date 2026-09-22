@@ -1804,6 +1804,7 @@ const hr: Partial<Translations> = {
   "placement.noBackup": "Još nema sigurnosne kopije.",
   "placement.stackNote": "Mapa projekta {project}: na {home}, kopirano u {targets} (slijedi zadano za kontejnere)",
   "placement.stackNoteNoCopy": "Mapa projekta {project}: na {home}, nije kopirano (slijedi zadano za kontejnere)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1812,6 +1813,7 @@ const hr: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default hr;

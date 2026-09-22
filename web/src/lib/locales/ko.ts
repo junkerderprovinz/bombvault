@@ -1785,6 +1785,7 @@ const ko: Partial<Translations> = {
   "placement.noBackup": "아직 백업이 없습니다.",
   "placement.stackNote": "프로젝트 폴더 {project}: {home}에, {targets}에 복사됨 (컨테이너 기본값을 따름)",
   "placement.stackNoteNoCopy": "프로젝트 폴더 {project}: {home}에, 복사되지 않음 (컨테이너 기본값을 따름)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1793,6 +1794,7 @@ const ko: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default ko;

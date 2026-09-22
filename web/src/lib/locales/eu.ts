@@ -1804,6 +1804,7 @@ const eu: Partial<Translations> = {
   "placement.noBackup": "Oraindik ez dago babeskopiarik.",
   "placement.stackNote": "{project} proiektu-karpeta: {home} kokapenean, {targets}(e)ra kopiatuta (edukiontzien lehenetsia jarraitzen du)",
   "placement.stackNoteNoCopy": "{project} proiektu-karpeta: {home} kokapenean, kopiatu gabe (edukiontzien lehenetsia jarraitzen du)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1812,6 +1813,7 @@ const eu: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default eu;

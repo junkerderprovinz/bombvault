@@ -1793,6 +1793,7 @@ const el: Partial<Translations> = {
   "placement.noBackup": "Δεν υπάρχει ακόμη αντίγραφο ασφαλείας.",
   "placement.stackNote": "Φάκελος έργου {project}: στο {home}, αντιγράφηκε στο {targets} (ακολουθεί την προεπιλογή των Containers)",
   "placement.stackNoteNoCopy": "Φάκελος έργου {project}: στο {home}, χωρίς αντιγραφή (ακολουθεί την προεπιλογή των Containers)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1801,6 +1802,7 @@ const el: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default el;

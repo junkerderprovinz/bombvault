@@ -1804,6 +1804,7 @@ const et: Partial<Translations> = {
   "placement.noBackup": "Varukoopiat veel pole.",
   "placement.stackNote": "Projektikaust {project}: kohas {home}, kopeeritud kohta {targets} (järgib konteinerite vaikeväärtust)",
   "placement.stackNoteNoCopy": "Projektikaust {project}: kohas {home}, kopeerimata (järgib konteinerite vaikeväärtust)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1812,6 +1813,7 @@ const et: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default et;

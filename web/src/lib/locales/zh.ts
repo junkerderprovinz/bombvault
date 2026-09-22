@@ -1785,6 +1785,7 @@ const zh: Partial<Translations> = {
   "placement.noBackup": "尚无备份。",
   "placement.stackNote": "项目文件夹 {project}：位于 {home}，已复制到 {targets}（遵循容器默认值）",
   "placement.stackNoteNoCopy": "项目文件夹 {project}：位于 {home}，未复制（遵循容器默认值）",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1793,6 +1794,7 @@ const zh: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default zh;

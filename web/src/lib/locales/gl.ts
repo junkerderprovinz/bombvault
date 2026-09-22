@@ -1804,6 +1804,7 @@ const gl: Partial<Translations> = {
   "placement.noBackup": "Aínda non hai copia de seguranza.",
   "placement.stackNote": "Cartafol de proxecto {project}: en {home}, copiado a {targets} (segue o valor por defecto dos contedores)",
   "placement.stackNoteNoCopy": "Cartafol de proxecto {project}: en {home}, sen copiar (segue o valor por defecto dos contedores)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1812,6 +1813,7 @@ const gl: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default gl;

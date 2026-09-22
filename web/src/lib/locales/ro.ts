@@ -1796,6 +1796,7 @@ const ro: Partial<Translations> = {
   "placement.noBackup": "Încă nicio copie de siguranță.",
   "placement.stackNote": "Folder de proiect {project}: pe {home}, copiat pe {targets} (urmează valoarea implicită a containerelor)",
   "placement.stackNoteNoCopy": "Folder de proiect {project}: pe {home}, necopiat (urmează valoarea implicită a containerelor)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1804,6 +1805,7 @@ const ro: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default ro;

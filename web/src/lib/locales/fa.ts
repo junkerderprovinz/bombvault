@@ -1804,6 +1804,7 @@ const fa: Partial<Translations> = {
   "placement.noBackup": "هنوز پشتیبانی گرفته نشده است.",
   "placement.stackNote": "پوشهٔ پروژهٔ {project}: در {home}، کپی‌شده به {targets} (از پیش‌فرض کانتینرها پیروی می‌کند)",
   "placement.stackNoteNoCopy": "پوشهٔ پروژهٔ {project}: در {home}، بدون کپی (از پیش‌فرض کانتینرها پیروی می‌کند)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1812,6 +1813,7 @@ const fa: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default fa;

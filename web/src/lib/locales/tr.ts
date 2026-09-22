@@ -1793,6 +1793,7 @@ const tr: Partial<Translations> = {
   "placement.noBackup": "Henüz yedek yok.",
   "placement.stackNote": "Proje klasörü {project}: {home} üzerinde, {targets} konumuna kopyalandı (konteyner varsayılanını izler)",
   "placement.stackNoteNoCopy": "Proje klasörü {project}: {home} üzerinde, kopyalanmadı (konteyner varsayılanını izler)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1801,6 +1802,7 @@ const tr: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default tr;

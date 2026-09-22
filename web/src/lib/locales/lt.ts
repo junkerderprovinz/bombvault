@@ -1804,6 +1804,7 @@ const lt: Partial<Translations> = {
   "placement.noBackup": "Atsarginės kopijos dar nėra.",
   "placement.stackNote": "Projekto aplankas {project}: vietoje {home}, nukopijuota į {targets} (seka konteinerių numatytąją)",
   "placement.stackNoteNoCopy": "Projekto aplankas {project}: vietoje {home}, nekopijuota (seka konteinerių numatytąją)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1812,6 +1813,7 @@ const lt: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default lt;

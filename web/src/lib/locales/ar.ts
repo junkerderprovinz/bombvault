@@ -1796,6 +1796,7 @@ const ar: Partial<Translations> = {
   "placement.noBackup": "لا يوجد نسخ احتياطي بعد.",
   "placement.stackNote": "مجلد المشروع {project}: على {home}، نُسخ إلى {targets} (يتبع افتراضي Containers)",
   "placement.stackNoteNoCopy": "مجلد المشروع {project}: على {home}، دون نسخ (يتبع افتراضي Containers)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1804,6 +1805,7 @@ const ar: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default ar;

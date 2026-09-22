@@ -1788,6 +1788,7 @@ const ru: Partial<Translations> = {
   "placement.noBackup": "Резервной копии пока нет.",
   "placement.stackNote": "Папка проекта {project}: на {home}, скопировано в {targets} (следует значению контейнеров по умолчанию)",
   "placement.stackNoteNoCopy": "Папка проекта {project}: на {home}, не скопировано (следует значению контейнеров по умолчанию)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1796,6 +1797,7 @@ const ru: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default ru;

@@ -1796,6 +1796,7 @@ const th: Partial<Translations> = {
   "placement.noBackup": "ยังไม่มีการสำรองข้อมูล",
   "placement.stackNote": "โฟลเดอร์โปรเจกต์ {project}: ที่ {home} คัดลอกไปยัง {targets} (เป็นไปตามค่าเริ่มต้นของคอนเทนเนอร์)",
   "placement.stackNoteNoCopy": "โฟลเดอร์โปรเจกต์ {project}: ที่ {home} ไม่ได้คัดลอก (เป็นไปตามค่าเริ่มต้นของคอนเทนเนอร์)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1804,6 +1805,7 @@ const th: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default th;

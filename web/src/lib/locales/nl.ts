@@ -1790,6 +1790,7 @@ const nl: Partial<Translations> = {
   "placement.noBackup": "Nog geen back-up.",
   "placement.stackNote": "Projectmap {project}: op {home}, gekopieerd naar {targets} (volgt de standaard van de containers)",
   "placement.stackNoteNoCopy": "Projectmap {project}: op {home}, niet gekopieerd (volgt de standaard van de containers)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1798,6 +1799,7 @@ const nl: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default nl;

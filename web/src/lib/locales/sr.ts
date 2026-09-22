@@ -1788,6 +1788,7 @@ const sr: Partial<Translations> = {
   "placement.noBackup": "Још увек нема резервне копије.",
   "placement.stackNote": "Фасцикла пројекта {project}: на {home}, копирано на {targets} (прати подразумевано за контејнере)",
   "placement.stackNoteNoCopy": "Фасцикла пројекта {project}: на {home}, није копирано (прати подразумевано за контејнере)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1796,6 +1797,7 @@ const sr: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default sr;

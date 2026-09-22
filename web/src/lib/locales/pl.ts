@@ -1788,6 +1788,7 @@ const pl: Partial<Translations> = {
   "placement.noBackup": "Jeszcze bez kopii zapasowej.",
   "placement.stackNote": "Folder projektu {project}: na {home}, skopiowano do {targets} (podąża za domyślnym ustawieniem kontenerów)",
   "placement.stackNoteNoCopy": "Folder projektu {project}: na {home}, nie skopiowano (podąża za domyślnym ustawieniem kontenerów)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1796,6 +1797,7 @@ const pl: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default pl;

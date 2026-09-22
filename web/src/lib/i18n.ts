@@ -1904,6 +1904,7 @@ export const en = {
   "placement.noBackup": "No backup yet.",
   "placement.stackNote": "Project folder {project}: on {home}, copied to {targets} (follows the containers default)",
   "placement.stackNoteNoCopy": "Project folder {project}: on {home}, not copied (follows the containers default)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1912,6 +1913,7 @@ export const en = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 
   "files.excludesCount": "Excludes: {n}",
   "files.enabled": "Include in schedule",
@@ -3783,6 +3785,7 @@ export const de: Translations = {
   "placement.noBackup": "Noch kein Backup.",
   "placement.stackNote": "Projektordner {project}: auf {home}, kopiert nach {targets} (folgt der Container-Vorgabe)",
   "placement.stackNoteNoCopy": "Projektordner {project}: auf {home}, keine Kopie (folgt der Container-Vorgabe)",
+  "placement.older": "Ältere Kopien bei {target}: {n}, zuletzt gesehen {date}",
 
   // Removal
   "offsiteRemoval.delete": "In {target} löschen",
@@ -3791,6 +3794,7 @@ export const de: Translations = {
   "offsiteRemoval.homeUnreadable": "Ob {home} sie noch hat, ließ sich nicht prüfen.",
   "offsiteRemoval.typeName": "Zum Bestätigen {name} eintippen",
   "offsiteRemoval.done": "In {target} gelöscht: {n}",
+  "offsiteRemoval.appendOnly": "{target} ist append-only. Von hier darf dort nichts gelöscht werden.",
 
   "files.excludesCount": "Ausschlüsse: {n}",
   "files.enabled": "Im Zeitplan einschließen",

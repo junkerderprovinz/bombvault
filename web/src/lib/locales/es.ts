@@ -1791,6 +1791,7 @@ const es: Partial<Translations> = {
   "placement.noBackup": "Aún no hay copia de seguridad.",
   "placement.stackNote": "Carpeta de proyecto {project}: en {home}, copiado a {targets} (sigue el valor predeterminado de los contenedores)",
   "placement.stackNoteNoCopy": "Carpeta de proyecto {project}: en {home}, sin copiar (sigue el valor predeterminado de los contenedores)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1799,6 +1800,7 @@ const es: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default es;

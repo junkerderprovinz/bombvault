@@ -1785,6 +1785,7 @@ const vi: Partial<Translations> = {
   "placement.noBackup": "Chưa có bản sao lưu nào.",
   "placement.stackNote": "Thư mục dự án {project}: tại {home}, đã sao chép đến {targets} (theo mặc định của container)",
   "placement.stackNoteNoCopy": "Thư mục dự án {project}: tại {home}, chưa sao chép (theo mặc định của container)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1793,6 +1794,7 @@ const vi: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default vi;

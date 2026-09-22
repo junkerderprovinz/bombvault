@@ -76,6 +76,8 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   "offsiteRemoval.homeUnreadable",
   "offsiteRemoval.typeName",
   "offsiteRemoval.done",
+  "offsiteRemoval.appendOnly",
+  "placement.older",
 ]);
 
 /** A value nobody would translate: a unit, a number, a protocol, a symbol. */

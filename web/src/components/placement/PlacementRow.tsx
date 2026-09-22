@@ -26,12 +26,14 @@ import {
   type PlacementStep,
 } from "../../lib/placement";
 import { placementErrorText } from "../../lib/placementCodes";
+import { placementChanged } from "../../lib/placementEvents";
 import { useConfirm } from "../../lib/useConfirm";
 import { useHostLabel } from "../../lib/useHostLabel";
 import { usePlacementOptions } from "../../lib/usePlacementOptions";
 import { usePlacementSave } from "../../lib/usePlacementSave";
 import { DirectRepoDialog } from "./DirectRepoDialog";
 import { PlacementBar } from "./PlacementBar";
+import { PlacementStatus } from "./PlacementStatus";
 
 const FOLLOW_KEYS: Record<Exclude<FollowLine, "home-set">, TranslationKey> = {
   follows: "placement.followsDefault",
@@ -173,12 +175,12 @@ export function PlacementRow({
               />
             )}
           </p>
-          {shown.paused && <p className="text-xs text-statusWarn">{t("placement.paused")}</p>}
           {warn.length > 0 && (
             <p className="text-xs text-statusWarn">
               {t("placement.noCopyNow").replace("{targets}", () => formatList(lang, warn))}
             </p>
           )}
+          <PlacementStatus item={item} name={name} view={shown} onChanged={placementChanged} />
         </div>
       )}
       {confirmDialog}

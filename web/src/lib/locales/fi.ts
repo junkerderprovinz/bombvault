@@ -1793,6 +1793,7 @@ const fi: Partial<Translations> = {
   "placement.noBackup": "Ei vielä varmuuskopiota.",
   "placement.stackNote": "Projektikansio {project}: kohteessa {home}, kopioitu kohteeseen {targets} (noudattaa konttien oletusta)",
   "placement.stackNoteNoCopy": "Projektikansio {project}: kohteessa {home}, ei kopioitu (noudattaa konttien oletusta)",
+  "placement.older": "Older copies at {target}: {n}, last seen {date}",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -1801,6 +1802,7 @@ const fi: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Whether {home} still has them could not be checked.",
   "offsiteRemoval.typeName": "Type {name} to confirm",
   "offsiteRemoval.done": "Deleted in {target}: {n}",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Nothing here may delete from it.",
 };
 
 export default fi;

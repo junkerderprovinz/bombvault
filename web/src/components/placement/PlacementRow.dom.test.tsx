@@ -5,6 +5,7 @@ import type { PlacementView } from "../../lib/api";
 import {
   homeOption,
   placementOptions,
+  placementPlan,
   placementView,
   renderWithProviders,
   targetOption,
@@ -253,9 +254,9 @@ describe("PlacementRow", () => {
     expect(screen.queryByRole("button", { name: "Reset" })).toBeNull();
   });
 
-  it("shows the pause of its domain", async () => {
-    renderRow(placementView({ paused: true }));
-    expect(await screen.findByText("Off-site paused until the default is confirmed.")).toBeTruthy();
+  it("shows the pause of its domain once", async () => {
+    renderRow(placementView({ paused: true, plan: placementPlan({ kind: "paused", warn: true }) }));
+    expect(await screen.findAllByText("Off-site paused until the default is confirmed.")).toHaveLength(1);
   });
 
   it("shows only its sentence when the placement cannot be read", async () => {
