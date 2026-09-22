@@ -1973,14 +1973,17 @@ type DomainStatusEntry struct {
 	// red/amber/green aggregate (see protectionLevel); it is "" for a disabled
 	// domain (the dashboard then shows nothing for it). These extend /api/status so
 	// the dashboard card needs no second round-trip.
-	OffsiteConfigured bool  `json:"offsiteConfigured"`
-	OffsiteImmutable  bool  `json:"offsiteImmutable"`
-	LastTamperAt      int64 `json:"lastTamperAt"`
-	LastTamperOK      bool  `json:"lastTamperOK"`
-	LastReplicationAt int64 `json:"lastReplicationAt"`
-	LastReplicationOK bool  `json:"lastReplicationOK"`
-	LastDRDrillAt     int64 `json:"lastDrDrillAt"`
-	LastDRDrillOK     bool  `json:"lastDrDrillOK"`
+	OffsiteConfigured bool `json:"offsiteConfigured"`
+	// OffPremisesCovered: every item of the domain lives somewhere that is a site
+	// of its own, so the dashboard does not claim there is no copy off the premises.
+	OffPremisesCovered bool  `json:"offPremisesCovered"`
+	OffsiteImmutable   bool  `json:"offsiteImmutable"`
+	LastTamperAt       int64 `json:"lastTamperAt"`
+	LastTamperOK       bool  `json:"lastTamperOK"`
+	LastReplicationAt  int64 `json:"lastReplicationAt"`
+	LastReplicationOK  bool  `json:"lastReplicationOK"`
+	LastDRDrillAt      int64 `json:"lastDrDrillAt"`
+	LastDRDrillOK      bool  `json:"lastDrDrillOK"`
 	// LastOffsiteSubsetAt / LastOffsiteSubsetOK stamp the latest OFF-SITE SUBSET
 	// drill (`restic check --read-data-subset` against the off-site repo) — the
 	// cheaper integrity check every domain (including VMs, since v8.0.0) can run
@@ -2387,6 +2390,16 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		// error leaves the relevant fact at its zero value (a missing check), which
 		// the aggregate then treats conservatively rather than failing the query.
 		offsiteConfigured := s.offsiteRepoFor(d.name, settings) != ""
+		var offPremisesCovered bool
+		if validPlacementDomain(d.name) {
+			copied, covered, cErr := s.placementCoverage(settings, d.name)
+			if cErr != nil {
+				log.Printf("api: status %s: placement could not be read, off-site stays as configured: %v", d.name, cErr) //nolint:gosec // G706: domain is a fixed literal
+			} else {
+				offsiteConfigured = offsiteConfigured && copied
+				offPremisesCovered = covered
+			}
+		}
 		offsiteImmutable := offsiteImmutableFor(d.name, settings)
 
 		// Tamper facts are aggregated worst-of across the domain's off-site
@@ -2477,6 +2490,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			LastVerifiedOK:        lastVerifiedOK,
 			VerifiedDetail:        verifiedDetail,
 			OffsiteConfigured:     offsiteConfigured,
+			OffPremisesCovered:    offPremisesCovered,
 			OffsiteImmutable:      offsiteImmutable,
 			LastTamperAt:          lastTamperAt,
 			LastTamperOK:          lastTamperOK,
