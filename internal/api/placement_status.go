@@ -1,7 +1,6 @@
 package api
 
 import (
-	"cmp"
 	"context"
 	"slices"
 	"sync"
@@ -24,9 +23,9 @@ type observedPlace struct {
 	Label  string `json:"label"`
 	Count  int    `json:"count"`
 	Latest int64  `json:"latest"`
-	SeenAt int64  `json:"seenAt"`
+	SeenAt int64  `json:"seenAt"` // when the item's copies were last seen there, 0 while it has none
 	Stale  bool   `json:"stale"`
-	State  string `json:"state"` // "counts" | "unreachable" | "unknown" | "old-copy" | "off"
+	State  string `json:"state"` // "counts" | "unreachable" | "unknown" | "old-copy" | "no-copy" | "off"
 	Since  int64  `json:"since"`
 	Counts bool   `json:"counts"`
 }
@@ -345,9 +344,7 @@ func observedState(p placementRead, item placementItem, f *statusFacts, repoID s
 		case !ticked[t.ID] && has:
 			o.Older = append(o.Older, olderCopies{TargetID: t.ID, Name: placementTargetName(t), Count: c.SnapshotCount, SeenAt: c.ObservedAt, AppendOnly: t.Immutable})
 		case ticked[t.ID] && (t.Enabled || has):
-			if pl, ok := f.targetPlace(t, c, has, item.LastSuccess); ok {
-				o.Places = append(o.Places, pl)
-			}
+			o.Places = append(o.Places, f.targetPlace(t, c, has, item.LastSuccess))
 		}
 	}
 
@@ -378,14 +375,13 @@ func tickedTargets(p placementRead, identity string, home homeKind) map[string]b
 
 // targetPlace judges one ticked target. Switched off, a failed run since its
 // last listing, a listing that lags by more than the grace or a newest copy
-// that far behind the last backup each keep it from counting. A target that
-// holds nothing of the item, and was listed recently enough to prove it, is no
-// place of the item at all.
-func (f *statusFacts) targetPlace(t store.OffsiteTarget, c store.ItemCopies, holds bool, lastBackup int64) (observedPlace, bool) {
+// that far behind the last backup each keep it from counting. A target whose
+// last listing proved it holds nothing of the item carries no copy yet.
+func (f *statusFacts) targetPlace(t store.OffsiteTarget, c store.ItemCopies, holds bool, lastBackup int64) observedPlace {
 	obs, listed := f.observed[t.ID]
 	pl := observedPlace{
 		Place: offsiteSourcePrefix + t.ID, Label: placementTargetName(t),
-		Count: c.SnapshotCount, Latest: c.LatestSnapshotAt, SeenAt: cmp.Or(c.ObservedAt, obs.ListedAt),
+		Count: c.SnapshotCount, Latest: c.LatestSnapshotAt, SeenAt: c.ObservedAt,
 	}
 	switch {
 	case !t.Enabled:
@@ -397,13 +393,13 @@ func (f *statusFacts) targetPlace(t store.OffsiteTarget, c store.ItemCopies, hol
 	case f.grace > 0 && f.now-obs.ListedAt > f.grace:
 		pl.State, pl.Since, pl.Stale = "unknown", obs.ListedAt, true
 	case !holds:
-		return observedPlace{}, false
+		pl.State = "no-copy"
 	case lastBackup-c.LatestSnapshotAt > f.grace:
 		pl.State, pl.Stale = "old-copy", true
 	default:
 		pl.State, pl.Counts = "counts", true
 	}
-	return pl, true
+	return pl
 }
 
 // score fills in sites, 3-2-1 and tone. The server holding the original data is

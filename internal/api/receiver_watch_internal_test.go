@@ -21,7 +21,6 @@ import (
 // TestReceiverDeadManDecision pins the once-per-stale-episode dedupe as a pure
 // function (no store/clock/transport), mirroring the watchdog's decision test.
 func TestReceiverDeadManDecision(t *testing.T) {
-	const hour = int64(3600)
 	now := int64(1_800_000_000)
 	dead := 26 * hour
 
@@ -145,7 +144,6 @@ func TestReceiverWatchDeadMansSwitch(t *testing.T) {
 	if _, err := exec.LookPath("restic"); err != nil {
 		t.Skip("no restic")
 	}
-	const hour = int64(3600)
 	appKey := strings.Repeat("ab", 32)
 	sendingKey := strings.Repeat("cd", 32)
 	repo := seedReceivedRepo(t, sendingKey) // snapshots for container:web x2, vm:db, all ~now
