@@ -1644,6 +1644,7 @@ const el: Partial<Translations> = {
   "placementCode.foreignDomain": "Αυτό το άμεσο αποθετήριο ανήκει σε προορισμό άλλου τομέα.",
   "placementCode.mirroredField": "Αυτή η τιμή προέρχεται από τον προορισμό. Άλλαξέ την εκεί.",
   "placementCode.companionTaken": "Αυτός ο προορισμός έχει ήδη άμεσο αποθετήριο.",
+  "placementCode.exclusionUnsaved": "Ο προορισμός αποθηκεύτηκε. Αυτά που πρέπει να εξαιρεθούν, όχι.",
   "placementCode.targetInUseItems": "Στοιχεία εξακολουθούν να αντιγράφονται στο άμεσο αποθετήριο αυτού του προορισμού: {n}. Στρέψε τα πρώτα αλλού.",
   "placementCode.targetInUseDefault": "Η προεπιλογή για {domains} δείχνει στο άμεσο αποθετήριο αυτού του προορισμού. Άλλαξε πρώτα την προεπιλογή.",
   "placementCode.directRepo": "Αυτό το αποθετήριο πηγαίνει μαζί με {target}. Αφαίρεσε τον προορισμό αντ' αυτού.",

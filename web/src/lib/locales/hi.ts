@@ -1655,6 +1655,7 @@ const hi: Partial<Translations> = {
   "placementCode.foreignDomain": "वह डायरेक्ट रिपॉज़िटरी किसी दूसरे डोमेन के गंतव्य की है।",
   "placementCode.mirroredField": "यह मान गंतव्य से आता है। इसे वहीं बदलें।",
   "placementCode.companionTaken": "इस गंतव्य के पास पहले से ही एक डायरेक्ट रिपॉज़िटरी है।",
+  "placementCode.exclusionUnsaved": "गंतव्य सहेजा गया। जो एक्सक्लूड होना चाहिए, वह नहीं।",
   "placementCode.targetInUseItems": "प्रविष्टियाँ अब भी इस गंतव्य की डायरेक्ट रिपॉज़िटरी में बैकअप ले रही हैं: {n}। पहले उन्हें कहीं और भेजें।",
   "placementCode.targetInUseDefault": "{domains} के लिए डिफ़ॉल्ट इस गंतव्य की डायरेक्ट रिपॉज़िटरी की ओर इशारा करता है। पहले डिफ़ॉल्ट बदलें।",
   "placementCode.directRepo": "यह रिपॉज़िटरी {target} के साथ जाती है। इसके बजाय वह गंतव्य हटाएँ।",

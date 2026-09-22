@@ -349,7 +349,7 @@ export function OffsiteTargetsSection({
           },
           alsoExclude
         );
-        if (!r.ok) throw new Error(r.error ?? t("settings.error"));
+        if (!r.ok) throw new Error(placementErrorText(t, lang, r, "settings.error"));
         pushSaveWarnings(push, t, r.warnings);
       }
       push(t("settings.saved"), "success");

@@ -328,7 +328,7 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		if err := h.svc.excludeFromTarget(stored.Domain, stored.ID, *v.AlsoExclude); err != nil {
 			// The row keeps its id, so there is nothing to take back here; the
 			// answer says which half of the save went through.
-			placementFail(w, fmt.Errorf("the target was saved; what it should leave out was not: %w", err), nil)
+			placementFail(w, fmt.Errorf("%w: %w", errExclusionUnsaved, err), nil)
 			return
 		}
 	}

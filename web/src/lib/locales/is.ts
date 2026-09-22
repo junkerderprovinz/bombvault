@@ -1655,6 +1655,7 @@ const is: Partial<Translations> = {
   "placementCode.foreignDomain": "Þessi beina geymsla tilheyrir áfangastað í öðru léni.",
   "placementCode.mirroredField": "Þetta gildi kemur frá áfangastaðnum. Breyttu því þar.",
   "placementCode.companionTaken": "Þessi áfangastaður hefur nú þegar beina geymslu.",
+  "placementCode.exclusionUnsaved": "Áfangastaðurinn var vistaður. Það sem á að útiloka ekki.",
   "placementCode.targetInUseItems": "Atriði öryggisafrita enn í beinu geymsluna hjá þessum áfangastað: {n}. Beindu þeim annað fyrst.",
   "placementCode.targetInUseDefault": "Sjálfgefið gildi fyrir {domains} vísar á beinu geymsluna hjá þessum áfangastað. Breyttu sjálfgefna gildinu fyrst.",
   "placementCode.directRepo": "Þessi geymsla fylgir {target}. Fjarlægðu áfangastaðinn í staðinn.",

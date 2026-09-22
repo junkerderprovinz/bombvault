@@ -1636,6 +1636,7 @@ const vi: Partial<Translations> = {
   "placementCode.foreignDomain": "Kho trực tiếp đó thuộc về một đích của miền khác.",
   "placementCode.mirroredField": "Giá trị này đến từ đích. Đổi nó ở đó.",
   "placementCode.companionTaken": "Đích này đã có kho trực tiếp.",
+  "placementCode.exclusionUnsaved": "Đích đã được lưu. Những gì cần loại trừ thì chưa.",
   "placementCode.targetInUseItems": "Vẫn còn mục đang sao lưu vào kho trực tiếp của đích này: {n}. Trỏ chúng sang nơi khác trước.",
   "placementCode.targetInUseDefault": "Giá trị mặc định cho {domains} đang trỏ đến kho trực tiếp của đích này. Đổi giá trị mặc định trước.",
   "placementCode.directRepo": "Kho này đi cùng với {target}. Hãy gỡ đích đó thay vì kho.",

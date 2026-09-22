@@ -1655,6 +1655,7 @@ const et: Partial<Translations> = {
   "placementCode.foreignDomain": "See otsehoidla kuulub teise domeeni sihtkohale.",
   "placementCode.mirroredField": "See väärtus tuleb sihtkohast. Muuda seda seal.",
   "placementCode.companionTaken": "Sellel sihtkohal on juba otsehoidla.",
+  "placementCode.exclusionUnsaved": "Sihtkoht salvestati. See, mis tuleb välja jätta, mitte.",
   "placementCode.targetInUseItems": "Üksused varundavad endiselt selle sihtkoha otsehoidlasse: {n}. Suuna need kõigepealt mujale.",
   "placementCode.targetInUseDefault": "{domains} vaikeväärtus osutab selle sihtkoha otsehoidlale. Muuda kõigepealt vaikeväärtust.",
   "placementCode.directRepo": "See hoidla käib kaasa sihtkohaga {target}. Eemalda selle asemel sihtkoht.",

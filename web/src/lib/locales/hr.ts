@@ -1655,6 +1655,7 @@ const hr: Partial<Translations> = {
   "placementCode.foreignDomain": "Taj izravni repozitorij pripada odredištu druge domene.",
   "placementCode.mirroredField": "Ova vrijednost dolazi s odredišta. Promijeni je ondje.",
   "placementCode.companionTaken": "Ovo odredište već ima izravni repozitorij.",
+  "placementCode.exclusionUnsaved": "Odredište je spremljeno. Ono što treba izuzeti, nije.",
   "placementCode.targetInUseItems": "Stavke se i dalje sigurnosno kopiraju u izravni repozitorij ovog odredišta: {n}. Prvo ih usmjeri drugamo.",
   "placementCode.targetInUseDefault": "Zadana vrijednost za {domains} pokazuje na izravni repozitorij ovog odredišta. Prvo promijeni zadanu vrijednost.",
   "placementCode.directRepo": "Ovaj repozitorij ide zajedno s odredištem {target}. Ukloni umjesto njega odredište.",

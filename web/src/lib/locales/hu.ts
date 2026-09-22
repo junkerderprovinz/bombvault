@@ -1647,6 +1647,7 @@ const hu: Partial<Translations> = {
   "placementCode.foreignDomain": "Ez a közvetlen tároló egy másik tartomány céljához tartozik.",
   "placementCode.mirroredField": "Ez az érték a céltól származik. Ott változtasd meg.",
   "placementCode.companionTaken": "Ennek a célnak már van közvetlen tárolója.",
+  "placementCode.exclusionUnsaved": "A cél mentve lett. Amit ki kell hagynia, nem.",
   "placementCode.targetInUseItems": "Elemek még mindig ide mentenek e cél közvetlen tárolójába: {n}. Először irányítsd őket máshová.",
   "placementCode.targetInUseDefault": "A(z) {domains} alapértelmezése e cél közvetlen tárolójára mutat. Először változtasd meg az alapértelmezést.",
   "placementCode.directRepo": "Ez a tároló a(z) {target} céllal jár együtt. Helyette a célt távolítsd el.",

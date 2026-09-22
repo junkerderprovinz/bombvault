@@ -1644,6 +1644,7 @@ const no: Partial<Translations> = {
   "placementCode.foreignDomain": "Det direkte depotet tilhører et mål i et annet domene.",
   "placementCode.mirroredField": "Denne verdien kommer fra målet. Endre den der.",
   "placementCode.companionTaken": "Dette målet har allerede et direkte depot.",
+  "placementCode.exclusionUnsaved": "Målet ble lagret. Det som skal utelukkes, ble ikke.",
   "placementCode.targetInUseItems": "Elementer sikkerhetskopieres fortsatt til dette målets direkte depot: {n}. Pek dem et annet sted først.",
   "placementCode.targetInUseDefault": "Standardverdien for {domains} peker på dette målets direkte depot. Endre standardverdien først.",
   "placementCode.directRepo": "Dette depotet hører sammen med {target}. Fjern målet i stedet.",

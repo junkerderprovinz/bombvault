@@ -1639,6 +1639,7 @@ const sr: Partial<Translations> = {
   "placementCode.foreignDomain": "Тај директни репозиторијум припада циљу друге домене.",
   "placementCode.mirroredField": "Ова вредност долази од циља. Промени је тамо.",
   "placementCode.companionTaken": "Овај циљ већ има директни репозиторијум.",
+  "placementCode.exclusionUnsaved": "Циљ је сачуван. Оно што треба изузети није.",
   "placementCode.targetInUseItems": "Ставке и даље праве резервне копије у директни репозиторијум овог циља: {n}. Прво их усмери другде.",
   "placementCode.targetInUseDefault": "Подразумевана вредност за {domains} показује на директни репозиторијум овог циља. Прво промени подразумевану вредност.",
   "placementCode.directRepo": "Овај репозиторијум иде заједно са циљем {target}. Уклони уместо њега циљ.",

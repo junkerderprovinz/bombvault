@@ -1655,6 +1655,7 @@ const eu: Partial<Translations> = {
   "placementCode.foreignDomain": "Zuzeneko biltegi hori beste domeinu bateko helmuga bati dagokio.",
   "placementCode.mirroredField": "Balio hau helmugatik dator. Aldatu hor.",
   "placementCode.companionTaken": "Helmuga honek jada badu zuzeneko biltegi bat.",
+  "placementCode.exclusionUnsaved": "Helmuga gorde da. Baztertu behar duena, ez.",
   "placementCode.targetInUseItems": "Elementuak oraindik helmuga honen zuzeneko biltegian babesten dira: {n}. Zuzendu haiek lehenik beste nonbaitera.",
   "placementCode.targetInUseDefault": "{domains} arloaren balio lehenetsiak helmuga honen zuzeneko biltegira seinalatzen du. Aldatu lehenik balio lehenetsia.",
   "placementCode.directRepo": "Biltegi hau {target}(r)ekin doa. Kendu helmuga hori horren ordez.",

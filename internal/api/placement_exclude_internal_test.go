@@ -234,8 +234,7 @@ func TestAMovedTargetSaysItWasSavedWhenOnlyTheExclusionFailed(t *testing.T) {
 		"domain": "containers", "name": "B2", "repo": "b2:other:containers", "enabled": true,
 		"alsoExclude": map[string]any{"identities": []string{"container:plex"}, "default": false},
 	})
-	msg, _ := res["error"].(string)
-	if res["ok"] != false || !strings.Contains(msg, "the target was saved") {
+	if res["ok"] != false || res["code"] != "exclusion-unsaved" {
 		t.Fatalf("PUT = %v, want a refusal that says the target itself was saved", res)
 	}
 	stored, ok, err := f.st.GetOffsiteTarget(b2.ID)

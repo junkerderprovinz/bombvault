@@ -1639,6 +1639,7 @@ const pl: Partial<Translations> = {
   "placementCode.foreignDomain": "To repozytorium bezpośrednie należy do celu innej domeny.",
   "placementCode.mirroredField": "Ta wartość pochodzi z celu. Zmień ją tam.",
   "placementCode.companionTaken": "Ten cel ma już repozytorium bezpośrednie.",
+  "placementCode.exclusionUnsaved": "Cel został zapisany. To, co ma wykluczyć, nie.",
   "placementCode.targetInUseItems": "Elementy nadal tworzą kopie zapasowe w repozytorium bezpośrednim tego celu: {n}. Najpierw skieruj je gdzie indziej.",
   "placementCode.targetInUseDefault": "Wartość domyślna dla {domains} wskazuje repozytorium bezpośrednie tego celu. Najpierw zmień wartość domyślną.",
   "placementCode.directRepo": "To repozytorium idzie razem z celem {target}. Usuń zamiast niego ten cel.",

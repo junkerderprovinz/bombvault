@@ -99,6 +99,17 @@ describe("the off-site targets and a new location", () => {
     expect(fake.callsTo("updateOffsiteTarget")[0][2]).toBeUndefined();
   });
 
+  it("says which half of the save went through when the exclusions failed", async () => {
+    listed.targets = [hetzner];
+    fake.reply("updateOffsiteTarget", { ok: false, code: "exclusion-unsaved", error: "the server's own sentence" });
+    renderWithProviders(<OffsiteTargetsSection domain="containers" t={t} />);
+    fireEvent.click(await screen.findByText(en["offsite.targets.edit"]));
+    fireEvent.change(repoField(), { target: { value: "sftp:u1@box:/containers-new" } });
+    save();
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Confirm" }));
+    expect(await screen.findByText(en["placementCode.exclusionUnsaved"])).toBeTruthy();
+  });
+
   it("does not ask when a saved target keeps its location", async () => {
     listed.targets = [hetzner];
     renderWithProviders(<OffsiteTargetsSection domain="containers" t={t} />);

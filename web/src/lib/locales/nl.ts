@@ -1641,6 +1641,7 @@ const nl: Partial<Translations> = {
   "placementCode.foreignDomain": "Die directe repository hoort bij een bestemming van een ander domein.",
   "placementCode.mirroredField": "Deze waarde komt van de bestemming. Wijzig ze daar.",
   "placementCode.companionTaken": "Deze bestemming heeft al een directe repository.",
+  "placementCode.exclusionUnsaved": "De bestemming is opgeslagen. Wat ze moet uitsluiten niet.",
   "placementCode.targetInUseItems": "Er back-uppen nog items naar de directe repository van deze bestemming: {n}. Wijs ze eerst ergens anders naartoe.",
   "placementCode.targetInUseDefault": "De standaard voor {domains} wijst naar de directe repository van deze bestemming. Wijzig eerst de standaard.",
   "placementCode.directRepo": "Deze repository hoort bij {target}. Verwijder in plaats daarvan die bestemming.",

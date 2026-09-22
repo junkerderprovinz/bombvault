@@ -1644,6 +1644,7 @@ const fi: Partial<Translations> = {
   "placementCode.foreignDomain": "Tämä suora arkisto kuuluu toisen toimialueen kohteelle.",
   "placementCode.mirroredField": "Tämä arvo tulee kohteesta. Muuta se siellä.",
   "placementCode.companionTaken": "Tällä kohteella on jo suora arkisto.",
+  "placementCode.exclusionUnsaved": "Kohde tallennettiin. Se, mikä pitäisi jättää pois, ei.",
   "placementCode.targetInUseItems": "Kohteet varmuuskopioituvat yhä tämän kohteen suoraan arkistoon: {n}. Osoita ne ensin muualle.",
   "placementCode.targetInUseDefault": "{domains} oletusarvo osoittaa tämän kohteen suoraan arkistoon. Vaihda oletusarvo ensin.",
   "placementCode.directRepo": "Tämä arkisto kuuluu yhteen kohteen {target} kanssa. Poista sen sijaan kohde.",

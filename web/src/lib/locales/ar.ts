@@ -1647,6 +1647,7 @@ const ar: Partial<Translations> = {
   "placementCode.foreignDomain": "هذا المستودع المباشر ينتمي إلى هدف في نطاق آخر.",
   "placementCode.mirroredField": "هذه القيمة تأتي من الهدف. غيّرها هناك.",
   "placementCode.companionTaken": "هذا الهدف لديه بالفعل مستودع مباشر.",
+  "placementCode.exclusionUnsaved": "تم حفظ الهدف. أما ما يجب استبعاده فلا.",
   "placementCode.targetInUseItems": "لا تزال عناصر تُنسخ احتياطيًا إلى المستودع المباشر لهذا الهدف: {n}. وجّهها إلى مكان آخر أولًا.",
   "placementCode.targetInUseDefault": "القيمة الافتراضية لـ {domains} تشير إلى المستودع المباشر لهذا الهدف. غيّر القيمة الافتراضية أولًا.",
   "placementCode.directRepo": "هذا المستودع مرتبط بـ {target}. أزل ذلك الهدف بدلاً منه.",

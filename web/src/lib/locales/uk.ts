@@ -1639,6 +1639,7 @@ const uk: Partial<Translations> = {
   "placementCode.foreignDomain": "Цей прямий репозиторій належить цілі іншого домену.",
   "placementCode.mirroredField": "Це значення надходить від цілі. Зміни його там.",
   "placementCode.companionTaken": "Ця ціль вже має прямий репозиторій.",
+  "placementCode.exclusionUnsaved": "Ціль збережено. Те, що потрібно виключити, ні.",
   "placementCode.targetInUseItems": "Елементи досі резервуються у прямий репозиторій цієї цілі: {n}. Спочатку спрямуй їх деінде.",
   "placementCode.targetInUseDefault": "Типове значення для {domains} вказує на прямий репозиторій цієї цілі. Спочатку зміни типове значення.",
   "placementCode.directRepo": "Цей репозиторій іде разом із ціллю {target}. Прибери натомість ціль.",

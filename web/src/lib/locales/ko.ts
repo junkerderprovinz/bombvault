@@ -1636,6 +1636,7 @@ const ko: Partial<Translations> = {
   "placementCode.foreignDomain": "해당 직접 저장소는 다른 도메인의 대상에 속합니다.",
   "placementCode.mirroredField": "이 값은 대상에서 가져옵니다. 그곳에서 변경하세요.",
   "placementCode.companionTaken": "이 대상에는 이미 직접 저장소가 있습니다.",
+  "placementCode.exclusionUnsaved": "대상은 저장되었습니다. 제외할 항목은 저장되지 않았습니다.",
   "placementCode.targetInUseItems": "항목이 아직 이 대상의 직접 저장소로 백업되고 있습니다: {n}개. 먼저 다른 곳으로 돌리세요.",
   "placementCode.targetInUseDefault": "{domains}의 기본값이 이 대상의 직접 저장소를 가리킵니다. 먼저 기본값을 바꾸세요.",
   "placementCode.directRepo": "이 저장소는 {target}과(와) 함께 갑니다. 대신 그 대상을 없애세요.",

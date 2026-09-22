@@ -1644,6 +1644,7 @@ const sv: Partial<Translations> = {
   "placementCode.foreignDomain": "Det direktarkivet tillhör ett mål i en annan domän.",
   "placementCode.mirroredField": "Det här värdet kommer från målet. Ändra det där.",
   "placementCode.companionTaken": "Det här målet har redan ett direktarkiv.",
+  "placementCode.exclusionUnsaved": "Målet sparades. Det som ska uteslutas gjorde det inte.",
   "placementCode.targetInUseItems": "Objekt säkerhetskopieras fortfarande till det här målets direktarkiv: {n}. Peka om dem först.",
   "placementCode.targetInUseDefault": "Standardvärdet för {domains} pekar på det här målets direktarkiv. Ändra standardvärdet först.",
   "placementCode.directRepo": "Det här arkivet hör ihop med {target}. Ta bort målet i stället.",

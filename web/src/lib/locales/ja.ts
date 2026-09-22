@@ -1636,6 +1636,7 @@ const ja: Partial<Translations> = {
   "placementCode.foreignDomain": "そのダイレクトリポジトリは別のドメインのターゲットに属しています。",
   "placementCode.mirroredField": "この値はターゲットから来ています。そちらで変更してください。",
   "placementCode.companionTaken": "そのターゲットにはすでにダイレクトリポジトリがあります。",
+  "placementCode.exclusionUnsaved": "ターゲットは保存されました。除外する項目は保存されていません。",
   "placementCode.targetInUseItems": "項目はまだこのターゲットのダイレクトリポジトリにバックアップされています: {n}。先に別の場所を指定してください。",
   "placementCode.targetInUseDefault": "{domains} の既定値はこのターゲットのダイレクトリポジトリを指しています。まず既定値を変更してください。",
   "placementCode.directRepo": "このリポジトリは{target}と一緒に存在します。代わりにそのターゲットを削除してください。",
