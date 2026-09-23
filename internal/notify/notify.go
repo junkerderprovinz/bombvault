@@ -84,8 +84,9 @@ type Config struct {
 	MatrixRoom       string `json:"matrixRoom"`
 	HealthchecksURL  string `json:"healthchecksUrl"`
 	// HealthchecksByDomain maps a backup domain ("container", "VM", "flash",
-	// "config", "files") to its own check URL, which replaces HealthchecksURL
-	// for that domain. An empty entry falls back to HealthchecksURL.
+	// "config", "files", "zfs") to its own check URL, which replaces
+	// HealthchecksURL for that domain. An empty entry falls back to
+	// HealthchecksURL.
 	HealthchecksByDomain map[string]string `json:"healthchecksByDomain"`
 	// Unraid sends each event to Unraid's own notification system. The service
 	// layer delivers it over SSH through the host's notify script; Send does not.

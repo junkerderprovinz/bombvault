@@ -26,8 +26,10 @@ func TestDomainStatusCoveredByEverything(t *testing.T) {
 
 	s := mustSettings(t, st)
 	s.ContainersEnabled, s.VMsEnabled, s.FlashEnabled, s.ConfigEnabled, s.FilesEnabled = true, true, true, true, true
+	s.ZFSEnabled = true
 	// No per-domain schedule, one whole-server pass at 05:00.
 	s.ContainersSchedule, s.VMsSchedule, s.FlashSchedule, s.ConfigSchedule, s.FilesSchedule = "off", "off", "off", "off", "off"
+	s.ZFSSchedule = "off"
 	s.EverythingSchedule = "daily 05:00"
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)

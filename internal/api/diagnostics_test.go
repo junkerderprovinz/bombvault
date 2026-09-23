@@ -249,3 +249,48 @@ func TestDiagnosticsCarriesDBDumpState(t *testing.T) {
 		}
 	}
 }
+
+func TestDiagnosticsHasZFSFile(t *testing.T) {
+	d := &fakeServiceDocker{}
+	h, st := dbFieldsRouterHarness(t, d)
+
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ZFSEnabled = true
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	item, err := st.CreateZFSDataset(store.ZFSDataset{
+		Dataset: "cache/appdata", Enabled: true, ExcludedChildren: []string{"cache/appdata/cachey"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.SetZFSCheck(item.ID, "ok", "", "/mnt/cache/appdata", 1); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.ReplaceZFSMembers(item.ID, []store.ZFSMember{
+		{ItemID: item.ID, Dataset: "cache/appdata/secret", Outcome: "key-not-loaded"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	cookie := loginCookie(t, h, "correct horse battery staple")
+	w := getRaw(t, h, "/api/diagnostics", cookie)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body = %s", w.Code, w.Body.String())
+	}
+
+	members := zipMembers(t, w.Body.Bytes())
+	zfsJSON, ok := members["zfs.json"]
+	if !ok {
+		t.Fatalf("the bundle is missing zfs.json. Members present: %v", memberNames(members))
+	}
+	for _, want := range []string{"cache/appdata", "cache/appdata/cachey", "key-not-loaded", "propagation", "mounts"} {
+		if !strings.Contains(zfsJSON, want) {
+			t.Errorf("zfs.json does not carry %q: %s", want, zfsJSON)
+		}
+	}
+}

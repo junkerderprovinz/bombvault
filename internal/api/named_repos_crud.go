@@ -230,7 +230,7 @@ func (h *Handler) validateNamedRepo(t store.OffsiteTarget, checkClass bool) erro
 	if sErr != nil {
 		return fmt.Errorf("read settings to check this location: %w", sErr)
 	}
-	for _, d := range []string{"containers", "vms", "flash", "config", "files"} {
+	for _, d := range []string{"containers", "vms", "flash", "config", "files", "zfs"} {
 		if own, oErr := h.svc.repoFor(settings, d, "local"); oErr == nil && sameRepoLocation(own, loc) {
 			return fmt.Errorf("that is already the %s domain's own repository; a named repository has to be a different place", d)
 		}

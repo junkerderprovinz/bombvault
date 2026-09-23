@@ -2131,27 +2131,32 @@ type settingsView struct {
 	FlashEnabled              bool   `json:"flashEnabled"`
 	ConfigEnabled             bool   `json:"configEnabled"`
 	FilesEnabled              bool   `json:"filesEnabled"`
+	ZFSEnabled                bool   `json:"zfsEnabled"`
 	ContainersPath            string `json:"containersPath"`
 	VMsPath                   string `json:"vmsPath"`
 	FlashPath                 string `json:"flashPath"`
 	ConfigPath                string `json:"configPath"`
 	FilesPath                 string `json:"filesPath"`
+	ZFSPath                   string `json:"zfsPath"`
 	RestoreFolder             string `json:"restoreFolder"`
 	ContainersOffsite         string `json:"containersOffsite"`
 	VMsOffsite                string `json:"vmsOffsite"`
 	FlashOffsite              string `json:"flashOffsite"`
 	ConfigOffsite             string `json:"configOffsite"`
 	FilesOffsite              string `json:"filesOffsite"`
+	ZFSOffsite                string `json:"zfsOffsite"`
 	ContainersOffsiteSchedule string `json:"containersOffsiteSchedule"`
 	VMsOffsiteSchedule        string `json:"vmsOffsiteSchedule"`
 	FlashOffsiteSchedule      string `json:"flashOffsiteSchedule"`
 	ConfigOffsiteSchedule     string `json:"configOffsiteSchedule"`
 	FilesOffsiteSchedule      string `json:"filesOffsiteSchedule"`
+	ZFSOffsiteSchedule        string `json:"zfsOffsiteSchedule"`
 	ContainersSchedule        string `json:"containersSchedule"`
 	VMsSchedule               string `json:"vmsSchedule"`
 	FlashSchedule             string `json:"flashSchedule"`
 	ConfigSchedule            string `json:"configSchedule"`
 	FilesSchedule             string `json:"filesSchedule"`
+	ZFSSchedule               string `json:"zfsSchedule"`
 	// Scheduled flash ZIP export: enable, destination folder (relative subpath
 	// under the mount root), and how many timestamped zips to keep (0 = a single
 	// overwriting flash-latest.zip).
@@ -2210,6 +2215,7 @@ type settingsView struct {
 	FlashOffsiteImmutable      bool `json:"flashOffsiteImmutable"`
 	ConfigOffsiteImmutable     bool `json:"configOffsiteImmutable"`
 	FilesOffsiteImmutable      bool `json:"filesOffsiteImmutable"`
+	ZFSOffsiteImmutable        bool `json:"zfsOffsiteImmutable"`
 	// Off-site growth budget in GB (0 = alarm off) + tamper-test cadence +
 	// DR-drill target container/VM ('' = auto).
 	OffsiteGrowthBudgetGB int    `json:"offsiteGrowthBudgetGB"`
@@ -2334,11 +2340,13 @@ func toView(s store.Settings) settingsView {
 		FlashEnabled:      s.FlashEnabled,
 		ConfigEnabled:     s.ConfigEnabled,
 		FilesEnabled:      s.FilesEnabled,
+		ZFSEnabled:        s.ZFSEnabled,
 		ContainersPath:    s.ContainersPath,
 		VMsPath:           s.VMsPath,
 		FlashPath:         s.FlashPath,
 		ConfigPath:        s.ConfigPath,
 		FilesPath:         s.FilesPath,
+		ZFSPath:           s.ZFSPath,
 		RestoreFolder:     s.RestoreFolder,
 		// Verbatim here on purpose. toView is the faithful store-to-view
 		// mapping that BOTH exits share, and the credentialed settings export
@@ -2350,16 +2358,19 @@ func toView(s store.Settings) settingsView {
 		FlashOffsite:                s.FlashOffsite,
 		ConfigOffsite:               s.ConfigOffsite,
 		FilesOffsite:                s.FilesOffsite,
+		ZFSOffsite:                  s.ZFSOffsite,
 		ContainersOffsiteSchedule:   s.ContainersOffsiteSchedule,
 		VMsOffsiteSchedule:          s.VMsOffsiteSchedule,
 		FlashOffsiteSchedule:        s.FlashOffsiteSchedule,
 		ConfigOffsiteSchedule:       s.ConfigOffsiteSchedule,
 		FilesOffsiteSchedule:        s.FilesOffsiteSchedule,
+		ZFSOffsiteSchedule:          s.ZFSOffsiteSchedule,
 		ContainersSchedule:          s.ContainersSchedule,
 		VMsSchedule:                 s.VMsSchedule,
 		FlashSchedule:               s.FlashSchedule,
 		ConfigSchedule:              s.ConfigSchedule,
 		FilesSchedule:               s.FilesSchedule,
+		ZFSSchedule:                 s.ZFSSchedule,
 		FlashZipExportEnabled:       s.FlashZipExportEnabled,
 		FlashZipExportPath:          s.FlashZipExportPath,
 		FlashZipExportKeep:          s.FlashZipExportKeep,
@@ -2390,6 +2401,7 @@ func toView(s store.Settings) settingsView {
 		FlashOffsiteImmutable:       s.FlashOffsiteImmutable,
 		ConfigOffsiteImmutable:      s.ConfigOffsiteImmutable,
 		FilesOffsiteImmutable:       s.FilesOffsiteImmutable,
+		ZFSOffsiteImmutable:         s.ZFSOffsiteImmutable,
 		OffsiteGrowthBudgetGB:       s.OffsiteGrowthBudgetGB,
 		TamperTestSchedule:          s.TamperTestSchedule,
 		DRDrillTarget:               s.DRDrillTarget,
@@ -2457,6 +2469,7 @@ func scrubGetSettingsSecrets(v settingsView) settingsView {
 	v.FlashOffsite = scrubRepoLocation(v.FlashOffsite)
 	v.ConfigOffsite = scrubRepoLocation(v.ConfigOffsite)
 	v.FilesOffsite = scrubRepoLocation(v.FilesOffsite)
+	v.ZFSOffsite = scrubRepoLocation(v.ZFSOffsite)
 	v.EverythingPreHook = ""
 	v.EverythingPostHook = ""
 	return v
@@ -2532,6 +2545,7 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
 func rejectEveryNSchedules(v settingsView) string {
 	for _, cad := range []string{
 		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule,
+		v.ZFSOffsiteSchedule,
 	} {
 		if c, _ := schedule.ParseCadence(cad); c.IntervalDays > 0 {
 			return "this schedule does not support 'everyN': use 'daily HH:MM', 'weekly DOW HH:MM', or a cron expression"
@@ -2569,11 +2583,13 @@ func (h *Handler) rejectSettingsPathOnNamedRepo(v settingsView, cur store.Settin
 		{"Flash", v.FlashPath, cur.FlashPath},
 		{"Config", v.ConfigPath, cur.ConfigPath},
 		{"Folders", v.FilesPath, cur.FilesPath},
+		{"ZFS datasets", v.ZFSPath, cur.ZFSPath},
 		{"Containers off-site", v.ContainersOffsite, cur.ContainersOffsite},
 		{"VMs off-site", v.VMsOffsite, cur.VMsOffsite},
 		{"Flash off-site", v.FlashOffsite, cur.FlashOffsite},
 		{"Config off-site", v.ConfigOffsite, cur.ConfigOffsite},
 		{"Folders off-site", v.FilesOffsite, cur.FilesOffsite},
+		{"ZFS datasets off-site", v.ZFSOffsite, cur.ZFSOffsite},
 	} {
 		if strings.TrimSpace(f.loc) == "" {
 			continue
@@ -2622,8 +2638,8 @@ func rejectInvalidSettingsPaths(v settingsView, mountRoot string) string {
 	// blank = none). A remote backend (rclone:/s3:/rest:…) is accepted verbatim;
 	// a local path must stay under the mount root.
 	for _, sub := range []string{
-		v.ContainersPath, v.VMsPath, v.FlashPath, v.ConfigPath, v.FilesPath, v.RestoreFolder,
-		v.ContainersOffsite, v.VMsOffsite, v.FlashOffsite, v.ConfigOffsite, v.FilesOffsite,
+		v.ContainersPath, v.VMsPath, v.FlashPath, v.ConfigPath, v.FilesPath, v.ZFSPath, v.RestoreFolder,
+		v.ContainersOffsite, v.VMsOffsite, v.FlashOffsite, v.ConfigOffsite, v.FilesOffsite, v.ZFSOffsite,
 	} {
 		if sub == "" || restic.IsRemoteRepo(sub) {
 			continue
@@ -2694,8 +2710,9 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// Validate each cadence parses (backup schedules + off-site + drills +
 	// tamper-test schedules).
 	for _, cad := range []string{
-		v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule, v.ConfigSchedule, v.FilesSchedule,
+		v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule, v.ConfigSchedule, v.FilesSchedule, v.ZFSSchedule,
 		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule,
+		v.ZFSOffsiteSchedule,
 		v.DrillsSchedule, v.TamperTestSchedule, v.DigestSchedule, v.EverythingSchedule,
 	} {
 		if _, err := schedule.ParseCadence(cad); err != nil {
@@ -2773,11 +2790,13 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.FlashEnabled = v.FlashEnabled
 		cur.ConfigEnabled = v.ConfigEnabled
 		cur.FilesEnabled = v.FilesEnabled
+		cur.ZFSEnabled = v.ZFSEnabled
 		cur.ContainersPath = v.ContainersPath
 		cur.VMsPath = v.VMsPath
 		cur.FlashPath = v.FlashPath
 		cur.ConfigPath = v.ConfigPath
 		cur.FilesPath = v.FilesPath
+		cur.ZFSPath = v.ZFSPath
 		cur.RestoreFolder = v.RestoreFolder
 		// keepLocation: the GET now hands out these locations with any embedded
 		// credential replaced by the redaction marker, so every client's
@@ -2796,16 +2815,19 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.FlashOffsite = keepLocation(v.FlashOffsite, cur.FlashOffsite)
 		cur.ConfigOffsite = keepLocation(v.ConfigOffsite, cur.ConfigOffsite)
 		cur.FilesOffsite = keepLocation(v.FilesOffsite, cur.FilesOffsite)
+		cur.ZFSOffsite = keepLocation(v.ZFSOffsite, cur.ZFSOffsite)
 		cur.ContainersOffsiteSchedule = v.ContainersOffsiteSchedule
 		cur.VMsOffsiteSchedule = v.VMsOffsiteSchedule
 		cur.FlashOffsiteSchedule = v.FlashOffsiteSchedule
 		cur.ConfigOffsiteSchedule = v.ConfigOffsiteSchedule
 		cur.FilesOffsiteSchedule = v.FilesOffsiteSchedule
+		cur.ZFSOffsiteSchedule = v.ZFSOffsiteSchedule
 		cur.ContainersSchedule = v.ContainersSchedule
 		cur.VMsSchedule = v.VMsSchedule
 		cur.FlashSchedule = v.FlashSchedule
 		cur.ConfigSchedule = v.ConfigSchedule
 		cur.FilesSchedule = v.FilesSchedule
+		cur.ZFSSchedule = v.ZFSSchedule
 		cur.FlashZipExportEnabled = v.FlashZipExportEnabled
 		cur.FlashZipExportPath = v.FlashZipExportPath
 		cur.FlashZipExportKeep = max(0, v.FlashZipExportKeep)
@@ -2834,6 +2856,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.FlashOffsiteImmutable = v.FlashOffsiteImmutable
 		cur.ConfigOffsiteImmutable = v.ConfigOffsiteImmutable
 		cur.FilesOffsiteImmutable = v.FilesOffsiteImmutable
+		cur.ZFSOffsiteImmutable = v.ZFSOffsiteImmutable
 		cur.OffsiteGrowthBudgetGB = max(0, v.OffsiteGrowthBudgetGB)
 		cur.TamperTestSchedule = v.TamperTestSchedule
 		cur.DRDrillTarget = strings.TrimSpace(v.DRDrillTarget)
@@ -2945,7 +2968,8 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// until enforced far-side. The "warnings" array is a backward-compatible
 	// extension of the ok envelope (absent when there is nothing to warn about).
 	var warnings []string
-	if (s.ContainersOffsiteImmutable || s.VMsOffsiteImmutable || s.FlashOffsiteImmutable || s.ConfigOffsiteImmutable || s.FilesOffsiteImmutable) &&
+	if (s.ContainersOffsiteImmutable || s.VMsOffsiteImmutable || s.FlashOffsiteImmutable || s.ConfigOffsiteImmutable ||
+		s.FilesOffsiteImmutable || s.ZFSOffsiteImmutable) &&
 		(s.OffsiteRetentionKeepLast > 0 || s.OffsiteRetentionKeepDaily > 0 ||
 			s.OffsiteRetentionKeepWeekly > 0 || s.OffsiteRetentionKeepMonthly > 0) {
 		warnings = append(warnings, "The off-site repo is append-only (immutable), so BombVault will not apply the off-site retention policy — enforce retention far-side (e.g. a rest-server prune cron) or use a maintenance window.")
@@ -3068,11 +3092,11 @@ func (h *Handler) handleRecoveryKitAck(w http.ResponseWriter, _ *http.Request) {
 }
 
 // handleCheck verifies the integrity of a domain's restic repo (restic check).
-// POST /api/check/{domain}  domain ∈ {containers, vms, flash, files}
+// POST /api/check/{domain}  domain ∈ {containers, vms, flash, files, zfs}
 func (h *Handler) handleCheck(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "files":
+	case "containers", "vms", "flash", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -3088,11 +3112,11 @@ func (h *Handler) handleCheck(w http.ResponseWriter, r *http.Request) {
 // recorded result. ?kind=subset (default) is the classic `restic check
 // --read-data-subset` integrity check; ?kind=dr is a real off-site sandbox restore
 // (containers, flash + files only). POST /api/verify/{domain}?source=&kind=
-// domain ∈ {containers,vms,flash,files}
+// domain ∈ {containers,vms,flash,files,zfs}
 func (h *Handler) handleRunDrill(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "files":
+	case "containers", "vms", "flash", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -3113,7 +3137,7 @@ func (h *Handler) handleRunDrill(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleDrills(w http.ResponseWriter, r *http.Request) {
 	domain := r.URL.Query().Get("domain")
 	switch domain {
-	case "containers", "vms", "flash", "files":
+	case "containers", "vms", "flash", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -3154,7 +3178,7 @@ func (h *Handler) handleDrills(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleUnlock(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "files":
+	case "containers", "vms", "flash", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -3179,7 +3203,7 @@ func (h *Handler) handleUnlock(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handlePrune(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -3202,7 +3226,7 @@ func (h *Handler) handlePrune(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleRetentionPreview(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -3230,7 +3254,7 @@ func (h *Handler) handleRetentionPreview(w http.ResponseWriter, r *http.Request)
 func (h *Handler) handleDeleteSnapshot(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -3255,7 +3279,7 @@ func (h *Handler) handleReplicateOffsite(w http.ResponseWriter, r *http.Request)
 	// supported the domain all along; this handler-local copy of the domain
 	// list was the only thing rejecting it, which is why self-backup alone had
 	// no connection test, no replicate-now and no wizard snippet.
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -3277,7 +3301,7 @@ func (h *Handler) handleTestOffsite(w http.ResponseWriter, r *http.Request) {
 	// supported the domain all along; this handler-local copy of the domain
 	// list was the only thing rejecting it, which is why self-backup alone had
 	// no connection test, no replicate-now and no wizard snippet.
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -3304,7 +3328,7 @@ func (h *Handler) handleDeploySnippet(w http.ResponseWriter, r *http.Request) {
 	// supported the domain all along; this handler-local copy of the domain
 	// list was the only thing rejecting it, which is why self-backup alone had
 	// no connection test, no replicate-now and no wizard snippet.
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -3328,7 +3352,7 @@ func (h *Handler) handleTamperTest(w http.ResponseWriter, r *http.Request) {
 	// supported the domain all along; this handler-local copy of the domain
 	// list was the only thing rejecting it, which is why self-backup alone had
 	// no connection test, no replicate-now and no wizard snippet.
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
@@ -3700,6 +3724,12 @@ func (h *Handler) runTargetMaps() (name, domain map[string]string) {
 			domain[fs.ID] = "files"
 		}
 	}
+	if ds, lErr := h.store.ListZFSDatasets(); lErr == nil {
+		for _, d := range ds {
+			name[d.ID] = d.Dataset
+			domain[d.ID] = "zfs"
+		}
+	}
 	return name, domain
 }
 
@@ -3831,7 +3861,7 @@ func (h *Handler) handleHistory(w http.ResponseWriter, r *http.Request) {
 
 // handleStats returns a domain's recorded repository-size samples for the
 // size/dedup trend. GET /api/stats?domain=&source=&limit= — domain ∈ {containers,
-// vms, flash, files}; source ∈ {local, offsite} (default local); limit defaults to
+// vms, flash, files, zfs}; source ∈ {local, offsite} (default local); limit defaults to
 // 90, clamped to 1..365. The response carries the ascending sample list plus the
 // latest sample (or null when there is none) for the headline figure. "files" is
 // accepted because CollectStatsOnStartup / maybeCollectStats already sample the
@@ -3843,7 +3873,7 @@ func (h *Handler) handleHistory(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleStats(w http.ResponseWriter, r *http.Request) {
 	domain := r.URL.Query().Get("domain")
 	switch domain {
-	case "containers", "vms", "flash", "files":
+	case "containers", "vms", "flash", "files", "zfs":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return

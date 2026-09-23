@@ -151,6 +151,27 @@ func TestPatchZFSDatasetDisableNeverCallsHost(t *testing.T) {
 	}
 }
 
+func TestPatchZFSDatasetKeepsBothFieldsWhenExcludesAndEnabledChangeTogether(t *testing.T) {
+	s, st, _, _ := zfsRunFixture(t, zfsTwoDatasetTree())
+	d := zfsSeedItem(t, st, zfsRoot)
+
+	off := false
+	patterns := []string{"*.tmp"}
+	if err := s.PatchZFSDataset(context.Background(), d.ID, ZFSDatasetPatch{Enabled: &off, Excludes: &patterns}); err != nil {
+		t.Fatalf("patch: %v", err)
+	}
+	row, err := st.GetZFSDataset(d.ID)
+	if err != nil {
+		t.Fatalf("reload the item: %v", err)
+	}
+	if row.Enabled {
+		t.Fatal("the item is still enabled")
+	}
+	if len(row.Excludes) != 1 || row.Excludes[0] != "*.tmp" {
+		t.Fatalf("excludes = %v, want the patched pattern", row.Excludes)
+	}
+}
+
 func TestPatchZFSDatasetEnableRunsCheck(t *testing.T) {
 	s, st, host, _ := zfsRunFixture(t, zfsTwoDatasetTree())
 	d, err := st.CreateZFSDataset(store.ZFSDataset{Dataset: zfsRoot})

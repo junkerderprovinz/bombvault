@@ -83,7 +83,7 @@ type EncryptionDetection struct {
 // encryptionDetectDomains lists the domains whose repositories are probed. A
 // domain is probed whenever its location is set, even with its Enabled flag
 // off: on a fresh recovery instance those flags have not been restored yet.
-var encryptionDetectDomains = []string{"containers", "vms", "flash", "files", "config"}
+var encryptionDetectDomains = []string{"containers", "vms", "flash", "files", "config", "zfs"}
 
 // encryptionProbeTimeout bounds each probe attempt on its own. With one budget
 // for the encrypted/plain pair, a cold sftp connection over a VPN can use it
@@ -272,6 +272,8 @@ func localRepoLocation(settings store.Settings, domain string) string {
 		return settings.FilesPath
 	case "config":
 		return settings.ConfigPath
+	case "zfs":
+		return settings.ZFSPath
 	}
 	return ""
 }

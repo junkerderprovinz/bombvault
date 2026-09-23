@@ -70,6 +70,8 @@ func digestBackupScheduleFor(domain string, settings store.Settings) string {
 		return settings.ConfigSchedule
 	case "files":
 		return settings.FilesSchedule
+	case "zfs":
+		return settings.ZFSSchedule
 	}
 	return ""
 }
@@ -91,6 +93,11 @@ func (s *Service) runTargetNames() map[string]string {
 	if fss, err := s.store.ListFileSets(); err == nil {
 		for _, fs := range fss {
 			names[fs.ID] = fs.Name
+		}
+	}
+	if ds, err := s.store.ListZFSDatasets(); err == nil {
+		for _, d := range ds {
+			names[d.ID] = d.Dataset
 		}
 	}
 	return names

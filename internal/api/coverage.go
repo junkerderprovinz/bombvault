@@ -55,6 +55,10 @@ const (
 	// backup copies the data while the server runs, so nothing holds a
 	// consistent copy of this database.
 	CoverageDBDumpOnlyCopyOff = "db-dump-only-copy-off"
+	// CoverageZFSMemberSkipped: the item is scheduled, but the last run could
+	// not read this dataset of its tree, so the green item covers less than its
+	// name suggests.
+	CoverageZFSMemberSkipped = "zfs-member-skipped"
 )
 
 // CoverageItem is one unprotected item.
@@ -103,6 +107,7 @@ func (s *Service) Coverage(ctx context.Context) (CoverageReport, error) {
 		s.coverContainers(ctx, settings),
 		s.coverVMs(settings),
 		s.coverFileSets(settings),
+		s.coverZFSDatasets(settings),
 	} {
 		if d.Unprotected == nil {
 			d.Unprotected = []CoverageItem{}
@@ -283,6 +288,66 @@ func (s *Service) coverFileSets(settings store.Settings) CoverageDomain {
 			Name:          fs.Name,
 			Reason:        reasonFor(fs.Enabled, fs.ScheduleCadence, settings.PerItemSchedules),
 			NeverBackedUp: s.neverBackedUp(fs.ID),
+		})
+	}
+	return out
+}
+
+// coverZFSDatasets judges the items the user added, and names every member of
+// a scheduled item that the last run could not read. A green item whose child
+// dataset was skipped is the hole this domain can hide, so the member goes in
+// the list under its own name and reason code.
+//
+// Datasets on the host that are in no item are not counted. An Unraid pool
+// carries system, Docker-layer, VM and share datasets that other domains cover
+// or that nobody wants backed up, so counting them here would make the card cry
+// wolf; the ZFS page lists them instead.
+func (s *Service) coverZFSDatasets(settings store.Settings) CoverageDomain {
+	out := CoverageDomain{Domain: "zfs", Enabled: settings.ZFSEnabled}
+	if !out.Enabled {
+		return out
+	}
+
+	items, err := s.store.ListZFSDatasets()
+	if err != nil {
+		log.Printf("api: coverage: listing ZFS items failed: %v", err)
+		return out
+	}
+	for _, d := range items {
+		out.Total++
+		if schedule.EffectiveZFSDatasetSchedule(d, settings).Kind == schedule.EffectiveNone {
+			out.Unprotected = append(out.Unprotected, CoverageItem{
+				Name:          d.Dataset,
+				Reason:        reasonFor(d.Enabled, d.ScheduleCadence, settings.PerItemSchedules),
+				NeverBackedUp: s.neverBackedUp(d.ID),
+			})
+			continue
+		}
+		out.Protected++
+		out.Unprotected = append(out.Unprotected, s.zfsSkippedMembers(d)...)
+	}
+	return out
+}
+
+// zfsSkippedMembers turns the members the last run left out into their own
+// entries. A volume and a structure dataset with canmount=off hold no files
+// this domain could protect, and an excluded child is a decision, so none of
+// the three is a gap.
+func (s *Service) zfsSkippedMembers(d store.ZFSDataset) []CoverageItem {
+	members, err := s.store.ListZFSMembers(d.ID)
+	if err != nil {
+		log.Printf("api: coverage: listing the members of %s failed: %v", d.Dataset, err)
+		return nil
+	}
+	var out []CoverageItem
+	for _, m := range members {
+		switch m.Outcome {
+		case "backed-up", "empty", "excluded", "zvol", "canmount-off":
+			continue
+		}
+		out = append(out, CoverageItem{
+			Name:   m.Dataset + " (" + m.Outcome + ")",
+			Reason: CoverageZFSMemberSkipped,
 		})
 	}
 	return out

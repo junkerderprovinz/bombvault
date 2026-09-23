@@ -1,7 +1,7 @@
 package api
 
-// "Backup Everything" runs containers, vms, flash, files and config in turn
-// under one parent run row (target_id = store.EverythingTargetID), stamps
+// "Backup Everything" runs containers, vms, flash, files, zfs and config in
+// turn under one parent run row (target_id = store.EverythingTargetID), stamps
 // every child run with that row's group (WithRunGroup), and fires the global
 // pre and post hooks around the whole pass so a dead-man's switch can watch it.
 
@@ -120,6 +120,7 @@ func (s *Service) backupEverythingHoldingGuard(ctx context.Context) (EverythingS
 		{"vms", settings.VMsEnabled, func() EverythingDomainResult { return s.everythingRunVMs(ctx, runID, settings) }},
 		{"flash", settings.FlashEnabled, func() EverythingDomainResult { return s.everythingRunFlash(ctx, runID) }},
 		{"files", settings.FilesEnabled, func() EverythingDomainResult { return s.everythingRunFiles(ctx, runID, settings) }},
+		{zfsDomain, settings.ZFSEnabled, func() EverythingDomainResult { return s.everythingRunZFS(ctx, runID, settings) }},
 		{"config", settings.ConfigEnabled, func() EverythingDomainResult { return s.everythingRunConfig(ctx, runID) }},
 	}
 	results := make([]EverythingDomainResult, 0, len(steps))
@@ -341,6 +342,43 @@ func (s *Service) everythingRunFiles(ctx context.Context, runID string, settings
 	s.ReplicateOffsiteAfterBulk(ctx, domain)
 
 	return EverythingDomainResult{Domain: domain, Attempted: attempted, Failed: failed, Failures: failures}
+}
+
+// everythingRunZFS runs the eligible ZFS items like everythingRunFiles does for
+// file sets.
+func (s *Service) everythingRunZFS(ctx context.Context, runID string, settings store.Settings) EverythingDomainResult {
+	items, err := s.store.ListZFSDatasets()
+	if err != nil {
+		log.Printf("api: backup everything: zfs: list items: %v", err)
+		return everythingDomainFault(zfsDomain, err)
+	}
+	items = schedule.DomainRunZFSDatasets(items, settings.PerItemSchedules)
+	if !schedule.DomainRunHasZFSWork(items) {
+		return everythingDomainIdle(zfsDomain)
+	}
+
+	runCtx := everythingRunCtx(ctx, runID)
+
+	s.ScheduledHealthchecksStart(ctx, zfsDomain)
+	var attempted, failed int
+	var failures []schedule.ItemFailure
+	for _, d := range items {
+		if !d.Enabled {
+			continue
+		}
+		attempted++
+		if _, err := s.BackupZFSDataset(runCtx, d.ID); err != nil {
+			failed++
+			failures = append(failures, schedule.ItemFailure{Name: d.Dataset, Reason: truncateRunErr(err)})
+			log.Printf("api: backup everything: zfs: backup %q failed: %v", d.Dataset, err) //nolint:gosec // G706: name is %q-quoted
+		}
+	}
+	s.ScheduledHealthchecksResult(ctx, zfsDomain, attempted, failed)
+	s.ScheduledNotifyResult(ctx, zfsDomain, attempted, failed, failures)
+	s.PruneAfterBulk(ctx, zfsDomain)
+	s.ReplicateOffsiteAfterBulk(ctx, zfsDomain)
+
+	return EverythingDomainResult{Domain: zfsDomain, Attempted: attempted, Failed: failed, Failures: failures}
 }
 
 // everythingRunFlash runs the flash backup like SetFlashJob's closure. A single
