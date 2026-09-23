@@ -143,7 +143,7 @@ const bg: Partial<Translations> = {
   "snapshots.files": "Файлове",
   "snapshots.delete": "Изтрий",
   "snapshots.deleteAll": "Изтрий всички архивирания",
-  "snapshots.deleteAllConfirm": "Да изтрия ли ВСИЧКИ архивирания на тази ВМ от избрания източник (локален или извън обекта)? Снапшотите се премахват завинаги и хранилището се прочиства. Това не може да бъде отменено.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Изтриване…",
   "snapshots.recreate": "Пресъздай от запазена конфигурация",
   "snapshots.recreateConfirm": "Да пресъздам ли този контейнер от запазената му конфигурация? Той се създава и стартира от съхранената дефиниция (образ, среда, портове, томове).",

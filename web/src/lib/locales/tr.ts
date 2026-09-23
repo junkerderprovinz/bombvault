@@ -685,7 +685,7 @@ const tr: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Tüm yedekleri sil",
-  "snapshots.deleteAllConfirm": "Bu VM'nin seçili kaynaktaki (yerel veya site dışı) TÜM yedekleri silinsin mi? Anlık görüntüler kalıcı olarak kaldırılır ve depo budanır. Bu işlem geri alınamaz.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Siliniyor…",
 
   // Snapshot tags + compare (diff)

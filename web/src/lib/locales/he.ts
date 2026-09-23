@@ -685,7 +685,7 @@ const he: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "מחק את כל הגיבויים",
-  "snapshots.deleteAllConfirm": "למחוק את כל הגיבויים של VM זו מהמקור הנבחר (מקומי או מחוץ לאתר)? ה-snapshots יוסרו לצמיתות והמאגר ייגזם. לא ניתן לבטל פעולה זו.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "מוחק…",
 
   // Snapshot tags + compare (diff)

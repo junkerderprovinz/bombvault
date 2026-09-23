@@ -680,7 +680,7 @@ const uk: Partial<Translations> = {
 
   // Snapshots — delete all
   "snapshots.deleteAll": "Видалити всі резервні копії",
-  "snapshots.deleteAllConfirm": "Видалити ВСІ резервні копії цієї VM з вибраного джерела (локального чи зовнішнього)? Знімки буде безповоротно видалено, а репозиторій очищено. Це не можна скасувати.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Видалення…",
 
   // Snapshot tags + compare (diff)

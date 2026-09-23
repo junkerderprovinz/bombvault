@@ -143,7 +143,7 @@ const et: Partial<Translations> = {
   "snapshots.files": "Failid",
   "snapshots.delete": "Kustuta",
   "snapshots.deleteAll": "Kustuta kõik varundused",
-  "snapshots.deleteAllConfirm": "Kas kustutada selle VM-i KÕIK varundused valitud allikast (kohalik või väline)? Hetktõmmised eemaldatakse jäädavalt ja hoidla puhastatakse. Seda ei saa tagasi võtta.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Kustutamine…",
   "snapshots.recreate": "Loo uuesti salvestatud seadistusest",
   "snapshots.recreateConfirm": "Kas luua see konteiner uuesti tema salvestatud seadistusest? See luuakse ja käivitatakse salvestatud definitsiooni järgi (tõmmis, keskkond, pordid, kettad).",

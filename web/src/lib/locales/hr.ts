@@ -143,7 +143,7 @@ const hr: Partial<Translations> = {
   "snapshots.files": "Datoteke",
   "snapshots.delete": "Izbriši",
   "snapshots.deleteAll": "Izbriši sve sigurnosne kopije",
-  "snapshots.deleteAllConfirm": "Izbrisati SVE sigurnosne kopije ove VM iz odabranog izvora (lokalnog ili izvanmrežnog)? Snimke se trajno uklanjaju, a repozitorij se čisti. Ovo se ne može poništiti.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Brisanje…",
   "snapshots.recreate": "Ponovno stvori iz spremljene konfiguracije",
   "snapshots.recreateConfirm": "Ponovno stvoriti ovaj kontejner iz njegove spremljene konfiguracije? Stvara se i pokreće prema spremljenoj definiciji (slika, okruženje, ulazi, volumeni).",

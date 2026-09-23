@@ -683,7 +683,7 @@ const cs: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Smazat všechny zálohy",
-  "snapshots.deleteAllConfirm": "Smazat VŠECHNY zálohy tohoto VM z vybraného zdroje (místní nebo mimo lokalitu)? Snímky budou trvale odstraněny a repozitář bude vyčištěn. Tuto akci nelze vrátit zpět.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Mazání…",
 
   // Snapshot tags + compare (diff)

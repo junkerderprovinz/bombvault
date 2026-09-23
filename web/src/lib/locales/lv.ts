@@ -143,7 +143,7 @@ const lv: Partial<Translations> = {
   "snapshots.files": "Faili",
   "snapshots.delete": "Dzēst",
   "snapshots.deleteAll": "Dzēst visas rezerves kopijas",
-  "snapshots.deleteAllConfirm": "Dzēst VISAS šīs VM rezerves kopijas no izvēlētā avota (vietējā vai attālinātā)? Momentuzņēmumi tiek neatgriezeniski noņemti, un repozitorijs tiek iztīrīts. Šo darbību nevar atsaukt.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Dzēš…",
   "snapshots.recreate": "Izveidot no jauna no saglabātās konfigurācijas",
   "snapshots.recreateConfirm": "Izveidot šo konteineru no jauna, izmantojot tā saglabāto konfigurāciju? Tas tiek izveidots un palaists atbilstoši saglabātajai definīcijai (attēls, vide, porti, sējumi).",

@@ -677,7 +677,7 @@ const ja: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "バックアップをすべて削除",
-  "snapshots.deleteAllConfirm": "選択中のソース（ローカルまたはオフサイト）からこの VM のバックアップをすべて削除しますか？スナップショットは完全に削除され、リポジトリが整理されます。元に戻せません。",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "削除中…",
 
   // Snapshot tags + compare (diff)

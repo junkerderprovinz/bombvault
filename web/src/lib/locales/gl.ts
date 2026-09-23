@@ -143,7 +143,7 @@ const gl: Partial<Translations> = {
   "snapshots.files": "Ficheiros",
   "snapshots.delete": "Eliminar",
   "snapshots.deleteAll": "Eliminar todas as copias",
-  "snapshots.deleteAllConfirm": "Eliminar TODAS as copias desta MV desde a orixe seleccionada (local ou externa)? As instantáneas elimínanse para sempre e o repositorio límpase. Isto non se pode desfacer.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Eliminando…",
   "snapshots.recreate": "Recrear desde a configuración gardada",
   "snapshots.recreateConfirm": "Recrear este contedor a partir da súa configuración gardada? Créase e inícianse a partir da definición gardada (imaxe, contorno, portos, volumes).",

@@ -143,7 +143,7 @@ const id: Partial<Translations> = {
   "snapshots.files": "File",
   "snapshots.delete": "Hapus",
   "snapshots.deleteAll": "Hapus semua cadangan",
-  "snapshots.deleteAllConfirm": "Hapus SEMUA cadangan VM ini dari sumber yang dipilih (lokal atau off-site)? Snapshot dihapus secara permanen dan repositori di-prune. Ini tidak dapat dibatalkan.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Menghapus…",
   "snapshots.recreate": "Buat ulang dari konfigurasi tersimpan",
   "snapshots.recreateConfirm": "Buat ulang container ini dari konfigurasi tersimpannya? Container dibuat dan dijalankan dari definisi yang tersimpan (image, environment, port, volume).",

@@ -143,7 +143,7 @@ const lt: Partial<Translations> = {
   "snapshots.files": "Failai",
   "snapshots.delete": "Ištrinti",
   "snapshots.deleteAll": "Ištrinti visas atsargines kopijas",
-  "snapshots.deleteAllConfirm": "Ištrinti VISAS šios VM kopijas iš pasirinkto šaltinio (vietinio arba nuotolinio)? Momentinės kopijos negrįžtamai pašalinamos, o saugykla išvaloma. Šio veiksmo negalima atšaukti.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Trinama…",
   "snapshots.recreate": "Atkurti iš išsaugotos konfigūracijos",
   "snapshots.recreateConfirm": "Sukurti šį konteinerį iš naujo pagal jo išsaugotą konfigūraciją? Jis sukuriamas ir paleidžiamas pagal išsaugotą apibrėžimą (atvaizdas, aplinka, prievadai, tomai).",

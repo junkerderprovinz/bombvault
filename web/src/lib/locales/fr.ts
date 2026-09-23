@@ -685,7 +685,7 @@ const fr: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Supprimer toutes les sauvegardes",
-  "snapshots.deleteAllConfirm": "Supprimer TOUTES les sauvegardes de cette VM depuis la source sélectionnée (locale ou hors site) ? Les instantanés sont supprimés définitivement et le dépôt est élagué. Cette action est irréversible.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Suppression…",
 
   // Snapshot tags + compare (diff)

@@ -677,7 +677,7 @@ const ko: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "모든 백업 삭제",
-  "snapshots.deleteAllConfirm": "선택한 소스(로컬 또는 오프사이트)에서 이 VM의 모든 백업을 삭제하시겠습니까? 스냅샷이 영구적으로 제거되고 저장소가 정리됩니다. 되돌릴 수 없습니다.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "삭제 중…",
 
   // Snapshot tags + compare (diff)

@@ -753,7 +753,7 @@ const ro: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Șterge toate copiile de rezervă",
-  "snapshots.deleteAllConfirm": "Ștergeți TOATE copiile de rezervă ale acestei VM din sursa selectată (locală sau externă)? Instantaneele sunt eliminate permanent și depozitul este curățat. Nu poate fi anulat.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Se șterge…",
 
   // Snapshot tags + compare (diff)

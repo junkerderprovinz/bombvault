@@ -143,7 +143,7 @@ const ca: Partial<Translations> = {
   "snapshots.files": "Fitxers",
   "snapshots.delete": "Elimina",
   "snapshots.deleteAll": "Elimina totes les còpies",
-  "snapshots.deleteAllConfirm": "Vols eliminar TOTES les còpies d'aquesta MV des de l'origen seleccionat (local o extern)? Els instantanis s'eliminen permanentment i el repositori es neteja. Això no es pot desfer.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Eliminant…",
   "snapshots.recreate": "Recrea des de la configuració desada",
   "snapshots.recreateConfirm": "Vols recrear aquest contenidor a partir de la seva configuració desada? Es crea i s'inicia a partir de la definició desada (imatge, entorn, ports, volums).",

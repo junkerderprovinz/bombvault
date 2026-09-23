@@ -685,7 +685,7 @@ const el: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Διαγραφή όλων των αντιγράφων",
-  "snapshots.deleteAllConfirm": "Διαγραφή ΟΛΩΝ των αντιγράφων αυτού του VM από την επιλεγμένη πηγή (τοπική ή εκτός τόπου); Τα στιγμιότυπα αφαιρούνται μόνιμα και το αποθετήριο κλαδεύεται. Μη αναστρέψιμο.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Διαγραφή…",
 
   // Snapshot tags + compare (diff)
