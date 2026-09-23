@@ -367,6 +367,8 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/items/{domain}/{name}/offsite/{target}/removal", h.handleOffsiteRemovalPreview)
 	mux.HandleFunc("DELETE /api/items/{domain}/{name}/offsite/{target}/removal", h.handleOffsiteRemoval)
 	mux.HandleFunc("GET /api/items/{domain}/{name}/timeline", h.handleTimeline)
+	mux.HandleFunc("GET /api/items/{domain}/{name}/timeline/{key}/delete", h.handleTimelineDeletePreview)
+	mux.HandleFunc("DELETE /api/items/{domain}/{name}/timeline/{key}", h.handleTimelineDelete)
 
 	// Foreign-repo read-only session endpoints (restore from ANOTHER BombVault
 	// instance's repo, #61). Sessions are in-memory with a TTL — never persisted

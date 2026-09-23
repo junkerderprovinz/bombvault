@@ -7,11 +7,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"slices"
 	"strings"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
@@ -64,6 +66,7 @@ type placeRef struct {
 	timelinePlace
 	repo    string
 	mode    restic.Mode
+	target  store.OffsiteTarget
 	openErr error
 }
 
@@ -172,7 +175,8 @@ func (s *Service) targetPlace(settings store.Settings, t store.OffsiteTarget) pl
 			Enabled:    t.Enabled,
 			AppendOnly: t.Immutable,
 		},
-		mode: s.offsiteModeForTarget(settings, t),
+		mode:   s.offsiteModeForTarget(settings, t),
+		target: t,
 	}
 	p.repo, p.openErr = s.resolveRepo(t.Repo)
 	return p
@@ -392,4 +396,221 @@ func (h *Handler) handleTimeline(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"places": tl.Places, "rows": tl.Rows}))
+}
+
+// placeDelete is what a delete takes at one place.
+type placeDelete struct {
+	Place       string   `json:"place"`
+	Label       string   `json:"label"`
+	SnapshotIDs []string `json:"snapshotIds"`
+}
+
+// otherPlace is a place a delete leaves alone, and why.
+type otherPlace struct {
+	Place string `json:"place"`
+	Label string `json:"label"`
+	State string `json:"state"` // "holds" | "missing" | "unreadable" | "append-only"
+}
+
+// rowIDs is what one place holds of a row: its snapshots and, for a VM, the
+// disk snapshots of those runs.
+func (it timelineItem) rowIDs(own []restic.Snapshot, rowKey string) []string {
+	var ids, runs []string
+	for _, snap := range own {
+		if it.isDisk(snap) || restic.Identity(snap) != rowKey {
+			continue
+		}
+		ids = append(ids, snap.ID)
+		if tag := vmRunTag(own, snap.ID); tag != "" {
+			runs = append(runs, tag)
+		}
+	}
+	for _, snap := range own {
+		if it.isDisk(snap) && slices.ContainsFunc(runs, func(tag string) bool { return slices.Contains(snap.Tags, tag) }) {
+			ids = append(ids, snap.ID)
+		}
+	}
+	return ids
+}
+
+// askedPlaces marks the places a delete names among the item's places; naming
+// none means every place. An id that is not a target of the domain is refused.
+func askedPlaces(refs []placeRef, places []string) (map[string]bool, error) {
+	asked := make(map[string]bool, len(refs))
+	for _, p := range refs {
+		asked[p.Place] = len(places) == 0
+	}
+	for _, place := range places {
+		if _, ok := asked[place]; !ok {
+			return nil, errUnknownOffsiteTarget
+		}
+		asked[place] = true
+	}
+	return asked, nil
+}
+
+// timelineDeletePreview lists every place live and splits them into the ones a
+// delete of the row would take and the rest, so the question can tell the last
+// copy from a place that could not be checked.
+func (s *Service) timelineDeletePreview(ctx context.Context, domain, key, rowKey string, places []string) ([]placeDelete, []otherPlace, error) {
+	it, refs, err := s.timelineRefs(domain, key)
+	if err != nil {
+		return nil, nil, err
+	}
+	asked, err := askedPlaces(refs, places)
+	if err != nil {
+		return nil, nil, err
+	}
+	del, others := []placeDelete{}, []otherPlace{}
+	for _, p := range refs {
+		own, err := s.ownedAt(ctx, it, p)
+		ids := it.rowIDs(own, rowKey)
+		other := otherPlace{Place: p.Place, Label: p.Label}
+		switch {
+		case err != nil:
+			other.State = "unreadable"
+		case len(ids) == 0:
+			other.State = "missing"
+		case !asked[p.Place]:
+			other.State = "holds"
+		case p.AppendOnly:
+			other.State = "append-only"
+		default:
+			del = append(del, placeDelete{Place: p.Place, Label: p.Label, SnapshotIDs: ids})
+			continue
+		}
+		others = append(others, other)
+	}
+	return del, others, nil
+}
+
+// timelineDelete forgets the confirmed ids of a row at each place, under the
+// domain lock. What a place no longer holds of the row stays untouched, and a
+// place that is append-only by now is left out and named.
+func (s *Service) timelineDelete(ctx context.Context, domain, key, rowKey string, del []placeDelete) ([]placeDelete, []otherPlace, error) {
+	deleted, skipped := []placeDelete{}, []otherPlace{}
+	unlock, ok := s.tryLockDomainFor(domain, "delete")
+	if !ok {
+		return deleted, skipped, errDomainBusy
+	}
+	defer unlock()
+
+	it, refs, err := s.timelineRefs(domain, key)
+	if err != nil {
+		return deleted, skipped, err
+	}
+	names := make([]string, 0, len(del))
+	for _, d := range del {
+		names = append(names, d.Place)
+	}
+	if _, err := askedPlaces(refs, names); err != nil {
+		return deleted, skipped, err
+	}
+	for _, d := range del {
+		// askedPlaces just confirmed every d.Place names one of refs, so the
+		// index below is never -1.
+		p := refs[slices.IndexFunc(refs, func(r placeRef) bool { return r.Place == d.Place })]
+		if p.AppendOnly {
+			skipped = append(skipped, otherPlace{Place: p.Place, Label: p.Label, State: "append-only"})
+			continue
+		}
+		own, err := s.ownedAt(ctx, it, p)
+		if err != nil {
+			return deleted, skipped, err
+		}
+		held := it.rowIDs(own, rowKey)
+		ids := slices.DeleteFunc(slices.Clone(d.SnapshotIDs), func(id string) bool { return !slices.Contains(held, id) })
+		if len(ids) == 0 {
+			continue
+		}
+		s.unlockStale(ctx, p.repo, p.mode)
+		if err := s.engine.Forget(ctx, p.repo, ids, false, p.mode); err != nil {
+			return deleted, skipped, fmt.Errorf("delete at %s: %w", cmp.Or(p.Label, "the item's location"), err)
+		}
+		deleted = append(deleted, placeDelete{Place: p.Place, Label: p.Label, SnapshotIDs: ids})
+		s.adjustObservedCopies(it, p, own, ids)
+	}
+	return deleted, skipped, nil
+}
+
+// adjustObservedCopies corrects what a target is seen to hold of the item after
+// ids were forgotten there, counted like a listing: every snapshot the item owns.
+func (s *Service) adjustObservedCopies(it timelineItem, p placeRef, own []restic.Snapshot, gone []string) {
+	if it.identity == "" || p.Kind != "target" {
+		return
+	}
+	var left int
+	var latest int64
+	for _, snap := range own {
+		if !slices.Contains(gone, snap.ID) {
+			left++
+			latest = max(latest, unixOf(snap.Time))
+		}
+	}
+	row := store.ItemCopies{Identity: it.identity, SnapshotCount: left, LatestSnapshotAt: latest}
+	if err := s.store.AdjustItemCopies(it.domain, p.target.ID, time.Now().Unix(), []store.ItemCopies{row}); err != nil {
+		log.Printf("api: timeline delete: observed copies of %q stay until the next listing: %v", it.identity, err) //nolint:gosec // G706: identity is %q-quoted
+	}
+}
+
+// timelineRowParams reads the item and the row key of a timeline row route.
+func (h *Handler) timelineRowParams(w http.ResponseWriter, r *http.Request) (domain, key, rowKey string, ok bool) {
+	domain, key, ok = h.itemParam(w, r, timelineDomains...)
+	if !ok {
+		return "", "", "", false
+	}
+	rowKey = r.PathValue("key")
+	if !backup.ValidSnapshotID(rowKey) {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid backup key"})
+		return "", "", "", false
+	}
+	return domain, key, rowKey, true
+}
+
+// handleTimelineDeletePreview serves GET /api/items/{domain}/{name}/timeline/{key}/delete.
+// Every ?place= names a place to delete at; none means every place of the row.
+func (h *Handler) handleTimelineDeletePreview(w http.ResponseWriter, r *http.Request) {
+	domain, key, rowKey, ok := h.timelineRowParams(w, r)
+	if !ok {
+		return
+	}
+	places := r.URL.Query()["place"]
+	if slices.ContainsFunc(places, func(p string) bool { return !validTimelinePlace(p) }) {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid place"})
+		return
+	}
+	del, others, err := h.svc.timelineDeletePreview(r.Context(), domain, key, rowKey, places)
+	if err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"delete": del, "others": others}))
+}
+
+// handleTimelineDelete serves DELETE /api/items/{domain}/{name}/timeline/{key}.
+// A refusal after some places were done still says which.
+func (h *Handler) handleTimelineDelete(w http.ResponseWriter, r *http.Request) {
+	domain, key, rowKey, ok := h.timelineRowParams(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		Places []placeDelete `json:"places"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	for _, d := range body.Places {
+		if !validTimelinePlace(d.Place) || slices.ContainsFunc(d.SnapshotIDs, func(id string) bool { return !backup.ValidSnapshotID(id) }) {
+			writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid place or backup id"})
+			return
+		}
+	}
+	deleted, skipped, err := h.svc.timelineDelete(r.Context(), domain, key, rowKey, body.Places)
+	result := map[string]any{"deleted": deleted, "skipped": skipped}
+	if err != nil {
+		placementFail(w, err, result)
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(result))
 }
