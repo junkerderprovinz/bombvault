@@ -241,3 +241,73 @@ func CheckRuleIdentity(domain, identity string) error {
 	}
 	return nil
 }
+
+// placementDomainForAlias maps the domain an alias row carries to the placement
+// domain and identity prefix the entry's copy rules use.
+func placementDomainForAlias(aliasDomain string) (domain, prefix string, err error) {
+	switch aliasDomain {
+	case "container":
+		return "containers", rulePrefix["containers"], nil
+	case "vm":
+		return "vms", rulePrefix["vms"], nil
+	}
+	return "", "", fmt.Errorf("no placement domain for aliases of %q", aliasDomain)
+}
+
+// renameCopyRuleTx carries an entry's rule to the name it moves to. A rule
+// already on that name refuses the move, even when the entry has none, so the
+// entry cannot inherit a choice made for something else.
+func renameCopyRuleTx(tx *sql.Tx, domain, from, to string) error {
+	var taken int
+	if err := tx.QueryRow(`SELECT count(*) FROM offsite_copy_rules WHERE domain = ? AND identity = ?`, domain, to).Scan(&taken); err != nil {
+		return fmt.Errorf("read the copy rule of %s: %w", to, err)
+	}
+	if taken > 0 {
+		return fmt.Errorf("%s: %w", to, ErrCopyRuleTaken)
+	}
+	return moveCopyRuleTx(tx, domain, from, to)
+}
+
+// cloneCopyRuleTx writes the rule of from onto to as well. A rule already on to
+// stays, since it belongs to whatever carries that name today.
+func cloneCopyRuleTx(tx *sql.Tx, domain, from, to string) error {
+	_, err := tx.Exec(`INSERT OR IGNORE INTO offsite_copy_rules (domain, identity, skip, updated_at)
+		SELECT domain, ?, skip, ? FROM offsite_copy_rules WHERE domain = ? AND identity = ?`,
+		to, time.Now().Unix(), domain, from)
+	if err != nil {
+		return fmt.Errorf("copy the rule of %s to %s: %w", from, to, err)
+	}
+	return nil
+}
+
+// keepRuleOnAliasesTx leaves the rule of an entry that is about to be deleted
+// on each of its former names, because the snapshots taken under them outlive
+// the row.
+func keepRuleOnAliasesTx(tx *sql.Tx, aliasDomain, targetID, name string) error {
+	domain, prefix, err := placementDomainForAlias(aliasDomain)
+	if err != nil {
+		return err
+	}
+	rows, err := tx.Query(`SELECT old_name FROM target_aliases WHERE domain = ? AND target_id = ?`, aliasDomain, targetID)
+	if err != nil {
+		return fmt.Errorf("read the former names of %s: %w", name, err)
+	}
+	defer rows.Close() //nolint:errcheck // read-only
+	var olds []string
+	for rows.Next() {
+		var old string
+		if err := rows.Scan(&old); err != nil {
+			return fmt.Errorf("read the former names of %s: %w", name, err)
+		}
+		olds = append(olds, old)
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("read the former names of %s: %w", name, err)
+	}
+	for _, old := range olds {
+		if err := cloneCopyRuleTx(tx, domain, prefix+name, prefix+old); err != nil {
+			return err
+		}
+	}
+	return nil
+}
