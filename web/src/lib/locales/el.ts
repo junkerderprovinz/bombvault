@@ -1654,6 +1654,7 @@ const el: Partial<Translations> = {
   "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
   "placementCode.nameMismatch": "The typed name does not match.",
   "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
+  "placementCode.snapshotMissing": "This backup is no longer at the chosen place.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "Το {target} άμεσο διατηρεί τώρα λιγότερα. Στοιχεία των οποίων το μοναδικό αντίγραφο βρίσκεται εκεί: {n}.",

@@ -1654,6 +1654,7 @@ const he: Partial<Translations> = {
   "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
   "placementCode.nameMismatch": "The typed name does not match.",
   "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
+  "placementCode.snapshotMissing": "This backup is no longer at the chosen place.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} ישיר שומר עכשיו פחות. פריטים שהעותק היחיד שלהם נמצא שם: {n}.",
