@@ -314,3 +314,35 @@ func TestVMTimelineNeverShowsADiskSnapshotAsARow(t *testing.T) {
 		t.Fatalf("a:zvol:b rows = %+v, want none: a3 names both VMs and no run settles which", of.Rows)
 	}
 }
+
+func TestFlashAndConfigTimelinesShowTheDomainPathAndItsTargets(t *testing.T) {
+	for _, domain := range []string{"flash", "config"} {
+		t.Run(domain, func(t *testing.T) {
+			f := newPlacementFixture(t)
+			home := f.singletonRepo(domain)
+			b2 := f.target(domain, "B2", "b2:bucket:"+domain)
+			f.hold(home,
+				snap("a0a0a0a0", 1_757_000_000),
+				snap("a1a1a1a1", 1_758_000_000, domain),
+			)
+			f.hold("b2:bucket:"+domain, copied("b1b1b1b1", "a1a1a1a1", 1_758_000_000, domain))
+			ctx := context.Background()
+
+			tl, err := f.svc.Timeline(ctx, domain, domain)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(tl.Places) != 2 || tl.Places[0].State != "read" || tl.Places[1].Place != "offsite:"+b2.ID {
+				t.Fatalf("places = %+v", tl.Places)
+			}
+			if got := rowKeys(tl.Rows); !slices.Equal(got, []string{"a1a1a1a1", "a0a0a0a0"}) {
+				t.Fatalf("rows = %v, want every snapshot of the repository", got)
+			}
+			_, rows, err := f.svc.TimelinePlace(ctx, domain, domain, "offsite:"+b2.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			markOf(t, rows, "a1a1a1a1", "offsite:"+b2.ID)
+		})
+	}
+}

@@ -52,7 +52,7 @@ type timeline struct {
 // timelineItem is whose snapshots a timeline shows and where the item writes.
 type timelineItem struct {
 	domain   string
-	identity string
+	identity string   // "" for flash and config, whose repositories hold nothing else
 	homeID   string   // named repository id, "" for the domain path
 	zvolDevs []string // disks a restore of the VM looks up by their own snapshot
 }
@@ -67,6 +67,9 @@ type placeRef struct {
 }
 
 func (s *Service) timelineItemFor(domain, key string) (timelineItem, error) {
+	if domain == "flash" || domain == "config" {
+		return timelineItem{domain: domain}, nil
+	}
 	ref := store.ItemRef{Domain: domain, Key: key}
 	identity, err := s.itemIdentity(ref)
 	if err != nil {
@@ -204,6 +207,9 @@ func (s *Service) ownedAt(ctx context.Context, it timelineItem, p placeRef) ([]r
 	all, err := s.listRepo(ctx, p.repo, p.mode)
 	if err != nil {
 		return nil, err
+	}
+	if it.identity == "" {
+		return all, nil
 	}
 	oc, err := s.ownerContextFor(it.domain)
 	if err != nil {
