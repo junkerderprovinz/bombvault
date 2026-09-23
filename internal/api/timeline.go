@@ -3,12 +3,17 @@ package api
 import (
 	"cmp"
 	"context"
+	"database/sql"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/bombvault/internal/virshcli"
 )
 
 // timelinePlace is one place an item's backups can lie at.
@@ -48,7 +53,8 @@ type timeline struct {
 type timelineItem struct {
 	domain   string
 	identity string
-	homeID   string // named repository id, "" for the domain path
+	homeID   string   // named repository id, "" for the domain path
+	zvolDevs []string // disks a restore of the VM looks up by their own snapshot
 }
 
 // placeRef is a place with what it takes to list it; openErr says why its
@@ -70,7 +76,66 @@ func (s *Service) timelineItemFor(domain, key string) (timelineItem, error) {
 	if err != nil {
 		return timelineItem{}, err
 	}
-	return timelineItem{domain: domain, identity: identity, homeID: home.Repo}, nil
+	it := timelineItem{domain: domain, identity: identity, homeID: home.Repo}
+	if domain == "vms" {
+		vm, err := s.store.GetVMTargetByName(key)
+		switch {
+		case err == nil:
+			it.zvolDevs = zvolDevsOf(vm.Definition)
+		case !errors.Is(err, sql.ErrNoRows):
+			return timelineItem{}, err
+		}
+	}
+	return it, nil
+}
+
+// zvolDevsOf returns the target devs of a VM's zvol disks, each of which a
+// restore looks up as vm:<name>:zvol:<dev> in the run's vmrun group.
+func zvolDevsOf(definition string) []string {
+	var def vmDefinition
+	if err := json.Unmarshal([]byte(definition), &def); err != nil {
+		return nil
+	}
+	parsed, err := virshcli.ParseDomain(def.DomainXML)
+	if err != nil {
+		return nil
+	}
+	var devs []string
+	for _, bd := range parsed.BlockDisks {
+		if _, ok := virshcli.ZvolDatasetFromDevPath(bd.Source); ok && bd.Dev != "" {
+			devs = append(devs, bd.Dev)
+		}
+	}
+	return devs
+}
+
+// isDisk reports whether snap is one of the VM's disk snapshots rather than a run.
+func (it timelineItem) isDisk(snap restic.Snapshot) bool {
+	return it.domain == "vms" && slices.ContainsFunc(snap.Tags, func(tag string) bool {
+		return strings.HasPrefix(tag, it.identity+":zvol:")
+	})
+}
+
+// incomplete reports whether a place misses a disk snapshot a restore of the
+// run would look up there. Without a vmrun tag there is no group to look them
+// up in, and a backup of a VM with zvol disks always sets one.
+func (it timelineItem) incomplete(run restic.Snapshot, own []restic.Snapshot) bool {
+	if len(it.zvolDevs) == 0 {
+		return false
+	}
+	group := vmRunTag(own, run.ID)
+	if group == "" {
+		return true
+	}
+	for _, dev := range it.zvolDevs {
+		disk := it.identity + ":zvol:" + dev
+		if !slices.ContainsFunc(own, func(s restic.Snapshot) bool {
+			return slices.Contains(s.Tags, group) && slices.Contains(s.Tags, disk)
+		}) {
+			return true
+		}
+	}
+	return false
 }
 
 // homePlace is where the item writes: its repository, or the domain path while
@@ -166,12 +231,16 @@ func (s *Service) readPlace(ctx context.Context, it timelineItem, p placeRef) (t
 	return p.timelinePlace, rowsAt(it, p.Place, own)
 }
 
-// rowsAt groups one place's snapshots by restic.Identity. Two snapshots of one
-// key, as restic leaves after copying a re-tagged snapshot again, share a mark.
+// rowsAt groups one place's snapshots by restic.Identity. A VM's disk snapshots
+// are no rows of their own; two snapshots of one key, as restic leaves after
+// copying a re-tagged snapshot again, share a mark.
 func rowsAt(it timelineItem, place string, own []restic.Snapshot) []timelineRow {
 	rows := []timelineRow{}
 	index := map[string]int{}
 	for _, snap := range newestFirst(own) {
+		if it.isDisk(snap) {
+			continue
+		}
 		key := restic.Identity(snap)
 		if i, ok := index[key]; ok {
 			rows[i].Places[0].SnapshotIDs = append(rows[i].Places[0].SnapshotIDs, snap.ID)
@@ -182,6 +251,7 @@ func rowsAt(it timelineItem, place string, own []restic.Snapshot) []timelineRow 
 			Place:       place,
 			SnapshotIDs: []string{snap.ID},
 			Tags:        append([]string{}, snap.Tags...),
+			Incomplete:  it.incomplete(snap, own),
 		}}})
 	}
 	return rows
