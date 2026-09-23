@@ -545,6 +545,7 @@ func (a *dbDumpAdapter) stopOrphan(ctx context.Context, lines []string) error {
 		log.Printf("api: database dump of %q: the dump inside the container could not be stopped and may run until its time limit: %v", a.container, err) //nolint:gosec // G706: name is %q-quoted
 		return err
 	}
+	log.Printf("api: database dump of %q: stopped the dump left running inside the container (pid %d)", a.container, pid) //nolint:gosec // G706: name is %q-quoted
 	return nil
 }
 
