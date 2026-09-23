@@ -31,6 +31,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/sshconn"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
+	"github.com/junkerderprovinz/bombvault/internal/zfs"
 	web "github.com/junkerderprovinz/bombvault/web"
 )
 
@@ -105,6 +106,11 @@ func healthcheckAt(port, httpsPort string) int {
 // missed overnight backup lands promptly. Fixed on purpose — a knob would
 // mostly invite foot-guns; revisit only if real setups need longer.
 const catchUpStartupDelay = 2 * time.Minute
+
+// zfsStartupSweepBudget caps the boot-time hunt for snapshots an interrupted run
+// left behind. Every call in it goes over SSH, so an unreachable host would
+// otherwise keep the ZFS domain locked for the rest of the process's life.
+const zfsStartupSweepBudget = 2 * time.Minute
 
 // platformFor maps a detected/overridden platform.Kind to a concrete
 // platform.Platform adapter. Every Kind BombVault knows about (Unraid,
@@ -282,7 +288,8 @@ func run() error {
 	// trim (TrimResticCache) can measure + evict per-repo cache subdirs. Empty
 	// (the mkdir-failed fallback above) disables the size-based trim.
 	svc.SetResticCacheDir(resticCacheDir)
-	svc.SetHostSSH(sc) // NVRAM transfer over SSH + the Settings key/test endpoints
+	svc.SetHostSSH(sc)                 // NVRAM transfer over SSH + the Settings key/test endpoints
+	svc.SetZFSHost(zfs.NewSSHHost(sc)) // same connection: snapshots and dataset listings for the ZFS domain
 	// Live backup/restore progress: the service publishes percentages here and the
 	// SSE endpoint (/api/progress) streams them to the SPA's per-card bars.
 	prog := progress.NewStore()
@@ -351,6 +358,13 @@ func run() error {
 		_, bErr := svc.BackupFileSet(ctx, id)
 		return bErr
 	}, st.ListFileSets)
+	// ZFS datasets are scheduled like file sets: one item at a time, with the
+	// per-item pings suppressed in favour of the aggregate one.
+	scheduler.SetZFSJob(func(id string) error {
+		ctx := api.WithBulkReplicateSuppressed(notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(context.Background())))
+		_, bErr := svc.BackupZFSDataset(ctx, id)
+		return bErr
+	}, st.ListZFSDatasets)
 	// "Backup Everything": a 6th, independent pseudo-domain that loops over all
 	// five domains internally (internal/api/everything.go's BackupEverything),
 	// so — like SetFlashJob/SetConfigJob — the scheduled closure takes no
@@ -466,17 +480,39 @@ func run() error {
 	flashLastRun := schedule.LastRunFunc(st.LastSuccessfulFlashBackup)
 	configLastRun := schedule.LastRunFunc(st.LastSuccessfulConfigBackup)
 	filesLastRun := schedule.FilesDueGate(st)
+	zfsLastRun := schedule.ZFSDueGate(st)
 	everythingLastRun := schedule.LastRunFunc(st.LastEverythingPass)
 
 	if settings, sErr := st.GetSettings(); sErr == nil {
 		// Apply the saved CPU cap before anything can start a restic child ([558]).
 		restic.SetMaxProcs(settings.BackupCores)
-		if rErr := scheduler.ReloadWithDueChecks(settings, containersLastRun, vmsLastRun, flashLastRun, configLastRun, filesLastRun, everythingLastRun); rErr != nil {
+		gates := schedule.DueGates{
+			Containers: containersLastRun, VMs: vmsLastRun, Flash: flashLastRun,
+			Config: configLastRun, Files: filesLastRun, ZFS: zfsLastRun,
+			Everything: everythingLastRun,
+		}
+		if rErr := scheduler.ReloadWithGates(settings, gates); rErr != nil {
 			log.Printf("scheduler: initial reload failed: %v", rErr)
 		}
 	} else {
 		log.Printf("scheduler: could not read settings: %v", sErr)
 	}
+	// Containers a dataset snapshot left stopped come back before anything else:
+	// this is Docker only and fast, and a user's applications being down outranks
+	// the rest of the boot.
+	svc.RecoverZFSRestarts(context.Background())
+	// The sweep talks to the host over SSH, where one call can take half a
+	// minute, so it runs in the background: the image health check would restart
+	// the container in the middle of a boot that waits for it. Holding the domain
+	// lock from here keeps a scheduled ZFS job behind the sweep all the same.
+	unlockZFS := svc.LockDomainForStartupSweep()
+	go func() {
+		defer unlockZFS()
+		sctx, cancel := context.WithTimeout(context.Background(), zfsStartupSweepBudget)
+		defer cancel()
+		svc.SweepZFSLeftoversOnStartup(sctx)
+	}()
+
 	scheduler.Start()
 	defer scheduler.Stop()
 

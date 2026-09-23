@@ -3,10 +3,18 @@ package api
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"sort"
+	"strings"
 	"sync"
 	"testing"
+	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/dockercli"
+	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
@@ -33,6 +41,9 @@ type fakeZFSHost struct {
 	// onSnapshot runs after a successful recursive snapshot, for a test that
 	// has to change the world mid-run.
 	onSnapshot func(snap string)
+	// onTree holds a tree listing, so a test can look at the world while a
+	// sweep is waiting on the host.
+	onTree func()
 }
 
 func (h *fakeZFSHost) record(call string) {
@@ -57,6 +68,9 @@ func (h *fakeZFSHost) Version(context.Context) (string, error) { return "zfs-2.3
 
 func (h *fakeZFSHost) Tree(_ context.Context, root string) ([]zfs.ListEntry, error) {
 	h.record("list -r " + root)
+	if h.onTree != nil {
+		h.onTree()
+	}
 	if h.treeErr != nil {
 		return nil, h.treeErr
 	}
@@ -232,4 +246,189 @@ func zfsMountFixture(t *testing.T, base []zfs.MountRecord, host *fakeZFSHost, mo
 		}
 		return recs
 	}
+}
+
+// zfsFakeContainer is one container the consistency window works on.
+type zfsFakeContainer struct {
+	id        string
+	running   bool
+	service   string
+	dependsOn string
+	// startLeavesDown makes Start succeed while the container stays down, the
+	// way a container that crashes on start behaves.
+	startLeavesDown bool
+	stopErr         error
+	startErr        error
+}
+
+// zfsFakeDocker answers the container calls a consistency window makes and
+// records them in order, so a test can pin which containers went down and in
+// which order they came back.
+type zfsFakeDocker struct {
+	dockercli.Docker
+
+	mu sync.Mutex
+
+	self       string
+	containers map[string]*zfsFakeContainer
+	calls      []string
+	execCmds   []string
+	execErr    error
+	// onStop runs while a stop is in flight, so a test can hold two stops
+	// against each other.
+	onStop func(name string)
+}
+
+func newZFSFakeDocker(running ...string) *zfsFakeDocker {
+	d := &zfsFakeDocker{containers: map[string]*zfsFakeContainer{}}
+	for _, name := range running {
+		d.containers[name] = &zfsFakeContainer{id: "id-" + name, running: true, service: name}
+	}
+	return d
+}
+
+func (d *zfsFakeDocker) record(call string) {
+	d.mu.Lock()
+	d.calls = append(d.calls, call)
+	d.mu.Unlock()
+}
+
+func (d *zfsFakeDocker) recorded() []string {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return append([]string(nil), d.calls...)
+}
+
+// byID finds a container by the reference stop and start use.
+func (d *zfsFakeDocker) byID(ref string) *zfsFakeContainer {
+	for _, c := range d.containers {
+		if c.id == ref {
+			return c
+		}
+	}
+	return nil
+}
+
+func (d *zfsFakeDocker) Self(context.Context) (string, error) { return d.self, nil }
+
+func (d *zfsFakeDocker) Inspect(_ context.Context, ref string) (model.Inspect, error) {
+	d.record("inspect:" + ref)
+	c, name := d.containers[ref], ref
+	if c == nil {
+		if c = d.byID(ref); c == nil {
+			return model.Inspect{}, fmt.Errorf("no such container %q", ref)
+		}
+		for n, known := range d.containers {
+			if known == c {
+				name = n
+			}
+		}
+	}
+	labels := map[string]string{"com.docker.compose.service": c.service}
+	if c.dependsOn != "" {
+		labels["com.docker.compose.depends_on"] = c.dependsOn
+	}
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return model.Inspect{
+		ID: c.id, Name: "/" + name, Running: c.running,
+		Config: model.Config{Labels: labels},
+	}, nil
+}
+
+func (d *zfsFakeDocker) Stop(_ context.Context, ref string, _ time.Duration) error {
+	c := d.byID(ref)
+	if c == nil {
+		return fmt.Errorf("no such container %q", ref)
+	}
+	name := d.nameOf(c)
+	d.record("stop:" + name)
+	if d.onStop != nil {
+		d.onStop(name)
+	}
+	if c.stopErr != nil {
+		return c.stopErr
+	}
+	d.mu.Lock()
+	c.running = false
+	d.mu.Unlock()
+	return nil
+}
+
+func (d *zfsFakeDocker) Start(_ context.Context, ref string) error {
+	c := d.byID(ref)
+	if c == nil {
+		return fmt.Errorf("no such container %q", ref)
+	}
+	d.record("start:" + d.nameOf(c))
+	if c.startErr != nil {
+		return c.startErr
+	}
+	if c.startLeavesDown {
+		return nil
+	}
+	d.mu.Lock()
+	c.running = true
+	d.mu.Unlock()
+	return nil
+}
+
+func (d *zfsFakeDocker) Health(_ context.Context, ref string) (model.Health, error) {
+	c := d.byID(ref)
+	if c == nil {
+		return model.Health{}, fmt.Errorf("no such container %q", ref)
+	}
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return model.Health{Running: c.running}, nil
+}
+
+func (d *zfsFakeDocker) Exec(_ context.Context, ref string, cmd []string) error {
+	d.mu.Lock()
+	d.execCmds = append(d.execCmds, strings.Join(cmd, " "))
+	d.mu.Unlock()
+	d.record("exec:" + ref)
+	return d.execErr
+}
+
+func (d *zfsFakeDocker) nameOf(c *zfsFakeContainer) string {
+	for name, known := range d.containers {
+		if known == c {
+			return name
+		}
+	}
+	return c.id
+}
+
+// zfsCaptureNotifications points the service's only notification channel at a
+// local server and returns a reader for the bodies it received.
+func zfsCaptureNotifications(t *testing.T, s *Service) func() []string {
+	t.Helper()
+	var mu sync.Mutex
+	var bodies []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		mu.Lock()
+		bodies = append(bodies, string(body))
+		mu.Unlock()
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(srv.Close)
+	if err := s.SetNotifyConfig(notify.Config{On: "always", WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
+		t.Fatalf("configure notifications: %v", err)
+	}
+	return func() []string {
+		mu.Lock()
+		defer mu.Unlock()
+		return append([]string(nil), bodies...)
+	}
+}
+
+func zfsAnyMessageContains(bodies []string, want string) bool {
+	for _, b := range bodies {
+		if strings.Contains(b, want) {
+			return true
+		}
+	}
+	return false
 }
