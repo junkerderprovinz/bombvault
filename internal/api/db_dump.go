@@ -1274,9 +1274,9 @@ func (s *Service) StartSaveDBDumpToPath(ctx context.Context, name, source, snaps
 		defer s.unregisterCancel(rkey)
 		runID = s.beginDBDumpRun(name, "dbdumpsave", "save database dump")
 		pctx, startedAt := s.progBegin(rctx, rkey, "restore")
-		serr := s.saveDBDump(pctx, plan, rkey, startedAt)
+		written, serr := s.saveDBDump(pctx, plan, rkey, startedAt)
 		s.progEnd(rkey, "restore", serr == nil, startedAt)
-		s.finishRestoreRun(runID, plan.dump.ID, serr)
+		s.finishSaveDBDumpRun(runID, plan.dump.ID, written, serr)
 		if serr != nil {
 			log.Printf("api: save database dump of %q failed: %v", name, serr) //nolint:gosec // G706: name is %q-quoted
 		}
@@ -1308,8 +1308,9 @@ func (s *Service) prepareSaveDBDump(ctx context.Context, name, source, snapshotI
 }
 
 // saveDBDump writes the dump beside its final name and publishes it with a
-// rename, so a half-written file is never mistaken for a dump.
-func (s *Service) saveDBDump(ctx context.Context, plan dbDumpSavePlan, key string, startedAt int64) error {
+// rename, so a half-written file is never mistaken for a dump. It answers with
+// the size of the file it left behind.
+func (s *Service) saveDBDump(ctx context.Context, plan dbDumpSavePlan, key string, startedAt int64) (int64, error) {
 	unlock := s.lockDomainFor("containers", "restore")
 	defer unlock()
 
@@ -1317,17 +1318,17 @@ func (s *Service) saveDBDump(ctx context.Context, plan dbDumpSavePlan, key strin
 	// A partial file here is what a save killed with the process left behind:
 	// batchActive admits no second save that could be writing it.
 	if err := os.Remove(partial); err != nil && !errors.Is(err, os.ErrNotExist) {
-		return err
+		return 0, err
 	}
 	f, err := os.OpenFile(partial, os.O_CREATE|os.O_EXCL|os.O_WRONLY, dbDumpFileMode) //nolint:gosec // G304: a name built from the container and the snapshot, inside a folder paths.Resolve contained
 	if err != nil {
-		return err
+		return 0, err
 	}
 	if cErr := s.dbDumpChownFn()(f, dbDumpFileUID, dbDumpFileGID); cErr != nil {
 		log.Printf("api: save database dump: %s keeps this process's ownership: %v", filepath.Base(partial), cErr) //nolint:gosec // G706: a name this process built
 	}
 
-	err = s.streamDBDumpInto(ctx, plan, f, key, startedAt)
+	written, err := s.streamDBDumpInto(ctx, plan, f, key, startedAt)
 	if cErr := f.Close(); err == nil {
 		err = cErr
 	}
@@ -1338,12 +1339,12 @@ func (s *Service) saveDBDump(ctx context.Context, plan dbDumpSavePlan, key strin
 		if rErr := os.Remove(partial); rErr != nil && !errors.Is(rErr, os.ErrNotExist) {
 			log.Printf("api: save database dump: the unfinished file could not be removed: %v", rErr)
 		}
-		return err
+		return 0, err
 	}
-	return nil
+	return written, nil
 }
 
-func (s *Service) streamDBDumpInto(ctx context.Context, plan dbDumpSavePlan, f *os.File, key string, startedAt int64) error {
+func (s *Service) streamDBDumpInto(ctx context.Context, plan dbDumpSavePlan, f *os.File, key string, startedAt int64) (int64, error) {
 	counted := &countingWriter{w: f, publish: func(n int64) {
 		s.publishDBDumpStage(key, "restore", "dbdumpsave", startedAt, n)
 	}}
@@ -1354,14 +1355,14 @@ func (s *Service) streamDBDumpInto(ctx context.Context, plan dbDumpSavePlan, f *
 		dst = gzW
 	}
 	if err := s.engine.DumpRaw(ctx, plan.src.repo, plan.dump.ID, plan.path, dst, plan.src.mode); err != nil {
-		return err
+		return 0, err
 	}
 	if gzW != nil {
 		if err := gzW.Close(); err != nil {
-			return err
+			return 0, err
 		}
 	}
-	return f.Sync()
+	return counted.written, f.Sync()
 }
 
 // countingWriter reports how far a stream has come, throttled, so a save of a
@@ -1398,4 +1399,20 @@ func (s *Service) beginDBDumpRun(name, kind, what string) string {
 		return ""
 	}
 	return runID
+}
+
+// finishSaveDBDumpRun closes a save run with the size of the file it wrote, the
+// number the run history and the activity log put in the line. A save that
+// failed or was cancelled ends like any other restore-side run.
+func (s *Service) finishSaveDBDumpRun(runID, snapshotID string, written int64, serr error) {
+	if serr != nil {
+		s.finishRestoreRun(runID, "", serr)
+		return
+	}
+	if runID == "" {
+		return
+	}
+	if err := (runsAdapter{st: s.store, ctx: context.Background()}).Finish(runID, "success", snapshotID, written, ""); err != nil {
+		log.Printf("api: save database dump: record the run result failed: %v", err)
+	}
 }

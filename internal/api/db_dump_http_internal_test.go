@@ -511,8 +511,12 @@ func TestSaveDBDumpToPathContainedAndExclusive(t *testing.T) {
 				t.Errorf("mode = %v, want 0640", info.Mode().Perm())
 			}
 		}
-		if run := latestRunOfKind(t, svc.store, "dbdumpsave"); run.Status != "success" {
+		run := latestRunOfKind(t, svc.store, "dbdumpsave")
+		if run.Status != "success" {
 			t.Errorf("run status = %q, want success", run.Status)
+		}
+		if run.Bytes != int64(len(payload)) {
+			t.Errorf("run bytes = %d, want the %d bytes written", run.Bytes, len(payload))
 		}
 	})
 
