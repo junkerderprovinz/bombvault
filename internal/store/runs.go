@@ -41,10 +41,51 @@ func (r *Repo) StartRun(targetID, kind string) (string, error) {
 	return id, nil
 }
 
+// RunMetrics are the source figures restic reports for a run, in the units the
+// runs table stores them in.
+type RunMetrics struct {
+	SourceBytes, SourceFiles, FilesNew, ResticMS int64
+	HasParent                                    *bool
+}
+
+// RunFinished names what a finish touched. A finish by id sets RunID, and
+// FailRunningRun, which has no id to give, sets TargetID.
+type RunFinished struct{ RunID, TargetID string }
+
+// SetRunFinishedHook installs fn, called after every finish that changed a row.
+// fn must not block and must not call back into the store: it runs on the
+// goroutine that finished the run, which holds the database's single connection.
+func (r *Repo) SetRunFinishedHook(fn func(RunFinished)) {
+	r.runFinishedMu.Lock()
+	defer r.runFinishedMu.Unlock()
+	r.runFinished = fn
+}
+
+func (r *Repo) notifyRunFinished(f RunFinished) {
+	r.runFinishedMu.RLock()
+	fn := r.runFinished
+	r.runFinishedMu.RUnlock()
+	if fn != nil {
+		fn(f)
+	}
+}
+
 // FinishRun records a run's final status, snapshot ID, bytes and optional
 // error. It is the only writer of runs.completed, which lets LastEverythingPass
 // tell a pass that reached its end from one whose process died.
 func (r *Repo) FinishRun(id, status, snapshotID string, bytes int64, errMsg string) error {
+	return r.finishRun(id, status, snapshotID, bytes, errMsg, nil, "")
+}
+
+// FinishRunMeasured is FinishRun plus what restic read and the fingerprint of
+// the selection the run covered. Nil metrics and an empty fingerprint leave
+// those columns NULL, which is what tells an unmeasured run from one that
+// measured a source of nothing.
+func (r *Repo) FinishRunMeasured(id, status, snapshotID string, bytes int64, errMsg string, m *RunMetrics, fp string) error {
+	return r.finishRun(id, status, snapshotID, bytes, errMsg, m, fp)
+}
+
+func (r *Repo) finishRun(id, status, snapshotID string, bytes int64, errMsg string, m *RunMetrics, fp string) error {
 	now := time.Now().Unix()
 	var snap, errCol any
 	if snapshotID != "" {
@@ -53,10 +94,24 @@ func (r *Repo) FinishRun(id, status, snapshotID string, bytes int64, errMsg stri
 	if errMsg != "" {
 		errCol = errMsg
 	}
+	var sourceBytes, sourceFiles, filesNew, resticMS, hasParent, selectionFP any
+	if m != nil {
+		sourceBytes, sourceFiles = m.SourceBytes, m.SourceFiles
+		filesNew, resticMS = m.FilesNew, m.ResticMS
+		if m.HasParent != nil {
+			hasParent = boolToInt(*m.HasParent)
+		}
+	}
+	if fp != "" {
+		selectionFP = fp
+	}
 	res, err := r.db.Exec(`
-		UPDATE runs SET status = ?, finished_at = ?, snapshot_id = ?, bytes = ?, error = ?, completed = 1
+		UPDATE runs
+		SET status = ?, finished_at = ?, snapshot_id = ?, bytes = ?, error = ?, completed = 1,
+		    source_bytes = ?, source_files = ?, files_new = ?, restic_ms = ?, has_parent = ?, selection_fp = ?
 		WHERE id = ?`,
-		status, now, snap, bytes, errCol, id,
+		status, now, snap, bytes, errCol,
+		sourceBytes, sourceFiles, filesNew, resticMS, hasParent, selectionFP, id,
 	)
 	if err != nil {
 		return fmt.Errorf("FinishRun: %w", err)
@@ -64,7 +119,15 @@ func (r *Repo) FinishRun(id, status, snapshotID string, bytes int64, errMsg stri
 	if n, _ := res.RowsAffected(); n == 0 {
 		return fmt.Errorf("FinishRun: run %s not found", id)
 	}
+	r.notifyRunFinished(RunFinished{RunID: id})
 	return nil
+}
+
+func boolToInt(b bool) int64 {
+	if b {
+		return 1
+	}
+	return 0
 }
 
 // FailRunningRun marks targetID's running run, if any, as failed and returns
@@ -85,6 +148,9 @@ func (r *Repo) FailRunningRun(targetID, errMsg string) (int64, error) {
 		return 0, fmt.Errorf("FailRunningRun: %w", err)
 	}
 	n, _ := res.RowsAffected()
+	if n > 0 {
+		r.notifyRunFinished(RunFinished{TargetID: targetID})
+	}
 	return n, nil
 }
 
@@ -711,4 +777,266 @@ func scanRun(s scanner) (Run, error) {
 		run.Error = errCol.String
 	}
 	return run, nil
+}
+
+// SeriesRun is the narrow run row anomaly detection reads. It is separate from
+// Run because Run is the shape /api/runs serves, and because a detector needs
+// the metric columns to tell a missing value from a measured zero.
+type SeriesRun struct {
+	ID, Status, SnapshotID, Error string
+	// Outcome is a ZFS member's own result within a run, empty for every other
+	// series.
+	Outcome                                                 string
+	StartedAt                                               int64
+	FinishedAt                                              int64
+	Bytes                                                   int64
+	SourceBytes, SourceFiles, FilesNew, ResticMS, HasParent *int64
+	SelectionFP                                             *string
+}
+
+// RunTargetKind says which series a run belongs to.
+type RunTargetKind struct{ TargetID, Kind string }
+
+// UnmeasuredRun is a finished run whose source metrics the backfill can still
+// read out of its snapshot.
+type UnmeasuredRun struct {
+	ID, TargetID, Kind, SnapshotID string
+	StartedAt                      int64
+}
+
+// BackfillMetrics are the figures one backfilled run gets. Bytes is set only
+// for a VM run, whose data added is the sum over its file and zvol snapshots.
+type BackfillMetrics struct {
+	RunMetrics
+	Bytes *int64
+}
+
+// eligibleRun is the condition for a run the detectors may learn from: it
+// succeeded and left either a snapshot or a measurement behind. A success that
+// records a decision instead of a backup, such as a container that was gone,
+// carries neither and would otherwise read as a source that vanished.
+const eligibleRun = `status = 'success'
+	AND ((snapshot_id IS NOT NULL AND snapshot_id <> '') OR source_bytes IS NOT NULL)`
+
+const seriesRunColumns = `id, status, snapshot_id, error, started_at, finished_at, bytes,
+		source_bytes, source_files, files_new, restic_ms, has_parent, selection_fp`
+
+// ItemSeries returns the newest limit runs of targetID and kind that reached an
+// outcome on or before cutoff, newest first. Ties on started_at are broken by
+// rowid of the runs table itself, so a dump and the backup that triggered it
+// keep their order however coarse the clock is.
+func (r *Repo) ItemSeries(targetID, kind string, cutoff int64, limit int) ([]SeriesRun, error) {
+	rows, err := r.db.Query(`
+		SELECT `+seriesRunColumns+`
+		FROM runs
+		WHERE target_id = ? AND kind = ? AND status IN ('success', 'failed') AND started_at <= ?
+		ORDER BY started_at DESC, rowid DESC
+		LIMIT ?`, targetID, kind, cutoff, limit)
+	if err != nil {
+		return nil, fmt.Errorf("ItemSeries: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	var out []SeriesRun
+	for rows.Next() {
+		run, err := scanSeriesRun(rows)
+		if err != nil {
+			return nil, fmt.Errorf("ItemSeries: %w", err)
+		}
+		out = append(out, run)
+	}
+	return out, rows.Err()
+}
+
+// NewDataWindow returns the eligible runs of targetID and kind started within
+// [from, cutoff], newest first and at most limit of them. The rows carry the id,
+// the start, the data added and the selection fingerprint, the four columns the
+// new-data detector reads over a month of runs; the metric fields stay nil.
+func (r *Repo) NewDataWindow(targetID, kind string, from, cutoff int64, limit int) ([]SeriesRun, error) {
+	rows, err := r.db.Query(`
+		SELECT id, started_at, bytes, selection_fp
+		FROM runs
+		WHERE target_id = ? AND kind = ? AND started_at BETWEEN ? AND ?
+			AND `+eligibleRun+`
+		ORDER BY started_at DESC, rowid DESC
+		LIMIT ?`, targetID, kind, from, cutoff, limit)
+	if err != nil {
+		return nil, fmt.Errorf("NewDataWindow: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	var out []SeriesRun
+	for rows.Next() {
+		var run SeriesRun
+		var bytes sql.NullInt64
+		var fp sql.NullString
+		if err := rows.Scan(&run.ID, &run.StartedAt, &bytes, &fp); err != nil {
+			return nil, fmt.Errorf("NewDataWindow: %w", err)
+		}
+		run.Bytes = bytes.Int64
+		if fp.Valid {
+			run.SelectionFP = &fp.String
+		}
+		out = append(out, run)
+	}
+	return out, rows.Err()
+}
+
+// FirstEligibleRunID returns the id of the oldest eligible run of targetID and
+// kind, or an empty string when the series has none. It is how a detector tells
+// a quiet item from one whose history only starts here.
+func (r *Repo) FirstEligibleRunID(targetID, kind string) (string, error) {
+	var id string
+	err := r.db.QueryRow(`
+		SELECT id FROM runs
+		WHERE target_id = ? AND kind = ? AND `+eligibleRun+`
+		ORDER BY started_at ASC, rowid ASC
+		LIMIT 1`, targetID, kind).Scan(&id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("FirstEligibleRunID: %w", err)
+	}
+	return id, nil
+}
+
+// RunTargets resolves run ids to the series they belong to. Ids with no row are
+// left out of the result.
+func (r *Repo) RunTargets(ids []string) (map[string]RunTargetKind, error) {
+	out := make(map[string]RunTargetKind, len(ids))
+	for start := 0; start < len(ids); start += lastBackupAmongChunk {
+		end := min(start+lastBackupAmongChunk, len(ids))
+		if err := r.runTargetsOfChunk(ids[start:end], out); err != nil {
+			return nil, err
+		}
+	}
+	return out, nil
+}
+
+// runTargetsOfChunk resolves one IN (...) clause worth of run ids into out,
+// keeping each query under SQLite's parameter limit.
+func (r *Repo) runTargetsOfChunk(ids []string, out map[string]RunTargetKind) error {
+	placeholders := strings.TrimSuffix(strings.Repeat("?,", len(ids)), ",")
+	args := make([]any, 0, len(ids))
+	for _, id := range ids {
+		args = append(args, id)
+	}
+	//nolint:gosec // G202: `placeholders` is a generated "?,?,…" list sized from
+	// len(ids), never user text; every id travels as a bound parameter in args.
+	rows, err := r.db.Query(
+		`SELECT id, target_id, kind FROM runs WHERE id IN (`+placeholders+`)`, args...)
+	if err != nil {
+		return fmt.Errorf("RunTargets: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	for rows.Next() {
+		var id string
+		var tk RunTargetKind
+		if sErr := rows.Scan(&id, &tk.TargetID, &tk.Kind); sErr != nil {
+			return fmt.Errorf("RunTargets: %w", sErr)
+		}
+		out[id] = tk
+	}
+	return rows.Err()
+}
+
+// UnmeasuredSnapshotRuns lists the successful backup and dump runs that left a
+// snapshot but no measurement, oldest first. Rows are drained before returning,
+// because the backfill writes on the same connection.
+func (r *Repo) UnmeasuredSnapshotRuns() ([]UnmeasuredRun, error) {
+	rows, err := r.db.Query(`
+		SELECT id, target_id, kind, snapshot_id, started_at
+		FROM runs
+		WHERE status = 'success' AND kind IN ('backup', 'dbdump')
+			AND snapshot_id IS NOT NULL AND snapshot_id <> '' AND source_bytes IS NULL
+		ORDER BY started_at ASC, rowid ASC`)
+	if err != nil {
+		return nil, fmt.Errorf("UnmeasuredSnapshotRuns: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	var out []UnmeasuredRun
+	for rows.Next() {
+		var run UnmeasuredRun
+		if err := rows.Scan(&run.ID, &run.TargetID, &run.Kind, &run.SnapshotID, &run.StartedAt); err != nil {
+			return nil, fmt.Errorf("UnmeasuredSnapshotRuns: %w", err)
+		}
+		out = append(out, run)
+	}
+	return out, rows.Err()
+}
+
+// SetRunMetrics fills in the metrics of runs that have none and returns how many
+// rows it wrote. The guard on source_bytes keeps a backfill from a snapshot,
+// which rounds through restic's summary, from replacing what the run itself
+// measured.
+func (r *Repo) SetRunMetrics(m map[string]BackfillMetrics) (int, error) {
+	if len(m) == 0 {
+		return 0, nil
+	}
+	tx, err := r.db.Begin()
+	if err != nil {
+		return 0, fmt.Errorf("SetRunMetrics begin: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // no-op after Commit
+
+	set := 0
+	for id, bm := range m {
+		var hasParent any
+		if bm.HasParent != nil {
+			hasParent = boolToInt(*bm.HasParent)
+		}
+		res, err := tx.Exec(`
+			UPDATE runs
+			SET source_bytes = ?, source_files = ?, files_new = ?, restic_ms = ?, has_parent = ?,
+			    bytes = COALESCE(?, bytes)
+			WHERE id = ? AND source_bytes IS NULL`,
+			bm.SourceBytes, bm.SourceFiles, bm.FilesNew, bm.ResticMS, hasParent, bm.Bytes, id,
+		)
+		if err != nil {
+			return 0, fmt.Errorf("SetRunMetrics %s: %w", id, err)
+		}
+		n, _ := res.RowsAffected()
+		set += int(n)
+	}
+	if err := tx.Commit(); err != nil {
+		return 0, fmt.Errorf("SetRunMetrics commit: %w", err)
+	}
+	return set, nil
+}
+
+func scanSeriesRun(s scanner) (SeriesRun, error) {
+	var run SeriesRun
+	var snapID, errCol, fp sql.NullString
+	var finishedAt, bytes sql.NullInt64
+	var sourceBytes, sourceFiles, filesNew, resticMS, hasParent sql.NullInt64
+	err := s.Scan(
+		&run.ID, &run.Status, &snapID, &errCol, &run.StartedAt, &finishedAt, &bytes,
+		&sourceBytes, &sourceFiles, &filesNew, &resticMS, &hasParent, &fp,
+	)
+	if err != nil {
+		return SeriesRun{}, err
+	}
+	run.SnapshotID = snapID.String
+	run.Error = errCol.String
+	run.FinishedAt = finishedAt.Int64
+	run.Bytes = bytes.Int64
+	run.SourceBytes = nullableInt(sourceBytes)
+	run.SourceFiles = nullableInt(sourceFiles)
+	run.FilesNew = nullableInt(filesNew)
+	run.ResticMS = nullableInt(resticMS)
+	run.HasParent = nullableInt(hasParent)
+	if fp.Valid {
+		run.SelectionFP = &fp.String
+	}
+	return run, nil
+}
+
+func nullableInt(v sql.NullInt64) *int64 {
+	if !v.Valid {
+		return nil
+	}
+	return &v.Int64
 }
