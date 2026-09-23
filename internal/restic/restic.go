@@ -14,6 +14,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -202,10 +203,11 @@ func storageClassFlags(repo, class string) []string {
 
 // Summary holds the fields we extract from restic's --json backup summary line.
 type Summary struct {
-	SnapshotID   string  `json:"snapshot_id"`
-	FilesNew     int     `json:"files_new"`
-	FilesChanged int     `json:"files_changed"`
-	BytesAdded   float64 `json:"data_added"`
+	SnapshotID      string  `json:"snapshot_id"`
+	FilesNew        int     `json:"files_new"`
+	FilesChanged    int     `json:"files_changed"`
+	FilesUnmodified int     `json:"files_unmodified"`
+	BytesAdded      float64 `json:"data_added"`
 	// TotalBytesProcessed is what restic read, before deduplication. For a
 	// backup taken from a command it is the size of the stream itself.
 	TotalBytesProcessed uint64 `json:"total_bytes_processed"`
@@ -434,6 +436,20 @@ func CatConfigArgs(repo string, m Mode) []string {
 // a bare name like ".git" by basename at any depth); paths are placed after --
 // (arg-injection guard).
 func BackupArgs(repo string, paths []string, tags []string, m Mode, excludes ...string) []string {
+	return backupArgs(repo, tags, m, "", excludes, paths)
+}
+
+// BackupDirArgs returns the argv for a backup run inside a directory on the
+// positional ".". --group-by host,tags makes restic look for the parent among
+// the snapshots carrying the same tags, so it finds the previous run although
+// the absolute working directory names a different ZFS snapshot every night.
+// Exactly one identity tag belongs here: a second tag puts the run into a group
+// of its own, and every night would read every file again.
+func BackupDirArgs(repo string, tags []string, m Mode, excludes ...string) []string {
+	return backupArgs(repo, tags, m, "host,tags", excludes, []string{"."})
+}
+
+func backupArgs(repo string, tags []string, m Mode, groupBy string, excludes, positionals []string) []string {
 	args := repoFlag(repo)
 	args = append(args, storageClassFlags(repo, m.StorageClass)...)
 	args = append(args, retryLockFlags()...)
@@ -447,6 +463,9 @@ func BackupArgs(repo string, paths []string, tags []string, m Mode, excludes ...
 	// restic group across container recreations; otherwise retention silently
 	// stops collapsing snapshots after an update.
 	args = append(args, "--host", backupHost)
+	if groupBy != "" {
+		args = append(args, "--group-by", groupBy)
+	}
 	for _, tag := range tags {
 		args = append(args, "--tag", tag)
 	}
@@ -463,7 +482,7 @@ func BackupArgs(repo string, paths []string, tags []string, m Mode, excludes ...
 		args = append(args, "--exclude", ex)
 	}
 	args = append(args, "--")
-	args = append(args, paths...)
+	args = append(args, positionals...)
 	return args
 }
 
@@ -718,6 +737,23 @@ func RestoreSubtreeIncludeArgs(repo, snapshotID, subtreePath, includePath, targe
 		args = append(args, "--no-lock") // a foreign restore only READS the source repo
 	}
 	args = append(args, "--json", "--target", target, "--include", includePath, "--", snapshotID+":"+subtreePath)
+	return args
+}
+
+// RestoreAllArgs returns the argv for restoring a whole snapshot into target.
+// A ZFS member's snapshot has the dataset root as its tree root, because the
+// backup ran inside the snapshot directory on ".", so its files land directly
+// in target without the absolute path of the run that stored them.
+func RestoreAllArgs(repo, snapshotID, target string, m Mode) []string {
+	args := repoFlag(repo)
+	args = append(args, "restore")
+	if !m.Encrypted {
+		args = append(args, insecureFlag)
+	}
+	if m.NoLock {
+		args = append(args, "--no-lock") // a foreign restore only READS the source repo
+	}
+	args = append(args, "--json", "--target", target, "--", snapshotID)
 	return args
 }
 
@@ -1130,9 +1166,23 @@ func (r Restic) authEnv(m Mode) []string {
 // argv.  On failure, full stderr is logged server-side but only a scrubbed
 // error is returned to the caller.
 func (r Restic) run(ctx context.Context, args []string, m Mode) ([]byte, error) {
+	return r.runIn(ctx, "", args, m)
+}
+
+// runIn is run with a working directory. restic resolves a relative target and
+// the absolute paths it matches excludes against from its own cwd, and Go's
+// os.Getwd prefers PWD over the resolved path, so a caller that runs inside a
+// symlinked or automounted directory gets the path it asked for only when PWD
+// says so. Go's exec fills PWD in by itself only when Env is nil, which it
+// never is here.
+func (r Restic) runIn(ctx context.Context, dir string, args []string, m Mode) ([]byte, error) {
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
 	configureProcGroup(cmd)
 	env := r.authEnv(m)
+	if dir != "" {
+		cmd.Dir = dir
+		env = append(env, "PWD="+dir)
+	}
 	var out []byte
 	var err error
 	// When a progress sink is present (backup/restore), stream stdout so each
@@ -2060,6 +2110,37 @@ func (r Restic) Backup(ctx context.Context, repo string, paths []string, tags []
 		return Summary{}, err
 	}
 	return ParseBackupSummary(out)
+}
+
+// BackupDir backs up the contents of dir as the snapshot's own tree root,
+// running restic inside dir on the positional ".". Both dir and a local
+// repository have to be absolute, because restic resolves a relative path
+// against its working directory, which here is the snapshot being read.
+func (r Restic) BackupDir(ctx context.Context, repo, dir string, tags []string, m Mode, excludes ...string) (Summary, error) {
+	if !filepath.IsAbs(dir) {
+		return Summary{}, fmt.Errorf("restic backup directory %q is not absolute", dir)
+	}
+	if !IsRemoteRepo(repo) && !filepath.IsAbs(repo) {
+		return Summary{}, fmt.Errorf("restic repository %q is not absolute", repo)
+	}
+	out, err := r.runIn(ctx, dir, BackupDirArgs(repo, tags, m, excludes...), m)
+	if err != nil {
+		// Exit 3 means a source file could not be read but the snapshot exists,
+		// the same as in Backup.
+		if errors.Is(err, ErrBackupSourceUnreadable) {
+			if sum, perr := ParseBackupSummary(out); perr == nil {
+				return sum, nil
+			}
+		}
+		return Summary{}, err
+	}
+	return ParseBackupSummary(out)
+}
+
+// RestoreAll restores a whole snapshot into target.
+func (r Restic) RestoreAll(ctx context.Context, repo, snapshotID, target string, m Mode) error {
+	_, err := r.run(ctx, RestoreAllArgs(repo, snapshotID, target, m), m)
+	return err
 }
 
 // DumpZip streams the snapshot subtree rooted at subfolder as a zip into w

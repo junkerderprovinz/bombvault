@@ -509,6 +509,88 @@ func TestBackupArgsExcludeCaches(t *testing.T) {
 	})
 }
 
+// TestBackupArgsHasNoGroupBy pins that the path-based backup builder leaves
+// grouping at restic's default. Every container, VM, flash, config and folder
+// snapshot is grouped by host and paths; a --group-by host,tags here would put
+// snapshots of different sources into one retention group.
+func TestBackupArgsHasNoGroupBy(t *testing.T) {
+	for _, got := range [][]string{
+		BackupArgs("/repo", []string{"/src"}, []string{"container:plex"}, Mode{Encrypted: true}),
+		BackupArgs("/repo", []string{"/src"}, nil, Mode{Encrypted: false}, "logs"),
+		BackupArgs("s3:bucket/repo", []string{"/a", "/b"}, []string{"flash"},
+			Mode{Encrypted: true, ExcludeCaches: true, Limits: Limits{UploadKBps: 512}}),
+	} {
+		for _, a := range got {
+			if a == "--group-by" {
+				t.Fatalf("BackupArgs must not group by tags, got %v", got)
+			}
+		}
+	}
+}
+
+// TestBackupDirArgs pins the argv of a backup taken inside a directory on the
+// positional ".". The --group-by flag is what makes restic find the previous
+// snapshot of the same dataset although the absolute working directory carries
+// a different snapshot name every run.
+func TestBackupDirArgs(t *testing.T) {
+	t.Run("encrypted", func(t *testing.T) {
+		got := BackupDirArgs("/repo", []string{"zfs:cache/appdata"}, Mode{Encrypted: true})
+		want := []string{"-r", "/repo", "--retry-lock", "5m", "backup", "--json", "--host", "bombvault",
+			"--group-by", "host,tags", "--tag", "zfs:cache/appdata", "--", "."}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("unencrypted with excludes", func(t *testing.T) {
+		got := BackupDirArgs("/repo", []string{"zfs:cache/appdata/plex"}, Mode{Encrypted: false},
+			"/mnt/cache/appdata/plex/.zfs/snapshot/bombvault-20260923T010000/Library/Cache", "*.tmp")
+		want := []string{"-r", "/repo", "--retry-lock", "5m", "backup", "--insecure-no-password", "--json",
+			"--host", "bombvault", "--group-by", "host,tags", "--tag", "zfs:cache/appdata/plex",
+			"--exclude", "/mnt/cache/appdata/plex/.zfs/snapshot/bombvault-20260923T010000/Library/Cache",
+			"--exclude", "*.tmp", "--", "."}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("limits and exclude-caches keep the slots they have in BackupArgs", func(t *testing.T) {
+		got := BackupDirArgs("s3:bucket/repo", []string{"zfs:tank/data"},
+			Mode{Encrypted: true, ExcludeCaches: true, Limits: Limits{UploadKBps: 1024, DownloadKBps: 512}}, "logs")
+		want := []string{"-r", "s3:bucket/repo", "--retry-lock", "5m", "--limit-upload", "1024", "--limit-download", "512",
+			"backup", "--json", "--host", "bombvault", "--group-by", "host,tags", "--tag", "zfs:tank/data",
+			"--exclude-caches", "--exclude", "logs", "--", "."}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+}
+
+// TestRestoreAllArgs pins the argv for restoring a whole snapshot into a target
+// directory, the shape the ZFS domain needs because its snapshot tree root is
+// the dataset root.
+func TestRestoreAllArgs(t *testing.T) {
+	t.Run("encrypted", func(t *testing.T) {
+		got := RestoreAllArgs("/repo", "abc123", "/mnt/cache/appdata", Mode{Encrypted: true})
+		want := []string{"-r", "/repo", "restore", "--json", "--target", "/mnt/cache/appdata", "--", "abc123"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("unencrypted", func(t *testing.T) {
+		got := RestoreAllArgs("/repo", "abc123", "/restore", Mode{Encrypted: false})
+		want := []string{"-r", "/repo", "restore", "--insecure-no-password", "--json", "--target", "/restore", "--", "abc123"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("a foreign source repository is only read", func(t *testing.T) {
+		got := RestoreAllArgs("/repo", "abc123", "/restore", Mode{Encrypted: true, NoLock: true})
+		want := []string{"-r", "/repo", "restore", "--no-lock", "--json", "--target", "/restore", "--", "abc123"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+}
+
 func TestDumpZipArgsEncrypted(t *testing.T) {
 	got := DumpZipArgs("/repo", "abc123", "/host/boot", Mode{Encrypted: true})
 	want := []string{"-r", "/repo", "dump", "-a", "zip", "--", "abc123:/host/boot", "/"}
