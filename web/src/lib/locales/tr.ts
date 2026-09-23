@@ -1790,13 +1790,13 @@ const tr: Partial<Translations> = {
   "placement.oldCopy": "{place}: en son kopya {date} tarihinden",
   "placement.rule321Met": "3-2-1 karşılanıyor",
   "placement.rule321OneCopy": "3-2-1 karşılanmıyor: tek yedek",
-  "placement.rule321NothingOff": "3-2-1 karşılanmıyor: tesis dışında hiçbir şey yok",
   "placement.rule321Unconfirmed": "3-2-1 doğrulanmadı",
   "placement.noBackup": "Henüz yedek yok.",
   "placement.stackNote": "Proje klasörü {project}: {home} üzerinde, {targets} konumuna kopyalandı (konteyner varsayılanını izler)",
   "placement.stackNoteNoCopy": "Proje klasörü {project}: {home} üzerinde, kopyalanmadı (konteyner varsayılanını izler)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

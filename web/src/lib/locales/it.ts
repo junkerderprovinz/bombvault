@@ -1790,13 +1790,13 @@ const it: Partial<Translations> = {
   "placement.oldCopy": "{place}: ultima copia del {date}",
   "placement.rule321Met": "3-2-1 rispettata",
   "placement.rule321OneCopy": "3-2-1 non rispettata: un solo backup",
-  "placement.rule321NothingOff": "3-2-1 non rispettata: niente fuori sede",
   "placement.rule321Unconfirmed": "3-2-1 non confermata",
   "placement.noBackup": "Ancora nessun backup.",
   "placement.stackNote": "Cartella di progetto {project}: su {home}, copiato su {targets} (segue il valore predefinito dei container)",
   "placement.stackNoteNoCopy": "Cartella di progetto {project}: su {home}, non copiato (segue il valore predefinito dei container)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

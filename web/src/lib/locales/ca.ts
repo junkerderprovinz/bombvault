@@ -1801,13 +1801,13 @@ const ca: Partial<Translations> = {
   "placement.oldCopy": "{place}: última còpia del {date}",
   "placement.rule321Met": "3-2-1 complert",
   "placement.rule321OneCopy": "3-2-1 no complert: una còpia de seguretat",
-  "placement.rule321NothingOff": "3-2-1 no complert: res fora de les instal·lacions",
   "placement.rule321Unconfirmed": "3-2-1 sense confirmar",
   "placement.noBackup": "Encara no hi ha cap còpia de seguretat.",
   "placement.stackNote": "Carpeta de projecte {project}: a {home}, copiat a {targets} (segueix el valor per defecte dels contenidors)",
   "placement.stackNoteNoCopy": "Carpeta de projecte {project}: a {home}, sense copiar (segueix el valor per defecte dels contenidors)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

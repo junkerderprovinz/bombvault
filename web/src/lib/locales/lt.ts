@@ -1801,13 +1801,13 @@ const lt: Partial<Translations> = {
   "placement.oldCopy": "{place}: naujausia kopija nuo {date}",
   "placement.rule321Met": "3-2-1 įvykdyta",
   "placement.rule321OneCopy": "3-2-1 neįvykdyta: viena atsarginė kopija",
-  "placement.rule321NothingOff": "3-2-1 neįvykdyta: nieko už patalpų ribų",
   "placement.rule321Unconfirmed": "3-2-1 nepatvirtinta",
   "placement.noBackup": "Atsarginės kopijos dar nėra.",
   "placement.stackNote": "Projekto aplankas {project}: vietoje {home}, nukopijuota į {targets} (seka konteinerių numatytąją)",
   "placement.stackNoteNoCopy": "Projekto aplankas {project}: vietoje {home}, nekopijuota (seka konteinerių numatytąją)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

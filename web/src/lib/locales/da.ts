@@ -1790,13 +1790,13 @@ const da: Partial<Translations> = {
   "placement.oldCopy": "{place}: seneste kopi fra {date}",
   "placement.rule321Met": "3-2-1 opfyldt",
   "placement.rule321OneCopy": "3-2-1 ikke opfyldt: én sikkerhedskopi",
-  "placement.rule321NothingOff": "3-2-1 ikke opfyldt: intet uden for huset",
   "placement.rule321Unconfirmed": "3-2-1 ubekræftet",
   "placement.noBackup": "Endnu ingen sikkerhedskopi.",
   "placement.stackNote": "Projektmappe {project}: på {home}, kopieret til {targets} (følger standarden for containere)",
   "placement.stackNoteNoCopy": "Projektmappe {project}: på {home}, ikke kopieret (følger standarden for containere)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

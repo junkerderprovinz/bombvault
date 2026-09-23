@@ -1790,13 +1790,13 @@ const fi: Partial<Translations> = {
   "placement.oldCopy": "{place}: viimeisin kopio {date}",
   "placement.rule321Met": "3-2-1 täyttyy",
   "placement.rule321OneCopy": "3-2-1 ei täyty: yksi varmuuskopio",
-  "placement.rule321NothingOff": "3-2-1 ei täyty: ei mitään tilojen ulkopuolella",
   "placement.rule321Unconfirmed": "3-2-1 vahvistamatta",
   "placement.noBackup": "Ei vielä varmuuskopiota.",
   "placement.stackNote": "Projektikansio {project}: kohteessa {home}, kopioitu kohteeseen {targets} (noudattaa konttien oletusta)",
   "placement.stackNoteNoCopy": "Projektikansio {project}: kohteessa {home}, ei kopioitu (noudattaa konttien oletusta)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

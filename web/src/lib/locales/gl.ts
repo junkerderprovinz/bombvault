@@ -1801,13 +1801,13 @@ const gl: Partial<Translations> = {
   "placement.oldCopy": "{place}: última copia do {date}",
   "placement.rule321Met": "3-2-1 cumprida",
   "placement.rule321OneCopy": "3-2-1 non cumprida: unha copia de seguranza",
-  "placement.rule321NothingOff": "3-2-1 non cumprida: nada fóra das instalacións",
   "placement.rule321Unconfirmed": "3-2-1 sen confirmar",
   "placement.noBackup": "Aínda non hai copia de seguranza.",
   "placement.stackNote": "Cartafol de proxecto {project}: en {home}, copiado a {targets} (segue o valor por defecto dos contedores)",
   "placement.stackNoteNoCopy": "Cartafol de proxecto {project}: en {home}, sen copiar (segue o valor por defecto dos contedores)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

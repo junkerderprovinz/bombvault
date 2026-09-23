@@ -1790,13 +1790,13 @@ const he: Partial<Translations> = {
   "placement.oldCopy": "{place}: העותק האחרון מ-{date}",
   "placement.rule321Met": "3-2-1 מתקיים",
   "placement.rule321OneCopy": "3-2-1 לא מתקיים: גיבוי אחד",
-  "placement.rule321NothingOff": "3-2-1 לא מתקיים: שום דבר מחוץ למתחם",
   "placement.rule321Unconfirmed": "3-2-1 לא מאושר",
   "placement.noBackup": "עדיין אין גיבוי.",
   "placement.stackNote": "תיקיית פרויקט {project}: ב-{home}, הועתק אל {targets} (עוקב אחרי ברירת המחדל של המכולות)",
   "placement.stackNoteNoCopy": "תיקיית פרויקט {project}: ב-{home}, לא הועתק (עוקב אחרי ברירת המחדל של המכולות)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

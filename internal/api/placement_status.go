@@ -43,7 +43,7 @@ type placementObserved struct {
 	Places   []observedPlace `json:"places"`
 	Sites    int             `json:"sites"`
 	Tone     string          `json:"tone"`    // "ok" | "warn" | "unconfirmed"
-	Rule321  string          `json:"rule321"` // "met" | "one-copy" | "nothing-off-premises" | "unconfirmed"
+	Rule321  string          `json:"rule321"` // "met" | "one-copy" | "unconfirmed"
 	Older    []olderCopies   `json:"older"`
 }
 
@@ -403,7 +403,9 @@ func (f *statusFacts) targetPlace(t store.OffsiteTarget, c store.ItemCopies, hol
 }
 
 // score fills in sites, 3-2-1 and tone. The server holding the original data is
-// always a site; a counting place off the premises adds its own.
+// always a site; a counting place off the premises adds its own. Every target is
+// a site of its own, so a second counting place is always one: there is no
+// verdict for two copies that both stay on the premises.
 func (o *placementObserved) score(homeSite string) {
 	sites := map[string]bool{"host": true}
 	counting, stale := 0, 0
@@ -431,13 +433,11 @@ func (o *placementObserved) score(homeSite string) {
 		o.Rule321 = "met"
 	case counting+stale >= 2 && (offSite || staleOffSite):
 		o.Rule321 = "unconfirmed"
-	case counting < 2:
-		o.Rule321 = "one-copy"
 	default:
-		o.Rule321 = "nothing-off-premises"
+		o.Rule321 = "one-copy"
 	}
 	switch {
-	case unreachable || o.Rule321 == "one-copy" || o.Rule321 == "nothing-off-premises":
+	case unreachable || o.Rule321 == "one-copy":
 		o.Tone = "warn"
 	case o.Rule321 == "unconfirmed":
 		o.Tone = "unconfirmed"

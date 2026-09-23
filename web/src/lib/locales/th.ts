@@ -1793,13 +1793,13 @@ const th: Partial<Translations> = {
   "placement.oldCopy": "{place}: สำเนาล่าสุดจาก {date}",
   "placement.rule321Met": "เป็นไปตามกฎ 3-2-1",
   "placement.rule321OneCopy": "ไม่เป็นไปตามกฎ 3-2-1: มีการสำรองข้อมูลเดียว",
-  "placement.rule321NothingOff": "ไม่เป็นไปตามกฎ 3-2-1: ไม่มีอะไรอยู่นอกสถานที่",
   "placement.rule321Unconfirmed": "กฎ 3-2-1 ยังไม่ได้รับการยืนยัน",
   "placement.noBackup": "ยังไม่มีการสำรองข้อมูล",
   "placement.stackNote": "โฟลเดอร์โปรเจกต์ {project}: ที่ {home} คัดลอกไปยัง {targets} (เป็นไปตามค่าเริ่มต้นของคอนเทนเนอร์)",
   "placement.stackNoteNoCopy": "โฟลเดอร์โปรเจกต์ {project}: ที่ {home} ไม่ได้คัดลอก (เป็นไปตามค่าเริ่มต้นของคอนเทนเนอร์)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

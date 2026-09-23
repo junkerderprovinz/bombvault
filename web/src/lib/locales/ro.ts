@@ -1793,13 +1793,13 @@ const ro: Partial<Translations> = {
   "placement.oldCopy": "{place}: ultima copie din {date}",
   "placement.rule321Met": "3-2-1 îndeplinită",
   "placement.rule321OneCopy": "3-2-1 neîndeplinită: o singură copie de siguranță",
-  "placement.rule321NothingOff": "3-2-1 neîndeplinită: nimic în afara sediului",
   "placement.rule321Unconfirmed": "3-2-1 neconfirmată",
   "placement.noBackup": "Încă nicio copie de siguranță.",
   "placement.stackNote": "Folder de proiect {project}: pe {home}, copiat pe {targets} (urmează valoarea implicită a containerelor)",
   "placement.stackNoteNoCopy": "Folder de proiect {project}: pe {home}, necopiat (urmează valoarea implicită a containerelor)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

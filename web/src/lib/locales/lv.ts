@@ -1801,13 +1801,13 @@ const lv: Partial<Translations> = {
   "placement.oldCopy": "{place}: jaunākā kopija no {date}",
   "placement.rule321Met": "3-2-1 izpildīts",
   "placement.rule321OneCopy": "3-2-1 nav izpildīts: viena dublēšana",
-  "placement.rule321NothingOff": "3-2-1 nav izpildīts: nekā ārpus telpām",
   "placement.rule321Unconfirmed": "3-2-1 neapstiprināts",
   "placement.noBackup": "Vēl nav dublējuma.",
   "placement.stackNote": "Projekta mape {project}: vietā {home}, kopēts uz {targets} (seko konteineru noklusējumam)",
   "placement.stackNoteNoCopy": "Projekta mape {project}: vietā {home}, nekopēts (seko konteineru noklusējumam)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

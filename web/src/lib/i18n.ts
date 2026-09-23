@@ -1901,13 +1901,13 @@ export const en = {
   "placement.oldCopy": "{place}: latest copy from {date}",
   "placement.rule321Met": "3-2-1 met",
   "placement.rule321OneCopy": "3-2-1 not met: one backup",
-  "placement.rule321NothingOff": "3-2-1 not met: nothing off the premises",
   "placement.rule321Unconfirmed": "3-2-1 unconfirmed",
   "placement.noBackup": "No backup yet.",
   "placement.stackNote": "Project folder {project}: on {home}, copied to {targets} (follows the containers default)",
   "placement.stackNoteNoCopy": "Project folder {project}: on {home}, not copied (follows the containers default)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
@@ -3785,13 +3785,13 @@ export const de: Translations = {
   "placement.oldCopy": "{place}: letzte Kopie vom {date}",
   "placement.rule321Met": "3-2-1 erfüllt",
   "placement.rule321OneCopy": "3-2-1 nicht erfüllt: eine Sicherung",
-  "placement.rule321NothingOff": "3-2-1 nicht erfüllt: nichts außer Haus",
   "placement.rule321Unconfirmed": "3-2-1 unbestätigt",
   "placement.noBackup": "Noch kein Backup.",
   "placement.stackNote": "Projektordner {project}: auf {home}, kopiert nach {targets} (folgt der Container-Vorgabe)",
   "placement.stackNoteNoCopy": "Projektordner {project}: auf {home}, keine Kopie (folgt der Container-Vorgabe)",
   "placement.older": "Ältere Kopien bei {target}: {n}, zuletzt gesehen {date}",
   "placement.noCopyYet": "{place}: noch keine Kopie",
+  "placement.notListedYet": "{place}: noch nicht gelistet",
 
   // Removal
   "offsiteRemoval.delete": "In {target} löschen",

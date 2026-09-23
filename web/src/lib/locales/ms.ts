@@ -1801,13 +1801,13 @@ const ms: Partial<Translations> = {
   "placement.oldCopy": "{place}: salinan terkini dari {date}",
   "placement.rule321Met": "3-2-1 dipenuhi",
   "placement.rule321OneCopy": "3-2-1 tidak dipenuhi: satu sandaran",
-  "placement.rule321NothingOff": "3-2-1 tidak dipenuhi: tiada apa-apa di luar premis",
   "placement.rule321Unconfirmed": "3-2-1 belum disahkan",
   "placement.noBackup": "Belum ada sandaran.",
   "placement.stackNote": "Folder projek {project}: di {home}, disalin ke {targets} (mengikut lalai kontena)",
   "placement.stackNoteNoCopy": "Folder projek {project}: di {home}, tidak disalin (mengikut lalai kontena)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

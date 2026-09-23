@@ -1785,13 +1785,13 @@ const ru: Partial<Translations> = {
   "placement.oldCopy": "{place}: последняя копия от {date}",
   "placement.rule321Met": "3-2-1 соблюдено",
   "placement.rule321OneCopy": "3-2-1 не соблюдено: одна резервная копия",
-  "placement.rule321NothingOff": "3-2-1 не соблюдено: ничего вне помещения",
   "placement.rule321Unconfirmed": "3-2-1 не подтверждено",
   "placement.noBackup": "Резервной копии пока нет.",
   "placement.stackNote": "Папка проекта {project}: на {home}, скопировано в {targets} (следует значению контейнеров по умолчанию)",
   "placement.stackNoteNoCopy": "Папка проекта {project}: на {home}, не скопировано (следует значению контейнеров по умолчанию)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

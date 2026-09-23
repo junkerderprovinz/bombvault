@@ -1801,13 +1801,13 @@ const sk: Partial<Translations> = {
   "placement.oldCopy": "{place}: posledná kópia z {date}",
   "placement.rule321Met": "3-2-1 splnené",
   "placement.rule321OneCopy": "3-2-1 nesplnené: jedna záloha",
-  "placement.rule321NothingOff": "3-2-1 nesplnené: nič mimo priestorov",
   "placement.rule321Unconfirmed": "3-2-1 nepotvrdené",
   "placement.noBackup": "Zatiaľ žiadna záloha.",
   "placement.stackNote": "Priečinok projektu {project}: na {home}, skopírované do {targets} (riadi sa predvoleným nastavením kontajnerov)",
   "placement.stackNoteNoCopy": "Priečinok projektu {project}: na {home}, nekopírované (riadi sa predvoleným nastavením kontajnerov)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

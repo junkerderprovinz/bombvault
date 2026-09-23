@@ -1790,13 +1790,13 @@ const el: Partial<Translations> = {
   "placement.oldCopy": "{place}: τελευταίο αντίγραφο από {date}",
   "placement.rule321Met": "3-2-1 πληρείται",
   "placement.rule321OneCopy": "3-2-1 δεν πληρείται: ένα αντίγραφο ασφαλείας",
-  "placement.rule321NothingOff": "3-2-1 δεν πληρείται: τίποτα εκτός εγκαταστάσεων",
   "placement.rule321Unconfirmed": "3-2-1 ανεπιβεβαίωτο",
   "placement.noBackup": "Δεν υπάρχει ακόμη αντίγραφο ασφαλείας.",
   "placement.stackNote": "Φάκελος έργου {project}: στο {home}, αντιγράφηκε στο {targets} (ακολουθεί την προεπιλογή των Containers)",
   "placement.stackNoteNoCopy": "Φάκελος έργου {project}: στο {home}, χωρίς αντιγραφή (ακολουθεί την προεπιλογή των Containers)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
