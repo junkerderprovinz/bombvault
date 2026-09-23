@@ -1806,6 +1806,23 @@ WHERE zfs_schedule = 'off'
   AND files_schedule = containers_schedule;`,
 		alreadySatisfied: migrationRecorded("settings_zfs_schedule_joins_sync"),
 	},
+	{
+		// What restic read during a run, next to the data it added, plus the
+		// fingerprint of the selection the run covered. The unmeasured state is
+		// NULL and not 0, because an emptied source measures a real 0 and is
+		// exactly the signal anomaly detection looks for. The index carries the
+		// per-item window over a table that holds every run of every item.
+		version: anomalyMigrationBase,
+		name:    "runs_source_metrics",
+		sql: `ALTER TABLE runs ADD COLUMN source_bytes INTEGER;
+ALTER TABLE runs ADD COLUMN source_files INTEGER;
+ALTER TABLE runs ADD COLUMN files_new INTEGER;
+ALTER TABLE runs ADD COLUMN restic_ms INTEGER;
+ALTER TABLE runs ADD COLUMN has_parent INTEGER;
+ALTER TABLE runs ADD COLUMN selection_fp TEXT;
+CREATE INDEX IF NOT EXISTS idx_runs_target_kind_started ON runs(target_id, kind, started_at);`,
+		alreadySatisfied: columnPresent("runs", "source_bytes"),
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -1815,6 +1832,10 @@ const dbDumpMigrationBase = 123
 // zfsMigrationBase numbers the twelve steps of the ZFS domain from one place,
 // so they keep their order if the base has to move before release.
 const zfsMigrationBase = 126
+
+// anomalyMigrationBase numbers the anomaly schema from one place, for the same
+// reason dbDumpMigrationBase does.
+const anomalyMigrationBase = 138
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.

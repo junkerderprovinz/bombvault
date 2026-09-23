@@ -915,3 +915,399 @@ func TestFailedDBDumpSnapshots(t *testing.T) {
 		t.Fatalf("FailedDBDumpSnapshots = %v, want %v", got, want)
 	}
 }
+
+func seriesTarget(t *testing.T, r *store.Repo, name string) store.Target {
+	t.Helper()
+	tg, err := r.UpsertTarget(store.Target{ContainerName: name})
+	if err != nil {
+		t.Fatalf("UpsertTarget %s: %v", name, err)
+	}
+	return tg
+}
+
+func seriesByID(t *testing.T, r *store.Repo, targetID, kind string) map[string]store.SeriesRun {
+	t.Helper()
+	series, err := r.ItemSeries(targetID, kind, 1<<40, 90)
+	if err != nil {
+		t.Fatalf("ItemSeries: %v", err)
+	}
+	byID := make(map[string]store.SeriesRun, len(series))
+	for _, run := range series {
+		byID[run.ID] = run
+	}
+	return byID
+}
+
+func TestFinishRunMeasuredWritesMetricsInOneUpdate(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	tg := seriesTarget(t, r, "sonarr")
+
+	parent := true
+	runID, err := r.StartRun(tg.ID, "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := &store.RunMetrics{SourceBytes: 4096, SourceFiles: 12, FilesNew: 3, ResticMS: 2100, HasParent: &parent}
+	if err := r.FinishRunMeasured(runID, "success", "snap", 512, "", m, "fp-1"); err != nil {
+		t.Fatalf("FinishRunMeasured: %v", err)
+	}
+
+	got := seriesByID(t, r, tg.ID, "backup")[runID]
+	if got.Status != "success" || got.SnapshotID != "snap" || got.Bytes != 512 {
+		t.Fatalf("the finish itself did not land: %+v", got)
+	}
+	if got.SourceBytes == nil || *got.SourceBytes != 4096 {
+		t.Fatalf("source_bytes = %v", got.SourceBytes)
+	}
+	if got.SourceFiles == nil || *got.SourceFiles != 12 {
+		t.Fatalf("source_files = %v", got.SourceFiles)
+	}
+	if got.FilesNew == nil || *got.FilesNew != 3 {
+		t.Fatalf("files_new = %v", got.FilesNew)
+	}
+	if got.ResticMS == nil || *got.ResticMS != 2100 {
+		t.Fatalf("restic_ms = %v", got.ResticMS)
+	}
+	if got.HasParent == nil || *got.HasParent != 1 {
+		t.Fatalf("has_parent = %v", got.HasParent)
+	}
+	if got.SelectionFP == nil || *got.SelectionFP != "fp-1" {
+		t.Fatalf("selection_fp = %v", got.SelectionFP)
+	}
+
+	bareRun, err := r.StartRun(tg.ID, "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.FinishRunMeasured(bareRun, "failed", "", 0, "boom", nil, ""); err != nil {
+		t.Fatalf("FinishRunMeasured(nil metrics): %v", err)
+	}
+	if bare := seriesByID(t, r, tg.ID, "backup")[bareRun]; bare.SourceBytes != nil || bare.HasParent != nil || bare.SelectionFP != nil {
+		t.Fatalf("nil metrics wrote values: %+v", bare)
+	}
+
+	plainRun, err := r.StartRun(tg.ID, "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.FinishRun(plainRun, "success", "snap", 8, ""); err != nil {
+		t.Fatalf("FinishRun: %v", err)
+	}
+	if left := seriesByID(t, r, tg.ID, "backup")[plainRun]; left.SourceBytes != nil || left.SelectionFP != nil {
+		t.Fatalf("FinishRun wrote metric columns: %+v", left)
+	}
+
+	if err := r.FinishRunMeasured("absent", "success", "snap", 0, "", m, "fp"); err == nil {
+		t.Fatal("FinishRunMeasured accepted an unknown run id")
+	}
+}
+
+func TestRunFinishedHookFires(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	tg := seriesTarget(t, r, "sonarr")
+
+	unwatched, err := r.StartRun(tg.ID, "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.FinishRun(unwatched, "success", "snap", 1, ""); err != nil {
+		t.Fatalf("FinishRun without a hook: %v", err)
+	}
+
+	var seen []store.RunFinished
+	r.SetRunFinishedHook(func(f store.RunFinished) { seen = append(seen, f) })
+
+	plain, err := r.StartRun(tg.ID, "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.FinishRun(plain, "success", "snap", 1, ""); err != nil {
+		t.Fatal(err)
+	}
+	measured, err := r.StartRun(tg.ID, "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.FinishRunMeasured(measured, "success", "snap", 1, "", &store.RunMetrics{SourceBytes: 1}, "fp"); err != nil {
+		t.Fatal(err)
+	}
+	want := []store.RunFinished{{RunID: plain}, {RunID: measured}}
+	if !reflect.DeepEqual(seen, want) {
+		t.Fatalf("after two finishes the hook saw %+v, want %+v", seen, want)
+	}
+
+	seen = nil
+	if err := r.FinishRun("absent", "success", "", 0, ""); err == nil {
+		t.Fatal("FinishRun accepted an unknown id")
+	}
+	if len(seen) != 0 {
+		t.Fatalf("a finish that matched no row fired the hook: %+v", seen)
+	}
+
+	if n, err := r.FailRunningRun(tg.ID, "boom"); err != nil || n != 0 {
+		t.Fatalf("FailRunningRun with nothing running = %d, %v", n, err)
+	}
+	if len(seen) != 0 {
+		t.Fatalf("FailRunningRun fired the hook without changing a row: %+v", seen)
+	}
+
+	if _, err := r.StartRun(tg.ID, "backup"); err != nil {
+		t.Fatal(err)
+	}
+	if n, err := r.FailRunningRun(tg.ID, "boom"); err != nil || n != 1 {
+		t.Fatalf("FailRunningRun = %d, %v", n, err)
+	}
+	if !reflect.DeepEqual(seen, []store.RunFinished{{TargetID: tg.ID}}) {
+		t.Fatalf("FailRunningRun told the hook %+v", seen)
+	}
+}
+
+func TestItemSeriesOrderAndFilter(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	tg := seriesTarget(t, r, "sonarr")
+	other := seriesTarget(t, r, "radarr")
+
+	insertRun(t, db, "old", tg.ID, "backup", "success", 100, "s1", "")
+	insertRun(t, db, "tie-first", tg.ID, "backup", "failed", 200, "", "boom")
+	insertRun(t, db, "tie-second", tg.ID, "backup", "success", 200, "s2", "")
+	insertRun(t, db, "beyond", tg.ID, "backup", "success", 900, "s3", "")
+	insertRun(t, db, "running", tg.ID, "backup", "running", 150, "", "")
+	insertRun(t, db, "cancelled", tg.ID, "backup", "cancelled", 150, "", "")
+	insertRun(t, db, "dump", tg.ID, "dbdump", "success", 150, "s4", "")
+	insertRun(t, db, "foreign", other.ID, "backup", "success", 150, "s5", "")
+
+	series, err := r.ItemSeries(tg.ID, "backup", 300, 90)
+	if err != nil {
+		t.Fatalf("ItemSeries: %v", err)
+	}
+	var ids []string
+	for _, run := range series {
+		ids = append(ids, run.ID)
+	}
+	if want := []string{"tie-second", "tie-first", "old"}; !reflect.DeepEqual(ids, want) {
+		t.Fatalf("ItemSeries = %v, want %v", ids, want)
+	}
+
+	dumps, err := r.ItemSeries(tg.ID, "dbdump", 300, 90)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(dumps) != 1 || dumps[0].ID != "dump" {
+		t.Fatalf("the dump series is %v", dumps)
+	}
+
+	limited, err := r.ItemSeries(tg.ID, "backup", 300, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(limited) != 2 {
+		t.Fatalf("limit ignored: %d rows", len(limited))
+	}
+}
+
+func TestNewDataWindowKeepsEligibleRunsInsideTheWindow(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	tg := seriesTarget(t, r, "sonarr")
+
+	insertRun(t, db, "before", tg.ID, "backup", "success", 50, "s0", "")
+	insertRun(t, db, "inside", tg.ID, "backup", "success", 150, "s1", "")
+	insertRun(t, db, "newer", tg.ID, "backup", "success", 250, "s2", "")
+	insertRun(t, db, "after", tg.ID, "backup", "success", 900, "s3", "")
+	insertRun(t, db, "failed", tg.ID, "backup", "failed", 200, "", "boom")
+	insertRun(t, db, "bookkeeping", tg.ID, "backup", "success", 220, "", "")
+
+	window, err := r.NewDataWindow(tg.ID, "backup", 100, 300, 1000)
+	if err != nil {
+		t.Fatalf("NewDataWindow: %v", err)
+	}
+	var ids []string
+	for _, run := range window {
+		ids = append(ids, run.ID)
+	}
+	if want := []string{"newer", "inside"}; !reflect.DeepEqual(ids, want) {
+		t.Fatalf("NewDataWindow = %v, want %v", ids, want)
+	}
+
+	capped, err := r.NewDataWindow(tg.ID, "backup", 100, 300, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(capped) != 1 || capped[0].ID != "newer" {
+		t.Fatalf("limit ignored: %v", capped)
+	}
+}
+
+func TestFirstEligibleRunIDSkipsSnapshotlessUnmeasuredSuccess(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	tg := seriesTarget(t, r, "sonarr")
+
+	insertRun(t, db, "bookkeeping", tg.ID, "backup", "success", 100, "", "")
+	insertRun(t, db, "failed", tg.ID, "backup", "failed", 110, "", "boom")
+	insertRun(t, db, "empty-measured", tg.ID, "backup", "success", 120, "", "")
+	if _, err := db.Exec(`UPDATE runs SET source_bytes = 0, source_files = 0 WHERE id = 'empty-measured'`); err != nil {
+		t.Fatal(err)
+	}
+	insertRun(t, db, "with-snapshot", tg.ID, "backup", "success", 130, "s1", "")
+
+	first, err := r.FirstEligibleRunID(tg.ID, "backup")
+	if err != nil {
+		t.Fatalf("FirstEligibleRunID: %v", err)
+	}
+	if first != "empty-measured" {
+		t.Fatalf("FirstEligibleRunID = %q, want the measured empty run", first)
+	}
+
+	if first, err = r.FirstEligibleRunID(tg.ID, "dbdump"); err != nil || first != "" {
+		t.Fatalf("FirstEligibleRunID for a kind without runs = %q, %v", first, err)
+	}
+
+	insertRun(t, db, "dump", tg.ID, "dbdump", "success", 90, "s2", "")
+	if first, err = r.FirstEligibleRunID(tg.ID, "dbdump"); err != nil || first != "dump" {
+		t.Fatalf("the dump series = %q, %v", first, err)
+	}
+}
+
+func TestRunTargetsResolvesEveryKnownRunID(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	tg := seriesTarget(t, r, "sonarr")
+
+	insertRun(t, db, "backup", tg.ID, "backup", "success", 100, "s1", "")
+	insertRun(t, db, "dump", tg.ID, "dbdump", "success", 110, "s2", "")
+
+	// More ids than fit in one IN clause, so the chunking is exercised.
+	ids := []string{"backup", "dump", "absent"}
+	for i := range 900 {
+		ids = append(ids, fmt.Sprintf("absent-%d", i))
+	}
+	got, err := r.RunTargets(ids)
+	if err != nil {
+		t.Fatalf("RunTargets: %v", err)
+	}
+	want := map[string]store.RunTargetKind{
+		"backup": {TargetID: tg.ID, Kind: "backup"},
+		"dump":   {TargetID: tg.ID, Kind: "dbdump"},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("RunTargets = %v, want %v", got, want)
+	}
+
+	empty, err := r.RunTargets(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(empty) != 0 {
+		t.Fatalf("an empty list resolved to %v", empty)
+	}
+}
+
+func TestUnmeasuredSnapshotRunsFindsWhatTheBackfillCanFill(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	tg := seriesTarget(t, r, "sonarr")
+
+	insertRun(t, db, "wanted", tg.ID, "backup", "success", 100, "s1", "")
+	insertRun(t, db, "dump", tg.ID, "dbdump", "success", 110, "s2", "")
+	insertRun(t, db, "measured", tg.ID, "backup", "success", 120, "s3", "")
+	if _, err := db.Exec(`UPDATE runs SET source_bytes = 7 WHERE id = 'measured'`); err != nil {
+		t.Fatal(err)
+	}
+	insertRun(t, db, "no-snapshot", tg.ID, "backup", "success", 130, "", "")
+	insertRun(t, db, "failed", tg.ID, "backup", "failed", 140, "s4", "boom")
+	insertRun(t, db, "restore", tg.ID, "restore", "success", 150, "s5", "")
+
+	runs, err := r.UnmeasuredSnapshotRuns()
+	if err != nil {
+		t.Fatalf("UnmeasuredSnapshotRuns: %v", err)
+	}
+	want := []store.UnmeasuredRun{
+		{ID: "wanted", TargetID: tg.ID, Kind: "backup", SnapshotID: "s1", StartedAt: 100},
+		{ID: "dump", TargetID: tg.ID, Kind: "dbdump", SnapshotID: "s2", StartedAt: 110},
+	}
+	if !reflect.DeepEqual(runs, want) {
+		t.Fatalf("UnmeasuredSnapshotRuns = %+v, want %+v", runs, want)
+	}
+}
+
+func TestSetRunMetricsNeverOverwritesLiveMeasurement(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	tg := seriesTarget(t, r, "sonarr")
+	vm := seriesTarget(t, r, "win11")
+
+	live, err := r.StartRun(tg.ID, "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.FinishRunMeasured(live, "success", "s1", 100, "", &store.RunMetrics{SourceBytes: 4096, SourceFiles: 9}, "fp"); err != nil {
+		t.Fatal(err)
+	}
+	insertRun(t, db, "stale", tg.ID, "backup", "success", 100, "s2", "")
+	insertRun(t, db, "vm", vm.ID, "backup", "success", 100, "s3", "")
+
+	summed := int64(999)
+	parent := true
+	n, err := r.SetRunMetrics(map[string]store.BackfillMetrics{
+		live: {RunMetrics: store.RunMetrics{SourceBytes: 1, SourceFiles: 1}},
+		"stale": {RunMetrics: store.RunMetrics{
+			SourceBytes: 2048, SourceFiles: 5, FilesNew: 2, ResticMS: 700, HasParent: &parent,
+		}},
+		"vm":     {RunMetrics: store.RunMetrics{SourceBytes: 8192}, Bytes: &summed},
+		"absent": {RunMetrics: store.RunMetrics{SourceBytes: 3}},
+	})
+	if err != nil {
+		t.Fatalf("SetRunMetrics: %v", err)
+	}
+	if n != 2 {
+		t.Fatalf("SetRunMetrics set %d rows, want 2", n)
+	}
+
+	byID := seriesByID(t, r, tg.ID, "backup")
+	if got := byID[live]; got.SourceBytes == nil || *got.SourceBytes != 4096 || got.SourceFiles == nil || *got.SourceFiles != 9 {
+		t.Fatalf("the live measurement was overwritten: %+v", got)
+	}
+	filled := byID["stale"]
+	if filled.SourceBytes == nil || *filled.SourceBytes != 2048 || filled.FilesNew == nil || *filled.FilesNew != 2 {
+		t.Fatalf("the unmeasured row was not filled: %+v", filled)
+	}
+	if filled.ResticMS == nil || *filled.ResticMS != 700 || filled.HasParent == nil || *filled.HasParent != 1 {
+		t.Fatalf("duration or parent missing: %+v", filled)
+	}
+
+	vmRuns, err := r.ItemSeries(vm.ID, "backup", 1<<40, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(vmRuns) != 1 || vmRuns[0].Bytes != summed {
+		t.Fatalf("the VM run's bytes are %+v, want %d", vmRuns, summed)
+	}
+}
