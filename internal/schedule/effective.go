@@ -128,10 +128,16 @@ func EffectiveZFSDatasetSchedule(d store.ZFSDataset, s store.Settings) Effective
 }
 
 // PausedByOverride reports whether an item's own schedule override switches its
-// backups off. EffectiveSchedule collapses that into EffectiveNone together
-// with a disabled domain and an excluded item, so the two cases need a reading
-// of their own where they have to be told apart.
-func PausedByOverride(override string) bool {
+// backups off, the operator's pause. EffectiveSchedule collapses that into
+// EffectiveNone together with a disabled domain and an excluded item, so the
+// two cases need a reading of their own where they have to be told apart. An
+// item with a cadence of its own is not paused, so a manual "back up this
+// domain now" takes it along even though the scheduled domain pass leaves it to
+// its own entry.
+func PausedByOverride(override string, perItem bool) bool {
+	if !perItem {
+		return false
+	}
 	cls := classifyItemOverride(override)
 	return !cls.ownEntry && !cls.inDomainRun
 }

@@ -32,6 +32,44 @@ func (s *slidingWindow) allow(key string, now time.Time) (bool, time.Duration) {
 	return true, 0
 }
 
+// reserve takes a slot for key and hands back the func that gives it up again.
+// A caller that keeps the slot never calls it. Taking the slot and deciding
+// whether it was free happen under one lock, so two starts arriving together
+// cannot both spend the last one.
+func (s *slidingWindow) reserve(key string, now time.Time) (release func(), ok bool, retry time.Duration) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	kept := s.pruneLocked(key, now)
+	if len(kept) >= s.max {
+		return nil, false, s.window - now.Sub(kept[0])
+	}
+	s.hits[key] = append(kept, now)
+	return func() { s.give(key, now) }, true, 0
+}
+
+// give returns the slot reserve took at now.
+func (s *slidingWindow) give(key string, now time.Time) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	hits := s.hits[key]
+	for i := len(hits) - 1; i >= 0; i-- {
+		if hits[i].Equal(now) {
+			s.hits[key] = append(hits[:i], hits[i+1:]...)
+			break
+		}
+	}
+	if len(s.hits[key]) == 0 {
+		delete(s.hits, key)
+	}
+}
+
+// remaining is how many hits key still has in its window.
+func (s *slidingWindow) remaining(key string, now time.Time) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.max - len(s.pruneLocked(key, now))
+}
+
 // pruneLocked drops the hits that have left key's window and returns the rest.
 func (s *slidingWindow) pruneLocked(key string, now time.Time) []time.Time {
 	cutoff := now.Add(-s.window)

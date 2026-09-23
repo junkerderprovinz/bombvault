@@ -1227,9 +1227,11 @@ func placeholderList(n int) string {
 	return strings.TrimSuffix(strings.Repeat("?,", n), ",")
 }
 
-// LatestMCPStartAt returns the newest started_at among the MCP-started runs of
-// targetIDs at or after since, or 0 when there is none. It answers the cooldown
-// that keeps an assistant from starting the same target again and again.
+// LatestMCPStartAt returns the newest started_at among the finished MCP-started
+// runs of targetIDs at or after since, or 0 when there is none. It answers the
+// cooldown that keeps an assistant from starting the same target again and
+// again. A run still in flight is left out: the caller's own guard answers that
+// one as busy, which says more than a waiting time.
 func (r *Repo) LatestMCPStartAt(targetIDs []string, since int64) (int64, error) {
 	var newest int64
 	for start := 0; start < len(targetIDs); start += lastBackupAmongChunk {
@@ -1245,7 +1247,7 @@ func (r *Repo) LatestMCPStartAt(targetIDs []string, since int64) (int64, error) 
 		row := r.db.QueryRow(`
 			SELECT max(started_at)
 			FROM runs
-			WHERE started_via = 'mcp' AND started_at >= ?
+			WHERE started_via = 'mcp' AND status <> 'running' AND started_at >= ?
 			  AND target_id IN (`+placeholderList(len(chunk))+`)`, args...)
 		var at sql.NullInt64
 		if err := row.Scan(&at); err != nil {
@@ -1259,19 +1261,20 @@ func (r *Repo) LatestMCPStartAt(targetIDs []string, since int64) (int64, error) 
 }
 
 // MCPBackupsSince counts the backups an MCP key started for targetID at or
-// after since, the ones that either ran or are still running. It is the daily
-// budget a single item has.
-func (r *Repo) MCPBackupsSince(targetID string, since int64) (int, error) {
-	var n int
-	err := r.db.QueryRow(`
-		SELECT count(*)
+// after since, the ones that either ran or are still running, and returns when
+// the oldest of them began. It is the daily budget a single item has, and
+// oldest says when the next slot frees up.
+func (r *Repo) MCPBackupsSince(targetID string, since int64) (count int, oldest int64, err error) {
+	var first sql.NullInt64
+	err = r.db.QueryRow(`
+		SELECT count(*), min(started_at)
 		FROM runs
 		WHERE target_id = ? AND kind = 'backup' AND started_via = 'mcp'
-		  AND started_at >= ? AND status IN ('success', 'running')`, targetID, since).Scan(&n)
+		  AND started_at >= ? AND status IN ('success', 'running')`, targetID, since).Scan(&count, &first)
 	if err != nil {
-		return 0, fmt.Errorf("MCPBackupsSince: %w", err)
+		return 0, 0, fmt.Errorf("MCPBackupsSince: %w", err)
 	}
-	return n, nil
+	return count, first.Int64, nil
 }
 
 // NewestBackupOrigins looks at the newest n successful runs of kind on targetID

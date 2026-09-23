@@ -1,0 +1,397 @@
+package api
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"github.com/junkerderprovinz/bombvault/internal/store"
+)
+
+// Two start calls that arrive together must not both see the last free slot.
+func TestSlidingWindowReserveIsAtomic(t *testing.T) {
+	w := newSlidingWindow(time.Hour, 2)
+	now := time.Now()
+
+	var mu sync.Mutex
+	var releases []func()
+	var start, done sync.WaitGroup
+	start.Add(1)
+	done.Add(20)
+	for range 20 {
+		go func() {
+			defer done.Done()
+			start.Wait()
+			release, ok, _ := w.reserve("k1", now)
+			if !ok {
+				return
+			}
+			mu.Lock()
+			releases = append(releases, release)
+			mu.Unlock()
+		}()
+	}
+	start.Done()
+	done.Wait()
+
+	if len(releases) != 2 {
+		t.Fatalf("%d of 20 callers got a slot, want the window's 2", len(releases))
+	}
+	if _, ok, retry := w.reserve("k1", now); ok || retry <= 0 {
+		t.Fatalf("a full window reserved again: ok=%v retry=%v", ok, retry)
+	}
+
+	releases[0]()
+	if _, ok, _ := w.reserve("k1", now); !ok {
+		t.Fatal("the released slot was not given back")
+	}
+	if _, ok, _ := w.reserve("k1", now); ok {
+		t.Fatal("the window handed out a third slot")
+	}
+}
+
+// newMCPStartHandler is a handler whose files domain answers a start. The sets
+// point at folders that are not there, so a launched backup fails in its own
+// goroutine without a repository or an engine behind it, which is all these
+// tests need: they are about what happens before the service is asked.
+func newMCPStartHandler(t *testing.T, sets ...string) (*Handler, *store.Repo, map[string]store.FileSet) {
+	t.Helper()
+	h, _, repo, _ := newMCPGateHandler(t)
+	settings, err := repo.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.FilesEnabled = true
+	settings.FilesPath = "backups/files"
+	if err := repo.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	out := make(map[string]store.FileSet, len(sets))
+	for _, name := range sets {
+		set, cErr := repo.CreateFileSet(store.FileSet{Name: name, Path: "data/" + name, Enabled: true})
+		if cErr != nil {
+			t.Fatal(cErr)
+		}
+		out[name] = set
+	}
+	return h, repo, out
+}
+
+// mcpStartCaller is the context the gate hands a tool.
+func mcpStartCaller(keyID string, canStart bool) context.Context {
+	return withMCPCaller(context.Background(), mcpCaller{
+		KeyID: keyID, Label: "Laptop", Hint: "x9Qa", CanStartBackups: canStart,
+	})
+}
+
+// startFileSet calls start_backup for one folder set the way the transport
+// would.
+func startFileSet(ctx context.Context, h *Handler, name string) *mcp.CallToolResult {
+	req := &mcp.CallToolRequest{Params: &mcp.CallToolParamsRaw{
+		Name:      "start_backup",
+		Arguments: json.RawMessage(fmt.Sprintf(`{"domain":"files","item":%q}`, name)),
+	}}
+	res, _ := h.toolStartBackup(ctx, req)
+	return res
+}
+
+// waitForFilesIdle blocks until the detached backup has given the shared guard
+// back, so the next start is not refused for the wrong reason.
+func waitForFilesIdle(t *testing.T, h *Handler) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		if !h.svc.BackupInProgress() {
+			return
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	t.Fatal("the detached backup never finished")
+}
+
+// A refusal has to say which of the two single-flight guards turned the call
+// away, and neither may cost the key a start.
+func TestMCPStartBackupBusyReasons(t *testing.T) {
+	h, _, _ := newMCPStartHandler(t, "docs")
+	ctx := mcpStartCaller("0b7e", true)
+
+	h.svc.batchActive.Store(true)
+	res := startFileSet(ctx, h, "docs")
+	if code := mcpErrorCode(t, res); code != "busy" {
+		t.Fatalf("with a backup in flight the code is %q, want busy", code)
+	}
+	if msg := mcpErrorMessage(t, res); msg != "a backup is already running" {
+		t.Fatalf("message = %q", msg)
+	}
+	h.svc.batchActive.Store(false)
+
+	unlock := h.svc.lockDomainFor("files", "prune")
+	res = startFileSet(ctx, h, "docs")
+	unlock()
+	if code := mcpErrorCode(t, res); code != "busy" {
+		t.Fatalf("with the domain busy the code is %q, want busy", code)
+	}
+	if msg := mcpErrorMessage(t, res); !strings.Contains(msg, "prune is running on files") {
+		t.Fatalf("message = %q, want it to name the operation and the domain", msg)
+	}
+
+	if left := h.mcp.starts.remaining("0b7e", h.mcp.now()); left != mcpStartsPerHour {
+		t.Fatalf("%d starts left of %d: a refused call kept a slot", left, mcpStartsPerHour)
+	}
+}
+
+// The budget counts what a key really launched, so an assistant cannot keep the
+// server busy by retrying, and one key's spending is not another's.
+func TestMCPStartBudget(t *testing.T) {
+	h, _, _ := newMCPStartHandler(t, "docs", "media", "music")
+	h.mcp.starts = newSlidingWindow(time.Hour, 2)
+	ctx := mcpStartCaller("0b7e", true)
+
+	for _, name := range []string{"docs", "media"} {
+		if res := startFileSet(ctx, h, name); res.IsError {
+			t.Fatalf("start of %s: %v", name, res.StructuredContent)
+		}
+		waitForFilesIdle(t, h)
+	}
+
+	res := startFileSet(ctx, h, "music")
+	if code := mcpErrorCode(t, res); code != "rate_limited" {
+		t.Fatalf("the third start gives %q, want rate_limited", code)
+	}
+	if secs := mcpErrorNumber(t, res, "retryAfterSeconds"); secs <= 0 {
+		t.Fatalf("retryAfterSeconds = %v, want the wait until a slot frees", secs)
+	}
+
+	if res := startFileSet(mcpStartCaller("c41d", true), h, "music"); res.IsError {
+		t.Fatalf("another key was held to the first one's budget: %v", res.StructuredContent)
+	}
+	waitForFilesIdle(t, h)
+}
+
+// A backup an assistant started a moment ago is not started again, whatever it
+// was told in between; the web interface stays unrestricted.
+func TestMCPStartCooldown(t *testing.T) {
+	h, repo, sets := newMCPStartHandler(t, "docs")
+	base := time.Now()
+	h.mcp.now = func() time.Time { return base }
+	ctx := mcpStartCaller("0b7e", true)
+
+	seedBackup(t, repo, sets["docs"].ID, "mcp", "0b7e")
+
+	res := startFileSet(ctx, h, "docs")
+	if code := mcpErrorCode(t, res); code != "cooldown" {
+		t.Fatalf("code = %q, want cooldown", code)
+	}
+
+	h.mcp.now = func() time.Time { return base.Add(5 * time.Minute) }
+	res = startFileSet(ctx, h, "docs")
+	if code := mcpErrorCode(t, res); code != "cooldown" {
+		t.Fatalf("five minutes on the code is %q, want cooldown", code)
+	}
+	if secs := mcpErrorNumber(t, res, "retryAfterSeconds"); secs != 600 {
+		t.Fatalf("retryAfterSeconds = %v, want the 600 left of the cooldown", secs)
+	}
+
+	// What the web interface does, which no cooldown covers.
+	seedBackup(t, repo, sets["docs"].ID, "", "")
+
+	h.mcp.now = func() time.Time { return base.Add(mcpStartCooldown + time.Minute) }
+	if res := startFileSet(ctx, h, "docs"); res.IsError {
+		t.Fatalf("the cooldown has run out but the start was refused: %v", res.StructuredContent)
+	}
+	waitForFilesIdle(t, h)
+}
+
+// Under a policy that keeps a fixed number of restore points, MCP must never
+// fill the window on its own: one of the kept points always comes from the
+// schedule or from the operator.
+func TestMCPRetentionGuardKeepsOlderRestorePoints(t *testing.T) {
+	h, repo, sets := newMCPStartHandler(t, "docs")
+	set := sets["docs"]
+	now := time.Now()
+	keepLast := func(t *testing.T, n int) store.Settings {
+		t.Helper()
+		s, err := repo.GetSettings()
+		if err != nil {
+			t.Fatal(err)
+		}
+		s.RetentionKeepLast = n
+		s.RetentionKeepDaily = 0
+		if err := repo.UpdateSettings(s); err != nil {
+			t.Fatal(err)
+		}
+		return s
+	}
+	item := mcpItem{Domain: "files", ID: set.ID, Name: set.Name}
+	held := func(t *testing.T, s store.Settings) *mcpHeldBack {
+		t.Helper()
+		hold, err := h.mcpRetentionHold(s, item, now)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return hold
+	}
+
+	s := keepLast(t, 3)
+	for range 3 {
+		seedBackup(t, repo, set.ID, "", "")
+	}
+	if hold := held(t, s); hold != nil {
+		t.Fatalf("the first MCP backup was held back: %v", hold.detail)
+	}
+
+	seedBackup(t, repo, set.ID, "mcp", "0b7e")
+	if hold := held(t, s); hold != nil {
+		t.Fatalf("the second MCP backup was held back: %v", hold.detail)
+	}
+
+	seedBackup(t, repo, set.ID, "mcp", "0b7e")
+	hold := held(t, s)
+	if hold == nil {
+		t.Fatal("a third MCP backup would leave only MCP-made restore points and was allowed")
+	}
+	if hold.detail["keepLast"] != 3 || hold.detail["mcpInWindow"] != 2 {
+		t.Fatalf("detail = %v, want keepLast 3 and mcpInWindow 2", hold.detail)
+	}
+
+	seedBackup(t, repo, set.ID, "", "")
+	if hold := held(t, s); hold != nil {
+		t.Fatalf("a backup from elsewhere made no room: %v", hold.detail)
+	}
+
+	t.Run("a rule that keeps days holds the older ones itself", func(t *testing.T) {
+		h, repo, sets := newMCPStartHandler(t, "docs")
+		set := sets["docs"]
+		s, err := repo.GetSettings()
+		if err != nil {
+			t.Fatal(err)
+		}
+		s.RetentionKeepLast = 3
+		s.RetentionKeepDaily = 7
+		if err := repo.UpdateSettings(s); err != nil {
+			t.Fatal(err)
+		}
+		seedBackup(t, repo, set.ID, "mcp", "0b7e")
+		seedBackup(t, repo, set.ID, "mcp", "0b7e")
+
+		hold, err := h.mcpRetentionHold(s, mcpItem{Domain: "files", ID: set.ID, Name: set.Name}, time.Now())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if hold != nil {
+			t.Fatalf("the daily rule keeps the older days, but the start was held back: %v", hold.detail)
+		}
+	})
+
+	t.Run("a window of one leaves no room at all", func(t *testing.T) {
+		s := keepLast(t, 1)
+		if hold := held(t, s); hold == nil {
+			t.Fatal("with one kept restore point MCP may never start this item, but it was allowed")
+		}
+	})
+
+	t.Run("the daily limit stands on its own", func(t *testing.T) {
+		h, repo, sets := newMCPStartHandler(t, "media")
+		set := sets["media"]
+		for range mcpItemStartsPerDay {
+			seedBackup(t, repo, set.ID, "mcp", "0b7e")
+		}
+		s, err := repo.GetSettings()
+		if err != nil {
+			t.Fatal(err)
+		}
+		hold, err := h.mcpRetentionHold(s, mcpItem{Domain: "files", ID: set.ID, Name: set.Name}, time.Now())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if hold == nil {
+			t.Fatalf("a fifth MCP backup of the day was allowed under a keep-everything policy")
+		}
+		if hold.detail["mcpStartsToday"] != mcpItemStartsPerDay {
+			t.Fatalf("detail = %v, want the day's count", hold.detail)
+		}
+	})
+
+	t.Run("a domain start leaves the guarded item out", func(t *testing.T) {
+		h, repo, sets := newMCPStartHandler(t, "docs", "media")
+		s, err := repo.GetSettings()
+		if err != nil {
+			t.Fatal(err)
+		}
+		s.RetentionKeepLast = 2
+		if err := repo.UpdateSettings(s); err != nil {
+			t.Fatal(err)
+		}
+		seedBackup(t, repo, sets["docs"].ID, "mcp", "0b7e")
+		// Past the cooldown of that backup, so the guard is what answers here.
+		h.mcp.now = func() time.Time { return time.Now().Add(mcpStartCooldown + time.Minute) }
+
+		req := &mcp.CallToolRequest{Params: &mcp.CallToolParamsRaw{
+			Name:      "start_domain_backup",
+			Arguments: json.RawMessage(`{"domain":"files"}`),
+		}}
+		res, _ := h.toolStartDomainBackup(mcpStartCaller("0b7e", true), req)
+		if res.IsError {
+			t.Fatalf("start_domain_backup: %v", res.StructuredContent)
+		}
+		out, _ := res.StructuredContent.(map[string]any)
+		items, _ := out["items"].([]mcpStartItem)
+		skipped, _ := out["skipped"].([]mcpSkipped)
+		if len(items) != 1 || items[0].Name != "media" {
+			t.Fatalf("started %v, want the set the guard leaves alone", items)
+		}
+		if len(skipped) != 1 || skipped[0].Name != "docs" || skipped[0].Reason != "retention_guard" {
+			t.Fatalf("skipped = %v, want the guarded set with its reason", skipped)
+		}
+		waitForFilesIdle(t, h)
+	})
+}
+
+// The tool list is one list for every key, so the permission is the handler's
+// to check on every call.
+func TestMCPStartPermissionRecheckedInHandler(t *testing.T) {
+	h, repo, _ := newMCPStartHandler(t, "docs")
+
+	res := startFileSet(mcpStartCaller("0b7e", false), h, "docs")
+	if code := mcpErrorCode(t, res); code != "not_permitted" {
+		t.Fatalf("code = %q, want not_permitted", code)
+	}
+	runs, err := repo.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(runs) != 0 {
+		t.Fatalf("%d runs were recorded, want none", len(runs))
+	}
+}
+
+// seedBackup writes a finished backup of an item, which is the history the
+// cooldown and the retention guard read. An empty origin is a backup the
+// schedule or the operator made.
+func seedBackup(t *testing.T, repo *store.Repo, targetID, via, keyID string) {
+	t.Helper()
+	id, err := repo.StartRunWith(targetID, "backup", store.RunMeta{StartedVia: via, StartedViaKey: keyID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := repo.FinishRun(id, "success", "", 0, ""); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// mcpErrorNumber reads one number out of a refusal's extra fields.
+func mcpErrorNumber(t *testing.T, res *mcp.CallToolResult, field string) float64 {
+	t.Helper()
+	body := mcpErrorBody(t, res)
+	n, ok := body[field].(float64)
+	if !ok {
+		t.Fatalf("the refusal carries no %s: %v", field, body)
+	}
+	return n
+}

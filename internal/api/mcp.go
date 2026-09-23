@@ -6,7 +6,6 @@ import (
 	"crypto/subtle"
 	"io"
 	"log"
-	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -86,6 +85,11 @@ type mcpState struct {
 	http  http.Handler
 	calls *slidingWindow
 
+	// starts is the hourly budget one key has for launching backups. A slot is
+	// reserved before the service is asked and given back unless a backup
+	// began.
+	starts *slidingWindow
+
 	// listSem is the single slot the restic-spawning tools share, so a key
 	// cannot put a dozen listings on one repository at once.
 	listSem chan struct{}
@@ -114,6 +118,7 @@ type mcpToolOutcome struct {
 func newMCPState() *mcpState {
 	return &mcpState{
 		calls:     newSlidingWindow(time.Minute, mcpCallsPerMinute),
+		starts:    newSlidingWindow(time.Hour, mcpStartsPerHour),
 		listSem:   make(chan struct{}, 1),
 		touched:   map[string]int64{},
 		authLog:   map[string]int64{},
@@ -389,14 +394,9 @@ func firstJSONToken(b []byte) int {
 	return -1
 }
 
-// retryAfterSeconds rounds a wait up to whole seconds, never below one, which
-// is what a Retry-After header can carry.
+// retryAfterSeconds is a wait in the form a Retry-After header carries.
 func retryAfterSeconds(d time.Duration) string {
-	s := int(math.Ceil(d.Seconds()))
-	if s < 1 {
-		s = 1
-	}
-	return strconv.Itoa(s)
+	return strconv.Itoa(secondsUntil(d))
 }
 
 // mcpToolContext gives a tool its own deadline and ends it when the service
