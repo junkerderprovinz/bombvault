@@ -101,6 +101,19 @@ func (f *placementFixture) makeRepo(loc string) {
 	}
 }
 
+// localRepo makes a local repository at rel under the mount root and returns its
+// location slash-spelled, the key hold and listErr are set under.
+func (f *placementFixture) localRepo(rel string) string {
+	f.t.Helper()
+	dir, err := f.svc.resolveRepo(rel)
+	if err != nil {
+		f.t.Fatalf("resolve %s: %v", rel, err)
+	}
+	loc := filepath.ToSlash(dir)
+	f.makeRepo(loc)
+	return loc
+}
+
 // target adds an enabled target behind the domain's last one.
 func (f *placementFixture) target(domain, name, location string) store.OffsiteTarget {
 	f.t.Helper()
