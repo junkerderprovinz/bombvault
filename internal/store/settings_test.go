@@ -441,6 +441,40 @@ func TestSettingsAuthPasswordHashRoundtrip(t *testing.T) {
 	}
 }
 
+func TestSettingsRoundTripZFSFields(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	s, err := r.GetSettings()
+	if err != nil {
+		t.Fatalf("GetSettings: %v", err)
+	}
+	if s.ZFSEnabled || s.ZFSPath != "user/bombvault/zfs" || s.ZFSSchedule != "off" {
+		t.Fatalf("fresh settings are enabled=%v path=%q schedule=%q", s.ZFSEnabled, s.ZFSPath, s.ZFSSchedule)
+	}
+
+	s.ZFSEnabled = true
+	s.ZFSPath = "user/tank/datasets"
+	s.ZFSSchedule = "daily 03:30"
+	s.ZFSOffsite = "sftp:box:/srv/zfs"
+	s.ZFSOffsiteSchedule = "weekly Sun 05:00"
+	s.ZFSOffsiteImmutable = true
+	if err := r.UpdateSettings(s); err != nil {
+		t.Fatalf("UpdateSettings: %v", err)
+	}
+
+	back, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if back != s {
+		t.Fatalf("settings did not round-trip:\ngot  %+v\nwant %+v", back, s)
+	}
+}
+
 func TestDBDumpsEnabledRoundTrip(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {

@@ -14,11 +14,13 @@ type Settings struct {
 	FlashEnabled      bool
 	ConfigEnabled     bool
 	FilesEnabled      bool
+	ZFSEnabled        bool
 	ContainersPath    string
 	VMsPath           string
 	FlashPath         string
 	ConfigPath        string
 	FilesPath         string
+	ZFSPath           string
 	// RestoreFolder pre-fills the restore-to-folder picker. Like the backup
 	// paths it is relative to the host mount.
 	RestoreFolder string
@@ -29,6 +31,7 @@ type Settings struct {
 	FlashOffsite      string
 	ConfigOffsite     string
 	FilesOffsite      string
+	ZFSOffsite        string
 	// Off-site replication schedule per domain, in the backup-schedule grammar.
 	// Empty replicates after every local backup; otherwise replication follows
 	// this cadence alone.
@@ -37,11 +40,13 @@ type Settings struct {
 	FlashOffsiteSchedule      string
 	ConfigOffsiteSchedule     string
 	FilesOffsiteSchedule      string
+	ZFSOffsiteSchedule        string
 	ContainersSchedule        string
 	VMsSchedule               string
 	FlashSchedule             string
 	ConfigSchedule            string
 	FilesSchedule             string
+	ZFSSchedule               string
 	// Flash ZIP export: after a successful flash backup the snapshot is also
 	// written as a plain .zip to FlashZipExportPath for syncing off the server.
 	// FlashZipExportKeep is how many timestamped zips to keep; 0 keeps a single
@@ -153,6 +158,7 @@ type Settings struct {
 	FlashOffsiteImmutable      bool
 	ConfigOffsiteImmutable     bool
 	FilesOffsiteImmutable      bool
+	ZFSOffsiteImmutable        bool
 	// OffsiteGrowthBudgetGB is the size at which an append-only off-site repo,
 	// which can only grow, triggers a notification. It warns and blocks nothing.
 	// 0 turns the alarm off.
@@ -262,11 +268,11 @@ func (r *Repo) GetSettings() (Settings, error) {
 
 func getSettings(q settingsQuerier) (Settings, error) {
 	row := q.QueryRow(`
-		SELECT encryption_enabled, containers_enabled, vms_enabled, flash_enabled, config_enabled, files_enabled,
-		       containers_path, vms_path, flash_path, config_path, files_path, restore_folder,
-		       containers_offsite, vms_offsite, flash_offsite, config_offsite, files_offsite,
-		       containers_offsite_schedule, vms_offsite_schedule, flash_offsite_schedule, config_offsite_schedule, files_offsite_schedule,
-		       containers_schedule, vms_schedule, flash_schedule, config_schedule, files_schedule,
+		SELECT encryption_enabled, containers_enabled, vms_enabled, flash_enabled, config_enabled, files_enabled, zfs_enabled,
+		       containers_path, vms_path, flash_path, config_path, files_path, zfs_path, restore_folder,
+		       containers_offsite, vms_offsite, flash_offsite, config_offsite, files_offsite, zfs_offsite,
+		       containers_offsite_schedule, vms_offsite_schedule, flash_offsite_schedule, config_offsite_schedule, files_offsite_schedule, zfs_offsite_schedule,
+		       containers_schedule, vms_schedule, flash_schedule, config_schedule, files_schedule, zfs_schedule,
 		       default_language, auth_password_hash,
 		       retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 		       offsite_retention_keep_last, offsite_retention_keep_daily, offsite_retention_keep_weekly, offsite_retention_keep_monthly,
@@ -275,7 +281,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		       metrics_enabled, metrics_token, widget_token,
 		       drills_enabled, drills_schedule, drills_subset_pct, offsite_drills_enabled,
 		       recovery_kit_ack,
-		       containers_offsite_immutable, vms_offsite_immutable, flash_offsite_immutable, config_offsite_immutable, files_offsite_immutable,
+		       containers_offsite_immutable, vms_offsite_immutable, flash_offsite_immutable, config_offsite_immutable, files_offsite_immutable, zfs_offsite_immutable,
 		       offsite_growth_budget_gb, tamper_test_schedule, dr_drill_target, dr_drill_target_vm,
 		       flash_zip_export_enabled, flash_zip_export_path, flash_zip_export_keep,
 		       prune_image_after_update, session_epoch, restic_cache_max_mb,
@@ -294,18 +300,18 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		FROM settings WHERE id = 1`)
 
 	var s Settings
-	var encEnabled, contEnabled, vmsEnabled, flashEnabled, configEnabled, filesEnabled, metricsEnabled, drillsEnabled, offsiteDrillsEnabled, recoveryKitAck int
-	var contImmutable, vmsImmutable, flashImmutable, configImmutable, filesImmutable int
+	var encEnabled, contEnabled, vmsEnabled, flashEnabled, configEnabled, filesEnabled, zfsEnabled, metricsEnabled, drillsEnabled, offsiteDrillsEnabled, recoveryKitAck int
+	var contImmutable, vmsImmutable, flashImmutable, configImmutable, filesImmutable, zfsImmutable int
 	var flashZipExportEnabled, pruneImageAfterUpdate, digestEnabled int
 	var catchUpMissed, watchdogEnabled, exportEncryptEnabled, receiverEnabled int
 	var restartHealthWait, reconcileUnraidUpdateStatus, perItemSchedules int
 	var fleetEnabled, pullEnabled, dbDumpsEnabled, totpEnabled int
 	err := row.Scan(
-		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled, &configEnabled, &filesEnabled,
-		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.ConfigPath, &s.FilesPath, &s.RestoreFolder,
-		&s.ContainersOffsite, &s.VMsOffsite, &s.FlashOffsite, &s.ConfigOffsite, &s.FilesOffsite,
-		&s.ContainersOffsiteSchedule, &s.VMsOffsiteSchedule, &s.FlashOffsiteSchedule, &s.ConfigOffsiteSchedule, &s.FilesOffsiteSchedule,
-		&s.ContainersSchedule, &s.VMsSchedule, &s.FlashSchedule, &s.ConfigSchedule, &s.FilesSchedule,
+		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled, &configEnabled, &filesEnabled, &zfsEnabled,
+		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.ConfigPath, &s.FilesPath, &s.ZFSPath, &s.RestoreFolder,
+		&s.ContainersOffsite, &s.VMsOffsite, &s.FlashOffsite, &s.ConfigOffsite, &s.FilesOffsite, &s.ZFSOffsite,
+		&s.ContainersOffsiteSchedule, &s.VMsOffsiteSchedule, &s.FlashOffsiteSchedule, &s.ConfigOffsiteSchedule, &s.FilesOffsiteSchedule, &s.ZFSOffsiteSchedule,
+		&s.ContainersSchedule, &s.VMsSchedule, &s.FlashSchedule, &s.ConfigSchedule, &s.FilesSchedule, &s.ZFSSchedule,
 		&s.DefaultLanguage, &s.AuthPasswordHash,
 		&s.RetentionKeepLast, &s.RetentionKeepDaily, &s.RetentionKeepWeekly, &s.RetentionKeepMonthly,
 		&s.OffsiteRetentionKeepLast, &s.OffsiteRetentionKeepDaily, &s.OffsiteRetentionKeepWeekly, &s.OffsiteRetentionKeepMonthly,
@@ -314,7 +320,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		&metricsEnabled, &s.MetricsToken, &s.WidgetToken,
 		&drillsEnabled, &s.DrillsSchedule, &s.DrillsSubsetPct, &offsiteDrillsEnabled,
 		&recoveryKitAck,
-		&contImmutable, &vmsImmutable, &flashImmutable, &configImmutable, &filesImmutable,
+		&contImmutable, &vmsImmutable, &flashImmutable, &configImmutable, &filesImmutable, &zfsImmutable,
 		&s.OffsiteGrowthBudgetGB, &s.TamperTestSchedule, &s.DRDrillTarget, &s.DRDrillTargetVM,
 		&flashZipExportEnabled, &s.FlashZipExportPath, &s.FlashZipExportKeep,
 		&pruneImageAfterUpdate, &s.SessionEpoch, &s.ResticCacheMaxMB,
@@ -343,6 +349,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 	s.FlashEnabled = flashEnabled != 0
 	s.ConfigEnabled = configEnabled != 0
 	s.FilesEnabled = filesEnabled != 0
+	s.ZFSEnabled = zfsEnabled != 0
 	s.MetricsEnabled = metricsEnabled != 0
 	s.DrillsEnabled = drillsEnabled != 0
 	s.OffsiteDrillsEnabled = offsiteDrillsEnabled != 0
@@ -353,6 +360,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 	s.FlashOffsiteImmutable = flashImmutable != 0
 	s.ConfigOffsiteImmutable = configImmutable != 0
 	s.FilesOffsiteImmutable = filesImmutable != 0
+	s.ZFSOffsiteImmutable = zfsImmutable != 0
 	s.FlashZipExportEnabled = flashZipExportEnabled != 0
 	s.PruneImageAfterUpdate = pruneImageAfterUpdate != 0
 	s.DigestEnabled = digestEnabled != 0
@@ -429,27 +437,32 @@ func updateSettings(e settingsExecer, s Settings) error {
 		  flash_enabled       = ?,
 		  config_enabled      = ?,
 		  files_enabled       = ?,
+		  zfs_enabled         = ?,
 		  containers_path     = ?,
 		  vms_path            = ?,
 		  flash_path          = ?,
 		  config_path         = ?,
 		  files_path          = ?,
+		  zfs_path            = ?,
 		  restore_folder      = ?,
 		  containers_offsite  = ?,
 		  vms_offsite         = ?,
 		  flash_offsite       = ?,
 		  config_offsite      = ?,
 		  files_offsite       = ?,
+		  zfs_offsite         = ?,
 		  containers_offsite_schedule = ?,
 		  vms_offsite_schedule        = ?,
 		  flash_offsite_schedule      = ?,
 		  config_offsite_schedule     = ?,
 		  files_offsite_schedule      = ?,
+		  zfs_offsite_schedule        = ?,
 		  containers_schedule = ?,
 		  vms_schedule        = ?,
 		  flash_schedule      = ?,
 		  config_schedule     = ?,
 		  files_schedule      = ?,
+		  zfs_schedule        = ?,
 		  default_language    = ?,
 		  auth_password_hash  = ?,
 		  retention_keep_last    = ?,
@@ -479,6 +492,7 @@ func updateSettings(e settingsExecer, s Settings) error {
 		  flash_offsite_immutable      = ?,
 		  config_offsite_immutable     = ?,
 		  files_offsite_immutable      = ?,
+		  zfs_offsite_immutable        = ?,
 		  offsite_growth_budget_gb     = ?,
 		  tamper_test_schedule         = ?,
 		  dr_drill_target              = ?,
@@ -521,10 +535,11 @@ func updateSettings(e settingsExecer, s Settings) error {
 		boolInt(s.FlashEnabled),
 		boolInt(s.ConfigEnabled),
 		boolInt(s.FilesEnabled),
-		s.ContainersPath, s.VMsPath, s.FlashPath, s.ConfigPath, s.FilesPath, s.RestoreFolder,
-		s.ContainersOffsite, s.VMsOffsite, s.FlashOffsite, s.ConfigOffsite, s.FilesOffsite,
-		s.ContainersOffsiteSchedule, s.VMsOffsiteSchedule, s.FlashOffsiteSchedule, s.ConfigOffsiteSchedule, s.FilesOffsiteSchedule,
-		s.ContainersSchedule, s.VMsSchedule, s.FlashSchedule, s.ConfigSchedule, s.FilesSchedule,
+		boolInt(s.ZFSEnabled),
+		s.ContainersPath, s.VMsPath, s.FlashPath, s.ConfigPath, s.FilesPath, s.ZFSPath, s.RestoreFolder,
+		s.ContainersOffsite, s.VMsOffsite, s.FlashOffsite, s.ConfigOffsite, s.FilesOffsite, s.ZFSOffsite,
+		s.ContainersOffsiteSchedule, s.VMsOffsiteSchedule, s.FlashOffsiteSchedule, s.ConfigOffsiteSchedule, s.FilesOffsiteSchedule, s.ZFSOffsiteSchedule,
+		s.ContainersSchedule, s.VMsSchedule, s.FlashSchedule, s.ConfigSchedule, s.FilesSchedule, s.ZFSSchedule,
 		s.DefaultLanguage, s.AuthPasswordHash,
 		s.RetentionKeepLast, s.RetentionKeepDaily, s.RetentionKeepWeekly, s.RetentionKeepMonthly,
 		s.OffsiteRetentionKeepLast, s.OffsiteRetentionKeepDaily, s.OffsiteRetentionKeepWeekly, s.OffsiteRetentionKeepMonthly,
@@ -533,7 +548,7 @@ func updateSettings(e settingsExecer, s Settings) error {
 		boolInt(s.MetricsEnabled), s.MetricsToken, s.WidgetToken,
 		boolInt(s.DrillsEnabled), s.DrillsSchedule, s.DrillsSubsetPct, boolInt(s.OffsiteDrillsEnabled),
 		boolInt(s.RecoveryKitAck),
-		boolInt(s.ContainersOffsiteImmutable), boolInt(s.VMsOffsiteImmutable), boolInt(s.FlashOffsiteImmutable), boolInt(s.ConfigOffsiteImmutable), boolInt(s.FilesOffsiteImmutable),
+		boolInt(s.ContainersOffsiteImmutable), boolInt(s.VMsOffsiteImmutable), boolInt(s.FlashOffsiteImmutable), boolInt(s.ConfigOffsiteImmutable), boolInt(s.FilesOffsiteImmutable), boolInt(s.ZFSOffsiteImmutable),
 		s.OffsiteGrowthBudgetGB, s.TamperTestSchedule, s.DRDrillTarget, s.DRDrillTargetVM,
 		boolInt(s.FlashZipExportEnabled), s.FlashZipExportPath, s.FlashZipExportKeep,
 		boolInt(s.PruneImageAfterUpdate), s.SessionEpoch, s.ResticCacheMaxMB,

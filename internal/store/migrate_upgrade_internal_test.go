@@ -506,6 +506,68 @@ func TestRunsCompletedBackfill(t *testing.T) {
 	}
 }
 
+// TestZFSMigrationsAreSatisfiedWhenAlreadyApplied builds a database that took
+// the ZFS bodies under numbers this build does not use, which is what a
+// renumbering at merge time leaves behind, and expects the guards to record the
+// versions without re-running an ALTER SQLite cannot repeat.
+func TestZFSMigrationsAreSatisfiedWhenAlreadyApplied(t *testing.T) {
+	db := OpenMem(t)
+	if err := Migrate(db); err != nil {
+		t.Fatalf("first migrate: %v", err)
+	}
+
+	var zfsNames []string
+	for _, m := range migrations {
+		if m.version >= zfsMigrationBase {
+			zfsNames = append(zfsNames, m.name)
+		}
+	}
+	if len(zfsNames) != 11 {
+		t.Fatalf("found %d migrations from v%d up, want the 11 of the ZFS domain", len(zfsNames), zfsMigrationBase)
+	}
+	for i, name := range zfsNames {
+		if _, err := db.Exec(`DELETE FROM schema_migrations WHERE name = ?`, name); err != nil {
+			t.Fatalf("forget %s: %v", name, err)
+		}
+		record(t, db, 900+i, name)
+	}
+	if _, err := db.Exec(`UPDATE settings SET zfs_path = 'user/tank/zfs', zfs_schedule = 'daily 03:00' WHERE id = 1`); err != nil {
+		t.Fatalf("configure the domain: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO zfs_datasets (id, dataset) VALUES ('z1', 'cache/appdata')`); err != nil {
+		t.Fatalf("seed an item: %v", err)
+	}
+
+	if err := Migrate(db); err != nil {
+		t.Fatalf("migrate over a database that already has the ZFS schema: %v", err)
+	}
+
+	applied := appliedVersions(t, db)
+	for _, m := range migrations {
+		if m.version < zfsMigrationBase {
+			continue
+		}
+		if applied[m.version] != m.name {
+			t.Fatalf("v%d = %q, want %q recorded so the next boot does not retry it", m.version, applied[m.version], m.name)
+		}
+	}
+
+	var path, schedule string
+	if err := db.QueryRow(`SELECT zfs_path, zfs_schedule FROM settings WHERE id = 1`).Scan(&path, &schedule); err != nil {
+		t.Fatalf("settings lost in the upgrade: %v", err)
+	}
+	if path != "user/tank/zfs" || schedule != "daily 03:00" {
+		t.Fatalf("zfs_path = %q, zfs_schedule = %q; a skipped body must not reset the columns", path, schedule)
+	}
+	var dataset string
+	if err := db.QueryRow(`SELECT dataset FROM zfs_datasets WHERE id = 'z1'`).Scan(&dataset); err != nil {
+		t.Fatalf("item lost in the upgrade: %v", err)
+	}
+	if dataset != "cache/appdata" {
+		t.Fatalf("dataset = %q, want cache/appdata", dataset)
+	}
+}
+
 // tableDDL returns a table's columns with the details a plain name:type
 // comparison would miss (nullability, default, primary key).
 func tableDDL(t *testing.T, db *sql.DB, table string) string {

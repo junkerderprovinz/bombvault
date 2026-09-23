@@ -434,6 +434,46 @@ func TestLastSuccessfulFilesBackupAndCounts(t *testing.T) {
 	}
 }
 
+// TestRunCountsAttributesZFS expects a run against a ZFS item to land in the
+// zfs bucket rather than in the unknown one, which the counter drops.
+func TestRunCountsAttributesZFS(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	d, err := r.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/appdata", Enabled: true})
+	if err != nil {
+		t.Fatalf("CreateZFSDataset: %v", err)
+	}
+	id, err := r.StartRun(d.ID, "backup")
+	if err != nil {
+		t.Fatalf("StartRun: %v", err)
+	}
+	if err := r.FinishRun(id, "success", "snap1", 100, ""); err != nil {
+		t.Fatal(err)
+	}
+	id, err = r.StartRun(d.ID, "backup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.FinishRun(id, "failed", "", 0, "boom"); err != nil {
+		t.Fatal(err)
+	}
+
+	counts, err := r.RunCounts()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if counts["zfs"]["success"] != 1 || counts["zfs"]["failed"] != 1 {
+		t.Fatalf("counts = %v, want one success and one failure for zfs", counts)
+	}
+	if len(counts["containers"]) != 0 || len(counts["files"]) != 0 {
+		t.Fatalf("a dataset run counted for another domain: %v", counts)
+	}
+}
+
 // TestSetRunGroup expects SetRunGroup to stamp one run's group_id and leave
 // other runs with an empty one.
 func TestSetRunGroup(t *testing.T) {

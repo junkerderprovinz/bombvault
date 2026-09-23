@@ -245,9 +245,10 @@ func (r *Repo) GetNamedRepo(id string) (OffsiteTarget, error) {
 // the database or an open transaction, so the guarded writes below cannot drift
 // from the count the interface shows.
 const itemsUsingNamedRepoQ = `
-		SELECT (SELECT COUNT(*) FROM targets   WHERE repo = ?)
-		     + (SELECT COUNT(*) FROM vms       WHERE repo = ?)
-		     + (SELECT COUNT(*) FROM file_sets WHERE repo = ?)`
+		SELECT (SELECT COUNT(*) FROM targets      WHERE repo = ?)
+		     + (SELECT COUNT(*) FROM vms          WHERE repo = ?)
+		     + (SELECT COUNT(*) FROM file_sets    WHERE repo = ?)
+		     + (SELECT COUNT(*) FROM zfs_datasets WHERE repo = ?)`
 
 // DeleteNamedRepoIfUnused deletes a named repository ONLY while nothing points
 // at it, counting and deleting in ONE transaction. It returns the count it saw:
@@ -266,7 +267,7 @@ func (r *Repo) DeleteNamedRepoIfUnused(id string) (int, error) {
 	}
 	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
 	var n int
-	if err := tx.QueryRow(itemsUsingNamedRepoQ, id, id, id).Scan(&n); err != nil {
+	if err := tx.QueryRow(itemsUsingNamedRepoQ, id, id, id, id).Scan(&n); err != nil {
 		return 0, fmt.Errorf("DeleteNamedRepoIfUnused count: %w", err)
 	}
 	if n > 0 {
@@ -294,7 +295,7 @@ func (r *Repo) SetNamedRepoLocationIfUnused(id, location string) (int, error) {
 	}
 	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
 	var n int
-	if err := tx.QueryRow(itemsUsingNamedRepoQ, id, id, id).Scan(&n); err != nil {
+	if err := tx.QueryRow(itemsUsingNamedRepoQ, id, id, id, id).Scan(&n); err != nil {
 		return 0, fmt.Errorf("SetNamedRepoLocationIfUnused count: %w", err)
 	}
 	if n > 0 {
@@ -309,14 +310,15 @@ func (r *Repo) SetNamedRepoLocationIfUnused(id, location string) (int, error) {
 	return 0, nil
 }
 
-// ItemsUsingNamedRepo counts the containers, VMs and file sets that currently
-// point at this named repository. Used for DISPLAY (the "n in use" badge) and to
-// explain a refusal before it happens; the refusals themselves are enforced by
-// DeleteNamedRepoIfUnused / SetNamedRepoLocationIfUnused, which re-count inside
-// their own transaction so the answer cannot go stale between the two calls.
+// ItemsUsingNamedRepo counts the containers, VMs, file sets and ZFS items that
+// currently point at this named repository. Used for DISPLAY (the "n in use"
+// badge) and to explain a refusal before it happens; the refusals themselves
+// are enforced by DeleteNamedRepoIfUnused / SetNamedRepoLocationIfUnused, which
+// re-count inside their own transaction so the answer cannot go stale between
+// the two calls.
 func (r *Repo) ItemsUsingNamedRepo(id string) (int, error) {
 	var n int
-	err := r.db.QueryRow(itemsUsingNamedRepoQ, id, id, id).Scan(&n)
+	err := r.db.QueryRow(itemsUsingNamedRepoQ, id, id, id, id).Scan(&n)
 	if err != nil {
 		return 0, fmt.Errorf("ItemsUsingNamedRepo: %w", err)
 	}

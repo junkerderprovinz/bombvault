@@ -136,3 +136,53 @@ func TestOffsiteTargetCRUD(t *testing.T) {
 		t.Fatalf("GetOffsiteTarget(missing) = ok:%v err:%v", ok, err)
 	}
 }
+
+// TestNamedRepoInUseCountsZFSDatasets expects a repository a dataset points at
+// to be held: without the refusal the item's next backup would silently land in
+// its domain repository and look like a working one.
+func TestNamedRepoInUseCountsZFSDatasets(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	repo, err := r.UpsertOffsiteTarget(store.OffsiteTarget{
+		Role: store.RoleRepo, Name: "Cold", Repo: "backups/cold", Enabled: true,
+	})
+	if err != nil {
+		t.Fatalf("UpsertOffsiteTarget: %v", err)
+	}
+	d, err := r.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/appdata", Enabled: true})
+	if err != nil {
+		t.Fatalf("CreateZFSDataset: %v", err)
+	}
+	if err := r.SetZFSDatasetRepo(d.ID, repo.ID); err != nil {
+		t.Fatalf("SetZFSDatasetRepo: %v", err)
+	}
+
+	n, err := r.ItemsUsingNamedRepo(repo.ID)
+	if err != nil {
+		t.Fatalf("ItemsUsingNamedRepo: %v", err)
+	}
+	if n != 1 {
+		t.Fatalf("in-use count = %d, want the dataset counted", n)
+	}
+	n, err = r.DeleteNamedRepoIfUnused(repo.ID)
+	if err != nil {
+		t.Fatalf("DeleteNamedRepoIfUnused: %v", err)
+	}
+	if n != 1 {
+		t.Fatalf("delete saw %d items, want the refusal", n)
+	}
+	if _, err := r.GetNamedRepo(repo.ID); err != nil {
+		t.Fatalf("a refused delete must leave the row in place: %v", err)
+	}
+	n, err = r.SetNamedRepoLocationIfUnused(repo.ID, "backups/elsewhere")
+	if err != nil {
+		t.Fatalf("SetNamedRepoLocationIfUnused: %v", err)
+	}
+	if n != 1 {
+		t.Fatalf("move saw %d items, want the refusal", n)
+	}
+}
