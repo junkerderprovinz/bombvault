@@ -44,7 +44,7 @@ export function Timeline({
 }) {
   const { t } = useT();
   const host = useHostLabel();
-  const { places, rows, loading, error, loadPlace, reload } = useTimeline(domain, itemKey, open);
+  const { places, rows, loading, error, reading, loadPlace, reload } = useTimeline(domain, itemKey, open);
   const [chosen, setChosen] = useState<Record<string, string | null>>({});
   const [deleting, setDeleting] = useState<{ row: TimelineRow; places: string[] } | null>(null);
   const { confirm, confirmDialog } = useConfirm();
@@ -97,6 +97,7 @@ export function Timeline({
             label={t("timeline.check")}
             labelKey="timeline.check"
             tone="neutral"
+            disabled={reading.has(p.place)}
             onClick={() => void loadPlace(p.place)}
             className="ms-auto"
           />
@@ -175,6 +176,7 @@ export function Timeline({
           label={t("timeline.showOlder")}
           labelKey="timeline.showOlder"
           tone="neutral"
+          disabled={unchecked.some((p) => reading.has(p.place))}
           onClick={() => unchecked.forEach((p) => void loadPlace(p.place))}
           className="self-start my-2"
         />
