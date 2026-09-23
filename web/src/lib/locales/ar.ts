@@ -315,7 +315,7 @@ const ar: Partial<Translations> = {
   "errorPanel.resolveAll": "تحديد الكل كمحلول",
   "errorPanel.affected": "المتأثرة",
   "errorPanel.empty": "لا توجد أخطاء نسخ احتياطي غير محلولة.",
-  "errorPanel.count": "{count} مرات",
+  "errorPanel.count": "zero={n} مرة|one=مرة واحدة|two=مرتان|few={n} مرات|many={n} مرة|other={n} مرة",
   "errorPanel.filterPlaceholder": "تصفية الأخطاء…",
 
   // Jobs page
@@ -991,7 +991,7 @@ const ar: Partial<Translations> = {
   "runReason.dbimportRollback": "فشل الاستيراد وتعذّرت إعادة البيانات القديمة إلى مكانها",
   "runReason.dbimportFailed": "أبلغت أداة الاستيراد عن خطأ",
   "runReason.dbimportKeptOld": "جرى الاحتفاظ بمجلد البيانات السابق",
-  "runReason.dbimportErrors": "انتهى الاستيراد مع أخطاء",
+  "runReason.dbimportErrors": "zero={n} خطأ، جرى الاحتفاظ بمجلد البيانات السابق|one=خطأ واحد، جرى الاحتفاظ بمجلد البيانات السابق|two=خطآن، جرى الاحتفاظ بمجلد البيانات السابق|few={n} أخطاء، جرى الاحتفاظ بمجلد البيانات السابق|many={n} خطأً، جرى الاحتفاظ بمجلد البيانات السابق|other={n} خطأ، جرى الاحتفاظ بمجلد البيانات السابق",
   "runReason.dbimportAppsDown": "zero=تعذّر تشغيل هذه التطبيقات من جديد: {apps}|one=تعذّر تشغيل هذا التطبيق من جديد: {apps}|two=تعذّر تشغيل هذين التطبيقين من جديد: {apps}|few=تعذّر تشغيل هذه التطبيقات من جديد: {apps}|many=تعذّر تشغيل هذه التطبيقات من جديد: {apps}|other=تعذّر تشغيل هذه التطبيقات من جديد: {apps}",
   "runReason.dbimportAppsStopped": "zero=تبقى هذه التطبيقات متوقفة إلى أن يُحسم أمر مجلد البيانات: {apps}|one=يبقى هذا التطبيق متوقفاً إلى أن يُحسم أمر مجلد البيانات: {apps}|two=يبقى هذان التطبيقان متوقفين إلى أن يُحسم أمر مجلد البيانات: {apps}|few=تبقى هذه التطبيقات متوقفة إلى أن يُحسم أمر مجلد البيانات: {apps}|many=تبقى هذه التطبيقات متوقفة إلى أن يُحسم أمر مجلد البيانات: {apps}|other=تبقى هذه التطبيقات متوقفة إلى أن يُحسم أمر مجلد البيانات: {apps}",
   "dbdump.toggle": "تفريغ قاعدة البيانات قبل كل نسخة احتياطية",

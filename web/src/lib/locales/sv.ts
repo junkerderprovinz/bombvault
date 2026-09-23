@@ -315,7 +315,7 @@ const sv: Partial<Translations> = {
   "errorPanel.resolveAll": "Markera alla som lösta",
   "errorPanel.affected": "Berörda",
   "errorPanel.empty": "Inga olösta säkerhetskopieringsfel.",
-  "errorPanel.count": "{count} förekomster",
+  "errorPanel.count": "one={n} förekomst|other={n} förekomster",
   "errorPanel.filterPlaceholder": "Filtrera fel…",
 
   // Jobs page
@@ -988,7 +988,7 @@ const sv: Partial<Translations> = {
   "runReason.dbimportRollback": "importen misslyckades och de gamla data kunde inte läggas tillbaka",
   "runReason.dbimportFailed": "importverktyget rapporterade ett fel",
   "runReason.dbimportKeptOld": "den tidigare datamappen behölls",
-  "runReason.dbimportErrors": "importen slutade med fel",
+  "runReason.dbimportErrors": "{n} fel, den tidigare datamappen behölls",
   "runReason.dbimportAppsDown": "one=den här appen gick inte att starta igen: {apps}|other=de här apparna gick inte att starta igen: {apps}",
   "runReason.dbimportAppsStopped": "one=den här appen förblir stoppad tills datamappen är ordnad: {apps}|other=de här apparna förblir stoppade tills datamappen är ordnad: {apps}",
   "dbdump.toggle": "Databasdump före varje säkerhetskopia",

@@ -315,7 +315,7 @@ const fr: Partial<Translations> = {
   "errorPanel.resolveAll": "Tout marquer comme résolu",
   "errorPanel.affected": "Concernés",
   "errorPanel.empty": "Aucune erreur de sauvegarde non résolue.",
-  "errorPanel.count": "{count} occurrences",
+  "errorPanel.count": "one={n} occurrence|other={n} occurrences",
   "errorPanel.filterPlaceholder": "Filtrer les erreurs…",
 
   // Jobs page
@@ -968,7 +968,7 @@ const fr: Partial<Translations> = {
   "runReason.dbimportRollback": "l'import a échoué et les anciennes données n'ont pas pu être remises en place",
   "runReason.dbimportFailed": "l'outil d'import a signalé une erreur",
   "runReason.dbimportKeptOld": "le dossier de données précédent a été conservé",
-  "runReason.dbimportErrors": "l'import s'est terminé avec des erreurs",
+  "runReason.dbimportErrors": "one={n} erreur, le dossier de données précédent a été conservé|other={n} erreurs, le dossier de données précédent a été conservé",
   "runReason.dbimportAppsDown": "one=cette application n'a pas pu redémarrer : {apps}|many=ces applications n'ont pas pu redémarrer : {apps}|other=ces applications n'ont pas pu redémarrer : {apps}",
   "runReason.dbimportAppsStopped": "one=cette application reste arrêtée tant que le dossier de données n'est pas réglé : {apps}|many=ces applications restent arrêtées tant que le dossier de données n'est pas réglé : {apps}|other=ces applications restent arrêtées tant que le dossier de données n'est pas réglé : {apps}",
   "dbdump.toggle": "Dump de la base de données avant chaque sauvegarde",

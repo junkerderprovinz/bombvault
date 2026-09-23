@@ -816,7 +816,7 @@ const hr: Partial<Translations> = {
   "errorPanel.resolveAll": "Označi sve kao riješeno",
   "errorPanel.affected": "Pogođeno",
   "errorPanel.empty": "Nema neriješenih grešaka sigurnosne kopije.",
-  "errorPanel.count": "{count} pojavljivanja",
+  "errorPanel.count": "one={n} pojavljivanje|few={n} pojavljivanja|other={n} pojavljivanja",
   "errorPanel.filterPlaceholder": "Filtriraj greške…",
 
   // Dashboard protection (RPO) status
@@ -856,7 +856,7 @@ const hr: Partial<Translations> = {
   "runReason.dbimportRollback": "uvoz nije uspio i stare podatke nije bilo moguće vratiti na mjesto",
   "runReason.dbimportFailed": "alat za uvoz prijavio je pogrešku",
   "runReason.dbimportKeptOld": "prethodna mapa s podacima je zadržana",
-  "runReason.dbimportErrors": "uvoz je završio s pogreškama",
+  "runReason.dbimportErrors": "one={n} pogreška, prethodna mapa s podacima je zadržana|few={n} pogreške, prethodna mapa s podacima je zadržana|other={n} pogrešaka, prethodna mapa s podacima je zadržana",
   "runReason.dbimportAppsDown": "one=ovu aplikaciju nije bilo moguće ponovno pokrenuti: {apps}|few=ove aplikacije nije bilo moguće ponovno pokrenuti: {apps}|other=ove aplikacije nije bilo moguće ponovno pokrenuti: {apps}",
   "runReason.dbimportAppsStopped": "one=ova aplikacija ostaje zaustavljena dok se ne riješi mapa s podacima: {apps}|few=ove aplikacije ostaju zaustavljene dok se ne riješi mapa s podacima: {apps}|other=ove aplikacije ostaju zaustavljene dok se ne riješi mapa s podacima: {apps}",
   "dbdump.toggle": "Ispis baze podataka prije svake sigurnosne kopije",

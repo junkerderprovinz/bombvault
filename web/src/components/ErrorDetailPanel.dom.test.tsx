@@ -5,7 +5,7 @@
 // container backup. listRuns and ackRuns are mocked.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor, fireEvent } from "@testing-library/react";
-import { I18nProvider, en } from "../lib/i18n";
+import { countText, I18nProvider, en } from "../lib/i18n";
 import type { Run } from "../lib/api";
 
 const listRuns = vi.fn();
@@ -111,6 +111,20 @@ describe("a failed database dump in the panel", () => {
     expect(line?.textContent).toContain(`${en["run.kindDbDump"]}: ${en["runReason.dbdumpAuth"]}`);
     expect(line?.textContent).toContain("FATAL: password authentication failed");
     expect(screen.getByLabelText(en["dbdump.fixAuth"])).toBeTruthy();
+  });
+
+  it("counts a group in the form the count needs", async () => {
+    renderPanel([
+      run({ id: "d1", kind: "dbdump", target: "pg", domain: "container", error: "boom" }),
+      run({ id: "d2", kind: "dbdump", target: "maria", domain: "container", error: "bang" }),
+      run({ id: "d3", kind: "dbdump", target: "pg2", domain: "container", error: "bang" }),
+    ]);
+
+    await waitFor(() => expect(listRuns).toHaveBeenCalled());
+    const panel = screen.getByRole("dialog").textContent ?? "";
+    expect(panel).toContain(countText(en["errorPanel.count"], "en", 1));
+    expect(panel).toContain(countText(en["errorPanel.count"], "en", 2));
+    expect(panel).not.toContain("1 occurrences");
   });
 
   it("keeps the container's failed backup as a group of its own", async () => {

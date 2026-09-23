@@ -816,7 +816,7 @@ const fa: Partial<Translations> = {
   "errorPanel.resolveAll": "علامت‌گذاری همه به‌عنوان برطرف‌شده",
   "errorPanel.affected": "تحت تأثیر",
   "errorPanel.empty": "هیچ خطای پشتیبان‌گیری برطرف‌نشده‌ای وجود ندارد.",
-  "errorPanel.count": "{count} مورد",
+  "errorPanel.count": "{n} مورد",
   "errorPanel.filterPlaceholder": "فیلتر خطاها…",
 
   // Dashboard protection (RPO) status
@@ -856,7 +856,7 @@ const fa: Partial<Translations> = {
   "runReason.dbimportRollback": "درون‌ریزی شکست خورد و داده‌های پیشین به جای خود بازنگشتند",
   "runReason.dbimportFailed": "ابزار درون‌ریزی خطایی گزارش کرد",
   "runReason.dbimportKeptOld": "پوشه داده پیشین نگه داشته شد",
-  "runReason.dbimportErrors": "درون‌ریزی با خطا به پایان رسید",
+  "runReason.dbimportErrors": "{n} خطا، پوشه داده پیشین نگه داشته شد",
   "runReason.dbimportAppsDown": "one=این برنامه دوباره راه‌اندازی نشد: {apps}|other=این برنامه‌ها دوباره راه‌اندازی نشدند: {apps}",
   "runReason.dbimportAppsStopped": "one=این برنامه تا روشن شدن وضعیت پوشهٔ داده متوقف می‌ماند: {apps}|other=این برنامه‌ها تا روشن شدن وضعیت پوشهٔ داده متوقف می‌مانند: {apps}",
   "dbdump.toggle": "تخلیهٔ پایگاه داده پیش از هر پشتیبان‌گیری",

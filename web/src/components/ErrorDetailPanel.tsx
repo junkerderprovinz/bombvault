@@ -143,7 +143,7 @@ export function ErrorDetailPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runs, filterText, filterDomain, filterType, t]);
 
-  const countLabel = (n: number) => t("errorPanel.count").replace("{count}", String(n));
+  const countLabel = (n: number) => t("errorPanel.count", n);
 
   const acknowledge = (body: { ids?: string[]; all?: boolean }) => {
     setBusy(true);

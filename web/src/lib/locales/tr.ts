@@ -315,7 +315,7 @@ const tr: Partial<Translations> = {
   "errorPanel.resolveAll": "Tümünü çözüldü olarak işaretle",
   "errorPanel.affected": "Etkilenen",
   "errorPanel.empty": "Çözülmemiş yedekleme hatası yok.",
-  "errorPanel.count": "{count} kez",
+  "errorPanel.count": "{n} kez",
   "errorPanel.filterPlaceholder": "Hataları filtrele…",
 
   // Jobs page
@@ -988,7 +988,7 @@ const tr: Partial<Translations> = {
   "runReason.dbimportRollback": "içe aktarma başarısız oldu ve eski veriler yerine konulamadı",
   "runReason.dbimportFailed": "içe aktarma aracı bir hata bildirdi",
   "runReason.dbimportKeptOld": "önceki veri klasörü korundu",
-  "runReason.dbimportErrors": "içe aktarma hatalarla bitti",
+  "runReason.dbimportErrors": "{n} hata, önceki veri klasörü korundu",
   "runReason.dbimportAppsDown": "one=şu uygulama yeniden başlatılamadı: {apps}|other=şu uygulamalar yeniden başlatılamadı: {apps}",
   "runReason.dbimportAppsStopped": "one=veri klasörü düzene girene kadar şu uygulama durdurulmuş kalır: {apps}|other=veri klasörü düzene girene kadar şu uygulamalar durdurulmuş kalır: {apps}",
   "dbdump.toggle": "Her yedeklemeden önce veritabanı dökümü",

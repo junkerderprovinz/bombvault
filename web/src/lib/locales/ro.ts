@@ -312,7 +312,7 @@ const ro: Partial<Translations> = {
   "errorPanel.resolveAll": "Marchează toate ca rezolvate",
   "errorPanel.affected": "Afectate",
   "errorPanel.empty": "Nicio eroare de backup nerezolvată.",
-  "errorPanel.count": "{count} apariții",
+  "errorPanel.count": "one={n} apariție|few={n} apariții|other={n} de apariții",
   "errorPanel.filterPlaceholder": "Filtrează erorile…",
 
   // Jobs page
@@ -968,7 +968,7 @@ const ro: Partial<Translations> = {
   "runReason.dbimportRollback": "importul a eșuat și datele vechi nu au putut fi puse la loc",
   "runReason.dbimportFailed": "instrumentul de import a raportat o eroare",
   "runReason.dbimportKeptOld": "dosarul de date anterior a fost păstrat",
-  "runReason.dbimportErrors": "importul s-a încheiat cu erori",
+  "runReason.dbimportErrors": "one={n} eroare, dosarul de date anterior a fost păstrat|few={n} erori, dosarul de date anterior a fost păstrat|other={n} de erori, dosarul de date anterior a fost păstrat",
   "runReason.dbimportAppsDown": "one=această aplicație nu a putut fi pornită din nou: {apps}|few=aceste aplicații nu au putut fi pornite din nou: {apps}|other=aceste aplicații nu au putut fi pornite din nou: {apps}",
   "runReason.dbimportAppsStopped": "one=această aplicație rămâne oprită până se rezolvă folderul de date: {apps}|few=aceste aplicații rămân oprite până se rezolvă folderul de date: {apps}|other=aceste aplicații rămân oprite până se rezolvă folderul de date: {apps}",
   "dbdump.toggle": "Dump al bazei de date înainte de fiecare copie",

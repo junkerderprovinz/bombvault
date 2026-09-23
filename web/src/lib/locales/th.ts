@@ -315,7 +315,7 @@ const th: Partial<Translations> = {
   "errorPanel.resolveAll": "ทำเครื่องหมายทั้งหมดว่าแก้ไขแล้ว",
   "errorPanel.affected": "ที่ได้รับผลกระทบ",
   "errorPanel.empty": "ไม่มีข้อผิดพลาดการสำรองข้อมูลที่ยังไม่ได้แก้ไข",
-  "errorPanel.count": "{count} ครั้ง",
+  "errorPanel.count": "{n} ครั้ง",
   "errorPanel.filterPlaceholder": "กรองข้อผิดพลาด…",
 
   // Jobs page
@@ -991,7 +991,7 @@ const th: Partial<Translations> = {
   "runReason.dbimportRollback": "การนำเข้าล้มเหลวและนำข้อมูลเดิมกลับเข้าที่ไม่ได้",
   "runReason.dbimportFailed": "เครื่องมือนำเข้ารายงานข้อผิดพลาด",
   "runReason.dbimportKeptOld": "เก็บโฟลเดอร์ข้อมูลเดิมไว้",
-  "runReason.dbimportErrors": "การนำเข้าจบลงพร้อมข้อผิดพลาด",
+  "runReason.dbimportErrors": "ข้อผิดพลาด {n} รายการ เก็บโฟลเดอร์ข้อมูลเดิมไว้",
   "runReason.dbimportAppsDown": "เริ่มแอปเหล่านี้ใหม่ไม่ได้: {apps}",
   "runReason.dbimportAppsStopped": "แอปเหล่านี้จะหยุดอยู่จนกว่าจะจัดการโฟลเดอร์ข้อมูลเรียบร้อย: {apps}",
   "dbdump.toggle": "ดัมป์ฐานข้อมูลก่อนสำรองทุกครั้ง",

@@ -816,7 +816,7 @@ const lt: Partial<Translations> = {
   "errorPanel.resolveAll": "Pažymėti visas kaip išspręstas",
   "errorPanel.affected": "Paveikta",
   "errorPanel.empty": "Neišspręstų atsarginio kopijavimo klaidų nėra.",
-  "errorPanel.count": "{count} atvejai",
+  "errorPanel.count": "one={n} atvejis|few={n} atvejai|many={n} atvejo|other={n} atvejų",
   "errorPanel.filterPlaceholder": "Filtruoti klaidas…",
 
   // Dashboard protection (RPO) status
@@ -856,7 +856,7 @@ const lt: Partial<Translations> = {
   "runReason.dbimportRollback": "importas nepavyko ir senų duomenų nepavyko grąžinti į vietą",
   "runReason.dbimportFailed": "importo įrankis pranešė apie klaidą",
   "runReason.dbimportKeptOld": "ankstesnis duomenų aplankas paliktas",
-  "runReason.dbimportErrors": "importas baigėsi su klaidomis",
+  "runReason.dbimportErrors": "one={n} klaida, ankstesnis duomenų aplankas paliktas|few={n} klaidos, ankstesnis duomenų aplankas paliktas|many={n} klaidos, ankstesnis duomenų aplankas paliktas|other={n} klaidų, ankstesnis duomenų aplankas paliktas",
   "runReason.dbimportAppsDown": "one=šios programos nepavyko vėl paleisti: {apps}|few=šių programų nepavyko vėl paleisti: {apps}|many=šių programų nepavyko vėl paleisti: {apps}|other=šių programų nepavyko vėl paleisti: {apps}",
   "runReason.dbimportAppsStopped": "one=ši programa lieka sustabdyta, kol bus sutvarkytas duomenų aplankas: {apps}|few=šios programos lieka sustabdytos, kol bus sutvarkytas duomenų aplankas: {apps}|many=šios programos lieka sustabdytos, kol bus sutvarkytas duomenų aplankas: {apps}|other=šios programos lieka sustabdytos, kol bus sutvarkytas duomenų aplankas: {apps}",
   "dbdump.toggle": "Duomenų bazės išklotinė prieš kiekvieną atsarginę kopiją",

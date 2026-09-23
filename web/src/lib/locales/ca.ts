@@ -816,7 +816,7 @@ const ca: Partial<Translations> = {
   "errorPanel.resolveAll": "Marca-ho tot com a resolt",
   "errorPanel.affected": "Afectats",
   "errorPanel.empty": "No hi ha errors de còpia sense resoldre.",
-  "errorPanel.count": "{count} ocurrències",
+  "errorPanel.count": "one={n} ocurrència|other={n} ocurrències",
   "errorPanel.filterPlaceholder": "Filtra errors…",
 
   // Dashboard protection (RPO) status
@@ -856,7 +856,7 @@ const ca: Partial<Translations> = {
   "runReason.dbimportRollback": "la importació ha fallat i les dades anteriors no s'han pogut tornar al seu lloc",
   "runReason.dbimportFailed": "l'eina d'importació ha informat d'un error",
   "runReason.dbimportKeptOld": "s'ha conservat la carpeta de dades anterior",
-  "runReason.dbimportErrors": "la importació ha acabat amb errors",
+  "runReason.dbimportErrors": "one={n} error, s'ha conservat la carpeta de dades anterior|other={n} errors, s'ha conservat la carpeta de dades anterior",
   "runReason.dbimportAppsDown": "one=aquesta aplicació no s'ha pogut tornar a iniciar: {apps}|many=aquestes aplicacions no s'han pogut tornar a iniciar: {apps}|other=aquestes aplicacions no s'han pogut tornar a iniciar: {apps}",
   "runReason.dbimportAppsStopped": "one=aquesta aplicació queda aturada fins que es resolgui la carpeta de dades: {apps}|many=aquestes aplicacions queden aturades fins que es resolgui la carpeta de dades: {apps}|other=aquestes aplicacions queden aturades fins que es resolgui la carpeta de dades: {apps}",
   "dbdump.toggle": "Bolcat de la base de dades abans de cada còpia",

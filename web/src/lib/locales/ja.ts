@@ -315,7 +315,7 @@ const ja: Partial<Translations> = {
   "errorPanel.resolveAll": "すべて解決済みにする",
   "errorPanel.affected": "対象",
   "errorPanel.empty": "未解決のバックアップエラーはありません。",
-  "errorPanel.count": "{count} 件",
+  "errorPanel.count": "{n} 件",
   "errorPanel.filterPlaceholder": "エラーを絞り込み…",
 
   // Jobs page
@@ -960,7 +960,7 @@ const ja: Partial<Translations> = {
   "runReason.dbimportRollback": "インポートが失敗し、以前のデータを元に戻せませんでした",
   "runReason.dbimportFailed": "インポートツールがエラーを報告しました",
   "runReason.dbimportKeptOld": "以前のデータフォルダーを残しました",
-  "runReason.dbimportErrors": "インポートはエラーを伴って終わりました",
+  "runReason.dbimportErrors": "エラー {n} 件、以前のデータフォルダーを残しました",
   "runReason.dbimportAppsDown": "次のアプリを再び起動できませんでした: {apps}",
   "runReason.dbimportAppsStopped": "データフォルダーが片付くまで、次のアプリは停止したままです: {apps}",
   "dbdump.toggle": "バックアップごとのデータベースダンプ",
