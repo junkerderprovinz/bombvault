@@ -39,9 +39,9 @@ var (
 	errMCPKeyNeedsPassword = errors.New("set a login password before creating a key from this address")
 )
 
-// mcpKeyCodes translates the store's refusals into the codes the card renders
-// as its own sentences.
-var mcpKeyCodes = []struct {
+// mcpErrorCodes translates the refusals of the card's two subjects, the keys
+// and the certificate, into the codes it renders as its own sentences.
+var mcpErrorCodes = []struct {
 	err  error
 	code string
 }{
@@ -50,10 +50,14 @@ var mcpKeyCodes = []struct {
 	{store.ErrMCPKeyLabelTaken, "mcp-key-label-taken"},
 	{store.ErrMCPKeyInUse, "mcp-key-in-use"},
 	{store.ErrMCPKeyActive, "mcp-key-active"},
+	{errCertNameInvalid, "cert-name-invalid"},
+	{errCertNameLimit, "cert-name-limit"},
+	{errCertNotOwn, "cert-not-own"},
+	{errCertWriteFailed, "cert-write-failed"},
 }
 
-func writeMCPKeyError(w http.ResponseWriter, err error) {
-	for _, c := range mcpKeyCodes {
+func writeMCPError(w http.ResponseWriter, err error) {
+	for _, c := range mcpErrorCodes {
 		if errors.Is(err, c.err) {
 			writeJSON(w, http.StatusOK, codedFailEnvelope(err, c.code))
 			return
@@ -180,8 +184,13 @@ func (h *Handler) handleListMCPKeys(w http.ResponseWriter, r *http.Request) {
 		active = append(active, v)
 	}
 	_, _, authOn := h.authEnabled()
+	var certificate any
+	if info, ok := h.svc.CertificateInfo(); ok {
+		certificate = info
+	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 		"endpointPath":     mcpEndpointPath,
+		"certificate":      certificate,
 		"limit":            store.MCPKeyLimit,
 		"authEnabled":      authOn,
 		"hostAllowsKeys":   h.mcpKeysAllowedFrom(r),
@@ -222,7 +231,7 @@ func (h *Handler) handleCreateMCPKey(w http.ResponseWriter, r *http.Request) {
 		secret.HashMCPKey(h.cfg.AppKey, key), secret.MCPKeyHint(key), secret.MCPKeyCheck(h.cfg.AppKey, id),
 		canStart, time.Now().Unix())
 	if err != nil {
-		writeMCPKeyError(w, err)
+		writeMCPError(w, err)
 		return
 	}
 	h.recordMCPKeyChange(r, row, "created", "created")
@@ -253,7 +262,7 @@ func (h *Handler) handleUpdateMCPKey(w http.ResponseWriter, r *http.Request) {
 	}
 	row, err := h.store.UpdateMCPKey(id, label, body.CanStartBackups)
 	if err != nil {
-		writeMCPKeyError(w, err)
+		writeMCPError(w, err)
 		return
 	}
 	event := ""
@@ -285,7 +294,7 @@ func (h *Handler) handleRotateMCPKey(w http.ResponseWriter, r *http.Request) {
 		secret.HashMCPKey(h.cfg.AppKey, key), secret.MCPKeyHint(key), secret.MCPKeyCheck(h.cfg.AppKey, id),
 		time.Now().Unix())
 	if err != nil {
-		writeMCPKeyError(w, err)
+		writeMCPError(w, err)
 		return
 	}
 	h.recordMCPKeyChange(r, row, "rotated", "replaced")
@@ -300,11 +309,11 @@ func (h *Handler) handleRevokeMCPKey(w http.ResponseWriter, r *http.Request) {
 	}
 	row, err := h.store.GetMCPKey(id)
 	if err != nil {
-		writeMCPKeyError(w, err)
+		writeMCPError(w, err)
 		return
 	}
 	if err := h.store.RevokeMCPKey(id, "user", time.Now().Unix()); err != nil {
-		writeMCPKeyError(w, err)
+		writeMCPError(w, err)
 		return
 	}
 	h.recordMCPKeyChange(r, row, "revoked", "revoked")
@@ -318,15 +327,52 @@ func (h *Handler) handlePurgeMCPKey(w http.ResponseWriter, r *http.Request) {
 	}
 	row, err := h.store.GetMCPKey(id)
 	if err != nil {
-		writeMCPKeyError(w, err)
+		writeMCPError(w, err)
 		return
 	}
 	if err := h.store.PurgeMCPKey(id); err != nil {
-		writeMCPKeyError(w, err)
+		writeMCPError(w, err)
 		return
 	}
 	h.recordMCPKeyChange(r, row, "purged", "")
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleMCPCertificate hands out the certificate the web interface serves, so
+// an operator can make their client trust it.
+func (h *Handler) handleMCPCertificate(w http.ResponseWriter, r *http.Request) {
+	pemBytes, ok := h.svc.CertificatePEM()
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", "application/x-pem-file")
+	w.Header().Set("Content-Disposition", `attachment; filename="bombvault-cert.pem"`)
+	if _, err := w.Write(pemBytes); err != nil {
+		log.Printf("api: mcp: send certificate: %v", err)
+	}
+}
+
+// handleAddMCPCertificateName adds the address the operator reached BombVault
+// on to its certificate, which is what a Node client needs before it connects.
+func (h *Handler) handleAddMCPCertificateName(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Host string `json:"host"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if h.cfg.HTTPOnly {
+		http.NotFound(w, r)
+		return
+	}
+	info, err := h.svc.AddCertificateName(body.Host)
+	if err != nil {
+		writeMCPError(w, err)
+		return
+	}
+	log.Printf("api: mcp: certificate reissued for %d address(es)", len(info.Names))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"certificate": info}))
 }
 
 // recordMCPKeyChange logs the mutation and, for a change worth waking the
