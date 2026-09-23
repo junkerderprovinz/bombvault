@@ -174,6 +174,13 @@ type zfsFakeEngine struct {
 	prunes       int
 	copies       []string
 	snaps        []restic.Snapshot
+	// restores are the restore calls in order, each written the way its argv
+	// reads, so a test can pin which snapshot went where.
+	restores []string
+	// restoreSizeBytes is what StatsRestoreSize reports per snapshot, and
+	// lsEntries what a snapshot's file listing holds.
+	restoreSizeBytes int64
+	lsEntries        []restic.FileEntry
 	// snapsByRepo answers for one location instead of snaps, so a test can put
 	// an item's history in a named repository.
 	snapsByRepo map[string][]restic.Snapshot
@@ -240,6 +247,46 @@ func (e *zfsFakeEngine) Copy(_ context.Context, destRepo, srcRepo string, _ []st
 }
 
 func (e *zfsFakeEngine) Init(context.Context, string, restic.Mode) error { return nil }
+
+func (e *zfsFakeEngine) RestoreAll(_ context.Context, _, snapshotID, target string, _ restic.Mode) error {
+	e.recordRestore("RestoreAll|" + snapshotID + "->" + target)
+	return nil
+}
+
+func (e *zfsFakeEngine) RestoreInclude(_ context.Context, _, snapshotID, includePath, target string, _ restic.Mode) error {
+	e.recordRestore("RestoreInclude|" + snapshotID + "|" + includePath + "->" + target)
+	return nil
+}
+
+func (e *zfsFakeEngine) RestoreSubtreeTo(_ context.Context, _, snapshotID, subtreePath, target string, _ restic.Mode) error {
+	e.recordRestore("RestoreSubtreeTo|" + snapshotID + "|" + subtreePath + "->" + target)
+	return nil
+}
+
+func (e *zfsFakeEngine) RestoreSubtreeInclude(_ context.Context, _, snapshotID, subtreePath, includePath, target string, _ restic.Mode) error {
+	e.recordRestore("RestoreSubtreeInclude|" + snapshotID + "|" + subtreePath + "|" + includePath + "->" + target)
+	return nil
+}
+
+func (e *zfsFakeEngine) StatsRestoreSize(context.Context, string, string, restic.Mode) (int, int64, error) {
+	return 0, e.restoreSizeBytes, nil
+}
+
+func (e *zfsFakeEngine) Ls(context.Context, string, string, restic.Mode) ([]restic.FileEntry, error) {
+	return e.lsEntries, nil
+}
+
+func (e *zfsFakeEngine) recordRestore(call string) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.restores = append(e.restores, call)
+}
+
+func (e *zfsFakeEngine) readRestores() []string {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return append([]string(nil), e.restores...)
+}
 
 func (e *zfsFakeEngine) readBackupDirs() []string {
 	e.mu.Lock()

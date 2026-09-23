@@ -9276,6 +9276,11 @@ func chosenSnapshot(snaps []restic.Snapshot, id string) *restic.Snapshot {
 // recording docs/keep-a and docs/keep-b, restored as <id>:docs, produced
 // keep-a and keep-b and left the never-backed-up sibling docs/nie-gesichert
 // absent. TestRestoreCommonAncestorOfRecordedRoots in internal/restic pins it.
+//
+// A ZFS member snapshot is the one shape this does not fit: it was taken inside
+// a snapshot directory on ".", so the path it recorded names that run's
+// snapshot and its tree root is the dataset root. The ZFS restore selects "/"
+// and never asks here.
 func snapshotRestoreRoot(snaps []restic.Snapshot, id string) string {
 	for _, sn := range snaps {
 		if sn.ID == id || strings.HasPrefix(sn.ID, id) {

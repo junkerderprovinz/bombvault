@@ -396,9 +396,14 @@ func (s *Service) DiscoverZFSDatasets(ctx context.Context, dryRun bool) (int, []
 		usable[name] = repoID
 	}
 
+	found := make([]string, 0, len(usable))
+	for name := range usable {
+		found = append(found, name)
+	}
+
 	discovered := 0
 	for name, repoID := range usable {
-		if zfsHasAncestorIn(name, usable) {
+		if zfsMinimalRoot(name, found) != name {
 			continue
 		}
 		if dryRun {
@@ -435,15 +440,16 @@ func (s *Service) DiscoverZFSDatasets(ctx context.Context, dryRun bool) (int, []
 	return discovered, skipped, readErr
 }
 
-// zfsHasAncestorIn reports whether one of the other found names is an ancestor
-// of name, which makes name a member of that item rather than an item.
-func zfsHasAncestorIn(name string, names map[string]string) bool {
-	for other := range names {
-		if zfs.DescendantOf(name, other) {
-			return true
+// zfsMinimalRoot names the item a dataset belongs to: the shortest of the found
+// names that is an ancestor of it, or the dataset itself when none of them is.
+func zfsMinimalRoot(dataset string, names []string) string {
+	root := dataset
+	for _, other := range names {
+		if zfs.DescendantOf(dataset, other) && len(other) < len(root) {
+			root = other
 		}
 	}
-	return false
+	return root
 }
 
 // zfsItemSnapshots lists everything an item's tree ever wrote: the root's own

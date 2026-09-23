@@ -450,6 +450,32 @@ func (r *Repo) GetZFSRun(runID string) (ZFSRun, error) {
 	return run, nil
 }
 
+// ListZFSRuns returns an item's recorded runs, newest first, so the restore
+// points of its history can be matched to what each run did.
+func (r *Repo) ListZFSRuns(itemID string, limit int) ([]ZFSRun, error) {
+	rows, err := r.db.Query(`
+		SELECT z.run_id, z.item_id, z.snapshot_name, z.window_seconds, z.hook_detail
+		FROM zfs_runs z
+		JOIN runs r ON r.id = z.run_id
+		WHERE z.item_id = ?
+		ORDER BY COALESCE(r.finished_at, r.started_at) DESC
+		LIMIT ?`, itemID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("ListZFSRuns: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	var out []ZFSRun
+	for rows.Next() {
+		var run ZFSRun
+		if err := rows.Scan(&run.RunID, &run.ItemID, &run.SnapshotName, &run.WindowSeconds, &run.HookDetail); err != nil {
+			return nil, fmt.Errorf("ListZFSRuns scan: %w", err)
+		}
+		out = append(out, run)
+	}
+	return out, rows.Err()
+}
+
 // AddZFSRunMember records what one run did to one dataset. It is written as
 // each member finishes, so an interrupted run keeps what it managed.
 func (r *Repo) AddZFSRunMember(m ZFSRunMember) error {

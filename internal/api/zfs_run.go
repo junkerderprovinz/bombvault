@@ -145,14 +145,14 @@ func (s *Service) zfsOverlappingItem(d store.ZFSDataset) (string, bool) {
 
 // zfsRefusalSentence is the English run error a refusal leaves in the history.
 // It ends in the reason code, from which the page builds its own sentence.
-func zfsRefusalSentence(root string, ref *backup.ZFSRefusal) string {
+func zfsRefusalSentence(action, name string, ref *backup.ZFSRefusal) string {
 	switch {
 	case ref.Code == "":
-		return "zfs backup: " + root + ": " + ref.Detail
+		return "zfs " + action + ": " + name + ": " + ref.Detail
 	case ref.Detail == "":
-		return "zfs backup: " + root + " [" + ref.Code + "]"
+		return "zfs " + action + ": " + name + " [" + ref.Code + "]"
 	default:
-		return "zfs backup: " + root + ": " + ref.Detail + " [" + ref.Code + "]"
+		return "zfs " + action + ": " + name + ": " + ref.Detail + " [" + ref.Code + "]"
 	}
 }
 
@@ -160,7 +160,7 @@ func zfsRefusalSentence(root string, ref *backup.ZFSRefusal) string {
 // failed run, so a scheduled item that cannot be read shows up in Run History
 // instead of only in the log.
 func (s *Service) recordZFSRefusal(ctx context.Context, d store.ZFSDataset, ref *backup.ZFSRefusal) error {
-	err := &backup.ZFSRefusal{Detail: zfsRefusalSentence(d.Dataset, ref)}
+	err := &backup.ZFSRefusal{Detail: zfsRefusalSentence("backup", d.Dataset, ref)}
 	if _, sErr := s.store.SetZFSCheck(d.ID, ref.Code, ref.Detail, d.LastHostMountpoint, time.Now().Unix()); sErr != nil {
 		log.Printf("api: zfs: recording the check of %s failed: %v", d.Dataset, sErr)
 	}
