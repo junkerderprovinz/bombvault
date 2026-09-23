@@ -103,7 +103,7 @@ func (s *Service) backupEverythingHoldingGuard(ctx context.Context) (EverythingS
 	// Every child run of the domain steps below gets group_id = runID. If the
 	// parent run cannot be recorded, return without the post-hook: a
 	// dead-man's-switch ping for a pass that never ran would be a false "done".
-	runID, err := s.store.StartRun(store.EverythingTargetID, "backup")
+	runID, err := s.startRun(ctx, store.EverythingTargetID, "backup")
 	if err != nil {
 		return EverythingSummary{}, fmt.Errorf("backup everything: start run: %w", err)
 	}

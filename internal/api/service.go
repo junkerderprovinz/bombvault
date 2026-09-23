@@ -3336,7 +3336,7 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	// up in the dashboard Activity Log/Run History as persisted history. This stays
 	// per-DOMAIN (one row per domain per call) — per-target activity/progress is a
 	// later stage, and with a single target it is identical to before. Best-effort.
-	activityRunID, aErr := s.store.StartRun(domainRunTargetID(domain), "offsite")
+	activityRunID, aErr := s.startRun(ctx, domainRunTargetID(domain), "offsite")
 	if aErr != nil {
 		log.Printf("api: offsite %s: could not start activity run (continuing): %v", domain, aErr) //nolint:gosec // G706: domain is a fixed literal
 		activityRunID = ""
@@ -4055,18 +4055,16 @@ func bulkReplicateSuppressed(ctx context.Context) bool {
 // "Backup Everything" pass (a sequential run over every domain — containers,
 // vms, flash, files, config — triggered as one unit, e.g. so a dead-man's-
 // switch ping can fire only once everything is done). The value is the
-// PARENT run's id; runsAdapter/startedRunsAdapter read it via
-// runGroupFromContext and stamp it onto the CHILD run they just started
-// (store.SetRunGroup), so that run is durably traceable back to the pass
-// that produced it. Unset by every caller today — a pure no-op until
-// BackupEverything (internal/api/everything.go) starts setting it.
+// PARENT run's id; startRunWith reads it via runGroupFromContext and writes it
+// into the CHILD run's INSERT, so that run is durably traceable back to the
+// pass that produced it. A context without one records no group.
 type runGroupKey struct{}
 
 // WithRunGroup marks ctx as belonging to the "Backup Everything" pass whose
 // parent run id is groupID (see runGroupKey). Set by BackupEverything around
 // each domain's own backup entry point (s.Backup/s.BackupVM/s.BackupFlash/
-// s.BackupFileSet/s.BackupConfig); read by runsAdapter/startedRunsAdapter
-// when they record that call's child run.
+// s.BackupFileSet/s.BackupConfig); read by startRunWith when it records that
+// call's child run.
 func WithRunGroup(ctx context.Context, groupID string) context.Context {
 	return context.WithValue(ctx, runGroupKey{}, groupID)
 }
@@ -5247,7 +5245,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	orchestrated := false
 	defer func() {
 		if retErr != nil && !orchestrated && !errors.Is(retErr, backup.ErrContainerNotInstalled) {
-			s.recordPreflightFailure("Backup", name, targetID, retErr)
+			s.recordPreflightFailure(ctx, "Backup", name, targetID, retErr)
 		}
 	}()
 
@@ -10893,11 +10891,9 @@ func (templatesAdapter) Read(dir, name string) (string, bool, error) { return te
 func (templatesAdapter) Write(dir, name, xml string) error           { return template.Write(dir, name, xml) }
 
 // runsAdapter satisfies backup.Runs over *store.Repo (StartRun/FinishRun).
-// ctx is captured at construction solely so Start can read
-// runGroupFromContext and stamp a "Backup Everything" pass's parent run id
-// onto the child run it just created (see runGroupKey's doc comment) — every
-// caller whose ctx carries no group (everyone today) sees no behaviour
-// change at all.
+// ctx is captured at construction solely so Start can read the "Backup
+// Everything" pass's parent run id (see runGroupKey's doc comment) and the run
+// origin off it. A ctx carrying neither records a plain row.
 type runsAdapter struct {
 	st  *store.Repo
 	ctx context.Context
@@ -10918,19 +10914,9 @@ type runsAdapter struct {
 var _ backup.Runs = runsAdapter{}
 
 func (r runsAdapter) Start(targetID, kind string) (string, error) {
-	id, err := r.st.StartRun(targetID, kind)
-	if err != nil {
-		return "", err
-	}
-	if gid := runGroupFromContext(r.ctx); gid != "" {
-		// Best-effort, like every other post-Start bookkeeping call in this
-		// file: the run already started successfully, so a stamp failure is
-		// logged, never returned (see store.SetRunGroup's doc comment).
-		if serr := r.st.SetRunGroup(id, gid); serr != nil {
-			log.Printf("api: run %s: stamp group %s failed: %v", id, gid, serr) //nolint:gosec // G706: id/gid are internal ids, not user input
-		}
-	}
-	return id, nil
+	// The package-level form, because the bookkeeping-only call sites build
+	// this adapter without a Service.
+	return startRunWith(r.ctx, r.st, targetID, kind)
 }
 
 // shutdownStatus rewrites a failure that is really a shutdown ([375]).
@@ -11431,7 +11417,7 @@ func (s *Service) removeStrayOverlays(diskPaths []string) {
 // is ignored (the real cause is already being returned to the caller).
 func (s *Service) failVMBackup(ctx context.Context, name string, cause error) {
 	if tg, err := s.store.GetVMTargetByName(name); err == nil {
-		if runID, sErr := s.store.StartRun(tg.ID, "backup"); sErr == nil {
+		if runID, sErr := s.startRun(ctx, tg.ID, "backup"); sErr == nil {
 			msg := cause.Error()
 			if len(msg) > 500 {
 				msg = msg[:500]
@@ -11484,7 +11470,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	orchestrated := false
 	defer func() {
 		if retErr != nil && !orchestrated && !errors.Is(retErr, backup.ErrVMNotInstalled) {
-			s.recordPreflightFailure("BackupVM", name, targetID, retErr)
+			s.recordPreflightFailure(ctx, "BackupVM", name, targetID, retErr)
 		}
 	}()
 	settings, err := s.store.GetSettings()
@@ -11712,19 +11698,9 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	// service-layer integration, Task 2; see startedRunsAdapter's doc
 	// comment). Wrapping it in startedRunsAdapter means the orchestrator's own
 	// Runs.Start call is a no-op read of this same id, not a second run row.
-	runID, err := s.store.StartRun(tg.ID, "backup")
+	runID, err := s.startRun(ctx, tg.ID, "backup")
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("backup vm: record run start: %w", err)
-	}
-	if gid := runGroupFromContext(ctx); gid != "" {
-		// Same "Backup Everything" group-stamp runsAdapter.Start does — inline
-		// here (rather than inside startedRunsAdapter) because the run id, and
-		// therefore the stamp, is produced ONCE right here, not inside a later
-		// Start() call (see startedRunsAdapter's doc comment above). Best-effort:
-		// a stamp failure must never fail a backup that already started.
-		if serr := s.store.SetRunGroup(runID, gid); serr != nil {
-			log.Printf("api: BackupVM: run %s: stamp group %s failed: %v", runID, gid, serr) //nolint:gosec // G706: runID/gid are internal ids, not user input
-		}
 	}
 	deps.Runs = startedRunsAdapter{st: s.store, runID: runID, svc: s, cancelKey: "vm:" + name}
 	// RunTag correlates every snapshot ONE backup invocation produces — only
@@ -12778,7 +12754,7 @@ func (s *Service) exportFlashZip(ctx context.Context, settings store.Settings, s
 	// export publishes nothing (nothing ran) — hence below the guard.
 	_, startedAt := s.progBegin(ctx, "export:flash", "maintenance")
 	defer func() { s.progEnd("export:flash", "maintenance", err == nil, startedAt) }()
-	runID, rErr := s.store.StartRun(store.FlashTargetID, "export")
+	runID, rErr := s.startRun(ctx, store.FlashTargetID, "export")
 	if rErr != nil {
 		log.Printf("api: flash zip export: could not start run record (continuing): %v", rErr)
 		runID = ""
@@ -12927,7 +12903,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 		// Record the miss as a failed run so a scheduled backup of a renamed or
 		// deleted folder shows up in Run History instead of failing invisibly.
 		err := fmt.Errorf("files backup: source path not found for %q (%s does not exist under the host mount)", set.Name, src)
-		if runID, sErr := s.store.StartRun(set.ID, "backup"); sErr != nil {
+		if runID, sErr := s.startRun(ctx, set.ID, "backup"); sErr != nil {
 			log.Printf("api: files backup: %q: record missing-path run: %v", set.Name, sErr) //nolint:gosec // G706: name is %q-quoted
 			// truncateRunErr, like every other FinishRun in this file: it is "the one
 			// function that writes runs.error", and this was the only call site
@@ -12976,7 +12952,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 				reason = fmt.Sprintf("source folder for %q could not be read (%s): %v", set.Name, src, eErr)
 			}
 			err := fmt.Errorf("files backup: %s", reason)
-			if runID, sErr := s.store.StartRun(set.ID, "backup"); sErr != nil {
+			if runID, sErr := s.startRun(ctx, set.ID, "backup"); sErr != nil {
 				log.Printf("api: files backup: %q: record failed run: %v", set.Name, sErr) //nolint:gosec // G706: name is %q-quoted
 			} else if fErr := s.store.FinishRun(runID, "failed", "", 0, truncateRunErr(err)); fErr != nil {
 				log.Printf("api: files backup: %q: finish failed run: %v", set.Name, fErr) //nolint:gosec // G706: name is %q-quoted
@@ -14317,7 +14293,7 @@ func (s *Service) DownloadFlashZip(ctx context.Context, snapshotID, source strin
 	if onResolved != nil {
 		onResolved(id)
 	}
-	runID, err := s.store.StartRun(store.FlashTargetID, "restore")
+	runID, err := s.startRun(ctx, store.FlashTargetID, "restore")
 	if err != nil {
 		return fmt.Errorf("flash download: start run: %w", err)
 	}
@@ -14476,7 +14452,7 @@ func (s *Service) RestoreConfig(ctx context.Context, snapshotID, source string) 
 	// contains a plaintext rclone.conf + ssh private key, so a fresh attempt should
 	// not let it linger. Best-effort — a leftover .bad must never block a restore.
 	_ = os.RemoveAll(root + ".bad")
-	runID, err := s.store.StartRun(store.ConfigTargetID, "restore")
+	runID, err := s.startRun(ctx, store.ConfigTargetID, "restore")
 	if err != nil {
 		return fmt.Errorf("config restore: start run: %w", err)
 	}
@@ -14878,7 +14854,7 @@ func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err e
 	vkey := "verify:" + domain
 	_, startedAt := s.progBegin(ctx, vkey, "maintenance")
 	defer func() { s.progEnd(vkey, "maintenance", err == nil, startedAt) }()
-	runID, rErr := s.store.StartRun(domainRunTargetID(domain), "verify")
+	runID, rErr := s.startRun(ctx, domainRunTargetID(domain), "verify")
 	if rErr != nil {
 		log.Printf("api: verify %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
 		runID = ""
@@ -15799,7 +15775,9 @@ func domainRunTargetID(domain string) string {
 // detail is bounded to the same cap as truncateRunErr. Best-effort: a store
 // error is logged and never fails the check that already ran.
 func (s *Service) recordDomainRun(domain, kind string, ok bool, detail string) {
-	runID, err := s.store.StartRun(domainRunTargetID(domain), kind)
+	// A drill or tamper row is never started through a tool, so a caller's
+	// context here would put the wrong name in the audit trail.
+	runID, err := s.startRun(context.Background(), domainRunTargetID(domain), kind)
 	if err != nil {
 		log.Printf("api: %s %s: could not start run record (continuing): %v", kind, domain, err) //nolint:gosec // G706: kind and domain are fixed literals
 		return
@@ -16263,7 +16241,7 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 	pkey := "prune:" + domain
 	_, startedAt := s.progBegin(ctx, pkey, "maintenance")
 	defer func() { s.progEnd(pkey, "maintenance", err == nil, startedAt) }()
-	runID, rErr := s.store.StartRun(domainRunTargetID(domain), "prune")
+	runID, rErr := s.startRun(ctx, domainRunTargetID(domain), "prune")
 	if rErr != nil {
 		log.Printf("api: prune %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
 		runID = ""
@@ -17298,7 +17276,7 @@ func (s *Service) recordAndNotifyContainerSkip(ctx context.Context, name string)
 	}
 	// Always record the skip so Run History shows it every run (a cheap, honest audit
 	// trail) rather than the removed target silently vanishing from the dashboard.
-	if runID, sErr := s.store.StartRun(tg.ID, "backup"); sErr != nil {
+	if runID, sErr := s.startRun(ctx, tg.ID, "backup"); sErr != nil {
 		log.Printf("api: Backup: skip %q: start skipped run: %v", name, sErr) //nolint:gosec // G706: name is %q-quoted
 	} else if fErr := s.store.FinishRun(runID, statusSkipped, "", 0, store.ReasonContainerGone); fErr != nil {
 		log.Printf("api: Backup: skip %q: finish skipped run: %v", name, fErr) //nolint:gosec // G706: name is %q-quoted
@@ -17342,12 +17320,12 @@ func (s *Service) recordAndNotifyContainerSkip(ctx context.Context, name string)
 // since the caller is already returning the real one. An entry with no target row
 // yet has nothing to key a run to, so there the reason is only logged, and the
 // scheduled summary still names it from the returned error.
-func (s *Service) recordPreflightFailure(kind, name, targetID string, cause error) {
+func (s *Service) recordPreflightFailure(ctx context.Context, kind, name, targetID string, cause error) {
 	if targetID == "" {
 		log.Printf("api: %s: %q failed before a run could be recorded (no target row yet): %v", kind, name, cause) //nolint:gosec // G706: kind is a fixed literal, name is %q-quoted
 		return
 	}
-	runID, err := s.store.StartRun(targetID, "backup")
+	runID, err := s.startRun(ctx, targetID, "backup")
 	if err != nil {
 		log.Printf("api: %s: %q: start failed run: %v", kind, name, err) //nolint:gosec // G706: see above
 		return
