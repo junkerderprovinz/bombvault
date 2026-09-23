@@ -142,7 +142,6 @@ const eu: Partial<Translations> = {
   "snapshots.none": "Ez da babeskopiarik aurkitu",
   "snapshots.files": "Fitxategiak",
   "snapshots.delete": "Ezabatu",
-  "snapshots.deleteConfirm": "Babeskopia hau ezabatu nahi duzu? Argazkia biltegitik kentzen da (exekutatu Garbitu Ezarpenetan lekua askatzeko). Ezin da desegin.",
   "snapshots.deleteAll": "Ezabatu babeskopia guztiak",
   "snapshots.deleteAllConfirm": "MB honen babeskopia GUZTIAK ezabatu nahi dituzu hautatutako iturritik (lokala edo kanpokoa)? Argazkiak betiko ezabatzen dira eta biltegia garbitzen da. Ezin da desegin.",
   "snapshots.deletingAll": "Ezabatzen…",
@@ -284,7 +283,6 @@ const eu: Partial<Translations> = {
   "source.localTip": "Biltegi lokala ostalari honetan",
   "source.offsiteTip": "Kanpoko kopia",
   "source.offsiteTarget": "Kanpoko helmuga",
-  "source.hint": "Berrezarpenak eta ezabatzeak hautatutako iturrian bakarrik eragiten dute: babeskopia lokal bat ezabatzeak ez du inoiz kanpoko kopia ukitzen, eta alderantziz.",
   "offsite.copyDomainTitle": "Kanpoko kopia {domain}",
   "offsite.schedulePlaceholder": "hutsik = babeskopia bakoitzaren ondoren · adib. weekly Sun 03:00",
   "offsite.replicateNow": "Errepikatu orain",
@@ -1002,8 +1000,6 @@ const eu: Partial<Translations> = {
   "containers.updateSettingFailed": "Ezin izan da ezarpena aldatu",
   "vms.loadFailed": "Ezin izan dira MBak kargatu",
   "files.loadSetsFailed": "Ezin izan dira karpeta-multzoak kargatu",
-  "flash.loadBackupsFailed": "Ezin izan dira Flash babeskopiak kargatu",
-  "config.loadBackupsFailed": "Ezin izan dira ezarpenen babeskopiak kargatu",
   "config.loadSettingsFailed": "Ezin izan dira uneko ezarpenak kargatu",
   "dashboard.loadRunsFailed": "Ezin izan dira exekuzioak kargatu",
 
@@ -1029,7 +1025,6 @@ const eu: Partial<Translations> = {
   "flash.backingUp": "Babeskopia egiten…",
   "flash.download": "Deskargatu (.zip)",
   "flash.restoreNote": "Berrezarpenak argazkiaren ZIP bat deskargatzen du. Exekutatzen ari den /boot ez da inoiz ukitzen. Jarri .zip zuzenean Unraid USB sortzailean, edo deskonprimitu USB berri batean zure Flash berreraikitzeko.",
-  "flash.none": "Oraindik ez dago Flash babeskopiarik. Abiarazi bat goian.",
   "settings.exportsEncryptionTitle": "Esportazio eta biltegi zifratzea",
   "settings.exportsEncryptionHint": "Kontrolak esportazio arrunten artefaktuak zifratzeko eta restic biltegien beren zifratzea kudeatzeko.",
   // Scheduled flash zip export
@@ -1073,7 +1068,6 @@ const eu: Partial<Translations> = {
   "config.backingUp": "Babeskopia egiten…",
   "config.snapshotsTitle": "Ezarpenen babeskopiak",
   "config.snapshotsHint": "Ezarpen hauek berreraikitako zerbitzari batean berrezartzeko, erabili Berreskuratzea fitxa. Ezarpenak berrezartzeak BombVault berrabiarazten du aplikatzeko, horregatik bizi da hor gainerako hondamendi-berreskuratze fluxuarekin batera.",
-  "config.none": "Oraindik ez dago ezarpenen babeskopiarik. Abiarazi bat goian.",
 
   // Receiver dashboard
   "receiver.title": "Hartzailea",

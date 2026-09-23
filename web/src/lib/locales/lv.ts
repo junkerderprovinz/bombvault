@@ -142,7 +142,6 @@ const lv: Partial<Translations> = {
   "snapshots.none": "Rezerves kopijas nav atrastas",
   "snapshots.files": "Faili",
   "snapshots.delete": "Dzēst",
-  "snapshots.deleteConfirm": "Dzēst šo rezerves kopiju? Momentuzņēmums tiek noņemts no repozitorija (lai atbrīvotu vietu, Iestatījumos palaidiet Iztīrīšanu). Šo darbību nevar atsaukt.",
   "snapshots.deleteAll": "Dzēst visas rezerves kopijas",
   "snapshots.deleteAllConfirm": "Dzēst VISAS šīs VM rezerves kopijas no izvēlētā avota (vietējā vai attālinātā)? Momentuzņēmumi tiek neatgriezeniski noņemti, un repozitorijs tiek iztīrīts. Šo darbību nevar atsaukt.",
   "snapshots.deletingAll": "Dzēš…",
@@ -284,7 +283,6 @@ const lv: Partial<Translations> = {
   "source.localTip": "Vietējs repozitorijs šajā saimniekdatorā",
   "source.offsiteTip": "Attālinātā kopija",
   "source.offsiteTarget": "Attālinātais mērķis",
-  "source.hint": "Atjaunošana un dzēšana ietekmē tikai izvēlēto avotu. Vietējās rezerves kopijas dzēšana nekad neskar attālināto kopiju, un otrādi.",
   "offsite.copyDomainTitle": "Attālinātā kopija {domain}",
   "offsite.schedulePlaceholder": "tukšs = pēc katras rezerves kopijas · piem. weekly Sun 03:00",
   "offsite.replicateNow": "Replicēt tagad",
@@ -1002,8 +1000,6 @@ const lv: Partial<Translations> = {
   "containers.updateSettingFailed": "Neizdevās mainīt iestatījumu",
   "vms.loadFailed": "Neizdevās ielādēt VM",
   "files.loadSetsFailed": "Neizdevās ielādēt mapju kopas",
-  "flash.loadBackupsFailed": "Neizdevās ielādēt Flash rezerves kopijas",
-  "config.loadBackupsFailed": "Neizdevās ielādēt iestatījumu rezerves kopijas",
   "config.loadSettingsFailed": "Neizdevās ielādēt pašreizējos iestatījumus",
   "dashboard.loadRunsFailed": "Neizdevās ielādēt izpildījumus",
 
@@ -1029,7 +1025,6 @@ const lv: Partial<Translations> = {
   "flash.backingUp": "Dublē…",
   "flash.download": "Lejupielādēt (.zip)",
   "flash.restoreNote": "Atjaunošana lejupielādē momentuzņēmuma ZIP. Darbojošais /boot nekad netiek skarts. Ievietojiet .zip tieši Unraid USB izveidotājā vai izpakojiet to jaunā USB, lai atjaunotu savu Flash.",
-  "flash.none": "Vēl nav Flash rezerves kopiju. Palaidiet vienu iepriekš.",
   "settings.exportsEncryptionTitle": "Eksporta un repozitoriju šifrēšana",
   "settings.exportsEncryptionHint": "Vadīklas parasto eksporta artefaktu šifrēšanai un pašu restic repozitoriju šifrēšanai.",
   // Scheduled flash zip export
@@ -1073,7 +1068,6 @@ const lv: Partial<Translations> = {
   "config.backingUp": "Dublē…",
   "config.snapshotsTitle": "Iestatījumu rezerves kopijas",
   "config.snapshotsHint": "Lai atjaunotu šos iestatījumus atjaunotā serverī, izmantojiet cilni Atkopšana. Iestatījumu atjaunošana restartē BombVault, lai tos piemērotu, tāpēc tas dzīvo tur kopā ar pārējo katastrofu atkopšanas plūsmu.",
-  "config.none": "Vēl nav iestatījumu rezerves kopiju. Palaidiet vienu iepriekš.",
 
   // Receiver dashboard
   "receiver.title": "Uztvērējs",

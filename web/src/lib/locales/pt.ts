@@ -195,7 +195,6 @@ const pt: Partial<Translations> = {
   "source.localTip": "Repositório local neste host",
   "source.offsiteTip": "Cópia externa",
   "source.offsiteTarget": "Destino externo",
-  "source.hint": "Restaurar e excluir agem apenas na origem selecionada: excluir um backup local nunca toca na cópia externa, e vice-versa.",
   "offsite.schedulePlaceholder": "vazio = após cada backup · ex. weekly Sun 03:00",
   "offsite.replicateNow": "Replicar agora",
   "offsite.copyDomainTitle": "Cópia externa {domain}",
@@ -440,7 +439,6 @@ const pt: Partial<Translations> = {
   // Backups — files
   "snapshots.files": "Ficheiros",
   "snapshots.delete": "Excluir",
-  "snapshots.deleteConfirm": "Excluir este backup? O snapshot é removido do repositório (execute Podar nas Configurações para recuperar o espaço). Não pode ser desfeito.",
   "snapshots.recreate": "Recriar a partir da config salva",
   "snapshots.recreateConfirm": "Recriar este contêiner a partir da configuração salva? Ele é criado e iniciado a partir da definição armazenada.",
   "snapshots.configOnlyHint": "Backup só de configuração: a definição do contêiner está salva, mas ele não tem pastas de dados para snapshot. Se você excluí-lo, ele aparece em \"Não instalado\", onde pode recriá-lo a partir desta configuração.",
@@ -539,7 +537,6 @@ const pt: Partial<Translations> = {
   "flash.backingUp": "A fazer backup…",
   "flash.download": "Baixar (.zip)",
   "flash.restoreNote": "A restauração baixa um ZIP do snapshot. O /boot em execução nunca é tocado. Solte o .zip direto no criador de USB do Unraid, ou descompacte-o em um USB novo para reconstruir o flash.",
-  "flash.none": "Ainda sem backups do flash. Inicie um backup acima.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Cifragem de exportação e repositório",
@@ -617,8 +614,6 @@ const pt: Partial<Translations> = {
   "containers.updateSettingFailed": "Falha ao atualizar a definição",
   "vms.loadFailed": "Falha ao carregar as VMs",
   "files.loadSetsFailed": "Falha ao carregar os conjuntos de pastas",
-  "flash.loadBackupsFailed": "Falha ao carregar os backups do Flash",
-  "config.loadBackupsFailed": "Falha ao carregar os backups das definições",
   "config.loadSettingsFailed": "Não foi possível carregar as definições atuais",
   "dashboard.loadRunsFailed": "Falha ao carregar as execuções",
 
@@ -1071,7 +1066,6 @@ const pt: Partial<Translations> = {
   "config.backingUp": "A fazer backup…",
   "config.snapshotsTitle": "Backups de definições",
   "config.snapshotsHint": "Para restaurar estas definições num servidor reconstruído, use o separador Recuperação. Restaurar as definições reinicia o BombVault para as aplicar, por isso fica aí junto com o resto do fluxo de recuperação de desastres.",
-  "config.none": "Ainda sem backups de definições. Inicie um backup acima.",
   "nav.config": "Auto-backup",
   "settings.configEnabled": "Auto-backup",
   "settings.configEnabledHint": "Backup das próprias configurações, destinos e credenciais do BombVault, para que uma instalação nova também possa restaurar sua configuração (auto-backup).",

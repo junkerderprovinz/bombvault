@@ -1,28 +1,21 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { hueVars, rainbowAt } from "../lib/appearance";
-import {
-  backupConfigNow,
-  listConfigSnapshots,
-  deleteSnapshot,
-  getSettings,
-  putSettings,
-} from "../lib/api";
-import type { Snapshot, Settings } from "../lib/api";
+import { backupConfigNow, getSettings, putSettings } from "../lib/api";
+import type { Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { BackupCancelButton } from "../components/BackupCancelButton";
 import { ProgressBar } from "../components/ProgressBar";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
-import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { PlacementFlow } from "../components/placement/PlacementFlow";
+import { Timeline } from "../components/timeline/Timeline";
 import { ToggleRow } from "./settings/shared";
-import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { InfoBubble } from "../components/InfoBubble";
-import { IconBackupNow, IconTrash } from "../components/Sidebar";
+import { IconBackupNow } from "../components/Sidebar";
 import { tLtr } from "../lib/ltrFragments";
 
 type T = ReturnType<typeof useT>["t"];
@@ -302,124 +295,6 @@ function ConfigSettingsCard({
 }
 
 // ---------------------------------------------------------------------------
-// Snapshot row — id + timestamp, with a delete affordance (mirrors Flash's
-// FlashSnapshotRow, minus the zip download). Delete targets the currently viewed
-// repo via `source`; an off-site append-only repo refuses the delete server-side,
-// so the returned error is surfaced in `deleteErr` rather than hidden.
-// ---------------------------------------------------------------------------
-
-function ConfigSnapshotRow({
-  snap,
-  source,
-  onDeleted,
-  t,
-}: {
-  snap: Snapshot;
-  source: RepoSource;
-  onDeleted: () => void;
-  t: T;
-}) {
-  const [deleting, setDeleting] = useState(false);
-  const { push } = useToast();
-  const { confirm, confirmDialog } = useConfirm();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
-  // failed delete toasts AND shakes the delete button.
-  const [shake, setShake] = useState(0);
-
-  async function handleDelete() {
-    if (!(await confirm(t("snapshots.deleteConfirm")))) return;
-    setDeleting(true);
-    try {
-      const res = await deleteSnapshot("config", snap.id, source);
-      if (res.ok) onDeleted();
-      else {
-        push(res.error ?? t("common.deleteFailed"), "fail");
-      }
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("common.deleteFailed"), "fail");
-      setShake((n) => n + 1);
-    } finally {
-      setDeleting(false);
-    }
-  }
-
-  return (
-    // py-1.5, not py-2.5: this row's delete badge grew 24px → 32px with the
-    // app-wide square-icon-badge unification, and trimming 4px of padding per
-    // side keeps the row at exactly the 44px it measured before. Same pairing
-    // as RestorePanel's SnapshotRow, for the same reason.
-    <div className="flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0">
-      <div className="flex items-center gap-3 text-sm">
-        <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">{snap.id.slice(0, 8)}</span>
-        <span className="text-carbon-textMuted text-xs flex-1">
-          {new Date(snap.time).toLocaleString()}
-        </span>
-        {/* Square icon-only delete badge (jdp, live review: "Der
-            Loeschen-Button bei Einstellungsbackups soll ein quadratischer
-            Badge mit Glyph sein") — was a bare text `<button>` reading
-            "Löschen", native `title=` tooltip. Routed through the shared
-            Badge component (shape="square", `tip`) rather than a hand-rolled
-            IconTipButton: Badge.tsx's own file header is explicit this is
-            meant to be the ONE shared mechanism a square icon-only glyph
-            badge renders through (its `tip` branch already wraps
-            IconTipButton internally, see Badge()'s own `as==="button"`
-            case) — OffsiteTargetsSection's "Ziel hinzufügen" button is the
-            reference call site for that exact shape/tip pairing. Every
-            OTHER snapshot-row delete button in this app (Flash/Files/VMs/
-            RestorePanel's own FlashSnapshotRow etc.) is still the identical
-            unconverted plain-text button; only this one call site (the one
-            jdp's ask named) is converted here, but through the shared
-            component so the next conversion has one real place to copy
-            from instead of a second bespoke implementation.
-            IconTrash (components/Sidebar.tsx) reused verbatim — already
-            drawn filled/`currentColor`-only for exactly this "remove a row"
-            role in Settings.tsx's Registries card, no new glyph needed.
-              size="icon" — the app's one square-icon-badge size (32px). This
-            was `size="large"` (24px), measured against its own pre-conversion
-            text button; RestorePanel's delete badge copied that number from
-            here, which is how one call site's local measurement became a
-            second badge size elsewhere in the app. Both are now on the single
-            shared stage — see Badge.tsx's "ONE SIZE FOR SQUARE ICON BADGES"
-            block. This row's padding moved py-2.5 → py-1.5 in the same
-            change, so the row still measures the 44px it did before.
-              tone="active", NOT the tone="neutral" + `hover:bg-statusFailBg
-            hover:text-statusFail` pair this badge shipped with. jdp, live
-            review of the sibling badge RestorePanel copied from this one:
-            "Der Löschen-Badge ist auch anders eingefärbt, soll nicht so sein,
-            ganz normal in die Farbmodi integrieren." `neutral` is one of the
-            tones Badge deliberately exempts from rainbow `hueIndex` (they are
-            load-bearing STATUS signals), so a neutral badge takes no
-            colour-engine position at all — this control stayed flat grey in
-            every palette while every other icon badge in the app followed the
-            engine, and the red hover made it the only badge with a bespoke
-            colour treatment. `active` + icon-only resolves to the solid
-            `bg-accent`/`text-accentContrast` pair and follows the accent/
-            rainbow engine like every sibling.
-              The action stays unambiguous without the red: the IconTrash
-            glyph and the `tip` bubble (t("snapshots.delete")) both name it,
-            and the click still routes through the confirm dialog below.
-            Mirrors the already-shipped decision that "Deaktivieren" buttons
-            must not be red either.
-              `glim-shake` (the system-wide "failed delete shakes the delete
-            button" rule) and `shrink-0` survive via `className` — behaviour
-            and layout, not colour. */}
-        <Button
-          key={shake}
-          label={t("snapshots.delete")}
-          labelKey="snapshots.delete"
-          glyph={<IconTrash />}
-          tone="accent"
-          onClick={() => void handleDelete()}
-          disabled={deleting}
-          className={`shrink-0${shake ? " glim-shake" : ""}`}
-        />
-      </div>
-      {confirmDialog}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Config page — BombVault's OWN settings self-backup. Backup + status only; the
 // restore flow (which restarts the app to swap the live DB) lives in the Recovery
 // tab, so the self-referential restart stays in one place.
@@ -428,10 +303,7 @@ function ConfigSnapshotRow({
 export function Config() {
   const { t } = useT();
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [source, setSource] = useState<RepoSource>("local");
-  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [reloadTick, setReloadTick] = useState(0);
   const progressMap = useProgress();
   const progress = progressMap["config"];
   // Any backup/restore/replication in flight (any domain) disables the config
@@ -445,24 +317,6 @@ export function Config() {
       })
       .catch(() => undefined);
   }, []);
-
-  function load() {
-    setError(null);
-    return listConfigSnapshots(source)
-      .then((res) => {
-        if (res.ok) setSnapshots(res.snapshots ?? []);
-        else setError(res.error ?? t("config.loadBackupsFailed"));
-      })
-      .catch((err: unknown) =>
-        setError(err instanceof Error ? err.message : t("config.loadBackupsFailed"))
-      );
-  }
-
-  useEffect(() => {
-    setLoading(true);
-    void load().finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source]);
 
   return (
     // PAGE_SHELL (jdp live-review: "Im Tab Selbst-Backup und Flash sind die
@@ -548,7 +402,7 @@ export function Config() {
           <div className="flex justify-end">
             <ConfigBackupButton
               t={t}
-              onBackedUp={() => void load()}
+              onBackedUp={() => setReloadTick((n) => n + 1)}
               externallyBusy={running.active}
               busyPhase={running.phase}
             />
@@ -574,9 +428,8 @@ export function Config() {
       {/* Snapshots card — list + delete; restoring settings lives in Recovery.
           `glim-notch-card`: see Settings.tsx's Card() for the reasoning.
           `.glim-hue` added (rainbow-mode completeness sweep, jdp live
-          review): same hueIndex={2} the Badge already uses — ConfigSnapshotRow's
-          own delete button inherits it via the ordinary custom-property
-          cascade, no per-row change needed. */}
+          review): same hueIndex={2} the Badge already uses. Timeline's own
+          delete button inherits it via the ordinary custom-property cascade. */}
       <div
         className="relative glim-notch-card glim-hue bg-carbon-surface rounded-card p-5 flex flex-col gap-4"
         style={hueVars(rainbowAt(2)) as CSSProperties}
@@ -597,47 +450,16 @@ export function Config() {
           </Badge>
         </h2>
 
-        {/* jdp live-review ("Tab Selbst-Backup: Info-Texte bitte in i
-            Infobubbles"): `source.hint` used to render as a permanent
-            `text-caption` <p> under this row — precisely rule 8's "read once,
-            costs vertical space forever" case. Now an InfoBubble on the
-            "Quelle" label, byte-identical in form to how Flash.tsx's own copy
-            was converted in 63f53d5. The wrapping `flex flex-col gap-1` div
-            goes with it: with the <p> gone it wrapped a single child.
-              Swept in the SAME pass, not deferred again: this string sat as
-            an identical permanent <p> at three FURTHER call sites
-            (components/RestorePanel.tsx = the Containers tab's per-container
-            panel, pages/VMs.tsx, pages/Files.tsx), all four converted
-            together. 63f53d5 explicitly recorded them as "left for a future
-            round" — fixing only the tab jdp happened to name is what turned
-            this into a four-round defect in the first place. Zero new i18n
-            keys; `source.hint` is already translated in all 42 locales. */}
-        <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
-            {t("source.label")}
-            <InfoBubble tip={t("source.hint")} />
-          </span>
-          <SourceToggle source={source} onChange={setSource} disabled={loading} domain="config" />
+        <div className="rounded-card bg-carbon-background px-3 py-1">
+          <Timeline
+            key={reloadTick}
+            domain="config"
+            itemKey="config"
+            itemName={t("config.snapshotsTitle")}
+            open
+            renderActions={() => null}
+          />
         </div>
-
-        {loading && <p className="text-xs text-carbon-textMuted">{t("dashboard.checking")}</p>}
-        {error && <p className="text-xs text-statusFail">{error}</p>}
-        {!loading && !error && snapshots.length === 0 && (
-          <p className="text-xs text-carbon-textMuted">{t("config.none")}</p>
-        )}
-        {!loading && snapshots.length > 0 && (
-          <div className="rounded-card bg-carbon-background px-3 py-1">
-            {snapshots.map((snap) => (
-              <ConfigSnapshotRow
-                key={snap.id}
-                snap={snap}
-                source={source}
-                onDeleted={() => void load()}
-                t={t}
-              />
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

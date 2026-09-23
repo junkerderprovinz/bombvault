@@ -38,6 +38,7 @@ class NoopEventSource {
 (globalThis as unknown as { EventSource: unknown }).EventSource = NoopEventSource;
 
 const putBodies: Settings[] = [];
+const timelineCalls: unknown[][] = [];
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
@@ -48,7 +49,10 @@ vi.mock("../lib/api", async (importOriginal) => {
       putBodies.push(s);
       return Promise.resolve({ ok: true });
     },
-    listConfigSnapshots: () => Promise.resolve({ ok: true, snapshots: [] }),
+    getTimeline: (...args: unknown[]) => {
+      timelineCalls.push(args);
+      return Promise.resolve({ ok: true, places: [], rows: [] });
+    },
   };
 });
 
@@ -56,6 +60,7 @@ const { Config } = await import("./Config");
 
 beforeEach(() => {
   putBodies.length = 0;
+  timelineCalls.length = 0;
 });
 
 afterEach(() => {
@@ -94,4 +99,9 @@ it("no longer offers a save button on this card", async () => {
   // Not a style preference: a button next to a control that already saved is
   // what made manilx expect the toggle NOT to have saved.
   expect(screen.queryByRole("button", { name: en["settings.save"] })).toBeNull();
+});
+
+it("lists the settings backups as the config timeline", async () => {
+  await renderPage();
+  await waitFor(() => expect(timelineCalls).toEqual([["config", "config"]]));
 });

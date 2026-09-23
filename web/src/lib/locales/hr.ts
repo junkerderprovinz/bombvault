@@ -142,7 +142,6 @@ const hr: Partial<Translations> = {
   "snapshots.none": "Nije pronađena nijedna sigurnosna kopija",
   "snapshots.files": "Datoteke",
   "snapshots.delete": "Izbriši",
-  "snapshots.deleteConfirm": "Izbrisati ovu sigurnosnu kopiju? Snimka se uklanja iz repozitorija (pokrenite Očisti u Postavkama za oslobađanje prostora). Ovo se ne može poništiti.",
   "snapshots.deleteAll": "Izbriši sve sigurnosne kopije",
   "snapshots.deleteAllConfirm": "Izbrisati SVE sigurnosne kopije ove VM iz odabranog izvora (lokalnog ili izvanmrežnog)? Snimke se trajno uklanjaju, a repozitorij se čisti. Ovo se ne može poništiti.",
   "snapshots.deletingAll": "Brisanje…",
@@ -284,7 +283,6 @@ const hr: Partial<Translations> = {
   "source.localTip": "Lokalni repozitorij na ovom hostu",
   "source.offsiteTip": "Izvanmrežna kopija",
   "source.offsiteTarget": "Izvanmrežno odredište",
-  "source.hint": "Vraćanje i brisanje djeluju samo na odabrani izvor: brisanje lokalne sigurnosne kopije nikada ne dira izvanmrežnu kopiju, i obrnuto.",
   "offsite.copyDomainTitle": "Izvanmrežna kopija {domain}",
   "offsite.schedulePlaceholder": "prazno = nakon svake sigurnosne kopije · npr. weekly Sun 03:00",
   "offsite.replicateNow": "Repliciraj sada",
@@ -1002,8 +1000,6 @@ const hr: Partial<Translations> = {
   "containers.updateSettingFailed": "Postavka se nije mogla promijeniti",
   "vms.loadFailed": "VM-ovi se nisu mogli učitati",
   "files.loadSetsFailed": "Skupovi mapa se nisu mogli učitati",
-  "flash.loadBackupsFailed": "Flash sigurnosne kopije se nisu mogle učitati",
-  "config.loadBackupsFailed": "Sigurnosne kopije postavki se nisu mogle učitati",
   "config.loadSettingsFailed": "Trenutne postavke se nisu mogle učitati",
   "dashboard.loadRunsFailed": "Izvršavanja se nisu mogla učitati",
 
@@ -1029,7 +1025,6 @@ const hr: Partial<Translations> = {
   "flash.backingUp": "Izrada sigurnosne kopije…",
   "flash.download": "Preuzmi (.zip)",
   "flash.restoreNote": "Vraćanje preuzima ZIP snimke. Pokrenuti /boot nikad se ne dira. Stavite .zip izravno u Unraid USB alat za izradu, ili ga raspakirajte na novi USB kako biste ponovno izgradili svoj Flash.",
-  "flash.none": "Još nema Flash sigurnosnih kopija. Pokrenite jednu iznad.",
   "settings.exportsEncryptionTitle": "Enkripcija izvoza i repozitorija",
   "settings.exportsEncryptionHint": "Kontrole za enkripciju običnih artefakata izvoza i vlastitu enkripciju restic repozitorija.",
   // Scheduled flash zip export
@@ -1073,7 +1068,6 @@ const hr: Partial<Translations> = {
   "config.backingUp": "Izrada sigurnosne kopije…",
   "config.snapshotsTitle": "Sigurnosne kopije postavki",
   "config.snapshotsHint": "Za vraćanje ovih postavki na ponovno izgrađenom poslužitelju, koristite karticu Oporavak. Vraćanje postavki ponovno pokreće BombVault kako bi ih primijenio, stoga tu ostaje uz ostatak procesa oporavka od katastrofe.",
-  "config.none": "Još nema sigurnosnih kopija postavki. Pokrenite jednu iznad.",
 
   // Receiver dashboard
   "receiver.title": "Prijamnik",

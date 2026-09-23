@@ -142,7 +142,6 @@ const sr: Partial<Translations> = {
   "snapshots.none": "Резервне копије нису пронађене",
   "snapshots.files": "Датотеке",
   "snapshots.delete": "Избриши",
-  "snapshots.deleteConfirm": "Избришем ову резервну копију? Снимак се уклања из репозиторијума (покрени Очисти у Подешавањима да ослободиш простор). Ово се не може поништити.",
   "snapshots.deleteAll": "Избриши све резервне копије",
   "snapshots.deleteAllConfirm": "Избришем СВЕ резервне копије овог ВМ-а из изабраног извора (локалног или спољног)? Снимци се трајно уклањају, а репозиторијум се чисти. Ово се не може поништити.",
   "snapshots.deletingAll": "Брисање…",
@@ -284,7 +283,6 @@ const sr: Partial<Translations> = {
   "source.localTip": "Локални репозиторијум на овом хосту",
   "source.offsiteTip": "Спољна копија",
   "source.offsiteTarget": "Спољни циљ",
-  "source.hint": "Враћање и брисање делују само на изабраном извору — брисање локалне резервне копије никада не утиче на спољну копију, и обрнуто.",
   "offsite.copyDomainTitle": "Спољна копија {domain}",
   "offsite.schedulePlaceholder": "празно = после сваке резервне копије · нпр. недељно нед 03:00",
   "offsite.replicateNow": "Дуплирај сада",
@@ -997,8 +995,6 @@ const sr: Partial<Translations> = {
   "containers.updateSettingFailed": "Промена подешавања није успела",
   "vms.loadFailed": "Учитавање ВМ-ова није успело",
   "files.loadSetsFailed": "Учитавање скупова фасцикли није успело",
-  "flash.loadBackupsFailed": "Учитавање резервних копија Flash-а није успело",
-  "config.loadBackupsFailed": "Учитавање резервних копија подешавања није успело",
   "config.loadSettingsFailed": "Тренутна подешавања нису могла да се учитају",
   "dashboard.loadRunsFailed": "Учитавање извршавања није успело",
 
@@ -1024,7 +1020,6 @@ const sr: Partial<Translations> = {
   "flash.backingUp": "Израда резервне копије…",
   "flash.download": "Преузми (.zip)",
   "flash.restoreNote": "Враћање преузима ZIP снимка — активни /boot остаје нетакнут. Датотеку .zip убаци директно у Unraid-ов алат за прављење USB-а или је распакуј на нов USB да поново изградиш свој Flash.",
-  "flash.none": "Још нема резервних копија Flash-а — покрени резервно копирање изнад.",
   "settings.exportsEncryptionTitle": "Шифровање извоза и репозиторијума",
   "settings.exportsEncryptionHint": "Контроле за шифровање обичних извозних артефаката и сопствено шифровање restic репозиторијума.",
   "flash.zipExport.title": "Извоз Flash-а у zip",
@@ -1067,7 +1062,6 @@ const sr: Partial<Translations> = {
   "config.backingUp": "Израда резервне копије…",
   "config.snapshotsTitle": "Резервне копије подешавања",
   "config.snapshotsHint": "За враћање ових подешавања на обновљеном серверу користи таб Опоравак — враћање подешавања поново покреће BombVault да их примени, па је зато тамо, заједно са остатком тока опоравка од катастрофе.",
-  "config.none": "Још нема резервних копија подешавања — покрени резервно копирање изнад.",
 
   // Receiver dashboard
   "receiver.title": "Пријемник",

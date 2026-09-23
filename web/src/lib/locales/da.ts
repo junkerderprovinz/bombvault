@@ -196,7 +196,6 @@ const da: Partial<Translations> = {
   "source.localTip": "Lokalt repository på denne host",
   "source.offsiteTip": "Ekstern kopi",
   "source.offsiteTarget": "Eksternt mål",
-  "source.hint": "Gendannelse og sletning gælder kun den valgte kilde: at slette en lokal sikkerhedskopi rører aldrig den eksterne kopi, og omvendt.",
   "offsite.schedulePlaceholder": "tom = efter hver sikkerhedskopi · f.eks. weekly Sun 03:00",
   "offsite.replicateNow": "Replikér nu",
   "offsite.copyDomainTitle": "Ekstern kopi {domain}",
@@ -443,7 +442,6 @@ const da: Partial<Translations> = {
   // Backups extra
   "snapshots.files": "Filer",
   "snapshots.delete": "Slet",
-  "snapshots.deleteConfirm": "Slet denne sikkerhedskopi? Snapshottet fjernes fra repositoriet (kør Beskær i Indstillinger for at frigøre pladsen). Kan ikke fortrydes.",
   "snapshots.recreate": "Genskab fra gemt konfiguration",
   "snapshots.recreateConfirm": "Genskab denne container fra dens gemte konfiguration? Den oprettes og startes ud fra den gemte definition.",
   "snapshots.configOnlyHint": "Kun-konfiguration-sikkerhedskopi: containerens definition er gemt, men den har ingen datamapper at tage snapshot af. Sletter du containeren, vises den under \"Ikke installeret\", hvor du kan genskabe den fra denne konfiguration.",
@@ -542,7 +540,6 @@ const da: Partial<Translations> = {
   "flash.backingUp": "Sikkerhedskopierer…",
   "flash.download": "Download (.zip)",
   "flash.restoreNote": "Gendannelse downloader en ZIP af snapshottet. Den kørende /boot røres aldrig. Læg .zip-filen direkte i Unraids USB-creator, eller pak den ud på et nyt USB-stik for at genopbygge din flash.",
-  "flash.none": "Ingen flash-sikkerhedskopier endnu. Kør en sikkerhedskopiering ovenfor.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Eksport- og repositorykryptering",
@@ -620,8 +617,6 @@ const da: Partial<Translations> = {
   "containers.updateSettingFailed": "Kunne ikke opdatere indstillingen",
   "vms.loadFailed": "Kunne ikke indlæse VMs",
   "files.loadSetsFailed": "Kunne ikke indlæse mappesættene",
-  "flash.loadBackupsFailed": "Kunne ikke indlæse Flash-sikkerhedskopierne",
-  "config.loadBackupsFailed": "Kunne ikke indlæse sikkerhedskopierne af indstillingerne",
   "config.loadSettingsFailed": "Kunne ikke indlæse de aktuelle indstillinger",
   "dashboard.loadRunsFailed": "Kunne ikke indlæse kørslerne",
 
@@ -782,7 +777,6 @@ const da: Partial<Translations> = {
   "config.backingUp": "Sikkerhedskopierer…",
   "config.snapshotsTitle": "Indstillingssikkerhedskopier",
   "config.snapshotsHint": "For at gendanne disse indstillinger på en genopbygget server skal du bruge fanen Gendannelse. Gendannelse af indstillinger genstarter BombVault for at anvende dem, så det hører til der sammen med resten af katastrofegendannelsesforløbet.",
-  "config.none": "Ingen indstillingssikkerhedskopier endnu. Kør en sikkerhedskopiering ovenfor.",
 
   // Recovery — restore BombVault's own settings step
   "recovery.stepConfig": "Gendan BombVaults egne indstillinger",

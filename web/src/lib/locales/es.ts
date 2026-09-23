@@ -196,7 +196,6 @@ const es: Partial<Translations> = {
   "source.localTip": "Repositorio local en este host",
   "source.offsiteTip": "Copia externa",
   "source.offsiteTarget": "Destino externo",
-  "source.hint": "Restaurar y eliminar solo afectan a la fuente seleccionada: eliminar una copia local nunca toca la copia externa, y viceversa.",
   "offsite.schedulePlaceholder": "vacío = tras cada copia · p. ej. weekly Sun 03:00",
   "offsite.replicateNow": "Replicar ahora",
   "offsite.copyDomainTitle": "Copia externa {domain}",
@@ -443,7 +442,6 @@ const es: Partial<Translations> = {
   // Backups — files
   "snapshots.files": "Archivos",
   "snapshots.delete": "Eliminar",
-  "snapshots.deleteConfirm": "¿Eliminar esta copia? La instantánea se quita del repositorio (ejecuta Podar en Ajustes para recuperar el espacio). No se puede deshacer.",
   "snapshots.recreate": "Recrear desde la config guardada",
   "snapshots.recreateConfirm": "¿Recrear este contenedor desde su configuración guardada? Se crea y se inicia a partir de la definición almacenada.",
   "snapshots.configOnlyHint": "Copia solo de configuración: la definición del contenedor está guardada, pero no tiene carpetas de datos que respaldar. Si lo eliminas, aparece en \"No instalado\", donde puedes recrearlo desde esta configuración.",
@@ -542,7 +540,6 @@ const es: Partial<Translations> = {
   "flash.backingUp": "Copiando…",
   "flash.download": "Descargar (.zip)",
   "flash.restoreNote": "La restauración descarga un ZIP de la instantánea. El /boot en ejecución nunca se toca. Pon el .zip directamente en el creador de USB de Unraid, o descomprímelo en un USB nuevo para reconstruir tu flash.",
-  "flash.none": "Aún no hay copias del flash. Inicia una copia arriba.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Cifrado de exportación y repositorio",
@@ -620,8 +617,6 @@ const es: Partial<Translations> = {
   "containers.updateSettingFailed": "No se pudo cambiar el ajuste",
   "vms.loadFailed": "Error al cargar las VMs",
   "files.loadSetsFailed": "Error al cargar los conjuntos de carpetas",
-  "flash.loadBackupsFailed": "Error al cargar las copias del Flash",
-  "config.loadBackupsFailed": "Error al cargar las copias de los ajustes",
   "config.loadSettingsFailed": "No se pudieron cargar los ajustes actuales",
   "dashboard.loadRunsFailed": "Error al cargar las ejecuciones",
 
@@ -790,7 +785,6 @@ const es: Partial<Translations> = {
   "config.backingUp": "Copiando…",
   "config.snapshotsTitle": "Copias de configuración",
   "config.snapshotsHint": "Para restaurar estos ajustes en un servidor reconstruido, usa la pestaña Recuperación. Restaurar los ajustes reinicia BombVault para aplicarlos, por eso vive ahí junto con el resto del flujo de recuperación ante desastres.",
-  "config.none": "Aún no hay copias de configuración. Inicia una copia arriba.",
 
   // Recovery — restore BombVault's own settings step
   "recovery.stepConfig": "Restaurar la propia configuración de BombVault",

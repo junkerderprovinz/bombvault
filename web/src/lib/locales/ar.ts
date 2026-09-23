@@ -196,7 +196,6 @@ const ar: Partial<Translations> = {
   "source.localTip": "مستودع محلي على هذا المضيف",
   "source.offsiteTip": "نسخة خارج الموقع",
   "source.offsiteTarget": "الوجهة خارج الموقع",
-  "source.hint": "الاستعادة والحذف يؤثران فقط على المصدر المحدد: حذف نسخة محلية لا يمس النسخة خارج الموقع أبدًا، والعكس صحيح.",
   "offsite.schedulePlaceholder": "فارغ = بعد كل نسخة احتياطية · مثل weekly Sun 03:00",
   "offsite.replicateNow": "نسخ الآن",
   "offsite.copyDomainTitle": "نسخة خارج الموقع {domain}",
@@ -443,7 +442,6 @@ const ar: Partial<Translations> = {
   // Backups — files
   "snapshots.files": "الملفات",
   "snapshots.delete": "حذف",
-  "snapshots.deleteConfirm": "حذف هذه النسخة الاحتياطية؟ تتم إزالة اللقطة من المستودع (شغّل التقليم في الإعدادات لاستعادة المساحة). لا يمكن التراجع.",
   "snapshots.recreate": "إعادة الإنشاء من الإعداد المحفوظ",
   "snapshots.recreateConfirm": "إعادة إنشاء هذه الحاوية من إعدادها المحفوظ؟ سيتم إنشاؤها وتشغيلها من التعريف المخزَّن.",
   "snapshots.configOnlyHint": "نسخة احتياطية للإعداد فقط: تعريف الحاوية محفوظ، لكن لا توجد مجلدات بيانات للقطة. إذا حذفت الحاوية ستظهر ضمن \"غير مثبَّتة\" حيث يمكنك إعادة إنشائها من هذا الإعداد.",
@@ -542,7 +540,6 @@ const ar: Partial<Translations> = {
   "flash.backingUp": "جارٍ النسخ الاحتياطي…",
   "flash.download": "تنزيل (.zip)",
   "flash.restoreNote": "يقوم الاستعادة بتنزيل ملف ZIP للقطة. لا يتم المساس بـ /boot قيد التشغيل أبدًا. ضع ملف .zip مباشرة في أداة إنشاء USB من Unraid، أو فك ضغطه على USB جديد لإعادة بناء الفلاش.",
-  "flash.none": "لا توجد نسخ احتياطية للفلاش بعد. شغّل نسخاً احتياطياً أعلاه.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "تشفير التصدير والمستودع",
@@ -620,8 +617,6 @@ const ar: Partial<Translations> = {
   "containers.updateSettingFailed": "فشل تحديث الإعداد",
   "vms.loadFailed": "فشل تحميل VMs",
   "files.loadSetsFailed": "فشل تحميل مجموعات المجلدات",
-  "flash.loadBackupsFailed": "فشل تحميل نسخ Flash الاحتياطية",
-  "config.loadBackupsFailed": "فشل تحميل نسخ الإعدادات الاحتياطية",
   "config.loadSettingsFailed": "تعذّر تحميل الإعدادات الحالية",
   "dashboard.loadRunsFailed": "فشل تحميل التشغيلات",
 
@@ -785,7 +780,6 @@ const ar: Partial<Translations> = {
   "config.backingUp": "جارٍ النسخ الاحتياطي…",
   "config.snapshotsTitle": "نسخ الإعدادات الاحتياطية",
   "config.snapshotsHint": "لاستعادة هذه الإعدادات على خادم مُعاد بناؤه، استخدم تبويب الاستعادة. استعادة الإعدادات تعيد تشغيل BombVault لتطبيقها، لذا فهي موجودة هناك مع بقية سير التعافي من الكوارث.",
-  "config.none": "لا توجد نسخ احتياطية للإعدادات بعد. شغّل نسخاً احتياطياً أعلاه.",
 
   // Recovery — restore BombVault's own settings step
   "recovery.stepConfig": "استعادة إعدادات BombVault الخاصة",

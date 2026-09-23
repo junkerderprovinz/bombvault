@@ -142,7 +142,6 @@ const fa: Partial<Translations> = {
   "snapshots.none": "هیچ پشتیبانی پیدا نشد",
   "snapshots.files": "فایل‌ها",
   "snapshots.delete": "حذف",
-  "snapshots.deleteConfirm": "این پشتیبان حذف شود؟ اسنپ‌شات از مخزن حذف می‌شود (برای آزادسازی فضا، گزینه پاک‌سازی را در تنظیمات اجرا کنید). این کار قابل بازگشت نیست.",
   "snapshots.deleteAll": "حذف همه پشتیبان‌ها",
   "snapshots.deleteAllConfirm": "همه پشتیبان‌های این ماشین مجازی از منبع انتخاب‌شده (محلی یا خارج از محل) حذف شوند؟ اسنپ‌شات‌ها برای همیشه حذف می‌شوند و مخزن پاک‌سازی می‌شود. این کار قابل بازگشت نیست.",
   "snapshots.deletingAll": "در حال حذف…",
@@ -284,7 +283,6 @@ const fa: Partial<Translations> = {
   "source.localTip": "مخزن محلی روی این میزبان",
   "source.offsiteTip": "نسخه خارج از محل",
   "source.offsiteTarget": "مقصد خارج از محل",
-  "source.hint": "بازیابی و حذف فقط روی منبع انتخاب‌شده اثر می‌گذارند: حذف یک پشتیبان محلی هرگز نسخه خارج از محل را دست نمی‌زند و برعکس.",
   "offsite.copyDomainTitle": "نسخه خارج از محل {domain}",
   "offsite.schedulePlaceholder": "خالی = پس از هر پشتیبان‌گیری · مثلاً weekly Sun 03:00",
   "offsite.replicateNow": "همانندسازی همین حالا",
@@ -1002,8 +1000,6 @@ const fa: Partial<Translations> = {
   "containers.updateSettingFailed": "تغییر تنظیم ناموفق بود",
   "vms.loadFailed": "بارگذاری ماشین‌های مجازی ناموفق بود",
   "files.loadSetsFailed": "بارگذاری مجموعه‌های پوشه ناموفق بود",
-  "flash.loadBackupsFailed": "بارگذاری پشتیبان‌های فلش ناموفق بود",
-  "config.loadBackupsFailed": "بارگذاری پشتیبان‌های تنظیمات ناموفق بود",
   "config.loadSettingsFailed": "تنظیمات فعلی بارگذاری نشد",
   "dashboard.loadRunsFailed": "بارگذاری اجراها ناموفق بود",
 
@@ -1029,7 +1025,6 @@ const fa: Partial<Translations> = {
   "flash.backingUp": "در حال پشتیبان‌گیری…",
   "flash.download": "دانلود (.zip)",
   "flash.restoreNote": "بازیابی یک ZIP از اسنپ‌شات دانلود می‌کند. /boot در حال اجرا هرگز دست‌نخورده باقی می‌ماند. .zip را مستقیماً در سازنده USB Unraid قرار دهید، یا آن را روی یک USB جدید باز کنید تا فلش خود را بازسازی کنید.",
-  "flash.none": "هنوز پشتیبان فلشی وجود ندارد. یکی را در بالا اجرا کنید.",
   "settings.exportsEncryptionTitle": "رمزنگاری خروجی‌گیری و مخزن",
   "settings.exportsEncryptionHint": "کنترل‌هایی برای رمزنگاری خروجی‌های ساده و رمزنگاری خود مخزن‌های restic.",
   // Scheduled flash zip export
@@ -1073,7 +1068,6 @@ const fa: Partial<Translations> = {
   "config.backingUp": "در حال پشتیبان‌گیری…",
   "config.snapshotsTitle": "پشتیبان‌های تنظیمات",
   "config.snapshotsHint": "برای بازیابی این تنظیمات روی سروری بازسازی‌شده، از تب بازیابی استفاده کنید. بازیابی تنظیمات، BombVault را دوباره اجرا می‌کند تا آن‌ها را اعمال کند، به همین دلیل آنجا کنار بقیه فرایند بازیابی از فاجعه قرار دارد.",
-  "config.none": "هنوز پشتیبانی از تنظیمات وجود ندارد. یکی را در بالا اجرا کنید.",
 
   // Receiver dashboard
   "receiver.title": "گیرنده",

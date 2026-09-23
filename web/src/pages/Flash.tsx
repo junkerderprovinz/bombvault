@@ -1,23 +1,21 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { hueVars, rainbowAt } from "../lib/appearance";
-import { backupFlashNow, listFlashSnapshots, flashDownloadURL, deleteSnapshot } from "../lib/api";
-import type { Snapshot } from "../lib/api";
+import { backupFlashNow, flashDownloadURL } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { BackupCancelButton } from "../components/BackupCancelButton";
 import { ProgressBar } from "../components/ProgressBar";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
-import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { PlacementFlow } from "../components/placement/PlacementFlow";
-import { useConfirm } from "../lib/useConfirm";
+import { Timeline, type TimelinePick } from "../components/timeline/Timeline";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { useToast } from "../lib/toast";
 import { FlashZipExportCard } from "./settings/FlashZipExportCard";
 import { InfoBubble } from "../components/InfoBubble";
-import { IconBackupNow, IconDownload, IconTrash } from "../components/Sidebar";
+import { IconBackupNow, IconDownload } from "../components/Sidebar";
 import { tLtr } from "../lib/ltrFragments";
 
 type T = ReturnType<typeof useT>["t"];
@@ -144,7 +142,7 @@ function FlashBackupButton({
 }
 
 // ---------------------------------------------------------------------------
-// Snapshot row (zip download restore)
+// Download button (zip restore)
 // ---------------------------------------------------------------------------
 
 // How long the download button shows a "preparing" spinner after a click,
@@ -157,32 +155,8 @@ function FlashBackupButton({
 // feedback at all; there is no browser event to key off instead.
 const DOWNLOAD_PREPARING_MS = 20_000;
 
-function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; source: RepoSource; onDeleted: () => void; t: T }) {
-  const [deleting, setDeleting] = useState(false);
+function FlashDownload({ pick, t }: { pick: TimelinePick; t: T }) {
   const [preparing, setPreparing] = useState(false);
-  const { push } = useToast();
-  const { confirm, confirmDialog } = useConfirm();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
-  // failed delete toasts AND shakes the delete button.
-  const [shake, setShake] = useState(0);
-
-  async function handleDelete() {
-    if (!(await confirm(t("snapshots.deleteConfirm")))) return;
-    setDeleting(true);
-    try {
-      const res = await deleteSnapshot("flash", snap.id, source);
-      if (res.ok) onDeleted();
-      else {
-        push(res.error ?? t("common.deleteFailed"), "fail");
-        setShake((n) => n + 1);
-      }
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("common.deleteFailed"), "fail");
-      setShake((n) => n + 1);
-    } finally {
-      setDeleting(false);
-    }
-  }
 
   // Native <a download>, not fetch()+Blob: the browser's own download
   // manager then owns progress/completion, so it survives this row
@@ -195,86 +169,24 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
     setPreparing(true);
     setTimeout(() => setPreparing(false), DOWNLOAD_PREPARING_MS);
     const a = document.createElement("a");
-    a.href = flashDownloadURL(snap.id, source);
-    a.download = `flash-${snap.id.slice(0, 8)}.zip`;
+    a.href = flashDownloadURL(pick.snapshotId, pick.source);
+    a.download = `flash-${pick.snapshotId.slice(0, 8)}.zip`;
     document.body.appendChild(a);
     a.click();
     a.remove();
   }
 
   return (
-    // py-1.5, not the py-2.5 this row used to carry — the identical trade
-    // components/RestorePanel.tsx's SnapshotRow, pages/Config.tsx's
-    // ConfigSnapshotRow and pages/Files.tsx's FileSetSnapshotRow each already
-    // made, and for the identical reason: this row's controls grew from ~24px
-    // text buttons to the app's one 32px square icon badge, and trimming 4px
-    // of padding per side keeps the row at exactly the 44px it measured
-    // before. A bigger badge in a list of unchanged density, rather than a
-    // list that grew. This was the FOURTH and last copy of that row.
-    <div className="flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0">
-      <div className="flex items-center gap-3 text-sm">
-        <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">{snap.id.slice(0, 8)}</span>
-        <span className="text-carbon-textMuted text-xs flex-1">
-          {new Date(snap.time).toLocaleString()}
-        </span>
-        {/* Download + Delete as square icon badges (jdp, live review:
-            "Flash-Tab, Backups-Card: die Buttons Download und Löschen sind
-            Text-Buttons, sollen aber quadratische Badges mit Glyphen sein
-            (inkl. Farbmodi, keine extra Färbung für Löschen)"). This row was
-            the LAST unconverted copy of a pattern already fixed in
-            components/RestorePanel.tsx, pages/Config.tsx's ConfigSnapshotRow
-            and pages/Files.tsx's FileSetSnapshotRow — not a regression, a
-            spot those three passes each missed.
-              Both take the same recipe as those three siblings: shape="square"
-            size="icon" (32px, the app's ONE square-icon-badge stage — see
-            Badge.tsx's "ONE SIZE FOR SQUARE ICON BADGES" block), tone="active",
-            and NO hueIndex — the Restore card that owns this list already
-            carries `.glim-hue` with hueIndex={1}, so the ordinary custom-
-            property cascade paints both badges in that card's own rainbow
-            position. Each gets a `tip` carrying the label the glyph replaced,
-            per the standing "an icon-only badge gets colour-engine
-            integration AND a tooltip" rule.
-              Glyphs are reused verbatim, no new drawings: IconDownload (the
-            same glyph Containers.tsx's ExportButton already uses for "hand me
-            this artefact as a file") and IconTrash (Config/Files/Settings'
-            own remove glyph).
-              The delete badge gets NO special colour treatment — not the
-            `hover:bg-statusFailBg hover:text-statusFail` red flash it used to
-            carry, and not a grey-neutral exemption either (neutral is one of
-            the tones Badge keeps OUT of the rainbow, which would leave it flat
-            grey beside a hued sibling — the exact "anders eingefärbt" defect
-            jdp reported on RestorePanel's delete). Its meaning is carried by
-            IconTrash, by its tip, and by the useConfirm dialog handleDelete
-            already opens, which is untouched.
-              Both in-flight labels ("…" for delete, the inline spinner+text
-            for download) have nowhere to live on an icon-only badge: delete
-            shows as `disabled` exactly like its three siblings, and download
-            keeps its spinner by swapping the GLYPH for it, the same trade
-            FlashBackupButton above and Containers' ExportButton already
-            make. */}
-        <Button
-          label={t("flash.download")}
-          labelKey="flash.download"
-          glyph={<IconDownload />}
-          tone="accent"
-          onClick={handleDownload}
-          disabled={preparing}
-          busy={preparing}
-          className={"shrink-0"}
-        />
-        <Button
-          key={shake}
-          label={t("snapshots.delete")}
-          labelKey="snapshots.delete"
-          glyph={<IconTrash />}
-          tone="accent"
-          onClick={() => void handleDelete()}
-          disabled={deleting || preparing}
-          className={`shrink-0${shake ? " glim-shake" : ""}`}
-        />
-      </div>
-      {confirmDialog}
-    </div>
+    <Button
+      label={t("flash.download")}
+      labelKey="flash.download"
+      glyph={<IconDownload />}
+      tone="accent"
+      onClick={handleDownload}
+      disabled={preparing}
+      busy={preparing}
+      className="shrink-0"
+    />
   );
 }
 
@@ -284,33 +196,12 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
 
 export function Flash() {
   const { t } = useT();
-  const [source, setSource] = useState<RepoSource>("local");
-  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [reloadTick, setReloadTick] = useState(0);
   const progressMap = useProgress();
   const progress = progressMap["flash"];
   // Any backup/restore/replication in flight (any domain) disables the flash
   // backup button + shows a hint, instead of relying on the 409 round-trip.
   const running = anyActive(progressMap);
-
-  function load() {
-    setError(null);
-    return listFlashSnapshots(source)
-      .then((res) => {
-        if (res.ok) setSnapshots(res.snapshots ?? []);
-        else setError(res.error ?? t("flash.loadBackupsFailed"));
-      })
-      .catch((err: unknown) =>
-        setError(err instanceof Error ? err.message : t("flash.loadBackupsFailed"))
-      );
-  }
-
-  useEffect(() => {
-    setLoading(true);
-    void load().finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source]);
 
   return (
     // PAGE_SHELL (jdp live-review: "Im Tab Selbst-Backup und Flash sind die
@@ -396,7 +287,7 @@ export function Flash() {
           <div className="flex justify-end">
             <FlashBackupButton
               t={t}
-              onBackedUp={() => void load()}
+              onBackedUp={() => setReloadTick((n) => n + 1)}
               externallyBusy={running.active}
               busyPhase={running.phase}
             />
@@ -420,19 +311,9 @@ export function Flash() {
       </div>
 
       {/* Restore card. `glim-notch-card`: see Settings.tsx's Card() for the
-          reasoning. `.glim-hue`: same hueIndex={1} the Badge already uses,
-          which FlashSnapshotRow's Download/Delete badges inherit via the
-          ordinary custom-property cascade — that is why neither passes a
-          hueIndex of its own.
-            This comment used to end "…no per-row change needed", written
-          during the rainbow-completeness sweep and describing the two row
-          controls as though they were already hue-integrated badges. They
-          were not: Download was a hard `bg-accent` text button and Delete a
-          text button whose only colour was a bespoke `hover:bg-statusFailBg`
-          red, so the cascade reached exactly one of the two and the claim
-          read as done work. Corrected here in the same pass that actually
-          converted them — a comment describing an intended end state as
-          fact is how this row survived three earlier sweeps unnoticed. */}
+          reasoning. `.glim-hue`: same hueIndex={1} the Badge already uses;
+          FlashDownload's badge inherits it via the ordinary custom-property
+          cascade, so it passes no hueIndex of its own. */}
       <div
         className="relative glim-notch-card glim-hue bg-carbon-surface rounded-card p-5 flex flex-col gap-4"
         style={hueVars(rainbowAt(1)) as CSSProperties}
@@ -453,43 +334,16 @@ export function Flash() {
           </Badge>
         </h2>
 
-        {/* jdp gave this exact text for an InfoBubble here ("Restore und
-            Löschen wirken nur auf die gewählte Quelle — ein lokales Backup
-            zu löschen rührt die Offsite-Kopie nie an und umgekehrt."). It
-            turns out to be byte-identical to the EXISTING `source.hint`
-            i18n key already used at this same call site — as a permanent
-            <p> caption below the row, precisely the rule-8 pattern an
-            InfoBubble exists to replace — and at four other call sites
-            app-wide with the identical label+SourceToggle-row-then-<p>
-            shape. Those were components/RestorePanel.tsx (the Containers
-            tab's per-container panel — note it lives in components/, not
-            Containers.tsx, which is why grepping pages/ alone missed it),
-            pages/Config.tsx, pages/VMs.tsx and pages/Files.tsx. This comment
-            used to end "the other four sites are UNCHANGED... a follow-up for
-            a future round"; that follow-up has since been done, and all four
-            now render the identical InfoBubble-on-the-label form this call
-            site pioneered. Zero new i18n keys — `source.hint` is already
-            translated in all 42 locales. */}
-        <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
-            {t("source.label")}
-            <InfoBubble tip={t("source.hint")} />
-          </span>
-          <SourceToggle source={source} onChange={setSource} disabled={loading} domain="flash" />
+        <div className="rounded-card bg-carbon-background px-3 py-1">
+          <Timeline
+            key={reloadTick}
+            domain="flash"
+            itemKey="flash"
+            itemName={t("flash.title")}
+            open
+            renderActions={(pick) => <FlashDownload pick={pick} t={t} />}
+          />
         </div>
-
-        {loading && <p className="text-xs text-carbon-textMuted">{t("dashboard.checking")}</p>}
-        {error && <p className="text-xs text-statusFail">{error}</p>}
-        {!loading && !error && snapshots.length === 0 && (
-          <p className="text-xs text-carbon-textMuted">{t("flash.none")}</p>
-        )}
-        {!loading && snapshots.length > 0 && (
-          <div className="rounded-card bg-carbon-background px-3 py-1">
-            {snapshots.map((snap) => (
-              <FlashSnapshotRow key={snap.id} snap={snap} source={source} onDeleted={() => void load()} t={t} />
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Flash-ZIP-Export card — MOVED here from Settings' Storage tab (jdp,

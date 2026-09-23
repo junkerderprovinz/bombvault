@@ -196,7 +196,6 @@ const zh: Partial<Translations> = {
   "source.localTip": "此主机上的本地仓库",
   "source.offsiteTip": "异地副本",
   "source.offsiteTarget": "异地目标",
-  "source.hint": "恢复和删除仅作用于所选来源。删除本地备份绝不会影响异地副本，反之亦然。",
   "offsite.schedulePlaceholder": "留空 = 每次备份后 · 例：weekly Sun 03:00",
   "offsite.replicateNow": "立即复制",
   "offsite.copyDomainTitle": "异地副本 {domain}",
@@ -442,7 +441,6 @@ const zh: Partial<Translations> = {
 
   "snapshots.files": "文件",
   "snapshots.delete": "删除",
-  "snapshots.deleteConfirm": "删除此备份？快照将从仓库中移除（在设置中运行“清理”以回收空间）。此操作无法撤销。",
   "snapshots.recreate": "从已保存的配置重新创建",
   "snapshots.recreateConfirm": "从已保存的配置重新创建此容器？将根据存储的定义创建并启动。",
   "snapshots.configOnlyHint": "仅配置备份：容器的定义已保存，但没有可快照的数据文件夹。如果删除该容器，它会出现在“未安装”中，你可以从此配置重新创建它。",
@@ -535,7 +533,6 @@ const zh: Partial<Translations> = {
   "flash.backingUp": "备份中…",
   "flash.download": "下载 (.zip)",
   "flash.restoreNote": "恢复会下载快照的 ZIP，运行中的 /boot 绝不会被改动。把 .zip 直接放进 Unraid USB 创建器，或解压到全新 U 盘以重建你的 flash。",
-  "flash.none": "尚无 Flash 备份。请在上方运行一次备份。",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "导出与仓库加密",
@@ -612,8 +609,6 @@ const zh: Partial<Translations> = {
   "containers.updateSettingFailed": "更新设置失败",
   "vms.loadFailed": "加载虚拟机失败",
   "files.loadSetsFailed": "加载文件夹集失败",
-  "flash.loadBackupsFailed": "加载 Flash 备份失败",
-  "config.loadBackupsFailed": "加载设置备份失败",
   "config.loadSettingsFailed": "无法加载当前设置",
   "dashboard.loadRunsFailed": "加载运行记录失败",
 
@@ -790,7 +785,6 @@ const zh: Partial<Translations> = {
   "config.backingUp": "备份中…",
   "config.snapshotsTitle": "设置备份",
   "config.snapshotsHint": "要将这些设置还原到重建的服务器上，请使用恢复标签页。还原设置会重启 BombVault 以应用它们，因此它与灾难恢复流程的其余部分放在一起。",
-  "config.none": "尚无设置备份。请在上方运行一次备份。",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "异地带宽",

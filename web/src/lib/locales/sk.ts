@@ -142,7 +142,6 @@ const sk: Partial<Translations> = {
   "snapshots.none": "Nenašli sa žiadne zálohy",
   "snapshots.files": "Súbory",
   "snapshots.delete": "Odstrániť",
-  "snapshots.deleteConfirm": "Odstrániť túto zálohu? Snímka sa odstráni z repozitára (na uvoľnenie miesta spustite v Nastaveniach funkciu Vyčistiť). Túto akciu nemožno vrátiť späť.",
   "snapshots.deleteAll": "Odstrániť všetky zálohy",
   "snapshots.deleteAllConfirm": "Odstrániť VŠETKY zálohy tohto VM z vybraného zdroja (lokálneho alebo vzdialeného)? Snímky sa natrvalo odstránia a repozitár sa vyčistí. Túto akciu nemožno vrátiť späť.",
   "snapshots.deletingAll": "Odstraňuje sa…",
@@ -284,7 +283,6 @@ const sk: Partial<Translations> = {
   "source.localTip": "Lokálny repozitár na tomto hostiteľovi",
   "source.offsiteTip": "Externá kópia",
   "source.offsiteTarget": "Externý cieľ",
-  "source.hint": "Obnovenie a odstránenie pôsobia iba na vybraný zdroj: odstránenie lokálnej zálohy sa nikdy nedotkne externej kópie a naopak.",
   "offsite.copyDomainTitle": "Externá kópia {domain}",
   "offsite.schedulePlaceholder": "prázdne = po každej zálohe · napr. weekly Sun 03:00",
   "offsite.replicateNow": "Replikovať teraz",
@@ -1002,8 +1000,6 @@ const sk: Partial<Translations> = {
   "containers.updateSettingFailed": "Nastavenie sa nepodarilo zmeniť",
   "vms.loadFailed": "VM sa nepodarilo načítať",
   "files.loadSetsFailed": "Sady priečinkov sa nepodarilo načítať",
-  "flash.loadBackupsFailed": "Zálohy Flash sa nepodarilo načítať",
-  "config.loadBackupsFailed": "Zálohy nastavení sa nepodarilo načítať",
   "config.loadSettingsFailed": "Aktuálne nastavenia sa nepodarilo načítať",
   "dashboard.loadRunsFailed": "Behy sa nepodarilo načítať",
 
@@ -1029,7 +1025,6 @@ const sk: Partial<Translations> = {
   "flash.backingUp": "Zálohuje sa…",
   "flash.download": "Stiahnuť (.zip)",
   "flash.restoreNote": "Obnovenie stiahne ZIP snímky. Bežiace /boot sa nikdy nedotkne. Vložte .zip priamo do nástroja na tvorbu USB Unraid, alebo ho rozbaľte na nové USB, aby ste znova zostavili svoj Flash.",
-  "flash.none": "Zatiaľ žiadne zálohy Flash. Spustite jednu vyššie.",
   "settings.exportsEncryptionTitle": "Šifrovanie exportov a repozitárov",
   "settings.exportsEncryptionHint": "Ovládacie prvky na šifrovanie obyčajných exportných artefaktov a vlastné šifrovanie repozitárov restic.",
   // Scheduled flash zip export
@@ -1073,7 +1068,6 @@ const sk: Partial<Translations> = {
   "config.backingUp": "Zálohuje sa…",
   "config.snapshotsTitle": "Zálohy nastavení",
   "config.snapshotsHint": "Na obnovenie týchto nastavení na znova zostavenom serveri použite kartu Obnovenie. Obnovenie nastavení reštartuje BombVault, aby ich uplatnil, preto sa nachádza tam spolu so zvyškom postupu obnovy po havárii.",
-  "config.none": "Zatiaľ žiadne zálohy nastavení. Spustite jednu vyššie.",
 
   // Receiver dashboard
   "receiver.title": "Prijímač",

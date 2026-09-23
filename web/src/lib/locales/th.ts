@@ -196,7 +196,6 @@ const th: Partial<Translations> = {
   "source.localTip": "ที่เก็บในเครื่องบนโฮสต์นี้",
   "source.offsiteTip": "สำเนานอกสถานที่",
   "source.offsiteTarget": "ปลายทางนอกสถานที่",
-  "source.hint": "การกู้คืนและการลบจะมีผลเฉพาะกับแหล่งที่เลือกเท่านั้น การลบข้อมูลสำรองในเครื่องจะไม่แตะต้องสำเนานอกสถานที่ และในทางกลับกัน",
   "offsite.schedulePlaceholder": "ว่าง = หลังการสำรองทุกครั้ง · เช่น weekly Sun 03:00",
   "offsite.replicateNow": "จำลองตอนนี้",
   "offsite.copyDomainTitle": "สำเนานอกสถานที่ {domain}",
@@ -443,7 +442,6 @@ const th: Partial<Translations> = {
   // Backups — files
   "snapshots.files": "ไฟล์",
   "snapshots.delete": "ลบ",
-  "snapshots.deleteConfirm": "ลบการสำรองข้อมูลนี้หรือไม่? สแนปช็อตจะถูกลบออกจากที่เก็บ (รัน ตัดทิ้ง ในการตั้งค่าเพื่อเรียกคืนพื้นที่) ไม่สามารถเลิกทำได้",
   "snapshots.recreate": "สร้างใหม่จากการตั้งค่าที่บันทึกไว้",
   "snapshots.recreateConfirm": "สร้างคอนเทนเนอร์นี้ใหม่จากการตั้งค่าที่บันทึกไว้หรือไม่? จะถูกสร้างและเริ่มทำงานจากคำจำกัดความที่จัดเก็บไว้",
   "snapshots.configOnlyHint": "การสำรองข้อมูลเฉพาะการตั้งค่า: คำจำกัดความของคอนเทนเนอร์ถูกบันทึกไว้ แต่ไม่มีโฟลเดอร์ข้อมูลให้สแนปช็อต หากคุณลบคอนเทนเนอร์ จะปรากฏใน \"ยังไม่ได้ติดตั้ง\" ซึ่งคุณสามารถสร้างใหม่จากการตั้งค่านี้ได้",
@@ -542,7 +540,6 @@ const th: Partial<Translations> = {
   "flash.backingUp": "กำลังสำรองข้อมูล…",
   "flash.download": "ดาวน์โหลด (.zip)",
   "flash.restoreNote": "การกู้คืนจะดาวน์โหลดไฟล์ ZIP ของสแนปช็อต /boot ที่กำลังทำงานจะไม่ถูกแตะต้อง วางไฟล์ .zip ลงในตัวสร้าง USB ของ Unraid โดยตรง หรือแตกไฟล์ลงใน USB ใหม่เพื่อสร้างแฟลชของคุณใหม่",
-  "flash.none": "ยังไม่มีการสำรองข้อมูลแฟลช เรียกใช้การสำรองข้อมูลด้านบน",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "การเข้ารหัสการส่งออกและที่เก็บข้อมูล",
@@ -620,8 +617,6 @@ const th: Partial<Translations> = {
   "containers.updateSettingFailed": "อัปเดตการตั้งค่าไม่สำเร็จ",
   "vms.loadFailed": "โหลด VMs ไม่สำเร็จ",
   "files.loadSetsFailed": "โหลดชุดโฟลเดอร์ไม่สำเร็จ",
-  "flash.loadBackupsFailed": "โหลดข้อมูลสำรอง Flash ไม่สำเร็จ",
-  "config.loadBackupsFailed": "โหลดข้อมูลสำรองการตั้งค่าไม่สำเร็จ",
   "config.loadSettingsFailed": "ไม่สามารถโหลดการตั้งค่าปัจจุบันได้",
   "dashboard.loadRunsFailed": "โหลดการทำงานไม่สำเร็จ",
 
@@ -801,7 +796,6 @@ const th: Partial<Translations> = {
   "config.backingUp": "กำลังสำรองข้อมูล…",
   "config.snapshotsTitle": "การสำรองข้อมูลการตั้งค่า",
   "config.snapshotsHint": "หากต้องการกู้คืนการตั้งค่าเหล่านี้ไปยังเซิร์ฟเวอร์ที่สร้างใหม่ ให้ใช้แท็บการกู้คืน การกู้คืนการตั้งค่าจะรีสตาร์ท BombVault เพื่อนำไปใช้ ดังนั้นมันจึงอยู่ที่นั่นพร้อมกับส่วนที่เหลือของกระบวนการกู้คืนจากภัยพิบัติ",
-  "config.none": "ยังไม่มีการสำรองข้อมูลการตั้งค่า เรียกใช้การสำรองข้อมูลด้านบน",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "แบนด์วิดท์นอกสถานที่",

@@ -193,7 +193,6 @@ const nl: Partial<Translations> = {
   "source.localTip": "Lokale repository op deze host",
   "source.offsiteTip": "Offsite-kopie",
   "source.offsiteTarget": "Off-site-doel",
-  "source.hint": "Herstellen en verwijderen werken alleen op de geselecteerde bron. Een lokale back-up verwijderen raakt nooit de off-site kopie, en omgekeerd.",
   "offsite.schedulePlaceholder": "leeg = na elke back-up · bijv. weekly Sun 03:00",
   "offsite.replicateNow": "Nu repliceren",
   "offsite.copyDomainTitle": "Offsite-kopie {domain}",
@@ -437,7 +436,6 @@ const nl: Partial<Translations> = {
   // Backups extra
   "snapshots.files": "Bestanden",
   "snapshots.delete": "Verwijderen",
-  "snapshots.deleteConfirm": "Deze back-up verwijderen? De snapshot wordt uit de repository verwijderd (voer Opschonen uit in Instellingen om de ruimte vrij te maken). Kan niet ongedaan worden gemaakt.",
   "snapshots.recreate": "Opnieuw maken uit opgeslagen config",
   "snapshots.recreateConfirm": "Deze container opnieuw maken vanuit de opgeslagen configuratie? Hij wordt aangemaakt en gestart vanuit de opgeslagen definitie.",
   "snapshots.configOnlyHint": "Alleen-config back-up: de definitie van de container is opgeslagen, maar hij heeft geen datamappen om te snapshotten. Als je hem verwijdert verschijnt hij onder \"Niet geïnstalleerd\", waar je hem opnieuw kunt maken vanuit deze config.",
@@ -536,7 +534,6 @@ const nl: Partial<Translations> = {
   "flash.backingUp": "Back-up maken…",
   "flash.download": "Downloaden (.zip)",
   "flash.restoreNote": "Herstel downloadt een ZIP van de snapshot. De actieve /boot wordt nooit aangeraakt. Zet de .zip rechtstreeks in de Unraid USB-creator, of pak hem uit op een nieuwe USB om je flash opnieuw op te bouwen.",
-  "flash.none": "Nog geen flash-back-ups. Maak er hierboven een.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Export- en repositoryversleuteling",
@@ -614,8 +611,6 @@ const nl: Partial<Translations> = {
   "containers.updateSettingFailed": "Kon de instelling niet bijwerken",
   "vms.loadFailed": "Kon de VM's niet laden",
   "files.loadSetsFailed": "Kon de mappensets niet laden",
-  "flash.loadBackupsFailed": "Kon de Flash-back-ups niet laden",
-  "config.loadBackupsFailed": "Kon de back-ups van de instellingen niet laden",
   "config.loadSettingsFailed": "Kon de huidige instellingen niet laden",
   "dashboard.loadRunsFailed": "Kon de uitvoeringen niet laden",
 
@@ -1068,7 +1063,6 @@ const nl: Partial<Translations> = {
   "config.backingUp": "Back-up maken…",
   "config.snapshotsTitle": "Instellingen-back-ups",
   "config.snapshotsHint": "Om deze instellingen op een opnieuw opgebouwde server te herstellen, gebruik je het tabblad Herstel. Het herstellen van instellingen start BombVault opnieuw om ze toe te passen, dus het staat daar bij de rest van het noodherstel.",
-  "config.none": "Nog geen instellingen-back-ups. Maak er hierboven een.",
   "nav.config": "Zelf-back-up",
   "settings.configEnabled": "Zelf-back-up",
   "settings.configEnabledHint": "BombVaults eigen instellingen, doelen en inloggegevens back-uppen, zodat een verse installatie ook zijn configuratie kan herstellen (zelf-back-up).",

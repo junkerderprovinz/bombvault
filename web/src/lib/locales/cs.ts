@@ -196,7 +196,6 @@ const cs: Partial<Translations> = {
   "source.localTip": "Místní repozitář na tomto hostiteli",
   "source.offsiteTip": "Kopie mimo lokalitu",
   "source.offsiteTarget": "Cíl mimo lokalitu",
-  "source.hint": "Obnovení a mazání se týkají jen vybraného zdroje: smazání místní zálohy se nikdy nedotkne kopie mimo lokalitu a naopak.",
   "offsite.schedulePlaceholder": "prázdné = po každé záloze · např. weekly Sun 03:00",
   "offsite.replicateNow": "Replikovat nyní",
   "offsite.copyDomainTitle": "Kopie mimo lokalitu {domain}",
@@ -443,7 +442,6 @@ const cs: Partial<Translations> = {
   // Files
   "snapshots.files": "Soubory",
   "snapshots.delete": "Smazat",
-  "snapshots.deleteConfirm": "Smazat tuto zálohu? Snímek se odstraní z repozitáře (pro uvolnění místa spusťte Vyčistit v Nastavení). Nelze vrátit zpět.",
   "snapshots.recreate": "Znovu vytvořit z uložené konfigurace",
   "snapshots.recreateConfirm": "Znovu vytvořit tento kontejner z uložené konfigurace? Bude vytvořen a spuštěn z uložené definice.",
   "snapshots.configOnlyHint": "Záloha jen konfigurace: definice kontejneru je uložena, ale nemá žádné datové složky ke snímku. Když kontejner smažete, objeví se v sekci „Nenainstalováno“, kde jej z této konfigurace znovu vytvoříte.",
@@ -540,7 +538,6 @@ const cs: Partial<Translations> = {
   "flash.backingUp": "Zálohuji…",
   "flash.download": "Stáhnout (.zip)",
   "flash.restoreNote": "Obnovení stáhne ZIP snímku. Běžící /boot se nikdy nezmění. Vložte .zip přímo do nástroje Unraid USB creator, nebo jej rozbalte na nový USB disk a obnovte tak flash.",
-  "flash.none": "Zatím žádné zálohy Flash. Spusťte zálohu výše.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Šifrování exportu a repozitáře",
@@ -618,8 +615,6 @@ const cs: Partial<Translations> = {
   "containers.updateSettingFailed": "Nepodařilo se změnit nastavení",
   "vms.loadFailed": "Nepodařilo se načíst VMs",
   "files.loadSetsFailed": "Nepodařilo se načíst sady složek",
-  "flash.loadBackupsFailed": "Nepodařilo se načíst zálohy Flash",
-  "config.loadBackupsFailed": "Nepodařilo se načíst zálohy nastavení",
   "config.loadSettingsFailed": "Nepodařilo se načíst aktuální nastavení",
   "dashboard.loadRunsFailed": "Nepodařilo se načíst běhy",
 
@@ -780,7 +775,6 @@ const cs: Partial<Translations> = {
   "config.backingUp": "Zálohuji…",
   "config.snapshotsTitle": "Zálohy nastavení",
   "config.snapshotsHint": "Chcete-li tato nastavení obnovit na znovu sestaveném serveru, použijte kartu Obnova. Obnovení nastavení restartuje BombVault, aby se použila, takže patří tam spolu se zbytkem postupu zotavení po havárii.",
-  "config.none": "Zatím žádné zálohy nastavení. Spusťte zálohu výše.",
 
   // Recovery — restore BombVault's own settings step
   "recovery.stepConfig": "Obnovit vlastní nastavení BombVaultu",

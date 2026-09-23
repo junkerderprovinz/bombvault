@@ -196,7 +196,6 @@ const hu: Partial<Translations> = {
   "source.localTip": "Helyi tároló ezen a hoszton",
   "source.offsiteTip": "Telephelyen kívüli másolat",
   "source.offsiteTarget": "Telephelyen kívüli cél",
-  "source.hint": "A visszaállítás és a törlés csak a kiválasztott forrásra hat: egy helyi mentés törlése soha nem érinti a telephelyen kívüli másolatot, és fordítva.",
   "offsite.schedulePlaceholder": "üres = minden mentés után · pl. weekly Sun 03:00",
   "offsite.replicateNow": "Replikálás most",
   "offsite.copyDomainTitle": "Telephelyen kívüli másolat {domain}",
@@ -443,7 +442,6 @@ const hu: Partial<Translations> = {
   // Backups — files
   "snapshots.files": "Fájlok",
   "snapshots.delete": "Törlés",
-  "snapshots.deleteConfirm": "Törli ezt a mentést? A pillanatkép eltávolításra kerül a tárolóból (a hely felszabadításához futtassa a Nyesést a Beállításokban). Nem vonható vissza.",
   "snapshots.recreate": "Újralétrehozás mentett konfigból",
   "snapshots.recreateConfirm": "Újralétrehozza ezt a konténert a mentett konfigurációjából? A tárolt definícióból jön létre és indul el.",
   "snapshots.configOnlyHint": "Csak-konfiguráció mentés: a konténer definíciója mentve van, de nincsenek adatmappái pillanatképhez. Ha törlöd, a „Nincs telepítve“ alatt jelenik meg, ahonnan újralétrehozhatod ebből a konfigból.",
@@ -542,7 +540,6 @@ const hu: Partial<Translations> = {
   "flash.backingUp": "Mentés…",
   "flash.download": "Letöltés (.zip)",
   "flash.restoreNote": "A visszaállítás letölti a pillanatkép ZIP-fájlját. A futó /boot-ot soha nem érinti. Húzd a .zip-et közvetlenül az Unraid USB-készítőjébe, vagy csomagold ki egy új USB-re a flash újraépítéséhez.",
-  "flash.none": "Még nincs flash mentés. Indítson egyet fent.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Export- és tárolótitkosítás",
@@ -620,8 +617,6 @@ const hu: Partial<Translations> = {
   "containers.updateSettingFailed": "A beállítás módosítása sikertelen",
   "vms.loadFailed": "A VM-ek betöltése sikertelen",
   "files.loadSetsFailed": "A mappakészletek betöltése sikertelen",
-  "flash.loadBackupsFailed": "A Flash mentések betöltése sikertelen",
-  "config.loadBackupsFailed": "A beállítások mentéseinek betöltése sikertelen",
   "config.loadSettingsFailed": "A jelenlegi beállítások nem tölthetők be",
   "dashboard.loadRunsFailed": "A futások betöltése sikertelen",
 
@@ -1078,7 +1073,6 @@ const hu: Partial<Translations> = {
   "config.backingUp": "Mentés…",
   "config.snapshotsTitle": "Beállítás-mentések",
   "config.snapshotsHint": "Ezeknek a beállításoknak egy újraépített szerverre való visszaállításához használd a Helyreállítás lapot. A beállítások visszaállítása újraindítja BombVaultot, hogy alkalmazza őket, ezért a többi vészhelyreállítási lépéssel együtt ott található.",
-  "config.none": "Még nincsenek beállítás-mentések. Indíts egyet fent.",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Kizárási minták",

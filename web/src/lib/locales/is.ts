@@ -142,7 +142,6 @@ const is: Partial<Translations> = {
   "snapshots.none": "Engin afrit fundust",
   "snapshots.files": "Skrár",
   "snapshots.delete": "Eyða",
-  "snapshots.deleteConfirm": "Eyða þessu afriti? Snapshottið er fjarlægt úr geymslusafninu (keyrðu Prune í Stillingum til að losa plássið). Þessu verður ekki afturkallað.",
   "snapshots.deleteAll": "Eyða öllum afritum",
   "snapshots.deleteAllConfirm": "Eyða ÖLLUM afritum þessarar sýndarvélar frá völdum uppruna (staðbundinn eða fjarlægur)? Snapshottin eru fjarlægð varanlega og geymslusafnið hreinsað. Þessu verður ekki afturkallað.",
   "snapshots.deletingAll": "Eyði…",
@@ -284,7 +283,6 @@ const is: Partial<Translations> = {
   "source.localTip": "Staðbundið geymslusafn á þessum hýsli",
   "source.offsiteTip": "Fjarlægt afrit",
   "source.offsiteTarget": "Fjarlægur áfangastaður",
-  "source.hint": "Endurheimt og eyðing hafa aðeins áhrif á valinn uppruna. Að eyða staðbundnu afriti snertir aldrei fjarlæga afritið, og öfugt.",
   "offsite.copyDomainTitle": "Fjarlægt afrit {domain}",
   "offsite.schedulePlaceholder": "autt = eftir hverja afritun · t.d. weekly Sun 03:00",
   "offsite.replicateNow": "Afrita fjarlægt núna",
@@ -1002,8 +1000,6 @@ const is: Partial<Translations> = {
   "containers.updateSettingFailed": "Ekki tókst að uppfæra stillinguna",
   "vms.loadFailed": "Ekki tókst að hlaða sýndarvélum",
   "files.loadSetsFailed": "Ekki tókst að hlaða möppusettum",
-  "flash.loadBackupsFailed": "Ekki tókst að hlaða Flash-afritum",
-  "config.loadBackupsFailed": "Ekki tókst að hlaða afritum stillinga",
   "config.loadSettingsFailed": "Ekki tókst að hlaða núverandi stillingum",
   "dashboard.loadRunsFailed": "Ekki tókst að hlaða keyrslum",
 
@@ -1029,7 +1025,6 @@ const is: Partial<Translations> = {
   "flash.backingUp": "Afrita…",
   "flash.download": "Sækja (.zip)",
   "flash.restoreNote": "Endurheimt sækir ZIP-skrá af snapshottinu. Ekki er hróflað við /boot í keyrslu. Settu .zip beint í Unraid USB-smíðatólið, eða dpakkaðu því á nýtt USB til að endurbyggja Flash-ið þitt.",
-  "flash.none": "Engin Flash-afrit ennþá. Keyrðu eitt hér að ofan.",
   "settings.exportsEncryptionTitle": "Dulkóðun útflutnings og geymslusafna",
   "settings.exportsEncryptionHint": "Stýring á dulkóðun venjulegra útflutningsgripa og eigin dulkóðun restic-geymslusafnanna.",
   // Scheduled flash zip export
@@ -1073,7 +1068,6 @@ const is: Partial<Translations> = {
   "config.backingUp": "Afrita…",
   "config.snapshotsTitle": "Afrit stillinga",
   "config.snapshotsHint": "Til að endurheimta þessar stillingar á endurbyggðum netþjóni, notaðu Endurheimtar-flipann. Að endurheimta stillingar endurræsir BombVault til að beita þeim, og þess vegna er hann þar ásamt öðru ferli neyðarendurheimtar.",
-  "config.none": "Engin stillingaafrit ennþá. Keyrðu eitt hér að ofan.",
 
   // Receiver dashboard
   "receiver.title": "Móttakandi",

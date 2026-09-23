@@ -142,7 +142,6 @@ const et: Partial<Translations> = {
   "snapshots.none": "Varundusi ei leitud",
   "snapshots.files": "Failid",
   "snapshots.delete": "Kustuta",
-  "snapshots.deleteConfirm": "Kas kustutada see varundus? Hetktõmmis eemaldatakse hoidlast (ruumi vabastamiseks käivita Seadetes Puhastus). Seda ei saa tagasi võtta.",
   "snapshots.deleteAll": "Kustuta kõik varundused",
   "snapshots.deleteAllConfirm": "Kas kustutada selle VM-i KÕIK varundused valitud allikast (kohalik või väline)? Hetktõmmised eemaldatakse jäädavalt ja hoidla puhastatakse. Seda ei saa tagasi võtta.",
   "snapshots.deletingAll": "Kustutamine…",
@@ -284,7 +283,6 @@ const et: Partial<Translations> = {
   "source.localTip": "Kohalik hoidla sellel hostil",
   "source.offsiteTip": "Väline koopia",
   "source.offsiteTarget": "Väline sihtkoht",
-  "source.hint": "Taastamine ja kustutamine mõjutavad ainult valitud allikat: kohaliku varunduse kustutamine ei puuduta kunagi välist koopiat ja vastupidi.",
   "offsite.copyDomainTitle": "Väline koopia {domain}",
   "offsite.schedulePlaceholder": "tühi = pärast iga varundust · nt weekly Sun 03:00",
   "offsite.replicateNow": "Replitseeri kohe",
@@ -1002,8 +1000,6 @@ const et: Partial<Translations> = {
   "containers.updateSettingFailed": "Seadistuse muutmine ebaõnnestus",
   "vms.loadFailed": "VM-ide laadimine ebaõnnestus",
   "files.loadSetsFailed": "Kaustakomplektide laadimine ebaõnnestus",
-  "flash.loadBackupsFailed": "Flashi varunduste laadimine ebaõnnestus",
-  "config.loadBackupsFailed": "Seadete varunduste laadimine ebaõnnestus",
   "config.loadSettingsFailed": "Praeguseid seadeid ei õnnestunud laadida",
   "dashboard.loadRunsFailed": "Käivituste laadimine ebaõnnestus",
 
@@ -1029,7 +1025,6 @@ const et: Partial<Translations> = {
   "flash.backingUp": "Varundamine…",
   "flash.download": "Laadi alla (.zip)",
   "flash.restoreNote": "Taastamine laadib alla hetktõmmise ZIP-faili. Töötavat /boot-i ei puudutata kunagi. Pane .zip otse Unraidi USB-looja sisse või paki see lahti uuel USB-l, et oma flash uuesti üles ehitada.",
-  "flash.none": "Flashi varundusi pole veel. Käivita üks ülalpool.",
   "settings.exportsEncryptionTitle": "Ekspordi ja hoidla krüpteering",
   "settings.exportsEncryptionHint": "Seaded tavaliste ekspordiartefaktide krüpteerimiseks ja restic hoidlate enda krüpteering.",
   // Scheduled flash zip export
@@ -1073,7 +1068,6 @@ const et: Partial<Translations> = {
   "config.backingUp": "Varundamine…",
   "config.snapshotsTitle": "Seadete varundused",
   "config.snapshotsHint": "Nende seadete taastamiseks ülesehitatud serveril kasuta Taaste vahekaarti. Seadete taastamine käivitab BombVaulti uuesti nende rakendamiseks, seetõttu elab see seal koos ülejäänud õnnetusjärgse taaste vooluga.",
-  "config.none": "Seadete varundusi pole veel. Käivita üks ülalpool.",
 
   // Receiver dashboard
   "receiver.title": "Vastuvõtja",

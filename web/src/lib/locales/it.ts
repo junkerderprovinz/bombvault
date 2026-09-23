@@ -196,7 +196,6 @@ const it: Partial<Translations> = {
   "source.localTip": "Repository locale su questo host",
   "source.offsiteTip": "Copia off-site",
   "source.offsiteTarget": "Destinazione off-site",
-  "source.hint": "Ripristino ed eliminazione agiscono solo sulla sorgente selezionata. Eliminare un backup locale non tocca mai la copia off-site, e viceversa.",
   "offsite.schedulePlaceholder": "vuoto = dopo ogni backup · es. weekly Sun 03:00",
   "offsite.replicateNow": "Replica ora",
   "offsite.copyDomainTitle": "Copia off-site {domain}",
@@ -443,7 +442,6 @@ const it: Partial<Translations> = {
   // Backups — files
   "snapshots.files": "File",
   "snapshots.delete": "Elimina",
-  "snapshots.deleteConfirm": "Eliminare questo backup? Lo snapshot viene rimosso dal repository (esegui Pota nelle Impostazioni per recuperare lo spazio). Non annullabile.",
   "snapshots.recreate": "Ricrea dalla config salvata",
   "snapshots.recreateConfirm": "Ricreare questo container dalla sua configurazione salvata? Viene creato e avviato dalla definizione memorizzata.",
   "snapshots.configOnlyHint": "Backup solo configurazione: la definizione del container è salvata, ma non ha cartelle dati di cui fare snapshot. Se lo elimini compare in \"Non installato\", dove puoi ricrearlo da questa configurazione.",
@@ -542,7 +540,6 @@ const it: Partial<Translations> = {
   "flash.backingUp": "Backup in corso…",
   "flash.download": "Scarica (.zip)",
   "flash.restoreNote": "Il ripristino scarica uno ZIP dello snapshot. Il /boot in esecuzione non viene mai toccato. Trascina il .zip direttamente nel creatore USB di Unraid, oppure estrailo su una chiavetta USB nuova per ricostruire il flash.",
-  "flash.none": "Ancora nessun backup del flash. Avviane uno sopra.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Cifratura di esportazione e repository",
@@ -620,8 +617,6 @@ const it: Partial<Translations> = {
   "containers.updateSettingFailed": "Impossibile aggiornare l'impostazione",
   "vms.loadFailed": "Impossibile caricare le VM",
   "files.loadSetsFailed": "Impossibile caricare i set di cartelle",
-  "flash.loadBackupsFailed": "Impossibile caricare i backup del Flash",
-  "config.loadBackupsFailed": "Impossibile caricare i backup delle impostazioni",
   "config.loadSettingsFailed": "Impossibile caricare le impostazioni attuali",
   "dashboard.loadRunsFailed": "Impossibile caricare le esecuzioni",
 
@@ -1075,7 +1070,6 @@ const it: Partial<Translations> = {
   "config.backingUp": "Backup in corso…",
   "config.snapshotsTitle": "Backup delle impostazioni",
   "config.snapshotsHint": "Per ripristinare queste impostazioni su un server ricostruito, usa la scheda Ripristino. Ripristinare le impostazioni riavvia BombVault per applicarle, quindi si trova lì insieme al resto del flusso di ripristino di emergenza.",
-  "config.none": "Ancora nessun backup delle impostazioni. Avviane uno sopra.",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Pattern di esclusione",

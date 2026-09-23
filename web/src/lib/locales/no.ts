@@ -195,7 +195,6 @@ const no: Partial<Translations> = {
   "source.localTip": "Lokalt repo på denne verten",
   "source.offsiteTip": "Ekstern kopi",
   "source.offsiteTarget": "Eksternt mål",
-  "source.hint": "Gjenoppretting og sletting gjelder kun den valgte kilden: å slette en lokal sikkerhetskopi rører aldri den eksterne kopien, og omvendt.",
   "offsite.schedulePlaceholder": "tom = etter hver sikkerhetskopi · f.eks. weekly Sun 03:00",
   "offsite.replicateNow": "Replikér nå",
   "offsite.copyDomainTitle": "Ekstern kopi {domain}",
@@ -440,7 +439,6 @@ const no: Partial<Translations> = {
   // Backups extra
   "snapshots.files": "Filer",
   "snapshots.delete": "Slett",
-  "snapshots.deleteConfirm": "Slette denne sikkerhetskopien? Øyeblikksbildet fjernes fra repositoriet (kjør Beskjær i Innstillinger for å frigjøre plassen). Kan ikke angres.",
   "snapshots.recreate": "Gjenopprett fra lagret konfig",
   "snapshots.recreateConfirm": "Gjenopprette denne containeren fra dens lagrede konfigurasjon? Den opprettes og startes fra den lagrede definisjonen.",
   "snapshots.configOnlyHint": "Kun-konfig-sikkerhetskopi: containerens definisjon er lagret, men den har ingen datamapper å ta øyeblikksbilde av. Sletter du den, vises den under \"Ikke installert\", der du kan gjenopprette den fra denne konfigurasjonen.",
@@ -539,7 +537,6 @@ const no: Partial<Translations> = {
   "flash.backingUp": "Sikkerhetskopierer…",
   "flash.download": "Last ned (.zip)",
   "flash.restoreNote": "Gjenoppretting laster ned en ZIP av øyeblikksbildet. Den kjørende /boot røres aldri. Legg .zip-filen rett inn i Unraids USB-creator, eller pakk den ut på en ny USB for å bygge opp flashen på nytt.",
-  "flash.none": "Ingen flash-sikkerhetskopier ennå. Kjør en sikkerhetskopiering ovenfor.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Eksport- og repositorykryptering",
@@ -617,8 +614,6 @@ const no: Partial<Translations> = {
   "containers.updateSettingFailed": "Kunne ikke oppdatere innstillingen",
   "vms.loadFailed": "Kunne ikke laste VM-ene",
   "files.loadSetsFailed": "Kunne ikke laste mappesettene",
-  "flash.loadBackupsFailed": "Kunne ikke laste Flash-sikkerhetskopiene",
-  "config.loadBackupsFailed": "Kunne ikke laste sikkerhetskopiene av innstillingene",
   "config.loadSettingsFailed": "Kunne ikke laste de gjeldende innstillingene",
   "dashboard.loadRunsFailed": "Kunne ikke laste kjøringene",
 
@@ -1071,7 +1066,6 @@ const no: Partial<Translations> = {
   "config.backingUp": "Sikkerhetskopierer…",
   "config.snapshotsTitle": "Innstillings-sikkerhetskopier",
   "config.snapshotsHint": "For å gjenopprette disse innstillingene på en gjenoppbygd server, bruk Gjenopprettings-fanen. Å gjenopprette innstillingene starter BombVault på nytt for å bruke dem, så det ligger der sammen med resten av katastrofegjenopprettingsflyten.",
-  "config.none": "Ingen innstillings-sikkerhetskopier ennå. Kjør en sikkerhetskopiering ovenfor.",
   "nav.config": "Auto-sikkerhetskopi",
   "settings.configEnabled": "Auto-sikkerhetskopi",
   "settings.configEnabledHint": "Sikkerhetskopiér BombVaults egne innstillinger, mål og påloggingsdetaljer, slik at en fersk installasjon også kan gjenopprette konfigurasjonen sin (auto-sikkerhetskopi).",

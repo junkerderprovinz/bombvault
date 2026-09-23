@@ -196,7 +196,6 @@ const vi: Partial<Translations> = {
   "source.localTip": "Kho lưu trữ cục bộ trên máy chủ này",
   "source.offsiteTip": "Bản sao ngoài site",
   "source.offsiteTarget": "Đích ngoài site",
-  "source.hint": "Khôi phục và xóa chỉ tác động đến nguồn đã chọn. Xóa bản sao lưu cục bộ không bao giờ ảnh hưởng đến bản sao ngoài site, và ngược lại.",
   "offsite.schedulePlaceholder": "trống = sau mỗi lần sao lưu · vd. weekly Sun 03:00",
   "offsite.replicateNow": "Sao chép ngay",
   "offsite.copyDomainTitle": "Bản sao ngoài site {domain}",
@@ -442,7 +441,6 @@ const vi: Partial<Translations> = {
 
   "snapshots.files": "Tập tin",
   "snapshots.delete": "Xóa",
-  "snapshots.deleteConfirm": "Xóa bản sao lưu này? Ảnh chụp nhanh bị xóa khỏi kho (chạy Dọn bớt trong Cài đặt để thu hồi dung lượng). Không thể hoàn tác.",
   "snapshots.recreate": "Tạo lại từ cấu hình đã lưu",
   "snapshots.recreateConfirm": "Tạo lại container này từ cấu hình đã lưu? Nó được tạo và khởi động từ định nghĩa đã lưu.",
   "snapshots.configOnlyHint": "Bản sao lưu chỉ cấu hình: định nghĩa của container được lưu, nhưng không có thư mục dữ liệu để chụp nhanh. Nếu bạn xóa container, nó xuất hiện trong \"Chưa cài đặt\", nơi bạn có thể tạo lại từ cấu hình này.",
@@ -535,7 +533,6 @@ const vi: Partial<Translations> = {
   "flash.backingUp": "Đang sao lưu…",
   "flash.download": "Tải xuống (.zip)",
   "flash.restoreNote": "Khôi phục sẽ tải về một tệp ZIP của ảnh chụp. Phân vùng /boot đang chạy không bao giờ bị đụng đến. Thả tệp .zip thẳng vào trình tạo USB của Unraid, hoặc giải nén nó vào một USB mới để dựng lại flash.",
-  "flash.none": "Chưa có bản sao lưu flash nào. Chạy một bản sao lưu ở trên.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Mã hóa Xuất & Kho lưu trữ",
@@ -612,8 +609,6 @@ const vi: Partial<Translations> = {
   "containers.updateSettingFailed": "Không cập nhật được cài đặt",
   "vms.loadFailed": "Không tải được VMs",
   "files.loadSetsFailed": "Không tải được các bộ thư mục",
-  "flash.loadBackupsFailed": "Không tải được các bản sao lưu Flash",
-  "config.loadBackupsFailed": "Không tải được các bản sao lưu cài đặt",
   "config.loadSettingsFailed": "Không thể tải cài đặt hiện tại",
   "dashboard.loadRunsFailed": "Không tải được các lần chạy",
 
@@ -790,7 +785,6 @@ const vi: Partial<Translations> = {
   "config.backingUp": "Đang sao lưu…",
   "config.snapshotsTitle": "Bản sao lưu cài đặt",
   "config.snapshotsHint": "Để khôi phục các cài đặt này lên một máy chủ dựng lại, hãy dùng tab Khôi phục. Việc khôi phục cài đặt sẽ khởi động lại BombVault để áp dụng chúng, nên nó nằm ở đó cùng với phần còn lại của quy trình khôi phục sau thảm họa.",
-  "config.none": "Chưa có bản sao lưu cài đặt nào. Chạy một bản sao lưu ở trên.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Băng thông off-site",

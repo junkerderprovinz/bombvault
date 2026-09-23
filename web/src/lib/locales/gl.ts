@@ -142,7 +142,6 @@ const gl: Partial<Translations> = {
   "snapshots.none": "Non se atoparon copias",
   "snapshots.files": "Ficheiros",
   "snapshots.delete": "Eliminar",
-  "snapshots.deleteConfirm": "Eliminar esta copia? A instantánea elimínase do repositorio (executa Limpar en Configuración para liberar o espazo). Isto non se pode desfacer.",
   "snapshots.deleteAll": "Eliminar todas as copias",
   "snapshots.deleteAllConfirm": "Eliminar TODAS as copias desta MV desde a orixe seleccionada (local ou externa)? As instantáneas elimínanse para sempre e o repositorio límpase. Isto non se pode desfacer.",
   "snapshots.deletingAll": "Eliminando…",
@@ -284,7 +283,6 @@ const gl: Partial<Translations> = {
   "source.localTip": "Repositorio local neste host",
   "source.offsiteTip": "Copia externa",
   "source.offsiteTarget": "Destino externo",
-  "source.hint": "Restaurar e eliminar só afectan á orixe seleccionada: eliminar unha copia local nunca toca a copia externa, e viceversa.",
   "offsite.copyDomainTitle": "Copia externa {domain}",
   "offsite.schedulePlaceholder": "baleiro = despois de cada copia · p. ex. weekly Sun 03:00",
   "offsite.replicateNow": "Replicar agora",
@@ -1002,8 +1000,6 @@ const gl: Partial<Translations> = {
   "containers.updateSettingFailed": "Non se puido cambiar a opción",
   "vms.loadFailed": "Non se puideron cargar as MV",
   "files.loadSetsFailed": "Non se puideron cargar os conxuntos de cartafoles",
-  "flash.loadBackupsFailed": "Non se puideron cargar as copias de Flash",
-  "config.loadBackupsFailed": "Non se puideron cargar as copias da configuración",
   "config.loadSettingsFailed": "Non se puido cargar a configuración actual",
   "dashboard.loadRunsFailed": "Non se puideron cargar as execucións",
 
@@ -1029,7 +1025,6 @@ const gl: Partial<Translations> = {
   "flash.backingUp": "Copiando…",
   "flash.download": "Descargar (.zip)",
   "flash.restoreNote": "Restaurar descarga un ZIP da instantánea. O /boot en execución nunca se toca. Pon o .zip directamente no creador de USB de Unraid, ou descomprímeo nun USB novo para reconstruír o teu Flash.",
-  "flash.none": "Aínda non hai copias de Flash. Inicia unha arriba.",
   "settings.exportsEncryptionTitle": "Cifrado de exportacións e repositorios",
   "settings.exportsEncryptionHint": "Controis para cifrar os artefactos de exportación simples e o cifrado propio dos repositorios restic.",
   // Scheduled flash zip export
@@ -1073,7 +1068,6 @@ const gl: Partial<Translations> = {
   "config.backingUp": "Copiando…",
   "config.snapshotsTitle": "Copias de configuración",
   "config.snapshotsHint": "Para restaurar esta configuración nun servidor reconstruído, usa a lapela de Recuperación: restaurar a configuración reinicia BombVault para aplicala, por iso vive alí xunto co resto do fluxo de recuperación de desastres.",
-  "config.none": "Aínda non hai copias de configuración. Inicia unha arriba.",
 
   // Receiver dashboard
   "receiver.title": "Receptor",

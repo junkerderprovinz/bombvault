@@ -196,7 +196,6 @@ const fr: Partial<Translations> = {
   "source.localTip": "Dépôt local sur cet hôte",
   "source.offsiteTip": "Copie hors site",
   "source.offsiteTarget": "Cible hors site",
-  "source.hint": "La restauration et la suppression n'agissent que sur la source sélectionnée : supprimer une sauvegarde locale ne touche jamais la copie hors site, et inversement.",
   "offsite.schedulePlaceholder": "vide = après chaque sauvegarde · ex. weekly Sun 03:00",
   "offsite.replicateNow": "Répliquer maintenant",
   "offsite.copyDomainTitle": "Copie hors site {domain}",
@@ -443,7 +442,6 @@ const fr: Partial<Translations> = {
   // Backups — files
   "snapshots.files": "Fichiers",
   "snapshots.delete": "Supprimer",
-  "snapshots.deleteConfirm": "Supprimer cette sauvegarde ? L'instantané est retiré du dépôt (lancez Élaguer dans les Réglages pour récupérer l'espace). Irréversible.",
   "snapshots.recreate": "Recréer depuis la config enregistrée",
   "snapshots.recreateConfirm": "Recréer ce conteneur à partir de sa configuration enregistrée ? Il est créé et démarré depuis la définition stockée.",
   "snapshots.configOnlyHint": "Sauvegarde config seule : la définition du conteneur est enregistrée, mais il n'a pas de dossiers de données à sauvegarder. Si vous le supprimez, il apparaît dans « Non installé », où vous pouvez le recréer depuis cette config.",
@@ -542,7 +540,6 @@ const fr: Partial<Translations> = {
   "flash.backingUp": "Sauvegarde…",
   "flash.download": "Télécharger (.zip)",
   "flash.restoreNote": "La restauration télécharge un ZIP de l'instantané : le /boot en cours d'exécution n'est jamais touché. Glissez le .zip directement dans le créateur de clé USB d'Unraid, ou décompressez-le sur une clé USB neuve pour reconstruire votre flash.",
-  "flash.none": "Aucune sauvegarde flash pour l'instant, lancez-en une ci-dessus.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Chiffrement des exports et des dépôts",
@@ -620,8 +617,6 @@ const fr: Partial<Translations> = {
   "containers.updateSettingFailed": "Échec de la mise à jour du paramètre",
   "vms.loadFailed": "Échec du chargement des VMs",
   "files.loadSetsFailed": "Échec du chargement des jeux de dossiers",
-  "flash.loadBackupsFailed": "Échec du chargement des sauvegardes Flash",
-  "config.loadBackupsFailed": "Échec du chargement des sauvegardes des paramètres",
   "config.loadSettingsFailed": "Impossible de charger les paramètres actuels",
   "dashboard.loadRunsFailed": "Échec du chargement des exécutions",
 
@@ -1075,7 +1070,6 @@ const fr: Partial<Translations> = {
   "config.backingUp": "Sauvegarde…",
   "config.snapshotsTitle": "Sauvegardes des réglages",
   "config.snapshotsHint": "Pour restaurer ces réglages sur un serveur reconstruit, utilisez l'onglet Récupération : restaurer les réglages redémarre BombVault pour les appliquer, il se trouve donc là avec le reste du flux de récupération après sinistre.",
-  "config.none": "Aucune sauvegarde des réglages pour l'instant, lancez-en une ci-dessus.",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "Motifs d'exclusion",

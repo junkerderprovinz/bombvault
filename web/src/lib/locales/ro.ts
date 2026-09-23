@@ -195,7 +195,6 @@ const ro: Partial<Translations> = {
   "source.localTip": "Repozitoriu local pe această gazdă",
   "source.offsiteTip": "Copie externă",
   "source.offsiteTarget": "Destinație externă",
-  "source.hint": "Restaurarea și ștergerea acționează doar asupra sursei selectate: ștergerea unui backup local nu atinge niciodată copia externă și invers.",
   "offsite.schedulePlaceholder": "gol = după fiecare backup · ex. weekly Sun 03:00",
   "offsite.replicateNow": "Replică acum",
   "offsite.copyDomainTitle": "Copie externă {domain}",
@@ -440,7 +439,6 @@ const ro: Partial<Translations> = {
   // Backups — files
   "snapshots.files": "Fișiere",
   "snapshots.delete": "Șterge",
-  "snapshots.deleteConfirm": "Ștergeți acest backup? Instantaneul este eliminat din depozit (rulați Curăță în Setări pentru a recupera spațiul). Nu poate fi anulat.",
   "snapshots.recreate": "Recreează din configurația salvată",
   "snapshots.recreateConfirm": "Recreezi acest container din configurația salvată? Este creat și pornit din definiția stocată.",
   "snapshots.configOnlyHint": "Backup doar configurație: definiția containerului este salvată, dar nu are foldere de date pentru snapshot. Dacă îl ștergi, apare la „Neinstalat“, de unde îl poți recrea din această configurație.",
@@ -539,7 +537,6 @@ const ro: Partial<Translations> = {
   "flash.backingUp": "Se copiază…",
   "flash.download": "Descarcă (.zip)",
   "flash.restoreNote": "Restaurarea descarcă un ZIP al instantaneului. /boot-ul în execuție nu este atins niciodată. Pune .zip-ul direct în creatorul USB Unraid sau dezarhivează-l pe un USB nou pentru a reconstrui flash-ul.",
-  "flash.none": "Încă nicio copie de rezervă flash. Rulați un backup mai sus.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Criptarea exportului și a depozitului",
@@ -617,8 +614,6 @@ const ro: Partial<Translations> = {
   "containers.updateSettingFailed": "Actualizarea setării a eșuat",
   "vms.loadFailed": "Încărcarea VM-urilor a eșuat",
   "files.loadSetsFailed": "Încărcarea seturilor de foldere a eșuat",
-  "flash.loadBackupsFailed": "Încărcarea backupurilor Flash a eșuat",
-  "config.loadBackupsFailed": "Încărcarea backupurilor de setări a eșuat",
   "config.loadSettingsFailed": "Nu s-au putut încărca setările curente",
   "dashboard.loadRunsFailed": "Încărcarea rulărilor a eșuat",
 
@@ -1074,7 +1069,6 @@ const ro: Partial<Translations> = {
   "config.backingUp": "Se face backup…",
   "config.snapshotsTitle": "Backupuri de setări",
   "config.snapshotsHint": "Pentru a restaura aceste setări pe un server reconstruit, folosește fila Recuperare. Restaurarea setărilor repornește BombVault pentru a le aplica, așa că se află acolo împreună cu restul fluxului de recuperare în caz de dezastru.",
-  "config.none": "Încă niciun backup de setări. Rulează un backup mai sus.",
   "nav.config": "Auto-backup",
   "settings.configEnabled": "Auto-backup",
   "settings.configEnabledHint": "Copiere de rezervă a propriilor setări, ținte și date de autentificare ale BombVault, astfel încât o instalare nouă să poată restaura și configurația ei (auto-backup).",

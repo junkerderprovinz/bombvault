@@ -142,7 +142,6 @@ const sl: Partial<Translations> = {
   "snapshots.none": "Ni najdenih varnostnih kopij",
   "snapshots.files": "Datoteke",
   "snapshots.delete": "Izbriši",
-  "snapshots.deleteConfirm": "Izbrišem to varnostno kopijo? Posnetek se odstrani iz repozitorija (v Nastavitvah zaženi Počisti, da sprostiš prostor). Tega ni mogoče razveljaviti.",
   "snapshots.deleteAll": "Izbriši vse varnostne kopije",
   "snapshots.deleteAllConfirm": "Izbrišem VSE varnostne kopije tega VM-ja iz izbranega vira (lokalnega ali zunanjega)? Posnetki se trajno odstranijo, repozitorij pa se počisti. Tega ni mogoče razveljaviti.",
   "snapshots.deletingAll": "Brisanje…",
@@ -284,7 +283,6 @@ const sl: Partial<Translations> = {
   "source.localTip": "Lokalni repozitorij na tem gostitelju",
   "source.offsiteTip": "Zunanja kopija",
   "source.offsiteTarget": "Zunanji cilj",
-  "source.hint": "Obnovitev in brisanje delujeta samo na izbranem viru: brisanje lokalne varnostne kopije nikoli ne vpliva na zunanjo kopijo in obratno.",
   "offsite.copyDomainTitle": "Zunanja kopija {domain}",
   "offsite.schedulePlaceholder": "prazno = po vsaki varnostni kopiji · npr. tedensko ned 03:00",
   "offsite.replicateNow": "Podvoji zdaj",
@@ -997,8 +995,6 @@ const sl: Partial<Translations> = {
   "containers.updateSettingFailed": "Nastavitve ni bilo mogoče spremeniti",
   "vms.loadFailed": "Nalaganje VM-jev ni uspelo",
   "files.loadSetsFailed": "Nalaganje naborov map ni uspelo",
-  "flash.loadBackupsFailed": "Nalaganje varnostnih kopij Flash ni uspelo",
-  "config.loadBackupsFailed": "Nalaganje varnostnih kopij nastavitev ni uspelo",
   "config.loadSettingsFailed": "Trenutnih nastavitev ni bilo mogoče naložiti",
   "dashboard.loadRunsFailed": "Nalaganje zagonov ni uspelo",
 
@@ -1024,7 +1020,6 @@ const sl: Partial<Translations> = {
   "flash.backingUp": "Izdelovanje varnostne kopije…",
   "flash.download": "Prenesi (.zip)",
   "flash.restoreNote": "Obnovitev prenese ZIP posnetka. Delujoč /boot ostane nedotaknjen. Datoteko .zip spusti neposredno v Unraidov ustvarjalnik USB-jev ali jo razširi na nov USB, da znova zgradiš svoj Flash.",
-  "flash.none": "Še ni varnostnih kopij Flasha. Zgoraj zaženi varnostno kopiranje.",
   "settings.exportsEncryptionTitle": "Šifriranje izvozov in repozitorijev",
   "settings.exportsEncryptionHint": "Nadzor nad šifriranjem navadnih izvoznih artefaktov in lastnim šifriranjem restic repozitorijev.",
   "flash.zipExport.title": "Izvoz Flash v zip",
@@ -1067,7 +1062,6 @@ const sl: Partial<Translations> = {
   "config.backingUp": "Izdelovanje varnostne kopije…",
   "config.snapshotsTitle": "Varnostne kopije nastavitev",
   "config.snapshotsHint": "Za obnovitev teh nastavitev na obnovljenem strežniku uporabi zavihek Obnova. Obnovitev nastavitev znova zažene BombVault, da jih uveljavi, zato je tam, skupaj z ostalim postopkom obnovitve po katastrofi.",
-  "config.none": "Še ni varnostnih kopij nastavitev. Zgoraj zaženi varnostno kopiranje.",
 
   // Receiver dashboard
   "receiver.title": "Sprejemnik",

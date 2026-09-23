@@ -196,7 +196,6 @@ const sv: Partial<Translations> = {
   "source.localTip": "Lokalt repo på denna värd",
   "source.offsiteTip": "Kopia utanför platsen",
   "source.offsiteTarget": "Mål utanför platsen",
-  "source.hint": "Återställning och radering påverkar bara den valda källan: att radera en lokal säkerhetskopia rör aldrig kopian utanför platsen, och tvärtom.",
   "offsite.schedulePlaceholder": "tomt = efter varje säkerhetskopia · t.ex. weekly Sun 03:00",
   "offsite.replicateNow": "Replikera nu",
   "offsite.copyDomainTitle": "Kopia utanför platsen {domain}",
@@ -443,7 +442,6 @@ const sv: Partial<Translations> = {
   // Backups extra
   "snapshots.files": "Filer",
   "snapshots.delete": "Ta bort",
-  "snapshots.deleteConfirm": "Ta bort denna säkerhetskopia? Ögonblicksbilden tas bort från repositoriet (kör Rensa i Inställningar för att frigöra utrymmet). Kan inte ångras.",
   "snapshots.recreate": "Återskapa från sparad konfig",
   "snapshots.recreateConfirm": "Återskapa den här containern från dess sparade konfiguration? Den skapas och startas från den lagrade definitionen.",
   "snapshots.configOnlyHint": "Endast-konfig-säkerhetskopia: containerns definition är sparad, men den har inga datamappar att ta ögonblicksbild av. Om du tar bort den visas den under \"Ej installerad\", där du kan återskapa den från denna konfiguration.",
@@ -542,7 +540,6 @@ const sv: Partial<Translations> = {
   "flash.backingUp": "Säkerhetskopierar…",
   "flash.download": "Ladda ner (.zip)",
   "flash.restoreNote": "Återställning laddar ner en ZIP av ögonblicksbilden. Den körande /boot rörs aldrig. Lägg .zip-filen direkt i Unraids USB-skapare, eller packa upp den på ett nytt USB-minne för att bygga om din flash.",
-  "flash.none": "Inga flash-säkerhetskopior än. Kör en säkerhetskopiering ovan.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Export- och repositorykryptering",
@@ -620,8 +617,6 @@ const sv: Partial<Translations> = {
   "containers.updateSettingFailed": "Kunde inte uppdatera inställningen",
   "vms.loadFailed": "Kunde inte läsa in VMs",
   "files.loadSetsFailed": "Kunde inte läsa in mappuppsättningarna",
-  "flash.loadBackupsFailed": "Kunde inte läsa in Flash-säkerhetskopiorna",
-  "config.loadBackupsFailed": "Kunde inte läsa in säkerhetskopiorna av inställningarna",
   "config.loadSettingsFailed": "Kunde inte läsa in de aktuella inställningarna",
   "dashboard.loadRunsFailed": "Kunde inte läsa in körningarna",
 
@@ -798,7 +793,6 @@ const sv: Partial<Translations> = {
   "config.backingUp": "Säkerhetskopierar…",
   "config.snapshotsTitle": "Inställningssäkerhetskopior",
   "config.snapshotsHint": "För att återställa dessa inställningar på en ombyggd server, använd fliken Återställning. Att återställa inställningar startar om BombVault för att tillämpa dem, så det finns där tillsammans med resten av katastrofåterställningsflödet.",
-  "config.none": "Inga inställningssäkerhetskopior än. Kör en säkerhetskopiering ovan.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Off-site-bandbredd",
