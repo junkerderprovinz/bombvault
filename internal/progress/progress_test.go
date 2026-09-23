@@ -57,7 +57,6 @@ func TestStoreSnapshotKeepsActiveDropsTerminal(t *testing.T) {
 	if snap := s.Snapshot(); len(snap) != 1 || snap[0].Key != "vm:win" {
 		t.Fatalf("active event should be in snapshot, got %+v", snap)
 	}
-	// Terminal event clears the key from the snapshot.
 	s.Publish(progress.Event{Key: "vm:win", Phase: "backup", Percent: 100, Active: false})
 	if snap := s.Snapshot(); len(snap) != 0 {
 		t.Fatalf("terminal event should clear the key, got %+v", snap)
@@ -90,11 +89,6 @@ func TestWithCopySinkNilIsNoop(t *testing.T) {
 	}
 }
 
-// TestCopySinkDoesNotLeakIntoPlainSink pins that the two ctx-carried sink
-// mechanisms are genuinely independent (distinct unexported key types) — a
-// ctx carrying only a CopySink must not be mistaken for one carrying a plain
-// Sink, and vice versa. Regression guard for a future refactor that might
-// otherwise try to unify the two context keys.
 func TestCopySinkDoesNotLeakIntoPlainSink(t *testing.T) {
 	ctx := progress.WithCopySink(context.Background(), func(progress.CopyProgress) {})
 	if progress.SinkFrom(ctx) != nil {
@@ -106,11 +100,6 @@ func TestCopySinkDoesNotLeakIntoPlainSink(t *testing.T) {
 	}
 }
 
-// TestEventStartedAtRoundTrip pins that StartedAt (issue #159) survives a
-// Publish/Subscribe round trip like every other Event field — before this
-// test, NO test in this package exercised StartedAt at all (every existing
-// Event literal in this file predates the field and leaves it at its zero
-// value), so a regression zeroing it on the wire could have shipped silently.
 func TestEventStartedAtRoundTrip(t *testing.T) {
 	s := progress.NewStore()
 	ch, cancel := s.Subscribe()
@@ -129,13 +118,9 @@ func TestEventStartedAtRoundTrip(t *testing.T) {
 	}
 }
 
-// TestEventStartedAtSurvivesTerminalEvent pins the review fix that a
-// terminal (Active:false) event carries the SAME StartedAt as the run's other
-// events — before the fix, api.progEnd published StartedAt:0, which made a
-// client-rendered live duration visibly vanish during the terminal-event
-// linger (see web/src/lib/reltime.ts's elapsedSince and its callers).
-// Snapshot() only holds ACTIVE events, so this checks the value the terminal
-// Publish call itself carried via a direct subscriber instead.
+// TestEventStartedAtSurvivesTerminalEvent checks that the final event keeps
+// the run's StartedAt. Snapshot holds only active events, so the final event
+// is read from a subscriber.
 func TestEventStartedAtSurvivesTerminalEvent(t *testing.T) {
 	s := progress.NewStore()
 	ch, cancel := s.Subscribe()
@@ -158,11 +143,9 @@ func TestStoreCancelUnsubscribes(t *testing.T) {
 	s := progress.NewStore()
 	ch, cancel := s.Subscribe()
 	cancel()
-	// Publishing after cancel must not panic (channel closed, removed from subs).
+	// Neither a publish after cancel nor a second cancel may panic.
 	s.Publish(progress.Event{Key: "flash", Phase: "backup", Percent: 1, Active: true})
-	// Double cancel must be safe.
 	cancel()
-	// Draining a closed channel returns the zero value with ok=false.
 	if _, ok := <-ch; ok {
 		t.Fatal("channel should be closed after cancel")
 	}

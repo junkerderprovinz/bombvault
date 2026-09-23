@@ -16,38 +16,21 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// newMeshCredSetID mints a fresh id for a newly accepted mesh offer's
-// credential set. CloudCredSet.ID has no store-level generator
-// (SetCloudCredSets is a pure replace-the-whole-list call, unlike the other
-// CRUD tables here, and the SPA normally mints one client-side via
-// crypto.randomUUID() — see Settings.tsx); this mirrors store's own newID()
-// shape (16 random bytes, hex) since this call happens server-side.
+// newMeshCredSetID returns an id for the credential set an accepted mesh offer
+// creates, in the form store.newID uses. Other credential set ids are minted by
+// the SPA.
 func newMeshCredSetID() string {
 	b := make([]byte, 16)
 	if _, err := rand.Read(b); err != nil {
-		// crypto/rand failing is a fatal platform problem, not a recoverable
-		// input error — matches store.newID()'s own panic-on-failure contract.
 		panic(fmt.Sprintf("newMeshCredSetID: %v", err))
 	}
 	return hex.EncodeToString(b)
 }
 
-// ---------------------------------------------------------------------------
-// Mesh off-site — a fleet peer OFFERS its own off-site storage (a rest-server
-// it deploys itself) instead of the two admins exchanging a URL and password
-// out of band. BombVault never hosts storage itself (see deploy.go); this only
-// automates handing the connection details from the offering instance to the
-// accepting instance's admin over the already-authenticated fleet channel, who
-// then reviews and turns it into a normal named CloudCredSet + OffsiteTarget —
-// both pre-existing mechanisms, unchanged. No off-site data ever flows through
-// this path, only connection metadata; the actual backup still replicates
-// straight to the deployed rest-server exactly as it does today.
-// ---------------------------------------------------------------------------
-
-// meshOfferRequest is the JSON body POSTed to the accepting instance's
-// self-gated GET /api/fleet/status sibling, POST /api/fleet/mesh-offer (same
-// fleetGate trust boundary: anyone holding this instance's fleet token may
-// send an offer, exactly as anyone holding it may poll the status endpoint).
+// meshOfferRequest is the body of POST /api/fleet/mesh-offer: a fleet peer
+// offering a rest-server it deployed as off-site storage. Only these
+// connection details cross the fleet channel; backups replicate straight to
+// the rest-server. Anyone holding this instance's fleet token may send one.
 type meshOfferRequest struct {
 	FromName        string `json:"fromName"`
 	SuggestedDomain string `json:"suggestedDomain"`
@@ -56,10 +39,9 @@ type meshOfferRequest struct {
 	RESTPassword    string `json:"restPassword"`
 }
 
-// handleFleetMeshOfferReceive handles POST /api/fleet/mesh-offer — a peer
-// proposing its own off-site storage to this instance. Self-gated exactly
-// like handleFleetStatus (same token, same allowlist entry); persists a
-// pending store.MeshOffer for a human to review under Settings → Fleet.
+// handleFleetMeshOfferReceive stores a peer's offer as a pending
+// store.MeshOffer for the admin to review. Like handleFleetStatus it checks
+// the fleet token itself.
 func (h *Handler) handleFleetMeshOfferReceive(w http.ResponseWriter, r *http.Request) {
 	if _, ok := h.fleetGate(w, r); !ok {
 		return
@@ -94,9 +76,8 @@ func (h *Handler) handleFleetMeshOfferReceive(w http.ResponseWriter, r *http.Req
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"id": stored.ID}))
 }
 
-// meshOfferView is the JSON wire shape of a received mesh offer. RESTPassword
-// is never returned — the accept endpoint uses the stored ciphertext
-// server-side, the admin never needs to see or retype it.
+// meshOfferView is a received mesh offer as the SPA sees it. The password is
+// left out; accepting uses the stored ciphertext.
 type meshOfferView struct {
 	ID              string `json:"id"`
 	From            string `json:"from"`
@@ -119,9 +100,8 @@ func meshOfferToView(o store.MeshOffer) meshOfferView {
 	}
 }
 
-// handleListMeshOffers lists every received mesh offer (pending, accepted and
-// declined — the SPA filters by status). GET /api/fleet/mesh-offers,
-// session-protected.
+// handleListMeshOffers lists received mesh offers in every status; the SPA
+// filters them.
 func (h *Handler) handleListMeshOffers(w http.ResponseWriter, _ *http.Request) {
 	offers, err := h.store.ListMeshOffers()
 	if err != nil {
@@ -135,8 +115,8 @@ func (h *Handler) handleListMeshOffers(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"offers": out}))
 }
 
-// meshOfferAcceptInput is the accept request body: which of THIS instance's
-// domains the accepted offer's storage should back up.
+// meshOfferAcceptInput names the local domain the offered storage will back
+// up.
 type meshOfferAcceptInput struct {
 	Domain      string              `json:"domain"`
 	AlsoExclude *newTargetExclusion `json:"alsoExclude"`
@@ -168,13 +148,10 @@ func (h *Handler) undoAcceptedOffer(targetID, setID string, cause error) error {
 	return cause
 }
 
-// handleAcceptMeshOffer turns a pending offer into a real, working off-site
-// target: a new named CloudCredSet (holding the peer-generated REST
-// credentials) plus a new OffsiteTarget for the chosen domain pointing at the
-// offer's repo via that credential set. POST
-// /api/fleet/mesh-offers/{id}/accept, session-protected. Neither the
-// credential set nor the target is probed for reachability before creation —
-// same contract as creating either directly (a Test button exists for that).
+// handleAcceptMeshOffer turns a pending offer into a credential set holding
+// the peer's REST credentials and an off-site target for the chosen domain
+// that uses it. Neither is probed first, just as when an admin creates them
+// by hand.
 func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) {
 	offer, ok, err := h.store.GetMeshOffer(r.PathValue("id"))
 	if err != nil {
@@ -257,10 +234,7 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": offsiteTargetToView(stored)}))
 }
 
-// handleDeclineMeshOffer marks a pending offer declined. POST
-// /api/fleet/mesh-offers/{id}/decline, session-protected. A missing id
-// answers 404; an already-decided offer is left untouched (idempotent
-// decline of an already-declined offer just re-confirms ok).
+// handleDeclineMeshOffer marks an offer declined. An unknown id answers 404.
 func (h *Handler) handleDeclineMeshOffer(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	if _, ok, err := h.store.GetMeshOffer(id); err != nil {
@@ -277,33 +251,25 @@ func (h *Handler) handleDeclineMeshOffer(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// meshProposeInput is the propose request body: which of THIS instance's
-// domains the offered storage is for, and the base URL this instance's admin
-// will deploy the rest-server at (BombVault cannot know this — it may be a
-// different box/port than BombVault itself, exactly like the existing
-// deploy-snippet feature already assumes).
+// meshProposeInput is the domain the offered storage is for and the base URL
+// the admin will deploy the rest-server at. BombVault cannot work out that
+// URL; the rest-server may run on another host or port.
 type meshProposeInput struct {
 	Domain  string `json:"domain"`
 	BaseURL string `json:"baseUrl"`
 }
 
-// meshProposeResponse mirrors DeploySnippet (same one-time credential the
-// admin needs to actually deploy the rest-server) plus the concrete repo URL
-// that was just sent to the peer, built from BaseURL instead of
-// DeploySnippet's generic placeholder.
+// meshProposeResponse is the deploy snippet plus the repo URL that was sent to
+// the peer.
 type meshProposeResponse struct {
 	DeploySnippet
 	Repo string `json:"repo"`
 }
 
-// handleProposeMeshOffer sends this instance's own off-site storage offer to
-// one fleet peer. POST /api/fleet/peers/{id}/mesh-offer, session-protected.
-// Generates a fresh one-time rest-server credential (the exact same
-// generation buildDeploySnippet already uses) scoped to BaseURL instead of
-// the generic placeholder, POSTs the connection details to the peer's
-// self-gated mesh-offer inbox using the peer's stored token, and returns the
-// same deploy recipe an admin needs to actually stand the rest-server up —
-// nothing here deploys anything itself.
+// handleProposeMeshOffer offers storage to a fleet peer. It generates a
+// one-time rest-server credential, sends the connection details to the peer's
+// mesh-offer inbox with the peer's stored token, and returns the deploy
+// snippet. Deploying the rest-server is left to the admin.
 func (h *Handler) handleProposeMeshOffer(w http.ResponseWriter, r *http.Request) {
 	peer, ok, err := h.store.GetFleetPeer(r.PathValue("id"))
 	if err != nil {
@@ -358,9 +324,9 @@ func (h *Handler) handleProposeMeshOffer(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"snippet": meshProposeResponse{DeploySnippet: snip, Repo: repo}}))
 }
 
-// postMeshOffer sends a mesh offer to a peer's POST /api/fleet/mesh-offer,
-// mirroring pollFleetPeer's transport (bounded client, no redirects, skipped
-// TLS verification for the same self-signed-cert reason).
+// postMeshOffer sends an offer to a peer over the same client pollFleetPeer
+// uses: bounded, no redirects, and no TLS verification because peers usually
+// run self-signed certificates.
 func postMeshOffer(ctx context.Context, peerURL, token string, offer meshOfferRequest) error {
 	ctx, cancel := context.WithTimeout(ctx, fleetPollTimeout)
 	defer cancel()

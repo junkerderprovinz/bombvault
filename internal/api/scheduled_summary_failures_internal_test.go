@@ -12,12 +12,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 )
 
-// TestFormatItemFailuresEnumeratesAndCaps pins the summary body builder (#64): it
-// renders one "- name: reason" line per failure, scrubs absolute host paths out of
-// each reason (matching the per-item notifyBackup treatment), and caps a large run
-// with a "+N more" tail so a 45-container night with 35 failures stays legible.
+// formatItemFailures writes one "- name: reason" line per failure with host
+// paths scrubbed, and caps a long list with a "+N more" line.
 func TestFormatItemFailuresEnumeratesAndCaps(t *testing.T) {
-	// A short list is enumerated in full, with the reason path-scrubbed.
 	short := []schedule.ItemFailure{
 		{Name: "plex", Reason: "init repo: no space left on device"},
 		{Name: "sonarr", Reason: "open /mnt/user/backups/containers/config: input/output error"},
@@ -36,7 +33,6 @@ func TestFormatItemFailuresEnumeratesAndCaps(t *testing.T) {
 		t.Fatalf("a short list must not be capped, got:\n%s", got)
 	}
 
-	// A large list caps at maxListedFailures with a "+N more" tail and omits the rest.
 	many := make([]schedule.ItemFailure, 0, maxListedFailures+5)
 	for i := 0; i < maxListedFailures+5; i++ {
 		many = append(many, schedule.ItemFailure{Name: "c" + string(rune('A'+i)), Reason: "restic repo error"})
@@ -54,11 +50,8 @@ func TestFormatItemFailuresEnumeratesAndCaps(t *testing.T) {
 	}
 }
 
-// TestScheduledNotifyResultEnumeratesFailedContainers pins the end-to-end summary
-// (#64): a scheduled run that failed sends ONE webhook message that names the failed
-// containers and their reasons — not just a bare "N of M failed" count — so the user
-// knows WHICH containers to look at without digging. A domain-wide fault that trips
-// the pre-flight guards for many containers is exactly the case this surfaces.
+// A failed scheduled run sends one webhook message that names each failed
+// container and its reason, not just the count.
 func TestScheduledNotifyResultEnumeratesFailedContainers(t *testing.T) {
 	var body string
 	wh := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
@@ -93,9 +86,7 @@ func TestScheduledNotifyResultEnumeratesFailedContainers(t *testing.T) {
 	}
 }
 
-// TestScheduledNotifyResultAllSuccessNoList pins that an all-success scheduled run
-// still sends only the clean "no failures" summary — the failure enumeration is added
-// solely on the failure path and never leaks an empty list into a green run.
+// A run without failures sends the plain summary with no list.
 func TestScheduledNotifyResultAllSuccessNoList(t *testing.T) {
 	var body string
 	wh := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {

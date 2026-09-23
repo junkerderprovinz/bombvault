@@ -18,6 +18,10 @@ import { IconVM, IconRestore, IconBackupNow, IconDownload, IconPower, IconLive }
 import { InfoBubble } from "../components/InfoBubble";
 import { NotInstalledHeading } from "../components/NotInstalledHeading";
 import { OrphanRemoveButton } from "../components/OrphanRemoveButton";
+import { RenameTakeoverRow } from "../components/RenameTakeoverRow";
+import { LinkEntryPicker } from "../components/LinkEntryPicker";
+import { FormerNames } from "../components/FormerNames";
+import { vmTakeover } from "../lib/useTakeOver";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { Button } from "../components/Button";
 import { groupStage } from "../lib/controls";
@@ -26,8 +30,7 @@ import { IncludeToggle } from "../components/IncludeToggle";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch, fireAndWaitRun } from "../lib/backupWatch";
 import { useConfirm } from "../lib/useConfirm";
-import { hueVars, rainbowAt } from "../lib/appearance";
-import { useRainbow } from "../lib/useRainbow";
+import { hueVars } from "../lib/appearance";
 import { Selector } from "../components/Selector";
 import { useToast } from "../lib/toast";
 import { PlacementRow } from "../components/placement/PlacementRow";
@@ -37,31 +40,19 @@ import { Timeline, type TimelinePick } from "../components/timeline/Timeline";
 
 type T = ReturnType<typeof useT>["t"];
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 function formatTs(unix: number | null | undefined): string {
   if (!unix) return "—";
   return new Date(unix * 1000).toLocaleString();
 }
 
-// ---------------------------------------------------------------------------
-// State chip (mirrors Containers.tsx) — stateTone maps a raw VM state to the
-// shared Badge's tone; stateLabel (lib/i18n) still does the actual
-// state->text translation.
-// ---------------------------------------------------------------------------
-
+// stateTone maps a raw VM state to a Badge tone, as in Containers.tsx;
+// stateLabel translates the state itself.
 function stateTone(state: string): BadgeTone {
   const lower = state.toLowerCase();
   if (lower === "running") return "ok";
   if (lower === "shut off" || lower === "shutoff" || lower === "stopped") return "fail";
   return "neutral";
 }
-
-// ---------------------------------------------------------------------------
-// Sort control
-// ---------------------------------------------------------------------------
 
 type SortKey = "name" | "status";
 
@@ -96,17 +87,9 @@ const SORT_KEYS = {
   status: "sort.status",
 } as const;
 
-// SortControl/ChipFilter below are thin, page-specific adapters onto the
-// shared Selector component (GlimStone form-engine Phase 2, Task 3) — the
-// actual button rendering, keyboard nav (roving tabindex, arrow keys/Home/
-// End, RTL) and rainbow hueing all live in Selector now, mirroring
-// Containers.tsx's own identical adapter pair.
-//
-// Both render the SMALL horizontal selector (`variant="well"`, no
-// `equalWidth`) — see Containers.tsx's own copy of this comment for the full
-// reasoning; the two files' filter menus have to stay the same control, which
-// is exactly the drift that put them here as a shared-Selector adapter pair in
-// the first place.
+// SortControl and ChipFilter adapt the shared Selector to this page, like the
+// matching pair in Containers.tsx; the filter menus of both pages have to stay
+// the same control.
 function SortControl({
   value,
   onChange,
@@ -131,15 +114,8 @@ function SortControl({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Schedule / backup chip filters (#41)
-// ---------------------------------------------------------------------------
-// Generic sibling of the sort chips: same chip look + localStorage pattern, but
-// parameterised over its option set so the schedule and backup dimensions each
-// instantiate it without duplicating the markup. Mirrors Containers.tsx's
-// ChipFilter. VMs have NO installed/not-installed FilterControl — the state-
-// based live/orphans split already covers that dimension.
-
+// The schedule and backup filters. VMs have no installed filter: the split
+// into live VMs and orphans already covers it.
 type ScheduleFilterKey = "all" | "scheduled" | "notScheduled";
 type BackupFilterKey = "all" | "backedUp" | "neverBackedUp";
 
@@ -184,10 +160,6 @@ function ChipFilter<K extends string>({
   );
 }
 
-// ---------------------------------------------------------------------------
-// VM-aware IncludeToggle variant
-// ---------------------------------------------------------------------------
-
 // VMMethodSelect picks the per-VM backup method (graceful shutdown vs live
 // snapshot) via PATCH /api/vms/{name}.
 function VMMethodSelect({
@@ -203,18 +175,13 @@ function VMMethodSelect({
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
 
-  // Re-seed when the parent hands down a fresh value (a list reload after a
-  // bulk action). Rows are keyed by libvirt name and do not remount, so
-  // without this the control would keep painting its stale pre-reload choice —
-  // the same fix IncludeToggle already carries.
+  // Rows are keyed by libvirt name and do not remount, so re-seed when a list
+  // reload hands down a new value.
   useEffect(() => setMethod(initial || "graceful"), [initial]);
 
   async function handleChange(next: string) {
-    // Optimistic, then reverted on failure. The old <select> did neither: it
-    // left the failed value showing and only toasted, so a rejected switch to
-    // "live" left the UI claiming no-downtime while the next backup would in
-    // fact shut the VM down — the exact confusion its own comment warned about
-    // while implementing the half of it that causes the confusion.
+    // Reverted on failure, so a rejected switch to "live" does not leave the
+    // UI promising no downtime while the next backup shuts the VM down.
     const prev = method;
     setMethod(next);
     setBusy(true);
@@ -232,20 +199,9 @@ function VMMethodSelect({
     }
   }
 
-  // Two square 32px glyph badges instead of a native <select> (jdp, live
-  // review: "die Methode für den VM-Backup (Live und graceful) bitte in
-  // quadratische Badges mit Glyph umformen"), built as Selector's icon-only
-  // segments — the same construction SourceToggle's Lokal/Offsite pair and
-  // PathModeSwitch's Local/Remote pair already use, so it inherits the colour
-  // engine, the shape engine, roving-tabindex keyboard nav and the app's one
-  // icon-badge size for free rather than hand-rolling a second look.
-  //
   // Both options stay visible with the active one filled, rather than one
-  // badge that cycles: this control decides whether the VM is SHUT DOWN for
-  // its backup, and a cycling badge would make the user infer the alternative
-  // from an icon they cannot see. `tip` carries the method name, which is also
-  // what makes the pair readable — the glyphs alone are the only differentiator
-  // once the fill is spent on the active state (see IconPower/IconLive).
+  // badge that cycles: this decides whether the VM is shut down for its
+  // backup, so the alternative should be in view. The tip names the method.
   return (
     <Selector
       items={[
@@ -273,25 +229,13 @@ function VMMethodSelect({
   );
 }
 
-// ---------------------------------------------------------------------------
-// VM-aware BackupButton variant
-// ---------------------------------------------------------------------------
-
-// GlimStone follow-up pass (v8.0.0) audit note: deliberately NOT migrated to a
-// toast — same reasoning as Containers.tsx's ExportButton, its exact twin.
-// The "done"/"error" result below shows the actual export destination path (or
-// the raw error), neither of which auto-dismissed before this pass; it's a
-// reference value to copy down, not a one-shot ping.
+// VMExportButton keeps its result inline as well as toasting a failure, like
+// Containers.tsx's ExportButton: the destination path is something to copy
+// down, not a passing notice.
 function VMExportButton({ name, t }: { name: string; t: T }) {
   const [state, setState] = useState<"idle" | "pending" | "done" | "error">("idle");
   const [msg, setMsg] = useState<string | null>(null);
   const { push } = useToast();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
-  // failed action toasts AND shakes its button, layered ON TOP of this
-  // button's own pre-existing sticky inline error (kept deliberately — see
-  // this component's header comment: the error text sits right next to the
-  // success path's copyable destination, both a "reference value", not a
-  // one-shot ping the toast alone would replace).
   const [shake, setShake] = useState(0);
   async function run() {
     setState("pending");
@@ -318,33 +262,16 @@ function VMExportButton({ name, t }: { name: string; t: T }) {
   }
   return (
     <div className="flex flex-col items-end gap-1">
-      {/* WHOLE-TREE SWEEP FINDING — square icon badge, mirroring
-          Containers.tsx's ExportButton verbatim (same role, same glyph, same
-          tone). This was the LAST plain-text Export button in the app: its
-          Containers twin was converted with `tone="active"` specifically
-          because the `bg-carbon-surface2` grey it used to carry (identical to
-          this one's) takes NO colour-engine position at all, leaving it the
-          single flat grey control in a card whose every other badge follows
-          the accent/rainbow engine. Leaving this copy would have reproduced
-          that exact "anders eingefärbt" report on the VM tab, one tab over.
-            size="icon" = 32px, the app's ONE square-icon-badge stage — not
-          re-measured against this button's own former text footprint.
-          IconDownload reused verbatim. `tip` carries the label the glyph
-          replaced. No hueIndex: VMRow's card already carries `.glim-hue` with
-          this VM's list position.
-            The sticky inline done/error text below is KEPT deliberately,
-          exactly as Containers' ExportButton keeps its own: it holds a
-          copyable destination path (a reference value the user reads off the
-          screen), not a one-shot ping a toast would replace. The column flips
-          items-start → items-end so the tile lines up with the card edge and
-          the text hangs beneath it. */}
+      {/* No hueIndex: the VMRow card already carries this VM's hue. The
+          column aligns to the end so the text hangs beneath the button at
+          the card edge. */}
       <Button
         key={shake}
         label={t("export.button")}
         labelKey="export.button"
         glyph={<IconDownload />}
         tone="accent"
-        // Same shared stage as BackupButton beside it — see that file.
+        // Shares its width stage with the backup button beside it.
         stage={groupStage([t("containers.backupNow"), t("export.button")])}
         onClick={() => void run()}
         disabled={state === "pending"}
@@ -359,41 +286,11 @@ function VMExportButton({ name, t }: { name: string; t: T }) {
   );
 }
 
-// WHOLE-TREE SWEEP FINDING — square icon badge, mirroring components/
-// BackupButton.tsx (the Containers twin) verbatim: same role, same
-// IconBackupNow glyph, same `shape="square" size="icon" tone="active"`
-// recipe, same `tip` priority order (pending → blocked-by-other → label),
-// same terminal-states-become-toasts trade.
-//
-// This was the LAST plain-text "Jetzt sichern" button in the app. Containers'
-// was converted first, then Flash's, then Files' FileSetBackupButton (also as
-// a sweep finding, not a named ask), then Config's in this same pass — which
-// left this one alone rendering as text. It sits in the top-right corner of
-// the VMRow card, the same card whose snapshot rows this pass just converted
-// to 32px badges, so leaving it would have put text buttons and icon badges
-// side by side in one card: exactly the "a user sees one card" contract
-// Badge.tsx's "ONE SIZE FOR SQUARE ICON BADGES" block spells out, and exactly
-// the report ("Jetzt sichern ist auf dem VM-Tab noch ein Text-Button") this
-// round exists to pre-empt rather than collect for a fifth time.
-//
-// The inline states are gone with the text button that had room for them:
-// success/error now toast (an error also shakes the badge), and the
-// blocked-by-other hint moves into the `tip`, which is where the other four
-// already put it. The nested `<Advanced><VMExportButton/></Advanced>` moved
-// OUT to the call site, so the two badges sit side by side in the corner the
-// way Containers.tsx's own BackupButton/ExportButton pair does, rather than
-// one badge being stacked underneath the other inside its sibling's column.
-//
-// This supersedes the v8.0.0 audit note that used to sit here, which deferred
-// the toast migration on the grounds that useBackupWatch's state shape also
-// backs RESTORE outcomes (sticky by design, RestoreAction.tsx). That reasoning
-// still correctly blocks changing the HOOK — untouched here — but rendering
-// state.phase as a toast is a per-component decision, which
-// components/BackupButton.tsx, Flash.tsx and Config.tsx have each now proved
-// with zero hook changes. The old note read, for reference: splitting
-// that shared, cross-file state machine's rendering by kind (backup vs.
-// restore) is a hook-level architecture change, not the local flash-swap this
-// pass does everywhere else, so it's left as its own deliberate follow-up.
+// VMBackupButton is the VM counterpart of components/BackupButton.tsx. Results
+// arrive as toasts (a failure also shakes the button), and the reason it is
+// blocked by another run goes in the title. The toasts are raised here rather
+// than in useBackupWatch, whose state also carries RestoreAction's sticky
+// restore outcome.
 function VMBackupButton({
   name,
   t,
@@ -403,13 +300,12 @@ function VMBackupButton({
   name: string;
   t: T;
   onBackedUp?: () => void;
-  /** "Something is running" signal (anyActive): busy-guards this backup while
-   *  another op runs, but never for its OWN in-flight backup (isPending). */
+  /** Whether any operation is running (anyActive). It blocks this backup
+   *  while another one runs, but never because of its own (isPending). */
   running?: { active: boolean; phase?: string };
 }) {
-  // Fire-and-watch (see useBackupWatch): the server backs the VM up detached and
-  // answers immediately, so we watch the "vm:<name>" progress + recorded run for
-  // the outcome instead of awaiting the whole backup.
+  // The server backs the VM up detached and answers at once, so the outcome
+  // comes from watching the "vm:<name>" progress and the recorded run.
   const { state, fire, isPending } = useBackupWatch({
     progressKey: `vm:${name}`,
     start: () => backupVMNow(name),
@@ -418,13 +314,9 @@ function VMBackupButton({
   });
   const blockedByOther = !!running?.active && !isPending;
   const { push } = useToast();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
-  // failed action toasts AND shakes its button.
   const [shake, setShake] = useState(0);
-  // Tracks the last phase already reported, so this effect toasts exactly
-  // once per NEW terminal transition — same guard as components/
-  // BackupButton.tsx (state.phase can only ever start at "idle", so this
-  // never fires on mount, only on a real fire()-driven change).
+  // The last phase already reported, so each terminal transition toasts once.
+  // state.phase starts at "idle", so nothing fires on mount.
   const seenPhase = useRef(state.phase);
 
   useEffect(() => {
@@ -441,7 +333,7 @@ function VMBackupButton({
     }
   }, [state, push, t]);
 
-  // #178: stable name, exceptional states as tooltip only.
+  // The label stays stable; exceptional states go in the title.
   const stateTip = isPending
     ? t("common.backingUp")
     : blockedByOther
@@ -463,10 +355,6 @@ function VMBackupButton({
     />
   );
 }
-
-// ---------------------------------------------------------------------------
-// VM-aware RestorePanel variant
-// ---------------------------------------------------------------------------
 
 function VMSnapshotActions({
   pick,
@@ -520,27 +408,20 @@ function VMRestorePanel({
   t,
   open,
 }: {
-  /** Raw libvirt name — every call in this panel (snapshots, delete-all,
-   *  recent runs, restore) MUST use this, never displayName. */
+  /** Raw libvirt name. Every call in this panel uses it, never displayName. */
   name: string;
   /** Display name shown in the restore cancel-confirm text; falls back to
    *  name. */
   displayName?: string;
   t: T;
-  /** Owned by VMRow's `openSections`, exactly like components/RestorePanel.tsx
-   *  takes `open` from ContainerRow's (jdp, live review: the VM card's backups
-   *  disclosure must be the container card's). This panel used to own the
-   *  state AND draw its own chevron trigger, which is why the two cards'
-   *  expanders looked nothing alike — one a hued Selector chip in a shared
-   *  row, the other a bare text button with a hand-rotated 12px svg. */
+  /** Owned by VMRow's `openSections`, as components/RestorePanel.tsx takes
+   *  `open` from ContainerRow, so both cards share one disclosure. */
   open: boolean;
 }) {
   const [reloadTick, setReloadTick] = useState(0);
   const [deletingAll, setDeletingAll] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // the "Delete all" control on a failed delete, alongside the toast below.
   const [shakeDeleteAll, setShakeDeleteAll] = useState(0);
 
   // "Delete all" empties the local place, which is what the question it asks
@@ -549,12 +430,8 @@ function VMRestorePanel({
   // below under a fresh key, so it reads the place again instead of keeping
   // the rows the delete just emptied.
   async function handleDeleteAll() {
-    // TODO(#follow-up): richer stake-detail copy ("N snapshots, X GB") belongs
-    // here once it ships (deferred — new interpolated i18n keys across all 25
-    // non-English locales, out of scope for this window.confirm() → dialog
-    // mechanism swap). Same flagged follow-up as OrphanRemoveButton.tsx's
-    // deleteConfirm and Files.tsx's deleteBackupsConfirm.
-    if (!(await confirm(t("snapshots.deleteAllConfirm")))) return;
+    // TODO: name the stake in the confirmation ("N snapshots, X GB").
+    if (!(await confirm(t("snapshots.deleteAllConfirm"), { confirmKey: "snapshots.deleteAll" }))) return;
     setDeletingAll(true);
     deleteBackupsVM(name, "local")
       .then((res) => {
@@ -613,13 +490,8 @@ function VMRestorePanel({
   );
 }
 
-// ---------------------------------------------------------------------------
-// VM row
-// ---------------------------------------------------------------------------
-
-// Exported (only) so VMs.test.tsx can render one row directly and assert its
-// action buttons wire up VM.libvirtName — never the display-only VM.name — to
-// the backend calls. See that test's header comment for the bug it pins.
+// VMRow is exported for VMs.test.tsx, which checks that its actions pass
+// VM.libvirtName to the backend rather than the display name VM.name.
 export function VMRow({
   vm,
   t,
@@ -627,6 +499,7 @@ export function VMRow({
   onPlacement,
   selected,
   onToggleSelect,
+  linkCandidates = [],
   index,
 }: {
   vm: VM;
@@ -636,30 +509,22 @@ export function VMRow({
   onPlacement: (next: PlacementView) => void;
   selected?: boolean;
   onToggleSelect?: () => void;
-  /** Position in the rendered list — the rainbow palette position (GlimStone
-   *  form-engine Phase 2, Task 2). Assigned by LIST INDEX, never a hash of
-   *  `vm.libvirtName` — see the callers below. */
+  /** The libvirt names of the not-installed entries this card can take over by hand. */
+  linkCandidates?: string[];
+  /** Position in the rendered list, which sets the palette position. */
   index: number;
 }) {
   const installed = vm.state !== "not-installed";
   const progressMap = useProgress();
-  // Progress keys are published server-side off the raw libvirt name (see
-  // "vm:"+name in internal/api/service.go) — never the display vm.name.
+  // The server keys progress by the raw libvirt name ("vm:"+name in
+  // internal/api/service.go), not by the display name.
   const progress = progressMap[`vm:${vm.libvirtName}`];
-  // "Something is running" across any domain — busy-guards this row's own VM
-  // backup (its OWN in-flight backup is handled by isPending inside the button).
+  // Whether anything is running in any domain; the button handles its own
+  // backup through isPending.
   const running = anyActive(progressMap);
 
-  // Disclosure state, lifted out of VMRestorePanel (jdp, live review: "Im
-  // Zeitplan einschließen, letztes Backup und Backup-Ausklapp-Button bitte
-  // exakt wie im Container-Tab in der Container-Card darstellen und
-  // platzieren"). ContainerRow owns the identical `openSections` Set and hands
-  // each pane its `open` as a prop; this row now does the same, so the trigger
-  // is a Selector chip in a shared row rather than the bespoke chevron button
-  // VMRestorePanel used to draw for itself. A Set with one member looks like
-  // overkill, but it IS ContainerRow's shape — and it is what keeps the two
-  // rows converging instead of drifting again the moment VMs grow a second
-  // expandable section.
+  // The same shape as ContainerRow's `openSections`, although VMs have only one
+  // section, so the two cards keep one disclosure control.
   const [openSections, setOpenSections] = useState<Set<string>>(() => new Set());
   function toggleSection(id: string) {
     setOpenSections((prev) => {
@@ -670,20 +535,16 @@ export function VMRow({
     });
   }
 
-  // One combined "Letztes Backup: <ts>" string in ONE muted span, exactly like
-  // ContainerRow's — not the two stacked <p>s in two different tones this row
-  // used to render up in its top row.
   const lastBackupText = `${t("containers.lastBackup")}: ${vm.lastBackup ? formatTs(vm.lastBackup) : t("containers.never")}`;
+
+  const aliases = vm.aliases ?? [];
+  const takeoverEntry = { name: vm.libvirtName, displayName: vm.name, api: vmTakeover };
 
   return (
     <div
-      style={{ ...hueVars(rainbowAt(index)), "--row-i": String(index) } as CSSProperties}
-      // glim-tint washes the card (trap #2 — without it this card shows
-      // almost no colour at rest); glim-active while THIS row's own
-      // backup/restore is actively running, so reactive mode shows the hue
-      // without needing hover — mirrors ContainerRow's identical treatment.
-      // glim-stagger-row (GlimStone motion-engine animation 3) — see
-      // ContainerRow's identical comment.
+      style={{ ...hueVars(index), "--row-i": String(index) } as CSSProperties}
+      // glim-active while this VM's own backup or restore runs, so reactive
+      // mode shows the hue without hover, as on ContainerRow.
       className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-stagger-row ${
         progress?.active ? "glim-active" : ""
       }`}
@@ -715,36 +576,17 @@ export function VMRow({
           </div>
         </div>
 
-        {/* The top-row corner: the backup method sharing the line with the
-            action badges (jdp, live review: "Die Badges für die Methode setzen
-            wir einfach in die Zeile von 'Jetzt sichern' und 'Export', nur mit
-            Abstand zu denen. Dann wird die Card weniger hoch und hat weniger
-            Leerraum"). A VM carries no image line and no IP, so this card's
-            left column is short and everything stacked on the right was paying
-            for vertical space the left half never used.
-              TWO gaps on purpose, and they are the whole point of the ask:
-            `gap-4` between the method group and the action pair, `gap-1.5`
-            WITHIN the pair. Both groups are 32px badges, so without the wider
-            outer gap the four tiles read as one undifferentiated strip and
-            "Live" sits as close to "Jetzt sichern" as it does to its own
-            sibling — a mis-click that starts a backup instead of changing a
-            setting. Same reason the pair itself keeps the tight gap
-            Containers.tsx's own BackupButton/ExportButton corner uses.
-              The label and its InfoBubble come along rather than being dropped
-            for compactness: two icon badges with no text next to them is
-            exactly the unlabelled control jdp has ruled out, and the hint is
-            the only place the difference between the methods is spelled out.
-              A not-installed VM has nothing to back up, so the corner holds its
-            removal button instead, the same OrphanRemoveButton in the same
-            place as on the container card (#232). "Remove entry" sat at the
-            card's bottom edge before and was offered even while backups existed,
-            which then vanished from the page with the entry. The local source
-            here, as on the container card; the Backups panel below keeps its own
+        {/* The method shares the line with the action buttons. gap-4 between
+            the groups and gap-1.5 within the pair keep "Live" from sitting as
+            close to the backup button as to its own sibling, where a mis-click
+            would start a backup.
+              A VM that is no longer installed has nothing to back up, so the
+            corner holds its removal button instead, as on the container card.
+            It deletes the local backups; the Backups panel keeps its own
             source-aware delete for the off-site copy. */}
         {installed ? (
           <div className="ms-auto flex items-center gap-4 shrink-0">
-            {/* Backup method (graceful / live) — always visible, never gated
-                behind Advanced: it decides whether the VM is shut down. */}
+            {/* Never behind Advanced: it decides whether the VM is shut down. */}
             <div className="flex items-center gap-2">
               <span className="flex items-center gap-1 text-xs text-carbon-textSub">
                 {t("vm.method")}
@@ -752,12 +594,6 @@ export function VMRow({
               </span>
               <VMMethodSelect name={vm.libvirtName} initial={vm.method} t={t} />
             </div>
-            {/* The action pair, laid out exactly like Containers.tsx's own
-                BackupButton/ExportButton corner: two 32px badges side by side,
-                not one stacked inside the other's column. VMExportButton used
-                to be rendered from INSIDE VMBackupButton — fine while both
-                were text buttons in a vertical stack, wrong once they became
-                square tiles. */}
             <div className="flex items-center gap-1.5">
               <VMBackupButton name={vm.libvirtName} t={t} onBackedUp={onRefresh} running={running} />
               {/* Plain export is an advanced-only extra. */}
@@ -779,18 +615,35 @@ export function VMRow({
         )}
       </div>
 
-      {/* Actions row — ContainerRow's shape, one right-aligned block holding
-          the include toggle. There it also carries UpdateAfterBackupRow
-          stacked under it; VMs have no such setting, and the method that used
-          to sit in that slot moved up into the top row (see its comment
-          above), so this row is now the toggle alone.
-            On a not-installed card too (#232), exactly as on the container
-          card: a deleted VM stays scheduled, and every run tries it again and
-          logs a skip, until this switch goes off. */}
-      <div className="flex items-start">
-        {/* No wrapping `<label>`/`<span>`: IncludeToggle renders the full
-            ToggleRow itself (label included, text-first) — see that
-            component's own comment. */}
+      {installed && vm.renameFrom && (
+        <RenameTakeoverRow
+          key={vm.renameFrom}
+          from={vm.renameFrom}
+          reason={vm.renameReason ?? ""}
+          entry={takeoverEntry}
+          onDone={onRefresh}
+          t={t}
+        />
+      )}
+      {aliases.length > 0 && (
+        <FormerNames
+          aliases={aliases}
+          conflicts={vm.aliasConflicts ?? []}
+          entry={takeoverEntry}
+          onDone={onRefresh}
+          t={t}
+        />
+      )}
+
+      {/* The include toggle shows on a removed VM too: it stays scheduled, and
+          every run tries it again and logs a skip until this switch goes off. */}
+      <div className="flex items-start gap-3">
+        {/* The start of this row is free, so the link picker takes it, as on
+            the container card. */}
+        {installed && vm.lastBackup == null && aliases.length === 0 && linkCandidates.length > 0 && (
+          <LinkEntryPicker candidates={linkCandidates} entry={takeoverEntry} onDone={onRefresh} t={t} />
+        )}
+        {/* IncludeToggle renders its own label. */}
         <div className="ms-auto">
           <IncludeToggle
             name={vm.libvirtName}
@@ -807,22 +660,10 @@ export function VMRow({
         onView={onPlacement}
       />
 
-      {/* Backups / Restore disclosure — ContainerRow's exact block: a chip row
-          holding the section Selector with the last-backup summary pushed to
-          its trailing edge (`ms-auto`), then the content pane below, driven by
-          the shared `openSections` above rather than by state inside the pane.
-          VMs have only the one section (no Folders/Stop/Excludes/Hooks
-          editors), so the Selector carries a single chip — same control, same
-          row, same place, one item instead of five. */}
+      {/* ContainerRow's disclosure block with a single section. */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2 flex-wrap">
-          {/* buttonHeight, same as the container card's own trigger row and
-              the folder card's Backups button. jdp asked whether the VM tab
-              has the same size mismatch (2026-09-11); it does, because it is
-              the same control in the same row - answered from the source
-              rather than from the screen, since the tab is gated behind VM
-              backup being enabled. Fixed in the same pass, so the three cards
-              never ship disagreeing about how big "Backups" is. */}
+          {/* buttonHeight, as on the container and folder cards. */}
           <Selector
             items={[{ id: "backups", label: t("snapshots.title") }]}
             label={t("containers.sectionsLabel")}
@@ -844,15 +685,9 @@ export function VMRow({
         />
       </div>
 
-      {/* Stop a backup that is running (#200). The same control the Folders
-          page has carried since v8.7.0, and the reason it is here now: the
-          answer given on that issue promised it for any running backup, while
-          only folder sets actually had it - the server has accepted the key for
-          every domain all along. Gated exactly as it is there: not on a RESTORE,
-          which has its own control inside the Backups panel with its own warning
-          about a half-restored target, and only while the run is active, so a
-          finished run's last frame does not leave a button that can only answer
-          "nothing to cancel". */}
+      {/* Not during a restore, which has its own cancel in the Backups panel,
+          and only while the run is active, so a finished run leaves no button
+          behind. */}
       {progress && progress.active && progress.phase !== "restore" && (
         <div className="flex justify-end">
           <BackupCancelButton cancelKey={`vm:${vm.libvirtName}`} name={vm.name} t={t} />
@@ -883,10 +718,7 @@ function ScheduleIncludeAllControl({
 }) {
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // whichever of the two buttons was actually clicked — a separate nonce per
-  // direction rather than one shared one, since only run()'s own `include`
-  // argument tells us which.
+  // One shake counter per button, so only the one that was clicked shakes.
   const [shakeInclude, setShakeInclude] = useState(0);
   const [shakeExclude, setShakeExclude] = useState(0);
 
@@ -936,26 +768,17 @@ function ScheduleIncludeAllControl({
   );
 }
 
-// ---------------------------------------------------------------------------
-// VM backup-order panel (#119, VMs) — manual per-VM scheduled-run sequence
-// ---------------------------------------------------------------------------
-
 const VM_BACKUP_ORDER_COLLAPSED_KEY = "bombvault.vmBackupOrderCollapsed";
 
-// VMBackupOrderPanel lets the user arrange the order the scheduled VM run backs
-// VMs up in (mirrors the container BackupOrderPanel, sharing useDragReorder). The
-// orderable set is the schedule-included VMs. It hydrates once from the persisted
-// order (GET /api/vms/backup-order), then reconciles as VMs come and go without
-// discarding an in-progress reorder. Save PUTs the whole displayed sequence
-// (authoritative); Reset PUTs an empty list, returning every VM to the name-order
-// tiebreak.
+// VMBackupOrderPanel sets the order in which the scheduled run backs up the
+// included VMs, like the container BackupOrderPanel. It loads the saved order
+// once, then reconciles as VMs come and go without discarding a reorder in
+// progress. Save puts the whole displayed sequence; Reset puts an empty list,
+// which falls back to name order.
 //
-// `names` (despite the name, kept for minimal diff against the container
-// sibling) holds each VM's raw libvirtName — the value the backend persists
-// and matches on (store.VMTarget rows are keyed by the raw name) — never the
-// display vm.name. `displayByLibvirtName` resolves a row's libvirtName back
-// to its friendly name for rendering and for the tiebreak sort, so a TrueNAS
-// user still sees and alphabetizes by the readable name.
+// `names` holds raw libvirt names, which the backend stores and matches on.
+// `displayByLibvirtName` maps them back to the readable name for display and
+// for the name-order tiebreak.
 function VMBackupOrderPanel({
   vms,
   t,
@@ -963,32 +786,16 @@ function VMBackupOrderPanel({
 }: {
   vms: VM[];
   t: T;
-  /** Rainbow position for THIS panel's own heading notch — GlimStone
-   *  follow-up pass (jdp, live review, emphatic, system-wide standing rule
-   *  after a fifth escalation: "Warum muss ich dich immer wieder extra dran
-   *  erinnern?"): this panel's collapsible-header title was still a plain
-   *  `<span>`, never routed through Badge's tone="heading"/hueIndex the way
-   *  every other static Card heading in the app now is (Dashboard.tsx's
-   *  Card(), Config.tsx's Card, Settings.tsx's Card/ToggleRow) — grepping
-   *  this whole file found zero `hueIndex` usages before this fix. Resolved
-   *  by the caller's own `nextHue()` counter, called DIRECTLY at the JSX
-   *  call site (never handed down as a function for this component to call
-   *  from its own body — that exact shape is what caused the SummaryTier
-   *  regression a commit ago: React doesn't invoke a child component's body
-   *  until after the parent's own render pass has already returned, so a
-   *  `nextHue` prop called from inside a child lands strictly after every
-   *  sibling's own direct call already consumed its slot). Omit for a
-   *  genuine singleton — same rule as every other `hueIndex` call site. */
+  /** Palette position for the panel heading. The caller computes it with
+   *  nextHue() at the call site; a child calling nextHue() itself would run
+   *  after all its siblings and get the wrong slot. */
   hueIndex?: number;
 }) {
   const [savedOrder, setSavedOrder] = useState<VmOrder[] | null>(null);
   const [names, setNames] = useState<string[]>([]);
   const [saveState, setSaveState] = useState<"idle" | "saving">("idle");
   const { push } = useToast();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // whichever button triggered the failed persist() — Save or Reset — kept as
-  // two separate nonces since persist() alone can't tell them apart (both can
-  // call it with an empty order in principle).
+  // persist() cannot tell Save from Reset, so each has its own counter.
   const [shakeSave, setShakeSave] = useState(0);
   const [shakeReset, setShakeReset] = useState(0);
   const hydrated = useRef(false);
@@ -1068,7 +875,7 @@ function VMBackupOrderPanel({
       try {
         localStorage.setItem(VM_BACKUP_ORDER_COLLAPSED_KEY, next ? "1" : "0");
       } catch {
-        /* private mode / quota — collapse just won't persist */
+        /* private mode or quota: the collapse just won't persist */
       }
       return next;
     });
@@ -1107,42 +914,19 @@ function VMBackupOrderPanel({
   if (savedOrder === null) return null;
 
   return (
-    // Rainbow-mode completeness sweep (jdp, live review: "Es sind nicht alle
-    // Buttons in den Regenbogen-Modus eingepflegt"): `.glim-hue` added below,
-    // same fix as Containers.tsx's own identical BackupOrderPanel twin —
-    // `glim-notch-card` alone only wires the reactive-mode hover reveal on
-    // the heading Badge's own notch, it never redefines --accent/
-    // --focus-ring, so the "Save" button further down stayed the flat theme
-    // accent regardless of rainbow even after the title notch itself was
-    // fixed. Same hueIndex prop the Badge already uses.
-    //
-    // relative + glim-notch-card: same "half-overlap card notch" pattern
-    // every other real Card in this app uses (Config.tsx's Card() is the
-    // closest twin — a single div carrying both the visible surface AND the
-    // notch's positioned ancestor, no separate outer wrapper needed since
-    // this box has no overflow-hidden to clip the badge's own -11px poke
-    // above it). glim-notch-card is the hook index.css's card-wide
-    // reactive-hover rule keys off, so hovering anywhere on this panel (not
-    // just the tiny badge glyph) reveals its hue in reactive rainbow mode.
+    // glim-notch-card makes the card the notch's positioned ancestor and lets
+    // hovering anywhere on it reveal the hue in reactive mode. It does not set
+    // --accent, so glim-hue is needed too, or the Save button keeps the flat
+    // theme accent.
     <div
       className={`relative glim-notch-card bg-carbon-surface rounded-card p-4 flex flex-col gap-3${
         hueIndex !== undefined ? " glim-hue" : ""
       }`}
-      style={hueIndex !== undefined ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined}
+      style={hueIndex !== undefined ? (hueVars(hueIndex) as CSSProperties) : undefined}
     >
-      {/* Title notch, always visible regardless of collapse state (matches
-          the PRE-fix behaviour, where title+count stayed visible collapsed
-          and only the hint hid) — moved OUT of the disclosure <button> below:
-          every real tone="heading" call site in this app keeps the Badge as
-          its <h2>'s SOLE child (Dashboard.tsx's Card()/SummaryCell,
-          Config.tsx's Card, this file's own notInstalledTitle below) because
-          size="heading" makes the badge `position: absolute` — a flex-row
-          sibling next to it would render at the badge's own now-vacated
-          in-flow slot instead of after it. The count folds INSIDE the
-          badge's own children instead (Badge's span is `inline-flex gap-1`,
-          built to hold more than one child), same visual "title (N)"
-          pairing as before, just now inheriting the badge's own solid
-          accent-fill/accentContrast ink. */}
+      {/* The Badge is the h2's only child: size="heading" positions it
+          absolutely, so a sibling would land in its vacated slot. The count
+          goes inside the badge instead. Visible even while collapsed. */}
       <h2 className="flex items-center">
         <Badge tone="heading" size="heading" wrap hueIndex={hueIndex}>
           {t("vmBackupOrder.title")}
@@ -1153,13 +937,9 @@ function VMBackupOrderPanel({
           )}
         </Badge>
       </h2>
-      {/* Disclosure toggle, now chevron(+hint)-only: the title text that used
-          to double as this button's accessible name moved into the h2 notch
-          above, so `aria-label` keeps this control genuinely named rather
-          than falling back to nothing once its only other content
-          (`aria-hidden` chevron, hint text hidden while collapsed) has none
-          to offer. `w-full` (unchanged) keeps the full row clickable even
-          though the visible content is now just the chevron while collapsed. */}
+      {/* The title lives in the h2, so aria-label names this button; while
+          collapsed it shows only the hidden chevron. w-full keeps the whole
+          row clickable. */}
       <button
         type="button"
         onClick={toggleCollapsed}
@@ -1173,10 +953,8 @@ function VMBackupOrderPanel({
           viewBox="0 0 12 12"
           fill="none"
           aria-hidden="true"
-          // Disclosure chevron — same RTL rotation scheme as the identical
-          // icon above (form-engine Phase 2 Task 6): closed points start
-          // (right in LTR, `rtl:rotate-180` flips it left), open always
-          // rotates to straight-down in both directions.
+          // Closed points to the reading start (flipped in RTL); open points
+          // down in both directions.
           className={`mt-0.5 shrink-0 text-carbon-textSub transition-transform ${collapsed ? "rtl:rotate-180" : "rotate-90"}`}
         >
           <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
@@ -1213,9 +991,6 @@ function VMBackupOrderPanel({
                   <span className="flex-1 min-w-0 truncate text-sm text-carbon-text">
                     {displayByLibvirtName.get(name) ?? name}
                   </span>
-                  {/* IconTipButton, not plain <button> + `title` — byte-for-
-                      byte the same conversion Containers.tsx's identical
-                      reorder pair got in this pass. See that call site. */}
                   <IconTipButton
                     tip={t("backupOrder.moveUp")}
                     onClick={() => move(i, -1)}
@@ -1243,7 +1018,7 @@ function VMBackupOrderPanel({
               <Button
                 key={shakeReset}
                 label={t("backupOrder.reset")}
-          labelKey="backupOrder.reset"
+                labelKey="backupOrder.reset"
                 tone="subtle"
                 onClick={clearOrder}
                 disabled={saveState === "saving"}
@@ -1268,34 +1043,22 @@ function VMBackupOrderPanel({
   );
 }
 
-// ---------------------------------------------------------------------------
-// VMs page
-// ---------------------------------------------------------------------------
-
 export function VMs() {
   const { t } = useT();
-  // One subscription for the whole list rather than one per row — see
-  // Containers.tsx's identical call for the same reasoning.
-  useRainbow();
-  // Advanced-mode flag read directly (not just via the <Advanced> wrapper
-  // below): VMBackupOrderPanel's own hueIndex must only be resolved via
-  // `nextHue()` when the panel will ACTUALLY render — see this function's
-  // own `nextHue()` comment below for why a JSX child's props (including a
-  // `hueIndex={nextHue()}` expression) evaluate eagerly as part of building
-  // the <Advanced> element, regardless of whether <Advanced> itself goes on
-  // to render null.
+  // Read directly rather than relying on <Advanced>: the order panel's
+  // hueIndex={nextHue()} is evaluated when the element is built, even if
+  // <Advanced> then renders nothing, so nextHue() may only run when the panel
+  // will render.
   const { advanced } = useAdvanced();
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
-  // Broader "something is running" signal: any backup/restore/replication in
-  // flight disables the bulk start buttons + shows a hint.
+  // Any backup, restore or replication in flight disables the bulk start
+  // buttons and shows a hint.
   const running = anyActive(useProgress());
   const [vms, setVMs] = useState<VM[]>([]);
   const [loading, setLoading] = useState(true);
-  // Page-level load failure — NOT migrated to a toast (GlimStone follow-up
-  // pass, v8.0.0 audit note): matches Containers.tsx's identical page-level
-  // `error` — a structural "the page failed" condition, not a one-shot
-  // confirmation of a button click.
+  // A failed page load replaces the list, so it stays inline rather than in a
+  // toast.
   const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>(loadSortKey);
   const [search, setSearch] = useState("");
@@ -1304,28 +1067,19 @@ export function VMs() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [discovering, setDiscovering] = useState(false);
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // the Discover button on a failed discover, alongside its existing toast.
   const [shakeDiscover, setShakeDiscover] = useState(0);
 
-  // GlimStone follow-up pass (v8.0.0): the "+N" / error note never
-  // auto-cleared (stuck next to the Discover button until the next click) —
-  // now a toast, mirroring Containers.tsx's identical handleDiscover.
   async function handleDiscover() {
     setDiscovering(true);
     try {
       const res = await discoverVMs();
-      // Both paths reload the list and name what was left out. A failed pass no
-      // longer means nothing happened: the named repositories are searched
-      // before the domain's own, so when the domain's own is what failed, the
-      // rows already found are real and already written - and this page does no
-      // polling, so without the reload the operator reads a true red error over
-      // an unchanged, empty list.
+      // Both paths reload the list and name what was left out. Named
+      // repositories are searched before the domain's own, so a failed pass can
+      // still have written real rows, and this page does not poll.
       if (res.skipped?.length) {
-        // A pass that could not open every repository says so. "+0" and "+3" look
-        // identical whether everything was read or a named repository was switched
-        // off, unresolvable or on a share that did not mount, and the second case
-        // is the one somebody has to act on.
+        // Without this, "+0" looks the same whether every repository was read
+        // or one was switched off, unresolvable or on a share that did not
+        // mount.
         push(t("common.discoverSkipped").replace("{list}", res.skipped.join(", ")), "warn");
       }
       if (res.ok) {
@@ -1354,12 +1108,8 @@ export function VMs() {
         if (n !== read.current) return;
         if (res.ok) {
           setVMs(res.vms ?? []);
-          // Clear on success, which nothing in this file did. A red banner set by
-          // one transient failure (the daemon restarting, a proxy 502) stayed
-          // above the correctly reloaded list for as long as the page was open,
-          // and it also suppressed the empty state and the "no matches" hint, so
-          // the page looked broken until the user navigated away. Files.tsx
-          // clears it explicitly and says why.
+          // A transient failure (a daemon restart, a proxy 502) must not leave
+          // its banner above a reloaded list, hiding the empty state.
           setError(null);
         } else setError(t("vms.loadFailed"));
       })
@@ -1396,9 +1146,9 @@ export function VMs() {
     localStorage.setItem(BACKUP_FILTER_STORAGE_KEY, k);
   }
 
-  // Compose search (#40) + schedule/backup chips (#41) into one predicate applied
-  // BEFORE sort + the live/orphans split, so they combine. VMs have no image, so
-  // the search matches the name only.
+  // Search and the schedule and backup filters form one predicate, applied
+  // before sorting and the split into live VMs and orphans. VMs have no image,
+  // so the search matches the name only.
   const query = search.trim().toLowerCase();
   const filtered = vms.filter((v) => {
     if (query && !v.name.toLowerCase().includes(query)) return false;
@@ -1409,16 +1159,21 @@ export function VMs() {
     return true;
   });
 
-  // Any contained filter off its default narrows the list. The schedule/backup
-  // chips persist to localStorage, so a restored non-"all" value would silently
-  // shrink the list behind the collapsed "Filters" button — surface it via the
-  // trigger's dot. Sort is not a filter (it never hides rows), so it is excluded.
+  // The filters persist in localStorage, so a restored value could shrink the
+  // list behind the collapsed Filters button; the trigger's dot shows it. Sort
+  // never hides rows, so it does not count.
   const filtersActive =
     query !== "" || scheduleFilter !== "all" || backupFilter !== "all";
 
   const sorted = sortVMs(filtered, sortKey);
   const live = sorted.filter((v) => v.state !== "not-installed");
   const orphans = sorted.filter((v) => v.state === "not-installed");
+  // Unfiltered, so a search cannot hide the entry to link. An entry under
+  // another entry's former name is left out, as on the container page.
+  const formerNames = new Set(vms.flatMap((v) => v.aliases ?? []));
+  const notInstalledNames = vms
+    .filter((v) => v.state === "not-installed" && !formerNames.has(v.libvirtName))
+    .map((v) => v.libvirtName);
 
   // When the list has VMs but the filters excluded them all, show a no-match hint
   // (distinct from the "no VMs at all" empty state, which keys off vms.length).
@@ -1440,10 +1195,8 @@ export function VMs() {
     setSelected(allLiveSelected ? new Set() : new Set(live.map((v) => v.libvirtName)));
   }
 
-  // Keep the selection in sync with what's actually visible: when a search or
-  // filter hides a previously-selected VM, drop it, so the bulk-bar count stays
-  // honest and a bulk action — including the DESTRUCTIVE "Restore selected" —
-  // can never overwrite a VM the user can no longer see.
+  // Drop selected VMs that a search or filter hides, so the bulk count stays
+  // right and a bulk restore never overwrites a VM the user cannot see.
   useEffect(() => {
     setSelected((prev) => {
       if (prev.size === 0) return prev;
@@ -1458,9 +1211,6 @@ export function VMs() {
     });
   }, [search, scheduleFilter, backupFilter, vms]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // GlimStone follow-up pass (v8.0.0): the "N ok, N failed" summary was a
-  // persistent inline note (no auto-dismiss); now a one-shot toast, mirroring
-  // Containers.tsx's identical runBulk. Severity follows the result.
   async function runBulk(action: (name: string) => Promise<{ ok: boolean }>) {
     setBulkBusy(true);
     let ok = 0;
@@ -1475,10 +1225,7 @@ export function VMs() {
       }
     }
     setBulkBusy(false);
-    // Same key the Containers twin uses for the identical sentence: the text is
-    // domain-neutral, and a second copy would be a second thing to translate.
-    // As a raw template literal this was hard English in 41 languages, and it
-    // escaped the parity test too, since that test only sees locale tables.
+    // The containers key, since the sentence is domain-neutral.
     push(
       t("containers.bulkResult").replace("{ok}", String(ok)).replace("{fail}", String(fail)),
       fail > 0 ? "warn" : "success"
@@ -1487,12 +1234,11 @@ export function VMs() {
     void loadVMs();
   }
 
-  // Single VM backups AND restores are ASYNC and share the server's
-  // single-flight guard, so firing them in a tight loop would make every call
-  // after the first hit "already running". Run the bulk serially via
-  // fireAndWaitRun: it fires one run (retrying briefly while the previous VM's
-  // guard is still releasing), then waits for the NEW recorded run to finish
-  // before the next — correlated by run id, never by the client clock.
+  // Backups and restores are asynchronous and share the server's single-flight
+  // guard, so a tight loop would get "already running" after the first call.
+  // fireAndWaitRun starts one run (retrying briefly while the previous guard
+  // releases) and waits for that run, matched by run id rather than by the
+  // client clock, to finish.
   function backupSelected() {
     void runBulk((name) =>
       fireAndWaitRun({
@@ -1516,32 +1262,13 @@ export function VMs() {
     );
   }
 
-  // hueSeq/nextHue (GlimStone follow-up pass — see Settings.tsx's own
-  // identical hueSeq/nextHue comment for the full reasoning): a plain,
-  // freshly-reset-every-render counter assigning 0,1,2,... to this page's
-  // heading notches in the exact order the JSX below actually evaluates each
-  // `hueIndex={nextHue()}` call, which for a `cond && (<Badge hueIndex=
-  // {nextHue()} />)` short-circuit is also exactly the order those notches
-  // are, or would be, painted. Two heading notches exist on this page today:
-  // VMBackupOrderPanel's own (advanced-only, gated on `advanced` directly
-  // rather than trusting <Advanced> below — see this component's own
-  // `advanced` doc above) and the not-installed section's (gated on
-  // `orphans.length > 0`, naturally short-circuited by the `&&` chain around
-  // it). Both calls are made DIRECTLY at their JSX call site as a plain
-  // number, never handed down as a function for a child to call from its own
-  // body later — see SummaryTier's own regression, fixed a commit ago in
-  // Dashboard.tsx, for exactly why that shape breaks the ordering.
+  // Hands out heading palette positions in the order the JSX evaluates
+  // nextHue(), reset on every render. Each call sits at its call site and
+  // only runs for a heading that will render.
   let hueSeq = 0;
   const nextHue = () => hueSeq++;
 
   return (
-    // PAGE_SHELL (jdp live-review, "Können wir die nicht überall gleich breit
-    // machen?"): was `gap-6 max-w-5xl`, the same off-standard pair Containers
-    // carried — this page is Containers' structural twin and drifted with it.
-    // jdp did not name this page (it has no sidebar entry on a host without
-    // VMs, so he could not have), which is exactly why it gets swept here in
-    // the same pass rather than surfacing as the same complaint a round later.
-    // See lib/pageShell.ts for the measurement table behind 1152px/40px.
     <div className={PAGE_SHELL}>
       {/* Page heading + Discover (disaster-recovery) action */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -1578,29 +1305,16 @@ export function VMs() {
       )}
       {!loading && !error && vms.length === 0 && (
         <div className="bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
-          {/* No "Add" action here (unlike Receiver/Fleet/Files): this list is a
-              live enumeration of what libvirt/KVM actually reports, not a
-              BombVault-managed list to add to. The page's own Discover button
-              above (disaster-recovery re-scan) is already the relevant action
-              for an empty result, so a second button here would be redundant. */}
+          {/* No Add action: the list is what libvirt reports, and Discover
+              above is the action for an empty result. */}
           <EmptyStateIcon icon={IconVM} />
           <p className="text-sm text-carbon-textMuted">{t("vms.empty")}</p>
         </div>
       )}
 
-      {/* VM backup-order panel (#119, VMs) — advanced: arrange the scheduled VM
-          run sequence. Above the list, like the container backup-order card.
-          `advanced ? nextHue() : undefined`, not a bare `nextHue()` inside
-          <Advanced>: a JSX child's own props (this `hueIndex` expression
-          included) evaluate eagerly as part of building the <Advanced>
-          element itself, before <Advanced> ever runs its own `advanced &&
-          when` check — so an unconditional `nextHue()` here would burn a
-          slot every render regardless of whether the panel actually paints,
-          landing the not-installed section's own notch below one index late
-          whenever Advanced mode is off. Gating on the same `advanced` flag
-          read directly above keeps the counter honest: only increment for a
-          notch that will actually render, exactly like Dashboard.tsx's own
-          advancedOnly blocks pre-filtering before ever calling nextHue(). */}
+      {/* Gated on `advanced` as well: the hueIndex expression is evaluated
+          even when <Advanced> renders nothing, and would push the
+          not-installed heading one position late. */}
       {!loading && !error && (
         <Advanced>
           <VMBackupOrderPanel vms={vms} t={t} hueIndex={advanced ? nextHue() : undefined} />
@@ -1670,8 +1384,8 @@ export function VMs() {
           </span>
           <Button
             label={t("vms.backupSelected")}
-          labelKey="vms.backupSelected"
-          hueIndex={BULK_HUE.backup}
+            labelKey="vms.backupSelected"
+            hueIndex={BULK_HUE.backup}
             tone="accent"
             onClick={backupSelected}
             disabled={bulkBusy || running.active}
@@ -1717,35 +1431,19 @@ export function VMs() {
               onPlacement={(next) => placeVM(v.libvirtName, next)}
               selected={selected.has(v.libvirtName)}
               onToggleSelect={() => toggleSelect(v.libvirtName)}
+              linkCandidates={notInstalledNames}
               index={i}
             />
           ))}
         </div>
       )}
 
-      {/* Orphan VMs — no longer defined on the host but still have backups */}
+      {/* VMs gone from the host that still have backups. */}
       {!loading && orphans.length > 0 && (
         <div className="flex flex-col gap-3 glim-content-fade">
-          {/* The same heading component as Containers.tsx's not-installed
-              section (#232), which also fixed the badge covering the hint.
-              `hueIndex={nextHue()}` (GlimStone follow-up pass, proactive sweep
-              of this same file): VMBackupOrderPanel's own notch above can
-              render on the very same page (Advanced mode on + at least one
-              orphaned VM), so this one is threaded through the same page-wide
-              `nextHue()` counter, in render order after that panel's own call,
-              and the two never collide on the same rainbow position. */}
           <NotInstalledHeading tip={t("vms.notInstalledHint")} hueIndex={nextHue()} t={t} />
-          {/* Continues the live list's index sequence (live.length + i)
-              instead of restarting at 0. Both sections render on the same
-              page at once, so a second sequence starting at 0 would hand the
-              first orphan the first live row's colour, the second orphan the
-              second live row's, and so on down the overlap — a colour
-              repeating inside what a reader takes for one list. Offsetting
-              makes the two sections one continuous sequence instead. Past the
-              eighth row the 8-colour palette still cycles, here as in any
-              long list (rainbowColorAt in lib/appearance.ts is
-              i % palette.length); that is intended, because a repeat then
-              lands a full palette apart rather than adjacent. */}
+          {/* Continues the live list's colour sequence, so the first orphan
+              does not repeat the first live row's colour. */}
           {orphans.map((v, i) => (
             <VMRow
               key={v.libvirtName}

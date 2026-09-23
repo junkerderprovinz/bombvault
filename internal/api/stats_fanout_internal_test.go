@@ -1,20 +1,5 @@
 package api
 
-// Repo-size sampling must not pile up.
-//
-// The throttle above every sampling path reads the newest repo_stats row, and
-// that row is written only when a sample FINISHES. So while one sample walks the
-// repo, the throttle still sees the old timestamp and waves the next caller
-// through. On a container round that was one three-command probe per container,
-// all against the repo the round was writing to, all with --no-lock so nothing
-// blocked and nothing reached the log. Reported as a box pinned at 90-100% CPU
-// for a whole round, with `ps` showing nine concurrent restic processes
-// (issue #189).
-//
-// What is pinned here: the in-flight guard, the throttle taking over once a
-// sample lands, the budget check measuring instead of sampling, and the per-item
-// call sites going through the round-aware hook.
-
 import (
 	"context"
 	"os"
@@ -29,13 +14,13 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// statsFakeEngine records what was asked of restic and can hold a caller inside
-// Snapshots, which is CollectStats' first engine call — the point at which the
-// in-flight slot is already taken and the expensive part has not started.
+// statsFakeEngine records the restic calls and can hold a caller inside
+// Snapshots. That is CollectStats' first engine call, made after the in-flight
+// slot is taken.
 type statsFakeEngine struct {
 	ResticEngine
 	entered chan struct{} // signalled once per Snapshots call
-	release chan struct{} // ONLY the first Snapshots call waits on this
+	release chan struct{} // only the first Snapshots call waits on this
 
 	mu       sync.Mutex
 	calls    []string // "snapshots", then each stats mode
@@ -59,9 +44,8 @@ func (e *statsFakeEngine) Snapshots(_ context.Context, _ string, _ restic.Mode) 
 	if e.entered != nil {
 		e.entered <- struct{}{}
 	}
-	// Only the FIRST caller is held. A later one must be free to run to
-	// completion, or a broken guard would deadlock this test instead of failing
-	// it, and a deadlocked test says nothing about what it was meant to pin.
+	// Hold only the first caller, so a broken guard fails the test instead of
+	// deadlocking it.
 	e.mu.Lock()
 	hold := e.release != nil && !e.heldOnce
 	e.heldOnce = true
@@ -114,9 +98,10 @@ func statsTestService(t *testing.T, eng ResticEngine) (*Service, *store.Repo) {
 	}, st
 }
 
-// A second sample cannot start while one is in flight. The first caller is held
-// inside Snapshots, which is what makes this deterministic rather than a race
-// the test hopes to lose: the slot is provably taken when the assertion runs.
+// The throttle reads the newest repo_stats row, which is written only when a
+// sample finishes, so it cannot stop a second sample while one is running; the
+// in-flight guard does. Holding the first caller inside Snapshots makes the
+// test deterministic.
 func TestStatsSampleDoesNotStackUp(t *testing.T) {
 	eng := &statsFakeEngine{entered: make(chan struct{}, 4), release: make(chan struct{})}
 	svc, _ := statsTestService(t, eng)
@@ -130,8 +115,8 @@ func TestStatsSampleDoesNotStackUp(t *testing.T) {
 		t.Fatal("the first sample never reached the engine")
 	}
 
-	// The slot is held. Every further caller must return without touching restic,
-	// which is the whole point: these are the other 43 containers of the round.
+	// Further callers, like the other items of a round, return without running
+	// restic.
 	for i := 0; i < 3; i++ {
 		if err := svc.collectStatsGuarded(context.Background(), "containers", "local"); err != nil {
 			t.Fatalf("a sample that finds one in flight must skip quietly, got %v", err)
@@ -151,8 +136,8 @@ func TestStatsSampleDoesNotStackUp(t *testing.T) {
 	}
 }
 
-// Once a sample has landed, the ordinary throttle takes over — and the slot is
-// free again, so this also pins that the guard releases.
+// Once a sample has landed the throttle takes over, which also shows the guard
+// was released.
 func TestStatsSampleThrottledAfterOneLands(t *testing.T) {
 	eng := &statsFakeEngine{}
 	svc, st := statsTestService(t, eng)
@@ -204,10 +189,9 @@ func (e *failingStatsEngine) Snapshots(_ context.Context, _ string, _ restic.Mod
 	return nil, os.ErrDeadlineExceeded
 }
 
-// The growth-budget check needs one number, and it now costs one restic run.
-// It used to call CollectStats: three runs, two of them computed and discarded,
-// plus a repo_stats row per container that both polluted the Storage card's
-// series and closed the throttle on the real once-a-day sample.
+// The growth-budget check needs one number, so it runs restic once and writes
+// no repo_stats row. A row per container would clutter the Storage card and
+// hold off the daily sample.
 func TestPrimaryRemoteBudgetMeasuresWithoutSampling(t *testing.T) {
 	eng := &statsFakeEngine{}
 	svc, st := statsTestService(t, eng)
@@ -217,10 +201,8 @@ func TestPrimaryRemoteBudgetMeasuresWithoutSampling(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// The domain's OWN repository is the remote one. That is what the whole
-	// feature is about, and since #204 it has to be said explicitly: an item can
-	// be pointed at a named remote repository that is NOT the primary, and the
-	// budget, the alarm text and the latch key here all belong to the primary.
+	// The domain's own repository is the remote one. An item can use another
+	// named repository, but the budget, alarm and latch key belong to the primary.
 	settings.ContainersPath = "s3:example.com/bucket/repo"
 	if err := st.UpdateSettings(settings); err != nil {
 		t.Fatal(err)
@@ -241,15 +223,10 @@ func TestPrimaryRemoteBudgetMeasuresWithoutSampling(t *testing.T) {
 	}
 }
 
-// TestPrimaryRemoteBudgetIgnoresAnItemsOwnRepository pins the other half.
-//
-// Every call site passes the repository the ITEM it just backed up uses, which
-// since #204 can be a named repository on a different account entirely. The
-// budget it would be measured against comes from the primary-remote row, the
-// alarm names the primary and the latch is keyed "primary:"+domain - so a named
-// repository charged to it produced an over-budget alarm about a repository that
-// is not the primary, and with several items on several named repositories the
-// latch flapped between their sizes.
+// Call sites pass the repository of the item they just backed up, which can be
+// a named repository on another account. The budget, the alarm text and the
+// "primary:"+domain latch belong to the primary, so any other repository is not
+// measured against them.
 func TestPrimaryRemoteBudgetIgnoresAnItemsOwnRepository(t *testing.T) {
 	eng := &statsFakeEngine{}
 	svc, st := statsTestService(t, eng)
@@ -277,9 +254,8 @@ func TestPrimaryRemoteBudgetIgnoresAnItemsOwnRepository(t *testing.T) {
 	}
 }
 
-// The per-item success paths must go through the round-aware hook. A new domain
-// wired straight to maybeCollectStats would reintroduce the fan-out silently:
-// nothing fails, nothing logs, the box just runs hot for the length of a round.
+// A domain wired straight to maybeCollectStats would sample once per item of a
+// round, with no error and no log line to show for it.
 func TestPerItemSuccessPathsUseTheRoundAwareHook(t *testing.T) {
 	src, err := os.ReadFile("service.go")
 	if err != nil {
@@ -291,11 +267,10 @@ func TestPerItemSuccessPathsUseTheRoundAwareHook(t *testing.T) {
 		}
 		if strings.Contains(string(src), `s.maybeCollectStats(ctx, "`+domain+`")`) {
 			t.Errorf("%s's success path calls maybeCollectStats(ctx, ...) directly, which samples "+
-				"once per item during a round — use collectStatsAfterItem", domain)
+				"once per item during a round; use collectStatsAfterItem", domain)
 		}
 	}
-	// The round's own sampling point is the exception, and it is deliberately
-	// spelled with the batch context so it stays easy to tell apart.
+	// The round itself samples once at the end, with the batch context.
 	if !strings.Contains(string(src), `s.maybeCollectStats(bctx, "containers")`) {
 		t.Error("a container round must still sample once, at the end")
 	}

@@ -6,16 +6,15 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestDrillTasks pins the scheduled-drill wiring: a local "subset" integrity check
-// per enabled domain, plus a real off-site "dr" drill for containers, VMs and
-// flash when off-site is configured (v8.0.0: VMs get the same real DR drill as
-// every other domain except config).
+// TestDrillTasks checks the scheduled drills: a local "subset" integrity check
+// per enabled domain, plus an off-site "dr" drill for containers, VMs and flash
+// when off-site is configured.
 func TestDrillTasks(t *testing.T) {
 	base := store.Settings{
 		ContainersEnabled:    true,
 		VMsEnabled:           true,
 		FlashEnabled:         true,
-		OffsiteDrillsEnabled: true, // default on: scheduled off-site DR drills run
+		OffsiteDrillsEnabled: true, // the default
 	}
 
 	t.Run("subset per enabled domain, no dr without off-site", func(t *testing.T) {
@@ -67,8 +66,6 @@ func TestDrillTasks(t *testing.T) {
 		}
 	})
 
-	// #37: opting out of the scheduled off-site DR drill drops the {*,offsite,dr}
-	// tasks but KEEPS the local {*,subset} integrity checks for every enabled domain.
 	t.Run("OffsiteDrillsEnabled false omits dr tasks but keeps local subset", func(t *testing.T) {
 		s := base
 		s.OffsiteDrillsEnabled = false

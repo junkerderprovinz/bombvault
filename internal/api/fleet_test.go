@@ -15,9 +15,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// fleetTestService builds a Service backed by a fresh in-memory store, mirroring
-// drDrillService's shape but with no restic-engine/docker/virsh behavior needed
-// (RunFleetPolls never touches any of them).
+// fleetTestService returns a Service on an in-memory store, along with the
+// store and the app key.
 func fleetTestService(t *testing.T) (*api.Service, *store.Repo, string) {
 	t.Helper()
 	dir := t.TempDir()
@@ -27,9 +26,6 @@ func fleetTestService(t *testing.T) (*api.Service, *store.Repo, string) {
 	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{}), st, appKey
 }
 
-// TestRunFleetPollsHappyPath pins the real peer-poll flow end to end: a fake
-// peer server answers GET /api/fleet/status with a valid token, RunFleetPolls
-// records success plus the peer's reported instance name/version/domains.
 func TestRunFleetPollsHappyPath(t *testing.T) {
 	var gotToken string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -84,10 +80,8 @@ func TestRunFleetPollsHappyPath(t *testing.T) {
 	}
 }
 
-// TestRunFleetPollsWrongTokenFails pins that a peer refusing the presented
-// token (403, as the real fleetGate would answer) is recorded as a failure
-// with a scrubbed detail, and the LAST-GOOD cached scorecard (if any) is left
-// untouched rather than being wiped by a failed poll.
+// A refused token is recorded as a failure, and the last good scorecard stays
+// cached.
 func TestRunFleetPollsWrongTokenFails(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "forbidden", http.StatusForbidden)
@@ -126,8 +120,6 @@ func TestRunFleetPollsWrongTokenFails(t *testing.T) {
 	}
 }
 
-// TestRunFleetPollsSkipsDisabled pins that a disabled peer is never contacted
-// and its poll state is left completely untouched.
 func TestRunFleetPollsSkipsDisabled(t *testing.T) {
 	called := false
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -161,12 +153,8 @@ func TestRunFleetPollsSkipsDisabled(t *testing.T) {
 	}
 }
 
-// TestRunFleetPollsAcceptsSelfSignedCert pins that a peer served over HTTPS
-// with an untrusted (self-signed) certificate is still polled successfully —
-// discovered live: every BombVault instance's own default cert is self-signed
-// and scoped to loopback names, never valid for the real address a peer would
-// actually be reached at, so strict TLS verification here would make the
-// feature fail against a completely standard BombVault install.
+// Every instance serves a self-signed certificate, so a peer behind one must
+// still be polled.
 func TestRunFleetPollsAcceptsSelfSignedCert(t *testing.T) {
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "instanceName": "tower", "version": "8.0.0", "domains": []map[string]any{}})

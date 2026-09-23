@@ -10,10 +10,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// heartbeatFakeEngine embeds ResticEngine (left nil) and overrides only the
-// three methods copyToOffsite's path exercises — the api_test fakeResticEngine
-// isn't visible here (external test package), and the other interface methods
-// are never reached on this path. Same pattern as self_restart_internal_test.go.
+// heartbeatFakeEngine implements only the methods copyToOffsite reaches; the
+// embedded ResticEngine stays nil. Copy blocks until blockCopy is closed.
 type heartbeatFakeEngine struct {
 	ResticEngine
 	blockCopy chan struct{}
@@ -23,10 +21,8 @@ func (f *heartbeatFakeEngine) RepoOpens(context.Context, string, restic.Mode) bo
 
 func (f *heartbeatFakeEngine) Unlock(context.Context, string, bool, restic.Mode) error { return nil }
 
-// Snapshots is reached by CollectStatsAsync's background sampling goroutine
-// (fired whenever no off-site growth budget is set — see copyToOffsiteTarget),
-// which races with the rest of this test; stub it so that background goroutine
-// doesn't panic on the nil-embedded interface. Its result is irrelevant here.
+// Snapshots is called by the background stats sampling that copyToOffsiteTarget
+// starts when no growth budget is set.
 func (f *heartbeatFakeEngine) Snapshots(context.Context, string, restic.Mode) ([]restic.Snapshot, error) {
 	return nil, nil
 }
@@ -38,15 +34,9 @@ func (f *heartbeatFakeEngine) Copy(_ context.Context, _, _ string, _ []string, _
 	return nil
 }
 
-// TestCopyToOffsiteHeartbeatsWhileCopying pins #134: a long-running off-site
-// copy must keep re-publishing its progress event so the frontend's 15s
-// staleness check (web/src/lib/progress.ts STALE_MS) never hides the
-// dashboard's "running" line. Before this fix the event was only published
-// once at start (progBegin) and once at finish (progEnd), so any replication
-// slower than 15s looked like it had silently vanished from the dashboard —
-// reported by a real user against a real off-site upload (bombvault#134).
-// The heartbeat interval is shrunk via the package var so the test itself
-// runs in milliseconds, not real minutes.
+// A long copy has to keep republishing its progress event, or the frontend's
+// staleness check (STALE_MS in web/src/lib/progress.ts) hides it from the
+// dashboard.
 func TestCopyToOffsiteHeartbeatsWhileCopying(t *testing.T) {
 	orig := offsiteProgressHeartbeat
 	offsiteProgressHeartbeat = 3 * time.Millisecond
@@ -82,9 +72,7 @@ func TestCopyToOffsiteHeartbeatsWhileCopying(t *testing.T) {
 		done <- svc.copyToOffsite(context.Background(), "flash", settings, "", []domainRepoRef{ownRef("/local/flash")}, nil)
 	}()
 
-	// Drain events while Copy is still blocked, counting active "offsite:flash"
-	// heartbeats. 3 within the deadline proves the heartbeat is genuinely
-	// periodic, not just the single progBegin event.
+	// Three active events while Copy blocks cannot all be the start event.
 	activeCount := 0
 	deadline := time.After(2 * time.Second)
 loop:
@@ -117,11 +105,9 @@ loop:
 	}
 }
 
-// heartbeatRealProgressFakeEngine's Copy reports ONE real per-snapshot
-// percentage through the CopySink installed in ctx (see progBeginCopySink),
-// exactly like restic.Copy does when it parses a live "packs copied" line,
-// then blocks — so every "offsite:flash" event observed afterwards can only
-// have come from the heartbeat goroutine, never from another real update.
+// heartbeatRealProgressFakeEngine's Copy reports one real percentage through
+// the CopySink in ctx, as restic.Copy does, and then blocks. Every later event
+// comes from the heartbeat.
 type heartbeatRealProgressFakeEngine struct {
 	ResticEngine
 	proceed chan struct{}
@@ -147,21 +133,9 @@ func (f *heartbeatRealProgressFakeEngine) Copy(ctx context.Context, _, _ string,
 	return nil
 }
 
-// TestCopyToOffsiteHeartbeatPreservesRealPercentage is the reviewer's exact
-// repro for the code-review blocker on this fix: before it, the heartbeat
-// unconditionally republished Percent:0 with no SnapshotIndex/SnapshotTotal
-// on the SAME "offsite:<domain>" key every offsiteProgressHeartbeat tick,
-// which — since Publish's map replaces the stored/streamed state wholesale —
-// erased whatever real percentage progBeginCopySink's sink had just reported
-// (e.g. "Replicating snapshot 2 of 4 (63%)" regressing to a bare
-// "Replicating…" on every heartbeat tick). On a slow transfer, where a whole
-// real percentage step can take many seconds, the heartbeat "wins" almost
-// every render. This test drives copyToOffsite for real (not a synthetic
-// event sequence): one real CopyProgress update lands, then several
-// heartbeat ticks fire (the interval is shrunk via the package var) while
-// Copy is still blocked — every one of them must still carry that same real
-// percent/snapshotIndex/snapshotTotal, proving the heartbeat now republishes
-// the last known real value instead of overwriting it.
+// Publish replaces an event wholesale, so a heartbeat carrying a blank frame
+// would erase the real percentage the copy last reported. Every tick must
+// republish the last real values.
 func TestCopyToOffsiteHeartbeatPreservesRealPercentage(t *testing.T) {
 	orig := offsiteProgressHeartbeat
 	offsiteProgressHeartbeat = 3 * time.Millisecond
@@ -213,17 +187,9 @@ loop:
 				}
 				continue
 			}
-			// Every active event from here on — heartbeat-driven, since Copy is
-			// still blocked and can publish no further real update — must still
-			// carry the real values. Regressing to Percent:0/SnapshotIndex:0 here
-			// is exactly the bug this test guards against.
-			// SnapshotTotal is 0 here on purpose: this fake's Snapshots returns
-			// nothing for either repo, so copyToOffsiteTarget's upfront candidate
-			// count is "could not estimate" — and progBeginCopySink now publishes
-			// that unknown honestly instead of widening it to the live index (see
-			// TestProgBeginCopySinkTotal and issue #159's follow-up). What this
-			// test guards is unchanged: every heartbeat tick must republish the
-			// sink's LAST REAL values, not a blank frame.
+			// SnapshotTotal stays 0: the fake's Snapshots returns nothing, so
+			// there is no estimate, and progBeginCopySink publishes that as
+			// unknown (see TestProgBeginCopySinkTotal).
 			if e.Percent != 63 || e.SnapshotIndex != 2 || e.SnapshotTotal != 0 {
 				t.Fatalf("event after the real percentage lost it: %+v", e)
 			}
@@ -251,11 +217,8 @@ loop:
 	}
 }
 
-// TestCopyToOffsiteHeartbeatStopsAfterFinish pins the shutdown-ordering half
-// of #134: once copyToOffsite returns, no further heartbeat can fire — the
-// heartbeat goroutine is stopped (via defer, registered after progEnd so it
-// unwinds FIRST) before the terminal progEnd event, so a late tick can never
-// race past it and resurrect Active:true after the operation is already done.
+// The heartbeat stops before the final progEnd event, so a late tick cannot
+// mark the finished copy active again.
 func TestCopyToOffsiteHeartbeatStopsAfterFinish(t *testing.T) {
 	orig := offsiteProgressHeartbeat
 	offsiteProgressHeartbeat = 3 * time.Millisecond
@@ -279,7 +242,7 @@ func TestCopyToOffsiteHeartbeatStopsAfterFinish(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fake := &heartbeatFakeEngine{} // blockCopy nil: Copy returns immediately
+	fake := &heartbeatFakeEngine{}
 	prog := progress.NewStore()
 	svc := &Service{store: st, engine: fake, progress: prog}
 
@@ -287,34 +250,22 @@ func TestCopyToOffsiteHeartbeatStopsAfterFinish(t *testing.T) {
 		t.Fatalf("copyToOffsite: %v", err)
 	}
 
-	// Subscribe AFTER the call returns and wait several heartbeat intervals:
-	// a still-running goroutine would publish an Active:true tick into this
-	// window; a properly stopped one publishes nothing.
+	// Several heartbeat intervals pass after the call returns; a running
+	// heartbeat would publish into this window.
 	ch, cancel := prog.Subscribe()
 	defer cancel()
 	select {
 	case e := <-ch:
 		t.Fatalf("unexpected event after copyToOffsite returned: %+v", e)
 	case <-time.After(50 * time.Millisecond):
-		// no event — heartbeat goroutine correctly stopped
 	}
 }
 
-// TestProgBeginCopySinkTotal pins what progBeginCopySink publishes as
-// SnapshotTotal, which is the number web/src/lib/progress.ts's
-// offsiteRunProgress divides by to derive the run-level percentage the
-// dashboard and OffsiteIndicator now show (issue #159's follow-up).
-//
-// Three cases, and the first one is the fix:
-//   - no estimate at all (0) stays 0, the documented "unknown" on the wire.
-//     It used to be widened to the live index, which fabricated a plausible
-//     "snapshot 7 of 7" out of nothing — indistinguishable from a genuine
-//     final snapshot, and enough to make a derived run percentage claim ~99%
-//     for a run that had barely started.
-//   - a real estimate is published as-is.
-//   - a real estimate the live index has overtaken IS widened, because there
-//     the estimate is known to have undercounted and "snapshot 3 of 2" would
-//     be worse than a slightly optimistic total.
+// SnapshotTotal is what offsiteRunProgress in web/src/lib/progress.ts divides
+// by. Without an estimate it stays 0, meaning unknown; widening it to the live
+// index would show "snapshot 7 of 7" for a run that has barely started. An
+// estimate the live index has overtaken is widened, since "snapshot 3 of 2"
+// would be worse.
 func TestProgBeginCopySinkTotal(t *testing.T) {
 	cases := []struct {
 		name      string

@@ -1,22 +1,7 @@
-// ---------------------------------------------------------------------------
-// Every motion level answers every motion token.
-//
-// The engine's own rule is that a level is a different NUMBER, never a
-// different animation. That only holds if each level actually carries a number
-// for each dial: a level that omits one inherits the bare root's, which is the
-// LIVELY value - so a quiet level silently keeps a lively number, and the level
-// above the default silently keeps the default's.
-//
-// Both halves have already happened here. The storm block arrived without a
-// page scale, so the level that travels furthest arrived at exactly the size
-// the level below it does. And a tilt added to the lively default without a `0`
-// in the quiet blocks would have rotated the page for somebody who asked for
-// less movement - the first thing such a person would notice.
-//
-// So: the quiet levels must name every dial the lively default names, and the
-// storm must too. The exceptions are listed, each with its reason, because an
-// exception that cannot be explained is a gap.
-// ---------------------------------------------------------------------------
+// Every motion level answers every motion token. A level that omits one
+// inherits the bare :root value, which is the lively one, so a quiet level
+// would keep a lively number and the storm would keep the default's. Allowed
+// omissions are listed with their reason.
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -24,48 +9,35 @@ import { describe, expect, it } from "vitest";
 
 const RAW = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "index.css"), "utf8");
 
-// Comments out first, and here it is load-bearing rather than tidy: the bare
-// root block carries a long note that NAMES the token families it is about
-// ("Shape-morph (--motion-shape-*)"), so a scan that reads comments counts
-// seven prose mentions as declarations and then reports them missing from
-// every other level. Replaced with blanks so every offset stays where it was.
+// Comments are blanked, keeping offsets, because the notes in the bare root
+// block name token families ("--motion-shape-*") that would count as
+// declarations.
 const CSS = RAW.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "));
 
-/** The tokens declared in one `:root...{ }` block, by selector. */
-function tokensOf(selector: string): Set<string> {
-  const at = CSS.indexOf(selector + " {");
-  if (at < 0) return new Set();
-  const end = CSS.indexOf("\n}", at);
-  const body = CSS.slice(at, end);
-  return new Set([...body.matchAll(/(--motion-[a-z-]+)\s*:/g)].map((m) => m[1]));
-}
-
-/**
- * The lively default is a BARE `:root` block, which the file has several of -
- * colours, shapes and the motion dial all declare on one. So it is found by
- * what it contains rather than by being first, and the difference is not
- * pedantic: keyed on the first `:root {` this guard compared an empty set
- * against three full ones and passed every level.
- */
-function livelyDefaults(): Set<string> {
-  const marker = CSS.indexOf("--motion-page-travel:");
-  const at = CSS.lastIndexOf(":root {", marker);
-  return tokensOf2(at);
-}
-
-function tokensOf2(at: number): Set<string> {
+/** The tokens declared in the block that starts at `at`. */
+function tokensAt(at: number): Set<string> {
   if (at < 0) return new Set();
   const body = CSS.slice(at, CSS.indexOf("\n}", at));
   return new Set([...body.matchAll(/(--motion-[a-z-]+)\s*:/g)].map((m) => m[1]));
 }
 
+/** The tokens declared in one `:root...{ }` block, by selector. */
+function tokensOf(selector: string): Set<string> {
+  return tokensAt(CSS.indexOf(selector + " {"));
+}
+
 /**
- * Dials a level may legitimately leave to the default.
- *
- * A curve is the one honest omission for a QUIETER level: asking for less
- * movement does not mean asking for a different easing, and the shorter
- * duration is what carries the change. A LIVELIER level has no such excuse,
- * which is why `storm` is not in here.
+ * The tokens of the bare `:root` block that holds the lively defaults. The file
+ * has several bare `:root` blocks, and the first declares no motion token.
+ */
+function livelyDefaults(): Set<string> {
+  const marker = CSS.indexOf("--motion-page-travel:");
+  return tokensAt(CSS.lastIndexOf(":root {", marker));
+}
+
+/**
+ * QUIET_MAY_OMIT lists the curves: a quieter level changes duration, not
+ * easing. A livelier level gets no such exemption, so storm must declare them.
  */
 const QUIET_MAY_OMIT = new Set(["--motion-shape-ease", "--motion-wipe-ease", "--motion-toast-ease"]);
 
@@ -73,7 +45,7 @@ describe("motion tokens", () => {
   const lively = livelyDefaults();
 
   it("declares the lively default on the bare root", () => {
-    // If this ever drops to a handful, the sets below are comparing nothing.
+    // With only a handful, the comparisons below would check nothing.
     expect(lively.size).toBeGreaterThanOrEqual(20);
   });
 
@@ -86,20 +58,15 @@ describe("motion tokens", () => {
   }
 
   it("storm answers every dial, curves included", () => {
-    // A level asking for MORE that inherits the default's gentler curve gets a
-    // longer animation on a softer spring, which reads as sluggish rather than
-    // wilder - and the block looks complete while it does.
+    // A livelier level on the default's gentler curve reads as sluggish rather
+    // than wilder.
     const mine = tokensOf(':root[data-motion="storm"]');
     const missing = [...lively].filter((t) => !mine.has(t));
     expect(missing).toEqual([]);
   });
 
-  // The page tilt used to be checked here, as zero wherever somebody asked for
-  // less movement. There is no tilt at any level now, and no scale either:
-  // both were what made the page entrance nest transforms with the elements
-  // animating inside it, which is #228. lib/pageEnterFlat.test.ts is the guard
-  // that replaced this one, and it checks the stronger thing - that neither
-  // dial exists at all, rather than that the quiet levels neutralise it.
+  // Travel is the page's only spatial dial; lib/pageEnterFlat.test.ts checks
+  // that tilt and scale do not exist.
   it("keeps the page's one spatial dial answered at every level", () => {
     for (const level of ["subtle", "off", "storm"]) {
       const at = CSS.indexOf(`:root[data-motion="${level}"] {`);

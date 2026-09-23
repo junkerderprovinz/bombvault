@@ -1,20 +1,9 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// The Self-backup Card's on/off toggle remembers the cadence it switched off.
-//
-// The toggle writes the literal "off" over configSchedule, which is the only
-// place that cadence is stored. Switching back on then wrote the shipped
-// "daily 02:00" default, so a user who had set "weekly Sun 04:00", switched the
-// schedule off and switched it on again silently got a different schedule than
-// the one they had configured — with the confirmation toast reporting a
-// successful save either way. The FlashZipExportCard's rememberedKeep is the
-// sibling that already did this correctly.
-//
-// The remembered value lives for this page's lifetime, exactly like
-// rememberedKeep's: once "off" is on the server the old string is genuinely
-// gone. A reload therefore falls back to the default, which the last test pins
-// so nobody mistakes the limit for a bug.
-// ---------------------------------------------------------------------------
+// The Self-backup Card's toggle writes "off" over configSchedule, the only
+// place its cadence is stored, so switching back on has to restore the
+// cadence it replaced rather than the shipped default. Like
+// FlashZipExportCard's rememberedKeep, the value lives for the page's
+// lifetime only; after a reload the default is all there is.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { I18nProvider, en } from "../lib/i18n";
@@ -125,9 +114,7 @@ async function renderSchedulesTab() {
   });
 }
 
-/** The Self-backup Card's switch, by the accessible name its label gives it.
- *  The Card title carries the same string, so the role filter is what
- *  distinguishes the control from its heading. */
+/** The Card title carries the same name, so the role picks the switch. */
 function selfBackupToggle() {
   return screen.getAllByRole("switch", { name: en["settings.schedulesSelfBackup"] })[0];
 }
@@ -176,9 +163,8 @@ describe("self-backup schedule toggle", () => {
   });
 
   it("falls back to the default when it has nothing to restore", async () => {
-    // A page that loads with the schedule already off has never seen a cadence
-    // to remember: the server keeps one string per domain, so the old value is
-    // gone. Switching on then legitimately offers the shipped default.
+    // Loaded with the schedule already off, the page has no cadence to
+    // remember.
     settingsOnServer = baseSettings({ configSchedule: "off" } as Partial<Settings>);
     await renderSchedulesTab();
 

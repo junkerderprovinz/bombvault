@@ -7,16 +7,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/spike"
 )
 
-// ---------------------------------------------------------------------------
-// Helper probes for injection
-// ---------------------------------------------------------------------------
-
 func alwaysOK(_ spike.Deps) (string, error)   { return "ok", nil }
 func alwaysFail(_ spike.Deps) (string, error) { return "", errors.New("probe failed") }
-
-// ---------------------------------------------------------------------------
-// Run tests
-// ---------------------------------------------------------------------------
 
 func TestRunAllPassReturnsAllOK(t *testing.T) {
 	probes := []spike.Probe{
@@ -66,8 +58,7 @@ func TestRunOneFailYieldsNotAllOK(t *testing.T) {
 	}
 }
 
-func TestRunFailingProbeDoesNotPanic(t *testing.T) {
-	// A probe that panics must be recovered gracefully.
+func TestRunRecoversPanickingProbe(t *testing.T) {
 	panicProbe := func(_ spike.Deps) (string, error) {
 		panic("unexpected panic in probe")
 	}
@@ -75,7 +66,6 @@ func TestRunFailingProbeDoesNotPanic(t *testing.T) {
 		{Name: "panic-probe", Fn: panicProbe},
 	}
 
-	// Must not panic the test process.
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatalf("Run let a probe panic escape: %v", r)
@@ -98,16 +88,13 @@ func TestRunEmptyProbesReturnsAllOK(t *testing.T) {
 	}
 }
 
-// TestRunBestEffortFailDoesNotGateAllOK verifies that a failing best-effort
-// probe (e.g. libvirt / qemu-img / rclone) is recorded as OK=false but does
-// not lower AllOK when all gating probes pass.
 func TestRunBestEffortFailDoesNotGateAllOK(t *testing.T) {
 	probes := []spike.Probe{
-		{Name: "docker", Fn: alwaysOK},                       // gating
-		{Name: "restic", Fn: alwaysOK},                       // gating
-		{Name: "libvirt", Fn: alwaysFail, BestEffort: true},  // optional
-		{Name: "qemu-img", Fn: alwaysFail, BestEffort: true}, // optional
-		{Name: "path-writable", Fn: alwaysOK},                // gating
+		{Name: "docker", Fn: alwaysOK},
+		{Name: "restic", Fn: alwaysOK},
+		{Name: "libvirt", Fn: alwaysFail, BestEffort: true},
+		{Name: "qemu-img", Fn: alwaysFail, BestEffort: true},
+		{Name: "path-writable", Fn: alwaysOK},
 	}
 	checks, allOK := spike.Run(spike.Deps{}, probes)
 	if !allOK {
@@ -116,7 +103,6 @@ func TestRunBestEffortFailDoesNotGateAllOK(t *testing.T) {
 	if len(checks) != 5 {
 		t.Fatalf("expected 5 checks, got %d", len(checks))
 	}
-	// Verify the best-effort failures are still reported as !OK.
 	for _, c := range checks {
 		if (c.Name == "libvirt" || c.Name == "qemu-img") && c.OK {
 			t.Fatalf("best-effort probe %q must be reported as OK=false", c.Name)
@@ -127,12 +113,10 @@ func TestRunBestEffortFailDoesNotGateAllOK(t *testing.T) {
 	}
 }
 
-// TestRunGatingFailStillLowersAllOK confirms that a non-best-effort probe
-// failure does lower AllOK even when best-effort probes also pass.
-func TestRunGatingFailStillLowersAllOK(t *testing.T) {
+func TestRunGatingFailLowersAllOK(t *testing.T) {
 	probes := []spike.Probe{
-		{Name: "docker", Fn: alwaysFail},                  // gating — fails
-		{Name: "libvirt", Fn: alwaysOK, BestEffort: true}, // optional — passes
+		{Name: "docker", Fn: alwaysFail},
+		{Name: "libvirt", Fn: alwaysOK, BestEffort: true},
 	}
 	_, allOK := spike.Run(spike.Deps{}, probes)
 	if allOK {
@@ -152,10 +136,6 @@ func TestRunNameAndDetailPopulated(t *testing.T) {
 		t.Fatalf("expected detail 'detail-text', got %q", checks[0].Detail)
 	}
 }
-
-// ---------------------------------------------------------------------------
-// DefaultProbes smoke test — just ensure they construct without panic.
-// ---------------------------------------------------------------------------
 
 func TestDefaultProbesConstruct(t *testing.T) {
 	probes := spike.DefaultProbes()

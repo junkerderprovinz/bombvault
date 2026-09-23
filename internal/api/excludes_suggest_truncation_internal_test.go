@@ -10,17 +10,13 @@ import (
 	"testing"
 )
 
-// ---------------------------------------------------------------------------
-// Issue #175 — a scan that cannot finish must never hand back a fraction
-// dressed up as a total, and must never silently drop the folder the user came
-// for. The pre-existing TestScanExcludeCandidatesTimeBound cancels BEFORE the
-// walk starts, so it only ever asserted "truncated=true, zero candidates" and
-// never touched the mechanism behind either defect. These do.
-// ---------------------------------------------------------------------------
+// A scan that cannot finish must not present a fraction as a total, and must
+// not drop the folder the user is looking for. These tests abort in the middle
+// of the walk to reach the code behind both.
 
-// countdownCtx expires after n Err() probes, which makes a mid-walk abort
-// EXACT rather than a race against a wall clock: scanExcludeCandidates probes
-// ctx.Err() once per walk callback, so n names the entry the walk stops on.
+// countdownCtx expires after n Err() calls. scanExcludeCandidates checks
+// ctx.Err() once per walk callback, so n picks the entry the walk stops on
+// without racing a clock.
 type countdownCtx struct {
 	context.Context
 	left *int
@@ -49,8 +45,8 @@ func candByRel(cands []suggestCandidate) map[string]suggestCandidate {
 	return out
 }
 
-// midWalkTree writes the fixture both truncation tests use. Walk order is
-// lexical depth-first, which pins the abort point exactly:
+// midWalkTree writes the fixture of the truncation tests. The walk is lexical
+// depth-first:
 //
 //	1 root  2 aaa  3 aaa/f.bin  4 bbb  5 bbb/g.bin  6 bbb/sub  7 bbb/sub/f.bin
 //	8 ccc  9 ccc/f.bin
@@ -64,10 +60,8 @@ func midWalkTree(t *testing.T) string {
 	return root
 }
 
-// TestScanExcludeCandidatesMidWalkTruncation: abort in the MIDDLE of the walk
-// and every candidate still marked complete must carry its real, byte-exact
-// total — the number the full walk would have produced. Anything the abort cut
-// short must say so instead of reporting the fraction it reached.
+// After an abort mid-walk every candidate marked complete carries its full
+// size, and anything cut short says so.
 func TestScanExcludeCandidatesMidWalkTruncation(t *testing.T) {
 	root := midWalkTree(t)
 	o := suggestOpts{maxDepth: suggestMaxDepth, largeBytes: 1000}
@@ -91,17 +85,16 @@ func TestScanExcludeCandidatesMidWalkTruncation(t *testing.T) {
 			t.Fatalf("candidate %q is not in the full-walk result at all: %+v", rel, sc.cands)
 		}
 		if c.size != want.size {
-			t.Fatalf("candidate %q is marked complete with size %d, but its real size is %d — "+
+			t.Fatalf("candidate %q is marked complete with size %d, but its real size is %d; "+
 				"a complete flag on a partial number is exactly defect #175", rel, c.size, want.size)
 		}
 	}
 
-	// aaa finished before the abort: exact, and presented as exact.
+	// aaa finished before the abort.
 	if c, ok := got["aaa"]; !ok || !c.complete || c.size != 3000 {
 		t.Fatalf("aaa should be complete at 3000, got %+v (present=%v)", c, ok)
 	}
-	// bbb was cut short: it holds 1000 of its real 6000 and must NOT claim that
-	// number is the total.
+	// bbb was cut short at 1000 of its 6000 and must not claim that as a total.
 	if c, ok := got["bbb"]; !ok || c.complete || c.size != 1000 {
 		t.Fatalf("bbb should be present as an incomplete 1000, got %+v (present=%v)", c, ok)
 	}
@@ -110,15 +103,13 @@ func TestScanExcludeCandidatesMidWalkTruncation(t *testing.T) {
 	}
 }
 
-// TestWalkDirLexicalDFSInvariant: on abort the incomplete set is EXACTLY the
-// ancestor chain of the stop point — nothing more, nothing less. This is the
-// test a future parallelisation of the walk must break loudly, because a
-// parallel walk invalidates the lexical-DFS derivation and quietly starts
-// stamping "complete" on partial totals again.
+// On abort the incomplete set is exactly the ancestor chain of the stop point.
+// That follows from the lexical depth-first walk; a parallel walk would break
+// it and has to fail here.
 func TestWalkDirLexicalDFSInvariant(t *testing.T) {
 	root := midWalkTree(t)
-	// largeBytes 0 keeps EVERY collected directory in the result, so the assertion
-	// below is over the whole set rather than the qualifying subset.
+	// largeBytes 0 keeps every collected directory, so the assertion covers the
+	// whole set rather than the qualifying subset.
 	o := suggestOpts{maxDepth: suggestMaxDepth, largeBytes: 0}
 
 	sc := scanExcludeCandidates(abortAfter(6), root, nil, o) // stops on bbb/sub/f.bin
@@ -133,12 +124,12 @@ func TestWalkDirLexicalDFSInvariant(t *testing.T) {
 	sort.Strings(incomplete)
 	sort.Strings(complete)
 
-	// The stop point is a FILE, so the folder the walk stopped inside is bbb/sub;
-	// its ancestor chain within the root is bbb/sub and bbb.
+	// The stop point is a file, so the walk stopped inside bbb/sub, whose chain
+	// within the root is bbb/sub and bbb.
 	if want := []string{"bbb", "bbb/sub"}; strings.Join(incomplete, ",") != strings.Join(want, ",") {
 		t.Fatalf("incomplete set = %v, want exactly the stop point's ancestor chain %v", incomplete, want)
 	}
-	// Everything the walk actually finished is exact — no defensive over-marking.
+	// Everything the walk finished is exact.
 	if want := []string{"aaa"}; strings.Join(complete, ",") != strings.Join(want, ",") {
 		t.Fatalf("complete set = %v, want %v (ccc was never reached, so it has no row at all)", complete, want)
 	}
@@ -147,11 +138,8 @@ func TestWalkDirLexicalDFSInvariant(t *testing.T) {
 	}
 }
 
-// TestTruncatedLargeDirNotDropped is the #175 regression test proper, in the
-// reporter's own shape: a lexically LATE large directory whose partial size
-// falls under the threshold. Before the fix the size gate dropped it outright,
-// so a truncated scan did not merely under-report — it hid the single biggest
-// offender and left only a 500-byte cache behind.
+// A lexically late large directory whose partial size falls under the
+// threshold stays in a truncated scan, instead of leaving only a small cache.
 func TestTruncatedLargeDirNotDropped(t *testing.T) {
 	root := t.TempDir()
 	writeSized(t, filepath.Join(root, "Plex", "Cache", "c.bin"), 500)
@@ -160,7 +148,7 @@ func TestTruncatedLargeDirNotDropped(t *testing.T) {
 	o := suggestOpts{maxDepth: suggestMaxDepth, largeBytes: 100000}
 
 	// Full walk: Plex 940500 / Plex/Media 940000 / Plex/Media/zz 900000 /
-	// Plex/Cache 500 — Media is far over the threshold.
+	// Plex/Cache 500. Media is far over the threshold.
 	full := candByRel(scanExcludeCandidates(context.Background(), root, nil, o).cands)
 	if full["Plex/Media"].size != 940000 {
 		t.Fatalf("fixture drifted: Plex/Media's real size is %d, want 940000", full["Plex/Media"].size)
@@ -168,7 +156,7 @@ func TestTruncatedLargeDirNotDropped(t *testing.T) {
 
 	// Walk order: 1 root  2 Plex  3 Plex/Cache  4 Plex/Cache/c.bin  5 Plex/Media
 	// 6 Plex/Media/aa.bin  7 Plex/Media/zz  8 Plex/Media/zz/big.bin. Stopping on
-	// entry 8 leaves Media holding 40000 of its 940000 — under the threshold.
+	// entry 8 leaves Media holding 40000 of its 940000, under the threshold.
 	sc := scanExcludeCandidates(abortAfter(7), root, nil, o)
 	got := candByRel(sc.cands)
 
@@ -188,10 +176,8 @@ func TestTruncatedLargeDirNotDropped(t *testing.T) {
 	}
 }
 
-// TestMaxResultsCapKeepsPartials: the suggestMaxResults cut is the SECOND
-// silent-drop site. The list mixes exact sizes with lower bounds, so a plain
-// truncation can cut a partially measured 55 GB folder in favour of a fully
-// measured small one. Every incomplete candidate must survive the cap.
+// The list mixes exact sizes with lower bounds, so a plain cut could drop a
+// partly measured 55 GB folder for a fully measured small one.
 func TestMaxResultsCapKeepsPartials(t *testing.T) {
 	var cands []suggestCandidate
 	for i := 0; i < 25; i++ {
@@ -220,11 +206,10 @@ func TestMaxResultsCapKeepsPartials(t *testing.T) {
 	}
 }
 
-// TestUnreadableSubtreeMarksAncestorsIncomplete: a subtree the walk could not
-// read leaves its ancestors short by however much it held. Reporting those as
-// finished is the same lie in a quieter form, and messy Unraid appdata trees are
-// exactly where it happens. The walk seam injects the error a real permission
-// failure would deliver (chmod 0 does not stop a directory listing on Windows).
+// An unreadable subtree leaves its ancestors short by whatever it held, which
+// happens a lot in messy Unraid appdata trees. The walk seam injects the error
+// a permission failure delivers, since chmod 0 does not stop a directory
+// listing on Windows.
 func TestUnreadableSubtreeMarksAncestorsIncomplete(t *testing.T) {
 	root := t.TempDir()
 	writeSized(t, filepath.Join(root, "readable", "f.bin"), 3000)
@@ -268,12 +253,11 @@ func TestUnreadableSubtreeMarksAncestorsIncomplete(t *testing.T) {
 	}
 }
 
-// TestCompleteScanUnchanged guards the collector split: a tree that walks to the
-// end must produce byte-identical suggestions — same order, sizes, reasons and
-// suppression as before the refactor — with every candidate complete.
-func TestCompleteScanUnchanged(t *testing.T) {
+// A walk that reaches the end marks every candidate complete and keeps the
+// usual order, sizes, reasons and suppression.
+func TestCompleteScanCandidatesAreExact(t *testing.T) {
 	root := t.TempDir()
-	writeSized(t, filepath.Join(root, "Cache", "tiny.bin"), 10)         // junk by NAME
+	writeSized(t, filepath.Join(root, "Cache", "tiny.bin"), 10)         // junk by name
 	writeSized(t, filepath.Join(root, "Cache", "sub", "more.bin"), 900) // child of junk: suppressed
 	writeSized(t, filepath.Join(root, "data", "deep", "blob.bin"), 2000)
 	writeSized(t, filepath.Join(root, "small", "f.bin"), 10) // under the threshold

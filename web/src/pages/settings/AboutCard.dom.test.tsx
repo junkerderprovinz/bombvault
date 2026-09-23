@@ -1,29 +1,16 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// The About card — the two things about it that are a STANDARD rather than a
-// preference, and that a later edit could quietly undo.
-//
-//   1. The ORDER. GlimStone lays it down for every app in the family: what this
-//      is, then the money with its own button, then the report with its own
-//      buttons, then the versions as a footer. The point of it is the pairing —
-//      each sentence sits directly above the thing it asks for — and the way it
-//      breaks is somebody moving one line, which no type checker and no parity
-//      test can see. Position in the document is therefore what is asserted,
-//      not merely presence.
-//
-//   2. NO ROUTE THIS PRODUCT CANNOT REACH. BombVault has no address of its own,
-//      so the card offers GitHub and says so, and nothing on it may invite a
-//      mail. It has been wrong in that direction once already: the button
-//      pointed at a different product's inbox, which is worse than no contact
-//      route, because somebody writes and then waits.
-// ---------------------------------------------------------------------------
+// The About card's order is a GlimStone standard shared by every app: each
+// sentence sits directly above the button it asks for. Moving one line breaks
+// that without failing a type check, so these tests assert position in the
+// document rather than presence. The card must also never name a contact route
+// it has no button for.
 import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { I18nProvider, en } from "../../lib/i18n";
 import { AboutCard } from "./AboutCard";
 
-// The card asks for the running version on mount. A promise that never settles
-// would leave the footer half-rendered, so this resolves with a real one.
+// The card fetches the running version on mount; without it the footer is
+// only half rendered.
 vi.mock("../../lib/api", () => ({
   getHealth: () => Promise.resolve({ version: "8.3.1" }),
 }));
@@ -40,19 +27,14 @@ function renderCard() {
 
 const where = (el: Element) => Array.from(document.querySelectorAll("*")).indexOf(el);
 
-/** Where a piece of text FIRST appears in the rendered document.
- *
- *  The first match rather than the only one: a button carries its label twice,
- *  once painted and once in the accessible tree for glyph mode, so insisting on
- *  a single match would be asserting something about the Button engine instead
- *  of about this card's order. */
+/** Position of the first element containing text. A button renders its label
+ *  twice (painted and in the accessible tree), so the first match counts. */
 function positionOf(text: string): number {
   return Math.min(...screen.getAllByText(text, { exact: false }).map(where));
 }
 
-/** Where a button sits. By ROLE, not by text: "GitHub" is also a word inside
- *  the sentence above it, so a text search finds the paragraph first and the
- *  order assertion compares a line against itself. */
+/** Found by role because "GitHub" also appears in the sentence above the
+ *  button. */
 function positionOfButton(name: string): number {
   return where(screen.getByRole("button", { name: new RegExp(name, "i") }));
 }
@@ -67,9 +49,8 @@ it("keeps the house order: what it is, the coffee, the report, the versions", ()
   const versions = positionOf("GlimStone");
 
   expect(body).toBeLessThan(coffee);
-  // Each sentence above the thing it asks for: the coffee button belongs to the
-  // coffee sentence and has to sit between it and the next sentence, not in a
-  // row of buttons at the end.
+  // The coffee button belongs to the coffee sentence, not to a row of buttons
+  // at the end.
   expect(coffee).toBeLessThan(coffeeButton);
   expect(coffeeButton).toBeLessThan(report);
   expect(report).toBeLessThan(repoButton);
@@ -77,12 +58,8 @@ it("keeps the house order: what it is, the coffee, the report, the versions", ()
 });
 
 it("runs the give buttons hosted-page first, wallet last", () => {
-  // GlimStone 1.10.0 fixes this order in the language rather than leaving it to
-  // each app: coffee, then PayPal, then the crypto window. It reads as a ramp -
-  // the routes most people already hold an account for, then the one that needs
-  // none and shows no name at either end. This app shipped coffee, crypto,
-  // PayPal for one release, which is the drift a shared card exists to prevent,
-  // and nothing could see it because each button on its own was correct.
+  // GlimStone fixes this order for every app: the routes most people already
+  // have an account for first, then the one that needs none.
   renderCard();
   const coffee = positionOfButton(en["about.coffeeButton"]);
   const paypal = positionOfButton(en["about.paypal"]);
@@ -107,10 +84,8 @@ it("gives the report sentence the extra line above it, and only that one", () =>
 
 it("puts both ways to give under the sentence that asks, and none of them elsewhere", () => {
   renderCard();
-  // Two buttons because they reach different people: the coffee takes a card,
-  // the crypto window takes what somebody already holds in a wallet. Both
-  // belong to the SAME sentence, so both have to sit between it and the next
-  // one — a second row further down would read as a second, unrelated offer.
+  // Both answer the same sentence; a second row further down would read as a
+  // separate offer.
   const coffee = positionOf(en["about.coffee"]);
   const report = positionOf(en["about.report"]);
   for (const key of ["about.coffeeButton", "about.crypto"] as const) {
@@ -122,9 +97,8 @@ it("puts both ways to give under the sentence that asks, and none of them elsewh
 
 it("opens the crypto window on the button, closed until then", () => {
   renderCard();
-  // The window is not merely hidden while it is shut: an address list that is
-  // in the document from the start is one CSS mistake away from being read by
-  // somebody who never asked for it, and one selector away from being copied.
+  // Absent rather than hidden: an address list in the document from the start
+  // is one CSS mistake away from being shown to somebody who never asked.
   expect(screen.queryByRole("dialog")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: new RegExp(en["about.crypto"], "i") }));
   const dialog = screen.getByRole("dialog");
@@ -134,11 +108,8 @@ it("opens the crypto window on the button, closed until then", () => {
 it("names no route without a control, and offers no control the sentence does not name", () => {
   renderCard();
   const sentence = en["about.report"];
-  // The rule rather than today's answer: whichever routes this product has,
-  // the sentence and the buttons under it have to agree. It has been wrong in
-  // both directions already — a mail button pointing at another product's
-  // inbox, and later a sentence that would have promised a mailbox that did
-  // not exist yet. Either way somebody writes and then waits.
+  // Whichever routes the product has, the sentence and the buttons under it
+  // have to agree, or somebody writes and then waits.
   const has = (label: string) =>
     Boolean(screen.queryByRole("button", { name: new RegExp(label, "i") }));
 

@@ -10,9 +10,6 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestFleetPeerEmptyURLRejected pins the empty-URL guard on both Create and
-// Update: a fleet peer with a blank (or whitespace-only) URL addresses nowhere
-// and is refused with ErrEmptyFleetPeer, writing nothing.
 func TestFleetPeerEmptyURLRejected(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -37,11 +34,8 @@ func TestFleetPeerEmptyURLRejected(t *testing.T) {
 	}
 }
 
-// TestFleetPeerCRUD exercises Create/Get/List/Update/Delete and, crucially,
-// that the PEER's fleet token round-trips as ENCRYPTED bytes: the store
-// persists the ciphertext verbatim (never plaintext), and only a holder of
-// this instance's app secret key can decrypt it back to the original token.
-// LastPollOK is nullable and starts NULL (never polled).
+// TestFleetPeerCRUD also checks that the peer's fleet token is stored as
+// ciphertext and decrypts back with this instance's app key.
 func TestFleetPeerCRUD(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -49,8 +43,8 @@ func TestFleetPeerCRUD(t *testing.T) {
 	}
 	r := store.New(db)
 
-	appKey := strings.Repeat("ab", 32) // THIS instance's app secret key
-	peerToken := "deadbeefcafef00d"    // the PEER's fleet_token (what we store)
+	appKey := strings.Repeat("ab", 32) // this instance's app secret key
+	peerToken := "deadbeefcafef00d"    // the peer's fleet_token
 	enc, err := secret.Encrypt(appKey, []byte(peerToken))
 	if err != nil {
 		t.Fatalf("Encrypt: %v", err)
@@ -100,8 +94,7 @@ func TestFleetPeerCRUD(t *testing.T) {
 		t.Fatalf("ListFleetPeers = %+v, want exactly the one created peer", all)
 	}
 
-	// Update: name/enabled change, token untouched when TokenEnc carries the
-	// existing ciphertext forward (mirrors how buildFleetPeer folds an edit).
+	// An edit carries the existing ciphertext forward, as buildFleetPeer does.
 	back.Name = "tower (renamed)"
 	back.Enabled = false
 	if err := r.UpdateFleetPeer(back); err != nil {
@@ -119,7 +112,6 @@ func TestFleetPeerCRUD(t *testing.T) {
 		t.Fatalf("token must survive an update that keeps the same ciphertext: dec=%q err=%v", dec2, err)
 	}
 
-	// UpdateFleetPeerPollResult writes ONLY the last-poll columns.
 	if err := r.UpdateFleetPeerPollResult(got.ID, 1_700_000_000, sql.NullBool{Valid: true, Bool: true}, "", "tower-instance", "1.2.3", `[{"domain":"containers"}]`); err != nil {
 		t.Fatalf("UpdateFleetPeerPollResult: %v", err)
 	}
@@ -132,7 +124,6 @@ func TestFleetPeerCRUD(t *testing.T) {
 		polled.LastPollDomainsJSON != `[{"domain":"containers"}]` {
 		t.Fatalf("UpdateFleetPeerPollResult round-trip mismatch: %+v", polled)
 	}
-	// Name/URL/enabled must be UNCHANGED by a poll-result write (leaving config alone).
 	if polled.Name != "tower (renamed)" || polled.Enabled {
 		t.Fatalf("UpdateFleetPeerPollResult must not touch config columns: %+v", polled)
 	}
@@ -143,7 +134,6 @@ func TestFleetPeerCRUD(t *testing.T) {
 	if _, ok, err := r.GetFleetPeer(got.ID); err != nil || ok {
 		t.Fatalf("GetFleetPeer after delete: ok=%v err=%v, want ok=false", ok, err)
 	}
-	// Deleting a missing id is a harmless no-op.
 	if err := r.DeleteFleetPeer("does-not-exist"); err != nil {
 		t.Fatalf("DeleteFleetPeer(missing id): %v", err)
 	}

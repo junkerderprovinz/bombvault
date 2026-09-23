@@ -6,12 +6,8 @@ import (
 	"testing"
 )
 
-// The 401 that ended issue #194 was not a wrong password and not a missing
-// --private-repos segment. It was one character: the credential set signed in as
-// "bombvault_containers" while the URL began "bombvault-containers". Both values
-// sat in BombVault at the moment it asked, and it said "401 Unauthorized"
-// anyway. These checks pin the comparison to the case it can prove and keep it
-// quiet everywhere it would be guessing.
+// restPathUserMismatch speaks only when it can prove the mismatch and stays
+// quiet wherever it would be guessing.
 func TestRestPathUserMismatch(t *testing.T) {
 	unauthorized := errors.New("restic cat failed: Fatal: unable to open config file: unexpected HTTP response (401): 401 Unauthorized")
 	env := func(user string) []string {
@@ -26,7 +22,7 @@ func TestRestPathUserMismatch(t *testing.T) {
 		want bool
 	}{
 		{
-			name: "the underscore against the hyphen, from the issue",
+			name: "an underscore against a hyphen",
 			err:  unauthorized,
 			repo: "rest:http://192.168.100.29:8000/bombvault-containers/containers",
 			env:  env("bombvault_containers"),
@@ -40,10 +36,8 @@ func TestRestPathUserMismatch(t *testing.T) {
 			want: false,
 		},
 		{
-			// A single segment is an ordinary repository path on a server
-			// running without --private-repos, where the 401 means a wrong
-			// password. Naming a "mismatch" there would send the reader to
-			// rename something that is already right.
+			// Without --private-repos a single segment is an ordinary path and
+			// the 401 means a wrong password.
 			name: "a URL with no user segment says nothing about a user",
 			err:  unauthorized,
 			repo: "rest:http://192.168.100.29:8000/containers",
@@ -65,8 +59,6 @@ func TestRestPathUserMismatch(t *testing.T) {
 			want: false,
 		},
 		{
-			// Every other failure keeps its own words. A destination that is
-			// switched off is not a naming mistake.
 			name: "a failure that is not a refusal",
 			err:  errors.New("restic cat failed: Fatal: unable to open config file: dial tcp 192.168.100.29:8000: connect: connection refused"),
 			repo: "rest:http://192.168.100.29:8000/bombvault-containers/containers",
@@ -91,9 +83,7 @@ func TestRestPathUserMismatch(t *testing.T) {
 			if !c.want {
 				return
 			}
-			// Both words have to be IN it. A message that says the two differ
-			// without saying what they are leaves the reader exactly where the
-			// bare 401 left him.
+			// The message has to name both values, not just say they differ.
 			for _, must := range []string{"bombvault_containers", "bombvault-containers", "--private-repos", "htpasswd"} {
 				if !strings.Contains(got.Error(), must) {
 					t.Errorf("message does not carry %q: %s", must, got)
@@ -106,8 +96,7 @@ func TestRestPathUserMismatch(t *testing.T) {
 	}
 }
 
-// The comparison is worth nothing if the funnel every user-facing error passes
-// through swaps it for the generic two-cause hint on the way out.
+// scrubError must not swap the named mismatch for the generic 401 hint.
 func TestScrubErrorKeepsTheNamedMismatch(t *testing.T) {
 	err := restPathUserMismatch(
 		errors.New("restic cat failed: Fatal: unable to open config file: unexpected HTTP response (401): 401 Unauthorized"),
@@ -152,8 +141,7 @@ func TestRestEnvUser(t *testing.T) {
 	if got := restEnvUser([]string{"RESTIC_REST_USERNAME=tower", "RESTIC_REST_PASSWORD=x"}); got != "tower" {
 		t.Errorf("got %q, want tower", got)
 	}
-	// applyTargetCreds replaces the whole env, but a duplicate would be read by
-	// the child process as the last one wins, so read it the same way.
+	// The child process reads the last of duplicate assignments.
 	if got := restEnvUser([]string{"RESTIC_REST_USERNAME=shared", "RESTIC_REST_USERNAME=tower"}); got != "tower" {
 		t.Errorf("got %q, want the last assignment", got)
 	}

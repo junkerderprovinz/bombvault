@@ -29,56 +29,25 @@ import { placementChanged } from "../lib/placementEvents";
 import { alsoDirectText, directAsk, directUse, retentionLowered } from "../lib/directRepo";
 import { useNewTargetQuestion } from "./placement/NewTargetQuestion";
 
-// The storage-class/immutable badges AND the Test/Edit/Remove buttons in a
-// target row render through Badge at this ONE shared stage, so their heights
-// stay pixel-identical regardless of the <span> vs <button> element
-// underneath — the same mechanism (and the same audit finding class) as
-// ErrorDetailPanel's count-badge + "Resolve"-button pair. "medium" (20px),
-// not "small" (18px, the badges' pre-fix stage) or "large" (24px, the
-// buttons' pre-fix stage): it's the dominant weight everywhere else in the
-// app (see Badge.tsx's file header), so fixing the parity here lands both
-// elements on the app's normal chip size instead of introducing a
-// one-off-large row in an otherwise compact settings panel.
+// The badges and the Test, Edit and Remove buttons of a target row share one
+// size, so spans and buttons in the row have the same height. Medium is the
+// app's usual chip size.
 const ROW_BADGE_SIZE: BadgeSize = "medium";
 
-// ---------------------------------------------------------------------------
-// OffsiteTargetsSection — per-domain "Additional off-site targets" editor
-// (multi-off-site). The PRIMARY off-site target (sortOrder 0, synced from the
-// Settings off-site config) is still edited by the single off-site editor above;
-// this section lists and manages the EXTRA targets (sortOrder > 0) through the
-// off-site-targets CRUD API. It owns no Settings state: every mutation goes
-// straight to the CRUD endpoints, and the section re-fetches its own list.
+// Editor for a domain's additional off-site targets (sortOrder > 0). The
+// primary target (sortOrder 0, synced from the Settings off-site config) has
+// its own editor above. This section owns no Settings state: it calls the
+// off-site-targets API directly and re-reads its list. Every target of a
+// domain replicates on that domain's schedule.
 //
-// No per-target schedule control is exposed: every target of a domain replicates
-// on that domain's off-site schedule (a short help line says so).
-//
-// GENUINE EXCEPTION to Settings.tsx's full-page Speichern-Button sweep (jdp,
-// live review, emphatic: "Die Speicher-Buttons sollen in allen Tabs weg...
-// Nur dort sollen Speicher-Buttons bleiben, wo es unbedingt sein muss."):
-// saveDraft's own Save button, inside the `draft` editor below, stays — the
-// exact same "multi-step DRAFT not meant to take effect until deliberately
-// applied" shape as Settings.tsx's own CloudCredSetsCard (see that
-// component's header comment for the fuller reasoning). openNew() mints a
-// scratch draft (id "") that exists in no list anywhere yet; closeEditor()
-// is an explicit, currently-functioning "discard my edits" affordance
-// auto-saving on every keystroke would silently break, and — worse than
-// CloudCredSetsCard's own case — a NEW target here calls createOffsiteTarget
-// (a real API side effect, a fresh row with its own id) rather than a
-// harmless local-state PATCH, so a half-typed name would create a real,
-// visible, half-configured off-site destination the instant it's typed.
-// ---------------------------------------------------------------------------
+// Unlike the rest of Settings, the editor keeps an explicit Save button. A new
+// target is created through the API when saved, so saving while the user types
+// would create a half-configured destination, and Cancel has to be able to
+// throw a draft away.
 
-// The canonical list, imported rather than re-declared: this file had its own
-// copy that omitted "config", which is half of why self-backup never got a
-// targets section (#176).
 type Domain = OffsiteDomain;
 type T = ReturnType<typeof useT>["t"];
-// "error" was removed from this type — the toast migration below (GlimStone
-// follow-up pass, v8.0.0) replaced that inline-flash outcome with a real
-// toast (push(), further down), so setSaveState now only ever sets
-// "idle"/"saving".
 type SaveState = "idle" | "saving";
-
 
 // A blank draft for a new additional target. sortOrder is assigned at save time so
 // it never shadows the primary (sortOrder 0).
@@ -105,29 +74,13 @@ function emptyDraft(domain: Domain): OffsiteTarget {
   };
 }
 
-// TargetTestButton probes ONE additional target. The primary editor's "Test
-// connection" only ever probes the PRIMARY target, so without this an extra
-// destination could sit broken behind that button's green verdict (issue #138).
-//
-// GlimStone follow-up pass (v8.0.0): the ok/uninit/fail verdict below moved to
-// toasts — this button is the exact near-duplicate of Settings.tsx's
-// TestConnectionButton (same ok/uninit/fail shape, just probing an additional
-// target instead of the primary), which already made this move; this button
-// was apparently just missed in that pass.
+// TargetTestButton probes one additional target. The primary editor's "Test
+// connection" probes only the primary.
 function TargetTestButton({ id, t }: { id: string; t: T }) {
   const { push } = useToast();
   const [busy, setBusy] = useState(false);
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide: "Wenn
-  // etwas fehlschlägt soll der Toggle/Button kurz zittern"): a bumped nonce,
-  // keyed onto this button exactly like every other failing-toast action in
-  // this file (saveDraft's Save button, remove()'s confirm badge below) and
-  // the rest of this session's sweep (Settings.tsx's own TestConnectionButton
-  // twin was left alone — out of THIS file's scope — but the shape is
-  // identical). Only the real "fail" branch shakes, not "warn" — an
-  // uninitialized-but-reachable repo isn't a failure of the test action
-  // itself, the exact same "warn never shakes, fail always does" split
-  // Containers.tsx's backupSelected() already established for its own
-  // 409-vs-real-error branches.
+  // Bumped on a failure to replay the shake. A reachable but uninitialised
+  // repo is a warning, not a failure, and does not shake.
   const [shake, setShake] = useState(0);
 
   async function go() {
@@ -173,18 +126,8 @@ export function OffsiteTargetsSection({
 }: {
   domain: Domain;
   t: T;
-  /** Offsite-tab card-split follow-up (Settings.tsx, jdp: "Die Buttons
-   *  Verbindung testen, Jetzt replizieren, Einrichten, Ziel hinzufügen in
-   *  die Farbengine aufnehmen"): this section's own enclosing per-domain
-   *  offsite Card's hue position, threaded straight through to the "Ziel
-   *  hinzufügen" add-target button below — the SAME value that Card's own
-   *  heading notch already got, not a second independent one. Only that ONE
-   *  button qualifies: Edit/Remove/Test above operate on an EXISTING
-   *  target row and correctly keep their pre-existing neutral/fail tones
-   *  (rule 4 state-adjacent semantics — Remove is destructive, Test's
-   *  verdict is a toast, not the button's own colour), same as
-   *  TestConnectionButton/ReplicateNowButton stay `tone="active"` rather
-   *  than gaining a NEW status meaning. */
+  /** The enclosing Card's hue, for the add-target button. The row buttons act
+   *  on an existing target and stay neutral. */
   hueIndex?: number;
 }) {
   const { push } = useToast();
@@ -196,24 +139,12 @@ export function OffsiteTargetsSection({
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
-  // GlimStone standing rule (system-wide, live review): saveDraft/remove
-  // below already push a "fail" toast on a real failure but, unlike every
-  // other action this session already swept (VMs.tsx, Containers.tsx,
-  // Files.tsx, Fleet.tsx, Receiver.tsx, Config.tsx, RestorePanel.tsx,
-  // IntegrityCard, the rest of Settings.tsx), never bumped the triggering
-  // button's own `.glim-shake`. Only one editor/one confirm-remove row can be
-  // open at a time in this section (`draft`/`confirmRemove` are each a
-  // single value, not per-row maps), so a single nonce per action — same
-  // shape as VMSSHCard's/IntegrityCard's own single `shake` state — covers
-  // whichever row is actually showing that button right now.
+  // One shake nonce per action is enough: only one editor and one remove
+  // confirmation can be open at a time.
   const [saveShake, setSaveShake] = useState(0);
   const [removeShake, setRemoveShake] = useState(0);
-  // Additional named credential sets (#141 stage 2) this target's CredsRef can
-  // pick from. Read through the shared hook, NOT a fetched-once local copy:
-  // the card that creates these sets sits on this very page (Settings' own
-  // Off-site tab renders one of these sections per domain AND
-  // CloudCredSetsCard), so a private copy went stale the moment a set was
-  // added and the new set stayed unselectable until a reload — issue #173.
+  // The shared hook rather than a local copy, because CloudCredSetsCard on the
+  // same page can add a set while this section is mounted.
   const credSets = useCloudCredSets();
   const repos = useNamedRepos();
   const { confirm, confirmDialog } = useConfirm();
@@ -252,11 +183,9 @@ export function OffsiteTargetsSection({
       })
       .catch(() => setLoadErr(t("offsite.targets.loadError")));
   }
-  // domain is fixed for a mounted instance (one per off-site domain block).
-  // Also re-read on the shared broadcast, so a write from ANY section (or from
-  // accepting a fleet mesh offer, which mints a target for its domain) lands
-  // here without a reload — the write paths below announce instead of
-  // refreshing only themselves.
+  // domain is fixed for a mounted instance. The shared broadcast brings in
+  // writes from any section, including a target minted by accepting a fleet
+  // mesh offer.
   useEffect(() => {
     refresh();
     return subscribeOffsiteTargets(refresh);
@@ -278,13 +207,8 @@ export function OffsiteTargetsSection({
     setSaveState("idle");
   }
 
-  // GlimStone follow-up pass (v8.0.0): the "error" flash below is now a
-  // toast — same shape as Files.tsx's FileSetDialog.handleSave (a dialog
-  // editor that closes on success via closeEditor(), so a toast is the only
-  // outcome notice left, success or failure). The client-side repoRequired
-  // check is reachable through the UI (unlike Fleet.tsx/Receiver.tsx's own
-  // dialogs, the Save button here isn't disabled while repo is blank), so it
-  // gets the same push() treatment as the API failure below it.
+  // Save stays enabled while the repo is blank, so the check below is
+  // reachable.
   async function saveDraft() {
     if (!draft) return;
     if (draft.repo.trim() === "") {
@@ -316,9 +240,8 @@ export function OffsiteTargetsSection({
     let exclusionsWritten = true;
     try {
       if (draft.id === "") {
-        // New target: give it a sortOrder strictly greater than 0 (and above any
-        // existing additional target) so a later Settings save can never mistake
-        // it for the primary and overwrite it.
+        // A sortOrder above every existing target, so a later Settings save
+        // cannot mistake the new one for the primary and overwrite it.
         const maxSort = targets.reduce((m, x) => Math.max(m, x.sortOrder), 0);
         const r = await createOffsiteTarget(
           {
@@ -380,13 +303,8 @@ export function OffsiteTargetsSection({
     }
   }
 
-  // BUG FIX (found alongside the saveDraft migration above, GlimStone
-  // follow-up pass v8.0.0): deleteOffsiteTarget resolves {ok:false, error}
-  // rather than throwing on a server-reported failure (e.g. an append-only/
-  // immutable target the backend refuses to remove) — this never checked
-  // `res.ok`, so a refused delete was silently treated as a success:
-  // confirmRemove closed and the list reloaded, with nothing telling the user
-  // why the target reappeared in it. Now checked and surfaced.
+  // deleteOffsiteTarget resolves {ok: false} instead of throwing when the
+  // server refuses, for example for an append-only target.
   async function remove(id: string) {
     setRemovingId(id);
     try {
@@ -438,15 +356,9 @@ export function OffsiteTargetsSection({
           <div className="flex min-w-0 flex-col gap-1">
             <span className="text-sm text-carbon-text truncate">{tgt.name || tgt.repo}</span>
             <span dir="ltr" className="text-xs text-carbon-textMuted font-mono break-all text-start">{tgt.repo}</span>
-            {/* `wrap` on BOTH chips, for the same reason the Dashboard
-                protection badges carry it: they sit in a min-w-0 column that a
-                long `repo` string (rendered break-all above) lets collapse to a
-                fraction of the chip's natural width, so as flex items they get
-                squeezed and their multi-word labels ("Immutable (append-only)",
-                "(provider default)", longer still in most locales) wrap to two
-                or three lines. Without `wrap` the stage's fixed h-* keeps the
-                tinted background one line tall and the extra lines paint
-                outside it. */}
+            {/* A long repo can squeeze this column until the chip labels wrap
+                to several lines; without `wrap` the tinted background would
+                stay one line tall. */}
             <span className="flex flex-wrap gap-2">
               <Badge tone="neutral" size={ROW_BADGE_SIZE} wrap>
                 {tgt.storageClass || t("cloud.storageClass.default")}
@@ -463,20 +375,8 @@ export function OffsiteTargetsSection({
             <Badge as="button" tone="neutral" size={ROW_BADGE_SIZE} onClick={() => openEdit(tgt)}>
               {t("offsite.targets.edit")}
             </Badge>
-            {/* NO bespoke red on either state (both were `tone="fail"`).
-                jdp's wording for this exact control: "Keine Sonderfarbe für
-                den Entfernen-Badge." Commit d336e532 applied that to eight
-                controls but found them by grepping for `statusFail` CLASSES,
-                so this pair — carrying the same red through Badge's own
-                `tone` prop — was invisible to it and stayed red while the
-                Fleet / Receiver / Settings remove buttons beside it all went
-                neutral.
-                  `tone="neutral"` is what the Edit badge one line up already
-                uses, so the row is now one chip family. The two-click inline
-                confirm is untouched and is what actually protects the
-                action: the LABEL flips Entfernen -> Entfernen bestätigen ->
-                Wird entfernt, which is the affordance, not the colour.
-                `glim-shake` on a failed remove survives — behaviour. */}
+            {/* Neutral like Edit, not red. The two-click confirm, whose label
+                changes, is what guards the removal. */}
             {confirmRemove === tgt.id ? (
               <Badge
                 key={removeShake}
@@ -616,7 +516,7 @@ export function OffsiteTargetsSection({
           <div className="flex items-center gap-3 flex-wrap">
             <Button
               label={t("offsite.targets.cancel")}
-          labelKey="offsite.targets.cancel"
+              labelKey="offsite.targets.cancel"
               tone="neutral"
               onClick={closeEditor}
             />
@@ -635,27 +535,6 @@ export function OffsiteTargetsSection({
         </div>
       )}
 
-      {/* Add button (hidden while the editor is open). `tone="active"` +
-          `hueIndex` (offsite-tab card-split follow-up, see this component's
-          own hueIndex doc above): this used to be a plain raw <button>
-          (`bg-carbon-surface`, no hue), the one control jdp's ask named that
-          hadn't even been converted to the shared Badge yet — matches
-          TestConnectionButton/ReplicateNowButton/the Einrichten toggle's own
-          identical conversion in Settings.tsx.
-          GlimStone follow-up round (jdp, live review of the just-hued text
-          badges: "Können wir die Buttons in quadratische Badges mit Glyphen
-          umwandeln?") — a square icon-only badge reusing IconAdd
-          (Sidebar.tsx) verbatim, the exact glyph the task named this button
-          could reuse ("Ziel hinzufügen"/"Add target" is the same add-a-new-
-          row action IconAdd already draws for the Registries card's own
-          add button). `size="icon"` — the app's one square-icon-badge size
-          (32px), not this section's own `ROW_BADGE_SIZE` ("medium", 20px, the
-          text-chip/Edit/Remove/Test row weight, which is a TEXT chip stage,
-          not an icon-badge one). Was `size="field"` (36px), pinned to the
-          off-site repo-url `<input>`'s own measured height; that per-neighbour
-          pinning is exactly the role-based split jdp rejected — see Badge.tsx's
-          "ONE SIZE FOR SQUARE ICON BADGES" block. The visible "Ziel
-          hinzufügen" text survives unchanged as the `tip` tooltip content. */}
       {!draft && (
         <Button
           label={t("offsite.targets.add")}

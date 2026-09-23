@@ -1,19 +1,9 @@
 package api
 
-// DetectEncryption vs. a concurrent settings save.
-//
-// Detection reads the settings row, then probes every configured repository.
-// That probe is the slow part by design: one dead off-site host costs
-// 2 x encryptionProbeTimeout (a minute) while the local repo answers at once,
-// and the Recovery page fires the whole thing on mount. So a settings save
-// landing DURING the probe is not a corner case, it is the normal case for a
-// user working through the recovery wizard.
-//
-// What detection actually determines is one bit: EncryptionEnabled. Writing
-// back the whole row it read a minute ago instead reverts every column the user
-// saved in between — paths, schedules, the login password — while the UI shows
-// those saves as successful. These tests pin that a detection can only ever
-// change the bit it determined.
+// One dead off-site host keeps a detection probing for a minute, and the
+// Recovery page starts one on mount, so a settings save during the probe is
+// the normal case. Detection determines only EncryptionEnabled, and these
+// tests check that it leaves everything else the user saved meanwhile alone.
 
 import (
 	"context"
@@ -27,8 +17,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// gatedEngine reports when a probe has started and blocks it until the test
-// releases it — standing in for the minute a dead backend really costs.
+// gatedEngine signals the start of the first probe and holds it, like a dead
+// backend, until the test releases it.
 type gatedEngine struct {
 	modeStubEngine
 	started chan struct{}
@@ -45,9 +35,6 @@ func (e *gatedEngine) RepoOpensErr(ctx context.Context, repo string, m restic.Mo
 	return e.modeStubEngine.RepoOpensErr(ctx, repo, m)
 }
 
-// TestDetectEncryptionKeepsConcurrentSettingsSave is the regression proof for
-// the lost-update bug: while the probe runs, the user saves unrelated settings.
-// Both writes must survive — the detected mode AND everything the user saved.
 func TestDetectEncryptionKeepsConcurrentSettingsSave(t *testing.T) {
 	eng := &gatedEngine{
 		modeStubEngine: modeStubEngine{encrypted: map[string]bool{}},
@@ -58,7 +45,7 @@ func TestDetectEncryptionKeepsConcurrentSettingsSave(t *testing.T) {
 	repo := mkrepo(t, s, "backups/containers")
 	eng.encrypted[repo] = true
 
-	// Stored mode is WRONG, so the detection has something to apply.
+	// The stored mode is wrong, so the detection has something to apply.
 	settings := setPaths(t, st, map[string]string{"containers": "backups/containers"})
 	settings.EncryptionEnabled = false
 	if err := st.UpdateSettings(settings); err != nil {
@@ -75,15 +62,15 @@ func TestDetectEncryptionKeepsConcurrentSettingsSave(t *testing.T) {
 		done <- result{det, err}
 	}()
 
-	// The probe is now in flight (and stuck, like a dead sftp host).
+	// The probe is in flight and stuck, like a dead sftp host.
 	select {
 	case <-eng.started:
 	case <-time.After(5 * time.Second):
 		t.Fatal("the probe never started")
 	}
 
-	// The user finishes the wizard's Step 2 and saves new paths; another tab
-	// sets a login password. Both land while the probe is still running.
+	// The user saves new paths in the wizard and another tab sets a login
+	// password while the probe is still running.
 	if _, err := st.MutateSettings(func(cur *store.Settings) error {
 		cur.VMsPath = "user/backups/vms-CHOSEN-BY-THE-USER"
 		cur.FilesPath = "user/backups/files-CHOSEN-BY-THE-USER"
@@ -117,27 +104,26 @@ func TestDetectEncryptionKeepsConcurrentSettingsSave(t *testing.T) {
 		t.Fatal("the detected mode was not applied")
 	}
 	if after.VMsPath != "user/backups/vms-CHOSEN-BY-THE-USER" {
-		t.Fatalf("VMsPath = %q — the save made during the probe was reverted", after.VMsPath)
+		t.Fatalf("VMsPath = %q; the save made during the probe was reverted", after.VMsPath)
 	}
 	if after.FilesPath != "user/backups/files-CHOSEN-BY-THE-USER" {
-		t.Fatalf("FilesPath = %q — the save made during the probe was reverted", after.FilesPath)
+		t.Fatalf("FilesPath = %q; the save made during the probe was reverted", after.FilesPath)
 	}
 	if after.RestoreFolder != "user/restores" {
-		t.Fatalf("RestoreFolder = %q — the save made during the probe was reverted", after.RestoreFolder)
+		t.Fatalf("RestoreFolder = %q; the save made during the probe was reverted", after.RestoreFolder)
 	}
 	if after.AuthPasswordHash != "set-while-the-probe-was-running" {
-		t.Fatalf("AuthPasswordHash = %q — a password set during the probe was reverted, i.e. auth silently turned back off", after.AuthPasswordHash)
+		t.Fatalf("AuthPasswordHash = %q; a password set during the probe was reverted and auth turned back off", after.AuthPasswordHash)
 	}
-	// The detection reports the row as it now stands, not the snapshot it read
-	// before the probe.
+	// The detection reports the row as it stands after the save, not the
+	// snapshot it read before the probe.
 	if got.det.EncryptionEnabled != after.EncryptionEnabled {
 		t.Fatalf("reported encryptionEnabled = %v but the row holds %v", got.det.EncryptionEnabled, after.EncryptionEnabled)
 	}
 }
 
-// TestDetectEncryptionUndecidedWritesNothing: an undecidable probe must not
-// write at all — not even the row it read. Otherwise the "we changed nothing"
-// path is still a full-row write and still reverts a concurrent save.
+// An undecided detection must not write the row it read either, or it would
+// still revert a concurrent save.
 func TestDetectEncryptionUndecidedWritesNothing(t *testing.T) {
 	eng := &gatedEngine{
 		modeStubEngine: modeStubEngine{
@@ -188,14 +174,11 @@ func TestDetectEncryptionUndecidedWritesNothing(t *testing.T) {
 		t.Fatal(err)
 	}
 	if after.InstanceName != "renamed-during-an-undecidable-probe" {
-		t.Fatalf("InstanceName = %q — an undecided detection still clobbered a concurrent save", after.InstanceName)
+		t.Fatalf("InstanceName = %q; an undecided detection still clobbered a concurrent save", after.InstanceName)
 	}
 }
 
-// TestDetectEncryptionSharesOneProbePass: two callers arriving together (two
-// browser tabs on the Recovery page, or a reload mid-probe) must share ONE
-// probe pass rather than forking a second set of restic processes at the same
-// repositories.
+// Two callers at once, such as two tabs or a reload mid-probe, share one pass.
 func TestDetectEncryptionSharesOneProbePass(t *testing.T) {
 	eng := &gatedEngine{
 		modeStubEngine: modeStubEngine{encrypted: map[string]bool{}},
@@ -229,9 +212,8 @@ func TestDetectEncryptionSharesOneProbePass(t *testing.T) {
 		}
 		second <- det
 	}()
-	// Give the follower a moment to either join or start its own pass. It cannot
-	// start one without blocking on the gate, so a second probe would show up in
-	// the counter below.
+	// Give the follower time to join or start its own pass; a pass of its own
+	// would show up in the probe count below.
 	time.Sleep(50 * time.Millisecond)
 	close(eng.release)
 
@@ -250,24 +232,22 @@ func TestDetectEncryptionSharesOneProbePass(t *testing.T) {
 	if a.Verdict != b.Verdict || a.EncryptionEnabled != b.EncryptionEnabled {
 		t.Fatalf("the two callers disagree: %+v vs %+v", a, b)
 	}
-	// One pass over one repository probes exactly once (it opens under the first,
-	// encrypted, mode). Two passes would have probed twice.
+	// The repository opens under the first (encrypted) probe, so one pass
+	// probes once.
 	if eng.probes != 1 {
-		t.Fatalf("%d probes — two concurrent callers must share one pass, not run one each", eng.probes)
+		t.Fatalf("%d probes; two concurrent callers must share one pass, not run one each", eng.probes)
 	}
 }
 
-// detectResult pairs what one DetectEncryption caller got back.
+// detectResult is what one DetectEncryption caller got back.
 type detectResult struct {
 	det EncryptionDetection
 	err error
 }
 
-// cancelAwareEngine gates the first probe (a slow backend) and then answers the
-// way restic really does when the probe's context died mid-run: ctxCancelErr
-// wraps the context error, and that message names neither "repository does not
-// exist" nor "unable to open config file", so the repository classifies as
-// UNREACHABLE rather than absent.
+// cancelAwareEngine holds the first probe like a slow backend, then answers as
+// restic does when the probe's context died: the wrapped context error matches
+// no absence wording, so the repository reads as unreachable.
 type cancelAwareEngine struct {
 	modeStubEngine
 	started chan struct{}
@@ -286,13 +266,9 @@ func (e *cancelAwareEngine) RepoOpensErr(ctx context.Context, repo string, m res
 	return e.modeStubEngine.RepoOpensErr(ctx, repo, m)
 }
 
-// TestDetectEncryptionSurvivesTheLeadersCancelledRequest: the caller that
-// happens to lead the shared pass is just whoever arrived first. When ITS
-// browser tab closes mid-probe, the pass must carry on for the callers still
-// waiting on it. Running the probes on the leader's request context instead
-// cancels every one of them, and a cancelled probe reads as "unreachable" — so
-// a follower whose own request is perfectly alive is handed a confident
-// "unknown", reported as a SUCCESS, for a repository that opens fine.
+// The leader of a shared pass is whoever arrived first. When its tab closes
+// mid-probe the pass carries on, or a live follower would be told "unknown"
+// for a repository that opens fine.
 func TestDetectEncryptionSurvivesTheLeadersCancelledRequest(t *testing.T) {
 	eng := &cancelAwareEngine{
 		modeStubEngine: modeStubEngine{encrypted: map[string]bool{}},
@@ -330,7 +306,7 @@ func TestDetectEncryptionSurvivesTheLeadersCancelledRequest(t *testing.T) {
 	}()
 	time.Sleep(50 * time.Millisecond)
 
-	// Now the tab that started it goes away, and only then does the backend answer.
+	// The tab that started it goes away first, and only then does the backend answer.
 	cancelLeader()
 	close(eng.release)
 
@@ -344,7 +320,7 @@ func TestDetectEncryptionSurvivesTheLeadersCancelledRequest(t *testing.T) {
 		t.Fatalf("follower detect: %v", got.err)
 	}
 	if got.det.Verdict != VerdictEncrypted {
-		t.Fatalf("follower verdict = %q (repos: %+v) — the leader's disconnect cancelled the shared probes, so a live caller was told the repositories are unreachable", got.det.Verdict, got.det.Repos)
+		t.Fatalf("follower verdict = %q (repos: %+v); the leader's disconnect cancelled the shared probes, so a live caller was told the repositories are unreachable", got.det.Verdict, got.det.Repos)
 	}
 	if !got.det.EncryptionEnabled {
 		t.Fatal("the detected mode reached no one: a cancelled leader must not cost the followers their answer")
@@ -361,17 +337,13 @@ func TestDetectEncryptionSurvivesTheLeadersCancelledRequest(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !after.EncryptionEnabled {
-		t.Fatal("the detected mode was never applied — the pass died with its leader's request")
+		t.Fatal("the detected mode was never applied; the pass died with its leader's request")
 	}
 }
 
-// TestDetectEncryptionPanicOnTheLeaderReleasesTheFlight: the leader clears the
-// single-flight slot and signals the followers on its way out. If it does that
-// with plain statements, a panic skips both — the flight stays installed for the
-// life of the process (encryption detection dead for every later caller) and the
-// followers park forever on a channel nobody closes. Cleanup must be deferred,
-// and a follower released that way must be told the pass produced nothing rather
-// than handed an empty detection as a success.
+// A panicking leader must still clear the single-flight slot and release its
+// followers with an error. Otherwise detection stays dead for the life of the
+// process and the followers wait forever.
 func TestDetectEncryptionPanicOnTheLeaderReleasesTheFlight(t *testing.T) {
 	eng := &gatedEngine{
 		modeStubEngine: modeStubEngine{encrypted: map[string]bool{}},
@@ -407,9 +379,8 @@ func TestDetectEncryptionPanicOnTheLeaderReleasesTheFlight(t *testing.T) {
 	}()
 	time.Sleep(50 * time.Millisecond)
 
-	// Blow the leader up on its OWN stack, after the probes: the store it writes
-	// the detected mode back through is gone. Any panic on that path does the same
-	// damage; this is only the shortest way to produce one.
+	// Make the leader panic on its own stack after the probes, when it writes
+	// the mode back through a nil store.
 	s.store = nil
 	close(eng.release)
 
@@ -428,8 +399,7 @@ func TestDetectEncryptionPanicOnTheLeaderReleasesTheFlight(t *testing.T) {
 		t.Fatal("the follower is still parked on a flight nobody closed")
 	}
 
-	// And the next caller starts a fresh pass instead of joining a flight that
-	// will never finish.
+	// The next caller starts a fresh pass.
 	s.store = st
 	done := make(chan EncryptionDetection, 1)
 	go func() {

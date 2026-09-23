@@ -17,8 +17,8 @@ type RepoStat struct {
 	Snapshots   int64  `json:"snapshots"`   // snapshot count at sample time
 }
 
-// defaultRepoStatLimit caps an unbounded ListRepoStats request (≈ one sample
-// per day for a year).
+// defaultRepoStatLimit caps an unbounded ListRepoStats request at about a year
+// of daily samples.
 const defaultRepoStatLimit = 365
 
 // AddRepoStat records a repository-size sample.
@@ -34,8 +34,8 @@ func (r *Repo) AddRepoStat(s RepoStat) error {
 	return nil
 }
 
-// LatestRepoStat returns the most recent sample for a domain + source. The bool
-// is false (with a zero RepoStat) when none has been recorded yet.
+// LatestRepoStat returns the most recent sample for a domain and source, or
+// false when none exists.
 func (r *Repo) LatestRepoStat(domain, source string) (RepoStat, bool, error) {
 	row := r.db.QueryRow(`
 		SELECT domain, source, at, raw_size, restore_size, snapshots
@@ -53,15 +53,13 @@ func (r *Repo) LatestRepoStat(domain, source string) (RepoStat, bool, error) {
 	return stat, true, nil
 }
 
-// ListRepoStats returns up to limit samples for a domain + source, oldest first
-// (ascending by `at`) so the dashboard can plot a trend left-to-right. A limit
-// of 0 or less falls back to defaultRepoStatLimit.
+// ListRepoStats returns the newest limit samples for a domain and source,
+// oldest first so the dashboard can plot them left to right. A limit of 0 or
+// less means defaultRepoStatLimit.
 func (r *Repo) ListRepoStats(domain, source string, limit int) ([]RepoStat, error) {
 	if limit <= 0 {
 		limit = defaultRepoStatLimit
 	}
-	// Take the most recent `limit` rows (newest first), then reverse to ascending
-	// so a capped window keeps the latest data, presented oldest-first.
 	rows, err := r.db.Query(`
 		SELECT domain, source, at, raw_size, restore_size, snapshots
 		FROM repo_stats
@@ -84,7 +82,6 @@ func (r *Repo) ListRepoStats(domain, source string, limit int) ([]RepoStat, erro
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	// Reverse to ascending by `at`.
 	for i, j := 0, len(out)-1; i < j; i, j = i+1, j-1 {
 		out[i], out[j] = out[j], out[i]
 	}

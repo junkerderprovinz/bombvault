@@ -9,12 +9,11 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestDeleteBackupsVMUnknownEstablishmentKeepsEntry (#232): without a local
-// repository DeleteBackupsVM removes only the entry, and only once it knows the
-// repository was never created. When the store cannot answer that question the
-// repository may be an established one on a share that is not mounted, with
-// every snapshot still in it, so the entry stays. An internal test because the
-// only way to make that read fail is to break the real schema underneath.
+// TestDeleteBackupsVMUnknownEstablishmentKeepsEntry: without a local repository
+// DeleteBackupsVM removes only the entry, and only when it knows the repository
+// was never created. If the store cannot say, the repository may sit on an
+// unmounted share with every snapshot still in it, so the entry stays. Breaking
+// the schema is the only way to make that read fail.
 func TestDeleteBackupsVMUnknownEstablishmentKeepsEntry(t *testing.T) {
 	dir := t.TempDir()
 	db, err := store.Open(":memory:")

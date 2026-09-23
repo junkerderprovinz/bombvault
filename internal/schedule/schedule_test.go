@@ -10,10 +10,6 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// ---------------------------------------------------------------------------
-// ParseCadence tests
-// ---------------------------------------------------------------------------
-
 func TestParseCadenceOff(t *testing.T) {
 	cad, err := schedule.ParseCadence("off")
 	if err != nil {
@@ -84,7 +80,6 @@ func TestParseCadenceWeeklyAllDays(t *testing.T) {
 	}
 }
 
-// TestParseCadenceWeeklyMultiDOW verifies comma-separated weekday sets.
 func TestParseCadenceWeeklyMultiDOW(t *testing.T) {
 	cad, err := schedule.ParseCadence("weekly Mon,Wed,Fri 02:30")
 	if err != nil {
@@ -98,7 +93,6 @@ func TestParseCadenceWeeklyMultiDOW(t *testing.T) {
 	}
 }
 
-// TestParseCadenceWeeklyMultiDOWCaseInsensitive verifies mixed-case multi-DOW.
 func TestParseCadenceWeeklyMultiDOWCaseInsensitive(t *testing.T) {
 	cad, err := schedule.ParseCadence("weekly mon,WED,fri 00:00")
 	if err != nil {
@@ -109,7 +103,6 @@ func TestParseCadenceWeeklyMultiDOWCaseInsensitive(t *testing.T) {
 	}
 }
 
-// TestParseCadenceWeeklyDuplicateDOW ensures duplicate days are rejected.
 func TestParseCadenceWeeklyDuplicateDOW(t *testing.T) {
 	_, err := schedule.ParseCadence("weekly Mon,Mon 03:00")
 	if err == nil {
@@ -131,8 +124,6 @@ func TestParseCadenceRawCron(t *testing.T) {
 	}
 }
 
-// TestCadencePeriodSeconds covers the RPO period each cadence form implies:
-// daily/weekly/everyN/cron derive from the schedule; off yields 0.
 func TestCadencePeriodSeconds(t *testing.T) {
 	cases := []struct {
 		name    string
@@ -146,23 +137,17 @@ func TestCadencePeriodSeconds(t *testing.T) {
 		{"cron weekly", "15 4 * * 2", 604800},
 		{"off", "off", 0},
 		{"empty", "", 0},
-		// Several weekdays: the RPO window is the LONGEST wait between two
-		// fires, not the first gap the walk happens to land on. Sat+Sun fire a
-		// day apart and then six days apart, so the answer is six days —
-		// reading the first pair called this a daily schedule and put the domain
-		// on warn every Monday and overdue every Tuesday, week after week.
+		// With several weekdays the period is the longest wait between two
+		// fires. Sat and Sun fire a day apart and then six days apart, so the
+		// answer is six days, not one.
 		{"weekly two adjacent days", "weekly Sat,Sun 03:00", 6 * 86400},
 		{"cron two adjacent days", "0 3 * * 0,6", 6 * 86400},
-		// Spread out rather than adjacent: Mon/Wed/Fri leaves Fri→Mon as the
-		// widest gap, three days, not the two-day gaps between the weekdays.
+		// Mon/Wed/Fri: Fri to Mon is the widest gap.
 		{"cron three spread days", "0 3 * * 1,3,5", 3 * 86400},
-		// Every weekday: the weekend is the window, Fri→Mon.
 		{"cron weekdays only", "0 3 * * 1-5", 3 * 86400},
-		// Twice a day stays twelve hours: an even split has one gap, and the
-		// widest-gap rule must not inflate it.
+		// An even split has one gap, and the widest-gap rule must not inflate it.
 		{"cron twice daily", "0 3,15 * * *", 12 * 3600},
-		// Monthly: February is the short month, but the widest gap is the long
-		// one — 31 days between the two 31-day months.
+		// The widest monthly gap is 31 days, not February's 28.
 		{"cron monthly", "0 3 1 * *", 31 * 86400},
 	}
 	for _, c := range cases {
@@ -207,8 +192,6 @@ func TestParseCadenceWeeklyCaseInsensitive(t *testing.T) {
 	}
 }
 
-// TestParseCadenceEveryN verifies basic everyN parsing and that IntervalDays
-// is populated.
 func TestParseCadenceEveryN(t *testing.T) {
 	cad, err := schedule.ParseCadence("everyN 5 03:00")
 	if err != nil {
@@ -225,8 +208,6 @@ func TestParseCadenceEveryN(t *testing.T) {
 	}
 }
 
-// TestParseCadenceEveryNOne verifies that N=1 is valid (effectively daily with
-// the due-gate, which always fires).
 func TestParseCadenceEveryNOne(t *testing.T) {
 	cad, err := schedule.ParseCadence("everyN 1 00:00")
 	if err != nil {
@@ -247,10 +228,10 @@ func TestParseCadenceInvalid(t *testing.T) {
 		"weekly Xyz 03:00",
 		"not a cron at all extra words here",
 		"everyN",
-		"everyN 0 03:00",   // N must be ≥ 1
-		"everyN -1 03:00",  // negative not allowed
-		"everyN abc 03:00", // non-integer
-		"everyN 5",         // missing time
+		"everyN 0 03:00",
+		"everyN -1 03:00",
+		"everyN abc 03:00",
+		"everyN 5",
 	}
 	for _, s := range cases {
 		_, err := schedule.ParseCadence(s)
@@ -260,16 +241,9 @@ func TestParseCadenceInvalid(t *testing.T) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// everyN due-gate logic tests
-// ---------------------------------------------------------------------------
-
-// TestEveryNDueGateSkipsWhenTooSoon verifies the injected lastRun check
-// suppresses the job when the interval has not elapsed.
 func TestEveryNDueGateSkipsWhenTooSoon(t *testing.T) {
 	var ran bool
 
-	// last run was only 1 hour ago; interval = 5 days → must NOT fire.
 	lastRun := func() (time.Time, error) {
 		return time.Now().Add(-1 * time.Hour), nil
 	}
@@ -283,12 +257,9 @@ func TestEveryNDueGateSkipsWhenTooSoon(t *testing.T) {
 	}
 }
 
-// TestEveryNDueGateFiresWhenDue verifies the gate lets the job through when
-// the interval has elapsed.
 func TestEveryNDueGateFiresWhenDue(t *testing.T) {
 	var ran bool
 
-	// last run was 6 days ago; interval = 5 days → must fire.
 	lastRun := func() (time.Time, error) {
 		return time.Now().Add(-6 * 24 * time.Hour), nil
 	}
@@ -302,13 +273,11 @@ func TestEveryNDueGateFiresWhenDue(t *testing.T) {
 	}
 }
 
-// TestEveryNDueGateFiresWhenNeverRun verifies that a zero lastRun (no prior
-// run) always lets the job through.
 func TestEveryNDueGateFiresWhenNeverRun(t *testing.T) {
 	var ran bool
 
 	lastRun := func() (time.Time, error) {
-		return time.Time{}, nil // zero → never run
+		return time.Time{}, nil
 	}
 
 	jobFn := func() { ran = true }
@@ -320,8 +289,6 @@ func TestEveryNDueGateFiresWhenNeverRun(t *testing.T) {
 	}
 }
 
-// TestEveryNDueGateSkipsOnLastRunError ensures the gate is conservative —
-// when the due-check query fails it skips the job rather than running it.
 func TestEveryNDueGateSkipsOnLastRunError(t *testing.T) {
 	var ran bool
 
@@ -338,31 +305,22 @@ func TestEveryNDueGateSkipsOnLastRunError(t *testing.T) {
 	}
 }
 
-// buildEveryNGate is a test helper that constructs the everyN due-gate closure
-// the same way the Scheduler does, so the logic can be tested without spinning
-// up a real cron runner.
-//
-// It calls the REAL schedule.EveryNDue rather than re-deriving the comparison.
-// It used to inline `time.Since(last) < intervalDays*24h`, and that copy is the
-// reason four green tests said nothing about the everyN+1 defect: they asserted
-// the test file's own arithmetic, not the scheduler's. The only thing this
-// helper still owns is the wiring around the decision (skip on a query error).
+// buildEveryNGate wires the everyN due-gate the way the Scheduler does, so it can
+// be tested without a cron runner. The decision itself comes from
+// schedule.EveryNDue, so the tests exercise the scheduler's rule rather than a
+// copy of it.
 func buildEveryNGate(intervalDays int, lastRunFn schedule.LastRunFunc, jobFn func()) func() {
 	return func() {
 		last, err := lastRunFn()
 		if err != nil {
-			return // conservative: skip on error
+			return
 		}
 		if !schedule.EveryNDue(last, time.Now(), intervalDays) {
-			return // not due yet
+			return
 		}
 		jobFn()
 	}
 }
-
-// ---------------------------------------------------------------------------
-// Scheduler test — inject a fake BackupFunc and call the containers job directly
-// ---------------------------------------------------------------------------
 
 func TestSchedulerContainersJobCallsBackupFunc(t *testing.T) {
 	var mu sync.Mutex
@@ -381,8 +339,6 @@ func TestSchedulerContainersJobCallsBackupFunc(t *testing.T) {
 		{ContainerName: "radarr", IncludeInSchedule: true},
 	}
 
-	// RunContainersJob is the exported hook that lets tests trigger the job
-	// synchronously without real time passing.
 	schedule.RunContainersJob(targets, backupFn)
 
 	mu.Lock()
@@ -415,9 +371,8 @@ func TestSchedulerContainersJobContinuesOnError(t *testing.T) {
 		{ContainerName: "radarr", IncludeInSchedule: true},
 	}
 
-	// A single job failure must not abort subsequent containers, and the job must
-	// return the per-container failure list (name + reason) so a scheduled run can
-	// name WHICH containers failed and WHY in its summary notification (#64).
+	// The failure list feeds the summary notification, which names each failed
+	// container and why it failed.
 	attempted, failed, failures := schedule.RunContainersJob(targets, backupFn)
 
 	mu.Lock()
@@ -483,7 +438,6 @@ func TestRunVMsJobContinuesOnError(t *testing.T) {
 		{Name: "debian", IncludeInSchedule: true},
 	}
 
-	// A single VM failure must not abort the remaining VMs.
 	schedule.RunVMsJob(vms, backupFn)
 
 	mu.Lock()
@@ -494,9 +448,9 @@ func TestRunVMsJobContinuesOnError(t *testing.T) {
 	}
 }
 
-// TestRunFilesJobBacksUpOnlyEnabledByID verifies the files job skips disabled
-// sets and hands backupFn the set's stable ID (never the name — run attribution
-// keys on file_sets.id so renames don't orphan history).
+// TestRunFilesJobBacksUpOnlyEnabledByID checks that the files job skips disabled
+// sets and passes each set's ID rather than its name, so renaming a set does not
+// orphan its run history.
 func TestRunFilesJobBacksUpOnlyEnabledByID(t *testing.T) {
 	var mu sync.Mutex
 	var called []string
@@ -527,9 +481,6 @@ func TestRunFilesJobBacksUpOnlyEnabledByID(t *testing.T) {
 	}
 }
 
-// TestRunFilesJobContinuesOnError verifies a single file-set failure does not
-// abort the remaining sets and is reported in the failed count (the input to the
-// aggregated Healthchecks ping).
 func TestRunFilesJobContinuesOnError(t *testing.T) {
 	var mu sync.Mutex
 	var called []string
@@ -560,7 +511,7 @@ func TestRunFilesJobContinuesOnError(t *testing.T) {
 	if attempted != 2 || failed != 1 {
 		t.Fatalf("expected attempted=2 failed=1, got attempted=%d failed=%d", attempted, failed)
 	}
-	// The failure is named by the set's human Name (not its ID) and carries the reason.
+	// Failures are reported by the set's name, not its ID.
 	if len(failures) != 1 || failures[0].Name != "docs" || failures[0].Reason != "backup failed" {
 		t.Fatalf("expected failures=[{docs backup failed}], got %+v", failures)
 	}
@@ -572,16 +523,18 @@ func TestSchedulerReloadRegistersEnabledDomains(t *testing.T) {
 
 	sched := schedule.New(backupFn, listFn)
 
-	// Reload with containers on daily schedule — must not panic or error.
-	settings := store.Settings{ContainersEnabled: true, VMsEnabled: true, FlashEnabled: true, ContainersSchedule: "daily 03:00",
-		VMsSchedule:   "off",
-		FlashSchedule: "off",
+	settings := store.Settings{
+		ContainersEnabled:  true,
+		VMsEnabled:         true,
+		FlashEnabled:       true,
+		ContainersSchedule: "daily 03:00",
+		VMsSchedule:        "off",
+		FlashSchedule:      "off",
 	}
 	if err := sched.Reload(settings); err != nil {
 		t.Fatalf("Reload returned error: %v", err)
 	}
 
-	// Reload again with all off — must clear entries without panic.
 	settings.ContainersSchedule = "off"
 	if err := sched.Reload(settings); err != nil {
 		t.Fatalf("second Reload returned error: %v", err)
@@ -590,17 +543,19 @@ func TestSchedulerReloadRegistersEnabledDomains(t *testing.T) {
 	sched.Stop()
 }
 
-// TestSchedulerReloadEveryN verifies that an everyN schedule reloads without
-// error and that the Cadence is correctly parsed.
 func TestSchedulerReloadEveryN(t *testing.T) {
 	backupFn := func(_ string) error { return nil }
 	listFn := func() ([]store.Target, error) { return nil, nil }
 
 	sched := schedule.New(backupFn, listFn)
 
-	settings := store.Settings{ContainersEnabled: true, VMsEnabled: true, FlashEnabled: true, ContainersSchedule: "everyN 7 04:00",
-		VMsSchedule:   "off",
-		FlashSchedule: "off",
+	settings := store.Settings{
+		ContainersEnabled:  true,
+		VMsEnabled:         true,
+		FlashEnabled:       true,
+		ContainersSchedule: "everyN 7 04:00",
+		VMsSchedule:        "off",
+		FlashSchedule:      "off",
 	}
 	if err := sched.Reload(settings); err != nil {
 		t.Fatalf("Reload with everyN returned error: %v", err)
@@ -608,22 +563,20 @@ func TestSchedulerReloadEveryN(t *testing.T) {
 	sched.Stop()
 }
 
-// TestSchedulerReloadWithDueChecksEveryNFires verifies ReloadWithDueChecks
-// wires the due-gate so a containers job is not triggered when the interval has
-// not elapsed (we confirm the gate by using a lastRun that is only 1h ago with
-// a 5-day interval, then manually calling RunContainersJob to confirm the cron
-// job itself is the only backed-up path — we can't trigger the cron tick here,
-// but we verify Reload doesn't error).
-func TestSchedulerReloadWithDueChecksEveryNFires(t *testing.T) {
+func TestSchedulerReloadWithDueChecksEveryN(t *testing.T) {
 	backupFn := func(_ string) error { return nil }
 	listFn := func() ([]store.Target, error) { return nil, nil }
 	lastRun := func() (time.Time, error) { return time.Now().Add(-6 * 24 * time.Hour), nil }
 
 	sched := schedule.New(backupFn, listFn)
 
-	settings := store.Settings{ContainersEnabled: true, VMsEnabled: true, FlashEnabled: true, ContainersSchedule: "everyN 5 03:00",
-		VMsSchedule:   "off",
-		FlashSchedule: "off",
+	settings := store.Settings{
+		ContainersEnabled:  true,
+		VMsEnabled:         true,
+		FlashEnabled:       true,
+		ContainersSchedule: "everyN 5 03:00",
+		VMsSchedule:        "off",
+		FlashSchedule:      "off",
 	}
 	if err := sched.ReloadWithDueChecks(settings, lastRun, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks returned error: %v", err)
@@ -631,22 +584,19 @@ func TestSchedulerReloadWithDueChecksEveryNFires(t *testing.T) {
 	sched.Stop()
 }
 
-// ---------------------------------------------------------------------------
-// NextRuns tests
-// ---------------------------------------------------------------------------
-
-// TestNextRunsReturnsEnabledEntries verifies NextRuns() surfaces a scheduled,
-// started entry labeled job=backup/domain=containers with a future Next time,
-// and that a domain left "off" does not appear at all.
 func TestNextRunsReturnsEnabledEntries(t *testing.T) {
 	backupFn := func(_ string) error { return nil }
 	listFn := func() ([]store.Target, error) { return nil, nil }
 
 	sched := schedule.New(backupFn, listFn)
 
-	settings := store.Settings{ContainersEnabled: true, VMsEnabled: true, FlashEnabled: true, ContainersSchedule: "daily 03:00",
-		VMsSchedule:   "off",
-		FlashSchedule: "off",
+	settings := store.Settings{
+		ContainersEnabled:  true,
+		VMsEnabled:         true,
+		FlashEnabled:       true,
+		ContainersSchedule: "daily 03:00",
+		VMsSchedule:        "off",
+		FlashSchedule:      "off",
 	}
 	if err := sched.Reload(settings); err != nil {
 		t.Fatalf("Reload returned error: %v", err)
@@ -673,16 +623,10 @@ func TestNextRunsReturnsEnabledEntries(t *testing.T) {
 	}
 }
 
-// TestSwitchedOffDomainIsNotRegistered pins the domain on/off switch to the
-// scheduler. A configured cadence is not on its own an instruction to run: the
-// domain it belongs to has to be switched on too.
-//
-// Registration used to read the cadence alone, so switching a domain off left
-// its nightly run going — container stop/start, prune and off-site replication
-// included — while the dashboard, the overdue watchdog and the drill set all
-// reported that same domain as off, and its tab was gone from the UI. The
-// off-site schedule is covered here as well: it replicates snapshots for a
-// domain that is producing none.
+// TestSwitchedOffDomainIsNotRegistered checks that a configured cadence alone
+// does not register a schedule; its domain has to be switched on too. That
+// includes the off-site schedule, which for a switched-off domain would
+// replicate snapshots nobody is making.
 func TestSwitchedOffDomainIsNotRegistered(t *testing.T) {
 	sched := schedule.New(func(string) error { return nil }, func() ([]store.Target, error) { return nil, nil })
 
@@ -734,18 +678,19 @@ func TestSwitchedOffDomainIsNotRegistered(t *testing.T) {
 	}
 }
 
-// TestNextRunsSortedSoonestFirst verifies that with multiple enabled domains
-// NextRuns() returns them ordered ascending by Next, regardless of the order
-// they were registered in.
 func TestNextRunsSortedSoonestFirst(t *testing.T) {
 	backupFn := func(_ string) error { return nil }
 	listFn := func() ([]store.Target, error) { return nil, nil }
 
 	sched := schedule.New(backupFn, listFn)
 
-	settings := store.Settings{ContainersEnabled: true, VMsEnabled: true, FlashEnabled: true, ContainersSchedule: "daily 23:59",
-		VMsSchedule:   "daily 00:01",
-		FlashSchedule: "off",
+	settings := store.Settings{
+		ContainersEnabled:  true,
+		VMsEnabled:         true,
+		FlashEnabled:       true,
+		ContainersSchedule: "daily 23:59",
+		VMsSchedule:        "daily 00:01",
+		FlashSchedule:      "off",
 	}
 	if err := sched.Reload(settings); err != nil {
 		t.Fatalf("Reload returned error: %v", err)
@@ -764,9 +709,7 @@ func TestNextRunsSortedSoonestFirst(t *testing.T) {
 	}
 }
 
-// TestSchedulerStopDrainsRunningJobs verifies that Stop blocks until any
-// in-flight job has finished, rather than returning immediately.
-func TestSchedulerStopDrainsRunningJobs(t *testing.T) {
+func TestSchedulerStopReturnsWhileAJobRunsOutsideCron(t *testing.T) {
 	const jobDuration = 80 * time.Millisecond
 
 	started := make(chan struct{})
@@ -783,35 +726,23 @@ func TestSchedulerStopDrainsRunningJobs(t *testing.T) {
 		{ContainerName: "plex", IncludeInSchedule: true},
 	}
 
-	// Use RunContainersJob synchronously in a goroutine to simulate an
-	// in-flight job, then call Stop and assert it only returns after the
-	// goroutine is done.
 	sched := schedule.New(backupFn, func() ([]store.Target, error) { return targets, nil })
 	sched.Start()
 
-	// Trigger the job manually in a goroutine.
 	go schedule.RunContainersJob(targets, backupFn)
 
-	// Wait until the job has started.
 	select {
 	case <-started:
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for job to start")
 	}
 
-	// Stop is called while the job is still sleeping. It must not return
-	// before the job finishes (the cron runner itself has no queued jobs,
-	// but we verify Stop/drain via the context mechanism).
 	sched.Stop()
 
-	// The job goroutine should have finished at (or before) this point.
+	// Stop has no cron job of its own to wait for, so the job may still be
+	// sleeping here.
 	select {
 	case <-finished:
-		// Good — job completed before we checked.
 	default:
-		// If the channel isn't closed yet the job is still running, which
-		// would mean Stop returned too early for the cron-internal drain.
-		// Since RunContainersJob runs outside cron here, we just verify
-		// Stop itself doesn't hang forever.
 	}
 }

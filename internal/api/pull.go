@@ -19,59 +19,36 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// Pulling: fetching snapshots OUT of another instance's repository into this
-// one (#227).
+// Pulling fetches snapshots from another instance's repository into this one.
+// It is off-site replication with the ends swapped, the same restic copy, so a
+// box can fetch a neighbour's backups without the neighbour configuring
+// anything or even being awake.
 //
-// It is the mirror image of off-site replication. There this box pushes its own
-// snapshots outward with `restic copy`; here it runs the same copy with the two
-// ends swapped, so a box can fetch a neighbour's backups without the neighbour
-// having to configure anything or even be awake.
+// The source belongs to somebody else and is only read: RepoOpens and Copy's
+// source argument are the only engine calls that reach it, never EnsureRepo,
+// Unlock, Forget or Prune. A lock on it usually means its owner is backing up.
 //
-// THREE RULES HOLD THIS FILE TOGETHER, and each has a way of failing quietly.
-//
-//  1. THE SOURCE IS SOMEBODY ELSE'S AND IS ONLY EVER READ. Exactly two engine
-//     calls may touch it: RepoOpens, to see whether the key fits, and Copy's
-//     source argument. Never EnsureRepo (it initialises), never Unlock (it
-//     deletes lock files), never Forget or Prune. A lock error on a foreign
-//     repository is not ours to repair: it usually means the far instance is
-//     backing up right now.
-//  2. THE TWO ENDS HAVE DIFFERENT PASSWORDS. Two BombVaults never share one,
-//     because each derives its repository password from its own APP_KEY. That
-//     is what restic.Mode.From exists for, and getting it wrong produces a
-//     message that reads as "wrong APP_KEY" for a key that was typed correctly.
-//  3. THE SOURCE LENDS US NOTHING AND WE LEND IT NOTHING. NoAmbientCreds
-//     withholds this box's rclone config, and an `rclone:` source is refused
-//     outright, for the confused-deputy reason foreign.go sets out: rclone reads
-//     its remotes from OUR file and would authenticate to a caller-chosen
-//     endpoint with our secrets.
-//
-// ONE SOURCE IS ONE DOMAIN, deliberately. A sender replicates per domain into
-// separate repositories, so a source repository holds one domain's snapshots and
-// the local repository it lands in is that same domain's. "Pull everything" is
-// several sources, which is also how it reads on screen: one row per thing being
-// fetched, each with its own schedule and its own last result.
+// The two ends have different passwords, because each instance derives its own
+// from its APP_KEY, and restic.Mode.From carries the source's. Getting that
+// wrong reads as "wrong APP_KEY" for a correctly typed key.
 
-// pullOpen resolves a pull source's location and opens it READ-ONLY, returning
-// the resolved location and the mode to read it with.
-//
-// It follows receiverOpen, which does the same job for a received repository,
-// and adds the two hardenings the foreign-restore path has and the receiver does
-// not need: no ambient credentials, and no rclone location.
+// pullOpen resolves a pull source's location and opens it read-only, returning
+// the location and the mode to read it with. It follows receiverOpen and adds
+// what the foreign-restore path has on top: no ambient credentials and no
+// rclone location.
 func (s *Service) pullOpen(ctx context.Context, ps store.PullSource, settings store.Settings) (string, restic.Mode, error) {
 	loc := strings.TrimSpace(ps.Repo)
 	if loc == "" {
 		return "", restic.Mode{}, errors.New("missing repository location")
 	}
 	if isRcloneLocation(loc) {
-		// The same refusal foreign.go gives, for the same reason: rclone ignores
-		// the environment and reads its remotes from this instance's config file,
-		// so an operator-supplied rclone location would authenticate to an
-		// endpoint of their choosing using OUR stored secrets.
+		// rclone reads its remotes from this instance's config file, so an
+		// operator-supplied rclone location would authenticate with our secrets.
 		return "", restic.Mode{}, errors.New("an rclone: location cannot be a pull source, because rclone would use THIS instance's remotes to reach it. Use the repository's own address (rest:, s3:, sftp: or b2:) with its own credentials")
 	}
-	// Resolve exactly as receiverOpen does: an already-absolute path inside the
-	// host mount is taken as-is, everything else goes through resolveRepo so the
-	// error names the host root and suggests the relative path to type instead.
+	// As in receiverOpen: an absolute path inside the host mount is used as is,
+	// anything else goes through resolveRepo, whose error suggests the relative
+	// path to type instead.
 	var repo string
 	mountRoot := path.Clean(filepath.ToSlash(s.cfg.HostMountRoot))
 	inMount := mountRoot != "." && mountRoot != "/" &&
@@ -91,15 +68,15 @@ func (s *Service) pullOpen(ctx context.Context, ps store.PullSource, settings st
 		return "", restic.Mode{}, errors.New("could not decrypt the stored APP_KEY for this pull source")
 	}
 	sourceKey := string(keyBytes)
-	// Guard the shape BEFORE any use: restickey.Derive panics on non-hex input by
-	// design, so this regexp is what stands between a corrupted row and a crash.
+	// restickey.Derive panics on non-hex input, so a corrupted row has to be
+	// caught here.
 	if !foreignKeyRe.MatchString(sourceKey) {
 		return "", restic.Mode{}, errors.New("the stored APP_KEY is not 64 lowercase hex characters")
 	}
 
-	// The source's own backend credentials, never this box's. A row with no
-	// credential set gets an empty Env rather than the shared ones, which is the
-	// difference against an off-site target: that one is ours and may borrow.
+	// The source's own backend credentials, never this box's. Without a
+	// credential set Env stays empty; unlike an off-site target, which is ours,
+	// a source does not borrow the shared ones.
 	var env []string
 	if ref := strings.TrimSpace(ps.CredsRef); ref != "" {
 		if c, cErr := s.decodeCloudFor(settings, ref); cErr == nil {
@@ -152,17 +129,14 @@ func (s *Service) pullFromSource(ctx context.Context, ps store.PullSource) (int,
 		return 0, err
 	}
 
-	// EVERYTHING FROM HERE ON WRITES TO `dest` AND ONLY TO `dest`. The source
-	// appears exactly twice more: in the listing below, which is read-only by
-	// mode, and as Copy's source argument.
+	// From here on only dest is written. The source appears twice more: in the
+	// listing, which is read-only by mode, and as Copy's source argument.
 	destMode := s.primaryModeFor(settings, domain, dest)
 	if err := s.EnsureRepo(ctx, dest, destMode); err != nil {
 		return 0, fmt.Errorf("ensure the local %s repository: %w", domain, err)
 	}
-	// Clearing a stale lock is right here and wrong one line up: this repository
-	// is ours, BombVault is its only writer, so a lock left behind is always
-	// stale. listSnapshots below refuses to do the same for the source, because
-	// its mode says NoLock.
+	// BombVault is the only writer of dest, so a lock left behind is stale.
+	// listSnapshots leaves the source's locks alone because its mode sets NoLock.
 	s.unlockStale(ctx, dest, destMode)
 
 	srcSnaps, err := s.listSnapshots(ctx, src, srcMode)
@@ -179,15 +153,13 @@ func (s *Service) pullFromSource(ctx context.Context, ps store.PullSource) (int,
 		pending = len(restic.PendingCopyIDs(srcSnaps, dstSnaps))
 	}
 	if pending == 0 {
-		// Nothing new. Saying so is not the same as failing, and it is the
-		// ordinary outcome of a scheduled pull between two backups.
+		// Nothing new is the ordinary outcome between two backups, not a failure.
 		return 0, nil
 	}
 
-	// The copy carries the DESTINATION's mode, with the source's credentials
-	// hung off it. nil for the snapshot ids on purpose: restic's own dedup is
-	// stricter than PendingCopyIDs (it compares full metadata), so the count
-	// above is for display and restic decides what actually moves.
+	// The copy carries the destination's mode with the source's credentials
+	// attached. No snapshot ids are passed: restic compares full metadata and
+	// decides what moves, so pending is only for display.
 	copyMode := destMode
 	copyMode.From = &restic.From{Encrypted: srcMode.Encrypted, Password: srcMode.Password}
 	copyMode.Env = append(append([]string{}, destMode.Env...), srcMode.Env...)
@@ -221,10 +193,9 @@ func (s *Service) RunPulls(ctx context.Context) error {
 		if period <= 0 {
 			continue // 'off', or a cadence with no period: only the button runs it
 		}
-		// schedule.PeriodDue, not a raw "now minus last is bigger than the
-		// period". The receiver's own comment explains what the naive form costs:
-		// a run that starts a minute late pushes the next one a minute later
-		// again, so a daily job drifts until it silently runs every other day.
+		// schedule.PeriodDue rather than "now minus last exceeds the period",
+		// which drifts: each late start pushes the next run later, until a daily
+		// job runs every other day.
 		if !schedule.PeriodDue(time.Unix(ps.LastPullAt, 0), now, period) {
 			continue
 		}
@@ -235,11 +206,9 @@ func (s *Service) RunPulls(ctx context.Context) error {
 	return nil
 }
 
-// pullProbe opens a source read-only and discards the result. It is what the
-// Test button runs, and what create and update run before they persist: a
-// mistyped location or key is refused while the person who typed it is still
-// looking at the form, rather than becoming a scheduled job that fails every
-// night at four with a message nobody reads.
+// pullProbe opens a source read-only and discards the result. The Test button
+// runs it, and create and update run it before saving, so a mistyped location
+// or key is refused on the form.
 func (s *Service) pullProbe(ctx context.Context, ps store.PullSource) error {
 	settings, err := s.store.GetSettings()
 	if err != nil {

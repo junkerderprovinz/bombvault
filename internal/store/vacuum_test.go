@@ -7,11 +7,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestVacuumIntoProducesConsistentSnapshot verifies VacuumInto writes a
-// standalone, fully-consistent copy of the live DB: the snapshot opens as an
-// independent database and reads back a value written to the source. VACUUM INTO
-// is only meaningful from an on-disk source, so this opens a real temp DB rather
-// than the in-memory OpenMem helper the other store tests use.
+// VACUUM INTO needs an on-disk source, so this test opens a real database
+// instead of using OpenMem.
 func TestVacuumIntoProducesConsistentSnapshot(t *testing.T) {
 	db, err := store.Open(filepath.Join(t.TempDir(), "src.sqlite"))
 	if err != nil {
@@ -37,7 +34,6 @@ func TestVacuumIntoProducesConsistentSnapshot(t *testing.T) {
 		t.Fatalf("VacuumInto: %v", err)
 	}
 
-	// Open the snapshot as an independent DB and read the marker back.
 	snapDB, err := store.Open(dst)
 	if err != nil {
 		t.Fatalf("open snapshot: %v", err)

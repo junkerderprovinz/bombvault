@@ -3,31 +3,27 @@ import type { useT } from "./i18n";
 type T = ReturnType<typeof useT>["t"];
 
 /**
- * relativeTime renders a unix timestamp as a fully written-out, localized
- * "time ago" string (e.g. "5 minutes ago" / "vor 5 Minuten"), shared by the
- * dashboard protection card, the runs list and the drills line so the wording
- * is consistent everywhere. Singular counts (n === 1) use dedicated keys so the
- * grammar stays correct ("1 minute ago" vs "5 minutes ago").
+ * relativeTime renders a unix timestamp as a localized "time ago" string such
+ * as "5 minutes ago".
  */
 export function relativeTime(t: T, unix: number): string {
   const diff = Math.floor((Date.now() - unix * 1000) / 1000);
   if (diff < 60) return t("time.justNow");
   if (diff < 3600) {
     const n = Math.floor(diff / 60);
-    return n === 1 ? t("time.minuteAgo") : t("time.minutesAgo").replace("{n}", String(n));
+    return t("time.minutesAgo", n);
   }
   if (diff < 86400) {
     const n = Math.floor(diff / 3600);
-    return n === 1 ? t("time.hourAgo") : t("time.hoursAgo").replace("{n}", String(n));
+    return t("time.hoursAgo", n);
   }
   const n = Math.floor(diff / 86400);
-  return n === 1 ? t("time.dayAgo") : t("time.daysAgo").replace("{n}", String(n));
+  return t("time.daysAgo", n);
 }
 
 /**
- * formatTs renders a unix timestamp as a localized date + time, or "—" when the
- * value is missing. Shared by the dashboard cards, the runs list and the
- * per-domain recent-runs list so absolute times read the same everywhere.
+ * formatTs renders a unix timestamp as a localized date and time, or a dash
+ * when the value is missing.
  */
 export function formatTs(unix: number | null | undefined): string {
   if (!unix) return "—";
@@ -35,9 +31,8 @@ export function formatTs(unix: number | null | undefined): string {
 }
 
 /**
- * formatDuration renders a whole-second span compactly and plural-free
- * (e.g. "12s", "3m 5s", "1h 2m"). A negative or non-finite input yields ""
- * so a missing/older start time never produces a broken duration.
+ * formatDuration renders a whole-second span compactly and plural-free, e.g.
+ * "12s", "3m 5s" or "1h 2m". A negative or non-finite input yields "".
  */
 export function formatDuration(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return "";
@@ -48,26 +43,13 @@ export function formatDuration(seconds: number): string {
 }
 
 /**
- * elapsedSince renders the whole-second span from a backend-stamped `startedAt`
- * (Unix SECONDS — see progress.ts's ProgressState) to `nowMs` (epoch ms, e.g.
- * `Date.now()`), via formatDuration. Returns "" when `startedAt` is missing/
- * not-a-number/not positive, or when it lands in the future (clock skew, or a
- * not-yet-confirmed start).
+ * elapsedSince renders the span from a backend-stamped `startedAt` (Unix
+ * seconds) to `nowMs` (epoch milliseconds) via formatDuration. It returns ""
+ * when `startedAt` is missing, not positive, or in the future (clock skew).
  *
- * The `startedAt > 0` guard is required, not just belt-and-suspenders:
- * progress.go's Event doc comment explicitly documents that a client "must
- * treat 0 as unknown, never as an actual epoch second" — a plain type/finite
- * check alone (Number.isFinite(0) is true) would let a genuine 0 through as if
- * it were a real timestamp, rendering something like "496466h 7m" (the age of
- * the Unix epoch) instead of hiding the duration. formatDuration's own
- * negative-rejection only catches a startedAt in the FUTURE, not a zero one in
- * the deep past, so that alone does not substitute for this check.
- *
- * Built for issue #159 (off-site replication's live progress — see
- * internal/api/service.go's copyToOffsite and restic.Copy's doc comment):
- * OffsiteIndicator and the dashboard's activity log tick this once a second
- * from a local `now` state so a live "running for 2m 14s" reads smoothly
- * between the backend's own periodic publishes.
+ * The backend sends 0 for an unknown start (see progress.go's Event), and a 0
+ * would otherwise render as the age of the Unix epoch; formatDuration only
+ * rejects a start in the future.
  */
 export function elapsedSince(startedAt: number | undefined, nowMs: number): string {
   if (typeof startedAt !== "number" || !Number.isFinite(startedAt) || startedAt <= 0) return "";
@@ -75,11 +57,9 @@ export function elapsedSince(startedAt: number | undefined, nowMs: number): stri
 }
 
 /**
- * formatClockTime renders a unix timestamp as a fixed 24-hour local clock face
- * ("HH:MM" or "HH:MM:SS"), independent of the browser's locale. The dashboard
- * activity log (a flat, docker-logs-style line list) wants a stable, always
- * 24-hour timestamp per line — not a locale-dependent 12/24-hour format that
- * `toLocaleTimeString` would silently vary by browser language.
+ * formatClockTime renders a unix timestamp as a 24-hour local clock ("HH:MM" or
+ * "HH:MM:SS") whatever the browser's locale, so every line of the activity log
+ * has the same shape.
  */
 export function formatClockTime(unix: number, withSeconds = true): string {
   const d = new Date(unix * 1000);

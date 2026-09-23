@@ -1,38 +1,17 @@
-// ---------------------------------------------------------------------------
-// Two things parity cannot see ([338], [339]).
-//
-// The parity test proves every locale carries every key with the same
-// placeholders. That is the structural half. Both failures below satisfy it
-// completely and are still wrong:
-//
-//   [338] A value that is still the English string. Present, correctly keyed,
-//         correctly placeholdered — and untranslated. Across 42 locales this
-//         is the likeliest quiet gap, because nothing about it looks like a
-//         gap: the key is there, the app renders, and only a reader of that
-//         language sees it.
-//
-//   [339] Two English keys with the same value. Every one of those is a
-//         sentence maintained in two places, and the pair drifts the moment
-//         somebody edits one. It already happened: `recovery.pageTitle` was a
-//         second copy of `nav.recovery`, and by the time it was found the page
-//         heading said "Notfall-Wiederherstellung" while the rail beside it
-//         said "Wiederherstellung".
-//
-// Both carry allow-lists rather than being advisory, because a guard that
-// merely warns is a guard nobody reads. An entry on either list is a decision
-// somebody made and wrote down.
-// ---------------------------------------------------------------------------
+// Two gaps the parity test cannot see. A value still identical to English is
+// keyed and placeholdered correctly, yet untranslated, and only a reader of that
+// language notices. Two en keys holding the same sentence are maintained twice
+// and drift apart the first time one is edited. Both checks fail rather than
+// warn, and every exception sits on an allow-list.
 import { describe, expect, it } from "vitest";
 import { en } from "./i18n";
 import { allLocales as locales } from "./localesForTests";
 
 /**
- * Values that are legitimately identical to English in some languages.
- *
- * Product names, units, protocol names and loanwords adopted verbatim. This is
- * the escape hatch for "correct and identical", and it is deliberately keyed
- * by KEY rather than by language: a term that stays English in Dutch usually
- * stays English in Danish too, and listing every pair would be noise.
+ * SAME_AS_EN_IS_FINE lists values that are legitimately identical to English:
+ * product names, units, protocol names and loanwords. It is keyed by key rather
+ * than by language, because a term that stays English in Dutch usually does in
+ * Danish too.
  */
 const SAME_AS_EN_IS_FINE = new Set<string>([
   // Literal input a user types or pastes. Translating a file path or a key
@@ -47,19 +26,16 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   "cadence.fmtCron",
   "placement.flow",
 
-  // Protocol and product names every locale writes in Latin script anyway.
-  // Checked rather than assumed: each of these appears untranslated in the
-  // locale's OWN surrounding prose too.
+  // Protocol and product names every locale writes in Latin script. Each also
+  // appears untranslated in the locales' own surrounding prose.
   "notify.webhook",
   "notify.appriseUrl",
   "notify.matrixHomeserver",
   "notify.healthchecks",
   "notify.smtp",
 
-  // "Containers" is the word el and he use in their own nav entry, so it is
-  // their vocabulary rather than a gap. The rule this file applies throughout:
-  // consistency INSIDE the language decides, not whether the string looks
-  // English from outside.
+  // "Containers" is the word el and he use in their own nav entry. Consistency
+  // within the language decides, not whether the string looks English.
   "stack.members",
 
   // Genuinely untranslated, not a loanword: these 40 locales carry the
@@ -116,11 +92,8 @@ function isUntranslatable(value: string): boolean {
 }
 
 describe("translations are actually translated", () => {
-  // Latin-script languages share vocabulary with English far more often than
-  // the others, so a hit there is much likelier to be legitimate. The
-  // non-Latin ones are where an untranslated string is unambiguous: a Cyrillic,
-  // Greek, Hebrew, Arabic, CJK or Thai locale showing a Latin sentence is not
-  // a loanword, it is a gap.
+  // Latin-script languages share much vocabulary with English. In a Cyrillic,
+  // Greek, Hebrew, Arabic, CJK or Thai locale a Latin sentence is always a gap.
   const NON_LATIN = ["ar", "bg", "el", "fa", "he", "hi", "ja", "ko", "ru", "sr", "th", "uk", "zh"];
 
   it.each(NON_LATIN)("%s does not leave English sentences in place", (code) => {
@@ -143,24 +116,13 @@ describe("translations are actually translated", () => {
 });
 
 describe("no sentence lives in two keys", () => {
-  // English is not enough to decide this, which the first cut of this guard
-  // found out immediately. It flagged two groups, and MEASURED against the
-  // other 40 tables both turned out to be legitimately separate:
-  //
-  //   containers.restoreSelected / vms.restoreSelected  differ in 5 locales,
-  //     because the noun's gender changes the agreement — Galician writes
-  //     "os seleccionados" for containers and "as seleccionadas" for VMs.
-  //
-  //   cloud.secretSet / receiver.appKeyKeep / fleet.tokenKeep  differ in ALL
-  //     40. They are identical in English by coincidence and in no other
-  //     language at all.
-  //
-  // So the rule is not "same in English". It is "same in English AND in every
-  // locale that carries both", which is the only shape that can actually
-  // drift: two keys already saying different things in 40 languages are not
-  // one sentence in two places, they are two sentences English happens to
-  // collapse. Merging those would have flattened a distinction 40 translators
-  // kept.
+  // English alone cannot decide this. containers.restoreSelected and
+  // vms.restoreSelected differ in five locales because of noun gender (Galician
+  // "os seleccionados" and "as seleccionadas"), and cloud.secretSet,
+  // receiver.appKeyKeep and fleet.tokenKeep differ in every other language. So
+  // a pair counts only when it is identical in English and in every locale
+  // that carries both; anything else is two sentences English happens to
+  // collapse.
   const TABLES = Object.entries(locales) as [string, Record<string, string>][];
 
   it("keeps a genuinely shared sentence to one key", () => {

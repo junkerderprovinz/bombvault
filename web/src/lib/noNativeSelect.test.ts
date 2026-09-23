@@ -1,18 +1,5 @@
-// ---------------------------------------------------------------------------
-// GlimStone rule 18, enforced instead of remembered: no native <select> in the
-// app (#3425).
-//
-// "A native control gets replaced, not persuaded." An open <select> is drawn by
-// the operating system, so no rule in this house reaches inside it — not the
-// shape engine, not the palette, not the type scale. The app carried twenty-one
-// of them for as long as replacing one meant hand-rolling a trigger, a panel
-// and a wheel handler; with SelectField that is a five-line call, so there is
-// no longer a reason for a new one to appear.
-//
-// A rule nobody can see broken is a rule that comes back. This test is the
-// place it gets caught, in the second it is written, rather than in a live
-// review a month later.
-// ---------------------------------------------------------------------------
+// GlimStone rule 18: no native <select>. The operating system draws an open
+// <select>, so none of the app's shape, palette or type rules reach inside it.
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -33,9 +20,7 @@ function sources(dir: string): string[] {
   return out;
 }
 
-/** Comments talk ABOUT the native control all over this codebase, which is the
- *  point: they explain why it is gone. Only JSX counts, so line and block
- *  comments come out before the search. */
+/** code strips comments, which mention <select> freely. */
 function code(text: string): string {
   return text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 }
@@ -48,14 +33,13 @@ it("has no native <select> left anywhere in src", () => {
   }
   expect(
     offenders,
-    "Use SelectField (components/SelectField.tsx) instead — it is the app's own " +
+    "Use SelectField (components/SelectField.tsx) instead; it is the app's own " +
       "replacement, and GlimStone rule 18 says a native control gets replaced, not persuaded.",
   ).toEqual([]);
 });
 
-it("finds the files at all, so an empty pass cannot mean an empty scan", () => {
+it("scans the source tree and keeps real markup when stripping comments", () => {
   const files = sources(SRC);
   expect(files.length).toBeGreaterThan(100);
-  // And the comment stripper does not eat real markup on the way past.
   expect(code("// <select>\n<select value={x} />")).toContain("<select value=");
 });

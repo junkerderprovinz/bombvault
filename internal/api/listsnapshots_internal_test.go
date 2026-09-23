@@ -8,9 +8,6 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
-// TestIsRepoUninitialized pins the classifier that decides whether a restic error
-// means "no repository yet" (treat as empty for a remote off-site) vs a genuine
-// failure that must still propagate (issue #117).
 func TestIsRepoUninitialized(t *testing.T) {
 	uninit := []error{
 		errors.New("Fatal: unable to open config file: <config/> does not exist\nIs there a repository at the following location?"),
@@ -35,9 +32,7 @@ func TestIsRepoUninitialized(t *testing.T) {
 	}
 }
 
-// snapshotsStubEngine implements only Snapshots (via a fixed error/result); all
-// other ResticEngine methods come from the embedded nil interface and must not be
-// called by listSnapshots on the paths under test.
+// snapshotsStubEngine implements only Snapshots, which returns err.
 type snapshotsStubEngine struct {
 	ResticEngine
 	err error
@@ -47,10 +42,8 @@ func (e snapshotsStubEngine) Snapshots(context.Context, string, restic.Mode) ([]
 	return nil, e.err
 }
 
-// TestListSnapshotsRemoteUninitialized verifies the #117 fix at the listSnapshots
-// seam: a REMOTE repo whose backend reports "repository does not exist" yields
-// (nil, nil) — no snapshots, not a fatal — while a genuine remote error and a
-// local uninitialized error both still propagate.
+// A remote repo that does not exist yet lists as empty. A real remote error
+// and a missing local repo are still returned.
 func TestListSnapshotsRemoteUninitialized(t *testing.T) {
 	notInit := errors.New("Fatal: unable to open config file: <config/> does not exist\nIs there a repository at the following location?\nrest:http://box:8000/flash")
 	authErr := errors.New("Fatal: unable to open repository at rest:http://box:8000/flash: server response unexpected: 401 Unauthorized")

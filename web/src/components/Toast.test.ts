@@ -1,14 +1,6 @@
-// ---------------------------------------------------------------------------
-// Toast / ToastViewport — pure-component tests (GlimStone form-engine Task 9).
-//
-// Same test approach as Toggle.test.ts/ConfirmDialog.test.ts: both are pure,
-// hookless function components, invoked directly as plain functions and
-// their returned element trees inspected as plain objects — no jsdom. The
-// stateful timing behaviour (pause/resume math, quiet-mode filtering) is
-// covered separately in lib/toastEngine.test.ts, which this file's
-// ToastViewport wiring tests confirm is actually reachable from the UI
-// (pause/resume handlers fire with the right id).
-// ---------------------------------------------------------------------------
+// The toast components use no hooks, so these tests call them as plain
+// functions and inspect the returned element trees. Timing lives in
+// lib/toastEngine.test.ts.
 import { describe, expect, it } from "vitest";
 import { ToastCard, ToastViewport } from "./Toast";
 
@@ -21,18 +13,9 @@ function isElementNode(node: unknown): node is ElementNode {
   return typeof node === "object" && node !== null;
 }
 
-// ToastViewport composes ToastCard via real JSX (`<ToastCard key={t.id} .../>`
-// inside .map()) rather than calling it as a plain function, specifically so
-// React keeps its normal per-item `key` reconciliation for a live list whose
-// items can be dismissed from the middle (a plain function call has no way
-// to carry a JSX `key`, and losing it risks React reusing the wrong DOM node
-// — and with it, the wrong toast's hover/focus pause state). That means a
-// node in this tree can be `{ type: ToastCard, props }` — a reference to the
-// pure component, not yet invoked. Since ToastCard is itself pure/hookless,
-// it's just as safe to invoke here as calling it directly (same thing
-// Toggle.test.ts/ConfirmDialog.test.ts do at the top level) — `resolve`
-// does exactly that recursively, so the walkers below still see the real
-// rendered tree underneath.
+// ToastViewport renders ToastCard as JSX so each card keeps its key, which
+// leaves unrendered `{ type: ToastCard, props }` nodes in the tree. resolve
+// calls such components so the walkers below see what they render.
 function resolve(node: unknown): unknown {
   if (isElementNode(node) && !Array.isArray(node) && typeof node.type === "function") {
     return (node.type as (props: unknown) => unknown)(node.props ?? {});
@@ -85,17 +68,17 @@ describe("ToastCard", () => {
     expect(visibleText(tree)).toContain("Settings saved");
   });
 
-  it("uses role=status (implicit polite live region) for a routine success toast", () => {
+  it("uses role=status for a success toast", () => {
     const tree = ToastCard(baseProps) as ElementNode;
     expect(tree.props?.role).toBe("status");
   });
 
-  it("uses role=alert (implicit assertive live region) for a fail toast — failures interrupt", () => {
+  it("uses role=alert for a fail toast", () => {
     const tree = ToastCard({ ...baseProps, severity: "fail" }) as ElementNode;
     expect(tree.props?.role).toBe("alert");
   });
 
-  it("uses role=alert for a warn toast too (blocking, not routine)", () => {
+  it("uses role=alert for a warn toast", () => {
     const tree = ToastCard({ ...baseProps, severity: "warn" }) as ElementNode;
     expect(tree.props?.role).toBe("alert");
   });
@@ -107,7 +90,7 @@ describe("ToastCard", () => {
     expect(buttons[0].props?.["aria-label"]).toBe("Dismiss notification");
   });
 
-  it("calls onDismiss(id) when the dismiss button is clicked — keyboard-activatable via a real <button>", () => {
+  it("calls onDismiss(id) when the dismiss button is clicked", () => {
     let seen: string | undefined;
     const tree = ToastCard({ ...baseProps, onDismiss: (id) => (seen = id) });
     const buttons = findAllButtons(tree);
@@ -122,14 +105,14 @@ describe("ToastCard", () => {
     expect(seen).toBe("t1");
   });
 
-  it("does NOT dismiss on a non-Escape key", () => {
+  it("ignores other keys", () => {
     let calls = 0;
     const tree = ToastCard({ ...baseProps, onDismiss: () => calls++ }) as ElementNode;
     tree.props!.onKeyDown({ key: "Tab", stopPropagation: () => {} });
     expect(calls).toBe(0);
   });
 
-  it("wires onMouseEnter/onMouseLeave to pause/resume with this toast's id (hover pauses)", () => {
+  it("passes its id to onMouseEnter and onMouseLeave", () => {
     const seen: string[] = [];
     const tree = ToastCard({
       ...baseProps,
@@ -141,7 +124,7 @@ describe("ToastCard", () => {
     expect(seen).toEqual(["enter:t1", "leave:t1"]);
   });
 
-  it("wires onFocus/onBlur to pause/resume with this toast's id (focus pauses too, not just hover)", () => {
+  it("passes its id to onFocus and onBlur", () => {
     const seen: string[] = [];
     const tree = ToastCard({
       ...baseProps,
@@ -153,12 +136,27 @@ describe("ToastCard", () => {
     expect(seen).toEqual(["focus:t1", "blur:t1"]);
   });
 
-  it("marks the card pointer-events-auto so it can be clicked (only the empty viewport space ignores clicks)", () => {
+  it("runs its action and then dismisses itself", () => {
+    let ran = 0;
+    let dismissed: string | undefined;
+    const tree = ToastCard({
+      ...baseProps,
+      action: { label: "Undo", onClick: () => ran++ },
+      onDismiss: (id) => (dismissed = id),
+    }) as ElementNode;
+    const children = tree.props!.children as unknown[];
+    const action = children.find((c): c is ElementNode => isElementNode(c) && c.props?.label === "Undo");
+    action!.props!.onClick();
+    expect(ran).toBe(1);
+    expect(dismissed).toBe("t1");
+  });
+
+  it("takes pointer events on the card", () => {
     const tree = ToastCard(baseProps) as ElementNode;
     expect(tree.props?.className).toContain("pointer-events-auto");
   });
 
-  it("never uses a coloured left rail/border-left for severity (rule 5: no vertical marks)", () => {
+  it("has no coloured side border", () => {
     const tree = ToastCard({ ...baseProps, severity: "fail" }) as ElementNode;
     expect(tree.props?.className).not.toMatch(/border-l|border-left/);
   });
@@ -169,28 +167,24 @@ describe("ToastViewport", () => {
 
   const noopHandlers = { onMouseEnter: noop, onMouseLeave: noop, onFocus: noop, onBlur: noop };
 
-  it("renders nothing but the (pointer-events-none) wrapper when there are no toasts", () => {
+  it("renders only the click-through wrapper when there are no toasts", () => {
     const tree = ToastViewport({ toasts: [], dismissLabel, onDismiss: noop, ...noopHandlers }) as ElementNode;
     expect(tree.props?.className).toContain("pointer-events-none");
     const cards = findAll(tree, (n) => typeof n.props?.role === "string");
     expect(cards).toHaveLength(0);
   });
 
-  it("caps the viewport height and scrolls as a defensive backstop, so a stack can never spill fully off-screen unreachable", () => {
+  it("caps the viewport height and scrolls", () => {
     const tree = ToastViewport({ toasts: [], dismissLabel, onDismiss: noop, ...noopHandlers }) as ElementNode;
     expect(tree.props?.className).toContain("max-h-screen");
     expect(tree.props?.className).toContain("overflow-y-auto");
   });
 
-  it("insets the corner with padding, not with a flush offset — the scroll backstop must not clip what paints outside each card", () => {
+  it("insets the corner with padding so the scroll box does not clip the cards", () => {
     const tree = ToastViewport({ toasts: [], dismissLabel, onDismiss: noop, ...noopHandlers }) as ElementNode;
     const className = String(tree.props?.className ?? "");
-    // overflow-y-auto forces overflow-x to compute to auto as well, so the clip
-    // boundary is the padding box. p-4 keeps each card's --elevation drop shadow
-    // AND the translateX(12px) start of its entrance animation inside it; a
-    // flush bottom-4/end-4 box with no padding sliced both off (live-measured:
-    // scrollWidth 332 vs clientWidth 320 mid-entrance). Same 1rem corner gap
-    // either way — see ToastViewport's comment in Toast.tsx.
+    // The clip boundary is the padding box, so p-4 keeps each card's shadow
+    // and the offset start of its slide-in inside it.
     expect(className).toContain("p-4");
     expect(className).toContain("bottom-0");
     expect(className).toContain("end-0");
@@ -198,7 +192,7 @@ describe("ToastViewport", () => {
     expect(className).not.toMatch(/\bend-4\b/);
   });
 
-  it("stacks multiple toasts — all render simultaneously, not one replacing another", () => {
+  it("renders several toasts at once", () => {
     const tree = ToastViewport({
       toasts: [
         { id: "a", message: "First", severity: "success" },
@@ -215,7 +209,7 @@ describe("ToastViewport", () => {
     expect(text).toContain("Third");
   });
 
-  it("each stacked toast is independently dismissible — dismissing one calls onDismiss with only ITS id", () => {
+  it("dismisses a stacked toast by its own id", () => {
     const calls: string[] = [];
     const tree = ToastViewport({
       toasts: [
@@ -228,11 +222,11 @@ describe("ToastViewport", () => {
     });
     const buttons = findAllButtons(tree);
     expect(buttons).toHaveLength(2);
-    buttons[1].props!.onClick(); // dismiss only the second toast
+    buttons[1].props!.onClick();
     expect(calls).toEqual(["b"]);
   });
 
-  it("passes the four hover/focus events through to each card independently — NOT collapsed into a single pause/resume pair", () => {
+  it("passes hover and focus events through separately", () => {
     const seen: string[] = [];
     const tree = ToastViewport({
       toasts: [{ id: "a", message: "A", severity: "success" }],
@@ -248,13 +242,10 @@ describe("ToastViewport", () => {
     card.props!.onFocus();
     card.props!.onMouseLeave();
     card.props!.onBlur();
-    // All four are distinct callbacks reaching the caller — a caller can
-    // track hover/focus as two independent flags and decide for itself
-    // whether "leave" or "blur" should actually resume the countdown.
     expect(seen).toEqual(["enter:a", "focus:a", "leave:a", "blur:a"]);
   });
 
-  it("the viewport wrapper itself never carries an onClick/backdrop handler (never modal, unlike ConfirmDialog)", () => {
+  it("has no click handler on the wrapper", () => {
     const tree = ToastViewport({
       toasts: [{ id: "a", message: "A", severity: "success" }],
       dismissLabel,

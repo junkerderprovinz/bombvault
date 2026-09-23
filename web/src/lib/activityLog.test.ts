@@ -1,10 +1,6 @@
-// ---------------------------------------------------------------------------
-// activityLog — happy-path tests for the pure merge/filter entry points.
-// buildLogLines/filterLogLines are deliberately framework-free (see the module
-// doc comment), so these run in the node environment with a stub resolver:
-// resolveName renders "key a=1 b=2", which keeps the translation key AND the
-// interpolated params assertable without any i18n context.
-// ---------------------------------------------------------------------------
+// buildLogLines and filterLogLines have no framework dependencies, so these
+// tests run in node. The stub resolver renders "key a=1 b=2", which keeps both
+// the translation key and its params assertable.
 import { describe, expect, it } from "vitest";
 import { buildLogLines, domainLabel, filterLogLines, formatLogDate } from "./activityLog";
 import type { LogLine } from "./activityLog";
@@ -78,13 +74,10 @@ describe("buildLogLines", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// #109 — drills, tamper tests and the flash-ZIP export publish live progress
-// keys ("drill:<domain>", "tamper:<domain>", "export:flash") so they show in
-// the log WHILE running, with the same dedupe-signature mechanics as the
-// other domain-op live lines (offsite/prune/verify).
-// ---------------------------------------------------------------------------
-describe("buildLogLines — live domain-op checks (#109)", () => {
+// Drills, tamper tests and the flash ZIP export publish live progress keys
+// ("drill:<domain>", "tamper:<domain>", "export:flash"), so they show in the
+// log while they run, like the other domain operations.
+describe("buildLogLines live check lines", () => {
   it("renders a live drill as a running restore-check line with drill kind/domain", () => {
     const progress: ProgressMap = {
       "drill:containers": { phase: "maintenance", percent: 0, active: true, lastSeen: 5_000_000 },
@@ -102,8 +95,8 @@ describe("buildLogLines — live domain-op checks (#109)", () => {
   });
 
   it("supersedes the finished drill run row while its live line still shows (no doubling)", () => {
-    // The backend records the drill run (recordDomainRun) BEFORE the terminal
-    // progress frame clears the live entry — during that window both exist.
+    // The backend records the drill run before the final progress frame clears
+    // the live entry, so for a moment both exist.
     const finishedDrill = makeRun({ id: "r-drill", kind: "drill", targetId: "containers", target: "containers" });
     const progress: ProgressMap = {
       "drill:containers": { phase: "maintenance", percent: 0, active: true, lastSeen: 5_000_000 },
@@ -136,18 +129,10 @@ describe("buildLogLines — live domain-op checks (#109)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Issue #159 — a first cut of this feature concluded restic copy had no
-// machine-readable percentage and shipped a duration-only live off-site line.
-// That conclusion was wrong (see restic.Copy's doc comment for the corrected
-// story): restic copy DOES print a real per-snapshot pack-copy percentage
-// once RESTIC_PROGRESS_FPS is wired up, so offsiteLiveLineText shows it once
-// available, falling back to the honest elapsed-duration signal (from the
-// backend-stamped startedAt) and finally to the plain running line whenever
-// neither is known/usable — so a stale/skewed/zero/negative timestamp can
-// never render "NaN" or a negative span.
-// ---------------------------------------------------------------------------
-describe("buildLogLines — live off-site line (#159)", () => {
+// The live off-site line shows run progress once the backend reports a snapshot
+// index and total, else the time since startedAt, else the plain running line,
+// so a skewed, zero or negative timestamp never renders NaN or a negative span.
+describe("buildLogLines live off-site line", () => {
   it("renders the plain running line when startedAt is not known yet", () => {
     const progress: ProgressMap = {
       "offsite:containers": { phase: "replicate", percent: 0, active: true, lastSeen: 5_000_000 },
@@ -170,7 +155,7 @@ describe("buildLogLines — live off-site line (#159)", () => {
     expect(live.text).toBe("activityLog.lineOffsiteRunningWithDuration domain=activityLog.domainContainers duration=30s");
   });
 
-  it("degrades to the plain running line — asserting the ACTUAL fallback text, not just the absence of NaN — when startedAt is in the future (clock skew)", () => {
+  it("falls back to the plain running line when startedAt is in the future", () => {
     const progress: ProgressMap = {
       "offsite:containers": { phase: "replicate", percent: 0, active: true, lastSeen: 5_030_000, startedAt: 6000 },
     };
@@ -197,24 +182,21 @@ describe("buildLogLines — live off-site line (#159)", () => {
     expect(lines[0].text).not.toContain("-");
   });
 
-  it("shows a RUN-LEVEL percentage once the backend reports a snapshot index/total", () => {
+  it("shows the run's percentage once the backend reports a snapshot index and total", () => {
     const progress: ProgressMap = {
       "offsite:containers": { phase: "replicate", percent: 62.6, active: true, lastSeen: 5_000_000, snapshotIndex: 2, snapshotTotal: 4 },
     };
     const lines = buildLogLines([], progress, [], resolveName, 5_000_000);
-    // 1 whole snapshot done + 62.6% of the second, out of 4 => 40.65% => 41.
-    // NOT 63, which is snapshot 2's own pack progress (see offsiteRunProgress).
+    // One snapshot done plus 62.6% of the second, out of 4, is 40.65%. 63
+    // would be the second snapshot's own pack progress.
     expect(lines[0].text).toBe(
       "activityLog.lineOffsiteRunningSnapshotPercent domain=activityLog.domainContainers index=2 total=4 percent=41 duration="
     );
   });
 
-  // The exact numbers from issue #159's report: "snapshot 15 of 126 (55%)" on a
-  // 1h 7m run. 55 was snapshot 15's own pack progress, but sat in parentheses
-  // right after the fraction, so it read as "15/126 = 55%" — which is what made
-  // the line look broken. Real run progress is ~12%, and the fraction beside it
-  // now agrees instead of contradicting.
-  it("renders the reported 15-of-126-at-55% case as ~12% overall, never 55%", () => {
+  // 55% is snapshot 15's own pack progress; next to "15 of 126" it would read
+  // as progress of the whole run, which is about 12% done.
+  it("shows snapshot 15 of 126 at 55% as 12% of the run", () => {
     const progress: ProgressMap = {
       "offsite:containers": { phase: "replicate", percent: 55, active: true, lastSeen: 5_000_000, snapshotIndex: 15, snapshotTotal: 126 },
     };
@@ -257,10 +239,8 @@ describe("buildLogLines — live off-site line (#159)", () => {
     expect(lines[0].text).toBe("activityLog.lineOffsiteRunning domain=activityLog.domainContainers");
   });
 
-  // The backend publishes snapshotTotal 0/absent when it could not estimate the
-  // candidate count at all (see api.progBeginCopySink). There is no honest
-  // denominator then, so the line must fall back rather than divide by the live
-  // index and claim a confident ~99%.
+  // Without an estimated total there is nothing to divide by; dividing by the
+  // live index would claim the run is nearly done.
   it("falls back to the duration line when the backend has no snapshot total to divide by", () => {
     const progress: ProgressMap = {
       "offsite:containers": { phase: "replicate", percent: 55, active: true, lastSeen: 5_030_000, startedAt: 5000, snapshotIndex: 15 },
@@ -269,18 +249,11 @@ describe("buildLogLines — live off-site line (#159)", () => {
     expect(lines[0].text).toBe("activityLog.lineOffsiteRunningWithDuration domain=activityLog.domainContainers duration=30s");
   });
 
-  // Review fix: ActivityLog.tsx's `now` ticks at a coarse 60s cadence (its
-  // idle countdown doesn't need better) — reusing it for the off-site
-  // duration meant that for a run's first ~60s, `now` could sit BEHIND the
-  // backend-stamped startedAt, making the computed span go NEGATIVE (blank),
-  // then jump once `now` finally caught up. `liveNow` is the fix: a second,
-  // faster-ticking clock buildLogLines/buildLiveLines take SEPARATELY from
-  // `now`, used ONLY for this computation.
+  // ActivityLog.tsx ticks `now` once a minute, which early in a run can lag
+  // behind startedAt, so the off-site duration uses the faster liveNow clock.
   it("uses liveNow (not now) for the off-site duration, so a stale `now` doesn't go negative", () => {
-    // startedAt = 5000s (5,000,000ms). `now` is 1s BEHIND that in ms terms —
-    // reusing `now` for elapsedSince (the pre-fix bug) would compute a
-    // NEGATIVE span, which formatDuration rejects, rendering blank. `liveNow`
-    // is 3s AHEAD of startedAt and must be what actually drives the text.
+    // `now` is 1s before startedAt (5000s) and would give a negative span;
+    // liveNow is 3s after it.
     const now = 4_999_000;
     const liveNow = 5_003_000;
     const progress: ProgressMap = {
@@ -291,9 +264,6 @@ describe("buildLogLines — live off-site line (#159)", () => {
   });
 
   it("still gates staleness on `now`, independent of liveNow", () => {
-    // lastSeen is far enough behind `now` to be stale (> STALE_MS), even
-    // though `liveNow` alone would suggest the entry is fresh — staleness must
-    // stay governed by `now`, unaffected by the liveNow fix.
     const progress: ProgressMap = {
       "offsite:containers": { phase: "replicate", percent: 0, active: true, lastSeen: 0, startedAt: 0 },
     };
@@ -302,7 +272,7 @@ describe("buildLogLines — live off-site line (#159)", () => {
     expect(lines.some((l) => l.text.includes("lineOffsiteRunning"))).toBe(false);
   });
 
-  it("buildLogLines defaults liveNow to now when the caller doesn't pass one (backward compatible)", () => {
+  it("defaults liveNow to now", () => {
     const progress: ProgressMap = {
       "offsite:containers": { phase: "replicate", percent: 0, active: true, lastSeen: 5_030_000, startedAt: 5000 },
     };
@@ -311,13 +281,10 @@ describe("buildLogLines — live off-site line (#159)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// #109 follow-up — the off-site DR drill has its own kind "drdrill" (live key
-// "drdrill:<domain>", run kind "drdrill") so it is distinguishable from the
-// local subset drill ("drill"), and a tamper run that produced no verdict is
-// recorded "skipped" and rendered as a neutral info line, never a red.
-// ---------------------------------------------------------------------------
-describe("buildLogLines — DR drill kind + skipped tamper (#109 follow-up)", () => {
+// The off-site DR drill has its own kind "drdrill", apart from the local subset
+// drill, and a tamper run without a verdict is recorded as skipped and shown as
+// a neutral info line.
+describe("buildLogLines DR drill and skipped tamper", () => {
   it("renders a live DR check with kind drdrill and the DR-running line", () => {
     const progress: ProgressMap = {
       "drdrill:containers": { phase: "maintenance", percent: 0, active: true, lastSeen: 5_000_000 },
@@ -363,12 +330,12 @@ describe("buildLogLines — DR drill kind + skipped tamper (#109 follow-up)", ()
     });
     const lines = buildLogLines([run], {}, [], resolveName, 5_000_000);
     expect(lines.map((l) => l.id)).toEqual(["run:r-tamper-s"]);
-    expect(lines[0].status).toBe("info"); // neutral — the test ran, no verdict; never a red
+    expect(lines[0].status).toBe("info");
     expect(lines[0].text).toContain("activityLog.lineTamperSkipped");
     expect(lines[0].text).toContain("error=only REST repos are verifiable");
   });
 
-  it("keeps the subset drill line unchanged alongside the new DR kind", () => {
+  it("keeps the subset drill apart from the DR drill", () => {
     const subset = makeRun({ id: "r-drill", kind: "drill", targetId: "containers", target: "containers" });
     const lines = buildLogLines([subset], {}, [], resolveName, 5_000_000);
     expect(lines[0].kind).toBe("drill");
@@ -384,17 +351,10 @@ describe("buildLogLines — DR drill kind + skipped tamper (#109 follow-up)", ()
   });
 });
 
-// ---------------------------------------------------------------------------
-// Backup Everything (Task 6 of the backup-everything plan) — a 6th pseudo-
-// domain: the parent run the backend records for a pass (kind="backup",
-// targetId=domain="everything", target="Backup Everything") reuses the
-// existing generic backup-line formatter untouched (Decision 3/4 of the
-// design spec), so this only proves the DOMAIN plumbing — domainLabel's
-// DOMAIN_KEYS entry (exercised here via the idle next-up line, the one
-// existing path that already renders a domain label) and normalizeDomain +
-// the new "everything" LogFilterDomain value actually matching a real line.
-// ---------------------------------------------------------------------------
-describe("buildLogLines / filterLogLines — Backup Everything pseudo-domain (Task 6)", () => {
+// A Backup Everything pass records a parent backup run under the pseudo-domain
+// "everything". Its line uses the generic backup formatter, so these tests
+// cover only the domain label and the domain filter.
+describe("Backup Everything pseudo-domain", () => {
   it("resolves the everything domain via domainLabel in the idle next-up line", () => {
     const next: ScheduleNext[] = [
       { job: "backup", domain: "everything", next: new Date(7_200_000).toISOString() },
@@ -405,12 +365,12 @@ describe("buildLogLines / filterLogLines — Backup Everything pseudo-domain (Ta
     expect(lines[0].text).toContain("domain=activityLog.domainEverything");
   });
 
-  it("normalizes a finished Backup Everything run's domain and matches the new filter value", () => {
+  it("normalizes a finished Backup Everything run's domain and matches its filter value", () => {
     const run = makeRun({
       id: "r-everything",
       targetId: "everything",
       target: "Backup Everything",
-      domain: "everything", // already the backend's runTargetMaps literal — no singular→plural mapping needed
+      domain: "everything", // needs no singular to plural mapping
       bytes: 0,
     });
     const other = makeRun({}); // id "r1", domain "container" → normalized "containers"
@@ -460,22 +420,18 @@ describe("filterLogLines", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// #104 — the activity log now spans many days, so each line must show AND be
-// searchable by its date, not just its time. Timestamps below are built with
-// the local Date constructor (not a bare epoch number) so the expected
-// calendar day is stable no matter which timezone the test runner is in —
-// formatLogDate/isoDateOf both read back via local getters too.
-// ---------------------------------------------------------------------------
+// The log spans several days, so each line shows its date and matches it in
+// the search. Timestamps come from the local Date constructor, so the expected
+// day does not depend on the runner's timezone.
 describe("formatLogDate", () => {
-  it("orders day/month per the active language (locale-aware date, fixed-face time stays formatClockTime's job)", () => {
+  it("orders day and month per the active language", () => {
     const atMs = new Date(2026, 6, 23, 5, 4, 8).getTime(); // 23 July 2026, local wall-clock
     expect(formatLogDate(atMs, "de")).toBe("23.07.");
     expect(formatLogDate(atMs, "en")).toBe("07/23");
   });
 });
 
-describe("filterLogLines — date search (#104)", () => {
+describe("filterLogLines date search", () => {
   const day1 = new Date(2026, 6, 23, 5, 4, 8).getTime(); // 23 July 2026
   const day2 = new Date(2026, 6, 24, 9, 0, 0).getTime(); // 24 July 2026
 
@@ -500,26 +456,19 @@ describe("filterLogLines — date search (#104)", () => {
     ).toEqual(["d2"]);
   });
 
-  it("defaults the localized-date match to the environment's own locale when no language is given (#108)", () => {
-    // With lang omitted the haystack uses the engine's default negotiation —
-    // whatever THIS environment renders for day1 must match (and does so on
-    // any OS locale, which is exactly the #108 contract).
+  it("matches the date in the environment's default locale when no language is given", () => {
     const shown = formatLogDate(day1);
     expect(filterLogLines(dateLines, { domain: "all", kind: "all", text: shown }).map((l) => l.id)).toEqual(["d1"]);
   });
 
-  it("still narrows by plain message text alongside the new date matching", () => {
+  it("still matches plain message text", () => {
     expect(filterLogLines(dateLines, { domain: "all", kind: "all", text: "sonarr" }).map((l) => l.id)).toEqual(["d2"]);
   });
 });
 
-// ---------------------------------------------------------------------------
-// Heatmap → Activity Log drilldown — the optional `day` filter (ISO
-// YYYY-MM-DD) keeps only lines on that LOCAL calendar day. Timestamps are
-// built with the local Date constructor so the expected day is stable in any
-// runner timezone (isoDateOf reads back via local getters too).
-// ---------------------------------------------------------------------------
-describe("filterLogLines — heatmap day filter", () => {
+// The heatmap drilldown passes a `day` (YYYY-MM-DD) that keeps only lines on
+// that local calendar day.
+describe("filterLogLines day filter", () => {
   const day1Morning = new Date(2026, 6, 23, 0, 0, 1).getTime(); // 23 July 2026, local
   const day1Night = new Date(2026, 6, 23, 23, 59, 59).getTime(); // same local day
   const day2 = new Date(2026, 6, 24, 9, 0, 0).getTime(); // 24 July 2026, local
@@ -538,7 +487,7 @@ describe("filterLogLines — heatmap day filter", () => {
     ).toEqual(["m", "n", "p", "idle"]);
   });
 
-  it("returns no run lines for a day with no runs (honest empty drilldown)", () => {
+  it("returns no run lines for a day without runs", () => {
     expect(
       filterLogLines(lines, { domain: "all", kind: "all", text: "", day: "2026-07-25" }).map((l) => l.id)
     ).toEqual(["idle"]);
@@ -563,43 +512,31 @@ describe("filterLogLines — heatmap day filter", () => {
   });
 
   it("exempts the idle line, like the domain/kind quick-filters do", () => {
-    // The idle "next up" line sits on day2 but survives a day1 filter — the
-    // chip can never hide the only line telling the user what's coming next.
+    // The idle line is on day2, but it says what runs next, so no day hides it.
     const ids = filterLogLines(lines, { domain: "all", kind: "all", text: "", day: "2026-07-23" }).map((l) => l.id);
     expect(ids).toContain("idle");
   });
 
-  it("is off when day is omitted (backwards compatible)", () => {
+  it("is off when day is omitted", () => {
     expect(filterLogLines(lines, { domain: "all", kind: "all", text: "" })).toHaveLength(lines.length);
   });
 });
 
-// -- #108: an omitted locale = the engine's default negotiation --------------
-// The log's date must use the SAME default-locale path as every other date in
-// the app (formatTs's plain toLocaleString) — never navigator.language, which
-// can disagree with the browser's formatting default (e.g. a macOS "en-US" UI
-// language with a Portuguese region). Omitting the locale is that contract.
-describe("formatLogDate with omitted locale (#108)", () => {
+// Without a locale the date follows the engine's default, like every other
+// date in the app, rather than navigator.language, which can disagree with it
+// (a macOS "en-US" UI language with a Portuguese region).
+describe("formatLogDate without a locale", () => {
   it("matches toLocaleDateString's default-locale day/month rendering", () => {
     const ts = new Date(2026, 6, 23, 5, 0, 0).getTime();
-    // Build the expected day/month string via the same default negotiation.
     const expected = new Intl.DateTimeFormat(undefined, { day: "2-digit", month: "2-digit" }).format(new Date(ts));
     expect(formatLogDate(ts)).toBe(expected);
   });
 });
 
-// ---------------------------------------------------------------------------
-// Issue #188 — a quiet run is not a finished run ([545])
-// ---------------------------------------------------------------------------
 describe("a live line whose stream has gone quiet", () => {
-  // Reported against a folder backup sitting at 18%: "a minute in it will
-  // update with different information and no longer show the progress of the
-  // current backup. If I refresh, it starts all over again."
-  //
-  // restic streams at 3fps WHILE it has something to report and goes quiet for
-  // minutes scanning a large tree, so `lastSeen` ages past STALE_MS on a
-  // perfectly healthy run. ActivityLog.tsx ticks `now` once a minute, which is
-  // why the drop lands on the minute boundary the report describes.
+  // restic can go quiet for minutes while it scans a large tree, so `lastSeen`
+  // ages past STALE_MS on a healthy run. The runs list decides whether the
+  // line stays.
   const quiet = {
     "files:Documents": { phase: "backup", percent: 18, active: true, lastSeen: 1_000_000 },
   };
@@ -622,9 +559,7 @@ describe("a live line whose stream has gone quiet", () => {
   });
 
   it("still disappears once no run reports it running", () => {
-    // The original protection, unchanged: a terminal frame lost in transit
-    // must not wedge a "running…" line in place forever. By the time that
-    // matters the run has finished, so nothing vouches for it.
+    // A lost final frame must not leave a running line in place forever.
     const finished = makeRun({
       id: "r-done",
       kind: "backup",
@@ -637,7 +572,7 @@ describe("a live line whose stream has gone quiet", () => {
     expect(lines.filter((l) => l.live)).toHaveLength(0);
   });
 
-  it("is not kept alive by some OTHER target's running run", () => {
+  it("is not kept alive by another target's running run", () => {
     const otherRunning = makeRun({
       id: "r-other",
       kind: "backup",
@@ -651,20 +586,12 @@ describe("a live line whose stream has gone quiet", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// domainLabel — the label the log now prints on every line.
-//
-// The line used to carry the item NAME alone, and a container and a folder set
-// may well share one. A user chasing a running backup read "Backing up HomeDVR"
-// on the dashboard, went to the Folders page, and found the set of that name
-// idle with no Stop button, because it was the CONTAINER that was running
-// (issue #200). The domain was in the data the whole time - it drives the filter
-// above the log - it just never reached the line.
-// ---------------------------------------------------------------------------
+// Every log line names its domain, since a container and a folder set can share
+// a name.
 describe("domainLabel", () => {
   const t = (k: string) => `T:${k}`;
 
-  it("gives the two domains that share names apart-tellable labels", () => {
+  it("gives containers and folder sets different labels", () => {
     expect(domainLabel(t, "containers")).not.toBe(domainLabel(t, "files"));
   });
 

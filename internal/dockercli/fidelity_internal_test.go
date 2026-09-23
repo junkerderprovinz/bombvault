@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/api/types/network"
 
 	"github.com/junkerderprovinz/bombvault/internal/model"
 )
@@ -73,4 +75,131 @@ func TestNetworkingConfigNilWhenNothingToPreserve(t *testing.T) {
 	if buildNetworkingConfig(model.Inspect{Network: model.NetworkEndpoint{Name: "bridge"}}) != nil {
 		t.Fatal("expected nil networking config when there is no static IP or MAC")
 	}
+}
+
+func TestContainerSummaryMappingCarriesMountsAndLabels(t *testing.T) {
+	t.Run("running container with bind mount and named volume", func(t *testing.T) {
+		summary := container.Summary{
+			ID:      "abc123def456",
+			Names:   []string{"/myapp"},
+			Image:   "ubuntu:22.04",
+			ImageID: "sha256:deadbeefcafe1234",
+			State:   "running",
+			Status:  "Up 2 hours",
+			Created: 1609459200,
+			Labels: map[string]string{
+				"com.docker.compose.project": "myproject",
+				"version":                    "1.0",
+			},
+			Mounts: []container.MountPoint{
+				{
+					Type:        mount.TypeBind,
+					Source:      "/host/appdata",
+					Destination: "/app/data",
+				},
+				{
+					Type:        mount.TypeVolume,
+					Name:        "myapp_cache",
+					Source:      "/var/lib/docker/volumes/myapp_cache/_data",
+					Destination: "/app/cache",
+				},
+			},
+			NetworkSettings: &container.NetworkSettingsSummary{
+				Networks: map[string]*network.EndpointSettings{
+					"bridge": {IPAddress: "172.17.0.2"},
+				},
+			},
+		}
+
+		info := mapContainerSummary(summary)
+
+		if info.ID != "abc123def456" {
+			t.Errorf("ID = %q, want abc123def456", info.ID)
+		}
+		if info.Name != "myapp" {
+			t.Errorf("Name = %q, want myapp", info.Name)
+		}
+		if info.Image != "ubuntu:22.04" {
+			t.Errorf("Image = %q, want ubuntu:22.04", info.Image)
+		}
+		if info.ImageID != "sha256:deadbeefcafe1234" {
+			t.Errorf("ImageID = %q, want sha256:deadbeefcafe1234", info.ImageID)
+		}
+		if info.Created != 1609459200 {
+			t.Errorf("Created = %d, want 1609459200", info.Created)
+		}
+		if info.State != "running" {
+			t.Errorf("State = %q, want running", info.State)
+		}
+		if info.IP != "172.17.0.2" {
+			t.Errorf("IP = %q, want 172.17.0.2", info.IP)
+		}
+		if info.Stack != "myproject" {
+			t.Errorf("Stack = %q, want myproject", info.Stack)
+		}
+		if info.Labels["version"] != "1.0" {
+			t.Errorf("Labels[version] = %q, want 1.0", info.Labels["version"])
+		}
+		if info.Labels["com.docker.compose.project"] != "myproject" {
+			t.Errorf("Labels[com.docker.compose.project] = %q, want myproject", info.Labels["com.docker.compose.project"])
+		}
+		if len(info.Mounts) != 1 {
+			t.Fatalf("len(Mounts) = %d, want 1 (bind mount only, not named volume)", len(info.Mounts))
+		}
+		if info.Mounts[0].Source != "/host/appdata" {
+			t.Errorf("Mounts[0].Source = %q, want /host/appdata", info.Mounts[0].Source)
+		}
+		if info.Mounts[0].Destination != "/app/data" {
+			t.Errorf("Mounts[0].Destination = %q, want /app/data", info.Mounts[0].Destination)
+		}
+	})
+
+	t.Run("stopped container carries all facts", func(t *testing.T) {
+		summary := container.Summary{
+			ID:      "stoppedabc123",
+			Names:   []string{"/oldname"},
+			Image:   "nginx:latest",
+			ImageID: "sha256:stoppedimg99",
+			State:   "exited",
+			Status:  "Exited (0) 1 day ago",
+			Created: 1609372800,
+			Labels: map[string]string{
+				"env": "test",
+			},
+			Mounts: []container.MountPoint{
+				{
+					Type:        mount.TypeBind,
+					Source:      "/host/config",
+					Destination: "/etc/nginx/conf.d",
+				},
+			},
+			NetworkSettings: &container.NetworkSettingsSummary{
+				Networks: map[string]*network.EndpointSettings{},
+			},
+		}
+
+		info := mapContainerSummary(summary)
+
+		if info.ID != "stoppedabc123" {
+			t.Errorf("ID = %q, want stoppedabc123", info.ID)
+		}
+		if info.ImageID != "sha256:stoppedimg99" {
+			t.Errorf("ImageID = %q, want sha256:stoppedimg99", info.ImageID)
+		}
+		if info.Created != 1609372800 {
+			t.Errorf("Created = %d, want 1609372800", info.Created)
+		}
+		if info.State != "exited" {
+			t.Errorf("State = %q, want exited", info.State)
+		}
+		if info.Labels["env"] != "test" {
+			t.Errorf("Labels[env] = %q, want test", info.Labels["env"])
+		}
+		if info.IP != "" {
+			t.Errorf("IP = %q, want empty for stopped container", info.IP)
+		}
+		if len(info.Mounts) != 1 {
+			t.Fatalf("len(Mounts) = %d, want 1", len(info.Mounts))
+		}
+	})
 }

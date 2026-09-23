@@ -7,9 +7,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// fakeGateStore is the smallest DomainGateStore a due-gate test needs. It records
-// which item IDs the gate asked about, which is the thing under test: the gate's
-// answer matters less than WHICH sets it counted.
+// fakeGateStore is a minimal DomainGateStore that records which item IDs the
+// gate asked about.
 type fakeGateStore struct {
 	sets     []store.FileSet
 	settings store.Settings
@@ -25,18 +24,13 @@ func (f *fakeGateStore) LastSuccessfulBackupAmong(ids []string) (time.Time, erro
 	return time.Time{}, nil
 }
 
-// Per-item schedules for folder sets (#199), the half #121 left out.
-//
-// manilx backs everything up nightly through Backup Everything and has one large
-// folder set that only needs a weekly run. Before this, a set was in the domain
-// run or excluded from scheduling altogether, so the only way to spare it was to
-// switch it off and back it up by hand. These tests pin the three things that
-// have to hold for that to work, and the fourth that has to hold for everyone
-// who never turns the feature on.
+// With PerItemSchedules on, a folder set with its own cadence leaves the domain
+// run and gets a cron entry of its own, so one large set can run weekly while
+// the rest run nightly.
 
-// The filter has to leave the list untouched while the feature is off. That is
-// not a formality: it is the promise that this column changes nothing for an
-// install that ignores it.
+// TestDomainRunFileSetsIsIdentityWhileTheFeatureIsOff checks that the list stays
+// untouched with the feature off, so an install that never uses it sees no
+// change.
 func TestDomainRunFileSetsIsIdentityWhileTheFeatureIsOff(t *testing.T) {
 	sets := []store.FileSet{
 		{ID: "a", Name: "media", Enabled: true, ScheduleCadence: "weekly sun 04:00"},
@@ -54,8 +48,9 @@ func TestDomainRunFileSetsIsIdentityWhileTheFeatureIsOff(t *testing.T) {
 	}
 }
 
-// With the feature on, a set carrying its own cadence leaves the domain run, a
-// set explicitly "off" leaves it too, and everything else stays.
+// TestDomainRunFileSetsDropsOverriddenAndOffSets checks that with the feature on,
+// a set carrying its own cadence leaves the domain run, a set explicitly "off"
+// leaves it too, and everything else stays.
 func TestDomainRunFileSetsDropsOverriddenAndOffSets(t *testing.T) {
 	sets := []store.FileSet{
 		{ID: "a", Name: "media", Enabled: true, ScheduleCadence: "weekly sun 04:00"}, // own entry
@@ -76,9 +71,9 @@ func TestDomainRunFileSetsDropsOverriddenAndOffSets(t *testing.T) {
 	}
 }
 
-// A set on its own cadence gets a cron entry of its own, and toggling the
-// feature off takes it away again. Mirrors TestPerItemEntriesRegistered for
-// containers.
+// TestPerItemFileSetEntriesFollowTheToggle checks that a set on its own cadence
+// gets a cron entry of its own, and that toggling the feature off takes it away
+// again.
 func TestPerItemFileSetEntriesFollowTheToggle(t *testing.T) {
 	sets := []store.FileSet{
 		{ID: "a", Name: "media", Enabled: true, ScheduleCadence: "weekly sun 04:00"}, // own entry
@@ -116,9 +111,9 @@ func TestPerItemFileSetEntriesFollowTheToggle(t *testing.T) {
 	}
 }
 
-// The thing manilx actually asked for: the weekly set must not be dragged along
-// by the nightly run, and the nightly run must still cover everything else. Each
-// set is backed up exactly once across both entries.
+// TestPerItemFileSetRunsOnlyItsOwnSet checks that the nightly run leaves out the
+// weekly set and still covers the rest, so each set is backed up exactly once
+// across both entries.
 func TestPerItemFileSetRunsOnlyItsOwnSet(t *testing.T) {
 	sets := []store.FileSet{
 		{ID: "media", Name: "media", Enabled: true, ScheduleCadence: "weekly sun 04:00"},
@@ -150,9 +145,9 @@ func TestPerItemFileSetRunsOnlyItsOwnSet(t *testing.T) {
 	}
 }
 
-// The due gate has to ignore a set on its own cadence, or one weekly set holds
-// the nightly gate closed for every daily set beside it. This is the failure the
-// feature would otherwise introduce, so it gets its own test.
+// TestFilesDueGateIgnoresSetsOnTheirOwnCadence checks that the due gate ignores
+// a set on its own cadence; otherwise one weekly set would hold the nightly gate
+// closed for every daily set beside it.
 func TestFilesDueGateIgnoresSetsOnTheirOwnCadence(t *testing.T) {
 	sets := []store.FileSet{
 		{ID: "media", Name: "media", Enabled: true, ScheduleCadence: "weekly sun 04:00"},
@@ -177,16 +172,9 @@ func TestFilesDueGateIgnoresSetsOnTheirOwnCadence(t *testing.T) {
 	}
 }
 
-// manilx's actual setup, from the screenshots on #199, because the first reply
-// on that issue was written from reading rather than from running it.
-//
-// The Folders domain schedule is OFF: nothing is scheduled there at all. What
-// backs his folders up is Backup Everything at 05:00, and every set has "include
-// in schedule" on. He wants one set, My_Backups, out of that nightly run and on
-// its own weekly cadence.
-//
-// So the per-item entry has to register even though the domain it belongs to has
-// no schedule of its own, which is the part that could plausibly not work.
+// TestPerItemFileSetEntryRegistersWithTheDomainScheduleOff checks that with the
+// Folders schedule off and Backup Everything doing the nightly run, a set on its
+// own weekly cadence still gets its entry, although its domain has no schedule.
 func TestPerItemFileSetEntryRegistersWithTheDomainScheduleOff(t *testing.T) {
 	sets := []store.FileSet{
 		{ID: "iso", Name: "ISO", Enabled: true},
@@ -199,7 +187,6 @@ func TestPerItemFileSetEntryRegistersWithTheDomainScheduleOff(t *testing.T) {
 	filesBackup, rec := recordingBackup()
 	sc.SetFilesJob(filesBackup, func() ([]store.FileSet, error) { return sets, nil })
 
-	// Exactly his card: Folders schedule "off", per-item schedules on.
 	on := store.Settings{FilesEnabled: true, FilesSchedule: "off", PerItemSchedules: true}
 	if err := sc.ReloadWithDueChecks(on, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("reload: %v", err)
@@ -208,7 +195,6 @@ func TestPerItemFileSetEntryRegistersWithTheDomainScheduleOff(t *testing.T) {
 		t.Fatalf("want exactly 1 entry (My_Backups, no domain entry), got %d", got)
 	}
 
-	// Firing it backs up his set and nothing else.
 	for _, e := range sc.c.Entries() {
 		e.Job.Run()
 	}
@@ -217,9 +203,9 @@ func TestPerItemFileSetEntryRegistersWithTheDomainScheduleOff(t *testing.T) {
 	}
 }
 
-// And the other half of his setup: Backup Everything must skip that set while
-// still covering the three that carry no cadence. This is the filter the API's
-// everythingRunFiles applies, tested at the seam it shares with the scheduler.
+// TestBackupEverythingSkipsAFolderSetOnItsOwnCadence checks that Backup
+// Everything skips a set on its own cadence and still covers the rest. The API's
+// everythingRunFiles applies this filter.
 func TestBackupEverythingSkipsAFolderSetOnItsOwnCadence(t *testing.T) {
 	sets := []store.FileSet{
 		{ID: "iso", Name: "ISO", Enabled: true},

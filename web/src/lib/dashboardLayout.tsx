@@ -1,20 +1,6 @@
-// ---------------------------------------------------------------------------
-// Customizable dashboard layout (#46) — per-browser card order + visibility.
-//
-// The user can reorder the dashboard cards, hide the ones they don't want, and
-// (per-card width toggle) size a card full or half width so two half cards sit
-// side by side. The preference is persisted in localStorage (like the
-// Simple/Advanced toggle in advanced.tsx). This module owns:
-//   • useDashboardLayout() — the persisted { order, hidden, widths } state +
-//                            mutators.
-//   • CustomizableBlock    — the per-card wrapper that, in edit mode, adds a
-//                            Carbon-styled control bar (drag handle, move
-//                            up/down, width toggle, hide) and wires native
-//                            HTML5 drag-and-drop.
-//
-// No new npm dependency: reordering uses native HTML5 drag-and-drop, with the
-// move up/down buttons as the accessible + touch fallback.
-// ---------------------------------------------------------------------------
+// Customizable dashboard layout: card order, visibility and width per browser,
+// kept in localStorage. Reordering uses native HTML5 drag-and-drop, with the
+// move up/down buttons as the keyboard and touch fallback.
 
 import {
   useCallback,
@@ -31,7 +17,8 @@ const KEY = "bombvault.dashboardLayout";
 
 type T = (key: TranslationKey) => string;
 
-// Native-DnD handlers the Dashboard builds per block and hands to the wrapper.
+// BlockDragHandlers are built by the Dashboard for each block. onDragOver has
+// to call preventDefault, or the browser never fires drop.
 export interface BlockDragHandlers {
   onDragStart: (e: ReactDragEvent<HTMLElement>) => void;
   onDragOver: (e: ReactDragEvent<HTMLElement>) => void;
@@ -39,9 +26,8 @@ export interface BlockDragHandlers {
   onDragEnd: (e: ReactDragEvent<HTMLElement>) => void;
 }
 
-// CardWidth — per-card width toggle (feature request B): "half" cards flow
-// side-by-side (two per row) in the Dashboard's responsive grid; "full" (the
-// default for every card, incl. ones never toggled) spans the full row.
+// CardWidth "half" puts two cards side by side in the Dashboard grid. Cards
+// that were never toggled are "full".
 export type CardWidth = "full" | "half";
 
 interface LayoutState {
@@ -56,9 +42,8 @@ interface StoredLayout {
   widths: Record<string, CardWidth>;
 }
 
-// readStored parses the persisted value defensively: a missing, corrupt or
-// wrong-shaped value yields null (→ defaults). Only string entries survive;
-// widths entries that aren't exactly "full"/"half" are dropped (→ default full).
+// readStored returns null for a missing or corrupt value. Entries of the wrong
+// type are dropped, so an unknown width falls back to full.
 function readStored(): StoredLayout | null {
   try {
     const raw = localStorage.getItem(KEY);
@@ -84,10 +69,8 @@ function readStored(): StoredLayout | null {
   }
 }
 
-// mergeOrder normalises a stored order against the known default order:
-//   • stale / unknown ids (not in defaultOrder) are dropped, and
-//   • newly-added block ids (present in defaultOrder but not yet stored) are
-//     appended at the end so a future card shows up, visible, without a reset.
+// mergeOrder drops stored ids that are no longer known and appends new default
+// ids at the end, so a card added later shows up without a reset.
 function mergeOrder(stored: string[], defaultOrder: string[]): string[] {
   const known = new Set(defaultOrder);
   const merged: string[] = [];
@@ -108,11 +91,9 @@ function mergeOrder(stored: string[], defaultOrder: string[]): string[] {
 }
 
 /**
- * useDashboardLayout — persisted per-browser card order + hidden set.
- *
- * @param defaultOrder the canonical block-id order (source of truth for which
- *        ids are "known"). Unknown ids in storage are ignored; new default ids
- *        are appended at the end, visible.
+ * useDashboardLayout keeps the card order, hidden set and widths for this
+ * browser. defaultOrder decides which ids are known: unknown stored ids are
+ * ignored, and new ones are appended, visible.
  */
 export function useDashboardLayout(defaultOrder: string[]) {
   const [state, setState] = useState<LayoutState>(() => {
@@ -127,8 +108,7 @@ export function useDashboardLayout(defaultOrder: string[]) {
     return { order, hidden, widths };
   });
 
-  // Persist on change. Skip the very first run so users who never customise
-  // don't get a redundant write; every real mutation below persists.
+  // Skip the initial render so a user who never customises gets no write.
   const firstRun = useRef(true);
   useEffect(() => {
     if (firstRun.current) {
@@ -143,13 +123,12 @@ export function useDashboardLayout(defaultOrder: string[]) {
       };
       localStorage.setItem(KEY, JSON.stringify(payload));
     } catch {
-      /* storage unavailable — keep the layout in-memory for this session */
+      /* storage unavailable: keep the layout in memory for this session */
     }
   }, [state]);
 
-  // move — simple index swap with the immediately-adjacent id in `order`
-  // (dir -1 = up, +1 = down). Skipping past hidden neighbours is intentionally
-  // not done; native drag-and-drop covers precise placement.
+  // move swaps with the adjacent id even when that one is hidden; drag-and-drop
+  // covers precise placement.
   const move = useCallback((id: string, dir: -1 | 1) => {
     setState((prev) => {
       const idx = prev.order.indexOf(id);
@@ -162,8 +141,7 @@ export function useDashboardLayout(defaultOrder: string[]) {
     });
   }, []);
 
-  // reorder — move `draggedId` next to `targetId` (used by native DnD). Dragging
-  // downward drops after the target, upward drops before it, which feels natural.
+  // Dragging down drops after the target, dragging up drops before it.
   const reorder = useCallback((draggedId: string, targetId: string) => {
     setState((prev) => {
       if (draggedId === targetId) return prev;
@@ -188,7 +166,6 @@ export function useDashboardLayout(defaultOrder: string[]) {
     });
   }, []);
 
-  // toggleWidth — flips a single card between full (default) and half width.
   const toggleWidth = useCallback((id: string) => {
     setState((prev) => {
       const current = prev.widths[id] ?? "full";
@@ -204,15 +181,11 @@ export function useDashboardLayout(defaultOrder: string[]) {
     setState({ order: defaultOrder.slice(), hidden: new Set<string>(), widths: {} });
   }, [defaultOrder]);
 
-  // getVisibleIds — the layout-visible (not hidden) ids, in order. Callers that
-  // also gate on Advanced mode filter this further against their block list.
   const getVisibleIds = useCallback(
     () => state.order.filter((id) => !state.hidden.has(id)),
     [state]
   );
 
-  // getWidth — the persisted width for a card id, defaulting to "full" for
-  // ids never toggled (matches the pre-existing single full-width column).
   const getWidth = useCallback(
     (id: string): CardWidth => state.widths[id] ?? "full",
     [state]
@@ -231,10 +204,6 @@ export function useDashboardLayout(defaultOrder: string[]) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Inline icons — stroke/fill currentColor, matching the existing SVG idiom.
-// ---------------------------------------------------------------------------
-
 function GripIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true" className="block">
@@ -248,15 +217,6 @@ function GripIcon() {
   );
 }
 
-// FILLED (design-language.md "Icon glyphs" — GlimStone follow-up round, full
-// icon-fill sweep): all four glyphs below were the last stroke-only icons in
-// the dashboard's per-card control bar. Chevrons are redrawn as filled
-// triangles (rule 219 — a chevron is a line glyph, needs real geometry, not
-// a thicker stroke); the eye and the columns split use the same
-// filled-shape-with-a-surface-colour-cutout technique this app already uses
-// elsewhere for a slider knob/switch dot (rule 220's thin-structural-line
-// case), so the pupil/divider still reads as a gap rather than vanishing
-// into a solid blob.
 function ChevronUpIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="block">
@@ -273,6 +233,8 @@ function ChevronDownIcon() {
   );
 }
 
+// The eye and columns icons cut the pupil and the divider out of a filled
+// shape with the surface colour, so they still read as gaps.
 function EyeOffIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="block">
@@ -296,16 +258,6 @@ const iconBtn =
   "rounded-control p-1 text-carbon-textSub hover:text-carbon-text hover:bg-carbon-hover " +
   "disabled:opacity-40 disabled:pointer-events-none motion-safe:transition-colors";
 
-// ---------------------------------------------------------------------------
-// CustomizableBlock — wraps a single dashboard block.
-//   editing=false → renders children plainly, no wrapper chrome (view parity).
-//   editing=true  → adds a control bar (drag handle, label, move up/down,
-//                   width toggle, hide) and makes the block a native drag
-//                   source + drop target. The width toggle itself doesn't
-//                   affect layout here — Dashboard.tsx reads `width` back via
-//                   getWidth() to size the grid wrapper around this block.
-// ---------------------------------------------------------------------------
-
 export interface CustomizableBlockProps {
   id: string;
   label: string;
@@ -324,6 +276,10 @@ export interface CustomizableBlockProps {
   children: ReactNode;
 }
 
+// CustomizableBlock renders its children unchanged outside edit mode. In edit
+// mode it adds a control bar and makes the block a drag source and drop
+// target. The width toggle does not size anything here: Dashboard reads it back
+// through getWidth() for the grid cell.
 export function CustomizableBlock({
   id,
   label,
@@ -341,9 +297,8 @@ export function CustomizableBlock({
   t,
   children,
 }: CustomizableBlockProps) {
-  // Drop-target highlight. A depth counter tracks dragenter/dragleave across the
-  // block's own children so the indicator doesn't flicker as the pointer crosses
-  // inner elements.
+  // dragenter and dragleave also fire for every child element, so a depth
+  // counter keeps the drop indicator from flickering.
   const depth = useRef(0);
   const [over, setOver] = useState(false);
 
@@ -359,10 +314,6 @@ export function CustomizableBlock({
       setOver(false);
     }
   };
-  const handleDragOver = (e: ReactDragEvent<HTMLElement>) => {
-    // preventDefault (in the parent handler) is required for onDrop to fire.
-    dragHandlers.onDragOver(e);
-  };
   const handleDrop = (e: ReactDragEvent<HTMLElement>) => {
     depth.current = 0;
     setOver(false);
@@ -374,7 +325,6 @@ export function CustomizableBlock({
     dragHandlers.onDragEnd(e);
   };
 
-  // View mode: no chrome — the card renders exactly as it did before #46.
   if (!editing) return <>{children}</>;
 
   return (
@@ -385,13 +335,13 @@ export function CustomizableBlock({
       draggable
       onDragStart={dragHandlers.onDragStart}
       onDragEnter={handleDragEnter}
-      onDragOver={handleDragOver}
+      onDragOver={dragHandlers.onDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onDragEnd={handleDragEnd}
       className="relative rounded-card"
     >
-      {/* Drop-target indicator — absolute so it never shifts layout. */}
+      {/* Absolute, so the drop indicator never shifts the layout. */}
       {over && (
         <div
           className="pointer-events-none absolute -top-3 start-0 end-0 h-0.5 rounded-control bg-carbon-text"
@@ -399,7 +349,6 @@ export function CustomizableBlock({
         />
       )}
 
-      {/* Control bar */}
       <div className="mb-2 flex items-center gap-2 rounded-card bg-carbon-surface2 px-2 py-1.5">
         <span className="shrink-0 cursor-move select-none text-carbon-textMuted" aria-hidden="true">
           <GripIcon />
@@ -407,20 +356,6 @@ export function CustomizableBlock({
         <span className="min-w-0 flex-1 truncate text-xs font-semibold uppercase tracking-wider text-carbon-textSub">
           {label}
         </span>
-        {/* All four are IconTipButton, not plain <button> + `title` (whole-app
-            sweep). Each carried an `aria-label` AND a duplicate native
-            `title` of the same string: a silent accessible name plus the
-            browser's own unstyled OS balloon, on a bar of four glyphs whose
-            meaning is not guessable. That pairing is exactly what
-            IconTipButton.tsx's header says the file exists to replace, and
-            it is what Dashboard's own customize pencil (the trigger that
-            reveals THIS bar) was converted away from one commit earlier —
-            these four sat one component away from it and were missed.
-              Same tip strings, same handlers, same `iconBtn` chrome; the
-            bubble is now the real .glim-bubble, appears on keyboard focus
-            as well as hover, and closes on scroll/Escape like every other
-            tooltip in the app. IconTipButton sets `aria-label` from `tip`
-            itself, so the accessible name is unchanged. */}
         <div className="flex shrink-0 items-center gap-1">
           <IconTipButton tip={t("dashboard.moveUp")} onClick={onMoveUp} disabled={isFirst} className={iconBtn}>
             <ChevronUpIcon />

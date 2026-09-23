@@ -1,9 +1,3 @@
-// ---------------------------------------------------------------------------
-// TimePicker — pure placement/parsing math, exercised directly with plain
-// numbers (no DOM, no React renderer), matching this repo's established
-// no-jsdom pattern for pure logic (Selector.test.ts, bubblePosition.test.ts).
-// Real DOM/keyboard/popover behaviour lives in TimePicker.dom.test.tsx.
-// ---------------------------------------------------------------------------
 import { describe, expect, it } from "vitest";
 import { formatTime, minutesFor, nearestStep, parseTime } from "./TimePicker";
 
@@ -18,11 +12,11 @@ describe("parseTime", () => {
     expect(parseTime("4:05")).toEqual({ hour: 4, minute: 5 });
   });
 
-  it("clamps an out-of-range hour/minute instead of producing an invalid time", () => {
+  it("clamps an out-of-range hour and minute", () => {
     expect(parseTime("99:99")).toEqual({ hour: 23, minute: 59 });
   });
 
-  it("defaults to 00:00 for empty or malformed input, never throws", () => {
+  it("defaults to 00:00 for empty or malformed input", () => {
     expect(parseTime("")).toEqual({ hour: 0, minute: 0 });
     expect(parseTime("not-a-time")).toEqual({ hour: 0, minute: 0 });
     expect(parseTime("  ")).toEqual({ hour: 0, minute: 0 });
@@ -46,7 +40,7 @@ describe("minutesFor", () => {
     expect(minutesFor(5)).toEqual([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]);
   });
 
-  it("supports a 1-minute step (every minute)", () => {
+  it("supports a 1-minute step", () => {
     expect(minutesFor(1)).toHaveLength(60);
     expect(minutesFor(1)[1]).toBe(1);
   });
@@ -55,7 +49,7 @@ describe("minutesFor", () => {
     expect(minutesFor(15)).toEqual([0, 15, 30, 45]);
   });
 
-  it("clamps a zero/negative/absurd step to a sane 1-59 range, falling back to 5", () => {
+  it("falls back to 5 for a zero or negative step", () => {
     expect(minutesFor(0)).toEqual(minutesFor(5));
     expect(minutesFor(-3)).toEqual(minutesFor(5));
   });
@@ -64,23 +58,21 @@ describe("minutesFor", () => {
 describe("nearestStep", () => {
   const steps = minutesFor(5);
 
-  it("returns the exact value when it's already a valid step", () => {
+  it("returns a value that is already on the grid", () => {
     expect(nearestStep(steps, 30)).toBe(30);
   });
 
-  it("rounds to the nearest available step for an off-grid value", () => {
+  it("rounds an off-grid value to the nearest step", () => {
     expect(nearestStep(steps, 32)).toBe(30);
     expect(nearestStep(steps, 33)).toBe(35);
   });
 
-  it("resolves an exact tie to the smaller/earlier option", () => {
-    // 27.5 is impossible with integers, but 2/3 between two steps close
-    // enough to be meaningfully tested: distance to 25 and 30 from 27 is 2
-    // and 3 — not a tie. Use a coarse 10-step table for a real tie at 5.
+  it("resolves a tie to the earlier option", () => {
+    // A 5-minute grid has no integer tie, so this uses steps of 10.
     expect(nearestStep([0, 10], 5)).toBe(0);
   });
 
-  it("never goes out of range at the ends", () => {
+  it("stays in range at the ends", () => {
     expect(nearestStep(steps, 0)).toBe(0);
     expect(nearestStep(steps, 59)).toBe(55);
   });

@@ -6,16 +6,13 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/config"
 )
 
-// svcWithMount builds a Service with only the Host Data mount config set —
-// enough to exercise toContainerPath in isolation. NVRAM is no longer a mount
-// (it travels over SSH), so there is a single host→container mapping.
+// svcWithMount builds a Service with only the host data mount configured,
+// which is all toContainerPath needs.
 func svcWithMount() *Service {
 	return &Service{cfg: config.Config{
 		HostSourceRoot: "/mnt",
 		HostMountRoot:  "/host/user",
-		// Explicit, not relying on any in-function default: config.Load always
-		// populates this in production, so tests that bypass Load must set it
-		// themselves to exercise the real (non-empty-segments) code path.
+		// config.Load always sets this, so a test that bypasses it has to.
 		DataRootSegments: []string{"appdata"},
 	}}
 }
@@ -44,10 +41,8 @@ func TestToContainerPath(t *testing.T) {
 	}
 }
 
-// TestValidResourceName guards the container/VM {name} validator: the Go 1.22
-// router decodes "%2f"/"%2e%2e", so an unvalidated name could carry "../" into
-// the template/XML file sinks. Valid Docker/libvirt names pass; anything with a
-// separator, "..", a leading "-"/".", NUL or that is empty is rejected.
+// The router decodes "%2f" and "%2e%2e", so an unchecked container or VM name
+// could carry "../" into the template and XML files.
 func TestValidResourceName(t *testing.T) {
 	valid := []string{"plex", "Windows-11", "ubuntu_test", "a.b-c_1", "X"}
 	for _, n := range valid {

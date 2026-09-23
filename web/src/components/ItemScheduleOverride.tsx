@@ -5,33 +5,10 @@ import { Badge } from "./Badge";
 import { ScheduleBadge } from "./ScheduleBadge";
 import { useToast } from "../lib/toast";
 
-// ---------------------------------------------------------------------------
-// Per-item schedule override (#121)
-//
-// A single container's or VM's optional schedule override. It reuses the exact
-// same CadenceBuilder the domain schedules use, so the grammar and editing feel
-// are identical. An empty override ("" / "off") means the item follows its domain
-// schedule; a concrete cadence overrides it. This control is only rendered while
-// the perItemSchedules setting is on — when it is off the item lists are unchanged.
-//
-// The editor is collapsed by default and shows a one-line summary (the override
-// cadence, or "uses the domain schedule"), so a long member list stays compact.
-//
-// Full-page Speichern-Button sweep (jdp, live review, emphatic: "Die Speicher-
-// Buttons sollen in allen Tabs weg. Überall soll es automatisch speichern."):
-// this used to hold its own manual "Übernehmen"-style Save button, found on a
-// re-sweep after the rest of the Schedules tab's cadence editors (the DOMAIN-
-// level Containers/VMs/Flash/Ordner Cards) had already been converted to
-// auto-save via `scheduleField` in Settings.tsx — the exact same CadenceBuilder
-// control, just wrapped in this collapse/expand disclosure for a potentially
-// long member list. There's no genuine reason for the PER-ITEM copy to still
-// batch into a click: the collapse/expand toggle is a compactness affordance,
-// not a "discard my edit" one — closing the panel never resets `value` back to
-// `initial`, so no cancel semantic exists here to protect (unlike
-// CloudCredSetsCard's/OffsiteTargetsSection's own draft editors elsewhere,
-// which keep their manual Save for exactly that reason). Debounces on the SAME
-// 800ms timing as every other free-text/cadence field on this page.
-// ---------------------------------------------------------------------------
+// ItemScheduleOverride is a container's or VM's optional schedule override. An
+// empty override ("" or "off") follows the domain schedule. It starts collapsed
+// to one line so a long member list stays compact, and saves as you type, like
+// the other cadence fields.
 
 const DEBOUNCE_MS = 800;
 
@@ -56,8 +33,6 @@ export function ItemScheduleOverride({
   // than drop it. Cleared when the timer fires normally.
   const pendingValue = useRef<string | null>(null);
 
-  // A non-empty, non-"off" cadence is an active override; anything else means the
-  // item follows its domain schedule.
   const active = value.trim() !== "" && value.trim() !== "off";
   const summary = active ? formatCadence(value, t, lang) : t("schedule.overrideUsesDefault");
 
@@ -77,12 +52,9 @@ export function ItemScheduleOverride({
     }
   }
 
-  // handleChange — optimistic local update + debounce, same shape as every
-  // other cadence field on this page (Settings.tsx's own scheduleField).
   function handleChange(v: string) {
     setValue(v);
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    // Tracked so the unmount cleanup can flush it (see the effect below).
     pendingValue.current = v;
     debounceTimer.current = setTimeout(() => {
       pendingValue.current = null;
@@ -90,16 +62,9 @@ export function ItemScheduleOverride({
     }, DEBOUNCE_MS);
   }
 
-  // A pending debounce must not fire after this row unmounts — but the pending
-  // WRITE must not be thrown away with it. Since the Save button was removed,
-  // this debounce is the only path that persists a per-item cadence, so a
-  // cleanup that merely cleared the timer lost the input outright: set a
-  // cadence, switch tab or flip the per-item toggle within 800ms, and it was
-  // gone with no toast and nothing on screen to suggest it had not been saved.
-  //
-  // The pending value is flushed instead. persist() is a plain fetch and does
-  // not touch this component's state, so calling it during unmount is safe —
-  // what must not survive unmount is the TIMER, and that is still cleared.
+  // Flush a pending write on unmount: the debounce is the only thing that saves
+  // a per-item cadence, so switching tab within 800ms of an edit would lose it.
+  // persist() does not touch this component's state, so it is safe here.
   useEffect(() => {
     return () => {
       if (debounceTimer.current) {
@@ -114,23 +79,10 @@ export function ItemScheduleOverride({
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("schedule.overrideTitle")}:</span>
-        {/* The resolved override is a real ScheduleBadge now (jdp, live-review
-            on the schedule cards: the cadence preview inside a CadenceBuilder
-            is redundant with the badge above it — see CadenceBuilder.tsx and
-            ScheduleBadge.tsx). This row already showed the resolved schedule,
-            but as plain text with an italic/muted variant of its own, so it
-            was the one cadence editor in the app whose summary did NOT look
-            like every other cadence editor's summary. Same
-            active-green/off-neutral pair the domain Cards' rows use.
-              The LABEL stays `formatCadence` (CadenceBuilder's prose grammar),
-            NOT the badge grammar `cadenceLabel` the ScheduleRow sites use: the
-            inactive case here is not "Kein Zeitplan" but a specific sentence,
-            "folgt dem Domain-Zeitplan" (schedule.overrideUsesDefault) — a
-            per-item override that is absent means it INHERITS, which is a
-            different statement from "nothing is scheduled", and swapping in
-            the generic label would have destroyed exactly that distinction. */}
+        {/* The label is formatCadence's prose rather than the badge grammar
+            of cadenceLabel: an absent override means the item inherits its
+            domain schedule, which is not the same as "nothing scheduled". */}
         <ScheduleBadge status={active ? "active" : "off"} label={summary} />
-        {/* Task 5 (rule 13): was a plain underlined text button. */}
         <Badge as="button" onClick={() => setOpen((o) => !o)} tone="neutral" size="small">
           {open ? t("common.close") : t("schedule.overrideEdit")}
         </Badge>
@@ -141,10 +93,9 @@ export function ItemScheduleOverride({
           <CadenceBuilder
             label={`${t("schedule.overrideTitle")}: ${name}`}
             value={value}
-            // A per-item override still has no last-run gate of its own, so the
-            // backend keeps refusing everyN here (SetScheduleCadence /
-            // SetVMScheduleCadence, internal/api/service.go). Unlike the drill,
-            // tamper-test and digest cards, this restriction stays (#166, #121).
+            // A per-item override has no last-run gate of its own, so the
+            // backend refuses everyN here (SetScheduleCadence and
+            // SetVMScheduleCadence in internal/api/service.go).
             modes={EXACT_CADENCE_MODES}
             onChange={handleChange}
           />

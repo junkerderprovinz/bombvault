@@ -1,33 +1,10 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// SettingsPage — what a settings write is allowed to send.
-//
-// PUT /api/settings takes the WHOLE settings object, and the page builds that
-// object by merging one field's new value onto its own baseline of "what the
-// server last confirmed". Two things used to break that:
-//
-//   1. The baseline only moved when a PUT RETURNED, and nothing serialized the
-//      writes. Every field auto-saves now, so two writes inside one round-trip
-//      is the normal case (flip two switches; or edit the Containers cadence
-//      with "sync" on, which arms a second debounce one render later). Both
-//      objects were built from the pre-first baseline, so each carried the
-//      other's field at its OLD value and whichever response landed last won.
-//      The UI showed both edits, the server kept one, and the loser reappeared
-//      reverted on the next reload.
-//
-//   2. A settings IMPORT replaced the whole configuration on the server and
-//      never told the page, so the baseline still held the entire pre-import
-//      configuration. One click on any switch afterwards PUT that object back
-//      and silently undid the import — reporting a successful save while doing
-//      it.
-//
-// Both are asserted through the real page against a mocked client: the test
-// controls when each PUT resolves, which is what makes the overlap real rather
-// than hypothetical.
-//
-// jsdom opted in explicitly (real clicks, controlled promises) — see
-// Selector.dom.test.tsx's header for this repo's naming convention.
-// ---------------------------------------------------------------------------
+// PUT /api/settings takes the whole settings object, which the page builds by
+// merging one field onto its baseline of what the server last confirmed. Two
+// writes inside one round trip therefore have to run in order, the second
+// built on the first, and an import has to refresh the baseline so the next
+// click does not send the old configuration back. The page runs against a
+// mocked client, and the tests decide when each PUT resolves.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { I18nProvider, en } from "../lib/i18n";
@@ -126,7 +103,7 @@ vi.mock("../lib/api", async (importOriginal) => {
   };
 });
 
-// Imported AFTER vi.mock so the page picks up the mocked client.
+// Imported after vi.mock so the page picks up the mocked client.
 const { SettingsPage } = await import("./Settings");
 
 async function renderPage() {
@@ -146,10 +123,9 @@ function toggle(name: string) {
   return screen.getByRole("switch", { name });
 }
 
-/** Select a tab through the page's own deep-link path (/settings#<tab>) rather
- * than by clicking the strip: the strip measures itself in two passes, so a
- * label query there matches more than one node. Switching tabs does NOT remount
- * the page — which is exactly why a stale baseline survives one. */
+/** Selects a tab through the deep link, because the strip measures itself in
+ * two passes and a label query there matches more than one node. Switching
+ * tabs does not remount the page, so a stale baseline survives it. */
 async function gotoTab(tab: string) {
   await act(async () => {
     window.location.hash = "#" + tab;
@@ -157,8 +133,7 @@ async function gotoTab(tab: string) {
   });
 }
 
-/** Minimal matchMedia stub — ThemeCard reads prefers-color-scheme on mount and
- * jsdom does not implement matchMedia (same stub as Settings.themeCard's). */
+/** ThemeCard reads prefers-color-scheme on mount, and jsdom has no matchMedia. */
 function stubMatchMedia() {
   window.matchMedia = ((query: string) => ({
     matches: false,
@@ -172,9 +147,8 @@ function stubMatchMedia() {
   })) as unknown as typeof window.matchMedia;
 }
 
-/** Minimal ResizeObserver stub — the page measures its tab strip on mount and
- * jsdom does not implement the observer. Nothing here depends on the measured
- * width, so a no-op observer is enough. */
+/** The page measures its tab strip on mount, and jsdom has no ResizeObserver.
+ * Nothing here depends on the width, so a no-op is enough. */
 function stubResizeObserver() {
   (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = class {
     observe() {}
@@ -200,12 +174,12 @@ describe("two settings writes inside one round-trip", () => {
   it("sends the second one built on the first, not on the pre-first baseline", async () => {
     await renderPage();
 
-    // Flip Containers on. Its PUT is in flight and deliberately not resolved.
+    // Flip Containers on and leave its PUT unresolved.
     fireEvent.click(toggle(en["settings.containersEnabled"]));
     await waitFor(() => expect(putCalls.length).toBe(1));
     expect(putCalls[0].body.containersEnabled).toBe(true);
 
-    // Flip Flash on while the first request is still open — a second switch,
+    // Flip Flash on while the first request is still open. A second switch,
     // so the first one's own in-flight guard does not apply.
     fireEvent.click(toggle(en["settings.flashEnabled"]));
 
@@ -220,9 +194,8 @@ describe("two settings writes inside one round-trip", () => {
     await waitFor(() => expect(putCalls.length).toBe(2));
     const second = putCalls[1].body;
     expect(second.flashEnabled).toBe(true);
-    // The whole point: the second full-object PUT must not carry the first
-    // field at its pre-click value, or the server ends up with only one of the
-    // two changes while the UI shows both.
+    // Carrying the first field at its old value would leave the server with
+    // one of the two changes while the UI shows both.
     expect(second.containersEnabled).toBe(true);
 
     await act(async () => {
@@ -238,7 +211,7 @@ describe("two settings writes inside one round-trip", () => {
 
     fireEvent.click(toggle(en["settings.flashEnabled"]));
     await act(async () => {
-      // The backend refuses VMs (its documented OFF->ON SSH check).
+      // The backend refuses VMs, as its SSH check does when they are switched on.
       putCalls[0].resolve({ ok: false, error: "no working SSH connection" });
     });
 
@@ -260,8 +233,7 @@ describe("a settings import", () => {
     await act(async () => {
       fireEvent.change(input, { target: { files: [file] } });
     });
-    // The server now holds a DIFFERENT configuration than the one this page
-    // loaded: that is exactly what an import is.
+    // The server now holds a different configuration than the page loaded.
     settingsOnServer = baseSettings({
       containersSchedule: "everyN 7 03:00",
       retentionKeepDaily: 30,
@@ -284,9 +256,7 @@ describe("a settings import", () => {
 
     const sent = putCalls[0].body;
     expect(sent.containersEnabled).toBe(true);
-    // Everything the import changed must still be there. Before the fix this
-    // PUT carried the page's pre-import object and silently restored every
-    // one of these to its old value, while reporting a successful save.
+    // Everything the import changed is still there.
     expect(sent.containersSchedule).toBe("everyN 7 03:00");
     expect(sent.retentionKeepDaily).toBe(30);
     expect(sent.filesEnabled).toBe(true);

@@ -1,25 +1,12 @@
 // @vitest-environment jsdom
-/**
- * The login screen's second step (v8.6.0).
- *
- * Three things have to hold, and each one is a way the form could quietly
- * become worse than the single-field version it replaces:
- *
- *   - the code field is not there until the server asks for it, so an install
- *     without a second factor looks exactly as it always did;
- *   - the password is NOT retyped for the second step, because a form that
- *     clears the field people just filled in is a form people fight;
- *   - the first "needCode" answer is not an error message. It is the form
- *     discovering it has a second field, and calling that a failure trains
- *     people to ignore the red text that will matter next time.
- */
+// The login form's second factor. The code field appears only when the server
+// asks for it, the password is kept for the second step, and the first
+// needCode answer is not shown as an error.
 import { render, screen, cleanup, waitFor, fireEvent, act } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const login = vi.fn();
-// The login screen also asks whether to offer a passkey. These tests are about
-// the password and the second factor, so the passkey half is mocked away:
-// passkeysAvailableInBrowser() false means the status is never even fetched.
+// Without WebAuthn in the browser the passkey status is never fetched.
 vi.mock("../lib/api", () => ({
   login: (...a: unknown[]) => login(...a),
   loginWithPasskey: vi.fn(),
@@ -57,7 +44,6 @@ describe("LoginPage, the second factor", () => {
     typePassword("hunter2hunter2");
     await submit();
     await waitFor(() => expect(onLogin).toHaveBeenCalledTimes(1));
-    // One call, password only: nothing invented a code parameter.
     expect(login).toHaveBeenCalledWith("hunter2hunter2", undefined);
   });
 
@@ -87,7 +73,6 @@ describe("LoginPage, the second factor", () => {
     typePassword("hunter2hunter2");
     await submit();
     await waitFor(() => expect(document.getElementById("bv-code")).not.toBeNull());
-    // The field still holds what was typed: nobody has to type it twice.
     expect((document.getElementById("bv-password") as HTMLInputElement).value).toBe(
       "hunter2hunter2",
     );

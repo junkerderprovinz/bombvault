@@ -6,13 +6,9 @@ import (
 	"testing"
 )
 
-// The look of the interface lives on the server so it survives a browser
-// (issue #191). These pin the three things a client depends on.
-
-// An untouched installation must answer "nothing stored", NOT an error and not
-// a set of defaults. That distinction is the whole upgrade path: a first load
-// seeds the server from whatever the browser already had, and it can only know
-// to do that if "no opinion" is distinguishable from "the opinion is default".
+// TestDisplayPrefsEmptyUntilSomethingIsStored: a fresh installation answers
+// "nothing stored" rather than defaults, so the first load knows to seed the
+// server from what the browser already has.
 func TestDisplayPrefsEmptyUntilSomethingIsStored(t *testing.T) {
 	h, _, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
 
@@ -35,9 +31,8 @@ func TestDisplayPrefsEmptyUntilSomethingIsStored(t *testing.T) {
 	}
 }
 
-// What goes in comes back out, verbatim and unread. The server deliberately
-// does not know what a "theme" is: the axes belong to the frontend and grow
-// with it, so a backend that understood them would need a release per axis.
+// TestDisplayPrefsRoundTrip: the server stores the preferences without
+// interpreting them; the keys belong to the frontend.
 func TestDisplayPrefsRoundTrip(t *testing.T) {
 	h, _, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
 
@@ -66,11 +61,8 @@ func TestDisplayPrefsRoundTrip(t *testing.T) {
 		}
 	}
 
-	// A second save MERGES. This test used to assert the opposite, on the
-	// assumption that "the client always sends the whole look" — and that
-	// assumption is what reopened #191. A browser sends what it HAS, and a
-	// browser whose site data was just cleared has nothing, so replacing let it
-	// publish its own emptiness and wipe the stored look for good.
+	// A second save merges. A browser whose site data was just cleared sends
+	// almost nothing, and a replace would let it wipe the stored look.
 	w, _ = doJSON(t, h, http.MethodPut, "/api/display-prefs", `{"bv-theme":"dark"}`)
 	if w.Code != http.StatusOK {
 		t.Fatalf("second PUT status = %d", w.Code)
@@ -91,9 +83,9 @@ func TestDisplayPrefsRoundTrip(t *testing.T) {
 	}
 }
 
-// The exact shape that cost manilx his settings three times over: a browser
-// with nothing left in it must not be able to clear the server. An empty object
-// is a valid payload and a no-op, not a reset.
+// TestDisplayPrefsEmptyPayloadKeepsTheStoredLook: an empty object is a valid
+// payload that changes nothing, so a browser with no preferences left cannot
+// clear the server's.
 func TestDisplayPrefsEmptyPayloadKeepsTheStoredLook(t *testing.T) {
 	h, _, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
 
@@ -115,9 +107,9 @@ func TestDisplayPrefsEmptyPayloadKeepsTheStoredLook(t *testing.T) {
 	}
 }
 
-// Only an OBJECT is accepted. A bare string or number would round-trip through
-// the column happily and then break the client that expects to spread it, and
-// an oversized body would turn a settings column into free storage.
+// TestDisplayPrefsRejectsNonObjectAndOversize: only an object is accepted,
+// since a bare value would break the client that spreads it, and the size cap
+// keeps the column from becoming free storage.
 func TestDisplayPrefsRejectsNonObjectAndOversize(t *testing.T) {
 	h, _, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
 
@@ -135,7 +127,6 @@ func TestDisplayPrefsRejectsNonObjectAndOversize(t *testing.T) {
 		t.Errorf("oversized PUT: status = %d, want 413", w.Code)
 	}
 
-	// And none of that may have left anything behind.
 	_, m := doJSON(t, h, http.MethodGet, "/api/display-prefs", "")
 	if m["stored"] != false {
 		t.Errorf("a rejected save still stored something: %v", m)

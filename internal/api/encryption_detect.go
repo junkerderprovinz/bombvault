@@ -1,28 +1,13 @@
 package api
 
-// Encryption-mode auto-detection.
-//
-// Settings.EncryptionEnabled is NOT a preference — it is a FACT about the
-// repositories. ModeFor turns it into exactly one thing: restic runs with a
-// password derived from APP_KEY (true) or with --insecure-no-password (false).
-// A repository was created one way or the other at init time and can never
-// change afterwards; setting the flag the other way just makes restic fail to
-// open the repo (EnsureRepo already reports that mismatch, see issue #14).
-//
-// Because it is a fact, it is DETECTABLE: opening the repository reveals which
-// mode it is in. The two modes are mutually exclusive by construction — restic
-// cannot open a password-less repo with a password, nor a keyed repo without
-// one — so a repo that opens under one mode definitively is that mode. This
-// file probes the configured repositories with the SAME read-only
-// `restic cat config` probe EnsureRepo/OpenForeign/probeOffsiteRepo already
-// use (ResticEngine.RepoOpensErr), classifies the outcome per repository, and
-// folds the results into one verdict.
-//
-// The whole point is that a user restoring onto a fresh instance must not have
-// to KNOW or GUESS the mode. So a definite verdict is APPLIED to the stored
-// setting. Everything else is reported honestly as undecided — a probe failure
-// is never silently read as "unencrypted", which would be the one wrong answer
-// that quietly creates a second, empty repository next to the real backups.
+// Settings.EncryptionEnabled describes how the repositories were created: with
+// the APP_KEY-derived password or with --insecure-no-password. That is fixed
+// at init, and restic opens a repository only in its own mode, so opening it
+// reveals the mode. This file probes every configured repository read-only
+// with `restic cat config` and applies a definite verdict to the stored
+// setting, so a user restoring onto a fresh instance does not have to know
+// it. A probe failure is never read as "unencrypted": that answer would create
+// a second, empty repository next to the real backups.
 
 import (
 	"context"
@@ -42,18 +27,16 @@ import (
 type RepoEncryptionState string
 
 const (
-	// RepoEncrypted: the repo opened with the APP_KEY-derived password.
+	// RepoEncrypted means the repo opened with the APP_KEY-derived password.
 	RepoEncrypted RepoEncryptionState = "encrypted"
-	// RepoPlain: the repo opened with --insecure-no-password.
+	// RepoPlain means the repo opened with --insecure-no-password.
 	RepoPlain RepoEncryptionState = "plain"
-	// RepoAbsent: the location is reachable but holds no repository yet, so
-	// there is genuinely nothing to detect — a first-time setup, where the
-	// user's own choice really does decide how the repo will be created.
+	// RepoAbsent means the location is reachable but holds no repository yet,
+	// so the user's choice decides how it will be created.
 	RepoAbsent RepoEncryptionState = "absent"
-	// RepoUnreachable: the probe failed for a reason that is NOT "no repo here"
-	// — a bad path, a dead backend, wrong backend credentials, an unmounted
-	// share. The repo may well exist and be encrypted; we simply cannot tell.
-	// This state must never be folded in with RepoAbsent (see foldEncryption).
+	// RepoUnreachable means the probe failed for another reason: a bad path, a
+	// dead backend, wrong credentials, an unmounted share. The repo may exist
+	// and be encrypted, so this is never folded in with RepoAbsent.
 	RepoUnreachable RepoEncryptionState = "unreachable"
 )
 
@@ -71,21 +54,19 @@ type RepoEncryption struct {
 type EncryptionVerdict string
 
 const (
-	// VerdictEncrypted / VerdictPlain: detected, unambiguous, APPLIED.
+	// VerdictEncrypted and VerdictPlain are definite and get applied.
 	VerdictEncrypted EncryptionVerdict = "encrypted"
 	VerdictPlain     EncryptionVerdict = "plain"
-	// VerdictConflict: repositories genuinely disagree — some opened encrypted,
-	// some opened plain. One global flag cannot open both, so there is no
-	// correct value to apply. Never applied; the user must fix the odd one out.
+	// VerdictConflict means some repositories opened encrypted and others
+	// plain. One global flag cannot open both, so nothing is applied and the
+	// user has to fix the odd one out.
 	VerdictConflict EncryptionVerdict = "conflict"
-	// VerdictAbsent: every configured location is reachable but empty. Nothing
-	// to detect; the user's choice decides how the repos get created.
+	// VerdictAbsent means every configured location is reachable but empty.
 	VerdictAbsent EncryptionVerdict = "absent"
-	// VerdictUnknown: at least one repository could not be opened for a reason
-	// other than "not created yet", and nothing else gave a definite answer.
-	// The honest "cannot tell". Never applied.
+	// VerdictUnknown means at least one repository could not be opened for a
+	// reason other than not existing yet, and none gave a definite answer.
 	VerdictUnknown EncryptionVerdict = "unknown"
-	// VerdictUnconfigured: no repository location is configured at all.
+	// VerdictUnconfigured means no repository location is configured.
 	VerdictUnconfigured EncryptionVerdict = "unconfigured"
 )
 
@@ -99,51 +80,37 @@ type EncryptionDetection struct {
 	Repos             []RepoEncryption  `json:"repos"`
 }
 
-// encryptionDetectDomains is the set of domains whose repositories carry a
-// mode. Every domain with a NON-EMPTY configured location is probed, including
-// domains whose *Enabled flag is off: on a fresh recovery instance those flags
-// have not been restored yet, so gating on them would skip exactly the repos
-// the user is trying to attach to. A configured location is the signal here,
-// not the enabled flag.
+// encryptionDetectDomains lists the domains whose repositories are probed. A
+// domain is probed whenever its location is set, even with its Enabled flag
+// off: on a fresh recovery instance those flags have not been restored yet.
 var encryptionDetectDomains = []string{"containers", "vms", "flash", "files", "config"}
 
-// encryptionProbeTimeout bounds ONE probe attempt. Per attempt, not shared
-// across the encrypted/plain pair: a cold sftp connection over a VPN can eat a
-// shared budget on the first try and leave the second attempt zero time, which
-// would report a reachable repo as unreachable (the #93 mistake, see
-// probeOffsiteRepo's own comment).
+// encryptionProbeTimeout bounds each probe attempt on its own. With one budget
+// for the encrypted/plain pair, a cold sftp connection over a VPN can use it
+// up on the first attempt and leave the second none, so a reachable repo would
+// read as unreachable.
 const encryptionProbeTimeout = 30 * time.Second
 
-// encryptionProbeParallel caps how many repositories are probed at once, so a
-// box with several domains and several off-site destinations does not serialize
-// into minutes of wall clock when everything is dead, and does not fork a
-// restic process per repo all at once either.
+// encryptionProbeParallel caps concurrent probes, so several dead backends do
+// not add up to minutes and not every repository forks restic at once.
 const encryptionProbeParallel = 4
 
-// encryptionDetectBudget bounds the SHARED pass as a whole. Because the pass is
-// detached from every caller's request (see DetectEncryption) it needs a
-// lifetime of its own, or a backend that never answers would hold the
-// single-flight slot — and with it encryption detection — for the life of the
-// process. It is deliberately far above what a real pass costs: the worst case
-// per repository is 2 x encryptionProbeTimeout (both modes time out) and
-// encryptionProbeParallel of them run at once, so this covers 60 configured
-// repositories, well past five domains plus their off-site destinations.
-// Cutting a legitimate pass short would produce exactly the "unreachable
-// everywhere" answer this feature exists to avoid.
+// encryptionDetectBudget bounds a whole detection pass. The pass is detached
+// from the callers' requests, so without it a backend that never answers would
+// hold the single-flight slot for the life of the process. The worst case per
+// repository is 2 x encryptionProbeTimeout with encryptionProbeParallel running
+// at once, so this covers 60 repositories; cutting a real pass short would
+// report every repository as unreachable.
 const encryptionDetectBudget = 15 * time.Minute
 
-// DetectEncryption probes every configured repository, folds the results into a
-// verdict, and — for a DEFINITE verdict only — writes that mode into the stored
-// settings so the user never has to assert it. It returns the detection either
-// way. The probe itself is strictly read-only: `restic cat config`, never
-// EnsureRepo (which would INITIALIZE a missing repo, i.e. write an empty
-// repository over the location the user is still trying to attach to).
+// DetectEncryption probes every configured repository, folds the results into
+// a verdict and, if the verdict is definite, writes that mode into the stored
+// settings. The probe is read-only (`restic cat config`); EnsureRepo would
+// initialize a missing repository at the location the user is trying to attach.
 //
-// Two callers arriving at once share ONE probe pass (encryptionDetectFlight):
-// the Recovery page fires this on mount, so a second tab — or a reload while a
-// dead off-site host is still burning its 2x30s probe budget — would otherwise
-// fork a second set of restic processes against the same repositories for an
-// answer the first pass is already computing.
+// Concurrent callers share one pass. The Recovery page runs this on mount, and
+// a second tab or a reload would otherwise start another set of restic
+// processes against the same repositories.
 func (s *Service) DetectEncryption(ctx context.Context) (EncryptionDetection, error) {
 	s.detectMu.Lock()
 	if flight := s.detectFlight; flight != nil {
@@ -160,13 +127,9 @@ func (s *Service) DetectEncryption(ctx context.Context) (EncryptionDetection, er
 	s.detectFlight = flight
 	s.detectMu.Unlock()
 
-	// Clear the slot and signal from a DEFER. A panic anywhere on this path would
-	// otherwise leave the flight installed and never closed: encryption detection
-	// dead for the rest of the process, and every later caller parked forever on a
-	// channel nobody will close. The pre-seeded err above covers the same case
-	// from the other side — a follower released by that defer must be told the
-	// pass produced nothing, not handed a zero-value detection as a successful
-	// verdict.
+	// Clearing the slot in a defer keeps a panic from leaving the flight
+	// installed and unclosed, which would park every later caller forever. The
+	// pre-seeded err tells followers released that way that there is no result.
 	defer func() {
 		s.detectMu.Lock()
 		s.detectFlight = nil
@@ -174,14 +137,10 @@ func (s *Service) DetectEncryption(ctx context.Context) (EncryptionDetection, er
 		close(flight.done)
 	}()
 
-	// The pass is SHARED, so no single caller may cancel it. The leader is merely
-	// whoever arrived first; running the probes on ITS request context means that
-	// closing its browser tab cancels every probe, and a cancelled probe reads as
-	// "unreachable" (restic wraps the context error, which matches no absence
-	// marker) — so the followers, whose own requests are perfectly alive, would be
-	// handed a confident verdict of "unknown". Detached, the pass runs to
-	// completion under its own budget; each caller still honours its own ctx while
-	// waiting on flight.done above.
+	// The pass is shared, so no single caller may cancel it. On the leader's
+	// request context a closed tab would cancel every probe, a cancelled probe
+	// reads as unreachable, and the other callers would get "unknown". Each
+	// caller still honours its own ctx while waiting on flight.done above.
 	pctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), encryptionDetectBudget)
 	defer cancel()
 
@@ -189,22 +148,20 @@ func (s *Service) DetectEncryption(ctx context.Context) (EncryptionDetection, er
 	return flight.det, flight.err
 }
 
-// errEncryptionDetectAborted is what a follower is told when the leading pass
-// died before it wrote a result. "No answer" must never surface as a verdict.
+// errEncryptionDetectAborted is returned to followers when the leading pass
+// ended without a result.
 var errEncryptionDetectAborted = errors.New("encryption detection did not complete")
 
-// encryptionDetectFlight is one in-flight DetectEncryption pass, shared with
-// every caller that arrives while it runs. done is closed once det/err are
-// final, so a follower reads them only after they are written. err starts at
-// errEncryptionDetectAborted and the pass overwrites it, so a flight closed
-// without one is a failure rather than an empty success.
+// encryptionDetectFlight is one in-flight DetectEncryption pass. done is
+// closed once det and err are final. err starts as errEncryptionDetectAborted,
+// so a flight closed without a result reads as a failure.
 type encryptionDetectFlight struct {
 	done chan struct{}
 	det  EncryptionDetection
 	err  error
 }
 
-// detectEncryption is the pass itself (see DetectEncryption for the contract).
+// detectEncryption runs one pass for DetectEncryption.
 func (s *Service) detectEncryption(ctx context.Context) (EncryptionDetection, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -221,20 +178,11 @@ func (s *Service) detectEncryption(ctx context.Context) (EncryptionDetection, er
 		Repos:             results,
 	}
 
-	// Apply ONLY a definite verdict. conflict/absent/unknown/unconfigured all
-	// leave the stored setting exactly as it was: there is no detected fact to
-	// follow, and guessing is the failure mode this whole feature exists to
-	// remove.
-	//
-	// The `settings` snapshot above is MINUTES old by now — probing a dead
-	// off-site host burns 2x encryptionProbeTimeout on it — so it must never be
-	// written back: doing that reverts every unrelated column the user saved
-	// meanwhile (paths, schedules, the login password) while the UI reports
-	// those saves as successful. MutateSettings re-reads the row under its own
-	// lock and applies ONLY the one fact this pass established, so a detection
-	// can change nothing it did not determine. It also returns the row as it now
-	// stands, which is what the caller is told the effective setting is — the
-	// stale snapshot cannot answer that either.
+	// Only a definite verdict is applied. The settings snapshot above can be
+	// minutes old by now (a dead off-site host costs 2 x encryptionProbeTimeout),
+	// and writing it back would revert whatever the user saved meanwhile.
+	// MutateSettings re-reads the row under its lock, changes only the
+	// encryption flag and returns the row the caller reports.
 	want, definite := verdict.encryptionEnabled()
 	applied := false
 	current, mErr := s.store.MutateSettings(func(cur *store.Settings) error {
@@ -249,7 +197,7 @@ func (s *Service) detectEncryption(ctx context.Context) (EncryptionDetection, er
 		return det, fmt.Errorf("apply detected encryption mode: %w", mErr)
 	}
 	if applied {
-		log.Printf("api: encryption mode auto-detected as %s — Settings.EncryptionEnabled set to %v", verdict, want)
+		log.Printf("api: encryption mode auto-detected as %s, Settings.EncryptionEnabled set to %v", verdict, want)
 	}
 	det.Applied = applied
 	det.EncryptionEnabled = current.EncryptionEnabled
@@ -269,29 +217,26 @@ func (v EncryptionVerdict) encryptionEnabled() (enabled, definite bool) {
 	}
 }
 
-// encryptionProbeTarget is one repository to probe, already resolved (or
-// carrying the resolution failure that made it unreachable before any restic
-// call).
+// encryptionProbeTarget is one resolved repository to probe. A non-nil err is
+// the resolution failure; such a target is unreachable without running restic.
 type encryptionProbeTarget struct {
 	domain string
 	source string
 	name   string
 	repo   string
-	mode   restic.Mode // the ENCRYPTED-mode probe; the plain probe is derived
-	err    error       // resolution failure — probed as unreachable, no restic run
+	mode   restic.Mode // encrypted mode; the plain probe is derived from it
+	err    error
 }
 
-// encryptionProbeTargets enumerates every configured repository: each domain's
-// local location, plus each of its off-site destinations (the real target rows
-// when present, otherwise the legacy Settings column, exactly as replication
-// resolves them — so what is probed is what actually gets written to).
+// encryptionProbeTargets lists every configured repository: each domain's
+// local location plus its off-site destinations, resolved the way replication
+// resolves them (target rows, else the legacy Settings column).
 func (s *Service) encryptionProbeTargets(settings store.Settings) []encryptionProbeTarget {
 	var out []encryptionProbeTarget
 	base := s.ModeFor(settings)
 
 	for _, domain := range encryptionDetectDomains {
-		// Local repo for the domain. An empty location means "not configured",
-		// which is not a repository and must not count as one.
+		// An empty location is unconfigured, not a repository.
 		if loc := localRepoLocation(settings, domain); strings.TrimSpace(loc) != "" {
 			repo, rErr := s.resolveRepo(loc)
 			out = append(out, encryptionProbeTarget{
@@ -299,7 +244,6 @@ func (s *Service) encryptionProbeTargets(settings store.Settings) []encryptionPr
 			})
 		}
 
-		// Off-site destinations for the domain.
 		for _, target := range s.offsiteReplicationTargets(domain, settings) {
 			if strings.TrimSpace(target.Repo) == "" {
 				continue
@@ -314,9 +258,8 @@ func (s *Service) encryptionProbeTargets(settings store.Settings) []encryptionPr
 	return out
 }
 
-// localRepoLocation returns a domain's configured LOCAL repo location straight
-// off Settings, without resolving it — the counterpart of
-// offsiteRepoFromSettings for the local side.
+// localRepoLocation returns a domain's local repo location from Settings,
+// unresolved.
 func localRepoLocation(settings store.Settings, domain string) string {
 	switch domain {
 	case "containers":
@@ -333,9 +276,8 @@ func localRepoLocation(settings store.Settings, domain string) string {
 	return ""
 }
 
-// probeEncryptionModes probes every target concurrently (capped) and returns
-// the per-repository results in the SAME order as targets, so the UI's list is
-// stable across runs rather than ordered by whichever probe finished first.
+// probeEncryptionModes probes the targets concurrently. Results keep the order
+// of targets so the UI list is stable across runs.
 func (s *Service) probeEncryptionModes(ctx context.Context, targets []encryptionProbeTarget) []RepoEncryption {
 	results := make([]RepoEncryption, len(targets))
 	sem := make(chan struct{}, encryptionProbeParallel)
@@ -354,14 +296,13 @@ func (s *Service) probeEncryptionModes(ctx context.Context, targets []encryption
 	return results
 }
 
-// probeOneEncryptionMode classifies ONE repository. It tries the encrypted mode
-// first, then the plain one (the same order OpenForeign and the receiver's
-// attach probe already use), and classifies a double failure honestly.
+// probeOneEncryptionMode classifies one repository. It tries the encrypted
+// mode first, then the plain one, as OpenForeign and the receiver's attach
+// probe do.
 func (s *Service) probeOneEncryptionMode(ctx context.Context, t encryptionProbeTarget) RepoEncryption {
 	out := RepoEncryption{Domain: t.domain, Source: t.source, Name: t.name}
 
-	// The location never resolved (containment rejection, malformed remote).
-	// That is a configuration failure, not evidence about encryption.
+	// A location that did not resolve says nothing about encryption.
 	if t.err != nil {
 		out.State = RepoUnreachable
 		out.Err = scrubError(t.err)
@@ -374,9 +315,8 @@ func (s *Service) probeOneEncryptionMode(ctx context.Context, t encryptionProbeT
 	plainMode := t.mode
 	plainMode.Encrypted = false
 	plainMode.Password = ""
-	// Never write a lock file into a repository just to ask what mode it is in.
-	// CatConfigArgs is lock-free already; NoLock keeps that explicit and matches
-	// the read-only foreign-session probe.
+	// Asking for the mode must not write a lock file. cat config takes none;
+	// NoLock keeps it that way, as in the foreign-session probe.
 	encMode.NoLock = true
 	plainMode.NoLock = true
 
@@ -396,28 +336,20 @@ func (s *Service) probeOneEncryptionMode(ctx context.Context, t encryptionProbeT
 		return out
 	}
 
-	// Neither mode opened it. Now the honest part: "no repository here yet" and
-	// "there might be a repository here but I could not reach it" look similar
-	// in restic's output and mean opposite things for this feature.
+	// Neither mode opened it. "No repository yet" and "could not reach it" look
+	// alike in restic's output but mean opposite things here.
 	out.State, out.Err = s.classifyClosedRepo(t.repo, encErr)
 	return out
 }
 
-// classifyClosedRepo decides whether a repository that opened under NEITHER
-// mode is genuinely absent (nothing to detect) or unreachable (cannot tell).
+// classifyClosedRepo decides whether a repository that opened under neither
+// mode is absent or unreachable.
 //
-// A REMOTE backend that answers restic's "repository does not exist" is the
-// established "reachable, just not created yet" signal (#117/#130) — the same
-// one listSnapshots and probeOffsiteRepo already treat as non-fatal. Detection
-// needs a STRICTER reading of it than those callers do, see
-// isRepoDefinitelyAbsent.
-//
-// A LOCAL path needs more care, and reuses EnsureRepo's own three-way
-// distinction (#55/#120): a missing `config` at a location BombVault previously
-// established, whose backing store is NOT in the kernel mount table, is a
-// vanished mount — very much a real repository we cannot see right now, so
-// reporting it as "absent" would be the exact wrong guess. Everything else that
-// is simply missing its `config` is a genuine fresh location.
+// Remote backends go through isRepoDefinitelyAbsent. A local path follows
+// EnsureRepo: a missing `config` at a location BombVault established earlier,
+// whose backing store is not in the mount table, is a vanished mount and so a
+// real repository that cannot be seen right now. Any other missing `config` is
+// a fresh location.
 func (s *Service) classifyClosedRepo(repo string, probeErr error) (RepoEncryptionState, string) {
 	if restic.IsRemoteRepo(repo) {
 		if isRepoDefinitelyAbsent(probeErr) {
@@ -426,8 +358,8 @@ func (s *Service) classifyClosedRepo(repo string, probeErr error) (RepoEncryptio
 		return RepoUnreachable, scrubError(probeErr)
 	}
 	if !localRepoMissing(repo) {
-		// A `config` file IS there but neither mode opened it: not a BombVault
-		// repo, a corrupt one, or a permissions problem. Never "absent".
+		// A `config` file exists but neither mode opened it: a foreign or
+		// corrupt repository, or a permissions problem.
 		return RepoUnreachable, scrubError(probeErr)
 	}
 	if s.repoEstablished(repo) && !s.destinationMounted(repo) {
@@ -436,24 +368,11 @@ func (s *Service) classifyClosedRepo(repo string, probeErr error) (RepoEncryptio
 	return RepoAbsent, ""
 }
 
-// repoAbsenceMarkers are the substrings that PROVE the backend answered and the
-// object restic asked for is not there. This is an ALLOW-list, and that
-// direction is the whole point: every phrasing nobody listed here resolves to
-// "unreachable", which is the safe verdict, instead of to "absent", which is
-// the dangerous one.
-//
-// The list was a DENY-list first (transportFailureMarkers below) and that shape
-// was wrong by construction. It enumerated the ways a probe can fail to reach a
-// backend, so any failure nobody had thought of — a 502 from the reverse proxy
-// in front of a rest-server that is down, an rclone remote that does not exist
-// yet on a fresh recovery instance — fell through to "absent" while the doc
-// comment promised the opposite. A backend cannot report "there is nothing
-// here" without saying so; a broken one says a hundred other things. So the
-// signal must be the statement, never the absence of a counter-statement.
-//
-// Every entry is a phrasing of "the named object does not exist", taken from
-// what the backends actually print (the rest one is verbatim from the live test
-// box, see listsnapshots_internal_test.go):
+// repoAbsenceMarkers are the phrasings with which a backend says the object
+// restic asked for does not exist. It is an allow-list, so any message not
+// listed here, such as a 502 from a proxy in front of a dead rest-server,
+// resolves to the safe "unreachable" rather than to "absent". The entries come
+// from what the backends print:
 //
 //	rest      Fatal: unable to open config file: <config/> does not exist
 //	restic    Fatal: repository does not exist: unable to open config file
@@ -463,29 +382,26 @@ func (s *Service) classifyClosedRepo(repo string, probeErr error) (RepoEncryptio
 //	gcs       storage: object doesn't exist
 //	sftp/swift  file does not exist / Object Not Found / no such file or directory
 //
-// A generic "404 Not Found" is deliberately NOT here: a reverse proxy answers
-// that for a mis-routed path in front of a repository that exists.
+// A plain "404 Not Found" is not listed: a reverse proxy returns it for a
+// mis-routed path in front of a repository that exists.
 var repoAbsenceMarkers = []string{
 	"does not exist", "doesn't exist", "no such file or directory",
 	"file not found", "object not found", "key not found",
 	"nosuchkey", "nosuchbucket", "blobnotfound",
 }
 
-// transportFailureMarkers are substrings that prove a probe failed to REACH the
-// backend, rather than reaching it and finding no repository. Caught on the live
-// test box: pointing an off-site repo at a host with nothing listening makes
-// restic answer
+// transportFailureMarkers name failures to reach the backend at all. For a host
+// with nothing listening restic prints
 //
 //	Fatal: unable to open config file: Head "http://…/config":
 //	dial tcp 192.168.20.199:8000: connect: no route to host
 //	Is there a repository at the following location?
 //
-// It is kept as a veto on top of the allow-list above, not as the decision:
-// "dial tcp: lookup backup.example: no such host" is a dead name that happens
-// to phrase itself like a missing object, and "open /mnt/x/config: permission
-// denied: no such file or directory" is the kind of compound message a layered
-// backend can produce. A message that names a transport failure is never
-// evidence of an empty location, whatever else it also says.
+// These markers veto the allow-list above rather than decide on their own:
+// "dial tcp: lookup backup.example: no such host" reads like a missing object,
+// and a layered backend can print "open /mnt/x/config: permission denied: no
+// such file or directory". A message that names a transport failure is never
+// evidence of an empty location.
 var transportFailureMarkers = []string{
 	"dial tcp", "no route to host", "connection refused", "connection reset",
 	"network is unreachable", "no such host", "i/o timeout", "timeout",
@@ -496,17 +412,12 @@ var transportFailureMarkers = []string{
 	"permission denied", "operation not permitted",
 }
 
-// isRepoDefinitelyAbsent reports whether err means "this location is reachable
-// and holds no repository", and nothing else. It is stricter than
-// isRepoUninitialized in one place: a transport failure named anywhere in the
-// message vetoes even restic's own "repository does not exist".
-//
-// The asymmetry is intentional. Guessing "unreachable" when a repo is merely
-// absent costs the user one visible "can't tell" line and a switch they set
-// themselves. Guessing "absent" when a repo is merely unreachable can silently
-// create an empty repository next to real backups. So anything ambiguous
-// resolves to unreachable, and with the allow-list above, "ambiguous" is the
-// default rather than a case someone has to have enumerated in advance.
+// isRepoDefinitelyAbsent reports whether err means the location is reachable
+// and holds no repository. It is stricter than isRepoUninitialized: a transport
+// failure named anywhere in the message vetoes even restic's own "repository
+// does not exist". Anything ambiguous resolves to unreachable, because wrongly
+// answering "absent" can create an empty repository next to real backups, while
+// wrongly answering "unreachable" only costs the user one "can't tell" line.
 func isRepoDefinitelyAbsent(err error) bool {
 	return isRepoUninitialized(err) && !containsAny(strings.ToLower(err.Error()), transportFailureMarkers)
 }
@@ -520,23 +431,16 @@ func containsAny(s string, subs []string) bool {
 	return false
 }
 
-// foldEncryption folds the per-repository states into one verdict.
+// foldEncryption folds the per-repository states into one verdict. The order
+// of the checks matters:
 //
-// The ORDER of the checks is the whole contract:
-//
-//   - encrypted AND plain both present → conflict. Two real repositories in
-//     different modes; one global flag cannot open both.
-//   - any definite detection, no contradiction → that mode. A repo that opened
-//     is proof, and since the flag is global one proof settles it. Repos that
-//     were absent or unreachable alongside it do not weaken that proof (a real
-//     mismatch among them still surfaces from EnsureRepo on the next backup).
-//   - no detection, but something was unreachable → unknown, NOT absent. This
-//     is checked BEFORE absent on purpose: "one location is empty and another
-//     could not be reached" must not read as "fresh install, pick anything" —
-//     the unreachable one may be the encrypted repository the user is here to
-//     restore.
-//   - no detection, everything reachable and empty → absent. A genuine
-//     first-time setup: nothing exists, so the user's choice decides.
+//   - encrypted and plain both present: conflict.
+//   - any definite detection: that mode. Absent or unreachable repositories
+//     alongside it do not weaken it; a real mismatch among them still
+//     surfaces from EnsureRepo on the next backup.
+//   - anything unreachable: unknown. This comes before absent because the
+//     unreachable repository may be the encrypted one the user wants back.
+//   - everything reachable and empty: absent, a first-time setup.
 func foldEncryption(repos []RepoEncryption) EncryptionVerdict {
 	if len(repos) == 0 {
 		return VerdictUnconfigured

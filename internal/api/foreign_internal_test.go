@@ -255,7 +255,7 @@ func (f *foreignRecordingEngine) Forget(_ context.Context, _ string, _ []string,
 	return nil
 }
 
-func (f *foreignRecordingEngine) ForgetPolicy(_ context.Context, _ string, _ restic.RetentionPolicy, _ restic.Mode, _ string, _ bool) error {
+func (f *foreignRecordingEngine) ForgetPolicy(_ context.Context, _ string, _ restic.RetentionPolicy, _ restic.Mode, _ []string, _ bool) error {
 	f.record("ForgetPolicy")
 	return nil
 }
@@ -824,7 +824,7 @@ func TestForeignContainerRestoreGuardAbortsWhenDestPoolMissing(t *testing.T) {
 
 	tg := containerGuardTarget(t, "/host/user/appdata/web")
 	// destBase points at a pool this host lacks -> dest /host/user/zfs/appdata/web.
-	_, err := s.prepareRestoreForTarget(context.Background(), repoRef{repo: repoDir}, "web", "latest", tg, "/host/user/zfs/appdata", false)
+	_, err := s.prepareRestoreForTarget(context.Background(), repoRef{repo: repoDir}, "web", "latest", tg, tagIdentity("container:web"), "/host/user/zfs/appdata", false)
 	if err == nil || !strings.Contains(err.Error(), "not on a mounted") {
 		t.Fatalf("want the destination not-mounted refusal, got %v", err)
 	}
@@ -849,7 +849,7 @@ func TestForeignContainerRestoreGuardAllowsMountedDest(t *testing.T) {
 	writeMountFixture(t, "/", "/host/user", "/host/user/appdata")
 
 	tg := containerGuardTarget(t, "/host/user/appdata/web")
-	plan, err := s.prepareRestoreForTarget(context.Background(), repoRef{repo: repoDir}, "web", "latest", tg, "/host/user/appdata", false)
+	plan, err := s.prepareRestoreForTarget(context.Background(), repoRef{repo: repoDir}, "web", "latest", tg, tagIdentity("container:web"), "/host/user/appdata", false)
 	if err != nil {
 		t.Fatalf("mounted destination must pass the guard, got %v", err)
 	}
@@ -881,7 +881,7 @@ func TestForeignContainerRestoreRemapsCrossPool(t *testing.T) {
 
 	tg := containerGuardTarget(t, "/host/user/zfs/appdata/web") // source pool = zfs (absent here)
 	tg.Definition = mustContainerDefWithBind(t, "/mnt/zfs/appdata/web:/config", "/var/run/docker.sock:/var/run/docker.sock")
-	plan, err := s.prepareRestoreForTarget(context.Background(), repoRef{repo: repoDir}, "web", "latest", tg, "/host/user/user/appdata", false)
+	plan, err := s.prepareRestoreForTarget(context.Background(), repoRef{repo: repoDir}, "web", "latest", tg, tagIdentity("container:web"), "/host/user/user/appdata", false)
 	if err != nil {
 		t.Fatalf("cross-pool remap must succeed to a mounted dest, got %v", err)
 	}
@@ -918,7 +918,7 @@ func TestForeignContainerRestoreRewritesNonCanonicalBind(t *testing.T) {
 
 	tg := containerGuardTarget(t, "/host/user/zfs/appdata/web")
 	tg.Definition = mustContainerDefWithBind(t, "/mnt/zfs/appdata/web/:/config") // trailing slash
-	plan, err := s.prepareRestoreForTarget(context.Background(), repoRef{repo: repoDir}, "web", "latest", tg, "/host/user/user/appdata", false)
+	plan, err := s.prepareRestoreForTarget(context.Background(), repoRef{repo: repoDir}, "web", "latest", tg, tagIdentity("container:web"), "/host/user/user/appdata", false)
 	if err != nil {
 		t.Fatalf("remap: %v", err)
 	}
@@ -946,12 +946,12 @@ func TestForeignContainerRestoreOverwriteGuard(t *testing.T) {
 	s.dirNonEmptyProbe = func(p string) bool { return p == dest }
 
 	tg := containerGuardTarget(t, "/host/user/zfs/appdata/web") // source != dest
-	_, err := s.prepareRestoreForTarget(context.Background(), repoRef{repo: repoDir}, "web", "latest", tg, "/host/user/user/appdata", false)
+	_, err := s.prepareRestoreForTarget(context.Background(), repoRef{repo: repoDir}, "web", "latest", tg, tagIdentity("container:web"), "/host/user/user/appdata", false)
 	if err == nil || !strings.Contains(err.Error(), "already contains data") {
 		t.Fatalf("non-empty foreign dest must be refused without overwrite, got %v", err)
 	}
 	// With overwrite confirmed it proceeds (guard + remap already validated).
-	if _, err := s.prepareRestoreForTarget(context.Background(), repoRef{repo: repoDir}, "web", "latest", tg, "/host/user/user/appdata", true); err != nil {
+	if _, err := s.prepareRestoreForTarget(context.Background(), repoRef{repo: repoDir}, "web", "latest", tg, tagIdentity("container:web"), "/host/user/user/appdata", true); err != nil {
 		t.Fatalf("overwrite=true must proceed, got %v", err)
 	}
 }
@@ -971,7 +971,7 @@ func TestLocalContainerRestoreSkipsRemap(t *testing.T) {
 	writeMountFixture(t, "/", "/host/user") // appdata NOT mounted
 
 	tg := containerGuardTarget(t, "/host/user/appdata/web")
-	plan, err := s.prepareRestoreForTarget(context.Background(), repoRef{repo: repoDir}, "web", "latest", tg, "", false)
+	plan, err := s.prepareRestoreForTarget(context.Background(), repoRef{repo: repoDir}, "web", "latest", tg, tagIdentity("container:web"), "", false)
 	if err != nil {
 		t.Fatalf("local restore must not gain the remap/guard, got %v", err)
 	}

@@ -9,8 +9,6 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestMeshOfferEmptyRepoRejected pins the empty-repo guard on Create: an
-// offer addressing nowhere is refused with ErrEmptyMeshOffer, writing nothing.
 func TestMeshOfferEmptyRepoRejected(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -32,10 +30,6 @@ func TestMeshOfferEmptyRepoRejected(t *testing.T) {
 	}
 }
 
-// TestMeshOfferCRUD exercises Create/Get/List/UpdateStatus/Delete and, like
-// fleet_peers/received_repos, that the peer-generated REST password round-
-// trips as ENCRYPTED bytes. Status defaults to "pending" and can be
-// transitioned to "accepted"/"declined".
 func TestMeshOfferCRUD(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -104,7 +98,6 @@ func TestMeshOfferCRUD(t *testing.T) {
 	if updated.Status != "accepted" {
 		t.Fatalf("want status 'accepted', got %q", updated.Status)
 	}
-	// Everything else must be untouched by a status-only write.
 	if updated.From != in.From || updated.Repo != in.Repo || updated.RESTUser != in.RESTUser {
 		t.Fatalf("UpdateMeshOfferStatus must not touch other columns: %+v", updated)
 	}
@@ -115,7 +108,6 @@ func TestMeshOfferCRUD(t *testing.T) {
 	if _, ok, err := r.GetMeshOffer(got.ID); err != nil || ok {
 		t.Fatalf("GetMeshOffer after delete: ok=%v err=%v, want ok=false", ok, err)
 	}
-	// Deleting a missing id is a harmless no-op.
 	if err := r.DeleteMeshOffer("does-not-exist"); err != nil {
 		t.Fatalf("DeleteMeshOffer(missing id): %v", err)
 	}

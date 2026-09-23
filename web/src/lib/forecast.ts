@@ -1,25 +1,17 @@
-// ---------------------------------------------------------------------------
-// forecast — pure formatting/selection for the Storage card's forecast line
-// (the "forecast" object riding GET /api/stats; backend contract in
-// internal/api/forecast.go). Framework-free like activityLog.ts: the only i18n
-// dependency is an injected resolver, so the growth/projection/free selection
-// is unit-testable without a live I18nProvider.
-// ---------------------------------------------------------------------------
+// The Storage card's forecast line, built from the "forecast" object in
+// GET /api/stats (internal/api/forecast.go). Translation goes through an
+// injected resolver, as in activityLog.ts, so this is testable without an
+// I18nProvider.
 
 import type { StorageForecast } from "./api";
 
-/**
- * Resolves a translation key (+ optional {placeholder} params) into a
- * localized, interpolated string — same seam as activityLog's ResolveName.
- * The real implementation closes over `useT()`'s `t`; tests pass a stub.
- */
+/** ResolveForecast translates a key and fills its {placeholder} params. The app
+ *  passes a closure over useT()'s t; tests pass a stub. */
 export type ResolveForecast = (key: string, params?: Record<string, string>) => string;
 
-/** humanBytes formats a byte count with a binary (1024) unit and one decimal.
- *  The shared formatter for the dashboard's storage figures (moved out of
- *  Dashboard.tsx so the forecast line reads exactly like the size column).
- *  Zero and negatives collapse to "0 B" — a signed display is the caller's
- *  job (buildForecastLine picks growth vs shrink wording instead). */
+/** humanBytes formats a byte count with a binary (1024) unit and one decimal,
+ *  like every storage figure on the dashboard. Zero and negatives collapse to
+ *  "0 B"; a signed display is up to the caller. */
 export function humanBytes(n: number): string {
   if (!n || n <= 0) return "0 B";
   const units = ["B", "KB", "MB", "GB", "TB"];
@@ -38,12 +30,8 @@ export const FORECAST_WARN_WEEKS = 8;
 /** Above this many weeksToFull the projection caps at "full in > 1 year". */
 export const FORECAST_CAP_WEEKS = 52;
 
-/**
- * The rendered segments of the Storage card's compact forecast line. Each
- * segment is already localized; a null segment is simply not rendered. `warn`
- * marks a near-term projection (weeksToFull < FORECAST_WARN_WEEKS) — the
- * component then paints the projection segment with the statusWarn text token.
- */
+/** ForecastLine holds the localized segments of the forecast line. A null
+ *  segment is not rendered. */
 export interface ForecastLine {
   /** Growth trend, e.g. "Growing 1.2 GB/week" (or the shrinking variant). */
   growth: string | null;
@@ -51,23 +39,18 @@ export interface ForecastLine {
   projection: string | null;
   /** Free space on the repo volume, e.g. "1.9 TB free". */
   free: string | null;
-  /** True when weeksToFull < FORECAST_WARN_WEEKS. */
+  /** True when weeksToFull < FORECAST_WARN_WEEKS; the projection is then shown
+   *  in the statusWarn colour. */
   warn: boolean;
 }
 
 /**
- * buildForecastLine maps a /api/stats forecast object to the display segments,
- * or null when there is nothing to show (absent/null forecast, or one carrying
- * no known field) — the card then renders no forecast line at all.
- *
- *   - growth: present whenever growthBytesPerWeek is known. Negative growth
- *     picks the "shrinking" wording with the unsigned magnitude; zero reads as
- *     growing "0 B"/week (flat).
- *   - projection: present whenever weeksToFull is known (the backend only
- *     sends it for positive growth + known free space). Rounded to whole
- *     weeks with a floor of 1 ("~1 week" has its own count-neutral key), and
- *     capped: beyond FORECAST_CAP_WEEKS it reads "full in > 1 year".
- *   - free: present whenever freeBytes is known.
+ * buildForecastLine maps a forecast object to its segments, or returns null
+ * when it carries nothing to show. Negative growth uses the shrinking wording
+ * with the unsigned amount. The backend sends weeksToFull only for positive
+ * growth and known free space; it is rounded to whole weeks with a floor of 1,
+ * which has its own count-neutral key, and reads "full in > 1 year" beyond
+ * FORECAST_CAP_WEEKS.
  */
 export function buildForecastLine(
   forecast: StorageForecast | null | undefined,

@@ -5,13 +5,9 @@ import (
 	"testing"
 )
 
-// TestLastReasonScrubsURLCredentials pins the fix for the finding that
-// reasonPathRe alone stops at the first ":" and so never reaches into a
-// "user:pass@host" URL's userinfo — meaning a repo location like restic's
-// rest:/s3: backends use (the generated deploy recipe documents this exact
-// "rest:https://user:pass@host:port/path" shape as valid) leaked its password
-// verbatim into the UI, run history and outbound notifications. The example
-// URL and password below are the ones from the finding.
+// TestLastReasonScrubsURLCredentials covers the userinfo of a
+// "rest:https://user:pass@host:port/path" repository, which reasonPathRe alone
+// never reaches because it stops at the first ":".
 func TestLastReasonScrubsURLCredentials(t *testing.T) {
 	stderr := `Fatal: unable to open repository at rest:https://backupuser:Tr0ub4dor&3@storage.example.com:8000/containers: repository does not exist`
 	got := lastReason(stderr)
@@ -26,10 +22,8 @@ func TestLastReasonScrubsURLCredentials(t *testing.T) {
 	}
 }
 
-// TestLastReasonScrubsURLCredentialsInItemCause exercises the OTHER call site
-// that applied the path scrubber directly (itemErrorCauses, used when a
-// restore's per-item JSON errors reference a remote repo location) to make
-// sure the credential scrub covers it too, not just lastReason's own final
+// TestLastReasonScrubsURLCredentialsInItemCause covers itemErrorCauses, which
+// scrubs per-item restore errors on its own, apart from lastReason's final
 // pass.
 func TestLastReasonScrubsURLCredentialsInItemCause(t *testing.T) {
 	stderr := strings.Join([]string{
@@ -42,10 +36,6 @@ func TestLastReasonScrubsURLCredentialsInItemCause(t *testing.T) {
 	}
 }
 
-// TestCredentialReDoesNotEatHostPort pins that the credential scrub is scoped
-// to a real "user:pass@" userinfo segment and doesn't mistake an ordinary
-// "host:port" (no "@") for one, so it can't gratuitously eat legitimate
-// non-secret content the existing path-scrub tests already rely on.
 func TestCredentialReDoesNotEatHostPort(t *testing.T) {
 	got := lastReason("Fatal: unable to reach storage.example.com:8000: connection refused")
 	if strings.Contains(got, "[redacted]") {
@@ -56,11 +46,6 @@ func TestCredentialReDoesNotEatHostPort(t *testing.T) {
 	}
 }
 
-// TestLastReasonScrubsNumericUsername pins the fix for the finding that
-// credentialRe's leading-character class used to require a LETTER, so a
-// fully-numeric username (a legal restic/rclone userinfo username) slipped
-// through completely unscrubbed — the password right after it too, since the
-// whole "user:pass@" match never fired at all.
 func TestLastReasonScrubsNumericUsername(t *testing.T) {
 	stderr := `Fatal: unable to open repository at rest:https://123456:SuperSecret@storage.example.com:8000/containers: repository does not exist`
 	got := lastReason(stderr)
@@ -75,15 +60,10 @@ func TestLastReasonScrubsNumericUsername(t *testing.T) {
 	}
 }
 
-// TestScrubSecretsPreservesHostname pins the fix for the finding that
-// scrubbing credentials BEFORE paths (the original order) destroyed the
-// hostname along with the password: once credentialRe replaced "user:pass@"
-// with "[redacted]@", the leftover "scheme://[redacted]@host" was exactly the
-// path-like shape reasonPathRe matches, so reasonPathRe's later pass ate the
-// hostname too — leaving an operator with multiple off-site targets unable to
-// tell which one a failure came from. Scrubbing paths first, then
-// credentials, redacts the password exactly as completely while keeping the
-// hostname.
+// TestScrubSecretsPreservesHostname checks that the hostname survives, which
+// needs credentials scrubbed after paths. In the other order the leftover
+// "scheme://[redacted]@host" looks like a path to reasonPathRe, which then
+// removes the hostname an operator needs to tell off-site targets apart.
 func TestScrubSecretsPreservesHostname(t *testing.T) {
 	got := scrubSecrets(`rest:https://backupuser:Tr0ub4dor&3@storage.example.com:8000/containers`)
 	if strings.Contains(got, "Tr0ub4dor") || strings.Contains(got, "backupuser") {

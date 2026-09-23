@@ -1,25 +1,14 @@
-// ---------------------------------------------------------------------------
 // Every themed utility a component names has to exist in the theme.
 //
 // Tailwind v4 builds a utility from a `--color-<name>` custom property in the
-// `@theme` block. Write `bg-statusWarnBgSoft` when no `--color-statusWarnBgSoft`
-// is declared and NOTHING complains: Tailwind emits no rule for it, TypeScript
-// never sees class strings, the lint rules look at code rather than CSS, and the
-// element renders with no background at all. The box keeps its radius and its
-// padding, so it still looks deliberate - it is just transparent.
+// `@theme` block. Write `bg-statusWarnBgSoft` without declaring
+// `--color-statusWarnBgSoft` and nothing complains: Tailwind emits no rule,
+// TypeScript never sees class strings, the lint rules read code rather than
+// CSS, and the element renders transparent while keeping its radius and
+// padding, so it still looks intended.
 //
-// That is not hypothetical. The passkey card shipped in v8.8.0 asking for
-// exactly that name for its refusal paragraph, and the warn family only had a
-// base tone and a strong tone: the soft step existed for the FAILURE family and
-// nowhere else. The box had a radius, padding and no fill for a whole release,
-// and every gate in the build was green.
-//
-// GlimStone 1.15.0 calls this out as its own rule and carries the token; this
-// guard is the mechanical half, so the next invented name fails here instead of
-// on somebody's screen. It is deliberately a source scan and not a DOM test: a
-// DOM test can only see the components it renders, and the defect is that a
-// class nobody rendered in a test was wrong.
-// ---------------------------------------------------------------------------
+// This is a source scan rather than a DOM test because a DOM test sees only the
+// components it renders, and the wrong class is usually one no test renders.
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -37,8 +26,8 @@ const FAMILY = "(?:carbon|accent|status)";
 // in it because both take a colour and both are used here.
 const PROPERTY = "(?:bg|text|border|ring|fill|stroke|divide|outline|from|via|to|shadow|caret|accent)";
 // The name may carry hyphens of its own (`carbon-textSub`), so the character
-// class has to allow them - and then a trailing hyphen has to be trimmed back
-// off, or `bg-carbon-surface-` style typos read as part of the name.
+// class allows them, and a trailing hyphen is trimmed off afterwards so a typo
+// like `bg-carbon-surface-` does not read as part of the name.
 const USE = new RegExp(`\\b${PROPERTY}-(${FAMILY}[A-Za-z0-9-]*)`, "g");
 
 function sources(dir: string): string[] {
@@ -55,13 +44,9 @@ function sources(dir: string): string[] {
   return out;
 }
 
-// Comments have to go before the scan, and that is not a nicety: this codebase
-// documents its own history in them ("Task 7: was text-statusInfo, the old fifth
-// hue"), so a scan that reads comments reports nine pieces of deliberate
-// documentation as defects and one real one. The next person then adds an
-// allow-list, and the guard is finished. Block comments first, then line
-// comments - and a line comment only when the slashes are not part of a URL,
-// which is why the preceding character is checked.
+// Comments are stripped before the scan because they may quote class names
+// that are not in the theme. A line comment is stripped only when its slashes
+// are not part of a URL, hence the check on the preceding character.
 function code(text: string): string {
   return text
     .replace(/\/\*[\s\S]*?\*\//g, " ")
@@ -88,9 +73,8 @@ for (const file of sources(SRC)) {
 }
 
 describe("themed utilities", () => {
-  // Self-check first, the same shape pageHeading.test.ts and
-  // backupCancelReach.test.ts carry: a scanner that reads nothing reports
-  // perfect coverage of nothing, and does it silently.
+  // A scanner that reads nothing passes silently, so check that it read
+  // something.
   it("the scan actually reached the source tree", () => {
     expect(
       uses.length,

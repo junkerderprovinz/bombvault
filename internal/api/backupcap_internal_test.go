@@ -7,9 +7,6 @@ import (
 	"time"
 )
 
-// TestBackupHardCap pins the configurable backup timeout (BACKUP_MAX_HOURS):
-// a raised 48h default, an explicit N hours, the 0=unlimited sentinel, and an
-// invalid value falling back to the default.
 func TestBackupHardCap(t *testing.T) {
 	cases := []struct {
 		name string
@@ -31,8 +28,8 @@ func TestBackupHardCap(t *testing.T) {
 			if tc.set {
 				t.Setenv("BACKUP_MAX_HOURS", tc.env)
 			} else {
-				// Register restoration via t.Setenv, then fully remove it to
-				// exercise the "unset" branch distinctly from "empty".
+				// t.Setenv restores the variable afterwards; Unsetenv then
+				// tests unset apart from empty.
 				t.Setenv("BACKUP_MAX_HOURS", "")
 				if err := os.Unsetenv("BACKUP_MAX_HOURS"); err != nil {
 					t.Fatal(err)
@@ -45,8 +42,6 @@ func TestBackupHardCap(t *testing.T) {
 	}
 }
 
-// TestBackupHoldCtxCap verifies the hold context has a deadline for a finite cap
-// and none for the unlimited (0) cap, while always being cancellable.
 func TestBackupHoldCtxCap(t *testing.T) {
 	t.Run("finite cap sets a deadline", func(t *testing.T) {
 		t.Setenv("BACKUP_MAX_HOURS", "24")
@@ -66,8 +61,8 @@ func TestBackupHoldCtxCap(t *testing.T) {
 	})
 }
 
-// TestDrillWaitCap ties the scheduled-drill wait to the backup cap and bounds the
-// unlimited case at a safe (non-overflowing) 100 years.
+// TestDrillWaitCap: the drill wait follows the backup cap, and no cap becomes
+// 100 years so that time.Time.Add cannot overflow.
 func TestDrillWaitCap(t *testing.T) {
 	t.Setenv("BACKUP_MAX_HOURS", "10")
 	if got := drillWaitCap(); got != 10*time.Hour {
@@ -78,7 +73,6 @@ func TestDrillWaitCap(t *testing.T) {
 	if got != 100*365*24*time.Hour {
 		t.Fatalf("unlimited drillWaitCap()=%v, want 100y", got)
 	}
-	// Must not overflow time.Time.Add into the past (the whole point of the bound).
 	if !time.Now().Add(got).After(time.Now()) {
 		t.Fatal("drillWaitCap for unlimited overflowed time.Time.Add")
 	}

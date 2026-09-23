@@ -1,21 +1,9 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// SelectionTree render/state/interaction tests (Phase 2, plan 01 tracer).
-//
-// These ride the FoldersEditor harness (vi.mock of the api module, component
-// imported AFTER the mock — same shape as Containers.excludesAssistant.dom
-// .test.tsx) so the whole tracer slice is exercised end to end: the mounts
-// response derives the (I, E) mirror, expanding a mount root lazily browses
-// once through the browse-relative path, a subfolder uncheck PATCHes the flat
-// set (bare mount include + "!"+child exclusion, selectionSource "tree"),
-// and a remount reconstructs checked/mixed/excluded from the lists alone.
-//
-// The remount scenario drives SelectionTree directly with a shared
-// editor-lifetime cache: the real cache owner is FoldersEditor (a useRef that
-// survives section close, dies with the page — Pitfall 3), and a fresh
-// component-local cache on every remount would hide exactly the "cache loss"
-// refetch this assertion exists to catch.
-// ---------------------------------------------------------------------------
+// Most tests drive SelectionTree through FoldersEditor with a mocked api
+// module, so a toggle can be checked against the request it sends. The
+// remount and id tests render SelectionTree directly with a shared browse
+// cache standing in for the editor's; a fresh cache per mount would hide a
+// refetch.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { I18nProvider, useT } from "../lib/i18n";
@@ -25,11 +13,9 @@ import type { BrowseResponse, ContainerMountsResponse, OkEnvelope } from "../lib
 const browseCalls: string[] = [];
 const patches: { name: string; paths: string[]; opts?: { selectionSource?: string } }[] = [];
 let mountsReply: ContainerMountsResponse;
-// Replies may be plain values or promises (a pending promise pins the loading
-// row, which an immediately-resolving mock can never show).
+// Replies may be promises: a pending one keeps the loading row on screen, and
+// a deferred save reply holds the queue mid-flight.
 let browseReplies: (BrowseResponse | Promise<BrowseResponse>)[] = [];
-// Same shape for setContainerTargets: a deferred reply holds a save in flight
-// so the queue's serialize/drain behavior is observable step by step.
 let patchReplies: (OkEnvelope | Promise<OkEnvelope>)[] = [];
 
 vi.mock("../lib/api", async (importOriginal) => {
@@ -42,9 +28,7 @@ vi.mock("../lib/api", async (importOriginal) => {
       const reply = browseReplies.shift() ?? { ok: true, dirs: [], status: "ok", truncated: false };
       return Promise.resolve(reply);
     },
-    // The composed PATCH endpoint (plan 03 Task 2) with the flat paths/source
-    // view the Phase 2 assertions pin, projected out of the body — the same
-    // wire contract the retired setBackupPaths mock captured.
+    // Records the paths and selectionSource from the request body.
     setContainerTargets: (name: string, body: Record<string, unknown>) => {
       patches.push({
         name,
@@ -57,7 +41,7 @@ vi.mock("../lib/api", async (importOriginal) => {
   };
 });
 
-// Imported AFTER vi.mock so the components pick up the mocked client.
+// Imported after vi.mock so the components pick up the mocked client.
 const { FoldersEditor } = await import("../pages/Containers");
 const { SelectionTree } = await import("./SelectionTree");
 
@@ -67,9 +51,8 @@ const PLEX2 = "/mnt/user/appdata/plex2";
 const OTHER = "/mnt/user/appdata/other";
 const CUSTOM = "/mnt/user/backups";
 
-/** Two selected mounts plus one custom include: unchecking either mount alone
- *  stays above the D-04 zero-include floor, so toggle bursts are observable
- *  without tripping the guard. */
+/** Two selected mounts and one custom include, so unchecking one mount never
+ *  empties the selection. */
 function richMounts(): ContainerMountsResponse {
   return mountsResponse({
     mounts: [
@@ -130,8 +113,7 @@ async function renderEditor(): Promise<void> {
   await act(async () => {});
 }
 
-// Stands in for the editor-lifetime cache FoldersEditor owns and passes down;
-// reassigned per test so scenarios never share listings.
+// Stands in for the cache FoldersEditor owns; replaced in beforeEach.
 let sharedCache = new Map<string, Promise<BrowseResponse>>();
 
 function TreeHarness() {
@@ -167,8 +149,8 @@ afterEach(() => {
   cleanup();
 });
 
-describe("SelectionTree lazy expansion (TREE-01)", () => {
-  it("fires zero browse calls on open, one on first expand (browse-relative), none on re-expand", async () => {
+describe("SelectionTree lazy expansion", () => {
+  it("browses nothing on open, once on first expand and not again on re-expand", async () => {
     browseReplies = [listing()];
     await renderEditor();
 
@@ -200,8 +182,8 @@ describe("SelectionTree lazy expansion (TREE-01)", () => {
   });
 });
 
-describe("SelectionTree toggle live-save (TREE-02, D-03)", () => {
-  it("unchecking a subfolder PATCHes mount bare + !child with selectionSource tree, root goes mixed", async () => {
+describe("SelectionTree toggle save", () => {
+  it("unchecking a subfolder saves the mount plus a !child exclusion and leaves the root mixed", async () => {
     browseReplies = [listing()];
     await renderEditor();
 
@@ -209,9 +191,7 @@ describe("SelectionTree toggle live-save (TREE-02, D-03)", () => {
       fireEvent.click(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }));
     });
     const child = screen.getByRole("treeitem", { name: /transcoding/ });
-    // hidden: true — the input carries aria-hidden (the treeitem's
-    // aria-checked is the single announcement; review WR-02), so ByRole's
-    // default a11y-tree filter would not return it.
+    // The checkbox is aria-hidden, so getByRole needs hidden: true.
     const box = within(child).getByRole("checkbox", { hidden: true });
     await act(async () => {
       fireEvent.click(box);
@@ -225,8 +205,8 @@ describe("SelectionTree toggle live-save (TREE-02, D-03)", () => {
       },
     ]);
 
-    // Optimistic mirror: the carve-out leaves the root mixed and the child
-    // excluded (unchecked box, muted tone) while the rest stays selected.
+    // Updated optimistically: the root is mixed, the child excluded and
+    // muted, its sibling still selected.
     expect(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }).getAttribute("aria-checked")).toBe("mixed");
     const excludedChild = screen.getByRole("treeitem", { name: /transcoding/ });
     expect(excludedChild.getAttribute("aria-checked")).toBe("false");
@@ -235,10 +215,10 @@ describe("SelectionTree toggle live-save (TREE-02, D-03)", () => {
   });
 });
 
-describe("SelectionTree remount reconstruction (TREE-03/04)", () => {
-  it("reconstructs mixed/excluded states with zero new browse calls via the editor-lifetime cache", async () => {
-    // D-05: expansion survives remount in localStorage; the listing survives
-    // in the cache the editor owns.
+describe("SelectionTree remount", () => {
+  it("restores mixed and excluded states from the lists without browsing again", async () => {
+    // Expansion comes back from localStorage, the listing from the shared
+    // cache.
     localStorage.setItem("bv-tree-expanded-plex", JSON.stringify([MOUNT]));
     mountsReply = mountsResponse({ excluded: [`${MOUNT}/transcoding`] });
     browseReplies = [listing()];
@@ -254,8 +234,7 @@ describe("SelectionTree remount reconstruction (TREE-03/04)", () => {
     first.unmount();
     cleanup();
 
-    // Remount: same (I, E), same cache — the state is pure list arithmetic,
-    // no refetch, no selection memory anywhere but the server.
+    // Same includes, exclusions and cache: nothing is fetched again.
     render(
       <I18nProvider>
         <TreeHarness />
@@ -273,8 +252,7 @@ describe("SelectionTree remount reconstruction (TREE-03/04)", () => {
   });
 
   it("shows an exclusions-only stored list unchecked and never PATCHes a repair", async () => {
-    // Phase 1 explicit-none carrier: a deliberate full deselect is stored as
-    // exclusions-only. The client displays it as-is and mutates nothing.
+    // Deselecting everything is stored as exclusions only.
     mountsReply = mountsResponse({
       mounts: [{ source: MOUNT, dest: "/config", selected: false, isAppdata: true, reachable: true }],
       excluded: [MOUNT],
@@ -287,7 +265,7 @@ describe("SelectionTree remount reconstruction (TREE-03/04)", () => {
   });
 });
 
-describe("SelectionTree per-node listing states (TREE-06, plan-01 scope)", () => {
+describe("SelectionTree listing states", () => {
   it("renders an empty directory as one muted folder.none row, distinct from loading and failure", async () => {
     browseReplies = [{ ok: true, status: "ok", truncated: false, dirs: [] }];
     await renderEditor();
@@ -300,8 +278,7 @@ describe("SelectionTree per-node listing states (TREE-06, plan-01 scope)", () =>
   });
 
   it("shows the loading row while a listing is pending, never empty", async () => {
-    // A never-settling promise pins the in-flight state: an immediately
-    // resolving mock would skip straight past the spinner row.
+    // A promise that never settles keeps the loading row on screen.
     browseReplies = [new Promise<BrowseResponse>(() => {})];
     await renderEditor();
 
@@ -323,7 +300,7 @@ describe("SelectionTree per-node listing states (TREE-06, plan-01 scope)", () =>
     await act(async () => {
       fireEvent.click(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }));
     });
-    // ok:false is its own state — never "empty", never a silent collapse.
+    // A refused read shows as an error, not as an empty directory.
     expect(screen.getByText("could not read directory")).toBeTruthy();
     expect(screen.queryByText("No subdirectories")).toBeNull();
 
@@ -336,13 +313,7 @@ describe("SelectionTree per-node listing states (TREE-06, plan-01 scope)", () =>
   });
 });
 
-// Plan 02 scope: the five browse outcomes are pinned DISTINCT, the retry
-// affordance re-enters the in-flight state, the truncated notice stays outside
-// the treeitem structure, a rejected promise settles with no spinner left
-// behind, and listing failures never interfere with selection persistence.
-// (The rows themselves landed with plan 01's documented deviations — these
-// tests are the pin the plan asked for: "verify that holds".)
-describe("SelectionTree per-node outcome rows (TREE-06/D-06, plan 02)", () => {
+describe("SelectionTree listing outcome rows", () => {
   it("renders the couldNotRead fallback when ok:false carries no error text, outside the treeitem structure", async () => {
     browseReplies = [{ ok: false, status: "error" }];
     await renderEditor();
@@ -351,8 +322,8 @@ describe("SelectionTree per-node outcome rows (TREE-06/D-06, plan 02)", () => {
       fireEvent.click(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }));
     });
 
-    // No error string on the wire -> the translated fallback, verbatim key
-    // text, in a plain row (never a treeitem, never an empty-listing stand-in).
+    // Without an error from the server, the translated fallback shows in a
+    // plain row.
     const row = screen.getByText("Could not read directory");
     expect(row.closest('[role="treeitem"]')).toBeNull();
     expect(screen.queryByText("No subdirectories")).toBeNull();
@@ -377,8 +348,8 @@ describe("SelectionTree per-node outcome rows (TREE-06/D-06, plan 02)", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     });
-    // The failed cache entry was evicted, so "Try again" is a REAL refetch:
-    // a second browse call, passing through the spinner row again.
+    // The failed entry was evicted, so the retry browses again and shows the
+    // loading row.
     expect(browseCalls).toEqual(["user/appdata/plex", "user/appdata/plex"]);
     expect(screen.getByText("Loading…")).toBeTruthy();
 
@@ -388,7 +359,7 @@ describe("SelectionTree per-node outcome rows (TREE-06/D-06, plan 02)", () => {
     expect(screen.getByRole("treeitem", { name: /library/ })).toBeTruthy();
   });
 
-  it("truncated listing renders the served children then one non-interactive notice row (D-06)", async () => {
+  it("truncated listing renders the served children then one non-interactive notice row", async () => {
     browseReplies = [{ ...listing(), truncated: true }];
     await renderEditor();
 
@@ -396,14 +367,12 @@ describe("SelectionTree per-node outcome rows (TREE-06/D-06, plan 02)", () => {
       fireEvent.click(screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }));
     });
 
-    // The served children render as real treeitems...
     expect(screen.getByRole("treeitem", { name: /transcoding/ })).toBeTruthy();
     expect(screen.getByRole("treeitem", { name: /library/ })).toBeTruthy();
-    // ...and setsize counts ONLY them: the notice row is outside the arithmetic.
+    // aria-setsize counts only the real children.
     expect(screen.getByRole("treeitem", { name: /transcoding/ }).getAttribute("aria-setsize")).toBe("2");
 
-    // Exactly one notice, a plain <p>: no treeitem role, no checkbox, nothing
-    // to click — never counted, never paginated.
+    // One notice, a plain <p> outside any treeitem.
     const notices = screen.getAllByText("First 500 entries shown");
     expect(notices.length).toBe(1);
     expect(notices[0].tagName).toBe("P");
@@ -439,12 +408,11 @@ describe("SelectionTree per-node outcome rows (TREE-06/D-06, plan 02)", () => {
     });
     expect(screen.getByText("Loading…")).toBeTruthy();
 
-    // All three texts coexist and are pairwise distinct; the retry affordance
-    // belongs to the no-access row alone (empty and loading are plain text).
+    // Only the failed row offers a retry.
     expect(screen.getAllByRole("button", { name: "Try again" }).length).toBe(1);
   });
 
-  it("a rejected browse promise settles to the error row — zero spinner nodes remain", async () => {
+  it("a rejected browse promise settles to the error row with no spinner left", async () => {
     let reject!: (e: Error) => void;
     const boom = new Promise<BrowseResponse>((_, rej) => {
       reject = rej;
@@ -459,13 +427,11 @@ describe("SelectionTree per-node outcome rows (TREE-06/D-06, plan 02)", () => {
       reject(new Error("network down"));
     });
 
-    // Both promise outcomes settle the node: the fallback text shows and no
-    // animate-spin element survives anywhere in the document.
     expect(screen.getByText("Could not read directory")).toBeTruthy();
     expect(document.querySelectorAll(".animate-spin").length).toBe(0);
   });
 
-  it("a node whose listing failed still toggles and PATCHes normally (listing errors never block saving)", async () => {
+  it("a node whose listing failed can still be toggled and saved", async () => {
     mountsReply = mountsResponse({
       mounts: [
         { source: MOUNT, dest: "/config", selected: true, isAppdata: false, reachable: true },
@@ -480,8 +446,7 @@ describe("SelectionTree per-node outcome rows (TREE-06/D-06, plan 02)", () => {
     });
     expect(screen.getByText("could not read directory")).toBeTruthy();
 
-    // The unreadable folder only failed to LIST: its own include still
-    // toggles, the save still leaves — selection and browse stay independent.
+    // Only the listing failed; the folder's own include still toggles.
     const box = within(screen.getByRole("treeitem", { name: /\/config/ })).getByRole("checkbox", { hidden: true });
     await act(async () => {
       fireEvent.click(box);
@@ -490,15 +455,10 @@ describe("SelectionTree per-node outcome rows (TREE-06/D-06, plan 02)", () => {
   });
 });
 
-// Phase 3 review WR-03: the exclusions-disclosure DOM id must be
-// collision-free per root. The retired non-alphanumeric stripping made
-// "/mnt/user/app-data" and "/mnt/user/app_data" share one sanitized id, so
-// two open disclosures rendered duplicate ids and every button's
-// aria-controls resolved to the FIRST list. Rendered directly against
-// SelectionTree (the remount tests' precedent): the id derivation is pure
-// tree arithmetic, no editor queue involved.
-describe("SelectionTree exclusions-disclosure ids (WR-03)", () => {
-  it("roots whose sanitized paths agree get distinct ids, and each button controls its own list", async () => {
+// Roots whose paths differ only in punctuation must get distinct list ids, or
+// every disclosure's aria-controls points at the first list.
+describe("SelectionTree exclusion list ids", () => {
+  it("roots that differ only in punctuation get distinct ids, and each button controls its own list", async () => {
     const DASH = `${HOST_ROOT}/user/app-data`;
     const UNDER = `${HOST_ROOT}/user/app_data`;
     render(
@@ -523,16 +483,13 @@ describe("SelectionTree exclusions-disclosure ids (WR-03)", () => {
     );
 
     // Both roots carry exactly one exclusion each: two disclosure buttons.
-    const btns = screen.getAllByRole("button", { name: /1 exclusions/ });
+    const btns = screen.getAllByRole("button", { name: /1 exclusion/ });
     expect(btns).toHaveLength(2);
-    // The collision pin: distinct aria-controls values for distinct roots
-    // (the stripped derivation yielded one shared id here).
     const ids = btns.map((b) => b.getAttribute("aria-controls"));
     expect(ids[0]).toBeTruthy();
     expect(new Set(ids).size).toBe(2);
 
-    // Open both: each button's aria-controls resolves to ITS OWN list —
-    // "x" under app-data, "y" under app_data — never the first list twice.
+    // Once open, each button's aria-controls resolves to its own list.
     await act(async () => {
       for (const b of btns) fireEvent.click(b);
     });
@@ -549,23 +506,21 @@ describe("SelectionTree exclusions-disclosure ids (WR-03)", () => {
   });
 });
 
-describe("empty-selection guard (D-04, pulled forward from plan 02)", () => {
+describe("empty-selection guard", () => {
   it("blocks the toggle that would leave zero includes before any PATCH, with the inline warn line", async () => {
     mountsReply = mountsResponse();
     browseReplies = [listing()];
     await renderEditor();
 
-    // The single selected mount root IS the only include: unchecking it
-    // would empty the item's selection.
+    // The mount root is the only include, so unchecking it would empty the
+    // selection.
     const root = screen.getByRole("treeitem", { name: /user\/appdata\/plex/ });
     const box = within(root).getByRole("checkbox", { hidden: true });
     await act(async () => {
       fireEvent.click(box);
     });
 
-    // Blocked client-side: no PATCH leaves, the include stays, the warn line
-    // (statusWarn text + one shake replay) says why and routes to the
-    // schedule toggle instead.
+    // Blocked before any request: the include stays and the warning says why.
     expect(patches).toEqual([]);
     expect(
       screen.getByRole("treeitem", { name: /user\/appdata\/plex/ }).getAttribute("aria-checked"),
@@ -577,12 +532,10 @@ describe("empty-selection guard (D-04, pulled forward from plan 02)", () => {
   });
 });
 
-// Plan 02 Task 2: the one-deep serialized PATCH queue (RESEARCH Open Question
-// 4, Pitfalls 4/5) plus the full D-04 treatment — shake replay + text-xs warn
-// line on the blocked row, whole-item include counting, and the defensive
-// handling of the server's coded empty-selection refusal.
-describe("FoldersEditor serialized save queue and D-04 guard (plan 02)", () => {
-  it("blocked last-include uncheck shakes the row and shows the text-xs warn line, mirror untouched", async () => {
+// One save in flight at a time; toggles made meanwhile go out as one
+// follow-up save.
+describe("FoldersEditor save queue and empty-selection guard", () => {
+  it("a blocked uncheck of the last include shakes the row and shows the warning", async () => {
     // One selected mount, no custom: unchecking it would empty the item.
     await renderEditor();
 
@@ -591,10 +544,10 @@ describe("FoldersEditor serialized save queue and D-04 guard (plan 02)", () => {
       fireEvent.click(box);
     });
 
-    expect(patches).toEqual([]); // no request left
+    expect(patches).toEqual([]);
     const row = screen.getByRole("treeitem", { name: /user\/appdata\/plex/ });
-    expect(row.getAttribute("aria-checked")).toBe("true"); // mirror never flipped
-    expect(row.className).toContain("glim-shake"); // one shake replay via the nonce-in-key technique
+    expect(row.getAttribute("aria-checked")).toBe("true");
+    expect(row.className).toContain("glim-shake");
     const warn = screen.getByText(
       "At least one folder must stay selected. To back up none of this container, turn off Include in schedule. To return to automatic detection, use Reset selection.",
     );
@@ -602,7 +555,7 @@ describe("FoldersEditor serialized save queue and D-04 guard (plan 02)", () => {
     expect(warn.className).toContain("text-statusWarn");
   });
 
-  it("unchecking the last MOUNT include PATCHes while a custom include exists (the count spans the whole item)", async () => {
+  it("unchecking the last mount still saves while a custom include remains", async () => {
     mountsReply = richMounts();
     await renderEditor();
 
@@ -622,23 +575,22 @@ describe("FoldersEditor serialized save queue and D-04 guard (plan 02)", () => {
     patchReplies = [first.promise];
     await renderEditor();
 
-    // Toggle 1: uncheck plex. PATCH 1 leaves and is held in flight.
+    // Uncheck plex; the first save is held in flight.
     await act(async () => {
       fireEvent.click(within(screen.getByRole("treeitem", { name: /\/config/ })).getByRole("checkbox", { hidden: true }));
     });
     expect(patches.length).toBe(1);
     expect(patches[0].paths).toEqual([PLEX2, CUSTOM]);
 
-    // Toggle 2 while PATCH 1 is in flight: the mirror updates optimistically,
-    // the save is queued dirty — never a concurrent second request.
+    // A second toggle meanwhile updates the view but is not sent yet.
     await act(async () => {
       fireEvent.click(within(screen.getByRole("treeitem", { name: /\/data/ })).getByRole("checkbox", { hidden: true }));
     });
     expect(patches.length).toBe(1);
 
-    // PATCH 1 fails: the revert is RE-DERIVED from the live mirror (plex
-    // returns; plex2's uncheck SURVIVES — a captured snapshot would wipe it),
-    // then the dirty drain sends the final full list exactly once.
+    // The first save fails. The revert is applied to the current state, so
+    // plex comes back and plex2's uncheck survives; then the queued save sends
+    // the final list once.
     await act(async () => {
       first.resolve({ ok: false, error: "save failed" });
     });
@@ -651,7 +603,7 @@ describe("FoldersEditor serialized save queue and D-04 guard (plan 02)", () => {
     expect(screen.getByRole("treeitem", { name: /user\/backups/ }).getAttribute("aria-checked")).toBe("true");
   });
 
-  it("collapses a burst: exactly one draining PATCH after the in-flight save resolves, bodies ordered", async () => {
+  it("collapses a burst of toggles into one follow-up save", async () => {
     mountsReply = richMounts();
     const first = deferred<OkEnvelope>();
     patchReplies = [first.promise];
@@ -668,16 +620,15 @@ describe("FoldersEditor serialized save queue and D-04 guard (plan 02)", () => {
     await act(async () => {
       first.resolve({ ok: true });
     });
-    // The two-toggle burst collapsed into ONE drain carrying the latest list.
+    // One follow-up save carrying the latest list.
     expect(patches.length).toBe(2);
     expect(patches[0].paths).toEqual([PLEX2, CUSTOM]);
     expect(patches[1].paths).toEqual([CUSTOM]);
   });
 
-  it("defensive backstop: a coded empty-selection refusal toasts verbatim and reverts the mirror", async () => {
-    // Unreachable once the D-04 block exists (the client never sends an
-    // empty-include list) — pinned anyway: the coded envelope is toasted
-    // verbatim and the optimistic mirror rolls back.
+  it("toasts a coded empty-selection refusal and reverts the change", async () => {
+    // The client guard should prevent this, but the server's refusal is
+    // still handled.
     mountsReply = mountsResponse({
       mounts: [
         { source: MOUNT, dest: "/config", selected: true, isAppdata: false, reachable: true },
@@ -691,7 +642,7 @@ describe("FoldersEditor serialized save queue and D-04 guard (plan 02)", () => {
       fireEvent.click(within(screen.getByRole("treeitem", { name: /\/config/ })).getByRole("checkbox", { hidden: true }));
     });
 
-    expect(patches.length).toBe(1); // no drain: the refusal settles the queue
+    expect(patches.length).toBe(1); // the refusal settles the queue
     expect(screen.getByText("Selection would be empty")).toBeTruthy();
     expect(screen.getByRole("treeitem", { name: /\/config/ }).getAttribute("aria-checked")).toBe("true");
   });

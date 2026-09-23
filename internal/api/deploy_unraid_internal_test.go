@@ -6,19 +6,10 @@ import (
 	"testing"
 )
 
-// The Unraid template has to PARSE, and it has to keep the one flag that makes
-// the destination immutable ([601]).
-//
-// Reported as "I couldn't get the scripted deployment of a restic docker
-// functional, and it couldn't be edited in the docker UI, so I used one from CA
-// instead." The docker-run recipe itself is sound — verified end to end against
-// a real rest-server, where `restic init` created a repository through it — so
-// what failed was the FORMAT. A container Unraid did not create from a template
-// has no Edit form behind it.
-//
-// A template that does not parse is worse than no template: Unraid drops it from
-// the dropdown silently, and the user is back to the bare docker run without
-// being told why.
+// TestUnraidTemplateParsesAndStaysAppendOnly: the Unraid template must parse
+// and must keep --append-only. Unraid drops a template that does not parse from
+// its dropdown without a word, leaving the user with a bare docker run that has
+// no Edit form.
 func TestUnraidTemplateParsesAndStaysAppendOnly(t *testing.T) {
 	snip, err := buildDeploySnippet("containers")
 	if err != nil {
@@ -34,12 +25,8 @@ func TestUnraidTemplateParsesAndStaysAppendOnly(t *testing.T) {
 		t.Errorf("the XML declaration must come first, got %.40q", snip.Unraid)
 	}
 
-	// Parse THE WHOLE STRING, never a prefix of it. The first version of this
-	// test truncated at </Container> before parsing, on the assumption that the
-	// trailing guidance lines were not part of the document. They were: the
-	// generator appended the shared `# ...` notes after the root element, which
-	// is not valid XML, and the whole file Unraid reads was broken while this
-	// test stayed green. It measured a prefix and reported on a file.
+	// Parse the whole string, not a prefix: shell-style notes after
+	// </Container> make the file invalid XML.
 	doc := snip.Unraid
 	i := strings.Index(doc, "</Container>")
 	if i < 0 {
@@ -65,8 +52,8 @@ func TestUnraidTemplateParsesAndStaysAppendOnly(t *testing.T) {
 		t.Errorf("template needs a Name and a Repository, got %q / %q", parsed.Name, parsed.Repo)
 	}
 
-	// The OPTIONS field is the whole point: --append-only is what makes this a
-	// destination that enforces its own policy rather than trusting the sender.
+	// --append-only makes the destination enforce its own policy instead of
+	// trusting the sender.
 	var options string
 	for _, c := range parsed.Configs {
 		if c.Target == "OPTIONS" {
@@ -82,9 +69,9 @@ func TestUnraidTemplateParsesAndStaysAppendOnly(t *testing.T) {
 		}
 	}
 
-	// The bcrypt line is shown for the user to write by hand and must NOT be a
-	// template field: Unraid keeps templates on the flash drive indefinitely,
-	// and this is a credential displayed exactly once.
+	// The htpasswd line is for the user to write by hand, never a template
+	// field: Unraid keeps templates on the flash drive, and the credential is
+	// shown only once.
 	if !strings.Contains(snip.Unraid, snip.Htpasswd) {
 		t.Error("the htpasswd line must appear in the instructions")
 	}
@@ -93,23 +80,20 @@ func TestUnraidTemplateParsesAndStaysAppendOnly(t *testing.T) {
 			t.Errorf("the credential must not be baked into a template field (%s)", c.Name)
 		}
 	}
-	// And the one-time plaintext password must not be anywhere in the file.
 	if strings.Contains(snip.Unraid, snip.Password) {
 		t.Error("the plaintext password must never reach the template")
 	}
 
-	// The two shared notes moved INTO the leading comment when the trailing
-	// lines were removed. Without this, deleting them would silently satisfy
-	// the "nothing follows the root element" check above.
+	// The shared notes belong in the leading comment. Dropping them would also
+	// pass the trailing-content check above.
 	for _, want := range []string{"terminate TLS", "repo URL for BombVault"} {
 		if !strings.Contains(snip.Unraid, want) {
 			t.Errorf("the template lost its %q guidance", want)
 		}
 	}
 
-	// An XML comment may not contain "--". The OPTIONS flags legitimately do,
-	// but they live in an element; the comment block must stay clean, or the
-	// file stops parsing for a reason nobody would look for.
+	// An XML comment may not contain "--". The flags do, but they live in an
+	// element.
 	if start := strings.Index(snip.Unraid, "<!--"); start >= 0 {
 		end := strings.Index(snip.Unraid[start:], "-->")
 		if end < 0 {

@@ -8,8 +8,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 )
 
-// fakeFlashRestic implements backup.FlashRestic (Backup only — flash restore is
-// a zip download handled in the service layer, not the orchestrator).
+// fakeFlashRestic records the paths and excludes it was asked to back up.
 type fakeFlashRestic struct {
 	backedUpPaths []string
 	excludes      []string
@@ -44,8 +43,6 @@ func TestBackupFlash(t *testing.T) {
 	if len(rc.backedUpPaths) != 1 || rc.backedUpPaths[0] != "/host/boot" {
 		t.Fatalf("expected to back up /host/boot, got %v", rc.backedUpPaths)
 	}
-	// The flash backup must exclude .git so a /boot/.git never enters the snapshot
-	// or the download/export zips — matching Unraid's own flash backup (#31).
 	if len(rc.excludes) != 1 || rc.excludes[0] != ".git" {
 		t.Fatalf("expected flash backup to exclude .git, got %v", rc.excludes)
 	}

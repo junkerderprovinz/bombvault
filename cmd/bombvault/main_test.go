@@ -9,11 +9,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 )
 
-// TestPlatformForTrueNASReturnsRealImplementation confirms PLATFORM=truenas
-// (platform.KindTrueNAS) now resolves to a real platform.TrueNAS{} instance —
-// NOT the Phase A fallback-to-generic-with-warning path, which today only
-// applies to a genuinely unrecognized Kind.
-func TestPlatformForTrueNASReturnsRealImplementation(t *testing.T) {
+func TestPlatformForTrueNAS(t *testing.T) {
 	var buf strings.Builder
 	prev := log.Writer()
 	log.SetOutput(&buf)
@@ -31,24 +27,19 @@ func TestPlatformForTrueNASReturnsRealImplementation(t *testing.T) {
 	}
 }
 
-// TestPlatformForUnraidUnchanged / TestPlatformForGenericUnchanged pin that
-// this task did not disturb the two already-implemented mappings.
-func TestPlatformForUnraidUnchanged(t *testing.T) {
+func TestPlatformForUnraid(t *testing.T) {
 	if _, ok := platformFor(platform.KindUnraid).(platform.Unraid); !ok {
 		t.Fatalf("platformFor(KindUnraid) = %T, want platform.Unraid", platformFor(platform.KindUnraid))
 	}
 }
 
-func TestPlatformForGenericUnchanged(t *testing.T) {
+func TestPlatformForGeneric(t *testing.T) {
 	if _, ok := platformFor(platform.KindGeneric).(platform.Generic); !ok {
 		t.Fatalf("platformFor(KindGeneric) = %T, want platform.Generic", platformFor(platform.KindGeneric))
 	}
 }
 
-// TestPlatformForUnknownKindStillFallsBackToGenericWithWarning: the
-// fallback-with-warning path must still exist for a genuinely unrecognized
-// Kind — Task 9 only removes it for the now-implemented KindTrueNAS case.
-func TestPlatformForUnknownKindStillFallsBackToGenericWithWarning(t *testing.T) {
+func TestPlatformForUnknownKindFallsBackToGeneric(t *testing.T) {
 	var buf strings.Builder
 	prev := log.Writer()
 	log.SetOutput(&buf)
@@ -63,13 +54,9 @@ func TestPlatformForUnknownKindStillFallsBackToGenericWithWarning(t *testing.T) 
 	}
 }
 
-// TestLogSchedulerTimezone pins the three outcomes the boot log has to
-// distinguish, because the difference between them is exactly the difference
-// between a backup running when the operator thinks it does and one running
-// hours later. time.Local is set directly rather than via TZ alone: Go resolves
-// time.Local once and caches it, so setting the variable mid-process would not
-// move the clock and the test would pass for the wrong reason. A fixed zone is
-// used instead of LoadLocation so the test needs no tzdata on the test runner.
+// TestLogSchedulerTimezone sets time.Local directly because Go caches it at
+// startup, so changing TZ alone would not move the clock. A fixed zone keeps
+// the test independent of tzdata.
 func TestLogSchedulerTimezone(t *testing.T) {
 	prevLocal := time.Local
 	defer func() { time.Local = prevLocal }()

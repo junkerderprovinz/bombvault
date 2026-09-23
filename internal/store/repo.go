@@ -11,14 +11,10 @@ import (
 // Repo provides typed access to the bombvault SQLite database.
 type Repo struct {
 	db *sql.DB
-	// settingsMu serialises every write to the single settings row. That row is
-	// written as ONE full-row UPDATE (see UpdateSettings), so a read-modify-write
-	// pair that is not serialised silently reverts every column another writer
-	// changed in between — the whole reason MutateSettings exists. Zero value is
-	// ready to use; production has exactly one Repo (cmd/bombvault/main.go), and
-	// the transaction inside MutateSettings makes the pairing atomic at the
-	// DATABASE level too, so a second Repo over the same DB cannot slip past it
-	// either.
+	// settingsMu serialises writes to the settings row. UpdateSettings rewrites
+	// every column, so an unserialised read-modify-write reverts whatever another
+	// writer changed in between. MutateSettings also holds a transaction, which
+	// covers a second Repo on the same database.
 	settingsMu sync.Mutex
 }
 

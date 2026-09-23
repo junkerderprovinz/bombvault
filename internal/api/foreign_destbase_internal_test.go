@@ -6,20 +6,10 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 )
 
-// TestForeignDestBaseDefaultsThroughPlatformSeam exercises
-// foreignContainerDestBase/foreignVMDestBase through their REAL call chain —
-// an empty target AND an explicitly emptied settings.RestoreFolder (the
-// migrated default is the non-empty "user/bombvault/restore", so reaching
-// the platform fallback for real requires clearing it, exactly as an
-// operator would via the restore-folder setting) — not an injected destBase,
-// which is how every other foreign-restore test reaches these functions.
-// Proves the platform.Platform seam these two functions were rewired onto is
-// actually live at the exact spot those tests bypass. Covers both the
-// nil-platform default (must reproduce Unraid{}'s historical literal via
-// platformFn) and an explicitly injected Generic{} (the identity default),
-// so a future wiring bug in either direction — falling through to the wrong
-// platform, or not consulting platformFn() at all — would fail here.
-func TestForeignDestBaseDefaultsThroughPlatformSeam(t *testing.T) {
+// With no target and an empty restore folder setting, foreign restores fall
+// back to the platform's default folder. The other foreign-restore tests
+// inject destBase and never reach this path.
+func TestForeignDestBaseFallsBackToPlatformDefault(t *testing.T) {
 	s := newForeignTestService(t, nil)
 	s.cfg.HostMountRoot = "/host/user"
 
@@ -34,7 +24,7 @@ func TestForeignDestBaseDefaultsThroughPlatformSeam(t *testing.T) {
 
 	cases := []struct {
 		name string
-		plat platform.Platform // nil leaves s.platform unset (default Unraid{})
+		plat platform.Platform // nil means the default, Unraid
 		call func(target string) (string, error)
 		want string
 	}{

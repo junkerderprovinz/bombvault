@@ -7,73 +7,19 @@ import { IconCloud, IconLocal } from "./Sidebar";
 import { Badge } from "./Badge";
 import { useT } from "../lib/i18n";
 
-// ---------------------------------------------------------------------------
-// PathModeSwitch — inline Local/Remote mode switcher for a domain's backup
-// path field (issue #152).
+// Local/Remote switch for a domain's backup path. A path already accepts a
+// restic remote URL, and restic backs up to it directly; this only frames the
+// value FolderBrowser edits. "Local" shows the folder browser. "Remote" shows a
+// URL field and, below it, OffsiteWizard in primary mode for bandwidth limits,
+// append-only protection and the growth-budget alarm.
 //
-// A backup path already accepts a raw restic remote URL (s3:/rest:/sftp:/
-// b2:/rclone:...) and restic backs up to it directly — nothing about that
-// changes here. This widget is UI framing over the SAME path value
-// FolderBrowser already edits: "Local" shows the familiar folder browser;
-// "Remote" swaps it for a plain URL field and, below it, reuses
-// OffsiteWizard's connection-test/credentials dialog (primary=true) — the
-// SAME dialog off-site destinations already use — to configure bandwidth
-// limits, append-only protection and a growth-budget alarm for it, in place
-// rather than duplicated.
-//
-// The Local/Remote pair itself renders on the shared Selector component
-// (GlimStone form-engine Phase 2, Task 3 follow-up — this file landed via an
-// unrelated PR that merged around the same time as Task 3 and never got
-// swept into it). Was two hand-rolled `<button>`s sharing one
-// `bg-carbon-background` pill behind them, styled independently of
-// Selector's twelve other call sites and — because a plain `<button>`'s
-// focus/hover/roving-tabindex behaviour isn't free the way Selector's is —
-// the one segmented control in the app with no arrow-key navigation. Same
-// shape as SourceToggle.tsx's Local/Off-site toggle (a bare two-item
-// `select="one"` strip, no leading caption, `plain`/`hue` left at their
-// defaults), so this follows that call site rather than the captioned
-// SortControl/ChipFilter ones: the shared wrapper pill is dropped exactly
-// as SourceToggle's own migration dropped its shared `bg-carbon-surface2`
-// pill (Selector.tsx's own header comment, point 2) — Selector's default
-// `plain={false}` chip look already carries that visual weight per segment,
-// nothing else needs to. `label` doubles as the strip's accessible name
-// (Selector's `label` prop is required and never rendered as visible text
-// here, same as SourceToggle's own `t("source.label")`) — reusing the
-// caller's own per-domain string ("Containers path", "VMs path", ...)
-// rather than adding one new generic i18n key shared by all five call
-// sites, since that string is already translated everywhere and gives each
-// instance a more specific accessible name than a single shared "Path mode"
-// ever could. No `disabled` prop existed on this component before the
-// migration and none was added — the original two buttons were never
-// wired to any busy/disabled state, so there is nothing to carry over.
-//
-// UPDATED (GlimStone follow-up round, Paths & Storage tab rework, points 2/5):
-// the two segments are now icon-only (IconFolder/IconCloud, from
-// Sidebar.tsx's shared icon set — the SAME folder glyph FolderBrowser's own
-// "Durchsuchen" button now uses, and the SAME cloud glyph Settings.tsx's own
-// Off-site tab icon draws) instead of the "Lokal"/"Remote" text labels. Since
-// `label` is no longer visible ANYWHERE inside the strip, `SelectorItem.label`
-// now does double duty as each segment's `aria-label` too (Selector's own
-// `iconOnly` flag) — the "reuses the caller's own per-domain string" reasoning
-// above still holds, it just also drives the strip's own leading caption on
-// this shared row now that removing the text would otherwise remove the
-// row's only visible name for a sighted user as well. Each segment also
-// carries a `tip` (a fuller InfoBubble-style hover/focus explanation, portal-
-// rendered — Selector's own `SelectorTab` subcomponent), since a bare glyph
-// alone doesn't say "this path lives on this host" vs "this is a remote
-// restic repository" the way the old text did. The Selector itself renders
-// on a shared row alongside its own path-field's label (`justify-between`,
-// label at the start, Selector at the end) instead of a separate right-
-// aligned row above the field — FolderBrowser's own label row is suppressed
-// via `renderLabel={false}` below, and the Remote branch's own inline
-// <label> was dropped the same way, so there is exactly one copy of `label`
-// rendered per path row, not two.
-// ---------------------------------------------------------------------------
+// The caller's per-domain label ("Containers path") is the visible caption of
+// the row and the Selector's accessible name. Each segment's tip explains what
+// its glyph means.
 
-// Mirrors restic's remoteRepoRe (internal/restic/restic.go): a leading
-// "scheme:" that names one of restic's native remote backends or rclone.
-// Exported for isRemotePath.test.ts — keeping this in lockstep with the
-// backend regex is exactly the kind of drift a unit test catches cheaply.
+// Mirrors restic's remoteRepoRe (internal/restic/restic.go): a leading scheme
+// naming one of restic's remote backends or rclone. isRemotePath.test.ts keeps
+// the two in step.
 const REMOTE_RE = /^(rclone|sftp|rest|s3|b2|azure|gs|swift):/;
 
 export function isRemotePath(v: string): boolean {
@@ -105,28 +51,13 @@ export function PathModeSwitch({
     setState: (s: "idle" | "saving" | "saved" | "error") => void,
     setError: (e: string | null) => void
   ) => Promise<boolean>;
-  /** GlimStone standing colour-engine rule, closing a gap OffsiteWizard's own
-   *  `hueIndex` doc comment already flagged by name ("PathModeSwitch's
-   *  remote-mode dialog, which shares one hue across five domains' worth of
-   *  chrome that isn't itself hued yet"): the Selector segment above is
-   *  already hue-aware on its own (Selector.tsx handles that internally),
-   *  but the "Configure primary remote"/"Close" toggle below it — and the
-   *  OffsiteWizard panel it opens — were plain flat chrome. Settings.tsx's
-   *  five call sites (Containers/VMs/Flash/Config/Files paths, one shared
-   *  Storage-tab Card) pass their own local 0-based index, the SAME "one
-   *  group, one local sequence" rule the Domains Card's seven ToggleRows and
-   *  the merged Colors Card's own three toggles already follow — a genuine
-   *  list of five sibling rows, not five independent singletons. Threaded
-   *  straight through to OffsiteWizard below (its own `hueIndex` doc
-   *  comment names this exact caller as the one that used to omit it). */
+  /** This row's position among the Storage tab's path rows, for the primary
+   *  remote button and the OffsiteWizard it opens. */
   hueIndex?: number;
 }) {
   const { t } = useT();
-  // The mode starts derived from the CURRENT value (a remote-shaped path
-  // opens in Remote mode on load), but is then an independent UI choice: a
-  // user can switch to "Remote" with an empty/local value to start typing a
-  // URL, without the widget snapping back to Local because the value doesn't
-  // look remote YET.
+  // Derived from the value only on mount, so switching to Remote with an empty
+  // or local value does not snap back before a URL has been typed.
   const [remoteMode, setRemoteMode] = useState(() => isRemotePath(value));
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -138,14 +69,8 @@ export function PathModeSwitch({
 
   return (
     <div className="flex flex-col gap-1.5">
-      {/* GlimStone follow-up round, points 2/5: the label and the Local/Remote
-          control now share ONE row (was label above, Selector on its own
-          right-aligned row below it) — jdp, live review: the two read as one
-          decision about the SAME path, so they sit on the same line, the
-          Selector at the row's trailing edge. This row is FolderBrowser's own
-          label slot moved up here (see `renderLabel={false}` below and the
-          plain <label> the Remote branch used to render for itself — both
-          retired in favour of this single shared copy). */}
+      {/* The label and the switch are one decision about one path, so they
+          share a row; FolderBrowser's own label is turned off below. */}
       <div className="flex items-center justify-between gap-2">
         <label className="text-xs text-carbon-textSub">{label}</label>
         <Selector
@@ -174,12 +99,8 @@ export function PathModeSwitch({
 
       {remoteMode ? (
         <div className="flex flex-col gap-1.5">
-          {/* Task 6 (RTL sweep): this input occupies the SAME slot as
-              FolderBrowser's path field below and holds the same kind of
-              technical value (a restic remote URL), so it carries the same
-              `dir="ltr"`/`text-start` pin — without it, switching Local →
-              Remote in ar/he would flip the field's direction and strand a
-              leading `/` or `:` at the wrong edge. */}
+          {/* Pinned LTR like FolderBrowser's path field, or a leading `/` or
+              `:` lands at the wrong edge in ar and he. */}
           <input
             value={value}
             spellCheck={false}
@@ -188,20 +109,8 @@ export function PathModeSwitch({
             dir="ltr"
             className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus text-start"
           />
-          {/* Was a plain flat `bg-carbon-surface2` <button> — the un-hued
-              chrome this component's own `hueIndex` doc comment names.
-              `tone="active"` is what makes a passed `hueIndex` actually
-              paint (Badge.tsx's own `hueOn` comment) — same conversion
-              OffsiteTargetsSection's "Ziel hinzufügen" button already made,
-              `size="medium"` matching that same file's own row-level chip
-              weight (ROW_BADGE_SIZE) rather than this row's bigger `field`
-              inputs, since this button has a visible sibling text label, not
-              a bare glyph. */}
-          {/* Absent rather than dimmed while the path beside it is local
-              (GlimStone 1.10.0). The two halves were already complementary -
-              the button greyed and the sentence appeared - so this is the same
-              pair with the greyed half removed. What is left is the third case
-              of the rule: no control, and a sentence saying why. */}
+          {/* tone="active" lets hueIndex paint. While the value is not a
+              remote URL there is no button, only a sentence saying why. */}
           {isRemotePath(value) ? (
             <Badge
               as="button"

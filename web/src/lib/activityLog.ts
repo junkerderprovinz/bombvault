@@ -1,22 +1,8 @@
-// ---------------------------------------------------------------------------
-// activityLog — pure data layer for the dashboard "activity log": a flat,
-// scrollable, docker-logs-style list of timestamped lines (NO zones), merged
-// from three sources:
-//
-//   1. Finished runs (GET /api/runs via listRuns) — one line per completed
-//      backup/restore/update/prune/verify/offsite/drill/tamper/export,
-//      ordered by finish time.
-//   2. Currently-active SSE progress keys (useProgress()) — live tail lines,
-//      always rendered at the very bottom ("now").
-//   3. The soonest scheduled fire (GET /api/schedule/next) — a trailing idle
-//      "next up" line, shown only while nothing is active.
-//
-// `buildLogLines` is the single pure entry point: given plain data (no
-// React, no fetch, no Date.now() reached for internally) it returns the
-// ordered, deduped `LogLine[]` the component renders. Keeping it pure makes
-// the merge/dedupe/ordering logic reasoned-about and unit-testable without a
-// live i18n context, SSE connection or clock.
-// ---------------------------------------------------------------------------
+// The dashboard's activity log: one flat list of timestamped lines, merged
+// from finished runs (listRuns), live SSE progress (useProgress) and the next
+// scheduled fire (/api/schedule/next). buildLogLines takes plain data and the
+// clock as arguments, so the merge, dedupe and ordering can be tested without
+// React, i18n or a live stream.
 
 import type { Run, ScheduleNext } from "./api";
 import type { ProgressMap, ProgressState } from "./progress";
@@ -24,83 +10,57 @@ import { offsiteRunProgress, STALE_MS } from "./progress";
 import { elapsedSince, formatClockTime, formatDuration } from "./reltime";
 import { RUN_REASONS } from "./runReason";
 
-// ---------------------------------------------------------------------------
-// Public types
-// ---------------------------------------------------------------------------
-
-/** Visual/semantic bucket for a line's glyph + colour (see ActivityLog.tsx). */
+/** Picks a line's glyph and colour in ActivityLog.tsx. */
 export type LogStatus = "running" | "success" | "failed" | "offsite" | "info";
 
-/** The domain a line belongs to, for the domain quick-filter. "everything" is
- *  the "Backup Everything" pseudo-domain (a sequential pass over the other
- *  five, see store.EverythingTargetID / runTargetMaps on the backend). "" when
- *  a finished run's target could not be resolved (e.g. a deleted item). */
+/** The domain a line belongs to, for the domain filter. "everything" is the
+ *  Backup Everything pass over the other five (store.EverythingTargetID on the
+ *  backend). "" means a finished run's target could not be resolved, e.g. a
+ *  deleted item. */
 export type LogDomain = "containers" | "vms" | "flash" | "config" | "files" | "everything" | "";
 
-/** The operation kind, for the type quick-filter. "update" is a real kind
- *  (the post-backup image-update run) that deliberately has no dedicated
- *  filter chip (see ActivityLog.tsx) but still carries a kind for search.
- *  "drill" (local restore-verification drill), "drdrill" (off-site DR restore
- *  check — a distinct kind so the two drill families are tellable apart; rows
- *  recorded before the split stay "drill"), "tamper" (off-site tamper test)
- *  and "export" (flash ZIP export) are persisted run kinds since the
- *  everything-in-the-log wave. */
+/** The operation kind, for the type filter. "update" (the image update after a
+ *  backup) has no filter chip but still carries a kind for search. "drill" is
+ *  the local restore drill and "drdrill" the off-site DR check; rows recorded
+ *  before the two were split stay "drill". */
 export type LogKind = "backup" | "restore" | "prune" | "verify" | "offsite" | "update" | "drill" | "drdrill" | "tamper" | "export" | "";
 
 export interface LogLine {
   /** Stable React key. */
   id: string;
-  /** Epoch ms used for ordering. Finished runs: finishedAt (fallback
-   *  startedAt). Live lines: the progress entry's lastSeen. Idle: `now`. */
+  /** Ordering key in epoch ms: finishedAt (else startedAt) for a finished run,
+   *  the progress entry's lastSeen for a live line, `now` for the idle line. */
   atMs: number;
   status: LogStatus;
-  /** Fully rendered, already-localized message (no timestamp/glyph). */
+  /** Localized message, without timestamp or glyph. */
   text: string;
   domain: LogDomain;
   kind: LogKind;
-  /** True for a currently-active tail line (updates in place). */
+  /** An active tail line that updates in place. */
   live: boolean;
-  /** True only for the trailing idle "next up"/"nothing yet" line, which
-   *  carries no domain/kind of its own (nothing has run/is scheduled to a
-   *  specific item yet) — exempts it from the domain/type quick-filters in
-   *  filterLogLines so an active filter chip can't hide it. */
+  /** The trailing "next up" or "nothing yet" line. It has no domain or kind,
+   *  so filterLogLines exempts it from the quick filters; otherwise an active
+   *  filter chip could hide it. */
   idle?: boolean;
 }
 
 /**
- * Resolves a translation key (optionally with `{placeholder}` params) to its
- * localized, interpolated string. Injected so `buildLogLines` stays pure and
- * framework-free — the real implementation (ActivityLog.tsx) closes over
- * `useT()`'s `t`; a test can pass a trivial stub instead.
+ * Turns a translation key and optional `{placeholder}` params into text.
+ * Injected so buildLogLines stays pure: ActivityLog.tsx passes useT()'s `t`,
+ * tests pass a stub.
  */
 export type ResolveName = (key: string, params?: Record<string, string>) => string;
 
 /**
- * A run's reason, in the reader's language where it is one of ours ([377]).
- *
- * Every "…failed: {error}" and "…skipped: {error}" line below fills that
- * placeholder from runs.error, so before this the log read half-translated:
- * "MinIO-Backup übersprungen: container no longer exists on the host", a German
- * sentence finished in English. Measured on jdp's dashboard, where three
- * definitions produced exactly that line twelve times over.
- *
- * Translating HERE rather than in each of the thirteen call sites keeps the fix
- * in one place, and keeps buildLogLines pure: RUN_REASONS maps our sentences to
- * keys, and resolveName is already the injected way this module turns a key
- * into text.
- *
- * A message from restic, rclone or Docker is passed through untouched, which is
- * the correct outcome for all of them.
+ * reasonText translates a run's error when it is one of our own sentences
+ * (RUN_REASONS), so a "…failed: {error}" line does not start in German and
+ * end in English. Messages from restic, rclone or Docker pass through as is.
  */
 function reasonText(raw: string | undefined, resolveName: ResolveName): string {
   if (!raw) return "";
   const key = RUN_REASONS[raw.trim()];
   return key ? resolveName(key) : raw;
 }
-
-// ---------------------------------------------------------------------------
-// Domain / job literal → translation key
-// ---------------------------------------------------------------------------
 
 const DOMAIN_KEYS: Record<string, string> = {
   containers: "activityLog.domainContainers",
@@ -111,8 +71,10 @@ const DOMAIN_KEYS: Record<string, string> = {
   everything: "activityLog.domainEverything",
 };
 
-/** Exported for activityLog.jobReach.test.ts, which checks it against the job
- *  names the Go scheduler emits. Nothing in the app reads it directly. */
+/** Translation keys for the job names the Go scheduler emits. A missing entry
+ *  shows up as the bare English job name, and nothing in TypeScript can see
+ *  internal/schedule/schedule.go, so activityLog.jobReach.test.ts reads the Go
+ *  source and fails when a job has no entry here. */
 export const JOB_KEYS: Record<string, string> = {
   backup: "activityLog.jobBackup",
   offsite: "activityLog.jobOffsite",
@@ -120,42 +82,26 @@ export const JOB_KEYS: Record<string, string> = {
   tamper: "activityLog.jobTamper",
   digest: "activityLog.jobDigest",
   watchdog: "activityLog.jobWatchdog",
-  // Both were missing, so both fell through to the raw literal: the scheduler
-  // emits job "receiver" and (since the fleet sweep learned its own name) job
-  // "fleet". An unmapped job renders as the bare English identifier.
   receiver: "activityLog.jobReceiver",
   fleet: "activityLog.jobFleet",
-  // And then it happened a third time, with the pull sweep (#227). Three times
-  // is not bad luck, it is a missing guard: this table is the only place that
-  // has to change when jobDomainFromName in internal/schedule/schedule.go grows
-  // a case, nothing in TypeScript can see that file, and the fallback is
-  // silent by design. activityLog.jobReach.test.ts now reads the Go source and
-  // fails when a job name has no entry here.
   pull: "activityLog.jobPull",
 };
 
-/** Translates a domain literal ("containers"/"vms"/"flash"/"config"/"files");
- *  an unknown literal (should not happen) falls back to the raw string. */
+/** Translates a domain literal; an unknown one falls back to the raw string. */
 export function domainLabel(resolveName: ResolveName, domain: string): string {
   const key = DOMAIN_KEYS[domain];
   return key ? resolveName(key) : domain;
 }
 
-/** Translates a schedule job literal ("backup"/"offsite"/"drill"/"tamper"/
- *  "digest"/"watchdog"/"receiver"/"fleet"/"pull"); an unknown literal falls back
- *  to the raw string, which is why an unmapped job shows up as bare English. */
+/** Translates a schedule job name; an unknown one falls back to the raw string. */
 function jobLabel(resolveName: ResolveName, job: string): string {
   const key = JOB_KEYS[job];
   return key ? resolveName(key) : job;
 }
 
-/**
- * normalizeDomain maps the singular item-domain vocabulary used by
- * runView.Domain / progress keys ("container"/"vm") to the plural domain
- * literal used everywhere else (filter chips, prune/verify domains):
- * "container"→"containers", "vm"→"vms". "files"/"flash"/"config"/"" pass
- * through unchanged (already canonical or empty/unresolved).
- */
+/** normalizeDomain maps the singular item domains of runs and progress keys
+ *  ("container", "vm") to the plural form the filters use. Other known
+ *  domains pass through; anything else becomes "". */
 function normalizeDomain(domain: string): LogDomain {
   if (domain === "container") return "containers";
   if (domain === "vm") return "vms";
@@ -172,18 +118,13 @@ function normalizeDomain(domain: string): LogDomain {
   return "";
 }
 
-// ---------------------------------------------------------------------------
-// Small pure formatters
-// ---------------------------------------------------------------------------
-
-/** Clamp + round a percent to a display-safe 0..100 integer. */
+/** Clamps and rounds a percentage to an integer in 0..100. */
 function displayPercent(percent: number): number {
   if (!Number.isFinite(percent)) return 0;
   return Math.round(Math.max(0, Math.min(100, percent)));
 }
 
-/** Binary (1024) byte formatter, one decimal — mirrors Dashboard's humanBytes
- *  so the activity log reads the same way the storage/backups cards do. */
+/** Binary byte formatter with one decimal, matching Dashboard's humanBytes. */
 function formatBytesShort(n: number): string {
   if (!n || n <= 0) return "0 B";
   const units = ["B", "KB", "MB", "GB", "TB"];
@@ -196,27 +137,16 @@ function formatBytesShort(n: number): string {
   return `${i === 0 ? v : v.toFixed(1)} ${units[i]}`;
 }
 
-// ---------------------------------------------------------------------------
-// Progress key parsing
-// ---------------------------------------------------------------------------
-
 type ParsedKey =
   | { scope: "item"; domain: "container" | "vm" | "files" | "flash" | "config"; name: string }
   | { scope: "batch"; domain: string }
   | { scope: "offsite" | "prune" | "verify" | "drill" | "drdrill" | "tamper" | "export"; domain: string };
 
 /**
- * parseProgressKey decodes a live SSE progress key into what it refers to.
- * See web/src/lib/progress.ts for the wire key shapes this must track:
- * "container:<name>", "vm:<name>", "flash", "config", "files:<set>",
- * "batch:containers", "batch:files", "offsite:<domain>", "prune:<domain>",
- * "verify:<domain>", "drill:<domain>" (local subset drill), "drdrill:<domain>"
- * (off-site DR restore check), "tamper:<domain>", "export:flash"
- * (#109 — drills/tamper tests/the flash-ZIP export publish live pairs too).
- * Every "<name>"/"<set>" suffix is ALREADY the human name (the backend
- * publishes "container:" + containerName, "files:" + set.Name, etc. — see
- * internal/api/service.go), so no id→name lookup is needed here.
- * Returns null for an unrecognized key shape (defensive; should not happen).
+ * parseProgressKey decodes a live SSE progress key; progress.ts documents the
+ * shapes. An item key's suffix is already the display name the backend
+ * published (internal/api/service.go), so no id lookup is needed. Returns
+ * null for a shape it does not know.
  */
 function parseProgressKey(key: string): ParsedKey | null {
   if (key === "flash") return { scope: "item", domain: "flash", name: "flash" };
@@ -236,23 +166,17 @@ function parseProgressKey(key: string): ParsedKey | null {
 }
 
 /**
- * itemDisplayName resolves an item-scope key's display name. Real
- * container/VM/file-set names are shown verbatim (they are proper nouns, not
- * translatable); the two singleton domains ("flash"/"config" keys with no
- * suffix) get their translated domain label instead. Disambiguated by
- * `parsed.domain` (which key prefix matched), not by the name string, so a
- * container coincidentally named "flash" is never mistaken for the flash
- * singleton (its key would be "container:flash", domain "container").
+ * itemDisplayName resolves an item-scope key's display name. Container, VM
+ * and file-set names are proper nouns and shown as is; the flash and config
+ * singletons get their translated domain label. The check is on
+ * `parsed.domain`, not on the name, so a container called "flash" stays a
+ * container.
  */
 function itemDisplayName(resolveName: ResolveName, parsed: Extract<ParsedKey, { scope: "item" }>): string {
   if (parsed.domain === "flash") return domainLabel(resolveName, "flash");
   if (parsed.domain === "config") return domainLabel(resolveName, "config");
   return parsed.name;
 }
-
-// ---------------------------------------------------------------------------
-// Live lines
-// ---------------------------------------------------------------------------
 
 interface LiveResult {
   lines: LogLine[];
@@ -261,19 +185,12 @@ interface LiveResult {
   signatures: Set<string>;
 }
 
-// itemSignature builds the dedupe key for an item-scope operation (backup/
-// restore of one container/VM/file-set/flash/config), so a finished run's
-// history line can be suppressed while its live tail line is still showing.
-//
-// Flash and config are domain-wide singletons, and their two callers disagree
-// on a display name: the live tail resolves the TRANSLATED domain label (see
-// itemDisplayName — e.g. "Flash"), while the finished run's `target` is the
-// backend's hard-coded English name (handlers.go: "Unraid flash"/"App
-// configuration" — see internal/api/handlers.go handleRuns). Keying on that
-// name would never match, so the two signatures agree by domain alone for
-// singleton domains — that's already unambiguous since there is exactly one
-// flash item and one config item. Containers/vms/files still key on their
-// real (untranslated, stable) item name, since a domain can have many.
+// itemSignature is the dedupe key for an item-scope backup or restore, so a
+// finished run's history line stays hidden while its live line still shows.
+// Flash and config key on the domain alone: the live line carries the
+// translated domain label and the run row the backend's English name
+// ("Unraid flash", "App configuration"), so the names never match, and each
+// of those domains has exactly one item anyway.
 function itemSignature(kind: string, domain: LogDomain, name: string): string {
   if (domain === "flash" || domain === "config") return `item|${kind}|${domain}`;
   return `item|${kind}|${domain}|${name}`;
@@ -283,9 +200,8 @@ function domainOpSignature(kind: string, domain: string): string {
   return `domain|${kind}|${domain}`;
 }
 
-/** Live-line text template per domain-scoped operation scope ("Pruning —
- *  {domain} …" etc.). The export line deliberately takes no {domain} — the
- *  flash-ZIP export is flash-only, so its text names flash itself. */
+/** Live-line text per domain-scoped operation. The export line takes no
+ *  {domain}: the flash ZIP export is flash-only, so its text names flash. */
 const DOMAIN_OP_RUNNING_KEYS: Record<"prune" | "verify" | "drill" | "drdrill" | "tamper" | "export", string> = {
   prune: "activityLog.linePruneRunning",
   verify: "activityLog.lineVerifyRunning",
@@ -296,18 +212,13 @@ const DOMAIN_OP_RUNNING_KEYS: Record<"prune" | "verify" | "drill" | "drdrill" | 
 };
 
 /**
- * offsiteLiveLineText picks the honest live-line text for an "offsite:<domain>"
- * progress state (issue #159), mirroring OffsiteIndicator's offsiteStatusText
- * tiering exactly (see that function's doc comment for the full reasoning):
- * a RUN-LEVEL percentage when one can honestly be derived ("… {percent}%
- * overall (snapshot {index} of {total})"), else the plain elapsed-duration
- * text, else the bare "running" text. Each tier has its own "WithDuration"
- * sibling key so a live percentage never has to drop the duration.
- *
- * The percentage comes from progress.ts's shared offsiteRunProgress so this
- * line and OffsiteIndicator cannot drift apart on the arithmetic — see that
- * function for why a raw per-snapshot percentage next to "k of N" is the
- * defect being fixed here, not the feature.
+ * offsiteLiveLineText picks the live-line text for an "offsite:<domain>"
+ * progress state, in the same tiers as OffsiteIndicator's offsiteStatusText:
+ * a run-level percentage when one can be derived ("{percent}% overall
+ * (snapshot {index} of {total})"), otherwise the elapsed duration, otherwise
+ * the bare running text. Each tier has a "WithDuration" key so a percentage
+ * never has to drop the duration. The percentage comes from
+ * offsiteRunProgress, so this line and OffsiteIndicator agree on it.
  */
 function offsiteLiveLineText(resolveName: ResolveName, domain: LogDomain, state: ProgressState, duration: string): string {
   const domainText = domainLabel(resolveName, domain);
@@ -324,18 +235,12 @@ function offsiteLiveLineText(resolveName: ResolveName, domain: LogDomain, state:
 }
 
 /**
- * buildLiveLines renders the live SSE progress keys as tail lines. `now` gates
- * staleness (STALE_MS) — deliberately coarse-tick-tolerant, since a lagging
- * `now` only delays noticing a lost terminal frame by a bit. `liveNow`
- * (defaults to `now` for callers that don't need finer granularity — e.g.
- * every existing test) is used ONLY for the off-site line's elapsedSince
- * computation: ActivityLog.tsx ticks `now` at a coarse 60s cadence (its idle
- * "next up" countdown doesn't need better), which used to ALSO starve the
- * off-site duration — for the run's first ~60s, `now` could sit BEHIND
- * `startedAt` (captured before the run began), making elapsedSince go
- * negative → "" (blank), then jump straight to a large value once `now`
- * finally ticked. `liveNow` is a separate, faster-ticking clock the caller
- * only runs while a live line is on screen.
+ * buildLiveLines renders the active SSE progress keys as tail lines. `now`
+ * decides staleness and may lag, since ActivityLog.tsx ticks it once a
+ * minute. `liveNow` is a faster clock the caller runs while a live line is on
+ * screen, used only for the off-site elapsed duration: on the minute tick
+ * alone, `now` can sit behind the run's `startedAt` for its first minute and
+ * the duration renders blank.
  */
 function buildLiveLines(
   progressMap: ProgressMap,
@@ -351,39 +256,20 @@ function buildLiveLines(
     const state = progressMap[key];
     if (!state.active) continue;
 
-    // A terminal SSE frame lost in transit can leave active:true stuck forever
-    // (see progress.ts STALE_MS/anyActive), so silence has to be able to end a
-    // live line. Silence alone must NOT end it, though — that was issue #188.
-    // -----------------------------------------------------------------------
-    // Reported as "a minute in it will update with different information and no
-    // longer show the progress of the current backup. If I refresh, it starts
-    // all over again", against a folder backup sitting at 18%.
-    //
-    // Both halves of that are this test. restic streams at 3fps WHILE IT HAS
-    // something to report; scanning a large folder tree it goes quiet for
-    // minutes, so `lastSeen` ages past STALE_MS while the run is perfectly
-    // healthy. And `now` ticks at a 60s cadence in ActivityLog.tsx, so the drop
-    // lands on a minute boundary — the exact cadence the report describes. A
-    // reload then repopulates `lastSeen` from the backend's snapshot replay and
-    // the line comes back, which is the "starts all over again" half.
-    //
-    // The mistake was treating one signal as the whole answer. STALE_MS asks
-    // "have we heard from the stream lately", which is a fine question and a
-    // bad way to ask "is this run alive" — and the app already knows the
-    // second one: the runs list is polled every 10s and each run carries its
-    // own status. So a stale line is dropped only when the runs list ALSO stops
-    // calling that target running. A lost terminal frame still ends the line
-    // (its run has finished by then and drops out of `stillRunning`), and a
-    // quiet but living run keeps it.
+    // A terminal SSE frame lost in transit can leave active:true stuck, so a
+    // silent line has to be able to end. Silence alone is not enough, though:
+    // restic goes quiet for minutes while it scans a large folder tree, and
+    // lastSeen ages past STALE_MS on a perfectly healthy run. A stale line is
+    // dropped only once the runs list, polled every 10s, stops reporting its
+    // target as running.
     const stale = now - state.lastSeen > STALE_MS;
-    /** Keep this line unless it is stale AND nothing in the runs list still
-     *  reports it running. `null` means "no Run row is ever attributed to this
-     *  key", so staleness is the only signal available for it. */
+    // A null signature means no Run row is ever attributed to the key, so
+    // staleness is the only signal there is for it.
     const keep = (signature: string | null) =>
       !stale || (signature !== null && stillRunning.has(signature));
 
     const parsed = parseProgressKey(key);
-    if (!parsed) continue; // unrecognized key shape — skip defensively
+    if (!parsed) continue;
 
     if (parsed.scope === "item") {
       const name = itemDisplayName(resolveName, parsed);
@@ -408,10 +294,8 @@ function buildLiveLines(
         domain: domainLabel(resolveName, domain),
         percent: String(pct),
       });
-      // No Run row is ever attributed to a "batch:*" key itself (each member
-      // item gets its own backup run) — nothing to dedupe against, and by the
-      // same token nothing in the runs list can vouch for it, so staleness
-      // stays its only liveness signal ([545] passes null for exactly this).
+      // Each member item records its own run and the batch key none, so there
+      // is nothing to dedupe against and nothing that can vouch for it.
       if (!keep(null)) continue;
       lines.push({ id: `live:${key}`, atMs: state.lastSeen, status: "running", text, domain, kind: "backup", live: true });
       continue;
@@ -419,18 +303,11 @@ function buildLiveLines(
 
     if (parsed.scope === "offsite") {
       const domain = normalizeDomain(parsed.domain);
-      // Issue #159: restic copy DOES print a real per-snapshot percentage
-      // (see restic.Copy's doc comment) — offsiteLiveLineText shows it once
-      // available, falling back to the honest elapsed-duration signal (from
-      // the backend-stamped startedAt), computed against `liveNow` (not
-      // `now` — see buildLiveLines' doc comment for why that distinction
-      // matters here) so it never goes negative for this component's first
-      // ~60s.
+      // Against liveNow, not now; see the doc comment.
       const duration = elapsedSince(state.startedAt, liveNow);
       const text = offsiteLiveLineText(resolveName, domain, state, duration);
-      // Off-site replication now DOES write a Run row (kind="offsite" on the
-      // domain target) — register the domain-op signature so the finished-run
-      // line can't briefly double up with this live tail line.
+      // Replication records a Run row on the domain target, so the signature
+      // keeps its finished line from showing next to this one.
       const offsiteSig = domainOpSignature("offsite", domain);
       if (!keep(offsiteSig)) continue;
       signatures.add(offsiteSig);
@@ -438,12 +315,8 @@ function buildLiveLines(
       continue;
     }
 
-    // "prune" | "verify" | "drill" | "drdrill" | "tamper" | "export" —
-    // domain-scoped ops.
-    // Same dedupe mechanics as offsite above: each of these records a Run row
-    // on the reserved domain target when it finishes (recordDomainRun /
-    // StartRun+FinishRun), so registering the domain-op signature lets the
-    // finished-run line supersede this live tail line without doubling up.
+    // prune, verify, drill, drdrill, tamper and export: domain-wide
+    // operations that record a Run row on the domain target the same way.
     const domain = normalizeDomain(parsed.domain);
     const text = resolveName(DOMAIN_OP_RUNNING_KEYS[parsed.scope], { domain: domainLabel(resolveName, domain) });
     const opSig = domainOpSignature(parsed.scope, domain);
@@ -454,10 +327,6 @@ function buildLiveLines(
 
   return { lines, signatures };
 }
-
-// ---------------------------------------------------------------------------
-// Finished-run lines
-// ---------------------------------------------------------------------------
 
 function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain, name: string): {
   status: LogStatus;
@@ -507,9 +376,9 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
   }
 
   if (run.kind === "tamper") {
-    // "skipped" = the test ran but produced no verdict (non-REST off-site,
-    // transport error, inconclusive probe) — a neutral info line carrying the
-    // backend's reason, never a red.
+    // "skipped" means the test ran without a verdict (non-REST off-site,
+    // transport error, inconclusive probe): a neutral line with the backend's
+    // reason, not a failure.
     return run.status === "success"
       ? { status: "success", text: resolveName("activityLog.lineTamperSuccess", { domain: domainText }) }
       : run.status === "failed"
@@ -543,7 +412,7 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
         : { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
   }
 
-  // "backup" (and any future/unexpected kind falls back to the same shape).
+  // backup, and any kind this client does not know yet.
   if (run.status === "success") {
     return { status: "success", text: resolveName("activityLog.lineBackupSuccess", { name, bytes: formatBytesShort(run.bytes), duration }) };
   }
@@ -556,8 +425,8 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
   return { status: "info", text: resolveName("activityLog.lineOther", { name, kind: run.kind, status: run.status }) };
 }
 
-/** Narrows a raw Run.kind string to the known LogKind set; an unexpected
- *  future kind falls back to "" rather than a bogus filter value. */
+/** Narrows a raw Run.kind string to LogKind; an unknown kind becomes ""
+ *  rather than a filter value nothing offers. */
 function asLogKind(kind: string): LogKind {
   if (
     kind === "backup" ||
@@ -576,9 +445,9 @@ function asLogKind(kind: string): LogKind {
   return "";
 }
 
-/** Kinds recorded against the reserved DOMAIN target id (see the backend's
- *  domainRunTargetID): their targetId IS the domain literal (or the flash/
- *  config singleton id), never a resolvable item id. */
+/** Kinds recorded against the reserved domain target (the backend's
+ *  domainRunTargetID): their targetId is the domain literal or the flash or
+ *  config singleton id, never an item id. */
 function isDomainOpKind(kind: string): boolean {
   return kind === "prune" || kind === "verify" || kind === "offsite" || kind === "drill" || kind === "drdrill" || kind === "tamper" || kind === "export";
 }
@@ -586,8 +455,7 @@ function isDomainOpKind(kind: string): boolean {
 function buildHistoryLines(runs: Run[], resolveName: ResolveName, liveSignatures: Set<string>): LogLine[] {
   const lines: LogLine[] = [];
   for (const run of runs) {
-    // Only COMPLETED runs come from history — an in-flight run is represented
-    // by its live progress line instead (see the module doc comment).
+    // A run still in flight shows as its live progress line instead.
     if (run.finishedAt == null) continue;
 
     const isDomainOp = isDomainOpKind(run.kind);
@@ -595,7 +463,7 @@ function buildHistoryLines(runs: Run[], resolveName: ResolveName, liveSignatures
     const name = run.target;
 
     const signature = isDomainOp ? domainOpSignature(run.kind, domain) : itemSignature(run.kind, domain, name);
-    if (liveSignatures.has(signature)) continue; // superseded by its live tail line
+    if (liveSignatures.has(signature)) continue;
 
     const { status, text } = finishedLineText(resolveName, run, domain, name);
     lines.push({ id: `run:${run.id}`, atMs: run.finishedAt * 1000, status, text, domain, kind: asLogKind(run.kind), live: false });
@@ -603,14 +471,9 @@ function buildHistoryLines(runs: Run[], resolveName: ResolveName, liveSignatures
   return lines;
 }
 
-// ---------------------------------------------------------------------------
-// Idle "next up" line
-// ---------------------------------------------------------------------------
-
 function buildIdleLine(scheduleNext: ScheduleNext[], resolveName: ResolveName, now: number, hasHistory: boolean): LogLine | null {
   const next = scheduleNext[0];
   if (!next) {
-    // No live lines AND no history AND nothing scheduled — truly empty.
     if (hasHistory) return null;
     return { id: "idle-empty", atMs: now, status: "info", text: resolveName("activityLog.lineEmpty"), domain: "", kind: "", live: false, idle: true };
   }
@@ -632,20 +495,11 @@ function buildIdleLine(scheduleNext: ScheduleNext[], resolveName: ResolveName, n
   return { id: "idle-next", atMs: now, status: "info", text, domain: "", kind: "", live: false, idle: true };
 }
 
-// ---------------------------------------------------------------------------
-// buildLogLines — the pure merge/dedupe/order entry point
-// ---------------------------------------------------------------------------
-
 /**
- * Merges finished runs, live progress and the next scheduled fire into one
- * ordered, deduped `LogLine[]` — oldest first, live lines always last (they
- * are "now"), with a trailing idle line only when nothing is currently
- * active. Pure: given the same inputs it always returns the same output.
- *
- * `liveNow` (defaults to `now`) is an optional finer-grained clock used ONLY
- * for the off-site live line's elapsed-duration computation — see
- * buildLiveLines' doc comment for why it needs to tick faster than `now`
- * does in the real component.
+ * buildLogLines merges finished runs, live progress and the next scheduled
+ * fire into one deduped list: history oldest first, then the live lines, and
+ * an idle line at the end only when nothing is running. `liveNow` defaults to
+ * `now`; buildLiveLines explains why the off-site line wants a faster clock.
  */
 export function buildLogLines(
   runs: Run[],
@@ -655,12 +509,9 @@ export function buildLogLines(
   now: number,
   liveNow: number = now
 ): LogLine[] {
-  // The second liveness signal a live line gets to consult ([545], issue #188):
-  // the runs the backend still calls "running". Built with the SAME signature
-  // functions buildHistoryLines uses, so a live line and its run row agree on
-  // what identifies them — including the flash/config case, where the two sides
-  // genuinely disagree on a display name and itemSignature keys by domain alone
-  // to make them meet.
+  // The runs the backend still reports as running, keyed with the same
+  // signatures buildHistoryLines uses, so a stale live line can ask whether
+  // its run is still going.
   const stillRunning = new Set<string>();
   for (const run of runs) {
     if (run.status !== "running") continue;
@@ -687,39 +538,22 @@ export function buildLogLines(
   return result;
 }
 
-// ---------------------------------------------------------------------------
-// Per-line date formatting (#104 — the log now spans many days since
-// everything-in-the-log, so a time-only stamp is ambiguous and must also be
-// date-searchable)
-// ---------------------------------------------------------------------------
-
 /**
- * formatLogDate renders a line's `atMs` as a locale-aware short date — day/
- * month in the ORDER the locale reads it (e.g. "23.07." for de, "24/07" for
- * pt-PT, "07/23" for en-US) — via Intl.DateTimeFormat. `locale` is normally
- * OMITTED: `undefined` runs the SAME default-locale negotiation every other
- * date in the app uses (formatTs's plain toLocaleString), which is the fix
- * for issue #108 — navigator.language can disagree with the browser's
- * formatting default (e.g. a macOS "en-US" UI language with a Portuguese
- * region), which made the log the ONLY place showing US order. Tests pass
- * an explicit locale for deterministic assertions. Exported so
- * ActivityLog.tsx can pair it with reltime.ts's formatClockTime for the
- * leftmost per-line stamp; filterLogLines below builds the identical string
- * into its search haystack so typing that same date filters correctly.
- * Deliberately only the date is locale-ordered — the time stays
- * formatClockTime's fixed 24-hour face, for the same reason that helper
- * gives (a stable, unambiguous clock, not a locale-varying 12/24-hour one).
+ * formatLogDate renders `atMs` as a short day and month in the locale's own
+ * order ("23.07." for de, "07/23" for en-US). The app leaves `locale`
+ * undefined, which runs the same default-locale negotiation as every other
+ * date here; navigator.language can disagree with the browser's formatting
+ * locale (an en-US interface in a Portuguese region). Tests pass one
+ * explicitly. filterLogLines searches the same string, so a typed date
+ * matches what is shown. The time stays on formatClockTime's fixed 24-hour
+ * face.
  */
 export function formatLogDate(atMs: number, locale?: string): string {
   return new Intl.DateTimeFormat(locale, { day: "2-digit", month: "2-digit" }).format(new Date(atMs));
 }
 
-/**
- * isoDateOf renders a line's `atMs` as its local-calendar-day ISO date
- * (YYYY-MM-DD), independent of the app's display language — lets
- * filterLogLines match a typed ISO date (e.g. "2026-07-23") no matter which
- * language is active.
- */
+/** isoDateOf renders `atMs` as its local calendar day in YYYY-MM-DD, so a
+ *  typed ISO date matches whatever the display language. */
 function isoDateOf(atMs: number): string {
   const d = new Date(atMs);
   const y = d.getFullYear();
@@ -728,30 +562,18 @@ function isoDateOf(atMs: number): string {
   return `${y}-${m}-${day}`;
 }
 
-// ---------------------------------------------------------------------------
-// filterLogLines — the client-side "docker logs | grep" filter
-// ---------------------------------------------------------------------------
-
 /** Domain quick-filter value ("all" plus every LogDomain except ""). */
 export type LogFilterDomain = "all" | "containers" | "vms" | "flash" | "config" | "files" | "everything";
 
-/** Type quick-filter value ("all" plus the operation kinds the filter bar
- *  offers — deliberately NOT including "update", which has no chip). "drill"
- *  and "drdrill" are separate filter values (local subset check vs off-site DR
- *  restore check); DR rows recorded before the kind split stay "drill" and so
- *  keep matching the drill filter. */
+/** Type quick-filter value: "all" plus the kinds the filter bar offers, which
+ *  leaves out "update". "drill" and "drdrill" are separate values (local
+ *  subset check and off-site DR restore check); DR rows recorded before the
+ *  split say "drill" and keep matching the drill filter. */
 export type LogFilterKind = "all" | "backup" | "restore" | "prune" | "verify" | "offsite" | "drill" | "drdrill" | "tamper" | "export";
 
-/** The two lists the filter bar offers, as (value, translation key) pairs.
- *
- *  They live here rather than in the bar because there are TWO bars — the
- *  activity log's own and the error panel's — and they were two hand-kept
- *  copies of the same fourteen entries. A copy is where a new kind gets added
- *  to one filter and not the other, and the panel had already drifted: it
- *  offered the same options with no comment about why "update" is missing,
- *  which is a rule that lives with the type above.
- *
- *  Keys, not labels: a list of options is not a place to call the translator. */
+/** The filter bar's options as value and translation-key pairs. The activity
+ *  log's bar and the error panel's both read them from here, so a new kind
+ *  cannot reach one filter and miss the other. */
 export const LOG_FILTER_DOMAINS: { value: LogFilterDomain; key: string }[] = [
   { value: "all", key: "activityLog.filterAllDomains" },
   { value: "containers", key: "activityLog.domainContainers" },
@@ -769,8 +591,7 @@ export const LOG_FILTER_KINDS: { value: LogFilterKind; key: string }[] = [
   { value: "prune", key: "activityLog.typePrune" },
   { value: "verify", key: "activityLog.typeVerify" },
   { value: "offsite", key: "activityLog.typeOffsite" },
-  // Drill/tamper reuse the existing job-label keys; the off-site DR check
-  // ("drdrill") is its own kind and reuses Run History's kind label.
+  // drill and tamper reuse the job labels, drdrill the Run History kind label.
   { value: "drill", key: "activityLog.jobDrill" },
   { value: "drdrill", key: "run.kindDRDrill" },
   { value: "tamper", key: "activityLog.jobTamper" },
@@ -780,38 +601,31 @@ export const LOG_FILTER_KINDS: { value: LogFilterKind; key: string }[] = [
 export interface LogFilter {
   domain: LogFilterDomain;
   kind: LogFilterKind;
-  /** Free-text, case-insensitive substring match against the line's message,
-   *  its ISO date (YYYY-MM-DD) and its locale-short date (#104). */
+  /** Case-insensitive substring match against the message, the ISO date and
+   *  the short localized date. */
   text: string;
-  /** Explicit date locale for the localized-date match (#104). Normally
-   *  OMITTED — undefined runs the browser's default-locale negotiation,
-   *  matching exactly what formatLogDate displays (#108). Tests pass an
-   *  explicit locale for deterministic assertions. */
+  /** Locale for the localized-date match. Leave it undefined to match what
+   *  formatLogDate displays; tests pass one explicitly. */
   lang?: string;
-  /** Optional exact-day filter (ISO YYYY-MM-DD), set by clicking a Dashboard
-   *  heatmap cell: keeps only lines whose `atMs` falls on that LOCAL calendar
-   *  day (the same local-day mapping the heatmap itself uses). Like the
-   *  domain/kind quick-filters — and unlike the free-text search — the idle
-   *  "next up" line is exempt, so the day chip can never hide the only line
-   *  telling the user what's coming next. */
+  /** Exact day (ISO YYYY-MM-DD), set by clicking a Dashboard heatmap cell and
+   *  matched on the local calendar day the way the heatmap maps it. Like the
+   *  quick filters, it never hides the idle line, the one that says what runs
+   *  next. */
   day?: string;
 }
 
 /**
- * Narrows `lines` to those matching the domain/type quick-filters, the
- * optional heatmap day filter and the free-text search — a pure filter,
- * extracted from ActivityLog.tsx so it can be unit-tested independently of
- * any rendering. The free-text search matches against the line's message AND
- * its date (both the ISO form and the locale-short form the UI displays), so
- * typing a date narrows the log too.
+ * filterLogLines narrows `lines` by the domain and type quick filters, the
+ * heatmap day and the free-text search. The search also matches the line's
+ * date, in ISO form and in the short form the UI shows, so typing a date
+ * narrows the log too.
  */
 export function filterLogLines(lines: LogLine[], filter: LogFilter): LogLine[] {
   const q = filter.text.trim().toLowerCase();
-  const lang = filter.lang; // undefined = browser-default locale, matching the display (#108)
+  const lang = filter.lang;
   return lines.filter((l) => {
-    // The idle line (`idle: true`) carries no domain/kind of its own — it is
-    // exempt from the domain/type quick-filters so an active filter chip
-    // never hides the only line telling the user what's coming next.
+    // The idle line has no domain or kind, so the quick filters skip it; an
+    // active chip must not hide the line saying what runs next.
     if (!l.idle) {
       if (filter.domain !== "all" && l.domain !== filter.domain) return false;
       if (filter.kind !== "all" && l.kind !== filter.kind) return false;

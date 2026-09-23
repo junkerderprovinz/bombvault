@@ -15,13 +15,11 @@ func newRepo(t *testing.T) *store.Repo {
 	return store.New(db)
 }
 
-// TestTargetScheduleCadencePersists proves the per-item container override (#121)
-// round-trips, defaults to "", is owned by SetScheduleCadence (not reset by a
-// backup-time UpsertTarget), and can be cleared.
+// TestTargetScheduleCadencePersists expects the per-container override to
+// default to empty, survive a backup-time UpsertTarget and be clearable.
 func TestTargetScheduleCadencePersists(t *testing.T) {
 	r := newRepo(t)
 
-	// A fresh target defaults to no override.
 	if _, err := r.UpsertTarget(store.Target{ContainerName: "web", AppdataPaths: []string{"/a"}}); err != nil {
 		t.Fatalf("UpsertTarget: %v", err)
 	}
@@ -33,7 +31,6 @@ func TestTargetScheduleCadencePersists(t *testing.T) {
 		t.Fatalf("default override: expected empty, got %q", got.ScheduleCadence)
 	}
 
-	// Setting an override persists.
 	if err := r.SetScheduleCadence("web", "daily 06:00"); err != nil {
 		t.Fatalf("SetScheduleCadence: %v", err)
 	}
@@ -42,8 +39,8 @@ func TestTargetScheduleCadencePersists(t *testing.T) {
 		t.Fatalf("after set: got %q, want %q", got.ScheduleCadence, "daily 06:00")
 	}
 
-	// A backup-time UpsertTarget refreshes appdata/definition but must NOT reset the
-	// override (owned by SetScheduleCadence), like the other per-item setters.
+	// A backup-time UpsertTarget refreshes appdata and definition but keeps the
+	// override.
 	if _, err := r.UpsertTarget(store.Target{ContainerName: "web", AppdataPaths: []string{"/b"}, Definition: "{}"}); err != nil {
 		t.Fatalf("UpsertTarget (refresh): %v", err)
 	}
@@ -61,7 +58,7 @@ func TestTargetScheduleCadencePersists(t *testing.T) {
 		t.Fatalf("create-on-miss: got %q", got.ScheduleCadence)
 	}
 
-	// Clearing it (empty string) returns the container to the domain default.
+	// An empty cadence returns the container to its domain schedule.
 	if err := r.SetScheduleCadence("web", ""); err != nil {
 		t.Fatalf("SetScheduleCadence (clear): %v", err)
 	}
@@ -71,8 +68,8 @@ func TestTargetScheduleCadencePersists(t *testing.T) {
 	}
 }
 
-// TestVMScheduleCadencePersists proves the per-item VM override (#121) round-trips
-// and is not reset by a backup-time UpsertVMTarget.
+// TestVMScheduleCadencePersists expects the per-VM override to survive a
+// backup-time UpsertVMTarget.
 func TestVMScheduleCadencePersists(t *testing.T) {
 	r := newRepo(t)
 
@@ -103,14 +100,12 @@ func TestVMScheduleCadencePersists(t *testing.T) {
 		t.Fatalf("override clobbered by Upsert: got %q", got.ScheduleCadence)
 	}
 
-	// An unknown VM is a not-found error (no create-on-miss for VMs).
+	// Unlike containers, an unknown VM is not created.
 	if err := r.SetVMScheduleCadence("ghost", "daily 05:00"); err == nil {
 		t.Fatal("expected not-found error for an unknown VM")
 	}
 }
 
-// TestPerItemSchedulesSettingPersists proves the feature toggle defaults off and
-// round-trips through GetSettings/UpdateSettings.
 func TestPerItemSchedulesSettingPersists(t *testing.T) {
 	r := newRepo(t)
 

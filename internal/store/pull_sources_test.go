@@ -10,9 +10,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestPullSourceEmptyLocationRejected pins the empty-location guard on both
-// Create and Update. A source with a blank location addresses nowhere and could
-// never be opened, so it is refused at the store boundary and writes nothing.
+// TestPullSourceEmptyLocationRejected expects Create and Update to refuse a
+// blank location without writing anything.
 func TestPullSourceEmptyLocationRejected(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -37,14 +36,9 @@ func TestPullSourceEmptyLocationRejected(t *testing.T) {
 	}
 }
 
-// TestPullSourceCRUD exercises Create/Get/List/Update/Delete, and above all that
-// the SOURCE instance's APP_KEY round-trips as ENCRYPTED bytes.
-//
-// That assertion is the point of the test rather than a detail of it. A pull
-// source holds a key belonging to somebody else's machine: it is the one secret
-// in this app that is not ours to leak. The store must persist ciphertext
-// verbatim and never see the plaintext, and only a holder of this instance's own
-// key can turn it back into the 64 hex characters that were typed in.
+// TestPullSourceCRUD also checks that the source instance's APP_KEY is stored
+// as ciphertext that only this instance's key can decrypt: it belongs to
+// another machine.
 func TestPullSourceCRUD(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -91,8 +85,7 @@ func TestPullSourceCRUD(t *testing.T) {
 		t.Fatalf("the stored ciphertext must decrypt back to the key that was entered: %q err=%v", back, err)
 	}
 
-	// A verdict must not be able to clobber a concurrent edit, which is why it
-	// has its own writer instead of a read-modify-write of the whole row.
+	// Writing a verdict leaves the configuration columns alone.
 	if err := r.UpdatePullSourceResult(made.ID, 1700000000, sql.NullBool{Bool: true, Valid: true}, "", 7); err != nil {
 		t.Fatal(err)
 	}
@@ -126,8 +119,7 @@ func TestPullSourceCRUD(t *testing.T) {
 	if _, ok, _ := r.GetPullSource(made.ID); ok {
 		t.Fatal("the row survived its own delete")
 	}
-	// Deleting something that is not there is how the receiver and off-site
-	// tables behave, and a caller that retries a delete must not see an error.
+	// A retried delete must not fail.
 	if err := r.DeletePullSource(made.ID); err != nil {
 		t.Fatalf("deleting a missing row must be a no-op, got %v", err)
 	}

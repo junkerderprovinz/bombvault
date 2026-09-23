@@ -1,533 +1,44 @@
-// ---------------------------------------------------------------------------
-// Badge — the one shared status chip/pill (GlimStone form-engine Task 5).
+// Badge is the shared status chip. It only paints a chip of a fixed size,
+// shape and colour; mapping a domain status to a `tone` stays at the call
+// site.
 //
-// Replaces five previously-separate copies of the same "colored chip" markup:
-// Dashboard.tsx's StatusChip, components/SpikePanel.tsx's own byte-different
-// duplicate StatusChip (which also hard-coded untranslated English
-// "OK"/"FAIL"/"INFO" — fixed at ITS call site via the spike.ok/spike.fail/
-// spike.info i18n keys, not inside Badge, since status TEXT is domain content
-// Badge has no business owning), Receiver.tsx's Badge, Fleet.tsx's byte-
-// identical duplicate of it, and Containers.tsx/VMs.tsx's StateChip pair.
+// Each size pins height, padding and font size together, so call sites never
+// repeat them as literals. Every square icon badge uses `icon`: badges of
+// different roles sit side by side in one card, so a per-role size shows up
+// as a mismatch. Its 32px is the height of the app's text inputs
+// (`text-sm px-3 py-1.5`), so a badge next to a field lines up with it.
 //
-// Badge only knows how to paint a fixed-size, fixed-shape, fixed-color chip.
-// Mapping a domain status/state string to a `tone` stays call-site logic (a
-// few lines of local switch/lookup) — the same separation Toggle.tsx draws
-// between "how a switch renders" and "what a caller's label says".
+// `as="button"` and `as="a"` resolve to the same box as the default <span>.
+// `appearance-none` strips native button chrome, `box-border` keeps padding
+// from inflating the height, and `min-h-0` stops a stretching flex or grid
+// parent from growing the box. The anchor keeps native link behaviour (copy
+// link, middle-click, the link role) that an onClick on a span loses.
 //
-// Sizing started as three named stages (small/medium/large per the design
-// language's "however many an app genuinely needs — small/medium/large is
-// usually enough"), briefly grew to six (heading/icon/field/compact), and is
-// now back to FIVE: small/medium/large/heading for text chips, plus exactly
-// ONE stage — `icon` — for every square icon-only badge in the app. See the
-// "ONE SIZE FOR SQUARE ICON BADGES" block further down for why the three-way
-// icon/compact/field split was removed and must not come back. Each stage
-// pins height + horizontal padding + font-size together as one canonical
-// source, read verbatim from the stage table below rather than left for a
-// call site to repeat as its own literals — that repetition is exactly how
-// the five duplicates this file replaces drifted apart in the first place
-// (px-2/px-1.5/no-size-class/text-[10px] all coexisting for what was
-// supposed to be one visual weight).
-//   - small  = 18px tall, 11px text  (--text-caption) — the OffsiteTargets-
-//     Section storage-class/immutable weight, previously the "no size class"
-//     bug (padding with no font-size utility of its own, height at the mercy
-//     of whatever the parent's ambient font-size happened to be).
-//   - medium = 20px tall, 12px text (--text-dense) — the dominant weight
-//     used by every StatusChip/Badge/StateChip predecessor.
-//   - large  = 24px tall, 12px text (--text-dense) — the ErrorDetailPanel
-//     count-badge + "Resolve"-button weight (see `as="button"` below).
+// `wrap` turns the fixed `h-*` into a `min-h-*` floor with vertical padding,
+// for badges that wrap to two lines in narrow columns. Without a definite
+// height the box stretches to a taller flex sibling, so a short wrap badge
+// next to a tall one needs `className="self-start"`.
 //
-// ---------------------------------------------------------------------------
-// ONE SIZE FOR SQUARE ICON BADGES — 32px (`size="icon"`, h-8/w-8). Full stop.
-//
-// Every square icon-only badge in this app renders at 32×32. There is no
-// second size, no per-role size, no "but this one sits somewhere different"
-// exception. If you are adding a square icon-only badge, pass `size="icon"`
-// and stop thinking about it.
-//
-// A ROLE-BASED SPLIT WAS TRIED AND EXPLICITLY REJECTED — do not reintroduce
-// it. A previous round audited every icon-badge call site, grouped them by
-// ROLE, live-measured each role against its own nearest neighbour, and
-// concluded the app legitimately had three sizes:
-//   - 28px (`icon`)    "standalone corner-badge pair"       → BackupButton,
-//                                                             ExportButton
-//   - 32px (`compact`) "icon badge beside a 32px field"     → FolderBrowser,
-//                                                             SourceToggle, …
-//   - 24px (`large`)   "badge in a dense list row"          → RestorePanel's
-//                                                             restore + delete
-// Each role WAS internally consistent, and every individual measurement in
-// that audit was correct. It was still the wrong answer, because the roles
-// are not visually separated: all three appear SIMULTANEOUSLY inside a single
-// expanded Container card. Measured live on the real deployed container, one
-// card at once showed "Jetzt sichern" 28×28, "Export" 28×28, "Lokal" 32×32,
-// "Offsite" 32×32, "Wiederherstellen" 24×24, "Löschen" 24×24 — three
-// different badge sizes side by side, which is exactly what jdp reported,
-// twice: "es gibt drei verschiedene Größen von quadratischen Badges. Bitte
-// alle gleich groß!"
-//
-// The lesson, stated plainly so it doesn't have to be relearned: "internally
-// consistent per role" is not a property a USER can perceive. A user sees one
-// card. Roles are an authoring-side abstraction; identical size is the
-// user-side contract. A justification of the form "these two badges may
-// differ because they play different roles" is, by itself, evidence the split
-// is wrong — not a reason it is allowed.
-//
-// WHY 32px specifically (measured live, not chosen for tidiness):
-//   - It is the height of this app's dominant real text input. FolderBrowser's
-//     path field (`text-sm px-3 py-1.5`) measures exactly 32px, and its
-//     "Durchsuchen" badge sits on the same `items-center` row: both boxes'
-//     top edges measured identical to the pixel. Settings' Registry fields are
-//     the same recipe. A badge next to a field must align with that field, and
-//     32px is the only value that does so without touching the field.
-//   - It is already the app's most common icon-badge size by call-site count,
-//     including every Selector `iconOnly` segment (Selector.tsx's own h-8 w-8
-//     — SourceToggle's Lokal/Offsite pair and PathModeSwitch's Local/Remote
-//     pair, 8 call sites), FolderBrowser's browse badge, Settings' Registry
-//     add/remove, VMSSHCard's two copy badges, the widget-URL copy badge and
-//     the Recovery-Kit download badge. Standardising on 32px changes the
-//     fewest pixels and leaves every already-correct field alignment intact.
-//   - The competing candidates both FAIL the field-alignment test: 24px and
-//     28px would each sit visibly short next to a 32px input, and adopting
-//     either would have meant re-sizing Selector plus a dozen non-Badge
-//     controls to chase a number nothing else in the app uses.
-//   - The dense-list objection is real but small and was paid for directly:
-//     RestorePanel's and Config's snapshot rows were `py-2.5` around 24px
-//     content (44px rows). Their padding is now `py-1.5` around 32px content,
-//     so those rows measure the SAME 44px they always did — a bigger badge in
-//     an unchanged-density list, rather than a list that grew.
-//   - The 36px off-site repo-url input (`px-3 py-2 text-sm`) keeps its own
-//     height; its badges are 32px and centre against it. A 4px difference
-//     between a badge and one taller-than-usual field is invisible next to
-//     the defect being fixed (three badge sizes in one card), and "match this
-//     one field exactly" is precisely the per-role reasoning that produced
-//     the defect.
-//
-// KNOCK-ON, deliberately included so the rule doesn't break something else:
-// the Appearance tab's colour swatches moved 28px → 32px (PaletteSwatch,
-// AccentPresetSwatch, and the custom-accent swatch, which was a stray 24px)
-// so the two reset badges in those rows still sit flush with the swatches
-// they reset — an alignment jdp has already reported twice ("der Reset-Badge
-// ist größer als die Farbfelder"). Swatches are colour discs, not icon
-// badges, so they are free to follow the badge rather than the other way
-// round.
-//
-// NOT square icon badges, and deliberately untouched: InfoBubble's inline
-// 15px info glyph (a text-flow annotation with no badge chrome) and the
-// backup-order list's bare `p-1` reorder arrows (20px, no resting fill, no
-// tooltip bubble — a drag-list affordance, not a tile). Neither carries a
-// badge background at rest; if either is ever converted INTO a badge, it
-// takes 32px like everything else.
-// ---------------------------------------------------------------------------
-//
-// `as="button"` renders a real <button> instead of a <span> but resolves to
-// the EXACT SAME box at a given stage: same height, same padding, same font,
-// same radius. A native button brings its own default padding/border/font
-// that a <span> never had, so this is spelled out explicitly rather than
-// left to whatever the element normally defaults to — `appearance-none`
-// strips native button chrome, `box-border` fixes box-sizing so the
-// declared height isn't inflated by border/padding math, and `min-h-0`
-// blocks a stretch-alignment flex/grid parent from growing the box taller
-// than the stage's own height. This is what actually fixes the
-// ErrorDetailPanel span-vs-button height mismatch: both render through this
-// one component at the same stage, so nothing downstream can drift them
-// apart independently again.
-//
-// `as="a"` (Task 5, rule 13 — "everything clickable is a badge, including
-// links") renders a real <a href> instead of onClick-on-a-span: a plain-text
-// link still needs native anchor behaviour (right-click "copy link address",
-// middle-click/ctrl-click to open in a new tab, the status-bar URL preview,
-// screen-reader "link" role vs. "button" role) that a synthetic onClick
-// handler degrades. `href`/`target`/`rel` are only meaningful with `as="a"`
-// and pass straight through. Resolves to the identical box as span/button at
-// the same stage — see `badgeClassName` below, which all three branches
-// share so nothing can drift them apart independently.
-//
-// react-router's <Link> is a fourth clickable element considered for this
-// task (it needs router context Badge has no reason to depend on, so
-// teaching Badge to render one directly would be real added machinery) —
-// but both of this app's two actual <Link>-as-plain-text sites turned out
-// NOT to want the Badge treatment on inspection: Dashboard.tsx's offsite-
-// fault row link stays plain text (converting only the one clickable ROW
-// STATE in an otherwise-plain-text list would make row height/typography
-// jump depending on which domain is faulted — see that call site's own
-// comment), and its "go to Recovery" nudge link instead adopted the app's
-// existing primary-action button idiom directly (rule 3's one-solid-accent-
-// action allowance, matching every other primary button already in the
-// app — also documented at that call site). `badgeClassName` stays a
-// private, non-exported helper for now: exporting a public escape hatch
-// with zero real call sites is speculative API surface, not a needed one —
-// if the same "must render as a router <Link>, but look like a Badge" need
-// turns up at a genuine future site, exporting this one-line function is a
-// one-line change.
-//
-// `wrap` — a stage's height is a fixed pixel floor for the common one-line
-// case, but some call sites (the Dashboard protection-card badges: local
-// verify shield / off-site subset / off-site DR, all icon+label+relative-
-// time strings inside a narrow grid column) genuinely wrap to two lines in
-// normal use, in the default locale, not just a translated-string edge case.
-// A fixed `h-*` + `leading-none` painted the tinted background at exactly
-// one line tall and let the wrapped second line spill outside it — the
-// background box didn't grow with the content. `wrap` swaps the stage's
-// `h-*` for `min-h-*` at the same px floor (so a single-line badge is
-// unchanged), drops `leading-none` for readable multi-line spacing, and adds
-// real vertical padding, so the box grows to contain however many lines the
-// content needs instead of clipping at the stage's one-line floor.
-//
-// One consequence worth knowing: a fixed `h-*` is a DEFINITE cross size, which
-// is what actually makes a stretch-aligned flex/grid parent leave the box at
-// the stage's own height (`min-h-0` above is belt-and-braces). `wrap` trades
-// that definite height for `min-h-*`, so a wrap badge sharing a flex line with
-// a taller sibling WILL stretch to that line's height. Harmless where it is
-// used today (a Dashboard wrap badge is the only thing in its grid cell, and
-// OffsiteTargetsSection's two chips wrap onto separate flex lines before either
-// grows), but a new call site that wants a short wrap badge to stay short next
-// to a tall one needs `className="self-start"`.
-//
-// `inFlow` — the notch's LOOK without the notch's own POSITIONING, so a
-// CALLER can position a whole GROUP of heading badges as one unit.
-//
-// History, because this replaced a much larger piece of machinery and the
-// reasoning matters more than the diff: an earlier round built a SPLIT
-// heading badge for the Recovery tab's step numbers — one pill, two cells,
-// the leading one shaded and cut off from the label by a hard seam, driven by
-// a `prefix` prop here, a `split` layout branch in badgeClassName, a
-// `.glim-badge-prefix` rule in index.css and a whole
-// --accent-contrast-inv/--item-hue-ink-inv token pair in accent.ts/
-// appearance.ts whose only job was giving that shaded cell an ink to flip to.
-// jdp reviewed it live and reversed it: "Die Cardtitelbadges mit Nummer
-// sollen zwei getrennte Badges sein. Der Badge der Nummer nicht abgedunkelt."
-// Two visually separate badges side by side, the number one taking the SAME
-// plain fill as the name one — no seam, no shaded cell, no second colour.
-// All of that machinery is therefore gone, not left dormant: `prefix`,
-// `split`, `.glim-badge-prefix`, `--accent-contrast-inv` and
-// `--item-hue-ink-inv` had exactly one consumer between them and it no longer
-// exists. (Nothing else referenced the inv tokens — checked across src/ and
-// index.css before deleting; the only reads were `.glim-badge-prefix`'s own
-// `color:` and the four rainbow rebind blocks that fed it.)
-//
-// What the two-badge shape actually needs from this component is one thing:
-// permission to NOT position itself. A heading notch normally carries its own
-// `absolute top-0 -translate-y-1/2`, which is exactly right for the one-badge
-// case and exactly wrong for two — two absolutely-positioned boxes with the
-// same static position land on top of each other, and the obvious "just offset
-// the second one" fix is a FIXED PIXEL OFFSET for this notch, which this
-// codebase has already shipped and had to remove twice (see the REGRESSION
-// note in badgeClassName below, and Settings.tsx's own offsite-tab history).
-//
-// `inFlow` moves the positioning up one level instead: the caller makes its
-// `<h2>` the absolutely-positioned element and lays the badges out inside it
-// with ordinary flexbox, so the pair's alignment to each other and to the
-// card edge is solved by layout rather than by arithmetic. `-translate-y-1/2`
-// on that h2 resolves against the H2's own rendered height — the tallest badge
-// in the row — so the pair's vertical centre sits on the card edge at ANY
-// badge height, and `items-center` puts both badges' own centres there too.
-// A one-line pair and a pair whose name wrapped to two lines both straddle
-// correctly with no height assumed anywhere. See StepCard.tsx, the one call
-// site, for the concrete markup.
-//
-// Everything else the notch treatment gives a heading badge is UNCHANGED by
-// this flag — the fixed `rounded-pill` radius, the `var(--elevation)` lift,
-// `.glim-notch-hue` (so reactive mode's card-wide hover still reveals both
-// badges), and `hueIndex`'s ordinary colour-engine participation. It removes
-// the four positioning classes and nothing else. `insetStart` becomes
-// meaningless alongside it (it is an override for the very offset that is no
-// longer being emitted) and is ignored — the CALLER owns the horizontal
-// position now, and the same static-position fallback that used to serve the
-// badge serves the caller's h2 instead, RTL-correctly, for the same reason.
-//
-// `tone="heading"` / `size="heading"` (Task 5, rule 11 — "every heading is a
-// filled section badge, never bare text... always coloured: it is a heading,
-// not a control, so rule 9 [the three-way reactive colour mode] does not
-// apply to it"). Colour choice:
-//   - IS the full, solid `--accent` fill + `--accent-contrast` ink — the
-//     EXACT SAME pairing this app already uses for a solid CTA elsewhere
-//     (Sidebar.tsx's `navActive`, the "Speichern" button). REVISED from this
-//     component's original rule-3-driven reasoning (rule 3 reserves solid
-//     accent for ACTIVITY — "the active nav item, the single primary action,
-//     progress fills... a page has at most one solid accent button" — and a
-//     first pass read a Card heading as NOT activity, so it shipped a soft
-//     `--accent-soft` wash instead, then an even-more-opaque `color-mix()`
-//     of that same wash once the wash's own transparency became visible at
-//     the notch's card-edge seam). jdp reviewed BOTH of those live and, on
-//     the second round, said the notch still read as "abgedunkelt"
-//     (darkened/dimmed) regardless of opacity — because a 14%-accent-into-
-//     surface wash is inherently a pale, muted colour, full stop, whether
-//     it's rendered with alpha or composited to a flat opaque equivalent of
-//     the exact same pale colour. What was actually wanted is the real,
-//     saturated accent colour, unmixed with anything — so this tone now
-//     renders `bg-accent text-accentContrast` (see TONE_CLASSES below), and
-//     `--accent-soft-solid` (the interim opaque-wash token from the prior
-//     round) is gone from index.css entirely — nothing references it anymore.
-//   - NOT any of the four state hues (ok/fail/warn/neutral): rule 4's hues
-//     are load-bearing semantic signals elsewhere on the same pages these
-//     headings live on (a container's running/settled/fault state, a
-//     schedule's warning). Painting a heading "neutral" would borrow the
-//     literal "waiting" state hue for a label that isn't waiting on
-//     anything; painting it any of the other three invents a false status.
-//     (This is specifically about rule 4's STATUS reading of neutral, on a
-//     structural element that has no status. It doesn't conflict with
-//     tone="neutral" being this same file's generic no-real-status default
-//     for actual chips/badges elsewhere — see the TONE_CLASSES comment below
-//     on the Task 7 "→ neutral" sites, which lands in that other,
-//     pre-existing role instead.)
-//   - REVISED AGAIN (jdp, second live-review round, emphatic): "Die ganzen
-//     Toggle, Abschnittsbadges sind nicht in der Farbengine!! Im
-//     Regenbogen-Modus hat alles die gleiche Farbe!" — every heading on a
-//     rainbow-mode page WAS rendering the identical flat accent fill,
-//     confirmed live against the real deployed container (Settings' seven
-//     general-tab Card notches — Domänen/Sprache/Design/Akzentfarbe/Ecken/
-//     Regenbogen-Modus/Leise Benachrichtigungen — all measured
-//     rgb(252,196,25), the flat accent, with rainbow mode ON). The
-//     paragraph below (kept for its still-correct "a heading isn't a
-//     control" / rule-9 reasoning) argued headings should NEVER take a
-//     rainbow position at all; jdp's live reaction overrides that specific
-//     conclusion, not the reasoning about rule 3/rule 9 — a heading can
-//     hold a rainbow POSITION (like any other list member) while still
-//     being furniture rather than a control.
-//
-//     `hueIndex` (optional, below) is the opt-in this reversal needed:
-//     omitted, a heading renders exactly as before (flat `bg-accent`,
-//     unaffected by rainbow mode — correct for a genuine singleton heading,
-//     the one-of-a-kind case design-language.md's rainbow section itself
-//     carves out). Passed, the heading joins the rainbow the same way a
-//     Selector segment or a ContainerRow does: `.glim-hue` +
-//     `hueVars(rainbowAt(hueIndex))`, position assigned by the caller's own
-//     LIST INDEX among the headings visible on that page/tab at once — a
-//     page's several Card titles are exactly the "genuine equal-member set"
-//     rule 2's "one hero, everything else quiet" was never meant to flatten
-//     into a single shared colour; rule 2 governs the page's ONE <h1>, not
-//     how many DIFFERENT hues its supporting section headings may carry.
-//     Deliberately restricted to `tone === "heading"` only (see the Badge()
-//     body below): every other tone is one of rule 4's four state hues, a
-//     load-bearing status signal a stray `hueIndex` must never overwrite.
-//     EXTENDED (offsite-tab card-split follow-up): `tone === "active"` now
-//     qualifies too — see the `hueOn` computation in Badge()'s own body for
-//     the full reasoning (it was never one of rule 4's four state hues to
-//     begin with, the same reason this section's own history above gives
-//     for why "active" replaced "info").
-//   - Every heading gets a SOLID fill (not a translucent wash) either way —
-//     flat accent when no `hueIndex` is given, its own rainbow position's
-//     colour when one is. This does mean rule 3's "at most one solid accent
-//     thing per page" no longer literally holds once a page has several
-//     Cards — an accepted, deliberate consequence of this live-review
-//     round's explicit ask, not an oversight: a heading badge is furniture
-//     (rule 11 already exempts it from rule 9's reactive-colour treatment
-//     for the same "not a control" reason), not a second competing call to
-//     action, so several solid-accent HEADINGS on one page don't dilute the
-//     page's one real primary-action button the way several solid-accent
-//     BUTTONS would.
-//   - Text is `text-accentContrast` (the computed black/white ink for
-//     legibility ON TOP of a solid accent fill — see index.css's
-//     `--accent-contrast` comment), not the previous quiet
-//     `text-carbon-textSub`: that muted ink was chosen specifically for a
-//     translucent wash where the card surface still dominated the contrast
-//     ratio, a premise that no longer holds now the fill is fully opaque
-//     accent.
-//   - Sizing is a dedicated stage, not a reuse of `large` (the existing
-//     tallest stage, already the visual weight of a real status/count chip —
-//     ErrorDetailPanel's count badge, a "Resolve" button): giving headings
-//     that SAME stage would make a passive section label compete pixel-for-
-//     pixel with a genuine activity/status indicator for attention, exactly
-//     backwards from what a heading should do. `heading`'s own stage keeps
-//     the source uppercase+letter-spaced treatment the app's headings always
-//     had (so this reads as an evolution of the existing convention, not a
-//     wholesale redesign) with roomier padding sized for a title's worth of
-//     text rather than a two-character status word.
-//
-// Deliberately NOT converted to this stage: a SECOND, nested heading level
-// (an <h3>/<span> sub-label already living inside a Card/panel this stage
-// already gave its own badge — e.g. Settings.tsx's "Export"/"Import"
-// sub-headings inside the Settings I/O Card, OffsiteWizard's per-step
-// labels inside its one wizard card). Badging every nesting level would
-// stack multiple equally-loud badges inside one another and read as a wall
-// of chips, not a hierarchy — rule 5 ("hierarchy from type and colour step")
-// still applies one level down even though rule 11 exempts the outer
-// heading from rule 9. Those sub-labels keep the plain eyebrow-style
-// treatment on purpose; see each call site.
-//
-// (An earlier pass of this task filed Dashboard.tsx's SummaryCell labels
-// here too — that was wrong. Each SummaryCell is its own standalone
-// bg-carbon-surface rounded-card box, not nested inside anything already
-// badged; it was actually a missed OUTERMOST heading and is now converted
-// at its own call site, same as every other Card heading on that page.)
-//
-// RESOLVED (GlimStone follow-up pass, folded into v8.0.0): the ~7 modal
-// dialog titles (Files.tsx, Fleet.tsx x2, Receiver.tsx, WhatsNewDialog.tsx,
-// ConfirmDialog.tsx, ErrorDetailPanel.tsx) are now `tone="heading"
-// size="heading"` Badges too. Rule 15 ("a window is a window... same
-// surface, same radius, same elevation, title as a badge, button row at the
-// bottom") is explicit about this: "title as a badge" is one clause in a
-// list of concrete window-chrome requirements sitting alongside surface,
-// radius and elevation — it is a prescription, not a placeholder for "figure
-// this out later." It doesn't say WHICH badge, so this reuses rule 11's
-// already-reasoned `tone="heading"`/`size="heading"` stage rather than
-// inventing a second heading treatment the spec never asked for — a dialog
-// title and a section heading are both "the name of the thing the reader is
-// looking at," just at different scopes.
-//
-// Badge growing an `id` prop turned out unnecessary: the `<h2 id="…">`
-// wrapper stays exactly where it was in the three sites that wire
-// `aria-labelledby` to it (ConfirmDialog, WhatsNewDialog, ErrorDetailPanel)
-// — only the h2's INNER content changed from bare text to `<Badge>`. An
-// `aria-labelledby` reference resolves to the target element's computed
-// text content, which still includes the Badge's rendered text regardless
-// of the span nested inside it, so the accessible name is byte-identical to
-// before. The other four dialogs (Files.tsx, Fleet.tsx x2, Receiver.tsx)
-// name themselves via `aria-label` on the `role="dialog"` div directly, not
-// via this heading at all, so there was nothing to preserve there either.
-// Verified live in both themes with a screen reader against all 7 — see the
-// PR/commit description for the accessibility-check writeup.
-//
-// Also deliberately NOT converted, and the only outermost <h2> in the app
-// that stays bare text: an ALERT/CALLOUT heading whose panel is itself a
-// filled status surface — today exactly one site, Dashboard.tsx's
-// RecoveryNag (`bg-statusWarnBg` + `recovery.nagTitle`). Rule 11's "filled
-// section badge" silently assumes a neutral card surface underneath for the
-// fill to register against; a status callout has already spent that budget
-// on its own background. Measured live at that site, at the time, against
-// tone="heading"'s THEN-current accent-soft wash fill: accent-soft 1.06:1
-// light / 1.39:1 dark, and warn-strong 1.00:1 light (index.css gives
-// --status-warn-bg and --status-warn-bg-strong the same value in light mode)
-// / 1.11:1 dark (numbers now superseded — a later live-review round replaced
-// tone="heading"'s wash with a solid `bg-accent` fill, see this file's own
-// tone="heading" section above — not re-measured against that fill, since
-// RecoveryNag's heading stays plain either way and this site's own
-// conclusion doesn't turn on the exact figure). So the badge would read as
-// plain text with extra padding, while also
-// discarding the text-statusWarn colour that currently carries the alert's
-// meaning at 8.62:1. Left plain on purpose — this is a token gap, not an
-// oversight, and the call site says so too. Every OTHER outermost heading
-// in the app is a badge; if a future pass adds a real "badge on a status
-// surface" tone pair, this is the one site waiting for it.
-//
-// RESOLVED, exempted (GlimStone follow-up pass, folded into v8.0.0): the 11
-// page titles (the `<h1 text-2xl font-semibold>` at the top of each page,
-// plus Recovery.tsx's `text-lg` one) were filed by the ORIGINAL Task 5 pass
-// as "belongs to the same future rule-15 pass as the dialogs" — that framing
-// doesn't survive actually reading rule 15's text. Rule 15 opens "A WINDOW
-// is a window" and every clause under it (surface, radius, elevation, a
-// button row at the bottom, an anchored title with only the middle region
-// scrolling) describes MODAL chrome specifically — a floating, elevated
-// card with its own button row. A page's root <h1> isn't inside a window by
-// this app's own vocabulary (rule 1: `.glim-card` is the one elevation, and
-// a page's own top-level content sits on the page ground, not raised); rule
-// 15 has nothing to say about it either way.
-//
-// What DOES govern an <h1> is rule 2 ("one hero per page — exactly one
-// element carries weight, everything else is supporting detail") plus the
-// type scale's own explicit carve-out: "a page's one hero figure (rule 2) is
-// sized on its own merits case by case, not from a repeated 'display' step —
-// forcing every hero into one fixed size would fight the same rule that says
-// there's exactly one hero and everything else is quiet." Each of these 11
-// `<h1>`s IS that page's one hero (the single largest, heaviest text on the
-// page, everything else — including every rule-11/rule-15 badge on the same
-// page — deliberately quieter than it). Converting it to the SAME
-// `tone="heading" size="heading"` Badge every section heading and dialog
-// title now uses would make the page's one hero visually indistinguishable
-// from the section badges nested underneath it, which is exactly the
-// "everything else is quiet, exactly one thing carries weight" hierarchy
-// rule 2 exists to protect — collapsing that hierarchy would be a rule-2
-// regression dressed up as rule-15 compliance.
-//
-// So: NOT converted, and this is a considered exemption, not a re-deferral.
-// All 11 stay exactly as they render today (`text-2xl font-semibold` /
-// Recovery.tsx's `text-lg font-semibold` — already "sized on its own
-// merits," per the type scale's own words, and already the loudest thing on
-// each page). If a future page ever grows a genuinely bigger hero element
-// (a stat figure, a chart headline) that outweighs its own <h1>, that page's
-// <h1> would need re-examination on its own merits — but no page in this
-// app has that shape today, so there's no live case to design against.
-// ---------------------------------------------------------------------------
+// A `tone="heading"` + `size="heading"` badge is a notch: it straddles the top
+// edge of its card. `inFlow` keeps the notch's look but drops its positioning,
+// so a caller can place several heading badges as one group (see
+// StepCard.tsx).
 
 import type { CSSProperties, ReactNode } from "react";
-import { hueVars, rainbowAt } from "../lib/appearance";
+import { hueVars } from "../lib/appearance";
 import { IconTipButton } from "./IconTipButton";
 
 export type BadgeTone = "ok" | "fail" | "warn" | "active" | "neutral" | "heading" | "muted";
-// `icon` is THE square-icon-badge stage — the only one. `field` (36px) and
-// `compact` (32px) used to exist alongside it purely to serve the rejected
-// role-based split; both are gone, and `icon` now carries the one canonical
-// 32px value. See the "ONE SIZE FOR SQUARE ICON BADGES" block above before
-// adding a fourth.
 export type BadgeSize = "small" | "medium" | "large" | "heading" | "icon";
-// Four shapes per the design language's Badges section: pill (fully round,
-// standalone chips/count badges), rounded (small fixed radius, compact
-// inline badges — the default, matching every predecessor's rounded-control),
-// square (a square-ASPECT icon badge — see `iconOnly`/`tip` — that still
-// tracks the shape engine's own --radius-control token, exactly like
-// `rounded` below; kept as its own named value purely so a call site reads
-// as "this is a square icon tile" rather than "this is a rounded text chip",
-// not because the two resolve to different CSS), circle (pill radius again
-// but width locked to height, for icon-only/single-glyph badges — same
-// radius as pill, distinct semantic use). Deliberately NOT the percentage-
-// capped `min(var(--radius-pill), 50%)` formula: a CSS percentage
-// border-radius resolves per-axis into an ellipse, not a stadium, so the
-// plain length-based `rounded-pill` token (which already auto-scales
-// correctly against this component's own fixed per-stage heights) is used
-// as-is, with zero cap needed.
-//
-// FIXED (GlimStone follow-up round, jdp's live review of the off-site tab's
-// four square icon badges — "nicht in der Formengine... die sind falsch
-// eingefärbt"): `square` used to hard-code `rounded-none` (literal 0px
-// corners, ALWAYS, in every shape-engine mode) — see RADIUS_CLASSES below.
-// That was a real shape-engine miss, the SAME mistake pattern as if a
-// Selector or any other control ignored `--radius-control`: with the app's
-// shape engine set to "soft" or "round", these four badges stayed hard
-// square instead of picking up the user's own chosen corner roundness,
-// because the doc comment above (kept, now corrected) conflated "this
-// component's own shape option named square" with "the global shape
-// engine's square PRESET" and hard-coded the latter's value (0) instead of
-// reading the engine's live token. Fixed by pointing `square` at the exact
-// same `rounded-control` class `rounded` already uses — a square-aspect
-// badge now renders 0 corners in "square" mode, genuinely rounded corners in
-// "soft"/"round" mode, verified live with getComputedStyle against all three
-// shape-engine settings.
+// `square` resolves to the same radius as `rounded` and exists so an icon
+// tile reads as one at the call site. `circle` is a pill locked to a 1:1
+// aspect. The pill radius is a length, not `50%`, because a percentage radius
+// resolves per axis into an ellipse.
 export type BadgeShape = "pill" | "rounded" | "square" | "circle";
 
-// NotchInset / INSET_START_CLASSES — the fix for a defect class that has now
-// independently recurred on Dashboard.tsx (twice — Card() AND SummaryCell()),
-// ActivityLog.tsx, Flash.tsx and Config.tsx: see the long "Deliberately no
-// explicit left/right/start/end offset" comment inside badgeClassName below
-// for the full mechanism, and each of those five files' own git history for
-// the specific incident. Short version: the notch's horizontal position was
-// ALWAYS derived from the CSS static-position fallback (no left/start ever
-// set), which is only correct when the badge's `<h2>` is a normal-flow child
-// of the SAME padded box that holds the card's visible content. The moment a
-// card's `relative` positioned ancestor and its padded content box are two
-// DIFFERENT elements — needed whenever the content box also carries its own
-// `overflow-hidden` (so the badge's own -11px poke isn't clipped by it; see
-// Card()'s own comment in Dashboard.tsx) — the static position silently
-// stops matching the content padding and falls back to the OUTER box's own
-// (zero) padding instead: flush with the card's bare edge, not its content.
-// Every one of those five incidents is the identical structural mismatch,
-// discovered independently, at a different call site, in a different round,
-// because nothing about the mechanism made the dependency visible — a
-// call site could get this right or wrong purely as a side effect of which
-// of two structurally-identical-looking div arrangements it happened to use.
-//
-// `insetStart` is the fix at the mechanism, not another per-call-site patch:
-// an EXPLICIT step on the Tailwind spacing scale, passed by the caller,
-// that a card whose padded content box is a p-4/p-5/p-6 box the badge's own
-// `relative` ancestor does NOT share must pass — matching that content box's
-// own padding step number literally. Once passed, the notch's horizontal
-// position no longer depends on which of the two structural recipes (single
-// merged div vs. split outer/inner) the card happens to use; it is stated
-// once, directly, at the one call site that actually knows the number,
-// instead of being re-derived by the browser from ambient DOM shape. A card
-// using the single-merged-div recipe (the large majority — Settings.tsx's
-// Card(), Config.tsx's own two Cards, Containers.tsx/VMs.tsx's panels,
-// Files.tsx/Fleet.tsx/Receiver.tsx's empty-state cards, and more) still omits
-// this prop entirely and keeps relying on the static-position fallback, which
-// is the CORRECT mechanism for that recipe (see the long comment below) — this
-// is an opt-in override for the one recipe shape that structurally can't use
-// the fallback correctly, not a replacement for it everywhere.
-//
-// Only 4/5/6 are enumerated (not an arbitrary number) because those are the
-// only content-box padding steps any split-recipe Card in this app has ever
-// used — Tailwind v4's utility classes must appear as literal strings in
-// source for the JIT scanner to generate them (no `start-${n}` string
-// interpolation), so this is a closed lookup table, extended the same way
-// SIZE_TOKENS/RADIUS_CLASSES above are whenever a new literal value is
-// genuinely needed, not a general-purpose arbitrary-value escape hatch.
+// Horizontal offset for a heading notch whose static position is wrong (see
+// badgeClassName). Tailwind only generates classes it finds as literals in
+// source, so the steps are a closed table rather than `start-${n}`.
 export type NotchInset = 4 | 5 | 6;
 const INSET_START_CLASSES: Record<NotchInset, string> = {
   4: "start-4",
@@ -535,139 +46,45 @@ const INSET_START_CLASSES: Record<NotchInset, string> = {
   6: "start-6",
 };
 
-// warn uses --status-warn-bg-STRONG, not the plain --status-warn-bg: the
-// token file (index.css) labels -strong verbatim "emphasised warn chip
-// (Files)" — it exists FOR small high-contrast chips like this one, while
-// plain --status-warn-bg is the softer tone used by full-width warning
-// panels/callouts (Settings.tsx, OffsiteWizard.tsx) that hold paragraph
-// text, a different UI role that can afford to be quieter. Receiver.tsx and
-// Fleet.tsx's old local Badge both used -strong for warn; using the plain
-// tone here would have silently weakened their warn chips (invisible in
-// light mode today, where the two tokens happen to share one value, but a
-// real regression in dark mode).
-// active replaces the old "info" tone (GlimStone form-engine Phase 2 Task 7,
-// design-language.md rule 4: "four state hues... never a fifth" — blue
-// "info" was a de-facto fifth hue, not a real state). Every call site that
-// used tone="info" for genuine, currently-happening activity (Dashboard's
-// statusTone: a run whose status is literally "running") now uses this
-// instead — --accent-soft wash + accent-derived text, the SAME soft/tinted
-// register every other tone here already uses, deliberately not a solid
-// accent fill: Dashboard's run-history list can legitimately show several
-// "running" rows at once (independent domains backing up concurrently), and
-// rule 3 caps SOLID accent at one thing per page — a soft chip carries no
-// such cap, it reads at the same visual weight as an ok/fail/warn chip
-// sitting next to it. Sites that meant something else entirely (pure
-// informational prose, a link/action badge) did NOT become "active" — those
-// use --status-neutral-*/tone="neutral" instead, in its pre-existing role as
-// this file's generic "no real status, muted default" tone (the same role
-// BadgeProps' own `tone = "neutral"` default already plays, per that prop's
-// doc comment below) — NOT rule 4's literal "skipped/waiting" state
-// semantics, which is specifically what the file header's tone="heading"
-// reasoning above declines to borrow for a structural element that isn't a
-// status at all. Same word, two pre-existing and non-conflicting jobs; see
-// index.css's TASK 7 comment for exactly which "→ neutral" sites landed here
-// and why.
+// warn uses --status-warn-bg-strong, the token meant for small chips; the
+// plain one is the softer fill for full-width warning panels. The two differ
+// only in dark mode.
 //
-// text-accentText, not the flat text-accent: a spec-compliance review
-// measured the flat accent gold at only 1.50:1 against this exact
-// accent-soft-tinted background in light theme (WCAG needs 4.5:1 for text;
-// dark theme measured fine). This is the identical failure mode
-// --field-focus-ring already solved once for this same accent hue (flat
-// accent gold has no contrast on a light surface, so light theme needs a
-// separate, darker value) — text-accentText (--accent-text, see index.css)
-// applies that same fix here rather than inventing a new mechanism.
+// active is a soft wash rather than a solid fill because a run list can show
+// several running rows at once. Its text uses text-accentText rather than
+// text-accent: the flat accent gold measures 1.50:1 on the accent-soft
+// background in light theme, well under the 4.5:1 text minimum.
 const TONE_CLASSES: Record<BadgeTone, string> = {
   ok: "bg-statusOkBg text-statusOk",
   fail: "bg-statusFailBg text-statusFail",
   warn: "bg-statusWarnBgStrong text-statusWarn",
   active: "bg-accentSoft text-accentText",
   neutral: "bg-carbon-surface2 text-carbon-textSub",
-  // See the file header's long-form reasoning (REVISED, live-review round —
-  // "the notch reads as darkened/dimmed, not the real accent colour"): the
-  // full, solid `--accent` fill + `--accent-contrast` ink, the same pairing
-  // `navActive`/the "Speichern" button use, not a translucent or
-  // opaque-composited wash of it. Used unconditionally for every
-  // tone="heading" badge, at any size — badgeClassName's own isHeadingNotch
-  // branch below no longer swaps in a different fill for the notch
-  // specifically; this single entry now covers both cases identically.
+  // Solid accent with computed ink, the same pair as the primary button. A
+  // translucent wash reads as dimmed at the card edge.
   heading: "bg-accent text-accentContrast",
-  // GlimStone follow-up round (jdp, live review of Settings' System-tab
-  // footer, live-measured: "Die Versionsnummern sollen keinen hellen
-  // Hintergrund haben" — the version link was `tone="neutral"`, i.e.
-  // `bg-carbon-surface2`, which resolves to a pale #e8e8e8 pill in light
-  // theme, plainly visible against the near-white page ground it sits on
-  // (confirmed live via screenshot — see this round's PR/commit
-  // description). `neutral` itself is untouched here (it stays the correct
-  // choice for every OTHER "no real status" chip that genuinely wants a
-  // visual grouping surface — see this file's own Task 7 comment on that
-  // tone) — a bare version string next to a genuine action link isn't a
-  // status chip or a grouped surface at all, it is exactly the same kind of
-  // small metadata caption Settings.tsx's own Export/Import preview `<dd>`
-  // rows already render as (`text-carbon-textMuted` label + plain-text
-  // value, zero background — see SettingsPortabilityCard's preview `<dl>`)
-  // and Fleet.tsx's own peer-version caption already renders as
-  // (`text-xs text-carbon-textMuted`, also zero background). `muted` gives
-  // that exact same plain-caption treatment through Badge instead of a
-  // second, parallel non-Badge span: no background utility at all (so
-  // nothing paints behind the text, in either theme, by simply never
-  // emitting one — not a transparent-cutout trick), `text-carbon-textMuted`
-  // ink matching those two existing captions verbatim. Kept as `as="a"`
-  // at its one live call site (AboutFooter's version link) rather than
-  // reverting to a bare `<span>`/`<a>` outside Badge — rule 13 ("everything
-  // clickable is a badge, including links") never required a badge to carry
-  // a tinted fill, only the shared height/padding/radius/hover-opacity box;
-  // this tone proves that box can be genuinely transparent when the content
-  // it wraps is a quiet caption, not a status signal.
+  // No background at all: a quiet caption, such as the version link in the
+  // Settings footer, that keeps the badge's box and hover.
   muted: "text-carbon-textMuted",
 };
 
 const RADIUS_CLASSES: Record<BadgeShape, string> = {
   pill: "rounded-pill",
-  // square: shape-engine token, not a literal 0 — see BadgeShape's own doc
-  // comment above for the live bug this fixes (a square-aspect badge used to
-  // stay hard-square in every shape-engine mode; now it reads the SAME
-  // --radius-control token `rounded` does, so "soft"/"round" genuinely
-  // rounds its corners and "square" still resolves to 0 via that token's own
-  // [data-shape="square"] value).
   square: "rounded-control",
   rounded: "rounded-control",
   circle: "rounded-pill",
 };
 
-// height/text are the two dimensions that must be pixel-identical between a
-// span and a button at the same stage; padding is kept separate so the
-// circle shape can zero it out below without ever needing two conflicting
-// px-* utilities to coexist in one className (Tailwind's cascade order
-// between two same-specificity utility classes isn't something a component
-// file can pin down on its own). minHeight is the same px floor as height,
-// spelled as `min-h-*` instead of `h-*` for `wrap` mode (see the file
-// header) — never emitted alongside `height` in the same className for the
-// same cascade-order reason padding is kept separate from the circle override.
+// Padding is kept apart from height so the icon-only branch can replace it
+// instead of emitting two conflicting px-* utilities, whose order a component
+// cannot control. minHeight is the same floor as height, used by `wrap`.
 const SIZE_TOKENS: Record<BadgeSize, { height: string; minHeight: string; text: string; padding: string }> = {
   small: { height: "h-[18px]", minHeight: "min-h-[18px]", text: "text-caption", padding: "px-1.5" },
   medium: { height: "h-5", minHeight: "min-h-5", text: "text-dense", padding: "px-2" },
   large: { height: "h-6", minHeight: "min-h-6", text: "text-dense", padding: "px-2.5" },
-  // Deliberately its own height (22px — between medium and large), not a
-  // reuse of either: same height as a real status chip would make a passive
-  // heading compete with genuine activity/status indicators for attention
-  // (see file header); a fixed size distinct from all three status-chip
-  // stages keeps a heading visually identifiable as "a heading" on sight,
-  // separate from whether it happens to render at a similar footprint.
-  // uppercase+tracking-widest preserves the source eyebrow treatment's
-  // typographic character; roomier px-3 padding fits a title's worth of
-  // text rather than a two-character status word.
+  // Its own height so a section title never looks like a status chip.
   heading: { height: "h-[22px]", minHeight: "min-h-[22px]", text: "text-dense uppercase tracking-widest", padding: "px-3" },
-  // THE square icon-badge stage — 32px (h-8), used by EVERY square icon-only
-  // badge in the app with no exceptions. See the "ONE SIZE FOR SQUARE ICON
-  // BADGES" block in this file's header for the live measurements behind the
-  // number and for the role-based 28/32/36px split that was tried, shipped,
-  // reported broken by jdp twice, and removed. h-8 is Tailwind's plain
-  // default spacing scale (step 8 = 2rem = 32px), the same value Selector's
-  // own `iconOnly` segments and every hand-rolled IconTipButton square in
-  // the app already hard-code, so this token and those literals agree.
-  //   text/padding are unused for the icon-only case (that branch overrides
-  // to px-0 + aspect-square, and there is no visible text) but are filled in
-  // for interface completeness.
+  // text and padding are unused: an icon-only badge has no text and gets px-0.
   icon: { height: "h-8", minHeight: "min-h-8", text: "text-dense", padding: "px-2" },
 };
 
@@ -677,35 +94,13 @@ interface BadgeStyleOptions {
   shape?: BadgeShape;
   wrap?: boolean;
   className?: string;
-  /** Zero horizontal padding + locked 1:1 aspect ratio, the same treatment
-   *  `shape="circle"` has always applied below (see `isIconOnly`) — generalised
-   *  here (GlimStone follow-up round, the off-site tab's four icon-only
-   *  conversions) so a `shape="square"` glyph badge gets the identical
-   *  padding/aspect fix a `shape="circle"` one already had, rather than
-   *  leaving `square` to render as a wide rectangle sized for TEXT it no
-   *  longer has. Not exposed on the public `BadgeProps` — Badge()'s own body
-   *  derives it FROM `tip` being set (an icon-only glyph is exactly what a
-   *  `tip`-carrying Badge always is; see that prop's own doc), so this stays
-   *  a private plumbing detail of badgeClassName rather than a second public
-   *  toggle a caller could set inconsistently with `tip`. */
+  /** Zero padding and a 1:1 aspect ratio. Badge sets it from `tip`, so a
+   *  caller cannot set it inconsistently. */
   iconOnly?: boolean;
-  /** Threaded straight from `BadgeProps.inFlow` — see that prop's doc and the
-   *  file header for what it does and why it exists. */
   inFlow?: boolean;
-  /** Explicit horizontal offset for the heading notch, overriding the static-
-   *  position fallback — see BadgeProps' own `insetStart` doc (the public
-   *  prop this is threaded straight from) for the full "why this exists"
-   *  reasoning. Resolved via INSET_START_CLASSES below. */
   insetStart?: NotchInset;
 }
 
-/**
- * The exact class list a Badge stage resolves to. Not exported — Badge's own
- * span/button/a branches below are its only callers today, so this stays a
- * private implementation-sharing helper rather than public API with no real
- * consumer (see the file header's note on why this app's two react-router
- * `<Link>` sites didn't end up needing it after all).
- */
 function badgeClassName({
   tone = "neutral",
   size = "medium",
@@ -717,190 +112,30 @@ function badgeClassName({
   insetStart,
 }: BadgeStyleOptions = {}): string {
   const { height, minHeight, text, padding } = SIZE_TOKENS[size];
-  // circle is icon/glyph-only: zero horizontal padding + a locked 1:1 aspect
-  // ratio against the stage's own height turns it into a true circle rather
-  // than an oval widened by the stage's normal text padding. `iconOnly`
-  // (GlimStone follow-up round — see BadgeStyleOptions' own doc) extends the
-  // identical fix to a `shape="square"` glyph badge: same zero-padding/
-  // locked-aspect need, a different final silhouette (the shape's own
-  // RADIUS_CLASSES below still decides square vs. circle vs. pill/rounded —
-  // this only ever governs padding/aspect, never the corner radius).
   const isIconOnly = shape === "circle" || iconOnly === true;
-  // wrap swaps the fixed one-line `h-*`+`leading-none`+`min-h-0` sizing for a
-  // `min-h-*` floor + real vertical padding + normal line-height, so a
-  // second wrapped line grows the box instead of overflowing it — see the
-  // file header. Never emit both `height` and `minHeight` (same CSS
-  // property, same specificity — exactly the two-conflicting-utilities
-  // hazard the padding/circle split above already guards against).
+  // Never both height and minHeight: same property, same specificity.
   const sizing = wrap
     ? `${minHeight} py-0.5 leading-tight wrap-break-word`
     : `${height} min-h-0 leading-none`;
 
-  // tone="heading" + size="heading" (GlimStone follow-up pass, live-review
-  // round — "half-overlap card notch"): every real call site pairs these two
-  // props together (verified — no call site uses one without the other), so
-  // gating on BOTH is the precise, self-documenting condition for "this is
-  // the notch treatment," not just "any heading-sized or heading-toned
-  // badge" in isolation.
+  // The notch sits on its card's top edge. top-0 plus -translate-y-1/2
+  // centres it on that edge at whatever height it renders, so a wrapped notch
+  // does not cover the card's first line.
   //
-  // jdp disliked the old inline filled-badge-inside-the-content-flow look
-  // (this same accent-soft chip, just sitting in normal document flow) and
-  // asked for CannonadeCommand's fieldset/legend-style tab instead: the
-  // badge now straddles ITS OWN CARD's top edge, half poking above the
-  // card's visual boundary, half overlapping onto it — a notch, not a
-  // heading floating inside the content area. BombVault's Cards are plain
-  // divs (no real <fieldset>/<legend>), so this reproduces that look
-  // synthetically with `position: absolute` on the badge + `position:
-  // relative` on the card (added at each call site — see those call sites'
-  // own comments for why a shared Card component doesn't exist here to
-  // carry that in one place).
+  // With no left or start set, the badge falls back to its static position:
+  // the start edge of the <h2> around it, which follows the card's padding
+  // and is correct under RTL. That breaks in two card shapes, where the
+  // caller passes `insetStart` instead:
+  //   1. The `relative` ancestor is not the padded content box, usually
+  //      because the content box is overflow-hidden and would clip the notch.
+  //   2. The card centres its content, so the <h2>, empty once the badge is
+  //      absolute, collapses to zero width in the middle of the card.
   //
-  // top-0 + -translate-y-1/2 (NOT a fixed `-top-[11px]`, see the REGRESSION
-  // note below): `top: 0` anchors the badge's own top edge to the card's top
-  // edge, then `transform: translateY(-50%)` — a percentage that CSS always
-  // resolves against the TRANSFORMED ELEMENT's OWN border-box height, never
-  // the containing block's — shifts it up by exactly half of WHATEVER height
-  // it actually rendered at. Net effect: the badge's vertical CENTER always
-  // sits exactly on the card's top edge, so it always straddles precisely
-  // half-above/half-below regardless of how tall it grows — the single-line
-  // 22px case (`h-[22px]` in SIZE_TOKENS.heading above) resolves to the
-  // identical -11px this used to hard-code, so nothing changes there.
-  //
-  // REGRESSION this replaces (live-review round, jdp: "Im Dashboard sind
-  // viele Cardtitelbadges nicht richtig platziert" — Dashboard.tsx's
-  // SummaryTier, the one narrow sm:grid-cols-3 cell already flagged below as
-  // wrapping "in the DEFAULT locale too"): the previous fixed `-top-[11px]`
-  // was ALWAYS exactly half of the SINGLE-LINE 22px case, never recomputed
-  // for a wrapped badge's real (taller) height. That was fine the day it
-  // shipped — checked against this app's longest heading strings across all
-  // 26 locales, "short section-title phrases that fit on one line... except
-  // the one narrow sm:grid-cols-3 cell" — but "fits at 1440px" quietly became
-  // "wraps to 2 lines" at any ordinary laptop/half-screen width once that one
-  // cell's own 3-way split narrows enough (measured live: ~640-850px, three
-  // SummaryCells sharing a row, German "NÄCHSTES BACKUP"/"LETZTES ERGEBNIS"
-  // — not a locale/string-length edge case, an ordinary browser width one).
-  // A wrapped badge is ~34px tall, not 22px; poking from a FIXED -11px then
-  // put its far edge at +23px into the card (double the intended overlap)
-  // instead of the intended +17px half — enough to visually bury the card's
-  // own first content line (confirmed live: "OK Ordner" nearly fully hidden
-  // under "LETZTES ERGEBNIS"). This is the SAME failure family Settings.tsx's
-  // own offsite-tab history already hit once from the opposite direction (a
-  // zero-height heading + a fixed gap, two 22px notches landing on top of
-  // each other, see that file's own comment) — a fixed pixel offset derived
-  // from ONE assumed height, silently wrong the moment the real height
-  // isn't that one value. `-translate-y-1/2` is the general fix for the
-  // whole family: it needs no assumed height at all, single-line or wrapped.
-  //
-  // No explicit left/right/start/end offset BY DEFAULT (insetStart omitted):
-  // with both left and right left `auto`, an absolutely positioned box falls
-  // back to its CSS "static position" — where it would have rendered had
-  // position stayed static. Every call site wraps Badge in a `flex
-  // items-center` <h2> (or, per this project's RTL-positioning convention —
-  // see FilterPopover.tsx and Settings.tsx's dropdown menu — the logical
-  // `start`/`end` pair is how this app expresses direction-aware offsets
-  // elsewhere), so the static position is the flex container's own start
-  // edge: it inherits whichever padding the real call site's card already
-  // uses (p-5 here, p-4 there, zero on a few bare group-label headings, or
-  // wherever a heading sits deeper in a decorated row — StepCard.tsx's
-  // numbered-circle row, for one) with zero per-call-site horizontal class
-  // needed, AND it is automatically RTL-correct (a flex row's start edge is
-  // the row's RIGHT edge under dir="rtl") for the same zero-extra-classes
-  // reason — the static-position fallback is direction-aware by definition.
-  // CORRECT precisely when the `<h2>` is a normal-flow child of the SAME
-  // padded box that holds the card's visible content — every single-merged-
-  // div Card in this app that ALSO stretches its `<h2>` full-width (Settings.tsx's
-  // Card(), Config.tsx's own two Cards, Containers.tsx/VMs.tsx's panels, and
-  // more) has exactly that shape, so this fallback is still the right,
-  // self-maintaining mechanism for all of those — no insetStart needed, and
-  // none should be added.
-  //
-  // WRONG — silently — in (at least) two distinct ways, neither visible from
-  // reading the call site's own JSX in isolation:
-  //
-  // (1) The card's `relative` positioned ancestor and its padded content box
-  // are two DIFFERENT elements: the static position then measures against the
-  // OUTER (unpadded) box instead of the content box's own padding, landing
-  // the badge flush with the card's bare edge instead of its content. That
-  // split shape is sometimes structurally required (a content box that is
-  // ALSO `overflow-hidden`, to clip ProgressBar's square-ended bar to the
-  // card's rounded corners, would clip the badge's own -11px poke above it if
-  // the badge lived inside that same box — so the badge has to move to an
-  // outer, unclipped ancestor instead). This exact mismatch independently bit
-  // Dashboard.tsx's Card() AND SummaryCell(), ActivityLog.tsx, Flash.tsx's
-  // and Config.tsx's backup Cards.
-  //
-  // (2) The card IS a single merged div (no split), but its OWN layout
-  // recipe centers its body content (`text-center flex flex-col
-  // items-center` — an empty-state pitch: icon, paragraph, button, all
-  // centered). Once the notch Badge inside the `<h2>` becomes
-  // `position: absolute`, it stops contributing to the h2's own intrinsic
-  // size — an h2 with nothing else in flow collapses to a 0×0 box, which the
-  // parent's `items-center` then centers horizontally in the card instead of
-  // stretching it to the padding edge. The static position resolves against
-  // that zero-width, CENTERED h2, landing the badge at the card's horizontal
-  // MIDDLE, not its content edge. Bit Files.tsx's, Fleet.tsx's and
-  // Receiver.tsx's identical empty-state Cards identically.
-  //
-  // Eight separate discoveries total, across eight separate live-review
-  // rounds, of two different defects with the identical SYMPTOM (badge not
-  // flush with content) and the identical ROOT CAUSE SHAPE (the notch's
-  // horizontal position is a function of ambient DOM/CSS structure the call
-  // site never states explicitly) — because nothing about "no offset =
-  // inherit ambient padding" made that dependency visible at the call site,
-  // for either variant. `insetStart` (NotchInset, above) is the fix for BOTH:
-  // an EXPLICIT step on the Tailwind spacing scale, matching the card's own
-  // content-box padding literally, passed by any call site whose structural
-  // recipe can't rely on the static-position fallback's assumptions (whichever
-  // of the two ways it can't). Once passed, it renders as a real `start-N`
-  // class below — a real CSS offset resolved directly against the `relative`
-  // containing block, so it is unaffected by what the h2 collapsed to or
-  // which of the two recipes the card happens to use. See each of those eight
-  // call sites for where this is actually set today.
-  //
-  // z-10: only needs to draw above this SAME card's own in-flow content
-  // immediately below it (default z-index:auto siblings don't establish
-  // their own stacking order); nothing here reaches for a shared app-wide
-  // z-index scale (dialogs/backdrops sit at z-50, popovers at z-20/z-50 —
-  // this badge never needs to out-rank those, it always renders inside its
-  // own card's local stacking, never competing with a DIFFERENT card or a
-  // dialog above it).
-  //
-  // rounded-pill (not this stage's usual shape-engine-driven radius, which
-  // is what plain `RADIUS_CLASSES[shape]` below would otherwise resolve to
-  // for the default shape="rounded" every heading call site actually
-  // passes): a fixed pill regardless of the app's round/soft/square
-  // shape-engine setting, matching CC's own reference implementation. A
-  // card-edge notch reads as its own fixed piece of window chrome — like a
-  // physical tab cut into the edge — not a data control the shape engine is
-  // meant to govern; the shape engine's whole point is reshaping CONTROLS
-  // (buttons, fields, swatches), and a heading was never one of those even
-  // before this pass (rule 11 exempts headings from rule 9's reactive-colour
-  // treatment for the identical reason — a heading isn't a control).
-  //
-  // shadow: var(--elevation) only, not this app's usual elevation+hairline
-  // pairing (`.rounded-card`'s own box-shadow: var(--elevation),
-  // var(--hairline) — see index.css): CC's own reference snippet specifies
-  // a single box-shadow (the elevation lift that reads as "this sits above
-  // the surface, not flush with it"), and --hairline is this app's
-  // border-emulating inset highlight for a surface's OWN edge — a different
-  // concern from "this floats above a surface," and one this same
-  // tone="heading" treatment never reached for even before this pass (a
-  // heading badge is furniture riding on the card, not a card boundary of
-  // its own).
+  // z-10 only has to clear the card's own content. The radius is a fixed pill
+  // whatever the shape engine says: a notch is card chrome, not a control.
   const isHeadingNotch = tone === "heading" && size === "heading";
-  // The notch's LOOK (the elevation lift) is separate from the notch's own
-  // POSITIONING (the four absolute-placement classes below), because `inFlow`
-  // takes exactly one of the two away — see the file header. A badge whose
-  // caller positions it is still a notch: it still rides above the card
-  // surface, so it still gets the lift.
   const notchChrome = isHeadingNotch ? "shadow-[var(--elevation)]" : "";
-  // insetStart only ever applies to a SELF-positioned notch — a non-notch
-  // badge is never position:absolute in the first place, and an `inFlow` one
-  // has handed the whole horizontal question to its caller, so in both cases
-  // an explicit start-N would be a dead, unused class (or worse, a real visual
-  // bug on a badge sitting inline in normal flow). Silently ignored outside
-  // that case, the same "only meaningful where it makes sense" contract
-  // hueIndex already documents above.
+  // An in-flow notch is positioned by its caller, so insetStart is ignored.
   const notchPositioning =
     isHeadingNotch && !inFlow
       ? [
@@ -911,55 +146,9 @@ function badgeClassName({
           .join(" ")
       : "";
 
-  // No per-notch colour override anymore (see the file header's tone=heading
-  // section for the two earlier rounds this went through — a translucent
-  // wash, then an opaque color-mix() of that same wash — and why jdp's
-  // latest live review replaced both with the plain, full-strength
-  // TONE_CLASSES.heading fill below). A heading-toned badge renders the
-  // identical solid accent fill whether or not it's also the notch size.
-  //
-  // isIconOnly && tone==="active" is the one exception to reusing
-  // TONE_CLASSES verbatim.
-  //
-  // ROUND 1 (GlimStone follow-up round, jdp's live review of the converted
-  // off-site buttons, emphatic and specific: "Die Buttons ... haben farbige
-  // Schrift" — the coloured TEXT itself, not the tinted background wash, was
-  // the complaint). A text badge's `text-accentText` ink is only legible
-  // BECAUSE it carries the hue — there is no text left to read once the
-  // content is a bare glyph, so that reasoning no longer applies, and
-  // design-language's own established "icons carry no colour of their own,
-  // only the badge does" rule (already the reason IconAdd/IconTrash render
-  // `currentColor` inside a plain `text-carbon-textSub` button, Settings.tsx's
-  // Registries card) took over instead: `text-carbon-textSub`, the same
-  // neutral ink every other icon-only badge in the app already reads its
-  // glyph colour from — riding on the UNCHANGED hued `bg-accentSoft` wash
-  // underneath it.
-  //
-  // ROUND 2, THIS FIX (jdp's next live-review round, on those same four
-  // badges: "die sind falsch eingefärbt, so halb abgedunkelt, das soll nicht
-  // so sein"): `bg-accentSoft` IS a 14%-alpha wash (`--accent-soft: rgba(...,
-  // 0.14)`/`--item-hue-soft` — see index.css/appearance.ts) — the EXACT same
-  // "half-darkened" failure mode this file's own tone="heading" section
-  // documents fixing once already (a translucent accent-into-surface wash
-  // reads as pale/dimmed no matter its alpha, full stop). Round 1 only ever
-  // touched the TEXT colour and explicitly left "the wash stays" — but the
-  // wash was the actual bug jdp is now naming directly. Fixed the same way:
-  // drop the wash, use the full solid `bg-accent` fill instead — which,
-  // exactly like tone="heading", now needs a computed-contrast ink rather
-  // than a flat neutral one (`text-carbon-textSub` was only ever safe against
-  // a PALE 14%-wash background; measured live against the RAINBOW palette's
-  // own solid hues once the fill went opaque, several dropped to ~1.0–1.8:1
-  // in dark theme and ~2.5–4.9:1 in light theme — a real contrast failure,
-  // the identical premise-no-longer-holds reasoning tone="heading" already
-  // gives for why IT moved off `text-carbon-textSub` onto `text-accentContrast`
-  // when ITS fill went from wash to solid). `text-accentContrast` is still a
-  // NEUTRAL ink in the sense the design-language rule actually cares about —
-  // computed black/white (`contrastOn()`/`--item-hue-ink`), carrying no hue of
-  // its own — it only stops being the specific token `text-carbon-textSub`,
-  // which was tuned for a pale wash background this badge no longer has.
-  // Every other tone/isIconOnly combination (a text chip, or an icon-only
-  // badge of any OTHER tone — none exist live today, but nothing here assumes
-  // otherwise) keeps the plain TONE_CLASSES lookup untouched.
+  // An icon-only active badge takes the solid accent: a bare glyph has no
+  // text that needs the hued ink, and the translucent wash reads as dimmed.
+  // Solid fills from the rainbow palette need the computed ink for contrast.
   const toneClasses =
     isIconOnly && tone === "active" ? "bg-accent text-accentContrast" : TONE_CLASSES[tone];
 
@@ -980,138 +169,37 @@ function badgeClassName({
 
 export interface BadgeProps {
   children: ReactNode;
-  /** Status color. Defaults to the neutral/muted chip every predecessor fell
-   *  back to when no other tone applied. */
   tone?: BadgeTone;
-  /** Named size stage — see the file header for the exact px values and
-   *  which predecessor weight each one replaces. For a SQUARE ICON-ONLY
-   *  badge (`shape="square"` + `tip`) there is exactly one correct answer,
-   *  `"icon"` (32px), regardless of what the badge does or what it sits
-   *  next to — see the header's "ONE SIZE FOR SQUARE ICON BADGES" block. */
+  /** Square icon-only badges always use `"icon"`. */
   size?: BadgeSize;
   shape?: BadgeShape;
-  /** Render as a clickable <button> or a real <a href> instead of a plain
-   *  <span>, resolving to the identical box (height/padding/font/radius) at
-   *  the same stage either way — see the file header. */
   as?: "span" | "button" | "a";
   onClick?: () => void;
   disabled?: boolean;
   title?: string;
-  /** Accessible name for an icon-only badge (its visible content is a
-   *  decorative aria-hidden glyph, so the element has no text of its own to
-   *  compute a name from). Pass alongside `title` for an icon-only control —
-   *  `title` alone gives a hover tooltip and would work as an accname
-   *  fallback, but an explicit `aria-label` is the direct, unambiguous
-   *  signal for assistive tech rather than relying on that fallback chain. */
+  /** Accessible name for a badge whose only content is an aria-hidden glyph. */
   ariaLabel?: string;
-  /** `as="a"` only: passed straight through to the underlying <a>. */
+  /** Only used with `as="a"`. */
   href?: string;
   target?: string;
   rel?: string;
-  /** Grow-to-fit instead of clipping: the stage's height becomes a floor
-   *  (`min-h-*`) rather than a fixed `h-*`, so content that wraps to more
-   *  than one line grows the box instead of overflowing it. For a badge
-   *  whose content is known to sometimes wrap (e.g. inside a narrow column
-   *  with `max-w-full`) — see the file header. */
+  /** Let the box grow for content that wraps, instead of clipping at one line. */
   wrap?: boolean;
-  /** Extra classes (e.g. `tabular-nums` for a count badge, `max-w-full` for
-   *  a narrow-column badge that needs to wrap rather than overflow — pair
-   *  with `wrap` so the box grows instead of clipping). */
   className?: string;
-  /** Rainbow position, by the caller's own LIST INDEX (never a hash) among
-   *  the heading badges visible at once on the same page/tab — jdp's
-   *  live-review override of this file's original "every heading gets the
-   *  same flat fill" stance, see the file header's tone="heading" section
-   *  for the full history. Meaningful on `tone === "heading"` AND
-   *  `tone === "active"` (offsite-tab card-split follow-up — see the
-   *  `hueOn` computation below for why "active" qualifies: it is the one
-   *  other tone that is accent-derived rather than one of rule 4's four
-   *  state hues). ok/fail/warn/neutral are load-bearing status signals
-   *  `hueIndex` must never overwrite, so it is silently ignored for those.
-   *  Omit for a genuine singleton (the only hue-eligible badge on its
-   *  page/tab) — that one keeps the flat, un-rainbowed accent, per
-   *  design-language's own "the only one of its kind on the page keeps the
-   *  single accent" exclusion. */
+  /** Rainbow position, by the caller's index among the badges shown together.
+   *  Only `heading` and `active` use it; the status tones keep their meaning.
+   *  Omit it for a badge that is the only one of its kind on the page. */
   hueIndex?: number;
-  /** `as="button"` only. Real hover/focus `.glim-bubble` tooltip AND the
-   *  button's accessible name, rendered through IconTipButton instead of a
-   *  plain `<button>` — GlimStone follow-up round, the off-site tab's four
-   *  action buttons converting from short-text badges to icon-only glyph
-   *  badges (jdp: "Können wir die Buttons in quadratische Badges mit Glyphen
-   *  umwandeln?" — the text is gone, so an icon-only trigger needs the same
-   *  real tooltip every other icon-only control in this app already gets,
-   *  not the `title`/`ariaLabel` pair above, which is only a native OS
-   *  balloon + a silent accessible name with no visible hover affordance —
-   *  IconTipButton.tsx's own header comment is explicit that a stray native
-   *  `title=` on an icon-only trigger is exactly the anti-pattern that file
-   *  exists to replace). Presence of `tip` is ALSO what marks this Badge as
-   *  icon-only for sizing purposes — see badgeClassName's own `iconOnly`
-   *  option: a `tip`-carrying Badge has no visible text by definition (an
-   *  icon-only trigger has nothing else a name/tooltip could come from), so
-   *  there is no real case where a caller would want `tip` set AND the
-   *  normal text-chip padding at the same time. When set, supersedes
-   *  `title`/`ariaLabel` for accessible-naming purposes (IconTipButton sets
-   *  its own `aria-label`); `title`/`ariaLabel` stay meaningful on every
-   *  OTHER `as` value and every button call site that doesn't pass `tip`. */
+  /** With `as="button"`: renders through IconTipButton, which gives an
+   *  icon-only badge a real tooltip and its accessible name, and marks the
+   *  badge icon-only for sizing. Takes the place of `title` and `ariaLabel`. */
   tip?: string;
-  /** Meaningful ONLY on the heading notch (`tone="heading"` AND
-   *  `size="heading"` together — see badgeClassName's own `isHeadingNotch`).
-   *  An explicit override for the notch's horizontal position, replacing the
-   *  CSS static-position fallback badgeClassName otherwise relies on (see
-   *  that function's own long comment for the full mechanism and its TWO
-   *  known trigger shapes). Pass the SAME Tailwind spacing step as the
-   *  ancestor card's own content-box padding (e.g. `insetStart={5}` for a
-   *  `p-5` box) whenever — and ONLY whenever — one of those two shapes
-   *  applies: (1) the card's structural recipe puts the badge's `relative`
-   *  positioned ancestor and its padded content box on two DIFFERENT
-   *  elements (typically because the content box is ALSO `overflow-hidden`,
-   *  which would otherwise clip the badge's own -11px poke above it — see
-   *  Dashboard.tsx's Card() for the canonical example of why that split
-   *  exists), or (2) the card is a single merged div but its own body
-   *  content is centered (`text-center items-center`), which collapses the
-   *  now-childless `<h2>` to a zero-width box that gets CENTERED instead of
-   *  stretched to the padding edge — see Files.tsx's/Fleet.tsx's/
-   *  Receiver.tsx's empty-state Cards for the canonical example. Omit for
-   *  every OTHER Card shape in this app (the large majority: a single merged
-   *  div that ALSO stretches its `<h2>` full-width) — those are already
-   *  correct via the static-position fallback, and adding an unneeded
-   *  `insetStart` there would be a second, redundant source of truth for the
-   *  same number that could itself drift out of sync with the real padding
-   *  later. This is the fix for a defect class that independently recurred
-   *  eight times across these two distinct trigger shapes (Dashboard.tsx's
-   *  Card() AND SummaryCell(), ActivityLog.tsx, Flash.tsx's and Config.tsx's
-   *  own backup Cards, Files.tsx's, Fleet.tsx's and Receiver.tsx's own
-   *  empty-state Cards, all discovered in separate live-review rounds)
-   *  precisely BECAUSE the old mechanism gave no call site any explicit
-   *  signal that its own DOM/CSS shape controlled the badge's position at
-   *  all. */
+  /** Heading notch only. The Tailwind spacing step of the card's content
+   *  padding (`5` for `p-5`), for the two card shapes where the static
+   *  position is wrong (see badgeClassName). Omit it everywhere else. */
   insetStart?: NotchInset;
-  /** Meaningful ONLY on the heading notch (`tone="heading"` AND
-   *  `size="heading"`), like `insetStart` above. Renders the notch's full
-   *  LOOK — the fixed pill radius, the `var(--elevation)` lift,
-   *  `.glim-notch-hue`, the solid accent fill — but drops the four classes
-   *  that place it (`absolute top-0 -translate-y-1/2 z-10`), leaving the badge
-   *  an ordinary in-flow inline-flex box its CALLER positions.
-   *
-   *  For exactly one shape of call site: SEVERAL heading badges that have to
-   *  straddle one card edge together as a group (today, StepCard.tsx's
-   *  number + name pair — jdp: "Die Cardtitelbadges mit Nummer sollen zwei
-   *  getrennte Badges sein"). Two self-positioning notches would stack on the
-   *  same static position, and nudging one of them apart with a fixed pixel
-   *  offset is the precise mistake this component's own history records
-   *  twice (see badgeClassName's REGRESSION note). The caller instead makes
-   *  its `<h2>` the positioned element — `absolute top-0 -translate-y-1/2`
-   *  resolving against the H2's own height, so the group straddles correctly
-   *  whatever the tallest badge in it turns out to be — and lays the badges
-   *  out inside it with plain flexbox.
-   *
-   *  Do NOT reach for this to render a heading badge inline in normal flow
-   *  somewhere: a heading that isn't a notch is a `tone="heading"` badge at a
-   *  non-heading size, which already renders in flow without this flag. This
-   *  is specifically "the notch, positioned by its parent instead of itself."
-   *  `insetStart` is ignored alongside it (the caller owns the horizontal
-   *  position now); everything else — `hueIndex`, `wrap`, an InfoBubble in
-   *  `children` — behaves identically. */
+  /** Heading notch only. Keeps the notch's look but leaves positioning to the
+   *  caller, for several badges that straddle one card edge together. */
   inFlow?: boolean;
 }
 
@@ -1135,78 +223,18 @@ export function Badge({
   insetStart,
   inFlow,
 }: BadgeProps) {
-  // Deliberately NO useRainbow() subscription here, unlike Selector's own
-  // identical-looking hue support: Badge (like Toggle) is a pure, hookless
-  // function component by established convention (see Badge.test.ts's own
-  // header comment — "invoked directly as a plain function... no jsdom/
-  // testing-library needed"), and a first attempt at this DID add the hook,
-  // which broke that entire suite (and Settings.tsx's own ToggleRow tests)
-  // with "Cannot read properties of null (reading 'useSyncExternalStore')" —
-  // calling a component as a plain function outside React's reconciler gives
-  // hooks no dispatcher to run against. Reverted; hueVars()/rainbowAt() below
-  // are plain functions reading module state, not hooks, so they still
-  // resolve correctly at render time with zero subscription. The live-repaint
-  // job this would otherwise cover is instead already handled by the ONE
-  // caller that actually edits rainbow settings: Settings.tsx's own
-  // SettingsPage() holds the Rainbow Card's state in a plain useState() in
-  // THAT SAME component (see its own `rainbow`/`setRainbowLocal`), so
-  // flipping the mode there already re-renders every Card/ToggleRow hueIndex
-  // call site on the page — no separate subscription needed for the one real
-  // place this value can change while the page showing it is mounted.
-  // EXTENDED (offsite-tab card-split follow-up, jdp: "Die Buttons Verbindung
-  // testen, Jetzt replizieren, Einrichten, Ziel hinzufügen in die Farbengine
-  // aufnehmen" — wire those four per-domain action buttons into the colour
-  // engine too): `tone === "active"` now qualifies alongside `"heading"`.
-  // This does NOT weaken the "never overwrite a load-bearing status signal"
-  // rule the comment above `hueIndex` explains — "active" was never one of
-  // rule 4's four state hues in the first place (see this file's own
-  // TONE_CLASSES/file-header history: it replaced the old "info" tone
-  // specifically BECAUSE blue "info" was a de-facto FIFTH hue, not a real
-  // state — "active" already means "accent-derived, no real status", the
-  // exact shape a rainbow position is allowed to colour). ok/fail/warn/
-  // neutral are untouched by this gate and stay hue-immune. A real per-
-  // domain call site (Settings.tsx's TestConnectionButton/ReplicateNowButton/
-  // offsite-wizard-toggle, OffsiteTargetsSection's "Ziel hinzufügen") passes
-  // a genuine hueIndex on tone="active" buttons and was verified live with
-  // getComputedStyle: each domain's own background-color matches that
-  // domain's own RAINBOW[i], not a flat accent.
-  //   THE LIMITATION THAT USED TO SIT HERE IS GONE, and it is worth saying so
-  // rather than deleting quietly, because the shape of it recurs: light
-  // theme's --accent-text was a STATIC gold that followed no accent, and the
-  // [data-rainbow] .glim-hue rebind never redeclared it, so a hued
-  // tone="active" badge shifted its BACKGROUND per position while its TEXT
-  // stayed gold. Both halves are fixed in index.css - the token is mixed from
-  // the accent now, and the rebind restates it for the position. What remains
-  // is the older, separate gap index.css's own "warn/active read as the
-  // same amber" comment documents for this exact token — not a new hole this
-  // change opens, and background-colour alone is enough for the position to
-  // read as genuinely different per domain (verified live).
+  // Badge stays hookless: Badge.test.ts calls it as a plain function, where a
+  // hook has no dispatcher.
   const hueOn = hueIndex !== undefined && (tone === "heading" || tone === "active");
-  // A hue-enabled heading badge is always the notch treatment (badgeClassName's
-  // own isHeadingNotch above gates the SAME tone==="heading" && size==="heading"
-  // pair — every real call site already pairs them, see that comment) — but
-  // this is computed again here, explicitly, rather than trusted as an
-  // established invariant: `.glim-notch-hue` below is a load-bearing selector
-  // hook (index.css's card-wide reactive-hover rule keys off it specifically,
-  // not the general `.glim-hue` every rainbow-hued element carries), and a
-  // future call site that ever passed `hueIndex` without `size="heading"`
-  // must NOT silently pick up that card-wide reveal too.
+  // index.css's card-wide reactive hover keys off `.glim-notch-hue`, so only
+  // a notch may carry it.
   const isNotchHue = hueOn && size === "heading";
-  // `tip !== undefined` marks this Badge icon-only for sizing purposes too —
-  // see badgeClassName's own `iconOnly` doc and BadgeProps' own `tip` doc for
-  // why the two are the same condition rather than two props a caller could
-  // set inconsistently.
   const shared = badgeClassName({ tone, size, shape, wrap, className, iconOnly: tip !== undefined, inFlow, insetStart });
   const merged = hueOn ? `glim-hue ${isNotchHue ? "glim-notch-hue " : ""}${shared}` : shared;
-  const hueStyle = hueOn ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined;
+  const hueStyle = hueOn ? (hueVars(hueIndex) as CSSProperties) : undefined;
 
   if (as === "button") {
     const buttonClassName = `appearance-none transition-opacity hover:opacity-80 disabled:opacity-50 disabled:hover:opacity-50 ${merged}`;
-    // `tip` renders through IconTipButton instead of a plain <button> — see
-    // BadgeProps' own `tip` doc for why (a real hover/focus tooltip an
-    // icon-only trigger needs, not the title/aria-label pair below, which
-    // stays the plain-button path's own accessible-naming mechanism for
-    // every call site that doesn't pass `tip`).
     if (tip !== undefined) {
       return (
         <IconTipButton tip={tip} onClick={onClick} disabled={disabled} style={hueStyle} className={buttonClassName}>

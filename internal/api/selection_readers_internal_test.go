@@ -10,13 +10,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// Reader-side contract for the "!" prefix in the stored flat selection
-// (01-RESEARCH.md R4). The readers are unexported, so these tests live in the
-// internal package next to empty_backup_guard_internal_test.go (whose
-// guardService/existingDir helpers are reused).
-
 // readersService is guardService with the split-root config, so
-// configuredBackupPaths resolves auto-detection exactly like production.
+// configuredBackupPaths auto-detects as in production.
 func readersService(t *testing.T) (*Service, *store.Repo) {
 	t.Helper()
 	db, err := store.Open(":memory:")
@@ -38,11 +33,9 @@ func readersService(t *testing.T) (*Service, *store.Repo) {
 	}, st
 }
 
-// TestConfiguredBackupPathsSplitsExclusions pins the split: the
-// explicit-vs-auto test stays on the RAW stored list (an exclusions-only list
-// is non-empty and therefore an explicit choice), while the RETURN is the
-// includes half only — exclusions never become backup sources, and they are
-// never transformed into anything else either (L1/L14).
+// configuredBackupPaths returns only the includes, but decides between explicit
+// and auto-detected on the raw list, so an exclusions-only list counts as an
+// explicit choice.
 func TestConfiguredBackupPathsSplitsExclusions(t *testing.T) {
 	s, st := readersService(t)
 	in := model.Inspect{Mounts: []model.Mount{
@@ -50,8 +43,6 @@ func TestConfiguredBackupPathsSplitsExclusions(t *testing.T) {
 	}}
 	auto := s.resolveAppdataPaths("plex", in) // /host/user/user/appdata/plex
 
-	// Mixed stored selection → includes only; the excluded branch is dropped,
-	// not turned into a positional nor an exclude pattern.
 	if err := st.SetBackupPaths("plex", []string{
 		auto[0], "!/host/user/user/appdata/plex/transcoding",
 	}); err != nil {
@@ -61,10 +52,7 @@ func TestConfiguredBackupPathsSplitsExclusions(t *testing.T) {
 		t.Fatalf("configuredBackupPaths = %v, want %v (includes only)", got, want)
 	}
 
-	// Exclusions-only: the raw list is non-empty, so the selection still counts
-	// as explicit — the answer is the empty includes set, NOT the
-	// auto-detection fallback (which would silently resurrect the folder the
-	// user just deselected).
+	// Falling back to auto-detection would bring back the deselected folder.
 	if err := st.SetBackupPaths("plex", []string{"!/host/user/user/appdata/plex/transcoding"}); err != nil {
 		t.Fatal(err)
 	}
@@ -73,15 +61,11 @@ func TestConfiguredBackupPathsSplitsExclusions(t *testing.T) {
 	}
 }
 
-// TestStoredDataIsGoneClassifiesExplicitNone pins the #181 guard extension
-// (threat T-01-03): a non-empty stored selection whose includes are all
-// exclusions is a deliberate deselect — the data may be right there on disk —
-// so it is never "gone" and the container is never refused as "not reachable".
-// The legacy prefix-free behavior is pinned unchanged right next to it.
+// An exclusions-only selection is an explicit deselect, so storedDataIsGone
+// never reports it gone, whatever is on disk.
 func TestStoredDataIsGoneClassifiesExplicitNone(t *testing.T) {
 	s, st := guardService(t)
 
-	// Exclusions-only: never gone, whatever the disk says.
 	if err := st.SetBackupPaths("myapp", []string{"!/host/user/appdata/gone-branch"}); err != nil {
 		t.Fatal(err)
 	}
@@ -89,9 +73,7 @@ func TestStoredDataIsGoneClassifiesExplicitNone(t *testing.T) {
 		t.Fatal("an exclusions-only selection is explicit-none, not data-gone")
 	}
 
-	// A mixed list whose includes still exist is equally not gone: the
-	// "!"-prefixed entries never stat, and they must not invert the
-	// measurement of the includes that do.
+	// Exclusions are not statted and must not affect the includes that are.
 	there := existingDir(t, "appdata")
 	if err := st.SetBackupPaths("myapp", []string{there, "!" + there + "/deselected"}); err != nil {
 		t.Fatal(err)
@@ -100,11 +82,8 @@ func TestStoredDataIsGoneClassifiesExplicitNone(t *testing.T) {
 		t.Fatal("a mixed selection with existing includes is not data-gone")
 	}
 
-	// The explicit-none classification is checked BEFORE any stat and is a
-	// decision about the selection's shape, not an accident of measuring
-	// nothing: even when the captured fallback data (AppdataPaths) has also
-	// vanished, an exclusions-only selection stays "not gone" — the user said
-	// no, and the disk has nothing to prove about a deliberate deselect.
+	// The shape is checked before any stat, so this holds even when the
+	// captured AppdataPaths have vanished as well.
 	captured := existingDir(t, "captured")
 	seedCaptured(t, st, "myapp", captured)
 	if err := os.RemoveAll(captured); err != nil {
@@ -117,11 +96,7 @@ func TestStoredDataIsGoneClassifiesExplicitNone(t *testing.T) {
 		t.Fatal("an exclusions-only selection stays explicit-none even when the captured data also vanished")
 	}
 
-	// The converse classification, now on the includes-only view: a mixed
-	// selection whose include vanished IS gone. The stat loop measures
-	// includesOnly(...) — "!"-entries are classes, not paths, and as literals
-	// they only ever voted "gone" — so dropping them from the measurement must
-	// not mask a genuinely vanished include.
+	// A mixed selection whose include vanished is gone.
 	vanished := existingDir(t, "share")
 	if err := st.SetBackupPaths("myapp", []string{vanished, "!" + vanished + "/deselected"}); err != nil {
 		t.Fatal(err)
@@ -133,8 +108,7 @@ func TestStoredDataIsGoneClassifiesExplicitNone(t *testing.T) {
 		t.Fatal("a mixed selection whose include vanished must still be reported gone")
 	}
 
-	// Legacy prefix-free behavior unchanged: a prefix-free selection whose
-	// folder vanished IS gone (what an unmounted share looks like).
+	// So is a plain selection whose folder vanished, as with an unmounted share.
 	gone := existingDir(t, "share2")
 	if err := st.SetBackupPaths("myapp", []string{gone}); err != nil {
 		t.Fatal(err)

@@ -1,21 +1,13 @@
-// ---------------------------------------------------------------------------
-// clipboard — one robust copy helper for every "Copy" button (#112).
-//
-// navigator.clipboard exists ONLY in secure contexts (HTTPS with an accepted
-// certificate). Reaching BombVault over plain HTTP or through a proxy that
-// downgrades the context leaves it undefined — the old per-button handlers then
-// threw inside their try, swallowed the error, and the button silently did
-// nothing (issue #112). This helper adds the classic execCommand("copy")
-// fallback (a temporary off-screen textarea), which works in non-secure
-// contexts, and reports success so callers only show "copied" when the text
-// actually reached the clipboard.
-// ---------------------------------------------------------------------------
+// navigator.clipboard exists only in secure contexts (HTTPS with an accepted
+// certificate), so over plain HTTP, or behind a proxy that downgrades the
+// context, a Copy button relying on it does nothing. copyText falls back to
+// execCommand("copy") on a temporary off-screen textarea, which works there.
 
 /**
- * copyText copies `text` to the clipboard. Tries the async Clipboard API
- * first (secure contexts), then falls back to execCommand("copy"). Returns
- * true when either path succeeded — callers show their "copied" feedback only
- * then, and can e.g. select the source field instead when it failed.
+ * copyText copies `text` to the clipboard, trying the async Clipboard API
+ * first and execCommand("copy") second. It returns true when either worked,
+ * so callers show "copied" only then and can, say, select the source field
+ * when it failed.
  */
 export async function copyText(text: string): Promise<boolean> {
   const nav = (globalThis as { navigator?: { clipboard?: { writeText(t: string): Promise<void> } } }).navigator;
@@ -24,7 +16,7 @@ export async function copyText(text: string): Promise<boolean> {
       await nav.clipboard.writeText(text);
       return true;
     } catch {
-      // Permission denied or transient failure — fall through to execCommand.
+      // Permission denied or a transient failure: fall through to execCommand.
     }
   }
   return execCommandCopy(text);
@@ -48,7 +40,7 @@ function execCommandCopy(text: string): boolean {
   if (!doc?.execCommand) return false;
   const ta = doc.createElement("textarea");
   ta.value = text;
-  // Off-screen but focusable — display:none would make select() a no-op.
+  // Off-screen rather than display:none, which would make select() a no-op.
   ta.style.position = "fixed";
   ta.style.top = "-1000px";
   ta.style.opacity = "0";

@@ -9,14 +9,14 @@ type T = ReturnType<typeof useT>["t"];
 
 interface OrphanRemoveButtonProps {
   /** Whether the entry still has backups, read off its last-backup time. A VM
-   *  entry rebuilt by Discover has no run record and, unlike a container (#44),
-   *  no snapshot-time fallback, so it reads as none: the button then removes
-   *  only the entry, and its snapshots stay for the next Discover to find. */
+   *  entry rebuilt by Discover has no run record and, unlike a container, no
+   *  snapshot-time fallback, so it reads as none: the button then removes only
+   *  the entry, and its snapshots stay for the next Discover to find. */
   hasBackups: boolean;
   /** Confirmation texts, already translated; each page names its own kind of item. */
   deleteConfirm: string;
   removeConfirm: string;
-  /** Deletes every backup AND the entry. */
+  /** Deletes every backup and the entry. */
   deleteBackups: () => Promise<OkEnvelope>;
   /** Removes only the entry, never a snapshot. */
   removeEntry: () => Promise<OkEnvelope>;
@@ -24,19 +24,14 @@ interface OrphanRemoveButtonProps {
   t: T;
 }
 
-// The one removal button on a not-installed card, shared by the Containers and
-// VMs pages (#232). The two pages used to disagree: the container card offered
-// only "Delete all backups" (bottom left), the VM card only "Remove entry"
-// (bottom right), each whatever the entry's state.
+// The removal button on a not-installed card on the Containers and VMs pages.
+// With backups it is "Delete all backups", because removing only the entry
+// would leave snapshots in the repository that nothing on the page points at.
+// Without backups it is "Remove entry". Keeping the backups while dropping the
+// entry from the schedule is the card's schedule switch.
 //
-// Which one shows follows from the entry. With backups it is "Delete all
-// backups", because removing just the entry would leave those snapshots in the
-// repository with nothing on the page pointing at them. Without backups there is
-// nothing to delete, so it is "Remove entry". Taking an entry off the schedule
-// while keeping its backups is the card's schedule switch, not this button.
-//
-// NO bespoke red, same as every other destructive action in the app: the label
-// and the confirmation dialog carry the meaning. A failure toasts AND shakes.
+// Neutral rather than red, like every destructive action in the app: the label
+// and the confirmation carry the meaning.
 export function OrphanRemoveButton({
   hasBackups,
   deleteConfirm,
@@ -53,12 +48,12 @@ export function OrphanRemoveButton({
   const failText = t(hasBackups ? "common.deleteFailed" : "common.removeFailed");
 
   async function run() {
-    // TODO(#follow-up): once richer stake-detail copy ("N snapshots, X GB")
-    // ships (deferred — needs new interpolated i18n keys across every
-    // non-English locale), it renders here as extra body content passed to
-    // confirm(), same as the two other flagged sites in VMs.tsx's
-    // deleteAllConfirm and Files.tsx's deleteBackupsConfirm.
-    if (!(await confirm(hasBackups ? deleteConfirm : removeConfirm))) return;
+    // TODO: pass what is at stake ("N snapshots, X GB") to confirm() once the
+    // interpolated i18n keys exist, as in VMs.tsx and Files.tsx.
+    const asked = hasBackups
+      ? confirm(deleteConfirm, { confirmKey: "containers.deleteBackups" })
+      : confirm(removeConfirm, { confirmKey: "vms.removeEntry" });
+    if (!(await asked)) return;
     setPending(true);
     try {
       const res = await (hasBackups ? deleteBackups() : removeEntry());
@@ -75,9 +70,8 @@ export function OrphanRemoveButton({
     }
   }
 
-  // Two literal call sites rather than one with the key in a variable: the glyph
-  // reach guard (glyphFor.reach.test.ts) reads labelKey statically, and each of
-  // these keys resolves to its own mark only where it is written out.
+  // Two literal call sites rather than one with the key in a variable, because
+  // glyphFor.reach.test.ts reads labelKey statically.
   const shared = {
     tone: "neutral" as const,
     onClick: () => void run(),

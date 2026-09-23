@@ -1,29 +1,8 @@
-// ---------------------------------------------------------------------------
-// Toggle — the one shared switch control (GlimStone form-engine Task 4).
-//
-// Toggle is a pure, hookless function component: props in, a plain React
-// element tree out. That means it can be invoked directly as a plain function
-// (bypassing any renderer) and its returned element tree inspected as plain
-// objects — no jsdom/testing-library needed. This repo's existing test suite
-// is entirely `environment: "node"` with zero DOM-rendering infrastructure
-// anywhere in its history (confirmed via `git log --all --grep=jsdom`), so
-// this keeps Toggle's tests on the same footing as everything else here
-// rather than introducing a new rendering-test toolchain for one component.
-//
-// The "flush, no indent" sub-toggle rule from the design language is a
-// caller-side layout concern (indentation lives on the wrapping container a
-// call site chooses, e.g. ItemScheduleOverride's own className), not a prop
-// Toggle exposes — Toggle itself never applies margin/padding around itself,
-// so there is nothing indent-related to unit test at the component level;
-// that fix is verified by reading ItemScheduleOverride.tsx directly and by
-// the live Playwright pass.
-// ---------------------------------------------------------------------------
+// Toggle uses no hooks, so these tests call it as a plain function and walk
+// the returned element tree without a renderer.
 import { describe, expect, it } from "vitest";
 import { Toggle } from "./Toggle";
 
-// A React element (from the automatic JSX runtime) is just a plain object;
-// `children` may be a single node, an array, or a boolean/null from a `&&`
-// guard. These two helpers walk that shape without needing a real renderer.
 interface ElementNode {
   type?: unknown;
   props?: { children?: unknown; [key: string]: unknown };
@@ -71,13 +50,13 @@ describe("Toggle", () => {
     expect(btn.props["aria-label"]).toBe("Weekly digest");
   });
 
-  it("sets aria-label even when the label is visible, so the switch always has an accessible name", () => {
+  it("sets aria-label when the label is visible too", () => {
     const tree = Toggle({ checked: false, onChange: () => {}, label: "Weekly digest" });
     const btn = findOneButton(tree);
     expect(btn.props["aria-label"]).toBe("Weekly digest");
   });
 
-  it("renders the checked (on) state as role=switch aria-checked=true with the accent fill", () => {
+  it("renders the on state as a checked switch with the accent fill", () => {
     const tree = Toggle({ checked: true, onChange: () => {}, label: "X" });
     const btn = findOneButton(tree);
     expect(btn.props.role).toBe("switch");
@@ -86,7 +65,7 @@ describe("Toggle", () => {
     expect(btn.props.className).not.toContain("bg-carbon-surface3");
   });
 
-  it("renders the unchecked (off) state as aria-checked=false with the neutral track", () => {
+  it("renders the off state with the neutral track", () => {
     const tree = Toggle({ checked: false, onChange: () => {}, label: "X" });
     const btn = findOneButton(tree);
     expect(btn.props["aria-checked"]).toBe(false);

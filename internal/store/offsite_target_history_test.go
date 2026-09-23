@@ -6,9 +6,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestRecordTamperTestForTarget covers the per-destination tamper history: an
-// empty targetID delegates to the domain-wide record/read (byte-identical N=1),
-// while a real targetID stamps offsite_target_id so per-destination reads isolate.
+// TestRecordTamperTestForTarget expects an empty targetID to use the
+// domain-wide record and read, while a real one stamps offsite_target_id so
+// each destination reads only its own results.
 func TestRecordTamperTestForTarget(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -16,8 +16,6 @@ func TestRecordTamperTestForTarget(t *testing.T) {
 	}
 	r := store.New(db)
 
-	// Empty targetID delegates to the domain path: the row is readable both
-	// domain-wide and via the empty-target read (which itself delegates).
 	if err := r.RecordTamperTestForTarget("containers", "", true, ""); err != nil {
 		t.Fatalf("RecordTamperTestForTarget(\"\"): %v", err)
 	}
@@ -27,7 +25,7 @@ func TestRecordTamperTestForTarget(t *testing.T) {
 	if tt, found, err := r.LatestTamperTestForTarget("containers", ""); err != nil || !found || !tt.Protected {
 		t.Fatalf("empty-target read must delegate to domain: found=%v protected=%v err=%v", found, tt.Protected, err)
 	}
-	// A specific targetID must NOT match the ""-stamped row.
+	// A specific targetID must not match the ""-stamped row.
 	if _, found, err := r.LatestTamperTestForTarget("containers", "aaaa1111"); err != nil {
 		t.Fatalf("LatestTamperTestForTarget(id): %v", err)
 	} else if found {
@@ -55,7 +53,7 @@ func TestRecordTamperTestForTarget(t *testing.T) {
 }
 
 // TestLatestSuccessfulOffsiteRunForTarget covers the per-destination currency
-// source used by the worst-of scorecard aggregation.
+// source behind the worst-of scorecard.
 func TestLatestSuccessfulOffsiteRunForTarget(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -63,7 +61,7 @@ func TestLatestSuccessfulOffsiteRunForTarget(t *testing.T) {
 	}
 	r := store.New(db)
 
-	// A successful run for t1, a still-open (unfinished) run for t2.
+	// A successful run for t1, an unfinished one for t2.
 	id1, err := r.RecordOffsiteRunForTarget("containers", "t1", 1000)
 	if err != nil {
 		t.Fatalf("RecordOffsiteRunForTarget(t1): %v", err)
@@ -82,13 +80,12 @@ func TestLatestSuccessfulOffsiteRunForTarget(t *testing.T) {
 	if run.StartedAt != 1000 || !run.OK {
 		t.Fatalf("t1 run = %+v, want StartedAt=1000 ok=true", run)
 	}
-	// t2 has only an unfinished (not-yet-successful) run → no success.
 	if _, found, err := r.LatestSuccessfulOffsiteRunForTarget("containers", "t2"); err != nil {
 		t.Fatalf("LatestSuccessfulOffsiteRunForTarget(t2): %v", err)
 	} else if found {
-		t.Fatal("t2 has no SUCCESSFUL run yet — must not be found")
+		t.Fatal("t2 has no successful run yet and must not be found")
 	}
-	// Empty targetID delegates to the domain-wide query (finds t1's success).
+	// An empty targetID falls back to the domain-wide query and finds t1's run.
 	if _, found, err := r.LatestSuccessfulOffsiteRunForTarget("containers", ""); err != nil || !found {
 		t.Fatalf("empty-target must delegate to domain-wide success: found=%v err=%v", found, err)
 	}

@@ -1,8 +1,5 @@
-// Package model holds the behavior-free container types shared across the
-// dependency-injection seam. The backup orchestrator and the dockercli adapter
-// both depend on these types, but neither depends on the other — keeping the DI
-// seam clean (no concrete-adapter import in the orchestrator). This package
-// imports only the standard library.
+// Package model holds the plain container types shared by the backup
+// orchestrator and the dockercli adapter, so neither has to import the other.
 package model
 
 // PortBinding maps a published host endpoint for a container port.
@@ -11,21 +8,20 @@ type PortBinding struct {
 	HostPort string
 }
 
-// Allocation describes the network resources a live container currently holds.
-// The restore pre-flight conflict check compares a container being restored
-// against the Allocations of all other containers to catch an in-use static IP
-// or published host port BEFORE the destructive stop/remove.
+// Allocation describes the network resources a live container holds. Restore
+// checks it against the other containers for a taken static IP or host port
+// before it stops and removes anything.
 type Allocation struct {
-	// Name is the normalized container name (no leading slash).
+	// Name is the container name without the leading slash.
 	Name string
-	// IPv4 is the container's current IPv4, empty when it holds none (DHCP not
-	// yet assigned, host networking, or a stopped container).
+	// IPv4 is empty when the container holds no address (DHCP not yet
+	// assigned, host networking, or stopped).
 	IPv4 string
-	// HostPorts are the published host ports as "<port>/<proto>" (e.g. "8080/tcp").
+	// HostPorts are the published host ports as "<port>/<proto>", e.g. "8080/tcp".
 	HostPorts []string
 }
 
-// DeviceMapping is a single HostConfig.Devices entry (host device → container device).
+// DeviceMapping is a single HostConfig.Devices entry.
 type DeviceMapping struct {
 	PathOnHost        string
 	PathInContainer   string
@@ -50,37 +46,34 @@ type Config struct {
 	Image string
 	Env   []string
 	Cmd   []string
-	// User is the process user (e.g. "1000:1000"). SEC: preserved on recreate.
+	// User is the process user, e.g. "1000:1000".
 	User string
-	// Labels carries the container labels. Unraid uses net.unraid.docker.*
-	// labels (managed, icon, webui, shell) to treat the container as a managed,
-	// editable app rather than a "third-party" one — so they MUST be preserved.
+	// Labels must survive a recreate: Unraid reads the net.unraid.docker.*
+	// labels (managed, icon, webui, shell) to show the container as a managed
+	// app instead of a third-party one.
 	Labels map[string]string
 }
 
-// NetworkEndpoint captures the primary network attachment so a recreated
-// container keeps its original IP/MAC (e.g. an Unraid br0.x static IP) instead
-// of being reassigned a new one.
+// NetworkEndpoint is a network attachment, kept so a recreated container gets
+// its original IP and MAC back (e.g. an Unraid br0.x static IP).
 type NetworkEndpoint struct {
-	// Name is the docker network name (e.g. "br0.20", "bridge").
+	// Name is the docker network name, e.g. "br0.20" or "bridge".
 	Name string
-	// IPv4Address is the statically-requested IPv4 (empty for DHCP/auto).
+	// IPv4Address is the requested static IPv4, empty for DHCP.
 	IPv4Address string
-	// MACAddress is the requested MAC (empty for auto).
+	// MACAddress is empty when docker assigns one.
 	MACAddress string
-	// Aliases are the network-scoped aliases.
-	Aliases []string
+	Aliases    []string
 }
 
-// HostConfig holds the host-side configuration we preserve on recreate.
-// The Cap/Privileged/SecurityOpt/ReadonlyRootfs/NetworkMode/Devices fields are
-// security-relevant: a recreated container must never gain privilege over the
-// original (SEC parity with the TypeScript implementation).
+// HostConfig holds the host-side configuration preserved on recreate. The
+// capability, privilege, namespace and limit fields must round-trip exactly:
+// dropping one could give the restored container more privilege than the
+// original (PidMode=host, say) or remove a hardening limit.
 type HostConfig struct {
-	Binds         []string
-	PortBindings  map[string][]PortBinding
-	RestartPolicy RestartPolicy
-	// SEC: security-relevant fields preserved on recreate.
+	Binds          []string
+	PortBindings   map[string][]PortBinding
+	RestartPolicy  RestartPolicy
 	CapAdd         []string
 	CapDrop        []string
 	Privileged     bool
@@ -88,66 +81,52 @@ type HostConfig struct {
 	ReadonlyRootfs bool
 	NetworkMode    string
 	Devices        []DeviceMapping
-	// Namespace / isolation and resource fields preserved on recreate so a
-	// restored container keeps its original security posture and limits (SEC §8).
-	// Dropping any of these can silently change isolation (e.g. PidMode=host) or
-	// remove a hardening limit, so they round-trip through backup/restore.
-	PidMode      string
-	IpcMode      string
-	UsernsMode   string
-	GroupAdd     []string
-	Sysctls      map[string]string
-	Tmpfs        map[string]string
-	ExtraHosts   []string
-	CgroupParent string
-	Ulimits      []Ulimit
+	PidMode        string
+	IpcMode        string
+	UsernsMode     string
+	GroupAdd       []string
+	Sysctls        map[string]string
+	Tmpfs          map[string]string
+	ExtraHosts     []string
+	CgroupParent   string
+	Ulimits        []Ulimit
 }
 
-// Ulimit is a container resource limit (mirrors docker's units.Ulimit),
-// preserved on recreate.
+// Ulimit mirrors docker's units.Ulimit.
 type Ulimit struct {
 	Name string
 	Soft int64
 	Hard int64
 }
 
-// Inspect is the subset of a container's inspect data that BombVault captures at
-// backup time and uses to recreate the container on restore. It is the rich
-// profile that flows through the DI seam so the recreated container preserves
-// the original's security-relevant fields (SEC §8).
+// Inspect is the part of a container's inspect data captured at backup time
+// and used to recreate the container on restore.
 type Inspect struct {
 	ID    string
-	Name  string // dockerode-style, may carry a leading slash (e.g. "/plex")
+	Name  string // may carry a leading slash, e.g. "/plex"
 	Image string
-	// Running is the container's run state. Captured at backup time so backup
-	// preserves it (a stopped container stays stopped, not started) and restore
-	// recreates it in the same state — a backup tool must not change run-state.
+	// Running is recorded so backup and restore leave a stopped container
+	// stopped.
 	Running    bool
 	Config     Config
 	HostConfig HostConfig
 	Mounts     []Mount
-	// Network is the primary network attachment, preserved so the recreated
-	// container keeps its original (often static) IP. Used by the restore
-	// pre-flight IP/port conflict check.
+	// Network is the primary attachment. Restore also uses it for the IP and
+	// port conflict check.
 	Network NetworkEndpoint
-	// Networks is EVERY network the container is attached to (including Network).
-	// On recreate the primary is created with the container and the rest are
-	// reconnected, so a multi-network container comes back fully attached.
+	// Networks lists every attached network, Network included. Recreate
+	// creates the container on the primary one and reconnects the rest.
 	Networks []NetworkEndpoint
 }
 
-// Health is the readiness snapshot of a live container, used by the health-gated
-// ordered restart after a backup: a dependency must be ready before the
-// containers that depend on it are started again.
+// Health is a live container's readiness, used when containers are restarted
+// in dependency order after a backup.
 type Health struct {
-	// Running is the container's run state (State.Running).
 	Running bool
-	// HasHealthcheck is true when the container defines a Docker healthcheck
-	// (State.Health is present). When false the caller treats Running plus a short
-	// grace as readiness, since there is no health verdict to wait for.
+	// HasHealthcheck reports whether State.Health is present. Without one the
+	// caller treats Running plus a short grace period as ready.
 	HasHealthcheck bool
-	// Healthy is true only when a healthcheck is defined AND its verdict is
-	// "healthy" (State.Health.Status == "healthy"). Always false when
-	// HasHealthcheck is false.
+	// Healthy is State.Health.Status == "healthy", and false without a
+	// healthcheck.
 	Healthy bool
 }

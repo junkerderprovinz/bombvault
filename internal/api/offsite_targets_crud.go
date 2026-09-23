@@ -9,14 +9,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// ---------------------------------------------------------------------------
-// CRUD API for additional off-site targets
-// ---------------------------------------------------------------------------
-
-// offsiteTargetView is the JSON wire shape of an off-site DESTINATION. store.
-// OffsiteTarget carries no json tags (it is a storage type), so this view owns
-// the field names the SPA sees. No field is a secret: creds_ref selects a
-// credential set (it is not a credential), and storage_class is a class name.
+// offsiteTargetView is an off-site target as the SPA sees it; store.OffsiteTarget
+// has no json tags. No field is secret: CredsRef only names a credential set.
 type offsiteTargetView struct {
 	ID                   string `json:"id"`
 	Domain               string `json:"domain"`
@@ -91,10 +85,8 @@ type offsiteTargetBody struct {
 	AlsoExclude *newTargetExclusion `json:"alsoExclude"`
 }
 
-// toStoreTarget maps the view to the storage type. Numeric fields are floored at
-// zero (a negative retention/limit/budget is meaningless), the storage class is
-// normalized (trim+upper), and the id/created_at are NOT taken from the body —
-// the handlers own those (create mints them, update preserves the existing row's).
+// toStoreTarget floors the numeric fields at zero, trims the repo and
+// upper-cases the storage class. ID and CreatedAt are left to the handlers.
 func (v offsiteTargetView) toStoreTarget() store.OffsiteTarget {
 	t := store.OffsiteTarget{
 		Domain:               v.Domain,
@@ -120,10 +112,8 @@ func (v offsiteTargetView) toStoreTarget() store.OffsiteTarget {
 	return t
 }
 
-// validateOffsiteTargetInput enforces the create/update contract: a valid domain,
-// a non-empty repo, and — when set — a restore-readable storage class. Returns a
-// user-facing error string, or "" when valid. Assumes t was built via
-// toStoreTarget (repo trimmed, class trim+uppercased).
+// validateOffsiteTargetInput returns a user-facing error, or "" when t is
+// valid. t must come from toStoreTarget.
 func validateOffsiteTargetInput(t store.OffsiteTarget) string {
 	if !validOffsiteDomain(t.Domain) {
 		return "invalid domain: must be one of containers, vms, flash, config, files"
@@ -137,21 +127,16 @@ func validateOffsiteTargetInput(t store.OffsiteTarget) string {
 	return ""
 }
 
-// rejectOffsiteTargetOnNamedRepo is the reciprocal of the refusal
-// validateNamedRepo makes in the other direction: a named repository may not be
-// created on an off-site destination, and a destination may not be created on a
-// named repository. Only three of the four directions were closed, and the one
-// left open is the supported route into the state that costs data: an item
-// writes its ONLY copy into the place replication treats as the second copy,
-// the copy moves nothing, the run is stamped a success, and the off-site
-// retention policy then ages that only copy.
+// rejectOffsiteTargetOnNamedRepo refuses an off-site target on a location that
+// is already a named repository, the counterpart of validateNamedRepo. Items
+// backed up there would write their only copy where replication keeps the
+// second: the copy moves nothing, the run reports success, and off-site
+// retention then ages the only copy. It returns a user-facing sentence, or ""
+// when the location is free, and refuses when the store or the target's
+// location cannot be read.
 //
-// Separate from validateOffsiteTargetInput because it needs the store, and that
-// function is also used by the settings import over rows it has not resolved
-// yet. Returns a user-facing sentence, or "" when the location is free.
-//
-// A store or resolution failure does NOT drop the guard silently: the same rule
-// validateNamedRepo states, for the same reason.
+// It needs the store, so it stays out of validateOffsiteTargetInput, which the
+// settings import runs on rows it has not resolved yet.
 func (h *Handler) rejectOffsiteTargetOnNamedRepo(t store.OffsiteTarget) string {
 	loc, err := h.svc.resolveRepo(t.Repo)
 	if err != nil {
@@ -166,8 +151,8 @@ func (h *Handler) rejectOffsiteTargetOnNamedRepo(t store.OffsiteTarget) string {
 		if oErr != nil || !repoLocationsOverlap(other, loc) {
 			continue
 		}
-		// The row's NAME is not echoed: it is free text, and a name carrying a
-		// slash comes out of scrubError as "[path]". The interface has the list.
+		// The row's name is left out: it is free text, and scrubError turns a
+		// name with a slash into "[path]".
 		return "that location is a named repository, or lies inside or around one; backups written there would be their own off-site copy, and the off-site retention would then age the only copy"
 	}
 	return ""
@@ -210,9 +195,8 @@ func (h *Handler) removeHalfMadeTarget(id string, cause error) error {
 	return cause
 }
 
-// handleListOffsiteTargets lists off-site targets. GET /api/offsite/targets
-// (all, in stable per-domain order) or GET /api/offsite/targets?domain=<d> (one
-// domain). An unknown ?domain is rejected; an empty result is a valid [] list.
+// handleListOffsiteTargets lists all off-site targets, or those of one domain
+// when ?domain is set.
 func (h *Handler) handleListOffsiteTargets(w http.ResponseWriter, r *http.Request) {
 	domain := strings.TrimSpace(r.URL.Query().Get("domain"))
 	var (
@@ -306,12 +290,9 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "cannot move an off-site target to another domain"})
 		return
 	}
-	// Only when this request MOVES the destination, the same scoping
-	// rejectSettingsPathOnNamedRepo does and for the same reason. A row that
-	// already sits on a colliding location - installable through the settings
-	// import, or carried in from an older build - would otherwise refuse every
-	// later edit over a field the request does not touch, so the target could not
-	// be disabled, renamed or capped, only deleted.
+	// Checked only when the request moves the target, as in
+	// rejectSettingsPathOnNamedRepo, so a row the settings import left on a
+	// colliding location can still be edited rather than only deleted.
 	moved := !sameRepoLocation(strings.TrimSpace(t.Repo), strings.TrimSpace(existing.Repo))
 	if moved {
 		if msg := h.rejectOffsiteTargetOnNamedRepo(t); msg != "" {
@@ -333,7 +314,7 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		}
 	}
 	t.ID = existing.ID
-	t.CreatedAt = existing.CreatedAt // preserve; UpsertOffsiteTarget would otherwise keep it via ON CONFLICT, but be explicit
+	t.CreatedAt = existing.CreatedAt
 	stored, err := h.store.UpsertOffsiteTarget(t)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -370,11 +351,9 @@ func (h *Handler) handleDeleteOffsiteTarget(w http.ResponseWriter, r *http.Reque
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleTestOffsiteTarget probes ONE off-site target (reachable / initialised)
-// without modifying it. Same response shape as handleTestOffsite, which only
-// ever probes a domain's PRIMARY target — so an additional target could sit
-// broken behind that button's green verdict (issue #138).
-// POST /api/offsite/targets/{id}/test
+// handleTestOffsiteTarget reports whether one off-site target is reachable and
+// initialised, in the same shape as handleTestOffsite, which only probes a
+// domain's primary target.
 func (h *Handler) handleTestOffsiteTarget(w http.ResponseWriter, r *http.Request) {
 	reachable, initialized, err := h.svc.TestOffsiteTarget(r.Context(), r.PathValue("id"))
 	if err != nil {

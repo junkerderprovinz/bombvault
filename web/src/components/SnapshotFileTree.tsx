@@ -1,21 +1,11 @@
-// ---------------------------------------------------------------------------
-// SnapshotFileTree — the collapsible file-tree selection UI shared by every
-// file-level restore: the container "Individual files" flow (RestorePanel) and
-// the file-set selective restore (Files, #65). It renders a filter box plus,
-// when unfiltered, a collapsible folder tree and, while filtering, a flat matched
-// list — each node a checkbox that toggles it in the multi-select set. Ticking a
-// folder selects its whole subtree. Purely presentational: the parent owns the
-// files, filter and selection state.
-// ---------------------------------------------------------------------------
-
 import { useMemo, useState } from "react";
 import type { FileEntry } from "../lib/api";
 import type { useT } from "../lib/i18n";
 
 type T = ReturnType<typeof useT>["t"];
 
-// Cap the rendered file list — a snapshot can hold thousands of nodes; rendering
-// them all would jank the UI. Users narrow with the filter box.
+// A snapshot can hold thousands of files and rendering them all stalls the
+// page, so the list stops at this many and the user narrows it with the filter.
 export const FILE_DISPLAY_CAP = 500;
 
 export interface TreeNode {
@@ -25,8 +15,7 @@ export interface TreeNode {
   children: Map<string, TreeNode>;
 }
 
-// buildTree turns restic's flat file list into a nested folder tree keyed by
-// path segment, so the browser can be expanded/collapsed like a file manager.
+// buildTree turns restic's flat file list into a folder tree keyed by path segment.
 export function buildTree(files: FileEntry[]): TreeNode {
   const root: TreeNode = { name: "", path: "", type: "dir", children: new Map() };
   for (const f of files) {
@@ -48,14 +37,13 @@ export function buildTree(files: FileEntry[]): TreeNode {
   return root;
 }
 
-// sortNodes orders tree children: directories first, then alphabetically.
+// sortNodes puts directories first, then sorts by name.
 export function sortNodes(a: TreeNode, b: TreeNode): number {
   if (a.type !== b.type) return a.type === "dir" ? -1 : 1;
   return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
 }
 
-// FileRow is one entry in the flat (filtered) list: a checkbox that toggles the
-// file/dir in the multi-select restore set.
+// FileRow is one entry of the flat list shown while filtering.
 function FileRow({
   file,
   selected,
@@ -82,9 +70,8 @@ function FileRow({
   );
 }
 
-// TreeRow renders one node of the collapsible file tree. Directories expand /
-// collapse; a checkbox on every node (file or folder) toggles it in the
-// multi-select restore set. Ticking a folder restores its whole subtree.
+// TreeRow renders one node of the folder tree. Ticking a folder selects its
+// whole subtree.
 function TreeRow({
   node,
   depth,
@@ -96,7 +83,7 @@ function TreeRow({
   selected: Set<string>;
   onToggle: (p: string) => void;
 }) {
-  const [expanded, setExpanded] = useState(depth === 0); // top level open by default
+  const [expanded, setExpanded] = useState(depth === 0);
   const isDir = node.type === "dir";
   const kids = isDir ? Array.from(node.children.values()).sort(sortNodes) : [];
 
@@ -104,16 +91,8 @@ function TreeRow({
     <div>
       <div
         className="flex items-center gap-1 py-0.5 text-xs rounded-control hover:bg-carbon-hover"
-        // `paddingInlineStart`, not `paddingLeft` — a physical inline style
-        // (a plain `style` prop, not a Tailwind class) is exactly what the
-        // class-based `pl-`/`pr-`/etc. grep sweep couldn't see (RTL sweep,
-        // form-engine Phase 2 Task 6 follow-up fix). This row carries no
-        // `dir` override of its own, so the logical property correctly
-        // resolves against the surrounding page's real direction: the
-        // indent piles up on the reading-start edge (left in LTR, right in
-        // RTL) either way, instead of always visually hugging the left
-        // regardless of direction — which made every depth in RTL look the
-        // same distance from the RTL reading edge, hiding the hierarchy.
+        // The logical property indents from the reading edge, so the hierarchy
+        // stays visible in RTL.
         style={{ paddingInlineStart: depth * 14 }}
       >
         {isDir ? (
@@ -149,9 +128,9 @@ function TreeRow({
   );
 }
 
-// SnapshotFileTree is the filter box + flat/tree selection list. Controlled: the
-// parent owns `files`, `filter` and `selected` and the toggle. Loading/error
-// states render inline (the parent drives them off its own fetch).
+// SnapshotFileTree is the file picker shared by the container file restore and
+// the file-set selective restore: a filter box over a folder tree, or a flat list
+// of matches while a filter is set. The parent owns the files, filter and selection.
 export function SnapshotFileTree({
   files,
   loading,
@@ -192,7 +171,6 @@ export function SnapshotFileTree({
       {!loading && !error && (q ? matched.length === 0 : topLevel.length === 0) && (
         <p className="text-xs text-carbon-textMuted">{t("files.none")}</p>
       )}
-      {/* Filtering → flat matched list (easier to scan); otherwise → folder tree. */}
       {!loading && q && shown.length > 0 && (
         <div className="max-h-64 overflow-y-auto">
           {shown.map((f) => (

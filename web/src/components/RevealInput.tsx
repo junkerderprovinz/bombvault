@@ -1,138 +1,32 @@
 import type { InputHTMLAttributes } from "react";
 
-// ---------------------------------------------------------------------------
-// RevealInput — the GlimStone "reveal eye" affordance (form-engine Task 6).
+// RevealInput is the password field with a show/hide eye that every secret in
+// the app renders through. It holds no state (useReveal does), so tests can
+// call it as a plain function.
 //
-// Every secret/token field in the app (login password, the cloud-credential
-// secrets, the fleet/receiver/recovery paste-a-key fields, the show-once
-// tokens) renders through this ONE component instead of a bare
-// <input type="password">, so the eye can't drift site-to-site the way
-// Toggle/Badge's duplicate predecessors did.
+// The input is always dir="ltr": keys and tokens are technical data and must
+// not be reordered on an RTL page.
 //
-// Pure, hookless function component on purpose — same shape as Toggle.tsx/
-// Badge.tsx (props in, an element tree out) — so it stays unit-testable by
-// calling it directly with props, no renderer/jsdom needed (this repo's test
-// suite is `environment: "node"`, zero DOM-rendering infra — see
-// Toggle.test.ts's header comment). The show/hide STATE lives in the
-// `useReveal` hook (lib/useReveal.ts) instead of inside this component for
-// exactly that reason: a stateful `useState` here would make RevealInput
-// un-callable as a plain function outside React's renderer. A call site
-// does `const reveal = useReveal(); <RevealInput {...reveal} .../>`.
+// The eye and the padding reserved for it both use physical properties behind
+// the rtl: variant. A logical pe-8 would resolve against the input's own
+// forced ltr, and end-2 against the nearest dir ancestor, which is not always
+// the page (OffsiteWizard puts this field inside a dir="ltr" label). rtl:
+// matches on the page, so both halves land on the same side.
 //
-// Design-language contract (docs/design-language.md, "The reveal eye"):
-//   - Bare icon inside the field's own trailing padding, not a chrome button
-//     beside it. BombVault serves its own SPA (web/index.html mounts #root
-//     directly — no foreign host DOM, confirmed against the Dockerfile/
-//     README: single Go binary serving its own embedded React app on its
-//     own port, never injected into another app's page), so nothing repaints
-//     a plain <button> with host chrome. This renders a real <button>, not
-//     the `<span role="button" tabindex="0">` workaround the spec reserves
-//     for a page embedded in a foreign host UI's global button styling.
-//   - Neutral colour, never the accent: `text-carbon-textMuted` + an
-//     opacity-based hover/focus step, the exact treatment InfoBubble.tsx
-//     uses for its own (i) icon (same precedent, "furniture, not activity").
-//   - Doesn't change the field's width: `wrapperClassName` takes over
-//     whatever layout classes (`w-full`, `flex-1 min-w-0`, …) the bare
-//     <input> used to carry at each call site; the input itself always gets
-//     an unconditional `w-full` so it fills that wrapper exactly like the
-//     original bare input filled ITS parent — swapping <input> for
-//     <RevealInput> never shrinks or grows the field's own footprint.
-//   - Reserves trailing room for the eye. Several call sites build their
-//     className from a shared `inputCls`/`offsiteInput` const also reused by
-//     OTHER, non-secret fields in the same file/function; appending a plain
-//     padding utility after that constant in the className string is NOT
-//     guaranteed to win the cascade against the constant's own `px-*`
-//     (Tailwind's generated utility order is not the order classes appear in
-//     the `class` attribute). The `!` important modifier pins the override
-//     without having to fork or string-edit the shared constant.
-//   - The eye button sits on the field's TRAILING edge — the right in LTR but
-//     the LEFT in RTL (Arabic, Hebrew — both shipped locales here, see
-//     lib/i18n.ts's isRtl). It is positioned with `right-2 rtl:right-auto!
-//     rtl:left-2`, the SAME page-gated physical pattern as the input's padding
-//     below, and deliberately NOT the logical `end-2` it used to be. See that
-//     comment for why the padding can't be logical; the point here is that the
-//     two MUST be driven by the same signal. `end-2` resolves against the
-//     nearest `dir` ANCESTOR, while the `rtl:` variant resolves against the
-//     PAGE — identical on most call sites, but they disagree the moment a call
-//     site nests this component inside its own `dir="ltr"` island (real case:
-//     OffsiteWizard's `<label dir="ltr">RESTIC_REST_PASSWORD</label>`, which
-//     pins that literal env-var name LTR). There the eye followed the label to
-//     the physical right while the reserved room followed the page to the
-//     left: dead space on one side, the secret rendering under the icon on the
-//     other — the exact bug the padding fix below was written to kill, just
-//     re-entering through a different door. Physical + `rtl:`-gated on BOTH
-//     halves makes them provably agree in every nesting.
-//     `rtl:right-auto!` needs its `!` (it has to beat the unconditional
-//     `right-2` base for the same property; equal specificity otherwise leaves
-//     the winner to Tailwind's generated order). `rtl:left-2` needs none —
-//     nothing else on this element sets `left`, and the reset above keeps the
-//     box from being over-constrained (an absolutely positioned element with
-//     an explicit width plus BOTH offsets drops one of them according to the
-//     containing block's direction, i.e. exactly the ambiguity being removed).
-//   - `dir="ltr"` + `text-start` on the <input> itself (RTL sweep, form-engine
-//     Phase 2 Task 6): every value this component ever holds — a login
-//     password, a cloud secret, a fleet/receiver token, an APP_KEY-equivalent
-//     recovery key — is technical data per design-language.md's RTL section,
-//     never language, so it must stay pinned left-to-right and NOT get bidi-
-//     reordered under dir="rtl" (Arabic, Hebrew). Fixing it once here, at the
-//     single shared component every secret field renders through, covers
-//     every call site (Login, Settings' cloud/S3/rest/matrix/smtp/registry/
-//     metrics/account-password fields, Recovery's recovery key, Receiver's
-//     app key, Fleet's token, OffsiteWizard's rest password) instead of
-//     patching each one individually. `text-start` (not the bare default)
-//     because several call sites build their `className` from a shared
-//     `inputCls` constant that may carry its own text-align — `text-start`
-//     resolves to "left" for THIS element specifically since its own `dir` is
-//     now "ltr", regardless of what the surrounding page's direction is, so
-//     the value always reads left-to-right from the field's own left edge.
-//     The field's POSITION in the page still follows the surrounding RTL
-//     layout untouched — only the text inside it is pinned.
-//   - The padding reservation is `pr-8! rtl:pr-0! rtl:pl-8!` — PHYSICAL
-//     properties gated by the `rtl:` variant, deliberately NOT the logical
-//     `pe-8` this used to be (form-engine Phase 2 Task 6 follow-up fix: that
-//     was a real regression, not a style nit). A logical property resolves
-//     against the direction of the ELEMENT IT'S APPLIED TO — and this
-//     specific element's direction is permanently pinned to "ltr" one line
-//     above, for the text-content reason above. So `pe-8` on this input
-//     doesn't track the PAGE's direction — it tracks the INPUT's own,
-//     forced-ltr direction, i.e. it always resolves to padding-right,
-//     full stop. Under an RTL page the eye (following the page) sits on the
-//     left while the reserved padding (following the input's own forced ltr)
-//     stayed on the right — dead space on one side, secret text rendering
-//     UNDERNEATH the eye on the other. Tailwind's compiled `rtl:` selector
-//     here (see the generated CSS) is `:where(:is(:lang(ar),:lang(he),…),
-//     [dir=rtl], [dir=rtl] *)` — an OR of an inherited-`:lang()` clause and
-//     two `dir`-attribute clauses, and crucially NEITHER depends on this
-//     specific element's own `dir`: the language list matches on the
-//     INHERITED page language regardless of this input's forced `dir="ltr"`,
-//     and `[dir="rtl"] *` matches on an ANCESTOR carrying `dir="rtl"` (the
-//     `<html>` element, per lib/i18n.ts), never on the element itself. Both
-//     independently and correctly detect the PAGE's direction on this
-//     descendant even though the descendant's own `dir` disagrees — which is
-//     exactly what's needed here. (Only `rtl:` is used, deliberately never
-//     paired with `ltr:` on this element: an `ltr:` variant built the same
-//     way would ALSO match here whenever the page's language isn't in the
-//     RTL list — which, for an LTR page, is always — so it wouldn't
-//     conflict in practice, but a single unconditional physical base plus
-//     only an `rtl:` override is simpler to reason about than two
-//     direction-conditional classes racing for the same property.)
-// ---------------------------------------------------------------------------
+// The padding utilities carry ! because callers pass shared class strings with
+// their own px-*, and Tailwind's output order, not the class order, decides
+// which one wins. rtl:right-auto! needs it for the same reason against right-2.
 
 export interface RevealInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
-  /** Current reveal state — from useReveal(). */
+  /** visible, onToggleVisible, showLabel and hideLabel come from useReveal(). */
   visible: boolean;
-  /** Flips `visible` — from useReveal(). */
   onToggleVisible: () => void;
-  /** Accessible name while hidden (the eye's action is "show"). From
-   *  useReveal(), which already resolves it via t("common.showValue"). */
+  /** Accessible name of the eye while the value is hidden. */
   showLabel: string;
-  /** Accessible name while visible (the eye's action is "hide"). From
-   *  useReveal(), via t("common.hideValue"). */
+  /** Accessible name of the eye while the value is shown. */
   hideLabel: string;
-  /** Classes for the outer positioning wrapper — pass through whatever
-   *  layout classes (`w-full`, `flex-1 min-w-0`, …) used to sit on the bare
-   *  <input> here, not on `className`, so the field's footprint in its own
-   *  row/grid/flex parent is unchanged by adopting the eye. */
+  /** Layout classes such as w-full or flex-1 min-w-0. They go on the wrapper,
+   *  and the input always fills it. */
   wrapperClassName?: string;
 }
 
@@ -161,17 +55,8 @@ export function RevealInput({
         className="absolute right-2 rtl:right-auto! rtl:left-2 top-1/2 -translate-y-1/2 inline-flex h-[15px] w-[15px] items-center justify-center rounded-pill text-carbon-textMuted opacity-80 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
       >
         {visible ? (
-          // Slashed eye: the same open-eye glyph, dimmed, struck through —
-          // never mirrored/rotated for RTL (design-language.md's RTL section:
-          // a symmetric icon with no inherent reading direction, like the
-          // reveal eye it names explicitly, never gets mirrored).
-          // FILLED eye (design-language.md "Icon glyphs"): the lens was
-          // already a closed silhouette (rule 218 — direct flip); the pupil
-          // is punched out in the field's own surface colour (same cutout
-          // technique this app uses for a slider knob) rather than drawn as
-          // a second currentColor fill, and the slash is a solid filled bar
-          // (rule 219 — a line glyph needs real geometry) at full opacity
-          // over the dimmed lens+pupil, same 0.55 dim as before.
+          // The eye is symmetric, so it is not mirrored under RTL. The pupil is
+          // cut out in the field's surface colour.
           <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true">
             <g opacity="0.55">
               <path d="M1 8C1 8 3.8 3.6 8 3.6S15 8 15 8 12.2 12.4 8 12.4 1 8 1 8Z" />
@@ -180,8 +65,6 @@ export function RevealInput({
             <rect x="-0.5" y="7.2" width="17" height="1.6" rx="0.8" transform="rotate(45 8 8)" />
           </svg>
         ) : (
-          // FILLED eye (open state) — same lens, same surface-colour pupil
-          // cutout, no slash, full opacity.
           <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true">
             <path d="M1 8C1 8 3.8 3.6 8 3.6S15 8 15 8 12.2 12.4 8 12.4 1 8 1 8Z" />
             <circle cx="8" cy="8" r="2.1" fill="var(--carbon-surface2, transparent)" />

@@ -1,20 +1,8 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// #191, third report, and the one that was actually his.
-//
-// The look is reconciled with the server as the page boots (main.tsx). On an
-// instance with a PASSWORD that boot happens while the login screen is up, and
-// /api/display-prefs is not in the auth gate's public list, so it answers 401
-// and the reconcile returns empty-handed. Signing in flips this component's
-// state and renders the app WITHOUT reloading the page, so nothing asked again:
-// the server held every setting and the browser never got one.
-//
-// Measured on the running build before this test was written: sign in with a
-// cleared browser and the only display-prefs traffic is "GET -> 401", with the
-// page left on a white background in English while the server had the lot.
-//
-// So: whenever the gate opens, reconcile. That is what this pins.
-// ---------------------------------------------------------------------------
+// main.tsx reconciles the look with the server at boot. On a password-protected
+// instance that happens behind the login screen and gets a 401, and signing in
+// renders the app without a reload, so Layout has to reconcile again whenever
+// the auth gate opens.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -33,14 +21,12 @@ vi.mock("../lib/api", () => ({
   getHealth: async () => ({ ok: true, version: "v8.5.4" }),
 }));
 
-// The login screen and the app shell are irrelevant here; both are heavy and
-// neither is what this is about.
+// Stubs for the heavy parts that play no role here.
 vi.mock("../pages/Login", () => ({
   LoginPage: ({ onLogin }: { onLogin: () => void }) => (
     <button data-testid="signin" onClick={onLogin}>sign in</button>
   ),
 }));
-vi.mock("../../components/Sidebar", () => ({ Sidebar: () => null }));
 vi.mock("../components/Sidebar", () => ({ Sidebar: () => null }));
 vi.mock("../components/WhatsNewDialog", () => ({ WhatsNewDialog: () => null }));
 
@@ -61,8 +47,6 @@ describe("reconciling the look once the auth gate opens", () => {
       </MemoryRouter>
     );
 
-    // Blocked: the boot-time call already happened in main.tsx and got a 401,
-    // so nothing here may have asked yet.
     await screen.findByTestId("signin");
     expect(syncSpy, "still locked, nothing to reconcile with").not.toHaveBeenCalled();
 
@@ -77,9 +61,7 @@ describe("reconciling the look once the auth gate opens", () => {
   });
 
   it("also reconciles when the session was already valid", async () => {
-    // No password, or a cookie that survived: the gate opens straight away and
-    // main.tsx's call has already succeeded. Asking once more costs one GET and
-    // keeps this component from having to know why the gate opened.
+    // No password, or a session that survived: the gate opens straight away.
     authState.authed = true;
 
     render(

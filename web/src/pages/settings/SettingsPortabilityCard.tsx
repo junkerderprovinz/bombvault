@@ -163,11 +163,7 @@ export function SettingsPortabilityCard({
 
   const busy = importBusy !== "idle" || exporting;
 
-  // Button-size/colour-engine sweep (jdp, live review — see VMSSHCard's own
-  // identical comment for the full reasoning): Export/Choose file/Confirm/
-  // Cancel were already at this page's dominant 32px control height, but
-  // none of the four carried this Card's own `hueIndex` — flat regardless of
-  // rainbow mode. Same `.glim-hue` + `hueVars(rainbowAt(hueIndex))` fix.
+  // The card's four buttons take its hue, as every control in a hued card does.
   const hueOn = hueIndex !== undefined;
 
   return (

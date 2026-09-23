@@ -19,7 +19,7 @@ import (
 
 // tamperService builds a Service whose containers off-site repo points at offsite
 // (flagged immutable), with an optional recording SSH for the Unraid notify path.
-// No docker/virsh/engine is needed — RunTamperTest speaks raw HTTP only.
+// RunTamperTest only speaks HTTP, so no docker, virsh or engine is needed.
 func tamperService(t *testing.T, offsite string, ssh HostSSH) (*Service, *store.Repo) {
 	t.Helper()
 	db, err := store.Open(filepath.Join(t.TempDir(), "test.db"))
@@ -48,9 +48,8 @@ func tamperService(t *testing.T, offsite string, ssh HostSSH) (*Service, *store.
 	return svc, st
 }
 
-// latestTamperRun returns the newest runs-table row of kind "tamper", failing
-// the test when none exists — the open-at-start run seam under test: EVERY
-// tamper outcome (success/failed/skipped) must settle exactly such a row.
+// latestTamperRun returns the newest run of kind "tamper" and fails the test
+// when there is none.
 func latestTamperRun(t *testing.T, st *store.Repo) store.Run {
 	t.Helper()
 	runs, err := st.ListRuns(10)
@@ -77,8 +76,8 @@ func deleteRecorder(status int, seen *[]string) http.Handler {
 	})
 }
 
-// TestRunTamperTestProtected: a server that refuses deletes (403) yields a
-// testable, protected verdict and probes both /data and /snapshots.
+// A 403 yields a testable, protected verdict, and both /data and /snapshots are
+// probed.
 func TestRunTamperTestProtected(t *testing.T) {
 	var seen []string
 	srv := httptest.NewServer(deleteRecorder(http.StatusForbidden, &seen))
@@ -107,7 +106,6 @@ func TestRunTamperTestProtected(t *testing.T) {
 	if !hasData || !hasSnap {
 		t.Fatalf("both /data and /snapshots must be probed, saw %v", seen)
 	}
-	// The verdict was recorded as protected.
 	last, found, err := st.LatestTamperTest("containers")
 	if err != nil || !found {
 		t.Fatalf("expected a recorded tamper test, found=%v err=%v", found, err)
@@ -115,21 +113,15 @@ func TestRunTamperTestProtected(t *testing.T) {
 	if !last.Protected {
 		t.Fatalf("recorded verdict should be protected")
 	}
-	// And the shared runs table settled a "success" tamper run on the domain target.
 	run := latestTamperRun(t, st)
 	if run.Status != "success" || run.TargetID != "containers" || run.FinishedAt == nil {
 		t.Fatalf("tamper run = %+v, want Status=success TargetID=containers finished", run)
 	}
 }
 
-// TestRunTamperTestUsesTargetOwnCredentials pins that each destination is
-// probed with ITS OWN credentials. The credentials used to be decoded once,
-// before the loop, and handed to every target, so a destination pointing at a
-// named credential set (CredsRef, since 7.11.0) was probed with the shared
-// ones. The rest-server answers 401 to that, and 401 is deliberately
-// inconclusive here, so the tamper test for exactly those destinations
-// recorded no verdict and stayed "skipped" forever while looking like it ran.
-// Replication always resolved per target, so only the verification was blind.
+// A target with its own named credential set is probed with it. The shared
+// credentials would get a 401, which is inconclusive, and the test would stay
+// skipped.
 func TestRunTamperTestUsesTargetOwnCredentials(t *testing.T) {
 	var probedAs []string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -150,8 +142,7 @@ func TestRunTamperTestUsesTargetOwnCredentials(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	// A real target row (not the settings-synthesised one) so the target loop
-	// sees a CredsRef at all.
+	// Only a stored target row carries a CredsRef.
 	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
 		Domain:    "containers",
 		Name:      "Primary",
@@ -176,10 +167,9 @@ func TestRunTamperTestUsesTargetOwnCredentials(t *testing.T) {
 	}
 }
 
-// drainTwoProgressEvents reads a begin + terminal progress event pair a
-// synchronous call published (the Subscribe channel is buffered, so both are
-// already queued when the call returns); a 5s deadline keeps a regression from
-// hanging. Shared by the tamper and flash-ZIP-export progress tests (#109).
+// drainTwoProgressEvents reads the begin and end events a synchronous call
+// published. The Subscribe channel is buffered, so both are queued by the time
+// the call returns; the deadline keeps a failure from hanging.
 func drainTwoProgressEvents(t *testing.T, ch <-chan progress.Event) (begin, term progress.Event) {
 	t.Helper()
 	deadline := time.After(5 * time.Second)
@@ -196,10 +186,8 @@ func drainTwoProgressEvents(t *testing.T, ch <-chan progress.Event) (begin, term
 	return begin, term
 }
 
-// TestRunTamperTestEmitsLiveProgress pins #109: a running tamper test —
-// previously invisible until its verdict row appeared — now publishes a
-// begin/terminal "maintenance" progress pair keyed "tamper:<domain>", so the
-// dashboard activity log shows a live line while the far side is probed.
+// A running tamper test publishes a "maintenance" progress pair keyed
+// "tamper:<domain>", so the activity log shows it while the far side is probed.
 func TestRunTamperTestEmitsLiveProgress(t *testing.T) {
 	var seen []string
 	srv := httptest.NewServer(deleteRecorder(http.StatusForbidden, &seen))
@@ -224,16 +212,12 @@ func TestRunTamperTestEmitsLiveProgress(t *testing.T) {
 	}
 }
 
-// TestRunTamperTestUnprotectedFlipNotifies: a server that would delete (404)
-// yields an unprotected verdict, records it, and — because the PREVIOUS verdict
-// was protected — fires exactly one protection-loss notification.
+// A server that accepts deletes after a protected verdict sends exactly one
+// protection-loss notification.
 func TestRunTamperTestUnprotectedFlipNotifies(t *testing.T) {
 	var seen []string
-	// 200, not 404 ([556]). A server that ACCEPTS a delete is what "unprotected"
-	// actually looks like; measured against a real rest-server, a DELETE for a
-	// non-existent 64-hex object answers 200 without --append-only and 403 with
-	// it, and never 404. A 404 is now inconclusive and records no verdict, so it
-	// can no longer stand in for an unprotected far side here.
+	// A rest-server without --append-only answers 200 for a missing 64-hex
+	// object; a 404 would be inconclusive.
 	srv := httptest.NewServer(deleteRecorder(http.StatusOK, &seen))
 	defer srv.Close()
 
@@ -243,7 +227,7 @@ func TestRunTamperTestUnprotectedFlipNotifies(t *testing.T) {
 	if err := svc.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
 		t.Fatal(err)
 	}
-	// Seed a previous PROTECTED verdict so the new unprotected one is a flip.
+	// A previous protected verdict makes the new one a flip.
 	if err := st.RecordTamperTest("containers", true, ""); err != nil {
 		t.Fatal(err)
 	}
@@ -255,17 +239,14 @@ func TestRunTamperTestUnprotectedFlipNotifies(t *testing.T) {
 	if !v.Testable || v.Protected {
 		t.Fatalf("an accepted delete must be testable + NOT protected, got %+v", v)
 	}
-	// The detail must quote what the far side actually did, since [557] renders it
-	// in the UI instead of a fixed "server ACCEPTED the delete" sentence.
+	// The UI shows the detail, so it names the status the far side returned.
 	if !strings.Contains(v.Detail, "200") {
 		t.Fatalf("detail must name the status the far side returned, got %q", v.Detail)
 	}
-	// Recorded as unprotected.
 	last, found, err := st.LatestTamperTest("containers")
 	if err != nil || !found || last.Protected {
 		t.Fatalf("expected a recorded UNprotected verdict, got found=%v protected=%v err=%v", found, last.Protected, err)
 	}
-	// Protection-loss notification fired exactly once over the Unraid channel.
 	if len(ssh.runs) != 1 {
 		t.Fatalf("expected exactly one protection-loss notify on the flip, got %d", len(ssh.runs))
 	}
@@ -275,9 +256,8 @@ func TestRunTamperTestUnprotectedFlipNotifies(t *testing.T) {
 	}
 }
 
-// TestRunTamperTestAccepted: a server that accepts the delete (200) is NOT
-// protected, with a clear detail — and records a "failed" run (the alarming
-// outcome) in the shared runs table.
+// An accepted delete is not protected and records a failed run carrying the
+// detail.
 func TestRunTamperTestAccepted(t *testing.T) {
 	var seen []string
 	srv := httptest.NewServer(deleteRecorder(http.StatusOK, &seen))
@@ -303,11 +283,9 @@ func TestRunTamperTestAccepted(t *testing.T) {
 	}
 }
 
-// TestRunTamperTestNonRestNotTestable: a non-REST off-site repo (the user's B2
-// object-lock case) is honestly reported as not testable, with no VERDICT
-// recorded — but the shared runs table still settles a "skipped" run carrying
-// the reason, so the scheduled test is visible in the activity log instead of
-// running invisibly (#109 follow-up).
+// A non-REST off-site repo is not testable and records no verdict, but still
+// settles a skipped run with the reason, so a scheduled test shows up in the
+// activity log.
 func TestRunTamperTestNonRestNotTestable(t *testing.T) {
 	svc, st := tamperService(t, "s3:s3.amazonaws.com/bucket/containers", &fakeHostSSH{})
 	v, err := svc.RunTamperTest(context.Background(), "containers")
@@ -332,18 +310,15 @@ func TestRunTamperTestNonRestNotTestable(t *testing.T) {
 	}
 }
 
-// TestRunTamperTestTransportErrorInconclusive: a server that refuses the
-// connection makes the test INCONCLUSIVE — RunTamperTest returns an error and
-// records NO VERDICT (never treats an unreachable server as protected OR
-// unprotected), while still settling a "skipped" run row for visibility.
+// A refused connection is inconclusive: RunTamperTest returns an error and
+// records no verdict, but still settles a skipped run.
 func TestRunTamperTestTransportErrorInconclusive(t *testing.T) {
 	srv := httptest.NewServer(deleteRecorder(http.StatusForbidden, new([]string)))
 	url := srv.URL
 	srv.Close() // now the address refuses connections
 
 	svc, st := tamperService(t, "rest:"+url, &fakeHostSSH{})
-	// Seed a previous verdict with a UNIQUE marker so we can prove the inconclusive
-	// run inserted no new row (a new record would replace it as "latest").
+	// A new record would replace this one as the latest.
 	const seedMarker = "SEED-MARKER-DO-NOT-REPLACE"
 	if err := st.RecordTamperTest("containers", true, seedMarker); err != nil {
 		t.Fatal(err)
@@ -353,8 +328,6 @@ func TestRunTamperTestTransportErrorInconclusive(t *testing.T) {
 	if err == nil {
 		t.Fatal("a transport error must return a non-nil error (inconclusive)")
 	}
-	// The latest record is STILL the seeded one, untouched — RecordTamperTest was
-	// never called for the inconclusive run.
 	last, found, lerr := st.LatestTamperTest("containers")
 	if lerr != nil || !found {
 		t.Fatalf("expected the seeded record to remain, found=%v err=%v", found, lerr)
@@ -362,19 +335,14 @@ func TestRunTamperTestTransportErrorInconclusive(t *testing.T) {
 	if !last.Protected || last.Detail != seedMarker {
 		t.Fatalf("inconclusive run must record nothing (seeded marker must stand), got protected=%v detail=%q", last.Protected, last.Detail)
 	}
-	// But the shared runs table still settles a "skipped" run carrying the
-	// transport error, so the attempt shows up in the activity log.
 	run := latestTamperRun(t, st)
 	if run.Status != "skipped" || run.TargetID != "containers" || run.Error == "" {
 		t.Fatalf("tamper run = %+v, want Status=skipped TargetID=containers with an error text", run)
 	}
 }
 
-// TestRunTamperTestInconclusiveStatuses: a 401 (rotated creds) or 503 (far-side
-// maintenance / proxy) is NOT a delete verdict — it is INCONCLUSIVE, exactly like
-// a transport error: RunTamperTest returns an error, records NO verdict row and
-// fires NO notification (it must never flip a stored PROTECTED verdict to a false
-// "protection LOST" on a non-decisive status) — only a "skipped" run row.
+// A 401 (rotated credentials) or 503 (far-side maintenance) is inconclusive like
+// a transport error: no verdict, no notification, only a skipped run.
 func TestRunTamperTestInconclusiveStatuses(t *testing.T) {
 	for _, status := range []int{http.StatusUnauthorized, http.StatusServiceUnavailable} {
 		t.Run(fmt.Sprintf("status_%d", status), func(t *testing.T) {
@@ -386,8 +354,7 @@ func TestRunTamperTestInconclusiveStatuses(t *testing.T) {
 			if err := svc.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
 				t.Fatal(err)
 			}
-			// Seed a previous PROTECTED verdict with a unique marker — a non-decisive
-			// status must leave it untouched (no new row, no flip).
+			// A protected verdict that has to stay the latest.
 			const seed = "SEED-INCONCLUSIVE-DO-NOT-REPLACE"
 			if err := st.RecordTamperTest("containers", true, seed); err != nil {
 				t.Fatal(err)
@@ -397,16 +364,13 @@ func TestRunTamperTestInconclusiveStatuses(t *testing.T) {
 			if err == nil {
 				t.Fatalf("status %d must be inconclusive → a non-nil error", status)
 			}
-			// Nothing recorded — the seeded PROTECTED row still stands.
 			last, found, lerr := st.LatestTamperTest("containers")
 			if lerr != nil || !found || !last.Protected || last.Detail != seed {
 				t.Fatalf("status %d must record nothing (seed must stand), got protected=%v detail=%q found=%v err=%v", status, last.Protected, last.Detail, found, lerr)
 			}
-			// And no protection-loss notification fired.
 			if len(ssh.runs) != 0 {
 				t.Fatalf("status %d must not notify, got %d notifications", status, len(ssh.runs))
 			}
-			// But the runs table still settles a "skipped" row for the attempt.
 			run := latestTamperRun(t, st)
 			if run.Status != "skipped" || !strings.Contains(run.Error, "inconclusive") {
 				t.Fatalf("status %d tamper run = %+v, want Status=skipped with the inconclusive reason", status, run)
@@ -415,14 +379,10 @@ func TestRunTamperTestInconclusiveStatuses(t *testing.T) {
 	}
 }
 
-// TestRunTamperTestConcurrentFlipNotifiesOnce: two concurrent tamper tests that
-// each observe a protected→unprotected flip must fire the protection-loss alert
-// EXACTLY once. RunTamperTest serialises per domain, so read-prev → record →
-// notify is atomic: the second run reads the verdict the first recorded and sees
-// no flip. Without the per-domain lock both could read the old PROTECTED verdict
-// and double-alarm.
+// RunTamperTest serialises per domain, so of two concurrent runs the second
+// reads the verdict the first recorded and sees no flip.
 func TestRunTamperTestConcurrentFlipNotifiesOnce(t *testing.T) {
-	srv := httptest.NewServer(deleteRecorder(http.StatusOK, new([]string))) // accepted delete = unprotected ([556])
+	srv := httptest.NewServer(deleteRecorder(http.StatusOK, new([]string))) // accepted delete: unprotected
 	defer srv.Close()
 
 	ssh := &fakeHostSSH{}
@@ -430,8 +390,7 @@ func TestRunTamperTestConcurrentFlipNotifiesOnce(t *testing.T) {
 	if err := svc.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
 		t.Fatal(err)
 	}
-	// Seed a previous PROTECTED verdict so BOTH concurrent runs would, without
-	// serialisation, observe the same protected→unprotected flip.
+	// Without the lock both runs would see this protected verdict and alert.
 	if err := st.RecordTamperTest("containers", true, ""); err != nil {
 		t.Fatal(err)
 	}
@@ -453,20 +412,14 @@ func TestRunTamperTestConcurrentFlipNotifiesOnce(t *testing.T) {
 	}
 }
 
-// TestTamperProbeIDsAreFullLength pins the object-id length both probes use ([555]).
-//
-// rest-server names EVERY object it serves — data, index, keys, snapshots alike —
-// by its full 64-hex id, and a name of any other length is not an object path at
-// all. The snapshot probe used to send the 8-hex SHORT id restic prints. Measured
-// against a real rest-server, with and without --append-only:
+// rest-server names every object by its full 64-hex ID; any other length is not
+// an object path. Measured with and without --append-only:
 //
 //	DELETE /repo/data/<64 hex>        403 (append-only)   200 (plain)
 //	DELETE /repo/snapshots/<64 hex>   403 (append-only)   200 (plain)
 //	DELETE /repo/snapshots/<8 hex>    404                 404
 //
-// So the short id made the second probe blind, and because a 404 counted as "not
-// protected" and the verdict is AND-ed across both probes, the tamper test could
-// never pass on ANY rest-server. This test fails against that build.
+// A probe with the 8-hex short ID restic prints would get 404 from every server.
 func TestTamperProbeIDsAreFullLength(t *testing.T) {
 	var seen []string
 	srv := httptest.NewServer(deleteRecorder(http.StatusForbidden, &seen))
@@ -491,9 +444,8 @@ func TestTamperProbeIDsAreFullLength(t *testing.T) {
 			t.Errorf("probe %q uses a %d-character id; rest-server only recognises 64-hex object names", p, len(id))
 		}
 	}
-	// And never /locks/: measured 200 even under --append-only, because deleting
-	// locks is rest-server's one documented append-only exception, so a locks
-	// probe would report every protected server as unprotected.
+	// Deleting locks is allowed even under --append-only, so a locks probe would
+	// call every protected server unprotected.
 	for _, p := range seen {
 		if strings.Contains(p, "/locks/") {
 			t.Errorf("probe %q targets locks, which append-only deliberately still allows", p)
@@ -501,16 +453,10 @@ func TestTamperProbeIDsAreFullLength(t *testing.T) {
 	}
 }
 
-// TestTamperProbe404IsInconclusive: a 404 is not a verdict ([556]).
-//
-// The old mapping read it as "the object did not exist, so the server would have
-// deleted a real one — not append-only". A rest-server refuses on append-only
-// BEFORE it looks for the object: a plain server answers a DELETE for a
-// non-existent 64-hex object with 200, an append-only one with 403, and neither
-// answers 404. A 404 therefore means the URL was not an object path at all.
-//
-// Reading that as "unprotected" does not merely mislead — it fires the
-// protection-lost alert. RunTamperTest must return an error and record nothing.
+// rest-server checks append-only before it looks for the object, so a delete of
+// a missing 64-hex object gets 200 or 403, never 404. A 404 means the URL is not
+// an object path; reading it as unprotected would fire the protection-lost
+// alert.
 func TestTamperProbe404IsInconclusive(t *testing.T) {
 	var seen []string
 	srv := httptest.NewServer(deleteRecorder(http.StatusNotFound, &seen))

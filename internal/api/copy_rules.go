@@ -179,12 +179,25 @@ func (s *Service) checkHomeChange(ctx context.Context, item store.ItemRef, read 
 		if err := s.validateItemRepoID(item.Domain, home.Repo); err != nil {
 			return fmt.Errorf("%w: %w", errRepoInvalid, err)
 		}
+		// The new repository may already hold fileset:<name> snapshots of an
+		// unrelated folder, which this set would adopt on its next backup.
+		if item.Domain == "files" {
+			set, err := s.store.GetFileSet(item.Key)
+			if err != nil {
+				return err
+			}
+			if err := s.fileSetNameAdoptable(ctx, set.Name, home.Repo, set.Path); err != nil {
+				return err
+			}
+		}
 	}
-	had, err := countsAsBackedUp(s.itemBackups(ctx, item))
-	if err != nil {
+	presence, err := s.itemBackups(ctx, item)
+	switch {
+	case presence == backupsUnreadable:
+		return fmt.Errorf("%w: %w", errHomeUncheckable, err)
+	case err != nil:
 		return err
-	}
-	if had {
+	case presence == backupsPresent:
 		return errHomeHasBackups
 	}
 	return nil

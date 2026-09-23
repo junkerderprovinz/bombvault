@@ -1,27 +1,8 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// ThemeCard (GlimStone follow-up pass, live-review round) — the dark/light
-// picker, moved out of Sidebar.tsx's own footer into its own Card in
-// Settings' General tab. Converted to a horizontal Selector in a LATER
-// live-review round (jdp: "das design dunkel/hell bitte ein horizontaler
-// selektor machen") — see ThemeCard's own header comment in Settings.tsx for
-// the full rationale. This covers the picker's OWN behaviour in that shape:
-// both segments are always present (light and dark), clicking one sets the
-// theme DIRECTLY to that segment (never a flip-the-current-value toggle) and
-// persists via lib/theme.ts's setTheme() (same STORAGE_KEY, same data-theme
-// paint), the active segment reflects the current mode via aria-selected,
-// and an OS-level prefers-color-scheme flip repaints the active segment live
-// while "system" is the stored preference — the exact same state machine
-// SidebarControls' old theme row had, just relocated and re-skinned.
-// Sidebar.language.dom.test.tsx (sibling file) is the other half: proving
-// the OLD location no longer renders it.
-//
-// jsdom opted in explicitly (real DOM/click behaviour needed, plus a
-// matchMedia stub lib/theme.ts's getResolvedTheme()/onSystemThemeChange()
-// both call — jsdom itself doesn't implement matchMedia) — see
-// Selector.dom.test.tsx's own header comment for this repo's naming
-// convention for the jsdom-opted-in exception.
-// ---------------------------------------------------------------------------
+// ThemeCard, the light/dark Selector on Settings' General tab. Clicking a
+// segment sets that theme directly and persists it through setTheme(), the
+// active segment carries aria-selected, and while "system" is stored an OS
+// prefers-color-scheme change repaints it live.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { ThemeCard } from "./settings/ThemeCard";
@@ -44,10 +25,8 @@ function renderCard() {
 
 let changeListeners: Array<() => void> = [];
 
-/** Minimal matchMedia stub — `matches` reflects whatever the test wants the
- * OS's prefers-color-scheme to currently be, and `addEventListener`
- * captures the change callback so a test can fire it manually to simulate
- * an OS-level flip (matching lib/theme.ts's onSystemThemeChange() contract). */
+/** jsdom has no matchMedia. `matches` is the OS preference the test wants, and
+ * the captured change callbacks let a test simulate an OS-level flip. */
 function stubMatchMedia(prefersDark: boolean) {
   window.matchMedia = ((query: string) => ({
     matches: prefersDark,
@@ -128,12 +107,8 @@ describe("ThemeCard", () => {
     renderCard();
     expect(screen.getByRole("tab", { name: "Light" }).getAttribute("aria-selected")).toBe("true");
 
-    // Simulate the OS flipping to dark: update what matchMedia reports, then
-    // fire the captured change listener the way a real matchMedia would.
-    // act() wraps this because the listener fires the component's setState
-    // OUTSIDE any Testing Library helper (unlike fireEvent, which wraps
-    // automatically) — without it, the assertion below can run before React
-    // flushes the resulting re-render.
+    // The OS flips to dark. The listener sets state outside any Testing
+    // Library helper, so act() makes React flush before the assertion.
     stubMatchMedia(true);
     expect(changeListeners.length).toBeGreaterThan(0);
     act(() => {
@@ -143,10 +118,9 @@ describe("ThemeCard", () => {
     expect(screen.getByRole("tab", { name: "Dark" }).getAttribute("aria-selected")).toBe("true");
   });
 
-  it("once explicitly set to \"light\", a later OS flip does NOT change the active segment", () => {
+  it("once explicitly set to \"light\", a later OS flip does not change the active segment", () => {
     localStorage.setItem(STORAGE_KEY, "light");
     renderCard();
-    // Explicit preference is "light" — an OS-level flip must be ignored.
     stubMatchMedia(true);
     act(() => {
       changeListeners.forEach((cb) => cb());

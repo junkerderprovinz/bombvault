@@ -7,8 +7,6 @@ import (
 	"testing"
 )
 
-// The Docker healthcheck (#60) must exit 0 when /api/health answers 200 and
-// non-zero when the engine is not serving.
 func TestHealthcheckAt(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/health" {

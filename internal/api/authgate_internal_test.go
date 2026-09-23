@@ -12,18 +12,15 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// authGatePublicPaths mirrors the allowlist inside authGate: these paths must
-// stay reachable both when auth is on without a cookie AND when the settings
-// store is erroring (so the SPA can render the login screen and health checks
-// keep working).
-// /widget and /api/widget/data are on it too: an embedding iframe cannot carry
-// the session cookie, so both self-gate on the widget token inside their
-// handlers (fail-closed 403 while no token is stored).
+// authGatePublicPaths mirrors authGate's allowlist: the login screen and the
+// health check have to work without a session and while the store is failing.
+// The widget handlers check the widget token themselves, because an embedding
+// iframe carries no session cookie.
 var authGatePublicPaths = []string{"/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data"}
 
-// newAuthGateHandler wires a Handler over a fresh in-memory store and also
-// returns the raw *sql.DB so a test can force store errors by closing it.
-// Only cfg + store are populated — authGate touches nothing else.
+// newAuthGateHandler returns a Handler on a fresh in-memory store, plus the
+// *sql.DB so a test can break the store by closing it. authGate needs only cfg
+// and store.
 func newAuthGateHandler(t *testing.T) (*Handler, *store.Repo, *sql.DB) {
 	t.Helper()
 	db, err := store.Open(":memory:")
@@ -61,10 +58,10 @@ func enableAuth(t *testing.T, h *Handler, repo *store.Repo) string {
 	return s.AuthPasswordHash
 }
 
-// enableAuthLegacyHash stores the PRE-v8.6.0 password format (a bare HMAC) and
-// returns it. Two tests need it: the one that proves a legacy hash is upgraded
-// on sign-in, and the throttle-flood test, whose ten thousand attempts have to
-// fit inside loginWindow and cannot when every one of them runs Argon2id.
+// enableAuthLegacyHash stores the password in the legacy bare-HMAC format and
+// returns it. The upgrade-on-sign-in test needs it, and so does the throttle
+// flood test, whose ten thousand attempts would not fit in loginWindow with
+// Argon2id.
 func enableAuthLegacyHash(t *testing.T, h *Handler, repo *store.Repo) string {
 	t.Helper()
 	s, err := repo.GetSettings()
@@ -101,15 +98,14 @@ func gateStatus(t *testing.T, h *Handler, path, cookie string) (code int, nextCa
 	}))
 	r := httptest.NewRequest(http.MethodGet, path, nil)
 	if cookie != "" {
-		r.AddCookie(&http.Cookie{Name: sessionCookieName, Value: cookie}) //nolint:gosec // G124: a REQUEST cookie in a test — Secure/HttpOnly are response attributes
+		r.AddCookie(&http.Cookie{Name: sessionCookieName, Value: cookie}) //nolint:gosec // G124: request cookie; Secure and HttpOnly only apply to responses
 	}
 	w := httptest.NewRecorder()
 	gate.ServeHTTP(w, r)
 	return w.Code, nextCalled
 }
 
-// Auth OFF (no password hash stored): every request — protected paths included —
-// passes straight through to next.
+// TestAuthGateOffPassesThrough: with no password stored, everything passes.
 func TestAuthGateOffPassesThrough(t *testing.T) {
 	h, _, _ := newAuthGateHandler(t)
 	code, called := gateStatus(t, h, "/api/status", "")
@@ -118,8 +114,6 @@ func TestAuthGateOffPassesThrough(t *testing.T) {
 	}
 }
 
-// Auth ON without a cookie: protected paths answer 401 and never reach next;
-// the public allowlist stays reachable.
 func TestAuthGateOnBlocksWithoutCookie(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	enableAuth(t, h, repo)
@@ -137,14 +131,13 @@ func TestAuthGateOnBlocksWithoutCookie(t *testing.T) {
 	}
 }
 
-// Auth ON with cookies: a token minted under the CURRENT epoch passes; garbage
-// is rejected; and a previously valid token dies the moment the epoch rotates
-// (the logout-all revocation path, end to end through the gate).
+// TestAuthGateOnCookieValidation also covers logout-all: rotating the epoch
+// revokes every token minted before it.
 func TestAuthGateOnCookieValidation(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	hash := enableAuth(t, h, repo)
 
-	// Fresh install: the epoch is the legacy empty string — a normal epoch value.
+	// A fresh install has an empty epoch, which is a valid value.
 	tok := secret.NewSessionToken(h.cfg.AppKey, hash, "", sessionTTL)
 	code, called := gateStatus(t, h, "/api/status", tok)
 	if code != http.StatusOK || !called {
@@ -156,8 +149,6 @@ func TestAuthGateOnCookieValidation(t *testing.T) {
 		t.Fatalf("garbage cookie: want 401 without reaching next, got code=%d called=%v", code, called)
 	}
 
-	// Rotate the epoch (what POST /api/logout-all does): the old cookie must be
-	// revoked, and a token minted under the NEW epoch must pass.
 	setEpoch(t, repo, "0123456789abcdef0123456789abcdef")
 	code, called = gateStatus(t, h, "/api/status", tok)
 	if code != http.StatusUnauthorized || called {
@@ -170,9 +161,8 @@ func TestAuthGateOnCookieValidation(t *testing.T) {
 	}
 }
 
-// Store error: the gate FAILS CLOSED — protected paths answer 503 (never
-// silently dropping the gate), while the public allowlist stays reachable so
-// the SPA can still render and recover.
+// TestAuthGateStoreErrorFailsClosed: a failing store closes the gate with 503,
+// while the public paths stay open so the SPA can still load.
 func TestAuthGateStoreErrorFailsClosed(t *testing.T) {
 	h, repo, db := newAuthGateHandler(t)
 	enableAuth(t, h, repo)

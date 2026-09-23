@@ -1,13 +1,9 @@
 package api
 
-// BackupEverything is the "Backup Everything" pass: a 6th, independent
-// pseudo-domain that sequentially runs containers → vms → flash → files →
-// config, group-stamping every child run it produces (WithRunGroup) under one
-// parent run row (target_id = store.EverythingTargetID), and fires the
-// operator-configured global pre/post hooks around the whole pass — the
-// dead-man's-switch use case the feature exists for. See the design spec
-// (decisions 3, 5 and 7) and the implementation plan's Task 4 for the full
-// rationale — this file implements that plan.
+// "Backup Everything" runs containers, vms, flash, files and config in turn
+// under one parent run row (target_id = store.EverythingTargetID), stamps
+// every child run with that row's group (WithRunGroup), and fires the global
+// pre and post hooks around the whole pass so a dead-man's switch can watch it.
 
 import (
 	"context"
@@ -22,37 +18,26 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// everythingBreakdownMaxLen bounds the structured per-domain breakdown string
-// FinishRun stores as the parent run's error text, matching truncateRunErr's
-// existing 500-char convention for run error messages elsewhere in this file.
+// everythingBreakdownMaxLen bounds the per-domain breakdown stored as the
+// parent run's error text, the same 500 characters truncateRunErr allows.
 const everythingBreakdownMaxLen = 500
 
-// EverythingSummary is the outcome of one "Backup Everything" pass, returned
-// by BackupEverything for callers that want more than the plain error
-// StartBackupEverything's background goroutine settles for. RunID is the
-// parent run's id (every child run this pass produced carries GroupID ==
-// RunID); Status/Error mirror what was written to that parent run via
-// FinishRun; Domains carries the per-domain detail the breakdown string was
-// built from, for callers (tests, a future UI) that want structured data
-// instead of re-parsing Error.
+// EverythingSummary is the outcome of one "Backup Everything" pass. RunID is
+// the parent run, which every child run of the pass carries as GroupID. Status
+// and Error are what was written to the parent run; Domains holds the results
+// the breakdown was built from.
 type EverythingSummary struct {
 	RunID   string
-	Status  string // "success" | "failed" — mirrors the parent run's own status
-	Error   string // the structured breakdown; empty on a clean pass
+	Status  string // "success" or "failed"
+	Error   string // the breakdown; empty on a clean pass
 	Domains []EverythingDomainResult
 }
 
-// EverythingDomainResult is one domain step's outcome within a "Backup
-// Everything" pass. Attempted/Failed/Failures mirror
-// schedule.RunContainersJob/RunVMsJob/RunFilesJob's own return shape for the
-// three multi-item domains (containers/vms/files); flash/config (singletons)
-// are represented the same way with Attempted always 1, so one formatter
-// (formatEverythingDomain) covers every domain uniformly. Attempted == 0 with
-// Failed == 0 means nothing was eligible this pass (e.g. no file sets
-// defined) — a benign no-op, not a failure (design spec, decision 3).
-// Attempted == 0 with Failed == 1 means the domain faulted before any item
-// could even be attempted (e.g. ListTargetsScheduleOrder itself errored) —
-// Failures[0] carries that one synthetic entry.
+// EverythingDomainResult is one domain's outcome within a pass, in the shape
+// schedule.RunContainersJob and its siblings return. Flash and config always
+// have Attempted 1. Attempted 0 with Failed 0 means nothing was eligible;
+// Attempted 0 with Failed 1 means the domain failed before any item was tried,
+// and Failures[0] carries the reason.
 type EverythingDomainResult struct {
 	Domain    string
 	Attempted int
@@ -60,111 +45,76 @@ type EverythingDomainResult struct {
 	Failures  []schedule.ItemFailure
 }
 
-// everythingStep is one domain's place in a "Backup Everything" pass: the
-// domain name (for the skip log), the operator's own on/off switch for it, and
-// the step itself. It exists so the enabled-check sits in ONE loop rather than
-// five call sites, which is how the check came to be missing from all five.
+// everythingStep is one domain of a pass with the operator's switch for it,
+// so the enabled check lives in one loop instead of five call sites.
 type everythingStep struct {
 	domain  string
 	enabled bool
 	run     func() EverythingDomainResult
 }
 
-// ErrEverythingInFlight is returned by BackupEverything when a "Backup
-// Everything" pass is already running. It is a refusal, not a failure: the
-// caller asked for a pass and the answer is that the one already in flight is
-// the pass — the same answer StartBackupEverything gives the HTTP handler as a
-// 409, phrased for a caller that does not speak in status codes.
+// ErrEverythingInFlight is returned by BackupEverything while another pass is
+// running. The HTTP handler answers the same case with 409.
 var ErrEverythingInFlight = errors.New("a Backup Everything pass is already running")
 
 // BackupEverything runs one "Backup Everything" pass and returns once every
-// domain step has been attempted. It essentially never returns a non-nil
-// error once the parent run has started recording: every REAL failure (a
-// domain erroring, an individual item failing) is captured as that domain's
-// own EverythingDomainResult and folded into the parent run's structured
-// breakdown, never propagated up — mirroring RunContainersJob/RunVMsJob/
-// RunFilesJob's own contract of returning counts, not an error, for exactly
-// this reason (a scheduled job logs per-item failures, it does not abort
-// over them). A non-nil error here means the pass could not even be recorded
-// as attempted (reading Settings or starting the parent run itself failed, or
-// a pass is already in flight) — there is no partial outcome to report.
+// domain has been attempted. Domain and item failures go into the parent run's
+// breakdown, not into the returned error, as with RunContainersJob and the
+// other scheduled jobs. An error means the pass could not be recorded at all:
+// reading Settings or starting the parent run failed, or a pass is already in
+// flight.
 //
-// It holds the single-flight guard for the duration of the pass. The guard used
-// to live in StartBackupEverything alone — the HTTP entry point — so the
-// SCHEDULED closure, which calls this function directly, never set it and never
-// tested it. A manual "Run now" during a nightly pass therefore found the flag
-// still false, took it, and started a SECOND concurrent pass: two parent run
-// rows on the same target, every domain backed up twice (lockDomain blocks
-// rather than failing, so the two just interleaved and both completed), and the
-// post-hook fired twice, i.e. the dead-man's-switch reported the whole server
-// protected twice for one nightly window. cron's own SkipIfStillRunning only
-// stops a scheduled pass overlapping ITSELF. Owning the guard here means every
-// entry point is covered by construction rather than by each one remembering.
+// The single-flight guard is taken here and not only in StartBackupEverything
+// because the scheduler calls this function directly. Otherwise a manual
+// "Run now" during a nightly pass would start a second one, backing up every
+// domain twice and firing the post-hook twice. cron's SkipIfStillRunning only
+// keeps a scheduled pass from overlapping itself.
 func (s *Service) BackupEverything(ctx context.Context) (_ EverythingSummary, retErr error) {
 	if !s.everythingActive.CompareAndSwap(false, true) {
 		return EverythingSummary{}, ErrEverythingInFlight
 	}
 	defer s.everythingActive.Store(false)
-	// The same recovery StartBackupEverything wraps its goroutine in, and for a
-	// reason this entry point shares: it is what the SCHEDULER calls. A panic in
-	// a domain step is caught there by cron.Recover, so the process survives —
-	// but nothing then closes the parent run row, and it sits in the Activity Log
-	// and Run History as a whole-server pass still running, until a restart.
-	// Deferred FIRST so it runs LAST, after the guard is released.
+	// cron.Recover keeps the process alive after a panic in a domain step, but
+	// nothing would close the parent run row, and the Activity Log would show
+	// the pass as running until a restart.
 	defer s.recoverOperation("backup everything: "+store.EverythingTargetID, &retErr, func(msg string) {
 		s.failStuckRun(store.EverythingTargetID, msg)
 	})
 	return s.backupEverythingHoldingGuard(ctx)
 }
 
-// backupEverythingHoldingGuard is the pass itself. Its caller MUST already hold
-// everythingActive and must release it when the pass returns — BackupEverything
-// does both around this call, and StartBackupEverything takes the guard
-// synchronously (so the handler can answer 409 without waiting on a goroutine)
-// and releases it in its own deferred chain.
+// backupEverythingHoldingGuard is the pass itself. The caller holds
+// everythingActive and releases it afterwards. StartBackupEverything takes it
+// synchronously so the handler can answer 409 without waiting on a goroutine.
 func (s *Service) backupEverythingHoldingGuard(ctx context.Context) (EverythingSummary, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return EverythingSummary{}, fmt.Errorf("backup everything: read settings: %w", err)
 	}
 
-	// Best-effort, before anything else: a failing/hanging pre-hook must never
-	// block the pass it is meant to gate (design spec, decision 6). HostShell.Run
-	// already applies its own bounded timeout, so ctx is passed through as-is —
-	// StartBackupEverything is the layer responsible for detaching it from
-	// request cancellation (context.WithoutCancel), same as StartBackupAll.
+	// A failing or hanging pre-hook must not block the pass it gates.
+	// HostShell.Run has its own timeout, so ctx is passed through as is.
 	if settings.EverythingPreHook != "" {
 		if err := s.hostShell.Run(ctx, settings.EverythingPreHook); err != nil {
 			log.Printf("api: backup everything: pre-hook failed (best-effort, pass continues): %v", err)
 		}
 	}
 
-	// The parent run row: every child run the five domain steps below produce
-	// gets group_id = runID (via WithRunGroup + runsAdapter/startedRunsAdapter,
-	// Task 3). If we can't even record that a pass started, no pass was really
-	// attempted — return immediately, and deliberately WITHOUT firing the
-	// post-hook (design spec, decision 7 / this task's own instructions): a
+	// Every child run of the domain steps below gets group_id = runID. If the
+	// parent run cannot be recorded, return without the post-hook: a
 	// dead-man's-switch ping for a pass that never ran would be a false "done".
 	runID, err := s.store.StartRun(store.EverythingTargetID, "backup")
 	if err != nil {
 		return EverythingSummary{}, fmt.Errorf("backup everything: start run: %w", err)
 	}
 
-	// Each domain step is independently wrapped: a step's own error (even one
-	// that faults before any item is attempted, e.g. ListTargetsScheduleOrder
-	// itself erroring) is captured into that step's own EverythingDomainResult
-	// and never aborts the remaining steps (design spec, decision 5's explicit
-	// "survive one domain failing" requirement).
+	// A failing step, even one that fails before any item, is recorded in its
+	// own result and does not stop the others.
 	//
-	// A domain the operator switched OFF is not part of the pass at all. Every
-	// other consumer of these five flags already reads them — rpoStatus
-	// (service.go), the overdue watchdog (watchdog.go), drillTasks
-	// (schedule.go) — and the UI hides the whole tab for a domain that is off.
-	// Running it here anyway made "Backup Everything" the one path that ignored
-	// the switch, in both directions: on a host without an Unraid flash the
-	// flash step failed on every single pass, which failed the PARENT run, i.e.
-	// the one signal the feature exists to produce; and with FlashEnabled=false
-	// on Unraid it would create a whole repo the operator never asked for.
+	// A domain switched off in Settings is left out, as in rpoStatus, the
+	// overdue watchdog and drillTasks, and the UI hides its tab. Otherwise a
+	// host without an Unraid flash would fail the parent run on every pass, and
+	// FlashEnabled=false on Unraid would still create a flash repository.
 	steps := []everythingStep{
 		{"containers", settings.ContainersEnabled, func() EverythingDomainResult { return s.everythingRunContainers(ctx, runID, settings) }},
 		{"vms", settings.VMsEnabled, func() EverythingDomainResult { return s.everythingRunVMs(ctx, runID, settings) }},
@@ -175,23 +125,20 @@ func (s *Service) backupEverythingHoldingGuard(ctx context.Context) (EverythingS
 	results := make([]EverythingDomainResult, 0, len(steps))
 	for _, step := range steps {
 		if !step.enabled {
-			log.Printf("api: backup everything: %s skipped — the domain is switched off in Settings", step.domain)
+			log.Printf("api: backup everything: %s skipped, the domain is switched off in Settings", step.domain)
 			continue
 		}
 		results = append(results, step.run())
 	}
 	if len(results) == 0 {
-		// Not an error — the operator's own configuration says there is nothing
-		// to back up — but a "Backup Everything" schedule with all five domains
-		// off is a standing misconfiguration that looks like protection from the
-		// dashboard, so it says so rather than reporting a silent clean pass.
-		log.Print("api: backup everything: no domain is switched on — the pass backed up nothing")
+		// Not an error, but a "Backup Everything" schedule with every domain off
+		// looks like protection on the dashboard, so it gets logged.
+		log.Print("api: backup everything: no domain is switched on, so the pass backed up nothing")
 	}
 
-	// Unconditional, exactly once, after every domain step has been attempted —
-	// success or failure of any/all of them — the actual dead-man's-switch
-	// requirement (design spec, decision 6). Best-effort: a failure here must
-	// never change the pass's own recorded status.
+	// The post-hook runs exactly once after every step, whatever the outcome;
+	// the dead-man's switch relies on that. Its failure does not change the
+	// recorded status.
 	if settings.EverythingPostHook != "" {
 		if err := s.hostShell.Run(ctx, settings.EverythingPostHook); err != nil {
 			log.Printf("api: backup everything: post-hook failed (best-effort): %v", err)
@@ -210,55 +157,35 @@ func (s *Service) backupEverythingHoldingGuard(ctx context.Context) (EverythingS
 		errMsg = everythingBreakdown(results)
 	}
 	if err := s.store.FinishRun(runID, status, "", 0, errMsg); err != nil {
-		// Best-effort like every other post-hoc run bookkeeping call in this
-		// package: the pass itself already ran to completion, so a store error
-		// recording its OWN outcome is only logged, never turned into a
-		// returned error (there is nothing left for a caller to retry).
+		// The pass has run, so there is nothing for a caller to retry.
 		log.Printf("api: backup everything: finish run %s: %v", runID, err)
 	}
 
 	return EverythingSummary{RunID: runID, Status: status, Error: errMsg, Domains: results}, nil
 }
 
-// StartBackupEverything launches a "Backup Everything" pass in a background
-// goroutine and returns immediately, mirroring StartBackupAll's exact shape
-// (design spec, decision 7): an atomic.Bool single-flight guard answers a
-// concurrent second call with (false, nil) rather than overlapping, and
-// context.WithoutCancel detaches the pass from the HTTP request that started
-// it — each domain step already applies its own hold/hard-cap (backupHoldCtx
-// inside s.Backup/s.BackupVM/etc.), so the pass itself needs no deadline of
-// its own.
+// StartBackupEverything starts a "Backup Everything" pass in the background and
+// returns at once, like StartBackupAll. A call while a pass is running returns
+// (false, nil). The pass is detached from the request's cancellation and needs
+// no deadline of its own, since every domain step applies its own hold and
+// hard cap.
 //
-// Deliberately NO per-domain busy pre-flight check (unlike StartBackupAll's
-// domainBusy("containers") check for its one domain): each domain step's own
-// existing lock (s.lockDomain) already governs contention with any OTHER
-// concurrent operation on that domain exactly as it does for every other
-// caller today. A domain that is busy when its turn in the pass comes up
-// simply surfaces as that domain's own failure in the pass's breakdown —
-// consistent with "survive one domain failing" (design spec, decision 7).
+// Unlike StartBackupAll there is no busy check up front: each step takes its
+// domain lock like any other caller and waits while the domain is busy.
 func (s *Service) StartBackupEverything(ctx context.Context) (bool, error) {
 	if !s.everythingActive.CompareAndSwap(false, true) {
 		return false, nil
 	}
 	bctx := context.WithoutCancel(ctx)
 	go func() {
-		// Deferred FIRST (so it runs LAST), exactly like every other detached
-		// backup/restore goroutine in this package — see recoverOperation's own
-		// doc comment. A panic anywhere inside the pass would otherwise reach
-		// the top of this goroutine unrecovered and take the whole process down,
-		// including the four domain steps that had nothing to do with it.
-		// failStuckRun closes out the PARENT run row (EverythingTargetID), which
-		// BackupEverything opened with store.StartRun and would otherwise leave
-		// "running" forever: the pass's own FinishRun is what the panic skipped.
-		// Any CHILD domain run that was in flight is closed out by that domain's
-		// own orchestrator path exactly as it is for any other caller.
+		// A panic in the pass would otherwise take the process down and leave
+		// the parent run row "running", because the pass's FinishRun was
+		// skipped. Child runs are closed by their own domain code.
 		defer s.recoverOperation("backup everything: "+store.EverythingTargetID, nil, func(msg string) {
 			s.failStuckRun(store.EverythingTargetID, msg)
 		})
 		defer s.everythingActive.Store(false)
-		// The guard is already held (the CAS above), so this calls the pass
-		// directly rather than BackupEverything, which would try to take it again
-		// and refuse its own caller.
+		// The guard is already held, so BackupEverything would refuse.
 		if _, err := s.backupEverythingHoldingGuard(bctx); err != nil {
 			log.Printf("api: backup everything: pass failed to start: %v", err)
 		}
@@ -266,32 +193,20 @@ func (s *Service) StartBackupEverything(ctx context.Context) (bool, error) {
 	return true, nil
 }
 
-// EverythingInProgress reports whether a "Backup Everything" pass is
-// currently running, mirroring BackupInProgress's own test-support role for
-// batchActive: tests poll this to wait out StartBackupEverything's detached
-// background goroutine before asserting on state it touches.
+// EverythingInProgress reports whether a "Backup Everything" pass is running.
+// Tests poll it to wait for StartBackupEverything's goroutine.
 func (s *Service) EverythingInProgress() bool { return s.everythingActive.Load() }
 
-// everythingRunCtx builds the context the three MULTI-ITEM domain steps
-// (containers/vms/files) hand to each ITEM's own backup call: group-stamped
-// (WithRunGroup) so every child run traces back to runID, plus the exact same
-// suppression stack main.go's scheduled multi-item closures apply to each
-// item — inline off-site replication and per-item Healthchecks/message
-// notifications are suppressed in favour of the ONE aggregate ping/batched
-// replication this domain step performs itself after its loop (see
-// ScheduledHealthchecksStart/Result, ScheduledNotifyResult below). The
-// PruneAfterBulk/ReplicateOffsiteAfterBulk calls below deliberately do NOT
-// use this suppressed ctx — mirroring main.go's own pruneAfterBulkFn/
-// replicateAfterBulkFn closures, which take no per-item ctx at all and
-// construct a fresh, unsuppressed context.Background() — so a failure
-// surfaced by the batched off-site replication itself still pings
-// Healthchecks/sends its failure notification exactly as a real scheduled
-// domain run's batched replication does; using the suppressed ctx here would
-// silently swallow that notification instead. The two SINGLETON domains
-// (flash/config) do not use everythingRunCtx at all — they call
-// WithRunGroup(ctx, runID) directly, mirroring SetFlashJob/SetConfigJob's
-// closures, which apply none of this suppression either (design spec,
-// decision 5).
+// everythingRunCtx is the context the multi-item steps pass to each item's
+// backup: stamped with runID, and with inline off-site replication and
+// per-item Healthchecks and message notifications suppressed, as in main.go's
+// scheduled closures. The step then sends one aggregate ping and runs one
+// batched replication itself.
+//
+// PruneAfterBulk and ReplicateOffsiteAfterBulk get the plain ctx, as main.go's
+// pruneAfterBulkFn and replicateAfterBulkFn do, so a failed batched
+// replication still notifies. Flash and config only need WithRunGroup, like
+// SetFlashJob and SetConfigJob.
 func everythingRunCtx(ctx context.Context, runID string) context.Context {
 	return WithRunGroup(
 		WithBulkReplicateSuppressed(notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(ctx))),
@@ -299,14 +214,10 @@ func everythingRunCtx(ctx context.Context, runID string) context.Context {
 	)
 }
 
-// everythingRunContainers backs up every IncludeInSchedule=true container,
-// reproducing schedule.RunContainersJob's exact skip/continue-on-error
-// semantics inline (targets not on the domain schedule this run — dropped by
-// DomainRunTargets — are skipped; ErrContainerNotInstalled is a skip, not a
-// failure, matching main.go's own scheduled containers closure; any other
-// per-item error is logged and the loop continues) so this step's per-item
-// Attempted/Failed/Failures can feed both the Healthchecks/notify aggregation
-// below and this pass's own structured breakdown.
+// everythingRunContainers backs up every container with IncludeInSchedule, with
+// the semantics of schedule.RunContainersJob: items on their own per-item
+// schedule are left out, ErrContainerNotInstalled is a skip, and any other
+// error is recorded while the loop goes on.
 func (s *Service) everythingRunContainers(ctx context.Context, runID string, settings store.Settings) EverythingDomainResult {
 	const domain = "containers"
 	targets, err := s.store.ListTargetsScheduleOrder()
@@ -314,7 +225,7 @@ func (s *Service) everythingRunContainers(ctx context.Context, runID string, set
 		log.Printf("api: backup everything: containers: list targets: %v", err)
 		return everythingDomainFault(domain, err)
 	}
-	targets = schedule.DomainRunTargets(targets, settings.PerItemSchedules) // drop items on their own per-item cadence (#121)
+	targets = schedule.DomainRunTargets(targets, settings.PerItemSchedules)
 	if !schedule.DomainRunHasWork(targets) {
 		return everythingDomainIdle(domain)
 	}
@@ -331,7 +242,7 @@ func (s *Service) everythingRunContainers(ctx context.Context, runID string, set
 		attempted++
 		if _, err := s.Backup(runCtx, t.ContainerName); err != nil {
 			if errors.Is(err, backup.ErrContainerNotInstalled) {
-				continue // removed container: a skip (already recorded), not a job failure (#57)
+				continue // a removed container is a skip and already recorded
 			}
 			failed++
 			failures = append(failures, schedule.ItemFailure{Name: t.ContainerName, Reason: truncateRunErr(err)})
@@ -340,21 +251,16 @@ func (s *Service) everythingRunContainers(ctx context.Context, runID string, set
 	}
 	s.ScheduledHealthchecksResult(ctx, domain, attempted, failed)
 	s.ScheduledNotifyResult(ctx, domain, attempted, failed, failures)
-	// Retention before replication, same order every scheduled multi-item
-	// domain uses (fewer snapshots left to copy). Plain ctx, not runCtx — see
-	// everythingRunCtx's doc comment: main.go's real pruneAfterBulkFn/
-	// replicateAfterBulkFn closures always run under a fresh, unsuppressed
-	// context.Background(), so a batched-replication failure still notifies.
+	// Pruning first leaves fewer snapshots to copy. Plain ctx, see
+	// everythingRunCtx.
 	s.PruneAfterBulk(ctx, domain)
 	s.ReplicateOffsiteAfterBulk(ctx, domain)
 
 	return EverythingDomainResult{Domain: domain, Attempted: attempted, Failed: failed, Failures: failures}
 }
 
-// everythingRunVMs mirrors everythingRunContainers for the VM domain,
-// reproducing schedule.RunVMsJob's exact semantics inline (including
-// ErrVMNotInstalled being a skip, not a failure, matching main.go's own
-// scheduled VMs closure).
+// everythingRunVMs is everythingRunContainers for VMs, with the semantics of
+// schedule.RunVMsJob (ErrVMNotInstalled is a skip).
 func (s *Service) everythingRunVMs(ctx context.Context, runID string, settings store.Settings) EverythingDomainResult {
 	const domain = "vms"
 	vms, err := s.store.ListVMTargets()
@@ -362,8 +268,8 @@ func (s *Service) everythingRunVMs(ctx context.Context, runID string, settings s
 		log.Printf("api: backup everything: vms: list vm targets: %v", err)
 		return everythingDomainFault(domain, err)
 	}
-	store.SortVMTargetsForRun(vms)                                    // #119: explicit VM backup order first, name-order tiebreak
-	vms = schedule.DomainRunVMTargets(vms, settings.PerItemSchedules) // drop VMs on their own per-item cadence (#121)
+	store.SortVMTargetsForRun(vms)
+	vms = schedule.DomainRunVMTargets(vms, settings.PerItemSchedules)
 	if !schedule.DomainRunHasVMWork(vms) {
 		return everythingDomainIdle(domain)
 	}
@@ -380,7 +286,7 @@ func (s *Service) everythingRunVMs(ctx context.Context, runID string, settings s
 		attempted++
 		if _, err := s.BackupVM(runCtx, v.Name); err != nil {
 			if errors.Is(err, backup.ErrVMNotInstalled) {
-				continue // VM no longer on the host: a skip (already logged), not a job failure
+				continue // a VM gone from the host is a skip and already logged
 			}
 			failed++
 			failures = append(failures, schedule.ItemFailure{Name: v.Name, Reason: truncateRunErr(err)})
@@ -389,21 +295,15 @@ func (s *Service) everythingRunVMs(ctx context.Context, runID string, settings s
 	}
 	s.ScheduledHealthchecksResult(ctx, domain, attempted, failed)
 	s.ScheduledNotifyResult(ctx, domain, attempted, failed, failures)
-	// Plain ctx, not runCtx — see everythingRunCtx's doc comment.
 	s.PruneAfterBulk(ctx, domain)
 	s.ReplicateOffsiteAfterBulk(ctx, domain)
 
 	return EverythingDomainResult{Domain: domain, Attempted: attempted, Failed: failed, Failures: failures}
 }
 
-// everythingRunFiles mirrors everythingRunContainers for the files domain,
-// reproducing schedule.RunFilesJob's exact semantics inline (Enabled sets
-// only; any other per-item error is logged and the loop continues — files has
-// no "not installed" sentinel, matching main.go's own scheduled files
-// closure). Since #199 it also drops sets on their own per-item cadence, the
-// way the containers and VMs steps already did: a folder set given a weekly
-// schedule of its own must not be dragged along by the nightly Everything run,
-// which was the whole point of asking for one.
+// everythingRunFiles is everythingRunContainers for file sets, with the
+// semantics of schedule.RunFilesJob: only enabled sets run, and a set with a
+// schedule of its own is left to it.
 func (s *Service) everythingRunFiles(ctx context.Context, runID string, settings store.Settings) EverythingDomainResult {
 	const domain = "files"
 	sets, err := s.store.ListFileSets()
@@ -411,7 +311,7 @@ func (s *Service) everythingRunFiles(ctx context.Context, runID string, settings
 		log.Printf("api: backup everything: files: list file sets: %v", err)
 		return everythingDomainFault(domain, err)
 	}
-	sets = schedule.DomainRunFileSets(sets, settings.PerItemSchedules) // #199
+	sets = schedule.DomainRunFileSets(sets, settings.PerItemSchedules)
 	if !schedule.DomainRunHasFileWork(sets) {
 		return everythingDomainIdle(domain)
 	}
@@ -434,18 +334,14 @@ func (s *Service) everythingRunFiles(ctx context.Context, runID string, settings
 	}
 	s.ScheduledHealthchecksResult(ctx, domain, attempted, failed)
 	s.ScheduledNotifyResult(ctx, domain, attempted, failed, failures)
-	// Plain ctx, not runCtx — see everythingRunCtx's doc comment.
 	s.PruneAfterBulk(ctx, domain)
 	s.ReplicateOffsiteAfterBulk(ctx, domain)
 
 	return EverythingDomainResult{Domain: domain, Attempted: attempted, Failed: failed, Failures: failures}
 }
 
-// everythingRunFlash runs the singleton flash backup, mirroring
-// SetFlashJob's scheduled closure exactly: no bulk-replicate/message/
-// Healthchecks suppression (there is nothing to aggregate — it is called
-// exactly once), just WithRunGroup so the one run it produces still traces
-// back to this pass.
+// everythingRunFlash runs the flash backup like SetFlashJob's closure. A single
+// run has nothing to aggregate, so only WithRunGroup is applied.
 func (s *Service) everythingRunFlash(ctx context.Context, runID string) EverythingDomainResult {
 	const domain = "flash"
 	if _, err := s.BackupFlash(WithRunGroup(ctx, runID)); err != nil {
@@ -455,8 +351,8 @@ func (s *Service) everythingRunFlash(ctx context.Context, runID string) Everythi
 	return EverythingDomainResult{Domain: domain, Attempted: 1}
 }
 
-// everythingRunConfig runs the singleton config (self) backup, mirroring
-// SetConfigJob's scheduled closure exactly — see everythingRunFlash.
+// everythingRunConfig runs BombVault's own config backup like SetConfigJob's
+// closure.
 func (s *Service) everythingRunConfig(ctx context.Context, runID string) EverythingDomainResult {
 	const domain = "config"
 	if _, err := s.BackupConfig(WithRunGroup(ctx, runID)); err != nil {
@@ -466,28 +362,17 @@ func (s *Service) everythingRunConfig(ctx context.Context, runID string) Everyth
 	return EverythingDomainResult{Domain: domain, Attempted: 1}
 }
 
-// everythingDomainIdle builds the EverythingDomainResult for a MULTI-ITEM
-// domain whose filtered list holds nothing this pass would back up — the
-// Attempted==0/Failed==0 benign no-op formatEverythingDomain already renders as
-// "<domain>: ok".
-//
-// The point is not the result value, it is the four calls the caller skips by
-// returning it: the aggregated Healthchecks start/result pair, PruneAfterBulk
-// and ReplicateOffsiteAfterBulk. The real scheduler gates its loop on exactly
-// this (schedule.go's DomainRunHasWork, whose own comment says "no loop, no
-// ping, and above all no prune and no off-site copy"); this pass reproduced the
-// loop and left the gate behind. On a box with no VMs and no file sets that
-// meant every pass pinged a green "0 of 0 items succeeded" at the dead-man's
-// switch — turning a check that had gone red back to green — and paid for a
-// real prune plus a full off-site repo open, twice, for nothing.
+// everythingDomainIdle is the result for a multi-item domain with nothing to
+// back up. Returning it early skips the Healthchecks ping pair, the prune and
+// the off-site copy, as the scheduler's DomainRunHasWork gate does. Otherwise
+// a box without VMs would ping "0 of 0 items succeeded" to the dead-man's
+// switch and turn a red check green.
 func everythingDomainIdle(domain string) EverythingDomainResult {
 	return EverythingDomainResult{Domain: domain}
 }
 
-// everythingDomainFault builds the EverythingDomainResult for a domain that
-// faulted BEFORE any item could even be attempted (e.g. ListTargetsScheduleOrder/
-// ListVMTargets/ListFileSets itself erroring) — Attempted stays 0, Failed is 1,
-// and the one synthetic ItemFailure carries the reason for the breakdown.
+// everythingDomainFault is the result for a domain that failed before any item
+// was attempted, for example because its target list could not be read.
 func everythingDomainFault(domain string, err error) EverythingDomainResult {
 	return EverythingDomainResult{
 		Domain:   domain,
@@ -496,9 +381,7 @@ func everythingDomainFault(domain string, err error) EverythingDomainResult {
 	}
 }
 
-// everythingSingletonFault builds the EverythingDomainResult for a failed
-// singleton domain (flash/config): Attempted is 1 (it was always attempted —
-// singletons have no "eligible items" concept), Failed is 1.
+// everythingSingletonFault is the result for a failed flash or config backup.
 func everythingSingletonFault(domain string, err error) EverythingDomainResult {
 	return EverythingDomainResult{
 		Domain:    domain,
@@ -508,10 +391,8 @@ func everythingSingletonFault(domain string, err error) EverythingDomainResult {
 	}
 }
 
-// everythingBreakdown joins every domain's formatEverythingDomain line into
-// the parent run's structured error text (design spec, decision 3), bounded
-// to everythingBreakdownMaxLen like every other run error message in this
-// package (see truncateRunErr).
+// everythingBreakdown joins the domain lines into the parent run's error text,
+// cut at everythingBreakdownMaxLen.
 func everythingBreakdown(results []EverythingDomainResult) string {
 	parts := make([]string, 0, len(results))
 	for _, r := range results {
@@ -524,16 +405,12 @@ func everythingBreakdown(results []EverythingDomainResult) string {
 	return s
 }
 
-// formatEverythingDomain renders one domain's line of the breakdown. It
-// treats every domain uniformly (multi-item and singleton alike, since
-// EverythingDomainResult represents both the same way):
+// formatEverythingDomain renders one domain's line of the breakdown:
 //
-//   - Attempted == 0, Failed == 0: "<domain>: ok" — nothing was eligible this
-//     pass (e.g. no file sets defined), a benign no-op, not a failure.
-//   - Attempted == 0, Failed == 1: "<domain>: failed (<reason>)" — the domain
-//     faulted before any item was attempted.
-//   - Failed == 0, Attempted > 0: "<domain>: N/N ok".
-//   - Failed > 0: "<domain>: ok/attempted ok (<item>: <reason>, …)".
+//   - nothing attempted or failed: "<domain>: ok"
+//   - failed before any item: "<domain>: failed (<reason>)"
+//   - every item ok: "<domain>: N/N ok"
+//   - otherwise: "<domain>: ok/attempted ok (<item>: <reason>, …)"
 func formatEverythingDomain(r EverythingDomainResult) string {
 	if r.Attempted == 0 {
 		if r.Failed == 0 {

@@ -12,7 +12,6 @@ import (
 	"strings"
 )
 
-// appKeyRe validates that APP_KEY is exactly 64 lowercase hex characters.
 var appKeyRe = regexp.MustCompile(`^[0-9a-f]{64}$`)
 
 // Config holds all process-level configuration for bombvault.
@@ -21,33 +20,22 @@ type Config struct {
 	DataDir        string
 	HostMountRoot  string
 	HostSourceRoot string
-	// DataRootSegments are the path-segment names that mark a bind-mount host
-	// source as persistent container data (e.g. "appdata", "config"). A bind is
-	// kept when ANY configured segment appears as a full path segment of its
-	// source. Unset (env DATA_ROOT_SEGMENTS) defaults to ["appdata"], which
-	// reproduces Unraid's original, single-segment-only behavior exactly.
+	// DataRootSegments (env DATA_ROOT_SEGMENTS) are the path segments that
+	// mark a bind mount's host source as container data, such as "appdata" or
+	// "config". A bind is kept when any of them is a whole segment of its
+	// source. The default is ["appdata"], the Unraid layout.
 	DataRootSegments []string
-	// PlatformOverride forces which platform.Kind (internal/platform)
-	// BombVault treats itself as running on, instead of auto-detecting.
-	// Empty (env PLATFORM unset, the default) means auto-detect; a recognized
-	// non-empty value ("unraid"/"truenas"/"generic") wins outright.
-	// Validated and mapped by platform.Detect, not here — an unrecognized
-	// value is not a config-load error, it just falls back to generic with a
-	// logged warning at detection time.
+	// PlatformOverride (env PLATFORM) forces the platform.Kind instead of
+	// detecting it; empty means detect. platform.Detect validates the value
+	// and falls back to generic with a warning when it is unknown.
 	PlatformOverride string
 	LibvirtHost      string
 	LibvirtSSHUser   string
 	LibvirtSSHPort   string
-	// LibvirtURI, when non-empty (env LIBVIRT_URI), is used verbatim as the
-	// libvirt connection URI (sshconn.Conn.VirshURI) instead of building
-	// qemu+ssh://LibvirtSSHUser@LibvirtHost:LibvirtSSHPort/system?... from
-	// LibvirtHost/LibvirtSSHUser/LibvirtSSHPort. Empty (the default) means
-	// "build it as today" — every existing Unraid/generic deployment is
-	// unaffected. Exists for TrueNAS Scale, whose libvirtd runs on a
-	// non-standard socket needing an extra ?socket=... query param the
-	// built-string form has no way to express — see
-	// docs/vm-backup-ssh-setup.md's "TrueNAS Scale" section for the exact
-	// value to set.
+	// LibvirtURI (env LIBVIRT_URI), when set, replaces the qemu+ssh URI built
+	// from LibvirtHost, LibvirtSSHUser and LibvirtSSHPort. TrueNAS Scale needs
+	// it because its libvirtd listens on a non-standard socket; the value is
+	// in docs/vm-backup-ssh-setup.md.
 	LibvirtURI        string
 	Port              int
 	HTTPSPort         int
@@ -55,17 +43,12 @@ type Config struct {
 	FlashTemplatesDir string
 	FlashDir          string
 	DBPath            string
-	// TrustedProxies lists the hops whose X-Forwarded-For header may be believed
-	// when working out which client a request came from (env TRUSTED_PROXY, comma
-	// separated, plain addresses or CIDR ranges). Empty (the default) means trust
-	// nobody, which is the only safe default: without it any caller could pick
-	// their own login-throttle bucket by inventing a header.
-	//
-	// It exists because the login throttle counts failures per client address,
-	// and behind a reverse proxy every request carries the PROXY's address. All
-	// clients then share one bucket, so an attacker's five failures a minute lock
-	// the operator out of their own instance. Naming the proxy here restores
-	// per-client counting for exactly the deployment the docs recommend.
+	// TrustedProxies (env TRUSTED_PROXY, comma-separated addresses or CIDR
+	// ranges) are the hops whose X-Forwarded-For is believed. The login
+	// throttle counts failures per client, and behind a reverse proxy every
+	// request carries the proxy's address, so without this an attacker's
+	// failures lock out every client. Empty trusts nobody; otherwise a caller
+	// could pick its own throttle bucket with a forged header.
 	TrustedProxies []net.IPNet
 }
 
@@ -83,21 +66,17 @@ func Load(env map[string]string) (Config, error) {
 		HostMountRoot:    stringOr(env["HOST_MOUNT_ROOT"], "/host/user"),
 		HostSourceRoot:   stringOr(env["HOST_SOURCE_ROOT"], "/mnt"),
 		DataRootSegments: dataRootSegments(env["DATA_ROOT_SEGMENTS"]),
-		// Empty (unset) means auto-detect; see PlatformOverride's doc comment.
 		PlatformOverride: env["PLATFORM"],
-		// libvirt is reached over SSH (qemu+ssh://) — no filesystem mount.
-		LibvirtHost:    stringOr(env["LIBVIRT_HOST"], "host.docker.internal"),
-		LibvirtSSHUser: stringOr(env["LIBVIRT_SSH_USER"], "root"),
-		LibvirtSSHPort: stringOr(env["LIBVIRT_SSH_PORT"], "22"),
-		// Empty (unset) means "build the qemu+ssh URI from the three fields
-		// above, as today"; see LibvirtURI's doc comment on Config.
+		// libvirt is reached over SSH, not through a mounted socket.
+		LibvirtHost:       stringOr(env["LIBVIRT_HOST"], "host.docker.internal"),
+		LibvirtSSHUser:    stringOr(env["LIBVIRT_SSH_USER"], "root"),
+		LibvirtSSHPort:    stringOr(env["LIBVIRT_SSH_PORT"], "22"),
 		LibvirtURI:        env["LIBVIRT_URI"],
 		Port:              intOr(env["PORT"], 3000),
 		HTTPSPort:         intOr(env["HTTPS_PORT"], 3443),
 		HTTPOnly:          strings.EqualFold(env["HTTP_ONLY"], "true"),
 		FlashTemplatesDir: stringOr(env["FLASH_TEMPLATES_DIR"], "/host/boot/config/plugins/dockerMan/templates-user"),
-		// Container-visible path of the Unraid USB flash (the whole /boot mounted
-		// read at /host/boot) for flash backup.
+		// the Unraid flash, /boot mounted at /host/boot
 		FlashDir:       stringOr(env["FLASH_DIR"], "/host/boot"),
 		TrustedProxies: trustedProxies(env["TRUSTED_PROXY"]),
 	}
@@ -134,19 +113,13 @@ func intOr(v string, def int) int {
 	return n
 }
 
-// defaultDataRootSegments is the single segment Unraid's original hardcoded
-// filter recognized. It MUST stay the sole default so an unset
-// DATA_ROOT_SEGMENTS reproduces today's Unraid-only behavior byte-for-byte.
+// defaultDataRootSegments matches Unraid's appdata share.
 var defaultDataRootSegments = []string{"appdata"}
 
-// trustedProxies parses TRUSTED_PROXY into networks. Each entry is either a
-// CIDR ("10.0.0.0/8") or a single address, which becomes a /32 or /128.
-//
-// An unparseable entry is DROPPED rather than failing the boot. Getting this
-// wrong must not take a backup tool offline, and dropping is the safe direction:
-// the effect of an ignored entry is that the proxy stays untrusted, which is the
-// behaviour BombVault had before this setting existed. The boot log names what
-// it dropped so the mistake is findable.
+// trustedProxies parses TRUSTED_PROXY. Each entry is a CIDR ("10.0.0.0/8") or
+// a single address, which becomes a /32 or /128. An entry that does not parse
+// is logged and skipped rather than failing startup, which leaves that proxy
+// untrusted.
 func trustedProxies(raw string) []net.IPNet {
 	var out []net.IPNet
 	for _, part := range strings.Split(raw, ",") {

@@ -7,19 +7,17 @@ var (
 	// splitting the tag so only the path is rewritten (quote style preserved).
 	// Groups: 1=`<source file=`, 2=quote, 3=path, 4=quote.
 	diskSourceFileRe = regexp.MustCompile(`(<source\s+file=)(['"])([^'"]*)(['"])`)
-	// nvramInnerRe captures the text path INSIDE a <nvram ...>PATH</nvram> element
-	// (groups: 1=open tag, 2=path, 3=close tag). A self-closing / empty <nvram>
-	// carries no path and is left untouched.
+	// nvramInnerRe captures the path inside a <nvram ...>PATH</nvram> element
+	// (groups: 1=open tag, 2=path, 3=close tag). A self-closing or empty
+	// <nvram> has no path and does not match.
 	nvramInnerRe = regexp.MustCompile(`(<nvram(?:\s[^>]*)?>)([^<]+)(</nvram>)`)
 )
 
-// RewriteDiskSources rewrites every <disk> <source file='OLD'/> whose OLD path
-// is a key in remap to the mapped NEW path, leaving every other source (e.g. a
-// cdrom ISO, or a disk not being restored) untouched. This is how a VM restored
-// onto a DIFFERENT host/pool points libvirt at the disks' new location instead
-// of the source server's paths. Paths are matched EXACTLY against the strings in
-// the XML (the same absolute host paths the backup recorded). An empty remap
-// returns the XML unchanged.
+// RewriteDiskSources replaces each <disk> <source file='OLD'/> whose OLD path
+// is a key in remap with the mapped path, so a VM restored onto another host or
+// pool finds its disks. Paths are matched exactly against the host paths the
+// backup recorded; other sources, such as a cdrom ISO or a disk not being
+// restored, stay as they are.
 func RewriteDiskSources(domainXML string, remap map[string]string) string {
 	if len(remap) == 0 {
 		return domainXML
@@ -33,10 +31,10 @@ func RewriteDiskSources(domainXML string, remap map[string]string) string {
 	})
 }
 
-// RewriteNVRAM rewrites the <nvram>OLD</nvram> host path to newPath so a restored
-// UEFI domain reads its var store from the destination location. BIOS domains (no
-// <nvram>) and a self-closing/empty <nvram> element are returned unchanged. Only
-// the FIRST nvram element is rewritten (a domain has at most one).
+// RewriteNVRAM sets the <nvram> host path to newPath so a restored UEFI domain
+// reads its var store from the destination. BIOS domains (no <nvram>) and an
+// empty <nvram> are returned unchanged. A domain has at most one nvram
+// element, and only the first match is rewritten.
 func RewriteNVRAM(domainXML, newPath string) string {
 	done := false
 	return nvramInnerRe.ReplaceAllStringFunc(domainXML, func(m string) string {

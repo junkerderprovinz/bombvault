@@ -7,14 +7,8 @@ import (
 	"testing"
 )
 
-// TestTruncateErrScrubsURLCredentials pins this package's own copy of the
-// credential-scrub fix already applied to internal/restic/restic.go and
-// internal/api/handlers.go. truncateErr's old doc comment claimed the
-// restic/dockercli adapters "already scrub secrets/paths from their own
-// errors" and so only truncated — true for THOSE callers today, but not a
-// property this function could actually enforce for every future caller, so
-// it now scrubs unconditionally instead of trusting every upstream error to
-// have been pre-scrubbed.
+// TestTruncateErrScrubsURLCredentials checks that truncateErr scrubs
+// credentials itself rather than trusting every caller to pass a clean error.
 func TestTruncateErrScrubsURLCredentials(t *testing.T) {
 	err := errors.New(`unable to open repository at rest:https://backupuser:Tr0ub4dor&3@storage.example.com:8000/containers: repository does not exist`)
 	got := truncateErr(err)
@@ -29,10 +23,8 @@ func TestTruncateErrScrubsURLCredentials(t *testing.T) {
 	}
 }
 
-// TestTruncateErrScrubsNumericUsername mirrors the twin fix in
-// internal/restic and internal/api: the credential regex's leading-character
-// class must not require a letter, or a fully-numeric username lets its
-// password through unscrubbed.
+// TestTruncateErrScrubsNumericUsername checks that a username of digits alone
+// is scrubbed together with its password.
 func TestTruncateErrScrubsNumericUsername(t *testing.T) {
 	err := errors.New(`unable to open repository at rest:https://123456:SuperSecret@storage.example.com:8000/containers: repository does not exist`)
 	got := truncateErr(err)
@@ -44,9 +36,8 @@ func TestTruncateErrScrubsNumericUsername(t *testing.T) {
 	}
 }
 
-// TestTruncateErrDoesNotEatHostPort pins that the credential scrub is scoped
-// to a real "user:pass@" userinfo segment and doesn't fire on an ordinary
-// "host:port" (no "@").
+// TestTruncateErrDoesNotEatHostPort checks that the credential scrub needs a
+// user:pass@ segment and leaves a plain host:port alone.
 func TestTruncateErrDoesNotEatHostPort(t *testing.T) {
 	got := truncateErr(errors.New("unable to reach storage.example.com:8000: connection refused"))
 	if strings.Contains(got, "[redacted]") {
@@ -57,10 +48,8 @@ func TestTruncateErrDoesNotEatHostPort(t *testing.T) {
 	}
 }
 
-// TestTruncateErrPreservesHostname pins the same reorder fix as
-// internal/restic/restic.go's scrubSecrets: scrubbing credentials BEFORE
-// paths destroys the hostname along with the password, so this package's own
-// copy runs the path scrub first too.
+// TestTruncateErrPreservesHostname checks that the hostname survives the
+// scrub. Scrubbing credentials before paths would take it with the password.
 func TestTruncateErrPreservesHostname(t *testing.T) {
 	got := truncateErr(errors.New(`rest:https://backupuser:Tr0ub4dor&3@storage.example.com:8000/containers`))
 	if strings.Contains(got, "Tr0ub4dor") || strings.Contains(got, "backupuser") {
@@ -71,20 +60,11 @@ func TestTruncateErrPreservesHostname(t *testing.T) {
 	}
 }
 
-// TestTruncateErrBypassesRestoreConflict is the regression test for the
-// finding that truncateErr used to run EVERY error through scrubRunErr
-// unconditionally, on the false theory that scrubbing already-clean text is a
-// harmless no-op. ErrRestoreConflict's message is a perfect counterexample:
-// checkRestoreConflicts' host:port conflict list ("host port 8080/tcp is
-// already used by container ...") is already user-safe, but contains "/",
-// which runErrPathRe mistakes for a filesystem path. Before
-// restoreConflictBypass, this exact error — produced by
-// checkRestoreConflicts, in this same package — reached runs.error
-// via orchestrator.go's Restore path with its port numbers mangled into
-// "[path]", even though the identical error survives intact through the api
-// package's scrubError.
+// TestTruncateErrBypassesRestoreConflict checks that a restore conflict keeps
+// its port list. The message is already safe to show, and runErrPathRe would
+// read "8080/tcp" as a path.
 func TestTruncateErrBypassesRestoreConflict(t *testing.T) {
-	err := fmt.Errorf("%w — free these and retry: %s", ErrRestoreConflict,
+	err := fmt.Errorf("%w. Free these and retry: %s", ErrRestoreConflict,
 		`host port 8080/tcp is already used by container "other-app"`)
 
 	got := truncateErr(err)
@@ -96,8 +76,6 @@ func TestTruncateErrBypassesRestoreConflict(t *testing.T) {
 	}
 }
 
-// TestTruncateErrNilAndTruncation pins truncateErr's pre-existing nil and
-// length-cap behavior, unaffected by the scrub now running first.
 func TestTruncateErrNilAndTruncation(t *testing.T) {
 	if got := truncateErr(nil); got != "" {
 		t.Fatalf("truncateErr(nil) = %q, want empty", got)

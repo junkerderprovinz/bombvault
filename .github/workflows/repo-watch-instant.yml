@@ -1,35 +1,22 @@
 name: Instant Repo-Watch Ping
 
-# Rolled out identically to every one of junkerderprovinz's own repos (see
-# repo-watch's README "Instant notifications" section for the rollout list
-# and how to add it to a new repo). Fires on new issues/PRs and new
-# comments/reviews from anyone else, and dispatches a repository_dispatch
-# event to junkerderprovinz/repo-watch, which does the actual Matrix post
-# (instant.yml + instant_notify.py there) using its own already-configured
-# Matrix credentials — this stub never talks to Matrix directly, and never
-# sees a Matrix secret.
+# The same file sits in every repository of this account; repo-watch's README lists
+# them and explains how to add a new one. It hands new issues, pull requests,
+# comments and reviews from other people to junkerderprovinz/repo-watch as a
+# repository_dispatch event, and repo-watch posts to Matrix with its own credentials,
+# so no Matrix secret ever reaches this repository.
 #
-# Foreign/upstream repos this account doesn't own can't run this (GitHub
-# only fires native issue/PR/comment triggers for a repo's own workflows),
-# so replies on this account's PRs against repos it doesn't own stay on
-# repo-watch's periodic 5-minute poll (replies.yml) — this stub only ever
-# covers this repo's own activity.
+# Repositories the account does not own cannot run this, because GitHub only fires
+# these triggers for a repository's own workflows. Replies there are picked up by
+# repo-watch's five-minute poll.
 
 on:
   issues:
     types: [opened]
-  # pull_request_target statt pull_request: ein PR aus einem FORK bekommt keine
-  # Repository-Secrets, also laeuft `gh` unten ohne REPOWATCH_PAT und bricht mit
-  # Exit 4 ab - ein roter Haken an jedem fremden PR, und keine Meldung genau
-  # dann, wenn sie am wichtigsten ist. pull_request_target laeuft im Kontext
-  # DIESES Repos und bekommt das Secret.
-  #
-  # Sicher, weil dieser Job keinen Code auscheckt: er liest Ereignisfelder und
-  # ruft eine API. Die Felder reisen ausserdem ausnahmslos ueber
-  # Umgebungsvariablen statt ueber ${{ }}-Interpolation (siehe den Kommentar am
-  # run-Block), also gibt es keinen Weg, ueber den fremder Inhalt zur
-  # Ausfuehrung kaeme. Genau diese zwei Eigenschaften sind es, die
-  # pull_request_target hier zulaessig machen.
+  # pull_request_target, because a pull request from a fork gets no secrets under
+  # pull_request, so gh would fail without REPOWATCH_PAT exactly when a stranger
+  # opens one. It is safe here: the job checks out no code, and every event field
+  # reaches the script through an environment variable.
   pull_request_target:
     types: [opened]
   issue_comment:
@@ -42,12 +29,11 @@ permissions:
 
 jobs:
   dispatch:
-    # Skip the account's own actions and bots (Renovate, etc.) — nobody
-    # needs a push telling them they just did something themselves.
+    # The account's own actions and bots need no ping.
     if: github.event.sender.login != 'junkerderprovinz' && !endsWith(github.event.sender.login, '[bot]')
     runs-on: ubuntu-latest
-    # One API call. A job with no limit runs until GitHub's six-hour ceiling if
-    # the call ever hangs, and this file sits in dozens of repos.
+    # A hung API call would otherwise run into GitHub's six-hour limit, in dozens of
+    # repositories.
     timeout-minutes: 5
     steps:
       - name: Dispatch to repo-watch
@@ -64,24 +50,16 @@ jobs:
           ISSUE_URL: ${{ github.event.issue.html_url }}
           PR_URL: ${{ github.event.pull_request.html_url }}
           ACTOR: ${{ github.event.sender.login }}
-        # Every event field above is read from env vars, never interpolated
-        # directly into this script — issue/PR titles are attacker-controlled
-        # on a public repo, and inlining them into a run: block via ${{ }}
-        # would be a shell-injection hole (GitHub's own documented "script
-        # injection" pitfall). Env-var expansion here is plain string
-        # substitution, not re-parsed as shell syntax, so it's safe.
+        # Titles are attacker-controlled on a public repository. Read from the
+        # environment they stay plain strings; interpolated with ${{ }} they would be
+        # parsed as shell.
         run: |
           kind="issue"
           number="$ISSUE_NUMBER"
           title="$ISSUE_TITLE"
           url="$ISSUE_URL"
           case "$EVENT_NAME" in
-            # Both names on purpose. The trigger above is pull_request_target
-            # (a fork PR gets no secrets under plain pull_request), and
-            # github.event_name carries that exact string — so a branch that
-            # only matches "pull_request" never fires, and the event falls
-            # through to the issue default, where number/title/url are all
-            # empty because a PR event has no github.event.issue.
+            # github.event_name carries pull_request_target for the trigger above.
             pull_request|pull_request_target)
               kind="pr"; number="$PR_NUMBER"; title="$PR_TITLE"; url="$PR_URL" ;;
             issue_comment)

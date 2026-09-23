@@ -217,6 +217,49 @@ func TestParseDomainNoTitleElement(t *testing.T) {
 	}
 }
 
+// TestParseDomainExtractsUUID: the UUID comes back lower-cased and trimmed, so
+// two spellings of one UUID never read as two VMs.
+func TestParseDomainExtractsUUID(t *testing.T) {
+	const xml = `
+<domain type='kvm'>
+  <uuid>  4A9B3FA1-4E77-4F2A-9C1F-2B6E9D1A7C33  </uuid>
+  <devices>
+    <disk type='file' device='disk'>
+      <source file='/mnt/cache/vms/Win/vdisk1.img'/>
+      <target dev='vda'/>
+    </disk>
+  </devices>
+</domain>`
+
+	d, err := virshcli.ParseDomain(xml)
+	if err != nil {
+		t.Fatalf("ParseDomain: %v", err)
+	}
+	if d.UUID != "4a9b3fa1-4e77-4f2a-9c1f-2b6e9d1a7c33" {
+		t.Fatalf("UUID = %q, want lower-cased and trimmed", d.UUID)
+	}
+}
+
+func TestParseDomainNoUUIDElement(t *testing.T) {
+	const xml = `
+<domain type='kvm'>
+  <devices>
+    <disk type='file' device='disk'>
+      <source file='/mnt/cache/vms/Win/vdisk1.img'/>
+      <target dev='vda'/>
+    </disk>
+  </devices>
+</domain>`
+
+	d, err := virshcli.ParseDomain(xml)
+	if err != nil {
+		t.Fatalf("ParseDomain: %v", err)
+	}
+	if d.UUID != "" {
+		t.Fatalf("UUID = %q, want empty for a domain with no <uuid> element", d.UUID)
+	}
+}
+
 // TestParseDomainFileBackedDiskHasNoBlockDisks is the explicit regression pin:
 // the existing file-backed fixtures (Unraid's own shape) must produce an
 // EMPTY BlockDisks — the new field must never spuriously populate for a

@@ -1,15 +1,7 @@
 // @vitest-environment jsdom
-// The ransomware scorecard's append-only row.
-//
-// Reported in support as "immutable offsite should be baked into the product".
-// The app already knew whether the off-site copy was deletable, and said so in
-// the quietest way it had: a grey dash reading "append-only not enabled", on a
-// card titled "ransomware protection", next to a domain graded "Protected".
-//
-// Renders the card directly rather than the page, for the same reason
-// Dashboard.protectionCard.dom.test.tsx does: an unscheduled domain carries no
-// protection posture, so on a test box `shown` is empty and the card renders
-// nothing at all.
+// The ransomware card's append-only row. The card is rendered directly, like in
+// Dashboard.protectionCard.dom.test.tsx, because on a test box no domain is
+// scheduled and the page renders nothing.
 
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
@@ -45,9 +37,8 @@ function domain(over: Partial<DomainStatus> = {}): DomainStatus {
     offsiteDrillScheduled: false,
     // Non-empty, or the card filters the domain out before any row renders.
     protection: "green",
-    // "" is exactly !offsiteImmutable (internal/api/service.go,
-    // protectionChecks): no append-only claim to prove, which is a different
-    // thing from a claim that failed.
+    // "" is what protectionChecks in internal/api/service.go reports when
+    // append-only is off: nothing to prove, which differs from a failed proof.
     tamperState: "",
     replicationState: "",
     drillState: "",
@@ -59,8 +50,7 @@ function domain(over: Partial<DomainStatus> = {}): DomainStatus {
 
 function renderCard(domains: DomainStatus[]) {
   const t = ((k: string) => en[k as keyof typeof en] ?? k) as never;
-  // A "bad" row renders its label as a <Link> into Settings, so the card needs
-  // a router around it the moment any row is red.
+  // A red row renders its label as a <Link> into Settings.
   return render(
     <MemoryRouter>
       <I18nProvider>
@@ -81,8 +71,7 @@ describe("RansomwareCard, append-only not enabled", () => {
   });
 
   it("stays grey when there is no off-site copy to make immutable", () => {
-    // The row above it is already red and links to the same settings page.
-    // "append-only not enabled" underneath would be advice about the wrong step.
+    // The off-site row above is already red and links to the same settings.
     renderCard([domain({ offsiteConfigured: false, protection: "red" })]);
     const row = screen.getByText(en["ransomware.appendOnlyOff"]);
     expect(row.className).toContain("text-carbon-textMuted");
@@ -90,8 +79,6 @@ describe("RansomwareCard, append-only not enabled", () => {
   });
 
   it("leaves a proven append-only row alone", () => {
-    // Only the "" arm is amber. A verified claim still reads verified, so a
-    // correctly configured box cannot come out of this looking worse.
     renderCard([domain({ offsiteImmutable: true, tamperState: "ok", lastTamperAt: 1_700_000_000 })]);
     expect(screen.queryByText(en["ransomware.appendOnlyOff"])).toBeNull();
     const row = screen.getByText(en["ransomware.appendOnlyVerified"]);
@@ -99,8 +86,8 @@ describe("RansomwareCard, append-only not enabled", () => {
   });
 
   it("does not touch the failed and never arms", () => {
-    // Both were already red and stay red: a claim that failed, or was never
-    // proven, is a different statement from a claim nobody made.
+    // A claim that failed or was never proven stays red, unlike a claim nobody
+    // made.
     renderCard([domain({ offsiteImmutable: true, tamperState: "failed", lastTamperAt: 1_700_000_000 })]);
     expect(screen.getByText(en["ransomware.appendOnlyFailed"])).toBeTruthy();
     cleanup();

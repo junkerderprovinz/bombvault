@@ -507,16 +507,13 @@ func (e *placementEngine) Copy(_ context.Context, dest, src string, ids []string
 
 // ForgetPolicy keeps the newest KeepLast snapshots carrying one of the tags, as
 // one group, and records the rest of the policy; without a tag it only records.
-func (e *placementEngine) ForgetPolicy(_ context.Context, repo string, p restic.RetentionPolicy, _ restic.Mode, tag string, prune bool) error {
+func (e *placementEngine) ForgetPolicy(_ context.Context, repo string, p restic.RetentionPolicy, _ restic.Mode, tags []string, prune bool) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	key := filepath.ToSlash(repo)
-	var tags []string
-	if tag != "" {
-		tags = []string{tag}
-	}
+	tags = slices.Clone(tags)
 	e.forgets = append(e.forgets, forgetCall{Repo: key, Tags: tags, Policy: p, Prune: prune})
-	if tags == nil || p.KeepLast == 0 {
+	if len(tags) == 0 || p.KeepLast == 0 {
 		return nil
 	}
 	var mine []restic.Snapshot

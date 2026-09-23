@@ -1,13 +1,9 @@
 package api_test
 
-// #166 — the API contract half of "every N days" for the drills / tamper-test /
-// digest schedules. The reporter's complaint was that the option could not be
-// used: the save came back ok:false with "this schedule does not support
-// 'everyN'" and the UI snapped the value back. Now that the scheduler genuinely
-// enforces the interval for those three (each records its own last-run pass,
-// see internal/store schedule_job_runs.go), the rejection is gone — but it must
-// still stand for the five OFF-SITE replication schedules, which still have no
-// last-run fact to gate on.
+// The drills, tamper-test and digest schedules accept an "everyN" cadence
+// because each records its own last run for the scheduler to gate on (see
+// internal/store schedule_job_runs.go). The five off-site replication
+// schedules keep no such record and refuse it.
 
 import (
 	"net/http"
@@ -24,10 +20,8 @@ const baseScheduleBody = `"containersPath": "backups/c",
 		"vmsSchedule": "off",
 		"flashSchedule": "off"`
 
-// TestSettingsPutAcceptsEveryNOnDrillsTamperDigest walks the three schedules the
-// issue is about: each must SAVE with an everyN cadence and read back unchanged
-// on the next GET (the "survives a reload" half — a value that saved but did not
-// persist would look identical in the UI to the original bug).
+// Each cadence must also read back unchanged: a value that saved but did not
+// persist would look like a refusal in the UI.
 func TestSettingsPutAcceptsEveryNOnDrillsTamperDigest(t *testing.T) {
 	cases := []struct {
 		field   string
@@ -52,7 +46,6 @@ func TestSettingsPutAcceptsEveryNOnDrillsTamperDigest(t *testing.T) {
 				t.Fatalf("%s must accept %q (#166), got %v", tc.field, tc.cadence, m)
 			}
 
-			// Read it back: the stored cadence must be exactly what was saved.
 			if s := getSettingsField(t, h, tc.field); s != tc.cadence {
 				t.Fatalf("%s read back as %q, want %q", tc.field, s, tc.cadence)
 			}
@@ -60,10 +53,9 @@ func TestSettingsPutAcceptsEveryNOnDrillsTamperDigest(t *testing.T) {
 	}
 }
 
-// TestSettingsPutStillRejectsEveryNOnOffsite pins the half of the old rule that
-// deliberately stays: an off-site replication job has no last-run fact, so its
-// interval could not be enforced and the cadence is still refused at save time.
-func TestSettingsPutStillRejectsEveryNOnOffsite(t *testing.T) {
+// An off-site replication job keeps no last-run record, so its interval could
+// not be enforced.
+func TestSettingsPutRejectsEveryNOnOffsite(t *testing.T) {
 	for _, field := range []string{
 		"containersOffsiteSchedule", "vmsOffsiteSchedule", "flashOffsiteSchedule",
 		"configOffsiteSchedule", "filesOffsiteSchedule",
@@ -88,10 +80,8 @@ func TestSettingsPutStillRejectsEveryNOnOffsite(t *testing.T) {
 	}
 }
 
-// TestSettingsPutAcceptsEveryNOnAllThreeTogether saves all three at once, the
-// way the Settings page does when a user edits more than one card before the
-// auto-save fires — a per-field allow-list that only worked one at a time would
-// still leave the reporter stuck.
+// The Settings page sends all three in one request when the user edits several
+// cards before the auto-save fires.
 func TestSettingsPutAcceptsEveryNOnAllThreeTogether(t *testing.T) {
 	d := &fakeServiceDocker{}
 	h, _ := newTestRouter(t, d, &fakeResticEngine{})
@@ -116,9 +106,8 @@ func TestSettingsPutAcceptsEveryNOnAllThreeTogether(t *testing.T) {
 	}
 }
 
-// getSettingsField GETs /api/settings and returns one string field out of the
-// nested "settings" object (the GET envelope is shape-symmetric with the PUT
-// body, so the settings live one level down from "ok").
+// getSettingsField returns one string field of the "settings" object in
+// GET /api/settings.
 func getSettingsField(t *testing.T, h http.Handler, field string) string {
 	t.Helper()
 	w, env := doJSON(t, h, http.MethodGet, "/api/settings", "")

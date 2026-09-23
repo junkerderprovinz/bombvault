@@ -1,23 +1,10 @@
 package store_test
 
-// What a domain's everyN due-gate is allowed to measure.
-//
-// The gate asks "has this domain's scheduled pass waited out its interval?".
-// It used to be answered by "the newest successful backup of ANY row in the
-// domain's table", which is a different question and starves the domain:
-//
-//	PerItemSchedules on, ContainersSchedule "everyN 7 03:00", 44 containers,
-//	one of them ("plex") overridden to "daily 01:00". registerPerItemEntries
-//	gives plex its own cron entry and DomainRunTargets REMOVES it from the
-//	domain run. Every night plex writes a fresh successful run, so at 03:00 the
-//	domain gate sees a two-hour-old timestamp and skips — every night, for
-//	good. The other 43 containers are never backed up by the schedule again,
-//	and the dashboard's RPO chip stays green because it reads the same query.
-//
-// These tests run the REAL gate (schedule.ContainersDueGate and friends,
-// exactly as main.go and api.go wire them) against a real database, and pin the
-// separation against the OLD feed in the same assertion, so the difference is
-// visible without having to remember what the code used to do.
+// A domain's everyN due-gate asks whether the domain's scheduled pass has
+// waited out its interval, so only items that pass runs may answer. With
+// per-item schedules on, a container with its own daily cron entry is left out
+// of the domain run. If its nightly success counted, a weekly containers gate
+// would see a fresh timestamp every night and never back up the rest.
 
 import (
 	"database/sql"
@@ -53,7 +40,6 @@ func perItemOn(t *testing.T, r *store.Repo) {
 	}
 }
 
-// TestContainersDueGateIgnoresItemsTheDomainRunSkips is the starvation case.
 func TestContainersDueGateIgnoresItemsTheDomainRunSkips(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -79,8 +65,8 @@ func TestContainersDueGateIgnoresItemsTheDomainRunSkips(t *testing.T) {
 		return tg.ID
 	}
 
-	plex := mk("plex", "daily 01:00", true) // own cron entry, NOT in the domain run
-	paused := mk("paused", "off", true)     // deliberately not scheduled at all
+	plex := mk("plex", "daily 01:00", true) // own cron entry, not in the domain run
+	paused := mk("paused", "off", true)     // not scheduled at all
 	excluded := mk("excluded", "", false)   // not included in the schedule
 	sonarr := mk("sonarr", "", true)        // a plain member of the domain run
 	seedSuccess(t, db, r, plex, now.Add(-2*time.Hour))
@@ -100,20 +86,17 @@ func TestContainersDueGateIgnoresItemsTheDomainRunSkips(t *testing.T) {
 		t.Fatal("the containers domain has not been backed up for 10 days and must be due")
 	}
 
-	// The OLD feed, still present because the dashboard's protection currency
-	// genuinely wants it, would have answered with plex's two-hour-old run and
-	// held the gate shut — the defect, pinned here so the two questions cannot
-	// be collapsed back into one query.
+	// The dashboard's "newest success anywhere" query answers with plex's
+	// two-hour-old run and would hold the gate shut.
 	anyItem, err := r.LastSuccessfulContainerBackup()
 	if err != nil {
 		t.Fatal(err)
 	}
 	if schedule.EveryNDue(anyItem, now, 7) {
-		t.Fatal("precondition: 'newest success anywhere' is expected to read NOT due here — that is the starvation being guarded")
+		t.Fatal("precondition: 'newest success anywhere' is expected to read not due here, which is the starvation under test")
 	}
 }
 
-// TestVMsDueGateIgnoresItemsTheDomainRunSkips is the VM counterpart.
 func TestVMsDueGateIgnoresItemsTheDomainRunSkips(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -153,9 +136,9 @@ func TestVMsDueGateIgnoresItemsTheDomainRunSkips(t *testing.T) {
 	}
 }
 
-// TestFilesDueGateIgnoresDisabledSets: a file set the user switched off is not
-// part of the domain run, so its last backup must not hold the gate closed for
-// the sets that are still on.
+// TestFilesDueGateIgnoresDisabledSets checks that a disabled file set, which is
+// not part of the domain run, cannot hold the gate closed for the sets that are
+// still on.
 func TestFilesDueGateIgnoresDisabledSets(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -184,10 +167,9 @@ func TestFilesDueGateIgnoresDisabledSets(t *testing.T) {
 	}
 }
 
-// TestDueGateNeverBackedUpIsDue: with nothing to measure, the gate reports the
-// definite "never" (zero time), which the scheduler reads as due — the same
-// answer a fresh install gets. It must not report an error, and it must not
-// report a stale time from an item the pass does not run.
+// TestDueGateNeverBackedUpIsDue expects the zero time, which the scheduler
+// reads as due, when there is nothing to measure: no error and no time from an
+// item the pass does not run.
 func TestDueGateNeverBackedUpIsDue(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -215,9 +197,9 @@ func TestDueGateNeverBackedUpIsDue(t *testing.T) {
 	}
 }
 
-// TestLastSuccessfulBackupAmongScopesAndChunks pins the store primitive itself:
-// only the given ids count, an empty list is a definite zero, and a list longer
-// than one IN (...) chunk still finds the newest.
+// TestLastSuccessfulBackupAmongScopesAndChunks checks that only the given ids
+// count, that an empty list gives the zero time and that a list longer than one
+// IN (...) chunk still finds the newest.
 func TestLastSuccessfulBackupAmongScopesAndChunks(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -234,8 +216,8 @@ func TestLastSuccessfulBackupAmongScopesAndChunks(t *testing.T) {
 		}
 		ids = append(ids, tg.ID)
 	}
-	// The newest success sits in the LAST chunk, an unrelated newer one outside
-	// the list entirely.
+	// The newest success in the list sits in the last chunk; a newer one lies
+	// outside the list.
 	seedSuccess(t, db, r, ids[len(ids)-1], now.AddDate(0, 0, -3))
 	outsider, err := r.UpsertTarget(store.Target{ContainerName: "outsider"})
 	if err != nil {

@@ -1,15 +1,10 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// #232: the card of a container that is no longer installed.
-//
-// one4spl renamed two containers and the old names kept recording a skip on
-// every scheduled run, with no switch on their cards to stop it. The only way
-// out was "Delete all backups", which deletes the very backups a rename leaves
-// behind. The card now carries the schedule switch, and its removal button
-// matches the VM card's (VMs.test.tsx pins the same three cases there).
-// ---------------------------------------------------------------------------
+// A container that is no longer installed, for example after a rename, keeps
+// its card. The card needs the schedule switch to stop recording skips, and a
+// removal button that matches the VM card's (VMs.test.tsx covers the same
+// cases there).
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { Container } from "../lib/api";
 import { placementOptions, placementView } from "../lib/placement.testsupport";
 
@@ -33,7 +28,6 @@ vi.mock("../lib/api", async () => {
   };
 });
 
-// Imported AFTER vi.mock so these bindings are the mocked functions.
 const { deleteBackups, forgetContainer, setInclude } = await import("../lib/api");
 const { ContainerRow } = await import("./Containers");
 const { en } = await import("../lib/i18n");
@@ -67,7 +61,7 @@ afterEach(() => {
   cleanup();
 });
 
-describe("ContainerRow when the container is no longer installed (#232)", () => {
+describe("ContainerRow when the container is no longer installed", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -93,7 +87,7 @@ describe("ContainerRow when the container is no longer installed (#232)", () => 
     expect(screen.queryByRole("button", { name: "containers.deleteBackups" })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "vms.removeEntry" }));
-    fireEvent.click(await screen.findByRole("button", { name: en["common.confirm"] }));
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: en["vms.removeEntry"] }));
 
     await waitFor(() => expect(forgetContainer).toHaveBeenCalledWith("radarr-movies"));
     expect(deleteBackups).not.toHaveBeenCalled();
@@ -113,7 +107,7 @@ describe("ContainerRow when the container is no longer installed (#232)", () => 
     expect(screen.queryByRole("button", { name: "vms.removeEntry" })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "containers.deleteBackups" }));
-    fireEvent.click(await screen.findByRole("button", { name: en["common.confirm"] }));
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: en["containers.deleteBackups"] }));
 
     await waitFor(() => expect(deleteBackups).toHaveBeenCalledWith("radarr-movies"));
     expect(forgetContainer).not.toHaveBeenCalled();

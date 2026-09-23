@@ -1,12 +1,9 @@
 package api
 
-// The cross-site write guard, and the notify-secret refill it sits next to.
-//
-// Both exist because authGate is a deliberate pass-through when no login
-// password is set — the documented trusted-LAN default. That model assumes an
-// attacker has to be on the LAN. A cross-site form post does not: it comes from
-// the operator's own browser, aimed at a LAN address, with no preflight and
-// needing no cookie.
+// Without a login password authGate lets every request through, on the
+// assumption that an attacker has to be on the LAN. A cross-site form post
+// comes from the operator's own browser instead, with no preflight and no
+// cookie needed.
 
 import (
 	"net/http"
@@ -17,9 +14,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 )
 
-// TestCrossSiteWriteIsRefused: the exact shape of the attack. An HTML form with
-// enctype="text/plain" can post a body the JSON decoder would accept, and the
-// browser marks it Sec-Fetch-Site: cross-site.
+// TestCrossSiteWriteIsRefused: a form with enctype="text/plain" can post a body
+// the JSON decoder accepts, and the browser sends it with
+// "Sec-Fetch-Site: cross-site".
 func TestCrossSiteWriteIsRefused(t *testing.T) {
 	h := csrfGate(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		t.Error("the handler must not be reached by a cross-site write")
@@ -37,10 +34,9 @@ func TestCrossSiteWriteIsRefused(t *testing.T) {
 	}
 }
 
-// TestCrossSiteBodylessWriteIsRefused: the guard is middleware rather than a
-// check inside decodeBody because plenty of state-changing routes carry no body
-// — starting a backup, pruning a repo, running the whole-server pass. A
-// body-only guard would have left exactly those reachable.
+// TestCrossSiteBodylessWriteIsRefused: the guard is middleware rather than part
+// of decodeBody because many state-changing routes, such as starting a backup
+// or pruning a repo, carry no body.
 func TestCrossSiteBodylessWriteIsRefused(t *testing.T) {
 	h := csrfGate(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		t.Error("the handler must not be reached by a cross-site write")
@@ -57,11 +53,10 @@ func TestCrossSiteBodylessWriteIsRefused(t *testing.T) {
 	}
 }
 
-// TestSameSiteAndNonBrowserWritesPass: everything that is not an explicit
-// cross-site browser request keeps working. same-origin is the SPA; same-site is
-// left alone because what a browser calls one "site" for a bare LAN IP is not
-// worth betting an install on; an absent header is a non-browser client (curl,
-// a peer's mesh POST, a script), which was never the threat.
+// TestSameSiteAndNonBrowserWritesPass: anything but an explicit cross-site
+// browser request passes. What a browser counts as one site for a bare LAN IP
+// is unreliable, so same-site is allowed, and a missing header means a
+// non-browser client such as curl or a peer.
 func TestSameSiteAndNonBrowserWritesPass(t *testing.T) {
 	for _, site := range []string{"same-origin", "same-site", "none", ""} {
 		reached := false
@@ -80,10 +75,9 @@ func TestSameSiteAndNonBrowserWritesPass(t *testing.T) {
 	}
 }
 
-// TestCrossSiteReadsPass: safe methods are reachable cross-site by design. The
-// browser's own same-origin policy keeps the response unreadable, and gating
-// them would break the widget iframe and a peer's status poll, both GETs on
-// purpose.
+// TestCrossSiteReadsPass: cross-site GETs pass, because the same-origin policy
+// keeps the response unreadable and the widget iframe and a peer's status poll
+// depend on them.
 func TestCrossSiteReadsPass(t *testing.T) {
 	reached := false
 	h := csrfGate(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -98,10 +92,10 @@ func TestCrossSiteReadsPass(t *testing.T) {
 	}
 }
 
-// TestNonJSONBodyIsRefused: the second half, and the one that does the work. A
-// cross-origin form can only send urlencoded, multipart or text/plain; anything
-// else needs a CORS preflight this server never answers. Requiring JSON removes
-// the whole class, whatever the Sec-Fetch-Site header says.
+// TestNonJSONBodyIsRefused: a cross-origin form can only send urlencoded,
+// multipart or text/plain bodies; anything else needs a CORS preflight this
+// server never answers. Requiring JSON closes that path whatever Sec-Fetch-Site
+// says.
 func TestNonJSONBodyIsRefused(t *testing.T) {
 	var body struct {
 		On string `json:"on"`
@@ -118,8 +112,8 @@ func TestNonJSONBodyIsRefused(t *testing.T) {
 	}
 }
 
-// TestJSONBodyWithCharsetIsAccepted: the check parses the media type rather than
-// comparing the raw header, so a client that spells out the charset is fine.
+// TestJSONBodyWithCharsetIsAccepted: the media type is parsed, so a charset
+// parameter is fine.
 func TestJSONBodyWithCharsetIsAccepted(t *testing.T) {
 	var body struct {
 		On string `json:"on"`
@@ -135,11 +129,10 @@ func TestJSONBodyWithCharsetIsAccepted(t *testing.T) {
 	}
 }
 
-// TestNotifySecretStaysWithItsDestination: POST /api/notify/test refills a blank
-// Matrix token from the encrypted store while taking the destination from the
-// request. A request naming its own homeserver with a blank token therefore had
-// the real token attached and sent there as a bearer header — a read of a secret
-// the API never hands back, dressed as a connection test.
+// TestNotifySecretStaysWithItsDestination: POST /api/notify/test refills blank
+// secrets from the store but takes the destination from the request. Without
+// this check, a request naming another homeserver would get the stored token
+// sent there as a bearer header.
 func TestNotifySecretStaysWithItsDestination(t *testing.T) {
 	svc := unraidNotifyService(t, nil)
 	stored := notify.Config{

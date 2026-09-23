@@ -1,44 +1,20 @@
-// ---------------------------------------------------------------------------
-// bombvault/lint-rules — the settled UI conventions, as lint rules.
+// bombvault/lint-rules: the house UI conventions as ESLint rules.
 //
-// Why these live in ESLint rather than in a test or a shell script:
+// Each rule is a statement about the shape of a JSX call site, which takes a
+// parser: a text search cannot tell a call site from a comment that quotes it,
+// and cannot see that `tone="fail"` and a statusFail class are the same red.
+// `npm run lint` runs in CI, and a violation shows up where the author is
+// typing.
 //
-//   * They are all statements about the SHAPE of a JSX call site, and ESLint
-//     is the tool this repo already runs that has a parser. The alternative —
-//     grepping — was tried: commit d336e532 swept the bespoke-red destructive
-//     controls by "grepping the whole tree for statusFail on an interactive
-//     element", and missed four controls that carried the identical red
-//     through `tone="fail"` instead of a class. A grep also cannot tell a call
-//     site from the enormous comment blocks in this codebase, which quote
-//     `shape="square"`, `tone="fail"` and `rounded-full` dozens of times while
-//     explaining why a past round did or did not use them.
-//   * `npm run lint` already runs in .github/workflows/lint.yml. A convention
-//     enforced there is enforced on every push and every PR with no new job,
-//     no new tool, and no new install.
-//   * A violation gets a file, a line, a column and an editor squiggle in the
-//     same place the author is typing, which is the only kind of feedback that
-//     changes behaviour before a reviewer has to.
-//   * Suppression is a first-class, auditable act. Each rule takes a
-//     `bv-convention-exception: <rule> -- <reason>` marker comment whose reason
-//     text is mandatory (helpers.js's hasException rejects a shrug), which names
-//     the rule it suppresses and must sit within eight lines above the element.
-//     Every exception in the app is therefore one command away, reasoning
-//     attached: `grep -rn "bv-convention-exception" web/src`.
+// A real exception is marked with a `bv-convention-exception: <rule> -- <why>`
+// comment ending at most eight lines above the element, and the reason is
+// mandatory (see hasException in helpers.js). `grep -rn
+// "bv-convention-exception" web/src` lists them all. ESLint does not know the
+// marker, so reportUnusedDisableDirectives does not catch a stale one: a marker
+// left behind keeps exempting whatever lands in its window.
 //
-//     What the marker does NOT get, said plainly because this header used to
-//     claim otherwise: `reportUnusedDisableDirectives: "error"` does not cover
-//     it. That setting governs real `eslint-disable` directives, which ESLint
-//     parses and tracks. The marker is an ordinary comment matched by a regex in
-//     helpers.js, and ESLint has no idea it is meant to mean anything — so a
-//     marker left behind after the element it excused stopped violating the rule
-//     goes on quietly exempting whatever else lands in its eight-line window,
-//     and the build says nothing. The grep is the audit; keeping the count low
-//     is what keeps the audit cheap. (lint-rules/README.md scopes the same
-//     setting correctly — this header was the one that overstated it.)
-//
-// The one convention that is NOT here is "explanations live in an InfoBubble":
-// see lint-rules/README.md for the measurements behind that decision.
-// ---------------------------------------------------------------------------
+// "Explanations live in an InfoBubble" is not a rule; lint-rules/README.md has
+// the measurements behind that.
 import controlReadsEngineTokens from "./control-reads-engine-tokens.js";
 import iconBadgeNeedsTooltip from "./icon-badge-needs-tooltip.js";
 import noEmDashInUserText from "./no-em-dash-in-user-text.js";

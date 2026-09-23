@@ -1,16 +1,10 @@
 package store_test
 
-// ---------------------------------------------------------------------------
-// A recorded timestamp from the FUTURE must not freeze a schedule.
-//
-// A box that boots with a wrong clock (dead CMOS battery, or the window before
-// NTP steps it) stamps its runs years ahead. Every currency read is an
-// `ORDER BY finished_at DESC LIMIT 1`, so that row keeps winning even after the
-// clock is corrected and later, correctly-stamped runs land: the poison never
-// ages out. Every consumer then computes now − last, gets a NEGATIVE elapsed
-// time, and fails silently — the everyN gate skips every fire forever, the
-// watchdog reads the domain as freshly current and never alerts.
-// ---------------------------------------------------------------------------
+// A box that boots with a wrong clock (dead CMOS battery, or before NTP steps
+// it) stamps its runs years ahead. Every currency read takes the newest
+// finished_at, so such a row would keep winning after the clock is fixed and
+// the elapsed time would stay negative: the everyN gate would skip every fire
+// and the watchdog would never alert.
 
 import (
 	"testing"
@@ -31,8 +25,8 @@ func TestLastSuccessfulBackupIgnoresAFutureStamp(t *testing.T) {
 		t.Fatalf("UpsertTarget: %v", err)
 	}
 
-	// The poisoned run: recorded normally, then stamped by a clock nine years
-	// ahead — exactly what the row looks like after NTP steps the clock back.
+	// A run stamped by a clock nine years ahead, as the row looks after NTP
+	// steps the clock back.
 	poisoned, err := r.StartRun(tg.ID, "backup")
 	if err != nil {
 		t.Fatal(err)
@@ -56,8 +50,8 @@ func TestLastSuccessfulBackupIgnoresAFutureStamp(t *testing.T) {
 		t.Fatalf("with only a poisoned row the answer is \"never\", got %v", last)
 	}
 
-	// And once a real run lands, THAT is what the gate measures — the poisoned
-	// row must not keep winning the ORDER BY, or the schedule never heals.
+	// A correctly stamped run must win over the future row, or the schedule
+	// never recovers.
 	good, err := r.StartRun(tg.ID, "backup")
 	if err != nil {
 		t.Fatal(err)
@@ -108,9 +102,8 @@ func TestLastScheduleJobRunIgnoresAFutureStamp(t *testing.T) {
 	}
 }
 
-// TestSanitizeRecordedTimeTolerance pins the boundary: ordinary skew (a stamp
-// taken moments ago, a second-resolution column rounding up) is a measurement;
-// a wrong-clock stamp is not.
+// TestSanitizeRecordedTimeTolerance keeps ordinary skew (a stamp taken moments
+// ago, a second-resolution column rounding up) and drops a wrong-clock stamp.
 func TestSanitizeRecordedTimeTolerance(t *testing.T) {
 	now := time.Date(2026, time.March, 11, 9, 15, 0, 0, time.UTC)
 	cases := []struct {

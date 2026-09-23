@@ -5,10 +5,6 @@ import (
 	"testing"
 )
 
-// The password store changed format in v8.6.0, and the thing that must not break
-// is the upgrade path: an instance whose hash was written by the old HMAC code
-// has to keep letting its owner in, then quietly move to Argon2id.
-
 func TestVerifyAcceptsLegacyHMACHash(t *testing.T) {
 	legacy := hashPasswordLegacy(appKey, "hunter2")
 	if !VerifyPassword(appKey, "hunter2", legacy) {
@@ -29,8 +25,9 @@ func TestLegacyHashIsFlaggedForRehash(t *testing.T) {
 	}
 }
 
-// A hash carrying WEAKER parameters than today's must be flagged, or a future
-// parameter bump would silently never take effect on existing installs.
+// TestWeakerParametersAreFlaggedForRehash checks that a hash with weaker
+// parameters is flagged; otherwise raising them would never reach existing
+// installs.
 func TestWeakerParametersAreFlaggedForRehash(t *testing.T) {
 	weak := hashPasswordWithSalt(appKey, "hunter2", []byte("0123456789abcdef"), 8*1024, 1, 1)
 	if !VerifyPassword(appKey, "hunter2", weak) {
@@ -45,15 +42,15 @@ func TestSaltMakesTwoHashesOfOnePasswordDiffer(t *testing.T) {
 	a := mustHash(t, appKey, "same password")
 	b := mustHash(t, appKey, "same password")
 	if a == b {
-		t.Fatal("two hashes of one password must differ — that is what the salt is for")
+		t.Fatal("two hashes of one password must differ because of the salt")
 	}
 	if !VerifyPassword(appKey, "same password", a) || !VerifyPassword(appKey, "same password", b) {
 		t.Fatal("both must still verify")
 	}
 }
 
-// The pepper is the property the HMAC scheme had and Argon2id does not have on
-// its own: a copied database is worth nothing without the APP_KEY.
+// TestWrongAppKeyFailsArgonHash checks the pepper, which makes a copied database
+// worthless without the APP_KEY.
 func TestWrongAppKeyFailsArgonHash(t *testing.T) {
 	h := mustHash(t, appKey, "hunter2")
 	if VerifyPassword(otherKey, "hunter2", h) {
@@ -61,9 +58,8 @@ func TestWrongAppKeyFailsArgonHash(t *testing.T) {
 	}
 }
 
-// A corrupted stored value must refuse everything. The failure mode worth
-// guarding is a parse that quietly falls back to defaults and then matches a
-// freshly computed hash.
+// TestMalformedStoredHashVerifiesNothing guards against a parse that falls back
+// to defaults and then matches a freshly computed hash.
 func TestMalformedStoredHashVerifiesNothing(t *testing.T) {
 	good := mustHash(t, appKey, "hunter2")
 	broken := []string{
@@ -84,9 +80,9 @@ func TestMalformedStoredHashVerifiesNothing(t *testing.T) {
 	}
 }
 
-// An empty stored hash means "authentication is off", and the callers check that
-// before ever getting here. If one forgets, an empty password must still not
-// walk in through the legacy branch.
+// TestEmptyStoredHashRejectsEmptyPassword covers a caller that forgets to check
+// for an empty stored hash, which means authentication is off: an empty
+// password still must not pass the legacy branch.
 func TestEmptyStoredHashRejectsEmptyPassword(t *testing.T) {
 	if VerifyPassword(appKey, "", "") {
 		t.Fatal("an empty stored hash must not verify an empty password")
@@ -94,8 +90,6 @@ func TestEmptyStoredHashRejectsEmptyPassword(t *testing.T) {
 }
 
 func TestNeedsRehashOnUnparseableIsFalse(t *testing.T) {
-	// It can never verify, so there is nothing to upgrade — and rehashing only
-	// ever runs after a successful verify.
 	if NeedsRehash(argonPrefix + "nonsense") {
 		t.Fatal("an unparseable argon value has nothing to rehash")
 	}

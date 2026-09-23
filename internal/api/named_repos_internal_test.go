@@ -8,13 +8,10 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestNamedRepoRoleIsInvisibleToTheOffsiteQueries is the load-bearing claim
-// behind putting named repositories (#204) in offsite_targets at all: a third
-// role is free because every query in that file filters on an explicit one.
-//
-// If it were not true, the replication loop would start copying backups INTO
-// what is meant to be a primary location, and the off-site CRUD would offer it
-// as a destination. That is why this is pinned rather than argued.
+// Named repositories share the offsite_targets table, which only works because
+// every off-site query filters on its role. Otherwise replication would copy
+// backups into a primary location and the off-site CRUD would offer it as a
+// target.
 func TestNamedRepoRoleIsInvisibleToTheOffsiteQueries(t *testing.T) {
 	st := newTestStore(t)
 
@@ -24,8 +21,7 @@ func TestNamedRepoRoleIsInvisibleToTheOffsiteQueries(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create named repo: %v", err)
 	}
-	// A real off-site destination beside it, so the queries have something to
-	// return and "empty" cannot pass for "filtered".
+	// A real off-site target, so an empty result cannot pass for a filtered one.
 	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
 		Domain: "containers", Name: "Offsite", Repo: "b2:bucket/offsite", Enabled: true,
 	}); err != nil {
@@ -50,7 +46,6 @@ func TestNamedRepoRoleIsInvisibleToTheOffsiteQueries(t *testing.T) {
 		t.Fatal("a named repository must not be reachable through GetOffsiteTarget")
 	}
 
-	// And the other way round: the named-repo queries see only their own rows.
 	repos, err := st.ListNamedRepos()
 	if err != nil {
 		t.Fatal(err)
@@ -60,14 +55,9 @@ func TestNamedRepoRoleIsInvisibleToTheOffsiteQueries(t *testing.T) {
 	}
 }
 
-// TestItemRepoPathRefusesRatherThanFallingBack pins the decision that matters
-// most here. An override that cannot be resolved is an ERROR; it never quietly
-// becomes the domain repository.
-//
-// A fallback would send the next backup somewhere else and look exactly like a
-// working backup - the run is green, the snapshot exists, it is simply in the
-// wrong place, and nobody finds out until they go looking for a snapshot that
-// is not where they expect it.
+// An override that cannot be resolved is an error, never the domain
+// repository. A fallback would look exactly like a working backup with the
+// snapshot in the wrong place, and nobody would notice until a restore.
 func TestItemRepoPathRefusesRatherThanFallingBack(t *testing.T) {
 	dir := t.TempDir()
 	st := newTestStore(t)
@@ -135,10 +125,9 @@ func TestItemRepoPathRefusesRatherThanFallingBack(t *testing.T) {
 	})
 }
 
-// TestDomainReposInUseCoversEveryItemsRepository pins what the dashboard reads.
-// A container pointed at a named repository keeps its snapshots there, so an
-// overview that only read the domain repository would report it as never backed
-// up - the most alarming thing a backup tool can say, and wrong.
+// A container pointed at a named repository keeps its snapshots there. An
+// overview that read only the domain repository would report it as never
+// backed up.
 func TestDomainReposInUseCoversEveryItemsRepository(t *testing.T) {
 	dir := t.TempDir()
 	st := newTestStore(t)
@@ -163,8 +152,7 @@ func TestDomainReposInUseCoversEveryItemsRepository(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// A second one that NOTHING points at: it must not be scanned, or every
-	// overview pays for repositories nobody uses.
+	// Nothing points at this one, so the overview must not scan it.
 	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
 		Role: store.RoleRepo, Name: "Unused", Repo: "backups/unused", Enabled: true,
 	}); err != nil {

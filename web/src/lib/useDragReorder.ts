@@ -1,20 +1,16 @@
 import { useRef, useState } from "react";
 import type { DragEvent, DragEventHandler, HTMLAttributes } from "react";
 
-// useDragReorder — live drag-to-reorder for a list rendered as rows. As a dragged
-// row passes over another, the list reorders IMMEDIATELY (the other rows shift
-// live) instead of only settling on drop, so you see the new position while
-// dragging. Shared by the container and VM backup-order lists.
+// useDragReorder reorders a list while a row is dragged over the others, not
+// only on drop, so the new position is visible during the drag. E is the row
+// element type, so the props spread onto an <li> or a <div> alike:
 //
-// Generic over the row element type so the returned props spread cleanly onto an
-// <li> (containers) or a <div> (VMs) without a type mismatch.
-//
-// Wire it up:
 //   const { dragIndex, rowProps } = useDragReorder<HTMLLIElement>(reorder, saving);
 //   items.map((it, i) => (
 //     <li {...rowProps(i)} className={dragIndex === i ? "opacity-40" : ""}>…</li>
 //   ))
-// where reorder(from, to) moves item `from` to index `to` in your list state.
+//
+// reorder(from, to) moves item `from` to index `to` in the caller's state.
 export function useDragReorder<E extends HTMLElement = HTMLElement>(
   onReorder: (from: number, to: number) => void,
   disabled = false,
@@ -22,8 +18,8 @@ export function useDragReorder<E extends HTMLElement = HTMLElement>(
   dragIndex: number | null;
   rowProps: (index: number) => HTMLAttributes<E>;
 } {
-  // A ref holds the authoritative current index of the dragged row: several
-  // dragEnter events can fire between renders, so reading state would go stale.
+  // Several dragEnter events can fire between renders, so the current index
+  // lives in a ref; state would be stale.
   const dragRef = useRef<number | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
 
@@ -45,8 +41,8 @@ export function useDragReorder<E extends HTMLElement = HTMLElement>(
       e.preventDefault();
       const from = dragRef.current;
       if (from === null || from === index) return;
-      onReorder(from, index); // move the dragged row here now → the others shift live
-      dragRef.current = index; // the dragged row now lives at `index`
+      onReorder(from, index);
+      dragRef.current = index;
       setDragIndex(index);
     };
 

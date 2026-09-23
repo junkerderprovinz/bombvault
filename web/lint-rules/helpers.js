@@ -1,20 +1,7 @@
-// ---------------------------------------------------------------------------
-// Shared AST helpers for the bombvault convention rules.
-//
-// Everything here works on the JSX nodes that BOTH espree (with
-// `ecmaFeatures.jsx`, what RuleTester uses in the unit tests) and
-// typescript-eslint's parser (what `npm run lint` actually uses on .tsx)
-// produce — JSXElement / JSXOpeningElement / JSXAttribute / JSXText /
-// JSXExpressionContainer are identical between the two, so a rule tested
-// against plain JSX is the same rule that runs against the real tree.
-//
-// Why AST and not a grep script: this codebase's comment blocks are longer
-// than its code and they QUOTE the very patterns these rules look for
-// (`shape="square"`, `tone="fail"`, `rounded-full` and `size="icon"` all
-// appear dozens of times inside prose explaining why a past round did or did
-// not use them). A text scanner cannot tell a call site from a paragraph
-// about a call site; a parser never sees the paragraphs at all.
-// ---------------------------------------------------------------------------
+// AST helpers shared by the bombvault convention rules. The JSX node types used
+// here are identical in espree (which RuleTester uses in the unit tests) and in
+// typescript-eslint's parser (which `npm run lint` uses), so a rule tested on
+// plain JSX behaves the same on the real tree.
 
 /** The tag name of a JSXElement / JSXOpeningElement, e.g. "div", "Badge". */
 export function jsxName(node) {
@@ -22,7 +9,7 @@ export function jsxName(node) {
   const name = opening?.name;
   if (!name) return "";
   if (name.type === "JSXIdentifier") return name.name;
-  // <Foo.Bar /> — the member expression's last part is the useful half.
+  // <Foo.Bar />: the last part names the component.
   if (name.type === "JSXMemberExpression") return name.property?.name ?? "";
   return "";
 }
@@ -40,15 +27,15 @@ export function hasAttr(node, attr) {
 }
 
 /**
- * The literal string value of an attribute written as `x="lit"` or `x={"lit"}`.
- * Returns undefined for anything computed — a rule must never guess at a value
- * it cannot see, so "unknown" is always treated as "not a violation".
+ * The string value of an attribute written as `x="lit"` or `x={"lit"}`, or
+ * undefined for anything computed. The rules treat a value they cannot see as
+ * compliant rather than guess.
  */
 export function attrStringValue(node, attr) {
   const a = getAttr(node, attr);
   if (!a) return undefined;
   const v = a.value;
-  if (!v) return undefined; // bare `iconOnly` — boolean true, not a string
+  if (!v) return undefined; // a bare `iconOnly` is boolean true
   if (v.type === "Literal" && typeof v.value === "string") return v.value;
   if (v.type === "JSXExpressionContainer") {
     const e = v.expression;
@@ -59,12 +46,9 @@ export function attrStringValue(node, attr) {
 }
 
 /**
- * The `const x = "…"` a className identifier stands for, or undefined.
- *
- * Only a CONST with a single definition and no later reassignment is followed:
- * anything a rule cannot see for certain must read as "unknown", and unknown is
- * never a violation. A `let` that is reassigned, a function parameter, an import
- * from another module — all decline here rather than guess.
+ * The initializer of the `const` an identifier names, or undefined. Only a
+ * const with a single definition and no other write is followed; a `let`, a
+ * parameter or an import reads as unknown.
  */
 function constInitializer(idNode, context) {
   const sourceCode = context?.sourceCode ?? context?.getSourceCode?.();
@@ -81,8 +65,6 @@ function constInitializer(idNode, context) {
     if (variable.defs.length !== 1) return undefined;
     const def = variable.defs[0];
     if (def.type !== "Variable" || def.parent?.kind !== "const") return undefined;
-    // A const can still be mutated through its own reference in TS? No — but a
-    // write reference at all means this is not the single settled value.
     if (variable.references.some((r) => r.isWrite() && r.identifier !== def.name)) return undefined;
     return def.node?.init;
   }
@@ -90,15 +72,10 @@ function constInitializer(idNode, context) {
 }
 
 /**
- * Every string literal anywhere inside a node (template quasis included).
- *
- * `context` is optional and, when given, lets an IDENTIFIER be followed to the
- * `const` it names. That is not a nicety: a class list moved into a local (the
- * `const inputCls = "rounded-control bg-carbon-surface2 …"` idiom this codebase
- * uses at a dozen interactive call sites) was invisible to every rule built on
- * this helper, so those controls were compliant by luck and unchecked in fact —
- * a guard that reads only literals silently stops guarding the moment someone
- * factors the literal out. `seen` breaks a cycle between two consts.
+ * Every string literal inside a node, template quasis included. With
+ * `context`, an identifier is followed to the const it names, so a class list
+ * factored out into `const inputCls = "…"` is still checked. `seen` breaks a
+ * cycle between two consts.
  */
 function collectStrings(node, out, context, seen) {
   if (!node || typeof node !== "object") return;
@@ -111,12 +88,8 @@ function collectStrings(node, out, context, seen) {
     for (const q of node.quasis) if (q.value?.cooked) out.push(q.value.cooked);
     for (const e of node.expressions) collectStrings(e, out, context, seen);
   } else if (node.type === "MemberExpression") {
-    // A property ACCESS is not the whole map. Resolving `S.btn` by expanding its
-    // object through constInitializer pulled in every string of the class map,
-    // so all three class-reading rules (which run at "error") judged a className
-    // by strings the element never referenced. The property name is the useful
-    // part and is collected on its own when it is a plain literal key; the
-    // object is deliberately not followed.
+    // `S.btn` uses one entry of S. Following the object would judge the
+    // className by every string in the map, so only a computed key is read.
     if (node.computed) collectStrings(node.property, out, context, seen);
     return;
   } else if (node.type === "Identifier" && context && seen && !seen.has(node.name)) {
@@ -132,16 +105,13 @@ function collectStrings(node, out, context, seen) {
 }
 
 /**
- * Every whitespace-separated class token an element can render, gathered from
- * every string literal in its `className` — a plain string, a template
- * literal, and both arms of a `cond ? "a" : "b"` inside one. Conditional arms
- * are included deliberately: `hover:text-statusFail` is just as much a
- * bespoke colour when it only appears in one branch.
+ * Every class token an element can render, from every string literal in its
+ * `className`, including both arms of a conditional: `hover:text-statusFail`
+ * in one branch is still a bespoke colour.
  *
- * Pass `context` to also follow a bare identifier to the `const` it names, so
- * `className={inputCls}` is read rather than skipped. Without it the old
- * literals-only behaviour is unchanged, which is what the RuleTester cases that
- * exercise this helper directly rely on.
+ * With `context`, a bare identifier such as `className={inputCls}` is followed
+ * to its const. Without it only literals are read, which the RuleTester cases
+ * that call this helper directly rely on.
  */
 export function classTokens(node, context) {
   const a = getAttr(node, "className");
@@ -194,14 +164,13 @@ function expressionRendersText(e) {
     case "Identifier":
       return e.name !== "undefined";
     default:
-      // A call (`t("x")`), a member expression, a template literal, a map()
-      // — anything that can produce a string. Treated as text, which makes
-      // "icon-only" the conservative, narrow classification it should be.
+      // A call like t("x"), a member access, a template or a map() can all
+      // produce a string. Counting them as text keeps "icon-only" narrow.
       return true;
   }
 }
 
-/** Does this element have a glyph child (an <svg>, an <Icon*/ /*> component)? */
+/** Does this element render a child element, such as an <svg> or an icon? */
 export function hasElementChild(node) {
   return (node.children ?? []).some(
     (c) =>
@@ -220,10 +189,8 @@ function containsJsx(e) {
 }
 
 /**
- * Icon-only: renders at least one element and no text at all. This is exactly
- * the shape Badge.tsx's own `tip` doc describes ("an icon-only trigger has
- * nothing else a name could come from"), derived from what the element
- * actually renders rather than from a prop a caller could forget to pass.
+ * Icon-only: renders at least one element and no text. Derived from what the
+ * element renders rather than from a prop a caller could forget to pass.
  */
 export function isIconOnly(node) {
   return hasElementChild(node) && !subtreeHasText(node);
@@ -251,38 +218,23 @@ const INTERACTIVE_TAGS = new Set([
   "IconTipButton",
 ]);
 
-// ---------------------------------------------------------------------------
-// The escape hatch.
-//
-// Every rule here is a house convention, and a house convention occasionally
-// has a real exception. Rather than a bare `eslint-disable` (which says
-// nothing about WHY and is invisible to anyone auditing the conventions), each
-// rule honours one marker comment placed directly above the offending element:
+// A house convention occasionally has a real exception, and a bare
+// eslint-disable says nothing about why. Each rule honours a marker comment
+// directly above the offending element instead, as in pages/Dashboard.tsx:
 //
 //     {/* bv-convention-exception: control-reads-engine-tokens --
-//         the heat-map cell is a chart mark, not a control; its colour IS the
+//         the heat-map cell is a chart mark, not a control; its colour is the
 //         datum and cannot come from the engine. */}
 //
-// The example above is a real one (pages/Dashboard.tsx's heat map). It used to
-// name ConfirmDialog's commit button, which was the one sanctioned status
-// colour in the app until GlimStone 1.12.0 removed the red from it; an example
-// that points at an exception nobody may use any more teaches the wrong thing.
-//
-// The reason text is mandatory (>= 12 characters) — a marker with no reason is
-// not accepted and the rule still fires. Every exception in the app is one
-// `grep -rn "bv-convention-exception" web/src` away, which a blanket
-// eslint-disable comment never is.
-// ---------------------------------------------------------------------------
+// A marker whose reason is shorter than 12 characters is ignored.
 const MARKER = /bv-convention-exception:\s*([a-z-]+)\s*(?:--|—|:)\s*(\S[\s\S]*)$/;
 
-/** How many lines above the reported node the marker BLOCK may end. */
+/** How many lines above the reported node the marker's comment may end. */
 const MARKER_LOOKBACK = 8;
 
 /**
- * Consecutive `//` lines are separate comment nodes to the parser but one
- * paragraph to a reader, and a real reason spills over several of them. Glue
- * runs of adjacent line comments (and each block comment) back into the block
- * the author actually wrote, so the marker's reason can span lines.
+ * The file's comments as the author wrote them: runs of adjacent `//` lines
+ * are joined into one block, so a marker's reason can span several lines.
  */
 function commentBlocks(sourceCode) {
   const blocks = [];
@@ -309,7 +261,7 @@ export function hasException(context, node, ruleId) {
     const m = MARKER.exec(block.text);
     if (!m) continue;
     if (m[1] !== ruleId) continue;
-    if (m[2].replace(/[\s/*]+/g, " ").trim().length < 12) continue; // a reason, not a shrug
+    if (m[2].replace(/[\s/*]+/g, " ").trim().length < 12) continue; // too short to be a reason
     return true;
   }
   return false;

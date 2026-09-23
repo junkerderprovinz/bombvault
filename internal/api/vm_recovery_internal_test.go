@@ -11,9 +11,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
 )
 
-// TestRemoveStrayOverlays guards the recurring live-backup bug: blockcommit
-// leaves the "*.bombvault-tmp" overlay file behind, breaking the next snapshot.
-// removeStrayOverlays must delete only those files, never the base disk or others.
+// A "*.bombvault-tmp" overlay that blockcommit left behind breaks the next
+// snapshot. Only those files are removed.
 func TestRemoveStrayOverlays(t *testing.T) {
 	dir := t.TempDir()
 	base := filepath.Join(dir, "vdisk1.qcow2")
@@ -39,9 +38,8 @@ func TestRemoveStrayOverlays(t *testing.T) {
 	}
 }
 
-// TestDomainLocks pins the per-repo serialisation: while a backup holds a
-// domain's lock, maintenance (tryLockDomain) reports busy; other domains stay
-// lockable; an unknown domain is a no-op success.
+// While a backup holds a domain's lock, tryLockDomain reports busy for that
+// domain only. An unknown domain always succeeds.
 func TestDomainLocks(t *testing.T) {
 	s := &Service{repoMu: map[string]*sync.Mutex{"containers": {}, "vms": {}}}
 
@@ -126,9 +124,8 @@ const cleanDomainXML = `<domain><devices>
   </disk>
 </devices></domain>`
 
-// TestLeftoverOverlayDevices: a writable disk whose source is a "*.bombvault-tmp"
-// overlay (a leftover from an interrupted live backup) is detected by its device;
-// a clean disk is not. Matching our own snapshot name is unambiguous.
+// A disk whose source is a "*.bombvault-tmp" overlay, left by an interrupted
+// live backup, is reported by its device.
 func TestLeftoverOverlayDevices(t *testing.T) {
 	clean := virshcli.DomainInfo{Disks: []virshcli.DiskRef{
 		{Dev: "hdc", Source: "/mnt/user/domains/WinSrv/vdisk1.qcow2"},
@@ -147,9 +144,8 @@ func TestLeftoverOverlayDevices(t *testing.T) {
 	}
 }
 
-// TestRecoverLeftoverOverlayCommitsAndRedumps: a running VM on a "*.bombvault-tmp"
-// overlay is committed back (blockcommit on the overlay device), then re-dumped so
-// the returned domain points at the clean base disk.
+// A running VM on an overlay is committed back and re-dumped, so the returned
+// domain points at the base disk.
 func TestRecoverLeftoverOverlayCommitsAndRedumps(t *testing.T) {
 	sv := &scriptedVirsh{active: true, dumpXMLs: []string{cleanDomainXML}}
 	s := &Service{virsh: sv}
@@ -170,9 +166,8 @@ func TestRecoverLeftoverOverlayCommitsAndRedumps(t *testing.T) {
 	}
 }
 
-// TestRecoverLeftoverOverlayShutOffErrors: a shut-off VM with a leftover overlay
-// can't be active-committed; we must error (never silently start it), and never
-// blockcommit.
+// A shut-off VM cannot be active-committed, so recovery fails instead of
+// starting it.
 func TestRecoverLeftoverOverlayShutOffErrors(t *testing.T) {
 	sv := &scriptedVirsh{active: false}
 	s := &Service{virsh: sv}
@@ -186,8 +181,6 @@ func TestRecoverLeftoverOverlayShutOffErrors(t *testing.T) {
 	}
 }
 
-// TestRecoverLeftoverOverlayNoOpWhenClean: a clean VM is untouched (no commit, xml
-// passes through unchanged).
 func TestRecoverLeftoverOverlayNoOpWhenClean(t *testing.T) {
 	sv := &scriptedVirsh{active: true}
 	s := &Service{virsh: sv}

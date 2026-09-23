@@ -6,8 +6,6 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestWatchdogStateRoundTrip pins the watchdog_state CRUD: absent → upsert →
-// read-back → refresh (same domain, new episode) → delete → absent again.
 func TestWatchdogStateRoundTrip(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -30,7 +28,7 @@ func TestWatchdogStateRoundTrip(t *testing.T) {
 		t.Fatalf("state = %+v, want NotifiedAt=100 LastSuccessAt=50", ws)
 	}
 
-	// Upsert on the same domain replaces the episode (conflict path).
+	// Upserting the same domain replaces the episode.
 	if err := r.UpsertWatchdogState(store.WatchdogState{Domain: "containers", NotifiedAt: 200, LastSuccessAt: 150}); err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +40,6 @@ func TestWatchdogStateRoundTrip(t *testing.T) {
 		t.Fatalf("refreshed state = %+v, want NotifiedAt=200 LastSuccessAt=150", ws)
 	}
 
-	// Delete → absent; deleting again stays a no-op (no error).
 	if err := r.DeleteWatchdogState("containers"); err != nil {
 		t.Fatal(err)
 	}

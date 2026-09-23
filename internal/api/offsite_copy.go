@@ -389,15 +389,17 @@ func (s *Service) ageTarget(ctx context.Context, domain, dest string, mode resti
 	if !op.Any() {
 		return false
 	}
+	var snaps []restic.Snapshot
 	var tags []string
 	if heldErr == nil {
-		tags = identityTags(append(slices.Clone(held), landed...))
+		snaps = append(slices.Clone(held), landed...)
+		tags = identityTags(snaps)
 	}
 	var err error
 	if len(tags) == 0 {
 		err = s.applyRetentionPerIdentity(ctx, dest, op, mode)
 	} else {
-		err = s.applyRetentionToTags(ctx, dest, op, mode, tags)
+		err = s.applyRetentionToTags(ctx, dest, op, mode, tags, snaps)
 	}
 	if err != nil {
 		log.Printf("api: offsite %s: retention prune failed (replica is safe): %v", domain, err) //nolint:gosec // G706: domain is a fixed literal

@@ -1,24 +1,10 @@
-// ---------------------------------------------------------------------------
-// The settled UI conventions — rule tests.
+// Tests for the rules in web/lint-rules/. Every rule has at least one invalid
+// case, and every false positive a rule was calibrated against is pinned as a
+// valid case that names the file it came from.
 //
-// web/lint-rules/ turns seven house conventions into lint errors. This file is
-// the other half of that: proof that each rule FIRES on the violation it
-// targets, and proof that it stays silent on the shapes in the real tree that
-// merely look similar.
-//
-// "A check that has never been seen to fail is not known to work" — so every
-// rule here has at least one `invalid` case, and every rule that had to be
-// calibrated against a real false positive has that exact false positive
-// pinned as a `valid` case, named after the file it came from. Those valid
-// cases are the load-bearing half: a rule that starts flagging Toggle's switch
-// or the Dashboard heat-map legend again will fail here rather than annoy
-// whoever hits it next and get switched off.
-//
-// espree with `ecmaFeatures.jsx` rather than typescript-eslint's parser: the
-// rules only read JSXElement / JSXAttribute / JSXText nodes, which both
-// parsers produce identically, and espree needs none of eslint.config.js's
-// side-by-side TypeScript 6 shim to run under vitest.
-// ---------------------------------------------------------------------------
+// espree with ecmaFeatures.jsx instead of typescript-eslint's parser: the rules
+// only read JSX nodes, which both parsers produce identically, and espree runs
+// under vitest without eslint.config.js's TypeScript shim.
 import { RuleTester } from "eslint";
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
@@ -46,26 +32,21 @@ const SETTINGS = "/repo/web/src/pages/Settings.tsx";
 const LOGIN = "/repo/web/src/pages/Login.tsx";
 const COMPONENT = "/repo/web/src/components/Widget.tsx";
 
-// ---------------------------------------------------------------------------
-// 1. An icon-only badge without a tooltip.
-// ---------------------------------------------------------------------------
+// An icon-only badge without a tooltip.
 ruleTester.run("icon-badge-needs-tooltip", rules["icon-badge-needs-tooltip"], {
   valid: [
-    // The good shape: every square icon badge in the app looks like this.
+    // The shape every square icon badge in the app uses.
     `<Badge as="button" shape="square" size="icon" tone="active" tip={t("snapshots.delete")}><IconTrash /></Badge>`,
     // A text chip that happens to contain a glyph is not an icon badge.
     `<Badge tone="ok" shape="pill">{"\\u2713 "}{t("drill.proven")}</Badge>`,
     // Text through an expression is still text.
     `<Badge as="button" shape="square">{t("offsite.targets.edit")}</Badge>`,
-    // REAL TREE, components/Toggle.tsx: the switch is icon-only with an
-    // aria-label and NO balloon, on purpose — commit 53a1931e removed its
-    // native title, and its visible label sits beside it (convention 2).
-    // A rule that demanded a tooltip here would undo that commit.
+    // components/Toggle.tsx: an icon-only switch with an aria-label and no
+    // tooltip, because its visible label sits beside it.
     `<button type="button" role="switch" aria-checked={checked} aria-label={label} onClick={f}><span className="knob" /></button>`,
-    // REAL TREE, components/Toast.tsx / ConfirmDialog.tsx / WhatsNewDialog.tsx:
-    // a dialog close X, aria-labelled, no balloon.
+    // An aria-labelled close X, as on Toast's dismiss button.
     `<button type="button" onClick={onClose} aria-label={t("common.close")}><svg /></button>`,
-    // REAL TREE, components/SnapshotFileTree.tsx: a disclosure chevron.
+    // The disclosure chevron in components/SnapshotFileTree.tsx.
     `<button onClick={toggle} aria-label={expanded ? "collapse" : "expand"}><svg /></button>`,
     // A Badge whose explanation is nested rather than passed as a prop.
     `<Badge shape="square"><InfoBubble tip={t("x")} /><IconKey /></Badge>`,
@@ -78,8 +59,7 @@ ruleTester.run("icon-badge-needs-tooltip", rules["icon-badge-needs-tooltip"], {
   ],
   invalid: [
     {
-      // The regression this rule exists for: a text button converted to a
-      // glyph badge, and the words simply vanished.
+      // A text button turned into a glyph badge with no words left.
       code: `<Badge as="button" shape="square" size="icon" onClick={f}><IconTrash /></Badge>`,
       errors: [{ messageId: "missing" }],
     },
@@ -88,13 +68,12 @@ ruleTester.run("icon-badge-needs-tooltip", rules["icon-badge-needs-tooltip"], {
       errors: [{ messageId: "missing" }],
     },
     {
-      // The native OS balloon — wrong on a Badge…
+      // A native title on a Badge.
       code: `<Badge as="button" shape="square" size="icon" title={t("x")} onClick={f}><IconPencil /></Badge>`,
       errors: [{ messageId: "nativeTitle" }],
     },
     {
-      // …and wrong on a plain icon-only <button>, which is what the nine
-      // reorder-arrow / dashboard-card controls in this tree were doing.
+      // A native title on a plain icon-only <button>.
       code: `<button onClick={f} aria-label={t("backupOrder.moveUp")} title={t("backupOrder.moveUp")}><svg /></button>`,
       errors: [{ messageId: "nativeTitle" }],
     },
@@ -107,7 +86,7 @@ ruleTester.run("icon-badge-needs-tooltip", rules["icon-badge-needs-tooltip"], {
       errors: [{ messageId: "missing" }],
     },
     {
-      // A marker naming a DIFFERENT rule does not silence this one.
+      // A marker naming a different rule does not silence this one.
       code: `
         {/* bv-convention-exception: one-icon-badge-size -- the wrong rule
             name, so this exception does not apply here at all. */}
@@ -118,32 +97,29 @@ ruleTester.run("icon-badge-needs-tooltip", rules["icon-badge-needs-tooltip"], {
   ],
 });
 
-// ---------------------------------------------------------------------------
-// 2. A square icon badge at any size other than the single canonical one.
-// ---------------------------------------------------------------------------
+// A square icon badge at any size other than the one canonical size.
 ruleTester.run("one-icon-badge-size", rules["one-icon-badge-size"], {
   valid: [
     `<Badge as="button" shape="square" size="icon" tip={t("x")}><IconTrash /></Badge>`,
-    // Non-square badges size themselves to their text; untouched.
+    // Non-square badges size themselves to their text.
     `<Badge tone="neutral" shape="pill" size="small">{t("x")}</Badge>`,
     // A className that is not a sizing utility is fine on an icon badge.
     `<Badge shape="square" size="icon" tip={t("x")} className="glim-shake ms-auto"><IconTrash /></Badge>`,
     // `max-w-full` must not be mistaken for a `w-` utility.
     `<Badge shape="square" size="icon" tip={t("x")} className="max-w-full"><IconTrash /></Badge>`,
-    // REAL TREE, the canonical hand-rolled size IS 32px, so h-8/w-8 passes.
+    // The canonical hand-rolled size is 32px, so h-8/w-8 passes.
     `<IconTipButton tip={t("x")} className="h-8 w-8 rounded-control"><svg /></IconTipButton>`,
-    // REAL TREE, components/RevealInput.tsx: a 15px inline eye affordance is
-    // an arbitrary-value box, not an h-N/w-N tile, and is not a badge.
+    // components/RevealInput.tsx: the 15px eye is an arbitrary-value box, not
+    // an h-N/w-N tile.
     `<button type="button" aria-label={l} onClick={f} className="h-[15px] w-[15px] rounded-pill"><svg /></button>`,
-    // REAL TREE, pages/Containers.tsx: the bare "x" remove glyph has no
-    // h-/w- pair at all — no size to be wrong.
+    // pages/Containers.tsx: the bare "x" remove glyph has no h-/w- pair, so
+    // there is no size to be wrong.
     `<button onClick={f} aria-label={t("offsite.targets.remove")} className="text-carbon-textMuted px-1"><span /></button>`,
     // A labelled control with a size is not an icon badge.
     `<button className="h-9 w-9" onClick={f}>{t("x")}</button>`,
   ],
   invalid: [
     {
-      // The role-based split, trying to come back.
       code: `<Badge as="button" shape="square" size="large" tip={t("x")}><IconTrash /></Badge>`,
       errors: [{ messageId: "wrongSize" }],
     },
@@ -166,8 +142,7 @@ ruleTester.run("one-icon-badge-size", rules["one-icon-badge-size"], {
       errors: [{ messageId: "classNameOverride" }],
     },
     {
-      // A square icon control that never became a Badge — 36px, the old
-      // "field" stage, hand-rolled.
+      // A hand-rolled 36px square icon control instead of a Badge.
       code: `<button onClick={f} aria-label={l} className="h-9 w-9 rounded-control"><svg /></button>`,
       errors: [{ messageId: "handRolled" }],
     },
@@ -176,8 +151,7 @@ ruleTester.run("one-icon-badge-size", rules["one-icon-badge-size"], {
       errors: [{ messageId: "handRolled" }],
     },
     {
-      // The escape hatch is per-rule and needs a reason; this one has both,
-      // but the FIRST badge below it is still out of the lookback window.
+      // A valid marker below the badge does not count; the rule looks above.
       code: `
         <Badge shape="square" size="large" tip={t("x")}><IconTrash /></Badge>
         {/* bv-convention-exception: one-icon-badge-size -- a marker BELOW the
@@ -188,9 +162,7 @@ ruleTester.run("one-icon-badge-size", rules["one-icon-badge-size"], {
   ],
 });
 
-// ---------------------------------------------------------------------------
-// 3. A page component whose root does not use the shared page shell.
-// ---------------------------------------------------------------------------
+// A page component whose root does not use the shared page shell.
 const shellOptions = [
   { exceptions: { "Settings.tsx": "PAGE_SHELL_TABBED", "Login.tsx": null } },
 ];
@@ -210,57 +182,50 @@ ruleTester.run("page-uses-page-shell", rules["page-uses-page-shell"], {
       filename: PAGE,
       options: shellOptions,
     },
-    // The documented exception, allowed BY NAME and only for its own shell.
+    // Settings' exception, allowed by name and only for its own shell.
     { code: `export function SettingsPage() { return <div className={PAGE_SHELL_TABBED}><h1 /></div>; }`, filename: SETTINGS, options: shellOptions },
-    // A page that ALSO renders as a tab panel of another page (Receiver, Fleet
-    // and Pull inside Instances) may choose between the two SHARED shells. Both
-    // arms are constants from pageShell.ts and one is this file's required
-    // shell, so the page still cannot invent a third width. The invalid list
-    // below holds the two shapes this must NOT let through.
+    // A page that also renders as a tab panel of another page (Receiver, Fleet
+    // and Pull inside Instances) may pick between the two shared shells, as
+    // long as one arm is its own.
     {
       code: `export function Fleet({ embedded }) { return <div className={embedded ? PAGE_SHELL_TABBED : PAGE_SHELL}><h1 /></div>; }`,
       filename: PAGE,
       options: shellOptions,
     },
-    // Login is exempt entirely — it never sits under <Outlet />.
+    // Login is exempt: it never sits under <Outlet />.
     { code: `export function LoginPage() { return <div className="w-full max-w-sm"><h1 /></div>; }`, filename: LOGIN, options: shellOptions },
     // Components outside src/pages are not pages.
     { code: `export function Widget() { return <div className="flex flex-col gap-10 max-w-6xl" />; }`, filename: COMPONENT, options: shellOptions },
-    // REAL TREE, pages/Settings.tsx x4: small stacked columns that share the
-    // shell's ingredient list at a completely different scale. `max-w-40`
-    // and `gap-1` are a label stack, not a page.
+    // pages/Settings.tsx: label stacks built from the shell's classes at a much
+    // smaller scale.
     { code: `export function SettingsPage() { return <div className={PAGE_SHELL_TABBED}><div className="flex flex-col gap-1 max-w-40" /></div>; }`, filename: SETTINGS, options: shellOptions },
     { code: `export function SettingsPage() { return <div className={PAGE_SHELL_TABBED}><div className="flex flex-col gap-1 text-xs max-w-xs" /></div>; }`, filename: SETTINGS, options: shellOptions },
   ],
   invalid: [
     {
-      // The ternary escape hatch, abused: a literal in one arm is a page
-      // hand-rolling its own width behind a condition, which is the exact drift
-      // this rule exists to stop. Both nets fire.
+      // A literal in one arm of the ternary is a hand-rolled width behind a
+      // condition.
       code: `export function Fleet({ embedded }) { return <div className={embedded ? "flex flex-col gap-6 max-w-5xl" : PAGE_SHELL}><h1 /></div>; }`,
       filename: PAGE,
       options: shellOptions,
       errors: [{ messageId: "notShelled" }, { messageId: "handRolled" }],
     },
     {
-      // Both arms shared, but NEITHER is the shell this file must use.
+      // Both arms shared, but neither is this file's shell.
       code: `export function Fleet({ embedded }) { return <div className={embedded ? PAGE_SHELL_TABBED : PAGE_SHELL_TABBED}><h1 /></div>; }`,
       filename: PAGE,
       options: shellOptions,
       errors: [{ messageId: "notShelled" }],
     },
     {
-      // An ARROW with an expression body has no ReturnStatement, so the rule
-      // found no returns and skipped the component in silence — a page written
-      // this way was never checked at all.
+      // An arrow with an expression body has no ReturnStatement.
       code: `export const Fleet = () => (<div className="flex flex-col gap-6 max-w-5xl"><h1 /></div>);`,
       filename: PAGE,
       options: shellOptions,
       errors: [{ messageId: "notShelled" }, { messageId: "handRolled" }],
     },
     {
-      // `export default Fleet;` is a bare Identifier, which noteExport dropped —
-      // same silent pass, different shape.
+      // `export default Fleet;` exports a bare Identifier.
       code: `function Fleet() { return <div className="space-y-4"><h1 /></div>; }
 export default Fleet;`,
       filename: PAGE,
@@ -268,22 +233,21 @@ export default Fleet;`,
       errors: [{ messageId: "notShelled" }],
     },
     {
-      // A VARIANT PREFIX hid the width cap from an ^-anchored pattern, so the
-      // second net (a literal shell copy in a nested element) had a hole in it.
+      // A variant prefix does not hide the width cap of a nested shell copy.
       code: `export function Fleet() { return <div className={PAGE_SHELL}><div className="flex flex-col gap-6 md:max-w-6xl"><h1 /></div></div>; }`,
       filename: PAGE,
       options: shellOptions,
       errors: [{ messageId: "handRolled" }],
     },
     {
-      // Page eleven, with its own idea of how wide a page is.
+      // A page with its own idea of how wide a page is.
       code: `export function Fleet() { return <div className="flex flex-col gap-6 max-w-5xl"><h1 /></div>; }`,
       filename: PAGE,
       options: shellOptions,
       errors: [{ messageId: "notShelled" }, { messageId: "handRolled" }],
     },
     {
-      // The root simply loses the shell.
+      // A root without the shell.
       code: `export function Fleet() { return <div className="space-y-4"><h1 /></div>; }`,
       filename: PAGE,
       options: shellOptions,
@@ -297,7 +261,7 @@ export default Fleet;`,
       errors: [{ messageId: "notShelled" }],
     },
     {
-      // …and Settings helping itself to something that is neither.
+      // Settings using the plain shell instead of its own.
       code: `export function SettingsPage() { return <div className={PAGE_SHELL}><h1 /></div>; }`,
       filename: SETTINGS,
       options: shellOptions,
@@ -320,25 +284,20 @@ export default Fleet;`,
   ],
 });
 
-// ---------------------------------------------------------------------------
-// 5. A destructive/delete control carrying a special colour treatment.
-// ---------------------------------------------------------------------------
+// A control, destructive ones included, coloured with a status colour.
 ruleTester.run("no-status-color-on-control", rules["no-status-color-on-control"], {
   valid: [
-    // A status READOUT keeps its colour — it is not a control.
+    // A status readout keeps its colour; it is not a control.
     `<Badge tone="fail">{t("receiver.unreachable")}</Badge>`,
     `<Badge tone="warn" wrap title={t("files.noPathHint")}>{t("x")}</Badge>`,
     `<p className="text-statusFail">{err}</p>`,
     `<span className="mt-1 h-2 w-2 rounded-full bg-statusFailSolid" />`,
-    // The destructive control, after the fix: same chip as its siblings.
+    // A destructive control on the same chip as its siblings.
     `<Badge as="button" tone="neutral" onClick={remove}>{t("offsite.targets.remove")}</Badge>`,
     `<button onClick={del} className="rounded-control bg-carbon-surface2 text-carbon-text hover:bg-carbon-surface3">{t("x")}</button>`,
     // tone="active" is the accent, not a status colour.
     `<Badge as="button" shape="square" size="icon" tone="active" tip={t("snapshots.delete")}><IconTrash /></Badge>`,
-    // The escape hatch itself, on an invented control. It used to be
-    // ConfirmDialog's commit button, which was the one sanctioned status colour
-    // in the app until GlimStone 1.12.0 took the red off it; the mechanism is
-    // still tested, the example is no longer an exception anybody may copy.
+    // The escape hatch, on a made-up control.
     `
       {/* bv-convention-exception: no-status-color-on-control -- a made-up
           control for this fixture, so the hatch itself stays covered. */}
@@ -347,7 +306,6 @@ ruleTester.run("no-status-color-on-control", rules["no-status-color-on-control"]
   ],
   invalid: [
     {
-      // The four this rule found in the real tree, in their original form.
       code: `<Badge as="button" tone="fail" size="small" onClick={del}>{t("snapshots.deleteAll")}</Badge>`,
       errors: [{ messageId: "tone" }],
     },
@@ -356,17 +314,16 @@ ruleTester.run("no-status-color-on-control", rules["no-status-color-on-control"]
       errors: [{ messageId: "tone" }],
     },
     {
-      // The spelling commit d336e532's grep COULD see…
       code: `<button onClick={del} className="rounded-control bg-statusFailBg text-statusFail">{t("x")}</button>`,
       errors: [{ messageId: "utility" }],
     },
     {
-      // …and a hover-only variant of it, which is just as bespoke.
+      // A hover-only variant is just as bespoke.
       code: `<button onClick={del} className="px-1 hover:text-statusFail">{"\\u00d7"}</button>`,
       errors: [{ messageId: "utility" }],
     },
     {
-      // Only in one arm of a conditional — still a bespoke red.
+      // In one arm of a conditional it is still a bespoke red.
       code: `<button onClick={del} className={busy ? "opacity-50" : "text-statusFail"}>{t("x")}</button>`,
       errors: [{ messageId: "utility" }],
     },
@@ -383,22 +340,18 @@ ruleTester.run("no-status-color-on-control", rules["no-status-color-on-control"]
   ],
 });
 
-// ---------------------------------------------------------------------------
-// 6. A control that hardcodes a radius or an accent colour.
-// ---------------------------------------------------------------------------
+// A control that hardcodes a radius or an accent colour.
 ruleTester.run("control-reads-engine-tokens", rules["control-reads-engine-tokens"], {
   valid: [
     `<button onClick={f} className="rounded-control bg-carbon-surface2">{t("x")}</button>`,
-    // A local the rule CAN see, and that is compliant — the widened lookup must
-    // not start reporting the eleven call sites it now reads.
+    // A compliant local the rule can resolve.
     `
       const inputCls = "rounded-control bg-carbon-surface2 px-3";
       export function F() {
         return <input className={inputCls} />;
       }
     `,
-    // A local it CANNOT settle on stays unknown, and unknown is never a
-    // violation: a rule must not guess at a value it cannot see.
+    // A value the rule cannot resolve is never a violation.
     `
       export function F({ cls }) {
         return <input className={cls} />;
@@ -413,16 +366,15 @@ ruleTester.run("control-reads-engine-tokens", rules["control-reads-engine-tokens
     `,
     `<button onClick={f} className="rounded-card">{t("x")}</button>`,
     `<button onClick={f} className="rounded-pill bg-accent text-accentContrast">{t("x")}</button>`,
-    // REAL TREE: every rounded-full in this app is a spinner ring or a status
-    // dot — non-interactive, genuinely a circle, and left alone.
+    // Spinner rings and status dots are real circles, not controls.
     `<span className="h-3 w-3 rounded-full border-2 border-t-transparent animate-spin" />`,
     `<div className="w-2 h-2 rounded-full bg-statusOkSolid shrink-0" />`,
-    // Inline colours that read a token are the whole point.
+    // Inline colours that read a token.
     `<button onClick={f} style={{ borderColor: "var(--accent-contrast)", borderTopColor: "transparent" }}>{t("x")}</button>`,
     `<input type="checkbox" style={{ accentColor: "var(--accent)" }} />`,
-    // A hex INSIDE var() is that token's own fallback, not a second source.
+    // A hex inside var() is that token's own fallback, not a second source.
     `<button onClick={f} style={{ backgroundColor: "var(--heat-ok-1, #a7f0ba)" }}>{t("x")}</button>`,
-    // Badge and IconTipButton own their chrome from the engines already.
+    // Badge and IconTipButton take their chrome from the engines.
     `<Badge as="button" shape="pill" onClick={f}>{t("x")}</Badge>`,
     // The escape hatch, with a reason.
     `
@@ -433,17 +385,11 @@ ruleTester.run("control-reads-engine-tokens", rules["control-reads-engine-tokens
   ],
   invalid: [
     {
-      // The swatch bug, in the form it originally shipped.
       code: `<button onClick={f} className="h-8 w-8 rounded-full border-2">{t("x")}</button>`,
       errors: [{ messageId: "radius" }],
     },
     {
-      // THE BLIND SPOT, closed. A class list moved into a local was invisible:
-      // the rule read className LITERALS and skipped a bare identifier, so the
-      // dozen `const inputCls = "…"` call sites in this tree (five inputs in
-      // OffsiteTargetsSection, OffsiteWizard's, two selects in RestorePanel,
-      // Containers' two, Fleet's two) were compliant by luck and unchecked in
-      // fact. Factoring a literal out must not switch the guard off.
+      // A class list moved into a local is still checked.
       code: `
         const inputCls = "rounded-lg bg-carbon-surface2 px-3";
         export function F() {
@@ -453,8 +399,8 @@ ruleTester.run("control-reads-engine-tokens", rules["control-reads-engine-tokens
       errors: [{ messageId: "radius" }],
     },
     {
-      // …through a template literal that interpolates the local, which is how
-      // the real call sites compose a base class list with a state class.
+      // So is a template literal that interpolates it, the way call sites add a
+      // state class to a base list.
       code: `
         const base = "rounded-lg px-3";
         export function F({ on }) {
@@ -480,7 +426,7 @@ ruleTester.run("control-reads-engine-tokens", rules["control-reads-engine-tokens
       errors: [{ messageId: "radiusInline" }],
     },
     {
-      // An accent that never follows the user's accent.
+      // A fixed colour that ignores the user's accent.
       code: `<button onClick={f} className="bg-[#FCC419] text-carbon-text">{t("x")}</button>`,
       errors: [{ messageId: "colourClass" }],
     },
@@ -499,19 +445,16 @@ ruleTester.run("control-reads-engine-tokens", rules["control-reads-engine-tokens
   ],
 });
 
-// ---------------------------------------------------------------------------
-// 7. A user-facing string that never goes through t().
-// ---------------------------------------------------------------------------
+// A user-facing string that does not go through t().
 ruleTester.run("user-message-is-translated", rules["user-message-is-translated"], {
   valid: [
-    // The fixed shapes: every message resolved through t() before it is shown.
+    // Messages resolved through t() before they are shown.
     `push(t("common.deleteFailed"), "fail");`,
     `setError(res.error ?? t("common.loadBackupsFailed"));`,
     `setError(err instanceof Error ? err.message : t("vms.loadFailed"));`,
     `push(res.error ?? t("common.discoverFailed"), "fail");`,
-    // The whole reason for the capital-plus-space test: the tree is full of
-    // `??` and `?:` string tails that are values, not sentences. Not one of
-    // these may be flagged, or the rule gets disabled and protects nothing.
+    // `??` and `?:` tails that are values, not sentences, which is what the
+    // capital-plus-space test lets through.
     `const mode = stored ?? "";`,
     `const kind = res.kind ?? "all";`,
     `const method = vm.method ?? "graceful";`,
@@ -520,13 +463,10 @@ ruleTester.run("user-message-is-translated", rules["user-message-is-translated"]
     `const n = count ?? "0";`,
     // A capital with no space is an identifier, not a sentence.
     `const domain = r.domain ?? "Containers";`,
-    // Templates whose STATIC text is punctuation or spacing are formatting, not
-    // sentences — the same line looksLikeSentence draws for the rest of the rule.
+    // Templates whose static text is only punctuation or spacing are formatting.
     "push(`${a}/${b}`, \"info\");",
     "setError(`${n} %`);",
-    // Array.prototype.push is not the toast. The toast always takes
-    // (message, tone), and requiring that second argument is what keeps every
-    // `seen.push(`enter:${id}`)` collector in the test files out of this rule.
+    // Array.prototype.push is not the toast, which always takes (message, tone).
     "seen.push(`enter:${id}`);",
     "broken.push(`${key}: want [${want}]`);",
     // The escape hatch, with a real reason.
@@ -538,20 +478,16 @@ ruleTester.run("user-message-is-translated", rules["user-message-is-translated"]
   ],
   invalid: [
     {
-      // `||` is the same fallback written the other way, and only `??` was
-      // checked — so this exact line was silent while its `??` twin was
-      // reported.
+      // `||` is the same fallback as `??`.
       code: `setError(err || "Failed to load VMs");`,
       errors: [{ messageId: "hardcoded" }],
     },
     {
-      // A TEMPLATE literal in a message sink is a string literal too. This is
-      // the shape the hard-English VM bulk toast escaped through.
+      // A template literal in a message sink is a string literal too.
       code: "push(`${ok} ok, ${fail} failed`, \"warn\");",
       errors: [{ messageId: "hardcoded" }],
     },
     {
-      // The single most-repeated defect in the sweep: 12 identical call sites.
       code: `push(res.error ?? "Delete failed", "fail");`,
       errors: [{ messageId: "hardcoded" }],
     },
@@ -560,7 +496,6 @@ ruleTester.run("user-message-is-translated", rules["user-message-is-translated"]
       errors: [{ messageId: "hardcoded" }],
     },
     {
-      // The ternary tail — the shape the grep-based sweep missed six times.
       code: `const msg = err instanceof Error ? err.message : "Check failed";`,
       errors: [{ messageId: "hardcoded" }],
     },
@@ -570,8 +505,8 @@ ruleTester.run("user-message-is-translated", rules["user-message-is-translated"]
       errors: [{ messageId: "hardcoded" }, { messageId: "hardcoded" }],
     },
     {
-      // A message sink takes ANY string literal, sentence-shaped or not — its
-      // first argument is a user message by construction.
+      // A message sink's first argument is a user message, sentence-shaped or
+      // not.
       code: `push("Failed", "fail");`,
       errors: [{ messageId: "hardcoded" }],
     },
@@ -584,7 +519,7 @@ ruleTester.run("user-message-is-translated", rules["user-message-is-translated"]
       errors: [{ messageId: "hardcoded" }],
     },
     {
-      // A marker naming a DIFFERENT rule does not suppress this one either.
+      // A marker naming a different rule does not suppress this one either.
       code: `
         // bv-convention-exception: one-icon-badge-size -- this badge is sized
         // by its own container and cannot take the shared stage.
@@ -595,15 +530,9 @@ ruleTester.run("user-message-is-translated", rules["user-message-is-translated"]
   ],
 });
 
-// ---------------------------------------------------------------------------
-// 8. An em dash in text a user reads.
-//
-// The rule is file-scoped for translation tables, so most cases here carry an
-// explicit `filename`. The mark itself is interpolated from one constant
-// rather than typed into forty strings: this file is prose ABOUT em dashes as
-// much as it is a test of them, and a literal one inside a test string is
-// indistinguishable at a glance from a literal one inside a comment.
-// ---------------------------------------------------------------------------
+// An em dash in text a user reads. Plain string literals are checked only in
+// translation tables, so most cases carry a filename. EM is built from its code
+// point so the fixtures need no literal dash.
 const EM = String.fromCharCode(0x2014);
 const LOCALE_DE = "/repo/web/src/lib/locales/de.ts";
 const LOCALE_JA = "/repo/web/src/lib/locales/ja.ts";
@@ -615,10 +544,7 @@ const I18N = "/repo/web/src/lib/i18n.ts";
 
 ruleTester.run("no-em-dash-in-user-text", rules["no-em-dash-in-user-text"], {
   valid: [
-    // The fixed shapes, one per replacement the sweep actually used: a comma
-    // where the dash joined a clause, a full stop where it introduced a
-    // standalone explanation, a colon before a definition, a parenthesis
-    // around an aside.
+    // The replacements for a dash: comma, full stop, colon, parentheses.
     { code: `const de = { "files.hint": "Sichert alles, auch die Konfiguration." };`, filename: LOCALE_DE },
     { code: `const de = { "files.hint": "Sichert alles. Die Konfiguration liegt daneben." };`, filename: LOCALE_DE },
     { code: `const de = { "files.hint": "Zwei Ziele: lokal und offsite." };`, filename: LOCALE_DE },
@@ -626,22 +552,16 @@ ruleTester.run("no-em-dash-in-user-text", rules["no-em-dash-in-user-text"], {
     // CJK takes its own punctuation, never a spaced hyphen.
     { code: `const ja = { "files.hint": "すべて保存します。設定も含みます。" };`, filename: LOCALE_JA },
 
-    // THE EXEMPTION. In ru/uk/bg/sr the em dash stands in for the absent
-    // copula and is ordinary punctuation; 561 of these live in the real files
-    // and not one is a defect. If this rule ever starts flagging them, the
-    // next sweep "fixes" 538 correct sentences into broken ones.
+    // In ru, uk, bg and sr the em dash stands in for the missing copula and is
+    // ordinary punctuation.
     { code: `const ru = { "x.y": "Мой брат ${EM} врач" };`, filename: LOCALE_RU },
     { code: `const uk = { "x.y": "Це ${EM} важливо" };`, filename: LOCALE_UK },
     { code: `const bg = { "x.y": "Това ${EM} е важно" };`, filename: LOCALE_BG },
     { code: `const sr = { "x.y": "Ово ${EM} је важно" };`, filename: LOCALE_SR },
-    // The exemption is by LOCALE, not by script: a Cyrillic string in a file
-    // that is not one of the four is still checked (the invalid block proves
-    // the other half of this).
+    // The exemption is by locale, not by script; see the mk case below.
     { code: `const sr = { "x.y": "Ово је важно" };`, filename: LOCALE_SR },
 
-    // A COMMENT IS NEVER USER-FACING. This is the load-bearing case: src/**
-    // holds 4,708 em dashes and 4,705 of them look exactly like this. A rule
-    // that flagged one of them would be switched off the same day.
+    // Comments are not user-facing.
     {
       code: `
         // Settings ${EM} Security card
@@ -650,19 +570,17 @@ ruleTester.run("no-em-dash-in-user-text", rules["no-em-dash-in-user-text"], {
       `,
       filename: LOCALE_DE,
     },
-    // …including a JSX comment sitting in rendered markup.
+    // Including a JSX comment inside rendered markup.
     `<p>{/* the label ${EM} which used to be inline ${EM} now comes from t() */}{t("x")}</p>`,
 
-    // An i18n KEY is read by the lookup, never by a person. (No key in this
-    // app contains one, but a key is not user-facing on principle, and the
-    // rule must not depend on that staying true by luck.)
+    // An i18n key is read by the lookup, not by a person.
     { code: `const de = { "a.b${EM}c": "Sicherheit" };`, filename: I18N },
 
-    // Outside the tables, an ordinary string literal is a class list, a path,
-    // a storage key or a test fixture. Not checked, and deliberately so.
+    // Outside the tables a string literal is a class list, a path, a storage
+    // key or a fixture, and is not checked.
     `const sep = " ${EM} ";`,
     `expect(render()).toContain("2026 ${EM} ok");`,
-    // …not even in a .ts file that merely sits near the tables.
+    // Not even in a .ts file next to the tables.
     { code: `export const SEP = "${EM}";`, filename: "/repo/web/src/lib/format.ts" },
 
     // An attribute that is not one of the four text-bearing ones.
@@ -678,16 +596,12 @@ ruleTester.run("no-em-dash-in-user-text", rules["no-em-dash-in-user-text"], {
   ],
   invalid: [
     {
-      // The plain case, in the file where 4,900 of them lived.
       code: `const de = { "files.hint": "Sichert alles ${EM} auch die Konfiguration." };`,
       filename: LOCALE_DE,
       errors: [{ messageId: "inTranslation" }],
     },
     {
-      // WITH A PLACEHOLDER. The one thing the fix must never disturb: the
-      // sweep's whole failure mode would have been a mangled {path} rendering
-      // a broken sentence at runtime, so the rule reports the string that
-      // carries one exactly like any other.
+      // A string with placeholders is reported like any other.
       code: `const de = { "files.restored": "{count} Dateien nach {path} ${EM} fertig in {when}." };`,
       filename: LOCALE_DE,
       errors: [{ messageId: "inTranslation" }],
@@ -700,48 +614,42 @@ ruleTester.run("no-em-dash-in-user-text", rules["no-em-dash-in-user-text"], {
       errors: [{ messageId: "inTranslation" }],
     },
     {
-      // Written as an escape sequence rather than the character. A grep over
-      // the source text misses this one; the rule reads the cooked value.
+      // An escape sequence instead of the character; the rule reads the cooked
+      // value.
       code: `const de = { "files.hint": "Sichert alles \\u2014 auch die Konfiguration." };`,
       filename: LOCALE_DE,
       errors: [{ messageId: "inTranslation" }],
     },
     {
-      // A template literal's literal chunks are as user-facing as a plain
-      // string; the interpolation between them is not the rule's business.
+      // The static chunks of a template literal count like a plain string.
       code: "const de = { \"files.hint\": `Sichert ${n} Dateien \\u2014 auch die Konfiguration.` };",
       filename: LOCALE_DE,
       errors: [{ messageId: "inTranslation" }],
     },
     {
-      // A Cyrillic STRING in a locale that is not one of the four exempt ones.
-      // The exemption is by locale, not by script.
+      // Cyrillic in a locale outside the four exempt ones.
       code: `const mk = { "x.y": "Тоа ${EM} е важно" };`,
       filename: "/repo/web/src/lib/locales/mk.ts",
       errors: [{ messageId: "inTranslation" }],
     },
 
-    // REAL TREE, the three the locale sweep could not reach: separators
-    // hardcoded in components, where no translator can see them.
+    // Separators hardcoded in components, where no translator can see them.
     {
-      // pages/Containers.tsx:667
       code: `<p className="text-xs">{t("containers.updateCheckLabel")}: {relativeTime(t, at)} ${EM} {resultText(t, r)}</p>`,
       errors: [{ messageId: "inJsxText" }],
     },
     {
-      // pages/Recovery.tsx:547, inside an <option>.
+      // Inside an <option>.
       code: `<option key={s.id} value={s.id}>{new Date(s.time).toLocaleString()} ${EM} {s.id.slice(0, 8)}</option>`,
       errors: [{ messageId: "inJsxText" }],
     },
     {
-      // pages/Recovery.tsx:1356, prefixing an error string.
+      // Prefixing an error string.
       code: `<span dir="ltr" className="font-mono break-all"> ${EM} {r.error}</span>`,
       errors: [{ messageId: "inJsxText" }],
     },
     {
-      // The entity spelling React decodes at render time. Not in the tree
-      // today, and the obvious way around a rule that only knows the
-      // character.
+      // The entity spelling, which React decodes at render time.
       code: `<p>Backs everything up &mdash; configuration included.</p>`,
       errors: [{ messageId: "inJsxText" }],
     },
@@ -763,7 +671,7 @@ ruleTester.run("no-em-dash-in-user-text", rules["no-em-dash-in-user-text"], {
       errors: [{ messageId: "inJsxText" }],
     },
     {
-      // A marker naming a DIFFERENT rule does not suppress this one.
+      // A marker naming a different rule does not suppress this one.
       code: `
         {/* bv-convention-exception: user-message-is-translated -- the wrong
             rule name, so this exception does not apply here at all. */}
@@ -774,30 +682,16 @@ ruleTester.run("no-em-dash-in-user-text", rules["no-em-dash-in-user-text"], {
   ],
 });
 
-// ---------------------------------------------------------------------------
-// 9. The router's routed pages are all files page-uses-page-shell can see.
-//
-// The RuleTester cases above run against synthetic `filename:` strings, so they
-// prove what the rule DOES with a file it is handed. They cannot prove it is
-// handed the right files, and that is the rule's one structural blind spot: it
-// returns `{}` for anything outside src/pages/*.tsx, and inside such a file it
-// only recognises the page component as the default export or an export named
-// after the file (`Fleet` / `FleetPage` in Fleet.tsx). A routed page whose
-// component is neither — `web/src/pages/Reports.tsx` exporting
-// `function ReportsView()` — or one placed outside src/pages, ships with its
-// own width and gap and the rule says nothing.
-//
-// page-uses-page-shell.js's header cites this test as the proof that no routed
-// page falls through that gap. It is that proof: it reads the REAL router and
-// resolves every routed element back to a file the rule would actually visit.
-// ---------------------------------------------------------------------------
+// page-uses-page-shell only visits src/pages/*.tsx and only recognises the
+// default export or an export named after the file (Fleet or FleetPage in
+// Fleet.tsx). The cases above use synthetic filenames, so this reads the real
+// router and checks that every routed page is a file the rule would visit.
 describe("page-uses-page-shell sees every routed page", () => {
   const HERE = dirname(fileURLToPath(import.meta.url));
   const ROUTER = readFileSync(join(HERE, "..", "app", "router.tsx"), "utf8");
   const PAGES_DIR = join(HERE, "..", "pages");
 
-  /** `<Route path="/x" element={<Foo />} />` → the component names routed to.
-   *  `<Navigate …>` is excluded: a redirect renders no page. */
+  /** Component names in `element={<Foo />}`, without redirects and the layout. */
   const routed = [
     ...new Set(
       [...ROUTER.matchAll(/element=\{<([A-Z][A-Za-z0-9_]*)\s*\/?>/g)]
@@ -806,9 +700,8 @@ describe("page-uses-page-shell sees every routed page", () => {
     ),
   ];
 
-  /** Every name router.tsx imports, mapped to the module it came from, e.g.
-   *  Recovery → "../pages/Recovery". Both `import X from` and `import { X } from`
-   *  are read: the pages use both forms. */
+  /** Each name router.tsx imports, mapped to its module, e.g. Recovery to
+   *  "../pages/Recovery". The pages use both default and named imports. */
   const IMPORTS = new Map<string, string>();
   for (const m of ROUTER.matchAll(/^import\s+([^;]+?)\s+from\s+"([^"]+)";/gm)) {
     const [, clause, from] = m;
@@ -819,7 +712,7 @@ describe("page-uses-page-shell sees every routed page", () => {
     for (const n of names) if (n) IMPORTS.set(n, from);
   }
 
-  it("finds the routes (the scan is not silently empty)", () => {
+  it("finds the routes", () => {
     expect(routed.length).toBeGreaterThan(8);
     expect(routed).toContain("SettingsPage");
   });
@@ -829,16 +722,15 @@ describe("page-uses-page-shell sees every routed page", () => {
     expect(from, `${name} is routed but not imported in router.tsx`).toBeDefined();
     expect(
       from,
-      `${name} is routed from "${from}" — page-uses-page-shell only visits src/pages/*.tsx, ` +
+      `${name} is routed from "${from}", but page-uses-page-shell only visits src/pages/*.tsx, ` +
         `so a routed page outside it is unchecked`
     ).toMatch(/^\.\.\/pages\//);
 
     const stem = (from as string).slice("../pages/".length);
     const source = readFileSync(join(PAGES_DIR, stem + ".tsx"), "utf8");
 
-    // The rule's own candidate test: the default export, or an export named
-    // <stem> or <stem>Page. Keep this in step with page-uses-page-shell.js's
-    // `wanted` set — if that widens, widen this.
+    // Mirrors the `wanted` set in page-uses-page-shell.js, and has to change
+    // with it: the default export, or an export named <stem> or <stem>Page.
     const named = new RegExp(
       String.raw`export\s+(?:(?:async\s+)?function|const)\s+(?:${stem}|${stem}Page)\b`
     );
@@ -846,11 +738,11 @@ describe("page-uses-page-shell sees every routed page", () => {
     expect(
       hasDefault || named.test(source),
       `src/pages/${stem}.tsx must export its page component as the default export or as ` +
-        `"${stem}"/"${stem}Page" — page-uses-page-shell finds the component by that name and ` +
+        `"${stem}"/"${stem}Page"; page-uses-page-shell finds the component by that name and ` +
         `silently checks nothing otherwise`
     ).toBe(true);
 
-    // …and the routed name must be one of those, not a third alias.
+    // The routed name must be one of those, not a third alias.
     expect(
       [stem, `${stem}Page`].includes(name) || hasDefault,
       `router.tsx routes <${name} />, which is neither ${stem} nor ${stem}Page nor a default export`

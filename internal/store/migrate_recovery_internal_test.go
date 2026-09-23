@@ -1,7 +1,7 @@
 package store
 
-// The two renumbering-recovery repairs, exercised against databases in the
-// broken states they exist for.
+// The migrations that repair databases broken by the migration renumbering,
+// run against databases in those broken states.
 
 import (
 	"database/sql"
@@ -21,11 +21,10 @@ func openMigrated(t *testing.T) *sql.DB {
 	return db
 }
 
-// TestMigrateRecoversSettingsEverythingColumns reproduces the mirror of the
-// collision v92 already covers: a database that recorded version 90 with the
-// OTHER numbering's body skips this build's settings_everything for good.
-// getSettings selects those columns by name, so without the repair the
-// installation cannot read its settings at all.
+// TestMigrateRecoversSettingsEverythingColumns covers a database that recorded
+// version 90 under the other numbering and so skips this build's
+// settings_everything migration for good. getSettings selects those columns by
+// name, so without the repair the settings cannot be read at all.
 func TestMigrateRecoversSettingsEverythingColumns(t *testing.T) {
 	db, err := Open(":memory:")
 	if err != nil {
@@ -36,12 +35,10 @@ func TestMigrateRecoversSettingsEverythingColumns(t *testing.T) {
 	if err := Migrate(db); err != nil {
 		t.Fatalf("first Migrate: %v", err)
 	}
-	// The damaged shape, exactly: the columns are gone, and version 90 is still
-	// RECORDED — under the other numbering's name, which is what makes Migrate
-	// skip this build's settings_everything forever. Deleting the 90 row instead
-	// would just let v90 rerun and repair itself, which is not the situation the
-	// field is in. Only 94 is unrecorded, the way a database that predates the
-	// repair has it.
+	// The columns are gone while version 90 stays recorded under the other
+	// numbering's name. Deleting the 90 row would let v90 rerun and repair
+	// itself, which is not what happens on real installs. Only 94 is
+	// unrecorded, as in a database that predates the repair.
 	for _, col := range []string{"everything_schedule", "everything_pre_hook", "everything_post_hook"} {
 		if _, err := db.Exec(`ALTER TABLE settings DROP COLUMN ` + col); err != nil {
 			t.Fatalf("drop %s: %v", col, err)
@@ -63,17 +60,16 @@ func TestMigrateRecoversSettingsEverythingColumns(t *testing.T) {
 			t.Fatal(err)
 		}
 		if n == 0 {
-			t.Fatalf("settings.%s missing after recovery — getSettings selects it by name", col)
+			t.Fatalf("settings.%s missing after recovery; getSettings selects it by name", col)
 		}
 	}
-	// And the settings are actually readable again, which is the point.
 	if _, err := New(db).GetSettings(); err != nil {
 		t.Fatalf("GetSettings after recovery: %v", err)
 	}
 }
 
-// TestMigrateRecoveryIsANoOpWhenNothingIsBroken: the repair must not disturb a
-// healthy database, since it runs on every one of them exactly once.
+// TestMigrateRecoveryIsANoOpWhenNothingIsBroken checks that the repair, which
+// runs once on every healthy database, leaves it intact.
 func TestMigrateRecoveryIsANoOpWhenNothingIsBroken(t *testing.T) {
 	db := openMigrated(t)
 	if err := Migrate(db); err != nil {
@@ -84,10 +80,10 @@ func TestMigrateRecoveryIsANoOpWhenNothingIsBroken(t *testing.T) {
 	}
 }
 
-// TestPanicClosedRunIsNotCompleted: v93's backfill excluded only the reap
-// marker, so a run closed by the PANIC path was recorded as completed — the
-// exact signal LastEverythingPass reads to decide a whole-server pass already
-// ran, which then skipped the next everyN interval.
+// TestPanicClosedRunIsNotCompleted covers v93's backfill, which excluded only
+// the reap marker and so marked a run closed by the panic path as completed.
+// LastEverythingPass reads that flag to decide whether a whole-server pass ran
+// and would skip the next everyN interval.
 func TestPanicClosedRunIsNotCompleted(t *testing.T) {
 	db, err := Open(":memory:")
 	if err != nil {
@@ -103,7 +99,7 @@ func TestPanicClosedRunIsNotCompleted(t *testing.T) {
 		VALUES ('r1', 'everything', 'backup', 'failed', 1, 2, 'internal error (recovered panic): boom', 1)`); err != nil {
 		t.Fatal(err)
 	}
-	// A genuinely completed failure, which must be left alone.
+	// A completed failure, which must stay completed.
 	if _, err := db.Exec(`INSERT INTO runs (id, target_id, kind, status, started_at, finished_at, error, completed)
 		VALUES ('r2', 'everything', 'backup', 'failed', 1, 2, 'containers: 1/2 ok (plex: boom)', 1)`); err != nil {
 		t.Fatal(err)
@@ -123,7 +119,7 @@ func TestPanicClosedRunIsNotCompleted(t *testing.T) {
 		t.Fatal(err)
 	}
 	if panicked != 0 {
-		t.Fatal("a panic-closed run must not count as completed — it never reached its own conclusion")
+		t.Fatal("a panic-closed run never finished and must not count as completed")
 	}
 	if real != 1 {
 		t.Fatal("a run that genuinely finished (and failed) must stay completed")

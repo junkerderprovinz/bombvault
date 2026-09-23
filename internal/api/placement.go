@@ -26,6 +26,7 @@ var (
 	errNotATarget          = errors.New("that is not an off-site target of this domain")
 	errPlacementBusy       = errors.New("a backup is running in this domain; try again once it has finished")
 	errHomeHasBackups      = errors.New("cannot change the repository of an item that already has backups; they stay where they were written")
+	errHomeUncheckable     = errors.New("whether this item holds backups could not be checked, so its repository stays")
 	errPlacementStale      = errors.New("the numbers changed since they were shown; check them again")
 	errRepoInUse           = errors.New("this repository is still in use")
 	errRepoInvalid         = errors.New("that repository cannot take backups")

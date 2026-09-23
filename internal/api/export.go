@@ -22,12 +22,10 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
 )
 
-// exportRecipients resolves the age recipients for the plain export paths from
-// settings. It returns (recipients, enabled, error): when export encryption is
-// OFF it returns (nil, false, nil) and the exports stay byte-identical plaintext.
-// When ON it parses settings.ExportAgeRecipients; a parse failure OR an empty
-// recipient set is a HARD error (enabled=true, err!=nil), so an export path can
-// fail loudly BEFORE writing anything and NEVER falls back to plaintext.
+// exportRecipients returns the age recipients for the plain exports and whether
+// export encryption is enabled. With encryption on, an invalid or empty recipient
+// list is an error, so the caller fails before writing anything instead of
+// falling back to plaintext.
 func (s *Service) exportRecipients(settings store.Settings) ([]age.Recipient, bool, error) {
 	if !settings.ExportEncryptEnabled {
 		return nil, false, nil
@@ -42,12 +40,9 @@ func (s *Service) exportRecipients(settings store.Settings) ([]age.Recipient, bo
 	return recips, true, nil
 }
 
-// sealOrRename publishes the temp file at tmpPath as its final artifact: a plain
-// os.Rename to plainFinal when recipients is empty, or an age-encrypted copy at
-// plainFinal+".age" (removing the plaintext tmp) when recipients is set. It
-// returns the final path. Keeps the three on-disk export paths (container/VM tar,
-// flash zip) DRY. On an encryption failure tmpPath is left for the caller's
-// cleanup and no plaintext artifact is published.
+// sealOrRename publishes tmpPath as plainFinal, or as an age-encrypted
+// plainFinal+".age" when recipients is set, and returns the final path. If
+// encryption fails, tmpPath is left for the caller to clean up.
 func sealOrRename(tmpPath, plainFinal string, recipients []age.Recipient) (string, error) {
 	if len(recipients) == 0 {
 		if err := os.Rename(tmpPath, plainFinal); err != nil { //nolint:gosec // G703: operator-configured export path
@@ -59,13 +54,12 @@ func sealOrRename(tmpPath, plainFinal string, recipients []age.Recipient) (strin
 	if err := ageseal.EncryptFile(tmpPath, final, recipients); err != nil {
 		return "", err
 	}
-	_ = os.Remove(tmpPath) // drop the plaintext temp once the ciphertext is published
+	_ = os.Remove(tmpPath)
 	return final, nil
 }
 
-// writeExportFile writes data to path, or (when recipients is non-empty) to
-// path+".age" age-encrypted, returning the final path written. Used for the
-// tool-free .xml sidecars so an encrypted export never leaves a plaintext .xml.
+// writeExportFile writes data to path, or encrypted to path+".age" when
+// recipients is set, and returns the path written.
 func writeExportFile(path string, data []byte, recipients []age.Recipient) (string, error) {
 	if len(recipients) == 0 {
 		if err := os.WriteFile(path, data, 0o600); err != nil { //nolint:gosec // G306: 0600 export file
@@ -90,7 +84,7 @@ func writeExportFile(path string, data []byte, recipients []age.Recipient) (stri
 		_ = os.Remove(final)
 		return "", err
 	}
-	if err := w.Close(); err != nil { // flush the age stream
+	if err := w.Close(); err != nil {
 		_ = f.Close()
 		_ = os.Remove(final)
 		return "", err
@@ -115,16 +109,13 @@ func (s *Service) exportDir(settings store.Settings) (string, error) {
 	return filepath.Join(filepath.Dir(repo), "export"), nil
 }
 
-// ExportContainer writes a TOOL-FREE plain backup of a container next to the
-// restic repo: <name>.tar.gz of its backup folders (the same paths restic uses)
-// plus <name>.xml, the Unraid template, so it can be restored by simply
-// extracting the tar and re-adding the template — no BombVault or restic needed.
-// The export is NOT encrypted (that is the point); restic stays the encrypted,
-// incremental engine. Returns the export directory.
+// ExportContainer writes a plain backup of a container to the export directory
+// and returns that directory: <name>.tar.gz of its backup folders plus <name>.xml,
+// its Unraid template. Restoring needs neither BombVault nor restic, only tar and
+// the template. Both files are age-encrypted when export encryption is on.
 func (s *Service) ExportContainer(ctx context.Context, name string) (string, error) {
-	// Defense-in-depth: the handler already validates {name} via nameParam, but the
-	// name becomes a filename here, so re-run the same strict validator (rejects
-	// path separators, a leading "-", "..", control chars) — one source of truth.
+	// The handler validated name already; it is checked again because it becomes
+	// a filename here.
 	if !validResourceName(name) {
 		return "", fmt.Errorf("unsafe container name %q", name)
 	}
@@ -136,9 +127,6 @@ func (s *Service) ExportContainer(ctx context.Context, name string) (string, err
 	if err != nil {
 		return "", err
 	}
-	// Resolve the age recipients up front: with export encryption on but no valid
-	// recipient this fails BEFORE any artifact is written, so a plaintext export is
-	// never produced when the user asked for encryption.
 	recipients, _, err := s.exportRecipients(settings)
 	if err != nil {
 		return "", err
@@ -153,16 +141,13 @@ func (s *Service) ExportContainer(ctx context.Context, name string) (string, err
 	}
 	appdata := s.effectiveBackupPaths(name, in)
 
-	// Write the Unraid template (the recreate recipe) as <name>.xml (or .xml.age
-	// when encryption is on) when present.
 	if xml, ok, _ := template.Read(s.cfg.FlashTemplatesDir, name); ok && xml != "" {
 		if _, err := writeExportFile(filepath.Join(dir, name+".xml"), []byte(xml), recipients); err != nil {
 			return "", fmt.Errorf("write template xml: %w", err)
 		}
 	}
 
-	// Write the appdata as <name>.tar.gz (or .tar.gz.age). A stateless container
-	// (no existing paths) gets only the .xml above.
+	// A stateless container gets only the template.
 	if len(appdata) > 0 {
 		if _, err := s.writeTarGz(filepath.Join(dir, name+".tar.gz"), appdata, recipients); err != nil {
 			return "", fmt.Errorf("write tar: %w", err)
@@ -171,18 +156,15 @@ func (s *Service) ExportContainer(ctx context.Context, name string) (string, err
 	return dir, nil
 }
 
-// writeTarGz writes a gzip-compressed tar of srcPaths to dest. Entry names are
-// relative to the host mount root, so extracting the archive at the host's /mnt
-// reconstructs the original layout. Non-regular files (symlinks, devices) are
-// skipped for safety. When recipients is non-empty the whole gzip/tar stream is
-// age-encrypted and the archive is published at dest+".age" instead of dest; it
-// returns the final path actually written.
+// writeTarGz writes a gzip-compressed tar of srcPaths to dest and returns the
+// path written. Entry names are relative to the host mount root, so extracting
+// the archive at the host's /mnt restores the original layout. Symlinks, devices
+// and other non-regular files are skipped. With recipients set, the stream is
+// age-encrypted and written to dest+".age".
 func (s *Service) writeTarGz(dest string, srcPaths []string, recipients []age.Recipient) (finalPath string, err error) {
-	// Write to a temp file and atomically rename on success. On ANY failure the
-	// temp file is removed, so a half-written ("valid-looking" but incomplete)
-	// archive is never left behind and a previous good export at dest survives.
-	// When encrypting, the temp file holds CIPHERTEXT (the age writer wraps the
-	// file), so no plaintext archive ever touches disk.
+	// The archive goes to a temp file that is renamed only on success, so a
+	// failed export never replaces a previous good one. When encrypting, the temp
+	// file already holds ciphertext.
 	final := dest
 	if len(recipients) > 0 {
 		final = dest + ".age"
@@ -194,13 +176,11 @@ func (s *Service) writeTarGz(dest string, srcPaths []string, recipients []age.Re
 	}
 	defer func() {
 		if err != nil {
-			_ = f.Close()      // idempotent: harmless if already closed below
+			_ = f.Close()
 			_ = os.Remove(tmp) //nolint:gosec // G703: tmp = final+".tmp"; final is built from a validResourceName-checked name under the operator-configured export dir
 		}
 	}()
 
-	// Build the writer chain: file [-> age] -> gzip -> tar. When encrypting, the
-	// age writer sits directly above the file so the gzip/tar bytes are sealed.
 	var sink io.Writer = f
 	var ageW io.WriteCloser
 	if len(recipients) > 0 {
@@ -219,8 +199,8 @@ func (s *Service) writeTarGz(dest string, srcPaths []string, recipients []age.Re
 			return "", err
 		}
 	}
-	// Close in order (tar → gzip → [age] → file) so every buffer is flushed before
-	// the atomic publish; any close error aborts the rename.
+	// Close tar, gzip, age and file in that order so every buffer is flushed
+	// before the rename.
 	if err = tw.Close(); err != nil {
 		return "", err
 	}
@@ -242,9 +222,9 @@ func (s *Service) writeTarGz(dest string, srcPaths []string, recipients []age.Re
 	return final, nil
 }
 
-// dedupPaths cleans the source paths and drops exact duplicates plus any path
-// nested under another, so an operator who selects both a parent folder and a
-// child of it does not archive the child's files twice (duplicate tar entries).
+// dedupPaths cleans the source paths and drops duplicates and any path nested
+// under another, so selecting both a folder and its child does not archive the
+// child twice.
 func dedupPaths(in []string) []string {
 	seen := map[string]bool{}
 	cleaned := make([]string, 0, len(in))
@@ -271,15 +251,12 @@ func dedupPaths(in []string) []string {
 	return out
 }
 
-// addToTar walks p and writes each regular file/dir into tw with a name relative
-// to root.
+// addToTar walks p and writes each regular file and directory into tw, named
+// relative to root.
 func addToTar(tw *tar.Writer, root, p string) error {
-	// Pick a traversal-free top-level name for this source path. Normally p is
-	// under root (the host mount), so entries are named relative to root and
-	// extracting at the host's /mnt reconstructs the original layout. If p is NOT
-	// under root (e.g. a selected path saved under a previous HostMountRoot),
-	// filepath.Rel would yield a "../.."-prefixed name that escapes on extraction
-	// (CWE-22 in the produced artifact) — root it at its own base instead.
+	// A path outside root (for example one saved under an earlier HostMountRoot)
+	// would get a "../"-prefixed name that escapes the target on extraction, so
+	// it is archived under its own base name instead.
 	base, rerr := filepath.Rel(root, p)
 	if rerr != nil || base == ".." || strings.HasPrefix(base, ".."+string(filepath.Separator)) {
 		base = filepath.Base(p)
@@ -292,9 +269,8 @@ func addToTar(tw *tar.Writer, root, p string) error {
 			return werr
 		}
 		if !fi.IsDir() && !fi.Mode().IsRegular() {
-			return nil // skip symlinks / devices / sockets
+			return nil
 		}
-		// file is always under p, so this Rel is clean and never escapes.
 		sub, serr := filepath.Rel(p, file)
 		if serr != nil {
 			return serr
@@ -325,17 +301,13 @@ func addToTar(tw *tar.Writer, root, p string) error {
 	})
 }
 
-// ExportVM writes a TOOL-FREE plain export of a VM next to the restic repo:
-// <name>.tar.gz of its disk image(s) plus <name>.xml (the persistent domain
-// definition), so it can be restored by extracting the disks and `virsh define`
-// without BombVault or restic. Not encrypted (that is the point). Returns the
-// export directory. A running VM is exported crash-consistent (best-effort, "just
-// in case"); for a clean image, export while the VM is shut off.
+// ExportVM writes a plain export of a VM to the export directory and returns
+// that directory: <name>.tar.gz of its disk images plus <name>.xml, the
+// persistent domain definition. Restoring needs only tar and `virsh define`.
+// Both files are age-encrypted when export encryption is on. A running VM is
+// exported crash-consistent; shut it off first for a clean image.
 func (s *Service) ExportVM(ctx context.Context, name string) (string, error) {
-	// VM names legitimately contain spaces ("Home Assistant", "Windows 11"), so
-	// use the VM-aware validator (still blocks path separators, "..", leading "-"
-	// and control chars — safe as a filename below), not the Docker-strict
-	// validResourceName which rejects any space.
+	// VM names may contain spaces, which validResourceName rejects.
 	if !validVMName(name) {
 		return "", fmt.Errorf("unsafe vm name %q", name)
 	}
@@ -347,8 +319,6 @@ func (s *Service) ExportVM(ctx context.Context, name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// Resolve recipients up front so an encryption-on / no-recipient export fails
-	// before writing any plaintext artifact (same fail-loud rule as ExportContainer).
 	recipients, _, err := s.exportRecipients(settings)
 	if err != nil {
 		return "", err
@@ -361,7 +331,7 @@ func (s *Service) ExportVM(ctx context.Context, name string) (string, error) {
 			return "", fmt.Errorf("export vm: ssh: %w", err)
 		}
 	}
-	// Disk layout from the LIVE XML; definition from the inactive (clean) XML.
+	// Disks come from the live XML, the exported definition from the inactive one.
 	liveXML, err := s.virsh.DumpXML(ctx, name)
 	if err != nil {
 		return "", fmt.Errorf("export vm: dumpxml: %w", err)

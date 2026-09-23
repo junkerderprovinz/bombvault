@@ -10,9 +10,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestReceivedRepoEmptyLocationRejected pins the empty-location guard on both
-// Create and Update: a received repo with a blank (or whitespace-only) location
-// addresses nowhere and is refused with ErrEmptyReceivedRepo, writing nothing.
+// TestReceivedRepoEmptyLocationRejected expects Create and Update to refuse a
+// blank or whitespace-only location without writing anything.
 func TestReceivedRepoEmptyLocationRejected(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -37,11 +36,9 @@ func TestReceivedRepoEmptyLocationRejected(t *testing.T) {
 	}
 }
 
-// TestReceivedRepoCRUD exercises Create/Get/List/Update/Delete and, crucially,
-// that the SENDING APP_KEY round-trips as ENCRYPTED bytes: the store persists the
-// ciphertext verbatim (never plaintext), and only a holder of the app secret key
-// can decrypt it back to the original 64-hex key. last_check_ok is nullable and
-// starts NULL (never checked).
+// TestReceivedRepoCRUD also checks that the sending instance's APP_KEY is
+// stored as ciphertext that only this instance's key decrypts, and that
+// last_check_ok starts NULL.
 func TestReceivedRepoCRUD(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -49,8 +46,8 @@ func TestReceivedRepoCRUD(t *testing.T) {
 	}
 	r := store.New(db)
 
-	appKey := strings.Repeat("ab", 32)     // THIS instance's app secret key
-	sendingKey := strings.Repeat("cd", 32) // the SENDING instance's APP_KEY (what we store)
+	appKey := strings.Repeat("ab", 32)     // this instance's key
+	sendingKey := strings.Repeat("cd", 32) // the sending instance's APP_KEY, which is stored
 	enc, err := secret.Encrypt(appKey, []byte(sendingKey))
 	if err != nil {
 		t.Fatalf("Encrypt: %v", err)
@@ -95,8 +92,6 @@ func TestReceivedRepoCRUD(t *testing.T) {
 		t.Fatalf("check state should be zero initially: %+v", back)
 	}
 
-	// The encrypted key round-trips: decrypt with the app secret key yields the
-	// original sending key exactly.
 	dec, err := secret.Decrypt(appKey, back.AppKeyEnc)
 	if err != nil {
 		t.Fatalf("Decrypt stored app_key_enc: %v", err)
@@ -104,12 +99,11 @@ func TestReceivedRepoCRUD(t *testing.T) {
 	if string(dec) != sendingKey {
 		t.Fatalf("app_key round-trip mismatch: got %q want %q", dec, sendingKey)
 	}
-	// A wrong app secret key must NOT decrypt it.
 	if _, err := secret.Decrypt(strings.Repeat("ff", 32), back.AppKeyEnc); err == nil {
 		t.Fatal("a wrong app secret key must fail to decrypt the stored key")
 	}
 
-	// Update in place: record a successful check + toggle read-data.
+	// Record a successful deep check and disable the repo.
 	back.LastCheckAt = 1234
 	back.LastCheckOK = sql.NullBool{Bool: true, Valid: true}
 	back.LastCheckReadData = true
@@ -127,7 +121,7 @@ func TestReceivedRepoCRUD(t *testing.T) {
 		t.Fatalf("in-place update failed: %+v", upd)
 	}
 
-	// List ordering by sort_order then created_at.
+	// List orders by sort_order, then created_at.
 	if _, err := r.CreateReceivedRepo(store.ReceivedRepo{Name: "B", Repo: "s3:bucket/b", Enabled: true, SortOrder: 5}); err != nil {
 		t.Fatal(err)
 	}
@@ -139,7 +133,7 @@ func TestReceivedRepoCRUD(t *testing.T) {
 		t.Fatalf("ListReceivedRepos order/len wrong: %+v", all)
 	}
 
-	// Delete removes it; a second delete is a no-op; Get on a missing id is (false, nil).
+	// A second delete is a no-op, and Get on a missing id is (false, nil).
 	if err := r.DeleteReceivedRepo(got.ID); err != nil {
 		t.Fatalf("DeleteReceivedRepo: %v", err)
 	}
@@ -154,8 +148,8 @@ func TestReceivedRepoCRUD(t *testing.T) {
 	}
 }
 
-// TestReceiverEnabledPersists pins the receiverEnabled settings flag: it defaults
-// to false (opt-in, like the domain tabs) and survives an update round-trip.
+// TestReceiverEnabledPersists expects ReceiverEnabled to default to false and
+// to survive an update.
 func TestReceiverEnabledPersists(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {

@@ -15,15 +15,13 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// flashZipFakeEngine is a minimal ResticEngine for the flash-zip-export tests.
-// It embeds the interface (nil) so the struct satisfies ResticEngine without
-// stubbing all ~22 methods; exportFlashZip only ever calls DumpZip, which is the
-// single method implemented here (any other call would panic — none happens).
+// flashZipFakeEngine implements only DumpZip, the one engine method
+// exportFlashZip calls. Any other call panics on the nil embedded interface.
 type flashZipFakeEngine struct {
-	ResticEngine // embedded interface value is nil on purpose; only DumpZip is used
-	dumpBytes    []byte
-	dumpErr      error
-	dumpCalls    int
+	ResticEngine
+	dumpBytes []byte
+	dumpErr   error
+	dumpCalls int
 }
 
 func (f *flashZipFakeEngine) DumpZip(_ context.Context, _, _, _ string, w io.Writer, _ restic.Mode) error {
@@ -35,9 +33,8 @@ func (f *flashZipFakeEngine) DumpZip(_ context.Context, _, _, _ string, w io.Wri
 	return err
 }
 
-// newFlashExportStore opens a migrated in-memory store for the export tests —
-// exportFlashZip now records a kind="export" run, so the Service needs a real
-// (empty) store instead of a nil one.
+// newFlashExportStore opens a migrated in-memory store, where exportFlashZip
+// records its run.
 func newFlashExportStore(t *testing.T) *store.Repo {
 	t.Helper()
 	db, err := store.Open(":memory:")
@@ -67,9 +64,8 @@ func latestExportRun(t *testing.T, st *store.Repo) store.Run {
 	return store.Run{}
 }
 
-// TestExportFlashZipKeep0 proves the default (Keep==0) path: the snapshot lands
-// at <dir>/flash-latest.zip with exactly the bytes DumpZip wrote, the atomic temp
-// file is gone, and a second export overwrites flash-latest.zip in place.
+// With Keep 0 the export writes flash-latest.zip, removes its temp file and
+// overwrites the same file on the next run.
 func TestExportFlashZipKeep0(t *testing.T) {
 	root := t.TempDir()
 	fake := &flashZipFakeEngine{dumpBytes: []byte("PK\x03\x04first")}
@@ -101,7 +97,6 @@ func TestExportFlashZipKeep0(t *testing.T) {
 		t.Fatalf("temp file must be gone after a successful export, stat err = %v", err)
 	}
 
-	// A second export overwrites flash-latest.zip with the new payload.
 	fake.dumpBytes = []byte("PK\x03\x04second")
 	if err := svc.exportFlashZip(context.Background(), settings, "cafebabe", restic.Mode{}, "/repo"); err != nil {
 		t.Fatalf("second exportFlashZip: %v", err)
@@ -113,7 +108,6 @@ func TestExportFlashZipKeep0(t *testing.T) {
 	if !bytes.Equal(got, []byte("PK\x03\x04second")) {
 		t.Fatalf("flash-latest.zip not overwritten, bytes = %q", got)
 	}
-	// Only the single latest file (no timestamped clutter) when Keep==0.
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		t.Fatal(err)
@@ -127,15 +121,15 @@ func TestExportFlashZipKeep0(t *testing.T) {
 	}
 }
 
-// TestPruneFlashZips proves pruneFlashZips keeps only the newest `keep`
-// timestamped flash-<ts>.zip files and never touches a non-matching file.
+// pruneFlashZips keeps the newest keep timestamped zips and leaves other files
+// alone.
 func TestPruneFlashZips(t *testing.T) {
 	dir := t.TempDir()
 	names := []string{
 		"flash-20260101-000000.zip",
 		"flash-20260102-000000.zip",
 		"flash-20260103-000000.zip",
-		"keepme.zip", // does not match flashZipRe → must survive
+		"keepme.zip",
 	}
 	for _, n := range names {
 		if err := os.WriteFile(filepath.Join(dir, n), []byte("x"), 0o600); err != nil {
@@ -168,18 +162,16 @@ func TestPruneFlashZips(t *testing.T) {
 	}
 }
 
-// TestPruneFlashZipsKeepZeroDeletesAllTimestamped proves that pruning with
-// keep==0 (latest mode) deletes ALL timestamped flash-<ts>.zip history left over
-// from a previous history run, while flash-latest.zip and any non-matching file
-// survive (they never match flashZipRe).
+// With keep 0 every timestamped zip goes, while flash-latest.zip and unrelated
+// files stay.
 func TestPruneFlashZipsKeepZeroDeletesAllTimestamped(t *testing.T) {
 	dir := t.TempDir()
 	names := []string{
 		"flash-20260101-000000.zip",
 		"flash-20260102-000000.zip",
 		"flash-20260103-000000.zip",
-		"flash-latest.zip", // does not match flashZipRe → must survive
-		"keepme.zip",       // does not match flashZipRe → must survive
+		"flash-latest.zip",
+		"keepme.zip",
 	}
 	for _, n := range names {
 		if err := os.WriteFile(filepath.Join(dir, n), []byte("x"), 0o600); err != nil {
@@ -214,8 +206,8 @@ func TestPruneFlashZipsKeepZeroDeletesAllTimestamped(t *testing.T) {
 	}
 }
 
-// TestExportFlashZipDumpError proves a DumpZip failure surfaces as an error and
-// leaves NOTHING behind — no temp file and no flash-*.zip.
+// A DumpZip failure is returned, recorded as a failed run, and leaves no file
+// behind.
 func TestExportFlashZipDumpError(t *testing.T) {
 	root := t.TempDir()
 	fake := &flashZipFakeEngine{dumpErr: errors.New("boom")}
@@ -235,8 +227,6 @@ func TestExportFlashZipDumpError(t *testing.T) {
 		t.Fatal("expected an error when DumpZip fails")
 	}
 
-	// The failed attempt still lands in the Activity Log feed: a finished
-	// kind="export" run with status failed and the error text.
 	run := latestExportRun(t, st)
 	if run.TargetID != store.FlashTargetID || run.Status != "failed" {
 		t.Fatalf("a failed export must record a failed export run on the flash target, got %+v", run)
@@ -262,8 +252,7 @@ func TestExportFlashZipDumpError(t *testing.T) {
 	}
 }
 
-// TestExportFlashZipDisabled proves the export is a no-op (nil, nothing written,
-// DumpZip never called) when disabled or when the path is empty.
+// A disabled export, or one without a path, does nothing and records no run.
 func TestExportFlashZipDisabled(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -292,7 +281,6 @@ func TestExportFlashZipDisabled(t *testing.T) {
 			if _, err := os.Stat(filepath.Join(root, "export")); !os.IsNotExist(err) {
 				t.Fatalf("no output folder should be created, stat err = %v", err)
 			}
-			// A disabled export never ran, so it records NO run either.
 			if runs, err := st.ListRuns(10); err != nil || len(runs) != 0 {
 				t.Fatalf("a disabled export must record no run, got runs=%v err=%v", runs, err)
 			}
@@ -300,9 +288,8 @@ func TestExportFlashZipDisabled(t *testing.T) {
 	}
 }
 
-// TestExportFlashZipRecordsRun pins the Activity Log feed (G2): a successful
-// export records a finished kind="export" run on the reserved flash target with
-// bytes = the written zip's size.
+// A successful export records a finished run on the flash target with the zip
+// size as its byte count.
 func TestExportFlashZipRecordsRun(t *testing.T) {
 	root := t.TempDir()
 	payload := []byte("PK\x03\x04digest-me")
@@ -334,11 +321,8 @@ func TestExportFlashZipRecordsRun(t *testing.T) {
 	}
 }
 
-// TestExportFlashZipEmitsLiveProgress pins #109: a running flash-ZIP export —
-// which can take a while on a big flash — publishes a begin/terminal
-// "maintenance" progress pair keyed "export:flash", so the dashboard activity
-// log shows a live line while the zip is written. A DumpZip failure still ends
-// the pair (Active=false, Percent=0) via the deferred progEnd.
+// The export publishes a begin and an end progress event keyed "export:flash",
+// and a failed dump still sends the end event.
 func TestExportFlashZipEmitsLiveProgress(t *testing.T) {
 	root := t.TempDir()
 	fake := &flashZipFakeEngine{dumpBytes: []byte("PK\x03\x04live")}
@@ -367,7 +351,6 @@ func TestExportFlashZipEmitsLiveProgress(t *testing.T) {
 		t.Fatalf("terminal event = %+v, want Key=export:flash Phase=maintenance Active=false Percent=100", term)
 	}
 
-	// Failure side: a dump error still ends the live pair (Percent=0).
 	fake.dumpErr = errors.New("boom")
 	if err := svc.exportFlashZip(context.Background(), settings, "cafebabe", restic.Mode{}, "/repo"); err == nil {
 		t.Fatal("expected an error when DumpZip fails")

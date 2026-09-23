@@ -12,17 +12,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 )
 
-// ---------------------------------------------------------------------------
-// fakeZFSHost / fakeZvolRestic — the zvol orchestrator's DI seam, unit-tested
-// with fakes exactly like fakeVM/fakeRestic/fakeRuns above (no real SSH
-// connection or ZFS/restic system is touched by any test in this file).
-//
-// ⚠ These tests verify the CONTROL FLOW (snapshot → stream → backup →
-// destroy, always-cleanup-via-defer, restore-target-never-equals-source) —
-// not that a real `zfs send`/`zfs receive` stream behaves this way against a
-// real TrueNAS box. See internal/virshcli/zvol.go's package doc comment.
-// ---------------------------------------------------------------------------
-
+// fakeZFSHost records the ZFS calls of BackupZvolDisk and RestoreZvolDisk.
+// These tests check the order of operations and the cleanup, not how a real
+// zfs send or receive behaves on TrueNAS.
 type fakeZFSHost struct {
 	log []string
 
@@ -33,9 +25,7 @@ type fakeZFSHost struct {
 	streamSendData []byte
 	streamSendWait error // returned by the wait() func StreamSend hands back
 
-	streamReceiveErr error
-	// streamReceiveData captures everything read from the reader passed to
-	// StreamReceive, so a test can assert the restore stream's bytes arrived.
+	streamReceiveErr    error
 	streamReceiveData   []byte
 	streamReceiveTarget string
 }
@@ -73,9 +63,6 @@ type fakeZvolRestic struct {
 
 	backupErr     error
 	backupSummary backup.Summary
-	// capturedStdin records everything read from the reader passed to
-	// BackupStdin, so a test can assert the zfs send stream's bytes reached
-	// restic.
 	capturedStdin []byte
 	capturedPath  string
 	capturedTags  []string
@@ -105,10 +92,6 @@ func (r *fakeZvolRestic) DumpTo(_ context.Context, repo, snapshotID, path string
 	return err
 }
 
-// ---------------------------------------------------------------------------
-// BackupZvolDisk
-// ---------------------------------------------------------------------------
-
 func sampleBackupZvolDeps(host *fakeZFSHost, r *fakeZvolRestic) backup.BackupZvolDeps {
 	return backup.BackupZvolDeps{
 		Name:     "truenasvm",
@@ -121,8 +104,8 @@ func sampleBackupZvolDeps(host *fakeZFSHost, r *fakeZvolRestic) backup.BackupZvo
 	}
 }
 
-// TestBackupZvolDiskHappyPath pins the documented sequence: zfs snapshot →
-// zfs send streamed into restic backup --stdin → zfs destroy (cleanup).
+// TestBackupZvolDiskHappyPath checks the sequence: snapshot, zfs send into
+// restic backup --stdin, destroy.
 func TestBackupZvolDiskHappyPath(t *testing.T) {
 	host := &fakeZFSHost{streamSendData: []byte("fake zfs send stream bytes")}
 	r := &fakeZvolRestic{backupSummary: backup.Summary{SnapshotID: "abc123", Bytes: 42}}
@@ -135,7 +118,6 @@ func TestBackupZvolDiskHappyPath(t *testing.T) {
 		t.Fatalf("summary = %+v, want the restic summary passed through", sum)
 	}
 
-	// Order: snapshot created BEFORE the send is streamed, destroyed AFTER.
 	wantOrder := []string{
 		"snapshotCreate:tank/vms/truenasvm/disk0@bombvault-20260816120000",
 		"streamSend:tank/vms/truenasvm/disk0@bombvault-20260816120000",
@@ -150,7 +132,6 @@ func TestBackupZvolDiskHappyPath(t *testing.T) {
 		}
 	}
 
-	// The zfs send bytes must have reached restic's stdin verbatim.
 	if string(r.capturedStdin) != "fake zfs send stream bytes" {
 		t.Fatalf("restic BackupStdin received %q, want the zfs send stream bytes", r.capturedStdin)
 	}
@@ -163,9 +144,8 @@ func TestBackupZvolDiskHappyPath(t *testing.T) {
 	}
 }
 
-// TestBackupZvolDiskAlwaysDestroysSnapshotOnBackupFailure is the core safety
-// test: the snapshot is a consistency point, not the backup artifact, so it
-// MUST be destroyed even when the restic backup itself fails.
+// TestBackupZvolDiskAlwaysDestroysSnapshotOnBackupFailure checks that the
+// snapshot, only a consistency point, goes even when the restic backup fails.
 func TestBackupZvolDiskAlwaysDestroysSnapshotOnBackupFailure(t *testing.T) {
 	host := &fakeZFSHost{streamSendData: []byte("stream")}
 	r := &fakeZvolRestic{backupErr: errors.New("restic: repository locked")}
@@ -179,9 +159,8 @@ func TestBackupZvolDiskAlwaysDestroysSnapshotOnBackupFailure(t *testing.T) {
 	}
 }
 
-// TestBackupZvolDiskAlwaysDestroysSnapshotOnStreamFailure covers the OTHER
-// failure point (starting the zfs send stream itself, before restic is ever
-// invoked) — the snapshot must still be cleaned up.
+// TestBackupZvolDiskAlwaysDestroysSnapshotOnStreamFailure fails zfs send
+// before restic runs.
 func TestBackupZvolDiskAlwaysDestroysSnapshotOnStreamFailure(t *testing.T) {
 	host := &fakeZFSHost{streamSendErr: errors.New("ssh: connection refused")}
 	r := &fakeZvolRestic{}
@@ -198,9 +177,6 @@ func TestBackupZvolDiskAlwaysDestroysSnapshotOnStreamFailure(t *testing.T) {
 	}
 }
 
-// TestBackupZvolDiskSnapshotCreateFailureIsFatalAndSkipsRestic: if the
-// snapshot create itself fails, there is nothing to send — restic must never
-// be invoked (no partial/garbage backup attempt).
 func TestBackupZvolDiskSnapshotCreateFailureIsFatalAndSkipsRestic(t *testing.T) {
 	host := &fakeZFSHost{snapshotCreateErr: errors.New("dataset does not exist")}
 	r := &fakeZvolRestic{}
@@ -217,10 +193,9 @@ func TestBackupZvolDiskSnapshotCreateFailureIsFatalAndSkipsRestic(t *testing.T) 
 	}
 }
 
-// TestBackupZvolDiskDestroyFailureDoesNotMaskBackupSuccess: a snapshot-destroy
-// failure is cleanup-only — it must be logged, not fail an otherwise
-// successful backup (the backed-up data is safe in the restic repo either
-// way; a leftover snapshot is a cosmetic/host-hygiene issue, not data loss).
+// TestBackupZvolDiskDestroyFailureDoesNotMaskBackupSuccess checks that a failed
+// destroy does not fail the backup: a leftover snapshot is untidy, not data
+// loss.
 func TestBackupZvolDiskDestroyFailureDoesNotMaskBackupSuccess(t *testing.T) {
 	host := &fakeZFSHost{
 		streamSendData:     []byte("stream"),
@@ -236,13 +211,9 @@ func TestBackupZvolDiskDestroyFailureDoesNotMaskBackupSuccess(t *testing.T) {
 		t.Fatalf("summary = %+v, want the successful restic summary", sum)
 	}
 	if !vmContains(host.log, "snapshotDestroy:") {
-		t.Fatalf("snapshot destroy must still be ATTEMPTED even though it fails; host.log = %v", host.log)
+		t.Fatalf("snapshot destroy must still be attempted even though it fails; host.log = %v", host.log)
 	}
 }
-
-// ---------------------------------------------------------------------------
-// RestoreZvolDisk — the safety-critical restore path.
-// ---------------------------------------------------------------------------
 
 func sampleRestoreZvolDeps(host *fakeZFSHost, r *fakeZvolRestic) backup.RestoreZvolDeps {
 	return backup.RestoreZvolDeps{
@@ -255,12 +226,9 @@ func sampleRestoreZvolDeps(host *fakeZFSHost, r *fakeZvolRestic) backup.RestoreZ
 	}
 }
 
-// TestRestoreZvolDiskNeverTargetsSourceDataset is THE structural safety test
-// for Task 10's restore path: `zfs receive` into an EXISTING dataset can
-// destroy live data, so the target dataset RestoreZvolDisk actually issues
-// `zfs receive` against must never equal the live source dataset — verified
-// by inspecting what the fake host actually received, not by reading the
-// implementation.
+// TestRestoreZvolDiskNeverTargetsSourceDataset checks the dataset the host
+// received into. zfs receive into an existing dataset can destroy live data,
+// so it must never be the source.
 func TestRestoreZvolDiskNeverTargetsSourceDataset(t *testing.T) {
 	host := &fakeZFSHost{}
 	r := &fakeZvolRestic{dumpData: []byte("restic dump bytes")}
@@ -271,40 +239,32 @@ func TestRestoreZvolDiskNeverTargetsSourceDataset(t *testing.T) {
 		t.Fatalf("RestoreZvolDisk: %v", err)
 	}
 	if target == deps.SourceDataset {
-		t.Fatalf("RestoreZvolDisk returned the SOURCE dataset %q as the restore target — this must never happen", target)
+		t.Fatalf("RestoreZvolDisk returned the source dataset %q as the restore target", target)
 	}
 	if host.streamReceiveTarget != target {
 		t.Fatalf("RestoreZvolDisk returned target %q but issued `zfs receive` against %q", target, host.streamReceiveTarget)
 	}
 	if host.streamReceiveTarget == deps.SourceDataset {
-		t.Fatalf("the actual StreamReceive call targeted the LIVE source dataset %q — data-destroying bug", deps.SourceDataset)
+		t.Fatalf("the actual StreamReceive call targeted the live source dataset %q", deps.SourceDataset)
 	}
 	if !strings.HasPrefix(target, deps.SourceDataset+"-bombvault-restore-") {
 		t.Fatalf("target dataset %q does not carry the expected bombvault-restore marker", target)
 	}
 
-	// The restic dump bytes must have reached the remote zfs receive verbatim.
 	if string(host.streamReceiveData) != "restic dump bytes" {
 		t.Fatalf("zfs receive stdin = %q, want the restic dump bytes", host.streamReceiveData)
 	}
 }
 
-// TestRestoreZvolDiskUsesRestoreBaseDatasetWhenSet is THE fix this task pins:
-// a CROSS-INSTANCE restore (internal/api/service.go's prepareRestoreVMForTarget
-// rebases the zvol dataset's pool onto the destination pool and sets
-// RestoreBaseDataset) must issue `zfs receive` against a target derived from
-// RestoreBaseDataset — the DESTINATION pool — not from SourceDataset, the
-// SOURCE box's pool, which does not exist on the destination host. Before this
-// fix, RestoreZvolDisk always derived its target from SourceDataset alone, so
-// a cross-instance zvol restore would attempt `zfs receive` into the source
-// pool's name on a box that doesn't have it — this test proves the fake host
-// actually receives against the REBASED pool's dataset instead.
+// TestRestoreZvolDiskUsesRestoreBaseDatasetWhenSet covers a restore onto
+// another instance, where prepareRestoreVMForTarget rebases the dataset onto
+// the destination pool because the source pool does not exist there.
 func TestRestoreZvolDiskUsesRestoreBaseDatasetWhenSet(t *testing.T) {
 	host := &fakeZFSHost{}
 	r := &fakeZvolRestic{dumpData: []byte("restic dump bytes")}
 
 	deps := sampleRestoreZvolDeps(host, r)
-	deps.RestoreBaseDataset = "flashpool/vms/truenasvm/disk0" // rebased onto the DESTINATION pool
+	deps.RestoreBaseDataset = "flashpool/vms/truenasvm/disk0"
 
 	target, err := backup.RestoreZvolDisk(context.Background(), deps)
 	if err != nil {
@@ -314,28 +274,22 @@ func TestRestoreZvolDiskUsesRestoreBaseDatasetWhenSet(t *testing.T) {
 		t.Fatalf("target dataset %q must be derived from RestoreBaseDataset %q, not SourceDataset %q", target, deps.RestoreBaseDataset, deps.SourceDataset)
 	}
 	if strings.HasPrefix(target, deps.SourceDataset+"-bombvault-restore-") {
-		t.Fatalf("target dataset %q was derived from the SOURCE dataset %q — the cross-instance rebase did not take effect", target, deps.SourceDataset)
+		t.Fatalf("target dataset %q was derived from the source dataset %q; the cross-instance rebase did not take effect", target, deps.SourceDataset)
 	}
 	if host.streamReceiveTarget != target {
 		t.Fatalf("RestoreZvolDisk returned target %q but issued `zfs receive` against %q", target, host.streamReceiveTarget)
 	}
 	if strings.HasPrefix(host.streamReceiveTarget, "tank/") {
-		t.Fatalf("the actual StreamReceive call targeted the SOURCE pool %q — this is the exact wrong-pool bug the fix closes", host.streamReceiveTarget)
+		t.Fatalf("the actual StreamReceive call targeted the source pool %q instead of the destination pool", host.streamReceiveTarget)
 	}
 }
 
-// TestRestoreZvolDiskFallsBackToSourceDatasetWhenRestoreBaseDatasetEmpty pins
-// the SAME-INSTANCE restore's behavior stays byte-for-byte unchanged: an empty
-// RestoreBaseDataset (the zero value every pre-existing caller/test uses, and
-// the value prepareRestoreVMForTarget leaves it at for a same-instance
-// restore) must fall back to deriving the target from SourceDataset exactly as
-// RestoreZvolDisk always did before this field existed.
 func TestRestoreZvolDiskFallsBackToSourceDatasetWhenRestoreBaseDatasetEmpty(t *testing.T) {
 	host := &fakeZFSHost{}
 	r := &fakeZvolRestic{dumpData: []byte("restic dump bytes")}
 
 	deps := sampleRestoreZvolDeps(host, r)
-	deps.RestoreBaseDataset = "" // explicit zero value — the same-instance case
+	deps.RestoreBaseDataset = "" // restore on the same instance
 
 	target, err := backup.RestoreZvolDisk(context.Background(), deps)
 	if err != nil {
@@ -346,9 +300,6 @@ func TestRestoreZvolDiskFallsBackToSourceDatasetWhenRestoreBaseDatasetEmpty(t *t
 	}
 }
 
-// TestRestoreZvolDiskPropagatesDumpFailure: if restic's dump fails, the
-// restore must fail cleanly (never attempt zfs receive with partial/garbage
-// data as if it were the real stream).
 func TestRestoreZvolDiskPropagatesDumpFailure(t *testing.T) {
 	host := &fakeZFSHost{}
 	r := &fakeZvolRestic{dumpErr: errors.New("restic: snapshot not found")}
@@ -359,8 +310,6 @@ func TestRestoreZvolDiskPropagatesDumpFailure(t *testing.T) {
 	}
 }
 
-// TestRestoreZvolDiskPropagatesReceiveFailure: if the remote `zfs receive`
-// fails, the error must surface (not be swallowed as a success).
 func TestRestoreZvolDiskPropagatesReceiveFailure(t *testing.T) {
 	host := &fakeZFSHost{streamReceiveErr: errors.New("zfs: receive failed: dataset already exists")}
 	r := &fakeZvolRestic{dumpData: []byte("data")}
@@ -371,11 +320,9 @@ func TestRestoreZvolDiskPropagatesReceiveFailure(t *testing.T) {
 	}
 }
 
-// TestRestoreZvolDiskReceiveNeverBlocksForeverOnEarlyFailure: if
-// StreamReceive returns an error WITHOUT ever draining its reader (e.g. an
-// SSH connection failure before any data was sent), the goroutine driving
-// restic's DumpTo must not hang forever trying to write into the pipe. This
-// pins the io.Pipe wiring's robustness, not just its happy path.
+// TestRestoreZvolDiskReceiveNeverBlocksForeverOnEarlyFailure has StreamReceive
+// fail without reading its input; the goroutine writing restic's dump into the
+// pipe must not hang.
 func TestRestoreZvolDiskReceiveNeverBlocksForeverOnEarlyFailure(t *testing.T) {
 	host := &earlyFailZFSHost{err: errors.New("ssh: connection refused")}
 	r := &fakeZvolRestic{dumpData: bytes.Repeat([]byte("x"), 1<<20)} // 1 MiB: bigger than a pipe's implicit buffering
@@ -391,13 +338,12 @@ func TestRestoreZvolDiskReceiveNeverBlocksForeverOnEarlyFailure(t *testing.T) {
 	select {
 	case <-done:
 	case <-time.After(5 * time.Second):
-		t.Fatal("RestoreZvolDisk hung — the DumpTo writer goroutine was never unblocked after StreamReceive failed early")
+		t.Fatal("RestoreZvolDisk hung: the DumpTo writer goroutine was never unblocked after StreamReceive failed early")
 	}
 }
 
-// earlyFailZFSHost's StreamReceive returns an error immediately WITHOUT
-// reading rd at all — simulating an SSH connection that never got as far as
-// accepting stdin.
+// earlyFailZFSHost's StreamReceive fails without reading rd, like an SSH
+// connection that never accepted stdin.
 type earlyFailZFSHost struct{ err error }
 
 func (h *earlyFailZFSHost) SnapshotCreate(context.Context, string, string) error  { return nil }
@@ -409,9 +355,8 @@ func (h *earlyFailZFSHost) StreamReceive(_ context.Context, _ io.Reader, _ strin
 	return h.err
 }
 
-// TestRestoreZvolDiskDistinctAcrossRepeatedCalls: two restores of the same
-// source dataset (e.g. a retried restore) must land on two DIFFERENT fresh
-// datasets, never silently collide/overwrite an earlier restore attempt.
+// TestRestoreZvolDiskDistinctAcrossRepeatedCalls checks that two restores of
+// the same dataset, such as a retry, land on two different new datasets.
 func TestRestoreZvolDiskDistinctAcrossRepeatedCalls(t *testing.T) {
 	host := &fakeZFSHost{}
 	r := &fakeZvolRestic{dumpData: []byte("data")}

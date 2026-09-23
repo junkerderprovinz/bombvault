@@ -1,32 +1,12 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// OffsiteIndicator — real DOM behaviour for issue #159's live off-site
-// progress readout. A first cut of this feature concluded restic copy had no
-// honest percentage to show and shipped a duration-only readout; that
-// conclusion was wrong (see the component's own doc comment / restic.Copy's
-// doc comment for the corrected story) — restic copy DOES print a real,
-// parseable per-snapshot percentage once RESTIC_PROGRESS_FPS is wired up.
-// This covers the full tiered display end to end: the component consumes the
-// SAME lib/progress.ts SSE plumbing production code does (mocking only the
-// browser's EventSource, which jsdom does not implement, so `new
-// EventSource(...)` inside progress.ts's openSource() doesn't throw) and
-// renders through the real useProgress()/offsiteStatusText()/elapsedSince()
-// pipeline — nothing about the component under test is stubbed.
-//
-// See OffsiteIndicator.test.ts for direct pure-function coverage of
-// offsiteStatusText's tiering logic (faster, no DOM needed).
-//
-// `.dom.test.tsx` per Selector.dom.test.tsx's convention for the jsdom-opted-in
-// exception (vitest.config.ts stays "node" by default).
-// ---------------------------------------------------------------------------
+// Runs the component through the real lib/progress.ts SSE handling. Only
+// EventSource is faked, because jsdom has none.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { OffsiteIndicator } from "./OffsiteIndicator";
 
-// A minimal fake EventSource: progress.ts's openSource() does `new
-// EventSource("/api/progress")` then assigns `.onmessage`. Capturing the
-// latest instance lets a test push a synthetic SSE frame through the EXACT
-// same `source.onmessage = handleMessage` path a real backend push would use.
+// progress.ts's openSource() constructs an EventSource and assigns
+// `.onmessage`; emit() pushes a frame through that same handler.
 const instances: FakeEventSource[] = [];
 
 class FakeEventSource {
@@ -59,7 +39,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe("OffsiteIndicator — elapsed duration (issue #159)", () => {
+describe("OffsiteIndicator, elapsed duration", () => {
   it("shows the plain replicating label with no duration before startedAt is known", () => {
     render(<OffsiteIndicator domain="containers" />);
     act(() => {
@@ -76,18 +56,17 @@ describe("OffsiteIndicator — elapsed duration (issue #159)", () => {
     act(() => {
       lastInstance().emit({ key: "offsite:containers", phase: "replicate", percent: 0, active: true, startedAt: nowSec });
     });
-    // t≈0s: formatDuration(0) => "0s", which IS truthy, so a real elapsed
-    // reading of exactly "0s" is still shown rather than being suppressed.
+    // "0s" is a non-empty string, so a zero elapsed time is still shown.
     expect(screen.getByText(/Replicating…\s*\(0s\)/)).toBeTruthy();
 
     act(() => {
-      vi.advanceTimersByTime(3000); // the component's own 1s local tick, no new SSE event needed
+      vi.advanceTimersByTime(3000); // the local tick, no SSE event
     });
     expect(screen.getByText(/Replicating…\s*\(3s\)/)).toBeTruthy();
     expect(document.body.textContent).not.toContain("NaN");
   });
 
-  it("keeps ticking the SAME duration across a backend heartbeat re-publish (same startedAt)", () => {
+  it("keeps the duration across a heartbeat that re-publishes the same startedAt", () => {
     const nowSec = Math.floor(Date.now() / 1000);
     render(<OffsiteIndicator domain="containers" />);
     act(() => {
@@ -97,21 +76,14 @@ describe("OffsiteIndicator — elapsed duration (issue #159)", () => {
       vi.advanceTimersByTime(5000);
     });
     expect(screen.getByText(/\(5s\)/)).toBeTruthy();
-    // Backend heartbeat tick: SAME startedAt, re-published as the real
-    // offsiteProgressHeartbeat loop does (see service.go's copyToOffsite).
+    // offsiteProgressHeartbeat re-publishes the event with the same startedAt.
     act(() => {
       lastInstance().emit({ key: "offsite:containers", phase: "replicate", percent: 0, active: true, startedAt: nowSec });
     });
-    expect(screen.getByText(/\(5s\)/)).toBeTruthy(); // unchanged — no reset to 0
+    expect(screen.getByText(/\(5s\)/)).toBeTruthy(); // not reset to 0
   });
 
-  // Review fix: progEnd now publishes the SAME StartedAt on the terminal event
-  // (previously it published none at all, which zeroed startedAt and made the
-  // duration vanish for the ~0.8-2.5s the terminal event lingers on screen —
-  // see progress.ts's COMPLETE_LINGER_MS / this component's MIN_VISIBLE_MS).
-  // This asserts the CORRECT behavior now: the duration keeps showing its
-  // real value through the terminal event, not just "doesn't say NaN".
-  it("keeps showing the correct duration through the terminal event (StartedAt is no longer dropped)", () => {
+  it("keeps showing the duration through the terminal event", () => {
     const nowSec = Math.floor(Date.now() / 1000);
     render(<OffsiteIndicator domain="containers" />);
     act(() => {
@@ -121,22 +93,15 @@ describe("OffsiteIndicator — elapsed duration (issue #159)", () => {
       vi.advanceTimersByTime(2000);
     });
     expect(screen.getByText(/\(2s\)/)).toBeTruthy();
-    // Terminal event now carries the SAME startedAt (the review fix).
     act(() => {
       lastInstance().emit({ key: "offsite:containers", phase: "replicate", percent: 100, active: false, startedAt: nowSec });
     });
-    // Still active in the frontend's map during the linger (Active is held
-    // true client-side until COMPLETE_LINGER_MS elapses — see progress.ts),
-    // so the duration is still rendered, and correctly, not blanked.
+    // progress.ts keeps the entry active until COMPLETE_LINGER_MS has passed.
     expect(screen.getByText(/\(2s\)/)).toBeTruthy();
     expect(document.body.textContent).not.toContain("NaN");
   });
 
-  // Defensive fallback: even if a future backend regression DID publish a
-  // terminal event with no StartedAt (or an old call site missed the fix),
-  // the indicator must still degrade to the plain label, never "NaN" or a
-  // garbage duration.
-  it("degrades to the plain label if a terminal event ever arrives with no StartedAt", () => {
+  it("falls back to the plain label when a terminal event has no startedAt", () => {
     const nowSec = Math.floor(Date.now() / 1000);
     render(<OffsiteIndicator domain="containers" />);
     act(() => {
@@ -151,14 +116,11 @@ describe("OffsiteIndicator — elapsed duration (issue #159)", () => {
     });
     expect(screen.getByText(/Replicating…/)).toBeTruthy();
     expect(document.body.textContent).not.toContain("NaN");
-    expect(document.body.textContent).not.toMatch(/\(\d/); // no stale/garbage duration survives
+    expect(document.body.textContent).not.toMatch(/\(\d/); // no stale duration
   });
 
-  // progress.go's Event doc comment (and reltime.ts's elapsedSince) both
-  // document that a client "must treat 0 as unknown, never an actual epoch
-  // second" — this is the case that guard exists for: a genuine 0 would
-  // otherwise compute an elapsed span back to the Unix epoch.
-  it("treats startedAt: 0 as unknown, never rendering the epoch's ~56-year elapsed span", () => {
+  // 0 means unknown (see progress.go's Event), not the Unix epoch.
+  it("treats startedAt 0 as unknown", () => {
     render(<OffsiteIndicator domain="containers" />);
     act(() => {
       lastInstance().emit({ key: "offsite:containers", phase: "replicate", percent: 0, active: true, startedAt: 0 });
@@ -168,7 +130,7 @@ describe("OffsiteIndicator — elapsed duration (issue #159)", () => {
     expect(document.body.textContent).not.toMatch(/\(\d/);
   });
 
-  it("treats a negative startedAt as unknown, never rendering a negative or garbage duration", () => {
+  it("treats a negative startedAt as unknown", () => {
     render(<OffsiteIndicator domain="containers" />);
     act(() => {
       lastInstance().emit({ key: "offsite:containers", phase: "replicate", percent: 0, active: true, startedAt: -100 });
@@ -179,7 +141,7 @@ describe("OffsiteIndicator — elapsed duration (issue #159)", () => {
   });
 });
 
-describe("OffsiteIndicator — live run-level percentage (issue #159's real percentage)", () => {
+describe("OffsiteIndicator, run-level percentage", () => {
   it("shows a run-level percentage once the backend reports a snapshot index/total", () => {
     render(<OffsiteIndicator domain="containers" />);
     act(() => {
@@ -195,10 +157,7 @@ describe("OffsiteIndicator — live run-level percentage (issue #159's real perc
     expect(screen.getByText(/Replicating… 41% overall \(snapshot 2 of 4\)/)).toBeTruthy();
   });
 
-  // End-to-end version of the case reported on #159: the numbers from that
-  // screenshot must render as RUN progress (~12%), not as the current
-  // snapshot's own pack progress (55%) sitting where a run percentage reads.
-  it("renders the reported 15-of-126-at-55% frame as ~12% overall, never 55%", () => {
+  it("shows snapshot 15 of 126 at 55% as 12% overall, not 55%", () => {
     render(<OffsiteIndicator domain="containers" />);
     act(() => {
       lastInstance().emit({
@@ -214,8 +173,7 @@ describe("OffsiteIndicator — live run-level percentage (issue #159's real perc
     expect(document.body.textContent).not.toContain("55%");
   });
 
-  // snapshotTotal 0/absent is the backend's honest "could not estimate" (see
-  // api.progBeginCopySink). No denominator, so no run-level claim at all.
+  // No total means the backend could not estimate one (api.progBeginCopySink).
   it("falls back to the duration readout when no snapshot total was reported", () => {
     const nowSec = Math.floor(Date.now() / 1000);
     render(<OffsiteIndicator domain="containers" />);
@@ -250,7 +208,7 @@ describe("OffsiteIndicator — live run-level percentage (issue #159's real perc
     expect(screen.getByText(/Replicating… 10% overall \(snapshot 1 of 1\).*0s/)).toBeTruthy();
   });
 
-  it("a single-snapshot run still renders correctly (not misread as 'unknown')", () => {
+  it("shows a single-snapshot run rather than treating it as unknown", () => {
     render(<OffsiteIndicator domain="files" />);
     act(() => {
       lastInstance().emit({
@@ -265,9 +223,6 @@ describe("OffsiteIndicator — live run-level percentage (issue #159's real perc
     expect(screen.getByText(/Replicating… 80% overall \(snapshot 1 of 1\)/)).toBeTruthy();
   });
 
-  // The percentage counts SNAPSHOTS against a best-effort estimate, not bytes.
-  // That caveat rides an (i) rather than the line itself, and must appear only
-  // in the tier that actually shows a percentage.
   it("attaches the estimate info bubble only while a run-level percentage is shown", () => {
     render(<OffsiteIndicator domain="containers" />);
     act(() => {

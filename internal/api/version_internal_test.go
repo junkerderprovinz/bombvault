@@ -2,8 +2,7 @@ package api
 
 import "testing"
 
-// TestVersionTag pins the banner version rendering: a stamped build shows the
-// version after the app name; an un-stamped build shows "(dev)".
+// A stamped build shows its version after the app name, an unstamped one "(dev)".
 func TestVersionTag(t *testing.T) {
 	orig := Version
 	defer func() { Version = orig }()

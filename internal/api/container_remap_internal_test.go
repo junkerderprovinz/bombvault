@@ -3,13 +3,11 @@ package api
 import (
 	"path"
 	"testing"
-
-	"github.com/junkerderprovinz/bombvault/internal/backup"
 )
 
-// TestContainerAppdataRemapSinglePath: one appdata path is restored into
-// <destBase>/<basename> and the bindRemap maps its HOST source path to the HOST
-// dest path (toHostPath round-trip: /host/user/... -> /mnt/...).
+// TestContainerAppdataRemapSinglePath: one appdata path goes to
+// <destBase>/<basename>, and bindRemap maps the host paths (/mnt/...) rather
+// than the container-visible ones.
 func TestContainerAppdataRemapSinglePath(t *testing.T) {
 	s := vmRestoreSvc(t, &foreignRecordingEngine{})
 	dirs, remap := s.containerAppdataRemap("/host/user/user/appdata", []string{"/host/user/zfs/appdata/xo"})
@@ -22,9 +20,9 @@ func TestContainerAppdataRemapSinglePath(t *testing.T) {
 	}
 }
 
-// TestContainerAppdataRemapNoopWhenDestEqualsSource: a standard container whose
-// appdata already lives under the destBase remaps to the SAME path (Target==source),
-// so restoring to the default destination lands it exactly where it was.
+// TestContainerAppdataRemapNoopWhenDestEqualsSource: appdata already under
+// destBase maps to itself, so a restore to the default destination lands where
+// the data was.
 func TestContainerAppdataRemapNoopWhenDestEqualsSource(t *testing.T) {
 	s := vmRestoreSvc(t, &foreignRecordingEngine{})
 	dirs, _ := s.containerAppdataRemap("/host/user/user/appdata", []string{"/host/user/user/appdata/web"})
@@ -33,8 +31,8 @@ func TestContainerAppdataRemapNoopWhenDestEqualsSource(t *testing.T) {
 	}
 }
 
-// TestContainerAppdataRemapDistinctBasenames: two appdata paths with different
-// leaves map to two distinct targets, no dedup suffix.
+// TestContainerAppdataRemapDistinctBasenames: different basenames need no dedup
+// suffix.
 func TestContainerAppdataRemapDistinctBasenames(t *testing.T) {
 	s := vmRestoreSvc(t, &foreignRecordingEngine{})
 	dirs, remap := s.containerAppdataRemap("/host/user/user/appdata",
@@ -53,10 +51,9 @@ func TestContainerAppdataRemapDistinctBasenames(t *testing.T) {
 	}
 }
 
-// TestContainerAppdataRemapBasenameCollisionIsDeduped: two appdata paths that share
-// a basename on DIFFERENT pools must map to DISTINCT target dirs — otherwise
-// RestoreSubtreeTo would merge both into one folder (silent data loss). This is the
-// safety-critical case.
+// TestContainerAppdataRemapBasenameCollisionIsDeduped: two appdata paths with
+// the same basename on different pools get distinct targets; a shared one would
+// make RestoreSubtreeTo merge both into one folder.
 func TestContainerAppdataRemapBasenameCollisionIsDeduped(t *testing.T) {
 	s := vmRestoreSvc(t, &foreignRecordingEngine{})
 	dirs, remap := s.containerAppdataRemap("/host/user/user/appdata",
@@ -66,9 +63,8 @@ func TestContainerAppdataRemapBasenameCollisionIsDeduped(t *testing.T) {
 		t.Fatalf("want 2 dirs, got %+v", dirs)
 	}
 	if dirs[0].Target == dirs[1].Target {
-		t.Fatalf("collision: both sources mapped to the same Target %q — would merge data", dirs[0].Target)
+		t.Fatalf("collision: both sources mapped to the same Target %q, which would merge data", dirs[0].Target)
 	}
-	// Every Subtree preserved, every Target unique, every bindRemap value unique.
 	seenTarget := map[string]bool{}
 	for _, d := range dirs {
 		if seenTarget[d.Target] {
@@ -79,11 +75,11 @@ func TestContainerAppdataRemapBasenameCollisionIsDeduped(t *testing.T) {
 	seenDest := map[string]bool{}
 	for _, v := range remap {
 		if seenDest[v] {
-			t.Fatalf("duplicate remap dest %q — binds would collide", v)
+			t.Fatalf("duplicate remap dest %q; the binds would collide", v)
 		}
 		seenDest[v] = true
 	}
-	// The deduped one carries a numeric suffix.
+	// The second one gets a numeric suffix.
 	if _, ok := seenTarget["/host/user/user/appdata/config"]; !ok {
 		t.Fatalf("expected first leaf undeduped, targets=%v", seenTarget)
 	}
@@ -92,13 +88,11 @@ func TestContainerAppdataRemapBasenameCollisionIsDeduped(t *testing.T) {
 	}
 }
 
-// TestContainerAppdataRemapSingleBindMatchesLegacyLeaf is the regression proof for
-// the multi-bind fix: for a container with ONE appdata path — the common case —
-// the destination must still be <destBase>/<basename>, byte-for-byte what the
-// pre-fix leaf-only mapping produced. The expectation is COMPUTED with the old
-// rule (base + "/" + path.Base(src)) rather than hand-written, so the two can
-// never silently drift apart.
-func TestContainerAppdataRemapSingleBindMatchesLegacyLeaf(t *testing.T) {
+// TestContainerAppdataRemapSingleBindUsesBasename: a container with a single
+// appdata path, the common case, lands at <destBase>/<basename>. The
+// expectation is computed from that rule rather than written out, so the two
+// cannot drift apart.
+func TestContainerAppdataRemapSingleBindUsesBasename(t *testing.T) {
 	s := vmRestoreSvc(t, &foreignRecordingEngine{})
 	const base = "/host/user/user/appdata"
 	cases := []struct {
@@ -134,13 +128,11 @@ func TestContainerAppdataRemapSingleBindMatchesLegacyLeaf(t *testing.T) {
 	}
 }
 
-// TestContainerAppdataRemapMultiBindKeepsSharedContainerFolder is the fix for the
-// multi-bind bug: resolveAppdataPaths records EVERY appdata bind as its own entry
-// without merging binds that share a folder, so a container with two binds under
-// one folder arrives here as two paths sharing the "SnapOtter" ancestor. Mapping
-// each by BASENAME alone dropped that ancestor and dumped "conf" and "data" as
-// top-level folders in the destination appdata root, colliding with any other
-// container's folders of those names. Both must nest under SnapOtter/ instead.
+// TestContainerAppdataRemapMultiBindKeepsSharedContainerFolder:
+// resolveAppdataPaths records every appdata bind separately, so a container
+// with two binds under one folder arrives as two paths below SnapOtter. Mapping
+// each by basename would put conf and data at the top of the destination, where
+// they collide with other containers' folders.
 func TestContainerAppdataRemapMultiBindKeepsSharedContainerFolder(t *testing.T) {
 	s := vmRestoreSvc(t, &foreignRecordingEngine{})
 	dirs, remap := s.containerAppdataRemap("/host/user/cache/appdata", []string{
@@ -157,7 +149,7 @@ func TestContainerAppdataRemapMultiBindKeepsSharedContainerFolder(t *testing.T) 
 	}
 	for _, d := range dirs {
 		if want[d.Subtree] != d.Target {
-			t.Fatalf("dir %+v: want Target %q — the shared SnapOtter folder must be preserved, not flattened to its leaf", d, want[d.Subtree])
+			t.Fatalf("dir %+v: want Target %q; the shared SnapOtter folder must keep its path, not be flattened to its leaf", d, want[d.Subtree])
 		}
 	}
 	// The recreated container's binds must follow to the nested locations.
@@ -169,11 +161,9 @@ func TestContainerAppdataRemapMultiBindKeepsSharedContainerFolder(t *testing.T) 
 	}
 }
 
-// TestContainerAppdataRemapMultiBindInPlaceIsNoop: restoring a multi-bind
-// container back to the appdata root it already lives in must map every path to
-// ITSELF (Target == Subtree). prepareRestoreForTarget skips the overwrite guard
-// exactly on that equality, so without the fix the leaf-only mapping turned an
-// in-place restore into "<destBase>/conf already contains data" prompts against
+// TestContainerAppdataRemapMultiBindInPlaceIsNoop: an in-place restore of a
+// multi-bind container maps every path to itself. prepareRestoreForTarget skips
+// its overwrite guard on exactly that equality; any other mapping prompts about
 // unrelated folders.
 func TestContainerAppdataRemapMultiBindInPlaceIsNoop(t *testing.T) {
 	s := vmRestoreSvc(t, &foreignRecordingEngine{})
@@ -192,12 +182,10 @@ func TestContainerAppdataRemapMultiBindInPlaceIsNoop(t *testing.T) {
 	}
 }
 
-// TestContainerAppdataRemapDedupeIsPerContainerFolder pins the collision suffix at
-// the destination ROOT, not the individual leaf: two containers' folders that
-// share a name on DIFFERENT pools still get distinct roots ("SnapOtter" and
-// "SnapOtter-2"), but every bind of one source folder stays TOGETHER under the
-// same root — a multi-bind container must never be split across SnapOtter/ and
-// SnapOtter-2/.
+// TestContainerAppdataRemapDedupeIsPerContainerFolder: the collision suffix
+// goes on the container folder, not the leaf. Same-named folders from different
+// pools become SnapOtter and SnapOtter-2, and all binds of one folder stay
+// together.
 func TestContainerAppdataRemapDedupeIsPerContainerFolder(t *testing.T) {
 	s := vmRestoreSvc(t, &foreignRecordingEngine{})
 	dirs, _ := s.containerAppdataRemap("/host/user/user/appdata", []string{
@@ -222,10 +210,10 @@ func TestContainerAppdataRemapDedupeIsPerContainerFolder(t *testing.T) {
 	}
 }
 
-// TestContainerAppdataRemapTargetsAlwaysUnique pins the safety invariant behind
-// the whole function: RestoreSubtreeTo dumps a subtree's CONTENTS into Target, so
-// two sources sharing a Target would silently MERGE two containers' data. No input
-// shape may ever produce a duplicate Target or a duplicate bindRemap destination.
+// TestContainerAppdataRemapTargetsAlwaysUnique: RestoreSubtreeTo writes a
+// subtree's contents into Target, so a shared Target would merge two
+// containers' data. No input may produce a duplicate Target or bindRemap
+// destination.
 func TestContainerAppdataRemapTargetsAlwaysUnique(t *testing.T) {
 	s := vmRestoreSvc(t, &foreignRecordingEngine{})
 	cases := [][]string{
@@ -245,25 +233,24 @@ func TestContainerAppdataRemapTargetsAlwaysUnique(t *testing.T) {
 		seenTarget := map[string]bool{}
 		for _, d := range dirs {
 			if seenTarget[d.Target] {
-				t.Fatalf("case %d (%v): duplicate Target %q — restoring both would merge their data", i, in, d.Target)
+				t.Fatalf("case %d (%v): duplicate Target %q; restoring both would merge their data", i, in, d.Target)
 			}
 			seenTarget[d.Target] = true
 		}
 		seenDest := map[string]bool{}
 		for _, v := range remap {
 			if seenDest[v] {
-				t.Fatalf("case %d (%v): duplicate bindRemap dest %q — two binds would collide", i, in, v)
+				t.Fatalf("case %d (%v): duplicate bindRemap dest %q; two binds would collide", i, in, v)
 			}
 			seenDest[v] = true
 		}
 	}
 }
 
-// TestAppdataRelPathSplit pins the anchor rule the destination path is built on:
-// the split is at the FIRST "appdata" segment, so a container that owns a NESTED
-// folder called "appdata" stays anchored at the real share root; a path that has
-// no "appdata" segment, or that IS an appdata root, yields an empty rel and lets
-// the caller fall back to the plain basename.
+// TestAppdataRelPathSplit: the split is at the first "appdata" segment, so a
+// nested folder called appdata stays under the real share root. A path without
+// that segment, or the appdata root itself, yields an empty rel and the caller
+// falls back to the basename.
 func TestAppdataRelPathSplit(t *testing.T) {
 	cases := []struct {
 		in, root, rel string
@@ -283,26 +270,22 @@ func TestAppdataRelPathSplit(t *testing.T) {
 	}
 }
 
-// compile-time: containerAppdataRemap returns backup.RestoreDir (aliased to VMRestoreDir).
-var _ = func() []backup.RestoreDir { return nil }
-
-// TestForeignBindWarningsClassification pins the #125 (Q1) bind classifier: only a
-// NON-appdata pool bind whose pool is absent on this host is warned; appdata binds
-// (remapped), host devices/sockets, and binds on mounted pools are not.
+// TestForeignBindWarningsClassification: only a non-appdata bind on a pool that
+// is not mounted here gets a warning. Appdata binds are remapped, and host
+// files, sockets and mounted pools are fine.
 func TestForeignBindWarningsClassification(t *testing.T) {
 	s := vmRestoreSvc(t, &foreignRecordingEngine{})
-	// /host/user/user is the shfs user share (holds appdata + downloads) and IS
-	// mounted; the zfs pool is NOT.
+	// The user share is mounted, the zfs pool is not.
 	writeMountFixture(t, "/", "/host/user", "/host/user/user")
 
 	binds := []string{
-		"/mnt/user/appdata/web:/config",             // appdata -> remapped, skip
-		"/mnt/zfs/media:/media:ro",                  // non-appdata pool, absent -> WARN
-		"/mnt/user/downloads:/downloads",            // non-appdata pool, mounted -> ok
-		"/var/run/docker.sock:/var/run/docker.sock", // host socket -> skip
-		"/etc/localtime:/etc/localtime:ro",          // host file -> skip
+		"/mnt/user/appdata/web:/config",             // appdata, remapped
+		"/mnt/zfs/media:/media:ro",                  // pool not mounted: warned
+		"/mnt/user/downloads:/downloads",            // mounted pool
+		"/var/run/docker.sock:/var/run/docker.sock", // host socket
+		"/etc/localtime:/etc/localtime:ro",          // host file
 	}
-	// appdata is recorded as the container-visible path (/host/user/user/appdata/web).
+	// Appdata is recorded as the container-visible path.
 	warnings := s.foreignBindWarnings(binds, []string{"/host/user/user/appdata/web"})
 
 	if len(warnings) != 1 || warnings[0].Host != "/mnt/zfs/media" {

@@ -1,29 +1,8 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// Files-page selection-tree integration tests (Phase 4, plan 03 — INTEG-02
-// criterion 1). Same import-after-mock harness as Containers.tree.dom.test
-// .tsx: the mocked api client serves browse listings and captures PATCH bodies
-// so the wire contract is observable step by step.
-//
-// Task 2 pins the mount contract: the Choose folders disclosure, exactly ONE
-// level-1 treeitem (the set's resolved path, aria-setsize=1) — no custom rows,
-// no CACHEDIR switch, no dest←source arrow — the NULL mirror seed (a set never
-// touched by the tree renders its root CHECKED at "1 path", UI-SPEC item 9),
-// the argv-matching preview count, the no-Path gating, and lazy browse through
-// the hostMountRoot prefix with the editor-lifetime cache.
-//
-// Task 3 adds the live-save pipeline pins (serialized queue, client/server D-06
-// refusal, revert-from-live-mirror, exact reopen) over the same harness.
-//
-// Plan 04 adds the audit surfaces: the per-root exclusions review list and the
-// dialog's path-change disclosure. The list itself is NOT reimplemented here —
-// it rides the shared SelectionTree disclosure (rootExclusions, the Phase 3
-// implementation) which the plan 03 mount already carries, so those pins are
-// characterization pins locking the FILES-page rendering (relative mono muted
-// rows, no controls, collapsed on reopen, dormant-root parity,
-// existence-unfiltered); the genuinely new implementation the RED gate drives
-// is the files.pathChangeHint caption in FileSetDialog.
-// ---------------------------------------------------------------------------
+// The folder selection tree on the Files page, with the same harness as
+// Containers.tree.dom.test.tsx: the mocked api client serves browse listings
+// and records PATCH bodies, so what goes over the wire can be checked step by
+// step.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { I18nProvider, useT } from "../lib/i18n";
@@ -31,9 +10,7 @@ import { ToastProvider } from "../lib/toast";
 import type { BrowseResponse, FileSetView } from "../lib/api";
 import { placementOptions, placementView } from "../lib/placement.testsupport";
 
-// jsdom has no EventSource, and rendering the full card (FileSetRow) opens the
-// progress stream on mount via useProgress. A no-op stand-in keeps these tests
-// about the selection tree rather than about SSE (Config.autosave precedent).
+// jsdom has no EventSource, and FileSetRow opens the progress stream on mount.
 class NoopEventSource {
   onmessage: ((e: MessageEvent) => void) | null = null;
   close() {}
@@ -46,8 +23,7 @@ const browseCalls: string[] = [];
 const patches: { id: string; body: Record<string, unknown> }[] = [];
 let browseReplies: (BrowseResponse | Promise<BrowseResponse>)[] = [];
 let patchReplies: ({ ok: boolean; error?: string; code?: string } | Promise<{ ok: boolean; error?: string; code?: string }>)[] = [];
-// No-overlap proof (T-04-11): the mock counts calls in flight; two overlapping
-// PATCHes would push maxConcurrentPatches to 2.
+// Two overlapping PATCHes would push maxConcurrentPatches to 2.
 let activePatches = 0;
 let maxConcurrentPatches = 0;
 
@@ -74,20 +50,10 @@ vi.mock("../lib/api", async (importOriginal) => {
   };
 });
 
-// Imported AFTER vi.mock so the components pick up the mocked client. The
-// namespace import additionally reaches FileSetDialog, whose export lands with
-// the plan 04 GREEN (the FoldersEditor harness precedent: exported for this
-// page's dom harness only).
+// Imported after vi.mock so the components get the mocked client.
 const FilesModule = await import("./Files");
 const { FileSetFoldersEditor, FileSetRow } = FilesModule;
-// Bound from the namespace like FileSetDialog: the reseed pins below depend on
-// this call-site key helper (review CR-01).
 const fileSetEditorKey = FilesModule.fileSetEditorKey;
-// Bound from the namespace rather than a destructured ESM import: a missing
-// named export fails the whole file at link time, while a missing namespace
-// property fails only the dialog tests — the honest RED before the plan 04
-// GREEN adds the export (the FoldersEditor harness precedent: exported for
-// this page's dom harness only).
 const FileSetDialog = FilesModule.FileSetDialog;
 
 const HOST_MOUNT_ROOT = "/host/user";
@@ -95,8 +61,8 @@ const REL = "documents";
 const ROOT = "/host/user/documents";
 const SUB = "/host/user/documents/sub";
 
-/** A file-set view as GET /api/files serves it. selectedPaths left absent by
- *  default — the NULL column case every new/legacy set starts in. */
+/** A file set as GET /api/files serves it. selectedPaths is absent by default,
+ *  as for every set the tree has not touched yet. */
 function setView(overrides?: Partial<FileSetView>): FileSetView {
   return {
     id: "set1",
@@ -111,8 +77,7 @@ function setView(overrides?: Partial<FileSetView>): FileSetView {
   };
 }
 
-/** Children of the documents root, browse-relative (host root "/host/user"
- *  swapped). */
+/** Children of the documents root, relative to the host mount root. */
 function documentsListing(): BrowseResponse {
   return {
     ok: true,
@@ -127,8 +92,7 @@ function documentsListing(): BrowseResponse {
 
 function EditorHarness({ set, hostMountRoot = HOST_MOUNT_ROOT }: { set: FileSetView; hostMountRoot?: string }) {
   const { t } = useT();
-  // The call site's exact keying (FileSetRow in Files.tsx): the CR-01 reseed
-  // pin only means something if the harness remounts the way the page does.
+  // Keyed as FileSetRow keys it, so the harness remounts when the page would.
   return <FileSetFoldersEditor key={fileSetEditorKey(set)} set={set} hostMountRoot={hostMountRoot} t={t} />;
 }
 
@@ -170,9 +134,7 @@ function Providers({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** A reply the test holds back, pinning a PATCH in flight so the queue's
- *  serialize/drain behavior is observable step by step (the Containers
- *  harness's deferred-reply machinery). */
+/** A reply the test resolves by hand, to hold a PATCH in flight. */
 function deferred<T>(): { promise: Promise<T>; resolve: (v: T) => void } {
   let resolve!: (v: T) => void;
   const promise = new Promise<T>((r) => {
@@ -211,8 +173,8 @@ beforeEach(() => {
 
 afterEach(cleanup);
 
-describe("FileSetFoldersEditor tree mount (INTEG-02 criterion 1, UI-SPEC items 1-9)", () => {
-  it("discloses exactly ONE level-1 treeitem: the resolved path, aria-setsize=1, mono root label", async () => {
+describe("FileSetFoldersEditor tree mount", () => {
+  it("shows one level-1 treeitem: the resolved path, aria-setsize=1, mono root label", async () => {
     browseReplies = [documentsListing()];
     await renderEditor(setView());
     await openDisclosure();
@@ -225,41 +187,37 @@ describe("FileSetFoldersEditor tree mount (INTEG-02 criterion 1, UI-SPEC items 1
     expect(root.getAttribute("aria-posinset")).toBe("1");
     expect(root.getAttribute("aria-expanded")).toBe("false");
     expect(within(root).getByText(ROOT)).toBeTruthy();
-    // The path renders ltr mono with a long-path title (house pattern) — and
-    // NO dest ← source arrow (the label is the path alone).
+    // The label is the path alone, without a dest/source arrow.
     expect(root.textContent).not.toContain("←");
     // The aria-label discloses the selection context (folders.treeLabel).
     expect(screen.getByRole("tree", { name: "Backup folder selection" })).toBeTruthy();
   });
 
-  it("NULL seed (UI-SPEC item 9): a never-tree-edited set renders its root CHECKED at 1 path, and no write happens", async () => {
+  it("renders a set the tree never edited with its root checked at 1 path, without writing", async () => {
     await renderEditor(setView({ selectedPaths: undefined }));
     await openDisclosure();
 
     const root = screen.getAllByRole("treeitem").filter((el) => el.getAttribute("aria-level") === "1")[0];
     expect(root.getAttribute("aria-checked")).toBe("true");
-    // The visible count equals the bare positionals the next backup hands
-    // restic — the legacy [SourceDir] argv is ONE entry (Phase 3 pinned rule).
-    // The reused key's copy is "{n} paths" (byte-identical, no pluralization),
-    // so one entry renders "1 paths".
-    expect(within(root).getByText("1 paths")).toBeTruthy();
-    // Rendering honesty is read-only: NULL stays NULL until the first toggle.
+    // The count is the number of paths the next backup hands restic, and such
+    // a set backs up its one source dir. The key has no plural form.
+    expect(within(root).getByText("1 path")).toBeTruthy();
     expect(patches).toEqual([]);
   });
 
-  it("stored partial selection [root, !sub]: root mixed, sub excluded, preview counts only the maximal root (TREE-04)", async () => {
+  it("stored partial selection [root, !sub]: root mixed, sub excluded, preview counts only the maximal root", async () => {
     browseReplies = [documentsListing()];
     await renderEditor(setView({ selectedPaths: [ROOT, `!${SUB}`] }));
     await openDisclosure();
 
-    // Root state derives from (I, E) alone — mixed WITHOUT any child loaded.
+    // The root state comes from the stored lists alone, before any child loads.
     const root = screen.getAllByRole("treeitem").filter((el) => el.getAttribute("aria-level") === "1")[0];
     expect(root.getAttribute("aria-checked")).toBe("mixed");
-    // Exactly one maximal include at-or-under the root: the visible number is
-    // what toFlatList serializes as bare positionals (T-04-10).
-    expect(within(root).getByText("1 paths")).toBeTruthy();
+    // One maximal include under the root, which toFlatList sends as a
+    // positional.
+    expect(within(root).getByText("1 path")).toBeTruthy();
 
-    // Expand: the carved-out child renders excluded, honest aria-expanded.
+    // Expanded, the carved-out child reads excluded.
     await act(async () => {
       fireEvent.click(root);
     });
@@ -268,7 +226,7 @@ describe("FileSetFoldersEditor tree mount (INTEG-02 criterion 1, UI-SPEC items 1
     expect(root.getAttribute("aria-expanded")).toBe("true");
   });
 
-  it("a set without a Path renders no disclosure and no tree (FileSetRow gating, D-02)", async () => {
+  it("a set without a path renders no disclosure and no tree", async () => {
     render(
       <Providers>
         <RowHarness set={setView({ path: "" })} />
@@ -277,7 +235,6 @@ describe("FileSetFoldersEditor tree mount (INTEG-02 criterion 1, UI-SPEC items 1
     await act(async () => {});
     expect(screen.queryByRole("button", { name: "Choose folders" })).toBeNull();
     expect(screen.queryByRole("tree")).toBeNull();
-    // The existing stand-in line is untouched.
     expect(
       screen.getByText(
         "Rebuilt from backups without a folder. Set a folder to back it up again. Restoring to a folder already works.",
@@ -294,13 +251,12 @@ describe("FileSetFoldersEditor tree mount (INTEG-02 criterion 1, UI-SPEC items 1
     await act(async () => {
       fireEvent.click(root);
     });
-    // The browse call carries the browse-relative path (hostMountRoot swapped).
+    // Browsing uses the path relative to the host mount root.
     expect(browseCalls).toEqual([REL]);
     expect(screen.getByRole("treeitem", { name: /^sub$/ })).toBeTruthy();
     expect(screen.getByRole("treeitem", { name: /^media$/ })).toBeTruthy();
 
-    // Collapse and re-expand: the editor-lifetime cache serves the listing —
-    // zero refetch.
+    // Collapse and expand again: the cache serves the listing.
     await act(async () => {
       fireEvent.click(root);
     });
@@ -313,24 +269,19 @@ describe("FileSetFoldersEditor tree mount (INTEG-02 criterion 1, UI-SPEC items 1
   });
 });
 
-// ---------------------------------------------------------------------------
-// Review CR-01: the mirror-reseed contract. The editor seeds from mount-time
-// props only, so the call site keys it by fileSetEditorKey — an anchor or
-// selection-presence change remounts it onto the fresh view.
-// ---------------------------------------------------------------------------
-
-describe("FileSetFoldersEditor mirror reseed (review CR-01)", () => {
-  it("a refetched view after a dialog path edit (new anchor, cleared selection) remounts to the honest post-clear seed — no stale mirror, no wedge", async () => {
+// The editor seeds from its mount-time props, so the call site keys it by
+// fileSetEditorKey: a new anchor, or a selection appearing or disappearing,
+// remounts it onto the fresh view.
+describe("FileSetFoldersEditor reseed", () => {
+  it("remounts onto the refetched view after a path edit, with the new anchor and no selection", async () => {
     browseReplies = [documentsListing()];
     const view = await renderEditor(setView({ selectedPaths: [ROOT, `!${SUB}`] }));
     await openDisclosure();
     const root = screen.getByRole("treeitem", { name: /documents/ });
     expect(root.getAttribute("aria-checked")).toBe("mixed");
 
-    // What FileSetDialog's save + loadSets() serve back: a DEEPER anchor and
-    // a CLEARED selection (the server-side A3 clear stored NULL; the view
-    // omits the key). Without the remount the mounted editor kept the old
-    // anchor's mixed mirror here.
+    // What the dialog's save and loadSets() serve back: a deeper anchor and no
+    // selection, since the server clears it when the path changes.
     view.rerender(
       <Providers>
         <EditorHarness set={setView({ path: "documents/docs", selectedPaths: undefined })} />
@@ -340,15 +291,13 @@ describe("FileSetFoldersEditor mirror reseed (review CR-01)", () => {
     await openDisclosure();
     await act(async () => {});
     const moved = screen.getByRole("treeitem", { name: /documents\/docs/ });
-    // Honest NULL seed (UI-SPEC item 9), not the old anchor's stale mirror:
-    // the root reads CHECKED at 1 paths — what the server actually has.
+    // Checked at 1 path, as the server has it, not the old anchor's state.
     expect(moved.getAttribute("aria-checked")).toBe("true");
-    expect(within(moved).getByText("1 paths")).toBeTruthy();
+    expect(within(moved).getByText("1 path")).toBeTruthy();
 
-    // The wedge pin: a toggle under the new anchor PATCHes ONLY fresh-anchor
-    // entries — no stale old-root entry rides along to be atomically refused
-    // against the new root (or, on a deeper move, to resurrect the cleared
-    // selection).
+    // A toggle sends only entries under the new anchor. A leftover entry for
+    // the old root would get the whole PATCH refused, or bring the cleared
+    // selection back after a move deeper.
     browseReplies = [
       { ok: true, status: "ok", truncated: false, dirs: [{ name: "media", path: "documents/docs/media" }] },
     ];
@@ -367,10 +316,8 @@ describe("FileSetFoldersEditor mirror reseed (review CR-01)", () => {
     browseReplies = [documentsListing()];
     const view = await renderEditor(setView({ selectedPaths: [ROOT, `!${SUB}`] }));
     await openDisclosure();
-    // A refetch that serves the same id/path/selection-presence (e.g. a
-    // finished backup's onRefresh) must NOT remount: the disclosure stays
-    // open — a remount would reset it to closed — and the mirror state is
-    // preserved.
+    // A refetch with the same id, path and selection presence, such as after
+    // a finished backup, keeps the disclosure open and the state as it was.
     view.rerender(
       <Providers>
         <EditorHarness set={setView({ selectedPaths: [ROOT, `!${SUB}`] })} />
@@ -381,11 +328,7 @@ describe("FileSetFoldersEditor mirror reseed (review CR-01)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Task 3: the live-save pipeline (Containers.tsx Pattern 4, single owed class)
-// ---------------------------------------------------------------------------
-
-describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, exact reopen)", () => {
+describe("FileSetFoldersEditor live save", () => {
   it("applies a toggle optimistically and PATCHes the full flat list once, with no selectionSource field anywhere", async () => {
     browseReplies = [documentsListing()];
     await renderEditor(setView());
@@ -402,9 +345,9 @@ describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, 
     // Optimistic: the carved-out child reads unchecked immediately.
     expect(media.getAttribute("aria-checked")).toBe("false");
     expect(root.getAttribute("aria-checked")).toBe("mixed");
-    // ONE PATCH of the full list — canonical toFlatList order, bare root plus
-    // the "!"-prefixed host carve-out — and NO selectionSource field: the
-    // file-set PATCH has no legacy client to protect (plan 02 presence gate).
+    // One PATCH with the full list in toFlatList order, the root plus the "!"
+    // carve-out, and no selectionSource field: file sets have no older client
+    // to tell apart.
     expect(patches).toHaveLength(1);
     expect(patches[0].id).toBe("set1");
     expect(patches[0].body.selectedPaths).toEqual([ROOT, `!${ROOT}/media`]);
@@ -412,7 +355,7 @@ describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, 
     expect(Object.keys(patches[0].body)).toEqual(["selectedPaths"]);
   });
 
-  it("collapses a rapid burst to maxConcurrentPatches === 1 and one drain carrying the LIVE mirror's latest state", async () => {
+  it("sends a rapid burst as one follow-up PATCH with the latest state, never two at once", async () => {
     browseReplies = [documentsListing()];
     const first = deferred<{ ok: boolean }>();
     patchReplies = [first.promise];
@@ -425,25 +368,24 @@ describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, 
     const media = screen.getByRole("treeitem", { name: /^media$/ });
     const sub = screen.getByRole("treeitem", { name: /^sub$/ });
 
-    // Burst: two toggles land while PATCH #1 is still in flight.
+    // Two toggles land while the first PATCH is in flight.
     await act(async () => {
       fireEvent.click(within(media).getByRole("checkbox", { hidden: true }));
       fireEvent.click(within(sub).getByRole("checkbox", { hidden: true }));
     });
     expect(patches).toHaveLength(1);
 
-    // The in-flight attempt resolves; the single drain sends the LIVE mirror.
+    // Once it resolves, a single follow-up sends the current state.
     await act(async () => {
       first.resolve({ ok: true });
     });
     expect(patches).toHaveLength(2);
     expect(patches[1].body.selectedPaths).toEqual([ROOT, `!${ROOT}/media`, `!${ROOT}/sub`]);
-    // Never two concurrent PATCHes (T-04-11 / T-02-08 discipline).
     expect(maxConcurrentPatches).toBe(1);
   });
 
-  it("refuses the last untick BEFORE any request: warn line, glim-shake, mirror unchanged, zero PATCHes (client D-06)", async () => {
-    await renderEditor(setView()); // NULL seed: the root itself is the one include
+  it("refuses the last untick before any request: warn line, shake, state unchanged, no PATCH", async () => {
+    await renderEditor(setView()); // no selection: the root is the only include
     await openDisclosure();
     const root = screen.getByRole("treeitem", { name: /documents/ });
     await act(async () => {
@@ -451,22 +393,21 @@ describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, 
     });
 
     expect(patches).toEqual([]);
-    // The inline warn line routes under the blocked row, orienting to Remove
-    // set (the files domain has no Reset; D-06).
+    // The warn line under the row points to deleting the set, since file sets
+    // have no reset.
     expect(
       screen.getByText(
         "A set needs at least one folder, so the last tick cannot be removed. Use Delete folder set if you no longer want this set.",
       ),
     ).toBeTruthy();
-    // Re-query: the shake nonce remounts the row (keyed Fragment), so the
-    // pre-toggle reference is detached. The fresh row still reads checked
-    // (mirror untouched) and carries the replayed shake class.
+    // The shake nonce remounts the row, so it is queried again. It still
+    // reads checked and carries the shake class.
     const shakenRoot = screen.getByRole("treeitem", { name: /documents/ });
     expect(shakenRoot.getAttribute("aria-checked")).toBe("true");
     expect(shakenRoot.className).toContain("glim-shake");
   });
 
-  it("routes a server code empty-selection refusal to the same warn line plus a fail toast and reverts from the LIVE mirror (a stacked toggle survives)", async () => {
+  it("shows a server empty-selection refusal as the same warn line plus a toast, and reverts only the failed toggle", async () => {
     browseReplies = [documentsListing()];
     const first = deferred<{ ok: boolean; error?: string; code?: string }>();
     patchReplies = [first.promise, { ok: true }];
@@ -479,8 +420,7 @@ describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, 
     const media = screen.getByRole("treeitem", { name: /^media$/ });
     const sub = screen.getByRole("treeitem", { name: /^sub$/ });
 
-    // Toggle media (PATCH #1 goes in flight), then toggle sub: it stacks as
-    // dirty while #1 is unresolved.
+    // Toggle media, whose PATCH stays in flight, then sub, which waits.
     await act(async () => {
       fireEvent.click(within(media).getByRole("checkbox", { hidden: true }));
     });
@@ -489,30 +429,28 @@ describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, 
     });
     expect(patches).toHaveLength(1);
 
-    // PATCH #1 comes back as a coded empty-selection refusal.
+    // The first PATCH comes back as a coded empty-selection refusal.
     await act(async () => {
       first.resolve({ ok: false, error: "selection refused", code: "empty-selection" });
     });
 
-    // The refusal lands as the fail toast (server text verbatim) AND the same
-    // inline warn line the client block uses, under the failed row.
+    // The server text shows as a toast, and the client check's warn line
+    // appears under the row.
     expect(screen.getByText("selection refused")).toBeTruthy();
     expect(
       screen.getByText(
         "A set needs at least one folder, so the last tick cannot be removed. Use Delete folder set if you no longer want this set.",
       ),
     ).toBeTruthy();
-    // The revert re-derives from the LIVE mirror by set-difference inverse of
-    // the FAILED mutation: media returns to covered (checked), while sub —
-    // the newer toggle stacked behind the failing save — survives unchecked.
-    // Re-queried: the revert's shake nonce remounts media's row.
+    // Only the failed toggle is undone on the current state: media is checked
+    // again, while sub, toggled after it, stays unchecked. The shake remounts
+    // media's row, so it is queried again.
     const revertedMedia = screen.getByRole("treeitem", { name: /^media$/ });
     const revertedSub = screen.getByRole("treeitem", { name: /^sub$/ });
     expect(revertedMedia.getAttribute("aria-checked")).toBe("true");
     expect(revertedSub.getAttribute("aria-checked")).toBe("false");
     expect(revertedMedia.className).toContain("glim-shake");
-    // The drain re-sends the live post-revert list: the root include plus
-    // sub's carve-out, nothing else.
+    // The follow-up sends the reverted list: the root plus sub's carve-out.
     expect(patches).toHaveLength(2);
     expect(patches[1].body.selectedPaths).toEqual([ROOT, `!${ROOT}/sub`]);
   });
@@ -539,9 +477,8 @@ describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, 
       first.resolve({ ok: false, error: "disk on fire" });
     });
     expect(screen.getByText("disk on fire")).toBeTruthy();
-    // Re-queried: the revert's shake nonce remounts the row, so the captured
-    // checkbox belongs to the detached node. The fresh row reads reverted to
-    // checked with the busy state cleared and the shake replayed.
+    // The shake remounts the row, so the captured checkbox is detached. The
+    // new row is checked again, not busy, and shaking.
     const revertedMedia = screen.getByRole("treeitem", { name: /^media$/ });
     const revertedBox = within(revertedMedia).getByRole("checkbox", { hidden: true });
     expect(revertedBox.disabled).toBe(false);
@@ -550,8 +487,7 @@ describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, 
   });
 
   it("reopens exactly: the toggled selection reconstructs identically after a remount, with zero refetch on plain close/reopen", async () => {
-    // Two listings: one for the first expansion, one for the remount's
-    // expansion (the mock's default reply is an EMPTY listing).
+    // One listing per expansion; the mock's default reply is an empty listing.
     browseReplies = [documentsListing(), documentsListing()];
     const view = await renderEditor(setView());
     await openDisclosure();
@@ -575,9 +511,9 @@ describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, 
     });
     expect(screen.queryByRole("tree")).toBeNull();
 
-    // Reopen: expansion memory restores the root expanded (zero refetch), and
-    // every state reconstructs from the (I, E) mirror — mixed root, excluded
-    // media, unchecked... never a DOM or localStorage selection.
+    // Reopened, the root is expanded again without a refetch, and every state
+    // is rebuilt from the stored lists rather than from the DOM or
+    // localStorage.
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Choose folders" }));
     });
@@ -591,10 +527,9 @@ describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, 
     expect(screen.getByRole("treeitem", { name: /^media$/ }).getAttribute("aria-checked")).toBe("false");
     expect(JSON.parse(localStorage.getItem("bv-tree-expanded-fileset-set1") ?? "[]")).toEqual([ROOT]);
 
-    // Full remount with the SAVED view (what a page revisit serves): states
-    // reconstruct identically from FileSetView.selectedPaths. The expansion
-    // memory also survives (localStorage), so the root renders pre-expanded
-    // — the mount browse consumes the second listing; no manual expansion.
+    // A full remount with the saved view, as a page revisit serves it,
+    // rebuilds the same states. The expansion survives in localStorage, so
+    // the mount's own browse takes the second listing.
     cleanup();
     view.unmount();
     await renderEditor(setView({ selectedPaths: saved }));
@@ -606,8 +541,8 @@ describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, 
     expect(screen.getByRole("treeitem", { name: /^media$/ }).getAttribute("aria-checked")).toBe("false");
   });
 
-  it("routes Space through the same onToggle pipeline as clicks (one toggle semantics, T-02-10)", async () => {
-    // Stored [root, !sub]: sub renders EXCLUDED, so Space re-includes it.
+  it("routes Space through the same toggle path as a click", async () => {
+    // Stored [root, !sub]: sub is excluded, so Space includes it again.
     browseReplies = [documentsListing()];
     await renderEditor(setView({ selectedPaths: [ROOT, `!${SUB}`] }));
     await openDisclosure();
@@ -617,10 +552,8 @@ describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, 
     });
     const sub = screen.getByRole("treeitem", { name: /^sub$/ });
     expect(sub.getAttribute("aria-checked")).toBe("false");
-    // Roving tabindex: focusing the row is what aims the tree's key map at it
-    // (the handler acts on the roving-focus node, per the component's own
-    // keyboard harness); the keyDown then fires on the tree element as a
-    // real keyboard user's bubbling event.
+    // Focusing the row points the roving tabindex at it; the keyDown then
+    // fires on the tree element, where a real key press bubbles to.
     await act(async () => {
       sub.focus();
     });
@@ -629,31 +562,25 @@ describe("FileSetFoldersEditor live-save pipeline (T-04-11 queue, D-06 refusal, 
     await act(async () => {
       fireEvent.keyDown(tree, { key: " " });
     });
-    // Space on the EXCLUDED child re-includes it — converging to the root's
-    // maximal include (applyToggle re-adds no own include when an ancestor
-    // covers it), exactly what a click on the checkbox produces.
+    // Including sub again leaves the root as the only include, since
+    // applyToggle adds none under a covering ancestor, as a click would.
     expect(patches).toHaveLength(1);
     expect(patches[0].body.selectedPaths).toEqual([ROOT]);
     expect(screen.getByRole("treeitem", { name: /^sub$/ }).getAttribute("aria-checked")).toBe("true");
   });
 });
 
-// ---------------------------------------------------------------------------
-// Plan 04: the audit surfaces — the per-root exclusions review list (D-07)
-// and the dialog's path-change disclosure (A3).
-// ---------------------------------------------------------------------------
-
-describe("FileSetFoldersEditor exclusions audit list (D-07, INTEG-03 pattern parity)", () => {
+describe("FileSetFoldersEditor exclusions list", () => {
   it("renders the per-root audit disclosure: count line, relative mono muted rows, zero interactive controls", async () => {
     await renderEditor(setView({ selectedPaths: [ROOT, `!${SUB}`, `!${ROOT}/media`] }));
     await openDisclosure();
 
-    // The count line is the shared folders.exclusions key over rootExclusions —
-    // the same classification the compile consumes (never a DOM count).
+    // The count comes from rootExclusions, the classification the backup uses,
+    // not from the DOM.
     const disc = screen.getByRole("button", { name: "2 exclusions" });
     expect(disc.getAttribute("aria-expanded")).toBe("false");
-    // A plain tabbable control OUTSIDE the roving set: no tabindex attribute of
-    // its own (backupOrder precedent), unlike the treeitems' 0/-1 roving.
+    // A plain tabbable control outside the roving set, so no tabindex of its
+    // own.
     expect(disc.getAttribute("tabindex")).toBeNull();
     await act(async () => {
       fireEvent.click(disc);
@@ -673,66 +600,56 @@ describe("FileSetFoldersEditor exclusions audit list (D-07, INTEG-03 pattern par
       expect(row.getAttribute("dir")).toBe("ltr");
       expect(row.getAttribute("title")).toBe(row.textContent);
     }
-    // Audit-only prohibition (T-04-14): the rows render NO controls — no
-    // per-row remove, no ExcludesEditor fanout. The only toggle path is the
-    // tree's one checkbox pipeline.
+    // The list is read-only; toggling only happens in the tree.
     expect(within(list as HTMLElement).queryByRole("button")).toBeNull();
     expect(within(list as HTMLElement).queryByRole("checkbox")).toBeNull();
   });
 
-  it("collapses on every reopen: the expansion is component state, deliberately not persisted", async () => {
+  it("collapses on every reopen, since its expansion is not persisted", async () => {
     await renderEditor(setView({ selectedPaths: [ROOT, `!${SUB}`] }));
     await openDisclosure();
-    const disc = screen.getByRole("button", { name: "1 exclusions" });
+    const disc = screen.getByRole("button", { name: "1 exclusion" });
     await act(async () => {
       fireEvent.click(disc);
     });
     expect(screen.getByTitle("sub")).toBeTruthy();
 
-    // Close the whole Choose folders disclosure (the tree unmounts) and
-    // reopen: the audit section is collapsed again — an audit view, not
-    // navigation comfort (STATE.md Phase 3 decision), so nothing about it
-    // reaches localStorage.
+    // Closing and reopening Choose folders unmounts the tree; the list comes
+    // back collapsed and left nothing in localStorage.
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Choose folders" }));
     });
     await openDisclosure();
-    const reopened = screen.getByRole("button", { name: "1 exclusions" });
+    const reopened = screen.getByRole("button", { name: "1 exclusion" });
     expect(reopened.getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByRole("listitem")).toBeNull();
-    // No audit-state key leaks into storage (only the tree's expansion comfort
-    // key may exist).
+    // Only the tree's expansion key may exist.
     expect(localStorage.getItem("bv-tree-expanded-fileset-set1")).not.toBeNull();
     const bvKeys = Object.keys(localStorage).filter((k) => k.startsWith("bv-"));
     expect(bvKeys.every((k) => k === "bv-lang" || k.startsWith("bv-tree-expanded-"))).toBe(true);
   });
 
   it("lists stored exclusions existence-unfiltered and renders a dormant root identically to an active one", async () => {
-    // The listing no longer contains "sub" (gone on disk since the selection
-    // was stored) — the audit list still names it (Phase 3 A3 rule: the list
-    // is existence-unfiltered; row-level warnings are the container panel's
-    // concern and are not re-implemented here).
+    // "sub" is gone from disk, but the list shows what is stored whether it
+    // exists or not.
     browseReplies = [
       { ok: true, status: "ok", truncated: false, dirs: [{ name: "media", path: "documents/media" }] },
     ];
     const active = await renderEditor(setView({ selectedPaths: [ROOT, `!${SUB}`] }));
     await openDisclosure();
-    const disc = screen.getByRole("button", { name: "1 exclusions" });
+    const disc = screen.getByRole("button", { name: "1 exclusion" });
     await act(async () => {
       fireEvent.click(disc);
     });
     const activeRowClass = screen.getByTitle("sub").className;
     active.unmount();
 
-    // Dormant-root parity: a stored exclusions-only list (root include gone —
-    // not reachable through this UI, where D-06 refuses the last untick on
-    // both halves, but the classifier is total) renders the IDENTICAL section
-    // for the same root: same count line, same rows, and the row carries the
-    // exact same classes as the active case (no extra gating, no different
-    // tone for a dormant root).
+    // A stored list of exclusions only cannot come from this UI, which refuses
+    // the last untick, but it renders the same count and rows with the same
+    // classes.
     const dormant = await renderEditor(setView({ selectedPaths: [`!${SUB}`] }));
     await openDisclosure();
-    const dormantDisc = screen.getByRole("button", { name: "1 exclusions" });
+    const dormantDisc = screen.getByRole("button", { name: "1 exclusion" });
     await act(async () => {
       fireEvent.click(dormantDisc);
     });
@@ -743,8 +660,8 @@ describe("FileSetFoldersEditor exclusions audit list (D-07, INTEG-03 pattern par
   });
 });
 
-describe("FileSetDialog path-change disclosure (A3, plan 02 PATCH-time clear rule)", () => {
-  it("discloses the clear consequence under the FolderBrowser, unconditionally", async () => {
+describe("FileSetDialog path-change hint", () => {
+  it("always says under the folder picker that a new path clears the selection", async () => {
     render(
       <Providers>
         <DialogHarness initial={setView()} />
@@ -752,18 +669,17 @@ describe("FileSetDialog path-change disclosure (A3, plan 02 PATCH-time clear rul
     );
     await act(async () => {});
     const hint = screen.getByText("Changing the folder clears the ticked sub-folder selection.");
-    // "Under the FolderBrowser": the caption follows the path input in DOM
-    // order, inside the same field block.
+    // The caption follows the path input inside the same field block.
     const pathInput = screen.getByPlaceholderText("user/appdata");
     expect(pathInput.compareDocumentPosition(hint) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // It states the consequence, not a condition: it renders even though this
-    // fixture stores no selection at all. The generic path hint is untouched.
+    // It shows even though this fixture stores no selection, next to the
+    // generic path hint.
     expect(
       screen.getByText("The folder to back up, a relative subpath under the host mount root."),
     ).toBeTruthy();
   });
 
-  it("keeps the existing hint behavior for a path-less set (both captions render, nothing conditioned on the selection)", async () => {
+  it("shows both captions for a set without a path", async () => {
     render(
       <Providers>
         <DialogHarness initial={setView({ path: "", selectedPaths: undefined })} />

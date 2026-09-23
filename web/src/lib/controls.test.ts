@@ -1,12 +1,6 @@
-// ---------------------------------------------------------------------------
-// Control label engine (#178) — the pure half.
-//
-// Two properties matter here and neither needs a DOM:
-//   - the width stage comes from the LABEL, so it cannot change with the mode
-//     (jdp: a button must be the same width in all three modes);
-//   - CJK labels count double, or Chinese buttons would be sized as if they
-//     were a third as wide as they render.
-// ---------------------------------------------------------------------------
+// The pure half of the control label engine. The width stage comes from the
+// label, so a button keeps its width in every mode, and CJK characters count
+// double, or Chinese buttons would be sized far narrower than they render.
 import { describe, expect, it } from "vitest";
 import { labelWidth, widthStage, hidesLabel, LABEL_MODES, CONTROL_AXES } from "./controls";
 
@@ -48,18 +42,15 @@ describe("widthStage", () => {
 });
 
 describe("the engine's shape", () => {
-  it("offers exactly the four modes jdp asked for", () => {
-    // "reactive" joined the three later (jdp: "Ich möchte einen vierten modus
-    // implementieren"). Order matters: the Settings strip renders LABEL_MODES
-    // in sequence, and reactive belongs after glyph because it is glyph plus
-    // something, not a fourth unrelated option.
+  it("offers the four label modes in order", () => {
+    // The Settings strip renders them in this order, and reactive is glyph
+    // plus a reveal on hover, so it follows glyph.
     expect(LABEL_MODES).toEqual(["text", "textGlyph", "glyph", "reactive"]);
   });
 
-  it("counts both hiding modes as hiding, which is the whole point of the helper", () => {
-    // Eleven call sites used to compare against "glyph" by hand. Every one of
-    // them would have had to learn about the fourth mode on its own, and the
-    // ones that forgot would have rendered a label the mode says to hide.
+  it("counts both hiding modes as hiding", () => {
+    // Call sites ask hidesLabel instead of comparing against "glyph", so a
+    // hiding mode reaches all of them at once.
     expect(LABEL_MODES.filter(hidesLabel)).toEqual(["glyph", "reactive"]);
   });
 

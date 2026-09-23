@@ -1,19 +1,7 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// LanguageCard (GlimStone follow-up pass, live-review point 9) — the app's
-// UI-language switcher, moved out of Sidebar.tsx's footer into its own Card
-// in Settings' General tab. This covers the picker's OWN behaviour in its
-// new home: it opens/closes, lists every offered language with its flag,
-// switching actually calls setLanguage() (which persists to localStorage and
-// re-renders the whole tree per lib/i18n.ts), and Escape/outside-click still
-// close it — the exact same interaction contract the sidebar version had,
-// just relocated. Sidebar.language.dom.test.tsx (sibling file) is the other
-// half: proving the OLD location no longer renders it.
-//
-// jsdom opted in explicitly (real DOM/click/keyboard behaviour needed) — see
-// Selector.dom.test.tsx's own header comment for this repo's naming
-// convention for the jsdom-opted-in exception.
-// ---------------------------------------------------------------------------
+// LanguageCard, the UI-language picker on Settings' General tab: it opens and
+// closes, lists every language with its flag, switches through setLanguage()
+// and closes on Escape or an outside click.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { LanguageCard } from "./settings/LanguageCard";
@@ -66,8 +54,7 @@ describe("LanguageCard", () => {
     renderCard();
     fireEvent.click(screen.getByRole("button", { name: /English/ }));
     const listbox = screen.getByRole("listbox");
-    // 42 offered locales (lib/i18n.ts's LANGUAGES) — sanity count, kept in
-    // sync with LANGUAGES.length whenever a locale is added.
+    // LANGUAGES in lib/i18n.ts; update the count when a locale is added.
     expect(within(listbox).getAllByRole("option").length).toBe(42);
     expect(within(listbox).getByRole("option", { name: /Deutsch/ })).toBeTruthy();
   });
@@ -78,15 +65,8 @@ describe("LanguageCard", () => {
     fireEvent.click(screen.getByRole("button", { name: /English/ }));
     fireEvent.click(screen.getByRole("option", { name: /Deutsch/ }));
 
-    // The whole I18nProvider tree re-renders on setLanguage, so the trigger
-    // itself now reads the new language, and the choice persisted.
-    //
-    // `findBy`, not `getBy`, since locales became lazy chunks ([344]):
-    // setLanguage now fetches the table BEFORE it moves the state, so that
-    // switching shows the new language rather than a beat of English on the
-    // way to it. That is one microtask, and the assertion has to allow for
-    // it. Waiting here is not papering over a race - the alternative,
-    // setting the state first, is the visible flash this ordering avoids.
+    // findBy, because setLanguage loads the locale chunk before it switches,
+    // so the page never flashes English on the way.
     expect(await screen.findByRole("button", { name: /Deutsch/ })).toBeTruthy();
     expect(localStorage.getItem(STORAGE_KEY)).toBe("de");
     expect(document.documentElement.getAttribute("lang")).toBe("de");

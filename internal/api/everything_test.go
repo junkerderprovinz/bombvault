@@ -1,24 +1,8 @@
 package api_test
 
-// Tests for Task 4 of the "Backup Everything" plan (the design notes
-// ): BackupEverything/StartBackupEverything
-// (internal/api/everything.go), the core sequential orchestration over
-// containers → vms → flash → files → config plus the global pre/post hooks.
-//
-// SCOPE NOTE: sequencing/failure-survival/hook-timing (tests 1-3 below) are
-// exercised over containers + flash + config only — the cheapest domains to
-// fake, per the plan's own explicit allowance when wiring ALL FIVE real
-// domains (VM/libvirt fakes especially) into one test is impractical. The
-// production BackupEverything code is NOT special-cased for this: it attempts
-// every domain the operator has switched ON, and the fixture below switches all
-// five on for exactly that reason. vms/files are exercised for
-// real, at ZERO eligible items (no VM targets or file sets are ever
-// registered by everythingTestService below), which is itself a genuine,
-// common production path (an operator who hasn't set up VMs/file sets yet)
-// and is asserted to count as that domain's own "ok" outcome (design spec,
-// decision 3), not skipped from the pass. Group-stamping (test 5) and
-// StartBackupEverything re-entrancy (test 6) are unaffected by this scoping
-// and are fully exercised.
+// The pass is exercised over containers, flash and config, the domains that
+// are cheap to fake. vms and files are switched on too but have nothing to back
+// up, as for an operator who has not set up VMs or file sets.
 
 import (
 	"context"
@@ -35,27 +19,15 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// everythingOrderLog is a shared, ordered event trail appended to by both
-// orderedEngine (below) and everythingFakeHostShell — since BackupEverything
-// runs entirely on the calling goroutine with no concurrency of its own, the
-// order entries land in is exactly the pass's real execution order, letting a
-// single assertion cover both "domains run in the right order" and "the
-// pre-hook fires before any domain step, the post-hook fires after all of
-// them".
+// everythingOrderLog is the trail of domain backups and hook runs. The pass
+// runs on the calling goroutine, so the entries are in execution order.
 type everythingOrderLog struct {
 	entries []string
 }
 
 func (o *everythingOrderLog) add(s string) { o.entries = append(o.entries, s) }
 
-// orderedEngine wraps a *fakeResticEngine (service_test.go's shared restic
-// fake) to also append a domain label to a shared everythingOrderLog on every
-// Backup call, identifying which repo (containers/flash/config) the call was
-// for by substring match on the repo path built from ContainersPath/
-// FlashPath/ConfigPath in everythingTestService below. Every other
-// ResticEngine method is promoted from the embedded *fakeResticEngine
-// unchanged (Go method promotion), so this satisfies api.ResticEngine in
-// full without reimplementing it.
+// orderedEngine logs the domain of every Backup call, judged by the repo path.
 type orderedEngine struct {
 	*fakeResticEngine
 	log *everythingOrderLog
@@ -75,11 +47,8 @@ func (e *orderedEngine) Backup(ctx context.Context, repo string, paths, tags []s
 	return e.fakeResticEngine.Backup(ctx, repo, paths, tags, mode, excludes...)
 }
 
-// everythingFakeHostShell is a minimal HostShell fake (see hostshell.go's
-// interface) for this file: it records every command it was asked to run, in
-// order, and — when wired with a shared everythingOrderLog — appends a
-// "hook:<cmd>" entry too, so hook timing can be asserted against domain
-// timing in one combined trail.
+// everythingFakeHostShell records every command it runs and, with a log set,
+// adds a "hook:<cmd>" entry to it.
 type everythingFakeHostShell struct {
 	log   *everythingOrderLog
 	calls []string
@@ -95,15 +64,10 @@ func (f *everythingFakeHostShell) Run(_ context.Context, cmd string) error {
 	return nil
 }
 
-// everythingTestService builds a Service wired for containers + flash +
-// config (see the file-level scope note): one container target ("primary")
-// with an explicit SelectedPaths folder that actually exists on disk — a real
-// (not "stateless"/definition-only) backup, so the containers domain step
-// genuinely reaches Restic.Backup and can be observed/blocked via eng — a
-// real /boot mount for the flash domain, and ConfigPath/ConfigEnabled for the
-// config (self) domain. No VM targets or file sets are ever registered, so
-// those two domains always run for real at zero eligible items (see the
-// file-level scope note).
+// everythingTestService builds a Service with all five domains switched on:
+// one container target whose SelectedPaths folder exists (so the containers
+// step reaches Restic.Backup and can be blocked through eng), a /boot for
+// flash, and a ConfigPath. There are no VM targets or file sets.
 func everythingTestService(t *testing.T, eng api.ResticEngine) (svc *api.Service, st *store.Repo, docker *fakeServiceDocker, tg store.Target) {
 	t.Helper()
 	dir := t.TempDir()
@@ -129,12 +93,8 @@ func everythingTestService(t *testing.T, eng api.ResticEngine) (svc *api.Service
 	s.ContainersPath = "backups/containers"
 	s.FlashPath = "backups/flash"
 	s.ConfigPath = "backups/config"
-	// All five domain switches on: the pass now skips a domain the operator
-	// switched off, so a fixture left at the store defaults (vms/flash/config/
-	// files all off) would exercise the skip path instead of the orchestration
-	// these tests are about. vms/files still contribute nothing — no VM target
-	// or file set is ever registered here — which is exactly the
-	// zero-eligible-items case the file header describes.
+	// The store defaults leave vms, flash, config and files off, and the pass
+	// skips switched-off domains.
 	s.ContainersEnabled = true
 	s.VMsEnabled = true
 	s.FlashEnabled = true
@@ -168,9 +128,8 @@ func everythingTestService(t *testing.T, eng api.ResticEngine) (svc *api.Service
 	return svc, st, docker, tg
 }
 
-// waitForEverythingDone blocks until StartBackupEverything's background
-// goroutine has released the everythingActive guard, mirroring
-// waitForBackupDone (handlers_test.go) for batchActive.
+// waitForEverythingDone blocks until StartBackupEverything's goroutine has
+// released the guard.
 func waitForEverythingDone(t *testing.T, svc *api.Service) {
 	t.Helper()
 	deadline := time.Now().Add(5 * time.Second)
@@ -183,10 +142,8 @@ func waitForEverythingDone(t *testing.T, svc *api.Service) {
 	t.Fatal("timed out waiting for the Backup Everything pass to finish")
 }
 
-// TestBackupEverythingOrder pins requirement 1: containers before vms before
-// flash before files before config. vms/files have zero eligible items in
-// this harness (see the file-level scope note), so the observable order log
-// is exactly [containers, flash, config].
+// The order is containers, vms, flash, files, config. vms and files have
+// nothing to back up here, so only the other three show in the log.
 func TestBackupEverythingOrder(t *testing.T) {
 	log := &everythingOrderLog{}
 	oe := &orderedEngine{fakeResticEngine: &fakeResticEngine{}, log: log}
@@ -207,11 +164,8 @@ func TestBackupEverythingOrder(t *testing.T) {
 	}
 }
 
-// TestBackupEverythingHooksFireExactlyOnce pins requirement 2: the pre-hook
-// fires at most once, before any domain step; the post-hook fires exactly
-// once, after every domain step. Both are asserted against the SAME shared
-// order log the domain calls append to, so the ordering claim is verified,
-// not just the call count.
+// The pre-hook fires before any domain and the post-hook after all of them,
+// checked in the same log as the domains.
 func TestBackupEverythingHooksFireExactlyOnce(t *testing.T) {
 	log := &everythingOrderLog{}
 	oe := &orderedEngine{fakeResticEngine: &fakeResticEngine{}, log: log}
@@ -246,12 +200,8 @@ func TestBackupEverythingHooksFireExactlyOnce(t *testing.T) {
 	}
 }
 
-// TestBackupEverythingSurvivesOneDomainFailing pins requirement 3: a domain
-// that fails entirely (here, containers — every Docker Inspect call errors)
-// does not abort the remaining domains (flash and config both still run,
-// observed via the shared order log), the post-hook still fires exactly
-// once, and the parent run's status is "failed" with a breakdown naming the
-// failing domain and its reason.
+// Every Docker inspect fails, so containers fails as a whole. Flash and config
+// still run, the post-hook fires once, and the breakdown names the failure.
 func TestBackupEverythingSurvivesOneDomainFailing(t *testing.T) {
 	log := &everythingOrderLog{}
 	oe := &orderedEngine{fakeResticEngine: &fakeResticEngine{}, log: log}
@@ -279,7 +229,7 @@ func TestBackupEverythingSurvivesOneDomainFailing(t *testing.T) {
 		t.Fatalf("breakdown %q does not name the failing domain/reason", sum.Error)
 	}
 
-	// The REMAINING domains still ran, in order, despite containers failing.
+	// The other domains still ran, in order.
 	want := []string{"flash", "config", "hook:echo post"}
 	if len(log.entries) != len(want) {
 		t.Fatalf("order log = %v, want %v (flash/config must still run, post-hook must still fire)", log.entries, want)
@@ -294,9 +244,6 @@ func TestBackupEverythingSurvivesOneDomainFailing(t *testing.T) {
 	}
 }
 
-// TestBackupEverythingAllCleanPass pins requirement 4 (clean half): every
-// domain succeeding (including vms/files at zero eligible items) yields
-// parent run status "success" and an empty Error.
 func TestBackupEverythingAllCleanPass(t *testing.T) {
 	svc, _, _, _ := everythingTestService(t, &fakeResticEngine{})
 
@@ -312,10 +259,7 @@ func TestBackupEverythingAllCleanPass(t *testing.T) {
 	}
 }
 
-// TestBackupEverythingGroupStamping pins requirement 5: the child run the
-// containers domain step produces carries GroupID == the parent run's id
-// (EverythingSummary.RunID), tying Task 3's group-stamp mechanism to the real
-// BackupEverything call path.
+// The containers child run carries the parent run's id as GroupID.
 func TestBackupEverythingGroupStamping(t *testing.T) {
 	svc, st, _, tg := everythingTestService(t, &fakeResticEngine{})
 
@@ -339,13 +283,8 @@ func TestBackupEverythingGroupStamping(t *testing.T) {
 	}
 }
 
-// TestStartBackupEverythingRefusesConcurrent pins requirement 6: a second
-// StartBackupEverything call while one is already in flight returns
-// (false, nil), mirroring StartBackupAll's busy-refusal contract. The fake
-// engine's block channel holds the first pass inside the containers domain's
-// real Restic.Backup call (see everythingTestService: the "primary" target
-// has a genuine, existing SelectedPaths folder) so the pass is deterministicly
-// still in flight when the second call is made.
+// The fake engine's block channel holds the first pass inside the containers
+// backup, so it is still in flight for the second call.
 func TestStartBackupEverythingRefusesConcurrent(t *testing.T) {
 	eng := &fakeResticEngine{block: make(chan struct{})}
 	svc, _, _, _ := everythingTestService(t, eng)

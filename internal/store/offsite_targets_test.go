@@ -7,9 +7,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestUpsertOffsiteTargetEmptyRepoRejected pins the empty-repo guard: a target
-// with a blank (or whitespace-only) repo addresses nowhere and is refused with
-// ErrEmptyOffsiteRepo, and nothing is written.
+// TestUpsertOffsiteTargetEmptyRepoRejected expects a blank or whitespace-only
+// repo to be refused without writing anything.
 func TestUpsertOffsiteTargetEmptyRepoRejected(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -100,7 +99,6 @@ func TestOffsiteTargetCRUD(t *testing.T) {
 		t.Fatal("UpsertOffsiteTarget did not stamp CreatedAt")
 	}
 
-	// Get round-trips every field.
 	back, ok, err := r.GetOffsiteTarget(got.ID)
 	if err != nil || !ok {
 		t.Fatalf("GetOffsiteTarget: ok=%v err=%v", ok, err)
@@ -128,8 +126,7 @@ func TestOffsiteTargetCRUD(t *testing.T) {
 		t.Fatalf("in-place update failed: %+v", upd)
 	}
 
-	// A second target in another domain, plus a second containers target with a
-	// later sort_order, exercises the List ordering (domain, sort_order, created_at).
+	// List orders by domain, sort_order, created_at.
 	if _, err := r.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "vms", Name: "Primary", Repo: "s3:vms", Enabled: true}); err != nil {
 		t.Fatal(err)
 	}
@@ -170,7 +167,6 @@ func TestOffsiteTargetCRUD(t *testing.T) {
 		t.Fatalf("DeleteOffsiteTarget (missing) should be a no-op: %v", err)
 	}
 
-	// Get on a missing id returns ok=false, no error.
 	if _, ok, err := r.GetOffsiteTarget("does-not-exist"); ok || err != nil {
 		t.Fatalf("GetOffsiteTarget(missing) = ok:%v err:%v", ok, err)
 	}

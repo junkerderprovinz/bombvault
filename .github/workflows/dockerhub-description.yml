@@ -1,12 +1,5 @@
-# Push the README to the Docker Hub repo's Overview, on demand and nothing else.
-#
-# build.yml already does this after every image push, but only after a full
-# multi-arch build. That makes it useless for answering the one question worth
-# answering when the sync starts failing: is the credential broken, or is this
-# repo's secret wrong? A run that builds nothing isolates the credential.
-#
-# Manual only. It never builds, never pushes an image, and touches nothing but
-# the description text on Docker Hub.
+# Pushes the README to the Docker Hub overview without building anything, so a
+# failing sync in build.yml can be traced to the credential alone.
 name: Docker Hub description
 
 on:
@@ -22,9 +15,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      # No gate and no continue-on-error here, unlike build.yml: this workflow
-      # exists to make a failure visible, so a missing secret or a refused
-      # login must turn the run red instead of passing quietly.
+      # Unlike build.yml there is no check for the secret: a missing token or a
+      # refused login should fail this run.
       - name: Sync README to Docker Hub
         uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5
         with:

@@ -1,9 +1,7 @@
 name: Docs
 
-# Build the MkDocs Material site and deploy it to GitHub Pages. Runs only when
-# the docs sources change (or on demand). Pages must be enabled once in the repo
-# settings (Settings, Pages, Source = GitHub Actions) for the first deploy to
-# publish.
+# The first deploy publishes only after Pages is set to GitHub Actions once
+# (Settings, Pages, Source).
 on:
   push:
     branches: [main]
@@ -19,7 +17,7 @@ permissions:
   pages: write
   id-token: write
 
-# Allow one concurrent deploy; a newer push supersedes an in-flight run.
+# One deploy at a time, and a running deploy is allowed to finish.
 concurrency:
   group: pages
   cancel-in-progress: false

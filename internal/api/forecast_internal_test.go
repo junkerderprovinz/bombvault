@@ -9,8 +9,6 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestGrowthBytesPerWeek pins the growth computation over the sample history:
-// steady growth, shrink, tiny history guards, and the 4-week window cut.
 func TestGrowthBytesPerWeek(t *testing.T) {
 	now := time.Unix(1_800_000_000, 0)
 	const day = int64(86400)
@@ -26,14 +24,13 @@ func TestGrowthBytesPerWeek(t *testing.T) {
 		wantOK bool
 	}{
 		{
-			// 7 GiB over exactly two weeks → 3.5 GiB/week.
+			// 7 GiB over two weeks.
 			name:   "steady growth",
 			stats:  []store.RepoStat{sample(14, 10<<30), sample(7, 13<<30+1<<29), sample(0, 17<<30)},
 			want:   (17<<30 - 10<<30) / 2,
 			wantOK: true,
 		},
 		{
-			// A prune shrank the repo: 2 GiB down over one week → negative rate.
 			name:   "shrink is a negative rate",
 			stats:  []store.RepoStat{sample(7, 10<<30), sample(0, 8<<30)},
 			want:   -(2 << 30),
@@ -50,7 +47,6 @@ func TestGrowthBytesPerWeek(t *testing.T) {
 			wantOK: false,
 		},
 		{
-			// Two samples 1 hour apart: below forecastMinSpan → no rate.
 			name: "tiny span claims nothing",
 			stats: []store.RepoStat{
 				{At: now.Unix() - 3600, RawSize: 10 << 30},
@@ -59,8 +55,8 @@ func TestGrowthBytesPerWeek(t *testing.T) {
 			wantOK: false,
 		},
 		{
-			// Samples older than the 4-week window are ignored: only the two inside
-			// count (1 GiB over one week), NOT the huge jump from the stale one.
+			// Only the two samples inside the window count, not the jump from
+			// the stale one.
 			name:   "window cut ignores stale samples",
 			stats:  []store.RepoStat{sample(60, 1<<30), sample(7, 10<<30), sample(0, 11<<30)},
 			want:   1 << 30,
@@ -80,8 +76,8 @@ func TestGrowthBytesPerWeek(t *testing.T) {
 	}
 }
 
-// forecastTestService builds a Service over a real (temp) store whose
-// containers repo resolves to a LOCAL path, with an injected free-space probe.
+// forecastTestService returns a Service whose containers repo is local and
+// whose free-space probe is diskFree.
 func forecastTestService(t *testing.T, diskFree func(string) (uint64, error)) *Service {
 	t.Helper()
 	db, err := store.Open(":memory:")
@@ -99,12 +95,9 @@ func forecastTestService(t *testing.T, diskFree func(string) (uint64, error)) *S
 	}
 }
 
-// TestStorageForecastCombinesGrowthAndFreeSpace pins the full projection: with
-// a known growth rate and a mocked statfs, weeksToFull = free / rate (one
-// decimal), and the probe receives the RESOLVED local repo path.
 func TestStorageForecastCombinesGrowthAndFreeSpace(t *testing.T) {
 	var probed string
-	free := uint64(10 << 30) // 10 GiB free
+	free := uint64(10 << 30)
 	svc := forecastTestService(t, func(path string) (uint64, error) {
 		probed = path
 		return free, nil
@@ -114,7 +107,7 @@ func TestStorageForecastCombinesGrowthAndFreeSpace(t *testing.T) {
 	const day = int64(86400)
 	stats := []store.RepoStat{
 		{At: now - 7*day, RawSize: 10 << 30},
-		{At: now, RawSize: 11 << 30}, // +1 GiB in one week
+		{At: now, RawSize: 11 << 30},
 	}
 
 	f := svc.StorageForecast("containers", "local", stats)
@@ -135,14 +128,10 @@ func TestStorageForecastCombinesGrowthAndFreeSpace(t *testing.T) {
 	}
 }
 
-// TestStorageForecastOmissions pins the absent-field contract: no/flat/negative
-// growth never yields weeksToFull; a failing probe omits freeBytes; and with
-// NOTHING known the forecast is nil.
 func TestStorageForecastOmissions(t *testing.T) {
 	now := time.Now().Unix()
 	const day = int64(86400)
 
-	// Shrinking repo + working probe: growth + free present, weeksToFull absent.
 	svc := forecastTestService(t, func(string) (uint64, error) { return 5 << 30, nil })
 	shrink := []store.RepoStat{
 		{At: now - 7*day, RawSize: 10 << 30},
@@ -156,14 +145,12 @@ func TestStorageForecastOmissions(t *testing.T) {
 		t.Fatalf("a shrinking repo never fills the disk, got weeksToFull=%v", *f.WeeksToFull)
 	}
 
-	// Failing probe + single sample: nothing is known → nil forecast.
 	svc = forecastTestService(t, func(string) (uint64, error) { return 0, errors.New("statfs unsupported") })
 	f = svc.StorageForecast("containers", "local", []store.RepoStat{{At: now, RawSize: 1 << 30}})
 	if f != nil {
 		t.Fatalf("with no growth and no free space the forecast must be nil, got %+v", f)
 	}
 
-	// Failing probe but known growth: growth present, free + weeksToFull absent.
 	f = svc.StorageForecast("containers", "local", []store.RepoStat{
 		{At: now - 7*day, RawSize: 1 << 30},
 		{At: now, RawSize: 2 << 30},
@@ -176,9 +163,6 @@ func TestStorageForecastOmissions(t *testing.T) {
 	}
 }
 
-// TestStorageForecastRemoteRepoSkipsProbe pins the remote path: an off-site
-// rclone:/s3: repo has no local filesystem, so the probe is never called and
-// freeBytes stays absent (growth from the off-site samples still works).
 func TestStorageForecastRemoteRepoSkipsProbe(t *testing.T) {
 	probes := 0
 	svc := forecastTestService(t, func(string) (uint64, error) { probes++; return 1 << 30, nil })
@@ -205,9 +189,6 @@ func TestStorageForecastRemoteRepoSkipsProbe(t *testing.T) {
 	}
 }
 
-// TestDiskFreeBytesPlatform smoke-tests the real statfs implementation where it
-// exists (Linux — the shipped container); elsewhere the stub's error path is
-// pinned instead, which is exactly what StorageForecast handles by omission.
 func TestDiskFreeBytesPlatform(t *testing.T) {
 	free, err := diskFreeBytes(t.TempDir())
 	if err != nil {

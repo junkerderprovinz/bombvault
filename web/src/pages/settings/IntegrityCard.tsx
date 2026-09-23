@@ -1,19 +1,10 @@
-// IntegrityCard, lifted out of Settings.tsx ([337]).
-//
-// A move, not a rewrite: the component and its comments are unchanged.
-
 // IntegrityCard runs per-domain repository maintenance: verify (restic check),
-// unlock (clear stale locks), prune (reclaim space), and a restore-verification
-// "drill". The drill has two kinds, chosen by the "Drill type" toggle:
-//   - "Integrity check" (subset): restic check --read-data-subset on the selected
-//     source repo — proves the backup data is intact + restorable.
-//   - "Real restore (off-site)" (dr): a REAL sandbox restore of the newest
-//     off-site snapshot, then verification + cleanup. All domains except config
-//     (config's real recovery path is the in-place staged restart, not a sandbox
-//     restore of the settings DB).
-// The DR-drill target (which container's/VM's off-site snapshot to restore) binds
-// to the shared settings.drDrillTarget / drDrillTargetVm via the parent's
-// baseline-merging save().
+// unlock (clear stale locks), prune (reclaim space), and a restore drill. The
+// drill is either an integrity check (restic check --read-data-subset on the
+// selected repo) or a real restore of the newest off-site snapshot into a
+// sandbox, verified and cleaned up afterwards. Config has no drill, because its
+// recovery path is the staged restart rather than a sandbox restore. The drill
+// targets are shared settings, saved through the parent's merging save().
 import { Button } from "../../components/Button";
 import { CheckDraw } from "../../components/CheckDraw";
 import { InfoBubble } from "../../components/InfoBubble";
@@ -48,40 +39,27 @@ export function IntegrityCard({
   ) => Promise<boolean>;
   hueIndex?: number;
 }) {
-  // Prune deletes snapshots, so it stays advanced-only even though the rest of
-  // this card (verify, unlock, DR drill) is a first-class default-mode feature.
   const { advanced } = useAdvanced();
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
   type ActState = "idle" | "busy" | "ok" | "fail";
   type DrillKind = "subset" | "dr";
   const [state, setState] = useState<Record<string, ActState>>({});
-  // GlimStone standing rule (jdp, live review, emphatic — "Wenn etwas
-  // fehlschlägt soll der Toggle/Button kurz zittern. Systemweit!!"): a failed
-  // action shows its message via a TOAST (push below), never as permanent
-  // page text, and the button that triggered it replays `.glim-shake` once.
-  // `msg` (a per-key error STRING kept around to render inline forever) is
-  // gone — the toast already carries the message the instant the action
-  // fails, so nothing needs to remember it past that point. `shake` replaces
-  // it: a per-key nonce, same shape, bumped on every failure so a fresh
-  // `.glim-shake` class + key remount fires even for the SAME button failing
-  // twice in a row (see ToggleRow's own shakeNonce doc comment for why a
-  // bumped number, not a boolean, is required here).
+  // A failed action reports its message in a toast and shakes the button that
+  // caused it. The value is a counter rather than a flag, so the same button
+  // failing twice in a row shakes twice.
   const [shake, setShake] = useState<Record<string, number>>({});
   const [source, setSource] = useState<RepoSource>("local");
   const [kind, setKind] = useState<DrillKind>("subset");
   // The last recorded drill per domain (for the current source), keyed by domain.
   const [lastDrill, setLastDrill] = useState<Record<string, RestoreDrill | null>>({});
-  // Append-only check (#109): the off-site wizard's tamper test, surfaced here
-  // under its plainer name because this card is where users look for checks.
-  // TamperRes mirrors the wizard's tri-state verdict: not-testable (amber) /
-  // protected (green) / delete-accepted (red); lastTamper feeds the idle
-  // "append-only protection · Last checked …" caption from /api/status.
+  // The append-only check is the off-site wizard's tamper test, under its
+  // plainer name because this card is where users look for checks. A verdict
+  // is not testable (amber), protected (green) or delete accepted (red);
+  // lastTamper feeds the idle "last checked" caption from /api/status.
   type TamperRes =
     | { kind: "busy" }
-    // `detail` carries the far side's own answer ([557]); it was dropped here
-    // while the API had been sending it all along, which is how the UI came to
-    // print a claim the server never made.
+    // `detail` is the far side's own answer.
     | { kind: "verdict"; testable: boolean; protected: boolean; detail?: string }
     | { kind: "error"; message: string };
   const [tamper, setTamper] = useState<Record<string, TamperRes | undefined>>({});
@@ -90,12 +68,7 @@ export function IntegrityCard({
   const [containers, setContainers] = useState<Container[]>([]);
   // VM list feeding the DR-drill target dropdown (kind "dr", VMs).
   const [vms, setVMs] = useState<VM[]>([]);
-  // Save state for the drill-target dropdowns (persisted via the parent
-  // save()). GlimStone follow-up pass (v8.0.0): save() now pushes a toast on
-  // both outcomes instead of setting a "saved"/"error" render state (see
-  // save()'s own header comment), so only the setters are needed here —
-  // save() still requires them as callback params, but nothing reads the
-  // values back anymore.
+  // save() reports the outcome in a toast, so only the setters are used.
   const [, setTgtState] = useState<SaveState>("idle");
   const [, setTgtError] = useState<string | null>(null);
   const [, setTgtVMState] = useState<SaveState>("idle");
@@ -159,7 +132,7 @@ export function IntegrityCard({
 
   // Load each domain's last tamper-test verdict once, so the append-only row's
   // idle caption mirrors the drill row's "last verified" line. The check always
-  // probes the OFF-SITE repo, so the source toggle never re-triggers this.
+  // probes the off-site repo, so the source toggle never re-triggers this.
   useEffect(() => {
     let active = true;
     getStatus()
@@ -177,17 +150,12 @@ export function IntegrityCard({
     };
   }, []);
 
-  // bumpShake replays `.glim-shake` on the button keyed `key` (see the
-  // `shake` state's own doc comment above) — called from every failure branch
-  // below alongside the toast `push()` that now carries the message instead
-  // of a permanent inline sentence.
   function bumpShake(key: string) {
     setShake((sh) => ({ ...sh, [key]: (sh[key] ?? 0) + 1 }));
   }
 
-  // runTamperFor proves the domain's off-site repo still refuses deletes — the
-  // exact tamper-test API behind the wizard's "Test append-only now" (#109: users
-  // searched for it here, and "append-only" is the plainer word for it).
+  // runTamperFor checks that the domain's off-site repo still refuses deletes,
+  // through the same API as the wizard's append-only test.
   async function runTamperFor(domain: Domain) {
     setTamper((m) => ({ ...m, [domain]: { kind: "busy" } }));
     try {
@@ -202,15 +170,10 @@ export function IntegrityCard({
         if (r.testable) {
           setLastTamper((m) => ({ ...m, [domain]: { at: Math.floor(Date.now() / 1000), ok: !!r.protected } }));
         }
-        // The verdict + its run row land in /api/status (scorecard tamper state) —
-        // broadcast so the dashboard refetches, mirroring runDrillFor above.
+        // The verdict lands in /api/status, so tell the dashboard to refetch.
         window.dispatchEvent(new Event("bv:settings-changed"));
-        // NOTE: a decisive "not protected" verdict (testable && !protected) is
-        // NOT a failed action — the test ran fine and truthfully reported bad
-        // news, exactly like a red health badge. That stays a persistent inline
-        // verdict (rendered below), not a toast — only the "error" branches
-        // below (the test itself couldn't run) are the "you clicked it, it
-        // didn't work" case the toast+shake standard targets.
+        // A "not protected" verdict is not a failed action: the test ran and
+        // reported bad news, so it stays an inline verdict rather than a toast.
       } else {
         const message = r.error ?? t("offsite.tamperError");
         setTamper((m) => ({ ...m, [domain]: { kind: "error", message } }));
@@ -234,14 +197,10 @@ export function IntegrityCard({
         action === "verify" ? await checkDomain(domain, source)
         : action === "unlock" ? await unlockDomain(domain, source)
         : await pruneDomain(domain, source);
-      // A green tick is not the whole answer for unlock, and neither is a red
-      // one. A repository shared with another domain gets only its STALE locks
-      // cleared, and a lock a previous container incarnation left is not stale
-      // until it is old enough - so this button can report either outcome and
-      // still have changed nothing on the very repository it was pressed for.
-      // That is a deliberate, permanent limitation, so it never becomes the
-      // error; the server names the repositories on both paths, and without
-      // this they were said only to the container log.
+      // A repository shared with another domain gets only its stale locks
+      // cleared, so unlock can report either outcome and still have changed
+      // nothing there. The server names those repositories on both paths; this
+      // is a known limit, so it is a warning rather than the error.
       const skipped: string[] = "skipped" in r && Array.isArray(r.skipped) ? r.skipped : [];
       if (skipped.length) {
         push(t("integrity.unlockPartial").replace("{list}", skipped.join(", ")), "warn");
@@ -260,10 +219,9 @@ export function IntegrityCard({
     }
   }
 
-  // runDrillFor runs a restore-verification drill and records its result inline,
-  // mirroring the per-action result-state pattern above (keyed "<domain>:drill").
-  // A "dr" drill does a REAL off-site restore into a sandbox — it always targets
-  // the off-site repo (source is ignored) and asks for confirmation first.
+  // runDrillFor runs a restore drill and records its result under
+  // "<domain>:drill". A "dr" drill restores into a sandbox for real, so it
+  // always targets the off-site repo and asks for confirmation first.
   async function runDrillFor(domain: Domain) {
     if (kind === "dr" && !(await confirm(t("drill.confirmDR")))) return;
     const key = `${domain}:drill`;
@@ -278,10 +236,8 @@ export function IntegrityCard({
           push(drill.detail || t("verify.failed"), "fail");
           bumpShake(key);
         }
-        // A recorded drill (pass OR fail) changes the shared /api/status the
-        // dashboard scorecard reads. Broadcast so the Dashboard refetches its
-        // drill / "proven restorable" pills without a page reload — mirrors how
-        // saving settings signals the app to refresh.
+        // A recorded drill, pass or fail, changes /api/status, so tell the
+        // dashboard to refetch its drill pills.
         window.dispatchEvent(new Event("bv:settings-changed"));
       } else {
         setState((s) => ({ ...s, [key]: "fail" }));
@@ -295,16 +251,6 @@ export function IntegrityCard({
     }
   }
 
-  // Each action carries its own labelKey and glyph now ([324]). This row had
-  // three buttons outside both engines: no key, no hue index, no glyph.
-  //
-  // Correcting what an earlier version of this comment claimed: a missing
-  // `labelKey` does NOT cost the width stage — that is derived from `label`,
-  // which is always present. What it costs is the GLYPH, since the key is
-  // what glyphFor looks up, and a button with no glyph falls back to showing
-  // its text in exactly the two modes that exist to hide it. Bad enough on
-  // its own, and worth stating accurately: the same wrong reasoning would
-  // have justified leaving a data-labelled button keyless.
   const actions: { key: Action; label: string; labelKey: string; glyph: ReactNode; busy: string }[] = [
     {
       key: "verify",
@@ -317,16 +263,11 @@ export function IntegrityCard({
       key: "unlock",
       label: t("integrity.unlock"),
       labelKey: "integrity.unlock",
-      // A key, not the open padlock this label otherwise resolves to ([528],
-      // jdp's call at the live review). `glyphFor` still maps /unlock/ to
-      // `IconUnlock` and still keeps it distinct from the credentials key, and
-      // that rule is deliberately left alone: it is the fallback for labels
-      // nobody has looked at, while this button HAS been looked at. Overriding
-      // at the call site is exactly what the `glyph` prop exists for.
+      // A key rather than the open padlock glyphFor maps /unlock/ to.
       glyph: <IconKey />,
       busy: "…",
     },
-    // Prune deletes snapshots — keep it behind Advanced so novices can't reach it.
+    // Prune deletes snapshots, so it stays behind Advanced.
     ...(advanced
       ? [
           {
@@ -340,9 +281,9 @@ export function IntegrityCard({
       : []),
   ];
 
-  // Append-only check eligibility: only a domain whose off-site repo is set AND
-  // flagged immutable gets the button — the same precondition the wizard's manual
-  // test has (anything else could only ever surface a backend error).
+  // Only a domain whose off-site repo is set and flagged immutable gets the
+  // append-only check, as in the wizard; anywhere else it could only return a
+  // backend error.
   const appendOnlyEligible: Record<Domain, boolean> = {
     containers: settings.containersOffsite !== "" && settings.containersOffsiteImmutable,
     vms: settings.vmsOffsite !== "" && settings.vmsOffsiteImmutable,
@@ -360,10 +301,9 @@ export function IntegrityCard({
         <SourceToggle
           source={source}
           onChange={(next) => {
-            // The ok/fail indicators belong to the previously selected source —
-            // clear them so a "healthy" result doesn't carry over to the other
-            // repo where no maintenance has run yet. The drill state + cached
-            // last-drill clear here too; the effect above reloads them for `next`.
+            // The results belong to the previous source; a "healthy" result
+            // must not carry over to a repo where nothing has run. The effect
+            // above reloads the last drill for `next`.
             setSource(next);
             setState({});
             setLastDrill({});
@@ -372,16 +312,9 @@ export function IntegrityCard({
         />
       </div>
 
-      {/* Drill-type toggle: subset integrity check vs a real off-site DR
-          restore — on the shared Selector component (GlimStone form-engine
-          Phase 2, Task 3; found only by re-grepping the current codebase,
-          not on the original Phase 1 audit's own 11-site list).
-          `variant="well"` with no `equalWidth` — the small scale of the app's
-          one grooved selector (round 7 escalation) — converted alongside
-          NotifyCard's "on" Selector in the same round; see that call site's
-          own comment for the full root-cause writeup. Both are the same
-          "small in-card single-choice" role at the same scale, so both share
-          the literal same variant+props, not just an eyeballed match. */}
+      {/* Drill type: a subset integrity check or a real off-site restore.
+          The small "well" variant, the same props as NotifyCard's selector in
+          the same role. */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs text-carbon-textMuted">{t("drill.kindLabel")}</span>
         <Selector
@@ -432,9 +365,6 @@ export function IntegrityCard({
               className={selectCls}
             />
           </label>
-          {/* GlimStone follow-up pass (v8.0.0): the "saved"/"error" flash this
-              used to render is gone — the shared save() now pushes a toast
-              on both outcomes (see its own header comment). */}
           <label className="flex flex-col gap-1 text-xs text-carbon-textSub max-w-xs">
             {t("drill.targetVM")}
             <SelectField
@@ -446,7 +376,7 @@ export function IntegrityCard({
               label={t("drill.targetVM")}
               options={[
                 { value: "", label: t("drill.targetMostRecent") },
-                // The VALUE is the raw libvirt name: pickDRSnapshot (service.go)
+                // The value is the raw libvirt name: pickDRSnapshot (service.go)
                 // matches it against the "vm:"+name backup tag, never the
                 // display-only friendly name a TrueNAS VM shows here.
                 ...vms.map((vm) => ({ value: vm.libvirtName, label: vm.name })),
@@ -465,17 +395,6 @@ export function IntegrityCard({
           const tLast = lastTamper[domain];
           return (
             <div key={domain} className="flex flex-col gap-1">
-              {/* Domain actions + the restore-verification drill on ONE row
-                  (jdp, live-review: "Die Buttons bei Container, VMs, etc
-                  sollen alle in einer Zeile stehen") — was two separate flex
-                  rows (verify/unlock/prune, then a second row for the drill/
-                  DR-run button behind an empty w-24 spacer just to align
-                  under the first row's buttons). The label alone already
-                  anchors the whole row's left edge now that everything sits
-                  on it, so that spacer is gone along with the second row;
-                  every button below keeps its exact behavior, disabled state
-                  and inline busy/ok/fail feedback — this is a pure layout
-                  merge, no logic changed. */}
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm text-carbon-textSub w-24 shrink-0">{label}</span>
                 {actions.map((a) => {
@@ -501,11 +420,8 @@ export function IntegrityCard({
                           {t("integrity.ok")}
                         </span>
                       )}
-                      {/* Minimal fixed glyph, matching the "ok" indicator's OWN
-                          visual weight — the actual error text now lives in the
-                          toast the failure just pushed (jdp, live review,
-                          emphatic standing rule: toast on failure, not a
-                          permanent inline sentence; see run()'s own comment). */}
+                      {/* The error text went to the toast; this short marker
+                          matches the weight of the ok indicator. */}
                       {state[k] === "fail" && <span className="text-sm text-statusFail">{t("integrity.failedShort")}</span>}
                     </span>
                   );
@@ -513,9 +429,8 @@ export function IntegrityCard({
                 <Button
                   key={shake[dKey] || 0}
                   label={kind === "dr" ? t("drill.runDR") : t("verify.now")}
-                  // Both engines here too ([324]). The labelKey follows the
-                  // same branch the label does — a stage derived from the
-                  // wrong key would size this button for the other wording.
+                  // The labelKey follows the label's branch, or the button
+                  // would be sized for the other wording.
                   labelKey={kind === "dr" ? "drill.runDR" : "verify.now"}
                   glyph={<IconCheckCircle />}
                   tone="neutral"
@@ -523,9 +438,8 @@ export function IntegrityCard({
                   onClick={() => void runDrillFor(domain)}
                   disabled={state[dKey] === "busy"}
                   busy={state[dKey] === "busy"}
-                  // The label is fixed now, so the RUNNING wording moves here,
-                  // where Button already puts everything that changes; the
-                  // standing hint is what it says the rest of the time.
+                  // The label stays fixed, so the running wording goes in the
+                  // title, which shows the standing hint the rest of the time.
                   title={
                     state[dKey] === "busy"
                       ? kind === "dr" ? t("drill.runningDR") : t("verify.running")
@@ -539,14 +453,11 @@ export function IntegrityCard({
                     {t("verify.ok")}
                   </span>
                 )}
-                {/* Same minimal-glyph treatment as the action buttons above —
-                    the raw error/detail text went to the toast when the
-                    failure happened, not into a permanent inline sentence. */}
                 {state[dKey] === "fail" && (
                   <span className="text-sm text-statusFail">✗ {t("verify.failed")}</span>
                 )}
                 {/* Last recorded drill for this domain/source (idle state only).
-                    Names WHICH check ran (off-site DR vs local integrity) and,
+                    Names which check ran (off-site restore or local integrity) and,
                     on a stored failure, the scrubbed reason. */}
                 {state[dKey] !== "busy" && state[dKey] !== "ok" && state[dKey] !== "fail" && (
                   drill ? (
@@ -570,11 +481,9 @@ export function IntegrityCard({
                 )}
               </div>
 
-              {/* Append-only check (#109): the wizard's tamper test, findable in
-                  this card and led by the plainer name. Immutable off-site domains
-                  only; always probes the OFF-SITE repo (source-independent). The
-                  verdict rendering mirrors the wizard, incl. the glyph as its own
-                  node so RTL locales place it correctly. */}
+              {/* The append-only check always probes the off-site repo,
+                  whatever the source. The glyph is its own node so RTL
+                  locales place it correctly. */}
               {appendOnlyEligible[domain] && (
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="w-24 shrink-0" />
@@ -599,8 +508,8 @@ export function IntegrityCard({
                           {tRes.protected ? <CheckDraw /> : "✗"}&nbsp;
                         </span>
                       )}
-                      {/* The server's own words, not a fixed sentence ([557]) —
-                          see OffsiteWizard.tsx's identical branch for why. */}
+                      {/* The server's own words rather than a fixed sentence,
+                          as in OffsiteWizard.tsx. */}
                       {!tRes.testable
                         ? t("offsite.tamperUnverifiable")
                         : tRes.protected
@@ -610,13 +519,8 @@ export function IntegrityCard({
                             : t("offsite.tamperFail")}
                     </span>
                   )}
-                  {/* The test itself failing to run (network/server error) is the
-                      "you clicked it, it didn't work" case — the toast pushed by
-                      runTamperFor carries the real message now, so this stays a
-                      fixed, short caption instead of the raw (possibly long)
-                      backend text living on the page forever. A decisive
-                      "not protected" VERDICT above is a different, legitimate
-                      persistent status and is untouched. */}
+                  {/* The test could not run: the toast has the message, the
+                      page keeps a short fixed caption. */}
                   {tRes?.kind === "error" && (
                     <span className="text-sm text-statusFail">{t("offsite.tamperError")}</span>
                   )}
@@ -640,23 +544,3 @@ export function IntegrityCard({
     </Card>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Schedule editors — migrated verbatim from the retired Plans page (Jobs.tsx).
-// The Schedules tab is now the single owner of every backup/off-site/self-backup/
-// restore-check cadence. These render their own Cards (same as on the old Plans
-// page); behaviour is unchanged.
-// ---------------------------------------------------------------------------
-
-/** Convert a cadence string to a human-readable label. */
-// cadenceLabel / ScheduleStatus / scheduleStatus / SCHEDULE_BADGE_TONE /
-// ScheduleBadge all MOVED to components/ScheduleBadge.tsx this round, verbatim
-// — plus a new `ScheduleRow` that owns the "Zeitplan: [badge]" line the four
-// domain Cards and Selbst-Backup each used to hand-roll below. See that file's
-// own header for why (CadenceBuilder's redundant inline preview could only be
-// deleted once EVERY cadence editor was guaranteed to show its resolved
-// schedule above, and ItemScheduleOverride needed the badge too — which an
-// export from this file could not give it without an import cycle, since this
-// file already imports ItemScheduleOverride).
-
-// Domain section — Containers (editable schedule + included-containers list)

@@ -18,8 +18,6 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestReceiverDeadManDecision pins the once-per-stale-episode dedupe as a pure
-// function (no store/clock/transport), mirroring the watchdog's decision test.
 func TestReceiverDeadManDecision(t *testing.T) {
 	now := int64(1_800_000_000)
 	dead := 26 * hour
@@ -54,9 +52,6 @@ func TestReceiverDeadManDecision(t *testing.T) {
 	}
 }
 
-// TestReceiverIntegrityShouldAlert pins the integrity transition debounce: alert
-// only on the crossing into failure (never->fail, ok->fail), never while already
-// failed, and never on success (which re-arms for the next failure).
 func TestReceiverIntegrityShouldAlert(t *testing.T) {
 	never := sql.NullBool{}
 	ok := sql.NullBool{Bool: true, Valid: true}
@@ -83,10 +78,9 @@ func TestReceiverIntegrityShouldAlert(t *testing.T) {
 	}
 }
 
-// receiverWatchService builds a Service over a real (temp) store wired to the real
-// restic engine, with a capturing webhook as the only notify channel (On=failure,
-// so the OK:false alerts send). It returns the service, store, and a thread-safe
-// accessor for the captured message bodies.
+// receiverWatchService builds a Service over a real in-memory store and the
+// real restic engine, notifying only a capturing webhook. The returned func
+// reads the captured message bodies.
 func receiverWatchService(t *testing.T, appKey string) (*Service, *store.Repo, func() []string) {
 	t.Helper()
 	var mu sync.Mutex
@@ -109,8 +103,8 @@ func receiverWatchService(t *testing.T, appKey string) (*Service, *store.Repo, f
 		t.Fatal(err)
 	}
 	st := store.New(db)
-	// HostMountRoot: a received repo lives under the mount like every other repo
-	// path ([554]); a t.TempDir() location is inside the OS temp root.
+	// A received repo has to live under the host mount like any repo path, and
+	// t.TempDir() is inside the OS temp root.
 	svc := &Service{cfg: config.Config{AppKey: appKey, HostMountRoot: os.TempDir()}, store: st, engine: restic.Restic{Bin: "restic"}}
 	if err := svc.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
 		t.Fatal(err)
@@ -135,11 +129,7 @@ func countContaining(bodies []string, sub string) int {
 	return n
 }
 
-// TestReceiverWatchDeadMansSwitch drives the dead-mans-switch end-to-end over the
-// real store + notify fan-out against a real received repo: stale sources alert
-// ONCE per episode, a fresh vantage stays quiet and clears the episodes, and going
-// stale again re-alerts. Two sources (container:web, vm:db) exercise per-source
-// grouping in the alert path.
+// Two sources cover the per-source grouping.
 func TestReceiverWatchDeadMansSwitch(t *testing.T) {
 	if _, err := exec.LookPath("restic"); err != nil {
 		t.Skip("no restic")
@@ -158,8 +148,7 @@ func TestReceiverWatchDeadMansSwitch(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Determine the actual newest snapshot time so "now" can be placed relative to
-	// it deterministically.
+	// The sweeps below place "now" relative to the newest snapshot.
 	sources, err := svc.receiverDeadManSources(context.Background(), created)
 	if err != nil {
 		t.Fatalf("receiverDeadManSources: %v", err)
@@ -174,8 +163,7 @@ func TestReceiverWatchDeadMansSwitch(t *testing.T) {
 		}
 	}
 
-	// Stale vantage: 100h after the newest snapshot, dead-man is 26h -> both sources
-	// stale -> exactly two alerts.
+	// 100h after the newest snapshot, with a 26h switch, both sources are stale.
 	staleNow := newest + 100*hour
 	if err := svc.runReceiverChecksAt(context.Background(), staleNow); err != nil {
 		t.Fatalf("runReceiverChecksAt: %v", err)
@@ -184,7 +172,6 @@ func TestReceiverWatchDeadMansSwitch(t *testing.T) {
 		t.Fatalf("first stale sweep must alert both sources once, got %d", n)
 	}
 
-	// Same vantage again: episodes already recorded -> no new alerts.
 	if err := svc.runReceiverChecksAt(context.Background(), staleNow); err != nil {
 		t.Fatal(err)
 	}
@@ -192,8 +179,7 @@ func TestReceiverWatchDeadMansSwitch(t *testing.T) {
 		t.Fatalf("an already-alerted episode must stay quiet, got %d total", n)
 	}
 
-	// Fresh vantage (within the window): not stale -> no alert, and the episodes are
-	// cleared (recovery), re-arming the switch.
+	// A fresh sweep clears the episodes, which re-arms the switch.
 	freshNow := newest + hour
 	if err := svc.runReceiverChecksAt(context.Background(), freshNow); err != nil {
 		t.Fatal(err)
@@ -207,7 +193,7 @@ func TestReceiverWatchDeadMansSwitch(t *testing.T) {
 		}
 	}
 
-	// Stale again after the recovery -> a brand-new episode -> re-alerts (two more).
+	// Stale again after the recovery is a new episode.
 	if err := svc.runReceiverChecksAt(context.Background(), staleNow); err != nil {
 		t.Fatal(err)
 	}
@@ -216,11 +202,8 @@ func TestReceiverWatchDeadMansSwitch(t *testing.T) {
 	}
 }
 
-// TestReceiverWatchIntegrityAlert proves a failed independent check raises the
-// integrity alert once (never->fail), and a still-failing check on the next due
-// run does not re-fire (fail->fail). The failure is induced with a wrong stored
-// sending key so the repo cannot be opened; dead-man is disabled so only the
-// integrity path can speak.
+// A wrong stored sending key makes the check fail, and the dead-man's switch is
+// off, so only the integrity path can alert.
 func TestReceiverWatchIntegrityAlert(t *testing.T) {
 	if _, err := exec.LookPath("restic"); err != nil {
 		t.Skip("no restic")
@@ -231,7 +214,6 @@ func TestReceiverWatchIntegrityAlert(t *testing.T) {
 	repo := seedReceivedRepo(t, sendingKey)
 
 	svc, st, bodies := receiverWatchService(t, appKey)
-	// Wrong stored key -> receiverOpen fails -> the scheduled check is not-ok.
 	rr := makeReceivedRepo(t, appKey, strings.Repeat("ef", 32), repo, 0)
 	rr.Name = "Broken repo"
 	rr.DeadManHours = 0 // disable the dead-mans-switch: only integrity may alert
@@ -241,8 +223,6 @@ func TestReceiverWatchIntegrityAlert(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// First due run (never -> fail): exactly one integrity alert, and the verdict is
-	// persisted as a failure.
 	if err := svc.runReceiverChecksAt(context.Background(), 1_000_000); err != nil {
 		t.Fatal(err)
 	}
@@ -254,8 +234,7 @@ func TestReceiverWatchIntegrityAlert(t *testing.T) {
 		t.Fatalf("the failed verdict must persist: %+v", got.LastCheckOK)
 	}
 
-	// Next due run two days later (fail -> fail): the check runs again and still
-	// fails, but the transition debounce keeps it quiet.
+	// Two days later the check fails again, which is no new breach.
 	if err := svc.runReceiverChecksAt(context.Background(), 1_000_000+2*day); err != nil {
 		t.Fatal(err)
 	}
@@ -264,10 +243,7 @@ func TestReceiverWatchIntegrityAlert(t *testing.T) {
 	}
 }
 
-// TestReceiverWatchMutedPolicyStillPersists pins that with notifications off the
-// watch sends nothing but STILL persists the check verdict (dashboard state), and
-// still records dead-man episodes so enabling alerts later does not replay old
-// staleness as new.
+// The dashboard shows the verdict whether or not alerts are on.
 func TestReceiverWatchMutedPolicyStillPersists(t *testing.T) {
 	if _, err := exec.LookPath("restic"); err != nil {
 		t.Skip("no restic")
@@ -294,7 +270,6 @@ func TestReceiverWatchMutedPolicyStillPersists(t *testing.T) {
 	if len(bodies()) != 0 {
 		t.Fatalf("a muted policy must send nothing, got %d", len(bodies()))
 	}
-	// The integrity check still ran and persisted a verdict (the good repo passes).
 	got, _, _ := st.GetReceivedRepo(created.ID)
 	if !got.LastCheckOK.Valid {
 		t.Fatal("the check must persist a verdict even under a muted policy")

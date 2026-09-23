@@ -8,15 +8,11 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/config"
 )
 
-// fakeHostShell is a minimal configurable HostShell fake for the "Backup
-// Everything" global hook seam's wiring test (Task 2): it records every
-// command it was asked to run, in order, and can be told to fail. It
-// deliberately never shells out to a real /bin/sh — the CI runner and this
-// dev environment may not both be POSIX, and the point of this test is the
-// interface/wiring, not os/exec itself.
+// fakeHostShell records the commands it is asked to run and returns err from
+// every call.
 type fakeHostShell struct {
-	calls []string // every cmd Run was asked to run, in order
-	err   error    // returned by every Run call
+	calls []string
+	err   error
 }
 
 var _ HostShell = (*fakeHostShell)(nil)
@@ -26,9 +22,6 @@ func (f *fakeHostShell) Run(_ context.Context, cmd string) error {
 	return f.err
 }
 
-// TestNewServiceDefaultsHostShell proves NewService wires a non-nil real
-// execHostShell adapter by default, so any production Service — even one
-// main.go never calls SetHostShell on — has a working HostShell.
 func TestNewServiceDefaultsHostShell(t *testing.T) {
 	svc := NewService(config.Config{}, nil, nil, nil, nil)
 	if svc.hostShell == nil {
@@ -39,11 +32,6 @@ func TestNewServiceDefaultsHostShell(t *testing.T) {
 	}
 }
 
-// TestSetHostShellOverridesDefault proves SetHostShell replaces the default
-// adapter with an injected fake, mirroring SetHostSSH/SetProgress's own
-// override contract — the seam later "Backup Everything" tests use to assert
-// hook call count/ordering/best-effort failure handling without ever
-// invoking a real shell.
 func TestSetHostShellOverridesDefault(t *testing.T) {
 	svc := NewService(config.Config{}, nil, nil, nil, nil)
 
@@ -55,8 +43,6 @@ func TestSetHostShellOverridesDefault(t *testing.T) {
 		t.Fatalf("SetHostShell did not override hostShell: got %#v", svc.hostShell)
 	}
 
-	// The fake records what it was asked to run and can be told to fail —
-	// exactly the fake HostShell contract this task's test requires.
 	err := svc.hostShell.Run(context.Background(), "curl -fsS https://example.invalid/ping")
 	if err == nil {
 		t.Fatal("fake HostShell.Run must return the configured error")

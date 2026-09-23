@@ -40,8 +40,8 @@ func (e *stackEngine) Snapshots(context.Context, string, restic.Mode) ([]restic.
 	return e.snaps, nil
 }
 
-func (e *stackEngine) ForgetPolicy(_ context.Context, _ string, _ restic.RetentionPolicy, _ restic.Mode, tag string, prune bool) error {
-	e.forgets = append(e.forgets, stackForget{Tag: tag, Prune: prune})
+func (e *stackEngine) ForgetPolicy(_ context.Context, _ string, _ restic.RetentionPolicy, _ restic.Mode, tags []string, prune bool) error {
+	e.forgets = append(e.forgets, stackForget{Tag: strings.Join(tags, ","), Prune: prune})
 	return nil
 }
 
@@ -124,8 +124,16 @@ func TestIdentityTagsCountStackProjects(t *testing.T) {
 }
 
 func TestPerIdentityRetentionAgesARepositoryOfProjectFolders(t *testing.T) {
+	db, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
 	eng := &stackEngine{snaps: []restic.Snapshot{{ID: "a1", Tags: []string{"stack:immich", "p1"}}}}
-	s := &Service{engine: eng}
+	s := &Service{engine: eng, store: store.New(db)}
 	if err := s.applyRetentionPerIdentity(context.Background(), "/repo", restic.RetentionPolicy{KeepLast: 3}, restic.Mode{}); err != nil {
 		t.Fatalf("applyRetentionPerIdentity: %v", err)
 	}

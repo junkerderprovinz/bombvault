@@ -1,17 +1,6 @@
-// ---------------------------------------------------------------------------
-// ConfirmDialog — the styled window.confirm() replacement (GlimStone
-// form-engine Task 7).
-//
-// Same test approach as Toggle.test.ts/RevealInput.test.ts: ConfirmDialog is
-// a pure, hookless function component, so it's invoked directly as a plain
-// function and its returned element tree inspected as plain objects — no
-// jsdom/renderer. Escape, the Tab focus-trap, the createPortal(...,
-// document.body) call, and returning focus to the trigger on close all live
-// in the companion hook (lib/useConfirm.tsx) instead of here, precisely
-// because they need `document`/a real hook lifecycle that this node-
-// environment, call-it-directly test style cannot provide — see that file's
-// header comment. They're covered by live Playwright verification instead.
-// ---------------------------------------------------------------------------
+// ConfirmDialog is a pure component, so these tests call it as a function and
+// inspect the returned element tree without a DOM. Escape, the focus trap, the
+// portal and focus return live in lib/useConfirm.tsx.
 import { describe, expect, it } from "vitest";
 import { ConfirmDialog } from "./ConfirmDialog";
 
@@ -36,10 +25,8 @@ function findAll(node: unknown, pred: (n: ElementNode) => boolean, out: ElementN
 }
 
 function findAllButtons(tree: unknown): ElementNode[] {
-  // Both kinds count: a raw <button> element, and the shared <Button>
-  // component (#178), whose node type is the function itself rather than the
-  // string "button". This tree is never rendered, only inspected, so a
-  // component node stays a component node.
+  // A raw <button>, or the shared <Button>, whose node type is the component
+  // function because the tree is never rendered.
   return findAll(
     tree,
     (n) => n.type === "button" || (typeof n.type === "function" && n.type.name === "Button")
@@ -51,9 +38,7 @@ function visibleText(node: unknown): string {
   if (typeof node === "string" || typeof node === "number") return String(node);
   if (Array.isArray(node)) return node.map(visibleText).join("");
   if (!isElementNode(node)) return "";
-  // A shared <Button> (#178) carries its words in the `label` PROP, not in
-  // children: this tree is inspected, never rendered, so nothing expands that
-  // prop into text on our behalf.
+  // An unrendered <Button> carries its words in the `label` prop.
   if (typeof node.type === "function" && node.type.name === "Button") {
     return String(node.props?.label ?? "");
   }
@@ -68,7 +53,6 @@ const baseProps = {
   message: "Delete this backup? This cannot be undone.",
   confirmLabel: "Confirm",
   cancelLabel: "Cancel",
-  closeLabel: "Close",
   onConfirm: noop,
   onCancel: noop,
 };
@@ -82,7 +66,7 @@ describe("ConfirmDialog", () => {
     expect(text).toContain("Cancel");
   });
 
-  it("uses the SAME message copy passed in — never rewrites or truncates it", () => {
+  it("shows the message unchanged", () => {
     const longMessage =
       "Delete ALL backups of this container? The snapshots are permanently removed from the repository and cannot be undone.";
     const tree = ConfirmDialog({ ...baseProps, message: longMessage });
@@ -109,32 +93,7 @@ describe("ConfirmDialog", () => {
     expect(calls).toBe(1);
   });
 
-  it("calls onCancel when the header close (X) button is clicked", () => {
-    let calls = 0;
-    const tree = ConfirmDialog({ ...baseProps, onCancel: () => calls++ });
-    const buttons = findAllButtons(tree);
-    // Since #178 the close control is a <Button> like any other, so its name
-    // is its LABEL rather than an aria-label on a glyph-only square. It is
-    // still the only button carrying the close label, which is the property
-    // that matters: the header's X and the footer's Cancel stay distinct.
-    const closeBtn = buttons.find((b) => b.props?.label === "Close");
-    expect(closeBtn).toBeDefined();
-    closeBtn!.props!.onClick();
-    expect(calls).toBe(1);
-  });
-
-  it("gives the header close (X) button its OWN accessible name, distinct from the footer Cancel button", () => {
-    const tree = ConfirmDialog(baseProps);
-    const buttons = findAllButtons(tree);
-    const closeBtn = buttons.find((b) => b.props?.label === "Close");
-    expect(closeBtn?.props?.label).toBe("Close");
-    // The point of this test survives the #178 conversion unchanged: the two
-    // controls must not share a name, or "Cancel" and "Close" become one
-    // thing to anyone navigating by name.
-    expect(closeBtn?.props?.label).not.toBe(baseProps.cancelLabel);
-  });
-
-  it("calls onCancel when the backdrop itself is clicked (not a click inside the card)", () => {
+  it("calls onCancel when the backdrop itself is clicked", () => {
     let calls = 0;
     const tree = ConfirmDialog({ ...baseProps, onCancel: () => calls++ }) as ElementNode;
     const target = {};
@@ -142,45 +101,38 @@ describe("ConfirmDialog", () => {
     expect(calls).toBe(1);
   });
 
-  it("does NOT call onCancel when the click originated inside the card (target !== currentTarget)", () => {
+  it("does not call onCancel for a click inside the card", () => {
     let calls = 0;
     const tree = ConfirmDialog({ ...baseProps, onCancel: () => calls++ }) as ElementNode;
     tree.props!.onClick({ target: {}, currentTarget: {} });
     expect(calls).toBe(0);
   });
 
-  it("auto-focuses the Cancel button (default focus lands on the non-destructive action)", () => {
+  it("focuses Cancel, the non-destructive action, on open", () => {
     const tree = ConfirmDialog(baseProps);
     const buttons = findAllButtons(tree);
     const cancelBtn = buttons.find((b) => visibleText(b) === "Cancel");
     expect(cancelBtn?.props?.autoFocus).toBe(true);
   });
 
-  it("gives the commit button its siblings' colour, never a status one", () => {
-    // GlimStone 1.12.0. The button was fault-red, and this dialog carried the
-    // one sanctioned exception to the no-status-colour-on-a-control rule to
-    // justify it. What warns is the QUESTION: somebody who has read a window
-    // stating the stakes and reached for the button has already been told, and
-    // spending red on every delete teaches people to read past it by the third
-    // time. Cancel and commit look alike on purpose.
+  it("paints both answers in the accent, never a status colour", () => {
+    // The question states the stakes; a red button on every delete teaches
+    // people to read past it.
     const tree = ConfirmDialog(baseProps);
     const buttons = findAllButtons(tree);
     const confirmBtn = buttons.find((b) => visibleText(b) === "Confirm" && b.props?.autoFocus !== true);
     const cancelBtn = buttons.find((b) => b.props?.autoFocus === true);
 
-    expect(confirmBtn?.props?.tone).toBe("neutral");
+    expect(confirmBtn?.props?.tone).toBe("accent");
     expect(confirmBtn?.props?.tone).toBe(cancelBtn?.props?.tone);
   });
 
-  it("takes no tone prop at all any more", () => {
-    // GlimStone 1.13.0. A prop that decides nothing is worse than no prop: it
-    // reads like a lever. Passing one has to be inert rather than quietly
-    // resolve to something, which is what this pins - the object is typed
-    // without it, so this is the runtime half of the same statement.
+  it("ignores a tone prop", () => {
+    // The props type has no tone; one passed anyway must change nothing.
     const tree = ConfirmDialog({ ...baseProps, ...({ tone: "warn" } as object) });
     const buttons = findAllButtons(tree);
     const confirmBtn = buttons.find((b) => visibleText(b) === "Confirm" && b.props?.autoFocus !== true);
-    expect(confirmBtn?.props?.tone).toBe("neutral");
+    expect(confirmBtn?.props?.tone).toBe("accent");
   });
 
   it("labels the dialog via aria-labelledby pointing at the title heading's id", () => {
@@ -198,7 +150,7 @@ describe("ConfirmDialog", () => {
     expect(dialogs[0].props?.["aria-modal"]).toBe("true");
   });
 
-  it("describes the dialog via aria-describedby pointing at the message paragraph's id (the stake-bearing text is announced, not just shown)", () => {
+  it("describes the dialog via aria-describedby pointing at the message paragraph's id", () => {
     const tree = ConfirmDialog(baseProps) as ElementNode;
     const dialogs = findAll(tree, (n) => n.props?.role === "dialog");
     const describedby = dialogs[0].props?.["aria-describedby"] as string;
@@ -209,12 +161,7 @@ describe("ConfirmDialog", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// GlimStone 1.7.3, folded in here. Three of these four are about what the
-// dialog does NOT draw, which is the kind of change that passes every existing
-// test by definition: nothing looks for a border that was never asserted.
-// ---------------------------------------------------------------------------
-describe("ConfirmDialog, GlimStone 1.7.3", () => {
+describe("ConfirmDialog layout and optional parts", () => {
   function classNames(node: unknown, out: string[] = []): string[] {
     if (!isElementNode(node)) return out;
     if (Array.isArray(node)) {
@@ -228,42 +175,26 @@ describe("ConfirmDialog, GlimStone 1.7.3", () => {
   }
 
   it("draws no divider under the title and none above the buttons", () => {
-    // Hierarchy drawn with borders is the thing the design language exists to
-    // avoid, and it had survived in the language's own window ("die linien weg").
     const all = classNames(ConfirmDialog(baseProps)).join(" ");
     expect(all).not.toContain("border-b");
     expect(all).not.toContain("border-t");
   });
 
-  it("omits the corner X entirely when no closeLabel is given", () => {
-    // Counted, not read as text. The first version of this check looked for
-    // the word "Close" and passed while the button was still being rendered
-    // with an undefined label, which is the failure mode it exists to catch:
-    // the control is still there, it just has no name any more.
-    const buttonsIn = (props: Parameters<typeof ConfirmDialog>[0]) =>
-      findAll(
-        ConfirmDialog(props),
-        (n) => typeof n.type === "function" && (n.type as { name?: string }).name === "Button",
-      );
-    const withX = buttonsIn(baseProps);
-    expect(withX).toHaveLength(3);
-    expect(withX.some((b) => b.props?.labelKey === "common.close")).toBe(true);
-
-    const { closeLabel: _drop, ...withoutClose } = baseProps;
-    const withoutX = buttonsIn(withoutClose);
-    expect(withoutX).toHaveLength(2);
-    expect(withoutX.some((b) => b.props?.labelKey === "common.close")).toBe(false);
-    // and the rest of the window is untouched
-    const text = visibleText(ConfirmDialog(withoutClose));
-    expect(text).toContain("Cancel");
-    expect(text).toContain("Delete this backup? This cannot be undone.");
+  it("offers the two footer answers and no close button in the corner", () => {
+    // Counted rather than found by text, since a button with an undefined label
+    // has no text but is still there.
+    const buttons = findAll(
+      ConfirmDialog(baseProps),
+      (n) => typeof n.type === "function" && (n.type as { name?: string }).name === "Button",
+    );
+    expect(buttons).toHaveLength(2);
+    expect(buttons.some((b) => b.props?.labelKey === "common.close")).toBe(false);
   });
 
   it("puts an `extra` control under the message, not inside it", () => {
     const tree = ConfirmDialog({ ...baseProps, extra: "ALSO REMOVE THE FOLDER" });
     expect(visibleText(tree)).toContain("ALSO REMOVE THE FOLDER");
-    // The described paragraph stays the message alone: a switch announced as
-    // part of the description is read as prose rather than reached as a control.
+    // The described paragraph stays the message alone.
     const described = findAll(
       tree,
       (n) => n.props?.id === "confirmdialog-message",

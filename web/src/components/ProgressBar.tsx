@@ -1,31 +1,18 @@
-// ---------------------------------------------------------------------------
-// ProgressBar — a thin, full-width accent bar pinned to the bottom edge of a
-// card to show live backup/restore progress.
+// A thin accent bar for live backup and restore progress. By default it is
+// pinned to the bottom of a `relative overflow-hidden` card, so it clips to the
+// card's rounded corners. `inline` puts it in normal flow with an optional
+// caption above it, as in the restore panel; the pinned bar has no caption
+// because the card's action button already names the running phase.
 //
-// Intended use: render inside a `relative overflow-hidden` card so the
-// absolutely-positioned bar clips to the card's rounded corners:
-//
-//   <ProgressBar percent={p.percent} active={p.active} />
-//
-// Determinate: the fill width tracks `percent` with a smooth transition.
-// Indeterminate (active but no number yet): a small accent segment loops
-// start→end, RTL-aware via a `[dir="rtl"]`-scoped custom property (keyframes
-// `glim-indeterminate` live in index.css).
-// When inactive, it renders nothing.
-//
-// `label` adds a small caption naming the phase/percentage (e.g. "Restoring… 42%")
-// and is shown ONLY on an `inline` bar, above the track. The pinned card bar
-// renders just the track: the card's own action button already names the running
-// phase, so a bar caption there merely duplicated it. `inline` renders the bar in
-// normal document flow (for use inside a restore panel) instead of pinned to a card.
-// ---------------------------------------------------------------------------
+// Without a percentage a small segment loops (`glim-indeterminate` in
+// index.css, RTL-aware). An inactive bar renders nothing.
 
 interface ProgressBarProps {
   percent: number;
   active: boolean;
   /** Force the looping animation. Defaults to `active && percent <= 0`. */
   indeterminate?: boolean;
-  /** Optional caption naming the phase / percentage (e.g. "Restoring… 42%"). */
+  /** Caption naming the phase or percentage, such as "Restoring… 42%". */
   label?: string;
   /** Render in normal document flow instead of pinned to a card's bottom edge. */
   inline?: boolean;
@@ -60,10 +47,9 @@ export function ProgressBar({ percent, active, indeterminate, label, inline }: P
         />
       ) : (
         <div
-          // `glim-progress-fill` carries the travelling band of light (index.css,
-          // inside the reduced-motion gate). Only while the bar is still filling:
-          // at 100 the work is done, and a light still sweeping a finished bar
-          // says the opposite of what the number says.
+          // `glim-progress-fill` is the travelling band of light (index.css,
+          // behind the reduced-motion gate). It stops at 100, where a light
+          // still sweeping the bar would contradict the number.
           className={`h-full transition-[width] duration-300 ease-out${clamped < 100 ? " glim-progress-fill" : ""}`}
           style={{ width: `${clamped}%`, background: "var(--accent)" }}
         />
@@ -71,7 +57,6 @@ export function ProgressBar({ percent, active, indeterminate, label, inline }: P
     </div>
   );
 
-  // Inline: caption above the bar, both in normal flow.
   if (inline) {
     return (
       <div className="flex flex-col gap-0.5">
@@ -81,9 +66,5 @@ export function ProgressBar({ percent, active, indeterminate, label, inline }: P
     );
   }
 
-  // Pinned card bar: just the track, no caption. The card's action button already
-  // names the running phase ("Sichere…" / "Wiederherstelle…"), so a bottom-right
-  // label on the bar only duplicated it. `label` is honoured on the inline bar
-  // (restore panel), where it carries the live percentage the button does not.
   return track;
 }

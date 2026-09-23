@@ -1,17 +1,7 @@
-// ---------------------------------------------------------------------------
-// colorFor — the activity log's status → colour mapping (issue #164).
-//
-// Pure logic, node environment: only the exported mapping function is called,
-// nothing is rendered.
-//
-// The bug this guards: GlimStone Phase 2 Task 7 merged "offsite" into the
-// "running" arm on the premise that both mean "activity happening right now".
-// activityLog.ts's finishedLineText returns status "offsite" for a FINISHED,
-// successful replication ("Off-site replication done — Containers"), so that
-// merge painted completed runs with the in-progress accent — and, because the
-// default accent gold and the warn amber used for "info" are ~11 RGB apart,
-// it also made off-site and info lines near-indistinguishable in the same log.
-// ---------------------------------------------------------------------------
+// colorFor maps an activity-log status to its text colour. "offsite" is also
+// the status of a finished off-site replication, so it must not wear the
+// in-progress accent of "running", and it has to stay apart from the amber of
+// "info" lines, which sits about 11 RGB units from the default accent.
 import { describe, expect, it } from "vitest";
 import { colorFor } from "./ActivityLog";
 import type { LogStatus } from "../lib/activityLog";

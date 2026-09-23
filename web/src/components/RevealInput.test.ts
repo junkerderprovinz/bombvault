@@ -1,10 +1,5 @@
-// ---------------------------------------------------------------------------
-// RevealInput — the reveal-eye affordance (GlimStone form-engine Task 6).
-//
-// Same test approach as Toggle.test.ts: RevealInput is a pure, hookless
-// function component, so it's invoked directly as a plain function and its
-// returned element tree inspected as plain objects — no jsdom/renderer.
-// ---------------------------------------------------------------------------
+// RevealInput has no hooks, so it is called as a plain function and the
+// returned element tree is inspected directly.
 import { describe, expect, it } from "vitest";
 import { RevealInput } from "./RevealInput";
 
@@ -107,7 +102,7 @@ describe("RevealInput", () => {
     expect(calls).toBe(1);
   });
 
-  it("never colours the eye with the accent — neutral text/opacity treatment only", () => {
+  it("keeps the eye in the muted text colour, not the accent", () => {
     const tree = RevealInput({
       visible: false,
       onToggleVisible: noop,
@@ -122,7 +117,7 @@ describe("RevealInput", () => {
     expect(cls).not.toContain("accent");
   });
 
-  it("reserves trailing padding with important, direction-aware PHYSICAL utilities so a shared inputCls's px-* can't win the cascade", () => {
+  it("reserves trailing padding with important physical utilities that follow the page direction", () => {
     const tree = RevealInput({
       visible: false,
       onToggleVisible: noop,
@@ -134,27 +129,18 @@ describe("RevealInput", () => {
     });
     const input = findOne(tree, "input");
     const cls = input.props.className as string;
-    // NOT the logical `pe-8` this used to be: this <input> carries its own
-    // `dir="ltr"` (see below), and a logical property resolves against the
-    // direction of the element it's on — so `pe-8` here would always
-    // resolve to padding-right, regardless of the PAGE's direction, landing
-    // the reserved room on the wrong side once dir="rtl" is active (a real,
-    // shipped regression from form-engine Phase 2 Task 6 — see the
-    // follow-up fix). `pr-8!` is the unconditional LTR-default base; the
-    // `rtl:` pair swaps it to the left once an ancestor has dir="rtl" —
-    // that variant's ancestor-only match clause still fires correctly even
-    // though this element's OWN direction is pinned to ltr.
+    // Not pe-8: the input is dir="ltr", so a logical property would always
+    // pad the right, whatever the page direction.
     expect(cls).toContain("pr-8!");
     expect(cls).toContain("rtl:pr-0!");
     expect(cls).toContain("rtl:pl-8!");
     expect(cls).not.toMatch(/(?:^|\s)pe-8!/);
     expect(cls).toContain("w-full");
-    // The caller's own visual classes (background, vertical padding) still
-    // pass through untouched — only the trailing padding is pinned.
+    // The caller's own classes pass through.
     expect(cls).toContain("bg-carbon-surface2");
   });
 
-  it("positions the eye on the trailing edge with the SAME page-gated physical pattern as the input's padding, never the logical end-2", () => {
+  it("positions the eye with rtl-gated physical offsets, not end-2", () => {
     const tree = RevealInput({
       visible: false,
       onToggleVisible: noop,
@@ -165,26 +151,17 @@ describe("RevealInput", () => {
     });
     const btn = findOne(tree, "button");
     const cls = btn.props.className as string;
-    // The eye still lands on the field's trailing edge (right in LTR, left in
-    // RTL) — but via `rtl:`-gated PHYSICAL offsets, not the logical `end-2`
-    // this used to be. `end-2` resolves against the nearest `dir` ANCESTOR
-    // while `rtl:` resolves against the PAGE, and a call site is free to nest
-    // this component inside its own `dir="ltr"` island (OffsiteWizard's
-    // `<label dir="ltr">RESTIC_REST_PASSWORD</label>` does exactly that) —
-    // there the two disagreed and the eye ended up on the opposite side from
-    // the padding that reserves room for it, secret text under the icon.
+    // end-2 follows the nearest dir ancestor, which can disagree with the page
+    // (OffsiteWizard nests the field in a dir="ltr" label).
     expect(cls).toContain("right-2");
     expect(cls).toContain("rtl:right-auto!");
     expect(cls).toContain("rtl:left-2");
     expect(cls).not.toMatch(/(?:^|\s)end-2(?:\s|$)/);
   });
 
-  it("drives the eye's offset and the input's padding reservation off the SAME direction signal", () => {
-    // The regression this guards is not either class list on its own — each
-    // looked right in isolation — it is the two halves resolving direction
-    // against DIFFERENT things (element/ancestor `dir` vs. the page). Assert
-    // the pairing itself: the reserved room and the icon must always be on
-    // the same side, so both must be `rtl:`-gated physical properties.
+  it("puts the eye and the reserved padding on the same side in both directions", () => {
+    // Each class list can look right on its own; both must follow the same
+    // direction signal.
     const tree = RevealInput({
       visible: false,
       onToggleVisible: noop,
@@ -201,14 +178,14 @@ describe("RevealInput", () => {
     // RTL override: padding moves to the left, eye moves to the left.
     expect(input).toContain("rtl:pl-8!");
     expect(btn).toContain("rtl:left-2");
-    // Neither half may use a logical property, which would resolve against
-    // the element's own / its nearest ancestor's `dir` instead of the page's.
+    // A logical property would follow the element's or an ancestor's dir
+    // instead of the page.
     for (const cls of [input, btn]) {
       expect(cls).not.toMatch(/(?:^|\s)(?:p[se]-|inset-inline|start-|end-)/);
     }
   });
 
-  it("wrapperClassName carries the field's layout footprint on the outer box, not the input", () => {
+  it("puts wrapperClassName on the outer box, not the input", () => {
     const tree = RevealInput({
       visible: false,
       onToggleVisible: noop,
@@ -221,7 +198,7 @@ describe("RevealInput", () => {
     expect((tree as ElementNode).props?.className).toBe("relative flex-1 min-w-0");
   });
 
-  it("defaults the wrapper to a bare relative box with no shrink-to-content sizing when wrapperClassName is omitted", () => {
+  it("leaves the wrapper a bare relative box without wrapperClassName", () => {
     const tree = RevealInput({
       visible: false,
       onToggleVisible: noop,

@@ -15,118 +15,74 @@ import { Button } from "./Button";
 import { InfoBubble } from "./InfoBubble";
 import { Toggle } from "./Toggle";
 
-// ---------------------------------------------------------------------------
-// SelectionTree — the container panel's backup-folder tree (Phase 2, D-02:
-// the mounts/custom list BECOMES the tree; no modal, no second presentation
-// of the same selection on the same screen).
+// SelectionTree is the backup-folder tree of a container's folder editor: one
+// role="tree" whose top-level items are the mounts followed by the custom
+// paths.
 //
-// One role="tree" per FoldersEditor. Its level-1 treeitems are the mount rows
-// followed by the custom-path rows; expanded children wrap in role="group".
-// Notice rows (the D-04 blocked warn line, loading/empty/error/truncated)
-// each ride inside a role="presentation" wrapper: APG allows tree/group
-// children to be treeitem, group, or presentation-wrapped only, and
-// presentation removes the wrapper from that structural contract while its
-// text content stays exposed to assistive tech (review WR-01).
-// Every node's checked/mixed/excluded state comes from classifyNode over the
-// (includes, exclusions) props — pure list arithmetic in HOST path space, so
-// it is correct for collapsed and never-loaded subtrees (TREE-03/04) and
-// never depends on which children happen to be fetched.
+// A node's checked, mixed or excluded state comes from classifyNode over the
+// includes and exclusions in host path space, so it is right for subtrees that
+// are collapsed or were never loaded. Selection is exposed only as
+// aria-checked, never aria-selected.
 //
-// Laziness (TREE-01): children fetch on first expand only, through the
-// browseCache Map the editor owns (panel lifetime — survives section close,
-// dies with the page). Rejections and refused reads (ok:false) are removed
-// from the cache so a retry genuinely refetches instead of replaying the
-// failure. Browse is called with the browse-relative path (hostSourceRoot
-// prefix swapped), WITH the hidden-visibility opt-in.
+// Children are fetched on first expand through the editor's browseCache.
+// Failed and refused reads are evicted so a retry really refetches. The browse
+// includes hidden directories: the tree is the backup selection, and a
+// dot-directory without a row could not be ticked or unticked (Home Assistant
+// keeps its config and device registry in .storage).
 //
-// That opt-in is the one place this tree parts company with FolderBrowser, and
-// it has to: a picker that hides dot-directories merely makes them awkward to
-// reach, but a SELECTION tree that hides them makes them impossible to tick or
-// untick, and what the tree shows is what gets backed up. Every include the
-// user sets by ticking children is a whitelist, so a folder with no row is
-// simply left out - and in appdata the dot-directories are the ones that
-// matter: Home Assistant keeps its config, auth and device registry in
-// .storage. That state had no signal on screen beyond the mount's own
-// indeterminate checkbox.
+// There is no emptiness probe, so every directory is expandable and an empty
+// one reports aria-expanded="true" with no children. Leaves (an unreachable
+// mount, a custom path outside the served root) omit aria-expanded.
 //
-// Selection is expressed ONLY via aria-checked on the treeitem
-// ("true"/"mixed"/"false"), never aria-selected (APG: never mix). The mixed
-// state is the DOM indeterminate property set in a callback ref — React has
-// no prop for it; this is the app's first tri-state checkbox (Pattern 5).
-// aria-expanded sits on every expandable treeitem (every directory is a
-// potential parent — Phase 1 rejected emptiness probes; an expanded empty dir
-// honestly reports true with zero children); it is omitted on the two honest
-// leaf kinds (an unreachable mount, a custom path outside the served root),
-// because APG end nodes must not announce themselves as parents (Pitfall 7).
+// Notice rows (the blocked warning, loading, empty, error, truncated) sit in
+// role="presentation" wrappers, because a tree or group may only contain
+// treeitems, groups and presentational wrappers.
 //
-// Keyboard (TREE-05, plan 03): the full APG TreeView checkbox-variant map on
-// one onKeyDown on the tree element, with roving tabindex — exactly one
-// treeitem (the focused, or last-focused, node; first root initially) carries
-// tabIndex 0. Right expands with focus STAYING on the parent and descends to
-// the first child only on a second press (a no-op while the loading row is
-// the only child, since notice rows are not focusable); Left collapses /
-// walks to the parent / does nothing on a closed root; Down/Up/Home/End move
-// focus between treeitems without ever expanding; Enter is the expansion
-// default action; Space is the ONLY selection toggler and routes through the
-// same onToggle as checkbox clicks — one toggle semantics, so the editor's
-// D-04 guard and serialized save queue cannot be bypassed by key (T-02-10).
+// Keyboard follows the APG tree view with a roving tabindex. Space toggles the
+// checkbox through the same onToggle as a click, so the editor's
+// empty-selection guard and save queue apply to it too.
 //
-// Expansion is comfort state only (D-05): persisted per container in
-// localStorage, capped; selection NEVER goes there.
-// ---------------------------------------------------------------------------
+// Expansion is saved per container in localStorage. Selection never is.
 
-/** Per-node listing state. ok:false is its own state — never folded into
- *  "empty", never a silent collapse (TREE-06). */
+/** Per-node listing state. A refused read is an error, not an empty listing. */
 type Listing =
   | { status: "loading" }
   | { status: "ok"; dirs: BrowseDirEntry[]; truncated: boolean }
   | { status: "error"; message: string };
 
 export interface SelectionTreeProps {
-  /** Server-discovered mount rows; the first level-1 treeitems. */
+  /** Mount rows from the server, listed first. */
   mounts: MountInfo[];
-  /** Custom backup paths (host form); trailing level-1 treeitems. */
+  /** Custom backup paths in host form, listed after the mounts. */
   customPaths: CustomPath[];
-  /** Includes in HOST path space — the server-truth mirror. */
+  /** Includes in host path space, mirroring the server. */
   includes: ReadonlySet<string>;
-  /** Exclusions in HOST path space ("!" stripped) — dormant entries included. */
+  /** Exclusions in host path space without the "!", dormant ones included. */
   exclusions: ReadonlySet<string>;
-  /** Host source root (e.g. "/mnt"); the browse translation prefix. */
+  /** Host source root such as "/mnt"; browse paths are relative to it. */
   hostSourceRoot: string;
-  /** Container name — scopes the bv-tree-expanded-{name} key (D-05). */
+  /** Scopes the bv-tree-expanded-{name} localStorage key. */
   containerName: string;
-  /** Editor-lifetime listings cache: host path -> browse promise. */
+  /** Listings cache owned by the editor: host path to browse promise. */
   browseCache: Map<string, Promise<BrowseResponse>>;
-  /** Checkbox toggle; carries the node's HOST path. */
+  /** Checkbox toggle; carries the node's host path. */
   onToggle: (hostPath: string) => void;
-  /** Remove-button handler for custom rows; carries the HOST path. */
+  /** Remove-button handler for custom rows; carries the host path. */
   onRemoveCustom: (hostPath: string) => void;
-  /** Per-root CACHEDIR.TAG toggles in HOST path form (D-06, RESTIC-01) —
-   *  the stored map the switches render from, exactly as the mounts response
-   *  served it plus the editor's optimistic flips.
-   *  Optional since Phase 4 (INTEG-02): the Files page reuses this tree over
-   *  a single set root, where RESTIC-01 deliberately does not apply (D-07
-   *  deferral). When this or onToggleCaches is absent the CACHEDIR sub-row is
-   *  skipped entirely — an empty map plus a no-op handler would render a dead
-   *  switch, a silent lie (UI-SPEC reuse contract item 5). Container callers
-   *  pass both, unchanged. */
+  /** Per-root CACHEDIR.TAG switches in host path form. The Files page passes
+   *  neither this nor onToggleCaches, which hides the switch row rather than
+   *  rendering a switch that does nothing. */
   excludeCaches?: Readonly<Record<string, boolean>>;
-  /** CACHEDIR switch flip; carries the root's HOST path and the new value.
-   *  Rides the SAME serialized save queue as onToggle (T-03-07). Optional
-   *  together with excludeCaches — see that prop's note. */
+  /** CACHEDIR switch handler, on the same save queue as onToggle. */
   onToggleCaches?: (hostPath: string, next: boolean) => void;
   /** Paths with a save in flight; their checkboxes disable. */
   busyPaths?: ReadonlySet<string>;
   /** Shake nonces per path; a bumped key replays .glim-shake on that row. */
   shakeCounts?: Readonly<Record<string, number>>;
-  /** Path whose last toggle was blocked (D-04); shows the inline warn line. */
+  /** Path whose last toggle was blocked; shows the inline warning. */
   blockedPath?: string | null;
-  /** Copy for the blocked warn line. Optional since Phase 4 (INTEG-02): the
-   *  Files page reuses this tree, and its refusal copy orients to that
-   *  domain's own exit ("Delete folder set", D-06) — reusing the folders wording
-   *  ("Use Reset") would name an action the card does not have (UI-SPEC
-   *  copy table). Absent keeps the folders key, byte-identical for the
-   *  container callers. */
+  /** Text of the blocked warning. The Files page passes its own, because the
+   *  default names a reset action its card does not have. */
   blockedMessage?: string;
 }
 
@@ -143,10 +99,7 @@ interface RowSpec {
   label: ReactNode;
 }
 
-/** One VISIBLE treeitem in visual order, with its parent treeitem's host path
- *  (null at level 1). The keyboard handler navigates this flat model; it is
- *  built by the exact same walk that renders (spec.expandable && expanded),
- *  so focus can never disagree with what is on screen. */
+/** A visible treeitem and its parent's host path (null at the top level). */
 interface FlatNode {
   spec: RowSpec;
   parent: string | null;
@@ -170,21 +123,16 @@ export function SelectionTree({
   blockedMessage,
 }: SelectionTreeProps) {
   const { t } = useT();
-  // D-05: expansion restored once on mount; the save effect below keeps the
-  // key in step. Write order is recency (newest last) — selectionTree caps it.
+  // Newest last, which is the order saveExpanded trims by.
   const [expandedOrder, setExpandedOrder] = useState<string[]>(() => loadExpanded(containerName));
   const [listings, setListings] = useState<Record<string, Listing>>({});
   const [focusPath, setFocusPath] = useState<string | null>(null);
-  // Exclusions-disclosure expansion (D-03): synchronous component state over
-  // the already-loaded mirror — no async, no loading state by construction.
-  // Deliberately NOT persisted (unlike tree expansion): this is an audit
-  // view, not navigation comfort, so every section reopens collapsed.
+  // Roots whose exclusion list is open. Not persisted: it is a review view,
+  // so it reopens collapsed.
   const [exclOpen, setExclOpen] = useState<ReadonlySet<string>>(new Set());
   const exclIdPrefix = useId();
-  // Roving-tabindex plumbing (TREE-05): the tree element (key target) and the
-  // currently rendered treeitem rows, keyed by host path. Callback refs keep
-  // the map exact through every expand/collapse — React nulls a row's entry
-  // the moment it unmounts.
+  // Rendered treeitem rows by host path, for moving focus. The callback ref
+  // drops a row's entry when it unmounts.
   const treeRef = useRef<HTMLDivElement>(null);
   const rowRefs = useRef(new Map<string, HTMLDivElement>());
 
@@ -201,8 +149,7 @@ export function SelectionTree({
       promise.then(
         (res) => {
           if (!res.ok) {
-            // A refused read is not a listing: drop it from the cache so
-            // "Try again" refetches rather than replaying the refusal.
+            // Evict a refused read so a retry refetches.
             browseCache.delete(hostPath);
             setListings((prev) => ({
               ...prev,
@@ -227,9 +174,9 @@ export function SelectionTree({
     [browseCache, hostSourceRoot, t],
   );
 
-  // Every expanded path must have its listing ensured — on expand (below) and
-  // again on mount when D-05 restores expansion. Idempotent: paths already
-  // tracked (any state) are left alone, so a retry is never auto-fired.
+  // Fetches a listing for every expanded path, including those restored from
+  // localStorage. Paths already tracked in any state are left alone, so a
+  // failed read is not retried automatically.
   useEffect(() => {
     for (const p of expandedOrder) {
       if (!listings[p]) fetchListing(p);
@@ -268,8 +215,6 @@ export function SelectionTree({
         depth,
         setSize: listing.dirs.length,
         posInSet: i + 1,
-        // Every directory is a potential parent (Phase 1 rejected emptiness
-        // probes): always expandable, honestly reporting empty when opened.
         expandable: true,
         unreachable: false,
         removable: false,
@@ -294,22 +239,15 @@ export function SelectionTree({
       label: (
         <span className="flex flex-col min-w-0">
           <span dir="ltr" className="font-mono break-all text-start">
-            {/* Phase 4 (INTEG-02, UI-SPEC item 2): a dest-less synthetic mount
-                row (the Files page's single set root) labels itself with the
-                bare host path — the dest ← source arrow only describes a
-                container mount. Container rows always carry a non-empty dest,
-                so this branch never fires there and the container panel is
-                byte-identical. */}
+            {/* The Files page passes its set root as a mount without a dest. */}
             {m.dest === "" ? m.source : `${m.dest} ← ${m.source}`}
           </span>
           {m.isAppdata && <span className="text-statusOk">{t("folders.appdataDefault")}</span>}
           {!m.reachable && <span className="text-statusFail">{t("folders.notReachable")}</span>}
-          {/* D-01 preview: muted, derived from the includes set alone (never
-              checked nodes, never existence) so it matches the bare entries
-              the next save serializes. Renders on EVERY root incl. "0 paths"
-              (INTEG-04: zero is information, not an empty state). */}
+          {/* Counted from the includes alone, so it matches what the next
+              save sends. Shown on every root, zero included. */}
           <span className="text-xs text-carbon-textMuted">
-            {t("folders.previewPaths").replace("{n}", String(rootIncludeCount(m.source, includes)))}
+            {t("folders.previewPaths", rootIncludeCount(m.source, includes))}
           </span>
         </span>
       ),
@@ -319,8 +257,7 @@ export function SelectionTree({
       depth: 0,
       setSize: rootCount,
       posInSet: mounts.length + i + 1,
-      // A custom path outside the served root cannot be browsed (server
-      // containment) — it renders as a plain row.
+      // The server only browses inside the served root.
       expandable: isAtOrUnder(cp.path, hostSourceRoot) && cp.path !== hostSourceRoot,
       unreachable: false,
       removable: true,
@@ -330,18 +267,16 @@ export function SelectionTree({
             {cp.path}
           </span>
           {!cp.exists && <span className="text-statusFail">{t("folders.customMissing")}</span>}
-          {/* Same D-01 preview contract as mount rows: standalone custom
-              roots announce their own at-or-under include count. */}
           <span className="text-xs text-carbon-textMuted">
-            {t("folders.previewPaths").replace("{n}", String(rootIncludeCount(cp.path, includes)))}
+            {t("folders.previewPaths", rootIncludeCount(cp.path, includes))}
           </span>
         </span>
       ),
     })),
   ];
 
-  // The flat visible model the keyboard navigates: same walk that renders, so
-  // the order a user sees and the order arrows move through cannot diverge.
+  // The visible rows in order for the keyboard handler, built by the same walk
+  // as the render so the two cannot disagree.
   const expandedSet = new Set(expandedOrder);
   function walk(specs: RowSpec[], parent: string | null, out: FlatNode[]): void {
     for (const spec of specs) {
@@ -355,13 +290,11 @@ export function SelectionTree({
   walk(rootSpecs, null, flatNodes);
   const flatPaths = new Set(flatNodes.map((n) => n.spec.path));
 
-  // Roving tabindex home: the focused node, or the first root before any
-  // focus. A focusPath that is no longer VISIBLE (its ancestor collapsed
-  // underneath it) falls back to the first root so exactly one tabbable
-  // treeitem always exists in the DOM.
+  // The one tabbable treeitem: the focused node, or the first root when
+  // nothing was focused yet or the focused node was collapsed away.
   const tabTarget = focusPath && flatPaths.has(focusPath) ? focusPath : firstRoot;
 
-  /** Move the roving tabindex AND the real DOM focus to a treeitem. */
+  /** Moves the roving tabindex and DOM focus to a treeitem. */
   function focusNode(hostPath: string): void {
     setFocusPath(hostPath);
     const row = rowRefs.current.get(hostPath);
@@ -369,11 +302,9 @@ export function SelectionTree({
     row?.focus();
   }
 
-  // The APG TreeView key map (TREE-05). It acts on the roving-focus node, and
-  // only when the event came from the tree itself or a treeitem row: focus
-  // sitting on an inner control (a checkbox, the retry Button, a remove chip)
-  // keeps that control's own key semantics — Space on a focused checkbox is
-  // the input's click, which already routes through the same onToggle.
+  // The APG tree view key map. Keys pressed on an inner control (the retry
+  // button, a remove chip, the exclusions toggle) keep that control's own
+  // behaviour.
   function handleTreeKeyDown(e: React.KeyboardEvent<HTMLDivElement>): void {
     const el = e.target as HTMLElement;
     if (el !== treeRef.current && el.getAttribute("role") !== "treeitem") return;
@@ -384,16 +315,14 @@ export function SelectionTree({
     switch (e.key) {
       case "ArrowRight":
         e.preventDefault();
-        if (!spec.expandable) return; // honest leaf: nothing to descend into
+        if (!spec.expandable) return;
         if (!expanded) {
-          // APG: expand with focus STAYING on the parent (children may still
-          // be loading); the browse fires through the toggleExpansion path.
+          // Focus stays on the parent while the children load.
           toggleExpansion(spec.path);
           return;
         }
-        // Expanded: descend to the first child — but only once a child
-        // treeitem EXISTS. While the loading notice row is the only thing
-        // under the node there is nothing focusable, so this is a no-op.
+        // Move to the first child. While the children are still loading
+        // there is none, and nothing happens.
         {
           const child = flatNodes.find((n) => n.parent === spec.path);
           if (child) focusNode(child.spec.path);
@@ -405,7 +334,7 @@ export function SelectionTree({
           toggleExpansion(spec.path); // collapse, focus stays
           return;
         }
-        // Closed child: walk up. A closed level-1 root has no parent: no-op.
+        // Move to the parent; a top-level row has none.
         if (parent) focusNode(parent);
         return;
       case "ArrowDown":
@@ -431,10 +360,8 @@ export function SelectionTree({
         return;
       case " ":
         e.preventDefault();
-        // The ONLY selection toggler, routed through the identical onToggle
-        // pipeline as checkbox clicks (T-02-10) — and it respects the same
-        // disabled rule the rendered checkbox has (unreachable row, save in
-        // flight for that node).
+        // Space is the only key that changes the selection. It goes through
+        // onToggle like a click and is disabled when the checkbox is.
         if (!spec.unreachable && !busyPaths?.has(spec.path)) onToggle(spec.path);
         return;
     }
@@ -446,21 +373,11 @@ export function SelectionTree({
     const listing = listings[spec.path];
     const kids = expanded ? childSpecs(spec.path, spec.depth + 1) : [];
     const shaken = !!shakeCounts?.[spec.path];
-    // D-03 review list: only ROOT rows carry an exclusions section (children
-    // never do). The id pairs the button's aria-controls with the ul.
+    // Only top-level rows list their exclusions.
     const rootExcl = spec.depth === 0 ? rootExclusions(spec.path, exclusions) : [];
-    // WR-03: the id derivation must be collision-free per root. The previous
-    // non-alphanumeric stripping collided for paths that differ only in
-    // stripped characters — "/mnt/user/app-data" and "/mnt/user/app_data"
-    // both sanitized to "mnt-user-app-data", and any two CJK-named segments
-    // collapsed the same way — producing duplicate DOM ids and an
-    // aria-controls that resolved every button to the FIRST list. The
-    // useId() prefix keeps trees apart; encodeURIComponent is injective on
-    // the path, so distinct roots within one tree can never share an id.
+    // encodeURIComponent is injective, so roots that differ only in
+    // punctuation still get distinct ids; useId keeps separate trees apart.
     const exclListId = `${exclIdPrefix}excl-${encodeURIComponent(spec.path)}`;
-    // UI-SPEC tone table: checked/mixed carry the row tone, unchecked is
-    // dimmed, excluded (and unreachable) muted. Status hues live on the text
-    // lines inside the label, never on a control.
     const tone =
       spec.unreachable || state === "excluded"
         ? "text-carbon-textMuted"
@@ -468,8 +385,8 @@ export function SelectionTree({
           ? "text-carbon-textSub"
           : "text-carbon-text";
     const ariaChecked = state === "checked" ? "true" : state === "mixed" ? "mixed" : "false";
-    // The mixed state rides the DOM indeterminate property — React has no
-    // prop for it, so a fresh callback ref runs on every render pass.
+    // React has no prop for indeterminate. A new callback ref on every render
+    // keeps it in sync.
     const boxRef = (el: HTMLInputElement | null) => {
       if (el) el.indeterminate = state === "mixed";
     };
@@ -495,9 +412,7 @@ export function SelectionTree({
         >
           <span className="mt-0.5 w-4 shrink-0 flex items-center justify-center" aria-hidden="true">
             {spec.expandable && (
-              // Presentational chevron (SnapshotFileTree's triangle): the row
-              // body itself is the expansion control, so the glyph carries no
-              // separate label to translate or double-fire.
+              // Decorative: clicking the row itself expands it.
               <svg
                 width="10"
                 height="10"
@@ -509,14 +424,9 @@ export function SelectionTree({
               </svg>
             )}
           </span>
-          {/* aria-hidden on the input (review WR-02): the treeitem's
-              aria-checked is the ONE selection announcement. For a mixed node
-              the real input would otherwise say "checkbox checked" (the DOM
-              indeterminate property has no ARIA reflection), contradicting
-              "mixed" one row-element later. The input is tabIndex -1 and
-              keyboard selection routes through Space on the treeitem
-              (T-02-10), so hiding it from the a11y tree costs nothing; mouse
-              users keep clicking it. */}
+          {/* Hidden from assistive tech: the treeitem's aria-checked carries
+              the state, and for a mixed node the input would announce
+              "checked". Keyboard users toggle with Space on the row. */}
           <input
             ref={boxRef}
             type="checkbox"
@@ -541,9 +451,6 @@ export function SelectionTree({
           )}
         </div>
         {blockedPath === spec.path && (
-          // Presentation wrapper (see the header note): the tree root's
-          // children must stay treeitem/group-shaped while the warn text
-          // remains announced.
           <div role="presentation">
             <p className="text-xs text-statusWarn" style={indent}>
               {blockedMessage ?? t("folders.emptySelectionBlocked")}
@@ -551,22 +458,15 @@ export function SelectionTree({
           </div>
         )}
         {spec.depth === 0 && rootExcl.length > 0 && (
-          // Reviewable exclusions (D-03/D-04): a per-root disclosure listing
-          // the remembered exclusions as relative paths. Presentation-wrapped
-          // like every notice row (the tree's structural contract), rendered
-          // for ACTIVE and DORMANT roots identically — the root checkbox
-          // above distinguishes them, and a deselected root's memory is
-          // never hidden. Nothing here mutates state: selection flows only
-          // through the tree's one toggle pipeline (T-02-10).
+          // The root's remembered exclusions as relative paths, read-only,
+          // shown whether or not the root is selected.
           <div role="presentation">
             <button
               type="button"
               aria-expanded={exclOpen.has(spec.path)}
               aria-controls={exclListId}
               onClick={() => toggleExclusions(spec.path)}
-              // A normal tabbable control outside the roving set (retry-
-              // Button precedent); the keydown target guard keeps its own
-              // Space/Enter semantics.
+              // Tabbable on its own, outside the roving tabindex.
               className="flex w-full items-center gap-2 py-1 text-start text-xs text-carbon-textMuted"
               style={{ paddingInlineStart: 16 }}
             >
@@ -581,12 +481,9 @@ export function SelectionTree({
                   <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
                 </svg>
               </span>
-              {t("folders.exclusions").replace("{n}", String(rootExcl.length))}
+              {t("folders.exclusions", rootExcl.length)}
             </button>
             {exclOpen.has(spec.path) && (
-              // Non-interactive audit rows: relative paths, mono ltr
-              // break-all with a title (house long-path pattern), muted,
-              // lexically sorted, no controls, not focusable.
               <ul id={exclListId}>
                 {rootExcl.map((rel) => (
                   <li
@@ -606,9 +503,6 @@ export function SelectionTree({
         {expanded && spec.expandable && (
           <div role="group" className="flex flex-col">
             {kids.map(renderSpec)}
-            {/* Each notice row below rides in a role="presentation" wrapper
-                (header note, review WR-01): group children stay
-                treeitem/group-shaped, the notice text stays announced. */}
             {listing && listing.status === "loading" && (
               <div role="presentation">
                 <div
@@ -658,29 +552,11 @@ export function SelectionTree({
           </div>
         )}
         {spec.depth === 0 && excludeCaches !== undefined && onToggleCaches !== undefined && (
-          // CACHEDIR.TAG sub-row (D-06, RESTIC-01): one switch per ROOT —
-          // mounts and standalone customs alike, regardless of expand state —
-          // in the same presentation-wrapped shape as the blocked warn line
-          // (the tree root's children stay treeitem/group-shaped). The
-          // switch carries hideLabel because the CALLER draws the visible
-          // label right beside it: Toggle's internal caption span is text-sm
-          // and would break the tree's 12px register (the sanctioned
-          // caller-drawn-label case from Toggle's own contract). The
-          // InfoBubble discloses the item-wide scope — the flag applies to
-          // the whole backup, not only this folder. glim-shake rides the row
-          // wrapper, replayed by the keyed nonce remount above; unreachable
-          // mounts cannot back up, so their switch disables. indent 16 / py-1
-          // match the exclusions disclosure's sub-row rhythm.
-          //
-          // The row renders AFTER the expanded children group, not between
-          // the root and its first child (UAT finding 2026-09-10): indent 16
-          // is exactly the depth-1 child indent, so a switch wedged above an
-          // expanded subtree read as that subtree's first subfolder. Below
-          // the group the root and its subfolders stay one contiguous visual
-          // block and the control reads as the root's affordance; a collapsed
-          // root still carries it directly beneath (no group renders). DOM
-          // order follows the same rule, so Tab reaches the switch after the
-          // subtree — one position, no roving-tabindex interaction.
+          // One CACHEDIR.TAG switch per root. The label is drawn here because
+          // Toggle's own caption is text-sm, too large for the tree, and the
+          // InfoBubble says the flag applies to the whole backup. The row
+          // comes after the expanded children: at this indent, placed above
+          // them it reads as the first subfolder.
           <div role="presentation">
             <div
               className={`flex items-center gap-2 py-1${shakeCounts?.[spec.path] ? " glim-shake" : ""}`}

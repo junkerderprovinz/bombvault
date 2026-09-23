@@ -8,32 +8,27 @@ import (
 	"time"
 )
 
-// ErrEmptyFleetPeer is returned when a fleet peer has no URL. A peer with an
-// empty URL addresses nowhere and could never be polled, so it is rejected at
-// the store boundary (mirrors ErrEmptyReceivedRepo).
+// ErrEmptyFleetPeer is returned for a fleet peer without a URL, which could
+// never be polled.
 var ErrEmptyFleetPeer = errors.New("fleet peer URL must not be empty")
 
-// FleetPeer is another BombVault instance this box polls, read-only, for its
-// protection status (the Fleet view). It carries the peer's base URL plus the
-// PEER's own fleet_token — the credential this instance presents when it polls
-// that peer's GET /api/fleet/status — stored ENCRYPTED at rest in TokenEnc
-// (internal/secret) and only ever decrypted in-engine, never by the store and
-// never logged. LastPoll* caches the peer's most recent response so the Fleet
-// page can render without a live round-trip on every load.
+// FleetPeer is another BombVault instance this one polls, read-only, for its
+// protection status (the Fleet view). The LastPoll fields cache the peer's
+// latest response so the Fleet page renders without a live round-trip.
 type FleetPeer struct {
 	ID   string
 	Name string
 	URL  string
-	// TokenEnc is the PEER's fleet token, AES-256-GCM encrypted at rest via
-	// internal/secret. The store only ever persists/returns the ciphertext; only
-	// the poller decrypts it (with this instance's APP_KEY) to authenticate the
-	// outbound request. Never logged, never returned in the clear.
+	// TokenEnc is the peer's fleet token, which this instance presents to the
+	// peer's GET /api/fleet/status. It is encrypted with this instance's
+	// APP_KEY (internal/secret); the store only handles the ciphertext and the
+	// poller decrypts it for the outbound request. It is never logged or
+	// returned in the clear.
 	TokenEnc []byte
 	Enabled  bool
 	// LastPollAt is the Unix time of the last poll attempt (0 = never polled).
 	LastPollAt int64
-	// LastPollOK is the last poll's verdict. Valid=false means never polled yet
-	// (the column is nullable).
+	// LastPollOK is the last poll's verdict. Valid=false means never polled.
 	LastPollOK sql.NullBool
 	// LastPollError is the last poll's scrubbed error ('' on success/never).
 	LastPollError string
@@ -41,8 +36,8 @@ type FleetPeer struct {
 	LastPollInstanceName string
 	// LastPollVersion is the peer's reported BombVault version.
 	LastPollVersion string
-	// LastPollDomainsJSON caches the peer's DomainStatusEntry[] response verbatim
-	// (already-serialized JSON) — the store treats it as an opaque string.
+	// LastPollDomainsJSON is the peer's DomainStatusEntry[] response as
+	// received. The store treats it as an opaque string.
 	LastPollDomainsJSON string
 	CreatedAt           int64
 	SortOrder           int
@@ -51,9 +46,9 @@ type FleetPeer struct {
 const fleetPeerCols = `id, name, url, token_enc, enabled, last_poll_at, last_poll_ok, last_poll_error,
 	last_poll_instance_name, last_poll_version, last_poll_domains_json, created_at, sort_order`
 
-// CreateFleetPeer inserts a new fleet peer. An empty ID is assigned via
-// newID(); CreatedAt is stamped now when 0. Returns the stored row (with the
-// assigned id/timestamp). The peer URL must not be empty.
+// CreateFleetPeer inserts a new fleet peer and returns the stored row. An
+// empty ID is assigned via newID() and a zero CreatedAt is set to now. The
+// peer URL must not be empty.
 func (r *Repo) CreateFleetPeer(p FleetPeer) (FleetPeer, error) {
 	if strings.TrimSpace(p.URL) == "" {
 		return FleetPeer{}, ErrEmptyFleetPeer
@@ -65,7 +60,7 @@ func (r *Repo) CreateFleetPeer(p FleetPeer) (FleetPeer, error) {
 		p.CreatedAt = time.Now().Unix()
 	}
 	if p.TokenEnc == nil {
-		p.TokenEnc = []byte{} // NOT NULL blob: bind an empty blob, never SQL NULL
+		p.TokenEnc = []byte{} // token_enc is not nullable, and a nil slice binds as NULL
 	}
 	_, err := r.db.Exec(`
 		INSERT INTO fleet_peers (`+fleetPeerCols+`)
@@ -81,13 +76,13 @@ func (r *Repo) CreateFleetPeer(p FleetPeer) (FleetPeer, error) {
 
 // UpdateFleetPeer updates the fleet peer identified by p.ID in place. The peer
 // URL must not be empty. Updating a missing id affects no rows and is not an
-// error (mirrors the received-repo/offsite conventions).
+// error.
 func (r *Repo) UpdateFleetPeer(p FleetPeer) error {
 	if strings.TrimSpace(p.URL) == "" {
 		return ErrEmptyFleetPeer
 	}
 	if p.TokenEnc == nil {
-		p.TokenEnc = []byte{} // NOT NULL blob: bind an empty blob, never SQL NULL
+		p.TokenEnc = []byte{} // token_enc is not nullable, and a nil slice binds as NULL
 	}
 	_, err := r.db.Exec(`
 		UPDATE fleet_peers SET
@@ -105,11 +100,10 @@ func (r *Repo) UpdateFleetPeer(p FleetPeer) error {
 	return nil
 }
 
-// UpdateFleetPeerPollResult writes ONLY the last-poll columns for the peer with
-// the given id, leaving name/url/token_enc/enabled untouched. The scheduled
-// fleet poll and the manual poll-now endpoint use it to persist a result
-// without a read-modify-write of the whole row. Updating a missing id affects
-// no rows and is not an error.
+// UpdateFleetPeerPollResult writes only the last-poll columns of the peer with
+// the given id, so the scheduled poll and the poll-now endpoint can store a
+// result without rewriting the whole row. Updating a missing id affects no
+// rows and is not an error.
 func (r *Repo) UpdateFleetPeerPollResult(id string, at int64, ok sql.NullBool, pollErr, instanceName, version, domainsJSON string) error {
 	_, err := r.db.Exec(`
 		UPDATE fleet_peers SET
@@ -128,8 +122,8 @@ func (r *Repo) UpdateFleetPeerPollResult(id string, at int64, ok sql.NullBool, p
 	return nil
 }
 
-// ListFleetPeers returns all fleet peers ordered by sort_order then created_at
-// (a stable display order).
+// ListFleetPeers returns all fleet peers ordered by sort_order, then
+// created_at.
 func (r *Repo) ListFleetPeers() ([]FleetPeer, error) {
 	rows, err := r.db.Query(`SELECT ` + fleetPeerCols + ` FROM fleet_peers ORDER BY sort_order, created_at`)
 	if err != nil {

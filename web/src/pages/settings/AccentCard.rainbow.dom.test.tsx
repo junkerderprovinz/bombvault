@@ -1,20 +1,7 @@
 // @vitest-environment jsdom
-/**
- * The accent row while rainbow mode owns the colours (jdp, 2026-09-08: "wenn
- * man den regenbogen modus aktiviert, sollen die akzentfarben abgedunkelt und
- * 'deaktiviert' werden").
- *
- * Three things have to hold together, and the third is the one that makes the
- * other two honest: the row is dimmed, it cannot be operated, and it SAYS why.
- * A dimmed row with no sentence is indistinguishable from a broken row, and the
- * switch that caused it sits below rather than above.
- *
- * Not asserted here, deliberately: that the accent has no effect anywhere.
- * It still does — `[data-rainbow] .glim-hue` overrides --accent only on
- * elements carrying a palette position, and a handful never got one. That gap
- * is a pass of its own; this file pins the control's behaviour, not a claim
- * about the whole stylesheet.
- */
+// While rainbow mode owns the colours, the accent row is dimmed, cannot be
+// operated, and says why. A dimmed row without a reason looks broken, and the
+// switch that caused it sits further down the page.
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
@@ -38,19 +25,13 @@ describe("AccentCard under rainbow mode", () => {
 
   it("explains itself while rainbow is on, in a bubble rather than a line", () => {
     const { container } = draw(true);
-    // jdp, 2026-09-10: "soll bitte nicht in eine neue Zeile sondern in eine i
-    // infobubble die nur erscheint wenn der rainbowmode aktiviert ist".
     expect(screen.getByLabelText("settings.accentRainbowHint")).toBeTruthy();
-    // And the half that keeps it a bubble: the sentence may not ALSO stand in
-    // the card as its own text. Without this the test passes for a call site
-    // that renders both.
+    // Without this the test would pass for a card that renders both.
     expect(container.textContent).not.toContain("settings.accentRainbowHint");
   });
 
   it("keeps the explanation readable while the row it explains is dimmed", () => {
-    // The reason a greyed-out control is greyed out may not be greyed out with
-    // it. Opacity applies to a whole subtree and a child cannot be less
-    // transparent than its parent, so this holds only as long as the dimming
+    // Opacity applies to a whole subtree, so this holds only while the dimming
     // sits on the label and the swatch group rather than on the row that also
     // carries the bubble.
     draw(true);
@@ -82,16 +63,13 @@ describe("AccentCard under rainbow mode", () => {
     expect(container.querySelectorAll('[aria-disabled="true"]').length).toBe(0);
   });
 
-  it("disables the reset badge too, even when there IS something to reset", () => {
-    // The seed matters, and without it this test is blind: on a fresh store the
-    // accent is already the default, so `nothingToReset` disables the badge on
-    // its own and the assertion would pass whatever rainbowOn does. Drifting
-    // the accent first is what makes rainbow mode the only reason it is off.
+  it("disables the reset badge even when there is something to reset", () => {
+    // On a fresh store the badge is already disabled because there is nothing
+    // to reset, and the assertion would pass whatever rainbowOn does.
     setAccent("#00ffcc");
     expect(getAccent().toLowerCase()).not.toBe(DEFAULT_ACCENT.toLowerCase());
 
     const { unmount } = draw(false);
-    // Proof the seed reached the control: with rainbow off it is live.
     expect(screen.getByRole("button", { name: /accentReset/i })).toHaveProperty("disabled", false);
     unmount();
 

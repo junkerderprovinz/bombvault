@@ -7,9 +7,6 @@ import (
 	"testing"
 )
 
-// TestRedactErrStripsSecretURL pins the secret-leak fix: a *url.Error carrying a
-// webhook/Healthchecks URL (token in the path) must not survive into the logged
-// message, while the underlying cause is kept.
 func TestRedactErrStripsSecretURL(t *testing.T) {
 	secret := "SUPERSECRET-TOKEN"
 	ue := &url.Error{
@@ -26,7 +23,6 @@ func TestRedactErrStripsSecretURL(t *testing.T) {
 	}
 }
 
-// TestRedactErrPassesThroughPlainError leaves a non-url error untouched.
 func TestRedactErrPassesThroughPlainError(t *testing.T) {
 	err := errors.New("boom")
 	if got := redactErr(err); got.Error() != "boom" {
@@ -34,9 +30,6 @@ func TestRedactErrPassesThroughPlainError(t *testing.T) {
 	}
 }
 
-// TestBuildSMTPMessage pins the email composition: Subject is the event title,
-// the body is the event message, the From/To headers carry the configured
-// addresses, and CRLF line endings separate header from body.
 func TestBuildSMTPMessage(t *testing.T) {
 	cfg := Config{SMTPFrom: "bombvault@example.com", SMTPTo: "admin@example.com"}
 	ev := Event{Title: "BombVault", Message: "Backup of container \"plex\" succeeded.", OK: true}
@@ -55,7 +48,6 @@ func TestBuildSMTPMessage(t *testing.T) {
 	}
 }
 
-// TestSplitRecipients splits comma/semicolon lists and drops blanks.
 func TestSplitRecipients(t *testing.T) {
 	got := splitRecipients(" a@x.com ,b@x.com; ;c@x.com ")
 	want := []string{"a@x.com", "b@x.com", "c@x.com"}
@@ -69,9 +61,6 @@ func TestSplitRecipients(t *testing.T) {
 	}
 }
 
-// TestHealthchecksURLFor pins the per-domain resolver: a domain with a non-empty
-// entry uses that URL; a blank entry, an absent domain, or a nil map all fall back
-// to the global HealthchecksURL.
 func TestHealthchecksURLFor(t *testing.T) {
 	c := Config{
 		HealthchecksURL:      "https://hc/global",
@@ -90,8 +79,7 @@ func TestHealthchecksURLFor(t *testing.T) {
 	if got := nilMap.healthchecksURLFor("flash"); got != "https://hc/global" {
 		t.Fatalf("nil map should fall back to global, got %q", got)
 	}
-	// The off-site/tamper notifiers use the plural "containers"/"vms"; they must
-	// normalize to the same per-domain check as the "container"/"VM" backup pings.
+	// The off-site and tamper notifiers use the plural spellings.
 	norm := Config{HealthchecksByDomain: map[string]string{"container": "https://hc/ct", "VM": "https://hc/vm"}}
 	if got := norm.healthchecksURLFor("containers"); got != "https://hc/ct" {
 		t.Fatalf("containers should normalize to the container check, got %q", got)
@@ -101,7 +89,6 @@ func TestHealthchecksURLFor(t *testing.T) {
 	}
 }
 
-// TestSMTPReadyGating: smtpReady only fires when enabled AND host/from/to are set.
 func TestSMTPReadyGating(t *testing.T) {
 	if (Config{SMTPHost: "smtp.x.com", SMTPFrom: "a@x.com", SMTPTo: "b@x.com"}).smtpReady() {
 		t.Fatal("smtpReady must be false when SMTPEnabled is false")
@@ -114,8 +101,6 @@ func TestSMTPReadyGating(t *testing.T) {
 	}
 }
 
-// TestWebhookReadyGating: webhookReady only fires when enabled AND a URL is set —
-// same shape as TestSMTPReadyGating above.
 func TestWebhookReadyGating(t *testing.T) {
 	if (Config{WebhookURL: "https://example.com/hook"}).webhookReady() {
 		t.Fatal("webhookReady must be false when WebhookEnabled is false")
@@ -128,8 +113,6 @@ func TestWebhookReadyGating(t *testing.T) {
 	}
 }
 
-// TestMatrixReadyGating: matrixReady only fires when enabled AND
-// homeserver/token/room are all set — same shape as TestSMTPReadyGating above.
 func TestMatrixReadyGating(t *testing.T) {
 	if (Config{MatrixHomeserver: "https://m.example", MatrixToken: "tok", MatrixRoom: "!r:x"}).matrixReady() {
 		t.Fatal("matrixReady must be false when MatrixEnabled is false")
@@ -142,8 +125,6 @@ func TestMatrixReadyGating(t *testing.T) {
 	}
 }
 
-// TestAppriseReadyGating: appriseReady only fires when enabled AND a URL is set —
-// same shape as TestSMTPReadyGating above.
 func TestAppriseReadyGating(t *testing.T) {
 	if (Config{AppriseURL: "https://apprise.example/notify/key"}).appriseReady() {
 		t.Fatal("appriseReady must be false when AppriseEnabled is false")

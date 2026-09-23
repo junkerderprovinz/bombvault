@@ -1,7 +1,5 @@
-// Package spike implements host-integration probes. Each probe is a function
-// that returns a human-readable detail string and an error. Probes are
-// dependency-injected so the package is fully unit-testable without a real
-// Docker socket or restic binary.
+// Package spike runs host-integration probes. Probes are plain functions over
+// Deps, so tests can inject stubs instead of a Docker socket or restic binary.
 package spike
 
 import (
@@ -22,43 +20,35 @@ type Check struct {
 	Name       string
 	OK         bool
 	Detail     string
-	BestEffort bool // true when this probe does not gate AllOK
+	BestEffort bool // does not count against Run's allOK
 }
 
-// ProbeFn is a probe implementation. It receives the shared Deps and returns a
-// human-readable detail (shown on success or failure) and an error that marks
-// the probe as failed when non-nil.
+// ProbeFn runs one probe. It returns a detail line for the report, or an error
+// that marks the probe as failed.
 type ProbeFn func(deps Deps) (detail string, err error)
 
 // Probe pairs a display name with its implementation.
 type Probe struct {
 	Name string
 	Fn   ProbeFn
-	// BestEffort marks optional probes (e.g. libvirt, qemu-img, rclone) that
-	// are reported but do NOT count against AllOK when they fail. Only the
-	// gating probes (docker, restic, path-writable) gate AllOK.
+	// BestEffort probes are reported but do not count against allOK when they
+	// fail.
 	BestEffort bool
 }
 
-// Deps carries the shared dependencies that real probes use. All fields are
-// optional so the zero value is safe for unit tests that inject stub probes.
+// Deps carries what the real probes need. The zero value works for tests that
+// inject stub probes.
 type Deps struct {
-	// Docker is used by the docker-reachable probe. May be nil in tests.
 	Docker dockercli.Docker
-	// ContainerPath is the resolved absolute backup path for the path-writable
-	// probe. May be empty; the probe skips the write if it is.
+	// ContainerPath is the container backup path. Empty skips the path probe.
 	ContainerPath string
-	// LibvirtTest checks that libvirt is reachable over SSH (qemu+ssh). nil when
-	// SSH is not wired; the libvirt probe then reports "not configured".
+	// LibvirtTest checks libvirt over SSH (qemu+ssh). It is nil until SSH is
+	// set up.
 	LibvirtTest func() error
 }
 
-// Run executes each probe in order, collects results, and returns them along
-// with an overall AllOK flag. Panics inside a probe are caught and converted
-// into a failed check — Run itself never panics.
-//
-// A failing best-effort probe is included in checks with OK=false but does NOT
-// lower AllOK. Only gating probes (BestEffort=false) affect AllOK.
+// Run executes the probes in order. A panicking probe becomes a failed check.
+// allOK is false when any probe that is not BestEffort failed.
 func Run(deps Deps, probes []Probe) (checks []Check, allOK bool) {
 	allOK = true
 	checks = make([]Check, 0, len(probes))
@@ -73,7 +63,6 @@ func Run(deps Deps, probes []Probe) (checks []Check, allOK bool) {
 	return checks, allOK
 }
 
-// runProbe executes a single probe, catching any panic.
 func runProbe(deps Deps, p Probe) (c Check) {
 	c.Name = p.Name
 	c.BestEffort = p.BestEffort
@@ -96,21 +85,9 @@ func runProbe(deps Deps, p Probe) (c Check) {
 	return c
 }
 
-// ---------------------------------------------------------------------------
-// Default probes
-// ---------------------------------------------------------------------------
-
-// DefaultProbes returns the standard set of host-integration probes used in
-// production. Each probe is independently injectable in tests via Run.
-//
-// Gating probes (BestEffort=false) — their failure lowers AllOK:
-//   - docker reachable
-//   - restic ≥0.17
-//   - path-writable
-//
-// Best-effort probes (BestEffort=true) — reported but do not gate AllOK; they
-// are needed only for later VM/Flash phases, not Phase-1 container backup:
-//   - qemu-img, rclone, libvirt
+// DefaultProbes returns the probes used in production. docker, restic and
+// path-writable gate allOK. qemu-img, rclone and libvirt are only needed for VM
+// and flash backups, so they are best-effort.
 func DefaultProbes() []Probe {
 	return []Probe{
 		{Name: "docker", Fn: probeDocker},
@@ -134,10 +111,9 @@ func probeDocker(deps Deps) (string, error) {
 	return fmt.Sprintf("reachable (%d containers)", len(containers)), nil
 }
 
-// resticMinVersion is the minimum acceptable restic version.
 var resticVersionRe = regexp.MustCompile(`restic\s+(\d+)\.(\d+)`)
 
-// probeRestic verifies that restic is on PATH and is version ≥0.17.
+// probeRestic checks that restic is on PATH and at least version 0.17.
 func probeRestic(deps Deps) (string, error) {
 	//nolint:gosec // G204: restic is a known binary, no user input in args
 	out, err := exec.Command("restic", "version").CombinedOutput()
@@ -149,7 +125,7 @@ func probeRestic(deps Deps) (string, error) {
 	if m == nil {
 		return "", fmt.Errorf("could not parse restic version from: %q", version)
 	}
-	// m[1]/m[2] are guaranteed to be digit-only by the regex above.
+	// The regex only matches digits, so Atoi cannot fail.
 	major, _ := strconv.Atoi(m[1])
 	minor, _ := strconv.Atoi(m[2])
 	if major == 0 && minor < 17 {
@@ -187,11 +163,10 @@ func probeRclone(_ Deps) (string, error) {
 	return first, nil
 }
 
-// probePathWritable verifies the chosen container backup path is writable WITHOUT
-// creating it. On Unraid a new top-level dir under /mnt/user becomes a share the
-// user then can't easily delete, so the spike must never create the backup folder
-// at startup — it is created lazily on the first real backup instead. We probe the
-// nearest already-existing ancestor (e.g. the mount root) for writability.
+// probePathWritable checks that the container backup path is writable without
+// creating it. On Unraid a new top-level directory under /mnt/user becomes a
+// share the user cannot easily delete, so the folder is left to the first
+// backup and the probe tests the nearest existing ancestor instead.
 func probePathWritable(deps Deps) (string, error) {
 	p := deps.ContainerPath
 	if p == "" {
@@ -199,9 +174,8 @@ func probePathWritable(deps Deps) (string, error) {
 	}
 	// A remote (rclone/SFTP) repo has no local dir to probe.
 	if strings.Contains(p, ":") && !filepath.IsAbs(p) {
-		return fmt.Sprintf("remote repo (%s) — not probed", p), nil
+		return fmt.Sprintf("remote repo (%s), not probed", p), nil
 	}
-	// Walk up to the first existing directory; never create anything.
 	dir := filepath.Clean(p)
 	for {
 		if _, err := os.Stat(dir); err == nil {
@@ -228,10 +202,8 @@ func probePathWritable(deps Deps) (string, error) {
 }
 
 // probeLibvirt checks that libvirt is reachable over SSH (qemu+ssh). VM backup
-// uses NO local libvirt mount, so there is no socket file to look for — the
-// check is the SSH connection itself (best-effort; not gating). "not configured"
-// means the SSH public key has not been authorized on the host yet (Settings →
-// VM Backup over SSH).
+// has no local libvirt socket, so the SSH connection is the check. Without an
+// authorized SSH key it reports "not configured".
 func probeLibvirt(d Deps) (string, error) {
 	if d.LibvirtTest == nil {
 		return "", fmt.Errorf("VM backup over SSH not configured: authorize the key in Settings → VM Backup over SSH")

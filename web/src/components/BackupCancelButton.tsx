@@ -1,23 +1,10 @@
-// ---------------------------------------------------------------------------
-// BackupCancelButton — stop a backup that is running (#200).
+// Stops a running backup. Unlike RestoreCancelButton it confirms in the normal
+// tone: restic writes the snapshot last, so an aborted backup leaves only
+// unreferenced data for the next prune and nothing on the host changes.
 //
-// The counterpart of RestoreCancelButton, and deliberately a much quieter
-// control, because the two actions are not comparable. Cancelling a RESTORE
-// leaves a container gone and its appdata half-written, which is why that
-// button opens a red confirmation naming what will be broken. Cancelling a
-// BACKUP breaks nothing: restic writes its snapshot as the last act of a run,
-// so an aborted backup leaves unreferenced data and no snapshot, and the next
-// prune collects it. Nothing on the host is touched at all.
-//
-// So this asks once, in the light tone, and only because a long backup that
-// somebody stops by accident is an hour of somebody's evening rather than a
-// disaster. It does NOT borrow the restore's fault-red dialog.
-//
-// It POSTs the backup's exact progress key ("files:<name>", "container:<name>",
-// "vm:<name>", "flash", "config"). A key that is no longer running answers
-// cancelled:false and nothing happens, so the button in a browser tab that has
-// not caught up cannot produce an error.
-// ---------------------------------------------------------------------------
+// It posts the backup's progress key ("files:<name>", "container:<name>",
+// "vm:<name>", "flash", "config"). A key whose backup has finished answers
+// cancelled:false, so a stale tab cannot cause an error.
 
 import { useState } from "react";
 import { cancelBackup } from "../lib/api";
@@ -53,9 +40,8 @@ export function BackupCancelButton({
       await cancelBackup(cancelKey);
       onCancelled?.();
     } catch {
-      // A failed POST leaves the backup running, which is the safe outcome:
-      // the button stays available and the run row remains the source of
-      // truth for what actually happened.
+      // The backup keeps running and the button stays usable; the run row
+      // shows what happened.
     } finally {
       setCancelling(false);
     }

@@ -14,31 +14,18 @@ import (
 // force-kills the process and returns, so a wedged restic can't hang the caller.
 const resticWaitDelay = 10 * time.Second
 
-// configureProcGroup makes a restic exec.Cmd killable as a whole process group.
-// restic spawns an rclone child for cloud backends; without a process group, ctx
-// cancel/timeout kills only the direct restic child and the rclone grandchild
-// (and restic's lock refresh) can linger. Setpgid puts restic in its own group;
-// Cancel SIGTERMs the whole group (-pid). WaitDelay bounds how long Wait gives
-// it to exit on its own before Go SIGKILLs restic itself; that kill reaches
-// only the leader, not the rest of the group.
+// configureProcGroup puts restic in its own process group, so cancelling also
+// stops the rclone child it starts for cloud backends. Cancel sends SIGTERM to
+// the whole group; after WaitDelay Go falls back to SIGKILL, which reaches only
+// restic itself.
 //
-// SIGTERM, not SIGKILL, matters: restic treats SIGTERM/SIGINT as a clean-abort
-// request — it stops starting new uploads and exits WITHOUT writing the final
-// snapshot object, so an interrupted backup simply produces no snapshot rather
-// than a broken one. SIGKILL skips that handler entirely. Root-caused live
-// 2026-08-12 against a real damaged containers repo (dozens of snapshots with
-// trees referencing blobs "not found in repository"/"not found in index"):
-// BombVault's own container got restarted (a routine image update) while a
-// catch-up backup batch was mid-upload; the in-flight restic process was
-// SIGKILLed via this exact code path, and a later automatic prune correctly
-// swept up the resulting orphaned pack data — but the killed snapshot's tree
-// metadata had already been written and still referenced it. `restic repair
-// snapshots --forget` recovered the repo (67 clean snapshots survived across
-// 42 containers); this is the fix for the corruption happening again.
+// On SIGTERM restic stops uploading and exits without writing the snapshot, so
+// an interrupted backup leaves no snapshot rather than a broken one. A SIGKILL
+// at the wrong moment can leave a snapshot whose trees reference blobs that
+// never reached the repository.
 //
-// Honest limit: a process stuck in uninterruptible I/O on a truly dead mount
-// (NFS/SMB) cannot be reaped even by SIGKILL — that needs separate mount-health
-// detection. This handles the common hangs and the rclone grandchild.
+// A process stuck in uninterruptible I/O on a dead NFS or SMB mount survives
+// even SIGKILL.
 func configureProcGroup(cmd *exec.Cmd) {
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Cancel = func() error {

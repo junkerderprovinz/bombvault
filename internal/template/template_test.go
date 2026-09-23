@@ -14,7 +14,6 @@ func TestFileName(t *testing.T) {
 	if got := template.FileName("Plex"); got != "my-Plex.xml" {
 		t.Fatalf("FileName = %q want my-Plex.xml", got)
 	}
-	// Casing must be preserved verbatim.
 	if got := template.FileName("nginx-Proxy"); got != "my-nginx-Proxy.xml" {
 		t.Fatalf("FileName = %q want my-nginx-Proxy.xml", got)
 	}
@@ -34,13 +33,10 @@ func TestReadAbsent(t *testing.T) {
 	}
 }
 
-// TestReadReturnsRealError verifies a real I/O error (not a missing file) is
-// surfaced rather than swallowed as "absent". Here the expected file path is
-// actually a directory, so os.ReadFile fails with something other than
-// fs.ErrNotExist.
+// A directory in place of the template file makes os.ReadFile fail with an
+// error other than fs.ErrNotExist.
 func TestReadReturnsRealError(t *testing.T) {
 	dir := t.TempDir()
-	// Create a directory at the exact path Read will try to open.
 	clash := filepath.Join(dir, template.FileName("App"))
 	if err := os.Mkdir(clash, 0o750); err != nil {
 		t.Fatalf("setup mkdir: %v", err)

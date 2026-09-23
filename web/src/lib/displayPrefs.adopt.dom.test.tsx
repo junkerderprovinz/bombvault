@@ -1,23 +1,7 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// The half of #191 that survived the first fix.
-//
-// The look lives on the server, and a browser whose data was cleared picks it
-// up a moment after boot. Six of the eight axes are attributes on the document
-// element and can simply be applied again. The other two — the language and the
-// advanced view — are React state, read ONCE when their provider mounts, and
-// the old code bridged that with a `location.reload()`.
-//
-// A reload can be suppressed. A session-scoped guard existed to stop a reload
-// loop, and it did that by refusing every reload after the first in the same
-// tab, which is exactly what a restored tab (or a tab left open while its site
-// data was cleared) presents. The values landed in localStorage, the page did
-// not reload, and it sat there in English on a white background with the
-// correct settings already stored: "all gone!", reported a second time.
-//
-// These pin the replacement: both providers follow the adopted values in place,
-// with no reload anywhere. Each fails without its own listener.
-// ---------------------------------------------------------------------------
+// The language and the advanced view are React state read once when their
+// provider mounts, so both providers have to follow values adopted from the
+// server in place, without a reload.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { ADOPTED_EVENT } from "./displayPrefs";
@@ -42,7 +26,7 @@ afterEach(cleanup);
 
 describe("adopting the server's look in a page that already booted", () => {
   it("switches the advanced view without a reload", () => {
-    // Mounted from an empty browser: the simple view, like a cleared Firefox.
+    // An empty browser mounts the simple view.
     render(
       <AdvancedProvider>
         <AdvancedProbe />
@@ -83,8 +67,8 @@ describe("adopting the server's look in a page that already booted", () => {
   });
 
   it("does not echo an adopted language back to the server", async () => {
-    // adopt() must not persist: the value came FROM the server, and saving it
-    // again would be a write nobody asked for on every boot of every browser.
+    // The value came from the server, so saving it would be a pointless write
+    // on every boot.
     const calls: string[] = [];
     const realFetch = globalThis.fetch;
     globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {

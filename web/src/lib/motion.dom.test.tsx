@@ -1,26 +1,4 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// GlimStone motion-engine persistence. `.dom.test.tsx` mirrors shape.dom.
-// test.tsx's own naming convention for the jsdom opt-in exception (this file
-// renders no JSX either — it only needs jsdom for `document`/`localStorage`,
-// both of which vitest's jsdom environment provides via the per-file
-// `// @vitest-environment jsdom` docblock).
-//
-// Covers the full round-trip: applyMotionIntensity's validate-or-default-to-
-// "subtle" contract, getMotionIntensity's read-back of a stored value
-// (falling back to "subtle" on nothing-stored/corrupt/invalid), and
-// setMotionIntensity's persist-then-apply behavior — the identical shape of
-// coverage shape.dom.test.tsx already has for its own sibling appearance
-// setting.
-//
-// The default moved from "wild" to "subtle" (#228). "wild" tilts the whole
-// route wrapper 1.2deg, scales it to .96 and travels 18px while the cards
-// inside stagger in on their own, and a reporter on Firefox/macOS read that
-// as the page trembling before it settled — with a green flash on top, since
-// the nested transforms each get their own compositing layer. Nobody had
-// chosen that: it was simply what shipped. "wild" stays one of the three
-// offered levels, it just is not the one you get without asking.
-// ---------------------------------------------------------------------------
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   MOTION_INTENSITIES,
@@ -60,7 +38,7 @@ describe("applyMotionIntensity", () => {
     expect(document.documentElement.getAttribute("data-motion")).toBe("subtle");
   });
 
-  it('defaults to "subtle" for an invalid/unknown string', () => {
+  it('defaults to "subtle" for an unknown string', () => {
     applyMotionIntensity("turbo");
     expect(document.documentElement.getAttribute("data-motion")).toBe("subtle");
   });
@@ -76,23 +54,13 @@ describe("getMotionIntensity", () => {
     expect(getMotionIntensity()).toBe("subtle");
   });
 
-  it('falls back to "subtle" for a corrupt/invalid stored value', () => {
+  it('falls back to "subtle" for an invalid stored value', () => {
     localStorage.setItem(STORAGE_KEY, "not-a-motion-level");
     expect(getMotionIntensity()).toBe("subtle");
   });
 
-  // WHY THE MIGRATION EXISTS NOW, and why it did not before. "full" was this
-  // level's name before GSS 2.0.0 and is not one of the four, so a value
-  // stored by an older visit fails validation and takes the default. While
-  // the default WAS "wild", that landed on the same level under its new
-  // name and a migration would have been a no-op - which is exactly what
-  // the comment here used to say.
-  //
-  // Moving the default to "subtle" (#228) broke that coincidence. Without a
-  // migration, somebody who had deliberately picked the strong level before
-  // 2.0.0 would silently be moved down to a weaker one, and "we changed the
-  // default" would have quietly become "we changed your choice". The two are
-  // different promises, and only the first one was made.
+  // "full" is the pre-2.0.0 name of "wild". Falling back to the default would
+  // move someone who chose the strong level down to "subtle".
   it('migrates a pre-2.0.0 stored "full" to "wild" rather than dropping it to the default', () => {
     localStorage.setItem(STORAGE_KEY, "full");
     expect(getMotionIntensity()).toBe("wild");
@@ -100,21 +68,16 @@ describe("getMotionIntensity", () => {
     expect(document.documentElement.getAttribute("data-motion")).toBe("wild");
   });
 
-  // The migration reads, it does not rewrite: getMotionIntensity is called on
-  // every boot and a setter that writes from a getter turns one stale key into
-  // a write on every page load. setMotionIntensity is what persists.
+  // getMotionIntensity runs on every boot, so writing from it would turn one
+  // stale key into a write on every page load.
   it("leaves the stored string alone while migrating it on read", () => {
     localStorage.setItem(STORAGE_KEY, "full");
     getMotionIntensity();
     expect(localStorage.getItem(STORAGE_KEY)).toBe("full");
   });
 
-  // The alias table is looked up by a string that came out of storage, and
-  // `key in obj` walks the prototype chain: "toString" and "constructor" are
-  // both "in" any object literal. Read through `in`, either one resolves to a
-  // FUNCTION that TypeScript then hands back as a MotionIntensity, and the
-  // boot code writes it straight onto data-motion. Only the table's own keys
-  // may answer.
+  // A lookup through the prototype chain would resolve "toString" to a
+  // function and write it onto data-motion.
   it("does not treat an inherited Object key as a legacy level", () => {
     for (const key of ["toString", "constructor", "hasOwnProperty", "__proto__"]) {
       localStorage.setItem(STORAGE_KEY, key);
@@ -122,12 +85,9 @@ describe("getMotionIntensity", () => {
     }
   });
 
-  // applyMotionIntensity documents itself as safe to hand a raw localStorage
-  // value, so it has to resolve the legacy spelling too. It did not while the
-  // alias table lived in the getter alone: the same string meant "wild" on one
-  // path and "subtle" on the other, and the differing path was the documented
-  // one.
-  it("resolves a legacy spelling on the apply path too, not only the getter", () => {
+  // applyMotionIntensity accepts raw localStorage values, so it has to agree
+  // with the getter on legacy spellings.
+  it("resolves a legacy spelling on the apply path too", () => {
     applyMotionIntensity("full");
     expect(document.documentElement.getAttribute("data-motion")).toBe("wild");
   });
@@ -141,7 +101,7 @@ describe("getMotionIntensity", () => {
 });
 
 describe("setMotionIntensity", () => {
-  it("persists the choice AND applies it to the document immediately", () => {
+  it("persists the choice and applies it immediately", () => {
     setMotionIntensity("off");
     expect(localStorage.getItem(STORAGE_KEY)).toBe("off");
     expect(document.documentElement.getAttribute("data-motion")).toBe("off");
@@ -165,15 +125,6 @@ describe("setMotionIntensity", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// GSS 1.17.0's hidden fourth level.
-//
-// Two things are easy to get wrong here and both are silent. A gesture that
-// counts clicks on the WRONG level turns an annoyed user into a surprised one;
-// and a stored "storm" rejected at boot turns the level into a flicker that
-// survives exactly until the next page load, which reads as the app forgetting
-// a setting rather than as a hidden one behaving correctly.
-// ---------------------------------------------------------------------------
 describe("the storm", () => {
   it("is not in the list a picker builds from", () => {
     expect(MOTION_INTENSITIES).not.toContain("storm");
@@ -187,7 +138,7 @@ describe("the storm", () => {
     expect(stormTap(state, "wild", "wild")).toBe("storm");
   });
 
-  it("starts over after it has opened, so a sixth click is not a seventh", () => {
+  it("resets the count once it opens", () => {
     const state = { taps: 0 };
     for (let i = 1; i < STORM_CLICKS; i += 1) stormTap(state, "wild", "wild");
     stormTap(state, "wild", "wild");
@@ -203,8 +154,7 @@ describe("the storm", () => {
     }
   });
 
-  // The count is about ONE level, held down. A click elsewhere in between is
-  // somebody browsing the picker rather than pressing the same button again.
+  // A click on another level in between is browsing the picker, not insisting.
   it("forgets the count when another level is clicked in between", () => {
     const state = { taps: 0 };
     stormTap(state, "wild", "wild");
@@ -216,9 +166,7 @@ describe("the storm", () => {
     expect(stormTap(state, "wild", "wild")).toBe("storm");
   });
 
-  // A hidden level that cannot survive a reload is not a level, it is a
-  // flicker: validating a stored value and populating a picker are two
-  // different questions.
+  // Validation accepts a level the picker does not offer.
   it("survives a reload even though no picker offers it", () => {
     setMotionIntensity("storm");
     expect(localStorage.getItem(STORAGE_KEY)).toBe("storm");

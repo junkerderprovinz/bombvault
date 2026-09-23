@@ -1,18 +1,10 @@
 package schedule
 
-// ---------------------------------------------------------------------------
-// NextRuns against an everyN cadence.
-//
-// An everyN cadence is a DAILY cron trigger plus a due-gate (ParseCadence
-// compiles "everyN N HH:MM" to a bare daily spec and carries N on the side), so
-// the cron entry's own Next is tomorrow on every one of the N-1 nights the gate
-// is going to close. NextRuns feeds the dashboard activity log's "up next" line,
-// which therefore promised a drill tomorrow when the real one was days out.
-//
-// These fire through the SAME registration path the scheduler uses in
-// production (ReloadWithDueChecks + the job-run store), so what is pinned is the
-// real chain, not a hand-built entry.
-// ---------------------------------------------------------------------------
+// ParseCadence compiles "everyN N HH:MM" to a daily cron spec and carries N on
+// the side, so the cron entry's own Next is tomorrow even on the N-1 nights the
+// due gate will close. NextRuns feeds the dashboard's "up next" line and has to
+// name the fire that will actually run. These tests register through
+// ReloadWithDueChecks and the job-run store, as the scheduler does.
 
 import (
 	"errors"
@@ -22,10 +14,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// everyNDrillScheduler registers the drills schedule on "everyN 7 03:00" with a
-// job-run store answering `last`, starts the cron runner (Entry.Next is only
-// computed once it is running) and returns the scheduler plus the drill's
-// reported next run.
+// everyNDrillScheduler registers the drills schedule on "everyN 7 03:00" with jr
+// as its job-run store, starts cron (Entry.Next is only computed while it runs)
+// and returns the drill's reported next run.
 func everyNDrillScheduler(t *testing.T, jr JobRunStore) (sc *Scheduler, drill NextRun, found bool) {
 	t.Helper()
 	noTargets := func() ([]store.Target, error) { return nil, nil }
@@ -52,10 +43,9 @@ func everyNDrillScheduler(t *testing.T, jr JobRunStore) (sc *Scheduler, drill Ne
 	return sc, NextRun{}, false
 }
 
-// TestNextRunsSkipsFiresTheEveryNGateWillClose is the regression. The drill pass
-// ran three days ago on a 7-day interval, so the next four nightly triggers are
-// all going to be skipped by the gate. "Up next" must name the fire that will
-// actually run, not tomorrow's trigger.
+// TestNextRunsSkipsFiresTheEveryNGateWillClose covers a drill pass that ran
+// three days ago on a 7-day interval. The gate will skip the next nightly
+// triggers, so "up next" must name the first fire it lets through.
 func TestNextRunsSkipsFiresTheEveryNGateWillClose(t *testing.T) {
 	jr := newFakeJobRuns()
 	last := time.Now().Add(-3 * 24 * time.Hour)
@@ -66,38 +56,27 @@ func TestNextRunsSkipsFiresTheEveryNGateWillClose(t *testing.T) {
 		t.Fatal("expected a job=drill entry in NextRuns")
 	}
 
-	// The gate itself is the oracle: whatever NextRuns reports must be a fire the
-	// gate would let through, and every earlier daily trigger must be one it would
-	// not. Asserting against EveryNDue rather than a hand-computed date means the
-	// two can never drift apart.
+	// Checked against the gate itself rather than a hand-computed date, so the
+	// two cannot drift apart.
 	if !EveryNDue(last, drill.Next, 7) {
-		t.Fatalf("NextRuns reported %v, which the due-gate would SKIP — the dashboard is promising a run that will not happen", drill.Next)
+		t.Fatalf("NextRuns reported %v, which the due-gate would skip; the dashboard is promising a run that will not happen", drill.Next)
 	}
 	tomorrow := time.Now().Add(24 * time.Hour)
 	if drill.Next.Before(tomorrow) {
 		t.Fatalf("NextRuns reported %v, sooner than tomorrow: with a 3-day-old pass and a 7-day interval the next real run is 4 days out", drill.Next)
 	}
-	// Count with the gate's OWN measure, not calendarDaysBetween. The gate
-	// anchors on the FIRE that produced `last`, not on the stamp: when the
-	// stamp's clock time is earlier than the fire's, it belongs to the previous
-	// day's fire that ran past midnight (see calendarDaysSinceFire). `last` here
-	// is "now minus three days", so its clock time IS now's — and between
-	// midnight and the 03:00 fire the two measures then legitimately differ by
-	// one. Asserting on calendarDaysBetween made this test fail for three hours
-	// every night while the code was right, which is exactly the drift this
-	// test's own comment above warns about: assert against the gate, not against
-	// a parallel calculation.
+	// Count with the gate's own measure. calendarDaysSinceFire anchors on the
+	// fire that produced last, and last carries now's clock time, so between
+	// midnight and the 03:00 fire calendarDaysBetween would be off by one.
 	//
-	// 7 exactly, not >= 7: the walk must stop at the FIRST fire the gate lets
-	// through. An 8 would mean it skipped a run that would really have happened.
+	// Exactly 7: the walk has to stop at the first fire the gate lets through.
 	if got := calendarDaysSinceFire(last, drill.Next); got != 7 {
 		t.Fatalf("the reported run is %d calendar days after the last pass's fire, want the first one at 7", got)
 	}
 }
 
-// TestNextRunsReportsTomorrowWhenTheGateWillOpen pins the other half: when the
-// interval HAS elapsed, NextRuns must not push the date out — the walk stops at
-// the first due fire.
+// TestNextRunsReportsTomorrowWhenTheGateWillOpen checks that once the interval
+// has passed, NextRuns reports the next daily trigger.
 func TestNextRunsReportsTomorrowWhenTheGateWillOpen(t *testing.T) {
 	jr := newFakeJobRuns()
 	jr.set(store.ScheduleJobDrills, time.Now().Add(-30*24*time.Hour))
@@ -111,10 +90,9 @@ func TestNextRunsReportsTomorrowWhenTheGateWillOpen(t *testing.T) {
 	}
 }
 
-// TestNextRunsFallsBackToTheCronFireWhenTheQueryFails pins the conservative
-// answer for "cannot tell": report the raw cron fire rather than inventing a
-// later date. The gate is conservative in the other direction anyway (it skips),
-// so the earliest time this could run is the honest one.
+// TestNextRunsFallsBackToTheCronFireWhenTheQueryFails checks that without a
+// last run to go on, NextRuns reports the raw cron fire, the earliest time the
+// job could run, rather than inventing a later date.
 func TestNextRunsFallsBackToTheCronFireWhenTheQueryFails(t *testing.T) {
 	jr := newFakeJobRuns()
 	jr.queryErr = errors.New("database is locked")
@@ -128,9 +106,8 @@ func TestNextRunsFallsBackToTheCronFireWhenTheQueryFails(t *testing.T) {
 	}
 }
 
-// TestNextRunsLeavesPlainCadencesAlone pins that a non-everyN entry is reported
-// exactly as cron computed it — the walk must be inert for the cadences whose
-// trigger IS their run.
+// TestNextRunsLeavesPlainCadencesAlone checks that an entry without everyN is
+// reported exactly as cron computed it.
 func TestNextRunsLeavesPlainCadencesAlone(t *testing.T) {
 	noTargets := func() ([]store.Target, error) { return nil, nil }
 	sc := New(func(string) error { return nil }, noTargets)

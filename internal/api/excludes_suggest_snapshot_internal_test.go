@@ -17,17 +17,13 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// ---------------------------------------------------------------------------
-// Issue #175, the snapshot feeder. restic already recorded every file's size
-// when it made the backup, so aggregating those per directory answers the
-// reporter's question ("what is bloating my backup") exactly and without a
-// filesystem walk — and it is all-or-nothing, so it can never produce the
-// partial number the live walk had to be taught to label.
-// ---------------------------------------------------------------------------
+// restic records every file's size at backup time, so aggregating the newest
+// snapshot per directory answers "what is bloating my backup" exactly and
+// without a filesystem walk. The pass is all or nothing, so it never yields a
+// partial number.
 
-// suggestFakeDocker embeds the Docker interface (left nil) and overrides only
-// Inspect — the single method the exclusion assistant reaches. Any other call
-// would panic on the nil embed, which is the point: this path must stay small.
+// suggestFakeDocker implements only Inspect, the one Docker method the
+// exclusion assistant uses. Anything else panics on the nil embed.
 type suggestFakeDocker struct {
 	dockercli.Docker
 	inspect model.Inspect
@@ -37,23 +33,20 @@ func (f *suggestFakeDocker) Inspect(context.Context, string) (model.Inspect, err
 	return f.inspect, nil
 }
 
-// suggestFakeEngine embeds ResticEngine (left nil) and implements only what the
-// snapshot feeder uses. Ls is implemented ON PURPOSE while being forbidden: it
-// counts its calls so a test can assert the suggest path never falls back onto
-// the buffered listing (measured 1.36 GiB retained on a 672k-node snapshot).
+// suggestFakeEngine implements what the snapshot feeder uses, plus Ls, which
+// only counts its calls because the suggest path must never use the buffered
+// listing.
 type suggestFakeEngine struct {
 	ResticEngine
 	snaps      []restic.Snapshot
 	entries    []restic.FileEntry
-	streamErr  error // fails the FIRST LsStream call only (stale-lock self-heal)
+	streamErr  error // fails the first LsStream call only
 	streamHook func(onEntry func(restic.FileEntry)) error
 	// snapsHook runs inside Snapshots, the last engine call before the suggest
-	// path decides whether to start its own listing. The singleflight test uses
-	// it to hold every caller at that point, so the assertion is about the
-	// singleflight and not about goroutine scheduling.
+	// path decides whether to list. The singleflight test holds callers there.
 	snapsHook func()
-	// mu guards the counters, which the singleflight test increments from
-	// several goroutines at once. Everything else here is single-threaded.
+	// mu guards the counters, which the singleflight test bumps from several
+	// goroutines.
 	mu          sync.Mutex
 	streamCalls int
 	lsCalls     int
@@ -85,8 +78,7 @@ func (e *suggestFakeEngine) LsStream(_ context.Context, _, _ string, _ restic.Mo
 	return nil
 }
 
-// streamCallCount reads the counter under the lock, for tests that assert it
-// while other goroutines may still be running.
+// streamCallCount reads the counter under the lock.
 func (e *suggestFakeEngine) streamCallCount() int {
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -103,10 +95,9 @@ func (e *suggestFakeEngine) Unlock(context.Context, string, bool, restic.Mode) e
 	return nil
 }
 
-// suggestFixture builds a Service wired to a real store, a fake Docker and a
-// fake engine, with one container ("plex") whose selected backup folder is a
-// real directory under the mount root. It returns the service, the engine and
-// that folder.
+// suggestFixture builds a Service with a real store, a fake Docker and a fake
+// engine, and one container ("plex") whose selected folder exists under the
+// mount root. It returns the service, the engine and that folder.
 func suggestFixture(t *testing.T) (*Service, *suggestFakeEngine, string) {
 	t.Helper()
 	dir := t.TempDir()
@@ -120,8 +111,8 @@ func suggestFixture(t *testing.T) (*Service, *suggestFakeEngine, string) {
 	}
 	st := store.New(db)
 
-	// A local containers repo that EXISTS (restic's config marker), so the
-	// snapshot feeder is reachable at all.
+	// A local containers repo with restic's config marker, so the snapshot
+	// feeder is reached.
 	repo := filepath.Join(dir, "backups", "containers")
 	if err := os.MkdirAll(repo, 0o750); err != nil {
 		t.Fatal(err)
@@ -160,10 +151,8 @@ func suggestFixture(t *testing.T) (*Service, *suggestFakeEngine, string) {
 	return svc, eng, filepath.ToSlash(appdata)
 }
 
-// snapEntries turns a real directory tree into the node stream `restic ls`
-// would emit for it: one entry per directory and file, absolute paths, file
-// sizes as recorded. This is what makes the equivalence assertion below a claim
-// about the two FEEDERS rather than about two hand-written fixtures.
+// snapEntries turns a directory tree into the node stream `restic ls` emits for
+// it, so the two feeders can be compared on the same tree.
 func snapEntries(t *testing.T, root string) []restic.FileEntry {
 	t.Helper()
 	var out []restic.FileEntry
@@ -199,11 +188,8 @@ func streamOf(entries []restic.FileEntry) func(func(restic.FileEntry)) error {
 	}
 }
 
-// TestSnapshotAggregateMatchesLiveWalk encodes the equivalence claim the whole
-// design rests on: the same tree through both feeders yields the same candidate
-// list — sizes, order, reasons and completeness. If this ever diverges, the UI's
-// "sizes come from the backup" promise is no longer the same number the walk
-// would have shown.
+// The same tree through both feeders yields the same candidates: sizes, order,
+// reasons and completeness.
 func TestSnapshotAggregateMatchesLiveWalk(t *testing.T) {
 	root := t.TempDir()
 	writeSized(t, filepath.Join(root, "Cache", "tiny.bin"), 10)
@@ -231,10 +217,8 @@ func TestSnapshotAggregateMatchesLiveWalk(t *testing.T) {
 	}
 }
 
-// TestSnapshotTreeRespectsCurrentExcludes: an exclude pattern added SINCE the
-// last backup still prunes those nodes. The directories are physically in the
-// snapshot (restic stored them before the pattern existed), so the pruning has
-// to happen while reading it, not by trusting the backup's own exclusion.
+// A pattern added since the last backup still prunes nodes the snapshot holds,
+// so pruning happens while reading it.
 func TestSnapshotTreeRespectsCurrentExcludes(t *testing.T) {
 	root := t.TempDir()
 	writeSized(t, filepath.Join(root, "app", "logs", "big.log"), 5000)
@@ -245,17 +229,16 @@ func TestSnapshotTreeRespectsCurrentExcludes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// logs is pruned AND not counted, so "app" holds nothing and never qualifies —
-	// exactly what the live walk does with the same pattern.
+	// logs is pruned and not counted, so "app" holds nothing, as in the live
+	// walk.
 	if len(cands) != 1 || cands[0].rel != "keep" || cands[0].size != 2000 {
 		t.Fatalf("expected only keep(2000), got %+v", cands)
 	}
 }
 
-// TestSnapshotRootsIntersection: roots are DERIVED from snap.Paths ∩ the
-// container's current selection. A snapshot path the user has since deselected
-// contributes nothing, and a newly selected folder that is not in the snapshot
-// yet produces no phantom candidates.
+// The roots are the snapshot paths that are still selected. A deselected path
+// contributes nothing, and a new folder not yet in the snapshot yields no
+// phantom candidates.
 func TestSnapshotRootsIntersection(t *testing.T) {
 	got := snapshotRoots(
 		[]string{"/host/user/appdata/plex", "/host/user/appdata/dropped"},
@@ -265,7 +248,7 @@ func TestSnapshotRootsIntersection(t *testing.T) {
 		t.Fatalf("roots = %v, want only the folder present in BOTH", got)
 	}
 
-	// And the aggregate over that intersection ignores nodes outside it.
+	// The aggregate ignores nodes outside the roots.
 	root := t.TempDir()
 	writeSized(t, filepath.Join(root, "keep", "f.bin"), 2000)
 	entries := append(snapEntries(t, root),
@@ -281,14 +264,12 @@ func TestSnapshotRootsIntersection(t *testing.T) {
 	}
 }
 
-// TestSnapshotPassIsAllOrNothing: a listing that outruns its budget yields ZERO
-// suggestions and an index-read failure. Asserted positively — there must be no
-// code path that hands back a partially consumed stream, because that is defect
-// #175 with a different feeder behind it.
+// A listing that runs out of time yields no suggestions and an index-read
+// failure, never a partly consumed stream.
 func TestSnapshotPassIsAllOrNothing(t *testing.T) {
 	svc, eng, root := suggestFixture(t)
 	eng.snaps = []restic.Snapshot{{ID: "abc123", Time: "2026-08-01T10:00:00Z", Paths: []string{root}, Tags: []string{"container:plex"}}}
-	// Emits a few real nodes, then dies the way a blown deadline does.
+	// A few nodes, then the deadline.
 	eng.streamHook = func(onEntry func(restic.FileEntry)) error {
 		onEntry(restic.FileEntry{Path: root + "/Cache", Type: "dir"})
 		onEntry(restic.FileEntry{Path: root + "/Cache/f.bin", Type: "file", Size: 10})
@@ -305,16 +286,14 @@ func TestSnapshotPassIsAllOrNothing(t *testing.T) {
 	if res.Source != suggestSourceSnapshot {
 		t.Fatalf("source = %q, want %q so the UI can offer the live scan", res.Source, suggestSourceSnapshot)
 	}
-	// And nothing was cached from the half-read stream.
+	// Nothing from the half-read stream is cached.
 	if _, ok := svc.suggestCacheGet("plex", suggestExcludesKey("x", "abc123", []string{root}, nil)); ok {
 		t.Fatal("a failed pass must not seed the cache")
 	}
 }
 
-// TestNoSnapshotFallsBackToLive: a container that has never been backed up is
-// exactly the user who wants to pre-exclude Plex junk BEFORE the first huge
-// backup. Only a walk can serve them, so the absence of a snapshot must fall
-// through to the live source rather than fail.
+// Before the first backup is when a user wants to exclude junk, and only the
+// live walk can answer then.
 func TestNoSnapshotFallsBackToLive(t *testing.T) {
 	svc, eng, root := suggestFixture(t)
 	eng.snaps = nil // never backed up
@@ -338,9 +317,8 @@ func TestNoSnapshotFallsBackToLive(t *testing.T) {
 	}
 }
 
-// TestSnapshotCacheKeyIncludesExcludes: the same snapshot plus the same
-// resolved excludes reads the index ONCE (a rescan is instant until the next
-// backup); editing the excludes changes what gets pruned, so it recomputes.
+// The same snapshot and excludes read the index once. Changed excludes prune
+// differently, so they recompute.
 func TestSnapshotCacheKeyIncludesExcludes(t *testing.T) {
 	svc, eng, root := suggestFixture(t)
 	eng.snaps = []restic.Snapshot{{ID: "abc123", Time: "2026-08-01T10:00:00Z", Paths: []string{root}, Tags: []string{"container:plex"}}}
@@ -367,7 +345,7 @@ func TestSnapshotCacheKeyIncludesExcludes(t *testing.T) {
 		t.Fatalf("a second scan of the same snapshot must be served from cache (LsStream calls=%d)", eng.streamCalls)
 	}
 
-	// Same snapshot, different resolved excludes → different pruning → recompute.
+	// Same snapshot, different excludes.
 	if err := svc.store.SetExcludes("plex", []string{"Cache"}); err != nil {
 		t.Fatal(err)
 	}
@@ -383,10 +361,8 @@ func TestSnapshotCacheKeyIncludesExcludes(t *testing.T) {
 	}
 }
 
-// TestSuggestNeverCallsBufferedLs is the enforceable form of the memory guard:
-// the suggest path must reach the index only through LsStream. Ls buffers the
-// whole listing and parseFileEntries splits that buffer, which measured 1355 MiB
-// retained on a 672k-node snapshot inside a memory-capped container.
+// Ls buffers the whole listing, which kept 1355 MiB on a 672k-node snapshot
+// inside a memory-capped container, so the suggest path must stream.
 func TestSuggestNeverCallsBufferedLs(t *testing.T) {
 	svc, eng, root := suggestFixture(t)
 	eng.snaps = []restic.Snapshot{{ID: "abc123", Time: "2026-08-01T10:00:00Z", Paths: []string{root}, Tags: []string{"container:plex"}}}
@@ -405,10 +381,8 @@ func TestSuggestNeverCallsBufferedLs(t *testing.T) {
 	}
 }
 
-// TestSuggestLsStaleLockSelfHeal: a stale exclusive lock left by an interrupted
-// write elsewhere in the repo blocks even a shared-lock listing. Without the
-// self-heal this new path would reintroduce #129 verbatim — clear stale locks,
-// retry exactly once.
+// A stale exclusive lock from an interrupted write blocks even a shared-lock
+// listing, so the suggest path clears stale locks and retries once.
 func TestSuggestLsStaleLockSelfHeal(t *testing.T) {
 	svc, eng, root := suggestFixture(t)
 	eng.snaps = []restic.Snapshot{{ID: "abc123", Time: "2026-08-01T10:00:00Z", Paths: []string{root}, Tags: []string{"container:plex"}}}
@@ -433,8 +407,8 @@ func TestSuggestLsStaleLockSelfHeal(t *testing.T) {
 	}
 }
 
-// TestSuggestLiveSourceForced: the UI's explicit retry after a failed index read
-// asks for the live walk by name, and gets it even though a snapshot exists.
+// The UI's retry after a failed index read asks for the live walk by name and
+// gets it, even though a snapshot exists.
 func TestSuggestLiveSourceForced(t *testing.T) {
 	svc, eng, root := suggestFixture(t)
 	eng.snaps = []restic.Snapshot{{ID: "abc123", Time: "2026-08-01T10:00:00Z", Paths: []string{root}, Tags: []string{"container:plex"}}}

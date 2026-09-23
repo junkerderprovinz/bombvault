@@ -42,48 +42,33 @@ import {
   IconUpload,
 } from "./glyphs";
 
-// ---------------------------------------------------------------------------
-// glyphFor (#178, [202]) — which symbol a button wears, decided once.
-//
-// jdp asked for every button to get a glyph. Drawing 146 unique symbols would
-// not have helped anyone: most of these buttons are the SAME VERB in different
-// places, and a reader learns "this shape means delete" far faster from twelve
-// repeated symbols than from a hundred and forty-six unique ones. So the
-// mapping is by MEANING, keyed off the translation key, which is stable across
-// all 42 languages in a way the visible text is not.
-//
-// Order matters: the first matching rule wins, so the specific patterns sit
-// above the general ones ("backupSelected" before "selected", "unlock" before
-// "lock"). A key that matches nothing returns undefined, and Button then falls
-// back to showing that button's text rather than an empty square.
-// ---------------------------------------------------------------------------
+// glyphFor picks the symbol a button wears by meaning, so one verb has one shape
+// wherever it appears. It is keyed off the translation key, which is the same
+// in every language. The first matching rule wins, so specific patterns sit
+// above general ones ("backupSelected" before "selected", "unlock" before
+// "lock").
 
 type Rule = [RegExp, () => ReactNode];
 
 const RULES: Rule[] = [
   // Backups and restores, the app's own verbs, before anything generic.
   [/backupNow|backupAll|backupSelected|runNow|backupOrder\.save/i, () => <IconBackupNow />],
-  // "restor" rather than "restore", so the participle comes along: a button
-  // that says "Restoring..." while a run is in flight is the same verb, and it
-  // was the one losing its mark at exactly the moment somebody is watching.
-  // Recreating a container from a snapshot is that verb too, under another name.
+  // "restor" also catches the "restoring" keys shown while a run is in flight.
   [/restor|recreate|rebuild/i, () => <IconRestore />],
   [/replicate|sync|refreshStatus|pollNow/i, () => <IconSync />],
 
   // Destructive and corrective actions.
-  [/\.(delete|remove)|removeExclusion|assistRemove|forget/i, () => <IconTrash />],
+  [/\.(delete|remove)|confirmRemove|removeExclusion|assistRemove|forget/i, () => <IconTrash />],
   [/prune|reclaim/i, () => <IconPrune />],
   [/unlock/i, () => <IconUnlock />],
 
   // Creation and editing.
   [/\.add|addSet|addPreset|addTarget|addTag|credSets\.add|registryAdd|passkeyAdd|passkeyCreate/i, () => <IconAdd />],
   [/edit|rename|editSet/i, () => <IconPencil />],
-  [/save|apply|confirm(?!Password)/i, () => <IconSave />],
+  [/save|apply/i, () => <IconSave />],
 
-  // Selection.
-  // "Exclude all" and "Include all" are the selection pair under another name,
-  // and they sit side by side on the Containers and VMs pages: one of them
-  // wearing a mark while the other printed a word was the visible half of this.
+  // Selection. "Exclude all" and "Include all" are clear and select all under
+  // other names.
   [/clearSelection|clearDayFilter|clearOrder|reset|excludeAll|assistExclude/i, () => <IconClearSelection />],
   [/selectAll|selectEvery|includeAll/i, () => <IconSelectAll />],
 
@@ -93,39 +78,26 @@ const RULES: Rule[] = [
   [/back|previous|prev\b/i, () => <IconBack />],
   [/next|continue|forward|jumpToLatest/i, () => <IconForward />],
 
-  // Connections, ahead of the probing block on purpose. "Connect" is the
-  // stronger verb whenever a key carries both: `recovery.connectPreview` is a
-  // button that CONNECTS to a foreign repository, and previewing it is what
-  // follows. Below the probing rules it matched `preview` and wore an eye
-  // (jdp: "der Verbinden und prüfen button soll eine kette als glyph
-  // bekommen"). Exactly one key changes glyph by this move — the other two
-  // connect keys never matched anything above it.
+  // Connections, above the probing rules so recovery.connectPreview, which
+  // connects first and previews after, gets the link.
   [/connect|pair|link|reconnect/i, () => <IconLink />],
 
-  // Probing and inspection.
-  // The tamper test sits in the same row as verify and drill and does the same
-  // kind of thing: it proves a claim. "accept" and "resolveAll" are the other
-  // shape of the same mark, somebody agreeing to what is on screen.
-  [/test|verify|check|drill|appendOnly|tamper|accept|approve|resolveAll|\.stored$/i, () => <IconCheckCircle />],
+  // Probing and inspection. "accept", "confirm" and "resolveAll" agree to what
+  // is on screen, so they take the same check.
+  [/test|verify|check|drill|appendOnly|tamper|accept|approve|confirm(?!Password)|resolveAll|\.stored$/i, () => <IconCheckCircle />],
   [/scan|discover|browse|search/i, () => <IconSearch />],
   [/show|reveal|preview|view/i, () => <IconEye />],
   [/hint|info|explain|examples/i, () => <IconInfo />],
 
-  // Transfer.
-  // "pull" joins the transfer family rather than earning a mark of its own:
-  // fetching another instance's snapshots into this one IS a download, and the
-  // language's own rule is that a reader learns one shape per VERB faster than
-  // one shape per feature.
+  // Transfer. Pulling another instance's snapshots into this one is a
+  // download.
   [/download|export|pullNow|pullFrom/i, () => <IconDownload />],
   [/upload|send|offer|push|proposeButton/i, () => <IconUpload />],
   [/copy/i, () => <IconCopy />],
 
-  // Secrets.
-  // Getting in and out, and the protection that guards it. These sit ABOVE the
-  // credentials rule because a key is the app's mark for a SECRET, and signing
-  // in is not a secret - it is a door. They sit above the power rule for the
-  // same reason in the other direction: the power mark belongs to a machine
-  // being shut down, not to a protection being switched off.
+  // Signing in and two-factor sit above the credentials rule (the key marks a
+  // secret, signing in is a door) and above the power rule, which is for
+  // shutting a machine down.
   [/signIn|logIn\b/i, () => <IconSignIn />],
   [/logout|signOut/i, () => <IconSignOut />],
   [/twoFactorEnable|totpEnable/i, () => <IconShieldOn />],
@@ -138,38 +110,16 @@ const RULES: Rule[] = [
   [/stop|abort|halt/i, () => <IconStop />],
   [/power|shutdown|reboot/i, () => <IconPower />],
 
-  // Local storage, as opposed to off-site ([321]).
-  //
-  // Two ordering constraints, both load-bearing. It sits BELOW the probing
-  // block because `drill.checkLocal` is a button that CHECKS, and the thing it
-  // checks is a detail of the verb — above that block it would wear a drive
-  // and stop looking like its three siblings in the same row. It sits ABOVE
-  // "places and configuration" because `recovery.configLocalPath` ends in
-  // "Path" and would otherwise take the folder, which is the one glyph a local
-  // control must not wear: a Browse button already has it, and two different
-  // functions sharing a symbol is the collision jdp reported once already.
-  //
-  // Anchored to the end of the key rather than matching "local" anywhere, so
-  // it takes `source.local` and `settings.pathMode.local` — the actual
-  // switches — without swallowing every key that merely mentions locality.
+  // Local storage, as opposed to off-site. Below the probing rules so
+  // drill.checkLocal keeps its check mark, above the places rule so
+  // settings.pathMode.local does not take the folder, and anchored to the end
+  // so only the switches match.
   [/\.local$|Local$/i, () => <IconLocal />],
 
-  // Giving and writing in, as MEANINGS. Both are nouns rather than verbs, which
-  // is why nothing above them matched: this table is built around what a button
-  // DOES, and "coffee" and "mail" are what it is ABOUT. They earn rules rather
-  // than an explicit glyph because the meanings are general — any future "write
-  // to us" wears the same envelope.
-  //
-  // NONE of the About card's four buttons resolves through here any more, and
-  // that is the point rather than an oversight: every one of them goes to a
-  // named company, so each carries that company's own mark, passed explicitly
-  // at the call site (GitHub, Buy Me a Coffee, Bitcoin). A brand must never be
-  // reachable by pattern — a rule keyed on "repo" would put GitHub's logo on
-  // repository settings that have nothing to do with GitHub, and one keyed on
-  // "coffee" would put another company's cup on anything that mentions coffee.
-  // These two rules stay for the generic sites: a plain cup for a donation
-  // route that is nobody's brand, and an envelope for any address at all. See
-  // gen_glyphs.py's IconGithub entry for the full reasoning.
+  // Nouns rather than verbs, for the generic cases: a plain cup for a donation
+  // and an envelope for any address. The About card's buttons carry their
+  // companies' own marks at the call site, since a brand must not be reachable
+  // by pattern.
   [/coffee|donate|sponsor/i, () => <IconCoffee />],
   [/\.mail|contact|writeToUs/i, () => <IconMail />],
 
@@ -180,11 +130,8 @@ const RULES: Rule[] = [
 ];
 
 /**
- * The glyph for a translation key, or undefined when nothing sensible matches.
- *
- * Undefined is a real answer, not a gap to be filled with a placeholder: a
- * button with no glyph keeps showing its text even in glyph mode, which is far
- * better than a symbol that means nothing.
+ * glyphFor returns the glyph for a translation key, or undefined when nothing
+ * matches, in which case the button keeps its text.
  */
 export function glyphFor(key: string): ReactNode | undefined {
   for (const [pattern, make] of RULES) {

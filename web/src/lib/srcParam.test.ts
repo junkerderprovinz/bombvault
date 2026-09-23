@@ -1,11 +1,6 @@
-// ---------------------------------------------------------------------------
-// srcParam — the single seam that decides which repo an API call reads from.
-//
-// It used to emit the ?source= param ONLY for the exact literal "offsite", so a
-// per-target "offsite:<id>" source silently produced no param at all and the
-// request fell back to the LOCAL repo. That is what kept the multi-off-site
-// restore picker from being wired up (issue #138); these cases pin both forms.
-// ---------------------------------------------------------------------------
+// srcParam decides which repository an API call reads from. Both the bare
+// "offsite" and a per-target "offsite:<id>" have to reach the server as
+// ?source=, or the request quietly falls back to the local repository.
 import { describe, expect, it } from "vitest";
 import { srcParam } from "./api";
 import { isOffsiteSource } from "../components/SourceToggle";

@@ -16,11 +16,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// panicRecoveryTestService is backupTestService plus the underlying *store.Repo
-// (backupTestService's 4-value signature is used positionally by many existing
-// tests, so it isn't extended here — this is a separate, otherwise-identical
-// setup for the panic-recovery tests below, which need to inspect the runs
-// table directly).
+// panicRecoveryTestService is backupTestService that also returns the store, so
+// the panic tests can inspect the runs table.
 func panicRecoveryTestService(t *testing.T) (*api.Service, *store.Repo, *fakeResticEngine) {
 	t.Helper()
 	dir := t.TempDir()
@@ -48,28 +45,8 @@ func panicRecoveryTestService(t *testing.T) (*api.Service, *store.Repo, *fakeRes
 	return svc, st, eng
 }
 
-// TestStartBackupPanicRecordsFailedRunAndReleasesGuard pins the fix for the
-// most severe finding of the code-review audit: every StartBackup/StartRestore/
-// StartReplicateOffsite goroutine in internal/api/service.go used to run with
-// zero panic recovery, so a panic anywhere in the shared backup/restore
-// orchestrator (an unusual Docker inspect shape, a nil dereference, ...) took
-// down the ENTIRE bombvault process — the HTTP server, the SSE progress
-// stream, and every other domain's concurrently in-flight backup/restore with
-// it. This test makes the underlying restic engine panic mid-backup (the
-// panic is injected AFTER backup.BackupContainer already called
-// Runs.Start, but its matching Runs.Finish is a plain, non-deferred call — so
-// without the fix the run would also be left stuck "running" forever, even on
-// a build where the process itself somehow survived).
-//
-// It proves BOTH halves of the fix:
-//  1. The goroutine's panic is recovered — this test function returning at all
-//     (instead of the whole `go test` binary crashing) already proves that,
-//     and waitForBackupDone additionally proves the shared single-flight guard
-//     was correctly released afterwards, not left stuck.
-//  2. The run record is closed out as "failed" (store.FailRunningRun via
-//     failStuckRun), not left stuck "running" — the story internal/store's
-//     TestListRunsWithRunningRun (package store, not this file's package)
-//     exists to warn about.
+// The engine panics after BackupContainer has opened its run, and
+// BackupContainer does not defer Runs.Finish.
 func TestStartBackupPanicRecordsFailedRunAndReleasesGuard(t *testing.T) {
 	svc, st, eng := panicRecoveryTestService(t)
 	eng.backupPanic = true
@@ -79,21 +56,15 @@ func TestStartBackupPanicRecordsFailedRunAndReleasesGuard(t *testing.T) {
 		t.Fatalf("backup should start: started=%v err=%v", started, err)
 	}
 
-	// If the panic were NOT recovered, this whole test binary would have
-	// already crashed by now. Reaching this line at all is part of the proof.
+	// An unrecovered panic would have crashed the test binary before this point.
 	waitForBackupDone(t, svc)
 
 	tg, err := st.GetTargetByContainer("plex")
 	if err != nil {
 		t.Fatalf("target row should exist (StartRun needs it): %v", err)
 	}
-	// recoverOperation is deferred FIRST in the goroutine (so it runs LAST,
-	// after batchActive.Store(false) — see its doc comment for why: it must be
-	// the outermost defer to catch a panic from anywhere, including from other
-	// cleanup defers). That means the run can still be transitioning to
-	// "failed" for a moment AFTER waitForBackupDone (which only watches
-	// batchActive) already returned — so the run's OWN terminal state is
-	// polled here directly, rather than assumed from the guard alone.
+	// recoverOperation is the outermost defer, so it closes the run after
+	// batchActive is cleared. Poll the run instead of trusting the guard.
 	run := waitForRunTerminal(t, st, tg.ID)
 	if run.Status != "failed" {
 		t.Fatalf("a panicked backup must record a FAILED run, not left stuck, got status=%q run=%+v", run.Status, run)
@@ -105,24 +76,17 @@ func TestStartBackupPanicRecordsFailedRunAndReleasesGuard(t *testing.T) {
 		t.Fatalf("the failed run should carry the panic detail, got error=%q", run.Error)
 	}
 
-	// The shared single-flight guard must be released — the classic symptom of
-	// an unrecovered goroutine crash (before the process itself dies) is every
-	// subsequent backup/restore permanently refused as "busy".
 	if svc.BackupInProgress() {
 		t.Fatal("the shared guard must be released after a recovered panic, not left stuck")
 	}
 	if started, _ := svc.StartBackup(context.Background(), "radarr"); !started {
-		t.Fatal("a later backup must be able to start — the guard must not be stuck from the earlier panic")
+		t.Fatal("a later backup must be able to start; the guard must not be stuck from the earlier panic")
 	}
-	waitForBackupDone(t, svc) // drain it before the test's t.Cleanup closes the store out from under it
+	waitForBackupDone(t, svc) // before t.Cleanup closes the store
 }
 
-// waitForRunTerminal polls the runs table until targetID's run leaves
-// "running" (or fails the test after a timeout), returning it. Needed
-// because recoverOperation's failStuckRun/finishRestoreRun call can complete
-// a moment after batchActive.Store(false) already fired (see
-// TestStartBackupPanicRecordsFailedRunAndReleasesGuard for why) — asserting
-// on the run's own terminal state must not rely on the guard's timing alone.
+// waitForRunTerminal polls until targetID's run leaves "running" and returns
+// it. recoverOperation can close the run a moment after the guard is released.
 func waitForRunTerminal(t *testing.T, st *store.Repo, targetID string) store.Run {
 	t.Helper()
 	deadline := time.Now().Add(5 * time.Second)
@@ -142,18 +106,10 @@ func waitForRunTerminal(t *testing.T, st *store.Repo, targetID string) store.Run
 	return store.Run{}
 }
 
-// TestStartBackupAllContinuesPastPanickingItem pins the batch-specific half of
-// the fix: StartBackupAll already treats one container's ordinary ERROR as
-// "log it, count it, keep going" (the loop never aborted for a normal error
-// before this fix, and must not start doing so now that a PANIC is also
-// contained). Without per-item recovery, one container's panic would abort
-// the whole batch's goroutine, silently skipping every container still queued
-// behind it — a regression this test would catch.
 func TestStartBackupAllContinuesPastPanickingItem(t *testing.T) {
 	svc, st, eng := panicRecoveryTestService(t)
-	// Only "plex" panics (matched by its "container:plex" restic tag, set by
-	// backup.BackupContainer) — armed BEFORE the batch goroutine launches, so
-	// there's no race on the fake between the test goroutine and the batch's.
+	// Only plex panics, matched by the tag BackupContainer sets. Arming it
+	// before the batch starts keeps the fake free of races.
 	eng.backupPanicTag = "container:plex"
 
 	started, err := svc.StartBackupAll(context.Background(), []string{"plex", "radarr", "sonarr"})
@@ -163,10 +119,7 @@ func TestStartBackupAllContinuesPastPanickingItem(t *testing.T) {
 
 	waitForBackupDone(t, svc)
 
-	// plex (the panicking item) must itself be recorded FAILED with a
-	// recognizable "recovered panic" marker — backupOneForBatch's own recovery,
-	// not just "the batch as a whole survived". Without per-item recovery this
-	// run would be left stuck "running" forever (see failStuckRun's doc comment).
+	// backupOneForBatch recovers per item, so plex's own run is closed as failed.
 	tgPlex, err := st.GetTargetByContainer("plex")
 	if err != nil {
 		t.Fatalf("plex target should exist: %v", err)
@@ -198,22 +151,16 @@ func TestStartBackupAllContinuesPastPanickingItem(t *testing.T) {
 	if !successFor("radarr") {
 		t.Fatalf("radarr, queued AFTER the panicking container, must still have been backed up (batch must continue past a panic like it already does past an error), got runs=%+v", runs)
 	}
-	// sonarr is queued AFTER radarr — proving the batch didn't just survive one
-	// item past the panic and then quietly stop, but ran the WHOLE remaining queue.
+	// sonarr comes after radarr, so the batch ran the rest of the queue and did
+	// not stop one item past the panic.
 	if !successFor("sonarr") {
 		t.Fatalf("sonarr, queued AFTER radarr, must also have been backed up normally, got runs=%+v", runs)
 	}
 }
 
-// TestStartForeignRestorePanicRecordsFailedRunAndReleasesGuard extends the
-// panic-recovery proof to StartForeignRestore (internal/api/foreign.go) — one
-// of the two goroutines a spec-compliance review found the f5b3286 sweep
-// missed (its "go func" grep covered only service.go). The files domain is
-// used here because it exercises the run-tracking half of
-// prepareForeignRestore's two onPanic strategies: it drives its own local
-// runID (finishRestoreRun), unlike the containers/vms branches which only
-// know a target id (failStuckRun) — see prepareForeignRestore's own doc
-// comment for why the two differ.
+// The files domain closes its own runID through finishRestoreRun, which
+// containers and vms cannot: they only know a target id and go through
+// failStuckRun.
 func TestStartForeignRestorePanicRecordsFailedRunAndReleasesGuard(t *testing.T) {
 	enc := true
 	location := "backups/other"
@@ -225,8 +172,8 @@ func TestStartForeignRestorePanicRecordsFailedRunAndReleasesGuard(t *testing.T) 
 	}
 	_, st, svc, dir := newTestRouterSvcDir(t, &fakeServiceDocker{}, eng)
 
-	// Seed the foreign repo's config marker so the session's snapshot listing
-	// reaches the engine — the identical setup TestForeignRestoreRoute uses.
+	// The config marker lets the snapshot listing reach the engine, as in
+	// TestForeignRestoreRoute.
 	if err := os.MkdirAll(filepath.Join(dir, "backups", "other"), 0o750); err != nil {
 		t.Fatal(err)
 	}
@@ -239,17 +186,14 @@ func TestStartForeignRestorePanicRecordsFailedRunAndReleasesGuard(t *testing.T) 
 		t.Fatalf("OpenForeign: %v", err)
 	}
 
-	// The snapshot above carries no Paths, so runRestoreFileSet's degenerate
-	// fallback calls RestoreInclude("/") — exactly the call shape
-	// TestForeignRestoreRoute already pins — so restorePanic reaches it.
+	// The snapshot has no Paths, so runRestoreFileSet falls back to
+	// RestoreInclude("/"), where restorePanic fires.
 	eng.restorePanic = true
 	started, err := svc.StartForeignRestore(context.Background(), sessionID, "files", "docs", "latest", true, "restore-here/docs", nil, false, "")
 	if err != nil || !started {
 		t.Fatalf("foreign restore should start: started=%v err=%v", started, err)
 	}
 
-	// If the panic were NOT recovered, this whole test binary would have already
-	// crashed by now. Reaching this line at all is part of the proof.
 	waitForBackupDone(t, svc)
 
 	set, err := st.GetFileSetByName("docs")
@@ -272,32 +216,20 @@ func TestStartForeignRestorePanicRecordsFailedRunAndReleasesGuard(t *testing.T) 
 	}
 }
 
-// TestStartRestoreStackMemberPanicRecordsFailedRunAndContinues extends the
-// panic-recovery proof to StartRestoreStack (internal/api/stacks.go) — the
-// other goroutine the f5b3286 sweep missed. Unlike the single-target starters,
-// a stack restore's per-member loop needed its OWN per-item recovery
-// (restoreStackMember), mirroring backupOneForBatch/backupFileSetOneForBatch:
-// one member's panic must count as that member failing — exactly like a
-// normal per-member error already does — and must not abort the members
-// still queued behind it.
 func TestStartRestoreStackMemberPanicRecordsFailedRunAndContinues(t *testing.T) {
-	d := &fakeServiceDocker{liveName: ""} // absent → fresh restore path
+	d := &fakeServiceDocker{liveName: ""} // absent, so the fresh restore path runs
 	eng := &fakeResticEngine{
-		// Only "web"'s snapshot panics — armed BEFORE the goroutine launches, so
-		// there's no race on the fake between the test goroutine and the stack's
-		// (mirrors backupPanicTag's own discipline).
+		// Only web's snapshot panics, armed before the goroutine starts.
 		restorePanicSnapshot: "aaaa1111",
 		snaps: []restic.Snapshot{
-			// Paths mirrors a real backup's recorded positional (RESTORE-01).
+			// Paths as a real backup records them.
 			{ID: "aaaa1111", Tags: []string{"container:web"}, Paths: []string{"/host/user/appdata/web"}},
 			{ID: "bbbb2222", Tags: []string{"container:worker"}, Paths: []string{"/host/user/appdata/worker"}},
 		},
 	}
-	// A REMOTE containers repo skips the local-existence probe so the restore
-	// actually reaches the engine (and restorePanicSnapshot) instead of silently
-	// taking the recreate-only path — the same reason
-	// TestStartRestoreStackSingleFlight/TestRestoreStackCancelledMemberAbortsLoop
-	// use a rest: URL. The mount root stays Linux-absolute for paths.Within.
+	// A remote containers repo skips the local-existence probe, so the restore
+	// reaches the engine instead of taking the recreate-only path. The mount
+	// root stays Linux-absolute for paths.Within.
 	dir := t.TempDir()
 	const mountRoot = "/host/user"
 	cfg := config.Config{
@@ -309,7 +241,7 @@ func TestStartRestoreStackMemberPanicRecordsFailedRunAndContinues(t *testing.T) 
 	st := newMemStore(t)
 	settings := mustSettings(t, st)
 	settings.EncryptionEnabled = false
-	settings.ContainersPath = "rest:http://127.0.0.1:8000/containers" // remote → no local-repo probe
+	settings.ContainersPath = "rest:http://127.0.0.1:8000/containers"
 	if err := st.UpdateSettings(settings); err != nil {
 		t.Fatal(err)
 	}
@@ -322,16 +254,9 @@ func TestStartRestoreStackMemberPanicRecordsFailedRunAndContinues(t *testing.T) 
 		t.Fatalf("stack restore should start: started=%v err=%v", started, err)
 	}
 
-	// Unlike the foreign-restore test above, removing restoreStackMember's own
-	// per-member recovery would NOT crash this test binary: the outer
-	// StartRestoreStack goroutine's own recoverOperation (deferred with a nil
-	// onPanic, see its "go func()" above) would still catch the panic one level
-	// up, since recover works for any panic still unwinding within the same
-	// goroutine, not just the closest defer. What it would actually break is the
-	// batch behaviour asserted below — the member loop would abort at "web"
-	// instead of continuing to "worker", and web's run would be left stuck
-	// "running" forever (the outer recovery has no onPanic to close it out)
-	// instead of recorded failed.
+	// Without restoreStackMember's recovery the outer recoverOperation would
+	// still catch the panic, but the loop would stop at web and leave its run
+	// "running". The assertions below catch that.
 	waitForBackupDone(t, svc)
 
 	webTg, err := st.GetTargetByContainer("web")
@@ -368,27 +293,14 @@ func TestStartRestoreStackMemberPanicRecordsFailedRunAndContinues(t *testing.T) 
 		t.Fatal("the shared guard must be released after a recovered panic, not left stuck")
 	}
 	if started, _ := svc.StartBackup(context.Background(), "web"); !started {
-		t.Fatal("a later operation must be able to start — the guard must not be stuck from the earlier panic")
+		t.Fatal("a later operation must be able to start; the guard must not be stuck from the earlier panic")
 	}
-	waitForBackupDone(t, svc) // drain it before the test's t.Cleanup closes the store out from under it
+	waitForBackupDone(t, svc) // before t.Cleanup closes the store
 }
 
-// TestStartRestoreConfigPanicRecordsFailedRunAndReleasesGuard extends the
-// panic-recovery proof to StartRestoreConfig (the finding this branch's second
-// commit fixes: it ran synchronously against the raw request ctx with NO panic
-// recovery at all, unlike every sibling Start* restore). Unlike those siblings,
-// StartRestoreConfig does not hand off to a background goroutine (see its own
-// doc comment for why — Recovery.tsx needs the real outcome synchronously), so
-// a panic here unwinds on the SAME goroutine as this test: reaching the
-// assertions below at all (instead of the whole `go test` binary crashing) is
-// already half the proof. The other half is that RestoreConfig's own run
-// record — started via store.StartRun(store.ConfigTargetID, "restore") deep
-// inside RestoreConfig, whose local runID never reaches StartRestoreConfig —
-// is still closed out as "failed" via the FailRunningRun/ConfigTargetID
-// fallback, not left stuck "running" forever, and that the single-flight
-// batchActive guard is released too (StartRestoreConfig's own special case:
-// unlike its siblings it sometimes deliberately KEEPS that guard held on
-// success, so the panic path must release it explicitly).
+// StartRestoreConfig runs on the caller's goroutine and RestoreConfig opens the
+// run itself, so the panic path closes it through ConfigTargetID. It releases
+// batchActive too, because a successful restore can keep that held.
 func TestStartRestoreConfigPanicRecordsFailedRunAndReleasesGuard(t *testing.T) {
 	t.Setenv("BOMBVAULT_SELF_CONTAINER", "")
 	dir := t.TempDir()
@@ -404,8 +316,6 @@ func TestStartRestoreConfigPanicRecordsFailedRunAndReleasesGuard(t *testing.T) {
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
 	started, auto, err := svc.StartRestoreConfig(context.Background(), "", "local")
-	// Reaching this line at all (instead of the test binary crashing) already
-	// proves the panic was recovered.
 	if err == nil || !strings.Contains(err.Error(), "recovered panic") {
 		t.Fatalf("expected a recovered-panic error, got started=%v auto=%v err=%v", started, auto, err)
 	}
@@ -427,19 +337,15 @@ func TestStartRestoreConfigPanicRecordsFailedRunAndReleasesGuard(t *testing.T) {
 	if svc.BackupInProgress() {
 		t.Fatal("the shared batchActive guard must be released after a recovered panic, not left stuck")
 	}
-	eng.restorePanic = false // disarm — this call must succeed normally
+	eng.restorePanic = false
 	if started, _, err := svc.StartRestoreConfig(context.Background(), "", "local"); err != nil || !started {
-		t.Fatalf("a later config restore must be able to start — the guard must not be stuck from the earlier panic: started=%v err=%v", started, err)
+		t.Fatalf("a later config restore must be able to start; the guard must not be stuck from the earlier panic: started=%v err=%v", started, err)
 	}
 }
 
-// panickingHostShell is a HostShell (hostshell.go) that panics instead of
-// running the command — the cheapest way to raise a panic INSIDE a "Backup
-// Everything" pass at a point where the parent run row is already open. The
-// post-hook is deliberately the trigger used below: it fires after
-// BackupEverything's store.StartRun but before its matching FinishRun, so a
-// panic there is exactly the "nothing left alive will ever close this run"
-// case failStuckRun exists for.
+// panickingHostShell panics instead of running the command. The test uses it
+// as the post-hook, which runs while BackupEverything's parent run is open, so
+// only failStuckRun can close that run.
 type panickingHostShell struct{}
 
 var _ api.HostShell = panickingHostShell{}
@@ -448,19 +354,6 @@ func (panickingHostShell) Run(_ context.Context, cmd string) error {
 	panic("boom: host shell exploded on " + cmd)
 }
 
-// TestStartBackupEverythingPanicRecordsFailedRunAndReleasesGuard extends this
-// file's panic-recovery guarantee to StartBackupEverything's own detached
-// goroutine. It is the newest of the Start* goroutines and therefore the
-// easiest one to leave out of the recoverOperation convention every sibling
-// follows: without it, a panic anywhere in a pass takes down the WHOLE
-// process — the HTTP server, the SSE progress stream, and every other
-// domain's concurrently in-flight work — which is precisely what a
-// "back up everything, then ping the dead-man's switch" job must never do.
-// Reaching the assertions below at all (instead of the test binary crashing)
-// is the first half of the proof; the second is that the pass's PARENT run
-// row is closed out as "failed" via the failStuckRun/EverythingTargetID
-// fallback rather than left stuck "running" forever, and that the
-// everythingActive single-flight guard is released so a later pass can start.
 func TestStartBackupEverythingPanicRecordsFailedRunAndReleasesGuard(t *testing.T) {
 	svc, st, _, _ := everythingTestService(t, &fakeResticEngine{})
 	s := mustSettings(t, st)
@@ -490,10 +383,9 @@ func TestStartBackupEverythingPanicRecordsFailedRunAndReleasesGuard(t *testing.T
 	if svc.EverythingInProgress() {
 		t.Fatal("the everythingActive guard must be released after a recovered panic, not left stuck")
 	}
-	// Disarm and prove the guard really is reusable: a second pass must start.
 	svc.SetHostShell(&everythingFakeHostShell{})
 	if started, err := svc.StartBackupEverything(context.Background()); err != nil || !started {
-		t.Fatalf("a later pass must be able to start — the guard must not be stuck from the earlier panic: started=%v err=%v", started, err)
+		t.Fatalf("a later pass must be able to start; the guard must not be stuck from the earlier panic: started=%v err=%v", started, err)
 	}
 	waitForEverythingDone(t, svc)
 }

@@ -3,7 +3,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { SelectField } from "../components/SelectField";
-import { hueVars, rainbowAt } from "../lib/appearance";
+import { hueVars } from "../lib/appearance";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
 import { withLtrIsolates, FOREIGN_APPDATA_DEST_HINT_LTR_FRAGMENTS } from "../lib/ltrFragments";
@@ -62,16 +62,8 @@ import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
 import { DiscoverFindings } from "../components/placement/DiscoverFindings";
 import { placementChanged } from "../lib/placementEvents";
-
 import { Toggle } from "../components/Toggle";
-// classifyReadable's probe: discover() + discoverVMs() OPEN the encrypted repo
-// (they read the mirrored, restic-encrypted definitions), so they are the
-// cleanest "can BombVault read your backups?" check with no backend change:
-//   - a wrong APP_KEY  -> the mapped "APP_KEY differs" error in {ok:false,error}
-//   - a missing/empty repo -> {ok:true, discovered:0}
-//   - a readable repo   -> {ok:true, discovered:>0}
-// See the report notes for why the snapshot-list probe can't be used pre-discover
-// (it needs a container name we don't have on a fresh install).
+
 type DiscoverResult = Awaited<ReturnType<typeof discover>>;
 
 function isKeyMismatch(err: string | undefined): boolean {
@@ -82,12 +74,9 @@ function isKeyMismatch(err: string | undefined): boolean {
 const offsiteInput =
   "rounded-control bg-carbon-surface2 px-3 py-2 text-sm text-carbon-text font-mono glim-field-focus";
 
-// RestoreRow — a single discovered target (container or VM) with its latest
-// snapshot and a per-item Restore button. The restore mechanics are the shared
-// <RestoreAction> (the same control the Containers/VMs tabs use), so a recovery
-// restore behaves identically to one launched from those tabs. The restore is
-// IN PLACE and LEFT STOPPED (forceLeaveStopped): the recovery flow restores
-// everything first, then you start them from the Containers/VMs tabs.
+// RestoreRow restores one discovered container or VM in place through the
+// shared RestoreAction and leaves it stopped: recovery restores everything
+// first, and the user starts things from the Containers and VMs tabs.
 function RestoreRow({
   domain,
   name,
@@ -98,56 +87,31 @@ function RestoreRow({
   hueIndex,
 }: {
   domain: "container" | "vm";
-  /** Raw identifier — the ONLY value the restore action below may send to the
-   *  backend. For VMs this MUST be VM.libvirtName, never VM.name (which is
-   *  display-only on TrueNAS). Containers have no such split. */
+  /** Identifier sent to the backend. For VMs this is VM.libvirtName, because
+   *  VM.name is display-only on TrueNAS. */
   name: string;
-  /** Display name shown in the row + the cancel-confirm text; falls back to
-   *  name. */
+  /** Shown in the row and the confirm text; defaults to name. */
   displayName?: string;
   lastBackup: number | null;
   t: ReturnType<typeof useT>["t"];
   otherActive: boolean;
-  /** Rainbow position for this row — same `.glim-hue`-on-the-row-wrapper
-   *  mechanism as ContainerRow/VMRow (see StepCard.tsx's own comment for the
-   *  cascade reasoning): the shared RestoreAction's plain bg-accent button
-   *  needs no changes of its own, it just inherits --accent/--focus-ring
-   *  from this row once the wrapper below carries the class. Assigned from
-   *  Recovery()'s page-flat `nextHue()` counter at the call site, one call
-   *  per row, in render order. */
+  /** Rainbow position; the row's glim-hue gives the restore button its accent. */
   hueIndex: number;
 }) {
-  // Latest-backup label — DISPLAY ONLY, read straight from the target list's own
-  // lastBackup field (unix seconds). No per-row snapshot fetch: a discovered list
-  // of N containers + M VMs would otherwise spawn N+M concurrent restic processes
-  // just for this label. The restore itself resolves "latest" on the server.
+  // Taken from the list's own lastBackup instead of a per-row snapshot fetch,
+  // which would start one restic process per item. The restore resolves
+  // "latest" on the server.
   const snapLabel = lastBackup ? new Date(lastBackup * 1000).toLocaleString() : "";
 
   return (
     <div
       className="flex flex-col gap-1 py-2 border-b border-carbon-border last:border-0 glim-hue"
-      style={hueVars(rainbowAt(hueIndex)) as CSSProperties}
+      style={hueVars(hueIndex) as CSSProperties}
     >
-      {/* In-place restore, LEFT STOPPED (forceLeaveStopped): the recovery flow
-          restores everything first, then you start them from the Containers/VMs
-          tabs. source omitted => the backend-default repo.
-            `requireConfirm={false}` + `confirmMessage`: the confirm CHECKBOX
-          does not fit a one-line row action, so the guard is a modal instead —
-          the same one "Restore all" in this card already uses. This row used to
-          pass requireConfirm={false} alone, on the strength of a prop doc
-          claiming the stepper gated the flow. It does not: a single click on
-          the glyph badge overwrote live appdata or VM disks with no question
-          asked, and it was the only requireConfirm={false} in the tree.
-            jdp live-review: "Card 5: die ganzen Wiederherstellen-Buttons sollen
-          quadratische Badges mit Glyphen sein und ganz rechts platziert sein."
-          `iconBadge` does the conversion (see RestoreAction's own doc for the
-          32px/tone/tooltip recipe and why the hue comes from THIS row's
-          wrapper rather than from a hueIndex prop). `leading` is what makes it
-          "in its row": this row's name and timestamp move INTO the trigger's
-          own flex line, so the badge's `ms-auto` pushes it to the far edge of
-          the same line they sit on — the row's own separate header <div> is
-          gone, not left behind above it. `label` still names the action; in
-          badge mode it becomes the hover tooltip and the accessible name. */}
+      {/* A confirm checkbox does not fit a one-line row, so confirmMessage
+          guards the restore with a modal instead. `leading` puts the name and
+          time on the badge's own line, so ms-auto pushes the badge to the far
+          edge; `label` becomes its tooltip and accessible name. */}
       <RestoreAction
         domain={domain}
         name={name}
@@ -179,13 +143,11 @@ function RestoreRow({
   );
 }
 
-// FileSetRecoveryRow — a discovered file set with a target-folder picker and a
-// per-item Restore button. File sets rebuilt from `fileset:` snapshot tags carry
-// NO source path (tags alone don't store it), so an in-place restore is
-// impossible here — the restore always extracts into a folder the user picks
-// (non-destructive, FolderBrowser convention). The newest snapshot is resolved
-// AT CLICK TIME (the files restore endpoint takes a concrete hex id, no
-// "latest" alias) so rendering N rows never spawns N restic processes.
+// FileSetRecoveryRow restores a discovered file set into a folder the user
+// picks. Sets rebuilt from `fileset:` snapshot tags carry no source path, so an
+// in-place restore is impossible. The files endpoint needs a concrete snapshot
+// id, and it is resolved on click so that N rows do not start N restic
+// processes.
 function FileSetRecoveryRow({
   set,
   hostMountRoot,
@@ -197,28 +159,17 @@ function FileSetRecoveryRow({
   hostMountRoot: string;
   t: ReturnType<typeof useT>["t"];
   otherActive: boolean;
-  /** Same `.glim-hue`-on-the-row-wrapper mechanism as RestoreRow above (see
-   *  its own comment) — this row's inline bg-accent Restore button inherits
-   *  --accent/--focus-ring from the wrapper with no button-level change. */
+  /** Rainbow position, as in RestoreRow. */
   hueIndex: number;
 }) {
   const [target, setTarget] = useState("");
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a failed
-  // action toasts AND shakes its button — a bumped nonce keyed onto the Restore
-  // button replays `.glim-shake` once per failure, same mechanism as
-  // VMExportButton/ExportButton's shakeNonce in the Containers/VMs tabs.
+  // Bumped per failure and used as the button key, so the shake replays.
   const [shake, setShake] = useState(0);
 
   const snapLabel = set.lastBackup ? new Date(set.lastBackup * 1000).toLocaleString() : "";
 
-  // GlimStone follow-up pass (v8.0.0): the "done"/"fail" result below is a
-  // genuinely one-shot completion notice — unlike VMBackupButton/BackupButton's
-  // shared useBackupWatch hook (deliberately left elsewhere in this pass), this
-  // row drives fireAndWaitRun directly with its own local state, the same
-  // shape as Settings.tsx's already-migrated ReplicateNowButton/
-  // TestConnectionButton, so it gets the same treatment.
   async function handleRestore() {
     if (target.trim() === "" || busy) return;
     setBusy(true);
@@ -255,18 +206,11 @@ function FileSetRecoveryRow({
   return (
     <div
       className="flex flex-col gap-2 py-2 border-b border-carbon-border last:border-0 glim-hue"
-      style={hueVars(rainbowAt(hueIndex)) as CSSProperties}
+      style={hueVars(hueIndex) as CSSProperties}
     >
-      {/* Same conversion as RestoreRow above (jdp: square glyph badges, flush
-          right), done inline here because this row drives fireAndWaitRun
-          directly rather than through RestoreAction. The badge moves UP into
-          this row's own name/timestamp line — that line is the row, and
-          `ms-auto` puts the badge at its far edge, on the same right edge as
-          every other restore badge and as the card's "Restore all" button.
-            It stays disabled until a target folder is picked, exactly as the
-          text button did; the folder picker it depends on is the very next
-          thing below it, and the tooltip carries the label the glyph replaced.
-          `shake`-keyed for the one-shot failure shake, unchanged. */}
+      {/* Built inline rather than with RestoreAction because this row drives
+          fireAndWaitRun itself. The badge stays disabled until a folder is
+          picked in the browser below it. */}
       <div className="flex items-center gap-3 text-sm">
         <span className="text-carbon-text font-medium flex-1 min-w-0 truncate">{set.name}</span>
         <span className="text-carbon-textMuted text-xs shrink-0">
@@ -294,38 +238,25 @@ function FileSetRecoveryRow({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Foreign-repo restore (#61) — "Restore from another BombVault repo".
-//
-// A clearly separated section: connect READ-ONLY to a DIFFERENT BombVault
-// instance's repository (its own APP_KEY), browse the inventory, restore
-// single items. Two hard rules distinguish it from the attach steps above:
-//   1. NOTHING persists. The session lives server-side in memory (30-min TTL);
-//      this card must NEVER call putSettings (the neighbouring connectPreview
-//      deliberately does — that is the anti-pattern here).
-//   2. foreignClose runs on unmount/leave and on disconnect, so the foreign
-//      key does not linger server-side for the full TTL.
-// ---------------------------------------------------------------------------
+// Restoring from another BombVault instance's repository, opened read-only with
+// that instance's APP_KEY. Unlike the attach steps nothing persists: the
+// session lives in server memory for 30 minutes, this card never calls
+// putSettings, and foreignClose runs on disconnect and unmount so the foreign
+// key does not linger for the full TTL.
 
-/** True when a foreign-restore error means the 30-min session lapsed — the
- *  remedy is always the same: reconnect (the card offers exactly that). */
+/** Reports whether a foreign-restore error means the session lapsed, which a
+ *  reconnect fixes. */
 function isForeignSessionGone(err: string | undefined): boolean {
   return !!err && /session/i.test(err) && /(expired|unknown)/i.test(err);
 }
 
-// One restorable foreign item: snapshot picker (default latest), a destination
-// folder, and a Restore button driven by fireAndWaitRun on the recorded run —
-// runs land with domain "container" | "vm" | "files" exactly like local ones.
-//
-// The destination folder is REQUIRED for two domains, for different reasons:
-//   - files: a foreign file set has no trusted local source path, so it always
-//     extracts into a folder the user picks.
-//   - vms (#122): a cross-instance VM must NEVER reuse the source server's disk
-//     paths (that wrote multi-GB images onto the destination host's RAM rootfs
-//     and bricked it). The user chooses where the disks land; they are written
-//     to <destination>/<vm-name>/ and the backend rewrites the libvirt XML to
-//     match. Defaults to the local VM domains path; a foreign VM is restored
-//     LEFT STOPPED so the operator can check it before starting it.
+// ForeignItemRow restores one foreign item from a chosen snapshot; its runs are
+// recorded under the same domains as local ones. Files and VMs need a
+// destination folder: a foreign file set has no trusted local source path, and
+// a foreign VM must not reuse the source server's disk paths, which can point
+// at the destination host's RAM rootfs (#122). VM disks land in
+// <destination>/<vm-name>/ with the libvirt XML rewritten to match, and the VM
+// stays stopped so it can be checked before its first start.
 function ForeignItemRow({
   domain,
   item,
@@ -345,40 +276,29 @@ function ForeignItemRow({
   hostMountRoot: string;
   /** Show the overwrite confirm before restoring (a real or unverifiable collision). */
   existsLocally: boolean;
-  /** True only when a same-named local item is KNOWN to exist; false when the local
-   *  inventory could not be read, so the confirm should say "could not verify". */
+  /** A same-named local item is known to exist; false when the local inventory
+   *  could not be read, so the confirm says "could not verify". */
   collisionKnown: boolean;
   t: ReturnType<typeof useT>["t"];
   blocked: boolean;
   onBusyChange: (busy: boolean) => void;
   onSessionGone: () => void;
-  /** Same `.glim-hue`-on-the-row-wrapper mechanism as RestoreRow/
-   *  FileSetRecoveryRow above — this row's own inline bg-accent Restore
-   *  button inherits --accent/--focus-ring from the wrapper. Assigned from
-   *  ForeignRestoreCard's own `nextHue()` (the SAME counter passed down from
-   *  Recovery(), continuing that one page-flat sequence). */
+  /** Rainbow position, continuing the page's sequence. */
   hueIndex: number;
 }) {
   const [snapshot, setSnapshot] = useState("latest");
-  // VMs default the destination to the local VM domains path (subpath under the
-  // host mount); this exact subpath resolves to the same folder the backend
-  // would fall back to, so leaving it untouched matches the safe default. File
-  // sets start blank (the user must pick a folder).
+  // VMs start at the local VM domains path, the folder the backend falls back
+  // to anyway; file sets start blank.
   const [target, setTarget] = useState(domain === "vms" ? "user/domains" : "");
   const needsTarget = domain === "files" || domain === "vms";
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a failed
-  // action toasts AND shakes its button — a bumped nonce keyed onto the
-  // Restore button replays `.glim-shake` once per failure, same mechanism as
-  // VMExportButton/ExportButton's shakeNonce in the Containers/VMs tabs.
   const [shake, setShake] = useState(0);
 
-  // Files domain only: restore the WHOLE set (default) or PICK a subfolder/file
-  // subset of it (#123 — pull one stack out of a whole-appdata set). The subset
-  // selection + its file tree are lazy: nothing is listed until the user switches
-  // to "pick a subfolder".
+  // Files only: restore the whole set or a picked part of it, such as one stack
+  // out of a whole-appdata set. The tree is listed once the user switches to
+  // picking.
   const [filesMode, setFilesMode] = useState<"whole" | "subset">("whole");
   const [foreignFiles, setForeignFiles] = useState<FileEntry[]>([]);
   const [filesLoading, setFilesLoading] = useState(false);
@@ -387,30 +307,24 @@ function ForeignItemRow({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const subsetActive = domain === "files" && filesMode === "subset";
 
-  // Containers domain only (#125): a cross-instance container restore remaps appdata
-  // onto a destination on THIS host. `overwrite` confirms writing into a non-empty
-  // destination that may belong to a different container; `warnings` lists the
-  // container's NON-appdata binds whose source pool this host lacks (appdata is
-  // remapped automatically — these the operator fixes in the template).
+  // Containers only: appdata is remapped onto this host. `overwrite` confirms
+  // writing into a non-empty destination that may belong to another container;
+  // `warnings` lists the other binds whose source pool this host lacks, which
+  // the operator fixes in the template.
   const [overwrite, setOverwrite] = useState(false);
   const [warnings, setWarnings] = useState<ForeignBindWarning[]>([]);
 
-  // onSessionGone is an inline arrow at the call site, so its identity changes on
-  // every parent re-render — and the parent re-renders on every /api/progress SSE
-  // tick. Hold it in a ref so the file-listing effect below can call the latest
-  // handler WITHOUT listing it as a dependency (else each SSE tick would wipe the
-  // ticked selection and re-fetch the tree mid-pick).
+  // onSessionGone is a new arrow on every parent render, and the parent renders
+  // on every progress tick. As an effect dependency it would wipe the selection
+  // and refetch the tree mid-pick, so the effects read it through a ref.
   const onSessionGoneRef = useRef(onSessionGone);
   onSessionGoneRef.current = onSessionGone;
 
-  // The recorded run's domain strings (see handleRuns): singular for
-  // containers/VMs, "files" for file sets.
   const runDomain = domain === "containers" ? "container" : domain === "vms" ? "vm" : "files";
-  // Newest-first for the picker; restic lists snapshots oldest-first.
+  // Newest first for the picker; restic lists oldest first.
   const snaps = [...item.snapshots].reverse();
 
-  // Containers: fetch the cross-pool bind warnings once (best-effort; the restore
-  // still guards the destination regardless). Read-only, session-scoped.
+  // Best effort: the restore guards the destination either way.
   useEffect(() => {
     if (domain !== "containers") return;
     let cancelled = false;
@@ -421,16 +335,14 @@ function ForeignItemRow({
         else if (isForeignSessionGone(res.error)) onSessionGoneRef.current();
       })
       .catch(() => {
-        /* non-fatal: the appdata remap + destination guard still protect the restore */
+        /* The appdata remap and the destination guard still protect the restore. */
       });
     return () => {
       cancelled = true;
     };
   }, [domain, session, item.name]);
 
-  // Lazily list the chosen snapshot's file tree for the subset picker; re-list
-  // when the snapshot changes and clear any prior selection (it belonged to the
-  // previous snapshot). Read-only session-scoped call (listForeignFiles).
+  // A snapshot change clears the selection, which belonged to the old tree.
   useEffect(() => {
     if (!subsetActive) return;
     let cancelled = false;
@@ -467,19 +379,12 @@ function ForeignItemRow({
     });
   }
 
-  // GlimStone follow-up pass (v8.0.0): same reasoning as FileSetRecoveryRow
-  // above — this row drives fireAndWaitRun directly with its OWN local state
-  // (not the shared, deliberately-sticky useBackupWatch hook), so the "ok"/
-  // "fail" result is a genuinely one-shot completion notice, now a toast.
   async function handleRestore() {
     if (busy || blocked) return;
     if (needsTarget && target.trim() === "") return;
-    // A subset restore needs at least one ticked path (the whole-set restore
-    // sends none).
     if (subsetActive && selected.size === 0) return;
-    // Overwrite confirm BEFORE anything fires. A KNOWN same-named local item warns
-    // that it will be overwritten; an unreadable local inventory instead says it
-    // could not verify (it is not claiming the item exists).
+    // An unreadable local inventory gets a "could not verify" confirm rather
+    // than claiming the item exists.
     if (existsLocally) {
       const key = collisionKnown ? "recovery.foreignExistsConfirm" : "recovery.foreignUnverifiedConfirm";
       if (!(await confirm(t(key).replace("{name}", item.name)))) return;
@@ -497,13 +402,10 @@ function ForeignItemRow({
             item: item.name,
             snapshot,
             confirm: true,
-            // Send whatever destination the field holds; empty lets the backend use
-            // its default (files require one, vms default to user/domains, containers
-            // default to the restore folder / user/appdata).
+            // Empty leaves the default to the backend: user/domains for VMs,
+            // the restore folder or user/appdata for containers.
             target: target.trim() || undefined,
-            // Only the subset mode selects paths; the whole-set restore omits them.
             paths: subsetActive ? [...selected] : undefined,
-            // Containers only: confirm overwriting a non-empty destination (#125).
             overwrite: domain === "containers" ? overwrite : undefined,
           }),
         t,
@@ -527,18 +429,8 @@ function ForeignItemRow({
   return (
     <div
       className="flex flex-col gap-2 py-2 border-b border-carbon-border last:border-0 glim-hue"
-      style={hueVars(rainbowAt(hueIndex)) as CSSProperties}
+      style={hueVars(hueIndex) as CSSProperties}
     >
-      {/* Standing rule "fix the pattern, not the page jdp named": this is the
-          THIRD per-item restore button on this page and the same pattern as
-          Card 5's two, so it takes the same square-badge conversion in the same
-          pass even though jdp only named Card 5. (The other restore buttons in
-          the app are NOT this pattern — RestorePanel's, VMs' and Files' are the
-          submit control of a restore FORM, sitting under a destination picker
-          inside a panel that is itself already opened by an icon badge — so
-          they stay text buttons.)
-            Badge last in the row + `ms-auto` = flush right, same as the two in
-          Card 5. */}
       <div className="flex items-center gap-3 text-sm flex-wrap">
         <span className="text-carbon-text font-medium flex-1 min-w-0 truncate">{item.name}</span>
         <SelectField
@@ -572,7 +464,6 @@ function ForeignItemRow({
       </div>
       {domain === "files" && (
         <div className="flex flex-col gap-2">
-          {/* Whole set vs. a subfolder/file subset of it (#123). */}
           <div className="flex items-center gap-4 text-xs">
             <label className="inline-flex items-center gap-1.5 cursor-pointer">
               <input
@@ -585,13 +476,7 @@ function ForeignItemRow({
               />
               <span className="text-carbon-text">{t("recovery.foreignWholeSet")}</span>
             </label>
-            {/* jdp live-review ("Info-Texte in i Infobubbles"): the
-                foreignSubfolderHint <p> that appeared under this pair once
-                "pick a subfolder" was selected explained what the subset mode
-                DOES — permanent prose about this exact control, so it belongs
-                on this control's own label. On the label rather than the mode
-                block below because it is then readable BEFORE choosing the
-                mode, which is when the explanation is actually useful. */}
+            {/* The hint sits on the label so it can be read before choosing. */}
             <label className="inline-flex items-center gap-1.5 cursor-pointer">
               <input
                 type="radio"
@@ -629,9 +514,6 @@ function ForeignItemRow({
       )}
       {domain === "vms" && (
         <div className="flex flex-col gap-1.5">
-          {/* jdp live-review ("Info-Texte in i Infobubbles"): the destination
-              hint under this picker moves onto the picker's own label bubble,
-              same as the connect step's location field above. */}
           <FolderBrowser
             label={t("recovery.foreignVMDest")}
             value={target}
@@ -644,15 +526,10 @@ function ForeignItemRow({
       )}
       {domain === "containers" && (
         <div className="flex flex-col gap-1.5">
-          {/* Same move as the VM destination above, with one extra step: this
-              hint names a literal `/mnt/zfs` pool path INSIDE the translated
-              sentence, which needs bidi isolation or its leading `/` migrates
-              to the wrong end of the path under RTL (see ltrFragments.tsx).
-              An InfoBubble tip is a plain string that is ALSO the trigger's
-              aria-label, so the `<span dir="ltr">` form withLtrFragments emits
-              has nowhere to live here — `withLtrIsolates` applies the identical
-              isolation with the U+2066/U+2069 characters instead, off the SAME
-              fragment list, so the locale-parity guard still covers it. */}
+          {/* The hint holds a literal pool path that needs bidi isolation under
+              RTL. A tip is a plain string that doubles as the aria-label, so it
+              gets isolate characters from withLtrIsolates instead of the
+              <span dir="ltr"> that withLtrFragments emits. */}
           <FolderBrowser
             label={t("recovery.foreignAppdataDest")}
             value={target}
@@ -674,15 +551,9 @@ function ForeignItemRow({
             <div className="rounded-card bg-carbon-surface2 px-3 py-2 text-xs text-carbon-textMuted max-w-2xl">
               <p className="text-statusWarn">{t("recovery.foreignBindWarning")}</p>
               <ul className="mt-1 flex flex-col gap-0.5">
-                {/* The key joins two free-form strings with a separator neither can
-                    contain, so "a" + "b|c" and "a|b" + "c" can't collide. It MUST stay
-                    the "\u0000" ESCAPE and never be re-typed as a literal NUL byte: a
-                    raw 0x00 anywhere in this file makes ripgrep/grep/git classify the
-                    WHOLE file as binary and return zero content lines for it, so every
-                    repo-wide sweep silently skips Recovery.tsx. That already happened
-                    once — the GlimStone form-engine confirm-dialog migration had to
-                    hand-find this file's two "grep-invisible" call sites after the
-                    sweep missed them. */}
+                {/* A separator neither string can contain keeps the keys apart.
+                    Keep it as the \u0000 escape: a literal NUL byte makes grep
+                    and git treat the whole file as binary. */}
                 {warnings.map((wn) => (
                   <li key={wn.host + "\u0000" + wn.container} className="font-mono wrap-break-word text-start" dir="ltr">
                     {wn.host} → {wn.container}
@@ -698,8 +569,8 @@ function ForeignItemRow({
   );
 }
 
-// The whole foreign section: heading + two StepCards (connect, browse &
-// restore). All session state is COMPONENT state — never Settings.
+// ForeignRestoreCard is the foreign section: a heading and two steps, connect
+// and restore. The session lives in component state, never in Settings.
 function ForeignRestoreCard({
   hostMountRoot,
   t,
@@ -709,26 +580,15 @@ function ForeignRestoreCard({
   hostMountRoot: string;
   t: ReturnType<typeof useT>["t"];
   otherActive: boolean;
-  /** The PARENT Recovery()'s own `nextHue()` counter, passed down as the
-   *  function itself (not a single computed value): this card renders THREE
-   *  of its own heading notches (the section h2 below + its two StepCards),
-   *  so each needs its own call to keep continuing the same page-flat
-   *  sequence in JSX order, exactly as if these three headings were inline
-   *  in Recovery()'s own return. */
+  /** The page's hue counter. The card renders three heading notches, and
+   *  each takes the next hue in order. */
   nextHue: () => number;
 }) {
-  // Connect input. The backend only opens a LOCALLY MOUNTED repository, so the
-  // location is always a folder under the host mount (e.g. a mounted share
-  // holding the other server's backups) — no remote-URL / off-site option here.
   const [localPath, setLocalPath] = useState("");
   const [key, setKey] = useState("");
-  // The FOREIGN repository's own backend credentials, for a remote location
-  // (#185). Kept in component state only: the server uses them for that one
-  // session and never persists them, and neither do we. This instance's stored
-  // cloud credentials are deliberately NOT offered as a default — lending them
-  // to a user-supplied URL is exactly the confused-deputy disclosure that #61
-  // closed, and typing the foreign repo's own credentials is what keeps a remote
-  // foreign restore free of borrowed authority.
+  // The foreign repository's own backend credentials, held for one session and
+  // never stored. This instance's cloud credentials are not offered as a
+  // default: lending them to a user-supplied URL would be a confused deputy.
   const [foreignS3KeyId, setForeignS3KeyId] = useState("");
   const [foreignS3Secret, setForeignS3Secret] = useState("");
   const [foreignS3Region, setForeignS3Region] = useState("");
@@ -739,39 +599,30 @@ function ForeignRestoreCard({
   const revealForeignRestPassword = useReveal();
 
   const [phase, setPhase] = useState<"idle" | "connecting" | "connected" | "error">("idle");
+  // Shown inline as well as in the toast, because the backend's message is
+  // worth reading in full.
   const [connectError, setConnectError] = useState<string | null>(null);
   const [session, setSession] = useState<string | null>(null);
   const [inventory, setInventory] = useState<ForeignInventory | null>(null);
-  // The 30-min server-side TTL lapsed mid-browse (a restore reported it):
-  // surface it and offer a one-click reconnect with the kept inputs.
+  // Set when a restore reports the session expired, to offer a reconnect with
+  // the kept inputs.
   const [sessionGone, setSessionGone] = useState(false);
-  // Local container/VM names ("container:x" / "vm:y"), fetched at connect time
-  // so each row knows whether a restore would overwrite something local.
+  // "container:x" and "vm:y", read at connect time so each row knows whether a
+  // restore would overwrite something local.
   const [localNames, setLocalNames] = useState<Set<string>>(new Set());
-  // Was the local container/VM inventory successfully read at connect time? When
-  // FALSE (the fetch failed), the collision state is UNKNOWN — every foreign
-  // container/VM then still prompts the overwrite confirm rather than silently
-  // skipping it (fail safe: confirm when unknown, never overwrite silently).
+  // False when the local inventory could not be read; every container and VM
+  // then asks before overwriting.
   const [localKnown, setLocalKnown] = useState(true);
   const [busyRows, setBusyRows] = useState(0);
   const { push } = useToast();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a failed
-  // action toasts AND shakes its button, layered ON TOP of this card's own
-  // pre-existing sticky inline connectError box (kept — the scrubbed backend
-  // message is worth reading, not just a toast ping). A bumped nonce keyed onto
-  // the Connect button replays `.glim-shake` once per failure, same mechanism
-  // as VMExportButton/ExportButton's shakeNonce.
   const [shake, setShake] = useState(0);
 
-  // Ref-mirror of the session id so the unmount cleanup closes the CURRENT
-  // session (an effect capturing `session` directly would close stale ids on
-  // every change instead).
+  // The unmount cleanup reads the current session through the ref; an effect
+  // on `session` would close each old id on every change.
   const sessionRef = useRef<string | null>(null);
   sessionRef.current = session;
   useEffect(
     () => () => {
-      // Leave/unmount: drop the session server-side (harmless if expired).
-      // NOTE: nothing is persisted here — this card never calls putSettings.
       if (sessionRef.current) {
         foreignClose(sessionRef.current).catch(() => undefined);
       }
@@ -780,16 +631,14 @@ function ForeignRestoreCard({
   );
 
   const location = localPath.trim();
-  // A remote location is anything restic would treat as a backend rather than a
-  // path: a known scheme prefix, or the unprefixed rclone remote name ("name:bucket")
-  // that is the common typo. Mirrors restic.IsRemoteRepo / LooksLikeUnprefixedRemote
-  // server-side — this only decides which fields to SHOW; the server re-checks and
-  // is the authority.
+  // Anything restic would treat as a backend rather than a path: a known scheme,
+  // or the unprefixed rclone "name:bucket" that is a common typo. Mirrors
+  // restic.IsRemoteRepo and LooksLikeUnprefixedRemote; it only decides which
+  // fields to show, the server checks again.
   const isRemoteLocation = /^(rest|s3|sftp|rclone|b2|gs|azure|swift):/i.test(location) ||
     /^[A-Za-z0-9_-]+:[^/\\]/.test(location);
-  // A remote repo needs at least one usable credential, otherwise the server
-  // refuses it. Which kind depends on the backend, so any one of them unlocks
-  // Connect and the server reports precisely what is missing.
+  // Which credential a remote repo needs depends on the backend, so any one
+  // unlocks Connect and the server reports what is missing.
   const hasForeignCreds =
     foreignS3KeyId.trim() !== "" ||
     foreignS3Secret.trim() !== "" ||
@@ -806,15 +655,13 @@ function ForeignRestoreCard({
     setPhase("connecting");
     setConnectError(null);
     setSessionGone(false);
-    // Replacing an open session: close the old one first (no dangling TTLs).
     if (sessionRef.current) {
       foreignClose(sessionRef.current).catch(() => undefined);
       setSession(null);
       setInventory(null);
     }
     try {
-      // Credentials ride along only for a remote location; a mounted path needs
-      // none, and sending them anyway would put secrets on the wire for nothing.
+      // A mounted path needs no credentials, so none go on the wire for it.
       const res = await foreignOpen(
         location,
         key.trim(),
@@ -837,30 +684,21 @@ function ForeignRestoreCard({
         setShake((n) => n + 1);
         return;
       }
-      // Read the LOCAL inventory BEFORE enabling the restore rows: which foreign
-      // names already exist locally decides whether a restore shows the overwrite
-      // confirm. Awaiting it here (rather than after phase "connected") means the
-      // rows never render enabled with a stale/empty collision set. If the fetch
-      // FAILS the collision state is UNKNOWN (localKnown=false) — every foreign
-      // container/VM then still prompts the confirm (fail safe).
+      // The local inventory is read before the rows are enabled, so they never
+      // render with a stale collision set.
       const names = new Set<string>();
       let known = true;
       try {
         const [cs, vs] = await Promise.all([listContainers(), listVMs()]);
-        // These endpoints answer HTTP 200 {ok:false} when docker/libvirt is
-        // briefly unavailable (fetchJSON does not throw on that), so the ok flag
-        // — not just a thrown error — decides whether the collision set is
-        // trustworthy. An untrusted set forces the overwrite confirm (fail safe).
+        // Both answer 200 with ok:false while docker or libvirt is briefly
+        // away, and fetchJSON does not throw on that.
         if (!cs.ok || !vs.ok) {
           known = false;
         } else {
           for (const c of cs.containers ?? []) names.add(`container:${c.name}`);
-          // ForeignItem.Name (below, item.name) is always the raw libvirt name
-          // — it comes from parsing the foreign repo's restic tags
-          // ("vm:"+rawName at backup time), never a friendly display name. The
-          // local side of this collision check must match on the same raw
-          // identifier (VM.libvirtName), not the display VM.name, or a
-          // TrueNAS VM's real collision would go undetected.
+          // Foreign item names come from restic tags and are raw libvirt names,
+          // so the match has to be on libvirtName; the display name would miss
+          // a TrueNAS VM.
           for (const v of vs.vms ?? []) names.add(`vm:${v.libvirtName}`);
         }
       } catch {
@@ -923,25 +761,11 @@ function ForeignRestoreCard({
       : [];
 
   return (
-    // gap-10 + pt-10, matching the page rhythm the parent wrapper now uses
-    // (jdp: "Bitte machen wie sonst überall") — this section's two StepCards
-    // are cards on the same page and can't sit at half the gap the six above
-    // them use. `mt-2` is gone with it: the parent's own gap-10 already sets
-    // the distance to the divider, and pt-10 sets the same 40px below it, so
-    // the rule sits centred in one consistent break instead of 40px above /
-    // 28px below.
+    // pt-10 matches the parent's gap-10, so the divider sits centred in the
+    // break.
     <div className="flex flex-col gap-10 border-t border-carbon-border pt-10">
       <div>
-        {/* Task 5 (rule 11): page-level group heading, same Badge-in-<h2>
-            treatment as Containers.tsx's StacksPanel `stack.title` heading.
-            GlimStone follow-up pass ("half-overlap card notch"): `relative`
-            added directly on this <h2> — no padding wraps it, so the h2
-            itself is the right anchor; see Badge.tsx's badgeClassName
-            comment.
-            jdp live-review ("Info-Texte in i Infobubbles"): foreignIntro —
-            this section's whole pitch, a permanent paragraph under the
-            heading — is now the badge's own `onAccent` (i), the same fix
-            Flash.tsx's and Config.tsx's card headings already carry. */}
+        {/* No padding wraps this h2, so it anchors the badge itself. */}
         <h2 className="relative flex items-center">
           <Badge tone="heading" size="heading" wrap hueIndex={nextHue()}>
             {t("recovery.foreignTitle")}
@@ -950,16 +774,7 @@ function ForeignRestoreCard({
         </h2>
       </div>
 
-      {/* Foreign step 1 — connect (read-only; nothing is saved). */}
       <StepCard n={1} title={t("recovery.foreignStepConnect")} state={connectState} hueIndex={nextHue()}>
-        {/* Local mounted path only — the backend never opens a remote/off-site
-            repo here, so the other server's backup share must be mounted on this
-            host and pointed at below. */}
-        {/* jdp live-review ("Info-Texte in i Infobubbles"): the standing hint
-            under this picker is now the picker's OWN label bubble —
-            FolderBrowser has carried a `hint` prop for exactly this since the
-            same convention landed on Settings/Config, so this is a move, not
-            new machinery. */}
         <FolderBrowser
           label={t("recovery.foreignLocation")}
           value={localPath}
@@ -969,9 +784,6 @@ function ForeignRestoreCard({
         />
 
         <div className="flex flex-col gap-1">
-          {/* Same fix one level down: the key field's own permanent hint <p>
-              becomes the (i) on its label, matching how every labelled field
-              in Settings.tsx/Config.tsx already carries its explanation. */}
           <label className="flex items-center gap-1 text-xs text-carbon-textSub">
             {t("recovery.foreignKey")}
             <InfoBubble tip={t("recovery.foreignKeyHint")} />
@@ -987,10 +799,6 @@ function ForeignRestoreCard({
           />
         </div>
 
-        {/* Remote location -> the OTHER repository's own backend credentials
-            (#185). Only rendered for a remote location: a mounted path needs
-            none. These are never pre-filled from this instance's own off-site
-            credentials and never persisted — see the state declaration. */}
         {isRemoteLocation && (
           <div className="flex flex-col gap-3 rounded-control border border-carbon-border/60 p-3">
             <p className="text-xs text-carbon-textSub">{t("recovery.foreignCredsIntro")}</p>
@@ -1075,7 +883,7 @@ function ForeignRestoreCard({
               <span className="text-sm text-statusOk">{t("recovery.foreignConnected")}</span>
               <Button
                 label={t("recovery.foreignClose")}
-          labelKey="recovery.foreignClose"
+                labelKey="recovery.foreignClose"
                 tone="neutral"
                 onClick={disconnect}
               />
@@ -1100,13 +908,11 @@ function ForeignRestoreCard({
         )}
       </StepCard>
 
-      {/* Foreign step 2 — browse the inventory & restore single items. */}
       <StepCard n={2} title={t("recovery.foreignStepBrowse")} state={browseState} hueIndex={nextHue()}>
         {!session || !inventory ? (
           <p className="text-sm text-carbon-textMuted">{t("recovery.foreignNotConnected")}</p>
         ) : (
           <>
-            {/* Session lapsed mid-browse (30-min TTL) — offer the reconnect. */}
             {sessionGone && (
               <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed flex items-center gap-3 flex-wrap">
                 <span className="flex-1">{t("recovery.foreignExpired")}</span>
@@ -1132,10 +938,9 @@ function ForeignRestoreCard({
                       session={session}
                       hostMountRoot={hostMountRoot}
                       existsLocally={
-                        // File sets restore into a chosen folder — they never
-                        // overwrite a same-named local item, so no confirm. For
-                        // containers/VMs, an UNKNOWN local inventory (fetch
-                        // failed) counts as a possible collision → confirm.
+                        // File sets restore into a chosen folder and never
+                        // overwrite. An unreadable local inventory counts as a
+                        // possible collision.
                         g.domain !== "files" &&
                         (!localKnown ||
                           localNames.has(
@@ -1143,8 +948,6 @@ function ForeignRestoreCard({
                           ))
                       }
                       collisionKnown={
-                        // A real, verified collision (vs an unreadable inventory) —
-                        // decides whether the confirm says "exists" or "could not verify".
                         g.domain !== "files" &&
                         localKnown &&
                         localNames.has(
@@ -1168,84 +971,13 @@ function ForeignRestoreCard({
   );
 }
 
-// ---------------------------------------------------------------------------
-// StepDisclosure — ONE expander shape, used by BOTH of step 3's optional
-// sections (the off-site repo URLs and the cloud/rclone credential cards).
-//
-// WHY A DISCLOSURE AT ALL (jdp, first round: "Der Abschnitt von
-// Cloud-Zugangsdaten (S3 / restic REST) und Off-site (rclone): brauchen wir
-// die immer oder sind die optional? Können wir die in einen Ein-/Aufklapp-
-// Button verstecken wenn sie optional sind?" — then, this round: "Können wir
-// den Offsite-Abschnitt auch in einen ausklappbaren Button machen?"). Both
-// sections really are optional, confirmed against the backend rather than
-// assumed:
-//   - Credentials: CloudCard's fields become nothing but env vars for the
-//     restic child process (internal/api/service.go's `cloudEnv`, which emits
-//     only the non-empty ones — AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY/
-//     AWS_DEFAULT_REGION/RESTIC_REST_USERNAME/RESTIC_REST_PASSWORD), and
-//     restic reads none of them for a repo that is a plain filesystem path.
-//     RcloneCard's config is written to DataDir/rclone.conf and only ever
-//     consulted for a repo carrying the `rclone:` prefix. That is also exactly
-//     what rclone.hint already says in words ("SMB/NFS need no rclone: mount
-//     the share on Unraid and set a Backup Path to it").
-//   - Off-site: the four *Offsite fields are the second-repo `restic copy`
-//     targets. settings.offsiteHint — which is that chip's own tip —
-//     documents them "leave blank to disable", and settings.offsiteTitle,
-//     which is that chip's own label, already ends in "(optional)".
-// So a user whose backups live on a local path under the host mount, or on a
-// share already mounted on Unraid, needs NEITHER section — and until they
-// open one, neither costs them any screen.
-//
-// THE TRIGGER is a `Selector` in `select="many"` mode — the mechanism this app
-// already uses for disclosure sections (Containers.tsx's per-container
-// Ordner/Stoppen/Ausschlussmuster/Hooks/Backups chip row, whose `openSections`
-// is a Set for the same "these open independently, this is not a tablist"
-// reason). One chip per section rather than five in a strip, but the same
-// component, the same `aria-pressed` state and the same "chip on = its pane
-// below is open" reading, instead of a bespoke expander idiom.
-//   SIBLINGS BY CONSTRUCTION (jdp's ask is that the two read as one mechanism,
-// not two): both call sites render THIS component, so the trigger's element,
-// size, shape, colour, aria wiring and open-state behaviour are one piece of
-// code rather than two that have to be kept in sync by hand. The only knob a
-// caller gets is `gap` — how far its own revealed content sits from the chip —
-// because a notch-badged Card needs 32px of clearance for the notch and a
-// plain stack of fields does not (see that prop's own doc).
-//   `hue={false}`, deliberately: Selector otherwise gives each item its OWN
-// rainbow position by list index, which for a lone chip means position 0 — a
-// red chip sitting inside step 3's yellow card, and, now that there are two of
-// them, BOTH chips red, which would also break the sibling reading. Turning
-// its own hueing off does NOT take it out of the colour engine: a chip still
-// paints `bg-accent`/`text-accentContrast` when active, and --accent under it
-// comes from the StepCard's own `.glim-hue`, so both chips carry THIS STEP's
-// hue exactly like every other button in the step body (Connect & preview,
-// Discover, …) and follow rainbow/reactive mode with them. That is the
-// "genuine singleton keeps its container's accent" case design-language
-// carves out, not an exemption from the engine.
-//
-// `size="lg"` (jdp, this round: "und die Buttons grösser machen"). Measured
-// live before the change: 24px tall, 12px text — Selector's `md` stage, this
-// expander's previous (default) size. After: 32px tall, 14px text, Selector's
-// OWN existing `lg` stage, not a value invented for this one spot. 32px is
-// also the number the rest of this page is already built on: it is Badge's
-// single square-icon-badge stage (see Badge.tsx's "ONE SIZE FOR SQUARE ICON
-// BADGES"), the height of every FolderBrowser path field stacked directly
-// above these chips in this same step, and the height of the step's own
-// "Connect & preview" and "Discover" buttons. So the enlarged chips line up
-// with the controls they sit among instead of introducing a fourth height.
-// `lg` is already this app's choice wherever a Selector is a primary control
-// rather than a dense inline one (Settings' 7-tab strip, its Shape and Motion
-// pickers).
-//
-// ALWAYS CLOSED ON LOAD. This deliberately REVERSES the "open by default when
-// credentials already exist" behaviour the immediately preceding round built
-// for the credentials chip — jdp has now explicitly asked for the opposite
-// ("und diese beiden Ausklappbaren standardmässig zugeklappt lassen"). Gone
-// with it: the `getCloud()`/`getRclone()` probe that decided it, the tri-state
-// `boolean | null` open flag that existed only so the probe's late answer
-// could not overwrite a user's click, and this component's whole `useEffect`.
-// `useState(false)` is the entire story now, for both chips, on every load,
-// configured or not.
-// ---------------------------------------------------------------------------
+// StepDisclosure is the expander for step 3's two optional sections, the
+// off-site repo URLs and the cloud and rclone credentials. A repo on a local
+// path or on a share mounted on Unraid needs neither: the credentials only
+// become env vars for restic, and the rclone config is read only for an
+// `rclone:` repo. The trigger is a one-item Selector in "many" mode, the same
+// disclosure mechanism as the per-container section chips, and both start
+// closed on every load.
 function StepDisclosure({
   label,
   tip,
@@ -1254,32 +986,23 @@ function StepDisclosure({
 }: {
   label: string;
   tip: string;
-  /** Vertical gap between the chip and the content it reveals (and between
-   *  that content's own children). Defaults to the credential cards' 32px: a
-   *  Card's heading notch is centred ON its card's top edge, so it eats half
-   *  its own height out of whatever gap precedes it — see the call site in
-   *  step 3 for the measured -1px overlap that number fixes. A section of
-   *  plain fields has no notch to clear and passes the step body's own
-   *  `gap-2` instead. */
+  /** Gap between the chip and what it reveals. The default clears a Card's
+   *  heading notch, which sits centred on the card's top edge; plain fields
+   *  pass the step body's gap-2. */
   gap?: string;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   return (
-    // pt-3 on top of the step body's own gap-2, so the chip clears whatever
-    // sits above it — see each call site's own comment in step 3.
+    // pt-3 on top of the step body's gap-2, so the chip clears what sits above.
     <div className={`pt-3 flex flex-col ${gap}`}>
       <Selector
         items={[{ id: DISCLOSURE_ID, label, tip }]}
         label={label}
         select="many"
         size="lg"
-        /* The app's ONE `hue={false}`, and the hard-technical case Selector's
-           header reserves the escape hatch for rather than a taste call: the
-           rainbow encodes an item's POSITION in a list, and this Selector has
-           exactly one item. Every instance would be RAINBOW[0] red, inside a
-           StepCard already carrying its own step colour, and would mean nothing
-           by it — there is no list here for a position to be a position in. */
+        /* A rainbow hue encodes a position in a list, and a lone chip has
+           none, so it takes the StepCard's accent instead. */
         hue={false}
         active={open ? OPEN_SECTION : NO_SECTION}
         onChange={() => setOpen((o) => !o)}
@@ -1288,88 +1011,45 @@ function StepDisclosure({
     </div>
   );
 }
-// One item id for every StepDisclosure: each chip is the only member of its
-// own Selector strip, so the id never has to tell it apart from a sibling —
-// which is what lets the two frozen Sets below serve both chips. Frozen rather
-// than a `new Set([...])` per render: Selector takes a ReadonlySet and there
-// are only ever two possible values.
+
+// Each chip is alone in its Selector, so one id and two shared sets serve
+// every StepDisclosure.
 const DISCLOSURE_ID = "sec";
 const OPEN_SECTION: ReadonlySet<string> = new Set([DISCLOSURE_ID]);
 const NO_SECTION: ReadonlySet<string> = new Set<string>();
 
-// CloudCredsDisclosure — step 3's credential cards inside a StepDisclosure. It
-// stays its own component for ONE reason: keeping the two `nextHue()` calls
-// unconditional at the call site (see the props below). Everything about the
-// expander itself is StepDisclosure's.
+// CloudCredsDisclosure is step 3's credential cards inside a StepDisclosure,
+// taking its hues as props so the caller's nextHue() calls stay unconditional.
 function CloudCredsDisclosure({
   t,
   cloudHue,
   rcloneHue,
 }: {
   t: ReturnType<typeof useT>["t"];
-  /** The two rainbow positions the cards used to take inline. Passed in (and
-   *  therefore evaluated by the caller's own `nextHue()` at exactly the point
-   *  in the JSX where these cards used to sit) so that COLLAPSING this section
-   *  does not renumber the rest of the page: `nextHue()` is a running counter
-   *  consumed in JSX evaluation order, so calling it inside a `{open && …}`
-   *  branch would shift every heading after step 3 by two positions the moment
-   *  the section closed. Props evaluate unconditionally; the cards they colour
-   *  do not. */
+  /** nextHue() is a running counter; called inside the collapsible branch it
+   *  would renumber every later heading whenever the section closes. */
   cloudHue: number;
   rcloneHue: number;
 }) {
   return (
     <StepDisclosure label={t("recovery.cloudCreds")} tip={t("recovery.cloudCredsHint")}>
-      {/* `nested` — these are the Settings page's own Cards rendered inside
-          a card, so they drop their (identical-to-the-parent) surface and
-          their horizontal padding and line up on the step's own content
-          edge. See Card's `nested` doc in Settings.tsx for the measured
-          20px indent this removes. */}
+      {/* `nested` drops the card surface and horizontal padding, so the
+          cards line up with the step's content edge. */}
       <CloudCard t={t} hueIndex={cloudHue} nested />
       <RcloneCard t={t} hueIndex={rcloneHue} nested />
     </StepDisclosure>
   );
 }
 
-// ---------------------------------------------------------------------------
-// EncryptionStatus — step 3's encryption block.
-//
-// jdp, live review: "Wieso brauchen wir da ein Passwort-Toggle? Muss ich selber
-// wissen ob ich verschluesselte Backups wiederherstelle...? Kann es das nicht
-// automatisch erkennen?" — it can, and now does.
-//
-// Settings.encryptionEnabled is not a preference, it is a FACT about the
-// repository: restic opens it either with the APP_KEY-derived password or with
-// --insecure-no-password, fixed at init time (see internal/api's ModeFor and
-// encryption_detect.go). So the backend PROBES the configured repos and the
-// setting follows what it finds. This component only renders the outcome.
-//
-// WHY THE SWITCH SURVIVES IN SOME STATES rather than being deleted outright:
-// detection can only report a fact when a repository actually exists. On a
-// genuine first-time setup nothing exists yet, and the user's choice really
-// does decide how the repos get created — deleting the control would leave that
-// case unanswerable on the page that needs it (Settings has its own copy, but
-// sending the user away mid-attach to set something this step depends on is
-// worse than showing one switch here). So:
-//
-//   detected (encrypted/plain) -> a plain status line, NO control. The common
-//                                 path — restoring an existing repo — asks the
-//                                 user for nothing at all, which is the point.
-//   absent / unconfigured      -> the real control: nothing to detect yet.
-//   unknown / conflict         -> the control as an OVERRIDE, next to a visible
-//                                 "couldn't tell"/"they disagree" line and the
-//                                 per-repo detail. Never a silent wrong guess.
-//
-// A disabled-looking switch is deliberately NOT used for the detected states: a
-// greyed switch still reads as "a thing you were supposed to set", which is
-// exactly the impression this change removes.
-//
-// Status colours (ok/warn/fail) stay OUTSIDE the accent/rainbow engine, same as
-// step 1's own readable/not-reachable line right above.
-// ---------------------------------------------------------------------------
+// EncryptionStatus shows step 3's encryption state. Encryption is a fact about
+// a repository, fixed when it is created (see ModeFor and
+// encryption_detect.go), so the backend probes the configured repos and the
+// setting follows what it finds. A detected state gets a plain status line,
+// since even a disabled switch reads as something the user should have set.
+// The switch appears only when there is nothing to detect yet, which leaves
+// the choice to the user, or as an override next to the per-repo detail when
+// the probe could not tell or the repos disagree.
 
-/** The tone each verdict is rendered in. `undecided` verdicts also show the
- *  override switch and the per-repo breakdown. */
 const ENC_VERDICT_TONE: Record<EncryptionVerdict, string> = {
   encrypted: "text-statusOk",
   plain: "text-statusOk",
@@ -1388,8 +1068,7 @@ const ENC_VERDICT_MESSAGE: Record<EncryptionVerdict, TranslationKey> = {
   conflict: "recovery.encConflict",
 };
 
-/** Verdicts where the mode is NOT established, so the user still decides (or
- *  overrides). Everything else is detected and needs no control. */
+/** Verdicts that leave the mode open, so the user decides or overrides. */
 const ENC_NEEDS_CONTROL: ReadonlySet<EncryptionVerdict> = new Set<EncryptionVerdict>([
   "absent",
   "unconfigured",
@@ -1397,9 +1076,8 @@ const ENC_NEEDS_CONTROL: ReadonlySet<EncryptionVerdict> = new Set<EncryptionVerd
   "conflict",
 ]);
 
-/** Verdicts where naming the individual repositories actually helps: "they
- *  disagree" is useless without knowing WHICH, and "couldn't tell" is useless
- *  without knowing which one failed and why. */
+/** Verdicts that only help with the repos named: which ones disagree, or
+ *  which one failed and why. */
 const ENC_SHOWS_REPOS: ReadonlySet<EncryptionVerdict> = new Set<EncryptionVerdict>([
   "unknown",
   "conflict",
@@ -1447,8 +1125,7 @@ function EncryptionStatus({
     );
   }
 
-  // The probe itself failed (network/HTTP, not a repo verdict). Treat it exactly
-  // like "unknown": undecided, control shown, never a guess.
+  // A failed probe (network or HTTP, not a verdict) counts as "unknown".
   const verdict: EncryptionVerdict = detection?.ok ? detection.verdict ?? "unknown" : "unknown";
   const repos = detection?.repos ?? [];
 
@@ -1458,8 +1135,6 @@ function EncryptionStatus({
         <p className={`text-sm leading-relaxed ${ENC_VERDICT_TONE[verdict]}`}>
           {t(ENC_VERDICT_MESSAGE[verdict])}
         </p>
-        {/* The MECHANISM is the explanation and belongs in the bubble; the line
-            above is a live status readout, which stays on the page. */}
         <InfoBubble tip={t("recovery.encDetectHint")} />
       </div>
 
@@ -1503,48 +1178,33 @@ export default function Recovery() {
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
 
-  // Step 1 — repo-readable / APP_KEY state, shared with later steps.
+  // Step 1's readability state, shared with the later steps.
   const [readableState, setReadableState] = useState<StepState>("idle");
-  // The repository folders the readability check actually read, shown under the
-  // step so an empty answer is interpretable rather than frightening (#196).
+  // The folders the check read, shown so an empty answer says where it looked.
   const [readSources, setReadSources] = useState<string[]>([]);
   const [lastError, setLastError] = useState<string | null>(null);
-  // The repositories the probe left out ON PURPOSE - a named repository switched
-  // off. Its own state rather than lastError, because that one only renders in
-  // the warn state and this must be said at every pill colour without turning
-  // the pill amber.
+  // Repositories the probe skipped because they are switched off. Kept apart
+  // from lastError, which only renders in the warn state: this is said at every
+  // pill colour without turning the pill amber.
   const [readNote, setReadNote] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
 
-  // Step 2 — attach settings. Own copy of the settings object; persisted through
-  // the SAME putSettings/setCloud/setRclone the Settings page uses (CloudCard and
-  // RcloneCard self-persist; paths/off-site/encryption go through the mirrored
-  // merge-onto-baseline save below — no new endpoint, no duplicate storage).
+  // Step 2 keeps its own copy of the settings and saves through the same calls
+  // as the Settings page; CloudCard and RcloneCard save themselves.
   const [settings, setSettings] = useState<Settings | null>(null);
   const [hostMountRoot, setHostMountRoot] = useState<string>("/host/user");
   const [attachState, setAttachState] = useState<"idle" | "saving">("idle");
   const [previewed, setPreviewed] = useState(false);
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a failed
-  // action toasts AND shakes its button — a bumped nonce keyed onto the
-  // "Connect & preview" button replays `.glim-shake` once per failure, same
-  // mechanism as VMExportButton/ExportButton's shakeNonce.
   const [connectPreviewShake, setConnectPreviewShake] = useState(0);
 
-  // Encryption mode — DETECTED from the repositories, not asserted by the user
-  // (see EncryptionStatus above for the whole rationale). `detecting` starts
-  // true because the probe runs on mount: the common path must be answered
-  // before the user could even reach for a control.
+  // The probe runs on mount, so detecting starts true.
   const [encDetection, setEncDetection] = useState<EncryptionDetection | null>(null);
   const [encDetecting, setEncDetecting] = useState(true);
 
-  // runEncryptionDetect probes the configured repos and folds the result back
-  // into the local settings copy, so the step's own `settings.encryptionEnabled`
-  // matches what the backend just applied. Without that write-back the next
-  // connectPreview would PUT the stale local value straight back over the
-  // detected one.
-  //
-  // Returns the detection so connectPreview can use the fresh result without
-  // reading `encDetection` through a stale closure.
+  // runEncryptionDetect probes the configured repos and writes the result into
+  // the local settings copy; otherwise the next connectPreview would PUT the
+  // stale value back over the detected one. It returns the detection so a
+  // caller need not read encDetection through a stale closure.
   const runEncryptionDetect = useCallback(async (): Promise<EncryptionDetection | null> => {
     setEncDetecting(true);
     try {
@@ -1556,9 +1216,8 @@ export default function Recovery() {
       }
       return res;
     } catch (err) {
-      // A transport failure is NOT evidence about encryption. Surface it as the
-      // undecided state (EncryptionStatus renders a failed envelope as
-      // "unknown") rather than letting the page imply anything about the mode.
+      // A transport failure says nothing about encryption and renders as
+      // "unknown".
       const failed: EncryptionDetection = {
         ok: false,
         error: err instanceof Error ? err.message : String(err),
@@ -1570,22 +1229,15 @@ export default function Recovery() {
     }
   }, []);
 
-  // Config-restore step (runs BEFORE attach/discover): restore BombVault's OWN
-  // settings first so the attach + discover steps come pre-filled. Optional and
-  // skippable — a user without a settings backup just attaches manually below.
-  // The location (local path / off-site URL) is stored on `settings` and saved
-  // right before the restore so the backend resolves the right repo.
+  // The config step restores BombVault's own settings first, so attach and
+  // discover come pre-filled. It is optional; without a settings backup the
+  // user attaches by hand. The location is saved right before the restore so
+  // the backend resolves the right repo.
   const [configSource, setConfigSource] = useState<RepoSource>("local");
   type ConfigPhase = "idle" | "saving" | "restarting" | "manual" | "reload" | "error";
   const [configPhase, setConfigPhase] = useState<ConfigPhase>("idle");
   const [configError, setConfigError] = useState<string | null>(null);
   const [configSkipped, setConfigSkipped] = useState(false);
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a failed
-  // action toasts AND shakes its button. This CTA can restart the container, so
-  // it gets the exact same treatment as every other primary action in this
-  // file — a bumped nonce keyed onto the "Restore my settings" button replays
-  // `.glim-shake` once per failure, same mechanism as
-  // VMExportButton/ExportButton's shakeNonce.
   const [configShake, setConfigShake] = useState(0);
 
   useEffect(() => {
@@ -1597,25 +1249,16 @@ export default function Recovery() {
         }
       })
       .catch(() => undefined)
-      // Detect the encryption mode as soon as the settings (and therefore the
-      // repo locations) are loaded — AFTER, not in parallel, so the write-back
-      // into the local settings copy can't be overwritten by the getSettings
-      // response landing second. On a box that is already attached this is what
-      // makes the common path decision-free: by the time the user reads step 3,
-      // the mode is already established and shown.
+      // After the settings rather than in parallel, so a late getSettings
+      // response cannot overwrite the detection's write-back.
       .finally(() => void runEncryptionDetect());
   }, [runEncryptionDetect]);
 
-  // checkReadable runs the discover probe and classifies the outcome. Shared by
-  // Step 1's "Re-check" and Step 2's "Connect & preview". It uses the READ-ONLY
-  // probe (probe=true) so merely checking readability never rebuilds the target
-  // list — only Step 3's explicit "Discover" does (#44). The count + error
-  // classification are identical to a real discover.
-  //
-  // Returns the classification (not just void) so connectPreview below can
-  // react to the FRESH result synchronously — reading the `readableState`
-  // React state var right after `await checkReadable()` would risk a stale
-  // closure value from before this render's state settled.
+  // checkReadable runs the read-only discover probe, so a check never rebuilds
+  // the target list; only step 3's Discover does. The probe opens the encrypted
+  // repo, so a wrong APP_KEY shows up as the mapped key error. It returns the
+  // state so connectPreview need not read readableState through a stale
+  // closure.
   const checkReadable = useCallback(async (): Promise<StepState> => {
     setChecking(true);
     setLastError(null);
@@ -1635,25 +1278,15 @@ export default function Recovery() {
         return "warn";
       }
       const total = (c.discovered ?? 0) + (v.discovered ?? 0) + (f.discovered ?? 0);
-      // Name the folders this actually read (#196). The wizard asks for an
-      // off-site repository one step earlier and then reads each domain's
-      // PRIMARY path, which is usually somewhere else entirely — and in the
-      // disaster case this wizard exists for, that primary is a local folder
-      // with nothing in it. An empty answer about an unnamed folder reads as
-      // "my backups are gone"; the same answer with the path in it reads as
-      // "it looked in the wrong place", which is the truth and is actionable.
+      // The wizard reads each domain's primary path, which after a disaster is
+      // often an empty local folder. With the path named, an empty answer reads
+      // as "it looked in the wrong place" rather than "my backups are gone".
       setReadSources([c.repo, v.repo, f.repo].filter((r): r is string => !!r));
-      // A repository the probe could NOT open keeps the pill off green, even when
-      // the ones it could open had plenty in them. The probe's whole job is to
-      // answer "are my backups readable from here", and a green tick over a
-      // repository that was never opened answers a different, easier question.
-      //
-      // …but only a repository that could not be opened. A repository switched
-      // off on purpose is named in the same sentence, because after a /config
-      // loss the operator has every reason to know it was not searched - and it
-      // is not a fault, so it must not hold this pill amber for good and swallow
-      // the save-success toast that is gated on "ok". skippedNeedsAction is the
-      // server's own split between the two; see repoSkip.Note.
+      // A repository that could not be opened keeps the pill off green even when
+      // the others had content. One switched off on purpose is only named: it is
+      // no fault, and holding the pill amber would also swallow the success
+      // toast gated on "ok". skippedNeedsAction is the server's split between
+      // the two, see repoSkip.Note.
       const skipped = [...new Set(results.flatMap((r) => r.skipped ?? []))];
       const needsAction = results.some((r) => r.skippedNeedsAction === true);
       const skippedLine = skipped.length > 0 ? t("common.discoverSkipped").replace("{list}", skipped.join(", ")) : null;
@@ -1663,50 +1296,32 @@ export default function Recovery() {
         setReadableState("warn");
         return "warn";
       }
-      // >0 = repo readable with content; 0 = reachable but empty / not attached yet.
+      // Zero means reachable but empty, or not attached yet.
       const next: StepState = total > 0 ? "ok" : "warn";
       setReadableState(next);
       return next;
     } catch (err) {
-      // Network/HTTP failure (unreachable, auth, 5xx) — not a key mismatch.
+      // Network or HTTP failure, not a key mismatch.
       setReadableState("warn");
       setLastError(err instanceof Error ? err.message : String(err));
       return "warn";
     } finally {
       setChecking(false);
     }
-    // [t], since the skip sentence is translated here. useT's t closes over the
-    // active table and changes identity on a language switch, and setLanguage
-    // re-renders rather than remounts - so an empty array pinned the German
-    // sentence onto an English card. runDiscover below already declares it.
+    // The skip sentence is translated here, and t changes identity on a
+    // language switch without a remount.
   }, [t]);
 
-  // connectPreview saves the paths/off-site/encryption fields (mirroring the
-  // Settings save() merge onto the server baseline), then re-runs checkReadable
-  // so Step 1's pill reflects the freshly-attached location.
-  //
-  // GlimStone follow-up pass (v8.0.0): the "saved"/"error" 3000ms inline flash
-  // is now a toast, same shape as Settings.tsx's shared save() helper — with
-  // one twist: the success flash only ever showed when the FOLLOW-UP
-  // readability check also came back "ok" (attaching a bad repo shouldn't look
-  // like a completed success), so the toast keeps that same condition, driven
-  // by checkReadable's own return value rather than the readableState React
-  // var (which would still read stale here, mid-function, before this
-  // render's state settles).
+  // connectPreview saves the attach fields and re-runs checkReadable for step
+  // 1's pill. The success toast waits for that check to come back ok, since
+  // attaching an unreadable repo is no success.
   const connectPreview = useCallback(async () => {
     if (!settings) return;
     setAttachState("saving");
-    // Re-fetch before merging, exactly like Config.tsx's handleSave and for the
-    // same reason. The PUT below sends a FULL object, and the baseline it used
-    // to merge onto was a mount-time snapshot — this page does not even listen
-    // to its own bv:settings-changed event. So anything changed meanwhile from
-    // a second tab, another device or a settings import was silently rolled
-    // back, cadences and retention included. That snapshot state is gone now
-    // rather than left lying around for the next caller to reach for.
-    //
-    // A failed re-fetch ABORTS rather than falling back to that snapshot: the
-    // backend answers {ok:false} at HTTP 200 instead of throwing, so a fallback
-    // would quietly do the exact damage this guard exists to prevent.
+    // The PUT sends a full object, so it merges onto freshly fetched settings;
+    // a snapshot from mount would roll back whatever another tab or an import
+    // changed meanwhile. The fetch answers ok:false instead of throwing, and a
+    // failure aborts rather than falling back to stale data.
     const latest = await getSettings();
     if (!latest.ok) {
       setAttachState("idle");
@@ -1730,29 +1345,19 @@ export default function Recovery() {
       const res = await putSettings(updated);
       if (res.ok) {
         setSettings((prev) => (prev ? { ...prev, ...patch } : updated));
-        // Keep the sidebar/Settings in sync (same event the Settings page fires).
         window.dispatchEvent(new Event("bv:settings-changed"));
         setPreviewed(true);
-        // Attaching a (possibly different) repo invalidates any previously
-        // discovered targets — clear them so Step 4 can never offer to restore
-        // the OLD repo's data; the user must re-Discover against the new repo.
+        // A new repo invalidates the discovered targets, so the restore step
+        // cannot offer the old repo's data.
         setContainers([]);
         setVMs([]);
         setFileSets([]);
         setDiscovered(null);
         setRestoreAllResult(null);
-        // Re-detect the encryption mode BEFORE the readability check, and only
-        // now that the new paths are persisted — detection probes the CONFIGURED
-        // locations, so running it any earlier would answer about the old ones.
-        // This is the moment the common path actually resolves: on a fresh box
-        // the mount-time probe had nothing configured to look at, and this run
-        // is the first that can see the repository the user just pointed at.
-        //
-        // The patch above deliberately still carries encryptionEnabled: for the
-        // undecidable cases (a brand-new empty location) that value IS the
-        // user's own choice and must be saved. When the mode is instead
-        // detectable, this call overwrites it with the truth a moment later and
-        // writes the result back into the local copy, so the two can't drift.
+        // Detection probes the configured locations, so it runs once the new
+        // paths are saved. The patch still carries encryptionEnabled because
+        // for a new, empty location it is the user's choice; where the mode is
+        // detectable, this run overwrites it and writes the result back.
         await runEncryptionDetect();
         const state = await checkReadable();
         if (state === "ok") push(t("recovery.readable"), "success");
@@ -1768,18 +1373,15 @@ export default function Recovery() {
     }
   }, [settings, checkReadable, runEncryptionDetect, push, t]);
 
-  // restoreOwnConfig stages a restore of BombVault's OWN settings and drives the
-  // self-restart that applies it. It first persists the chosen config-repo
-  // location (merged onto the server baseline, like connectPreview), then calls
-  // restoreConfig("latest", source). On autoRestart it polls the health endpoint
-  // until BombVault returns and reloads so the restored settings load; without an
-  // auto-restart it shows the manual container-restart instruction.
+  // restoreOwnConfig saves the chosen config-repo location, stages a restore of
+  // BombVault's own settings and follows the restart that applies it: with
+  // autoRestart it waits for the app and reloads, otherwise it shows the manual
+  // restart instruction.
   const restoreOwnConfig = useCallback(async () => {
     if (!settings) return;
     setConfigPhase("saving");
     setConfigError(null);
-    // Same full-object PUT, same stale mount-time baseline, same re-fetch — see
-    // connectPreview above.
+    // The same fresh baseline as in connectPreview.
     const latest = await getSettings();
     if (!latest.ok) {
       const message = latest.error ?? t("config.loadSettingsFailed");
@@ -1808,7 +1410,6 @@ export default function Recovery() {
       setSettings((prev) => (prev ? { ...prev, ...patch } : updated));
       const res = await restoreConfig("latest", configSource === "offsite" ? "offsite" : undefined);
       if (!res.ok) {
-        // e.g. an APP_KEY / encryption mismatch — show the mapped remedy.
         const message = isKeyMismatch(res.error) ? t("recovery.appKeyRemedy") : res.error ?? t("settings.error");
         setConfigError(message);
         setConfigPhase("error");
@@ -1817,8 +1418,7 @@ export default function Recovery() {
         return;
       }
       if (!res.staged) {
-        // Contract drift guard: ok:true but the snapshot was NOT staged — don't drive
-        // the restart/reload flow (nothing would be applied). Surface it as an error.
+        // Without a staged snapshot the restart would apply nothing.
         const message = res.error ?? t("settings.error");
         setConfigError(message);
         setConfigPhase("error");
@@ -1827,21 +1427,20 @@ export default function Recovery() {
         return;
       }
       if (res.autoRestart) {
-        // BombVault is restarting itself to apply the staged restore. Poll the
-        // health endpoint until it answers again, then reload so the restored
-        // paths / off-site / creds populate this page (and the steps below).
+        // Reload once BombVault answers again, so the restored settings fill
+        // this page.
         setConfigPhase("restarting");
         const back = await waitForAppBack();
         if (back) {
           window.location.reload();
         } else {
-          // Poll window elapsed — the restore is already applied on boot, so let
-          // the user reload manually once BombVault is back.
+          // The restore applies on boot anyway; the user reloads once
+          // BombVault is back.
           setConfigPhase("reload");
         }
       } else {
-        // Docker socket unreachable: the restore is staged + persisted, but the
-        // user must restart the container themselves to apply it.
+        // Docker socket unreachable: the restore is staged, and the user
+        // restarts the container to apply it.
         setConfigPhase("manual");
       }
     } catch (err) {
@@ -1860,22 +1459,13 @@ export default function Recovery() {
         ? "warn"
         : "idle";
 
-  // Step 3 — discover everything. Runs discoverAll(), then re-fetches the target
-  // lists (kept for the later review/restore step).
-  //
-  // GlimStone follow-up pass (v8.0.0) audit note: `discovered`/`discoverError`
-  // below are DELIBERATELY left as inline status, not migrated to a toast —
-  // unlike Containers.tsx/VMs.tsx's own discoverMsg (which WAS migrated),
-  // these counts, the error and the skip flag all feed `discoverStepState`
-  // (this StepCard's own ok/warn pill) AND are read by Step 5 below to decide
-  // what's about to be restored.
-  // It's reference content the wizard's later steps depend on, not a one-shot
-  // ping — the same "what did the last check say" reasoning as
-  // IntegrityCard's persisted results.
+  // Step 3 runs discoverAll() and refetches the target lists for the restore
+  // step. The result stays inline instead of becoming a toast, because the
+  // step's pill and step 5 both read it.
   const [discovering, setDiscovering] = useState(false);
   const [discovered, setDiscovered] = useState<Awaited<ReturnType<typeof discoverAll>> | null>(null);
   const [discoverError, setDiscoverError] = useState<string | null>(null);
-  // Reconstructed target lists — populated by Discover, read by the review step.
+  // Filled by Discover, read by the restore step.
   const [containers, setContainers] = useState<Container[]>([]);
   const [vms, setVMs] = useState<VM[]>([]);
   const [fileSets, setFileSets] = useState<FileSetView[]>([]);
@@ -1885,21 +1475,15 @@ export default function Recovery() {
     setDiscoverError(null);
     try {
       const counts = await discoverAll();
-      // A discover that returned {ok:false} (e.g. a wrong APP_KEY) surfaces its
-      // real message here — show it instead of the misleading "found none" state.
-      //
-      // The counts and the skip list are kept EITHER WAY. A pass searches the
-      // named repositories before the domain's own, so when the domain's own is
-      // what failed, whatever was found is real and already written back. On the
-      // screen somebody opens after losing their configuration, "could not open
-      // the domain repository" and "…and nothing was recovered" are two different
-      // answers, and only one of them is true.
+      // A failed discover shows its real message instead of "found none". The
+      // counts and skip list are kept either way: named repositories are
+      // searched before the domain's own, so when that one fails, whatever was
+      // found is real and already written back.
       if (counts.error) {
         setDiscoverError(
           isKeyMismatch(counts.error) ? t("recovery.appKeyRemedy") : counts.error
         );
       }
-      // Re-fetch the reconstructed target lists and store them for the restore step.
       const [cs, vs, fs] = await Promise.all([listContainers(), listVMs(), listFileSets()]);
       setContainers(cs.containers ?? []);
       setVMs(vs.vms ?? []);
@@ -1914,12 +1498,9 @@ export default function Recovery() {
     }
   }, [t]);
 
-  // The pill answers for the WHOLE pass, not only for its count. A partial
-  // discover now keeps what it found and carries the error alongside it, so
-  // "four containers rebuilt" and "the domain repository could not be opened"
-  // are both true at once - and the summary dot said ok while the red error box
-  // and the skip line sat underneath it in the same card. checkReadable was
-  // given exactly this rule 250 lines up; this is the other half of it.
+  // The pill answers for the whole pass: a partial discover keeps what it found
+  // and carries the error too, so going by the count alone would show ok above
+  // a red error, the rule checkReadable follows as well.
   const discoverStepState: StepState = discovered
     ? discoverError || discovered.skippedNeedsAction
       ? "warn"
@@ -1928,34 +1509,21 @@ export default function Recovery() {
         : "warn"
     : "idle";
 
-  // Step 4 — review & restore all. anyActive() over the shared progress store is
-  // the v4 "something is in flight" signal: it gates "Restore all" (and each
-  // row) so a bulk run can't collide with a live per-item op, and vice-versa.
+  // The restore step. anyActive() gates "Restore all" and each row, so a bulk
+  // run cannot collide with a single restore.
   const progressMap = useProgress();
   const running = anyActive(progressMap);
   const [restoreAllBusy, setRestoreAllBusy] = useState(false);
-  // GlimStone follow-up pass (v8.0.0) audit note: DELIBERATELY left as inline
-  // status, not migrated to a toast — unlike Containers.tsx/VMs.tsx's own
-  // bulk-action result (which WAS migrated, see runBulk there), this count
-  // ALSO drives `restoreStepState` below (this StepCard's own ok/warn pill),
-  // and a disaster-recovery restore's ok/fail counts are exactly what a user
-  // needs to keep reading and act on (which rows below need a retry), not a
-  // 4s ping to glance at and lose. Same reasoning as IntegrityCard's results.
+  // Inline rather than a toast: it drives the step's pill, and the counts say
+  // whether rows need a retry.
   const [restoreAllResult, setRestoreAllResult] = useState<{ ok: number; fail: number } | null>(null);
 
-  // Recovery-kit download refusal (e.g. the 403 "set a login password" fail-closed
-  // answer when auth is off) — surfaced next to the Step 6 download button.
+  // A refused kit download, such as the 403 while no login password is set.
   const [kitError, setKitError] = useState<string | null>(null);
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a failed
-  // action toasts AND shakes its button, layered ON TOP of this button's own
-  // pre-existing sticky inline error above (kept — same "reference-value error
-  // kept inline" pattern as VMExportButton/ExportButton, both of which layer
-  // the same fail toast + button shake on top of their own sticky inline msg).
   const [kitShake, setKitShake] = useState(0);
 
-  // Is the libvirt SSH link set up? VM restore needs it. VMSSHInfo() errors
-  // (ok:false) precisely when SSH is not wired, so this is the settings check.
-  // Advisory only (a note, never a hard block).
+  // VM restore needs the libvirt SSH link, and getVMSSH fails exactly when it
+  // is not set up. Only a note, never a block.
   const [vmSshConfigured, setVmSshConfigured] = useState<boolean | null>(null);
   useEffect(() => {
     getVMSSH()
@@ -1963,11 +1531,9 @@ export default function Recovery() {
       .catch(() => setVmSshConfigured(false));
   }, []);
 
-  // Restore every discovered container THEN every VM, SEQUENTIALLY and LEFT
-  // STOPPED — exactly the Containers.tsx restoreSelected pattern: fireAndWaitRun
-  // fires one restore and waits for its NEW recorded run to reach a terminal
-  // state before the next, so the shared single-flight guard never rejects the
-  // follow-ups as "already running". Accumulate an ok/fail count.
+  // Restores every container, then every VM, one at a time and left stopped.
+  // fireAndWaitRun waits for each run to finish, so the single-flight guard
+  // never rejects the next one as already running.
   const restoreAll = useCallback(async () => {
     if (restoreAllBusy) return;
     if (containers.length === 0 && vms.length === 0) return;
@@ -1976,8 +1542,6 @@ export default function Recovery() {
     setRestoreAllResult(null);
     let ok = 0;
     let fail = 0;
-    // try/finally so a throw mid-loop can never strand the busy flag (which would
-    // leave "Restore all" and every row permanently disabled).
     try {
       for (const c of containers) {
         const res = await fireAndWaitRun({
@@ -1990,9 +1554,8 @@ export default function Recovery() {
         else fail++;
       }
       for (const v of vms) {
-        // libvirtName, not name: on TrueNAS `name` is the display-only
-        // friendly name, and both the recorded run's target and virsh itself
-        // only ever know the VM by its raw libvirt name.
+        // On TrueNAS `name` is display-only; virsh and the recorded run know
+        // the VM by its libvirt name.
         const res = await fireAndWaitRun({
           kind: "restore",
           matchRun: (r) => r.domain === "vm" && r.target === v.libvirtName,
@@ -2014,80 +1577,25 @@ export default function Recovery() {
       ? "warn"
       : "ok"
     : "idle";
-  // Rows are blocked while ANY op runs OR while the bulk loop is mid-flight
-  // (between two items the SSE store can briefly show nothing active).
+  // The bulk loop counts too: between two items the progress store can
+  // briefly show nothing active.
   const rowOtherActive = running.active || restoreAllBusy;
 
-  // hueSeq/nextHue — same mechanism as Settings.tsx's own counter (see that
-  // file's comment for the full history and jdp's standing rule, "Es soll
-  // immer alles in die Farb- und Formengine integriert werden!! IMMER!!").
-  // Recovery has no tabs, so this is one flat, page-wide sequence: every
-  // StepCard/CloudCard/RcloneCard heading notch below takes
-  // `hueIndex={nextHue()}` in exactly the order the JSX evaluates each call,
-  // so a branch that isn't currently rendering (e.g. Step 3's own
-  // settings-not-loaded-yet fallback) never leaves a gap in the visible
-  // rainbow sequence. ForeignRestoreCard gets the counter FUNCTION itself
-  // (not one computed value) so its own three headings continue this same
-  // sequence rather than restarting at 0.
+  // One page-wide hue sequence, handed out in JSX evaluation order, so a
+  // branch that is not rendered leaves no gap. ForeignRestoreCard gets the
+  // function itself so its headings continue the sequence.
   let hueSeq = 0;
   const nextHue = () => hueSeq++;
 
   return (
-    // PAGE_SHELL (jdp live-review, "Können wir die nicht überall gleich breit
-    // machen?"): the gap here was already the correct 40px from the earlier
-    // "Bitte machen wie sonst überall" round, which also dropped this page's
-    // stray `p-1`. What that round did NOT give it is a max-width — this
-    // wrapper had none at all, so its Cards were simply as wide as the window
-    // let them be: 1633px at a 1920px viewport, the widest surface in the app
-    // and 865px wider than Flash. That was a missing constraint rather than a
-    // deliberate full-bleed choice, so it takes the shared 1152px cap like
-    // every other page. Verified live: nothing on this page clips, reflows or
-    // overflows at 1152px. See lib/pageShell.ts for the table.
     <div className={PAGE_SHELL}>
       <div>
-        {/* The page's <h1> + subtitle pair, kept as-is: every page in this app
-            renders a plain `<p>` subtitle under its own heading (Config's
-            config.subtitle, Fleet's, Receiver's, Dashboard's), so this one is
-            the page's own standing description, not a per-control
-            explanation the "Infotexte in i Infobubbles" round is about. Folding
-            it into a bubble would make Recovery the one page whose heading
-            reads differently from all the others. */}
-        {/* The sidebar's own word, not a second one ([325], jdp: "Überschrift
-            soll statt Notfall-Wiederherstellung nur Wiederherstellung sein").
-            `recovery.pageTitle` carried a "disaster" qualifier the nav entry
-            never had, so the rail said one thing and the page another. Reusing
-            `nav.recovery` instead of retranslating a title in 42 locales also
-            means the two can never drift apart again — pageTitle is deleted, so
-            there is no second string left to disagree with this one. */}
-        {/* The house heading, byte-identical to every other page: text-2xl for
-            the title and text-carbon-textSub for the sentence under it. This one
-            sat on text-lg with the dimmer textMuted, so the tab with the most
-            frightening job in the app had the quietest heading in it. max-w-2xl
-            stays - it only limits the line length of a longer sentence, and
-            nothing about the size. */}
-        <h1 className="text-2xl font-semibold text-carbon-text">{t("recovery.pageTitle")}</h1>
+        <h1 className="text-2xl font-semibold text-carbon-text">{t("nav.recovery")}</h1>
         <p className="mt-1 text-sm text-carbon-textSub max-w-2xl">{t("recovery.intro")}</p>
       </div>
 
-      {/* Step 1 — Can BombVault read your backups? (repo-readable / APP_KEY)
-          jdp live-review ("Info-Texte in i Infobubbles"): the permanent
-          appKeyExplain <p> is now the heading badge's own (i), same treatment
-          Flash.tsx/Config.tsx/Settings.tsx's Cards already give theirs. */}
       <StepCard n={1} title={t("recovery.step1")} hint={t("recovery.appKeyExplain")} state={readableState} hueIndex={nextHue()}>
         <div className="flex items-center gap-3">
-          {/* jdp live-review: "Card 1: Button 'Erneut prüfen' soll nur 'Prüfen'
-              heissen." `recovery.recheck` was shortened IN PLACE (its value, in
-              all 42 locales) rather than swapped for another key — it has
-              exactly ONE call site in the whole app, this one, so nothing else
-              could break, and the two near-matches that exist (`integrity.verify`
-              = "Verify"/"Prüfen", the restic-check card's own button;
-              `spike.checkNow` = "Check now") both belong to other domains and
-              would couple this button's wording to theirs. Its KEY still reads
-              `recheck` because that name is what the plan doc and the two
-              remedy strings below ("…then re-check" / "…und prüfe erneut", which
-              are prose about repeating the action, not this label) refer to;
-              the button's own wording is the value, and the value is now plain.
-              Do not re-lengthen it. */}
           <Button
             label={t("recovery.recheck")}
             labelKey="recovery.recheck"
@@ -2106,11 +1614,9 @@ export default function Recovery() {
           )}
         </div>
 
-        {/* Which folders were read (#196). Shown whenever the check has run, not
-            only on failure: on a green result it confirms the right place, and
-            on an empty one it turns "my backups are gone" into "it looked
-            somewhere else". Deliberately the raw paths, because the next thing
-            a stuck user does is compare them with what they typed. */}
+        {/* Shown after every check, not only on failure: a good result confirms
+            the place. Raw paths, because a stuck user compares them with what
+            they typed. */}
         {readSources.length > 0 && readableState !== "idle" && (
           <p className="text-xs text-carbon-textMuted leading-relaxed wrap-break-word">
             {t("recovery.readFrom")}{" "}
@@ -2118,42 +1624,21 @@ export default function Recovery() {
           </p>
         )}
 
-        {/* Exact remedy when the key doesn't match the repo. */}
         {readableState === "bad" && (
           <div className="rounded-card bg-statusFailBgSoft px-3 py-2.5 text-xs text-statusFail leading-relaxed">
             {t("recovery.appKeyRemedy")}
           </div>
         )}
 
-        {/* The raw (scrubbed) backend message for a warn/other error, as a hint. */}
         {readableState === "warn" && lastError && (
           <p dir="ltr" className="text-xs text-carbon-textMuted font-mono break-all text-start">{lastError}</p>
         )}
 
-        {/* …and the repositories that were deliberately left out, at every pill
-            colour. This one is not a fault, so it neither turns the pill amber
-            nor rides on lastError (which only renders in the warn state): it is
-            simply a true thing the person rebuilding an instance should know,
-            because a repository switched off is a repository that was not
-            searched. */}
         {readNote && (
           <p dir="ltr" className="text-xs text-carbon-textMuted break-words text-start">{readNote}</p>
         )}
       </StepCard>
 
-      {/* Step 2 — Restore BombVault's OWN settings first (optional, pre-attach).
-          On a rebuilt box this pre-fills the attach + discover steps below; it
-          ends with a self-restart, so it lives here rather than on the Config
-          page. Skippable — a user without a settings backup attaches manually. */}
-      {/* jdp live-review ("Info-Texte in i Infobubbles"): configHint and
-          configAppKeyReminder were two stacked permanent <p>s — one bubble on
-          the heading now carries both. They are one explanation split across
-          two sentences (what this step does, and the precondition it needs),
-          not two separate topics, so a second bubble on the same heading would
-          just be two (i) glyphs a reader has to hover in turn.
-          `recovery.configSkipped` below is NOT folded in: it is what the card
-          says once the step has been skipped — a state readout, and the card's
-          only content in that state. */}
       <StepCard
         n={2}
         title={t("recovery.stepConfig")}
@@ -2167,7 +1652,6 @@ export default function Recovery() {
           <>
             {settings ? (
               <>
-                {/* Where the config backup lives: a local path or an off-site URL. */}
                 <div className="flex items-center gap-2 flex-wrap pt-1">
                   <span className="text-xs text-carbon-textMuted">{t("recovery.configSourceLabel")}</span>
                   <SourceToggle
@@ -2201,20 +1685,6 @@ export default function Recovery() {
                 )}
 
                 <div className="flex flex-wrap items-center gap-3 pt-1">
-                  {/* jdp live-review: "Card 2: Button 'BV Einstellungen
-                      wiederherstellen' soll nur 'Wiederherstellen' heissen."
-                      Safe because this card's OWN heading already names the
-                      object — verified live on the deployed page before
-                      shortening, not assumed: the step-2 notch reads
-                      "BombVaults eigene Einstellungen wiederherstellen"
-                      (`recovery.stepConfig`) and sits directly above this
-                      button, so "Wiederherstellen" is never read in isolation.
-                      Shortened IN PLACE like step 1's, and for the same reason:
-                      `recovery.configRestore` has exactly one call site. Its new
-                      value in each locale is that locale's OWN existing
-                      `snapshots.restore` string, verbatim, so all 42 use the
-                      wording the app already ships for this verb rather than a
-                      fresh translation of it. */}
                   <Button
                     label={t("recovery.configSkip")}
                     labelKey="recovery.configSkip"
@@ -2235,37 +1705,23 @@ export default function Recovery() {
                   />
                 </div>
 
-                {/* Restarting — optimistic; waitForAppBack() reloads on return. The
-                    manual reload is offered right away too: if BombVault comes back
-                    faster than the poll's down-detection window, the user isn't stuck
-                    watching the spinner and can reload the moment the app is up. */}
+                {/* The reload shows right away, in case BombVault is back before
+                    the poll notices it went down. */}
                 {configPhase === "restarting" && (
                   <div className="flex flex-col gap-1">
-                    {/* Task 7: was text-statusInfo (the old fifth hue) — genuine
-                        activity (the app really is restarting right now), a
-                        single occurrence on this page, so plain accent-derived
-                        text is safe (no competing solid-accent elements at
-                        once). text-accentText, not the flat text-accent: a
-                        spec-compliance review measured the flat accent gold
-                        at 1.61:1 in light theme here (7.79:1 as
-                        text-statusInfo #0043ce before this task) — badly under the
-                        4.5:1 text minimum. See index.css's --accent-text
-                        comment for the fix and the measured numbers. */}
+                    {/* text-accentText: the flat accent misses the 4.5:1 text
+                        contrast in the light theme, see index.css. */}
                     <p className="text-sm text-accentText">{t("recovery.configRestarting")}</p>
-                    {/* Task 5 (rule 13): same shape as ItemScheduleOverride's
-                        converted button — a plain underlined text link. */}
                     <Badge as="button" onClick={() => window.location.reload()} tone="neutral" size="small" className="self-start">
                       {t("recovery.configReload")}
                     </Badge>
                   </div>
                 )}
-                {/* Manual restart needed (Docker socket unreachable). */}
                 {configPhase === "manual" && (
                   <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
                     {t("recovery.configManualRestart")}
                   </div>
                 )}
-                {/* Auto-restart poll timed out — offer a manual reload. */}
                 {configPhase === "reload" && (
                   <div className="flex flex-wrap items-center gap-3">
                     <span className="text-xs text-statusWarn">{t("recovery.configReloadWhenBack")}</span>
@@ -2290,13 +1746,6 @@ export default function Recovery() {
         )}
       </StepCard>
 
-      {/* Step 3 — Attach your backups (consolidated; cloud creds un-gated here) */}
-      {/* jdp live-review ("Info-Texte in i Infobubbles"): attachHint (a
-          permanent <p> at the top of the card) and credsSaveHint (another one
-          buried between the credential cards and the Connect button) are both
-          "how this step works" prose with no live value in them, so both fold
-          into the heading's own (i) — same single-bubble reasoning as Step 2
-          above. */}
       <StepCard
         n={3}
         title={t("recovery.step2")}
@@ -2306,15 +1755,9 @@ export default function Recovery() {
       >
         {settings ? (
           <>
-            {/* Encryption mode, FIRST in the card (jdp: "Card 3: kannst du den
-                Passwort-Toggle ganz nach oben in der Card verschieben?").
-                  Top placement is also what the block now earns: it stopped
-                being a field the user fills in and became this step's own
-                outcome line — "here is what your backups actually are". On
-                load it reads unconfigured/absent, and the moment "Connect &
-                preview" persists the paths below it turns into the detected
-                verdict. See EncryptionStatus for why a control still appears
-                in the undecidable cases and never in the detected ones. */}
+            {/* First in the card because it is the step's outcome: it turns
+                into the detected verdict once Connect & preview saves the
+                paths below. */}
             <EncryptionStatus
               t={t}
               detection={encDetection}
@@ -2325,7 +1768,6 @@ export default function Recovery() {
               }
             />
 
-            {/* Local backup paths (relative to the host mount). */}
             <FolderBrowser
               label={t("settings.containersPath")}
               value={settings.containersPath}
@@ -2351,25 +1793,7 @@ export default function Recovery() {
               onChange={(v) => setSettings((prev) => (prev ? { ...prev, filesPath: v } : prev))}
             />
 
-            {/* Off-site repo URLs (rest / S3 / B2 / sftp / rclone) — the
-                SECOND disclosure (jdp: "Card 3: können wir den Offsite-
-                Abschnitt auch in einen ausklappbaren Button machen?"). Same
-                StepDisclosure component as the credentials one below, so the
-                two are siblings by construction rather than by resemblance —
-                see that component for the trigger's size, its colour-engine
-                wiring, and why BOTH now start closed.
-                  The chip REPLACES the bare `settings.offsiteTitle` eyebrow
-                span this section used to carry: that string is now the chip's
-                own label, so the section is still named exactly as before and
-                the name isn't printed twice. Its tip is settings.offsiteHint,
-                the paragraph the Settings page already shows under the same
-                fields — no new i18n key for either.
-                  `gap-2` rather than the default `gap-8`: this section reveals
-                plain labelled inputs, not notch-badged Cards, so there is no
-                notch poking up out of the first child that needs clearing. It
-                matches the step body's own gap-2 above and below, which is
-                what makes the revealed fields read as part of the step rather
-                than as a floating panel. */}
+            {/* gap-2 because plain fields have no notch to clear. */}
             <StepDisclosure
               label={t("settings.offsiteTitle")}
               tip={t("settings.offsiteHint")}
@@ -2395,48 +1819,9 @@ export default function Recovery() {
               ))}
             </StepDisclosure>
 
-            {/* The encryption ToggleRow used to sit HERE, between the off-site
-                disclosure and the credential cards. It moved to the TOP of this
-                card and became EncryptionStatus (jdp: "kannst du den
-                Passwort-Toggle ganz nach oben in der Card verschieben? Wieso
-                brauchen wir da ein Passwort-Toggle? ... Kann es das nicht
-                automatisch erkennen?"). It can: the mode is now probed off the
-                repositories themselves, so on the common path there is no
-                control here at all. See EncryptionStatus above.
-                  The old spacing fix this position needed (jdp: "Der darunter
-                folgende Badge ist zu nah am Passworttoggle-Text") is gone with
-                it — nothing sits between the disclosure and the credential
-                cards anymore, so the notch-badge gap described below is now
-                measured against the off-site disclosure's own bottom edge. */}
-
-            {/* Cloud + rclone credential cards — the exact Settings components,
-                self-persisting via setCloud/setRclone (no duplicate persistence)
-                — behind the SECOND of this step's two identical expanders,
-                because they are optional for most installs. See StepDisclosure
-                above for the whole "why a disclosure / why this trigger / why
-                both start closed" writeup, and CloudCredsDisclosure just below
-                it for why the two `nextHue()` calls stay HERE, at this exact
-                point in the JSX, instead of moving inside the collapsed branch
-                (a conditional nextHue() would renumber every heading below
-                step 3 whenever the section is closed).
-                  SPACING (jdp: "Der darunter folgende Badge ist zu nah am
-                Passworttoggle-Text"): measured live before this change, the
-                CloudCard heading notch's top edge sat at y=1189 while the
-                toggle label's bottom sat at y=1190 — a NEGATIVE 1px gap, the
-                badge literally overlapping the text. The DOM gap looked fine
-                (8px, the step body's own gap-2) and that is exactly the trap:
-                a notch badge is centred ON its card's top edge, so it eats
-                half its own height (11px) out of whatever gap precedes it.
-                8 - 11 = -3. The disclosure wrapper adds `pt-3` on top of the
-                body gap, and its own `gap-8` sits between the chip and the
-                first card's edge, so both badge gaps land ~20px clear — see
-                that component. */}
+            {/* The Settings page's own cards, which save themselves. */}
             <CloudCredsDisclosure t={t} cloudHue={nextHue()} rcloneHue={nextHue()} />
 
-            {/* Connect & preview — save paths/off-site/encryption, then re-check.
-                (The "credentials save via each card's own Save button" note that
-                used to sit here is now part of this step's heading bubble — see
-                the StepCard's own `hint` above.) */}
             <div className="flex items-center gap-3 pt-1">
               <Button
                 key={connectPreviewShake}
@@ -2455,7 +1840,6 @@ export default function Recovery() {
         )}
       </StepCard>
 
-      {/* Step 4 — Discover everything (rebuild targets from the backup defs) */}
       <StepCard n={4} title={t("recovery.step3")} state={discoverStepState} hueIndex={nextHue()}>
         <div className="flex items-center gap-3">
           <Button
@@ -2480,14 +1864,11 @@ export default function Recovery() {
           )}
         </div>
 
-        {/* 0/0/0 — nothing found: point back to Step 1/2. */}
         {discovered && discovered.containers + discovered.vms + discovered.files === 0 && (
           <p className="text-sm text-statusWarn">{t("recovery.foundNone")}</p>
         )}
-        {/* A repository the pass could not open. This is the screen somebody
-            reaches after losing their /config, so "found none" has to be able to
-            say "…and here is what was never looked at", otherwise an unmounted
-            share reads exactly like an empty archive. */}
+        {/* Without the skipped repositories named, an unmounted share would
+            read like an empty archive. */}
         {discovered && discovered.skipped.length > 0 && (
           <p className="text-sm text-statusWarn">
             {t("common.discoverSkipped").replace("{list}", discovered.skipped.join(", "))}
@@ -2503,65 +1884,45 @@ export default function Recovery() {
         )}
       </StepCard>
 
-      {/* Step 5 — Review & restore everything (in place, left stopped) */}
       <StepCard n={5} title={t("recovery.step4")} state={restoreStepState} hueIndex={nextHue()}>
         {!anyDiscovered ? (
           <p className="text-sm text-carbon-textMuted">{t("recovery.noneDiscovered")}</p>
         ) : (
           <>
-            {/* Restore all — every container then VM, sequential + left stopped.
-                Shown ONLY when there are containers/VMs to bulk-restore: file
-                sets carry no original path, so they're restored per-row (below)
-                into a chosen folder and restoreAll() deliberately skips them. */}
+            {/* File sets carry no original path, so restoreAll() skips them and
+                they restore per row into a chosen folder. */}
             {(containers.length > 0 || vms.length > 0) && (
-            /* jdp live-review: "Card 5: Der Wiederherstellen-Button der ganzen
-               Container soll ganz nach rechts." The button used to LEAD this
-               row, with the busy phrase and the ok/fail result trailing it.
-               Both readouts now come first and the button is pushed to the
-               row's far edge with `ms-auto` — this app's established
-               flush-right idiom for a control that shares its row with a
-               leading sibling (Containers.tsx's BackupButton/ExportButton
-               row; Flash.tsx's own comment spells out the same pair of
-               options and why `justify-end` is the one to use only when there
-               is nothing to push away from). `ms-auto`, not `ml-auto`: under
-               dir="rtl" the row's far edge is its left one, and the button
-               has to follow it.
-                 It still lands flush right when NEITHER readout is present —
-               a lone flex child with `margin-inline-start: auto` absorbs all
-               the free space on its start side. Verified live in both states. */
-            <div className="flex flex-wrap items-center gap-3">
-              {running.active && !restoreAllBusy && (
-                <span className="text-xs text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
-              )}
-              {restoreAllResult && (
-                <span
-                  className={`text-sm ${restoreAllResult.fail > 0 ? "text-statusWarn" : "text-statusOk"}`}
-                >
-                  {t("recovery.restoreAllResult")
-                    .replace("{ok}", String(restoreAllResult.ok))
-                    .replace("{fail}", String(restoreAllResult.fail))}
-                </span>
-              )}
-              <Button
-                label={t("recovery.restoreAll")}
-                labelKey="recovery.restoreAll"
-                tone="accent"
-                onClick={() => void restoreAll()}
-                disabled={restoreAllBusy || running.active}
-                busy={restoreAllBusy}
-                className="ms-auto"
-              />
-            </div>
+              <div className="flex flex-wrap items-center gap-3">
+                {running.active && !restoreAllBusy && (
+                  <span className="text-xs text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
+                )}
+                {restoreAllResult && (
+                  <span
+                    className={`text-sm ${restoreAllResult.fail > 0 ? "text-statusWarn" : "text-statusOk"}`}
+                  >
+                    {t("recovery.restoreAllResult")
+                      .replace("{ok}", String(restoreAllResult.ok))
+                      .replace("{fail}", String(restoreAllResult.fail))}
+                  </span>
+                )}
+                <Button
+                  label={t("recovery.restoreAll")}
+                  labelKey="recovery.restoreAll"
+                  tone="accent"
+                  onClick={() => void restoreAll()}
+                  disabled={restoreAllBusy || running.active}
+                  busy={restoreAllBusy}
+                  className="ms-auto"
+                />
+              </div>
             )}
 
-            {/* VM restore needs the libvirt SSH link — advisory note, not a block. */}
             {vms.length > 0 && vmSshConfigured === false && (
               <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
                 {t("recovery.vmSshNote")}
               </div>
             )}
 
-            {/* Containers first, then VMs. */}
             {containers.length > 0 && (
               <div className="flex flex-col">
                 <span className="text-xs font-medium text-carbon-textSub pt-1 pb-1">
@@ -2599,18 +1960,8 @@ export default function Recovery() {
                 ))}
               </div>
             )}
-            {/* File sets — restore into a chosen folder ("Restore all" covers
-                containers + VMs only; a rediscovered set has no original path,
-                so each row needs its own target folder). */}
             {fileSets.length > 0 && (
               <div className="flex flex-col">
-                {/* jdp live-review ("Info-Texte in i Infobubbles"): the
-                    filesRestoreHint <p> under this group label explained why
-                    each set needs its own target folder — permanent prose about
-                    a group of controls, so it moves onto the group's own label
-                    as the plain (neutral) InfoBubble, not the `onAccent` one:
-                    this is a bare eyebrow label on the card surface, not a
-                    solid-accent heading badge. */}
                 <span className="inline-flex items-center gap-1 self-start text-xs font-medium text-carbon-textSub pt-2 pb-1">
                   {t("nav.files")}
                   <InfoBubble tip={t("recovery.filesRestoreHint")} />
@@ -2631,18 +1982,11 @@ export default function Recovery() {
         )}
       </StepCard>
 
-      {/* Step 6 — Your recovery kit (safety net for next time)
-          jdp live-review ("Info-Texte in i Infobubbles"): kitHint was the
-          card's whole body apart from the download button — now the heading's
-          own (i). The `kitError` span below stays: it is the backend's own
-          refusal text, shown only when a download is actually refused. */}
       <StepCard n={6} title={t("recovery.step5")} hint={t("recovery.kitHint")} state="idle" hueIndex={nextHue()}>
         <Button
           key={kitShake}
           label={t("recovery.kitDownload")}
           labelKey="recovery.kitDownload"
-          // Accent ([326]). The kit is the one artefact this page exists to
-          // hand over, and its card holds nothing else to do.
           tone="neutral"
           onClick={() => {
             setKitError(null);
@@ -2654,26 +1998,16 @@ export default function Recovery() {
               }
             });
           }}
-          // Only the layout stays here ([326]). Surface, hover, radius,
-          // padding, text size and colour all come from `tone` and `.glim-btn`
-          // already, and restating them was not merely redundant: Tailwind
-          // resolves two competing background utilities by their order in the
-          // compiled stylesheet, not by the order they appear in the
-          // attribute, so `` quietly beat the `bg-accent`
-          // the tone had added. Measured on the deployed build: both classes
-          // sat on the element and the wrong one was painting.
+          // Only layout here: tone and .glim-btn carry the rest, and a second
+          // background utility would win by stylesheet order over the tone's.
           className={`self-start${kitShake ? " glim-shake" : ""}`}
         />
         {kitError && (
-          // Backend-provided error text shown verbatim BY DESIGN (e.g. the
-          // fail-closed "set a login password" refusal when auth is off) —
-          // the API answers English and is not translated client-side.
+          // Shown verbatim; the backend answers in English.
           <span className="text-xs text-statusFail wrap-break-word">✗ {kitError}</span>
         )}
       </StepCard>
 
-      {/* Restore from ANOTHER BombVault repo (#61) — visually separate from the
-          attach steps above; read-only session, nothing persisted. */}
       <ForeignRestoreCard hostMountRoot={hostMountRoot} t={t} otherActive={rowOtherActive} nextHue={nextHue} />
       {confirmDialog}
     </div>

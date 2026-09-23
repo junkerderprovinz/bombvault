@@ -2,9 +2,8 @@ package store
 
 import "testing"
 
-// TestSortVMTargetsForRun verifies the VM run ordering (#119, VMs): VMs with an
-// explicit backup_order (>0) come first in ascending order, then the unordered
-// ones (0) keep their incoming (name-sorted) order.
+// TestSortVMTargetsForRun expects VMs with an explicit backup_order first, in
+// ascending order, and the unordered ones (0) in their incoming order.
 func TestSortVMTargetsForRun(t *testing.T) {
 	vms := []VMTarget{
 		{Name: "b", BackupOrder: 0},
@@ -15,7 +14,7 @@ func TestSortVMTargetsForRun(t *testing.T) {
 	SortVMTargetsForRun(vms)
 
 	got := []string{vms[0].Name, vms[1].Name, vms[2].Name, vms[3].Name}
-	want := []string{"y", "z", "b", "a"} // explicit y(1),z(2) first; then unordered b,a in place
+	want := []string{"y", "z", "b", "a"}
 	for i := range want {
 		if got[i] != want[i] {
 			t.Fatalf("SortVMTargetsForRun = %v, want %v", got, want)

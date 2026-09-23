@@ -38,7 +38,7 @@ func TestCompressesLargeTextBodies(t *testing.T) {
 	if w.Body.Len() >= len(longBody) {
 		t.Errorf("compressed body is %d bytes against %d raw - no saving", w.Body.Len(), len(longBody))
 	}
-	// It has to be READABLE again, which is the half a size check cannot see.
+	// A smaller body proves nothing unless it also decompresses.
 	zr, err := gzip.NewReader(bytes.NewReader(w.Body.Bytes()))
 	if err != nil {
 		t.Fatalf("body is not valid gzip: %v", err)
@@ -47,15 +47,15 @@ func TestCompressesLargeTextBodies(t *testing.T) {
 	if err != nil || string(out) != longBody {
 		t.Errorf("round trip lost the body (err=%v, %d bytes back)", err, len(out))
 	}
-	// A wrong Content-Length is a truncated response; it must be gone.
+	// The raw length would truncate the response.
 	if got := w.Header().Get("Content-Length"); got != "" {
 		t.Errorf("Content-Length = %q, want it dropped once the body is encoded", got)
 	}
 }
 
 func TestNeverCompressesEventStreams(t *testing.T) {
-	// The one that matters. gzip buffers, and a buffered event stream is a
-	// live update that is no longer live - /api/progress is exactly that.
+	// gzip buffers, and a buffered event stream such as /api/progress stops
+	// being live.
 	h := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")
 		_, _ = io.WriteString(w, longBody)
@@ -71,8 +71,7 @@ func TestNeverCompressesEventStreams(t *testing.T) {
 }
 
 func TestKeepsTheFlusherInterface(t *testing.T) {
-	// Losing http.Flusher is how a compression layer silently disables SSE:
-	// the handler asks for it, does not find it, and refuses to stream at all.
+	// An SSE handler that cannot find http.Flusher refuses to stream at all.
 	var sawFlusher bool
 	h := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, sawFlusher = w.(http.Flusher)
@@ -100,8 +99,8 @@ func TestLeavesBodiesAloneWhenNotAsked(t *testing.T) {
 	if w.Body.String() != longBody {
 		t.Error("body altered for a client that never asked for gzip")
 	}
-	// Vary is set either way: a cache that stored the plain answer without it
-	// would hand those bytes to a client that did ask.
+	// Without Vary, a cache could hand the plain bytes to a client that asked
+	// for gzip.
 	if !strings.Contains(w.Header().Get("Vary"), "Accept-Encoding") {
 		t.Error("Vary: Accept-Encoding missing on an uncompressed response")
 	}

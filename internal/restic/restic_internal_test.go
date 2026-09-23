@@ -29,16 +29,10 @@ func TestStatusPercent(t *testing.T) {
 	}
 }
 
-// TestCopyStatusPercent pins the text-format parser that replaced the original
-// (mistaken) "restic copy has no percentage at all" conclusion — issue #159.
-// The real line shape, confirmed against upstream
-// internal/ui/progress/terminal.go's newProgressMax and hands-on against the
-// installed restic 0.17.3 binary, is "[M:SS] NN.NN%  X / Y packs copied"
-// (or "[H:MM:SS] ..." past an hour). Deliberately loose (leading bracket +
-// percent only), so a future wording change to the trailing "X / Y packs
-// copied" text still parses — only a change to the bracket+percent PREFIX
-// itself would stop parsing, and even then it degrades to "no percentage this
-// line", never a crash (see copyStatusPercent's doc comment).
+// TestCopyStatusPercent covers the text progress line of restic copy,
+// "[M:SS] NN.NN%  X / Y packs copied" or "[H:MM:SS] ..." past an hour, as
+// printed by newProgressMax in restic's internal/ui/progress/terminal.go. Only
+// the bracket and percent are matched, so new wording after them still parses.
 func TestCopyStatusPercent(t *testing.T) {
 	cases := []struct {
 		name   string
@@ -66,13 +60,10 @@ func TestCopyStatusPercent(t *testing.T) {
 	}
 }
 
-// TestCopyStartedRegex pins the case-insensitive match for restic copy's
-// per-snapshot section header, anchored to the START of the line (past any
-// leading whitespace) but not the trailing wording ("...this may take a
-// while..."), so a minor upstream punctuation tweak still advances the
-// snapshot boundary while a user-controlled backed-up path that happens to
-// CONTAIN the text "copy started" elsewhere in a line can no longer trigger
-// a false boundary (see copyStartedRe's doc comment).
+// TestCopyStartedRegex covers the per-snapshot header of restic copy. The match
+// ignores case, leading whitespace and the wording after "copy started", and is
+// anchored to the start of the line so a backed-up path containing the phrase
+// does not start a new snapshot.
 func TestCopyStartedRegex(t *testing.T) {
 	cases := []struct {
 		line string
@@ -83,9 +74,7 @@ func TestCopyStartedRegex(t *testing.T) {
 		{"\tcopy started", true}, // any leading whitespace, not just two spaces
 		{"[0:13] 50.00%  2 / 4 packs copied", false},
 		{"snapshot abc123 saved, copied from source snapshot def456", false},
-		// A backed-up path containing the literal text "copy started" must NOT
-		// fire a spurious snapshot boundary just because the substring appears
-		// somewhere mid-line — only a line that STARTS with it counts.
+		// "copy started" inside a path, not at the start of the line.
 		{"snapshot abc123 of /mnt/user/copy started backups at 2026-08-16 10:00:00:", false},
 		{"", false},
 	}
@@ -96,9 +85,9 @@ func TestCopyStartedRegex(t *testing.T) {
 	}
 }
 
-// TestLastReasonPrefersInformativeLine pins the behaviour that surfaced the
-// real cause to forum users: restic's data-corruption error ends with a generic
-// "open an issue" trailer, but we must show the "Detected data corruption" line.
+// TestLastReasonPrefersInformativeLine checks that restic's data-corruption
+// error is reported by its "Detected data corruption" line, not by the generic
+// "open an issue" trailer that follows it.
 func TestLastReasonPrefersInformativeLine(t *testing.T) {
 	stderr := `Fatal: unable to save snapshot: failed to save blob from file "/host/user/cache/vms/Windows 11/vdisk1.img": Detected data corruption while saving blob 52fefaee: hash mismatch
 Corrupted blobs are either caused by hardware issues or software bugs. Please open an issue at https://github.com/restic/restic/issues/new/choose for further troubleshooting.`
@@ -128,9 +117,8 @@ func TestLastReasonEmpty(t *testing.T) {
 	}
 }
 
-// TestLastReasonAppendsItemErrorToCount pins that a count-only restore summary
-// ("There were N errors") is enriched with the first concrete per-item error and
-// that the host path in that sample is scrubbed.
+// TestLastReasonAppendsItemErrorToCount checks that a bare "There were N errors"
+// summary gets the first per-item error appended, with its host path scrubbed.
 func TestLastReasonAppendsItemErrorToCount(t *testing.T) {
 	stderr := strings.Join([]string{
 		"ignoring error for /host/user/bombvault/flash-restore/bzimage: Lchown: operation not permitted",
@@ -148,12 +136,11 @@ func TestLastReasonAppendsItemErrorToCount(t *testing.T) {
 	}
 }
 
-// TestLastReasonDecodesJSONItemErrors pins the issue #110 fix: a restore run
-// with --json (every BombVault restore) reports its per-file errors as
-// {"message_type":"error",…} JSON objects on stderr, followed by a plain
-// "Fatal: There were N errors" tally. The tally alone is useless — the decoded
-// error.message causes must be surfaced (path-scrubbed), never the raw JSON.
-// The stderr shape is taken from a live restic 0.17.3 repeat-restore repro.
+// TestLastReasonDecodesJSONItemErrors covers restore with --json, which every
+// BombVault restore uses. Per-file errors then arrive on stderr as
+// {"message_type":"error",...} objects before a plain "Fatal: There were N
+// errors" tally. The tally alone says nothing, so the decoded, path-scrubbed
+// messages are shown, never the raw JSON. The stderr is from restic 0.17.3.
 func TestLastReasonDecodesJSONItemErrors(t *testing.T) {
 	stderr := strings.Join([]string{
 		`{"message_type":"error","error":{"message":"open /host/user/user/temp/host/user/appdata/plex/db.sqlite: file exists"},"during":"restore","item":"/host/user/appdata/plex/db.sqlite"}`,
@@ -174,19 +161,19 @@ func TestLastReasonDecodesJSONItemErrors(t *testing.T) {
 	}
 }
 
-// TestLastReasonJSONCausesDedupedAndBounded pins the bounding contract: repeated
-// identical causes collapse into one, at most three distinct causes are joined,
-// and further distinct causes fold into a "(+N more)" count.
+// TestLastReasonJSONCausesDedupedAndBounded checks that identical causes
+// collapse into one, at most three distinct causes are joined, and the rest
+// fold into a "(+N more)" count.
 func TestLastReasonJSONCausesDedupedAndBounded(t *testing.T) {
 	line := func(msg, item string) string {
 		return `{"message_type":"error","error":{"message":"` + msg + `"},"during":"restore","item":"` + item + `"}`
 	}
 	stderr := strings.Join([]string{
 		line("UtimesNano: operation not supported", "/a/1"),
-		line("UtimesNano: operation not supported", "/a/2"), // duplicate cause — must collapse
+		line("UtimesNano: operation not supported", "/a/2"), // duplicate cause
 		line("open /host/user/x: file exists", "/a/3"),
 		line("symlink /host/user/y: invalid argument", "/a/4"),
-		line("mkfifo /host/user/z: function not implemented", "/a/5"), // 4th distinct — folded
+		line("mkfifo /host/user/z: function not implemented", "/a/5"), // fourth distinct cause
 		"Fatal: There were 5 errors",
 	}, "\n")
 	got := lastReason(stderr)
@@ -203,9 +190,9 @@ func TestLastReasonJSONCausesDedupedAndBounded(t *testing.T) {
 	}
 }
 
-// TestLastReasonRawJSONLineDecoded pins that when the chosen reason line IS a
-// raw per-item JSON error (restic died before printing its tally), the decoded
-// cause is shown instead of the JSON object.
+// TestLastReasonRawJSONLineDecoded checks that a per-item JSON error chosen as
+// the reason line, as when restic dies before printing its tally, is shown
+// decoded.
 func TestLastReasonRawJSONLineDecoded(t *testing.T) {
 	got := lastReason(`{"message_type":"error","error":{"message":"open /host/user/x: no space left on device"},"during":"restore","item":"/x"}`)
 	if strings.Contains(got, "message_type") {
@@ -216,11 +203,10 @@ func TestLastReasonRawJSONLineDecoded(t *testing.T) {
 	}
 }
 
-// TestIsMetadataOnlyRestoreFailure pins the Part-3 classifier used to downgrade a
-// files restore to success-with-warning: it is true ONLY when every error is a
-// per-file ownership/permission error on the target (the /mnt/user FUSE case), and
-// false the moment any genuine data/space/fatal error appears — so a real failure
-// is never masked.
+// TestIsMetadataOnlyRestoreFailure covers the classifier that downgrades a files
+// restore to a success with a warning. It holds only when every error is an
+// ownership or permission error on the target (the /mnt/user FUSE case), so a
+// real data, space or fatal error is never masked.
 func TestIsMetadataOnlyRestoreFailure(t *testing.T) {
 	metaOnly := strings.Join([]string{
 		"ignoring error for /host/user/restore/docs/a.txt: Lchown: operation not permitted",
@@ -231,7 +217,6 @@ func TestIsMetadataOnlyRestoreFailure(t *testing.T) {
 		t.Fatal("all-metadata-permission stderr must classify as metadata-only")
 	}
 
-	// A no-space per-file error mixed in is a GENUINE failure — must not be masked.
 	withRealError := strings.Join([]string{
 		"ignoring error for /host/user/restore/docs/a.txt: Lchown: operation not permitted",
 		"ignoring error for /host/user/restore/docs/big.bin: no space left on device",
@@ -241,23 +226,18 @@ func TestIsMetadataOnlyRestoreFailure(t *testing.T) {
 		t.Fatal("a no-space per-file error must NOT be treated as metadata-only")
 	}
 
-	// A hard fatal (missing snapshot / unreachable repo) is never metadata-only.
 	if isMetadataOnlyRestoreFailure("Fatal: unable to load snapshot: no matching ID found") {
 		t.Fatal("a fatal load error must NOT be metadata-only")
 	}
 
-	// No error lines at all → nothing to downgrade.
 	if isMetadataOnlyRestoreFailure("") {
 		t.Fatal("empty stderr must NOT be metadata-only")
 	}
 }
 
-// TestIsMetadataOnlyRestoreFailureJSONForm pins that the classifier ALSO
-// understands restic's --json per-item error objects — the phrasing every
-// BombVault restore actually produces (the text "ignoring error for …" form
-// only appears without --json). Before issue #110 the JSON form was never
-// recognized, so the files-restore success-with-warning downgrade could never
-// fire in production.
+// TestIsMetadataOnlyRestoreFailureJSONForm covers restic's --json error
+// objects, which is what every BombVault restore produces. The text form
+// "ignoring error for ..." only appears without --json.
 func TestIsMetadataOnlyRestoreFailureJSONForm(t *testing.T) {
 	permLine := `{"message_type":"error","error":{"message":"Lchown: lchown /host/user/restore/docs/a.txt: operation not permitted"},"during":"restore","item":"/docs/a.txt"}`
 	metaOnly := strings.Join([]string{
@@ -269,7 +249,6 @@ func TestIsMetadataOnlyRestoreFailureJSONForm(t *testing.T) {
 		t.Fatal("all-permission JSON stderr must classify as metadata-only")
 	}
 
-	// A non-permission JSON per-item error mixed in is a GENUINE failure.
 	mixed := strings.Join([]string{
 		permLine,
 		`{"message_type":"error","error":{"message":"open /host/user/restore/docs/big.bin: no space left on device"},"during":"restore","item":"/docs/big.bin"}`,
@@ -279,7 +258,6 @@ func TestIsMetadataOnlyRestoreFailureJSONForm(t *testing.T) {
 		t.Fatal("a non-permission JSON per-item error must NOT be metadata-only")
 	}
 
-	// runError must tag the sentinel for the JSON form too.
 	err := runError([]string{"-r", "/repo", "restore", "--target", "/t", "--", "abc:/p"},
 		permLine+"\nFatal: There were 1 errors")
 	if !errors.Is(err, ErrRestoreMetadataOnly) {
@@ -287,10 +265,9 @@ func TestIsMetadataOnlyRestoreFailureJSONForm(t *testing.T) {
 	}
 }
 
-// TestRunErrorTagsMetadataOnlyRestore pins that runError wraps ErrRestoreMetadataOnly
-// for a metadata-only RESTORE failure while keeping the displayed message identical
-// (so the container to-path restore is unchanged), and never tags genuine failures
-// or non-restore subcommands.
+// TestRunErrorTagsMetadataOnlyRestore checks that runError wraps
+// ErrRestoreMetadataOnly for a metadata-only restore failure without changing
+// the message, and tags neither real failures nor other subcommands.
 func TestRunErrorTagsMetadataOnlyRestore(t *testing.T) {
 	stderr := "ignoring error for /host/user/restore/docs/a.txt: Lchown: operation not permitted\nFatal: There were 1 errors"
 	err := runError([]string{"-r", "/repo", "restore", "--target", "/t", "--", "abc:/p"}, stderr)
@@ -304,13 +281,11 @@ func TestRunErrorTagsMetadataOnlyRestore(t *testing.T) {
 		t.Fatalf("host path must be scrubbed, got %q", err.Error())
 	}
 
-	// A genuine restore failure must NOT wrap the sentinel.
 	genuine := runError([]string{"-r", "/repo", "restore"}, "Fatal: unable to load snapshot: no matching ID found")
 	if errors.Is(genuine, ErrRestoreMetadataOnly) {
 		t.Fatalf("a genuine restore failure must not be tagged metadata-only, got %v", genuine)
 	}
 
-	// The same permission text on a NON-restore subcommand stays a plain failure.
 	backup := runError([]string{"-r", "/repo", "backup"}, "ignoring error for /x: operation not permitted\nFatal: There were 1 errors")
 	if errors.Is(backup, ErrRestoreMetadataOnly) {
 		t.Fatalf("only the restore subcommand may be tagged metadata-only, got %v", backup)

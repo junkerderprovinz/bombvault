@@ -8,29 +8,14 @@ import (
 	"time"
 )
 
-// The mtime shortcut in makeRepoReadable, and the exact edge of what it can see.
+// makeRepoReadable skips the files of every directory whose mtime is older than
+// the last clean pass. That catches every file restic writes, because a new
+// file changes its directory's mtime. It misses a file that something else
+// chmods without touching the directory; the stamp expiry bounds that to a day.
+// The subtests pin both sides so the miss is not mistaken for a bug.
 //
-// The pass used to stat every entry after every backup. Measured against a real
-// 123 GB repository that was 592 ms, against a median backup run of 2 seconds
-// ([5437]). It now stats the directories and skips the FILES of any directory
-// that has not changed since the last clean pass.
-//
-// That is a trade, and a trade has a losing side. These tests pin BOTH sides,
-// because the losing side is the part a later reader will otherwise mistake for
-// a bug and "fix" by deleting the shortcut:
-//
-//	wins   a file restic just wrote is relaxed, because writing it changed its
-//	       directory's mtime. This is the only case that happens in practice.
-//	loses  a file something else chmod'd restrictive, without touching the
-//	       directory, is NOT seen on the next pass. Nothing in BombVault does
-//	       that, and the stamp expiry bounds it to a day.
-//
-// Every time below is SET with Chtimes rather than waited for. The first draft
-// of this file leaned on wall-clock ordering and failed for a reason worth
-// keeping written down: tmpfs stamps a directory at the timer tick, so two
-// writes 1.5 ms apart produced a directory mtime identical to the nanosecond,
-// and the "new file" case looked broken when it was not. That measurement is
-// also why the production stamp is backdated by stampBackdate.
+// All times are set with Chtimes rather than waited for: tmpfs stamps a
+// directory at the timer tick, so two quick writes can get the same mtime.
 func TestMakeRepoReadableScopesToChangedDirectories(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("unix permission bits are not modelled on windows")
@@ -68,8 +53,6 @@ func TestMakeRepoReadableScopesToChangedDirectories(t *testing.T) {
 		return fi.Mode().Perm()
 	}
 
-	// setMtime pins a path's mtime so the comparison under test is decided by
-	// the values this test chose, not by how fast the machine ran.
 	setMtime := func(t *testing.T, p string, at time.Time) {
 		t.Helper()
 		if err := os.Chtimes(p, at, at); err != nil {
@@ -82,9 +65,7 @@ func TestMakeRepoReadableScopesToChangedDirectories(t *testing.T) {
 		write(t, dirA, "first")
 		makeRepoReadable(repo, stampDir)
 
-		// Put the last pass an hour back, then write what restic would write.
-		// dirB's mtime is now clearly after the stamp, which is the basis of the
-		// shortcut and the case it must never miss.
+		// Move the last pass an hour back, then write a pack as restic would.
 		setMtime(t, permStampPath(stampDir, repo), time.Now().Add(-time.Hour))
 		fresh := write(t, dirB, "second")
 		makeRepoReadable(repo, stampDir)
@@ -96,11 +77,9 @@ func TestMakeRepoReadableScopesToChangedDirectories(t *testing.T) {
 		}
 	})
 
-	t.Run("a new file in a DEEPER directory is relaxed, because mtime does not propagate", func(t *testing.T) {
-		// The defect the first implementation shipped with. Writing data/bb/x
-		// updates bb and leaves data alone, so a pass that skipped `data`
-		// wholesale for looking old skipped bb with it and relaxed nothing ever
-		// again. Directories must always be descended into.
+	t.Run("a new file in a deeper directory is relaxed, because mtime does not propagate", func(t *testing.T) {
+		// Writing data/bb/x updates bb but not data, so a pass that skipped an
+		// old-looking data/ wholesale would never reach bb again.
 		repo, stampDir, dirA, dirB := newRepo(t)
 		write(t, dirA, "first")
 		makeRepoReadable(repo, stampDir)
@@ -108,10 +87,8 @@ func TestMakeRepoReadableScopesToChangedDirectories(t *testing.T) {
 		hour := time.Now().Add(-time.Hour)
 		setMtime(t, permStampPath(stampDir, repo), hour)
 		deep := write(t, dirB, "second")
-		// Every directory ABOVE the new file looks untouched, which is exactly
-		// what a real repository looks like: data/ changes only when a new
-		// two-character prefix appears. Set AFTER the write, because the write
-		// itself moves the parent's mtime forward.
+		// In a real repository data/ only changes when a new two-character prefix
+		// appears. Backdate it after the write, which moved the parent's mtime.
 		setMtime(t, filepath.Join(repo, "data"), hour.Add(-time.Hour))
 		setMtime(t, repo, hour.Add(-time.Hour))
 
@@ -132,9 +109,8 @@ func TestMakeRepoReadableScopesToChangedDirectories(t *testing.T) {
 			t.Fatalf("the first pass must relax everything, perm %o", got)
 		}
 
-		// chmod does NOT change the parent directory's mtime, so the next pass
-		// cannot tell this happened. Asserting it stays 0600 states the trade
-		// honestly rather than pretending the shortcut is free.
+		// chmod does not change the directory's mtime, so the next pass cannot
+		// see it and the file stays 0600.
 		if err := os.Chmod(p, 0o600); err != nil {
 			t.Fatal(err)
 		}
@@ -156,8 +132,8 @@ func TestMakeRepoReadableScopesToChangedDirectories(t *testing.T) {
 		}
 		setMtime(t, dirA, time.Now().Add(-time.Hour))
 
-		// Age the stamp past fullSweepAfter. This is the safety net for exactly
-		// the case the previous subtest just showed the shortcut cannot see.
+		// An expired stamp repairs what the previous subtest shows the shortcut
+		// cannot see.
 		old := time.Now().Add(-fullSweepAfter - time.Hour)
 		setMtime(t, permStampPath(stampDir, repo), old)
 
@@ -176,9 +152,8 @@ func TestMakeRepoReadableScopesToChangedDirectories(t *testing.T) {
 			t.Fatalf("a clean pass must leave a stamp, got %v", err)
 		}
 
-		// A repository that is not there at all: the pass cannot read it, so it
-		// saw an error and must not claim to have covered anything. Without this,
-		// one bad pass would mark every directory it never reached as done.
+		// A pass over a missing repository fails. Stamping it would make the next
+		// pass skip directories this one never reached.
 		missing := filepath.Join(t.TempDir(), "gone")
 		makeRepoReadable(missing, stampDir)
 		if _, err := os.Stat(permStampPath(stampDir, missing)); err == nil {
@@ -188,8 +163,8 @@ func TestMakeRepoReadableScopesToChangedDirectories(t *testing.T) {
 	})
 
 	t.Run("two repositories do not share a stamp", func(t *testing.T) {
-		// One stamp for all would let a pass over repository A mark repository B
-		// as covered, and B would then never be relaxed again.
+		// A shared stamp would let a pass over one repository mark the other as
+		// covered.
 		one, stampDir, dirA, _ := newRepo(t)
 		two := t.TempDir()
 		if err := os.MkdirAll(filepath.Join(two, "data", "aa"), 0o700); err != nil {

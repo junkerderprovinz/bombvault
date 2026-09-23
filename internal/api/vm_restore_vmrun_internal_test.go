@@ -42,6 +42,9 @@ const vmrunDomainXML = `<domain type='kvm'><name>mixedvm</name>` +
 	`<disk type='block' device='disk'><source dev='/dev/zvol/tank/vms/mixedvm/disk1'/><target dev='vdb'/></disk>` +
 	`<disk type='block' device='disk'><source dev='/dev/zvol/tank/vms/mixedvm/disk2'/><target dev='vdc'/></disk></devices></domain>`
 
+// mixedvmDisk is the file-backed disk of vmrunDomainXML as the backup reads it.
+const mixedvmDisk = "/host/user/pool/domains/mixedvm/mixedvm.qcow2"
+
 // vmrunGroupSnaps builds the 3-snapshot restic listing one mixed-VM backup
 // run under runTag produces: the main file-backed snapshot (mainID) plus one
 // per zvol disk (vdb -> vdbID, vdc -> vdcID), each carrying its own identity
@@ -49,7 +52,7 @@ const vmrunDomainXML = `<domain type='kvm'><name>mixedvm</name>` +
 // real tag shape (internal/backup/vm_orchestrator.go).
 func vmrunGroupSnaps(runTag, mainID, vdbID, vdcID string) []restic.Snapshot {
 	return []restic.Snapshot{
-		{ID: mainID, Tags: []string{"vm:mixedvm", "p2", runTag}},
+		{ID: mainID, Tags: []string{"vm:mixedvm", "p2", runTag}, Paths: []string{mixedvmDisk}},
 		{ID: vdbID, Tags: []string{"vm:mixedvm:zvol:vdb", "p2", runTag},
 			Paths: []string{"/vm-disks/tank/vms/mixedvm/disk1@bombvault-20260101000000"}},
 		{ID: vdcID, Tags: []string{"vm:mixedvm:zvol:vdc", "p2", runTag},
@@ -78,8 +81,7 @@ func vmrunRestoreTarget(t *testing.T, eng ResticEngine) (*Service, repoRef, stor
 	s.ssh = &fakeHostSSH{}
 	repoDir := filepath.Join(t.TempDir(), "repo")
 	seedResticRepoDir(t, repoDir)
-	disks := []string{"/host/user/pool/domains/mixedvm/mixedvm.qcow2"}
-	tg := vmTargetJSON(t, "mixedvm", vmrunDomainXML, disks, "")
+	tg := vmTargetJSON(t, "mixedvm", vmrunDomainXML, []string{mixedvmDisk}, "")
 	return s, repoRef{repo: repoDir}, tg
 }
 
@@ -93,7 +95,7 @@ func TestPrepareRestoreVMResolvesVmrunGroupForAllThreeDisks(t *testing.T) {
 	eng := &foreignRecordingEngine{snaps: snaps}
 	s, ref, tg := vmrunRestoreTarget(t, eng)
 
-	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "latest", tg, "", "")
+	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "latest", tg, tagIdentity("vm:mixedvm"), "", "")
 	if err != nil {
 		t.Fatalf("prepareRestoreVMForTarget: %v", err)
 	}
@@ -124,7 +126,7 @@ func TestPrepareRestoreVMExplicitSnapshotIDResolvesVmrunGroup(t *testing.T) {
 	eng := &foreignRecordingEngine{snaps: snaps}
 	s, ref, tg := vmrunRestoreTarget(t, eng)
 
-	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "aaaaaaaaaaaaaaaa", tg, "", "")
+	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "aaaaaaaaaaaaaaaa", tg, tagIdentity("vm:mixedvm"), "", "")
 	if err != nil {
 		t.Fatalf("prepareRestoreVMForTarget: %v", err)
 	}
@@ -153,7 +155,7 @@ func TestPrepareRestoreVMLatestPicksNewestRunsGroupNotOlder(t *testing.T) {
 	eng := &foreignRecordingEngine{snaps: all}
 	s, ref, tg := vmrunRestoreTarget(t, eng)
 
-	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "latest", tg, "", "")
+	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "latest", tg, tagIdentity("vm:mixedvm"), "", "")
 	if err != nil {
 		t.Fatalf("prepareRestoreVMForTarget: %v", err)
 	}
@@ -180,11 +182,11 @@ func TestPrepareRestoreVMLatestPicksNewestRunsGroupNotOlder(t *testing.T) {
 // never a group lookup invented from thin air.
 func TestPrepareRestoreVMFallsBackWhenNoVmrunTag(t *testing.T) {
 	eng := &foreignRecordingEngine{snaps: []restic.Snapshot{
-		{ID: "deadbeef12345678", Tags: []string{"vm:mixedvm", "p2"}}, // no vmrun: tag
+		{ID: "deadbeef12345678", Tags: []string{"vm:mixedvm", "p2"}, Paths: []string{mixedvmDisk}}, // no vmrun: tag
 	}}
 	s, ref, tg := vmrunRestoreTarget(t, eng)
 
-	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "latest", tg, "", "")
+	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "latest", tg, tagIdentity("vm:mixedvm"), "", "")
 	if err != nil {
 		t.Fatalf("prepareRestoreVMForTarget: %v", err)
 	}
@@ -229,11 +231,11 @@ func TestPrepareRestoreVMSingleSnapshotVmrunGroupFallsBackForZvolDisks(t *testin
 		// Only the main snapshot exists in the whole repo — it carries the
 		// real runTag (so vmRunTag finds it and a group lookup DOES fire),
 		// but neither zvol disk's own snapshot was ever created.
-		{ID: "deadbeef12345678", Tags: []string{"vm:mixedvm", "p2", runTag}},
+		{ID: "deadbeef12345678", Tags: []string{"vm:mixedvm", "p2", runTag}, Paths: []string{mixedvmDisk}},
 	}}
 	s, ref, tg := vmrunRestoreTarget(t, eng)
 
-	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "latest", tg, "", "")
+	plan, err := s.prepareRestoreVMForTarget(context.Background(), ref, "mixedvm", "latest", tg, tagIdentity("vm:mixedvm"), "", "")
 	if err != nil {
 		t.Fatalf("prepareRestoreVMForTarget: %v", err)
 	}

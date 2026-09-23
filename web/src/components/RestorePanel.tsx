@@ -22,8 +22,8 @@ import { Timeline, type TimelinePick } from "./timeline/Timeline";
 
 type T = ReturnType<typeof useT>["t"];
 
-// humanBytes formats a byte count with a binary (1024) unit and one decimal
-// (mirrors the Dashboard's storage card so sizes read the same everywhere).
+// humanBytes formats a byte count in binary units with one decimal, like the
+// Dashboard's storage card.
 function humanBytes(n: number): string {
   if (!n || n <= 0) return "0 B";
   const units = ["B", "KB", "MB", "GB", "TB"];
@@ -36,21 +36,18 @@ function humanBytes(n: number): string {
   return `${i === 0 ? v : v.toFixed(1)} ${units[i]}`;
 }
 
-// displayTags drops internal marker tags and shows only user-facing tags as chips.
-// The ownership tag (container:<name>) is an implementation detail every snapshot
-// carries, "p1" is an internal orchestrator marker and "bv:direct" marks a
-// snapshot written straight into a direct repository; all three are noise in the
-// UI, so they're hidden here. They stay in restic's metadata untouched.
+// displayTags hides the ownership tags under the entry's own or a former name,
+// the formerly: takeover marker and the internal marker tags: "p1" is an
+// orchestrator marker and "bv:direct" marks a snapshot written straight into a
+// direct repository. All of them stay in restic's metadata untouched.
 const INTERNAL_TAGS = new Set(["p1", "bv:direct"]);
-export function displayTags(tags: string[], containerName: string): string[] {
-  const owner = `container:${containerName}`;
-  return tags.filter((tg) => tg !== owner && !INTERNAL_TAGS.has(tg));
+export function displayTags(tags: string[], containerName: string, aliases: string[] = []): string[] {
+  const owners = new Set([containerName, ...aliases].map((n) => `container:${n}`));
+  return tags.filter((tg) => !owners.has(tg) && !INTERNAL_TAGS.has(tg) && !tg.startsWith("formerly:"));
 }
 
-// SnapshotFileBrowser lists a snapshot's files for multi-select restore: tick any
-// files/folders (a collapsible folder tree when unfiltered, or a flat matched list
-// while filtering), choose a destination (in place, or an alternate folder), then
-// restore the whole selection at once.
+// SnapshotFileBrowser restores ticked files and folders from a snapshot, in
+// place or into another folder.
 function SnapshotFileBrowser({
   containerName,
   snapshotId,
@@ -77,10 +74,9 @@ function SnapshotFileBrowser({
   const [folder, setFolder] = useState(defaultFolder);
   const [restoredTarget, setRestoredTarget] = useState("");
 
-  // Fire-and-watch (see useBackupWatch): the server validates + resolves the
-  // target synchronously, acks with {started, target}, and runs the restic work
-  // detached — so a long restore survives this panel (or the whole browser)
-  // going away; the run history is the source of truth for the outcome.
+  // The server acks with {started, target} and runs the restore detached, so
+  // it survives the panel or the browser closing. useBackupWatch reads the
+  // outcome from the run history.
   const cancelledRef = useRef(false);
   const { state: restoreState, fire, reset, isPending } = useBackupWatch({
     progressKey: `container:${containerName}`,
@@ -98,8 +94,8 @@ function SnapshotFileBrowser({
   });
   const progressMap = useProgress();
   const prog = progressMap[`container:${containerName}`];
-  // Busy-guard: block a new restore while any OTHER backup/restore/replication
-  // runs (this item's own in-flight op is covered by isPending, never blocked).
+  // Any other running backup, restore or replication blocks a new restore.
+  // This item's own run shows as isPending instead.
   const running = anyActive(progressMap);
   const blockedByOther = running.active && !isPending;
   const { confirm, confirmDialog } = useConfirm();
@@ -108,8 +104,6 @@ function SnapshotFileBrowser({
     setLoading(true);
     listSnapshotFiles(containerName, snapshotId, source)
       .then((res) => {
-        // #129 — show the server's own reason (e.g. a stale repo lock) when it
-        // sent one; the generic message is only for a plain network failure.
         if (res.ok) setFiles(res.files ?? []);
         else setError(loadErrorMessage(res, t("files.loadFailed")));
       })
@@ -117,8 +111,8 @@ function SnapshotFileBrowser({
       .finally(() => setLoading(false));
   }, [containerName, snapshotId, source, t]);
 
-  // toggle flips one path in the selection set; a new selection clears any prior
-  // result banner so it can't linger over a fresh, unrun selection.
+  // toggle, pickDest and pickFolder clear the last result, which described the
+  // previous choice.
   function toggle(p: string) {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -129,8 +123,6 @@ function SnapshotFileBrowser({
     reset();
   }
 
-  // Changing the destination or the target folder also invalidates a prior result
-  // banner, so a stale "Restored to …" can't linger over a different, unrun choice.
   function pickDest(d: "inPlace" | "toFolder") {
     setDest(d);
     reset();
@@ -143,7 +135,7 @@ function SnapshotFileBrowser({
   async function handleRestoreSelected() {
     if (selected.size === 0) return;
     if (dest === "toFolder" && !folder.trim()) return;
-    // In place overwrites the live files, so keep the explicit confirm.
+    // Restoring in place overwrites the live files, so it asks first.
     if (dest === "inPlace" && !(await confirm(t("files.restoreConfirm")))) return;
     void fire();
   }
@@ -164,7 +156,6 @@ function SnapshotFileBrowser({
         t={t}
       />
 
-      {/* Destination + restore-selected action — shown once something is ticked. */}
       {count > 0 && (
         <div className="border-t border-carbon-border pt-2 flex flex-col gap-2">
           <div className="flex flex-col gap-1.5">
@@ -237,35 +228,20 @@ function SnapshotFileBrowser({
 
 interface RestorePanelProps {
   name: string;
+  /** The entry's former names, whose ownership tags are hidden like its own. */
+  aliases?: string[];
   t: T;
-  // installed=false marks a not-installed (orphan) container: when it has a
-  // config-only backup (no snapshots) it can be recreated from the saved config.
+  // False for a container that is not installed. With a config-only backup
+  // it can be recreated from the saved definition.
   installed?: boolean;
-  /** Whether the panel's content is expanded. GlimStone follow-up round (jdp,
-   *  live-review: "Können wir hier Buttons machen die alle in einer Zeile
-   *  stehen?" — Containers.tsx's five stacked disclosure triggers, this one
-   *  included, became one shared row of chip buttons): the trigger row (the
-   *  chevron button + the "Backups" label, formerly rendered by this
-   *  component itself) moved up into ContainerRow's own shared Selector strip
-   *  — see that call site's own comment. This component no longer owns an
-   *  `open` boolean or renders a trigger of its own; it is purely the content
-   *  pane, shown or hidden by the CALLER's own state, the same "controlled,
-   *  not self-toggling" shape FoldersEditor/StopContainersEditor/
-   *  ExcludesEditor/HooksEditor (Containers.tsx) all took on in the same
-   *  pass. `lastBackupText` (the flush-right "Letztes Backup: …" fact that
-   *  used to share the trigger's own line) moved with the trigger — the
-   *  caller renders it directly next to the shared button row instead, since
-   *  it is always-visible summary data, not part of this expandable content. */
+  /** Whether the panel is shown. The caller owns the toggle. */
   open: boolean;
 }
 
-// RecreateButton recreates a not-installed container from its saved definition
-// (a config-only backup has no restic snapshot to restore). Calls the normal
-// restore with "latest", which the backend resolves to a recreate-only restore.
-//
-// Fire-and-watch (see useBackupWatch): the POST is only the async ACK — the
-// recreate runs detached on the server, so the real outcome (the recorded run)
-// must be watched. Treating the ack as final rendered detached failures green.
+// RecreateButton recreates a container that is not installed from its saved
+// definition, since a config-only backup has no snapshot to restore. The
+// backend turns a restore of "latest" into a recreate. The POST only
+// acknowledges the start; the result comes from the recorded run.
 function RecreateButton({ name, source, t }: { name: string; source: string; t: T }) {
   const cancelledRef = useRef(false);
   const { state, fire, isPending } = useBackupWatch({
@@ -315,11 +291,8 @@ function RecreateButton({ name, source, t }: { name: string; source: string; t: 
   );
 }
 
-// RestoreToFolder extracts a whole snapshot into an ALTERNATE folder under the
-// host mount — non-destructive: the running container is never touched. It uses
-// the shared FolderBrowser (a folder-tree picker) pre-filled with the default
-// restore folder, calls restoreContainerToPath, and shows the resolved target
-// path on success (errors inline).
+// RestoreToFolder extracts a whole snapshot into another folder under the host
+// mount and leaves the running container alone.
 function RestoreToFolder({
   containerName,
   snapshotId,
@@ -340,11 +313,8 @@ function RestoreToFolder({
   const [path, setPath] = useState(defaultFolder);
   const [target, setTarget] = useState("");
 
-  // Fire-and-watch (see useBackupWatch): the server validates + resolves the
-  // target synchronously, acks with {started, target}, and runs the (possibly
-  // multi-hour) extraction detached — issue #24: awaiting it held the request
-  // open until the browser/proxy dropped it, killing restic mid-restore. The
-  // run history is the source of truth; closing the panel is safe.
+  // Runs detached like the file restore: an extraction can take hours, and a
+  // request held open that long gets dropped by the browser or a proxy.
   const cancelledRef = useRef(false);
   const { state, fire, reset, isPending } = useBackupWatch({
     progressKey: `container:${containerName}`,
@@ -366,7 +336,7 @@ function RestoreToFolder({
 
   function pickPath(v: string) {
     setPath(v);
-    reset(); // a stale "Restored to …" must not linger over a different, unrun choice
+    reset(); // the last result described the previous folder
   }
 
   const done = state.phase === "success";
@@ -409,15 +379,13 @@ function RestoreToFolder({
   );
 }
 
-// snapLabel renders a snapshot's short id + time for the compare selects.
+// snapLabel renders a snapshot's short id and time for the compare selects.
 function snapLabel(snap: Snapshot): string {
   return `${snap.id.slice(0, 8)} · ${new Date(snap.time).toLocaleString()}`;
 }
 
-// CompareSnapshots is a collapsible "Compare" panel: pick two snapshots (two
-// selects, defaulting to the newest pair) and show the diff summary of what
-// changed between them (restic diff). Visually consistent with the Files /
-// Restore-to-folder panels.
+// CompareSnapshots shows what changed between two snapshots (restic diff),
+// starting with the newest pair.
 function CompareSnapshots({ containerName, t }: { containerName: string; t: T }) {
   const [open, setOpen] = useState(false);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
@@ -510,9 +478,8 @@ function CompareSnapshots({ containerName, t }: { containerName: string; t: T })
               disabled={loading}
               className={selectCls}
             />
-            {/* Compare-direction arrow: implies reading order (from → to), so
-                it mirrors under RTL — an inline-block wrapper so scaleX(-1)
-                flips the glyph shape itself, not the layout position. */}
+            {/* The arrow follows reading order, so it flips under RTL.
+                inline-block lets the scale apply to the glyph itself. */}
             <span className="inline-block text-xs text-carbon-textMuted rtl:-scale-x-100">→</span>
             <SelectField
               value={to}
@@ -548,13 +515,13 @@ function CompareSnapshots({ containerName, t }: { containerName: string; t: T })
   );
 }
 
-// SnapshotTags renders a snapshot's (non-ownership) tags as small chips plus a
-// tiny inline "add tag" input. On submit it calls tagSnapshot and asks the
-// parent to refresh so the new chip appears.
+// SnapshotTags shows a snapshot's user tags as chips, with an inline input to
+// add one.
 function SnapshotTags({
   tags,
   snapshotId,
   containerName,
+  aliases,
   source,
   onTagged,
   t,
@@ -562,6 +529,7 @@ function SnapshotTags({
   tags: string[];
   snapshotId: string;
   containerName: string;
+  aliases: string[];
   source: string;
   onTagged: () => void;
   t: T;
@@ -570,7 +538,7 @@ function SnapshotTags({
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
-  const shown = displayTags(tags, containerName);
+  const shown = displayTags(tags, containerName, aliases);
 
   // A failed tag toasts but does not shake: the shake replays by remounting
   // the element under a fresh key, and remounting this still focused input
@@ -646,12 +614,14 @@ type RestoreMode = "inPlace" | "files" | "toFolder";
 function SnapshotActions({
   pick,
   containerName,
+  aliases,
   hostMountRoot,
   defaultFolder,
   t,
 }: {
   pick: TimelinePick;
   containerName: string;
+  aliases: string[];
   hostMountRoot: string;
   defaultFolder: string;
   t: T;
@@ -659,8 +629,7 @@ function SnapshotActions({
   const { advanced } = useAdvanced();
   const running = anyActive(useProgress());
   const [showRestore, setShowRestore] = useState(false);
-  // In basic mode only the in-place restore is offered; the mode radios (files /
-  // to-folder) are advanced. Pin the mode to "inPlace" so the panel always renders.
+  // Basic mode offers only the in-place restore.
   const [mode, setMode] = useState<RestoreMode>("inPlace");
   const effectiveMode: RestoreMode = advanced ? mode : "inPlace";
   // Group name so the three radios are mutually exclusive PER row.
@@ -668,13 +637,13 @@ function SnapshotActions({
 
   return (
     <>
-      {/* Tags (chips + inline add-tag) — ownership tag hidden. Advanced only. */}
       <Advanced>
         <div className="hidden sm:flex">
           <SnapshotTags
             tags={pick.mark.tags}
             snapshotId={pick.snapshotId}
             containerName={containerName}
+            aliases={aliases}
             source={pick.source}
             onTagged={pick.refresh}
             t={t}
@@ -683,9 +652,8 @@ function SnapshotActions({
       </Advanced>
       {/* Square icon badge, no hueIndex needed: this row sits inside
           ContainerRow's own `.glim-hue` element, so the ambient rainbow
-          position already applies (FoldersEditor's Save/Add badges use the
-          same mechanism). The timeline row itself carries id, time and
-          delete; this toggle only opens the inline restore panel. */}
+          position already applies. The timeline row itself carries id, time
+          and delete; this toggle only opens the inline restore panel. */}
       <Button
         label={t("restore.open")}
         labelKey="restore.open"
@@ -695,8 +663,6 @@ function SnapshotActions({
       />
       {showRestore && (
         <div className="basis-full mt-1 rounded-card bg-carbon-surface2 p-3 flex flex-col gap-3 text-xs">
-          {/* Mode radios (Individual files / To a folder) are advanced; in basic
-              mode only the in-place restore below is shown. */}
           <Advanced>
             <div className="flex flex-col gap-1.5">
               <label className="flex items-center gap-2 cursor-pointer text-carbon-text">
@@ -731,6 +697,7 @@ function SnapshotActions({
               </label>
             </div>
           </Advanced>
+
           {effectiveMode === "inPlace" && (
             <div className="flex flex-col gap-2 border-t border-carbon-border pt-2">
               <p className="text-caption text-carbon-textMuted">{t("restore.inPlaceHint")}</p>
@@ -746,6 +713,7 @@ function SnapshotActions({
               />
             </div>
           )}
+
           {effectiveMode === "files" && (
             <div className="border-t border-carbon-border pt-2">
               <SnapshotFileBrowser
@@ -759,6 +727,7 @@ function SnapshotActions({
               />
             </div>
           )}
+
           {effectiveMode === "toFolder" && (
             <div className="border-t border-carbon-border pt-2">
               <RestoreToFolder
@@ -778,20 +747,17 @@ function SnapshotActions({
   );
 }
 
-// DEFAULT_RESTORE_FOLDER is the fallback pre-fill for the restore-to-folder
-// picker when the settings value is empty (matches the backend column default).
-// Exported so every restore-to-folder picker in the app (containers here, file
-// sets in Files.tsx) shares the exact same fallback instead of drifting apart.
+// DEFAULT_RESTORE_FOLDER pre-fills every restore-to-folder picker when the
+// setting is empty. It matches the backend column default.
 export const DEFAULT_RESTORE_FOLDER = "user/bombvault/restore";
 
-export function RestorePanel({ name, t, installed = true, open }: RestorePanelProps) {
+export function RestorePanel({ name, aliases = [], t, installed = true, open }: RestorePanelProps) {
   // Restore-to-folder needs the default folder + host mount root to seed the
   // FolderBrowser. Fetched once the panel is opened (not on mount).
   const [restoreFolder, setRestoreFolder] = useState(DEFAULT_RESTORE_FOLDER);
   const [hostMountRoot, setHostMountRoot] = useState("/host/user");
 
-  // Load the default restore folder + host mount root the first time the panel
-  // is opened, so the restore-to-folder picker can pre-fill them.
+  // Seeds the restore-to-folder pickers once the panel opens.
   useEffect(() => {
     if (!open) return;
     getSettings()
@@ -830,6 +796,7 @@ export function RestorePanel({ name, t, installed = true, open }: RestorePanelPr
           <SnapshotActions
             pick={pick}
             containerName={name}
+            aliases={aliases}
             hostMountRoot={hostMountRoot}
             defaultFolder={restoreFolder}
             t={t}

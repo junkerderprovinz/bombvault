@@ -1,30 +1,15 @@
 package schedule
 
-// ---------------------------------------------------------------------------
-// #166 — "every N days" for the drills / tamper-test / digest schedules.
+// These tests cover the everyN cadence of the drills, tamper-test and digest
+// schedules. Each registers the real domain spec through ReloadWithDueChecks
+// and fires the entry the way cron does, so trigger, due gate and job run
+// together, and the interval is set through the stored last-run time.
 //
-// These are BEHAVIOURAL tests, not symbol checks. Each one registers the real
-// domain spec through ReloadWithDueChecks and then fires the registered cron
-// entry the same way cron itself would (`sc.c.Entry(id).WrappedJob.Run()`, the
-// idiom the catch-up and after-bulk tests already use). So what is exercised is
-// the actual daily trigger → due-gate → job chain, with the interval driven by
-// manipulating the STORED last-run timestamp rather than by waiting days.
-//
-// The four cases pinned for all three schedules:
-//
-//	inside the interval   → the trigger fires, the job does NOT run
-//	older than the interval → the job DOES run
-//	no record at all      → the job DOES run (see below)
-//	last-run query fails  → the job does NOT run
-//
-// "No record at all" runs on purpose. A zero time with a nil error is a definite
-// "has never run" (fresh install, or the schedule was just switched on), not an
-// unknown — and deferring the first pass by a whole interval would leave a user
-// who enabled drills with no verification for N days while the UI says drills
-// are on, and would skip FOREVER if the record never appeared. The unknown is a
-// query ERROR, and that skips. The five backup domains have always read a
-// never-backed-up domain as due, so all eight schedules now agree.
-// ---------------------------------------------------------------------------
+// A zero time with a nil error means the job has never run, and it runs:
+// waiting a whole interval would leave drills that the UI shows as on
+// unverified for N days. Only a query error, where the store cannot tell,
+// skips. The backup domains treat a domain that was never backed up the same
+// way.
 
 import (
 	"errors"
@@ -35,22 +20,18 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// fakeJobRuns is an in-memory JobRunStore whose answer is fully controllable:
-// a stored time, a deliberate "never ran" (zero + nil), or a query failure.
+// fakeJobRuns is an in-memory JobRunStore that answers with a stored time,
+// "never ran" (zero time, nil error) or a query failure.
 type fakeJobRuns struct {
 	mu sync.Mutex
-	// at holds the last-run time per job. A job absent from the map answers
-	// "never ran" — zero time, NIL error — which is what a fresh install and a
-	// just-migrated database both look like.
+	// at holds the last-run time per job. A job missing from it has never run,
+	// as on a fresh install.
 	at map[string]time.Time
-	// queryErr, when set, makes every LastScheduleJobRun fail. This is the
-	// "cannot tell" case, which must never be confused with "never ran".
+	// queryErr, when set, makes every LastScheduleJobRun fail.
 	queryErr error
 	// recordErr, when set, makes every RecordScheduleJobRun fail.
 	recordErr error
-	// recorded counts successful writes per job, so a test can prove the job
-	// stamped its own last-run time (and that the digest did NOT stamp one after
-	// a failed send).
+	// recorded counts successful writes per job.
 	recorded map[string]int
 }
 
@@ -64,7 +45,7 @@ func (f *fakeJobRuns) LastScheduleJobRun(job string) (time.Time, error) {
 	if f.queryErr != nil {
 		return time.Time{}, f.queryErr
 	}
-	return f.at[job], nil // absent → zero time, nil error → "never ran"
+	return f.at[job], nil
 }
 
 func (f *fakeJobRuns) RecordScheduleJobRun(job string, at time.Time) error {
@@ -96,10 +77,9 @@ func (f *fakeJobRuns) storedAt(job string) time.Time {
 	return f.at[job]
 }
 
-// gateProbe is one schedule under test: the settings that register it with an
-// everyN cadence, the job label its entry carries, and a counter wired into the
-// real job function so "did the job run?" is answered by the work actually being
-// invoked, not by inspecting the gate.
+// gateProbe is one schedule under test: settings that register it with an
+// everyN cadence, the label its entry carries, and a wire func that counts
+// calls to the real job function.
 type gateProbe struct {
 	name     string
 	jobKey   string // store.ScheduleJob* key
@@ -110,8 +90,8 @@ type gateProbe struct {
 	wire func(sc *Scheduler, runs *int, jobErr error)
 }
 
-// interval used by every probe below: 7 days, so "1h ago" is comfortably inside
-// it and "8 days ago" comfortably outside, with no clock-edge ambiguity.
+// probeIntervalDays puts "1h ago" well inside the interval and "8 days ago"
+// well outside it.
 const probeIntervalDays = 7
 
 func gateProbes() []gateProbe {
@@ -122,8 +102,8 @@ func gateProbes() []gateProbe {
 			label:  "drill",
 			settings: store.Settings{
 				DrillsEnabled: true,
-				// One enabled domain gives drillTasks a non-empty task list; an
-				// empty pass deliberately records nothing (see the domain spec).
+				// drillTasks needs an enabled domain; an empty pass records
+				// nothing.
 				ContainersEnabled: true,
 				DrillsSchedule:    "everyN 7 03:00",
 			},
@@ -158,9 +138,8 @@ func gateProbes() []gateProbe {
 	}
 }
 
-// fireEntry registers p's schedule and invokes its cron entry exactly once,
-// through cron's own wrapped job chain — the same path a real daily trigger
-// takes. It returns how many times the underlying work ran.
+// fireEntry registers p's schedule, runs its cron entry once through cron's
+// wrapped job chain, and returns how often the job ran.
 func fireEntry(t *testing.T, p gateProbe, jobRuns JobRunStore, jobErr error) int {
 	t.Helper()
 	noTargets := func() ([]store.Target, error) { return nil, nil }
@@ -188,9 +167,8 @@ func fireEntry(t *testing.T, p gateProbe, jobRuns JobRunStore, jobErr error) int
 	return runs
 }
 
-// TestEveryNGateInsideIntervalSkips — case 1. The daily trigger fires and the
-// job does NOT run, because the stored last-run is 1h old against a 7-day
-// interval. Driven by writing that timestamp straight into the job-run store.
+// TestEveryNGateInsideIntervalSkips fires the trigger one hour after the last
+// run of a 7-day interval; the job must not run.
 func TestEveryNGateInsideIntervalSkips(t *testing.T) {
 	for _, p := range gateProbes() {
 		t.Run(p.name, func(t *testing.T) {
@@ -199,9 +177,8 @@ func TestEveryNGateInsideIntervalSkips(t *testing.T) {
 			if runs := fireEntry(t, p, jr, nil); runs != 0 {
 				t.Fatalf("%s: last run 1h ago with a %d-day interval must SKIP, but the job ran %d time(s)", p.name, probeIntervalDays, runs)
 			}
-			// A skipped fire must not refresh the timestamp either — otherwise a
-			// daily trigger would keep pushing the due date out and the pass would
-			// never come due at all.
+			// A skipped fire must not refresh the timestamp, or the daily
+			// trigger would keep pushing the due date out.
 			if got := jr.recordCount(p.jobKey); got != 0 {
 				t.Fatalf("%s: a skipped fire must not record a run, got %d record(s)", p.name, got)
 			}
@@ -209,9 +186,8 @@ func TestEveryNGateInsideIntervalSkips(t *testing.T) {
 	}
 }
 
-// TestEveryNGateOlderThanIntervalRuns — case 2. Same wiring, but the stored
-// last-run is 8 days old against the 7-day interval, so the job DOES run and
-// stamps a fresh timestamp.
+// TestEveryNGateOlderThanIntervalRuns checks that a job last run 8 days ago on
+// a 7-day interval runs and records a new time.
 func TestEveryNGateOlderThanIntervalRuns(t *testing.T) {
 	for _, p := range gateProbes() {
 		t.Run(p.name, func(t *testing.T) {
@@ -231,18 +207,16 @@ func TestEveryNGateOlderThanIntervalRuns(t *testing.T) {
 	}
 }
 
-// TestEveryNGateNoRecordRuns — case 3, the chosen "never ran" behaviour. The
-// store answers zero-time WITHOUT an error (no row: fresh install, or an upgrade
-// that has only just created the table), and the first trigger after enabling
-// runs the pass rather than deferring it by a whole interval.
+// TestEveryNGateNoRecordRuns checks that a job without a last-run record runs
+// on the first trigger instead of waiting a whole interval.
 func TestEveryNGateNoRecordRuns(t *testing.T) {
 	for _, p := range gateProbes() {
 		t.Run(p.name, func(t *testing.T) {
-			jr := newFakeJobRuns() // empty map → "never ran"
+			jr := newFakeJobRuns()
 			if runs := fireEntry(t, p, jr, nil); runs == 0 {
 				t.Fatalf("%s: with no last-run record the first fire after enabling must RUN, but the job never ran", p.name)
 			}
-			// And it must leave a record behind, so the SECOND day is gated.
+			// The record it leaves gates the next day.
 			if got := jr.recordCount(p.jobKey); got != 1 {
 				t.Fatalf("%s: the first run must record a last-run time, got %d record(s)", p.name, got)
 			}
@@ -253,9 +227,8 @@ func TestEveryNGateNoRecordRuns(t *testing.T) {
 	}
 }
 
-// TestEveryNGateQueryFailureSkips — case 4, the safety property. The last-run
-// query ERRORS, which is "cannot tell", and the job must not run. This is the
-// case that must never be collapsed into case 3.
+// TestEveryNGateQueryFailureSkips checks that a failing last-run query skips
+// the job. Unlike a missing record, an error means the store cannot tell.
 func TestEveryNGateQueryFailureSkips(t *testing.T) {
 	for _, p := range gateProbes() {
 		t.Run(p.name, func(t *testing.T) {
@@ -268,11 +241,9 @@ func TestEveryNGateQueryFailureSkips(t *testing.T) {
 	}
 }
 
-// TestEveryNGateWithoutJobRunStoreSkips is the same safety property one level
-// up: forgetting SetJobRunStore entirely must not degrade into firing the job
-// daily (the exact failure the pre-#166 code had, and the reason the option was
-// refused at the API). jobLastRun reports the unwired store as an error, so the
-// gate skips.
+// TestEveryNGateWithoutJobRunStoreSkips checks that a scheduler without
+// SetJobRunStore skips instead of firing the job daily: jobLastRun reports the
+// missing store as an error.
 func TestEveryNGateWithoutJobRunStoreSkips(t *testing.T) {
 	for _, p := range gateProbes() {
 		t.Run(p.name, func(t *testing.T) {
@@ -283,15 +254,14 @@ func TestEveryNGateWithoutJobRunStoreSkips(t *testing.T) {
 	}
 }
 
-// TestEveryNPartialFailureStillCountsAsRun pins requirement 3's answer for the
-// two expensive multi-task passes: every task was ATTEMPTED, so the pass counts
-// as a run even though each task reported an error. Gating on success instead
-// would re-run the whole pass — DR restore included — every single night for as
-// long as one repo stayed broken.
+// TestEveryNPartialFailureStillCountsAsRun checks that a drills or tamper pass
+// counts as a run once every task was attempted, even if they all failed.
+// Gating on success would repeat the whole pass, DR restore included, every
+// night while one repo stays broken.
 func TestEveryNPartialFailureStillCountsAsRun(t *testing.T) {
 	for _, p := range gateProbes() {
 		if p.jobKey == store.ScheduleJobDigest {
-			continue // the digest's opposite choice is pinned below
+			continue // the digest retries instead; see below
 		}
 		t.Run(p.name, func(t *testing.T) {
 			jr := newFakeJobRuns()
@@ -306,10 +276,9 @@ func TestEveryNPartialFailureStillCountsAsRun(t *testing.T) {
 	}
 }
 
-// TestEveryNDigestFailureDoesNotCountAsRun pins the digest's opposite choice: a
-// send that FAILED records nothing, so tomorrow's trigger retries instead of
-// losing the digest for the whole interval. It is one cheap idempotent message,
-// so a retry costs almost nothing — unlike a DR restore.
+// TestEveryNDigestFailureDoesNotCountAsRun checks that a failed digest send
+// records nothing, so the next day's trigger retries it instead of losing the
+// digest for the whole interval. A retry is one cheap message.
 func TestEveryNDigestFailureDoesNotCountAsRun(t *testing.T) {
 	var p gateProbe
 	for _, c := range gateProbes() {
@@ -327,16 +296,15 @@ func TestEveryNDigestFailureDoesNotCountAsRun(t *testing.T) {
 	}
 }
 
-// TestEveryNDrillsEmptyTaskListRecordsNothing covers the one empty-pass case:
-// drills enabled with no domain enabled attempts nothing, so it must not stamp a
-// last-run time — otherwise enabling a domain the next day would be gated behind
-// a whole interval by a pass that did no work.
+// TestEveryNDrillsEmptyTaskListRecordsNothing checks that a drill pass with no
+// enabled domain records no run, so a domain enabled the next day is not held
+// back a whole interval by a pass that did nothing.
 func TestEveryNDrillsEmptyTaskListRecordsNothing(t *testing.T) {
 	p := gateProbes()[0]
 	if p.jobKey != store.ScheduleJobDrills {
 		t.Fatalf("probe order changed; expected drills first, got %q", p.jobKey)
 	}
-	p.settings.ContainersEnabled = false // → drillTasks returns nothing
+	p.settings.ContainersEnabled = false // drillTasks returns nothing
 	jr := newFakeJobRuns()
 	if runs := fireEntry(t, p, jr, nil); runs != 0 {
 		t.Fatalf("drills: no enabled domain means no task may run, got %d", runs)
@@ -346,9 +314,8 @@ func TestEveryNDrillsEmptyTaskListRecordsNothing(t *testing.T) {
 	}
 }
 
-// TestEveryNRecordFailureLeavesJobDue proves a failed WRITE is the safe
-// direction: the work ran, the stamp did not land, so the next trigger runs the
-// pass again rather than the failure silently pushing the schedule out.
+// TestEveryNRecordFailureLeavesJobDue checks that when recording the run fails,
+// the next trigger runs the pass again.
 func TestEveryNRecordFailureLeavesJobDue(t *testing.T) {
 	p := gateProbes()[0] // drills
 	jr := newFakeJobRuns()
@@ -359,17 +326,14 @@ func TestEveryNRecordFailureLeavesJobDue(t *testing.T) {
 	if !jr.storedAt(store.ScheduleJobDrills).IsZero() {
 		t.Fatal("drills: a failed record must not leave a timestamp behind")
 	}
-	// Still due on the next fire, because nothing was stamped.
 	if runs := fireEntry(t, p, jr, nil); runs == 0 {
 		t.Fatal("drills: after a failed record the next trigger must run the pass again")
 	}
 }
 
-// TestEveryNUnenforceableCadenceIsNotRegistered pins the fail-safe added
-// alongside this feature: a domain with NO last-run query at all (the five
-// off-site replication schedules) used to have its everyN cadence silently
-// downgraded to the bare daily trigger — firing the job every day, N times too
-// often. Such an entry is now refused registration outright.
+// TestEveryNUnenforceableCadenceIsNotRegistered checks that an everyN cadence on
+// a schedule without a last-run query, such as off-site replication, is not
+// registered, because it would fire every day.
 func TestEveryNUnenforceableCadenceIsNotRegistered(t *testing.T) {
 	noTargets := func() ([]store.Target, error) { return nil, nil }
 	sc := New(func(string) error { return nil }, noTargets)
@@ -387,8 +351,7 @@ func TestEveryNUnenforceableCadenceIsNotRegistered(t *testing.T) {
 		}
 	}
 
-	// The same schedule on a plain daily cadence is registered and fires — the
-	// refusal is specific to an unenforceable everyN, not to off-site as such.
+	// The same schedule with a daily cadence registers and fires.
 	if err := sc.ReloadWithDueChecks(store.Settings{ContainersEnabled: true, ContainersOffsiteSchedule: "daily 02:00"}, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks(daily): %v", err)
 	}

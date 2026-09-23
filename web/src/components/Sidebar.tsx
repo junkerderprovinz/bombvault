@@ -3,17 +3,12 @@ import { useState, useRef, useEffect, type CSSProperties } from "react";
 import { logout, type Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { useAdvanced } from "../lib/advanced";
-import { hueVars, rainbowAt } from "../lib/appearance";
-import { useRainbow } from "../lib/useRainbow";
+import { hueVars } from "../lib/appearance";
 
 import {
   IconContainers,
   IconVM,
   IconFiles,
-  // IconReceiver is no longer rendered here (the three instance rows became
-  // one), but it is still re-exported below for Receiver.tsx and Pull.tsx,
-  // which import it from this module. That export block reads from navGlyphs
-  // directly, so it does not need this import.
   IconFleet,
   IconDashboard,
   IconRecovery,
@@ -22,17 +17,13 @@ import {
   IconViewSimple,
   IconViewAdvanced,
   IconGear,
-  IconPower,
 } from "./navGlyphs";
+import { IconSignOut } from "./glyphs";
 import { useLabelMode } from "../lib/useLabelMode";
 import { hidesLabel, labelWidth } from "../lib/controls";
 import { useTipBubble } from "../lib/useTipBubble";
 
-// Navigation and domain glyphs now come from Streamline's free Core Solid set
-// (#178, [202]) rather than being drawn here, so the whole interface reads as
-// one icon family. They are re-exported under their existing names, because
-// dozens of files import IconTrash and friends FROM this file and there is no
-// value in touching all of them for a change none of them can see.
+// Many files import the glyphs from this module, so they are re-exported here.
 export {
   IconContainers,
   IconVM,
@@ -63,12 +54,9 @@ export {
   IconViewAdvanced,
 } from "./navGlyphs";
 
-
-
 interface SidebarProps {
   settings: Settings | null;
-  /** Whether a login password is set. The sign-out row exists only then, since
-   *  on an instance without one there is nothing to sign out of. */
+  /** Whether a login password is set; the sign-out row appears only then. */
   authEnabled: boolean;
 }
 
@@ -76,112 +64,24 @@ interface NavItem {
   to: string;
   label: string;
   icon: React.ReactNode;
-  /** This item's own stable rainbow position — see this file's own header
-   *  comment (the rainbow-reversal round) and NavItem's own doc comment
-   *  below for how the CALLER resolves this via `nextHue()`. */
+  /** The row's rainbow position, assigned by the caller in render order. */
   hueIndex: number;
 }
 
-// Rainbow-hued nav rail (GlimStone follow-up round, REVERSING the decision
-// below — jdp, live-review: "Die ganzen Tabs in der Sidebar sind wieder
-// nicht im Regenbogenmodus bzw in der Farbengine."). jdp is this design
-// exception's own owner (five escalations deep, this app's own standing
-// convention for a self-authored aesthetic call) and has now explicitly
-// overridden it: every visible destination below — including Settings in
-// the footer group — gets its own stable rainbow-hue position, via the
-// EXACT `hueVars(rainbowAt(index))` / `.glim-hue`/`.glim-hue-icon`
-// mechanism the Settings tab strip's own Selector segments already use
-// (Selector.tsx) — not a second, bespoke nav-only mechanism.
-//
-// The two objections the original decision raised (preserved below,
-// unedited) are answered, not ignored:
-//
-//  1. "Colour buys nothing here" — overridden outright by jdp's explicit
-//     ask; colour is no longer optional-because-unneeded, it's requested.
-//  2. "Colour could not be stable here" — true only against a STATIC,
-//     hand-written literal index (0 for Dashboard, 1 for Recovery, ...),
-//     which really would drift the moment a domain toggle hid one of the
-//     conditional tabs (VMs/Flash/Files/Config/Receiver/Fleet). The fix is
-//     the SAME nextHue()-during-actual-render approach Dashboard.tsx's own
-//     `visibleBlocks`/`hueSeq` counter and Settings.tsx's own per-tab
-//     `hueSeq`/`nextHue()` Card sequence already use for THEIR OWN
-//     conditionally-rendered sets (see either file's own `hueSeq`/`nextHue`
-//     comment): a plain `let hueSeq = 0`, reset fresh on every render,
-//     incremented once per NavItem call made DIRECTLY in the order this
-//     file's own JSX below actually evaluates it. A
-//     `{vmsEnabled && <NavItem hueIndex={nextHue()} .../>}` gate
-//     SHORT-CIRCUITS before ever calling `nextHue()` when the domain is
-//     off, so a hidden tab never burns a slot — every VISIBLE item's
-//     position (and with it its colour) is exactly its own rank among the
-//     tabs actually on screen that render, immune to which OTHER
-//     conditional tabs happen to be hidden or shown around it. The wrap
-//     past RAINBOW's 8 colours (lib/appearance.ts) at full config (10
-//     entries, Settings included) is the same accepted tradeoff
-//     Containers.tsx/VMs.tsx's own row lists already make past their own
-//     8th row — see the ORIGINAL comment below, which raised the wrap on
-//     its own but never called it disqualifying by itself either.
-//
-// KnightLoader's Sidebar.tsx (hued nav off 6 hard-coded destinations) is now
-// a real precedent this file actually follows, not one it distinguishes
-// itself from: the "off a FIXED destination count" gap the original comment
-// drew between the two apps closes the moment this file's own hue position
-// is read off the VISIBLE list's own render-time rank instead of a
-// hard-coded literal.
-//
-// ORIGINAL DECISION (GlimStone form-engine Phase 2, Task 2 — decided in the
-// spec-compliance review of the first attempt, which had wired every
-// NavItem to a palette position; reaffirmed once more in a later live-review
-// round below before THIS round reversed it), preserved verbatim for
-// history:
-//
-//  1. Colour buys nothing here. Every destination already carries a
-//     permanent, always-visible identity in its label + icon, so rainbow's
-//     actual job ("tell apart several members of a set that otherwise look
-//     alike") has nothing to do on a rail where no two entries look alike in
-//     the first place.
-//  2. Colour could not be stable here even if it were wanted. The visible set
-//     is user-configured — 4 to 10 entries, depending on which domains are on
-//     (vmsEnabled etc.) — so a destination's position, and with it its
-//     colour, moves whenever a domain is toggled in Settings; at full config
-//     the 10 entries also wrap RAINBOW's 8 colours (lib/appearance.ts) and
-//     two of them repeat. A nav rail is the one surface where a colour would
-//     have to be LEARNED to be worth anything, and a learned colour that
-//     moves is worse than no colour at all.
-//
-// The wrap on its own is NOT the disqualifier: a container/VM list wraps the
-// same way past its eighth row and keeps rainbow on purpose (see
-// Containers.tsx/VMs.tsx) — there the colour only has to separate rows that
-// are on screen together, and a repeat lands a full palette apart, never
-// beside its twin. KnightLoader's Sidebar.tsx does hue its nav, but off 6
-// hard-coded destinations, so neither point above applies to it; that
-// precedent doesn't transfer to a rail whose length changes.
-//
-// STILL not rainbowed (GlimStone follow-up round, live-review — the
-// tab-strip 3-state colour rule, jdp: "...Hauptabs in der Sidebar..."): this
-// decision and its two counts above stood unchanged for that round too — see
-// `navInactive`'s own comment below for the flat-accent, single-token
-// mechanism that round built, since REPLACED by this round's
-// `.glim-hue`/`.glim-hue-icon` (still true of SidebarControls' own
-// Simple/Advanced toggle, which stays on the old flat-accent mechanism — see
-// `navInactive`'s own comment below for why that one control is different).
-
-// Easter-egg state machine (Item 6): idle → wobble (shake) → boom (explode).
+// Easter egg: idle, then wobble, then boom.
 type EggState = "idle" | "wobble" | "boom";
 
-// Fragment shatter grid (Item 6). On boom the logo breaks into an N×N grid of tiles,
-// each painting its OWN slice of the current logo (via --egg-logo + a per-tile
-// background-position, so at rest they reassemble the whole mark) and flying outward
-// from the centre with spin + a little gravity. Corner tiles point at the corners;
-// magnitude is randomised per tile. Pre-computed once at module load so the pattern
-// stays stable across the re-renders the boom triggers (no re-randomising mid-boom).
-const FRAG_N = 6; // 6×6 = 36 fragments
+// On boom the logo breaks into an N×N grid of tiles, each painting its slice of
+// the logo through background-position and flying outward with some spin.
+// Computed at module load so re-renders during the boom do not re-randomise it.
+const FRAG_N = 6;
 const FRAG_TILES = Array.from({ length: FRAG_N * FRAG_N }, (_, i) => {
   const row = Math.floor(i / FRAG_N);
   const col = i % FRAG_N;
   const mid = (FRAG_N - 1) / 2;
-  const vx = col - mid; // outward direction from centre
+  const vx = col - mid;
   const vy = row - mid;
-  const spread = 15 + Math.random() * 13; // per-unit magnitude, randomised
+  const spread = 15 + Math.random() * 13;
   const dx = Math.round(vx * spread + (Math.random() - 0.5) * 12);
   const dy = Math.round(vy * spread + (Math.random() - 0.5) * 12);
   return {
@@ -196,7 +96,7 @@ const FRAG_TILES = Array.from({ length: FRAG_N * FRAG_N }, (_, i) => {
   };
 });
 
-// Overlapping soft radial puffs that build the billowing fire→smoke explosion cloud.
+// Soft radial puffs that overlap into the fire and smoke cloud.
 const BOOM_CLOUD = [
   { cx: "-6px", cy: "-4px", delay: "0ms", hot: true },
   { cx: "16px", cy: "-8px", delay: "40ms", hot: true },
@@ -205,8 +105,6 @@ const BOOM_CLOUD = [
   { cx: "0px", cy: "-16px", delay: "150ms", hot: false },
 ];
 
-// Flying sparks — alternating hot yellow / orange, radial from the centre, staggered.
-// Kept module-level so the array stays stable across renders (no re-randomising).
 const BOOM_PARTICLES = Array.from({ length: 14 }, (_, i) => {
   const angle = (Math.PI * 2 * i) / 14 + (i % 2) * 0.22;
   const dist = 34 + (i % 3) * 12;
@@ -218,77 +116,32 @@ const BOOM_PARTICLES = Array.from({ length: 14 }, (_, i) => {
   };
 });
 
-// `transition` (not just `transition-colors`) so the transform-based hover/press
-// micro-interactions below animate too; all transforms are motion-safe-gated so
-// reduced-motion users get colour-only feedback (Item 7a/7d).
+// `transition` rather than `transition-colors` so the hover and press transforms
+// animate too. Every transform is motion-safe, so reduced motion gets colour
+// feedback only.
 const navBase =
-  "glim-nav-row flex items-center gap-3 px-3.5 rounded-control text-[15px] font-medium transition duration-150 select-none motion-safe:active:scale-[.97]";
+  "glim-nav-row flex items-center gap-3 px-3.5 rounded-control text-[15px] font-medium transition duration-150 select-none motion-safe:active:scale-[var(--motion-press-scale)]";
 const navActive =
   "bg-accent text-accentContrast";
-// `rtl:-translate-x-0.5!` — physical `translate-x`, same trap as the Toggle
-// thumb (RTL sweep, form-engine Phase 2 Task 6 follow-up fix): a positive
-// nudge always moves right on screen, which reaches toward the main content
-// area only when the sidebar sits on the LEFT (LTR). Negating it under `rtl:`
-// keeps the nudge pointed at the content instead of away from it once the
-// sidebar sits on the right. `!` beats the base rule regardless of Tailwind's
-// generated declaration order, same reasoning as the Toggle thumb fix.
-//
-// `glim-nav-idle` DROPPED from this shared string (GlimStone follow-up round,
-// rainbow reversal — see this file's own header comment): NavItem below no
-// longer reads the bespoke flat-accent `.glim-nav-idle svg` CSS rule at all —
-// it now carries `.glim-hue`/`.glim-hue-icon` instead, the exact classes any
-// other hue-enabled Selector segment carries (Selector.tsx), so it picks up
-// index.css's EXISTING generic `.glim-hue-icon` rule (no new CSS needed for
-// NavItem itself) — the identical idle/hover/selected 3-state machine this
-// rail always had, just reading this item's own `--item-hue` instead of the
-// single flat `--accent`.
-//   `glim-nav-idle` itself is NOT deleted from index.css — SidebarControls'
-// own Simple/Advanced view toggle below is a genuine set-of-ONE, not a list
-// of same-type destinations competing for a stable rainbow position (the
-// colour engine's own "anything that is the only one of its kind on the
-// page keeps the single accent" exclusion, glimstone/docs/design-language.md
-// "Rainbow — the accent, plural") — it keeps the marker directly on its own
-// call site below instead of inheriting it from this shared string.
+// translate-x is physical, so the hover nudge would point away from the content
+// once the rail sits on the right; `rtl:` negates it. The `!` wins over the base
+// rule whatever order Tailwind emits them in.
 const navInactive =
   "text-(--sidebar-text) hover:bg-carbon-hover hover:text-carbon-text motion-safe:hover:translate-x-0.5 motion-safe:hover:rtl:-translate-x-0.5!";
 
-// hueIndex (GlimStone follow-up round, rainbow reversal — see this file's
-// own header comment): resolved by the CALLER's `nextHue()` counter at the
-// exact synchronous point each NavItem below is actually rendered — never
-// computed inside this component itself, the same "caller resolves the
-// position, callee just paints it" split Settings.tsx's own `hueIndex` Card
-// prop and Dashboard.tsx's own per-block `hueIndex` props already use.
-// `glim-hue`/`glim-hue-icon` ride unconditionally on every NavItem
-// regardless of active state (exactly Selector.tsx's own SelectorTab
-// convention, `hue ? "glim-hue glim-hue-icon" : ""` applied to every
-// segment) — `glim-active` is the one extra marker that differs between the
-// two branches, added only alongside `navActive` on the active route, so
-// index.css's existing `.glim-hue-icon:not(.glim-active)` guard correctly
-// excludes the filled/selected item: it already gets its icon colour for
-// free via `text-accentContrast` currentColor inheritance off navActive's
-// own `bg-accent text-accentContrast`, not from `.glim-hue-icon`'s own
-// colour declaration, so painting this item's hue on top of a badge already
-// filled with that same hue never happens.
+// NavItem is one destination row. On the current route glim-active switches the
+// icon tint off, because the filled badge already shows the hue.
 function NavItem({ to, label, icon, hueIndex }: NavItem) {
-  // #178: the sidebar has its own axis, deliberately separate from buttons and
-  // tabs, because reducing THIS rail to glyphs is a layout decision rather
-  // than a density preference.
+  // The rail has its own label axis: reducing it to glyphs changes the layout,
+  // not just the density.
   const labelMode = useLabelMode("sidebar");
   const showLabel = !hidesLabel(labelMode);
   const showIcon = labelMode !== "text";
-  // Reactive: the glyph sits centred like in glyph mode, and hovering the row
-  // slides its name back in. Nothing reflows, because the rail is a fixed
-  // 224px and the row was always that wide. That fixed width is also why
-  // reactive is the one hiding mode the narrow rail leaves alone (see the
-  // <aside>'s own comment).
+  // Reactive centres the glyph and slides the name back in on hover. The rail
+  // keeps its full width in this mode, so nothing reflows.
   const reactive = labelMode === "reactive";
-  // A rail row with no visible text needs to say what it is on hover, in the
-  // app's own bubble — the same ruling that took the native `title` balloon
-  // off Button. Eleven unnamed pictures is a worse glyph mode than a slightly
-  // denser one. Nothing is passed while the label is visible: the row already
-  // says what it is, and a tooltip repeating it is noise.
-  // No bubble in reactive mode: hovering already brings the word back, and a
-  // tooltip saying the same thing would land on top of the animation doing it.
+  // A row whose text is hidden names itself in the tooltip bubble. Reactive
+  // mode needs none, since hovering brings the word back.
   const tooltip = useTipBubble(showLabel || reactive ? undefined : label);
   return (
     <>
@@ -297,27 +150,20 @@ function NavItem({ to, label, icon, hueIndex }: NavItem) {
         ref={tooltip.ref}
         aria-describedby={tooltip.describedBy}
         {...tooltip.handlers}
-        // `justify-center` — the glyph centres in whatever column it is given.
-        // That started as the answer to the rail-width question (the rail kept
-        // its 224px and the glyphs centred in it) and it is still what the
-        // narrowed rail needs, since the row is wider than the glyph in both. Without it the glyphs sat hard left with 178px of empty rail
-        // beside each one.
         className={({ isActive }) =>
           `${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " glim-reactive" : ""} glim-hue glim-hue-icon ${isActive ? `${navActive} glim-active` : navInactive}`
         }
         style={
           {
-            ...(hueVars(rainbowAt(hueIndex)) as CSSProperties),
+            ...(hueVars(hueIndex) as CSSProperties),
             ...(reactive ? { "--reactive-chars": labelWidth(label) } : {}),
           } as CSSProperties
         }
       >
         {showIcon && icon}
-        {/* Never removed, only hidden: a nav row whose text is gone entirely
-            has no accessible name, and this rail is how the app is navigated.
-            `sr-only` is `position: absolute`, so the hidden span is not a flex
-            item and `gap-3` does not leave a phantom gap beside the centred
-            glyph. */}
+        {/* Hidden, never removed: without it the link has no accessible name.
+            `sr-only` is absolutely positioned, so it leaves no gap beside the
+            centred glyph. */}
         <span className={showLabel ? undefined : reactive ? "glim-label-reactive" : "sr-only"}>{label}</span>
       </NavLink>
       {tooltip.bubble}
@@ -325,34 +171,12 @@ function NavItem({ to, label, icon, hueIndex }: NavItem) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// SidebarSignOut — the footer's sign-out row, above the view toggle (jdp).
-//
-// Its own small component rather than a branch inside SidebarControls, because
-// it is the only row in this rail whose EXISTENCE depends on server state; the
-// toggle beside it is always there. Same markup as that toggle so the two read
-// as one column: the shared nav-row base, the label hidden but never removed in
-// glyph mode, and a tooltip only where the words are gone.
-//
-// Signing out clears this browser's cookie and reloads, which is what puts the
-// login screen back up.
-//
-// THIS IS THE ONLY SIGN-OUT IN THE APP NOW. The Security card used to carry a
-// second one plus an "everywhere" variant; both are gone (GlimStone 2.1.0,
-// rule 22: a settings card configures, the shell operates). So the duplicate
-// this comment used to point at no longer exists, and the "everywhere" half
-// did not simply vanish either - rotating the session epoch moved into
-// changing the password, where somebody who fears their password leaked
-// already expects it to happen.
+// SidebarSignOut is the footer's sign-out row. Signing out clears this
+// browser's cookie and reloads, which brings the login screen back.
 function SidebarSignOut({ hueIndex }: { hueIndex: number }) {
   const { t } = useT();
   const labelMode = useLabelMode("sidebar");
   const showLabel = !hidesLabel(labelMode);
-  // jdp, 2026-09-08: "erweiterte ansicht und ausloggbutton sind nicht in der
-  // farbengine und auch nicht in der beschriftungengine". Both true, and the
-  // labelling half was the more visible one: this row painted its glyph in
-  // EVERY mode, so in text mode it sat under a column of text-only nav rows
-  // wearing a symbol none of them wore. NavItem's rule, restated here.
   const showIcon = labelMode !== "text";
   const reactive = labelMode === "reactive";
   const label = t("auth.logout");
@@ -371,20 +195,17 @@ function SidebarSignOut({ hueIndex }: { hueIndex: number }) {
         onClick={() => void signOut()}
         aria-describedby={tooltip.describedBy}
         {...tooltip.handlers}
-        // `glim-hue glim-hue-icon` + hueVars, exactly as NavItem carries them:
-        // this row sits in the same column as the nav destinations and is read
-        // as one of them, so it takes a palette position like the rest.
-        // `glim-nav-idle` stays: it is the hover-reveal marker, orthogonal to
-        // which colour the row owns.
+        // Hued like the nav rows it sits among. glim-nav-idle only decides when
+        // the glyph takes the colour, not which colour it is.
         className={`${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " glim-reactive" : ""} glim-hue glim-hue-icon glim-nav-idle ${navInactive} w-full`}
         style={
           {
-            ...(hueVars(rainbowAt(hueIndex)) as CSSProperties),
+            ...(hueVars(hueIndex) as CSSProperties),
             ...(reactive ? { "--reactive-chars": labelWidth(label) } : {}),
           } as CSSProperties
         }
       >
-        {showIcon && <IconPower />}
+        {showIcon && <IconSignOut />}
         <span className={showLabel ? undefined : reactive ? "glim-label-reactive" : "sr-only"}>{label}</span>
       </button>
       {tooltip.bubble}
@@ -392,25 +213,7 @@ function SidebarSignOut({ hueIndex }: { hueIndex: number }) {
   );
 }
 
-// SidebarControls — Simple/Advanced view toggle in the sidebar footer. Both
-// the language switcher (flag + name, dropdown opening upward — GlimStone
-// follow-up pass, live-review point 9) and the dark/light theme toggle
-// (GlimStone follow-up pass, later live-review round) that used to live here
-// have MOVED into their own Cards in Settings' General tab — jdp asked for
-// each as a literal move ("verschieb den Sprachschalter... auch als eigene
-// card ins allgemein setting", then the same for the theme toggle), never a
-// duplicate — so this footer no longer renders either of them. See
-// Settings.tsx's LanguageCard/ThemeCard for where they live now, and
-// Sidebar.language.dom.test.tsx for the regression guard against either one
-// reappearing here.
-// ---------------------------------------------------------------------------
-
-// Exported: Settings.tsx's own Language Card (GlimStone follow-up pass,
-// live-review point 9) reuses this exact flag glyph for its relocated
-// language picker — same "small shared piece imported straight from
-// Sidebar.tsx" precedent this file's own IconContainers/IconVM/IconFiles/
-// IconReceiver/IconFleet already established for Containers.tsx/VMs.tsx/
-// Files.tsx/Receiver.tsx/Fleet.tsx.
+// Flag is the country flag glyph used by the language picker in Settings.
 export function Flag({ code }: { code: string }) {
   return (
     <span
@@ -420,61 +223,36 @@ export function Flag({ code }: { code: string }) {
   );
 }
 
+// SidebarControls is the Simple/Advanced view toggle in the footer.
 function SidebarControls({ hueIndex }: { hueIndex: number }) {
   const { t } = useT();
   const { advanced, setAdvanced } = useAdvanced();
-  // #178: this row lives IN the rail, so it follows the rail's own axis. It
-  // was the one row that did not, which showed up immediately in glyph mode:
-  // five icons and one full-width label, and the rail could not narrow.
   const labelMode = useLabelMode("sidebar");
   const showLabel = !hidesLabel(labelMode);
-  // See SidebarSignOut's own comment: the rail's text mode drops the glyph,
-  // and this row was not obeying that.
   const showIcon = labelMode !== "text";
   const reactive = labelMode === "reactive";
   const view = advanced ? t("mode.advancedView") : t("mode.simpleView");
-  // Same rule as NavItem's: the row explains itself in the real bubble, and
-  // only while its text is hidden. It used to carry the name in a native
-  // `title` in EVERY mode — the balloon on a row whose words are already
-  // printed right there, which is the pattern this round removed everywhere
-  // else.
   const tooltip = useTipBubble(showLabel || reactive ? undefined : view);
 
   return (
     <div className="flex flex-col gap-1">
-      {/* Simple / Advanced view — a single-click toggle (same height, hover,
-          press feedback as every other nav-rail row). The label shows the
-          CURRENT view; a click flips it. Replaces the old segmented switch +
-          hint (Item 4). The dark/light theme row that used to sit above this
-          one moved into Settings' General tab (ThemeCard) — see this
-          function's own header comment. */}
+      {/* The label shows the current view; a click flips it. */}
       <button
         ref={tooltip.ref}
         onClick={() => setAdvanced(!advanced)}
         aria-pressed={advanced}
         aria-describedby={tooltip.describedBy}
         {...tooltip.handlers}
-        // This row used to argue it was "a genuine set-of-one, not a member of
-        // the now-hued nav-destination list" and keep the flat accent. That
-        // was my call, not jdp's, and he reversed it on 2026-09-08: the rail
-        // is one column and every row in it takes a palette position. The
-        // hover-reveal marker `glim-nav-idle` is unaffected — it decides WHEN
-        // the colour shows, not WHICH colour the row owns.
-        //
-        // `justify-center` in glyph mode for the same reason as NavItem's —
-        // this row sits in the same column and has to centre with it.
         className={`${navBase} ${showLabel ? "" : "justify-center"}${reactive ? " glim-reactive" : ""} glim-hue glim-hue-icon glim-nav-idle ${navInactive} w-full`}
         style={
           {
-            ...(hueVars(rainbowAt(hueIndex)) as CSSProperties),
+            ...(hueVars(hueIndex) as CSSProperties),
             ...(reactive ? { "--reactive-chars": labelWidth(view) } : {}),
           } as CSSProperties
         }
       >
-        {/* One glyph per state, not one for both (jdp): the row shows the view
-            it is CURRENTLY in, so a single symbol left the two states looking
-            identical — in glyph mode, where the words are gone, that made the
-            row unreadable. Sparse layout for simple, dense one for advanced. */}
+        {/* One glyph per view: in glyph mode the icon is all that tells the
+            two apart. */}
         {showIcon && (advanced ? <IconViewAdvanced /> : <IconViewSimple />)}
         {/* Hidden, never removed: the toggle keeps its accessible name. */}
         <span className={showLabel ? undefined : reactive ? "glim-label-reactive" : "sr-only"}>{view}</span>
@@ -495,53 +273,33 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
   const fleetEnabled = settings?.fleetEnabled ?? false;
   const pullEnabled = settings?.pullEnabled ?? false;
 
-  // #178: the logo row lives IN the rail, so it follows the rail's own axis
-  // like every other row does. jdp's call after seeing the centred glyph
-  // column live: the mark centres and the wordmark goes, rather than a
-  // left-aligned 64px mark and a word sitting on top of eleven centred
-  // glyphs. Measured before the change: mark centre x=48 against a glyph
-  // column at x=112, so the two were visibly off the same axis.
-  //
-  // Nothing is lost by hiding the word: this button already carries
-  // `aria-label={t("nav.dashboard")}`, so its accessible name never depended
-  // on the wordmark being painted.
+  // The logo row follows the rail's label mode too: with labels hidden the mark
+  // centres on the glyph column and the wordmark goes. The button's aria-label
+  // names it in every mode.
   const railMode = useLabelMode("sidebar");
   const railLabels = !hidesLabel(railMode);
-  // The wordmark comes back on hover too, so the header behaves like the
-  // rows beneath it rather than being the one thing that stays mute.
   const railReactive = railMode === "reactive";
-  // Glyph mode, and only glyph mode, narrows the rail — see the <aside>'s own
-  // comment for why reactive is excluded rather than overlooked.
   const railNarrow = railMode === "glyph";
-  // One string for all four boxes the mark is drawn in (wrapper, egg mark and
-  // the two theme images): they have to agree, or the shatter grid and the
-  // image sit in differently sized boxes.
+  // One size for all four boxes the mark is drawn in, or the shatter grid and
+  // the image end up in differently sized boxes.
   const markBox = railNarrow ? "h-12 w-12" : "h-16 w-16";
 
-  // Subscribed, not read (GlimStone follow-up round, rainbow reversal — see
-  // this file's own header comment): registers this component for a
-  // re-render on any rainbow change (on/off/reactive/rotate/palette edit),
-  // the same lib/useRainbow.ts contract every other hue-enabled consumer
-  // (Selector.tsx, ContainerRow/VMRow/FileSetRow) already subscribes
-  // through — called once here, not once per NavItem, matching that hook's
-  // own "once per list, not once per row" doc.
-  useRainbow();
 
-  // Easter egg (Item 6): press-and-hold the logo → it wobbles, then explodes,
-  // then reappears. A short click still navigates to the Dashboard; once the
-  // hold has fired the egg, the trailing click is suppressed.
+  // Easter egg: hold the logo and it wobbles, explodes and comes back. A short
+  // click still goes to the Dashboard; once the hold has fired, the click that
+  // follows is swallowed.
   const [eggState, setEggState] = useState<EggState>("idle");
-  const holdRef = useRef<number | null>(null); // 500ms pre-fire hold timer
-  const seqRef = useRef<number[]>([]);         // wobble→boom→idle sequence timers
-  const firedRef = useRef(false);              // did the hold fire the egg?
+  const holdRef = useRef<number | null>(null);
+  const seqRef = useRef<number[]>([]);
+  const firedRef = useRef(false);
 
   function startHold() {
-    if (eggState !== "idle") return; // ignore new presses while an egg is playing
+    if (eggState !== "idle") return;
     firedRef.current = false;
     if (holdRef.current !== null) window.clearTimeout(holdRef.current);
     holdRef.current = window.setTimeout(() => {
       holdRef.current = null;
-      firedRef.current = true; // the click that follows the release must not navigate
+      firedRef.current = true;
       setEggState("wobble");
       const toBoom = window.setTimeout(() => {
         setEggState("boom");
@@ -555,8 +313,8 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
     }, 500);
   }
 
-  // Release/leave before the hold fires → cancel so the click navigates normally.
-  // If the egg already fired we leave the sequence running to play out.
+  // Releasing or leaving before the hold fires cancels it, so the click
+  // navigates normally. A sequence that already started plays out.
   function cancelHold() {
     if (holdRef.current !== null) {
       window.clearTimeout(holdRef.current);
@@ -565,11 +323,10 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
   }
 
   function handleLogoClick() {
-    if (firedRef.current) return; // the hold fired the egg → swallow the navigation
+    if (firedRef.current) return;
     navigate("/dashboard");
   }
 
-  // Clear any pending timers on unmount.
   useEffect(() => {
     return () => {
       if (holdRef.current !== null) window.clearTimeout(holdRef.current);
@@ -581,34 +338,16 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
     eggState === "wobble" ? "glim-egg-wobble" : eggState === "boom" ? "glim-egg-boom" : "glim-logo-idle";
 
   return (
-    // Glyph mode is the one mode that narrows the rail (#178, manilx: "When
-    // using only buttons in sidebar it should shrink in width"). The other
-    // three keep 224px, and that is not timidity:
-    //   - text and text+glyph obviously need the words' width;
-    //   - REACTIVE cannot narrow, because its words slide back INSIDE the row
-    //     (`--reactive-chars` on a `max-width` transition) and because the
-    //     ACTIVE row keeps its words permanently (`.glim-reactive.glim-active`).
-    //     A narrow rail would clip the one row that must always stay readable,
-    //     and the alternative, expanding the whole rail on hover, either shoves
-    //     the page sideways or turns into the tooltip reactive mode exists to
-    //     avoid.
-    // The narrow width is `--rail-narrow`, the house's 85px, and no longer this
-    // app's own sum. It used to be 6rem, worked out from the 48px mark plus the
-    // row's `px-3.5`; the sibling worked out 64px the same way from its own
-    // mark, and the two rails then did the same job at different widths. The
-    // mark fits the rail now: 48px still sits centred at 85 with room on both
-    // sides. See GlimStone's own bullet for the reversal.
-    // A window shorter than the rows scrolls the rail instead of cutting off
-    // the bottom group, which holds Settings.
+    // Only glyph mode narrows the rail. Reactive cannot: its labels slide back
+    // inside the rows and the active row keeps its label, which a narrow rail
+    // would clip. A window shorter than the rows scrolls the rail rather than
+    // cutting off the bottom group with Settings.
     <aside
       className={`flex flex-col ${railNarrow ? "w-(--rail-narrow)" : "w-56"} shrink-0 h-full overflow-x-hidden overflow-y-auto rounded-card bg-carbon-sidebar`}
       style={{ scrollbarWidth: "thin", scrollbarColor: "var(--carbon-border) transparent" }}
     >
-      {/* Logo + wordmark → Dashboard. Two theme-specific marks auto-switch via the
-          `dark:` variant (dark mark on the light surface, light mark on the dark
-          surface). A short click navigates to the Dashboard; press-and-hold fires
-          the easter egg (Item 6). It's a button (not a link) so click vs. long-press
-          is fully under our control. */}
+      {/* A button rather than a link, so a click and a long press can be told
+          apart. The two images switch with the theme through `dark:`. */}
       <button
         type="button"
         aria-label={t("nav.dashboard")}
@@ -620,13 +359,8 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
         onContextMenu={(e) => e.preventDefault()}
         className={`glim-logo-btn flex items-center ${railLabels ? "gap-2.5 px-4 text-start" : "justify-center px-0"}${railReactive ? " glim-reactive" : ""} py-5 w-full cursor-pointer select-none hover:opacity-90 transition-opacity`}
       >
-        {/* The narrow rail gets the smaller mark, which is the second logo the
-            rail-width question always needed: the big 64px mark in an 85px column
-            leaves ten and a half pixels either side and reads as a mark wedged
-            into a gap. 48px sits in it, with 18.5 on each side (measured). `--egg-mark` carries the size into CSS, because the shatter
-            tiles paint slices of a background sized to the WHOLE mark while each
-            tile is a sixth of it, so a hard-coded 64px there would cut the wrong
-            slices as soon as the mark changed size. */}
+        {/* `--egg-mark` passes the mark size to the shatter tiles, whose
+            background is sized to the whole mark. */}
         <span
           className={`relative inline-flex ${markBox} shrink-0 items-center justify-center`}
           style={{ "--egg-mark": railNarrow ? "48px" : "64px" } as CSSProperties}
@@ -644,8 +378,7 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
               draggable={false}
               className={`glim-logo-img ${markBox} object-contain shrink-0 hidden dark:block`}
             />
-            {/* At boom the <img> is hidden (CSS) and the mark shatters into flying
-                tiles, each showing its own slice of the current logo. */}
+            {/* At boom the CSS hides the <img> and the tiles take its place. */}
             {eggState === "boom" && (
               <span className="glim-frag-grid" aria-hidden="true">
                 {FRAG_TILES.map((f, i) => (
@@ -672,7 +405,6 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
           </span>
           {eggState === "boom" && (
             <span className="glim-boom-fx" aria-hidden="true">
-              {/* Billowing fire→smoke cloud behind the flying fragments. */}
               {BOOM_CLOUD.map((c, i) => (
                 <span
                   key={`c${i}`}
@@ -680,7 +412,6 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
                   style={{ "--cx": c.cx, "--cy": c.cy, "--delay": c.delay } as React.CSSProperties}
                 />
               ))}
-              {/* Flying sparks for extra energy. */}
               {BOOM_PARTICLES.map((p, i) => (
                 <span
                   key={`p${i}`}
@@ -698,14 +429,11 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
             </span>
           )}
         </span>
-        {/* Removed from the DOM rather than hidden with `sr-only`, unlike every
-            other label in this rail: this one is decoration, not a name. The
-            button's own `aria-label` above is its accessible name in every
-            mode, so an `sr-only` copy would only make a screen reader read
-            "Dashboard BombVault".
-            Reactive keeps it in the DOM so it can slide back on hover, and
-            `aria-hidden` is what stops that from reintroducing exactly the
-            double-announcement the removal above avoids. */}
+        {/* Removed rather than `sr-only`, unlike the other labels in the rail:
+            the button's aria-label is its name, and a hidden copy would make a
+            screen reader say "Dashboard BombVault". Reactive keeps it in the
+            DOM to slide it back on hover, with aria-hidden for the same
+            reason. */}
         {(railLabels || railReactive) && (
           <span
             aria-hidden={railReactive || undefined}
@@ -718,32 +446,15 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
         )}
       </button>
 
-      {/* hueSeq/nextHue (GlimStone follow-up round, rainbow reversal — see
-          this file's own header comment): the SAME page-wide running-counter
-          pattern as Dashboard.tsx's own `visibleBlocks`/`hueSeq` and
-          Settings.tsx's own per-tab `hueSeq`/`nextHue()` — a plain `let`,
-          reset to 0 fresh on every render (nothing here needs to survive
-          between renders), incremented once per NavItem call made DIRECTLY
-          in the order the JSX below actually evaluates it, spanning BOTH
-          groups (the main <nav> list AND the Settings NavItem in the footer
-          group further down) — jdp's own ask was "die ganzen Tabs in der
-          Sidebar," ALL of them, and Settings is the same NavItem component
-          rendering the same kind of destination, just placed in its own
-          flex group below the Simple/Advanced spacer for LAYOUT reasons
-          only, not a different species of nav element. A
-          `{flag && <NavItem hueIndex={nextHue()} .../>}` gate
-          short-circuits BEFORE evaluating `nextHue()` when the domain is
-          off, so a hidden conditional tab never burns a slot — hiding or
-          showing VMs/Flash/Files/Config/Receiver/Fleet only ever
-          shifts the POSITIONS of tabs after it in this list, never the
-          identity-to-position mapping of the ones before it, and never
-          leaves a gap in the sequence. */}
+      {/* Every row of the rail, the footer included, takes the next palette
+          position in render order. A domain that is off short-circuits before
+          nextHue() runs, so hidden tabs leave no gap and the rows before them
+          keep their colour. */}
       {(() => {
         let hueSeq = 0;
         const nextHue = () => hueSeq++;
         return (
           <>
-            {/* Navigation */}
             <nav className="flex flex-col gap-1 p-3 flex-1">
               <NavItem
                 to="/dashboard"
@@ -764,7 +475,6 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
                 icon={<IconContainers />}
                 hueIndex={nextHue()}
               />
-              {/* VMs / Flash / Files tabs appear only once their domain is enabled. */}
               {vmsEnabled && (
                 <NavItem to="/vms" label={t("nav.vms")} icon={<IconVM />} hueIndex={nextHue()} />
               )}
@@ -774,19 +484,11 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
               {filesEnabled && (
                 <NavItem to="/files" label={t("nav.files")} icon={<IconFiles />} hueIndex={nextHue()} />
               )}
-              {/* Config self-backup tab appears only once its domain is enabled. */}
               {configEnabled && (
                 <NavItem to="/config" label={t("nav.config")} icon={<IconConfig />} hueIndex={nextHue()} />
               )}
-              {/* Everything about ANOTHER instance lives behind one row now
-                  (jdp: "ein eintrag aber der name gefällt mir nicht. sollen wir
-                  ihn nicht besser instanzen nennen"). Receiver, Fleet and Pull
-                  are still three separate objects with three separate tables -
-                  see Instances.tsx for why merging THEM would be wrong - but
-                  they were three rows answering one question, and two of them
-                  wore the same glyph. The row appears as soon as ANY of the
-                  three is switched on; the page then shows only the tabs whose
-                  own setting is on. */}
+              {/* Receiver, Fleet and Pull share one row. The Instances page
+                  shows only the tabs whose setting is on. */}
               {(receiverEnabled || fleetEnabled || pullEnabled) && (
                 <NavItem
                   to="/instances"
@@ -797,16 +499,6 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
               )}
             </nav>
 
-            {/* Bottom group: sign-out (only with a password set), the
-                Simple/Advanced view toggle, then Settings. All three continue
-                THIS SAME nextHue() sequence rather than starting their own —
-                see this block's own opening comment. The first two joined it
-                on 2026-09-08 (jdp: both were outside the colour engine); the
-                `authEnabled &&` gate short-circuits before nextHue() runs, so
-                an instance without a password burns no palette position and
-                the toggle below keeps the colour it would have had anyway.
-                Language and theme both moved out — see SidebarControls' own
-                header comment. */}
             <div className="flex flex-col gap-1 p-3">
               {authEnabled && <SidebarSignOut hueIndex={nextHue()} />}
               <SidebarControls hueIndex={nextHue()} />

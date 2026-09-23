@@ -1,12 +1,8 @@
-// ---------------------------------------------------------------------------
-// offsiteRunProgress — the single place the off-site run-level percentage is
-// derived (issue #159). Both surfaces that show it (ActivityLog's live line and
-// OffsiteIndicator) call this, so the arithmetic is pinned here once instead of
-// twice in two component tests that could drift apart the way the strings did.
+// offsiteRunProgress is the one place the off-site run percentage is derived,
+// shared by ActivityLog's live line and OffsiteIndicator.
 //
-// Pure logic, node environment: importing ./progress only defines the module's
-// functions — its EventSource plumbing all lives inside them.
-// ---------------------------------------------------------------------------
+// Node environment: importing ./progress only defines functions, the
+// EventSource is created inside them.
 import { describe, expect, it } from "vitest";
 import { offsiteRunProgress } from "./progress";
 import type { ProgressState } from "./progress";
@@ -26,16 +22,16 @@ describe("offsiteRunProgress", () => {
   });
 
   it("returns null when the backend reported no snapshot total to divide by", () => {
-    // The honest "could not estimate" (api.progBeginCopySink). Dividing by the
-    // live index instead would compute (15-1+0.55)/15 = 97% for a run that has
-    // barely started — the single worst thing this helper could do.
+    // No total means the backend could not estimate one (api.progBeginCopySink).
+    // Dividing by the live index instead would read (15-1+0.55)/15 = 97% for a
+    // run that has barely started.
     expect(offsiteRunProgress(state({ snapshotIndex: 15, percent: 55 }))).toBeNull();
     expect(offsiteRunProgress(state({ snapshotIndex: 15, snapshotTotal: 0, percent: 55 }))).toBeNull();
   });
 
-  // The exact frame from issue #159's report. 15 of 126 at 55% is NOT 55% of
-  // the run — 55 is snapshot 15's own pack-copy progress, which restarts at 0
-  // for every snapshot. 14 whole snapshots plus 55% of the 15th, out of 126.
+  // 15 of 126 at 55% is not 55% of the run: 55 is snapshot 15's own pack-copy
+  // progress, which restarts at 0 for every snapshot. 14 whole snapshots plus
+  // 55% of the 15th, out of 126.
   it("folds the current snapshot's own progress into the snapshot count", () => {
     expect(offsiteRunProgress(state({ snapshotIndex: 15, snapshotTotal: 126, percent: 55 }))).toEqual({
       percent: 12,
@@ -45,8 +41,8 @@ describe("offsiteRunProgress", () => {
   });
 
   it("agrees with the plain k/N fraction it is rendered next to", () => {
-    // The whole point of the new phrasing: "12% overall (snapshot 15 of 126)"
-    // must corroborate itself. 15/126 = 11.9%, and the derived figure is 12%.
+    // "12% overall (snapshot 15 of 126)" has to agree with itself: 15/126 is
+    // 11.9%.
     const run = offsiteRunProgress(state({ snapshotIndex: 15, snapshotTotal: 126, percent: 55 }));
     const naive = Math.round((15 / 126) * 100);
     expect(Math.abs((run?.percent ?? 0) - naive)).toBeLessThanOrEqual(1);
@@ -62,8 +58,8 @@ describe("offsiteRunProgress", () => {
   });
 
   it("clamps an out-of-range percent and never reports 100 while still running", () => {
-    // Parking at 100% through the retention/unlock tail of a run is exactly the
-    // "is it stuck?" impression #159 was reported about.
+    // A bar parked at 100% through the retention and unlock tail of a run
+    // looks stuck.
     expect(offsiteRunProgress(state({ snapshotIndex: 1, snapshotTotal: 1, percent: 142 }))?.percent).toBe(99);
     expect(offsiteRunProgress(state({ snapshotIndex: 1, snapshotTotal: 1, percent: -5 }))?.percent).toBe(0);
     expect(offsiteRunProgress(state({ snapshotIndex: 126, snapshotTotal: 126, percent: 100 }))?.percent).toBe(99);
@@ -76,8 +72,8 @@ describe("offsiteRunProgress", () => {
   });
 
   it("advances monotonically across a snapshot boundary instead of sawtoothing", () => {
-    // The old readout swung 0 -> 100 once per snapshot while "of N" crawled,
-    // which is what made a healthy hour-long run look broken.
+    // A per-snapshot percentage swings from 0 to 100 once per snapshot, which
+    // makes a healthy hour-long run look broken.
     const seq = [
       offsiteRunProgress(state({ snapshotIndex: 3, snapshotTotal: 10, percent: 10 }))!.percent,
       offsiteRunProgress(state({ snapshotIndex: 3, snapshotTotal: 10, percent: 90 }))!.percent,

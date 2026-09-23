@@ -1,21 +1,8 @@
-// ---------------------------------------------------------------------------
-// Every job name the scheduler can emit has a label in this language.
-//
-// The scheduler names its jobs in Go and the activity log translates them in
-// TypeScript, and nothing connects the two. jobDomainFromName is the single
-// place that decides the vocabulary; JOB_KEYS is the single place that has to
-// answer it. When the two drift, jobLabel falls back to the raw string on
-// purpose, so the failure is a bare English word on an otherwise translated
-// dashboard - visible to a user in Japanese, invisible to every test, to
-// `tsc` (JOB_KEYS is a Record<string, string>, so any key type-checks) and to
-// the i18n parity guard (which compares tables to each other, and a key that
-// exists in none of them is missing from none of them).
-//
-// It has now drifted three times: "receiver", then "fleet", then "pull". The
-// table's own comment records the first two. This guard is the answer to the
-// third, and it reads the Go source rather than a copy of it, because a copy
-// is the thing that goes stale.
-// ---------------------------------------------------------------------------
+// The scheduler names its jobs in Go (jobDomainFromName) and the activity log
+// translates them through JOB_KEYS. A job missing from JOB_KEYS shows as a bare
+// English word on a translated dashboard, and neither tsc (JOB_KEYS is a
+// Record<string, string>) nor the i18n parity check can see it. This test reads
+// the Go source itself, since a copied list would go stale.
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -38,7 +25,7 @@ function jobNamesFromGo(): string[] {
   expect(end, "could not find the end of jobDomainFromName").toBeGreaterThan(start);
   const body = src.slice(start, end);
 
-  // Only the FIRST string of each return is the job; the second is the domain.
+  // The first string of each return is the job; the second is the domain.
   const names = new Set<string>();
   for (const m of body.matchAll(/return\s+"([^"]+)"/g)) {
     names.add(m[1]);
@@ -49,8 +36,7 @@ function jobNamesFromGo(): string[] {
 describe("schedule job names reach a translation", () => {
   it("finds the job names in the Go source at all", () => {
     const names = jobNamesFromGo();
-    // Anti-vacuity: if the parse ever silently yields nothing, the assertions
-    // below would all pass over an empty list and this file would guard air.
+    // An empty parse would let the other tests pass without checking anything.
     expect(names.length).toBeGreaterThanOrEqual(7);
     expect(names).toContain("backup");
     expect(names).toContain("pull");

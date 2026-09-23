@@ -1,42 +1,10 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// SettingsPage — what happens to an edit that is still inside its debounce.
-//
-// With the Save buttons gone the 800ms debounce is the ONLY thing that ever
-// writes a text field, which changes what its two neighbouring behaviours mean:
-//
-//   1. LEAVING THE PAGE. The page-level cleanup cleared every pending timer, so
-//      typing a value and clicking a sidebar link within 800ms threw the edit
-//      away. No toast, no error, and the field had already shown the value as
-//      accepted. Nothing was protected by the cancel — the debounce captures its
-//      value explicitly and a post-unmount setState is a no-op — so an edit was
-//      being lost for nothing.
-//
-//   2. TRIMMING BLANK REGISTRY ROWS. keepRegistryAuths drops untouched blank
-//      rows, which was right when it ran on a Save CLICK ("I am finished") and
-//      is wrong when it runs 800ms after a keystroke: adding a row and then
-//      going back to fix a typo in an existing one made the new, still-empty row
-//      vanish from under the cursor.
-//
-//   3. EDITING THE REGISTRY LIST WHILE ITS OWN SAVE IS IN FLIGHT. The response
-//      used to write back the list the request had been built from, so a row
-//      added — or characters typed — during the round-trip were erased when the
-//      PUT came back, and the row ids were left describing a list that no longer
-//      existed.
-//
-//   4. AN IMPORT ARRIVING WHILE ONE IS PENDING. An import replaces the whole
-//      configuration, so an edit typed against the old one has to be dropped.
-//      The drop used to happen inside the serialized write queue, i.e. whenever
-//      the import reached the head of it — so a debounce that elapsed while an
-//      earlier save still held the queue appended its write BEHIND the import
-//      and wrote a pre-import value over the freshly imported configuration.
-//
-// All three are driven through the real page against a mocked client, with the
-// test controlling when each PUT resolves.
-//
-// jsdom opted in explicitly (real typing, controlled promises) — see
-// Selector.dom.test.tsx's header for this repo's naming convention.
-// ---------------------------------------------------------------------------
+// The 800 ms debounce is the only thing that writes a Settings text field. An
+// edit still inside it has to survive leaving the page, a blank registry row
+// must not vanish while another row is edited, the registry list has to keep
+// what was typed during its own save, and an import must drop a pending edit
+// instead of letting it land behind the import. The page runs against a
+// mocked client, and the tests decide when each PUT resolves.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { I18nProvider, en } from "../lib/i18n";
@@ -91,9 +59,8 @@ type Pending = { body: Settings; resolve: (v: { ok: boolean; error?: string }) =
 
 const putCalls: Pending[] = [];
 let settingsOnServer = baseSettings();
-/** Import applies are controllable too: the window this file cares about runs
- *  from the Import click until the re-loaded configuration is installed, and
- *  the apply itself is the longest part of it. */
+/** The tests resolve import applies too: the apply is the longest part of the
+ *  window between the Import click and the reloaded configuration. */
 const importApplyCalls: string[] = [];
 const importApplies: ((v: { ok: boolean; applied?: boolean; error?: string }) => void)[] = [];
 
@@ -135,7 +102,7 @@ vi.mock("../lib/api", async (importOriginal) => {
   };
 });
 
-// Imported AFTER vi.mock so the page picks up the mocked client.
+// Imported after vi.mock so the page picks up the mocked client.
 const { SettingsPage } = await import("./Settings");
 
 async function renderPage() {
@@ -150,8 +117,8 @@ async function renderPage() {
   });
 }
 
-/** Select a tab through the page's own deep-link path — the strip measures
- *  itself in two passes, so a label query there matches more than one node. */
+/** Selects a tab through the deep link, because the strip measures itself in
+ *  two passes and a label query there matches more than one node. */
 async function gotoTab(tab: string) {
   await act(async () => {
     window.location.hash = "#" + tab;
@@ -218,8 +185,7 @@ describe("leaving the page with an edit still inside its debounce", () => {
     // Still well inside the 800ms window: nothing has been sent yet.
     expect(putCalls).toHaveLength(0);
 
-    // The user clicks a sidebar link. SettingsPage is a routed component, so it
-    // unmounts — which is where the edit used to die.
+    // Following a sidebar link unmounts the routed page.
     await act(async () => {
       cleanup();
     });
@@ -255,13 +221,13 @@ describe("a blank registry row while another row is being edited", () => {
     await renderPage();
     await gotoTab("storage");
 
-    // Add a row: a blank one appears at the end and is deliberately not saved.
+    // Add a row: a blank one appears at the end and is not saved.
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: en["settings.registryAdd"] }));
     });
     expect(hostInputs()).toHaveLength(2);
 
-    // Now go back and fix a typo in the FIRST row's username.
+    // Then go back and fix a typo in the first row's username.
     const users = screen.getAllByLabelText(en["settings.registryUser"]) as HTMLInputElement[];
     await act(async () => {
       fireEvent.change(users[0], { target: { value: "corrected" } });
@@ -307,8 +273,7 @@ describe("a blank registry row while another row is being edited", () => {
       putCalls[0].resolve({ ok: true });
     });
 
-    // Typing into the surviving blank row must reach THAT row, not the first
-    // one — which is what an id/row misalignment would break.
+    // Misaligned ids would send typing in the blank row to the first one.
     await waitFor(() => expect(hostInputs()).toHaveLength(2));
     await act(async () => {
       fireEvent.change(hostInputs()[1], { target: { value: "docker.io" } });
@@ -326,8 +291,7 @@ describe("editing the registry list while its save is in flight", () => {
     await renderPage();
     await gotoTab("storage");
 
-    // One row on screen; edit it and let the debounce elapse, so the PUT is
-    // genuinely in flight and its payload is now frozen.
+    // Let the debounce elapse, so the PUT is in flight with its payload fixed.
     await act(async () => {
       fireEvent.change(hostInputs()[0], { target: { value: "ghcr.io/updated" } });
     });
@@ -336,8 +300,8 @@ describe("editing the registry list while its save is in flight", () => {
     });
     await waitFor(() => expect(putCalls).toHaveLength(1));
 
-    // The user adds a row DURING the round-trip — the window the frozen
-    // payload knows nothing about.
+    // A row added during the round trip, which the payload knows nothing
+    // about.
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: en["settings.registryAdd"] }));
     });
@@ -351,8 +315,7 @@ describe("editing the registry list while its save is in flight", () => {
     await waitFor(() => expect(hostInputs()).toHaveLength(2));
     expect(hostInputs()[1].value).toBe("");
 
-    // ...and the row ids must still line up with the rows, so typing into the
-    // new row reaches THAT row.
+    // ...and the row ids still line up, so typing into the new row reaches it.
     await act(async () => {
       fireEvent.change(hostInputs()[1], { target: { value: "docker.io" } });
     });
@@ -407,8 +370,8 @@ describe("importing settings while an edit is still inside its debounce", () => 
     await renderPage();
     await gotoTab("general");
 
-    // A save is in flight and deliberately never resolved yet, so everything
-    // queued after it waits — including the import.
+    // A save stays in flight, so everything queued after it waits, the import
+    // included.
     await act(async () => {
       fireEvent.click(screen.getByRole("switch", { name: en["settings.containersEnabled"] }));
     });
@@ -428,9 +391,8 @@ describe("importing settings while an edit is still inside its debounce", () => 
     });
     expect(importApplyCalls).toHaveLength(0); // still stuck behind the in-flight save
 
-    // The debounce elapses while the import is still waiting its turn. This is
-    // the moment the queued cancel was too late for: the edit used to queue
-    // itself BEHIND the import here.
+    // The debounce elapses while the import still waits its turn; the edit
+    // must not queue itself behind it.
     await act(async () => {
       vi.advanceTimersByTime(900);
     });
@@ -458,8 +420,8 @@ describe("importing settings while an edit is still inside its debounce", () => 
     settingsOnServer = baseSettings({ registryAuths: [registry({ host: "ghcr.io" })] });
     await renderPage();
 
-    // Nothing is in flight, so the import starts straight away — and then sits
-    // on its own request, which is the longer half of the same window.
+    // Nothing is in flight, so the import starts at once and then waits on its
+    // own request, the longer half of the same window.
     await confirmImport();
     await waitFor(() => expect(importApplyCalls).toHaveLength(1));
     settingsOnServer = baseSettings({

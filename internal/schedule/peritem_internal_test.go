@@ -7,8 +7,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// recordingBackup is a BackupFunc that records the names it was called with, so a
-// test can assert exactly WHICH items a run backed up.
+// recordingBackup returns a BackupFunc that records the names it is called with.
 func recordingBackup() (BackupFunc, *[]string) {
 	var mu sync.Mutex
 	var got []string
@@ -20,32 +19,27 @@ func recordingBackup() (BackupFunc, *[]string) {
 	}, &got
 }
 
-// TestClassifyItemOverride pins the per-item due-selection seam (#121): the pure
-// classification of an override string into "follow the domain default", "own
-// entry on this cadence", or "off (not scheduled)".
+// TestClassifyItemOverride covers the three outcomes of an item's override:
+// follow the domain default, an own entry on its cadence, or not scheduled.
 func TestClassifyItemOverride(t *testing.T) {
-	// Empty override → follow the domain default (the unchanged case).
 	if got := classifyItemOverride(""); !got.inDomainRun || got.ownEntry {
 		t.Fatalf("empty override: expected inDomainRun, got %+v", got)
 	}
-	// Whitespace-only is treated as empty.
 	if got := classifyItemOverride("   "); !got.inDomainRun || got.ownEntry {
 		t.Fatalf("blank override: expected inDomainRun, got %+v", got)
 	}
-	// Invalid override → fall back to the domain default (never silently unscheduled).
+	// An invalid override falls back to the domain run instead of leaving the
+	// item unscheduled.
 	if got := classifyItemOverride("nonsense cadence"); !got.inDomainRun || got.ownEntry {
 		t.Fatalf("invalid override: expected inDomainRun fallback, got %+v", got)
 	}
-	// everyN is unsupported per-item (no per-item last-run gate) → domain default.
+	// There is no per-item last-run gate, so everyN falls back as well.
 	if got := classifyItemOverride("everyN 3 04:00"); !got.inDomainRun || got.ownEntry {
 		t.Fatalf("everyN override: expected inDomainRun fallback, got %+v", got)
 	}
-	// "off" → not scheduled at all (neither its own entry nor the domain run).
 	if got := classifyItemOverride("off"); got.inDomainRun || got.ownEntry {
 		t.Fatalf("off override: expected neither, got %+v", got)
 	}
-	// A concrete cadence → its own entry, with the parsed cron spec. "daily 06:00"
-	// is "minute hour * * *" = "0 6 * * *".
 	got := classifyItemOverride("daily 06:00")
 	if !got.ownEntry || got.inDomainRun {
 		t.Fatalf("concrete override: expected ownEntry, got %+v", got)
@@ -55,8 +49,8 @@ func TestClassifyItemOverride(t *testing.T) {
 	}
 }
 
-// TestDomainRunTargetsFlagOff proves that with the feature OFF the domain run is
-// byte-for-byte unchanged: overrides are ignored and the SAME slice is returned.
+// TestDomainRunTargetsFlagOff checks that with the feature off overrides are
+// ignored and every included item stays in the domain run.
 func TestDomainRunTargetsFlagOff(t *testing.T) {
 	targets := []store.Target{
 		{ContainerName: "web", IncludeInSchedule: true, ScheduleCadence: "daily 06:00"},
@@ -67,7 +61,6 @@ func TestDomainRunTargetsFlagOff(t *testing.T) {
 		t.Fatalf("flag off: expected all %d targets (overrides ignored), got %d", len(targets), len(got))
 	}
 
-	// The domain run backs up EVERY included item, override or not — exactly as today.
 	backup, rec := recordingBackup()
 	attempted, failed, _ := RunContainersJob(got, backup)
 	if attempted != 2 || failed != 0 {
@@ -78,16 +71,15 @@ func TestDomainRunTargetsFlagOff(t *testing.T) {
 	}
 }
 
-// TestDomainRunTargetsFlagOn proves that with the feature ON an item with a valid
-// override is filtered OUT of the domain run (it fires on its own entry instead),
-// an item without an override stays in the domain run (domain cadence), and an
-// "off" override drops the item from all scheduling.
+// TestDomainRunTargetsFlagOn checks that with the feature on, an item with a
+// valid override leaves the domain run for its own entry, an item without one
+// stays, and an "off" override drops the item from scheduling.
 func TestDomainRunTargetsFlagOn(t *testing.T) {
 	targets := []store.Target{
 		{ContainerName: "web", IncludeInSchedule: true, ScheduleCadence: "daily 06:00"}, // own entry
 		{ContainerName: "db", IncludeInSchedule: true},                                  // domain default
 		{ContainerName: "cache", IncludeInSchedule: true, ScheduleCadence: "off"},       // not scheduled
-		{ContainerName: "bad", IncludeInSchedule: true, ScheduleCadence: "gibberish"},   // invalid → domain default
+		{ContainerName: "bad", IncludeInSchedule: true, ScheduleCadence: "gibberish"},   // invalid -> domain default
 	}
 	got := DomainRunTargets(targets, true)
 
@@ -105,22 +97,20 @@ func TestDomainRunTargetsFlagOn(t *testing.T) {
 	}
 }
 
-// TestPerItemEntriesRegistered verifies the scheduler registers a dedicated cron
-// entry per overridden+included item only when the feature is on, and that toggling
-// it off removes those entries — with the OFF case registering exactly the single
-// domain entry (byte-for-byte as before).
+// TestPerItemEntriesRegistered checks that each included item with an override
+// gets its own cron entry while the feature is on, and that turning it off
+// leaves only the domain entry.
 func TestPerItemEntriesRegistered(t *testing.T) {
 	targets := []store.Target{
 		{ContainerName: "web", IncludeInSchedule: true, ScheduleCadence: "daily 06:00"},       // own entry
 		{ContainerName: "api", IncludeInSchedule: true, ScheduleCadence: "weekly Sun 02:00"},  // own entry
 		{ContainerName: "db", IncludeInSchedule: true},                                        // domain default
 		{ContainerName: "off1", IncludeInSchedule: true, ScheduleCadence: "off"},              // no entry
-		{ContainerName: "excluded", IncludeInSchedule: false, ScheduleCadence: "daily 07:00"}, // not included → no entry
+		{ContainerName: "excluded", IncludeInSchedule: false, ScheduleCadence: "daily 07:00"}, // not included -> no entry
 	}
 	backup, _ := recordingBackup()
 	sc := New(backup, func() ([]store.Target, error) { return targets, nil })
 
-	// Feature OFF: exactly one entry (the containers domain job). Overrides ignored.
 	off := store.Settings{ContainersEnabled: true, ContainersSchedule: "daily 03:00"}
 	if err := sc.ReloadWithDueChecks(off, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks (off): %v", err)
@@ -129,9 +119,7 @@ func TestPerItemEntriesRegistered(t *testing.T) {
 		t.Fatalf("feature off: expected exactly 1 entry (containers domain), got %d", got)
 	}
 
-	// Feature ON: the domain entry PLUS one per-item entry for each of the two
-	// valid, included overrides (web, api) = 3 entries. off1 (off) and excluded
-	// (not in schedule) get none.
+	// The domain entry plus web and api; off1 and excluded get none.
 	on := off
 	on.PerItemSchedules = true
 	if err := sc.ReloadWithDueChecks(on, nil, nil, nil, nil, nil, nil); err != nil {
@@ -141,7 +129,6 @@ func TestPerItemEntriesRegistered(t *testing.T) {
 		t.Fatalf("feature on: expected 3 entries (1 domain + 2 per-item), got %d", got)
 	}
 
-	// Toggling back off removes the per-item entries.
 	if err := sc.ReloadWithDueChecks(off, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks (off again): %v", err)
 	}
@@ -150,10 +137,9 @@ func TestPerItemEntriesRegistered(t *testing.T) {
 	}
 }
 
-// TestPerItemEntryRunsOnlyItsItem drives a registered per-item entry's job and the
-// domain entry's job directly (via their wrapped cron jobs), proving the per-item
-// entry backs up ONLY its own overridden container and the domain job backs up ONLY
-// the domain-default containers — no item is backed up twice.
+// TestPerItemEntryRunsOnlyItsItem fires the per-item and the domain entry and
+// checks that each container is backed up once: web by its own entry, db by
+// the domain run.
 func TestPerItemEntryRunsOnlyItsItem(t *testing.T) {
 	targets := []store.Target{
 		{ContainerName: "web", IncludeInSchedule: true, ScheduleCadence: "daily 06:00"}, // own entry
@@ -170,9 +156,6 @@ func TestPerItemEntryRunsOnlyItsItem(t *testing.T) {
 		t.Fatalf("expected 2 entries (domain + web), got %d", len(sc.entries))
 	}
 
-	// Fire every registered entry once through its wrapped cron job (what a real
-	// fire runs). The union must be exactly {web, db}, each once — web from its own
-	// entry, db from the domain entry, and web NOT also from the domain run.
 	for _, e := range sc.entries {
 		entry := sc.c.Entry(e.id)
 		if entry.WrappedJob != nil {
@@ -188,7 +171,7 @@ func TestPerItemEntryRunsOnlyItsItem(t *testing.T) {
 	}
 }
 
-// TestDomainRunVMTargetsFlag mirrors the container filter for VMs.
+// TestDomainRunVMTargetsFlag checks the same filter for VMs.
 func TestDomainRunVMTargetsFlag(t *testing.T) {
 	vms := []store.VMTarget{
 		{Name: "win", IncludeInSchedule: true, ScheduleCadence: "daily 06:00"}, // own entry

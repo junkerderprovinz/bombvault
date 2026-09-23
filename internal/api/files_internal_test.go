@@ -1,9 +1,15 @@
 package api
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
@@ -11,12 +17,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestValidateFileSet pins the save-time guard for the files domain: the name
-// feeds restic tags + progress keys (strict container-name charset), the path
-// must be a contained subpath under the host mount AND exist on disk — with
-// the single deliberate exception that a PATH-LESS set is valid while it stays
-// DISABLED (DiscoverFileSets rebuilds sets from fileset: tags alone, where the
-// original path is unknowable; such a set must be storable but never enabled).
+// A set without a path is valid only while disabled: DiscoverFileSets rebuilds
+// sets from their restic tags, which do not carry the path.
 func TestValidateFileSet(t *testing.T) {
 	root := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(root, "data", "docs"), 0o750); err != nil {
@@ -41,7 +43,9 @@ func TestValidateFileSet(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			err := s.validateFileSet(c.fs)
+			// Create always checks the path.
+			// TestValidateFileSetChecksPathOnlyWhenAsked covers the flag.
+			err := s.validateFileSet(c.fs, true)
 			if c.wantErr && err == nil {
 				t.Fatalf("validateFileSet(%+v) = nil, want error", c.fs)
 			}
@@ -52,11 +56,65 @@ func TestValidateFileSet(t *testing.T) {
 	}
 }
 
-// TestDefaultHostConfigFileSet pins the "Host system config" preset (Task 7
-// of the platform-expansion plan, the files domain's flash-domain analogue
-// on generic/TrueNAS hosts): offered on generic/truenas with a sensible,
-// clearly-editable starting point; never offered on Unraid, which already
-// has the dedicated flash domain for this purpose.
+// A well-formed, contained path that does not exist is refused only when
+// checkPathExists is set.
+func TestValidateFileSetChecksPathOnlyWhenAsked(t *testing.T) {
+	root := t.TempDir()
+	s := &Service{cfg: config.Config{HostMountRoot: root}}
+	dead := store.FileSet{Name: "docs", Path: "data/gone", Enabled: true}
+
+	if err := s.validateFileSet(dead, true); err == nil {
+		t.Fatal("checkPathExists=true must refuse a dead path")
+	}
+	if err := s.validateFileSet(dead, false); err != nil {
+		t.Fatalf("checkPathExists=false must pass a dead path through, got %v", err)
+	}
+
+	// The flag never waives containment or the empty-path/enabled rule, only
+	// the on-disk existence check.
+	traversal := store.FileSet{Name: "docs", Path: "../etc", Enabled: false}
+	if err := s.validateFileSet(traversal, false); err == nil {
+		t.Fatal("checkPathExists=false must still refuse a traversal path")
+	}
+	emptyEnabled := store.FileSet{Name: "docs", Path: "", Enabled: true}
+	if err := s.validateFileSet(emptyEnabled, false); err == nil {
+		t.Fatal("checkPathExists=false must still refuse enabling a path-less set")
+	}
+}
+
+// A directory holding only nested empty directories is empty, while a file at
+// any depth makes it non-empty.
+func TestFileSetSourceEmptyCountsOnlyFilesAsContent(t *testing.T) {
+	root := t.TempDir()
+
+	empty := filepath.Join(root, "empty")
+	if err := os.MkdirAll(filepath.Join(empty, "nested", "deeper"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	got, err := fileSetSourceEmpty(empty)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got {
+		t.Fatal("a tree of only empty directories must read as empty")
+	}
+
+	withFile := filepath.Join(root, "with-file")
+	if err := os.MkdirAll(filepath.Join(withFile, "nested"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(withFile, "nested", "leaf.txt"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	got, err = fileSetSourceEmpty(withFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got {
+		t.Fatal("a tree with a deeply nested file must not read as empty")
+	}
+}
+
 func TestDefaultHostConfigFileSet(t *testing.T) {
 	if name, path, excludes, ok := defaultHostConfigFileSet(platform.KindGeneric); !ok || name == "" || path == "" || excludes != nil {
 		t.Fatalf("KindGeneric: got name=%q path=%q excludes=%v ok=%v, want a non-empty name/path, nil excludes, ok=true", name, path, excludes, ok)
@@ -67,30 +125,15 @@ func TestDefaultHostConfigFileSet(t *testing.T) {
 	if name, path, excludes, ok := defaultHostConfigFileSet(platform.KindUnraid); ok || name != "" || path != "" || excludes != nil {
 		t.Fatalf("KindUnraid: got name=%q path=%q excludes=%v ok=%v, want all-zero, ok=false (flash domain already covers this)", name, path, excludes, ok)
 	}
-	// The suggested path must be a RELATIVE subpath (paths.Resolve rejects an
-	// absolute sub), matching every other file set's Path convention — this is
-	// the exact spot the plan's paraphrase ("/etc") would have broken save-time
-	// validation had it been taken literally.
-	if _, path, _, _ := defaultHostConfigFileSet(platform.KindGeneric); filepathIsAbs(path) {
+	// paths.Resolve rejects an absolute sub, so the preset path must be relative.
+	if _, path, _, _ := defaultHostConfigFileSet(platform.KindGeneric); strings.HasPrefix(path, "/") {
 		t.Fatalf("preset path %q must be relative to HostMountRoot, not absolute", path)
 	}
 }
 
-// filepathIsAbs reports whether p looks like an absolute POSIX path (a
-// leading "/") — the file sets domain always deals in Linux container paths
-// (see internal/paths' doc comment), so this avoids pulling in path/filepath's
-// OS-dependent IsAbs for a one-line check in a single test.
-func filepathIsAbs(p string) bool {
-	return len(p) > 0 && p[0] == '/'
-}
-
-// TestFileSetPositionals is the white-box table for the file-set compile
-// helper (Phase 4, D-05): the single place a stored file-set selection turns
-// into the restic positional source list. nil = the legacy single positional
-// (the NULL column); any written selection is re-anchored against the freshly
-// resolved set root on every compile — entries outside it are filtered, a
-// list that filters to empty falls back to the root, and an unanchored
-// positional is never emitted (RESEARCH Pitfall 2 layer 2).
+// fileSetPositionals turns a stored selection into restic's source paths. Every
+// entry is checked against the set root on each compile: entries outside it are
+// dropped, and when nothing is left the root itself is used.
 func TestFileSetPositionals(t *testing.T) {
 	const src = "/host/user/data/docs"
 	cases := []struct {
@@ -98,16 +141,16 @@ func TestFileSetPositionals(t *testing.T) {
 		selected []string
 		want     []string
 	}{
-		{"nil selection is the legacy single positional", nil, []string{src}},
+		{"nil selection is the set root", nil, []string{src}},
 		{"entry equal to the root anchors", []string{src}, []string{src}},
 		{"disjoint entries under the root are kept, canonically ordered", []string{src + "/b", src + "/a"}, []string{src + "/a", src + "/b"}},
 		{"redundant descendant collapses to the maximal root", []string{src, src + "/child"}, []string{src}},
-		{"entries outside the root are filtered (re-anchor)", []string{"/elsewhere/other", src + "/a"}, []string{src + "/a"}},
-		{"all-outside entries fall back to the root (never unanchored)", []string{"/elsewhere/other"}, []string{src}},
+		{"entries outside the root are filtered", []string{"/elsewhere/other", src + "/a"}, []string{src + "/a"}},
+		{"all entries outside the root fall back to the root", []string{"/elsewhere/other"}, []string{src}},
 		{"zero includes after filtering fall back to the root", []string{"!" + src + "/gone"}, []string{src}},
 		{"exact child entry is kept as-is", []string{src + "/exact"}, []string{src + "/exact"}},
 		{"deeply nested descendant collapses to the maximal root", []string{src, src + "/child/deep"}, []string{src}},
-		{"/data/doc-style sibling must not anchor-match /data/docs (segment-aligned trap)", []string{src[:len(src)-1] /* ".../doc" sibling of ".../docs" */}, []string{src}},
+		{"sibling sharing the root's prefix does not match it", []string{src[:len(src)-1] /* ".../doc" */}, []string{src}},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -119,12 +162,8 @@ func TestFileSetPositionals(t *testing.T) {
 	}
 
 	t.Run("compile is deterministic and canonically ordered", func(t *testing.T) {
-		// Same stored set → deep-equal positional lists in the same canonical
-		// (NormalizeSelection sorted) order on every call, so snapshot Paths
-		// are reproducible across saves, reloads, and restarts. Stored out of
-		// order on purpose: the compile, not the writer, owns the order. (No
-		// bare src among the entries — a redundant-descendant collapse is the
-		// maximal-prune rows' job; here every survivor stays maximal.)
+		// Stable output keeps snapshot paths the same from run to run. The
+		// entries are stored unsorted because the compile owns the order.
 		stored := []string{src + "/zeta", src + "/alpha/inner", "/elsewhere/filtered-out"}
 		want := []string{src + "/alpha/inner", src + "/zeta"}
 		first := fileSetPositionals(stored, src)
@@ -138,10 +177,8 @@ func TestFileSetPositionals(t *testing.T) {
 	})
 }
 
-// TestBeginRestoreRunForTarget pins the generalized restore bookkeeping the
-// files domain records against file_sets.id directly (no container target row
-// lookup): begin opens a kind "restore" run against the given target id and
-// finishRestoreRun closes it with the terminal status + snapshot id.
+// A file-set restore records its run against the set's id, with no container
+// target lookup.
 func TestBeginRestoreRunForTarget(t *testing.T) {
 	db, err := store.Open(":memory:")
 	if err != nil {
@@ -178,5 +215,127 @@ func TestBeginRestoreRunForTarget(t *testing.T) {
 	}
 	if run.SnapshotID != "deadbeef12345678" {
 		t.Fatalf("run snapshot = %q, want the restored snapshot id", run.SnapshotID)
+	}
+}
+
+// When the store cannot say whether the repository was ever established, it
+// may sit on a share that is not mounted with every snapshot still in it, so
+// the refusal treats that as having backups. It is an internal test because
+// only a broken schema makes that read fail.
+func TestFileSetHasBackupsUnknownEstablishmentCountsAsHasBackups(t *testing.T) {
+	dir := t.TempDir()
+	db, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	st := store.New(db)
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.FilesPath = "backups/files" // never created on disk
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	set, err := st.CreateFileSet(store.FileSet{Name: "docs", Path: "data/docs", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc := NewService(config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}, st, nil, nil, nil)
+
+	if _, err := db.Exec("DROP TABLE established_repos"); err != nil {
+		t.Fatal(err)
+	}
+
+	hasBackups, bErr := svc.fileSetHasBackups(context.Background(), set.ID)
+	if !hasBackups {
+		t.Fatalf("an unreadable establishment marker must count as having backups, got hasBackups=%v err=%v", hasBackups, bErr)
+	}
+	if !errors.Is(bErr, errFileSetRepoUnreachable) {
+		t.Fatalf("want errFileSetRepoUnreachable, got %v", bErr)
+	}
+}
+
+// The busy refusal names whichever operation holds the files domain lock, not
+// always "backup".
+func TestFileSetPatchBusyRefusalNamesTheHoldingOperation(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, "data", "docs"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	db, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	st := store.New(db)
+	set, err := st.CreateFileSet(store.FileSet{Name: "docs", Path: "data/docs", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc := NewService(cfg, st, nil, nil, nil)
+	h := NewHandler(cfg, st, nil, svc, nil, nil)
+
+	unlock := svc.lockDomainFor("files", "delete")
+	defer unlock()
+
+	req := httptest.NewRequest(http.MethodPatch, "/api/files/sets/"+set.ID, strings.NewReader(`{"name":"renamed"}`))
+	req.Header.Set("Content-Type", "application/json")
+	req.SetPathValue("id", set.ID)
+	w := httptest.NewRecorder()
+	h.handlePatchFileSet(w, req)
+
+	var resp struct {
+		OK    bool   `json:"ok"`
+		Error string `json:"error"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v (%s)", err, w.Body.String())
+	}
+	if resp.OK {
+		t.Fatal("rename while delete holds the files lock must be refused")
+	}
+	if !strings.Contains(resp.Error, "delete") {
+		t.Fatalf("want the refusal to name the holding operation, got %q", resp.Error)
+	}
+}
+
+// A repository chosen for the set after discovery first read it is the
+// operator's, so the repair leaves it.
+func TestDiscoverHomeKeepsARepositoryChosenSinceTheFirstRead(t *testing.T) {
+	dir := t.TempDir()
+	db, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	st := store.New(db)
+	chosen, err := st.UpsertOffsiteTarget(store.OffsiteTarget{Role: store.RoleRepo, Name: "chosen", Repo: "backups/chosen", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	set, err := st.CreateFileSet(store.FileSet{Name: "docs", Repo: chosen.ID, RepoChosen: store.RepoChosen})
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc := NewService(config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}, st, nil, nil, nil)
+
+	item := store.ItemRef{Domain: "files", Key: set.ID}
+	if left, err := svc.discoverHome(context.Background(), item, "found-elsewhere", nil, true); err != nil || left {
+		t.Fatalf("discoverHome = %v, %v; want it to leave the chosen repository alone", left, err)
+	}
+	if got, err := st.GetFileSet(set.ID); err != nil || got.Repo != chosen.ID {
+		t.Fatalf("repo = %q, %v; want the chosen %q kept", got.Repo, err, chosen.ID)
 	}
 }

@@ -1,10 +1,7 @@
-// ---------------------------------------------------------------------------
-// Cron validator + next-fire evaluator (#107). The grammar must mirror the
-// backend's robfig/cron v3 standard parser EXACTLY — every "valid" row here
-// was cross-checked against internal/schedule ParseCadence (which accepts raw
-// 5-field cron), and every "invalid" row is one robfig rejects too (notably
-// DOW 7, which classic cron allows but robfig does not).
-// ---------------------------------------------------------------------------
+// The grammar mirrors robfig/cron v3's standard parser, which the backend
+// validates with (internal/schedule ParseCadence): every valid row is one it
+// accepts and every invalid row one it rejects, including DOW 7, which classic
+// cron allows.
 import { describe, expect, it } from "vitest";
 import { cronPeriodSeconds, isValidCronExpression, nextCronFires } from "./cron";
 
@@ -49,21 +46,21 @@ describe("isValidCronExpression", () => {
     "5-1 * * * *", // reversed range
     "*/0 * * * *", // step must be >= 1
     "1/2/3 * * * *", // at most one "/"
-    "daily 02:00", // builder grammar is NOT cron
+    "daily 02:00", // builder grammar, not cron
   ];
   it.each(invalid)("rejects %j", (expr) => {
     expect(isValidCronExpression(expr)).toBe(false);
   });
 });
 
-// hhmm collapses a fire to a comparable local "day HH:MM" tuple.
+// stamp formats a fire as local "YYYY-MM-DD HH:MM".
 function stamp(d: Date): string {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
 describe("nextCronFires", () => {
-  it("returns null for an invalid expression (never a guessed preview)", () => {
+  it("returns null for an invalid expression", () => {
     expect(nextCronFires("60 * * * *", 3)).toBeNull();
   });
 
@@ -119,8 +116,8 @@ describe("nextCronFires", () => {
   });
 
   it("uses AND semantics when a day field is starred with a step (robfig star bit)", () => {
-    // dom "*/2" carries robfig's star bit, so BOTH odd day AND Monday must
-    // match. Mondays from 2026-07-24: Jul 27 (odd), Aug 3 (odd), Aug 10
+    // dom "*/2" carries robfig's star bit, so the day must be odd and a
+    // Monday. Mondays from 2026-07-24: Jul 27 (odd), Aug 3 (odd), Aug 10
     // (even, skipped), Aug 17 (odd).
     const fires = nextCronFires("0 0 */2 * 1", 3, new Date(2026, 6, 24, 0, 0));
     expect(fires?.map(stamp)).toEqual(["2026-07-27 00:00", "2026-08-03 00:00", "2026-08-17 00:00"]);
@@ -137,8 +134,8 @@ describe("nextCronFires", () => {
   it("steps daily fires DST-safely (wall-clock time stays fixed, gaps stay ~24h)", () => {
     // 400 consecutive daily fires cross at least one DST transition in any
     // DST-observing zone. Every fire must land on the scheduled local time
-    // and be 23-25 hours after the previous one (24h +/- the largest DST
-    // shift) — never drift, never repeat, never go backwards.
+    // and be 23 to 25 hours after the previous one (24h +/- the largest DST
+    // shift): no drift, no repeats, never backwards.
     let cursor = new Date(2026, 0, 1, 0, 0);
     let prev: Date | null = null;
     for (let i = 0; i < 400; i++) {

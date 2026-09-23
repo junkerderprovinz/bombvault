@@ -1,14 +1,6 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// ColorPickerSwatch — real DOM behaviour Colorpicker.test.ts's pure hex<->HSV
-// math tests can't cover: the popover actually opening/closing, and the hex
-// field round-tripping into onChange. Named `.dom.test.tsx` per
-// Selector.dom.test.tsx's own convention for the jsdom-opted-in exception
-// (vitest.config.ts stays "node" by default). No @testing-library/jest-dom
-// in this repo — plain DOM property/attribute access instead of the
-// toBeInTheDocument()/toHaveAttribute() matchers, matching Selector's own
-// tests.
-// ---------------------------------------------------------------------------
+// DOM behaviour of ColorPickerSwatch: the popover opening and closing, and the
+// hex field feeding onChange.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { ColorPickerSwatch } from "./ColorPickerPopover";
@@ -17,7 +9,7 @@ afterEach(() => {
   cleanup();
 });
 
-describe("ColorPickerSwatch — trigger + popover", () => {
+describe("ColorPickerSwatch trigger and popover", () => {
   it("renders a swatch showing the current value as its background, no dialog until clicked", () => {
     render(<ColorPickerSwatch value="#2f6feb" onChange={vi.fn()} label="Accent colour" />);
     const trigger = screen.getByRole("button", { name: "Accent colour" });
@@ -62,7 +54,7 @@ describe("ColorPickerSwatch — trigger + popover", () => {
     expect(screen.queryByRole("dialog")).not.toBeNull();
   });
 
-  it("scrolling closes the open popover (a fixed popover would otherwise de-anchor from its trigger)", () => {
+  it("scrolling closes the open popover", () => {
     render(<ColorPickerSwatch value="#2f6feb" onChange={vi.fn()} label="Accent colour" />);
     fireEvent.click(screen.getByRole("button", { name: "Accent colour" }));
     expect(screen.queryByRole("dialog")).not.toBeNull();
@@ -78,7 +70,7 @@ describe("ColorPickerSwatch — trigger + popover", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("only one popover is ever open at once — opening a second closes the first", () => {
+  it("opening a second popover closes the first", () => {
     render(
       <div>
         <ColorPickerSwatch value="#2f6feb" onChange={vi.fn()} label="First" />
@@ -93,7 +85,7 @@ describe("ColorPickerSwatch — trigger + popover", () => {
   });
 });
 
-describe("ColorPickerSwatch — hex field round-trip", () => {
+describe("ColorPickerSwatch hex field", () => {
   it("typing a valid 6-digit hex calls onChange with the normalized value", () => {
     const spy = vi.fn();
     render(<ColorPickerSwatch value="#2f6feb" onChange={spy} label="Accent colour" />);
@@ -103,7 +95,7 @@ describe("ColorPickerSwatch — hex field round-trip", () => {
     expect(spy).toHaveBeenCalledWith("#ff00aa");
   });
 
-  it("keeps the field's own typed text as-is (no forced re-casing while typing)", () => {
+  it("keeps the typed casing in the field", () => {
     const spy = vi.fn();
     render(<ColorPickerSwatch value="#2f6feb" onChange={spy} label="Accent colour" />);
     fireEvent.click(screen.getByRole("button", { name: "Accent colour" }));
@@ -121,20 +113,16 @@ describe("ColorPickerSwatch — hex field round-trip", () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it("dragging the SV square updates the hex field to match (bidirectional sync)", () => {
+  it("dragging the SV square updates the hex field", () => {
     const spy = vi.fn();
     render(<ColorPickerSwatch value="#ff0000" onChange={spy} label="Accent colour" />);
     fireEvent.click(screen.getByRole("button", { name: "Accent colour" }));
     const dialog = screen.getByRole("dialog", { name: "Accent colour" });
     const sv = dialog.querySelector(".glim-picker-sv") as HTMLElement;
-    // jsdom's getBoundingClientRect() is always a zero rect by default,
-    // which would divide-by-zero the drag math below — stub it with a
-    // realistic box so (clientX, clientY) maps to a real, predictable
-    // fraction of the square instead of NaN.
+    // jsdom's rects are all zero, which would divide the drag math by zero.
     sv.getBoundingClientRect = () =>
       ({ x: 0, y: 0, left: 0, top: 0, right: 220, bottom: 112, width: 220, height: 112, toJSON() {} }) as DOMRect;
-    // Top-left corner of the SV square is saturation=0, value=1 — white,
-    // regardless of the starting hue (#ff0000 -> h=0).
+    // The top-left corner is saturation 0, value 1: white, whatever the hue.
     fireEvent.mouseDown(sv, { clientX: 0, clientY: 0 });
     expect(spy).toHaveBeenCalledWith("#ffffff");
     const hexField = screen.getByLabelText("Hex") as HTMLInputElement;

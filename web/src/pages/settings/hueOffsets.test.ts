@@ -1,22 +1,10 @@
-// ---------------------------------------------------------------------------
-// No two selectors on one settings screen start on the same colour.
+// No two selectors on one settings screen start on the same colour. A Selector
+// segment takes its hue from its position, so two stacked selectors of similar
+// width repeat every colour straight down the page. hueOffset fixes that, but
+// its default of 0 is only right for a lone selector, so inside the settings
+// tree every hued selector passes one, taken from the shared HUE_OFFSET table.
 //
-// A Selector segment takes its hue from its POSITION, which is what makes a
-// rainbow list readable: position three is the same colour wherever you meet
-// it. Stack two selectors of similar width, though, and every column repeats
-// straight down the page, so the second one tells you nothing the first did
-// not (jdp, 2026-09-15, on the three label-mode selectors in Settings all
-// wearing the same orange in column two).
-//
-// `hueOffset` is the fix, and the trap is that its default is 0 - which is
-// correct for a lone selector on a page and wrong for every selector added
-// beside another one. A new card gets written, nobody thinks about the
-// palette, and the collision comes back silently. So: inside the settings
-// tree, passing an offset is not optional, and the offsets come from one
-// table rather than from nine separate judgement calls.
-//
-// Node environment: this reads source, it does not render.
-// ---------------------------------------------------------------------------
+// This reads source; it does not render.
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

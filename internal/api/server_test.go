@@ -17,12 +17,10 @@ func TestEnsureSelfSignedGeneratesAndReuses(t *testing.T) {
 	if err != nil {
 		t.Fatalf("first ensure: %v", err)
 	}
-	// Files exist and load as a valid TLS keypair.
 	if _, err := tls.LoadX509KeyPair(cert1, key1); err != nil {
 		t.Fatalf("generated keypair invalid: %v", err)
 	}
 
-	// Capture contents to prove reuse (not regeneration) on the second call.
 	keyBefore, err := os.ReadFile(key1) //nolint:gosec // G304: key1 is a path returned by EnsureSelfSigned under the test's own TempDir, not user input
 	if err != nil {
 		t.Fatal(err)

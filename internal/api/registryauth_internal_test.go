@@ -5,9 +5,8 @@ import (
 	"testing"
 )
 
-// TestRegistryHost pins the docker reference heuristic (#106): the part before
-// the first "/" is a registry host only when it contains a "." or ":" or is
-// "localhost"; everything else is a Docker Hub path.
+// The part before the first "/" is a registry host only when it contains a "."
+// or ":" or is "localhost"; everything else is a Docker Hub path.
 func TestRegistryHost(t *testing.T) {
 	cases := []struct {
 		ref  string
@@ -36,18 +35,14 @@ func TestRegistryHost(t *testing.T) {
 	}
 }
 
-// TestMergeRegistryAuths pins the settings-PUT contract (#106): a blank token
-// keeps the stored one for that host, a non-blank token replaces it, an entry
-// absent from the submitted list is deleted, and invalid entries are rejected
-// with user-facing errors.
 func TestMergeRegistryAuths(t *testing.T) {
 	stored := []RegistryAuth{
 		{Host: "ghcr.io", Username: "old-user", Token: "ghcr-token"},
 		{Host: "lscr.io", Username: "u", Token: "lscr-token"},
 	}
 
-	// Blank token keeps stored; non-blank replaces; lscr.io absent → deleted;
-	// docker.io added new. Hosts normalize (case/scheme).
+	// The blank ghcr.io token keeps the stored one, lscr.io is absent and goes,
+	// docker.io is new, and hosts are normalized for case and scheme.
 	got, err := mergeRegistryAuths([]registryAuthView{
 		{Host: "https://GHCR.IO/", Username: "new-user", Token: ""},
 		{Host: "docker.io", Username: "hubuser", Token: "hub-token"},
@@ -65,18 +60,17 @@ func TestMergeRegistryAuths(t *testing.T) {
 		t.Fatalf("new entry must store its token: %+v", got[1])
 	}
 
-	// A NEW host with a blank token has nothing stored to keep → error.
+	// A new host with a blank token has nothing stored to keep.
 	if _, err := mergeRegistryAuths([]registryAuthView{{Host: "quay.io"}}, stored); err == nil ||
 		!strings.Contains(err.Error(), "token is required") {
 		t.Fatalf("a new host without a token must be rejected, got %v", err)
 	}
 
-	// Blank host → error.
 	if _, err := mergeRegistryAuths([]registryAuthView{{Host: " ", Token: "x"}}, nil); err == nil {
 		t.Fatal("a blank host must be rejected")
 	}
 
-	// Duplicate hosts (after normalization) → error.
+	// Hosts are compared after normalization.
 	if _, err := mergeRegistryAuths([]registryAuthView{
 		{Host: "ghcr.io", Token: "a"},
 		{Host: "https://ghcr.io", Token: "b"},
@@ -84,12 +78,11 @@ func TestMergeRegistryAuths(t *testing.T) {
 		t.Fatalf("duplicate hosts must be rejected, got %v", err)
 	}
 
-	// A host carrying a path is a mistyped ref, not a host → error.
+	// A host carrying a path is a mistyped image reference.
 	if _, err := mergeRegistryAuths([]registryAuthView{{Host: "ghcr.io/owner/img", Token: "x"}}, nil); err == nil {
 		t.Fatal("a host with a path must be rejected")
 	}
 
-	// Empty submitted list = delete everything.
 	if got, err := mergeRegistryAuths(nil, stored); err != nil || len(got) != 0 {
 		t.Fatalf("an empty list must clear all entries: %v %v", got, err)
 	}

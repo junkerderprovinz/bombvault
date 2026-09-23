@@ -5,15 +5,14 @@ import (
 	"fmt"
 )
 
-// ConfigRestic is the restic surface the config self-backup domain needs. Like
-// flash it is a plain directory backup (of a staged snapshot of /config), so
-// there is no lifecycle to manage.
+// ConfigRestic is the restic surface BombVault's own config backup needs.
 type ConfigRestic interface {
 	Backup(ctx context.Context, repo string, paths, tags []string, excludes ...string) (Summary, error)
 }
 
-// ConfigBackupDeps bundles everything BackupConfig needs. SourceDir is the staged
-// snapshot directory (VACUUM-INTO DB + rclone.conf + ssh/), NOT the live /config.
+// ConfigBackupDeps holds what BackupConfig needs. SourceDir is the staged copy
+// of /config (the database written with VACUUM INTO, rclone.conf and ssh/),
+// not the live directory.
 type ConfigBackupDeps struct {
 	SourceDir string
 	Repo      string
@@ -22,9 +21,8 @@ type ConfigBackupDeps struct {
 	Runs      Runs
 }
 
-// BackupConfig backs up BombVault's own staged /config snapshot via restic. A
-// thin record-around-restic (no stop/start): the DB was made consistent upstream
-// by VACUUM INTO, so this just snapshots the staging directory.
+// BackupConfig backs up the staged /config copy and records the run. VACUUM
+// INTO already made the database consistent, so nothing has to be stopped.
 func BackupConfig(ctx context.Context, d ConfigBackupDeps) (Summary, error) {
 	runID, err := d.Runs.Start(d.TargetID, kindBackup)
 	if err != nil {

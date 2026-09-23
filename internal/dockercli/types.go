@@ -7,6 +7,12 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/model"
 )
 
+// MountPoint is a bind mount on a container.
+type MountPoint struct {
+	Source      string
+	Destination string
+}
+
 // ContainerInfo is a summary of a container as returned by List.
 type ContainerInfo struct {
 	ID     string
@@ -21,6 +27,13 @@ type ContainerInfo struct {
 	IP string
 	// Stack is the compose project (com.docker.compose.project label), "" if none.
 	Stack string
+	// ImageID is the local image ID (sha256:...).
+	ImageID string
+	// Created is the creation time in Unix seconds.
+	Created int64
+	Labels  map[string]string
+	// Mounts are the bind mounts only; see mapContainerSummary.
+	Mounts []MountPoint
 }
 
 // Docker is the host-control surface consumed by the backup orchestrator.

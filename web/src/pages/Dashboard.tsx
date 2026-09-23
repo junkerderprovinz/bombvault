@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import { hueVars, rainbowAt } from "../lib/appearance";
+import { hueVars } from "../lib/appearance";
 import { listRuns, getSpike, listContainers, listVMs, getSettings, getStatus, getHistory, getStats, downloadRecoveryKit, ackRecoveryKit, runDrill, getScheduleNext } from "../lib/api";
 import type { Run, SpikeCheck, Container, Settings, DomainStatus, HistoryDay, DayStat, RepoStat, StorageForecast, ScheduleNext } from "../lib/api";
 import { ErrorDetailPanel } from "../components/ErrorDetailPanel";
@@ -487,7 +487,7 @@ function Card({
     // Card's many call sites.
     <div
       className={`relative glim-notch-card${hueIndex !== undefined ? " glim-hue" : ""}`}
-      style={hueIndex !== undefined ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined}
+      style={hueIndex !== undefined ? (hueVars(hueIndex) as CSSProperties) : undefined}
     >
       <h2 className="flex items-center">
         <Badge tone="heading" size="heading" wrap hueIndex={hueIndex} insetStart={5}>{title}</Badge>
@@ -2027,7 +2027,7 @@ function SummaryCell({
     // child might add.
     <div
       className={`relative glim-notch-card min-w-0${hueIndex !== undefined ? " glim-hue" : ""}`}
-      style={hueIndex !== undefined ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined}
+      style={hueIndex !== undefined ? (hueVars(hueIndex) as CSSProperties) : undefined}
     >
       {/* Task 5 (rule 11): each SummaryCell is its own standalone
           bg-carbon-surface rounded-card box — not nested inside an

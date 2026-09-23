@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -515,10 +516,188 @@ func TestBackupFileSetMissingSourceRecordsFailedRun(t *testing.T) {
 	}
 }
 
+// TestBackupFileSetEmptySourceWithHistoryFailsRun: an empty source must not
+// succeed for a set with history, or keep-N retention would age the real
+// snapshots out. The guard fires before any restic call.
+func TestBackupFileSetEmptySourceWithHistoryFailsRun(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	srcDir := root + "/data/docs"
+	if err := os.MkdirAll(srcDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.FilesPath = "backups/files"
+	s.RetentionKeepLast = 1 // a policy is configured, so a real run would forget something
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	set, err := st.CreateFileSet(store.FileSet{Name: "docs", Path: "data/docs", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// initWritesConfig leaves a config marker on disk; without it the guard's
+	// listing would see a missing repository and never reach eng.snaps.
+	eng := &fakeResticEngine{initWritesConfig: true, snaps: []restic.Snapshot{
+		{ID: "cafefeed12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{srcDir}},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	_, err = svc.BackupFileSet(context.Background(), set.ID)
+	if err == nil {
+		t.Fatal("expected an error for an empty source with existing history")
+	}
+	if !strings.Contains(err.Error(), "no files") {
+		t.Fatalf("error should say the source has no files, got %v", err)
+	}
+	if len(eng.backedUp) != 0 {
+		t.Fatalf("no restic backup may run for an empty source with history, got %v", eng.backedUp)
+	}
+	if len(eng.forgetTags) != 0 || len(eng.prunedRepos) != 0 {
+		t.Fatalf("retention must not run, got forgetTags=%v prunedRepos=%v", eng.forgetTags, eng.prunedRepos)
+	}
+	run, rErr := st.LastRunForTarget(set.ID)
+	if rErr != nil {
+		t.Fatal(rErr)
+	}
+	if run == nil || run.Status != "failed" {
+		t.Fatalf("expected a failed run recorded against the set id, got %+v", run)
+	}
+}
+
+// TestBackupFileSetEmptySourceFirstBackupAllowed: a first backup of an empty
+// folder has no history to age out, so it runs.
+func TestBackupFileSetEmptySourceFirstBackupAllowed(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	srcDir := root + "/data/docs"
+	if err := os.MkdirAll(srcDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.FilesPath = "backups/files"
+	s.RetentionKeepLast = 1 // proves retention runs here, unlike the refused case above
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	set, err := st.CreateFileSet(store.FileSet{Name: "docs", Path: "data/docs", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{} // no pre-existing snapshots: first-ever backup
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	if _, err := svc.BackupFileSet(context.Background(), set.ID); err != nil {
+		t.Fatalf("a first-ever backup of an empty folder must be allowed, got %v", err)
+	}
+	if len(eng.backedUp) != 1 {
+		t.Fatalf("expected the backup to run, got %v", eng.backedUp)
+	}
+	if len(eng.forgetTags) == 0 {
+		t.Fatalf("expected retention to run after a successful backup, got forgetTags=%v", eng.forgetTags)
+	}
+}
+
+// TestBackupFileSetUnreadableSourceWithHistoryFailsRun: an unreadable source
+// (EACCES, ESTALE, a dropped share) fails like an empty one when the set has
+// history, instead of letting restic record an effectively empty snapshot.
+func TestBackupFileSetUnreadableSourceWithHistoryFailsRun(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	srcDir := root + "/data/docs"
+	if err := os.MkdirAll(srcDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.FilesPath = "backups/files"
+	s.RetentionKeepLast = 1
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	set, err := st.CreateFileSet(store.FileSet{Name: "docs", Path: "data/docs", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{initWritesConfig: true, snaps: []restic.Snapshot{
+		{ID: "cafefeed12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{srcDir}},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	readErr := errors.New("read docs: input/output error")
+	defer api.SetFileSetSourceWalk(func(string, fs.WalkDirFunc) error { return readErr })()
+
+	_, err = svc.BackupFileSet(context.Background(), set.ID)
+	if err == nil {
+		t.Fatal("expected an error for an unreadable source with existing history")
+	}
+	if !strings.Contains(err.Error(), "could not be read") {
+		t.Fatalf("error should say the source could not be read, got %v", err)
+	}
+	if len(eng.backedUp) != 0 {
+		t.Fatalf("no restic backup may run for an unreadable source with history, got %v", eng.backedUp)
+	}
+	if len(eng.forgetTags) != 0 || len(eng.prunedRepos) != 0 {
+		t.Fatalf("retention must not run, got forgetTags=%v prunedRepos=%v", eng.forgetTags, eng.prunedRepos)
+	}
+	run, rErr := st.LastRunForTarget(set.ID)
+	if rErr != nil {
+		t.Fatal(rErr)
+	}
+	if run == nil || run.Status != "failed" {
+		t.Fatalf("expected a failed run recorded against the set id, got %+v", run)
+	}
+}
+
+// TestBackupFileSetHistoryListingFailureCountsAsHistory: when the guard cannot
+// list the set's snapshots it assumes history and refuses an empty source.
+func TestBackupFileSetHistoryListingFailureCountsAsHistory(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	srcDir := root + "/data/docs"
+	if err := os.MkdirAll(srcDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.FilesPath = "backups/files"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	set, err := st.CreateFileSet(store.FileSet{Name: "docs", Path: "data/docs", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo, err := paths.Resolve(root, "backups/files")
+	if err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{initWritesConfig: true}
+	eng.snapsErrFor = map[string]error{repo: errors.New("boom: repo unreadable")}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	_, err = svc.BackupFileSet(context.Background(), set.ID)
+	if err == nil {
+		t.Fatal("expected an error: an empty source with an unreadable history listing must refuse")
+	}
+	if !strings.Contains(err.Error(), "no files") {
+		t.Fatalf("error should say the source has no files, got %v", err)
+	}
+	if len(eng.backedUp) != 0 {
+		t.Fatalf("no restic backup may run when history could not be checked, got %v", eng.backedUp)
+	}
+}
+
 // fileSetFilesRestoreService builds a service with an initialised files repo, a
 // "docs" file set (source data/docs) whose fileset:docs snapshot ("aaaa1111",
-// backed-up root <root>/data/docs) sits in the fake engine, plus a FOREIGN
-// snapshot ("bbbb2222", fileset:other) — the shared setup for the selective
+// backed-up root <root>/data/docs) sits in the fake engine, plus a foreign
+// snapshot ("bbbb2222", fileset:other): the shared setup for the selective
 // file-set restore tests (#65). Returns the service, store, the set id and the
 // resolved host mount root.
 func fileSetFilesRestoreService(t *testing.T, eng *fakeResticEngine) (*api.Service, *store.Repo, string, string) {
@@ -735,6 +914,13 @@ func TestOffsiteScheduleDecouplesFromBackup(t *testing.T) {
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
+	flashRepo := filepath.Join(dir, "backups", "flash")
+	if err := os.MkdirAll(flashRepo, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(flashRepo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
@@ -743,16 +929,6 @@ func TestOffsiteScheduleDecouplesFromBackup(t *testing.T) {
 	}
 	if len(eng.copied) != 0 {
 		t.Fatalf("with a separate off-site schedule, backup must NOT replicate, got %v", eng.copied)
-	}
-	// The fake engine does not touch disk, so the backup above leaves no config
-	// marker; write the one a real backup would to keep flash's own repo present
-	// for the replication below.
-	flashRepo := filepath.Join(dir, "backups", "flash")
-	if err := os.MkdirAll(flashRepo, 0o750); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(flashRepo, "config"), []byte("x"), 0o600); err != nil {
-		t.Fatal(err)
 	}
 
 	// The scheduled/on-demand path replicates explicitly.
@@ -826,13 +1002,6 @@ func TestReplicateOffsiteImmutableSkipsRetention(t *testing.T) {
 	s.OffsiteRetentionKeepDaily = 14 // an off-site policy IS set…
 	s.FlashOffsiteImmutable = true   // …but the repo is append-only
 	if err := st.UpdateSettings(s); err != nil {
-		t.Fatal(err)
-	}
-	flashRepo := filepath.Join(dir, "backups", "flash")
-	if err := os.MkdirAll(flashRepo, 0o750); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(flashRepo, "config"), []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	eng := &fakeResticEngine{}
@@ -3104,7 +3273,8 @@ func TestServiceSetIncludeAllOrphans(t *testing.T) {
 // backups can leave the list without going through "Delete all backups", and
 // removing the entry never touches a repository.
 func TestForgetTargetRemovesContainerEntry(t *testing.T) {
-	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir()}
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
 	st := newMemStore(t)
 	if _, err := st.UpsertTarget(store.Target{ContainerName: "Nexterm"}); err != nil {
 		t.Fatal(err)
@@ -4293,9 +4463,10 @@ func TestDeleteBackupsVMForgetsOnlyThatVMAndPrunes(t *testing.T) {
 
 // TestForgetVMTargetRemovesEntry pins the orphan-cleanup fix: a no-longer-installed
 // VM with no backups can be cleared from the list (its target row) without needing
-// a repo — answering "how do I delete this entry".
+// a repo, answering "how do I delete this entry".
 func TestForgetVMTargetRemovesEntry(t *testing.T) {
-	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir()}
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
 	st := newMemStore(t)
 	if _, err := st.UpsertVMTarget(store.VMTarget{Name: "DietPi_template"}); err != nil {
 		t.Fatal(err)
@@ -4649,9 +4820,526 @@ func marshalDefinition(inspect model.Inspect, templateXML string, appdata ...str
 	return json.Marshal(def{Inspect: inspect, TemplateXML: templateXML, AppdataPaths: appdata})
 }
 
-// ---------------------------------------------------------------------------
-// fakes
-// ---------------------------------------------------------------------------
+// storedLink is a link record in a stored definition.
+type storedLink struct {
+	Name           string `json:"name"`
+	LinkedAt       int64  `json:"linked_at"`
+	PrevDefinition string `json:"prev_definition,omitempty"`
+}
+
+// withLinks is the definition def recording each of olds as a former name,
+// linked at linkTime.
+func withLinks(t *testing.T, def string, olds ...string) string {
+	t.Helper()
+	links := make([]storedLink, 0, len(olds))
+	for _, old := range olds {
+		links = append(links, storedLink{Name: old, LinkedAt: unixOf(t, linkTime)})
+	}
+	return withLinkRecords(t, def, links...)
+}
+
+// withLinkRecords is the definition def with links as its link records.
+func withLinkRecords(t *testing.T, def string, links ...storedLink) string {
+	t.Helper()
+	var fields map[string]any
+	if err := json.Unmarshal([]byte(def), &fields); err != nil {
+		t.Fatal(err)
+	}
+	fields["aliases"] = links
+	b, err := json.Marshal(fields)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(b)
+}
+
+// writeStoredDef writes an encrypted definition for name into bombvault-defs
+// beside repo, the legacy location readStoredDef still falls back to, so a
+// Discover test can rebuild the name without a real container or backup run.
+// It records each of formerNames as linked at linkTime.
+func writeStoredDef(t *testing.T, svc *api.Service, repo, name string, formerNames ...string) {
+	t.Helper()
+	_ = svc // the key is the fixed test APP_KEY, not taken from svc
+	defJSON, err := marshalDefinition(
+		model.Inspect{Name: "/" + name, Config: model.Config{Image: name + ":latest"}},
+		"<xml/>", "/host/appdata/"+name,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(formerNames) > 0 {
+		defJSON = []byte(withLinks(t, string(defJSON), formerNames...))
+	}
+	enc, err := secret.Encrypt(strings.Repeat("a", 64), defJSON)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defsDir := filepath.Join(filepath.Dir(repo), "bombvault-defs")
+	if err := os.MkdirAll(defsDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(defsDir, name+".def"), enc, 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// TestDiscoverFoldsFormerNames: after a /config loss radarr's stored definition
+// records radarr-movies as its former name, so radarr-movies comes back as
+// radarr's alias rather than as an entry of its own.
+func TestDiscoverFoldsFormerNames(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo, err := paths.Resolve(dir, s.ContainersPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Time: "2024-01-01T00:00:00Z", Tags: []string{"container:radarr-movies", "p1"}},
+		{ID: "bbbb2222", Time: "2024-06-01T00:00:00Z", Tags: []string{"container:radarr", "p1", "formerly:radarr-movies"}},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	writeStoredDef(t, svc, repo, "radarr", "radarr-movies") // the current name records the link
+	writeStoredDef(t, svc, repo, "radarr-movies")           // the old name has a definition too
+
+	if _, err := svc.Discover(context.Background(), false); err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	if _, err := st.GetTargetByContainer("radarr-movies"); err == nil {
+		t.Fatal("the former name must not come back as an entry of its own")
+	}
+	tg, err := st.GetTargetByContainer("radarr")
+	if err != nil {
+		t.Fatalf("the current name must be rebuilt: %v", err)
+	}
+	names, _ := st.AliasNames("container", tg.ID)
+	if len(names) != 1 || names[0] != "radarr-movies" {
+		t.Fatalf("alias after discover = %v", names)
+	}
+	snaps, err := svc.Snapshots(context.Background(), "radarr", "")
+	if err != nil || len(snaps) != 2 {
+		t.Fatalf("both snapshots belong to the rebuilt entry: %d, %v", len(snaps), err)
+	}
+}
+
+// TestDiscoverRebuildsFormerNameStandaloneWhenCurrentCannotBeRebuilt: radarr
+// has no stored definition, so folding radarr-movies onto it would leave a
+// dangling alias. radarr-movies has its own definition and comes back as a
+// standalone entry instead.
+func TestDiscoverRebuildsFormerNameStandaloneWhenCurrentCannotBeRebuilt(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo, err := paths.Resolve(dir, s.ContainersPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:radarr-movies", "p1"}},
+		{ID: "bbbb2222", Tags: []string{"container:radarr", "p1", "formerly:radarr-movies"}},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	writeStoredDef(t, svc, repo, "radarr-movies")
+
+	// A dry run writes nothing, aliases included.
+	if _, err := svc.Discover(context.Background(), true); err != nil {
+		t.Fatalf("Discover (dry run): %v", err)
+	}
+	if _, err := st.GetTargetByContainer("radarr"); err == nil {
+		t.Fatal("dry run must not create the radarr target")
+	}
+	if _, err := st.GetTargetByContainer("radarr-movies"); err == nil {
+		t.Fatal("dry run must not create the radarr-movies target")
+	}
+	if _, err := st.AliasByOldName("container", "radarr-movies"); err == nil {
+		t.Fatal("dry run must not write an alias")
+	}
+
+	if _, err := svc.Discover(context.Background(), false); err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	if _, err := st.GetTargetByContainer("radarr"); err == nil {
+		t.Fatal("radarr has no stored definition and must not be rebuilt")
+	}
+	tg, err := st.GetTargetByContainer("radarr-movies")
+	if err != nil {
+		t.Fatalf("radarr-movies has its own definition and must still be rebuilt as its own entry: %v", err)
+	}
+	if _, err := st.AliasByOldName("container", "radarr-movies"); err == nil {
+		t.Fatal("no alias must exist for radarr-movies: there is no current entry to fold it onto")
+	}
+	// Its own entry, not a half-alias: it sees only its own snapshot.
+	snaps, err := svc.Snapshots(context.Background(), "radarr-movies", "")
+	if err != nil || len(snaps) != 1 {
+		t.Fatalf("radarr-movies snapshots = %d, %v, want its own 1", len(snaps), err)
+	}
+	if tg.ContainerName != "radarr-movies" {
+		t.Fatalf("rebuilt target name = %q, want radarr-movies", tg.ContainerName)
+	}
+}
+
+// TestDiscoverHalfMigratedFormerNameLeavesBothEntriesUntouched: radarr-movies
+// already has its own row and is also recorded as radarr's former name.
+// Discover neither aliases it nor deletes its row, and both entries keep the
+// snapshots they had.
+func TestDiscoverHalfMigratedFormerNameLeavesBothEntriesUntouched(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo, err := paths.Resolve(dir, s.ContainersPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// The half-migrated state: a row that was never linked to radarr.
+	preExisting, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies", AppdataPaths: []string{"/pre-existing/path"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:radarr-movies", "p1"}},
+		{ID: "bbbb2222", Tags: []string{"container:radarr", "p1", "formerly:radarr-movies"}},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	writeStoredDef(t, svc, repo, "radarr", "radarr-movies")
+	writeStoredDef(t, svc, repo, "radarr-movies")
+
+	if _, err := svc.Discover(context.Background(), false); err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+
+	// Same row and same appdata path: neither the rebuild nor the fold touched it.
+	tgOld, err := st.GetTargetByContainer("radarr-movies")
+	if err != nil {
+		t.Fatalf("radarr-movies must still exist: %v", err)
+	}
+	if tgOld.ID != preExisting.ID {
+		t.Fatalf("radarr-movies row was replaced: id = %q, want the pre-existing %q", tgOld.ID, preExisting.ID)
+	}
+	if len(tgOld.AppdataPaths) != 1 || tgOld.AppdataPaths[0] != "/pre-existing/path" {
+		t.Fatalf("radarr-movies appdata = %v, want the untouched pre-existing path", tgOld.AppdataPaths)
+	}
+
+	tgNew, err := st.GetTargetByContainer("radarr")
+	if err != nil {
+		t.Fatalf("radarr must be rebuilt: %v", err)
+	}
+
+	if _, err := st.AliasByOldName("container", "radarr-movies"); err == nil {
+		t.Fatal("half-migrated radarr-movies must not be aliased: that would duplicate an existing entry")
+	}
+	if names, _ := st.AliasNames("container", tgNew.ID); len(names) != 0 {
+		t.Fatalf("radarr must have no aliases in the half-migrated case, got %v", names)
+	}
+
+	// With no alias between them, each entry sees only its own snapshot.
+	oldSnaps, err := svc.Snapshots(context.Background(), "radarr-movies", "")
+	if err != nil || len(oldSnaps) != 1 {
+		t.Fatalf("radarr-movies snapshots = %d, %v, want its own 1", len(oldSnaps), err)
+	}
+	newSnaps, err := svc.Snapshots(context.Background(), "radarr", "")
+	if err != nil || len(newSnaps) != 1 {
+		t.Fatalf("radarr snapshots = %d, %v, want its own 1", len(newSnaps), err)
+	}
+}
+
+// TestDiscoverSharedFormerNameRebuiltOnceWhenNoOwnerCanBeRebuilt: two entries
+// claim radarr-movies as a former name and neither can be rebuilt.
+// radarr-movies has its own definition and comes back as its own entry,
+// rebuilt and counted once rather than once per claimant.
+func TestDiscoverSharedFormerNameRebuiltOnceWhenNoOwnerCanBeRebuilt(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo, err := paths.Resolve(dir, s.ContainersPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:radarr-movies", "p1"}},
+		{ID: "bbbb2222", Tags: []string{"container:radarr", "p1", "formerly:radarr-movies"}},
+		{ID: "cccc3333", Tags: []string{"container:radarr-legacy", "p1", "formerly:radarr-movies"}},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	// Only the shared former name has a stored definition.
+	writeStoredDef(t, svc, repo, "radarr-movies")
+
+	res, err := svc.Discover(context.Background(), false)
+	n := res.Found
+	if err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	if n != 1 {
+		t.Fatalf("discovered = %d, want 1 (radarr-movies counted once, not once per failed claimant)", n)
+	}
+	if _, err := st.GetTargetByContainer("radarr"); err == nil {
+		t.Fatal("radarr has no stored definition and must not be rebuilt")
+	}
+	if _, err := st.GetTargetByContainer("radarr-legacy"); err == nil {
+		t.Fatal("radarr-legacy has no stored definition and must not be rebuilt")
+	}
+	if _, err := st.GetTargetByContainer("radarr-movies"); err != nil {
+		t.Fatalf("radarr-movies has its own definition and must still be rebuilt as its own entry: %v", err)
+	}
+	if _, err := st.AliasByOldName("container", "radarr-movies"); err == nil {
+		t.Fatal("no alias must exist: neither claimant could be rebuilt, so there is nothing to fold onto")
+	}
+}
+
+// TestDiscoverSharedFormerNameFoldsOnlyWhenOneOwnerRebuilds: two entries name
+// radarr-movies as a former name and only radarr can be rebuilt and records
+// the link. radarr-movies ends up as radarr's alias and nothing else: no
+// standalone row next to the alias, and no missing alias because a standalone
+// row got there first.
+func TestDiscoverSharedFormerNameFoldsOnlyWhenOneOwnerRebuilds(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo, err := paths.Resolve(dir, s.ContainersPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Time: "2024-01-01T00:00:00Z", Tags: []string{"container:radarr-movies", "p1"}},
+		{ID: "bbbb2222", Time: "2024-06-01T00:00:00Z", Tags: []string{"container:radarr", "p1", "formerly:radarr-movies"}},
+		{ID: "cccc3333", Time: "2024-06-01T00:00:00Z", Tags: []string{"container:radarr-legacy", "p1", "formerly:radarr-movies"}},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	// radarr-movies and radarr both have stored definitions; radarr-legacy does not.
+	writeStoredDef(t, svc, repo, "radarr-movies")
+	writeStoredDef(t, svc, repo, "radarr", "radarr-movies")
+
+	if _, err := svc.Discover(context.Background(), false); err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	tg, err := st.GetTargetByContainer("radarr")
+	if err != nil {
+		t.Fatalf("radarr has its own definition and must be rebuilt: %v", err)
+	}
+	if _, err := st.GetTargetByContainer("radarr-legacy"); err == nil {
+		t.Fatal("radarr-legacy has no stored definition and must not be rebuilt")
+	}
+	if _, err := st.GetTargetByContainer("radarr-movies"); err == nil {
+		t.Fatal("radarr-movies must not come back as a standalone entry: it was folded into radarr's alias")
+	}
+	alias, err := st.AliasByOldName("container", "radarr-movies")
+	if err != nil {
+		t.Fatalf("radarr-movies must be aliased to radarr: %v", err)
+	}
+	if alias.TargetID != tg.ID {
+		t.Fatalf("radarr-movies aliased to %q, want radarr's target %q", alias.TargetID, tg.ID)
+	}
+}
+
+// TestDiscoverFoldsOrdinaryPreRenameHistory: radarr-movies has two snapshots
+// from before the rename, which radarr's definition records at linkTime. The
+// fold yields one entry with one alias and all three snapshots.
+func TestDiscoverFoldsOrdinaryPreRenameHistory(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo, err := paths.Resolve(dir, s.ContainersPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Time: "2024-01-01T00:00:00Z", Tags: []string{"container:radarr-movies", "p1"}},
+		{ID: "aaaa2222", Time: "2024-02-01T00:00:00Z", Tags: []string{"container:radarr-movies", "p1"}},
+		{ID: "bbbb3333", Time: "2024-06-01T00:00:00Z", Tags: []string{"container:radarr", "p1", "formerly:radarr-movies"}},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	writeStoredDef(t, svc, repo, "radarr", "radarr-movies")
+	writeStoredDef(t, svc, repo, "radarr-movies")
+
+	if _, err := svc.Discover(context.Background(), false); err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	if _, err := st.GetTargetByContainer("radarr-movies"); err == nil {
+		t.Fatal("the former name must not come back as an entry of its own")
+	}
+	tg, err := st.GetTargetByContainer("radarr")
+	if err != nil {
+		t.Fatalf("the current name must be rebuilt: %v", err)
+	}
+	names, _ := st.AliasNames("container", tg.ID)
+	if len(names) != 1 || names[0] != "radarr-movies" {
+		t.Fatalf("alias after discover = %v", names)
+	}
+	snaps, err := svc.Snapshots(context.Background(), "radarr", "")
+	if err != nil || len(snaps) != 3 {
+		t.Fatalf("all three snapshots (both pre-rename and the one after) belong to the rebuilt entry: %d, %v", len(snaps), err)
+	}
+}
+
+// TestDiscoverDoesNotFoldAFormerNameOnItsTagAlone: radarr's backups carry
+// formerly:radarr-movies, but radarr's stored definition records no link, as
+// after an unlink. Snapshot times cannot date a link once retention has run,
+// so Discover rebuilds radarr-movies as its own entry and merges nothing.
+func TestDiscoverDoesNotFoldAFormerNameOnItsTagAlone(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo, err := paths.Resolve(dir, s.ContainersPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Time: "2024-01-01T00:00:00Z", Tags: []string{"container:radarr-movies", "p1"}},
+		{ID: "aaaa2222", Time: "2024-02-01T00:00:00Z", Tags: []string{"container:radarr-movies", "p1"}},
+		{ID: "bbbb3333", Time: "2024-06-01T00:00:00Z", Tags: []string{"container:radarr", "p1", "formerly:radarr-movies"}},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	writeStoredDef(t, svc, repo, "radarr")
+	writeStoredDef(t, svc, repo, "radarr-movies")
+
+	if _, err := svc.Discover(context.Background(), false); err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+
+	tgNew, err := st.GetTargetByContainer("radarr")
+	if err != nil {
+		t.Fatalf("radarr must still be rebuilt: %v", err)
+	}
+	if names, _ := st.AliasNames("container", tgNew.ID); len(names) != 0 {
+		t.Fatalf("radarr-movies must not be folded in without a record, got aliases %v", names)
+	}
+	if _, err := st.GetTargetByContainer("radarr-movies"); err != nil {
+		t.Fatalf("radarr-movies must still be rebuilt as its own entry (its stored definition proves it can be recreated), not silently merged: %v", err)
+	}
+	if _, err := st.AliasByOldName("container", "radarr-movies"); err == nil {
+		t.Fatal("no alias must be written without a record")
+	}
+	newSnaps, err := svc.Snapshots(context.Background(), "radarr", "")
+	if err != nil || len(newSnaps) != 1 {
+		t.Fatalf("radarr snapshots = %d, %v, want its own 1 (not merged with radarr-movies)", len(newSnaps), err)
+	}
+}
+
+// TestDiscoverSkipsUnsafeFormerNameAlias: an alias name goes into the next
+// backup's formerly: tag, where restic would split a comma into two tags. The
+// unsafe name is recorded as radarr's former name here, so the name alone is
+// why the alias is refused.
+func TestDiscoverSkipsUnsafeFormerNameAlias(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo, err := paths.Resolve(dir, s.ContainersPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Time: "2024-01-01T00:00:00Z", Tags: []string{"container:radarr,bad", "p1"}},
+		{ID: "bbbb2222", Time: "2024-06-01T00:00:00Z", Tags: []string{"container:radarr", "p1", "formerly:radarr,bad"}},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	writeStoredDef(t, svc, repo, "radarr", "radarr,bad")
+
+	if _, err := svc.Discover(context.Background(), false); err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+
+	tg, err := st.GetTargetByContainer("radarr")
+	if err != nil {
+		t.Fatalf("radarr must still be rebuilt: %v", err)
+	}
+	names, _ := st.AliasNames("container", tg.ID)
+	for _, n := range names {
+		if n == "radarr,bad" {
+			t.Fatalf("an unsafe name must never reach target_aliases, got aliases %v", names)
+		}
+	}
+	if _, err := st.AliasByOldName("container", "radarr,bad"); err == nil {
+		t.Fatal("no alias must be written for a name that fails validResourceName")
+	}
+}
 
 type fakeResticEngine struct {
 	inited         []string
@@ -4665,24 +5353,19 @@ type fakeResticEngine struct {
 	restoreErr     error  // when set, every RestoreInclude/RestorePath returns it (e.g. context.Canceled)
 	forgotten      []string
 	// forgotRepos is the repository of every Forget call, parallel to the ids it
-	// carried. Without it the fake discards the one argument that says WHERE the
-	// delete landed, so every assertion around it is an assertion about the fake:
-	// rewriting DeleteSnapshot to forget from the wrong repository of a
-	// two-repository domain left the whole suite green.
+	// carried, so a test can check where a delete landed.
 	forgotRepos []string
 	forgotModes []restic.Mode
 	prunedRepos []string
-	forgetTags  []string // identity tags passed to ForgetPolicy (issue #91)
+	forgetTags  []string // identity tags passed to ForgetPolicy
 	// forgetPolicyPrunes is the prune flag of every ForgetPolicy call, parallel
 	// to forgetTags, so a test can tell how many of a backup's retention passes
 	// actually pruned rather than just how many ran.
 	forgetPolicyPrunes []bool
 	checked            []string
-	// The MODE each maintenance call was made with, parallel to the repo slices
-	// above. Without these a test can only see WHICH repositories an operation
-	// reached, not whether each was addressed with its own credentials, storage
-	// class and caps - and hoisting one mode out of the loop is exactly the
-	// regression the per-repository rewrite exists to prevent.
+	// The mode each maintenance call was made with, parallel to the repo slices
+	// above, so a test can check that every repository is addressed with its own
+	// credentials, storage class and caps.
 	checkedModes   []restic.Mode
 	checkDataModes []restic.Mode
 	unlockedModes  []restic.Mode
@@ -4696,45 +5379,31 @@ type fakeResticEngine struct {
 	// onSnapshots, when set, runs on every Snapshots call with the call count, so
 	// a test can mutate the store between two listings inside one operation.
 	onSnapshots func(call int)
-	// copyErrFor fails the copy of ONE source, which is the only way to build the
-	// shape the off-site gate turns on: two sources, one of them failing. With a
-	// single global copyErr every Copy fails or none does, and "did every source
-	// fail" and "did anything land" agree in both directions - so the gate that
-	// distinguishes them cannot be tested at all.
+	// copyErrFor fails the copy of one source. The off-site gate tells "every
+	// source failed" from "something landed", which a single global copyErr
+	// cannot express.
 	copyErrFor map[string]error
-	// copiedModes is the mode of every Copy CALL, in call order. Not parallel to
-	// `copied`, which counts the calls that SUCCEEDED - and under the blockCopy
-	// fixture this is appended before the wait while copied is incremented after
-	// it, so the two are not even the same length mid-test.
+	// copiedModes is the mode of every Copy call, in call order. It is not
+	// parallel to copied, which counts successful calls only and, under
+	// blockCopy, grows after the wait.
 	copiedModes []restic.Mode
 	snaps       []restic.Snapshot
 	// snapsByRepo overrides snaps for a specific repository; anything not listed
 	// falls back to snaps.
 	snapsByRepo map[string][]restic.Snapshot
-	// listedRepos is every repository Snapshots was asked about, in order. A test
-	// that wants to know WHICH repositories a pass looked in - discovery, above
-	// all - cannot read that from a per-repository return map.
+	// listedRepos is every repository Snapshots was asked about, in order, so a
+	// test can tell which repositories a pass such as discovery looked in.
 	listedRepos []string
-	// listedModes is the mode every Snapshots call was made with, parallel to
-	// listedRepos. Every reader used to name its mode parameter `_`, which made
-	// the whole "each repository is addressed with the mode built for IT" question
-	// invisible to the suite - and it stayed invisible long enough for one reader
-	// (the container restore) to be missed by the very sweep that converted its VM
-	// twin.
-	//
-	// It covers the restore too, and a separate restoredModes was added here and
-	// then removed for claiming otherwise: prepareRestoreIn builds ONE mode, uses
-	// it for the snapshot listing and hands the same one to the plan, so
-	// RestoreInclude cannot be called with a different mode than the listing that
-	// preceded it. A second recorder for one value is not a second instrument.
+	// listedModes is the mode of every Snapshots call, parallel to listedRepos.
+	// It covers the restore too: prepareRestoreIn hands the listing's mode to the
+	// plan, so RestoreInclude cannot run with a different one.
 	listedModes []restic.Mode
-	// snapsErrFor makes the listing of ONE repository fail, permanently, so a test
-	// can tell "this repository could not be opened" apart from "it is empty".
-	// snapshotsErr fails once and then succeeds, which exercises the stale-unlock
-	// retry and cannot express an unreadable repository.
+	// snapsErrFor makes the listing of one repository fail permanently, so a test
+	// can tell an unreadable repository from an empty one. snapshotsErr fails
+	// once and then succeeds, which exercises the stale-unlock retry instead.
 	snapsErrFor     map[string]error
 	lsEntries       []restic.FileEntry
-	lsErr           error // when set, the FIRST Ls call fails (exercises the stale-unlock retry, #129)
+	lsErr           error // when set, the first Ls call fails (exercises the stale-unlock retry)
 	lsCalls         int
 	lsPathEntries   []restic.FileEntry // LsPath's own return value; see LsPath's doc comment
 	lsPathErr       error
@@ -4755,12 +5424,11 @@ type fakeResticEngine struct {
 	checkDataPct    []int    // subset percent of each CheckData call
 	checkDataErr    error    // returned by CheckData (drill outcome)
 	unlockErr       error
-	// Exclusion-assistant snapshot feeder (issue #175). lsStreamEntries is what
-	// LsStream emits node by node; lsStreamErr fails the FIRST call only (so a
-	// test can exercise the stale-lock self-heal exactly like lsErr does for Ls);
-	// lsStreamCalls counts calls (cache assertions); lsStreamHook, when set,
-	// REPLACES the default emission entirely — used to simulate a listing that
-	// outruns its time budget.
+	// Exclusion-assistant snapshot feeder. lsStreamEntries is what LsStream emits
+	// node by node; lsStreamErr fails the first call only, like lsErr does for
+	// Ls; lsStreamCalls counts calls for the cache assertions; lsStreamHook, when
+	// set, replaces the default emission to simulate a listing that outruns its
+	// time budget.
 	lsStreamEntries []restic.FileEntry
 	lsStreamErr     error
 	lsStreamCalls   int
@@ -4775,31 +5443,33 @@ type fakeResticEngine struct {
 	// DR-drill knobs. statsRestoreSizeErr fails StatsRestoreSize; statsRestoreBytes
 	// (non-zero) overrides the byte total it reports so a test can force a
 	// verification mismatch. Absent overrides, StatsRestoreSize derives files+bytes
-	// from lsEntries — kept consistent with the files RestoreInclude("/") writes.
+	// from lsEntries, consistent with the files RestoreInclude("/") writes.
 	statsRestoreSizeErr error
 	statsRestoreBytes   int64
 	// rawSizeBytes, when non-zero, overrides the raw-data TotalSize that Stats
-	// reports — lets a test drive the off-site growth budget over its limit.
+	// reports, so a test can drive the off-site growth budget over its limit.
 	rawSizeBytes int64
-	// copyPanic, when true, makes Copy panic — exercises the deferred
+	// copyPanic, when true, makes Copy panic, which exercises the deferred
 	// FinishOffsiteRun's defence against stamping a phantom success on an unwind.
 	copyPanic bool
-	// block, when non-nil, makes Backup wait on it — lets a test hold a batch
-	// run "in flight" to exercise the single-batch (409) guard deterministically.
+	// block, when non-nil, makes Backup wait on it, so a test can hold a batch
+	// run in flight to exercise the single-batch (409) guard deterministically.
 	block chan struct{}
-	// blockRestore, when non-nil, makes RestoreInclude AND RestorePath wait on
-	// it — lets a test hold an async restore "in flight" to exercise the shared
+	// blockRestore, when non-nil, makes RestoreInclude and RestorePath wait on
+	// it, so a test can hold an async restore in flight to exercise the shared
 	// single-flight guard and the domain lock deterministically.
 	blockRestore chan struct{}
-	// blockCopy, when non-nil, makes Copy wait on it — lets a test hold an
-	// off-site replication "in flight" deterministically (#134 heartbeat test)
-	// instead of sleeping.
+	// blockCopy, when non-nil, makes Copy wait on it, so a test can hold an
+	// off-site replication in flight instead of sleeping.
 	blockCopy chan struct{}
-	// restoreEntered, when non-nil, receives one (non-blocking) signal the
-	// moment a blocked restore call is INSIDE the engine — i.e. the restore
-	// execute path has already acquired the domain repo lock — so a test can
-	// order its next step deterministically instead of sleeping.
+	// restoreEntered, when non-nil, receives one (non-blocking) signal once a
+	// blocked restore call is inside the engine, where the restore path already
+	// holds the domain repo lock, so a test can order its next step
+	// deterministically instead of sleeping.
 	restoreEntered chan struct{}
+	// backupEntered does the same for Backup: it is signalled before Backup
+	// waits on block, when the caller already holds its domain lock.
+	backupEntered chan struct{}
 	// existingMode, when non-nil, simulates an already-created repo of that
 	// encryption mode: RepoOpens then returns true only for a probe whose mode
 	// matches. When nil, RepoOpens mirrors a local repo and "opens" once restic's
@@ -4812,52 +5482,39 @@ type fakeResticEngine struct {
 	// ctx.Err() at each RestoreInclude entry (proves the restore ran under a
 	// non-cancelled, detached ctx), and snapshotsCtxDeadline records whether each
 	// Snapshots call carried a deadline (proves the drill's snapshot listing is
-	// bounded). Recording only — the fake's behaviour is unchanged.
+	// bounded). They only record; the fake behaves the same either way.
 	restoreCtxErrs       []error
 	snapshotsCtxDeadline []bool
 	// initWritesConfig, when true, makes Init drop a `config` marker so a
-	// subsequent RepoOpens/localRepoMissing reflects a real, freshly-created repo
-	// (used by the #120 re-establish-on-live-disk test).
+	// subsequent RepoOpens/localRepoMissing reflects a real, freshly-created repo.
 	initWritesConfig bool
-	// stdinBackups records each BackupStdin call ("path:tags") — the zvol VM
-	// disk backup path (v8.0.0 VM service-layer integration, Task 2).
+	// stdinBackups records each BackupStdin call ("path:tags") of the zvol VM
+	// disk backup path.
 	stdinBackups   []string
 	stdinBackupErr error
-	// dumpRawCalls records each DumpRaw call ("snapshotID:path") — the zvol VM
-	// disk restore path's restic-side counterpart.
+	// dumpRawCalls records each DumpRaw call ("snapshotID:path"), the restic side
+	// of a zvol VM disk restore.
 	dumpRawCalls []string
 	dumpRawErr   error
 	dumpRawData  []byte
-	// backupPanic, when true, makes Backup panic for every call — the
-	// container-backup counterpart of copyPanic, used to exercise
-	// recoverOperation/failStuckRun on the StartBackup goroutine: unlike
-	// copyToOffsite's own already-deferred finish, backup.BackupContainer's
-	// Runs.Start/Finish are plain sequential calls (not deferred), so a panic
-	// here would otherwise leave the run stuck "running" forever without the
-	// fix. Set synchronously before launching the goroutine under test — NOT
-	// concurrently with it — to avoid a data race on this field.
+	// backupPanic, when true, makes Backup panic on every call, to exercise
+	// recoverOperation and failStuckRun on the StartBackup goroutine:
+	// backup.BackupContainer's Runs.Start and Finish are not deferred, so without
+	// recovery the run would stay "running". Set it before launching the
+	// goroutine under test, not concurrently with it, to avoid a data race.
 	backupPanic bool
-	// backupPanicTag, when non-empty, makes Backup panic ONLY for a call whose
-	// tags include this exact string (e.g. "container:plex") — lets a batch
-	// test make ONE queued item panic deterministically while the others still
-	// run normally, without racing backupPanic against the batch goroutine.
+	// backupPanicTag, when non-empty, makes Backup panic only for a call whose
+	// tags include this string (e.g. "container:plex"), so a batch test can make
+	// one queued item panic while the others run normally.
 	backupPanicTag string
-	// restorePanic, when true, makes RestoreInclude AND RestorePath (the two
-	// restic restore entry points a real restore can reach — RestorePath for
-	// an in-place whole-container/stack restore, RestoreInclude for a
-	// foreign/file-set restore) panic for every call — the restore counterpart
-	// of backupPanic, used to exercise recoverOperation on the
-	// StartForeignRestore and StartRestoreStack goroutines (the two sites the
-	// f5b3286 sweep's plain `go func` grep of service.go missed:
-	// internal/api/foreign.go and internal/api/stacks.go both launch their
-	// own). Set synchronously before launching the goroutine under test, like
-	// backupPanic.
+	// restorePanic, when true, makes RestoreInclude and RestorePath panic on
+	// every call, to exercise recoverOperation on the StartForeignRestore and
+	// StartRestoreStack goroutines. Set it before launching the goroutine under
+	// test, like backupPanic.
 	restorePanic bool
-	// restorePanicSnapshot, when non-empty, makes RestoreInclude/RestorePath
-	// panic ONLY for a call whose snapshotID matches — lets a stack-restore
-	// test make ONE member panic deterministically while the others still
-	// restore normally, without racing restorePanic against the batch
-	// goroutine (mirrors backupPanicTag).
+	// restorePanicSnapshot, when non-empty, makes RestoreInclude and RestorePath
+	// panic only for a call whose snapshotID matches, so a stack-restore test can
+	// make one member panic while the others restore normally.
 	restorePanicSnapshot string
 }
 
@@ -4903,6 +5560,12 @@ func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, tags []
 			}
 		}
 	}
+	if f.backupEntered != nil {
+		select {
+		case f.backupEntered <- struct{}{}:
+		default:
+		}
+	}
 	if f.block != nil {
 		<-f.block
 	}
@@ -4917,10 +5580,9 @@ func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, tags []
 	return restic.Summary{SnapshotID: "deadbeef12345678", BytesAdded: 2048}, nil
 }
 
-// BackupStdin records each zvol disk's stdin backup call — the zvol VM disk
-// backup path (v8.0.0 VM service-layer integration, Task 2). Each call gets
-// its own distinct snapshot id (zvolSnap1, zvolSnap2, ...) so a test can tell
-// which disk's snapshot id ended up where.
+// BackupStdin records each zvol disk's stdin backup. Each call gets its own
+// snapshot id (zvolSnap1, zvolSnap2, ...) so a test can tell which disk's
+// snapshot id ended up where.
 func (f *fakeResticEngine) BackupStdin(_ context.Context, _ string, rd io.Reader, path string, tags []string, _ restic.Mode) (restic.Summary, error) {
 	_, _ = io.Copy(io.Discard, rd)
 	f.stdinBackups = append(f.stdinBackups, path+":"+strings.Join(tags, ","))
@@ -4941,7 +5603,7 @@ func (f *fakeResticEngine) DumpRaw(_ context.Context, _, snapshotID, path string
 }
 
 // blockIfArmed signals restoreEntered (non-blocking) and waits on blockRestore
-// when it is armed — shared by the restore entry points of the fake.
+// when it is armed.
 func (f *fakeResticEngine) blockIfArmed() {
 	if f.blockRestore == nil {
 		return
@@ -5030,10 +5692,11 @@ func (f *fakeResticEngine) Forget(_ context.Context, repo string, snapshotIDs []
 	return nil
 }
 
-func (f *fakeResticEngine) ForgetPolicy(_ context.Context, repo string, p restic.RetentionPolicy, _ restic.Mode, tag string, prune bool) error {
+func (f *fakeResticEngine) ForgetPolicy(_ context.Context, repo string, p restic.RetentionPolicy, _ restic.Mode, tags []string, prune bool) error {
 	if p.Any() {
 		f.prunedRepos = append(f.prunedRepos, repo)
-		f.forgetTags = append(f.forgetTags, tag)
+		// One entry per call, so the tags of a folded alias count as one group.
+		f.forgetTags = append(f.forgetTags, strings.Join(tags, ","))
 		f.forgetPolicyPrunes = append(f.forgetPolicyPrunes, prune)
 	}
 	return f.forgetPolicyErr
@@ -5043,21 +5706,21 @@ func (f *fakeResticEngine) Ls(_ context.Context, _, _ string, _ restic.Mode) ([]
 	f.lsCalls++
 	if f.lsErr != nil {
 		e := f.lsErr
-		f.lsErr = nil // fail once, then succeed (exercises the stale-unlock retry, #129)
+		f.lsErr = nil // fail once, then succeed (exercises the stale-unlock retry)
 		return nil, e
 	}
 	return f.lsEntries, nil
 }
 
 // LsStream is the streaming listing the exclusion assistant's snapshot feeder
-// uses (issue #175). Backed by its OWN field for the same reason LsPath is:
-// many tests set lsEntries for unrelated file-restore assertions and must not
-// have those turn into phantom exclude suggestions.
+// uses. It has its own field for the same reason LsPath does: many tests set
+// lsEntries for unrelated file-restore assertions, and those must not turn
+// into phantom exclude suggestions.
 func (f *fakeResticEngine) LsStream(ctx context.Context, _, _ string, _ restic.Mode, onEntry func(restic.FileEntry)) error {
 	f.lsStreamCalls++
 	if f.lsStreamErr != nil {
 		e := f.lsStreamErr
-		f.lsStreamErr = nil // fail once, then succeed (exercises the stale-unlock retry, #129)
+		f.lsStreamErr = nil // fail once, then succeed (exercises the stale-unlock retry)
 		return e
 	}
 	if f.lsStreamHook != nil {
@@ -5069,11 +5732,9 @@ func (f *fakeResticEngine) LsStream(ctx context.Context, _, _ string, _ restic.M
 	return nil
 }
 
-// LsPath is deliberately backed by its OWN field (lsPathEntries), not lsEntries:
-// many existing tests set lsEntries for unrelated file-restore-browsing
-// assertions, and healRestoreDirOwnership (the only caller of LsPath) must not
-// pick those up and attempt a spurious ownership heal in tests that never meant
-// to exercise it.
+// LsPath reads lsPathEntries rather than lsEntries: many tests set lsEntries
+// for unrelated file-browsing assertions, and healRestoreDirOwnership, the only
+// caller of LsPath, must not attempt a spurious ownership heal from them.
 func (f *fakeResticEngine) LsPath(_ context.Context, _, _, dirPath string, _ restic.Mode) ([]restic.FileEntry, error) {
 	f.lsPathCalls = append(f.lsPathCalls, dirPath)
 	if f.lsPathErr != nil {
@@ -5186,14 +5847,9 @@ func (f *fakeResticEngine) Copy(_ context.Context, destRepo, srcRepo string, sna
 		<-f.blockCopy
 	}
 	f.copied = append(f.copied, srcRepo+"->"+destRepo)
-	// The snapshot ids are RECORDED, not discarded.
-	//
-	// Discarding them is why the two worst off-site defects of the fifth review
-	// round passed the whole suite green: whether a copy is narrowed to this
-	// domain's snapshots, or drags another domain's into this destination for
-	// its retention to age, is decided entirely by this argument - and no test
-	// could see it. A fake that throws away the thing under test turns every
-	// assertion around it into an assertion about the fake.
+	// The snapshot ids decide whether a copy stays within this domain's
+	// snapshots or drags another domain's into the destination, so they are
+	// recorded for the tests to check.
 	f.copiedIDs = append(f.copiedIDs, snapshotIDs)
 	if e, ok := f.copyErrFor[srcRepo]; ok && e != nil {
 		return e
@@ -5388,11 +6044,10 @@ func TestRunRestoreDrillFailureRecorded(t *testing.T) {
 	}
 }
 
-// TestRunSubsetDrillEmitsLiveProgress pins #109: a running restore-verification
-// drill — previously invisible until it finished (its run row is recorded
-// back-to-back by recordDomainRun) — now publishes a begin/terminal
-// "maintenance" progress pair keyed "drill:<domain>", so the dashboard activity
-// log shows a live line WHILE the drill reads back pack data.
+// TestRunSubsetDrillEmitsLiveProgress checks that a running restore-verification
+// drill publishes a begin/terminal "maintenance" progress pair keyed
+// "drill:<domain>". Its run row is only recorded at the end, so without the pair
+// the activity log shows nothing while the drill reads back pack data.
 func TestRunSubsetDrillEmitsLiveProgress(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}}
 	svc := initRepoSvc(t, eng)
@@ -5414,9 +6069,9 @@ func TestRunSubsetDrillEmitsLiveProgress(t *testing.T) {
 	}
 }
 
-// TestRunSubsetDrillFailureEndsLiveProgress pins the failure side of the #109
-// seam: a failing drill still emits the terminal frame (Active=false, Percent=0)
-// via the deferred progEnd, so a red drill can never leave a stuck live line.
+// TestRunSubsetDrillFailureEndsLiveProgress checks that a failing drill still
+// emits the terminal frame (Active=false, Percent=0) through the deferred
+// progEnd, so a red drill cannot leave a stuck live line.
 func TestRunSubsetDrillFailureEndsLiveProgress(t *testing.T) {
 	eng := &fakeResticEngine{
 		snaps:        []restic.Snapshot{{ID: "aaaa1111bbbb2222"}},
@@ -5511,9 +6166,9 @@ func TestRunDRDrillHappyPath(t *testing.T) {
 	if !drill.OK || drill.Kind != "dr" || drill.Source != "offsite" || drill.Domain != "containers" {
 		t.Fatalf("want an ok dr/offsite/containers drill, got %+v", drill)
 	}
-	// #109: the DR drill publishes a live maintenance pair like the subset drill,
-	// but keyed "drdrill:<domain>" — its own kind, so the activity log tells the
-	// off-site DR restore check apart from the local subset check.
+	// The DR drill publishes a live maintenance pair like the subset drill, but
+	// keyed "drdrill:<domain>", so the activity log tells the off-site DR restore
+	// check apart from the local subset check.
 	begin, term := drainTwoEvents(t, ch)
 	if begin.Key != "drdrill:containers" || begin.Phase != "maintenance" || !begin.Active {
 		t.Fatalf("begin event = %+v, want Key=drdrill:containers Phase=maintenance Active=true", begin)
@@ -5545,7 +6200,7 @@ func TestRunDRDrillHappyPath(t *testing.T) {
 		t.Fatalf("recorded drill = %+v, want kind=dr ok=true with a timestamp", latest)
 	}
 	// The shared runs table mirrors the outcome under its own kind "drdrill"
-	// (NOT the subset drill's "drill"), on the reserved domain target id.
+	// (not the subset drill's "drill"), on the reserved domain target id.
 	runs, rErr := st.ListRuns(10)
 	if rErr != nil {
 		t.Fatal(rErr)
@@ -5581,13 +6236,9 @@ func TestRunDRDrillFlashWholeSnapshot(t *testing.T) {
 	}
 }
 
-// TestRunDRDrillVMsHappyPath pins the real off-site DR drill for VMs: same
-// mechanism as containers (TestRunDRDrillHappyPath) — restore the newest
-// off-site snapshot of the pinned drill target into a marker-guarded sandbox,
-// verify restored files+bytes against restic's own accounting, remove the
-// sandbox, and record a restore_drills(kind='dr', source='offsite'). VMs are no
-// longer refused (v8.0.0): a VM disk image is large but the mechanism is
-// identical to every other domain, just with a bigger restore.
+// TestRunDRDrillVMsHappyPath pins the off-site DR drill for VMs, which works
+// like the one for containers (TestRunDRDrillHappyPath): a VM disk image is
+// only a bigger restore.
 func TestRunDRDrillVMsHappyPath(t *testing.T) {
 	eng := &fakeResticEngine{
 		snaps: []restic.Snapshot{
@@ -5638,7 +6289,7 @@ func TestRunDRDrillVMsHappyPath(t *testing.T) {
 }
 
 // TestRunDRDrillNoOffsite pins the clear error when the domain has no off-site
-// repo configured — nothing is restored or recorded.
+// repo configured; nothing is restored or recorded.
 func TestRunDRDrillNoOffsite(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Tags: []string{"container:plex"}}}}
 	svc, _ := drDrillService(t, eng, "containers", "", "plex") // no off-site set
@@ -5692,13 +6343,11 @@ func TestRunDRDrillFailureNotifiesAndRecords(t *testing.T) {
 	}
 }
 
-// TestRunDRDrillTruncatedFileFails pins H1: a restored file that is short by a
-// small amount (here 5 KB of a ~125 KB snapshot — WELL under the old 5% band, but
-// over the tight metadata floor) must FAIL the drill. restic restore is
-// content-addressed, so the restored logical bytes must equal restic's
-// restore-size exactly; the file COUNT is unchanged, so only an exact-byte check
-// (not a 5%/total band) catches the data hole. Pre-fix this drill recorded ok=true
-// over a truncation.
+// TestRunDRDrillTruncatedFileFails checks that a restored file short by a small
+// amount (5 KB of a ~125 KB snapshot, under a 5% band but over the metadata
+// floor) fails the drill. restic restore is content-addressed, so the restored
+// bytes must equal restic's restore-size exactly; the file count is unchanged,
+// so only an exact-byte check catches the hole.
 func TestRunDRDrillTruncatedFileFails(t *testing.T) {
 	eng := &fakeResticEngine{
 		snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Time: "2026-07-01T00:00:00Z", Tags: []string{"container:plex"}}},
@@ -5707,8 +6356,8 @@ func TestRunDRDrillTruncatedFileFails(t *testing.T) {
 			{Path: "/appdata/plex/big.db", Type: "file", Size: 120000},
 		},
 		// restic's restore-size reports 125000 bytes (5000 more than landed on disk):
-		// a truncated restore with the file count unchanged. 5000 < 5% of 125000
-		// (=6250) so the OLD band waved it through; 5000 > the tight 4 KB floor.
+		// a truncated restore with the file count unchanged. 5000 is under 5% of
+		// 125000 (6250) but over the 4 KB floor.
 		statsRestoreBytes: 125000,
 	}
 	svc, _ := drDrillService(t, eng, "containers", "rest:http://192.168.20.9:8000/containers", "plex")
@@ -5726,10 +6375,10 @@ func TestRunDRDrillTruncatedFileFails(t *testing.T) {
 	}
 }
 
-// TestRunDRDrillEmptySnapshotSkips pins L4: a snapshot with no restorable file
-// data (0 files / 0 bytes — e.g. a definition-only / stateless container) must
-// record NOTHING (neither a false green nor a false red) and return a clear
-// "nothing to drill" message.
+// TestRunDRDrillEmptySnapshotSkips checks that a snapshot with no restorable
+// file data (0 files and 0 bytes, e.g. a stateless container) records nothing,
+// neither a false green nor a false red, and returns a clear "nothing to drill"
+// message.
 func TestRunDRDrillEmptySnapshotSkips(t *testing.T) {
 	eng := &fakeResticEngine{
 		snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Time: "2026-07-01T00:00:00Z", Tags: []string{"container:plex"}}},
@@ -5745,7 +6394,7 @@ func TestRunDRDrillEmptySnapshotSkips(t *testing.T) {
 	if drill.OK {
 		t.Fatalf("an empty snapshot must not record a green drill, got %+v", drill)
 	}
-	// NOTHING recorded — the scorecard neither greens nor reds a no-op.
+	// The scorecard neither greens nor reds a no-op.
 	if _, found, fErr := svc.LatestDrill("containers", "offsite"); fErr != nil {
 		t.Fatalf("LatestDrill: %v", fErr)
 	} else if found {
@@ -5753,12 +6402,10 @@ func TestRunDRDrillEmptySnapshotSkips(t *testing.T) {
 	}
 }
 
-// TestRunDRDrillDetachedAndBounded pins M2 (detach) + M1 (bounded listing): even
-// when the caller's ctx is already cancelled (a browser tab close / a
-// context.Background scheduler parent), the drill runs to completion — the restore
-// executes under a NON-cancelled, detached ctx (M2) and the snapshot listing runs
-// under a BOUNDED ctx so a wedged `restic snapshots` can't hold the domain lock
-// forever (M1).
+// TestRunDRDrillDetachedAndBounded checks that the drill completes even when the
+// caller's ctx is already cancelled (a closed browser tab): the restore runs
+// under a detached ctx, and the snapshot listing under a bounded one so a wedged
+// `restic snapshots` cannot hold the domain lock forever.
 func TestRunDRDrillDetachedAndBounded(t *testing.T) {
 	eng := &fakeResticEngine{
 		snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Time: "2026-07-01T00:00:00Z", Tags: []string{"container:plex"}}},
@@ -5778,14 +6425,14 @@ func TestRunDRDrillDetachedAndBounded(t *testing.T) {
 	if !drill.OK {
 		t.Fatalf("the drill must complete despite the cancelled parent, got %+v", drill)
 	}
-	// M2: the restore ran under a detached, non-cancelled ctx.
+	// The restore ran under a detached, non-cancelled ctx.
 	if len(eng.restoreCtxErrs) == 0 {
 		t.Fatal("expected the sandbox restore to run")
 	}
 	if eng.restoreCtxErrs[0] != nil {
 		t.Fatalf("restore ctx must be detached (not cancelled), got %v", eng.restoreCtxErrs[0])
 	}
-	// M1: the snapshot listing ran under a bounded (deadline-bearing) ctx.
+	// The snapshot listing ran under a bounded (deadline-bearing) ctx.
 	if len(eng.snapshotsCtxDeadline) == 0 {
 		t.Fatal("expected the drill to list snapshots")
 	}
@@ -5794,9 +6441,9 @@ func TestRunDRDrillDetachedAndBounded(t *testing.T) {
 	}
 }
 
-// TestRunSubsetDrillManualBusyRecordsNothing pins #30-A1 for a MANUAL drill: with
-// the domain lock held by an in-flight op, a manual subset drill (wait=false) must
-// fail fast with errDomainBusy and record NOTHING (no misleading row, no CheckData).
+// TestRunSubsetDrillManualBusyRecordsNothing checks that a manual subset drill
+// (wait=false) on a domain whose lock is held fails fast with errDomainBusy and
+// records nothing: no misleading row, no CheckData.
 func TestRunSubsetDrillManualBusyRecordsNothing(t *testing.T) {
 	eng := &fakeResticEngine{
 		blockRestore:   make(chan struct{}),
@@ -5832,14 +6479,14 @@ func TestRunSubsetDrillManualBusyRecordsNothing(t *testing.T) {
 	waitForBackupDone(t, svc) // terminal → temp-dir cleanup race-free
 }
 
-// TestRunSubsetDrillScheduledWaitsForLock pins #30-A1 for a SCHEDULED drill: with
-// the domain lock briefly held, a scheduled subset drill (wait=true) must BLOCK on
-// the lock instead of vanishing, then record a row once the lock releases — so the
-// dashboard can never read "never" just because a nightly backup co-fired.
+// TestRunSubsetDrillScheduledWaitsForLock checks that a scheduled subset drill
+// (wait=true) blocks on a briefly held domain lock and records a row once it is
+// released, so the dashboard does not read "never" just because a nightly
+// backup fired at the same time.
 func TestRunSubsetDrillScheduledWaitsForLock(t *testing.T) {
 	// The bounded wait polls the lock every drillLockPoll; shrink it so the drill
-	// re-acquires promptly once the restore releases the lock (the wait deadline is
-	// irrelevant here — the lock frees in milliseconds, well under it).
+	// re-acquires promptly once the restore releases the lock. The wait deadline
+	// does not matter here, the lock frees in milliseconds.
 	defer api.SetDrillLockTimingsForTest(time.Hour, 5*time.Millisecond)()
 
 	eng := &fakeResticEngine{
@@ -5859,7 +6506,7 @@ func TestRunSubsetDrillScheduledWaitsForLock(t *testing.T) {
 		t.Fatal("restore never reached the engine")
 	}
 
-	// The scheduled drill runs in a goroutine because it BLOCKS on the held lock.
+	// The scheduled drill runs in a goroutine because it blocks on the held lock.
 	type drillResult struct {
 		drill store.RestoreDrill
 		err   error
@@ -5893,7 +6540,7 @@ func TestRunSubsetDrillScheduledWaitsForLock(t *testing.T) {
 		t.Fatal("scheduled drill never completed after the lock released")
 	}
 
-	// The whole point: a row is recorded, so the dashboard is not stuck on "never".
+	// A row is recorded, so the dashboard is not stuck on "never".
 	if latest, found, fErr := svc.LatestDrill("containers", "local"); fErr != nil || !found {
 		t.Fatalf("a scheduled drill must record a row: found=%v err=%v", found, fErr)
 	} else if !latest.OK {
@@ -5904,13 +6551,11 @@ func TestRunSubsetDrillScheduledWaitsForLock(t *testing.T) {
 	}
 }
 
-// TestRunSubsetDrillScheduledLockWaitTimesOut pins the bounded-wait cap + busy-skip
-// recording (#30): a SCHEDULED drill (wait=true) whose domain lock stays held past
-// drillLockWait must give up with errDomainBusy WITHOUT running CheckData, but now
-// records a dated failed "skipped: repository busy" row so the dashboard shows WHY
-// the check did not run instead of silently freezing the previous state. The timings
-// are shrunk to milliseconds via a test hook so the deadline elapses without a real
-// 12h wait.
+// TestRunSubsetDrillScheduledLockWaitTimesOut checks the bounded wait: a
+// scheduled drill (wait=true) whose domain lock stays held past drillLockWait
+// gives up with errDomainBusy without running CheckData, and records a dated
+// failed "skipped: repository busy" row so the dashboard shows why the check did
+// not run. A test hook shrinks the timings to milliseconds.
 func TestRunSubsetDrillScheduledLockWaitTimesOut(t *testing.T) {
 	// Tiny deadline + poll so the wait times out in milliseconds, not hours.
 	defer api.SetDrillLockTimingsForTest(40*time.Millisecond, 5*time.Millisecond)()
@@ -5941,8 +6586,8 @@ func TestRunSubsetDrillScheduledLockWaitTimesOut(t *testing.T) {
 	if len(eng.checkDataRepos) != 0 {
 		t.Fatalf("a timed-out scheduled drill must not run CheckData, got %v", eng.checkDataRepos)
 	}
-	// The busy-skip is now RECORDED as a dated failed row (was: recorded nothing) so
-	// the dashboard can show WHY the scheduled check did not run (#30).
+	// The busy-skip is recorded as a dated failed row, so the dashboard can show
+	// why the scheduled check did not run.
 	if latest, found, fErr := svc.LatestDrill("containers", "local"); fErr != nil {
 		t.Fatalf("LatestDrill: %v", fErr)
 	} else if !found {
@@ -5955,10 +6600,10 @@ func TestRunSubsetDrillScheduledLockWaitTimesOut(t *testing.T) {
 	waitForBackupDone(t, svc) // terminal → temp-dir cleanup race-free
 }
 
-// TestRunSubsetDrillClearsStaleLockBeforeCheckData pins #30-A2 for the subset drill:
-// it clears a stale restic lock (Unlock) BEFORE the read-data check (CheckData),
-// mirroring CheckDomain — else a lock left by an interrupted off-site op makes the
-// drill fail "repository is already locked" (the #29 regression).
+// TestRunSubsetDrillClearsStaleLockBeforeCheckData checks that the subset drill
+// clears a stale restic lock (Unlock) before the read-data check (CheckData),
+// like CheckDomain. Otherwise a lock left by an interrupted off-site op makes
+// the drill fail with "repository is already locked".
 func TestRunSubsetDrillClearsStaleLockBeforeCheckData(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}}
 	svc := initRepoSvc(t, eng)
@@ -5994,9 +6639,9 @@ func TestRunSubsetDrillClearsStaleLockBeforeCheckData(t *testing.T) {
 	}
 }
 
-// TestRunDRDrillClearsStaleLockBeforeRestore pins #30-A2 for the DR drill: it clears
-// a stale restic lock (Unlock) BEFORE the sandbox restore (RestoreInclude), mirroring
-// CheckDomain — the #29 regression guard for the off-site DR path.
+// TestRunDRDrillClearsStaleLockBeforeRestore checks that the DR drill clears a
+// stale restic lock (Unlock) before the sandbox restore (RestoreInclude), like
+// CheckDomain.
 func TestRunDRDrillClearsStaleLockBeforeRestore(t *testing.T) {
 	eng := &fakeResticEngine{
 		snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Time: "2026-07-01T00:00:00Z", Tags: []string{"container:plex"}}},
@@ -6033,14 +6678,12 @@ func TestRunDRDrillClearsStaleLockBeforeRestore(t *testing.T) {
 	}
 }
 
-// TestCheckDomainDoesNotForceUnlockOrRetryOnLock pins the reversal of #92/#94: a
-// repo-lock error from `restic check` is no longer force-unlocked (removeAll=true)
-// and retried — force-removing a lock cannot fix a live holder and would strip
-// protection off a running restic op. CheckDomain still clears a genuine stale
-// orphan (a plain, removeAll=false unlock) before the single check call, and
-// `restic check` itself now carries --retry-lock to wait out a transient
-// cross-process lock, so a lock error that still surfaces is a real, unresolved
-// failure and must be returned as-is.
+// TestCheckDomainDoesNotForceUnlockOrRetryOnLock checks that a repo-lock error
+// from `restic check` is returned as-is rather than force-unlocked
+// (removeAll=true) and retried: force-removing a lock cannot fix a live holder
+// and would strip protection off a running restic op. CheckDomain still clears
+// a stale orphan with a plain unlock before its single check, and `restic check`
+// carries --retry-lock for transient cross-process locks.
 func TestCheckDomainDoesNotForceUnlockOrRetryOnLock(t *testing.T) {
 	lockErr := errors.New("repository is already locked exclusively")
 	eng := &fakeResticEngine{checkErr: lockErr}
@@ -6063,10 +6706,9 @@ func TestCheckDomainDoesNotForceUnlockOrRetryOnLock(t *testing.T) {
 	}
 }
 
-// TestCheckDomainDoesNotRetryNonLockError pins that a genuine check failure (repo
-// corruption, not a lock) is returned as-is with NO force-unlock and NO retry —
-// CheckDomain never retries `restic check` for any error now, so real integrity
-// failures still surface just like a lock error does.
+// TestCheckDomainDoesNotRetryNonLockError checks that a genuine check failure
+// (repo corruption, not a lock) is returned as-is, without a force-unlock or a
+// retry, just like a lock error.
 func TestCheckDomainDoesNotRetryNonLockError(t *testing.T) {
 	eng := &fakeResticEngine{checkErr: errors.New("pack 1234abcd is damaged, run rebuild-index")}
 	svc := initRepoSvc(t, eng)
@@ -6084,11 +6726,11 @@ func TestCheckDomainDoesNotRetryNonLockError(t *testing.T) {
 	}
 }
 
-// TestCheckDomainEmitsMaintenanceProgressAndRunRecord pins that a manual verify —
-// previously invisible on the dashboard (no progress event, no run row) — now
-// publishes a begin/terminal "maintenance" progress pair keyed "verify:<domain>"
-// and records a run of kind "verify" against the reserved domain-literal target
-// id, so it shows up in the activity log/run history like a backup does.
+// TestCheckDomainEmitsMaintenanceProgressAndRunRecord checks that a manual
+// verify publishes a begin/terminal "maintenance" progress pair keyed
+// "verify:<domain>" and records a run of kind "verify" against the reserved
+// domain-literal target id, so it shows up in the activity log and run history
+// like a backup does.
 func TestCheckDomainEmitsMaintenanceProgressAndRunRecord(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc, st := initRepoSvcWithStore(t, eng)
@@ -6162,8 +6804,8 @@ func TestCheckDomainFailureRecordsFailedRunAndProgress(t *testing.T) {
 	}
 }
 
-// TestPruneDomainCallsPrune: with NO retention policy set, Prune is a plain
-// space-reclaim (restic prune) and must NOT forget anything.
+// TestPruneDomainCallsPrune checks that without a retention policy, Prune is a
+// plain space-reclaim (restic prune) and forgets nothing.
 func TestPruneDomainCallsPrune(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc := initRepoSvc(t, eng)
@@ -6178,11 +6820,10 @@ func TestPruneDomainCallsPrune(t *testing.T) {
 	}
 }
 
-// TestPruneDomainClearsStaleLockFirst pins that a manual prune clears a stale
-// restic lock BEFORE pruning. Without this, a lock left by a previously
-// interrupted backup/prune makes every manual Prune fail with "repository is
-// already locked" — the reported "prune is broken". The unlock must be a
-// stale-only unlock (removeAll=false), exactly as backups and DeleteSnapshot do.
+// TestPruneDomainClearsStaleLockFirst checks that a manual prune clears a stale
+// restic lock before pruning; otherwise a lock left by an interrupted backup or
+// prune makes every manual Prune fail with "repository is already locked". The
+// unlock is stale-only (removeAll=false), as for backups and DeleteSnapshot.
 func TestPruneDomainClearsStaleLockFirst(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc := initRepoSvc(t, eng)
@@ -6197,9 +6838,9 @@ func TestPruneDomainClearsStaleLockFirst(t *testing.T) {
 	}
 }
 
-// TestPruneDomainAppliesRetentionWhenSet: with a retention policy configured,
-// Prune APPLIES it (forget --keep-* --prune) so it collapses snapshots per the
-// policy, not just a plain space-reclaim.
+// TestPruneDomainAppliesRetentionWhenSet checks that with a retention policy
+// configured, Prune applies it (forget --keep-* --prune) rather than only
+// reclaiming space.
 func TestPruneDomainAppliesRetentionWhenSet(t *testing.T) {
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
@@ -6231,10 +6872,10 @@ func TestPruneDomainAppliesRetentionWhenSet(t *testing.T) {
 	}
 }
 
-// TestPruneDomainPerSourceRetention pins the per-source retention fix: pruning the
-// OFF-SITE repo uses the off-site policy, and pruning the LOCAL repo uses the local
-// policy. Here local retention is OFF and off-site is SET, so off-site prune
-// applies retention (ForgetPolicy) while local prune is a plain space-reclaim.
+// TestPruneDomainPerSourceRetention checks that pruning the off-site repo uses
+// the off-site policy and pruning the local repo the local one. Here only the
+// off-site policy is set, so the off-site prune applies retention (ForgetPolicy)
+// while the local prune is a plain space-reclaim.
 func TestPruneDomainPerSourceRetention(t *testing.T) {
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
@@ -6242,7 +6883,7 @@ func TestPruneDomainPerSourceRetention(t *testing.T) {
 	s := mustSettings(t, st)
 	s.ContainersPath = "backups/containers"
 	s.ContainersOffsite = "backups/containers-offsite"
-	// Local policy OFF, off-site policy SET (archive: keep 30 daily).
+	// Local policy off, off-site policy set (archive: keep 30 daily).
 	s.RetentionKeepLast, s.RetentionKeepDaily, s.RetentionKeepWeekly, s.RetentionKeepMonthly = 0, 0, 0, 0
 	s.OffsiteRetentionKeepDaily = 30
 	if err := st.UpdateSettings(s); err != nil {
@@ -6267,7 +6908,7 @@ func TestPruneDomainPerSourceRetention(t *testing.T) {
 		t.Fatalf("off-site prune must apply the off-site policy, got prunedRepos=%v manualPruned=%v", eng.prunedRepos, eng.manualPruned)
 	}
 
-	// Local prune → local policy is OFF → plain space-reclaim, NOT the off-site policy.
+	// Local prune → local policy is off → plain space-reclaim, not the off-site policy.
 	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("PruneDomain local: %v", err)
 	}
@@ -6279,11 +6920,11 @@ func TestPruneDomainPerSourceRetention(t *testing.T) {
 	}
 }
 
-// TestPruneDomainEmitsMaintenanceProgressAndRunRecord pins that a manual prune —
-// previously invisible on the dashboard (no progress event, no run row) — now
-// publishes a begin/terminal "maintenance" progress pair keyed "prune:<domain>"
-// and records a run of kind "prune" against the reserved domain-literal target
-// id, so it shows up in the activity log/run history like a backup does.
+// TestPruneDomainEmitsMaintenanceProgressAndRunRecord checks that a manual
+// prune publishes a begin/terminal "maintenance" progress pair keyed
+// "prune:<domain>" and records a run of kind "prune" against the reserved
+// domain-literal target id, so it shows up in the activity log and run history
+// like a backup does.
 func TestPruneDomainEmitsMaintenanceProgressAndRunRecord(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc, st := initRepoSvcWithStore(t, eng)
@@ -6359,16 +7000,16 @@ func TestPruneDomainFailureRecordsFailedRunAndProgress(t *testing.T) {
 }
 
 // notInstalledVirsh is a fakeVirsh whose DumpXML reports the libvirt "failed to
-// get domain" error — i.e. the host no longer defines the VM.
+// get domain" error, as for a VM the host does not define.
 type notInstalledVirsh struct{ fakeVirsh }
 
 func (notInstalledVirsh) DumpXML(_ context.Context, _ string) (string, error) {
 	return "", errors.New("virshcli: dumpxml: error: failed to get domain 'DietPi_template'")
 }
 
-// TestBackupVMSkipsWhenDomainNotInstalled pins that a scheduled VM whose domain
-// was deleted/undefined on the host is SKIPPED (backup.ErrVMNotInstalled), not
-// failed — so the nightly vms job stops erroring on a leftover schedule entry.
+// TestBackupVMSkipsWhenDomainNotInstalled checks that a scheduled VM whose
+// domain was undefined on the host is skipped (backup.ErrVMNotInstalled), not
+// failed, so the nightly vms job does not error on a leftover schedule entry.
 func TestBackupVMSkipsWhenDomainNotInstalled(t *testing.T) {
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
@@ -6424,8 +7065,8 @@ func TestDiscoverVMsRebuildsTargetFromStorage(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111", Tags: []string{"vm:Tailscale", "p2"}}}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	// dryRun=true first: the readability probe reports the count but must NOT
-	// recreate the VM target (#44).
+	// dryRun=true first: the readability probe reports the count but must not
+	// recreate the VM target.
 	if probe, pErr := svc.DiscoverVMs(context.Background(), true); pErr != nil {
 		t.Fatalf("DiscoverVMs probe: %v", pErr)
 	} else if probe.Found != 1 {
@@ -6497,11 +7138,10 @@ func TestSnapshotsSelfHealsStaleLock(t *testing.T) {
 	}
 }
 
-// TestListSnapshotFilesSelfHealsStaleLock pins #129: ListSnapshotFiles (the
-// container "Select files" listing) must self-heal a stale-lock conflict the
-// same way listSnapshots already does for the backups list — a stale-unlock +
-// retry — instead of surfacing a bare "Failed to load files" until an
-// unrelated backup happens to clear the lock as a side effect.
+// TestListSnapshotFilesSelfHealsStaleLock checks that ListSnapshotFiles (the
+// container "Select files" listing) heals a stale-lock conflict with a
+// stale-unlock and retry, like listSnapshots does for the backups list, instead
+// of surfacing a bare "Failed to load files".
 func TestListSnapshotFilesSelfHealsStaleLock(t *testing.T) {
 	eng := &fakeResticEngine{
 		snaps:     []restic.Snapshot{{ID: "aaaa1111", Tags: []string{"container:plex"}}},
@@ -6526,8 +7166,8 @@ func TestListSnapshotFilesSelfHealsStaleLock(t *testing.T) {
 }
 
 // TestListSnapshotFilesFileSetSelfHealsStaleLock is the file-set counterpart
-// of TestListSnapshotFilesSelfHealsStaleLock (#129): the selective-restore
-// file listing for a file set must self-heal the same stale-lock conflict.
+// of TestListSnapshotFilesSelfHealsStaleLock: the selective-restore file
+// listing for a file set must heal the same stale-lock conflict.
 func TestListSnapshotFilesFileSetSelfHealsStaleLock(t *testing.T) {
 	eng := &fakeResticEngine{
 		lsEntries: []restic.FileEntry{{Path: "/data/docs/a.txt", Type: "file"}},
@@ -6550,9 +7190,9 @@ func TestListSnapshotFilesFileSetSelfHealsStaleLock(t *testing.T) {
 	}
 }
 
-// TestCollectStatsNoRepoIsNoop pins that CollectStats records nothing and returns
-// nil when the local repo has not been created yet — so the post-backup hook can
-// never turn a good backup into a failure on a fresh setup.
+// TestCollectStatsNoRepoIsNoop checks that CollectStats records nothing and
+// returns nil when the local repo has not been created yet, so the post-backup
+// hook cannot turn a good backup into a failure on a fresh setup.
 func TestCollectStatsNoRepoIsNoop(t *testing.T) {
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
@@ -6577,7 +7217,7 @@ func TestCollectStatsNoRepoIsNoop(t *testing.T) {
 }
 
 // TestCollectStatsEmptyRepoIsNoop pins that an initialised but empty
-// (zero-snapshot) repo records nothing — Stats is never run over an empty repo.
+// (zero-snapshot) repo records nothing; Stats never runs over an empty repo.
 func TestCollectStatsEmptyRepoIsNoop(t *testing.T) {
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
@@ -6664,8 +7304,8 @@ func TestRecoveryKit(t *testing.T) {
 		if !strings.Contains(kit, appKey) {
 			t.Error("kit must contain the APP_KEY when encryption is on")
 		}
-		// The derived restic repo password must appear, using the SAME derivation the
-		// engine uses (restickey.Derive) — not a reinvented one.
+		// The derived restic repo password must appear, using the derivation the
+		// engine uses (restickey.Derive).
 		if !strings.Contains(kit, restickey.Derive(appKey)) {
 			t.Error("kit must contain the APP_KEY-derived restic password")
 		}
@@ -6742,7 +7382,7 @@ func TestRecoveryKit(t *testing.T) {
 }
 
 func TestRecoveryKitCredentials(t *testing.T) {
-	// rcloneConf is a small but complete rclone remote definition — it holds the
+	// rcloneConf is a small but complete rclone remote definition. It holds the
 	// remote's own secrets, so the kit must reproduce it verbatim.
 	const rcloneConf = "[offsite]\ntype = s3\nprovider = Wasabi\naccess_key_id = RCLONEKEY123\nsecret_access_key = RCLONESECRET456\n"
 
@@ -6780,7 +7420,7 @@ func TestRecoveryKitCredentials(t *testing.T) {
 		if !strings.Contains(kit, "## Repository credentials") {
 			t.Error("kit must contain the Repository credentials section")
 		}
-		// Each set field must appear as a restic `ENV_VAR=value` line — this proves
+		// Each set field must appear as a restic `ENV_VAR=value` line, which proves
 		// both the stored value and the env-var name restic expects. The `=` form is
 		// unique to the credentials section (the generic restore notes reference the
 		// bare names in prose).
@@ -6822,8 +7462,9 @@ func TestRecoveryKitCredentials(t *testing.T) {
 		if !strings.Contains(kit, "AWS_ACCESS_KEY_ID=ONLYKEY") {
 			t.Error("kit must show the S3 key that IS set")
 		}
-		// S3Region + rest-server were NOT set — their credential lines must be absent
-		// (assert on the `NAME=` form; the bare names appear in the generic notes).
+		// S3Region and the rest-server were not set, so their credential lines must
+		// be absent (assert on the `NAME=` form; the bare names appear in the
+		// generic notes).
 		if strings.Contains(kit, "AWS_DEFAULT_REGION=") {
 			t.Error("kit must NOT show an AWS_DEFAULT_REGION line when no region is set")
 		}
@@ -6894,13 +7535,13 @@ func TestBackupConfigEndToEnd(t *testing.T) {
 		t.Fatal("no snapshot id recorded")
 	}
 
-	// restic must have been handed the STAGED snapshot dir, not the live /config.
+	// restic must have been handed the staged snapshot dir, not the live /config.
 	staging := filepath.Join(dir, ".snapshot")
 	if len(eng.lastPaths) != 1 || eng.lastPaths[0] != staging {
 		t.Fatalf("restic backed up %v, want [%s]", eng.lastPaths, staging)
 	}
 
-	// The staging dir is always removed after the backup — the snapshot never lingers.
+	// The staging dir is always removed after the backup.
 	if _, statErr := os.Stat(staging); !os.IsNotExist(statErr) {
 		t.Fatalf("staging dir not cleaned up: %v", statErr)
 	}
@@ -6913,11 +7554,11 @@ func TestBackupConfigEndToEnd(t *testing.T) {
 	}
 }
 
-// TestRestoreConfigStagesAndWritesMarker verifies RestoreConfig STAGES a config
-// restore rather than overwriting the live DB: it restic-restores the config
-// snapshot subtree (<DataDir>/.snapshot) into the staging root and writes the
-// boot-swap marker. It does NOT touch the live DB (that swap happens on the next
-// boot via selfrestore.ApplyPending).
+// TestRestoreConfigStagesAndWritesMarker checks that RestoreConfig stages a
+// config restore rather than overwriting the live DB: it restic-restores the
+// config snapshot subtree (<DataDir>/.snapshot) into the staging root and writes
+// the boot-swap marker. The live DB is swapped on the next boot by
+// selfrestore.ApplyPending.
 func TestRestoreConfigStagesAndWritesMarker(t *testing.T) {
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: filepath.ToSlash(dir)}
@@ -6941,8 +7582,8 @@ func TestRestoreConfigStagesAndWritesMarker(t *testing.T) {
 		t.Fatalf("restore marker not written: %v", err)
 	}
 	// RestoreInclude must be called with the config snapshot source (<DataDir>/.snapshot)
-	// as the include path and the staging root as the target — the exact pairing the
-	// boot swap relies on to find the restored subtree.
+	// as the include path and the staging root as the target, the pairing the boot
+	// swap relies on to find the restored subtree.
 	wantInclude := filepath.Join(dir, ".snapshot")
 	wantTarget := selfrestore.StagingRoot(dir)
 	found := false
@@ -6960,20 +7601,13 @@ func TestRestoreConfigStagesAndWritesMarker(t *testing.T) {
 	}
 }
 
-// TestStartRestoreConfigSurvivesCancelledContext pins the fix for the finding
-// that StartRestoreConfig ran RestoreConfig synchronously against the raw HTTP
-// request context: a browser tab close or reverse-proxy idle timeout would
-// cancel that context mid-restore, killing the restic subprocess mid-write of
-// the STAGED config restore — which the next boot swap applies BLIND (no
-// re-check), so a truncated write there corrupts the live config. It proves the
-// restic restore actually runs under a context detached from the (already
-// cancelled) caller ctx: StartRestoreConfig still returns the real outcome
-// synchronously (Recovery.tsx needs it to decide whether to poll for the
-// self-restart or show the manual-restart instructions — see
-// StartRestoreConfig's own doc comment for why it does NOT hand off to a
-// fire-and-forget goroutine like its Start* siblings), but the actual
-// RestoreInclude call must see a NON-cancelled ctx.Err(), exactly like
-// RunRestoreDrill's own detach already does (TestRunDRDrillDetachedAndBounded).
+// TestStartRestoreConfigSurvivesCancelledContext checks that the restic restore
+// behind StartRestoreConfig runs under a context detached from the caller's. A
+// closed browser tab or a proxy idle timeout would otherwise kill restic
+// mid-write of the staged config restore, which the next boot swap applies
+// without a re-check. StartRestoreConfig still returns the outcome
+// synchronously, because Recovery.tsx needs it to decide whether to wait for
+// the self-restart.
 func TestStartRestoreConfigSurvivesCancelledContext(t *testing.T) {
 	t.Setenv("BOMBVAULT_SELF_CONTAINER", "") // force docker.Self resolution, not an ambient override
 	dir := t.TempDir()
@@ -7005,8 +7639,8 @@ func TestStartRestoreConfigSurvivesCancelledContext(t *testing.T) {
 	if len(eng.restoreCtxErrs) == 0 || eng.restoreCtxErrs[0] != nil {
 		t.Fatalf("restore ctx must be detached (not cancelled), got %v", eng.restoreCtxErrs)
 	}
-	// The boot-swap marker must still be written — proof the restore genuinely
-	// ran to completion rather than being silently aborted.
+	// The boot-swap marker proves the restore ran to completion rather than
+	// being silently aborted.
 	if _, statErr := os.Stat(selfrestore.MarkerPath(dir)); statErr != nil {
 		t.Fatalf("restore marker not written despite the detached ctx: %v", statErr)
 	}
@@ -7028,4 +7662,1122 @@ func contains(ss []string, want string) bool {
 		}
 	}
 	return false
+}
+
+// TestSnapshotsFollowAlias: after a takeover the entry's history is the union
+// of both names, without any snapshot being rewritten. The old name's snapshot
+// predates the link (AddAlias stamps the current time), so the alias claims it.
+func TestSnapshotsFollowAlias(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo, err := paths.Resolve(dir, s.ContainersPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "radarr"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.AddAlias("container", "radarr-movies", tg.ID); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Time: "2024-01-01T00:00:00Z", Tags: []string{"container:radarr-movies", "p1"}},
+		{ID: "bbbb2222", Tags: []string{"container:radarr", "p1"}},
+		{ID: "cccc3333", Time: "2024-01-01T00:00:00Z", Tags: []string{"container:sonarr", "p1"}},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	snaps, err := svc.Snapshots(context.Background(), "radarr", "")
+	if err != nil {
+		t.Fatalf("Snapshots: %v", err)
+	}
+	if len(snaps) != 2 {
+		t.Fatalf("both names belong to this entry, got %d: %+v", len(snaps), snaps)
+	}
+	for _, sn := range snaps {
+		if sn.ID == "cccc3333" {
+			t.Fatal("another container's snapshot must never be included")
+		}
+	}
+}
+
+// TestLatestContainerBackupTimesFoldsAlias: snapshots keep the old
+// container:<name> tag after a rename, so the last-backup map folds the old
+// name onto the current one: one dashboard row with one date, not an extra
+// orphan row under the old name.
+func TestLatestContainerBackupTimesFoldsAlias(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo, err := paths.Resolve(dir, s.ContainersPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "radarr"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.AddAlias("container", "radarr-movies", tg.ID); err != nil {
+		t.Fatal(err)
+	}
+	// The alias's snapshot is the newer one, so a fold that merely dropped the
+	// old name would report radarr's older date.
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Time: "2024-06-01T00:00:00Z", Tags: []string{"container:radarr-movies", "p1"}},
+		{ID: "bbbb2222", Time: "2024-01-01T00:00:00Z", Tags: []string{"container:radarr", "p1"}},
+		{ID: "cccc3333", Time: "2024-03-01T00:00:00Z", Tags: []string{"container:sonarr", "p1"}},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	times, err := svc.LatestContainerBackupTimes(context.Background())
+	if err != nil {
+		t.Fatalf("LatestContainerBackupTimes: %v", err)
+	}
+	if _, ok := times["radarr-movies"]; ok {
+		t.Fatalf("old name must not keep its own row, got %+v", times)
+	}
+	want, err := time.Parse(time.RFC3339Nano, "2024-06-01T00:00:00Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := times["radarr"]; got != want.Unix() {
+		t.Fatalf("radarr should fold in the alias's newer snapshot, want %d got %d (%+v)", want.Unix(), got, times)
+	}
+	if _, ok := times["sonarr"]; !ok {
+		t.Fatalf("unrelated container must be unaffected, got %+v", times)
+	}
+}
+
+// TestLatestContainerBackupTimesDoesNotStealReusedAliasName: entry A was
+// renamed from "radarr" to "radarr-old", and a different container B took the
+// name "radarr" up again. Under that name, a snapshot from the link on is
+// B's and one from before it is A's, whichever of them is newer.
+func TestLatestContainerBackupTimesDoesNotStealReusedAliasName(t *testing.T) {
+	latest := func(t *testing.T, snaps []restic.Snapshot) map[string]int64 {
+		t.Helper()
+		dir := t.TempDir()
+		cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+		st := newMemStore(t)
+		s := mustSettings(t, st)
+		s.ContainersPath = "backups/containers"
+		if err := st.UpdateSettings(s); err != nil {
+			t.Fatal(err)
+		}
+		establishLocalRepo(t, dir, s.ContainersPath)
+		a, err := st.UpsertTarget(store.Target{ContainerName: "radarr-old"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := st.AddAliasAt("container", "radarr", a.ID, unixOf(t, linkTime)); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr"}); err != nil {
+			t.Fatal(err)
+		}
+		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{snaps: snaps})
+		times, err := svc.LatestContainerBackupTimes(context.Background())
+		if err != nil {
+			t.Fatalf("LatestContainerBackupTimes: %v", err)
+		}
+		return times
+	}
+	own := restic.Snapshot{ID: "aaaa1111", Time: "2024-02-01T00:00:00Z", Tags: []string{"container:radarr-old", "p1"}}
+	pre := restic.Snapshot{ID: "bbbb2222", Time: "2024-04-01T00:00:00Z", Tags: []string{"container:radarr", "p1"}}
+	post := restic.Snapshot{ID: "cccc3333", Time: "2024-08-01T00:00:00Z", Tags: []string{"container:radarr", "p1"}}
+
+	t.Run("a snapshot after the link counts for B", func(t *testing.T) {
+		times := latest(t, []restic.Snapshot{own, post})
+		if got, want := times["radarr"], unixOf(t, post.Time); got != want {
+			t.Fatalf("radarr = %d, want B's own %d (%+v)", got, want, times)
+		}
+		if got, want := times["radarr-old"], unixOf(t, own.Time); got != want {
+			t.Fatalf("radarr-old = %d, want A's own %d (%+v)", got, want, times)
+		}
+	})
+	t.Run("a snapshot before the link counts for A", func(t *testing.T) {
+		times := latest(t, []restic.Snapshot{own, pre})
+		if got, ok := times["radarr"]; ok {
+			t.Fatalf("radarr = %d, want no date: its only snapshot is A's (%+v)", got, times)
+		}
+		if got, want := times["radarr-old"], unixOf(t, pre.Time); got != want {
+			t.Fatalf("radarr-old = %d, want its pre-link %d (%+v)", got, want, times)
+		}
+	})
+}
+
+// TestPruneDomainFoldsRenamedContainerAliasIntoOneRetentionGroup: retention
+// finds identities in the tags the snapshots carry, so a renamed container's
+// old and new tags would get separate forget passes, and the old tag, which
+// never gets another snapshot, would keep its last N forever. The alias folds
+// both into one group while an unrelated container keeps its own.
+func TestPruneDomainFoldsRenamedContainerAliasIntoOneRetentionGroup(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	s.RetentionKeepLast = 3 // a policy is set
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo := filepath.Join(dir, "backups", "containers")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.AddAlias("container", "radarr", tg.ID); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:radarr-movies", "p1"}},
+		{ID: "bbbb2222", Time: "2024-01-01T00:00:00Z", Tags: []string{"container:radarr", "p1"}}, // the entry's old name, from before the link
+		{ID: "cccc3333", Tags: []string{"container:sonarr", "p1"}},                               // unrelated entry, must stay its own group
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+		t.Fatalf("PruneDomain: %v", err)
+	}
+	if len(eng.forgetTags) != 2 {
+		t.Fatalf("expected 2 forget groups (renamed entry folded together + sonarr separate), got %d: %v", len(eng.forgetTags), eng.forgetTags)
+	}
+	var foldedGroup []string
+	for _, g := range eng.forgetTags {
+		if strings.Contains(g, "radarr") {
+			foldedGroup = strings.Split(g, ",")
+		}
+	}
+	if !contains(foldedGroup, "container:radarr-movies") || !contains(foldedGroup, "container:radarr") {
+		t.Fatalf("the renamed entry's old and new tags must be one forget group, got %v (all groups: %v)", foldedGroup, eng.forgetTags)
+	}
+}
+
+// TestPruneDomainDoesNotFoldAReusedAliasNameIntoTheOldEntry: a freed alias name
+// is not reserved, so after entry A is renamed from "radarr" to "radarr-old", a
+// different container B can take "radarr" again. B's snapshots stay out of A's
+// retention group.
+func TestPruneDomainDoesNotFoldAReusedAliasNameIntoTheOldEntry(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	s.RetentionKeepLast = 3
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo := filepath.Join(dir, "backups", "containers")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// Entry A: currently "radarr-old", with "radarr" recorded as its retired name.
+	a, err := st.UpsertTarget(store.Target{ContainerName: "radarr-old"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.AddAlias("container", "radarr", a.ID); err != nil {
+		t.Fatal(err)
+	}
+	// Entry B took the freed name; UpsertTarget never consults target_aliases.
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr"}); err != nil {
+		t.Fatal(err)
+	}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:radarr-old", "p1"}}, // A's own
+		{ID: "bbbb2222", Tags: []string{"container:radarr", "p1"}},     // B's own (live, reused name)
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+		t.Fatalf("PruneDomain: %v", err)
+	}
+	if len(eng.forgetTags) != 2 {
+		t.Fatalf("expected 2 separate forget groups (A and B), got %d: %v", len(eng.forgetTags), eng.forgetTags)
+	}
+	for _, g := range eng.forgetTags {
+		tags := strings.Split(g, ",")
+		if len(tags) != 1 {
+			t.Fatalf("B's live tag must never be folded into A's retired-name group, got group %v (all groups: %v)", tags, eng.forgetTags)
+		}
+	}
+}
+
+// TestServiceBackupTagsIncludeAliasFormerNames: Service.Backup looks up the
+// target's aliases and passes them on as formerly: tags. The container needs
+// an appdata mount, since a definition-only backup never calls restic.
+func TestServiceBackupTagsIncludeAliasFormerNames(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "radarr"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.AddAlias("container", "radarr-movies", tg.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	appdata := root + "/appdata/radarr"
+	if err := os.MkdirAll(appdata, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name:    "/radarr",
+		Image:   "radarr:latest",
+		Running: true,
+		Mounts: []model.Mount{
+			{Type: "bind", Source: appdata, Destination: "/config"},
+		},
+	}}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+
+	if _, err := svc.Backup(context.Background(), "radarr"); err != nil {
+		t.Fatalf("backup: %v", err)
+	}
+	want := []string{"container:radarr", "p1", "formerly:radarr-movies"}
+	if len(eng.lastTags) != len(want) {
+		t.Fatalf("tags = %v, want %v", eng.lastTags, want)
+	}
+	for i, tag := range want {
+		if eng.lastTags[i] != tag {
+			t.Fatalf("tags = %v, want %v", eng.lastTags, want)
+		}
+	}
+}
+
+// TestServiceBackupTagsUnchangedWithoutAlias: an entry that was never renamed
+// reaches restic with only its usual two tags.
+func TestServiceBackupTagsUnchangedWithoutAlias(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	appdata := root + "/appdata/plex"
+	if err := os.MkdirAll(appdata, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	d := &fakeServiceDocker{inspect: model.Inspect{
+		Name:    "/plex",
+		Image:   "plex:latest",
+		Running: true,
+		Mounts: []model.Mount{
+			{Type: "bind", Source: appdata, Destination: "/config"},
+		},
+	}}
+	eng := &fakeResticEngine{}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+
+	if _, err := svc.Backup(context.Background(), "plex"); err != nil {
+		t.Fatalf("backup: %v", err)
+	}
+	want := []string{"container:plex", "p1"}
+	if len(eng.lastTags) != len(want) || eng.lastTags[0] != want[0] || eng.lastTags[1] != want[1] {
+		t.Fatalf("tags = %v, want %v", eng.lastTags, want)
+	}
+}
+
+// TestTakeOverContainer: the old entry takes the new name and keeps its
+// settings and history, and the old name lives on as an alias.
+func TestTakeOverContainer(t *testing.T) {
+	dir := t.TempDir()
+	// The new-name backups check fails closed when the repo cannot be
+	// resolved, so HostMountRoot must be usable even though the repo is never
+	// established.
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	old, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies", AppdataPaths: []string{"/host/user/user/appdata/radarr"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SetInclude("radarr-movies", true); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr"}); err != nil { // the new name's empty row
+		t.Fatal(err)
+	}
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr", ID: "abc"}}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+
+	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+	got, err := st.GetTargetByContainer("radarr")
+	if err != nil || got.ID != old.ID || !got.IncludeInSchedule {
+		t.Fatalf("entry after takeover = %+v, %v", got, err)
+	}
+	names, _ := st.AliasNames("container", old.ID)
+	if len(names) != 1 || names[0] != "radarr-movies" {
+		t.Fatalf("alias = %v", names)
+	}
+}
+
+// TestTakeOverContainerRefusesConfiguredEmptyRow: a row at the new name without
+// backups but with a schedule flag and excludes holds an operator's settings,
+// so the takeover refuses rather than delete it.
+func TestTakeOverContainerRefusesConfiguredEmptyRow(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	old, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	newTg, err := st.UpsertTarget(store.Target{ContainerName: "radarr"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Configured before its first backup, so there is no container:radarr snapshot.
+	if err := st.SetInclude("radarr", true); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SetExcludes("radarr", []string{"*.log"}); err != nil {
+		t.Fatal(err)
+	}
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+
+	err = svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr")
+	if err == nil {
+		t.Fatal("a configured (even if never backed-up) row at newName must not be silently deleted")
+	}
+	if !strings.Contains(err.Error(), "radarr") {
+		t.Fatalf("the refusal must name the entry, got: %v", err)
+	}
+	gotOld, err := st.GetTargetByContainer("radarr-movies")
+	if err != nil || gotOld.ID != old.ID {
+		t.Fatalf("old entry must be untouched: %+v, %v", gotOld, err)
+	}
+	gotNew, err := st.GetTargetByContainer("radarr")
+	if err != nil || gotNew.ID != newTg.ID {
+		t.Fatalf("new entry must be untouched: %+v, %v", gotNew, err)
+	}
+	if !gotNew.IncludeInSchedule || len(gotNew.Excludes) != 1 {
+		t.Fatalf("new entry's configured state must survive the refusal: %+v", gotNew)
+	}
+	if _, err := st.AliasByOldName("container", "radarr-movies"); err == nil {
+		t.Fatal("no alias must be written on refusal")
+	}
+}
+
+// TestTakeOverContainerRefusesEntryWithBackups: merging two real histories into
+// one row cannot be undone, so a new entry with backups of its own is never
+// taken over and both entries stay as they were.
+func TestTakeOverContainerRefusesEntryWithBackups(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo, err := paths.Resolve(dir, s.ContainersPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	old, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	newTg, err := st.UpsertTarget(store.Target{ContainerName: "radarr"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr", ID: "abc"}}}
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111", Tags: []string{"container:radarr", "p1"}}}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+
+	err = svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr")
+	if err == nil {
+		t.Fatal("an entry with its own backups must be refused")
+	}
+	if !strings.Contains(err.Error(), "its own entry") {
+		t.Fatalf("a live owning entry must be named in the refusal so the operator can tell it apart from an orphaned snapshot, got: %v", err)
+	}
+	gotOld, err := st.GetTargetByContainer("radarr-movies")
+	if err != nil || gotOld.ID != old.ID {
+		t.Fatalf("old entry must be untouched: %+v, %v", gotOld, err)
+	}
+	gotNew, err := st.GetTargetByContainer("radarr")
+	if err != nil || gotNew.ID != newTg.ID {
+		t.Fatalf("new entry must be untouched: %+v, %v", gotNew, err)
+	}
+	if _, err := st.AliasByOldName("container", "radarr-movies"); err == nil {
+		t.Fatal("no alias must be written on refusal")
+	}
+}
+
+// TestTakeOverContainerRefusesForeignOrphanedSnapshot: no row owns the new
+// name, but a container:<new> snapshot whose formerly: tag names another entry
+// exists. That history cannot be proven to be the entry's own, so the takeover
+// is refused and nothing changes.
+func TestTakeOverContainerRefusesForeignOrphanedSnapshot(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo, err := paths.Resolve(dir, s.ContainersPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	old, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Its formerly: tag names someone else, not radarr-movies.
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:radarr", "formerly:someone-else"}},
+	}}
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+
+	err = svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr")
+	if err == nil {
+		t.Fatal("an orphaned snapshot from an unrelated entry must refuse the takeover")
+	}
+	if !strings.Contains(err.Error(), "unrelated entry") {
+		t.Fatalf("an orphaned snapshot must be named in the refusal so the operator can tell it apart from a live owning entry, got: %v", err)
+	}
+	gotOld, err := st.GetTargetByContainer("radarr-movies")
+	if err != nil || gotOld.ID != old.ID {
+		t.Fatalf("old entry must be untouched: %+v, %v", gotOld, err)
+	}
+	if _, err := st.GetTargetByContainer("radarr"); err == nil {
+		t.Fatal("no row must have been created for the new name on refusal")
+	}
+	if _, err := st.AliasByOldName("container", "radarr-movies"); err == nil {
+		t.Fatal("no alias must be written on refusal")
+	}
+}
+
+// TestTakeOverContainerAllowsOwnFormerSnapshot: after a takeover and an unlink,
+// a container:<new> snapshot tagged formerly:<old> is the entry's own earlier
+// work, so taking over again succeeds.
+func TestTakeOverContainerAllowsOwnFormerSnapshot(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo, err := paths.Resolve(dir, s.ContainersPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	old, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Left by an earlier takeover onto radarr that was later unlinked.
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:radarr", "formerly:radarr-movies"}},
+	}}
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+
+	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err != nil {
+		t.Fatalf("TakeOverContainer must allow the round trip: %v", err)
+	}
+	got, err := st.GetTargetByContainer("radarr")
+	if err != nil || got.ID != old.ID {
+		t.Fatalf("entry after takeover = %+v, %v", got, err)
+	}
+}
+
+// TestTakeOverContainerChainOntoFurtherName: a chain of takeovers works, and the
+// formerly: match counts every alias the entry has collected, not only its
+// current name.
+func TestTakeOverContainerChainOntoFurtherName(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo, err := paths.Resolve(dir, s.ContainersPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	old, err := st.UpsertTarget(store.Target{ContainerName: "A"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The entry's own snapshot from a time it answered to C, tagged with the
+	// name A, which becomes an alias after the first hop.
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:C", "formerly:A"}},
+	}}
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "B"}}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+
+	// Hop 1: A -> B (no container:B snapshot exists, so this is unaffected).
+	if err := svc.TakeOverContainer(context.Background(), "A", "B"); err != nil {
+		t.Fatalf("first takeover: %v", err)
+	}
+	// Hop 2: B -> C. The formerly:A snapshot matches through the alias A.
+	d.listOut = []dockercli.ContainerInfo{{Name: "C"}}
+	if err := svc.TakeOverContainer(context.Background(), "B", "C"); err != nil {
+		t.Fatalf("second takeover onto a further name: %v", err)
+	}
+	got, err := st.GetTargetByContainer("C")
+	if err != nil || got.ID != old.ID {
+		t.Fatalf("entry after chained takeover = %+v, %v", got, err)
+	}
+	names, _ := st.AliasNames("container", old.ID)
+	if len(names) != 2 {
+		t.Fatalf("alias chain = %v, want 2 entries (A, B)", names)
+	}
+}
+
+// TestTakeOverContainerChecksTheEntrysOwnRepositoryToo: the entry keeps its
+// repository override through a takeover and reads container:<new> snapshots
+// there, so the gate checks that repository too, not only the one the new
+// name resolves to.
+func TestTakeOverContainerChecksTheEntrysOwnRepositoryToo(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	own := filepath.Join(dir, "backups", "containers")
+	cold := filepath.Join(dir, "backups", "cold")
+	for _, p := range []string{own, cold} {
+		if err := os.MkdirAll(p, 0o755); err != nil { //nolint:gosec // G301: test temp dir
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(p, "config"), []byte("x"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	named, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
+		Role: store.RoleRepo, Name: "Cold", Repo: "backups/cold", Enabled: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.WritePlacement(store.ItemRef{Domain: "containers", Key: "radarr-movies"}, &store.HomeWrite{Repo: named.ID, Choice: store.RepoChosen}, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+	// The stranger's snapshot is only in radarr-movies's cold repository, not
+	// in the domain repository that "radarr" alone would resolve to.
+	eng := &fakeResticEngine{snapsByRepo: map[string][]restic.Snapshot{
+		filepath.ToSlash(cold): {{ID: "aaaa1111", Tags: []string{"container:radarr", "p1"}}},
+	}}
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+
+	err = svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr")
+	if err == nil {
+		t.Fatal("a stranger's snapshot in the entry's own target repository must refuse the takeover")
+	}
+	if _, err := st.AliasByOldName("container", "radarr-movies"); err == nil {
+		t.Fatal("no alias must be written on refusal")
+	}
+}
+
+// TestTakeOverContainerFailsClosedOnRepoResolutionError: an error while checking
+// for foreign backups refuses the takeover instead of reading as "no backups",
+// since this gate guards an irreversible merge. A ContainersPath outside
+// HostMountRoot makes the repo resolution fail without touching the filesystem.
+func TestTakeOverContainerFailsClosedOnRepoResolutionError(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "../outside"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies"}); err != nil {
+		t.Fatal(err)
+	}
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+
+	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err == nil {
+		t.Fatal("a repo-resolution error must refuse the takeover, not be treated as \"no backups\"")
+	}
+	if _, err := st.GetTargetByContainer("radarr-movies"); err != nil {
+		t.Fatal("the old entry must be untouched")
+	}
+	if _, err := st.AliasByOldName("container", "radarr-movies"); err == nil {
+		t.Fatal("no alias must be written when the check itself failed")
+	}
+}
+
+// TestTakeOverContainerRefusesWhenNewNotInstalled: without an installed
+// container under the new name there is nothing to take over onto.
+func TestTakeOverContainerRefusesWhenNewNotInstalled(t *testing.T) {
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir()}
+	st := newMemStore(t)
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies"}); err != nil {
+		t.Fatal(err)
+	}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+
+	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err == nil {
+		t.Fatal("a new name that is not installed must be refused")
+	}
+	if _, err := st.GetTargetByContainer("radarr-movies"); err != nil {
+		t.Fatal("the old entry must be untouched")
+	}
+}
+
+// TestTakeOverContainerRefusesWhenOldInstalledAgain: a real container answers
+// to the old name again, so taking its entry over would orphan that
+// container's history.
+func TestTakeOverContainerRefusesWhenOldInstalledAgain(t *testing.T) {
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir()}
+	st := newMemStore(t)
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies"}); err != nil {
+		t.Fatal(err)
+	}
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}, {Name: "radarr-movies"}}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+
+	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err == nil {
+		t.Fatal("an old name that is installed again must be refused")
+	}
+	if _, err := st.GetTargetByContainer("radarr-movies"); err != nil {
+		t.Fatal("the old entry must be untouched")
+	}
+}
+
+// TestTakeOverContainerRefusesWhenOldHasNoEntry: there is nothing to take over
+// when the old name never had a target row.
+func TestTakeOverContainerRefusesWhenOldHasNoEntry(t *testing.T) {
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir()}
+	st := newMemStore(t)
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+
+	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err == nil {
+		t.Fatal("an old name with no entry must be refused")
+	}
+}
+
+// TestTakeOverContainerRejectsInvalidNames: an alias name ends up in a
+// formerly:<name> restic tag, where a comma would split it into several tags,
+// and RenameTargetWithAlias validates nothing, so both names are checked here.
+func TestTakeOverContainerRejectsInvalidNames(t *testing.T) {
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir()}
+	st := newMemStore(t)
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+
+	if err := svc.TakeOverContainer(context.Background(), "radarr,movies", "radarr"); err == nil {
+		t.Fatal("a comma in the old name must be refused before it can reach an alias/restic tag")
+	}
+	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr,new"); err == nil {
+		t.Fatal("a comma in the new name must be refused")
+	}
+}
+
+// TestTakeOverContainerRewritesDefinitionAndStopLists: a restore before the next
+// backup must recreate the container under its new name, and other entries
+// that stop it during their backups must keep stopping the right one.
+func TestTakeOverContainerRewritesDefinitionAndStopLists(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	defJSON, err := marshalDefinition(model.Inspect{Name: "/radarr-movies", Image: "radarr:latest"}, "<Container><Name>radarr-movies</Name></Container>", "/host/appdata/radarr")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies", Definition: string(defJSON)}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "sonarr"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SetStopContainers("sonarr", []string{"radarr-movies", "postgres"}); err != nil {
+		t.Fatal(err)
+	}
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+
+	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+
+	got, err := st.GetTargetByContainer("radarr")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var def struct {
+		Inspect     model.Inspect `json:"inspect"`
+		TemplateXML string        `json:"template_xml"`
+	}
+	if err := json.Unmarshal([]byte(got.Definition), &def); err != nil {
+		t.Fatalf("unmarshal rewritten definition: %v", err)
+	}
+	if def.Inspect.Name != "/radarr" {
+		t.Fatalf("Inspect.Name = %q, want %q (else a restore would recreate the container under the old name)", def.Inspect.Name, "/radarr")
+	}
+	if !strings.Contains(def.TemplateXML, "<Name>radarr</Name>") || strings.Contains(def.TemplateXML, "radarr-movies") {
+		t.Fatalf("template <Name> not rewritten: %q", def.TemplateXML)
+	}
+
+	sonarr, err := st.GetTargetByContainer("sonarr")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"radarr", "postgres"}
+	if len(sonarr.StopContainers) != len(want) || sonarr.StopContainers[0] != want[0] || sonarr.StopContainers[1] != want[1] {
+		t.Fatalf("sonarr.StopContainers = %v, want %v", sonarr.StopContainers, want)
+	}
+}
+
+// TestTakeOverContainerLocksBeforeReadingForForeignBackups: the foreign-backups
+// gate runs under the containers domain lock, or a backup of the new name that
+// finishes between the check and the lock would slip past it. While another
+// operation holds the lock, the takeover fails busy without reading any
+// repository.
+func TestTakeOverContainerLocksBeforeReadingForForeignBackups(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	repo := filepath.Join(dir, "backups", "containers")
+	if err := os.MkdirAll(repo, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "plex"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies"}); err != nil {
+		t.Fatal(err)
+	}
+
+	eng := &fakeResticEngine{
+		snaps:          []restic.Snapshot{{ID: "aaaa1111", Tags: []string{"container:plex"}}},
+		blockRestore:   make(chan struct{}),
+		restoreEntered: make(chan struct{}, 1),
+	}
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}, {Name: "plex"}}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	ctx := context.Background()
+
+	// Hold the "containers" domain lock with an in-flight (blocked) restore.
+	if _, started, err := svc.StartRestoreToPath(ctx, "plex", "local", "aaaa1111", "user/restore/plex"); err != nil || !started {
+		t.Fatalf("restore should start: started=%v err=%v", started, err)
+	}
+	select {
+	case <-eng.restoreEntered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("restore never reached the engine")
+	}
+
+	listedBefore := len(eng.listedRepos)
+	if err := svc.TakeOverContainer(ctx, "radarr-movies", "radarr"); err == nil {
+		t.Fatal("a takeover against a busy containers domain must be refused")
+	}
+	if len(eng.listedRepos) != listedBefore {
+		t.Fatalf("the foreign-backups gate read the repository (listedRepos %d -> %d) before the domain lock refused the takeover: the lock must be acquired first", listedBefore, len(eng.listedRepos))
+	}
+
+	close(eng.blockRestore) // let the restore finish
+	waitForBackupDone(t, svc)
+}
+
+// TestUnlinkContainerAlias: unlinking reverses a takeover, so the entry goes
+// back to its old name and the alias is gone.
+func TestUnlinkContainerAlias(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	old, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr"}); err != nil {
+		t.Fatal(err)
+	}
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+
+	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+
+	if err := svc.UnlinkContainerAlias(context.Background(), "radarr-movies"); err != nil {
+		t.Fatalf("UnlinkContainerAlias: %v", err)
+	}
+	got, err := st.GetTargetByContainer("radarr-movies")
+	if err != nil || got.ID != old.ID {
+		t.Fatalf("entry after unlink = %+v, %v", got, err)
+	}
+	if _, err := st.GetTargetByContainer("radarr"); err == nil {
+		t.Fatal("the taken-over name must no longer have an entry of its own")
+	}
+	if _, err := st.AliasByOldName("container", "radarr-movies"); err == nil {
+		t.Fatal("the alias must be gone after unlink")
+	}
+}
+
+// TestUnlinkContainerAliasRefusesUnknownName: a name that was never taken over
+// is refused rather than silently ignored.
+func TestUnlinkContainerAliasRefusesUnknownName(t *testing.T) {
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir()}
+	st := newMemStore(t)
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+
+	if err := svc.UnlinkContainerAlias(context.Background(), "never-linked"); err == nil {
+		t.Fatal("a name that was never taken over must be refused")
+	}
+}
+
+// TestUnlinkContainerAliasRewritesDefinitionAndStopLists: unlink undoes the
+// takeover's definition and stop-list rewrites, name for name.
+func TestUnlinkContainerAliasRewritesDefinitionAndStopLists(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	defJSON, err := marshalDefinition(model.Inspect{Name: "/radarr-movies"}, "<Container><Name>radarr-movies</Name></Container>")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies", Definition: string(defJSON)}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "sonarr"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SetStopContainers("sonarr", []string{"radarr-movies"}); err != nil {
+		t.Fatal(err)
+	}
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+
+	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+	if err := svc.UnlinkContainerAlias(context.Background(), "radarr-movies"); err != nil {
+		t.Fatalf("UnlinkContainerAlias: %v", err)
+	}
+
+	got, err := st.GetTargetByContainer("radarr-movies")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var def struct {
+		Inspect     model.Inspect `json:"inspect"`
+		TemplateXML string        `json:"template_xml"`
+	}
+	if err := json.Unmarshal([]byte(got.Definition), &def); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if def.Inspect.Name != "/radarr-movies" {
+		t.Fatalf("Inspect.Name = %q, want %q", def.Inspect.Name, "/radarr-movies")
+	}
+	if !strings.Contains(def.TemplateXML, "<Name>radarr-movies</Name>") {
+		t.Fatalf("template <Name> not rewritten back: %q", def.TemplateXML)
+	}
+	sonarr, err := st.GetTargetByContainer("sonarr")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(sonarr.StopContainers) != 1 || sonarr.StopContainers[0] != "radarr-movies" {
+		t.Fatalf("sonarr.StopContainers = %v, want [radarr-movies]", sonarr.StopContainers)
+	}
+}
+
+// TestTakeOverContainerMovesDRDrillTarget: the DR drill pins a container by
+// name, so a takeover moves the pin with the entry, or drills would keep
+// verifying an ever older snapshot under a name nothing answers to.
+func TestTakeOverContainerMovesDRDrillTarget(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.DRDrillTarget = "radarr-movies"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr"}); err != nil {
+		t.Fatal(err)
+	}
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+
+	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+	got, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.DRDrillTarget != "radarr" {
+		t.Fatalf("DRDrillTarget = %q, want %q (moved with the takeover)", got.DRDrillTarget, "radarr")
+	}
+}
+
+func TestTakeOverContainerLeavesUnrelatedDRDrillTargetAlone(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.DRDrillTarget = "sonarr"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr"}); err != nil {
+		t.Fatal(err)
+	}
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+
+	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+	got, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.DRDrillTarget != "sonarr" {
+		t.Fatalf("DRDrillTarget = %q, want unchanged %q", got.DRDrillTarget, "sonarr")
+	}
+}
+
+func TestUnlinkContainerAliasMovesDRDrillTargetBack(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
+	st := newMemStore(t)
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr-movies"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "radarr"}); err != nil {
+		t.Fatal(err)
+	}
+	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+
+	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+	// An operator pins the drill to the current name after the takeover.
+	s := mustSettings(t, st)
+	s.DRDrillTarget = "radarr"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := svc.UnlinkContainerAlias(context.Background(), "radarr-movies"); err != nil {
+		t.Fatalf("UnlinkContainerAlias: %v", err)
+	}
+	got, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.DRDrillTarget != "radarr-movies" {
+		t.Fatalf("DRDrillTarget = %q, want %q (moved back)", got.DRDrillTarget, "radarr-movies")
+	}
 }

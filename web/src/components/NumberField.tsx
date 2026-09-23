@@ -1,47 +1,14 @@
-// A number field with our own steppers inside it ([411]).
+// A number input with its steppers inside the field. The browser's spinner is
+// an OS widget on its own background that only `accent-color` reaches, so
+// `glim-num` hides it and two arrows without a background of their own take its
+// place, with padding that keeps the digits clear of them. Reference:
+// glimstone reference/numberField.ts and the `.glim-num-*` rules in
+// reference/tokens.css.
 //
-// GlimStone, "Never a native number spinner either": `<input type="number">` is
-// fine and keeps everything worth keeping — min/max/step, the arrow keys, a
-// phone's numeric keypad — but the two arrows the browser paints beside it come
-// from the OS widget set, on their own background, and the only property that
-// reaches them is `accent-color`. jdp reported it here in the same words he
-// used one app earlier: "jetzt haben sie einen dunklen hintergrund. der soll
-// weg".
-//
-// The rule has a second half that is easy to drop, and dropping it is what made
-// the first replacement (in that other app) wrong: the complaint was never
-// "there are arrows". It was that they arrive on their own dark ground AND
-// crowd the value. So a stepper is PART OF THE FIELD, not a control beside it —
-// inside the field's own box, no background of its own, only the ink changing
-// on hover, with enough inline padding that the digits never run underneath.
-//
-// Reference implementation and CSS: glimstone reference/numberField.ts and the
-// `.glim-num-*` rules in reference/tokens.css, both added in 1.7.0. This is the
-// React shape of that, not a second design.
-//
-// ---------------------------------------------------------------------------
-// Why the props are a native <input>'s props, verbatim
-// ---------------------------------------------------------------------------
-// Fifteen call sites across six files, and every one of them carries its own
-// clamping inside onChange — Math.max(1, parseInt(...)), an isNaN guard, a
-// server-matching 5..3600 range, a debounce keyed on the field name. A tidier
-// `onValueChange(n: number)` signature would have meant rewriting all fifteen,
-// at the end of a long session, on the page that holds somebody's SMTP port and
-// their retention counts. The prize for that is a slightly nicer prop name.
-//
-// So this takes `onChange` exactly as the native element does, and the swap at
-// each site is `<input` -> `<NumberField` with `type="number"` dropped. Nothing
-// else moves.
-//
-// Which leaves one real problem: `stepUp()` writes the DOM and fires NO event,
-// so on a controlled React input the new number would appear for a frame and
-// snap straight back to the old prop. Setting `el.value` directly does not help
-// either — React tracks the last value it wrote on the node, sees no change,
-// and swallows the event. The way through is React's own tracker: write through
-// the prototype's value setter (which the tracker does not see) and then
-// dispatch a real `input` event, so React concludes a person typed it and calls
-// onChange with an ordinary event. Every call site's existing handler then runs
-// unchanged, clamping and debouncing included.
+// The props are a native <input>'s, so a call site swaps `<input type="number"`
+// for `<NumberField` and keeps its own onChange, clamping and debouncing
+// included. stepUp() fires no event, so the steppers replay the new value
+// through setValueLikeAUser for that onChange to run.
 
 import { useCallback, useEffect, useRef, useState, type InputHTMLAttributes } from "react";
 
@@ -63,26 +30,22 @@ function canStep(el: HTMLInputElement | null, direction: 1 | -1): boolean {
 }
 
 /**
- * Set an input's value the way a person would, as far as React can tell.
- *
- * React stores the last value it rendered on the node itself and compares
- * against it before dispatching onChange; assigning `el.value` updates that
- * store as a side effect, so the comparison finds nothing changed and the event
- * never reaches the handler. Writing through the PROTOTYPE's setter bypasses
- * the instance property React installed, leaving its record stale — which is
- * exactly what makes the following event look like a real edit.
+ * Sets the value so that React treats the following input event as an edit.
+ * React compares against the last value it saw on the node, and assigning
+ * `el.value` updates that record too, so onChange would never fire. The
+ * prototype's setter goes around the instance property React installed.
  */
 function setValueLikeAUser(el: HTMLInputElement, next: string) {
   const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
   if (setter) setter.call(el, next);
-  else el.value = next; // no prototype setter: nothing to bypass
+  else el.value = next;
   el.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
 export function NumberField({ className = "", wrapperClassName = "", ...rest }: NumberFieldProps) {
   const ref = useRef<HTMLInputElement>(null);
-  // Held in state rather than computed during render: the answer depends on the
-  // DOM node's own min/max/step, which do not exist on the first pass.
+  // State rather than a value computed during render: it reads the DOM node's
+  // min, max and step, which do not exist on the first render.
   const [ends, setEnds] = useState({ up: true, down: true });
 
   const sync = useCallback(() => {
@@ -91,10 +54,8 @@ export function NumberField({ className = "", wrapperClassName = "", ...rest }: 
 
   useEffect(sync, [sync, rest.value]);
 
-  /**
-   * Step through the input's OWN stepUp/stepDown so min/max/step live in the
-   * markup and nowhere else, and the browser's clamping applies for free.
-   */
+  // stepUp and stepDown keep min, max and step in the markup, and the browser
+  // does the clamping.
   const step = (direction: 1 | -1) => {
     const el = ref.current;
     if (!el || el.disabled || el.readOnly) return;
@@ -102,35 +63,19 @@ export function NumberField({ className = "", wrapperClassName = "", ...rest }: 
     if (direction > 0) el.stepUp();
     else el.stepDown();
     const after = el.value;
-    if (after === before) return; // already at the end; nothing to report
-    // stepUp wrote the DOM directly and React saw nothing. Put the value back
-    // through the tracker so the call site's own onChange runs.
+    if (after === before) return;
+    // React did not see stepUp's write. Replay it so the call site's onChange
+    // runs.
     setValueLikeAUser(el, before);
     setValueLikeAUser(el, after);
     sync();
   };
 
-  /**
-   * The wheel steps the value, but ONLY while the field has focus (GlimStone
-   * 1.7.4).
-   *
-   * That condition is the whole design, not a caution bolted on afterwards. A
-   * number input that answers the wheel whenever a pointer happens to pass over
-   * it changes values somebody was only scrolling past, and browsers removed
-   * exactly that behaviour from the native widget. Requiring focus means the
-   * field was deliberately entered first, which is the same gesture that
-   * already enables the arrow keys, so the wheel becomes a fourth way to do
-   * what typing, the arrow keys and the two steppers already do rather than a
-   * new hazard.
-   *
-   * Attached with `passive: false` and calling preventDefault, or the page
-   * scrolls at the same time and the field slides out from under the pointer
-   * mid-adjustment. React's own onWheel is passive by default and cannot do
-   * this, which is why it hangs off the element by hand.
-   *
-   * Up is more, matching the upper arrow and the up key. A trackpad reports
-   * fractional deltas, so only the sign is read.
-   */
+  // The wheel steps the value only while the field has focus, so scrolling the
+  // page past a field never changes it. The listener is non-passive because
+  // preventDefault has to stop the page scrolling the field away, and React's
+  // onWheel is passive. Wheel up is more; trackpads report fractional deltas,
+  // so only the sign counts.
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -143,37 +88,18 @@ export function NumberField({ className = "", wrapperClassName = "", ...rest }: 
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-    // `step` is redefined every render and closes over nothing that changes
-    // between them beyond `sync`, which is stable. Re-attaching a non-passive
-    // listener on every render would be the more expensive mistake.
+    // `step` is new every render but only uses the ref and `sync`, which are
+    // stable, so the listener is attached once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sync]);
 
-  /**
-   * A solid triangle with ROUNDED corners ([457]).
-   *
-   * This took three goes, and the last correction is the one worth writing
-   * down. jdp: "eigentlich wollte ich einfach nur die ursprünglichen dreicke
-   * wie sie waren, nur ohne den dunklen hintergrund". The browser's own spinner
-   * was already the right MARK — small solid triangles — and the complaint was
-   * only ever about the ground under them and the space they stole. I read
-   * "remove the widget" as "design a replacement", and drew chevrons ([451]
-   * corrected those to triangles, sharp ones).
-   *
-   * The general form, since it will happen again: **when somebody asks for one
-   * property of a thing to change, the rest of the thing is the specification.**
-   * Redrawing it is not a neutral act, and each redraw costs a round.
-   *
-   * Rounded via a matched stroke with `strokeLinejoin="round"` rather than arcs
-   * in the path: three corners, three radii, and the shape stays one triangle
-   * anybody can read. The base path is inset by the stroke's half-width so the
-   * painted result lands where the sharp version did, instead of growing.
-   */
+  // The native spinner's small solid triangle, with corners rounded by a
+  // round-joined stroke in the same colour. The path is inset by half the
+  // stroke width so the painted shape keeps the size of the sharp one.
   const Arrow = ({ up }: { up: boolean }) => (
     <svg viewBox="0 0 10 6" width="10" height="6" aria-hidden="true">
       {/* bv-convention-exception: user-message-is-translated -- SVG path data,
-          not prose. "M5 1.7 L8.6 4.6 L1.4 4.6 Z" is a triangle; there is
-          nothing here for a translator to translate. */}
+          not prose; nothing to translate. */}
       <path
         d={up ? "M5 1.7 L8.6 4.6 L1.4 4.6 Z" : "M5 4.3 L1.4 1.4 L8.6 1.4 Z"}
         fill="currentColor"
@@ -185,30 +111,19 @@ export function NumberField({ className = "", wrapperClassName = "", ...rest }: 
   );
 
   return (
-    // Sized by its content, not by its parent (GlimStone 1.7.5). `block` alone
-    // is correct in a block parent and wrong in the place this helper is used
-    // most: a labelled field is a COLUMN flex container, this wrapper is a flex
-    // item in it, and the default stretch spreads an item across the cross axis
-    // — which in a column is its width. So a 6rem number box in a full-width
-    // column produced a full-width wrapper, and the two arrows sat at the far
-    // right of the row with the field alone on the left. The rule beside the
-    // steppers has said "a stepper is part of the field, not a control next to
-    // it" all along; the stylesheet agreed and the screen did not.
-    //
-    // One consequence, stated rather than buried: the width lives on the input,
-    // and it has to be a definite one.
+    // Sized by its content: in a labelled field's column flex container a
+    // stretched wrapper would put the arrows at the far end of the row, away
+    // from the input. The input therefore needs a definite width.
     <span className={`relative block w-fit max-w-full self-start justify-self-start ${wrapperClassName}`}>
       <input
         {...rest}
         ref={ref}
         type="number"
-        // glim-num strips the native spinner; pe-8 is the rule's second half —
-        // room for the arrows so the digits never run underneath them.
+        // pe-8 keeps the digits clear of the arrows.
         className={`glim-num pe-8 ${className}`}
       />
-      {/* aria-hidden and not focusable: the input already carries the value,
-          the range and the arrow keys. A screen reader meeting these would
-          hear a third control changing the same number for no reason. */}
+      {/* Hidden and unfocusable: the input already exposes the value, the
+          range and the arrow keys. */}
       <span
         aria-hidden="true"
         className="pointer-events-none absolute inset-y-px end-1.5 flex flex-col justify-center gap-px"
@@ -221,14 +136,9 @@ export function NumberField({ className = "", wrapperClassName = "", ...rest }: 
               type="button"
               tabIndex={-1}
               disabled={rest.disabled || rest.readOnly || !enabled}
-              // NO title, and not an oversight. These carry aria-hidden and
-              // tabIndex={-1}, so no keyboard or screen-reader user ever
-              // reaches them — which leaves `title` doing only the one thing
-              // the repo's icon-badge rule forbids it for: painting an OS
-              // balloon. A chevron inside a number field beside its own label
-              // is not a control anybody has to be told about.
-              // No background, ever. Giving these a surface is what turned the
-              // first attempt at this into three objects standing in a row.
+              // No title: nobody reaches these by keyboard or screen reader, so
+              // it would only paint the OS tooltip the icon-badge rule forbids.
+              // No background, so the arrows stay part of the field.
               className="pointer-events-auto flex h-[11px] w-[14px] items-center justify-center border-0 bg-transparent p-0 text-carbon-textMuted transition-colors hover:text-carbon-text disabled:opacity-35 disabled:hover:text-carbon-textMuted focus:outline-none"
               // Keep the caret in the field: a mousedown here would move focus
               // and a field that saves on blur would fire on every click.

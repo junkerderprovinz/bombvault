@@ -7,13 +7,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// A domain whose PRIMARY backup path is a remote repository can now name its own
-// credential set (#182, manilx: "I can't set s3 credentials when i use s3 as
-// main path and offsite"). These tests exist mainly because of the trap that
-// shape invites: TestPrimaryRepo already resolved the row's CredsRef, so the
-// connection test would go green while every real backup still ran on the
-// SHARED credentials. A selector that only works in the test is worse than no
-// selector, so what is pinned here is the BACKUP path, not the probe.
+// A remote primary path can name its own credential set. TestPrimaryRepo
+// resolves the row's CredsRef too, so a connection test could pass while real
+// backups ran with the shared credentials; these tests cover the backup path.
 
 // primaryCredsService builds a service whose containers domain backs up to a
 // remote repo, with one shared credential set and one named set to choose from.
@@ -50,9 +46,6 @@ func settingsOf(t *testing.T, s *Service) store.Settings {
 	return settings
 }
 
-// TestPrimaryModeForUsesItsOwnCredentialSet is #182 itself: the mode a real
-// backup runs with must carry the NAMED set's keys once the primary row selects
-// one.
 func TestPrimaryModeForUsesItsOwnCredentialSet(t *testing.T) {
 	s := primaryCredsService(t)
 	if _, err := s.SetPrimaryRemoteConfig("containers", store.OffsiteTarget{CredsRef: "garage"}); err != nil {
@@ -73,8 +66,6 @@ func TestPrimaryModeForUsesItsOwnCredentialSet(t *testing.T) {
 	}
 }
 
-// TestPrimaryModeForWithoutASetKeepsSharedCredentials is the no-regression half:
-// every install that never picks a set must behave exactly as before.
 func TestPrimaryModeForWithoutASetKeepsSharedCredentials(t *testing.T) {
 	s := primaryCredsService(t)
 	if _, err := s.SetPrimaryRemoteConfig("containers", store.OffsiteTarget{LimitUpload: 500}); err != nil {
@@ -88,10 +79,8 @@ func TestPrimaryModeForWithoutASetKeepsSharedCredentials(t *testing.T) {
 	}
 }
 
-// TestPrimaryModeForKeepsBandwidthCaps guards the refactor rather than the
-// feature: the caps from issue #152 used to be assigned at each of the five
-// backup call sites and now come from primaryModeFor, so losing them would be
-// silent (a backup that simply saturates the uplink).
+// Losing the caps would go unnoticed: the backup would simply saturate the
+// uplink.
 func TestPrimaryModeForKeepsBandwidthCaps(t *testing.T) {
 	s := primaryCredsService(t)
 	if _, err := s.SetPrimaryRemoteConfig("containers", store.OffsiteTarget{
@@ -107,9 +96,8 @@ func TestPrimaryModeForKeepsBandwidthCaps(t *testing.T) {
 	}
 }
 
-// TestPrimaryModeForLocalPathIgnoresStoredRow pins the guard that keeps a local
-// primary byte-identical to what it was before any of this existed: no limits,
-// no credential override, whatever a leftover row happens to say.
+// A local primary gets no limits and no credential override, whatever a
+// leftover row says.
 func TestPrimaryModeForLocalPathIgnoresStoredRow(t *testing.T) {
 	s := primaryCredsService(t)
 	if _, err := s.SetPrimaryRemoteConfig("containers", store.OffsiteTarget{

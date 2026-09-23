@@ -1,15 +1,10 @@
-// ---------------------------------------------------------------------------
-// bubblePosition — pure placement math, exercised directly with plain
-// numbers (no DOM, no React renderer), matching this repo's established
-// no-jsdom pattern for pure logic (Selector.test.ts, appearance.test.ts).
-// ---------------------------------------------------------------------------
 import { describe, expect, it } from "vitest";
 import { computeBubblePosition } from "./bubblePosition";
 
 const VIEWPORT = { width: 1024, height: 768 };
 const SMALL_BUBBLE = { width: 200, height: 60 };
 
-describe("computeBubblePosition — horizontal clamp", () => {
+describe("computeBubblePosition: horizontal clamp", () => {
   it("centres on the trigger when there's room on both sides", () => {
     const trigger = { left: 500, right: 540, top: 100, bottom: 120 };
     const pos = computeBubblePosition(trigger, SMALL_BUBBLE, VIEWPORT);
@@ -17,13 +12,11 @@ describe("computeBubblePosition — horizontal clamp", () => {
   });
 
   it("clamps a right-edge trigger so the bubble's right side stays inside the viewport", () => {
-    // Trigger hugging the right edge — reproduces the reported
-    // "Wiederherstellungskit" overflow shape: naive centring would put
-    // left at ~1010, pushing half the 200px-wide bubble past width 1024.
+    // Centring alone would put left at 1010 and half the bubble past the edge.
     const trigger = { left: 1000, right: 1020, top: 100, bottom: 120 };
     const pos = computeBubblePosition(trigger, SMALL_BUBBLE, VIEWPORT);
-    // Bubble is translateX(-50%)'d around `left`, so its right edge is
-    // left + halfWidth — must stay within margin of the viewport edge.
+    // The bubble is centred on `left` with translateX(-50%), so its right
+    // edge is left + halfWidth.
     expect(pos.left + SMALL_BUBBLE.width / 2).toBeLessThanOrEqual(VIEWPORT.width - 8);
     expect(pos.left).toBe(1024 - 8 - 100); // viewport.width - margin - halfWidth
   });
@@ -43,8 +36,8 @@ describe("computeBubblePosition — horizontal clamp", () => {
   });
 });
 
-describe("computeBubblePosition — vertical flip", () => {
-  it("opens below the trigger by default (matches the pre-fix behaviour when there's room)", () => {
+describe("computeBubblePosition: vertical flip", () => {
+  it("opens below the trigger when there is room", () => {
     const trigger = { left: 100, right: 140, top: 100, bottom: 120 };
     const pos = computeBubblePosition(trigger, SMALL_BUBBLE, VIEWPORT);
     expect(pos.above).toBe(false);
@@ -52,9 +45,7 @@ describe("computeBubblePosition — vertical flip", () => {
   });
 
   it("flips above the trigger when a tall bubble opening below would clip the viewport's bottom edge", () => {
-    // Reproduces the actual recovery.why case: a long tip wraps to a tall
-    // bubble, and the trigger sits low enough in a scrolled page that
-    // opening downward would run past the window's bottom edge.
+    // A long tip wraps into a tall bubble on a trigger near the bottom.
     const trigger = { left: 300, right: 340, top: 700, bottom: 720 };
     const tallBubble = { width: 260, height: 140 };
     const pos = computeBubblePosition(trigger, tallBubble, VIEWPORT);
@@ -64,10 +55,9 @@ describe("computeBubblePosition — vertical flip", () => {
     expect(pos.top + tallBubble.height).toBeLessThanOrEqual(VIEWPORT.height);
   });
 
-  it("stays below (does NOT flip) when the trigger is pinned near the very top, even if opening below would clip the bottom", () => {
-    // A trigger with no room above must keep opening downward — flipping
-    // into negative space would just trade one clipped edge for another
-    // (reference/tooltip.ts's own documented edge case).
+  it("stays below when the trigger is near the top, even if the bottom clips", () => {
+    // Flipping into negative space would only trade one clipped edge for
+    // another.
     const trigger = { left: 300, right: 340, top: 4, bottom: 24 };
     const tallBubble = { width: 260, height: 900 }; // taller than the whole viewport
     const pos = computeBubblePosition(trigger, tallBubble, VIEWPORT);
@@ -83,8 +73,8 @@ describe("computeBubblePosition — vertical flip", () => {
   });
 });
 
-describe("computeBubblePosition — combined edge cases", () => {
-  it("clamps horizontally AND flips vertically at once for a trigger pinned to the bottom-right corner", () => {
+describe("computeBubblePosition: combined edge cases", () => {
+  it("clamps horizontally and flips vertically in the bottom-right corner", () => {
     const trigger = { left: 1000, right: 1020, top: 740, bottom: 760 };
     const bubble = { width: 260, height: 120 };
     const pos = computeBubblePosition(trigger, bubble, VIEWPORT);
@@ -101,12 +91,11 @@ describe("computeBubblePosition — combined edge cases", () => {
   });
 });
 
-describe("computeBubblePosition — vertical clamping", () => {
+describe("computeBubblePosition: vertical clamping", () => {
   it("pulls a bubble back inside when it fits but would overhang the bottom", () => {
-    // Fits in the viewport, fits neither in the gap below the trigger nor in the
-    // one above it. Before the clamp this stayed at trigger.bottom + margin and
-    // the last ~150px hung off the screen — unreachable, since every consumer is
-    // position:fixed.
+    // Fits the viewport, but neither the gap below the trigger nor the one
+    // above it. Consumers are position:fixed, so an overhang could not be
+    // scrolled into view.
     const trigger = { left: 300, right: 340, top: 300, bottom: 320 };
     const bubble = { width: 260, height: 600 };
     const pos = computeBubblePosition(trigger, bubble, VIEWPORT);
@@ -115,8 +104,8 @@ describe("computeBubblePosition — vertical clamping", () => {
   });
 
   it("leaves a bubble taller than the viewport exactly where it was", () => {
-    // Clipping is unavoidable here, and moving it up would trade a clipped
-    // bottom for a covered trigger. The old behaviour is the better one.
+    // Clipping is unavoidable here, and moving the bubble up would cover the
+    // trigger as well.
     const trigger = { left: 300, right: 340, top: 4, bottom: 24 };
     const bubble = { width: 260, height: 900 };
     const pos = computeBubblePosition(trigger, bubble, VIEWPORT);

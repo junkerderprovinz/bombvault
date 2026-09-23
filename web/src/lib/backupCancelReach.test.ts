@@ -1,17 +1,8 @@
-// ---------------------------------------------------------------------------
-// Every domain that can run a backup can stop one.
-//
-// The server registers a cancel for all five - containers, VMs, folder sets,
-// flash and config - and POST /api/backup/cancel has accepted every one of those
-// keys since #200. The BUTTON existed on the Folders page alone, and nothing said
-// so. The answer posted on that issue promised it for any running backup, which
-// was true of one page out of five.
-//
-// That is a gap no unit test and no type checker can see: each page is correct on
-// its own terms, and the only thing wrong is that four of them are missing
-// something the fifth has. A source scan is the right instrument for "these
-// distant files must agree", exactly as pageHeading.test.ts is for the headings.
-// ---------------------------------------------------------------------------
+// Every domain that can run a backup can stop one. The server registers a
+// cancel for containers, VMs, folder sets, flash and config, and
+// POST /api/backup/cancel accepts all five keys, so every page's card needs the
+// button. Each page is correct on its own terms, so only a scan across the
+// files can see one that lacks it, as pageHeading.test.ts does for headings.
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -46,7 +37,7 @@ describe("the cancel control", () => {
     ).toContain(`cancelKey={${key}}`);
   });
 
-  it.each(DOMAINS)("$file does not offer it during a RESTORE", ({ file }) => {
+  it.each(DOMAINS)("$file does not offer it during a restore", ({ file }) => {
     const src = readFileSync(join(PAGES, file), "utf8");
     const at = src.indexOf("<BackupCancelButton");
     expect(at, `${file} has no BackupCancelButton`).toBeGreaterThan(-1);

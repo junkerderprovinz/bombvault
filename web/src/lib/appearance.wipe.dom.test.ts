@@ -1,25 +1,10 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// The colour wipe fires for a flip somebody MADE, and never for a look that
-// merely arrived.
-//
-// Reported as #228: "when switching options the screen flashes green". Measured
-// from the reporter's own video, a heading badge travelled from the flat accent
-// to a rainbow hue and back over about 160 ms while the accent itself never
-// changed. The cause is two applies, not one: main.tsx applies every stored
-// axis before first paint, and applies them AGAIN when the server hands this
-// browser a different stored look. The wipe gate only ever suppressed the
-// first, so the second animated a change nobody had made, across the whole
-// page, a moment after paint.
-//
-// Both halves are pinned here, because the fix is one boolean and the obvious
-// "simplification" later is to drop it:
-//
-//   a real flip     still wipes. Removing that makes a mode change snap, which
-//                   is the animation this engine exists for.
-//   an adopted look never wipes, but its VALUE still lands. Skipping the value
-//                   too would leave the browser showing the wrong look.
-// ---------------------------------------------------------------------------
+// The colour wipe runs for a flip somebody made, never for a look that merely
+// arrived. main.tsx applies every stored axis before first paint and again when
+// the server hands this browser a different stored look; animating that second
+// apply would walk every hued element to its rainbow hue and back right after
+// paint. Both sides are pinned: a real flip still wipes, and an adopted look
+// skips the wipe but its value still lands.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const WIPE = "glim-colour-wipe";
@@ -55,7 +40,7 @@ describe("colour wipe", () => {
     expect(document.documentElement.classList.contains(WIPE)).toBe(true);
   });
 
-  it("does NOT wipe when the same look merely arrives from the server", async () => {
+  it("does not wipe when a look arrives from the server", async () => {
     const a = await freshModule();
     a.applyRainbow({ on: false }); // boot, from localStorage
     a.applyRainbow({ on: true }, { animate: false }); // the adopted look
@@ -77,7 +62,7 @@ describe("colour wipe", () => {
   });
 
   it("a later real flip still wipes after an adopted one", async () => {
-    // The adopt must not poison the gate for the flips that follow it.
+    // Adopting a look must not disarm the gate for the flips after it.
     const a = await freshModule();
     a.applyRainbow({ on: false });
     a.applyRainbow({ on: true }, { animate: false });

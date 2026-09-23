@@ -4,42 +4,21 @@ import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { CoinMark } from "./donateMarks";
 import { QRCode } from "./QRCode";
-import { hueVars, rainbowAt } from "../lib/appearance";
+import { hueVars } from "../lib/appearance";
 import { copyText } from "../lib/clipboard";
 import { useT } from "../lib/i18n";
 import { useLabelMode } from "../lib/useLabelMode";
-import { useRainbow } from "../lib/useRainbow";
 import { useToast } from "../lib/toast";
 import { CRYPTO_COINS, type CryptoCoin, type CryptoNetwork } from "../lib/donate";
 
-// ---------------------------------------------------------------------------
-// The crypto donation window ([3524], rebuilt as coin-first in [3554]).
+// The crypto donation window: pick a coin, then its chain, and get the address
+// as text and as a QR code. It works offline, sends nothing and shows no name.
 //
-// A house window (rule 15: a window is a window) rather than a link to somebody
-// else's page. Everything a donor needs is here: pick a coin, pick a chain, get
-// the address as text and as a QR code, copy it. It works with no internet,
-// sends nothing anywhere, and shows no name — which is the whole reason this
-// route exists beside the coffee button.
-//
-// THE ORDER IS UPSIDE DOWN ON PURPOSE (jdp, 2026-09-10): the code comes first
-// and the picker sits under it. A dialog usually asks before it answers, and
-// this one answers first, because the answer is what the window was opened
-// for. The picker below changes that answer in place, so the thing somebody
-// came here to scan never moves off the top of the window.
-//
-// THE COINS ARE THE TILES, THE CHAINS ARE UNDERNEATH. A donor thinks "I have
-// USDT", not "I have Ethereum", so the first choice is the one they can
-// actually answer. The second choice is the dangerous one, and it stays a
-// real, separate choice: every chain offered here carries its own address, so
-// a chain we cannot receive on is unofferable rather than merely discouraged.
-// lib/donate.ts carries the near miss that made this the rule.
-//
-// The chain row is shown even for a coin that has only one, and that is not
-// filler. It is the line that says WHICH network the address on screen belongs
-// to, and hiding it for the single-chain coins would make the one fact that
-// decides whether the money arrives appear and disappear depending on which
-// tile is lit.
-// ---------------------------------------------------------------------------
+// The code comes first and the picker sits under it, so what the donor came to
+// scan stays at the top while the picker changes it in place. Coins are the
+// tiles because a donor knows "I have USDT" before they know the chain. The
+// chain stays a separate choice, and only chains with their own address are
+// offered (see lib/donate.ts).
 
 export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
   const { t } = useT();
@@ -48,35 +27,15 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
   const [network, setNetwork] = useState<CryptoNetwork>(CRYPTO_COINS[0]!.networks[0]!);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // Both engines, joined the way every other control on the page is.
-  //
-  // The label mode decides what a tile SHOWS, and `reactive` now means here
-  // what it means everywhere else: the ticker is collapsed at rest and comes
-  // back under the pointer, with the SELECTED tile keeping its word.
-  //
-  // This reverses what the file used to do. It resolved reactive to the same
-  // thing as text-and-glyph, on the argument that a grid of eight coins is
-  // something people SEARCH, so hiding the tickers turns "find USDT" into
-  // hovering every tile in turn. That argument is not wrong, and it is not
-  // mine to make: reactive is a setting somebody chose, and a control that
-  // quietly opts out of the mode is exactly the complaint that started this
-  // round for the source toggle and the VM method switch. jdp, 2026-09-11:
-  // "Die Kryptokacheln sind nicht im reaktiven beschriftungsmodus."
-  //
-  // What keeps it usable is that the marks stay: in reactive mode the grid is
-  // eight brand logos in their own colours, which is how a donor recognises
-  // their coin faster than they read a ticker anyway - the argument
-  // donateMarks.tsx already makes for having the colours at all.
+  // The label mode decides what a tile shows. In reactive mode the ticker is
+  // collapsed at rest like any other label and the selected tile keeps it; the
+  // coin marks stay, and a donor recognises those faster than a ticker anyway.
   const mode = useLabelMode("buttons");
   const reactive = mode === "reactive";
   const showMark = mode !== "text";
   const showTicker = mode !== "glyph";
-  // Subscribed once for the whole window rather than once per tile: the
-  // palette changes for every tile at once anyway.
-  useRainbow();
 
-  // Escape closes, and focus starts inside the window rather than wherever it
-  // happened to be — the same contract every other window in this app keeps.
+  // Escape closes, and focus starts inside the window.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -86,10 +45,8 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  // Picking a coin always lands on a network of THAT coin. Keeping the previous
-  // chain when it happens to also carry the new coin would be a convenience
-  // with one bad case: the chain somebody last looked at staying selected under
-  // a coin they never checked it against.
+  // A new coin always starts on its own first network, so a chain chosen for
+  // another coin never stays selected unchecked.
   function pickCoin(next: CryptoCoin) {
     setCoin(next);
     setNetwork(next.networks[0]!);
@@ -127,53 +84,26 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-5">
           <p className="text-sm text-carbon-textSub">{t("about.cryptoIntro")}</p>
 
-          {/* The answer, first. */}
           <div className="flex flex-col items-center gap-3 rounded-card bg-carbon-surface2 p-4">
-            {/* Bigger (jdp, 2026-09-11: "mach den qr code bitte etwas
-                größer"). 168 was sized against a dialog that had not yet grown
-                square coin tiles under it; at 224 the code is the largest thing
-                in the window, which matches what it is for. The box is about
-                440px wide inside its own padding, so it still sits in open
-                space rather than filling the panel edge to edge.
-
-                It stays black on white in BOTH themes (jdp asked whether it
-                could go light in the dark theme, 2026-09-11, and chose to keep
-                it): a code drawn light-on-dark is inverted, the standard does
-                not describe one, and the scanners that refuse it are exactly
-                the wallet apps a donor would be holding. QRCode.tsx carries the
-                full argument.
-
-                What DOES change is the plate. `rounded-card` makes the white
-                square read as a deliberate card on the dark ground instead of
-                a raw slab with hard corners, which is what made it look out of
-                place. Safe to clip: the outermost four modules are the quiet
-                zone, which is white by spec, so a rounded corner never touches
-                a dark module. */}
+            {/* Black on white in both themes, because wallet scanners refuse an
+                inverted code (see QRCode.tsx). The rounded corners only clip
+                the quiet zone, which is white. */}
             <QRCode value={network.address} size={224} className="rounded-card" />
-            {/* Whole, in one piece, in a mono face, and never shortened: an
-                address is read back by eye before somebody sends to it, so an
-                ellipsis in the middle turns the one string that has to be
-                exact into a string nobody can check. */}
+            {/* Never shortened: a donor checks the address by eye before
+                sending to it. */}
             <p dir="ltr" className="w-full break-all text-center font-mono text-xs text-carbon-text">
               {network.address}
             </p>
-            {/* The chain, switched HERE, directly under the address it changes
-                (jdp, 2026-09-10: "die netzwerke soll man unter der Adresse
-                umschalten können"). A picker one box away from its own effect
-                makes somebody look twice to see whether the address moved; a
-                row of chips under it changes the string in front of their
-                eyes. Shown even when a coin has only one chain, because this
-                is also the line that SAYS which network the address belongs
-                to, and that fact may not come and go with the tile. */}
+            {/* The chain switches right under the address it changes. The row
+                shows even for a single chain, because it says which network
+                the address belongs to. */}
             <div
               className="flex flex-wrap justify-center gap-2"
               role="listbox"
               aria-label={t("about.cryptoNetworks")}
             >
-              {/* A chain name is DATA and has no symbol, so the label engine
-                  has nothing to hide here and these stay words in every mode.
-                  The colour engine still applies: each chain owns a position,
-                  so the chosen one fills in its own hue. */}
+              {/* Chain names are data without a glyph, so they stay words in
+                  every mode. Each chain owns a rainbow position. */}
               {coin.networks.map((n, i) => (
                 <button
                   key={n.id}
@@ -181,7 +111,7 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
                   role="option"
                   aria-selected={n.id === network.id}
                   onClick={() => setNetwork(n)}
-                  style={hueVars(rainbowAt(i)) as CSSProperties}
+                  style={hueVars(i) as CSSProperties}
                   className={`glim-hue rounded-pill px-3 py-1 text-xs font-medium transition-colors ${
                     n.id === network.id
                       ? "glim-active bg-accent text-accentContrast"
@@ -192,19 +122,13 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
                 </button>
               ))}
             </div>
-            {/* Warn-coloured, and it is not a warning: it is the line a donor
-                would otherwise go hunting for. Exchanges train people to look
-                for a destination tag or a memo, so the chain that wants
-                neither has to say so where the address is. */}
+            {/* Exchanges teach people to look for a destination tag or memo, so
+                a chain that needs neither says so next to the address. */}
             {network.noteKey && (
               <p className="text-center text-xs text-statusWarn">{t(network.noteKey)}</p>
             )}
-            {/* The one accent surface in this box, so it takes the position of
-                the coin it belongs to: in rainbow mode the copy button is the
-                same colour as the tile the address came from. The close button
-                below has no position, and that is not an omission - it is
-                neutral-toned, and a palette colour on a control that paints no
-                accent resolves to nothing. */}
+            {/* Takes the coin's rainbow position, so it matches the selected
+                tile. */}
             <Button
               label={t("common.copy")}
               labelKey="common.copy"
@@ -214,20 +138,9 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
             />
           </div>
 
-          {/* The picker, under the answer it changes. Each tile owns a palette
-              position, so rainbow mode makes eight coins scannable by colour
-              the way it makes any other list scannable.
-
-              `.glim-hue` only, never `.glim-hue-icon`. That class paints a
-              tile's glyph in its own position hue, and this is the one grid in
-              the app whose glyphs may not be painted: they are brand marks
-              carrying brand colours. It sat here while the marks were
-              `currentColor` and did real work; since they took their own
-              colours it has been inert, and an inert class on a control reads
-              as a decision that is still in force. The rule it would have
-              broken is already written out beside .glim-hue-icon in index.css
-              ("die icons sollen nicht eingefärbt werden, nur die badges also
-              der hintergrund"). */}
+          {/* Each tile owns a rainbow position. `.glim-hue` only, not
+              `.glim-hue-icon`, because the coin marks keep their brand
+              colours. */}
           <div className="grid grid-cols-4 gap-2" role="listbox" aria-label={t("about.cryptoTitle")}>
             {CRYPTO_COINS.map((c, i) => (
               <button
@@ -238,31 +151,12 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
                 aria-label={`${c.name} (${c.symbol})`}
                 title={c.name}
                 onClick={() => pickCoin(c)}
-                style={hueVars(rainbowAt(i)) as CSSProperties}
-                // Square (jdp, 2026-09-10: "Die kacheln der Kryptowährungen
-                // sollen quadratisch sein"). `aspect-square` rather than a
-                // fixed height, so the tile stays square in all three label
-                // modes: mark alone, ticker alone, or both. Without it the row
-                // changed height whenever the labelling engine changed what is
-                // inside it, and a picker that reflows when you switch label
-                // mode reads as a different grid.
-                //
-                // The hover follows KnightLoader's browser tiles, which
-                // settled this already (BrowserTools.tsx: "The hover goes
-                // light in the dark theme"): a surface one step up is not a
-                // hover anybody notices on a dark ground, so the dark theme
-                // goes to white and flips the ink. The coin marks keep their
-                // own colours straight through it - only the surface and the
-                // ticker change - which is the same rule that file states.
-                // XRP is the one mark with no colour of its own, so index.css
-                // moves --coin-xrp for this hover and for the selected tile.
-                //
-                // The flipped ink is `text-carbon-background`, not the literal
-                // KnightLoader writes: on this theme that token IS #161616, so
-                // the value is the same one and it now comes from the engine
-                // rather than from a hex somebody has to keep in step. The
-                // sibling's own lint rule would have caught the literal here,
-                // and did.
+                style={hueVars(i) as CSSProperties}
+                // `aspect-square` keeps the tile square in every label mode, so
+                // the grid does not reflow when the mode changes. A one step
+                // lighter hover goes unnoticed on a dark ground, so the dark
+                // theme hovers to white with flipped ink. The marks keep their
+                // colours; index.css recolours XRP's colourless mark there.
                 className={`glim-coin-tile glim-hue flex aspect-square flex-col items-center justify-center gap-2 rounded-control px-2 transition-colors ${
                   reactive ? "glim-reactive " : ""
                 }${
@@ -271,21 +165,11 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
                     : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-surface3 hover:text-carbon-text dark:hover:bg-white dark:hover:text-carbon-background"
                 }`}
               >
-                {/* Half the tile, which is the sibling's proportion rather than
-                    a number chosen here: its browser tiles are 112px with a
-                    56px mark, and these came out 110px wide. The mark was 22px
-                    while the tile sized itself to its contents; once the tile
-                    became a square it was a fifth of it, and a logo floating in
-                    an empty square is not the grid jdp pointed at. */}
+                {/* About half the tile. */}
                 {showMark && <CoinMark coin={c.id} size={44} />}
                 {showTicker && (
-                  // The house's own reactive label, not a second mechanism:
-                  // `.glim-label-reactive` collapses at rest and is handed back
-                  // by the shared rule on hover, focus and `.glim-active`, so
-                  // the selected coin keeps its ticker for free. In the other
-                  // modes the class is simply absent and this is a plain span.
-                  // `--reactive-chars` is the label's own length, which for a
-                  // three or four letter ticker keeps the reveal snappy.
+                  // The shared reactive label: collapsed at rest, shown on
+                  // hover, focus and `.glim-active`.
                   <span
                     className={`text-xs font-medium${reactive ? " glim-label-reactive" : ""}`}
                     style={reactive ? ({ "--reactive-chars": c.symbol.length } as CSSProperties) : undefined}

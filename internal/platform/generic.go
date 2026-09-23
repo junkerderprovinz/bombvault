@@ -3,29 +3,25 @@ package platform
 import "context"
 
 // Generic implements Platform for a plain Docker host with no assumed share
-// layout: no appdata-fallback convention (Tasks 2/3's bind/volume/compose-
-// label discovery is expected to find everything on its own), an identity
-// restore-destination default (no assumed subpath under the host mount), and
-// no host-side update-status step to reconcile.
+// layout.
 type Generic struct{}
 
 var _ Platform = Generic{}
 
 func (Generic) Kind() Kind { return KindGeneric }
 
-// AppdataFallback: no convention to fall back to. An empty selection
-// (config-only backup) beats guessing a folder that doesn't exist.
+// AppdataFallback returns "": a configuration-only backup beats guessing a
+// folder that does not exist.
 func (Generic) AppdataFallback(_, _ string) string { return "" }
 
-// ForeignContainerDestBase: identity default — the host mount root itself,
-// no assumed subpath.
+// ForeignContainerDestBase returns the host mount root itself.
 func (Generic) ForeignContainerDestBase(hostMountRoot string) string { return hostMountRoot }
 
-// ForeignVMDestBase: identity default — the host mount root itself, no
-// assumed subpath.
+// ForeignVMDestBase returns the host mount root itself.
 func (Generic) ForeignVMDestBase(hostMountRoot string) string { return hostMountRoot }
 
-// ReconcileContainerUpdateStatus: no generic-Docker-host UI to reconcile.
+// ReconcileContainerUpdateStatus does nothing; a plain Docker host has no UI
+// to refresh.
 func (Generic) ReconcileContainerUpdateStatus(context.Context, SSHRunner, string) error {
 	return nil
 }

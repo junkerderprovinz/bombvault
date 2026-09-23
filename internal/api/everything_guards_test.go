@@ -1,15 +1,10 @@
 package api_test
 
-// Regression tests for the two guards "Backup Everything" was missing against
-// its own sibling, the real scheduler: the operator's per-domain on/off switch,
-// and the has-work check that keeps a domain with nothing to do from paying for
-// an aggregate Healthchecks ping, a prune and an off-site replication.
-//
-// Both are asserted through what a user can actually observe — which domains
-// ran, and which Healthchecks checks were pinged — rather than through internal
-// call counts, because the ping IS the damage in the second case: a green
-// "0 of 0 items succeeded" at the dead-man's switch for a pass that touched
-// nothing turns a check that had gone red back to green.
+// Like the scheduler, "Backup Everything" honours the per-domain switch and
+// skips a domain with nothing to do instead of paying for a Healthchecks ping,
+// a prune and an off-site copy. The tests check what a user sees (which domains
+// ran, which checks were pinged): a green "0 of 0 items succeeded" ping for a
+// pass that touched nothing turns a red check green.
 
 import (
 	"context"
@@ -20,12 +15,9 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/notify"
-	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// hcRecorder is a Healthchecks endpoint that records the path of every ping it
-// receives, so a test can assert which DOMAIN's check was pinged (each domain
-// gets its own path below) and, just as importantly, which was not.
+// hcRecorder is a Healthchecks endpoint that records the path of every ping.
 type hcRecorder struct {
 	mu    sync.Mutex
 	paths []string
@@ -62,13 +54,8 @@ func (r *hcRecorder) seen() []string {
 	return append([]string(nil), r.paths...)
 }
 
-// TestEverythingSkipsSwitchedOffDomain: a domain the operator switched off is
-// not part of the pass. Backup Everything used to call all five domain steps
-// unconditionally, which had a consequence in both directions — on a host
-// without an Unraid flash the flash step failed on every pass and failed the
-// PARENT run with it, i.e. the one signal the whole feature exists to produce;
-// and with the flash domain off on Unraid the step would create a repo the
-// operator never asked for.
+// On a host without an Unraid flash a flash step would fail the parent run on
+// every pass.
 func TestEverythingSkipsSwitchedOffDomain(t *testing.T) {
 	log := &everythingOrderLog{}
 	eng := &orderedEngine{fakeResticEngine: &fakeResticEngine{}, log: log}
@@ -98,8 +85,7 @@ func TestEverythingSkipsSwitchedOffDomain(t *testing.T) {
 			t.Fatalf("a switched-off domain must not appear in the pass result, got %+v", sum.Domains)
 		}
 	}
-	// The domains that ARE on still run, and the pass is still a success: a
-	// skipped domain is the operator's own configuration, not a failure.
+	// The domains that are on still run, and a skipped domain is no failure.
 	var ranContainers bool
 	for _, e := range log.entries {
 		if e == "containers" {
@@ -114,24 +100,16 @@ func TestEverythingSkipsSwitchedOffDomain(t *testing.T) {
 	}
 }
 
-// TestEverythingIdleDomainSkipsPingAndTail: a domain that IS switched on but has
-// nothing eligible this pass must not ping its Healthchecks check.
-//
-// The real scheduler gates its whole domain closure on exactly this
-// (schedule.DomainRunHasWork, whose comment reads "no loop, no ping, and above
-// all no prune and no off-site copy"); the Everything pass reproduced the loop
-// and left the gate behind. On a box with no VMs and no file sets — an ordinary
-// state, not an exotic one — every pass therefore pinged a green "0 of 0 items
-// succeeded" at those domains' checks.
+// A switched-on domain with nothing eligible must not ping its check, as with
+// the scheduler's DomainRunHasWork gate.
 func TestEverythingIdleDomainSkipsPingAndTail(t *testing.T) {
 	hc := newHCRecorder(t)
 	log := &everythingOrderLog{}
 	eng := &orderedEngine{fakeResticEngine: &fakeResticEngine{}, log: log}
 	svc, _, _, _ := everythingTestService(t, eng)
 
-	// Per-domain checks so a ping identifies WHICH domain pinged. The fixture
-	// registers one container target and no VM targets or file sets at all, so
-	// containers has work and vms/files do not.
+	// One check per domain. The fixture has one container target and no VMs or
+	// file sets, so only containers has work.
 	if err := svc.SetNotifyConfig(notify.Config{
 		On: "always",
 		HealthchecksByDomain: map[string]string{
@@ -149,17 +127,16 @@ func TestEverythingIdleDomainSkipsPingAndTail(t *testing.T) {
 	}
 
 	if hc.pinged("/vm") {
-		t.Fatalf("no VM is eligible — its check must not be pinged, pings = %v", hc.seen())
+		t.Fatalf("no VM is eligible, so its check must not be pinged, pings = %v", hc.seen())
 	}
 	if hc.pinged("/files") {
-		t.Fatalf("no file set is eligible — its check must not be pinged, pings = %v", hc.seen())
+		t.Fatalf("no file set is eligible, so its check must not be pinged, pings = %v", hc.seen())
 	}
 	if !hc.pinged("/container") {
 		t.Fatalf("containers HAS work and must still ping its check, pings = %v", hc.seen())
 	}
 
-	// An idle domain is still reported, and still reported as fine: nothing was
-	// eligible is a benign no-op (design spec, decision 3), not a failure.
+	// An idle domain is still reported, as a success.
 	var sawVMs bool
 	for _, d := range sum.Domains {
 		if d.Domain != "vms" {
@@ -178,11 +155,8 @@ func TestEverythingIdleDomainSkipsPingAndTail(t *testing.T) {
 	}
 }
 
-// TestEverythingBreakdownIsScrubbed: the parent run's breakdown goes out to the
-// run history, the weekly digest (Discord/Matrix/SMTP) and the token-gated
-// widget feed. It used to bypass truncateRunErr — "the one function that writes
-// runs.error" per its own doc — so absolute host paths reached all three raw,
-// while the CHILD run of the very same failure got the scrubbed text.
+// The parent run's breakdown reaches the run history, the weekly digest and the
+// widget feed, so host paths in it are scrubbed as in the child runs.
 func TestEverythingBreakdownIsScrubbed(t *testing.T) {
 	log := &everythingOrderLog{}
 	eng := &orderedEngine{
@@ -195,8 +169,7 @@ func TestEverythingBreakdownIsScrubbed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Containers alone: it is the domain with a seeded target, so it is the one
-	// that reaches the failing engine.
+	// Only containers has a seeded target to reach the failing engine.
 	s.VMsEnabled, s.FlashEnabled, s.FilesEnabled, s.ConfigEnabled = false, false, false, false
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
@@ -217,8 +190,8 @@ func TestEverythingBreakdownIsScrubbed(t *testing.T) {
 	}
 }
 
-// errFakeBackupPath is a backup failure whose message embeds an absolute host
-// path, the exact shape scrubSecrets exists to strip.
+// errFakeBackupPath is a backup failure with an absolute host path, which
+// scrubSecrets strips.
 var errFakeBackupPath = &pathErr{}
 
 type pathErr struct{}
@@ -226,5 +199,3 @@ type pathErr struct{}
 func (*pathErr) Error() string {
 	return "restic: unable to read /mnt/user/appdata/secretpath/config.json"
 }
-
-var _ = store.Settings{}

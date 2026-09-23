@@ -1,17 +1,6 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// GlimStone form-engine — shape engine persistence. `.dom.test.tsx` mirrors
-// appearance.dom.test.tsx's own naming convention for the jsdom opt-in
-// exception (this file renders no JSX either — it only needs jsdom for
-// `document`/`localStorage`, both of which vitest's jsdom environment
-// provides via the per-file `// @vitest-environment jsdom` docblock).
-//
-// Covers the full round-trip: applyShape's validate-or-default-to-"round"
-// contract, getShape's read-back of a stored value (falling back to "round"
-// on nothing-stored/corrupt/invalid), and setShape's persist-then-apply
-// behavior — the same shape of coverage accent.test.ts/appearance.dom.test.tsx
-// already have for their own sibling appearance settings.
-// ---------------------------------------------------------------------------
+// The shape setting round-trip. jsdom is here for `document` and
+// `localStorage`; nothing is rendered.
 import { beforeEach, describe, expect, it } from "vitest";
 import { SHAPES, applyShape, armShapeTransitions, getShape, setShape, type Shape } from "./shape";
 
@@ -67,7 +56,7 @@ describe("getShape", () => {
 });
 
 describe("setShape", () => {
-  it("persists the choice AND applies it to the document immediately", () => {
+  it("persists the choice and applies it to the document immediately", () => {
     setShape("soft");
     expect(localStorage.getItem(STORAGE_KEY)).toBe("soft");
     expect(document.documentElement.getAttribute("data-shape")).toBe("soft");
@@ -91,11 +80,8 @@ describe("setShape", () => {
   });
 });
 
-// GlimStone motion-engine, animation 1 (shape-morph) — armShapeTransitions()
-// only ever ADDS the class main.tsx arms two frames after boot; index.css's
-// own "Round 2, item 1" rule is what actually turns its presence into a
-// live `transition: border-radius`. This suite covers only the JS-side
-// contract: absent until armed, present (and idempotent) once armed.
+// index.css turns the class into a border-radius transition; these tests
+// cover only when the class is present.
 describe("armShapeTransitions", () => {
   it("does not add .glim-shape-transitions until called", () => {
     expect(document.documentElement.classList.contains("glim-shape-transitions")).toBe(false);
@@ -106,14 +92,14 @@ describe("armShapeTransitions", () => {
     expect(document.documentElement.classList.contains("glim-shape-transitions")).toBe(true);
   });
 
-  it("is idempotent — calling it again never removes or duplicates the class", () => {
+  it("is idempotent: a second call neither removes nor duplicates the class", () => {
     armShapeTransitions();
     armShapeTransitions();
     expect(document.documentElement.classList.contains("glim-shape-transitions")).toBe(true);
     expect(document.documentElement.className.split(/\s+/).filter((c) => c === "glim-shape-transitions").length).toBe(1);
   });
 
-  it("a subsequent setShape() call after arming leaves the class in place", () => {
+  it("keeps the class through a later setShape()", () => {
     armShapeTransitions();
     setShape("soft");
     expect(document.documentElement.classList.contains("glim-shape-transitions")).toBe(true);

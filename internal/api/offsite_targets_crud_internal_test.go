@@ -28,7 +28,6 @@ func decodeEnvelope(t *testing.T, rec *httptest.ResponseRecorder) map[string]any
 func TestOffsiteTargetCRUDHandlers(t *testing.T) {
 	h, _ := newCRUDHandler(t)
 
-	// CREATE
 	body, _ := json.Marshal(offsiteTargetView{Domain: "containers", Name: "Second", Repo: "s3:c2", StorageClass: "standard_ia", Enabled: true, SortOrder: 5})
 	rec := httptest.NewRecorder()
 	h.handleCreateOffsiteTarget(rec, jsonReq(http.MethodPost, "/api/offsite/targets", bytes.NewReader(body)))
@@ -45,7 +44,6 @@ func TestOffsiteTargetCRUDHandlers(t *testing.T) {
 		t.Fatalf("storage class not normalized/uppercased: %v", created["storageClass"])
 	}
 
-	// LIST (filtered by domain)
 	rec = httptest.NewRecorder()
 	h.handleListOffsiteTargets(rec, httptest.NewRequest(http.MethodGet, "/api/offsite/targets?domain=containers", nil))
 	env = decodeEnvelope(t, rec)
@@ -54,7 +52,6 @@ func TestOffsiteTargetCRUDHandlers(t *testing.T) {
 		t.Fatalf("list(containers) = %d, want 1", len(list))
 	}
 
-	// UPDATE
 	body, _ = json.Marshal(offsiteTargetView{Domain: "containers", Name: "Second", Repo: "s3:c2-moved", Enabled: false, SortOrder: 5})
 	req := jsonReq(http.MethodPut, "/api/offsite/targets/"+id, bytes.NewReader(body))
 	req.SetPathValue("id", id)
@@ -72,7 +69,6 @@ func TestOffsiteTargetCRUDHandlers(t *testing.T) {
 		t.Fatalf("update changed id: %v != %v", upd["id"], id)
 	}
 
-	// DELETE
 	req = jsonReq(http.MethodDelete, "/api/offsite/targets/"+id, nil)
 	req.SetPathValue("id", id)
 	rec = httptest.NewRecorder()
@@ -170,7 +166,6 @@ func TestUpdateOffsiteTargetRefusesADomainChange(t *testing.T) {
 	}
 }
 
-// TestUpdateOffsiteTargetMissing: PUT to an unknown id is a clean not-found.
 func TestUpdateOffsiteTargetMissing(t *testing.T) {
 	h, _ := newCRUDHandler(t)
 	body, _ := json.Marshal(offsiteTargetView{Domain: "containers", Repo: "s3:x"})

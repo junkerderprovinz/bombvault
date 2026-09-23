@@ -1,9 +1,7 @@
-// Package releasenotes embeds BombVault's own release notes into the binary so
-// the "What's new" dialog (#48) can be served locally. The dialog used to fetch
-// api.github.com at runtime, but the app's own Content-Security-Policy
-// (connect-src 'self') blocks that cross-origin request, so it always failed
-// (#54). Serving the notes from the same origin fixes it — offline, and with no
-// GitHub rate limits.
+// Package releasenotes embeds BombVault's release notes so the "What's new"
+// dialog is served from the same origin. The app's Content-Security-Policy
+// (connect-src 'self') blocks fetching them from api.github.com, and a local
+// copy also works offline and without rate limits.
 package releasenotes
 
 import (
@@ -17,10 +15,9 @@ var notesFS embed.FS
 
 var verRe = regexp.MustCompile(`\d+\.\d+\.\d+`)
 
-// Tag normalizes a build version to its release tag "vX.Y.Z". Build versions on
-// :latest carry metadata ("v5.2.1+main.<sha>", issue #22); this returns
-// "v5.2.1". Returns "" for "dev" / "0.0.0" / anything without an x.y.z core,
-// mirroring the frontend releaseTag() so both agree on which release to show.
+// Tag turns a build version into its release tag, so "v5.2.1+main.<sha>"
+// becomes "v5.2.1". It returns "" for "dev", "0.0.0" and anything without an
+// x.y.z core, matching releaseTag() in the frontend.
 func Tag(version string) string {
 	m := verRe.FindString(version)
 	if m == "" || m == "0.0.0" {
@@ -29,9 +26,8 @@ func Tag(version string) string {
 	return "v" + m
 }
 
-// Notes returns the embedded release-notes markdown for a version (normalized to
-// its tag) and true when found. Returns "", false for dev builds or a version
-// whose note was not embedded, so the dialog degrades to its GitHub-link fallback.
+// Notes returns the embedded release notes for version's tag. It reports false
+// for dev builds and versions without a note; the dialog then links to GitHub.
 func Notes(version string) (string, bool) {
 	tag := Tag(version)
 	if tag == "" {

@@ -1,12 +1,11 @@
 // Package secret provides AES-256-GCM encryption keyed by a value derived from
-// the APP_KEY. It is used to store container definitions on the backup storage
-// (so they survive a loss of BombVault's own /config) without leaking the
-// container env vars and other secrets they contain. The key derivation is
-// domain-separated from the restic-password derivation in package restickey.
+// the APP_KEY. It is used to store container definitions on the backup storage,
+// so they survive the loss of BombVault's own /config without exposing the env
+// vars and other secrets they contain. The key derivation is domain-separated
+// from the restic password derivation in package restickey.
 //
-// The package also contains authentication helpers (HashPassword, VerifyPassword,
-// NewSessionToken, ValidSessionToken) that follow the same HMAC-SHA256/APP_KEY
-// pattern.
+// The package also holds the login helpers: password hashing, session tokens,
+// TOTP and recovery codes.
 package secret
 
 import (
@@ -33,7 +32,7 @@ func deriveKey(appKey string) ([]byte, error) {
 	}
 	mac := hmac.New(sha256.New, keyBytes)
 	mac.Write([]byte("bombvault:def-encryption"))
-	return mac.Sum(nil), nil // 32 bytes → AES-256
+	return mac.Sum(nil), nil
 }
 
 // Encrypt seals plaintext with AES-256-GCM and returns nonce||ciphertext.
@@ -68,12 +67,8 @@ func Decrypt(appKey string, data []byte) ([]byte, error) {
 	return pt, nil
 }
 
-// ---------------------------------------------------------------------------
-// Authentication helpers
-// ---------------------------------------------------------------------------
-
-// hmacHex returns hex(HMAC-SHA256(hexDecode(appKey), message)).
-// It panics on an invalid (non-hex) appKey — the caller must have validated it.
+// hmacHex returns hex(HMAC-SHA256(hexDecode(appKey), message)). It panics on a
+// non-hex appKey; callers validate the key first.
 func hmacHex(appKey, message string) string {
 	keyBytes, err := hex.DecodeString(appKey)
 	if err != nil {
@@ -84,17 +79,11 @@ func hmacHex(appKey, message string) string {
 	return hex.EncodeToString(mac.Sum(nil))
 }
 
-// HashPassword and VerifyPassword now live in password.go: the login password is
-// stored with Argon2id over an APP_KEY-keyed pepper, not with a bare HMAC.
-
-// sessionMessage builds the HMAC message a session token signs. The epoch is a
-// server-side revocation value: rotating it (POST /api/logout-all) changes the
-// message for every token, invalidating all outstanding sessions at once. An
-// EMPTY epoch reproduces the pre-epoch legacy message format (no epoch segment),
-// so cookies minted before the epoch existed keep validating until the first
-// rotation. This is unambiguous because passwordHash is hex (it can never
-// contain the ":" separator), so a legacy message can't collide with an
-// epoch-bearing one.
+// sessionMessage builds the message a session token signs. Rotating the epoch
+// (POST /api/logout-all) changes the message for every token and so ends all
+// sessions at once. An empty epoch leaves the epoch segment out, which keeps
+// tokens issued before epochs existed valid until the first rotation. The two
+// forms cannot collide because passwordHash never contains the ":" separator.
 func sessionMessage(expiry, passwordHash, epoch string) string {
 	if epoch == "" {
 		return "bombvault:session:" + expiry + ":" + passwordHash
@@ -102,29 +91,20 @@ func sessionMessage(expiry, passwordHash, epoch string) string {
 	return "bombvault:session:" + expiry + ":" + epoch + ":" + passwordHash
 }
 
-// NewSessionToken creates a signed, time-limited session token.
-//
-// Format: "<expiryUnix>.<hex-HMAC>"
-//
-// The MAC is bound to the expiry timestamp, the current passwordHash and the
-// session epoch, so that changing or clearing the password — or rotating the
-// epoch ("log out everywhere") — instantly invalidates all existing sessions.
-// An empty epoch is a valid (legacy) value; see sessionMessage.
-//
-// It panics on an invalid (non-hex) appKey.
+// NewSessionToken creates a signed, time-limited session token of the form
+// "<expiryUnix>.<hex-HMAC>". The MAC covers the expiry, passwordHash and epoch,
+// so changing the password or rotating the epoch invalidates every existing
+// session. It panics on a non-hex appKey.
 func NewSessionToken(appKey, passwordHash, epoch string, ttl time.Duration) string {
 	expiry := strconv.FormatInt(time.Now().Add(ttl).Unix(), 10)
 	sig := hmacHex(appKey, sessionMessage(expiry, passwordHash, epoch))
 	return expiry + "." + sig
 }
 
-// ValidSessionToken verifies a token produced by NewSessionToken.  It returns
-// false for any parse error, expired token, wrong APP_KEY, wrong epoch, or
-// tampered value.
-//
-// It panics on an invalid (non-hex) appKey.
+// ValidSessionToken verifies a token produced by NewSessionToken. It returns
+// false for any parse error, expired token, wrong APP_KEY, wrong epoch or
+// tampered value. It panics on a non-hex appKey.
 func ValidSessionToken(appKey, passwordHash, epoch, token string) bool {
-	// Split on the LAST "." so that the expiry part can never contain a dot.
 	dot := strings.LastIndex(token, ".")
 	if dot < 0 {
 		return false
@@ -136,11 +116,10 @@ func ValidSessionToken(appKey, passwordHash, epoch, token string) bool {
 		return false
 	}
 	if time.Now().Unix() > expiry {
-		return false // expired
+		return false
 	}
 
 	wantSig := hmacHex(appKey, sessionMessage(expStr, passwordHash, epoch))
-	// Constant-time hex comparison.
 	a, err1 := hex.DecodeString(gotSig)
 	b, err2 := hex.DecodeString(wantSig)
 	if err1 != nil || err2 != nil {
@@ -148,10 +127,6 @@ func ValidSessionToken(appKey, passwordHash, epoch, token string) bool {
 	}
 	return hmac.Equal(a, b)
 }
-
-// ---------------------------------------------------------------------------
-// AES-256-GCM encryption
-// ---------------------------------------------------------------------------
 
 func newGCM(appKey string) (cipher.AEAD, error) {
 	key, err := deriveKey(appKey)

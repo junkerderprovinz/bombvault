@@ -162,6 +162,37 @@ export const en = {
   "containers.deleteBackups": "Delete all backups",
   "containers.deleteBackupsConfirm": "Delete ALL backups of this container? The snapshots are permanently removed from the repository and cannot be undone.",
   "containers.removeEntryConfirm": "Remove this container's entry from the list? Its backups, if any, are not deleted.",
+
+  // Taking over the entry of a renamed container or VM, on both pages.
+  "takeover.looksLike": "Looks like {old}",
+  "takeover.suggestHint": "This may be a renamed entry. Taking over moves the old entry's backups and settings here.",
+  "takeover.reason.dockerId": "same Docker container",
+  "takeover.reason.appdataBind": "same appdata folders",
+  "takeover.reason.composeService": "same compose service",
+  "takeover.reason.templateLineage": "Unraid renamed its template",
+  "takeover.reason.libvirtUuid": "same VM (UUID)",
+  "takeover.backups": "one={n} backup|other={n} backups",
+  "takeover.accept": "Take over",
+  "takeover.decline": "Not this one",
+  "takeover.confirm": "Take over {old}? Its settings move to {new}. {history} From then on, retention counts the backups of both together. You can undo the link later.",
+  "takeover.historyMany": "one=The backup of {old} becomes the history of {new}.|other=The {n} backups of {old} become the history of {new}.",
+  "takeover.historyUnknown": "The backups of {old} become the history of {new}.",
+  "takeover.done": "{old} now belongs to {new}.",
+  "takeover.undo": "Undo",
+  "takeover.failed": "Could not take over the entry.",
+  "takeover.link": "Link to an entry…",
+  "takeover.formerEntry": "Former entry",
+  "takeover.linkHint": "Pick the not-installed entry this one was known as before a rename. Its backups and settings then move here.",
+  "takeover.renamed": "Renamed",
+  "takeover.formerly": "Formerly: {names}.",
+  "takeover.formerlyHint": "Backups made under a former name count as this entry's history. Unlinking moves the entry back to that name.",
+  "takeover.unlink": "Unlink",
+  "takeover.unlinkName": "Unlink {old}",
+  "takeover.unlinkConfirm": "Unlink {old}? The entry goes back to that name, with its settings and the backups from before the link. Backups made under {new} since then stay there.",
+  "takeover.unlinkFailed": "Could not unlink the name.",
+  "takeover.conflict": "The old name {old} is taken again",
+  "takeover.conflictHint": "Something else now runs under this old name. This entry's older backups stay with it. Rename the other one if the two should stay separate.",
+
   "containers.filter": "Filter:",
   "containers.filterAll": "All",
   "containers.filterInstalled": "Installed",
@@ -263,7 +294,7 @@ export const en = {
   // Stacks (compose-project restore)
   "stack.title": "Stacks",
   "stack.restore": "Restore stack…",
-  "stack.members": "{n} containers",
+  "stack.members": "one={n} container|other={n} containers",
   "stack.restoreHint":
     "Restores every container in this stack from its latest backup, left stopped, then (optionally) starts them in dependency order.",
   "stack.startInOrder": "Start in dependency order after restore",
@@ -753,10 +784,10 @@ export const en = {
   // Phase 3 (D-01): per-root effective-selection preview; {n} = stored
   // maximal includes at-or-under the root. Invariant {n} key, no plural
   // fork (stack.members precedent).
-  "folders.previewPaths": "{n} paths",
+  "folders.previewPaths": "one={n} path|other={n} paths",
   // Phase 3 (D-03/D-04): per-root reviewable-exclusions disclosure label;
   // {n} = stored exclusions strictly under the root (dormant included).
-  "folders.exclusions": "{n} exclusions",
+  "folders.exclusions": "one={n} exclusion|other={n} exclusions",
   // Phase 3 plan 03 (D-05, INTEG-04): the reset control and its fail-tone
   // confirm. The confirm message names every consequence (auto-detection
   // returns, remembered exclusions are removed, and the per-root cache-folder
@@ -912,7 +943,7 @@ export const en = {
   "settings.rainbow": "Rainbow Mode",
   "settings.rainbowHint": "Each row in a list gets its own colour from a set of eight, instead of everything sharing one accent colour, which makes long lists easier to tell apart at a glance.",
   "settings.disco": "Disco Mode",
-  "settings.discoHint": "Every coloured row and item steps to the next colour in the palette once a second, for as long as Rainbow Mode is on.",
+  "settings.discoHint": "Every coloured row and item glides slowly to the next colour in the palette for as long as Rainbow Mode is on.",
   "settings.rainbowReactive": "Reactive Mode",
   "settings.rainbowReactiveHint": "When on, a row or item's colour only appears while you're hovering it, or while it's running or selected. Otherwise it stays neutral. When off, every coloured row and item shows its colour all the time.",
   "settings.rainbowRotate": "Colour Rotation",
@@ -1051,7 +1082,7 @@ export const en = {
   "picker.saturationBrightness": "Saturation and brightness",
   "jobs.cadenceDaily": "Daily at {time}",
   "jobs.cadenceWeekly": "Weekly ({days}) at {time}",
-  "jobs.cadenceEveryN": "Every {n} days at {time}",
+  "jobs.cadenceEveryN": "one=Every day at {time}|other=Every {n} days at {time}",
   "sort.label": "Sort:",
   "sort.nameAsc": "Name (A–Z)",
   "sort.status": "Status",
@@ -1067,7 +1098,7 @@ export const en = {
   "cadence.daysUnit": "days",
   "cadence.fmtDaily": "daily at {time}",
   "cadence.fmtWeekly": "weekly ({days}) at {time}",
-  "cadence.fmtEveryN": "every {n} days at {time}",
+  "cadence.fmtEveryN": "one=every day at {time}|other=every {n} days at {time}",
   // Cron cadence mode (#107)
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Expression",
@@ -1088,12 +1119,9 @@ export const en = {
   "timePicker.hour": "Hour",
   "timePicker.minute": "Minute",
   "time.justNow": "just now",
-  "time.minuteAgo": "1 minute ago",
-  "time.minutesAgo": "{n} minutes ago",
-  "time.hourAgo": "1 hour ago",
-  "time.hoursAgo": "{n} hours ago",
-  "time.dayAgo": "1 day ago",
-  "time.daysAgo": "{n} days ago",
+  "time.minutesAgo": "one={n} minute ago|other={n} minutes ago",
+  "time.hoursAgo": "one={n} hour ago|other={n} hours ago",
+  "time.daysAgo": "one={n} day ago|other={n} days ago",
   "folder.browse": "Browse…",
   "folder.browseTitle": "Browse folders",
   "folder.use": "Use this folder",
@@ -1200,10 +1228,10 @@ export const en = {
   "auth.confirmCode": "Enter the code the app shows now",
   "auth.recoveryTitle": "Recovery codes",
   "auth.recoveryHint": "Write these down now. Each one works once, and they are not shown again.",
-  "auth.recoveryLeft": "{n} recovery codes left",
+  "auth.recoveryLeft": "one={n} recovery code left|other={n} recovery codes left",
   "auth.recoverySaved": "I have written them down",
   "auth.disableCodePrompt": "Enter a current code to turn it off",
-  "auth.passwordMinHint": "At least {n} characters.",
+  "auth.passwordMinHint": "one=At least {n} character.|other=At least {n} characters.",
 
   // Common action labels (shared across container / VM / settings buttons)
   "common.backingUp": "Backing up…",
@@ -1368,7 +1396,7 @@ export const en = {
   "receiver.monitoringOff": "Monitoring off",
   "receiver.lastReceived": "Last received",
   "receiver.never": "Never",
-  "receiver.snapshotsCount": "{n} snapshots",
+  "receiver.snapshotsCount": "one={n} snapshot|other={n} snapshots",
   "receiver.checkOk": "Check OK",
   "receiver.checkFailed": "Check failed",
   "receiver.checkNever": "Not checked yet",
@@ -1441,9 +1469,9 @@ export const en = {
   "pull.pullOk": "Pull OK",
   "pull.pullFailed": "Pull failed",
   "pull.pullingOff": "Pulling off",
-  "pull.snapshotsPulled": "{n} snapshots pulled",
+  "pull.snapshotsPulled": "one={n} snapshot pulled|other={n} snapshots pulled",
   "pull.nothingNew": "Nothing new to pull.",
-  "pull.pulled": "Pulled {n} snapshots.",
+  "pull.pulled": "one=Pulled {n} snapshot.|other=Pulled {n} snapshots.",
   "pull.testOk": "The source answered.",
   "pull.saveError": "Could not save the pull source.",
   "settings.pullEnabled": "Pull from other instances",
@@ -1551,11 +1579,9 @@ export const en = {
   "vm.ssh.copyCmd": "Copy command",
   "vm.ssh.guide": "Full setup & networking guide",
 
-  // Guided Recovery tab (disaster-recovery walkthrough) — note: the `recovery.*`
-  // prefix above is the encryption *kit*; the page title uses `recovery.pageTitle`
-  // to avoid colliding with the existing `recovery.title` ("Recovery kit").
+  // Guided Recovery tab. The `recovery.*` keys above belong to the encryption
+  // kit; the page heading reads `nav.recovery`, the same word as the sidebar.
   "nav.recovery": "Recovery",
-  "recovery.pageTitle": "Disaster recovery",
   "recovery.intro": "Recover your containers and VMs from an existing backup onto this install.",
   // Step 1 — connection / APP_KEY readability check
   "recovery.step1": "Can BombVault read your backups?",
@@ -1698,6 +1724,7 @@ export const en = {
   "files.pathHint": "The folder to back up, a relative subpath under the host mount root.",
   "files.excludes": "Exclude patterns",
   "files.excludesHint": "One pattern per line, passed to restic as --exclude (e.g. *.tmp, cache/).",
+  "files.nameLocked": "The name cannot change once the set has backups, because they are filed under it. Create a new set for a new name.",
   // Named repositories
   "repos.title": "Repositories",
   "repos.intro": "Places backups can be written to. Set one up here, then pick it on an individual container, VM or folder set instead of using that domain's own repository.",
@@ -2302,6 +2329,36 @@ export const de: Translations = {
   "containers.deleteBackups": "Alle Backups löschen",
   "containers.deleteBackupsConfirm": "ALLE Backups dieses Containers löschen? Die Snapshots werden dauerhaft aus dem Repository entfernt und können nicht wiederhergestellt werden.",
   "containers.removeEntryConfirm": "Den Eintrag dieses Containers aus der Liste entfernen? Vorhandene Backups werden nicht gelöscht.",
+
+  "takeover.looksLike": "Sieht aus wie {old}",
+  "takeover.suggestHint": "Das sieht nach einem umbenannten Eintrag aus. Übernimmst du ihn, gehen seine Backups und Einstellungen auf diesen hier über.",
+  "takeover.reason.dockerId": "derselbe Docker-Container",
+  "takeover.reason.appdataBind": "dieselben Appdata-Ordner",
+  "takeover.reason.composeService": "derselbe Compose-Dienst",
+  "takeover.reason.templateLineage": "Unraid hat die Vorlage umbenannt",
+  "takeover.reason.libvirtUuid": "dieselbe VM (UUID)",
+  "takeover.backups": "one={n} Backup|other={n} Backups",
+  "takeover.accept": "Übernehmen",
+  "takeover.decline": "Passt nicht",
+  "takeover.confirm": "{old} übernehmen? Die Einstellungen gehen dann auf {new} über. {history} Die Aufbewahrungsregeln zählen danach die Backups beider zusammen. Die Verknüpfung lässt sich später wieder lösen.",
+  "takeover.historyMany": "one=Das Backup von {old} gehört dann zum Verlauf von {new}.|other=Die {n} Backups von {old} gehören dann zum Verlauf von {new}.",
+  "takeover.historyUnknown": "Die Backups von {old} gehören dann zum Verlauf von {new}.",
+  "takeover.done": "{old} gehört jetzt zu {new}.",
+  "takeover.undo": "Rückgängig",
+  "takeover.failed": "Der Eintrag ließ sich nicht übernehmen.",
+  "takeover.link": "Mit Eintrag verknüpfen…",
+  "takeover.formerEntry": "Früherer Eintrag",
+  "takeover.linkHint": "Wähle den nicht installierten Eintrag, unter dem das hier vor einer Umbenennung lief. Seine Backups und Einstellungen gehen dann hierher über.",
+  "takeover.renamed": "Umbenannt",
+  "takeover.formerly": "Früher: {names}.",
+  "takeover.formerlyHint": "Backups unter einem früheren Namen zählen zum Verlauf dieses Eintrags. Löst du die Verknüpfung, geht der Eintrag auf diesen Namen zurück.",
+  "takeover.unlink": "Lösen",
+  "takeover.unlinkName": "Verknüpfung mit {old} lösen",
+  "takeover.unlinkConfirm": "Verknüpfung mit {old} lösen? Der Eintrag trägt dann wieder diesen Namen, mit seinen Einstellungen und den Backups aus der Zeit vor der Verknüpfung. Backups, die seither unter {new} entstanden sind, bleiben dort.",
+  "takeover.unlinkFailed": "Die Verknüpfung ließ sich nicht lösen.",
+  "takeover.conflict": "Der alte Name {old} ist wieder vergeben",
+  "takeover.conflictHint": "Unter diesem alten Namen läuft jetzt etwas anderes. Die älteren Backups bleiben bei diesem Eintrag. Sollen beide getrennt bleiben, benenne das andere um.",
+
   "containers.filter": "Filter:",
   "containers.filterAll": "Alle",
   "containers.filterInstalled": "Installiert",
@@ -2816,8 +2873,8 @@ export const de: Translations = {
   "folders.retry": "Erneut versuchen",
   "folders.emptySelectionBlocked":
     "Mindestens ein Ordner muss ausgewählt bleiben. Um nichts von diesem Container zu sichern, deaktiviere die Zeitplan-Einbindung. Um zur automatischen Erkennung zurückzukehren, nutze Auswahl zurücksetzen.",
-  "folders.previewPaths": "{n} Pfade",
-  "folders.exclusions": "{n} Ausschlüsse",
+  "folders.previewPaths": "one={n} Pfad|other={n} Pfade",
+  "folders.exclusions": "one={n} Ausschluss|other={n} Ausschlüsse",
   "folders.resetSelection": "Auswahl zurücksetzen",
   "folders.resetConfirm":
     "Ordnerauswahl zurücksetzen? Der Container kehrt zur automatischen Erkennung zurück (appdata-Standard), und alle gemerkten Ausschlüsse und Cache-Ordner-Einstellungen werden entfernt.",
@@ -2905,7 +2962,7 @@ export const de: Translations = {
   "settings.rainbow": "Regenbogen-Modus",
   "settings.rainbowHint": "Jede Zeile in einer Liste bekommt eine eigene Farbe aus einer festen Auswahl von acht, statt dass alles dieselbe Akzentfarbe hat. Das macht lange Listen auf einen Blick leichter unterscheidbar.",
   "settings.disco": "Disco-Modus",
-  "settings.discoHint": "Jede farbige Zeile und jedes farbige Element wechselt einmal pro Sekunde zur nächsten Farbe der Palette, solange der Regenbogen-Modus aktiv ist.",
+  "settings.discoHint": "Jede farbige Zeile und jedes farbige Element gleitet langsam zur nächsten Farbe der Palette, solange der Regenbogen-Modus aktiv ist.",
   "settings.rainbowReactive": "Reaktiver Modus",
   "settings.rainbowReactiveHint": "Wenn aktiv, bleiben farbige Zeilen und Elemente neutral, bis du sie mit der Maus berührst oder sie gerade laufen oder ausgewählt sind. Die Farbe erscheint also nur bei Bedarf. Wenn deaktiviert, zeigen alle farbigen Zeilen und Elemente ihre Farbe durchgehend.",
   "settings.rainbowRotate": "Farbenrotation",
@@ -3019,7 +3076,7 @@ export const de: Translations = {
   "picker.saturationBrightness": "Sättigung und Helligkeit",
   "jobs.cadenceDaily": "Täglich um {time}",
   "jobs.cadenceWeekly": "Wöchentlich ({days}) um {time}",
-  "jobs.cadenceEveryN": "Alle {n} Tage um {time}",
+  "jobs.cadenceEveryN": "one=Jeden Tag um {time}|other=Alle {n} Tage um {time}",
   "sort.label": "Sortieren:",
   "sort.nameAsc": "Name (A–Z)",
   "sort.status": "Status",
@@ -3035,7 +3092,7 @@ export const de: Translations = {
   "cadence.daysUnit": "Tage",
   "cadence.fmtDaily": "täglich um {time} Uhr",
   "cadence.fmtWeekly": "wöchentlich ({days}) um {time} Uhr",
-  "cadence.fmtEveryN": "jeden {n}. Tag um {time} Uhr",
+  "cadence.fmtEveryN": "one=jeden Tag um {time} Uhr|other=jeden {n}. Tag um {time} Uhr",
   // Cron cadence mode (#107)
   "cadence.cron": "Cron",
   "cadence.cronExpr": "Ausdruck",
@@ -3051,12 +3108,9 @@ export const de: Translations = {
   "timePicker.hour": "Stunde",
   "timePicker.minute": "Minute",
   "time.justNow": "gerade eben",
-  "time.minuteAgo": "vor 1 Minute",
-  "time.minutesAgo": "vor {n} Minuten",
-  "time.hourAgo": "vor 1 Stunde",
-  "time.hoursAgo": "vor {n} Stunden",
-  "time.dayAgo": "vor 1 Tag",
-  "time.daysAgo": "vor {n} Tagen",
+  "time.minutesAgo": "one=vor {n} Minute|other=vor {n} Minuten",
+  "time.hoursAgo": "one=vor {n} Stunde|other=vor {n} Stunden",
+  "time.daysAgo": "one=vor {n} Tag|other=vor {n} Tagen",
   "folder.browse": "Durchsuchen…",
   "folder.browseTitle": "Ordner durchsuchen",
   "folder.use": "Diesen Ordner verwenden",
@@ -3157,7 +3211,7 @@ export const de: Translations = {
   "auth.confirmCode": "Gib den Code ein, den die App jetzt zeigt",
   "auth.recoveryTitle": "Notfallcodes",
   "auth.recoveryHint": "Schreib sie jetzt auf. Jeder funktioniert einmal, und sie werden nicht noch einmal angezeigt.",
-  "auth.recoveryLeft": "Noch {n} Notfallcodes übrig",
+  "auth.recoveryLeft": "one=Noch {n} Notfallcode übrig|other=Noch {n} Notfallcodes übrig",
   "auth.recoverySaved": "Ich habe sie aufgeschrieben",
   "auth.disableCodePrompt": "Gib zum Ausschalten einen aktuellen Code ein",
   "auth.passwordMinHint": "Mindestens {n} Zeichen.",
@@ -3285,7 +3339,7 @@ export const de: Translations = {
   "receiver.monitoringOff": "Überwachung aus",
   "receiver.lastReceived": "Zuletzt empfangen",
   "receiver.never": "Nie",
-  "receiver.snapshotsCount": "{n} Backups",
+  "receiver.snapshotsCount": "one={n} Backup|other={n} Backups",
   "receiver.checkOk": "Prüfung OK",
   "receiver.checkFailed": "Prüfung fehlgeschlagen",
   "receiver.checkNever": "Noch nicht geprüft",
@@ -3353,9 +3407,9 @@ export const de: Translations = {
   "pull.pullOk": "Holen erfolgreich",
   "pull.pullFailed": "Holen fehlgeschlagen",
   "pull.pullingOff": "Holen aus",
-  "pull.snapshotsPulled": "{n} Snapshots geholt",
+  "pull.snapshotsPulled": "one={n} Snapshot geholt|other={n} Snapshots geholt",
   "pull.nothingNew": "Nichts Neues zu holen.",
-  "pull.pulled": "{n} Snapshots geholt.",
+  "pull.pulled": "one={n} Snapshot geholt.|other={n} Snapshots geholt.",
   "pull.testOk": "Die Quelle hat geantwortet.",
   "pull.saveError": "Die Quelle konnte nicht gespeichert werden.",
   "settings.pullEnabled": "Von anderen Instanzen holen",
@@ -3460,7 +3514,6 @@ export const de: Translations = {
 
   // Guided Recovery tab (disaster-recovery walkthrough)
   "nav.recovery": "Wiederherstellung",
-  "recovery.pageTitle": "Notfall-Wiederherstellung",
   "recovery.intro": "Stelle deine Container und VMs aus einem vorhandenen Backup auf dieser Installation wieder her.",
   // Schritt 1 — Verbindungs-/APP_KEY-Lesbarkeitsprüfung
   "recovery.step1": "Kann BombVault deine Backups lesen?",
@@ -3597,6 +3650,7 @@ export const de: Translations = {
   "files.pathHint": "Der zu sichernde Ordner, ein relativer Unterpfad unter dem Host-Mount-Root.",
   "files.excludes": "Ausschlussmuster",
   "files.excludesHint": "Ein Muster pro Zeile, wird als --exclude an restic übergeben (z. B. *.tmp, cache/).",
+  "files.nameLocked": "Der Name lässt sich nicht mehr ändern, sobald der Satz Sicherungen hat, denn sie sind unter diesem Namen abgelegt. Für einen neuen Namen lege einen neuen Satz an.",
   "repos.title": "Repositories",
   "repos.intro": "Orte, an die Sicherungen geschrieben werden können. Lege hier einen an und wähle ihn dann bei einem einzelnen Container, einer VM oder einem Ordner-Satz aus, statt das Repository der Domäne zu nutzen.",
   "repos.name": "Name",
@@ -4179,15 +4233,50 @@ export function applyStoredLanguage(): void {
 export interface I18nContextValue {
   lang: string;
   setLanguage: (code: string) => void;
-  t: (key: TranslationKey) => string;
+  /** With a count, picks the form that count needs and puts it in. */
+  t: (key: TranslationKey, n?: number) => string;
   languages: Language[];
+}
+
+const PLURAL_CATEGORIES = new Set(["zero", "one", "two", "few", "many", "other"]);
+
+/**
+ * pluralForms reads the forms a value offers, each labelled with the category
+ * it serves: "one={n} backup|other={n} backups". Russian needs three of them,
+ * Slovenian four, English two, and most strings none at all, which is what a
+ * value without labels is. Every segment has to be labelled, so a sentence that
+ * merely contains "=" or "|" stays the one form it is.
+ */
+function pluralForms(value: string): Map<string, string> | null {
+  const forms = new Map<string, string>();
+  for (const part of value.split("|")) {
+    const at = part.indexOf("=");
+    if (at <= 0 || !PLURAL_CATEGORIES.has(part.slice(0, at))) return null;
+    forms.set(part.slice(0, at), part.slice(at + 1));
+  }
+  return forms.size > 0 ? forms : null;
+}
+
+/**
+ * countText is the form of value that lang uses for n, with n put in. Without
+ * a count it answers with the plain form, so a caller that has none renders a
+ * sentence rather than the labels.
+ */
+export function countText(value: string, lang: string, n?: number): string {
+  const forms = pluralForms(value);
+  let text = value;
+  if (forms) {
+    const category = n === undefined ? "other" : new Intl.PluralRules(lang).select(n);
+    text = forms.get(category) ?? forms.get("other") ?? value;
+  }
+  return n === undefined ? text : text.split("{n}").join(String(n));
 }
 
 // Provide a safe default so `useT()` never throws outside a Provider during tests.
 const I18nContext = createContext<I18nContextValue>({
   lang: DEFAULT_CODE,
   setLanguage: () => undefined,
-  t: (key) => en[key] ?? key,
+  t: (key, n) => countText(en[key] ?? key, DEFAULT_CODE, n),
   languages: OFFERED_LANGUAGES,
 });
 
@@ -4252,8 +4341,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, [adopt]);
 
   const t = useCallback(
-    (key: TranslationKey): string => table[key] ?? en[key] ?? key,
-    [table]
+    (key: TranslationKey, n?: number): string => countText(table[key] ?? en[key] ?? key, lang, n),
+    [table, lang]
   );
 
   return createElement(

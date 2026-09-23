@@ -12,36 +12,18 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// THE SAFETY CONTRACT OF THE PULL, and it is the only test in this file because
-// everything else about a pull is somebody's convenience while this is somebody
-// else's data.
-//
-// A pull source belongs to another machine. Exactly two engine calls may reach
-// it: RepoOpens, to find out whether the key fits, and Copy's SOURCE argument.
-// Anything else is a write into a repository whose owner never agreed to it:
-// Init creates, Unlock deletes lock files, Forget and Prune delete data, Backup
-// adds to it.
-//
-// The reason this is a test and not a comment is that every one of those calls
-// is one line away in this file's neighbours. copyToOffsiteTarget - the function
-// the pull is modelled on - calls EnsureRepo, unlockStale and applyRetention,
-// and all three are correct THERE because its far end is our own repository. A
-// pull is the same shape with the ends swapped, so the same three lines are
-// catastrophic here, and a swap that copies one of them by accident produces no
-// error at all: the source is simply modified.
-//
-// The recorder below therefore asserts on the LOCATION each call reached, not on
-// the call count. A test that counted calls would pass just as happily if Init
-// had been pointed at the wrong end.
+// pullRecorder records which location each engine call reaches.
+// copyToOffsiteTarget, which the pull mirrors, calls EnsureRepo, unlockStale
+// and applyRetention on its far end, and copying one of those lines would
+// modify the source without any error, so the test checks locations rather
+// than call counts.
 type pullRecorder struct {
 	ResticEngine
 	// calls records "Method repo" for every engine call, in order.
 	calls []string
 	snaps map[string][]restic.Snapshot
-	// copyMode is the mode the copy actually went out with. Recording it is the
-	// difference between proving the source side EXISTS and proving it carries
-	// the right password: a nil check passes just as happily when the two sides
-	// were swapped, which is the mistake this whole file is about.
+	// copyMode is the mode the copy went out with, so the test can check the
+	// passwords and not only that a source side exists.
 	copyMode *restic.Mode
 }
 
@@ -104,8 +86,7 @@ func TestPullNeverWritesToTheSource(t *testing.T) {
 	}
 
 	eng := &pullRecorder{snaps: map[string][]restic.Snapshot{
-		// One snapshot on their side that we do not have, so the copy is reached
-		// at all. A test whose copy never runs proves nothing about the copy.
+		// A snapshot we do not have, so the copy actually runs.
 		srcLoc: {{ID: "aaa"}},
 	}}
 	svc := &Service{
@@ -135,9 +116,8 @@ func TestPullNeverWritesToTheSource(t *testing.T) {
 		switch {
 		case strings.HasPrefix(c, "RepoOpens "):
 		case strings.HasPrefix(c, "Snapshots "):
-			// Reading the listing is the pull's whole purpose, and it is read-only
-			// by mode: listSnapshots refuses to self-heal a lock when NoLock is
-			// set, which is asserted next door in readonly_never_unlocks.
+			// Read-only by mode: listSnapshots does not clear a lock when NoLock
+			// is set (see readonly_never_unlocks).
 		case strings.Contains(c, "src="+srcLoc):
 		default:
 			t.Errorf("the pull reached the SOURCE with %q.\n"+
@@ -150,7 +130,6 @@ func TestPullNeverWritesToTheSource(t *testing.T) {
 		t.Fatal("the source was never reached at all, so this test asserted nothing")
 	}
 
-	// And the copy has to have carried the source's own credentials.
 	var copied bool
 	for _, c := range eng.calls {
 		if strings.HasPrefix(c, "Copy dest=") {
@@ -166,10 +145,8 @@ func TestPullNeverWritesToTheSource(t *testing.T) {
 		t.Fatal("no copy was attempted, so the source-side assertion above proved nothing")
 	}
 
-	// The far key must be the one that opens the source, and our own must be the
-	// one that opens the destination. Asserting this on the VALUES is the point:
-	// the nil check above survives a swap of the two sides untouched, and a swap
-	// is exactly the mistake a file modelled on copyToOffsiteTarget invites.
+	// Their key has to open the source and ours the destination. The nil check
+	// above would still pass with the two sides swapped, so compare the values.
 	theirPw := restickey.Derive(theirKey)
 	ourPw := restickey.Derive(ourKey)
 	if theirPw == ourPw {

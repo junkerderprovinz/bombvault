@@ -1,10 +1,8 @@
-// Package notify sends best-effort backup notifications to optional channels: a
-// webhook (generic JSON, Discord, Slack, Gotify or ntfy), a Matrix room, an
-// email (SMTP), a user-run Apprise API server (caronc/apprise-api — fans out to
-// Apprise's 100+ services), and a Healthchecks.io ping. Every send is
-// best-effort and time-bounded; a failure to notify never affects a backup.
-// URLs/tokens are admin-configured, so reaching internal endpoints is
-// intentional (no SSRF filtering).
+// Package notify sends backup notifications to a webhook (generic JSON,
+// Discord, Slack, Gotify or ntfy), a Matrix room, SMTP, a user-run Apprise API
+// server and Healthchecks.io. Every send is best-effort and time-bounded, so a
+// failed notification never affects a backup. The admin configures the URLs,
+// which is why internal endpoints are allowed (no SSRF filtering).
 package notify
 
 import (
@@ -25,10 +23,9 @@ import (
 	"time"
 )
 
-// redactErr strips the request URL from a *url.Error before it is logged: a
-// webhook (Discord/Slack/Gotify/ntfy) or Healthchecks URL carries its secret
-// token in the path, and the default *url.Error string prints the full URL. The
-// underlying cause (timeout, connection refused, …) is preserved.
+// redactErr drops the request URL from a *url.Error before it is logged,
+// because webhook and Healthchecks URLs carry their secret token in the path.
+// The cause (timeout, connection refused) is kept.
 func redactErr(err error) error {
 	var ue *url.Error
 	if errors.As(err, &ue) {
@@ -39,44 +36,36 @@ func redactErr(err error) error {
 
 const sendTimeout = 15 * time.Second
 
-// hcSuppressKey is the context key that suppresses the per-call Healthchecks ping
-// in Send and SendStart while leaving every message channel (webhook/Matrix/SMTP/
-// Apprise) untouched. A SCHEDULED per-domain run sets it on each item's context so the many
-// per-item Healthchecks pings collapse into ONE aggregate start/success/fail ping
-// for the whole domain job (see PingDomainStart / PingDomainResult and #49).
+// hcSuppressKey marks a context in which Send and SendStart skip the
+// Healthchecks ping. A scheduled per-domain run sets it on every item and pings
+// once for the whole run instead (PingDomainStart, PingDomainResult).
 type hcSuppressKey struct{}
 
-// WithHealthchecksSuppressed returns a child context that suppresses the
-// Healthchecks ping in Send and SendStart. ONLY the Healthchecks ping is affected;
-// every other channel still fires per call. Used by scheduled per-domain runs,
-// which ping Healthchecks once for the whole run instead of once per item.
+// WithHealthchecksSuppressed returns a context in which Send and SendStart skip
+// the Healthchecks ping. The other channels still fire.
 func WithHealthchecksSuppressed(ctx context.Context) context.Context {
 	return context.WithValue(ctx, hcSuppressKey{}, true)
 }
 
-// healthchecksSuppressed reports whether ctx carries the suppress flag.
 func healthchecksSuppressed(ctx context.Context) bool {
 	v, _ := ctx.Value(hcSuppressKey{}).(bool)
 	return v
 }
 
-// msgSuppressKey is the context key that marks a per-item MESSAGE send (webhook/
-// Matrix/SMTP/Apprise) as a candidate for domain-level summarisation. A scheduled per-domain
-// run sets it on each backup item; Send then skips the per-item message ONLY when the
-// config also asks for a summary (Config.ScheduledSummary), so the many per-item
-// messages collapse into ONE "N of M" summary for the whole run (#56). It is separate
-// from hcSuppressKey so a per-container update notice (which suppresses only the HC
-// ping) still delivers its message. See WithMessagesSuppressed.
+// msgSuppressKey marks a per-item message of a scheduled run. Send drops it
+// when Config.ScheduledSummary is on, so the run ends in one "N of M" summary.
+// It is separate from hcSuppressKey because a container update notice skips
+// only the Healthchecks ping and must still deliver its message.
 type msgSuppressKey struct{}
 
-// WithMessagesSuppressed marks ctx as a per-item scheduled-backup message: Send drops
-// the per-item webhook/Matrix/SMTP/Apprise send when the config's ScheduledSummary is on.
+// WithMessagesSuppressed marks ctx as a per-item scheduled-backup message,
+// which Send drops when ScheduledSummary is on.
 func WithMessagesSuppressed(ctx context.Context) context.Context {
 	return context.WithValue(ctx, msgSuppressKey{}, true)
 }
 
-// MessagesSuppressed reports whether ctx is a per-item scheduled-backup message. The
-// service layer reads it to drop its own per-item Unraid push in summary mode.
+// MessagesSuppressed reports whether ctx is a per-item scheduled-backup message.
+// The service layer uses it to drop its own Unraid push in summary mode.
 func MessagesSuppressed(ctx context.Context) bool {
 	v, _ := ctx.Value(msgSuppressKey{}).(bool)
 	return v
@@ -85,123 +74,74 @@ func MessagesSuppressed(ctx context.Context) bool {
 // Config holds the notification channels. An empty field disables that channel.
 type Config struct {
 	On string `json:"on"` // "never" | "failure" | "always"
-	// WebhookEnabled gates the webhook channel — a populated WebhookURL with this
-	// off never sends, same enable/disable shape as SMTPEnabled below (added
-	// alongside MatrixEnabled/AppriseEnabled so every message channel that isn't
-	// Unraid-native gets an explicit on/off switch, not just "blank URL = off").
-	WebhookEnabled bool   `json:"webhookEnabled"`
-	WebhookURL     string `json:"webhookUrl"`
-	WebhookFormat  string `json:"webhookFormat"` // generic|discord|slack|gotify|ntfy
-	// MatrixEnabled gates the Matrix channel — same enable/disable shape as
-	// SMTPEnabled below.
+	// The Enabled flags switch a channel off without clearing its settings.
+	WebhookEnabled   bool   `json:"webhookEnabled"`
+	WebhookURL       string `json:"webhookUrl"`
+	WebhookFormat    string `json:"webhookFormat"` // generic|discord|slack|gotify|ntfy
 	MatrixEnabled    bool   `json:"matrixEnabled"`
 	MatrixHomeserver string `json:"matrixHomeserver"`
 	MatrixToken      string `json:"matrixToken"`
 	MatrixRoom       string `json:"matrixRoom"`
 	HealthchecksURL  string `json:"healthchecksUrl"`
-	// HealthchecksByDomain maps a backup domain
-	// ("container"|"VM"|"flash"|"config"|"files") to its own Healthchecks check
-	// URL. A per-domain URL replaces (does not add to) the global HealthchecksURL
-	// for that domain; a blank/absent entry falls back to the global URL.
+	// HealthchecksByDomain maps a backup domain ("container", "VM", "flash",
+	// "config", "files") to its own check URL, which replaces HealthchecksURL
+	// for that domain. An empty entry falls back to HealthchecksURL.
 	HealthchecksByDomain map[string]string `json:"healthchecksByDomain"`
-	// Unraid sends each event to Unraid's native notification system (which can
-	// itself forward to Pushover/email/Discord/…). It is delivered over SSH by the
-	// service layer (the host's notify script), not by this package's HTTP Send.
+	// Unraid sends each event to Unraid's own notification system. The service
+	// layer delivers it over SSH through the host's notify script; Send does not.
 	Unraid bool `json:"unraid"`
-	// SMTP sends each event as a plain-text email via an SMTP server.
-	SMTPEnabled  bool   `json:"smtpEnabled"`
-	SMTPHost     string `json:"smtpHost"`
-	SMTPPort     int    `json:"smtpPort"`
-	SMTPUsername string `json:"smtpUsername"`
-	SMTPPassword string `json:"smtpPassword"`
-	SMTPFrom     string `json:"smtpFrom"`
-	SMTPTo       string `json:"smtpTo"`
-	SMTPTLS      string `json:"smtpTls"` // "starttls" (default) | "tls" | "none"
-	// AppriseEnabled gates the Apprise channel — same enable/disable shape as
-	// SMTPEnabled below.
-	AppriseEnabled bool `json:"appriseEnabled"`
-	// AppriseURL is the full notify endpoint of a user-run Apprise API server
+	// SMTP sends each event as a plain-text email.
+	SMTPEnabled    bool   `json:"smtpEnabled"`
+	SMTPHost       string `json:"smtpHost"`
+	SMTPPort       int    `json:"smtpPort"`
+	SMTPUsername   string `json:"smtpUsername"`
+	SMTPPassword   string `json:"smtpPassword"`
+	SMTPFrom       string `json:"smtpFrom"`
+	SMTPTo         string `json:"smtpTo"`
+	SMTPTLS        string `json:"smtpTls"` // "starttls" (default) | "tls" | "none"
+	AppriseEnabled bool   `json:"appriseEnabled"`
+	// AppriseURL is the notify endpoint of a user-run Apprise API server
 	// (github.com/caronc/apprise-api), typically http://host:8000/notify/<key>.
-	// Each event is POSTed there as JSON {title, body, type}, unlocking Apprise's
-	// 100+ services without bundling Python. The <key> in the path is the secret,
-	// so errors are logged through redactErr like the webhook URL.
+	// The <key> is a secret, so errors go through redactErr.
 	AppriseURL string `json:"appriseUrl"`
-	// AppriseTags is an optional comma-separated tag filter passed as the
-	// payload's "tag" field, so a shared Apprise config key can route BombVault
-	// events to a subset of its targets. Empty = Apprise's default (all).
+	// AppriseTags is an optional comma-separated tag filter, so a shared
+	// Apprise key can route BombVault events to some of its targets.
 	AppriseTags string `json:"appriseTags"`
-	// ScheduledSummary collapses a scheduled per-domain run's per-item messages into
-	// ONE "N of M succeeded/failed" summary on the message channels (webhook/Matrix/
-	// SMTP/Unraid), instead of one message per container/VM (#56). Off by default, so
-	// existing setups keep their per-item notifications. Healthchecks is already
-	// aggregated regardless. Manual multi-select backups stay per-item.
+	// ScheduledSummary replaces the per-item messages of a scheduled run with
+	// one "N of M" summary on webhook, Matrix, SMTP and Unraid. Healthchecks is
+	// aggregated either way, and manual backups always report per item.
 	ScheduledSummary bool `json:"scheduledSummary"`
-	// NotifyOnUpdate sends a message when a container is updated by the post-backup
-	// image update (#52/#56): "Updated <name> to a newer image", so the user can
-	// verify it still works. Off by default; fires per updated container (updates are
-	// rare) and is NOT folded into the scheduled summary.
+	// NotifyOnUpdate sends "Updated <name> to a newer image" when the
+	// post-backup image update replaces a container, so the user can check it
+	// still works. It goes out per container, never folded into the summary.
 	NotifyOnUpdate bool `json:"notifyOnUpdate"`
 }
 
-// UnmarshalJSON decodes a stored notification config and BACK-FILLS the three
-// channel gates for a config written before those gates existed.
+// UnmarshalJSON decodes a stored config. Older configs have no
+// WebhookEnabled, MatrixEnabled or AppriseEnabled key, and reading those as
+// false would turn off their failure alerts, so an absent key means the channel
+// is on when its fields are filled in. A present key, false included, is kept.
 //
-// WebhookEnabled / MatrixEnabled / AppriseEnabled are new. Before them the three
-// channels were gated by their fields alone: a webhook fired iff WebhookURL was
-// set, Matrix iff homeserver+token+room were set, Apprise iff AppriseURL was set.
-// The config is persisted as a JSON blob (encrypted, settings.notify_conf), so
-// every config written by an earlier build simply has no such key — and a plain
-// decode turns an absent key into Go's zero value, false. That silently switches
-// off failure alerting on the first start after an upgrade: the webhook that was
-// meant to tell the operator a backup failed stops firing, and the Settings page
-// renders the channel as if it had never been set up (the toggle is off, so its
-// URL fields are hidden), with no error, no log line and nothing to notice.
-//
-// An ABSENT key is not a user decision. It is a config from a build in which the
-// switch did not exist, and the truthful value for it is the rule that build
-// actually applied: on iff the channel was filled in. A key that IS present is
-// honoured exactly as written, so an explicit false — a user switching a channel
-// off while keeping its URL — survives every later load. Once the config is saved
-// again the keys are written explicitly and this back-fill no longer applies to
-// it. Nothing needs to be rewritten for it to take effect, which is why this is
-// a decode rule and not a database migration: the blob is encrypted with APP_KEY,
-// which the SQL migrations deliberately have no access to.
-//
-// It sits on the type rather than at the one call site that decodes the stored
-// blob, so every path that unmarshals a Config reads it the same way: the stored
-// blob, and a settings-export file written by an older instance.
+// This is a decode rule rather than a migration because the stored blob is
+// encrypted with APP_KEY, which the SQL migrations cannot read, and because an
+// imported settings export needs the same rule.
 func (c *Config) UnmarshalJSON(data []byte) error {
 	return c.decode(data, false)
 }
 
-// DecodeStrict decodes a Config the way a request decoder would if UnmarshalJSON
-// were not in the way: an UNKNOWN key is an error. The back-fill above is applied
-// exactly as on the lenient path, and an ABSENT known key stays fine — only a key
-// that matches no field is refused.
-//
-// The API decodes every POST body with json.Decoder.DisallowUnknownFields, which
-// is what catches client/server field-name drift on a blob the UI edits as a
-// whole. That check works one level at a time: encoding/json hands the entire
-// object to a type's own UnmarshalJSON and never looks inside it, so the moment
-// Config grew the back-fill above, /api/notify and /api/notify/test stopped
-// rejecting anything. A misspelled "webhookEnable" was then dropped in silence
-// and the back-fill, seeing a filled-in URL and no gate key, switched the channel
-// ON — turning a user's explicit off into an on. The strict decode belongs here,
-// on the type that owns the field names, rather than at the two call sites.
-//
-// The STORED blob keeps the lenient path on purpose: it may carry keys from a
-// build whose fields no longer exist, and refusing to load it would take the
-// whole notification config down over a leftover key.
+// DecodeStrict is UnmarshalJSON that also rejects unknown keys.
+// json.Decoder.DisallowUnknownFields does not reach inside a custom
+// UnmarshalJSON, and a misspelled "webhookEnable" would otherwise be dropped
+// and the absent key would switch that channel on. The stored blob stays
+// lenient because it may carry keys of removed fields.
 func (c *Config) DecodeStrict(data []byte) error {
 	return c.decode(data, true)
 }
 
-// decode is the shared body of UnmarshalJSON and DecodeStrict; strict rejects
-// unknown keys.
 func (c *Config) decode(data []byte, strict bool) error {
-	// A distinct type with the same fields and NO method set, so unmarshalling
-	// into it cannot recurse back into this function — and, on the strict path,
-	// so the decoder sees the fields themselves instead of a custom unmarshaller.
+	// storedConfig has Config's fields but none of its methods, so decoding
+	// into it neither recurses into UnmarshalJSON nor hides the fields from
+	// DisallowUnknownFields.
 	type storedConfig Config
 	var out storedConfig
 	if strict {
@@ -213,8 +153,7 @@ func (c *Config) decode(data []byte, strict bool) error {
 	} else if err := json.Unmarshal(data, &out); err != nil {
 		return err
 	}
-	// Second pass over the same bytes, reading only the three gates as pointers:
-	// nil means the key was absent, which is the case this exists for.
+	// Read the three switches again as pointers: nil means the key was absent.
 	var gates struct {
 		Webhook *bool `json:"webhookEnabled"`
 		Matrix  *bool `json:"matrixEnabled"`
@@ -243,53 +182,27 @@ type Event struct {
 	OK      bool
 }
 
-// shouldSend decides whether an outcome is worth a message.
-//
-// UNSET IS NOT "never", and that distinction is the fix for #195. The stored
-// config is a JSON blob defaulting to the empty string, so a fresh install
-// parsed to On == "" and fell into the silent branch. The effect was the worst
-// shape a default can have: somebody fills in a channel, presses Test, sees it
-// arrive, and is then never told that backups stopped — because Test sends
-// unconditionally while every real event was dropped here. Nothing on screen
-// separated "configured and live" from "configured and muted".
-//
-// So an empty value now means "failure": if a channel has been set up at all,
-// the thing people mean by turning notifications on is being told when
-// something breaks. An EXPLICIT "never" is still honoured exactly as before,
-// because silencing on purpose is a real choice and this must not override it.
-// The two are distinguishable precisely because the blob starts empty.
-// active reports whether notifications are switched on at all.
-//
-// ONE place decides this. It used to be decided in five: shouldSend plus four
-// hand-written allowlists spelled `c.On != "always" && c.On != "failure"`. That
-// spelling is why fixing the unset default in shouldSend alone changed nothing
-// — the four copies still dropped the message before it ever got there, and the
-// tests that caught it are the ones written the same hour. A policy repeated in
-// five places is four places to forget.
-//
-// It stays a POSITIVE allowlist, which is a deliberate older decision this
-// change does not get to overturn: an unrecognised value is treated like
-// "never", so a corrupted or hand-edited config cannot start contacting
-// endpoints on its own. Only ONE member is added to the list, the empty string,
-// because that is the actual defect: the stored blob starts empty, so "" means
-// nobody has chosen yet, and somebody who fills in a channel means to hear when
-// something breaks. An explicit "never" is still off.
+// active reports whether notifications are switched on at all. It is an
+// allowlist, so a corrupted or hand-edited value sends nothing. An empty On
+// means nobody has chosen yet and counts as "failure", because whoever fills
+// in a channel wants to hear when a backup breaks.
 func (c Config) active() bool {
 	switch c.On {
 	case "", "always", "failure":
 		return true
-	default: // "never", and anything unrecognised
+	default:
 		return false
 	}
 }
 
+// shouldSend reports whether an event with this outcome gets a message.
 func (c Config) shouldSend(ok bool) bool {
 	switch c.On {
 	case "always":
 		return true
-	case "failure", "": // unset = failure; see the doc comment above
+	case "failure", "":
 		return !ok
-	default: // "never", and anything unrecognised — see active()
+	default:
 		return false
 	}
 }
@@ -300,9 +213,8 @@ func (c Config) Configured() bool {
 	return c.webhookReady() || c.matrixReady() || len(c.healthchecksURLs()) > 0 || c.smtpReady() || c.appriseReady()
 }
 
-// healthchecksURLFor returns the per-domain Healthchecks URL when one is set for
-// domain, otherwise the global HealthchecksURL. A per-domain URL replaces (does
-// not add to) the global for that domain.
+// healthchecksURLFor returns the domain's own Healthchecks URL, or the global
+// one when the domain has none.
 func (c Config) healthchecksURLFor(domain string) string {
 	if u := c.HealthchecksByDomain[normalizeHCDomain(domain)]; u != "" {
 		return u
@@ -311,12 +223,9 @@ func (c Config) healthchecksURLFor(domain string) string {
 }
 
 // normalizeHCDomain maps the domain spellings used across the codebase to the
-// canonical HealthchecksByDomain keys ("container"|"VM"|"flash"|"config"|"files").
-// Backups use "container"/"VM"; the off-site and tamper failure notifiers use the
-// plural "containers"/"vms". "flash", "config" and "files" have a single spelling
-// everywhere and pass through the default case unchanged. Normalizing here means
-// a per-domain check catches ALL of a domain's events (backup + replication/
-// drill/tamper failures), not just backups.
+// HealthchecksByDomain keys. Backups say "container" and "VM", the off-site and
+// tamper notifiers "containers" and "vms"; without this a per-domain check
+// would miss the replication, drill and tamper failures.
 func normalizeHCDomain(domain string) string {
 	switch domain {
 	case "containers":
@@ -328,9 +237,8 @@ func normalizeHCDomain(domain string) string {
 	}
 }
 
-// healthchecksURLs returns every distinct configured Healthchecks URL — the global
-// HealthchecksURL plus each non-empty per-domain value — de-duplicated. Used by
-// SendTest to ping every check exactly once and by Configured.
+// healthchecksURLs returns the global and per-domain Healthchecks URLs without
+// duplicates.
 func (c Config) healthchecksURLs() []string {
 	seen := map[string]bool{}
 	var urls []string
@@ -352,8 +260,6 @@ func mapValues(m map[string]string) []string {
 	return out
 }
 
-// webhookReady only fires when enabled AND a URL is set — the same shape as
-// smtpReady below, added alongside matrixReady/appriseReady's own gates.
 func (c Config) webhookReady() bool {
 	return c.WebhookEnabled && c.WebhookURL != ""
 }
@@ -366,17 +272,14 @@ func (c Config) smtpReady() bool {
 	return c.SMTPEnabled && c.SMTPHost != "" && c.SMTPFrom != "" && c.SMTPTo != ""
 }
 
-// appriseReady only fires when enabled AND a URL is set — same shape as
-// webhookReady/smtpReady above.
 func (c Config) appriseReady() bool {
 	return c.AppriseEnabled && c.AppriseURL != ""
 }
 
-// Send dispatches ev to the configured channels. Healthchecks is a monitor, not a
-// human message: it must get the success ping to stay green, so it fires on both
-// outcomes whenever configured (except when notifications are "never"). The On
-// policy governs only the message channels (webhook/matrix/smtp/apprise). Each
-// channel's error is logged, never returned (best-effort).
+// Send delivers ev to the configured channels and logs each channel's error.
+// The On policy applies to the message channels. Healthchecks is pinged on both
+// outcomes unless notifications are off, because a check needs its success
+// pings to stay green.
 func Send(ctx context.Context, c Config, domain string, ev Event) {
 	if !c.active() {
 		return
@@ -385,12 +288,6 @@ func Send(ctx context.Context, c Config, domain string, ev Event) {
 	defer cancel()
 	client := &http.Client{Timeout: sendTimeout}
 
-	// Healthchecks is a monitor, not a human message: it must get the success ping
-	// to stay green, so it fires on both outcomes whenever configured — the On
-	// policy governs only the message channels below. The domain selects its own
-	// check when one is configured, else the global URL. A scheduled per-domain run
-	// suppresses this per-item ping (context flag) so its ONE aggregate ping speaks
-	// for the whole run; the message channels below still fire per item.
 	if hcURL := c.healthchecksURLFor(domain); hcURL != "" && !healthchecksSuppressed(ctx) {
 		phase := "success"
 		if !ev.OK {
@@ -405,8 +302,7 @@ func Send(ctx context.Context, c Config, domain string, ev Event) {
 		return
 	}
 
-	// Scheduled per-domain run with summary mode on: drop this per-item message so the
-	// single "N of M" summary (Service.ScheduledNotifyResult) speaks for the whole run.
+	// In summary mode Service.ScheduledNotifyResult reports the whole run.
 	if MessagesSuppressed(ctx) && c.ScheduledSummary {
 		return
 	}
@@ -433,21 +329,16 @@ func Send(ctx context.Context, c Config, domain string, ev Event) {
 	}
 }
 
-// SendStart marks the beginning of a backup: it pings the Healthchecks check's
-// /start endpoint (so the check can measure duration and detect a hung run) and
-// posts an "info"-type message to Apprise, the one message channel with a native
-// start-suited type. The Apprise start fires ONLY under On=always — a
-// failure-only setup gets no routine start notices — and never for a per-item
-// scheduled send in summary mode (the run's messages collapse into the one
-// summary, so its starts must not leak either). The Healthchecks-suppress flag
-// keeps affecting only the Healthchecks ping. Best-effort.
+// SendStart marks the start of a backup. It pings the Healthchecks /start
+// endpoint, so the check can measure duration and catch a hung run, and posts
+// an "info" message to Apprise, the only message channel with a type for it.
+// The Apprise post needs On=always and is skipped for per-item sends in
+// summary mode.
 func SendStart(ctx context.Context, c Config, domain string) {
 	if !c.active() {
 		return
 	}
 	hcURL := c.healthchecksURLFor(domain)
-	// A scheduled per-domain run suppresses this per-item /start (context flag) so the
-	// run's ONE aggregate /start (PingDomainStart) speaks for the whole domain job.
 	pingHC := hcURL != "" && !healthchecksSuppressed(ctx)
 	postApprise := c.appriseReady() && c.On == "always" &&
 		(!MessagesSuppressed(ctx) || !c.ScheduledSummary)
@@ -473,12 +364,9 @@ func SendStart(ctx context.Context, c Config, domain string) {
 	}
 }
 
-// PingDomainStart pings a SCHEDULED per-domain run's Healthchecks check /start once,
-// at the start of the whole run — the aggregate counterpart to the per-item SendStart
-// (which the run suppresses). No-op when the domain has no check configured or
-// notifications are off; best-effort. The suppress flag does NOT apply here: this IS
-// the aggregate ping. domain may be the plural scheduler spelling ("containers"|"vms");
-// healthchecksURLFor normalises it to the per-domain check key.
+// PingDomainStart pings /start once for a whole scheduled per-domain run, in
+// place of the per-item SendStart pings the run suppresses. domain may use the
+// scheduler's plural spelling ("containers", "vms").
 func PingDomainStart(ctx context.Context, c Config, domain string) {
 	hcURL := c.healthchecksURLFor(domain)
 	if !c.active() || hcURL == "" {
@@ -492,12 +380,9 @@ func PingDomainStart(ctx context.Context, c Config, domain string) {
 	}
 }
 
-// PingDomainResult pings a SCHEDULED per-domain run's Healthchecks check once at the
-// end of the whole run: the success endpoint when ok, else <base>/fail. summary (e.g.
-// "3 of 3 items succeeded" or "1 of 3 items failed") is POSTed as the request body so
-// it shows in the check's event log. It is the aggregate counterpart to the per-item
-// success/fail ping inside Send (which the run suppresses). No-op when the domain has
-// no check configured or notifications are off; best-effort.
+// PingDomainResult pings the domain's check once at the end of a scheduled
+// run, on <base> when ok and <base>/fail otherwise. summary, such as "1 of 3
+// items failed", is sent as the body so it shows in the check's event log.
 func PingDomainResult(ctx context.Context, c Config, domain string, ok bool, summary string) {
 	hcURL := c.healthchecksURLFor(domain)
 	if !c.active() || hcURL == "" {
@@ -524,7 +409,7 @@ func SendTest(ctx context.Context, c Config) error {
 	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
 	defer cancel()
 	client := &http.Client{Timeout: sendTimeout}
-	ev := Event{Title: "BombVault", Message: "Test notification — notifications are working.", OK: true}
+	ev := Event{Title: "BombVault", Message: "Test notification: notifications are working.", OK: true}
 
 	if c.webhookReady() {
 		if err := sendWebhook(ctx, client, c, ev); err != nil {
@@ -554,11 +439,8 @@ func SendTest(ctx context.Context, c Config) error {
 	return nil
 }
 
-// sendApprise posts ev to a user-run Apprise API server: a JSON
-// {title, body, type} POST to the configured full /notify/<key> endpoint, per
-// the apprise-api stateful-notify contract. The event outcome maps onto
-// Apprise's native message types: OK→"success", !OK→"failure" (SendStart posts
-// "info" for a backup start).
+// sendApprise posts ev to the Apprise /notify/<key> endpoint with the type
+// "success" or "failure".
 func sendApprise(ctx context.Context, client *http.Client, c Config, ev Event) error {
 	typ := "success"
 	if !ev.OK {
@@ -567,9 +449,7 @@ func sendApprise(ctx context.Context, client *http.Client, c Config, ev Event) e
 	return postAppriseJSON(ctx, client, c, ev.Title, ev.Message, typ)
 }
 
-// postAppriseJSON is the shared Apprise POST: {title, body, type}, plus the
-// optional "tag" filter when AppriseTags is set (comma-separated, routed to a
-// subset of the key's targets; absent = Apprise's default).
+// postAppriseJSON posts {title, body, type}, plus "tag" when AppriseTags is set.
 func postAppriseJSON(ctx context.Context, client *http.Client, c Config, title, body, typ string) error {
 	payload := map[string]string{"title": title, "body": body, "type": typ}
 	if c.AppriseTags != "" {
@@ -628,16 +508,14 @@ func sendMatrix(ctx context.Context, client *http.Client, c Config, ev Event) er
 	return do(client, req)
 }
 
-// pingHealthchecks pings the check for a lifecycle phase: "start" (<base>/start),
-// "success" (<base>) or "fail" (<base>/fail). Bodyless (GET) — the per-item pings.
+// pingHealthchecks sends a GET for the phase "start" (<base>/start), "success"
+// (<base>) or "fail" (<base>/fail).
 func pingHealthchecks(ctx context.Context, client *http.Client, base, phase string) error {
 	return pingHealthchecksBody(ctx, client, base, phase, "")
 }
 
-// pingHealthchecksBody pings the check for a lifecycle phase, optionally attaching a
-// body that Healthchecks records in the check's event feed. An empty body sends a
-// plain GET (the per-item lifecycle pings); a non-empty body is POSTed (the aggregate
-// per-domain-run summary — see PingDomainResult).
+// pingHealthchecksBody is pingHealthchecks with a body, which Healthchecks
+// records in the check's event log. A non-empty body turns the GET into a POST.
 func pingHealthchecksBody(ctx context.Context, client *http.Client, base, phase, body string) error {
 	u := strings.TrimRight(base, "/")
 	switch phase {
@@ -685,10 +563,8 @@ func do(client *http.Client, req *http.Request) error {
 	return nil
 }
 
-// buildSMTPMessage renders ev into an RFC 5322 message (CRLF line endings):
-// From/To/Subject/Date headers plus a plain-text body. Subject is the event
-// title, the body its message. Kept pure so it can be unit-tested without a
-// server.
+// buildSMTPMessage renders ev as a plain-text RFC 5322 message with the title
+// as subject.
 func buildSMTPMessage(c Config, ev Event) []byte {
 	var b strings.Builder
 	b.WriteString("From: " + c.SMTPFrom + "\r\n")
@@ -708,8 +584,7 @@ func buildSMTPMessage(c Config, ev Event) []byte {
 //   - "none": plain dial, no encryption.
 //
 // PLAIN auth is used only when a username is set. The dial is bounded by ctx's
-// deadline (falling back to sendTimeout) so an unreachable server fails fast
-// rather than hanging the (best-effort) notification.
+// deadline, or sendTimeout, so an unreachable server fails fast.
 func sendSMTP(ctx context.Context, c Config, ev Event) error {
 	port := c.SMTPPort
 	if port == 0 {
@@ -747,10 +622,9 @@ func sendSMTP(ctx context.Context, c Config, ev Event) error {
 	defer client.Close() //nolint:errcheck // close error after Quit is not actionable
 
 	if strings.EqualFold(c.SMTPTLS, "starttls") || c.SMTPTLS == "" {
-		// Require STARTTLS when it was requested: if the server does not advertise
-		// it, fail loudly instead of silently sending credentials/mail in cleartext
-		// (a STARTTLS-stripping MITM must not be able to downgrade us). Users who
-		// genuinely want plaintext can pick the "none" encryption mode explicitly.
+		// Fail rather than fall back to cleartext, or a MITM that strips the
+		// STARTTLS extension would get the credentials. Plaintext is the explicit
+		// "none" mode.
 		if ok, _ := client.Extension("STARTTLS"); !ok {
 			return fmt.Errorf("starttls: server does not advertise STARTTLS. Set Encryption to TLS (implicit) or None")
 		}
@@ -787,8 +661,8 @@ func sendSMTP(ctx context.Context, c Config, ev Event) error {
 	return client.Quit()
 }
 
-// splitRecipients splits a comma/semicolon-separated recipient list into trimmed,
-// non-empty addresses (the To header keeps the raw string for display).
+// splitRecipients splits a comma or semicolon separated recipient list into
+// trimmed addresses. The To header keeps the raw string.
 func splitRecipients(to string) []string {
 	fields := strings.FieldsFunc(to, func(r rune) bool { return r == ',' || r == ';' })
 	out := make([]string, 0, len(fields))

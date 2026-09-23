@@ -40,7 +40,7 @@ func TestSPAFallsBackToIndexForClientRoute(t *testing.T) {
 	h := api.NewSPAHandler(testSPAFS(), apiMux)
 
 	w := httptest.NewRecorder()
-	// A deep client-side route with no matching file → index.html.
+	// A client-side route with no matching file gets index.html.
 	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/settings/encryption", nil))
 	if w.Code != http.StatusOK {
 		t.Fatalf("status = %d", w.Code)
@@ -64,9 +64,8 @@ func TestSPADelegatesAPIRoutes(t *testing.T) {
 	}
 }
 
-// The API-owned pages OUTSIDE /api (/metrics for Prometheus, /widget for the
-// embeddable dashboard widget) must reach the API router — never the SPA index
-// fallback (a scrape/iframe getting index.html would be a silent breakage).
+// /metrics and /widget live outside /api but belong to the API router. A scraper
+// or iframe that got index.html would break without any error.
 func TestSPADelegatesAPIOwnedPages(t *testing.T) {
 	apiMux := http.NewServeMux()
 	apiMux.HandleFunc("GET /metrics", func(w http.ResponseWriter, _ *http.Request) {
@@ -92,24 +91,15 @@ func TestSPAUnknownAPIRouteDoesNotFallBack(t *testing.T) {
 	h := api.NewSPAHandler(testSPAFS(), apiMux)
 
 	w := httptest.NewRecorder()
-	// An unknown /api/ route must 404 (NOT serve index.html as if it were a route).
 	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/does-not-exist", nil))
 	if w.Code != http.StatusNotFound {
 		t.Fatalf("expected 404 for unknown api route, got %d body=%q", w.Code, w.Body.String())
 	}
 }
 
-// TestSPACacheHeaders pins the split the whole point of [333] rests on: the
-// shell must never be cached, the hashed assets should be cached forever.
-//
-// Both PATHS to the shell are checked, because the fix's first cut set the
-// header on only one of them and looked complete: a client-side route reaches
-// serveIndex, while "/index.html" by name goes through the file server. A
-// browser landing on the app hits the first, a reload of a bookmarked file URL
-// the second, and half a fix here is indistinguishable from none - the symptom
-// is a page that reports the previous deploy's version and no amount of
-// deploying corrects it ([266], and the same confusion again while verifying a
-// deploy on 2026-08-31).
+// The shell is never cached and hashed assets are cached for a year. Both ways
+// to the shell are checked: a client-side route goes through serveIndex,
+// "/index.html" through the file server.
 func TestSPACacheHeaders(t *testing.T) {
 	h := api.NewSPAHandler(testSPAFS(), http.NewServeMux())
 
@@ -121,18 +111,14 @@ func TestSPACacheHeaders(t *testing.T) {
 		}
 	}
 
-	// A content-hashed asset is immutable by construction - a new build gives
-	// it a new NAME - so caching it for a year costs nothing and is what makes
-	// an uncacheable shell cheap.
+	// A new build gives a hashed asset a new name, so a long cache is safe.
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/assets/app.js", nil))
 	if got := w.Header().Get("Cache-Control"); got != "public, max-age=31536000, immutable" {
 		t.Errorf("asset Cache-Control = %q, want a long immutable cache", got)
 	}
 
-	// Everything else keeps whatever the file server decides. A favicon is
-	// neither hashed nor the shell, and inventing a policy for it here would be
-	// this test claiming more than the change actually made.
+	// Other files keep whatever the file server sends.
 	w = httptest.NewRecorder()
 	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/favicon.ico", nil))
 	if got := w.Header().Get("Cache-Control"); got != "" {
@@ -140,13 +126,8 @@ func TestSPACacheHeaders(t *testing.T) {
 	}
 }
 
-// TestAssetsMissDoesNotFallBack pins [345]: a missing file under /assets/ is a
-// 404, not the SPA index.
-//
-// The failure it prevents is specific and was measured on the deployed build:
-// every /assets/<anything> returned 200 with text/html, so a browser holding a
-// stale index.html asked for a chunk that no longer existed, received markup,
-// and tried to parse it as JavaScript.
+// A stale index.html asking for a chunk that no longer exists gets a 404, not
+// markup it would try to parse as JavaScript.
 func TestAssetsMissDoesNotFallBack(t *testing.T) {
 	h := api.NewSPAHandler(testSPAFS(), http.NewServeMux())
 
@@ -158,8 +139,7 @@ func TestAssetsMissDoesNotFallBack(t *testing.T) {
 		}
 	}
 
-	// An asset that DOES exist is unaffected, and so is a client-side route
-	// that merely happens to sit at the top level.
+	// Existing assets and top-level client routes are unaffected.
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/assets/app.js", nil))
 	if w.Code != http.StatusOK {

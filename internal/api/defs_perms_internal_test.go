@@ -8,18 +8,15 @@ import (
 	"testing"
 )
 
-// The disaster-recovery defs directory lives on the operator's backup share, which
-// is typically a network path the operator also copies off-box. An older BombVault
-// created it at 0700 (root-only), which locked non-root SMB users out of the WHOLE
-// backup folder and broke their second-copy sync. ensureDefsDir must create it
-// world-traversable AND heal an existing 0700 directory to 0755.
+// TestEnsureDefsDirHealsTo0755: the defs directory lives on the backup share,
+// which non-root SMB users copy off-box. ensureDefsDir creates it at 0755 and
+// relaxes an existing 0700 one.
 func TestEnsureDefsDirHealsTo0755(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("unix permission bits are not modelled on windows")
 	}
 	dir := filepath.Join(t.TempDir(), "bombvault-defs")
 
-	// A fresh create is world-traversable.
 	if err := ensureDefsDir(dir); err != nil {
 		t.Fatalf("ensureDefsDir (fresh): %v", err)
 	}
@@ -27,8 +24,7 @@ func TestEnsureDefsDirHealsTo0755(t *testing.T) {
 		t.Fatalf("fresh defs dir perm = %o, want 0755", perm)
 	}
 
-	// A directory an older version locked down to 0700 is healed to 0755.
-	if err := os.Chmod(dir, 0o700); err != nil { //nolint:gosec // G302: deliberately simulating the old locked-down dir this fix heals
+	if err := os.Chmod(dir, 0o700); err != nil { //nolint:gosec // G302: simulates a defs dir locked down to 0700
 		t.Fatal(err)
 	}
 	if err := ensureDefsDir(dir); err != nil {
@@ -39,9 +35,8 @@ func TestEnsureDefsDirHealsTo0755(t *testing.T) {
 	}
 }
 
-// os.WriteFile keeps an existing file's mode, so a .def an older version wrote at
-// 0600 would stay unreadable to the SMB sync user even after a fresh backup rewrote
-// it. writeDef must heal it to 0644 (and still write the new encrypted bytes).
+// TestWriteDefHeals0600FileTo0644: os.WriteFile keeps an existing file's mode,
+// so writeDef has to relax a 0600 .def to 0644 itself.
 func TestWriteDefHeals0600FileTo0644(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("unix permission bits are not modelled on windows")
@@ -62,9 +57,8 @@ func TestWriteDefHeals0600FileTo0644(t *testing.T) {
 	}
 }
 
-// makeRepoReadable must relax a root-written 0700/0600 restic tree to be readable
-// (group+other) so the operator's off-box sync tool can copy it, without altering
-// content. Unix-perm specific → skipped on Windows.
+// TestMakeRepoReadableRelaxesTree: makeRepoReadable gives group and other read
+// access to a root-written restic tree, so an off-box sync tool can copy it.
 func TestMakeRepoReadableRelaxesTree(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("unix permission bits are not modelled on windows")
@@ -92,8 +86,8 @@ func TestMakeRepoReadableRelaxesTree(t *testing.T) {
 	}
 }
 
-// makeRepoReadable must preserve a setgid/sticky bit (group-inheritance dirs on a
-// shared NAS) while still adding the group/other read+traverse bits.
+// TestMakeRepoReadablePreservesSetgid: a setgid bit, used for group inheritance
+// on a shared NAS, survives while the read bits are added.
 func TestMakeRepoReadablePreservesSetgid(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("unix mode bits are not modelled on windows")
@@ -103,7 +97,7 @@ func TestMakeRepoReadablePreservesSetgid(t *testing.T) {
 	if err := os.MkdirAll(sub, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Chmod(sub, os.ModeSetgid|0o700); err != nil { //nolint:gosec // G302: test sets up a setgid dir the fix must preserve
+	if err := os.Chmod(sub, os.ModeSetgid|0o700); err != nil { //nolint:gosec // G302: a setgid dir that makeRepoReadable must preserve
 		t.Fatal(err)
 	}
 
@@ -121,8 +115,8 @@ func TestMakeRepoReadablePreservesSetgid(t *testing.T) {
 	}
 }
 
-// writeDef must land the def atomically (temp + rename) and leave no ".tmp" behind,
-// so a reader or the migration never sees a half-written def as complete.
+// TestWriteDefIsAtomic: writeDef goes through a temp file and a rename, so
+// nobody reads a half-written def, and leaves no .tmp behind.
 func TestWriteDefIsAtomic(t *testing.T) {
 	dir := t.TempDir()
 	if err := writeDef(dir, "plex.def", []byte("ENC")); err != nil {
@@ -142,8 +136,9 @@ func TestWriteDefIsAtomic(t *testing.T) {
 	}
 }
 
-// readStoredDef prefers the new in-repo location and falls back to the pre-v5.4.1
-// sibling, so a restore from an old-layout backup still finds its definitions.
+// TestReadStoredDefPrefersNewThenLegacy: readStoredDef falls back to the legacy
+// sibling folder, so a restore from an old-layout backup still finds its
+// definitions.
 func TestReadStoredDefPrefersNewThenLegacy(t *testing.T) {
 	base := t.TempDir()
 	newDir := filepath.Join(base, "repo", "def")
@@ -151,24 +146,22 @@ func TestReadStoredDefPrefersNewThenLegacy(t *testing.T) {
 	mustMkdir(t, newDir)
 	mustMkdir(t, legacyDir)
 
-	// only in legacy → fallback finds it
 	mustWrite(t, filepath.Join(legacyDir, "a.def"), "LEGACY")
 	if b, err := readStoredDef(newDir, legacyDir, "a.def"); err != nil || string(b) != "LEGACY" {
 		t.Fatalf("legacy fallback: %q %v", b, err)
 	}
-	// present in both → prefers new
 	mustWrite(t, filepath.Join(newDir, "a.def"), "NEW")
 	if b, err := readStoredDef(newDir, legacyDir, "a.def"); err != nil || string(b) != "NEW" {
 		t.Fatalf("prefer new: %q %v", b, err)
 	}
-	// missing in both → error
 	if _, err := readStoredDef(newDir, legacyDir, "missing.def"); err == nil {
 		t.Fatal("a def missing from both dirs must error")
 	}
 }
 
-// migrateLegacyDefs moves old-location defs into the repo, drops stale duplicates,
-// leaves non-def files alone, and removes the legacy dir only once it is empty.
+// TestMigrateLegacyDefs: migrateLegacyDefs moves legacy defs into the repo,
+// drops a legacy duplicate of a def already there, and removes the legacy dir
+// once it is empty.
 func TestMigrateLegacyDefs(t *testing.T) {
 	base := t.TempDir()
 	newDir := filepath.Join(base, "repo", "def")
@@ -199,7 +192,7 @@ func TestMigrateLegacyDefsLeavesForeignFiles(t *testing.T) {
 	mustMkdir(t, newDir)
 	mustMkdir(t, legacyDir)
 	mustWrite(t, filepath.Join(legacyDir, "a.def"), "A")
-	mustWrite(t, filepath.Join(legacyDir, "keep.txt"), "x") // not a .def → must survive
+	mustWrite(t, filepath.Join(legacyDir, "keep.txt"), "x") // not a .def
 
 	migrateLegacyDefs(newDir, legacyDir)
 

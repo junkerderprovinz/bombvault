@@ -2,9 +2,8 @@ package api
 
 import "testing"
 
-// TestProtectionLevel exhaustively covers the red/amber/green aggregation,
-// including the staleness path (a tamper test older than 2× its schedule period),
-// which can't be reached through RecordTamperTest (it always stamps "now").
+// A tamper test older than twice its period can only be built here, because
+// RecordTamperTest always stamps the current time.
 func TestProtectionLevel(t *testing.T) {
 	const day = int64(86400)
 	now := int64(1_700_000_000)
@@ -68,12 +67,8 @@ func TestProtectionLevel(t *testing.T) {
 	}
 }
 
-// TestProtectionChecksConsistentWithLevel pins that the per-check states
-// protectionChecks emits never contradict protectionLevel: a {never,failed,stale}
-// tamper state coincides with a red chip (via the immutable branch), an "overdue"
-// replication/drill state coincides with amber, and an all-good posture is green
-// with empty check states. This is the invariant that makes the dashboard card a
-// pure renderer that cannot diverge from the chip.
+// The dashboard card renders the per-check states next to the level chip, so
+// the two must never disagree.
 func TestProtectionChecksConsistentWithLevel(t *testing.T) {
 	const day = int64(86400)
 	now := int64(1_700_000_000)
@@ -136,8 +131,7 @@ func TestProtectionChecksConsistentWithLevel(t *testing.T) {
 			wantLevel:  "amber",
 		},
 		{
-			// A PASSED but stale drill: currency drives the row (a failed drill would
-			// instead read "failed", covered by TestProtectionChecksDrillHonorsOutcome).
+			// A passed but stale drill. A failed one reads "failed" instead.
 			name: "overdue drill → overdue + amber",
 			in: protInputs{
 				enabled: true, offsiteConfigured: true,
@@ -147,9 +141,8 @@ func TestProtectionChecksConsistentWithLevel(t *testing.T) {
 			wantLevel:  "amber",
 		},
 		{
-			// A recent but FAILED DR drill: the row reads a red "failed", so the chip
-			// must NOT read green over it — protectionLevel downgrades it to amber (a
-			// failed restorability proof needs attention; other protections are fine).
+			// A recent failed drill shows a red row, so the chip drops to amber
+			// instead of staying green.
 			name: "failed recent drill → failed row + amber chip (chip can't be green over a red row)",
 			in: protInputs{
 				enabled: true, offsiteConfigured: true,
@@ -168,28 +161,21 @@ func TestProtectionChecksConsistentWithLevel(t *testing.T) {
 		if gotLevel != c.wantLevel {
 			t.Errorf("%s: protectionLevel = %q, want %q", c.name, gotLevel, c.wantLevel)
 		}
-		// Invariant: a red-inducing tamper state must coincide with a red chip.
 		redTamper := gotChecks.Tamper == "never" || gotChecks.Tamper == "failed" || gotChecks.Tamper == "stale"
 		if redTamper && gotLevel != "red" {
 			t.Errorf("%s: tamper %q must coincide with a red chip, got %q", c.name, gotChecks.Tamper, gotLevel)
 		}
-		// Invariant: an "overdue" replication/drill must coincide with (at least) amber.
 		if (gotChecks.Replication == "overdue" || gotChecks.Drill == "overdue") && gotLevel == "green" {
 			t.Errorf("%s: an overdue check must not coincide with a green chip", c.name)
 		}
-		// Invariant: a red "failed" drill row must not coincide with a green chip.
 		if gotChecks.Drill == "failed" && gotLevel == "green" {
 			t.Errorf("%s: a failed drill row must not coincide with a green chip, got %q", c.name, gotLevel)
 		}
 	}
 }
 
-// TestProtectionChecksDrillHonorsOutcome pins that the DR-drill scorecard row
-// reflects the latest drill's OUTCOME, not just its recency: a recorded DR drill
-// that FAILED reads "failed" (a red row) even when it is recent, so the row can't
-// go green-by-currency while the off-site "proven restorable" pill (lastDRDrillOK)
-// reads red. A passed recent drill stays "ok"; no drill yet stays "never"; and a
-// failed drill beats currency (still "failed" even when also overdue).
+// The drill row follows the latest drill's outcome as well as its age, so it
+// cannot turn green while the off-site "proven restorable" pill is red.
 func TestProtectionChecksDrillHonorsOutcome(t *testing.T) {
 	const day = int64(86400)
 	now := int64(1_700_000_000)

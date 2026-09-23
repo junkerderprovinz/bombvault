@@ -1,7 +1,5 @@
-// ---------------------------------------------------------------------------
-// Advanced mode — global toggle, persisted per-browser in localStorage.
-// Default OFF (clean/simple UI); ON reveals expert/advanced controls.
-// ---------------------------------------------------------------------------
+// Advanced mode: a global toggle kept in localStorage. Off by default; on
+// reveals the expert controls.
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { ADOPTED_EVENT, save as saveDisplayPrefs } from "./displayPrefs";
@@ -22,11 +20,9 @@ export function AdvancedProvider({ children }: { children: ReactNode }) {
     }
   });
 
-  // The initial read above happens once, at mount. A browser that adopts the
-  // server's look a moment later changes this key underneath that read, and
-  // without this the page would sit in the simple view with "1" in storage —
-  // one half of what #191 looked like. Reading storage again is enough; this
-  // must not save, or adopting would echo straight back to the server.
+  // Adopting the server's stored look can change this key after the mount
+  // read, so read it again. No save here, or the adopted value would echo
+  // straight back to the server.
   useEffect(() => {
     const onAdopted = () => {
       try {

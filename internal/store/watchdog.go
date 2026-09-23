@@ -6,12 +6,10 @@ import (
 	"fmt"
 )
 
-// WatchdogState is the overdue-backup watchdog's once-per-episode memory for
-// one domain: when the notification fired and which last-success timestamp the
-// overdue verdict was based on. An episode is identified by that timestamp —
-// while it is unchanged the domain is still in the SAME overdue episode and the
-// watchdog stays quiet; a new success changes it (or removes the row via the
-// recovery path), re-arming the watchdog.
+// WatchdogState records when the overdue-backup watchdog notified about a
+// domain and which last-success timestamp that notice was based on. While the
+// timestamp is unchanged the domain is in the same overdue episode and the
+// watchdog stays quiet; a new success starts a new one.
 type WatchdogState struct {
 	Domain        string
 	NotifiedAt    int64
@@ -50,8 +48,8 @@ func (r *Repo) UpsertWatchdogState(ws WatchdogState) error {
 	return nil
 }
 
-// DeleteWatchdogState removes a domain's episode state (the domain recovered —
-// its backups are current again). Deleting a missing row is a no-op.
+// DeleteWatchdogState removes a domain's episode state once its backups are
+// current again. Deleting a missing row is a no-op.
 func (r *Repo) DeleteWatchdogState(domain string) error {
 	if _, err := r.db.Exec(`DELETE FROM watchdog_state WHERE domain = ?`, domain); err != nil {
 		return fmt.Errorf("DeleteWatchdogState: %w", err)

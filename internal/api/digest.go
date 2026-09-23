@@ -11,20 +11,15 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// digestWindow is how far back the weekly digest looks. The digest fires on its
-// own cadence (DigestSchedule, weekly by default), and always summarises the
-// trailing 7 days regardless of when it fires, so a rescheduled digest never
-// silently narrows or widens its window.
+// digestWindow is how far back the digest looks, whatever its schedule, so
+// moving the schedule never narrows or widens the window.
 const digestWindow = 7 * 24 * time.Hour
 
-// digestMaxFailures caps how many failed runs the digest enumerates
-// individually before collapsing the rest into a "+N more" tail — same idea as
-// the scheduled summary's maxListedFailures, tighter because the digest already
-// carries the per-kind counts.
+// digestMaxFailures is how many failed runs the digest lists before collapsing
+// the rest into "+N more".
 const digestMaxFailures = 5
 
-// digestKindOrder fixes the print order of the per-kind count lines so the
-// digest reads stably week over week (map iteration order is random).
+// digestKindOrder keeps the count lines in the same order every week.
 var digestKindOrder = []string{"backup", "restore", "update", "prune", "verify", "offsite", "drill", "drdrill", "tamper", "export"}
 
 // digestKindCount is one kind's finished-run tally inside the digest window.
@@ -33,24 +28,22 @@ type digestKindCount struct {
 	Failed int
 }
 
-// digestOffsiteLine is one domain's off-site currency verdict: when the last
-// SUCCESSFUL replication landed (0 = never) and whether that is stale relative
-// to the domain's replication cadence (older than 2× the expected period —
-// the same staleness factor the tamper scorecard uses).
+// digestOffsiteLine is one domain's last successful replication (0 = never).
+// Stale means older than twice the expected period, the factor the tamper
+// scorecard uses.
 type digestOffsiteLine struct {
 	Domain string
 	LastOK int64
 	Stale  bool
 }
 
-// digestStats is everything composeDigest needs, collected up front so the
-// compose step is a pure, unit-testable function of plain data.
+// digestStats is everything composeDigest needs, collected up front so that
+// composing is a pure function.
 type digestStats struct {
-	// Now pins "now" (unix seconds) so relative ages in the composed text are
-	// deterministic for a given stats value.
+	// Now is the reference time for relative ages, in unix seconds.
 	Now int64
-	// Kinds tallies finished runs per runs.kind; kinds with no activity are
-	// absent. TotalFailed is the sum of every kind's Failed.
+	// Kinds counts finished runs per kind; kinds without runs are absent.
+	// TotalFailed is the sum of every kind's Failed.
 	Kinds       map[string]digestKindCount
 	TotalFailed int
 	// BackupBytes sums the bytes added by successful backup runs in the window.
@@ -63,9 +56,8 @@ type digestStats struct {
 	MoreFailures int
 }
 
-// digestBackupScheduleFor returns a domain's LOCAL backup cadence — the
-// replication expectation when the off-site schedule is blank (coupled:
-// replicate after every local backup).
+// digestBackupScheduleFor returns a domain's local backup schedule, which sets
+// the replication cadence when the domain has no off-site schedule of its own.
 func digestBackupScheduleFor(domain string, settings store.Settings) string {
 	switch domain {
 	case "containers":
@@ -82,9 +74,8 @@ func digestBackupScheduleFor(domain string, settings store.Settings) string {
 	return ""
 }
 
-// runTargetNames resolves runs.target_id → human name, mirroring handleRuns'
-// map (container targets, VM targets, file sets, plus the reserved flash/config
-// ids). Best-effort: an unknown id just stays unresolved.
+// runTargetNames maps run target ids to display names, as handleRuns does.
+// Unknown ids stay unresolved.
 func (s *Service) runTargetNames() map[string]string {
 	names := map[string]string{store.FlashTargetID: "Unraid flash", store.ConfigTargetID: "App configuration"}
 	if cts, err := s.store.ListTargets(); err == nil {
@@ -105,9 +96,9 @@ func (s *Service) runTargetNames() map[string]string {
 	return names
 }
 
-// collectDigestStats gathers the digest's inputs: the last digestWindow of
-// finished runs (RunsSince is time-bounded, so the ListRuns 500-row cap does
-// not apply here) plus each off-site domain's replication currency.
+// collectDigestStats gathers the finished runs of the last digestWindow and the
+// replication age of each off-site domain. RunsSince is bounded by time, so the
+// ListRuns row cap does not apply.
 func (s *Service) collectDigestStats(now time.Time) (digestStats, error) {
 	stats := digestStats{Now: now.Unix(), Kinds: map[string]digestKindCount{}}
 
@@ -117,8 +108,8 @@ func (s *Service) collectDigestStats(now time.Time) (digestStats, error) {
 	}
 	names := s.runTargetNames()
 	for _, run := range runs {
-		// Only finished outcomes count; a still-running run has no verdict yet and
-		// a skipped one is intentionally neither success nor failure (#57).
+		// A running run has no verdict yet, and a skipped one is neither success
+		// nor failure.
 		switch run.Status {
 		case "success":
 			c := stats.Kinds[run.Kind]
@@ -135,8 +126,7 @@ func (s *Service) collectDigestStats(now time.Time) (digestStats, error) {
 			if len(stats.Failures) < digestMaxFailures {
 				name := names[run.TargetID]
 				if name == "" {
-					// Domain-scoped runs (prune/verify/offsite/drill/tamper) carry the
-					// domain literal as their target id — already readable as-is.
+					// Domain-scoped runs use the domain name as their target id.
 					name = run.TargetID
 				}
 				reason := run.Error
@@ -151,10 +141,6 @@ func (s *Service) collectDigestStats(now time.Time) (digestStats, error) {
 		}
 	}
 
-	// Off-site currency per domain with a configured off-site repo: the age of
-	// the last SUCCESSFUL replication versus its cadence (the off-site schedule
-	// when set, else the coupled local backup schedule). Stale = older than 2×
-	// the expected period, mirroring the scorecard's staleness factor.
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return digestStats{}, fmt.Errorf("read settings: %w", err)
@@ -168,13 +154,9 @@ func (s *Service) collectDigestStats(now time.Time) (digestStats, error) {
 			log.Printf("api: digest: latest off-site run for %s: %v", domain, oErr) //nolint:gosec // G706: domain is a fixed literal
 		} else if found {
 			line.LastOK = run.FinishedAt
-			// An off-site schedule of its own governs on its own. Without one the
-			// copy rides along with the local backup, so the local cadence is the
-			// expectation — and that includes the "Backup Everything" pass, which
-			// replicates after its loop exactly as a domain run does. Reading only
-			// the per-domain cadence left a domain covered solely by the pass at
-			// period 0, i.e. never stale, however old its off-site copy got (#177,
-			// the same blind spot as in the protection status and the watchdog).
+			// Without its own off-site schedule a domain replicates after each
+			// local backup, including the Backup Everything pass. A domain covered
+			// only by that pass would otherwise have period 0 and never go stale.
 			period := cadencePeriodSeconds(s.offsiteScheduleFor(domain, settings))
 			if period == 0 {
 				period, _ = domainCoverage(digestBackupScheduleFor(domain, settings), settings.EverythingSchedule)
@@ -188,12 +170,12 @@ func (s *Service) collectDigestStats(now time.Time) (digestStats, error) {
 	return stats, nil
 }
 
-// digestAge renders a unix timestamp as a compact "3h ago" / "2d ago" age
-// relative to now (unix seconds), for the digest's off-site currency lines.
+// digestAge renders the age of at relative to now, both unix seconds, as
+// "5m ago", "3h ago" or "2d ago".
 func digestAge(now, at int64) string {
 	d := now - at
 	if d < 0 {
-		d = 0 // clock skew — never render a negative age
+		d = 0 // clock skew
 	}
 	switch {
 	case d < 3600:
@@ -205,12 +187,10 @@ func digestAge(now, at int64) string {
 	}
 }
 
-// composeDigest renders the collected stats as the compact plaintext digest
-// message. Pure — same stats, same text — so it is unit-testable without a
-// store, clock or notify transport.
+// composeDigest renders stats as the plaintext digest message.
 func composeDigest(stats digestStats) string {
 	var b strings.Builder
-	b.WriteString("BombVault weekly digest — last 7 days\n")
+	b.WriteString("BombVault weekly digest, last 7 days\n")
 
 	if len(stats.Kinds) == 0 {
 		b.WriteString("No finished runs in this window.\n")
@@ -223,7 +203,7 @@ func composeDigest(stats digestStats) string {
 			}
 			fmt.Fprintf(&b, "- %s: %d ok, %d failed\n", kind, c.OK, c.Failed)
 		}
-		// A future/unknown kind still shows up rather than silently vanishing.
+		// Kinds missing from digestKindOrder still show up, after the known ones.
 		for kind, c := range stats.Kinds {
 			known := false
 			for _, k := range digestKindOrder {
@@ -248,7 +228,7 @@ func composeDigest(stats digestStats) string {
 			case line.LastOK == 0:
 				fmt.Fprintf(&b, "- %s: no successful copy yet\n", line.Domain)
 			case line.Stale:
-				fmt.Fprintf(&b, "- %s: STALE — last successful copy %s\n", line.Domain, digestAge(stats.Now, line.LastOK))
+				fmt.Fprintf(&b, "- %s: stale, last successful copy %s\n", line.Domain, digestAge(stats.Now, line.LastOK))
 			default:
 				fmt.Fprintf(&b, "- %s: current (last copy %s)\n", line.Domain, digestAge(stats.Now, line.LastOK))
 			}
@@ -269,13 +249,10 @@ func composeDigest(stats digestStats) string {
 	return strings.TrimRight(b.String(), "\n")
 }
 
-// SendDigest composes and sends the weekly digest through the existing notify
-// fan-out (message channels + the Unraid mirror, like notifyReplicationFailed).
-// It records nothing in runs — the digest reports history, it is not history.
-// The Healthchecks ping is suppressed: the digest is a human summary, never a
-// monitor lifecycle event, so it must not flip a domain check. A muted policy
-// (On empty/"never") skips silently; On="failure" lets notify.Send drop an
-// all-green digest per the house policy gate.
+// SendDigest sends the weekly digest to the notify channels and the Unraid
+// mirror without recording a run. The Healthchecks ping is suppressed because
+// a summary must not flip a domain check. A muted policy sends nothing, and
+// On="failure" lets notify.Send drop an all-green digest.
 func (s *Service) SendDigest(ctx context.Context) error {
 	c, err := s.NotifyConfig()
 	if err != nil {

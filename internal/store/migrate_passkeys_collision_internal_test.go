@@ -77,6 +77,16 @@ func seedBranchNumbering(t *testing.T, db *sql.DB, through int) {
 	if _, err := db.Exec(`DROP TABLE IF EXISTS passkeys`); err != nil {
 		t.Fatal(err)
 	}
+	// v120 (target_aliases) is a fresh migration too; dropping the table also
+	// takes its v122 column (prev_definition) with it.
+	if _, err := db.Exec(`DROP TABLE IF EXISTS target_aliases`); err != nil {
+		t.Fatal(err)
+	}
+	// v121 (vm_uuid) is a fresh migration too; dropping its column lets Migrate
+	// apply it again without "duplicate column name".
+	if _, err := db.Exec(`ALTER TABLE vms DROP COLUMN uuid`); err != nil {
+		t.Fatal(err)
+	}
 	for _, m := range old {
 		if m.v <= through {
 			if _, err := db.Exec(`INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, 0)`, m.v, m.name); err != nil {

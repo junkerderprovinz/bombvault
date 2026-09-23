@@ -1,129 +1,14 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import { computeBubblePosition } from "../lib/bubblePosition";
-import { hueVars, rainbowAt } from "../lib/appearance";
-import { useRainbow } from "../lib/useRainbow";
+import { hueVars } from "../lib/appearance";
 import { useT } from "../lib/i18n";
-
-// ---------------------------------------------------------------------------
-// TimePicker — a shared hour/minute picker (GlimStone form-engine, a NEW
-// standard component; see docs/design-language.md "The time picker" for the
-// canonical spec). Replaces every native `<input type="time">` in the app
-// (jdp, live-review: "Können wir bei den Zeitfeldern einen schönen Stunden-
-// und Minuten-Picker implementieren, damit man es nicht manuell eintippen
-// muss" — a nice hour/minute picker so the value never has to be typed by
-// hand). As of this pass the ONE call site is CadenceBuilder.tsx's cadence
-// time field; a full repo sweep for `type="time"` found no others
-// (Settings.tsx/Dashboard.tsx/ItemScheduleOverride.tsx all route through
-// CadenceBuilder rather than rendering their own).
-//
-// Interaction model: a compact field-styled trigger shows the current
-// "HH:MM" (read-only text, never a typeable `<input>` — the whole point of
-// this component), and clicking/activating it opens a popover holding TWO
-// independently scrollable `role="listbox"` columns (hour 0-23, minute in
-// configurable steps, default 5 — schedules in this app are backup cadences,
-// which don't need to-the-minute precision, and no existing granularity
-// convention elsewhere in the app suggested a different default; the
-// `intervalDays`/"every N days" field is a free-typed integer with no fixed
-// step at all). This is the SAME "custom listbox escape hatch"
-// Settings.tsx's LanguageCard already established for a control that needs
-// full styling control a native `<select>` can't give it — extended here to
-// a scrollable NUMERIC list instead of a short fixed one, which also
-// satisfies the "scrollable column" shape of the alternative design the task
-// brief offered. A pair of `<select>`-replacement dropdowns was the other
-// option considered; the always-visible scrollable listbox was chosen
-// instead because it shows every value the same way the native
-// `<input type="time">` spinner did, without a second click to open a
-// nested dropdown per field.
-//
-// Popover chrome/positioning/dismissal is NOT reinvented: it reuses the same
-// portal + measure-then-clamp-position + outside-mousedown/Escape/scroll-
-// dismiss contract ColorPickerSwatch (components/ColorPickerPopover.tsx) and
-// InfoBubble.tsx/IconTipButton.tsx already established, calling
-// lib/bubblePosition.ts's own `computeBubblePosition` directly (unlike
-// ColorPickerPopover, which predates that shared helper and still does its
-// own inline clamp math — this component generalizes it instead of adding a
-// third copy). See index.css's `.glim-time-popover` for why it needs
-// `transform: translateX(-50%)` + `width: max-content` to match that
-// helper's centred-trigger contract exactly.
-//
-// Shape engine: every radius here (`.glim-time-popover`'s `--radius-card`,
-// `.glim-time-option`'s `--radius-control`, the trigger's own
-// `rounded-control`) reads the SAME tokens lib/shape.ts's applyShape() sets
-// on `<html>` — reshapes with round/soft/square exactly like every other
-// control in the app, no separate mechanism.
-//
-// Colour engine: the trigger keeps its EXACT visual identity as the native
-// `<input type="time">` it replaces (same `inputCls`-equivalent classes as
-// CadenceBuilder's sibling cron/everyN fields, including
-// `glim-field-focus-well`'s inset focus ring), so it fits into the existing
-// well without a visual seam. The popover's selected-hour/selected-minute
-// highlight reads `var(--accent)`/`var(--accent-contrast)` directly (see
-// index.css's `.glim-time-option[aria-selected="true"]`), redefined per-item
-// by the SAME `hueVars(rainbowAt(i))`/`.glim-hue` mechanism Selector.tsx's
-// segments use whenever `hueIndex` is passed.
-//   CORRECTED (live-review round 5, jdp: "Der Zeitpicker ist nicht im
-// Regenbogenmodus" — a real, third-time-emphatic instance of the standing
-// "capability exists but isn't wired up" failure): `hueIndex` was optional
-// "for a future call site" through the prior round, and CadenceBuilder — the
-// one real call site — never actually passed one. Fixed by threading a real
-// `hueIndex` down from every CadenceBuilder caller in Settings.tsx (each
-// passing the SAME position its own enclosing `<Card hueIndex={...}>`
-// already has) through CadenceBuilder's own new `hueIndex` prop into here.
-//   That alone was NOT enough, caught live: the trigger button correctly
-// picked up its hue (it sets `--item-hue`/etc. via `hueStyle` directly on
-// itself), but the POPOVER's hour/minute options stayed flat-accent even
-// with a real `hueIndex` passed in. Root cause — `createPortal(..., document.
-// body)` renders the popover into a completely separate DOM subtree from the
-// trigger button; `--item-hue` is set as an INLINE custom property (via
-// `style`) on whichever element calls hueVars(), and inline custom
-// properties only inherit down the REAL DOM tree, which a portal detaches
-// from. The option buttons carried `.glim-hue` (so `[data-rainbow] .glim-hue
-// { --accent: var(--item-hue); ... }` matched them) but had no ANCESTOR in
-// their own portalled subtree ever declaring `--item-hue`, so `var(--item-
-// hue)` there resolved to nothing — a custom property invalid at computed-
-// value time falls back to the INHERITED value for whatever reads it, not to
-// the flat accent as one might expect, and since `.glim-time-option[aria-
-// selected="true"]`'s `background-color` isn't itself inherited, an invalid
-// `--accent` there computed to fully transparent, not merely "the wrong
-// colour." Fixed by also spreading `hueStyle` onto the portalled panel
-// (`role="dialog"`) div below — an ordinary DOM ancestor of both listbox
-// columns once mounted, portal or not, so `--item-hue` now inherits down to
-// every option exactly as it would from any non-portalled ancestor. Verified
-// live with Playwright + getComputedStyle at two different Card hue
-// positions: the selected-hour pill's actual computed `background-color`
-// matches that Card's own `RAINBOW[i]` value, not the flat `--accent`.
-//
-// RTL: forced `dir="ltr"` on both the trigger and the popover, matching
-// CronEditor's own `dir="ltr"` on its raw cron-expression input a few lines
-// above this component's one call site — a clock time like "14:30" reads
-// left-to-right even inside an RTL page (Arabic/Hebrew), the same convention
-// every other time-shaped value in this app already follows.
-//
-// Keyboard: ArrowUp/ArrowDown step within a column (wrapping at both ends)
-// and immediately commit the new value (roving tabindex follows the
-// currently selected item, matching Selector.tsx's own "arrow-selects-as-it-
-// moves" convention for a `select="one"` strip); Home/End jump to the first/
-// last item; ArrowLeft/ArrowRight move focus between the hour and minute
-// columns (safe to hard-code left=hour/right=minute without an RTL check,
-// since the whole control is forced `dir="ltr"`); Escape closes the popover
-// from anywhere (document-level listener, matching ColorPickerSwatch);
-// clicking/Enter/Space on any option commits it without closing the popover,
-// so both hour and minute can be picked in one visit — dismissal is always
-// explicit (outside click, Escape, or scroll/resize), never automatic,
-// matching ColorPickerSwatch's own contract exactly.
-// ---------------------------------------------------------------------------
 
 const HOURS: number[] = Array.from({ length: 24 }, (_, i) => i);
 
-/** minutesFor is the minute column's own value set for a given step — pure
- *  and exported so it (and nearestStep below) are unit-tested directly
- *  without a renderer, matching this repo's established no-jsdom pattern for
- *  pure logic (Selector.test.ts's stepFor/nextFocusIndex). */
+/** minutesFor returns the minute column for a step. A step outside 1 to 59
+ *  falls back to 5. */
 export function minutesFor(step: number): number[] {
-  // Any non-positive, non-finite, or out-of-range step (0, negative, NaN,
-  // >59) falls back to the 5-minute default rather than producing an empty,
-  // infinite, or nonsensical column.
   const truncated = Math.trunc(step);
   const s = Number.isFinite(truncated) && truncated >= 1 && truncated <= 59 ? truncated : 5;
   const out: number[] = [];
@@ -131,10 +16,8 @@ export function minutesFor(step: number): number[] {
   return out;
 }
 
-/** nearestStep is which of `options` sits closest to `n` — used to highlight
- *  a real listbox option even when the stored minute predates a step change
- *  (or came from a cron-derived time never divisible by the current step).
- *  Ties resolve to the smaller/earlier option. */
+/** nearestStep returns the option closest to `n`, so a stored minute that is
+ *  off the step grid still highlights an option. Ties go to the earlier one. */
 export function nearestStep(options: number[], n: number): number {
   return options.reduce((best, cur) => (Math.abs(cur - n) < Math.abs(best - n) ? cur : best), options[0]);
 }
@@ -143,17 +26,13 @@ function pad2(n: number): string {
   return String(n).padStart(2, "0");
 }
 
-/** formatTime renders hour/minute as the "HH:MM" string this component's
- *  callers store and pass back in as `value` — the exact format the native
- *  `<input type="time">` it replaces already used, so no data model changes
- *  anywhere else. */
+/** formatTime renders "HH:MM", the same format as a native time input. */
 export function formatTime(hour: number, minute: number): string {
   return `${pad2(hour)}:${pad2(minute)}`;
 }
 
-/** parseTime parses "HH:MM" into clamped { hour, minute }, defaulting to
- *  00:00 for anything malformed or empty — never throws, matching
- *  CadenceBuilder's own tolerant parseCadenceString/cronFromState. */
+/** parseTime parses "HH:MM" into a clamped hour and minute. Malformed input
+ *  gives 00:00. */
 export function parseTime(value: string): { hour: number; minute: number } {
   const m = /^(\d{1,2}):(\d{1,2})$/.exec((value ?? "").trim());
   if (!m) return { hour: 0, minute: 0 };
@@ -162,19 +41,10 @@ export function parseTime(value: string): { hour: number; minute: number } {
   return { hour, minute };
 }
 
-// Only ONE TimePicker popover is ever open across the whole app — mirrors
-// ColorPickerSwatch's own module-level `activeCloser` singleton (opening a
-// new one closes whichever was already open).
+// Closes the one open TimePicker popover, so opening another closes it first.
 let activeCloser: (() => void) | null = null;
 
-// A small clock glyph for the trigger — FILLED (design-language.md "Icon
-// glyphs"; `currentColor`, never a hard-coded tone). Unlike InfoBubble.tsx's
-// own "(i)" glyph (that file's rule 221 named exception — explanatory
-// furniture, not a control), this clock names an actual control (the
-// time-picker trigger), so it gets the same fill-and-cutout treatment as
-// every other content icon: a solid dial, hands punched out in the field's
-// own surface colour (rule 220's own named example — "a clock's hands...
-// renders as a thin filled shape").
+// A filled dial with the hands cut out in the field's surface colour.
 function ClockGlyph() {
   return (
     <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true" className="flex-none">
@@ -185,6 +55,14 @@ function ClockGlyph() {
   );
 }
 
+/**
+ * TimePicker is an hour/minute picker. The trigger shows "HH:MM" and opens a
+ * popover with an hour and a minute listbox. Arrow keys step and commit,
+ * Home/End jump to the ends, Left/Right switch columns. Picking a value keeps
+ * the popover open; an outside click, Escape, scroll or resize closes it. Both
+ * trigger and popover are forced to LTR, since a clock time reads that way in
+ * any language.
+ */
 export function TimePicker({
   value,
   onChange,
@@ -194,32 +72,21 @@ export function TimePicker({
   hueIndex,
   className,
 }: {
-  /** Current "HH:MM" value — same format/contract as the native
-   *  `<input type="time">` this replaces. */
+  /** Current value as "HH:MM". */
   value: string;
-  /** Fires with a new "HH:MM" on every hour/minute pick. */
+  /** Called with the new "HH:MM" on every pick. */
   onChange: (v: string) => void;
-  /** Accessible name for the trigger AND the popover dialog, e.g.
-   *  t("cadence.time"). */
+  /** Accessible name for the trigger and the popover. */
   label: string;
   disabled?: boolean;
-  /** Minute column granularity, default 5 (see this file's header comment
-   *  for why). */
+  /** Minute column granularity, default 5; backup schedules rarely need finer. */
   minuteStep?: number;
-  /** Optional rainbow palette position — see this file's header comment for
-   *  the composition contract. Omitted by today's one call site (a single
-   *  field, not a row in an enumerable list). */
+  /** Rainbow palette position, usually the enclosing card's. */
   hueIndex?: number;
-  /** Caller-supplied trigger classes; defaults to the exact classes
-   *  CadenceBuilder's sibling cron/everyN fields already use, so the
-   *  trigger keeps the native input's visual footprint. */
+  /** Replaces the default trigger classes. */
   className?: string;
 }) {
   const { t } = useT();
-  // Subscribed, not read directly — see lib/useRainbow.ts's own header for
-  // why. Called unconditionally (rules of hooks) even with no `hueIndex`,
-  // matching Selector.tsx's identical convention.
-  useRainbow();
 
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
@@ -234,13 +101,9 @@ export function TimePicker({
   const selectedMinute = nearestStep(minutes, minute);
 
   const closeSelf = useCallback(() => {
-    // Focus goes back to the trigger, but only when it is still inside the
-    // popover: opening deliberately moves focus onto the selected hour, and that
-    // button is unmounted with the portal, so without this the focus fell to
-    // <body> and the next Tab after Escape restarted at the top of the document
-    // instead of at the time field. useConfirm returns focus on all four of its
-    // close paths for the same reason. Someone who closed it by clicking
-    // elsewhere has already chosen where focus belongs, so their choice stands.
+    // The focused option unmounts with the portal, so focus returns to the
+    // trigger instead of falling to <body>. After a click elsewhere, focus is
+    // already where the user put it.
     const panel = panelRef.current;
     const returnFocus = !!panel && panel.contains(document.activeElement);
     setOpen(false);
@@ -266,10 +129,7 @@ export function TimePicker({
     setOpen(true);
   }
 
-  // Position the popover off the trigger's own rect, clamped into the
-  // viewport — same computeBubblePosition call InfoBubble.tsx/
-  // IconTipButton.tsx already make, run in a useLayoutEffect so the
-  // corrected position lands before the browser's next paint.
+  // Place the popover at the trigger, clamped into the viewport, before paint.
   useLayoutEffect(() => {
     if (!open) return;
     const trigger = triggerRef.current;
@@ -288,30 +148,10 @@ export function TimePicker({
     setPos({ left, top });
   }, [open]);
 
-  // Scroll the current hour/minute into view (re-runs on every value change
-  // while open too, so arrow-key navigation keeps the highlighted option in
-  // view once it scrolls past the visible window) and, once per open
-  // transition, move focus into the dialog — a keyboard user's Enter/Space
-  // on the trigger would otherwise leave focus stranded on a now-covered
-  // button. `scrollIntoView` is guarded: jsdom stubs it as a no-op, real
-  // browsers implement it natively.
-  //
-  // Gated on `pos !== null` (not just `open`), and NOT merged into the
-  // positioning effect above despite running right after it: on the very
-  // first render after opening, the popover is still sitting at its
-  // `left:-9999px/top:-9999px` placeholder (see the JSX below) — the
-  // positioning effect above only just SCHEDULED the real coordinates via
-  // `setPos`, which lands in a later commit, not this one. Calling `.focus()`
-  // on an option while its containing popover is still parked off-screen at
-  // -9999px made the BROWSER auto-scroll the page trying to bring that
-  // off-screen element into view — which then tripped this component's own
-  // scroll-closes-the-popover dismissal listener a couple of milliseconds
-  // later, closing the popover it had just opened (caught live: a
-  // MutationObserver on the trigger's aria-expanded attribute showed
-  // true→false ~2ms apart on every open). Waiting for `pos` to be non-null
-  // means this only runs once the real, on-screen position has actually been
-  // committed and painted, so scrollIntoView/focus never has an off-screen
-  // element to react to.
+  // Keep the selected hour and minute in view and move focus into the popover
+  // once per open. This waits for `pos`: focusing an option while the popover
+  // is still parked at -9999px makes the browser scroll the page, and that
+  // scroll closes the popover again. jsdom has no scrollIntoView.
   useLayoutEffect(() => {
     if (!open || !pos) return;
     hourRefs.current[hour]?.scrollIntoView?.({ block: "nearest" });
@@ -322,26 +162,10 @@ export function TimePicker({
     }
   }, [open, hour, selectedMinute, pos]);
 
-  // Dismissal: outside pointerdown, Escape, or scroll/resize — the exact
-  // same set ColorPickerSwatch documents and relies on (a fixed popover
-  // de-anchored from its trigger reads as broken either way).
-  //
-  // The scroll listener is capture-phase on `window`, so it also receives
-  // scroll events from the popover's OWN two `.glim-time-col` listbox
-  // columns (a genuinely NEW wrinkle ColorPickerSwatch never had to handle —
-  // it has no internal scrollable region at all). Caught live: this
-  // component's own `scrollIntoView` calls (bringing the current hour/
-  // minute into view on open, and after every arrow-key step) fire a
-  // 'scroll' event on the column div itself, which — before this guard —
-  // reached this same capture-phase listener and closed the popover the
-  // instant it opened (confirmed via a live MutationObserver: aria-expanded
-  // flipped true then false again ~2ms apart, with the scroll event's own
-  // target being the internal column, not window, `window.scrollY` staying
-  // 0 throughout). A scroll INSIDE the popover never de-anchors it from its
-  // trigger — only a scroll of an ANCESTOR (the page, or a scrollable card)
-  // does — so scroll events whose target lives inside `panelRef` are
-  // ignored here, while every other scroll still closes the popover exactly
-  // as before.
+  // Close on an outside click, Escape, scroll or resize, since a fixed popover
+  // would drift away from its trigger. The capture-phase scroll listener also
+  // sees the listbox columns scrolling (our own scrollIntoView included);
+  // those do not move the trigger and are ignored.
   useEffect(() => {
     if (!open) return;
     function onPointerDown(e: MouseEvent) {
@@ -421,10 +245,8 @@ export function TimePicker({
   }
 
   const hue = hueIndex !== undefined;
-  // Checked inline (not via the `hue` boolean above) so TypeScript actually
-  // narrows `hueIndex` to `number` here — a separately-stored boolean
-  // derived from the same comparison doesn't re-narrow the original variable.
-  const hueStyle = hueIndex !== undefined ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined;
+  // Compared again here because `hue` does not narrow `hueIndex`.
+  const hueStyle = hueIndex !== undefined ? (hueVars(hueIndex) as CSSProperties) : undefined;
   const optionCls = `glim-time-option${hue ? " glim-hue" : ""}`;
 
   const triggerCls =
@@ -459,17 +281,9 @@ export function TimePicker({
             aria-label={label}
             dir="ltr"
             className="glim-time-popover glim-fade"
-            // `...hueStyle` (Task 3 portal-inheritance fix — see this file's
-            // own header comment for the full root-cause writeup): this
-            // panel is portalled to document.body, a separate DOM subtree
-            // from the trigger button above, so the trigger's own inline
-            // `--item-hue`/etc. custom properties never reach the option
-            // buttons inside via inheritance unless this panel — a REAL
-            // ancestor of both listbox columns, portal notwithstanding —
-            // declares them itself. Spread rather than replacing `left`/
-            // `top`: hueStyle is `undefined` when `hueIndex` is undefined,
-            // and spreading `undefined` into an object literal is a no-op,
-            // so a non-hued TimePicker's positioning is unaffected.
+            // The portal leaves the trigger's subtree, so the panel sets the
+            // hue variables again for the options to inherit. Without them
+            // the selected option's background turns transparent.
             style={{ left: pos?.left ?? -9999, top: pos?.top ?? -9999, ...hueStyle }}
           >
             <div

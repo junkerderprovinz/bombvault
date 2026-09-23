@@ -1,16 +1,13 @@
 // @vitest-environment jsdom
 /**
- * The two-factor card (v8.6.0).
+ * The failures worth guarding in two-factor enrolment are the ones that lock
+ * somebody out of their own backups:
  *
- * Enrolment is a sequence, and the card has to be honest at every point in it.
- * The failures worth guarding are the ones that end with somebody locked out of
- * their own backups:
- *
- *   - the status line must read the SERVER's answer, never the local step, so a
- *     half-finished enrolment can never look armed;
- *   - the recovery codes are shown exactly once, so they must actually appear
- *     and must not be swept away by the same click that confirmed the code;
- *   - turning the factor off must ask for a live code, so a session somebody
+ *   - the status line reads the server's answer, not the local step, so a
+ *     half-finished enrolment never looks armed;
+ *   - the recovery codes are shown exactly once, so they must appear and must
+ *     not be swept away by the click that confirmed the code;
+ *   - turning the factor off asks for a live code, so a session somebody
  *     walked away from cannot quietly remove it.
  */
 import { render, screen, cleanup, waitFor, fireEvent, act } from "@testing-library/react";
@@ -59,8 +56,8 @@ describe("TwoFactorCard", () => {
     render(<TwoFactorCard passwordSet enabled={false} onChanged={vi.fn()} />);
     await click(/set up/i);
     await waitFor(() => expect(screen.getByText("GEZDGNBVGY3TQOJQ")).toBeTruthy());
-    // The QR itself, for a phone that can scan, AND the secret, for one that
-    // cannot. Either one alone leaves somebody stuck.
+    // The QR for a phone that can scan, and the secret for one that cannot.
+    // Either one alone leaves somebody stuck.
     expect(document.querySelector("svg[role=img]")).toBeTruthy();
   });
 

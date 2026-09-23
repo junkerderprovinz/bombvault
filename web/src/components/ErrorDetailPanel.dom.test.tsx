@@ -1,21 +1,7 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// ErrorDetailPanel — the "Backup Everything" pseudo-domain half.
-//
-// The Backup Everything feature taught ActivityLog.tsx about its new
-// "everything" domain and stopped there. This panel is the app's SECOND
-// domain-rendering surface (the modal behind the dashboard's error count) and
-// was never told, so a failed pass rendered a raw lowercase "everything" chip
-// where flash/config/files all get a real translation, and could not be
-// filtered to at all.
-//
-// Covered here because the live box cannot reach it: the panel only opens
-// when the dashboard's error count is > 0, and that count excludes the
-// off-site failure the test container happens to carry — so its StatCard is
-// not clickable there. A mounted component does not have that problem.
-//
-// listRuns/ackRuns are mocked; nothing here talks to a server.
-// ---------------------------------------------------------------------------
+// The error panel has to know the Backup Everything pseudo-domain like the
+// Activity Log does: as a filter option and as a translated label. listRuns and
+// ackRuns are mocked.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { I18nProvider, en } from "../lib/i18n";
@@ -67,24 +53,20 @@ afterEach(() => {
   cleanup();
 });
 
-describe("ErrorDetailPanel — the Backup Everything domain", () => {
-  it("offers the pseudo-domain in its filter, like the Activity Log does", async () => {
+describe("ErrorDetailPanel with the Backup Everything domain", () => {
+  it("offers Backup Everything in the domain filter", async () => {
     renderPanel([run()]);
     await waitFor(() => expect(listRuns).toHaveBeenCalled());
 
-    // The picker is the app's own listbox now, not a native <select> (#3425),
-    // so its options exist while it is OPEN. Same question either way: does the
-    // domain filter offer the pseudo-domain, with the shared label.
+    // The filter is a listbox, so its options exist only while it is open.
     fireEvent.click(screen.getAllByRole("combobox")[0]!);
     const labels = screen.getAllByRole("option").map((o) => o.textContent);
     expect(labels).toContain(en["activityLog.domainEverything"]);
   });
 
   it("labels a failed pass with its translated domain, not the raw tag", async () => {
-    // A target name deliberately UNLIKE the domain label, so matching the
-    // label cannot accidentally be matching the target: the "affected" line
-    // renders "<targets> · <domainLabel(domain)>", and with the domain case
-    // missing it renders the bare lowercase tag from `default: return d`.
+    // A target name unlike the domain label, so the assertion cannot match the
+    // target by accident. The line reads "<targets> · <domain label>".
     renderPanel([run({ target: "nightly-pass" })]);
 
     const affected = await screen.findByText(/nightly-pass/);
@@ -92,14 +74,12 @@ describe("ErrorDetailPanel — the Backup Everything domain", () => {
     expect(affected.textContent).not.toContain("· everything");
   });
 
-  it("keeps the five original domains labelled too", async () => {
+  it("lists every domain in the shared order", async () => {
     renderPanel([run()]);
     await waitFor(() => expect(listRuns).toHaveBeenCalled());
 
     fireEvent.click(screen.getAllByRole("combobox")[0]!);
     const labels = screen.getAllByRole("option").map((o) => o.textContent);
-    // The new option is an addition, not a replacement, and the order is the
-    // one the shared list defines.
     expect(labels).toEqual([
       en["activityLog.filterAllDomains"],
       en["activityLog.domainContainers"],

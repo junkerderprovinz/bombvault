@@ -31,8 +31,8 @@ func ageRoundTripDecrypt(t *testing.T, cipher []byte, id *age.X25519Identity) []
 	return out
 }
 
-// TestExportRecipients covers the resolve-once gate: off yields nothing, on with a
-// valid recipient yields it, on with an empty/invalid list is a hard error.
+// Off yields nothing, on with a valid recipient yields it, and on with an empty
+// or invalid list is an error.
 func TestExportRecipients(t *testing.T) {
 	svc := &Service{}
 	id, _ := age.GenerateX25519Identity()
@@ -51,11 +51,10 @@ func TestExportRecipients(t *testing.T) {
 	}
 }
 
-// TestWriteTarGzAgeRoundTrip: writeTarGz with recipients writes dest+".age"
-// ciphertext (not dest), and the archive decrypts to a valid gzip tar.
+// With recipients writeTarGz writes dest+".age" instead of dest, and it
+// decrypts to a gzip tar.
 func TestWriteTarGzAgeRoundTrip(t *testing.T) {
 	root := t.TempDir()
-	// A source file under the mount root.
 	src := filepath.Join(root, "data")
 	if err := os.MkdirAll(src, 0o750); err != nil {
 		t.Fatal(err)
@@ -81,15 +80,14 @@ func TestWriteTarGzAgeRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Decrypt -> should be a valid gzip tar carrying data/f.txt.
 	plain := ageRoundTripDecrypt(t, raw, id)
 	if !bytes.HasPrefix(plain, []byte{0x1f, 0x8b}) {
 		t.Fatal("decrypted payload is not gzip")
 	}
 }
 
-// TestWriteExportFileAge: writeExportFile with recipients writes path+".age" and
-// decrypts back to the original bytes; without recipients it writes plaintext.
+// With recipients writeExportFile writes path+".age", which decrypts to the
+// original bytes; without them it writes plaintext.
 func TestWriteExportFileAge(t *testing.T) {
 	dir := t.TempDir()
 	id, _ := age.GenerateX25519Identity()
@@ -121,8 +119,8 @@ func TestWriteExportFileAge(t *testing.T) {
 	}
 }
 
-// TestExportFlashZipAgeRoundTrip: with encryption on, exportFlashZip writes
-// flash-latest.zip.age (no plaintext .zip) and it decrypts to the DumpZip payload.
+// With encryption on, exportFlashZip writes only flash-latest.zip.age, which
+// decrypts to the DumpZip payload.
 func TestExportFlashZipAgeRoundTrip(t *testing.T) {
 	root := t.TempDir()
 	payload := []byte("PK\x03\x04sealed")
@@ -159,8 +157,7 @@ func TestExportFlashZipAgeRoundTrip(t *testing.T) {
 	}
 }
 
-// TestExportFlashZipEncryptionNoRecipientFailsLoud: encryption on + no recipient
-// errors and writes NO artifact (no zip, no temp, no export folder content).
+// Encryption on without a recipient is an error and writes nothing.
 func TestExportFlashZipEncryptionNoRecipientFailsLoud(t *testing.T) {
 	root := t.TempDir()
 	fake := &flashZipFakeEngine{dumpBytes: []byte("nope")}
@@ -206,13 +203,12 @@ func (f *downloadFakeEngine) DumpZip(_ context.Context, _, _, _ string, w io.Wri
 	return err
 }
 
-// TestDownloadFlashZipAgeRoundTrip: with encryption on, the streamed bytes are an
-// age blob that decrypts to the DumpZip payload.
+// With encryption on, the streamed bytes are an age blob that decrypts to the
+// DumpZip payload.
 func TestDownloadFlashZipAgeRoundTrip(t *testing.T) {
 	root := t.TempDir()
-	// A real (all-Store, restic-shaped) zip: DownloadFlashZip now runs the
-	// dump through dumpFlashZipCompat's recompress step, which parses it as
-	// an actual zip — a magic-byte stand-in no longer survives that.
+	// A real zip with stored entries, as restic writes it: dumpFlashZipCompat
+	// recompresses the dump and has to parse it.
 	payload := buildTestStoredZip(t, map[string][]byte{"f.txt": []byte("hello flash")})
 	fake := &downloadFakeEngine{
 		snaps:     []restic.Snapshot{{ID: "aaaa1111bbbb2222"}},
@@ -240,8 +236,8 @@ func TestDownloadFlashZipAgeRoundTrip(t *testing.T) {
 	if bytes.Equal(buf.Bytes(), payload) {
 		t.Fatal("stream must be ciphertext, not the raw zip payload")
 	}
-	// The recompress step changes the bytes (Store -> Deflate), so compare
-	// logical zip content rather than a raw byte match against payload.
+	// Recompression changes the bytes (Store to Deflate), so compare the zip
+	// content instead.
 	got := ageRoundTripDecrypt(t, buf.Bytes(), id)
 	zr, err := zip.NewReader(bytes.NewReader(got), int64(len(got)))
 	if err != nil {
@@ -264,8 +260,8 @@ func TestDownloadFlashZipAgeRoundTrip(t *testing.T) {
 	}
 }
 
-// TestDownloadFlashZipEncryptionNoRecipientFailsLoud: encryption on + no recipient
-// errors BEFORE onResolved fires and BEFORE any bytes are written.
+// Encryption on without a recipient fails before onResolved fires and before
+// any byte is written.
 func TestDownloadFlashZipEncryptionNoRecipientFailsLoud(t *testing.T) {
 	root := t.TempDir()
 	fake := &downloadFakeEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}, dumpBytes: []byte("x")}

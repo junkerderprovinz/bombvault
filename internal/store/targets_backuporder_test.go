@@ -6,13 +6,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestSortTargetsForRun pins the #119 sequencing at the pure-function level:
-// containers with an explicit backup order (>0) come first in ascending order,
-// and the unordered rest (0) keep their INCOMING order — which callers pass
-// most-overdue-first, so the existing #95 tiebreak survives untouched.
+// Containers with an explicit backup order (>0) come first in ascending order.
+// The rest keep their incoming order, which callers pass most-overdue-first.
 func TestSortTargetsForRun(t *testing.T) {
-	// Incoming order is the overdue-first order the SQL produces. bravo/delta are
-	// unordered; charlie and alpha carry explicit orders that must jump the queue.
 	targets := []store.Target{
 		{ContainerName: "bravo", BackupOrder: 0},
 		{ContainerName: "delta", BackupOrder: 0},
@@ -22,15 +18,11 @@ func TestSortTargetsForRun(t *testing.T) {
 	store.SortTargetsForRun(targets)
 
 	got := names(targets)
-	// alpha(1), charlie(2) lead by explicit order; bravo, delta follow in the
-	// incoming (overdue-first) order.
 	want := []string{"alpha", "charlie", "bravo", "delta"}
 	assertOrder(t, got, want)
 }
 
-// TestSortTargetsForRunNoExplicit proves the sort is a no-op when nothing has an
-// explicit order: the incoming overdue-first order is returned verbatim (the
-// stability guarantee that keeps #95 behavior EXACTLY as before).
+// Without explicit orders the sort is stable and changes nothing.
 func TestSortTargetsForRunNoExplicit(t *testing.T) {
 	incoming := []string{"bravo", "delta", "charlie", "alpha"}
 	targets := make([]store.Target, 0, len(incoming))
@@ -41,9 +33,7 @@ func TestSortTargetsForRunNoExplicit(t *testing.T) {
 	assertOrder(t, names(targets), incoming)
 }
 
-// TestListTargetsScheduleOrderWithBackupOrder proves the schedule/batch ordering
-// combines both rules end to end through the DB: explicit backup order first,
-// then the most-overdue-first tiebreak for the unordered remainder.
+// Explicit backup order first, then most-overdue-first for the rest.
 func TestListTargetsScheduleOrderWithBackupOrder(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -72,12 +62,11 @@ func TestListTargetsScheduleOrderWithBackupOrder(t *testing.T) {
 			t.Fatalf("backdate finished_at: %v", err)
 		}
 	}
-	// Without explicit orders the #95 order would be: bravo, delta (never), then
-	// charlie (oldest success), then alpha (newest success).
+	// Without explicit orders this would be bravo, delta (never backed up),
+	// charlie, alpha.
 	seedSuccess(ids["charlie"], 1000)
 	seedSuccess(ids["alpha"], 9000)
 
-	// Give delta and alpha explicit orders — they must lead, in that order.
 	if err := r.SetBackupOrder("delta", 1); err != nil {
 		t.Fatalf("SetBackupOrder(delta): %v", err)
 	}
@@ -89,16 +78,11 @@ func TestListTargetsScheduleOrderWithBackupOrder(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListTargetsScheduleOrder: %v", err)
 	}
-	// delta(1), alpha(2) first by explicit order; then the unordered remainder in
-	// overdue-first order: bravo (never), charlie (oldest success).
 	want := []string{"delta", "alpha", "bravo", "charlie"}
 	assertOrder(t, names(got), want)
 }
 
-// TestListTargetsScheduleOrderUnchangedWithoutOrder guards the no-regression
-// promise: with no explicit backup order set, the schedule order is EXACTLY the
-// pre-#119 most-overdue-first order.
-func TestListTargetsScheduleOrderUnchangedWithoutOrder(t *testing.T) {
+func TestListTargetsScheduleOrderWithoutBackupOrder(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
 		t.Fatalf("Migrate: %v", err)
@@ -136,10 +120,8 @@ func TestListTargetsScheduleOrderUnchangedWithoutOrder(t *testing.T) {
 	assertOrder(t, names(got), want)
 }
 
-// TestBackupOrderRoundTrip proves setting and getting the ordering round-trips,
-// that SetBackupOrders is authoritative (a dropped container returns to
-// unordered), and that a positive order can be assigned to a container with no
-// target row yet (create-on-miss).
+// SetBackupOrders replaces the whole ordering: a container left out returns to
+// unordered.
 func TestBackupOrderRoundTrip(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -147,7 +129,7 @@ func TestBackupOrderRoundTrip(t *testing.T) {
 	}
 	r := store.New(db)
 
-	// A never-seen container (no target row) can still be ordered.
+	// Neither container has a target row yet.
 	if err := r.SetBackupOrders([]store.ContainerOrder{
 		{Container: "db", Order: 1},
 		{Container: "app", Order: 2},
@@ -162,7 +144,7 @@ func TestBackupOrderRoundTrip(t *testing.T) {
 		t.Fatalf("BackupOrders round-trip = %+v, want db=1, app=2", got)
 	}
 
-	// Reapplying WITHOUT "app" must return it to unordered (authoritative replace).
+	// Reapplying without app returns it to unordered.
 	if err := r.SetBackupOrders([]store.ContainerOrder{{Container: "db", Order: 1}}); err != nil {
 		t.Fatalf("SetBackupOrders (replace): %v", err)
 	}
@@ -182,9 +164,8 @@ func TestBackupOrderRoundTrip(t *testing.T) {
 	}
 }
 
-// TestUpsertTargetPreservesBackupOrder guards that a backup's UpsertTarget (which
-// refreshes appdata/definition) never clobbers the user's chosen order — same
-// ownership contract as stop_containers/excludes.
+// A backup's UpsertTarget refreshes appdata and definition but keeps the user's
+// order, as it keeps stop_containers and excludes.
 func TestUpsertTargetPreservesBackupOrder(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -198,8 +179,7 @@ func TestUpsertTargetPreservesBackupOrder(t *testing.T) {
 	if err := r.SetBackupOrder("app", 5); err != nil {
 		t.Fatalf("SetBackupOrder: %v", err)
 	}
-	// A later backup upserts the same container with fresh appdata/definition and
-	// BackupOrder left at its zero value — the order must survive.
+	// A backup upserts with BackupOrder left at zero.
 	if _, err := r.UpsertTarget(store.Target{ContainerName: "app", Definition: "{}"}); err != nil {
 		t.Fatalf("UpsertTarget (refresh): %v", err)
 	}
@@ -212,9 +192,8 @@ func TestUpsertTargetPreservesBackupOrder(t *testing.T) {
 	}
 }
 
-// TestOrderContainerNamesForRun proves the batch (multi-select) path sequences a
-// SELECTED subset exactly like a scheduled run: explicit order first, overdue
-// tiebreak after, and a selected name with no target row is never dropped.
+// A multi-select batch is ordered like a scheduled run, and a selected name
+// without a target row goes last instead of being dropped.
 func TestOrderContainerNamesForRun(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -230,8 +209,7 @@ func TestOrderContainerNamesForRun(t *testing.T) {
 		}
 		ids[n] = tg.ID
 	}
-	// charlie has an old success, alpha a newer one, bravo never — overdue order
-	// among the unordered is bravo, charlie, alpha.
+	// Overdue order: bravo (never backed up), charlie, alpha.
 	seed := func(id string, at int64) {
 		runID, err := r.StartRun(id, "backup")
 		if err != nil {
@@ -250,18 +228,15 @@ func TestOrderContainerNamesForRun(t *testing.T) {
 		t.Fatalf("SetBackupOrder(alpha): %v", err)
 	}
 
-	// Selection is passed in an arbitrary order and includes "ghost" (no target).
+	// ghost has no target row.
 	got, err := r.OrderContainerNamesForRun([]string{"bravo", "ghost", "charlie", "alpha"})
 	if err != nil {
 		t.Fatalf("OrderContainerNamesForRun: %v", err)
 	}
-	// alpha(explicit 1) first; then unordered overdue-first bravo, charlie; then
-	// the unknown "ghost" appended (never dropped).
 	want := []string{"alpha", "bravo", "charlie", "ghost"}
 	assertOrder(t, got, want)
 }
 
-// names extracts container names in slice order.
 func names(targets []store.Target) []string {
 	out := make([]string, 0, len(targets))
 	for _, t := range targets {
@@ -270,7 +245,6 @@ func names(targets []store.Target) []string {
 	return out
 }
 
-// assertOrder fails the test unless got matches want exactly (same length + order).
 func assertOrder(t *testing.T, got, want []string) {
 	t.Helper()
 	if len(got) != len(want) {
