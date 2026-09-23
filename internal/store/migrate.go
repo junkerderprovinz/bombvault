@@ -1635,11 +1635,58 @@ CREATE INDEX IF NOT EXISTS idx_target_aliases_target ON target_aliases(domain, t
 		sql:              `ALTER TABLE targets ADD COLUMN db_dump_engine TEXT NOT NULL DEFAULT '';`,
 		alreadySatisfied: columnPresent("targets", "db_dump_engine"),
 	},
+	{
+		// Who started a run, for the Activity log and the audit trail. '' means
+		// the web interface or the scheduler; 'mcp' marks a run started through
+		// the MCP endpoint, and started_via_key holds the mcp_keys.id of the key.
+		// Written in the same INSERT as the run (StartRunWith), never as a later
+		// stamp that could fail on its own. The partial index serves the start
+		// cooldown and stays empty until a key is used.
+		version:          mcpMigrationBase,
+		name:             "runs_started_via",
+		alreadySatisfied: columnPresent("runs", "started_via"),
+		sql: `
+ALTER TABLE runs ADD COLUMN started_via     TEXT NOT NULL DEFAULT '';
+ALTER TABLE runs ADD COLUMN started_via_key TEXT NOT NULL DEFAULT '';
+CREATE INDEX IF NOT EXISTS idx_runs_started_via ON runs(target_id, started_at) WHERE started_via != '';`,
+	},
+	{
+		// A key is shown once and only its HMAC-SHA256 digest, peppered with the
+		// APP_KEY, is stored, so nothing here authenticates anybody on its own.
+		// key_check lets the card notice an APP_KEY change that silently broke
+		// every digest. Revoking keeps the row with key_digest emptied, so the
+		// Activity log can still name the key behind an old run, which is why the
+		// label is unique among active rows only.
+		version:          mcpMigrationBase + 1,
+		name:             "mcp_keys",
+		alreadySatisfied: tablePresent("mcp_keys"),
+		sql: `
+CREATE TABLE IF NOT EXISTS mcp_keys (
+  id                TEXT    PRIMARY KEY,
+  label             TEXT    NOT NULL DEFAULT '',
+  key_digest        TEXT    NOT NULL DEFAULT '',
+  key_hint          TEXT    NOT NULL DEFAULT '',
+  key_check         TEXT    NOT NULL DEFAULT '',
+  can_start_backups INTEGER NOT NULL DEFAULT 1,
+  created_at        INTEGER NOT NULL DEFAULT 0,
+  rotated_at        INTEGER NOT NULL DEFAULT 0,
+  last_used_at      INTEGER NOT NULL DEFAULT 0,
+  last_used_from    TEXT    NOT NULL DEFAULT '',
+  revoked_at        INTEGER NOT NULL DEFAULT 0,
+  revoked_reason    TEXT    NOT NULL DEFAULT ''
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_keys_digest ON mcp_keys(key_digest) WHERE key_digest != '';
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_keys_active_label ON mcp_keys(lower(label)) WHERE revoked_at = 0;`,
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
 // so they keep their order if the base has to move before release.
 const dbDumpMigrationBase = 123
+
+// mcpMigrationBase numbers the MCP server's migrations from one place, so they
+// keep their order if the base has to move before release.
+const mcpMigrationBase = 146
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.
