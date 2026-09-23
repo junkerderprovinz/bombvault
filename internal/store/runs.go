@@ -25,20 +25,47 @@ type Run struct {
 	// GroupID is the id of the parent run of a multi-domain pass such as
 	// "Backup Everything", or empty for a run outside one. Set by SetRunGroup.
 	GroupID string `json:"groupId"`
+	// StartedVia names what asked for this run when the audit trail has a name
+	// for it: "mcp" for the MCP endpoint, empty for the web interface and the
+	// scheduler.
+	StartedVia string `json:"startedVia"`
+	// StartedViaKey is the mcp_keys.id behind an MCP-started run, so the
+	// Activity log can name the client even after the key is revoked.
+	StartedViaKey string `json:"startedViaKey"`
 }
 
-// StartRun records the beginning of a run and returns its ID.
-func (r *Repo) StartRun(targetID, kind string) (string, error) {
+// runCols is the column list of every full run query, in the order scanRun
+// reads them.
+const runCols = `id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id, started_via, started_via_key`
+
+// RunMeta is what a caller knows about a run beyond its target and kind: the
+// pass it belongs to and who asked for it.
+type RunMeta struct {
+	GroupID       string
+	StartedVia    string
+	StartedViaKey string
+}
+
+// StartRunWith records the beginning of a run with its group and origin and
+// returns its ID. Both travel in the INSERT that creates the row, so no run can
+// exist without the audit trail that explains it.
+func (r *Repo) StartRunWith(targetID, kind string, meta RunMeta) (string, error) {
 	id := newID()
 	_, err := r.db.Exec(`
-		INSERT INTO runs (id, target_id, kind, status, started_at)
-		VALUES (?, ?, ?, 'running', ?)`,
-		id, targetID, kind, time.Now().Unix(),
+		INSERT INTO runs (id, target_id, kind, status, started_at, group_id, started_via, started_via_key)
+		VALUES (?, ?, ?, 'running', ?, ?, ?, ?)`,
+		id, targetID, kind, time.Now().Unix(), meta.GroupID, meta.StartedVia, meta.StartedViaKey,
 	)
 	if err != nil {
-		return "", fmt.Errorf("StartRun: %w", err)
+		return "", fmt.Errorf("StartRunWith: %w", err)
 	}
 	return id, nil
+}
+
+// StartRun records the beginning of a run the web interface or the scheduler
+// asked for.
+func (r *Repo) StartRun(targetID, kind string) (string, error) {
+	return r.StartRunWith(targetID, kind, RunMeta{})
 }
 
 // RunMetrics are the source figures restic reports for a run, in the units the
@@ -268,7 +295,7 @@ func (r *Repo) ReapInterruptedRuns() (int64, error) {
 // LastSuccessfulBackup returns the most recent successful backup run for targetID, or nil.
 func (r *Repo) LastSuccessfulBackup(targetID string) (*Run, error) {
 	row := r.db.QueryRow(`
-		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id
+		SELECT `+runCols+`
 		FROM runs
 		WHERE target_id = ? AND kind = 'backup' AND status = 'success'
 		ORDER BY started_at DESC
@@ -288,7 +315,7 @@ func (r *Repo) LastSuccessfulBackup(targetID string) (*Run, error) {
 // miss.
 func (r *Repo) LastRunForTarget(targetID string) (*Run, error) {
 	row := r.db.QueryRow(`
-		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id
+		SELECT `+runCols+`
 		FROM runs
 		WHERE target_id = ? AND kind = 'backup'
 		ORDER BY started_at DESC
@@ -506,7 +533,7 @@ func SanitizeRecordedTime(at, now time.Time) time.Time {
 // ListRuns returns up to limit recent runs across all targets, newest first.
 func (r *Repo) ListRuns(limit int) ([]Run, error) {
 	rows, err := r.db.Query(`
-		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id
+		SELECT `+runCols+`
 		FROM runs
 		ORDER BY started_at DESC
 		LIMIT ?`, limit)
@@ -533,7 +560,7 @@ func (r *Repo) ListRuns(limit int) ([]Run, error) {
 // however coarse the clock is.
 func (r *Repo) RecentRunsOfKind(targetID, kind string, limit int) ([]Run, error) {
 	rows, err := r.db.Query(`
-		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id
+		SELECT `+runCols+`
 		FROM runs
 		WHERE target_id = ? AND kind = ? AND status <> 'running'
 		ORDER BY started_at DESC, rowid DESC
@@ -663,7 +690,7 @@ func (r *Repo) FailedDBDumpSnapshots(targetID string) (map[string]bool, error) {
 // first, for the dashboard's backup-health heatmap.
 func (r *Repo) RunsSince(since int64) ([]Run, error) {
 	rows, err := r.db.Query(`
-		SELECT id, target_id, kind, status, started_at, finished_at, snapshot_id, bytes, error, acknowledged, group_id
+		SELECT `+runCols+`
 		FROM runs
 		WHERE started_at >= ?
 		ORDER BY started_at DESC`, since)
@@ -773,6 +800,7 @@ func scanRun(s scanner) (Run, error) {
 	err := s.Scan(
 		&run.ID, &run.TargetID, &run.Kind, &run.Status,
 		&run.StartedAt, &finishedAt, &snapID, &bytes, &errCol, &run.Acknowledged, &run.GroupID,
+		&run.StartedVia, &run.StartedViaKey,
 	)
 	if err != nil {
 		return Run{}, err
@@ -1106,4 +1134,271 @@ func nullableInt(v sql.NullInt64) *int64 {
 		return nil
 	}
 	return &v.Int64
+}
+
+// ErrRunNotFound reports a run id that no row carries.
+var ErrRunNotFound = errors.New("run not found")
+
+// GetRun returns one run by its id.
+func (r *Repo) GetRun(id string) (Run, error) {
+	row := r.db.QueryRow(`SELECT `+runCols+` FROM runs WHERE id = ?`, id)
+	run, err := scanRun(row)
+	if errors.Is(err, sql.ErrNoRows) {
+		return Run{}, ErrRunNotFound
+	}
+	if err != nil {
+		return Run{}, fmt.Errorf("GetRun: %w", err)
+	}
+	return run, nil
+}
+
+// RunFilter narrows ListRunsFiltered. An empty list means "any".
+type RunFilter struct {
+	TargetIDs []string
+	Kinds     []string
+	Statuses  []string
+	// Since keeps runs started at or after this unix second when it is set.
+	Since int64
+	Limit int
+}
+
+// How far a caller may stretch one filtered query: enough ids for every item of
+// an install and enough rows for the longest answer a tool returns, both well
+// inside SQLite's parameter limit.
+const (
+	runFilterMaxTargets = 2000
+	runFilterMaxRows    = 500
+)
+
+// ListRunsFiltered returns the runs matching f, newest first. Ties on
+// started_at keep their insertion order, so a dump and the backup that
+// triggered it stay in sequence however coarse the clock is.
+func (r *Repo) ListRunsFiltered(f RunFilter) ([]Run, error) {
+	var where []string
+	var args []any
+	in := func(column string, values []string) {
+		if len(values) == 0 {
+			return
+		}
+		where = append(where, column+" IN ("+placeholderList(len(values))+")")
+		for _, v := range values {
+			args = append(args, v)
+		}
+	}
+	in("target_id", f.TargetIDs[:min(len(f.TargetIDs), runFilterMaxTargets)])
+	in("kind", f.Kinds)
+	in("status", f.Statuses)
+	if f.Since > 0 {
+		where = append(where, "started_at >= ?")
+		args = append(args, f.Since)
+	}
+	limit := f.Limit
+	if limit <= 0 || limit > runFilterMaxRows {
+		limit = runFilterMaxRows
+	}
+	args = append(args, limit)
+
+	q := `SELECT ` + runCols + ` FROM runs`
+	if len(where) > 0 {
+		//nolint:gosec // G202: the conditions are built above from column names and
+		// generated "?,…" lists; every value travels as a bound parameter in args.
+		q += ` WHERE ` + strings.Join(where, " AND ")
+	}
+	q += ` ORDER BY started_at DESC, rowid DESC LIMIT ?`
+	rows, err := r.db.Query(q, args...)
+	if err != nil {
+		return nil, fmt.Errorf("ListRunsFiltered: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	var out []Run
+	for rows.Next() {
+		run, sErr := scanRun(rows)
+		if sErr != nil {
+			return nil, fmt.Errorf("ListRunsFiltered: %w", sErr)
+		}
+		out = append(out, run)
+	}
+	return out, rows.Err()
+}
+
+// placeholderList returns the "?,?,…" list for n bound parameters.
+func placeholderList(n int) string {
+	return strings.TrimSuffix(strings.Repeat("?,", n), ",")
+}
+
+// LatestMCPStartAt returns the newest started_at among the MCP-started runs of
+// targetIDs at or after since, or 0 when there is none. It answers the cooldown
+// that keeps an assistant from starting the same target again and again.
+func (r *Repo) LatestMCPStartAt(targetIDs []string, since int64) (int64, error) {
+	var newest int64
+	for start := 0; start < len(targetIDs); start += lastBackupAmongChunk {
+		end := min(start+lastBackupAmongChunk, len(targetIDs))
+		chunk := targetIDs[start:end]
+
+		args := make([]any, 0, len(chunk)+1)
+		args = append(args, since)
+		for _, id := range chunk {
+			args = append(args, id)
+		}
+		//nolint:gosec // G202: placeholderList generates "?,…" from len(chunk); every id is a bound parameter.
+		row := r.db.QueryRow(`
+			SELECT max(started_at)
+			FROM runs
+			WHERE started_via = 'mcp' AND started_at >= ?
+			  AND target_id IN (`+placeholderList(len(chunk))+`)`, args...)
+		var at sql.NullInt64
+		if err := row.Scan(&at); err != nil {
+			return 0, fmt.Errorf("LatestMCPStartAt: %w", err)
+		}
+		if at.Valid && at.Int64 > newest {
+			newest = at.Int64
+		}
+	}
+	return newest, nil
+}
+
+// MCPBackupsSince counts the backups an MCP key started for targetID at or
+// after since, the ones that either ran or are still running. It is the daily
+// budget a single item has.
+func (r *Repo) MCPBackupsSince(targetID string, since int64) (int, error) {
+	var n int
+	err := r.db.QueryRow(`
+		SELECT count(*)
+		FROM runs
+		WHERE target_id = ? AND kind = 'backup' AND started_via = 'mcp'
+		  AND started_at >= ? AND status IN ('success', 'running')`, targetID, since).Scan(&n)
+	if err != nil {
+		return 0, fmt.Errorf("MCPBackupsSince: %w", err)
+	}
+	return n, nil
+}
+
+// NewestBackupOrigins looks at the newest n successful runs of kind on targetID
+// and reports how many there are and how many an MCP key started. Under a
+// count-only retention policy that is what says whether one more MCP backup
+// would push the last operator-made one out of the repository.
+func (r *Repo) NewestBackupOrigins(targetID, kind string, n int) (total, viaMCP int, err error) {
+	if n <= 0 {
+		return 0, 0, nil
+	}
+	rows, qErr := r.db.Query(`
+		SELECT started_via
+		FROM runs
+		WHERE target_id = ? AND kind = ? AND status = 'success'
+		ORDER BY started_at DESC, rowid DESC
+		LIMIT ?`, targetID, kind, n)
+	if qErr != nil {
+		return 0, 0, fmt.Errorf("NewestBackupOrigins: %w", qErr)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	for rows.Next() {
+		var via string
+		if sErr := rows.Scan(&via); sErr != nil {
+			return 0, 0, fmt.Errorf("NewestBackupOrigins: %w", sErr)
+		}
+		total++
+		if via == "mcp" {
+			viaMCP++
+		}
+	}
+	if rErr := rows.Err(); rErr != nil {
+		return 0, 0, fmt.Errorf("NewestBackupOrigins: %w", rErr)
+	}
+	return total, viaMCP, nil
+}
+
+// BackupStamp is what a list of items says about a target's backup history
+// without a query per item.
+type BackupStamp struct {
+	LastSuccessAt       int64
+	LastDurationSeconds int64
+	LastRunAt           int64
+	LastRunStatus       string
+}
+
+// LatestBackupsByTarget returns every target's newest backup stamps. Both
+// queries skip future stamps, which would otherwise win the ordering and hide
+// every correctly stamped run behind them.
+//
+// The bare columns beside max(finished_at) come from the row that matched it,
+// which is how each group arrives with its own started_at and status.
+func (r *Repo) LatestBackupsByTarget() (map[string]BackupStamp, error) {
+	out := map[string]BackupStamp{}
+	cutoff := saneStampCutoff()
+
+	success, err := r.db.Query(`
+		SELECT target_id, max(finished_at), started_at
+		FROM runs
+		WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL`+sanePastStamp+`
+		GROUP BY target_id`, cutoff)
+	if err != nil {
+		return nil, fmt.Errorf("LatestBackupsByTarget: %w", err)
+	}
+	defer success.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	for success.Next() {
+		var target string
+		var finishedAt, startedAt int64
+		if sErr := success.Scan(&target, &finishedAt, &startedAt); sErr != nil {
+			return nil, fmt.Errorf("LatestBackupsByTarget: %w", sErr)
+		}
+		out[target] = BackupStamp{LastSuccessAt: finishedAt, LastDurationSeconds: finishedAt - startedAt}
+	}
+	if sErr := success.Err(); sErr != nil {
+		return nil, fmt.Errorf("LatestBackupsByTarget: %w", sErr)
+	}
+
+	last, err := r.db.Query(`
+		SELECT target_id, max(finished_at), started_at, status
+		FROM runs
+		WHERE kind = 'backup' AND finished_at IS NOT NULL`+sanePastStamp+`
+		GROUP BY target_id`, cutoff)
+	if err != nil {
+		return nil, fmt.Errorf("LatestBackupsByTarget: %w", err)
+	}
+	defer last.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	for last.Next() {
+		var target, status string
+		var finishedAt, startedAt int64
+		if sErr := last.Scan(&target, &finishedAt, &startedAt, &status); sErr != nil {
+			return nil, fmt.Errorf("LatestBackupsByTarget: %w", sErr)
+		}
+		stamp := out[target]
+		stamp.LastRunAt = startedAt
+		stamp.LastRunStatus = status
+		out[target] = stamp
+	}
+	return out, last.Err()
+}
+
+// LastRunsOfKind returns every target's newest finished run of one kind, so a
+// list of items costs one query rather than one per item. A running row is left
+// out and ties fall to the row written last, as LastRunOfKind has it.
+func (r *Repo) LastRunsOfKind(kind string) (map[string]Run, error) {
+	rows, err := r.db.Query(`
+		SELECT `+runCols+`
+		FROM (
+			SELECT `+runCols+`,
+			       row_number() OVER (PARTITION BY target_id ORDER BY started_at DESC, rowid DESC) AS rank
+			FROM runs
+			WHERE kind = ? AND status <> 'running'
+		)
+		WHERE rank = 1`, kind)
+	if err != nil {
+		return nil, fmt.Errorf("LastRunsOfKind: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	out := map[string]Run{}
+	for rows.Next() {
+		run, sErr := scanRun(rows)
+		if sErr != nil {
+			return nil, fmt.Errorf("LastRunsOfKind: %w", sErr)
+		}
+		out[run.TargetID] = run
+	}
+	return out, rows.Err()
 }

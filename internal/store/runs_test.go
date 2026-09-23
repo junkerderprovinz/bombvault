@@ -2,6 +2,7 @@ package store_test
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"reflect"
 	"testing"
@@ -1350,5 +1351,348 @@ func TestSetRunMetricsNeverOverwritesLiveMeasurement(t *testing.T) {
 	}
 	if len(vmRuns) != 1 || vmRuns[0].Bytes != summed {
 		t.Fatalf("the VM run's bytes are %+v, want %d", vmRuns, summed)
+	}
+}
+
+// runRow is a run written straight into the table, so a test can choose the
+// stamps, the duration and the origin the queries under test read.
+type runRow struct {
+	id, targetID, kind, status string
+	startedAt, finishedAt      int64
+	via, viaKey                string
+}
+
+func insertRunRow(t *testing.T, db *sql.DB, row runRow) {
+	t.Helper()
+	var finished any
+	if row.finishedAt != 0 {
+		finished = row.finishedAt
+	}
+	_, err := db.Exec(`
+		INSERT INTO runs (id, target_id, kind, status, started_at, finished_at, started_via, started_via_key)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		row.id, row.targetID, row.kind, row.status, row.startedAt, finished, row.via, row.viaKey)
+	if err != nil {
+		t.Fatalf("insert run %s: %v", row.id, err)
+	}
+}
+
+func TestStartRunWithWritesMetaInOneInsert(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	tg, err := r.UpsertTarget(store.Target{ContainerName: "pg"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	meta := store.RunMeta{GroupID: "g1", StartedVia: "mcp", StartedViaKey: "k1"}
+	id, err := r.StartRunWith(tg.ID, "backup", meta)
+	if err != nil {
+		t.Fatalf("StartRunWith: %v", err)
+	}
+
+	check := func(label string, run *store.Run) {
+		t.Helper()
+		if run == nil {
+			t.Fatalf("%s: no run", label)
+		}
+		if run.GroupID != "g1" || run.StartedVia != "mcp" || run.StartedViaKey != "k1" {
+			t.Fatalf("%s: group %q, via %q/%q, want g1 and mcp/k1", label, run.GroupID, run.StartedVia, run.StartedViaKey)
+		}
+	}
+
+	runs, err := r.ListRuns(10)
+	if err != nil || len(runs) != 1 {
+		t.Fatalf("ListRuns = %v, %v", runs, err)
+	}
+	check("ListRuns", &runs[0])
+
+	last, err := r.LastRunForTarget(tg.ID)
+	if err != nil {
+		t.Fatalf("LastRunForTarget: %v", err)
+	}
+	check("LastRunForTarget", last)
+
+	if err := r.FinishRun(id, "success", "snap", 1, ""); err != nil {
+		t.Fatal(err)
+	}
+	success, err := r.LastSuccessfulBackup(tg.ID)
+	if err != nil {
+		t.Fatalf("LastSuccessfulBackup: %v", err)
+	}
+	check("LastSuccessfulBackup", success)
+
+	since, err := r.RunsSince(0)
+	if err != nil || len(since) != 1 {
+		t.Fatalf("RunsSince = %v, %v", since, err)
+	}
+	check("RunsSince", &since[0])
+
+	pruneID, err := r.StartRun(tg.ID, "prune")
+	if err != nil {
+		t.Fatalf("StartRun: %v", err)
+	}
+	runs, err = r.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var plain store.Run
+	for _, run := range runs {
+		if run.ID == pruneID {
+			plain = run
+		}
+	}
+	if plain.ID == "" {
+		t.Fatal("ListRuns does not carry the run StartRun just wrote")
+	}
+	if plain.GroupID != "" || plain.StartedVia != "" || plain.StartedViaKey != "" {
+		t.Fatalf("StartRun stamped %q/%q/%q, want all empty", plain.GroupID, plain.StartedVia, plain.StartedViaKey)
+	}
+}
+
+func TestListRunsFilteredByTargetsKindsStatusesSince(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	rows := []runRow{
+		{id: "a1", targetID: "a", kind: "backup", status: "success", startedAt: 100, finishedAt: 110},
+		{id: "a2", targetID: "a", kind: "dbdump", status: "failed", startedAt: 200, finishedAt: 210},
+		{id: "b1", targetID: "b", kind: "backup", status: "running", startedAt: 300},
+		{id: "b2", targetID: "b", kind: "backup", status: "success", startedAt: 400, finishedAt: 410},
+	}
+	for _, row := range rows {
+		insertRunRow(t, db, row)
+	}
+
+	ids := func(f store.RunFilter) []string {
+		t.Helper()
+		got, err := r.ListRunsFiltered(f)
+		if err != nil {
+			t.Fatalf("ListRunsFiltered(%+v): %v", f, err)
+		}
+		out := make([]string, len(got))
+		for i, run := range got {
+			out[i] = run.ID
+		}
+		return out
+	}
+
+	cases := []struct {
+		name   string
+		filter store.RunFilter
+		want   []string
+	}{
+		{"everything, newest first", store.RunFilter{}, []string{"b2", "b1", "a2", "a1"}},
+		{"by target", store.RunFilter{TargetIDs: []string{"a"}}, []string{"a2", "a1"}},
+		{"by kind", store.RunFilter{Kinds: []string{"dbdump"}}, []string{"a2"}},
+		{"by status", store.RunFilter{Statuses: []string{"success"}}, []string{"b2", "a1"}},
+		{"since", store.RunFilter{Since: 200}, []string{"b2", "b1", "a2"}},
+		{"limit", store.RunFilter{Limit: 2}, []string{"b2", "b1"}},
+		{
+			"combined",
+			store.RunFilter{TargetIDs: []string{"a", "b"}, Kinds: []string{"backup"}, Statuses: []string{"success"}, Since: 200},
+			[]string{"b2"},
+		},
+	}
+	for _, c := range cases {
+		if got := ids(c.filter); !reflect.DeepEqual(got, c.want) {
+			t.Fatalf("%s: got %v, want %v", c.name, got, c.want)
+		}
+	}
+}
+
+func TestLatestBackupsByTargetIgnoresInsaneStamps(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	now := time.Now().Unix()
+	future := time.Now().AddDate(9, 0, 0).Unix()
+	rows := []runRow{
+		{id: "a-old", targetID: "a", kind: "backup", status: "success", startedAt: now - 900, finishedAt: now - 880},
+		{id: "a-good", targetID: "a", kind: "backup", status: "success", startedAt: now - 600, finishedAt: now - 570},
+		{id: "a-fail", targetID: "a", kind: "backup", status: "failed", startedAt: now - 300, finishedAt: now - 290},
+		{id: "a-future", targetID: "a", kind: "backup", status: "success", startedAt: now - 100, finishedAt: future},
+		{id: "a-dump", targetID: "a", kind: "dbdump", status: "success", startedAt: now - 60, finishedAt: now - 50},
+		{id: "b-fail", targetID: "b", kind: "backup", status: "failed", startedAt: now - 200, finishedAt: now - 190},
+		{id: "c-running", targetID: "c", kind: "backup", status: "running", startedAt: now - 10},
+	}
+	for _, row := range rows {
+		insertRunRow(t, db, row)
+	}
+
+	got, err := r.LatestBackupsByTarget()
+	if err != nil {
+		t.Fatalf("LatestBackupsByTarget: %v", err)
+	}
+	want := map[string]store.BackupStamp{
+		"a": {LastSuccessAt: now - 570, LastDurationSeconds: 30, LastRunAt: now - 300, LastRunStatus: "failed"},
+		"b": {LastRunAt: now - 200, LastRunStatus: "failed"},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("LatestBackupsByTarget = %+v, want %+v", got, want)
+	}
+}
+
+func TestGetRun(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	insertRunRow(t, db, runRow{
+		id: "r1", targetID: "t1", kind: "backup", status: "success",
+		startedAt: 100, finishedAt: 160, via: "mcp", viaKey: "k1",
+	})
+	_, err := db.Exec(`UPDATE runs SET snapshot_id = 'snap', bytes = 42, error = 'note', acknowledged = 1, group_id = 'g1' WHERE id = 'r1'`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	run, err := r.GetRun("r1")
+	if err != nil {
+		t.Fatalf("GetRun: %v", err)
+	}
+	finished := int64(160)
+	want := store.Run{
+		ID: "r1", TargetID: "t1", Kind: "backup", Status: "success",
+		StartedAt: 100, FinishedAt: &finished, SnapshotID: "snap", Bytes: 42, Error: "note",
+		Acknowledged: true, GroupID: "g1", StartedVia: "mcp", StartedViaKey: "k1",
+	}
+	if run.FinishedAt == nil || *run.FinishedAt != finished {
+		t.Fatalf("FinishedAt = %v, want %d", run.FinishedAt, finished)
+	}
+	run.FinishedAt = want.FinishedAt
+	if !reflect.DeepEqual(run, want) {
+		t.Fatalf("GetRun = %+v, want %+v", run, want)
+	}
+
+	if _, err := r.GetRun("nope"); !errors.Is(err, store.ErrRunNotFound) {
+		t.Fatalf("GetRun of an unknown id = %v, want ErrRunNotFound", err)
+	}
+}
+
+func TestMCPStartQueries(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	rows := []runRow{
+		{id: "web", targetID: "a", kind: "backup", status: "success", startedAt: 100, finishedAt: 110},
+		{id: "mcp1", targetID: "a", kind: "backup", status: "success", startedAt: 200, finishedAt: 210, via: "mcp", viaKey: "k1"},
+		{id: "mcp2", targetID: "a", kind: "backup", status: "running", startedAt: 300, via: "mcp", viaKey: "k2"},
+		{id: "mcp3", targetID: "a", kind: "backup", status: "failed", startedAt: 400, finishedAt: 410, via: "mcp", viaKey: "k1"},
+		{id: "mcp4", targetID: "a", kind: "dbdump", status: "success", startedAt: 500, finishedAt: 510, via: "mcp", viaKey: "k1"},
+		{id: "mcp5", targetID: "b", kind: "backup", status: "success", startedAt: 600, finishedAt: 610, via: "mcp", viaKey: "k1"},
+	}
+	for _, row := range rows {
+		insertRunRow(t, db, row)
+	}
+
+	latest := []struct {
+		name    string
+		targets []string
+		since   int64
+		want    int64
+	}{
+		{"newest mcp start of the target", []string{"a"}, 0, 500},
+		{"several targets", []string{"a", "b"}, 0, 600},
+		{"since cuts the older starts", []string{"a"}, 501, 0},
+		{"a target without mcp runs", []string{"c"}, 0, 0},
+		{"no targets", nil, 0, 0},
+	}
+	for _, c := range latest {
+		got, err := r.LatestMCPStartAt(c.targets, c.since)
+		if err != nil {
+			t.Fatalf("LatestMCPStartAt(%v, %d): %v", c.targets, c.since, err)
+		}
+		if got != c.want {
+			t.Fatalf("%s: LatestMCPStartAt = %d, want %d", c.name, got, c.want)
+		}
+	}
+
+	counts := []struct {
+		target string
+		since  int64
+		want   int
+	}{
+		{"a", 0, 2},
+		{"a", 250, 1},
+		{"b", 0, 1},
+		{"c", 0, 0},
+	}
+	for _, c := range counts {
+		got, err := r.MCPBackupsSince(c.target, c.since)
+		if err != nil {
+			t.Fatalf("MCPBackupsSince(%s, %d): %v", c.target, c.since, err)
+		}
+		if got != c.want {
+			t.Fatalf("MCPBackupsSince(%s, %d) = %d, want %d", c.target, c.since, got, c.want)
+		}
+	}
+
+	origins := []struct {
+		name          string
+		kind          string
+		n             int
+		total, viaMCP int
+	}{
+		{"newest backup came through mcp", "backup", 1, 1, 1},
+		{"the one before it did not", "backup", 2, 2, 1},
+		{"there are only two successful backups", "backup", 5, 2, 1},
+		{"dumps are counted as their own series", "dbdump", 5, 1, 1},
+	}
+	for _, c := range origins {
+		total, viaMCP, err := r.NewestBackupOrigins("a", c.kind, c.n)
+		if err != nil {
+			t.Fatalf("NewestBackupOrigins(a, %s, %d): %v", c.kind, c.n, err)
+		}
+		if total != c.total || viaMCP != c.viaMCP {
+			t.Fatalf("%s: NewestBackupOrigins(a, %s, %d) = %d/%d, want %d/%d", c.name, c.kind, c.n, total, viaMCP, c.total, c.viaMCP)
+		}
+	}
+}
+
+func TestLastRunsOfKind(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	rows := []runRow{
+		{id: "a-old", targetID: "a", kind: "dbdump", status: "success", startedAt: 100, finishedAt: 110},
+		{id: "a-new", targetID: "a", kind: "dbdump", status: "failed", startedAt: 200, finishedAt: 210},
+		{id: "a-running", targetID: "a", kind: "dbdump", status: "running", startedAt: 300},
+		{id: "a-backup", targetID: "a", kind: "backup", status: "success", startedAt: 400, finishedAt: 410},
+		{id: "b-dump", targetID: "b", kind: "dbdump", status: "success", startedAt: 150, finishedAt: 160, via: "mcp", viaKey: "k1"},
+	}
+	for _, row := range rows {
+		insertRunRow(t, db, row)
+	}
+
+	got, err := r.LastRunsOfKind("dbdump")
+	if err != nil {
+		t.Fatalf("LastRunsOfKind: %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("LastRunsOfKind returned %d targets, want 2", len(got))
+	}
+	if got["a"].ID != "a-new" {
+		t.Fatalf("target a got run %q, want the newest finished dump a-new", got["a"].ID)
+	}
+	if got["b"].ID != "b-dump" || got["b"].StartedVia != "mcp" {
+		t.Fatalf("target b got %+v, want b-dump with its origin", got["b"])
 	}
 }
