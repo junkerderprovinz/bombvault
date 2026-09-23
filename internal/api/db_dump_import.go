@@ -142,7 +142,7 @@ func importToolFailure(kept, detail string) error {
 
 // dbImportPlan is what an import resolved while the request was still open: the
 // container by name and by id, the dump, the engine, the data folder in this
-// process's view and the role a PostgreSQL dump always recreates.
+// process's view and the role and database a PostgreSQL dump always recreates.
 type dbImportPlan struct {
 	name    string
 	id      string
@@ -151,6 +151,7 @@ type dbImportPlan struct {
 	engine  dbdump.Engine
 	dataDir string
 	pgUser  string
+	pgDB    string
 }
 
 // StartImportDBDump imports one dump into a freshly initialised database. Every
@@ -238,6 +239,7 @@ func (s *Service) prepareImportDBDump(ctx context.Context, name, source, snapsho
 		engine:  engine,
 		dataDir: dataDir,
 		pgUser:  postgresRole(in.Config.Env),
+		pgDB:    postgresDatabase(in.Config.Env),
 	}, nil
 }
 
@@ -293,15 +295,32 @@ func versionMajor(version string) int {
 	return major
 }
 
-// postgresRole is the role a PostgreSQL dump recreates, so the one collision it
+// postgresRole is the role a PostgreSQL dump recreates, so the collision it
 // always produces against a fresh cluster is not counted as an error.
 func postgresRole(env []string) string {
+	if user := envValue(env, "POSTGRES_USER"); user != "" {
+		return user
+	}
+	return "postgres"
+}
+
+// postgresDatabase is the database the image's own entrypoint creates before
+// the import runs, the second collision a dump meets on a fresh cluster. The
+// official image names it after the role when POSTGRES_DB is unset.
+func postgresDatabase(env []string) string {
+	if db := envValue(env, "POSTGRES_DB"); db != "" {
+		return db
+	}
+	return postgresRole(env)
+}
+
+func envValue(env []string, want string) string {
 	for _, e := range env {
-		if name, value, ok := strings.Cut(e, "="); ok && name == "POSTGRES_USER" && value != "" {
+		if name, value, ok := strings.Cut(e, "="); ok && name == want {
 			return value
 		}
 	}
-	return "postgres"
+	return ""
 }
 
 // importDBDump runs the import under the containers restore lock and returns
@@ -558,7 +577,7 @@ func (s *Service) feedDBImport(ctx context.Context, plan dbImportPlan, keptHere,
 	case readErr != nil:
 		return "", importToolFailure(kept, importDetail("read the dump: "+readErr.Error()))
 	}
-	if n := dbdump.CountImportErrors(plan.engine, tail, plan.pgUser); n > 0 {
+	if n := dbdump.CountImportErrors(plan.engine, tail, plan.pgUser, plan.pgDB); n > 0 {
 		return fmt.Sprintf("%s: %d errors, the previous data folder is kept at %s", store.NoteDBImportErrors, n, kept), nil
 	}
 	return store.NoteDBImportKeptOld + ": " + kept, nil

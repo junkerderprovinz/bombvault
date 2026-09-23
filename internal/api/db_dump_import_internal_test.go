@@ -153,7 +153,7 @@ func newImportRig(t *testing.T) *importRig {
 			ID:      "c0ffee1d",
 			Name:    "/pg",
 			Running: true,
-			Config:  model.Config{Image: "postgres:16.4", Env: []string{"POSTGRES_USER=immich"}},
+			Config:  model.Config{Image: "postgres:16.4", Env: []string{"POSTGRES_USER=immich", "POSTGRES_DB=immich_db"}},
 			Mounts:  []model.Mount{{Source: "/data/pg", Destination: "/var/lib/postgresql/data"}},
 		},
 		probeOut: "bombvault-dbdump-version pg_dumpall (PostgreSQL) 16.4\n",
@@ -341,9 +341,10 @@ func TestImportRefusesBeforeTouchingAnything(t *testing.T) {
 }
 
 func TestImportStepsInOrder(t *testing.T) {
-	// pg_dumpall's role section always collides with the role a fresh cluster
-	// was created for.
-	const expected = "ERROR:  role \"immich\" already exists\n"
+	// A cluster the image initialised from POSTGRES_USER and POSTGRES_DB holds
+	// both before the dump's own CREATE statements run.
+	const expected = "ERROR:  role \"immich\" already exists\n" +
+		"ERROR:  database \"immich_db\" already exists\n"
 
 	t.Run("the fresh database is in place before the container starts", func(t *testing.T) {
 		rig := newImportRig(t)

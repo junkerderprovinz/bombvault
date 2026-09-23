@@ -111,27 +111,34 @@ func TestVersionMajorOK(t *testing.T) {
 }
 
 func TestCountImportErrors(t *testing.T) {
-	psql := `SET
+	// What a clean import into a cluster the image initialised looks like: the
+	// entrypoint created the role and the database from POSTGRES_USER and
+	// POSTGRES_DB, so both CREATE statements of the dump find them there.
+	fresh := `SET
 ERROR:  role "immich" already exists
 CREATE ROLE
-ERROR:  relation "assets" already exists
+ERROR:  database "immich_db" already exists
 `
-	if got := dbdump.CountImportErrors(dbdump.EnginePostgres, psql, "immich"); got != 1 {
+	if got := dbdump.CountImportErrors(dbdump.EnginePostgres, fresh, "immich", "immich_db"); got != 0 {
+		t.Errorf("CountImportErrors of a clean import = %d, want 0", got)
+	}
+	psql := fresh + `ERROR:  relation "assets" already exists` + "\n"
+	if got := dbdump.CountImportErrors(dbdump.EnginePostgres, psql, "immich", "immich_db"); got != 1 {
 		t.Errorf("CountImportErrors = %d, want 1", got)
 	}
-	if got := dbdump.CountImportErrors(dbdump.EnginePostgres, psql, "other"); got != 2 {
-		t.Errorf("CountImportErrors with another user = %d, want 2", got)
+	if got := dbdump.CountImportErrors(dbdump.EnginePostgres, psql, "other", "other"); got != 3 {
+		t.Errorf("CountImportErrors with another user and database = %d, want 3", got)
 	}
 	twice := psql + `ERROR:  role "immich" already exists` + "\n"
-	if got := dbdump.CountImportErrors(dbdump.EnginePostgres, twice, "immich"); got != 2 {
+	if got := dbdump.CountImportErrors(dbdump.EnginePostgres, twice, "immich", "immich_db"); got != 2 {
 		t.Errorf("CountImportErrors tolerated the expected line twice: %d, want 2", got)
 	}
 
 	maria := "ERROR 1064 (42000) at line 12: You have an error in your SQL syntax\n"
-	if got := dbdump.CountImportErrors(dbdump.EngineMariaDB, maria, "root"); got != 1 {
+	if got := dbdump.CountImportErrors(dbdump.EngineMariaDB, maria, "root", "app"); got != 1 {
 		t.Errorf("CountImportErrors = %d, want 1", got)
 	}
-	if got := dbdump.CountImportErrors(dbdump.EnginePostgres, "", ""); got != 0 {
+	if got := dbdump.CountImportErrors(dbdump.EnginePostgres, "", "", ""); got != 0 {
 		t.Errorf("CountImportErrors of empty stderr = %d, want 0", got)
 	}
 }
