@@ -190,8 +190,9 @@ function DumpRow({
       ? t("dbdump.importConfirm").replace("{version}", dump.version)
       : `${t("dbdump.importConfirmNoVersion")} ${t("dbdump.importNoVersion")}`;
     let asked = question.replace("{engine}", engineName).replace("{container}", containerName);
-    if (importStops.length === 1) asked += " " + t("dbdump.importStopsOne").replace("{app}", importStops[0]);
-    if (importStops.length > 1) asked += " " + t("dbdump.importStopsMany").replace("{apps}", importStops.join(", "));
+    if (importStops.length > 0) {
+      asked += " " + t("dbdump.importStops", importStops.length).replace("{apps}", importStops.join(", "));
+    }
     if (!(await confirm(asked, { confirmKey: "dbdump.import" }))) return;
     void fireImport();
   }
