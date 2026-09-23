@@ -1113,6 +1113,47 @@ func TestNewDataWindowKeepsEligibleRunsInsideTheWindow(t *testing.T) {
 	}
 }
 
+func TestNewDataWindowCarriesTheSourceFigures(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	tg := seriesTarget(t, r, "radarr")
+
+	insertRun(t, db, "measured", tg.ID, "backup", "success", 150, "s1", "")
+	insertRun(t, db, "bare", tg.ID, "backup", "success", 250, "s2", "")
+	if _, err := db.Exec(`
+		UPDATE runs SET source_bytes = 4096, source_files = 12, files_new = 12, has_parent = 0
+		WHERE id = 'measured'`); err != nil {
+		t.Fatal(err)
+	}
+
+	window, err := r.NewDataWindow(tg.ID, "backup", 100, 300, 1000)
+	if err != nil {
+		t.Fatalf("NewDataWindow: %v", err)
+	}
+	if len(window) != 2 {
+		t.Fatalf("window = %v", window)
+	}
+	if window[0].SourceBytes != nil || window[0].HasParent != nil {
+		t.Fatalf("an unmeasured run came back measured: %+v", window[0])
+	}
+	measured := window[1]
+	if measured.SourceBytes == nil || *measured.SourceBytes != 4096 {
+		t.Fatalf("source bytes = %v", measured.SourceBytes)
+	}
+	if measured.SourceFiles == nil || *measured.SourceFiles != 12 {
+		t.Fatalf("source files = %v", measured.SourceFiles)
+	}
+	if measured.FilesNew == nil || *measured.FilesNew != 12 {
+		t.Fatalf("files new = %v", measured.FilesNew)
+	}
+	if measured.HasParent == nil || *measured.HasParent != 0 {
+		t.Fatalf("parent flag = %v", measured.HasParent)
+	}
+}
+
 func TestFirstEligibleRunIDSkipsSnapshotlessUnmeasuredSuccess(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
