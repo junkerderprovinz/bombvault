@@ -132,30 +132,36 @@ func (s *Service) BackupStacksAfterBulk(ctx context.Context, names []string) {
 	}
 }
 
-// latestStackSnapshot returns the newest snapshot carrying this project's stack
-// tag, or ok=false when the project has never been backed up as a stack (every
-// installation before this change, and any project whose folder was never
-// reachable).
-func (s *Service) latestStackSnapshot(ctx context.Context, repo string, mode restic.Mode, project string) (restic.Snapshot, bool) {
-	snaps, err := s.engine.Snapshots(ctx, repo, mode)
+// stackDir is the newest snapshot of a project's folder at one source, and what
+// it takes to restore it from there.
+type stackDir struct {
+	repo  string
+	mode  restic.Mode
+	snap  restic.Snapshot
+	found bool
+}
+
+// latestStackDir looks for the project's folder at the containers repository
+// the source names. found is false for a project never backed up as a stack.
+func (s *Service) latestStackDir(ctx context.Context, project, source string) (stackDir, error) {
+	settings, repo, err := s.domainRepoSource("containers", source)
 	if err != nil {
-		log.Printf("api: stack restore: list snapshots: %v", err)
-		return restic.Snapshot{}, false
+		return stackDir{}, err
+	}
+	d := stackDir{repo: repo, mode: s.repoModeFor(settings, "containers", source, repo)}
+	snaps, err := s.listRepo(ctx, repo, d.mode)
+	if err != nil {
+		return stackDir{}, err
 	}
 	want := stackSnapshotTag(project)
-	var best restic.Snapshot
-	var found bool
 	for _, sn := range snaps {
-		if !slices.Contains(sn.Tags, want) {
-			continue
-		}
 		// Times are RFC3339 from restic, so a string compare orders them; taking
 		// the max avoids depending on the listing order.
-		if !found || sn.Time > best.Time {
-			best, found = sn, true
+		if slices.Contains(sn.Tags, want) && (!d.found || sn.Time > d.snap.Time) {
+			d.snap, d.found = sn, true
 		}
 	}
-	return best, found
+	return d, nil
 }
 
 // RestoreStackDir restores a compose project's working directory in place, from
@@ -167,19 +173,17 @@ func (s *Service) latestStackSnapshot(ctx context.Context, repo string, mode res
 // must not read as a failure, or every restore of an older backup would report
 // one.
 func (s *Service) RestoreStackDir(ctx context.Context, project, source string) (ok bool, err error) {
-	settings, repo, err := s.domainRepoSource("containers", source)
+	d, err := s.latestStackDir(ctx, project, source)
 	if err != nil {
 		return false, err
 	}
-	mode := s.primaryModeFor(settings, "containers", repo)
-	sn, found := s.latestStackSnapshot(ctx, repo, mode, project)
-	if !found || len(sn.Paths) == 0 {
+	if !d.found || len(d.snap.Paths) == 0 {
 		return false, nil
 	}
-	if err := s.engine.RestorePath(ctx, repo, sn.ID, sn.Paths[0], mode); err != nil {
+	if err := s.engine.RestorePath(ctx, d.repo, d.snap.ID, d.snap.Paths[0], d.mode); err != nil {
 		return false, fmt.Errorf("restore stack %s: %w", project, err)
 	}
-	log.Printf("api: stack restore: %s from %s", project, sn.ID[:8])
+	log.Printf("api: stack restore: %s from %s", project, d.snap.ID[:8])
 	return true, nil
 }
 

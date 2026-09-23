@@ -147,7 +147,7 @@ func TestRestoreStack(t *testing.T) {
 	}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
 
-	res, err := svc.RestoreStack(context.Background(), "media", "local", true, true)
+	res, err := svc.RestoreStack(context.Background(), "media", "local", "", true, true)
 	if err != nil {
 		t.Fatalf("RestoreStack: %v", err)
 	}
@@ -251,7 +251,7 @@ func TestRestoreStackCancelledMemberAbortsLoop(t *testing.T) {
 	seedStackTarget(t, st, mountRoot, "svc-b", "media", "b", "c")
 	seedStackTarget(t, st, mountRoot, "svc-c", "media", "c", "")
 
-	res, err := svc.RestoreStack(context.Background(), "media", "local", true, true)
+	res, err := svc.RestoreStack(context.Background(), "media", "local", "", true, true)
 	if err != nil {
 		t.Fatalf("RestoreStack: %v", err)
 	}
@@ -299,7 +299,7 @@ func TestRestoreStackNotConfirmed(t *testing.T) {
 	st := newMemStore(t)
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir(), HostMountRoot: t.TempDir()}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
-	if _, err := svc.RestoreStack(context.Background(), "media", "local", false, false); err == nil {
+	if _, err := svc.RestoreStack(context.Background(), "media", "local", "", false, false); err == nil {
 		t.Fatal("RestoreStack must reject an unconfirmed request")
 	}
 }
@@ -309,7 +309,7 @@ func TestRestoreStackEmpty(t *testing.T) {
 	st := newMemStore(t)
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir(), HostMountRoot: t.TempDir()}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
-	_, err := svc.RestoreStack(context.Background(), "nope", "local", false, true)
+	_, err := svc.RestoreStack(context.Background(), "nope", "local", "", false, true)
 	if err == nil || !strings.Contains(err.Error(), "no backed-up containers") {
 		t.Fatalf("expected 'no backed-up containers' error, got %v", err)
 	}
@@ -327,7 +327,7 @@ func TestRestoreStackRespectsRunState(t *testing.T) {
 	seedStackTargetState(t, st, mountRoot, "web", "app", "web", "", true)        // running
 	seedStackTargetState(t, st, mountRoot, "worker", "app", "worker", "", false) // stopped
 
-	res, err := svc.RestoreStack(context.Background(), "app", "local", true, true)
+	res, err := svc.RestoreStack(context.Background(), "app", "local", "", true, true)
 	if err != nil {
 		t.Fatalf("RestoreStack: %v", err)
 	}
@@ -393,7 +393,7 @@ func TestStartRestoreStackSingleFlight(t *testing.T) {
 	seedStackTarget(t, st, mountRoot, "worker", "app", "worker", "")
 	ctx := context.Background()
 
-	started, err := svc.StartRestoreStack(ctx, "app", "local", true, true)
+	started, err := svc.StartRestoreStack(ctx, "app", "local", "", true, true)
 	if err != nil || !started {
 		t.Fatalf("stack restore should start: started=%v err=%v", started, err)
 	}
@@ -406,7 +406,7 @@ func TestStartRestoreStackSingleFlight(t *testing.T) {
 	}
 
 	// Every starter sharing the guard must answer busy while it runs.
-	if started, err := svc.StartRestoreStack(ctx, "app", "local", true, true); err != nil || started {
+	if started, err := svc.StartRestoreStack(ctx, "app", "local", "", true, true); err != nil || started {
 		t.Fatalf("second stack restore must be rejected busy: started=%v err=%v", started, err)
 	}
 	if started, err := svc.StartRestore(ctx, "web", "aaaa1111", "local", false); err != nil || started {
@@ -448,13 +448,13 @@ func TestStartRestoreStackValidationFailsFast(t *testing.T) {
 	seedStackTarget(t, st, mountRoot, "web", "app", "web", "")
 	ctx := context.Background()
 
-	if started, err := svc.StartRestoreStack(ctx, "app", "local", true, false); !errors.Is(err, backup.ErrNotConfirmed) || started {
+	if started, err := svc.StartRestoreStack(ctx, "app", "local", "", true, false); !errors.Is(err, backup.ErrNotConfirmed) || started {
 		t.Fatalf("unconfirmed: want ErrNotConfirmed + not started, got started=%v err=%v", started, err)
 	}
-	if started, err := svc.StartRestoreStack(ctx, "app", "nope", true, true); err == nil || started {
+	if started, err := svc.StartRestoreStack(ctx, "app", "nope", "", true, true); err == nil || started {
 		t.Fatalf("a bad source must fail synchronously, got started=%v err=%v", started, err)
 	}
-	if started, err := svc.StartRestoreStack(ctx, "ghost", "local", true, true); err == nil || !strings.Contains(err.Error(), "no backed-up containers") || started {
+	if started, err := svc.StartRestoreStack(ctx, "ghost", "local", "", true, true); err == nil || !strings.Contains(err.Error(), "no backed-up containers") || started {
 		t.Fatalf("an empty stack must fail synchronously, got started=%v err=%v", started, err)
 	}
 
@@ -493,7 +493,7 @@ func TestRestoreStackBlocksDependentOnFailedDependency(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res, err := svc.RestoreStack(context.Background(), "shop", "local", true, true)
+	res, err := svc.RestoreStack(context.Background(), "shop", "local", "", true, true)
 	if err != nil {
 		t.Fatalf("RestoreStack: %v", err)
 	}
@@ -516,6 +516,59 @@ func TestRestoreStackBlocksDependentOnFailedDependency(t *testing.T) {
 	for _, c := range d.calls {
 		if c == "start:app" {
 			t.Fatalf("app was started despite its dependency failing: %v", d.calls)
+		}
+	}
+}
+
+// TestRestoreStackTakesTheProjectFolderFromTheSourceItIsGiven: the members come
+// from B2, and so does the project folder unless stackDirSource names another
+// place.
+func TestRestoreStackTakesTheProjectFolderFromTheSourceItIsGiven(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir, FlashTemplatesDir: filepath.Join(dir, "flash")}
+	st := newMemStore(t)
+	s := mustSettings(t, st)
+	s.EncryptionEnabled = false
+	s.ContainersPath = "backups/containers"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	// resolveRepo joins HostMountRoot and the configured path with a plain
+	// slash rather than filepath.Join, so the repo string it hands back keeps
+	// HostMountRoot's own separators; local must match that, not an
+	// OS-cleaned join, to compare equal to what RestorePath receives.
+	local := dir + "/backups/containers"
+	if err := os.MkdirAll(local, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(local, "config"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	b2, err := st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "B2", Repo: "s3:host/b2", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	seedStackTarget(t, st, "/host/user", "svc-a", "media", "a", "")
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Time: "2026-09-18T03:00:00Z", Tags: []string{"container:svc-a"}},
+		{ID: "eeee5555", Time: "2026-09-18T03:00:00Z", Tags: []string{"stack:media"}, Paths: []string{"/appdata/media"}},
+	}}
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+
+	for _, c := range []struct{ dirSource, want string }{
+		{"", "s3:host/b2:eeee5555:/appdata/media"},
+		{"local", local + ":eeee5555:/appdata/media"},
+	} {
+		eng.restored = nil
+		if _, err := svc.RestoreStack(context.Background(), "media", "offsite:"+b2.ID, c.dirSource, false, true); err != nil {
+			t.Fatalf("stackDirSource %q: %v", c.dirSource, err)
+		}
+		found := false
+		for _, r := range eng.restored {
+			found = found || r == c.want
+		}
+		if !found {
+			t.Errorf("stackDirSource %q: restores = %v, want %s", c.dirSource, eng.restored, c.want)
 		}
 	}
 }
