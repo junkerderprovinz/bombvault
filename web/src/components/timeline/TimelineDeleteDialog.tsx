@@ -11,7 +11,8 @@ import { hostLabelSettled } from "../../lib/useHostLabel";
  *  lists every other place live, so the question can say whether this is the
  *  last copy, which places still hold it, and which could not be checked.
  *  `onDone` fires even on a refusal, since part of the row can already be
- *  gone; only a cancel or an empty preview closes without it. */
+ *  gone, and when a place turns out not to hold the backup, since the card's
+ *  row is stale then; a cancel or any other empty preview only closes. */
 export function TimelineDeleteDialog({
   domain,
   itemKey,
@@ -45,12 +46,27 @@ export function TimelineDeleteDialog({
       if (!live) return;
       const names = (list: { label: string }[]) => formatList(lang, list.map((p) => p.label || host));
       const del = res.delete ?? [];
-      if (!res.ok || del.length === 0) {
-        push(res.ok ? t("placementCode.snapshotMissing") : placementErrorText(t, lang, res, "common.deleteFailed"), "fail");
+      const others = res.others ?? [];
+      if (!res.ok) {
+        push(placementErrorText(t, lang, res, "common.deleteFailed"), "fail");
         onClose();
         return;
       }
-      const others = res.others ?? [];
+      if (del.length === 0) {
+        // Only the places this delete asked for say why nothing came back; the
+        // others are there for the question, which is dropped.
+        const asked = places.length === 0 ? others : others.filter((o) => places.includes(o.place));
+        const unreadable = asked.filter((o) => o.state === "unreadable");
+        const appendOnly = asked.filter((o) => o.state === "append-only");
+        if (unreadable.length > 0) push(t("placement.uncheckable").replace("{list}", () => names(unreadable)), "fail");
+        else if (appendOnly.length > 0) push(t("timeline.deleteSkipped").replace("{list}", () => names(appendOnly)), "fail");
+        else push(t("placementCode.snapshotMissing"), "fail");
+        // A place that no longer holds the backup leaves the card showing a
+        // row that is gone, so the caller reloads instead of only closing.
+        if (asked.some((o) => o.state === "missing")) onDone();
+        else onClose();
+        return;
+      }
       // Append-only places keep their copy no matter what is asked, so they
       // count as "still held" as well as being called out as left out.
       const kept = others.filter((o) => o.state === "holds" || o.state === "append-only");
