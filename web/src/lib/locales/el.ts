@@ -12,6 +12,8 @@ const el: Partial<Translations> = {
   "nav.vms": "VMs",
   "nav.flash": "Flash",
   "nav.settings": "Ρυθμίσεις",
+  "nav.more": "Περισσότερα",
+  "nav.mobileNavigation": "Πλοήγηση κινητού",
   "about.title": "Σχετικά με το BombVault",
   "about.body": "Ένας ιππότης, μία σταυροφορία: προσεγμένα εργαλεία ανοιχτού κώδικα που δεν υπήρχαν στη μορφή που ήθελα, φτιαγμένα μέχρι να μη λείπει τίποτα. Όλα δωρεάν, χωρίς λογαριασμούς, χωρίς τηλεμετρία, χωρίς διαφημίσεις και χωρίς επί πληρωμή επίπεδα. Πουθενά αστερίσκος. Τίποτα αναγνώσιμο δεν φεύγει ποτέ από τα δικά σου τείχη. Σφυρηλατημένα τα βράδια και τα σαββατοκύριακα, με καρδιά και πείσμα.",
   "about.coffee": "Αν το BombVault κέρδισε τη θέση του στον διακομιστή ή στον υπολογιστή σου, ρίξε ένα νόμισμα στον ιππότη σου: βοηθά να καλυφθούν τα έξοδα και κρατά το έργο ζωντανό. Και κάνει την καρδιά αυτού του ιππότη να χτυπά λίγο πιο γρήγορα. Πιο κάτω υπάρχουν τρεις δρόμοι, διάλεξε αυτόν που σου ταιριάζει.",
@@ -204,6 +206,9 @@ const el: Partial<Translations> = {
   "run.colStarted": "Έναρξη",
   "run.colFinished": "Ολοκλήρωση",
   "run.colContainer": "Container",
+  "home.newBackupConfirm": "Να ξεκινήσει τώρα αντίγραφο ασφαλείας για όλους τους ενεργούς τομείς; Τα containers σταματούν και επανεκκινούνται ένα τη φορά, όσο εκτελείται το αντίγραφό τους.",
+  "run.statVolume": "Όγκος δεδομένων",
+  "run.statSnapshot": "Στιγμιότυπο",
 
   // Settings
   "settings.title": "Ρυθμίσεις",
@@ -274,6 +279,9 @@ const el: Partial<Translations> = {
   "settings.labels.buttons": "Κουμπιά",
   "settings.labels.sidebar": "Πλαϊνή μπάρα",
   "settings.labels.tabs": "Καρτέλες",
+  "settings.labels.bottombar": "Κάτω μπάρα",
+  "settings.axisBottombarHint": "Ισχύει μόνο για τη διάταξη του τηλεφώνου.",
+  "settings.axisSidebarHint": "Ισχύει μόνο για τη διάταξη υπολογιστή.",
   "settings.labels.mode.text": "Κείμενο",
   "settings.labels.mode.textGlyph": "Κείμενο και σύμβολο",
   "settings.labels.mode.glyph": "Σύμβολο",
@@ -625,6 +633,10 @@ const el: Partial<Translations> = {
   "common.confirm": "Επιβεβαίωση",
   "common.cancel": "Άκυρο",
   "common.close": "Κλείσιμο",
+  "common.expand": "Ανάπτυξη",
+  "common.collapse": "Σύμπτυξη",
+  "common.back": "Πίσω",
+  "common.loadMore": "Φόρτωση περισσότερων",
 
   // Failure fallbacks
   "common.actionFailed": "Η ενέργεια απέτυχε",
@@ -904,6 +916,7 @@ const el: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Κατάσταση προστασίας",
   "dashboard.noOffsite": "Κανένα αντίγραφο εκτός τοποθεσίας",
+  "dashboard.statusLoadFailed": "Δεν ήταν δυνατή η φόρτωση της κατάστασης",
   "dashboard.neverExcluded": "Δεν έχει προγραμματιστεί",
   "dashboard.neverExcludedTitle": "Εξαιρέθηκε σκόπιμα από το πρόγραμμα, οπότε δεν υπάρχει τίποτα να αντιγραφεί εδώ.",
   "dashboard.neverSelf": "Δικό του κοντέινερ",

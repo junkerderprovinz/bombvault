@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit && tsc -p tsconfig.harness.json && vite build",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.harness.json",
     "preview": "vite preview",
-    "lint": "eslint src",
-    "test": "vitest run"
+    "lint": "eslint src e2e playwright.config.ts",
+    "test": "vitest run",
+    "test:e2e": "node e2e/ensure-binary.mjs && playwright test"
   },
   "dependencies": {
     "flag-icons": "^7.5.0",
@@ -20,9 +21,11 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
+    "@types/node": "^24.13.6",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",

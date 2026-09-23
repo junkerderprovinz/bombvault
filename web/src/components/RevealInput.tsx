@@ -16,6 +16,10 @@ import type { InputHTMLAttributes } from "react";
 // The padding utilities carry ! because callers pass shared class strings with
 // their own px-*, and Tailwind's output order, not the class order, decides
 // which one wins. rtl:right-auto! needs it for the same reason against right-2.
+//
+// Under a coarse pointer the 15px eye is too small to hit, so its button takes
+// the field's full height and a 44px strip at the end, and the padding widens
+// to match. The glyph stays the same size.
 
 export interface RevealInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
   /** visible, onToggleVisible, showLabel and hideLabel come from useReveal(). */
@@ -45,14 +49,14 @@ export function RevealInput({
         {...rest}
         type={visible ? "text" : "password"}
         dir="ltr"
-        className={`w-full pr-8! rtl:pr-0! rtl:pl-8! text-start${className ? ` ${className}` : ""}`}
+        className={`w-full pr-8! rtl:pr-0! rtl:pl-8! pointer-coarse:pr-11! rtl:pointer-coarse:pr-0! rtl:pointer-coarse:pl-11! text-start${className ? ` ${className}` : ""}`}
       />
       <button
         type="button"
         onClick={onToggleVisible}
         aria-label={visible ? hideLabel : showLabel}
         aria-pressed={visible}
-        className="absolute right-2 rtl:right-auto! rtl:left-2 top-1/2 -translate-y-1/2 inline-flex h-[15px] w-[15px] items-center justify-center rounded-pill text-carbon-textMuted opacity-80 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+        className="absolute right-2 rtl:right-auto! rtl:left-2 top-1/2 -translate-y-1/2 inline-flex h-[15px] w-[15px] pointer-coarse:h-full pointer-coarse:w-11 pointer-coarse:right-0 rtl:pointer-coarse:left-0! items-center justify-center rounded-pill text-carbon-textMuted opacity-80 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
       >
         {visible ? (
           // The eye is symmetric, so it is not mirrored under RTL. The pupil is

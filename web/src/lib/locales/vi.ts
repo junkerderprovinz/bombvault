@@ -12,6 +12,8 @@ const vi: Partial<Translations> = {
   "nav.vms": "VMs",
   "nav.flash": "Flash",
   "nav.settings": "Cài đặt",
+  "nav.more": "Thêm",
+  "nav.mobileNavigation": "Điều hướng trên di động",
   "about.title": "Giới thiệu về BombVault",
   "about.body": "Một hiệp sĩ, một cuộc viễn chinh: những công cụ mã nguồn mở gọn đẹp vốn không tồn tại theo hình dạng tôi muốn, được xây cho đến khi không còn thiếu gì. Tất cả miễn phí, không tài khoản, không đo từ xa, không quảng cáo và không gói trả phí. Không có dấu sao ở đâu cả. Không có gì đọc được rời khỏi bức tường của bạn. Được rèn vào buổi tối và cuối tuần, bằng trái tim và sự cứng đầu.",
   "about.coffee": "Nếu BombVault đã xứng đáng có một chỗ trên máy chủ hay máy tính của bạn, hãy tung một đồng cho hiệp sĩ của bạn: nó giúp trang trải chi phí và giữ cho dự án sống. Và nó khiến trái tim của hiệp sĩ này đập nhanh hơn một chút. Bên dưới có ba lối, chọn lối nào hợp với bạn.",
@@ -204,6 +206,9 @@ const vi: Partial<Translations> = {
   "run.colStarted": "Bắt đầu",
   "run.colFinished": "Kết thúc",
   "run.colContainer": "Container",
+  "home.newBackupConfirm": "Bắt đầu sao lưu tất cả miền đang bật ngay bây giờ? Container sẽ dừng và khởi động lại từng cái trong khi sao lưu của chúng đang chạy.",
+  "run.statVolume": "Dung lượng dữ liệu",
+  "run.statSnapshot": "Bản chụp",
 
   // Settings
   "settings.title": "Cài đặt",
@@ -274,6 +279,9 @@ const vi: Partial<Translations> = {
   "settings.labels.buttons": "Nút",
   "settings.labels.sidebar": "Thanh bên",
   "settings.labels.tabs": "Thẻ",
+  "settings.labels.bottombar": "Thanh dưới",
+  "settings.axisBottombarHint": "Chỉ ảnh hưởng đến bố cục điện thoại.",
+  "settings.axisSidebarHint": "Chỉ ảnh hưởng đến bố cục máy tính.",
   "settings.labels.mode.text": "Chữ",
   "settings.labels.mode.textGlyph": "Chữ và biểu tượng",
   "settings.labels.mode.glyph": "Biểu tượng",
@@ -324,7 +332,7 @@ const vi: Partial<Translations> = {
   "jobs.cadenceDaily": "Hằng ngày lúc {time}",
   "jobs.cadenceWeekly": "Hằng tuần ({days}) lúc {time}",
   "jobs.cadenceEveryN": "Mỗi {n} ngày lúc {time}",
-  "sort.label": "Sắp xếp:",
+  "sort.label": "Sắp xếp",
   "sort.nameAsc": "Tên (A–Z)",
   "sort.status": "Trạng thái",
   "sort.ip": "IP",
@@ -617,6 +625,10 @@ const vi: Partial<Translations> = {
   "common.confirm": "Xác nhận",
   "common.cancel": "Hủy",
   "common.close": "Đóng",
+  "common.expand": "Mở rộng",
+  "common.collapse": "Thu gọn",
+  "common.back": "Quay lại",
+  "common.loadMore": "Tải thêm",
 
   // Failure fallbacks
   "common.actionFailed": "Thao tác thất bại",
@@ -896,6 +908,7 @@ const vi: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Trạng thái bảo vệ",
   "dashboard.noOffsite": "Không có bản sao ngoài site",
+  "dashboard.statusLoadFailed": "Không thể tải trạng thái",
   "dashboard.neverExcluded": "Không có lịch",
   "dashboard.neverExcludedTitle": "Được cố ý để ngoài lịch, nên ở đây không có gì để sao lưu.",
   "dashboard.neverSelf": "Vùng chứa của chính nó",

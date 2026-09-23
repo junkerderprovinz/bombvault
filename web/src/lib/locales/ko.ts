@@ -12,6 +12,8 @@ const ko: Partial<Translations> = {
   "nav.vms": "가상 머신",
   "nav.flash": "플래시",
   "nav.settings": "설정",
+  "nav.more": "더보기",
+  "nav.mobileNavigation": "모바일 내비게이션",
   "about.title": "BombVault 정보",
   "about.body": "기사는 한 명, 원정도 하나입니다. 원하던 모습으로는 없던 보기 좋은 오픈 소스 도구를, 빠진 것이 없을 때까지 만듭니다. 전부 무료이고 계정도, 텔레메트리도, 광고도, 유료 등급도 없습니다. 어디에도 별표는 없습니다. 읽을 수 있는 것은 결코 당신의 성벽 밖으로 나가지 않습니다. 저녁과 주말에, 마음과 고집으로 벼렸습니다.",
   "about.coffee": "BombVault이 당신의 서버나 컴퓨터에서 자리를 얻었다면 기사에게 동전 한 닢을 던져 주세요. 비용을 메우고 프로젝트를 살려 둡니다. 그리고 이 기사의 심장도 조금 더 빨리 뜁니다. 아래에 세 가지 길이 있으니 편한 쪽으로 하세요.",
@@ -204,6 +206,9 @@ const ko: Partial<Translations> = {
   "run.colStarted": "시작",
   "run.colFinished": "완료",
   "run.colContainer": "컨테이너",
+  "home.newBackupConfirm": "지금 활성화된 모든 도메인의 백업을 시작할까요? 컨테이너는 백업이 실행되는 동안 하나씩 중지되었다가 다시 시작됩니다.",
+  "run.statVolume": "데이터 용량",
+  "run.statSnapshot": "스냅샷",
 
   // Settings
   "settings.title": "설정",
@@ -274,6 +279,9 @@ const ko: Partial<Translations> = {
   "settings.labels.buttons": "버튼",
   "settings.labels.sidebar": "사이드바",
   "settings.labels.tabs": "탭",
+  "settings.labels.bottombar": "하단 바",
+  "settings.axisBottombarHint": "휴대폰 레이아웃에만 적용됩니다.",
+  "settings.axisSidebarHint": "데스크톱 레이아웃에만 적용됩니다.",
   "settings.labels.mode.text": "텍스트",
   "settings.labels.mode.textGlyph": "텍스트와 기호",
   "settings.labels.mode.glyph": "기호",
@@ -617,6 +625,10 @@ const ko: Partial<Translations> = {
   "common.confirm": "확인",
   "common.cancel": "취소",
   "common.close": "닫기",
+  "common.expand": "펼치기",
+  "common.collapse": "접기",
+  "common.back": "뒤로",
+  "common.loadMore": "더 불러오기",
 
   // Failure fallbacks
   "common.actionFailed": "작업에 실패했습니다",
@@ -876,6 +888,7 @@ const ko: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "보호 상태",
   "dashboard.noOffsite": "외부 사본 없음",
+  "dashboard.statusLoadFailed": "상태를 불러오지 못했습니다",
   "dashboard.neverExcluded": "예약 안 됨",
   "dashboard.neverExcludedTitle": "의도적으로 일정에서 제외했으므로 여기서 백업할 것은 없습니다.",
   "dashboard.neverSelf": "자기 컨테이너",

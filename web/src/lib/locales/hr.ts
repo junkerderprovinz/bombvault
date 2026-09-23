@@ -13,6 +13,8 @@ const hr: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Samostalna sigurnosna kopija",
   "nav.settings": "Postavke",
+  "nav.more": "Više",
+  "nav.mobileNavigation": "Mobilna navigacija",
 
   // Mode toggle
   "about.title": "O aplikaciji BombVault",
@@ -274,6 +276,9 @@ const hr: Partial<Translations> = {
   "run.colStarted": "Pokrenuto",
   "run.colFinished": "Završeno",
   "run.colContainer": "Kontejner",
+  "home.newBackupConfirm": "Započeti sada sigurnosnu kopiju svih omogućenih domena? Kontejneri se zaustavljaju i ponovno pokreću jedan po jedan dok traje njihova sigurnosna kopija.",
+  "run.statVolume": "Volumen podataka",
+  "run.statSnapshot": "Snimka",
 
   // Settings
   "settings.title": "Postavke",
@@ -727,6 +732,9 @@ const hr: Partial<Translations> = {
   "settings.labels.buttons": "Gumbi",
   "settings.labels.sidebar": "Bočna traka",
   "settings.labels.tabs": "Kartice",
+  "settings.labels.bottombar": "Donja traka",
+  "settings.axisBottombarHint": "Određuje samo raspored na telefonu.",
+  "settings.axisSidebarHint": "Određuje samo raspored na računalu.",
   "settings.labels.mode.text": "Tekst",
   "settings.labels.mode.textGlyph": "Tekst i simbol",
   "settings.labels.mode.glyph": "Simbol",
@@ -770,6 +778,7 @@ const hr: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Status zaštite",
   "dashboard.noOffsite": "Nema kopije izvan lokacije",
+  "dashboard.statusLoadFailed": "Status nije moguće učitati",
   "dashboard.neverExcluded": "Nije zakazano",
   "dashboard.neverExcludedTitle": "Namjerno izostavljeno iz rasporeda, pa ovdje nema što sigurnosno kopirati.",
   "dashboard.neverSelf": "Vlastiti spremnik",
@@ -995,6 +1004,10 @@ const hr: Partial<Translations> = {
   "common.restoring": "Vraćanje…",
   "common.done": "Gotovo",
   "common.close": "Zatvori",
+  "common.expand": "Proširi",
+  "common.collapse": "Sažmi",
+  "common.back": "Natrag",
+  "common.loadMore": "Učitaj više",
   "common.loadingBackups": "Učitavanje sigurnosnih kopija…",
   "common.saving": "Spremanje…",
   "common.restoreRunning": "Vraćanje je u tijeku…",

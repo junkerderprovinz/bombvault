@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { useT, type TranslationKey } from "../lib/i18n";
-import { PAGE_SHELL } from "../lib/pageShell";
+import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { SelectField } from "../components/SelectField";
 import { hueVars } from "../lib/appearance";
 import { RevealInput } from "../components/RevealInput";
@@ -1591,7 +1591,7 @@ export default function Recovery() {
   const nextHue = () => hueSeq++;
 
   return (
-    <div className={PAGE_SHELL}>
+    <div className={PAGE_SHELL_RESPONSIVE}>
       <div>
         <h1 className="text-2xl font-semibold text-carbon-text">{t("nav.recovery")}</h1>
         <p className="mt-1 text-sm text-carbon-textSub max-w-2xl">{t("recovery.intro")}</p>

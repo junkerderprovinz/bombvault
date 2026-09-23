@@ -12,6 +12,8 @@ const da: Partial<Translations> = {
   "nav.vms": "VMs",
   "nav.flash": "Flash",
   "nav.settings": "Indstillinger",
+  "nav.more": "Mere",
+  "nav.mobileNavigation": "Mobil navigation",
   "about.title": "Om BombVault",
   "about.body": "Én ridder, ét korstog: pæne open source-værktøjer, der ikke fandtes i den form, jeg ville have, bygget indtil intet mangler. Alt gratis, uden konti, uden telemetri, uden reklamer og uden betalte niveauer. Ingen stjerne nogen steder. Intet læsbart forlader nogensinde dine egne mure. Smedet om aftenen og i weekenden, med hjerte og stædighed.",
   "about.coffee": "Hvis BombVault har fortjent en plads på din server eller computer, så kast en mønt til din ridder: det hjælper med at dække omkostningerne og holder projektet i live. Og det får denne ridders hjerte til at slå lidt hurtigere. Nedenfor er der tre veje, tag den, der passer dig.",
@@ -204,6 +206,9 @@ const da: Partial<Translations> = {
   "run.colStarted": "Startet",
   "run.colFinished": "Afsluttet",
   "run.colContainer": "Container",
+  "home.newBackupConfirm": "Vil du starte en backup af alle aktiverede domæner nu? Containere stoppes og genstartes én ad gangen, mens deres backup kører.",
+  "run.statVolume": "Datamængde",
+  "run.statSnapshot": "Snapshot",
 
   // Settings
   "settings.title": "Indstillinger",
@@ -274,6 +279,9 @@ const da: Partial<Translations> = {
   "settings.labels.buttons": "Knapper",
   "settings.labels.sidebar": "Sidepanel",
   "settings.labels.tabs": "Faner",
+  "settings.labels.bottombar": "Bundpanel",
+  "settings.axisBottombarHint": "Påvirker kun telefonlayoutet.",
+  "settings.axisSidebarHint": "Påvirker kun skrivebordslayoutet.",
   "settings.labels.mode.text": "Tekst",
   "settings.labels.mode.textGlyph": "Tekst og symbol",
   "settings.labels.mode.glyph": "Symbol",
@@ -625,6 +633,10 @@ const da: Partial<Translations> = {
   "common.confirm": "Bekræft",
   "common.cancel": "Annuller",
   "common.close": "Luk",
+  "common.expand": "Udvid",
+  "common.collapse": "Sammenfold",
+  "common.back": "Tilbage",
+  "common.loadMore": "Indlæs flere",
 
   // Failure fallbacks
   "common.actionFailed": "Handlingen mislykkedes",
@@ -904,6 +916,7 @@ const da: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Beskyttelsesstatus",
   "dashboard.noOffsite": "Ingen ekstern kopi",
+  "dashboard.statusLoadFailed": "Kunne ikke indlæse status",
   "dashboard.neverExcluded": "Ikke planlagt",
   "dashboard.neverExcludedTitle": "Bevidst udeladt af planen, så der er intet at sikkerhedskopiere her.",
   "dashboard.neverSelf": "Egen container",

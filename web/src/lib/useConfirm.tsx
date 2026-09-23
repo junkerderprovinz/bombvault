@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { ConfirmSheet } from "../components/mobile/ConfirmSheet";
 import { useT, type TranslationKey } from "./i18n";
+import { useIsDesktop } from "./useMediaQuery";
 
-// useConfirm replaces window.confirm() with ConfirmDialog. It keeps the
-// one-string-in, boolean-out shape, only async:
+// useConfirm replaces window.confirm(): ConfirmDialog at desktop widths,
+// ConfirmSheet below the breakpoint. It keeps the one-string-in, boolean-out
+// shape, only async:
 //
 //   const { confirm, confirmDialog } = useConfirm();
 //   if (!(await confirm(t("x.deleteConfirm"), { confirmKey: "x.delete" }))) return;
@@ -37,6 +40,13 @@ function focusableElements(root: HTMLElement): HTMLElement[] {
 
 export function useConfirm() {
   const { t } = useT();
+  // The presentation half swaps at the one width breakpoint; ConfirmDialog
+  // (the desktop card) at/above 48rem, ConfirmSheet (the bottom sheet, safe
+  // cancel stacked above the confirm in the thumb-default bottom slot) below
+  // it.
+  // Nothing else about the contract moves: same confirm() promise, same
+  // settle paths, same translated strings, zero per-call-site changes.
+  const isDesktop = useIsDesktop();
   const [pending, setPending] = useState<PendingConfirm | null>(null);
   const resolveRef = useRef<((value: boolean) => void) | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -96,18 +106,39 @@ export function useConfirm() {
 
   // An ancestor with a CSS transform (e.g. .glim-page-enter) would confine a
   // position: fixed backdrop to its own box, so the dialog goes to <body>.
+  //
+  // The sheet branch does not attach dialogRef: the ref drives
+  // this hook's Tab trap, and BottomSheet already runs its own (same
+  // FOCUSABLE_SELECTOR lift) over the panel; leaving the ref null makes the
+  // trap below a no-op instead of fighting the sheet's. Escape fires from
+  // both listeners on one keypress in the sheet branch; settle() nulls its
+  // resolver on the first call, so the double dispatch is benign (the second
+  // is a guarded no-op); asserted once-and-only-once in
+  // ConfirmSheet.dom.test.tsx.
   const confirmDialog = pending
     ? createPortal(
-        <ConfirmDialog
-          ref={dialogRef}
-          title={t("confirmDialog.title")}
-          message={pending.message}
-          confirmLabel={t(pending.confirmKey ?? "common.confirm")}
-          confirmLabelKey={pending.confirmKey ?? "common.confirm"}
-          cancelLabel={pending.cancelLabel ?? t("common.cancel")}
-          onConfirm={() => settle(true)}
-          onCancel={() => settle(false)}
-        />,
+        isDesktop ? (
+          <ConfirmDialog
+            ref={dialogRef}
+            title={t("confirmDialog.title")}
+            message={pending.message}
+            confirmLabel={t(pending.confirmKey ?? "common.confirm")}
+            confirmLabelKey={pending.confirmKey ?? "common.confirm"}
+            cancelLabel={pending.cancelLabel ?? t("common.cancel")}
+            onConfirm={() => settle(true)}
+            onCancel={() => settle(false)}
+          />
+        ) : (
+          <ConfirmSheet
+            title={t("confirmDialog.title")}
+            message={pending.message}
+            confirmLabel={t(pending.confirmKey ?? "common.confirm")}
+            confirmLabelKey={pending.confirmKey ?? "common.confirm"}
+            cancelLabel={pending.cancelLabel ?? t("common.cancel")}
+            onConfirm={() => settle(true)}
+            onCancel={() => settle(false)}
+          />
+        ),
         document.body
       )
     : null;
