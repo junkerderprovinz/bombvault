@@ -657,7 +657,7 @@ func dbDumpReasonText(reasonID, detail string) string {
 // forgetDBDumpSeries applies the retention policy to a container's dumps as
 // their own series and without pruning: the container's own pass right after
 // it reclaims the space of both in one go. A renamed container's dumps age
-// with it, under the same tags its volume snapshots are forgotten by.
+// with it, by the same alias rule that decides which volume snapshots it owns.
 func (s *Service) forgetDBDumpSeries(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, name string) {
 	p := s.retentionPolicy(settings)
 	if !p.Any() || s.primaryIsImmutable("containers", repo) {
