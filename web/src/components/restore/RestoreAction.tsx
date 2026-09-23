@@ -16,11 +16,10 @@
 // where they are rendered, so the two shapes cannot drift into two different
 // notions of "can this restore run" — see `iconBadge`'s own doc below.
 //
-// It is deliberately delete-agnostic and list-agnostic: the caller owns the row
-// chrome (snapshot id / time / tags), the snapshot list + Source toggle, and the
-// delete button (delete uses the PLURAL-domain deleteSnapshot — never crossed
-// here; this watch's matchRun stays SINGULAR "container"/"vm" or it never
-// resolves). RestoreAction only drives the one restore.
+// It owns neither the list nor the delete: the timeline draws the row (snapshot
+// id, time, places) and its own delete buttons. This watch's matchRun takes the
+// singular "container"/"vm" or it never resolves. RestoreAction only drives the
+// one restore.
 //
 // cancelledRef is load-bearing: this component owns the single ref instance,
 // hands it to useBackupWatch (whose no-run fallback reads it to report a neutral

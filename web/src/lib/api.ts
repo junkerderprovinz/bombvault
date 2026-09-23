@@ -2632,15 +2632,6 @@ export function getStackDir(project: string, source: string): Promise<OkEnvelope
   return fetchJSON(`/api/stacks/${encodeURIComponent(project)}/dir${srcParam(source)}`);
 }
 
-/** DELETE /api/snapshots/{domain}/{id} — forget a single snapshot. */
-export function deleteSnapshot(
-  domain: "containers" | "vms" | "flash" | "config" | "files",
-  id: string,
-  source?: string
-): Promise<OkEnvelope> {
-  return fetchJSON(`/api/snapshots/${domain}/${encodeURIComponent(id)}${srcParam(source)}`, { method: "DELETE" });
-}
-
 /** GET /api/rclone — configured rclone remote names (never secrets). */
 export function getRclone(): Promise<OkEnvelope & { remotes?: string[] }> {
   return fetchJSON("/api/rclone");
@@ -2848,10 +2839,6 @@ export function backupVMNow(name: string): Promise<BackupResponse> {
   });
 }
 
-export function listVMSnapshots(name: string, source?: string): Promise<ListSnapshotsResponse> {
-  return fetchJSON(`/api/vms/${encodeURIComponent(name)}/snapshots${srcParam(source)}`);
-}
-
 /** Start a VM restore. ASYNC — see restore; watch "vm:<name>" over SSE. */
 export function restoreVM(
   name: string,
@@ -2936,11 +2923,6 @@ export function backupFlashNow(): Promise<BackupResponse> {
   return fetchJSON("/api/flash/backup", { method: "POST" });
 }
 
-/** GET /api/flash/snapshots — list flash snapshots. */
-export function listFlashSnapshots(source?: string): Promise<ListSnapshotsResponse> {
-  return fetchJSON(`/api/flash/snapshots${srcParam(source)}`);
-}
-
 /**
  * GET /api/flash/download — URL that streams a flash snapshot as a zip download
  * (restic dump). Used as a plain <a> link: the GET carries the session cookie,
@@ -2963,11 +2945,6 @@ export function flashDownloadURL(snapshotId: string, source?: string): string {
  */
 export function backupConfigNow(): Promise<BackupResponse> {
   return fetchJSON("/api/config/backup", { method: "POST" });
-}
-
-/** GET /api/config/snapshots — list BombVault's own config self-backups. */
-export function listConfigSnapshots(source?: string): Promise<ListSnapshotsResponse> {
-  return fetchJSON(`/api/config/snapshots${srcParam(source)}`);
 }
 
 // ---------------------------------------------------------------------------

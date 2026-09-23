@@ -31,8 +31,8 @@ export function useHostLabel(): string {
 
 /** The host label settled rather than reactive, for a flow that builds its
  *  text once inside an effect and has no re-render left to pick up a later
- *  update. Empty until the platform is unrecognised; the caller supplies its
- *  own fallback text. */
+ *  update. Empty when the platform is not one this interface names; the caller
+ *  supplies its own fallback text. */
 export function hostLabelSettled(): Promise<string> {
   return loadPlatform().then((p) => PRODUCTS[p] ?? "");
 }
