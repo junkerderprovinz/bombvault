@@ -34,6 +34,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
 
 // ForeignItem is one restorable item (container, VM or file set) found in a
@@ -45,13 +46,16 @@ type ForeignItem struct {
 }
 
 // ForeignInventory groups a foreign repository's snapshots by the same tag
-// prefixes Discover cuts (container:/vm:/fileset:/dbdump:), so the Recovery UI
-// can offer a browse-and-restore tree without any local state.
+// prefixes Discover cuts (container:/vm:/fileset:/dbdump:/zfs:), so the Recovery
+// UI can offer a browse-and-restore tree without any local state.
 type ForeignInventory struct {
 	Containers []ForeignItem `json:"containers"`
 	VMs        []ForeignItem `json:"vms"`
 	FileSets   []ForeignItem `json:"fileSets"`
 	DBDumps    []ForeignItem `json:"dbDumps"`
+	// ZFS holds one item per dataset tree, carrying the snapshots of every
+	// dataset below its root.
+	ZFS []ForeignItem `json:"zfs"`
 }
 
 // foreignSession is one open read-only session onto a foreign repository. It
@@ -362,6 +366,7 @@ func (s *Service) foreignInventory(ctx context.Context, repo string, mode restic
 	vms := map[string][]restic.Snapshot{}
 	fileSets := map[string][]restic.Snapshot{}
 	dbDumps := map[string][]restic.Snapshot{}
+	datasets := map[string][]restic.Snapshot{}
 	for _, snap := range snaps {
 		for _, tag := range snap.Tags {
 			if rest, ok := strings.CutPrefix(tag, "container:"); ok && rest != "" {
@@ -376,6 +381,9 @@ func (s *Service) foreignInventory(ctx context.Context, repo string, mode restic
 			if rest, ok := strings.CutPrefix(tag, dbDumpIdentityPrefix); ok && rest != "" {
 				dbDumps[rest] = append(dbDumps[rest], snap)
 			}
+			if rest, ok := strings.CutPrefix(tag, "zfs:"); ok && zfs.ValidateDatasetName(rest) == nil {
+				datasets[rest] = append(datasets[rest], snap)
+			}
 		}
 	}
 	return ForeignInventory{
@@ -383,7 +391,25 @@ func (s *Service) foreignInventory(ctx context.Context, repo string, mode restic
 		VMs:        foreignItems(vms),
 		FileSets:   foreignItems(fileSets),
 		DBDumps:    foreignItems(dbDumps),
+		ZFS:        foreignZFSItems(datasets),
 	}, nil
+}
+
+// foreignZFSItems collects the dataset tags into one item per tree, the way
+// discovery does: datasets of one tree never belong to two items, so a name
+// with no ancestor among the others is the root of its own.
+func foreignZFSItems(datasets map[string][]restic.Snapshot) []ForeignItem {
+	names := make([]string, 0, len(datasets))
+	for name := range datasets {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	trees := map[string][]restic.Snapshot{}
+	for _, name := range names {
+		root := zfsMinimalRoot(name, names)
+		trees[root] = append(trees[root], datasets[name]...)
+	}
+	return foreignItems(trees)
 }
 
 // foreignItems flattens a name→snapshots map into a name-sorted item list.
@@ -496,8 +522,12 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 	// (still blocks empty/over-long/path-separators/".."/leading "-"/control
 	// chars) while containers and file sets keep the strict validResourceName.
 	nameOK := validResourceName(item)
-	if domain == "vms" {
+	switch domain {
+	case "vms":
 		nameOK = validVMName(item)
+	case "zfs":
+		// A dataset name carries slashes, which the resource name rules reject.
+		nameOK = zfs.ValidateDatasetName(item) == nil
 	}
 	if !nameOK {
 		return "", nil, nil, errors.New("invalid item name")
@@ -645,9 +675,102 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 			s.finishRestoreRun(runID, "", errors.New(msg)) // see StartRestoreFileSet for why not concludeFileSetRestore
 		}
 		return rkey, run, onPanic, nil
+	case "zfs":
+		plan, err := s.prepareForeignZFSRestore(ctx, sess, item, snapshotID, targetSubPath, filePaths)
+		if err != nil {
+			return "", nil, nil, err
+		}
+		rkey := zfsDomain + ":" + item
+		var runID string // see the files branch above for why this is declared here
+		run := func(rctx context.Context) error {
+			runID = s.beginRestoreRunForTarget(plan.itemID)
+			pctx, startedAt := s.progBegin(rctx, rkey, "restore")
+			rerr := s.runRestoreZFS(pctx, plan)
+			return s.concludeFileSetRestore(runID, rkey, plan.snapshotID, rerr, startedAt)
+		}
+		onPanic := func(msg string) {
+			s.finishRestoreRun(runID, "", errors.New(msg)) // see StartRestoreFileSet for why not concludeFileSetRestore
+		}
+		return rkey, run, onPanic, nil
 	default:
-		return "", nil, nil, errors.New("unknown domain (must be containers, vms or files)")
+		return "", nil, nil, errors.New("unknown domain (must be containers, vms, files or zfs)")
 	}
+}
+
+// prepareForeignZFSRestore validates a dataset restore out of a foreign
+// repository. It only ever writes into a folder: another server's live paths
+// are not this server's, and its datasets do not exist here at all.
+func (s *Service) prepareForeignZFSRestore(ctx context.Context, sess foreignSession, dataset, snapshotID, targetSubPath string, filePaths []string) (zfsRestorePlan, error) {
+	if strings.TrimSpace(targetSubPath) == "" {
+		return zfsRestorePlan{}, errors.New("a ZFS dataset from another server can only be restored into a folder")
+	}
+	target, err := paths.Resolve(s.cfg.HostMountRoot, targetSubPath)
+	if err != nil {
+		return zfsRestorePlan{}, errors.New("invalid target folder: must be a relative subpath under the host mount")
+	}
+	explicitID := snapshotID != "latest" && snapshotID != ""
+	if explicitID && !backup.ValidSnapshotID(snapshotID) {
+		return zfsRestorePlan{}, backup.ErrInvalidSnapshotID
+	}
+	snaps, err := s.snapshotsForTag(ctx, sess.repo, sess.mode, "zfs:"+dataset)
+	if err != nil {
+		return zfsRestorePlan{}, err
+	}
+	if explicitID {
+		if !snapshotBelongs(snaps, snapshotID) {
+			return zfsRestorePlan{}, fmt.Errorf("snapshot %s does not belong to this dataset", snapshotID)
+		}
+	} else {
+		if len(snaps) == 0 {
+			return zfsRestorePlan{}, errors.New("no backups found for this dataset")
+		}
+		snapshotID = snaps[len(snaps)-1].ID
+	}
+	selected, err := zfsCleanRestorePaths(filePaths)
+	if err != nil {
+		return zfsRestorePlan{}, err
+	}
+	itemID, err := s.adoptForeignZFSDataset(dataset)
+	if err != nil {
+		return zfsRestorePlan{}, err
+	}
+	plan := zfsRestorePlan{
+		itemID:     itemID,
+		root:       dataset,
+		dataset:    dataset,
+		repo:       sess.repo,
+		mode:       sess.mode,
+		steps:      []zfsRestoreStep{{snapshotID: snapshotID, target: target}},
+		paths:      selected,
+		snapshotID: snapshotID,
+	}
+	if err := s.guardZFSRestoreFolder(ctx, plan, target); err != nil {
+		return zfsRestorePlan{}, err
+	}
+	if err := paths.EnsureDirReadable(target); err != nil {
+		return zfsRestorePlan{}, fmt.Errorf("create target folder: %w", err)
+	}
+	return plan, nil
+}
+
+// adoptForeignZFSDataset gives the restore a row to record its run against: the
+// item that already covers the dataset, or a new switched-off one, the way a
+// foreign folder set is adopted.
+func (s *Service) adoptForeignZFSDataset(dataset string) (string, error) {
+	rows, err := s.store.ListZFSDatasets()
+	if err != nil {
+		return "", fmt.Errorf("adopt zfs dataset %q: %w", dataset, err)
+	}
+	for _, d := range rows {
+		if d.Dataset == dataset || zfs.DescendantOf(dataset, d.Dataset) {
+			return d.ID, nil
+		}
+	}
+	created, err := s.store.CreateZFSDataset(store.ZFSDataset{Dataset: dataset, Enabled: false})
+	if err != nil {
+		return "", fmt.Errorf("adopt zfs dataset %q: %w", dataset, err)
+	}
+	return created.ID, nil
 }
 
 // foreignContainerTarget reads the item's encrypted definition from the FOREIGN
@@ -842,17 +965,27 @@ func (s *Service) prepareForeignFileSetFilesRestore(ctx context.Context, sess fo
 	return s.buildFileSetFilesPlan(snaps, snapshotID, setID, item, sess.repo, sess.mode, filePaths, targetSubPath)
 }
 
-// ListForeignFiles lists the files of one file set's snapshot in an open foreign
-// session, so the recovery UI can offer a subfolder/file picker before a selective
-// restore. It is the foreign, session-scoped twin of ListSnapshotFilesFileSet:
-// read-only (sess.mode carries NoLock), tag-scoped to the item so one set's tree
-// can't be listed through another's id, and it never touches local repos.
+// ListForeignFiles lists the files of one file set's or one dataset's snapshot
+// in an open foreign session, so the recovery UI can offer a subfolder/file
+// picker before a selective restore. It is the foreign, session-scoped twin of
+// ListSnapshotFilesFileSet: read-only (sess.mode carries NoLock), tag-scoped to
+// the item so one item's tree can't be listed through another's id, and it
+// never touches local repos.
 func (s *Service) ListForeignFiles(ctx context.Context, sessionID, domain, item, snapshotID string) ([]restic.FileEntry, error) {
-	if domain != "files" {
-		return nil, errors.New("file listing is only available for the files domain")
-	}
-	if !validResourceName(item) {
-		return nil, errors.New("invalid item name")
+	var tag string
+	switch domain {
+	case "files":
+		if !validResourceName(item) {
+			return nil, errors.New("invalid item name")
+		}
+		tag = "fileset:" + item
+	case "zfs":
+		if zfs.ValidateDatasetName(item) != nil {
+			return nil, errors.New("invalid item name")
+		}
+		tag = "zfs:" + item
+	default:
+		return nil, errors.New("file listing is only available for the files and zfs domains")
 	}
 	sess, err := s.foreignSession(sessionID)
 	if err != nil {
@@ -862,7 +995,7 @@ func (s *Service) ListForeignFiles(ctx context.Context, sessionID, domain, item,
 	if explicitID && !backup.ValidSnapshotID(snapshotID) {
 		return nil, backup.ErrInvalidSnapshotID
 	}
-	snaps, err := s.snapshotsForTag(ctx, sess.repo, sess.mode, "fileset:"+item)
+	snaps, err := s.snapshotsForTag(ctx, sess.repo, sess.mode, tag)
 	if err != nil {
 		return nil, err
 	}

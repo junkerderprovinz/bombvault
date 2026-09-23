@@ -164,6 +164,18 @@ func (f *foreignRecordingEngine) RestorePath(_ context.Context, repo, snapshotID
 	return nil
 }
 
+// RestoreAll is the whole-snapshot restore a ZFS dataset takes: a member
+// snapshot's tree root is the dataset root, so its contents land in the target
+// without the path of the run that stored them.
+func (f *foreignRecordingEngine) RestoreAll(_ context.Context, repo, snapshotID, target string, m restic.Mode) error {
+	f.record("RestoreAll")
+	f.recordMode(m)
+	f.mu.Lock()
+	f.restores = append(f.restores, "RestoreAll|"+repo+"|"+snapshotID+"->"+target)
+	f.mu.Unlock()
+	return nil
+}
+
 func (f *foreignRecordingEngine) RestoreInclude(_ context.Context, repo, snapshotID, includePath, target string, m restic.Mode) error {
 	f.record("RestoreInclude")
 	f.recordMode(m)
@@ -556,8 +568,8 @@ func TestForeignInventoryGrouping(t *testing.T) {
 	if err != nil {
 		t.Fatalf("marshal: %v", err)
 	}
-	if string(raw) != `{"containers":[],"vms":[],"fileSets":[],"dbDumps":[]}` {
-		t.Fatalf("empty inventory JSON = %s, want exact containers/vms/fileSets/dbDumps keys with []", raw)
+	if string(raw) != `{"containers":[],"vms":[],"fileSets":[],"dbDumps":[],"zfs":[]}` {
+		t.Fatalf("empty inventory JSON = %s, want exact containers/vms/fileSets/dbDumps/zfs keys with []", raw)
 	}
 }
 
@@ -1315,9 +1327,10 @@ func TestListForeignFiles(t *testing.T) {
 		t.Fatalf("foreign file listing performed forbidden repo writes: %v", bad)
 	}
 
-	// A non-files domain is rejected (containers/vms have no file tree here).
-	if _, err := s.ListForeignFiles(ctx, id, "containers", "appdata", "latest"); err == nil || !strings.Contains(err.Error(), "files domain") {
-		t.Fatalf("non-files domain: want the domain error, got %v", err)
+	// A domain without a file tree here is rejected (containers and vms restore
+	// from their own definitions).
+	if _, err := s.ListForeignFiles(ctx, id, "containers", "appdata", "latest"); err == nil || !strings.Contains(err.Error(), "files and zfs domains") {
+		t.Fatalf("a domain with no file tree: want the domain error, got %v", err)
 	}
 	// An unsafe item name is rejected before any engine call.
 	if _, err := s.ListForeignFiles(ctx, id, "files", "../evil", "latest"); err == nil || !strings.Contains(err.Error(), "invalid item name") {
@@ -1774,5 +1787,94 @@ func TestForeignRestoreValidationFailureLeavesLocalTargetIntact(t *testing.T) {
 	}
 	if strings.Contains(after.Definition, "foreign-image") {
 		t.Fatalf("local target must NOT hold the foreign recipe, got %s", after.Definition)
+	}
+}
+
+func TestForeignInventoryGroupsZFSTrees(t *testing.T) {
+	const location = "backups/other"
+	eng := &foreignRecordingEngine{
+		opens: opensEncrypted,
+		snaps: []restic.Snapshot{
+			{ID: "aaaa1111", Tags: []string{"zfs:tank/data"}},
+			{ID: "bbbb2222", Tags: []string{"zfs:tank/data/sub"}},
+			{ID: "cccc3333", Tags: []string{"zfs:pool/apps"}},
+			{ID: "dddd4444", Tags: []string{"zfs:tank/../etc"}},
+			{ID: "eeee5555", Tags: []string{"fileset:docs"}},
+		},
+	}
+	s := newForeignTestService(t, eng)
+	seedForeignRepoMarker(t, s, location)
+
+	_, inv, err := s.OpenForeign(context.Background(), location, foreignTestKey, nil)
+	if err != nil {
+		t.Fatalf("OpenForeign: %v", err)
+	}
+	if len(inv.ZFS) != 2 {
+		t.Fatalf("zfs items = %+v, want one per minimal root", inv.ZFS)
+	}
+	if inv.ZFS[0].Name != "pool/apps" || len(inv.ZFS[0].Snapshots) != 1 {
+		t.Fatalf("first item = %+v, want pool/apps with its one snapshot", inv.ZFS[0])
+	}
+	if inv.ZFS[1].Name != "tank/data" || len(inv.ZFS[1].Snapshots) != 2 {
+		t.Fatalf("second item = %+v, want tank/data with the snapshots of its whole tree", inv.ZFS[1])
+	}
+}
+
+func TestForeignZFSRestoreRequiresFolderAndGuards(t *testing.T) {
+	const location = "backups/other"
+	eng := &foreignRecordingEngine{
+		opens: opensEncrypted,
+		snaps: []restic.Snapshot{
+			{ID: "aaaa1111", Time: "2026-07-05T10:00:00Z", Tags: []string{"zfs:tank/data"}},
+			{ID: "bbbb2222", Time: "2026-07-06T10:00:00Z", Tags: []string{"zfs:tank/data"}},
+		},
+	}
+	s := newForeignTestService(t, eng)
+	s.cfg.HostMountRoot = filepath.ToSlash(s.cfg.HostMountRoot)
+	sessionRepo := seedForeignRepoMarker(t, s, location)
+	zfsMountedFixture(t, s.cfg.HostMountRoot)
+
+	id, _, err := s.OpenForeign(context.Background(), location, foreignTestKey, nil)
+	if err != nil {
+		t.Fatalf("OpenForeign: %v", err)
+	}
+	ctx := context.Background()
+	started, err := s.StartForeignRestore(ctx, id, "zfs", "tank/data", "latest", true, "", nil, false, "")
+	if started || err == nil || !strings.Contains(err.Error(), "folder") {
+		t.Fatalf("started = %v, err = %v, want a refusal that asks for a folder", started, err)
+	}
+	started, err = s.StartForeignRestore(ctx, id, "zfs", "tank/data", "latest", true, "unmounted/here", nil, false, "")
+	if started || zfsCodeOf(t, err) != "destination-not-mounted" {
+		t.Fatalf("started = %v, err = %v, want the destination guard to refuse", started, err)
+	}
+
+	started, err = s.StartForeignRestore(ctx, id, "zfs", "tank/data", "latest", true, zfsMountedSub+"/from-other", nil, false, "")
+	if !started || err != nil {
+		t.Fatalf("started = %v, err = %v", started, err)
+	}
+	waitForeignIdle(t, s)
+	target, err := paths.Resolve(s.cfg.HostMountRoot, zfsMountedSub+"/from-other")
+	if err != nil {
+		t.Fatalf("resolve the target: %v", err)
+	}
+	want := "RestoreAll|" + sessionRepo + "|bbbb2222->" + target
+	eng.mu.Lock()
+	restores := append([]string(nil), eng.restores...)
+	eng.mu.Unlock()
+	if len(restores) != 1 || restores[0] != want {
+		t.Fatalf("restore calls = %v, want exactly [%s]", restores, want)
+	}
+	if !eng.everyModeNoLock() {
+		t.Fatalf("every foreign read and restore must stay lock-free, got %+v", eng.modes)
+	}
+	if forbidden := eng.calledForbidden(); len(forbidden) != 0 {
+		t.Fatalf("the foreign repository was written to: %v", forbidden)
+	}
+	row, err := s.store.GetZFSDatasetByName("tank/data")
+	if err != nil {
+		t.Fatalf("the dataset was not adopted locally: %v", err)
+	}
+	if row.Enabled {
+		t.Fatal("an adopted foreign dataset must stay switched off")
 	}
 }

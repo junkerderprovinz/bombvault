@@ -103,6 +103,14 @@ func validateComponent(comp string) error {
 	return nil
 }
 
+// PreRestoreNameFits reports whether the safety snapshot of name stays inside
+// ZFS's 255 byte limit. Descendants are read off the host and can be longer
+// than an item root, so the dataset an in-place restore writes into is measured
+// on its own.
+func PreRestoreNameFits(name string) bool {
+	return len(name)+1+len(PreRestorePrefix)+stampLen <= MaxSnapshotNameLen
+}
+
 // SnapshotName is the host snapshot name for a backup taken at now.
 func SnapshotName(now time.Time) string {
 	return SnapshotPrefix + now.UTC().Format(stampLayout)
@@ -111,6 +119,19 @@ func SnapshotName(now time.Time) string {
 // PreRestoreSnapshotName is the safety snapshot name for a restore started at now.
 func PreRestoreSnapshotName(now time.Time) string {
 	return PreRestorePrefix + now.UTC().Format(stampLayout)
+}
+
+// StampTime is the UTC instant the 14 digit stamp at the end of a BombVault
+// snapshot name stands for.
+func StampTime(snap string) (time.Time, bool) {
+	if len(snap) < stampLen {
+		return time.Time{}, false
+	}
+	t, err := time.ParseInLocation(stampLayout, snap[len(snap)-stampLen:], time.UTC)
+	if err != nil {
+		return time.Time{}, false
+	}
+	return t, true
 }
 
 // IsBombVaultSnapshot reports whether snap is a snapshot a backup run took.

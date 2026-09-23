@@ -626,12 +626,12 @@ func TestZFSBackupLeavesTheDestroyToTheSweepWhenItFails(t *testing.T) {
 }
 
 func TestZFSRefusalSentenceNamesTheCode(t *testing.T) {
-	got := zfsRefusalSentence(zfsRoot, &backup.ZFSRefusal{Code: "not-found",
+	got := zfsRefusalSentence("backup", zfsRoot, &backup.ZFSRefusal{Code: "not-found",
 		Detail: "cannot open 'cache/appdata': dataset does not exist"})
 	if !strings.HasSuffix(got, "[not-found]") || !strings.Contains(got, zfsRoot) {
 		t.Fatalf("sentence = %q", got)
 	}
-	if bare := zfsRefusalSentence(zfsRoot, &backup.ZFSRefusal{Code: "ssh-missing"}); !strings.HasSuffix(bare, "[ssh-missing]") {
+	if bare := zfsRefusalSentence("backup", zfsRoot, &backup.ZFSRefusal{Code: "ssh-missing"}); !strings.HasSuffix(bare, "[ssh-missing]") {
 		t.Fatalf("sentence without a detail = %q", bare)
 	}
 	if !errors.Is(&backup.ZFSRefusal{Code: "x"}, backup.ErrZFSRefusal) {
