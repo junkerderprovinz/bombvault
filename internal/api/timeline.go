@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"slices"
 	"strings"
 	"time"
@@ -348,4 +349,47 @@ func (s *Service) TimelinePlace(ctx context.Context, domain, key, place string) 
 	}
 	tp, rows := s.readPlace(ctx, it, p)
 	return tp, rows, nil
+}
+
+// timelineDomains are the domains that carry a timeline: the three that carry
+// copy rules and named repositories, plus flash and config, whose repository
+// is a single path.
+var timelineDomains = []string{"containers", "vms", "files", "flash", "config"}
+
+// validTimelinePlace reports whether place is "local" or "offsite:" followed
+// by a well-formed target id.
+func validTimelinePlace(place string) bool {
+	if place == "local" {
+		return true
+	}
+	id, ok := strings.CutPrefix(place, offsiteSourcePrefix)
+	return ok && validOffsiteTargetID(id)
+}
+
+// handleTimeline serves an item's timeline over all its places, or with
+// ?place= just the one the caller asked to read.
+func (h *Handler) handleTimeline(w http.ResponseWriter, r *http.Request) {
+	domain, key, ok := h.itemParam(w, r, timelineDomains...)
+	if !ok {
+		return
+	}
+	if place := r.URL.Query().Get("place"); place != "" {
+		if !validTimelinePlace(place) {
+			writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid place"})
+			return
+		}
+		p, rows, err := h.svc.TimelinePlace(r.Context(), domain, key, place)
+		if err != nil {
+			placementFail(w, err, nil)
+			return
+		}
+		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"place": p, "rows": rows}))
+		return
+	}
+	tl, err := h.svc.Timeline(r.Context(), domain, key)
+	if err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"places": tl.Places, "rows": tl.Rows}))
 }
