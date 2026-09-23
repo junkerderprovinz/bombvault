@@ -3,6 +3,7 @@ package api
 import (
 	"math"
 	"slices"
+	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -31,6 +32,8 @@ const (
 	detectorSource      = "source"
 	detectorDuration    = "duration"
 	detectorReliability = "reliability"
+	detectorIntegrity   = "integrity"
+	detectorCapacity    = "capacity"
 )
 
 const (
@@ -48,7 +51,35 @@ const (
 	metricFlaky              = "flaky"
 	metricDumpFailureStreak  = "dump_failure_streak"
 	metricDumpFlaky          = "dump_flaky"
+	metricDrillSubset        = "drill_subset"
+	metricDrillDR            = "drill_dr"
+	metricCapacityETA        = "capacity_eta"
+	metricCapacityLow        = "capacity_low"
 )
+
+// anomalyDetectors is the closed catalogue: which rule stands behind every
+// metric. A fingerprint is built from it, so the detector of a finding and the
+// detector of the row it refreshes can never drift apart.
+var anomalyDetectors = map[string]string{
+	metricNewData:            detectorNewData,
+	metricNewDataRewrite:     detectorNewData,
+	metricNewDataFull:        detectorNewData,
+	metricSourceBytesShrink:  detectorSource,
+	metricSourceBytesGrowth:  detectorSource,
+	metricSourceFilesShrink:  detectorSource,
+	metricDumpBytesShrink:    detectorSource,
+	metricDumpBytesGrowth:    detectorSource,
+	metricDurationSlower:     detectorDuration,
+	metricDumpDurationSlower: detectorDuration,
+	metricFailureStreak:      detectorReliability,
+	metricFlaky:              detectorReliability,
+	metricDumpFailureStreak:  detectorReliability,
+	metricDumpFlaky:          detectorReliability,
+	metricDrillSubset:        detectorIntegrity,
+	metricDrillDR:            detectorIntegrity,
+	metricCapacityETA:        detectorCapacity,
+	metricCapacityLow:        detectorCapacity,
+}
 
 // The families a user marks as expected, one per rule and direction, so that
 // accepting a new level leaves the opposite direction watching.
@@ -197,7 +228,7 @@ type itemInput struct {
 
 // finding is one raised event or condition, in the shape a row is written from.
 type finding struct {
-	Detector, Metric, Severity    string
+	Metric, Severity              string
 	RunID, LastGoodRunID          string
 	RunAt                         int64
 	Observed, Expected, Threshold float64
@@ -313,7 +344,7 @@ func newDataSpike(rows []store.SeriesRun, samples []int, i int, p sensParams, ce
 		return finding{}, false
 	}
 	return finding{
-		Detector: detectorNewData, Metric: metricNewData, Severity: "warning",
+		Metric: metricNewData, Severity: "warning",
 		RunID: run.ID, RunAt: run.StartedAt,
 		Observed: observed, Expected: refBytes, Threshold: threshold,
 		Samples: len(samples), Event: true,
@@ -354,7 +385,7 @@ func rewriteFinding(run, previous store.SeriesRun, samples int) finding {
 		details["hasParent"] = *run.HasParent
 	}
 	return finding{
-		Detector: detectorNewData, Metric: metricNewDataRewrite, Severity: "critical",
+		Metric: metricNewDataRewrite, Severity: "critical",
 		RunID: run.ID, LastGoodRunID: previous.ID, RunAt: run.StartedAt,
 		Observed: observed, Expected: source, Threshold: rewriteShare * source,
 		Samples: samples, Event: true, Details: finiteDetails(details),
@@ -366,7 +397,7 @@ func rewriteFinding(run, previous store.SeriesRun, samples int) finding {
 // so it is information and never an alarm.
 func fullUploadFinding(run store.SeriesRun, samples int) finding {
 	return finding{
-		Detector: detectorNewData, Metric: metricNewDataFull, Severity: "info",
+		Metric: metricNewDataFull, Severity: "info",
 		RunID: run.ID, RunAt: run.StartedAt,
 		Observed: float64(run.Bytes), Samples: samples, Event: true,
 	}
@@ -551,7 +582,7 @@ func (r sizeRule) collapsed(current measurement, prior []measurement, p sensPara
 		details["drain"] = true
 	}
 	return &finding{
-		Detector: detectorSource, Metric: r.shrinkMetric, Severity: "critical",
+		Metric: r.shrinkMetric, Severity: "critical",
 		RunID: current.runID, RunAt: current.at,
 		Observed: current.value, Expected: expected, Threshold: p.CollapseFrac * expected,
 		Samples: samples, Details: finiteDetails(details),
@@ -585,7 +616,7 @@ func (r sizeRule) shrank(current measurement, samples []measurement, p sensParam
 		severity = "critical"
 	}
 	return &finding{
-		Detector: detectorSource, Metric: r.shrinkMetric, Severity: severity,
+		Metric: r.shrinkMetric, Severity: severity,
 		RunID: current.runID, RunAt: current.at,
 		Observed: current.value, Expected: level, Threshold: p.ShrinkRatio * level,
 		Samples: len(samples), Details: levelDetails(current.value, level, spread, z),
@@ -606,7 +637,7 @@ func (r sizeRule) grew(current measurement, samples []measurement, p sensParams)
 		return nil
 	}
 	return &finding{
-		Detector: detectorSource, Metric: r.growthMetric, Severity: "warning",
+		Metric: r.growthMetric, Severity: "warning",
 		RunID: current.runID, RunAt: current.at,
 		Observed: current.value, Expected: level, Threshold: p.GrowthRatio * level,
 		Samples: len(samples), Details: levelDetails(current.value, level, spread, z),
@@ -653,7 +684,7 @@ func slowerRun(current measurement, samples []measurement, metric string, p sens
 		return nil
 	}
 	return &finding{
-		Detector: detectorDuration, Metric: metric, Severity: "warning",
+		Metric: metric, Severity: "warning",
 		RunID: current.runID, RunAt: current.at,
 		Observed: current.value, Expected: level, Threshold: p.DurRatio * level,
 		Samples: len(samples), Details: levelDetails(current.value, level, spread, z),
@@ -686,7 +717,7 @@ func detectReliability(in itemInput, p sensParams) ([]finding, []absence) {
 	}
 	raise := func(metric, severity string, observed, threshold float64) finding {
 		return finding{
-			Detector: detectorReliability, Metric: metric, Severity: severity,
+			Metric: metric, Severity: severity,
 			RunID: runs[0].ID, RunAt: runs[0].StartedAt,
 			Observed: observed, Threshold: threshold, Samples: len(runs),
 			Details: map[string]any{"streak": streak, "failed": failed, "total": len(runs)},
@@ -711,6 +742,44 @@ func detectReliability(in itemInput, p sensParams) ([]finding, []absence) {
 	return found, absent
 }
 
+// drillMetrics are the two restore checks a finding can be raised from: the
+// subset check that reads real pack data back, and the test restore from an
+// off-site copy.
+var drillMetrics = map[string]string{"subset": metricDrillSubset, "dr": metricDrillDR}
+
+// drillSkipped marks a check that never ran, recorded so the dashboard says why
+// instead of freezing the previous result.
+const drillSkipped = "skipped:"
+
+// detectIntegrity watches one series of restore checks: the newest one failed
+// while an earlier one proved the backup restorable. A series that never passed
+// is not a regression, and the failing check announces itself.
+func detectIntegrity(key store.DrillKey, checks []store.RestoreDrill) ([]finding, []absence) {
+	metric, known := drillMetrics[key.Kind]
+	if !known {
+		return nil, nil
+	}
+	ran := make([]store.RestoreDrill, 0, len(checks))
+	for _, check := range checks {
+		if !strings.HasPrefix(check.Detail, drillSkipped) {
+			ran = append(ran, check)
+		}
+	}
+	if len(ran) == 0 {
+		return nil, nil
+	}
+	newest := ran[0]
+	passedBefore := slices.ContainsFunc(ran[1:], func(check store.RestoreDrill) bool { return check.OK })
+	if newest.OK || !passedBefore {
+		return nil, []absence{{Metric: metric}}
+	}
+	return []finding{{
+		Metric: metric, Severity: "critical",
+		RunAt: newest.At, Samples: len(ran),
+		Details: map[string]any{"source": key.Source, "kind": key.Kind},
+	}}, nil
+}
+
 // verdict turns one metric's rules into what the lifecycle needs: the finding
 // while the condition holds, an absence once it is gone. An open row carries
 // the level its episode started from, and only a return to that level ends it,
@@ -726,7 +795,7 @@ func verdict(open map[string]store.Anomaly, metric string, current measurement,
 		return []finding{*raised}, nil
 	case isOpen:
 		return []finding{{
-			Detector: row.Detector, Metric: metric, Severity: row.Severity,
+			Metric: metric, Severity: row.Severity,
 			RunID: current.runID, RunAt: current.at,
 			Observed: current.value, Expected: row.Expected, Threshold: row.Threshold,
 			Samples: row.Samples,

@@ -992,3 +992,83 @@ func TestDumpSeriesHasItsOwnReliabilityMetrics(t *testing.T) {
 	}
 	noFindingFor(t, found, metricFailureStreak)
 }
+
+// drills builds one series of restore checks from a compact outcome string,
+// newest first: p a pass, f a failure, s a check that never ran.
+func drills(key store.DrillKey, outcomes string) []store.RestoreDrill {
+	out := make([]store.RestoreDrill, 0, len(outcomes))
+	for i, outcome := range outcomes {
+		d := store.RestoreDrill{
+			Domain: key.Domain, Source: key.Source, Kind: key.Kind,
+			OffsiteTargetID: key.TargetID,
+			At:              anomalyNow - int64(i)*anomalyDay,
+			OK:              outcome == 'p',
+		}
+		if outcome == 's' {
+			d.Detail = "skipped: repository busy longer than 5m0s"
+		}
+		out = append(out, d)
+	}
+	return out
+}
+
+func TestIntegrityRegression(t *testing.T) {
+	local := store.DrillKey{Domain: "containers", Source: "local", Kind: "subset"}
+
+	found, absent := detectIntegrity(local, drills(local, "fp"))
+	got := findingFor(t, found, metricDrillSubset)
+	if got.Severity != "critical" || got.Samples != 2 || got.RunAt != anomalyNow {
+		t.Fatalf("finding = %+v", got)
+	}
+	if got.Details["source"] != "local" || got.Details["kind"] != "subset" {
+		t.Fatalf("details = %+v", got.Details)
+	}
+	if len(absent) != 0 {
+		t.Fatalf("absent = %+v", absent)
+	}
+
+	found, _ = detectIntegrity(local, drills(local, "ffp"))
+	if got := findingFor(t, found, metricDrillSubset); got.Samples != 3 {
+		t.Fatalf("a second failure after the same pass ended the finding: %+v", got)
+	}
+
+	found, _ = detectIntegrity(local, drills(local, "sfp"))
+	findingFor(t, found, metricDrillSubset)
+
+	found, absent = detectIntegrity(local, drills(local, "spf"))
+	noFindingFor(t, found, metricDrillSubset)
+	absenceFor(t, absent, metricDrillSubset)
+
+	found, absent = detectIntegrity(local, drills(local, "pf"))
+	noFindingFor(t, found, metricDrillSubset)
+	absenceFor(t, absent, metricDrillSubset)
+
+	found, absent = detectIntegrity(local, drills(local, "ff"))
+	noFindingFor(t, found, metricDrillSubset)
+	absenceFor(t, absent, metricDrillSubset)
+
+	found, absent = detectIntegrity(local, drills(local, "ss"))
+	if len(found) != 0 || len(absent) != 0 {
+		t.Fatalf("a series of checks that never ran was judged: %+v %+v", found, absent)
+	}
+}
+
+func TestIntegrityKeepsEveryDrillSeriesApart(t *testing.T) {
+	named := store.DrillKey{Domain: "files", Source: "offsite", TargetID: "backblaze", Kind: "subset"}
+	found, _ := detectIntegrity(named, drills(named, "fp"))
+	if got := findingFor(t, found, metricDrillSubset); got.Details["source"] != "offsite" {
+		t.Fatalf("details = %+v", got.Details)
+	}
+
+	restore := store.DrillKey{Domain: "files", Source: "offsite", Kind: "dr"}
+	found, _ = detectIntegrity(restore, drills(restore, "fp"))
+	if got := findingFor(t, found, metricDrillDR); got.Details["kind"] != "dr" {
+		t.Fatalf("details = %+v", got.Details)
+	}
+
+	unknown := store.DrillKey{Domain: "files", Source: "local", Kind: "smoke"}
+	found, absent := detectIntegrity(unknown, drills(unknown, "fp"))
+	if len(found) != 0 || len(absent) != 0 {
+		t.Fatalf("a check outside the catalogue was judged: %+v %+v", found, absent)
+	}
+}
