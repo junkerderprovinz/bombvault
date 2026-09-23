@@ -488,3 +488,104 @@ func TestCommandBackupReasonLeavesOutTheDumpProtocol(t *testing.T) {
 		t.Errorf("reason = %q, want the line that says what happened", err)
 	}
 }
+
+// resticCwdHelperEnv set to "1" turns a child copy of the test binary into a
+// restic stand-in that reports where it was started.
+const resticCwdHelperEnv = "BOMBVAULT_RESTIC_CWD"
+
+// TestResticCwdReporter is a helper, not a test. In the child that runIn spawns
+// it prints its working directory and the PWD it inherited; in a normal test run
+// it returns at once.
+func TestResticCwdReporter(t *testing.T) {
+	if os.Getenv(resticCwdHelperEnv) != "1" {
+		return
+	}
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	fmt.Printf("wd=%s\npwd=%s\n", wd, os.Getenv("PWD"))
+}
+
+// TestRunInSetsWorkingDirectory checks that a run bound to a directory starts
+// restic there and hands it that directory as PWD. restic derives the absolute
+// paths it matches excludes against from its working directory, and Go's exec
+// only adds PWD when Env is nil, which it never is here.
+func TestRunInSetsWorkingDirectory(t *testing.T) {
+	r := Restic{Bin: os.Args[0]}
+	t.Setenv(resticCwdHelperEnv, "1")
+	args := []string{"-test.run=^TestResticCwdReporter$", "--", "backup"}
+
+	t.Run("a directory is passed on as cwd and PWD", func(t *testing.T) {
+		dir := t.TempDir()
+		out, err := r.runIn(context.Background(), dir, args, Mode{})
+		if err != nil {
+			t.Fatalf("runIn: %v\n%s", err, out)
+		}
+		if !strings.Contains(string(out), "wd="+dir+"\n") {
+			t.Fatalf("restic did not start in %s:\n%s", dir, out)
+		}
+		if !strings.Contains(string(out), "pwd="+dir+"\n") {
+			t.Fatalf("restic did not inherit PWD=%s:\n%s", dir, out)
+		}
+	})
+
+	t.Run("an empty directory leaves the environment as it was", func(t *testing.T) {
+		wd, err := os.Getwd()
+		if err != nil {
+			t.Fatalf("getwd: %v", err)
+		}
+		out, err := r.runIn(context.Background(), "", args, Mode{})
+		if err != nil {
+			t.Fatalf("runIn: %v\n%s", err, out)
+		}
+		if !strings.Contains(string(out), "wd="+wd+"\n") {
+			t.Fatalf("restic started somewhere else than %s:\n%s", wd, out)
+		}
+		if !strings.Contains(string(out), "pwd="+os.Getenv("PWD")+"\n") {
+			t.Fatalf("PWD changed although no directory was given:\n%s", out)
+		}
+	})
+}
+
+// TestBackupDirRefusesRelativeDir checks that a relative snapshot directory is
+// rejected before restic is started. A relative directory would resolve against
+// whatever the server's working directory happens to be.
+func TestBackupDirRefusesRelativeDir(t *testing.T) {
+	r := Restic{Bin: "restic-does-not-exist"}
+	_, err := r.BackupDir(context.Background(), "/repo", filepath.Join("sub", "snap"), []string{"zfs:tank/x"}, Mode{})
+	if err == nil {
+		t.Fatal("BackupDir accepted a relative directory")
+	}
+	if !strings.Contains(err.Error(), "not absolute") {
+		t.Fatalf("BackupDir reached restic instead of refusing the directory: %v", err)
+	}
+}
+
+// TestBackupDirRefusesRelativeLocalRepo checks that a relative local repository
+// is rejected too: restic would resolve it against the snapshot directory and
+// write a repository inside the snapshot it is reading.
+func TestBackupDirRefusesRelativeLocalRepo(t *testing.T) {
+	dir := t.TempDir()
+	r := Restic{Bin: "restic-does-not-exist"}
+
+	t.Run("relative local repository", func(t *testing.T) {
+		_, err := r.BackupDir(context.Background(), "repo", dir, []string{"zfs:tank/x"}, Mode{})
+		if err == nil {
+			t.Fatal("BackupDir accepted a relative local repository")
+		}
+		if !strings.Contains(err.Error(), "not absolute") {
+			t.Fatalf("BackupDir reached restic instead of refusing the repository: %v", err)
+		}
+	})
+
+	t.Run("a remote repository has no absolute path to check", func(t *testing.T) {
+		_, err := r.BackupDir(context.Background(), "sftp:host:repo", dir, []string{"zfs:tank/x"}, Mode{})
+		if err == nil {
+			t.Fatal("the missing binary should have failed the run")
+		}
+		if strings.Contains(err.Error(), "not absolute") {
+			t.Fatalf("a remote repository was refused as a relative path: %v", err)
+		}
+	})
+}
