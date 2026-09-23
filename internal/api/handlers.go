@@ -2263,6 +2263,16 @@ type settingsView struct {
 	// predates the switch would otherwise turn a safety feature off without a
 	// word.
 	DBDumpsEnabled *bool `json:"dbDumpsEnabled"`
+	// Anomaly detection over the backup history: the switch, the preset every
+	// item follows, the severity from which a finding is pushed, and the pause
+	// on deleting old backups after a loss of data. The two switches are
+	// pointers and the two presets keep their stored value when blank, for the
+	// reason DBDumpsEnabled above is a pointer: a file or a browser tab that
+	// predates them would otherwise turn detection and the pause off.
+	AnomalyEnabled       *bool  `json:"anomalyEnabled"`
+	AnomalySensitivity   string `json:"anomalySensitivity"`
+	AnomalyNotifyMin     string `json:"anomalyNotifyMin"`
+	AnomalyRetentionHold *bool  `json:"anomalyRetentionHold"`
 	// InstanceName is this instance's own display name, reported to polling
 	// fleet peers so a peer's Fleet page can label this box. Not a secret.
 	InstanceName string `json:"instanceName"`
@@ -2391,6 +2401,10 @@ func toView(s store.Settings) settingsView {
 		FleetEnabled:                s.FleetEnabled,
 		PullEnabled:                 s.PullEnabled,
 		DBDumpsEnabled:              &s.DBDumpsEnabled,
+		AnomalyEnabled:              &s.AnomalyEnabled,
+		AnomalySensitivity:          s.AnomalySensitivity,
+		AnomalyNotifyMin:            s.AnomalyNotifyMin,
+		AnomalyRetentionHold:        &s.AnomalyRetentionHold,
 		InstanceName:                s.InstanceName,
 		FleetToken:                  "", // secret — never echoed; FleetTokenSet reports presence
 		FleetTokenSet:               s.FleetToken != "",
@@ -2640,9 +2654,56 @@ func rejectInvalidSettingsNames(v settingsView) string {
 	return ""
 }
 
+// rejectInvalidAnomalySettings guards the two anomaly presets on both write
+// paths. Blank means "keep what is stored", so an export from before the
+// feature and a client that sends neither key both pass.
+func rejectInvalidAnomalySettings(v settingsView) string {
+	if p := v.AnomalySensitivity; p != "" && !slices.Contains(anomalyPresets, Sensitivity(p)) {
+		return "unknown anomaly sensitivity " + strconv.Quote(p)
+	}
+	if m := v.AnomalyNotifyMin; m != "" && !slices.Contains(anomalyNotifyLevels, m) {
+		return "unknown anomaly notification minimum " + strconv.Quote(m)
+	}
+	return ""
+}
+
+// applyAnomalySettings writes the four anomaly fields onto the row and reports
+// whether any of them moved. An absent switch and a blank preset keep what is
+// stored, so an old browser tab saving an unrelated card cannot switch
+// detection or the retention pause off.
+func applyAnomalySettings(cur *store.Settings, v settingsView) bool {
+	before := *cur
+	if v.AnomalyEnabled != nil {
+		cur.AnomalyEnabled = *v.AnomalyEnabled
+	}
+	if v.AnomalySensitivity != "" {
+		cur.AnomalySensitivity = v.AnomalySensitivity
+	}
+	if v.AnomalyNotifyMin != "" {
+		cur.AnomalyNotifyMin = v.AnomalyNotifyMin
+	}
+	if v.AnomalyRetentionHold != nil {
+		cur.AnomalyRetentionHold = *v.AnomalyRetentionHold
+	}
+	return anomalySettingsMoved(before, *cur)
+}
+
+// anomalySettingsMoved reports whether a write changed any of the four fields,
+// which is when the engine has to judge every series again.
+func anomalySettingsMoved(before, after store.Settings) bool {
+	return before.AnomalyEnabled != after.AnomalyEnabled ||
+		before.AnomalySensitivity != after.AnomalySensitivity ||
+		before.AnomalyNotifyMin != after.AnomalyNotifyMin ||
+		before.AnomalyRetentionHold != after.AnomalyRetentionHold
+}
+
 func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	var v settingsView
 	if !decodeBody(w, r, &v) {
+		return
+	}
+	if msg := rejectInvalidAnomalySettings(v); msg != "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
 
@@ -2735,6 +2796,10 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// mangle into "[path]". Carried out of the callback so that one shape
 	// survives while every other failure keeps going through failEnvelope.
 	var registryInputErr error
+
+	// Whether this save touched detection at all, so the engine judges every
+	// series again only when the rules behind it moved.
+	var anomalyChanged bool
 
 	// Write the form's OWN fields onto the CURRENT row, one assignment each —
 	// never `*cur = store.Settings{…}`. A whole-struct literal writes every
@@ -2840,6 +2905,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		if v.DBDumpsEnabled != nil {
 			cur.DBDumpsEnabled = *v.DBDumpsEnabled
 		}
+		anomalyChanged = applyAnomalySettings(cur, v)
 		cur.InstanceName = strings.TrimSpace(v.InstanceName)
 		cur.EverythingSchedule = v.EverythingSchedule
 		// Blank keeps the stored command, same contract as the three tokens
@@ -2911,6 +2977,9 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// Dual-write: mirror the just-saved off-site config into each domain's PRIMARY
 	// offsite_targets row so the replication path (which now reads those rows) sees
 	// the change. Settings stays authoritative for the fallback/rollback path.
+	if anomalyChanged {
+		h.svc.anomalies.MarkAllDirty()
+	}
 	h.svc.syncAllPrimaryOffsiteTargets(s)
 	// The CPU cap reaches restic through the process environment of the NEXT
 	// child it starts ([558]), so applying it here takes effect without a

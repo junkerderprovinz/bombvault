@@ -174,7 +174,7 @@ func TestRetentionSkipsItemWithOpenSourceCollapse(t *testing.T) {
 		t.Fatalf("want a critical source_bytes_shrink, got %s/%s", row.Metric, row.Severity)
 	}
 
-	if _, _, err := svc.AcknowledgeAnomalies(context.Background(), []string{row.ID}, "clearing it out"); err != nil {
+	if _, _, _, err := svc.AcknowledgeAnomalies(context.Background(), []string{row.ID}, "clearing it out"); err != nil {
 		t.Fatalf("acknowledge: %v", err)
 	}
 	mark = len(eng.forgetTags)
@@ -200,11 +200,11 @@ func TestRetentionSkipsItemWithOpenSourceCollapse(t *testing.T) {
 func TestRewriteHoldsRetentionUntilTheUserActs(t *testing.T) {
 	settle := map[string]func(*api.Service, []string) error{
 		"acknowledge": func(svc *api.Service, ids []string) error {
-			_, _, err := svc.AcknowledgeAnomalies(context.Background(), ids, "")
+			_, _, _, err := svc.AcknowledgeAnomalies(context.Background(), ids, "")
 			return err
 		},
 		"mark as expected": func(svc *api.Service, ids []string) error {
-			_, _, err := svc.MarkAnomaliesExpected(context.Background(), ids, "")
+			_, _, _, err := svc.MarkAnomaliesExpected(context.Background(), ids, "")
 			return err
 		},
 	}
@@ -232,7 +232,7 @@ func TestRewriteHoldsRetentionUntilTheUserActs(t *testing.T) {
 			if row.Metric != "new_data_rewrite" || row.Severity != "critical" {
 				t.Fatalf("want a critical new_data_rewrite, got %s/%s", row.Metric, row.Severity)
 			}
-			if row.LastGoodRun == "" {
+			if row.LastGood == nil {
 				t.Fatal("a data-loss finding has to name the backup to restore from")
 			}
 
@@ -258,7 +258,7 @@ func TestExpectedRewriteIsNotRaisedAgain(t *testing.T) {
 
 	backupOnce(t, svc, "plex")
 	row := onlyHeldRow(t, svc)
-	if _, _, err := svc.MarkAnomaliesExpected(context.Background(), []string{row.ID}, ""); err != nil {
+	if _, _, _, err := svc.MarkAnomaliesExpected(context.Background(), []string{row.ID}, ""); err != nil {
 		t.Fatalf("mark as expected: %v", err)
 	}
 

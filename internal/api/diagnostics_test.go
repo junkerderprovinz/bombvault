@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/logring"
@@ -246,6 +247,38 @@ func TestDiagnosticsCarriesDBDumpState(t *testing.T) {
 	for _, quoted := range []string{detail, "alice@example.com"} {
 		if strings.Contains(runs, quoted) {
 			t.Errorf("runs.json carries %q, which a database tool said and which can quote a row: %s", quoted, runs)
+		}
+	}
+}
+
+// The bundle has to say what detection currently holds against the history, so
+// a report about a backup that looks wrong carries the finding that says so.
+func TestDiagnosticsBundleHasAnomalies(t *testing.T) {
+	h, st, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	cookie := loginCookie(t, h, "correct horse battery staple")
+
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	seedAnomaly(t, st, store.Anomaly{
+		ID: "shrink", Detector: "source", Metric: "source_bytes_shrink", Severity: "critical",
+		ScopeKind: "item", ScopeID: tg.ID, TargetID: tg.ID, Domain: "container",
+		LastSeenAt: time.Now().Unix(),
+	})
+
+	w := getRaw(t, h, "/api/diagnostics", cookie)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body = %s", w.Code, w.Body.String())
+	}
+	members := zipMembers(t, w.Body.Bytes())
+	file, ok := members["anomalies.json"]
+	if !ok {
+		t.Fatalf("the bundle is missing anomalies.json. Members present: %v", memberNames(members))
+	}
+	for _, want := range []string{`"summary"`, `"open"`, `"source_bytes_shrink"`} {
+		if !strings.Contains(file, want) {
+			t.Fatalf("anomalies.json must carry %s: %s", want, file)
 		}
 	}
 }

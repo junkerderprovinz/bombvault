@@ -10,6 +10,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/config"
@@ -191,5 +192,40 @@ func seedFailedRunOfKind(t *testing.T, st *store.Repo, targetID, kind, reason st
 	}
 	if err := st.FinishRun(id, "failed", "", 0, reason); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// The weekly reminder for a critical nobody settled and for the deleting of
+// old backups that is still waiting on it.
+func TestDigestMentionsOpenAnomalies(t *testing.T) {
+	svc, st, body := digestTestService(t, "always")
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	seedBackupRun(t, st, tg.ID, "success", "", 1024)
+	if err := svc.SendDigest(context.Background()); err != nil {
+		t.Fatalf("SendDigest: %v", err)
+	}
+	if strings.Contains(body(), "Anomalies still open") {
+		t.Fatalf("a digest with no findings must not mention them, got %q", body())
+	}
+
+	now := time.Now().Unix()
+	seedAnomaly(t, st, store.Anomaly{
+		ID: "shrink", Detector: "source", Metric: "source_bytes_shrink", Severity: "critical",
+		ScopeKind: "item", ScopeID: tg.ID, TargetID: tg.ID, Domain: "container", LastSeenAt: now,
+	})
+	seedAnomaly(t, st, store.Anomaly{
+		ID: "slower", Detector: "duration", Metric: "duration_slower", Severity: "warning",
+		ScopeKind: "item", ScopeID: tg.ID, TargetID: tg.ID, Domain: "container", LastSeenAt: now,
+	})
+	startAnomalyEngine(t, svc)
+
+	if err := svc.SendDigest(context.Background()); err != nil {
+		t.Fatalf("SendDigest: %v", err)
+	}
+	if want := "Anomalies still open: critical 1, warning 1, retention paused for 1 item(s)"; !strings.Contains(body(), want) {
+		t.Fatalf("digest must carry %q, got %q", want, body())
 	}
 }

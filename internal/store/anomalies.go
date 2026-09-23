@@ -107,7 +107,7 @@ type AnomalyFilter struct {
 
 const (
 	defaultAnomalyLimit = 100
-	maxAnomalyLimit     = 500
+	MaxAnomalyLimit     = 500
 	maxAckNoteRunes     = 500
 )
 
@@ -303,8 +303,8 @@ func (r *Repo) ListAnomalies(f AnomalyFilter) ([]Anomaly, string, error) {
 	if limit <= 0 {
 		limit = defaultAnomalyLimit
 	}
-	if limit > maxAnomalyLimit {
-		limit = maxAnomalyLimit
+	if limit > MaxAnomalyLimit {
+		limit = MaxAnomalyLimit
 	}
 
 	where := []string{}

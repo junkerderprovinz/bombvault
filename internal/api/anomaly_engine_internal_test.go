@@ -594,7 +594,7 @@ func TestAcknowledgeDuringPassKeepsAcknowledged(t *testing.T) {
 			}
 			go func() {
 				<-paused
-				_, _, err := f.svc.AcknowledgeAnomalies(context.Background(), []string{row.ID}, "seen it")
+				_, _, _, err := f.svc.AcknowledgeAnomalies(context.Background(), []string{row.ID}, "seen it")
 				acked <- err
 			}()
 

@@ -54,6 +54,10 @@ type digestStats struct {
 	// lines (newest first); MoreFailures counts the collapsed remainder.
 	Failures     []string
 	MoreFailures int
+	// AnomaliesCritical, AnomaliesWarning and AnomaliesHeld are the findings
+	// nobody has settled yet, whenever they were raised: the weekly reminder
+	// that a critical is still open and that deleting old backups is waiting.
+	AnomaliesCritical, AnomaliesWarning, AnomaliesHeld int
 }
 
 // digestBackupScheduleFor returns a domain's local backup schedule, which sets
@@ -167,6 +171,13 @@ func (s *Service) collectDigestStats(now time.Time) (digestStats, error) {
 		}
 		stats.Offsite = append(stats.Offsite, line)
 	}
+
+	counts, _, err := s.store.OpenAnomalyCounts()
+	if err != nil {
+		return digestStats{}, fmt.Errorf("read open anomalies: %w", err)
+	}
+	stats.AnomaliesCritical, stats.AnomaliesWarning = counts["critical"], counts["warning"]
+	stats.AnomaliesHeld = s.anomalies.summary().RetentionHeld
 	return stats, nil
 }
 
@@ -233,6 +244,11 @@ func composeDigest(stats digestStats) string {
 				fmt.Fprintf(&b, "- %s: current (last copy %s)\n", line.Domain, digestAge(stats.Now, line.LastOK))
 			}
 		}
+	}
+
+	if stats.AnomaliesCritical > 0 || stats.AnomaliesWarning > 0 || stats.AnomaliesHeld > 0 {
+		fmt.Fprintf(&b, "Anomalies still open: critical %d, warning %d, retention paused for %d item(s)\n",
+			stats.AnomaliesCritical, stats.AnomaliesWarning, stats.AnomaliesHeld)
 	}
 
 	if len(stats.Failures) > 0 {

@@ -270,3 +270,30 @@ func mustEngineSettings(t *testing.T, f *engineFixture) store.Settings {
 	}
 	return settings
 }
+
+// The page says when a finding reached nobody, so the summary has to know
+// whether a message would go anywhere at all.
+func TestSummarySaysWhenNothingIsPushed(t *testing.T) {
+	f := newEngineFixture(t)
+	f.pass(t)
+	if !f.e.summary().NotifyMuted {
+		t.Fatal("with no channel configured nothing is sent")
+	}
+
+	wh := newWebhookRecorder(t)
+	if err := f.svc.SetNotifyConfig(wh.config("never")); err != nil {
+		t.Fatal(err)
+	}
+	f.e.refresh()
+	if !f.e.summary().NotifyMuted {
+		t.Fatal("an explicit never sends nothing either")
+	}
+
+	if err := f.svc.SetNotifyConfig(wh.config("always")); err != nil {
+		t.Fatal(err)
+	}
+	f.e.refresh()
+	if f.e.summary().NotifyMuted {
+		t.Fatal("a configured channel is not muted")
+	}
+}

@@ -68,3 +68,9 @@ func withSnapshot(id string) runOpt {
 func withError(msg string) runOpt {
 	return func(run *store.SeriesRun) { run.Error = msg }
 }
+
+// prefsPatch is a change that names both controls, the way a form does that
+// has a value for each of them.
+func prefsPatch(sensitivity, notifyMin string) AnomalyPrefsPatch {
+	return AnomalyPrefsPatch{Sensitivity: &sensitivity, NotifyMin: &notifyMin}
+}

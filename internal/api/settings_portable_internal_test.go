@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 
@@ -594,5 +595,100 @@ func TestImportWithoutDBDumpsFieldKeepsIt(t *testing.T) {
 	}
 	if !got.DBDumpsEnabled {
 		t.Fatal("an export file that predates the switch must leave it alone")
+	}
+}
+
+func TestSettingsExportImportCarriesAnomalySettings(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	s, err := srcStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.AnomalyEnabled = false
+	s.AnomalySensitivity = "strict"
+	s.AnomalyNotifyMin = "warning"
+	s.AnomalyRetentionHold = false
+	if err := srcStore.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	body, exp := doExport(t, src, "")
+	if exp.Settings.AnomalyEnabled == nil || *exp.Settings.AnomalyEnabled {
+		t.Fatalf("the export must name the switch, got %v", exp.Settings.AnomalyEnabled)
+	}
+	if exp.Settings.AnomalySensitivity != "strict" || exp.Settings.AnomalyNotifyMin != "warning" {
+		t.Fatalf("preset and minimum not exported: %+v", exp.Settings)
+	}
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	preview := doImport(t, dst, body, "")
+	groups := preview["summary"].(map[string]any)["settingsGroups"].([]any)
+	if !slices.Contains(groups, any("anomalies")) {
+		t.Fatalf("the preview has to name the group it would change, got %v", groups)
+	}
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply envelope wrong: %v", env)
+	}
+	got, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.AnomalyEnabled || got.AnomalyRetentionHold ||
+		got.AnomalySensitivity != "strict" || got.AnomalyNotifyMin != "warning" {
+		t.Fatalf("the four fields did not survive the round trip: %+v", got)
+	}
+
+	bad := exp
+	bad.Settings.AnomalySensitivity = "wild"
+	badBody, err := json.Marshal(bad)
+	if err != nil {
+		t.Fatal(err)
+	}
+	env := doImport(t, dst, badBody, "?apply=true")
+	want := rejectInvalidAnomalySettings(bad.Settings)
+	if msg, _ := env["error"].(string); env["ok"] != false || !strings.Contains(msg, want) {
+		t.Fatalf("an unknown preset must be refused with %q, got %v", want, env)
+	}
+}
+
+// Every other switch in the import view is copied as it stands, so a file
+// written before this version would turn detection and the data-loss pause off
+// on the instance it is applied to.
+func TestPreFeatureExportImportsAndKeepsDetectionOn(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	body, _ := doExport(t, src, "")
+
+	var raw map[string]any
+	if err := json.Unmarshal(body, &raw); err != nil {
+		t.Fatal(err)
+	}
+	settings := raw["settings"].(map[string]any)
+	for _, key := range []string{"anomalyEnabled", "anomalySensitivity", "anomalyNotifyMin", "anomalyRetentionHold"} {
+		delete(settings, key)
+	}
+	older, err := json.Marshal(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	before, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if env := doImport(t, dst, older, "?apply=true"); env["ok"] != true {
+		t.Fatalf("a file from before the feature has to import: %v", env)
+	}
+	got, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.AnomalyEnabled || !got.AnomalyRetentionHold {
+		t.Fatalf("detection and the pause must stay on: %+v", got)
+	}
+	if got.AnomalySensitivity != before.AnomalySensitivity || got.AnomalyNotifyMin != before.AnomalyNotifyMin {
+		t.Fatalf("preset and minimum must keep their stored values: %+v", got)
 	}
 }
