@@ -125,15 +125,19 @@ func (s *Server) Run(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("server: ensure cert: %w", err)
 		}
+		if err := loadServedCertificate(certPath, keyPath); err != nil {
+			return fmt.Errorf("server: load cert: %w", err)
+		}
 		addr := net.JoinHostPort(bindHost, strconv.Itoa(s.cfg.HTTPSPort))
 		srv = &http.Server{
 			Addr:              addr,
 			Handler:           s.handler,
 			ReadHeaderTimeout: 15 * time.Second,
+			TLSConfig:         servedTLSConfig(),
 		}
 		printBanner()
 		printReady("HTTPS", s.cfg.HTTPSPort)
-		serve = func() error { return srv.ListenAndServeTLS(certPath, keyPath) }
+		serve = func() error { return srv.ListenAndServeTLS("", "") }
 	}
 
 	errCh := make(chan error, 1)

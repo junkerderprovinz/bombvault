@@ -9,6 +9,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -334,6 +335,91 @@ func TestMCPKeyEndpointsRefuseCrossSite(t *testing.T) {
 	}
 }
 
+func TestMCPCertificateEndpoints(t *testing.T) {
+	st := newMemStore(t)
+	h, _ := newMCPKeyRouter(t, st, mcpAppKey)
+
+	w, _ := doMCPKey(t, h, http.MethodGet, "/api/mcp/certificate", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("download: status = %d, want 200", w.Code)
+	}
+	if got := w.Header().Get("Content-Type"); got != "application/x-pem-file" {
+		t.Fatalf("Content-Type = %q", got)
+	}
+	if got := w.Header().Get("Content-Disposition"); got != `attachment; filename="bombvault-cert.pem"` {
+		t.Fatalf("Content-Disposition = %q", got)
+	}
+	if !strings.HasPrefix(w.Body.String(), "-----BEGIN CERTIFICATE-----") {
+		t.Fatalf("body is not a PEM certificate: %q", w.Body.String())
+	}
+
+	_, m := doMCPKey(t, h, http.MethodPost, "/api/mcp/certificate/names", `{"host":"192.168.1.10"}`)
+	if m["ok"] != true {
+		t.Fatalf("add name: %v", m)
+	}
+	cert, _ := m["certificate"].(map[string]any)
+	names, _ := cert["names"].([]any)
+	if len(names) != 4 || names[3] != "192.168.1.10" {
+		t.Fatalf("names after adding one = %v", names)
+	}
+
+	if _, m = doMCPKey(t, h, http.MethodPost, "/api/mcp/certificate/names", `{"host":"bad host!"}`); m["code"] != "cert-name-invalid" {
+		t.Fatalf("an unusable address: %v", m)
+	}
+	if _, m = doMCPKey(t, h, http.MethodPost, "/api/mcp/certificate/names", `{"host":"1.2.3.4","label":"x"}`); m["ok"] != false {
+		t.Fatalf("an unknown field must be refused: %v", m)
+	}
+
+	r := httptest.NewRequest(http.MethodPost, "/api/mcp/certificate/names", strings.NewReader(`{"host":"1.2.3.4"}`))
+	r.Host = mcpTestHost
+	r.Header.Set("Content-Type", "application/json")
+	r.Header.Set("Sec-Fetch-Site", "cross-site")
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+	if w.Code != http.StatusForbidden {
+		t.Fatalf("cross-site: status = %d, want 403", w.Code)
+	}
+
+	cookie := enableLogin(t, st, mcpAppKey)
+	for _, route := range []struct {
+		method string
+		path   string
+		body   string
+	}{
+		{http.MethodGet, "/api/mcp/certificate", ""},
+		{http.MethodPost, "/api/mcp/certificate/names", `{"host":"192.168.1.11"}`},
+	} {
+		if w, _ = doMCPKey(t, h, route.method, route.path, route.body); w.Code != http.StatusUnauthorized {
+			t.Fatalf("%s %s without a session: status = %d, want 401", route.method, route.path, w.Code)
+		}
+		if w, _ = doMCPKeyJSON(t, h, route.method, route.path, route.body, mcpTestHost, cookie); w.Code != http.StatusOK {
+			t.Fatalf("%s %s with a session: status = %d, want 200", route.method, route.path, w.Code)
+		}
+	}
+}
+
+func TestMCPCertificateEndpointsAreGoneWithoutTLS(t *testing.T) {
+	st := newMemStore(t)
+	dir := t.TempDir()
+	h, _ := mcpRouterWith(t, st, config.Config{AppKey: mcpAppKey, DataDir: dir, HostMountRoot: dir, HTTPOnly: true})
+
+	for _, route := range []struct {
+		method string
+		path   string
+		body   string
+	}{
+		{http.MethodGet, "/api/mcp/certificate", ""},
+		{http.MethodPost, "/api/mcp/certificate/names", `{"host":"192.168.1.10"}`},
+	} {
+		if w, _ := doMCPKey(t, h, route.method, route.path, route.body); w.Code != http.StatusNotFound {
+			t.Fatalf("%s %s on a plain HTTP install: status = %d, want 404", route.method, route.path, w.Code)
+		}
+	}
+	if list := mcpKeyList(t, h); list["certificate"] != nil {
+		t.Fatalf("certificate = %v, want null on a plain HTTP install", list["certificate"])
+	}
+}
+
 func TestMCPKeyLifecycleEndpoints(t *testing.T) {
 	st := newMemStore(t)
 	h, _ := newMCPKeyRouter(t, st, mcpAppKey)
@@ -419,6 +505,16 @@ func TestMCPKeyListCarriesEndpointAndAuthState(t *testing.T) {
 	}
 	if rows := mcpKeyRows(t, list, "keys"); len(rows) != 1 || rows[0]["inUse"] != false {
 		t.Fatalf("a key no run names must not be inUse: %v", rows)
+	}
+	cert, _ := list["certificate"].(map[string]any)
+	if cert["selfIssued"] != true {
+		t.Fatalf("certificate = %v, want BombVault's own on a fresh data dir", list["certificate"])
+	}
+	if names, _ := cert["names"].([]any); len(names) != 3 || names[0] != "localhost" || names[1] != "127.0.0.1" || names[2] != "::1" {
+		t.Fatalf("certificate names = %v", cert["names"])
+	}
+	if fp, _ := cert["fingerprint"].(string); len(fp) != 64 {
+		t.Fatalf("fingerprint = %q, want a sha256 in hex", fp)
 	}
 
 	if _, err := st.StartRunWith("container:plex", "backup", store.RunMeta{StartedVia: "mcp", StartedViaKey: id}); err != nil {

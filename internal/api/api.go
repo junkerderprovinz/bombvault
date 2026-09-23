@@ -438,6 +438,8 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/mcp/keys/{id}/rotate", h.handleRotateMCPKey)
 	mux.HandleFunc("POST /api/mcp/keys/{id}/revoke", h.handleRevokeMCPKey)
 	mux.HandleFunc("DELETE /api/mcp/keys/{id}", h.handlePurgeMCPKey)
+	mux.HandleFunc("GET /api/mcp/certificate", h.handleMCPCertificate)
+	mux.HandleFunc("POST /api/mcp/certificate/names", h.handleAddMCPCertificateName)
 
 	// Mesh off-site (v8.0.0): review offers this box has RECEIVED from peers
 	// (accept turns one into a normal named credential set + off-site target,

@@ -29,11 +29,19 @@ const (
 // the public-looking name the rule refuses.
 const mcpTestHost = "tower"
 
-// newMCPKeyRouter wires a router over st with appKey as the pepper.
+// newMCPKeyRouter wires a router over st with appKey as the pepper, on a data
+// dir that carries the certificate the server writes at boot.
 func newMCPKeyRouter(t *testing.T, st *store.Repo, appKey string) (http.Handler, *api.Service) {
 	t.Helper()
 	dir := t.TempDir()
-	cfg := config.Config{AppKey: appKey, DataDir: dir, HostMountRoot: dir}
+	if _, _, err := api.EnsureSelfSigned(dir); err != nil {
+		t.Fatal(err)
+	}
+	return mcpRouterWith(t, st, config.Config{AppKey: appKey, DataDir: dir, HostMountRoot: dir})
+}
+
+func mcpRouterWith(t *testing.T, st *store.Repo, cfg config.Config) (http.Handler, *api.Service) {
+	t.Helper()
 	d := &fakeServiceDocker{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
