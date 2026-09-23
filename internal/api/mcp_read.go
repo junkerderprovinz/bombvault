@@ -4,12 +4,14 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"log"
 	"slices"
 	"strings"
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -20,6 +22,16 @@ const (
 	mcpStatsLimitMax     = 90
 	mcpStatsLimitDefault = 30
 )
+
+// How many runs one call may ask for, and how many it gets without asking.
+const (
+	mcpRunsLimitMax     = 100
+	mcpRunsLimitDefault = 20
+)
+
+// mcpItemsPerDomain caps one domain's item list, so a single answer stays a
+// size a client can read.
+const mcpItemsPerDomain = 500
 
 func (h *Handler) toolGetHealth(ctx context.Context, _ *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	caller, ok := mcpCallerFrom(ctx)
@@ -217,4 +229,554 @@ func (h *Handler) toolGetStorageStats(ctx context.Context, req *mcp.CallToolRequ
 		"samples":            samples,
 		"growthBytesPerWeek": growth,
 	}), nil
+}
+
+// mcpStops is what a backup of one item takes down, read from stored settings
+// and the live Docker state. Known is false when Docker could not be asked, so
+// an assistant does not read silence as "nothing is stopped".
+type mcpStops struct {
+	Self       bool     `json:"self"`
+	Containers []string `json:"containers"`
+	Known      bool     `json:"known"`
+}
+
+// mcpLastDump is the newest database dump attempt of a container.
+type mcpLastDump struct {
+	At     int64  `json:"at"`
+	Status string `json:"status"`
+}
+
+// mcpDatabase is the dump picture of a container that holds a database.
+type mcpDatabase struct {
+	Engine      string       `json:"engine"`
+	EngineKnown bool         `json:"engineKnown"`
+	DumpOff     bool         `json:"dumpOff"`
+	LastDump    *mcpLastDump `json:"lastDump,omitempty"`
+}
+
+// mcpItemView is one protected thing as list_items reports it. Installed is a
+// pointer because "not installed" and "nobody could ask Docker" are different
+// answers, and only containers have either.
+type mcpItemView struct {
+	ID                  string       `json:"id"`
+	Name                string       `json:"name"`
+	Installed           *bool        `json:"installed,omitempty"`
+	Included            bool         `json:"included"`
+	Paused              bool         `json:"paused"`
+	Schedule            string       `json:"schedule"`
+	Stops               mcpStops     `json:"stops"`
+	LastDurationSeconds int64        `json:"lastDurationSeconds"`
+	LastSuccessAt       int64        `json:"lastSuccessAt"`
+	LastRunAt           int64        `json:"lastRunAt"`
+	LastRunStatus       string       `json:"lastRunStatus"`
+	Database            *mcpDatabase `json:"database,omitempty"`
+}
+
+func (v *mcpItemView) stamp(s store.BackupStamp) {
+	v.LastSuccessAt = s.LastSuccessAt
+	v.LastDurationSeconds = s.LastDurationSeconds
+	v.LastRunAt = s.LastRunAt
+	v.LastRunStatus = s.LastRunStatus
+}
+
+type listItemsInput struct {
+	Domain string `json:"domain"`
+}
+
+func (h *Handler) toolListItems(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	if _, ok := mcpCallerFrom(ctx); !ok {
+		return mcpNoCaller(), nil
+	}
+	var in listItemsInput
+	if err := decodeMCPArgs(req.Params.Arguments, &in); err != nil {
+		h.logMCPCall(ctx, "list_items", "invalid_argument")
+		return mcpToolError("invalid_argument", err.Error(), nil), nil
+	}
+	if in.Domain != "" && !slices.Contains(mcpDomains, in.Domain) {
+		h.logMCPCall(ctx, "list_items", "invalid_argument")
+		return mcpToolError("invalid_argument", "domain must be one of "+strings.Join(mcpDomains, ", "), nil), nil
+	}
+	ctx, cancel := h.mcpToolContext(ctx, mcpReadTimeout)
+	defer cancel()
+
+	settings, err := h.store.GetSettings()
+	if err != nil {
+		h.logMCPCall(ctx, "list_items", "unavailable")
+		return mcpToolError("unavailable", "settings could not be read", nil), nil
+	}
+	items, known, err := h.mcpItems(ctx, settings, in.Domain)
+	if err != nil {
+		h.logMCPCall(ctx, "list_items", "failed")
+		return mcpServiceError(err), nil
+	}
+
+	domains := make([]map[string]any, 0, len(mcpDomains))
+	for _, domain := range mcpDomains {
+		if in.Domain != "" && domain != in.Domain {
+			continue
+		}
+		rows := items[domain]
+		truncated := len(rows) > mcpItemsPerDomain
+		if truncated {
+			rows = rows[:mcpItemsPerDomain]
+		}
+		row := map[string]any{
+			"domain":    domain,
+			"enabled":   mcpDomainEnabled(settings, domain),
+			"truncated": truncated,
+			"items":     rows,
+		}
+		if domain == "containers" {
+			row["installedKnown"] = known[domain]
+		}
+		domains = append(domains, row)
+	}
+
+	h.logMCPCall(ctx, "list_items", "ok")
+	return mcpOK(map[string]any{"domains": domains}), nil
+}
+
+// mcpItems collects the protected things of every domain the caller asked for
+// ("" means all) and reports per domain whether the live state behind them
+// could be read. A switched-off domain is skipped: nothing backs its items up,
+// so nothing in it is a protected thing.
+func (h *Handler) mcpItems(ctx context.Context, settings store.Settings, domain string) (map[string][]mcpItemView, map[string]bool, error) {
+	items := map[string][]mcpItemView{}
+	for _, d := range mcpDomains {
+		if domain == "" || d == domain {
+			items[d] = []mcpItemView{}
+		}
+	}
+	// Without container rows, nothing in the listing rests on Docker.
+	known := map[string]bool{"containers": true}
+
+	stamps, err := h.store.LatestBackupsByTarget()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if _, want := items["containers"]; want && settings.ContainersEnabled {
+		rows, dockerAnswered, cErr := h.mcpContainerItems(ctx, settings, stamps)
+		if cErr != nil {
+			return nil, nil, cErr
+		}
+		items["containers"], known["containers"] = rows, dockerAnswered
+	}
+	if _, want := items["vms"]; want && settings.VMsEnabled {
+		vms, vErr := h.store.ListVMTargets()
+		if vErr != nil {
+			return nil, nil, vErr
+		}
+		rows := make([]mcpItemView, 0, len(vms))
+		for _, vm := range vms {
+			view := mcpItemView{
+				ID:       vm.ID,
+				Name:     vm.Name,
+				Included: vm.IncludeInSchedule,
+				Paused:   schedule.PausedByOverride(vm.ScheduleCadence),
+				Schedule: schedule.EffectiveVMSchedule(vm, settings).Kind,
+				Stops:    mcpStops{Self: vm.Method != "live", Containers: []string{}, Known: true},
+			}
+			view.stamp(stamps[vm.ID])
+			rows = append(rows, view)
+		}
+		items["vms"] = rows
+	}
+	if _, want := items["files"]; want && settings.FilesEnabled {
+		sets, fErr := h.store.ListFileSets()
+		if fErr != nil {
+			return nil, nil, fErr
+		}
+		rows := make([]mcpItemView, 0, len(sets))
+		for _, set := range sets {
+			view := mcpItemView{
+				ID:       set.ID,
+				Name:     set.Name,
+				Included: set.Enabled,
+				Paused:   schedule.PausedByOverride(set.ScheduleCadence),
+				Schedule: schedule.EffectiveFileSetSchedule(set, settings).Kind,
+				Stops:    mcpStops{Containers: []string{}, Known: true},
+			}
+			view.stamp(stamps[set.ID])
+			rows = append(rows, view)
+		}
+		items["files"] = rows
+	}
+	if _, want := items["flash"]; want && settings.FlashEnabled {
+		items["flash"] = []mcpItemView{mcpSingletonItem("flash", settings.FlashSchedule, settings.EverythingSchedule, stamps)}
+	}
+	if _, want := items["config"]; want && settings.ConfigEnabled {
+		items["config"] = []mcpItemView{mcpSingletonItem("config", settings.ConfigSchedule, settings.EverythingSchedule, stamps)}
+	}
+	return items, known, nil
+}
+
+// mcpContainerItems lists the container targets with their live state. A Docker
+// failure leaves the rows in place without an installed flag: the stored items
+// are still what an operator asks about, and dropping them because the socket
+// was busy would read as "BombVault protects nothing".
+func (h *Handler) mcpContainerItems(ctx context.Context, settings store.Settings, stamps map[string]store.BackupStamp) ([]mcpItemView, bool, error) {
+	targets, err := h.store.ListTargets()
+	if err != nil {
+		return nil, false, err
+	}
+	dumps, err := h.store.LastRunsOfKind("dbdump")
+	if err != nil {
+		return nil, false, err
+	}
+
+	infos, listErr := h.docker.List(ctx)
+	if listErr != nil {
+		log.Printf("api: mcp: list_items: the container list is unavailable: %v", listErr)
+	}
+	live := make(map[string]dockercli.ContainerInfo, len(infos))
+	for _, c := range infos {
+		live[c.Name] = c
+	}
+	byName := make(map[string]store.Target, len(targets))
+	for _, t := range targets {
+		byName[t.ContainerName] = t
+	}
+	dbRows := h.svc.dbDumpRows(ctx, infos, byName)
+	self := h.svc.SelfContainerName(ctx)
+	dockerAnswered := listErr == nil
+
+	rows := make([]mcpItemView, 0, len(targets))
+	for _, t := range targets {
+		if self != "" && t.ContainerName == self {
+			continue
+		}
+		view := mcpItemView{
+			ID:       t.ID,
+			Name:     t.ContainerName,
+			Included: t.IncludeInSchedule,
+			Paused:   schedule.PausedByOverride(t.ScheduleCadence),
+			Schedule: schedule.EffectiveContainerSchedule(t, settings).Kind,
+			Stops:    mcpStops{Containers: []string{}, Known: dockerAnswered},
+		}
+		if dockerAnswered {
+			c, installed := live[t.ContainerName]
+			view.Installed = &installed
+			view.Stops.Self = isRunning(c)
+			for _, name := range t.StopContainers {
+				if isRunning(live[name]) {
+					view.Stops.Containers = append(view.Stops.Containers, name)
+				}
+			}
+		}
+		view.stamp(stamps[t.ID])
+		if db := mcpDatabaseOf(t, dbRows[t.ContainerName], dockerAnswered); db != nil {
+			if dump, ok := dumps[t.ID]; ok {
+				at := dump.StartedAt
+				if dump.FinishedAt != nil {
+					at = *dump.FinishedAt
+				}
+				db.LastDump = &mcpLastDump{At: at, Status: dump.Status}
+			}
+			view.Database = db
+		}
+		rows = append(rows, view)
+	}
+	return rows, dockerAnswered, nil
+}
+
+func isRunning(c dockercli.ContainerInfo) bool {
+	return strings.EqualFold(c.State, "running")
+}
+
+// mcpDatabaseOf is the database block of a container, or nil for one nothing
+// says holds a database. The operator's stored engine outranks the recognition,
+// and with Docker unreachable the row's own dump switch is the only evidence
+// left that there is a database at all.
+func mcpDatabaseOf(t store.Target, row dbDumpRow, dockerAnswered bool) *mcpDatabase {
+	switch {
+	case t.DBDumpEngine != "":
+		return &mcpDatabase{Engine: t.DBDumpEngine, EngineKnown: true, DumpOff: t.DBDumpOff}
+	case row.Tier != "":
+		return &mcpDatabase{Engine: row.Engine, EngineKnown: true, DumpOff: t.DBDumpOff}
+	case !dockerAnswered && t.DBDumpOff:
+		return &mcpDatabase{DumpOff: true}
+	}
+	return nil
+}
+
+// mcpSingletonItem is the one item of the flash or config domain, neither of
+// which has rows of its own.
+func mcpSingletonItem(domain, own, everything string, stamps map[string]store.BackupStamp) mcpItemView {
+	view := mcpItemView{
+		ID:       domainRunTargetID(domain),
+		Name:     domain,
+		Included: true,
+		Schedule: domainScheduleKind(own, everything),
+		Stops:    mcpStops{Containers: []string{}, Known: true},
+	}
+	view.stamp(stamps[view.ID])
+	return view
+}
+
+// domainScheduleKind answers for a whole domain what EffectiveSchedule answers
+// for an item, off the same cadences domainStatusFrom reads.
+func domainScheduleKind(own, everything string) string {
+	switch {
+	case cadencePeriodSeconds(own) > 0:
+		return schedule.EffectiveDomain
+	case cadencePeriodSeconds(everything) > 0:
+		return schedule.EffectiveEverything
+	default:
+		return schedule.EffectiveNone
+	}
+}
+
+func mcpDomainEnabled(s store.Settings, domain string) bool {
+	switch domain {
+	case "containers":
+		return s.ContainersEnabled
+	case "vms":
+		return s.VMsEnabled
+	case "files":
+		return s.FilesEnabled
+	case "flash":
+		return s.FlashEnabled
+	case "config":
+		return s.ConfigEnabled
+	}
+	return false
+}
+
+// mcpItem is one resolved thing a tool was asked about.
+type mcpItem struct{ Domain, ID, Name string }
+
+// resolveMCPItem turns a domain and the name or id an assistant passed into the
+// stored item, refusing before the request reaches restic. The second return
+// value is the tool error to answer with, nil when the item resolved.
+func (h *Handler) resolveMCPItem(domain, item string) (mcpItem, *mcp.CallToolResult) {
+	switch domain {
+	case "containers":
+		if !validResourceName(item) {
+			return mcpItem{}, mcpToolError("invalid_argument", "item must be the name of a container", nil)
+		}
+		t, err := h.store.GetTargetByContainer(item)
+		if err != nil {
+			return mcpItem{}, mcpToolError("not_found", "BombVault does not protect a container called "+item+"; it has to be added in the web interface first", nil)
+		}
+		return mcpItem{Domain: domain, ID: t.ID, Name: t.ContainerName}, nil
+	case "vms":
+		if !validVMName(item) {
+			return mcpItem{}, mcpToolError("invalid_argument", "item must be the name of a VM", nil)
+		}
+		vm, err := h.store.GetVMTargetByName(item)
+		if err != nil {
+			return mcpItem{}, mcpToolError("not_found", "BombVault does not protect a VM called "+item+"; it has to be added in the web interface first", nil)
+		}
+		return mcpItem{Domain: domain, ID: vm.ID, Name: vm.Name}, nil
+	case "files":
+		return h.resolveMCPFileSet(item)
+	case "flash", "config":
+		if item != "" && item != domain {
+			return mcpItem{}, mcpToolError("invalid_argument", "the "+domain+" domain holds a single item, called "+domain, nil)
+		}
+		return mcpItem{Domain: domain, ID: domainRunTargetID(domain), Name: domain}, nil
+	}
+	return mcpItem{}, mcpToolError("invalid_argument", "domain must be one of "+strings.Join(mcpDomains, ", "), nil)
+}
+
+// resolveMCPFileSet finds a folder set by its id, its exact name, or a name
+// that differs only in case. Two sets whose names differ only in case are legal,
+// so that last step can be ambiguous and says so instead of picking one.
+func (h *Handler) resolveMCPFileSet(item string) (mcpItem, *mcp.CallToolResult) {
+	sets, err := h.store.ListFileSets()
+	if err != nil {
+		return mcpItem{}, mcpServiceError(err)
+	}
+	notFound := mcpToolError("not_found", "BombVault has no folder set called "+item, nil)
+	if runIDRe.MatchString(item) {
+		for _, set := range sets {
+			if set.ID == item {
+				return mcpItem{Domain: "files", ID: set.ID, Name: set.Name}, nil
+			}
+		}
+		return mcpItem{}, notFound
+	}
+
+	var matches []store.FileSet
+	for _, set := range sets {
+		if set.Name == item {
+			matches = []store.FileSet{set}
+			break
+		}
+		if strings.EqualFold(set.Name, item) {
+			matches = append(matches, set)
+		}
+	}
+	switch len(matches) {
+	case 0:
+		return mcpItem{}, notFound
+	case 1:
+		return mcpItem{Domain: "files", ID: matches[0].ID, Name: matches[0].Name}, nil
+	}
+	candidates := make([]map[string]any, 0, len(matches))
+	for _, set := range matches {
+		candidates = append(candidates, map[string]any{"id": set.ID, "name": set.Name})
+	}
+	return mcpItem{}, mcpToolError("ambiguous", "several folder sets are called "+item+"; pass the id of the one you mean",
+		map[string]any{"candidates": candidates})
+}
+
+// mcpRunStatuses are the states a run row can be in.
+var mcpRunStatuses = []string{"running", "success", "failed", "cancelled", "skipped"}
+
+// mcpRunDomains is the domain vocabulary of a run: the item domains plus the
+// Backup Everything pass, which owns runs but no items.
+var mcpRunDomains = append(append([]string{}, mcpDomains...), "everything")
+
+type listRunsInput struct {
+	Limit  *int   `json:"limit"`
+	Domain string `json:"domain"`
+	Item   string `json:"item"`
+	Status string `json:"status"`
+	Kind   string `json:"kind"`
+	Since  int64  `json:"since"`
+}
+
+func (h *Handler) toolListRuns(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	if _, ok := mcpCallerFrom(ctx); !ok {
+		return mcpNoCaller(), nil
+	}
+	var in listRunsInput
+	if err := decodeMCPArgs(req.Params.Arguments, &in); err != nil {
+		h.logMCPCall(ctx, "list_runs", "invalid_argument")
+		return mcpToolError("invalid_argument", err.Error(), nil), nil
+	}
+	limit := mcpRunsLimitDefault
+	if in.Limit != nil {
+		limit = *in.Limit
+	}
+	refuse := func(msg string) (*mcp.CallToolResult, error) {
+		h.logMCPCall(ctx, "list_runs", "invalid_argument")
+		return mcpToolError("invalid_argument", msg, nil), nil
+	}
+	switch {
+	case limit < 1 || limit > mcpRunsLimitMax:
+		return refuse(fmt.Sprintf("limit must be between 1 and %d", mcpRunsLimitMax))
+	case in.Domain != "" && !slices.Contains(mcpRunDomains, in.Domain):
+		return refuse("domain must be one of " + strings.Join(mcpRunDomains, ", "))
+	case in.Item != "" && in.Domain == "":
+		return refuse("item needs the domain it belongs to")
+	case in.Status != "" && !slices.Contains(mcpRunStatuses, in.Status):
+		return refuse("status must be one of " + strings.Join(mcpRunStatuses, ", "))
+	case in.Kind != "" && !slices.Contains(digestKindOrder, in.Kind):
+		return refuse("kind must be one of " + strings.Join(digestKindOrder, ", "))
+	case in.Since < 0:
+		return refuse("since must be a unix time in seconds")
+	}
+
+	// One row over the limit, so the answer can say whether there is more
+	// without a second query.
+	filter := store.RunFilter{Limit: limit + 1, Since: in.Since}
+	if in.Status != "" {
+		filter.Statuses = []string{in.Status}
+	}
+	if in.Kind != "" {
+		filter.Kinds = []string{in.Kind}
+	}
+	switch {
+	case in.Item != "":
+		item, bad := h.resolveMCPItem(in.Domain, in.Item)
+		if bad != nil {
+			h.logMCPCall(ctx, "list_runs", "refused")
+			return bad, nil
+		}
+		filter.TargetIDs = []string{item.ID}
+	case in.Domain != "":
+		ids, err := h.mcpDomainTargetIDs(in.Domain)
+		if err != nil {
+			h.logMCPCall(ctx, "list_runs", "failed")
+			return mcpServiceError(err), nil
+		}
+		filter.TargetIDs = ids
+	}
+
+	runs, err := h.store.ListRunsFiltered(filter)
+	if err != nil {
+		h.logMCPCall(ctx, "list_runs", "failed")
+		return mcpServiceError(err), nil
+	}
+	truncated := len(runs) > limit
+	if truncated {
+		runs = runs[:limit]
+	}
+
+	views := h.runViews(runs)
+	rows := make([]map[string]any, 0, len(views))
+	for _, view := range views {
+		rows = append(rows, mcpRunRow(view))
+	}
+
+	h.logMCPCall(ctx, "list_runs", "ok")
+	return mcpOK(map[string]any{"runs": rows, "truncated": truncated}), nil
+}
+
+// mcpDomainTargetIDs is every target id a domain's runs can be stored under:
+// its current items plus the literal id that carries the domain's own prune,
+// verify, off-site, tamper and drill rows.
+func (h *Handler) mcpDomainTargetIDs(domain string) ([]string, error) {
+	ids := []string{domainRunTargetID(domain)}
+	switch domain {
+	case "containers":
+		targets, err := h.store.ListTargets()
+		if err != nil {
+			return nil, err
+		}
+		for _, t := range targets {
+			ids = append(ids, t.ID)
+		}
+	case "vms":
+		vms, err := h.store.ListVMTargets()
+		if err != nil {
+			return nil, err
+		}
+		for _, vm := range vms {
+			ids = append(ids, vm.ID)
+		}
+	case "files":
+		sets, err := h.store.ListFileSets()
+		if err != nil {
+			return nil, err
+		}
+		for _, set := range sets {
+			ids = append(ids, set.ID)
+		}
+	}
+	return ids, nil
+}
+
+// mcpRunRow is one run in the shape a tool answers with: no snapshot id, no
+// host paths in the error, and a domain an assistant can pass back in. The web
+// interface reads a domain operation by its target id, so a row that carries no
+// item domain takes that literal id as its domain here.
+func mcpRunRow(v runView) map[string]any {
+	domain := mcpDomainOut(v.Domain)
+	if domain == "" && slices.Contains(mcpRunDomains, v.TargetID) {
+		domain = v.TargetID
+	}
+	var finished int64
+	if v.FinishedAt != nil {
+		finished = *v.FinishedAt
+	}
+	return map[string]any{
+		"id":              v.ID,
+		"domain":          domain,
+		"itemId":          v.TargetID,
+		"itemName":        v.Target,
+		"kind":            v.Kind,
+		"status":          v.Status,
+		"startedAt":       v.StartedAt,
+		"finishedAt":      finished,
+		"bytes":           v.Bytes,
+		"error":           mcpScrubText(v.Error),
+		"acknowledged":    v.Acknowledged,
+		"groupId":         v.GroupID,
+		"startedVia":      v.StartedVia,
+		"startedViaLabel": v.StartedViaLabel,
+	}
 }

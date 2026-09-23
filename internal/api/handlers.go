@@ -3647,6 +3647,11 @@ type runView struct {
 	store.Run
 	Target string `json:"target"`
 	Domain string `json:"domain"` // "container" | "vm" | "flash" | "config" | "files" | "everything" | ""
+	// StartedViaLabel is the operator's name for the MCP key behind the run and
+	// StartedViaRevoked says whether that key is revoked. Both stay empty for a
+	// run the web interface or the scheduler started.
+	StartedViaLabel   string `json:"startedViaLabel"`
+	StartedViaRevoked bool   `json:"startedViaRevoked"`
 }
 
 // runTargetMaps resolves target_id → (human name, domain) across every domain,
@@ -3692,12 +3697,43 @@ func (h *Handler) handleRuns(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "runs": h.runViews(runs)})
+}
+
+// runViews enriches stored runs with their target's name and domain and names
+// the MCP key behind the ones an assistant started.
+func (h *Handler) runViews(runs []store.Run) []runView {
 	name, domain := h.runTargetMaps()
+	keys := h.mcpKeysBehind(runs)
 	views := make([]runView, 0, len(runs))
 	for _, r := range runs {
-		views = append(views, runView{Run: r, Target: name[r.TargetID], Domain: domain[r.TargetID]})
+		v := runView{Run: r, Target: name[r.TargetID], Domain: domain[r.TargetID]}
+		if key, ok := keys[r.StartedViaKey]; ok {
+			v.StartedViaLabel = key.Label
+			v.StartedViaRevoked = key.RevokedAt > 0
+		}
+		views = append(views, v)
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "runs": views})
+	return views
+}
+
+// mcpKeysBehind indexes the MCP keys the runs name, and reads none at all when
+// no run came from MCP. A revoked key is included: the audit trail has to keep
+// naming the client that started a run after the key it used is gone.
+func (h *Handler) mcpKeysBehind(runs []store.Run) map[string]store.MCPKey {
+	if !slices.ContainsFunc(runs, func(r store.Run) bool { return r.StartedViaKey != "" }) {
+		return nil
+	}
+	keys, err := h.store.ListMCPKeys()
+	if err != nil {
+		log.Printf("api: runs: reading the MCP key names failed: %v", err)
+		return nil
+	}
+	out := make(map[string]store.MCPKey, len(keys))
+	for _, key := range keys {
+		out[key.ID] = key
+	}
+	return out
 }
 
 // handleAckRuns marks failed runs as acknowledged so the dashboard's error panel

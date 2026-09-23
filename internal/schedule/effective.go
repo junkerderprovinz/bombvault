@@ -122,6 +122,15 @@ func EffectiveFileSetSchedule(fs store.FileSet, s store.Settings) EffectiveSched
 	return effectiveItemSchedule(s.FilesEnabled, fs.Enabled, fs.ScheduleCadence, s.FilesSchedule, s)
 }
 
+// PausedByOverride reports whether an item's own schedule override switches its
+// backups off. EffectiveSchedule collapses that into EffectiveNone together
+// with a disabled domain and an excluded item, so the two cases need a reading
+// of their own where they have to be told apart.
+func PausedByOverride(override string) bool {
+	cls := classifyItemOverride(override)
+	return !cls.ownEntry && !cls.inDomainRun
+}
+
 // cadenceRuns reports whether a cadence string would ever fire. An unparseable
 // cadence counts as not running, which matches registerJobs: it logs and skips.
 func cadenceRuns(cadence string) bool {
