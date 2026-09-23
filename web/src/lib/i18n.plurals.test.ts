@@ -76,3 +76,25 @@ describe("plural forms in the tables", () => {
     }
   });
 });
+
+describe("the dump counts in Czech and Slovak", () => {
+  // Both languages have a "many" category, but Intl selects it only for
+  // fractions: five and up land in "other". A table that reads "many" as the
+  // big-number form puts the genitive singular on screen, "5 výpisu".
+  const form = (code: string, key: string, n: number): string =>
+    countText((locales[code] as Record<string, string>)[key], code, n);
+
+  it("read as the genitive plural from five upwards", () => {
+    expect(form("cs", "recovery.foreignDbDumps", 5)).toContain("5 výpisů");
+    expect(form("sk", "recovery.foreignDbDumps", 5)).toContain("5 výpisov");
+    expect(form("cs", "recovery.dumpOnlySkipped", 11)).toContain("11 databází");
+    expect(form("sk", "recovery.dumpOnlySkipped", 11)).toContain("11 databáz");
+    expect(form("cs", "dbdump.introNotice", 25)).toContain("25 databází");
+    expect(form("sk", "dbdump.introNotice", 25)).toContain("25 databáz");
+  });
+
+  it("keep their own form for two, three and four", () => {
+    expect(form("cs", "recovery.foreignDbDumps", 3)).toContain("3 výpisy");
+    expect(form("sk", "recovery.foreignDbDumps", 3)).toContain("3 výpisy");
+  });
+});
