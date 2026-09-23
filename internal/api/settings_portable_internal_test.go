@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -690,5 +692,86 @@ func TestPreFeatureExportImportsAndKeepsDetectionOn(t *testing.T) {
 	}
 	if got.AnomalySensitivity != before.AnomalySensitivity || got.AnomalyNotifyMin != before.AnomalyNotifyMin {
 		t.Fatalf("preset and minimum must keep their stored values: %+v", got)
+	}
+}
+
+// seedMCPKeys stores two keys the way the API does, with fixed material so an
+// export can be searched for every part of them.
+func seedMCPKeys(t *testing.T, st *store.Repo) []string {
+	t.Helper()
+	var traces []string
+	for _, k := range []struct{ id, label, digest, hint string }{
+		{"0b7e0b7e0b7e0b7e0b7e0b7e0b7e0b7e", "Claude Code laptop", "9f1c4b2ade", "Zq7X"},
+		{"77aa77aa77aa77aa77aa77aa77aa77aa", "Workshop desktop", "31e8d70ac5", "Wm4P"},
+	} {
+		if _, err := st.CreateMCPKey(k.id, k.label, k.digest, k.hint, "check-"+k.id, true, 1789600000); err != nil {
+			t.Fatalf("seed key %s: %v", k.label, err)
+		}
+		traces = append(traces, k.label, k.digest, k.hint)
+	}
+	return traces
+}
+
+// activeMCPKeyLabels returns the labels of the keys a request could still
+// authenticate with.
+func activeMCPKeyLabels(t *testing.T, st *store.Repo) []string {
+	t.Helper()
+	keys, err := st.ActiveMCPKeys()
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := make([]string, 0, len(keys))
+	for _, k := range keys {
+		out = append(out, k.Label)
+	}
+	return out
+}
+
+func TestExportNeverCarriesMCPKeys(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	traces := append(seedMCPKeys(t, srcStore), secret.MCPKeyPrefix)
+
+	for _, query := range []string{"", "?includeCredentials=true"} {
+		body, _ := doExport(t, src, query)
+		for _, trace := range traces {
+			if bytes.Contains(body, []byte(trace)) {
+				t.Fatalf("export%q carries %q", query, trace)
+			}
+		}
+	}
+}
+
+func TestImportLeavesMCPKeysAlone(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	body, _ := doExport(t, src, "?includeCredentials=true")
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	seedMCPKeys(t, dstStore)
+	before := activeMCPKeyLabels(t, dstStore)
+
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply envelope wrong: %v", env)
+	}
+	if got := activeMCPKeyLabels(t, dstStore); !reflect.DeepEqual(got, before) {
+		t.Fatalf("active keys after a plain import = %v, want %v", got, before)
+	}
+
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(body, &raw); err != nil {
+		t.Fatal(err)
+	}
+	raw["mcpKeys"] = json.RawMessage(`[{"label":"x","keyDigest":"deadbeef"}]`)
+	crafted, err := json.Marshal(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if env := doImport(t, dst, crafted, "?apply=true"); env["ok"] != true {
+		t.Fatalf("a file with an unknown top-level field must still import: %v", env)
+	}
+	got := activeMCPKeyLabels(t, dstStore)
+	if !reflect.DeepEqual(got, before) {
+		t.Fatalf("a crafted mcpKeys field changed the key set: %v", got)
 	}
 }

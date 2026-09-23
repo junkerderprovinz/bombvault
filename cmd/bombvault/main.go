@@ -201,7 +201,8 @@ func run() error {
 	// moment to swap BombVault's own settings database, which the running process
 	// otherwise holds open (WAL). Fail-safe: on any error the boot continues on the
 	// existing live DB (ApplyPending has already cleared the pending state).
-	if applied, err := selfrestore.ApplyPending(cfg.DataDir); err != nil {
+	applied, err := selfrestore.ApplyPending(cfg.DataDir)
+	if err != nil {
 		log.Printf("selfrestore: %v", err) // fail-safe: boot continues on the live DB
 	} else if applied {
 		log.Printf("selfrestore: applied a staged config restore; booting on the restored settings")
@@ -216,6 +217,8 @@ func run() error {
 		return err
 	}
 	st := store.New(db)
+
+	api.RevokeMCPKeysAfterConfigRestore(st, applied, time.Now())
 
 	// Reap runs left in 'running' by a previous lifetime (crash/update mid-backup)
 	// so they don't linger as a perpetual "running" status on the dashboard.

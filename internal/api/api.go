@@ -452,6 +452,16 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("DELETE /api/fleet/peers/{id}", h.handleDeleteFleetPeer)
 	mux.HandleFunc("POST /api/fleet/peers/{id}/poll", h.handleFleetPeerPoll)
 
+	// MCP server: the keys an assistant authenticates with. Create and rotate
+	// hand the key out once and never again, so these routes stay
+	// session-protected like every other /api route.
+	mux.HandleFunc("GET /api/mcp/keys", h.handleListMCPKeys)
+	mux.HandleFunc("POST /api/mcp/keys", h.handleCreateMCPKey)
+	mux.HandleFunc("PATCH /api/mcp/keys/{id}", h.handleUpdateMCPKey)
+	mux.HandleFunc("POST /api/mcp/keys/{id}/rotate", h.handleRotateMCPKey)
+	mux.HandleFunc("POST /api/mcp/keys/{id}/revoke", h.handleRevokeMCPKey)
+	mux.HandleFunc("DELETE /api/mcp/keys/{id}", h.handlePurgeMCPKey)
+
 	// Mesh off-site (v8.0.0): review offers this box has RECEIVED from peers
 	// (accept turns one into a normal named credential set + off-site target,
 	// both pre-existing mechanisms) and propose this box's OWN storage to a
