@@ -1,8 +1,10 @@
 package sshconn
 
 import (
+	"context"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -139,5 +141,34 @@ func TestLastLine(t *testing.T) {
 				t.Errorf("lastLine(%q) = %q, want %q", tc.in, got, tc.want)
 			}
 		})
+	}
+}
+
+// TestRunCaptureKeepsStdoutAndStderrApart points sshBinary at a script that
+// writes to both streams and fails, which is what a zfs call looks like when
+// the remote user may not snapshot.
+func TestRunCaptureKeepsStdoutAndStderrApart(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("needs a POSIX shell")
+	}
+	script := filepath.Join(t.TempDir(), "fake-ssh")
+	body := "#!/bin/sh\necho out-line\necho err-line >&2\nexit 1\n"
+	if err := os.WriteFile(script, []byte(body), 0o700); err != nil { //nolint:gosec // G306: an executable stand-in for ssh
+		t.Fatal(err)
+	}
+	old := sshBinary
+	sshBinary = script
+	t.Cleanup(func() { sshBinary = old })
+
+	c := testConn(t)
+	stdout, stderr, err := c.RunCapture(context.Background(), "zfs", "snapshot", "cache/appdata@bombvault-20260917031500")
+	if err == nil {
+		t.Fatal("RunCapture reported success for a command that exited 1")
+	}
+	if stdout != "out-line" {
+		t.Errorf("stdout = %q", stdout)
+	}
+	if stderr != "err-line" {
+		t.Errorf("stderr = %q", stderr)
 	}
 }

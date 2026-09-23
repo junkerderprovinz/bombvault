@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -36,13 +37,22 @@ type Config struct {
 	// from LibvirtHost, LibvirtSSHUser and LibvirtSSHPort. TrueNAS Scale needs
 	// it because its libvirtd listens on a non-standard socket; the value is
 	// in docs/vm-backup-ssh-setup.md.
-	LibvirtURI        string
-	Port              int
-	HTTPSPort         int
-	HTTPOnly          bool
-	FlashTemplatesDir string
-	FlashDir          string
-	DBPath            string
+	LibvirtURI string
+	// LibvirtURIHost and LibvirtURIUser are the SSH target LibvirtURI names,
+	// empty when no qemu+ssh URI is set. They fill in for the variables the
+	// deployment left unset and let the probe report a target that disagrees
+	// with the URI.
+	LibvirtURIHost string
+	LibvirtURIUser string
+	// LibvirtHostWasPlaceholder records that LIBVIRT_HOST still held the value
+	// the Unraid template ships, which reaches no host.
+	LibvirtHostWasPlaceholder bool
+	Port                      int
+	HTTPSPort                 int
+	HTTPOnly                  bool
+	FlashTemplatesDir         string
+	FlashDir                  string
+	DBPath                    string
 	// TrustedProxies (env TRUSTED_PROXY, comma-separated addresses or CIDR
 	// ranges) are the hops whose X-Forwarded-For is believed. The login
 	// throttle counts failures per client, and behind a reverse proxy every
@@ -60,6 +70,13 @@ func Load(env map[string]string) (Config, error) {
 		return Config{}, fmt.Errorf("APP_KEY must be exactly 64 lowercase hex characters")
 	}
 
+	uriHost, uriUser, uriPort, hasURI := sshTargetFromURI(env["LIBVIRT_URI"])
+	libvirtHost := env["LIBVIRT_HOST"]
+	wasPlaceholder := libvirtHost == libvirtHostPlaceholder
+	if wasPlaceholder {
+		libvirtHost = ""
+	}
+
 	c := Config{
 		AppKey:           key,
 		DataDir:          stringOr(env["DATA_DIR"], "/config"),
@@ -67,21 +84,52 @@ func Load(env map[string]string) (Config, error) {
 		HostSourceRoot:   stringOr(env["HOST_SOURCE_ROOT"], "/mnt"),
 		DataRootSegments: dataRootSegments(env["DATA_ROOT_SEGMENTS"]),
 		PlatformOverride: env["PLATFORM"],
-		// libvirt is reached over SSH, not through a mounted socket.
-		LibvirtHost:       stringOr(env["LIBVIRT_HOST"], "host.docker.internal"),
-		LibvirtSSHUser:    stringOr(env["LIBVIRT_SSH_USER"], "root"),
-		LibvirtSSHPort:    stringOr(env["LIBVIRT_SSH_PORT"], "22"),
-		LibvirtURI:        env["LIBVIRT_URI"],
-		Port:              intOr(env["PORT"], 3000),
-		HTTPSPort:         intOr(env["HTTPS_PORT"], 3443),
-		HTTPOnly:          strings.EqualFold(env["HTTP_ONLY"], "true"),
-		FlashTemplatesDir: stringOr(env["FLASH_TEMPLATES_DIR"], "/host/boot/config/plugins/dockerMan/templates-user"),
+		// libvirt is reached over SSH, not through a mounted socket. A
+		// variable the deployment did not set falls back to the URI's own
+		// target, which on TrueNAS is the only one that works.
+		LibvirtHost:               stringOr(libvirtHost, stringOr(uriHost, "host.docker.internal")),
+		LibvirtSSHUser:            stringOr(env["LIBVIRT_SSH_USER"], stringOr(uriUser, "root")),
+		LibvirtSSHPort:            stringOr(env["LIBVIRT_SSH_PORT"], stringOr(uriPort, "22")),
+		LibvirtURI:                env["LIBVIRT_URI"],
+		LibvirtURIHost:            uriHost,
+		LibvirtURIUser:            uriUser,
+		LibvirtHostWasPlaceholder: wasPlaceholder,
+		Port:                      intOr(env["PORT"], 3000),
+		HTTPSPort:                 intOr(env["HTTPS_PORT"], 3443),
+		HTTPOnly:                  strings.EqualFold(env["HTTP_ONLY"], "true"),
+		FlashTemplatesDir:         stringOr(env["FLASH_TEMPLATES_DIR"], "/host/boot/config/plugins/dockerMan/templates-user"),
 		// the Unraid flash, /boot mounted at /host/boot
 		FlashDir:       stringOr(env["FLASH_DIR"], "/host/boot"),
 		TrustedProxies: trustedProxies(env["TRUSTED_PROXY"]),
 	}
 	c.DBPath = filepath.Join(c.DataDir, "bombvault.sqlite")
+	if wasPlaceholder {
+		log.Printf("config: LIBVIRT_HOST still holds the template placeholder, using %s", c.LibvirtHost)
+	}
+	if hasURI && (libvirtHost == "" || env["LIBVIRT_SSH_USER"] == "" || env["LIBVIRT_SSH_PORT"] == "") {
+		log.Printf("config: SSH target taken from LIBVIRT_URI: %s@%s:%s", c.LibvirtSSHUser, c.LibvirtHost, c.LibvirtSSHPort)
+	}
 	return c, nil
+}
+
+// libvirtHostPlaceholder is the value the Unraid template ships for
+// LIBVIRT_HOST. It reaches no host, so it counts as unset.
+const libvirtHostPlaceholder = "192.168.x.x"
+
+// sshTargetFromURI reads the SSH target out of a qemu+ssh libvirt URI. Any
+// other scheme gives ok == false and changes nothing.
+func sshTargetFromURI(uri string) (host, user, port string, ok bool) {
+	if uri == "" {
+		return "", "", "", false
+	}
+	u, err := url.Parse(uri)
+	if err != nil || u.Scheme != "qemu+ssh" || u.Hostname() == "" {
+		return "", "", "", false
+	}
+	if u.User != nil {
+		user = u.User.Username()
+	}
+	return u.Hostname(), user, u.Port(), true
 }
 
 // LoadFromEnv reads configuration from the process environment.
