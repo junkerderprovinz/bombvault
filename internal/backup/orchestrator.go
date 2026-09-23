@@ -421,13 +421,10 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 	if stopTimeout <= 0 {
 		stopTimeout = defaultStopTimeout
 	}
-	tags := []string{"container:" + d.ContainerRef, "p1"}
 	// One tag per alias, so a reader matches the snapshot on any of them.
 	// restic splits a tag value on commas; the names go unescaped because the
 	// takeover only stores names that pass the Docker name check.
-	for _, f := range d.FormerNames {
-		tags = append(tags, "formerly:"+f)
-	}
+	tags := withFormerNames([]string{"container:" + d.ContainerRef, "p1"}, d.FormerNames)
 
 	var (
 		summary     Summary

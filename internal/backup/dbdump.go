@@ -68,13 +68,16 @@ type DBDumpOutcome struct {
 }
 
 // dbDumpTags pairs the dump snapshot with the backup run it belongs to, so a
-// restore can find the dump taken minutes before a volume snapshot.
-func dbDumpTags(p DBDumpPlan, backupRunID string) []string {
+// restore can find the dump taken minutes before a volume snapshot. The former
+// names go on it for the same reason the volume snapshot carries them: a
+// container whose data sits under its compose working directory leaves dumps
+// and nothing else, and discovery has to read the link out of them.
+func dbDumpTags(p DBDumpPlan, backupRunID string, formerNames []string) []string {
 	tags := []string{p.Identity, "p1", "dbengine:" + p.Engine, "bvrun:" + backupRunID}
 	if p.Image != "" {
 		tags = append(tags, "dbimage:"+p.Image)
 	}
-	return tags
+	return withFormerNames(tags, formerNames)
 }
 
 // runDBDump takes the dump and records it as a run of its own, so a failed dump
@@ -91,7 +94,7 @@ func runDBDump(ctx context.Context, d BackupDeps, backupRunID string) (backupNot
 	res, dumpErr := d.DBDumper.Dump(ctx, DBDumpRequest{
 		Repo: d.RepoPath,
 		Plan: *d.DBDump,
-		Tags: dbDumpTags(*d.DBDump, backupRunID),
+		Tags: dbDumpTags(*d.DBDump, backupRunID, d.FormerNames),
 	})
 
 	out := DBDumpOutcome{

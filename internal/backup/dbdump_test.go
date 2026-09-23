@@ -172,9 +172,10 @@ func TestDBDumpSuccessRecordsItsOwnRun(t *testing.T) {
 
 func TestDBDumpTags(t *testing.T) {
 	tests := []struct {
-		name  string
-		image string
-		want  []string
+		name        string
+		image       string
+		formerNames []string
+		want        []string
 	}{
 		{
 			name:  "with an image reference",
@@ -186,12 +187,22 @@ func TestDBDumpTags(t *testing.T) {
 			image: "",
 			want:  []string{"dbdump:pg", "p1", "dbengine:postgres", "bvrun:run-1"},
 		},
+		{
+			// A container backed up under the compose working directory leaves
+			// dumps and nothing else, so the link to its old name has to survive
+			// in them.
+			name:        "after a rename",
+			image:       "",
+			formerNames: []string{"pg-old"},
+			want:        []string{"dbdump:pg", "p1", "dbengine:postgres", "bvrun:run-1", "formerly:pg-old"},
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			d, r, runs, dumper := dumpFakes(t)
 			deps := dumpDeps(d, r, runs, dumper)
 			deps.DBDump.Image = tc.image
+			deps.FormerNames = tc.formerNames
 
 			if _, err := backup.BackupContainer(t.Context(), deps); err != nil {
 				t.Fatalf("unexpected error: %v", err)
