@@ -44,6 +44,13 @@ describe("TimelineDeleteDialog", () => {
     expect(fake.callsTo("deleteTimelineRow")).toEqual([["containers", "nginx", "a1a1a1a1", [atHome]]]);
   });
 
+  it("says the space waits on a prune and that the delete is final", async () => {
+    fake.reply("getTimelineDeletePreview", { ok: true, delete: [atHome], others: [] });
+    open();
+    expect(await screen.findByText("The space is not reclaimed until a prune runs.")).toBeTruthy();
+    expect(screen.getByText("This cannot be undone.")).toBeTruthy();
+  });
+
   it("says when this is the last copy", async () => {
     fake.reply("getTimelineDeletePreview", {
       ok: true,

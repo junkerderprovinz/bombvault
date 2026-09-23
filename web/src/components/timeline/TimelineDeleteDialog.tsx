@@ -77,6 +77,7 @@ export function TimelineDeleteDialog({
       if (kept.length > 0) lines.push(t("timeline.deleteHeldBy").replace("{list}", () => names(kept)));
       if (unread.length > 0) lines.push(t("placement.uncheckable").replace("{list}", () => names(unread)));
       if (leftOut.length > 0) lines.push(t("timeline.deleteSkipped").replace("{list}", () => names(leftOut)));
+      lines.push(t("timeline.deleteSpace"), t("timeline.deleteFinal"));
       const everywhere = places.length === 0;
       const yes = await confirm(t("timeline.deleteAsk").replace("{list}", () => names(del)), {
         confirmLabel: everywhere ? t("timeline.deleteRow") : t("common.delete"),
