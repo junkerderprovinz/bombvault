@@ -1,19 +1,27 @@
 package api
 
 import (
+	"log"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
 // ownerContext is what deciding a snapshot's owner needs besides its tags.
 type ownerContext struct {
-	domain string
-	known  map[string]bool // identities that exist as an item row or a copy rule
+	domain         string
+	known          map[string]bool       // identities that exist as an item row or a copy rule
+	aliasPrefix    string                // container: or vm:, empty where no aliases exist
+	aliases        map[string]aliasOwner // by the former name's identity
+	aliasesUnknown bool                  // the alias table could not be read
+	entries        []string              // every row's identity, all possible owners while aliasesUnknown
 }
 
-func (s *Service) ownerContextFor(domain string) (ownerContext, error) {
+// ownerContextByName is the domain's rows and copy rules, enough to settle a
+// snapshot by the name its tag carries today.
+func (s *Service) ownerContextByName(domain string) (ownerContext, error) {
 	c := ownerContext{domain: domain, known: map[string]bool{}}
 	switch domain {
 	case "containers":
@@ -53,9 +61,10 @@ func (s *Service) ownerContextFor(domain string) (ownerContext, error) {
 	return c, nil
 }
 
-// identityOf returns the identities a tag can belong to: none for a tag of another
-// domain or a marker tag, one for an exact tag, two for vm:<a>:zvol:<b> when both
-// vm:<a> and vm:<a>:zvol:<b> are known.
+// identityOf returns the identities a tag can belong to by name: none for a tag
+// of another domain or a marker tag, one for an exact tag, two for
+// vm:<a>:zvol:<b> when both vm:<a> and vm:<a>:zvol:<b> are known. owners adds
+// what the link of a former name decides.
 func (c ownerContext) identityOf(tag string) []string {
 	switch c.domain {
 	case "containers":
@@ -111,8 +120,8 @@ type snapshotOwner struct {
 	Owner    string   // the settled owner, "" when the vmrun sibling does not decide
 }
 
-// owners settles every snapshot of one listing, keyed by snapshot id.
-func (c ownerContext) owners(snaps []restic.Snapshot) map[string]snapshotOwner {
+// ownersByName settles every snapshot of one listing, keyed by snapshot id.
+func (c ownerContext) ownersByName(snaps []restic.Snapshot) map[string]snapshotOwner {
 	runs := map[string][]restic.Snapshot{}
 	for _, sn := range snaps {
 		if run := runTag(sn); run != "" {
@@ -139,6 +148,126 @@ func (c ownerContext) owners(snaps []restic.Snapshot) map[string]snapshotOwner {
 		out[sn.ID] = o
 	}
 	return out
+}
+
+// aliasOwner is the entry that a former name's snapshots from before the link
+// belong to.
+type aliasOwner struct {
+	identity string
+	linkedAt time.Time
+}
+
+// ownerContextFor is ownerContextByName with the domain's former names, which
+// owners settles by the snapshot's time against the link.
+func (s *Service) ownerContextFor(domain string) (ownerContext, error) {
+	c, err := s.ownerContextByName(domain)
+	if err != nil {
+		return c, err
+	}
+	aliasDomain, ok := map[string]string{"containers": "container", "vms": "vm"}[domain]
+	if !ok {
+		return c, nil
+	}
+	names, err := s.rowNamesByID(domain)
+	if err != nil {
+		return c, err
+	}
+	c.aliasPrefix = aliasDomain + ":"
+	for _, name := range names {
+		c.entries = append(c.entries, c.aliasPrefix+name)
+	}
+	slices.Sort(c.entries)
+	aliases, err := s.store.ListAliases(aliasDomain)
+	if err != nil {
+		log.Printf("api: %s aliases: %v; any entry may own a snapshot under a former name until this reads", aliasDomain, err) //nolint:gosec // G706: aliasDomain is a fixed literal
+		c.aliasesUnknown = true
+		return c, nil
+	}
+	c.aliases = make(map[string]aliasOwner, len(aliases))
+	for _, a := range aliases {
+		// A row deleted between the two reads took its aliases with it.
+		name, ok := names[a.TargetID]
+		if !ok {
+			continue
+		}
+		id := c.aliasPrefix + a.OldName
+		c.aliases[id] = aliasOwner{identity: c.aliasPrefix + name, linkedAt: time.Unix(a.LinkedAt, 0)}
+		c.known[id] = true
+	}
+	return c, nil
+}
+
+// rowNamesByID maps the container or VM rows of domain from id to name.
+func (s *Service) rowNamesByID(domain string) (map[string]string, error) {
+	names := map[string]string{}
+	if domain == "vms" {
+		vms, err := s.store.ListVMTargets()
+		if err != nil {
+			return nil, err
+		}
+		for _, v := range vms {
+			names[v.ID] = v.Name
+		}
+		return names, nil
+	}
+	targets, err := s.store.ListTargets()
+	if err != nil {
+		return nil, err
+	}
+	for _, t := range targets {
+		names[t.ID] = t.ContainerName
+	}
+	return names, nil
+}
+
+// owners settles each snapshot by name, then gives a snapshot under a former
+// name to the renamed entry when it was taken before the link.
+func (c ownerContext) owners(snaps []restic.Snapshot) map[string]snapshotOwner {
+	out := c.ownersByName(snaps)
+	if len(c.aliases) == 0 && !c.aliasesUnknown {
+		return out
+	}
+	for _, snap := range snaps {
+		if o, ok := out[snap.ID]; ok {
+			out[snap.ID] = c.throughLinks(snap, o)
+		}
+	}
+	return out
+}
+
+// throughLinks applies the links of former names to an owner settled by name.
+func (c ownerContext) throughLinks(snap restic.Snapshot, o snapshotOwner) snapshotOwner {
+	ts, timed := snapshotTime(snap)
+	var out snapshotOwner
+	for _, id := range o.Possible {
+		possible, _ := c.throughLink(id, ts, timed)
+		out.Possible = append(out.Possible, possible...)
+	}
+	if o.Owner != "" {
+		_, out.Owner = c.throughLink(o.Owner, ts, timed)
+	}
+	slices.Sort(out.Possible)
+	out.Possible = slices.Compact(out.Possible)
+	return out
+}
+
+// throughLink resolves one identity: a former name belongs to the renamed entry
+// before its link and to whoever carries the name from the link on. owner is ""
+// when the time or the alias table cannot tell.
+func (c ownerContext) throughLink(id string, ts time.Time, timed bool) (possible []string, owner string) {
+	if c.aliasesUnknown && strings.HasPrefix(id, c.aliasPrefix) {
+		return append([]string{id}, c.entries...), ""
+	}
+	a, ok := c.aliases[id]
+	switch {
+	case !ok:
+		return []string{id}, id
+	case !timed:
+		return []string{a.identity, id}, ""
+	case ts.Before(a.linkedAt):
+		return []string{a.identity}, a.identity
+	}
+	return []string{id}, id
 }
 
 // runTag is the vmrun:<id> tag that ties the snapshots of one VM backup together.

@@ -133,6 +133,12 @@ func (a aliasClaim) takenAt(snap restic.Snapshot) (time.Time, bool) {
 	if !slices.Contains(snap.Tags, a.tag) {
 		return time.Time{}, false
 	}
+	return snapshotTime(snap)
+}
+
+// snapshotTime is when snap was taken. A Time that does not parse places the
+// snapshot on neither side of a link.
+func snapshotTime(snap restic.Snapshot) (time.Time, bool) {
 	ts, err := time.Parse(time.RFC3339Nano, snap.Time)
 	return ts, err == nil
 }
