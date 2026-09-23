@@ -71,11 +71,11 @@ func TestConnectingAsDirectRepositoryDropsTheOffPremisesMark(t *testing.T) {
 
 func TestDeletingATargetOnImportLeavesARemoteDirectRepositoryOffThePremises(t *testing.T) {
 	r := newRepo(t)
-	for _, loc := range []string{
-		"s3:https://s3.example.com/bv", "b2:bucket:bv", "rest:https://nas:8000/bv", "sftp:u@host:/bv",
-		"rclone:remote:bv", "azure:container:/bv", "gs:bucket:/bv", "swift:container:/bv",
-		"/mnt/remotes/nas/offsite", "S3:https://s3.example.com/upper",
-	} {
+	locations := []string{"/mnt/remotes/nas/offsite", "S3:https://s3.example.com/upper"}
+	for _, scheme := range restic.RemoteSchemes() {
+		locations = append(locations, scheme+":host/bv")
+	}
+	for _, loc := range locations {
 		target := store.SeedOffsiteTarget(t, r, "containers", loc)
 		direct := store.SeedCompanion(t, r, target)
 		if err := r.DeleteOffsiteTarget(target.ID); err != nil {

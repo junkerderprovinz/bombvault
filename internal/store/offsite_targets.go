@@ -7,6 +7,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
 // ErrEmptyOffsiteRepo is returned by UpsertOffsiteTarget when the target has no
@@ -90,6 +92,19 @@ type OffsiteTarget struct {
 	// it a plain remote repository.
 	CompanionLost bool
 	OffPremises   bool // counts as a site of its own for sites and 3-2-1, never for replication
+}
+
+// remoteLocation is the SQL that asks of a location column what
+// restic.IsRemoteRepo asks in Go: does it name a remote backend. A remote
+// repository stands off the premises, and the two places that decide that,
+// here and in the off-premises migration, read the same scheme list.
+func remoteLocation(col string) string {
+	schemes := restic.RemoteSchemes()
+	globs := make([]string, len(schemes))
+	for i, scheme := range schemes {
+		globs[i] = fmt.Sprintf("%s GLOB '%s:*'", col, scheme)
+	}
+	return strings.Join(globs, " OR ")
 }
 
 // Off-site target roles (see OffsiteTarget.Role's doc comment).
@@ -729,10 +744,9 @@ func (r *Repo) DeleteOffsiteTarget(id string) error {
 		if err := deleteTargetObservationsTx(tx, id); err != nil {
 			return err
 		}
+		//nolint:gosec // G202: remoteLocation is built from restic's scheme list, never from user text; every value travels as a parameter.
 		_, err := tx.Exec(`UPDATE offsite_targets SET companion_of = '', companion_lost = 1,
-			  off_premises = (repo GLOB 's3:*'   OR repo GLOB 'b2:*'     OR repo GLOB 'rest:*'
-			               OR repo GLOB 'sftp:*' OR repo GLOB 'rclone:*' OR repo GLOB 'azure:*'
-			               OR repo GLOB 'gs:*'   OR repo GLOB 'swift:*')
+			  off_premises = (`+remoteLocation("repo")+`)
 			WHERE role = ? AND companion_of = ? AND companion_of <> ''`, RoleRepo, id)
 		return err
 	})
