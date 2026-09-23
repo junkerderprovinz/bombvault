@@ -85,6 +85,11 @@ const RULES: Rule[] = [
   // Probing and inspection. "accept", "confirm" and "resolveAll" agree to what
   // is on screen, so they take the same check.
   [/test|verify|check|drill|appendOnly|tamper|accept|approve|confirm(?!Password)|resolveAll|\.stored$/i, () => <IconCheckCircle />],
+  // Settling an anomaly: seen and closed takes the same check as the other
+  // agreements, while marking it as expected records a new normal level.
+  [/acknowledge/i, () => <IconCheckCircle />],
+  [/expected/i, () => <IconSave />],
+
   [/scan|discover|browse|search/i, () => <IconSearch />],
   [/show|reveal|preview|view/i, () => <IconEye />],
   [/hint|info|explain|examples/i, () => <IconInfo />],

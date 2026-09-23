@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { getSettings, getAuth, getHealth, type Settings } from "../lib/api";
 import { LoginPage } from "../pages/Login";
 import { WhatsNewDialog } from "../components/WhatsNewDialog";
+import { AnomalyProvider } from "../lib/useAnomalies";
 import { sync as syncDisplayPrefs } from "../lib/displayPrefs";
 
 // The last BombVault version this browser has seen. The "What's new" dialog
@@ -147,24 +148,28 @@ export function Layout() {
   // spaces both from the window edge and from each other. It is GlimStone's
   // --page-gutter (1rem, `p-4`), the same in every app that uses the design
   // language. The content's 1.5rem padding is a separate distance on top.
+  // Inside the gate, so a browser that may not enter polls nothing. The rail's
+  // count and the dashboard card read the same summary from here.
   return (
-    <div className="flex h-screen overflow-hidden bg-carbon-background gap-4 p-4">
-      <Sidebar settings={settings} authEnabled={authEnabled} />
-      {/* `main` is the scroll container. It and the route wrapper are flex
-          columns so a short page can fill the height and push a footer to the
-          bottom (Settings does this with AboutFooter); other pages render at
-          their natural height. */}
-      <main className="flex-1 flex flex-col overflow-y-auto min-w-0">
-        {/* The page padding lives inside the scroll container. There is none
-            at the bottom, so at the end of a scroll the last card ends level
-            with the rail instead of 24px above it. */}
-        <div key={location.pathname} className="glim-page-enter flex-1 flex flex-col p-6 pb-0">
-          <Outlet />
-        </div>
-      </main>
-      {whatsNewVersion && (
-        <WhatsNewDialog version={whatsNewVersion} onClose={() => setWhatsNewVersion(null)} />
-      )}
-    </div>
+    <AnomalyProvider>
+      <div className="flex h-screen overflow-hidden bg-carbon-background gap-4 p-4">
+        <Sidebar settings={settings} authEnabled={authEnabled} />
+        {/* `main` is the scroll container. It and the route wrapper are flex
+            columns so a short page can fill the height and push a footer to the
+            bottom (Settings does this with AboutFooter); other pages render at
+            their natural height. */}
+        <main className="flex-1 flex flex-col overflow-y-auto min-w-0">
+          {/* The page padding lives inside the scroll container. There is none
+              at the bottom, so at the end of a scroll the last card ends level
+              with the rail instead of 24px above it. */}
+          <div key={location.pathname} className="glim-page-enter flex-1 flex flex-col p-6 pb-0">
+            <Outlet />
+          </div>
+        </main>
+        {whatsNewVersion && (
+          <WhatsNewDialog version={whatsNewVersion} onClose={() => setWhatsNewVersion(null)} />
+        )}
+      </div>
+    </AnomalyProvider>
   );
 }
