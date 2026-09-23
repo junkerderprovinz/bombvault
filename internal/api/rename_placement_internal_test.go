@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -65,6 +66,36 @@ func TestATakeoverOntoANameWithOnlyACopyRuleIsRefused(t *testing.T) {
 	}
 	if _, err := f.st.GetTargetByContainer("nginx"); err != nil {
 		t.Fatalf("the entry left its name after a refused takeover: %v", err)
+	}
+}
+
+func TestATakeoverKeepsTheRowOfANameWithACopyRule(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("nginx", "")
+	f.container("web", "")
+	f.rule("containers", "container:web", store.SkipAll)
+	f.dock.installed = map[string]bool{"web": true}
+
+	err := f.svc.TakeOverContainer(context.Background(), "nginx", "web")
+	if err == nil || !strings.Contains(err.Error(), "copy rule") {
+		t.Fatalf("err = %v, want a refusal that names the copy rule", err)
+	}
+	if _, err := f.st.GetTargetByContainer("web"); err != nil {
+		t.Fatalf("the row of web was removed although it has a copy rule: %v", err)
+	}
+}
+
+func TestAVMTakeoverKeepsTheRowOfANameWithACopyRule(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.vm("win11", "")
+	f.rule("vms", "vm:win11", store.SkipAll)
+
+	err := f.svc.removeEmptyVMRow(context.Background(), "win11")
+	if err == nil || !strings.Contains(err.Error(), "copy rule") {
+		t.Fatalf("err = %v, want a refusal that names the copy rule", err)
+	}
+	if _, err := f.st.GetVMTargetByName("win11"); err != nil {
+		t.Fatalf("the row of win11 was removed although it has a copy rule: %v", err)
 	}
 }
 
