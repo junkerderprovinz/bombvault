@@ -30,6 +30,7 @@ var mcpStartTools = []string{
 	"start_backup",
 	"start_domain_backup",
 	"start_backup_everything",
+	"cancel_backup",
 }
 
 // The era Claude Code and mcp-remote negotiate today. A client that speaks it
@@ -129,11 +130,13 @@ func TestMCPToolAnnotationsAndSchemas(t *testing.T) {
 		// primary repository can be an S3 bucket or a REST server. A start
 		// leaves it too, and a second call makes a second backup, but nothing
 		// it does destroys a restore point.
+		// Cancelling writes too, and a second call finds nothing left to stop,
+		// which is why it keeps the idempotent hint the starts give up.
 		starts := slices.Contains(mcpStartTools, name)
 		for hint, want := range map[string]any{
 			"readOnlyHint":    !starts,
 			"destructiveHint": false,
-			"idempotentHint":  !starts,
+			"idempotentHint":  !starts || name == "cancel_backup",
 			"openWorldHint":   starts || name == "list_restore_points",
 		} {
 			if ann[hint] != want {

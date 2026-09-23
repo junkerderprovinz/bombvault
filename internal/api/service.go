@@ -16942,6 +16942,9 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool
 	} else {
 		msg = fmt.Sprintf("Backup of %s FAILED: %s", target, scrubError(backupErr))
 	}
+	if o := runOriginFromContext(ctx); o.Via == "mcp" {
+		msg += " " + s.mcpOriginSentence(o.KeyID)
+	}
 	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: ok})
 
 	// Unraid native notification (delivered over SSH; notify.Send is HTTP-only).
@@ -16960,6 +16963,18 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool
 			log.Printf("notify: unraid: %v", e)
 		}
 	}
+}
+
+// mcpOriginSentence names the MCP key behind a backup for the notification
+// about it. A key the store cannot name still gets the sentence: what the
+// reader needs is that the backup came from neither the schedule nor the web
+// interface.
+func (s *Service) mcpOriginSentence(keyID string) string {
+	key, err := s.store.GetMCPKey(keyID)
+	if err != nil || key.Label == "" {
+		return "Started through MCP."
+	}
+	return fmt.Sprintf("Started through MCP with the key %q.", key.Label)
 }
 
 // statusSkipped marks a run BombVault intentionally did NOT perform because the

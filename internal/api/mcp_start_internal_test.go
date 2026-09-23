@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -368,6 +369,90 @@ func TestMCPStartPermissionRecheckedInHandler(t *testing.T) {
 	}
 	if len(runs) != 0 {
 		t.Fatalf("%d runs were recorded, want none", len(runs))
+	}
+}
+
+// A cancel reaches a backup only under the exact progress key the service
+// registered it with, so the two have to be read side by side: the derived key
+// here, the literal in service.go there.
+func TestMCPCancelDerivesTheServiceKey(t *testing.T) {
+	h, repo, sets := newMCPStartHandler(t, "docs")
+	target, err := repo.UpsertTarget(store.Target{ContainerName: "plex"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	vm, err := repo.UpsertVMTarget(store.VMTarget{Name: "win11"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile("service.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	src := string(raw)
+
+	for _, c := range []struct {
+		domain   string
+		targetID string
+		want     string
+		register string
+	}{
+		{"containers", target.ID, "container:plex", `s.registerBackupCancel("container:"+name, cancel)`},
+		{"vms", vm.ID, "vm:win11", `s.registerBackupCancel("vm:"+name, cancel)`},
+		{"files", sets["docs"].ID, "files:docs", `s.registerBackupCancel("files:"+set.Name, cancel)`},
+		{"flash", store.FlashTargetID, "flash", `s.registerBackupCancel("flash", cancel)`},
+		{"config", store.ConfigTargetID, "config", `s.registerBackupCancel("config", cancel)`},
+	} {
+		key, item, ok := h.mcpCancelKey(store.Run{TargetID: c.targetID})
+		if !ok {
+			t.Fatalf("%s: no progress key for target %q", c.domain, c.targetID)
+		}
+		if key != c.want {
+			t.Fatalf("%s: key = %q, want %q", c.domain, key, c.want)
+		}
+		if item.Domain != c.domain || item.ID != c.targetID {
+			t.Fatalf("%s: item = %+v", c.domain, item)
+		}
+		if !strings.Contains(src, c.register) {
+			t.Fatalf("%s backups no longer register under %s, so a cancel of one reaches nothing", c.domain, c.register)
+		}
+	}
+
+	if _, _, ok := h.mcpCancelKey(store.Run{TargetID: "gone"}); ok {
+		t.Fatal("a target that is not set up any more must have no progress key")
+	}
+}
+
+// The progress key belongs to the item, not to the run, so a backup that ends
+// in the moment the cancel arrives can hand the key to the next one. The answer
+// then has to say that nothing of this run was stopped.
+func TestMCPCancelReportsARunThatEndedFirst(t *testing.T) {
+	h, repo, sets := newMCPStartHandler(t, "docs")
+	runID, err := repo.StartRunWith(sets["docs"].ID, "backup",
+		store.RunMeta{StartedVia: "mcp", StartedViaKey: "0b7e"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	h.svc.registerBackupCancel("files:docs", func() {
+		if fErr := repo.FinishRun(runID, "success", "snap1", 1, ""); fErr != nil {
+			t.Error(fErr)
+		}
+	})
+
+	req := &mcp.CallToolRequest{Params: &mcp.CallToolParamsRaw{
+		Name:      "cancel_backup",
+		Arguments: json.RawMessage(fmt.Sprintf(`{"runId":%q}`, runID)),
+	}}
+	res, _ := h.toolCancelBackup(mcpStartCaller("0b7e", true), req)
+	if res.IsError {
+		t.Fatalf("cancel_backup: %v", res.StructuredContent)
+	}
+	out, _ := res.StructuredContent.(map[string]any)
+	if out["cancelled"] != false {
+		t.Fatalf("the answer claims %v, want cancelled false", out["cancelled"])
+	}
+	if _, ok := out["warning"].(string); !ok {
+		t.Fatalf("the answer carries no warning: %v", out)
 	}
 }
 

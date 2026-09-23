@@ -5600,7 +5600,7 @@ func (f *fakeResticEngine) RepoOpensErr(ctx context.Context, repo string, m rest
 	return errors.New("fake: repo did not open")
 }
 
-func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, tags []string, m restic.Mode, excludes ...string) (restic.Summary, error) {
+func (f *fakeResticEngine) Backup(ctx context.Context, repo string, paths, tags []string, m restic.Mode, excludes ...string) (restic.Summary, error) {
 	if f.backupPanic {
 		panic("boom during backup")
 	}
@@ -5618,7 +5618,13 @@ func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, tags []
 		}
 	}
 	if f.block != nil {
-		<-f.block
+		// A cancelled backup ends in restic returning the context error; that is
+		// how the run bookkeeping tells a cancellation from a failure.
+		select {
+		case <-f.block:
+		case <-ctx.Done():
+			return restic.Summary{}, ctx.Err()
+		}
 	}
 	f.backedUp = append(f.backedUp, repo)
 	f.lastPaths = paths
