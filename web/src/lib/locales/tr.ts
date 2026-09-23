@@ -1711,6 +1711,12 @@ const tr: Partial<Translations> = {
   "placement.uploadCost": "Yüklemeler sağlayıcıda ücrete tabi olabilir.",
   "placement.uncheckable": "Denetlenemedi: {list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "{target} yanında doğrudan depo",
   "directRepo.intro": "Bunu seçen ögeler doğrudan {target} hedefine yedeklenir, onun anahtarı, depolama sınıfı, sınırları ve append-only ayarıyla. Anlık görüntülerini {target} kurallarına göre saklar. İptal hiçbir şey bırakmaz.",

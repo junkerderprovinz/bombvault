@@ -1722,6 +1722,12 @@ const hr: Partial<Translations> = {
   "placement.uploadCost": "Prijenosi mogu koštati kod pružatelja usluge.",
   "placement.uncheckable": "Nije bilo moguće provjeriti: {list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "Izravni repozitorij kod {target}",
   "directRepo.intro": "Stavke koje ga odaberu sigurnosno se kopiraju izravno na {target}, s njegovim ključem, klasom pohrane, ograničenjima i postavkom append-only. Čuva svoje snimke prema pravilima {target}. Otkazivanje ne ostavlja ništa za sobom.",

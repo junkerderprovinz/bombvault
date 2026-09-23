@@ -1722,6 +1722,12 @@ const lv: Partial<Translations> = {
   "placement.uploadCost": "Augšupielādes var maksāt naudu pie sniedzēja.",
   "placement.uncheckable": "Neizdevās pārbaudīt: {list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "Tiešā krātuve pie {target}",
   "directRepo.intro": "Vienumi, kas to izvēlas, tiek dublēti tieši uz {target}, izmantojot tā atslēgu, krātuves klasi, ierobežojumus un append-only iestatījumu. Tā glabā savus momentuzņēmumus pēc {target} noteikumiem. Atcelšana neatstāj neko.",

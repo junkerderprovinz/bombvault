@@ -1815,6 +1815,13 @@ export const en = {
   "placement.uncheckable": "Could not be checked: {list}",
   "placement.flow": "{from} → {to}",
 
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
+
   // Direct repository
   "directRepo.title": "Direct repository at {target}",
   "directRepo.intro":
@@ -3699,6 +3706,13 @@ export const de: Translations = {
   "placement.uploadCost": "Uploads können beim Anbieter Geld kosten.",
   "placement.uncheckable": "Nicht prüfbar: {list}",
   "placement.flow": "{from} → {to}",
+
+  // Timeline
+  "timeline.deleteAsk": "Diese Sicherung hier löschen: {list}?",
+  "timeline.deleteRow": "Überall löschen",
+  "timeline.deleteLast": "Das ist die letzte Kopie dieser Sicherung.",
+  "timeline.deleteHeldBy": "Liegt noch bei: {list}",
+  "timeline.deleteSkipped": "Ausgelassen, append-only: {list}",
 
   // Direct repository
   "directRepo.title": "Direkt-Repository bei {target}",

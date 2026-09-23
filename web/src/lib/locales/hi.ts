@@ -1722,6 +1722,12 @@ const hi: Partial<Translations> = {
   "placement.uploadCost": "अपलोड से प्रोवाइडर पर पैसे खर्च हो सकते हैं।",
   "placement.uncheckable": "जाँचा नहीं जा सका: {list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "{target} पर डायरेक्ट रिपॉज़िटरी",
   "directRepo.intro": "जो प्रविष्टियाँ इसे चुनती हैं, वे सीधे {target} में बैकअप होती हैं, इसकी कुंजी, स्टोरेज क्लास, सीमाओं और append-only सेटिंग के साथ। यह अपने स्नैपशॉट {target} के नियमों के अनुसार रखता है। रद्द करने पर कुछ नहीं बचता।",

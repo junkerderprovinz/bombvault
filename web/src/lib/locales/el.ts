@@ -1711,6 +1711,12 @@ const el: Partial<Translations> = {
   "placement.uploadCost": "Οι μεταφορτώσεις μπορεί να κοστίσουν χρήματα στον πάροχο.",
   "placement.uncheckable": "Δεν ήταν δυνατός ο έλεγχος: {list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "Άμεσο αποθετήριο στο {target}",
   "directRepo.intro": "Τα στοιχεία που το επιλέγουν αντιγράφονται απευθείας στο {target}, με το κλειδί, την κλάση αποθήκευσης, τα όρια και τη ρύθμιση append-only του. Κρατά τα στιγμιότυπά του σύμφωνα με τους κανόνες του {target}. Η ακύρωση δεν αφήνει τίποτα πίσω.",

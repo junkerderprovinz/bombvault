@@ -1708,6 +1708,12 @@ const nl: Partial<Translations> = {
   "placement.uploadCost": "Uploads kunnen geld kosten bij de provider.",
   "placement.uncheckable": "Kon niet worden gecontroleerd: {list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "Directe repository bij {target}",
   "directRepo.intro": "Items die deze kiezen back-uppen rechtstreeks naar {target}, met de sleutel, opslagklasse, limieten en append-only-instelling daarvan. Het bewaart zijn snapshots volgens de regels van {target}. Annuleren laat niets achter.",

@@ -1722,6 +1722,12 @@ const bg: Partial<Translations> = {
   "placement.uploadCost": "Качванията могат да струват пари при доставчика.",
   "placement.uncheckable": "Не можа да се провери: {list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "Директно хранилище при {target}",
   "directRepo.intro": "Елементите, които го изберат, се архивират направо в {target}, с неговия ключ, клас на съхранение, лимити и настройка за append-only. Пази снимките си по правилата на {target}. Отказът не оставя нищо след себе си.",

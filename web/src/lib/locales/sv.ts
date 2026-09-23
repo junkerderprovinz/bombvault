@@ -1711,6 +1711,12 @@ const sv: Partial<Translations> = {
   "placement.uploadCost": "Uppladdningar kan kosta pengar hos leverantören.",
   "placement.uncheckable": "Kunde inte kontrolleras: {list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "Direkt arkiv hos {target}",
   "directRepo.intro": "Objekt som väljer det säkerhetskopieras direkt till {target}, med dess nyckel, lagringsklass, gränser och append-only-inställning. Det behåller sina ögonblicksbilder enligt {target}s regler. Avbryt lämnar inget kvar.",

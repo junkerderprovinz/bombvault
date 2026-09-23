@@ -1703,6 +1703,12 @@ const zh: Partial<Translations> = {
   "placement.uploadCost": "上传可能会在提供商处产生费用。",
   "placement.uncheckable": "无法检查：{list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "{target} 处的直接存储库",
   "directRepo.intro": "选择它的项目会直接备份到 {target}，使用它的密钥、存储类别、限制和 append-only 设置。它按照 {target} 的规则保留快照。取消不会留下任何东西。",

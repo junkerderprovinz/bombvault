@@ -1703,6 +1703,12 @@ const ko: Partial<Translations> = {
   "placement.uploadCost": "업로드는 제공자에게 비용이 들 수 있습니다.",
   "placement.uncheckable": "확인할 수 없음: {list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "{target}의 직접 저장소",
   "directRepo.intro": "이것을 선택한 항목은 {target}으로 바로 백업되며, 해당 대상의 키, 스토리지 클래스, 제한, append-only 설정을 그대로 씁니다. 스냅샷은 {target}의 규칙에 따라 보관됩니다. 취소하면 아무것도 남지 않습니다.",
