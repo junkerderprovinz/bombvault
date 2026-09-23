@@ -468,3 +468,23 @@ func TestFailedCommandBackupLogsOnlyResticsOwnLines(t *testing.T) {
 		}
 	})
 }
+
+// TestCommandBackupReasonLeavesOutTheDumpProtocol checks that the reason a
+// failed dump carries is a sentence and not the script's pid announcement,
+// which is the last thing restic forwarded when the helper was killed.
+func TestCommandBackupReasonLeavesOutTheDumpProtocol(t *testing.T) {
+	stderr := "subprocess bombvault: bombvault-dbdump-scope all\n" +
+		"signal interrupt received, cleaning up\n" +
+		"subprocess bombvault: bombvault-dbdump-pid 114\n"
+
+	err := commandRunError([]string{"-r", "/repo", "backup"}, stderr)
+	if err == nil {
+		t.Fatal("commandRunError returned no error")
+	}
+	if strings.Contains(err.Error(), "bombvault-dbdump") {
+		t.Errorf("reason = %q, want the protocol line left out", err)
+	}
+	if !strings.Contains(err.Error(), "signal interrupt received") {
+		t.Errorf("reason = %q, want the line that says what happened", err)
+	}
+}
