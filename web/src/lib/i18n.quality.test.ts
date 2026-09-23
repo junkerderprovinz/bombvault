@@ -76,6 +76,7 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   "timeline.deleteLast",
   "timeline.deleteHeldBy",
   "timeline.deleteSkipped",
+  "timeline.deletePartial",
   "timeline.unchecked",
   "timeline.unreadable",
   "timeline.check",

@@ -1711,6 +1711,7 @@ const el: Partial<Translations> = {
   "timeline.deleteLast": "This is the last copy of this backup.",
   "timeline.deleteHeldBy": "Still held by: {list}",
   "timeline.deleteSkipped": "Left out, append-only: {list}",
+  "timeline.deletePartial": "Already deleted at: {list}",
   "timeline.unchecked": "{place}: not checked",
   "timeline.unreadable": "{place}: not readable",
   "timeline.check": "Check",

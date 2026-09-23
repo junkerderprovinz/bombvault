@@ -97,8 +97,13 @@ export function TimelineDeleteDialog({
       const out = await deleteTimelineRow(domain, itemKey, row.key, del);
       if (!live) return;
       const skipped = out.skipped ?? [];
-      if (!out.ok) push(placementErrorText(t, lang, out, "common.deleteFailed"), "fail");
-      else if (skipped.length > 0) push(t("timeline.deleteSkipped").replace("{list}", () => names(skipped)));
+      const done = out.deleted ?? [];
+      if (!out.ok) {
+        push(placementErrorText(t, lang, out, "common.deleteFailed"), "fail");
+        // A refusal can come after places were emptied, and those copies are
+        // gone for good, so the failure never stands on its own.
+        if (done.length > 0) push(t("timeline.deletePartial").replace("{list}", () => names(done)));
+      } else if (skipped.length > 0) push(t("timeline.deleteSkipped").replace("{list}", () => names(skipped)));
       onDone();
     }
     run().catch(() => {
