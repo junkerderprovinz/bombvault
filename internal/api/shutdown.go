@@ -79,6 +79,16 @@ func (s *Service) inFlightBackups() int {
 // uses it to label aborts; it is not a health flag.
 func (s *Service) IsShuttingDown() bool { return s.shuttingDown.Load() }
 
+// StopContext returns a context that BeginShutdown cancels.
+func (s *Service) StopContext() context.Context {
+	s.stopOnce.Do(s.openStopContext)
+	return s.stopCtx
+}
+
+func (s *Service) openStopContext() {
+	s.stopCtx, s.stopCancel = context.WithCancel(context.Background())
+}
+
 // BeginShutdown marks the process as leaving, cancels every in-flight backup
 // and waits up to shutdownGrace for them to unwind. Backups that fail meanwhile
 // are recorded as cancelled, which leaves the startup reaper's "interrupted"
@@ -89,6 +99,8 @@ func (s *Service) IsShuttingDown() bool { return s.shuttingDown.Load() }
 // interrupted. BeginShutdown is safe to call more than once.
 func (s *Service) BeginShutdown() {
 	s.shuttingDown.Store(true)
+	s.stopOnce.Do(s.openStopContext)
+	s.stopCancel()
 
 	s.cancelMu.Lock()
 	cancels := make([]context.CancelFunc, 0, len(s.backupCancels))

@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"log"
 	"sort"
 	"strings"
 )
@@ -177,6 +178,42 @@ func (s *Service) writeDBDumpMetrics(b *strings.Builder) error {
 		b.WriteString(body.String())
 	}
 	return nil
+}
+
+// mcpMetrics renders the MCP series, which let an operator alert on a looping
+// or hostile client. The request counters are process-local and reset on a
+// restart, like every other counter here.
+func (h *Handler) mcpMetrics() string {
+	h.mcp.countMu.Lock()
+	requests := make(map[string]uint64, len(h.mcp.requests))
+	for outcome, n := range h.mcp.requests {
+		requests[outcome] = n
+	}
+	h.mcp.countMu.Unlock()
+
+	outcomes := make([]string, 0, len(requests))
+	for outcome := range requests {
+		outcomes = append(outcomes, outcome)
+	}
+	sort.Strings(outcomes)
+
+	var b strings.Builder
+	b.WriteString("# HELP bombvault_mcp_requests_total Requests to the MCP endpoint per gate outcome.\n")
+	b.WriteString("# TYPE bombvault_mcp_requests_total counter\n")
+	for _, outcome := range outcomes {
+		fmt.Fprintf(&b, "bombvault_mcp_requests_total{outcome=\"%s\"} %d\n",
+			escapeLabelValue(outcome), requests[outcome])
+	}
+
+	keys, err := h.store.ActiveMCPKeys()
+	if err != nil {
+		log.Printf("api: mcp: could not count the active keys for /metrics: %v", err)
+		return b.String()
+	}
+	b.WriteString("# HELP bombvault_mcp_active_keys Number of MCP keys that can currently authenticate.\n")
+	b.WriteString("# TYPE bombvault_mcp_active_keys gauge\n")
+	fmt.Fprintf(&b, "bombvault_mcp_active_keys %d\n", len(keys))
+	return b.String()
 }
 
 func boolMetric(v bool) int {
