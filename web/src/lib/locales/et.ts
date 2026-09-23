@@ -1400,7 +1400,7 @@ const et: Partial<Translations> = {
   "files.noPathHint": "Ehitatud üles varundustest ilma kaustata. Määra kaust taasvarundamiseks. Taastamine kausta töötab juba.",
   "files.deleteSet": "Kustuta kaustakomplekt",
   "files.deleteSetConfirm": "Kas eemaldada see kaustakomplekt loendist? Selle varundusi ei kustutata ja need saab hiljem uuesti leida.",
-  "files.deleteBackupsConfirm": "Kas kustutada selle kaustakomplekti KÕIK varundused? Hetktõmmised eemaldatakse jäädavalt, hoidla puhastatakse ja komplekt unustatakse. Seda ei saa tagasi võtta.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Taasta algsesse asukohta",
   "files.restoreOriginalConfirm": "Kas taastada see varundus komplekti kausta peale? Olemasolevad failid kirjutatakse üle.",
   "files.restoreToFolder": "Taasta kausta",

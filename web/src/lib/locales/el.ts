@@ -1199,7 +1199,7 @@ const el: Partial<Translations> = {
   "files.noPathHint": "Ανακατασκευάστηκε από αντίγραφα χωρίς φάκελο. Ορίστε έναν φάκελο για να δημιουργούνται ξανά αντίγραφα. Η επαναφορά σε φάκελο λειτουργεί ήδη.",
   "files.deleteSet": "Διαγραφή συνόλου φακέλων",
   "files.deleteSetConfirm": "Αφαίρεση αυτού του συνόλου φακέλων από τη λίστα; Τα αντίγραφά του δεν διαγράφονται και μπορούν να ανακαλυφθούν ξανά αργότερα.",
-  "files.deleteBackupsConfirm": "Διαγραφή ΟΛΩΝ των αντιγράφων αυτού του συνόλου φακέλων; Τα στιγμιότυπα αφαιρούνται μόνιμα, το αποθετήριο κλαδεύεται και το σύνολο ξεχνιέται. Μη αναστρέψιμο.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Επαναφορά στην αρχική θέση",
   "files.restoreOriginalConfirm": "Επαναφορά αυτού του αντιγράφου πάνω από τον φάκελο του συνόλου; Τα υπάρχοντα αρχεία θα αντικατασταθούν.",
   "files.restoreToFolder": "Επαναφορά σε φάκελο",

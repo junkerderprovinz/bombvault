@@ -1400,7 +1400,7 @@ const id: Partial<Translations> = {
   "files.noPathHint": "Dibangun ulang dari cadangan tanpa folder. Atur folder untuk mencadangkan lagi. Pemulihan ke folder sudah berfungsi.",
   "files.deleteSet": "Hapus set folder",
   "files.deleteSetConfirm": "Hapus set folder ini dari daftar? Cadangannya tidak dihapus dan dapat ditemukan kembali nanti.",
-  "files.deleteBackupsConfirm": "Hapus SEMUA cadangan set folder ini? Snapshot dihapus secara permanen, repositori di-prune, dan set dilupakan. Ini tidak dapat dibatalkan.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Pulihkan ke lokasi asli",
   "files.restoreOriginalConfirm": "Pulihkan cadangan ini ke folder set? File yang sudah ada akan ditimpa.",
   "files.restoreToFolder": "Pulihkan ke folder",

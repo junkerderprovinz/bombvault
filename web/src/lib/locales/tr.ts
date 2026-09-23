@@ -1199,7 +1199,7 @@ const tr: Partial<Translations> = {
   "files.noPathHint": "Klasör olmadan yedeklerden yeniden oluşturuldu. Yeniden yedeklemek için bir klasör ayarlayın. Bir klasöre geri yükleme şimdiden çalışıyor.",
   "files.deleteSet": "Klasör setini sil",
   "files.deleteSetConfirm": "Bu klasör seti listeden kaldırılsın mı? Yedekleri silinmez ve daha sonra yeniden keşfedilebilir.",
-  "files.deleteBackupsConfirm": "Bu klasör setinin TÜM yedekleri silinsin mi? Anlık görüntüler kalıcı olarak kaldırılır, depo budanır ve set unutulur. Geri alınamaz.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Orijinal konuma geri yükle",
   "files.restoreOriginalConfirm": "Bu yedek, setin klasörünün üzerine geri yüklensin mi? Mevcut dosyaların üzerine yazılır.",
   "files.restoreToFolder": "Bir klasöre geri yükle",

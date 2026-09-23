@@ -1191,7 +1191,7 @@ const ja: Partial<Translations> = {
   "files.noPathHint": "フォルダー情報なしでバックアップから再構築されました。再びバックアップするにはフォルダーを設定してください。フォルダーへの復元は今すぐ使えます。",
   "files.deleteSet": "フォルダーセットを削除",
   "files.deleteSetConfirm": "このフォルダーセットを一覧から削除しますか？バックアップは削除されず、後で再発見できます。",
-  "files.deleteBackupsConfirm": "このフォルダーセットのバックアップをすべて削除しますか？スナップショットは完全に削除され、リポジトリが整理され、セットは忘れられます。元に戻せません。",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "元の場所に復元",
   "files.restoreOriginalConfirm": "このバックアップをセットのフォルダーに上書き復元しますか？既存のファイルは上書きされます。",
   "files.restoreToFolder": "フォルダーに復元",

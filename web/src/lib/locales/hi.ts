@@ -1400,7 +1400,7 @@ const hi: Partial<Translations> = {
   "files.noPathHint": "बिना फ़ोल्डर वाले बैकअप से फिर से बनाया गया। फिर से बैकअप लेने के लिए एक फ़ोल्डर सेट करें। किसी फ़ोल्डर में रीस्टोर करना पहले से काम करता है।",
   "files.deleteSet": "फ़ोल्डर सेट हटाएँ",
   "files.deleteSetConfirm": "इस फ़ोल्डर सेट को सूची से हटाएँ? इसके बैकअप हटाए नहीं जाते और बाद में फिर से खोजे जा सकते हैं।",
-  "files.deleteBackupsConfirm": "इस फ़ोल्डर सेट के सभी बैकअप हटाएँ? स्नैपशॉट स्थायी रूप से हटा दिए जाते हैं, रिपॉज़िटरी प्रून हो जाती है और सेट भुला दिया जाता है। इसे वापस नहीं किया जा सकता।",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "मूल स्थान पर रीस्टोर करें",
   "files.restoreOriginalConfirm": "सेट के फ़ोल्डर पर यह बैकअप रीस्टोर करें? मौजूदा फ़ाइलें ओवरराइट हो जाएँगी।",
   "files.restoreToFolder": "किसी फ़ोल्डर में रीस्टोर करें",

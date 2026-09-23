@@ -1400,7 +1400,7 @@ const hr: Partial<Translations> = {
   "files.noPathHint": "Ponovno izgrađeno iz sigurnosnih kopija bez mape. Postavite mapu za ponovnu sigurnosnu kopiju. Vraćanje u mapu već radi.",
   "files.deleteSet": "Izbriši skup mapa",
   "files.deleteSetConfirm": "Ukloniti ovaj skup mapa s popisa? Njegove sigurnosne kopije ne brišu se i mogu se kasnije ponovno otkriti.",
-  "files.deleteBackupsConfirm": "Izbrisati SVE sigurnosne kopije ovog skupa mapa? Snimke se trajno uklanjaju, repozitorij se čisti, a skup se zaboravlja. Ovo se ne može poništiti.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Vrati na izvornu lokaciju",
   "files.restoreOriginalConfirm": "Vratiti ovu sigurnosnu kopiju preko mape skupa? Postojeće datoteke bit će prepisane.",
   "files.restoreToFolder": "Vrati u mapu",

@@ -1400,7 +1400,7 @@ const sk: Partial<Translations> = {
   "files.noPathHint": "Znova zostavené zo záloh bez priečinka. Nastavte priečinok, aby ste znova zálohovali. Obnovenie do priečinka už funguje.",
   "files.deleteSet": "Odstrániť sadu priečinkov",
   "files.deleteSetConfirm": "Odstrániť túto sadu priečinkov zo zoznamu? Jej zálohy sa neodstránia a možno ich neskôr znova nájsť.",
-  "files.deleteBackupsConfirm": "Odstrániť VŠETKY zálohy tejto sady priečinkov? Snímky sa natrvalo odstránia, repozitár sa vyčistí a sada sa zabudne. Túto akciu nemožno vrátiť späť.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Obnoviť na pôvodné miesto",
   "files.restoreOriginalConfirm": "Obnoviť túto zálohu do priečinka sady? Existujúce súbory sa prepíšu.",
   "files.restoreToFolder": "Obnoviť do priečinka",

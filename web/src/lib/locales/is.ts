@@ -1400,7 +1400,7 @@ const is: Partial<Translations> = {
   "files.noPathHint": "Endurbyggt úr afritum án möppu. Stilltu möppu til að afrita aftur. Endurheimt í möppu virkar þegar.",
   "files.deleteSet": "Eyða möppusetti",
   "files.deleteSetConfirm": "Fjarlægja þetta möppusett úr listanum? Afritum þess er ekki eytt og hægt er að finna þau aftur síðar.",
-  "files.deleteBackupsConfirm": "Eyða ÖLLUM afritum þessa möppusetts? Snapshottin eru fjarlægð varanlega, geymslusafnið er hreinsað og settið gleymist. Þessu verður ekki afturkallað.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Endurheimta á upprunalega staðinn",
   "files.restoreOriginalConfirm": "Endurheimta þetta afrit yfir möppu settsins? Núverandi skrám verður skrifað yfir.",
   "files.restoreToFolder": "Endurheimta í möppu",

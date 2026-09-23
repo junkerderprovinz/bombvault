@@ -1191,7 +1191,7 @@ const vi: Partial<Translations> = {
   "files.noPathHint": "Được dựng lại từ các bản sao lưu mà không có thư mục. Đặt một thư mục để sao lưu lại. Khôi phục vào thư mục đã hoạt động ngay.",
   "files.deleteSet": "Xóa bộ thư mục",
   "files.deleteSetConfirm": "Gỡ bộ thư mục này khỏi danh sách? Các bản sao lưu của nó không bị xóa và có thể được phát hiện lại sau.",
-  "files.deleteBackupsConfirm": "Xóa TẤT CẢ bản sao lưu của bộ thư mục này? Các snapshot bị xóa vĩnh viễn, kho được dọn bớt và bộ sẽ bị quên. Không thể hoàn tác.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Khôi phục về vị trí gốc",
   "files.restoreOriginalConfirm": "Khôi phục bản sao lưu này đè lên thư mục của bộ? Các tập tin hiện có sẽ bị ghi đè.",
   "files.restoreToFolder": "Khôi phục vào một thư mục",

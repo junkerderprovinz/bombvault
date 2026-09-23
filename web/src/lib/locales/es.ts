@@ -1197,7 +1197,7 @@ const es: Partial<Translations> = {
   "files.noPathHint": "Reconstruido desde las copias sin carpeta. Define una carpeta para volver a copiarlo. Restaurar en una carpeta ya funciona.",
   "files.deleteSet": "Eliminar conjunto de carpetas",
   "files.deleteSetConfirm": "¿Quitar este conjunto de carpetas de la lista? Sus copias no se eliminan y podrán redescubrirse más tarde.",
-  "files.deleteBackupsConfirm": "¿Eliminar TODAS las copias de este conjunto de carpetas? Las instantáneas se eliminan permanentemente, el repositorio se poda y el conjunto se olvida. No se puede deshacer.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Restaurar en la ubicación original",
   "files.restoreOriginalConfirm": "¿Restaurar esta copia sobre la carpeta del conjunto? Los archivos existentes se sobrescribirán.",
   "files.restoreToFolder": "Restaurar en una carpeta",

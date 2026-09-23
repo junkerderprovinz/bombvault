@@ -1385,7 +1385,7 @@ const sr: Partial<Translations> = {
   "files.noPathHint": "Поново изграђено из резервних копија без фасцикле. Подеси фасциклу да је поново резервно копираш — враћање у фасциклу већ ради.",
   "files.deleteSet": "Обриши скуп фасцикли",
   "files.deleteSetConfirm": "Уклоним овај скуп фасцикли са листе? Његове резервне копије се не бришу и могу се касније поново открити.",
-  "files.deleteBackupsConfirm": "Избришем СВЕ резервне копије овог скупа фасцикли? Снимци се трајно уклањају, репозиторијум се чисти и скуп се заборавља. Ово се не може поништити.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Врати на изворну локацију",
   "files.restoreOriginalConfirm": "Вратим ову резервну копију преко фасцикле скупа? Постојеће датотеке ће бити преписане.",
   "files.restoreToFolder": "Врати у фасциклу",

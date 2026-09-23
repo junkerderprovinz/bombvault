@@ -1400,7 +1400,7 @@ const bg: Partial<Translations> = {
   "files.noPathHint": "Пресъздаден от архивирания без папка. Задай папка, за да архивираш отново — възстановяването в папка вече работи.",
   "files.deleteSet": "Изтриване на набора от папки",
   "files.deleteSetConfirm": "Да премахна ли този набор от папки от списъка? Архивиранията му не се изтриват и могат да бъдат открити отново по-късно.",
-  "files.deleteBackupsConfirm": "Да изтрия ли ВСИЧКИ архивирания на този набор от папки? Снапшотите се премахват завинаги, хранилището се прочиства и наборът се забравя. Това не може да бъде отменено.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Възстанови в оригиналното местоположение",
   "files.restoreOriginalConfirm": "Да възстановя ли това архивиране върху папката на набора? Съществуващите файлове ще бъдат презаписани.",
   "files.restoreToFolder": "Възстанови в папка",

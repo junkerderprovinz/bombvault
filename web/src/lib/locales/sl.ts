@@ -1385,7 +1385,7 @@ const sl: Partial<Translations> = {
   "files.noPathHint": "Ponovno zgrajeno iz varnostnih kopij brez mape. Za ponovno varnostno kopiranje nastavi mapo. Obnovitev v mapo že deluje.",
   "files.deleteSet": "Izbriši nabor map",
   "files.deleteSetConfirm": "Odstranim ta nabor map s seznama? Njegove varnostne kopije se ne izbrišejo in jih je mogoče pozneje ponovno odkriti.",
-  "files.deleteBackupsConfirm": "Izbrišem VSE varnostne kopije tega nabora map? Posnetki se trajno odstranijo, repozitorij se počisti in nabor se pozabi. Tega ni mogoče razveljaviti.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Obnovi na izvorno lokacijo",
   "files.restoreOriginalConfirm": "Obnovim to varnostno kopijo čez mapo nabora? Obstoječe datoteke bodo prepisane.",
   "files.restoreToFolder": "Obnovi v mapo",

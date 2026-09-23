@@ -1202,7 +1202,7 @@ const hu: Partial<Translations> = {
   "files.noPathHint": "Mappa nélkül, mentésekből újjáépítve. Állíts be egy mappát az újbóli mentéshez. A mappába való visszaállítás már most működik.",
   "files.deleteSet": "Mappakészlet törlése",
   "files.deleteSetConfirm": "Eltávolítod ezt a mappakészletet a listáról? A mentései nem törlődnek, és később újra felfedezhetők.",
-  "files.deleteBackupsConfirm": "Törlöd ennek a mappakészletnek az ÖSSZES mentését? A pillanatképek véglegesen eltávolításra kerülnek, a tároló megnyesésre kerül, és a készlet elfelejtődik. Nem vonható vissza.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Visszaállítás az eredeti helyre",
   "files.restoreOriginalConfirm": "Visszaállítod ezt a mentést a készlet mappájára? A meglévő fájlok felülíródnak.",
   "files.restoreToFolder": "Visszaállítás mappába",

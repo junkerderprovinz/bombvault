@@ -1400,7 +1400,7 @@ const eu: Partial<Translations> = {
   "files.noPathHint": "Karpetarik gabeko babeskopietatik berreraikita. Ezarri karpeta bat berriz babesteko. Karpeta batean berrezartzea jada funtzionatzen du.",
   "files.deleteSet": "Ezabatu karpeta multzoa",
   "files.deleteSetConfirm": "Karpeta-multzo hau zerrendatik kendu nahi duzu? Bere babeskopiak ez dira ezabatzen eta geroago berriz aurki daitezke.",
-  "files.deleteBackupsConfirm": "Karpeta-multzo honen babeskopia GUZTIAK ezabatu nahi dituzu? Argazkiak betiko ezabatzen dira, biltegia garbitzen da eta multzoa ahazten da. Ezin da desegin.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Berrezarri jatorrizko kokapenean",
   "files.restoreOriginalConfirm": "Babeskopia hau multzoaren karpetaren gainean berrezarri nahi duzu? Dauden fitxategiak gainidatzi egingo dira.",
   "files.restoreToFolder": "Berrezarri karpeta batean",

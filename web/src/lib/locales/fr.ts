@@ -1199,7 +1199,7 @@ const fr: Partial<Translations> = {
   "files.noPathHint": "Reconstruit depuis les sauvegardes sans dossier. Définissez un dossier pour le sauvegarder à nouveau. La restauration dans un dossier fonctionne déjà.",
   "files.deleteSet": "Supprimer le jeu de dossiers",
   "files.deleteSetConfirm": "Retirer ce jeu de dossiers de la liste ? Ses sauvegardes ne sont pas supprimées et pourront être redécouvertes plus tard.",
-  "files.deleteBackupsConfirm": "Supprimer TOUTES les sauvegardes de ce jeu de dossiers ? Les instantanés sont définitivement supprimés, le dépôt est élagué et le jeu est oublié. Irréversible.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Restaurer à l'emplacement d'origine",
   "files.restoreOriginalConfirm": "Restaurer cette sauvegarde par-dessus le dossier du jeu ? Les fichiers existants seront écrasés.",
   "files.restoreToFolder": "Restaurer dans un dossier",

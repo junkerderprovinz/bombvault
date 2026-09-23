@@ -636,9 +636,11 @@ function FileSetRestorePanel({
   const [shakeDeleteAll, setShakeDeleteAll] = useState(0);
   const running = anyActive(useProgress());
 
-  // "Delete all" fails as a toast, not inline. Bumping reloadTick remounts
-  // the timeline below under a fresh key, so it reads the place again instead
-  // of keeping the rows the delete just emptied.
+  // "Delete all" empties the local place and forgets the set, which is what
+  // the question it asks says; a copy at a target stays behind and no set
+  // knows it any more. It fails as a toast, not inline. Bumping reloadTick
+  // remounts the timeline below under a fresh key, so it reads the place
+  // again instead of keeping the rows the delete just emptied.
   async function handleDeleteAll() {
     // TODO(#follow-up): richer stake-detail copy ("N snapshots, X GB") belongs
     // here once it ships (deferred — new interpolated i18n keys across all 25

@@ -1400,7 +1400,7 @@ const ca: Partial<Translations> = {
   "files.noPathHint": "Reconstruït des de còpies sense carpeta. Configura una carpeta per tornar a copiar. Restaurar a una carpeta ja funciona.",
   "files.deleteSet": "Suprimeix el conjunt de carpetes",
   "files.deleteSetConfirm": "Vols eliminar aquest conjunt de carpetes de la llista? Les seves còpies no s'eliminen i es poden tornar a descobrir més endavant.",
-  "files.deleteBackupsConfirm": "Vols eliminar TOTES les còpies d'aquest conjunt de carpetes? Els instantanis s'eliminen permanentment, el repositori es neteja i el conjunt s'oblida. Això no es pot desfer.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Restaura a la ubicació original",
   "files.restoreOriginalConfirm": "Vols restaurar aquesta còpia sobre la carpeta del conjunt? Els fitxers existents se sobreescriuran.",
   "files.restoreToFolder": "Restaura a una carpeta",
