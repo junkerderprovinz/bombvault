@@ -434,3 +434,19 @@ export function IconTabStorage() {
     </svg>
   );
 }
+
+/** Anomalies, a backup that does not fit its history. */
+export function IconAnomalies() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 14 14"
+      fill="currentColor"
+      className="shrink-0"
+      aria-hidden="true"
+    >
+      <rect x="1.4" y="8.6" width="2.2" height="4" rx="1.1" /><rect x="4.4" y="7.4" width="2.2" height="5.2" rx="1.1" /><rect x="7.4" y="1.4" width="2.2" height="11.2" rx="1.1" /><rect x="10.4" y="8" width="2.2" height="4.6" rx="1.1" />
+    </svg>
+  );
+}

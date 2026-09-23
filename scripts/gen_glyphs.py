@@ -225,6 +225,18 @@ CANCEL_NOTE = """Cancel or dismiss
 The same drawing and cropped viewBox as navGlyphs' IconClose, which explains
 the frame."""
 
+# Four backups on one baseline with the third far above them. The free
+# Streamline set has no chart with an outlier in it, so the columns are drawn
+# on the same 14-unit grid as the database cylinder: pill caps like IconAdd's
+# bars, one column per reading, and the height difference is the whole mark.
+ANOMALY_COLUMNS = (
+    '<rect x="1.4" y="8.6" width="2.2" height="4" rx="1.1" />'
+    '<rect x="4.4" y="7.4" width="2.2" height="5.2" rx="1.1" />'
+    '<rect x="7.4" y="1.4" width="2.2" height="11.2" rx="1.1" />'
+    '<rect x="10.4" y="8" width="2.2" height="4.6" rx="1.1" />'
+)
+ANOMALY_BOX = "0 0 14 14"
+
 # Glyphs that do not come from the Streamline set. They are emitted after the
 # generated ones and carry their own viewBox instead of going through G's
 # 14-unit grid; the rendered box is 16px either way.
@@ -265,6 +277,7 @@ EXTRA_NAV = [
              (3.0, 1.0, 18.0, 22.0), "integrity"),
     imported("IconTabStorage", "Paths and storage tab", "0 0 448 512",
              (0.0, 0.0, 448.0, 512.0), "storage"),
+    ("IconAnomalies", "Anomalies, a backup that does not fit its history", ANOMALY_BOX, ANOMALY_COLUMNS),
 ]
 
 # IconCancel is the same cross as IconClose, so the app has one X.
