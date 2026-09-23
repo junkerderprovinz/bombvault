@@ -18,6 +18,8 @@ var mcpReadTools = []string{
 	"get_coverage",
 	"get_activity",
 	"get_storage_stats",
+	"list_items",
+	"list_runs",
 }
 
 // The era Claude Code and mcp-remote negotiate today. A client that speaks it
@@ -155,6 +157,8 @@ func TestMCPReadToolsOnEmptyInstall(t *testing.T) {
 		"get_coverage":      {"domains"},
 		"get_activity":      {"running"},
 		"get_storage_stats": {"samples"},
+		"list_items":        {"domains"},
+		"list_runs":         {"runs"},
 	}
 	for _, tool := range mcpReadTools {
 		res := mcpCallTool(t, h, key, tool, args[tool])

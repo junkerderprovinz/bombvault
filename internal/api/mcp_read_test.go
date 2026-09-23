@@ -2,8 +2,11 @@ package api_test
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -206,5 +209,622 @@ func TestMCPGetStorageStats(t *testing.T) {
 	}
 	if res.Structured["growthBytesPerWeek"] != nil {
 		t.Fatalf("growthBytesPerWeek = %v, want null without samples", res.Structured["growthBytesPerWeek"])
+	}
+}
+
+// runningContainer is a live container the host reports as up, which is what
+// decides whether a backup has to stop it.
+func runningContainer(name string) dockercli.ContainerInfo {
+	c := liveContainer(name)
+	c.State = "running"
+	return c
+}
+
+// imageContainer is a running container on a named image, so the database
+// recognition has something to read.
+func imageContainer(name, image string) dockercli.ContainerInfo {
+	c := runningContainer(name)
+	c.Image = image
+	return c
+}
+
+// mcpItemDomains indexes a list_items answer by domain name.
+func mcpItemDomains(t *testing.T, res mcpToolResult) map[string]map[string]any {
+	t.Helper()
+	if res.IsError {
+		t.Fatalf("list_items: %v", res.Structured)
+	}
+	rows, _ := res.Structured["domains"].([]any)
+	if len(rows) == 0 {
+		t.Fatalf("list_items returned no domains: %v", res.Structured)
+	}
+	out := make(map[string]map[string]any, len(rows))
+	for _, raw := range rows {
+		row, ok := raw.(map[string]any)
+		if !ok {
+			t.Fatalf("a domain row is not an object: %v", raw)
+		}
+		name, _ := row["domain"].(string)
+		out[name] = row
+	}
+	return out
+}
+
+// mcpItemsByName indexes one domain row's items by their name.
+func mcpItemsByName(t *testing.T, domain map[string]any) map[string]map[string]any {
+	t.Helper()
+	items, ok := domain["items"].([]any)
+	if !ok {
+		t.Fatalf("domain row %v has no items array", domain)
+	}
+	out := make(map[string]map[string]any, len(items))
+	for _, raw := range items {
+		item, ok := raw.(map[string]any)
+		if !ok {
+			t.Fatalf("an item is not an object: %v", raw)
+		}
+		name, _ := item["name"].(string)
+		out[name] = item
+	}
+	return out
+}
+
+// seedTarget adds a container target the way a first backup would.
+func seedTarget(t *testing.T, st *store.Repo, name string) store.Target {
+	t.Helper()
+	tg, err := st.UpsertTarget(store.Target{ContainerName: name, IncludeInSchedule: true})
+	if err != nil {
+		t.Fatalf("seed target %q: %v", name, err)
+	}
+	return tg
+}
+
+// seedRun writes one run and returns its id. A status of "running" leaves it
+// open.
+func seedRun(t *testing.T, st *store.Repo, targetID, kind, status string, meta store.RunMeta) string {
+	t.Helper()
+	id, err := st.StartRunWith(targetID, kind, meta)
+	if err != nil {
+		t.Fatalf("start %s run on %s: %v", kind, targetID, err)
+	}
+	if status == "running" {
+		return id
+	}
+	if err := st.FinishRun(id, status, "", 0, ""); err != nil {
+		t.Fatalf("finish %s run on %s: %v", kind, targetID, err)
+	}
+	return id
+}
+
+func TestMCPListItemsIdsNamesAndStamps(t *testing.T) {
+	docker := &fakeServiceDocker{
+		selfName: "bombvault",
+		listOut:  []dockercli.ContainerInfo{runningContainer("plex"), runningContainer("bombvault")},
+	}
+	h, st, _, key := newMCPToolRouter(t, docker, &fakeResticEngine{})
+
+	plex := seedTarget(t, st, "plex")
+	seedTarget(t, st, "archive")
+	seedTarget(t, st, "bombvault")
+	if err := st.SetScheduleCadence("archive", "off"); err != nil {
+		t.Fatal(err)
+	}
+	docs, err := st.CreateFileSet(store.FileSet{Name: "Documents", Path: "documents", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SetFileSetScheduleCadence(docs.ID, "weekly sun 06:00"); err != nil {
+		t.Fatal(err)
+	}
+
+	settings := mustSettings(t, st)
+	settings.ContainersEnabled = true
+	settings.ContainersSchedule = "daily 02:30"
+	settings.FilesEnabled = true
+	settings.FilesSchedule = "weekly mon 04:00"
+	settings.FlashEnabled = true
+	settings.ConfigEnabled = true
+	settings.ConfigSchedule = "daily 06:00"
+	settings.EverythingSchedule = "daily 05:00"
+	settings.PerItemSchedules = true
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+
+	runID := seedRun(t, st, plex.ID, "backup", "success", store.RunMeta{})
+	run, err := st.GetRun(runID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	domains := mcpItemDomains(t, mcpCallTool(t, h, key, "list_items", ""))
+	containers := mcpItemsByName(t, domains["containers"])
+
+	if _, ok := containers["bombvault"]; ok {
+		t.Fatalf("BombVault's own container is offered as a backup item: %v", containers["bombvault"])
+	}
+	if got := containers["plex"]["id"]; got != plex.ID {
+		t.Fatalf("plex id = %v, want %q", got, plex.ID)
+	}
+	if got := containers["plex"]["installed"]; got != true {
+		t.Fatalf("a listed container reports installed = %v", got)
+	}
+	if got := containers["archive"]["installed"]; got != false {
+		t.Fatalf("a container the host does not run reports installed = %v", got)
+	}
+	if got := domains["containers"]["installedKnown"]; got != true {
+		t.Fatalf("installedKnown = %v with Docker answering", got)
+	}
+	if got := containers["plex"]["schedule"]; got != "both" {
+		t.Fatalf("plex schedule = %v, want both (the domain cadence and Backup Everything)", got)
+	}
+	if got := containers["archive"]["paused"]; got != true {
+		t.Fatalf("a container switched off by its own override reports paused = %v", got)
+	}
+	if got := containers["archive"]["schedule"]; got != "none" {
+		t.Fatalf("a paused container reports schedule = %v, want none", got)
+	}
+
+	if got, want := containers["plex"]["lastSuccessAt"], float64(*run.FinishedAt); got != want {
+		t.Fatalf("lastSuccessAt = %v, want %v", got, want)
+	}
+	if got, want := containers["plex"]["lastRunAt"], float64(run.StartedAt); got != want {
+		t.Fatalf("lastRunAt = %v, want %v", got, want)
+	}
+	if got := containers["plex"]["lastRunStatus"]; got != "success" {
+		t.Fatalf("lastRunStatus = %v", got)
+	}
+	if got, want := containers["plex"]["lastDurationSeconds"], float64(*run.FinishedAt-run.StartedAt); got != want {
+		t.Fatalf("lastDurationSeconds = %v, want %v", got, want)
+	}
+
+	files := mcpItemsByName(t, domains["files"])
+	if got := files["Documents"]["id"]; got != docs.ID {
+		t.Fatalf("a set without a single run is listed as %v, want id %q", files["Documents"], docs.ID)
+	}
+	if got := files["Documents"]["schedule"]; got != "own" {
+		t.Fatalf("Documents schedule = %v, want own", got)
+	}
+	if got := files["Documents"]["lastRunStatus"]; got != "" {
+		t.Fatalf("a set without runs reports lastRunStatus = %v", got)
+	}
+
+	flash := mcpItemsByName(t, domains["flash"])
+	if got := flash["flash"]["schedule"]; got != "everything" {
+		t.Fatalf("flash without its own cadence reports schedule = %v, want everything", got)
+	}
+	config := mcpItemsByName(t, domains["config"])
+	if got := config["config"]["schedule"]; got != "domain" {
+		t.Fatalf("config with its own cadence reports schedule = %v, want domain", got)
+	}
+
+	if got := domains["vms"]["enabled"]; got != false {
+		t.Fatalf("the VMs domain reports enabled = %v", got)
+	}
+	if items, _ := domains["vms"]["items"].([]any); len(items) != 0 {
+		t.Fatalf("a switched-off domain lists %v", items)
+	}
+
+	only := mcpItemDomains(t, mcpCallTool(t, h, key, "list_items", `{"domain":"files"}`))
+	if len(only) != 1 || only["files"] == nil {
+		t.Fatalf("a domain argument returned %v", only)
+	}
+	if code := mcpCallTool(t, h, key, "list_items", `{"domain":"nas"}`).code(t); code != "invalid_argument" {
+		t.Fatalf("an unknown domain gives %q, want invalid_argument", code)
+	}
+}
+
+func TestMCPListItemsReportsWhatABackupStops(t *testing.T) {
+	docker := &fakeServiceDocker{
+		listOut: []dockercli.ContainerInfo{
+			runningContainer("immich"),
+			runningContainer("immich_postgres"),
+			liveContainer("redis"),
+			liveContainer("archive"),
+		},
+	}
+	h, st, _, key := newMCPToolRouter(t, docker, &fakeResticEngine{})
+
+	seedTarget(t, st, "immich")
+	seedTarget(t, st, "archive")
+	if err := st.SetStopContainers("immich", []string{"immich_postgres", "redis"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertVMTarget(store.VMTarget{Name: "Windows11", Method: "graceful", IncludeInSchedule: true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertVMTarget(store.VMTarget{Name: "Ubuntu", Method: "live", IncludeInSchedule: true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.CreateFileSet(store.FileSet{Name: "Documents", Path: "documents", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+
+	settings := mustSettings(t, st)
+	settings.ContainersEnabled = true
+	settings.VMsEnabled = true
+	settings.FilesEnabled = true
+	settings.FlashEnabled = true
+	settings.ConfigEnabled = true
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+
+	domains := mcpItemDomains(t, mcpCallTool(t, h, key, "list_items", ""))
+	containers := mcpItemsByName(t, domains["containers"])
+
+	stops, _ := containers["immich"]["stops"].(map[string]any)
+	if stops["self"] != true || stops["known"] != true {
+		t.Fatalf("a running container reports stops = %v", stops)
+	}
+	also, _ := stops["containers"].([]any)
+	if len(also) != 1 || also[0] != "immich_postgres" {
+		t.Fatalf("stops.containers = %v, want only the one that is up", also)
+	}
+
+	stopped, _ := containers["archive"]["stops"].(map[string]any)
+	if stopped["self"] != false {
+		t.Fatalf("a container that is already down reports stops = %v", stopped)
+	}
+
+	vms := mcpItemsByName(t, domains["vms"])
+	if s, _ := vms["Windows11"]["stops"].(map[string]any); s["self"] != true {
+		t.Fatalf("a gracefully backed-up VM reports stops = %v", s)
+	}
+	if s, _ := vms["Ubuntu"]["stops"].(map[string]any); s["self"] != false {
+		t.Fatalf("a live-backed-up VM reports stops = %v", s)
+	}
+
+	for _, row := range []struct{ domain, item string }{
+		{"files", "Documents"}, {"flash", "flash"}, {"config", "config"},
+	} {
+		items := mcpItemsByName(t, domains[row.domain])
+		s, _ := items[row.item]["stops"].(map[string]any)
+		if s["self"] != false {
+			t.Fatalf("%s/%s reports stops = %v, want nothing stopped", row.domain, row.item, s)
+		}
+		if c, _ := s["containers"].([]any); len(c) != 0 {
+			t.Fatalf("%s/%s stops the containers %v", row.domain, row.item, c)
+		}
+	}
+}
+
+func TestMCPListItemsDescribesDatabaseContainers(t *testing.T) {
+	docker := &fakeServiceDocker{
+		listOut: []dockercli.ContainerInfo{
+			imageContainer("immich_postgres", "postgres:16"),
+			imageContainer("paperless_db", "mariadb:11"),
+			runningContainer("plex"),
+		},
+		inspects: map[string]model.Inspect{
+			"immich_postgres": {Running: true, Config: model.Config{Image: "postgres:16", Env: []string{"POSTGRES_PASSWORD=x"}}},
+			"paperless_db":    {Running: true, Config: model.Config{Image: "mariadb:11", Env: []string{"MARIADB_ROOT_PASSWORD=x"}}},
+		},
+	}
+	h, st, _, key := newMCPToolRouter(t, docker, &fakeResticEngine{})
+
+	pg := seedTarget(t, st, "immich_postgres")
+	seedTarget(t, st, "paperless_db")
+	seedTarget(t, st, "plex")
+	if err := st.SetDBDumpOff("paperless_db", true); err != nil {
+		t.Fatal(err)
+	}
+
+	settings := mustSettings(t, st)
+	settings.ContainersEnabled = true
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	dumpID := seedRun(t, st, pg.ID, "dbdump", "success", store.RunMeta{})
+	dump, err := st.GetRun(dumpID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	containers := mcpItemsByName(t, mcpItemDomains(t, mcpCallTool(t, h, key, "list_items", ""))["containers"])
+
+	db, _ := containers["immich_postgres"]["database"].(map[string]any)
+	if db["engine"] != "postgres" || db["engineKnown"] != true || db["dumpOff"] != false {
+		t.Fatalf("the recognised postgres container reports database = %v", db)
+	}
+	last, _ := db["lastDump"].(map[string]any)
+	if last["at"] != float64(*dump.FinishedAt) || last["status"] != "success" {
+		t.Fatalf("lastDump = %v, want the seeded dump run", last)
+	}
+	if off, _ := containers["paperless_db"]["database"].(map[string]any); off["dumpOff"] != true {
+		t.Fatalf("a container whose dumps are switched off reports database = %v", off)
+	}
+	if _, ok := containers["plex"]["database"]; ok {
+		t.Fatalf("a plain container carries a database block: %v", containers["plex"])
+	}
+
+	inspected := 0
+	for _, call := range docker.calls {
+		if strings.HasPrefix(call, "inspect:") {
+			inspected++
+		}
+	}
+	if inspected != 2 {
+		t.Fatalf("the listing inspected %d containers (%v), want only the two database candidates", inspected, docker.calls)
+	}
+
+	down := &fakeServiceDocker{listErr: errors.New("docker: no such host")}
+	h2, st2, _, key2 := newMCPToolRouter(t, down, &fakeResticEngine{})
+	seedTarget(t, st2, "paperless_db")
+	if err := st2.SetDBDumpOff("paperless_db", true); err != nil {
+		t.Fatal(err)
+	}
+	blind := mustSettings(t, st2)
+	blind.ContainersEnabled = true
+	if err := st2.UpdateSettings(blind); err != nil {
+		t.Fatal(err)
+	}
+	rows := mcpItemsByName(t, mcpItemDomains(t, mcpCallTool(t, h2, key2, "list_items", ""))["containers"])
+	unknown, _ := rows["paperless_db"]["database"].(map[string]any)
+	if unknown["engineKnown"] != false || unknown["engine"] != "" || unknown["dumpOff"] != true {
+		t.Fatalf("with Docker unreachable the database block reads %v", unknown)
+	}
+}
+
+func TestMCPListItemsDockerDown(t *testing.T) {
+	docker := &fakeServiceDocker{listErr: errors.New("docker: no such host")}
+	h, st, _, key := newMCPToolRouter(t, docker, &fakeResticEngine{})
+	seedTarget(t, st, "plex")
+	settings := mustSettings(t, st)
+	settings.ContainersEnabled = true
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+
+	res := mcpCallTool(t, h, key, "list_items", "")
+	if res.IsError {
+		t.Fatalf("an unreachable Docker made the whole listing fail: %v", res.Structured)
+	}
+	domains := mcpItemDomains(t, res)
+	if got := domains["containers"]["installedKnown"]; got != false {
+		t.Fatalf("installedKnown = %v with Docker unreachable", got)
+	}
+	containers := mcpItemsByName(t, domains["containers"])
+	if len(containers) != 1 {
+		t.Fatalf("the stored rows are gone from the listing: %v", containers)
+	}
+	if _, ok := containers["plex"]["installed"]; ok {
+		t.Fatalf("plex claims an installed state nobody could read: %v", containers["plex"])
+	}
+	stops, _ := containers["plex"]["stops"].(map[string]any)
+	if stops["known"] != false || stops["self"] != false {
+		t.Fatalf("stops = %v, want an honest unknown", stops)
+	}
+}
+
+// mcpRunRows is the runs array of a list_runs answer.
+func mcpRunRows(t *testing.T, res mcpToolResult) []map[string]any {
+	t.Helper()
+	if res.IsError {
+		t.Fatalf("list_runs: %v", res.Structured)
+	}
+	raw, ok := res.Structured["runs"].([]any)
+	if !ok {
+		t.Fatalf("list_runs answered without a runs array: %v", res.Structured)
+	}
+	out := make([]map[string]any, 0, len(raw))
+	for _, item := range raw {
+		row, ok := item.(map[string]any)
+		if !ok {
+			t.Fatalf("a run row is not an object: %v", item)
+		}
+		out = append(out, row)
+	}
+	return out
+}
+
+// mcpRunIDs is the id list of a list_runs answer, in the order it came back.
+func mcpRunIDs(t *testing.T, res mcpToolResult) []string {
+	t.Helper()
+	rows := mcpRunRows(t, res)
+	out := make([]string, 0, len(rows))
+	for _, row := range rows {
+		id, _ := row["id"].(string)
+		out = append(out, id)
+	}
+	return out
+}
+
+func TestMCPListRunsLimitFilterAndEnrichment(t *testing.T) {
+	docker := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{runningContainer("plex")}}
+	h, st, _, key := newMCPToolRouter(t, docker, &fakeResticEngine{})
+
+	plex := seedTarget(t, st, "plex")
+	vm, err := st.UpsertVMTarget(store.VMTarget{Name: "Windows11", IncludeInSchedule: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 25; i++ {
+		seedRun(t, st, plex.ID, "backup", "success", store.RunMeta{})
+	}
+	failed := seedRun(t, st, plex.ID, "backup", "failed", store.RunMeta{})
+	vmRun := seedRun(t, st, vm.ID, "backup", "success", store.RunMeta{})
+
+	res := mcpCallTool(t, h, key, "list_runs", "")
+	rows := mcpRunRows(t, res)
+	if len(rows) != 20 {
+		t.Fatalf("list_runs returned %d rows, want the default 20", len(rows))
+	}
+	if res.Structured["truncated"] != true {
+		t.Fatalf("truncated = %v with more runs than the limit", res.Structured["truncated"])
+	}
+
+	for _, args := range []string{`{"limit":0}`, `{"limit":101}`} {
+		if code := mcpCallTool(t, h, key, "list_runs", args).code(t); code != "invalid_argument" {
+			t.Fatalf("%s: code = %q, want invalid_argument", args, code)
+		}
+	}
+
+	byDomain := mcpRunIDs(t, mcpCallTool(t, h, key, "list_runs", `{"domain":"vms"}`))
+	if len(byDomain) != 1 || byDomain[0] != vmRun {
+		t.Fatalf("the vms domain returned %v, want only %q", byDomain, vmRun)
+	}
+	byItem := mcpRunIDs(t, mcpCallTool(t, h, key, "list_runs", `{"domain":"vms","item":"Windows11"}`))
+	if len(byItem) != 1 || byItem[0] != vmRun {
+		t.Fatalf("the item filter returned %v, want only %q", byItem, vmRun)
+	}
+	if code := mcpCallTool(t, h, key, "list_runs", `{"item":"Windows11"}`).code(t); code != "invalid_argument" {
+		t.Fatalf("an item without a domain gives %q, want invalid_argument", code)
+	}
+	if code := mcpCallTool(t, h, key, "list_runs", `{"domain":"vms","item":"Gone"}`).code(t); code != "not_found" {
+		t.Fatalf("an unknown item gives %q, want not_found", code)
+	}
+
+	byStatus := mcpRunIDs(t, mcpCallTool(t, h, key, "list_runs", `{"status":"failed"}`))
+	if len(byStatus) != 1 || byStatus[0] != failed {
+		t.Fatalf("the failed filter returned %v, want only %q", byStatus, failed)
+	}
+	if code := mcpCallTool(t, h, key, "list_runs", `{"status":"broken"}`).code(t); code != "invalid_argument" {
+		t.Fatalf("an unknown status gives %q, want invalid_argument", code)
+	}
+
+	prune := seedRun(t, st, "containers", "prune", "success", store.RunMeta{})
+	byKind := mcpRunIDs(t, mcpCallTool(t, h, key, "list_runs", `{"kind":"prune"}`))
+	if len(byKind) != 1 || byKind[0] != prune {
+		t.Fatalf("the prune filter returned %v, want only %q", byKind, prune)
+	}
+	if code := mcpCallTool(t, h, key, "list_runs", `{"kind":"reboot"}`).code(t); code != "invalid_argument" {
+		t.Fatalf("an unknown kind gives %q, want invalid_argument", code)
+	}
+
+	pruneRun, err := st.GetRun(prune)
+	if err != nil {
+		t.Fatal(err)
+	}
+	since := mcpRunIDs(t, mcpCallTool(t, h, key, "list_runs", fmt.Sprintf(`{"since":%d}`, pruneRun.StartedAt)))
+	if len(since) == 0 || since[0] != prune {
+		t.Fatalf("the since filter returned %v, want the prune run first", since)
+	}
+
+	ack, err := st.AcknowledgeRuns([]string{failed})
+	if err != nil || ack != 1 {
+		t.Fatalf("acknowledge the failed run: n=%d err=%v", ack, err)
+	}
+	acked := mcpRunRows(t, mcpCallTool(t, h, key, "list_runs", `{"status":"failed"}`))
+	if acked[0]["acknowledged"] != true {
+		t.Fatalf("an acknowledged failure comes back as %v", acked[0])
+	}
+
+	_, body := doJSON(t, h, http.MethodGet, "/api/runs", "")
+	httpRuns, _ := body["runs"].([]any)
+	if len(httpRuns) == 0 {
+		t.Fatalf("GET /api/runs is empty, so the comparison below proves nothing")
+	}
+	names := map[string]string{}
+	for _, raw := range httpRuns {
+		row, _ := raw.(map[string]any)
+		id, _ := row["id"].(string)
+		names[id], _ = row["target"].(string)
+	}
+	for _, row := range mcpRunRows(t, mcpCallTool(t, h, key, "list_runs", `{"limit":100}`)) {
+		id, _ := row["id"].(string)
+		if row["itemName"] != names[id] {
+			t.Fatalf("run %s is named %v through MCP and %q over HTTP", id, row["itemName"], names[id])
+		}
+	}
+}
+
+func TestMCPListRunsDomainLevelRowsAndVocabulary(t *testing.T) {
+	docker := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{runningContainer("plex")}}
+	h, st, _, key := newMCPToolRouter(t, docker, &fakeResticEngine{})
+
+	plex := seedTarget(t, st, "plex")
+	vm, err := st.UpsertVMTarget(store.VMTarget{Name: "Windows11", IncludeInSchedule: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	set, err := st.CreateFileSet(store.FileSet{Name: "Documents", Path: "documents", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	seedRun(t, st, plex.ID, "backup", "success", store.RunMeta{})
+	seedRun(t, st, vm.ID, "backup", "success", store.RunMeta{})
+	seedRun(t, st, set.ID, "backup", "success", store.RunMeta{})
+	prune := seedRun(t, st, "containers", "prune", "success", store.RunMeta{})
+	verify := seedRun(t, st, "vms", "verify", "success", store.RunMeta{})
+	seedRun(t, st, "files", "offsite", "success", store.RunMeta{})
+	seedRun(t, st, store.EverythingTargetID, "backup", "success", store.RunMeta{})
+
+	rows := mcpRunRows(t, mcpCallTool(t, h, key, "list_runs", `{"domain":"containers","kind":"prune"}`))
+	if len(rows) != 1 || rows[0]["id"] != prune {
+		t.Fatalf("a containers prune is invisible under its own domain: %v", rows)
+	}
+	if rows[0]["domain"] != "containers" || rows[0]["itemId"] != "containers" {
+		t.Fatalf("the prune row reads %v, want the containers domain", rows[0])
+	}
+	rows = mcpRunRows(t, mcpCallTool(t, h, key, "list_runs", `{"domain":"vms","kind":"verify"}`))
+	if len(rows) != 1 || rows[0]["id"] != verify {
+		t.Fatalf("a vms verify is invisible under its own domain: %v", rows)
+	}
+
+	seen := map[string]bool{}
+	for _, row := range mcpRunRows(t, mcpCallTool(t, h, key, "list_runs", `{"limit":100}`)) {
+		domain, _ := row["domain"].(string)
+		if domain == "" {
+			t.Fatalf("a run came back without a domain: %v", row)
+		}
+		seen[domain] = true
+	}
+	for _, domain := range []string{"containers", "vms", "files", "everything"} {
+		if !seen[domain] {
+			t.Fatalf("no run came back with domain %q: %v", domain, seen)
+		}
+	}
+	for domain := range seen {
+		back := mcpCallTool(t, h, key, "list_runs", fmt.Sprintf(`{"domain":%q}`, domain))
+		if back.IsError {
+			t.Fatalf("list_runs refuses its own domain value %q: %v", domain, back.Structured)
+		}
+		if domain == "everything" {
+			continue
+		}
+		items := mcpCallTool(t, h, key, "list_items", fmt.Sprintf(`{"domain":%q}`, domain))
+		if items.IsError {
+			t.Fatalf("list_items refuses the domain value %q that list_runs returned: %v", domain, items.Structured)
+		}
+	}
+}
+
+func TestMCPListRunsShowsOriginLabelEvenWhenRevoked(t *testing.T) {
+	docker := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{runningContainer("plex")}}
+	h, st, _, key := newMCPToolRouter(t, docker, &fakeResticEngine{})
+	_, desktopID := createMCPKey(t, h, "Desktop", true)
+
+	plex := seedTarget(t, st, "plex")
+	runID := seedRun(t, st, plex.ID, "backup", "success", store.RunMeta{StartedVia: "mcp", StartedViaKey: desktopID})
+
+	w, _ := doMCPKey(t, h, http.MethodPost, "/api/mcp/keys/"+desktopID+"/revoke", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("revoke: status = %d", w.Code)
+	}
+
+	rows := mcpRunRows(t, mcpCallTool(t, h, key, "list_runs", `{"domain":"containers","item":"plex"}`))
+	if len(rows) != 1 || rows[0]["id"] != runID {
+		t.Fatalf("list_runs returned %v", rows)
+	}
+	if rows[0]["startedVia"] != "mcp" || rows[0]["startedViaLabel"] != "Desktop" {
+		t.Fatalf("the run of a revoked key reads %v, want it named Desktop", rows[0])
+	}
+
+	_, body := doJSON(t, h, http.MethodGet, "/api/runs", "")
+	httpRuns, _ := body["runs"].([]any)
+	found := false
+	for _, raw := range httpRuns {
+		row, _ := raw.(map[string]any)
+		if row["id"] != runID {
+			continue
+		}
+		found = true
+		if row["startedViaLabel"] != "Desktop" || row["startedViaRevoked"] != true {
+			t.Fatalf("GET /api/runs reads %v, want the revoked Desktop key named", row)
+		}
+	}
+	if !found {
+		t.Fatalf("GET /api/runs does not carry the run at all: %v", httpRuns)
 	}
 }
