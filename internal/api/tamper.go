@@ -48,7 +48,7 @@ var tamperHTTPClient = &http.Client{
 // scheduled test against a non-REST off-site still shows up.
 func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict TamperVerdict, err error) {
 	switch domain {
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		return TamperVerdict{}, fmt.Errorf("unknown domain %q", domain)
 	}

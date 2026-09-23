@@ -8,7 +8,7 @@ import (
 )
 
 // offsiteConfigDomains lists the domains that can have an off-site target.
-var offsiteConfigDomains = []string{"containers", "vms", "flash", "config", "files"}
+var offsiteConfigDomains = []string{"containers", "vms", "flash", "config", "files", "zfs"}
 
 func validOffsiteDomain(domain string) bool {
 	for _, d := range offsiteConfigDomains {

@@ -302,3 +302,41 @@ func TestStartBackupEverythingRefusesConcurrent(t *testing.T) {
 	close(eng.block)
 	waitForEverythingDone(t, svc)
 }
+
+// The ZFS step sits between folders and the self-backup, so an item that holds
+// a container's data is snapshotted before the configuration that describes it.
+func TestBackupEverythingRunsZFSAfterFiles(t *testing.T) {
+	svc, st, _, _ := everythingTestService(t, &fakeResticEngine{})
+	s := mustSettings(t, st)
+	s.ZFSEnabled = true
+	s.ZFSPath = "backups/zfs"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/appdata", Enabled: true}); err != nil {
+		t.Fatalf("seed zfs item: %v", err)
+	}
+
+	sum, err := svc.BackupEverything(context.Background())
+	if err != nil {
+		t.Fatalf("BackupEverything: %v", err)
+	}
+	var order []string
+	for _, d := range sum.Domains {
+		order = append(order, d.Domain)
+	}
+	want := []string{"containers", "vms", "flash", "files", "zfs", "config"}
+	if len(order) != len(want) {
+		t.Fatalf("domain order = %v, want %v", order, want)
+	}
+	for i, w := range want {
+		if order[i] != w {
+			t.Fatalf("domain order[%d] = %q, want %q (full order: %v)", i, order[i], w, order)
+		}
+	}
+	for _, d := range sum.Domains {
+		if d.Domain == "zfs" && d.Attempted != 1 {
+			t.Fatalf("zfs step attempted %d items, want 1", d.Attempted)
+		}
+	}
+}

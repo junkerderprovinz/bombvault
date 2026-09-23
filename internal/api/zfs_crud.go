@@ -206,6 +206,10 @@ func (s *Service) PatchZFSDataset(ctx context.Context, id string, p ZFSDatasetPa
 // that owns its column.
 func (s *Service) applyZFSPatch(d store.ZFSDataset, p ZFSDatasetPatch) error {
 	if p.Enabled != nil {
+		// Carried on the row as well: the excludes write below goes through
+		// UpdateZFSDataset, which writes the enabled column too and would put
+		// the old value back.
+		d.Enabled = *p.Enabled
 		if err := s.store.SetZFSDatasetEnabled(d.ID, *p.Enabled); err != nil {
 			return err
 		}

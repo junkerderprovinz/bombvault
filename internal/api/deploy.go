@@ -43,7 +43,7 @@ func randomDeployPassword() (string, error) {
 // response that returns it.
 func buildDeploySnippet(domain string) (DeploySnippet, error) {
 	switch domain {
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
 		return DeploySnippet{}, fmt.Errorf("unknown domain %q", domain)
 	}

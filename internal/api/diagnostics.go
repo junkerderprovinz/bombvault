@@ -15,6 +15,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/logring"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
 
 // diagFile is one member of the bundle: a name and the bytes behind it.
@@ -58,6 +59,94 @@ type diagDBDump struct {
 	LastStatus      string `json:"lastStatus,omitempty"`
 	LastAt          int64  `json:"lastAt,omitempty"`
 	LastReason      string `json:"lastReason,omitempty"`
+}
+
+// diagZFS is what the ZFS domain looks like without asking the host: the items
+// and how their last look at the tree ended, the propagation check the
+// container can make on its own, and the zfs lines of its mount table.
+type diagZFS struct {
+	Enabled      bool          `json:"enabled"`
+	Items        []diagZFSItem `json:"items"`
+	Propagation  string        `json:"propagation"`
+	Unpropagated []string      `json:"unpropagated"`
+	Mounts       []string      `json:"mounts"`
+}
+
+// diagZFSItem is one item with the state its last preflight or run left.
+type diagZFSItem struct {
+	Dataset          string          `json:"dataset"`
+	Enabled          bool            `json:"enabled"`
+	CheckCode        string          `json:"checkCode,omitempty"`
+	CheckDetail      string          `json:"checkDetail,omitempty"`
+	CheckAt          int64           `json:"checkAt,omitempty"`
+	HostMountpoint   string          `json:"hostMountpoint,omitempty"`
+	ExcludedChildren []string        `json:"excludedChildren,omitempty"`
+	LeftoverCount    int             `json:"leftoverCount"`
+	SafetyCount      int             `json:"safetyCount"`
+	Members          []diagZFSMember `json:"members"`
+}
+
+// diagZFSMember is one dataset of an item's tree as the last run left it.
+type diagZFSMember struct {
+	Dataset string `json:"dataset"`
+	Outcome string `json:"outcome"`
+	Detail  string `json:"detail,omitempty"`
+}
+
+// zfsDiagnostics describes the ZFS domain from the database and the container's
+// own mount table. It reaches no host: a support bundle must not hang on an SSH
+// session, and the machine being unreachable is often why it is being written.
+func (h *Handler) zfsDiagnostics() (diagZFS, error) {
+	settings, err := h.store.GetSettings()
+	if err != nil {
+		return diagZFS{}, err
+	}
+	out := diagZFS{Enabled: settings.ZFSEnabled, Items: []diagZFSItem{}, Propagation: "ok", Unpropagated: []string{}}
+	recs := zfsMountRecords()
+	if top, nested := zfs.Propagation(recs, h.cfg.HostMountRoot); !top || len(nested) > 0 {
+		out.Propagation = "propagation-missing"
+		out.Unpropagated = nested
+	}
+	out.Mounts = zfsMountLines(recs)
+
+	items, err := h.store.ListZFSDatasets()
+	if err != nil {
+		return out, err
+	}
+	for _, d := range items {
+		row := diagZFSItem{
+			Dataset: d.Dataset, Enabled: d.Enabled,
+			CheckCode: d.LastCheckCode, CheckDetail: scrubSecrets(d.LastCheckDetail), CheckAt: d.LastCheckAt,
+			HostMountpoint: d.LastHostMountpoint, ExcludedChildren: d.ExcludedChildren,
+			LeftoverCount: d.LeftoverCount, Members: []diagZFSMember{},
+		}
+		if safety, sErr := h.store.ListZFSSafetySnapshots(d.ID); sErr == nil {
+			row.SafetyCount = len(safety)
+		}
+		if members, mErr := h.store.ListZFSMembers(d.ID); mErr == nil {
+			for _, m := range members {
+				row.Members = append(row.Members, diagZFSMember{
+					Dataset: m.Dataset, Outcome: m.Outcome, Detail: scrubSecrets(m.Detail),
+				})
+			}
+		}
+		out.Items = append(out.Items, row)
+	}
+	slices.SortFunc(out.Items, func(a, b diagZFSItem) int { return strings.Compare(a.Dataset, b.Dataset) })
+	return out, nil
+}
+
+// zfsMountLines renders the zfs entries of the container's mount table, so a
+// missing dataset mount can be read off the bundle.
+func zfsMountLines(recs []zfs.MountRecord) []string {
+	out := []string{}
+	for _, r := range recs {
+		if r.FSType != "zfs" {
+			continue
+		}
+		out = append(out, r.Source+" -> "+r.MountPoint+" ("+strings.Join(r.Options, ",")+")")
+	}
+	return out
 }
 
 // dbDumpDiagnostics describes every container this host runs a database in,
@@ -223,6 +312,11 @@ func (h *Handler) buildDiagnostics(ctx context.Context) ([]diagFile, error) {
 	// dbdump.json holds which databases are dumped and how the last dump went.
 	dumps, dErr := h.dbDumpDiagnostics(ctx)
 	add("dbdump.json", dumps, dErr)
+
+	// zfs.json holds the ZFS items, their trees and what the container can see
+	// of the host's mounts.
+	zfsDiag, zErr := h.zfsDiagnostics()
+	add("zfs.json", zfsDiag, zErr)
 
 	// runs.json — recent history. Run.Error holds raw restic/rclone/Docker
 	// output, which handleRuns can serve as-is because it sits behind the

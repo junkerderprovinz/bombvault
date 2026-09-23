@@ -373,6 +373,29 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/files/sets/{id}/restore-files", h.handleRestoreFileSetFiles)
 	mux.HandleFunc("POST /api/files/discover", h.handleDiscoverFiles)
 
+	// ZFS endpoints (the zfs domain: a dataset and the datasets below it, read
+	// from one recursive snapshot).
+	mux.HandleFunc("GET /api/zfs", h.handleListZFSDatasets)
+	mux.HandleFunc("GET /api/zfs/connection", h.handleZFSConnection)
+	mux.HandleFunc("GET /api/zfs/host", h.handleZFSHostDatasets)
+	mux.HandleFunc("POST /api/zfs/check", h.handleZFSCheck)
+	mux.HandleFunc("POST /api/zfs/datasets", h.handleCreateZFSDatasets)
+	mux.HandleFunc("PATCH /api/zfs/datasets/{id}", h.handlePatchZFSDataset)
+	mux.HandleFunc("DELETE /api/zfs/datasets/{id}", h.handleDeleteZFSDataset)
+	mux.HandleFunc("DELETE /api/zfs/datasets/{id}/backups", h.handleDeleteBackupsZFSDataset)
+	mux.HandleFunc("GET /api/zfs/datasets/{id}/safety-snapshots", h.handleListZFSSafetySnapshots)
+	mux.HandleFunc("DELETE /api/zfs/datasets/{id}/safety-snapshots", h.handleDeleteZFSSafetySnapshot)
+	mux.HandleFunc("GET /api/zfs/runs/{runId}/members", h.handleZFSRunMembers)
+	mux.HandleFunc("POST /api/zfs/excludes/preview", h.handlePreviewZFSExcludes)
+	mux.HandleFunc("POST /api/zfs/datasets/{id}/backup", h.handleBackupZFSDataset)
+	mux.HandleFunc("POST /api/zfs/backup-all", h.handleBackupZFSAll)
+	mux.HandleFunc("POST /api/zfs/datasets/{id}/probe", h.handleProbeZFSDataset)
+	mux.HandleFunc("POST /api/zfs/datasets/{id}/sweep", h.handleSweepZFSDataset)
+	mux.HandleFunc("GET /api/zfs/datasets/{id}/restore-points", h.handleZFSRestorePoints)
+	mux.HandleFunc("GET /api/zfs/datasets/{id}/files", h.handleListSnapshotFilesZFS)
+	mux.HandleFunc("POST /api/zfs/datasets/{id}/restore", h.handleRestoreZFS)
+	mux.HandleFunc("POST /api/zfs/discover", h.handleDiscoverZFS)
+
 	// Foreign-repo read-only session endpoints (restore from ANOTHER BombVault
 	// instance's repo, #61). Sessions are in-memory with a TTL — never persisted
 	// to Settings. AuthGate-protected like every other /api route (the public

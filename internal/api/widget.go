@@ -89,7 +89,7 @@ func (h *Handler) handleWidgetPage(w http.ResponseWriter, r *http.Request) {
 
 // widgetRun is one run in the widget feed, with only what widget.html needs
 // for its log lines. Domain follows runView and activityLog.ts: items carry
-// "container", "vm", "files", "flash" or "config", and domain-scoped
+// "container", "vm", "files", "zfs", "flash" or "config", and domain-scoped
 // operations carry the domain their run was recorded against.
 type widgetRun struct {
 	ID         string `json:"id"`

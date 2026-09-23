@@ -133,11 +133,13 @@ func redactExportLocations(exp *settingsExport) {
 	exp.Settings.FlashPath = scrubRepoLocation(exp.Settings.FlashPath)
 	exp.Settings.ConfigPath = scrubRepoLocation(exp.Settings.ConfigPath)
 	exp.Settings.FilesPath = scrubRepoLocation(exp.Settings.FilesPath)
+	exp.Settings.ZFSPath = scrubRepoLocation(exp.Settings.ZFSPath)
 	exp.Settings.ContainersOffsite = scrubRepoLocation(exp.Settings.ContainersOffsite)
 	exp.Settings.VMsOffsite = scrubRepoLocation(exp.Settings.VMsOffsite)
 	exp.Settings.FlashOffsite = scrubRepoLocation(exp.Settings.FlashOffsite)
 	exp.Settings.ConfigOffsite = scrubRepoLocation(exp.Settings.ConfigOffsite)
 	exp.Settings.FilesOffsite = scrubRepoLocation(exp.Settings.FilesOffsite)
+	exp.Settings.ZFSOffsite = scrubRepoLocation(exp.Settings.ZFSOffsite)
 	for i := range exp.OffsiteTargets {
 		exp.OffsiteTargets[i].Repo = scrubRepoLocation(exp.OffsiteTargets[i].Repo)
 	}
@@ -156,6 +158,7 @@ func redactedLocations(exp settingsExport) []string {
 		{"flashOffsite", exp.Settings.FlashOffsite},
 		{"configOffsite", exp.Settings.ConfigOffsite},
 		{"filesOffsite", exp.Settings.FilesOffsite},
+		{"zfsOffsite", exp.Settings.ZFSOffsite},
 	} {
 		if locationRedacted(f.loc) {
 			out = append(out, f.name)
@@ -500,11 +503,13 @@ func (h *Handler) rejectImportCollisions(exp settingsExport) string {
 		{"the Containers path", s.ContainersPath}, {"the VMs path", s.VMsPath},
 		{"the Flash path", s.FlashPath}, {"the Config path", s.ConfigPath},
 		{"the Folders path", s.FilesPath},
+		{"the ZFS datasets path", s.ZFSPath},
 		{"the Containers off-site destination", s.ContainersOffsite},
 		{"the VMs off-site destination", s.VMsOffsite},
 		{"the Flash off-site destination", s.FlashOffsite},
 		{"the Config off-site destination", s.ConfigOffsite},
 		{"the Folders off-site destination", s.FilesOffsite},
+		{"the ZFS datasets off-site destination", s.ZFSOffsite},
 	} {
 		if loc, ok := resolve(p.loc); ok {
 			occupied = append(occupied, place{p.label, loc})
@@ -629,8 +634,9 @@ func validateExport(exp settingsExport, mountRoot string) string {
 // missing here imports without ever being checked for grammar.
 func exportCadences(v settingsView) []string {
 	return []string{
-		v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule, v.ConfigSchedule, v.FilesSchedule,
+		v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule, v.ConfigSchedule, v.FilesSchedule, v.ZFSSchedule,
 		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule,
+		v.ZFSOffsiteSchedule,
 		v.DrillsSchedule, v.TamperTestSchedule, v.DigestSchedule, v.EverythingSchedule,
 	}
 }
@@ -673,18 +679,19 @@ func settingsGroups(v settingsView) []string {
 	}
 	// The dump switch counts when it is off, the mirror image of the flags
 	// above: it is on by default, so switching it off is what an apply imposes.
-	add("domains", v.ContainersEnabled || v.VMsEnabled || v.FlashEnabled || v.ConfigEnabled || v.FilesEnabled ||
-		v.ContainersPath != "" || v.VMsPath != "" || v.FlashPath != "" || v.ConfigPath != "" || v.FilesPath != "" ||
+	add("domains", v.ContainersEnabled || v.VMsEnabled || v.FlashEnabled || v.ConfigEnabled || v.FilesEnabled || v.ZFSEnabled ||
+		v.ContainersPath != "" || v.VMsPath != "" || v.FlashPath != "" || v.ConfigPath != "" || v.FilesPath != "" || v.ZFSPath != "" ||
 		(v.DBDumpsEnabled != nil && !*v.DBDumpsEnabled))
 	add("schedules", v.ContainersSchedule != "" || v.VMsSchedule != "" || v.FlashSchedule != "" ||
-		v.ConfigSchedule != "" || v.FilesSchedule != "")
+		v.ConfigSchedule != "" || v.FilesSchedule != "" || v.ZFSSchedule != "")
 	// The whole-server pass is its own area, not part of "schedules": it is the
 	// one setting an apply can switch ON for a box that never ran it, so the
 	// preview has to name it.
 	add("everything", v.EverythingSchedule != "")
 	add("retention", v.RetentionKeepLast > 0 || v.RetentionKeepDaily > 0 || v.RetentionKeepWeekly > 0 || v.RetentionKeepMonthly > 0 ||
 		v.OffsiteRetentionKeepLast > 0 || v.OffsiteRetentionKeepDaily > 0 || v.OffsiteRetentionKeepWeekly > 0 || v.OffsiteRetentionKeepMonthly > 0)
-	add("offsite", v.ContainersOffsite != "" || v.VMsOffsite != "" || v.FlashOffsite != "" || v.ConfigOffsite != "" || v.FilesOffsite != "")
+	add("offsite", v.ContainersOffsite != "" || v.VMsOffsite != "" || v.FlashOffsite != "" || v.ConfigOffsite != "" ||
+		v.FilesOffsite != "" || v.ZFSOffsite != "")
 	add("drills", v.DrillsEnabled || v.DrillsSchedule != "" || v.OffsiteDrillsEnabled)
 	add("digest", v.DigestEnabled || v.DigestSchedule != "")
 	add("monitoring", v.MetricsEnabled || v.WidgetTokenSet)
@@ -959,6 +966,7 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.FlashEnabled = v.FlashEnabled
 	out.ConfigEnabled = v.ConfigEnabled
 	out.FilesEnabled = v.FilesEnabled
+	out.ZFSEnabled = v.ZFSEnabled
 	// Backup paths, via importedLocation for the same reason the off-site
 	// locations below use it: a domain path may itself be a restic remote, so a
 	// plain export can carry a stripped credential here too. Writing the marker
@@ -970,6 +978,7 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.FlashPath = importedLocation(existing.FlashPath, v.FlashPath)
 	out.ConfigPath = importedLocation(existing.ConfigPath, v.ConfigPath)
 	out.FilesPath = importedLocation(existing.FilesPath, v.FilesPath)
+	out.ZFSPath = importedLocation(existing.ZFSPath, v.ZFSPath)
 	out.RestoreFolder = v.RestoreFolder
 	// Off-site locations, via importedLocation: a location the plain export
 	// stripped a credential out of never overwrites a working one here.
@@ -978,16 +987,19 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.FlashOffsite = importedLocation(existing.FlashOffsite, v.FlashOffsite)
 	out.ConfigOffsite = importedLocation(existing.ConfigOffsite, v.ConfigOffsite)
 	out.FilesOffsite = importedLocation(existing.FilesOffsite, v.FilesOffsite)
+	out.ZFSOffsite = importedLocation(existing.ZFSOffsite, v.ZFSOffsite)
 	out.ContainersOffsiteSchedule = v.ContainersOffsiteSchedule
 	out.VMsOffsiteSchedule = v.VMsOffsiteSchedule
 	out.FlashOffsiteSchedule = v.FlashOffsiteSchedule
 	out.ConfigOffsiteSchedule = v.ConfigOffsiteSchedule
 	out.FilesOffsiteSchedule = v.FilesOffsiteSchedule
+	out.ZFSOffsiteSchedule = v.ZFSOffsiteSchedule
 	out.ContainersSchedule = v.ContainersSchedule
 	out.VMsSchedule = v.VMsSchedule
 	out.FlashSchedule = v.FlashSchedule
 	out.ConfigSchedule = v.ConfigSchedule
 	out.FilesSchedule = v.FilesSchedule
+	out.ZFSSchedule = v.ZFSSchedule
 	// The whole-server pass's cadence. Missing here until now, so an import
 	// switched Backup Everything off on the instance it was applied to.
 	out.EverythingSchedule = v.EverythingSchedule
@@ -1015,6 +1027,7 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	out.FlashOffsiteImmutable = v.FlashOffsiteImmutable
 	out.ConfigOffsiteImmutable = v.ConfigOffsiteImmutable
 	out.FilesOffsiteImmutable = v.FilesOffsiteImmutable
+	out.ZFSOffsiteImmutable = v.ZFSOffsiteImmutable
 	out.OffsiteGrowthBudgetGB = max(0, v.OffsiteGrowthBudgetGB)
 	out.TamperTestSchedule = v.TamperTestSchedule
 	out.DRDrillTarget = strings.TrimSpace(v.DRDrillTarget)

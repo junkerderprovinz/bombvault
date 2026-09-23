@@ -1705,10 +1705,10 @@ func (s *Service) forgetWithLockHeal(ctx context.Context, repo string, p restic.
 }
 
 // identityTags returns the distinct item-identity tags present in snaps:
-// container:<name>, vm:<name>, fileset:<name>, dbdump:<name>, and the fixed
-// flash/config tags. Profile/marker tags (p1, p2, live) are not identities, and
-// neither are the tags describing a dump (engine, image, version, database
-// names, the run it belongs to).
+// container:<name>, vm:<name>, fileset:<name>, dbdump:<name>, zfs:<dataset>,
+// and the fixed flash/config tags. Profile/marker tags (p1, p2, live) are not
+// identities, and neither are the tags describing a dump (engine, image,
+// version, database names, the run it belongs to).
 func identityTags(snaps []restic.Snapshot) []string {
 	seen := map[string]bool{}
 	var out []string
@@ -1716,7 +1716,8 @@ func identityTags(snaps []restic.Snapshot) []string {
 		for _, t := range sn.Tags {
 			isIdentity := t == "flash" || t == "config" ||
 				strings.HasPrefix(t, "container:") || strings.HasPrefix(t, "vm:") ||
-				strings.HasPrefix(t, "fileset:") || strings.HasPrefix(t, dbDumpIdentityPrefix)
+				strings.HasPrefix(t, "fileset:") || strings.HasPrefix(t, dbDumpIdentityPrefix) ||
+				strings.HasPrefix(t, "zfs:")
 			if isIdentity && !seen[t] {
 				seen[t] = true
 				out = append(out, t)
@@ -2105,6 +2106,8 @@ func offsiteRepoFromSettings(domain string, settings store.Settings) string {
 		return settings.ConfigOffsite
 	case "files":
 		return settings.FilesOffsite
+	case zfsDomain:
+		return settings.ZFSOffsite
 	}
 	return ""
 }
@@ -2147,6 +2150,8 @@ func offsiteScheduleFromSettings(domain string, settings store.Settings) string 
 		return settings.ConfigOffsiteSchedule
 	case "files":
 		return settings.FilesOffsiteSchedule
+	case zfsDomain:
+		return settings.ZFSOffsiteSchedule
 	}
 	return ""
 }
@@ -2169,6 +2174,8 @@ func offsiteImmutableFor(domain string, s store.Settings) bool {
 		return s.ConfigOffsiteImmutable
 	case "files":
 		return s.FilesOffsiteImmutable
+	case zfsDomain:
+		return s.ZFSOffsiteImmutable
 	}
 	return false
 }
@@ -2578,6 +2585,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		{"flash", settings.FlashEnabled, settings.FlashSchedule, s.store.LastSuccessfulFlashBackup},
 		{"config", settings.ConfigEnabled, settings.ConfigSchedule, s.store.LastSuccessfulConfigBackup},
 		{"files", settings.FilesEnabled, settings.FilesSchedule, s.store.LastSuccessfulFilesBackup},
+		{zfsDomain, settings.ZFSEnabled, settings.ZFSSchedule, s.store.LastSuccessfulZFSBackup},
 	}
 
 	out := make([]DomainStatusEntry, 0, len(domains))
@@ -2740,13 +2748,15 @@ type HistoryDay struct {
 	Flash      DayStat `json:"flash"`
 	Config     DayStat `json:"config"`
 	Files      DayStat `json:"files"`
+	ZFS        DayStat `json:"zfs"`
 }
 
 // runDomains is the target_id → domain map ("container" | "vm" | "flash" |
-// "config" | "files") used to attribute each run to its domain. It mirrors the
-// same mapping handleRuns uses: container targets, VM targets, file sets, and
-// the singleton flash/config ids. Best-effort — an unknown id (e.g. a deleted
-// target) maps to "" and is ignored by the bucketer.
+// "config" | "files" | "zfs") used to attribute each run to its domain. It
+// mirrors the same mapping handleRuns uses: container targets, VM targets,
+// file sets, ZFS items and the singleton flash/config ids. Best-effort: an
+// unknown id (for example a deleted target) maps to "" and is ignored by the
+// bucketer.
 func (s *Service) runDomains() map[string]string {
 	domain := map[string]string{store.FlashTargetID: "flash", store.ConfigTargetID: "config"}
 	if cts, err := s.store.ListTargets(); err == nil {
@@ -2762,6 +2772,11 @@ func (s *Service) runDomains() map[string]string {
 	if fss, err := s.store.ListFileSets(); err == nil {
 		for _, fs := range fss {
 			domain[fs.ID] = "files"
+		}
+	}
+	if ds, err := s.store.ListZFSDatasets(); err == nil {
+		for _, d := range ds {
+			domain[d.ID] = zfsDomain
 		}
 	}
 	return domain
@@ -2815,6 +2830,8 @@ func bucketRunsByDay(runs []store.Run, domain map[string]string, startUnix, endU
 			stat = &out[i].Config
 		case "files":
 			stat = &out[i].Files
+		case zfsDomain:
+			stat = &out[i].ZFS
 		default:
 			continue
 		}
@@ -3059,6 +3076,7 @@ func (s *Service) CollectStatsOnStartup() {
 		{"flash", settings.FlashEnabled},
 		{"config", settings.ConfigEnabled},
 		{"files", settings.FilesEnabled},
+		{zfsDomain, settings.ZFSEnabled},
 	} {
 		if d.enabled {
 			s.CollectStatsAsync(d.name, "local")
@@ -8308,7 +8326,7 @@ func (s *Service) repoSharedWithAnotherDomain(settings store.Settings, domain st
 	if r.Own || r.Named.ID == "" {
 		return false
 	}
-	for _, d := range []string{"containers", "vms", "files"} {
+	for _, d := range []string{"containers", "vms", "files", zfsDomain} {
 		if d == domain {
 			continue
 		}
@@ -14480,7 +14498,7 @@ func (s *Service) PreviewExcludes(ctx context.Context, name string, candidate []
 }
 
 // CheckDomain verifies the integrity of a domain's restic repo (restic check).
-// domain is "containers" | "vms" | "flash" | "files". Returns a friendly error
+// domain is "containers" | "vms" | "flash" | "files" | "zfs". Returns a friendly error
 // when the repo has not been created yet. Bounded by a timeout so a huge repo
 // can't hang the request forever.
 func (s *Service) CheckDomain(ctx context.Context, domain, source string) (err error) {
@@ -14629,7 +14647,7 @@ func (s *Service) RunRestoreDrill(ctx context.Context, domain, source, kind stri
 // four mails at the one moment they were already looking straight at it.
 func (s *Service) runSubsetDrill(ctx context.Context, domain, source string, wait bool) (drill store.RestoreDrill, err error) {
 	switch domain {
-	case "containers", "vms", "flash", "config", "files":
+	case "containers", "vms", "flash", "config", "files", zfsDomain:
 	default:
 		return store.RestoreDrill{}, fmt.Errorf("unknown domain %q", domain)
 	}
@@ -14884,7 +14902,7 @@ var errNothingToDrill = errors.New("no restorable file data in the newest off-si
 // records kind='dr' ok=false AND fires the drill-failure notification.
 func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bool) (drill store.RestoreDrill, err error) {
 	switch domain {
-	case "containers", "vms", "flash", "files":
+	case "containers", "vms", "flash", "files", zfsDomain:
 	default:
 		return store.RestoreDrill{}, fmt.Errorf("unknown domain %q", domain)
 	}
@@ -15026,8 +15044,10 @@ func (s *Service) runDRDrill(ctx context.Context, domain, source string, wait bo
 // its vm:<name> tag — same pattern as containers. flash: the newest snapshot
 // outright (flash is a single whole-USB image, no per-item scoping). files
 // follows the flash path: the newest snapshot in the files repo outright — a
-// file-set restore is sandbox-cheap and any set proves the repo restorable. An
-// empty repo or a target with no off-site snapshot yields a clear error.
+// file-set restore is sandbox-cheap and any set proves the repo restorable. zfs
+// takes the newest snapshot carrying a zfs: tag, because a member's tree root
+// is its dataset root and any member proves the repo restorable. An empty repo
+// or a target with no off-site snapshot yields a clear error.
 func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings store.Settings, repo string, mode restic.Mode) (string, error) {
 	all, err := s.listSnapshots(ctx, repo, mode)
 	if err != nil {
@@ -15039,6 +15059,8 @@ func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings st
 	switch domain {
 	case "flash", "files":
 		return newestSnapshot(all).ID, nil
+	case zfsDomain:
+		return newestZFSMemberSnapshot(all)
 	case "containers", "vms":
 		var (
 			target string
@@ -15075,6 +15097,25 @@ func (s *Service) pickDRSnapshot(ctx context.Context, domain string, settings st
 	default:
 		return "", fmt.Errorf("unknown domain %q", domain)
 	}
+}
+
+// newestZFSMemberSnapshot picks the newest member snapshot of the ZFS domain.
+// A repository shared with another domain also holds snapshots this drill must
+// not restore, so the tag decides rather than the timestamp alone.
+func newestZFSMemberSnapshot(all []restic.Snapshot) (string, error) {
+	var scoped []restic.Snapshot
+	for _, snap := range all {
+		for _, t := range snap.Tags {
+			if rest, ok := strings.CutPrefix(t, "zfs:"); ok && rest != "" {
+				scoped = append(scoped, snap)
+				break
+			}
+		}
+	}
+	if len(scoped) == 0 {
+		return "", errNothingToDrill
+	}
+	return newestSnapshot(scoped).ID, nil
 }
 
 // newestSnapshot returns the snapshot with the latest Time (RFC3339 sorts
@@ -16510,9 +16551,9 @@ func (s *Service) decodeCloudFor(settings store.Settings, credsRef string) (Clou
 // Encryption-key recovery kit (disaster recovery without a running BombVault)
 // ---------------------------------------------------------------------------
 
-// namedRepoItemNames lists the containers, VMs and folder sets pointed at one
-// named repository (#204), as a single comma-separated line for the recovery
-// kit. Built from the three item lists rather than a new store query, and
+// namedRepoItemNames lists the containers, VMs, folder sets and ZFS items
+// pointed at one named repository (#204), as a single comma-separated line for
+// the recovery kit. Built from the item lists rather than a new store query, and
 // tolerant of a read failure: the location is the part that must not be lost,
 // the inventory is the help.
 func (s *Service) namedRepoItemNames(id string) string {
@@ -16535,6 +16576,13 @@ func (s *Service) namedRepoItemNames(id string) string {
 		for _, f := range sets {
 			if strings.TrimSpace(f.Repo) == id {
 				out = append(out, "folder set "+f.Name)
+			}
+		}
+	}
+	if ds, err := s.store.ListZFSDatasets(); err == nil {
+		for _, d := range ds {
+			if strings.TrimSpace(d.Repo) == id {
+				out = append(out, "ZFS dataset "+d.Dataset)
 			}
 		}
 	}
@@ -16569,8 +16617,8 @@ func (s *Service) RecoveryKit() (string, error) {
 	// settings (the same resolution the engine uses), so the kit names the real
 	// places the data lives. A resolution failure for one domain leaves that line
 	// blank rather than failing the whole kit.
-	repos := make([]recoveryRepo, 0, 4)
-	for _, d := range []string{"containers", "vms", "flash", "files"} {
+	repos := make([]recoveryRepo, 0, 5)
+	for _, d := range []string{"containers", "vms", "flash", "files", zfsDomain} {
 		rr := recoveryRepo{Domain: d}
 		if loc, rErr := s.repoFor(settings, d, "local"); rErr == nil {
 			rr.Local = loc
@@ -16752,6 +16800,7 @@ func (s *Service) RecoveryKit() (string, error) {
 	w("  (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY for S3, RESTIC_REST_USERNAME /\n")
 	w("  RESTIC_REST_PASSWORD for a REST server) and use the repo verbatim.\n")
 
+	b.WriteString(s.zfsKitSection(settings))
 	b.WriteString(dbDumpKitSection)
 
 	return b.String(), nil
