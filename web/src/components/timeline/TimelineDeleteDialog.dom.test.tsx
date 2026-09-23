@@ -79,6 +79,41 @@ describe("TimelineDeleteDialog", () => {
     expect(fake.callsTo("getTimelineDeletePreview")).toEqual([["containers", "nginx", "a1a1a1a1", []]]);
   });
 
+  it("names the place it could not read when nothing came back to delete", async () => {
+    fake.reply("getTimelineDeletePreview", {
+      ok: true,
+      delete: [],
+      others: [{ place: "offsite:t-b2", label: "B2", state: "unreadable" }],
+    });
+    const { onDone, onClose } = open(["offsite:t-b2"]);
+    expect(await screen.findByText("Could not be checked: B2")).toBeTruthy();
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(onDone).not.toHaveBeenCalled();
+  });
+
+  it("names the append-only place it left out when nothing came back to delete", async () => {
+    fake.reply("getTimelineDeletePreview", {
+      ok: true,
+      delete: [],
+      others: [{ place: "offsite:t-b2", label: "B2", state: "append-only" }],
+    });
+    const { onClose } = open(["offsite:t-b2"]);
+    expect(await screen.findByText("Left out, append-only: B2")).toBeTruthy();
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+  });
+
+  it("reloads the list when the place no longer holds the backup", async () => {
+    fake.reply("getTimelineDeletePreview", {
+      ok: true,
+      delete: [],
+      others: [{ place: "local", label: "", state: "missing" }],
+    });
+    const { onDone, onClose } = open();
+    expect(await screen.findByText("This backup is no longer at the chosen place.")).toBeTruthy();
+    await waitFor(() => expect(onDone).toHaveBeenCalled());
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it("shows the translated refusal and still reloads", async () => {
     fake.reply("getTimelineDeletePreview", { ok: true, delete: [atHome], others: [] });
     fake.reply("deleteTimelineRow", { ok: false, code: "domain-busy", error: "server sentence", deleted: [], skipped: [] });
