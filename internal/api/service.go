@@ -9920,7 +9920,7 @@ func (s *Service) reposToCheckForTakeover(settings store.Settings, domain, newNa
 // backup naming one of the entry's names as a former name is its own, made
 // before an unlink.
 func (s *Service) refuseForeignBackups(ctx context.Context, settings store.Settings, domain, targetID, currentName, newName string, repos []string) error {
-	settingsDomain, prefix, _ := aliasDomain(domain)
+	settingsDomain, _, _ := aliasDomain(domain)
 	own, err := s.ownNamesFor(domain, targetID, currentName)
 	if err != nil {
 		return fmt.Errorf("%q cannot be checked for backups: %w", newName, err)
@@ -9930,9 +9930,9 @@ func (s *Service) refuseForeignBackups(ctx context.Context, settings store.Setti
 		return fmt.Errorf("%q cannot be checked for backups: %w", newName, err)
 	}
 	for _, p := range places {
-		// The literal tag: an identity widened by aliases would pull in the
+		// The literal tags: an identity widened by aliases would pull in the
 		// history of whatever row holds newName.
-		snaps, err := s.snapshotsForTag(ctx, p.repo, p.mode, prefix+newName)
+		snaps, err := s.snapshotsForTags(ctx, p.repo, p.mode, entryTags(domain, newName))
 		if err != nil {
 			return fmt.Errorf("%q cannot be checked for backups: %s could not be read: %w", newName, p.name, err)
 		}
@@ -10230,24 +10230,52 @@ func aliasDomain(domain string) (settingsDomain, prefix, kind string) {
 	return "containers", "container:", "container"
 }
 
+// entryTagPrefixes are the identity-tag prefixes an entry's snapshots carry in
+// the alias domain. A container has two: its files backups and its database
+// dumps.
+func entryTagPrefixes(domain string) []string {
+	settingsDomain, _, _ := aliasDomain(domain)
+	return domainTagPrefixes(settingsDomain)
+}
+
+// entryTags are those prefixes on one name.
+func entryTags(domain, name string) []string {
+	prefixes := entryTagPrefixes(domain)
+	tags := make([]string, 0, len(prefixes))
+	for _, prefix := range prefixes {
+		tags = append(tags, prefix+name)
+	}
+	return tags
+}
+
 // oldNameReused reports whether a's old name holds a snapshot a does not
 // claim, one taken at or after the link or at a time that does not parse, in
 // repos or in any off-site target of the alias's domain. The error names the
 // place that could not be read.
 func (s *Service) oldNameReused(ctx context.Context, settings store.Settings, a store.Alias, repos []string) (bool, error) {
-	domain, prefix, _ := aliasDomain(a.Domain)
+	domain, _, _ := aliasDomain(a.Domain)
 	places, err := s.backupPlaces(settings, domain, repos)
 	if err != nil {
 		return false, err
 	}
-	claim := newAliasClaim(prefix, a)
+	// Both of a container's identities, since a dump under the old name is as
+	// good a sign that the name is in use again as a files backup.
+	var claims []aliasClaim
+	var tags []string
+	for _, prefix := range entryTagPrefixes(a.Domain) {
+		claim := newAliasClaim(prefix, a)
+		claims = append(claims, claim)
+		tags = append(tags, claim.tag)
+	}
 	for _, p := range places {
-		snaps, err := s.snapshotsForTag(ctx, p.repo, p.mode, claim.tag)
+		snaps, err := s.snapshotsForTags(ctx, p.repo, p.mode, tags)
 		if err != nil {
 			return false, fmt.Errorf("%s could not be read: %w", p.name, err)
 		}
-		if !claim.claimsEvery(snaps) {
-			return true, nil
+		for _, claim := range claims {
+			if !claim.claimsEvery(snaps) {
+				return true, nil
+			}
 		}
 	}
 	return false, nil
