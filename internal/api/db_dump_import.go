@@ -171,15 +171,17 @@ func (s *Service) StartImportDBDump(ctx context.Context, name, source, snapshotI
 	rkey := "container:" + name
 	go func() {
 		var runID string
+		// A panic skips the restart, so the reason has to name what is down.
+		var stopped []importDependent
 		defer s.recoverOperation("import database dump: "+name, nil, func(msg string) {
-			s.finishDBImportRun(runID, "", "", errors.New(msg))
+			s.finishDBImportRun(runID, "", "", errors.New(msg+appsStoppedTail(stopped)))
 		})
 		defer s.batchActive.Store(false)
 		ictx, cancel := context.WithTimeout(bctx, restoreTimeout)
 		defer cancel()
 		runID = s.beginDBDumpRun(name, "dbimport", "import database dump")
 		pctx, startedAt := s.progBegin(ictx, rkey, "restore")
-		note, ierr := s.importDBDump(pctx, plan, rkey, startedAt)
+		note, ierr := s.importDBDump(pctx, plan, rkey, startedAt, &stopped)
 		s.progEnd(rkey, "restore", ierr == nil, startedAt)
 		s.finishDBImportRun(runID, plan.dump.ID, note, ierr)
 		if ierr != nil {
@@ -303,13 +305,14 @@ func postgresRole(env []string) string {
 }
 
 // importDBDump runs the import under the containers restore lock and returns
-// the note its run row carries.
-func (s *Service) importDBDump(ctx context.Context, plan dbImportPlan, key string, startedAt int64) (string, error) {
+// the note its run row carries. It keeps stopped up to date with the apps that
+// are down at any moment, so the caller can name them if this panics.
+func (s *Service) importDBDump(ctx context.Context, plan dbImportPlan, key string, startedAt int64, stopped *[]importDependent) (string, error) {
 	unlock := s.lockDomainFor("containers", "restore")
 	defer unlock()
 	s.publishDBDumpStage(key, "restore", "dbimport", startedAt, 0)
 
-	stopped := s.stopImportDependents(ctx, plan.name)
+	*stopped = s.stopImportDependents(ctx, plan.name)
 	var note string
 	kept, err := s.freshDataDirFor(ctx, plan)
 	if err == nil {
@@ -320,12 +323,12 @@ func (s *Service) importDBDump(ctx context.Context, plan dbImportPlan, key strin
 		// An app started on a half-imported or empty database runs its
 		// migrations there and takes writes that are lost once the kept folder
 		// goes back.
-		if len(stopped) > 0 {
-			ierr.msg += "; " + store.ImportTailAppsStopped + ": " + dependentNames(stopped)
-		}
+		ierr.msg += appsStoppedTail(*stopped)
 		return note, err
 	}
-	if down := s.startImportDependents(context.WithoutCancel(ctx), stopped); len(down) > 0 {
+	down := s.startImportDependents(context.WithoutCancel(ctx), *stopped)
+	*stopped = down
+	if len(down) > 0 {
 		const suffix = "; " + store.ImportTailAppsDown + ": "
 		if ierr != nil {
 			ierr.msg += suffix + dependentNames(down)
@@ -334,6 +337,14 @@ func (s *Service) importDBDump(ctx context.Context, plan dbImportPlan, key strin
 		}
 	}
 	return note, err
+}
+
+// appsStoppedTail is what a reason appends to name the apps it leaves stopped.
+func appsStoppedTail(deps []importDependent) string {
+	if len(deps) == 0 {
+		return ""
+	}
+	return "; " + store.ImportTailAppsStopped + ": " + dependentNames(deps)
 }
 
 // importDependent is a container the import stopped. It is stopped and started
