@@ -36,9 +36,8 @@ type DBDumpRequest struct {
 // DBDumpResult describes the snapshot a finished dump left behind. Note is a
 // success note for the run, empty when the dump has nothing to add.
 type DBDumpResult struct {
-	SnapshotID string
-	Bytes      int64
-	Note       string
+	Summary Summary
+	Note    string
 }
 
 // DBDumpError is the failure a DBDumper reports: Reason is the run's error
@@ -60,11 +59,10 @@ type DBDumper interface {
 // DBDumpOutcome is what the dump run was recorded as, handed back to the caller
 // so it can word a notification once the backup's own result is known.
 type DBDumpOutcome struct {
-	RunID      string
-	Status     string
-	Reason     string
-	SnapshotID string
-	Bytes      int64
+	RunID   string
+	Status  string
+	Reason  string
+	Summary Summary
 }
 
 // dbDumpTags pairs the dump snapshot with the backup run it belongs to, so a
@@ -98,24 +96,25 @@ func runDBDump(ctx context.Context, d BackupDeps, backupRunID string) (backupNot
 	})
 
 	out := DBDumpOutcome{
-		RunID:      runID,
-		Status:     statusSuccess,
-		Reason:     res.Note,
-		SnapshotID: res.SnapshotID,
-		Bytes:      res.Bytes,
+		RunID:   runID,
+		Status:  statusSuccess,
+		Reason:  res.Note,
+		Summary: res.Summary,
 	}
 	if dumpErr != nil {
 		out = DBDumpOutcome{RunID: runID, Status: statusFailed}
 		var dumpFail *DBDumpError
 		if errors.As(dumpErr, &dumpFail) {
 			out.Reason = dumpFail.Reason
-			out.SnapshotID = dumpFail.SnapshotID
+			// A snapshot restic could not remove again is recorded on the failed
+			// run, so the dump list can mark exactly it.
+			out.Summary = Summary{SnapshotID: dumpFail.SnapshotID}
 		} else {
 			out.Reason = truncateErr(dumpErr)
 		}
 	}
 
-	if err := d.Runs.Finish(runID, out.Status, out.SnapshotID, out.Bytes, out.Reason); err != nil {
+	if err := d.Runs.Finish(runID, out.Status, out.Summary, out.Reason); err != nil {
 		log.Printf("backup: record database dump result for %q failed: %v", d.ContainerRef, err)
 	}
 	if d.OnDBDumpDone != nil {

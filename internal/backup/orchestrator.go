@@ -63,6 +63,32 @@ var (
 type Summary struct {
 	SnapshotID string
 	Bytes      int64
+	// Measured is true when restic reported its totals for this backup. It is
+	// false for a container with no appdata paths, where restic never ran, and
+	// for a summary line without totals; the fields below are then recorded as
+	// nothing rather than as zeros.
+	Measured    bool
+	SourceBytes int64
+	SourceFiles int64
+	FilesNew    int64
+	ResticMS    int64
+	// HasParent is filled in by the service adapter when it had to ask whether
+	// restic found a parent snapshot. Nil means unknown.
+	HasParent *bool
+}
+
+// Plus adds o into s: the file disks of a VM plus each of its zvol disks. The
+// snapshot id and the parent flag stay s's, and the result counts as measured
+// only when both sides are, so a partly unmeasured run records nothing instead
+// of an undercount.
+func (s Summary) Plus(o Summary) Summary {
+	s.Bytes += o.Bytes
+	s.SourceBytes += o.SourceBytes
+	s.SourceFiles += o.SourceFiles
+	s.FilesNew += o.FilesNew
+	s.ResticMS += o.ResticMS
+	s.Measured = s.Measured && o.Measured
+	return s
 }
 
 // Docker is the subset of host control the orchestrator needs. The rich
@@ -128,7 +154,10 @@ type Templates interface {
 // Runs records the lifecycle of a backup/restore run.
 type Runs interface {
 	Start(targetID, kind string) (runID string, err error)
-	Finish(runID, status, snapshotID string, bytes int64, errMsg string) error
+	// Finish records the outcome. sum carries the snapshot id, the new data and,
+	// where the run was measured, restic's own totals; a failure passes an empty
+	// summary.
+	Finish(runID, status string, sum Summary, errMsg string) error
 }
 
 // ---------------------------------------------------------------------------
@@ -399,7 +428,7 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 	if d.WasRunning && d.PreHook != "" {
 		if hookErr := d.Docker.Exec(ctx, d.ContainerRef, []string{"sh", "-c", d.PreHook}); hookErr != nil {
 			e := fmt.Errorf("backup: pre-hook: %w", hookErr)
-			_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(e))
+			_ = d.Runs.Finish(runID, statusFailed, Summary{}, truncateErr(e))
 			return Summary{}, e
 		}
 	}
@@ -412,7 +441,7 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		dumpNote = runDBDump(ctx, d, runID)
 		if ctxErr := ctx.Err(); ctxErr != nil {
 			e := fmt.Errorf("backup: stopped after database dump: %w", ctxErr)
-			_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(e))
+			_ = d.Runs.Finish(runID, statusFailed, Summary{}, truncateErr(e))
 			return Summary{}, e
 		}
 	}
@@ -557,7 +586,7 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 	}()
 
 	if backupErr != nil {
-		_ = d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(backupErr))
+		_ = d.Runs.Finish(runID, statusFailed, Summary{}, truncateErr(backupErr))
 		return Summary{}, backupErr
 	}
 
@@ -570,11 +599,13 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		}
 	}
 
-	snap := ""
+	// A container with no appdata paths never ran restic, so its run carries no
+	// snapshot and no measurement rather than a row of zeros.
+	recorded := Summary{}
 	if summarySeen {
-		snap = summary.SnapshotID
+		recorded = summary
 	}
-	if err := d.Runs.Finish(runID, statusSuccess, snap, summary.Bytes, dumpNote); err != nil {
+	if err := d.Runs.Finish(runID, statusSuccess, recorded, dumpNote); err != nil {
 		return summary, fmt.Errorf("backup: record run finish: %w", err)
 	}
 	return summary, nil
@@ -770,7 +801,7 @@ func RestoreContainer(ctx context.Context, d RestoreDeps) error {
 
 	restoreErr := runRestore(ctx, d)
 	if restoreErr != nil {
-		_ = d.Runs.Finish(runID, restoreOutcome(restoreErr), "", 0, truncateErr(restoreErr))
+		_ = d.Runs.Finish(runID, restoreOutcome(restoreErr), Summary{}, truncateErr(restoreErr))
 		return restoreErr
 	}
 
@@ -783,7 +814,7 @@ func RestoreContainer(ctx context.Context, d RestoreDeps) error {
 	// A partial-mapping restore (RESTORE-01) still records success — the run
 	// itself completed — but the note channel says what was left out, so a DR
 	// audit never mistakes "success" for "everything came back".
-	if err := d.Runs.Finish(runID, statusSuccess, recordedSnap, 0, skippedPathsNote(d.SkippedPaths)); err != nil {
+	if err := d.Runs.Finish(runID, statusSuccess, Summary{SnapshotID: recordedSnap}, skippedPathsNote(d.SkippedPaths)); err != nil {
 		return fmt.Errorf("restore: record run finish: %w", err)
 	}
 	return nil

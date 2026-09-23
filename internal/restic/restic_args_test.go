@@ -914,6 +914,45 @@ func TestSnapshotsArgs(t *testing.T) {
 	})
 }
 
+func TestSnapshotParentArgs(t *testing.T) {
+	t.Run("encrypted", func(t *testing.T) {
+		got := SnapshotArgs("/repo", "abc123", Mode{Encrypted: true})
+		want := []string{"-r", "/repo", "snapshots", "--no-lock", "--json", "--", "abc123"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("unencrypted", func(t *testing.T) {
+		got := SnapshotArgs("/repo", "abc123", Mode{Encrypted: false})
+		want := []string{"-r", "/repo", "snapshots", "--insecure-no-password", "--no-lock", "--json", "--", "abc123"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
+	t.Run("the parent of a snapshot without one is empty", func(t *testing.T) {
+		list := []byte(`[{"id":"feedface","parent":"aaaabbbb"},{"id":"feedfacf"}]`)
+		got, err := parseSnapshotParent(list)
+		if err != nil {
+			t.Fatalf("parseSnapshotParent: %v", err)
+		}
+		if got != "aaaabbbb" {
+			t.Fatalf("parent = %q, want aaaabbbb", got)
+		}
+		got, err = parseSnapshotParent([]byte(`[{"id":"feedfacf"}]`))
+		if err != nil {
+			t.Fatalf("parseSnapshotParent: %v", err)
+		}
+		if got != "" {
+			t.Fatalf("parent = %q, want empty", got)
+		}
+	})
+	t.Run("an empty list is an error", func(t *testing.T) {
+		if _, err := parseSnapshotParent([]byte(`[]`)); err == nil {
+			t.Fatal("parseSnapshotParent of an empty list returned no error")
+		}
+	})
+}
+
 func TestDiffArgs(t *testing.T) {
 	t.Run("encrypted", func(t *testing.T) {
 		got := DiffArgs("/repo", "aaaa1111", "bbbb2222", Mode{Encrypted: true})

@@ -5323,12 +5323,12 @@ func (s *Service) updateContainerAfterBackup(ctx context.Context, name string, i
 		return
 	}
 	if err := s.recreateForUpdate(ctx, name, in); err != nil {
-		_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", "", 0, truncateRunErr(err))
+		_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", backup.Summary{}, truncateRunErr(err))
 		s.setUpdateCheck(name, "failed")
 		log.Printf("api: update-after-backup: recreate %q failed (backup is safe): %v", name, err) //nolint:gosec // G706: name is %q-quoted
 		return
 	}
-	_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", "", 0, "")
+	_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", backup.Summary{}, "")
 	s.setUpdateCheck(name, "updated")
 
 	// #116: BombVault just recreated the container, so its image tag moved to the
@@ -5428,7 +5428,7 @@ func (s *Service) recordUpdateFailure(name, targetID string, cause error) {
 		log.Printf("api: update-after-backup: %q could not record update failure: %v (cause: %v)", name, rErr, cause) //nolint:gosec // G706: name is %q-quoted
 		return
 	}
-	_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", "", 0, truncateRunErr(cause))
+	_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", backup.Summary{}, truncateRunErr(cause))
 }
 
 // StartBackupAll launches a server-side batch backup of the named containers,
@@ -8878,14 +8878,14 @@ func (s *Service) finishRestoreRun(runID, snapshotID string, rerr error) {
 	var err error
 	switch {
 	case rerr == nil:
-		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", snapshotID, 0, "")
+		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", backup.Summary{SnapshotID: snapshotID}, "")
 	case errors.Is(rerr, context.Canceled):
 		// A user cancel is an intentional, recorded outcome — NOT a failure: record
 		// it as "cancelled" and fire no failure alert (restores have no failure
 		// notifier today; the terminal progEnd already fired to clear the bar).
-		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "cancelled", "", 0, "cancelled by user")
+		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "cancelled", backup.Summary{}, "cancelled by user")
 	default:
-		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", "", 0, truncateRunErr(rerr))
+		err = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", backup.Summary{}, truncateRunErr(rerr))
 	}
 	if err != nil {
 		log.Printf("api: restore: record run finish failed: %v", err)
@@ -8905,7 +8905,7 @@ func (s *Service) finishRestoreRunWarn(runID, snapshotID, warn string) {
 	// restore run is never part of a "Backup Everything" pass's group-stamped
 	// children (see runGroupKey's doc comment), so context.Background() is a
 	// genuine no-op here.
-	err := runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", snapshotID, 0, warn)
+	err := runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "success", backup.Summary{SnapshotID: snapshotID}, warn)
 	if err != nil {
 		log.Printf("api: restore: record run finish (warning) failed: %v", err)
 	}
@@ -10656,7 +10656,7 @@ func (s *Service) shutdownStatus(status string) (string, string, bool) {
 	return "cancelled", store.ReasonShutdown, true
 }
 
-func (r runsAdapter) Finish(runID, status, snapshotID string, bytes int64, errMsg string) error {
+func (r runsAdapter) Finish(runID, status string, sum backup.Summary, errMsg string) error {
 	if r.svc != nil {
 		if newStatus, newMsg, changed := r.svc.shutdownStatus(status); changed {
 			status, errMsg = newStatus, newMsg
@@ -10676,7 +10676,7 @@ func (r runsAdapter) Finish(runID, status, snapshotID string, bytes int64, errMs
 			status, errMsg = "cancelled", store.ReasonCancelled
 		}
 	}
-	return r.st.FinishRun(runID, status, snapshotID, bytes, errMsg)
+	return r.st.FinishRun(runID, status, sum.SnapshotID, sum.Bytes, errMsg)
 }
 
 // startedRunsAdapter satisfies backup.Runs exactly like runsAdapter, except
@@ -10710,7 +10710,7 @@ var _ backup.Runs = startedRunsAdapter{}
 
 func (r startedRunsAdapter) Start(string, string) (string, error) { return r.runID, nil }
 
-func (r startedRunsAdapter) Finish(runID, status, snapshotID string, bytes int64, errMsg string) error {
+func (r startedRunsAdapter) Finish(runID, status string, sum backup.Summary, errMsg string) error {
 	if r.svc != nil {
 		if newStatus, newMsg, changed := r.svc.shutdownStatus(status); changed {
 			status, errMsg = newStatus, newMsg
@@ -10722,7 +10722,7 @@ func (r startedRunsAdapter) Finish(runID, status, snapshotID string, bytes int64
 			status, errMsg = "cancelled", store.ReasonCancelled
 		}
 	}
-	return r.st.FinishRun(runID, status, snapshotID, bytes, errMsg)
+	return r.st.FinishRun(runID, status, sum.SnapshotID, sum.Bytes, errMsg)
 }
 
 // sshZFSHost adapts HostSSH's semantic Run/StreamCommand/RunWithStdin SSH

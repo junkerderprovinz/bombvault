@@ -593,7 +593,7 @@ func (s *Service) finishDBImportRun(runID, snapshotID, note string, ierr error) 
 	if ierr != nil {
 		status, snapshotID, text = "failed", "", truncateRunErr(ierr)
 	}
-	if err := (runsAdapter{st: s.store, ctx: context.Background()}).Finish(runID, status, snapshotID, 0, text); err != nil {
+	if err := (runsAdapter{st: s.store, ctx: context.Background()}).Finish(runID, status, backup.Summary{SnapshotID: snapshotID}, text); err != nil {
 		log.Printf("api: import database dump: record the run result failed: %v", err)
 	}
 }
