@@ -1164,8 +1164,8 @@ export const en = {
   "dbdump.importConfirm": "Import this {engine} {version} dump into {container}? BombVault stops the container, moves its data folder aside (it is kept, nothing is deleted), starts the container with an empty data folder and imports the dump. The applications using this database see its state from the time of the dump.",
   "dbdump.importConfirmNoVersion": "Import this {engine} dump into {container}? BombVault stops the container, moves its data folder aside (it is kept, nothing is deleted), starts the container with an empty data folder and imports the dump. The applications using this database see its state from the time of the dump.",
   "dbdump.importNoVersion": "This dump does not record its database version. The import fails if the server cannot read it.",
-  "dbdump.importStopsOne": "BombVault also stops {app} for the import. It starts it again afterwards, unless the import fails and the old data cannot be put back.",
-  "dbdump.importStopsMany": "BombVault also stops these apps for the import: {apps}. It starts them again afterwards, unless the import fails and the old data cannot be put back.",
+  "dbdump.importStops":
+    "one=BombVault also stops {apps} for the import and starts it again afterwards. A failure once the import has begun leaves the old data set aside and the app stopped.|other=BombVault also stops these apps for the import: {apps}. It starts them again afterwards. A failure once the import has begun leaves the old data set aside and the apps stopped.",
   "dbdump.importDone": "Database imported.",
   "dbdump.importRefused.busy": "Another backup or restore is running. Try again when it has finished.",
   "dbdump.importRefused.notRunning": "Start the container first; the import needs the running server.",
@@ -3154,8 +3154,8 @@ export const de: Translations = {
   "dbdump.importConfirm": "Diesen {engine}-{version}-Dump in {container} importieren? BombVault stoppt den Container, schiebt seinen Datenordner zur Seite (er bleibt erhalten, nichts wird gelöscht), startet den Container mit leerem Datenordner und importiert den Dump. Die Anwendungen, die diese Datenbank nutzen, sehen danach ihren Stand vom Zeitpunkt des Dumps.",
   "dbdump.importConfirmNoVersion": "Diesen {engine}-Dump in {container} importieren? BombVault stoppt den Container, schiebt seinen Datenordner zur Seite (er bleibt erhalten, nichts wird gelöscht), startet den Container mit leerem Datenordner und importiert den Dump. Die Anwendungen, die diese Datenbank nutzen, sehen danach ihren Stand vom Zeitpunkt des Dumps.",
   "dbdump.importNoVersion": "Dieser Dump hält seine Datenbankversion nicht fest. Der Import schlägt fehl, wenn der Server ihn nicht lesen kann.",
-  "dbdump.importStopsOne": "Während des Imports stoppt BombVault auch {app}. Danach startet es die App wieder, außer der Import scheitert und die alten Daten lassen sich nicht zurücklegen.",
-  "dbdump.importStopsMany": "Während des Imports stoppt BombVault auch diese Apps: {apps}. Danach startet es sie wieder, außer der Import scheitert und die alten Daten lassen sich nicht zurücklegen.",
+  "dbdump.importStops":
+    "one=Während des Imports stoppt BombVault auch {apps} und startet die App danach wieder. Scheitert der Import, nachdem er begonnen hat, bleiben die alten Daten zur Seite geschoben und die App gestoppt.|other=Während des Imports stoppt BombVault auch diese Apps: {apps}. Danach startet es sie wieder. Scheitert der Import, nachdem er begonnen hat, bleiben die alten Daten zur Seite geschoben und die Apps gestoppt.",
   "dbdump.importDone": "Datenbank importiert.",
   "dbdump.importRefused.busy": "Es läuft gerade ein anderes Backup oder eine Wiederherstellung. Versuche es danach noch einmal.",
   "dbdump.importRefused.notRunning": "Starte den Container zuerst; der Import braucht den laufenden Server.",

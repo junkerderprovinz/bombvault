@@ -5,7 +5,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { AdvancedProvider } from "../../lib/advanced";
-import { I18nProvider, en } from "../../lib/i18n";
+import { countText, I18nProvider, en } from "../../lib/i18n";
 import type { DBDumpView } from "../../lib/api";
 
 const listDbDumps = vi.fn();
@@ -53,7 +53,7 @@ class StubEventSource {
 
 const { DatabaseDumpList } = await import("./DatabaseDumpList");
 
-const t = ((k: string) => en[k as keyof typeof en] ?? k) as never;
+const t = ((k: string, n?: number) => countText(en[k as keyof typeof en] ?? k, "en", n)) as never;
 
 function makeDump(over: Partial<DBDumpView> = {}): DBDumpView {
   return {
@@ -232,7 +232,9 @@ describe("the database dump list", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: en["dbdump.import"] }));
     await waitFor(() => expect(screen.getByRole("dialog")).toBeTruthy());
-    expect(screen.getByRole("dialog").textContent).toContain(filled("dbdump.importStopsOne", { app: "immich_server" }));
+    expect(screen.getByRole("dialog").textContent).toContain(
+      countText(en["dbdump.importStops"], "en", 1).replace("{apps}", "immich_server")
+    );
   });
 
   it("names every app the import stops while it runs", async () => {
@@ -241,7 +243,7 @@ describe("the database dump list", () => {
     fireEvent.click(await screen.findByRole("button", { name: en["dbdump.import"] }));
     await waitFor(() => expect(screen.getByRole("dialog")).toBeTruthy());
     expect(screen.getByRole("dialog").textContent).toContain(
-      filled("dbdump.importStopsMany", { apps: "immich_server, immich_machine_learning" })
+      countText(en["dbdump.importStops"], "en", 2).replace("{apps}", "immich_server, immich_machine_learning")
     );
   });
 
