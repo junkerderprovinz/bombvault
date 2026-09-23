@@ -161,7 +161,7 @@ func TestPruneDomainPrunesBothRepositories(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc, _, own, cold := twoRepoDomain(t, eng)
 
-	if err := svc.PruneDomain(context.Background(), "containers", "local"); err != nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", "local"); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
 	}
 	if !hasRepo(eng.manualPruned, own) || !hasRepo(eng.manualPruned, cold) {
@@ -286,7 +286,7 @@ func TestAnAppendOnlyLocalNamedRepositoryIsNotPruned(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := svc.PruneDomain(context.Background(), "containers", "local"); err != nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", "local"); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
 	}
 	if !hasRepo(eng.manualPruned, own) {

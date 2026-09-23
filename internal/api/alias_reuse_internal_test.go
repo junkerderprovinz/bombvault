@@ -110,7 +110,7 @@ func TestContainerIdentityOwnsItsWholeNameDespiteItsOwnAliasOnIt(t *testing.T) {
 		t.Fatal(err)
 	}
 	settings.RetentionKeepLast = 3
-	s.applyRetention(context.Background(), "rest:http://fake/containers", settings, restic.Mode{}, s.containerIdentity("radarr"), "containers")
+	s.applyRetention(context.Background(), "rest:http://fake/containers", settings, restic.Mode{}, s.containerIdentity("radarr"), "containers", anomalyScope{})
 	if len(eng.forgetTags) != 1 || eng.forgetTags[0][0] != "container:radarr" {
 		t.Fatalf("forget tag sets = %v; its own old snapshots must not pause its retention", eng.forgetTags)
 	}

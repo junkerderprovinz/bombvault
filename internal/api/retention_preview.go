@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-
+	"slices"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -28,6 +28,10 @@ type RetentionPreviewItem struct {
 	Tag    string            `json:"tag"`
 	Keep   []restic.Snapshot `json:"keep"`
 	Remove []restic.Snapshot `json:"remove"`
+	// Paused marks an item a finding is holding: the real pass keeps its
+	// snapshots, so an empty removal list here is a decision, not a quiet
+	// nothing-to-do.
+	Paused bool `json:"paused,omitempty"`
 }
 
 // RetentionPreviewRepo is one repository's part of the answer. A domain is no
@@ -140,7 +144,7 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 		rMode := s.repoModeFor(settings, domain, source, r.Loc)
 
 		rCtx, cancel := context.WithTimeout(ctx, previewPerRepoTimeout)
-		groups, pErr := s.previewRetentionPerIdentity(rCtx, r.Loc, policy, rMode)
+		groups, paused, pErr := s.previewRetentionPerIdentity(rCtx, r.Loc, policy, rMode)
 		cancel()
 
 		if pErr != nil {
@@ -149,10 +153,12 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 			row.Error = scrubError(pErr)
 		}
 		for _, g := range groups {
+			tag := previewTagOf(g)
 			row.Items = append(row.Items, RetentionPreviewItem{
-				Tag:    previewTagOf(g),
+				Tag:    tag,
 				Keep:   g.Keep,
 				Remove: g.Remove,
+				Paused: slices.Contains(paused, tag),
 			})
 		}
 		out.Repos = append(out.Repos, row)

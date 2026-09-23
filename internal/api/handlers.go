@@ -3165,8 +3165,17 @@ func (h *Handler) handlePrune(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
 	}
-	if err := h.svc.PruneDomain(r.Context(), domain, sourceParam(r)); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+	paused, err := h.svc.PruneDomain(r.Context(), domain, sourceParam(r))
+	if err != nil {
+		body := failEnvelope(err)
+		if len(paused) > 0 {
+			body["paused"] = paused
+		}
+		writeJSON(w, http.StatusOK, body)
+		return
+	}
+	if len(paused) > 0 {
+		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"paused": paused}))
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))

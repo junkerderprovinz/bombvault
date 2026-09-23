@@ -666,9 +666,21 @@ func dbDumpReasonText(reasonID, detail string) string {
 // their own series and without pruning: the container's own pass right after
 // it reclaims the space of both in one go. A renamed container's dumps age
 // with it, by the same alias rule that decides which volume snapshots it owns.
-func (s *Service) forgetDBDumpSeries(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, name string) {
+func (s *Service) forgetDBDumpSeries(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, name, targetID string) {
 	p := s.retentionPolicy(settings)
 	if !p.Any() || s.primaryIsImmutable("containers", repo) {
+		return
+	}
+	hold := anomalyScope{Kind: anomalyScopeDump, ID: targetID}
+	held, why, hErr := s.anomalies.RetentionHeld(ctx, hold)
+	if hErr != nil {
+		log.Printf("api: retention of the database dumps of %q skipped: the anomaly check failed: %v", name, hErr) //nolint:gosec // G706: name is %q-quoted
+		s.notifyRetentionFailed(ctx, dbDumpIdentityPrefix+name,
+			"the anomaly check could not run, so nothing was deleted: "+scrubError(hErr))
+		return
+	}
+	if held {
+		log.Printf("api: retention of the database dumps of %q paused: %s", name, why) //nolint:gosec // G706: name is %q-quoted
 		return
 	}
 	tags, ok := s.retentionTagsFor(ctx, repo, mode, s.containerDumpIdentity(name))

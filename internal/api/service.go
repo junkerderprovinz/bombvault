@@ -1617,7 +1617,11 @@ func (s *Service) retentionPolicyForSource(settings store.Settings, source strin
 // (#204) carries its own flag and may be a plain folder on a share, so this
 // applies to a local path as readily as to a cloud bucket. Anything with no
 // append-only flag anywhere is unaffected.
-func (s *Service) applyRetention(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, id entryIdentity, domain string) {
+//
+// hold names the series whose findings can pause this pass: an open critical
+// finding that says the source lost its data keeps its own item's snapshots
+// until the user has seen it. An empty hold is never held.
+func (s *Service) applyRetention(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, id entryIdentity, domain string, hold anomalyScope) {
 	p := s.retentionPolicy(settings)
 	if !p.Any() {
 		return
@@ -1633,6 +1637,16 @@ func (s *Service) applyRetention(ctx context.Context, repo string, settings stor
 	// restic forget without a tag would select the whole repository.
 	if id.tag == "" {
 		log.Printf("api: %s: retention skipped: the item has no identity tag", domain) //nolint:gosec // G706: domain is a fixed literal
+		return
+	}
+	held, why, err := s.anomalies.RetentionHeld(ctx, hold)
+	if err != nil {
+		log.Printf("api: %s: retention skipped for %s: the anomaly check failed: %v", domain, id.tag, err) //nolint:gosec // G706: domain is a fixed literal and tags are validated names
+		s.notifyRetentionFailed(ctx, id.tag, "the anomaly check could not run, so nothing was deleted: "+scrubError(err))
+		return
+	}
+	if held {
+		log.Printf("api: %s: retention paused for %s: %s", domain, id.tag, why) //nolint:gosec // G706: domain is a fixed literal and tags are validated names
 		return
 	}
 	prune := !bulkReplicateSuppressed(ctx) // bulk run: one batched prune after the loop
@@ -1739,21 +1753,38 @@ func identityTags(snaps []restic.Snapshot) []string {
 // together with a later machine's under the same name. That pass runs only for
 // a repository with no identity tag at all, one written before identity tags
 // existed, so its retention does not silently stop.
-func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode) error {
+//
+// It has no domain in hand and a named repository can hold several (#204), so
+// it asks for the holds of the whole installation and returns every tag it
+// left alone. The repo-wide pass cannot spare a held item, so it refuses while
+// anything is held.
+func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode) ([]string, error) {
 	if !p.Any() {
-		return nil
+		return nil, nil
 	}
-	snaps, err := s.engine.Snapshots(ctx, repo, mode)
+	held, err := s.anomalies.HeldIdentityTags()
 	if err != nil {
-		return fmt.Errorf("list snapshots for retention: %w", err)
+		return nil, fmt.Errorf("read which items are paused: %w", err)
 	}
+	snaps, sErr := s.engine.Snapshots(ctx, repo, mode)
 	tags := identityTags(snaps)
-	if len(tags) == 0 {
-		return s.forgetWithLockHeal(ctx, repo, p, mode, nil, true)
+	if sErr != nil || len(tags) == 0 {
+		if len(held) > 0 {
+			return held.names(), errRetentionPaused(len(held))
+		}
+		if sErr != nil {
+			return nil, fmt.Errorf("list snapshots for retention: %w", sErr)
+		}
+		return nil, s.forgetWithLockHeal(ctx, repo, p, mode, nil, true)
 	}
 	groups, _ := s.foldAliasedIdentityTags(tags, snaps) // skipped tags are logged there and kept
+	var paused []string
 	var errs []error
 	for _, group := range groups {
+		if held.holdsAny(group) {
+			paused = append(paused, group...)
+			continue
+		}
 		if fErr := s.forgetWithLockHeal(ctx, repo, p, mode, group, false); fErr != nil {
 			errs = append(errs, fmt.Errorf("%s: %w", strings.Join(group, ","), fErr))
 		}
@@ -1761,7 +1792,7 @@ func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo string, p 
 	if pErr := s.engine.Prune(ctx, repo, mode); pErr != nil {
 		errs = append(errs, pErr)
 	}
-	return errors.Join(errs...)
+	return paused, errors.Join(errs...)
 }
 
 // foldAliasedIdentityTags groups the identity tags that belong to one entry,
@@ -1894,18 +1925,32 @@ func (s *Service) foldTag(tag string, snaps []restic.Snapshot, domains []aliasFo
 // previewed and the failures come back alongside the groups that succeeded, so
 // an operator learns about the repositories that answered instead of seeing a
 // bare error for all of them.
-func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode) ([]restic.ForgetGroup, error) {
+func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode) ([]restic.ForgetGroup, []string, error) {
 	if !p.Any() {
-		return nil, nil
+		return nil, nil, nil
+	}
+	held, hErr := s.anomalies.HeldIdentityTags()
+	if hErr != nil {
+		return nil, nil, fmt.Errorf("read which items are paused: %w", hErr)
 	}
 	snaps, err := s.engine.Snapshots(ctx, repo, mode)
 	tags := identityTags(snaps)
 	if err != nil || len(tags) == 0 {
-		return s.engine.ForgetPreview(ctx, repo, p, mode, "")
+		if len(held) > 0 {
+			return nil, held.names(), errRetentionPaused(len(held))
+		}
+		groups, pErr := s.engine.ForgetPreview(ctx, repo, p, mode, "")
+		return groups, nil, pErr
 	}
 	var out []restic.ForgetGroup
+	var paused []string
 	var errs []error
 	for _, tag := range tags {
+		if held.holds(tag) {
+			paused = append(paused, tag)
+			out = append(out, restic.ForgetGroup{Tags: []string{tag}, Keep: snapshotsTagged(snaps, tag)})
+			continue
+		}
 		groups, pErr := s.engine.ForgetPreview(ctx, repo, p, mode, tag)
 		if pErr != nil {
 			errs = append(errs, fmt.Errorf("%s: %w", tag, pErr))
@@ -1921,7 +1966,19 @@ func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo string, 
 			out = append(out, g)
 		}
 	}
-	return out, errors.Join(errs...)
+	return out, paused, errors.Join(errs...)
+}
+
+// snapshotsTagged is every snapshot carrying tag, the keep list of an item
+// whose retention is paused.
+func snapshotsTagged(snaps []restic.Snapshot, tag string) []restic.Snapshot {
+	var out []restic.Snapshot
+	for _, sn := range snaps {
+		if slices.Contains(sn.Tags, tag) {
+			out = append(out, sn)
+		}
+	}
+	return out
 }
 
 // notifyRetentionFailed sends a best-effort alert when the post-backup
@@ -1929,7 +1986,7 @@ func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo string, 
 // when notifications are off.
 func (s *Service) notifyRetentionFailed(ctx context.Context, tag, detail string) {
 	c, err := s.NotifyConfig()
-	if err != nil || c.On == "" || c.On == "never" {
+	if err != nil || !c.Active() {
 		return
 	}
 	subject := "Retention prune FAILED for " + tag
@@ -3673,8 +3730,12 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 		}
 		// Per-identity: one tag-scoped, ungrouped forget per item, one prune —
 		// identity-stable like the local retention (issue #91).
-		if perr := s.applyRetentionPerIdentity(ctx, dest, op, mode); perr != nil {
+		offPaused, perr := s.applyRetentionPerIdentity(ctx, dest, op, mode)
+		if perr != nil {
 			log.Printf("api: offsite %s: retention prune failed (replica is safe): %v", domain, perr) //nolint:gosec // G706: domain is a fixed literal
+		}
+		if len(offPaused) > 0 {
+			log.Printf("api: offsite %s: %s", domain, retentionPausedNote(offPaused)) //nolint:gosec // G706: domain is a fixed literal and tags are validated names
 		}
 	}
 	// Sample the off-site repo size into the repo_stats time series and evaluate the
@@ -5375,11 +5436,11 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// The dumps are their own retention series, forgotten without a prune so
 	// the container's pass below reclaims both at once.
 	if dumpPlan != nil {
-		s.forgetDBDumpSeries(ctx, repo, settings, mode, name)
+		s.forgetDBDumpSeries(ctx, repo, settings, mode, name, tg.ID)
 	}
 	// A renamed container's "keep last N" counts across the rename, as long as
 	// no other machine has used the old name since.
-	s.applyRetention(ctx, repo, settings, mode, s.containerIdentity(name), "containers")
+	s.applyRetention(ctx, repo, settings, mode, s.containerIdentity(name), "containers", anomalyScope{Kind: anomalyScopeItem, ID: tg.ID})
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "containers", settings, mode, repo)
 	s.collectStatsAfterItem(ctx, "containers")
@@ -7960,6 +8021,17 @@ func skippedError(what string, skipped []repoSkip) error {
 		parts = append(parts, fmt.Sprintf("%s (%s)", s.Name, s.Reason))
 	}
 	return fmt.Errorf("%s covered only part of this domain: %s", what, strings.Join(parts, ", "))
+}
+
+// retentionPausedNote is what a pass that left held items alone records and
+// reports, in the same shape as skippedError: the work was done, except for
+// the items whose old backups a finding is keeping. Empty when nothing was
+// held, so a clean pass carries no note.
+func retentionPausedNote(tags []string) string {
+	if len(tags) == 0 {
+		return ""
+	}
+	return "done, except: deleting old backups is paused for " + strings.Join(tags, ", ")
 }
 
 // nothingCoveredError is skippedError's counterpart for the case where the
@@ -11618,12 +11690,12 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	// Retention runs once for the VM's identity, aliases included, and once per
 	// zvol disk tag, so each disk's history ages as its own group. zvol tags
 	// have no aliases: a VM with block disks is never offered a takeover.
-	s.applyRetention(ctx, repo, settings, mode, s.vmIdentity(name), "vms")
+	s.applyRetention(ctx, repo, settings, mode, s.vmIdentity(name), "vms", anomalyScope{Kind: anomalyScopeItem, ID: tg.ID})
 	for _, bd := range vmBlockDisks {
 		if bd.Dev == "" {
 			continue // without a target dev it has no tag of its own and ages with "vm:<name>"
 		}
-		s.applyRetention(ctx, repo, settings, mode, tagIdentity("vm:"+name+":zvol:"+bd.Dev), "vms")
+		s.applyRetention(ctx, repo, settings, mode, tagIdentity("vm:"+name+":zvol:"+bd.Dev), "vms", anomalyScope{Kind: anomalyScopeItem, ID: tg.ID})
 	}
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "vms", settings, mode, repo)
@@ -12577,7 +12649,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	s.applyRetention(ctx, repo, settings, mode, tagIdentity("flash"), "flash")
+	s.applyRetention(ctx, repo, settings, mode, tagIdentity("flash"), "flash", anomalyScope{Kind: anomalyScopeItem, ID: store.FlashTargetID})
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "flash", settings, mode, repo)
 	s.collectStatsAfterItem(ctx, "flash")
@@ -12886,7 +12958,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	s.applyRetention(ctx, repo, settings, mode, tagIdentity("fileset:"+set.Name), "files")
+	s.applyRetention(ctx, repo, settings, mode, tagIdentity("fileset:"+set.Name), "files", anomalyScope{Kind: anomalyScopeItem, ID: set.ID})
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "files", settings, mode, repo)
 	s.collectStatsAfterItem(ctx, "files")
@@ -14080,7 +14152,7 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	s.applyRetention(ctx, repo, settings, mode, tagIdentity("config"), "config")
+	s.applyRetention(ctx, repo, settings, mode, tagIdentity("config"), "config", anomalyScope{Kind: anomalyScopeItem, ID: store.ConfigTargetID})
 	s.replicateOffsite(ctx, "config", settings, mode, repo)
 	s.collectStatsAfterItem(ctx, "config")
 	s.checkPrimaryRemoteBudget(ctx, "config", repo, settings)
@@ -15970,7 +16042,9 @@ func (s *Service) UnlockDomain(ctx context.Context, domain, source string) ([]st
 // (begin/terminal, indeterminate — restic prune/forget streams no percentage)
 // and records a "prune" run, so a manual/scheduled prune shows up on the
 // dashboard activity log/run history instead of running invisibly.
-func (s *Service) PruneDomain(ctx context.Context, domain, source string) error {
+// The tags it returns are the items whose old backups it kept because an
+// unusual backup is holding them.
+func (s *Service) PruneDomain(ctx context.Context, domain, source string) ([]string, error) {
 	return s.pruneDomain(ctx, domain, source, true)
 }
 
@@ -15997,7 +16071,7 @@ func (s *Service) PruneAfterBulk(ctx context.Context, domain string) {
 	}
 	// applyPolicy=false: the per-item tag-scoped forgets already ran inline during
 	// the loop (without --prune), so this pass is a plain space-reclaim.
-	if err := s.pruneDomain(ctx, domain, "local", false); err != nil {
+	if _, err := s.pruneDomain(ctx, domain, "local", false); err != nil {
 		log.Printf("api: prune %s: batched prune failed: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 	}
 }
@@ -16007,14 +16081,14 @@ func (s *Service) PruneAfterBulk(ctx context.Context, domain string) {
 // per-identity forget --keep-* then one prune — "apply retention now") versus a
 // plain space-reclaim (`restic prune` only — the batched post-bulk pass, whose
 // per-item forgets already ran inline without --prune).
-func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyPolicy bool) (err error) {
+func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyPolicy bool) (paused []string, err error) {
 	// EVERY repository this domain's items write to (#204). Prune is what turns a
 	// forgotten snapshot back into free space, so pruning only the domain
 	// repository means the space retention freed on a named one is never
 	// reclaimed - and nothing says so.
 	settings, repos, skipped, err := s.domainReposForOp(domain, source)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// An immutable repo is never pruned from this box (append-only is the point),
 	// and that is now a decision PER repository rather than for the domain:
@@ -16057,18 +16131,18 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 		// unresolvable hears only "append-only", and never that a repository was
 		// not considered at all.
 		if sErr := skippedError("this prune", skipped); sErr != nil {
-			return errors.Join(refusal, sErr)
+			return nil, errors.Join(refusal, sErr)
 		}
-		return refusal
+		return nil, refusal
 	}
 	repos, missing, err := s.reposThatExist(prunable, "no backups to prune yet")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	skipped = append(skipped, missing...)
 	unlock, ok := s.tryLockDomainFor(domain, "prune")
 	if !ok {
-		return errDomainBusy
+		return nil, errDomainBusy
 	}
 	defer unlock()
 	// Per repository, like the other three (see CheckDomain).
@@ -16087,11 +16161,11 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 		if runID == "" {
 			return
 		}
-		status := "success"
+		status, note := "success", retentionPausedNote(paused)
 		if err != nil {
-			status = "failed"
+			status, note = "failed", truncateRunErr(err)
 		}
-		if fErr := s.store.FinishRun(runID, status, "", 0, truncateRunErr(err)); fErr != nil {
+		if fErr := s.store.FinishRun(runID, status, "", 0, note); fErr != nil {
 			log.Printf("api: prune %s: could not finish run record: %v", domain, fErr) //nolint:gosec // G706: domain is a fixed literal
 		}
 	}()
@@ -16123,19 +16197,22 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, applyP
 		if policy.Any() {
 			// Per-identity: tag-scoped, ungrouped forget per item + one prune —
 			// also drains frozen path-groups left by the old grouping (issue #91).
-			if err = s.applyRetentionPerIdentity(ctx, r.Loc, policy, rMode); err != nil {
+			var repoPaused []string
+			repoPaused, err = s.applyRetentionPerIdentity(ctx, r.Loc, policy, rMode)
+			paused = append(paused, repoPaused...)
+			if err != nil {
 				err = fmt.Errorf("pruning %s: %w", s.refName(r), err)
-				return err
+				return paused, err
 			}
 			continue
 		}
 		if err = s.engine.Prune(ctx, r.Loc, rMode); err != nil {
 			err = fmt.Errorf("pruning %s: %w", s.refName(r), err)
-			return err
+			return paused, err
 		}
 	}
 	err = skippedError("this prune", skipped)
-	return err
+	return paused, err
 }
 
 // DeleteSnapshot forgets a single snapshot by id from a domain's repo (restic
@@ -17021,6 +17098,20 @@ func orNone(s string) string {
 	return s
 }
 
+// singletonItemName is the label of a domain that has no per-item name, and
+// empty for one that has. Without it a "%s %q" label renders an empty quote
+// (`config ""`), and the same item would be called different things depending
+// on which message names it.
+func singletonItemName(domain string) string {
+	switch domain {
+	case "flash":
+		return "Unraid flash"
+	case "config":
+		return "BombVault configuration"
+	}
+	return ""
+}
+
 // notifyBackup sends a best-effort notification for a completed backup. It reads
 // the stored config each call (cheap; backups are infrequent) and is a no-op when
 // notifications are off.
@@ -17029,15 +17120,8 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name string, ok bool
 	if err != nil || c.On == "" || c.On == "never" {
 		return
 	}
-	// Singleton domains have no per-item name, so a "%s %q" label would render an
-	// empty quote (e.g. `config ""`). Give each a clean human label.
-	var target string
-	switch domain {
-	case "flash":
-		target = "Unraid flash"
-	case "config":
-		target = "BombVault configuration"
-	default:
+	target := singletonItemName(domain)
+	if target == "" {
 		target = fmt.Sprintf("%s %q", domain, name)
 	}
 	var msg string

@@ -396,7 +396,7 @@ func pruneGroups(t *testing.T, domain string, snaps []restic.Snapshot, setup fun
 	setup(st)
 	eng := &fakeResticEngine{snaps: snaps}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
-	if err := svc.PruneDomain(context.Background(), domain, ""); err != nil {
+	if _, err := svc.PruneDomain(context.Background(), domain, ""); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
 	}
 	return sortedCopy(eng.forgetTags)
@@ -534,7 +534,7 @@ func TestPruneDomainForgetsNothingWhenTheListingFails(t *testing.T) {
 	eng := &fakeResticEngine{snapsErrFor: map[string]error{repo: errors.New("repository unreadable")}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	if err := svc.PruneDomain(context.Background(), "containers", ""); err == nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err == nil {
 		t.Fatal("a prune whose listing failed must report it")
 	}
 	if len(eng.prunedRepos) != 0 || len(eng.manualPruned) != 0 {

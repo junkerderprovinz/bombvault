@@ -83,7 +83,7 @@ func TestPreviewRetentionPerIdentityMirrorsTheRealPass(t *testing.T) {
 	}}
 	s := &Service{engine: eng}
 
-	if _, err := s.previewRetentionPerIdentity(context.Background(), "/repo",
+	if _, _, err := s.previewRetentionPerIdentity(context.Background(), "/repo",
 		restic.RetentionPolicy{KeepLast: 5}, restic.Mode{}); err != nil {
 		t.Fatalf("want no error, got %v", err)
 	}
@@ -109,7 +109,7 @@ func TestPreviewRetentionFallsBackToRepoWide(t *testing.T) {
 		eng := &previewEngine{snapsErr: errors.New("repository is unreachable")}
 		s := &Service{engine: eng}
 
-		if _, err := s.previewRetentionPerIdentity(context.Background(), "/repo",
+		if _, _, err := s.previewRetentionPerIdentity(context.Background(), "/repo",
 			restic.RetentionPolicy{KeepLast: 5}, restic.Mode{}); err != nil {
 			t.Fatalf("want no error, got %v", err)
 		}
@@ -122,7 +122,7 @@ func TestPreviewRetentionFallsBackToRepoWide(t *testing.T) {
 		eng := &previewEngine{snaps: []restic.Snapshot{snapWithTags("a1", "p1", "live")}}
 		s := &Service{engine: eng}
 
-		if _, err := s.previewRetentionPerIdentity(context.Background(), "/repo",
+		if _, _, err := s.previewRetentionPerIdentity(context.Background(), "/repo",
 			restic.RetentionPolicy{KeepLast: 5}, restic.Mode{}); err != nil {
 			t.Fatalf("want no error, got %v", err)
 		}
@@ -140,7 +140,7 @@ func TestPreviewRetentionInertPolicyAsksNothing(t *testing.T) {
 	eng := &previewEngine{snaps: []restic.Snapshot{snapWithTags("a1", "container:plex")}}
 	s := &Service{engine: eng}
 
-	groups, err := s.previewRetentionPerIdentity(context.Background(), "/repo",
+	groups, _, err := s.previewRetentionPerIdentity(context.Background(), "/repo",
 		restic.RetentionPolicy{}, restic.Mode{})
 	if err != nil {
 		t.Fatalf("want no error, got %v", err)
@@ -165,7 +165,7 @@ func TestPreviewRetentionSurvivesOneFailingTag(t *testing.T) {
 	}
 	s := &Service{engine: eng}
 
-	_, err := s.previewRetentionPerIdentity(context.Background(), "/repo",
+	_, _, err := s.previewRetentionPerIdentity(context.Background(), "/repo",
 		restic.RetentionPolicy{KeepLast: 5}, restic.Mode{})
 	if err == nil {
 		t.Fatal("want the per-tag failure surfaced, got nil")
@@ -190,7 +190,7 @@ func TestPreviewStampsQueriedIdentity(t *testing.T) {
 	}
 	s := &Service{engine: eng}
 
-	groups, err := s.previewRetentionPerIdentity(context.Background(),
+	groups, _, err := s.previewRetentionPerIdentity(context.Background(),
 		"/repo", restic.RetentionPolicy{KeepLast: 5}, restic.Mode{})
 	if err != nil {
 		t.Fatalf("previewRetentionPerIdentity: %v", err)
@@ -214,12 +214,75 @@ func TestPreviewKeepsATagResticReported(t *testing.T) {
 	}
 	s := &Service{engine: eng}
 
-	groups, err := s.previewRetentionPerIdentity(context.Background(),
+	groups, _, err := s.previewRetentionPerIdentity(context.Background(),
 		"/repo", restic.RetentionPolicy{KeepLast: 5}, restic.Mode{})
 	if err != nil {
 		t.Fatalf("previewRetentionPerIdentity: %v", err)
 	}
 	if len(groups) != 1 || len(groups[0].Tags) != 2 {
 		t.Fatalf("groups = %+v, want the reported tags untouched", groups)
+	}
+}
+
+// TestPreviewMirrorsTheHold: the preview answers the question the real pass
+// answers, and the real pass keeps a held item's snapshots. Listing them as
+// about to be removed would send an operator looking for a deletion that never
+// comes.
+func TestPreviewMirrorsTheHold(t *testing.T) {
+	f := newEngineFixture(t)
+	id := f.container(t, "plex")
+	f.steadySeries(t, id, "backup", 11, 40*gib)
+	f.run(t, id, "backup", f.now-60, 20*mib)
+	f.pass(t)
+
+	eng := &previewEngine{snaps: []restic.Snapshot{
+		snapWithTags("a1", "container:plex"),
+		snapWithTags("b2", "fileset:docs"),
+	}}
+	f.svc.engine = eng
+
+	groups, paused, err := f.svc.previewRetentionPerIdentity(context.Background(), "/repo",
+		restic.RetentionPolicy{KeepLast: 5}, restic.Mode{})
+	if err != nil {
+		t.Fatalf("want no error, got %v", err)
+	}
+	if len(eng.previewTags) != 1 || eng.previewTags[0] != "fileset:docs" {
+		t.Fatalf("restic must be asked only about the tags that would be forgotten, got %v", eng.previewTags)
+	}
+	if len(paused) != 1 || paused[0] != "container:plex" {
+		t.Fatalf("paused = %v, want the held tag", paused)
+	}
+	var held *restic.ForgetGroup
+	for i, g := range groups {
+		if len(g.Tags) > 0 && g.Tags[0] == "container:plex" {
+			held = &groups[i]
+		}
+	}
+	if held == nil {
+		t.Fatalf("the held item belongs in the answer, got %+v", groups)
+	}
+	if len(held.Remove) != 0 || len(held.Keep) != 1 {
+		t.Fatalf("a held item keeps everything and removes nothing, got %+v", *held)
+	}
+}
+
+// Without identity tags the pass falls back to one repository-wide forget,
+// which cannot spare the held item.
+func TestPreviewReportsTheRefusalOnTheFallbackPath(t *testing.T) {
+	f := newEngineFixture(t)
+	id := f.container(t, "plex")
+	f.steadySeries(t, id, "backup", 11, 40*gib)
+	f.run(t, id, "backup", f.now-60, 20*mib)
+	f.pass(t)
+
+	eng := &previewEngine{}
+	f.svc.engine = eng
+
+	if _, _, err := f.svc.previewRetentionPerIdentity(context.Background(), "/repo",
+		restic.RetentionPolicy{KeepLast: 5}, restic.Mode{}); err == nil {
+		t.Fatal("want an error saying the real pass would refuse")
+	}
+	if len(eng.previewTags) != 0 {
+		t.Fatalf("nothing may be previewed repository-wide while an item is held, got %v", eng.previewTags)
 	}
 }
