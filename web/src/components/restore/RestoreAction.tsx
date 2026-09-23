@@ -34,6 +34,7 @@ import { restore, restoreVM } from "../../lib/api";
 import type { useT } from "../../lib/i18n";
 import { useBackupWatch } from "../../lib/backupWatch";
 import { useProgress, busyPhraseKey } from "../../lib/progress";
+import { SNAPSHOT_MISSING } from "../../lib/timeline";
 import { RestoreProgress } from "./RestoreProgress";
 import type { RepoSource } from "../SourceToggle";
 import { Button } from "../Button";
@@ -131,6 +132,8 @@ interface RestoreActionProps {
    *  trigger, which is what "flush right in its row" requires — without this
    *  the badge lands on a line of its own under the row it belongs to. */
   leading?: ReactNode;
+  /** Called when the place answered snapshot-missing, so the timeline can offer the next one. */
+  onMissing?: () => void;
   t: T;
 }
 
@@ -151,6 +154,7 @@ export function RestoreAction({
   label,
   iconBadge = false,
   leading,
+  onMissing,
   t,
 }: RestoreActionProps) {
   const [confirmed, setConfirmed] = useState(false);
@@ -168,10 +172,13 @@ export function RestoreAction({
     kind: "restore",
     matchRun: (r) => r.domain === domain && r.target === name,
     cancelledRef,
-    start: () =>
-      domain === "container"
+    start: async () => {
+      const res = await (domain === "container"
         ? restore(name, snapshotId, true, source, forceLeaveStopped || leaveStopped)
-        : restoreVM(name, snapshotId, true, source, forceLeaveStopped || leaveStopped),
+        : restoreVM(name, snapshotId, true, source, forceLeaveStopped || leaveStopped));
+      if (res.code === SNAPSHOT_MISSING) onMissing?.();
+      return res;
+    },
   });
   const prog = useProgress()[progressKey];
   // Busy-guard: block a new restore while any OTHER backup/restore/replication

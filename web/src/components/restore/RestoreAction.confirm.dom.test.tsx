@@ -123,3 +123,16 @@ describe("row-action restore confirmation", () => {
     await waitFor(() => expect(restore).toHaveBeenCalledTimes(1));
   });
 });
+
+describe("a place that lost the snapshot", () => {
+  it("is reported so the timeline can offer the next place", async () => {
+    restore.mockImplementationOnce((() =>
+      Promise.resolve({ ok: false, code: "snapshot-missing", error: "gone" })) as never);
+    const onMissing = vi.fn();
+    renderAction({ onMissing });
+    await act(async () => {
+      fireEvent.click(trigger());
+    });
+    await waitFor(() => expect(onMissing).toHaveBeenCalledTimes(1));
+  });
+});
