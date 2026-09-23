@@ -1590,19 +1590,25 @@ func runError(args []string, stderr string) error {
 
 // commandRunError is runError for a backup taken from a command. The lines
 // restic forwarded from the command can quote a database row and the log ends
-// up in the diagnostics bundle, so the log keeps restic's own lines only.
+// up in the diagnostics bundle, so the log keeps restic's own lines only. The
+// protocol lines the helper writes for BombVault are the last thing a killed
+// dump leaves behind, so they are kept out of the reason as well.
 func commandRunError(args []string, stderr string) error {
-	var own []string
+	var own, reason []string
 	left := 0
 	for _, line := range strings.Split(stderr, "\n") {
 		if strings.HasPrefix(line, subprocessLinePrefix) {
 			left++
+			if !strings.Contains(line, dumpProtocolPrefix) {
+				reason = append(reason, line)
+			}
 			continue
 		}
 		own = append(own, line)
+		reason = append(reason, line)
 	}
 	log.Printf("restic %s stderr (%d lines from the command left out): %s", subcommand(args), left, strings.Join(own, "\n"))
-	return stderrError(args, stderr)
+	return stderrError(args, strings.Join(reason, "\n"))
 }
 
 // stderrError is the concise, path-scrubbed error runError returns.
@@ -2132,6 +2138,10 @@ func (e *CommandSnapshotPartialError) Error() string {
 
 // subprocessLinePrefix is how restic labels a line its child wrote to stderr.
 const subprocessLinePrefix = "subprocess "
+
+// dumpProtocolPrefix marks the lines the dump script writes for BombVault
+// rather than for the reader: the pid of the dump and its scope.
+const dumpProtocolPrefix = "bombvault-dbdump-"
 
 // BackupFromCommand backs up the stdout of command into repo under stdinPath
 // and returns the lines restic forwarded from the command, on success as well
