@@ -38,46 +38,13 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   // within the language decides, not whether the string looks English.
   "stack.members",
 
-  // Genuinely untranslated, not a loanword: these 40 locales carry the
-  // English sentence as a placeholder until the next translation sweep.
-  // en and de already have their own wording; shrink this group when the
-  // rest follow.
-  "placementCode.appendOnly",
-  "placementCode.removalGrown",
-  "placementCode.nameMismatch",
-  "placementCode.homeUnreadable",
-  "placementCode.snapshotMissing",
-  "timeline.deleteAsk",
-  "timeline.deleteRow",
-  "timeline.deleteLast",
-  "timeline.deleteHeldBy",
-  "timeline.deleteSkipped",
-  "timeline.deletePartial",
-  "timeline.deleteSpace",
-  "timeline.deleteFinal",
-  "timeline.unchecked",
-  "timeline.unreadable",
-  "timeline.check",
-  "timeline.showOlder",
-  "timeline.onlyHere",
-  "timeline.incomplete",
-  "timeline.incompleteHint",
-  "timeline.snapshotMissing",
-  "timeline.stackDirMissing",
+  // A handful of confirm dialogs outside the placement family still carry an
+  // English placeholder. Not covered by the stricter placement guard below.
   "snapshots.deleteAllConfirm",
   "files.deleteBackupsConfirm",
-  "offsiteRemoval.delete",
-  "offsiteRemoval.ask",
-  "offsiteRemoval.onlyThere",
-  "offsiteRemoval.homeUnreadable",
-  "offsiteRemoval.typeName",
-  "offsiteRemoval.done",
-  "offsiteRemoval.appendOnly",
-  "placement.older",
-  "placement.noCopyYet",
-  "placement.notListedYet",
-  "repos.offPremises",
-  "repos.offPremisesHint",
+
+  // "direct" reads the same in fr, nl and ro as in English.
+  "placement.homeDirect",
 ]);
 
 /** A value nobody would translate: a unit, a number, a protocol, a symbol. */
@@ -111,6 +78,35 @@ describe("translations are actually translated", () => {
       leaks,
       `${code} carries English sentences verbatim. Translate them, or add the key to ` +
         "SAME_AS_EN_IS_FINE with a reason if it is genuinely the same word in this language.",
+    ).toEqual([]);
+  });
+});
+
+describe("placement text is not left in English", () => {
+  // The placement selector and the surfaces it added (per-item placement
+  // codes, the timeline, off-site removal, off-premises) are the part of the
+  // app most likely to gain a string nobody localises before it merges. Every
+  // locale is checked here, not just the non-Latin ones above, because a
+  // Latin-script locale can copy English just as easily.
+  const FAMILIES = ["placementCode.", "timeline.", "offsiteRemoval.", "placement.", "repos.offPremises"];
+  const codes = Object.keys(locales).filter((c) => c !== "en");
+
+  it.each(codes)("%s translates its placement text", (code) => {
+    const table = locales[code as keyof typeof locales] as Record<string, string>;
+    const leaks: string[] = [];
+    for (const [key, value] of Object.entries(en)) {
+      if (typeof value !== "string") continue;
+      if (!FAMILIES.some((family) => key.startsWith(family))) continue;
+      if (SAME_AS_EN_IS_FINE.has(key)) continue;
+      if (typeof table[key] !== "string") continue;
+      if (table[key] !== value) continue;
+      if (isUntranslatable(value)) continue;
+      leaks.push(`${key}: ${JSON.stringify(value.slice(0, 60))}`);
+    }
+    expect(
+      leaks,
+      `${code} leaves placement text identical to English. Translate it, or add the key to ` +
+        "SAME_AS_EN_IS_FINE with a reason.",
     ).toEqual([]);
   });
 });
