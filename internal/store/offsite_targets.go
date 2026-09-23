@@ -647,7 +647,11 @@ func (r *Repo) DeleteNamedRepoIfUnused(id string) (NamedRepoUse, error) {
 // where it is, so a move under a live item, or under a default that homes open
 // items on this repository, makes the next backup succeed into an empty
 // repository.
-func (r *Repo) SetNamedRepoLocationIfUnused(id, location string) (NamedRepoUse, error) {
+//
+// offPremises is written with the location, because it describes that location:
+// a mark left behind goes on counting a repository moved onto the array as a
+// site of its own, and every item there reads as having a copy off the premises.
+func (r *Repo) SetNamedRepoLocationIfUnused(id, location string, offPremises bool) (NamedRepoUse, error) {
 	var use NamedRepoUse
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -664,7 +668,8 @@ func (r *Repo) SetNamedRepoLocationIfUnused(id, location string) (NamedRepoUse, 
 	if use.InUse() {
 		return use, nil
 	}
-	if _, err := tx.Exec(`UPDATE offsite_targets SET repo = ? WHERE id = ? AND role = ?`, location, id, RoleRepo); err != nil {
+	if _, err := tx.Exec(`UPDATE offsite_targets SET repo = ?, off_premises = ? WHERE id = ? AND role = ?`,
+		location, boolInt(offPremises), id, RoleRepo); err != nil {
 		return use, fmt.Errorf("SetNamedRepoLocationIfUnused: %w", err)
 	}
 	if err := tx.Commit(); err != nil {

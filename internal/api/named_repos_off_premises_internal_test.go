@@ -49,6 +49,65 @@ func TestDirectRepositoryRefusesTheOffPremisesMark(t *testing.T) {
 	}
 }
 
+func TestMovingARepositoryMarksItFromItsNewLocation(t *testing.T) {
+	f := newPlacementFixture(t)
+	box := f.namedRepo("Storagebox", "sftp:u@box:/bv")
+	f.offPremises(box.ID)
+	f.makeRepo(f.root + "/backups/cold")
+
+	if m := f.do("PATCH", "/api/repos/"+box.ID, map[string]any{"repo": "backups/cold"}); m["ok"] != true {
+		t.Fatalf("PATCH repo: %v", m)
+	}
+	moved, err := f.st.GetNamedRepo(box.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if moved.Repo != "backups/cold" || moved.OffPremises {
+		t.Fatalf("after the move: %q, off premises %v; want the array and no mark", moved.Repo, moved.OffPremises)
+	}
+
+	m := f.do("PATCH", "/api/repos/"+box.ID, map[string]any{"repo": "sftp:u@box:/bv", "offPremises": false})
+	if m["ok"] != true {
+		t.Fatalf("PATCH repo and mark: %v", m)
+	}
+	back, err := f.st.GetNamedRepo(box.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if back.Repo != "sftp:u@box:/bv" || back.OffPremises {
+		t.Fatalf("a move that answers for itself: %q, off premises %v", back.Repo, back.OffPremises)
+	}
+	if got := m["repo"].(map[string]any)["offPremises"]; got != false {
+		t.Fatalf("the answer says %v", got)
+	}
+}
+
+func TestImportMovingAKnownRepositoryMarksItFromTheNewLocation(t *testing.T) {
+	f := newPlacementFixture(t)
+	box := f.namedRepo("Storagebox", "sftp:u@box:/bv")
+	f.offPremises(box.ID)
+	f.makeRepo(f.root + "/backups/cold")
+
+	exp := f.do("GET", "/api/settings/export", nil)
+	for _, row := range exp["namedRepos"].([]any) {
+		r := row.(map[string]any)
+		if r["id"] == box.ID {
+			r["repo"] = "backups/cold"
+			delete(r, "offPremises") // a file written before the field existed
+		}
+	}
+	if m := f.do("POST", "/api/settings/import?apply=true", exp); m["ok"] != true {
+		t.Fatalf("import: %v", m)
+	}
+	moved, err := f.st.GetNamedRepo(box.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if moved.Repo != "backups/cold" || moved.OffPremises {
+		t.Fatalf("after the import: %q, off premises %v; want the array and no mark", moved.Repo, moved.OffPremises)
+	}
+}
+
 func TestImportTakesTheOffPremisesMarkFromTheFileOrKeepsTheStoredOne(t *testing.T) {
 	f := newPlacementFixture(t)
 	box := f.namedRepo("Storagebox", "sftp:u@box:/bv")

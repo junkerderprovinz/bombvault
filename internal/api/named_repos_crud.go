@@ -366,13 +366,20 @@ func (h *Handler) handleUpdateNamedRepo(w http.ResponseWriter, r *http.Request) 
 	// leaves the other fields saved and the location where it was.
 	newLocation := row.Repo
 	row.Repo = current
+	// The mark says whether the location stands off the premises, so a move that
+	// brings no answer of its own takes the new location's. A direct repository
+	// counts with its target and keeps its cleared mark.
+	mark := row.OffPremises
+	if body.OffPremises == nil && row.CompanionOf == "" {
+		mark = restic.IsRemoteRepo(newLocation)
+	}
 	saved, err := h.store.UpsertOffsiteTarget(row)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
 	if moving {
-		use, mErr := h.store.SetNamedRepoLocationIfUnused(id, newLocation)
+		use, mErr := h.store.SetNamedRepoLocationIfUnused(id, newLocation, mark)
 		if mErr != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(mErr))
 			return
@@ -391,7 +398,7 @@ func (h *Handler) handleUpdateNamedRepo(w http.ResponseWriter, r *http.Request) 
 			})
 			return
 		}
-		saved.Repo = newLocation
+		saved.Repo, saved.OffPremises = newLocation, mark
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "repo": h.namedRepoViews([]store.OffsiteTarget{saved})[0]})
 }
