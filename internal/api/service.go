@@ -6016,6 +6016,121 @@ func (s *Service) backupFileSetOneForBatch(ctx context.Context, id string) (err 
 	return err
 }
 
+// orderVMNamesForRun sequences a manual VM batch the way a scheduled VM run is
+// sequenced: the operator's explicit backup order first, then the name order
+// for the rest. A selected VM that has no stored row yet keeps its place in the
+// selection instead of being dropped.
+func (s *Service) orderVMNamesForRun(names []string) []string {
+	stored, err := s.store.ListVMTargets()
+	if err != nil {
+		log.Printf("api: backup-vms-all: read vm targets: %v (using selection order)", err)
+		return names
+	}
+	store.SortVMTargetsForRun(stored)
+	requested := make(map[string]bool, len(names))
+	for _, n := range names {
+		requested[n] = true
+	}
+	seen := make(map[string]bool, len(names))
+	out := make([]string, 0, len(names))
+	for _, vm := range stored {
+		if requested[vm.Name] && !seen[vm.Name] {
+			out = append(out, vm.Name)
+			seen[vm.Name] = true
+		}
+	}
+	for _, n := range names {
+		if !seen[n] {
+			out = append(out, n)
+			seen[n] = true
+		}
+	}
+	return out
+}
+
+// StartBackupVMsAll launches sequential backups for the named VMs in one
+// background batch and returns immediately, mirroring StartBackupFilesAll for
+// the VM domain. Two rules come from the existing VM paths: the queue runs in
+// the operator's backup order whatever order the caller passed, and a VM the
+// host no longer defines is a skip rather than a batch failure. Overall progress
+// is published under "batch:vms" while each VM still publishes its own
+// "vm:<name>" bar as it runs. Shares batchActive; returns (false, nil) if a
+// backup/batch is already running, or (false, err) if the vms domain is already
+// busy with another op.
+func (s *Service) StartBackupVMsAll(ctx context.Context, names []string) (bool, error) {
+	if !s.batchActive.CompareAndSwap(false, true) {
+		return false, nil
+	}
+	if op, busy := s.domainBusy("vms"); busy {
+		s.batchActive.Store(false)
+		return false, fmt.Errorf("%s is running on vms", op)
+	}
+	// Detach immediately so the batch is independent of the request that started
+	// it (canceled the moment the handler returns). Each per-VM BackupVM applies
+	// its own hard timeout, so the batch needs no deadline of its own.
+	// #95: the bulk flag suppresses each VM's inline off-site replication so the
+	// whole batch is replicated once after the loop.
+	bctx := WithBulkReplicateSuppressed(context.WithoutCancel(ctx))
+	go func() {
+		// See StartBackupAll's identical pair of defers. This one contains a panic
+		// outside the per-item loop; inside it every VM has its own recovery in
+		// backupVMOneForBatch, so one bad VM cannot abort the rest of the batch.
+		defer s.recoverOperation("backup-vms-all", nil, nil)
+		defer s.batchActive.Store(false)
+
+		queue := make([]string, 0, len(names))
+		for _, n := range names {
+			if n != "" {
+				queue = append(queue, n)
+			}
+		}
+		queue = s.orderVMNamesForRun(queue)
+		total := len(queue)
+		const key = "batch:vms"
+		s.publishBatch(key, 0, true)
+		ok, fail, skipped := 0, 0, 0
+		for i, n := range queue {
+			if err := s.backupVMOneForBatch(bctx, n); err != nil {
+				if errors.Is(err, backup.ErrVMNotInstalled) {
+					skipped++
+					log.Printf("api: backup-vms-all: %q skipped: not defined on the host", n) //nolint:gosec // G706: n is %q-quoted
+				} else {
+					fail++
+					log.Printf("api: backup-vms-all: %q failed (continuing): %v", n, err) //nolint:gosec // G706: n is %q-quoted
+				}
+			} else {
+				ok++
+			}
+			s.publishBatch(key, float64(i+1)/float64(total)*100, true)
+		}
+		s.publishBatch(key, 100, false)
+		// Retention first, so the off-site copy below has fewer snapshots to
+		// carry. Each VM's forget already ran inline without a prune under the
+		// bulk flag, so this is a plain space reclaim for the whole batch.
+		s.PruneAfterBulk(bctx, "vms")
+		s.ReplicateOffsiteAfterBulk(bctx, "vms")
+		// One repository sample for the whole round rather than one per VM.
+		s.maybeCollectStats(bctx, "vms")
+		log.Printf("api: backup-vms-all done: %d ok, %d skipped, %d failed (of %d requested %d)", ok, skipped, fail, total, len(names))
+	}()
+	return true, nil
+}
+
+// backupVMOneForBatch backs up a single queued VM on behalf of
+// StartBackupVMsAll. See backupOneForBatch, the containers-batch counterpart,
+// for why each item gets its own recovery instead of one shared at the batch
+// level.
+func (s *Service) backupVMOneForBatch(ctx context.Context, name string) (err error) {
+	// See backupOneForBatch for why this must be a direct defer, not wrapped.
+	defer s.recoverOperation("backup-vms-all: "+name, &err, func(msg string) {
+		if tg, tErr := s.store.GetVMTargetByName(name); tErr == nil {
+			s.failStuckRun(tg.ID, msg)
+		}
+	})
+	_, err = s.BackupVM(ctx, name)
+	return err
+}
+
 // BackupInProgress reports whether a single backup, a batch, or a restore is
 // currently running (they share the same single-flight guard). It lets callers
 // — and tests — observe when the detached goroutine has fully finished.
