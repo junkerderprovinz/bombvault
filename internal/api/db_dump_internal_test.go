@@ -345,7 +345,7 @@ func TestDBDumpAdapterTrustsResticWithoutResultLine(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Dump: %v", err)
 	}
-	if res.SnapshotID != "aaaa1111bbbb2222" || res.Bytes != 500 {
+	if res.Summary.SnapshotID != "aaaa1111bbbb2222" || res.Summary.Bytes != 500 {
 		t.Fatalf("result = %+v", res)
 	}
 	if res.Note != store.NoteDBDumpOneDatabase {

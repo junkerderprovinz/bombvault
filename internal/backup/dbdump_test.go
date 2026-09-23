@@ -65,13 +65,25 @@ func dumpDeps(d *fakeDocker, r *fakeRestic, runs *fakeRuns, dumper backup.DBDump
 	}
 }
 
+// dumpSummary is what restic reports for a dump: one stream, the dump's size
+// as both the new data and the source.
+var dumpSummary = backup.Summary{
+	SnapshotID:  "abc123def456",
+	Bytes:       4096,
+	Measured:    true,
+	SourceBytes: 4096,
+	SourceFiles: 1,
+	FilesNew:    1,
+	ResticMS:    1200,
+}
+
 func dumpFakes(t *testing.T) (*fakeDocker, *fakeRestic, *fakeRuns, *fakeDumper) {
 	t.Helper()
 	d := &fakeDocker{}
 	return d,
 		&fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678", Bytes: 1024}},
 		&fakeRuns{numbered: true},
-		&fakeDumper{docker: d, res: backup.DBDumpResult{SnapshotID: "abc123def456", Bytes: 4096}}
+		&fakeDumper{docker: d, res: backup.DBDumpResult{Summary: dumpSummary}}
 }
 
 func TestDBDumpRunsAfterPreHookAndBeforeStop(t *testing.T) {
@@ -158,15 +170,36 @@ func TestDBDumpSuccessRecordsItsOwnRun(t *testing.T) {
 		t.Fatalf("run kinds = %v, want the second one to be dbdump", runs.kinds)
 	}
 	got := runs.finishOf(t, "run-2")
-	want := runFinish{runID: "run-2", status: "success", snapshotID: "abc123def456", bytes: 4096, note: store.NoteDBDumpOneDatabase}
+	want := runFinish{runID: "run-2", status: "success", sum: dumpSummary, note: store.NoteDBDumpOneDatabase}
 	if got != want {
 		t.Fatalf("dump run finished %+v, want %+v", got, want)
 	}
-	if outcome.SnapshotID != "abc123def456" || outcome.Bytes != 4096 || outcome.Status != "success" {
+	if outcome.Summary != dumpSummary || outcome.Status != "success" {
 		t.Fatalf("outcome = %+v", outcome)
 	}
 	if note := runs.finishOf(t, "run-1").note; note != "" {
 		t.Fatalf("backup run note = %q, want empty", note)
+	}
+}
+
+func TestDBDumpRunFinishesWithItsOwnSummary(t *testing.T) {
+	d, r, runs, dumper := dumpFakes(t)
+
+	if _, err := backup.BackupContainer(t.Context(), dumpDeps(d, r, runs, dumper)); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if runs.kinds[1] != "dbdump" {
+		t.Fatalf("run kinds = %v, want the second one to be dbdump", runs.kinds)
+	}
+	dump := runs.finishOf(t, "run-2").sum
+	if dump != dumpSummary {
+		t.Fatalf("dump run summary = %+v, want the dump's own %+v", dump, dumpSummary)
+	}
+
+	volume := runs.finishOf(t, "run-1").sum
+	if volume.SourceBytes != 0 || volume.SnapshotID != "deadbeef12345678" {
+		t.Fatalf("backup run summary = %+v, want the volume backup's own numbers", volume)
 	}
 }
 
@@ -370,7 +403,7 @@ func TestDBDumpLeftoverRecordsSnapshotOnFailedRun(t *testing.T) {
 	}
 
 	got := runs.finishOf(t, "run-2")
-	if got.status != "failed" || got.snapshotID != snapshot {
+	if got.status != "failed" || got.sum.SnapshotID != snapshot {
 		t.Fatalf("dump run finished %+v, want failed with snapshot %q", got, snapshot)
 	}
 }

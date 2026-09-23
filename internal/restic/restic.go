@@ -17,6 +17,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"sync/atomic"
@@ -209,11 +210,39 @@ type Summary struct {
 	// TotalBytesProcessed is what restic read, before deduplication. For a
 	// backup taken from a command it is the size of the stream itself.
 	TotalBytesProcessed uint64 `json:"total_bytes_processed"`
+	TotalFilesProcessed uint64 `json:"total_files_processed"`
+	// TotalDuration is a pointer because its presence is what marks the totals
+	// above as measured: restic prints the three together, so a summary line
+	// without them (an older binary, a truncated line) must not read as a
+	// source that shrank to nothing.
+	TotalDuration *float64 `json:"total_duration,omitempty"` // seconds
 }
 
 // SnapshotSummary is the counter set restic stores with a snapshot since 0.17.
 type SnapshotSummary struct {
 	TotalBytesProcessed uint64 `json:"total_bytes_processed"`
+}
+
+// SnapshotMetaSummary is the full counter set of a snapshot taken by restic
+// 0.17 or later, read from the repository rather than from a running backup.
+type SnapshotMetaSummary struct {
+	BackupStart         time.Time `json:"backup_start"`
+	BackupEnd           time.Time `json:"backup_end"`
+	FilesNew            uint64    `json:"files_new"`
+	DataAdded           uint64    `json:"data_added"`
+	TotalFilesProcessed uint64    `json:"total_files_processed"`
+	TotalBytesProcessed uint64    `json:"total_bytes_processed"`
+}
+
+// SnapshotMeta is one snapshot as the metric backfill needs it. It is a type
+// of its own so that the snapshot lists the SPA receives (snapshot panels,
+// retention preview, foreign inventory) keep the keys they have.
+type SnapshotMeta struct {
+	ID     string   `json:"id"`
+	Tags   []string `json:"tags"`
+	Parent string   `json:"parent,omitempty"`
+	// Summary is absent on snapshots written by restic before 0.17.
+	Summary *SnapshotMetaSummary `json:"summary,omitempty"`
 }
 
 // Snapshot holds a subset of the restic snapshot JSON. Original is the hex id
@@ -781,6 +810,14 @@ func SnapshotsArgs(repo string, m Mode) []string {
 	}
 	args = append(args, "--no-lock", "--json")
 	return args
+}
+
+// SnapshotArgs returns the argv slice for `restic snapshots --no-lock --json
+// <snapshotID>`, the one-snapshot form of SnapshotsArgs and read-only for the
+// same reason. The id is passed as a positional after the end-of-flags marker,
+// like StatsRestoreSizeArgs does.
+func SnapshotArgs(repo, snapshotID string, m Mode) []string {
+	return append(SnapshotsArgs(repo, m), "--", snapshotID)
 }
 
 // StatsArgs returns the argv slice for `restic stats --no-lock --json --mode
@@ -2298,6 +2335,42 @@ func (r Restic) Snapshots(ctx context.Context, repo string, m Mode) ([]Snapshot,
 		return nil, fmt.Errorf("restic snapshots: parse JSON: %w", err)
 	}
 	return snaps, nil
+}
+
+// SnapshotsMeta lists the same snapshots as Snapshots and reads the counters
+// and the parent link each one carries, for the metric backfill.
+func (r Restic) SnapshotsMeta(ctx context.Context, repo string, m Mode) ([]SnapshotMeta, error) {
+	out, err := r.run(ctx, SnapshotsArgs(repo, m), m)
+	if err != nil {
+		return nil, err
+	}
+	var metas []SnapshotMeta
+	if err := json.Unmarshal(out, &metas); err != nil {
+		return nil, fmt.Errorf("restic snapshots: parse JSON: %w", err)
+	}
+	return metas, nil
+}
+
+// SnapshotParent returns the snapshot one snapshot was based on, empty when it
+// has none. A backup in which every file is new reads differently with a parent
+// than without one, and only the repository says which of the two it was.
+func (r Restic) SnapshotParent(ctx context.Context, repo, snapshotID string, m Mode) (string, error) {
+	out, err := r.run(ctx, SnapshotArgs(repo, snapshotID, m), m)
+	if err != nil {
+		return "", err
+	}
+	return parseSnapshotParent(out)
+}
+
+func parseSnapshotParent(out []byte) (string, error) {
+	var metas []SnapshotMeta
+	if err := json.Unmarshal(out, &metas); err != nil {
+		return "", fmt.Errorf("restic snapshots: parse JSON: %w", err)
+	}
+	if len(metas) == 0 {
+		return "", fmt.Errorf("restic snapshots: snapshot not found")
+	}
+	return metas[0].Parent, nil
 }
 
 // Stats returns repository statistics for the chosen --mode (see StatsArgs).

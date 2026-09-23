@@ -37,6 +37,47 @@ func TestBackupConfigRecordsRunAndTags(t *testing.T) {
 	}
 }
 
+func TestConfigBackupFinishCarriesSummary(t *testing.T) {
+	measured := backup.Summary{
+		SnapshotID:  "s1",
+		Bytes:       42,
+		Measured:    true,
+		SourceBytes: 8192,
+		SourceFiles: 4,
+		FilesNew:    1,
+		ResticMS:    310,
+	}
+	t.Run("a successful backup records what restic measured", func(t *testing.T) {
+		runs := &fakeRuns{}
+		_, err := backup.BackupConfig(context.Background(), backup.ConfigBackupDeps{
+			SourceDir: "/config/.snapshot", Repo: "/repo", TargetID: "config",
+			Restic: &fakeRestic{summary: measured}, Runs: runs,
+		})
+		if err != nil {
+			t.Fatalf("BackupConfig: %v", err)
+		}
+		got := runs.finishOf(t, "run-1")
+		if got.status != "success" || got.sum != measured {
+			t.Fatalf("finish = %+v, want the restic summary on a success", got)
+		}
+	})
+
+	t.Run("a failed backup records no metrics", func(t *testing.T) {
+		runs := &fakeRuns{}
+		_, err := backup.BackupConfig(context.Background(), backup.ConfigBackupDeps{
+			SourceDir: "/config/.snapshot", Repo: "/repo", TargetID: "config",
+			Restic: &fakeRestic{summary: measured, backupErr: errors.New("restic boom")}, Runs: runs,
+		})
+		if err == nil {
+			t.Fatal("expected the restic failure to surface")
+		}
+		got := runs.finishOf(t, "run-1")
+		if got.status != "failed" || got.sum != (backup.Summary{}) {
+			t.Fatalf("finish = %+v, want an empty summary on a failure", got)
+		}
+	})
+}
+
 func TestBackupConfigRecordsFailure(t *testing.T) {
 	fr := &fakeRestic{backupErr: errors.New("restic boom")}
 	runs := &fakeRuns{}

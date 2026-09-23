@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -109,7 +110,7 @@ func TestCancelledBackupRecordsCancelledNotFailed(t *testing.T) {
 	// This is what the backup package calls when restic returns the context
 	// error that the cancellation caused.
 	a := runsAdapter{st: st, ctx: context.Background(), svc: s, cancelKey: "files:set1"}
-	if err := a.Finish(runID, "failed", "", 0, "context canceled"); err != nil {
+	if err := a.Finish(runID, "failed", backup.Summary{}, "context canceled"); err != nil {
 		t.Fatalf("finish run: %v", err)
 	}
 
@@ -140,7 +141,7 @@ func TestAGenuineFailureKeepsItsStatus(t *testing.T) {
 		t.Fatalf("start run: %v", err)
 	}
 	a := runsAdapter{st: st, ctx: context.Background(), svc: s, cancelKey: "files:set2"}
-	if err := a.Finish(runID, "failed", "", 0, "repository is locked"); err != nil {
+	if err := a.Finish(runID, "failed", backup.Summary{}, "repository is locked"); err != nil {
 		t.Fatalf("finish run: %v", err)
 	}
 
@@ -169,7 +170,7 @@ func TestASuccessfulBackupIsNeverRelabelled(t *testing.T) {
 		t.Fatalf("start run: %v", err)
 	}
 	a := runsAdapter{st: st, ctx: context.Background(), svc: s, cancelKey: "files:set3"}
-	if err := a.Finish(runID, "success", "snap1", 42, ""); err != nil {
+	if err := a.Finish(runID, "success", backup.Summary{SnapshotID: "snap1", Bytes: 42}, ""); err != nil {
 		t.Fatalf("finish run: %v", err)
 	}
 

@@ -199,11 +199,10 @@ func (t *fakeTemplates) Write(dir, name, xml string) error {
 // runFinish is one recorded Finish, so a flow with more than one run can be
 // checked per run rather than by position in the status list.
 type runFinish struct {
-	runID      string
-	status     string
-	snapshotID string
-	bytes      int64
-	note       string
+	runID  string
+	status string
+	sum    backup.Summary
+	note   string
 }
 
 type fakeRuns struct {
@@ -235,7 +234,7 @@ func (r *fakeRuns) Start(targetID, kind string) (string, error) {
 	return r.lastRunID, r.startErr
 }
 
-func (r *fakeRuns) Finish(runID, status, snapshotID string, bytes int64, errMsg string) error {
+func (r *fakeRuns) Finish(runID, status string, sum backup.Summary, errMsg string) error {
 	entry := "runFinish:" + runID + ":" + status
 	if errMsg != "" {
 		entry += ":" + errMsg
@@ -243,11 +242,10 @@ func (r *fakeRuns) Finish(runID, status, snapshotID string, bytes int64, errMsg 
 	r.log = append(r.log, entry)
 	r.finishes = append(r.finishes, status)
 	r.finishCalls = append(r.finishCalls, runFinish{
-		runID:      runID,
-		status:     status,
-		snapshotID: snapshotID,
-		bytes:      bytes,
-		note:       errMsg,
+		runID:  runID,
+		status: status,
+		sum:    sum,
+		note:   errMsg,
 	})
 	return r.finishErr
 }
@@ -460,6 +458,74 @@ func TestBackupHappyPath(t *testing.T) {
 	if len(runs.finishes) != 1 || runs.finishes[0] != "success" {
 		t.Fatalf("run finishes = %v, want [success]", runs.finishes)
 	}
+}
+
+func TestBackupContainerFinishCarriesMeasuredSummary(t *testing.T) {
+	measured := backup.Summary{
+		SnapshotID:  "deadbeef12345678",
+		Bytes:       1024,
+		Measured:    true,
+		SourceBytes: 1048576,
+		SourceFiles: 816,
+		FilesNew:    3,
+		ResticMS:    2431,
+	}
+	deps := func(r *fakeRestic, runs *fakeRuns, paths []string) backup.BackupDeps {
+		return backup.BackupDeps{
+			ContainerRef:         "plex",
+			ContainerName:        "Plex",
+			RepoPath:             "/repo",
+			AppdataPaths:         paths,
+			StopTimeout:          30 * time.Second,
+			TargetID:             "target-1",
+			WasRunning:           true,
+			SnapshotTemplatesDir: "/data/templates",
+			FlashTemplatesDir:    "/boot/templates",
+			Docker:               &fakeDocker{},
+			Restic:               r,
+			Templates:            &fakeTemplates{},
+			Runs:                 runs,
+		}
+	}
+
+	t.Run("a successful backup records what restic measured", func(t *testing.T) {
+		runs := &fakeRuns{}
+		r := &fakeRestic{summary: measured}
+		if _, err := backup.BackupContainer(t.Context(), deps(r, runs, []string{"/host/user/appdata/plex"})); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		got := runs.finishOf(t, "run-1")
+		if got.status != "success" || got.sum != measured {
+			t.Fatalf("finish = %+v, want the restic summary on a success", got)
+		}
+	})
+
+	t.Run("a failed backup records no metrics", func(t *testing.T) {
+		runs := &fakeRuns{}
+		r := &fakeRestic{summary: measured, backupErr: errors.New("repository is locked")}
+		if _, err := backup.BackupContainer(t.Context(), deps(r, runs, []string{"/host/user/appdata/plex"})); err == nil {
+			t.Fatal("expected the restic failure to surface")
+		}
+		got := runs.finishOf(t, "run-1")
+		if got.status != "failed" || got.sum != (backup.Summary{}) {
+			t.Fatalf("finish = %+v, want an empty summary on a failure", got)
+		}
+	})
+
+	t.Run("a container without appdata paths is not measured", func(t *testing.T) {
+		runs := &fakeRuns{}
+		r := &fakeRestic{summary: measured}
+		if _, err := backup.BackupContainer(t.Context(), deps(r, runs, nil)); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		got := runs.finishOf(t, "run-1")
+		if got.status != "success" {
+			t.Fatalf("finish = %+v, want a success", got)
+		}
+		if got.sum.SnapshotID != "" || got.sum.Measured {
+			t.Fatalf("summary = %+v, want no snapshot and no measurement where restic never ran", got.sum)
+		}
+	})
 }
 
 func TestBackupStopsAndRestartsDependencies(t *testing.T) {

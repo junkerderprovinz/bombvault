@@ -462,10 +462,13 @@ func (a *dbDumpAdapter) decide(ctx, dumpCtx context.Context, req backup.DBDumpRe
 // missing result line costs the byte count the helper would have confirmed,
 // not the dump.
 func (a *dbDumpAdapter) success(sum restic.Summary, res dbdump.Result, hasRes bool, lines []string) backup.DBDumpResult {
-	out := backup.DBDumpResult{SnapshotID: sum.SnapshotID, Bytes: int64(sum.TotalBytesProcessed)} //nolint:gosec // G115: a dump stream is gigabytes at most, nowhere near MaxInt64
+	out := backup.DBDumpResult{Summary: backup.Summary{
+		SnapshotID: sum.SnapshotID,
+		Bytes:      int64(sum.TotalBytesProcessed), //nolint:gosec // G115: a dump stream is gigabytes at most, nowhere near MaxInt64
+	}}
 	scope := dbdump.ParseScope(lines)
 	if hasRes {
-		out.Bytes = res.Bytes
+		out.Summary.Bytes = res.Bytes
 		if res.Scope != "" {
 			scope = res.Scope
 		}
