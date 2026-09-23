@@ -1711,6 +1711,12 @@ const fi: Partial<Translations> = {
   "placement.uploadCost": "Lataukset voivat maksaa palveluntarjoajalla.",
   "placement.uncheckable": "Ei voitu tarkistaa: {list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "Suora arkisto kohteessa {target}",
   "directRepo.intro": "Kohteet, jotka valitsevat sen, varmuuskopioituvat suoraan kohteeseen {target}, sen avaimella, tallennusluokalla, rajoilla ja append-only-asetuksella. Se säilyttää tilannevedoksensa kohteen {target} sääntöjen mukaan. Peruminen ei jätä mitään jälkeensä.",

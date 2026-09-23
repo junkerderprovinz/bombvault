@@ -1711,6 +1711,12 @@ const he: Partial<Translations> = {
   "placement.uploadCost": "העלאות עלולות לעלות כסף אצל הספק.",
   "placement.uncheckable": "לא ניתן היה לבדוק: {list}",
   "placement.flow": "{from} ← {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "מאגר ישיר אצל {target}",
   "directRepo.intro": "פריטים שבוחרים בו מגובים ישירות אל {target}, עם המפתח, מחלקת האחסון, המגבלות וההגדרה append-only שלו. הוא שומר את התצלומים שלו לפי הכללים של {target}. ביטול לא משאיר כלום.",

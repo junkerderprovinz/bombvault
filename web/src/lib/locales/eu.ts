@@ -1722,6 +1722,12 @@ const eu: Partial<Translations> = {
   "placement.uploadCost": "Igoerek dirua kosta dezakete hornitzailearengan.",
   "placement.uncheckable": "Ezin izan da egiaztatu: {list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "Biltegi zuzena {target}(r)en ondoan",
   "directRepo.intro": "Hautatzen duten elementuak zuzenean babesten dira {target}(e)n, bere gakoarekin, biltegiratze-klasearekin, mugekin eta gehitu-soilik ezarpenarekin. Bere argazkiak {target}(r)en arauen arabera gordetzen ditu. Ezeztatzeak ez du ezer uzten.",

@@ -1722,6 +1722,12 @@ const et: Partial<Translations> = {
   "placement.uploadCost": "Üleslaadimine võib pakkuja juures raha maksta.",
   "placement.uncheckable": "Ei õnnestunud kontrollida: {list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "Otsehoidla {target} juures",
   "directRepo.intro": "Üksused, mis selle valivad, varundatakse otse hoidlasse {target}, selle võtme, salvestusklassi, piirangute ja append-only seadistusega. See säilitab oma hetktõmmiseid {target} reeglite järgi. Tühistamine ei jäta midagi maha.",

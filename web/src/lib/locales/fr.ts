@@ -1711,6 +1711,12 @@ const fr: Partial<Translations> = {
   "placement.uploadCost": "Les envois peuvent coûter de l'argent chez le fournisseur.",
   "placement.uncheckable": "Impossible de vérifier : {list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "Dépôt direct chez {target}",
   "directRepo.intro": "Les éléments qui le choisissent sont sauvegardés directement vers {target}, avec sa clé, sa classe de stockage, ses limites et son réglage append-only. Il conserve ses snapshots selon les règles de {target}. Annuler ne laisse rien derrière.",

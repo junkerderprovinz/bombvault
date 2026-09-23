@@ -1722,6 +1722,12 @@ const fa: Partial<Translations> = {
   "placement.uploadCost": "بارگذاری‌ها ممکن است نزد ارائه‌دهنده هزینه داشته باشند.",
   "placement.uncheckable": "بررسی نشد: {list}",
   "placement.flow": "{from} ← {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "مخزن مستقیم نزد {target}",
   "directRepo.intro": "مواردی که آن را انتخاب می‌کنند مستقیماً در {target} پشتیبان‌گیری می‌شوند، با کلید، کلاس ذخیره‌سازی، محدودیت‌ها و تنظیم append-only. نسخه‌های خود را طبق قواعد {target} نگه می‌دارد. لغو چیزی باقی نمی‌گذارد.",

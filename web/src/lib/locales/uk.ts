@@ -1706,6 +1706,12 @@ const uk: Partial<Translations> = {
   "placement.uploadCost": "Завантаження можуть коштувати грошей у провайдера.",
   "placement.uncheckable": "Не вдалося перевірити: {list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "Прямий репозиторій біля {target}",
   "directRepo.intro": "Елементи, які його оберуть, резервуються напряму в {target}, з його ключем, класом сховища, лімітами та налаштуванням append-only. Він зберігає свої знімки за правилами {target}. Скасування нічого не залишає.",

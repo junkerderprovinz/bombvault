@@ -1703,6 +1703,12 @@ const ja: Partial<Translations> = {
   "placement.uploadCost": "アップロードはプロバイダー側で料金がかかることがあります。",
   "placement.uncheckable": "チェックできませんでした: {list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "{target} のダイレクトリポジトリ",
   "directRepo.intro": "これを選んだ項目は {target} へ直接バックアップされ、そのキー、ストレージクラス、制限、append-only 設定を使います。スナップショットは {target} のルールで保持されます。キャンセルすれば何も残りません。",

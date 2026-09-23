@@ -1722,6 +1722,12 @@ const sk: Partial<Translations> = {
   "placement.uploadCost": "Nahrávanie môže u poskytovateľa stáť peniaze.",
   "placement.uncheckable": "Nepodarilo sa skontrolovať: {list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "Priamy repozitár pri {target}",
   "directRepo.intro": "Položky, ktoré si ho zvolia, sa zálohujú priamo do {target}, s jeho kľúčom, triedou úložiska, limitmi a nastavením append-only. Uchováva svoje snímky podľa pravidiel {target}. Zrušenie nič nezanechá.",

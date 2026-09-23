@@ -1722,6 +1722,12 @@ const lt: Partial<Translations> = {
   "placement.uploadCost": "Įkėlimai gali kainuoti pas teikėją.",
   "placement.uncheckable": "Nepavyko patikrinti: {list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "Tiesioginė saugykla prie {target}",
   "directRepo.intro": "Elementai, kurie ją pasirenka, atsargines kopijas daro tiesiai į {target}, naudodami jo raktą, saugyklos klasę, apribojimus ir append-only nustatymą. Ji saugo savo momentines kopijas pagal {target} taisykles. Atšaukimas nieko nepalieka.",

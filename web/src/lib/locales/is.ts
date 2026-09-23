@@ -1722,6 +1722,12 @@ const is: Partial<Translations> = {
   "placement.uploadCost": "Innsendingar geta kostað fé hjá þjónustuveitanda.",
   "placement.uncheckable": "Ekki tókst að athuga: {list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "Bein geymsla hjá {target}",
   "directRepo.intro": "Atriði sem velja hana taka öryggisafrit beint í {target}, með lykli þess, geymsluflokki, mörkum og aðeins-bæta-við stillingu. Hún varðveitir sínar skyndimyndir eftir reglum {target}. Hætt við skilur ekkert eftir.",

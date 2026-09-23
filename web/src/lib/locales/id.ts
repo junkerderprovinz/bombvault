@@ -1722,6 +1722,12 @@ const id: Partial<Translations> = {
   "placement.uploadCost": "Unggahan bisa dikenai biaya di penyedia.",
   "placement.uncheckable": "Tidak dapat diperiksa: {list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "Repositori langsung di {target}",
   "directRepo.intro": "Item yang memilihnya dicadangkan langsung ke {target}, dengan kunci, kelas penyimpanan, batas, dan pengaturan append-only miliknya. Snapshot-nya disimpan sesuai aturan {target}. Membatalkan tidak meninggalkan apa pun.",

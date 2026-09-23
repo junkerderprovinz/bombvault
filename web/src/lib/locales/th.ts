@@ -1714,6 +1714,12 @@ const th: Partial<Translations> = {
   "placement.uploadCost": "การอัปโหลดอาจมีค่าใช้จ่ายที่ผู้ให้บริการ",
   "placement.uncheckable": "ตรวจสอบไม่ได้: {list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "ที่เก็บข้อมูลโดยตรงที่ {target}",
   "directRepo.intro": "รายการที่เลือกใช้จะสำรองข้อมูลตรงไปยัง {target} พร้อมคีย์ คลาสพื้นที่จัดเก็บ ขีดจำกัด และการตั้งค่า append-only เก็บสแนปช็อตตามกฎของ {target} การยกเลิกจะไม่เหลืออะไรไว้",

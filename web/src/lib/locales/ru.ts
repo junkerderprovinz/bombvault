@@ -1706,6 +1706,12 @@ const ru: Partial<Translations> = {
   "placement.uploadCost": "Загрузки могут стоить денег у провайдера.",
   "placement.uncheckable": "Не удалось проверить: {list}",
   "placement.flow": "{from} → {to}",
+  // Timeline
+  "timeline.deleteAsk": "Delete this backup here: {list}?",
+  "timeline.deleteRow": "Delete everywhere",
+  "timeline.deleteLast": "This is the last copy of this backup.",
+  "timeline.deleteHeldBy": "Still held by: {list}",
+  "timeline.deleteSkipped": "Left out, append-only: {list}",
   // Direct repository
   "directRepo.title": "Прямой репозиторий у {target}",
   "directRepo.intro": "Элементы, которые его выбирают, копируются напрямую в {target}, с его ключом, классом хранения, лимитами и настройкой append-only. Он хранит свои снимки по правилам {target}. Отмена не оставляет ничего.",
