@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { listSnapshots, restore, listSnapshotFiles, restoreContainerFiles, restoreContainerToPath, deleteSnapshot, diffSnapshots, tagSnapshot, getSettings } from "../lib/api";
+import { listSnapshots, restore, listSnapshotFiles, restoreContainerFiles, restoreContainerToPath, diffSnapshots, tagSnapshot, getSettings } from "../lib/api";
 import type { Snapshot, FileEntry, SnapshotDiff } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { Advanced, useAdvanced } from "../lib/advanced";
 import { useBackupWatch } from "../lib/backupWatch";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
+import { SNAPSHOT_MISSING } from "../lib/timeline";
 import { RestoreProgress } from "./restore/RestoreProgress";
 import { RestoreAction } from "./restore/RestoreAction";
-import { SourceToggle, type RepoSource } from "./SourceToggle";
 import { FolderBrowser } from "./FolderBrowser";
 import { RecentRunsList } from "./RecentRunsList";
 import { SnapshotFileTree } from "./SnapshotFileTree";
@@ -16,9 +16,9 @@ import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
 import { Button } from "./Button";
 import { SelectField } from "./SelectField";
-import { InfoBubble } from "./InfoBubble";
-import { IconRestore, IconTrash } from "./Sidebar";
+import { IconRestore } from "./Sidebar";
 import { IconDisclosure } from "./IconDisclosure";
+import { Timeline, type TimelinePick } from "./timeline/Timeline";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -42,9 +42,9 @@ function humanBytes(n: number): string {
 // snapshot written straight into a direct repository; all three are noise in the
 // UI, so they're hidden here. They stay in restic's metadata untouched.
 const INTERNAL_TAGS = new Set(["p1", "bv:direct"]);
-export function displayTags(snap: Snapshot, containerName: string): string[] {
+export function displayTags(tags: string[], containerName: string): string[] {
   const owner = `container:${containerName}`;
-  return (snap.tags ?? []).filter((tg) => tg !== owner && !INTERNAL_TAGS.has(tg));
+  return tags.filter((tg) => tg !== owner && !INTERNAL_TAGS.has(tg));
 }
 
 // SnapshotFileBrowser lists a snapshot's files for multi-select restore: tick any
@@ -57,6 +57,7 @@ function SnapshotFileBrowser({
   source,
   hostMountRoot,
   defaultFolder,
+  onMissing,
   t,
 }: {
   containerName: string;
@@ -64,6 +65,7 @@ function SnapshotFileBrowser({
   source: string;
   hostMountRoot: string;
   defaultFolder: string;
+  onMissing: () => void;
   t: T;
 }) {
   const [files, setFiles] = useState<FileEntry[]>([]);
@@ -87,6 +89,7 @@ function SnapshotFileBrowser({
       const paths = [...selected];
       const targetPath = dest === "toFolder" ? folder.trim() : "";
       const res = await restoreContainerFiles(containerName, snapshotId, paths, targetPath, true, source);
+      if (res.code === SNAPSHOT_MISSING) onMissing();
       if (res.ok) setRestoredTarget(res.target ?? "");
       return res;
     },
@@ -323,6 +326,7 @@ function RestoreToFolder({
   source,
   hostMountRoot,
   defaultFolder,
+  onMissing,
   t,
 }: {
   containerName: string;
@@ -330,6 +334,7 @@ function RestoreToFolder({
   source: string;
   hostMountRoot: string;
   defaultFolder: string;
+  onMissing: () => void;
   t: T;
 }) {
   const [path, setPath] = useState(defaultFolder);
@@ -347,6 +352,7 @@ function RestoreToFolder({
     start: async () => {
       const p = path.trim();
       const res = await restoreContainerToPath(containerName, snapshotId, p, source);
+      if (res.code === SNAPSHOT_MISSING) onMissing();
       if (res.ok) setTarget(res.target ?? p);
       return res;
     },
@@ -412,21 +418,11 @@ function snapLabel(snap: Snapshot): string {
 // selects, defaulting to the newest pair) and show the diff summary of what
 // changed between them (restic diff). Visually consistent with the Files /
 // Restore-to-folder panels.
-function CompareSnapshots({
-  snapshots,
-  containerName,
-  source,
-  t,
-}: {
-  snapshots: Snapshot[];
-  containerName: string;
-  source: string;
-  t: T;
-}) {
+function CompareSnapshots({ containerName, t }: { containerName: string; t: T }) {
   const [open, setOpen] = useState(false);
-  // Default to comparing the two most recent snapshots (older "from" → newer "to").
-  const [from, setFrom] = useState(snapshots[1]?.id ?? "");
-  const [to, setTo] = useState(snapshots[0]?.id ?? "");
+  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [diff, setDiff] = useState<SnapshotDiff | null>(null);
@@ -437,20 +433,26 @@ function CompareSnapshots({
   // this component's header comment above).
   const [shake, setShake] = useState(0);
 
-  // Re-seed the default pair whenever the snapshot set changes (e.g. toggling the
-  // Local/Off-site source reloads a different repo's snapshots). Without this, the
-  // selects keep stale IDs from the previous repo and Compare is rejected with
-  // "snapshot does not belong to this container".
+  // renderActions only ever gets one picked mark at a time, so compare reads
+  // its own snapshot list at the container's own location once it opens, and
+  // seeds the default pair (older "from" → newer "to") from what comes back.
   useEffect(() => {
-    setFrom(snapshots[1]?.id ?? "");
-    setTo(snapshots[0]?.id ?? "");
-    setDiff(null);
-    setError(null);
-  }, [snapshots]);
+    if (!open) return;
+    listSnapshots(containerName, "local")
+      .then((res) => {
+        const list = res.ok ? (res.snapshots ?? []) : [];
+        setSnapshots(list);
+        setFrom(list[1]?.id ?? "");
+        setTo(list[0]?.id ?? "");
+        setDiff(null);
+        setError(null);
+      })
+      .catch(() => setSnapshots([]));
+  }, [open, containerName]);
 
   // GlimStone follow-up pass (v8.0.0) audit note: `diff`/`error` below are
-  // deliberately NOT migrated to a toast, unlike this file's SnapshotRow.
-  // handleDelete / SnapshotTags.submit siblings. A successful compare renders
+  // deliberately NOT migrated to a toast, unlike this file's SnapshotTags.submit
+  // sibling. A successful compare renders
   // a real comparison RESULT the user reads at their own pace — added/changed/
   // removed file counts and byte totals — not a one-shot completion ping; the
   // same "reference value" reasoning ExportButton and RestoreProgress's
@@ -466,7 +468,7 @@ function CompareSnapshots({
     setError(null);
     setDiff(null);
     try {
-      const res = await diffSnapshots(containerName, from, to, source);
+      const res = await diffSnapshots(containerName, from, to, "local");
       if (res.ok && res.diff) {
         setDiff(res.diff);
       } else {
@@ -560,13 +562,15 @@ function CompareSnapshots({
 // tiny inline "add tag" input. On submit it calls tagSnapshot and asks the
 // parent to refresh so the new chip appears.
 function SnapshotTags({
-  snap,
+  tags,
+  snapshotId,
   containerName,
   source,
   onTagged,
   t,
 }: {
-  snap: Snapshot;
+  tags: string[];
+  snapshotId: string;
   containerName: string;
   source: string;
   onTagged: () => void;
@@ -576,7 +580,7 @@ function SnapshotTags({
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
-  const tags = displayTags(snap, containerName);
+  const shown = displayTags(tags, containerName);
 
   // NOTE (Task 2 audit, GlimStone standing rule sweep): deliberately NOT given
   // a `.glim-shake` here, unlike this file's other fixes — there is no
@@ -595,7 +599,7 @@ function SnapshotTags({
     }
     setBusy(true);
     try {
-      const res = await tagSnapshot(containerName, snap.id, [tag], source);
+      const res = await tagSnapshot(containerName, snapshotId, [tag], source);
       if (res.ok) {
         setValue("");
         setAdding(false);
@@ -612,7 +616,7 @@ function SnapshotTags({
 
   return (
     <div className="flex items-center gap-1 flex-wrap">
-      {tags.map((tg) => (
+      {shown.map((tg) => (
         <span
           key={tg}
           className="inline-flex items-center rounded-control bg-carbon-surface3 px-1.5 py-0.5 text-caption text-carbon-textSub"
@@ -655,186 +659,58 @@ function SnapshotTags({
 // RestoreMode selects which of the three restore flows the inline panel shows.
 type RestoreMode = "inPlace" | "files" | "toFolder";
 
-function SnapshotRow({
-  snap,
+function SnapshotActions({
+  pick,
   containerName,
-  source,
   hostMountRoot,
   defaultFolder,
-  onDeleted,
-  onTagged,
   t,
 }: {
-  snap: Snapshot;
+  pick: TimelinePick;
   containerName: string;
-  source: RepoSource;
   hostMountRoot: string;
   defaultFolder: string;
-  onDeleted: () => void;
-  onTagged: () => void;
   t: T;
 }) {
   const { advanced } = useAdvanced();
-  const progressMap = useProgress();
-  // Busy-guard handed to the shared RestoreAction: block a new restore while any
-  // OTHER backup/restore/replication runs (this snapshot's own in-flight restore
-  // is covered inside RestoreAction via isPending, never self-blocked).
-  const running = anyActive(progressMap);
-  // Delete only needs to be blocked while THIS container's own op is in flight
-  // (deleting a snapshot mid-restore/backup of the same repo). An unrelated
-  // container's activity must not disable it — so guard on the row-local key,
-  // not the global anyActive.
-  const busy = progressMap[`container:${containerName}`]?.active ?? false;
-  // The consolidated "Restore…" panel: one toggle, three radio-selected modes.
+  const running = anyActive(useProgress());
   const [showRestore, setShowRestore] = useState(false);
   // In basic mode only the in-place restore is offered; the mode radios (files /
   // to-folder) are advanced. Pin the mode to "inPlace" so the panel always renders.
   const [mode, setMode] = useState<RestoreMode>("inPlace");
   const effectiveMode: RestoreMode = advanced ? mode : "inPlace";
-  const [deleting, setDeleting] = useState(false);
-  const { push } = useToast();
-  const { confirm, confirmDialog } = useConfirm();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
-  // failed delete toasts AND shakes the delete button.
-  const [shake, setShake] = useState(0);
-
-  async function handleDelete() {
-    if (!(await confirm(t("snapshots.deleteConfirm")))) return;
-    setDeleting(true);
-    try {
-      const res = await deleteSnapshot("containers", snap.id, source);
-      if (res.ok) onDeleted();
-      else {
-        push(res.error ?? t("common.deleteFailed"), "fail");
-        setShake((n) => n + 1);
-      }
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("common.deleteFailed"), "fail");
-      setShake((n) => n + 1);
-    } finally {
-      setDeleting(false);
-    }
-  }
-
-  // Group name so the three radios are mutually exclusive PER snapshot.
-  const radioName = `restore-mode-${snap.id}`;
+  // Group name so the three radios are mutually exclusive PER row.
+  const radioName = `restore-mode-${pick.row.key}`;
 
   return (
-    // py-1.5, not the py-2.5 this row used to carry: the two square icon
-    // badges in it grew 24px → 32px when every square icon badge in the app
-    // was unified on one size, and trimming the row's own vertical padding by
-    // the matching 4px per side keeps the collapsed row at exactly the 44px
-    // it measured before (verified live, before and after). A bigger badge in
-    // a list of unchanged density, rather than a list that grew — see
-    // Badge.tsx's "ONE SIZE FOR SQUARE ICON BADGES" block. Config.tsx's
-    // ConfigSnapshotRow carries the identical pairing for the same reason.
-    <div className="flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0">
-      <div className="flex items-center gap-3 text-sm">
-        {/* Snapshot ID */}
-        <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">
-          {snap.id.slice(0, 8)}
-        </span>
-        {/* Time */}
-        <span className="text-carbon-textMuted text-xs flex-1">
-          {new Date(snap.time).toLocaleString()}
-        </span>
-        {/* Tags (chips + inline add-tag) — ownership tag hidden. Advanced only. */}
-        <Advanced>
-          <div className="hidden sm:flex">
-            <SnapshotTags snap={snap} containerName={containerName} source={source} onTagged={onTagged} t={t} />
-          </div>
-        </Advanced>
-
-        {/* Consolidated restore toggle: opens the inline panel with 3 modes.
-            Square icon badge (icon-badge round, standing rule: every icon
-            badge gets real hue integration + a hover tooltip carrying its
-            old label) — was a plain text `<button>` reading "Wiederherstellen…".
-            `tone="active"` (icon-only → solid `bg-accent`/`text-accentContrast`,
-            Badge.tsx's own `isIconOnly && tone==="active"` branch), no
-            `hueIndex` needed: this row lives inside ContainerRow's own
-            `.glim-hue` element (RestorePanel is one of that row's own
-            disclosure panes), so the ambient CSS custom-property cascade
-            already resolves `--accent`/`--accent-contrast` to the row's own
-            rainbow position — the exact same already-verified mechanism
-            FoldersEditor's own Save/Add badges use (see Containers.tsx).
-            IconRestore reuses the app's existing circular-sweep "restore"
-            glyph family (Sidebar.tsx's own IconRecovery — see that icon's
-            own doc comment; Settings.tsx's separate reset glyph,
-            IconResetArrow, deliberately diverged from this family for its
-            own harder small-badge-beside-colour-swatches legibility case).
-            `size="icon"` — the app's one square-icon-badge size (32px). This
-            badge was `size="large"` (24px), measured against its own
-            pre-conversion `py-1` text-button self: correct for this control
-            in isolation, and wrong in the card, where it sat beside the 32px
-            Lokal/Offsite pair and the (then) 28px Jetzt-sichern/Export pair.
-            The row's own padding dropped `py-2.5` → `py-1.5` in the same
-            change, so the snapshot row still measures the 44px it always did
-            with a larger badge inside it — see Badge.tsx's "ONE SIZE FOR
-            SQUARE ICON BADGES" block. The old "highlighted while open" `bg-carbon-surface3`
-            swap is dropped rather than layered onto a second, competing
-            background utility class (Tailwind utilities of equal specificity
-            resolve by generated-stylesheet order, not by className list
-            order — not a safe way to override Badge's own tone fill):
-            `aria-expanded` now carries that state instead, matching every
-            other disclosure trigger in this app (StackCard's own chevron
-            toggle, ExcludesEditor's assistant toggle) that doesn't
-            recolour itself when open either — the panel appearing below is
-            already the visible feedback. (Badge/IconTipButton don't carry an
-            `aria-expanded` passthrough today, same as the plain `<button>`
-            this replaces, which never set one either — no regression.) */}
-        <Button
-          label={t("restore.open")}
-          labelKey="restore.open"
-          glyph={<IconRestore />}
-          tone="accent"
-          onClick={() => setShowRestore((p) => !p)}
-        />
-
-        {/* Delete this backup (restic forget) — square icon badge, styled
-            EXACTLY like the restore badge beside it and like every other
-            icon badge in this card.
-              jdp, live review: "Der Löschen-Badge ist auch anders eingefärbt,
-            soll nicht so sein, ganz normal in die Farbmodi integrieren." He
-            is right, and the previous reasoning was the problem. This badge
-            was `tone="neutral"` plus `hover:bg-statusFailBg
-            hover:text-statusFail` — a flat grey tile at rest that flashed red
-            on hover. Two things were wrong with that: `neutral` is one of the
-            tones Badge deliberately exempts from rainbow `hueIndex` (they are
-            load-bearing STATUS signals), so this badge took no colour-engine
-            position at all and stayed grey in every rainbow palette while its
-            siblings picked up the row's hue; and the red hover made it the
-            one badge in the card with a bespoke colour treatment.
-              Now `tone="active"` with no colour override, identical to the
-            restore badge it sits next to: icon-only + active resolves to the
-            solid `bg-accent`/`text-accentContrast` pair, and this row lives
-            inside ContainerRow's own `.glim-hue` element, so the ordinary CSS
-            custom-property cascade paints it in the row's own rainbow
-            position — no `hueIndex` needed, the same mechanism the restore
-            badge and FoldersEditor's badges already use.
-              Nothing about the action becomes ambiguous by dropping the red:
-            the destructive meaning is carried by the IconTrash glyph and by
-            the `tip` bubble (t("snapshots.delete") — "Löschen"), and the
-            action still routes through the existing confirm dialog before
-            anything is forgotten. This mirrors the already-shipped decision
-            that "Deaktivieren" buttons must not be red either.
-              `glim-shake` (the system-wide "failed delete shakes its button"
-            rule) survives on `className` — that is behaviour, not colour.
-            IconTrash reused verbatim (Sidebar.tsx). */}
-        <Button
-          key={shake}
-          label={t("snapshots.delete")}
-          labelKey="snapshots.delete"
-          glyph={<IconTrash />}
-          tone="accent"
-          onClick={() => void handleDelete()}
-          disabled={deleting || busy}
-          className={shake ? "glim-shake" : ""}
-        />
-      </div>
-
-      {/* Inline restore panel: radio-selected mode + the UI for that mode. */}
+    <>
+      {/* Tags (chips + inline add-tag) — ownership tag hidden. Advanced only. */}
+      <Advanced>
+        <div className="hidden sm:flex">
+          <SnapshotTags
+            tags={pick.mark.tags}
+            snapshotId={pick.snapshotId}
+            containerName={containerName}
+            source={pick.source}
+            onTagged={pick.refresh}
+            t={t}
+          />
+        </div>
+      </Advanced>
+      {/* Square icon badge, no hueIndex needed: this row sits inside
+          ContainerRow's own `.glim-hue` element, so the ambient rainbow
+          position already applies (FoldersEditor's Save/Add badges use the
+          same mechanism). The timeline row itself carries id, time and
+          delete; this toggle only opens the inline restore panel. */}
+      <Button
+        label={t("restore.open")}
+        labelKey="restore.open"
+        glyph={<IconRestore />}
+        tone="accent"
+        onClick={() => setShowRestore((p) => !p)}
+      />
       {showRestore && (
-        <div className="mt-1 rounded-card bg-carbon-surface2 p-3 flex flex-col gap-3 text-xs">
+        <div className="basis-full mt-1 rounded-card bg-carbon-surface2 p-3 flex flex-col gap-3 text-xs">
           {/* Mode radios (Individual files / To a folder) are advanced; in basic
               mode only the in-place restore below is shown. */}
           <Advanced>
@@ -871,54 +747,50 @@ function SnapshotRow({
               </label>
             </div>
           </Advanced>
-
-          {/* In place — the destructive recreate (confirm-gated). */}
           {effectiveMode === "inPlace" && (
             <div className="flex flex-col gap-2 border-t border-carbon-border pt-2">
               <p className="text-caption text-carbon-textMuted">{t("restore.inPlaceHint")}</p>
               <RestoreAction
                 domain="container"
                 name={containerName}
-                snapshotId={snap.id}
-                source={source}
+                snapshotId={pick.snapshotId}
+                source={pick.source}
                 otherActive={running}
                 successMessage={t("restore.completeContainer")}
+                onMissing={pick.onMissing}
                 t={t}
               />
             </div>
           )}
-
-          {/* Individual files — multi-select file restore (in place / to a folder). */}
           {effectiveMode === "files" && (
             <div className="border-t border-carbon-border pt-2">
               <SnapshotFileBrowser
                 containerName={containerName}
-                snapshotId={snap.id}
-                source={source}
+                snapshotId={pick.snapshotId}
+                source={pick.source}
                 hostMountRoot={hostMountRoot}
                 defaultFolder={defaultFolder}
+                onMissing={pick.onMissing}
                 t={t}
               />
             </div>
           )}
-
-          {/* To a folder — extract into an alternate folder via the tree picker. */}
           {effectiveMode === "toFolder" && (
             <div className="border-t border-carbon-border pt-2">
               <RestoreToFolder
                 containerName={containerName}
-                snapshotId={snap.id}
-                source={source}
+                snapshotId={pick.snapshotId}
+                source={pick.source}
                 hostMountRoot={hostMountRoot}
                 defaultFolder={defaultFolder}
+                onMissing={pick.onMissing}
                 t={t}
               />
             </div>
           )}
         </div>
       )}
-      {confirmDialog}
-    </div>
+    </>
   );
 }
 
@@ -929,19 +801,10 @@ function SnapshotRow({
 export const DEFAULT_RESTORE_FOLDER = "user/bombvault/restore";
 
 export function RestorePanel({ name, t, installed = true, open }: RestorePanelProps) {
-  const [source, setSource] = useState<RepoSource>("local");
-  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
-  const [loading, setLoading] = useState(false);
-  // Section-load error — NOT migrated to a toast (GlimStone follow-up pass,
-  // v8.0.0 audit note): same structural "the section failed to load"
-  // condition as Files.tsx's FileSetRestorePanel, not a one-shot action.
-  const [error, setError] = useState<string | null>(null);
   // Restore-to-folder needs the default folder + host mount root to seed the
   // FolderBrowser. Fetched once the panel is opened (not on mount).
   const [restoreFolder, setRestoreFolder] = useState(DEFAULT_RESTORE_FOLDER);
   const [hostMountRoot, setHostMountRoot] = useState("/host/user");
-
-  const [reloadTick, setReloadTick] = useState(0);
 
   // Load the default restore folder + host mount root the first time the panel
   // is opened, so the restore-to-folder picker can pre-fill them.
@@ -957,81 +820,34 @@ export function RestorePanel({ name, t, installed = true, open }: RestorePanelPr
       .catch(() => undefined);
   }, [open]);
 
-  useEffect(() => {
-    if (!open) return;
-    setLoading(true);
-    setError(null);
-    listSnapshots(name, source)
-      .then((res) => {
-        if (res.ok) setSnapshots(res.snapshots ?? []);
-        else setError(res.error ?? t("common.loadBackupsFailed"));
-      })
-      .catch(() => setError(t("common.loadBackupsFailed")))
-      .finally(() => setLoading(false));
-  }, [open, name, source, reloadTick]); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
-
   if (!open) return null;
 
   return (
     <div className="mt-2 rounded-card bg-carbon-background px-3 py-1">
-      {/* Source (Local / Off-site) toggle is advanced; basic mode uses local. */}
-      <Advanced>
-        {/* `source.hint` as an InfoBubble on the "Quelle" label, not the
-            permanent `text-caption` <p> under the row it used to be — rule
-            8's "read once, costs vertical space forever" case. Same
-            conversion Flash.tsx got in 63f53d5, applied here in the same pass
-            as the three other surviving copies (pages/Config.tsx,
-            pages/VMs.tsx, pages/Files.tsx) rather than one tab at a time.
-            This is the copy that renders on the CONTAINERS tab — it lives in
-            this shared panel rather than in Containers.tsx itself, which is
-            why grepping pages/ alone misses it.
-              The row keeps its own `py-2` and bottom border: nothing here
-            changed height, only the <p> beneath it disappeared. The wrapping
-            `flex flex-col gap-1` goes with the <p>, having one child left. */}
-        <div className="flex items-center gap-2 py-2 border-b border-carbon-border">
-          <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
-            {t("source.label")}
-            <InfoBubble tip={t("source.hint")} />
-          </span>
-          <SourceToggle source={source} onChange={setSource} disabled={loading} domain="containers" />
-        </div>
-      </Advanced>
       <RecentRunsList name={name} domain="container" t={t} />
-      {loading && (
-        <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
-      )}
-      {error && (
-        <p className="py-3 text-xs text-statusFail">{error}</p>
-      )}
-      {!loading && !error && snapshots.length === 0 && (
-        <div className="py-3 flex flex-col gap-1">
-          <p className="text-xs text-carbon-textMuted">{t("snapshots.none")}</p>
-          {/* A config-only backup (stateless container, no data snapshot) has
-              no restic snapshot. If the container is gone, offer to recreate
-              it from the saved definition; if it's installed, just explain. */}
-          {installed ? (
-            <p className="text-xs text-carbon-textMuted">{t("snapshots.configOnlyHint")}</p>
-          ) : (
-            <RecreateButton name={name} source={source} t={t} />
-          )}
-        </div>
-      )}
-      <Advanced when={!loading && !error && snapshots.length >= 2}>
-        <CompareSnapshots snapshots={snapshots} containerName={name} source={source} t={t} />
+      <Advanced>
+        <CompareSnapshots containerName={name} t={t} />
       </Advanced>
-      {!loading && snapshots.map((snap) => (
-        <SnapshotRow
-          key={snap.id}
-          snap={snap}
-          containerName={name}
-          source={source}
-          hostMountRoot={hostMountRoot}
-          defaultFolder={restoreFolder}
-          onDeleted={() => setReloadTick((n) => n + 1)}
-          onTagged={() => setReloadTick((n) => n + 1)}
-          t={t}
-        />
-      ))}
+      <Timeline
+        domain="containers"
+        itemKey={name}
+        itemName={name}
+        open={open}
+        header={(rows) => {
+          if (rows.length > 0) return null;
+          if (installed) return <p className="py-2 text-xs text-carbon-textMuted">{t("snapshots.configOnlyHint")}</p>;
+          return <RecreateButton name={name} source="local" t={t} />;
+        }}
+        renderActions={(pick) => (
+          <SnapshotActions
+            pick={pick}
+            containerName={name}
+            hostMountRoot={hostMountRoot}
+            defaultFolder={restoreFolder}
+            t={t}
+          />
+        )}
+      />
     </div>
   );
 }
