@@ -1315,3 +1315,42 @@ func TestRestoreDepsSkippedPathsEmptyIsByteIdentical(t *testing.T) {
 		t.Fatalf("final run log entry = %q, want exactly %q (no note suffix — byte-identical to pre-SkippedPaths behavior)", got, want)
 	}
 }
+
+// RestartInOrder is what the ZFS consistency window uses to bring the apps it
+// stopped back up, so the order and the health gating it gives outside a
+// container backup have to match what the backup itself does.
+func TestRestartInOrderMatchesDependencyOrder(t *testing.T) {
+	defer backup.SetHealthTimingForTest(time.Millisecond, time.Millisecond)()
+	d := &fakeDocker{}
+	deps := []backup.StopContainer{
+		{Name: "web", WasRunning: true, Service: "web", DependsOn: []string{"app"}},
+		{Name: "app", WasRunning: true, Service: "app", DependsOn: []string{"db"}},
+		{Name: "db", WasRunning: true, Service: "db"},
+	}
+	backup.RestartInOrder(t.Context(), d, deps, true, time.Second)
+
+	db, app, web := idxOf(d.log, "start:db"), idxOf(d.log, "start:app"), idxOf(d.log, "start:web")
+	if db < 0 || app < 0 || web < 0 {
+		t.Fatalf("every container must be started: %v", d.log)
+	}
+	if db >= app || app >= web {
+		t.Fatalf("expected db before app before web: %v", d.log)
+	}
+	if h := idxOf(d.log, "health:db"); h < 0 || h >= app {
+		t.Fatalf("app must wait for db to be healthy: %v", d.log)
+	}
+}
+
+func TestStopLevelsIsReverseStartOrder(t *testing.T) {
+	deps := []backup.StopContainer{
+		{Name: "web", Service: "web", DependsOn: []string{"app"}},
+		{Name: "api", Service: "api", DependsOn: []string{"app"}},
+		{Name: "app", Service: "app", DependsOn: []string{"db"}},
+		{Name: "db", Service: "db"},
+	}
+	got := backup.StopLevels(deps)
+	want := [][]int{{0, 1}, {2}, {3}}
+	if fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Fatalf("StopLevels = %v, want %v", got, want)
+	}
+}
