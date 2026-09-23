@@ -19,6 +19,9 @@ import type {
   TargetImpact,
   TargetOption,
   TargetPreview,
+  TimelineMark,
+  TimelinePlace,
+  TimelineRow,
   UploadEstimate,
 } from "./api";
 import { I18nProvider } from "./i18n";
@@ -178,6 +181,41 @@ export function removalPreview(over?: Partial<RemovalPreview>): RemovalPreview {
   };
 }
 
+export function timelinePlace(over?: Partial<TimelinePlace>): TimelinePlace {
+  return {
+    place: "local",
+    label: "",
+    kind: "home",
+    remote: false,
+    enabled: true,
+    appendOnly: false,
+    state: "read",
+    ...over,
+  };
+}
+
+export function timelineMark(place: string, ...ids: string[]): TimelineMark {
+  return { place, snapshotIds: ids, tags: [] };
+}
+
+export function timelineRow(key: string, time: string, ...marks: TimelineMark[]): TimelineRow {
+  return { key, time, places: marks };
+}
+
+/** A minimal stand-in for the browser's EventSource, which jsdom does not
+ *  implement. Assigning it to globalThis lets a component's progress-store
+ *  effect run without throwing; nothing here inspects the messages it would
+ *  carry. */
+export function stubEventSource(): void {
+  class StubEventSource {
+    onmessage: ((e: MessageEvent) => void) | null = null;
+    close(): void {}
+    addEventListener(): void {}
+    removeEventListener(): void {}
+  }
+  (globalThis as { EventSource?: unknown }).EventSource = StubEventSource;
+}
+
 function applied(change: PlacementChange): PlacementView {
   const view = placementView();
   if (change.home) {
@@ -235,6 +273,12 @@ const DEFAULTS: Record<string, Reply> = {
   updateOffsiteTarget: (...args) => ({ ok: true, target: args[1], warnings: [] }),
   acceptMeshOffer: () => ({ ok: true }),
   getSettings: () => ({ ok: true, platform: "unraid", hostMountRoot: "/host/user" }),
+  getTimeline: () => ({ ok: true, places: [timelinePlace()], rows: [] }),
+  getTimelinePlace: () => ({ ok: true, place: timelinePlace(), rows: [] }),
+  getTimelineDeletePreview: () => ({ ok: true, delete: [], others: [] }),
+  deleteTimelineRow: () => ({ ok: true, deleted: [], skipped: [] }),
+  getStackDir: () => ({ ok: true, found: true, time: "" }),
+  restoreStack: () => ({ ok: true, started: true }),
 };
 
 export interface ApiCall {

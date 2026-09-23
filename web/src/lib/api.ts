@@ -101,6 +101,7 @@ export interface ListFilesResponse {
    *  etc). Populated by every list-files endpoint, local and foreign alike —
    *  callers should show it instead of a generic message (#129). */
   error?: string;
+  code?: string;
 }
 
 /** Settings from GET /api/settings (nested under "settings") */
@@ -759,16 +760,20 @@ export function cancelBackup(key: string): Promise<{ ok: boolean; cancelled: boo
  * the server returns {ok:true, started:true} and the per-member loops run
  * detached. The ack carries NO member results; each member's restore records a
  * kind "restore" run, so outcomes live in the run history.
+ *
+ * stackDirSource takes the project folder from another source, "local" when
+ * the chosen one lacks it.
  */
 export function restoreStack(
   project: string,
   startAfter: boolean,
   confirm: boolean,
-  source?: string
+  source?: string,
+  stackDirSource?: string
 ): Promise<OkEnvelope & { started?: boolean }> {
   return fetchJSON(`/api/stacks/${encodeURIComponent(project)}/restore${srcParam(source)}`, {
     method: "POST",
-    body: JSON.stringify({ startAfter, confirm }),
+    body: JSON.stringify(stackDirSource ? { startAfter, confirm, stackDirSource } : { startAfter, confirm }),
   });
 }
 
@@ -2537,6 +2542,94 @@ export function connectRepo(repoId: string, targetId: string): Promise<OkEnvelop
 export interface RefusalTarget {
   id: string;
   name: string;
+}
+
+export type TimelineDomain = PlacementDomain | "flash" | "config";
+
+export interface TimelinePlace {
+  place: string;
+  label: string;
+  kind: "home" | "target";
+  remote: boolean;
+  enabled: boolean;
+  appendOnly: boolean;
+  state: "read" | "unchecked" | "unreadable";
+  error?: string;
+}
+
+export interface TimelineMark {
+  place: string;
+  snapshotIds: string[];
+  tags: string[];
+  incomplete?: boolean;
+}
+
+export interface TimelineRow {
+  key: string;
+  time: string;
+  places: TimelineMark[];
+}
+
+export interface PlaceDelete {
+  place: string;
+  label: string;
+  snapshotIds: string[];
+}
+
+export interface OtherPlace {
+  place: string;
+  label: string;
+  state: "holds" | "missing" | "unreadable" | "append-only";
+}
+
+function timelinePath(domain: TimelineDomain, key: string): string {
+  return `/api/items/${encodeURIComponent(domain)}/${encodeURIComponent(key)}/timeline`;
+}
+
+/** An item's backups over all its places; remote places come back unchecked. */
+export function getTimeline(
+  domain: TimelineDomain,
+  key: string
+): Promise<OkEnvelope & { places?: TimelinePlace[]; rows?: TimelineRow[] }> {
+  return fetchJSON(timelinePath(domain, key));
+}
+
+/** Reads one place; its rows carry only that place's marks. */
+export function getTimelinePlace(
+  domain: TimelineDomain,
+  key: string,
+  place: string
+): Promise<OkEnvelope & { place?: TimelinePlace; rows?: TimelineRow[] }> {
+  return fetchJSON(`${timelinePath(domain, key)}?place=${encodeURIComponent(place)}`);
+}
+
+/** What deleting a backup at these places takes, with every other place listed
+ *  live. No places means every place of the row. */
+export function getTimelineDeletePreview(
+  domain: TimelineDomain,
+  key: string,
+  rowKey: string,
+  places?: string[]
+): Promise<OkEnvelope & { delete?: PlaceDelete[]; others?: OtherPlace[] }> {
+  const query = (places ?? []).map((p) => `place=${encodeURIComponent(p)}`).join("&");
+  return fetchJSON(`${timelinePath(domain, key)}/${encodeURIComponent(rowKey)}/delete${query ? `?${query}` : ""}`);
+}
+
+export function deleteTimelineRow(
+  domain: TimelineDomain,
+  key: string,
+  rowKey: string,
+  places: PlaceDelete[]
+): Promise<OkEnvelope & { deleted?: PlaceDelete[]; skipped?: OtherPlace[] }> {
+  return fetchJSON(`${timelinePath(domain, key)}/${encodeURIComponent(rowKey)}`, {
+    method: "DELETE",
+    body: JSON.stringify({ places }),
+  });
+}
+
+/** Whether a compose project's folder has a snapshot at a source. */
+export function getStackDir(project: string, source: string): Promise<OkEnvelope & { found?: boolean; time?: string }> {
+  return fetchJSON(`/api/stacks/${encodeURIComponent(project)}/dir${srcParam(source)}`);
 }
 
 /** DELETE /api/snapshots/{domain}/{id} — forget a single snapshot. */
