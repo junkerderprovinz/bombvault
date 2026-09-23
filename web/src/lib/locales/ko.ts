@@ -315,7 +315,7 @@ const ko: Partial<Translations> = {
   "errorPanel.resolveAll": "모두 해결됨으로 표시",
   "errorPanel.affected": "영향받음",
   "errorPanel.empty": "해결되지 않은 백업 오류가 없습니다.",
-  "errorPanel.count": "{count}건",
+  "errorPanel.count": "{n}건",
   "errorPanel.filterPlaceholder": "오류 필터링…",
 
   // Jobs page
@@ -960,7 +960,7 @@ const ko: Partial<Translations> = {
   "runReason.dbimportRollback": "가져오기가 실패했고 이전 데이터를 제자리에 되돌리지 못했습니다",
   "runReason.dbimportFailed": "가져오기 도구가 오류를 알렸습니다",
   "runReason.dbimportKeptOld": "이전 데이터 폴더를 남겨 두었습니다",
-  "runReason.dbimportErrors": "가져오기가 오류와 함께 끝났습니다",
+  "runReason.dbimportErrors": "오류 {n}건, 이전 데이터 폴더를 남겨 두었습니다",
   "runReason.dbimportAppsDown": "다음 앱을 다시 시작하지 못했습니다: {apps}",
   "runReason.dbimportAppsStopped": "데이터 폴더가 정리될 때까지 다음 앱은 중지된 상태로 남습니다: {apps}",
   "dbdump.toggle": "백업마다 데이터베이스 덤프",

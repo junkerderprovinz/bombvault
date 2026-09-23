@@ -816,7 +816,7 @@ const bg: Partial<Translations> = {
   "errorPanel.resolveAll": "Маркирай всички като разрешени",
   "errorPanel.affected": "Засегнати",
   "errorPanel.empty": "Няма неразрешени грешки при архивиране.",
-  "errorPanel.count": "{count} появявания",
+  "errorPanel.count": "one={n} появяване|other={n} появявания",
   "errorPanel.filterPlaceholder": "Филтрирай грешки…",
 
   // Dashboard protection (RPO) status
@@ -856,7 +856,7 @@ const bg: Partial<Translations> = {
   "runReason.dbimportRollback": "внасянето се провали и старите данни не можаха да бъдат върнати на мястото си",
   "runReason.dbimportFailed": "инструментът за внасяне съобщи за грешка",
   "runReason.dbimportKeptOld": "предишната папка с данни беше запазена",
-  "runReason.dbimportErrors": "внасянето завърши с грешки",
+  "runReason.dbimportErrors": "one={n} грешка, предишната папка с данни беше запазена|other={n} грешки, предишната папка с данни беше запазена",
   "runReason.dbimportAppsDown": "one=това приложение не успя да стартира отново: {apps}|other=тези приложения не успяха да стартират отново: {apps}",
   "runReason.dbimportAppsStopped": "one=това приложение остава спряно, докато въпросът с папката с данни не се реши: {apps}|other=тези приложения остават спрени, докато въпросът с папката с данни не се реши: {apps}",
   "dbdump.toggle": "Дъмп на базата данни преди всяко резервно копие",

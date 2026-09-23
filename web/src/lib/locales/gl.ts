@@ -816,7 +816,7 @@ const gl: Partial<Translations> = {
   "errorPanel.resolveAll": "Marcar todo como resolto",
   "errorPanel.affected": "Afectados",
   "errorPanel.empty": "Non hai erros de copia sen resolver.",
-  "errorPanel.count": "{count} ocorrencias",
+  "errorPanel.count": "one={n} ocorrencia|other={n} ocorrencias",
   "errorPanel.filterPlaceholder": "Filtrar erros…",
 
   // Dashboard protection (RPO) status
@@ -856,7 +856,7 @@ const gl: Partial<Translations> = {
   "runReason.dbimportRollback": "a importación fallou e os datos anteriores non se puideron devolver ao seu sitio",
   "runReason.dbimportFailed": "a ferramenta de importación informou dun erro",
   "runReason.dbimportKeptOld": "conservouse o cartafol de datos anterior",
-  "runReason.dbimportErrors": "a importación rematou con erros",
+  "runReason.dbimportErrors": "one={n} erro, conservouse o cartafol de datos anterior|other={n} erros, conservouse o cartafol de datos anterior",
   "runReason.dbimportAppsDown": "one=esta aplicación non se puido volver iniciar: {apps}|other=estas aplicacións non se puideron volver iniciar: {apps}",
   "runReason.dbimportAppsStopped": "one=esta aplicación segue detida ata que se resolva o cartafol de datos: {apps}|other=estas aplicacións seguen detidas ata que se resolva o cartafol de datos: {apps}",
   "dbdump.toggle": "Envorcado da base de datos antes de cada copia",

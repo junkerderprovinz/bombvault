@@ -814,7 +814,7 @@ const sl: Partial<Translations> = {
   "errorPanel.resolveAll": "Označi vse kot rešeno",
   "errorPanel.affected": "Prizadeto",
   "errorPanel.empty": "Ni nerešenih napak varnostnega kopiranja.",
-  "errorPanel.count": "{count} pojavitev",
+  "errorPanel.count": "one={n} pojavitev|two={n} pojavitvi|few={n} pojavitve|other={n} pojavitev",
   "errorPanel.filterPlaceholder": "Filtriraj napake…",
 
   // Dashboard protection (RPO) status
@@ -854,7 +854,7 @@ const sl: Partial<Translations> = {
   "runReason.dbimportRollback": "uvoz ni uspel in starih podatkov ni bilo mogoče vrniti na mesto",
   "runReason.dbimportFailed": "orodje za uvoz je javilo napako",
   "runReason.dbimportKeptOld": "prejšnja mapa s podatki je bila ohranjena",
-  "runReason.dbimportErrors": "uvoz se je končal z napakami",
+  "runReason.dbimportErrors": "one={n} napaka, prejšnja mapa s podatki je bila ohranjena|two={n} napaki, prejšnja mapa s podatki je bila ohranjena|few={n} napake, prejšnja mapa s podatki je bila ohranjena|other={n} napak, prejšnja mapa s podatki je bila ohranjena",
   "runReason.dbimportAppsDown": "one=te aplikacije ni bilo mogoče znova zagnati: {apps}|two=teh dveh aplikacij ni bilo mogoče znova zagnati: {apps}|few=teh aplikacij ni bilo mogoče znova zagnati: {apps}|other=teh aplikacij ni bilo mogoče znova zagnati: {apps}",
   "runReason.dbimportAppsStopped": "one=ta aplikacija ostane ustavljena, dokler mapa s podatki ni urejena: {apps}|two=ti dve aplikaciji ostaneta ustavljeni, dokler mapa s podatki ni urejena: {apps}|few=te aplikacije ostanejo ustavljene, dokler mapa s podatki ni urejena: {apps}|other=te aplikacije ostanejo ustavljene, dokler mapa s podatki ni urejena: {apps}",
   "dbdump.toggle": "Izvoz podatkovne baze pred vsako varnostno kopijo",

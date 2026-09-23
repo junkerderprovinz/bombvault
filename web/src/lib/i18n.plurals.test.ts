@@ -61,6 +61,8 @@ describe("plural forms in the tables", () => {
     expect(labelled).toContain("recovery.foreignDbDumps");
     expect(labelled).toContain("recovery.dumpOnlySkipped");
     expect(labelled).toContain("runReason.dbimportAppsStopped");
+    expect(labelled).toContain("runReason.dbimportErrors");
+    expect(labelled).toContain("errorPanel.count");
     expect(labelled).toContain("settings.dbDumpsOffConfirm");
     expect(labelled).toContain("dbdump.importStops");
   });

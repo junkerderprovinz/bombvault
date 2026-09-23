@@ -816,7 +816,7 @@ const hi: Partial<Translations> = {
   "errorPanel.resolveAll": "सभी को हल किया गया चिह्नित करें",
   "errorPanel.affected": "प्रभावित",
   "errorPanel.empty": "कोई अनसुलझी बैकअप त्रुटि नहीं है।",
-  "errorPanel.count": "{count} बार हुआ",
+  "errorPanel.count": "{n} बार हुआ",
   "errorPanel.filterPlaceholder": "त्रुटियाँ फ़िल्टर करें…",
 
   // Dashboard protection (RPO) status
@@ -856,7 +856,7 @@ const hi: Partial<Translations> = {
   "runReason.dbimportRollback": "आयात विफल हुआ और पुराना डेटा वापस अपनी जगह पर नहीं रखा जा सका",
   "runReason.dbimportFailed": "आयात उपकरण ने एक त्रुटि बताई",
   "runReason.dbimportKeptOld": "पिछला डेटा फ़ोल्डर रखा गया",
-  "runReason.dbimportErrors": "आयात त्रुटियों के साथ समाप्त हुआ",
+  "runReason.dbimportErrors": "one={n} त्रुटि, पिछला डेटा फ़ोल्डर रखा गया|other={n} त्रुटियाँ, पिछला डेटा फ़ोल्डर रखा गया",
   "runReason.dbimportAppsDown": "one=यह ऐप फिर से शुरू नहीं हो सका: {apps}|other=ये ऐप्स फिर से शुरू नहीं हो सके: {apps}",
   "runReason.dbimportAppsStopped": "one=डेटा फ़ोल्डर ठीक होने तक यह ऐप रुका रहेगा: {apps}|other=डेटा फ़ोल्डर ठीक होने तक ये ऐप्स रुके रहेंगे: {apps}",
   "dbdump.toggle": "हर बैकअप से पहले डेटाबेस डंप",

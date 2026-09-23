@@ -315,7 +315,7 @@ const cs: Partial<Translations> = {
   "errorPanel.resolveAll": "Označit vše jako vyřešené",
   "errorPanel.affected": "Dotčené",
   "errorPanel.empty": "Žádné nevyřešené chyby zálohování.",
-  "errorPanel.count": "{count} výskytů",
+  "errorPanel.count": "one={n} výskyt|few={n} výskyty|many={n} výskytu|other={n} výskytů",
   "errorPanel.filterPlaceholder": "Filtrovat chyby…",
 
   // Jobs page
@@ -986,7 +986,7 @@ const cs: Partial<Translations> = {
   "runReason.dbimportRollback": "import selhal a stará data se nepodařilo vrátit zpět",
   "runReason.dbimportFailed": "nástroj pro import ohlásil chybu",
   "runReason.dbimportKeptOld": "předchozí složka s daty byla ponechána",
-  "runReason.dbimportErrors": "import skončil s chybami",
+  "runReason.dbimportErrors": "one={n} chyba, předchozí složka s daty byla ponechána|few={n} chyby, předchozí složka s daty byla ponechána|many={n} chyby, předchozí složka s daty byla ponechána|other={n} chyb, předchozí složka s daty byla ponechána",
   "runReason.dbimportAppsDown": "one=tuto aplikaci se nepodařilo znovu spustit: {apps}|few=tyto aplikace se nepodařilo znovu spustit: {apps}|many=tyto aplikace se nepodařilo znovu spustit: {apps}|other=tyto aplikace se nepodařilo znovu spustit: {apps}",
   "runReason.dbimportAppsStopped": "one=tato aplikace zůstane zastavená, dokud se nevyřeší složka s daty: {apps}|few=tyto aplikace zůstanou zastavené, dokud se nevyřeší složka s daty: {apps}|many=tyto aplikace zůstanou zastavené, dokud se nevyřeší složka s daty: {apps}|other=tyto aplikace zůstanou zastavené, dokud se nevyřeší složka s daty: {apps}",
   "dbdump.toggle": "Výpis databáze před každou zálohou",

@@ -312,7 +312,7 @@ const pt: Partial<Translations> = {
   "errorPanel.resolveAll": "Marcar todos como resolvidos",
   "errorPanel.affected": "Afetados",
   "errorPanel.empty": "Nenhum erro de backup não resolvido.",
-  "errorPanel.count": "{count} ocorrências",
+  "errorPanel.count": "one={n} ocorrência|other={n} ocorrências",
   "errorPanel.filterPlaceholder": "Filtrar erros…",
 
   // Jobs page
@@ -965,7 +965,7 @@ const pt: Partial<Translations> = {
   "runReason.dbimportRollback": "a importação falhou e os dados anteriores não puderam ser repostos",
   "runReason.dbimportFailed": "a ferramenta de importação comunicou um erro",
   "runReason.dbimportKeptOld": "a pasta de dados anterior foi mantida",
-  "runReason.dbimportErrors": "a importação terminou com erros",
+  "runReason.dbimportErrors": "one={n} erro, a pasta de dados anterior foi mantida|other={n} erros, a pasta de dados anterior foi mantida",
   "runReason.dbimportAppsDown": "one=não foi possível voltar a iniciar esta aplicação: {apps}|many=não foi possível voltar a iniciar estas aplicações: {apps}|other=não foi possível voltar a iniciar estas aplicações: {apps}",
   "runReason.dbimportAppsStopped": "one=esta aplicação fica parada até a pasta de dados ser resolvida: {apps}|many=estas aplicações ficam paradas até a pasta de dados ser resolvida: {apps}|other=estas aplicações ficam paradas até a pasta de dados ser resolvida: {apps}",
   "dbdump.toggle": "Dump da base de dados antes de cada cópia",

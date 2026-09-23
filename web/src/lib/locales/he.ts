@@ -315,7 +315,7 @@ const he: Partial<Translations> = {
   "errorPanel.resolveAll": "סמן הכול כפתור",
   "errorPanel.affected": "מושפעים",
   "errorPanel.empty": "אין שגיאות גיבוי לא פתורות.",
-  "errorPanel.count": "{count} מופעים",
+  "errorPanel.count": "one=מופע אחד|two=שני מופעים|other={n} מופעים",
   "errorPanel.filterPlaceholder": "סינון שגיאות…",
 
   // Jobs page
@@ -968,7 +968,7 @@ const he: Partial<Translations> = {
   "runReason.dbimportRollback": "הייבוא נכשל ולא ניתן היה להחזיר את הנתונים הישנים למקומם",
   "runReason.dbimportFailed": "כלי הייבוא דיווח על שגיאה",
   "runReason.dbimportKeptOld": "תיקיית הנתונים הקודמת נשמרה",
-  "runReason.dbimportErrors": "הייבוא הסתיים עם שגיאות",
+  "runReason.dbimportErrors": "one=שגיאה אחת, תיקיית הנתונים הקודמת נשמרה|two=שתי שגיאות, תיקיית הנתונים הקודמת נשמרה|other={n} שגיאות, תיקיית הנתונים הקודמת נשמרה",
   "runReason.dbimportAppsDown": "one=לא ניתן היה להפעיל מחדש את היישום הזה: {apps}|two=לא ניתן היה להפעיל מחדש את שני היישומים האלה: {apps}|other=לא ניתן היה להפעיל מחדש את היישומים האלה: {apps}",
   "runReason.dbimportAppsStopped": "one=היישום הזה נשאר עצור עד שתיקיית הנתונים תוסדר: {apps}|two=שני היישומים האלה נשארים עצורים עד שתיקיית הנתונים תוסדר: {apps}|other=היישומים האלה נשארים עצורים עד שתיקיית הנתונים תוסדר: {apps}",
   "dbdump.toggle": "היטל של בסיס הנתונים לפני כל גיבוי",

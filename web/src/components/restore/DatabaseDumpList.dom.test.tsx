@@ -298,13 +298,14 @@ describe("the database dump list", () => {
 
   it("reports an import that finished with errors as a warning", async () => {
     recordAfterStart(
-      importRun("success", "database imported with errors: 3 errors, the previous data folder is kept at /mnt/x")
+      importRun("success", "database imported with errors: 3, the previous data folder is kept at /mnt/x")
     );
     renderList();
     await confirmImport();
 
-    const line = await screen.findByText(en["runReason.dbimportErrors"], { exact: false }, { timeout: 4000 });
+    const line = await screen.findByText(/3 errors/, {}, { timeout: 4000 });
     expect(line.className).toContain("statusWarn");
+    expect(line.querySelector('bdi[dir="ltr"]')?.textContent).toBe("/mnt/x");
     expect(document.body.textContent).not.toContain(en["dbdump.importDone"]);
   });
 

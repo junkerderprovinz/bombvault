@@ -315,7 +315,7 @@ const vi: Partial<Translations> = {
   "errorPanel.resolveAll": "Đánh dấu tất cả là đã giải quyết",
   "errorPanel.affected": "Bị ảnh hưởng",
   "errorPanel.empty": "Không có lỗi sao lưu chưa giải quyết.",
-  "errorPanel.count": "{count} lần",
+  "errorPanel.count": "{n} lần",
   "errorPanel.filterPlaceholder": "Lọc lỗi…",
 
   // Jobs page
@@ -980,7 +980,7 @@ const vi: Partial<Translations> = {
   "runReason.dbimportRollback": "việc nhập đã thất bại và không đưa được dữ liệu cũ về chỗ cũ",
   "runReason.dbimportFailed": "công cụ nhập báo một lỗi",
   "runReason.dbimportKeptOld": "thư mục dữ liệu trước đó được giữ lại",
-  "runReason.dbimportErrors": "việc nhập kết thúc với lỗi",
+  "runReason.dbimportErrors": "{n} lỗi, thư mục dữ liệu trước đó được giữ lại",
   "runReason.dbimportAppsDown": "không thể khởi động lại các ứng dụng sau: {apps}",
   "runReason.dbimportAppsStopped": "các ứng dụng sau vẫn dừng cho đến khi thư mục dữ liệu được xử lý xong: {apps}",
   "dbdump.toggle": "Kết xuất cơ sở dữ liệu trước mỗi lần sao lưu",

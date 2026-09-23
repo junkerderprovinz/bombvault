@@ -310,7 +310,7 @@ const nl: Partial<Translations> = {
   "errorPanel.resolveAll": "Alles als opgelost markeren",
   "errorPanel.affected": "Betrokken",
   "errorPanel.empty": "Geen onopgeloste back-upfouten.",
-  "errorPanel.count": "{count} keer",
+  "errorPanel.count": "{n} keer",
   "errorPanel.filterPlaceholder": "Fouten filteren…",
 
   // Jobs page
@@ -962,7 +962,7 @@ const nl: Partial<Translations> = {
   "runReason.dbimportRollback": "het importeren mislukte en de oude gegevens konden niet worden teruggezet",
   "runReason.dbimportFailed": "het importgereedschap meldde een fout",
   "runReason.dbimportKeptOld": "de vorige gegevensmap is bewaard",
-  "runReason.dbimportErrors": "het importeren eindigde met fouten",
+  "runReason.dbimportErrors": "one={n} fout, de vorige gegevensmap is bewaard|other={n} fouten, de vorige gegevensmap is bewaard",
   "runReason.dbimportAppsDown": "one=deze app kon niet opnieuw starten: {apps}|other=deze apps konden niet opnieuw starten: {apps}",
   "runReason.dbimportAppsStopped": "one=deze app blijft gestopt tot de datamap is uitgezocht: {apps}|other=deze apps blijven gestopt tot de datamap is uitgezocht: {apps}",
   "dbdump.toggle": "Databasedump voor elke back-up",

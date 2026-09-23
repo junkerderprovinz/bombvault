@@ -578,7 +578,7 @@ func (s *Service) feedDBImport(ctx context.Context, plan dbImportPlan, keptHere,
 		return "", importToolFailure(kept, importDetail("read the dump: "+readErr.Error()))
 	}
 	if n := dbdump.CountImportErrors(plan.engine, tail, plan.pgUser, plan.pgDB); n > 0 {
-		return fmt.Sprintf("%s: %d errors, the previous data folder is kept at %s", store.NoteDBImportErrors, n, kept), nil
+		return fmt.Sprintf("%s: %d, the previous data folder is kept at %s", store.NoteDBImportErrors, n, kept), nil
 	}
 	return store.NoteDBImportKeptOld + ": " + kept, nil
 }

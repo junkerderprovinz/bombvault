@@ -55,7 +55,19 @@ describe("runReason", () => {
     expect(runReason("database import failed and the old data could not be put back: /a, /b", t)).toBe(
       "runReason.dbimportRollback: /a, /b"
     );
-    expect(runReason("database imported with errors: 3, /old", t)).toBe("runReason.dbimportErrors: 3, /old");
+    expect(runReason("database import failed: the import tool reported an error: exit 1", t)).toBe(
+      "runReason.dbimportFailed: exit 1"
+    );
+  });
+
+  it("counts the errors an import reported, and keeps the folder as the detail", () => {
+    const counted = (key: TranslationKey, n?: number): string => `${key}(${n})`;
+    expect(
+      runReasonParts("database imported with errors: 1, the previous data folder is kept at /mnt/pg.old", counted)
+    ).toEqual({ head: "runReason.dbimportErrors(1)", detail: "/mnt/pg.old" });
+    expect(
+      runReasonParts("database imported with errors: 12, the previous data folder is kept at /mnt/pg.old", counted)
+    ).toEqual({ head: "runReason.dbimportErrors(12)", detail: "/mnt/pg.old" });
   });
 
   it("prefers an exact match over a prefix", () => {

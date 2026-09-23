@@ -315,7 +315,7 @@ const zh: Partial<Translations> = {
   "errorPanel.resolveAll": "全部标记为已解决",
   "errorPanel.affected": "受影响",
   "errorPanel.empty": "没有未解决的备份错误。",
-  "errorPanel.count": "{count} 次",
+  "errorPanel.count": "{n} 次",
   "errorPanel.filterPlaceholder": "筛选错误…",
 
   // Jobs page
@@ -980,7 +980,7 @@ const zh: Partial<Translations> = {
   "runReason.dbimportRollback": "导入失败，旧数据也无法放回原处",
   "runReason.dbimportFailed": "导入工具报告了一个错误",
   "runReason.dbimportKeptOld": "已保留之前的数据文件夹",
-  "runReason.dbimportErrors": "导入结束时带有错误",
+  "runReason.dbimportErrors": "{n} 个错误，已保留之前的数据文件夹",
   "runReason.dbimportAppsDown": "以下应用未能重新启动：{apps}",
   "runReason.dbimportAppsStopped": "在数据文件夹处理好之前，以下应用保持停止：{apps}",
   "dbdump.toggle": "每次备份前转储数据库",

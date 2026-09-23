@@ -310,7 +310,7 @@ const pl: Partial<Translations> = {
   "errorPanel.resolveAll": "Oznacz wszystkie jako rozwiązane",
   "errorPanel.affected": "Dotknięte",
   "errorPanel.empty": "Brak nierozwiązanych błędów kopii zapasowej.",
-  "errorPanel.count": "{count} wystąpień",
+  "errorPanel.count": "one={n} wystąpienie|few={n} wystąpienia|many={n} wystąpień|other={n} wystąpienia",
   "errorPanel.filterPlaceholder": "Filtruj błędy…",
 
   // Jobs page
@@ -960,7 +960,7 @@ const pl: Partial<Translations> = {
   "runReason.dbimportRollback": "import nie powiódł się i starych danych nie dało się odłożyć na miejsce",
   "runReason.dbimportFailed": "narzędzie do importu zgłosiło błąd",
   "runReason.dbimportKeptOld": "poprzedni folder z danymi został zachowany",
-  "runReason.dbimportErrors": "import zakończył się błędami",
+  "runReason.dbimportErrors": "one={n} błąd, poprzedni folder z danymi został zachowany|few={n} błędy, poprzedni folder z danymi został zachowany|many={n} błędów, poprzedni folder z danymi został zachowany|other={n} błędu, poprzedni folder z danymi został zachowany",
   "runReason.dbimportAppsDown": "one=nie udało się ponownie uruchomić tej aplikacji: {apps}|few=nie udało się ponownie uruchomić tych aplikacji: {apps}|many=nie udało się ponownie uruchomić tych aplikacji: {apps}|other=nie udało się ponownie uruchomić tych aplikacji: {apps}",
   "runReason.dbimportAppsStopped": "one=ta aplikacja pozostaje zatrzymana, dopóki folder danych nie zostanie uporządkowany: {apps}|few=te aplikacje pozostają zatrzymane, dopóki folder danych nie zostanie uporządkowany: {apps}|many=te aplikacje pozostają zatrzymane, dopóki folder danych nie zostanie uporządkowany: {apps}|other=te aplikacje pozostają zatrzymane, dopóki folder danych nie zostanie uporządkowany: {apps}",
   "dbdump.toggle": "Zrzut bazy danych przed każdą kopią",

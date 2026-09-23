@@ -84,6 +84,10 @@ function importAppTail(text: string): { rest: string; apps: StoppedApps } | unde
   return undefined;
 }
 
+/** What an import writes when its tool reported errors: how many it counted and
+ *  where the previous data folder waits. The count picks the sentence. */
+const IMPORT_ERRORS = /^database imported with errors: (\d+), the previous data folder is kept at (.+)$/;
+
 /** The sentence about the apps an import stopped, and the names it lists. */
 export interface StoppedApps {
   key: TranslationKey;
@@ -141,6 +145,9 @@ export function runReasonParts(raw: string | null | undefined, t: T): RunReasonP
     };
   }
   if (!text) return { head: "", detail: "" };
+
+  const errors = IMPORT_ERRORS.exec(text);
+  if (errors) return { head: t("runReason.dbimportErrors", Number(errors[1])), detail: errors[2] };
 
   const exact = RUN_REASONS[text] ?? RUN_REASON_PREFIXES[text];
   if (exact) return { head: t(exact), detail: "" };

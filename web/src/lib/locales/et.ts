@@ -816,7 +816,7 @@ const et: Partial<Translations> = {
   "errorPanel.resolveAll": "Märgi kõik lahendatuks",
   "errorPanel.affected": "Mõjutatud",
   "errorPanel.empty": "Lahendamata varundusvigu pole.",
-  "errorPanel.count": "{count} esinemist",
+  "errorPanel.count": "one={n} esinemine|other={n} esinemist",
   "errorPanel.filterPlaceholder": "Filtreeri vigu…",
 
   // Dashboard protection (RPO) status
@@ -856,7 +856,7 @@ const et: Partial<Translations> = {
   "runReason.dbimportRollback": "import ebaõnnestus ja vanu andmeid ei saanud tagasi panna",
   "runReason.dbimportFailed": "imporditööriist teatas veast",
   "runReason.dbimportKeptOld": "varasem andmekaust jäeti alles",
-  "runReason.dbimportErrors": "import lõppes vigadega",
+  "runReason.dbimportErrors": "{n} viga, varasem andmekaust jäeti alles",
   "runReason.dbimportAppsDown": "one=seda rakendust ei õnnestunud uuesti käivitada: {apps}|other=neid rakendusi ei õnnestunud uuesti käivitada: {apps}",
   "runReason.dbimportAppsStopped": "one=see rakendus jääb peatatuks, kuni andmekaust on korda tehtud: {apps}|other=need rakendused jäävad peatatuks, kuni andmekaust on korda tehtud: {apps}",
   "dbdump.toggle": "Andmebaasi tõmmis enne iga varukoopiat",

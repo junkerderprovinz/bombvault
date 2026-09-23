@@ -315,7 +315,7 @@ const fi: Partial<Translations> = {
   "errorPanel.resolveAll": "Merkitse kaikki ratkaistuiksi",
   "errorPanel.affected": "Koskee",
   "errorPanel.empty": "Ei ratkaisemattomia varmuuskopiointivirheitä.",
-  "errorPanel.count": "{count} esiintymää",
+  "errorPanel.count": "one={n} esiintymä|other={n} esiintymää",
   "errorPanel.filterPlaceholder": "Suodata virheitä…",
 
   // Jobs page
@@ -988,7 +988,7 @@ const fi: Partial<Translations> = {
   "runReason.dbimportRollback": "tuonti epäonnistui eikä vanhoja tietoja saatu takaisin paikalleen",
   "runReason.dbimportFailed": "tuontityökalu ilmoitti virheestä",
   "runReason.dbimportKeptOld": "aiempi datakansio säilytettiin",
-  "runReason.dbimportErrors": "tuonti päättyi virheisiin",
+  "runReason.dbimportErrors": "one={n} virhe, aiempi datakansio säilytettiin|other={n} virhettä, aiempi datakansio säilytettiin",
   "runReason.dbimportAppsDown": "one=tätä sovellusta ei saatu käynnistettyä uudelleen: {apps}|other=näitä sovelluksia ei saatu käynnistettyä uudelleen: {apps}",
   "runReason.dbimportAppsStopped": "one=tämä sovellus pysyy pysäytettynä, kunnes datakansio on selvitetty: {apps}|other=nämä sovellukset pysyvät pysäytettyinä, kunnes datakansio on selvitetty: {apps}",
   "dbdump.toggle": "Tietokannan vedos ennen jokaista varmuuskopiota",

@@ -702,12 +702,25 @@ describe("dbdump runs", () => {
     expect(line.text).toContain("runReason.dbimportAppsDown");
   });
 
+  const english: ResolveName = (key, params, count) => {
+    let s = countText(en[key as keyof typeof en] ?? key, "en", count);
+    for (const [name, value] of Object.entries(params ?? {})) s = s.split(`{${name}}`).join(value);
+    return s;
+  };
+
+  it("says once how many errors an import reported", () => {
+    const runs = [
+      dump({ id: "i1", kind: "dbimport", error: "database imported with errors: 1, the previous data folder is kept at /mnt/pg.old" }),
+      dump({ id: "i2", kind: "dbimport", error: "database imported with errors: 4, the previous data folder is kept at /mnt/pg.old" }),
+    ];
+    const lines = buildLogLines(runs, {}, [], english, 2_000_000);
+    expect(lines.find((l) => l.id === "run:i1")?.text).toBe(
+      "immich_postgres database imported with errors: 1 error, the previous data folder was kept: /mnt/pg.old"
+    );
+    expect(lines.find((l) => l.id === "run:i2")?.text).toContain("4 errors, the previous data folder was kept");
+  });
+
   it("agrees with the number of apps an import could not start again", () => {
-    const english: ResolveName = (key, params, count) => {
-      let s = countText(en[key as keyof typeof en] ?? key, "en", count);
-      for (const [name, value] of Object.entries(params ?? {})) s = s.split(`{${name}}`).join(value);
-      return s;
-    };
     const kept = "database imported; the previous data folder was kept: /mnt/pg.old";
     const runs = [
       dump({ id: "i1", kind: "dbimport", error: `${kept}; could not start these apps again: immich_server` }),

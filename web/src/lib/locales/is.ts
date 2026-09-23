@@ -816,7 +816,7 @@ const is: Partial<Translations> = {
   "errorPanel.resolveAll": "Merkja allt sem leyst",
   "errorPanel.affected": "Áhrif á",
   "errorPanel.empty": "Engar óleystar afritunarvillur.",
-  "errorPanel.count": "{count} tilvik",
+  "errorPanel.count": "{n} tilvik",
   "errorPanel.filterPlaceholder": "Sía villur…",
 
   // Dashboard protection (RPO) status
@@ -856,7 +856,7 @@ const is: Partial<Translations> = {
   "runReason.dbimportRollback": "innflutningurinn brást og ekki tókst að koma gömlu gögnunum á sinn stað",
   "runReason.dbimportFailed": "innflutningstólið tilkynnti villu",
   "runReason.dbimportKeptOld": "fyrri gagnamöppunni var haldið",
-  "runReason.dbimportErrors": "innflutningnum lauk með villum",
+  "runReason.dbimportErrors": "one={n} villa, fyrri gagnamöppunni var haldið|other={n} villur, fyrri gagnamöppunni var haldið",
   "runReason.dbimportAppsDown": "one=ekki tókst að ræsa þetta forrit aftur: {apps}|other=ekki tókst að ræsa þessi forrit aftur: {apps}",
   "runReason.dbimportAppsStopped": "one=þetta forrit verður áfram stöðvað þar til gengið hefur verið frá gagnamöppunni: {apps}|other=þessi forrit verða áfram stöðvuð þar til gengið hefur verið frá gagnamöppunni: {apps}",
   "dbdump.toggle": "Gagnagrunnsafrit fyrir hvert öryggisafrit",

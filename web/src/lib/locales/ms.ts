@@ -816,7 +816,7 @@ const ms: Partial<Translations> = {
   "errorPanel.resolveAll": "Tandakan semua sebagai diselesaikan",
   "errorPanel.affected": "Terjejas",
   "errorPanel.empty": "Tiada ralat sandaran yang belum diselesaikan.",
-  "errorPanel.count": "{count} kejadian",
+  "errorPanel.count": "{n} kejadian",
   "errorPanel.filterPlaceholder": "Tapis ralat…",
 
   // Dashboard protection (RPO) status
@@ -856,7 +856,7 @@ const ms: Partial<Translations> = {
   "runReason.dbimportRollback": "import gagal dan data lama tidak dapat dikembalikan ke tempatnya",
   "runReason.dbimportFailed": "alat import melaporkan satu ralat",
   "runReason.dbimportKeptOld": "folder data sebelumnya dikekalkan",
-  "runReason.dbimportErrors": "import berakhir dengan ralat",
+  "runReason.dbimportErrors": "{n} ralat, folder data sebelumnya dikekalkan",
   "runReason.dbimportAppsDown": "aplikasi berikut tidak dapat dimulakan semula: {apps}",
   "runReason.dbimportAppsStopped": "aplikasi berikut kekal berhenti sehingga folder data dibereskan: {apps}",
   "dbdump.toggle": "Longgokan pangkalan data sebelum setiap sandaran",

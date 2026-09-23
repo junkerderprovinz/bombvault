@@ -816,7 +816,7 @@ const lv: Partial<Translations> = {
   "errorPanel.resolveAll": "Atzīmēt visas kā atrisinātas",
   "errorPanel.affected": "Ietekmēts",
   "errorPanel.empty": "Nav neatrisinātu rezerves kopēšanas kļūdu.",
-  "errorPanel.count": "{count} gadījumi",
+  "errorPanel.count": "zero={n} gadījumu|one={n} gadījums|other={n} gadījumi",
   "errorPanel.filterPlaceholder": "Filtrēt kļūdas…",
 
   // Dashboard protection (RPO) status
@@ -856,7 +856,7 @@ const lv: Partial<Translations> = {
   "runReason.dbimportRollback": "imports neizdevās, un vecos datus neizdevās likt atpakaļ",
   "runReason.dbimportFailed": "importa rīks ziņoja par kļūdu",
   "runReason.dbimportKeptOld": "iepriekšējā datu mape tika paturēta",
-  "runReason.dbimportErrors": "imports beidzās ar kļūdām",
+  "runReason.dbimportErrors": "zero={n} kļūdu, iepriekšējā datu mape tika paturēta|one={n} kļūda, iepriekšējā datu mape tika paturēta|other={n} kļūdas, iepriekšējā datu mape tika paturēta",
   "runReason.dbimportAppsDown": "zero=šīs lietotnes neizdevās atkal palaist: {apps}|one=šo lietotni neizdevās atkal palaist: {apps}|other=šīs lietotnes neizdevās atkal palaist: {apps}",
   "runReason.dbimportAppsStopped": "zero=šīs lietotnes paliek apturētas, līdz datu mape būs sakārtota: {apps}|one=šī lietotne paliek apturēta, līdz datu mape būs sakārtota: {apps}|other=šīs lietotnes paliek apturētas, līdz datu mape būs sakārtota: {apps}",
   "dbdump.toggle": "Datubāzes izraksts pirms katras rezerves kopijas",

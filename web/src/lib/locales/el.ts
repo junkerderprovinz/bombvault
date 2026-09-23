@@ -315,7 +315,7 @@ const el: Partial<Translations> = {
   "errorPanel.resolveAll": "Επισήμανση όλων ως επιλυμένων",
   "errorPanel.affected": "Επηρεαζόμενα",
   "errorPanel.empty": "Δεν υπάρχουν ανεπίλυτα σφάλματα αντιγράφων ασφαλείας.",
-  "errorPanel.count": "{count} εμφανίσεις",
+  "errorPanel.count": "one={n} εμφάνιση|other={n} εμφανίσεις",
   "errorPanel.filterPlaceholder": "Φιλτράρισμα σφαλμάτων…",
 
   // Jobs page
@@ -988,7 +988,7 @@ const el: Partial<Translations> = {
   "runReason.dbimportRollback": "η εισαγωγή απέτυχε και τα παλιά δεδομένα δεν ήταν δυνατό να επανατοποθετηθούν",
   "runReason.dbimportFailed": "το εργαλείο εισαγωγής ανέφερε σφάλμα",
   "runReason.dbimportKeptOld": "ο προηγούμενος φάκελος δεδομένων διατηρήθηκε",
-  "runReason.dbimportErrors": "η εισαγωγή τελείωσε με σφάλματα",
+  "runReason.dbimportErrors": "one={n} σφάλμα, ο προηγούμενος φάκελος δεδομένων διατηρήθηκε|other={n} σφάλματα, ο προηγούμενος φάκελος δεδομένων διατηρήθηκε",
   "runReason.dbimportAppsDown": "one=αυτή η εφαρμογή δεν ξεκίνησε ξανά: {apps}|other=αυτές οι εφαρμογές δεν ξεκίνησαν ξανά: {apps}",
   "runReason.dbimportAppsStopped": "one=αυτή η εφαρμογή μένει σταματημένη μέχρι να τακτοποιηθεί ο φάκελος δεδομένων: {apps}|other=αυτές οι εφαρμογές μένουν σταματημένες μέχρι να τακτοποιηθεί ο φάκελος δεδομένων: {apps}",
   "dbdump.toggle": "Αντίγραφο της βάσης δεδομένων πριν από κάθε αντίγραφο ασφαλείας",

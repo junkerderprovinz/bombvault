@@ -814,7 +814,7 @@ const sr: Partial<Translations> = {
   "errorPanel.resolveAll": "Означи све као решено",
   "errorPanel.affected": "Погођено",
   "errorPanel.empty": "Нема нерешених грешака резервног копирања.",
-  "errorPanel.count": "{count} појава",
+  "errorPanel.count": "one={n} појава|few={n} појаве|other={n} појава",
   "errorPanel.filterPlaceholder": "Филтрирај грешке…",
 
   // Dashboard protection (RPO) status
@@ -854,7 +854,7 @@ const sr: Partial<Translations> = {
   "runReason.dbimportRollback": "увоз није успео и старе податке није било могуће вратити на место",
   "runReason.dbimportFailed": "алат за увоз је пријавио грешку",
   "runReason.dbimportKeptOld": "претходна фасцикла са подацима је задржана",
-  "runReason.dbimportErrors": "увоз се завршио са грешкама",
+  "runReason.dbimportErrors": "one={n} грешка, претходна фасцикла са подацима је задржана|few={n} грешке, претходна фасцикла са подацима је задржана|other={n} грешака, претходна фасцикла са подацима је задржана",
   "runReason.dbimportAppsDown": "one=ову апликацију није било могуће поново покренути: {apps}|few=ове апликације није било могуће поново покренути: {apps}|other=ове апликације није било могуће поново покренути: {apps}",
   "runReason.dbimportAppsStopped": "one=ова апликација остаје заустављена док се не среди фасцикла са подацима: {apps}|few=ове апликације остају заустављене док се не среди фасцикла са подацима: {apps}|other=ове апликације остају заустављене док се не среди фасцикла са подацима: {apps}",
   "dbdump.toggle": "Испис базе података пре сваке резервне копије",

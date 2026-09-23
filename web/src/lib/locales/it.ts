@@ -315,7 +315,7 @@ const it: Partial<Translations> = {
   "errorPanel.resolveAll": "Segna tutti come risolti",
   "errorPanel.affected": "Interessati",
   "errorPanel.empty": "Nessun errore di backup non risolto.",
-  "errorPanel.count": "{count} occorrenze",
+  "errorPanel.count": "one={n} occorrenza|other={n} occorrenze",
   "errorPanel.filterPlaceholder": "Filtra errori…",
 
   // Jobs page
@@ -958,7 +958,7 @@ const it: Partial<Translations> = {
   "runReason.dbimportRollback": "l'importazione non è riuscita e i dati precedenti non sono stati rimessi al loro posto",
   "runReason.dbimportFailed": "lo strumento di importazione ha segnalato un errore",
   "runReason.dbimportKeptOld": "la cartella dati precedente è stata conservata",
-  "runReason.dbimportErrors": "l'importazione è terminata con errori",
+  "runReason.dbimportErrors": "one={n} errore, la cartella dati precedente è stata conservata|other={n} errori, la cartella dati precedente è stata conservata",
   "runReason.dbimportAppsDown": "one=non è stato possibile riavviare questa applicazione: {apps}|many=non è stato possibile riavviare queste applicazioni: {apps}|other=non è stato possibile riavviare queste applicazioni: {apps}",
   "runReason.dbimportAppsStopped": "one=questa applicazione resta ferma finché la cartella dei dati non è sistemata: {apps}|many=queste applicazioni restano ferme finché la cartella dei dati non è sistemata: {apps}|other=queste applicazioni restano ferme finché la cartella dei dati non è sistemata: {apps}",
   "dbdump.toggle": "Dump del database prima di ogni backup",

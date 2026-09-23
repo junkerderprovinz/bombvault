@@ -315,7 +315,7 @@ const da: Partial<Translations> = {
   "errorPanel.resolveAll": "Markér alle som løst",
   "errorPanel.affected": "Berørte",
   "errorPanel.empty": "Ingen uløste sikkerhedskopieringsfejl.",
-  "errorPanel.count": "{count} forekomster",
+  "errorPanel.count": "one={n} forekomst|other={n} forekomster",
   "errorPanel.filterPlaceholder": "Filtrér fejl…",
 
   // Jobs page
@@ -988,7 +988,7 @@ const da: Partial<Translations> = {
   "runReason.dbimportRollback": "importen mislykkedes, og de gamle data kunne ikke lægges tilbage",
   "runReason.dbimportFailed": "importværktøjet meldte en fejl",
   "runReason.dbimportKeptOld": "den tidligere datamappe blev beholdt",
-  "runReason.dbimportErrors": "importen sluttede med fejl",
+  "runReason.dbimportErrors": "{n} fejl, den tidligere datamappe blev beholdt",
   "runReason.dbimportAppsDown": "one=denne app kunne ikke startes igen: {apps}|other=disse apps kunne ikke startes igen: {apps}",
   "runReason.dbimportAppsStopped": "one=denne app forbliver stoppet, indtil datamappen er bragt i orden: {apps}|other=disse apps forbliver stoppet, indtil datamappen er bragt i orden: {apps}",
   "dbdump.toggle": "Databasedump før hver sikkerhedskopi",

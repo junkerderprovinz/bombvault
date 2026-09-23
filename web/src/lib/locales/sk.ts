@@ -816,7 +816,7 @@ const sk: Partial<Translations> = {
   "errorPanel.resolveAll": "Označiť všetky ako vyriešené",
   "errorPanel.affected": "Ovplyvnené",
   "errorPanel.empty": "Žiadne nevyriešené chyby zálohovania.",
-  "errorPanel.count": "{count} výskytov",
+  "errorPanel.count": "one={n} výskyt|few={n} výskyty|many={n} výskytu|other={n} výskytov",
   "errorPanel.filterPlaceholder": "Filtrovať chyby…",
 
   // Dashboard protection (RPO) status
@@ -856,7 +856,7 @@ const sk: Partial<Translations> = {
   "runReason.dbimportRollback": "import zlyhal a staré dáta sa nepodarilo vrátiť späť",
   "runReason.dbimportFailed": "nástroj na import ohlásil chybu",
   "runReason.dbimportKeptOld": "predchádzajúci priečinok s dátami zostal zachovaný",
-  "runReason.dbimportErrors": "import sa skončil s chybami",
+  "runReason.dbimportErrors": "one={n} chyba, predchádzajúci priečinok s dátami zostal zachovaný|few={n} chyby, predchádzajúci priečinok s dátami zostal zachovaný|many={n} chyby, predchádzajúci priečinok s dátami zostal zachovaný|other={n} chýb, predchádzajúci priečinok s dátami zostal zachovaný",
   "runReason.dbimportAppsDown": "one=túto aplikáciu sa nepodarilo znova spustiť: {apps}|few=tieto aplikácie sa nepodarilo znova spustiť: {apps}|many=tieto aplikácie sa nepodarilo znova spustiť: {apps}|other=tieto aplikácie sa nepodarilo znova spustiť: {apps}",
   "runReason.dbimportAppsStopped": "one=táto aplikácia zostane zastavená, kým sa nevyrieši priečinok s dátami: {apps}|few=tieto aplikácie zostanú zastavené, kým sa nevyrieši priečinok s dátami: {apps}|many=tieto aplikácie zostanú zastavené, kým sa nevyrieši priečinok s dátami: {apps}|other=tieto aplikácie zostanú zastavené, kým sa nevyrieši priečinok s dátami: {apps}",
   "dbdump.toggle": "Výpis databázy pred každou zálohou",

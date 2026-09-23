@@ -315,7 +315,7 @@ const hu: Partial<Translations> = {
   "errorPanel.resolveAll": "Összes megoldottként jelölése",
   "errorPanel.affected": "Érintett",
   "errorPanel.empty": "Nincsenek megoldatlan biztonsági mentési hibák.",
-  "errorPanel.count": "{count} előfordulás",
+  "errorPanel.count": "{n} előfordulás",
   "errorPanel.filterPlaceholder": "Hibák szűrése…",
 
   // Jobs page
@@ -971,7 +971,7 @@ const hu: Partial<Translations> = {
   "runReason.dbimportRollback": "az importálás meghiúsult, és a régi adatokat nem sikerült visszatenni",
   "runReason.dbimportFailed": "az importáló eszköz hibát jelzett",
   "runReason.dbimportKeptOld": "a korábbi adatmappa megmaradt",
-  "runReason.dbimportErrors": "az importálás hibákkal ért véget",
+  "runReason.dbimportErrors": "{n} hiba, a korábbi adatmappa megmaradt",
   "runReason.dbimportAppsDown": "one=ezt az alkalmazást nem sikerült újraindítani: {apps}|other=ezeket az alkalmazásokat nem sikerült újraindítani: {apps}",
   "runReason.dbimportAppsStopped": "one=ez az alkalmazás leállítva marad, amíg az adatmappa rendbe nem kerül: {apps}|other=ezek az alkalmazások leállítva maradnak, amíg az adatmappa rendbe nem kerül: {apps}",
   "dbdump.toggle": "Adatbázismentés minden biztonsági mentés előtt",

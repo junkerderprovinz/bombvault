@@ -816,7 +816,7 @@ const eu: Partial<Translations> = {
   "errorPanel.resolveAll": "Markatu guztiak konponduta",
   "errorPanel.affected": "Eraginpean",
   "errorPanel.empty": "Ez dago konpondu gabeko babeskopia-errorerik.",
-  "errorPanel.count": "{count} agerraldi",
+  "errorPanel.count": "{n} agerraldi",
   "errorPanel.filterPlaceholder": "Iragazi erroreak…",
 
   // Dashboard protection (RPO) status
@@ -856,7 +856,7 @@ const eu: Partial<Translations> = {
   "runReason.dbimportRollback": "inportazioak huts egin du eta datu zaharrak ezin izan dira bere lekura itzuli",
   "runReason.dbimportFailed": "inportazio-tresnak errore bat eman du",
   "runReason.dbimportKeptOld": "aurreko datu-karpeta gorde da",
-  "runReason.dbimportErrors": "inportazioa erroreekin amaitu da",
+  "runReason.dbimportErrors": "{n} errore, aurreko datu-karpeta gorde da",
   "runReason.dbimportAppsDown": "one=aplikazio hau ezin izan da berriro abiarazi: {apps}|other=aplikazio hauek ezin izan dira berriro abiarazi: {apps}",
   "runReason.dbimportAppsStopped": "one=aplikazio hau geldituta geratzen da datu-karpeta konpondu arte: {apps}|other=aplikazio hauek geldituta geratzen dira datu-karpeta konpondu arte: {apps}",
   "dbdump.toggle": "Datu-basearen iraulketa babeskopia bakoitzaren aurretik",

@@ -1049,7 +1049,7 @@ export const en = {
   "errorPanel.resolveAll": "Mark all resolved",
   "errorPanel.affected": "Affected",
   "errorPanel.empty": "No unresolved backup errors.",
-  "errorPanel.count": "{count} occurrences",
+  "errorPanel.count": "one={n} occurrence|other={n} occurrences",
   "errorPanel.filterPlaceholder": "Filter errors…",
 
   // Dashboard protection (RPO) status
@@ -1089,7 +1089,8 @@ export const en = {
   "runReason.dbimportRollback": "the import failed and the old data could not be put back",
   "runReason.dbimportFailed": "the import tool reported an error",
   "runReason.dbimportKeptOld": "the previous data folder was kept",
-  "runReason.dbimportErrors": "the import finished with errors",
+  "runReason.dbimportErrors":
+    "one={n} error, the previous data folder was kept|other={n} errors, the previous data folder was kept",
   "runReason.dbimportAppsDown":
     "one=this app did not start again: {apps}|other=these apps did not start again: {apps}",
   "runReason.dbimportAppsStopped":
@@ -3040,7 +3041,7 @@ export const de: Translations = {
   "errorPanel.resolveAll": "Alle als erledigt markieren",
   "errorPanel.affected": "Betroffen",
   "errorPanel.empty": "Keine offenen Sicherungsfehler.",
-  "errorPanel.count": "{count} Vorkommen",
+  "errorPanel.count": "{n} Vorkommen",
   "errorPanel.filterPlaceholder": "Fehler filtern…",
 
   // Dashboard protection (RPO) status
@@ -3080,7 +3081,7 @@ export const de: Translations = {
   "runReason.dbimportRollback": "der Import scheiterte und die alten Daten ließen sich nicht zurücklegen",
   "runReason.dbimportFailed": "das Import-Werkzeug hat einen Fehler gemeldet",
   "runReason.dbimportKeptOld": "der bisherige Datenordner wurde behalten",
-  "runReason.dbimportErrors": "der Import endete mit Fehlern",
+  "runReason.dbimportErrors": "{n} Fehler, der bisherige Datenordner wurde behalten",
   "runReason.dbimportAppsDown":
     "one=diese App ließ sich nicht wieder starten: {apps}|other=diese Apps ließen sich nicht wieder starten: {apps}",
   "runReason.dbimportAppsStopped":
