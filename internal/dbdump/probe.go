@@ -2,6 +2,7 @@ package dbdump
 
 import (
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -115,21 +116,27 @@ func majorOf(version string) (int, bool) {
 	return major, true
 }
 
-// CountImportErrors counts the errors an import reported. pg_dumpall's role
-// section always collides with the role a fresh cluster was created for, so
-// that one line is expected once.
-func CountImportErrors(e Engine, stderr, pguser string) int {
-	expected := ""
-	if e == EnginePostgres && pguser != "" {
-		expected = `role "` + pguser + `" already exists`
+// CountImportErrors counts the errors an import reported. A cluster the image
+// just initialised already holds the role and the database the container was
+// created with, so pg_dumpall's CREATE for each of them collides once and is
+// not an error of the import.
+func CountImportErrors(e Engine, stderr, pguser, pgdb string) int {
+	var expected []string
+	if e == EnginePostgres {
+		if pguser != "" {
+			expected = append(expected, `role "`+pguser+`" already exists`)
+		}
+		if pgdb != "" {
+			expected = append(expected, `database "`+pgdb+`" already exists`)
+		}
 	}
-	count, tolerated := 0, false
+	count := 0
 	for _, line := range strings.Split(stderr, "\n") {
 		if !strings.Contains(line, "ERROR") {
 			continue
 		}
-		if !tolerated && expected != "" && strings.Contains(line, expected) {
-			tolerated = true
+		if i := slices.IndexFunc(expected, func(e string) bool { return strings.Contains(line, e) }); i >= 0 {
+			expected = slices.Delete(expected, i, i+1)
 			continue
 		}
 		count++
