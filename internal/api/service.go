@@ -8495,7 +8495,7 @@ func sanitizeTags(in []string) ([]string, error) {
 // target only and the entry stays.
 func (s *Service) DeleteBackups(ctx context.Context, name, source string) error {
 	if isOffsiteSource(source) {
-		_, err := s.forgetAtTarget(ctx, "containers", "container:"+name, source, nil)
+		_, err := s.forgetAtTarget(ctx, "containers", "container:"+name, source, taggedForItem, nil)
 		return err
 	}
 	settings, err := s.store.GetSettings()
@@ -8596,11 +8596,12 @@ func (s *Service) DeleteBackups(ctx context.Context, name, source string) error 
 }
 
 // DeleteBackupsVM removes every backup of a VM. From the local source it also
-// forgets the VM's entry; from an off-site source it deletes at that target only,
-// the VM's disks included, and the entry stays.
+// forgets the VM's entry; from an off-site source it deletes the snapshots the
+// VM's backup list shows at that target and the entry stays. Its disk images
+// live under their own tags and go through the window that shows them first.
 func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) error {
 	if isOffsiteSource(source) {
-		_, err := s.forgetAtTarget(ctx, "vms", "vm:"+name, source, nil)
+		_, err := s.forgetAtTarget(ctx, "vms", "vm:"+name, source, taggedForItem, nil)
 		return err
 	}
 	settings, err := s.store.GetSettings()
@@ -11650,7 +11651,7 @@ func (s *Service) DeleteBackupsFileSet(ctx context.Context, id, source string) e
 		return errFileSetNotFound
 	}
 	if isOffsiteSource(source) {
-		_, err := s.forgetAtTarget(ctx, "files", "fileset:"+set.Name, source, nil)
+		_, err := s.forgetAtTarget(ctx, "files", "fileset:"+set.Name, source, taggedForItem, nil)
 		return err
 	}
 	settings, err := s.store.GetSettings()
