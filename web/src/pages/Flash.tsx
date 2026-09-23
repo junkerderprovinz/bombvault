@@ -34,10 +34,9 @@ type T = ReturnType<typeof useT>["t"];
 // sichern" conversion) already solved: there is no room for any of that
 // next to a small square glyph, so every TERMINAL state (success/error) now
 // surfaces as a toast instead, matching the "failed action toasts AND
-// shakes its button" standing rule this same file's FlashSnapshotRow delete
-// button already follows. Only the PENDING state stays inline — swapped for
-// the glyph itself (a spinner replacing the icon while running), same as
-// Containers.tsx's BackupButton.
+// shakes its button" standing rule. Only the pending state stays inline,
+// swapped for the glyph itself (a spinner replacing the icon while running),
+// same as Containers.tsx's BackupButton.
 //
 // `size="icon"` (Badge.tsx, h-8/w-8 = 32px): reused verbatim from
 // Containers.tsx's BackupButton rather than re-measured against THIS

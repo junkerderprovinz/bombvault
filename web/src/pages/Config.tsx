@@ -52,9 +52,8 @@ type T = ReturnType<typeof useT>["t"];
 // hook, zero hook changes, just a different render for kind="backup"'s
 // already-self-clearing 4s terminal states. VMs.tsx's VMBackupButton is the
 // one remaining full-width text button of this family and is NOT touched
-// here; jdp's ask named this card, and unlike the source.hint sweep in this
-// same pass that one is a different card layout (a per-VM row control), not
-// another copy of this exact card.
+// here; jdp's ask named this card, and that button is a different card
+// layout (a per-VM row control), not another copy of this exact card.
 function ConfigBackupButton({
   t,
   onBackedUp,
