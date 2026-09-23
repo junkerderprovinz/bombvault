@@ -216,7 +216,7 @@ func TestEffectiveBackupPathsWithSelectionIsOneRead(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	paths, selection := svc.effectiveBackupPathsWithSelection("plex", model.Inspect{})
+	paths, _, selection := svc.effectiveBackupPathsWithSelection("plex", model.Inspect{})
 	if len(paths) != 1 || paths[0] != root {
 		t.Fatalf("paths = %v, want [%s]", paths, root)
 	}
@@ -247,7 +247,7 @@ func TestBackupExcludesComeFromTheSameReadAsThePositionals(t *testing.T) {
 	}
 	src := string(raw)
 
-	if !strings.Contains(src, "effective, selection := s.effectiveBackupPathsWithSelection(name, in)") {
+	if !strings.Contains(src, "effective, configured, selection := s.effectiveBackupPathsWithSelection(name, in)") {
 		t.Error("Backup no longer takes both halves of the selection from one read.")
 	}
 	if !strings.Contains(src, "excludedBranches(selection)") {

@@ -75,12 +75,16 @@ type Summary struct {
 	// HasParent is filled in by the service adapter when it had to ask whether
 	// restic found a parent snapshot. Nil means unknown.
 	HasParent *bool
+	// SelectionFP fingerprints what the item was configured to back up, set by
+	// the adapter that produced this summary. It travels with the numbers it
+	// belongs to, so a dump and the container backup around it keep their own.
+	SelectionFP string
 }
 
 // Plus adds o into s: the file disks of a VM plus each of its zvol disks. The
-// snapshot id and the parent flag stay s's, and the result counts as measured
-// only when both sides are, so a partly unmeasured run records nothing instead
-// of an undercount.
+// snapshot id, the parent flag and the fingerprint stay s's, and the result
+// counts as measured only when both sides are, so a partly unmeasured run
+// records nothing instead of an undercount.
 func (s Summary) Plus(o Summary) Summary {
 	s.Bytes += o.Bytes
 	s.SourceBytes += o.SourceBytes

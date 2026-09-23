@@ -19,6 +19,7 @@ import (
 	"io/fs"
 	"log"
 	"maps"
+	"math"
 	"os"
 	"path"
 	"path/filepath"
@@ -125,6 +126,13 @@ type ResticEngine interface {
 	// touched and no filesystem metadata is restored).
 	DumpZip(ctx context.Context, repo, snapshotID, subfolder string, w io.Writer, mode restic.Mode) error
 	Snapshots(ctx context.Context, repo string, mode restic.Mode) ([]restic.Snapshot, error)
+	// SnapshotsMeta lists the same snapshots with the counters restic stores on
+	// them. It is separate from Snapshots so the listings the SPA receives keep
+	// the keys they have.
+	SnapshotsMeta(ctx context.Context, repo string, mode restic.Mode) ([]restic.SnapshotMeta, error)
+	// SnapshotParent returns the snapshot restic based snapshotID on, empty when
+	// it found none.
+	SnapshotParent(ctx context.Context, repo, snapshotID string, mode restic.Mode) (string, error)
 	Forget(ctx context.Context, repo string, snapshotIDs []string, prune bool, mode restic.Mode) error
 	// ForgetPolicy applies a keep-policy (retention). Inert when the policy has
 	// no dimension set. tags scopes the policy to one item's snapshots as a
@@ -4818,12 +4826,13 @@ func (s *Service) configuredBackupPaths(name string, in model.Inspect) []string 
 // detection, filtered to those that exist on disk (a stateless container ends up
 // with an empty list).
 func (s *Service) effectiveBackupPaths(name string, in model.Inspect) []string {
-	paths, _ := s.effectiveBackupPathsWithSelection(name, in)
+	paths, _, _ := s.effectiveBackupPathsWithSelection(name, in)
 	return paths
 }
 
-// effectiveBackupPathsWithSelection returns the same paths AND the stored
-// selection they were derived from, out of ONE read of the target row.
+// effectiveBackupPathsWithSelection returns the same paths, the configured
+// paths they were filtered from AND the stored selection both were derived
+// from, out of ONE read of the target row.
 //
 // A backup needs both: the includes become the restic positionals, the
 // exclusion branches become the --exclude tail. Reading them separately let a
@@ -4839,13 +4848,13 @@ func (s *Service) effectiveBackupPaths(name string, in model.Inspect) []string {
 // One read cannot tear. It can still be overtaken by a save that lands just
 // before it, which is ordinary staleness: the whole selection is then the new
 // one, the next run uses it, and no snapshot is internally inconsistent.
-func (s *Service) effectiveBackupPathsWithSelection(name string, in model.Inspect) (paths, selection []string) {
-	chosen := s.resolveAppdataPaths(name, in)
+func (s *Service) effectiveBackupPathsWithSelection(name string, in model.Inspect) (paths, configured, stored []string) {
+	configured = s.resolveAppdataPaths(name, in)
 	if existing, gErr := s.store.GetTargetByContainer(name); gErr == nil && len(existing.SelectedPaths) > 0 {
-		selection = existing.SelectedPaths
-		chosen = includesOnly(selection)
+		stored = existing.SelectedPaths
+		configured = includesOnly(stored)
 	}
-	return onlyExistingPaths(chosen), selection
+	return onlyExistingPaths(configured), configured, stored
 }
 
 // emptyBackupIsUnreachable decides what an empty effective path list MEANS, and
@@ -5078,7 +5087,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// the positionals, and selection feeds the --exclude tail further down. Two
 	// reads let a save landing between them pair old positionals with new
 	// exclusions - see effectiveBackupPathsWithSelection.
-	effective, selection := s.effectiveBackupPathsWithSelection(name, in)
+	effective, configured, selection := s.effectiveBackupPathsWithSelection(name, in)
 
 	// Guard against a SILENT no-op: if a PREVIOUS backup captured data (or the user
 	// selected folders) but every path now resolves away — e.g. the appdata share
@@ -5182,6 +5191,17 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 			container: name, containerID: in.ID, progressKey: pkey, startedAt: startedAt,
 		}
 	}
+	excludes := append(s.resolveExcludePatterns(tg.Excludes, in), excludedBranches(selection)...)
+	// The fingerprint covers the configured folders, not the ones that resolved
+	// on disk just now: an unmounted share must look like the selection it has
+	// always been, so the detectors report the collapse instead of writing it
+	// off as a change the user made.
+	selectionFP := selectionFingerprint(itemSelection{
+		Kind:     "container",
+		Paths:    configured,
+		Excludes: excludes,
+		Caches:   enabledKeys(tg.ExcludeCaches),
+	})
 	sum, err := backup.BackupContainer(bctx, backup.BackupDeps{
 		ContainerRef:           name,
 		FormerNames:            aliasOldNames(aliases),
@@ -5209,9 +5229,9 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		// positional from another is a snapshot nobody asked for. Patterns
 		// travel as typed builder arguments into BackupArgs (excludes before
 		// --, positionals after) — never through a shell.
-		Excludes:     append(s.resolveExcludePatterns(tg.Excludes, in), excludedBranches(selection)...),
+		Excludes:     excludes,
 		Docker:       s.docker,
-		Restic:       &resticAdapter{engine: s.engine, mode: mode},
+		Restic:       &resticAdapter{engine: s.engine, mode: mode, selectionFP: selectionFP},
 		Templates:    templatesAdapter{},
 		Runs:         runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "container:" + name},
 		DBDump:       dumpPlan,
@@ -10507,6 +10527,9 @@ func (s *Service) ContainerPath() string {
 type resticAdapter struct {
 	engine ResticEngine
 	mode   restic.Mode
+	// selectionFP fingerprints what this item is configured to back up, empty
+	// for the restore and maintenance constructions, which cover no selection.
+	selectionFP string
 }
 
 var (
@@ -10514,12 +10537,77 @@ var (
 	_ backup.ZFSRestic = (*resticAdapter)(nil)
 )
 
+// snapshotParentTimeout bounds the extra restic call a run pays for when every
+// file it read was new. It reads one snapshot, so a repository that needs
+// longer than this has stopped answering.
+const snapshotParentTimeout = 30 * time.Second
+
 func (a *resticAdapter) Backup(ctx context.Context, repo string, paths, tags []string, excludes ...string) (backup.Summary, error) {
 	sum, err := a.engine.Backup(ctx, repo, paths, tags, a.mode, excludes...)
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	return backup.Summary{SnapshotID: sum.SnapshotID, Bytes: int64(sum.BytesAdded)}, nil
+	out := backupSummaryFrom(sum)
+	out.SelectionFP = a.selectionFP
+	out.HasParent = a.parentFlag(ctx, repo, out)
+	return out, nil
+}
+
+// backupSummaryFrom converts what restic reported about a finished backup. A
+// line without total_duration leaves the run unmeasured: restic prints the
+// totals together, so a missing duration means the figures beside it are
+// missing too, and recording them as zeros would read as a source that emptied
+// itself.
+func backupSummaryFrom(sum restic.Summary) backup.Summary {
+	out := backup.Summary{SnapshotID: sum.SnapshotID, Bytes: int64(sum.BytesAdded)}
+	if sum.TotalDuration == nil {
+		return out
+	}
+	out.Measured = true
+	out.SourceBytes = int64(sum.TotalBytesProcessed) //nolint:gosec // G115: restic cannot have read more than 8 EiB
+	out.SourceFiles = int64(sum.TotalFilesProcessed) //nolint:gosec // G115: nor more than 2^63 files
+	out.FilesNew = int64(sum.FilesNew)
+	out.ResticMS = int64(math.Round(*sum.TotalDuration * 1000))
+	if out.ResticMS < 0 {
+		out.ResticMS = 0
+	}
+	return out
+}
+
+// parentFlag answers whether restic had an earlier snapshot to compare
+// against, and asks only when every file it read was new. A first backup into a
+// fresh repository and a rewrite of every file read the same way, because
+// restic counts a file as new when its path is missing from the parent tree,
+// and appending a suffix to every file is what ransomware leaves behind. Only
+// the parent separates the two, so an unreadable one stays unknown.
+func (a *resticAdapter) parentFlag(ctx context.Context, repo string, sum backup.Summary) *bool {
+	if !sum.Measured || sum.FilesNew == 0 || sum.FilesNew != sum.SourceFiles {
+		return nil
+	}
+	pctx, cancel := context.WithTimeout(ctx, snapshotParentTimeout)
+	defer cancel()
+	parent, err := a.engine.SnapshotParent(pctx, repo, sum.SnapshotID, a.mode)
+	if err != nil {
+		log.Printf("api: backup: could not read whether snapshot %s was based on an earlier one: %v", shortID(sum.SnapshotID), err)
+		return nil
+	}
+	has := parent != ""
+	return &has
+}
+
+// metricsOf returns what a run recorded of restic's own figures, nil when
+// restic did not report them.
+func metricsOf(sum backup.Summary) *store.RunMetrics {
+	if !sum.Measured {
+		return nil
+	}
+	return &store.RunMetrics{
+		SourceBytes: sum.SourceBytes,
+		SourceFiles: sum.SourceFiles,
+		FilesNew:    sum.FilesNew,
+		ResticMS:    sum.ResticMS,
+		HasParent:   sum.HasParent,
+	}
 }
 
 // BackupDir carries restic's per-file counters through, which a ZFS run
@@ -10676,7 +10764,7 @@ func (r runsAdapter) Finish(runID, status string, sum backup.Summary, errMsg str
 			status, errMsg = "cancelled", store.ReasonCancelled
 		}
 	}
-	return r.st.FinishRun(runID, status, sum.SnapshotID, sum.Bytes, errMsg)
+	return r.st.FinishRunMeasured(runID, status, sum.SnapshotID, sum.Bytes, errMsg, metricsOf(sum), sum.SelectionFP)
 }
 
 // startedRunsAdapter satisfies backup.Runs exactly like runsAdapter, except
@@ -10722,7 +10810,7 @@ func (r startedRunsAdapter) Finish(runID, status string, sum backup.Summary, err
 			status, errMsg = "cancelled", store.ReasonCancelled
 		}
 	}
-	return r.st.FinishRun(runID, status, sum.SnapshotID, sum.Bytes, errMsg)
+	return r.st.FinishRunMeasured(runID, status, sum.SnapshotID, sum.Bytes, errMsg, metricsOf(sum), sum.SelectionFP)
 }
 
 // sshZFSHost adapts HostSSH's semantic Run/StreamCommand/RunWithStdin SSH
@@ -10771,7 +10859,7 @@ func (a *resticZvolAdapter) BackupStdin(ctx context.Context, repo string, rd io.
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	return backup.Summary{SnapshotID: sum.SnapshotID, Bytes: int64(sum.BytesAdded)}, nil
+	return backupSummaryFrom(sum), nil
 }
 
 func (a *resticZvolAdapter) DumpTo(ctx context.Context, repo, snapshotID, path string, w io.Writer) error {
@@ -11352,6 +11440,17 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		log.Printf("api: backup vm: aliases of %q: %v", name, aliasErr) //nolint:gosec // G706: %q-quoted
 	}
 
+	// A zvol disk is part of what this VM covers just as much as a file-backed
+	// one, so dropping either has to move the fingerprint.
+	sources := append([]string{}, diskPaths...)
+	for _, bd := range vmBlockDisks {
+		sources = append(sources, bd.Dataset)
+	}
+	selectionFP := selectionFingerprint(itemSelection{
+		Kind:     "vm",
+		Paths:    sources,
+		Excludes: domain.SkipSnapshotDevs,
+	})
 	deps := backup.VMBackupDeps{
 		Name:             name,
 		FormerNames:      aliasOldNames(aliases),
@@ -11363,7 +11462,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		TargetID:         tg.ID,
 		DataDir:          s.cfg.DataDir,
 		VM:               s.virsh,
-		Restic:           &resticAdapter{engine: s.engine, mode: mode},
+		Restic:           &resticAdapter{engine: s.engine, mode: mode, selectionFP: selectionFP},
 		BlockDisks:       vmBlockDisks,
 		ZFSHost:          sshZFSHost{ssh: s.ssh},
 		ZvolRestic:       &resticZvolAdapter{engine: s.engine, mode: mode},
@@ -12406,7 +12505,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 		SourceDir: s.cfg.FlashDir,
 		Repo:      repo,
 		TargetID:  store.FlashTargetID,
-		Restic:    &resticAdapter{engine: s.engine, mode: mode},
+		Restic:    &resticAdapter{engine: s.engine, mode: mode, selectionFP: selectionFingerprint(itemSelection{Kind: "flash"})},
 		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "flash"},
 	})
 	s.progEnd("flash", "backup", err == nil, startedAt)
@@ -12698,6 +12797,12 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 			anchored = append(anchored, e)
 		}
 	}
+	selectionFP := selectionFingerprint(itemSelection{
+		Kind:     "files",
+		Root:     set.Path,
+		Paths:    set.SelectedPaths,
+		Excludes: set.Excludes,
+	})
 	sum, err := backup.BackupFileSetDir(fctx, backup.FileSetBackupDeps{
 		SourceDir:   src,
 		SourcePaths: positionals,
@@ -12706,7 +12811,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 		SetName:     set.Name,
 		Excludes: append(append([]string{}, set.Excludes...),
 			excludedBranches(anchored)...),
-		Restic: &resticAdapter{engine: s.engine, mode: mode},
+		Restic: &resticAdapter{engine: s.engine, mode: mode, selectionFP: selectionFP},
 		Runs:   runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "files:" + set.Name},
 	})
 	s.progEnd(key, "backup", err == nil, startedAt)
@@ -13897,7 +14002,7 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 		SourceDir: stagingDir,
 		Repo:      repo,
 		TargetID:  store.ConfigTargetID,
-		Restic:    &resticAdapter{engine: s.engine, mode: mode},
+		Restic:    &resticAdapter{engine: s.engine, mode: mode, selectionFP: selectionFingerprint(itemSelection{Kind: "config"})},
 		Runs:      runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "config"},
 	})
 	s.progEnd("config", "backup", err == nil, startedAt)

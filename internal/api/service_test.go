@@ -5437,6 +5437,13 @@ type fakeResticEngine struct {
 	// snapsByRepo overrides snaps for a specific repository; anything not listed
 	// falls back to snaps.
 	snapsByRepo map[string][]restic.Snapshot
+	// backupSummaries are served to Backup in order, so a test can feed the
+	// source totals of a whole history; an empty queue falls back to the fixed
+	// summary above.
+	backupSummaries []restic.Summary
+	// The counter listing and the parent the anomaly history reads.
+	snapsMetaByRepo map[string][]restic.SnapshotMeta
+	snapshotParent  string
 	// listedRepos is every repository Snapshots was asked about, in order, so a
 	// test can tell which repositories a pass such as discovery looked in.
 	listedRepos []string
@@ -5632,6 +5639,11 @@ func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, tags []
 	if f.backupErr != nil {
 		return restic.Summary{}, f.backupErr
 	}
+	if len(f.backupSummaries) > 0 {
+		sum := f.backupSummaries[0]
+		f.backupSummaries = f.backupSummaries[1:]
+		return sum, nil
+	}
 	return restic.Summary{SnapshotID: "deadbeef12345678", BytesAdded: 2048}, nil
 }
 
@@ -5653,6 +5665,14 @@ func (f *fakeResticEngine) BackupDir(_ context.Context, repo, dir string, tags [
 func (f *fakeResticEngine) RestoreAll(_ context.Context, _, snapshotID, target string, _ restic.Mode, _ ...string) error {
 	f.restoreAllTargets = append(f.restoreAllTargets, snapshotID+":"+target)
 	return f.restoreErr
+}
+
+func (f *fakeResticEngine) SnapshotsMeta(_ context.Context, repo string, _ restic.Mode) ([]restic.SnapshotMeta, error) {
+	return f.snapsMetaByRepo[repo], nil
+}
+
+func (f *fakeResticEngine) SnapshotParent(_ context.Context, _, _ string, _ restic.Mode) (string, error) {
+	return f.snapshotParent, nil
 }
 
 // BackupStdin records each zvol disk's stdin backup. Each call gets its own
