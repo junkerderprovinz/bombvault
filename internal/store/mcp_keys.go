@@ -92,6 +92,29 @@ func collectMCPKeys(rows *sql.Rows, label string) ([]MCPKey, error) {
 	return out, nil
 }
 
+// MCPKeyIDsInUse returns the ids the run history still names. Such a key can be
+// revoked but never removed, because the Activity log reads its label.
+func (r *Repo) MCPKeyIDsInUse() (map[string]bool, error) {
+	rows, err := r.db.Query(`SELECT DISTINCT started_via_key FROM runs WHERE started_via_key != ''`)
+	if err != nil {
+		return nil, fmt.Errorf("MCPKeyIDsInUse: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	out := map[string]bool{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("MCPKeyIDsInUse: %w", err)
+		}
+		out[id] = true
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("MCPKeyIDsInUse: %w", err)
+	}
+	return out, nil
+}
+
 // GetMCPKey returns one key, revoked or not.
 func (r *Repo) GetMCPKey(id string) (MCPKey, error) {
 	key, err := scanMCPKey(r.db.QueryRow(`SELECT `+mcpKeyCols+` FROM mcp_keys WHERE id = ?`, id))

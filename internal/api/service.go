@@ -1923,6 +1923,26 @@ func (s *Service) notifyRetentionFailed(ctx context.Context, tag, detail string)
 	}
 }
 
+// notifyMCPKeyChange reports that a key was created, replaced, allowed to start
+// backups, set to read only or revoked. A credential change is not a backup
+// result, so it goes out whenever notifications are configured and not switched
+// off, and never to Healthchecks, which tracks backups. The key is never in it.
+func (s *Service) notifyMCPKeyChange(ctx context.Context, event, label, hint, addr string) {
+	c, err := s.NotifyConfig()
+	if err != nil || c.On == "" || c.On == "never" {
+		return
+	}
+	title := "BombVault: MCP key " + event
+	msg := fmt.Sprintf("The MCP key %q (ending in %s) was %s from %s. If this was not you, revoke it under Settings > System > MCP server.",
+		label, hint, event, addr)
+	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "mcp", notify.Event{Title: title, Message: msg, OK: false})
+	if s.unraidGate(c.Unraid) {
+		if e := s.sendUnraidNotify(ctx, title, msg, "warning"); e != nil {
+			log.Printf("notify: unraid: %v", e)
+		}
+	}
+}
+
 // offsiteTargetsFor returns a domain's ENABLED off-site destinations from the
 // store, in stable per-domain order (sort_order, then created_at). It is the
 // plural successor to the single-repo Settings.*Offsite* columns: a backfilled
