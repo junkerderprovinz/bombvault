@@ -19,12 +19,10 @@ import {
   deleteFileSetBackups,
   backupFileSet,
   backupFilesAll,
-  fileSetSnapshots,
   restoreFileSet,
   listSnapshotFilesFileSet,
   restoreFileSetFiles,
   discoverFiles,
-  deleteSnapshot,
   getSettings,
   getFileSetPreset,
 } from "../lib/api";
@@ -33,7 +31,6 @@ import type {
   FileSetView,
   OkEnvelope,
   PlacementView,
-  Snapshot,
   FileEntry,
   FileSetPresetResponse,
 } from "../lib/api";
@@ -44,7 +41,7 @@ import { PlacementRow } from "../components/placement/PlacementRow";
 import { placementErrorText } from "../lib/placementCodes";
 import { subscribePlacement } from "../lib/placementEvents";
 import { reposChanged, subscribeRepos } from "../lib/useNamedRepos";
-import { SourceToggle, type RepoSource } from "../components/SourceToggle";
+import type { RepoSource } from "../components/SourceToggle";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { EffectiveScheduleLine } from "../components/EffectiveScheduleLine";
@@ -59,7 +56,7 @@ import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconBackupNow, IconFiles, IconPencil, IconTrash } from "../components/Sidebar";
 import { BULK_HUE } from "../lib/bulkHue";
 import { useT } from "../lib/i18n";
-import { Advanced, useAdvanced } from "../lib/advanced";
+import { useAdvanced } from "../lib/advanced";
 import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
 import { loadErrorMessage } from "../lib/errors";
@@ -79,6 +76,8 @@ import { CheckDraw } from "../components/CheckDraw";
 import { useToast } from "../lib/toast";
 import { IconRestore } from "../components/Sidebar";
 import { IconDisclosure } from "../components/IconDisclosure";
+import { SNAPSHOT_MISSING } from "../lib/timeline";
+import { Timeline } from "../components/timeline/Timeline";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -294,6 +293,7 @@ function FileSetFileBrowser({
   hostMountRoot,
   restoreFolder,
   otherActive,
+  onMissing,
   t,
 }: {
   set: FileSetView;
@@ -302,6 +302,7 @@ function FileSetFileBrowser({
   hostMountRoot: string;
   restoreFolder: string;
   otherActive: { active: boolean; phase?: string };
+  onMissing: () => void;
   t: T;
 }) {
   const [files, setFiles] = useState<FileEntry[]>([]);
@@ -325,6 +326,7 @@ function FileSetFileBrowser({
     cancelledRef,
     start: async () => {
       const res = await restoreFileSetFiles(set.id, snapshotId, [...selected], folder.trim(), true, source);
+      if (res.code === SNAPSHOT_MISSING) onMissing();
       if (res.ok) setRestoredTarget(res.target ?? "");
       return res;
     },
@@ -442,8 +444,8 @@ function FileSetRestoreControl({
   hostMountRoot,
   restoreFolder,
   otherActive,
+  onMissing,
   t,
-  trailing,
 }: {
   set: FileSetView;
   snapshotId: string;
@@ -451,15 +453,8 @@ function FileSetRestoreControl({
   hostMountRoot: string;
   restoreFolder: string;
   otherActive: { active: boolean; phase?: string };
+  onMissing: () => void;
   t: T;
-  /** Rendered at the end of the destination row, after the Restore button.
-   *
-   *  The snapshot's delete badge, in practice: everything a snapshot DOES sits
-   *  in one row (jdp, 2026-09-11: "der löschen button in die gleiche zeile der
-   *  anderen buttons"). A prop rather than the caller wrapping this component,
-   *  because the row it joins is this component's own flex line - a wrapper
-   *  outside it would land on the next one. */
-  trailing?: ReactNode;
 }) {
   // A path-less discovered set can only restore into a chosen folder — the
   // server refuses an in-place restore when it doesn't know the original path.
@@ -487,8 +482,11 @@ function FileSetRestoreControl({
     kind: "restore",
     matchRun: (r) => r.domain === "files" && r.target === set.name,
     cancelledRef,
-    start: () =>
-      restoreFileSet(set.id, snapshotId, true, dest === "folder" ? targetPath : "", source),
+    start: async () => {
+      const res = await restoreFileSet(set.id, snapshotId, true, dest === "folder" ? targetPath : "", source);
+      if (res.code === SNAPSHOT_MISSING) onMissing();
+      return res;
+    },
   });
   const prog = useProgress()[progressKey];
   const blockedByOther = otherActive.active && !isPending;
@@ -561,15 +559,6 @@ function FileSetRestoreControl({
             {t(busyPhraseKey(otherActive.phase))}
           </span>
         )}
-        {/* `ms-auto` on the wrapper, so whatever the caller puts here is pushed
-            to the row's far end (jdp, 2026-09-11: "Der löschen button in den
-            Backupzeilen soll ganz rechts sein"). Sitting straight after the
-            Restore button, the delete badge read as a third step in the same
-            sequence; at the far edge it reads as what it is - the one control
-            on the row that is not part of restoring. Applied here rather than
-            by the caller because `ms-auto` only means anything inside THIS
-            flex row. */}
-        {trailing && <span className="ms-auto flex items-center">{trailing}</span>}
       </div>
       {/* Target folder picker for the non-destructive whole-set extract */}
       {dest === "folder" && (
@@ -602,145 +591,10 @@ function FileSetRestoreControl({
           hostMountRoot={hostMountRoot}
           restoreFolder={restoreFolder}
           otherActive={otherActive}
+          onMissing={onMissing}
           t={t}
         />
       )}
-      {confirmDialog}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Snapshot row + Backups panel (mirror VMSnapshotRow / VMRestorePanel)
-// ---------------------------------------------------------------------------
-
-function FileSetSnapshotRow({
-  snap,
-  set,
-  source,
-  hostMountRoot,
-  restoreFolder,
-  onDeleted,
-  t,
-}: {
-  snap: Snapshot;
-  set: FileSetView;
-  source: RepoSource;
-  hostMountRoot: string;
-  restoreFolder: string;
-  onDeleted: () => void;
-  t: T;
-}) {
-  const progressMap = useProgress();
-  const running = anyActive(progressMap);
-  // Delete is guarded only against THIS set's own in-flight backup/restore, not
-  // any global activity (mirrors the VM panel's rationale).
-  const busy = progressMap[`files:${set.name}`]?.active ?? false;
-  const [deleting, setDeleting] = useState(false);
-  const { push } = useToast();
-  const { confirm, confirmDialog } = useConfirm();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
-  // failed delete toasts AND shakes the delete button.
-  const [shake, setShake] = useState(0);
-
-  async function handleDelete() {
-    if (!(await confirm(t("snapshots.deleteConfirm")))) return;
-    setDeleting(true);
-    try {
-      const res = await deleteSnapshot("files", snap.id, source);
-      if (res.ok) onDeleted();
-      else {
-        push(res.error ?? t("common.deleteFailed"), "fail");
-        setShake((n) => n + 1);
-      }
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("common.deleteFailed"), "fail");
-      setShake((n) => n + 1);
-    } finally {
-      setDeleting(false);
-    }
-  }
-
-  return (
-    // py-1.5, not the py-2.5 this row used to carry — the identical trade
-    // components/RestorePanel.tsx's own snapshot row already made, and for the
-    // identical reason: its delete control grew from a ~24px text button to the
-    // app's one 32px square icon badge, and trimming 4px of padding per side
-    // keeps the collapsed row at the 44px it measured before. A bigger badge in
-    // a list of unchanged density, rather than a list that grew. Config.tsx's
-    // ConfigSnapshotRow carries the same pairing.
-    <div className="flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0">
-      {/* Identity FIRST, then when it was taken, on the line under it (jdp,
-          2026-09-11: "datum und uhrzeit unter die backup kennung"). They were
-          side by side in one row with the delete button, which made a snapshot
-          read as three unrelated columns; stacked, the date is plainly a
-          property OF the id above it. The id keeps its own mono face and the
-          date the muted caption tone, so the two stay told apart without a
-          fixed column width holding them.
-
-          The `w-20` on the id is gone with the row it was measured for, and so
-          is the `ps-24` indent that used to align the action row under it. */}
-      <div className="flex flex-col">
-        <span dir="ltr" className="font-mono text-start text-carbon-text text-xs">
-          {snap.id.slice(0, 8)}
-        </span>
-        <span className="text-carbon-textMuted text-xs">
-          {new Date(snap.time).toLocaleString()}
-          {snap.tags && snap.tags.length > 0 && (
-            <span className="hidden sm:inline">{` · ${snap.tags.join(", ")}`}</span>
-          )}
-        </span>
-      </div>
-        {/* Whole-area sweep finding, not part of jdp's two named buttons: this
-            per-snapshot delete was the LAST surviving copy of the exact defect
-            already fixed in components/RestorePanel.tsx and pages/Config.tsx —
-            a plain text button whose only colour was a bespoke
-            `hover:bg-statusFailBg hover:text-statusFail` red flash, sitting
-            inside a card every other control of which is hue-integrated. jdp's
-            wording when he reported it there ("Der Löschen-Badge ist auch
-            anders eingefärbt, soll nicht so sein, ganz normal in die Farbmodi
-            integrieren") applies here verbatim; leaving this one behind would
-            have meant the Files tab's own remove badge above is hue-integrated
-            while the delete one panel down is not.
-              Same recipe as its two already-corrected siblings and as the
-            remove badge above: square, `size="icon"` (32px), `tone="active"`,
-            no `hueIndex` — this panel renders inside FileSetRow's own
-            `.glim-hue` card, so the cascade paints it in this set's rainbow
-            position. No red, no grey: the meaning is carried by IconTrash, by
-            the tip, and by the confirm dialog handleDelete already opens
-            (t("snapshots.deleteConfirm")), which is untouched. The "…"
-            in-flight label has nowhere to live on an icon-only badge, so
-            `deleting` shows as `disabled`, exactly like RestorePanel's. */}
-      {/* The delete badge moved DOWN into the action row (jdp, 2026-09-11:
-          "der löschen button in die gleiche zeile der anderen buttons"). It
-          used to sit alone at the far end of the identity line, which put the
-          one destructive control on this row as far as possible from the two
-          controls it belongs with, and left it as the only reason that line
-          was a flex row at all. Everything a snapshot DOES is now in one row;
-          the line above only says which snapshot. */}
-      <div>
-        <FileSetRestoreControl
-          set={set}
-          snapshotId={snap.id}
-          source={source}
-          hostMountRoot={hostMountRoot}
-          restoreFolder={restoreFolder}
-          otherActive={running}
-          t={t}
-          trailing={
-            <Button
-              key={shake}
-              label={t("snapshots.delete")}
-              labelKey="snapshots.delete"
-              glyph={<IconTrash />}
-              tone="accent"
-              onClick={() => void handleDelete()}
-              disabled={deleting || busy}
-              className={`shrink-0${shake ? " glim-shake" : ""}`}
-            />
-          }
-        />
-      </div>
       {confirmDialog}
     </div>
   );
@@ -773,18 +627,6 @@ function FileSetRestorePanel({
   trailing?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const [source, setSource] = useState<RepoSource>("local");
-  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
-  const [loading, setLoading] = useState(false);
-  // Section-load error (list failed to load) — NOT migrated to a toast
-  // (GlimStone follow-up pass, v8.0.0 audit note): it replaces the whole
-  // snapshot-list content area, the same "the section failed to load"
-  // structural condition as Files()'s own page-level `error`, not a one-shot
-  // button-click confirmation. handleDeleteAll's own one-shot failure below
-  // is the bug fix — it used to share this exact state slot (see comment
-  // there).
-  const [error, setError] = useState<string | null>(null);
-
   const [reloadTick, setReloadTick] = useState(0);
   const [deletingAll, setDeletingAll] = useState(false);
   const { push } = useToast();
@@ -792,29 +634,11 @@ function FileSetRestorePanel({
   // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
   // the "Delete all" control on a failed delete, alongside the toast below.
   const [shakeDeleteAll, setShakeDeleteAll] = useState(0);
+  const running = anyActive(useProgress());
 
-  useEffect(() => {
-    if (!open) return;
-    setLoading(true);
-    setError(null);
-    fileSetSnapshots(set.id, source)
-      .then((res) => {
-        if (res.ok) setSnapshots(res.snapshots ?? []);
-        else setError(res.error ?? t("common.loadBackupsFailed"));
-      })
-      .catch(() => setError(t("common.loadBackupsFailed")))
-      .finally(() => setLoading(false));
-  }, [open, set.id, source, reloadTick]); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
-
-  // BUG FIX (GlimStone follow-up pass, v8.0.0): "Delete all" is a one-shot
-  // action failure — it used to be routed through the section-load `error`
-  // above via setError(), but the failure branch below also bumps
-  // reloadTick to refresh the (still-existing) snapshot list, which re-fires
-  // the load effect above and clears `error` again almost immediately
-  // (setError(null) at the top of that effect) — so a delete-all failure was
-  // already near-invisible before this fix, the EXACT same dead-error-
-  // display bug 43c6b49 found and fixed in VMs.tsx's
-  // VMRestorePanel.handleDeleteAll. A toast survives that reload.
+  // "Delete all" fails as a toast, not inline. Bumping reloadTick remounts
+  // the timeline below under a fresh key, so it reads the place again instead
+  // of keeping the rows the delete just emptied.
   async function handleDeleteAll() {
     // TODO(#follow-up): richer stake-detail copy ("N snapshots, X GB") belongs
     // here once it ships (deferred — new interpolated i18n keys across all 25
@@ -864,109 +688,43 @@ function FileSetRestorePanel({
 
       {open && (
         <div className="mt-2 rounded-card bg-carbon-background px-3 py-1">
-          {/* `source.hint` moved from a permanent `text-caption` <p> under
-              this row onto the "Quelle" label as an InfoBubble — rule 8's
-              "read once, costs vertical space forever" case, the same
-              conversion Flash.tsx got in 63f53d5 and the other three copies
-              (components/RestorePanel.tsx, pages/Config.tsx, pages/VMs.tsx)
-              get in this same pass. This was the fourth and last of them.
-                Moving it also fixes the same latent mismatch VMs.tsx's
-              identical row had: the label + SourceToggle are wrapped in
-              <Advanced>, but the <p> explaining what choosing a source DOES
-              sat outside it, so basic mode rendered a hint about a control it
-              wasn't showing. As part of the label it now appears exactly when
-              the toggle does.
-                The old outer `flex flex-col gap-1` wrapper is gone with the
-              <p> (one child left); its `py-2 border-b` moves onto this row,
-              so the row's own box is unchanged. */}
-          <div className="flex items-center gap-2 py-2 border-b border-carbon-border">
-              {/* Source (Local / Off-site) toggle is advanced; basic mode uses local. */}
-              <Advanced>
-                <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
-                  {t("source.label")}
-                  <InfoBubble tip={t("source.hint")} />
-                </span>
-                <SourceToggle source={source} onChange={setSource} disabled={loading} domain="files" />
-              </Advanced>
-              {/* Delete-all acts on the LOCAL repo (and forgets the set), so it
-                  is only offered while the local source is shown. */}
-              {source === "local" && snapshots.length > 0 && (
-                // NO bespoke red. The comment that used to sit here claimed
-                // this badge was "already correctly fault-red per 'the
-                // destructive control is always the fault colour'" — that
-                // rule was REVERSED, and this call site never heard about it.
-                // The standing rule is the opposite (jdp: "Der Löschen-Badge
-                // ist auch anders eingefärbt, soll nicht so sein"; "Keine
-                // Sonderfarbe für den Entfernen-Badge"), and commit d336e532
-                // swept eight controls onto it — but it found them by
-                // grepping for `statusFail` CLASSES, so this badge, carrying
-                // the identical red through Badge's own `tone` prop, was
-                // invisible to that sweep and kept it.
-                //   `tone="neutral"` now: the same secondary chip its
-                // siblings use, and the same neutral chrome Containers.tsx's
-                // own "Alle Backups löschen" took in that sweep. Nothing
-                // becomes ambiguous — the label still says "Alle löschen"
-                // verbatim and handleDeleteAll still routes through the
-                // shared confirm dialog. `glim-shake` survives: behaviour,
-                // not colour. bombvault/no-status-color-on-control now fails
-                // the build if this comes back.
-                // A BUTTON, at the ordinary button size, with the glyph its own
-                // key already earns (jdp, 2026-09-11: "der alle backups löschen
-                // button in der ordner card soll auch normale button größe inkl
-                // glyph sein"). It was a `size="small"` Badge, which is the one
-                // shape this action may not have: Containers.tsx's identical
-                // "Alle Backups löschen" is a full Button and says why in its
-                // own comment - a labelled action that also carries an
-                // in-flight label, not a row-action glyph pair. Two cards
-                // offering the same destructive action in two different sizes
-                // is exactly the drift that comment was written to stop.
-                //
-                // The glyph is not passed: `labelKey` is `snapshots.deleteAll`
-                // and glyphFor's `/\.(delete|remove)/` rule resolves the trash
-                // for it, the same way the container card gets its own. Passing
-                // one here would be a second opinion about a symbol the table
-                // already owns.
-                //
-                // The label is STABLE and the in-flight wording moves to
-                // `title`, which is Button's own documented contract: a label
-                // that changes to "Wird gelöscht…" mid-action resizes the
-                // control at the one moment somebody is watching it. `busy`
-                // carries the spinner instead. Same three props as the
-                // container card, in the same order.
+          <RecentRunsList name={set.name} domain="files" t={t} />
+          <Timeline
+            key={reloadTick}
+            domain="files"
+            itemKey={set.id}
+            itemName={set.name}
+            open={open}
+            header={(rows) =>
+              rows.some((r) => r.places.some((m) => m.place === "local")) && (
                 <Button
                   key={shakeDeleteAll}
                   label={t("snapshots.deleteAll")}
                   labelKey="snapshots.deleteAll"
                   tone="neutral"
                   onClick={() => void handleDeleteAll()}
-                  disabled={deletingAll || loading}
+                  disabled={deletingAll}
                   busy={deletingAll}
                   title={deletingAll ? t("snapshots.deletingAll") : undefined}
-                  className={`ms-auto${shakeDeleteAll ? " glim-shake" : ""}`}
+                  className={`self-end my-1${shakeDeleteAll ? " glim-shake" : ""}`}
                 />
-              )}
-          </div>
-          <RecentRunsList name={set.name} domain="files" t={t} />
-          {loading && (
-            <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
-          )}
-          {error && <p className="py-3 text-xs text-statusFail">{error}</p>}
-          {!loading && !error && snapshots.length === 0 && (
-            <p className="py-3 text-xs text-carbon-textMuted">{t("snapshots.none")}</p>
-          )}
-          {!loading &&
-            snapshots.map((snap) => (
-              <FileSetSnapshotRow
-                key={snap.id}
-                snap={snap}
-                set={set}
-                source={source}
-                hostMountRoot={hostMountRoot}
-                restoreFolder={restoreFolder}
-                onDeleted={() => setReloadTick((n) => n + 1)}
-                t={t}
-              />
-            ))}
+              )
+            }
+            renderActions={(pick) => (
+              <div className="basis-full">
+                <FileSetRestoreControl
+                  set={set}
+                  snapshotId={pick.snapshotId}
+                  source={pick.source}
+                  hostMountRoot={hostMountRoot}
+                  restoreFolder={restoreFolder}
+                  otherActive={running}
+                  onMissing={pick.onMissing}
+                  t={t}
+                />
+              </div>
+            )}
+          />
         </div>
       )}
       {confirmDialog}
