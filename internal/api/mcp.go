@@ -41,6 +41,10 @@ const (
 	mcpTouchEvery     = time.Minute
 	mcpAuthLogEvery   = 10 * time.Second
 
+	// How long a tool that reads the database and Docker may take. Shutdown
+	// ends it too, so nothing outlives the process.
+	mcpReadTimeout = 15 * time.Second
+
 	mcpAuthRealm = `Bearer realm="bombvault-mcp"`
 
 	// The JSON-RPC 2.0 code for a request the server refuses to look at.
@@ -83,20 +87,29 @@ type mcpState struct {
 	authLogMu sync.Mutex
 	authLog   map[string]int64
 
-	countMu  sync.Mutex
-	requests map[string]uint64
+	countMu   sync.Mutex
+	requests  map[string]uint64
+	toolCalls map[mcpToolOutcome]uint64
 
 	// now is time.Now; internal tests replace it with a fixed clock.
 	now func() time.Time
 }
 
+// mcpToolOutcome is one cell of the tool-call counter: which tool answered
+// what.
+type mcpToolOutcome struct {
+	tool    string
+	outcome string
+}
+
 func newMCPState() *mcpState {
 	return &mcpState{
-		calls:    newSlidingWindow(time.Minute, mcpCallsPerMinute),
-		touched:  map[string]int64{},
-		authLog:  map[string]int64{},
-		requests: map[string]uint64{},
-		now:      time.Now,
+		calls:     newSlidingWindow(time.Minute, mcpCallsPerMinute),
+		touched:   map[string]int64{},
+		authLog:   map[string]int64{},
+		requests:  map[string]uint64{},
+		toolCalls: map[mcpToolOutcome]uint64{},
+		now:       time.Now,
 	}
 }
 
@@ -104,11 +117,7 @@ func newMCPState() *mcpState {
 // calls it, so a bad tool registration fails every router test in CI instead of
 // panicking at boot.
 func (h *Handler) buildMCPHTTP() http.Handler {
-	srv := mcp.NewServer(&mcp.Implementation{
-		Name:    "bombvault",
-		Title:   "BombVault",
-		Version: Version,
-	}, nil)
+	srv := h.newMCPServer()
 
 	getServer := func(r *http.Request) *mcp.Server {
 		if _, ok := mcpCallerFrom(r.Context()); !ok {
@@ -395,5 +404,11 @@ func (h *Handler) mcpToolContext(ctx context.Context, d time.Duration) (context.
 func (h *Handler) countMCPRequest(outcome string) {
 	h.mcp.countMu.Lock()
 	h.mcp.requests[outcome]++
+	h.mcp.countMu.Unlock()
+}
+
+func (h *Handler) countMCPToolCall(tool, outcome string) {
+	h.mcp.countMu.Lock()
+	h.mcp.toolCalls[mcpToolOutcome{tool: tool, outcome: outcome}]++
 	h.mcp.countMu.Unlock()
 }

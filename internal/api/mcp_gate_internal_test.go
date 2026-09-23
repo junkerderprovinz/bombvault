@@ -215,6 +215,7 @@ func TestMCPLogsNeverContainKeyOrLabel(t *testing.T) {
 	out := captureLog(t, func() {
 		mcpInternalPost(router, "bvmcp_wrong", mcpInternalInitialize, "10.0.0.4:1")
 		mcpInternalPost(router, key, mcpInternalInitialize, "10.0.0.4:1")
+		mcpInternalPost(router, key, `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_health","arguments":{}}}`, "10.0.0.4:1")
 	})
 
 	for _, secretText := range []string{key, "Karin", secret.HashMCPKey(h.cfg.AppKey, key)} {
@@ -227,6 +228,10 @@ func TestMCPLogsNeverContainKeyOrLabel(t *testing.T) {
 	}
 	if strings.Contains(out, id) && !strings.Contains(out, "..."+secret.MCPKeyHint(key)) {
 		t.Fatalf("a line names the key id without its hint:\n%s", out)
+	}
+	want := "key " + id + " ..." + secret.MCPKeyHint(key) + " tool get_health -> ok"
+	if !strings.Contains(out, want) {
+		t.Fatalf("the call line %q is missing:\n%s", want, out)
 	}
 }
 
@@ -245,6 +250,7 @@ func TestMCPMetricsCountOutcomes(t *testing.T) {
 	key, _ := seedMCPKey(t, h, repo, "Laptop")
 	mcpInternalPost(router, "", mcpInternalInitialize, "")
 	mcpInternalPost(router, key, mcpInternalInitialize, "")
+	mcpInternalPost(router, key, `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_health","arguments":{}}}`, "")
 
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/metrics", nil))
@@ -255,7 +261,8 @@ func TestMCPMetricsCountOutcomes(t *testing.T) {
 	for _, line := range []string{
 		`bombvault_mcp_requests_total{outcome="not_found"} 1`,
 		`bombvault_mcp_requests_total{outcome="no_key"} 1`,
-		`bombvault_mcp_requests_total{outcome="ok"} 1`,
+		`bombvault_mcp_requests_total{outcome="ok"} 2`,
+		`bombvault_mcp_tool_calls_total{tool="get_health",outcome="ok"} 1`,
 		`bombvault_mcp_active_keys 1`,
 	} {
 		if !strings.Contains(body, line) {

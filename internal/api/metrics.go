@@ -189,6 +189,10 @@ func (h *Handler) mcpMetrics() string {
 	for outcome, n := range h.mcp.requests {
 		requests[outcome] = n
 	}
+	toolCalls := make(map[mcpToolOutcome]uint64, len(h.mcp.toolCalls))
+	for call, n := range h.mcp.toolCalls {
+		toolCalls[call] = n
+	}
 	h.mcp.countMu.Unlock()
 
 	outcomes := make([]string, 0, len(requests))
@@ -203,6 +207,25 @@ func (h *Handler) mcpMetrics() string {
 	for _, outcome := range outcomes {
 		fmt.Fprintf(&b, "bombvault_mcp_requests_total{outcome=\"%s\"} %d\n",
 			escapeLabelValue(outcome), requests[outcome])
+	}
+
+	if len(toolCalls) > 0 {
+		calls := make([]mcpToolOutcome, 0, len(toolCalls))
+		for call := range toolCalls {
+			calls = append(calls, call)
+		}
+		sort.Slice(calls, func(i, j int) bool {
+			if calls[i].tool != calls[j].tool {
+				return calls[i].tool < calls[j].tool
+			}
+			return calls[i].outcome < calls[j].outcome
+		})
+		b.WriteString("# HELP bombvault_mcp_tool_calls_total Tool calls per tool and outcome.\n")
+		b.WriteString("# TYPE bombvault_mcp_tool_calls_total counter\n")
+		for _, call := range calls {
+			fmt.Fprintf(&b, "bombvault_mcp_tool_calls_total{tool=\"%s\",outcome=\"%s\"} %d\n",
+				escapeLabelValue(call.tool), escapeLabelValue(call.outcome), toolCalls[call])
+		}
 	}
 
 	keys, err := h.store.ActiveMCPKeys()
