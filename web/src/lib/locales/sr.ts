@@ -1707,6 +1707,8 @@ const sr: Partial<Translations> = {
   "timeline.deleteHeldBy": "Still held by: {list}",
   "timeline.deleteSkipped": "Left out, append-only: {list}",
   "timeline.deletePartial": "Already deleted at: {list}",
+  "timeline.deleteSpace": "The space is not reclaimed until a prune runs.",
+  "timeline.deleteFinal": "This cannot be undone.",
   "timeline.unchecked": "{place}: not checked",
   "timeline.unreadable": "{place}: not readable",
   "timeline.check": "Check",
