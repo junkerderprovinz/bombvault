@@ -56,10 +56,23 @@ PGUSER="${POSTGRES_USER:-postgres}"; export PGUSER
 if [ -n "${POSTGRES_PASSWORD:-}" ]; then PGPASSWORD="$POSTGRES_PASSWORD"; export PGPASSWORD; fi
 `
 
-// mysqlPreamble also settles the root-or-user decision, because the probe, the
-// ready check and the import all have to take the same one as the dump.
-// A template that carries a root password and a non-empty random flag at once
-// is decided by asking the server: a root login that works means root is real.
+// mysqlPreamble also settles the root-or-user decision and how that account
+// reaches the server, because the probe, the ready check and the import all
+// have to take the same ones as the dump. A template that carries a root
+// password and a non-empty random flag at once is decided by asking the
+// server: a root login that works means root is real.
+//
+// The images disagree about which accounts they create. linuxserver/mariadb
+// puts MYSQL_ROOT_PASSWORD on root@'%' and leaves the local root accounts
+// without a password; yobasystems/alpine-mariadb creates the app user as
+// user@'%' and keeps the anonymous local account that wins over it on the
+// socket. Both refuse the socket login with 1045 and take the same credentials
+// one step to the side, so bv_resolve settles the login before the dump
+// starts: the socket, then TCP where a '%' grant applies, then, for root
+// alone, the local account without a password, which has to answer as root so
+// an anonymous account cannot pass for it. A refused local login costs about
+// ten milliseconds, and an account nobody grants keeps the configured password
+// on the socket, so the dump fails with the server's own message.
 const mysqlPreamble = `for v in MARIADB_ROOT_PASSWORD MYSQL_ROOT_PASSWORD MARIADB_USER MYSQL_USER MARIADB_PASSWORD MYSQL_PASSWORD MARIADB_DATABASE MYSQL_DATABASE; do
   bv_secret "$v"
 done
@@ -71,20 +84,38 @@ random="${MARIADB_RANDOM_ROOT_PASSWORD:-${MYSQL_RANDOM_ROOT_PASSWORD:-}}"
 empty="${MARIADB_ALLOW_EMPTY_ROOT_PASSWORD:-${MYSQL_ALLOW_EMPTY_PASSWORD:-}}"
 common="--quick --routines --events --triggers --hex-blob --default-character-set=utf8mb4 --single-transaction"
 client=$(command -v mariadb 2>/dev/null || command -v mysql 2>/dev/null)
-if [ -n "$random" ] && [ -n "$rootpw" ] && [ -n "$client" ] &&
-   MYSQL_PWD="$rootpw" "$client" --user=root -N -B -e 'SELECT 1' >/dev/null 2>&1; then
-  random=""
+conn=""; pw=""
+bv_try() { MYSQL_PWD="$pw" "$client" $conn --user="$1" -N -B -e 'SELECT 1' </dev/null >/dev/null 2>&1; }
+bv_resolve() {
+  pw="$2"; conn=""
+  bv_try "$1" && return 0
+  conn="--protocol=TCP --host=127.0.0.1"
+  bv_try "$1" && return 0
+  conn=""
+  if [ "$1" = root ]; then
+    case "$(MYSQL_PWD= "$client" --user=root -N -B -e 'SELECT CURRENT_USER()' </dev/null 2>/dev/null)" in
+      root@*) pw=""; return 0 ;;
+    esac
+  fi
+  pw="$2"
+  return 1
+}
+user=""; db=""; scope=database
+if [ -n "$rootpw" ] || [ -n "$empty" ]; then
+  pw="$rootpw"
+  if [ -n "$client" ] && bv_resolve root "$rootpw"; then
+    scope=all
+  elif [ -z "$random" ]; then
+    scope=all
+  fi
 fi
-user=""; db=""
-if [ -z "$random" ] && { [ -n "$rootpw" ] || [ -n "$empty" ]; }; then
-  scope=all
-  if [ -n "$rootpw" ]; then MYSQL_PWD="$rootpw"; export MYSQL_PWD; fi
-else
-  scope=database
+if [ "$scope" = database ]; then
   user="${MARIADB_USER:-${MYSQL_USER:-}}"; db="${MARIADB_DATABASE:-${MYSQL_DATABASE:-}}"
   { [ -n "$user" ] && [ -n "$db" ]; } || exit 66
-  MYSQL_PWD="${MARIADB_PASSWORD:-${MYSQL_PASSWORD:-}}"; export MYSQL_PWD
+  conn=""; pw="${MARIADB_PASSWORD:-${MYSQL_PASSWORD:-}}"
+  if [ -n "$client" ]; then bv_resolve "$user" "$pw"; fi
 fi
+MYSQL_PWD="$pw"; export MYSQL_PWD
 `
 
 // No --clean: a DROP ROLE of the connected role aborts the reload.
@@ -100,9 +131,9 @@ exec "$@"
 // --single-transaction; mariadb-dump and the mysqldump of MariaDB 10.x reject
 // the option, so its --help decides.
 const mysqlDumpTail = `if [ "$scope" = all ]; then
-  set -- "$tool" $common --user=root --all-databases
+  set -- "$tool" $common $conn --user=root --all-databases
 else
-  set -- "$tool" $common --no-tablespaces --user="$user" --databases "$db"
+  set -- "$tool" $common $conn --no-tablespaces --user="$user" --databases "$db"
 fi
 case "$tool" in *mysqldump) "$tool" --help 2>/dev/null | grep -q -- --set-gtid-purged && set -- "$@" --set-gtid-purged=OFF ;; esac
 echo "bombvault-dbdump-scope $scope" >&2
@@ -120,7 +151,7 @@ exit 0
 
 const mysqlProbeTail = `echo "bombvault-dbdump-version $("$tool" --version 2>/dev/null)"
 if [ "$scope" = database ]; then echo "bombvault-dbdump-db $db"
-elif [ -n "$client" ]; then "$client" -N -B --user=root -e 'SHOW DATABASES' 2>/dev/null |
+elif [ -n "$client" ]; then "$client" $conn -N -B --user=root -e 'SHOW DATABASES' 2>/dev/null |
   while IFS= read -r n; do echo "bombvault-dbdump-db $n"; done
 fi
 exit 0
@@ -153,8 +184,8 @@ if ! "$admin" --protocol=TCP --host=127.0.0.1 ping >/dev/null 2>&1; then
   entrypoint_running && exit 1
   "$admin" ping >/dev/null 2>&1 || exit 1
 fi
-if [ "$scope" = all ]; then exec "$client" --user=root -N -B -e 'SELECT 1'; fi
-exec "$client" --user="$user" -N -B -e 'SELECT 1' "$db"
+if [ "$scope" = all ]; then exec "$client" $conn --user=root -N -B -e 'SELECT 1'; fi
+exec "$client" $conn --user="$user" -N -B -e 'SELECT 1' "$db"
 `
 
 // ON_ERROR_STOP stays off: pg_dumpall's role section always collides with the
@@ -163,8 +194,8 @@ const postgresImportTail = `exec psql -X --no-password -v ON_ERROR_STOP=0 -d pos
 `
 
 const mysqlImportTail = `[ -n "$client" ] || exit 64
-if [ "$scope" = all ]; then exec "$client" --user=root; fi
-exec "$client" --user="$user" "$db"
+if [ "$scope" = all ]; then exec "$client" $conn --user=root; fi
+exec "$client" $conn --user="$user" "$db"
 `
 
 // orphanStopScript signals a dump that outlived its helper. The case makes a

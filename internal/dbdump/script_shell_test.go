@@ -251,6 +251,185 @@ func TestMySQLScriptRootPath(t *testing.T) {
 	}
 }
 
+// mysqlClient writes a client stub that records every login attempt as
+// "<user> <socket|tcp> <none|given> <query>" and then answers the way decide,
+// an sh fragment, says. It returns the path of the record.
+func (c *shellCase) mysqlClient(decide string) string {
+	c.t.Helper()
+	attempts := filepath.Join(c.records, "attempts")
+	c.write("mariadb", "#!/bin/sh\n"+
+		"proto=socket; user=; query=\n"+
+		"while [ $# -gt 0 ]; do\n"+
+		"  case \"$1\" in\n"+
+		"    --protocol=TCP) proto=tcp ;;\n"+
+		"    --user=*) user=${1#--user=} ;;\n"+
+		"    -e) query=$2; shift ;;\n"+
+		"  esac\n"+
+		"  shift\n"+
+		"done\n"+
+		"pw=none; [ -n \"$MYSQL_PWD\" ] && pw=given\n"+
+		"echo \"$user $proto $pw $query\" >> "+attempts+"\n"+
+		decide+"\n")
+	return attempts
+}
+
+func (c *shellCase) attempts() []string {
+	c.t.Helper()
+	data, err := os.ReadFile(filepath.Join(c.records, "attempts")) //nolint:gosec // G304: the path is this test's own temp directory
+	if err != nil {
+		return nil
+	}
+	return strings.Split(strings.TrimSuffix(string(data), "\n"), "\n")
+}
+
+// TestMySQLScriptSettlesTheLoginTheImageGrants runs the login order against the
+// account layouts the tier-1 images really create: linuxserver/mariadb puts
+// the root password on root@'%' and leaves the local root accounts without
+// one, yobasystems/alpine-mariadb creates the app user as user@'%' behind an
+// anonymous local account.
+func TestMySQLScriptSettlesTheLoginTheImageGrants(t *testing.T) {
+	const (
+		refuseEveryPassword = `[ "$pw" = given ] && exit 1
+case "$query" in *CURRENT_USER*) echo "root@localhost"; exit 0 ;; esac
+exit 0`
+		anonymousAnswers = `[ "$pw" = given ] && exit 1
+case "$query" in *CURRENT_USER*) echo "@localhost"; exit 0 ;; esac
+exit 0`
+		tcpOnly = `[ "$proto" = tcp ] && exit 0
+exit 1`
+	)
+	appEnv := []string{"MARIADB_USER=app", "MARIADB_PASSWORD=p", "MARIADB_DATABASE=appdb"}
+
+	t.Run("the socket login works", func(t *testing.T) {
+		c := newShellCase(t)
+		c.stub("mariadb-dump", "exit 0")
+		c.mysqlClient("exit 0")
+
+		res := c.dump(dbdump.EngineMariaDB, []string{"MYSQL_ROOT_PASSWORD=r"})
+		if res.exit != 0 {
+			t.Fatalf("exit %d, stderr %q", res.exit, res.stderr)
+		}
+		if want := []string{"root socket given SELECT 1"}; !slices.Equal(c.attempts(), want) {
+			t.Errorf("attempts = %q, want %q", c.attempts(), want)
+		}
+		got := c.call("mariadb-dump")
+		if got.hasArg("--protocol=TCP") {
+			t.Errorf("argv = %q, want the socket", got.args)
+		}
+		if got.env["MYSQL_PWD"] != "r" {
+			t.Errorf("MYSQL_PWD = %q, want r", got.env["MYSQL_PWD"])
+		}
+	})
+
+	t.Run("the local root account has no password", func(t *testing.T) {
+		c := newShellCase(t)
+		c.stub("mariadb-dump", "exit 0")
+		c.mysqlClient(refuseEveryPassword)
+
+		res := c.dump(dbdump.EngineMariaDB, []string{"MYSQL_ROOT_PASSWORD=r"})
+		if res.exit != 0 {
+			t.Fatalf("exit %d, stderr %q", res.exit, res.stderr)
+		}
+		want := []string{
+			"root socket given SELECT 1",
+			"root tcp given SELECT 1",
+			"root socket none SELECT CURRENT_USER()",
+		}
+		if !slices.Equal(c.attempts(), want) {
+			t.Errorf("attempts = %q, want %q", c.attempts(), want)
+		}
+		got := c.call("mariadb-dump")
+		if got.env["MYSQL_PWD"] != "" {
+			t.Errorf("MYSQL_PWD = %q, want the password dropped", got.env["MYSQL_PWD"])
+		}
+		if got.hasArg("--protocol=TCP") || !got.hasArg("--all-databases") {
+			t.Errorf("argv = %q, want the whole server over the socket", got.args)
+		}
+	})
+
+	t.Run("an anonymous local account does not pass for root", func(t *testing.T) {
+		c := newShellCase(t)
+		c.stub("mariadb-dump", "exit 0")
+		c.mysqlClient(anonymousAnswers)
+
+		res := c.dump(dbdump.EngineMariaDB, []string{"MYSQL_ROOT_PASSWORD=r"})
+		if res.exit != 0 {
+			t.Fatalf("exit %d, stderr %q", res.exit, res.stderr)
+		}
+		got := c.call("mariadb-dump")
+		if got.env["MYSQL_PWD"] != "r" {
+			t.Errorf("MYSQL_PWD = %q, want the configured password, so the dump fails with the server's own message", got.env["MYSQL_PWD"])
+		}
+		if got.hasArg("--protocol=TCP") {
+			t.Errorf("argv = %q, want the socket", got.args)
+		}
+	})
+
+	t.Run("the app user exists for TCP only", func(t *testing.T) {
+		c := newShellCase(t)
+		c.stub("mariadb-dump", "exit 0")
+		c.mysqlClient(tcpOnly)
+
+		res := c.dump(dbdump.EngineMariaDB, appEnv)
+		if res.exit != 0 {
+			t.Fatalf("exit %d, stderr %q", res.exit, res.stderr)
+		}
+		want := []string{"app socket given SELECT 1", "app tcp given SELECT 1"}
+		if !slices.Equal(c.attempts(), want) {
+			t.Errorf("attempts = %q, want %q", c.attempts(), want)
+		}
+		got := c.call("mariadb-dump")
+		for _, arg := range []string{"--protocol=TCP", "--host=127.0.0.1", "--user=app", "appdb"} {
+			if !got.hasArg(arg) {
+				t.Errorf("argv = %q, want %s", got.args, arg)
+			}
+		}
+		if got.env["MYSQL_PWD"] != "p" {
+			t.Errorf("MYSQL_PWD = %q, want p", got.env["MYSQL_PWD"])
+		}
+	})
+
+	t.Run("a refused app user keeps the socket and its own error", func(t *testing.T) {
+		c := newShellCase(t)
+		c.stub("mariadb-dump", "exit 0")
+		c.mysqlClient("exit 1")
+
+		res := c.dump(dbdump.EngineMariaDB, appEnv)
+		if res.exit != 0 {
+			t.Fatalf("exit %d, stderr %q", res.exit, res.stderr)
+		}
+		got := c.call("mariadb-dump")
+		if got.hasArg("--protocol=TCP") {
+			t.Errorf("argv = %q, want the socket", got.args)
+		}
+		if len(c.attempts()) != 2 {
+			t.Errorf("attempts = %q, want the socket and TCP and no more", c.attempts())
+		}
+	})
+
+	t.Run("the import takes the login the dump settled on", func(t *testing.T) {
+		c := newShellCase(t)
+		c.stub("mariadb-dump", "exit 0")
+		c.write("mariadb", "#!/bin/sh\n"+
+			"case \"$*\" in\n"+
+			"  *'SELECT 1'*) case \"$*\" in *--protocol=TCP*) exit 0 ;; esac; exit 1 ;;\n"+
+			"esac\n"+
+			"{ for a in \"$@\"; do echo \"arg=$a\"; done; } > "+filepath.Join(c.records, "import")+"\nexit 0\n")
+
+		argv, err := dbdump.ImportArgv(dbdump.EngineMariaDB)
+		if err != nil {
+			t.Fatalf("ImportArgv: %v", err)
+		}
+		res := c.run(argv, appEnv, "")
+		if res.exit != 0 {
+			t.Fatalf("exit %d, stderr %q", res.exit, res.stderr)
+		}
+		if got := c.call("import"); !got.hasArg("--protocol=TCP") {
+			t.Errorf("import argv = %q, want the login the dump settles on", got.args)
+		}
+	})
+}
+
 func TestMySQLScriptRandomRootFallsBackToAppUser(t *testing.T) {
 	appEnv := []string{"MARIADB_USER=app", "MARIADB_PASSWORD=p", "MARIADB_DATABASE=appdb"}
 
