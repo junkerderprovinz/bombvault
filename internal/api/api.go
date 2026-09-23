@@ -303,6 +303,17 @@ func (h *Handler) Router() http.Handler {
 	// What is NOT backed up. The status route above is per domain and cannot
 	// answer it: a container nobody ever added is absent from every list it has.
 	mux.HandleFunc("GET /api/coverage", h.handleCoverage)
+
+	// What the backup history says about itself: the findings, the items they
+	// are about, and what the user decided about them.
+	mux.HandleFunc("GET /api/anomalies", h.handleAnomalies)
+	mux.HandleFunc("GET /api/anomalies/summary", h.handleAnomalySummary)
+	mux.HandleFunc("GET /api/anomalies/items", h.handleAnomalyItems)
+	mux.HandleFunc("GET /api/anomalies/{id}", h.handleAnomaly)
+	mux.HandleFunc("POST /api/anomalies/acknowledge", h.handleAcknowledgeAnomalies)
+	mux.HandleFunc("POST /api/anomalies/expected", h.handleAnomaliesExpected)
+	mux.HandleFunc("PUT /api/anomalies/items/{targetId}/prefs", h.handleAnomalyItemPrefs)
+	mux.HandleFunc("DELETE /api/anomalies/items/{targetId}/expectations/{family}", h.handleForgetAnomalyExpectation)
 	// An SMB or WebDAV destination from a form instead of a hand-written rclone
 	// config. Carries a live storage password, so it sits behind
 	// requireAuthForSecrets inside the handler.

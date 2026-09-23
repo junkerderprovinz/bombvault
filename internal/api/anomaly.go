@@ -34,22 +34,24 @@ var (
 // AnomalyView is one finding with everything the page needs to write a sentence
 // about it.
 type AnomalyView struct {
-	ID          string `json:"id"`
-	Detector    string `json:"detector"`
-	Metric      string `json:"metric"`
-	Severity    string `json:"severity"`
-	State       string `json:"state"`
-	ScopeKind   string `json:"scopeKind"`
-	ScopeID     string `json:"scopeId"`
-	TargetID    string `json:"targetId"`
-	Domain      string `json:"domain"`
-	Name        string `json:"name"`
-	Part        string `json:"part"`
-	TargetName  string `json:"targetName"`
-	RunID       string `json:"runId"`
-	LastRunID   string `json:"lastRunId"`
-	LastRunAt   int64  `json:"lastRunAt"`
-	LastGoodRun string `json:"lastGoodRunId"`
+	ID         string `json:"id"`
+	Detector   string `json:"detector"`
+	Metric     string `json:"metric"`
+	Severity   string `json:"severity"`
+	State      string `json:"state"`
+	ScopeKind  string `json:"scopeKind"`
+	ScopeID    string `json:"scopeId"`
+	TargetID   string `json:"targetId"`
+	Domain     string `json:"domain"`
+	Name       string `json:"name"`
+	Part       string `json:"part"`
+	TargetName string `json:"targetName"`
+	RunID      string `json:"runId"`
+	LastRunID  string `json:"lastRunId"`
+	LastRunAt  int64  `json:"lastRunAt"`
+	// LastGood is the backup to restore from after a loss of data, absent on
+	// every finding that is not about one.
+	LastGood *RestorePointRef `json:"lastGood,omitempty"`
 
 	Observed  float64 `json:"observed"`
 	Expected  float64 `json:"expected"`
@@ -72,6 +74,13 @@ type AnomalyView struct {
 	Expectable    bool   `json:"expectable"`
 	RetentionHeld bool   `json:"retentionHeld"`
 	StillPresent  bool   `json:"stillPresent"`
+}
+
+// RestorePointRef names one backup precisely enough to restore it.
+type RestorePointRef struct {
+	RunID      string `json:"runId"`
+	SnapshotID string `json:"snapshotId"`
+	At         int64  `json:"at"`
 }
 
 // AnomalyPage is one page of findings and the cursor that continues it.
@@ -164,6 +173,23 @@ type AnomalyExpectationView struct {
 	UpdatedAt int64   `json:"updatedAt"`
 }
 
+// AnomalyPrefsPatch is a change to one item's preferences. A field the caller
+// did not send keeps its stored value; an empty one follows the global setting.
+type AnomalyPrefsPatch struct {
+	Sensitivity *string `json:"sensitivity"`
+	NotifyMin   *string `json:"notifyMin"`
+}
+
+func (p AnomalyPrefsPatch) applyTo(stored store.ItemPrefs) store.ItemPrefs {
+	if p.Sensitivity != nil {
+		stored.Sensitivity = *p.Sensitivity
+	}
+	if p.NotifyMin != nil {
+		stored.NotifyMin = *p.NotifyMin
+	}
+	return stored
+}
+
 // AnomalyItem is one backed-up item on the Items tab: what it usually does,
 // what it has learned, and the settings it follows.
 type AnomalyItem struct {
@@ -220,12 +246,31 @@ func (s *Service) ListAnomalies(ctx context.Context, f store.AnomalyFilter) (Ano
 	if err != nil {
 		return AnomalyPage{}, err
 	}
+	points, err := s.lastGoodPoints(rows)
+	if err != nil {
+		return AnomalyPage{}, err
+	}
 	page := AnomalyPage{Anomalies: make([]AnomalyView, 0, len(rows)), NextCursor: cursor}
 	targets := s.offsiteTargetNames(rows)
 	for _, row := range rows {
-		page.Anomalies = append(page.Anomalies, anomalyViewOf(row, items, targets))
+		page.Anomalies = append(page.Anomalies, anomalyViewOf(row, items, targets, points))
 	}
 	return page, ctx.Err()
+}
+
+// lastGoodPoints resolves the runs the data-loss findings point back to, so a
+// row carries the snapshot a restore needs and not only a run id.
+func (s *Service) lastGoodPoints(rows []store.Anomaly) (map[string]store.RestorePoint, error) {
+	var ids []string
+	for _, row := range rows {
+		if row.LastGoodRunID != "" && !slices.Contains(ids, row.LastGoodRunID) {
+			ids = append(ids, row.LastGoodRunID)
+		}
+	}
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	return s.store.RestorePoints(ids)
 }
 
 // GetAnomaly serves one finding by id.
@@ -238,7 +283,11 @@ func (s *Service) GetAnomaly(ctx context.Context, id string) (AnomalyView, bool,
 	if err != nil {
 		return AnomalyView{}, false, err
 	}
-	return anomalyViewOf(row, items, s.offsiteTargetNames([]store.Anomaly{row})), true, ctx.Err()
+	points, err := s.lastGoodPoints([]store.Anomaly{row})
+	if err != nil {
+		return AnomalyView{}, false, err
+	}
+	return anomalyViewOf(row, items, s.offsiteTargetNames([]store.Anomaly{row}), points), true, ctx.Err()
 }
 
 // offsiteTargetNames resolves the named off-site targets the given drill rows
@@ -261,17 +310,17 @@ func (s *Service) offsiteTargetNames(rows []store.Anomaly) map[string]string {
 
 // AcknowledgeAnomalies settles the episodes the user has seen and releases the
 // retention holds they were carrying.
-func (s *Service) AcknowledgeAnomalies(ctx context.Context, ids []string, note string) (int, int, error) {
+func (s *Service) AcknowledgeAnomalies(ctx context.Context, ids []string, note string) (changed, skipped, released int, err error) {
 	return s.closeAnomalyEpisodes(ctx, ids, note, false)
 }
 
 // MarkAnomaliesExpected settles the episodes and records the new level or
 // amount as normal, so the same condition is not reported again.
-func (s *Service) MarkAnomaliesExpected(ctx context.Context, ids []string, note string) (int, int, error) {
+func (s *Service) MarkAnomaliesExpected(ctx context.Context, ids []string, note string) (changed, skipped, released int, err error) {
 	return s.closeAnomalyEpisodes(ctx, ids, note, true)
 }
 
-func (s *Service) closeAnomalyEpisodes(ctx context.Context, ids []string, note string, expected bool) (int, int, error) {
+func (s *Service) closeAnomalyEpisodes(ctx context.Context, ids []string, note string, expected bool) (int, int, int, error) {
 	wanted := dedupedIDs(ids)
 	skipped := 0
 	if len(wanted) > anomalyActionLimit {
@@ -284,7 +333,7 @@ func (s *Service) closeAnomalyEpisodes(ctx context.Context, ids []string, note s
 		row, found, err := s.store.GetAnomaly(id)
 		switch {
 		case err != nil:
-			return 0, 0, err
+			return 0, 0, 0, err
 		case !found || row.State != "open":
 			skipped++
 		case expected && !anomalyExpectable(row.Metric):
@@ -294,7 +343,7 @@ func (s *Service) closeAnomalyEpisodes(ctx context.Context, ids []string, note s
 		}
 	}
 	if len(closable) == 0 {
-		return 0, skipped, ctx.Err()
+		return 0, skipped, 0, ctx.Err()
 	}
 
 	release := s.anomalies.lockScopes(anomalyScopesOf(closable))
@@ -308,12 +357,12 @@ func (s *Service) closeAnomalyEpisodes(ctx context.Context, ids []string, note s
 	}
 	closed, err := closeRows(anomalyIDsOf(closable), note, now)
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, 0, err
 	}
 	if expected {
 		for _, row := range closed {
 			if wErr := s.writeAnomalyExpectation(row, now); wErr != nil {
-				return 0, 0, wErr
+				return 0, 0, 0, wErr
 			}
 		}
 	}
@@ -321,7 +370,19 @@ func (s *Service) closeAnomalyEpisodes(ctx context.Context, ids []string, note s
 
 	s.anomalies.markScopesDirty(anomalyScopesOf(closed))
 	s.anomalies.refresh()
-	return len(closed), skipped + len(closable) - len(closed), ctx.Err()
+	return len(closed), skipped + len(closable) - len(closed), heldAmong(closable, closed), ctx.Err()
+}
+
+// heldAmong counts the closed episodes that were pausing retention, which is
+// what the page reports back as released.
+func heldAmong(before, closed []store.Anomaly) int {
+	n := 0
+	for _, row := range before {
+		if anomalyHolds(row) && slices.ContainsFunc(closed, func(c store.Anomaly) bool { return c.ID == row.ID }) {
+			n++
+		}
+	}
+	return n
 }
 
 // writeAnomalyExpectation records what the user just declared normal: a ceiling
@@ -355,9 +416,9 @@ func (s *Service) AnomalyItems(context.Context) ([]AnomalyItem, error) {
 	return s.anomalies.itemViews(), nil
 }
 
-// SetItemAnomalyPrefs stores one item's overrides. An empty field means the
-// item follows the global setting again.
-func (s *Service) SetItemAnomalyPrefs(ctx context.Context, targetID string, p store.ItemPrefs) error {
+// SetItemAnomalyPrefs stores one item's overrides. A field the caller left out
+// keeps what is stored, an empty one follows the global setting again.
+func (s *Service) SetItemAnomalyPrefs(ctx context.Context, targetID string, patch AnomalyPrefsPatch) error {
 	items, err := s.anomalyItemRefs()
 	if err != nil {
 		return err
@@ -365,19 +426,28 @@ func (s *Service) SetItemAnomalyPrefs(ctx context.Context, targetID string, p st
 	if _, known := items[targetID]; !known {
 		return fmt.Errorf("%s: %w", targetID, errNotAnAnomalyItem)
 	}
-	if p.Sensitivity != "" && !slices.Contains(anomalyPresets, Sensitivity(p.Sensitivity)) {
-		return fmt.Errorf("%s: %w", p.Sensitivity, errUnknownSensitivity)
+	if patch.Sensitivity != nil && *patch.Sensitivity != "" &&
+		!slices.Contains(anomalyPresets, Sensitivity(*patch.Sensitivity)) {
+		return fmt.Errorf("%s: %w", *patch.Sensitivity, errUnknownSensitivity)
 	}
-	if p.NotifyMin != "" && !slices.Contains(anomalyNotifyLevels, p.NotifyMin) {
-		return fmt.Errorf("%s: %w", p.NotifyMin, errUnknownNotifyMin)
+	if patch.NotifyMin != nil && *patch.NotifyMin != "" && !slices.Contains(anomalyNotifyLevels, *patch.NotifyMin) {
+		return fmt.Errorf("%s: %w", *patch.NotifyMin, errUnknownNotifyMin)
 	}
 
 	scopes := []anomalyScope{
 		{Kind: anomalyScopeItem, ID: targetID},
 		{Kind: anomalyScopeDump, ID: targetID},
 	}
+	// Reading, merging and writing under the item's own lock, because the page
+	// saves the two controls separately and the second save would otherwise
+	// carry a value from before the first one.
 	release := s.anomalies.lockScopes(scopes)
-	if err := s.store.SetItemPrefs(targetID, p); err != nil {
+	stored, err := s.store.ListItemPrefs()
+	if err != nil {
+		release()
+		return err
+	}
+	if err := s.store.SetItemPrefs(targetID, patch.applyTo(stored[targetID])); err != nil {
 		release()
 		return err
 	}
@@ -419,15 +489,15 @@ func (s *Service) StartAnomalyEngine(ctx context.Context) {
 	s.anomalies.Start(ctx)
 }
 
-func anomalyViewOf(row store.Anomaly, items map[string]anomalyItemRef, targets map[string]string) AnomalyView {
+func anomalyViewOf(row store.Anomaly, items map[string]anomalyItemRef, targets map[string]string,
+	points map[string]store.RestorePoint) AnomalyView {
 	view := AnomalyView{
 		ID: row.ID, Detector: row.Detector, Metric: row.Metric,
 		Severity: row.Severity, State: row.State,
 		ScopeKind: row.ScopeKind, ScopeID: row.ScopeID, TargetID: row.TargetID, Domain: row.Domain,
 		Name:  items[row.TargetID].Name,
 		RunID: row.RunID, LastRunID: row.LastRunID, LastRunAt: row.LastRunAt,
-		LastGoodRun: row.LastGoodRunID,
-		Observed:    row.Observed, Expected: row.Expected, Threshold: row.Threshold,
+		Observed: row.Observed, Expected: row.Expected, Threshold: row.Threshold,
 		Samples: row.Samples, Sensitivity: row.Sensitivity,
 		Details: anomalyDetails(row.Details), Occurrences: row.Occurrences,
 		FirstSeenAt: row.FirstSeenAt, LastSeenAt: row.LastSeenAt,
@@ -440,6 +510,9 @@ func anomalyViewOf(row store.Anomaly, items map[string]anomalyItemRef, targets m
 	}
 	if row.ScopeKind == anomalyScopeZFSDS {
 		view.Part = row.ScopeID
+	}
+	if p, found := points[row.LastGoodRunID]; found {
+		view.LastGood = &RestorePointRef{RunID: p.RunID, SnapshotID: p.SnapshotID, At: p.At}
 	}
 	view.TargetName = targets[offsiteTargetOf(row)]
 	return view

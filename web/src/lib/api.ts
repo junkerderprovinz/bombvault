@@ -196,6 +196,14 @@ export interface Settings {
   /** Dumping recognised database containers before their backup, for every
    *  container at once. A container can still be switched off on its card. */
   dbDumpsEnabled: boolean;
+  /** Anomaly detection over the backup history, the preset every item follows
+   *  unless it carries its own, the severity from which a finding is pushed,
+   *  and whether a finding that means data was lost pauses the deletion of old
+   *  backups of that item. */
+  anomalyEnabled: boolean;
+  anomalySensitivity: string;
+  anomalyNotifyMin: string;
+  anomalyRetentionHold: boolean;
   containersPath: string;
   vmsPath: string;
   flashPath: string;
@@ -1967,11 +1975,15 @@ export function unlockDomain(
   return fetchJSON(`/api/unlock/${domain}${srcParam(source)}`, { method: "POST" });
 }
 
-/** POST /api/prune/{domain} — reclaim space from forgotten snapshots (restic prune). */
+/**
+ * POST /api/prune/{domain} — reclaim space from forgotten snapshots (restic
+ * prune). `paused` names the items a finding is holding: their snapshots were
+ * kept on purpose, which is not the same as nothing to do.
+ */
 export function pruneDomain(
   domain: "containers" | "vms" | "flash" | "config" | "files" | "zfs",
   source?: string
-): Promise<OkEnvelope> {
+): Promise<OkEnvelope & { paused?: string[] }> {
   return fetchJSON(`/api/prune/${domain}${srcParam(source)}`, { method: "POST" });
 }
 
@@ -1989,6 +2001,8 @@ export type RetentionPreviewItem = {
   tag: string;
   keep?: RetentionPreviewSnapshot[] | null;
   remove?: RetentionPreviewSnapshot[] | null;
+  /** A finding is holding this item, so the empty removal list is a decision. */
+  paused?: boolean;
 };
 
 /**
@@ -4391,4 +4405,260 @@ export function addRcloneRemote(
     method: "POST",
     body: JSON.stringify(form),
   });
+}
+
+export type AnomalySeverity = "critical" | "warning" | "info";
+export type AnomalyState = "open" | "resolved" | "acknowledged" | "expected";
+export type AnomalyDetector =
+  | "new_data"
+  | "source"
+  | "duration"
+  | "reliability"
+  | "integrity"
+  | "capacity";
+export type AnomalyScopeKind = "item" | "dump" | "zfsds" | "domain" | "volume";
+
+/** The backup a finding about lost data says to restore from. */
+export type RestorePointRef = {
+  runId: string;
+  snapshotId: string;
+  at: number;
+};
+
+/**
+ * One finding. The backend sends ids and numbers only: the sentence a reader
+ * sees is built in lib/anomalies.ts, and `name` is empty wherever the label is
+ * a translated one (flash, config, a whole domain, the storage volume).
+ */
+export type AnomalyView = {
+  id: string;
+  detector: AnomalyDetector;
+  metric: string;
+  severity: AnomalySeverity;
+  state: AnomalyState;
+  scopeKind: AnomalyScopeKind;
+  scopeId: string;
+  targetId: string;
+  domain: string;
+  /** ZFS dataset for a zfsds row, "" otherwise. */
+  part: string;
+  /** The named off-site target of a restore-check row, "" otherwise. */
+  targetName: string;
+  name: string;
+  runId: string;
+  lastRunId: string;
+  lastRunAt: number;
+  /** Only on the findings that mean data was lost. */
+  lastGood?: RestorePointRef;
+  observed: number;
+  expected: number;
+  threshold: number;
+  samples: number;
+  sensitivity: string;
+  details: Record<string, number | boolean | string>;
+  occurrences: number;
+  firstSeenAt: number;
+  lastSeenAt: number;
+  recoveredAt: number;
+  resolvedAt: number;
+  ackedAt: number;
+  clearedAt: number;
+  ackNote: string;
+  notifiedAt: number;
+  /** Whether this condition can be marked as expected. */
+  expectable: boolean;
+  /** Whether this finding is pausing the deletion of old backups. */
+  retentionHeld: boolean;
+  /** A settled row whose condition has not cleared. */
+  stillPresent: boolean;
+};
+
+/** The figures the sidebar, the dashboard card and the Settings card poll. */
+export type AnomalySummary = {
+  enabled: boolean;
+  /** False until the first full pass of this process has run. */
+  ready: boolean;
+  /** Grows with every pass and every user action; the hooks refetch on it. */
+  generation: number;
+  open: Record<AnomalySeverity, number>;
+  recoveredCritical: number;
+  learningItems: number;
+  retentionHeld: number;
+  evalErrors: number;
+  /** No channel or an explicit "never": nothing is pushed. */
+  notifyMuted: boolean;
+  backfill: {
+    slots: number;
+    done: number;
+    failed: number;
+    filled: number;
+    withoutSummary: number;
+  };
+  /** Repositories whose backend answers no free-space question, by name. */
+  unmeasuredVolumes: string[];
+};
+
+/** A series that belongs to an item: its database dumps, or one ZFS dataset. */
+export type AnomalySeriesInfo = {
+  part: string;
+  learning: { samples: number; needed: number };
+  typical: { sourceBytes: number | null; resticMs: number | null };
+  open: Record<AnomalySeverity, number>;
+  retentionHeld: boolean;
+};
+
+/** One watched item on the Items tab. */
+export type AnomalyItem = {
+  targetId: string;
+  domain: string;
+  name: string;
+  /** Included in the schedule, in an enabled domain. */
+  scheduled: boolean;
+  /** The item's own override, "" when it follows the global setting. */
+  sensitivity: string;
+  effective: string;
+  notifyMin: string;
+  effectiveNotifyMin: string;
+  learning: {
+    samples: number;
+    needed: number;
+    newData: number;
+    source: number;
+    duration: number;
+    noData: boolean;
+  };
+  /** Null per field while the rule behind it is still learning. */
+  typical: {
+    sourceBytes: number | null;
+    newDataBytes: number | null;
+    resticMs: number | null;
+  };
+  dump: AnomalySeriesInfo | null;
+  datasets: AnomalySeriesInfo[];
+  open: Record<AnomalySeverity, number>;
+  retentionHeld: boolean;
+  /** When the selection was last re-based, 0 when it never was. */
+  selectionSince: number;
+  expectations: {
+    scopeKind: string;
+    part: string;
+    family: string;
+    sinceAt: number;
+    ceiling: number;
+    updatedAt: number;
+  }[];
+};
+
+/**
+ * The listing's query. `state` takes "open", "closed", "all" or a comma list;
+ * `scope` is "item:<targetId>", "domain:<domain>:<source>" or "volume:<key>".
+ * An unknown value is refused with code "bad-filter" rather than quietly
+ * answering an empty page.
+ */
+export type AnomalyFilter = {
+  state?: string;
+  severity?: string;
+  detector?: string;
+  domain?: string;
+  scope?: string;
+  since?: number;
+  limit?: number;
+  cursor?: string;
+};
+
+/** GET /api/anomalies */
+export function getAnomalies(
+  f: AnomalyFilter = {}
+): Promise<OkEnvelope & { anomalies: AnomalyView[]; nextCursor: string }> {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(f)) {
+    if (value !== undefined && value !== "") query.set(key, String(value));
+  }
+  const suffix = query.toString();
+  return fetchJSON(`/api/anomalies${suffix ? `?${suffix}` : ""}`);
+}
+
+/** GET /api/anomalies/summary — served from memory, polled by the layout. */
+export function getAnomalySummary(): Promise<
+  OkEnvelope & { summary: AnomalySummary }
+> {
+  return fetchJSON("/api/anomalies/summary");
+}
+
+/** GET /api/anomalies/{id} */
+export function getAnomaly(
+  id: string
+): Promise<OkEnvelope & { anomaly: AnomalyView }> {
+  return fetchJSON(`/api/anomalies/${encodeURIComponent(id)}`);
+}
+
+export type AnomalyActionResult = OkEnvelope & {
+  changed: number;
+  skipped: number;
+  /** How many retention holds this call ended. */
+  released: number;
+};
+
+/**
+ * POST /api/anomalies/acknowledge — settle what the user has seen. This
+ * releases the hold on deleting old backups of those series, so it is the one
+ * anomaly action with a consequence beyond the page.
+ */
+export function acknowledgeAnomalies(
+  ids: string[],
+  note?: string
+): Promise<AnomalyActionResult> {
+  return fetchJSON("/api/anomalies/acknowledge", {
+    method: "POST",
+    body: JSON.stringify({ ids, note: note ?? "" }),
+  });
+}
+
+/** POST /api/anomalies/expected — settle and record the new level as normal. */
+export function markAnomaliesExpected(
+  ids: string[],
+  note?: string
+): Promise<AnomalyActionResult> {
+  return fetchJSON("/api/anomalies/expected", {
+    method: "POST",
+    body: JSON.stringify({ ids, note: note ?? "" }),
+  });
+}
+
+/** GET /api/anomalies/items */
+export function getAnomalyItems(): Promise<
+  OkEnvelope & { items: AnomalyItem[] }
+> {
+  return fetchJSON("/api/anomalies/items");
+}
+
+/**
+ * PUT /api/anomalies/items/{targetId}/prefs — one item's overrides. A key that
+ * is left out keeps its stored value, an empty one follows the global setting,
+ * so the two controls can save on their own.
+ */
+export function setItemAnomalyPrefs(
+  targetId: string,
+  prefs: { sensitivity?: string; notifyMin?: string }
+): Promise<OkEnvelope> {
+  return fetchJSON(
+    `/api/anomalies/items/${encodeURIComponent(targetId)}/prefs`,
+    { method: "PUT", body: JSON.stringify(prefs) }
+  );
+}
+
+/** DELETE one expectation, so its rule watches the series again. */
+export function forgetAnomalyExpectation(
+  targetId: string,
+  family: string,
+  scope = "item",
+  part = ""
+): Promise<OkEnvelope> {
+  const query = new URLSearchParams({ scope });
+  if (part) query.set("part", part);
+  return fetchJSON(
+    `/api/anomalies/items/${encodeURIComponent(targetId)}/expectations/` +
+      `${encodeURIComponent(family)}?${query.toString()}`,
+    { method: "DELETE" }
+  );
 }

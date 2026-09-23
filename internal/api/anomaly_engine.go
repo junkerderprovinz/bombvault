@@ -1036,6 +1036,10 @@ func (e *anomalyEngine) rebuildCache() error {
 	if err != nil {
 		return err
 	}
+	notifyCfg, err := e.svc.NotifyConfig()
+	if err != nil {
+		return err
+	}
 
 	e.mu.Lock()
 	results := maps.Clone(e.results)
@@ -1048,6 +1052,9 @@ func (e *anomalyEngine) rebuildCache() error {
 		Enabled: settings.AnomalyEnabled, Ready: ready,
 		EvalErrors: errs, Backfill: backfillSummary(backfill),
 		UnmeasuredVolumes: unmeasured,
+		// The same gate sendNotifications applies, so the page cannot promise a
+		// message that nothing would deliver.
+		NotifyMuted: !notifyCfg.Active() || !notifyCfg.Configured(),
 	}
 	for _, row := range open {
 		switch row.Severity {

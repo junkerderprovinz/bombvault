@@ -626,6 +626,11 @@ func validateExport(exp settingsExport, mountRoot string) string {
 	if msg := rejectInvalidSettingsNames(exp.Settings); msg != "" {
 		return "invalid settings: " + msg
 	}
+	// The two anomaly presets, through the guard the save uses, so an import
+	// cannot persist a value the Settings page then refuses to save.
+	if msg := rejectInvalidAnomalySettings(exp.Settings); msg != "" {
+		return "invalid settings: " + msg
+	}
 	return ""
 }
 
@@ -696,6 +701,12 @@ func settingsGroups(v settingsView) []string {
 	add("digest", v.DigestEnabled || v.DigestSchedule != "")
 	add("monitoring", v.MetricsEnabled || v.WidgetTokenSet)
 	add("language", v.DefaultLanguage != "")
+	// Named only when the file departs from the defaults, so importing a file
+	// that leaves detection as it ships says nothing about it.
+	add("anomalies", (v.AnomalyEnabled != nil && !*v.AnomalyEnabled) ||
+		(v.AnomalyRetentionHold != nil && !*v.AnomalyRetentionHold) ||
+		(v.AnomalySensitivity != "" && v.AnomalySensitivity != string(sensBalanced)) ||
+		(v.AnomalyNotifyMin != "" && v.AnomalyNotifyMin != "critical"))
 	add("exportEncryption", v.ExportEncryptEnabled || v.ExportAgeRecipients != "")
 	return groups
 }
@@ -732,11 +743,17 @@ func (h *Handler) applyImport(r *http.Request, exp settingsExport) error {
 			"or export again with credentials included.", strings.Join(slots, ", "))
 	}
 
+	var anomalyChanged bool
 	if _, err := h.store.MutateSettings(func(cur *store.Settings) error {
-		*cur = mergeImportedSettings(*cur, exp.Settings)
+		merged := mergeImportedSettings(*cur, exp.Settings)
+		anomalyChanged = anomalySettingsMoved(*cur, merged)
+		*cur = merged
 		return nil
 	}); err != nil {
 		return err
+	}
+	if anomalyChanged {
+		h.svc.anomalies.MarkAllDirty()
 	}
 
 	// Replace the off-site targets with the imported set (a clean, deterministic
@@ -1051,6 +1068,10 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	if v.DBDumpsEnabled != nil {
 		out.DBDumpsEnabled = *v.DBDumpsEnabled
 	}
+	// Same contract as the dump switch, and the same reason: a file written
+	// before this version carries none of the four, and reading that as "off"
+	// would take detection and the data-loss pause with it.
+	applyAnomalySettings(&out, v)
 
 	return out
 }

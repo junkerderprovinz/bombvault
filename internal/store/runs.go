@@ -962,6 +962,53 @@ func (r *Repo) runTargetsOfChunk(ids []string, out map[string]RunTargetKind) err
 	return rows.Err()
 }
 
+// RestorePoint is the backup one run left behind: what to restore, and when it
+// was taken.
+type RestorePoint struct {
+	RunID, SnapshotID string
+	At                int64
+}
+
+// RestorePoints resolves run ids to the backups they left behind. A run that
+// stored no snapshot, and an id no run has, is absent from the result.
+func (r *Repo) RestorePoints(ids []string) (map[string]RestorePoint, error) {
+	out := make(map[string]RestorePoint, len(ids))
+	for start := 0; start < len(ids); start += lastBackupAmongChunk {
+		end := min(start+lastBackupAmongChunk, len(ids))
+		if err := r.restorePointsOfChunk(ids[start:end], out); err != nil {
+			return nil, err
+		}
+	}
+	return out, nil
+}
+
+func (r *Repo) restorePointsOfChunk(ids []string, out map[string]RestorePoint) error {
+	placeholders := strings.TrimSuffix(strings.Repeat("?,", len(ids)), ",")
+	args := make([]any, 0, len(ids))
+	for _, id := range ids {
+		args = append(args, id)
+	}
+	//nolint:gosec // G202: `placeholders` is a generated "?,?,…" list sized from
+	// len(ids), never user text; every id travels as a bound parameter in args.
+	rows, err := r.db.Query(`
+		SELECT id, snapshot_id, COALESCE(finished_at, started_at)
+		FROM runs
+		WHERE id IN (`+placeholders+`) AND snapshot_id IS NOT NULL AND snapshot_id <> ''`, args...)
+	if err != nil {
+		return fmt.Errorf("RestorePoints: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	for rows.Next() {
+		var p RestorePoint
+		if sErr := rows.Scan(&p.RunID, &p.SnapshotID, &p.At); sErr != nil {
+			return fmt.Errorf("RestorePoints: %w", sErr)
+		}
+		out[p.RunID] = p
+	}
+	return rows.Err()
+}
+
 // UnmeasuredSnapshotRuns lists the successful backup and dump runs that left a
 // snapshot but no measurement, oldest first. Rows are drained before returning,
 // because the backfill writes on the same connection.

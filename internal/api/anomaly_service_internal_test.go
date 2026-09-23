@@ -58,13 +58,13 @@ func TestAcknowledgeCountsWhatItCouldNotClose(t *testing.T) {
 	f := newEngineFixture(t)
 	_, row := f.collapsedContainer(t, "nextcloud")
 
-	changed, skipped, err := f.svc.AcknowledgeAnomalies(context.Background(),
+	changed, skipped, released, err := f.svc.AcknowledgeAnomalies(context.Background(),
 		[]string{row.ID, row.ID, "no-such-row"}, "planned clean-up")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if changed != 1 || skipped != 1 {
-		t.Fatalf("changed = %d skipped = %d, want 1 and 1", changed, skipped)
+	if changed != 1 || skipped != 1 || released != 1 {
+		t.Fatalf("changed = %d skipped = %d released = %d, want 1, 1 and 1", changed, skipped, released)
 	}
 	after, _, err := f.st.GetAnomaly(row.ID)
 	if err != nil {
@@ -74,9 +74,9 @@ func TestAcknowledgeCountsWhatItCouldNotClose(t *testing.T) {
 		t.Fatalf("row = %s %q", after.State, after.AckNote)
 	}
 
-	changed, skipped, err = f.svc.AcknowledgeAnomalies(context.Background(), []string{row.ID}, "")
-	if err != nil || changed != 0 || skipped != 1 {
-		t.Fatalf("a settled row = %d %d %v", changed, skipped, err)
+	changed, skipped, released, err = f.svc.AcknowledgeAnomalies(context.Background(), []string{row.ID}, "")
+	if err != nil || changed != 0 || skipped != 1 || released != 0 {
+		t.Fatalf("a settled row = %d %d %d %v", changed, skipped, released, err)
 	}
 }
 
@@ -84,7 +84,7 @@ func TestMarkExpectedRecordsWhatTheSeriesMayDoNow(t *testing.T) {
 	f := newEngineFixture(t)
 	id, row := f.collapsedContainer(t, "nextcloud")
 
-	changed, skipped, err := f.svc.MarkAnomaliesExpected(context.Background(), []string{row.ID}, "moved to a share")
+	changed, skipped, _, err := f.svc.MarkAnomaliesExpected(context.Background(), []string{row.ID}, "moved to a share")
 	if err != nil || changed != 1 || skipped != 0 {
 		t.Fatalf("mark expected = %d %d %v", changed, skipped, err)
 	}
@@ -141,7 +141,7 @@ func TestMarkExpectedSkipsAMetricNobodyCanExpect(t *testing.T) {
 		t.Fatalf("want a failure streak, got %s", row.Metric)
 	}
 
-	changed, skipped, err := f.svc.MarkAnomaliesExpected(context.Background(), []string{row.ID}, "")
+	changed, skipped, _, err := f.svc.MarkAnomaliesExpected(context.Background(), []string{row.ID}, "")
 	if err != nil || changed != 0 || skipped != 1 {
 		t.Fatalf("mark expected = %d %d %v", changed, skipped, err)
 	}
@@ -260,17 +260,17 @@ func TestSetItemPrefsRefusesAnythingButAnItemAndAKnownSetting(t *testing.T) {
 	f.pass(t)
 
 	ctx := context.Background()
-	if err := f.svc.SetItemAnomalyPrefs(ctx, "containers", store.ItemPrefs{Sensitivity: "strict"}); err == nil {
+	if err := f.svc.SetItemAnomalyPrefs(ctx, "containers", prefsPatch("strict", "")); err == nil {
 		t.Fatal("a domain literal is not an item")
 	}
-	if err := f.svc.SetItemAnomalyPrefs(ctx, id, store.ItemPrefs{Sensitivity: "paranoid"}); err == nil {
+	if err := f.svc.SetItemAnomalyPrefs(ctx, id, prefsPatch("paranoid", "")); err == nil {
 		t.Fatal("an unknown preset must be refused")
 	}
-	if err := f.svc.SetItemAnomalyPrefs(ctx, id, store.ItemPrefs{NotifyMin: "loud"}); err == nil {
+	if err := f.svc.SetItemAnomalyPrefs(ctx, id, prefsPatch("", "loud")); err == nil {
 		t.Fatal("an unknown notification minimum must be refused")
 	}
 
-	if err := f.svc.SetItemAnomalyPrefs(ctx, id, store.ItemPrefs{Sensitivity: "strict", NotifyMin: "warning"}); err != nil {
+	if err := f.svc.SetItemAnomalyPrefs(ctx, id, prefsPatch("strict", "warning")); err != nil {
 		t.Fatal(err)
 	}
 	item := itemByID(t, mustItems(t, f), id)

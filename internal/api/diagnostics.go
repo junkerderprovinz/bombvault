@@ -336,6 +336,19 @@ func (h *Handler) buildDiagnostics(ctx context.Context) ([]diagFile, error) {
 		add("runs.json", views, nil)
 	}
 
+	// anomalies.json holds what detection currently has against the history:
+	// the figures the page polls and the open findings behind them. The rows
+	// carry ids, metrics and numbers, and no name the runs member does not
+	// already give away.
+	page, aErr := h.svc.ListAnomalies(ctx, store.AnomalyFilter{Limit: store.MaxAnomalyLimit})
+	if aErr != nil {
+		add("anomalies.json", nil, aErr)
+	} else {
+		add("anomalies.json", map[string]any{
+			"summary": h.svc.AnomalySummary(ctx), "open": page.Anomalies,
+		}, nil)
+	}
+
 	// scheduler.json — what is planned next, nil-guarded the way
 	// handleScheduleNext is.
 	if h.scheduler == nil {
