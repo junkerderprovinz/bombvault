@@ -46,12 +46,14 @@ var (
 )
 
 // zfsSnapshotPoll is how often the mount table is read while a snapshot
-// automount propagates into the container.
-var zfsSnapshotPoll = 250 * time.Millisecond
-
-// zfsSnapshotWait bounds that wait. The mount is already made on the host by
-// then, so anything longer is a propagation problem, not a slow kernel.
-const zfsSnapshotWait = 5 * time.Second
+// automount propagates into the container, and zfsSnapshotWait bounds that
+// wait: the mount is already made on the host by then, so anything longer is a
+// propagation problem rather than a slow kernel. Both are vars so a test does
+// not have to wait them out.
+var (
+	zfsSnapshotPoll = 250 * time.Millisecond
+	zfsSnapshotWait = 5 * time.Second
+)
 
 // snapshotDirEmpty reports whether a member's snapshot holds nothing. restic
 // refuses an empty source, and a dataset may legitimately hold nothing at the

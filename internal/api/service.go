@@ -1038,6 +1038,8 @@ func (s *Service) DiscoverSource(domain string) string {
 		repo, err = s.vmsRepoPath(settings)
 	case "files":
 		repo, err = s.filesRepoPath(settings)
+	case zfsDomain:
+		repo, err = s.zfsRepoPath(settings)
 	default:
 		repo, err = s.containersRepoPath(settings)
 	}
@@ -7528,6 +7530,16 @@ func (s *Service) domainReposInUse(settings store.Settings, domain string) ([]do
 				ids[id] = true
 			}
 		}
+	case zfsDomain:
+		datasets, dErr := s.store.ListZFSDatasets()
+		if dErr != nil {
+			return out, []repoSkip{{Name: "this domain's items", Reason: "their list could not be read", Unreachable: true}}, nil //nolint:nilerr // see above
+		}
+		for _, d := range datasets {
+			if id := strings.TrimSpace(d.Repo); id != "" {
+				ids[id] = true
+			}
+		}
 	}
 	named, err := s.store.ListNamedRepos()
 	if err != nil {
@@ -7566,6 +7578,8 @@ func domainTagPrefixes(domain string) []string {
 		return []string{"vm:"}
 	case "files":
 		return []string{"fileset:"}
+	case zfsDomain:
+		return []string{"zfs:"}
 	}
 	return nil
 }
@@ -15350,6 +15364,8 @@ func (s *Service) repoFor(settings store.Settings, domain, source string) (strin
 		return s.configRepoPath(settings)
 	case "files":
 		return s.filesRepoPath(settings)
+	case zfsDomain:
+		return s.zfsRepoPath(settings)
 	default:
 		return "", fmt.Errorf("unknown domain %q", domain)
 	}

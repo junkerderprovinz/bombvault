@@ -27,8 +27,11 @@ type fakeZFSHost struct {
 
 	tree     []zfs.ListEntry
 	treeErr  error
+	listErr  error
 	snaps    []zfs.SnapshotEntry
 	snapsErr error
+
+	versionErr error
 
 	snapshotErr error
 	destroyErr  error
@@ -64,7 +67,15 @@ func (h *fakeZFSHost) snapshotNames() []string {
 	return append([]string(nil), h.taken...)
 }
 
-func (h *fakeZFSHost) Version(context.Context) (string, error) { return "zfs-2.3.4", nil }
+func (h *fakeZFSHost) Version(context.Context) (string, error) {
+	h.record("version")
+	if h.versionErr != nil {
+		return "", h.versionErr
+	}
+	return "zfs-2.3.4", nil
+}
+
+func (h *fakeZFSHost) Binary() string { return "zfs" }
 
 func (h *fakeZFSHost) Tree(_ context.Context, root string) ([]zfs.ListEntry, error) {
 	h.record("list -r " + root)
@@ -79,6 +90,9 @@ func (h *fakeZFSHost) Tree(_ context.Context, root string) ([]zfs.ListEntry, err
 
 func (h *fakeZFSHost) List(context.Context) ([]zfs.ListEntry, error) {
 	h.record("list")
+	if h.listErr != nil {
+		return nil, h.listErr
+	}
 	return h.tree, nil
 }
 
@@ -156,17 +170,34 @@ type zfsFakeEngine struct {
 
 	forgetTags   []string
 	forgetPruned []bool
+	forgotten    []string
 	prunes       int
 	copies       []string
 	snaps        []restic.Snapshot
+	// snapsByRepo answers for one location instead of snaps, so a test can put
+	// an item's history in a named repository.
+	snapsByRepo map[string][]restic.Snapshot
 }
 
 func (e *zfsFakeEngine) RepoOpens(context.Context, string, restic.Mode) bool { return true }
 
 func (e *zfsFakeEngine) Unlock(context.Context, string, bool, restic.Mode) error { return nil }
 
-func (e *zfsFakeEngine) Snapshots(context.Context, string, restic.Mode) ([]restic.Snapshot, error) {
+func (e *zfsFakeEngine) Snapshots(_ context.Context, repo string, _ restic.Mode) ([]restic.Snapshot, error) {
+	if snaps, ok := e.snapsByRepo[repo]; ok {
+		return snaps, nil
+	}
+	if e.snapsByRepo != nil {
+		return nil, nil
+	}
 	return e.snaps, nil
+}
+
+func (e *zfsFakeEngine) Forget(_ context.Context, _ string, ids []string, _ bool, _ restic.Mode) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.forgotten = append(e.forgotten, ids...)
+	return nil
 }
 
 func (e *zfsFakeEngine) BackupDir(_ context.Context, repo, dir string, tags []string, _ restic.Mode, excludes ...string) (restic.Summary, error) {
@@ -214,6 +245,12 @@ func (e *zfsFakeEngine) readBackupDirs() []string {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	return append([]string(nil), e.backupDirs...)
+}
+
+func (e *zfsFakeEngine) readForgotten() []string {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return append([]string(nil), e.forgotten...)
 }
 
 func (e *zfsFakeEngine) readForgetTags() []string {

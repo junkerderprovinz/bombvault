@@ -29,7 +29,8 @@ var _ Host = (*SSHHost)(nil)
 // NewSSHHost returns a Host that talks over r.
 func NewSSHHost(r Runner) *SSHHost { return &SSHHost{r: r} }
 
-func (h *SSHHost) binary() string {
+// Binary is the zfs command that worked on this host.
+func (h *SSHHost) Binary() string {
 	if h.usrSbin.Load() {
 		return usrSbinZFS
 	}
@@ -161,7 +162,7 @@ func (h *SSHHost) runCapped(ctx context.Context, args []string) (string, error) 
 // gets one retry under /usr/sbin, and a binary that worked is kept for the
 // rest of the process.
 func (h *SSHHost) run(ctx context.Context, args []string) (string, error) {
-	argv := withBinary(args, h.binary())
+	argv := withBinary(args, h.Binary())
 	stdout, stderr, err := h.r.RunCapture(ctx, argv...)
 	if err == nil {
 		return stdout, nil

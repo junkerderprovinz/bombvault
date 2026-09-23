@@ -38,12 +38,13 @@ type Config struct {
 	// it because its libvirtd listens on a non-standard socket; the value is
 	// in docs/vm-backup-ssh-setup.md.
 	LibvirtURI string
-	// LibvirtURIHost and LibvirtURIUser are the SSH target LibvirtURI names,
-	// empty when no qemu+ssh URI is set. They fill in for the variables the
-	// deployment left unset and let the probe report a target that disagrees
-	// with the URI.
+	// LibvirtURIHost, LibvirtURIUser and LibvirtURIPort are the SSH target
+	// LibvirtURI names, empty when no qemu+ssh URI is set. They fill in for the
+	// variables the deployment left unset and let the probe report a target
+	// that disagrees with the URI.
 	LibvirtURIHost string
 	LibvirtURIUser string
+	LibvirtURIPort string
 	// LibvirtHostWasPlaceholder records that LIBVIRT_HOST still held the value
 	// the Unraid template ships, which reaches no host.
 	LibvirtHostWasPlaceholder bool
@@ -93,6 +94,7 @@ func Load(env map[string]string) (Config, error) {
 		LibvirtURI:                env["LIBVIRT_URI"],
 		LibvirtURIHost:            uriHost,
 		LibvirtURIUser:            uriUser,
+		LibvirtURIPort:            uriPort,
 		LibvirtHostWasPlaceholder: wasPlaceholder,
 		Port:                      intOr(env["PORT"], 3000),
 		HTTPSPort:                 intOr(env["HTTPS_PORT"], 3443),
