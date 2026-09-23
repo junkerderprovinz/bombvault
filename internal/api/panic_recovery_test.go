@@ -317,7 +317,7 @@ func TestStartRestoreStackMemberPanicRecordsFailedRunAndContinues(t *testing.T) 
 	seedStackTarget(t, st, mountRoot, "web", "app", "web", "")
 	seedStackTarget(t, st, mountRoot, "worker", "app", "worker", "")
 
-	started, err := svc.StartRestoreStack(context.Background(), "app", "local", true, true)
+	started, err := svc.StartRestoreStack(context.Background(), "app", "local", "", true, true)
 	if err != nil || !started {
 		t.Fatalf("stack restore should start: started=%v err=%v", started, err)
 	}

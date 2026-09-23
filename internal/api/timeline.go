@@ -398,6 +398,21 @@ func (h *Handler) handleTimeline(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"places": tl.Places, "rows": tl.Rows}))
 }
 
+// handleStackDir serves GET /api/stacks/{project}/dir: whether the project
+// folder has a snapshot at the source, and from when.
+func (h *Handler) handleStackDir(w http.ResponseWriter, r *http.Request) {
+	project, ok := stackParam(w, r)
+	if !ok {
+		return
+	}
+	d, err := h.svc.latestStackDir(r.Context(), project, sourceParam(r))
+	if err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"found": d.found, "time": d.snap.Time}))
+}
+
 // placeDelete is what a delete takes at one place.
 type placeDelete struct {
 	Place       string   `json:"place"`

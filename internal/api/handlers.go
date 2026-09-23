@@ -1132,6 +1132,17 @@ func (h *Handler) handleBackupCancel(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "cancelled": cancelled})
 }
 
+// stackParam reads {project}, a compose project name, which is laxer than a
+// container name but must not carry a path.
+func stackParam(w http.ResponseWriter, r *http.Request) (string, bool) {
+	project := r.PathValue("project")
+	if project == "" || strings.Contains(project, "/") || strings.Contains(project, "..") {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid stack name"})
+		return "", false
+	}
+	return project, true
+}
+
 // handleRestoreStack restores every backed-up member of a compose stack STOPPED,
 // then (optionally) starts them in dependency order. POST /api/stacks/{project}/restore
 // The {project} is a compose project name, which is laxer than a container name
@@ -1143,19 +1154,23 @@ func (h *Handler) handleBackupCancel(w http.ResponseWriter, r *http.Request) {
 // per-member restore + start loops run detached. Per-member outcomes land in
 // the run history (each member's restore records a kind "restore" run).
 func (h *Handler) handleRestoreStack(w http.ResponseWriter, r *http.Request) {
-	project := r.PathValue("project")
-	if project == "" || strings.Contains(project, "/") || strings.Contains(project, "..") {
-		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid stack name"})
+	project, ok := stackParam(w, r)
+	if !ok {
 		return
 	}
 	var body struct {
-		StartAfter bool `json:"startAfter"`
-		Confirm    bool `json:"confirm"`
+		StartAfter     bool   `json:"startAfter"`
+		Confirm        bool   `json:"confirm"`
+		StackDirSource string `json:"stackDirSource"`
 	}
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	started, err := h.svc.StartRestoreStack(r.Context(), project, sourceParam(r), body.StartAfter, body.Confirm)
+	dirSource := ""
+	if body.StackDirSource != "" {
+		dirSource = normalizeSource(body.StackDirSource)
+	}
+	started, err := h.svc.StartRestoreStack(r.Context(), project, sourceParam(r), dirSource, body.StartAfter, body.Confirm)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
