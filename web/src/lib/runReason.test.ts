@@ -100,6 +100,18 @@ describe("runReason", () => {
     ).toBe("runReason.dbimportFailed {apps}: exit 1: x; runReason.dbimportAppsStopped immich_server");
   });
 
+  it("counts the apps so their sentence can agree with them", () => {
+    const counts: number[] = [];
+    const record = (key: TranslationKey, n?: number): string => {
+      if (n !== undefined) counts.push(n);
+      return key;
+    };
+    const kept = "database imported; the previous data folder was kept: /mnt/pg.old";
+    runReasonParts(`${kept}; could not start these apps again: immich_server`, record);
+    runReasonParts(`${kept}; could not start these apps again: immich_server, immich_ml, immich_web`, record);
+    expect(counts).toEqual([1, 3]);
+  });
+
   it("hands back a reason it does not know", () => {
     expect(runReason("Fatal: repository is already locked", t)).toBe("Fatal: repository is already locked");
     expect(runReasonParts("Fatal: repository is already locked", t)).toEqual({

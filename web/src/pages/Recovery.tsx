@@ -1062,7 +1062,7 @@ function ForeignRestoreCard({
                 the recovery kit carries the commands. */}
             {inventory && inventory.dbDumps.length > 0 && (
               <p className="text-xs text-carbon-textMuted leading-relaxed">
-                {t("recovery.foreignDbDumps").replace("{count}", String(inventory.dbDumps.length))}
+                {t("recovery.foreignDbDumps", inventory.dbDumps.length)}
               </p>
             )}
           </>
@@ -1646,7 +1646,7 @@ export default function Recovery() {
     const dumpOnly = containers.length - withFiles.length;
     if (withFiles.length === 0 && vms.length === 0) return;
     const question = dumpOnly
-      ? `${t("containers.restoreSelectedConfirm")} ${t("recovery.dumpOnlySkipped").replace("{count}", String(dumpOnly))}`
+      ? `${t("containers.restoreSelectedConfirm")} ${t("recovery.dumpOnlySkipped", dumpOnly)}`
       : t("containers.restoreSelectedConfirm");
     if (!(await confirm(question))) return;
     setRestoreAllBusy(true);

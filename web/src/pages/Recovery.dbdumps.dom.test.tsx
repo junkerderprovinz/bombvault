@@ -5,7 +5,7 @@
 // would bring them back with an empty database and say nothing about it.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { I18nProvider, en } from "../lib/i18n";
+import { countText, I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { Container, ForeignInventory } from "../lib/api";
 
@@ -136,7 +136,7 @@ describe("a foreign repository holding only dumps", () => {
     });
 
     expect(screen.queryByText(en["recovery.foreignEmpty"])).toBeNull();
-    expect(screen.getByText(en["recovery.foreignDbDumps"].replace("{count}", "1"))).toBeTruthy();
+    expect(screen.getByText(countText(en["recovery.foreignDbDumps"], "en", 1))).toBeTruthy();
   });
 });
 
@@ -168,7 +168,7 @@ describe("containers that exist as dumps alone", () => {
     });
 
     fireEvent.click(screen.getByRole("button", { name: en["recovery.restoreAll"] }));
-    const question = await screen.findByText(new RegExp(en["recovery.dumpOnlySkipped"].replace("{count}", "1")));
+    const question = await screen.findByText(new RegExp(countText(en["recovery.dumpOnlySkipped"], "en", 1)));
     expect(question).toBeTruthy();
 
     await act(async () => {

@@ -1089,8 +1089,10 @@ export const en = {
   "runReason.dbimportFailed": "the import tool reported an error",
   "runReason.dbimportKeptOld": "the previous data folder was kept",
   "runReason.dbimportErrors": "the import finished with errors",
-  "runReason.dbimportAppsDown": "these apps did not start again: {apps}",
-  "runReason.dbimportAppsStopped": "these apps stay stopped until the data folder is sorted out: {apps}",
+  "runReason.dbimportAppsDown":
+    "one=this app did not start again: {apps}|other=these apps did not start again: {apps}",
+  "runReason.dbimportAppsStopped":
+    "one=this app stays stopped until the data folder is sorted out: {apps}|other=these apps stay stopped until the data folder is sorted out: {apps}",
   "dbdump.toggle": "Database dump before each backup",
   "dbdump.toggleHint": "BombVault recognised this container as a {engine} database. Before each backup it asks the running server for a full SQL dump and stores it as a restore point of its own, straight into the backup repository, without writing a file to your disks. A restore uses the files backup taken after the container stops; the dump is a second copy you can download or import. A failed dump never fails the backup; it shows up as a failed run of its own.",
   "dbdump.toggleHintLabel": "The container label bombvault.dbdump switches the dump on for this {engine} database. Before each backup it asks the running server for a full SQL dump and stores it as a restore point of its own. A failed dump never fails the backup; it shows up as a failed run of its own.",
@@ -1119,8 +1121,10 @@ export const en = {
   "dbdump.busyImporting": "Importing the database dump...",
   "dbdump.updateWarn": "This is a database. An image update can move it to a new major version that refuses its old data folder. The dump taken just before the update can then be imported into the new version from the Backups panel.",
   "dbdump.updateWarnSameMajor": "This is a database. An image update can move it to a new major version. MySQL and MariaDB import a dump only into the major version it came from, so if the new version cannot use the old data folder, roll the image back to the previous version and import the dump taken just before the update there.",
-  "dbdump.stackRestoreWarn": "The data of {names} is copied while the stack runs. After the restore, import their latest database dump before you use the apps.",
-  "dbdump.introNotice": "BombVault dumps the databases it recognises before each backup, as restore points of their own. Recognised here: {count}, the first is {name}. You can switch this off per container on its card or for all containers in Settings.",
+  "dbdump.stackRestoreWarn":
+    "one=The data of {names} is copied while the stack runs. After the restore, import its latest database dump before you use the app.|other=The data of {names} is copied while the stack runs. After the restore, import their latest database dump before you use the apps.",
+  "dbdump.introNotice":
+    "one=BombVault dumps the databases it recognises before each backup, as restore points of their own. Recognised here: {n} database, {name}. You can switch this off per container on its card or for all containers in Settings.|other=BombVault dumps the databases it recognises before each backup, as restore points of their own. Recognised here: {n} databases, the first is {name}. You can switch this off per container on its card or for all containers in Settings.",
   "dbdump.introDismiss": "Got it",
   "dbdump.fixAuth": "Check the password variables on the database container itself (for example POSTGRES_PASSWORD, MARIADB_ROOT_PASSWORD or MYSQL_ROOT_PASSWORD, or their _FILE versions). The dump uses exactly those.",
   "dbdump.fixPrivileges": "The dump could only log in as the app user, which lacks a right the dump needs. Give the container a real root password instead of a random one.",
@@ -2008,11 +2012,13 @@ export const en = {
   "recovery.foreignClose": "Disconnect",
   "recovery.foreignNotConnected": "Connect to a repository above first.",
   "recovery.foreignEmpty": "The repository is readable but holds no BombVault backups.",
-  "recovery.foreignDbDumps": "Database dumps in this repository: {count}. Get one with the restic CLI as described in the recovery kit.",
+  "recovery.foreignDbDumps":
+    "one={n} database dump in this repository. Get it with the restic CLI as described in the recovery kit.|other={n} database dumps in this repository. Get one with the restic CLI as described in the recovery kit.",
   "recovery.dumpOnlyTitle": "Databases saved only as dumps",
   "recovery.dumpOnlyHint": "These containers have no files backup, only database dumps. Restore each one and import its dump before you start the apps that use it.",
   "recovery.restoreAndImport": "Restore and import",
-  "recovery.dumpOnlySkipped": "Databases saved only as dumps are left out here: {count}. Restore and import them from their own list.",
+  "recovery.dumpOnlySkipped":
+    "one={n} database is saved only as a dump and is left out here. Restore and import it from its own list.|other={n} databases are saved only as dumps and are left out here. Restore and import them from their own list.",
   "recovery.foreignLatest": "Latest backup",
   "recovery.foreignTargetFolder": "Target folder",
   "recovery.foreignWholeSet": "Whole set",
@@ -3073,8 +3079,10 @@ export const de: Translations = {
   "runReason.dbimportFailed": "das Import-Werkzeug hat einen Fehler gemeldet",
   "runReason.dbimportKeptOld": "der bisherige Datenordner wurde behalten",
   "runReason.dbimportErrors": "der Import endete mit Fehlern",
-  "runReason.dbimportAppsDown": "diese Apps ließen sich nicht wieder starten: {apps}",
-  "runReason.dbimportAppsStopped": "diese Apps bleiben gestoppt, bis der Datenordner geklärt ist: {apps}",
+  "runReason.dbimportAppsDown":
+    "one=diese App ließ sich nicht wieder starten: {apps}|other=diese Apps ließen sich nicht wieder starten: {apps}",
+  "runReason.dbimportAppsStopped":
+    "one=diese App bleibt gestoppt, bis der Datenordner geklärt ist: {apps}|other=diese Apps bleiben gestoppt, bis der Datenordner geklärt ist: {apps}",
   "dbdump.toggle": "Datenbank-Dump vor jedem Backup",
   "dbdump.toggleHint": "BombVault hat diesen Container als {engine}-Datenbank erkannt. Vor jedem Backup fragt es den laufenden Server nach einem vollständigen SQL-Dump und legt ihn als eigenen Wiederherstellungspunkt direkt im Backup-Repository ab, ohne eine Datei auf deine Platten zu schreiben. Eine Wiederherstellung nutzt das Datei-Backup, das nach dem Anhalten des Containers entsteht; der Dump ist eine zweite Kopie, die du herunterladen oder einspielen kannst. Ein fehlgeschlagener Dump lässt das Backup nie fehlschlagen, er erscheint als eigener fehlgeschlagener Lauf.",
   "dbdump.toggleHintLabel": "Das Container-Label bombvault.dbdump schaltet den Dump für diese {engine}-Datenbank ein. Vor jedem Backup fragt BombVault den laufenden Server nach einem vollständigen SQL-Dump und legt ihn als eigenen Wiederherstellungspunkt ab. Ein fehlgeschlagener Dump lässt das Backup nie fehlschlagen, er erscheint als eigener fehlgeschlagener Lauf.",
@@ -3103,8 +3111,10 @@ export const de: Translations = {
   "dbdump.busyImporting": "Spiele den Datenbank-Dump ein...",
   "dbdump.updateWarn": "Das ist eine Datenbank. Ein Image-Update kann sie auf eine neue Hauptversion heben, die ihren alten Datenordner ablehnt. Der Dump von kurz vor dem Update lässt sich dann im Backups-Bereich in die neue Version einspielen.",
   "dbdump.updateWarnSameMajor": "Das ist eine Datenbank. Ein Image-Update kann sie auf eine neue Hauptversion heben. MySQL und MariaDB spielen einen Dump nur in die Hauptversion ein, aus der er stammt. Kommt die neue Version mit dem alten Datenordner nicht zurecht, setze das Image auf die vorige Version zurück und spiele dort den Dump von kurz vor dem Update ein.",
-  "dbdump.stackRestoreWarn": "Die Daten von {names} werden im laufenden Betrieb des Stacks kopiert. Spiele nach der Wiederherstellung deren neuesten Datenbank-Dump ein, bevor du die Apps benutzt.",
-  "dbdump.introNotice": "BombVault dumpt die Datenbanken, die es erkennt, vor jedem Backup als eigene Wiederherstellungspunkte. Hier erkannt: {count}, die erste ist {name}. Du kannst das je Container auf dessen Karte abschalten oder in den Einstellungen für alle Container.",
+  "dbdump.stackRestoreWarn":
+    "one=Die Daten von {names} werden im laufenden Betrieb des Stacks kopiert. Spiele nach der Wiederherstellung dessen neuesten Datenbank-Dump ein, bevor du die App benutzt.|other=Die Daten von {names} werden im laufenden Betrieb des Stacks kopiert. Spiele nach der Wiederherstellung deren neuesten Datenbank-Dump ein, bevor du die Apps benutzt.",
+  "dbdump.introNotice":
+    "one=BombVault dumpt die Datenbanken, die es erkennt, vor jedem Backup als eigene Wiederherstellungspunkte. Hier erkannt: {n} Datenbank, {name}. Du kannst das je Container auf dessen Karte abschalten oder in den Einstellungen für alle Container.|other=BombVault dumpt die Datenbanken, die es erkennt, vor jedem Backup als eigene Wiederherstellungspunkte. Hier erkannt: {n} Datenbanken, die erste ist {name}. Du kannst das je Container auf dessen Karte abschalten oder in den Einstellungen für alle Container.",
   "dbdump.introDismiss": "Alles klar",
   "dbdump.fixAuth": "Prüfe die Passwort-Variablen am Datenbank-Container selbst (etwa POSTGRES_PASSWORD, MARIADB_ROOT_PASSWORD oder MYSQL_ROOT_PASSWORD, oder deren _FILE-Varianten). Der Dump nutzt genau diese.",
   "dbdump.fixPrivileges": "Der Dump konnte sich nur als App-Benutzer anmelden, dem ein Recht fehlt, das er braucht. Gib dem Container ein echtes Root-Passwort statt eines zufälligen.",
@@ -3909,11 +3919,13 @@ export const de: Translations = {
   "recovery.foreignClose": "Trennen",
   "recovery.foreignNotConnected": "Verbinde dich zuerst oben mit einem Repository.",
   "recovery.foreignEmpty": "Das Repository ist lesbar, enthält aber keine BombVault-Backups.",
-  "recovery.foreignDbDumps": "Datenbank-Dumps in diesem Repository: {count}. Hol dir einen mit der restic-CLI, wie es das Notfallpaket beschreibt.",
+  "recovery.foreignDbDumps":
+    "one={n} Datenbank-Dump in diesem Repository. Hol ihn dir mit der restic-CLI, wie es das Notfallpaket beschreibt.|other={n} Datenbank-Dumps in diesem Repository. Hol dir einen mit der restic-CLI, wie es das Notfallpaket beschreibt.",
   "recovery.dumpOnlyTitle": "Datenbanken, die nur als Dump gesichert sind",
   "recovery.dumpOnlyHint": "Diese Container haben kein Datei-Backup, nur Datenbank-Dumps. Stelle jeden wieder her und importiere seinen Dump, bevor du die Apps startest, die ihn nutzen.",
   "recovery.restoreAndImport": "Wiederherstellen und importieren",
-  "recovery.dumpOnlySkipped": "Datenbanken, die nur als Dump gesichert sind, bleiben hier außen vor: {count}. Stelle sie über ihre eigene Liste wieder her und importiere sie.",
+  "recovery.dumpOnlySkipped":
+    "one={n} Datenbank, die nur als Dump gesichert ist, bleibt hier außen vor. Stelle sie über ihre eigene Liste wieder her und importiere sie.|other={n} Datenbanken, die nur als Dump gesichert sind, bleiben hier außen vor. Stelle sie über ihre eigene Liste wieder her und importiere sie.",
   "recovery.foreignLatest": "Neuestes Backup",
   "recovery.foreignTargetFolder": "Zielordner",
   "recovery.foreignWholeSet": "Gesamter Satz",
