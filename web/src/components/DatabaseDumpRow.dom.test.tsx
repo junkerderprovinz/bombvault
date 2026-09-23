@@ -317,7 +317,7 @@ describe("DatabaseDumpRow", () => {
     expect(note.className).toContain("statusWarn");
   });
 
-  it("translates a failure, keeps the tool's own message and offers the remedy", () => {
+  it("translates a failure and offers the remedy", () => {
     renderRow({
       lastDbDump: {
         at: 1_700_000_000,
@@ -328,9 +328,23 @@ describe("DatabaseDumpRow", () => {
     });
     const failure = screen.getByText(en["runReason.dbdumpAuth"], { exact: false });
     expect(failure.className).toContain("statusFail");
-    expect(document.body.textContent).toContain("FATAL: password authentication failed");
-    expect(document.querySelector('bdi[dir="ltr"]')?.textContent).toBe("FATAL: password authentication failed");
     expect(hints()).toContain(en["dbdump.fixAuth"]);
+  });
+
+  it("leaves the tool's own message off the card", () => {
+    renderRow({
+      lastDbDump: {
+        at: 1_700_000_000,
+        status: "failed",
+        bytes: 0,
+        error:
+          "database dump failed: the container is paused or restarting: dockercli: exec create: container is paused, " +
+          "restarting or stopped: Error response from daemon: Container pg is paused, unpause the container before exec",
+      },
+    });
+    expect(screen.getByText(en["runReason.dbdumpNotRunning"])).toBeTruthy();
+    expect(document.body.textContent).not.toContain("dockercli");
+    expect(document.body.textContent).not.toContain("Error response from daemon");
   });
 
   it("says a cancelled dump was cancelled and offers no remedy for it", () => {

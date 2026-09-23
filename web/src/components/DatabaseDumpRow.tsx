@@ -5,7 +5,7 @@ import { coverageKey, dumpLeftRunning, dumpWasCancelled, ENGINE_NAMES, remedyKey
 import { humanBytes } from "../lib/forecast";
 import type { TranslationKey, useT } from "../lib/i18n";
 import { relativeTime } from "../lib/reltime";
-import { RunReasonText } from "../lib/runReason";
+import { runReasonParts, RunReasonText } from "../lib/runReason";
 import { useConfirm } from "../lib/useConfirm";
 import { useToast } from "../lib/toast";
 import { ToggleRow } from "../pages/settings/shared";
@@ -121,12 +121,13 @@ export function DatabaseDumpRow({ container, t }: { container: Container; t: T }
       };
     }
     if (last.status === "failed") {
+      // Only the sentence BombVault wrote, the form the widget and the
+      // diagnostics bundle carry. What the tool said behind it can quote a row
+      // of the database and names packages of this program; it stays in the
+      // run history.
+      const { head, note } = runReasonParts(last.error, t);
       return {
-        node: (
-          <span className="text-statusFail">
-            <RunReasonText reason={last.error} t={t} />
-          </span>
-        ),
+        node: <span className="text-statusFail">{note ? `${head}; ${note}` : head}</span>,
         remedy: remedyKey(last.error),
       };
     }
