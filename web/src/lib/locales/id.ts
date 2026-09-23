@@ -13,6 +13,8 @@ const id: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Cadangan Mandiri",
   "nav.settings": "Pengaturan",
+  "nav.more": "Lainnya",
+  "nav.mobileNavigation": "Navigasi seluler",
 
   // Mode toggle
   "about.title": "Tentang BombVault",
@@ -274,6 +276,9 @@ const id: Partial<Translations> = {
   "run.colStarted": "Dimulai",
   "run.colFinished": "Selesai",
   "run.colContainer": "Container",
+  "home.newBackupConfirm": "Mulai pencadangan untuk semua domain yang diaktifkan sekarang? Kontainer dihentikan dan dimulai ulang satu per satu selama pencadangannya berjalan.",
+  "run.statVolume": "Volume data",
+  "run.statSnapshot": "Snapshot",
 
   // Settings
   "settings.title": "Pengaturan",
@@ -727,6 +732,9 @@ const id: Partial<Translations> = {
   "settings.labels.buttons": "Tombol",
   "settings.labels.sidebar": "Bilah sisi",
   "settings.labels.tabs": "Tab",
+  "settings.labels.bottombar": "Bilah bawah",
+  "settings.axisBottombarHint": "Hanya memengaruhi tata letak ponsel.",
+  "settings.axisSidebarHint": "Hanya memengaruhi tata letak desktop.",
   "settings.labels.mode.text": "Teks",
   "settings.labels.mode.textGlyph": "Teks dan simbol",
   "settings.labels.mode.glyph": "Simbol",
@@ -770,6 +778,7 @@ const id: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Status perlindungan",
   "dashboard.noOffsite": "Tidak ada salinan luar lokasi",
+  "dashboard.statusLoadFailed": "Tidak dapat memuat status",
   "dashboard.neverExcluded": "Tidak dijadwalkan",
   "dashboard.neverExcludedTitle": "Sengaja ditinggalkan di luar jadwal, jadi tidak ada yang perlu dicadangkan di sini.",
   "dashboard.neverSelf": "Kontainer sendiri",
@@ -852,7 +861,7 @@ const id: Partial<Translations> = {
   "jobs.cadenceDaily": "Setiap hari pukul {time}",
   "jobs.cadenceWeekly": "Setiap minggu ({days}) pukul {time}",
   "jobs.cadenceEveryN": "Setiap {n} hari pukul {time}",
-  "sort.label": "Urutkan:",
+  "sort.label": "Urutkan",
   "sort.nameAsc": "Nama (A–Z)",
   "sort.status": "Status",
   "sort.ip": "IP",
@@ -995,6 +1004,10 @@ const id: Partial<Translations> = {
   "common.restoring": "Memulihkan…",
   "common.done": "Selesai",
   "common.close": "Tutup",
+  "common.expand": "Perluas",
+  "common.collapse": "Ciutkan",
+  "common.back": "Kembali",
+  "common.loadMore": "Muat lebih banyak",
   "common.loadingBackups": "Memuat cadangan…",
   "common.saving": "Menyimpan…",
   "common.restoreRunning": "Pemulihan sedang berjalan…",

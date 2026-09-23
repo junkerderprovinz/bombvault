@@ -241,6 +241,10 @@ EXTRA_NAV = [
              (3.0, 1.0, 18.0, 22.0), "integrity"),
     imported("IconTabStorage", "Paths and storage tab", "0 0 448 512",
              (0.0, 0.0, 448.0, 512.0), "storage"),
+    # The bottom bar's More slot. Three equal dots on the text baseline: the
+    # mark every platform uses for "there is more".
+    ("IconEllipsis", "More, the overflow destination", "1.4 1.4 11.2 11.2",
+     '<circle cx="2.5" cy="7" r="1.1" /><circle cx="7" cy="7" r="1.1" /><circle cx="11.5" cy="7" r="1.1" />'),
 ]
 
 # IconCancel is the same cross as IconClose, so the app has one X.

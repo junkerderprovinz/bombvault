@@ -12,6 +12,8 @@ const ro: Partial<Translations> = {
   "nav.vms": "VM-uri",
   "nav.flash": "Flash",
   "nav.settings": "Setări",
+  "nav.more": "Mai mult",
+  "nav.mobileNavigation": "Navigare mobilă",
   "about.title": "Despre BombVault",
   "about.body": "Un singur cavaler, o cruciadă: unelte open source îngrijite, care nu existau în forma pe care o voiam, construite până nu mai lipsește nimic. Totul gratuit, fără conturi, fără telemetrie, fără reclame și fără abonamente. Niciun asterisc nicăieri. Nimic lizibil nu părăsește vreodată zidurile tale. Făurit seara și în weekend, cu inimă și încăpățânare.",
   "about.coffee": "Dacă BombVault și-a câștigat un loc pe serverul sau calculatorul tău, aruncă o monedă cavalerului tău: ajută la acoperirea costurilor și ține proiectul în viață. Și face inima acestui cavaler să bată puțin mai repede. Mai jos sunt trei căi, alege-o pe cea care ți se potrivește.",
@@ -203,6 +205,9 @@ const ro: Partial<Translations> = {
   "run.colStarted": "Început",
   "run.colFinished": "Terminat",
   "run.colContainer": "Container",
+  "home.newBackupConfirm": "Începi acum o copie de siguranță a tuturor domeniilor activate? Containerele sunt oprite și repornite pe rând, în timp ce rulează copia lor de siguranță.",
+  "run.statVolume": "Volum de date",
+  "run.statSnapshot": "Instantaneu",
 
   // Settings
   "settings.title": "Setări",
@@ -271,6 +276,9 @@ const ro: Partial<Translations> = {
   "settings.labels.buttons": "Butoane",
   "settings.labels.sidebar": "Bară laterală",
   "settings.labels.tabs": "File",
+  "settings.labels.bottombar": "Bară inferioară",
+  "settings.axisBottombarHint": "Se aplică doar aspectului de telefon.",
+  "settings.axisSidebarHint": "Se aplică doar aspectului de desktop.",
   "settings.labels.mode.text": "Text",
   "settings.labels.mode.textGlyph": "Text și simbol",
   "settings.labels.mode.glyph": "Simbol",
@@ -622,6 +630,10 @@ const ro: Partial<Translations> = {
   "common.confirm": "Confirmare",
   "common.cancel": "Anulare",
   "common.close": "Închide",
+  "common.expand": "Extinde",
+  "common.collapse": "Restrânge",
+  "common.back": "Înapoi",
+  "common.loadMore": "Încarcă mai multe",
 
   // Failure fallbacks
   "common.actionFailed": "Acțiunea a eșuat",
@@ -884,6 +896,7 @@ const ro: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Stare protecție",
   "dashboard.noOffsite": "Fără copie în afara locației",
+  "dashboard.statusLoadFailed": "Nu s-a putut încărca starea",
   "dashboard.neverExcluded": "Neprogramat",
   "dashboard.neverExcludedTitle": "Lăsat intenționat în afara programării, așa că nu este nimic de salvat aici.",
   "dashboard.neverSelf": "Container propriu",

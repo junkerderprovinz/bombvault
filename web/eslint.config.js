@@ -1,4 +1,5 @@
-// ESLint flat config for `npm run lint` (`eslint src`): @eslint/js and
+// ESLint flat config for `npm run lint` (src, the e2e specs and the
+// Playwright config): @eslint/js and
 // typescript-eslint recommended, without type information (type-aware linting
 // would pull the whole DOM lib into the lint program), plus react-hooks.
 //
@@ -43,22 +44,33 @@ const tseslintModule = await import("typescript-eslint");
 const tseslint = tseslintModule.default ?? tseslintModule;
 
 const SRC = ["src/**/*.{ts,tsx}"];
+// The Playwright harness: files that run in node outside the app bundle, but
+// are first-party TypeScript all the same, so the base gate reads them (the
+// e2e/wipe-e2e-data.mjs pre-command is .mjs and stays out).
+const HARNESS = ["e2e/**/*.ts", "playwright.config.ts"];
 
 export default [
   { linterOptions: { reportUnusedDisableDirectives: "error" } },
 
+  // Base recommended sets, scoped to the app sources plus the harness.
   ...[js.configs.recommended, ...tseslint.configs.recommended].map((config) => ({
     ...config,
-    files: SRC,
+    files: [...SRC, ...HARNESS],
   })),
 
   {
     files: SRC,
     plugins: { "react-hooks": reactHooks },
     rules: {
+      // The correctness rules this gate exists for.
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
+    },
+  },
 
+  {
+    files: [...SRC, ...HARNESS],
+    rules: {
       // The compiler already reports undefined names; no-undef only adds
       // false positives on TypeScript files.
       "no-undef": "off",
@@ -98,6 +110,13 @@ export default [
             // The seven-tab Selector strip is 1424px wide in German, and
             // PAGE_SHELL's 1152px cap would wrap it onto two rows.
             "Settings.tsx": "PAGE_SHELL_TABBED",
+            // Below 48rem the Card rhythm steps down to 24px (md:gap-10 is
+            // gap-10 at/above it, so desktop is unchanged by construction).
+            // Same 1152px cap. See PAGE_SHELL_RESPONSIVE in pageShell.ts.
+            "Dashboard.tsx": "PAGE_SHELL_RESPONSIVE",
+            "Containers.tsx": "PAGE_SHELL_RESPONSIVE",
+            "VMs.tsx": "PAGE_SHELL_RESPONSIVE",
+            "Recovery.tsx": "PAGE_SHELL_RESPONSIVE",
             // Not a routed page: Layout renders it in place of the app shell
             // while auth is blocked.
             "Login.tsx": null,

@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMIncludeAll, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM, getVmBackupOrder, setVmBackupOrder, setVMRepo } from "../lib/api";
+import { Link } from "react-router-dom";
+import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMIncludeAll, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM, getVmBackupOrder, setVmBackupOrder, setVMRepo, getSettings } from "../lib/api";
+import type { VM, Snapshot, VmOrder, Run } from "../lib/api";
 import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FilterPopover } from "../components/FilterPopover";
+import { ChipFilter, loadStoredFilterKey } from "../components/ChipFilter";
 import { IconTipButton } from "../components/IconTipButton";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
-import type { VM, Snapshot, VmOrder } from "../lib/api";
 import { BULK_HUE } from "../lib/bulkHue";
 import { useT, stateLabel } from "../lib/i18n";
-import { PAGE_SHELL } from "../lib/pageShell";
+import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { useDragReorder } from "../lib/useDragReorder";
 import { Advanced, useAdvanced } from "../lib/advanced";
 import { BackupCancelButton } from "../components/BackupCancelButton";
@@ -35,6 +37,15 @@ import { hueVars } from "../lib/appearance";
 import { Selector } from "../components/Selector";
 import { useToast } from "../lib/toast";
 import { RepoPicker } from "../components/RepoPicker";
+// The phone face's building blocks: the breakpoint hook, the ONE pagination
+// primitive, the shared mobile list chrome and the card block's surfaces.
+import { useIsDesktop } from "../lib/useMediaQuery";
+import { useLoadMore } from "../lib/useLoadMore";
+import { ListToolbar } from "../components/mobile/ListToolbar";
+import { MobileListCard } from "../components/mobile/MobileListCard";
+import { MobileDetailShell } from "../components/mobile/MobileDetailShell";
+import { RunDetailSheet } from "../components/mobile/RunDetailSheet";
+import { MobileSectionLabel } from "../components/mobile/MobileSectionLabel";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -121,40 +132,18 @@ const SCHEDULE_FILTER_STORAGE_KEY = "bv-vms-schedule-filter";
 const BACKUP_FILTER_STORAGE_KEY = "bv-vms-backup-filter";
 
 function loadScheduleFilterKey(): ScheduleFilterKey {
-  const v = localStorage.getItem(SCHEDULE_FILTER_STORAGE_KEY);
-  if (v === "all" || v === "scheduled" || v === "notScheduled") return v;
-  return "all";
+  return loadStoredFilterKey(
+    SCHEDULE_FILTER_STORAGE_KEY,
+    ["all", "scheduled", "notScheduled"] as const,
+    "all",
+  );
 }
 
 function loadBackupFilterKey(): BackupFilterKey {
-  const v = localStorage.getItem(BACKUP_FILTER_STORAGE_KEY);
-  if (v === "all" || v === "backedUp" || v === "neverBackedUp") return v;
-  return "all";
-}
-
-function ChipFilter<K extends string>({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: { key: K; label: string }[];
-  value: K;
-  onChange: (k: K) => void;
-}) {
-  return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <span className="text-xs text-carbon-textMuted">{label}</span>
-      <Selector
-        items={options.map((o) => ({ id: o.key, label: o.label }))}
-        label={label}
-        variant="well"
-        select="one"
-        active={value}
-        onChange={(id) => onChange(id as K)}
-      />
-    </div>
+  return loadStoredFilterKey(
+    BACKUP_FILTER_STORAGE_KEY,
+    ["all", "backedUp", "neverBackedUp"] as const,
+    "all",
   );
 }
 
@@ -294,6 +283,7 @@ function VMBackupButton({
   t,
   onBackedUp,
   running,
+  onRunCorrelated,
 }: {
   name: string;
   t: T;
@@ -301,6 +291,13 @@ function VMBackupButton({
   /** Whether any operation is running (anyActive). It blocks this backup
    *  while another one runs, but never because of its own (isPending). */
   running?: { active: boolean; phase?: string };
+  /** Optional correlated-run deep-link. useBackupWatch's `onRun` fires on
+   *  EVERY poll with the baseline-id-correlated run; the mobile card host
+   *  feeds it the block's component-local RunDetailSheet (with the dismissed
+   *  latch — the same mechanism Containers.tsx's mobile detail hosts).
+   *  Desktop callers omit it and stay byte-identical, exactly as
+   *  BackupButton.tsx's own passthrough pins. */
+  onRunCorrelated?: (run: Run) => void;
 }) {
   // The server backs the VM up detached and answers at once, so the outcome
   // comes from watching the "vm:<name>" progress and the recorded run.
@@ -309,6 +306,7 @@ function VMBackupButton({
     start: () => backupVMNow(name),
     matchRun: (r) => r.domain === "vm" && r.target === name,
     onDone: onBackedUp,
+    onRun: onRunCorrelated,
   });
   const blockedByOther = !!running?.active && !isPending;
   const { push } = useToast();
@@ -899,6 +897,78 @@ function ScheduleIncludeAllControl({
   );
 }
 
+function VMSelectAll({ t, checked, onChange }: { t: T; checked: boolean; onChange: () => void }) {
+  return (
+    <label className="flex items-center gap-2 text-xs text-carbon-textSub cursor-pointer">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        className="h-4 w-4 cursor-pointer"
+        style={{ accentColor: "var(--accent)" }}
+      />
+      {t("containers.selectAll")}
+    </label>
+  );
+}
+
+// VMBulkBar acts on the ticked VMs and is the same bar at both widths.
+function VMBulkBar({
+  t,
+  count,
+  busy,
+  running,
+  onBackup,
+  onRestore,
+  onClear,
+}: {
+  t: T;
+  count: number;
+  busy: boolean;
+  running: { active: boolean; phase?: string };
+  onBackup: () => void;
+  onRestore: () => void;
+  onClear: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 flex-wrap rounded-card bg-carbon-surface2 px-3 py-2">
+      <span className="text-xs text-carbon-textSub">
+        {count} {t("containers.selectedCount")}
+      </span>
+      <Button
+        label={t("vms.backupSelected")}
+        labelKey="vms.backupSelected"
+        hueIndex={BULK_HUE.backup}
+        tone="accent"
+        onClick={onBackup}
+        disabled={busy || running.active}
+      />
+      {/* Bulk restore is advanced-only; bulk backup stays basic. */}
+      <Advanced>
+        <Button
+          label={t("vms.restoreSelected")}
+          labelKey="vms.restoreSelected"
+          hueIndex={BULK_HUE.restore}
+          tone="accent"
+          onClick={onRestore}
+          disabled={busy || running.active}
+        />
+      </Advanced>
+      <Button
+        label={t("containers.clearSelection")}
+        labelKey="containers.clearSelection"
+        tone="neutral"
+        onClick={onClear}
+        disabled={busy}
+      />
+      {busy && <span className="text-xs text-carbon-textMuted">{t("containers.working")}</span>}
+      {!busy && running.active && (
+        <span className="text-xs text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
+      )}
+    </div>
+  );
+}
+
 const VM_BACKUP_ORDER_COLLAPSED_KEY = "bombvault.vmBackupOrderCollapsed";
 
 // VMBackupOrderPanel sets the order in which the scheduled run backs up the
@@ -1176,10 +1246,23 @@ function VMBackupOrderPanel({
 
 export function VMs() {
   const { t } = useT();
-  // Read directly rather than relying on <Advanced>: the order panel's
-  // hueIndex={nextHue()} is evaluated when the element is built, even if
-  // <Advanced> then renders nothing, so nextHue() may only run when the panel
-  // will render.
+  // ONE responsive layout (the Dashboard.tsx/Containers.tsx rewrite pattern):
+  // every block below is JSX-gated on `isDesktop` or `!isDesktop`, so exactly
+  // one face of the page ever mounts — there is no CSS-hidden twin. The
+  // dual-block shape this page's mobile port arrived in (hidden-by-utility
+  // wrappers over a second mobile gate) double-rendered the list and kept a
+  // hidden DOM copy in sync for nothing; killing it is the point of the
+  // rewrite. jsdom's matchMedia stub answers "desktop", so unit tests pin the
+  // desktop face and the phone face is exercised by the Playwright harness
+  // (web/e2e/destination-vms.spec.ts).
+  const isDesktop = useIsDesktop();
+  // Advanced-mode flag read directly (not just via the <Advanced> wrapper
+  // below): VMBackupOrderPanel's own hueIndex must only be resolved via
+  // `nextHue()` when the panel will ACTUALLY render — see this function's
+  // own `nextHue()` comment below for why a JSX child's props (including a
+  // `hueIndex={nextHue()}` expression) evaluate eagerly as part of building
+  // the <Advanced> element, regardless of whether <Advanced> itself goes on
+  // to render null.
   const { advanced } = useAdvanced();
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
@@ -1264,14 +1347,14 @@ export function VMs() {
   // before sorting and the split into live VMs and orphans. VMs have no image,
   // so the search matches the name only.
   const query = search.trim().toLowerCase();
-  const filtered = vms.filter((v) => {
+  const filtered = useMemo(() => vms.filter((v) => {
     if (query && !v.name.toLowerCase().includes(query)) return false;
     if (scheduleFilter === "scheduled" && !v.includeInSchedule) return false;
     if (scheduleFilter === "notScheduled" && v.includeInSchedule) return false;
     if (backupFilter === "backedUp" && v.lastBackup == null) return false;
     if (backupFilter === "neverBackedUp" && v.lastBackup != null) return false;
     return true;
-  });
+  }), [vms, query, scheduleFilter, backupFilter]);
 
   // The filters persist in localStorage, so a restored value could shrink the
   // list behind the collapsed Filters button; the trigger's dot shows it. Sort
@@ -1279,7 +1362,7 @@ export function VMs() {
   const filtersActive =
     query !== "" || scheduleFilter !== "all" || backupFilter !== "all";
 
-  const sorted = sortVMs(filtered, sortKey);
+  const sorted = useMemo(() => sortVMs(filtered, sortKey), [filtered, sortKey]);
   const live = sorted.filter((v) => v.state !== "not-installed");
   const orphans = sorted.filter((v) => v.state === "not-installed");
   // Unfiltered, so a search cannot hide the entry to link. An entry under
@@ -1383,8 +1466,11 @@ export function VMs() {
   const nextHue = () => hueSeq++;
 
   return (
-    <div className={PAGE_SHELL}>
-      {/* Page heading + Discover (disaster-recovery) action */}
+    // Same shell as Containers; eslint.config.js carries the
+    // PAGE_SHELL_RESPONSIVE exception.
+    <div className={PAGE_SHELL_RESPONSIVE}>
+      {/* Page heading + Discover (disaster-recovery) action, at both
+          widths, the same header the Containers page renders. */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold text-carbon-text">
@@ -1395,6 +1481,8 @@ export function VMs() {
           </p>
           <div className="mt-2"><OffsiteIndicator domain="vms" /></div>
         </div>
+        {/* Discover is the way back after a lost database, so it stays
+            whether or not VM backups are switched on, as on Containers. */}
         <div className="flex items-center gap-2 shrink-0">
           <Button
             key={shakeDiscover}
@@ -1419,24 +1507,44 @@ export function VMs() {
       )}
       {!loading && !error && vms.length === 0 && (
         <div className="bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3">
-          {/* No Add action: the list is what libvirt reports, and Discover
-              above is the action for an empty result. */}
+          {/* No "Add" action here (unlike Receiver/Fleet/Files): this list is a
+              live enumeration of what libvirt/KVM actually reports, not a
+              BombVault-managed list to add to. The page's own Discover action
+              (disaster-recovery re-scan, the header button above) is already the
+              relevant action for an empty result, so a second button here
+              would be redundant. */}
           <EmptyStateIcon icon={IconVM} />
           <p className="text-sm text-carbon-textMuted">{t("vms.empty")}</p>
         </div>
       )}
 
-      {/* Gated on `advanced` as well: the hueIndex expression is evaluated
-          even when <Advanced> renders nothing, and would push the
-          not-installed heading one position late. */}
-      {!loading && !error && (
+      {/* VM backup-order panel (#119, VMs) — advanced, DESKTOP-ONLY: a
+          drag-reorder editor has no phone face (mobile edits each VM's
+          schedule on the card's own sheet instead), and the phone never
+          mounts it — exactly one face per width.
+          `advanced ? nextHue() : undefined`, not a bare `nextHue()` inside
+          <Advanced>: a JSX child's own props (this `hueIndex` expression
+          included) evaluate eagerly as part of building the <Advanced>
+          element itself, before <Advanced> ever runs its own `advanced &&
+          when` check — so an unconditional `nextHue()` here would burn a
+          slot every render regardless of whether the panel actually paints,
+          landing the not-installed section's own notch below one index late
+          whenever Advanced mode is off. Gating on the same `advanced` flag
+          read directly above keeps the counter honest: only increment for a
+          notch that will actually render, exactly like Dashboard.tsx's own
+          advancedOnly blocks pre-filtering before ever calling nextHue(). */}
+      {isDesktop && !loading && !error && (
         <Advanced>
           <VMBackupOrderPanel vms={vms} t={t} hueIndex={advanced ? nextHue() : undefined} />
         </Advanced>
       )}
 
-      {/* Controls: Filters popover (search + schedule/backup filters + sort) + select-all. */}
-      {!loading && vms.length > 0 && (
+      {/* Controls: Filters popover (search + schedule/backup filters + sort) + select-all.
+          Desktop face — below the breakpoint the mobile block's ListToolbar
+          carries the SAME state (search/chips/sort) on the shared primitives.
+          One predicate, two presentations; the `isDesktop` gate mounts exactly
+          one of them per width. */}
+      {isDesktop && !loading && vms.length > 0 && (
         <div className="flex items-center gap-x-6 gap-y-2 flex-wrap">
           <FilterPopover label={t("filter.button")} active={filtersActive}>
             <input
@@ -1471,16 +1579,7 @@ export function VMs() {
             <SortControl value={sortKey} onChange={handleSortChange} t={t} />
           </FilterPopover>
           {live.length > 0 && (
-            <label className="flex items-center gap-2 text-xs text-carbon-textSub cursor-pointer">
-              <input
-                type="checkbox"
-                checked={allLiveSelected}
-                onChange={toggleSelectAll}
-                className="h-4 w-4 cursor-pointer"
-                style={{ accentColor: "var(--accent)" }}
-              />
-              {t("containers.selectAll")}
-            </label>
+            <VMSelectAll t={t} checked={allLiveSelected} onChange={toggleSelectAll} />
           )}
           {live.length > 0 && (
             <div className="ms-auto">
@@ -1490,51 +1589,24 @@ export function VMs() {
         </div>
       )}
 
-      {/* Bulk action bar */}
-      {!loading && selected.size > 0 && (
-        <div className="flex items-center gap-3 flex-wrap rounded-card bg-carbon-surface2 px-3 py-2">
-          <span className="text-xs text-carbon-textSub">
-            {selected.size} {t("containers.selectedCount")}
-          </span>
-          <Button
-            label={t("vms.backupSelected")}
-            labelKey="vms.backupSelected"
-            hueIndex={BULK_HUE.backup}
-            tone="accent"
-            onClick={backupSelected}
-            disabled={bulkBusy || running.active}
-          />
-          {/* Bulk restore is advanced-only; bulk backup stays basic. */}
-          <Advanced>
-            <Button
-              label={t("vms.restoreSelected")}
-              labelKey="vms.restoreSelected"
-              hueIndex={BULK_HUE.restore}
-              tone="accent"
-              onClick={() => void restoreSelected()}
-              disabled={bulkBusy || running.active}
-            />
-          </Advanced>
-          <Button
-            label={t("containers.clearSelection")}
-            labelKey="containers.clearSelection"
-            tone="neutral"
-            onClick={() => setSelected(new Set())}
-            disabled={bulkBusy}
-          />
-          {bulkBusy && (
-            <span className="text-xs text-carbon-textMuted">{t("containers.working")}</span>
-          )}
-          {!bulkBusy && running.active && (
-            <span className="text-xs text-carbon-textMuted">
-              {t(busyPhraseKey(running.phase))}
-            </span>
-          )}
-        </div>
+      {/* The phone block renders the same bar under its summary line. */}
+      {isDesktop && !loading && selected.size > 0 && (
+        <VMBulkBar
+          t={t}
+          count={selected.size}
+          busy={bulkBusy}
+          running={running}
+          onBackup={backupSelected}
+          onRestore={() => void restoreSelected()}
+          onClear={() => setSelected(new Set())}
+        />
       )}
 
-      {/* Live VMs */}
-      {!loading && live.length > 0 && (
+      {/* Live VMs — the desktop list, JSX-gated: at >=48rem this is the list;
+          below it the phone gets the card list in the mobile block instead and
+          these full row cards (with their inline editors' weight) never mount
+          at all — the point of the gate, versus a CSS-hidden second copy. */}
+      {isDesktop && !loading && live.length > 0 && (
         <div className="flex flex-col gap-3 glim-content-fade">
           {live.map((v, i) => (
             <VMRow
@@ -1551,8 +1623,10 @@ export function VMs() {
         </div>
       )}
 
-      {/* VMs gone from the host that still have backups. */}
-      {!loading && orphans.length > 0 && (
+      {/* Orphan VMs — no longer defined on the host but still have backups.
+          Desktop face — the phone's card list renders its own not-installed
+          section inline (see the mobile block below). */}
+      {isDesktop && !loading && orphans.length > 0 && (
         <div className="flex flex-col gap-3 glim-content-fade">
           <NotInstalledHeading tip={t("vms.notInstalledHint")} hueIndex={nextHue()} t={t} />
           {/* Continues the live list's colour sequence, so the first orphan
@@ -1563,11 +1637,604 @@ export function VMs() {
         </div>
       )}
 
-      {/* No VM matches the active search / schedule / backup filters. */}
+      {/* The phone face is mounted only below 48rem rather than hidden, so
+          the settings read it owns never reaches the desktop. */}
+      {!isDesktop && (
+        <MobileVMsBlock
+          sorted={sorted}
+          liveCount={live.length}
+          loading={loading}
+          error={error !== null}
+          onRetry={() => void loadVMs()}
+          search={search}
+          onSearch={setSearch}
+          scheduleFilter={scheduleFilter}
+          onScheduleFilterChange={handleScheduleFilterChange}
+          backupFilter={backupFilter}
+          onBackupFilterChange={handleBackupFilterChange}
+          sortKey={sortKey}
+          onSortChange={handleSortChange}
+          running={running}
+          onRefresh={() => void loadVMs()}
+          linkCandidates={notInstalledNames}
+          selected={selected}
+          onToggleSelect={toggleSelect}
+          allLiveSelected={allLiveSelected}
+          onToggleSelectAll={toggleSelectAll}
+          onBackupSelected={backupSelected}
+          onRestoreSelected={() => void restoreSelected()}
+          onClearSelection={() => setSelected(new Set())}
+          bulkBusy={bulkBusy}
+          onIncludeAllChanged={() => void loadVMs()}
+          vms={vms}
+        />
+      )}
+
+      {/* No VM matches the active search / schedule / backup filters. Shared:
+          rendered at every width, the same sentence either face's own filter
+          chrome sits above. */}
       {!loading && !error && noMatch && (
         <p className="text-sm text-carbon-textMuted">{t("filter.noMatch")}</p>
       )}
       {confirmDialog}
     </div>
+  );
+}
+
+// MobileVMsBlock is the VMs page below 48rem. It is its own component so the
+// one read only the phone needs (whether VM backups are switched on) stays
+// off the desktop. The filter state is the page's own, so the phone toolbar
+// and the desktop popover drive the same predicate.
+//
+// It hosts the one RunDetailSheet for its cards. onRun fires on every poll,
+// so the sheet always holds the freshest record, and a sheet the user
+// dismissed stays closed through later polls of the same run.
+function MobileVMsBlock({
+  sorted,
+  liveCount,
+  loading,
+  error,
+  onRetry,
+  search,
+  onSearch,
+  scheduleFilter,
+  onScheduleFilterChange,
+  backupFilter,
+  onBackupFilterChange,
+  sortKey,
+  onSortChange,
+  running,
+  onRefresh,
+  linkCandidates,
+  selected,
+  onToggleSelect,
+  allLiveSelected,
+  onToggleSelectAll,
+  onBackupSelected,
+  onRestoreSelected,
+  onClearSelection,
+  bulkBusy,
+  onIncludeAllChanged,
+  vms,
+}: {
+  /** The page's memoized filtered+sorted list; useLoadMore's identity
+   *  contract needs a stable array identity across unrelated renders. */
+  sorted: VM[];
+  /** Live (non not-installed) count for the summary line. */
+  liveCount: number;
+  /** The list is still loading (gates the toolbar, mirroring the desktop
+   *  controls row's own `!loading` condition). */
+  loading: boolean;
+  /** Page-level load failure (the shared error paragraph carries the text;
+   *  this block adds the mobile retry row). */
+  error: boolean;
+  onRetry: () => void;
+  search: string;
+  onSearch: (next: string) => void;
+  scheduleFilter: ScheduleFilterKey;
+  onScheduleFilterChange: (k: ScheduleFilterKey) => void;
+  backupFilter: BackupFilterKey;
+  onBackupFilterChange: (k: BackupFilterKey) => void;
+  sortKey: SortKey;
+  onSortChange: (k: SortKey) => void;
+  running: { active: boolean; phase?: string };
+  onRefresh: () => void;
+  /** The not-installed names the detail's link picker offers. */
+  linkCandidates: string[];
+  /** Bulk-selection state over libvirt names, shared with the desktop face. */
+  selected: ReadonlySet<string>;
+  onToggleSelect: (name: string) => void;
+  /** True when every live VM is ticked (the select-all checkbox). */
+  allLiveSelected: boolean;
+  onToggleSelectAll: () => void;
+  onBackupSelected: () => void;
+  onRestoreSelected: () => void;
+  onClearSelection: () => void;
+  bulkBusy: boolean;
+  /** The include-all switch's refresh: the page reloads its list. */
+  onIncludeAllChanged: () => void;
+  /** The full list payload, for the advanced backup order panel. */
+  vms: VM[];
+}) {
+  const { t } = useT();
+
+  // Whether VM backups are switched on, read here rather than by the page so
+  // the desktop, which never mounts this block, makes no extra request. An
+  // unknown or failed read counts as on: the real list and its own error
+  // surfaces are honest, a claim that the feature is off might not be.
+  const [gate, setGate] = useState<"unknown" | "on" | "off">("unknown");
+  useEffect(() => {
+    let alive = true;
+    getSettings()
+      .then((r) => {
+        if (alive) setGate(r.ok && r.settings.vmsEnabled === false ? "off" : "on");
+      })
+      .catch(() => {
+        if (alive) setGate("on");
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // The open detail holds the VM's name, not the object taken at tap time, and
+  // reads the VM out of the unfiltered list: a reload brings fresh data, and a
+  // change made in the detail can take the VM out of the current filter.
+  const [openVmName, setOpenVmName] = useState<string | null>(null);
+  const openVm = openVmName === null ? null : vms.find((v) => v.libvirtName === openVmName) ?? null;
+  const listScrollRef = useRef(0);
+  const restoreScrollRef = useRef(false);
+
+  function openCard(vm: VM) {
+    listScrollRef.current = document.getElementById("bv-main")?.scrollTop ?? 0;
+    setOpenVmName(vm.libvirtName);
+    // After the detail commits, the page reads from the top (the back row is
+    // the first thing on screen).
+    requestAnimationFrame(() => {
+      document.getElementById("bv-main")?.scrollTo(0, 0);
+    });
+  }
+
+  function closeDetail() {
+    if (openVmName === null) return;
+    restoreScrollRef.current = true;
+    setOpenVmName(null);
+  }
+
+  useEffect(() => {
+    if (openVm !== null || !restoreScrollRef.current) return;
+    restoreScrollRef.current = false;
+    document.getElementById("bv-main")?.scrollTo(0, listScrollRef.current);
+  }, [openVm]);
+
+  // Every save, finished backup and takeover reloads the list and hands this
+  // a new array. Keyed on the filter state alone, the window keeps the
+  // reader's place (and the card being edited mounted) through a reload, and
+  // a changed filter still rewinds.
+  const windowKey = [search.trim().toLowerCase(), scheduleFilter, backupFilter, sortKey].join("\u0000");
+  const { visible, showMore, hasMore } = useLoadMore(sorted, 20, windowKey);
+  const mobileLive = visible.filter((v) => v.state !== "not-installed");
+  const mobileOrphans = visible.filter((v) => v.state === "not-installed");
+  // A removed VM only logs a skip when its run comes, so it does not count as
+  // scheduled, as on the Containers page.
+  const scheduledCount = sorted.filter((v) => v.state !== "not-installed" && v.includeInSchedule).length;
+  // While the detail is open the list is off the tree (its scroll position is
+  // saved and restored on Back), so the rows the window kept are the detail's
+  // to render through.
+  const listChromeHidden = openVm !== null;
+
+  return (
+    <div className="flex flex-col gap-4 glim-content-fade">
+      {/* The VM detail, in the frame the Containers detail renders, above
+          where the list sits; the list is off the tree while it is open. */}
+      {openVm !== null && (
+        <MobileVMDetail
+          vm={openVm}
+          t={t}
+          running={running}
+          onRefresh={onRefresh}
+          onBack={closeDetail}
+          linkCandidates={linkCandidates}
+        />
+      )}
+
+      {/* Page-level load failure: the shared error paragraph above carries the
+          message; this >=44px tonal row is the mobile recovery affordance.
+          folders.retry ("Try again") is the sanctioned existing label; no
+          new key needed. */}
+      {error && !listChromeHidden && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="min-h-[2.75rem] w-full rounded-control bg-carbon-surface2 px-4 text-sm text-carbon-text"
+        >
+          {t("folders.retry")}
+        </button>
+      )}
+
+      {gate === "off" ? (
+        // The destinations gate, mobile face: the block says plainly that VM
+        // backups are off and links to the settings row that turns them on.
+        // A gated surface shows nothing else: no toolbar, no cards.
+        <div className="relative glim-notch-card">
+          <MobileSectionLabel t={t} labelKey="settings.vmsEnabled" />
+          <div className="flex flex-col gap-2 rounded-card bg-carbon-surface p-4 pt-5">
+            <p className="text-sm text-carbon-textSub">{t("settings.vmsEnabledHint")}</p>
+            <Link
+              to="/settings"
+              className="flex min-h-[2.75rem] items-center rounded-control bg-carbon-surface2 px-4 text-sm text-carbon-text"
+            >
+              {t("nav.settings")}
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Summary counts line, the Containers.tsx mobile list precedent:
+              derived from the same list payload the desktop reads, no new
+              endpoint, no new key. */}
+          {liveCount > 0 && !listChromeHidden && (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs text-carbon-textMuted">
+                {`${liveCount} ${t("nav.vms")}${
+                  scheduledCount > 0 ? ` · ${scheduledCount} ${t("filter.scheduled")}` : ""
+                }`}
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <VMSelectAll t={t} checked={allLiveSelected} onChange={onToggleSelectAll} />
+                <ScheduleIncludeAllControl t={t} onChanged={onIncludeAllChanged} />
+              </div>
+            </div>
+          )}
+
+          {!loading && !error && !listChromeHidden && (
+            <Advanced>
+              <VMBackupOrderPanel vms={vms} t={t} hueIndex={0} />
+            </Advanced>
+          )}
+
+          {!loading && !listChromeHidden && selected.size > 0 && (
+            <VMBulkBar
+              t={t}
+              count={selected.size}
+              busy={bulkBusy}
+              running={running}
+              onBackup={onBackupSelected}
+              onRestore={onRestoreSelected}
+              onClear={onClearSelection}
+            />
+          )}
+
+          {/* The ONE toolbar: lifted page state, shared chip filters. Rendered
+              once the first load has settled (mirrors the desktop controls
+              row), including when filters currently match nothing; a cleared
+              search must remain clearable. */}
+          {!loading && !error && !listChromeHidden && (
+            <ListToolbar search={search} onSearch={onSearch} placeholder="vms.searchPlaceholder">
+              <ChipFilter<ScheduleFilterKey>
+                label={t("filter.schedule")}
+                value={scheduleFilter}
+                onChange={onScheduleFilterChange}
+                options={[
+                  { key: "all", label: t("filter.all") },
+                  { key: "scheduled", label: t("filter.scheduled") },
+                  { key: "notScheduled", label: t("filter.notScheduled") },
+                ]}
+              />
+              <ChipFilter<BackupFilterKey>
+                label={t("filter.backup")}
+                value={backupFilter}
+                onChange={onBackupFilterChange}
+                options={[
+                  { key: "all", label: t("filter.all") },
+                  { key: "backedUp", label: t("filter.backedUp") },
+                  { key: "neverBackedUp", label: t("filter.neverBackedUp") },
+                ]}
+              />
+              <SortControl value={sortKey} onChange={onSortChange} t={t} />
+            </ListToolbar>
+          )}
+
+          {!listChromeHidden && (
+            <>
+              {mobileLive.map((v, i) => (
+                <MobileVMCard
+                  key={v.libvirtName}
+                  vm={v}
+                  t={t}
+                  index={i}
+                  selected={selected.has(v.libvirtName)}
+                  onToggleSelect={() => onToggleSelect(v.libvirtName)}
+                  onOpen={() => openCard(v)}
+                />
+              ))}
+
+              {mobileOrphans.length > 0 && (
+                <div className="flex flex-col gap-4 pt-2">
+                  {/* The shared heading the Containers phone list renders: the
+                      hint rides the badge's (i), not an open paragraph. */}
+                  <NotInstalledHeading tip={t("vms.notInstalledHint")} hueIndex={0} t={t} />
+                  {/* No selection here, as on the desktop: a bulk backup of a
+                      removed VM parks a run for hours. */}
+                  {mobileOrphans.map((v, i) => (
+                    <MobileVMCard
+                      key={v.libvirtName}
+                      vm={v}
+                      t={t}
+                      index={liveCount + i}
+                      onOpen={() => openCard(v)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* The one load-more affordance, gated on hasMore: no rows beyond
+                  the window, no button (hasMore is the only signal this may gate
+                  on). */}
+              {hasMore && (
+                <button
+                  type="button"
+                  onClick={showMore}
+                  className="min-h-[2.75rem] w-full rounded-control bg-carbon-surface2 px-4 text-sm text-carbon-text"
+                >
+                  {t("common.loadMore")}
+                </button>
+              )}
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// MobileVMCard is one VM as the phone row the Containers list renders too,
+// with the backup method as its meta line. Every control lives in the
+// detail the row opens.
+function MobileVMCard({
+  vm,
+  t,
+  index,
+  onOpen,
+  selected,
+  onToggleSelect,
+}: {
+  vm: VM;
+  t: T;
+  index: number;
+  onOpen: () => void;
+  selected?: boolean;
+  onToggleSelect?: () => void;
+}) {
+  const installed = vm.state !== "not-installed";
+  return (
+    <MobileListCard
+      title={vm.name}
+      meta={
+        installed ? (vm.method === "live" ? t("vm.method.live") : t("vm.method.graceful")) : undefined
+      }
+      badge={
+        installed ? (
+          <Badge tone={stateTone(vm.state)}>{stateLabel(t, vm.state)}</Badge>
+        ) : (
+          <Badge tone="neutral">{t("containers.notInstalled")}</Badge>
+        )
+      }
+      hueIndex={index}
+      onOpen={onOpen}
+      selected={selected}
+      onToggleSelect={onToggleSelect}
+    />
+  );
+}
+
+// MobileVMDetail is the stacked VM detail: the shared detail shell with the
+// desktop row's controls inside. It hosts the RunDetailSheet for its own
+// deep-linked runs, the way the Containers detail does; onRun fires on
+// every poll, so the sheet always holds the freshest record, and a sheet
+// the user dismissed stays closed through later polls of the same run.
+function MobileVMDetail({
+  vm,
+  t,
+  running,
+  onRefresh,
+  onBack,
+  linkCandidates,
+}: {
+  vm: VM;
+  t: T;
+  running: { active: boolean; phase?: string };
+  onRefresh: () => void;
+  onBack: () => void;
+  /** The not-installed entries this detail can take over by hand. */
+  linkCandidates: string[];
+}) {
+  const { push } = useToast();
+  // Reverted on a failed save, so the picker never shows a destination the
+  // server did not accept.
+  const [repoChoice, setRepoChoice] = useState(vm.repo ?? "");
+  useEffect(() => {
+    setRepoChoice(vm.repo ?? "");
+  }, [vm.repo]);
+  const progressMap = useProgress();
+  const progress = progressMap[`vm:${vm.libvirtName}`];
+  const installed = vm.state !== "not-installed";
+  // The same one-section disclosure the desktop row keeps (snapshots and
+  // restore live behind it), through the same Set rule ContainerRow uses.
+  const [openSections, setOpenSections] = useState<Set<string>>(() => new Set());
+  function toggleSection(id: string) {
+    setOpenSections((prev) => (prev.has(id) ? new Set() : new Set([id])));
+  }
+  const aliases = vm.aliases ?? [];
+  const takeoverEntry = { name: vm.libvirtName, displayName: vm.name, api: vmTakeover };
+  // The run-sheet latch, the Containers detail's, verbatim.
+  const [sheetRun, setSheetRun] = useState<Run | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const sheetDismissed = useRef(false);
+  const lastCorrelatedRun = useRef<string | null>(null);
+
+  return (
+    <MobileDetailShell title={vm.name} onBack={onBack}>
+      {/* The takeover pair, as the desktop row renders it. */}
+      {installed && vm.renameFrom && (
+        <RenameTakeoverRow
+          key={vm.renameFrom}
+          from={vm.renameFrom}
+          reason={vm.renameReason ?? ""}
+          entry={takeoverEntry}
+          onDone={onRefresh}
+          t={t}
+        />
+      )}
+      {aliases.length > 0 && (
+        <FormerNames
+          aliases={aliases}
+          conflicts={vm.aliasConflicts ?? []}
+          entry={takeoverEntry}
+          onDone={onRefresh}
+          t={t}
+        />
+      )}
+
+      {/* The desktop card's corner, verbatim: a not-installed entry gets the
+          removal control (#232) instead of a backup trigger; backing up a
+          VM that no longer exists only parks a run in flight for hours. */}
+      {!installed && (
+        <OrphanRemoveButton
+          hasBackups={vm.lastBackup != null}
+          deleteConfirm={t("vms.deleteBackupsConfirm")}
+          removeConfirm={t("vms.removeEntryConfirm")}
+          deleteBackups={() => deleteBackupsVM(vm.libvirtName, "local")}
+          removeEntry={() => forgetVM(vm.libvirtName)}
+          onDone={onRefresh}
+          t={t}
+        />
+      )}
+
+      {/* Last-run line, the desktop row's combined line, verbatim keys. */}
+      <p className="text-xs text-carbon-textMuted">
+        {`${t("containers.lastBackup")}: ${vm.lastBackup ? formatTs(vm.lastBackup) : t("containers.never")}`}
+      </p>
+
+      {/* The start of the actions row is free, so the link picker takes it,
+          as on the desktop row: a card with former names is already linked,
+          even before its first run. */}
+      {installed && vm.lastBackup == null && aliases.length === 0 && linkCandidates.length > 0 && (
+        <LinkEntryPicker candidates={linkCandidates} entry={takeoverEntry} onDone={onRefresh} t={t} />
+      )}
+
+      {installed && (
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1 text-xs text-carbon-textSub">
+              {t("vm.method")}
+              <InfoBubble tip={t("vm.method.hint")} />
+            </span>
+            <VMMethodSelect name={vm.libvirtName} initial={vm.method} t={t} />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <VMBackupButton
+              name={vm.libvirtName}
+              t={t}
+              running={running}
+              onBackedUp={onRefresh}
+              onRunCorrelated={(run) => {
+                if (lastCorrelatedRun.current !== run.id) {
+                  lastCorrelatedRun.current = run.id;
+                  sheetDismissed.current = false; // new fire re-arms the deep-link
+                }
+                setSheetRun(run);
+                if (!sheetDismissed.current) setSheetOpen(true);
+              }}
+            />
+            <Advanced>
+              <VMExportButton name={vm.libvirtName} t={t} />
+            </Advanced>
+          </div>
+        </div>
+      )}
+
+      {/* The schedule switch, the desktop card's own: without it there is no
+          way to schedule or unschedule a VM from a phone at all. It shows on
+          a removed VM too: the entry stays scheduled and every run logs a
+          skip until this switch goes off. */}
+      <IncludeToggle name={vm.libvirtName} initial={vm.includeInSchedule} save={setVMInclude} />
+
+      {/* ContainerRow's disclosure block with a single section. */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Selector
+            items={[{ id: "backups", label: t("snapshots.title") }]}
+            label={t("containers.sectionsLabel")}
+            select="many"
+            active={openSections}
+            buttonHeight
+            onChange={toggleSection}
+          />
+          <span className="ms-auto shrink-0 text-xs text-carbon-textMuted whitespace-nowrap">
+            {`${t("containers.lastBackup")}: ${vm.lastBackup ? formatTs(vm.lastBackup) : t("containers.never")}`}
+          </span>
+        </div>
+        {/* Where this VM's backups go. Locked once the VM has backups: they
+            stay in the repository they were written to. */}
+        <Advanced>
+          <RepoPicker
+            value={repoChoice}
+            onChange={(next) => {
+              const before = repoChoice;
+              setRepoChoice(next);
+              void setVMRepo(vm.libvirtName, next).then((r) => {
+                if (r.ok) {
+                  push(t("folders.saved"), "success");
+                  return;
+                }
+                push(r.error ?? t("settings.error"), "fail");
+                setRepoChoice(before);
+              });
+            }}
+            locked={vm.lastBackup != null}
+          />
+        </Advanced>
+
+        <VMRestorePanel
+          name={vm.libvirtName}
+          displayName={vm.name}
+          t={t}
+          open={openSections.has("backups")}
+        />
+      </div>
+
+      {/* Not during a restore, which has its own cancel in the Backups panel,
+          and only while the run is active, so a finished run leaves no button
+          behind. */}
+      {progress && progress.active && progress.phase !== "restore" && (
+        <div className="flex justify-end">
+          <BackupCancelButton cancelKey={`vm:${vm.libvirtName}`} name={vm.name} t={t} />
+        </div>
+      )}
+
+      {/* Live backup/restore progress, pinned to the card's bottom edge */}
+      {progress && (
+        <ProgressBar
+          percent={progress.percent}
+          active={progress.active}
+          label={progress.phase === "restore" ? t("common.restoring") : t("common.backingUp")}
+        />
+      )}
+
+      {/* The run sheet, hosted component-locally: opens on the useBackupWatch
+          baseline-id correlation, closes through BottomSheet's three paths,
+          and never re-opens itself after dismissal. */}
+      {sheetRun && (
+        <RunDetailSheet
+          run={sheetRun}
+          open={sheetOpen}
+          onClose={() => {
+            sheetDismissed.current = true;
+            setSheetOpen(false);
+          }}
+        />
+      )}
+    </MobileDetailShell>
   );
 }

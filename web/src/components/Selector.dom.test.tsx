@@ -422,7 +422,7 @@ describe("Selector variant=\"well\" at both scales", () => {
     }
   });
 
-  it("the two scales differ only in whether segments are pinned", () => {
+  it("the two scales differ only in pinning", () => {
     render(<Selector items={ITEMS} label="Small" active="a" onChange={() => {}} variant="well" />);
     const smallList = screen.getByRole("tablist").className;
     const smallTab = (screen.getByRole("tab", { name: "Alpha" }) as HTMLElement).className;
@@ -433,9 +433,15 @@ describe("Selector variant=\"well\" at both scales", () => {
 
     expect(bigList).toBe(smallList);
 
-    // The segment differs only by the pinning classes.
+    // The segment differs by one sanctioned rider, the pinning classes the
+    // big scale carries. They are stripped before the byte-identity compare,
+    // so the guard keeps catching any second divergence.
     const PIN = ["flex-none", "justify-center", "text-center", "h-[var(--badge-md)]"];
-    const strip = (s: string) => s.split(/\s+/).filter((c) => !PIN.includes(c)).join(" ");
+    const strip = (s: string) =>
+      s
+        .split(/\s+/)
+        .filter((c) => !PIN.includes(c))
+        .join(" ");
     expect(strip(bigTab)).toBe(strip(smallTab));
     for (const c of PIN) {
       expect(bigTab.split(/\s+/)).toContain(c);

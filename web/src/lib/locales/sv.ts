@@ -12,6 +12,8 @@ const sv: Partial<Translations> = {
   "nav.vms": "VMs",
   "nav.flash": "Flash",
   "nav.settings": "Inställningar",
+  "nav.more": "Mer",
+  "nav.mobileNavigation": "Mobil navigering",
   "about.title": "Om BombVault",
   "about.body": "En riddare, ett korståg: snygga öppna verktyg som inte fanns i den form jag ville ha, byggda tills inget saknas. Allt gratis, utan konton, utan telemetri, utan reklam och utan betalnivåer. Ingen asterisk någonstans. Inget läsbart lämnar någonsin dina egna murar. Smitt på kvällar och helger, med hjärta och envishet.",
   "about.coffee": "Om BombVault har förtjänat en plats på din server eller dator, kasta ett mynt till din riddare: det hjälper till att täcka kostnaderna och håller projektet vid liv. Och det får den här riddarens hjärta att slå lite snabbare. Nedan finns tre vägar, ta den som passar dig.",
@@ -204,6 +206,9 @@ const sv: Partial<Translations> = {
   "run.colStarted": "Startad",
   "run.colFinished": "Avslutad",
   "run.colContainer": "Container",
+  "home.newBackupConfirm": "Starta en säkerhetskopia av alla aktiverade domäner nu? Containrar stoppas och startas om en i taget medan deras säkerhetskopia körs.",
+  "run.statVolume": "Datamängd",
+  "run.statSnapshot": "Snapshot",
 
   // Settings
   "settings.title": "Inställningar",
@@ -274,6 +279,9 @@ const sv: Partial<Translations> = {
   "settings.labels.buttons": "Knappar",
   "settings.labels.sidebar": "Sidofält",
   "settings.labels.tabs": "Flikar",
+  "settings.labels.bottombar": "Nedre fält",
+  "settings.axisBottombarHint": "Påverkar endast telefonlayouten.",
+  "settings.axisSidebarHint": "Påverkar endast skrivbordslayouten.",
   "settings.labels.mode.text": "Text",
   "settings.labels.mode.textGlyph": "Text och symbol",
   "settings.labels.mode.glyph": "Symbol",
@@ -625,6 +633,10 @@ const sv: Partial<Translations> = {
   "common.confirm": "Bekräfta",
   "common.cancel": "Avbryt",
   "common.close": "Stäng",
+  "common.expand": "Fäll ut",
+  "common.collapse": "Fäll ihop",
+  "common.back": "Tillbaka",
+  "common.loadMore": "Ladda in fler",
 
   // Failure fallbacks
   "common.actionFailed": "Åtgärden misslyckades",
@@ -904,6 +916,7 @@ const sv: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Skyddsstatus",
   "dashboard.noOffsite": "Ingen kopia utanför platsen",
+  "dashboard.statusLoadFailed": "Det gick inte att läsa in statusen",
   "dashboard.neverExcluded": "Inte schemalagt",
   "dashboard.neverExcludedTitle": "Medvetet utelämnat ur schemat, så här finns inget att säkerhetskopiera.",
   "dashboard.neverSelf": "Egen behållare",

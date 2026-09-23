@@ -5,6 +5,12 @@ import { useTipBubble } from "../lib/useTipBubble";
 // paragraph under the control. It is never accent-coloured, because the accent
 // means active.
 //
+// The 15px icon sits inside a 27px box (p-1.5) whose negative margin (-m-1.5)
+// gives the strike area back to the layout: the visible ink and the space the
+// bubble takes between label words are unchanged, but the target a finger
+// actually lands on is a comfortable 27px instead of the icon's own 15px (the
+// same compensating-padding trick Toast's close button uses).
+//
 // `onAccent` is for an icon inside a heading badge on the accent fill: it
 // inherits the badge's --accent-contrast ink and keeps full opacity.
 export function InfoBubble({ tip, onAccent = false }: { tip: string; onAccent?: boolean }) {
@@ -23,7 +29,7 @@ export function InfoBubble({ tip, onAccent = false }: { tip: string; onAccent?: 
         // stops it; focus still lands here because browsers assign it on
         // mousedown.
         onClick={(e) => e.preventDefault()}
-        className={`inline-flex h-[15px] w-[15px] flex-none cursor-help items-center justify-center rounded-pill focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) ${
+        className={`inline-flex h-[27px] w-[27px] flex-none cursor-help items-center justify-center rounded-pill p-1.5 -m-1.5 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring) ${
           onAccent ? "text-current" : "text-carbon-textMuted opacity-80 hover:opacity-100 focus:opacity-100"
         }`}
       >

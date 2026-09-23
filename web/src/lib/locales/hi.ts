@@ -13,6 +13,8 @@ const hi: Partial<Translations> = {
   "nav.flash": "फ़्लैश",
   "nav.config": "सेल्फ़-बैकअप",
   "nav.settings": "सेटिंग्स",
+  "nav.more": "और",
+  "nav.mobileNavigation": "मोबाइल नेविगेशन",
 
   // Mode toggle
   "about.title": "BombVault के बारे में",
@@ -274,6 +276,9 @@ const hi: Partial<Translations> = {
   "run.colStarted": "शुरू हुआ",
   "run.colFinished": "पूरा हुआ",
   "run.colContainer": "कंटेनर",
+  "home.newBackupConfirm": "क्या अभी सभी सक्रिय डोमेन का बैकअप शुरू करें? कंटेनर एक-एक करके उनके बैकअप चलने के दौरान रोके जाते हैं और फिर से शुरू किए जाते हैं.",
+  "run.statVolume": "डेटा आयतन",
+  "run.statSnapshot": "स्नैपशॉट",
 
   // Settings
   "settings.title": "सेटिंग्स",
@@ -727,6 +732,9 @@ const hi: Partial<Translations> = {
   "settings.labels.buttons": "बटन",
   "settings.labels.sidebar": "साइडबार",
   "settings.labels.tabs": "टैब",
+  "settings.labels.bottombar": "बॉटम बार",
+  "settings.axisBottombarHint": "केवल फ़ोन लेआउट पर लागू होता है.",
+  "settings.axisSidebarHint": "केवल डेस्कटॉप लेआउट पर लागू होता है.",
   "settings.labels.mode.text": "पाठ",
   "settings.labels.mode.textGlyph": "पाठ और प्रतीक",
   "settings.labels.mode.glyph": "प्रतीक",
@@ -770,6 +778,7 @@ const hi: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "सुरक्षा स्थिति",
   "dashboard.noOffsite": "कोई ऑफ़-साइट प्रति नहीं",
+  "dashboard.statusLoadFailed": "स्थिति लोड नहीं हो सकी",
   "dashboard.neverExcluded": "निर्धारित नहीं",
   "dashboard.neverExcludedTitle": "जानबूझकर समय-सारणी से बाहर रखा गया है, इसलिए यहाँ बैकअप के लिए कुछ नहीं है।",
   "dashboard.neverSelf": "अपना कंटेनर",
@@ -995,6 +1004,10 @@ const hi: Partial<Translations> = {
   "common.restoring": "रीस्टोर हो रहा है…",
   "common.done": "हो गया",
   "common.close": "बंद करें",
+  "common.expand": "विस्तारित करें",
+  "common.collapse": "संकुचित करें",
+  "common.back": "वापस",
+  "common.loadMore": "और लोड करें",
   "common.loadingBackups": "बैकअप लोड हो रहे हैं…",
   "common.saving": "सहेजा जा रहा है…",
   "common.restoreRunning": "एक रीस्टोर चल रहा है…",

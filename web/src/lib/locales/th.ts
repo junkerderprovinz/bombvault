@@ -12,6 +12,8 @@ const th: Partial<Translations> = {
   "nav.vms": "VMs",
   "nav.flash": "Flash",
   "nav.settings": "การตั้งค่า",
+  "nav.more": "เพิ่มเติม",
+  "nav.mobileNavigation": "การนำทางบนมือถือ",
   "about.title": "เกี่ยวกับ BombVault",
   "about.body": "อัศวินคนเดียว การเดินทัพครั้งเดียว: เครื่องมือโอเพนซอร์สหน้าตาดีที่ไม่มีอยู่ในรูปแบบที่ผมต้องการ สร้างไปจนกว่าจะไม่ขาดอะไรเลย ทุกอย่างฟรี ไม่มีบัญชี ไม่มีเทเลเมทรี ไม่มีโฆษณา และไม่มีระดับที่ต้องจ่ายเงิน ไม่มีดอกจันที่ไหนทั้งนั้น ไม่มีอะไรที่อ่านได้ออกไปพ้นกำแพงของคุณ หลอมขึ้นในยามค่ำและวันหยุด ด้วยหัวใจและความดื้อรั้น",
   "about.coffee": "ถ้า BombVault คู่ควรกับที่ทางบนเซิร์ฟเวอร์หรือเครื่องของคุณ โยนเหรียญให้อัศวินของคุณ: มันช่วยครอบคลุมค่าใช้จ่ายและทำให้โครงการอยู่ต่อได้ แล้วก็ทำให้หัวใจของอัศวินคนนี้เต้นเร็วขึ้นอีกนิด ด้านล่างมีสามทาง เลือกทางที่คุณสะดวก",
@@ -204,6 +206,9 @@ const th: Partial<Translations> = {
   "run.colStarted": "เริ่มต้น",
   "run.colFinished": "เสร็จสิ้น",
   "run.colContainer": "Container",
+  "home.newBackupConfirm": "เริ่มสำรองข้อมูลทุกโดเมนที่เปิดใช้งานตอนนี้หรือไม่? คอนเทนเนอร์จะหยุดและเริ่มใหม่ทีละตัวระหว่างการสำรองข้อมูลของตน",
+  "run.statVolume": "ปริมาณข้อมูล",
+  "run.statSnapshot": "สแนปช็อต",
 
   // Settings
   "settings.title": "การตั้งค่า",
@@ -274,6 +279,9 @@ const th: Partial<Translations> = {
   "settings.labels.buttons": "ปุ่ม",
   "settings.labels.sidebar": "แถบด้านข้าง",
   "settings.labels.tabs": "แท็บ",
+  "settings.labels.bottombar": "แถบด้านล่าง",
+  "settings.axisBottombarHint": "มีผลเฉพาะกับเลย์เอาต์โทรศัพท์เท่านั้น",
+  "settings.axisSidebarHint": "มีผลเฉพาะกับเลย์เอาต์เดสก์ท็อปเท่านั้น",
   "settings.labels.mode.text": "ข้อความ",
   "settings.labels.mode.textGlyph": "ข้อความและสัญลักษณ์",
   "settings.labels.mode.glyph": "สัญลักษณ์",
@@ -625,6 +633,10 @@ const th: Partial<Translations> = {
   "common.confirm": "ยืนยัน",
   "common.cancel": "ยกเลิก",
   "common.close": "ปิด",
+  "common.expand": "ขยาย",
+  "common.collapse": "ย่อ",
+  "common.back": "ย้อนกลับ",
+  "common.loadMore": "โหลดเพิ่มเติม",
 
   // Failure fallbacks
   "common.actionFailed": "การดำเนินการล้มเหลว",
@@ -907,6 +919,7 @@ const th: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "สถานะการป้องกัน",
   "dashboard.noOffsite": "ไม่มีสำเนานอกสถานที่",
+  "dashboard.statusLoadFailed": "ไม่สามารถโหลดสถานะได้",
   "dashboard.neverExcluded": "ไม่ได้อยู่ในกำหนดการ",
   "dashboard.neverExcludedTitle": "เว้นไว้นอกกำหนดการโดยตั้งใจ จึงไม่มีอะไรต้องสำรองที่นี่",
   "dashboard.neverSelf": "คอนเทนเนอร์ของตัวเอง",
