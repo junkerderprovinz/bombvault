@@ -6346,7 +6346,7 @@ func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name
 	}
 	if explicitID {
 		if !snapshotBelongs(snaps, snapshotID) {
-			return containerRestorePlan{}, fmt.Errorf("snapshot %s does not belong to this container", snapshotID)
+			return containerRestorePlan{}, notInListing{snapshotID, "container"}
 		}
 	} else {
 		switch {
@@ -7693,7 +7693,7 @@ func (s *Service) ListSnapshotFiles(ctx context.Context, name, snapshotID, sourc
 		}
 	}
 	if !found {
-		return nil, fmt.Errorf("snapshot %s does not belong to this container", snapshotID)
+		return nil, notInListing{snapshotID, "container"}
 	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -7778,7 +7778,7 @@ func (s *Service) prepareRestoreFiles(ctx context.Context, name, source, snapsho
 		return filesRestorePlan{}, err
 	}
 	if !snapshotBelongs(snaps, snapshotID) {
-		return filesRestorePlan{}, fmt.Errorf("snapshot %s does not belong to this container", snapshotID)
+		return filesRestorePlan{}, notInListing{snapshotID, "container"}
 	}
 
 	// Resolve the destination. Empty targetSubPath → in-place (restic target "/",
@@ -8132,7 +8132,7 @@ func (s *Service) prepareRestoreToPath(ctx context.Context, name, source, snapsh
 		return toPathRestorePlan{}, err
 	}
 	if !snapshotBelongs(snaps, snapshotID) {
-		return toPathRestorePlan{}, fmt.Errorf("snapshot %s does not belong to this container", snapshotID)
+		return toPathRestorePlan{}, notInListing{snapshotID, "container"}
 	}
 
 	settings, err := s.store.GetSettings()
@@ -9854,7 +9854,7 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 	}
 	if explicitID {
 		if !snapshotBelongs(snaps, snapshotID) {
-			return vmRestorePlan{}, fmt.Errorf("snapshot %s does not belong to this vm", snapshotID)
+			return vmRestorePlan{}, notInListing{snapshotID, "vm"}
 		}
 	} else {
 		if len(snaps) == 0 {
@@ -11149,7 +11149,7 @@ func (s *Service) ListSnapshotFilesFileSet(ctx context.Context, id, snapshotID, 
 		return nil, err
 	}
 	if !snapshotBelongs(snaps, snapshotID) {
-		return nil, fmt.Errorf("snapshot %s does not belong to this file set", snapshotID)
+		return nil, notInListing{snapshotID, "file set"}
 	}
 	// Loaded for its repository override (#204): a set with its own repo is
 	// listed FROM that repo, and reading the domain's would report "snapshot
@@ -11242,7 +11242,7 @@ func (s *Service) prepareRestoreFileSet(ctx context.Context, id, snapshotID, sou
 		return fileSetRestorePlan{}, err
 	}
 	if !snapshotBelongs(snaps, snapshotID) {
-		return fileSetRestorePlan{}, fmt.Errorf("snapshot %s does not belong to this file set", snapshotID)
+		return fileSetRestorePlan{}, notInListing{snapshotID, "file set"}
 	}
 	// Take the to-folder restore subtree from the SNAPSHOT itself, NOT a
 	// recompute of set.Path: HostMountRoot may have changed since the backup, and
@@ -11481,7 +11481,7 @@ func (s *Service) buildFileSetFilesPlan(snaps []restic.Snapshot, snapshotID, set
 	}
 
 	if !snapshotBelongs(snaps, snapshotID) {
-		return fileSetFilesRestorePlan{}, fmt.Errorf("snapshot %s does not belong to this file set", snapshotID)
+		return fileSetFilesRestorePlan{}, notInListing{snapshotID, "file set"}
 	}
 	// The subtree comes from the SNAPSHOT itself (the node covering all of its
 	// recorded paths - taking only the first made every file under a second
@@ -11885,7 +11885,7 @@ func resolveFlashSnapshot(snaps []restic.Snapshot, selector string) (string, err
 		}
 	}
 	if match == "" {
-		return "", errors.New("snapshot not found")
+		return "", notInListing{id: selector}
 	}
 	return match, nil
 }
@@ -12026,7 +12026,7 @@ func resolveConfigSnapshot(snaps []restic.Snapshot, selector string) (string, er
 		}
 	}
 	if match == "" {
-		return "", errors.New("snapshot not found")
+		return "", notInListing{id: selector}
 	}
 	return match, nil
 }
