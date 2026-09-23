@@ -614,3 +614,26 @@ func (h *Handler) handleTimelineDelete(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(result))
 }
+
+var errSnapshotMissing = errors.New("the chosen place no longer holds this backup")
+
+// notInListing is a snapshot id the chosen source does not hold for the item.
+type notInListing struct{ id, owner string }
+
+func (e notInListing) Error() string {
+	if e.owner == "" {
+		return "snapshot not found"
+	}
+	return fmt.Sprintf("snapshot %s does not belong to this %s", e.id, e.owner)
+}
+
+// restoreFail answers a restore, a file listing or a download that could not
+// start. From a named target an id it does not hold comes back as
+// snapshot-missing, so the timeline can read that place again and offer the
+// next one instead of showing a restic error.
+func restoreFail(w http.ResponseWriter, source string, err error) {
+	if offsiteTargetIDFromSource(source) != "" && errors.As(err, new(notInListing)) {
+		err = fmt.Errorf("%w: %w", errSnapshotMissing, err)
+	}
+	placementFail(w, err, nil)
+}

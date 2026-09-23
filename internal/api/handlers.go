@@ -1082,7 +1082,7 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 	}
 	started, err := h.svc.StartRestore(r.Context(), name, body.SnapshotID, sourceParam(r), body.LeaveStopped)
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		restoreFail(w, sourceParam(r), err)
 		return
 	}
 	if !started {
@@ -1177,7 +1177,7 @@ func (h *Handler) handleListFiles(w http.ResponseWriter, r *http.Request) {
 	snapshot := r.URL.Query().Get("snapshot")
 	files, err := h.svc.ListSnapshotFiles(r.Context(), name, snapshot, sourceParam(r))
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		restoreFail(w, sourceParam(r), err)
 		return
 	}
 	if files == nil {
@@ -1209,7 +1209,7 @@ func (h *Handler) handleRestoreFiles(w http.ResponseWriter, r *http.Request) {
 	}
 	target, started, err := h.svc.StartRestoreFiles(r.Context(), name, sourceParam(r), body.SnapshotID, body.Paths, body.TargetPath, body.Confirm)
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		restoreFail(w, sourceParam(r), err)
 		return
 	}
 	if !started {
@@ -1242,7 +1242,7 @@ func (h *Handler) handleRestoreContainerTo(w http.ResponseWriter, r *http.Reques
 	}
 	target, started, err := h.svc.StartRestoreToPath(r.Context(), name, sourceParam(r), body.SnapshotID, body.TargetPath)
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		restoreFail(w, sourceParam(r), err)
 		return
 	}
 	if !started {
@@ -4441,7 +4441,7 @@ func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
 	}
 	started, err := h.svc.StartRestoreVM(r.Context(), name, body.SnapshotID, sourceParam(r), body.LeaveStopped)
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		restoreFail(w, sourceParam(r), err)
 		return
 	}
 	if !started {
@@ -4528,9 +4528,10 @@ func (h *Handler) handleRestoreConfig(w http.ResponseWriter, r *http.Request) {
 	}
 	// The source rides the BODY here (not ?source=), so normalize it explicitly —
 	// same contract as sourceParam, incl. the "offsite:<id>" per-target form.
-	started, auto, err := h.svc.StartRestoreConfig(r.Context(), body.Snapshot, normalizeSource(body.Source))
+	source := normalizeSource(body.Source)
+	started, auto, err := h.svc.StartRestoreConfig(r.Context(), body.Snapshot, source)
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		restoreFail(w, source, err)
 		return
 	}
 	if !started {
@@ -4583,7 +4584,7 @@ func (h *Handler) handleDownloadFlash(w http.ResponseWriter, r *http.Request) {
 	// (bad/ambiguous id, no backups, repo locked). A mid-stream failure (after
 	// bytes flowed) can only truncate the body; the failed run is recorded.
 	if err != nil && !lw.wrote {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		restoreFail(w, sourceParam(r), err)
 	}
 }
 
@@ -5324,7 +5325,7 @@ func (h *Handler) handleRestoreFileSet(w http.ResponseWriter, r *http.Request) {
 	}
 	target, started, err := h.svc.StartRestoreFileSet(r.Context(), id, body.SnapshotID, sourceParam(r), body.TargetPath, body.Confirm)
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		restoreFail(w, sourceParam(r), err)
 		return
 	}
 	if !started {
@@ -5344,7 +5345,7 @@ func (h *Handler) handleListSnapshotFilesFileSet(w http.ResponseWriter, r *http.
 	snapshot := r.URL.Query().Get("snapshot")
 	files, err := h.svc.ListSnapshotFilesFileSet(r.Context(), id, snapshot, sourceParam(r))
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		restoreFail(w, sourceParam(r), err)
 		return
 	}
 	if files == nil {
@@ -5377,7 +5378,7 @@ func (h *Handler) handleRestoreFileSetFiles(w http.ResponseWriter, r *http.Reque
 	}
 	target, started, err := h.svc.StartRestoreFileSetFiles(r.Context(), id, sourceParam(r), body.SnapshotID, body.Paths, body.TargetPath, body.Confirm)
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		restoreFail(w, sourceParam(r), err)
 		return
 	}
 	if !started {
