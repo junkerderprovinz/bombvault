@@ -84,6 +84,7 @@ var anomalyDetectors = map[string]string{
 // The families a user marks as expected, one per rule and direction, so that
 // accepting a new level leaves the opposite direction watching.
 const (
+	familyNewData         = "new_data"
 	familySourceBytesDown = "source_bytes_down"
 	familySourceBytesUp   = "source_bytes_up"
 	familySourceFilesDown = "source_files_down"
@@ -93,9 +94,13 @@ const (
 	familyDumpDuration    = "dump_duration"
 )
 
-// anomalyDomainVM is the domain of a VM item, whose runs only carry the data
-// its disks added once the run was measured.
-const anomalyDomainVM = "vm"
+// anomalyDomainContainer and anomalyDomainVM are the item domains that are
+// singled out: a container has a dump series next to its backups, and a VM's
+// runs only carry the data its disks added once the run was measured.
+const (
+	anomalyDomainContainer = "container"
+	anomalyDomainVM        = "vm"
+)
 
 const (
 	// anomalyMinSamples is how much history a detector wants before it judges
@@ -269,7 +274,7 @@ func detectNewData(in itemInput, p sensParams) ([]finding, int) {
 			!selectionChangedAt(rows, i) &&
 			(!measuredOnly || run.SourceBytes != nil)
 	}
-	ceiling := in.Expectations[metricNewData].Ceiling
+	ceiling := in.Expectations[familyNewData].Ceiling
 
 	var found []finding
 	for i, run := range rows {
@@ -583,7 +588,7 @@ func (r sizeRule) collapsed(current measurement, prior []measurement, p sensPara
 	}
 	return &finding{
 		Metric: r.shrinkMetric, Severity: "critical",
-		RunID: current.runID, RunAt: current.at,
+		RunID: current.runID, RunAt: current.at, LastGoodRunID: prior[len(prior)-1].runID,
 		Observed: current.value, Expected: expected, Threshold: p.CollapseFrac * expected,
 		Samples: samples, Details: finiteDetails(details),
 	}
@@ -617,7 +622,7 @@ func (r sizeRule) shrank(current measurement, samples []measurement, p sensParam
 	}
 	return &finding{
 		Metric: r.shrinkMetric, Severity: severity,
-		RunID: current.runID, RunAt: current.at,
+		RunID: current.runID, RunAt: current.at, LastGoodRunID: samples[len(samples)-1].runID,
 		Observed: current.value, Expected: level, Threshold: p.ShrinkRatio * level,
 		Samples: len(samples), Details: levelDetails(current.value, level, spread, z),
 	}
@@ -964,4 +969,78 @@ func modifiedZ(x, m, madFloored float64) float64 {
 		return 0
 	}
 	return 0.6745 * (x - m) / madFloored
+}
+
+// learningInfo is how many samples each family of rules could learn from, so
+// the page can say what the baseline still lacks instead of staying silent.
+type learningInfo struct {
+	NewData, Source, Duration, Needed int
+	// NoData marks a series that is measured and backs up nothing, which no
+	// amount of further runs will turn into a baseline.
+	NoData bool
+}
+
+// typicalValues are the medians behind an item's "usual" figures, each nil
+// while its rule is still learning.
+type typicalValues struct{ SourceBytes, NewDataBytes, ResticMS *int64 }
+
+// itemResult is one series' whole verdict of one pass.
+type itemResult struct {
+	Findings []finding
+	Absent   []absence
+	Learning learningInfo
+	Typical  typicalValues
+}
+
+// evaluateItem runs every rule a series is watched by and reports what each of
+// them could learn from.
+func evaluateItem(in itemInput) itemResult {
+	p := paramsFor(in.Sens)
+	newData, newDataSamples := detectNewData(in, p)
+	source, sourceGone, sourceSamples := detectSource(in, p)
+	duration, durationGone, durationSamples := detectDuration(in, p)
+	reliability, reliabilityGone := detectReliability(in, p)
+
+	res := itemResult{
+		Learning: learningInfo{
+			NewData: newDataSamples, Source: sourceSamples, Duration: durationSamples,
+			Needed: anomalyMinSamples,
+		},
+	}
+	res.Findings = append(append(append(append(res.Findings, newData...), source...), duration...), reliability...)
+	res.Absent = append(append(append(res.Absent, sourceGone...), durationGone...), reliabilityGone...)
+
+	eligible := oldestFirst(eligibleRuns(in.Series))
+	sizes := measurements(eligible, func(run store.SeriesRun) *int64 { return run.SourceBytes })
+	res.Learning.NoData = len(sizes) > 0 && slices.Max(sampleValues(sizes)) == 0
+	res.Typical = typicalValues{
+		SourceBytes: typicalOf(sizes, sourceSamples),
+		ResticMS: typicalOf(measurements(eligible,
+			func(run store.SeriesRun) *int64 { return run.ResticMS }), durationSamples),
+		NewDataBytes: typicalOf(newDataMeasurements(in.NewData), newDataSamples),
+	}
+	return res
+}
+
+// typicalOf is the median of a rule's samples once it has enough of them. A
+// rule that is still learning has no usual value to show.
+func typicalOf(samples []measurement, learned int) *int64 {
+	if learned < anomalyMinSamples || len(samples) == 0 {
+		return nil
+	}
+	value := int64(median(sampleValues(newestSamples(samples, anomalyWindow))))
+	return &value
+}
+
+// newDataMeasurements reads the data each backup of the window added. It is a
+// plain column rather than a nullable one, so a run that measured nothing and
+// one that added nothing look alike; the new-data rules tell them apart by the
+// source figures, and the median here only needs the amounts.
+func newDataMeasurements(window []store.SeriesRun) []measurement {
+	rows := oldestFirst(window)
+	out := make([]measurement, 0, len(rows))
+	for _, run := range rows {
+		out = append(out, measurement{runID: run.ID, at: run.StartedAt, value: float64(run.Bytes)})
+	}
+	return out
 }

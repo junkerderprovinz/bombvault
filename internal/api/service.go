@@ -276,6 +276,10 @@ type Service struct {
 	// destination already hold data" seam: nil uses the real filesystem
 	// (dirNonEmpty); tests inject a fake. Accessed via dirNonEmptyFn.
 	dirNonEmptyProbe func(path string) bool
+	// anomalies evaluates the backup history after every run. Nil on a Service
+	// built as a bare literal, which most of this package's tests are; every
+	// method of it survives that.
+	anomalies *anomalyEngine
 	// repoMu serialises operations per domain repo. A backup holds its domain's
 	// lock for the whole run; maintenance (unlock/prune/delete) TryLocks and
 	// reports "busy" instead, so a destructive `restic unlock --remove-all` /
@@ -474,7 +478,7 @@ func (s *Service) lockTamper(domain string) func() {
 
 // NewService constructs the backup service.
 func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcli.Virsh, eng ResticEngine) *Service {
-	return &Service{
+	s := &Service{
 		cfg: cfg, store: st, docker: d, virsh: v, engine: eng,
 		hostShell:    execHostShell{},
 		dbDumpHelper: helperBinaryPath(),
@@ -491,6 +495,8 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 		suggestCache:      map[string]suggestCacheEntry{},
 		suggestFlights:    map[string]*suggestFlight{},
 	}
+	s.anomalies = newAnomalyEngine(s, time.Now)
+	return s
 }
 
 // errDomainBusy is returned by a maintenance op when a backup is holding the
