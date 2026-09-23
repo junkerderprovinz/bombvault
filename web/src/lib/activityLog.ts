@@ -50,11 +50,17 @@ export interface LogLine {
 }
 
 /**
- * Turns a translation key and optional `{placeholder}` params into text.
+ * Turns a translation key and optional `{placeholder}` params into text. The
+ * count picks the plural form of a key that offers several.
  * Injected so buildLogLines stays pure: ActivityLog.tsx passes useT()'s `t`,
  * tests pass a stub.
  */
-export type ResolveName = (key: string, params?: Record<string, string>) => string;
+export type ResolveName = (key: string, params?: Record<string, string>, count?: number) => string;
+
+/** The `t` a run reason expects, fed from a ResolveName. */
+function reasonT(resolveName: ResolveName) {
+  return (key: TranslationKey, n?: number) => resolveName(key, undefined, n);
+}
 
 /**
  * reasonText translates a run's error when it is one of our own sentences, so a
@@ -64,7 +70,7 @@ export type ResolveName = (key: string, params?: Record<string, string>) => stri
  */
 function reasonText(raw: string | undefined, resolveName: ResolveName): string {
   if (!raw) return "";
-  return runReason(raw, (key: TranslationKey) => resolveName(key));
+  return runReason(raw, reasonT(resolveName));
 }
 
 const DOMAIN_KEYS: Record<string, string> = {
@@ -443,7 +449,7 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
         return { status: "success", text: resolveName("activityLog.lineDbImportedErrors", { name, note: reasonText(run.error, resolveName) }) };
       }
       const text = resolveName("activityLog.lineDbImported", { name });
-      const { note } = runReasonParts(run.error, (key: TranslationKey) => resolveName(key));
+      const { note } = runReasonParts(run.error, reasonT(resolveName));
       return { status: "success", text: note ? `${text}; ${note}` : text };
     }
     return run.status === "failed"

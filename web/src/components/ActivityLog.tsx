@@ -161,8 +161,8 @@ export function ActivityLog({
 
   // buildLogLines takes this instead of `t`, so it can be tested without an
   // I18nProvider.
-  const resolveName: ResolveName = (key, params) => {
-    let s = t(key as TranslationKey);
+  const resolveName: ResolveName = (key, params, count) => {
+    let s = t(key as TranslationKey, count);
     if (params) {
       for (const [name, value] of Object.entries(params)) s = s.split(`{${name}}`).join(value);
     }

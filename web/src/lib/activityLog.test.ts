@@ -3,8 +3,9 @@
 // the translation key and its params assertable.
 import { describe, expect, it } from "vitest";
 import { buildLogLines, domainLabel, filterLogLines, formatLogDate } from "./activityLog";
-import type { LogLine } from "./activityLog";
+import type { LogLine, ResolveName } from "./activityLog";
 import type { Run, ScheduleNext } from "./api";
+import { countText, en } from "./i18n";
 import type { ProgressMap } from "./progress";
 
 const resolveName = (key: string, params?: Record<string, string>): string =>
@@ -699,6 +700,22 @@ describe("dbdump runs", () => {
     const [line] = buildLogLines([run], {}, [], resolveName, 2_000_000);
     expect(line.text).toContain("activityLog.lineDbImported");
     expect(line.text).toContain("runReason.dbimportAppsDown");
+  });
+
+  it("agrees with the number of apps an import could not start again", () => {
+    const english: ResolveName = (key, params, count) => {
+      let s = countText(en[key as keyof typeof en] ?? key, "en", count);
+      for (const [name, value] of Object.entries(params ?? {})) s = s.split(`{${name}}`).join(value);
+      return s;
+    };
+    const kept = "database imported; the previous data folder was kept: /mnt/pg.old";
+    const runs = [
+      dump({ id: "i1", kind: "dbimport", error: `${kept}; could not start these apps again: immich_server` }),
+      dump({ id: "i2", kind: "dbimport", error: `${kept}; could not start these apps again: immich_server, immich_ml` }),
+    ];
+    const lines = buildLogLines(runs, {}, [], english, 2_000_000);
+    expect(lines.find((l) => l.id === "run:i1")?.text).toContain("this app did not start again");
+    expect(lines.find((l) => l.id === "run:i2")?.text).toContain("these apps did not start again");
   });
 
   it("colours a successful run as a warning only when its note asks for action", () => {
