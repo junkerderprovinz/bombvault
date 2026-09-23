@@ -32,6 +32,7 @@ const (
 	anomalyScopeDump   = "dump"
 	anomalyScopeZFSDS  = "zfsds"
 	anomalyScopeDomain = "domain"
+	anomalyScopeVolume = "volume"
 )
 
 const (
@@ -100,12 +101,14 @@ type anomalyEngine struct {
 	dirtyRuns    map[string]struct{}
 	dirtyScopes  map[anomalyScope]struct{}
 	dirtyDomains map[string]struct{}
+	volumeDirty  bool
 	fullDirty    bool
 	evaluatedTo  map[anomalyScope]int64
 	results      map[anomalyScope]anomalyScopeResult
 	lastPrune    int64
 	evalErrors   int
 	ready        bool
+	unmeasured   map[string][]string
 
 	signal     chan struct{}
 	scopeLocks sync.Map
@@ -132,6 +135,7 @@ func newAnomalyEngine(s *Service, now func() time.Time) *anomalyEngine {
 		dirtyDomains: map[string]struct{}{},
 		evaluatedTo:  map[anomalyScope]int64{},
 		results:      map[anomalyScope]anomalyScopeResult{},
+		unmeasured:   map[string][]string{},
 		signal:       make(chan struct{}, 1),
 		debounce:     anomalyDebounce,
 		idleTick:     anomalyIdleTick,
@@ -158,9 +162,13 @@ func (e *anomalyEngine) Start(ctx context.Context) {
 	go func() {
 		select {
 		case <-ctx.Done():
+			return
 		case <-time.After(e.startupDelay):
-			e.MarkAllDirty()
 		}
+		if err := e.backfillRunMetrics(ctx); err != nil {
+			log.Printf("anomaly: read the repositories' own history: %v", err)
+		}
+		e.MarkAllDirty()
 	}()
 }
 
@@ -230,6 +238,34 @@ func (e *anomalyEngine) MarkAllDirty() {
 	e.fullDirty = true
 	e.mu.Unlock()
 	e.wake()
+}
+
+// MarkVolumeDirty puts the free-space rules up for the next pass, which is
+// what a fresh reading asks for.
+func (e *anomalyEngine) MarkVolumeDirty() {
+	if e == nil {
+		return
+	}
+	e.mu.Lock()
+	e.volumeDirty = true
+	e.mu.Unlock()
+	e.wake()
+}
+
+// noteUnmeasuredVolumes records the repositories of one domain whose backend
+// answers no capacity question, so the page can name them instead of leaving
+// them out of the picture.
+func (e *anomalyEngine) noteUnmeasuredVolumes(domain string, names []string) {
+	if e == nil {
+		return
+	}
+	e.mu.Lock()
+	if len(names) == 0 {
+		delete(e.unmeasured, domain)
+	} else {
+		e.unmeasured[domain] = names
+	}
+	e.mu.Unlock()
 }
 
 func (e *anomalyEngine) markScopesDirty(scopes []anomalyScope) {
@@ -336,6 +372,18 @@ type anomalyPass struct {
 
 	drills     []store.DrillKey
 	drillsRead bool
+
+	volumes     map[string]*volumeHistory
+	volumesRead bool
+	growth      map[string]int64
+	growthRead  bool
+}
+
+// volumeHistory is one volume's readings and the domains that keep a
+// repository on it.
+type volumeHistory struct {
+	samples []store.VolumeSample
+	domains []string
 }
 
 // drillKeys lists the restore-check series of this installation, once per pass.
@@ -358,19 +406,22 @@ func (e *anomalyEngine) passOnce(ctx context.Context) error {
 		return nil
 	}
 	now := e.now().Unix()
-	runs, scopes, domains, full := e.takeDirty()
+	dirty, full := e.takeDirty()
 	pruneDue := e.pruneDue(now)
-	if !full && !pruneDue && len(runs)+len(scopes)+len(domains) == 0 {
+	if !full && !pruneDue && dirty.empty() {
 		return nil
 	}
 
 	settings, err := e.svc.store.GetSettings()
 	if err != nil {
-		e.restoreDirty(runs, scopes, domains, full)
+		e.restoreDirty(dirty, full)
 		return err
 	}
 	if pruneDue {
 		e.prune(now)
+		if bErr := e.backfillRunMetrics(ctx); bErr != nil {
+			log.Printf("anomaly: read the repositories' own history: %v", bErr)
+		}
 	}
 	if !settings.AnomalyEnabled {
 		e.setEvalErrors(0)
@@ -379,19 +430,19 @@ func (e *anomalyEngine) passOnce(ctx context.Context) error {
 
 	p := &anomalyPass{settings: settings, now: now}
 	if p.items, err = e.items(settings); err != nil {
-		e.restoreDirty(runs, scopes, domains, full)
+		e.restoreDirty(dirty, full)
 		e.setEvalErrors(1)
 		e.refresh()
 		return err
 	}
 	if p.prefs, err = e.svc.store.ListItemPrefs(); err != nil {
-		e.restoreDirty(runs, scopes, domains, full)
+		e.restoreDirty(dirty, full)
 		e.setEvalErrors(1)
 		e.refresh()
 		return err
 	}
 
-	for _, sc := range e.scopesToEvaluate(runs, scopes, domains, full, p) {
+	for _, sc := range e.scopesToEvaluate(dirty, full, p) {
 		if ctx.Err() != nil {
 			break
 		}
@@ -411,11 +462,15 @@ func (e *anomalyEngine) passOnce(ctx context.Context) error {
 
 // scopesToEvaluate turns the dirty sets into the series of this pass, in a
 // stable order.
-func (e *anomalyEngine) scopesToEvaluate(runs map[string]struct{}, scopes map[anomalyScope]struct{},
-	domains map[string]struct{}, full bool, p *anomalyPass) []anomalyScope {
-
-	want := maps.Clone(scopes)
-	dirtyDomains := maps.Clone(domains)
+func (e *anomalyEngine) scopesToEvaluate(dirty dirtySets, full bool, p *anomalyPass) []anomalyScope {
+	runs := dirty.runs
+	want := maps.Clone(dirty.scopes)
+	dirtyDomains := maps.Clone(dirty.domains)
+	if dirty.volumes || full {
+		for _, sc := range e.volumeScopes(p) {
+			want[sc] = struct{}{}
+		}
+	}
 	if full {
 		for id, ref := range p.items {
 			want[anomalyScope{Kind: anomalyScopeItem, ID: id}] = struct{}{}
@@ -496,8 +551,107 @@ func (e *anomalyEngine) evaluateScope(ctx context.Context, sc anomalyScope, p *a
 		return e.evaluateSeries(ctx, sc, p)
 	case anomalyScopeDomain:
 		return e.evaluateDrillSeries(ctx, sc, p)
+	case anomalyScopeVolume:
+		return e.evaluateVolume(ctx, sc, p)
 	}
 	return nil
+}
+
+// volumeScopes are the volumes this installation has readings for.
+func (e *anomalyEngine) volumeScopes(p *anomalyPass) []anomalyScope {
+	histories, err := e.volumeHistories(p)
+	if err != nil {
+		log.Printf("anomaly: read the free-space samples: %v", err)
+		p.errs++
+		return nil
+	}
+	out := make([]anomalyScope, 0, len(histories))
+	for volume := range histories {
+		out = append(out, anomalyScope{Kind: anomalyScopeVolume, ID: volume})
+	}
+	return out
+}
+
+// volumeHistories groups this pass's readings by volume, once.
+func (e *anomalyEngine) volumeHistories(p *anomalyPass) (map[string]*volumeHistory, error) {
+	if p.volumesRead {
+		return p.volumes, nil
+	}
+	samples, err := e.svc.store.ListVolumeSamples(p.now - capacityWindowDays*86400)
+	if err != nil {
+		return nil, err
+	}
+	out := map[string]*volumeHistory{}
+	for _, sample := range samples {
+		history := out[sample.Volume]
+		if history == nil {
+			history = &volumeHistory{}
+			out[sample.Volume] = history
+		}
+		history.samples = append(history.samples, sample)
+		for _, domain := range sample.Domains {
+			if !slices.Contains(history.domains, domain) {
+				history.domains = append(history.domains, domain)
+			}
+		}
+	}
+	p.volumes, p.volumesRead = out, true
+	return out, nil
+}
+
+// repoGrowth is how fast each domain's own repository grows, from the same
+// measurement the storage forecast shows, so the card and the finding cannot
+// give different answers.
+func (e *anomalyEngine) repoGrowth(p *anomalyPass) map[string]int64 {
+	if p.growthRead {
+		return p.growth
+	}
+	out := map[string]int64{}
+	for _, domain := range enabledDomains(p.settings) {
+		stats, err := e.svc.store.ListRepoStats(domain, "local", 0)
+		if err != nil {
+			log.Printf("anomaly: read the size samples of %s: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+			continue
+		}
+		if week, ok := growthBytesPerWeek(stats, time.Unix(p.now, 0)); ok {
+			out[domain] = week
+		}
+	}
+	p.growth, p.growthRead = out, true
+	return out
+}
+
+// evaluateVolume judges how much room one volume has left. It is a scope like
+// any other, so an acknowledge of a capacity finding takes the same lock a pass
+// does.
+func (e *anomalyEngine) evaluateVolume(ctx context.Context, sc anomalyScope, p *anomalyPass) error {
+	histories, err := e.volumeHistories(p)
+	if err != nil {
+		return err
+	}
+	history := histories[sc.ID]
+	if history == nil {
+		return nil
+	}
+	state, err := e.svc.store.AnomalyScopeState(sc.Kind, sc.ID)
+	if err != nil {
+		return err
+	}
+	growth := e.repoGrowth(p)
+	sens := resolveSensitivity("", p.settings.AnomalySensitivity)
+	if e.beforeWrite != nil {
+		e.beforeWrite(sc)
+	}
+	found, absent := detectCapacity(volumeInput{
+		Volume: sc.ID, Domains: history.domains, Samples: history.samples,
+		Growth: growth, Open: openByMetric(state.Open), Sens: sens, Now: p.now,
+	})
+	changes := applyFindings(scopeRef{Kind: sc.Kind, ID: sc.ID, Sensitivity: string(sens)},
+		found, absent, state, p.now)
+	if err := e.apply(sc, changes); err != nil {
+		return err
+	}
+	return ctx.Err()
 }
 
 // evaluateSeries judges one item's backups or one container's database dumps.
@@ -666,25 +820,39 @@ func (e *anomalyEngine) RetentionHeld(ctx context.Context, sc anomalyScope) (boo
 	return false, "", nil
 }
 
-func (e *anomalyEngine) takeDirty() (map[string]struct{}, map[anomalyScope]struct{}, map[string]struct{}, bool) {
+func (e *anomalyEngine) takeDirty() (dirtySets, bool) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	runs, scopes, domains, full := e.dirtyRuns, e.dirtyScopes, e.dirtyDomains, e.fullDirty
+	d := dirtySets{runs: e.dirtyRuns, scopes: e.dirtyScopes, domains: e.dirtyDomains, volumes: e.volumeDirty}
+	full := e.fullDirty
 	e.dirtyRuns = map[string]struct{}{}
 	e.dirtyScopes = map[anomalyScope]struct{}{}
 	e.dirtyDomains = map[string]struct{}{}
+	e.volumeDirty = false
 	e.fullDirty = false
-	return runs, scopes, domains, full
+	return d, full
 }
 
-func (e *anomalyEngine) restoreDirty(runs map[string]struct{}, scopes map[anomalyScope]struct{},
-	domains map[string]struct{}, full bool) {
+// dirtySets is what one pass took off the queue, kept together so a pass that
+// cannot finish can put all of it back.
+type dirtySets struct {
+	runs    map[string]struct{}
+	scopes  map[anomalyScope]struct{}
+	domains map[string]struct{}
+	volumes bool
+}
 
+func (d dirtySets) empty() bool {
+	return len(d.runs)+len(d.scopes)+len(d.domains) == 0 && !d.volumes
+}
+
+func (e *anomalyEngine) restoreDirty(d dirtySets, full bool) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	maps.Copy(e.dirtyRuns, runs)
-	maps.Copy(e.dirtyScopes, scopes)
-	maps.Copy(e.dirtyDomains, domains)
+	maps.Copy(e.dirtyRuns, d.runs)
+	maps.Copy(e.dirtyScopes, d.scopes)
+	maps.Copy(e.dirtyDomains, d.domains)
+	e.volumeDirty = e.volumeDirty || d.volumes
 	e.fullDirty = e.fullDirty || full
 }
 
@@ -768,12 +936,14 @@ func (e *anomalyEngine) rebuildCache() error {
 	e.mu.Lock()
 	results := maps.Clone(e.results)
 	errs, ready := e.evalErrors, e.ready
+	unmeasured := unmeasuredNames(e.unmeasured)
 	e.mu.Unlock()
 
 	next := &anomalyCache{Ready: ready}
 	next.Summary = AnomalySummary{
 		Enabled: settings.AnomalyEnabled, Ready: ready,
 		EvalErrors: errs, Backfill: backfillSummary(backfill),
+		UnmeasuredVolumes: unmeasured,
 	}
 	for _, row := range open {
 		switch row.Severity {
@@ -1005,6 +1175,21 @@ func scopeCounts(open []store.Anomaly, sc anomalyScope) (AnomalyOpenCounts, bool
 		held = held || anomalyHolds(row)
 	}
 	return counts, held
+}
+
+// unmeasuredNames is every repository no backend can measure, each named once
+// however many domains write to it.
+func unmeasuredNames(byDomain map[string][]string) []string {
+	var out []string
+	for _, names := range byDomain {
+		for _, name := range names {
+			if !slices.Contains(out, name) {
+				out = append(out, name)
+			}
+		}
+	}
+	slices.Sort(out)
+	return out
 }
 
 func backfillSummary(slots []store.AnomalyBackfillSlot) AnomalyBackfillSummary {

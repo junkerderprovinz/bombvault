@@ -67,15 +67,17 @@ func TestExcludesChangeRecordsANewFingerprint(t *testing.T) {
 // TestAFolderSetRecordsItsOwnFingerprint: a set's paths are its selection, and
 // the set keeps a fingerprint of its own rather than sharing the containers'.
 func TestAFolderSetRecordsItsOwnFingerprint(t *testing.T) {
-	h, st, svc := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
-	dir := t.TempDir()
-	set, err := st.CreateFileSet(store.FileSet{Name: "media", Path: dir})
+	h, st, svc, root := newTestRouterSvcDir(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	if err := os.MkdirAll(filepath.Join(root, "media"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	set, err := st.CreateFileSet(store.FileSet{Name: "media", Path: "media"})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	before := backupSetAndReadFingerprint(t, h, st, svc, set.ID)
-	if err := st.UpdateFileSet(store.FileSet{ID: set.ID, Name: "media", Path: dir, Excludes: []string{"*.part"}}); err != nil {
+	if err := st.UpdateFileSet(store.FileSet{ID: set.ID, Name: "media", Path: "media", Excludes: []string{"*.part"}}); err != nil {
 		t.Fatal(err)
 	}
 	if after := backupSetAndReadFingerprint(t, h, st, svc, set.ID); after == before {

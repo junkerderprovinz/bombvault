@@ -1044,3 +1044,208 @@ func newDataMeasurements(window []store.SeriesRun) []measurement {
 	}
 	return out
 }
+
+const (
+	// capacityWindowDays is how far back the free-space trend looks. Long
+	// enough to see through a nightly backup and the prune that follows it,
+	// short enough to react inside a month.
+	capacityWindowDays = 28
+	// capacitySlopeSamples and capacitySlopeSpan are what a falling-free-space
+	// line needs before it is a trend rather than two readings around a prune.
+	capacitySlopeSamples = 5
+	capacitySlopeSpan    = 3 * 86400
+	// capacityResizeFrac is the change in a volume's size that starts the
+	// window again: the readings from before a disk was swapped describe a
+	// different disk.
+	capacityResizeFrac = 0.10
+	capacityLowWarn    = 0.10
+	capacityLowCrit    = 0.05
+	// capacityLowCleared and capacityEtaCleared are how far back a volume has
+	// to come before an open finding ends, so a disk hovering at the threshold
+	// does not open and close a row every hour.
+	capacityLowCleared = 0.12
+	capacityEtaCleared = 1.25
+)
+
+// volumeInput is one volume's free-space history and what grows on it. Like
+// every other detector input it is pure: the samples, the growth per domain and
+// the rows a previous pass left open.
+type volumeInput struct {
+	Volume string
+	// Domains are the domains that keep a repository on this volume.
+	Domains []string
+	// Samples are the volume's readings, oldest first, as ListVolumeSamples
+	// returns them.
+	Samples []store.VolumeSample
+	// Growth is each domain's repository growth per week, from the same
+	// measurement the storage forecast shows.
+	Growth map[string]int64
+	Open   map[string]store.Anomaly
+	Sens   Sensitivity
+	Now    int64
+}
+
+// detectCapacity judges how long a volume still has room and how little of it
+// is left. Repository growth alone would miss every other writer on the same
+// disk, so the free space itself is fitted as well and the nearer of the two
+// projections decides.
+func detectCapacity(in volumeInput) ([]finding, []absence) {
+	window := capacityWindow(in.Samples, in.Now)
+	if len(window) == 0 {
+		return nil, nil
+	}
+	in.Samples = window
+	newest := window[len(window)-1]
+	p := paramsFor(in.Sens)
+
+	var found []finding
+	var absent []absence
+
+	eta, known := capacityETA(in)
+	open, isOpen := in.Open[metricCapacityETA]
+	switch {
+	case known && eta < p.EtaCritDays:
+		found = append(found, capacityFinding(metricCapacityETA, "critical", eta, p.EtaCritDays, newest, len(window)))
+	case known && eta < p.EtaWarnDays:
+		found = append(found, capacityFinding(metricCapacityETA, "warning", eta, p.EtaWarnDays, newest, len(window)))
+	case known && isOpen && eta < capacityEtaCleared*p.EtaWarnDays:
+		found = append(found, capacityFinding(metricCapacityETA, open.Severity, eta, open.Threshold, newest, len(window)))
+	default:
+		absent = append(absent, absence{Metric: metricCapacityETA, Observed: eta})
+	}
+
+	if newest.TotalBytes == nil || *newest.TotalBytes <= 0 {
+		return found, absent
+	}
+	share := float64(newest.FreeBytes) / float64(*newest.TotalBytes)
+	open, isOpen = in.Open[metricCapacityLow]
+	switch {
+	case share < capacityLowCrit:
+		found = append(found, capacityFinding(metricCapacityLow, "critical", share, capacityLowCrit, newest, len(window)))
+	case share < capacityLowWarn:
+		found = append(found, capacityFinding(metricCapacityLow, "warning", share, capacityLowWarn, newest, len(window)))
+	case isOpen && share < capacityLowCleared:
+		found = append(found, capacityFinding(metricCapacityLow, open.Severity, share, open.Threshold, newest, len(window)))
+	default:
+		absent = append(absent, absence{Metric: metricCapacityLow, Observed: share})
+	}
+	return found, absent
+}
+
+// capacityETA is how many days the volume has left, from the repositories'
+// growth and from the slope of its own free space. A volume nobody measures a
+// trend for has no projection at all, which is different from having a
+// comfortable one.
+func capacityETA(in volumeInput) (float64, bool) {
+	newest := in.Samples[len(in.Samples)-1]
+	free := float64(newest.FreeBytes)
+	eta, known := math.Inf(1), false
+
+	var perWeek int64
+	for _, domain := range in.Domains {
+		perWeek += in.Growth[domain]
+	}
+	if perWeek > 0 {
+		eta, known = free/(float64(perWeek)/7), true
+	}
+	if drain, ok := freeSpaceDrainPerDay(in.Samples); ok {
+		eta, known = min(eta, free/drain), true
+	}
+	if !known {
+		return 0, false
+	}
+	return eta, true
+}
+
+// freeSpaceDrainPerDay fits the free space over time and reports how fast it
+// falls, in bytes per day. A volume that is not losing room has no drain.
+func freeSpaceDrainPerDay(samples []store.VolumeSample) (float64, bool) {
+	if len(samples) < capacitySlopeSamples ||
+		samples[len(samples)-1].At-samples[0].At < capacitySlopeSpan {
+		return 0, false
+	}
+	days := make([]float64, len(samples))
+	free := make([]float64, len(samples))
+	for i, s := range samples {
+		days[i] = float64(s.At-samples[0].At) / 86400
+		free[i] = float64(s.FreeBytes)
+	}
+	slope, ok := olsSlope(days, free)
+	if !ok || slope >= 0 {
+		return 0, false
+	}
+	return -slope, true
+}
+
+// capacityWindow cuts the readings to the trend window and starts it again
+// wherever the volume changed size, because the readings from before a resize
+// describe a different disk.
+func capacityWindow(samples []store.VolumeSample, now int64) []store.VolumeSample {
+	cutoff := now - capacityWindowDays*86400
+	var window []store.VolumeSample
+	for _, s := range samples {
+		if s.At >= cutoff {
+			window = append(window, s)
+		}
+	}
+	start := 0
+	for i := 1; i < len(window); i++ {
+		if volumeResized(window[i-1], window[i]) {
+			start = i
+		}
+	}
+	return window[start:]
+}
+
+func volumeResized(previous, current store.VolumeSample) bool {
+	if previous.TotalBytes == nil || current.TotalBytes == nil || *previous.TotalBytes <= 0 {
+		return false
+	}
+	change := math.Abs(float64(*current.TotalBytes-*previous.TotalBytes)) / float64(*previous.TotalBytes)
+	return change > capacityResizeFrac
+}
+
+func capacityFinding(metric, severity string, observed, threshold float64,
+	newest store.VolumeSample, samples int) finding {
+
+	details := map[string]any{"freeBytes": float64(newest.FreeBytes), "source": newest.Source}
+	if newest.TotalBytes != nil {
+		details["totalBytes"] = float64(*newest.TotalBytes)
+	}
+	return finding{
+		Metric: metric, Severity: severity, RunAt: newest.At,
+		Observed: observed, Threshold: threshold, Samples: samples,
+		Details: finiteDetails(details),
+	}
+}
+
+// olsSlope is the least-squares slope of ys over xs, absent when the xs do not
+// spread at all.
+func olsSlope(xs, ys []float64) (float64, bool) {
+	if len(xs) != len(ys) || len(xs) < 2 {
+		return 0, false
+	}
+	meanX, meanY := mean(xs), mean(ys)
+	var num, den float64
+	for i := range xs {
+		dx := xs[i] - meanX
+		num += dx * (ys[i] - meanY)
+		den += dx * dx
+	}
+	if den == 0 {
+		return 0, false
+	}
+	slope := num / den
+	if math.IsNaN(slope) || math.IsInf(slope, 0) {
+		return 0, false
+	}
+	return slope, true
+}
+
+func mean(xs []float64) float64 {
+	var sum float64
+	for _, x := range xs {
+		sum += x
+	}
+	return sum / float64(len(xs))
+}
