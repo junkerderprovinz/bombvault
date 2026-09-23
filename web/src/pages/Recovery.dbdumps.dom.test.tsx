@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { countText, I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
-import type { Container, ForeignInventory } from "../lib/api";
+import type { Container, DBDumpView, ForeignInventory, Run } from "../lib/api";
 
 class NoopEventSource {
   onmessage: ((e: MessageEvent) => void) | null = null;
@@ -19,7 +19,36 @@ class NoopEventSource {
 
 let containersOnServer: Container[] = [];
 let foreignInventory: ForeignInventory = { containers: [], vms: [], fileSets: [], dbDumps: [] };
-const restore = vi.fn(() => Promise.resolve({ ok: true, started: true }));
+let dumpsOnServer: DBDumpView[] = [];
+let runsOnServer: Run[] = [];
+
+function finishedRun(kind: string, target: string): Run {
+  return {
+    id: `${kind}-${runsOnServer.length + 1}`,
+    targetId: "t1",
+    kind,
+    status: "success",
+    startedAt: 1_700_000_000,
+    finishedAt: 1_700_000_010,
+    snapshotId: "s1",
+    bytes: 0,
+    error: "",
+    acknowledged: false,
+    target,
+    domain: "container",
+  };
+}
+
+// Both actions of the dump-only row run detached and are watched through the
+// recorded runs, so each start hands its finished run to the next poll.
+const restore = vi.fn((name: string) => {
+  runsOnServer = [...runsOnServer, finishedRun("restore", name)];
+  return Promise.resolve({ ok: true, started: true });
+});
+const importDbDump = vi.fn((name: string) => {
+  runsOnServer = [...runsOnServer, finishedRun("dbimport", name)];
+  return Promise.resolve({ ok: true, started: true });
+});
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
@@ -49,11 +78,13 @@ vi.mock("../lib/api", async (importOriginal) => {
     listContainers: () => Promise.resolve({ ok: true, containers: containersOnServer }),
     listVMs: () => Promise.resolve({ ok: true, vms: [] }),
     listFileSets: () => Promise.resolve({ ok: true, fileSets: [] }),
-    listRuns: () => Promise.resolve({ ok: true, runs: [] }),
+    listRuns: () => Promise.resolve({ ok: true, runs: runsOnServer }),
     getVMSSH: () => Promise.resolve({ ok: true, host: "tower" }),
     foreignOpen: () => Promise.resolve({ ok: true, session: "s1", inventory: foreignInventory }),
     foreignClose: () => Promise.resolve({ ok: true }),
-    restore: (...a: unknown[]) => restore(...(a as [])),
+    restore: (...a: unknown[]) => restore(...(a as [string])),
+    listDbDumps: () => Promise.resolve({ ok: true, dumps: dumpsOnServer }),
+    importDbDump: (...a: unknown[]) => importDbDump(...(a as [string])),
   };
 });
 
@@ -114,10 +145,16 @@ async function renderPage() {
 beforeEach(() => {
   containersOnServer = [];
   foreignInventory = { containers: [], vms: [], fileSets: [], dbDumps: [] };
+  dumpsOnServer = [];
+  runsOnServer = [];
   restore.mockClear();
+  importDbDump.mockClear();
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  vi.useRealTimers();
+  cleanup();
+});
 
 describe("a foreign repository holding only dumps", () => {
   it("is not reported as empty", async () => {
@@ -159,6 +196,34 @@ describe("containers that exist as dumps alone", () => {
     expect(list.textContent).toContain("immich_postgres");
     expect(list.textContent).not.toContain("sonarr");
     expect(screen.getByRole("button", { name: en["recovery.restoreAndImport"] })).toBeTruthy();
+  });
+
+  it("come back with their data when the row's one action is used", async () => {
+    dumpsOnServer = [
+      {
+        id: "d1",
+        time: "2026-09-23T19:10:19Z",
+        engine: "postgres",
+        image: "postgres:16",
+        version: "16.4",
+        databases: ["immich"],
+        bytes: 5_000,
+        damaged: false,
+      },
+    ];
+    // Both runs are watched by polling the run list, so the clock has to move.
+    vi.useFakeTimers();
+    await renderPage();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["recovery.discover"] }));
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: en["recovery.restoreAndImport"] }));
+    await act(() => vi.advanceTimersByTimeAsync(10_000));
+
+    expect(restore.mock.calls[0]).toEqual(["immich_postgres", "latest", true]);
+    expect(importDbDump.mock.calls[0]).toEqual(["immich_postgres", "d1"]);
+    expect(screen.getByText(en["dbdump.importDone"])).toBeTruthy();
   });
 
   it("are left out of restoring everything, and said so", async () => {

@@ -169,7 +169,7 @@ function DumpOnlyRow({
       const restored = await fireAndWaitRun({
         kind: "restore",
         matchRun: (r) => r.domain === "container" && r.target === name,
-        start: () => restore(name, "latest", false),
+        start: () => restore(name, "latest", true),
         t,
       });
       if (!restored.ok) {
