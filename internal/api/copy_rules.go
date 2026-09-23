@@ -585,3 +585,17 @@ func withTarget(skip []string, targetID string) []string {
 	}
 	return append(slices.Clone(skip), targetID)
 }
+
+// withCopyRule adds "copy rule" to the settings a takeover would drop. The
+// store refuses the rename that moves a rule onto a name that has one, but by
+// then the row on that name is gone.
+func (s *Service) withCopyRule(labels []string, domain, identity string) ([]string, error) {
+	_, found, err := s.store.CopyRuleFor(domain, identity)
+	if err != nil {
+		return nil, fmt.Errorf("read the copy rule of %s: %w", identity, err)
+	}
+	if found {
+		labels = append(labels, "copy rule")
+	}
+	return labels, nil
+}

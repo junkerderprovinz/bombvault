@@ -245,8 +245,9 @@ func (s *Service) refreshedVMDefinition(ctx context.Context, def vmDefinition, u
 	return string(b), nil
 }
 
-// removeEmptyVMRow deletes the row on name when it has no backups and nothing
-// configured, so the entry can move there, and refuses any other row.
+// removeEmptyVMRow deletes the row on name when it has no backups, nothing
+// configured and no copy rule, so the entry can move there, and refuses any
+// other row.
 func (s *Service) removeEmptyVMRow(ctx context.Context, name string) error {
 	tg, err := s.store.GetVMTargetByName(name)
 	switch {
@@ -255,7 +256,11 @@ func (s *Service) removeEmptyVMRow(ctx context.Context, name string) error {
 	case err != nil:
 		return fmt.Errorf("read the entry of %q: %w", name, err)
 	}
-	if labels := vmConfiguredStateLabels(tg); len(labels) > 0 {
+	labels, err := s.withCopyRule(vmConfiguredStateLabels(tg), "vms", "vm:"+name)
+	if err != nil {
+		return err
+	}
+	if len(labels) > 0 {
 		return fmt.Errorf("%q already has its own configured entry (%s); remove it yourself first", name, strings.Join(labels, ", "))
 	}
 	has, err := s.vmHasBackups(ctx, name)

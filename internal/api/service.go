@@ -9551,11 +9551,15 @@ func configuredStateLabels(t store.Target) []string {
 }
 
 // targetOccupyingNewNameIsEmpty reports whether t, the row already on a
-// takeover's new name, may be deleted to make way: it has neither backups nor
-// operator-set configuration. labels names the configuration it found, so the
-// refusal can say what would be lost.
+// takeover's new name, may be deleted to make way: it has no backups, no
+// operator-set configuration and no copy rule. labels names what it found, so
+// the refusal can say what would be lost.
 func (s *Service) targetOccupyingNewNameIsEmpty(ctx context.Context, t store.Target) (empty bool, labels []string, err error) {
-	if labels := configuredStateLabels(t); len(labels) > 0 {
+	labels, err = s.withCopyRule(configuredStateLabels(t), "containers", "container:"+t.ContainerName)
+	if err != nil {
+		return false, nil, err
+	}
+	if len(labels) > 0 {
 		return false, labels, nil
 	}
 	hasBackups, err := s.containerHasBackups(ctx, t.ContainerName)
