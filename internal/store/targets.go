@@ -580,7 +580,8 @@ func (r *Repo) SetExcludeCaches(containerName string, m map[string]bool) error {
 // behind, they could never be unlinked, and the unique (domain, old_name)
 // index would keep those names from ever becoming aliases again. An alias
 // whose old_name only equals name but points at another row is that row's
-// history and stays.
+// history and stays. Each former name keeps the entry's copy rule, because the
+// snapshots taken under it outlive the row.
 func (r *Repo) DeleteTarget(name string) error {
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -605,6 +606,9 @@ func (r *Repo) DeleteTarget(name string) error {
 		return fmt.Errorf("DeleteTarget: %w", err)
 	}
 	if hasRow {
+		if err := keepRuleOnAliasesTx(tx, "container", id, name); err != nil {
+			return fmt.Errorf("DeleteTarget: %w", err)
+		}
 		if _, err := tx.Exec(`DELETE FROM target_aliases WHERE domain = 'container' AND target_id = ?`, id); err != nil {
 			return fmt.Errorf("DeleteTarget aliases: %w", err)
 		}
@@ -663,6 +667,9 @@ func scanTarget(s scanner) (Target, error) {
 // it just gave up. The caller rewrites it beforehand, so a definition that
 // fails to rewrite fails before anything is written; pass the current
 // definition when there is nothing to rewrite.
+//
+// The entry's copy rule moves to the new name; a new name that carries a rule
+// of its own is ErrCopyRuleTaken.
 func (r *Repo) RenameTargetWithAlias(oldName, newName, newDefinition string) error {
 	return r.renameWithAlias(containerEntries, oldName, newName, newDefinition, "")
 }
@@ -672,6 +679,9 @@ func (r *Repo) RenameTargetWithAlias(oldName, newName, newDefinition string) err
 // oldName is no container's former name, and when an unrelated entry has
 // taken oldName since, rather than merge the two. newDefinition is written
 // with the rename back, for the same reason as in RenameTargetWithAlias.
+//
+// The copy rule comes back with the name, and an old name that carries a rule
+// of its own is ErrCopyRuleTaken.
 func (r *Repo) UnlinkAlias(oldName, newDefinition string) error {
 	return r.unlinkAlias(containerEntries, oldName, newDefinition, "")
 }

@@ -136,6 +136,13 @@ func (r *Repo) renameWithAlias(e entryTable, oldName, newName, newDefinition, uu
 			return fmt.Errorf("rename %q: drop alias %q: %w", oldName, newName, err)
 		}
 	}
+	placement, prefix, err := placementDomainForAlias(e.domain)
+	if err != nil {
+		return err
+	}
+	if err := renameCopyRuleTx(tx, placement, prefix+oldName, prefix+newName); err != nil {
+		return fmt.Errorf("rename %q: %w", oldName, err)
+	}
 	if err := e.moveRow(tx, id, newName, newDefinition, uuid); err != nil {
 		return fmt.Errorf("rename %q: %w", oldName, err)
 	}
@@ -171,6 +178,17 @@ func (r *Repo) unlinkAlias(e entryTable, oldName, newDefinition, uuid string) er
 	}
 	if taken > 0 {
 		return fmt.Errorf("%q already has its own entry", oldName)
+	}
+	var current string
+	if err := tx.QueryRow(`SELECT `+e.nameCol+` FROM `+e.table+` WHERE id = ?`, targetID).Scan(&current); err != nil {
+		return fmt.Errorf("unlink %q: read the linked entry: %w", oldName, err)
+	}
+	placement, prefix, err := placementDomainForAlias(e.domain)
+	if err != nil {
+		return err
+	}
+	if err := renameCopyRuleTx(tx, placement, prefix+current, prefix+oldName); err != nil {
+		return fmt.Errorf("unlink %q: %w", oldName, err)
 	}
 	if err := e.moveRow(tx, targetID, oldName, newDefinition, uuid); err != nil {
 		return fmt.Errorf("unlink %q: %w", oldName, err)
