@@ -448,8 +448,13 @@ func TestDBDumpAdapterStopsOrphanFromForwardedPid(t *testing.T) {
 
 		parent, cancel := context.WithCancel(context.Background())
 		cancel()
-		if _, err := a.Dump(parent, dumpRequest()); err == nil {
-			t.Fatal("a cancelled dump reported success")
+		logged := captureLog(t, func() {
+			if _, err := a.Dump(parent, dumpRequest()); err == nil {
+				t.Error("a cancelled dump reported success")
+			}
+		})
+		if !strings.Contains(logged, "4242") {
+			t.Errorf("the log does not say that the dump was stopped:\n%s", logged)
 		}
 
 		if len(dock.execArgv) != 1 {
