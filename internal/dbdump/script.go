@@ -198,9 +198,52 @@ if [ "$scope" = all ]; then exec "$client" $conn --user=root; fi
 exec "$client" $conn --user="$user" "$db"
 `
 
-// orphanStopScript signals a dump that outlived its helper. The case makes a
-// recycled pid harmless.
-const orphanStopScript = `case "$(tr '\0' ' ' </proc/$1/cmdline 2>/dev/null)" in *dump*) kill -TERM "$1";; esac`
+// orphanStopScript signals a dump that outlived its helper, deepest process
+// first and each one only once the one below it has been reaped. The first
+// case makes a recycled pid harmless.
+//
+// The signal must reach the dump's processes and no others. pg_dumpall runs a
+// pg_dump per database through a shell, and coreutils timeout, which the dump
+// runs under, is its own process-group leader and forwards a TERM to the whole
+// group. Whoever dies first leaves children behind that PID 1 adopts, and PID 1
+// in the official image is the postmaster: it takes a signalled child it never
+// started for a crashed backend, drops every connection and reinitialises the
+// cluster. So no process is signalled while it still has a child of the dump
+// under it, and in practice the first signal is enough, because pg_dumpall
+// ends when its pg_dump does and timeout ends with the tool it wraps.
+const orphanStopScript = `case "$(tr '\0' ' ' </proc/$1/cmdline 2>/dev/null)" in *dump*) ;; *) exit 0 ;; esac
+bv_parent() {
+  [ -r "/proc/$1/stat" ] || return 1
+  read -r bv_stat <"/proc/$1/stat" || return 1
+  bv_stat=${bv_stat##*") "}
+  set -- $bv_stat
+  parent=$2
+}
+tree=" $1 "
+order="$1"
+depth=0
+while [ "$depth" -lt 8 ]; do
+  depth=$((depth + 1)); grew=""
+  for entry in /proc/[0-9]*; do
+    pid=${entry#/proc/}
+    case "$tree" in *" $pid "*) continue ;; esac
+    bv_parent "$pid" || continue
+    case "$tree" in *" $parent "*) tree="$tree$pid "; order="$pid $order"; grew=y ;; esac
+  done
+  [ -n "$grew" ] || break
+done
+budget=60
+below=""
+for pid in $order; do
+  while [ -n "$below" ] && [ "$budget" -gt 0 ] && [ -e "/proc/$below" ]; do
+    budget=$((budget - 1))
+    sleep 0.05
+  done
+  kill -TERM "$pid" 2>/dev/null
+  below="$pid"
+done
+exit 0
+`
 
 func buildScript(e Engine, head, postgresTail, mysqlTail string) (string, error) {
 	switch e {

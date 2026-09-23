@@ -148,7 +148,7 @@ func TestOrphanStopArgvRejectsBadPid(t *testing.T) {
 	if len(argv) != 5 || argv[0] != "sh" || argv[1] != "-c" || argv[3] != "bv" || argv[4] != "42" {
 		t.Fatalf("OrphanStopArgv = %q", argv)
 	}
-	for _, want := range []string{"/proc/$1/cmdline", `kill -TERM "$1"`, "*dump*"} {
+	for _, want := range []string{"/proc/$1/cmdline", `kill -TERM "$pid"`, "*dump*"} {
 		if !strings.Contains(argv[2], want) {
 			t.Errorf("orphan stop script lacks %q: %s", want, argv[2])
 		}

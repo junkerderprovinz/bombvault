@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/dbdump"
 )
@@ -943,4 +944,135 @@ func TestImportScriptReadsStdin(t *testing.T) {
 			t.Errorf("MYSQL_PWD = %q, want p", got.env["MYSQL_PWD"])
 		}
 	})
+}
+
+// waiter writes a script that records its pid, starts child when there is one
+// and waits. On a TERM it records the parent it has at that moment, so the
+// record shows whether it was still attached to the dump when the signal
+// arrived. A script with a child holds a second before it goes, which gives
+// the child that moment to read its parent. It waits in a loop, because the
+// stop reaches the sleep it waits on as well.
+func waiter(t *testing.T, dir, name, child, log, started string) string {
+	t.Helper()
+	hold, start := "", ""
+	if child != "" {
+		hold, start = "sleep 1; ", "\""+child+"\" &\n"
+	}
+	body := "#!/bin/sh\n" +
+		"rec() {\n" +
+		"  read -r s < /proc/$$/stat\n" +
+		"  s=${s##*\") \"}\n" +
+		"  set -- $s\n" +
+		"  echo \"" + name + " $2\" >> " + log + "\n" +
+		"}\n" +
+		"trap 'rec; " + hold + "exit 143' TERM\n" +
+		"echo \"" + name + " $$\" >> " + started + "\n" +
+		start +
+		"while :; do sleep 30 & wait; done\n"
+	path := filepath.Join(dir, name+".sh")
+	if err := os.WriteFile(path, []byte(body), 0o755); err != nil { //nolint:gosec // G306: the script has to be executable
+		t.Fatal(err)
+	}
+	return path
+}
+
+// readPairs reads the "<name> <pid>" lines a waiter wrote.
+func readPairs(t *testing.T, path string) map[string]string {
+	t.Helper()
+	data, err := os.ReadFile(path) //nolint:gosec // G304: the path is this test's own temp directory
+	if err != nil {
+		return nil
+	}
+	pairs := map[string]string{}
+	for _, line := range strings.Split(strings.TrimSpace(string(data)), "\n") {
+		if name, pid, ok := strings.Cut(line, " "); ok {
+			pairs[name] = pid
+		}
+	}
+	return pairs
+}
+
+func waitFor(t *testing.T, path string, want int) map[string]string {
+	t.Helper()
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		if pairs := readPairs(t, path); len(pairs) >= want {
+			return pairs
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("%s holds %d of %d entries", filepath.Base(path), len(readPairs(t, path)), want)
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+}
+
+// TestOrphanStopSignalsTheDumpTreeAndNothingElse builds the process shape a
+// PostgreSQL dump has (pg_dumpall runs a pg_dump per database through a shell)
+// and checks that the stop reaches every process of it while a process beside
+// it keeps running. A child that outlives its parent is re-parented to PID 1,
+// which in the database images is the server itself, and a signal it reaps
+// there costs the whole cluster a crash recovery.
+func TestOrphanStopSignalsTheDumpTreeAndNothingElse(t *testing.T) {
+	if _, err := os.Stat("/proc/self/stat"); err != nil {
+		t.Skip("no /proc to walk")
+	}
+	dir := t.TempDir()
+	signalled := filepath.Join(dir, "signalled")
+	started := filepath.Join(dir, "started")
+
+	leaf := waiter(t, dir, "leaf", "", signalled, started)
+	mid := waiter(t, dir, "mid", leaf, signalled, started)
+	top := waiter(t, dir, "fakedump", mid, signalled, started)
+	beside := waiter(t, dir, "bystander", "", signalled, started)
+
+	for _, script := range []string{top, beside} {
+		cmd := exec.Command(script) //nolint:gosec // G204: a script this test wrote
+		if err := cmd.Start(); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() {
+			_ = cmd.Process.Kill()
+			_ = cmd.Wait()
+		})
+	}
+	pids := waitFor(t, started, 4)
+
+	stop := func(pid string) {
+		t.Helper()
+		n, err := strconv.Atoi(pid)
+		if err != nil {
+			t.Fatalf("pid %q: %v", pid, err)
+		}
+		argv, err := dbdump.OrphanStopArgv(n)
+		if err != nil {
+			t.Fatalf("OrphanStopArgv: %v", err)
+		}
+		out, err := exec.Command(argv[0], argv[1:]...).CombinedOutput() //nolint:gosec // G204: the argv is this package's own constant script
+		if err != nil {
+			t.Fatalf("orphan stop: %v, output %q", err, out)
+		}
+		time.Sleep(300 * time.Millisecond)
+	}
+
+	stop(pids["bystander"])
+	if got := readPairs(t, signalled); len(got) != 0 {
+		t.Fatalf("a process that is not a dump was signalled: %v", got)
+	}
+
+	stop(pids["fakedump"])
+	got := waitFor(t, signalled, 3)
+	for _, name := range []string{"fakedump", "mid", "leaf"} {
+		if _, ok := got[name]; !ok {
+			t.Errorf("%s was not signalled, the stop reached %v", name, got)
+		}
+	}
+	if _, ok := got["bystander"]; ok {
+		t.Error("the stop reached a process beside the dump")
+	}
+	if got["leaf"] != pids["mid"] {
+		t.Errorf("the leaf hung under %s when it was signalled, want its own parent %s", got["leaf"], pids["mid"])
+	}
+	if got["mid"] != pids["fakedump"] {
+		t.Errorf("the middle process hung under %s when it was signalled, want its own parent %s", got["mid"], pids["fakedump"])
+	}
 }
