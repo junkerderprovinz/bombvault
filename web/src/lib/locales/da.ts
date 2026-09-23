@@ -243,7 +243,7 @@ const da: Partial<Translations> = {
   "settings.containersEnabledHint": "Sikkerhedskopiér og gendan Docker-containere: BombVaults kernedomæne, slået til som standard.",
   "settings.dbDumps": "Automatiske databasedumps",
   "settings.dbDumpsHint": "Før hver backup dumpes genkendte PostgreSQL-, MySQL- og MariaDB-containere som deres egne gendannelsespunkter. Her slår du det fra for alle containere på én gang, for eksempel når dine databaser allerede dumper sig selv. Enkelte containere kan slås fra på deres kort.",
-  "settings.dbDumpsOffConfirm": "Slå databasedumps fra for alle containere? For {names} er dumpet den eneste sammenhængende kopi af databasen.",
+  "settings.dbDumpsOffConfirm": "one=Slå databasedumps fra for alle containere? For {names} er dumpet den eneste sammenhængende kopi af databasen.|other=Slå databasedumps fra for alle containere? For {names} er dumpene de eneste sammenhængende kopier af deres databaser.",
   "settings.dbDumpsOffConfirmPlain": "Slå databasedumps fra for alle containere?",
   "settings.vmsEnabled": "VMs",
   "settings.vmsEnabledHint": "Sikkerhedskopiér og gendan virtuelle maskiner via SSH med libvirt.",

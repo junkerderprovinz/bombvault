@@ -412,7 +412,7 @@ const lt: Partial<Translations> = {
   "settings.containersEnabledHint": "Kurkite atsargines kopijas ir atkurkite Docker konteinerius, pagrindinė BombVault sritis, pagal numatytuosius nustatymus įjungta.",
   "settings.dbDumps": "Automatinės duomenų bazių išklotinės",
   "settings.dbDumpsHint": "Prieš kiekvieną atsarginę kopiją atpažinti PostgreSQL, MySQL ir MariaDB konteineriai išklojami kaip atskiri atkūrimo taškai. Čia tai išjungi visiems konteineriams iš karto, pavyzdžiui, kai tavo duomenų bazės jau išsikloja pačios. Atskirą konteinerį galima išjungti jo kortelėje.",
-  "settings.dbDumpsOffConfirm": "Išjungti duomenų bazių išklotines visiems konteineriams? Šiems išklotinė yra vienintelė nuosekli duomenų bazės kopija: {names}.",
+  "settings.dbDumpsOffConfirm": "one=Išjungti duomenų bazių išklotines visiems konteineriams? Šiam išklotinė yra vienintelė nuosekli duomenų bazės kopija: {names}.|few=Išjungti duomenų bazių išklotines visiems konteineriams? Šiems išklotinės yra vienintelės nuoseklios jų duomenų bazių kopijos: {names}.|many=Išjungti duomenų bazių išklotines visiems konteineriams? Šiems išklotinės yra vienintelės nuoseklios jų duomenų bazių kopijos: {names}.|other=Išjungti duomenų bazių išklotines visiems konteineriams? Šiems išklotinės yra vienintelės nuoseklios jų duomenų bazių kopijos: {names}.",
   "settings.dbDumpsOffConfirmPlain": "Išjungti duomenų bazių išklotines visiems konteineriams?",
   "settings.vmsEnabled": "VM",
   "settings.vmsEnabledHint": "Kurkite atsargines kopijas ir atkurkite virtualiąsias mašinas per SSH naudodami libvirt.",

@@ -243,7 +243,7 @@ const fr: Partial<Translations> = {
   "settings.containersEnabledHint": "Sauvegarder et restaurer les conteneurs Docker, le domaine principal de BombVault, activé par défaut.",
   "settings.dbDumps": "Exports SQL automatiques",
   "settings.dbDumpsHint": "Avant chaque sauvegarde, les conteneurs PostgreSQL, MySQL et MariaDB reconnus sont exportés comme points de restauration à part. Ici vous coupez cela pour tous les conteneurs d'un coup, par exemple si vos bases s'exportent déjà toutes seules. Un conteneur isolé se coupe sur sa carte.",
-  "settings.dbDumpsOffConfirm": "Couper les exports SQL pour tous les conteneurs ? Pour {names}, l'export est la seule copie cohérente de la base.",
+  "settings.dbDumpsOffConfirm": "one=Couper les exports SQL pour tous les conteneurs ? Pour {names}, l'export est la seule copie cohérente de la base.|many=Couper les exports SQL pour tous les conteneurs ? Pour {names}, les exports sont les seules copies cohérentes de leurs bases.|other=Couper les exports SQL pour tous les conteneurs ? Pour {names}, les exports sont les seules copies cohérentes de leurs bases.",
   "settings.dbDumpsOffConfirmPlain": "Couper les exports SQL pour tous les conteneurs ?",
   "settings.vmsEnabled": "VMs",
   "settings.vmsEnabledHint": "Sauvegarder et restaurer les machines virtuelles via SSH avec libvirt.",

@@ -240,7 +240,7 @@ const pl: Partial<Translations> = {
   "settings.containersEnabledHint": "Kopia zapasowa i przywracanie kontenerów Docker: główna domena BombVault, domyślnie włączona.",
   "settings.dbDumps": "Automatyczne zrzuty baz danych",
   "settings.dbDumpsHint": "Przed każdą kopią zapasową rozpoznane kontenery PostgreSQL, MySQL i MariaDB są zrzucane jako osobne punkty przywracania. Tutaj wyłączasz to dla wszystkich kontenerów naraz, na przykład gdy twoje bazy same robią zrzuty. Pojedynczy kontener wyłączysz na jego karcie.",
-  "settings.dbDumpsOffConfirm": "Wyłączyć zrzuty baz danych dla wszystkich kontenerów? Dla {names} zrzut jest jedyną spójną kopią bazy.",
+  "settings.dbDumpsOffConfirm": "one=Wyłączyć zrzuty baz danych dla wszystkich kontenerów? Dla {names} zrzut jest jedyną spójną kopią bazy.|few=Wyłączyć zrzuty baz danych dla wszystkich kontenerów? Dla {names} zrzuty są jedynymi spójnymi kopiami ich baz.|many=Wyłączyć zrzuty baz danych dla wszystkich kontenerów? Dla {names} zrzuty są jedynymi spójnymi kopiami ich baz.|other=Wyłączyć zrzuty baz danych dla wszystkich kontenerów? Dla {names} zrzuty są jedynymi spójnymi kopiami ich baz.",
   "settings.dbDumpsOffConfirmPlain": "Wyłączyć zrzuty baz danych dla wszystkich kontenerów?",
   "settings.vmsEnabled": "Maszyny wirtualne",
   "settings.vmsEnabledHint": "Kopia zapasowa i przywracanie maszyn wirtualnych przez SSH za pomocą libvirt.",

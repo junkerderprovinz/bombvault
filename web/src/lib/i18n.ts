@@ -528,7 +528,8 @@ export const en = {
   "settings.containersEnabledHint": "Back up and restore Docker containers, BombVault's core domain, enabled by default.",
   "settings.dbDumps": "Automatic database dumps",
   "settings.dbDumpsHint": "Before each backup, recognised PostgreSQL, MySQL and MariaDB containers are dumped as restore points of their own. Switch it off here for every container at once, for example when your databases already dump themselves. Single containers can be switched off on their card.",
-  "settings.dbDumpsOffConfirm": "Switch off database dumps for all containers? For {names} the dump is the only consistent copy of the database.",
+  "settings.dbDumpsOffConfirm":
+    "one=Switch off database dumps for all containers? For {names} the dump is the only consistent copy of the database.|other=Switch off database dumps for all containers? For {names} the dumps are the only consistent copies of their databases.",
   "settings.dbDumpsOffConfirmPlain": "Switch off database dumps for all containers?",
   "settings.vmsEnabled": "VMs",
   "settings.vmsEnabledHint": "Back up and restore virtual machines over SSH via libvirt.",
@@ -2631,7 +2632,8 @@ export const de: Translations = {
   "settings.containersEnabledHint": "Container sichern und wiederherstellen, BombVaults Kerndomäne, standardmäßig aktiv.",
   "settings.dbDumps": "Automatische Datenbank-Dumps",
   "settings.dbDumpsHint": "Vor jedem Backup werden erkannte PostgreSQL-, MySQL- und MariaDB-Container als eigene Wiederherstellungspunkte gedumpt. Hier schaltest du das für alle Container auf einmal ab, etwa wenn deine Datenbanken sich schon selbst dumpen. Einzelne Container lassen sich auf ihrer Karte abschalten.",
-  "settings.dbDumpsOffConfirm": "Datenbank-Dumps für alle Container abschalten? Bei {names} ist der Dump die einzige konsistente Kopie der Datenbank.",
+  "settings.dbDumpsOffConfirm":
+    "one=Datenbank-Dumps für alle Container abschalten? Bei {names} ist der Dump die einzige konsistente Kopie der Datenbank.|other=Datenbank-Dumps für alle Container abschalten? Bei {names} sind die Dumps die einzigen konsistenten Kopien ihrer Datenbanken.",
   "settings.dbDumpsOffConfirmPlain": "Datenbank-Dumps für alle Container abschalten?",
   "settings.vmsEnabled": "VMs",
   "settings.vmsEnabledHint": "VMs über SSH per libvirt sichern und wiederherstellen.",

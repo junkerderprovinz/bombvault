@@ -61,6 +61,8 @@ describe("plural forms in the tables", () => {
     expect(labelled).toContain("recovery.foreignDbDumps");
     expect(labelled).toContain("recovery.dumpOnlySkipped");
     expect(labelled).toContain("runReason.dbimportAppsStopped");
+    expect(labelled).toContain("settings.dbDumpsOffConfirm");
+    expect(labelled).toContain("dbdump.importStops");
   });
 
   it.each(Object.entries(locales))("locale %s offers only categories it uses", (code, table) => {

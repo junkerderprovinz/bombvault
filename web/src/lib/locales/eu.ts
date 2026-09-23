@@ -412,7 +412,7 @@ const eu: Partial<Translations> = {
   "settings.containersEnabledHint": "Docker edukiontzien babeskopia egin eta berrezarri, BombVaulten domeinu nagusia, lehenespenez gaituta.",
   "settings.dbDumps": "Datu-baseen iraulketa automatikoa",
   "settings.dbDumpsHint": "Babeskopia bakoitzaren aurretik, ezagututako PostgreSQL, MySQL eta MariaDB edukiontziak beren leheneratze-puntu gisa iraultzen dira. Hemen edukiontzi guztientzat batera itzaltzen duzu, adibidez zure datu-baseek dagoeneko beren kabuz iraultzen badute. Edukiontzi bakoitza bere txartelean itzal daiteke.",
-  "settings.dbDumpsOffConfirm": "Datu-baseen iraulketa edukiontzi guztientzat itzali? {names} kasuan iraulketa da datu-basearen kopia sendo bakarra.",
+  "settings.dbDumpsOffConfirm": "one=Datu-baseen iraulketa edukiontzi guztientzat itzali? {names} kasuan iraulketa da datu-basearen kopia sendo bakarra.|other=Datu-baseen iraulketa edukiontzi guztientzat itzali? {names} kasuan iraulketak dira haien datu-baseen kopia sendo bakarrak.",
   "settings.dbDumpsOffConfirmPlain": "Datu-baseen iraulketa edukiontzi guztientzat itzali?",
   "settings.vmsEnabled": "MB",
   "settings.vmsEnabledHint": "Babestu eta berrezarri makina birtualak SSH bidez libvirt erabiliz.",

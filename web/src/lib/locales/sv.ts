@@ -243,7 +243,7 @@ const sv: Partial<Translations> = {
   "settings.containersEnabledHint": "Säkerhetskopiera och återställ Docker-containrar, BombVaults kärndomän, aktiverad som standard.",
   "settings.dbDumps": "Automatiska databasdumpar",
   "settings.dbDumpsHint": "Före varje säkerhetskopia dumpas igenkända PostgreSQL-, MySQL- och MariaDB-behållare som egna återställningspunkter. Här stänger du av det för alla behållare på en gång, till exempel när dina databaser redan dumpar sig själva. Enskilda behållare stängs av på sitt kort.",
-  "settings.dbDumpsOffConfirm": "Stänga av databasdumpar för alla behållare? För {names} är dumpen den enda konsekventa kopian av databasen.",
+  "settings.dbDumpsOffConfirm": "one=Stänga av databasdumpar för alla behållare? För {names} är dumpen den enda konsekventa kopian av databasen.|other=Stänga av databasdumpar för alla behållare? För {names} är dumparna de enda konsekventa kopiorna av deras databaser.",
   "settings.dbDumpsOffConfirmPlain": "Stänga av databasdumpar för alla behållare?",
   "settings.vmsEnabled": "VMs",
   "settings.vmsEnabledHint": "Säkerhetskopiera och återställ virtuella maskiner via SSH med libvirt.",

@@ -240,7 +240,7 @@ const nl: Partial<Translations> = {
   "settings.containersEnabledHint": "Docker-containers back-uppen en herstellen, het kerndomein van BombVault, standaard ingeschakeld.",
   "settings.dbDumps": "Automatische databasedumps",
   "settings.dbDumpsHint": "Voor elke back-up worden herkende PostgreSQL-, MySQL- en MariaDB-containers gedumpt als eigen herstelpunten. Hier zet je dat voor alle containers tegelijk uit, bijvoorbeeld wanneer je databases zichzelf al dumpen. Losse containers zet je op hun kaart uit.",
-  "settings.dbDumpsOffConfirm": "Databasedumps voor alle containers uitzetten? Voor {names} is de dump de enige consistente kopie van de database.",
+  "settings.dbDumpsOffConfirm": "one=Databasedumps voor alle containers uitzetten? Voor {names} is de dump de enige consistente kopie van de database.|other=Databasedumps voor alle containers uitzetten? Voor {names} zijn de dumps de enige consistente kopieën van hun databases.",
   "settings.dbDumpsOffConfirmPlain": "Databasedumps voor alle containers uitzetten?",
   "settings.vmsEnabled": "VM's",
   "settings.vmsEnabledHint": "Virtuele machines back-uppen en herstellen via SSH met libvirt.",

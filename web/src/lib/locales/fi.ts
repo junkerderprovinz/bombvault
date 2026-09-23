@@ -243,7 +243,7 @@ const fi: Partial<Translations> = {
   "settings.containersEnabledHint": "Docker-konttien varmuuskopiointi ja palautus: BombVaultin ydinalue, oletuksena päällä.",
   "settings.dbDumps": "Automaattiset tietokantavedokset",
   "settings.dbDumpsHint": "Ennen jokaista varmuuskopiota tunnistetuista PostgreSQL-, MySQL- ja MariaDB-konteista otetaan vedos omana palautuspisteenään. Täältä kytket sen pois kaikilta konteilta kerralla, esimerkiksi kun tietokantasi vedostavat jo itse. Yksittäisen kontin voi kytkeä pois sen omalta kortilta.",
-  "settings.dbDumpsOffConfirm": "Kytketäänkö tietokantavedokset pois kaikilta konteilta? Näille vedos on tietokannan ainoa eheä kopio: {names}.",
+  "settings.dbDumpsOffConfirm": "one=Kytketäänkö tietokantavedokset pois kaikilta konteilta? Tälle vedos on tietokannan ainoa eheä kopio: {names}.|other=Kytketäänkö tietokantavedokset pois kaikilta konteilta? Näille vedos on niiden tietokannan ainoa eheä kopio: {names}.",
   "settings.dbDumpsOffConfirmPlain": "Kytketäänkö tietokantavedokset pois kaikilta konteilta?",
   "settings.vmsEnabled": "VMs",
   "settings.vmsEnabledHint": "Virtuaalikoneiden varmuuskopiointi ja palautus SSH:n kautta libvirtillä.",
