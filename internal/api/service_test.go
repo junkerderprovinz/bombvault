@@ -4266,8 +4266,9 @@ func TestDiffSnapshots(t *testing.T) {
 
 // TestTagSnapshot pins the tag-add access control + sanitisation: a bad snapshot
 // id is rejected, a tag with a comma is refused (restic tags are
-// comma-separated), tags are trimmed and empties dropped, and a valid call tags
-// the snapshot through the engine.
+// comma-separated), a tag under one of BombVault's own prefixes is refused, tags
+// are trimmed and empties dropped, and a valid call tags the snapshot through
+// the engine.
 func TestTagSnapshot(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{
 		{ID: "aaaa1111", Tags: []string{"container:plex"}},
@@ -4289,6 +4290,17 @@ func TestTagSnapshot(t *testing.T) {
 	}
 	if len(eng.taggedSnaps) != 0 {
 		t.Fatalf("must not tag with an invalid tag, got %v", eng.taggedSnaps)
+	}
+
+	// A tag under one of BombVault's own prefixes is refused: it would place the
+	// snapshot in an item's retention series or in its rename history.
+	for _, tag := range []string{"container:other", "dbdump:plex", "formerly:plex-old"} {
+		if err := svc.TagSnapshot(ctx, "plex", "local", "aaaa1111", []string{tag}); err == nil || !strings.Contains(err.Error(), "reserved") {
+			t.Fatalf("%q must be refused as reserved, got %v", tag, err)
+		}
+	}
+	if len(eng.taggedSnaps) != 0 {
+		t.Fatalf("must not tag with a reserved tag, got %v", eng.taggedSnaps)
 	}
 
 	// Happy path: tags are trimmed, empties dropped, the snapshot is tagged.
