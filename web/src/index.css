@@ -127,6 +127,65 @@
   --btn-w-lg: 15rem;
 }
 
+/* The phone arm of --settings-tab-seg-w. The desktop arm is the --nav-row-w
+   pin, and the element carries it as a `md:` override (Settings.tsx), so the
+   48rem literal stays in the one place that owns it (lib/useMediaQuery.ts)
+   rather than being written a second time here.
+
+   The width is the viewport minus what the row loses before the segments:
+   the page column's p-4 (2 x 1rem) and the strip's six gaps, which are the
+   container's own gap-1 (6 x 0.25rem), so 3.5rem, plus 1.5rem for a classic
+   scrollbar, which 100vw counts and the content box does not. That is about
+   15px in a desktop browser at phone width; on a phone the scrollbar is an
+   overlay and the reserve goes unused. Divided by seven it gives 44.3px at
+   390px, so seven segments sit on one row. Floored at 2.5rem so the narrowest
+   supported width cannot shrink a segment below tap-target scale; there the
+   floor costs one wrapped row, two bounded rows rather than the seven a fixed
+   pin gives. The row height is --nav-row-h at every width, labels truncate
+   inside the shrunken box (Selector's span.truncate), and each tab keeps its
+   glyph and accessible name. */
+:root {
+  --settings-tab-seg-w: max(2.5rem, calc((100vw - 5rem) / 7));
+}
+
+/* Safe-area insets; the three edges a device's own hardware claims (side
+   notches, rounded corners, home indicator) exposed as :root custom
+   properties so any component can pad past them without knowing the device.
+
+   These resolve to real lengths only because web/index.html declares
+   viewport-fit=cover on its viewport meta: without that directive the layout
+   viewport is inset by the system chrome and every env(safe-area-inset-*)
+   below reads 0px, silently. The two files are one contract; change them
+   together.
+
+   The max(..., 0px) clamp is defensive, not cosmetic: env() resolves to 0px
+   on devices with no inset on a side, but on a browser that supports the
+   syntax yet reports nothing (desktop, some Android WebViews) the raw env()
+   can behave as an invalid/unset value in a var() chain; clamping to an
+   explicit 0px floor keeps every consumer's calc()/padding valid everywhere.
+
+   Consumers today: left and right at EVERY width (the Layout scroller's
+   inset-clamped side padding and the desktop frame's gutter, so this is not a
+   phone-only mechanism; the
+   BottomSheet panel and the BottomNav row); bottom by the BottomNav host,
+   the --sticky-action-h scroll padding below, and BottomSheet's last surface
+   (its body when no footer follows, its footer otherwise).
+
+   There is deliberately no --safe-area-top: nothing ever consumed it (the
+   phone scroller is a flat p-4 and the fullHeight sheet's header starts at
+   y=0), so it was a dead token that read as a live contract: a future top
+   consumer reintroduces it beside its own padding rather than reserving a
+   variable nothing reads. */
+:root {
+  --safe-area-right: max(env(safe-area-inset-right), 0px);
+  --safe-area-bottom: max(env(safe-area-inset-bottom), 0px);
+  --safe-area-left: max(env(safe-area-inset-left), 0px);
+  /* What a sticky action bar covers at the bottom of the phone scroller: its
+     padding plus a key-stage control, rounded up. The scroller keeps this
+     much scroll padding so a focused control never rests underneath it. */
+  --sticky-action-h: calc(4.5rem + var(--safe-area-bottom));
+}
+
 /* The one raised surface, from GlimStone. Never nested: one elevation. */
 .glim-card {
   background-color: var(--carbon-surface);
@@ -378,6 +437,30 @@
   margin-inline-start: var(--btn-gap);
 }
 
+/* Coarse pointers reveal at rest. A tap fires before any reveal state can
+   exist; hover is a desktop-only state, so on a coarse pointer reactive
+   degenerated into permanent icon-only (on a touch device the recovery
+   wizard's step-1 CTA rendered as an unlabeled check glyph). Under coarse
+   pointers reactive now reads as text at rest, and the hover/focus
+   reveal above keeps working unchanged on fine pointers.
+
+   The ceiling is the reveal's own `--reactive-chars` contract; same formula,
+   same 24 fallback rather than a second derivation here (see that block's
+   comment for why a fixed number clipped and crawled at both ends). No
+   padding declaration, on purpose: the reveal restores none either, and the
+   resting `padding: 0` stays load-bearing for the glyph's centering.
+
+   This is a reveal state, so it carries the same obligation the guard above
+   states: its transform reset lives after the reduced-motion gate below and
+   the two must move together. */
+@media (pointer: coarse) {
+  .glim-label-reactive {
+    max-width: calc(var(--reactive-chars, 24) * 0.62em + 0.75rem);
+    opacity: 1;
+    margin-inline-start: var(--btn-gap);
+  }
+}
+
 /* The reveal animates per motion level and only inside the OS gate; with
    reduced motion the words simply appear. */
 @media (prefers-reduced-motion: no-preference) {
@@ -413,6 +496,19 @@
   :root:not([data-motion="subtle"]):not([data-motion="off"]) .glim-reactive:hover .glim-label-reactive,
   :root:not([data-motion="subtle"]):not([data-motion="off"]) .glim-reactive:focus-visible .glim-label-reactive,
   :root:not([data-motion="subtle"]):not([data-motion="off"]) .glim-reactive:focus-within .glim-label-reactive {
+    transform: translateX(0) scaleX(1);
+  }
+}
+
+/* The coarse-pointer companion reset; the pair the two guard comments above
+   exist to keep together. The `(pointer: coarse)` block before the gate
+   reveals reactive labels at rest; in the lively motion levels that revealed
+   label would otherwise sit 6.4px displaced and squashed to 82%, the exact
+   revealed-but-still-displaced shape the `.glim-active` repair already fixed.
+   Same combined query and same selector shape as the reset list above, so the
+   at-rest coarse reveal reads like any other reveal state. */
+@media (prefers-reduced-motion: no-preference) and (pointer: coarse) {
+  :root:not([data-motion="subtle"]):not([data-motion="off"]) .glim-label-reactive {
     transform: translateX(0) scaleX(1);
   }
 }

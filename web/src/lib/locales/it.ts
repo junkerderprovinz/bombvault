@@ -12,6 +12,8 @@ const it: Partial<Translations> = {
   "nav.vms": "VM",
   "nav.flash": "Flash",
   "nav.settings": "Impostazioni",
+  "nav.more": "Altro",
+  "nav.mobileNavigation": "Navigazione mobile",
   "about.title": "Informazioni su BombVault",
   "about.body": "Un solo cavaliere, una crociata: strumenti open source curati che non esistevano nella forma che volevo, costruiti finché non manca più niente. Tutto gratuito, senza account, senza telemetria, senza pubblicità e senza piani a pagamento. Nessun asterisco da nessuna parte. Niente di leggibile lascia mai le tue mura. Forgiato di sera e nei fine settimana, con cuore e testardaggine.",
   "about.coffee": "Se BombVault si è guadagnato un posto sul tuo server o sul tuo computer, getta una moneta al tuo cavaliere: aiuta a coprire i costi e tiene vivo il progetto. E fa battere un po' più forte il cuore di questo cavaliere. Qui sotto trovi tre strade, scegli quella che preferisci.",
@@ -204,6 +206,9 @@ const it: Partial<Translations> = {
   "run.colStarted": "Avviato",
   "run.colFinished": "Terminato",
   "run.colContainer": "Container",
+  "home.newBackupConfirm": "Avviare ora un backup di tutti i domini attivati? I container vengono fermati e riavviati uno alla volta, mentre il loro backup è in esecuzione.",
+  "run.statVolume": "Volume dati",
+  "run.statSnapshot": "Snapshot",
 
   // Settings
   "settings.title": "Impostazioni",
@@ -274,6 +279,9 @@ const it: Partial<Translations> = {
   "settings.labels.buttons": "Pulsanti",
   "settings.labels.sidebar": "Barra laterale",
   "settings.labels.tabs": "Schede",
+  "settings.labels.bottombar": "Barra inferiore",
+  "settings.axisBottombarHint": "Interessa solo il layout del telefono.",
+  "settings.axisSidebarHint": "Interessa solo il layout desktop.",
   "settings.labels.mode.text": "Testo",
   "settings.labels.mode.textGlyph": "Testo e simbolo",
   "settings.labels.mode.glyph": "Simbolo",
@@ -625,6 +633,10 @@ const it: Partial<Translations> = {
   "common.confirm": "Conferma",
   "common.cancel": "Annulla",
   "common.close": "Chiudi",
+  "common.expand": "Espandi",
+  "common.collapse": "Comprimi",
+  "common.back": "Indietro",
+  "common.loadMore": "Carica altri",
 
   // Failure fallbacks
   "common.actionFailed": "Azione non riuscita",
@@ -874,6 +886,7 @@ const it: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Stato di protezione",
   "dashboard.noOffsite": "Nessuna copia off-site",
+  "dashboard.statusLoadFailed": "Impossibile caricare lo stato",
   "dashboard.neverExcluded": "Non pianificato",
   "dashboard.neverExcludedTitle": "Lasciato fuori dalla pianificazione di proposito: qui non c'è nulla da salvare.",
   "dashboard.neverSelf": "Contenitore proprio",

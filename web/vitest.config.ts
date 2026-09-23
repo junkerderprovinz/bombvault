@@ -8,8 +8,13 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
-    // jsdom has no ResizeObserver, and Selector observes its row; see the
-    // stub's own header.
-    setupFiles: ["src/lib/testSetup/resizeObserver.ts"],
+    // Two guarded stubs for what jsdom does not implement, each explained in
+    // its own header: matchMedia, which lib/useMediaQuery.ts subscribes to
+    // during the Layout render and which had to land with useMediaQuery, and
+    // ResizeObserver, which Selector uses to measure the row it sits in.
+    setupFiles: [
+      "src/lib/testSetup/matchMedia.ts",
+      "src/lib/testSetup/resizeObserver.ts",
+    ],
   },
 });

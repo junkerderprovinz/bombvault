@@ -12,6 +12,8 @@ const fr: Partial<Translations> = {
   "nav.vms": "VMs",
   "nav.flash": "Flash",
   "nav.settings": "Paramètres",
+  "nav.more": "Plus",
+  "nav.mobileNavigation": "Navigation mobile",
   "about.title": "À propos de BombVault",
   "about.body": "Un seul chevalier, une croisade : des outils open source soignés qui n'existaient pas sous la forme que je voulais, construits jusqu'à ce que plus rien ne manque. Tout est gratuit, sans comptes, sans télémétrie, sans publicité et sans formule payante. Aucun astérisque nulle part. Rien de lisible ne quitte jamais tes propres murs. Forgé le soir et le week-end, avec du cœur et de l'entêtement.",
   "about.coffee": "Si BombVault a gagné sa place sur ton serveur ou ton ordinateur, lance une pièce à ton chevalier : elle aide à couvrir les frais et garde le projet en vie. Et elle fait battre un peu plus vite le cœur de ce chevalier. Trois chemins plus bas, prends celui qui te convient.",
@@ -204,6 +206,9 @@ const fr: Partial<Translations> = {
   "run.colStarted": "Démarré",
   "run.colFinished": "Terminé",
   "run.colContainer": "Conteneur",
+  "home.newBackupConfirm": "Lancer une sauvegarde de tous les domaines activés maintenant ? Les conteneurs sont arrêtés puis redémarrés un à un, pendant leur sauvegarde.",
+  "run.statVolume": "Volume de données",
+  "run.statSnapshot": "Instantané",
 
   // Settings
   "settings.title": "Paramètres",
@@ -274,6 +279,9 @@ const fr: Partial<Translations> = {
   "settings.labels.buttons": "Boutons",
   "settings.labels.sidebar": "Barre latérale",
   "settings.labels.tabs": "Onglets",
+  "settings.labels.bottombar": "Barre inférieure",
+  "settings.axisBottombarHint": "Concerne uniquement la mise en page du téléphone.",
+  "settings.axisSidebarHint": "Concerne uniquement la mise en page du bureau.",
   "settings.labels.mode.text": "Texte",
   "settings.labels.mode.textGlyph": "Texte et symbole",
   "settings.labels.mode.glyph": "Symbole",
@@ -625,6 +633,10 @@ const fr: Partial<Translations> = {
   "common.confirm": "Confirmer",
   "common.cancel": "Annuler",
   "common.close": "Fermer",
+  "common.expand": "Déplier",
+  "common.collapse": "Replier",
+  "common.back": "Retour",
+  "common.loadMore": "Charger plus",
 
   // Failure fallbacks
   "common.actionFailed": "Échec de l'action",
@@ -884,6 +896,7 @@ const fr: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "État de protection",
   "dashboard.noOffsite": "Aucune copie hors site",
+  "dashboard.statusLoadFailed": "Impossible de charger l'état",
   "dashboard.neverExcluded": "Non planifié",
   "dashboard.neverExcludedTitle": "Volontairement laissé hors de la planification : il n'y a rien à sauvegarder ici.",
   "dashboard.neverSelf": "Conteneur propre",

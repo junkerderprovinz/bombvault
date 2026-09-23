@@ -102,17 +102,20 @@ interface SelectorCommon {
  * colours at the default offset; pages/settings/hueOffsets.test.ts requires
  * every hued selector in that tree to take its offset from here.
  *
- * The palette has eight colours and the tree nine selectors, so `drillKind`
- * shares the first label row's start. The two sit in different tabs.
+ * There are more selectors than the palette has colours, so two pairs share a
+ * start: `drillKind` with the first label row, and `theme` with `notifyOn`.
+ * Each pair sits in different tabs, which is the property the test checks.
+ * General spends all eight positions, so a selector added there has no free
+ * start and the table needs rethinking rather than another entry.
  */
 export const HUE_OFFSET = {
   tabs: 0,
-  /** The three label-mode rows take +0..2 by axis, so the block reads as one
-   *  group. */
+  /** One row per control axis, each a colour further along, so the block reads
+   *  as one group. */
   labels: 1,
-  shape: 4,
-  motion: 5,
-  theme: 6,
+  shape: 5,
+  motion: 6,
+  theme: 7,
   notifyOn: 7,
   drillKind: 1,
 } as const;

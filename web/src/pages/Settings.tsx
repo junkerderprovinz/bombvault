@@ -1323,10 +1323,13 @@ export function SettingsPage() {
   // #178: the three label modes, mirrored into local state so the selectors
   // show the current choice; the controls themselves read through
   // useLabelMode, which the labelModeChanged() call below wakes.
+  // renders one selector per CONTROL_AXES entry, so the mobile bottom bar's
+  // axis appears here the same way the other three do.
   const [labelModes, setLabelModes] = useState<Record<ControlAxis, LabelMode>>(() => ({
     buttons: getLabelMode("buttons"),
     sidebar: getLabelMode("sidebar"),
     tabs: getLabelMode("tabs"),
+    bottombar: getLabelMode("bottombar"),
   }));
 
   // Rainbow state (GlimStone form-engine Phase 2, Task 1) — synced from/to
@@ -2513,10 +2516,21 @@ export function SettingsPage() {
            in German and wrapped the seven tabs onto two rows. */
         // The rail's own row width, via the shared token — "gleich groß wie die
         // tabs in der sidebar" is a promise, and a promise needs one number,
-        // not two that happen to agree today. It also gives the longest label
-        // ("Benachrichtigungen") the 16px it was missing, which is why that tab
-        // clipped its own text in reactive mode.
-        segmentWidth="var(--nav-row-w)"
+        // not two that happen to agree today. Below 48rem the token resolves
+        // to its phone arm (index.css --settings-tab-seg-w): the fixed 200px
+        // pin stacked all seven flex-none tabs into seven rows on a 390px
+        // phone, a wall of chrome before any content; the phone arm fits
+        // one row and bounds the wrap at two
+        // on the narrowest widths, while desktop keeps the pin unchanged. It
+        // also gives the longest label ("Benachrichtigungen") the 16px it was
+        // missing, which is why that tab clipped its own text in reactive
+        // mode.
+        segmentWidth="var(--settings-tab-seg-w)"
+        // The desktop arm of that token, as a Tailwind variant so the 48rem
+        // number stays in lib/useMediaQuery.ts and the CSS carries only the
+        // phone formula. Above the breakpoint every tab is the rail's row box
+        // again.
+        className="md:[--settings-tab-seg-w:var(--nav-row-w)]"
       />
       </div>
       </div>
@@ -2759,8 +2773,8 @@ export function SettingsPage() {
               just below (see that IIFE's own comment for why a bare inline
               `hueIndex={nextHue()}` can't feed two hue-aware children from
               one call).
-                The toggle's label is NOT hidden behind this Card's own title
-              — RestoreChecksSection's `verify.auto` ToggleRow right below
+                The toggle's label is not hidden behind this Card's own
+              title, the way RestoreChecksSection's `verify.auto` ToggleRow right below
               this one used to hide its own caption the same way (reasoning:
               "the Card's title already says the same thing"), and jdp
               explicitly reversed that exact pattern there ("Bei erstem
@@ -3338,8 +3352,8 @@ export function SettingsPage() {
                   `.glim-bubble` hover tooltip every other icon-only control on
                   this page already gets, not a native `title=`;
                   `settings.registryRemove`'s existing value moves from
-                  visible button text to this tooltip's own content unchanged
-                  — same "text moves onto the tip, key stays" move the
+                  visible button text to this tooltip's own content
+                  unchanged, the same "text moves onto the tip, key stays" move the
                   Registry-add button below already made.
                     COLOUR-ENGINE ROUND (jdp's standing rule, five escalations
                   deep): this badge and the Registry-add one below were still
@@ -3863,7 +3877,7 @@ export function SettingsPage() {
               not a mechanical one — flagged rather than decided here.
               CARD-SPLIT FOLLOW-UP: this text applies identically to all four
               domains (it's about repo URL syntax, not domain-specific), so it
-              stays a ONE-TIME read rather than repeating verbatim in every
+              stays a one-time read rather than repeating verbatim in every
               new Card — shown once, in the first (Containers) Card only. */}
           {domain === "containers" && (
             <p className="text-xs text-carbon-textMuted -mt-1">{t("settings.offsiteHint")}</p>
@@ -4547,8 +4561,8 @@ export function SettingsPage() {
       {/* GENERAL — Appearance                                               */}
       {/* GlimStone follow-up pass, live-review point 5: this used to be ONE  */}
       {/* shared Card with four sub-topics (accent / shape / rainbow / quiet  */}
-      {/* toasts) separated by `border-t border-carbon-border` divider lines  */}
-      {/* — a real, previously-unnoticed violation of this app's own "never a */}
+      {/* toasts) separated by `border-t border-carbon-border` divider lines,  */}
+      {/* a violation of this app's own "never a                              */}
       {/* border line, only shade/shadow" house rule (see index.css's shape-  */}
       {/* token comments and Badge.tsx's file header: every OTHER visual      */}
       {/* separation in this app comes from a surface's own elevation, not a  */}
@@ -4722,20 +4736,24 @@ export function SettingsPage() {
 
       {tab === "general" && (
       <>
-      {/* Control labels (#178) — how much of a control's identity is shown.
-          Three axes rather than one switch, because the right answer differs
-          per axis: a sidebar reduced to glyphs narrows the whole page, tabs do
-          not, and action buttons are a density preference. jdp asked for one
-          selector each, sharing the same three options.
-          Placed straight after Animations on purpose: both are per-viewer
-          appearance dials kept in this browser rather than server settings,
-          and they read as a pair. */}
+      {/* Control labels (#178), how much of a control's identity is shown.
+          One selector per chrome surface rather than one switch, because the
+          right answer differs: a rail reduced to glyphs narrows the whole
+          page, tabs do not, and action buttons are a density preference.
+          Placed straight after Animations: both are per-viewer appearance
+          dials kept in this browser rather than server settings, and they
+          read as a pair. */}
       <Card title={t("settings.labels")} hint={t("settings.labelsHint")} hueIndex={nextHue()}>
         <div className="flex flex-col gap-4">
           {CONTROL_AXES.map((axis, axisIndex) => (
             <div key={axis} className="flex flex-col gap-1">
-              <span className="text-xs text-carbon-textSub">
+              <span className="flex items-center gap-1 text-xs text-carbon-textSub">
                 {t(`settings.labels.${axis}` as TranslationKey)}
+                {/* Layout mounts the rail or the bar, never both, so each of
+                    those two rows is dead on the other width and says so.
+                    Buttons and tabs need no hint: they answer everywhere. */}
+                {axis === "bottombar" && <InfoBubble tip={t("settings.axisBottombarHint")} />}
+                {axis === "sidebar" && <InfoBubble tip={t("settings.axisSidebarHint")} />}
               </span>
               <Selector
                 items={LABEL_MODES.map((m) => ({
@@ -4755,12 +4773,11 @@ export function SettingsPage() {
                 size="lg"
                 variant="well"
                 equalWidth
-                // Each of the three rows starts one colour further along the
-                // palette (jdp, 2026-09-15: "nicht jeder selektor soll am
-                // gleichen feld die gleiche farbe haben"). Offsetting by the
-                // row index rather than by the row COUNT keeps neighbouring
-                // rows adjacent in the palette, so the block still reads as
-                // one group instead of three unrelated strips. Every other
+                // Each row starts one colour further along the palette, so two
+                // selectors never repeat the same colour down the page.
+                // Offsetting by the row index rather than by the row count
+                // keeps the rows adjacent in the palette, so the block still
+                // reads as one group rather than unrelated strips. Every other
                 // start in the settings tree comes out of the same table.
                 hueOffset={HUE_OFFSET.labels + axisIndex}
               />
@@ -5099,8 +5116,8 @@ export function SettingsPage() {
           Apprise's own ToggleRow comment above documents fixing the same way.
           Moved verbatim into `hint` instead (ToggleRow's own InfoBubble prop,
           same content contract as Card's `title`/`hint` pair): no wording
-          change needed on either the EN source string or its DE translation
-          — both were already a single compact two-sentence explanation, well
+          change needed on either the EN source string or its DE
+          translation: both were already a single compact two-sentence explanation, well
           within the register settings.offsiteDrillsHelp's own much longer
           hint text already establishes as normal for this bubble, so only
           the display mechanism moved, not the copy. Only this call site's

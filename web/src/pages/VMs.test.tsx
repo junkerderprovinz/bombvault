@@ -5,8 +5,9 @@
 // jsdom.
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, cleanup, within } from "@testing-library/react";
-import { VMRow } from "./VMs";
-import type { VM } from "../lib/api";
+import { MemoryRouter } from "react-router-dom";
+import { VMRow, VMs } from "./VMs";
+import type { VM, Settings } from "../lib/api";
 
 // useProgress() opens an EventSource on mount, which jsdom lacks; the hook
 // only touches onmessage and close().
@@ -30,11 +31,23 @@ vi.mock("../lib/api", async () => {
     forgetVM: vi.fn(async () => ({ ok: true })),
     deleteBackupsVM: vi.fn(async () => ({ ok: true })),
     setVMInclude: vi.fn(async () => ({ ok: true })),
+    // Page-level fetches (the single-layout tests below render the full <VMs>
+    // page). The mobile block's own fetches (getSettings/getScheduleNext)
+    // never run under jsdom's desktop matchMedia — the stubs only have to
+    // exist.
+    listVMs: vi.fn(async () => ({ ok: true, vms: [] })),
+    getSettings: vi.fn(async () => ({
+      ok: true,
+      settings: {} as Settings,
+      hostMountRoot: "",
+      platform: "generic",
+    })),
+    getScheduleNext: vi.fn(async () => []),
   };
 });
 
-// Imported after vi.mock so these bindings are the mocked functions.
-import { backupVMNow, deleteBackupsVM, forgetVM, setVMInclude } from "../lib/api";
+// Imported AFTER vi.mock so this binding is the mocked function.
+import { backupVMNow, deleteBackupsVM, forgetVM, setVMInclude, listVMs } from "../lib/api";
 import { en } from "../lib/i18n";
 
 const noop = () => {
@@ -183,5 +196,78 @@ describe("VMRow when the VM is no longer defined", () => {
 
     await waitFor(() => expect(deleteBackupsVM).toHaveBeenCalledWith(orphan.libvirtName, "local"));
     expect(forgetVM).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The single-layout gate, tested on the desktop half. The VMs page renders as
+// ONE responsive layout: the two faces (desktop rows / mobile cards) are
+// gated in JSX on useIsDesktop(), so exactly one of them ever MOUNTS — there
+// is no CSS-hidden twin kept in sync for nothing. jsdom's matchMedia stub
+// (src/lib/testSetup/matchMedia.ts) answers "desktop", so the full <VMs>
+// page here renders the DESKTOP presentation and the mobile card block is
+// never mounted; that makes jsdom the right place to pin the desktop half of
+// the contract:
+//   - the rendered DOM carries ZERO hidden-by-utility classes — a `md:hidden`
+//     or `max-md:hidden` anywhere in the container means a face is being
+//     visually hidden instead of not mounted, the exact shape this page was
+//     rewritten away from;
+//   - the desktop list is NOT windowed — with more VMs than the mobile
+//     block's 20-row window, all 25 rows render and the mobile load-more
+//     stays absent;
+//   - the mobile-only surfaces (the summary counts line, the per-card
+//     schedule entry, the gate-off settings link) do not exist in the
+//     desktop DOM.
+// The phone face itself is exercised by the Playwright harness
+// (web/e2e/destination-vms.spec.ts); see the mount-discipline comment on
+// VMs().
+// ---------------------------------------------------------------------------
+describe("VMs page renders ONE layout (desktop identity in jsdom)", () => {
+  // More VMs than the mobile block's 20-row window — enough to prove the
+  // desktop list renders unwrapped while the mobile load-more stays absent.
+  const manyVMs: VM[] = Array.from({ length: 25 }, (_, i) => ({
+    name: `vm-${String(i).padStart(2, "0")}`,
+    libvirtName: `id-${String(i).padStart(2, "0")}`,
+    state: "running",
+    method: "graceful",
+    includeInSchedule: false,
+    lastBackup: null,
+    lastBackupStarted: null,
+  }));
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(listVMs).mockResolvedValue({ ok: true, vms: manyVMs });
+  });
+
+  it("renders the desktop face with no hidden twin and the mobile block absent", async () => {
+    const { container } = render(
+      <MemoryRouter>
+        <VMs />
+      </MemoryRouter>
+    );
+
+    // The desktop content arrives (listVMs resolved).
+    await waitFor(() => expect(screen.getByText("vm-00")).toBeTruthy());
+
+    // No face is visually hidden: both utility literals are asserted as
+    // class-substring absences over the whole rendered container. (The
+    // broader `md:hidden` substring also covers `max-md:hidden`; both are
+    // asserted so a failure names the exact literal that regressed.)
+    expect(container.querySelector('[class*="md:hidden"]')).toBeNull();
+    expect(container.querySelector('[class*="max-md:hidden"]')).toBeNull();
+
+    // The mobile block never mounts in jsdom — none of its unique surfaces
+    // exist. The summary counts line (its text embeds the nav.vms key), the
+    // per-card schedule entry, the gate-off settings link and the load-more
+    // button are all mobile-only; the desktop list is not windowed, so all
+    // 25 rows are present and "Load more" cannot appear.
+    expect(screen.queryByText(/nav\.vms/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "schedule.overrideTitle" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "nav.settings" })).toBeNull();
+    expect(screen.queryByText("common.loadMore")).toBeNull();
+    for (const vm of manyVMs) {
+      expect(screen.getByText(vm.name)).toBeTruthy();
+    }
   });
 });

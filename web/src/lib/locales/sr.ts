@@ -13,6 +13,8 @@ const sr: Partial<Translations> = {
   "nav.flash": "Flash",
   "nav.config": "Сопствена резервна копија",
   "nav.settings": "Подешавања",
+  "nav.more": "Још",
+  "nav.mobileNavigation": "Мобилна навигација",
 
   // Mode toggle
   "about.title": "О програму BombVault",
@@ -274,6 +276,9 @@ const sr: Partial<Translations> = {
   "run.colStarted": "Почето",
   "run.colFinished": "Завршено",
   "run.colContainer": "Контејнер",
+  "home.newBackupConfirm": "Започнути сада резервну копију свих укључених области? Контејнери се заустављају и поново покрећу један по један док траје њихова резервна копија.",
+  "run.statVolume": "Волумен података",
+  "run.statSnapshot": "Снимак",
 
   // Settings
   "settings.title": "Подешавања",
@@ -725,6 +730,9 @@ const sr: Partial<Translations> = {
   "settings.labels.buttons": "Дугмад",
   "settings.labels.sidebar": "Бочна трака",
   "settings.labels.tabs": "Картице",
+  "settings.labels.bottombar": "Доња трака",
+  "settings.axisBottombarHint": "Односи се само на распоред на телефону.",
+  "settings.axisSidebarHint": "Односи се само на распоред на рачунару.",
   "settings.labels.mode.text": "Текст",
   "settings.labels.mode.textGlyph": "Текст и симбол",
   "settings.labels.mode.glyph": "Симбол",
@@ -768,6 +776,7 @@ const sr: Partial<Translations> = {
   // Dashboard protection (RPO) status
   "dashboard.protectionTitle": "Стање заштите",
   "dashboard.noOffsite": "Нема копије ван локације",
+  "dashboard.statusLoadFailed": "Статус није могуће учитати",
   "dashboard.neverExcluded": "Није заказано",
   "dashboard.neverExcludedTitle": "Намерно изостављено из распореда, па овде нема шта да се копира.",
   "dashboard.neverSelf": "Сопствени контејнер",
@@ -990,6 +999,10 @@ const sr: Partial<Translations> = {
   "common.restoring": "Враћање…",
   "common.done": "Готово",
   "common.close": "Затвори",
+  "common.expand": "Прошири",
+  "common.collapse": "Сажми",
+  "common.back": "Назад",
+  "common.loadMore": "Учитај још",
   "common.loadingBackups": "Учитавање резервних копија…",
   "common.saving": "Чување…",
   "common.restoreRunning": "Враћање је у току…",

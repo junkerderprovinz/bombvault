@@ -75,6 +75,12 @@ const RULES: Rule[] = [
   // Navigation and dialogs.
   [/cancel|skip|decline/i, () => <IconCancel />],
   [/close|dismiss/i, () => <IconClose />],
+  // "Done" is a sheet's terminal verb rather than a close: it signs off on what
+  // the surface just let the user do — the schedule just saved, the guided flow
+  // just finished — which is the same agreement the probing block's mark
+  // already carries. Word-bounded, so a future key merely CONTAINING done
+  // (backupDone) never takes the check by substring accident.
+  [/\bdone\b/i, () => <IconCheckCircle />],
   [/back|previous|prev\b/i, () => <IconBack />],
   [/next|continue|forward|jumpToLatest/i, () => <IconForward />],
 
