@@ -1730,6 +1730,7 @@ const eu: Partial<Translations> = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
   // Direct repository
   "directRepo.title": "Biltegi zuzena {target}(r)en ondoan",
   "directRepo.intro": "Hautatzen duten elementuak zuzenean babesten dira {target}(e)n, bere gakoarekin, biltegiratze-klasearekin, mugekin eta gehitu-soilik ezarpenarekin. Bere argazkiak {target}(r)en arauen arabera gordetzen ditu. Ezeztatzeak ez du ezer uzten.",

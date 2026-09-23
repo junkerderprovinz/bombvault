@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { listContainers, deleteBackups, forgetContainer, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setContainerTargets, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, ApiError, type ContainerTargetsBody } from "../lib/api";
+import { listContainers, deleteBackups, forgetContainer, backupAll, restore, restoreStack, discover, setContainerHooks, getContainerMounts, setContainerTargets, setStopContainers, setContainerExcludes, previewContainerExcludes, suggestContainerExcludes, exportContainer, setIncludeAll, setUpdateAfterBackup, getBackupOrder, setBackupOrder, getStackDir, ApiError, type ContainerTargetsBody } from "../lib/api";
 import type { Container, ExcludeSuggestion, MountInfo, CustomPath, ContainerOrder, BrowseResponse, PlacementView } from "../lib/api";
 import { applyToggle, browseRelToHost, classifyNode, isAtOrUnder, partitionCustomPaths, toFlatList } from "../lib/selectionTree";
 import { SelectionTree } from "../components/SelectionTree";
@@ -21,7 +21,7 @@ import { BackupButton } from "../components/BackupButton";
 import { fireAndWaitRun } from "../lib/backupWatch";
 import { RestorePanel } from "../components/RestorePanel";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
-import { SourceToggle, type RepoSource } from "../components/SourceToggle";
+import { SourceToggle, isOffsiteSource, type RepoSource } from "../components/SourceToggle";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { IconContainers, IconDownload, IconAdd } from "../components/Sidebar";
 import { IncludeToggle } from "../components/IncludeToggle";
@@ -38,6 +38,9 @@ import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { relativeTime } from "../lib/reltime";
 import { useDragReorder } from "../lib/useDragReorder";
 import { useConfirm } from "../lib/useConfirm";
+import { offsiteTargetLabel, useOffsiteTargets } from "../lib/useOffsiteTargets";
+import { useHostLabel } from "../lib/useHostLabel";
+import { placementErrorText } from "../lib/placementCodes";
 import { hueVars, rainbowAt } from "../lib/appearance";
 import { useRainbow } from "../lib/useRainbow";
 import { Selector, type SelectorItem } from "../components/Selector";
@@ -2667,7 +2670,7 @@ const STACK_DONE_GRACE_MS = 8000;
 // only acks {started:true} and carries no member results), so on start the card
 // shows a sticky "restore started" hint; per-member outcomes land in the run
 // history. Synchronous validation errors (empty stack, busy, …) show inline.
-function StackCard({
+export function StackCard({
   group,
   onRestored,
   t,
@@ -2701,6 +2704,17 @@ function StackCard({
   const [startInOrder, setStartInOrder] = useState(true);
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
+  const { lang } = useT();
+  // Read through a ref rather than the hook value directly: run() reads this
+  // after its own await (the restore confirm, then getStackDir), by which
+  // point a slow-to-load target list may have caught up. Closing over the
+  // hook value itself would freeze it at the render that owned the click.
+  const host = useHostLabel();
+  const hostRef = useRef(host);
+  hostRef.current = host;
+  const targets = useOffsiteTargets("containers");
+  const targetsRef = useRef(targets);
+  targetsRef.current = targets;
   // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
   // the Restore button when the restore fails to even START (see run()'s own
   // comment for why a started-then-running restore stays a durable inline
@@ -2750,7 +2764,26 @@ function StackCard({
     setFinished(false);
     sawActive.current = false;
     try {
-      const res = await restoreStack(group.project, startInOrder, true, source);
+      let stackDirSource: string | undefined;
+      if (isOffsiteSource(source)) {
+        const dir = await getStackDir(group.project, source);
+        if (!dir.ok) {
+          push(placementErrorText(t, lang, dir, "settings.error"), "fail");
+          setShake((n) => n + 1);
+          return;
+        }
+        const ts = targetsRef.current;
+        const picked = source === "offsite" ? ts[0] : ts.find((x) => `offsite:${x.id}` === source);
+        const placeName = picked ? offsiteTargetLabel(picked) : t("source.offsite");
+        const ask = t("timeline.stackDirMissing")
+          .replace("{place}", () => placeName)
+          .replace("{home}", () => hostRef.current);
+        if (!dir.found) {
+          if (!(await confirm(ask))) return;
+          stackDirSource = "local";
+        }
+      }
+      const res = await restoreStack(group.project, startInOrder, true, source, stackDirSource);
       if (res.ok) {
         setStarted(true);
         onRestored(); // refresh the main list so run-state/orphan rows update

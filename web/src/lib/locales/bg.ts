@@ -1730,6 +1730,7 @@ const bg: Partial<Translations> = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
   // Direct repository
   "directRepo.title": "Директно хранилище при {target}",
   "directRepo.intro": "Елементите, които го изберат, се архивират направо в {target}, с неговия ключ, клас на съхранение, лимити и настройка за append-only. Пази снимките си по правилата на {target}. Отказът не оставя нищо след себе си.",

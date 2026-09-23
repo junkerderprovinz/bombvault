@@ -1730,6 +1730,7 @@ const is: Partial<Translations> = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
   // Direct repository
   "directRepo.title": "Bein geymsla hjá {target}",
   "directRepo.intro": "Atriði sem velja hana taka öryggisafrit beint í {target}, með lykli þess, geymsluflokki, mörkum og aðeins-bæta-við stillingu. Hún varðveitir sínar skyndimyndir eftir reglum {target}. Hætt við skilur ekkert eftir.",

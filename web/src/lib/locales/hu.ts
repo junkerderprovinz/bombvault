@@ -1722,6 +1722,7 @@ const hu: Partial<Translations> = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
   // Direct repository
   "directRepo.title": "{target} közvetlen tárolója",
   "directRepo.intro": "Az elemek, amelyek ezt választják, közvetlenül a(z) {target} célba mentenek, annak kulcsával, tárolási osztályával, korlátaival és append-only beállításával. A pillanatképeit a {target} szabályai szerint őrzi meg. A megszakítás semmit nem hagy hátra.",

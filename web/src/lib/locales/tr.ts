@@ -1719,6 +1719,7 @@ const tr: Partial<Translations> = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
   // Direct repository
   "directRepo.title": "{target} yanında doğrudan depo",
   "directRepo.intro": "Bunu seçen ögeler doğrudan {target} hedefine yedeklenir, onun anahtarı, depolama sınıfı, sınırları ve append-only ayarıyla. Anlık görüntülerini {target} kurallarına göre saklar. İptal hiçbir şey bırakmaz.",

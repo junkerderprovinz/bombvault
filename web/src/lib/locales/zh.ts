@@ -1711,6 +1711,7 @@ const zh: Partial<Translations> = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
   // Direct repository
   "directRepo.title": "{target} 处的直接存储库",
   "directRepo.intro": "选择它的项目会直接备份到 {target}，使用它的密钥、存储类别、限制和 append-only 设置。它按照 {target} 的规则保留快照。取消不会留下任何东西。",

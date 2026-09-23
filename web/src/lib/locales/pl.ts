@@ -1714,6 +1714,7 @@ const pl: Partial<Translations> = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
   // Direct repository
   "directRepo.title": "Bezpośrednie repozytorium przy {target}",
   "directRepo.intro": "Elementy, które je wybiorą, są archiwizowane bezpośrednio do {target}, z jego kluczem, klasą pamięci, limitami i ustawieniem append-only. Zachowuje swoje migawki według zasad {target}. Anulowanie niczego nie zostawia.",

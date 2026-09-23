@@ -1714,6 +1714,7 @@ const ru: Partial<Translations> = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
   // Direct repository
   "directRepo.title": "Прямой репозиторий у {target}",
   "directRepo.intro": "Элементы, которые его выбирают, копируются напрямую в {target}, с его ключом, классом хранения, лимитами и настройкой append-only. Он хранит свои снимки по правилам {target}. Отмена не оставляет ничего.",

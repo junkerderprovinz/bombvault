@@ -1730,6 +1730,7 @@ const lt: Partial<Translations> = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
   // Direct repository
   "directRepo.title": "Tiesioginė saugykla prie {target}",
   "directRepo.intro": "Elementai, kurie ją pasirenka, atsargines kopijas daro tiesiai į {target}, naudodami jo raktą, saugyklos klasę, apribojimus ir append-only nustatymą. Ji saugo savo momentines kopijas pagal {target} taisykles. Atšaukimas nieko nepalieka.",

@@ -1823,6 +1823,7 @@ export const en = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
 
   // Direct repository
   "directRepo.title": "Direct repository at {target}",
@@ -3718,6 +3719,7 @@ export const de: Translations = {
   "timeline.incompleteHint":
     "Nicht alle Platten dieses Laufs liegen hier, deshalb wird dieser Ort für eine Wiederherstellung nicht gewählt.",
   "timeline.snapshotMissing": "{place} hat diese Sicherung nicht mehr. Aus {next} wiederherstellen?",
+  "timeline.stackDirMissing": "Der Projektordner liegt nicht in {place}. Stand von {home} verwenden?",
 
   // Direct repository
   "directRepo.title": "Direkt-Repository bei {target}",
