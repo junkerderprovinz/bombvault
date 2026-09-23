@@ -540,6 +540,7 @@ func (h *Handler) handleMetrics(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "metrics error", http.StatusInternalServerError)
 		return
 	}
+	body += h.mcpMetrics()
 	w.Header().Set("Content-Type", metricsContentType)
 	w.WriteHeader(http.StatusOK)
 	if _, wErr := w.Write([]byte(body)); wErr != nil {
@@ -4786,6 +4787,15 @@ func (h *Handler) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 //     same self-gated fleet token as the status poll above; the ONLY write
 //     endpoint on this allowlist. It only ever stores a pending offer for a
 //     human to review; accept/decline/propose stay session-protected.)
+//   - GET /api/auth/passkeys and the two POST /api/auth/passkey/login halves
+//     (they are how somebody who is not signed in signs in, beside /api/login.
+//     The status answers an unauthenticated caller with counts and whether this
+//     address can carry a passkey at all, never with a credential; the list of
+//     registered keys is gated inside the handler on a session.)
+//   - POST /mcp  (an assistant's MCP client carries no session cookie either.
+//     It is self-gated on its own keys and answers 404 while none exists, so it
+//     is never open. The key management routes under /api/mcp stay
+//     session-protected.)
 func (h *Handler) authGate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Read auth state directly so we can fail CLOSED on a store error: a
@@ -4795,11 +4805,9 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 		s, err := h.store.GetSettings()
 		if err != nil {
 			log.Printf("api: authGate: GetSettings: %v", err)
-			switch r.URL.Path {
-			case "/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data", "/api/fleet/status", "/api/fleet/mesh-offer",
-				"/api/auth/passkeys", "/api/auth/passkey/login/begin", "/api/auth/passkey/login/finish":
+			if authGatePublicPath(r.URL.Path) {
 				next.ServeHTTP(w, r)
-			default:
+			} else {
 				writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 					"ok":    false,
 					"error": "authentication unavailable",
@@ -4814,20 +4822,7 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 			return
 		}
 
-		// Always allow the public auth + health endpoints, plus the self-gating
-		// /metrics scrape endpoint (Prometheus can't carry the session cookie),
-		// the self-gating widget endpoints (an embedding iframe can't either),
-		// the self-gating fleet status endpoint (a polling peer can't either),
-		// and the self-gating mesh-offer inbox (same reasoning, and the same
-		// fleet token — see the doc comment above).
-		switch r.URL.Path {
-		case "/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data", "/api/fleet/status", "/api/fleet/mesh-offer",
-			// The passkey status and the two login halves, beside /api/login for
-			// the same reason: they are how somebody who is not signed in signs in.
-			// The status answers an unauthenticated caller with counts and whether
-			// this address can carry a passkey at all, never with a credential; the
-			// list of registered keys is gated inside the handler on a session.
-			"/api/auth/passkeys", "/api/auth/passkey/login/begin", "/api/auth/passkey/login/finish":
+		if authGatePublicPath(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -4844,6 +4839,22 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+// authGatePublicPath reports whether a path is reachable without a session. The
+// reason for each entry is in authGate's doc comment; every one of them gates
+// itself on a token, a key or a check inside its own handler.
+func authGatePublicPath(path string) bool {
+	switch path {
+	case "/api/auth", "/api/login", "/api/health",
+		"/metrics",
+		"/widget", "/api/widget/data",
+		"/api/fleet/status", "/api/fleet/mesh-offer",
+		"/api/auth/passkeys", "/api/auth/passkey/login/begin", "/api/auth/passkey/login/finish",
+		mcpEndpointPath:
+		return true
+	}
+	return false
 }
 
 // ---------------------------------------------------------------------------

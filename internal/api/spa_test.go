@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"testing/fstest"
 
@@ -64,8 +65,9 @@ func TestSPADelegatesAPIRoutes(t *testing.T) {
 	}
 }
 
-// /metrics and /widget live outside /api but belong to the API router. A scraper
-// or iframe that got index.html would break without any error.
+// /metrics, /widget and /mcp live outside /api but belong to the API router. A
+// scraper, iframe or MCP client that got index.html would break without any
+// error.
 func TestSPADelegatesAPIOwnedPages(t *testing.T) {
 	apiMux := http.NewServeMux()
 	apiMux.HandleFunc("GET /metrics", func(w http.ResponseWriter, _ *http.Request) {
@@ -74,13 +76,52 @@ func TestSPADelegatesAPIOwnedPages(t *testing.T) {
 	apiMux.HandleFunc("GET /widget", func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write([]byte("widget-body"))
 	})
+	apiMux.HandleFunc("/mcp", func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("mcp-body"))
+	})
 	h := api.NewSPAHandler(testSPAFS(), apiMux)
 
-	for path, want := range map[string]string{"/metrics": "metrics-body", "/widget": "widget-body"} {
+	for path, want := range map[string]string{"/metrics": "metrics-body", "/widget": "widget-body", "/mcp": "mcp-body"} {
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, path, nil))
 		if w.Code != http.StatusOK || w.Body.String() != want {
 			t.Fatalf("%s delegation failed: code=%d body=%q", path, w.Code, w.Body.String())
+		}
+	}
+
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, httptest.NewRequest(http.MethodPost, "/mcp", nil))
+	if w.Code != http.StatusOK || w.Body.String() != "mcp-body" {
+		t.Fatalf("POST /mcp delegation failed: code=%d body=%q", w.Code, w.Body.String())
+	}
+
+	// The mux registers the exact path only, so a client guessing at a
+	// sub-path gets its 404 rather than the shell.
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/mcp/x", nil))
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("/mcp/x: code=%d body=%q, want the API router's 404", w.Code, w.Body.String())
+	}
+}
+
+// A client that gets a 401 from /mcp asks for OAuth metadata next. The shell
+// would answer 200 with markup, and the client would report a parse error
+// instead of "unauthorized".
+func TestSPAWellKnownIsNotFound(t *testing.T) {
+	h := api.NewSPAHandler(testSPAFS(), http.NewServeMux())
+
+	for _, path := range []string{
+		"/.well-known/oauth-protected-resource",
+		"/.well-known/oauth-protected-resource/mcp",
+		"/.well-known/oauth-authorization-server",
+	} {
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, path, nil))
+		if w.Code != http.StatusNotFound {
+			t.Errorf("%s: status = %d, want 404", path, w.Code)
+		}
+		if ct := w.Header().Get("Content-Type"); strings.Contains(ct, "text/html") {
+			t.Errorf("%s: Content-Type = %q, want no markup", path, ct)
 		}
 	}
 }

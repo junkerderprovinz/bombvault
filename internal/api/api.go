@@ -69,6 +69,10 @@ type Handler struct {
 	// bounds the map's total memory even under a flood of one-off keys that
 	// are each queried exactly once. Guarded by loginMu, like loginFails.
 	loginSweepCalls int
+
+	// mcp holds the MCP endpoint's transport, its per-key budget and the
+	// counters /metrics reports. Router() creates one when NewHandler did not.
+	mcp *mcpState
 }
 
 // NewHandler constructs the API handler.
@@ -104,6 +108,7 @@ func NewHandler(
 		// future edit that assigns into loginFails elsewhere without that
 		// same nil-check would panic).
 		loginFails: make(map[string][]time.Time),
+		mcp:        newMCPState(),
 	}
 }
 
@@ -118,6 +123,14 @@ func (h *Handler) SetProgress(p *progress.Store) { h.progress = p }
 // paths) requires a valid session cookie.
 func (h *Handler) Router() http.Handler {
 	mux := http.NewServeMux()
+
+	if h.mcp == nil {
+		h.mcp = newMCPState()
+	}
+	h.mcp.http = h.buildMCPHTTP()
+	// Outside /api like /metrics, allow-listed in authGate and gated inside
+	// serveMCP on its own keys: no key means 404, never open.
+	mux.HandleFunc(mcpEndpointPath, h.serveMCP)
 
 	// Public / auth endpoints — also allow-listed inside authGate.
 	mux.HandleFunc("GET /api/health", h.handleHealth)

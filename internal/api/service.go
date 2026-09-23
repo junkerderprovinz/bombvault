@@ -320,6 +320,13 @@ type Service struct {
 	// can explain and an honest "the server went down".
 	shuttingDown atomic.Bool
 
+	// stopCtx is cancelled by BeginShutdown. Work that outlives the request
+	// that asked for it, such as an MCP tool call on a detached handler
+	// context, hangs off it so docker stop reaches it too.
+	stopOnce   sync.Once
+	stopCtx    context.Context
+	stopCancel context.CancelFunc
+
 	// self-container detection (resolved once, cached): the name of BombVault's
 	// OWN container, so a backup never stops the process doing the backing up.
 	selfMu       sync.Mutex

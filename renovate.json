@@ -25,6 +25,14 @@
       "labels": ["github-actions"]
     },
     {
+      "description": "MCP SDK: its own PR, never grouped, never auto-merged. A bump moves the protocol surface and the SDK's security defaults, so it goes in only after somebody has re-run the MCP interop tests and the hardware checklist.",
+      "matchManagers": ["gomod"],
+      "matchPackageNames": ["github.com/modelcontextprotocol/go-sdk"],
+      "groupName": null,
+      "automerge": false,
+      "labels": ["dependencies", "mcp"]
+    },
+    {
       "description": "Go: group minor+patch module updates into one weekly PR; majors stay separate for review",
       "matchManagers": ["gomod"],
       "matchUpdateTypes": ["minor", "patch"],
