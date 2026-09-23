@@ -69,7 +69,10 @@ func TestDeletingAFileSetAtATargetKeepsTheSet(t *testing.T) {
 	}
 }
 
-func TestDeletingAVMAtATargetTakesItsDisksAndLeavesOtherVMs(t *testing.T) {
+// The button sits under the list of the machine's own snapshots and asks the
+// generic question, so it takes that list and nothing else. Its disk images are
+// deleted through the window that shows them first.
+func TestDeletingAVMAtATargetTakesWhatItsBackupListShows(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.vm("web", "")
 	f.vm("web2", "")
@@ -83,8 +86,8 @@ func TestDeletingAVMAtATargetTakesItsDisksAndLeavesOtherVMs(t *testing.T) {
 	if err := f.svc.DeleteBackupsVM(context.Background(), "web", "offsite:"+b2.ID); err != nil {
 		t.Fatal(err)
 	}
-	if got := forgottenAt(f, "b2:bucket:vms"); !slices.Equal(got, []string{"v1", "v2"}) {
-		t.Fatalf("forgotten at B2 = %v, want v1 and v2", got)
+	if got := forgottenAt(f, "b2:bucket:vms"); !slices.Equal(got, []string{"v1"}) {
+		t.Fatalf("forgotten at B2 = %v, want v1 alone", got)
 	}
 	if _, err := f.st.GetVMTargetByName("web"); err != nil {
 		t.Fatalf("the entry must stay: %v", err)
@@ -93,7 +96,7 @@ func TestDeletingAVMAtATargetTakesItsDisksAndLeavesOtherVMs(t *testing.T) {
 
 // A disk snapshot alone in its run has no sibling naming which of its two
 // candidates owns it, so it belongs to neither and no delete at the target
-// reaches it. Its twin in a run that does hold the VM goes with the VM.
+// reaches it, however it is tagged.
 func TestDeletingAVMAtATargetLeavesADiskNoRunSiblingClaims(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.vm("a", "")
@@ -113,8 +116,8 @@ func TestDeletingAVMAtATargetLeavesADiskNoRunSiblingClaims(t *testing.T) {
 	if err := f.svc.DeleteBackupsVM(context.Background(), "a", "offsite:"+b2.ID); err != nil {
 		t.Fatal(err)
 	}
-	if got := forgottenAt(f, "b2:bucket:vms"); !slices.Equal(got, []string{"v1", "v2"}) {
-		t.Fatalf("forgotten at B2 = %v, want v1 and v2; v3 is claimed by nobody", got)
+	if got := forgottenAt(f, "b2:bucket:vms"); !slices.Equal(got, []string{"v1"}) {
+		t.Fatalf("forgotten at B2 = %v, want v1 alone; v2 and v3 carry another name", got)
 	}
 }
 

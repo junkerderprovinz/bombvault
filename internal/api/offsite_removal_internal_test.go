@@ -119,6 +119,34 @@ func TestRemovalOfSnapshotsFoundOnlyThereNeedsTheTypedName(t *testing.T) {
 	}
 }
 
+// The window deletes everything the ownership rule gives the machine, disk
+// images included, and its count says so before anything is deleted.
+func TestRemovalOfAVMTakesItsDiskImages(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.vm("win11", "")
+	b2 := f.target("vms", "B2", "b2:bucket:vms")
+	f.hold("b2:bucket:vms",
+		copied("v1", "a1", 1_758_000_000, "vm:win11", "vmrun:r1"),
+		copied("v2", "a2", 1_758_000_000, "vm:win11:zvol:sda", "vmrun:r1"),
+	)
+	path := "/api/items/vms/win11/offsite/" + b2.ID + "/removal"
+
+	m := f.do("GET", path, nil)
+	if m["count"] != float64(2) {
+		t.Fatalf("preview = %v, want both snapshots counted", m)
+	}
+	if got := onlyThereIDs(m); !slices.Equal(got, []string{"v1", "v2"}) {
+		t.Fatalf("only there = %v, want both", got)
+	}
+	m = f.do("DELETE", path, map[string]any{"onlyThere": []string{"v1", "v2"}, "typedName": "win11"})
+	if m["ok"] != true || m["deleted"] != float64(2) {
+		t.Fatalf("delete = %v", m)
+	}
+	if got := forgottenAt(f, "b2:bucket:vms"); !slices.Equal(got, []string{"v1", "v2"}) {
+		t.Fatalf("forgotten = %v, want the machine and its disk", got)
+	}
+}
+
 func TestRemovalRefusesAListThatGrew(t *testing.T) {
 	f, b2 := vaultwardenAtB2(t)
 	m := f.do("DELETE", removalPath(b2.ID), map[string]any{"onlyThere": []string{}, "typedName": "vaultwarden"})

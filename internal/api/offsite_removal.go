@@ -42,9 +42,21 @@ func (s *Service) listRepo(ctx context.Context, repo string, mode restic.Mode) (
 	return s.listSnapshots(ctx, repo, mode)
 }
 
-// listItemAtTarget lists what identity owns at the target the source names. A
-// snapshot whose owner the listing cannot settle stays out.
-func (s *Service) listItemAtTarget(ctx context.Context, settings store.Settings, domain, identity, source string) (itemAtTarget, error) {
+// snapScope says how much of an item a delete at a target takes.
+type snapScope int
+
+const (
+	// taggedForItem is the item's own snapshots, the list its backup panel shows.
+	taggedForItem snapScope = iota
+	// ownedByItem is everything the ownership rule gives the item, a machine's
+	// disk images included. Only the window that previews them uses it.
+	ownedByItem
+)
+
+// listItemAtTarget lists what identity owns at the target the source names, as
+// far as the scope reaches. A snapshot whose owner the listing cannot settle
+// stays out of both scopes: it may belong to another item.
+func (s *Service) listItemAtTarget(ctx context.Context, settings store.Settings, domain, identity, source string, scope snapScope) (itemAtTarget, error) {
 	target, err := s.offsiteTargetForSource(settings, domain, source)
 	if err != nil {
 		return itemAtTarget{}, err
@@ -64,9 +76,13 @@ func (s *Service) listItemAtTarget(ctx context.Context, settings store.Settings,
 	}
 	owners := oc.owners(all)
 	for _, snap := range all {
-		if owners[snap.ID].Owner == identity {
-			at.Snaps = append(at.Snaps, snap)
+		if owners[snap.ID].Owner != identity {
+			continue
 		}
+		if scope == taggedForItem && !slices.Contains(snap.Tags, identity) {
+			continue
+		}
+		at.Snaps = append(at.Snaps, snap)
 	}
 	return at, nil
 }
@@ -84,11 +100,11 @@ func (s *Service) refuseAppendOnlyTarget(settings store.Settings, domain, source
 	return nil
 }
 
-// forgetAtTarget deletes every snapshot identity owns at one off-site target and
-// prunes there. Append-only is asked before the domain lock and again inside it,
-// after the listing, so a flag switched on in between still refuses; check sees
-// that listing and can refuse before anything is deleted.
-func (s *Service) forgetAtTarget(ctx context.Context, domain, identity, source string, check func(store.Settings, itemAtTarget) error) (int, error) {
+// forgetAtTarget deletes the snapshots the scope gives identity at one off-site
+// target and prunes there. Append-only is asked before the domain lock and again
+// inside it, after the listing, so a flag switched on in between still refuses;
+// check sees that listing and can refuse before anything is deleted.
+func (s *Service) forgetAtTarget(ctx context.Context, domain, identity, source string, scope snapScope, check func(store.Settings, itemAtTarget) error) (int, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return 0, fmt.Errorf("read settings: %w", err)
@@ -102,7 +118,7 @@ func (s *Service) forgetAtTarget(ctx context.Context, domain, identity, source s
 	}
 	defer unlock()
 
-	at, err := s.listItemAtTarget(ctx, settings, domain, identity, source)
+	at, err := s.listItemAtTarget(ctx, settings, domain, identity, source, scope)
 	if err != nil {
 		return 0, err
 	}
@@ -168,7 +184,7 @@ func (s *Service) offsiteRemovalPreview(ctx context.Context, item store.ItemRef,
 	if err != nil {
 		return removalPreview{}, fmt.Errorf("read settings: %w", err)
 	}
-	at, err := s.listItemAtTarget(ctx, settings, item.Domain, identity, offsiteSourcePrefix+targetID)
+	at, err := s.listItemAtTarget(ctx, settings, item.Domain, identity, offsiteSourcePrefix+targetID, ownedByItem)
 	if err != nil {
 		return removalPreview{}, err
 	}
@@ -183,7 +199,7 @@ func (s *Service) removeFromTarget(ctx context.Context, item store.ItemRef, targ
 	if err != nil {
 		return 0, err
 	}
-	return s.forgetAtTarget(ctx, item.Domain, identity, offsiteSourcePrefix+targetID, func(settings store.Settings, at itemAtTarget) error {
+	return s.forgetAtTarget(ctx, item.Domain, identity, offsiteSourcePrefix+targetID, ownedByItem, func(settings store.Settings, at itemAtTarget) error {
 		p, err := s.removalPreviewOf(ctx, settings, item, identity, at)
 		if err != nil {
 			return err
