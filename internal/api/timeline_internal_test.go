@@ -243,3 +243,74 @@ func TestFileSetTimelineFollowsTheSetsName(t *testing.T) {
 		t.Fatalf("rows = %v", got)
 	}
 }
+
+func TestVMTimelineShowsRunsAndMarksAPlaceWithoutTheirDisksIncomplete(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.zvolVM("web")
+	b2 := f.target("vms", "B2", "b2:bucket:vms")
+	f.hold(f.domainPath("vms"),
+		snap("a1a1a1a1", 1_758_000_000, "vm:web", "vmrun:r1"),
+		snap("a2a2a2a2", 1_758_000_000, "vm:web:zvol:sda", "vmrun:r1"),
+	)
+	f.hold("b2:bucket:vms", copied("b1b1b1b1", "a1a1a1a1", 1_758_000_000, "vm:web", "vmrun:r1"))
+	ctx := context.Background()
+
+	tl, err := f.svc.Timeline(ctx, "vms", "web")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := rowKeys(tl.Rows); !slices.Equal(got, []string{"a1a1a1a1"}) {
+		t.Fatalf("rows = %v, want the run only", got)
+	}
+	if m := markOf(t, tl.Rows, "a1a1a1a1", "local"); m.Incomplete {
+		t.Fatalf("home mark = %+v, the disk is there", m)
+	}
+	_, rows, err := f.svc.TimelinePlace(ctx, "vms", "web", "offsite:"+b2.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if m := markOf(t, rows, "a1a1a1a1", "offsite:"+b2.ID); !m.Incomplete {
+		t.Fatalf("B2 mark = %+v, want incomplete: B2 lacks the disk", m)
+	}
+}
+
+func TestVMTimelineOfAVMWithoutZvolDisksIsNeverIncomplete(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.vm("files-only", "")
+	f.hold(f.domainPath("vms"), snap("a1a1a1a1", 1_758_000_000, "vm:files-only"))
+
+	tl, err := f.svc.Timeline(context.Background(), "vms", "files-only")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if m := markOf(t, tl.Rows, "a1a1a1a1", "local"); m.Incomplete {
+		t.Fatalf("mark = %+v", m)
+	}
+}
+
+func TestVMTimelineNeverShowsADiskSnapshotAsARow(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.vm("a", "")
+	f.vm("a:zvol:b", "")
+	f.hold(f.domainPath("vms"),
+		snap("a1a1a1a1", 1_758_000_000, "vm:a", "vmrun:r1"),
+		snap("a2a2a2a2", 1_758_000_000, "vm:a:zvol:b", "vmrun:r1"),
+		snap("a3a3a3a3", 1_759_000_000, "vm:a:zvol:b", "vmrun:r2"),
+	)
+	ctx := context.Background()
+
+	a, err := f.svc.Timeline(ctx, "vms", "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := rowKeys(a.Rows); !slices.Equal(got, []string{"a1a1a1a1"}) {
+		t.Fatalf("a rows = %v, want its run without the disk of the same run", got)
+	}
+	of, err := f.svc.Timeline(ctx, "vms", "a:zvol:b")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(of.Rows) != 0 {
+		t.Fatalf("a:zvol:b rows = %+v, want none: a3 names both VMs and no run settles which", of.Rows)
+	}
+}

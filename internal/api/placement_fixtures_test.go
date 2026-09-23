@@ -259,6 +259,25 @@ func (f *placementFixture) vm(name, repoID string) store.VMTarget {
 	return vm
 }
 
+// zvolVM adds a VM whose definition holds one zvol disk, sda, the disk a restore
+// of one of its runs looks up as a snapshot of its own.
+func (f *placementFixture) zvolVM(name string) store.VMTarget {
+	f.t.Helper()
+	xml := `<domain type='kvm'><name>` + name + `</name><devices><disk type='block' device='disk'>` +
+		`<source dev='/dev/zvol/tank/vms/` + name + `-sda'/><target dev='sda' bus='sata'/></disk></devices></domain>`
+	def, err := json.Marshal(vmDefinition{DomainXML: xml})
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	vm := f.vm(name, "")
+	vm.Definition = string(def)
+	vm, err = f.st.UpsertVMTarget(vm)
+	if err != nil {
+		f.t.Fatalf("zvol vm %s: %v", name, err)
+	}
+	return vm
+}
+
 // fileSet adds an enabled file set with a source folder under files/.
 func (f *placementFixture) fileSet(name, repoID string) store.FileSet {
 	f.t.Helper()
