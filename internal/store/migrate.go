@@ -1635,11 +1635,156 @@ CREATE INDEX IF NOT EXISTS idx_target_aliases_target ON target_aliases(domain, t
 		sql:              `ALTER TABLE targets ADD COLUMN db_dump_engine TEXT NOT NULL DEFAULT '';`,
 		alreadySatisfied: columnPresent("targets", "db_dump_engine"),
 	},
+	{
+		// ZFS datasets are a domain of their own, so they carry the same six
+		// settings every other domain has. Off on a database that predates them,
+		// because the host may not even have a pool.
+		version:          zfsMigrationBase,
+		name:             "settings_zfs_enabled",
+		sql:              `ALTER TABLE settings ADD COLUMN zfs_enabled INTEGER NOT NULL DEFAULT 0;`,
+		alreadySatisfied: columnPresent("settings", "zfs_enabled"),
+	},
+	{
+		version:          zfsMigrationBase + 1,
+		name:             "settings_zfs_path",
+		sql:              `ALTER TABLE settings ADD COLUMN zfs_path TEXT NOT NULL DEFAULT 'user/bombvault/zfs';`,
+		alreadySatisfied: columnPresent("settings", "zfs_path"),
+	},
+	{
+		version:          zfsMigrationBase + 2,
+		name:             "settings_zfs_schedule",
+		sql:              `ALTER TABLE settings ADD COLUMN zfs_schedule TEXT NOT NULL DEFAULT 'off';`,
+		alreadySatisfied: columnPresent("settings", "zfs_schedule"),
+	},
+	{
+		version:          zfsMigrationBase + 3,
+		name:             "settings_zfs_offsite",
+		sql:              `ALTER TABLE settings ADD COLUMN zfs_offsite TEXT NOT NULL DEFAULT '';`,
+		alreadySatisfied: columnPresent("settings", "zfs_offsite"),
+	},
+	{
+		version:          zfsMigrationBase + 4,
+		name:             "settings_zfs_offsite_schedule",
+		sql:              `ALTER TABLE settings ADD COLUMN zfs_offsite_schedule TEXT NOT NULL DEFAULT '';`,
+		alreadySatisfied: columnPresent("settings", "zfs_offsite_schedule"),
+	},
+	{
+		version:          zfsMigrationBase + 5,
+		name:             "settings_zfs_offsite_immutable",
+		sql:              `ALTER TABLE settings ADD COLUMN zfs_offsite_immutable INTEGER NOT NULL DEFAULT 0;`,
+		alreadySatisfied: columnPresent("settings", "zfs_offsite_immutable"),
+	},
+	{
+		// One row per item, keyed on the root dataset of the tree it protects.
+		// The members are derived from the host on every run and live in
+		// zfs_members, so nothing here has to be kept in step with the pool.
+		// runs.target_id points at id, exactly as it does for a file set.
+		version: zfsMigrationBase + 6,
+		name:    "zfs_datasets",
+		sql: `CREATE TABLE IF NOT EXISTS zfs_datasets (
+  id                   TEXT    PRIMARY KEY,
+  dataset              TEXT    NOT NULL UNIQUE,
+  enabled              INTEGER NOT NULL DEFAULT 1,
+  excludes             TEXT    NOT NULL DEFAULT '[]',
+  excluded_children    TEXT    NOT NULL DEFAULT '[]',
+  schedule_cadence     TEXT    NOT NULL DEFAULT '',
+  repo                 TEXT    NOT NULL DEFAULT '',
+  stop_containers      TEXT    NOT NULL DEFAULT '[]',
+  restart_pending      TEXT    NOT NULL DEFAULT '[]',
+  hook_container       TEXT    NOT NULL DEFAULT '',
+  pre_snapshot         TEXT    NOT NULL DEFAULT '',
+  post_snapshot        TEXT    NOT NULL DEFAULT '',
+  last_check_code      TEXT    NOT NULL DEFAULT '',
+  last_check_detail    TEXT    NOT NULL DEFAULT '',
+  last_check_at        INTEGER NOT NULL DEFAULT 0,
+  last_host_mountpoint TEXT    NOT NULL DEFAULT '',
+  leftover_count       INTEGER NOT NULL DEFAULT 0,
+  leftover_checked_at  INTEGER NOT NULL DEFAULT 0,
+  created_at           INTEGER NOT NULL DEFAULT 0
+);`,
+		alreadySatisfied: tablePresent("zfs_datasets"),
+	},
+	{
+		// The state of every dataset in an item's tree as the last preflight or
+		// run found it. first_seen_at is what makes a child picked up later
+		// visible as new, so a replace keeps it.
+		version: zfsMigrationBase + 7,
+		name:    "zfs_members",
+		sql: `CREATE TABLE IF NOT EXISTS zfs_members (
+  item_id          TEXT    NOT NULL,
+  dataset          TEXT    NOT NULL,
+  host_mountpoint  TEXT    NOT NULL DEFAULT '',
+  outcome          TEXT    NOT NULL DEFAULT '',
+  detail           TEXT    NOT NULL DEFAULT '',
+  first_seen_at    INTEGER NOT NULL DEFAULT 0,
+  last_backup_at   INTEGER NOT NULL DEFAULT 0,
+  used_by_dataset  INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (item_id, dataset)
+);`,
+		alreadySatisfied: tablePresent("zfs_members"),
+	},
+	{
+		// What a ZFS run has that the runs table has no column for: the stamp
+		// that names the restore point, how long the apps were held, and a
+		// post-snapshot command's complaint.
+		version: zfsMigrationBase + 8,
+		name:    "zfs_runs",
+		sql: `CREATE TABLE IF NOT EXISTS zfs_runs (
+  run_id           TEXT    PRIMARY KEY,
+  item_id          TEXT    NOT NULL,
+  snapshot_name    TEXT    NOT NULL DEFAULT '',
+  window_seconds   INTEGER NOT NULL DEFAULT -1,
+  hook_detail      TEXT    NOT NULL DEFAULT ''
+);`,
+		alreadySatisfied: tablePresent("zfs_runs"),
+	},
+	{
+		// One row per member per run, written as each member finishes. The
+		// per-dataset index serves the history of a single dataset, which is
+		// read far more often than a whole run.
+		version: zfsMigrationBase + 9,
+		name:    "zfs_run_members",
+		sql: `CREATE TABLE IF NOT EXISTS zfs_run_members (
+  run_id            TEXT    NOT NULL,
+  dataset           TEXT    NOT NULL,
+  outcome           TEXT    NOT NULL,
+  is_new            INTEGER NOT NULL DEFAULT 0,
+  restic_snapshot   TEXT    NOT NULL DEFAULT '',
+  bytes_added       INTEGER NOT NULL DEFAULT 0,
+  files_new         INTEGER NOT NULL DEFAULT 0,
+  files_changed     INTEGER NOT NULL DEFAULT 0,
+  files_unmodified  INTEGER NOT NULL DEFAULT 0,
+  duration_ms       INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (run_id, dataset)
+);
+CREATE INDEX IF NOT EXISTS idx_zfs_run_members_dataset ON zfs_run_members(dataset);`,
+		alreadySatisfied: tablePresent("zfs_run_members"),
+	},
+	{
+		// The snapshots taken before an in-place restore. They are kept until
+		// the user deletes one, so they need a durable row: the sweeper that
+		// removes leaked backup stamps must be able to tell them apart.
+		version: zfsMigrationBase + 10,
+		name:    "zfs_safety_snapshots",
+		sql: `CREATE TABLE IF NOT EXISTS zfs_safety_snapshots (
+  item_id          TEXT    NOT NULL,
+  dataset          TEXT    NOT NULL,
+  name             TEXT    NOT NULL,
+  created_at       INTEGER NOT NULL,
+  used_bytes       INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (dataset, name)
+);`,
+		alreadySatisfied: tablePresent("zfs_safety_snapshots"),
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
 // so they keep their order if the base has to move before release.
 const dbDumpMigrationBase = 123
+
+// zfsMigrationBase numbers the eleven steps of the ZFS domain from one place,
+// so they keep their order if the base has to move before release.
+const zfsMigrationBase = 126
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.

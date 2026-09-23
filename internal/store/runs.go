@@ -319,6 +319,18 @@ func (r *Repo) LastSuccessfulFilesBackup() (time.Time, error) {
 	return scanLastBackupTime(row, "LastSuccessfulFilesBackup")
 }
 
+// LastSuccessfulZFSBackup is LastSuccessfulContainerBackup for ZFS items.
+func (r *Repo) LastSuccessfulZFSBackup() (time.Time, error) {
+	row := r.db.QueryRow(`
+		SELECT finished_at
+		FROM runs
+		WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL
+		  AND target_id IN (SELECT id FROM zfs_datasets)`+sanePastStamp+`
+		ORDER BY finished_at DESC
+		LIMIT 1`, saneStampCutoff())
+	return scanLastBackupTime(row, "LastSuccessfulZFSBackup")
+}
+
 // FlashTargetID is the reserved runs.target_id for the singleton flash domain
 // (the Unraid USB). Flash has no per-item table, so its runs carry this fixed
 // id, which cannot collide with the hex ids of other targets.
@@ -656,6 +668,7 @@ func (r *Repo) RunCountsOfKind(kind string) (map[string]map[string]int, error) {
 		    WHEN target_id = ?                              THEN 'flash'
 		    WHEN target_id IN (SELECT id FROM vms)          THEN 'vms'
 		    WHEN target_id IN (SELECT id FROM file_sets)    THEN 'files'
+		    WHEN target_id IN (SELECT id FROM zfs_datasets) THEN 'zfs'
 		    WHEN target_id IN (SELECT id FROM targets)      THEN 'containers'
 		    ELSE ''
 		  END AS domain,
