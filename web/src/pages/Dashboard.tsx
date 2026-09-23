@@ -7,7 +7,7 @@ import type { Run, SpikeCheck, Container, Settings, DomainStatus, CoverageReport
 import { ErrorDetailPanel } from "../components/ErrorDetailPanel";
 import { useT } from "../lib/i18n";
 import { SelectField } from "../components/SelectField";
-import { isOwnReason, isWarningNote, runReason } from "../lib/runReason";
+import { isOwnReason, isWarningNote, RunReasonText } from "../lib/runReason";
 import { runKindLabel } from "../lib/runKind";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { useAdvanced } from "../lib/advanced";
@@ -1336,14 +1336,14 @@ export function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hue
                 </div>
                 {/* dir stays "ltr" for a restic/rclone/Docker message (Latin
                     technical text, which has to read left-to-right even on an
-                    Arabic page) and follows the page for one of OUR sentences,
-                    which is now actually in the reader's language ([377]). */}
+                    Arabic page) and follows the page for one of our own
+                    sentences, which is in the reader's language ([377]). */}
                 {run.status === "failed" && run.error && (
                   <p
                     dir={isOwnReason(run.error) ? undefined : "ltr"}
                     className="ps-16 text-xs text-statusFail wrap-break-word text-start"
                   >
-                    {runReason(run.error, t)}
+                    <RunReasonText reason={run.error} t={t} />
                   </p>
                 )}
                 {run.status === "skipped" && run.error && (
@@ -1351,7 +1351,7 @@ export function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hue
                     dir={isOwnReason(run.error) ? undefined : "ltr"}
                     className="ps-16 text-xs text-carbon-textMuted wrap-break-word text-start"
                   >
-                    {runReason(run.error, t)}
+                    <RunReasonText reason={run.error} t={t} />
                   </p>
                 )}
                 {/* A run can succeed and still have something to say: which
@@ -1364,7 +1364,7 @@ export function RunsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hue
                       isWarningNote(run.error) ? "text-statusWarn" : "text-carbon-textMuted"
                     }`}
                   >
-                    {runReason(run.error, t)}
+                    <RunReasonText reason={run.error} t={t} />
                   </p>
                 )}
               </div>

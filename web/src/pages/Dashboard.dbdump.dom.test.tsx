@@ -97,9 +97,10 @@ describe("the run history", () => {
 
     const warned = await screen.findByText(en["runReason.dbdumpOneDatabase"]);
     expect(warned.className).toContain("text-statusWarn");
-    const kept = screen.getByText(/pg\.old/);
-    expect(kept.textContent).toContain(en["runReason.dbimportKeptOld"]);
-    expect(kept.className).toContain("text-carbon-textMuted");
+    // The folder path sits in its own isolate, so the sentence is the parent.
+    const kept = screen.getByText(/pg\.old/).closest("p");
+    expect(kept?.textContent).toContain(en["runReason.dbimportKeptOld"]);
+    expect(kept?.className).toContain("text-carbon-textMuted");
   });
 
   it("gives the kind column room for the longest label", async () => {
