@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -22,10 +23,16 @@ import (
 	"sync/atomic"
 )
 
-// remoteRepoRe matches a restic remote-backend repo location (vs. a local path).
-// rclone covers cloud backends (B2/S3/Drive/…); the others are restic's native
-// remote backends. A local repo is a plain filesystem path with no scheme.
-var remoteRepoRe = regexp.MustCompile(`^(rclone|sftp|rest|s3|b2|azure|gs|swift):`)
+// remoteSchemes are the location prefixes of restic's remote backends. rclone
+// covers the cloud backends (B2/S3/Drive/…); the others are native. A local
+// repo is a plain filesystem path with no scheme.
+var remoteSchemes = []string{"rclone", "sftp", "rest", "s3", "b2", "azure", "gs", "swift"}
+
+var remoteRepoRe = regexp.MustCompile(`^(` + strings.Join(remoteSchemes, "|") + `):`)
+
+// RemoteSchemes lists the prefixes IsRemoteRepo recognizes, for callers that
+// have to ask the question somewhere else than in Go, such as in SQL.
+func RemoteSchemes() []string { return slices.Clone(remoteSchemes) }
 
 // IsRemoteRepo reports whether loc is a restic remote-backend location (not a
 // local filesystem path). Used to skip path-containment resolution and to inject

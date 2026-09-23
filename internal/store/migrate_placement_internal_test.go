@@ -537,10 +537,11 @@ func TestOffPremisesBackfillMatchesIsRemoteRepo(t *testing.T) {
 	db := OpenMem(t)
 	migrateThrough(t, db, migrationNamed(t, "offsite_targets_off_premises").version-1)
 	locations := []string{
-		"s3:https://s3.example.com/bv", "b2:bucket:bv", "rest:https://nas:8000/bv",
-		"sftp:u@host:/bv", "rclone:remote:bv", "azure:container:/bv", "gs:bucket:/bv",
-		"swift:container:/bv", "backups/named", "/mnt/remotes/nas/bv",
+		"backups/named", "/mnt/remotes/nas/bv",
 		"S3:https://s3.example.com/upper", "BackBlaze:bucket/cold",
+	}
+	for _, scheme := range restic.RemoteSchemes() {
+		locations = append(locations, scheme+":host/bv")
 	}
 	for i, loc := range locations {
 		if _, err := db.Exec(`INSERT INTO offsite_targets (id, domain, name, repo, role) VALUES (?, '', ?, ?, 'repo')`,

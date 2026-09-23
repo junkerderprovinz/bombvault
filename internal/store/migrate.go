@@ -1790,9 +1790,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_offsite_targets_companion
 ALTER TABLE offsite_targets ADD COLUMN off_premises INTEGER NOT NULL DEFAULT 0;
 UPDATE offsite_targets SET off_premises = 1
  WHERE role = 'repo' AND companion_of = ''
-   AND (repo GLOB 's3:*'     OR repo GLOB 'b2:*'     OR repo GLOB 'rest:*'
-     OR repo GLOB 'sftp:*'   OR repo GLOB 'rclone:*' OR repo GLOB 'azure:*'
-     OR repo GLOB 'gs:*'     OR repo GLOB 'swift:*');`,
+   AND (` + remoteLocation("repo") + `);`,
 	},
 }
 
