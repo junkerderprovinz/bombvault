@@ -3619,6 +3619,7 @@ func (h *Handler) runSpikeAndCache() (any, bool) {
 		Docker:        h.docker,
 		ContainerPath: h.svc.ContainerPath(),
 		LibvirtTest:   h.svc.LibvirtReachable,
+		ZFSTest:       h.svc.ZFSSpikeStatus,
 	}
 	checks, allOK := spike.Run(deps, h.probes)
 	h.spikeMu.Lock()

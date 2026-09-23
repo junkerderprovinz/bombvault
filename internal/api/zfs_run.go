@@ -42,45 +42,20 @@ func (s *Service) zfsPreflight(ctx context.Context, d store.ZFSDataset, previous
 		}
 		return nil, &backup.ZFSRefusal{Code: code, Detail: err.Error()}
 	}
-	if tree[0].Type != "filesystem" {
-		return nil, &backup.ZFSRefusal{Code: "not-filesystem", Detail: d.Dataset}
-	}
-	legacy := 0
-	for _, e := range tree {
-		if !zfs.SnapshotNameFits(e.Name) {
-			// The recursive snapshot is one command over the whole tree, so a
-			// single name that does not fit fails every member with it.
-			return nil, &backup.ZFSRefusal{Code: "name-too-long", Detail: e.Name}
-		}
-		if e.Type == "filesystem" && e.Mountpoint == "legacy" {
-			legacy++
-		}
-	}
-	if legacy > zfsMaxLegacyFilesystems {
-		return nil, &backup.ZFSRefusal{Code: "docker-storage", Detail: d.Dataset}
+	if ref := zfsTreeRefusal(d.Dataset, tree); ref != nil {
+		return nil, ref
 	}
 
 	seen := make(map[string]bool, len(previous))
 	for _, p := range previous {
 		seen[p.Dataset] = true
 	}
-	recs := zfsMountRecords()
-	members := make([]zfsMember, 0, len(tree))
+	members := s.zfsResolveMembers(tree, d.Dataset, d.ExcludedChildren, seen)
 	readable := 0
-	for _, e := range tree {
-		m := zfsMember{
-			Entry:   e,
-			RelPath: zfsRelPath(d.Dataset, e.Name),
-			Code:    zfs.MemberCode(e, d.ExcludedChildren),
-			IsNew:   !seen[e.Name],
-		}
-		if m.Code == "" {
-			m.Mount, m.Code = s.resolveDatasetMount(recs, e, false)
-		}
+	for _, m := range members {
 		if m.Code == "" {
 			readable++
 		}
-		members = append(members, m)
 	}
 	if readable == 0 {
 		return nil, &backup.ZFSRefusal{Code: "nothing-readable", Detail: d.Dataset}
@@ -103,6 +78,50 @@ func (s *Service) zfsPreflight(ctx context.Context, d store.ZFSDataset, previous
 		log.Printf("api: zfs: recording the check of %s failed: %v", d.Dataset, err)
 	}
 	return members, nil
+}
+
+// zfsTreeRefusal refuses a tree no item can be built on, before anything looks
+// at the individual members.
+func zfsTreeRefusal(root string, tree []zfs.ListEntry) *backup.ZFSRefusal {
+	if tree[0].Type != "filesystem" {
+		return &backup.ZFSRefusal{Code: "not-filesystem", Detail: root}
+	}
+	legacy := 0
+	for _, e := range tree {
+		if !zfs.SnapshotNameFits(e.Name) {
+			// The recursive snapshot is one command over the whole tree, so a
+			// single name that does not fit fails every member with it.
+			return &backup.ZFSRefusal{Code: "name-too-long", Detail: e.Name}
+		}
+		if e.Type == "filesystem" && e.Mountpoint == "legacy" {
+			legacy++
+		}
+	}
+	if legacy > zfsMaxLegacyFilesystems {
+		return &backup.ZFSRefusal{Code: "docker-storage", Detail: root}
+	}
+	return nil
+}
+
+// zfsResolveMembers turns a tree listing into the item's members, each with the
+// code that says whether it can be read. seen holds the datasets a previous run
+// knew, so a child picked up for the first time is marked as new.
+func (s *Service) zfsResolveMembers(tree []zfs.ListEntry, root string, excluded []string, seen map[string]bool) []zfsMember {
+	recs := zfsMountRecords()
+	members := make([]zfsMember, 0, len(tree))
+	for _, e := range tree {
+		m := zfsMember{
+			Entry:   e,
+			RelPath: zfsRelPath(root, e.Name),
+			Code:    zfs.MemberCode(e, excluded),
+			IsNew:   seen != nil && !seen[e.Name],
+		}
+		if m.Code == "" {
+			m.Mount, m.Code = s.resolveDatasetMount(recs, e, false)
+		}
+		members = append(members, m)
+	}
+	return members
 }
 
 // zfsOverlappingItem names the item whose tree shares datasets with d. Two

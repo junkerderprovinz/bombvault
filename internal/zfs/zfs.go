@@ -14,6 +14,9 @@ import (
 // streams and keeps its own argv.
 type Host interface {
 	Version(ctx context.Context) (string, error)
+	// Binary is the zfs command this host answered to, which the connection
+	// card reports so a PATH without /usr/sbin is visible before a run fails.
+	Binary() string
 	Tree(ctx context.Context, root string) ([]ListEntry, error)
 	List(ctx context.Context) ([]ListEntry, error)
 	SnapshotRecursive(ctx context.Context, root, snap string) error

@@ -45,6 +45,9 @@ type Deps struct {
 	// LibvirtTest checks libvirt over SSH (qemu+ssh). It is nil until SSH is
 	// set up.
 	LibvirtTest func() error
+	// ZFSTest reaches the pool owner over SSH and reports what it found, or why
+	// the ZFS domain cannot read it. Nil while the domain is off.
+	ZFSTest func() (string, error)
 }
 
 // Run executes the probes in order. A panicking probe becomes a failed check.
@@ -96,6 +99,7 @@ func DefaultProbes() []Probe {
 		{Name: "rclone", Fn: probeRclone, BestEffort: true},
 		{Name: "path-writable", Fn: probePathWritable},
 		{Name: "libvirt", Fn: probeLibvirt, BestEffort: true},
+		{Name: "zfs", Fn: probeZFS, BestEffort: true},
 	}
 }
 
@@ -212,4 +216,15 @@ func probeLibvirt(d Deps) (string, error) {
 		return "", fmt.Errorf("libvirt not reachable over SSH: %v", err)
 	}
 	return "reachable over SSH (qemu+ssh)", nil
+}
+
+// probeZFS reports how the ZFS domain reaches the pool owner and whether the
+// container still receives the host's new mounts. Both break silently: a Host
+// Data mapping without mount propagation only shows up when the first backup
+// cannot read its snapshot.
+func probeZFS(d Deps) (string, error) {
+	if d.ZFSTest == nil {
+		return "ZFS datasets are switched off", nil
+	}
+	return d.ZFSTest()
 }

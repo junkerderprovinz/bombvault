@@ -82,11 +82,15 @@ func zfsRunFixture(t *testing.T, tree []zfs.ListEntry) (*Service, *store.Repo, *
 		zfsRoot:  zfsRootPath,
 		zfsChild: zfsChildPath,
 	})
-	previousStat, previousEmpty, previousPoll := zfsStat, zfsDirEmpty, zfsSnapshotPoll
-	t.Cleanup(func() { zfsStat, zfsDirEmpty, zfsSnapshotPoll = previousStat, previousEmpty, previousPoll })
+	previousStat, previousEmpty := zfsStat, zfsDirEmpty
+	previousPoll, previousWait := zfsSnapshotPoll, zfsSnapshotWait
+	t.Cleanup(func() {
+		zfsStat, zfsDirEmpty = previousStat, previousEmpty
+		zfsSnapshotPoll, zfsSnapshotWait = previousPoll, previousWait
+	})
 	zfsStat = func(string) (fs.FileInfo, error) { return nil, nil }
 	zfsDirEmpty = func(string) (bool, error) { return false, nil }
-	zfsSnapshotPoll = time.Millisecond
+	zfsSnapshotPoll, zfsSnapshotWait = time.Millisecond, 20*time.Millisecond
 	return s, st, host, eng
 }
 
