@@ -49,6 +49,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/template"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
+	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
 
 // containerDefinition is the recreate recipe persisted at backup time so that
@@ -94,6 +95,11 @@ type ResticEngine interface {
 	// discarding it, for TestOffsite, which needs to explain why a repo didn't open.
 	RepoOpensErr(ctx context.Context, repo string, mode restic.Mode) error
 	Backup(ctx context.Context, repo string, paths, tags []string, mode restic.Mode, excludes ...string) (restic.Summary, error)
+	// BackupDir backs up the contents of dir as the snapshot's own tree root,
+	// with restic running inside dir. A ZFS member is read this way, so its
+	// tree root stays the dataset root although the directory it is read from
+	// names a different snapshot every run.
+	BackupDir(ctx context.Context, repo, dir string, tags []string, mode restic.Mode, excludes ...string) (restic.Summary, error)
 	// BackupStdin backs up the ENTIRE content of rd as a single synthetic file
 	// recorded under path, tagged with tags — the zvol VM disk backup path
 	// (v8.0.0 VM service-layer integration, Task 2): a `zfs send` stream piped
@@ -106,6 +112,9 @@ type ResticEngine interface {
 	// the container.
 	BackupFromCommand(ctx context.Context, repo, stdinPath string, tags, command []string, mode restic.Mode) (restic.Summary, []string, error)
 	RestorePath(ctx context.Context, repo, snapshotID, path string, mode restic.Mode) error
+	// RestoreAll restores a whole snapshot into target. A ZFS member's tree
+	// root is the dataset root, so its files land directly in target.
+	RestoreAll(ctx context.Context, repo, snapshotID, target string, mode restic.Mode) error
 	// DumpRaw streams the synthetic file at path, from the given snapshot, into
 	// w — the restore-side counterpart of BackupStdin, feeding a `zfs receive`
 	// over SSH (see backup.ZvolRestic's doc comment).
@@ -227,6 +236,9 @@ type Service struct {
 	engine   ResticEngine
 	ssh      HostSSH         // optional; nil = no SSH (VM NVRAM transfer skipped)
 	progress *progress.Store // optional; nil = progress reporting disabled
+	// zfs owns the pools the ZFS domain snapshots. Optional; nil refuses every
+	// entry point of that domain with ssh-missing rather than skipping silently.
+	zfs zfs.Host
 	// hostShell runs the "Backup Everything" global pre/post hook commands in
 	// BombVault's OWN container (see hostshell.go). Defaulted to the real
 	// execHostShell adapter in NewService, so it is never nil in production;
@@ -476,6 +488,7 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 			"flash":      {},
 			"config":     {},
 			"files":      {},
+			"zfs":        {},
 		},
 		domainActivity:    map[string]string{},
 		runCancels:        map[string]context.CancelFunc{},
@@ -10455,7 +10468,10 @@ type resticAdapter struct {
 	mode   restic.Mode
 }
 
-var _ backup.Restic = (*resticAdapter)(nil)
+var (
+	_ backup.Restic    = (*resticAdapter)(nil)
+	_ backup.ZFSRestic = (*resticAdapter)(nil)
+)
 
 func (a *resticAdapter) Backup(ctx context.Context, repo string, paths, tags []string, excludes ...string) (backup.Summary, error) {
 	sum, err := a.engine.Backup(ctx, repo, paths, tags, a.mode, excludes...)
@@ -10463,6 +10479,22 @@ func (a *resticAdapter) Backup(ctx context.Context, repo string, paths, tags []s
 		return backup.Summary{}, err
 	}
 	return backup.Summary{SnapshotID: sum.SnapshotID, Bytes: int64(sum.BytesAdded)}, nil
+}
+
+// BackupDir carries restic's per-file counters through, which a ZFS run
+// records per member and the domain's baselines read back.
+func (a *resticAdapter) BackupDir(ctx context.Context, repo, dir string, tags []string, excludes ...string) (backup.ZFSBackupSummary, error) {
+	sum, err := a.engine.BackupDir(ctx, repo, dir, tags, a.mode, excludes...)
+	if err != nil {
+		return backup.ZFSBackupSummary{}, err
+	}
+	return backup.ZFSBackupSummary{
+		SnapshotID:      sum.SnapshotID,
+		BytesAdded:      int64(sum.BytesAdded),
+		FilesNew:        int64(sum.FilesNew),
+		FilesChanged:    int64(sum.FilesChanged),
+		FilesUnmodified: int64(sum.FilesUnmodified),
+	}, nil
 }
 
 func (a *resticAdapter) RestorePaths(ctx context.Context, repo, snapshotID string, paths []string) error {
