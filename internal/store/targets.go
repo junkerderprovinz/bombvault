@@ -686,6 +686,9 @@ func (r *Repo) DeleteTarget(name string) error {
 	); err != nil {
 		return fmt.Errorf("DeleteTarget runs: %w", err)
 	}
+	if err := deleteAnomalyState(tx, `IN (SELECT id FROM targets WHERE container_name = ?)`, name); err != nil {
+		return fmt.Errorf("DeleteTarget: %w", err)
+	}
 	if _, err := tx.Exec(`DELETE FROM targets WHERE container_name = ?`, name); err != nil {
 		return fmt.Errorf("DeleteTarget: %w", err)
 	}

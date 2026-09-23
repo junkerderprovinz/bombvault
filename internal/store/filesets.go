@@ -247,6 +247,10 @@ func (r *Repo) DeleteFileSet(id string) error {
 		tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
 		return fmt.Errorf("DeleteFileSet runs: %w", err)
 	}
+	if err := deleteAnomalyState(tx, `= ?`, id); err != nil {
+		tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
+		return fmt.Errorf("DeleteFileSet: %w", err)
+	}
 	if _, err := tx.Exec(`DELETE FROM file_sets WHERE id = ?`, id); err != nil {
 		tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
 		return fmt.Errorf("DeleteFileSet: %w", err)

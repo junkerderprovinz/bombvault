@@ -341,3 +341,22 @@ func TestDeleteFileSetNotFoundIsNoop(t *testing.T) {
 		t.Fatalf("delete non-existent: %v", err)
 	}
 }
+
+func TestDeleteFileSetRemovesAnomalyState(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	fs, err := r.CreateFileSet(store.FileSet{Name: "deleteme", Path: "user/deleteme", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	seedAnomalyState(t, r, fs.ID, "files")
+
+	if err := r.DeleteFileSet(fs.ID); err != nil {
+		t.Fatalf("DeleteFileSet: %v", err)
+	}
+	assertAnomalyStateGone(t, r, fs.ID)
+}

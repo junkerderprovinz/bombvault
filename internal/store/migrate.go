@@ -1823,6 +1823,116 @@ ALTER TABLE runs ADD COLUMN selection_fp TEXT;
 CREATE INDEX IF NOT EXISTS idx_runs_target_kind_started ON runs(target_id, kind, started_at);`,
 		alreadySatisfied: columnPresent("runs", "source_bytes"),
 	},
+	{
+		// The findings anomaly detection keeps, the preferences and expectations a
+		// user sets on them, the free-space samples the capacity rule reads, and
+		// the state of the one-off backfill out of the repositories.
+		//
+		// A finding is an episode: one row lives from the first pass that saw the
+		// condition to the pass that saw it gone, and the partial unique index is
+		// what keeps a second open row of the same fingerprint out.
+		//
+		// A zfsds scope id is the dataset name, not the item id: a dataset's name
+		// is the identity of its backups, so keying by item would restart every
+		// dataset's history when a tree is re-rooted. target_id still carries the
+		// item, for the cascades and for grouping.
+		//
+		// No alreadySatisfied guard, per the v107 rule: the body is CREATE-only and
+		// idempotent, and a guard on the first table would skip creating the others
+		// on a database that has only some of them.
+		version: anomalyMigrationBase + 1,
+		name:    "anomalies",
+		sql: `
+CREATE TABLE IF NOT EXISTS anomalies (
+  id                TEXT    PRIMARY KEY,
+  fingerprint       TEXT    NOT NULL,
+  detector          TEXT    NOT NULL,
+  metric            TEXT    NOT NULL,
+  severity          TEXT    NOT NULL,
+  state             TEXT    NOT NULL DEFAULT 'open',
+  scope_kind        TEXT    NOT NULL,
+  scope_id          TEXT    NOT NULL,
+  target_id         TEXT    NOT NULL DEFAULT '',
+  domain            TEXT    NOT NULL DEFAULT '',
+  run_id            TEXT    NOT NULL DEFAULT '',
+  last_run_id       TEXT    NOT NULL DEFAULT '',
+  last_run_at       INTEGER NOT NULL DEFAULT 0,
+  last_good_run_id  TEXT    NOT NULL DEFAULT '',
+  cleared_at        INTEGER NOT NULL DEFAULT 0,
+  observed          REAL    NOT NULL DEFAULT 0,
+  expected          REAL    NOT NULL DEFAULT 0,
+  threshold         REAL    NOT NULL DEFAULT 0,
+  samples           INTEGER NOT NULL DEFAULT 0,
+  sensitivity       TEXT    NOT NULL DEFAULT '',
+  details           TEXT    NOT NULL DEFAULT '{}',
+  occurrences       INTEGER NOT NULL DEFAULT 1,
+  first_seen_at     INTEGER NOT NULL,
+  last_seen_at      INTEGER NOT NULL,
+  recovered_at      INTEGER NOT NULL DEFAULT 0,
+  resolved_at       INTEGER NOT NULL DEFAULT 0,
+  acked_at          INTEGER NOT NULL DEFAULT 0,
+  ack_note          TEXT    NOT NULL DEFAULT '',
+  notified_at       INTEGER NOT NULL DEFAULT 0,
+  notified_severity TEXT    NOT NULL DEFAULT ''
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_anomalies_open_fingerprint ON anomalies(fingerprint) WHERE state = 'open';
+CREATE INDEX IF NOT EXISTS idx_anomalies_state_seen ON anomalies(state, last_seen_at);
+CREATE INDEX IF NOT EXISTS idx_anomalies_scope ON anomalies(scope_kind, scope_id);
+CREATE INDEX IF NOT EXISTS idx_anomalies_fingerprint_seen ON anomalies(fingerprint, last_seen_at);
+CREATE INDEX IF NOT EXISTS idx_anomalies_target ON anomalies(target_id);
+
+CREATE TABLE IF NOT EXISTS anomaly_item_prefs (
+  target_id   TEXT PRIMARY KEY,
+  sensitivity TEXT NOT NULL DEFAULT '',
+  notify_min  TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS anomaly_expectations (
+  scope_kind TEXT    NOT NULL,
+  scope_id   TEXT    NOT NULL,
+  target_id  TEXT    NOT NULL,
+  family     TEXT    NOT NULL,
+  since_at   INTEGER NOT NULL DEFAULT 0,
+  ceiling    REAL    NOT NULL DEFAULT 0,
+  anomaly_id TEXT    NOT NULL DEFAULT '',
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY (scope_kind, scope_id, family)
+);
+
+CREATE TABLE IF NOT EXISTS volume_samples (
+  volume      TEXT    NOT NULL,
+  at          INTEGER NOT NULL,
+  free_bytes  INTEGER NOT NULL,
+  total_bytes INTEGER,
+  domains     TEXT    NOT NULL DEFAULT '',
+  source      TEXT    NOT NULL DEFAULT 'statfs',
+  PRIMARY KEY (volume, at)
+);
+
+CREATE TABLE IF NOT EXISTS anomaly_backfill (
+  slot            TEXT    PRIMARY KEY,
+  attempted_at    INTEGER NOT NULL,
+  done            INTEGER NOT NULL DEFAULT 0,
+  filled          INTEGER NOT NULL DEFAULT 0,
+  without_summary INTEGER NOT NULL DEFAULT 0,
+  error           TEXT    NOT NULL DEFAULT ''
+);`,
+	},
+	{
+		// The feature switch, the preset every item follows unless it overrides it,
+		// the severity from which a finding is pushed, and the guard that stops
+		// retention from deleting good backups against a lost source. All four on,
+		// because a user who never opens the tab is the one the guard is for.
+		//
+		// Guarded like every other ALTER body above.
+		version: anomalyMigrationBase + 2,
+		name:    "settings_anomaly",
+		sql: `ALTER TABLE settings ADD COLUMN anomaly_enabled INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE settings ADD COLUMN anomaly_sensitivity TEXT NOT NULL DEFAULT 'balanced';
+ALTER TABLE settings ADD COLUMN anomaly_notify_min TEXT NOT NULL DEFAULT 'critical';
+ALTER TABLE settings ADD COLUMN anomaly_retention_hold INTEGER NOT NULL DEFAULT 1;`,
+		alreadySatisfied: columnPresent("settings", "anomaly_enabled"),
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
