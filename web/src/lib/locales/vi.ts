@@ -1782,13 +1782,13 @@ const vi: Partial<Translations> = {
   "placement.oldCopy": "{place}: bản sao mới nhất từ {date}",
   "placement.rule321Met": "Đáp ứng quy tắc 3-2-1",
   "placement.rule321OneCopy": "Không đáp ứng quy tắc 3-2-1: chỉ một bản sao lưu",
-  "placement.rule321NothingOff": "Không đáp ứng quy tắc 3-2-1: không có gì ngoài cơ sở",
   "placement.rule321Unconfirmed": "Quy tắc 3-2-1 chưa xác nhận",
   "placement.noBackup": "Chưa có bản sao lưu nào.",
   "placement.stackNote": "Thư mục dự án {project}: tại {home}, đã sao chép đến {targets} (theo mặc định của container)",
   "placement.stackNoteNoCopy": "Thư mục dự án {project}: tại {home}, chưa sao chép (theo mặc định của container)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

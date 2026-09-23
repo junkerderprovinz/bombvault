@@ -1788,13 +1788,13 @@ const cs: Partial<Translations> = {
   "placement.oldCopy": "{place}: poslední kopie z {date}",
   "placement.rule321Met": "3-2-1 splněno",
   "placement.rule321OneCopy": "3-2-1 nesplněno: jedna záloha",
-  "placement.rule321NothingOff": "3-2-1 nesplněno: nic mimo areál",
   "placement.rule321Unconfirmed": "3-2-1 nepotvrzeno",
   "placement.noBackup": "Zatím žádná záloha.",
   "placement.stackNote": "Projektová složka {project}: na {home}, kopírováno do {targets} (řídí se výchozím nastavením kontejnerů)",
   "placement.stackNoteNoCopy": "Projektová složka {project}: na {home}, bez kopírování (řídí se výchozím nastavením kontejnerů)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

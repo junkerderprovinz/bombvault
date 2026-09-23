@@ -1801,13 +1801,13 @@ const bg: Partial<Translations> = {
   "placement.oldCopy": "{place}: последно копие от {date}",
   "placement.rule321Met": "3-2-1 изпълнено",
   "placement.rule321OneCopy": "3-2-1 не е изпълнено: едно резервно копие",
-  "placement.rule321NothingOff": "3-2-1 не е изпълнено: нищо извън обекта",
   "placement.rule321Unconfirmed": "3-2-1 непотвърдено",
   "placement.noBackup": "Все още няма резервно копие.",
   "placement.stackNote": "Папка на проекта {project}: на {home}, копирано в {targets} (следва подразбирането за контейнерите)",
   "placement.stackNoteNoCopy": "Папка на проекта {project}: на {home}, без копиране (следва подразбирането за контейнерите)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

@@ -1787,13 +1787,13 @@ const nl: Partial<Translations> = {
   "placement.oldCopy": "{place}: laatste kopie van {date}",
   "placement.rule321Met": "3-2-1 behaald",
   "placement.rule321OneCopy": "3-2-1 niet behaald: één back-up",
-  "placement.rule321NothingOff": "3-2-1 niet behaald: niets buiten de locatie",
   "placement.rule321Unconfirmed": "3-2-1 onbevestigd",
   "placement.noBackup": "Nog geen back-up.",
   "placement.stackNote": "Projectmap {project}: op {home}, gekopieerd naar {targets} (volgt de standaard van de containers)",
   "placement.stackNoteNoCopy": "Projectmap {project}: op {home}, niet gekopieerd (volgt de standaard van de containers)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

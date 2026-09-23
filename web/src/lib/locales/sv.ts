@@ -1790,13 +1790,13 @@ const sv: Partial<Translations> = {
   "placement.oldCopy": "{place}: senaste kopia från {date}",
   "placement.rule321Met": "3-2-1 uppfylld",
   "placement.rule321OneCopy": "3-2-1 inte uppfylld: en säkerhetskopia",
-  "placement.rule321NothingOff": "3-2-1 inte uppfylld: inget utanför lokalen",
   "placement.rule321Unconfirmed": "3-2-1 obekräftad",
   "placement.noBackup": "Ingen säkerhetskopia ännu.",
   "placement.stackNote": "Projektmapp {project}: på {home}, kopierad till {targets} (följer standarden för containrar)",
   "placement.stackNoteNoCopy": "Projektmapp {project}: på {home}, inte kopierad (följer standarden för containrar)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

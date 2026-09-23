@@ -357,7 +357,6 @@ export function planLines(
 const RULE_321: Record<PlacementObserved["rule321"], { key: TranslationKey; tone: StatusLine["tone"] }> = {
   met: { key: "placement.rule321Met", tone: "normal" },
   "one-copy": { key: "placement.rule321OneCopy", tone: "warn" },
-  "nothing-off-premises": { key: "placement.rule321NothingOff", tone: "warn" },
   unconfirmed: { key: "placement.rule321Unconfirmed", tone: "unconfirmed" },
 };
 
@@ -397,7 +396,10 @@ function placeLine(t: T, lang: string, p: ObservedPlace): StatusLine {
       };
     case "unknown":
       return {
-        text: p.since > 0 ? at("placement.stateUnknown").replace("{since}", () => formatTs(p.since)) : p.label,
+        text:
+          p.since > 0
+            ? at("placement.stateUnknown").replace("{since}", () => formatTs(p.since))
+            : at("placement.notListedYet"),
         tone: "muted",
       };
     case "old-copy":

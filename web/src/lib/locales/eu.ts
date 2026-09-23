@@ -1801,13 +1801,13 @@ const eu: Partial<Translations> = {
   "placement.oldCopy": "{place}: azken kopia {date}(e)koa",
   "placement.rule321Met": "3-2-1 betea",
   "placement.rule321OneCopy": "3-2-1 bete gabe: babeskopia bat",
-  "placement.rule321NothingOff": "3-2-1 bete gabe: ezer ez instalazioetatik kanpo",
   "placement.rule321Unconfirmed": "3-2-1 berretsi gabe",
   "placement.noBackup": "Oraindik ez dago babeskopiarik.",
   "placement.stackNote": "{project} proiektu-karpeta: {home} kokapenean, {targets}(e)ra kopiatuta (edukiontzien lehenetsia jarraitzen du)",
   "placement.stackNoteNoCopy": "{project} proiektu-karpeta: {home} kokapenean, kopiatu gabe (edukiontzien lehenetsia jarraitzen du)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

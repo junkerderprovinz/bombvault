@@ -387,6 +387,20 @@ describe("observedLine", () => {
     expect(lines[1]).toEqual({ text: "B2: no copy yet", tone: "muted" });
   });
 
+  it("says a target has not been listed yet instead of standing there as a bare name", () => {
+    const lines = observedLine(
+      tEn,
+      "en",
+      placementObserved({
+        places: [observedPlace({ state: "unknown", since: 0, stale: true, counts: false })],
+        sites: 1,
+        rule321: "one-copy",
+        tone: "warn",
+      })
+    );
+    expect(lines[1]).toEqual({ text: "B2: not listed yet", tone: "muted" });
+  });
+
   it("says no backup yet before the first one", () => {
     expect(observedLine(tEn, "en", placementObserved({ noBackup: true }))).toEqual([
       { text: "No backup yet.", tone: "muted" },

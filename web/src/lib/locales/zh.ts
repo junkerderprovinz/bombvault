@@ -1782,13 +1782,13 @@ const zh: Partial<Translations> = {
   "placement.oldCopy": "{place}：最新副本来自 {date}",
   "placement.rule321Met": "满足 3-2-1",
   "placement.rule321OneCopy": "不满足 3-2-1：只有一份备份",
-  "placement.rule321NothingOff": "不满足 3-2-1：没有场外副本",
   "placement.rule321Unconfirmed": "3-2-1 未确认",
   "placement.noBackup": "尚无备份。",
   "placement.stackNote": "项目文件夹 {project}：位于 {home}，已复制到 {targets}（遵循容器默认值）",
   "placement.stackNoteNoCopy": "项目文件夹 {project}：位于 {home}，未复制（遵循容器默认值）",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

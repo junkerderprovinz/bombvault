@@ -1801,13 +1801,13 @@ const is: Partial<Translations> = {
   "placement.oldCopy": "{place}: nýjasta afrit frá {date}",
   "placement.rule321Met": "3-2-1 uppfyllt",
   "placement.rule321OneCopy": "3-2-1 ekki uppfyllt: eitt afrit",
-  "placement.rule321NothingOff": "3-2-1 ekki uppfyllt: ekkert utan húss",
   "placement.rule321Unconfirmed": "3-2-1 óstaðfest",
   "placement.noBackup": "Ekkert afrit ennþá.",
   "placement.stackNote": "Verkefnamappa {project}: á {home}, afritað í {targets} (fylgir sjálfgefnu íláta)",
   "placement.stackNoteNoCopy": "Verkefnamappa {project}: á {home}, ekki afritað (fylgir sjálfgefnu íláta)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

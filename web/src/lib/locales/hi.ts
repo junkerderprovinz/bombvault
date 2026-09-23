@@ -1801,13 +1801,13 @@ const hi: Partial<Translations> = {
   "placement.oldCopy": "{place}: नवीनतम प्रति {date} की",
   "placement.rule321Met": "3-2-1 पूरा",
   "placement.rule321OneCopy": "3-2-1 पूरा नहीं: एक बैकअप",
-  "placement.rule321NothingOff": "3-2-1 पूरा नहीं: परिसर से बाहर कुछ नहीं",
   "placement.rule321Unconfirmed": "3-2-1 अपुष्ट",
   "placement.noBackup": "अभी तक कोई बैकअप नहीं।",
   "placement.stackNote": "प्रोजेक्ट फ़ोल्डर {project}: {home} पर, {targets} में कॉपी किया गया (कंटेनर डिफ़ॉल्ट का अनुसरण करता है)",
   "placement.stackNoteNoCopy": "प्रोजेक्ट फ़ोल्डर {project}: {home} पर, कॉपी नहीं किया गया (कंटेनर डिफ़ॉल्ट का अनुसरण करता है)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

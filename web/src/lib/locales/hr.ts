@@ -1801,13 +1801,13 @@ const hr: Partial<Translations> = {
   "placement.oldCopy": "{place}: zadnja kopija od {date}",
   "placement.rule321Met": "3-2-1 ispunjeno",
   "placement.rule321OneCopy": "3-2-1 nije ispunjeno: jedna sigurnosna kopija",
-  "placement.rule321NothingOff": "3-2-1 nije ispunjeno: ništa izvan prostorija",
   "placement.rule321Unconfirmed": "3-2-1 nepotvrđeno",
   "placement.noBackup": "Još nema sigurnosne kopije.",
   "placement.stackNote": "Mapa projekta {project}: na {home}, kopirano u {targets} (slijedi zadano za kontejnere)",
   "placement.stackNoteNoCopy": "Mapa projekta {project}: na {home}, nije kopirano (slijedi zadano za kontejnere)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

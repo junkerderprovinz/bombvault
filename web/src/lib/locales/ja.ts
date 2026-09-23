@@ -1782,13 +1782,13 @@ const ja: Partial<Translations> = {
   "placement.oldCopy": "{place}：最新の複製は {date}",
   "placement.rule321Met": "3-2-1 を満たしています",
   "placement.rule321OneCopy": "3-2-1 未達成：バックアップが1つのみ",
-  "placement.rule321NothingOff": "3-2-1 未達成：施設外に何もありません",
   "placement.rule321Unconfirmed": "3-2-1 未確認",
   "placement.noBackup": "まだバックアップがありません。",
   "placement.stackNote": "プロジェクトフォルダ {project}：{home} に保存、{targets} にコピー（コンテナの既定値に従う）",
   "placement.stackNoteNoCopy": "プロジェクトフォルダ {project}：{home} に保存、コピーなし（コンテナの既定値に従う）",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

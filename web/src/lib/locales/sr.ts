@@ -1785,13 +1785,13 @@ const sr: Partial<Translations> = {
   "placement.oldCopy": "{place}: последња копија од {date}",
   "placement.rule321Met": "3-2-1 испуњено",
   "placement.rule321OneCopy": "3-2-1 није испуњено: једна резервна копија",
-  "placement.rule321NothingOff": "3-2-1 није испуњено: ништа ван просторија",
   "placement.rule321Unconfirmed": "3-2-1 непотврђено",
   "placement.noBackup": "Још увек нема резервне копије.",
   "placement.stackNote": "Фасцикла пројекта {project}: на {home}, копирано на {targets} (прати подразумевано за контејнере)",
   "placement.stackNoteNoCopy": "Фасцикла пројекта {project}: на {home}, није копирано (прати подразумевано за контејнере)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

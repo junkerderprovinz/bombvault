@@ -1785,13 +1785,13 @@ const sl: Partial<Translations> = {
   "placement.oldCopy": "{place}: zadnja kopija od {date}",
   "placement.rule321Met": "3-2-1 izpolnjeno",
   "placement.rule321OneCopy": "3-2-1 ni izpolnjeno: ena varnostna kopija",
-  "placement.rule321NothingOff": "3-2-1 ni izpolnjeno: nič zunaj prostorov",
   "placement.rule321Unconfirmed": "3-2-1 nepotrjeno",
   "placement.noBackup": "Še ni varnostne kopije.",
   "placement.stackNote": "Mapa projekta {project}: na {home}, kopirano v {targets} (sledi privzeti vrednosti zabojnikov)",
   "placement.stackNoteNoCopy": "Mapa projekta {project}: na {home}, ni kopirano (sledi privzeti vrednosti zabojnikov)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

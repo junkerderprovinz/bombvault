@@ -1785,13 +1785,13 @@ const uk: Partial<Translations> = {
   "placement.oldCopy": "{place}: остання копія від {date}",
   "placement.rule321Met": "3-2-1 дотримано",
   "placement.rule321OneCopy": "3-2-1 не дотримано: одна резервна копія",
-  "placement.rule321NothingOff": "3-2-1 не дотримано: нічого поза приміщенням",
   "placement.rule321Unconfirmed": "3-2-1 непідтверджено",
   "placement.noBackup": "Резервної копії ще немає.",
   "placement.stackNote": "Папка проєкту {project}: на {home}, скопійовано до {targets} (слідує значенню контейнерів за замовчуванням)",
   "placement.stackNoteNoCopy": "Папка проєкту {project}: на {home}, не скопійовано (слідує значенню контейнерів за замовчуванням)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",

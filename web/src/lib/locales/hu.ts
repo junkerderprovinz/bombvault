@@ -1793,13 +1793,13 @@ const hu: Partial<Translations> = {
   "placement.oldCopy": "{place}: legutóbbi másolat: {date}",
   "placement.rule321Met": "3-2-1 teljesül",
   "placement.rule321OneCopy": "3-2-1 nem teljesül: egyetlen mentés",
-  "placement.rule321NothingOff": "3-2-1 nem teljesül: semmi a telephelyen kívül",
   "placement.rule321Unconfirmed": "3-2-1 megerősítetlen",
   "placement.noBackup": "Még nincs mentés.",
   "placement.stackNote": "Projektmappa {project}: itt: {home}, másolva ide: {targets} (a konténerek alapértelmezését követi)",
   "placement.stackNoteNoCopy": "Projektmappa {project}: itt: {home}, nincs másolva (a konténerek alapértelmezését követi)",
   "placement.older": "Older copies at {target}: {n}, last seen {date}",
   "placement.noCopyYet": "{place}: no copy yet",
+  "placement.notListedYet": "{place}: not listed yet",
 
   // Removal
   "offsiteRemoval.delete": "Delete in {target}",
