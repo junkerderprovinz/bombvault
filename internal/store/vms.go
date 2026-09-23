@@ -221,6 +221,9 @@ func (r *Repo) DeleteVMTarget(name string) error {
 	); err != nil {
 		return fmt.Errorf("DeleteVMTarget runs: %w", err)
 	}
+	if err := deleteAnomalyState(tx, `IN (SELECT id FROM vms WHERE name = ?)`, name); err != nil {
+		return fmt.Errorf("DeleteVMTarget: %w", err)
+	}
 	if _, err := tx.Exec(`DELETE FROM vms WHERE name = ?`, name); err != nil {
 		return fmt.Errorf("DeleteVMTarget: %w", err)
 	}

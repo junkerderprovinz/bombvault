@@ -242,6 +242,20 @@ type Settings struct {
 	// whatever the outcome, so it can feed a dead man's switch.
 	EverythingPreHook  string
 	EverythingPostHook string
+	// AnomalyEnabled switches anomaly detection over the backup history on. Off
+	// stops evaluation, its notifications and its retention hold; the findings
+	// already recorded stay readable.
+	AnomalyEnabled bool
+	// AnomalySensitivity is the preset every item follows unless it carries its
+	// own: strict, balanced or permissive.
+	AnomalySensitivity string
+	// AnomalyNotifyMin is the severity from which a finding is pushed:
+	// info, warning, critical or off.
+	AnomalyNotifyMin string
+	// AnomalyRetentionHold pauses deleting old backups of a series whose source
+	// collapsed, shrank sharply or was rewritten, until the finding is
+	// acknowledged or marked as expected.
+	AnomalyRetentionHold bool
 }
 
 // settingsQuerier and settingsExecer are satisfied by both *sql.DB and *sql.Tx,
@@ -290,7 +304,8 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		       fleet_enabled, pull_enabled, db_dumps_enabled, instance_name, fleet_token,
 		       everything_schedule, everything_pre_hook, everything_post_hook,
 		       backup_cores, display_prefs,
-		       totp_secret, totp_enabled, totp_recovery
+		       totp_secret, totp_enabled, totp_recovery,
+		       anomaly_enabled, anomaly_sensitivity, anomaly_notify_min, anomaly_retention_hold
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -300,6 +315,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 	var catchUpMissed, watchdogEnabled, exportEncryptEnabled, receiverEnabled int
 	var restartHealthWait, reconcileUnraidUpdateStatus, perItemSchedules int
 	var fleetEnabled, pullEnabled, dbDumpsEnabled, totpEnabled int
+	var anomalyEnabled, anomalyRetentionHold int
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled, &configEnabled, &filesEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.ConfigPath, &s.FilesPath, &s.RestoreFolder,
@@ -330,6 +346,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		&s.EverythingSchedule, &s.EverythingPreHook, &s.EverythingPostHook,
 		&s.BackupCores, &s.DisplayPrefs,
 		&s.TOTPSecret, &totpEnabled, &s.TOTPRecovery,
+		&anomalyEnabled, &s.AnomalySensitivity, &s.AnomalyNotifyMin, &anomalyRetentionHold,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing: run Migrate first")
@@ -366,6 +383,8 @@ func getSettings(q settingsQuerier) (Settings, error) {
 	s.FleetEnabled = fleetEnabled != 0
 	s.PullEnabled = pullEnabled != 0
 	s.DBDumpsEnabled = dbDumpsEnabled != 0
+	s.AnomalyEnabled = anomalyEnabled != 0
+	s.AnomalyRetentionHold = anomalyRetentionHold != 0
 	return s, nil
 }
 
@@ -513,7 +532,11 @@ func updateSettings(e settingsExecer, s Settings) error {
 		  display_prefs                = ?,
 		  totp_secret                  = ?,
 		  totp_enabled                 = ?,
-		  totp_recovery                = ?
+		  totp_recovery                = ?,
+		  anomaly_enabled              = ?,
+		  anomaly_sensitivity          = ?,
+		  anomaly_notify_min           = ?,
+		  anomaly_retention_hold       = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -558,6 +581,10 @@ func updateSettings(e settingsExecer, s Settings) error {
 		s.TOTPSecret,
 		boolInt(s.TOTPEnabled),
 		s.TOTPRecovery,
+		boolInt(s.AnomalyEnabled),
+		s.AnomalySensitivity,
+		s.AnomalyNotifyMin,
+		boolInt(s.AnomalyRetentionHold),
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)

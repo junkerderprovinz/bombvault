@@ -390,3 +390,43 @@ func TestSetDBDumpOffCreatesTargetRow(t *testing.T) {
 		t.Fatalf("the created row carries engine %q, want mysql", got.DBDumpEngine)
 	}
 }
+
+func TestDeleteTargetRemovesAnomalyState(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	tg, err := r.UpsertTarget(store.Target{ContainerName: "deleteme"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	keep, err := r.UpsertTarget(store.Target{ContainerName: "keepme"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	seedAnomalyState(t, r, tg.ID, "container")
+	seedAnomalyState(t, r, keep.ID, "container")
+	seedDomainAnomaly(t, r)
+
+	if err := r.DeleteTarget("deleteme"); err != nil {
+		t.Fatalf("DeleteTarget: %v", err)
+	}
+	assertAnomalyStateGone(t, r, tg.ID)
+
+	rows, _, err := r.ListAnomalies(store.AnomalyFilter{TargetID: keep.ID})
+	if err != nil {
+		t.Fatalf("ListAnomalies: %v", err)
+	}
+	if len(rows) != 3 {
+		t.Fatalf("the other container kept %d of its findings", len(rows))
+	}
+	domainRows, _, err := r.ListAnomalies(store.AnomalyFilter{ScopeKind: "domain"})
+	if err != nil {
+		t.Fatalf("ListAnomalies domain: %v", err)
+	}
+	if len(domainRows) != 1 {
+		t.Fatal("the domain finding went with the container")
+	}
+}

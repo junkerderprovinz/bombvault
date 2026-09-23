@@ -258,3 +258,22 @@ func TestDeleteVMTargetNotFoundIsNoop(t *testing.T) {
 		t.Fatalf("delete non-existent: %v", err)
 	}
 }
+
+func TestDeleteVMTargetRemovesAnomalyState(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	tg, err := r.UpsertVMTarget(store.VMTarget{Name: "deleteme", Method: "graceful"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	seedAnomalyState(t, r, tg.ID, "vm")
+
+	if err := r.DeleteVMTarget("deleteme"); err != nil {
+		t.Fatalf("DeleteVMTarget: %v", err)
+	}
+	assertAnomalyStateGone(t, r, tg.ID)
+}

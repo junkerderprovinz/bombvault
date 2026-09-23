@@ -468,3 +468,47 @@ func TestDBDumpsEnabledRoundTrip(t *testing.T) {
 		t.Fatal("the global switch did not stay off")
 	}
 }
+
+func TestSettingsAnomalyFieldsRoundTrip(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+
+	s, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !s.AnomalyEnabled || !s.AnomalyRetentionHold {
+		t.Fatal("anomaly detection and its retention hold must default to on")
+	}
+	if s.AnomalySensitivity != "balanced" || s.AnomalyNotifyMin != "critical" {
+		t.Fatalf("defaults are (%q, %q)", s.AnomalySensitivity, s.AnomalyNotifyMin)
+	}
+
+	got, err := r.MutateSettings(func(m *store.Settings) error {
+		m.AnomalyEnabled = false
+		m.AnomalySensitivity = "strict"
+		m.AnomalyNotifyMin = "warning"
+		m.AnomalyRetentionHold = false
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("MutateSettings: %v", err)
+	}
+	if got.AnomalyEnabled || got.AnomalyRetentionHold {
+		t.Fatal("the switches did not stay off")
+	}
+
+	stored, err := r.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stored.AnomalyEnabled || stored.AnomalyRetentionHold {
+		t.Fatal("the switches came back on after a read")
+	}
+	if stored.AnomalySensitivity != "strict" || stored.AnomalyNotifyMin != "warning" {
+		t.Fatalf("preset and minimum round-tripped as (%q, %q)", stored.AnomalySensitivity, stored.AnomalyNotifyMin)
+	}
+}
