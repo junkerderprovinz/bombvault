@@ -566,6 +566,10 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
+	// The anomaly worker evaluates the backup history after every run and stops
+	// with the same context the server does.
+	svc.StartAnomalyEngine(ctx)
+
 	server := api.NewServer(cfg, web.DistFS(), handler.Router())
 	runErr := server.Run(ctx)
 
