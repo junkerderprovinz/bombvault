@@ -303,7 +303,7 @@ func (s *Service) RunPrimaryTamperTest(ctx context.Context, domain string) (verd
 	}
 	target.Repo = loc
 
-	runID, rErr := s.store.StartRun(domainRunTargetID(domain), "tamper")
+	runID, rErr := s.startRun(ctx, domainRunTargetID(domain), "tamper")
 	if rErr != nil {
 		log.Printf("api: primary tamper %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
 		runID = ""

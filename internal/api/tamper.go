@@ -74,7 +74,7 @@ func (s *Service) RunTamperTest(ctx context.Context, domain string) (verdict Tam
 	}
 	// Open the run row now and settle it from the named returns, so every
 	// outcome from here on leaves a dated row.
-	runID, rErr := s.store.StartRun(domainRunTargetID(domain), "tamper")
+	runID, rErr := s.startRun(ctx, domainRunTargetID(domain), "tamper")
 	if rErr != nil {
 		log.Printf("api: tamper %s: could not start run record (continuing): %v", domain, rErr) //nolint:gosec // G706: domain is a fixed literal
 		runID = ""

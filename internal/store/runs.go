@@ -23,7 +23,7 @@ type Run struct {
 	// dashboard error panel, which takes it out of the failure badge.
 	Acknowledged bool `json:"acknowledged"`
 	// GroupID is the id of the parent run of a multi-domain pass such as
-	// "Backup Everything", or empty for a run outside one. Set by SetRunGroup.
+	// "Backup Everything", or empty for a run outside one.
 	GroupID string `json:"groupId"`
 	// StartedVia names what asked for this run when the audit trail has a name
 	// for it: "mcp" for the MCP endpoint, empty for the web interface and the
