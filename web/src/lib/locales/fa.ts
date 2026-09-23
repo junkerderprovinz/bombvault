@@ -1730,6 +1730,7 @@ const fa: Partial<Translations> = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
   // Direct repository
   "directRepo.title": "مخزن مستقیم نزد {target}",
   "directRepo.intro": "مواردی که آن را انتخاب می‌کنند مستقیماً در {target} پشتیبان‌گیری می‌شوند، با کلید، کلاس ذخیره‌سازی، محدودیت‌ها و تنظیم append-only. نسخه‌های خود را طبق قواعد {target} نگه می‌دارد. لغو چیزی باقی نمی‌گذارد.",

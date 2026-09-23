@@ -1711,6 +1711,7 @@ const ko: Partial<Translations> = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
   // Direct repository
   "directRepo.title": "{target}의 직접 저장소",
   "directRepo.intro": "이것을 선택한 항목은 {target}으로 바로 백업되며, 해당 대상의 키, 스토리지 클래스, 제한, append-only 설정을 그대로 씁니다. 스냅샷은 {target}의 규칙에 따라 보관됩니다. 취소하면 아무것도 남지 않습니다.",

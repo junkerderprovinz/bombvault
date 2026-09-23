@@ -1730,6 +1730,7 @@ const et: Partial<Translations> = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
   // Direct repository
   "directRepo.title": "Otsehoidla {target} juures",
   "directRepo.intro": "Üksused, mis selle valivad, varundatakse otse hoidlasse {target}, selle võtme, salvestusklassi, piirangute ja append-only seadistusega. See säilitab oma hetktõmmiseid {target} reeglite järgi. Tühistamine ei jäta midagi maha.",

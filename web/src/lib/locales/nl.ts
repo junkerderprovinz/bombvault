@@ -1716,6 +1716,7 @@ const nl: Partial<Translations> = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
   // Direct repository
   "directRepo.title": "Directe repository bij {target}",
   "directRepo.intro": "Items die deze kiezen back-uppen rechtstreeks naar {target}, met de sleutel, opslagklasse, limieten en append-only-instelling daarvan. Het bewaart zijn snapshots volgens de regels van {target}. Annuleren laat niets achter.",

@@ -1730,6 +1730,7 @@ const sk: Partial<Translations> = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
   // Direct repository
   "directRepo.title": "Priamy repozitár pri {target}",
   "directRepo.intro": "Položky, ktoré si ho zvolia, sa zálohujú priamo do {target}, s jeho kľúčom, triedou úložiska, limitmi a nastavením append-only. Uchováva svoje snímky podľa pravidiel {target}. Zrušenie nič nezanechá.",

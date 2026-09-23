@@ -1730,6 +1730,7 @@ const ms: Partial<Translations> = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
   // Direct repository
   "directRepo.title": "Repositori terus di {target}",
   "directRepo.intro": "Item yang memilihnya disandarkan terus ke {target}, dengan kunci, kelas storan, had dan tetapan append-only miliknya. Ia menyimpan snapshot mengikut peraturan {target}. Batal tidak meninggalkan apa-apa.",

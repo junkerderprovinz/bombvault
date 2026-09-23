@@ -1722,6 +1722,7 @@ const ar: Partial<Translations> = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
   // Direct repository
   "directRepo.title": "مستودع مباشر عند {target}",
   "directRepo.intro": "العناصر التي تختاره تُنسخ احتياطيًا مباشرة إلى {target}، بمفتاحه وفئة التخزين والحدود وإعداد append-only الخاص به. يحتفظ بلقطاته وفق قواعد {target}. الإلغاء لا يترك شيئًا وراءه.",

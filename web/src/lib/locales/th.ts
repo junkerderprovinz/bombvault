@@ -1722,6 +1722,7 @@ const th: Partial<Translations> = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
   // Direct repository
   "directRepo.title": "ที่เก็บข้อมูลโดยตรงที่ {target}",
   "directRepo.intro": "รายการที่เลือกใช้จะสำรองข้อมูลตรงไปยัง {target} พร้อมคีย์ คลาสพื้นที่จัดเก็บ ขีดจำกัด และการตั้งค่า append-only เก็บสแนปช็อตตามกฎของ {target} การยกเลิกจะไม่เหลืออะไรไว้",

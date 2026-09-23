@@ -1719,6 +1719,7 @@ const no: Partial<Translations> = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
   // Direct repository
   "directRepo.title": "Direkte depot hos {target}",
   "directRepo.intro": "Elementer som velger det, sikkerhetskopieres direkte til {target}, med nøkkelen, lagringsklassen, grensene og append-only-innstillingen. Det beholder øyeblikksbildene sine etter {target}s regler. Avbryt etterlater ingenting.",

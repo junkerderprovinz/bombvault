@@ -1719,6 +1719,7 @@ const he: Partial<Translations> = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
   // Direct repository
   "directRepo.title": "מאגר ישיר אצל {target}",
   "directRepo.intro": "פריטים שבוחרים בו מגובים ישירות אל {target}, עם המפתח, מחלקת האחסון, המגבלות וההגדרה append-only שלו. הוא שומר את התצלומים שלו לפי הכללים של {target}. ביטול לא משאיר כלום.",

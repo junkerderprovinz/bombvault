@@ -1730,6 +1730,7 @@ const hi: Partial<Translations> = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
   // Direct repository
   "directRepo.title": "{target} पर डायरेक्ट रिपॉज़िटरी",
   "directRepo.intro": "जो प्रविष्टियाँ इसे चुनती हैं, वे सीधे {target} में बैकअप होती हैं, इसकी कुंजी, स्टोरेज क्लास, सीमाओं और append-only सेटिंग के साथ। यह अपने स्नैपशॉट {target} के नियमों के अनुसार रखता है। रद्द करने पर कुछ नहीं बचता।",

@@ -1711,6 +1711,7 @@ const vi: Partial<Translations> = {
   "timeline.incomplete": "incomplete",
   "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
   "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
+  "timeline.stackDirMissing": "The project folder is not in {place}. Use the state from {home}?",
   // Direct repository
   "directRepo.title": "Kho trực tiếp tại {target}",
   "directRepo.intro": "Các mục chọn kho này sẽ sao lưu thẳng vào {target}, dùng khóa, lớp lưu trữ, giới hạn và cài đặt append-only của nó. Kho giữ các snapshot theo quy tắc của {target}. Hủy sẽ không để lại gì.",

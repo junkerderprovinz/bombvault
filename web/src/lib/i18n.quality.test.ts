@@ -84,6 +84,7 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   "timeline.incomplete",
   "timeline.incompleteHint",
   "timeline.snapshotMissing",
+  "timeline.stackDirMissing",
   "offsiteRemoval.delete",
   "offsiteRemoval.ask",
   "offsiteRemoval.onlyThere",
