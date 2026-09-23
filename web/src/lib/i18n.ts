@@ -1821,6 +1821,14 @@ export const en = {
   "timeline.deleteLast": "This is the last copy of this backup.",
   "timeline.deleteHeldBy": "Still held by: {list}",
   "timeline.deleteSkipped": "Left out, append-only: {list}",
+  "timeline.unchecked": "{place}: not checked",
+  "timeline.unreadable": "{place}: not readable",
+  "timeline.check": "Check",
+  "timeline.showOlder": "Load older",
+  "timeline.onlyHere": "only here",
+  "timeline.incomplete": "incomplete",
+  "timeline.incompleteHint": "Not every disk of this run is here, so this place is not picked for a restore.",
+  "timeline.snapshotMissing": "{place} no longer has this backup. Restore from {next}?",
 
   // Direct repository
   "directRepo.title": "Direct repository at {target}",
@@ -3713,6 +3721,15 @@ export const de: Translations = {
   "timeline.deleteLast": "Das ist die letzte Kopie dieser Sicherung.",
   "timeline.deleteHeldBy": "Liegt noch bei: {list}",
   "timeline.deleteSkipped": "Ausgelassen, append-only: {list}",
+  "timeline.unchecked": "{place}: nicht geprüft",
+  "timeline.unreadable": "{place}: nicht lesbar",
+  "timeline.check": "Prüfen",
+  "timeline.showOlder": "Ältere laden",
+  "timeline.onlyHere": "nur hier",
+  "timeline.incomplete": "unvollständig",
+  "timeline.incompleteHint":
+    "Nicht alle Platten dieses Laufs liegen hier, deshalb wird dieser Ort für eine Wiederherstellung nicht gewählt.",
+  "timeline.snapshotMissing": "{place} hat diese Sicherung nicht mehr. Aus {next} wiederherstellen?",
 
   // Direct repository
   "directRepo.title": "Direkt-Repository bei {target}",
