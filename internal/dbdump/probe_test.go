@@ -31,6 +31,27 @@ func TestParseProbe(t *testing.T) {
 			dbdump.Probe{Version: "11.4.5", Databases: []string{"nextcloud"}},
 		},
 		{
+			"mariadb of the newest format",
+			"bombvault-dbdump-version mariadb-dump from 13.0.2-MariaDB, client 10.20\n",
+			dbdump.Probe{Version: "13.0.2"},
+		},
+		{
+			"mariadb 10.6, whose banner leads with the dump tool's own version",
+			"bombvault-dbdump-version mariadb-dump  Ver 10.19 Distrib 10.6.28-MariaDB\n" +
+				"bombvault-dbdump-db nextcloud\n",
+			dbdump.Probe{Version: "10.6.28", Databases: []string{"nextcloud"}},
+		},
+		{
+			"mariadb-aria of jc21",
+			"bombvault-dbdump-version mariadb-dump  Ver 10.19 Distrib 10.11.5-MariaDB\n",
+			dbdump.Probe{Version: "10.11.5"},
+		},
+		{
+			"mysql 5.7, the same two-version banner",
+			"bombvault-dbdump-version mysqldump  Ver 10.13 Distrib 5.7.44, for Linux (x86_64)\n",
+			dbdump.Probe{Version: "5.7.44"},
+		},
+		{
 			"mysql",
 			"bombvault-dbdump-version mysqldump  Ver 8.0.39 for Linux on x86_64 (MySQL Community Server - GPL)\n" +
 				"bombvault-dbdump-db wordpress\n",
