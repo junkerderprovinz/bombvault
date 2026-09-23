@@ -266,6 +266,11 @@ func scrubBypassMessage(err error) (string, bool) {
 		// a platform-mismatch refusal (TestNotify's Unraid channel, the
 		// dashboard-tile plugin) — see unraidPlatformMismatchError.
 		return err.Error(), true
+	case errors.Is(err, backup.ErrZFSRefusal):
+		// Built from validated dataset names and reason codes, and the names
+		// contain "/": scrubbed, "cache/appdata" becomes "[path]" and the run
+		// history stops saying which dataset failed.
+		return err.Error(), true
 	case errors.Is(err, errZvolRebaseFailed):
 		// Same deal again: the ZFS dataset/pool names ARE the message, and
 		// necessarily contain "/" — see errZvolRebaseFailed.

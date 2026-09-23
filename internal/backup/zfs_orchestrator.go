@@ -199,7 +199,10 @@ func BackupZFSItem(ctx context.Context, d ZFSBackupDeps) (Summary, error) {
 		log.Printf("zfs backup: record run for %s: %v", d.Root, recErr)
 	}
 	if snapErr != nil {
-		return Summary{}, d.failRun(runID, &ZFSRefusal{Code: "snapshot-failed", Detail: truncateErr(snapErr)})
+		// The stderr of zfs carries the dataset name, and the run history is
+		// where a user reads which one failed, so it goes in whole and is
+		// bounded by the refusal's own truncation.
+		return Summary{}, d.failRun(runID, &ZFSRefusal{Code: "snapshot-failed", Detail: snapErr.Error()})
 	}
 
 	for _, m := range d.Skipped {

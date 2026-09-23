@@ -5377,16 +5377,20 @@ type commandBackup struct {
 }
 
 type fakeResticEngine struct {
-	inited         []string
-	backedUp       []string
-	lastPaths      []string
-	lastTags       []string
-	lastExcludes   []string
-	lastMode       restic.Mode
-	restored       []string
-	restoreErrPath string // when set, RestoreInclude fails on this include path
-	restoreErr     error  // when set, every RestoreInclude/RestorePath returns it (e.g. context.Canceled)
-	forgotten      []string
+	inited    []string
+	backedUp  []string
+	lastPaths []string
+	// lastDir is the directory of the last BackupDir call, and
+	// restoreAllTargets every whole-snapshot restore, in order.
+	lastDir           string
+	restoreAllTargets []string
+	lastTags          []string
+	lastExcludes      []string
+	lastMode          restic.Mode
+	restored          []string
+	restoreErrPath    string // when set, RestoreInclude fails on this include path
+	restoreErr        error  // when set, every RestoreInclude/RestorePath returns it (e.g. context.Canceled)
+	forgotten         []string
 	// forgotRepos is the repository of every Forget call, parallel to the ids it
 	// carried, so a test can check where a delete landed.
 	forgotRepos []string
@@ -5629,6 +5633,26 @@ func (f *fakeResticEngine) Backup(_ context.Context, repo string, paths, tags []
 		return restic.Summary{}, f.backupErr
 	}
 	return restic.Summary{SnapshotID: "deadbeef12345678", BytesAdded: 2048}, nil
+}
+
+// BackupDir records the directory a ZFS member was read from, which is the
+// one thing that tells two members of the same run apart.
+func (f *fakeResticEngine) BackupDir(_ context.Context, repo, dir string, tags []string, m restic.Mode, excludes ...string) (restic.Summary, error) {
+	f.backedUp = append(f.backedUp, repo)
+	f.lastDir = dir
+	f.lastTags = tags
+	f.lastExcludes = excludes
+	f.lastMode = m
+	if f.backupErr != nil {
+		return restic.Summary{}, f.backupErr
+	}
+	return restic.Summary{SnapshotID: "deadbeef12345678", BytesAdded: 2048}, nil
+}
+
+// RestoreAll records where a whole snapshot was restored to.
+func (f *fakeResticEngine) RestoreAll(_ context.Context, _, snapshotID, target string, _ restic.Mode) error {
+	f.restoreAllTargets = append(f.restoreAllTargets, snapshotID+":"+target)
+	return f.restoreErr
 }
 
 // BackupStdin records each zvol disk's stdin backup. Each call gets its own
