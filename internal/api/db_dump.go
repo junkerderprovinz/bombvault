@@ -715,7 +715,11 @@ func (t *dbDumpTally) take() string {
 	if len(names) > maxListedFailures {
 		names, tail = names[:maxListedFailures], fmt.Sprintf(", +%d more", len(names)-maxListedFailures)
 	}
-	return fmt.Sprintf("%d database dumps failed: %s%s", len(all), strings.Join(names, ", "), tail)
+	what := "database dumps failed"
+	if len(all) == 1 {
+		what = "database dump failed"
+	}
+	return fmt.Sprintf("%d %s: %s%s", len(all), what, strings.Join(names, ", "), tail)
 }
 
 // ScheduledRounds hands the scheduler's per-domain rounds the context their
