@@ -49,7 +49,7 @@ type fakeServiceDocker struct {
 	restartErr     error
 	removeErr      error
 	pullErr        error
-	imageID        string // returned by ImageID (post-pull image id, for #52 update tests)
+	imageID        string // returned by ImageID after a pull
 	imageIDErr     error
 	imageRemoveErr error
 	createErr      error
@@ -111,9 +111,8 @@ func (f *fakeServiceDocker) Pull(_ context.Context, image string) error {
 	return f.pullErr
 }
 
-// PullWithAuth records the same "pull:" call label as Pull (the auth string is
-// resolved server-side; "" = anonymous), so call-order assertions hold across
-// both pull entry points.
+// PullWithAuth records the same "pull:" call as Pull, so call-order assertions
+// hold for both.
 func (f *fakeServiceDocker) PullWithAuth(_ context.Context, image, _ string) error {
 	f.calls = append(f.calls, "pull:"+image)
 	return f.pullErr
@@ -159,8 +158,7 @@ func (f *fakeServiceDocker) Allocations(_ context.Context) ([]model.Allocation, 
 	return f.allocations, f.allocErr
 }
 
-// fakeVirsh is a no-op virshcli.Virsh implementation for service/handler tests.
-// All methods return empty values and nil errors unless the test configures otherwise.
+// fakeVirsh is a no-op virshcli.Virsh.
 type fakeVirsh struct{}
 
 var _ virshcli.Virsh = fakeVirsh{}

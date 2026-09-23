@@ -1,18 +1,8 @@
-// ---------------------------------------------------------------------------
-// withLtrFragments — the leading-`/` hint-text fix (RTL sweep, form-engine
-// Phase 2 Task 6 follow-up). Same test approach as RevealInput.test.ts/
-// Toggle.test.ts: a pure function returning a plain React element tree, so
-// it's called directly and the tree inspected as plain objects — no jsdom.
-//
-// Exercised against the REAL production translation strings (English,
-// Arabic, Hebrew — copy-pasted from lib/i18n.ts / lib/locales/{ar,he}.ts,
-// not paraphrased), since that's exactly what's live-verified elsewhere for
-// offsite.repoLocalHint (pixel-measured in a real browser, both locales,
-// both themes). excludes.hint and recovery.foreignAppdataDestHint use the
-// identical shared function, but the Containers/Recovery pages that render
-// them need real Docker containers / restic snapshots to reach live in a
-// sandbox with neither — so their coverage is here instead of Playwright.
-// ---------------------------------------------------------------------------
+// withLtrFragments returns a plain React element tree, so it is inspected as
+// objects without jsdom. The cases use copies of the real en, ar and he
+// strings. The pages that render excludes.hint and
+// recovery.foreignAppdataDestHint need live containers and restic snapshots,
+// so this is their coverage.
 import { describe, expect, it } from "vitest";
 import type { ReactNode } from "react";
 import * as ltrFragmentsModule from "./ltrFragments";
@@ -36,10 +26,9 @@ function isElementNode(node: unknown): node is ElementNode {
   return typeof node === "object" && node !== null && "props" in node;
 }
 
-/** Flattens the returned ReactNode[] back into a plain string, verifying
- *  along the way that every non-string piece is a `dir="ltr"` span (nothing
- *  else this function can produce) — i.e. round-trips to prove no text was
- *  dropped or duplicated by the split/wrap. */
+/** flattenAndCheckSpans joins the nodes back into a string and checks that
+ *  every non-string piece is a `dir="ltr"` span, so a round trip proves the
+ *  split dropped or duplicated no text. */
 function flattenAndCheckSpans(nodes: ReactNode): { text: string; ltrPieces: string[] } {
   const arr = Array.isArray(nodes) ? nodes : [nodes];
   let text = "";
@@ -76,17 +65,16 @@ describe("withLtrFragments", () => {
     expect(arr[2]).toBe(" for details");
   });
 
-  it("matches the longer fragment first so a shorter one that's its own substring doesn't cannibalize it", () => {
-    // "/mnt" is a substring of "/mnt/x" — listing the longer one first must
-    // consume the full path in one piece, leaving only the OTHER standalone
-    // "/mnt" occurrence for the second pass.
+  it("matches a longer fragment before a shorter one it contains", () => {
+    // Listed first, "/mnt/x" takes the full path in one piece and leaves only
+    // the standalone "/mnt" for the second pass.
     const out = withLtrFragments("no /mnt here, but /mnt/x there", ["/mnt/x", "/mnt"]);
     const { text, ltrPieces } = flattenAndCheckSpans(out);
     expect(text).toBe("no /mnt here, but /mnt/x there");
     expect(ltrPieces).toEqual(["/mnt", "/mnt/x"]);
   });
 
-  describe("offsite.repoLocalHint — the reported worst case (reads as the wrong path syntax)", () => {
+  describe("offsite.repoLocalHint", () => {
     const EN =
       'Also accepts a plain folder under the "Host Data" mount — enter it relative to that mount, without the leading /mnt: a share at /mnt/remotes/nas/bombvault is entered as remotes/nas/bombvault.';
     const AR =
@@ -102,15 +90,13 @@ describe("withLtrFragments", () => {
       const out = withLtrFragments(source, REPO_LOCAL_HINT_LTR_FRAGMENTS);
       const { text, ltrPieces } = flattenAndCheckSpans(out);
       expect(text).toBe(source);
-      // The standalone "/mnt" reference AND the full example path both get
-      // isolated — the relative counterpart ("remotes/nas/bombvault", no
-      // leading /) does NOT, since it starts with a letter and already
-      // renders correctly untouched (per the class of bug this fixes).
+      // The relative "remotes/nas/bombvault" starts with a letter and stays
+      // unwrapped.
       expect(ltrPieces).toEqual(["/mnt", "/mnt/remotes/nas/bombvault"]);
     });
   });
 
-  describe("excludes.hint — the leading-/ path example", () => {
+  describe("excludes.hint", () => {
     const EN =
       "One pattern per line. A container path (e.g. /config/Library/.../Cache) is matched against the backed-up volume; a bare name like .git matches at any depth. Brace lists like {a,b} are not supported; use one line each.";
     const AR =
@@ -130,7 +116,7 @@ describe("withLtrFragments", () => {
     });
   });
 
-  describe("recovery.foreignAppdataDestHint — the leading-/ pool path example", () => {
+  describe("recovery.foreignAppdataDestHint", () => {
     const EN =
       "Where the container's appdata is restored. Leave blank for the default. A container backed up from a pool this server does not have (for example /mnt/zfs) is remapped here so it lands correctly.";
     const AR =
@@ -151,19 +137,8 @@ describe("withLtrFragments", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Locale drift guard — the ONLY way this mechanism can fail in production.
-//
-// The cases above prove the function does the right thing to strings that are
-// copies of today's translations. They cannot notice a translator editing the
-// REAL table tomorrow: a literal-substring matcher that stops matching just
-// returns the sentence untouched, silently, in that one locale. Since the
-// whole reason offsite.repoLocalHint is wrapped at all is that it TEACHES
-// exact path syntax, an unprotected locale is a correctness bug, not a
-// cosmetic one — so it has to fail the build, loudly, the moment it happens.
-//
-// This runs against the live registry (lib/i18n's `locales`), not a copy.
-// ---------------------------------------------------------------------------
+// A translator retyping a path makes the substring match fail silently in that
+// locale, so every registered key is checked against the live locale tables.
 describe("declared fragments vs. the real locale tables", () => {
   it("registers every fragment list this module exports", () => {
     const exported = Object.keys(ltrFragmentsModule).filter((n) => n.endsWith("_LTR_FRAGMENTS"));
@@ -172,11 +147,8 @@ describe("declared fragments vs. the real locale tables", () => {
       const list = (ltrFragmentsModule as unknown as Record<string, readonly string[]>)[name];
       expect(registered, `${name} is not registered in LTR_FRAGMENTS_BY_KEY`).toContain(list);
     }
-    // Every DISTINCT registered value is one of the exported lists, so the map
-    // can hold no ad-hoc inline array that escapes the checks below. A set
-    // comparison rather than a length equality, because several keys share one
-    // list (four cards name /config, five name /boot) — which is why the lists
-    // are named after the PATH rather than after a single key.
+    // No inline array may escape the checks below. Several keys share one
+    // list, hence a set rather than a length comparison.
     expect(new Set(registered).size).toBe(exported.length);
   });
 
@@ -199,7 +171,7 @@ describe("declared fragments vs. the real locale tables", () => {
         ([, table]) => typeof table[key as TranslationKey] === "string"
       );
 
-      it("is translated in more than just English (sanity floor for the sweep below)", () => {
+      it("is translated in more than just English", () => {
         expect(defining.length).toBeGreaterThan(20);
       });
 
@@ -210,11 +182,11 @@ describe("declared fragments vs. the real locale tables", () => {
           for (const frag of frags) {
             expect(
               value.includes(frag),
-              `locales.${code}["${key}"] no longer contains "${frag}" — withLtrFragments() would silently stop pinning it LTR for this locale`
+              `locales.${code}["${key}"] does not contain "${frag}", so withLtrFragments() would stop pinning it LTR for this locale`
             ).toBe(true);
           }
-          // And the wrap must round-trip: every declared fragment actually
-          // becomes its own dir="ltr" span, with no text lost or duplicated.
+          // Every fragment becomes its own span, with no text lost or
+          // duplicated.
           const { text, ltrPieces } = flattenAndCheckSpans(withLtrFragments(value, frags));
           expect(text).toBe(value);
           for (const frag of frags) expect(ltrPieces).toContain(frag);
@@ -224,12 +196,6 @@ describe("declared fragments vs. the real locale tables", () => {
   }
 });
 
-// ---------------------------------------------------------------------------
-// withLtrIsolates — the plain-string counterpart, for the same sentences once
-// they move into an InfoBubble tip (a text node that is ALSO the trigger's
-// aria-label, so the `<span dir="ltr">` form above has nowhere to live).
-// Same fragment lists, same guard below, U+2066/U+2069 instead of markup.
-// ---------------------------------------------------------------------------
 describe("withLtrIsolates", () => {
   const LRI = "\u2066";
   const PDI = "\u2069";
@@ -252,8 +218,7 @@ describe("withLtrIsolates", () => {
   });
 
   it("honours list order: a longer fragment consumes the shorter one inside it", () => {
-    // Same left-to-right precedence withLtrFragments documents — the inner
-    // "/mnt" must NOT be wrapped a second time inside the already-wrapped path.
+    // The inner "/mnt" is not wrapped again inside the wrapped path.
     const out = withLtrIsolates("see /mnt/remotes/nas/bombvault or /mnt", [
       "/mnt/remotes/nas/bombvault",
       "/mnt",
@@ -270,9 +235,7 @@ describe("withLtrIsolates", () => {
     expect(withLtrIsolates("unchanged", [])).toBe("unchanged");
   });
 
-  // Read from the LIVE registry, not a pasted copy: this is the string the
-  // Recovery tab's appdata-destination bubble actually renders, in the two
-  // RTL locales the leading-`/` bug was originally confirmed in.
+  // The live string the Recovery tab's appdata-destination bubble renders.
   it.each(["ar", "he"])(
     "protects the real recovery.foreignAppdataDestHint the bubble renders, in %s",
     (code) => {
@@ -287,41 +250,24 @@ describe("withLtrIsolates", () => {
   );
 });
 
-// ---------------------------------------------------------------------------
-// COVERAGE — derived from `en`, not from the registry.
-//
-// The registry above proves that what IS registered stays correct in every
-// locale. It says nothing about what is MISSING, and missing is how this got
-// here: three strings were protected while fourteen others baked a leading-`/`
-// path into the same kind of translated prose and rendered it unisolated, so in
-// ar/he/fa the Flash tab's "Back up" bubble read "boot/" and the cache card
-// read "config/". A hand-maintained list of "the strings that mention a path"
-// will always lag the strings.
-//
-// So the required set is computed from the en table itself, and every key it
-// finds must be either registered or explicitly exempted with a reason. Adding
-// a hint that mentions a path now fails the build until someone decides which.
-//
-// What this guard does NOT check, stated plainly rather than implied: that each
-// registered key's RENDER SITE actually applies the isolation. `tLtr` exists to
-// make that hard to get wrong (pass the key, get the isolated string), but a
-// call site that reaches for a bare `t()` is still possible and this test would
-// not see it.
-// ---------------------------------------------------------------------------
+// The keys that need registering are derived from en, because a hand-kept list
+// of strings that mention a path lags the strings. A new hint with a leading
+// "/" path fails until it is registered or exempted with a reason. Whether a
+// render site applies the isolation is not checked; tLtr makes that the easy
+// path, but a bare t() call would pass.
 
 /** An absolute path embedded in prose: a `/` that is not preceded by a letter,
  *  digit, `:` or another `/` (so a URL scheme and a mid-path slash are not
  *  false starts), followed by at least one path-ish character. */
 const PATH_IN_PROSE = /(?<![A-Za-z0-9:/])\/[A-Za-z0-9._*{}<>-]+(?:\/[A-Za-z0-9._*{}<>-]*)*/;
 
-/** Keys whose `/` match is NOT the bug this module fixes. Each needs a reason:
- *  an unexplained entry here is how a real one gets waved through. */
+/** Keys whose `/` match is not a leading path, each with the reason. */
 const NOT_A_PATH: Record<string, string> = {
   "dashboard.forecastGrowth": "a unit, not a path: {bytes}/week, and 'week' is translated per locale",
   "dashboard.forecastShrink": "same unit as forecastGrowth",
-  "rclone.pathHint": "the example is rclone:<remote>:<bucket>/path — it BEGINS with letters, which are a strong LTR class that anchors the whole run; only a leading `/` misrenders",
+  "rclone.pathHint": "the example is rclone:<remote>:<bucket>/path. It begins with letters, a strong LTR class that anchors the whole run; only a leading `/` misrenders",
   "recovery.foreignVMDestHint": "the run is <destination>/<vm-name>/ and BOTH placeholder words are translated (sl 'ime-vm', sr 'naziv-vm'), so no literal fragment can match in every locale; the leading character is `<`, not `/`",
-  "folders.customPlaceholder": "orphaned key — rendered nowhere (see i18n.orphans.test.ts's ratchet)",
+  "folders.customPlaceholder": "orphaned key, rendered nowhere (see i18n.orphans.test.ts's ratchet)",
 };
 
 describe("coverage: every en string that embeds a path is accounted for", () => {
@@ -329,7 +275,7 @@ describe("coverage: every en string that embeds a path is accounted for", () => 
     .filter(([, value]) => PATH_IN_PROSE.test(value as string))
     .map(([key]) => key);
 
-  it("finds the strings it is supposed to find (the scan is not silently empty)", () => {
+  it("finds the path-bearing strings", () => {
     expect(withPaths.length).toBeGreaterThan(15);
     expect(withPaths).toContain("flash.backupHint");
     expect(withPaths).toContain("offsite.repoLocalHint");
@@ -347,7 +293,7 @@ describe("coverage: every en string that embeds a path is accounted for", () => 
     ).toEqual([]);
   });
 
-  it("keeps NOT_A_PATH honest — every exemption still matches a real key", () => {
+  it("keeps every NOT_A_PATH exemption matching a real key", () => {
     for (const key of Object.keys(NOT_A_PATH)) {
       expect(withPaths, `NOT_A_PATH lists "${key}", which no longer embeds a path`).toContain(key);
       expect(NOT_A_PATH[key].length, `NOT_A_PATH["${key}"] needs a real reason`).toBeGreaterThan(20);

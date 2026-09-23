@@ -6,10 +6,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestOffsiteTargetRoleDefaultsToOffsite pins the normalization guard: a row
-// upserted without a Role (every caller/row that predates issue #152) is
-// stored as RoleOffsite, so it keeps showing up in the off-site queries
-// exactly as before this field existed.
+// TestOffsiteTargetRoleDefaultsToOffsite expects a row upserted without a Role
+// to be stored as RoleOffsite, so it shows up in the off-site queries.
 func TestOffsiteTargetRoleDefaultsToOffsite(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -33,12 +31,10 @@ func TestOffsiteTargetRoleDefaultsToOffsite(t *testing.T) {
 	}
 }
 
-// TestPrimaryRemoteTargetIsolatedFromOffsiteQueries is the core invariant of
-// the #152 schema reuse: a domain's "primary" row (remote-primary safety
-// settings) must never be returned by ListOffsiteTargets, OffsiteTargetsForDomain,
-// GetOffsiteTarget or DeleteOffsiteTarget — those are the off-site REPLICATION
-// destination surface, and a primary row is not a replication destination. It
-// IS reachable via PrimaryRemoteTarget, keyed by domain.
+// TestPrimaryRemoteTargetIsolatedFromOffsiteQueries covers a domain's primary
+// row (remote-primary safety settings), which shares the table with off-site
+// targets but is not a replication destination. The off-site queries must not
+// see it; PrimaryRemoteTarget finds it by domain.
 func TestPrimaryRemoteTargetIsolatedFromOffsiteQueries(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -46,12 +42,10 @@ func TestPrimaryRemoteTargetIsolatedFromOffsiteQueries(t *testing.T) {
 	}
 	r := store.New(db)
 
-	// One real off-site destination for "containers" ...
 	offsiteTgt, err := r.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Backblaze", Repo: "b2:bucket:path", Enabled: true})
 	if err != nil {
 		t.Fatalf("UpsertOffsiteTarget: %v", err)
 	}
-	// ... and a primary-remote safety config for the SAME domain.
 	primaryTgt, err := r.UpsertPrimaryRemoteTarget("containers", store.OffsiteTarget{
 		Repo: "s3:bucket/containers", Immutable: true, LimitUpload: 500, LimitDownload: 250, GrowthBudgetGB: 100, Enabled: true,
 	})
@@ -68,7 +62,6 @@ func TestPrimaryRemoteTargetIsolatedFromOffsiteQueries(t *testing.T) {
 		t.Fatal("primary row must not share the off-site row's id")
 	}
 
-	// ListOffsiteTargets / OffsiteTargetsForDomain see ONLY the off-site row.
 	all, err := r.ListOffsiteTargets()
 	if err != nil {
 		t.Fatal(err)
@@ -84,21 +77,16 @@ func TestPrimaryRemoteTargetIsolatedFromOffsiteQueries(t *testing.T) {
 		t.Fatalf("OffsiteTargetsForDomain leaked the primary row: %+v", dom)
 	}
 
-	// GetOffsiteTarget must not resolve the primary row's id (the off-site
-	// CRUD/test/delete handlers must never reach it via that surface).
 	if _, ok, _ := r.GetOffsiteTarget(primaryTgt.ID); ok {
 		t.Fatal("GetOffsiteTarget must not resolve a \"primary\"-role id")
 	}
-	// DeleteOffsiteTarget on the primary row's id must be a no-op — it must
-	// survive an off-site-target delete call.
 	if err := r.DeleteOffsiteTarget(primaryTgt.ID); err != nil {
 		t.Fatalf("DeleteOffsiteTarget(primary id) should be a no-op, got err: %v", err)
 	}
 	if _, ok, err := r.PrimaryRemoteTarget("containers"); err != nil || !ok {
-		t.Fatalf("primary row was deleted via DeleteOffsiteTarget — isolation broken (ok=%v err=%v)", ok, err)
+		t.Fatalf("primary row was deleted via DeleteOffsiteTarget; isolation broken (ok=%v err=%v)", ok, err)
 	}
 
-	// PrimaryRemoteTarget round-trips the safety fields.
 	back, ok, err := r.PrimaryRemoteTarget("containers")
 	if err != nil || !ok {
 		t.Fatalf("PrimaryRemoteTarget: ok=%v err=%v", ok, err)
@@ -107,16 +95,13 @@ func TestPrimaryRemoteTargetIsolatedFromOffsiteQueries(t *testing.T) {
 		t.Fatalf("PrimaryRemoteTarget round-trip mismatch: %+v", back)
 	}
 
-	// A domain with no primary row configured reports ok=false, not an error.
 	if _, ok, err := r.PrimaryRemoteTarget("vms"); err != nil || ok {
 		t.Fatalf("PrimaryRemoteTarget(unconfigured domain) = ok:%v err:%v, want ok:false err:nil", ok, err)
 	}
 }
 
-// TestUpsertPrimaryRemoteTargetUpdatesInPlace pins the id-preserving update
-// path (mirrors syncPrimaryOffsiteTarget's off-site counterpart): a second
-// UpsertPrimaryRemoteTarget for the same domain updates the SAME row rather
-// than creating a second one, and its id/created_at survive the update.
+// TestUpsertPrimaryRemoteTargetUpdatesInPlace expects a second upsert for the
+// same domain to update the existing row and keep its id and created_at.
 func TestUpsertPrimaryRemoteTargetUpdatesInPlace(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -142,7 +127,6 @@ func TestUpsertPrimaryRemoteTargetUpdatesInPlace(t *testing.T) {
 		t.Fatalf("update did not persist new fields: %+v", second)
 	}
 
-	// Still exactly one primary row for the domain.
 	got, ok, err := r.PrimaryRemoteTarget("vms")
 	if err != nil || !ok {
 		t.Fatalf("PrimaryRemoteTarget: ok=%v err=%v", ok, err)
@@ -152,8 +136,8 @@ func TestUpsertPrimaryRemoteTargetUpdatesInPlace(t *testing.T) {
 	}
 }
 
-// TestDeletePrimaryRemoteTarget pins the clear-safety-settings path (used when
-// an operator switches a domain's path back to local).
+// TestDeletePrimaryRemoteTarget clears a domain's primary row, as happens when
+// its path goes back to local.
 func TestDeletePrimaryRemoteTarget(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -170,7 +154,6 @@ func TestDeletePrimaryRemoteTarget(t *testing.T) {
 	if _, ok, err := r.PrimaryRemoteTarget("flash"); err != nil || ok {
 		t.Fatalf("PrimaryRemoteTarget after delete = ok:%v err:%v, want ok:false err:nil", ok, err)
 	}
-	// A second delete (nothing left to remove) is a no-op.
 	if err := r.DeletePrimaryRemoteTarget("flash"); err != nil {
 		t.Fatalf("DeletePrimaryRemoteTarget (missing) should be a no-op: %v", err)
 	}

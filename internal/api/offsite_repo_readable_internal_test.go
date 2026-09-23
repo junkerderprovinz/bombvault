@@ -14,12 +14,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// offsiteReadableFakeEngine embeds ResticEngine (left nil) and overrides only
-// what copyToOffsiteTarget's path touches — same pattern as
-// offsite_progress_heartbeat_internal_test.go. Copy writes a repo tree with the
-// modes restic ACTUALLY produces on a local backend (verified against restic
-// 0.17.3: dirs 0700, pack/config/key files 0400), which is the whole point of
-// the fix under test.
+// offsiteReadableFakeEngine implements only what copyToOffsiteTarget reaches.
+// Copy writes a tree with the modes restic 0.17.3 uses on a local backend:
+// directories 0700, files 0400.
 type offsiteReadableFakeEngine struct {
 	ResticEngine
 	copyDest string
@@ -38,7 +35,7 @@ func (f *offsiteReadableFakeEngine) Snapshots(context.Context, string, restic.Mo
 func (f *offsiteReadableFakeEngine) Copy(_ context.Context, dest, _ string, _ []string, _ restic.Limits, _ restic.Mode) error {
 	f.copyDest = dest
 	shard := filepath.Join(dest, "data", "00")
-	if err := os.MkdirAll(shard, 0o700); err != nil { //nolint:gosec // G301: deliberately reproducing restic's root-only 0700 tree
+	if err := os.MkdirAll(shard, 0o700); err != nil { //nolint:gosec // G301: reproduces restic's root-only 0700 tree
 		return err
 	}
 	for _, f := range []string{
@@ -52,17 +49,10 @@ func (f *offsiteReadableFakeEngine) Copy(_ context.Context, dest, _ string, _ []
 	return nil
 }
 
-// A replicated off-site repo that lands on a mounted share must end up readable
-// by the share's OTHER clients, not just by the root process that wrote it.
-//
-// restic writes a local repo 0700/0400, and until this fix copyToOffsiteTarget
-// left it that way — while every local backup has always run makeRepoReadable
-// over the PRIMARY repo for exactly this reason. On an Unassigned-Devices NFS
-// mount the asymmetry stays invisible (the host reads the share as uid 0 and
-// walks straight through the 0700 dirs); switch the same share to SMB and the
-// CIFS session authenticates as an ordinary user the far side refuses, so the
-// repo folders list but their contents do not (bombvault#138 follow-up,
-// reported by manilx). Pins the destination tree as group+other readable.
+// A replica on a mounted share must be readable by the share's other clients,
+// as makeRepoReadable does for local backups. Over NFS the host reads as uid 0
+// and never notices, but an SMB session authenticates as an ordinary user and
+// cannot read into restic's 0700 directories.
 func TestCopyToOffsiteTargetMakesDestinationReadable(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("unix permission bits are not modelled on windows")
@@ -82,8 +72,7 @@ func TestCopyToOffsiteTargetMakesDestinationReadable(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// A local/mounted-share destination: a path RELATIVE to the Host Data mount,
-	// which is what the v7.10.0 off-site wizard now accepts (#138).
+	// A share destination, given relative to the host data mount.
 	root := t.TempDir()
 	fake := &offsiteReadableFakeEngine{}
 	svc := &Service{store: st, engine: fake, progress: progress.NewStore()}
@@ -131,8 +120,7 @@ func (e *modeErr) Error() string {
 	return e.path + " has perm " + e.perm.String() + ", missing " + e.want.String()
 }
 
-// A REMOTE off-site destination has no local tree to relax; the guard must skip
-// it rather than let filepath.WalkDir loose on a repo URL.
+// A remote destination has no local tree, so WalkDir must not run on its URL.
 func TestMakeOffsiteRepoReadableSkipsRemote(t *testing.T) {
 	for _, repo := range []string{
 		"rest:http://192.168.1.2:8000/containers",
@@ -142,12 +130,12 @@ func TestMakeOffsiteRepoReadableSkipsRemote(t *testing.T) {
 		if !restic.IsRemoteRepo(repo) {
 			t.Fatalf("%q must be recognised as a remote repo", repo)
 		}
-		makeOffsiteRepoReadable(repo, t.TempDir()) // must not panic, must not touch the filesystem
+		makeOffsiteRepoReadable(repo, t.TempDir())
 	}
 }
 
-// A destination that is not there yet — EnsureRepo failed because the share had
-// not mounted (#55) — must be a silent no-op, never a panic or a stray mkdir.
+// When the share has not mounted, the destination does not exist and must not
+// be created.
 func TestMakeOffsiteRepoReadableToleratesMissingPath(t *testing.T) {
 	missing := filepath.Join(t.TempDir(), "never-mounted")
 	makeOffsiteRepoReadable(missing, t.TempDir())

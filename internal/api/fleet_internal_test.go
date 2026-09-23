@@ -5,16 +5,8 @@ import (
 	"testing"
 )
 
-// TestFleetTokenOK pins fleetTokenOK's fail-closed contract: an empty stored
-// token always fails (feature off), the HEADER is the only accepted carrier,
-// and a mismatch fails even with a non-empty stored token.
-//
-// The query cases are the point of this test rather than an afterthought. The
-// ?token= form used to be accepted here and nothing ever sent it: this
-// instance's own peer poll and its mesh-offer sender both set the header. What
-// it did do is put a credential in a request line, where the reverse proxy in
-// front writes it to its access log. So a right token in the query must FAIL,
-// and asserting that is the only way this stays true.
+// Only the header is accepted. A correct token in the query string must fail,
+// because the request line ends up in reverse proxy logs.
 func TestFleetTokenOK(t *testing.T) {
 	cases := []struct {
 		name        string
@@ -26,7 +18,7 @@ func TestFleetTokenOK(t *testing.T) {
 		{"empty stored always fails", "", "anything", "", false},
 		{"empty stored fails even with empty presented", "", "", "", false},
 		{"header match", "secret", "secret", "", true},
-		{"a right token in the QUERY is refused", "secret", "", "secret", false},
+		{"a right token in the query is refused", "secret", "", "secret", false},
 		{"the header still decides when both are present", "secret", "secret", "wrong", true},
 		{"a query token cannot rescue a wrong header", "secret", "wrong", "secret", false},
 		{"mismatch fails", "secret", "wrong", "", false},

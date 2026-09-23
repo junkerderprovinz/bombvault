@@ -1,9 +1,5 @@
-// ---------------------------------------------------------------------------
-// forecast — tests for the pure buildForecastLine selection/formatting.
-// Same stub-resolver convention as activityLog.test.ts: resolve renders
-// "key a=1 b=2", which keeps the translation key AND the interpolated params
-// assertable without any i18n context.
-// ---------------------------------------------------------------------------
+// resolve renders "key a=1 b=2", as in activityLog.test.ts, so the translation
+// key and its params can be asserted without an i18n context.
 import { describe, expect, it } from "vitest";
 import { buildForecastLine, humanBytes } from "./forecast";
 
@@ -17,7 +13,7 @@ const resolve = (key: string, params?: Record<string, string>): string =>
 const GIB = 1024 * 1024 * 1024;
 
 describe("buildForecastLine", () => {
-  it("returns null when the forecast is absent (no empty shells)", () => {
+  it("returns null when the forecast is absent or empty", () => {
     expect(buildForecastLine(null, resolve)).toBeNull();
     expect(buildForecastLine(undefined, resolve)).toBeNull();
     expect(buildForecastLine({}, resolve)).toBeNull();
@@ -41,7 +37,7 @@ describe("buildForecastLine", () => {
       resolve
     );
     expect(line!.growth).toBe("dashboard.forecastShrink bytes=512.0 MB");
-    // A shrinking repo never fills the disk — no projection, no warn.
+    // A shrinking repo never fills the disk.
     expect(line!.projection).toBeNull();
     expect(line!.warn).toBe(false);
   });

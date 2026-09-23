@@ -1,33 +1,10 @@
-// ---------------------------------------------------------------------------
-// Instances - one door to the three surfaces that are about ANOTHER BombVault.
-//
-// jdp, on seeing Receiver, Fleet and Pull as three sidebar rows: "die sind doch
-// fast das gleiche. Können wir die beiden seiten nicht mergen?" He was right
-// about the navigation and wrong about the objects, and this page is what that
-// distinction looks like.
-//
-// The objects stay apart, because they answer different questions and a person
-// can want one without the other:
-//
-//   Receiver  a repository that already LIES here, sent by somebody else.
-//             A location plus their APP_KEY. The far side may be off forever.
-//   Fleet     another instance that is RUNNING, asked over HTTP for its
-//             protection scorecard. A URL plus a bearer token. The far side
-//             must be awake and must have issued that token first.
-//   Pull      somebody else's repository that this box FETCHES FROM. A location
-//             plus their APP_KEY, like a receiver, but it moves data onto this
-//             disk instead of only reading.
-//
-// For the same neighbouring box you may well need two of those rows, which is
-// exactly why they are not one table. What they share is the answer to "where
-// do I go for something to do with another instance", and that is a navigation
-// question, not a data question. So: one entry, three tabs, three unchanged
-// pages underneath.
-//
-// Each tab is still gated on its own setting. The strip shows only what is
-// switched on, and with a single one on there is no strip at all - a row of
-// tabs where only one can ever be chosen is furniture, not navigation.
-// ---------------------------------------------------------------------------
+// Instances puts the three pages about another BombVault behind one entry, a
+// tab each. They stay separate pages because they hold different things: a
+// receiver is a repository somebody else sent here (location plus their
+// APP_KEY), a fleet peer is a running instance asked over HTTP for its
+// scorecard (URL plus bearer token), and a pull source is somebody else's
+// repository this box fetches from. Each tab is gated on its own setting, and
+// with only one switched on there is no strip.
 import { useEffect, useState, type CSSProperties } from "react";
 import { getSettings } from "../lib/api";
 import type { Settings } from "../lib/api";
@@ -45,9 +22,8 @@ export type InstanceTab = (typeof INSTANCE_TABS)[number];
 const TAB_ICON: Record<InstanceTab, React.ReactNode> = {
   receiver: <IconReceiver />,
   fleet: <IconFleet />,
-  // Not IconReceiver: with three rows collapsed into one strip, two segments
-  // wearing the same glyph would be indistinguishable in glyph mode. Pull is
-  // the one that moves data toward this box, and the download arrow says so.
+  // Receiver's glyph twice would be ambiguous in glyph mode, and pulling moves
+  // data toward this box.
   pull: <IconDownload />,
 };
 
@@ -92,12 +68,9 @@ export function Instances() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
-  // Written out one key at a time, on purpose. Composing the key from the tab
-  // id would hand i18n.orphans.test.ts a pattern shaped "anything dot title",
-  // and that pattern marks every page title in the app as used, so no page
-  // title could ever be reported dead again. (Its scanner reads source TEXT,
-  // so even naming the composed form in a comment here is enough to trip it,
-  // which is how this was found.)
+  // One literal key per tab. A key built from the tab id would make
+  // i18n.orphans.test.ts count every page title as used; its scanner reads the
+  // source text, comments included.
   const tabLabel: Record<InstanceTab, string> = {
     receiver: t("receiver.title"),
     fleet: t("fleet.title"),
@@ -111,9 +84,8 @@ export function Instances() {
   };
   const visible = INSTANCE_TABS.filter((k) => enabled[k]);
 
-  // Before settings arrive, `visible` is empty and nothing renders; afterwards a
-  // tab the URL asked for but the settings switched off falls back to the first
-  // one that IS on, rather than showing a blank panel under a live heading.
+  // Nothing renders before settings arrive. A tab from the URL whose setting is
+  // off falls back to the first one that is on instead of a blank panel.
   const active: InstanceTab | null = visible.includes(tab) ? tab : (visible[0] ?? null);
 
   function choose(next: InstanceTab) {
@@ -124,7 +96,7 @@ export function Instances() {
     try {
       window.history.replaceState(null, "", `#${next}`);
     } catch {
-      /* history unavailable - the tab still switches */
+      /* history unavailable; the tab still switches */
     }
   }
 
@@ -156,10 +128,8 @@ export function Instances() {
         </div>
       )}
 
-      {/* Keyed on the active tab so the slide replays on every switch: a class
-          on a node that is never recreated only ever animates once. Same
-          mechanism as the Settings strip, and the same --tab-dir so the panel
-          travels in the direction the click went. */}
+      {/* Keyed on the tab so the slide replays on every switch, with --tab-dir
+          sending it the way the click went, as in Settings. */}
       {active && (
         <div key={active} className="glim-tab-slide flex flex-col" style={{ "--tab-dir": tabDir } as CSSProperties}>
           {active === "receiver" && <Receiver embedded />}

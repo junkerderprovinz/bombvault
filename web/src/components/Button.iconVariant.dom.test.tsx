@@ -1,17 +1,7 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// The "icon" variant (GlimStone 1.8.0) — a SHAPE, not an answer to the mode.
-//
-// This is the whole content of the rule and the only thing worth testing about
-// it. The variant's first version resolved to a glyph in every mode, the way a
-// chip does, and it was rejected in the same words as the defect it was meant
-// to fix: a row of five controls printed no word while the buttons beside them
-// printed theirs, with the app-wide setting on text-plus-glyph. From outside, a
-// documented exemption and a control that ignores the setting look identical.
-//
-// So: the square arrives exactly when there are no words to print, and never
-// otherwise.
-// ---------------------------------------------------------------------------
+// The "icon" variant is a shape, not a label mode. It becomes a square only
+// when the mode prints no words, so a row of icon actions still follows the
+// app-wide label setting like the buttons beside it.
 import { afterEach, beforeEach, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { Button } from "./Button";
@@ -49,15 +39,14 @@ it("is an ordinary labelled button in the modes that show words", () => {
     // No square, and the width stage every other button of this label takes.
     expect(classes()).not.toContain("glim-btn-icon");
     expect(classes().some((c) => /^glim-btn-(xs|sm|md|lg)$/.test(c))).toBe(true);
-    // The words are painted, which is the half the first version got wrong.
     expect(screen.getByRole("button").textContent).toContain("Delete");
     cleanup();
   }
 });
 
 it("stays out of the square in reactive mode", () => {
-  // Reactive grows as the words arrive on hover, and a fixed width is the one
-  // thing that cannot do.
+  // Reactive mode grows as the words arrive on hover, which a fixed square
+  // cannot do.
   setLabelMode("buttons", "reactive");
   renderIconAction();
   expect(classes()).not.toContain("glim-btn-icon");

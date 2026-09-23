@@ -1,25 +1,10 @@
-// ---------------------------------------------------------------------------
-// Every page wears the same heading.
-//
-// The house form is one line of markup repeated on each page of the app:
+// Every tab repeats the same heading markup:
 //
 //   <h1 className="text-2xl font-semibold text-carbon-text">…</h1>
 //   <p className="mt-1 text-sm text-carbon-textSub">…</p>
 //
-// Recovery drifted off it and nobody noticed for months: text-lg instead of
-// text-2xl, and the dimmer text-carbon-textMuted instead of text-carbon-textSub.
-// So the tab with the most frightening job in the app - the one somebody opens
-// after losing their configuration - had the quietest heading in it, and it was
-// jdp who spotted it in the live review rather than any test.
-//
-// That is the shape of defect this file exists for: not a broken behaviour, a
-// SILENT DIVERGENCE between siblings, which no unit test and no type checker can
-// see because each page is correct on its own terms. A source scan is the right
-// instrument for "these distant lines must agree", and the wrong one for almost
-// everything else - see named_repos_reach_internal_test.go for the same tool
-// used on the Go side, and for what it costs when it is pointed at the wrong
-// question.
-// ---------------------------------------------------------------------------
+// Each page is correct on its own, so neither the type checker nor a unit test
+// notices one drifting from its siblings. A source scan does.
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -27,10 +12,8 @@ import { describe, expect, it } from "vitest";
 
 const PAGES = join(dirname(fileURLToPath(import.meta.url)), "..", "pages");
 
-// Glyphs.tsx is a developer sheet, not a page of the product: it is reachable
-// only by typing its route, carries no nav entry and no translated title.
-// Login.tsx is the pre-authentication screen - one centred card, no tab, no
-// subtitle - and its heading is deliberately its own.
+// Glyphs.tsx is a developer sheet reachable only by typing its route, and
+// Login.tsx is the pre-authentication card with no tab and no subtitle.
 const NOT_A_TAB = new Set(["Glyphs.tsx", "Login.tsx"]);
 
 function pageFiles(): string[] {
@@ -54,16 +37,9 @@ describe("every tab's heading", () => {
         `heading until somebody looked at the two tabs side by side.`,
     ).toBe("text-2xl font-semibold text-carbon-text");
 
-    // The sentence under the title, where one exists. text-carbon-textMuted is
-    // the dimmer token and belongs to hints and secondary lines inside a card,
-    // never to the page's own subtitle.
-    //
-    // Matched by POSITION, not by class order. The first version of this check
-    // looked for the literal "mt-1 text-sm text-carbon-…", which is the spelling
-    // the house form happens to use - and Recovery's own regression was spelled
-    // "text-sm text-carbon-textMuted mt-1", so the guard written for it would
-    // have let it straight through. A class list is a set; anything that reads it
-    // as a sequence is testing the formatter, not the rule.
+    // The subtitle under the title, where one exists. text-carbon-textMuted is
+    // the dimmer token for hints inside a card, not for a page subtitle. The
+    // classes are checked as a set, since their order in the markup varies.
     const after = src.slice(src.indexOf(h1![0]));
     const sub = after.match(/<p className="([^"]*)"/);
     if (sub && /text-carbon-text(Sub|Muted)/.test(sub[1])) {

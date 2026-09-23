@@ -83,26 +83,7 @@ func (c *Client) List(ctx context.Context) ([]ContainerInfo, error) {
 	}
 	out := make([]ContainerInfo, 0, len(summaries))
 	for _, s := range summaries {
-		name := ""
-		if len(s.Names) > 0 {
-			name = normalizeName(s.Names[0])
-		}
-		ip := ""
-		for _, net := range s.NetworkSettings.Networks {
-			if net != nil && net.IPAddress != "" {
-				ip = net.IPAddress
-				break
-			}
-		}
-		out = append(out, ContainerInfo{
-			ID:     s.ID,
-			Name:   name,
-			Image:  s.Image,
-			State:  string(s.State),
-			Status: s.Status,
-			IP:     ip,
-			Stack:  s.Labels["com.docker.compose.project"],
-		})
+		out = append(out, mapContainerSummary(s))
 	}
 	return out, nil
 }
@@ -525,7 +506,44 @@ func isNoSuchContainer(err error) bool {
 // same way virshcli.IsNotFound serves the VM path.
 func IsNotFound(err error) bool { return err != nil && isNoSuchContainer(err) }
 
-// ---- mapping helpers -------------------------------------------------------
+// mapContainerSummary converts a list summary into a ContainerInfo. Named
+// volumes are left out of Mounts: rename matching compares host paths, and a
+// volume's source is Docker's own storage rather than the container's appdata.
+func mapContainerSummary(s container.Summary) ContainerInfo {
+	name := ""
+	if len(s.Names) > 0 {
+		name = normalizeName(s.Names[0])
+	}
+	ip := ""
+	for _, net := range s.NetworkSettings.Networks {
+		if net != nil && net.IPAddress != "" {
+			ip = net.IPAddress
+			break
+		}
+	}
+	mounts := make([]MountPoint, 0, len(s.Mounts))
+	for _, m := range s.Mounts {
+		if m.Type == mount.TypeBind && m.Source != "" && m.Destination != "" {
+			mounts = append(mounts, MountPoint{
+				Source:      m.Source,
+				Destination: m.Destination,
+			})
+		}
+	}
+	return ContainerInfo{
+		ID:      s.ID,
+		Name:    name,
+		Image:   s.Image,
+		State:   string(s.State),
+		Status:  s.Status,
+		IP:      ip,
+		Stack:   s.Labels["com.docker.compose.project"],
+		ImageID: s.ImageID,
+		Created: s.Created,
+		Labels:  s.Labels,
+		Mounts:  mounts,
+	}
+}
 
 // mapInspect converts the SDK inspect response into our captured subset.
 func mapInspect(resp container.InspectResponse) model.Inspect {

@@ -14,16 +14,13 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// updateFakeDocker embeds the Docker interface (left nil) and overrides only the
-// methods updateContainerAfterBackup exercises, recording calls so the test can
-// assert whether the recreate happened. Kept in package api since the api_test
-// fakeServiceDocker isn't visible to internal tests.
+// updateFakeDocker implements the Docker methods updateContainerAfterBackup
+// uses and records the calls; the embedded interface stays nil.
 type updateFakeDocker struct {
 	dockercli.Docker
 	imageID string
 	calls   []string
-	// pullAuths records the registryAuth string of every PullWithAuth call, so
-	// the #106 tests can assert whether a credential reached the pull.
+	// pullAuths holds the registryAuth of every pull, "" for an anonymous one.
 	pullAuths []string
 }
 
@@ -33,8 +30,7 @@ func (f *updateFakeDocker) Pull(_ context.Context, ref string) error {
 	return nil
 }
 
-// PullWithAuth records the same "pull:" label as Pull (assertions cover both
-// entry points) plus the auth string the service resolved.
+// PullWithAuth records the same "pull:" call as Pull, plus the auth string.
 func (f *updateFakeDocker) PullWithAuth(_ context.Context, ref, registryAuth string) error {
 	f.calls = append(f.calls, "pull:"+ref)
 	f.pullAuths = append(f.pullAuths, registryAuth)
@@ -80,8 +76,7 @@ func newUpdateTestSvc(t *testing.T) (*Service, *store.Repo) {
 	return &Service{store: st}, st
 }
 
-// A newer pulled image must trigger a stop/remove/recreate and record a
-// successful "update" run (#52).
+// A newer image recreates the container and records a successful "update" run.
 func TestUpdateAfterBackup_RecreatesOnNewerImage(t *testing.T) {
 	svc, st := newUpdateTestSvc(t)
 	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex"})
@@ -100,9 +95,9 @@ func TestUpdateAfterBackup_RecreatesOnNewerImage(t *testing.T) {
 			t.Fatalf("a newer image must recreate the container: missing %q in calls %v", want, f.calls)
 		}
 	}
-	// Prune is opt-in (default off): the superseded image must be kept.
+	// Pruning is off by default, so the old image stays.
 	if strings.Contains(calls, "imageRemove:") {
-		t.Fatalf("prune is off by default — the old image must NOT be removed; calls %v", f.calls)
+		t.Fatalf("prune is off by default, so the old image must stay; calls %v", f.calls)
 	}
 	runs, err := st.ListRuns(10)
 	if err != nil {
@@ -122,8 +117,7 @@ func TestUpdateAfterBackup_RecreatesOnNewerImage(t *testing.T) {
 	}
 }
 
-// An image that did not change must NOT recreate the container and must not
-// clutter the run history with a no-op update (#52).
+// An unchanged image leaves the container alone and records no update run.
 func TestUpdateAfterBackup_SkipsWhenUpToDate(t *testing.T) {
 	svc, st := newUpdateTestSvc(t)
 	tg, err := st.UpsertTarget(store.Target{ContainerName: "plex"})
@@ -148,8 +142,7 @@ func TestUpdateAfterBackup_SkipsWhenUpToDate(t *testing.T) {
 	}
 }
 
-// With prune-after-update opted in, a successful update removes the superseded
-// (old) image (#56).
+// With prune-after-update on, a successful update removes the old image.
 func TestUpdateAfterBackup_PrunesOldImageWhenEnabled(t *testing.T) {
 	svc, st := newUpdateTestSvc(t)
 	cfg, err := st.GetSettings()
@@ -175,9 +168,8 @@ func TestUpdateAfterBackup_PrunesOldImageWhenEnabled(t *testing.T) {
 	}
 }
 
-// unraidReconcilePHPRun scans an SSH run for the #116 update-status reconcile:
-// a `php -r <snippet> -- <ref>` invocation carrying reloadUpdateStatus. Returns
-// the ref token and whether such a run was found.
+// unraidReconcilePHPRun finds the `php -r <snippet> -- <ref>` run that calls
+// reloadUpdateStatus and returns its ref.
 func unraidReconcilePHPRun(runs [][]string) (string, bool) {
 	for _, r := range runs {
 		if len(r) >= 5 && r[0] == "php" && r[1] == "-r" &&
@@ -188,9 +180,8 @@ func unraidReconcilePHPRun(runs [][]string) (string, bool) {
 	return "", false
 }
 
-// A real update (newer image → recreate) must, with the toggle on (the default),
-// trigger Unraid's own update-status recheck for that image over SSH so the stale
-// Docker-tab banner clears (#116).
+// An applied update asks Unraid over SSH to recheck the image's update status,
+// so the Docker tab drops its stale update banner. The setting is on by default.
 func TestUpdateAfterBackup_ReconcilesUnraidStatusOnUpdate(t *testing.T) {
 	svc, st := newUpdateTestSvc(t)
 	ssh := &fakeHostSSH{}
@@ -213,8 +204,7 @@ func TestUpdateAfterBackup_ReconcilesUnraidStatusOnUpdate(t *testing.T) {
 	}
 }
 
-// The reconcile must fire ONLY when an update actually happened: an up-to-date
-// image (no recreate) must not touch Unraid's status file (#116).
+// Without an update, Unraid's status file is left alone.
 func TestUpdateAfterBackup_NoReconcileWhenUpToDate(t *testing.T) {
 	svc, st := newUpdateTestSvc(t)
 	ssh := &fakeHostSSH{}
@@ -229,7 +219,7 @@ func TestUpdateAfterBackup_NoReconcileWhenUpToDate(t *testing.T) {
 	svc.updateContainerAfterBackup(context.Background(), "plex", in, tg.ID)
 
 	if _, ok := unraidReconcilePHPRun(ssh.runs); ok {
-		t.Fatalf("no update happened — Unraid status must not be reconciled; runs %v", ssh.runs)
+		t.Fatalf("no update happened, so the Unraid status must not be reconciled; runs %v", ssh.runs)
 	}
 }
 
@@ -256,12 +246,12 @@ func TestUpdateAfterBackup_ReconcileSkippedWhenDisabled(t *testing.T) {
 	svc.updateContainerAfterBackup(context.Background(), "plex", in, tg.ID)
 
 	if _, ok := unraidReconcilePHPRun(ssh.runs); ok {
-		t.Fatalf("reconcile is disabled — it must not run; runs %v", ssh.runs)
+		t.Fatalf("reconcile is disabled, so it must not run; runs %v", ssh.runs)
 	}
 }
 
-// A reconcile trigger error must NOT fail the update: the "update" run is still
-// recorded as a success and nothing panics (#116, best-effort/non-fatal).
+// The reconcile is best effort: when it fails, the update run is still a
+// success.
 func TestUpdateAfterBackup_ReconcileErrorDoesNotFailUpdate(t *testing.T) {
 	svc, st := newUpdateTestSvc(t)
 	svc.ssh = &fakeHostSSH{runErr: errors.New("ssh down")}
@@ -289,9 +279,8 @@ func TestUpdateAfterBackup_ReconcileErrorDoesNotFailUpdate(t *testing.T) {
 	}
 }
 
-// TestUpdateAfterBackup_RegistryAuthReachesPull (#106): with a credential
-// stored for the image's registry host, the post-backup update pull carries the
-// encoded RegistryAuth; a ref on a different registry still pulls anonymously.
+// A pull from a registry with a stored credential carries the encoded
+// RegistryAuth; a ref on another registry pulls anonymously.
 func TestUpdateAfterBackup_RegistryAuthReachesPull(t *testing.T) {
 	svc, st := newUpdateTestSvc(t)
 	svc.cfg = config.Config{AppKey: strings.Repeat("a", 64)}
@@ -317,7 +306,7 @@ func TestUpdateAfterBackup_RegistryAuthReachesPull(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Matching host → the encoded credential must reach the pull.
+	// Matching host: the pull carries the credential.
 	f := &updateFakeDocker{imageID: "sha256:SAME"}
 	svc.docker = f
 	in := model.Inspect{Name: "/tcm", Image: "sha256:SAME", Config: model.Config{Image: "ghcr.io/owner/tcm-ui:latest"}}
@@ -333,7 +322,7 @@ func TestUpdateAfterBackup_RegistryAuthReachesPull(t *testing.T) {
 		t.Fatalf("ghcr.io pull must carry the stored credential: got %q, want %q", f.pullAuths[0], want)
 	}
 
-	// Non-matching host (a bare Docker Hub ref) → anonymous pull ("").
+	// A bare Docker Hub ref pulls anonymously.
 	f2 := &updateFakeDocker{imageID: "sha256:SAME"}
 	svc.docker = f2
 	in2 := model.Inspect{Name: "/plex", Image: "sha256:SAME", Config: model.Config{Image: "plex:latest"}}

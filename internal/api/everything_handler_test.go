@@ -1,13 +1,5 @@
 package api_test
 
-// Handler-level test for Task 5 of the "Backup Everything" plan
-// (the design notes): POST
-// /api/backup-everything (internal/api/handlers.go's handleBackupEverything).
-// Reuses everything_test.go's Task-4 harness (everythingTestService,
-// waitForEverythingDone) so the concurrency guard is exercised through the
-// SAME synchronization technique already used to test StartBackupEverything's
-// re-entrancy contract directly (TestStartBackupEverythingRefusesConcurrent).
-
 import (
 	"net/http"
 	"testing"
@@ -18,15 +10,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/spike"
 )
 
-// TestHandleBackupEverythingStartsAndRefusesConcurrent: the first POST starts
-// the pass and returns {ok:true, started:true}; a second POST while the first
-// pass is still in flight is refused with a 409 {ok:false} (handleBackupEverything
-// mirrors handleBackupAll's exact response-shape/status-code convention). The
-// fake engine's block channel holds the first pass inside the containers
-// domain's real Restic.Backup call (see everythingTestService,
-// everything_test.go: the "primary" target has a genuine, existing
-// SelectedPaths folder), so the pass is deterministically still running when
-// the second request is made.
+// The fake engine's block channel holds the first pass inside the containers
+// backup, so it is still running when the second POST arrives.
 func TestHandleBackupEverythingStartsAndRefusesConcurrent(t *testing.T) {
 	eng := &fakeResticEngine{block: make(chan struct{})}
 	svc, st, docker, _ := everythingTestService(t, eng)

@@ -1,19 +1,8 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// Pins the fix for the severe VM-identifier regression: VMRow's action
-// buttons (Backup Now here) must send VM.libvirtName — the raw libvirt
-// domain name — to the backend, NEVER VM.name (display-only; on TrueNAS it is
-// the resolved friendly name, not something virsh has ever heard of). Before
-// this fix VMView/VM had only `name`, so every action call site had no choice
-// but to send the display value, and virsh rejected it as "domain not found"
-// on every TrueNAS VM whose friendly name differs from its raw name.
-//
-// This is the first component-level (jsdom) test in this repo — everything
-// else under src/**/*.test.ts is pure-logic, node-environment (see
-// vitest.config.ts). A cross-stack identifier/display-name bug like this one
-// lives entirely in how a component wires a prop into an API call, which a
-// pure-logic test cannot observe; hence the jsdom opt-in here.
-// ---------------------------------------------------------------------------
+// VMRow's actions have to send VM.libvirtName, the raw libvirt domain name.
+// VM.name is only for display, and on TrueNAS it is a friendly name virsh does
+// not know. Only a component test sees how a prop reaches an API call, hence
+// jsdom.
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, cleanup, within } from "@testing-library/react";
 import { VMRow } from "./VMs";
@@ -36,9 +25,8 @@ vi.mock("../lib/api", async () => {
   const actual = await vi.importActual<typeof import("../lib/api")>("../lib/api");
   return {
     ...actual,
-    // useBackupWatch's fire() snapshots listRuns() before AND polls it after
-    // start() — stub it to an empty, always-ok list so the watch never blocks
-    // on a real network call.
+    // useBackupWatch's fire() reads listRuns() before and after start(), so an
+    // empty list keeps the watch off the network.
     listRuns: vi.fn(async () => ({ ok: true, runs: [] })),
     backupVMNow: vi.fn(async () => ({ ok: true, started: true })),
     forgetVM: vi.fn(async () => ({ ok: true })),
@@ -50,7 +38,7 @@ vi.mock("../lib/api", async () => {
   };
 });
 
-// Imported AFTER vi.mock so this binding is the mocked function.
+// Imported after vi.mock so these bindings are the mocked functions.
 import { backupVMNow, deleteBackupsVM, forgetVM, getTimeline, setVMInclude } from "../lib/api";
 import { en } from "../lib/i18n";
 
@@ -63,8 +51,7 @@ const t = ((key: string) => key) as unknown as Parameters<typeof VMRow>[0]["t"];
 // For the one test that reads a sentence rather than a key.
 const tEn = ((key: string) => en[key as keyof typeof en] ?? key) as unknown as Parameters<typeof VMRow>[0]["t"];
 
-// A TrueNAS-shaped VM: the display name and the raw libvirt identifier
-// deliberately differ, exactly the case that exposed the bug.
+// A TrueNAS-shaped VM whose display name and libvirt name differ.
 const trueNasVM: VM = {
   name: "debian",
   libvirtName: "550e8400-e29b-41d4-a716-446655440000",
@@ -88,12 +75,8 @@ describe("VMRow action wiring", () => {
   it("sends VM.libvirtName to backupVMNow, never the display VM.name", async () => {
     render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} onPlacement={noop} index={0} />);
 
-    // By ROLE and NAME, which is the query that survives #178: how much of a
-    // control is shown is now the viewer's choice, so this button may render
-    // its text, its glyph, or both. Its accessible name is the same either
-    // way, and that is what has to keep working. getByLabelText was right
-    // while it was strictly an icon-only badge carrying an aria-label; it
-    // would now pass or fail depending on a display preference.
+    // By role and name: the viewer chooses whether a control shows its text,
+    // its glyph or both, and only the accessible name stays the same.
     fireEvent.click(screen.getByRole("button", { name: "containers.backupNow" }));
 
     await waitFor(() => expect(backupVMNow).toHaveBeenCalled());
@@ -108,18 +91,9 @@ describe("VMRow action wiring", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Pins the structure jdp asked for in a live review ("Im Zeitplan einschließen,
-// letztes Backup und Backup-Ausklapp-Button bitte exakt wie im Container-Tab in
-// der Container-Card darstellen und platzieren", plus "die Methode für den
-// VM-Backup (Live und graceful) bitte in quadratische Badges mit Glyph
-// umformen").
-//
-// These are deliberately structural assertions, not snapshot diffs: the defect
-// class here is DRIFT — two pages slowly growing different answers to the same
-// question — and drift is only caught by naming the shared contract out loud.
-// A snapshot would go green on any change that was merely re-approved.
-// ---------------------------------------------------------------------------
+// Structural assertions rather than snapshots: the risk is the VM and
+// container rows drifting apart, and a snapshot goes green on any change that
+// is merely re-approved.
 describe("VMRow matches the container card's structure", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -128,9 +102,7 @@ describe("VMRow matches the container card's structure", () => {
   it("renders the backups disclosure as a pressable chip, not a bespoke button", () => {
     render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} onPlacement={noop} index={0} />);
 
-    // Selector's segments carry aria-pressed; the hand-rolled chevron button
-    // this replaced carried nothing at all, so this assertion fails the moment
-    // the disclosure regresses to a plain <button>.
+    // Selector's segments carry aria-pressed, which a plain <button> lacks.
     const chip = screen.getByRole("button", { name: "snapshots.title" });
     expect(chip.getAttribute("aria-pressed")).toBe("false");
   });
@@ -152,12 +124,11 @@ describe("VMRow matches the container card's structure", () => {
     ).toBe("true");
   });
 
-  it("shows last-backup as ONE combined summary line, the container row's shape", () => {
+  it("shows last-backup as one combined summary line, like the container row", () => {
     render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} onPlacement={noop} index={0} />);
 
-    // `lastBackup: null` on the fixture, so the combined string ends in the
-    // "never" key. Two separate stacked <p>s — the shape this row used to have
-    // — would leave no single node carrying both halves.
+    // lastBackup is null on the fixture, so the line ends in the "never" key.
+    // Two stacked <p>s would leave no single node with both halves.
     expect(screen.getByText("containers.lastBackup: containers.never")).toBeTruthy();
   });
 
@@ -168,14 +139,11 @@ describe("VMRow matches the container card's structure", () => {
     const method = screen.getByRole("tablist", { name: "vm.method" });
     expect(within(method).queryByRole("combobox")).toBeNull();
 
-    // Selector's single-select segments are role="tab"/aria-selected (its
-    // multi-select ones, like the backups chip above, are button/aria-pressed)
-    // — and an icon-only segment's accessible name is its `label`, which is
-    // the whole reason an icon-only control must carry one.
+    // Single-select segments are tabs with aria-selected, and an icon-only
+    // segment's accessible name is its label.
     const graceful = screen.getByRole("tab", { name: "vm.method.graceful" });
     const live = screen.getByRole("tab", { name: "vm.method.live" });
-    // Both visible at once — the pair was chosen over a single cycling badge
-    // precisely so the alternative never has to be inferred.
+    // Both show at once, so the alternative never has to be inferred.
     expect(graceful.getAttribute("aria-selected")).toBe("true");
     expect(live.getAttribute("aria-selected")).toBe("false");
   });
@@ -197,20 +165,16 @@ describe("VMRow matches the container card's structure", () => {
     fireEvent.click(await screen.findByRole("button", { name: en["snapshots.deleteAll"] }));
 
     expect(await screen.findByText(/ALL local backups/)).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: en["common.confirm"] }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["snapshots.deleteAll"] }));
     await waitFor(() => expect(deleteBackupsVM).toHaveBeenCalledWith(trueNasVM.libvirtName, "local"));
   });
 });
 
-// ---------------------------------------------------------------------------
-// #232: a not-installed card offers the same controls on the VM page as on the
-// Containers page. The schedule switch, so an entry can come off the schedule
-// without losing its backups, and ONE removal button in the top-right action
-// corner: "Delete all backups" while it has backups, "Remove entry" once it has
-// none. Removing only the entry while backups exist would hide those backups
-// from the page, so that button is never offered then.
-// ---------------------------------------------------------------------------
-describe("VMRow when the VM is no longer defined (#232)", () => {
+// A VM that is no longer defined gets the same controls as a missing
+// container: the schedule switch, and one removal button that reads "Delete
+// all backups" while backups exist and "Remove entry" once there are none.
+// Removing only the entry would hide existing backups from the page.
+describe("VMRow when the VM is no longer defined", () => {
   // Display name and libvirt name differ on purpose, same as trueNasVM above.
   const orphan: VM = { ...trueNasVM, state: "not-installed", includeInSchedule: true };
 
@@ -239,7 +203,7 @@ describe("VMRow when the VM is no longer defined (#232)", () => {
     expect(screen.queryByRole("button", { name: "containers.deleteBackups" })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "vms.removeEntry" }));
-    fireEvent.click(await screen.findByRole("button", { name: en["common.confirm"] }));
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: en["vms.removeEntry"] }));
 
     await waitFor(() => expect(forgetVM).toHaveBeenCalledWith(orphan.libvirtName));
     expect(deleteBackupsVM).not.toHaveBeenCalled();
@@ -250,7 +214,7 @@ describe("VMRow when the VM is no longer defined (#232)", () => {
     expect(screen.queryByRole("button", { name: "vms.removeEntry" })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "containers.deleteBackups" }));
-    fireEvent.click(await screen.findByRole("button", { name: en["common.confirm"] }));
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: en["containers.deleteBackups"] }));
 
     await waitFor(() => expect(deleteBackupsVM).toHaveBeenCalledWith(orphan.libvirtName, "local"));
     expect(forgetVM).not.toHaveBeenCalled();

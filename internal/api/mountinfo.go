@@ -11,62 +11,43 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
-// mountinfoPath is the source of mount records. It is a package var so tests can
-// point it at a fixture; production reads the live kernel table. Host Data is
-// mounted with slave propagation, so a mount that appears on the host (e.g. an
-// Unassigned Devices disk that mounts after Docker starts) becomes visible here.
+// mountinfoPath is a var so tests can point it at a fixture. Host Data is
+// mounted with slave propagation, so a disk the host mounts after Docker starts
+// still shows up in this table.
 var mountinfoPath = "/proc/self/mountinfo"
 
-// destinationMounted reports whether the LOCAL repo path sits on a genuinely
-// PRESENT per-share/per-disk mount, by consulting the kernel mount table
-// (mountinfoPath). A bare os.Stat / temp-write probe is NOT enough, because an
-// unmounted mountpoint directory is usually still writable, which is exactly the
-// late-mount case (#55) we must keep protecting.
+// destinationMounted reports whether a local repo sits on a mount of its own
+// below HostMountRoot. Stat or a test write cannot answer that, because an
+// unmounted mountpoint directory is usually still writable.
 //
-// The discriminator: the repo counts as mounted only when some mount point M is
-// the repo itself OR an ancestor directory of it, AND M is a STRICT/PROPER
-// DESCENDANT of HostMountRoot (path.Clean(s.cfg.HostMountRoot), e.g. /host/user).
-// In a real /proc/self/mountinfo "/" is ALWAYS a mount point, and the broad host
-// bind (HostMountRoot itself, from HostSourceRoot) is too; neither may satisfy
-// the check, or every local repo would look mounted and the #55 guard would be
-// defeated. #55 protects paths served by a DISTINCT per-disk/per-share mount BELOW
-// the broad host bind, and that mount only appears in mountinfo when actually
-// mounted. So: EXCLUDE "/", EXCLUDE HostMountRoot itself, and exclude any mount at
-// or above HostMountRoot. Examples (HostMountRoot=/host/user):
-//   - UD disk mounted at /host/user/disks/X → repo under it is mounted → self-heal.
-//   - genuinely-unmounted share: only "/" and /host/user present → not mounted → #55.
-//   - array-default repo /host/user/bombvault/…: nearest mount is the broad bind
-//     itself → not mounted → stays protected (safe/over-protective, acceptable).
+// A mount point counts when it is the repo or one of its ancestors and lies
+// strictly below HostMountRoot. "/" and the host bind at HostMountRoot are
+// always in the table and would make every repo look mounted. With
+// HostMountRoot=/host/user:
+//   - a disk mounted at /host/user/disks/X: a repo below it is mounted
+//   - an unmounted share: only "/" and /host/user are listed, so not mounted
+//   - a repo at /host/user/bombvault: the nearest mount is the host bind, so
+//     it is treated as not mounted, which errs on the safe side
 //
-// Remote repos have no local backing store and are never gated on a mount.
+// Only HostMountRoot is consulted, so this works both when HostSourceRoot is
+// translated (Unraid: /mnt becomes /host/user) and when the two are the same
+// path, such as /data. HostMountRoot "/" is not supported.
 //
-// This discriminator keys off s.cfg.HostMountRoot ALONE — it never reads
-// HostSourceRoot, and makes no assumption about how the two relate. That
-// makes it correct under both Unraid's split-root default (HostSourceRoot=/mnt
-// translated to HostMountRoot=/host/user) and the generic/TrueNAS identity-root
-// default (HostSourceRoot == HostMountRoot at a real path, e.g. both /data —
-// no path translation): either way it excludes "/" and HostMountRoot itself
-// exactly as documented above. This is scoped to an identity root at a real,
-// non-root path; HostMountRoot=="/" itself is a distinct, more extreme case
-// (it would collide with the exclude-root rule) and is not handled here.
-//
-// On ANY error reading or parsing the mount table it is CONSERVATIVE and returns
-// false (destination treated as NOT mounted), so the #55 protection still holds:
-// a marker is never cleared on uncertainty.
+// Remote repos report false. So does any error reading the mount table, which
+// keeps a not-mounted marker from being cleared on uncertainty.
 func (s *Service) destinationMounted(repo string) bool {
 	if restic.IsRemoteRepo(repo) {
 		return false
 	}
 	f, err := os.Open(mountinfoPath) //nolint:gosec // G304: mountinfoPath is a fixed package var (/proc/self/mountinfo), overridden only by tests
 	if err != nil {
-		return false // conservative: cannot prove the mount is present
+		return false
 	}
 	defer f.Close() //nolint:errcheck // read-only handle
 	mounted := parseMountedDirs(f)
 
-	// Walk repo and each ancestor; a match counts only when the ancestor is a
-	// listed mount point AND a proper descendant of HostMountRoot. mount records
-	// are kernel paths (forward slashes), so normalise both the same way.
+	// Mount records use forward slashes, so both paths are normalised the same
+	// way.
 	root := path.Clean(filepath.ToSlash(s.cfg.HostMountRoot))
 	p := path.Clean(filepath.ToSlash(repo))
 	for {
@@ -75,15 +56,14 @@ func (s *Service) destinationMounted(repo string) bool {
 		}
 		parent := path.Dir(p)
 		if parent == p {
-			return false // reached the filesystem root without a qualifying mount
+			return false
 		}
 		p = parent
 	}
 }
 
-// isStrictSubpath reports whether p is a proper (strict) descendant of root: root
-// is a path-prefix of p and p != root. Both must already be path.Clean'd. This is
-// what excludes "/" and HostMountRoot itself from counting as the backing mount.
+// isStrictSubpath reports whether p lies below root and is not root itself.
+// Both paths must already be cleaned.
 func isStrictSubpath(root, p string) bool {
 	if p == root {
 		return false
@@ -95,17 +75,15 @@ func isStrictSubpath(root, p string) bool {
 	return strings.HasPrefix(p, prefix)
 }
 
-// parseMountedDirs reads /proc/self/mountinfo-format records from r and returns
-// the set of mount-point directories (field 5 of each record), octal-unescaped.
-// Malformed lines are skipped. Kept as an inner function taking an io.Reader so
-// tests can feed a fixture without touching the filesystem.
+// parseMountedDirs returns the set of mount points in mountinfo records read
+// from r. Malformed lines are skipped.
 func parseMountedDirs(r io.Reader) map[string]bool {
 	out := make(map[string]bool)
 	sc := bufio.NewScanner(r)
 	sc.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 	for sc.Scan() {
 		fields := strings.Fields(sc.Text())
-		// mountinfo: id, parent, major:minor, root, MOUNT-POINT, opts, ...
+		// id, parent, major:minor, root, mount point, options, ...
 		if len(fields) < 5 {
 			continue
 		}
@@ -114,8 +92,8 @@ func parseMountedDirs(r io.Reader) map[string]bool {
 	return out
 }
 
-// unescapeOctal decodes the \NNN octal escapes the kernel uses in mountinfo for
-// space (\040), tab (\011), newline (\012) and backslash (\134) within paths.
+// unescapeOctal decodes the \NNN escapes the kernel writes into mountinfo
+// paths for space, tab, newline and backslash.
 func unescapeOctal(s string) string {
 	if !strings.ContainsRune(s, '\\') {
 		return s

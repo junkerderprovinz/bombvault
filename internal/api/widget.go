@@ -12,50 +12,31 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// ---------------------------------------------------------------------------
-// Embeddable dashboard widget — GET /widget (page) + GET /api/widget/data
-// (feed) + POST/DELETE /api/widget/token (admin management).
-//
-// The widget is a tiny, self-contained, dark-only HTML page showing ONLY the
-// mini activity log (the flat docker-logs list), meant to be iframed into
-// Homepage/Organizr/Heimdall or any dashboard. Because an embedding iframe
-// cannot carry the session cookie, both the page and its feed bypass authGate
-// (public allowlist) and gate themselves on the stored widget token instead:
-// no stored token (the default) = feature OFF = both answer 403, fail closed.
-// The token grants READ-ONLY access to the activity log + schedule preview —
-// nothing else.
-// ---------------------------------------------------------------------------
+// The embeddable dashboard widget is a small page showing the activity log,
+// meant to be iframed into Homepage, Organizr, Heimdall and the like. An
+// iframe cannot carry the session cookie, so the page and its feed skip
+// authGate and check the stored widget token instead; with no token stored,
+// both answer 403. The token grants read access to the activity log and the
+// schedule preview, nothing else.
 
-// widgetPage is the self-contained widget HTML (inline CSS/JS, no SPA bundle —
-// the 2 MB dist stays out of the iframe; this page is a few KB).
+// widgetPage is the widget HTML with inline CSS and JS, so the iframe does not
+// load the SPA bundle.
 //
 //go:embed widget.html
 var widgetPage []byte
 
-// widgetRunLimit caps the feed at roughly one tile-screen of history — the
-// widget is a glanceable log, not the dashboard.
+// widgetRunLimit caps the feed at about one screen of history.
 const widgetRunLimit = 40
 
-// widgetErrorMax truncates run error text in the feed: a widget line can only
-// show the head of an error anyway, and the full text stays in the app.
+// widgetErrorMax truncates run errors in the feed; a widget line shows only
+// the start of an error, and the full text stays in the app.
 const widgetErrorMax = 200
 
-// widgetTokenOK reports whether the request carries the stored widget token in
-// the X-Widget-Token header. Constant-time compare; an EMPTY stored token
-// always fails (feature off = fail closed), even for an empty presented one.
-//
-// The query form lives in widgetPageTokenOK below and nowhere else. Splitting
-// the two is the whole point: an iframe cannot set a header on the document
-// request, so the PAGE has to take the token from its src, and that one
-// appearance is unavoidable. Everything after it is a fetch the page makes
-// itself, which can set a header — so it does, and the secret stops appearing
-// in request lines.
-//
-// What that was costing: widget.html put the token into every feed URL and the
-// feed is polled on a timer, so the credential was written into the reverse
-// proxy's access log once per refresh, for as long as the dashboard was open.
-// Measured in this deployment's own proxy log on 2026-09-07, which records the
-// full request line including the query.
+// widgetTokenOK reports whether the X-Widget-Token header matches the stored
+// token. An empty stored token never matches. Only the page accepts the token
+// in the query (widgetPageTokenOK): an iframe cannot set a header on the
+// document request, but the page's own fetches can, which keeps the token out
+// of proxy access logs on every poll.
 func widgetTokenOK(r *http.Request, stored string) bool {
 	if stored == "" {
 		return false
@@ -64,8 +45,8 @@ func widgetTokenOK(r *http.Request, stored string) bool {
 	return subtle.ConstantTimeCompare([]byte(got), []byte(stored)) == 1
 }
 
-// widgetPageTokenOK is widgetTokenOK plus the ?token= query form, and it is
-// used by the PAGE alone. See widgetTokenOK for why the two are separate.
+// widgetPageTokenOK is widgetTokenOK that also accepts ?token=, for the page
+// only.
 func widgetPageTokenOK(r *http.Request, stored string) bool {
 	if widgetTokenOK(r, stored) {
 		return true
@@ -76,22 +57,10 @@ func widgetPageTokenOK(r *http.Request, stored string) bool {
 	return subtle.ConstantTimeCompare([]byte(r.URL.Query().Get("token")), []byte(stored)) == 1
 }
 
-// widgetGate loads settings and enforces the widget token, mirroring how
-// /metrics self-gates inside its handler. It returns false after writing the
-// refusal: 503 on a store error (fail closed, like authGate), 403 on a
-// missing/mismatched token or when no token is stored (feature off).
-func (h *Handler) widgetGate(w http.ResponseWriter, r *http.Request) bool {
-	return h.widgetGateWith(w, r, widgetTokenOK)
-}
-
-// widgetPageGate is widgetGate for the page, which additionally accepts the
-// query form. Separate function rather than a boolean argument, so a future
-// caller cannot pass the wrong one by accident at a call site that reads fine.
-func (h *Handler) widgetPageGate(w http.ResponseWriter, r *http.Request) bool {
-	return h.widgetGateWith(w, r, widgetPageTokenOK)
-}
-
-func (h *Handler) widgetGateWith(w http.ResponseWriter, r *http.Request, ok func(*http.Request, string) bool) bool {
+// widgetGate checks the widget token with ok and reports false after writing
+// the refusal: 503 when settings cannot be read, 403 when the token is
+// missing, wrong or not set.
+func (h *Handler) widgetGate(w http.ResponseWriter, r *http.Request, ok func(*http.Request, string) bool) bool {
 	s, err := h.store.GetSettings()
 	if err != nil {
 		log.Printf("api: widget: settings read failed: %v", err)
@@ -105,12 +74,10 @@ func (h *Handler) widgetGateWith(w http.ResponseWriter, r *http.Request, ok func
 	return true
 }
 
-// handleWidgetPage serves the embeddable widget page (GET /widget?token=…).
-// The framing headers are handled by securityHeaders (frame-ancestors * for
-// exactly this path); everything dynamic comes from /api/widget/data, so the
-// page bytes themselves are static.
+// handleWidgetPage serves GET /widget. securityHeaders allows framing for this
+// path, and everything dynamic comes from /api/widget/data.
 func (h *Handler) handleWidgetPage(w http.ResponseWriter, r *http.Request) {
-	if !h.widgetPageGate(w, r) {
+	if !h.widgetGate(w, r, widgetPageTokenOK) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -120,13 +87,10 @@ func (h *Handler) handleWidgetPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// widgetRun is the slim per-run row of GET /api/widget/data — just what the
-// widget needs to compose its English log lines (see widget.html): no
-// snapshot ids, no hooks, error text truncated. Domain vocabulary matches
-// runView/activityLog.ts: items carry "container"/"vm"/"files"/"flash"/
-// "config"; domain-scoped ops (prune/verify/offsite/drill/drdrill/tamper/
-// export) carry the domain literal their run was recorded against
-// ("containers"/"vms"/…, or the flash/config singleton).
+// widgetRun is one run in the widget feed, with only what widget.html needs
+// for its log lines. Domain follows runView and activityLog.ts: items carry
+// "container", "vm", "files", "flash" or "config", and domain-scoped
+// operations carry the domain their run was recorded against.
 type widgetRun struct {
 	ID         string `json:"id"`
 	Kind       string `json:"kind"`
@@ -139,9 +103,9 @@ type widgetRun struct {
 	Error      string `json:"error"`
 }
 
-// widgetDomainOpKind mirrors activityLog.ts's isDomainOpKind: these kinds are
-// recorded against the reserved DOMAIN target id, so their TargetID is the
-// domain literal itself rather than a resolvable item id.
+// widgetDomainOpKind mirrors isDomainOpKind in activityLog.ts. These kinds are
+// recorded against the domain, so their TargetID is the domain name rather
+// than an item id.
 func widgetDomainOpKind(kind string) bool {
 	switch kind {
 	case "prune", "verify", "offsite", "drill", "drdrill", "tamper", "export":
@@ -158,12 +122,11 @@ func truncateWidgetError(msg string) string {
 	return msg[:widgetErrorMax] + "…"
 }
 
-// handleWidgetData serves the widget feed (GET /api/widget/data, X-Widget-Token): the
-// last widgetRunLimit runs (reusing ListRuns + the runView target resolution),
-// the schedule-next preview and the app version — everything the page needs
-// for one refresh in one round trip.
+// handleWidgetData serves GET /api/widget/data: the last widgetRunLimit runs,
+// the upcoming scheduled runs and the app version, all the page needs for one
+// refresh.
 func (h *Handler) handleWidgetData(w http.ResponseWriter, r *http.Request) {
-	if !h.widgetGate(w, r) {
+	if !h.widgetGate(w, r, widgetTokenOK) {
 		return
 	}
 	runs, err := h.store.ListRuns(widgetRunLimit)
@@ -176,7 +139,7 @@ func (h *Handler) handleWidgetData(w http.ResponseWriter, r *http.Request) {
 	for _, run := range runs {
 		d := domain[run.TargetID]
 		if d == "" && widgetDomainOpKind(run.Kind) {
-			d = run.TargetID // domain-scoped op: the target id IS the domain literal
+			d = run.TargetID
 		}
 		views = append(views, widgetRun{
 			ID:         run.ID,
@@ -204,13 +167,11 @@ func (h *Handler) handleWidgetData(w http.ResponseWriter, r *http.Request) {
 	}))
 }
 
-// handleWidgetTokenGenerate handles POST /api/widget/token — generates a fresh
-// random 32-hex token, stores it (replacing any previous one — regenerate ==
-// revoke old + issue new) and returns it ONCE. The token is never echoed
-// again afterwards (settingsView follows the MetricsToken blank-and-report-
-// is-set contract), so the Settings card shows the widget URL only right
-// after generating. Session-protected via authGate: NOT on the public
-// allowlist — only a logged-in admin can mint or rotate the token.
+// handleWidgetTokenGenerate handles POST /api/widget/token. It stores a new
+// random token, which revokes the previous one, and returns it. settingsView
+// never returns the token, so the Settings card can show the widget URL only
+// right after generating. Unlike the widget itself, this endpoint is behind
+// authGate.
 func (h *Handler) handleWidgetTokenGenerate(w http.ResponseWriter, _ *http.Request) {
 	buf := make([]byte, 16)
 	if _, err := rand.Read(buf); err != nil {
@@ -228,9 +189,8 @@ func (h *Handler) handleWidgetTokenGenerate(w http.ResponseWriter, _ *http.Reque
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"token": token}))
 }
 
-// handleWidgetTokenDisable handles DELETE /api/widget/token — clears the
-// stored token, so both widget endpoints immediately fail closed (403) again.
-// Session-protected like the generate endpoint.
+// handleWidgetTokenDisable handles DELETE /api/widget/token. Without a stored
+// token both widget endpoints answer 403.
 func (h *Handler) handleWidgetTokenDisable(w http.ResponseWriter, _ *http.Request) {
 	if _, err := h.store.MutateSettings(func(s *store.Settings) error {
 		s.WidgetToken = ""

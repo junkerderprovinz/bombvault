@@ -10,25 +10,13 @@ import (
 	"testing"
 )
 
-// TestDerivedExcludePatternsAreLiteral pins why internal/api's escapeGlobLiteral
-// exists: restic reads an --exclude value as a GLOB, and the tree derives those
-// values from folder names the user ticked off - names nobody wrote as a
-// pattern.
-//
-// Three failures, measured here rather than reasoned about, each silent:
-//
-//	"Inception (2010) [1080p]" excluded by its own name stays IN the snapshot
-//	("[1080p]" is a one-character class, so it cannot match the seven literal
-//	characters it came from);
-//
-//	"Season [01]" instead drops the SIBLINGS "Season 0" and "Season 1" while
-//	keeping itself - the inverse of what the user asked for;
-//
-//	"Movies [2024" is an invalid pattern and restic refuses the whole run, so
-//	the item stops being backed up from the moment that checkbox is clicked.
-//
-// The escaped form does the right thing in all three. If restic ever changed
-// how it reads these patterns, this test is what would say so.
+// TestDerivedExcludePatternsAreLiteral shows why internal/api's
+// escapeGlobLiteral exists: restic reads an --exclude value as a glob, and the
+// tree builds those values from folder names the user unticked. Unescaped,
+// "Inception (2010) [1080p]" stays in the snapshot because "[1080p]" is a
+// one-character class, "Season [01]" drops its siblings "Season 0" and
+// "Season 1" but keeps itself, and "Movies [2024" is an invalid pattern that
+// fails the whole backup. The escaped forms exclude exactly the named folder.
 func TestDerivedExcludePatternsAreLiteral(t *testing.T) {
 	if _, err := exec.LookPath("restic"); err != nil {
 		t.Skip("restic not on PATH")
@@ -84,9 +72,8 @@ func TestDerivedExcludePatternsAreLiteral(t *testing.T) {
 		return got
 	}
 
-	// The same escaping internal/api applies. Kept as its own literal rather
-	// than imported: this file is the independent measurement the other one
-	// cites, so it must not share code with what it is checking.
+	// A copy of internal/api's escaping, kept separate so the test measures
+	// restic independently of the code it backs.
 	escape := func(p string) string {
 		var b strings.Builder
 		for _, r := range p {

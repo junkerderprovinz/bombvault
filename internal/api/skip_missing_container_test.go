@@ -18,16 +18,13 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestBackupSkipsRemovedContainer: a backup of a container that no longer exists on
-// the host returns ErrContainerNotInstalled (a skip, not a failure), never drives
-// the orchestrator (no stop/start/create side effects), and records exactly one
-// "skipped" run per attempt so the dashboard reflects it and agrees with the green
-// aggregate Healthchecks ping instead of showing nothing (#57).
+// A backup of a container that no longer exists returns ErrContainerNotInstalled,
+// leaves the orchestrator alone and records one "skipped" run per attempt, so the
+// dashboard agrees with the green Healthchecks ping.
 func TestBackupSkipsRemovedContainer(t *testing.T) {
 	dir := t.TempDir()
-	// HostMountRoot == the temp dir so resolveRepo("backups/containers") lands under
-	// it (a writable, platform-neutral path); EnsureRepo then opens the seeded repo
-	// instead of trying to mkdir an unwritable host path like /host on Linux CI.
+	// HostMountRoot is the temp dir, so the repo resolves to a writable path
+	// instead of /host.
 	cfg := config.Config{
 		AppKey:            strings.Repeat("a", 64),
 		DataDir:           dir,
@@ -60,10 +57,9 @@ func TestBackupSkipsRemovedContainer(t *testing.T) {
 		t.Fatalf("seed target: %v", err)
 	}
 
-	// Point the notify webhook at a counting test server: the "container removed"
-	// warning must reach the user on the FIRST skip only (#111 — it fired every
-	// night), while every skip still records its run row below. notify.Send is
-	// synchronous, so plain counters are race-free here.
+	// The "container removed" warning goes out on the first skip only, while
+	// every skip records a run. notify.Send is synchronous, so plain counters are
+	// race-free.
 	var webhookHits int
 	var webhookBody string
 	wh := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
@@ -83,9 +79,8 @@ func TestBackupSkipsRemovedContainer(t *testing.T) {
 	if webhookHits != 1 {
 		t.Fatalf("first skip must notify exactly once, webhook hits = %d", webhookHits)
 	}
-	// The rewritten #111 message must be unmistakable: nothing is being backed up
-	// anymore and the existing backups stay restorable (the old wording read as
-	// "BombVault is still trying to back it up").
+	// The message says nothing is backed up any more and the existing backups
+	// stay restorable.
 	for _, want := range []string{"not backing it up anymore", "remain restorable"} {
 		if !strings.Contains(webhookBody, want) {
 			t.Fatalf("skip notification missing %q:\n%s", want, webhookBody)
@@ -111,17 +106,16 @@ func TestBackupSkipsRemovedContainer(t *testing.T) {
 		t.Fatalf("run = %+v, want status=skipped target=%s error~='no longer exists'", r, tg.ID)
 	}
 
-	// A second attempt on the still-missing target records another skip: the run row
-	// is an honest per-attempt audit trail (only the notification is debounced).
+	// A second attempt records another skip; only the notification is debounced.
 	if _, err := svc.Backup(context.Background(), "Nexterm"); !errors.Is(err, backup.ErrContainerNotInstalled) {
 		t.Fatalf("second Backup err = %v, want ErrContainerNotInstalled", err)
 	}
 	if runs, _ = st.ListRuns(10); len(runs) != 2 {
 		t.Fatalf("after second skip, runs = %d, want 2", len(runs))
 	}
-	// …but it must NOT notify again: the previous run for this target is already a
-	// skip (LastRunForTarget), so the warning stays quiet until the target either
-	// comes back or is removed. Stateless, so it also survives restarts.
+	// The previous run is already a skip (LastRunForTarget), so there is no
+	// second warning. The check reads the run history, so it holds across
+	// restarts.
 	if webhookHits != 1 {
 		t.Fatalf("second consecutive skip must not notify again (debounced), webhook hits = %d", webhookHits)
 	}

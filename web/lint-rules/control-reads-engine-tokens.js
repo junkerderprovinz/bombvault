@@ -1,37 +1,24 @@
-// ---------------------------------------------------------------------------
-// control-reads-engine-tokens — settled convention 1.
+// control-reads-engine-tokens: an interactive element takes its corner radius
+// from the shape engine and its colour from the colour engine.
 //
-// "Everything interactive is in the colour and shape engines."
+// The shape engine works because every rounded corner reads
+// --radius-card/--radius-control/--radius-pill, so a control that spells its
+// radius out keeps its corners when the user switches to `soft` or `square`.
+// An accent written as a hex or in Tailwind's amber/yellow palette likewise
+// ignores the user's accent.
 //
-// The shape engine's contract, from index.css: "every rounded corner reads
-// --radius-card/--radius-control/--radius-pill, nothing hard-codes a literal
-// radius, so switching the attribute recolors". One control that spells its
-// radius out breaks that silently — it simply keeps its corners while the rest
-// of the app squares off, and nobody notices until someone switches to
-// `square` mode and looks carefully. That is exactly how the accent and rainbow
-// palette swatches stayed perfect circles in every shape (Settings.tsx records
-// the fix: "the one pair of controls on this page that silently ignored the
-// shape engine").
+// On interactive elements only:
 //
-// The same applies to colour: an accent written as a hex, or as Tailwind's own
-// amber/yellow palette, is an accent that never follows the user's chosen one.
+//   radius  `rounded-card`, `rounded-control`, `rounded-pill` or
+//           `rounded-none`; not `rounded-full`, `rounded-lg`, `rounded-[10px]`
+//           or a bare `rounded`.
+//   colour  no literal `#rrggbb`, `rgb()` or `hsl()` in `style`, no arbitrary
+//           colour such as `bg-[#…]`, no `*-amber-N` or `*-yellow-N`. A
+//           `var(--token)` is fine, including `var(--heat-ok-1, #a7f0ba)`,
+//           where the hex is only the token's fallback.
 //
-// So, on interactive elements only:
-//
-//   RADIUS   only `rounded-card` / `rounded-control` / `rounded-pill`
-//            (the three shape-engine tokens) and `rounded-none`. Not
-//            `rounded-full`, `rounded-lg`, `rounded-[10px]`, or bare `rounded`.
-//
-//   COLOUR   no literal `#rrggbb` / `rgb()` / `hsl()` in `style`, no
-//            `bg-[#…]`-style arbitrary colour, no `*-amber-N`/`*-yellow-N`.
-//            `var(--token)` is the whole point and is always fine — including
-//            `var(--heat-ok-1, #a7f0ba)`, where the hex is the token's own
-//            fallback rather than a second source of truth.
-//
-// Non-interactive elements are untouched on purpose. Every `rounded-full` in
-// the tree today is a spinner ring or a 6px status dot, and those ARE circles
-// by definition, not controls whose corners should follow a preference.
-// ---------------------------------------------------------------------------
+// Non-interactive elements are left alone: the `rounded-full` ones are spinner
+// rings and status dots, which are circles by definition.
 import {
   baseUtility,
   classTokens,
@@ -54,7 +41,7 @@ const SHAPE_TOKEN_RADII = new Set([
 
 const ANY_RADIUS = /^rounded(?:-|$)/;
 
-/** `bg-[#0af]`, `text-[rgb(1,2,3)]`, `border-[hsl(…)]` — an inlined colour. */
+/** An inlined colour: `bg-[#0af]`, `text-[rgb(1,2,3)]`, `border-[hsl(…)]`. */
 const ARBITRARY_COLOUR = /^[a-z-]+-\[(#[0-9a-fA-F]{3,8}|rgba?\(|hsla?\()/;
 
 /** Tailwind's own palette standing in for the accent. */
@@ -140,9 +127,8 @@ export default {
           }
           if (!COLOUR_PROPS.has(key)) continue;
           if (!LITERAL_COLOUR.test(val.value)) continue;
-          // `var(--heat-ok-1, #a7f0ba)`: the hex is the token's fallback, not
-          // a competing source of truth. Only a colour written OUTSIDE a
-          // var() is a hardcoded colour.
+          // A hex inside var() is the token's fallback; only a colour written
+          // outside var() is hardcoded.
           const outsideVar = val.value.replace(/var\([^)]*\)/g, "");
           if (!LITERAL_COLOUR.test(outsideVar)) continue;
           if (hasException(context, opening, RULE_ID)) return;
@@ -160,8 +146,8 @@ export default {
         if (!isInteractive(node)) return;
         const opening = node.openingElement;
 
-        // Badge/IconTipButton own their own radius from the shape engine
-        // already; a className on them is checked by one-icon-badge-size.
+        // Badge and IconTipButton take their radius from the shape engine
+        // themselves; one-icon-badge-size checks their className.
         const name = jsxName(node);
         const ownsItsChrome = name === "Badge" || name === "IconTipButton";
 

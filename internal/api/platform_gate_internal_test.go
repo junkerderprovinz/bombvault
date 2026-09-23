@@ -17,13 +17,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// failIfCalledSSH implements HostSSH but fails the test immediately if ANY
-// method is invoked. Task 6 requires the Unraid-only sendUnraidNotify/
-// dashplugin steps to be skipped ENTIRELY on a non-Unraid platform — not
-// attempted and then swallowed. Wiring this fake in place of the usual
-// fakeHostSSH proves "entirely": if the guard degrades to "attempt anyway,
-// let the error get logged away", this fake fails the test the instant the
-// attempt happens, rather than requiring an assertion on call counts.
+// failIfCalledSSH fails the test on any call that would reach the host, so an
+// Unraid-only step that is attempted on another platform and then logged away
+// still fails.
 type failIfCalledSSH struct{ t *testing.T }
 
 var _ HostSSH = failIfCalledSSH{}
@@ -57,15 +53,8 @@ func (f failIfCalledSSH) RunWithStdin(context.Context, io.Reader, ...string) err
 	return nil
 }
 
-// TestSendUnraidNotifyCallSitesSkipOnNonUnraidPlatform pins Task 6's contract
-// for every background/best-effort sendUnraidNotify call site across
-// service.go, digest.go, tamper.go, watchdog.go and receiver_watch.go: with
-// notify.Config.Unraid=true and host SSH configured — exactly the state that
-// makes today's Unraid host attempt the call — a Generic platform must skip
-// the SSH round-trip ENTIRELY instead of attempting it and swallowing the
-// (predictable, noisy) failure. Each subtest wires the SAME notify.Config
-// shape a real Unraid host would use to actually reach the guarded block, so
-// the ONLY variable is the platform.
+// Each call site runs with Unraid notifications on and SSH configured, the
+// state in which an Unraid host would send.
 func TestSendUnraidNotifyCallSitesSkipOnNonUnraidPlatform(t *testing.T) {
 	t.Run("notifyRetentionFailed", func(t *testing.T) {
 		s := unraidNotifyService(t, failIfCalledSSH{t})
@@ -188,12 +177,8 @@ func TestSendUnraidNotifyCallSitesSkipOnNonUnraidPlatform(t *testing.T) {
 	})
 }
 
-// TestTestNotifyUnraidChannelSkippedOnNonUnraidPlatform: the explicit "Test"
-// button path is a request-scoped action, not a background job — silently
-// reporting success without ever contacting anything would be dishonest, so
-// this call site (unlike the fire-and-forget ones above) must return a clear
-// error instead of attempting the SSH command, rather than pretending the
-// test passed.
+// The Test button waits for an answer, so unlike the background call sites it
+// has to return an error instead of reporting success without sending.
 func TestTestNotifyUnraidChannelSkippedOnNonUnraidPlatform(t *testing.T) {
 	s := unraidNotifyService(t, failIfCalledSSH{t})
 	s.SetPlatform(platform.Generic{})
@@ -202,11 +187,8 @@ func TestTestNotifyUnraidChannelSkippedOnNonUnraidPlatform(t *testing.T) {
 	}
 }
 
-// TestDashboardPluginInstallRemoveSkipOnNonUnraidPlatform: the companion
-// dashboard-tile plugin's install/remove are Unraid `plugin` CLI operations —
-// meaningless anywhere else — so on a non-Unraid platform they must refuse
-// before ever opening the SSH connection, not attempt a command that could
-// only fail on the far end.
+// The dashboard plugin is managed with Unraid's plugin CLI, so on another
+// platform install and remove refuse before opening SSH.
 func TestDashboardPluginInstallRemoveSkipOnNonUnraidPlatform(t *testing.T) {
 	for _, ep := range []struct {
 		name string
@@ -225,32 +207,10 @@ func TestDashboardPluginInstallRemoveSkipOnNonUnraidPlatform(t *testing.T) {
 	}
 }
 
-// --- code-review fix: loud, actionable diagnostics on a c.Unraid=true /
-// Kind()!=KindUnraid mismatch, instead of the silent feature drop the above
-// tests (Task 6, pre-existing) only proved the SAFE half of. ---
-//
-// Detect()'s only Unraid signal is the dockerMan marker under the
-// container's /host/boot mount, which the shipped Unraid template only
-// wired up months after the Kind() gate above was introduced. A genuinely
-// Unraid host whose mount is missing hits exactly this state — Unraid=true,
-// SSH configured, Kind()==KindGeneric — and used to have every Unraid-only
-// feature go dark with no way to tell "the user turned this off" apart from
-// "detection is wrong". The tests below pin the fix: the gate stays HARD
-// (Option B — trusting the toggle blindly would reintroduce the exact
-// wrong-platform SSH attempts Task 6 eliminated, see unraidGate's doc
-// comment), but the mismatch is now loud and actionable everywhere it can
-// be observed: a once-per-process log line for the best-effort background
-// paths, and a named, hinted error for the two request-scoped refusals
-// (TestNotify, the dashboard plugin).
-
-// TestUnraidGateMismatchWarnsOncePerService pins the exact misdetection
-// scenario from the finding: notify.Config.Unraid=true, SSH configured,
-// Kind()==KindGeneric. unraidGate must still return false (SAFE — no
-// Unraid-only SSH command runs, enforced by failIfCalledSSH), but unlike
-// before the fix, the mismatch must now be OBSERVABLE: exactly one
-// diagnostic log line naming the detected platform and the /host/boot fix,
-// even across repeated calls on the same Service (platformMismatchOnce must
-// not spam the log once per notification on a bad day with many failures).
+// Detect recognises Unraid only by the dockerMan marker under /host/boot, so an
+// Unraid host without that mount runs with Unraid notifications on, SSH
+// configured and a Generic platform. The gate stays closed there, but logs the
+// mismatch once for the background paths.
 func TestUnraidGateMismatchWarnsOncePerService(t *testing.T) {
 	s := unraidNotifyService(t, failIfCalledSSH{t})
 	s.SetPlatform(platform.Generic{})
@@ -278,9 +238,7 @@ func TestUnraidGateMismatchWarnsOncePerService(t *testing.T) {
 	}
 }
 
-// TestUnraidGateNoWarnWhenPlatformMatches: the common case (a real Unraid
-// host, correctly detected) must stay completely silent — no diagnostic
-// noise when nothing is wrong.
+// A correctly detected Unraid host logs nothing.
 func TestUnraidGateNoWarnWhenPlatformMatches(t *testing.T) {
 	s := unraidNotifyService(t, &fakeHostSSH{}) // no SetPlatform: platformFn() defaults to Unraid{}
 
@@ -297,8 +255,7 @@ func TestUnraidGateNoWarnWhenPlatformMatches(t *testing.T) {
 	}
 }
 
-// TestUnraidGateNoWarnWhenToggleOff: a non-Unraid host with the Unraid
-// toggle correctly left off has nothing to diagnose — no log line.
+// With the Unraid toggle off there is nothing to diagnose.
 func TestUnraidGateNoWarnWhenToggleOff(t *testing.T) {
 	s := unraidNotifyService(t, failIfCalledSSH{t})
 	s.SetPlatform(platform.Generic{})
@@ -316,10 +273,8 @@ func TestUnraidGateNoWarnWhenToggleOff(t *testing.T) {
 	}
 }
 
-// TestUnraidGateNoWarnWhenSSHUnconfigured: without SSH configured at all,
-// the platform-mismatch diagnostic would be misleading (SSH, not detection,
-// is the actual blocker) — no log line; sendUnraidNotify's own nil-SSH
-// message already covers that case where it's reachable (e.g. TestNotify).
+// Without SSH the platform is not what blocks, so a mismatch line would
+// mislead. sendUnraidNotify reports the missing SSH itself.
 func TestUnraidGateNoWarnWhenSSHUnconfigured(t *testing.T) {
 	s := unraidNotifyService(t, nil)
 	s.SetPlatform(platform.Generic{})
@@ -337,12 +292,8 @@ func TestUnraidGateNoWarnWhenSSHUnconfigured(t *testing.T) {
 	}
 }
 
-// TestTestNotifyPlatformMismatchErrorIsActionable extends
-// TestTestNotifyUnraidChannelSkippedOnNonUnraidPlatform (which only pinned
-// "must fail"): the refusal TestNotify's Settings "Test" button surfaces to
-// the user must itself name the detected platform and the /host/boot fix —
-// this is a synchronous, user-initiated action, so the diagnostic belongs in
-// the response, not just the container log.
+// The Test button's refusal names the detected platform and the /host/boot
+// fix, because the user reads the response, not the container log.
 func TestTestNotifyPlatformMismatchErrorIsActionable(t *testing.T) {
 	s := unraidNotifyService(t, failIfCalledSSH{t})
 	s.SetPlatform(platform.Generic{})
@@ -358,12 +309,9 @@ func TestTestNotifyPlatformMismatchErrorIsActionable(t *testing.T) {
 	}
 }
 
-// TestDashboardPluginPlatformMismatchErrorIsActionable extends
-// TestDashboardPluginInstallRemoveSkipOnNonUnraidPlatform the same way: the
-// install/remove refusal must name the detected platform and the
-// /host/boot fix, not just say "only available on Unraid hosts" (which
-// reads as a deliberate limitation, not a possible detection bug, to an
-// operator who is certain they ARE on Unraid).
+// The plugin refusal names the platform and the /host/boot fix as well. "Only
+// available on Unraid hosts" would read as a limitation to an operator who is
+// on Unraid.
 func TestDashboardPluginPlatformMismatchErrorIsActionable(t *testing.T) {
 	for _, ep := range []struct {
 		name string
@@ -389,13 +337,8 @@ func TestDashboardPluginPlatformMismatchErrorIsActionable(t *testing.T) {
 	}
 }
 
-// TestScrubErrorKeepsUnraidPlatformMismatchPaths pins the scrubber bypass
-// unraidPlatformMismatchError relies on (found via live verification: without
-// it, handlers.go's generic absolute-path scrubber reduced the whole
-// actionable hint to "...verify the host's [path] is bind-mounted to
-// [path] inside the container...", exactly as useless as the pre-fix
-// errRestoreDestination/errRepoPathGuidance bugs that pattern already fixes
-// elsewhere). Mirrors TestScrubErrorKeepsRestoreDestinationPath's shape.
+// Scrubbed, the platform-mismatch hint would read "verify the host's [path] is
+// bind-mounted to [path] inside the container".
 func TestScrubErrorKeepsUnraidPlatformMismatchPaths(t *testing.T) {
 	s := &Service{}
 	s.SetPlatform(platform.Generic{})
@@ -412,9 +355,7 @@ func TestScrubErrorKeepsUnraidPlatformMismatchPaths(t *testing.T) {
 			t.Fatalf("scrubbed platform-mismatch message missing %q, got %q", want, got)
 		}
 	}
-	// The wrapped TestNotify shape (fmt.Errorf("unraid: %w", ...)) must survive
-	// the same way: errors.Is unwraps through fmt.Errorf's %w to reach
-	// platformMismatchErr's own Is method.
+	// TestNotify wraps it as "unraid: %w", which has to survive as well.
 	wrapped := fmt.Errorf("unraid: %w", err)
 	if !errors.Is(wrapped, errUnraidPlatformMismatch) {
 		t.Fatal(`fmt.Errorf("unraid: %w", ...)-wrapped platform-mismatch error must still satisfy errors.Is`)
@@ -422,8 +363,7 @@ func TestScrubErrorKeepsUnraidPlatformMismatchPaths(t *testing.T) {
 	if gotWrapped := scrubError(wrapped); strings.Contains(gotWrapped, "[path]") {
 		t.Fatalf("wrapped platform-mismatch error must not be path-scrubbed, got %q", gotWrapped)
 	}
-	// Unrelated errors still get their absolute paths stripped (the scrubber's
-	// normal, unbypassed behavior must be unaffected).
+	// Other errors still lose their absolute paths.
 	if other := scrubError(errors.New("open /config/bombvault.db: permission denied")); !strings.Contains(other, "[path]") {
 		t.Fatalf("ordinary errors must still be path-scrubbed, got %q", other)
 	}

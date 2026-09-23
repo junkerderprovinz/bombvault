@@ -1,15 +1,6 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// The shared listbox is reachable and navigable from the keyboard.
-//
-// It portals its panel to document.body and used to move no focus at all. So
-// after opening the language picker with Enter, focus stayed on the trigger and
-// the next Tab went to the following settings control rather than into the 42
-// options — and because the capture-phase scroll listener closes the panel,
-// tabbing away often shut it before it could be reached at all. TimePicker,
-// which this component's own comments cite as the structural template, has had
-// both halves the whole time.
-// ---------------------------------------------------------------------------
+// The panel is portalled to document.body, so the next Tab from the trigger
+// would never reach it. It moves focus in on open and hands it back on close.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useRef, useState } from "react";
@@ -35,7 +26,7 @@ function Harness({ selected = "b" }: { selected?: string }) {
   );
 }
 
-/** Opening is a layout-effect + state dance; act() lets both commits land. */
+/** Opening takes a layout effect and a state update; act() lets both commit. */
 async function open(selected?: string) {
   render(<Harness selected={selected} />);
   await act(async () => {
@@ -48,8 +39,7 @@ function option(name: string) {
 }
 
 beforeEach(() => {
-  // jsdom implements neither, and the panel calls both while positioning and
-  // focusing. Their absence is not what these tests are about.
+  // jsdom lacks scrollIntoView, which the panel calls while focusing.
   Element.prototype.scrollIntoView = function () {};
 });
 
@@ -96,9 +86,7 @@ describe("DropdownListbox keyboard access", () => {
   it("gives focus back to the trigger when it closes from inside", async () => {
     await open("b");
     const trigger = screen.getByRole("button", { name: "open" });
-    // Activating a FOCUSED option is what a keyboard user does (the open effect
-    // already put focus there). Focus is set explicitly because jsdom, unlike a
-    // browser, does not focus a button on click.
+    // jsdom does not focus a button on click, so focus is set explicitly.
     option("b").focus();
     await act(async () => {
       fireEvent.click(option("b"));
@@ -107,10 +95,8 @@ describe("DropdownListbox keyboard access", () => {
   });
 
   it("leaves focus alone when it closes with focus outside the panel", async () => {
-    // Someone who moved focus elsewhere has already chosen where it should be,
-    // and yanking it back to the trigger would fight them. Focusing the other
-    // button is a REAL focus move, so the panel sees the blur with a
-    // relatedTarget outside itself — which is what clears the tracking.
+    // Someone who moved focus elsewhere has chosen where it should be. A real
+    // focus move gives the panel a blur whose relatedTarget is outside it.
     await open("b");
     const trigger = screen.getByRole("button", { name: "open" });
     const elsewhere = screen.getByRole("button", { name: "elsewhere" });

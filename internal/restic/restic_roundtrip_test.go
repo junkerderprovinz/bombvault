@@ -14,9 +14,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
-// resolved turns a path into the spelling restic itself will record: symlinks
-// followed, and on Windows the 8.3 short form expanded. A failure here is the
-// fixture's own problem and not the subject of any test, so it is fatal.
+// resolved returns path as restic will record it: symlinks followed and, on
+// Windows, 8.3 short names expanded.
 func resolved(t *testing.T, path string) string {
 	t.Helper()
 	real, err := filepath.EvalSymlinks(path)
@@ -26,18 +25,12 @@ func resolved(t *testing.T, path string) string {
 	return real
 }
 
-// inSnapshot turns an OS path into the spelling restic uses INSIDE a snapshot,
-// which is what the `<id>:<path>` selector of `restic dump` is matched against.
-//
-// On Linux, where BombVault actually runs, that is the path itself and this is an
-// identity. On Windows restic drops the colon and makes the drive letter the
-// first component with forward slashes: C:\\Users\\x\\src is stored as
-// /C/Users/x/src, which `restic ls` shows plainly. So a test that hands the
-// selector an OS path gets "path not found" - and that, not the 8.3 short name,
-// is why this test was red on every Windows machine for months.
-//
-// Nothing in production needs this: every DumpZip caller runs in the Linux
-// container and passes a path that is already in this form.
+// inSnapshot returns the spelling restic uses for path inside a snapshot, which
+// is what the `<id>:<path>` selector of `restic dump` is matched against. On
+// Linux that is the path itself. On Windows restic drops the colon and makes
+// the drive letter the first component, so C:\Users\x\src is stored as
+// /C/Users/x/src. DumpZip callers run in the Linux container and never need
+// this.
 func inSnapshot(path string) string {
 	if runtime.GOOS != "windows" {
 		return path
@@ -47,27 +40,17 @@ func inSnapshot(path string) string {
 	return "/" + strings.TrimSuffix(vol, ":") + rest
 }
 
-// TestRoundtrip exercises a full init → backup → restore cycle using the real
-// restic binary.  It is skipped when restic is not on PATH (local dev) and
-// runs in CI where restic is installed by the workflow.
+// TestRoundtrip runs init, backup and restore against the real restic binary.
+// It skips when restic is not on PATH.
 func TestRoundtrip(t *testing.T) {
 	if _, err := exec.LookPath("restic"); err != nil {
 		t.Skip("no restic")
 	}
 
 	ctx := context.Background()
-	// The REAL path, not the one the OS handed us. restic records the resolved
-	// path in the snapshot, and every later command is matched against that, so
-	// a test that hands restic one spelling and looks it up under another fails
-	// on a mismatch that has nothing to do with the code under test.
-	//
-	// Two operating systems do this to you, for different reasons. On Windows a
-	// profile name with spaces gives t.TempDir() the 8.3 short form
-	// (C:\Users\JUNKER~1\…), which restic expands - this test was red on every
-	// such machine for months and green in CI, so it read as a known local
-	// quirk rather than as the bug it is. On macOS /var is a symlink to
-	// /private/var and the same thing happens. EvalSymlinks settles both, and is
-	// an identity on a Linux runner.
+	// restic records the resolved path and matches every later command against
+	// it. On Windows a profile name with spaces gives t.TempDir() an 8.3 short
+	// form that restic expands, and on macOS /var is a symlink to /private/var.
 	dir := resolved(t, t.TempDir())
 	repo := filepath.Join(dir, "repo")
 	src := filepath.Join(dir, "src")
@@ -113,7 +96,6 @@ func TestRoundtrip(t *testing.T) {
 		t.Fatal("f.txt not found in dumped zip")
 	}
 
-	// Also verify snapshots listing works.
 	snaps, err := r.Snapshots(ctx, repo, m)
 	if err != nil {
 		t.Fatal("Snapshots:", err)
@@ -123,16 +105,11 @@ func TestRoundtrip(t *testing.T) {
 	}
 }
 
-// TestBackupStdinRoundtrip exercises BackupStdin → DumpRaw against the real
-// restic binary: content piped in via stdin (standing in for a zvol's
-// `zfs send` stream, Task 10 of the v8.0.0 TrueNAS platform expansion) must
-// come back byte-identical, with no local staging file at any point. This
-// verifies the restic-level mechanism genuinely works (not just its argv
-// shape) — it does NOT verify anything upstream of it: a real `zfs send`
-// stream over a real SSH connection from a real TrueNAS Scale host has never
-// been exercised (no test hardware available; see
-// internal/virshcli/zvol.go's package doc comment for the full caveat).
-// Skipped when restic is not on PATH, same as TestRoundtrip.
+// TestBackupStdinRoundtrip pipes content through BackupStdin and back out of
+// DumpRaw, as a zvol's `zfs send` stream is backed up, and expects the same
+// bytes without a staging file in between. It covers restic only; a real zfs
+// send over SSH from a TrueNAS host is untested (see the package doc in
+// internal/virshcli/zvol.go).
 func TestBackupStdinRoundtrip(t *testing.T) {
 	if _, err := exec.LookPath("restic"); err != nil {
 		t.Skip("no restic")
@@ -149,8 +126,7 @@ func TestBackupStdinRoundtrip(t *testing.T) {
 		t.Fatal("Init:", err)
 	}
 
-	// Content large enough to exercise more than a single read() from the
-	// pipe, standing in for a zfs send stream's bytes.
+	// Large enough to take more than one read from the pipe.
 	want := bytes.Repeat([]byte("zfs-send-stream-bytes-"), 4096)
 	const stdinPath = "/vm-disks/tank/vm-disk1@bombvault-snap"
 
@@ -170,17 +146,11 @@ func TestBackupStdinRoundtrip(t *testing.T) {
 		t.Fatalf("DumpRaw returned %d bytes, want %d bytes identical to what BackupStdin was given", got.Len(), len(want))
 	}
 
-	// The recorded snapshot path must be exactly the stdin-filename given — no
-	// synthesized "/stdin/..." prefix — which is what BackupStdinArgs's doc
-	// comment claims and what DumpRaw's caller (the zvol restore path) depends
-	// on. Only asserted on the actual deployment target (Linux, where an
-	// already-absolute path is stored verbatim); restic resolves a "/..."
-	// --stdin-filename through the OS's own absolute-path rules, so on Windows
-	// (this repo's dev sandbox only — BombVault never runs there) restic
-	// rewrites it under the current drive (e.g. "D:\vm-disks\..."), which is a
-	// platform quirk of local dev, not a behavior BombVault's container ever
-	// exercises. The byte-identity round-trip above (the property that
-	// actually matters) already passed on every OS.
+	// The snapshot path must be the stdin filename exactly, without a
+	// "/stdin/" prefix, because the zvol restore hands it to DumpRaw. Checked
+	// on Linux only: on Windows restic resolves the absolute --stdin-filename
+	// against the current drive ("D:\vm-disks\..."), and BombVault never runs
+	// there.
 	snaps, err := r.Snapshots(ctx, repo, m)
 	if err != nil {
 		t.Fatal("Snapshots:", err)

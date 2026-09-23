@@ -14,9 +14,7 @@ import (
 )
 
 // probeStubEngine implements only RepoOpensErr: a repo listed in opens probes
-// clean, anything else fails. Every probed repo is recorded so a test can pin
-// WHICH destination was actually contacted. All other ResticEngine methods come
-// from the embedded nil interface and must not be called on these paths.
+// clean, anything else fails. Every probed repo is recorded.
 type probeStubEngine struct {
 	ResticEngine
 	opens map[string]bool
@@ -47,7 +45,6 @@ func (e *probeFailure) Error() string {
 	return "Fatal: unable to open repository at " + e.repo + ": server response unexpected: 401 Unauthorized"
 }
 
-// newProbeSvc builds a Service over an in-memory store with a stub engine.
 func newProbeSvc(t *testing.T, opens map[string]bool) (*Service, *store.Repo, *probeStubEngine) {
 	t.Helper()
 	s, st := newSyncTestService(t)
@@ -57,10 +54,8 @@ func newProbeSvc(t *testing.T, opens map[string]bool) (*Service, *store.Repo, *p
 	return s, st, eng
 }
 
-// TestTestOffsiteTargetProbesThatTarget is the issue-#138 regression: a domain's
-// SECOND off-site destination could be broken while "Test connection" (which
-// only ever probes the PRIMARY) stayed green. Each target must now be probed on
-// its own, at its own repo.
+// The domain's test only probes the primary, so a broken second target has to
+// fail its own test.
 func TestTestOffsiteTargetProbesThatTarget(t *testing.T) {
 	const primaryRepo = "rest:http://good:8000/containers"
 	const secondRepo = "rest:http://broken:8000/containers"
@@ -79,20 +74,16 @@ func TestTestOffsiteTargetProbesThatTarget(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// The domain-level probe still reports the PRIMARY as healthy — that is the
-	// misleading green the issue described, and it stays correct for what it says.
 	reachable, initialized, err := svc.TestOffsite(context.Background(), "containers")
 	if err != nil || !reachable || !initialized {
 		t.Fatalf("primary probe = (%v, %v, %v), want reachable+initialized", reachable, initialized, err)
 	}
 
-	// Same target by id → same verdict.
 	reachable, initialized, err = svc.TestOffsiteTarget(context.Background(), primary.ID)
 	if err != nil || !reachable || !initialized {
 		t.Fatalf("per-target probe of the primary = (%v, %v, %v), want reachable+initialized", reachable, initialized, err)
 	}
 
-	// The BROKEN second destination must now fail on its own, with the reason.
 	reachable, initialized, err = svc.TestOffsiteTarget(context.Background(), second.ID)
 	if reachable || initialized {
 		t.Fatalf("a broken second destination must not report reachable/initialized, got (%v, %v)", reachable, initialized)
@@ -104,7 +95,6 @@ func TestTestOffsiteTargetProbesThatTarget(t *testing.T) {
 		t.Fatalf("the failure must name the destination that failed, got: %v", err)
 	}
 
-	// Every probe went to a repo that actually belongs to a target.
 	for _, repo := range eng.probed {
 		if repo != primaryRepo && repo != secondRepo {
 			t.Fatalf("probed an unexpected repo %q", repo)
@@ -112,9 +102,8 @@ func TestTestOffsiteTargetProbesThatTarget(t *testing.T) {
 	}
 }
 
-// TestTestOffsiteTargetUnknownID: an unknown id is an error, never a silent
-// fallback to the primary — a "test" that probed something else is exactly the
-// bug being fixed. Nothing is probed at all.
+// An unknown id is an error and probes nothing. Falling back to the primary
+// would report on a different target.
 func TestTestOffsiteTargetUnknownID(t *testing.T) {
 	svc, st, eng := newProbeSvc(t, map[string]bool{"rest:http://good:8000/containers": true})
 	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
@@ -135,9 +124,8 @@ func TestTestOffsiteTargetUnknownID(t *testing.T) {
 	}
 }
 
-// TestTestOffsiteTargetLocalPathGuidance: a target pointed at an ABSOLUTE host
-// path answers with the relative-path guidance (issue #138's original symptom)
-// instead of the raw paths sentinel, and never reaches the engine.
+// A target at an absolute host path gets the relative-path guidance instead of
+// the raw sentinel error, and the engine is never called.
 func TestTestOffsiteTargetLocalPathGuidance(t *testing.T) {
 	svc, st, eng := newProbeSvc(t, nil)
 	tgt, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
@@ -158,14 +146,12 @@ func TestTestOffsiteTargetLocalPathGuidance(t *testing.T) {
 	}
 }
 
-// TestOffsiteTargetTestRouteRegisters guards the pattern collision a new route
-// under /api/offsite/ can cause: ServeMux PANICS at registration when two
-// patterns conflict, and "POST /api/offsite/{domain}/test" sits right next to
-// the new "POST /api/offsite/targets/{id}/test". Building the real router proves
-// they coexist; the standalone mux proves the per-target pattern is the one that
-// matches (and that a normal domain still reaches the domain handler).
+// ServeMux panics when two patterns conflict, and
+// "POST /api/offsite/{domain}/test" sits next to
+// "POST /api/offsite/targets/{id}/test". The real router must build, and the
+// per-target pattern must win for its paths.
 func TestOffsiteTargetTestRouteRegisters(t *testing.T) {
-	_ = (&Handler{}).Router() // panics on a conflicting pattern
+	_ = (&Handler{}).Router()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/offsite/targets/{id}/test", func(http.ResponseWriter, *http.Request) {})
@@ -183,8 +169,6 @@ func TestOffsiteTargetTestRouteRegisters(t *testing.T) {
 	}
 }
 
-// TestHandleTestOffsiteTargetEnvelope pins the HTTP shape the SPA consumes:
-// {ok,reachable,initialized} on success, {ok:false,error} on a failing probe.
 func TestHandleTestOffsiteTargetEnvelope(t *testing.T) {
 	const repo = "rest:http://good:8000/containers"
 	svc, st, _ := newProbeSvc(t, map[string]bool{repo: true})

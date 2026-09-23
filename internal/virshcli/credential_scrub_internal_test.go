@@ -5,12 +5,6 @@ import (
 	"testing"
 )
 
-// TestLastReasonScrubsURLCredentials pins this package's copy of the
-// credential-scrub fix already applied to internal/restic/restic.go and
-// internal/api/handlers.go: this file's own doc comment claims lastReason
-// "mirrors restic's lastReason scrubbing", so it must catch a "user:pass@"
-// userinfo segment too, not just absolute paths, to actually keep that
-// parity rather than silently diverging from it.
 func TestLastReasonScrubsURLCredentials(t *testing.T) {
 	stderr := `error: Failed to connect to qemu+ssh://backupuser:Tr0ub4dor&3@storage.example.com/system: Cannot recv data`
 	got := lastReason(stderr)
@@ -25,10 +19,8 @@ func TestLastReasonScrubsURLCredentials(t *testing.T) {
 	}
 }
 
-// TestLastReasonScrubsNumericUsername mirrors the twin fix in
-// internal/restic and internal/api: credentialRe's leading-character class
-// must not require a letter, or a fully-numeric username lets its password
-// through unscrubbed.
+// credentialRe must not require a leading letter, or a numeric username lets
+// its password through.
 func TestLastReasonScrubsNumericUsername(t *testing.T) {
 	stderr := `error: Failed to connect to qemu+ssh://123456:SuperSecret@storage.example.com/system: Cannot recv data`
 	got := lastReason(stderr)
@@ -40,10 +32,7 @@ func TestLastReasonScrubsNumericUsername(t *testing.T) {
 	}
 }
 
-// TestLastReasonDoesNotEatHostPort pins that the credential scrub is scoped to
-// a real "user:pass@" userinfo segment and doesn't fire on ordinary text that
-// merely contains a colon.
-func TestLastReasonDoesNotEatHostPort(t *testing.T) {
+func TestLastReasonKeepsHostPort(t *testing.T) {
 	got := lastReason("error: unable to connect to server at 'storage.example.com:16509': Connection refused")
 	if strings.Contains(got, "[redacted]") {
 		t.Fatalf("credential scrub must not fire on a plain host:port, got %q", got)
@@ -53,9 +42,6 @@ func TestLastReasonDoesNotEatHostPort(t *testing.T) {
 	}
 }
 
-// TestLastReasonScrubsAbsolutePath is the pre-existing behavior this fix must
-// not regress: a bare host path with no credentials is still scrubbed to
-// "[path]".
 func TestLastReasonScrubsAbsolutePath(t *testing.T) {
 	got := lastReason("error: failed to open /mnt/user/domains/Windows10/vdisk1.img: Permission denied")
 	if strings.Contains(got, "/mnt/user") {

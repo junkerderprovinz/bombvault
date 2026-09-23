@@ -6,37 +6,16 @@ import { NumberField } from "./NumberField";
 import { TimePicker } from "./TimePicker";
 import { tLtr } from "../lib/ltrFragments";
 
-// ---------------------------------------------------------------------------
-// Schedule cadence builder (shared by the Plans tab and the Settings drills card)
-// ---------------------------------------------------------------------------
-
 export type CadenceMode = "off" | "daily" | "weekly" | "everyN" | "cron";
 
 /** Every mode the grammar knows, in the order the pills are rendered. */
 export const ALL_CADENCE_MODES: CadenceMode[] = ["off", "daily", "weekly", "everyN", "cron"];
 
 /**
- * EXACT_CADENCE_MODES is the set a schedule WITHOUT a last-run gate may use
- * (#166). The backend refuses `everyN` for the five OFF-SITE replication
- * schedules — see `rejectEveryNSchedules` in internal/api/handlers.go, which is
- * the single authority for both settings write paths — and for the per-item
- * overrides, see SetScheduleCadence/SetVMScheduleCadence in
- * internal/api/service.go. Those jobs have nothing to count an interval from,
- * so an everyN cadence there would silently fire daily.
- *
- * The picker used to offer all five modes everywhere regardless, so choosing
- * "Every N days" on a restricted card made the WHOLE Schedules tab unsavable
- * (one Save button PUTs the full settings object). Pass this constant wherever a
- * picker edits such a schedule, so the mode is never offered in the first place.
- *
- * As of #166 that is exactly ONE call site: ItemScheduleOverride.tsx. The five
- * off-site cadences are edited as raw text inputs in Settings.tsx rather than
- * through this component, so they have no mode list to restrict — their refusal
- * is enforced server-side only. And the drills, tamper-test and digest cards
- * deliberately do NOT pass it any more: each of those passes now stamps
- * schedule_job_runs (migration v89) and reads it back through the scheduler's
- * due-gate, so their interval is really enforced and the mode is offered and
- * saved like any other.
+ * EXACT_CADENCE_MODES leaves out everyN, for schedules that have no last-run
+ * record to count an interval from. The backend refuses everyN for them
+ * (SetScheduleCadence and SetVMScheduleCadence in internal/api/service.go),
+ * since it would fire daily.
  */
 export const EXACT_CADENCE_MODES: CadenceMode[] = ["off", "daily", "weekly", "cron"];
 
@@ -47,7 +26,7 @@ export interface CadenceState {
   time: string; // "HH:MM"
   weekdays: string[]; // subset of WEEKDAYS, for weekly
   intervalDays: number; // for everyN
-  cron: string; // raw 5-field cron expression, for cron (#107)
+  cron: string; // raw 5-field cron expression, for cron
 }
 
 export const DEFAULT_CADENCE: CadenceState = {
@@ -73,37 +52,26 @@ export function buildCadenceString(s: CadenceState): string {
     case "everyN":
       return `everyN ${Math.max(1, s.intervalDays)} ${s.time}`;
     case "cron":
-      // The raw expression IS the cadence string — the backend's ParseCadence
-      // accepts any 5-field cron verbatim. Callers only emit this when the
-      // expression validates (see CadenceBuilder's update()).
+      // The backend's ParseCadence accepts any 5-field cron verbatim.
+      // CadenceBuilder's update() only emits this when the expression validates.
       return s.cron.trim();
   }
 }
 
-// prettyTime turns "HH:MM" into "H:MM" (drops a leading zero on the hour), e.g.
-// "04:00" -> "4:00".
+// prettyTime drops the leading zero of the hour: "04:00" -> "4:00".
 function prettyTime(hhmm: string): string {
   const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm);
   return m ? `${parseInt(m[1], 10)}:${m[2]}` : hhmm;
 }
 
-// WEEKDAY_OFFSET maps the stored English abbreviation to a day-of-month in the
-// first week of January 2024. 2024-01-01 is a MONDAY, so day 1 = Mon … day 7 =
-// Sun. (The previous reference, 2024's predecessor, started on a Sunday, which
-// shifted every label back by one — a Sunday schedule read as "Sat".)
+// WEEKDAY_OFFSET maps the stored English abbreviation to a day of January 2024,
+// which starts on a Monday.
 const WEEKDAY_OFFSET: Record<string, number> = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 };
 
 // localizedWeekday renders a stored English 3-letter weekday in the given
 // language's short form via Intl (e.g. "Mon" -> "Mo." in de), falling back to the
-// stored abbreviation.
-//
-// timeZone: "UTC" is load-bearing, not tidiness. The reference date is built with
-// Date.UTC, so it is midnight UTC; formatting it in the VIEWER's zone shifts it
-// backwards by the offset anywhere west of UTC, and midnight minus a few hours
-// is the previous day. A Wednesday schedule therefore read as "Tue" for anyone
-// in the Americas while being correct in Europe, which is why it went unnoticed
-// here for so long (#183, kramttocs). Formatted in UTC, the date means the same
-// day in every zone.
+// stored abbreviation. The reference date is midnight UTC, so it is formatted in
+// UTC; in the viewer's zone it would fall on the previous day west of UTC.
 function localizedWeekday(abbr: string, lang: string): string {
   const off = WEEKDAY_OFFSET[abbr];
   if (!off) return abbr;
@@ -136,12 +104,11 @@ export function formatCadence(raw: string, t: CadenceT, lang: string): string {
       return t("cadence.fmtWeekly").replace("{days}", days).replace("{time}", time);
     }
     case "everyN":
-      // "every 1 day" reads oddly — an interval of 1 is just daily.
+      // An interval of 1 is just daily.
       if (s.intervalDays <= 1) return t("cadence.fmtDaily").replace("{time}", time);
-      return t("cadence.fmtEveryN").replace("{n}", String(s.intervalDays)).replace("{time}", time);
+      return t("cadence.fmtEveryN", s.intervalDays).replace("{time}", time);
     case "cron":
-      // A raw expression has no natural prose form — show it verbatim with a
-      // "cron:" prefix so schedule summaries stay recognizable.
+      // A raw expression has no prose form, so it is shown verbatim.
       return t("cadence.fmtCron").replace("{expr}", s.cron);
   }
 }
@@ -168,11 +135,9 @@ export function parseCadenceString(raw: string): CadenceState {
     return { ...DEFAULT_CADENCE, mode: "everyN", time: everyNM[2], intervalDays: parseInt(everyNM[1], 10) };
   }
 
-  // Anything else is a raw cron cadence (the backend accepts any 5-field cron
-  // verbatim, #107). Preserve the string EXACTLY — mapping it to "off" here
-  // would silently destroy a stored schedule the moment the builder re-emits.
-  // Even a string our validator dislikes is kept: the cron editor then shows
-  // it with an inline error instead of eating it.
+  // Anything else is kept verbatim as a raw cron cadence, so re-emitting it
+  // never destroys a stored schedule. A string the validator rejects is kept
+  // too; the cron editor shows it with an inline error.
   return { ...DEFAULT_CADENCE, mode: "cron", cron: s };
 }
 
@@ -205,6 +170,7 @@ const CRON_EXAMPLES = [
   { expr: "0 3 1 * *", key: "cadence.cronExMonthly" },
 ] as const;
 
+/** Edits a stored cadence string with mode pills and the fields each mode needs. */
 export function CadenceBuilder({
   label,
   value,
@@ -216,56 +182,31 @@ export function CadenceBuilder({
   label: string;
   value: string;
   disabled?: boolean;
-  /**
-   * Which modes this call site may offer. Defaults to ALL_CADENCE_MODES, so the
-   * schedules whose backend accepts everyN are untouched; pass
-   * EXACT_CADENCE_MODES where it doesn't (#166).
-   */
+  /** Modes this call site offers. Defaults to ALL_CADENCE_MODES. */
   modes?: CadenceMode[];
   onChange: (v: string) => void;
-  /** Rainbow position for the TimePicker rendered inside (Task 3, jdp
-   *  live-review: "Der Zeitpicker ist nicht im Regenbogenmodus" — the
-   *  TimePicker always accepted an optional `hueIndex` but this, its one
-   *  real call site, never actually passed one through, so the popover's
-   *  selected-hour/-minute highlight always fell back to the flat accent
-   *  even in rainbow mode). Every caller of THIS component passes the SAME
-   *  `hueIndex` its own enclosing `<Card hueIndex={...}>` already receives
-   *  (see each call site in Settings.tsx), so the TimePicker inside reads as
-   *  part of the same coloured group as the Card around it rather than
-   *  falling back to the flat accent. The live statement of that contract is
-   *  the Backup Everything card's own convention-pass note in Settings.tsx,
-   *  which spells out what threading a Card's index into this component buys.
-   *  (This used to cite "SaveBar's own `hueIndex` doc" as the precedent —
-   *  that prop and its doc were deleted as dead plumbing in the same
-   *  Speichern-button sweep, so the cross-reference pointed at nothing.) */
+  /** Rainbow position for the TimePicker inside. Callers pass the `hueIndex`
+   *  of the Card around them, so the picker takes the card's colour. */
   hueIndex?: number;
 }) {
   const { t, lang } = useT();
   const [state, setState] = useState<CadenceState>(() => parseCadenceString(value));
 
   const allowed = modes ?? ALL_CADENCE_MODES;
-  // Legacy-value guard, mirroring parseCadenceString's cron-preservation
-  // rationale: a value already stored out-of-band (a settings import from an
-  // older build, a hand-edited DB) keeps its own pill for this instance, so it
-  // is DISPLAYED rather than silently rewritten by the first onChange. Once the
-  // user moves off it the pill goes away, because there is nothing to preserve
-  // any more.
+  // A stored mode outside `allowed`, such as an everyN value from an import,
+  // keeps its pill so it is displayed rather than rewritten. The pill goes once
+  // the user picks another mode.
   const offered = ALL_CADENCE_MODES.filter((m) => allowed.includes(m) || m === state.mode);
 
-  // Re-parse when the stored value changes externally (e.g. after load or sync checkbox)
+  // The stored value can change from outside, for example once settings load.
   useEffect(() => {
     setState(parseCadenceString(value));
   }, [value]);
 
-  // update() derives the next state from the CURRENT render's `state`, not from
-  // a setState updater callback. The parent notification must stay OUT of an
-  // updater: React runs those during render, so calling the parent's onChange
-  // (a setState on another component) from inside one is a
-  // "Cannot update a component while rendering a different component"
-  // violation, and StrictMode's double-invoke fired it twice per click. Every
-  // caller here is a discrete user event (one Selector/input change per event),
-  // so the closure's `state` is the latest — the same assumption toggleWeekday
-  // below already makes when it reads state.weekdays.
+  // update() builds the next state from this render's `state` rather than in a
+  // setState updater, because it calls the parent's onChange and React runs
+  // updaters during render. Every caller is a discrete user event, so `state`
+  // is current.
   function update(patch: Partial<CadenceState>) {
     let next = { ...state, ...patch };
     // Entering cron mode with no expression yet: prefill the equivalent of
@@ -286,7 +227,6 @@ export function CadenceBuilder({
     const next = current.includes(day)
       ? current.filter((d) => d !== day)
       : [...current, day];
-    // Always keep at least one weekday selected
     if (next.length === 0) return;
     update({ weekdays: next });
   }
@@ -295,104 +235,20 @@ export function CadenceBuilder({
     "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 glim-field-focus-well disabled:opacity-50";
 
   return (
-    // A <fieldset> — not opacity — carries the disabled state: it natively
-    // disables every nested button/input (they match the :disabled CSS
-    // pseudo-class without each one needing its own `disabled` prop wired
-    // through), so no pointer-events-none hack is needed either. Rule 15
-    // rules out opacity on a CONTAINER (it composites the whole subtree);
-    // each interactive element below dims itself individually instead via
-    // its own `disabled:opacity-50` — the same per-control pattern the
-    // switch/button controls elsewhere in this app already use.
-    //
-    // `group` + `group-disabled:opacity-50` extends that same per-element
-    // dimming to the plain text nodes here (the <legend>, sub-labels, and
-    // preview/error text) — they are not "listed" form elements, so
-    // fieldset[disabled] alone leaves them at full brightness next to the
-    // now-dimmed controls. The selector is a plain CSS descendant match, so
-    // it also reaches CronEditor's own text below without threading a
-    // `disabled` prop through that child.
+    // The fieldset disables every nested control natively. Opacity on the
+    // container would composite the whole subtree, so each control dims itself
+    // with `disabled:opacity-50`, and plain text, which fieldset[disabled] does
+    // not reach, uses `group-disabled:opacity-50`.
     <fieldset disabled={disabled} className="group flex min-w-0 flex-col gap-3 border-0 m-0 p-0">
-      {/* The label doubles as the fieldset's accessible name via <legend> —
-          a bare leading <span> left the group unnamed in the a11y tree.
-            Live-review round 5 (jdp, correcting a misread of an earlier
-          request: "Den Text in die Cardtitelbadges wieder einfügen, den habe
-          ich nicht gemeint. Den 'Titeltext' aus der Zeitplancard [entfernen].
-          Siehe Screenshot. Das ist es, das Wort 'Container'."): every one of
-          this component's callers wraps it in its own Card, and that Card's
-          `title` names the exact same domain one level up (e.g. "Container")
-          — this <legend> then repeated that same word again, in plain grey
-          text, directly above the schedule pills. jdp's screenshot showed
-          THIS plain-text repeat, not the Card's own heading badge (a
-          previous round misread the complaint and removed the Card's
-          `title` instead, which is reverted separately — see each
-          ContainersSection/VMsSection/FlashSection/FilesSection/
-          RestoreChecksSection Card in Settings.tsx).
-            `sr-only` (Tailwind's built-in visually-hidden utility — clips to
-          a 1px box, not `display:none`/`visibility:hidden`, so screen
-          readers still read it) rather than deleting the element outright:
-          a fieldset's accessible name comes from its <legend>, and nothing
-          else in this component names the group (no aria-label on the
-          fieldset itself) — removing this entirely would leave the fieldset
-          unnamed in the a11y tree again, the exact regression this
-          <legend> was originally added to fix (see this file's own commit
-          history / the paragraph above). Visually hiding it keeps the
-          accessible name intact for screen-reader users while sighted users
-          see the word exactly once (the Card's own heading badge above),
-          not twice.
-            The `mb-3` spacing compensation this <legend> used to provide
-          (a <legend> renders in its own out-of-flow box, never as a flex
-          item, so the fieldset's own `gap-3` never reached it) is now moot:
-          an `sr-only` element is clipped to a 1x1px box removed from normal
-          flow-affecting layout, so it no longer displaces the row below it
-          either way — verified live, no gap regression at any of this
-          component's call sites. */}
+      {/* The legend is the fieldset's accessible name. It is visually hidden
+          because every caller's Card title already shows the same word. */}
       <legend className="sr-only">
         {label}
       </legend>
 
-      {/* Mode pills — the shared Selector component (GlimStone form-engine
-          Phase 2, Task 3). Disabling still comes from the ancestor
-          <fieldset disabled> above, not a prop here: Selector renders real
-          <button> elements, which a native fieldset already disables
-          regardless of the wrapping <div> between them.
-          `variant="well"` with NO `equalWidth` — the SMALL scale of the app's
-          one grooved horizontal selector (round 7 escalation, jdp: "Du hast
-          keinen richtigen horizontalen Selektor gemacht!" — the plain-chip-
-          plus-`raised` treatment this used to carry, even with its idle fill
-          bumped a shade deeper, still read as loose separate buttons next to
-          the page's big pickers, not as one real Selector control). Every
-          call site of THIS component wraps it in its own `rounded-card
-          bg-carbon-surface2 p-4` well (see each Settings.tsx caller, and
-          ItemScheduleOverride.tsx's own `p-3` variant of it) — which is
-          exactly why round 7's first cut read as nothing at all here: it
-          painted the groove `bg-carbon-surface2`, the literal same token as
-          that wrapper, so the enclosure was invisible on every schedule
-          card. The groove is `bg-carbon-surface3` now — the same depth
-          `inputCls` below already puts this component's own time/number/cron
-          fields at, inside this same well — so the mode row reads as a real
-          nested control whether it sits in a surface2 well like this one or
-          directly on a Card like NotifyCard's "on" row. The wrapper stays:
-          it is what anchors the time picker, weekday row, interval field,
-          cron editor and preview text as one group, and `inputCls`'s own
-          `glim-field-focus-well` focus treatment is specified against a
-          surface2 well — the variant, not the caller, is what moved.
-            Round 8 (jdp: "Die kleinen Selektoren sollen so aussehen wie die
-          grossen! Die nicht ausgewaehlten Optionen sollen kein Badge sein")
-          then removed the separate "track" variant this used to name: idle
-          segments are transparent against the groove here now, exactly as in
-          the Theme/Shape/Motion pickers, and the only real difference left
-          between the two scales is the pinned width/height — which is
-          `equalWidth`, which this call site simply does not pass. See
-          Selector.tsx's own file header item 6 for the full writeup. */}
+      {/* `variant="well"` without `equalWidth` is the small scale of the
+          grooved selector; see Selector.tsx. */}
       <Selector
-        // `offered` = the caller's allow-list plus the stored value itself, so a
-        // legacy everyN is still displayed rather than silently rewritten (#166).
-        // The drill, tamper-test and digest cards no longer restrict anything:
-        // those three now record when their pass last ran
-        // (internal/store/schedule_job_runs.go, migration v89), so the interval is
-        // genuinely enforced and the API accepts the mode. The allow-list survives
-        // for the one call site where everyN remains unenforceable: the per-item
-        // overrides, which have no per-item last-run fact to count from.
         items={offered.map((m) => ({
           id: m,
           label:
@@ -413,29 +269,14 @@ export function CadenceBuilder({
         variant="well"
       />
 
-      {/* Say WHY a mode is missing rather than leaving a silent gap (#166): a
-          user who used "Every N days" on another card and cannot find it here
-          otherwise has no way to tell whether it's absent on purpose or broken.
-          Keyed off the caller's allow-list, not `offered`, so it still explains
-          itself while a legacy everyN value is being displayed. Since the drill,
-          tamper-test and digest cards stopped restricting the mode, the per-item
-          override box is the one picker that still renders this — the one place
-          everyN genuinely stays unenforceable. */}
+      {/* Explains a missing Every N days, which a user may know from another
+          card. Keyed off `allowed` rather than `offered`, so it also shows
+          while a stored everyN value is displayed. */}
       {!allowed.includes("everyN") && (
         <p className="text-xs text-carbon-textMuted group-disabled:opacity-50">{t("cadence.everyNUnavailable")}</p>
       )}
 
-      {/* Time picker — shown for all non-off modes except cron (the expression
-          carries its own times). Formerly a native `<input type="time">`;
-          replaced by the shared TimePicker component (GlimStone form-engine,
-          new standard component — jdp, live-review: "einen schönen Stunden-
-          und Minuten-Picker... damit man es nicht manuell eintippen muss").
-          Same "HH:MM" string wired straight into `update({ time })` as
-          before — only the input UI changed, CadenceState's own data model
-          didn't. Disabling still comes from the ancestor `<fieldset
-          disabled>` alone (a real `<button>` trigger, same as every other
-          disabled-aware control in this fieldset), no separate `disabled`
-          prop needed here. */}
+      {/* A cron expression carries its own times. */}
       {state.mode !== "off" && state.mode !== "cron" && (
         <div className="flex items-center gap-3">
           <label className="text-xs text-carbon-textMuted w-16 group-disabled:opacity-50">{t("cadence.time")}</label>
@@ -448,15 +289,7 @@ export function CadenceBuilder({
         </div>
       )}
 
-      {/* Weekly: weekday multi-select — select="many" (toggling a day never
-          replaces the others, "at least one" is still enforced by
-          toggleWeekday itself, unchanged). `variant="well"`, not `raised`,
-          for the same round-7 reason as the mode pills above — kept on the
-          same variant so the two Selector rows inside one CadenceBuilder
-          instance read as one family, not one grooved control sitting
-          directly above a leftover plain-raised-chip one. Unpinned like the
-          mode row (no `equalWidth`); `size="sm"` is the only thing that
-          makes this the tighter of the two. */}
+      {/* Same variant as the mode pills, so the two rows read as one family. */}
       {state.mode === "weekly" && (
         <div className="flex items-center gap-2 flex-wrap">
           <label className="text-xs text-carbon-textMuted w-16 group-disabled:opacity-50">{t("cadence.days")}</label>
@@ -472,7 +305,6 @@ export function CadenceBuilder({
         </div>
       )}
 
-      {/* Every N days: number input */}
       {state.mode === "everyN" && (
         <div className="flex items-center gap-3">
           <label className="text-xs text-carbon-textMuted w-16 group-disabled:opacity-50">{t("cadence.every")}</label>
@@ -489,9 +321,8 @@ export function CadenceBuilder({
         </div>
       )}
 
-      {/* Cron: raw 5-field expression with validation, next-fire preview and
-          clickable examples (#107). The backend stays the validity authority —
-          this only pre-checks the grammar it is known to accept. */}
+      {/* The backend decides validity; this only pre-checks the grammar it
+          accepts. */}
       {state.mode === "cron" && (
         <CronEditor
           value={state.cron}
@@ -502,30 +333,8 @@ export function CadenceBuilder({
         />
       )}
 
-      {/* The plain one-line preview that used to sit here is GONE (jdp,
-          live-review, with a screenshot of a schedule card showing the green
-          badge "Täglich um 02:00" above the card and the line "täglich um
-          2:00 Uhr" inside it: "Bei den ganzen Zeitplänen den Text in der
-          Auswahlcard entfernen. Das wird ja über der Card schon als grüner
-          Badge angezeigt. Ist redundant.").
-            It said the same thing as the resolved-schedule badge above the
-          card, only in the sentence-cased prose grammar (`formatCadence`)
-          instead of the badge's short one (`cadenceLabel`) — two renderings
-          of one value, ~40px apart.
-            Deleting it here is only correct because EVERY call site now has
-          that badge: the four domain Cards and Selbst-Backup already did;
-          Restore-Prüfungen, Wochenbericht and Wiederherstellungs-Prüfplan had
-          nothing above them and got one this round; ItemScheduleOverride's own
-          plain-text summary became the same badge. See ScheduleBadge.tsx
-          (ScheduleRow) — the row is one shared component now precisely so a
-          future cadence editor can't be added without it and quietly lose the
-          only place its resolved schedule was shown.
-            CRON KEEPS ITS OWN PREVIEW, deliberately: CronEditor's "next
-          fires" list below shows upcoming fire TIMES ("24 Jul 2026, 18:00,
-          …"), which no badge anywhere renders — genuinely more information,
-          not a second copy of the same string. That is why this removal was
-          scoped to the non-cron branch's paragraph only, and why `lang` is
-          still threaded down into CronEditor. */}
+      {/* No prose preview: every caller shows the cadence in a ScheduleRow
+          badge above the card. Only cron lists its next fire times. */}
     </fieldset>
   );
 }
@@ -558,9 +367,9 @@ function CronEditor({
 }) {
   const trimmed = value.trim();
   const valid = trimmed !== "" && isValidCronExpression(trimmed);
-  // The preview must never be WRONG: nextCronFires only evaluates the grammar
-  // subset it fully understands, and when it cannot produce at least two fire
-  // times we degrade to a plain "valid expression" note instead of guessing.
+  // nextCronFires only evaluates the grammar subset it fully understands. With
+  // fewer than two fire times the editor says "valid expression" rather than
+  // guessing.
   const fires = valid ? nextCronFires(trimmed, 3) : null;
 
   return (
@@ -592,7 +401,6 @@ function CronEditor({
         <p className="text-xs text-carbon-textSub group-disabled:opacity-50">{t("cadence.cronValid")}</p>
       )}
 
-      {/* Quick help — clickable examples that fill the input. */}
       <div className="flex flex-col gap-1">
         <span className="text-xs text-carbon-textMuted group-disabled:opacity-50">{t("cadence.cronExamples")}</span>
         {CRON_EXAMPLES.map((ex) => (

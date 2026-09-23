@@ -5,9 +5,8 @@ import (
 	"testing"
 )
 
-// TestParseDependsOn pins the three compose depends_on encodings (JSON object,
-// colon-suffixed list, plain list) plus the empty/absent cases. parseDependsOn is
-// unexported, so this lives in an internal (package api) test.
+// Compose writes depends_on as a JSON object, a colon-suffixed list or a plain
+// list.
 func TestParseDependsOn(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -65,8 +64,7 @@ func TestParseDependsOn(t *testing.T) {
 	}
 }
 
-// TestStackStartOrder verifies the topological start order (deps start first) and
-// the cycle fallback to enumeration order.
+// Dependencies start first, and a cycle falls back to enumeration order.
 func TestStackStartOrder(t *testing.T) {
 	// a depends_on b, b depends_on c, c none. Enumeration order is a,b,c;
 	// dependency order must be c,b,a.
@@ -85,7 +83,7 @@ func TestStackStartOrder(t *testing.T) {
 		t.Fatalf("start order = %v, want %v", gotNames, want)
 	}
 
-	// External deps are ignored (dep on a service that is not a member).
+	// A dependency on a service outside the stack is ignored.
 	ext := []stackMember{
 		{name: "x", service: "x", deps: []string{"not-in-stack"}},
 		{name: "y", service: "y"},
@@ -111,8 +109,8 @@ func TestStackStartOrder(t *testing.T) {
 		seen[i] = true
 	}
 
-	// Diamond: d depends_on b + c, both depend_on a. Any valid order must place a
-	// before b/c and b/c before d (exact positions of b vs c don't matter).
+	// Diamond: d depends on b and c, both depend on a. The order of b and c does
+	// not matter.
 	diamond := []stackMember{
 		{name: "d", service: "d", deps: []string{"b", "c"}},
 		{name: "b", service: "b", deps: []string{"a"}},
@@ -121,8 +119,7 @@ func TestStackStartOrder(t *testing.T) {
 	}
 	assertDepsBeforeDependents(t, diamond, stackStartOrder(diamond))
 
-	// Duplicate service label (compose replicas): two members share service "web",
-	// and "app" depends_on "web" — so BOTH web members must start before app.
+	// Compose replicas share the service "web", so both start before "app".
 	dup := []stackMember{
 		{name: "web-1", service: "web"},
 		{name: "web-2", service: "web"},

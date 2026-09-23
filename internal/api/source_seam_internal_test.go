@@ -8,10 +8,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestOffsiteSourceParsing pins the pure source-string helpers: the predicate,
-// the id extractor and the plausible-id guard. These are the single seam every
-// call site uses instead of comparing the literal "offsite", so an "offsite:<id>"
-// flows through unchanged.
+// Call sites use these helpers instead of comparing against the literal
+// "offsite", so "offsite:<id>" works everywhere.
 func TestOffsiteSourceParsing(t *testing.T) {
 	cases := []struct {
 		source    string
@@ -35,8 +33,8 @@ func TestOffsiteSourceParsing(t *testing.T) {
 		}
 	}
 
-	// validOffsiteTargetID accepts a store.newID-shaped lowercase-hex token and
-	// rejects empty / over-long / non-hex input.
+	// validOffsiteTargetID accepts a lowercase hex token like store.newID makes
+	// and rejects empty, over-long and non-hex input.
 	idOK := []string{"a", "deadbeef", "0123456789abcdef0123456789abcdef"}
 	idBad := []string{"", "ABC123", "xyz", "dead-beef", "g", string(make([]byte, 65))}
 	for _, id := range idOK {
@@ -73,7 +71,7 @@ func TestNormalizeSource(t *testing.T) {
 	}
 }
 
-// newSourceSeamStore spins up a migrated in-memory store for the resolver tests.
+// newSourceSeamStore returns a migrated in-memory store.
 func newSourceSeamStore(t *testing.T) *store.Repo {
 	t.Helper()
 	db, err := store.Open(":memory:")
@@ -131,15 +129,13 @@ func TestOffsiteTargetForSource(t *testing.T) {
 	}
 }
 
-// TestRepoForOffsiteByteIdentical is the backward-compat guard: bare "offsite"
-// resolves to the SAME repo as a backfilled single-target install's legacy
-// column, and per-id addressing picks the matching target's repo.
-func TestRepoForOffsiteByteIdentical(t *testing.T) {
+// On a backfilled single-target install, bare "offsite" resolves to the same
+// repo as the legacy settings column, and "offsite:<id>" to that target's repo.
+func TestRepoForOffsiteMatchesLegacyColumn(t *testing.T) {
 	st := newSourceSeamStore(t)
 	s := &Service{store: st}
 
-	// A backfilled N=1 install: one enabled target whose Repo equals the legacy
-	// Settings column (this is exactly what the stage-1 backfill produces).
+	// The backfill leaves one enabled target whose Repo equals the legacy column.
 	primary, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
 		Domain: "containers", Name: "Primary", Repo: "s3:offsite-primary", Enabled: true, SortOrder: 0,
 	})
@@ -148,8 +144,7 @@ func TestRepoForOffsiteByteIdentical(t *testing.T) {
 	}
 	settings := store.Settings{ContainersOffsite: "s3:offsite-primary"}
 
-	// Bare "offsite" resolves to the primary repo (a remote repo passes through
-	// resolveRepo verbatim, so this is the literal repo string).
+	// A remote repo passes through resolveRepo unchanged.
 	bare, err := s.repoFor(settings, "containers", "offsite")
 	if err != nil {
 		t.Fatalf("repoFor(offsite): %v", err)
@@ -158,8 +153,7 @@ func TestRepoForOffsiteByteIdentical(t *testing.T) {
 		t.Fatalf("repoFor(offsite) = %q, want s3:offsite-primary", bare)
 	}
 
-	// And it must equal what a rows-less legacy install resolves to — the property
-	// that keeps existing installs byte-identical.
+	// An install without target rows resolves to the same repo.
 	stLegacy := newSourceSeamStore(t)
 	sLegacy := &Service{store: stLegacy}
 	legacy, err := sLegacy.repoFor(settings, "containers", "offsite")
@@ -170,7 +164,6 @@ func TestRepoForOffsiteByteIdentical(t *testing.T) {
 		t.Fatalf("legacy repoFor(offsite) = %q, backfilled = %q; must be identical", legacy, bare)
 	}
 
-	// "offsite:<primaryID>" resolves to the same repo.
 	byID, err := s.repoFor(settings, "containers", "offsite:"+primary.ID)
 	if err != nil {
 		t.Fatalf("repoFor(offsite:<primary>): %v", err)
@@ -179,8 +172,8 @@ func TestRepoForOffsiteByteIdentical(t *testing.T) {
 		t.Fatalf("repoFor(offsite:<primary>) = %q, want s3:offsite-primary", byID)
 	}
 
-	// A second target: its id resolves to its own repo, while bare "offsite" still
-	// resolves to the primary (first enabled).
+	// A second target's id resolves to its own repo, while bare "offsite" stays
+	// on the primary.
 	second, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
 		Domain: "containers", Name: "Second", Repo: "s3:offsite-second", Enabled: true, SortOrder: 1,
 	})
@@ -202,12 +195,10 @@ func TestRepoForOffsiteByteIdentical(t *testing.T) {
 		t.Fatalf("repoFor(offsite) after adding a 2nd target = %q, want the primary s3:offsite-primary", stillPrimary)
 	}
 
-	// Nothing configured → the caller's "no such repo" error (unchanged contract).
 	if _, err := s.repoFor(store.Settings{}, "vms", "offsite"); err == nil {
 		t.Fatal("repoFor(offsite) with nothing configured should error")
 	}
-	// A non-offsite source selects the local branch (no off-site parsing): a
-	// remote local path passes straight through resolveRepo unchanged.
+	// A local source takes the local path, even when that path is a remote.
 	if got, err := s.repoFor(store.Settings{VMsPath: "s3:vms-local"}, "vms", "local"); err != nil || got != "s3:vms-local" {
 		t.Fatalf("repoFor(local) = %q, err=%v; want s3:vms-local", got, err)
 	}

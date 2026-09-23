@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-// writeCacheSubdir creates a fake per-repo cache subdir of the given size whose
-// newest file mtime is `used` — the LRU signal trimCacheDirLRU sorts on.
+// writeCacheSubdir creates a per-repo cache subdir of the given size whose
+// newest mtime is used, the signal trimCacheDirLRU sorts on.
 func writeCacheSubdir(t *testing.T, base, name string, size int, used time.Time) string {
 	t.Helper()
 	dir := filepath.Join(base, name)
@@ -19,8 +19,7 @@ func writeCacheSubdir(t *testing.T, base, name string, size int, used time.Time)
 	if err := os.WriteFile(f, make([]byte, size), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	// Pin every path's mtime (file AND dirs) so the walk's newest-mtime is `used`
-	// regardless of filesystem timestamp granularity.
+	// Pin the directories too: measureDir starts from the root's own mtime.
 	for _, p := range []string{f, filepath.Join(dir, "data"), dir} {
 		if err := os.Chtimes(p, used, used); err != nil {
 			t.Fatal(err)
@@ -29,10 +28,9 @@ func writeCacheSubdir(t *testing.T, base, name string, size int, used time.Time)
 	return dir
 }
 
-// TestTrimCacheDirLRUEvictsOldestFirst pins the eviction policy: subdirs go
-// least-recently-used first, only until the total fits the limit, and the most
-// recently used subdir survives even when it alone exceeds the limit (it most
-// likely belongs to a currently-running or just-finished op).
+// TestTrimCacheDirLRUEvictsOldestFirst: subdirs go least recently used first
+// and only until the total fits. The most recently used one survives even when
+// it alone exceeds the limit.
 func TestTrimCacheDirLRUEvictsOldestFirst(t *testing.T) {
 	base := t.TempDir()
 	now := time.Now()
@@ -40,7 +38,7 @@ func TestTrimCacheDirLRUEvictsOldestFirst(t *testing.T) {
 	middle := writeCacheSubdir(t, base, "repo-middle", 4096, now.Add(-48*time.Hour))
 	newest := writeCacheSubdir(t, base, "repo-newest", 4096, now.Add(-1*time.Hour))
 
-	// Limit fits two subdirs: only the oldest must be evicted.
+	// The limit fits two subdirs.
 	trimCacheDirLRU(base, 9000)
 
 	if _, err := os.Stat(oldest); !os.IsNotExist(err) {
@@ -52,8 +50,7 @@ func TestTrimCacheDirLRUEvictsOldestFirst(t *testing.T) {
 		}
 	}
 
-	// Limit smaller than any single subdir: everything except the most recently
-	// used one is evicted — the hottest cache is never deleted.
+	// A limit below any single subdir leaves only the most recently used one.
 	trimCacheDirLRU(base, 1024)
 	if _, err := os.Stat(middle); !os.IsNotExist(err) {
 		t.Fatalf("middle subdir should have been evicted, stat err = %v", err)
@@ -63,8 +60,6 @@ func TestTrimCacheDirLRUEvictsOldestFirst(t *testing.T) {
 	}
 }
 
-// TestTrimCacheDirLRUUnderLimitIsNoOp ensures a cache within its budget is left
-// completely untouched.
 func TestTrimCacheDirLRUUnderLimitIsNoOp(t *testing.T) {
 	base := t.TempDir()
 	a := writeCacheSubdir(t, base, "repo-a", 1024, time.Now().Add(-24*time.Hour))

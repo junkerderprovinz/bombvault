@@ -6,11 +6,10 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestListTargetsScheduleOrder pins the #95 anti-starvation ordering: a scheduled
-// run must visit never-backed-up targets first, then the least-recently
-// successfully backed-up, then alphabetically — so a slow or interrupted run can
-// never perpetually starve the same alphabetical tail. Only a SUCCESSFUL backup run
-// counts as "backed up"; a failed run leaves the target in the never-backed-up head.
+// A scheduled run visits never-backed-up targets first, then the oldest
+// successful backup, then alphabetically, so an interrupted run cannot starve
+// the same alphabetical tail every time. Only a successful run counts as a
+// backup.
 func TestListTargetsScheduleOrder(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -27,8 +26,6 @@ func TestListTargetsScheduleOrder(t *testing.T) {
 		ids[n] = tg.ID
 	}
 
-	// seedSuccess records a successful backup and back-dates its finished_at so the
-	// ordering by "oldest success first" is testable deterministically.
 	seedSuccess := func(id string, finishedAt int64) {
 		runID, err := r.StartRun(id, "backup")
 		if err != nil {
@@ -45,7 +42,7 @@ func TestListTargetsScheduleOrder(t *testing.T) {
 	seedSuccess(ids["charlie"], 1000) // oldest successful backup
 	seedSuccess(ids["alpha"], 9000)   // most recent successful backup
 
-	// delta has ONLY a failed run — it must still count as never-backed-up.
+	// delta has only a failed run, so it still counts as never backed up.
 	fr, err := r.StartRun(ids["delta"], "backup")
 	if err != nil {
 		t.Fatalf("StartRun(delta): %v", err)
@@ -64,8 +61,6 @@ func TestListTargetsScheduleOrder(t *testing.T) {
 		order = append(order, tg.ContainerName)
 	}
 
-	// never-backed-up first (bravo, delta — alphabetical among them), then by oldest
-	// success (charlie at t=1000 before alpha at t=9000).
 	want := []string{"bravo", "delta", "charlie", "alpha"}
 	if len(order) != len(want) {
 		t.Fatalf("schedule order = %v, want %v", order, want)
@@ -76,8 +71,7 @@ func TestListTargetsScheduleOrder(t *testing.T) {
 		}
 	}
 
-	// The UI list (ListTargets) must remain strictly alphabetical — the schedule
-	// ordering is scoped to the scheduler and must not have leaked into it.
+	// ListTargets feeds the UI and stays alphabetical.
 	ui, err := r.ListTargets()
 	if err != nil {
 		t.Fatalf("ListTargets: %v", err)

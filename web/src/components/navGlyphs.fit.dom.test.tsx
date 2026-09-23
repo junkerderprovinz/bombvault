@@ -1,40 +1,13 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// One sizing rule for every imported glyph ([242], [267], [281], [285], [316]).
+// Imported artwork uses its viewBox very differently (Font Awesome fills it,
+// Tabler pads two units on every side), so each glyph's viewBox is cropped to
+// its measured ink and squared, and preserveAspectRatio scales the longer side
+// to fill the box. The crop is recomputed here rather than snapshotted,
+// because a wrong crop still renders, just at the wrong size.
 //
-// Five rounds of jdp looking at icons that were all in identically-sized boxes
-// and reporting, correctly every time, that some of them were bigger than
-// others. The rule that came out of it:
-//
-//   What the eye compares is a glyph's INK, not its box. Imported artwork
-//   varies wildly in how much of its own viewBox it uses — Font Awesome fills
-//   its box edge to edge, Tabler pads by two units on all four sides — so a
-//   set assembled from several sources arrives on screen at several sizes
-//   unless something normalises it.
-//
-// The normaliser is a viewBox cropped to the measured ink and squared off.
-// `preserveAspectRatio="xMidYMid meet"` (the default) then scales each drawing
-// until its longer side fills the box, leaving the aspect ratio alone. Square
-// rather than tight on both axes for exactly that reason: a tight rectangle
-// would stretch a wide glyph to the height of a tall one.
-//
-// What is pinned here, and why each part:
-//
-//   1. The cropped box is RECOMPUTED from the measured ink, not snapshotted.
-//      A viewBox that merely differs from the source's proves nothing — a
-//      wrong crop renders perfectly well, just at the wrong size.
-//   2. Every one of them is square. This is the whole aspect-ratio guarantee,
-//      and it is one multiplication away from being silently wrong.
-//   3. The off-site tab and the off-site control carry the identical box.
-//      Those two drifted apart once already.
-//
-// The ink boxes below are MEASUREMENTS, taken with getBBox on the real markup
-// in a browser. They are deliberately not derived from any viewBox: a path's
-// drawn extent and its viewBox have no necessary relationship, and two of the
-// source files carry a fully transparent bounding path that makes the viewBox
-// actively misleading — dropped on import, which is why `copy` measures 20 of
-// its 24 units rather than the full 24.
-// ---------------------------------------------------------------------------
+// The ink boxes were measured with getBBox in a browser, not read off the
+// viewBox: two source files carry a transparent bounding path, dropped on
+// import, which is why IconCopy measures 20 of its 24 units.
 import { expect, it } from "vitest";
 import { render } from "@testing-library/react";
 import {
@@ -53,17 +26,13 @@ const INK: Record<string, readonly [number, number, number, number]> = {
   IconCloud: [0, 32, 640, 448],
   IconLocal: [0, 32, 512, 448],
   IconCopy: [2, 2, 20, 20],
-  // Re-measured after the drawing was revised; kept at the precision getBBox
-  // reported rather than rounded to the tidy 2/20 it nearly is, because a
-  // declared ink that is only approximately the measured one gives the next
-  // re-measure nothing to compare against.
+  // Kept at the precision getBBox reported rather than rounded to the 2/20 it
+  // nearly is, so a later measurement has something exact to compare with.
   IconCheckCircle: [2, 1.9934, 20.0078, 20.0143],
   IconTabIntegrity: [3, 1, 18, 22],
   IconTabStorage: [0, 0, 448, 512],
-  // Re-measured on 2026-09-11, when the drawing became Vecteezy's. The source
-  // declares `0 0 492 492` and the ink is a 368.7 square inside it, so this is
-  // the number the crop exists for: carried through unchanged the mark would
-  // render at three quarters of every glyph beside it.
+  // The source declares `0 0 492 492` and the ink is a 368.7 square inside it;
+  // uncropped, the mark would render at three quarters of its neighbours' size.
   IconSave: [61.8, 62.4, 368.7, 368.7],
 };
 
@@ -106,9 +75,8 @@ it("emits the same cloud for the off-site tab and the off-site control", () => {
 });
 
 it("centres each crop on the ink, so nothing sits off to one side", () => {
-  // The half of the crop that is easy to get wrong: the SIDE can be right
-  // while the origin is not, which renders the glyph correctly sized and
-  // visibly off-centre. Checked as "ink centre equals box centre".
+  // The side can be right while the origin is not, which renders the glyph at
+  // the right size but off-centre.
   for (const [name] of GLYPHS) {
     const [x, y, w, h] = INK[name];
     const [bx, by, bw, bh] = croppedBox(INK[name]);

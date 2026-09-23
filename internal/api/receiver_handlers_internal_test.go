@@ -17,9 +17,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// receiverHandlerFixture builds a Handler wired to a real (temp) store and the
-// real restic engine, sharing one app secret key. Enough for the receiver CRUD
-// endpoints, which use only h.store, h.svc and h.cfg.
+// receiverHandlerFixture builds a Handler over a real in-memory store and the
+// real restic engine. The receiver endpoints use only h.store, h.svc and h.cfg.
 func receiverHandlerFixture(t *testing.T, appKey string) (*Handler, *store.Repo) {
 	t.Helper()
 	db, err := store.Open(":memory:")
@@ -31,8 +30,8 @@ func receiverHandlerFixture(t *testing.T, appKey string) (*Handler, *store.Repo)
 		t.Fatal(err)
 	}
 	st := store.New(db)
-	// HostMountRoot: a received repo lives under the mount like every other repo
-	// path ([554]); a t.TempDir() location is inside the OS temp root.
+	// A received repo has to live under the host mount like any repo path, and
+	// t.TempDir() is inside the OS temp root.
 	cfg := config.Config{AppKey: appKey, HostMountRoot: os.TempDir()}
 	svc := &Service{cfg: cfg, store: st, engine: restic.Restic{Bin: "restic"}}
 	return &Handler{cfg: cfg, store: st, svc: svc}, st
@@ -56,14 +55,10 @@ func postJSONReq(t *testing.T, target string, body any) *http.Request {
 	return jsonReq(http.MethodPost, target, bytes.NewReader(b))
 }
 
-// TestReceiverCreateValidation covers the create contract that needs no restic: a
-// malformed app key is rejected, an empty repo is rejected, and a syntactically
-// valid request whose repo cannot be OPENED read-only is rejected by the probe
-// (nothing is persisted in any of these cases).
+// None of these refusals needs restic, and none may persist a row.
 func TestReceiverCreateValidation(t *testing.T) {
 	h, st := receiverHandlerFixture(t, strings.Repeat("ab", 32))
 
-	// Bad app key shape (not 64 lowercase hex) -> rejected before any probe.
 	w := httptest.NewRecorder()
 	h.handleCreateReceiverRepo(w, postJSONReq(t, "/api/receiver/repos", map[string]any{
 		"repo": "rest:https://box:8000/vault", "appKey": "not-hex",
@@ -72,7 +67,6 @@ func TestReceiverCreateValidation(t *testing.T) {
 		t.Fatalf("bad app key must be rejected: %v", resp)
 	}
 
-	// Empty repo -> rejected.
 	w = httptest.NewRecorder()
 	h.handleCreateReceiverRepo(w, postJSONReq(t, "/api/receiver/repos", map[string]any{
 		"repo": "   ", "appKey": strings.Repeat("cd", 32),
@@ -81,8 +75,8 @@ func TestReceiverCreateValidation(t *testing.T) {
 		t.Fatalf("empty repo must be rejected: %v", resp)
 	}
 
-	// Well-formed request, but the location is not an openable repo -> the probe
-	// rejects it (restic present: bogus path; restic absent: probe fails too).
+	// The probe refuses a location that does not open, with or without restic
+	// installed.
 	w = httptest.NewRecorder()
 	h.handleCreateReceiverRepo(w, postJSONReq(t, "/api/receiver/repos", map[string]any{
 		"repo": filepath.Join(t.TempDir(), "not-a-repo"), "appKey": strings.Repeat("cd", 32),
@@ -96,9 +90,6 @@ func TestReceiverCreateValidation(t *testing.T) {
 	}
 }
 
-// TestReceiverCreateAndCheckNow (real restic) creates a repo against a real
-// received repository (the probe passes), then runs check-now and asserts the
-// verdict is returned AND persisted. Skips when restic is unavailable.
 func TestReceiverCreateAndCheckNow(t *testing.T) {
 	if _, err := exec.LookPath("restic"); err != nil {
 		t.Skip("no restic")
@@ -108,7 +99,6 @@ func TestReceiverCreateAndCheckNow(t *testing.T) {
 	repo := seedReceivedRepo(t, sendingKey)
 	h, st := receiverHandlerFixture(t, appKey)
 
-	// Create: probe opens the real repo read-only, row is saved, no key leaks.
 	w := httptest.NewRecorder()
 	h.handleCreateReceiverRepo(w, postJSONReq(t, "/api/receiver/repos", map[string]any{
 		"name": "Off-site A", "repo": repo, "appKey": sendingKey, "checkCadence": "daily 04:00",
@@ -132,7 +122,6 @@ func TestReceiverCreateAndCheckNow(t *testing.T) {
 		t.Fatalf("a fresh repo must have a null lastCheckOk: %v", repoView["lastCheckOk"])
 	}
 
-	// Check-now: runs the independent check and persists the verdict.
 	w = httptest.NewRecorder()
 	cr := jsonReq(http.MethodPost, "/api/receiver/repos/"+id+"/check", nil)
 	cr.SetPathValue("id", id)
@@ -151,9 +140,6 @@ func TestReceiverCreateAndCheckNow(t *testing.T) {
 	}
 }
 
-// TestReceiverDeleteRemovesRowOnly proves DELETE removes only the DB row (and its
-// dead-man episode state) and NEVER touches the received repository on disk. No
-// restic needed: the row is inserted directly and the "repo" is a sentinel dir.
 func TestReceiverDeleteRemovesRowOnly(t *testing.T) {
 	h, st := receiverHandlerFixture(t, strings.Repeat("ab", 32))
 
@@ -191,9 +177,7 @@ func TestReceiverDeleteRemovesRowOnly(t *testing.T) {
 	}
 }
 
-// TestReceiverListReturnsStatusNoKey pins that the list endpoint surfaces the
-// registered repo with its status and hasAppKey, and never the decrypted key. A
-// row inserted directly (no restic) lists as unreachable, which is fine here.
+// Without restic the row lists as unreachable, which does not matter here.
 func TestReceiverListReturnsStatusNoKey(t *testing.T) {
 	h, st := receiverHandlerFixture(t, strings.Repeat("ab", 32))
 	if _, err := st.CreateReceivedRepo(store.ReceivedRepo{Name: "A", Repo: "rest:https://box/vault", AppKeyEnc: []byte("ciphertext"), Enabled: true}); err != nil {

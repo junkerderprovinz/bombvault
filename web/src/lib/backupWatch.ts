@@ -1,28 +1,20 @@
-// ---------------------------------------------------------------------------
-// Fire-and-watch hook for single backups AND restores.
+// Fire-and-watch for single backups and restores. The POST returns at once
+// ({ok:true, started:true}) and the work runs detached on the server, so it
+// survives the request dying: backing up the reverse-proxy container the UI
+// runs through cuts the fetch, and a multi-hour restore to a folder outlives
+// any browser or proxy timeout. The button therefore fires, then watches for
+// completion and reads the recorded run for the outcome, and never reports
+// "Failed to fetch" for work the server is doing.
 //
-// Single "Back up now" — and, since issue #24, every restore — actions are
-// ASYNC on the server: the POST returns immediately ({ok:true, started:true})
-// and the work runs in a detached goroutine, so it survives the request
-// connection dying — including the cases that bit users: backing up the
-// reverse-proxy container the UI runs through severs the fetch, and a
-// multi-hour restore-to-folder holds the request open until the browser/proxy
-// drops it (which used to cancel the context and kill restic mid-restore). The
-// button must therefore NOT await the whole run; it fires, then WATCHES for
-// completion and reads the recorded run to learn the real outcome. It must
-// never show "Failed to fetch" for work the server actually runs.
-//
-// Watching uses two signals, belt-and-suspenders:
-//   1. the shared SSE progress store (useProgress) — the live bar; when the
-//      entry for this key was seen and then clears, the run finished.
-//   2. polling listRuns() — both as the outcome lookup (success vs failure,
-//      snapshot id, error text) and as a fallback when SSE reports nothing
-//      (a very fast run that completed before we subscribed, or a dropped
-//      stream). We snapshot this target's existing run ids BEFORE firing and
-//      treat the newest run that did NOT exist then as ours — correlating by a
-//      NEW run, never by comparing the client clock to the server's startedAt
-//      (clock skew made that match the wrong run or hang until timeout).
-// ---------------------------------------------------------------------------
+// It watches two signals:
+//   1. the SSE progress store (useProgress): when this key's entry was seen
+//      and then clears, the run has finished;
+//   2. polling listRuns(), for the outcome (status, snapshot id, error) and as
+//      a fallback when SSE reports nothing (a run that finished before we
+//      subscribed, or a dropped stream). The target's run ids are recorded
+//      before firing and the newest run not among them is ours; comparing the
+//      client clock with the server's startedAt picks the wrong run under
+//      clock skew.
 
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
 import { listRuns, type Run } from "./api";
@@ -36,30 +28,28 @@ export type BackupWatchState =
   | { phase: "idle" }
   | { phase: "pending" }
   | { phase: "success"; snapshotId?: string }
-  // A user-cancelled restore is a NEUTRAL terminal (sticky, no red error banner):
-  // the recorded run's status is "cancelled", distinct from a real failure.
+  // A cancelled restore: neutral and sticky, no error banner.
   | { phase: "cancelled" }
-  // The container was removed from the host but is still a target: the recorded
-  // run's status is "skipped" — a NEUTRAL terminal (no false success, no red
-  // error), so the watcher completes instead of spinning to timeout (#57).
+  // The container was removed from the host but is still a target, so the run
+  // was skipped. Neutral, and the watch ends instead of running into its timeout.
   | { phase: "skipped" }
   | { phase: "error"; message: string };
 
 /** The run kind being watched (matches the recorded run's `kind` field). */
 export type WatchKind = "backup" | "restore";
 
-/** How long a BACKUP success stays shown before auto-clearing (matches the old
- * UX). Restore banners are sticky — see finish(). */
+/** How long a backup success stays shown. A restore result is sticky; see
+ *  finish(). */
 const SUCCESS_CLEAR_MS = 4000;
 /** Poll the runs list at this cadence while watching for completion. */
 const POLL_INTERVAL_MS = 2000;
-/** Give up watching after this long and report the last known run state — kept
- * just beyond the matching server-side hard cap (12h backups, 48h restores). */
+/** Give up watching after this long, just beyond the server's hard cap on a
+ *  detached run (12h backups, 48h restores). */
 const WATCH_TIMEOUT_BACKUP_MS = 13 * 60 * 60 * 1000;
 const WATCH_TIMEOUT_RESTORE_MS = 49 * 60 * 60 * 1000;
 /** Once the live progress entry has vanished, allow this many successful run
  * polls to still surface the recorded run before falling back to a generic
- * success (some flows record no run — see the fallback in fire()'s poll). */
+ * success (some flows record no run; see the fallback in fire()'s poll). */
 const RUNLESS_GRACE_POLLS = 3;
 
 /** The watch deadline for a run kind (matches the server's detached-run cap). */
@@ -80,24 +70,23 @@ interface UseBackupWatchArgs {
   start: StartBackupFn;
   /** True for the run that belongs to this target (domain + name). */
   matchRun: RunMatcher;
-  /** Which run kind to watch. Defaults to "backup" (backward-compatible). */
+  /** Which run kind to watch. Defaults to "backup". */
   kind?: WatchKind;
   /** Called once on successful completion so the caller can refresh its list. */
   onDone?: () => void;
   /**
-   * Set true by a paired cancel button when its cancel POST succeeds. The
-   * no-run success fallback consults it so a cancelled restore that recorded NO
-   * run (file/to-folder on a target-less container → progress entry just
-   * vanishes) finishes "cancelled" (neutral) instead of flashing green
-   * "Restored". Reset to false when a fresh run starts.
+   * Set by a paired cancel button once its cancel POST succeeds. A cancelled
+   * restore that records no run (a file or to-folder restore on a container
+   * without a target) would otherwise end in the no-run success fallback and
+   * show a green "Restored". Reset when a new run starts.
    */
   cancelledRef?: MutableRefObject<boolean>;
 }
 
 /**
- * Drives one "Back up now" / "Restore" button: call `fire()` on click. Returns
- * the current display state. Determines success vs failure from the recorded
- * run, never from the (now fire-and-forget) POST response.
+ * useBackupWatch drives one "Back up now" or "Restore" button: call `fire()`
+ * on click. Success or failure comes from the recorded run, never from the
+ * POST response.
  */
 export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", onDone, cancelledRef }: UseBackupWatchArgs) {
   const [state, setState] = useState<BackupWatchState>({ phase: "idle" });
@@ -105,24 +94,21 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
   const progress = useProgress();
   const entry = progress[progressKey];
 
-  // Watch bookkeeping kept in refs so the polling effect doesn't re-subscribe.
+  // Watch bookkeeping lives in refs so the polling effect does not re-subscribe.
   const watching = useRef(false);
   const sawProgress = useRef(false);
-  // True once the SSE progress entry was seen active AND then disappeared —
-  // the server-side work has finished; only the outcome lookup remains.
+  // True once the progress entry was seen active and then cleared: the work
+  // is done and only the outcome lookup remains.
   const progressVanished = useRef(false);
-  // Successful run polls since the progress entry vanished that found NO
-  // matching run — drives the no-run fallback (see fire()'s poll loop).
+  // Clean run polls since then that found no matching run (see fire()).
   const pollsSinceVanished = useRef(0);
-  // Run ids that already existed for this target the moment we fired. The new
-  // run is whichever matching run is NOT in this set — correlation by identity,
-  // not by clock. null = the pre-fire snapshot failed; seeded lazily on first poll.
+  // Run ids the target already had when we fired; our run is the matching one
+  // not in this set. null means the pre-fire lookup failed and the first poll
+  // seeds it.
   const baselineIds = useRef<Set<string> | null>(null);
   const matchRef = useRef(matchRun);
   const kindRef = useRef(kind);
   const onDoneRef = useRef(onDone);
-  // Mirror the (optional) cancelled flag ref the same way, so the poll closure
-  // always reads the latest one without re-subscribing.
   const cancelledRefRef = useRef(cancelledRef);
   matchRef.current = matchRun;
   kindRef.current = kind;
@@ -137,28 +123,26 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
     setState(next);
     if (next.phase === "success") {
       onDoneRef.current?.();
-      // A restore's success banner is STICKY: a restore is a rare, destructive
-      // action whose outcome the user must actually see, so the backup button's
-      // ~4s auto-clear does not apply. It stays until reset() — which is wired
-      // to selection/destination changes — puts the button back to idle.
+      // A restore is rare and destructive, so its success stays until
+      // reset(), which the pages call when the selection or destination
+      // changes.
       if (kindRef.current !== "restore") {
         setTimeout(() => setState({ phase: "idle" }), SUCCESS_CLEAR_MS);
       }
     }
   }, []);
 
-  // Look up the outcome from the recorded runs. "resolved" once a terminal
-  // (success/failed) run for this target — one that did not exist when we fired
-  // — is found (state has been set); "no-run" when the lookup worked but no new
-  // matching run exists (the candidate for the no-run fallback); "inconclusive"
-  // when the lookup failed, was seeding, or the run is still in flight.
+  // Looks up the outcome in the recorded runs. "resolved": a terminal run that
+  // did not exist when we fired was found, and the state is set. "no-run": the
+  // lookup worked but found no new matching run. "inconclusive": the lookup
+  // failed, the baseline was being seeded, or the run is still going.
   const resolveFromRuns = useCallback(async (): Promise<"resolved" | "no-run" | "inconclusive"> => {
     try {
       const res = await listRuns();
       if (!res.ok || !res.runs) return "inconclusive";
       const mine = (r: Run) => r.kind === kindRef.current && matchRef.current(r);
-      // If the pre-fire snapshot failed, seed the baseline from the current runs
-      // now and wait for the NEXT one — never resolve against a pre-existing run.
+      // The pre-fire lookup failed: seed the baseline now and resolve on a
+      // later poll, never against a run that already existed.
       if (baselineIds.current === null) {
         baselineIds.current = new Set(res.runs.filter(mine).map((r) => r.id));
         return "inconclusive";
@@ -181,34 +165,28 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
         return "resolved";
       }
       if (run.status === "cancelled") {
-        // Neutral terminal: the user cancelled — finish() leaves it sticky and
-        // does NOT fire onDone or the red error banner (see the union comment).
         finish({ phase: "cancelled" });
         return "resolved";
       }
       if (run.status === "skipped") {
-        // Neutral terminal: the container no longer exists, so the backup was
-        // skipped (not failed). Complete the watch instead of polling to the 13h
-        // timeout, and show neither a green success nor a red error (#57).
+        // The container is gone from the host. End the watch instead of
+        // polling into the 13h timeout.
         finish({ phase: "skipped" });
         return "resolved";
       }
       return "inconclusive"; // still running
     } catch {
-      return "inconclusive"; // transient network error — keep polling
+      return "inconclusive"; // transient network error, keep polling
     }
   }, [finish, t]);
 
-  // Record that the live progress entry appeared so we know to look for its
-  // disappearance as the completion edge. Runs on every progress map change.
+  // The progress entry disappearing after it was seen active is the
+  // completion edge.
   useEffect(() => {
     if (!watching.current) return;
     if (entry && entry.active) {
       sawProgress.current = true;
     } else if (sawProgress.current) {
-      // The entry was seen active and has now cleared: the server-side work is
-      // done, only the run lookup remains. From here the poll loop counts
-      // successful-but-empty run polls toward the no-run fallback.
       progressVanished.current = true;
     }
   }, [entry]);
@@ -218,11 +196,10 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
   const fire = useCallback(async () => {
     if (watching.current) return;
     setState({ phase: "pending" });
-    // A fresh run starts uncancelled — clear any leftover flag from a prior one.
+    // Clear a cancel left over from the previous run.
     if (cancelledRefRef.current) cancelledRefRef.current.current = false;
-    // Snapshot this target's existing run ids BEFORE firing, so the watch can
-    // pick out the run we are about to start by identity. If this fails, leave
-    // the baseline null — resolveFromRuns seeds it lazily on the first poll.
+    // Record the target's existing run ids before firing. If that fails the
+    // baseline stays null and resolveFromRuns seeds it on the first poll.
     baselineIds.current = null;
     try {
       const before = await listRuns();
@@ -232,7 +209,7 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
         );
       }
     } catch {
-      // ignore — lazy seeding covers it.
+      // the first poll seeds the baseline
     }
     let res: Awaited<ReturnType<StartBackupFn>>;
     try {
@@ -260,17 +237,15 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
       if (!watching.current) return;
       const outcome = await resolveFromRuns();
       if (outcome === "resolved" || !watching.current) return;
-      // No-run fallback: some flows record no run at all (restore-files /
-      // restore-to on a container without a target row), so run polling alone
-      // would pend forever. Once the SSE progress entry was seen active and
-      // then vanished (the work IS finished), a few clean polls that still
-      // find no run end the watch with a generic success. A run that IS found
-      // stays authoritative — it resolves above before this can trigger.
+      // Some flows record no run at all (a file restore or restore-to on a
+      // container without a target row), so polling alone would never end.
+      // Once the progress entry was seen and has cleared, a few clean polls
+      // without a run end the watch as a success. A run that does turn up
+      // resolves above first.
       if (progressVanished.current && outcome === "no-run") {
         pollsSinceVanished.current += 1;
         if (pollsSinceVanished.current >= RUNLESS_GRACE_POLLS) {
-          // A cancel with no recorded run must NOT masquerade as success: if the
-          // paired cancel button flagged a cancel, finish neutral-cancelled.
+          // A cancel without a recorded run must not end as a success.
           finish(cancelledRefRef.current?.current ? { phase: "cancelled" } : { phase: "success" });
           return;
         }
@@ -288,9 +263,8 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
     setTimeout(() => void poll(), 600);
   }, [start, resolveFromRuns, finish, t]);
 
-  // Clear a lingering success/error banner (e.g. when the user changes the
-  // selection a stale result would misdescribe). No-op while a watch runs —
-  // the in-flight state must stay visible.
+  // Clears a finished result, e.g. when the selection changes and the result
+  // would describe the wrong thing. Does nothing while a watch runs.
   const reset = useCallback(() => {
     if (!watching.current) setState({ phase: "idle" });
   }, []);
@@ -305,40 +279,22 @@ export function useBackupWatch({ progressKey, start, matchRun, kind = "backup", 
   return { state, fire, reset, isPending: state.phase === "pending" };
 }
 
-// ---------------------------------------------------------------------------
-// fireAndWaitRun — the non-hook variant for BULK loops.
-//
-// Bulk "back up / restore selected" actions run their targets one after
-// another. The starts are async and share the server's single-flight guard, so
-// firing them in a tight loop would make every call after the first hit
-// "already running". This helper fires ONE run (retrying while the previous
-// target's guard is still releasing — the guard clears only once the previous
-// target's ENTIRE backup call returns, which on the server includes that
-// target's own inline off-site replication, run synchronously AFTER its run
-// is already marked terminal but BEFORE the guard is released), then waits
-// for the NEW recorded run to reach a terminal state before returning.
-// Correlates by a new run id, never by the client clock (skew matched the
-// wrong or last run).
-//
-// #154: the fire-retry used to give up after a fixed, much shorter budget
-// (30s) than a real inline off-site replication can take (the reported
-// activity log shows 20-40s copies) — so a batch item queued right after a
-// slow-replicating one got silently abandoned: its start() never succeeded,
-// so no run was ever recorded for it, so it vanished from the batch with no
-// success line, no failure line, nothing. The fire-retry and the terminal-
-// wait below now share ONE deadline (watchTimeoutMs) — the same generous
-// ceiling already used to wait out a real in-progress backup/restore — so a
-// transient "still releasing" busy signal is retried for as long as a batch
-// item is allowed to run at all, never abandoned on an arbitrary shorter one.
-// ---------------------------------------------------------------------------
-
+/**
+ * fireAndWaitRun is the non-hook variant for bulk loops, which back up or
+ * restore their targets one after another. It fires one run, retrying while
+ * the previous target still holds the server's single-flight guard, then
+ * waits for the new run to finish. The guard is released only when the
+ * previous target's whole backup call returns, including its inline off-site
+ * replication, so the retry shares the full watch deadline; a shorter budget
+ * would drop a batch item without any run recorded for it. Like the hook, it
+ * matches the run by a new id, not by the clock.
+ */
 export async function fireAndWaitRun(opts: {
   kind: WatchKind;
   matchRun: RunMatcher;
   start: StartBackupFn;
-  /** Required, not optional: this function's failure tail is toasted verbatim
-   *  by every caller, so a missing `t` here is an untranslated sentence in a
-   *  user's face. Callers all have one in scope. */
+  /** Required: every caller toasts the failure text as is, so it has to be
+   *  translated. */
   t: T;
 }): Promise<{ ok: boolean; error?: string }> {
   const mine = (r: Run) => r.kind === opts.kind && opts.matchRun(r);
@@ -347,11 +303,8 @@ export async function fireAndWaitRun(opts: {
     const before = await listRuns();
     baseline = new Set((before.runs ?? []).filter(mine).map((r) => r.id));
   } catch {
-    // ignore — fall back to the first terminal run for this target.
+    // without a baseline, the first terminal run for this target counts
   }
-  // ONE deadline covers both the fire-retry below and the terminal-wait that
-  // follows a successful start (see the header comment for why the two must
-  // not have separate, shorter-than-necessary budgets).
   const deadline = Date.now() + watchTimeoutMs(opts.kind);
   for (;;) {
     let res: Awaited<ReturnType<StartBackupFn>>;
@@ -365,17 +318,17 @@ export async function fireAndWaitRun(opts: {
     if (!busy || Date.now() > deadline) return { ok: false, error: res.error };
     await new Promise((r) => setTimeout(r, 1000));
   }
-  // Poll the recorded runs until this target's NEW run reaches a terminal state.
+  // Poll the recorded runs until this target's new run reaches a terminal state.
   for (;;) {
     await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
     try {
       const runs = await listRuns();
       const run = runs.runs?.find((r) => mine(r) && !baseline.has(r.id));
       if (run && run.status === "success") return { ok: true };
-      if (run && run.status === "skipped") return { ok: true }; // removed target: a neutral skip, not a failure (#57)
+      if (run && run.status === "skipped") return { ok: true }; // a removed target is skipped, not failed
       if (run && run.status === "failed") return { ok: false, error: run.error };
     } catch {
-      // transient — keep polling
+      // transient, keep polling
     }
     if (Date.now() > deadline) return { ok: false, error: `Timed out waiting for the ${opts.kind} to finish` };
   }

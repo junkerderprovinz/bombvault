@@ -1,26 +1,17 @@
+// Theme: dark, light or system via data-theme on <html>, persisted in
+// localStorage. "system" is the default and follows the OS live through
+// prefers-color-scheme; picking dark or light overrides the OS until cleared.
+//
+// index.html's inline <head> script repeats the resolution below (STORAGE_KEY
+// included) to set data-theme before first paint, since it cannot import this
+// module. Keep the two in sync.
 import { save as saveDisplayPrefs } from "./displayPrefs";
-// ---------------------------------------------------------------------------
-// Theme — dark / light / system via data-theme on <html> + localStorage
-//
-// "system" follows the OS live via prefers-color-scheme (design-language.md:
-// "Default is system, not a hard-coded light or dark — an app that opens
-// dark on a light-mode OS made a choice nobody asked it to make"). A user
-// who explicitly picks dark or light overrides the OS until they clear it.
-//
-// index.html's inline <head> script duplicates the resolution logic below
-// (STORAGE_KEY included) to paint data-theme synchronously before first
-// paint, since it can't import this module. Keep the two in sync.
-// ---------------------------------------------------------------------------
 
 export type Theme = "dark" | "light" | "system";
 export type ResolvedTheme = "dark" | "light";
 
 const STORAGE_KEY = "bv-theme";
 const DEFAULT: Theme = "system";
-
-function getHtml(): HTMLElement {
-  return document.documentElement;
-}
 
 function systemPrefersDark(): boolean {
   return window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -37,13 +28,13 @@ export function getTheme(): Theme {
   return DEFAULT;
 }
 
-/** What's actually painted right now — "system" resolved against the OS. */
+/** What is painted right now, with "system" resolved against the OS. */
 export function getResolvedTheme(): ResolvedTheme {
   return resolve(getTheme());
 }
 
 function paint(theme: Theme): void {
-  getHtml().setAttribute("data-theme", resolve(theme));
+  document.documentElement.setAttribute("data-theme", resolve(theme));
 }
 
 export function setTheme(theme: Theme): void {
@@ -52,47 +43,35 @@ export function setTheme(theme: Theme): void {
   paint(theme);
 }
 
-/** Explicit dark<->light toggle — lands on a real choice, never "system",
- * matching the existing two-state sidebar control.
- *
- * KNOWN GAP, left deliberately: once a user's first toggle click moves them
- * off "system" (the default), there is currently no UI path back to it —
- * only clearing localStorage does. Giving the sidebar control a real third
- * state needs a new icon, a new i18n key across all locales (this project's
- * own established per-key-across-every-locale discipline), and a decision on
- * cycle order — real UI design work, not a mechanical follow-on to this
- * token/theme-foundation task. Flagged as explicit deferred scope, not an
- * oversight. */
+/** Flips between dark and light, always landing on an explicit choice rather
+ * than "system". After the first toggle there is no way back to "system" short
+ * of clearing localStorage; a third state would need its own icon and i18n
+ * key. */
 export function toggleTheme(): ResolvedTheme {
   const next: ResolvedTheme = getResolvedTheme() === "dark" ? "light" : "dark";
   setTheme(next);
   return next;
 }
 
-/** Subscribes `onChange` to OS-level dark/light flips (fires on every flip,
- * regardless of the stored preference — callers that only care while on
- * "system" check `getTheme()` inside their own callback, as both call sites
- * below do). Returns an unsubscribe function. Isolates the Safari < 14
- * `addListener`/`removeListener` fallback in one place instead of it being
- * copied at every call site. */
+/** Subscribes `onChange` to OS dark/light flips whatever the stored preference;
+ * callers that care only while on "system" check getTheme() themselves.
+ * Returns the unsubscribe. */
 export function onSystemThemeChange(onChange: () => void): () => void {
   const mql = window.matchMedia("(prefers-color-scheme: dark)");
   if (typeof mql.addEventListener === "function") {
     mql.addEventListener("change", onChange);
     return () => mql.removeEventListener("change", onChange);
   }
-  // Safari < 14 fallback — deprecated but still the only API there.
+  // Safari before 14 has only the deprecated listener API.
   mql.addListener(onChange);
   return () => mql.removeListener(onChange);
 }
 
 let liveListenerAttached = false;
 
-/** Called at boot in main.tsx before first render. Also wires a live
- * listener so an OS-level theme change repaints immediately for anyone
- * still on "system" (attached once; safe to call repeatedly — the
- * subscription is intentionally never torn down for the lifetime of the
- * page, unlike Sidebar.tsx's own use of onSystemThemeChange). */
+/** Called in main.tsx before the first render. Also attaches, once, a listener
+ * that repaints on an OS theme change while on "system"; it lives as long as
+ * the page. */
 export function applyStoredTheme(): void {
   paint(getTheme());
 

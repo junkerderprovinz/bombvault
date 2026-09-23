@@ -13,18 +13,10 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
-// TestHealRestoreDirOwnershipAppliesSnapshotMode is the regression proof for the
-// second #125 half: restic's restorer never re-applies a restored subtree
-// root's OWN metadata (only its restored contents get the snapshot's mode), so
-// a remapped restore's destination root was left at whatever EnsureDirReadable
-// set it to (0o755) regardless of what the snapshot actually recorded. This
-// proves healRestoreDirOwnership reads the snapshot's own node for the subtree
-// root (via LsPath) and re-applies its mode to the real, already-restored
-// target directory. Ownership (Lchown) is exercised too, chowning to the
-// test's OWN current uid/gid — the one chown any process, privileged or not,
-// is always permitted to perform (verified live: an unprivileged chown to the
-// SAME uid/gid a file already has succeeds; only chowning to a DIFFERENT uid
-// needs CAP_CHOWN) — so the assertion is deterministic in CI without root.
+// restic restores a subtree's contents with their recorded metadata but not the
+// subtree root itself, so the heal reads the root's node via LsPath and applies
+// its mode to the target. The chown goes to the test's own uid and gid, which
+// needs no CAP_CHOWN, so this runs in CI without root.
 func TestHealRestoreDirOwnershipAppliesSnapshotMode(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("unix mode/owner bits are not modelled on windows")
@@ -35,11 +27,9 @@ func TestHealRestoreDirOwnershipAppliesSnapshotMode(t *testing.T) {
 	}
 
 	const subtree = "/host/user/zfs/appdata/SnapOtter/conf"
-	// restic's own mode encoding: the type bits (ModeDir) ride alongside the
-	// permission bits, exactly as observed live against restic 0.17.3's
-	// `restic ls --json` output — a caller must mask with .Perm() to get a
-	// plain chmod-able value. 0o700 here is deliberately DIFFERENT from the
-	// 0o755 EnsureDirReadable seeded, so a passing Chmod is provable.
+	// restic ls --json carries the type bits (ModeDir) next to the permission
+	// bits, so the heal has to mask with Perm. 0o700 differs from the seeded
+	// 0o755, so the assertion shows the chmod happened.
 	const wantPerm = 0o700
 	eng := &foreignRecordingEngine{lsPathEntries: []restic.FileEntry{
 		{Path: subtree, Type: "dir", Uid: os.Getuid(), Gid: os.Getgid(), Mode: uint32(fs.ModeDir | wantPerm)},
@@ -62,12 +52,8 @@ func TestHealRestoreDirOwnershipAppliesSnapshotMode(t *testing.T) {
 	}
 }
 
-// TestHealRestoreDirOwnershipContinuesPastAnErroringDir proves the heal is
-// best-effort per directory: a restore has ALREADY succeeded by the time this
-// runs (it is only called after backup.RestoreContainer returns nil), so one
-// directory's LsPath failing must not stop the remaining directories from
-// being healed, and must never surface as an error to the caller (the
-// function returns nothing to fail with).
+// The heal runs after the restore has succeeded, so it is best effort per
+// directory: one failing LsPath must not stop the others.
 func TestHealRestoreDirOwnershipContinuesPastAnErroringDir(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("unix mode/owner bits are not modelled on windows")
@@ -81,11 +67,8 @@ func TestHealRestoreDirOwnershipContinuesPastAnErroringDir(t *testing.T) {
 	const subtreeA = "/host/user/zfs/appdata/First/conf"
 	const subtreeB = "/host/user/zfs/appdata/Second/conf"
 	const wantPermB = 0o750
-	// lsPathErr fires for EVERY call in this fake (it has no per-dirPath
-	// selectivity), so this proves the loop tolerates a totally failing LsPath
-	// for one entry and still visits the next — the interesting assertion is
-	// that BOTH calls happen (the loop doesn't abort early) and the function
-	// doesn't panic despite never getting a usable entry back.
+	// The fake fails every LsPath call, so the check is that both directories
+	// are still visited.
 	eng := &foreignRecordingEngine{lsPathErr: errors.New("repo busy")}
 	s := vmRestoreSvc(t, eng)
 
@@ -106,10 +89,8 @@ func TestHealRestoreDirOwnershipContinuesPastAnErroringDir(t *testing.T) {
 	}
 }
 
-// TestHealRestoreDirOwnershipSkipsWhenNoMatchingEntry proves the heal leaves
-// the target untouched when the snapshot listing for that path came back but
-// contains no node for the subtree root itself (an unexpected snapshot shape),
-// rather than guessing at some other entry's metadata.
+// Without a node for the subtree root itself the heal leaves the target alone
+// instead of borrowing another entry's metadata.
 func TestHealRestoreDirOwnershipSkipsWhenNoMatchingEntry(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("unix mode/owner bits are not modelled on windows")
@@ -120,7 +101,6 @@ func TestHealRestoreDirOwnershipSkipsWhenNoMatchingEntry(t *testing.T) {
 	}
 	const subtree = "/host/user/zfs/appdata/SnapOtter/conf"
 
-	// Only a CHILD entry, no entry whose Path equals the subtree root itself.
 	eng := &foreignRecordingEngine{lsPathEntries: []restic.FileEntry{
 		{Path: filepath.ToSlash(subtree) + "/settings.ini", Type: "file", Uid: os.Getuid(), Gid: os.Getgid(), Mode: 0o600},
 	}}

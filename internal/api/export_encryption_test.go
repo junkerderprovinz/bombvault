@@ -18,8 +18,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/model"
 )
 
-// exportEncTestSetup wires a container-export Service (mirroring
-// TestServiceExportContainer) and returns the service plus the export dir sibling.
+// exportEncTestSetup returns a Service with one container, plex, ready to export.
 func exportEncTestSetup(t *testing.T, recipients string, enable bool) *api.Service {
 	t.Helper()
 	dir := t.TempDir()
@@ -34,7 +33,7 @@ func exportEncTestSetup(t *testing.T, recipients string, enable bool) *api.Servi
 		HostMountRoot:     root,
 		HostSourceRoot:    root,
 		FlashTemplatesDir: flash,
-		DataRootSegments:  []string{"appdata"}, // config.Load's default; this helper builds Config by hand
+		DataRootSegments:  []string{"appdata"}, // config.Load's default
 	}
 	st := newMemStore(t)
 	s := mustSettings(t, st)
@@ -65,10 +64,6 @@ func exportEncTestSetup(t *testing.T, recipients string, enable bool) *api.Servi
 	return api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
 }
 
-// TestExportContainerAgeRoundTrip: with export encryption on, the container export
-// produces .tar.gz.age + .xml.age (no plaintext), the tar.gz.age is NOT a valid
-// gzip on its own, and it decrypts with the in-test identity back to a valid tar.gz
-// containing the expected appdata entry. The .xml.age decrypts to the template.
 func TestExportContainerAgeRoundTrip(t *testing.T) {
 	id, err := age.GenerateX25519Identity()
 	if err != nil {
@@ -81,7 +76,6 @@ func TestExportContainerAgeRoundTrip(t *testing.T) {
 		t.Fatalf("ExportContainer: %v", err)
 	}
 
-	// The plaintext names must NOT exist; the .age names must.
 	for _, plain := range []string{"plex.tar.gz", "plex.xml"} {
 		if _, err := os.Stat(filepath.Join(out, plain)); !os.IsNotExist(err) {
 			t.Fatalf("plaintext artifact %s must not exist (stat err = %v)", plain, err)
@@ -95,7 +89,6 @@ func TestExportContainerAgeRoundTrip(t *testing.T) {
 		}
 	}
 
-	// The .age tar is not a valid gzip stream on its own.
 	raw, err := os.ReadFile(tarAge) //nolint:gosec // test file
 	if err != nil {
 		t.Fatal(err)
@@ -104,13 +97,11 @@ func TestExportContainerAgeRoundTrip(t *testing.T) {
 		t.Fatal("ciphertext must not parse as gzip")
 	}
 
-	// Decrypt and read the tar entries.
 	names := decryptedTarEntryNames(t, raw, id)
 	if !contains(names, "user/appdata/plex/prefs.xml") {
 		t.Fatalf("decrypted tar should contain the appdata entry, got %v", names)
 	}
 
-	// The .xml.age decrypts to the template.
 	xmlRaw, err := os.ReadFile(xmlAge) //nolint:gosec // test file
 	if err != nil {
 		t.Fatal(err)
@@ -125,16 +116,15 @@ func TestExportContainerAgeRoundTrip(t *testing.T) {
 	}
 }
 
-// TestExportContainerEncryptionNoRecipientFailsLoud: encryption on + no recipient
-// must return an error and write NO artifact (never a plaintext fallback).
-func TestExportContainerEncryptionNoRecipientFailsLoud(t *testing.T) {
-	svc := exportEncTestSetup(t, "   ", true) // enabled but no valid recipient
+// With encryption on but no recipient, the export must fail without writing a
+// plaintext fallback.
+func TestExportContainerEncryptionWithoutRecipientWritesNothing(t *testing.T) {
+	svc := exportEncTestSetup(t, "   ", true)
 
 	out, err := svc.ExportContainer(context.Background(), "plex")
 	if err == nil {
 		t.Fatal("expected a hard error when encryption is on with no recipient")
 	}
-	// exportDir is a deterministic sibling of the repo; assert it holds no export.
 	if out != "" {
 		if entries, rerr := os.ReadDir(out); rerr == nil {
 			for _, e := range entries {
@@ -144,8 +134,8 @@ func TestExportContainerEncryptionNoRecipientFailsLoud(t *testing.T) {
 	}
 }
 
-// decryptedTarEntryNames decrypts an age blob with id and returns the gzip-tar
-// entry names inside.
+// decryptedTarEntryNames decrypts an age-encrypted tar.gz and returns its entry
+// names.
 func decryptedTarEntryNames(t *testing.T, cipher []byte, id *age.X25519Identity) []string {
 	t.Helper()
 	r, err := age.Decrypt(bytes.NewReader(cipher), id)

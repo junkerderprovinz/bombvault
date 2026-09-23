@@ -1,22 +1,19 @@
-// ---------------------------------------------------------------------------
-// Minimal 5-field cron parsing + next-fire evaluation for the CadenceBuilder's
-// "Cron" mode (#107). Pure logic, no dependency.
+// 5-field cron parsing and next-fire evaluation for the CadenceBuilder's cron
+// mode.
 //
-// The grammar deliberately mirrors robfig/cron v3's STANDARD parser — the
-// backend's validity authority (internal/schedule ParseCadence): per field
-// "*" / "?", single values, "a-b" ranges, an optional "/step" (where "a/step"
-// means "a-max/step"), comma lists, JAN-DEC month names and SUN-SAT weekday
-// names (case-insensitive, ranges of names allowed), and day-of-week 0-6
-// (7 is NOT Sunday here — robfig rejects it, so we must too). Matching the
-// backend exactly means the client never green-lights an expression the save
-// will bounce, and never blocks one the backend would take.
+// The grammar mirrors robfig/cron v3's standard parser, which the backend
+// validates with (internal/schedule ParseCadence): per field "*" or "?",
+// single values, "a-b" ranges, an optional "/step" ("a/step" means
+// "a-max/step"), comma lists, JAN-DEC and SUN-SAT names (case-insensitive,
+// ranges allowed), and day-of-week 0-6. 7 is not Sunday, because robfig
+// rejects it. Matching the backend means the client never passes an
+// expression the save would bounce, nor blocks one it would take.
 //
-// The evaluator exists ONLY for the preview ("next: …"). It must never show a
-// WRONG fire time — callers degrade to a plain "valid expression" note when it
-// returns null or finds no fire within the search horizon (e.g. "0 0 30 2 *",
-// which never fires). Date stepping uses local wall-clock Date arithmetic, so
-// DST gaps are skipped forward the way a local cron daemon behaves.
-// ---------------------------------------------------------------------------
+// The evaluator only feeds the "next: …" preview and must never show a wrong
+// time: callers fall back to a plain "valid expression" note when it returns
+// null or finds nothing within the horizon ("0 0 30 2 *" never fires). Steps
+// use local wall-clock Date arithmetic, so DST gaps are skipped forward the
+// way a local cron daemon does.
 
 const MONTH_NAMES: Record<string, number> = {
   jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
@@ -33,7 +30,7 @@ interface FieldBounds {
   names?: Record<string, number>;
 }
 
-// minute, hour, day-of-month, month, day-of-week — in expression order.
+// minute, hour, day-of-month, month, day-of-week, in expression order.
 const FIELD_BOUNDS: FieldBounds[] = [
   { min: 0, max: 59 },
   { min: 0, max: 23 },
@@ -44,7 +41,7 @@ const FIELD_BOUNDS: FieldBounds[] = [
 
 interface ParsedField {
   values: Set<number>;
-  /** True when any list item starts with "*" or "?" — robfig's "star bit",
+  /** True when any list item starts with "*" or "?": robfig's "star bit",
    *  which flips the dom/dow combination from OR to AND (see dayMatches). */
   star: boolean;
 }
@@ -135,8 +132,8 @@ export function isValidCronExpression(expr: string): boolean {
 }
 
 // dayMatches mirrors robfig's dom/dow combination: when either field carries
-// the star bit the two must BOTH match (the starred one trivially does);
-// when both are restricted, EITHER matching suffices (classic cron OR).
+// the star bit both must match (the starred one trivially does); when both
+// are restricted, either one matching is enough (classic cron OR).
 function dayMatches(s: CronSchedule, t: Date): boolean {
   const dom = s.dom.values.has(t.getDate());
   const dow = s.dow.values.has(t.getDay());
@@ -195,16 +192,16 @@ export function nextCronFires(expr: string, count: number, from: Date = new Date
 }
 
 /**
- * cronPeriodSeconds approximates how often the expression fires, in seconds —
- * the gap between its first two fires from a fixed base, mirroring the
- * backend's Cadence.PeriodSeconds. Returns 0 when the expression is invalid
+ * cronPeriodSeconds approximates how often the expression fires, in seconds:
+ * the gap between its first two fires from a fixed base, as the backend's
+ * Cadence.PeriodSeconds computes it. Returns 0 when the expression is invalid
  * or the gap cannot be computed, so callers can treat 0 as "unknown".
  */
 export function cronPeriodSeconds(expr: string): number {
   const sched = parseCronExpression(expr);
   if (sched === null) return 0;
-  // Fixed local base (2000-01-01 was a Saturday) keeps the result stable
-  // regardless of when it is computed — same trick as the backend.
+  // A fixed local base (2000-01-01 was a Saturday) keeps the result stable
+  // whenever it is computed, as in the backend.
   const base = new Date(2000, 0, 1, 0, 0, 0, 0);
   const first = nextFire(sched, base);
   if (first === null) return 0;

@@ -1,18 +1,7 @@
 // @vitest-environment jsdom
-/**
- * The mark on the login screen.
- *
- * The login screen is the one surface of the app that carries no rail, so
- * before this it was an unlabelled password box on a plain background. On a box
- * running several instances, "which one am I unlocking" is a real question, and
- * the answer belongs above the field rather than in the browser tab.
- *
- * Two things have to hold:
- *   - both theme marks are present, switched by the `dark:` variant exactly as
- *     the rail does it, so the light mark never lands on the light surface;
- *   - the marks are decorative. The heading beside them already names the
- *     product, and an alt text here would have a screen reader say it twice.
- */
+// The login screen has no rail, so it shows the mark itself. Both theme marks
+// switch on the `dark:` variant as in the rail, and both are decorative because
+// the heading beside them already names the product.
 import { render, cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -37,7 +26,7 @@ describe("LoginPage mark", () => {
 
     const dark = marks.find((m) => m.getAttribute("src") === "/logo.svg")!;
     const light = marks.find((m) => m.getAttribute("src") === "/logo-light.svg")!;
-    // The dark mark is the one for the LIGHT surface, so it hides in dark mode.
+    // The dark mark belongs on the light surface, so it hides in dark mode.
     expect(dark.className).toContain("block");
     expect(dark.className).toContain("dark:hidden");
     expect(light.className).toContain("hidden");

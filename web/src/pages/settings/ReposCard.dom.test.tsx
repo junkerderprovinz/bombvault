@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { NamedRepo, OffsiteTarget } from "../../lib/api";
 import { en } from "../../lib/i18n";
@@ -100,7 +100,7 @@ describe("the Repositories card", () => {
     render(<ReposCard />);
     fireEvent.click(await screen.findByRole("button", { name: en["offsite.targets.remove"] }));
     await act(async () => {
-      fireEvent.click(await screen.findByRole("button", { name: en["common.confirm"] }));
+      fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: en["offsite.targets.remove"] }));
     });
     await waitFor(() =>
       expect(pushed).toContainEqual({
@@ -119,7 +119,7 @@ describe("the Repositories card", () => {
     render(<ReposCard />);
     fireEvent.click(await screen.findByRole("button", { name: en["offsite.targets.remove"] }));
     await act(async () => {
-      fireEvent.click(await screen.findByRole("button", { name: en["common.confirm"] }));
+      fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: en["offsite.targets.remove"] }));
     });
     await waitFor(() => expect(seen).toHaveBeenCalledTimes(1));
     off();

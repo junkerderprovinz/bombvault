@@ -34,9 +34,6 @@ func TestLoadLibvirtDefaults(t *testing.T) {
 	}
 }
 
-// TestLoadDataRootSegmentsDefault pins the regression-safety property: with
-// DATA_ROOT_SEGMENTS unset, DataRootSegments must be exactly ["appdata"] — the
-// single segment Unraid's original hardcoded filter recognized.
 func TestLoadDataRootSegmentsDefault(t *testing.T) {
 	c, err := config.Load(map[string]string{"APP_KEY": strings.Repeat("a", 64)})
 	if err != nil {
@@ -48,9 +45,6 @@ func TestLoadDataRootSegmentsDefault(t *testing.T) {
 	}
 }
 
-// TestLoadPlatformOverrideDefault pins the auto-detect default: with PLATFORM
-// unset, PlatformOverride must be empty so platform.Detect probes for the
-// Unraid marker instead of trusting a forced value.
 func TestLoadPlatformOverrideDefault(t *testing.T) {
 	c, err := config.Load(map[string]string{"APP_KEY": strings.Repeat("a", 64)})
 	if err != nil {
@@ -61,8 +55,8 @@ func TestLoadPlatformOverrideDefault(t *testing.T) {
 	}
 }
 
-// TestLoadPlatformOverridePassthrough: PLATFORM is passed through verbatim,
-// unvalidated — platform.Detect (not config.Load) is what validates/maps it.
+// TestLoadPlatformOverridePassthrough checks that Load passes PLATFORM through
+// as given; platform.Detect validates it.
 func TestLoadPlatformOverridePassthrough(t *testing.T) {
 	c, err := config.Load(map[string]string{
 		"APP_KEY":  strings.Repeat("a", 64),
@@ -76,9 +70,6 @@ func TestLoadPlatformOverridePassthrough(t *testing.T) {
 	}
 }
 
-// TestLoadLibvirtURIDefault pins the empty default: with LIBVIRT_URI unset,
-// LibvirtURI must be "" so sshconn builds the qemu+ssh:// string from
-// LibvirtHost/LibvirtSSHUser/LibvirtSSHPort exactly as it does today.
 func TestLoadLibvirtURIDefault(t *testing.T) {
 	c, err := config.Load(map[string]string{"APP_KEY": strings.Repeat("a", 64)})
 	if err != nil {
@@ -89,8 +80,6 @@ func TestLoadLibvirtURIDefault(t *testing.T) {
 	}
 }
 
-// TestLoadLibvirtURIPassthrough: LIBVIRT_URI is passed through verbatim,
-// unvalidated — sshconn.Conn.VirshURI is what uses it, not config.Load.
 func TestLoadLibvirtURIPassthrough(t *testing.T) {
 	const uri = "qemu+ssh://root@truenas.local/system?socket=/run/truenas_libvirt/libvirt-sock"
 	c, err := config.Load(map[string]string{
@@ -106,8 +95,7 @@ func TestLoadLibvirtURIPassthrough(t *testing.T) {
 }
 
 // TestLoadDataRootSegmentsParsesCommaSeparatedList covers trimming,
-// lower-casing, and dropping empty entries (e.g. a stray double comma) in one
-// pass over DATA_ROOT_SEGMENTS.
+// lower-casing and dropping empty entries.
 func TestLoadDataRootSegmentsParsesCommaSeparatedList(t *testing.T) {
 	c, err := config.Load(map[string]string{
 		"APP_KEY":            strings.Repeat("a", 64),

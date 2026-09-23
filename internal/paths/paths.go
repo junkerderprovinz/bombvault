@@ -14,24 +14,13 @@ var ErrTraversal = errors.New("paths: sub path escapes the root (traversal)")
 // ErrAbsoluteSub is returned when sub is an absolute path.
 var ErrAbsoluteSub = errors.New("paths: sub must be a relative path")
 
-// Resolve joins root and sub using slash semantics, cleans the result, and
-// verifies the result stays strictly within root. It rejects any sub that is
-// absolute or that after cleaning resolves outside root
-// (e.g. "../etc" or "a/../../etc").
+// Resolve joins root and sub, cleans the result and checks that it lies
+// strictly inside root. It rejects an absolute sub and one that escapes root
+// after cleaning, such as "../etc" or "a/../../etc".
 //
-// root is always the caller's configured HostMountRoot — Resolve never sees
-// HostSourceRoot, so it works identically regardless of how that root relates
-// to a separate source root. This supports both Unraid's split-root default
-// (HostSourceRoot=/mnt translated to HostMountRoot=/host/user) and the
-// generic/TrueNAS identity-root default (HostSourceRoot == HostMountRoot,
-// e.g. both /data — no path translation, the simpler bind-mount convention
-// used by comparable tools like Nautical Backup and Dockge): an identity root
-// is just another root value, not a special case.
-//
-// Paths here are always Linux paths (container-internal), so the path package
-// (always slash-separated) is correct regardless of the build OS.
+// The paths are container-internal Linux paths, so the path package is right
+// on any build OS.
 func Resolve(root, sub string) (string, error) {
-	// Reject absolute sub paths (start with "/").
 	if strings.HasPrefix(sub, "/") {
 		return "", ErrAbsoluteSub
 	}
@@ -40,8 +29,7 @@ func Resolve(root, sub string) (string, error) {
 	joined := cleanRoot + "/" + sub
 	cleaned := path.Clean(joined)
 
-	// The cleaned result must be a strict child of cleanRoot (not equal, not a sibling).
-	// Append "/" to cleanRoot so /host/user never matches /host/user2/foo.
+	// The trailing slash keeps /host/user from matching /host/user2/foo.
 	prefix := cleanRoot + "/"
 	if !strings.HasPrefix(cleaned, prefix) {
 		return "", ErrTraversal
@@ -50,11 +38,8 @@ func Resolve(root, sub string) (string, error) {
 	return cleaned, nil
 }
 
-// Within reports whether absPath is an absolute path that lies strictly inside
-// root (after slash-clean). Used to re-validate stored absolute appdata paths
-// before a restore writes to them (defense-in-depth). Same root-value note as
-// Resolve above: works identically under Unraid's split root or a
-// generic/TrueNAS identity root, since only the single root value matters.
+// Within reports whether absPath is absolute and lies strictly inside root.
+// Restore uses it to re-check stored appdata paths before writing to them.
 func Within(root, absPath string) bool {
 	if !strings.HasPrefix(absPath, "/") {
 		return false
@@ -69,16 +54,13 @@ func EnsureDir(path string) error {
 	return os.MkdirAll(path, 0o700)
 }
 
-// EnsureDirReadable creates path and all parents, then forces path itself to
-// 0o755 so a restore TARGET on a user-visible / synced share (Unraid /mnt/user)
-// is readable by the operator's non-root SMB user — root created it, and a 0o700
-// dir (EnsureDir's mode) or a strict process umask would otherwise lock them out.
-// The explicit Chmod (not just MkdirAll's mode, which a umask can strip) also
-// heals a target an earlier version created at 0o700, mirroring how
-// ensureDefsDir/makeRepoReadable heal perms on the backup share.
+// EnsureDirReadable creates path and sets it to 0o755, so a restore target on
+// a user share such as /mnt/user stays readable for the operator's non-root
+// SMB user. The Chmod covers what a umask strips from MkdirAll's mode, and an
+// existing 0o700 directory.
 func EnsureDirReadable(path string) error {
 	if err := os.MkdirAll(path, 0o755); err != nil { //nolint:gosec // G301: restore target on a user-visible share must be operator-readable
 		return err
 	}
-	return os.Chmod(path, 0o755) //nolint:gosec // G302: see above — must be readable by the non-root share user
+	return os.Chmod(path, 0o755) //nolint:gosec // G302: must be readable by the non-root share user
 }

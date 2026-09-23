@@ -1,68 +1,28 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { ConfirmDialog } from "../components/ConfirmDialog";
-import { useT } from "./i18n";
+import { useT, type TranslationKey } from "./i18n";
 
-// ---------------------------------------------------------------------------
-// useConfirm — the stateful half of ConfirmDialog (GlimStone form-engine
-// Task 7), the direct replacement for window.confirm() across the app.
+// useConfirm replaces window.confirm() with ConfirmDialog. It keeps the
+// one-string-in, boolean-out shape, only async:
 //
-// Mirrors useReveal.ts/RevealInput.tsx's exact split: the pending-request
-// queue and the promise plumbing live HERE so ConfirmDialog itself stays a
-// pure, hookless function component, callable directly as a plain function in
-// ConfirmDialog.test.ts (same shape as Toggle.tsx/Badge.tsx/RevealInput.tsx —
-// see ConfirmDialog.tsx's own header comment for why).
-//
-// This hook ALSO owns everything that makes the dialog a genuinely modal
-// dialog rather than an inline styled box, because every one of those needs
-// either `document` (undefined in ConfirmDialog.test.ts's node-environment
-// unit tests) or a real hook (useEffect/useRef), neither of which
-// ConfirmDialog.tsx may use:
-//   - createPortal(..., document.body) — renders past any ancestor with a CSS
-//     transform (a transform creates a new containing block, so a
-//     `position: fixed` backdrop nested under one no longer covers the real
-//     viewport). Exactly InfoBubble.tsx's fix for the identical problem.
-//   - Escape — a document-level keydown listener, not a React `onKeyDown` on
-//     the dialog root: the old onKeyDown only fired while focus was still
-//     somewhere inside the dialog, so clicking the (unfocusable) message text
-//     or tabbing out moved focus to <body> and silently killed Escape for
-//     good. Matches WhatsNewDialog.tsx/ErrorDetailPanel.tsx/FilterPopover.tsx/
-//     InfoBubble.tsx/Sidebar.tsx's own document-listener pattern. (RestorePanel
-//     .tsx is deliberately NOT in that list: its only Escape handling is a React
-//     onKeyDown on the inline tag-entry <input>, which is correct there — that
-//     Escape must fire only while the input itself has focus.)
-//   - A Tab/Shift+Tab focus trap over the dialog card's own focusable
-//     elements (header close-X, Cancel, Confirm), so focus can never land on
-//     the page behind a dialog that is now ACTUALLY covering it (a portal +
-//     backdrop with nothing stopping Tab would just be a bigger version of
-//     the same escape-the-modal bug).
-//   - Returning focus to whatever triggered the confirm() call once it
-//     settles, on all four close paths (Escape / Cancel / Confirm /
-//     backdrop-click) — they all funnel through `settle` below.
-//
-// Call sites keep window.confirm()'s exact control-flow shape — same
-// one-string-in, boolean-out contract, just async and non-blocking instead of
-// a native, unstylable, tab-freezing dialog:
-//
-//   if (!window.confirm(t("x.deleteConfirm"))) return;
-//   ...
-// becomes
 //   const { confirm, confirmDialog } = useConfirm();
-//   ...
-//   if (!(await confirm(t("x.deleteConfirm")))) return;
-//   ...
+//   if (!(await confirm(t("x.deleteConfirm"), { confirmKey: "x.delete" }))) return;
 //   return (<>... {confirmDialog}</>);
 //
-// One useConfirm() instance per component is enough even when a component
-// has several confirm() call sites (VMSnapshotRow, IntegrityCard, ...): only
-// one confirmation can ever be genuinely pending for a given user at a time,
-// so the single pending-request slot is never a real constraint — it just
-// means a second confirm() call before the first settles would replace the
-// pending dialog, which never happens in practice since the triggering
-// button is the only way to reach either call and it's disabled while busy
-// (and, now that the dialog is genuinely modal, physically unreachable while
-// one is already open).
+// The hook owns everything that needs `document` or hooks, so ConfirmDialog
+// stays a plain function component: the portal, a document-level Escape
+// listener (an onKeyDown on the dialog stops firing once focus falls to
+// <body>), a Tab trap, and returning focus to the trigger on every close path.
+//
+// One pending request per instance is enough: the dialog is modal, so a second
+// confirm() cannot be triggered while one is open.
 export interface ConfirmOptions {
+  /** The key of the button that asked, so the answer repeats its words and
+   *  glyph ("Delete") rather than a bare "Confirm". */
+  confirmKey?: TranslationKey;
+  /** A composed label, for an answer that carries a name or a count and so has
+   *  no key of its own. It wins over confirmKey. */
   confirmLabel?: string;
   /** Translation key behind confirmLabel, so the confirm button shows its glyph. */
   confirmLabelKey?: string;
@@ -79,9 +39,6 @@ interface PendingConfirm extends ConfirmOptions {
   message: string;
 }
 
-// The dialog card's own focusable controls, in DOM/tab order: header
-// close-X, Cancel, Confirm. Kept generic (not hardcoded to those three)
-// so it still holds if the card ever grows another focusable element.
 const FOCUSABLE_SELECTOR =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -94,15 +51,11 @@ export function useConfirm() {
   const [pending, setPending] = useState<PendingConfirm | null>(null);
   const [typed, setTyped] = useState("");
   const resolveRef = useRef<((value: boolean) => void) | null>(null);
-  // The dialog card's DOM node (for the Tab trap) and whatever had focus the
-  // moment confirm() was called (to restore it once the dialog closes).
   const dialogRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
 
   const confirm = useCallback((message: string, options?: ConfirmOptions) => {
-    // Captured BEFORE setPending fires the re-render that auto-focuses the
-    // dialog's own Cancel button — after that, document.activeElement would
-    // already be the dialog, not the button that opened it.
+    // Read before setPending: the re-render moves focus into the dialog.
     const active = document.activeElement;
     triggerRef.current = active instanceof HTMLElement && active !== document.body ? active : null;
     setTyped("");
@@ -150,20 +103,17 @@ export function useConfirm() {
       </>
     );
 
-  // Portal-rendered to <body> (InfoBubble.tsx's fix for the same problem):
-  // any ancestor of the call site with a CSS transform (e.g. .glim-page-enter)
-  // creates a new containing block, so a `position: fixed` backdrop nested
-  // under it only covers that ancestor's box, not the real viewport.
+  // An ancestor with a CSS transform (e.g. .glim-page-enter) would confine a
+  // position: fixed backdrop to its own box, so the dialog goes to <body>.
   const confirmDialog = pending
     ? createPortal(
         <ConfirmDialog
           ref={dialogRef}
           title={t("confirmDialog.title")}
           message={pending.message}
-          confirmLabel={pending.confirmLabel ?? t("common.confirm")}
-          confirmLabelKey={pending.confirmLabelKey}
+          confirmLabel={pending.confirmLabel ?? t(pending.confirmKey ?? "common.confirm")}
+          confirmLabelKey={pending.confirmLabelKey ?? pending.confirmKey ?? "common.confirm"}
           cancelLabel={pending.cancelLabel ?? t("common.cancel")}
-          closeLabel={t("common.close")}
           extra={extra}
           confirmDisabled={locked}
           onConfirm={() => settle(true)}

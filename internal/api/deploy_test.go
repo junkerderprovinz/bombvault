@@ -8,21 +8,17 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// realIPv4Re matches a real dotted-quad IPv4 address. The 192.168.x.x placeholder
-// does NOT match (the x octets are not digits), so any match is a leaked real IP.
+// realIPv4Re matches a dotted-quad IPv4 address, which the 192.168.x.x
+// placeholder is not.
 var realIPv4Re = regexp.MustCompile(`\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b`)
 
-// TestBuildDeploySnippet pins the rest-server deployment snippet: it enables
-// append-only + private-repos, its htpasswd line verifies against the one-time
-// password with bcrypt, and it leaks no real IP (only the 192.168.x.x placeholder).
 func TestBuildDeploySnippet(t *testing.T) {
 	snip, err := buildDeploySnippet("containers")
 	if err != nil {
 		t.Fatalf("buildDeploySnippet: %v", err)
 	}
 
-	// The append-only + private-repos flags are the whole point — the far side
-	// enforces immutability. Both snippet flavours must carry them.
+	// These flags make the far side enforce immutability.
 	for _, want := range []string{"--append-only", "--private-repos"} {
 		if !strings.Contains(snip.DockerRun, want) {
 			t.Errorf("docker run snippet missing %q", want)
@@ -32,8 +28,6 @@ func TestBuildDeploySnippet(t *testing.T) {
 		}
 	}
 
-	// The user + htpasswd line are per-domain, and the hash verifies against the
-	// returned plaintext password (proving it is a real bcrypt of THAT password).
 	if snip.User != "bombvault-containers" {
 		t.Errorf("user = %q, want bombvault-containers", snip.User)
 	}
@@ -50,12 +44,10 @@ func TestBuildDeploySnippet(t *testing.T) {
 	if snip.Password == "" || len(snip.Password) != 24 {
 		t.Errorf("password length = %d, want 24 url-safe chars", len(snip.Password))
 	}
-	// The plaintext password must never be embedded in the htpasswd line.
 	if strings.Contains(snip.Htpasswd, snip.Password) {
 		t.Errorf("htpasswd line must not embed the plaintext password")
 	}
 
-	// No real IPs — only the 192.168.x.x placeholder may appear in either snippet.
 	for name, s := range map[string]string{"dockerRun": snip.DockerRun, "compose": snip.Compose} {
 		if leak := realIPv4Re.FindString(s); leak != "" {
 			t.Errorf("%s snippet contains a real IP %q (only 192.168.x.x placeholder allowed)", name, leak)
@@ -65,7 +57,6 @@ func TestBuildDeploySnippet(t *testing.T) {
 		}
 	}
 
-	// Two invocations must yield different passwords (freshly random each time).
 	snip2, err := buildDeploySnippet("containers")
 	if err != nil {
 		t.Fatalf("buildDeploySnippet (2): %v", err)
@@ -75,7 +66,6 @@ func TestBuildDeploySnippet(t *testing.T) {
 	}
 }
 
-// TestBuildDeploySnippetUnknownDomain: a domain outside the fixed set is refused.
 func TestBuildDeploySnippetUnknownDomain(t *testing.T) {
 	if _, err := buildDeploySnippet("../etc"); err == nil {
 		t.Fatal("expected an error for an unknown domain")

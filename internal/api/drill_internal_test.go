@@ -6,10 +6,9 @@ import (
 	"testing"
 )
 
-// TestCleanupDrillSandboxMarkerGuard pins the safety interlock: cleanup deletes a
-// sandbox ONLY when the .bombvault-drill marker is present in that exact dir. An
-// unmarked dir is NEVER removed and yields an error — a guard against ever
-// os.RemoveAll-ing a path that is not a drill sandbox we created.
+// TestCleanupDrillSandboxMarkerGuard: cleanupDrillSandbox removes only a
+// directory that carries the drill marker, so it cannot RemoveAll a path it did
+// not create.
 func TestCleanupDrillSandboxMarkerGuard(t *testing.T) {
 	t.Run("refuses an unmarked dir", func(t *testing.T) {
 		dir := filepath.Join(t.TempDir(), "not-a-drill")

@@ -67,10 +67,9 @@ func TestRunsFinishFailed(t *testing.T) {
 	}
 }
 
-// TestListRunsWithRunningRun guards the dashboard's "Failed to load runs"
-// regression: a run still in flight (or interrupted mid-backup) has a NULL
-// `bytes` column because StartRun never sets it and FinishRun was never reached.
-// ListRuns must return such a row instead of failing the whole scan on the NULL.
+// TestListRunsWithRunningRun covers a running or interrupted run, whose bytes
+// are NULL because FinishRun never ran. ListRuns must return it instead of
+// failing the scan.
 func TestListRunsWithRunningRun(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -79,8 +78,6 @@ func TestListRunsWithRunningRun(t *testing.T) {
 	r := store.New(db)
 
 	tg, _ := r.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/data"}})
-	// StartRun only — simulates a backup that is running or was interrupted, so
-	// the row keeps bytes = NULL (FinishRun, which sets bytes, never ran).
 	if _, err := r.StartRun(tg.ID, "backup"); err != nil {
 		t.Fatalf("StartRun: %v", err)
 	}
@@ -100,11 +97,9 @@ func TestListRunsWithRunningRun(t *testing.T) {
 	}
 }
 
-// TestFailRunningRunScopedToTarget verifies FailRunningRun closes out ONLY the
-// named target's running run, as 'failed' with the given error, and never
-// touches a different target's genuinely in-flight run — the property that
-// makes it safe to call from a recovered panic (api.Service.failStuckRun)
-// without accidentally failing an unrelated domain's concurrent backup.
+// TestFailRunningRunScopedToTarget checks that FailRunningRun fails the named
+// target's running run and leaves another target's in-flight run alone, so
+// panic recovery cannot fail an unrelated backup.
 func TestFailRunningRunScopedToTarget(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -115,7 +110,7 @@ func TestFailRunningRunScopedToTarget(t *testing.T) {
 	stuck, _ := r.UpsertTarget(store.Target{ContainerName: "stuck", AppdataPaths: []string{"/data"}})
 	other, _ := r.UpsertTarget(store.Target{ContainerName: "other", AppdataPaths: []string{"/data"}})
 	stuckRun, _ := r.StartRun(stuck.ID, "backup")
-	otherRun, _ := r.StartRun(other.ID, "backup") // still genuinely running elsewhere
+	otherRun, _ := r.StartRun(other.ID, "backup")
 
 	n, err := r.FailRunningRun(stuck.ID, "internal error (recovered panic): boom")
 	if err != nil {
@@ -140,14 +135,14 @@ func TestFailRunningRunScopedToTarget(t *testing.T) {
 		t.Fatalf("a different target's genuinely running run must be left untouched, got %+v", got)
 	}
 
-	// Calling it again (nothing left running for this target) is a harmless no-op.
+	// Nothing is left running for this target, so a second call changes nothing.
 	if n, err := r.FailRunningRun(stuck.ID, "second call"); err != nil || n != 0 {
 		t.Fatalf("re-calling FailRunningRun on an already-finished run should no-op, got n=%d err=%v", n, err)
 	}
 }
 
-// TestReapInterruptedRuns verifies a startup reap turns orphaned 'running' runs
-// into 'failed' (with a finished_at) while leaving completed runs untouched.
+// TestReapInterruptedRuns expects the startup reap to fail orphaned running
+// runs and leave finished ones alone.
 func TestReapInterruptedRuns(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -156,7 +151,6 @@ func TestReapInterruptedRuns(t *testing.T) {
 	r := store.New(db)
 
 	tg, _ := r.UpsertTarget(store.Target{ContainerName: "jellyfin", AppdataPaths: []string{"/data"}})
-	// One orphaned (running) + one cleanly finished run.
 	orphan, _ := r.StartRun(tg.ID, "backup")
 	done, _ := r.StartRun(tg.ID, "backup")
 	if err := r.FinishRun(done, "success", "deadbeef", 1024, ""); err != nil {
@@ -187,9 +181,6 @@ func TestReapInterruptedRuns(t *testing.T) {
 	}
 }
 
-// TestRunsSince verifies the time-windowed query: runs at or after the cutoff
-// are returned (newest first) and older runs are excluded. Powers the
-// dashboard's backup-health heatmap window.
 func TestRunsSince(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -198,9 +189,7 @@ func TestRunsSince(t *testing.T) {
 	r := store.New(db)
 
 	tg, _ := r.UpsertTarget(store.Target{ContainerName: "sonarr", AppdataPaths: []string{"/data"}})
-	// StartRun stamps started_at = now, so every seeded run is recent. The cutoff
-	// is what we vary: a cutoff in the future excludes them, one in the past keeps
-	// them.
+	// StartRun stamps started_at with the current time, so only the cutoff varies.
 	for i := 0; i < 3; i++ {
 		if _, err := r.StartRun(tg.ID, "backup"); err != nil {
 			t.Fatalf("StartRun: %v", err)
@@ -225,11 +214,9 @@ func TestRunsSince(t *testing.T) {
 	}
 }
 
-// TestLastRunForTarget pins the skip-warning debounce query (#111): it must
-// return the most recent BACKUP run regardless of status (here a "skipped" run
-// recorded after a success), ignore other run kinds (a newer tamper run must not
-// mask the backup history) and other targets' runs, and report nil when the
-// target has no backup runs at all.
+// TestLastRunForTarget expects the newest backup run of the target whatever its
+// status, ignoring other kinds and other targets, and nil when there are no
+// runs.
 func TestLastRunForTarget(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -250,10 +237,8 @@ func TestLastRunForTarget(t *testing.T) {
 		t.Fatalf("no runs yet: got (%+v, %v), want (nil, nil)", run, err)
 	}
 
-	// Seed with explicit started_at stamps (StartRun's second granularity would
-	// make same-second ordering ambiguous): a success, then a newer skip, then an
-	// even newer non-backup run and a newer run of ANOTHER target — neither of the
-	// last two may win.
+	// Explicit started_at stamps, since StartRun's one-second resolution would
+	// make the order ambiguous. The last two rows are newer but must not win.
 	now := time.Now().Unix()
 	seed := []struct {
 		id, target, kind, status string
@@ -282,10 +267,6 @@ func TestLastRunForTarget(t *testing.T) {
 	}
 }
 
-// TestAcknowledgeRuns verifies both acknowledge paths (#126): AcknowledgeRuns
-// flips the flag for the given ids only and reports the right rows-affected
-// count (a no-op on an empty list), and AcknowledgeAllFailed acknowledges every
-// still-unacknowledged failed run while leaving successful runs untouched.
 func TestAcknowledgeRuns(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -295,7 +276,6 @@ func TestAcknowledgeRuns(t *testing.T) {
 
 	tg, _ := r.UpsertTarget(store.Target{ContainerName: "sonarr", AppdataPaths: []string{"/data"}})
 
-	// Two failed backup runs + one successful one.
 	fail1, _ := r.StartRun(tg.ID, "backup")
 	if err := r.FinishRun(fail1, "failed", "", 0, "restic backup failed"); err != nil {
 		t.Fatalf("FinishRun(fail1): %v", err)
@@ -323,17 +303,14 @@ func TestAcknowledgeRuns(t *testing.T) {
 		return false
 	}
 
-	// Fresh runs start unacknowledged.
 	if ackFlag(fail1) || ackFlag(fail2) || ackFlag(okRun) {
 		t.Fatal("runs should start unacknowledged")
 	}
 
-	// Empty id list is a no-op.
 	if n, err := r.AcknowledgeRuns(nil); err != nil || n != 0 {
 		t.Fatalf("AcknowledgeRuns(nil) = (%d, %v), want (0, nil)", n, err)
 	}
 
-	// Acknowledge one run by id.
 	n, err := r.AcknowledgeRuns([]string{fail1})
 	if err != nil {
 		t.Fatalf("AcknowledgeRuns: %v", err)
@@ -348,7 +325,7 @@ func TestAcknowledgeRuns(t *testing.T) {
 		t.Fatal("fail2 should NOT be acknowledged yet")
 	}
 
-	// Acknowledge all remaining failed runs — only fail2 is still unacknowledged.
+	// Only fail2 is still unacknowledged.
 	n, err = r.AcknowledgeAllFailed()
 	if err != nil {
 		t.Fatalf("AcknowledgeAllFailed: %v", err)
@@ -359,16 +336,14 @@ func TestAcknowledgeRuns(t *testing.T) {
 	if !ackFlag(fail2) {
 		t.Fatal("fail2 should be acknowledged after AcknowledgeAllFailed")
 	}
-	// A successful run is never touched.
 	if ackFlag(okRun) {
 		t.Fatal("success run must not be acknowledged by AcknowledgeAllFailed")
 	}
 }
 
-// TestLastSuccessfulBackupDomainScoped verifies that the per-domain everyN
-// due-gate queries are scoped to their own table: a VM backup must NOT satisfy
-// the containers gate, and vice versa. (Both kinds share kind='backup'; the
-// distinction is whether target_id lives in `targets` or `vms`.)
+// TestLastSuccessfulBackupDomainScoped checks that a VM backup does not count
+// for containers. Both domains record kind='backup'; which table holds
+// target_id decides the domain.
 func TestLastSuccessfulBackupDomainScoped(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -376,7 +351,6 @@ func TestLastSuccessfulBackupDomainScoped(t *testing.T) {
 	}
 	r := store.New(db)
 
-	// Record a successful VM backup only — no container backup.
 	vm, err := r.UpsertVMTarget(store.VMTarget{Name: "ubuntu"})
 	if err != nil {
 		t.Fatalf("UpsertVMTarget: %v", err)
@@ -389,7 +363,6 @@ func TestLastSuccessfulBackupDomainScoped(t *testing.T) {
 		t.Fatalf("FinishRun: %v", err)
 	}
 
-	// The VM gate sees it…
 	vmLast, err := r.LastSuccessfulVMBackup()
 	if err != nil {
 		t.Fatalf("LastSuccessfulVMBackup: %v", err)
@@ -398,7 +371,6 @@ func TestLastSuccessfulBackupDomainScoped(t *testing.T) {
 		t.Fatal("LastSuccessfulVMBackup should be non-zero after a VM backup")
 	}
 
-	// …but the containers gate must NOT (no container has been backed up).
 	cLast, err := r.LastSuccessfulContainerBackup()
 	if err != nil {
 		t.Fatalf("LastSuccessfulContainerBackup: %v", err)
@@ -408,10 +380,8 @@ func TestLastSuccessfulBackupDomainScoped(t *testing.T) {
 	}
 }
 
-// TestLastSuccessfulFilesBackupAndCounts verifies the files domain helpers: a
-// run recorded against a file_sets.id satisfies the files everyN due-gate, is
-// attributed to the "files" bucket by RunCounts, and does NOT satisfy the
-// containers gate (scoping mirrors TestLastSuccessfulBackupDomainScoped).
+// TestLastSuccessfulFilesBackupAndCounts expects a run against a file set to
+// count for the files domain and in RunCounts, but not for containers.
 func TestLastSuccessfulFilesBackupAndCounts(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -423,7 +393,6 @@ func TestLastSuccessfulFilesBackupAndCounts(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateFileSet: %v", err)
 	}
-	// Before any run the gate must report zero.
 	ts, err := r.LastSuccessfulFilesBackup()
 	if err != nil {
 		t.Fatal(err)
@@ -453,7 +422,6 @@ func TestLastSuccessfulFilesBackupAndCounts(t *testing.T) {
 	if counts["files"]["success"] != 1 {
 		t.Fatalf("expected 1 files success, got %v", counts["files"])
 	}
-	// A file-set backup must NOT satisfy the containers gate.
 	cLast, err := r.LastSuccessfulContainerBackup()
 	if err != nil {
 		t.Fatal(err)
@@ -463,10 +431,8 @@ func TestLastSuccessfulFilesBackupAndCounts(t *testing.T) {
 	}
 }
 
-// TestSetRunGroup verifies SetRunGroup stamps a run's group_id, that ListRuns
-// round-trips it correctly, and that a run never stamped keeps the zero-value
-// "" (an ungrouped run is unaffected — the default for every run outside a
-// "Backup Everything" pass).
+// TestSetRunGroup expects SetRunGroup to stamp one run's group_id and leave
+// other runs with an empty one.
 func TestSetRunGroup(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -504,26 +470,16 @@ func TestSetRunGroup(t *testing.T) {
 		t.Fatalf("ungrouped run's GroupID must stay empty (zero-value default), got %+v", byID[ungrouped])
 	}
 
-	// Best-effort bookkeeping: stamping an id that matches no row is not an error.
+	// An id that matches no row is not an error.
 	if err := r.SetRunGroup("no-such-run", "some-group"); err != nil {
 		t.Fatalf("SetRunGroup(unknown id) must not error: %v", err)
 	}
 }
 
-// TestLastEverythingPass pins the "Backup Everything" everyN due-gate's input:
-// no matching rows report a zero time; a run that has FINISHED sets it, success
-// or failure; a run still in flight does not.
-//
-// The failure case is the point, and it is a deliberate reversal — this test
-// used to assert that a failed pass leaves the gate at zero. That is what made
-// the pass run every night instead of every N days: the parent run is
-// all-or-nothing ("success" iff every domain step had zero item failures), so a
-// single item that fails persistently — one broken container, or the flash step
-// on a host with no /boot mount, which is a supported deployment — means the
-// pass never records a success, the gate reads "never ran" on every daily
-// trigger, and the whole five-domain pass plus the batched prune and off-site
-// replication runs nightly, silently. Whether the pass may run is a question
-// about the INTERVAL, not about the verdict.
+// TestLastEverythingPass counts a finished pass whether it succeeded or failed,
+// and not a pass in flight. The parent run fails whenever a single item does,
+// so gating on success would let one persistently broken item rerun the whole
+// pass every night.
 func TestLastEverythingPass(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -531,7 +487,6 @@ func TestLastEverythingPass(t *testing.T) {
 	}
 	r := store.New(db)
 
-	// No runs yet.
 	ts, err := r.LastEverythingPass()
 	if err != nil {
 		t.Fatal(err)
@@ -540,7 +495,6 @@ func TestLastEverythingPass(t *testing.T) {
 		t.Fatalf("expected zero time before any everything pass, got %v", ts)
 	}
 
-	// A pass that is still running is not a completed pass.
 	runningID, err := r.StartRun(store.EverythingTargetID, "backup")
 	if err != nil {
 		t.Fatalf("StartRun: %v", err)
@@ -553,7 +507,7 @@ func TestLastEverythingPass(t *testing.T) {
 		t.Fatalf("a pass that has not finished must not satisfy the gate, got %v", ts)
 	}
 
-	// It finishes "failed" because one item failed. The pass still RAN, so the
+	// One item failed, so the pass finishes "failed", but it ran and the
 	// interval starts here.
 	if err := r.FinishRun(runningID, "failed", "", 0, "flash: not mounted"); err != nil {
 		t.Fatal(err)
@@ -563,10 +517,9 @@ func TestLastEverythingPass(t *testing.T) {
 		t.Fatal(err)
 	}
 	if failedAt.IsZero() {
-		t.Fatal("a completed pass must satisfy the gate even when an item failed — otherwise the pass runs every night")
+		t.Fatal("a completed pass must satisfy the gate even when an item failed; otherwise the pass runs every night")
 	}
 
-	// A later successful pass moves it forward.
 	okID, err := r.StartRun(store.EverythingTargetID, "backup")
 	if err != nil {
 		t.Fatalf("StartRun: %v", err)
@@ -583,19 +536,10 @@ func TestLastEverythingPass(t *testing.T) {
 	}
 }
 
-// TestLastEverythingPassIgnoresAbandonedRuns is the other half of the gate, and
-// the one the "a finished run counts, success or not" rule above opened up: a
-// pass that was ABANDONED must not count, even though it carries a finished_at.
-//
-// The pass holds one parent run open across containers → vms → flash → files →
-// config plus the batched prune and off-site replication, i.e. hours. Reboot the
-// box or update the container in that window and ReapInterruptedRuns — global,
-// unconditional, every startup — stamps the abandoned row finished_at = the
-// restart instant. On `everyN 7 03:00` that stamp shuts the everyN gate for the
-// next seven days and closes the anacron catch-up with it (the stamp lies after
-// the missed fire, so nothing reads as missed): a whole interval of whole-server
-// backups skipped, silently, because the box rebooted mid-pass. The panic path
-// (FailRunningRun) writes the same shape.
+// TestLastEverythingPassIgnoresAbandonedRuns covers a pass closed out by the
+// startup reap or the panic path, which has a finished_at but did not complete.
+// Counting it would let a reboot during the hours-long pass skip the next whole
+// interval.
 func TestLastEverythingPassIgnoresAbandonedRuns(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
@@ -632,8 +576,7 @@ func TestLastEverythingPassIgnoresAbandonedRuns(t *testing.T) {
 			}
 			tc.abandon(t, r)
 
-			// The row is closed out — that part is correct, the dashboard must not
-			// show a perpetual "running" chip.
+			// The row itself is closed, so the dashboard does not show it running.
 			runs, err := r.ListRuns(10)
 			if err != nil {
 				t.Fatal(err)
@@ -647,17 +590,15 @@ func TestLastEverythingPassIgnoresAbandonedRuns(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !ts.IsZero() {
-				t.Fatalf("an abandoned pass must not satisfy the everyN gate, got %v — the next interval of whole-server backups would be skipped", ts)
+				t.Fatalf("an abandoned pass must not satisfy the everyN gate, got %v; the next interval of whole-server backups would be skipped", ts)
 			}
 		})
 	}
 }
 
-// TestLastEverythingPassCountsACompletedPassAfterAReap pins that the fix is
-// narrow: excluding abandoned rows must not exclude the completed pass that
-// follows one. A reboot mid-pass, then the catch-up pass that actually runs to
-// its own end — the gate measures the second, not the first.
-func TestLastEverythingPassCountsACompletedPassAfterAReap(t *testing.T) {
+// TestLastEverythingPassCountsPassAfterReap expects a pass that completes after
+// an abandoned one to count.
+func TestLastEverythingPassCountsPassAfterReap(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
 		t.Fatal(err)
@@ -688,9 +629,8 @@ func TestLastEverythingPassCountsACompletedPassAfterAReap(t *testing.T) {
 	}
 }
 
-// TestLastSuccessfulConfigBackupAndCounts verifies the config self-backup domain
-// helpers: a run tagged with the reserved ConfigTargetID satisfies the config
-// everyN due-gate and is attributed to the "config" domain by RunCounts.
+// TestLastSuccessfulConfigBackupAndCounts expects a run under ConfigTargetID to
+// count for the config domain and in RunCounts.
 func TestLastSuccessfulConfigBackupAndCounts(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {

@@ -1,24 +1,14 @@
-// ---------------------------------------------------------------------------
-// ESLint flat config — the frontend lint gate (npm run lint → `eslint src`).
+// ESLint flat config for `npm run lint` (`eslint src`): @eslint/js and
+// typescript-eslint recommended, without type information (type-aware linting
+// would pull the whole DOM lib into the lint program), plus react-hooks.
 //
-// @eslint/js recommended + typescript-eslint recommended (deliberately the
-// NON-type-checked variant: type-aware linting would pull the whole DOM lib
-// into the lint program) + react-hooks (rules-of-hooks = error, the
-// correctness rule this gate exists for; exhaustive-deps = warn).
-//
-// TypeScript 6 side-by-side shim
-// ------------------------------
-// The project's `typescript` devDep is the native TS 7 compiler (tsgo), which
-// no longer ships the JS compiler API. typescript-eslint hard-throws on
-// ts.versionMajorMinor >= 7 and its error message prescribes the official
-// "running side-by-side with TypeScript 6.0" pattern. npm cannot nest a peer
-// dependency over a conflicting root direct dependency, so the TS 6.0.3 copy
-// (the last JS-API TypeScript, inside typescript-eslint's ">=4.8.4 <6.1.0"
-// peer range) lives in the lint-ts/ file: sub-package, and the resolve hook
-// below redirects every `typescript` import made from inside the
-// typescript-eslint module tree (incl. ts-api-utils) to it. Everything else —
-// `tsc --noEmit` in the build, vite, vitest — keeps the real TS 7 package.
-// ---------------------------------------------------------------------------
+// The project's `typescript` devDependency is the native TS 7 compiler, which
+// ships no JS compiler API, and typescript-eslint refuses to run on TS 7. Its
+// error message prescribes running TypeScript 6 side by side. npm cannot nest a
+// peer dependency under a conflicting direct dependency, so TS 6.0.3 lives in
+// the lint-ts/ sub-package, and the resolve hook below points every
+// `typescript` import made from inside typescript-eslint or ts-api-utils at it.
+// tsc, vite and vitest keep TS 7.
 
 import { createRequire, registerHooks } from "node:module";
 import { pathToFileURL } from "node:url";
@@ -26,10 +16,9 @@ import js from "@eslint/js";
 import reactHooks from "eslint-plugin-react-hooks";
 import bombvault from "./lint-rules/index.js";
 
-// The anchor file does not need to exist — it only pins module resolution to
-// the lint-ts/ directory, so `typescript` resolves to lint-ts/node_modules.
-// (The sync resolve hook must return a final URL — rewriting context.parentURL
-// for nextResolve is silently ignored for CJS requires.)
+// The anchor file need not exist; it only makes `typescript` resolve from
+// lint-ts/node_modules. The hook returns a final URL because rewriting
+// context.parentURL for nextResolve is ignored for CJS requires.
 const lintTsRequire = createRequire(new URL("./lint-ts/_anchor.js", import.meta.url));
 
 registerHooks({
@@ -48,8 +37,8 @@ registerHooks({
   },
 });
 
-// Imported AFTER the hook is registered — a static import would hoist above
-// the registerHooks call and load typescript-eslint against the API-less TS 7.
+// A static import would be hoisted above registerHooks and load
+// typescript-eslint against TS 7.
 const tseslintModule = await import("typescript-eslint");
 const tseslint = tseslintModule.default ?? tseslintModule;
 
@@ -58,7 +47,6 @@ const SRC = ["src/**/*.{ts,tsx}"];
 export default [
   { linterOptions: { reportUnusedDisableDirectives: "error" } },
 
-  // Base recommended sets, scoped to the app sources.
   ...[js.configs.recommended, ...tseslint.configs.recommended].map((config) => ({
     ...config,
     files: SRC,
@@ -68,17 +56,14 @@ export default [
     files: SRC,
     plugins: { "react-hooks": reactHooks },
     rules: {
-      // The correctness rules this gate exists for.
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
 
-      // TS itself checks undefined identifiers (and knows the DOM globals);
-      // no-undef on TS files only produces false positives.
+      // The compiler already reports undefined names; no-undef only adds
+      // false positives on TypeScript files.
       "no-undef": "off",
 
-      // Calibration against the existing tree (see the lint gate wave):
-      // allow intentionally-unused values when prefixed with "_", and don't
-      // fail on empty catch blocks used as deliberate "ignore" handlers.
+      // A leading underscore marks a value that is meant to be unused.
       "@typescript-eslint/no-unused-vars": [
         "error",
         {
@@ -90,13 +75,8 @@ export default [
     },
   },
 
-  // -------------------------------------------------------------------------
-  // The settled UI conventions (lint-rules/, and its README for the full
-  // reasoning). These are house rules, not correctness rules, and they are
-  // errors on purpose: each one has already been broken, reported by jdp,
-  // fixed, and then broken again by a later round, because until now they
-  // lived only in prose and in a reviewer's memory.
-  // -------------------------------------------------------------------------
+  // The house UI conventions; lint-rules/README.md has the reasoning. Errors
+  // rather than warnings, so a regression fails the lint job.
   {
     files: SRC,
     plugins: { bombvault },
@@ -106,30 +86,20 @@ export default [
       "bombvault/no-status-color-on-control": "error",
       "bombvault/control-reads-engine-tokens": "error",
       "bombvault/user-message-is-translated": "error",
-      // Unlike page-uses-page-shell below, this one takes no options, and the
-      // ru/uk/bg/sr exemption is deliberately NOT configurable here. Settings'
-      // exception is a project decision and belongs where a reader can find
-      // it; "the em dash is ordinary punctuation in Russian" is a fact about
-      // Russian, it lives next to the paragraph explaining it, and it is not
-      // something a future config edit should be able to switch off by
-      // accident. See lint-rules/no-em-dash-in-user-text.js.
+      // No options: the ru/uk/bg/sr exemption is a fact about those languages,
+      // not a project setting, so it lives in the rule.
       "bombvault/no-em-dash-in-user-text": "error",
       "bombvault/page-uses-page-shell": [
         "error",
         {
-          // The page-shell exceptions, stated here rather than inferred, so
-          // that "Settings is allowed to differ" is a decision someone can
-          // read back — not a hole a future page falls through. Both are
-          // documented at length in src/lib/pageShell.ts.
+          // Files that use a different shell, or none (null). See
+          // src/lib/pageShell.ts.
           exceptions: {
-            // Its 7-tab `size="lg" equalWidth` Selector strip measures 1424px
-            // in de; capping the root at PAGE_SHELL's 1152px breaks the strip
-            // onto two rows. Same 40px rhythm, no width cap.
+            // The seven-tab Selector strip is 1424px wide in German, and
+            // PAGE_SHELL's 1152px cap would wrap it onto two rows.
             "Settings.tsx": "PAGE_SHELL_TABBED",
-            // Not a routed page at all: Layout.tsx returns it BEFORE the
-            // sidebar/<main> shell when auth is blocked, so it never sits
-            // under <Outlet />. Its `w-full max-w-sm` is a centred
-            // full-screen auth card, a different layout primitive.
+            // Not a routed page: Layout renders it in place of the app shell
+            // while auth is blocked.
             "Login.tsx": null,
           },
         },

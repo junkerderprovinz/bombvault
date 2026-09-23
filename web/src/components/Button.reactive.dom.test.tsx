@@ -1,23 +1,8 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// The fourth label mode (jdp: "Ich möchte einen vierten modus implementieren
-// 'reaktiver Text und Symbole' wo alles buttons etc. nur den Glyph zeigen aber
-// bei mouseover der text mit eingeblendet wird durch eine schöne animation").
-//
-// What is worth pinning here is not the animation — that is CSS, verified in a
-// browser — but the three things the animation depends on and that a later
-// change could quietly break:
-//
-//   1. The words are REALLY THERE at rest, in a collapsed box. Not `sr-only`,
-//      which cannot be revealed, and not absent, which cannot be revealed
-//      either. A reveal animation needs something to reveal.
-//   2. The control is marked for the CSS to key off. Without `glim-reactive` on
-//      the button, the hover rule has nothing to match and the label stays
-//      collapsed forever — a mode that silently does nothing.
-//   3. The width does not move. This is the reason the mode can exist at all:
-//      the stage already reserves the label's width, so the words arrive
-//      inside a box that was always that size.
-// ---------------------------------------------------------------------------
+// Reactive mode shows only the glyph and reveals the label on hover. The
+// animation is CSS; these tests pin what it needs from the markup: the label
+// in the DOM in a collapsed box, and `glim-reactive` on the button for the
+// hover rule to match.
 import { afterEach, beforeEach, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { Button } from "./Button";
@@ -68,11 +53,6 @@ it("still has its accessible name, like every other mode", () => {
   expect(screen.getByRole("button", { name: "Off-site-DR-Prüfung starten" })).toBeTruthy();
 });
 
-// Originally this pinned "the same stage in all four modes", which was true
-// when the mode shipped. jdp then asked for the opposite in the two hiding
-// modes: narrow at rest, growing on hover. So the reveal is no longer free of
-// layout — it IS the layout, and what has to hold instead is that the button
-// takes no floor that would stop it from growing.
 it("takes no width stage, so the button itself can grow as the words arrive", () => {
   setLabelMode("buttons", "reactive");
   renderButton();
@@ -83,8 +63,8 @@ it("takes no width stage, so the button itself can grow as the words arrive", ()
 it("carries its label's length so the reveal is neither clipped nor sluggish", () => {
   setLabelMode("buttons", "reactive");
   renderButton("Off-site-DR-Prüfung starten");
-  // A fixed ceiling cut this label off on hover and made short ones snap open;
-  // the ceiling is derived from the text instead. 27 visual units here.
+  // The reveal's ceiling comes from the label length, 27 visual units here, so
+  // a long label is not clipped and a short one does not snap open.
   const style = screen.getByRole("button").getAttribute("style") ?? "";
   expect(style).toContain("--reactive-chars: 27");
 });
@@ -92,18 +72,17 @@ it("carries its label's length so the reveal is neither clipped nor sluggish", (
 it("shows its text outright when it has no glyph to fall back on", () => {
   setLabelMode("buttons", "reactive");
   render(<Button label="Clear" onClick={() => {}} />);
-  // Same rule as glyph mode: an empty box is unusable, and a reactive empty box
-  // is an empty box you have to find with the pointer first.
+  // As in glyph mode, a button with no glyph shows its text, not an empty box.
   expect(screen.getByText("Clear").className).toContain("glim-btn-label");
   expect(screen.getByRole("button").className).not.toContain("glim-reactive");
 });
 
-it("does not also put the label in a bubble — hovering already reveals it", () => {
+it("does not also put the label in a bubble, since hovering already reveals it", () => {
   setLabelMode("buttons", "reactive");
   renderButton();
   expect(screen.getByRole("button").getAttribute("title")).toBeNull();
-  // A `title` prop is the changing half and still belongs in the bubble; the
-  // label does not, because the same hover paints it into the button.
+  // A `title` prop still goes to the bubble; the label does not, because the
+  // same hover paints it into the button.
   cleanup();
   render(
     <Button label="Clear" glyph={<svg />} title="Another backup is running" onClick={() => {}} />

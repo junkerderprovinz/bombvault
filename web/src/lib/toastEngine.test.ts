@@ -1,13 +1,8 @@
-// ---------------------------------------------------------------------------
-// toastEngine — pure state-transition tests (GlimStone form-engine Task 9).
-//
-// Every timestamp here is a plain injected `now` number, never a real clock
-// or a fake-timer library — see toastEngine.ts's header comment for why this
-// keeps the suite on the same `environment: "node"`, no-jsdom footing as the
-// rest of this repo's tests (Toggle.test.ts etc.).
-// ---------------------------------------------------------------------------
+// Every timestamp here is an injected `now`, never a real clock or fake timers,
+// so the suite runs in the plain node environment.
 import { describe, expect, it } from "vitest";
 import {
+  ACTION_TOAST_DURATION_MS,
   MAX_VISIBLE_TOASTS,
   NO_ENGAGEMENT,
   TOAST_DURATION_MS,
@@ -34,6 +29,14 @@ describe("addToast", () => {
     expect(list[0].remainingMs).toBe(TOAST_DURATION_MS);
   });
 
+  it("keeps a toast that offers an action for the longer action duration", () => {
+    const action = { label: "Undo", onClick: () => {} };
+    const list = addToast([], { id: "a", message: "Linked", severity: "success", action }, 1_000_000);
+    expect(list[0].expiresAt).toBe(1_000_000 + ACTION_TOAST_DURATION_MS);
+    expect(list[0].remainingMs).toBe(ACTION_TOAST_DURATION_MS);
+    expect(ACTION_TOAST_DURATION_MS).toBeGreaterThan(TOAST_DURATION_MS);
+  });
+
   it("stacks onto the list rather than replacing an existing toast", () => {
     let list = addToast([], { id: "a", message: "First", severity: "success" }, 0);
     list = addToast(list, { id: "b", message: "Second", severity: "fail" }, 0);
@@ -53,7 +56,7 @@ describe("addToast", () => {
     expect(list.map((t) => t.message)).toEqual(["One", "Two", "Three"]);
   });
 
-  it("never grows past MAX_VISIBLE_TOASTS — the default cap this app actually renders with", () => {
+  it("never grows past MAX_VISIBLE_TOASTS", () => {
     let list: ToastEntry[] = [];
     // One more push than the cap allows.
     for (let i = 0; i < MAX_VISIBLE_TOASTS + 1; i++) {
@@ -62,13 +65,12 @@ describe("addToast", () => {
     expect(list).toHaveLength(MAX_VISIBLE_TOASTS);
   });
 
-  it("drops the OLDEST toast(s) to make room, never the brand-new one just pushed", () => {
+  it("drops the oldest toasts to make room, never the one just pushed", () => {
     let list: ToastEntry[] = [];
     for (let i = 0; i < MAX_VISIBLE_TOASTS + 1; i++) {
       list = addToast(list, { id: `t${i}`, message: `Msg ${i}`, severity: "success" }, i);
     }
-    // t0 (the very first, oldest) is gone; every toast from t1 onward — most
-    // recent included — survived.
+    // t0 is gone; every toast from t1 on, the newest included, survived.
     expect(list.map((t) => t.id)).toEqual(
       Array.from({ length: MAX_VISIBLE_TOASTS }, (_, i) => `t${i + 1}`)
     );
@@ -97,7 +99,7 @@ describe("addToast", () => {
     expect(list.map((t) => t.id)).toEqual(["b", "c"]);
   });
 
-  it("under the cap, behaves exactly as before — no toast is dropped", () => {
+  it("drops nothing while under the cap", () => {
     let list: ToastEntry[] = [];
     for (let i = 0; i < MAX_VISIBLE_TOASTS; i++) {
       list = addToast(list, { id: `t${i}`, message: `Msg ${i}`, severity: "success" }, i);
@@ -106,13 +108,13 @@ describe("addToast", () => {
     expect(list.map((t) => t.id)).toEqual(Array.from({ length: MAX_VISIBLE_TOASTS }, (_, i) => `t${i}`));
   });
 
-  it("skips a PAUSED toast when making room — evicting the one being hovered/tabbed into is the very damage the pause prevents", () => {
+  it("skips a paused toast when making room", () => {
     let list: ToastEntry[] = [];
     for (let i = 0; i < MAX_VISIBLE_TOASTS; i++) {
       list = addToast(list, { id: `t${i}`, message: `Msg ${i}`, severity: "success" }, i);
     }
-    // The user hovers (or Tabs into) the OLDEST toast, which pauses it — and a
-    // paused toast never expires, so plain drop-oldest would target it first.
+    // Hovering or tabbing into the oldest toast pauses it, and plain
+    // drop-oldest would evict exactly the toast the user is reading.
     list = pauseToast(list, "t0", 10);
     list = addToast(list, { id: "new", message: "New", severity: "success" }, 20);
     expect(list).toHaveLength(MAX_VISIBLE_TOASTS);
@@ -121,7 +123,7 @@ describe("addToast", () => {
     expect(list[0].expiresAt).toBeNull();
   });
 
-  it("falls back to dropping the oldest when EVERY older toast is paused — the newest still always survives", () => {
+  it("drops the oldest when every older toast is paused, and the newest still survives", () => {
     let list: ToastEntry[] = [];
     for (let i = 0; i < MAX_VISIBLE_TOASTS; i++) {
       list = addToast(list, { id: `t${i}`, message: `Msg ${i}`, severity: "success" }, i);
@@ -150,24 +152,24 @@ describe("applyEngagement", () => {
     expect(applyEngagement(NO_ENGAGEMENT, "focus", true)).toEqual({ next: { hover: false, focus: true }, engaged: true });
   });
 
-  it("stays ENGAGED when the mouse leaves a toast the keyboard is still inside — the bug this rule exists to fix", () => {
-    // hover -> Tab in -> mouse away. The countdown must NOT resume: focus is
-    // still on the dismiss button, and resuming would auto-dismiss the toast
-    // out from under the user, snapping activeElement back to <body>.
+  it("stays engaged when the mouse leaves a toast the keyboard is still inside", () => {
+    // hover -> Tab in -> mouse away. The countdown must not resume: focus is
+    // still on the dismiss button, and resuming would dismiss the toast out
+    // from under the user, snapping activeElement back to <body>.
     let e = applyEngagement(NO_ENGAGEMENT, "hover", true);
     e = applyEngagement(e.next, "focus", true);
     e = applyEngagement(e.next, "hover", false);
     expect(e).toEqual({ next: { hover: false, focus: true }, engaged: true });
   });
 
-  it("stays ENGAGED in the mirror order too — focus first, then hover, then un-hover", () => {
+  it("stays engaged in the mirror order: focus, hover, then un-hover", () => {
     let e = applyEngagement(NO_ENGAGEMENT, "focus", true);
     e = applyEngagement(e.next, "hover", true);
     e = applyEngagement(e.next, "hover", false);
     expect(e.engaged).toBe(true);
   });
 
-  it("disengages only once BOTH have ended, whichever ends last", () => {
+  it("disengages only once both have ended, whichever ends last", () => {
     let e = applyEngagement(NO_ENGAGEMENT, "hover", true);
     e = applyEngagement(e.next, "focus", true);
     e = applyEngagement(e.next, "hover", false);
@@ -175,7 +177,7 @@ describe("applyEngagement", () => {
     expect(e).toEqual({ next: { hover: false, focus: false }, engaged: false });
   });
 
-  it("still disengages on a plain hover-in/hover-out with no focus involved — the ordinary case must not regress", () => {
+  it("disengages on a plain hover-in and hover-out with no focus involved", () => {
     const inn = applyEngagement(NO_ENGAGEMENT, "hover", true);
     expect(inn.engaged).toBe(true);
     const out = applyEngagement(inn.next, "hover", false);
@@ -188,7 +190,7 @@ describe("applyEngagement", () => {
     expect(twice).toEqual(once);
   });
 
-  it("never mutates the state it was handed — each toast id's entry is replaced, not edited in place", () => {
+  it("never mutates the state it was handed", () => {
     const prev: ToastEngagement = { hover: true, focus: false };
     applyEngagement(prev, "focus", true);
     expect(prev).toEqual({ hover: true, focus: false });
@@ -219,7 +221,7 @@ describe("pauseToast", () => {
     expect(paused[0].expiresAt).toBeNull();
   });
 
-  it("only pauses the targeted toast — sibling toasts in the stack keep running", () => {
+  it("pauses only the targeted toast while its siblings keep running", () => {
     let list = addToast([], { id: "a", message: "A", severity: "success" }, 0);
     list = addToast(list, { id: "b", message: "B", severity: "success" }, 0);
     const paused = pauseToast(list, "a", 1000);
@@ -237,7 +239,7 @@ describe("pauseToast", () => {
   it("is a no-op on a toast that's already paused (never re-freezes against a stale null expiresAt)", () => {
     const list = addToast([], { id: "a", message: "A", severity: "success" }, 0);
     const once = pauseToast(list, "a", 1500); // remainingMs -> 2500
-    const twice = pauseToast(once, "a", 3000); // should NOT recompute from null
+    const twice = pauseToast(once, "a", 3000); // must not recompute from null
     expect(twice[0].remainingMs).toBe(2500);
   });
 
@@ -248,22 +250,19 @@ describe("pauseToast", () => {
   });
 });
 
-describe("resumeToast — the exact 'preserves remaining time, not reset' requirement", () => {
-  it("restarts the countdown from the FROZEN remainder, not the full 4s", () => {
+describe("resumeToast", () => {
+  it("restarts the countdown from the frozen remainder, not the full 4s", () => {
     // Push at t=0 (expires t=4000). Hover at t=1500 (2500ms left, frozen).
     let list = addToast([], { id: "a", message: "A", severity: "success" }, 0);
     list = pauseToast(list, "a", 1500);
     expect(list[0].remainingMs).toBe(2500);
 
-    // A long, deliberately-past-the-original-deadline pause: real time keeps
-    // moving (to t=9000, well past the original t=4000 expiry) while the
-    // mouse just sits on the toast. If pause didn't actually freeze the
-    // clock, this toast would already be "expired" by now.
+    // Resume at t=9000, well past the original t=4000 expiry. Had the pause
+    // not frozen the clock, the toast would already have expired.
     const resumed = resumeToast(list, "a", 9000);
-    // Correct: 9000 + 2500 (the frozen remainder) = 11500.
+    // 9000 + 2500 (the frozen remainder) = 11500.
     expect(resumed[0].expiresAt).toBe(11500);
-    // Explicitly wrong behaviour this guards against: resetting to the full
-    // duration would give 9000 + 4000 = 13000 instead.
+    // Resetting to the full duration would give 9000 + 4000 = 13000.
     expect(resumed[0].expiresAt).not.toBe(9000 + TOAST_DURATION_MS);
   });
 
@@ -291,7 +290,7 @@ describe("resumeToast — the exact 'preserves remaining time, not reset' requir
   });
 });
 
-describe("shouldShowToast — severity-based quiet mode", () => {
+describe("shouldShowToast", () => {
   it("shows every severity when quiet mode is off", () => {
     expect(shouldShowToast("success", false)).toBe(true);
     expect(shouldShowToast("warn", false)).toBe(true);

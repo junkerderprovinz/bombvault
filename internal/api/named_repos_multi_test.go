@@ -15,24 +15,15 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// The tests in this file drive the domain-wide operations against a domain that
-// really has TWO repositories, and assert what the engine was actually called
-// with.
-//
-// They exist because the guards written alongside the multi-repository rewrite
-// are source scans: they assert that the loop CALLS domainReposForOp and
-// primaryModeFor, and cannot see what the loop does with the answer. The exact
-// regression the rewrite exists to prevent - resolve every repository and then
-// use element [0], or hoist one mode out of the loop so every repository is
-// addressed with the domain's credentials - contains every string those guards
-// look for and passes all of them. A source scan is the right instrument for
-// "which of two distant lines share a read"; it is the wrong one for "the loop
-// body uses the loop variable", and that distinction was missed.
+// These tests run the domain-wide operations against a domain with two
+// repositories and check what the engine was called with. Source scans can
+// only see that a loop calls domainReposForOp and primaryModeFor, not that the
+// body uses the loop variable.
 
-// twoRepoDomain builds a service whose Containers domain has its own repository
-// plus a named repository (#204) that one container points at. Both exist on
-// disk, so reposThatExist keeps them. It returns the service, the store, and the
-// two resolved locations in the order the operations should reach them.
+// twoRepoDomain builds a service whose containers domain has its own
+// repository plus a named repository that one container points at. Both exist
+// on disk. It returns the service, the store, and the two locations in the
+// order the operations should reach them.
 func twoRepoDomain(t *testing.T, eng *fakeResticEngine) (*api.Service, *store.Repo, string, string) {
 	t.Helper()
 	dir := t.TempDir()
@@ -50,8 +41,8 @@ func twoRepoDomain(t *testing.T, eng *fakeResticEngine) (*api.Service, *store.Re
 		if err := os.MkdirAll(p, 0o755); err != nil { //nolint:gosec // G301: test temp dir
 			t.Fatal(err)
 		}
-		// requireExistingRepo stats <repo>/config; a repository that is not there
-		// is dropped, which would make these tests pass for the wrong reason.
+		// requireExistingRepo drops a repository without a config file, which
+		// would let these tests pass for the wrong reason.
 		if err := os.WriteFile(filepath.Join(p, "config"), []byte("x"), 0o600); err != nil {
 			t.Fatal(err)
 		}
@@ -72,9 +63,9 @@ func twoRepoDomain(t *testing.T, eng *fakeResticEngine) (*api.Service, *store.Re
 	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng), st, own, cold
 }
 
-// errWrongKey is restic's own sentence for the failure the Recovery wizard
-// classifies on. Spelled out here rather than referenced from production code:
-// the point of the test is that this exact message survives to the caller.
+// errWrongKey is restic's message for a wrong key, which the Recovery wizard
+// classifies on. It is spelled out here because the tests check that this
+// exact message reaches the caller.
 var errWrongKey = errors.New("wrong password or no key found")
 
 func hasRepo(got []string, want string) bool {
@@ -86,10 +77,8 @@ func hasRepo(got []string, want string) bool {
 	return false
 }
 
-// TestCheckDomainChecksBothRepositoriesWithTheirOwnModes is the behavioural twin
-// of the two source scans over CheckDomain: it asserts the loop reached BOTH
-// repositories and that the named one was addressed with ITS OWN bandwidth cap,
-// not the domain's.
+// The named repository must be checked with its own bandwidth cap, not the
+// domain's.
 func TestCheckDomainChecksBothRepositoriesWithTheirOwnModes(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc, _, own, cold := twoRepoDomain(t, eng)
@@ -103,9 +92,8 @@ func TestCheckDomainChecksBothRepositoriesWithTheirOwnModes(t *testing.T) {
 	if !hasRepo(eng.checked, own) || !hasRepo(eng.checked, cold) {
 		t.Fatalf("checked = %v, want %q and %q", eng.checked, own, cold)
 	}
-	// The modes are parallel to the repos. The named repository carries an upload
-	// cap of 4242; the domain's own carries none. One mode hoisted out of the loop
-	// would make these two equal, which is the whole point of the assertion.
+	// The modes run parallel to the repos. Only the named repository has an
+	// upload cap, so a single mode reused for both would show here.
 	var ownMode, coldMode restic.Mode
 	for i, r := range eng.checked {
 		if filepath.Clean(r) == filepath.Clean(cold) {
@@ -123,8 +111,6 @@ func TestCheckDomainChecksBothRepositoriesWithTheirOwnModes(t *testing.T) {
 	}
 }
 
-// TestUnlockDomainUnlocksBothRepositories pins the same for the unlock button,
-// which exists precisely for the case where something is stuck.
 func TestUnlockDomainUnlocksBothRepositories(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc, _, own, cold := twoRepoDomain(t, eng)
@@ -137,17 +123,11 @@ func TestUnlockDomainUnlocksBothRepositories(t *testing.T) {
 	}
 }
 
-// TestUnlockNamesTheSharedRepositoryItCouldOnlyClearStaleLocksOn pins the half
-// of repoSkip.Note that had no channel.
-//
-// A repository shared with another domain gets `restic unlock` WITHOUT
-// --remove-all, because forcing there would yank the lock out from under that
-// domain's running backup. That is deliberate, permanent and correct, so it must
-// not stamp the run red - but `restic unlock` removes only what restic itself
-// calls stale, and a lock a previous container incarnation left is not stale
-// until it is old enough. So the one case this button exists for is exactly the
-// case where it can come back green having changed nothing, and the operator has
-// to be told which repository that was.
+// A repository shared with another domain is unlocked without --remove-all, so
+// the other domain's running backup keeps its lock. That clears only locks
+// restic considers stale, and a fresh lock left by a previous container stays.
+// The run is not a failure, but the operator has to learn which repository
+// may still be locked.
 func TestUnlockNamesTheSharedRepositoryItCouldOnlyClearStaleLocksOn(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc, st, _, _ := twoRepoDomain(t, eng)
@@ -177,8 +157,6 @@ func TestUnlockNamesTheSharedRepositoryItCouldOnlyClearStaleLocksOn(t *testing.T
 	}
 }
 
-// TestPruneDomainPrunesBothRepositories pins that the space retention freed on a
-// named repository is actually reclaimed.
 func TestPruneDomainPrunesBothRepositories(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc, _, own, cold := twoRepoDomain(t, eng)
@@ -191,13 +169,9 @@ func TestPruneDomainPrunesBothRepositories(t *testing.T) {
 	}
 }
 
-// TestASwitchedOffRepositoryMakesTheVerifyReportIncomplete is the finding the
-// fourth review round led with: a named repository that is switched off (the
-// ordinary reaction to a share dying) silently dropped out of every domain-wide
-// operation, and the operation then reported success over the remainder.
-//
-// The verify must FAIL, naming the repository, rather than go green about data
-// nobody opened.
+// Switching a named repository off is the usual reaction to a dead share. The
+// verify must then fail and name it, rather than report success over the
+// repositories it could reach.
 func TestASwitchedOffRepositoryMakesTheVerifyReportIncomplete(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc, st, own, _ := twoRepoDomain(t, eng)
@@ -220,18 +194,14 @@ func TestASwitchedOffRepositoryMakesTheVerifyReportIncomplete(t *testing.T) {
 	if !strings.Contains(err.Error(), "Cold") {
 		t.Errorf("the error must name the repository it could not cover, got %q", err.Error())
 	}
-	// …and it still verified what it COULD reach. Refusing outright would leave
-	// the reachable half unverified, which is worse than an honest partial pass.
+	// The reachable repository is still verified.
 	if !hasRepo(eng.checked, own) {
 		t.Errorf("checked = %v, want the reachable repository still verified", eng.checked)
 	}
 }
 
-// TestDeleteSnapshotRefusesAnIdThatMatchesInTwoRepositories pins the ambiguity
-// guard. A short id is eight hex characters and both repositories were written
-// by the same BombVault, so a collision is likelier here than restic's own
-// within-one-repository odds - and the cost of guessing is deleting the wrong
-// backup.
+// A short id is eight hex characters across two repositories, and guessing
+// would delete the wrong backup.
 func TestDeleteSnapshotRefusesAnIdThatMatchesInTwoRepositories(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "abcd1234deadbeef"}}}
 	svc, _, _, _ := twoRepoDomain(t, eng)
@@ -248,28 +218,17 @@ func TestDeleteSnapshotRefusesAnIdThatMatchesInTwoRepositories(t *testing.T) {
 	}
 }
 
-// TestASharedNamedRepositoryIsCopiedNarrowedToThisDomain is the behavioural
-// proof the off-site half never had.
-//
-// A named repository can be shared: nothing scopes one to a single domain and
-// the same picker offers it to containers, VMs and folder sets alike. Copying
-// it WHOLE into one domain's off-site destination carries the other domain's
-// snapshots along, and applyRetentionPerIdentity at the destination then ages
-// them under this domain's keep-policy - a foreign policy deleting backups
-// whose own destination is untouched.
-//
-// The decision used to be the source's INDEX in a slice both callers reshape.
-// It is now the reference's own identity, and this test reads the snapshot ids
-// the engine was actually handed, which is the only place the difference shows.
+// Any domain can use a named repository. Copied whole into one domain's
+// off-site target, it would carry the other domain's snapshots along, and that
+// target's retention would then age them under a foreign keep policy.
 func TestASharedNamedRepositoryIsCopiedNarrowedToThisDomain(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{
 		{ID: "1111aaaa", Tags: []string{"container:plex"}},
 		{ID: "2222bbbb", Tags: []string{"vm:win11"}},
 	}}
 	svc, st, own, cold := twoRepoDomain(t, eng)
-	// The DESTINATION is empty, so every snapshot is still pending. Without this
-	// the fake answers the destination with the source's own list and the copy
-	// correctly finds nothing to do - proving the fake, not the code.
+	// An empty destination leaves every snapshot pending. Otherwise the fake
+	// answers with the source's list and the copy has nothing to do.
 	eng.snapsByRepo = map[string][]restic.Snapshot{
 		"rest:http://192.168.1.2:8000/containers": nil,
 	}
@@ -290,8 +249,7 @@ func TestASharedNamedRepositoryIsCopiedNarrowedToThisDomain(t *testing.T) {
 		t.Fatalf("copied = %v, want both repositories of the domain replicated", eng.copied)
 	}
 	for i, c := range eng.copied {
-		// eng.copied is "<src>-><dest>"; the locations are resolved under a
-		// forward-slash mount root, so both sides are normalised before comparing.
+		// eng.copied holds "<src>-><dest>" under a forward-slash mount root.
 		src := filepath.ToSlash(strings.SplitN(c, "->", 2)[0])
 		switch {
 		case src == filepath.ToSlash(own):
@@ -312,14 +270,8 @@ func TestASharedNamedRepositoryIsCopiedNarrowedToThisDomain(t *testing.T) {
 	}
 }
 
-// TestAnAppendOnlyLocalNamedRepositoryIsNotPruned pins the guarantee the
-// interface prints next to the toggle.
-//
-// Every gate read the flag through primaryIsImmutable, which returns false for
-// any local path before it ever consults a named row - so for "backups/cold" on
-// a share, the first shape the hint advertises, the switch was on screen, the
-// tooltip promised nothing on this box may delete from it, and prune repacked
-// it anyway.
+// The append-only toggle promises that nothing on this box deletes from the
+// repository, and that holds for a local path such as a share too.
 func TestAnAppendOnlyLocalNamedRepositoryIsNotPruned(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc, st, own, cold := twoRepoDomain(t, eng)
@@ -347,18 +299,10 @@ func TestAnAppendOnlyLocalNamedRepositoryIsNotPruned(t *testing.T) {
 	}
 }
 
-// TestDeleteSnapshotHitsTheRepositoryHoldingIt is the instrument the delete path
-// never had.
-//
-// The fake used to discard Forget's repo argument, so rewriting DeleteSnapshot
-// to forget from the first repository of a two-repository domain left the whole
-// suite green: every assertion around repoHoldingSnapshot was an assertion about
-// the fake. This reads the repository the engine was actually handed.
 func TestDeleteSnapshotHitsTheRepositoryHoldingIt(t *testing.T) {
 	eng := &fakeResticEngine{snapsByRepo: map[string][]restic.Snapshot{}}
 	svc, _, own, cold := twoRepoDomain(t, eng)
-	// The snapshot exists ONLY in the named repository, so a delete that goes to
-	// the domain's own is unambiguously wrong.
+	// The snapshot exists only in the named repository.
 	eng.snapsByRepo[filepath.ToSlash(cold)] = []restic.Snapshot{{ID: "abcd1234deadbeef", Tags: []string{"container:plex"}}}
 	eng.snapsByRepo[filepath.ToSlash(own)] = nil
 
@@ -373,21 +317,14 @@ func TestDeleteSnapshotHitsTheRepositoryHoldingIt(t *testing.T) {
 			"Deleting from the wrong repository of a domain either fails or removes a different backup.",
 			eng.forgotRepos[0], cold)
 	}
-	// …and with the named repository's own mode, not the domain's.
 	if eng.forgotModes[0].Limits.UploadKBps != 4242 {
 		t.Errorf("the delete was addressed with upload cap %d, want the named repository's own 4242",
 			eng.forgotModes[0].Limits.UploadKBps)
 	}
 }
 
-// TestAnAppendOnlyLocalNamedRepositoryRefusesASnapshotDelete covers the other
-// five gates that read the append-only flag.
-//
-// TestAnAppendOnlyLocalNamedRepositoryIsNotPruned exercised PruneDomain, which
-// was the ONE gate routed through the reference. The other five asked
-// primaryIsImmutable, which returned false for any local path before consulting
-// the named row, so the toggle protected a cloud archive and not the NAS share
-// the hint advertises.
+// A snapshot delete honours the append-only flag of a local named repository
+// just as prune does.
 func TestAnAppendOnlyLocalNamedRepositoryRefusesASnapshotDelete(t *testing.T) {
 	eng := &fakeResticEngine{snapsByRepo: map[string][]restic.Snapshot{}}
 	svc, st, own, cold := twoRepoDomain(t, eng)
@@ -413,27 +350,20 @@ func TestAnAppendOnlyLocalNamedRepositoryRefusesASnapshotDelete(t *testing.T) {
 	}
 }
 
-// TestDiscoverSearchesBothRepositories is the behavioural proof the disaster
-// recovery path never had.
-//
-// discoverNamesAcrossRepos had no test at all: inserting `refs = refs[:1]`,
-// which reverts discovery to the domain repository only, left the suite green.
-// That is the pass an operator runs after losing /config, and the named
-// repositories are exactly what it exists to find.
+// Discover is what an operator runs after losing /config, and the named
+// repositories are what it has to find.
 func TestDiscoverSearchesBothRepositories(t *testing.T) {
 	eng := &fakeResticEngine{snapsByRepo: map[string][]restic.Snapshot{}}
 	svc, _, own, cold := twoRepoDomain(t, eng)
 	eng.snapsByRepo[filepath.ToSlash(own)] = []restic.Snapshot{{ID: "1111aaaa", Tags: []string{"container:sonarr"}}}
 	eng.snapsByRepo[filepath.ToSlash(cold)] = []restic.Snapshot{{ID: "2222bbbb", Tags: []string{"container:plex"}}}
 
-	// The definitions have to be where a real rebuild would find them: beside the
-	// snapshots for the item on the named repository, in the domain mirror for the
-	// other. Without them Discover counts nothing and the test would pass for the
-	// wrong reason.
+	// Without definitions where a real rebuild finds them, Discover counts
+	// nothing and the test would pass for the wrong reason.
 	writeDiscoverableDef(t, filepath.Join(own, "def"), "sonarr")
 	writeDiscoverableDef(t, filepath.Join(cold, "def"), "plex")
 
-	// probe=true: read-only, so nothing is written back to the store.
+	// A probe is read-only.
 	res, err := svc.Discover(context.Background(), true)
 	n, skipped := res.Found, res.Skipped
 	if err != nil {
@@ -455,8 +385,7 @@ func TestDiscoverSearchesBothRepositories(t *testing.T) {
 	}
 }
 
-// writeDiscoverableDef puts an encrypted, decryptable definition where Discover
-// reads one, so a discovery test counts what a real rebuild would rebuild.
+// writeDiscoverableDef writes an encrypted definition for name into dir.
 func writeDiscoverableDef(t *testing.T, dir, name string) {
 	t.Helper()
 	if err := os.MkdirAll(dir, 0o755); err != nil { //nolint:gosec // G301: test temp dir
@@ -471,14 +400,9 @@ func writeDiscoverableDef(t *testing.T, dir, name string) {
 	}
 }
 
-// TestDiscoverFailsWhenTheDomainRepositoryCannotBeRead pins the asymmetry the
-// Recovery wizard depends on.
-//
-// A NAMED repository that cannot be listed is a skip; the domain's OWN is an
-// error, because that error is what the wizard classifies on to tell a wrong
-// APP_KEY from an empty archive. Folding it into the skip list replaced a red
-// remedy panel with a silent "0 found" on the one screen an operator reaches on
-// their worst day.
+// A named repository that cannot be listed is a skip, but the domain's own is
+// an error: the Recovery wizard classifies on it to tell a wrong APP_KEY from
+// an empty archive.
 func TestDiscoverFailsWhenTheDomainRepositoryCannotBeRead(t *testing.T) {
 	eng := &fakeResticEngine{
 		snapsByRepo: map[string][]restic.Snapshot{},
@@ -499,31 +423,19 @@ func TestDiscoverFailsWhenTheDomainRepositoryCannotBeRead(t *testing.T) {
 	}
 }
 
-// TestAPartialDiscoverRebuildsTheRowButNotItsRepository is the test the one
-// above cannot be: it runs dryRun=FALSE, so it reaches the write block at all.
-//
-// Returning the partial name map alongside the read error let a rebuild get as
-// far as it could instead of returning nothing, which is right. What came with
-// it is that the write loop then decided an item's REPOSITORY from evidence the
-// pass itself knows is incomplete: the named repositories are searched first and
-// the domain's own last, so when the domain's own is the one that failed, the
-// newest-wins comparison was decided without ever opening the repository most
-// items are actually in.
-//
-// The row is the recoverable half and must still be written. The repository
-// column is the half that latches: a later Discover sees it non-empty and leaves
-// it alone, the PATCH route refuses to clear it for an item with backups, and no
-// route deletes it - so a wrong attribution here is permanent, and the next
-// scheduled backup follows it into the wrong archive.
+// When the domain's own repository cannot be read, a real (not dry-run)
+// Discover still rebuilds the row but leaves its repository empty. Only the
+// named repositories were searched, and the column latches: a later Discover
+// leaves a set value alone, the PATCH route will not clear it for an item with
+// backups, and the next backup follows it into the wrong archive.
 func TestAPartialDiscoverRebuildsTheRowButNotItsRepository(t *testing.T) {
 	eng := &fakeResticEngine{
 		snapsByRepo: map[string][]restic.Snapshot{},
 		snapsErrFor: map[string]error{},
 	}
 	svc, st, own, cold := twoRepoDomain(t, eng)
-	// sonarr has no row yet, so this pass creates one - the shape where the
-	// has-backups refusal is deliberately not asked and nothing else stands in
-	// the way of the attribution.
+	// sonarr has no row yet, so the has-backups refusal is not asked and
+	// nothing else stands in the way of the attribution.
 	eng.snapsByRepo[filepath.ToSlash(cold)] = []restic.Snapshot{{ID: "2222bbbb", Tags: []string{"container:sonarr"}}}
 	eng.snapsErrFor[filepath.ToSlash(own)] = errWrongKey
 	writeDiscoverableDef(t, filepath.Join(cold, "def"), "sonarr")
@@ -547,18 +459,11 @@ func TestAPartialDiscoverRebuildsTheRowButNotItsRepository(t *testing.T) {
 			"a later Discover leaves a non-empty column alone and the PATCH route refuses to clear it\n"+
 			"for an item with backups, so the item is re-homed for good and its next backup follows.", tg.Repo)
 	}
-	_ = own
 }
 
-// TestAnUnmountedDomainRepositoryAlsoWithholdsTheAttribution closes the other
-// half of the same defect.
-//
-// The gate keys on readErr, and discoverNamesAcrossRepos has TWO exits that
-// leave a repository unread. Only the listing failure produced an error; the
-// localRepoMissing branch fires earlier, records a skip and continues, so an
-// UNMOUNTED share - which is the shape a post-/config-loss Discover is most
-// likely to meet - reached the write loop with err == nil and re-homed items on
-// named-repository evidence alone.
+// An unmounted share, the likeliest state after losing /config, leaves the
+// domain repository unread without a listing error. It must withhold the
+// attribution just like a failed listing.
 func TestAnUnmountedDomainRepositoryAlsoWithholdsTheAttribution(t *testing.T) {
 	eng := &fakeResticEngine{
 		snapsByRepo: map[string][]restic.Snapshot{},
@@ -567,8 +472,8 @@ func TestAnUnmountedDomainRepositoryAlsoWithholdsTheAttribution(t *testing.T) {
 	svc, st, own, cold := twoRepoDomain(t, eng)
 	eng.snapsByRepo[filepath.ToSlash(cold)] = []restic.Snapshot{{ID: "2222bbbb", Tags: []string{"container:sonarr"}}}
 	writeDiscoverableDef(t, filepath.Join(cold, "def"), "sonarr")
-	// The domain repository was a working repository and its share is gone now.
-	// Nothing errors: localRepoMissing fires before the listing ever happens.
+	// The domain repository was established and its share is gone, so
+	// localRepoMissing fires before any listing.
 	if err := st.MarkRepoEstablished(filepath.ToSlash(own)); err != nil {
 		t.Fatal(err)
 	}
@@ -597,21 +502,14 @@ func TestAnUnmountedDomainRepositoryAlsoWithholdsTheAttribution(t *testing.T) {
 	}
 }
 
-// TestAPartialDiscoverOfVMsWithholdsTheAttributionToo is the gap a source scan
-// could not see.
-//
-// The container test above and the file-set one elsewhere both exercise their
-// own entry point; DiscoverVMs had the gate in the code and nothing that ran it.
-// A scan that only checks a function call is present would stay green if the
-// condition were inverted, or if the gate were deleted while its comment stayed.
 func TestAPartialDiscoverOfVMsWithholdsTheAttributionToo(t *testing.T) {
 	eng := &fakeResticEngine{
 		snapsByRepo: map[string][]restic.Snapshot{},
 		snapsErrFor: map[string]error{},
 	}
 	svc, st, own, cold := twoRepoDomain(t, eng)
-	// The VMs domain shares the folder the containers domain uses here, so the
-	// same two repositories serve both and the fixture stays small.
+	// The VMs domain reuses the containers folder, so the same two repositories
+	// serve both.
 	s, err := st.GetSettings()
 	if err != nil {
 		t.Fatal(err)
@@ -643,14 +541,8 @@ func TestAPartialDiscoverOfVMsWithholdsTheAttributionToo(t *testing.T) {
 	}
 }
 
-// TestAnAllNamedDomainStillDiscoversWithoutItsOwnRepository is the other side of
-// that gate, and the reason it is not simply "the domain repository is missing,
-// so fail".
-//
-// The install issue #204 exists for never creates the domain repository at all:
-// every backup only ever creates the item's own location. Ending the pass on
-// that would break exactly the configuration the feature added - the mistake the
-// sixth round already paid for once in offsiteReplicationSources.
+// When every item uses a named repository, the domain repository is never
+// created. That is not a failure, so the attribution goes ahead.
 func TestAnAllNamedDomainStillDiscoversWithoutItsOwnRepository(t *testing.T) {
 	eng := &fakeResticEngine{
 		snapsByRepo: map[string][]restic.Snapshot{},
@@ -659,7 +551,7 @@ func TestAnAllNamedDomainStillDiscoversWithoutItsOwnRepository(t *testing.T) {
 	svc, st, own, cold := twoRepoDomain(t, eng)
 	eng.snapsByRepo[filepath.ToSlash(cold)] = []restic.Snapshot{{ID: "2222bbbb", Tags: []string{"container:sonarr"}}}
 	writeDiscoverableDef(t, filepath.Join(cold, "def"), "sonarr")
-	// Never created, and no established marker - the ordinary all-named shape.
+	// Never created and never marked established.
 	if err := os.RemoveAll(own); err != nil {
 		t.Fatal(err)
 	}
@@ -681,32 +573,23 @@ func TestAnAllNamedDomainStillDiscoversWithoutItsOwnRepository(t *testing.T) {
 			"There is no repository of the domain's own to have missed anything, so the named\n" +
 			"evidence is complete - and an empty column sends the next backup somewhere else.")
 	}
-	// …and it is still SAID, because after a /config loss this branch cannot tell
-	// "never created" from "on a share that is not mounted".
+	// It is still reported, because after losing /config "never created" and
+	// "on an unmounted share" look the same.
 	if len(skipped) == 0 {
 		t.Error("the missing domain repository was not named at all; the wizard has to show it\n" +
 			"before anybody trusts a result assembled without it")
 	}
 }
 
-// TestANamedRepositoryAtTheHeadOfTheListIsStillNarrowed is the discriminator the
-// test above cannot be.
-//
-// In that fixture the domain's own repository is present and FIRST, so
-// reinstating the old positional rule ("index 0 is the domain's own, everything
-// after it is named") leaves the suite green: the named repository is at index 1
-// either way. Here the domain's own repository does not exist at all - the
-// ordinary shape once every item is pointed somewhere else - so the named
-// repository IS the head of the list, and a rule that reads identity off a
-// position copies it whole.
+// Without a domain repository the named one heads the source list, and it
+// must still be narrowed to this domain's snapshots rather than judged by its
+// position.
 func TestANamedRepositoryAtTheHeadOfTheListIsStillNarrowed(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{
 		{ID: "1111aaaa", Tags: []string{"container:plex"}},
 		{ID: "2222bbbb", Tags: []string{"vm:win11"}},
 	}}
-	svc, st, own, cold := twoRepoDomain(t, eng)
-	// No domain repository on disk: every item of this domain lives on the named
-	// one, which is what issue #204 asked for.
+	svc, st, own, _ := twoRepoDomain(t, eng)
 	if err := os.RemoveAll(own); err != nil {
 		t.Fatal(err)
 	}
@@ -735,17 +618,10 @@ func TestANamedRepositoryAtTheHeadOfTheListIsStillNarrowed(t *testing.T) {
 			"therefore copies it whole - dragging another domain's snapshots into this domain's\n"+
 			"off-site destination, where this domain's retention then ages them.", got)
 	}
-	_ = cold
 }
 
-// TestACopyAlreadyAtTheDestinationIsNotSentAgain pins the identity rule restic
-// actually uses.
-//
-// A copy lands at the destination under a NEW id and records the source id in
-// Original. Comparing the destination's own ids against the source's own ids
-// therefore matches nothing, ever: the narrowing was inert, and every historical
-// id of the domain went onto restic's command line on every pass. No test could
-// see it, because every fixture left the destination empty.
+// A copy lands at the destination under a new id and keeps the source id in
+// Original, so that is the field to compare.
 func TestACopyAlreadyAtTheDestinationIsNotSentAgain(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{
 		{ID: "1111aaaa", Tags: []string{"container:plex"}},
@@ -756,8 +632,7 @@ func TestACopyAlreadyAtTheDestinationIsNotSentAgain(t *testing.T) {
 		t.Fatal(err)
 	}
 	dest := "rest:http://192.168.1.2:8000/containers"
-	// The destination already holds a copy of 1111aaaa. Its own id is a different
-	// one, exactly as restic writes it; the link back is Original.
+	// The destination already holds a copy of 1111aaaa.
 	eng.snapsByRepo = map[string][]restic.Snapshot{
 		dest: {{ID: "9999ffff", Original: "1111aaaa", Tags: []string{"container:plex"}}},
 	}
@@ -785,24 +660,17 @@ func TestACopyAlreadyAtTheDestinationIsNotSentAgain(t *testing.T) {
 	}
 }
 
-// TestAPartialCopyDoesNotAgeTheDestination is the behavioural test the off-site
-// merge blocker never had.
-//
-// The gate used to ask "did EVERY source fail?" and now asks "did anything
-// land?". Those two agree in every fixture the package could previously build,
-// because the fake carried one global copy error: with it set every copy failed,
-// without it none did. The shape that separates them is two sources where one
-// fails, and it is the shape that costs data - a forget plus prune over a
-// destination that did not receive what this pass was meant to bring it.
+// With two sources and one failing, the destination must not be aged: a
+// forget and prune would run over a replica that is missing what the failed
+// source carries.
 func TestAPartialCopyDoesNotAgeTheDestination(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{
 		{ID: "1111aaaa", Tags: []string{"container:plex"}},
 	}}
-	svc, st, own, cold := twoRepoDomain(t, eng)
+	svc, st, _, cold := twoRepoDomain(t, eng)
 	dest := "rest:http://192.168.1.2:8000/containers"
 	eng.snapsByRepo = map[string][]restic.Snapshot{dest: nil}
-	// The NAMED source fails; the domain's own succeeds. Under the old gate that
-	// read as "one error, two sources, so a partial pass", and the retention ran.
+	// The named source fails; the domain's own succeeds.
 	eng.copyErrFor = map[string]error{filepath.ToSlash(cold): errors.New("the share went away mid-copy")}
 
 	s, err := st.GetSettings()
@@ -810,48 +678,33 @@ func TestAPartialCopyDoesNotAgeTheDestination(t *testing.T) {
 		t.Fatal(err)
 	}
 	s.ContainersOffsite = dest
-	s.OffsiteRetentionKeepLast = 3 // a policy, so the retention would have something to do
+	s.OffsiteRetentionKeepLast = 3
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
 
-	// A failing source makes the whole pass fail, which is correct and expected.
 	if err := svc.ReplicateOffsite(context.Background(), "containers"); err == nil {
 		t.Fatal("a source that could not be copied must make the pass report failure")
 	}
-	// …and the destination must NOT have been aged: what did land is not what
-	// this pass was supposed to bring.
 	if len(eng.prunedRepos) != 0 {
 		t.Errorf("the destination was aged after a partial copy (%v).\n"+
 			"A forget plus prune here deletes history against a replica that is missing\n"+
 			"exactly the snapshots the failed source was carrying.", eng.prunedRepos)
 	}
-	_ = own
 }
 
-// TestASourceThatNeverReachedTheCopyDoesNotAgeTheDestination covers the shape
-// the gate above cannot see.
-//
-// Moving the gate from "did anything land" to "did the pass complete without
-// error" was right in the direction that mattered, and it removed the last
-// `copied` term with it. A source that was dropped BEFORE the copy loop - it was
-// a working repository once and is not reachable now - never becomes a copy
-// error, so the remaining sources report a clean pass and the destination is
-// aged under the off-site keep-policy while it is missing exactly what the
-// dropped source was carrying. That destination may by then be the only copy of
-// those items left.
+// A source that was established once and is unreachable now is skipped before
+// the copy loop, so it never becomes a copy error. The destination, which may
+// by then hold the only copy of its items, must still not be aged.
 func TestASourceThatNeverReachedTheCopyDoesNotAgeTheDestination(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{
 		{ID: "1111aaaa", Tags: []string{"container:plex"}},
 	}}
-	svc, st, own, cold := twoRepoDomain(t, eng)
+	svc, st, _, cold := twoRepoDomain(t, eng)
 	dest := "rest:http://192.168.1.2:8000/containers"
 	eng.snapsByRepo = map[string][]restic.Snapshot{dest: nil}
-	// cold was a working repository and is gone now: offsiteReplicationSources
-	// puts that in the SKIP list, not in the source list, so the copy loop never
-	// hears about it.
-	// The marker is keyed by the RESOLVED location, which resolveRepo builds from
-	// the slash-spelled mount root - not by filepath.Join's native separators.
+	// The marker is keyed by the resolved location, which uses forward
+	// slashes.
 	if err := st.MarkRepoEstablished(filepath.ToSlash(cold)); err != nil {
 		t.Fatal(err)
 	}
@@ -864,7 +717,7 @@ func TestASourceThatNeverReachedTheCopyDoesNotAgeTheDestination(t *testing.T) {
 		t.Fatal(err)
 	}
 	s.ContainersOffsite = dest
-	s.OffsiteRetentionKeepLast = 3 // a policy, so the retention would have something to do
+	s.OffsiteRetentionKeepLast = 3
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
@@ -877,28 +730,19 @@ func TestASourceThatNeverReachedTheCopyDoesNotAgeTheDestination(t *testing.T) {
 			"The copy loop saw no error because the source never reached it, so 'the pass completed\n"+
 			"without error' is true and still means nothing about whether the destination is current.", eng.prunedRepos)
 	}
-	_ = own
 }
 
-// TestAppendOnlyTurnedOnMidDeleteIsHonoured closes the race the round-nine audit
-// named and left below its floor.
-//
-// DeleteBackups asks the protection question twice: once before the domain lock,
-// to answer "is there anything here to protect", and once inside it, to answer
-// "may this delete happen". The second one used to REPLAY the first answer - so
-// an operator who turns append-only on while their own delete is in flight, which
-// is exactly the moment they most mean it, still lost the archive. A flag that is
-// honoured only if it was already set when the button was pressed is not a
-// protection.
+// DeleteBackups checks protection before taking the domain lock and again
+// inside it. The second check must read the flag afresh, so switching
+// append-only on while a delete is in flight still stops it.
 func TestAppendOnlyTurnedOnMidDeleteIsHonoured(t *testing.T) {
 	eng := &fakeResticEngine{snapsByRepo: map[string][]restic.Snapshot{}}
 	svc, st, own, cold := twoRepoDomain(t, eng)
 	eng.snapsByRepo[filepath.ToSlash(cold)] = []restic.Snapshot{{ID: "abcd1234deadbeef", Tags: []string{"container:plex"}}}
 	eng.snapsByRepo[filepath.ToSlash(own)] = nil
 
-	// The repository is NOT protected when the delete starts, so the pre-lock
-	// check waves it through. Between that listing and the one inside the lock,
-	// the operator switches Append-only on.
+	// Append-only goes on between the listing before the lock and the one
+	// inside it.
 	eng.onSnapshots = func(call int) {
 		if call != 1 {
 			return
@@ -925,14 +769,10 @@ func TestAppendOnlyTurnedOnMidDeleteIsHonoured(t *testing.T) {
 	}
 }
 
-// TestTheCopyIsOpenedWithTheDestinationsMode makes copiedModes an instrument
-// instead of a field nothing reads.
-//
-// `restic copy` spends its ONE set of backend credentials on the DESTINATION;
-// only the repository password has a --from- counterpart. So the mode has to be
-// the destination's, whatever the source is - and the named source here carries
-// a storage class of its own, which is exactly what a mode built from the wrong
-// end would carry into the call.
+// restic copy uses its one set of backend credentials for the destination;
+// only the repository password has a --from- counterpart. The mode must
+// therefore be the destination's, even when the source carries caps of its
+// own.
 func TestTheCopyIsOpenedWithTheDestinationsMode(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{
 		{ID: "1111aaaa", Tags: []string{"container:plex"}},
@@ -965,20 +805,18 @@ func TestTheCopyIsOpenedWithTheDestinationsMode(t *testing.T) {
 	}
 }
 
-// TestADestinationThatIsAlsoASourceIsNeverAged pins the other half of the same
-// blocker, which no fixture reached either.
 func TestADestinationThatIsAlsoASourceIsNeverAged(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{
 		{ID: "1111aaaa", Tags: []string{"container:plex"}},
 	}}
-	svc, st, own, cold := twoRepoDomain(t, eng)
+	svc, st, _, _ := twoRepoDomain(t, eng)
 
 	s, err := st.GetSettings()
 	if err != nil {
 		t.Fatal(err)
 	}
-	// The off-site destination IS the named repository one container backs up to.
-	// Its snapshots therefore have no second copy anywhere.
+	// The off-site destination is the named repository a container backs up
+	// to, so its snapshots have no second copy anywhere.
 	s.ContainersOffsite = "backups/cold"
 	s.OffsiteRetentionKeepLast = 3
 	if err := st.UpdateSettings(s); err != nil {
@@ -991,17 +829,11 @@ func TestADestinationThatIsAlsoASourceIsNeverAged(t *testing.T) {
 			"Whatever the other sources managed, a forget plus prune there deletes snapshots\n"+
 			"whose only copy is the thing being pruned.", eng.prunedRepos)
 	}
-	_ = own
-	_ = cold
 }
 
-// TestARemotePrimaryIsStillReplicated is the guard for the defect the sixth
-// round's own fix introduced.
-//
-// Excluding "any remote source" instead of "any remote NAMED source" emptied the
-// list for a domain whose Backup Path is a restic remote, so every whole-domain
-// replication returned an error without attempting a copy - for the documented
-// configuration where that replication is the ONLY way to get a second copy.
+// Only remote named repositories are left out of replication. A remote
+// backup path is still a source, because replication is the only way such an
+// install gets a second copy.
 func TestARemotePrimaryIsStillReplicated(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "1111aaaa", Tags: []string{"container:plex"}}}}
 	svc, st, _, _ := twoRepoDomain(t, eng)
@@ -1010,9 +842,8 @@ func TestARemotePrimaryIsStillReplicated(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// A remote primary replicated into a second bucket of the same account - the
-	// shape docs/offsite-recovery.md describes, and the only way such an install
-	// gets a second copy at all.
+	// A remote primary replicated into a second bucket of the same account, as
+	// docs/offsite-recovery.md describes.
 	s.ContainersPath = "s3:https://s3.example/bucket/primary"
 	s.ContainersOffsite = "s3:https://s3.example/bucket/offsite"
 	if err := st.UpdateSettings(s); err != nil {
@@ -1036,18 +867,10 @@ func TestARemotePrimaryIsStillReplicated(t *testing.T) {
 	}
 }
 
-// TestARemotePrimaryWithItsOwnCredentialsIsStillAttempted is the discriminator
-// the test above cannot be: there, both ends sit in one bucket of one account,
-// so it cannot tell "the credentials match" from "the credentials are never
-// asked about".
-//
-// The comment that used to justify keeping a remote own primary claimed the two
-// ends share credentials BY CONSTRUCTION. They do not: primaryModeFor resolves
-// the primary-remote row's own CredsRef (#182) and offsiteModeForTarget the
-// destination row's, and those are independent store fields. What is true, and
-// what this pins, is that such an install is ATTEMPTED and fails loudly rather
-// than being silently left without a source - which is what the alternative
-// was, and what cost round seven its single high finding.
+// The primary and the destination can use different credential sets, since
+// primaryModeFor and offsiteModeForTarget read independent CredsRef fields.
+// Such a copy is still attempted: failing visibly beats silently dropping the
+// only source.
 func TestARemotePrimaryWithItsOwnCredentialsIsStillAttempted(t *testing.T) {
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "1111aaaa", Tags: []string{"container:plex"}}}}
 	svc, st, _, _ := twoRepoDomain(t, eng)
@@ -1061,9 +884,7 @@ func TestARemotePrimaryWithItsOwnCredentialsIsStillAttempted(t *testing.T) {
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
-	// The primary's own safety row names a credential set of its own - a different
-	// account from the destination's, which is the configuration the "by
-	// construction" claim said could not exist.
+	// The primary's row names a different account from the destination's.
 	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
 		Role: store.RolePrimary, Domain: "containers", Repo: s.ContainersPath,
 		Enabled: true, CredsRef: "account-a",
@@ -1085,23 +906,16 @@ func TestARemotePrimaryWithItsOwnCredentialsIsStillAttempted(t *testing.T) {
 	}
 }
 
-// TestEveryReaderAddressesItsOwnRepository is the instrument the mode conversion
-// never had.
-//
-// Every reader on the fake used to name its restic.Mode parameter `_`, so "is
-// each repository addressed with the mode built for IT" was invisible to the
-// suite by construction. It stayed invisible long enough for the container
-// restore to be missed by the same sweep that converted its VM twin: the two
-// lines sit two thousand apart, do the same thing, and only one was changed.
+// Listing snapshots and restoring must open an item's named repository with
+// that repository's own mode.
 func TestEveryReaderAddressesItsOwnRepository(t *testing.T) {
 	eng := &fakeResticEngine{snapsByRepo: map[string][]restic.Snapshot{}}
 	svc, _, own, cold := twoRepoDomain(t, eng)
 	eng.snapsByRepo[filepath.ToSlash(cold)] = []restic.Snapshot{{ID: "abcd1234deadbeef", Tags: []string{"container:plex"}}}
 	eng.snapsByRepo[filepath.ToSlash(own)] = nil
 
-	// plex is pointed at the named repository, which carries an upload cap of
-	// 4242. Every reader that opens it must carry that cap; the domain's own
-	// carries none, so a shared mode is unmistakable.
+	// plex uses the named repository with its 4242 upload cap; the domain's own
+	// has none, so a shared mode shows.
 	if _, err := svc.Snapshots(context.Background(), "plex", "local"); err != nil {
 		t.Fatalf("Snapshots: %v", err)
 	}
@@ -1116,11 +930,10 @@ func TestEveryReaderAddressesItsOwnRepository(t *testing.T) {
 		}
 	}
 
-	// …and the restore path, which is the one the sweep missed.
 	eng.listedRepos, eng.listedModes = nil, nil
 	if _, err := svc.StartRestore(context.Background(), "plex", "abcd1234deadbeef", "local", true); err != nil {
-		// A restore can fail for reasons unrelated to the mode (no definition, no
-		// docker). What matters is the mode of whatever it DID open.
+		// The restore may fail for other reasons, such as no definition or no
+		// Docker. Only the mode of what it opened matters here.
 		t.Logf("StartRestore returned %v (the mode below is what this test is about)", err)
 	}
 	for i, r := range eng.listedRepos {
@@ -1135,13 +948,8 @@ func TestEveryReaderAddressesItsOwnRepository(t *testing.T) {
 	}
 }
 
-// TestEveryAppendOnlyGateRefusesALocalNamedRepository closes the last of the
-// instrument gaps the seventh round named.
-//
-// Six gates can destroy data, and the toggle promises in 42 languages that none
-// of them may. Three of them - the bulk deletes - had no test at all, which is
-// how five of the six came to short-circuit past the flag on a local path while
-// the suite stayed green.
+// The bulk delete of an item on an append-only local named repository is
+// refused, and nothing is forgotten or pruned.
 func TestEveryAppendOnlyGateRefusesALocalNamedRepository(t *testing.T) {
 	eng := &fakeResticEngine{snapsByRepo: map[string][]restic.Snapshot{}}
 	svc, st, own, cold := twoRepoDomain(t, eng)
@@ -1158,12 +966,9 @@ func TestEveryAppendOnlyGateRefusesALocalNamedRepository(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// The bulk delete of the item that lives there.
 	if err := svc.DeleteBackups(context.Background(), "plex", ""); err == nil {
 		t.Error("DeleteBackups went ahead on an append-only repository")
 	}
-	// …and the retention that runs after every backup, which is the gate that
-	// actually repacked one before the reorder.
 	if len(eng.forgotRepos) != 0 {
 		t.Errorf("something was forgotten from %v despite the append-only flag", eng.forgotRepos)
 	}
@@ -1172,18 +977,12 @@ func TestEveryAppendOnlyGateRefusesALocalNamedRepository(t *testing.T) {
 	}
 }
 
-// TestAnEmptyContainerRowCanStillBeCleared is the other half: the flag protects
-// SNAPSHOTS, and with none there is nothing to protect.
-//
-// While an entry has backups, "Delete all backups" is the only removal its card
-// offers, so refusing here left a container with no snapshots left at all stuck
-// in the "not installed" list, with no way out but switching the whole
-// repository's protection off - which drops it for every other item sharing
-// that repository.
+// Append-only protects snapshots. A container without any must still be
+// removable, or it stays in the "not installed" list until the whole
+// repository loses its protection.
 func TestAnEmptyContainerRowCanStillBeCleared(t *testing.T) {
 	eng := &fakeResticEngine{snapsByRepo: map[string][]restic.Snapshot{}}
 	svc, st, own, cold := twoRepoDomain(t, eng)
-	// No snapshots anywhere.
 	eng.snapsByRepo[filepath.ToSlash(cold)] = nil
 	eng.snapsByRepo[filepath.ToSlash(own)] = nil
 

@@ -12,25 +12,11 @@ import Recovery from "../pages/Recovery";
 import { GlyphSheet } from "../pages/Glyphs";
 import { I18nProvider } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
-import { useRainbow } from "../lib/useRainbow";
 
 export function AppRouter() {
-  // The colour engine, subscribed once at the top. A hue arrives as an inline
-  // style computed during render (hueVars() bakes the hex and its four derived
-  // tints, which is why it cannot be a CSS var reference), so an element only
-  // changes colour when its component renders again - and about a dozen hue
-  // consumers never subscribe on their own. That was invisible while rainbow
-  // was only ever edited on the Settings page, because every other page
-  // mounted fresh afterwards. Disco writes once a second while the user is
-  // looking at some other page, and without this line the sidebar and the
-  // selectors would walk while the cards beside them sat still. One
-  // subscription here repaints everything below it. See
-  // app/rootRepaintsOnHue.test.ts.
-  useRainbow();
   return (
     <I18nProvider>
-      {/* Inside I18nProvider — the toast dismiss button's aria-label needs a
-          live translation (form-engine Task 9). */}
+      {/* Inside I18nProvider: the dismiss button's aria-label is translated. */}
       <ToastProvider>
         <BrowserRouter>
           <Routes>
@@ -42,24 +28,20 @@ export function AppRouter() {
               <Route path="/flash" element={<Flash />} />
               <Route path="/config" element={<Config />} />
               <Route path="/files" element={<Files />} />
-              {/* Receiver, Fleet and Pull became three tabs of one page (jdp:
-                  "die sind doch fast das gleiche"). The three old paths stay as
-                  redirects: they are in bookmarks, in the release notes and in
-                  at least one support answer, and a dead link is a worse
-                  outcome than a hash. Same treatment /jobs got below. */}
+              {/* Receiver, Pull and Fleet are tabs of Instances. Their own
+                  paths stay as redirects because bookmarks, release notes and
+                  support answers link to them. */}
               <Route path="/instances" element={<Instances />} />
               <Route path="/receiver" element={<Navigate to="/instances#receiver" replace />} />
               <Route path="/pull" element={<Navigate to="/instances#pull" replace />} />
               <Route path="/fleet" element={<Navigate to="/instances#fleet" replace />} />
               <Route path="/recovery" element={<Recovery />} />
-              {/* The Plans page was retired into Settings › Schedules; keep /jobs
-                  as a redirect so old links/bookmarks land on the Schedules tab. */}
+              {/* Schedules are a Settings tab; /jobs stays for existing links. */}
               <Route path="/jobs" element={<Navigate to="/settings#schedules" replace />} />
               <Route path="/settings" element={<SettingsPage />} />
-              {/* The glyph contact sheet ([330]) — every icon at its real size
-                  with its measured fill, so a mis-sized import is visible
-                  before it reaches a card. Deliberately unlisted: no nav entry,
-                  no translation, reachable by whoever maintains the icons. */}
+              {/* Every glyph at its real size with its measured fill, so a
+                  mis-sized icon shows up before it reaches a card. Unlisted:
+                  no nav entry and no translation. */}
               <Route path="/glyphs" element={<GlyphSheet />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Route>

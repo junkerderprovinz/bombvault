@@ -10,27 +10,16 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// The overdue-backup watchdog: a daily scheduled check (schedule.WatchdogCadence,
-// gated on Settings.WatchdogEnabled) that actively NOTIFIES when a domain's
-// backups are overdue — a state that is otherwise only visible on the dashboard,
-// which nobody looks at precisely when backups have quietly stopped. "Overdue"
-// is decided by rpoStatus, the EXACT predicate the dashboard's protection status
-// uses (age > 2× the cadence period), so the push and the dashboard can never
-// disagree. Each overdue episode notifies ONCE (store.WatchdogState remembers
-// the last-success timestamp the verdict was based on); a new success ends the
-// episode and re-arms the watchdog.
+// The overdue-backup watchdog runs once a day and notifies when a domain's
+// backups are overdue, which is otherwise visible only on the dashboard. It
+// uses rpoStatus, the predicate behind the dashboard's protection status, so
+// the two cannot disagree. Each overdue episode notifies once:
+// store.WatchdogState keeps the last success the alert was based on, and a
+// newer success starts a new episode.
 
-// watchdogDecision is the pure per-domain verdict RunWatchdog acts on, so the
-// once-per-episode dedupe is unit-testable without a store, clock or notify
-// transport:
-//
-//   - not overdue (by rpoStatus — the dashboard's own predicate): never notify;
-//     clear any recorded episode (the domain recovered, re-arming the watchdog).
-//     "never" and "warn" are deliberately not push-worthy — the watchdog alerts
-//     REGRESSIONS (backups that stopped), not setups that have not started.
-//   - overdue with a recorded episode based on the SAME last success: the one
-//     notification for this episode already went out — stay quiet.
-//   - overdue otherwise (no state, or the last success changed since): notify.
+// watchdogDecision returns what RunWatchdog does for one domain. "never" and
+// "warn" are not reported, because the watchdog alerts on backups that
+// stopped, not on setups that have not started.
 func watchdogDecision(now, lastSuccess, periodSeconds int64, enabled bool, state store.WatchdogState, haveState bool) (notifyNeeded, clearState bool) {
 	if rpoStatus(now, lastSuccess, periodSeconds, enabled && periodSeconds > 0) != "overdue" {
 		return false, haveState
@@ -41,8 +30,8 @@ func watchdogDecision(now, lastSuccess, periodSeconds int64, enabled bool, state
 	return true, false
 }
 
-// watchdogPeriod renders an RPO period compactly ("1d", "12h", "45m") for the
-// overdue message's "expected every …" clause.
+// watchdogPeriod formats an RPO period as "1d", "12h" or "45m" for the overdue
+// message.
 func watchdogPeriod(seconds int64) string {
 	switch {
 	case seconds%86400 == 0:
@@ -54,16 +43,14 @@ func watchdogPeriod(seconds int64) string {
 	}
 }
 
-// RunWatchdog performs the daily overdue-backup check across all domains. It is
-// the scheduler's watchdog job (SetWatchdogJob in cmd/bombvault/main.go).
+// RunWatchdog runs the daily overdue-backup check across all domains.
 func (s *Service) RunWatchdog(ctx context.Context) error {
 	return s.runWatchdogAt(ctx, time.Now().Unix())
 }
 
-// runWatchdogAt is the testable core of RunWatchdog with an injectable "now".
-// A muted notify policy (On empty/"never") skips silently — with no way to
-// deliver, recording episodes would only suppress the alert the user asked for
-// by enabling notifications later.
+// runWatchdogAt is RunWatchdog at a given time. With notifications muted it
+// does nothing, because recording episodes it cannot deliver would suppress
+// the alert once the user turns notifications on.
 func (s *Service) runWatchdogAt(ctx context.Context, now int64) error {
 	c, err := s.NotifyConfig()
 	if err != nil {
@@ -77,8 +64,7 @@ func (s *Service) runWatchdogAt(ctx context.Context, now int64) error {
 		return fmt.Errorf("read settings: %w", err)
 	}
 
-	// Same domain table DomainStatus drives the dashboard with, so the watchdog
-	// judges exactly what the protection chips show.
+	// The same domains DomainStatus shows on the dashboard.
 	domains := []struct {
 		name     string
 		enabled  bool
@@ -102,13 +88,8 @@ func (s *Service) runWatchdogAt(ctx context.Context, now int64) error {
 		if !last.IsZero() {
 			lastUnix = last.Unix()
 		}
-		// Same coverage rule DomainStatus uses, and it bites harder here: a domain
-		// backed up only by the "Backup Everything" pass has no cadence of its
-		// own, so reading that cadence alone gave period 0 — and period 0 means
-		// "no expectation", which switches this watchdog OFF for that domain. A
-		// user who runs the whole server through the pass, the configuration
-		// #177's reporter is in, had no dead-man's switch on any domain at all,
-		// and nothing said so.
+		// A domain backed up only by the Backup Everything pass has no cadence of
+		// its own, and period 0 would disarm the watchdog for it.
 		period, _ := domainCoverage(d.schedule, settings.EverythingSchedule)
 
 		state, haveState, sErr := s.store.GetWatchdogState(d.name)
@@ -126,8 +107,8 @@ func (s *Service) runWatchdogAt(ctx context.Context, now int64) error {
 			continue
 		}
 		s.notifyBackupOverdue(ctx, c, d.name, lastUnix, period, now)
-		// Record the episode AFTER the send: a failed record means at worst one
-		// duplicate alert on the next fire — better than a silently lost episode.
+		// Recording after the send means a failed record costs one duplicate
+		// alert on the next run instead of a lost one.
 		if uErr := s.store.UpsertWatchdogState(store.WatchdogState{Domain: d.name, NotifiedAt: now, LastSuccessAt: lastUnix}); uErr != nil {
 			log.Printf("api: watchdog: %s state record failed: %v", d.name, uErr) //nolint:gosec // G706: domain is a fixed literal
 		}
@@ -135,11 +116,10 @@ func (s *Service) runWatchdogAt(ctx context.Context, now int64) error {
 	return nil
 }
 
-// notifyBackupOverdue sends the overdue alert through the established notify
-// fan-out (message channels + the Unraid mirror, like notifyReplicationFailed).
-// The Healthchecks ping is suppressed: this is a human alert about MISSING
-// runs, not a run lifecycle event — a /fail ping here would corrupt the
-// domain check's start/success pairing.
+// notifyBackupOverdue sends the overdue alert to the message channels and the
+// Unraid mirror. The Healthchecks ping is suppressed: the alert is about runs
+// that did not happen, and a /fail ping would break the check's start/success
+// pairing.
 func (s *Service) notifyBackupOverdue(ctx context.Context, c notify.Config, domain string, lastSuccess, period, now int64) {
 	msg := fmt.Sprintf("Backups for %s are overdue: last success %s, expected every %s.",
 		domain, digestAge(now, lastSuccess), watchdogPeriod(period))

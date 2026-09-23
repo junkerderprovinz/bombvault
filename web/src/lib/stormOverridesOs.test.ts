@@ -1,27 +1,18 @@
-// ---------------------------------------------------------------------------
-// The storm outranks the operating system.
+// The storm motion level outranks the operating system.
 //
-// Every other motion level sits strictly inside
-// `@media (prefers-reduced-motion: no-preference)`, which is what enforces
-// "the OS wins": a browser reporting reduced motion never even evaluates a
-// data-motion selector for those properties. motion.ts's own header says so,
-// and for the three offered levels it stays true.
+// The three offered levels sit inside `@media (prefers-reduced-motion:
+// no-preference)`, so a browser reporting reduced motion never evaluates their
+// data-motion selectors. "storm" is a hidden level reached by clicking the
+// same option five times, so choosing it is a statement of intent rather than
+// an inherited default.
 //
-// "storm" is the exception, on jdp's call (2026-09-15): it is a hidden level
-// reached by clicking the same option five times, so choosing it is a
-// statement of intent rather than a default somebody inherited.
-//
-// The gate lives in the `reduce` block, not in the 225-line no-preference
-// one. That block does not switch motion off; it swaps in gentler
-// substitutes (a fade instead of a shake, a fade instead of the logo
-// shattering), and those substitutes ARE the ones that make the storm the
-// storm. So each of them now excludes storm, and storm gets the full
-// animation back in the same block. The micro-interactions in the
-// no-preference block (press, lift, spinner) stay OS-gated: they are not
-// what anybody unlocks a storm for.
+// Its gate lives in the `reduce` block. That block swaps in gentler substitutes
+// (a fade instead of a shake, a fade instead of the logo shattering), and those
+// are exactly the effects that make the storm, so each substitute excludes
+// storm and storm gets the full animation back in the same block. The
+// micro-interactions (press, lift, spinner) stay OS-gated.
 //
 // Node environment: this reads the stylesheet, it does not render.
-// ---------------------------------------------------------------------------
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -90,11 +81,10 @@ function noPreferenceBlock(): string {
  *  the fragment tiles, the flash/shockwave pseudo elements, the cloud puffs
  *  and the sparks.
  *
- *  `gate` is not optional decoration. Collecting names alone would accept the
- *  five rules with their gates INVERTED - the full explosion handed to the
- *  reduced-motion user and nothing to the storm - because the names present in
- *  the block would be exactly the same set. So a caller says which selector
- *  shape may contribute. */
+ *  Names alone would also accept the five rules with their gates inverted (the
+ *  full explosion for the reduced-motion user and nothing for the storm), since
+ *  the set of names would be the same. `gate` says which selectors may
+ *  contribute. */
 function boomAnimations(body: string, gate?: RegExp): Set<string> {
   const out = new Set<string>();
   const clean = body.replace(/\/\*[\s\S]*?\*\//g, "");
@@ -110,8 +100,8 @@ function boomAnimations(body: string, gate?: RegExp): Set<string> {
 
 describe("the reduce block", () => {
   it("still carries substitutes rather than switching motion off", () => {
-    // The premise. If a future pass turns this block into `animation: none`
-    // everywhere, the storm exemption below needs rethinking, not keeping.
+    // If this block ever becomes `animation: none` everywhere, the storm
+    // exemption below needs rethinking.
     const subs = substitutes();
     expect(subs.length).toBeGreaterThan(4);
     expect(subs.some((s) => /animation:/.test(s.body))).toBe(true);
@@ -127,9 +117,9 @@ describe("the reduce block", () => {
   });
 
   it("gives the storm the full animation back, not just an exemption", () => {
-    // Exempting without restoring would leave a storm user with NO animation
-    // on these elements under reduced motion, which is worse than the gentle
-    // substitute it replaced.
+    // Exempting without restoring would leave a storm user with no animation
+    // on these elements under reduced motion, worse than the gentle
+    // substitute.
     const subs = substitutes();
     const storm = subs.filter((s) => /:root\[data-motion="storm"\]/.test(s.selector));
     expect(storm.length).toBeGreaterThan(3);
@@ -144,8 +134,8 @@ describe("the reduce block", () => {
 
     // Not "contains no fade": the modal backdrop fades at full motion too,
     // just for longer, so banning the keyword would fail on correct code.
-    // What has to hold is that storm does not get handed the SAME
-    // declaration the reduced-motion substitute uses.
+    // What has to hold is that storm does not get the same declaration the
+    // reduced-motion substitute uses.
     let compared = 0;
     for (const rule of storm) {
       const sub = gentle.get(target(rule.selector));
@@ -157,17 +147,13 @@ describe("the reduce block", () => {
   });
 
   it("animates every layer it stops hiding, because their resting state is invisible", () => {
-    // The test above only compares selectors that appear on BOTH sides, so it
-    // cannot see a target that is exempted and then never restored. The
-    // shatter egg is exactly that case, and it is the worst-behaved one:
-    // `.glim-frag`, `.glim-cloud`, `.glim-particle` and both
-    // `.glim-boom-fx` pseudo elements each rest at `opacity: 0` and are only
-    // ever revealed BY their animation. Lifting `display: none` for the storm
-    // therefore does nothing on its own - the logo goes to `opacity: 0`
-    // (restored above) and the debris meant to replace it stays invisible, so
-    // the mark simply vanishes for the 1.4s Sidebar.tsx's timer runs. Worse
-    // than the gentle fade-pulse it displaced, and worse than the storm it
-    // promised. Un-hiding and animating are one change, not two.
+    // The test above only compares selectors present on both sides, so it
+    // misses a target that is exempted and never restored. The shatter egg's
+    // layers (`.glim-frag`, `.glim-cloud`, `.glim-particle` and both
+    // `.glim-boom-fx` pseudo elements) rest at `opacity: 0` and appear only
+    // through their animation. Lifting `display: none` alone would make the
+    // logo vanish for the 1.4s of Sidebar.tsx's timer with no debris in its
+    // place.
     const hidden = substitutes().filter((s) => /display:\s*none/.test(s.body));
     expect(hidden.length).toBeGreaterThan(0);
 
@@ -176,8 +162,7 @@ describe("the reduce block", () => {
     const full = boomAnimations(noPreferenceBlock());
     expect(full.size).toBeGreaterThan(2);
 
-    // Storm-gated only, so inverting the five gates fails here rather than
-    // reading as "the names are all present, carry on".
+    // Storm-gated selectors only, so inverted gates fail here.
     const restored = boomAnimations(reduceBlock(), /:root\[data-motion="storm"\]/);
     const missing = [...full].filter((name) => !restored.has(name));
     expect(missing).toEqual([]);

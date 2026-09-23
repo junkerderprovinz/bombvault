@@ -14,21 +14,18 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
-// The broad host bind BombVault runs under (from HostSourceRoot /mnt). A REAL
-// /proc/self/mountinfo always lists both "/" and this bind, so every fixture here
-// includes them: the discriminator must NOT treat either as the backing mount, or
-// the #55 guard is defeated (the exact bug #120's first cut introduced).
+// hostMountRoot is the broad host bind BombVault runs under (HostSourceRoot
+// /mnt). A real /proc/self/mountinfo always lists "/" and this bind, so every
+// fixture here does too; neither may count as the backing mount.
 const hostMountRoot = "/host/user"
 
-// writeMountinfo writes a /proc/self/mountinfo-format fixture whose mount points
-// are the given directories, points the api package at it, and restores the
-// previous source on cleanup. Paths are used verbatim as field 5 (the mount
-// point) so a test can control exactly which directories look "mounted".
+// writeMountinfo writes a mountinfo fixture whose mount points are the given
+// paths, verbatim, and points the api package at it until cleanup.
 func writeMountinfo(t *testing.T, mountPoints ...string) {
 	t.Helper()
 	var b strings.Builder
 	for i, mp := range mountPoints {
-		// id parent major:minor root MOUNT-POINT opts... - fstype source superopts
+		// id parent major:minor root mountpoint opts... - fstype source superopts
 		fmt.Fprintf(&b, "%d 1 0:%d / %s rw,relatime shared:%d - xfs /dev/sd%c rw\n", 36+i, 10+i, mp, i+1, 'a'+i)
 	}
 	path := filepath.Join(t.TempDir(), "mountinfo")
@@ -38,20 +35,18 @@ func writeMountinfo(t *testing.T, mountPoints ...string) {
 	t.Cleanup(api.SetMountinfoPath(path))
 }
 
-// slashRepo is the form the discriminator compares against (kernel paths use
-// forward slashes), so a mounted-fixture must list the repo in this form.
+// slashRepo returns repo with forward slashes, as the kernel lists mount points.
 func slashRepo(repo string) string { return filepath.ToSlash(repo) }
 
-// newDiscriminatorSvc builds a minimal Service whose only relevant field is
-// cfg.HostMountRoot, for exercising DestinationMounted with synthetic host paths.
+// newDiscriminatorSvc builds a Service for DestinationMounted, where only
+// cfg.HostMountRoot matters.
 func newDiscriminatorSvc(t *testing.T, mountRoot string) *api.Service {
 	t.Helper()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir(), HostMountRoot: mountRoot}
 	return api.NewService(cfg, newMemStore(t), &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
 }
 
-// TestParseMountedDirs checks the mountinfo parser: it collects field-5 mount
-// points and octal-unescapes spaces in them.
+// The parser collects the mount points (field 5) and unescapes octal spaces.
 func TestParseMountedDirs(t *testing.T) {
 	const fixture = "36 1 0:1 / / rw - xfs /dev/sda rw\n" +
 		"41 36 0:2 / /host/user/disks/rolob-dev rw shared:1 - xfs /dev/sdb rw\n" +
@@ -68,22 +63,19 @@ func TestParseMountedDirs(t *testing.T) {
 	}
 }
 
-// TestDestinationMountedDiscriminator exercises the PRODUCTION discriminator with
-// REALISTIC fixtures that always include "/" and the broad HostMountRoot bind
-// (/host/user). Only a per-share/per-disk mount that is a PROPER descendant of
-// HostMountRoot may count as "mounted"; "/" and the broad bind must not.
+// Only a mount strictly below HostMountRoot counts; "/" and the broad bind do
+// not.
 func TestDestinationMountedDiscriminator(t *testing.T) {
 	svc := newDiscriminatorSvc(t, hostMountRoot)
 
-	// (a) Genuinely-unmounted share: mountinfo has only "/" and the broad bind, no
-	// per-disk mount for the path. The #55 case → NOT mounted.
+	// (a) Unmounted share: only "/" and the broad bind are listed.
 	writeMountinfo(t, "/", hostMountRoot)
 	if svc.DestinationMounted(hostMountRoot + "/disks/X/container") {
 		t.Error("(a) an unmounted share (only / and the broad bind present) must NOT count as mounted")
 	}
 
-	// (c) Array-default repo: nearest mount is the broad bind itself, not a proper
-	// descendant → NOT mounted (safe/over-protective, acceptable).
+	// (c) Array-default repo: the nearest mount is the broad bind, so it does
+	// not count. That errs on the safe side.
 	if svc.DestinationMounted(hostMountRoot + "/bombvault/container") {
 		t.Error("(c) an array-default path whose nearest mount is the broad bind must NOT count as mounted")
 	}
@@ -92,8 +84,7 @@ func TestDestinationMountedDiscriminator(t *testing.T) {
 		t.Error("HostMountRoot itself must NOT count as a backing mount")
 	}
 
-	// (b) Mounted UD share: the per-disk mount /host/user/disks/X is present and is
-	// a proper descendant of the broad bind → mounted (self-heal).
+	// (b) Mounted Unassigned Devices share with its own mount below the bind.
 	writeMountinfo(t, "/", hostMountRoot, hostMountRoot+"/disks/X")
 	if !svc.DestinationMounted(hostMountRoot + "/disks/X/container") {
 		t.Error("(b) a subdir of a mounted per-disk share (proper descendant of the broad bind) must count as mounted")
@@ -101,27 +92,17 @@ func TestDestinationMountedDiscriminator(t *testing.T) {
 	if !svc.DestinationMounted(hostMountRoot + "/disks/X") {
 		t.Error("(b) the per-disk mount point itself must count as mounted")
 	}
-	// A sibling path with no per-disk mount is still unmounted even though the
-	// disks/X mount is present in the same table.
+	// A sibling without a mount of its own stays unmounted.
 	if svc.DestinationMounted(hostMountRoot + "/disks/Y/container") {
 		t.Error("(b) a sibling share with no per-disk mount must NOT count as mounted")
 	}
 }
 
-// TestDestinationMountedDiscriminatorIdentityRoot mirrors
-// TestDestinationMountedDiscriminator above but under a generic/TrueNAS
-// "identity bind" config: HostSourceRoot == HostMountRoot (both "/data"),
-// the intended default off Unraid (no /mnt → /host/user translation, per the
-// design spec's platform-expansion doc). The discriminator (destinationMounted
-// in mountinfo.go) keys off cfg.HostMountRoot alone — it never reads
-// HostSourceRoot at all — so an identity root is not a special case for it,
-// but this test proves that rather than leaving it implicit. The design spec
-// flagged a DIFFERENT, more extreme case as a real collision risk:
-// HostSourceRoot=="/" (root itself), which is out of scope here — this test
-// stays scoped to an identity root at a real, non-root path ("/data"), which
-// is what Task 4 actually ships as the generic/TrueNAS default.
+// On TrueNAS and other generic hosts HostSourceRoot and HostMountRoot are the
+// same path. The discriminator reads only HostMountRoot, so such an identity
+// root behaves like any other.
 func TestDestinationMountedDiscriminatorIdentityRoot(t *testing.T) {
-	const identityRoot = "/data" // HostSourceRoot == HostMountRoot == /data
+	const identityRoot = "/data"
 	cfg := config.Config{
 		AppKey:         strings.Repeat("a", 64),
 		DataDir:        t.TempDir(),
@@ -130,7 +111,7 @@ func TestDestinationMountedDiscriminatorIdentityRoot(t *testing.T) {
 	}
 	svc := api.NewService(cfg, newMemStore(t), &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
 
-	// Genuinely-unmounted: only "/" and the broad identity bind present → NOT mounted.
+	// Only "/" and the identity bind are listed.
 	writeMountinfo(t, "/", identityRoot)
 	if svc.DestinationMounted(identityRoot + "/disks/X/container") {
 		t.Error("an unmounted share under an identity root must NOT count as mounted")
@@ -139,7 +120,7 @@ func TestDestinationMountedDiscriminatorIdentityRoot(t *testing.T) {
 		t.Error("the identity root itself must NOT count as a backing mount")
 	}
 
-	// A per-disk mount below the identity root IS mounted (self-heal case).
+	// A per-disk mount below the identity root counts.
 	writeMountinfo(t, "/", identityRoot, identityRoot+"/disks/X")
 	if !svc.DestinationMounted(identityRoot + "/disks/X/container") {
 		t.Error("a subdir of a mounted per-disk share below the identity root must count as mounted")
@@ -147,16 +128,13 @@ func TestDestinationMountedDiscriminatorIdentityRoot(t *testing.T) {
 	if !svc.DestinationMounted(identityRoot + "/disks/X") {
 		t.Error("the per-disk mount point itself must count as mounted")
 	}
-	// A sibling path with no per-disk mount is still unmounted even though the
-	// disks/X mount is present in the same table.
 	if svc.DestinationMounted(identityRoot + "/disks/Y/container") {
 		t.Error("a sibling share with no per-disk mount must NOT count as mounted")
 	}
 }
 
-// TestDestinationMountedReadErrorIsNotMounted checks the conservative fallback:
-// if the mount table cannot be read, the destination is treated as NOT mounted
-// so the #55 protection still fires.
+// An unreadable mount table counts as not mounted, so the guard against
+// re-initializing a vanished repo still fires.
 func TestDestinationMountedReadErrorIsNotMounted(t *testing.T) {
 	svc := newDiscriminatorSvc(t, hostMountRoot)
 	t.Cleanup(api.SetMountinfoPath(filepath.Join(t.TempDir(), "does-not-exist")))
@@ -165,14 +143,10 @@ func TestDestinationMountedReadErrorIsNotMounted(t *testing.T) {
 	}
 }
 
-// #55: once a repo has been established at a local destination, a later failure to
-// find its `config` while the backing store is genuinely NOT mounted must NOT
-// trigger a re-init (that would write an empty repo shadowing the real backups).
-// It must return ErrBackupPathNotMounted instead. A genuinely new location inits.
-//
-// The fixture is REALISTIC: it lists "/" and the broad host bind (HostMountRoot),
-// exactly like production, and NO per-share mount for the repo — proving the guard
-// still protects when the two universally-present mounts are in the table.
+// Once a repo is established, a missing `config` on an unmounted backing store
+// returns ErrBackupPathNotMounted instead of initializing an empty repo over
+// the real backups. A new location still initializes. The fixture lists "/"
+// and the broad bind, as in production, but no mount for the repo.
 func TestEnsureRepoRefusesReInitWhenEstablishedRepoVanishes(t *testing.T) {
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
@@ -185,11 +159,9 @@ func TestEnsureRepoRefusesReInitWhenEstablishedRepoVanishes(t *testing.T) {
 	if err := os.MkdirAll(repo, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	// The backing store is NOT mounted: the fixture lists only "/" and the broad
-	// HostMountRoot bind, so no proper-descendant mount backs the repo path.
 	writeMountinfo(t, "/", slashRepo(dir))
 
-	// Establish it: a `config` marker makes RepoOpens true → EnsureRepo records it.
+	// With a `config` present RepoOpens succeeds and EnsureRepo records the repo.
 	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("{}"), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -200,7 +172,7 @@ func TestEnsureRepoRefusesReInitWhenEstablishedRepoVanishes(t *testing.T) {
 		t.Fatalf("opening an existing repo must not init, got %v", eng.inited)
 	}
 
-	// The backing share vanishes (late mount at boot): the config is gone.
+	// The backing share has not mounted yet at boot, so the config is gone.
 	if err := os.Remove(filepath.Join(repo, "config")); err != nil {
 		t.Fatal(err)
 	}
@@ -210,12 +182,11 @@ func TestEnsureRepoRefusesReInitWhenEstablishedRepoVanishes(t *testing.T) {
 	if len(eng.inited) != 0 {
 		t.Fatalf("must NOT re-init an established-but-unmounted repo, got inits %v", eng.inited)
 	}
-	// The marker must survive (nothing to clear — the store is genuinely gone).
 	if ok, _ := st.IsRepoEstablished(repo); !ok {
 		t.Fatalf("the established marker must be kept while the store is unmounted")
 	}
 
-	// A genuinely new location (never established) still initialises normally.
+	// A location never established still initializes.
 	fresh := filepath.Join(dir, "fresh")
 	if err := svc.EnsureRepo(context.Background(), fresh, mode); err != nil {
 		t.Fatalf("a fresh location should init, got %v", err)
@@ -225,14 +196,9 @@ func TestEnsureRepoRefusesReInitWhenEstablishedRepoVanishes(t *testing.T) {
 	}
 }
 
-// #120: a stale/phantom established marker on a destination that IS mounted (a UD
-// disk that mounted after Docker, shadowing a pre-mount phantom init) must be
-// cleared and the repo re-established on the live disk, not surface a spurious
-// "not mounted" error.
-//
-// The fixture is REALISTIC: it lists "/" and the broad host bind (HostMountRoot)
-// PLUS the per-share mount for the repo (a proper descendant of the broad bind) —
-// modelling a UD disk mounted at /host/user/disks/X below the broad bind.
+// A stale established marker on a mounted destination (an Unassigned Devices
+// disk that mounted after Docker, hiding an init made before it) is cleared
+// and the repo is initialized on the live disk.
 func TestEnsureRepoReInitsWhenEstablishedRepoIsMountedButMissing(t *testing.T) {
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
@@ -245,12 +211,11 @@ func TestEnsureRepoReInitsWhenEstablishedRepoIsMountedButMissing(t *testing.T) {
 	if err := os.MkdirAll(repo, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	// A permanent phantom marker exists, but there is no config on the live disk.
+	// A marker, but no config on the live disk.
 	if err := st.MarkRepoEstablished(repo); err != nil {
 		t.Fatal(err)
 	}
-	// The destination IS mounted: the fixture carries "/" and the broad bind AND the
-	// repo's own per-share mount (a proper descendant of the broad bind).
+	// The repo has its own mount below the broad bind.
 	writeMountinfo(t, "/", slashRepo(dir), slashRepo(repo))
 
 	if err := svc.EnsureRepo(context.Background(), repo, mode); err != nil {
@@ -259,16 +224,14 @@ func TestEnsureRepoReInitsWhenEstablishedRepoIsMountedButMissing(t *testing.T) {
 	if len(eng.inited) != 1 || eng.inited[0] != repo {
 		t.Fatalf("the live disk should have been (re-)inited once, got %v", eng.inited)
 	}
-	// It is established again (the fresh init wrote a config → RepoOpens → re-mark).
+	// The init wrote a config, so the repo is marked established again.
 	if ok, _ := st.IsRepoEstablished(repo); !ok {
 		t.Fatalf("the repo should be established again after re-init on the live disk")
 	}
 }
 
-// The snapshot-list gate: a missing local repo that was established returns an
-// empty list (not an error) when the destination is mounted, and
-// ErrBackupPathNotMounted when it is not — using REALISTIC fixtures ("/" + broad
-// bind always present).
+// An established local repo without `config` lists no snapshots when its
+// destination is mounted and returns ErrBackupPathNotMounted when it is not.
 func TestSnapshotsGateEmptyWhenMountedErrorWhenNot(t *testing.T) {
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
@@ -276,7 +239,7 @@ func TestSnapshotsGateEmptyWhenMountedErrorWhenNot(t *testing.T) {
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
 	mode := restic.Mode{Encrypted: true, Password: "pw"}
 
-	repo := filepath.Join(dir, "repo") // exists, but has no `config` → localRepoMissing
+	repo := filepath.Join(dir, "repo") // exists without a `config`
 	if err := os.MkdirAll(repo, 0o700); err != nil {
 		t.Fatal(err)
 	}
@@ -284,7 +247,7 @@ func TestSnapshotsGateEmptyWhenMountedErrorWhenNot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Mounted (broad bind + the repo's own per-share mount) → empty list, no error.
+	// Mounted.
 	writeMountinfo(t, "/", slashRepo(dir), slashRepo(repo))
 	snaps, err := svc.SnapshotsForTag(context.Background(), repo, mode, "container:x")
 	if err != nil {
@@ -294,7 +257,7 @@ func TestSnapshotsGateEmptyWhenMountedErrorWhenNot(t *testing.T) {
 		t.Fatalf("expected no snapshots, got %v", snaps)
 	}
 
-	// Not mounted (only "/" and the broad bind) → ErrBackupPathNotMounted.
+	// Not mounted.
 	writeMountinfo(t, "/", slashRepo(dir))
 	if _, err := svc.SnapshotsForTag(context.Background(), repo, mode, "container:x"); !errors.Is(err, api.ErrBackupPathNotMounted) {
 		t.Fatalf("unmounted destination must return ErrBackupPathNotMounted, got %v", err)

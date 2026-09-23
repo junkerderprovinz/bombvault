@@ -15,20 +15,11 @@ interface LoginPageProps {
   onLogin: () => void;
 }
 
-// ---------------------------------------------------------------------------
-// LoginPage — full-screen centered login form, shown when auth is ON + not authed.
-//
-// Since v8.6.0 it has a second step. The password field is submitted on its own
-// first; if a second factor is armed the server answers needCode and the code
-// field appears. The password is kept in state across that, so accepting the
-// code does not mean typing the password again.
-//
-// The code field is NOT shown up front, even when GET /api/auth says a factor is
-// armed. Asking for a code before the password has been accepted invites people
-// to burn a 30-second window on a password they then mistype, and the round trip
-// that reveals the field costs nothing.
-// ---------------------------------------------------------------------------
-
+// LoginPage is the full-screen login form shown while auth is on and nobody is
+// signed in. The password goes first; when a second factor is armed the
+// server answers needCode and the code field appears, with the password kept.
+// The field waits for that answer even when GET /api/auth already reports a
+// factor, so nobody spends a 30-second code window on a mistyped password.
 export function LoginPage({ onLogin }: LoginPageProps) {
   const { t } = useT();
   const reveal = useReveal();
@@ -52,9 +43,8 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       if (res.needCode) {
         setNeedCode(true);
         setCode("");
-        // The first answer of needCode is not a failure, it is the form
-        // discovering it has a second field. Only say something once the code
-        // has actually been tried and rejected.
+        // The first needCode answer only reveals the field; a message waits
+        // until a code has been tried and rejected.
         setError(code === "" ? null : (res.error ?? t("auth.codeInvalid")));
         return;
       }
@@ -66,11 +56,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     }
   }
 
-  // Whether to offer the passkey button at all. Three things have to be true:
-  // the browser can do WebAuthn, this ADDRESS can carry a passkey (a bare IP
-  // cannot, see internal/api/passkeys.go), and a key is actually registered for
-  // it. Anything less and the button would open a prompt that cannot succeed,
-  // which is worse than no button: it teaches people that passkeys are broken.
+  // The passkey button needs WebAuthn in the browser, an address that can carry
+  // a passkey (a bare IP cannot, see internal/api/passkeys.go) and a key
+  // registered for it. A prompt that cannot succeed is worse than no button.
   const [passkeyOffer, setPasskeyOffer] = useState(false);
   const [passkeyBusy, setPasskeyBusy] = useState(false);
   useEffect(() => {
@@ -97,8 +85,8 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       }
       setError(res.error ?? t("auth.passkeySignInFailed"));
     } catch (err) {
-      // A cancelled prompt lands here too. Its own message says more than any
-      // sentence written in advance could.
+      // A cancelled prompt lands here too, and its own message says more than
+      // a generic one.
       setError(err instanceof Error ? err.message : t("auth.passkeySignInFailed"));
     } finally {
       setPasskeyBusy(false);
@@ -110,15 +98,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   return (
     <div className="flex items-center justify-center min-h-screen bg-carbon-background">
       <div className="w-full max-w-sm rounded-card bg-carbon-surface p-8 flex flex-col gap-6 shadow-lg">
-        {/* Mark + title. The login screen is the one surface that carries no
-            rail, so without this it is an unlabelled password box on a plain
-            background: nothing on it says which instance is being unlocked, and
-            on a box running several of these that is a real question.
-            Two theme-specific marks, switched by the `dark:` variant exactly as
-            the rail does it - the dark mark on the light surface, the light one
-            on the dark surface. Decorative beside a heading that already names
-            the product, so it is hidden from assistive technology rather than
-            read out twice. */}
+        {/* This screen has no rail, so the mark tells which instance is being
+            unlocked. The theme marks switch like the rail's and stay hidden
+            from assistive technology, since the heading names the product. */}
         <div className="flex flex-col items-center gap-3">
           <span className="flex h-16 w-16 items-center justify-center">
             <img
@@ -142,7 +124,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         </div>
 
         <form onSubmit={(e) => void handleSubmit(e)} className="flex flex-col gap-4">
-          {/* Password field */}
           <div className="flex flex-col gap-1.5">
             <label
               htmlFor="bv-password"
@@ -185,14 +166,12 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             </div>
           )}
 
-          {/* Error message */}
           {error && (
             <p className="text-xs text-statusFail" role="alert">
               {error}
             </p>
           )}
 
-          {/* Submit button */}
           <Button
             label={t("auth.signIn")}
             labelKey="auth.signIn"
@@ -203,10 +182,8 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             title={busy ? t("auth.signingIn") : undefined}
           />
 
-          {/* The passkey, UNDER the password and not instead of it. The password
-              is the way in that always works; the passkey is the convenient one,
-              and only on an address that can carry it. Hidden entirely when it
-              cannot rather than shown disabled: a disabled control on a login
+          {/* Below the password, which always works. Hidden rather than
+              disabled where it cannot work: a disabled control on a login
               screen reads as "you are locked out". */}
           {passkeyOffer && !needCode && (
             <Button

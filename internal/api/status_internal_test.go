@@ -2,8 +2,7 @@ package api
 
 import "testing"
 
-// TestRPOStatus exhaustively covers the pure RPO status decision: the boundaries
-// between ok / warn / overdue, plus the never / off short-circuits.
+// Covers the boundaries between ok, warn and overdue, plus never and off.
 func TestRPOStatus(t *testing.T) {
 	const day = int64(86400)
 	const now = int64(1_000_000_000)

@@ -12,18 +12,13 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 )
 
-// Pinned literals: these are today's REAL pre-Platform-seam values (verified
-// against internal/api/service.go before this package existed), not a
-// paraphrase. A future accidental edit to Unraid{}'s literals must fail here.
 const (
 	testHostMountRoot = "/host/user"
 
-	wantUnraidAppdataFallback          = "/mnt/user/appdata/myapp" // path.Join("/mnt/user/appdata", "myapp")
-	wantUnraidForeignContainerDestBase = "/host/user/user/appdata" // path.Join(hostMountRoot, "user/appdata")
-	wantUnraidForeignVMDestBase        = "/host/user/user/domains" // path.Join(hostMountRoot, "user/domains")
+	wantUnraidAppdataFallback          = "/mnt/user/appdata/myapp"
+	wantUnraidForeignContainerDestBase = "/host/user/user/appdata"
+	wantUnraidForeignVMDestBase        = "/host/user/user/domains"
 )
-
-// --- Unraid{} ---
 
 func TestUnraidKind(t *testing.T) {
 	if got := (platform.Unraid{}).Kind(); got != platform.KindUnraid {
@@ -36,7 +31,6 @@ func TestUnraidAppdataFallback(t *testing.T) {
 	if got != wantUnraidAppdataFallback {
 		t.Fatalf("Unraid{}.AppdataFallback = %q, want %q", got, wantUnraidAppdataFallback)
 	}
-	// hostMountRoot must be ignored: Unraid's convention is a fixed HOST path.
 	got2 := platform.Unraid{}.AppdataFallback("/totally/different/root", "myapp")
 	if got2 != wantUnraidAppdataFallback {
 		t.Fatalf("Unraid{}.AppdataFallback must ignore hostMountRoot: got %q, want %q", got2, wantUnraidAppdataFallback)
@@ -57,8 +51,7 @@ func TestUnraidForeignVMDestBase(t *testing.T) {
 	}
 }
 
-// fakeSSH is a minimal platform.SSHRunner test double that records the args
-// it was called with and returns a canned error.
+// fakeSSH records the arguments it was called with and returns err.
 type fakeSSH struct {
 	called bool
 	args   []string
@@ -118,8 +111,6 @@ func TestUnraidReconcileContainerUpdateStatus_PropagatesSSHError(t *testing.T) {
 	}
 }
 
-// --- Generic{} ---
-
 func TestGenericKind(t *testing.T) {
 	if got := (platform.Generic{}).Kind(); got != platform.KindGeneric {
 		t.Fatalf("Generic{}.Kind() = %q, want %q", got, platform.KindGeneric)
@@ -153,16 +144,6 @@ func TestGenericReconcileContainerUpdateStatusIsNoop(t *testing.T) {
 		t.Fatalf("Generic{}.ReconcileContainerUpdateStatus must never touch SSH, args=%v", ssh.args)
 	}
 }
-
-// --- TrueNAS{} ---
-//
-// TrueNAS{} embeds Generic{}: containers behave identically to generic (no
-// TrueNAS-specific appdata/restore-dest logic needed — see truenas.go), so
-// every method below except Kind() must match Generic{}'s outputs exactly.
-// Kind() is the one deliberate override — it must report KindTrueNAS, not the
-// embedded Generic{}'s KindGeneric, otherwise Detect/platformFor's whole
-// point (PLATFORM=truenas resolving to a REAL, distinguishable platform)
-// would be defeated.
 
 func TestTrueNASKind(t *testing.T) {
 	if got := (platform.TrueNAS{}).Kind(); got != platform.KindTrueNAS {
@@ -198,8 +179,6 @@ func TestTrueNASReconcileContainerUpdateStatusIsNoop(t *testing.T) {
 	}
 }
 
-// --- Detect ---
-
 func TestDetectFindsUnraidMarker(t *testing.T) {
 	flashDir := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(flashDir, "config/plugins/dockerMan"), 0o750); err != nil {
@@ -218,7 +197,7 @@ func TestDetectFallsBackToGenericWithoutMarker(t *testing.T) {
 }
 
 func TestDetectOverrideWinsRegardlessOfMarker(t *testing.T) {
-	// A flash dir that WOULD auto-detect as Unraid; the override must still win.
+	// Without an override this flash dir detects as Unraid.
 	flashDir := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(flashDir, "config/plugins/dockerMan"), 0o750); err != nil {
 		t.Fatal(err)

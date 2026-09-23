@@ -9,17 +9,14 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/model"
 )
 
-// These tests cover the #119 follow-up (bostafari): when "update after successful
-// backup" is enabled, the container is RECREATED after the backup. That recreate
-// is handed to the orchestrator as the WhileDependentsStopped hook, so it runs
-// while the stopped dependents are STILL down — the dependents are restarted only
-// AFTER the recreate. With no hook, the dependents restart right after the backup
-// (Part B, unchanged). The hook is best-effort: even if it "fails", the dependents
-// are never left stopped.
+// With "update after successful backup" on, the container is recreated after
+// the backup through the WhileDependentsStopped hook, so its dependents stay
+// down until the recreate is done. Without the hook they restart right after
+// the backup, and a failing hook still leaves no dependent stopped.
 
-// runBackupWithHook drives BackupContainer of a running target whose stopped-set
-// is deps, with an optional WhileDependentsStopped hook and health-wait config,
-// and returns the fakeDocker call log.
+// runBackupWithHook backs up a running target that stops deps, with an
+// optional WhileDependentsStopped hook and the given health-wait settings. The
+// Docker calls land in d.log.
 func runBackupWithHook(t *testing.T, d *fakeDocker, deps []backup.StopContainer, hook func(), healthWait bool, timeout time.Duration) {
 	t.Helper()
 	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678", Bytes: 1024}}
@@ -49,10 +46,8 @@ func runBackupWithHook(t *testing.T, d *fakeDocker, deps []backup.StopContainer,
 	}
 }
 
-// recreateTargetHook returns a hook that mimics the update-after-backup recreate:
-// stop, remove and recreate+start the target, exactly what breaks a dependent that
-// came back too early. It records those calls in the same fakeDocker log so the
-// test can assert the dependents restart only afterwards.
+// recreateTargetHook stops, removes and recreates the target the way the update
+// does, logging to the same fakeDocker.
 func recreateTargetHook(d *fakeDocker) func() {
 	return func() {
 		ctx := context.Background()
@@ -62,9 +57,6 @@ func recreateTargetHook(d *fakeDocker) func() {
 	}
 }
 
-// With the update hook set, the target's recreate must happen while the dependents
-// are still down, and the dependents must be restarted (health-gated, in
-// depends_on order) only AFTER the recreate completes.
 func TestUpdateHookRecreatesBeforeDependentRestart(t *testing.T) {
 	defer backup.SetHealthTimingForTest(time.Millisecond, time.Millisecond)()
 	d := &fakeDocker{}
@@ -80,32 +72,25 @@ func TestUpdateHookRecreatesBeforeDependentRestart(t *testing.T) {
 	if initialStart < 0 || recreate < 0 || startDB < 0 || startApp < 0 {
 		t.Fatalf("target must be restarted then recreated, and both deps restarted: %v", d.log)
 	}
-	// The recreate runs after the target's initial post-backup restart ...
 	if initialStart >= recreate {
 		t.Fatalf("recreate must run after the target's initial restart: %v", d.log)
 	}
-	// ... and BOTH dependents come back only AFTER the recreate (the bug: they used
-	// to be up already and broke against the torn-down target).
 	if recreate >= startDB || recreate >= startApp {
 		t.Fatalf("dependents must restart only after the recreate: %v", d.log)
 	}
-	// depends_on order still holds, health-gated.
 	if startDB >= startApp {
 		t.Fatalf("restart order must follow depends_on (db < app): %v", d.log)
 	}
 	if countOf(d.log, "health:db") < 1 {
 		t.Fatalf("health wait must still gate the dependents: %v", d.log)
 	}
-	// The target must be re-waited for Running after the recreate, before its netns
-	// dependents start: two waitRunning on the target (initial + post-recreate).
+	// The target is waited for twice, after the first restart and after the
+	// recreate, before dependents sharing its network namespace start.
 	if countOf(d.log, "waitRunning:backuptarget") != 2 {
 		t.Fatalf("target must be re-waited running after the recreate: %v", d.log)
 	}
 }
 
-// With NO update hook, the dependents restart right after the backup, exactly as
-// Part B does today: the target is restarted and waited-for once (no recreate) and
-// the dependents come back in order.
 func TestNoUpdateHookRestartsDependentsRightAfterBackup(t *testing.T) {
 	d := &fakeDocker{}
 	deps := []backup.StopContainer{
@@ -123,15 +108,13 @@ func TestNoUpdateHookRestartsDependentsRightAfterBackup(t *testing.T) {
 	if idxOf(d.log, "start:db") >= idxOf(d.log, "start:app") {
 		t.Fatalf("restart order must follow depends_on (db < app): %v", d.log)
 	}
-	// The target is waited-for-running exactly once (no post-recreate re-wait).
 	if countOf(d.log, "waitRunning:backuptarget") != 1 {
 		t.Fatalf("without a hook the target is waited once: %v", d.log)
 	}
 }
 
-// If the update "fails" (its recreate leaves the target stopped: stop+remove but no
-// successful create), the dependents must STILL be restarted — never orphaned
-// stopped. The hook here does not recreate the target.
+// TestUpdateHookFailureStillRestartsDependents uses a hook that removes the
+// target without recreating it.
 func TestUpdateHookFailureStillRestartsDependents(t *testing.T) {
 	d := &fakeDocker{}
 	deps := []backup.StopContainer{
@@ -142,7 +125,6 @@ func TestUpdateHookFailureStillRestartsDependents(t *testing.T) {
 		ctx := context.Background()
 		_ = d.Stop(ctx, "backuptarget", 0)
 		_ = d.Remove(ctx, "backuptarget")
-		// recreate failed: the target is left down, but the dependents must still come back.
 	}
 	runBackupWithHook(t, d, deps, failingUpdate, true, 5*time.Second)
 
@@ -154,9 +136,9 @@ func TestUpdateHookFailureStillRestartsDependents(t *testing.T) {
 	}
 }
 
-// The per-container health timeout must still bound the wait when the update hook
-// is present: a dependency that never turns healthy must not hang the flow, and its
-// dependent must still be restarted after the timeout — and after the recreate.
+// TestUpdateHookHealthTimeoutStillProceeds checks that the health timeout still
+// applies with the hook: app starts after the recreate although db never turns
+// healthy.
 func TestUpdateHookHealthTimeoutStillProceeds(t *testing.T) {
 	defer backup.SetHealthTimingForTest(time.Millisecond, time.Millisecond)()
 	d := &fakeDocker{

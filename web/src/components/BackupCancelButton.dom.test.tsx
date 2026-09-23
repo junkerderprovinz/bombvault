@@ -1,13 +1,8 @@
 // @vitest-environment jsdom
 /**
- * The backup cancel button (#200).
- *
- * Two things are worth pinning. The key, because it is the one thing that can
- * be wrong without anything saying so: the backend registers a running backup
- * under the key the progress stream publishes, and a button that sends anything
- * else gets a cheerful "cancelled: false" and does nothing forever. And the
- * confirmation, because a long backup stopped by an accidental click is an
- * evening of somebody's time.
+ * The backend registers a running backup under its progress key and answers
+ * any other key with "cancelled: false", so a wrong key fails silently. The
+ * confirmation keeps a stray click from stopping a long backup.
  */
 import { render, screen, cleanup, fireEvent, act } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -18,7 +13,7 @@ vi.mock("../lib/api", async (orig) => ({
   cancelBackup: (key: string) => cancelBackup(key),
 }));
 
-// useConfirm renders a dialog; drive it by answering yes or no.
+// Answers the confirmation without rendering the dialog.
 let answer = true;
 vi.mock("../lib/useConfirm", () => ({
   useConfirm: () => ({
@@ -48,8 +43,6 @@ describe("BackupCancelButton", () => {
       fireEvent.click(screen.getByRole("button", { name: /backup.cancel/i }));
     });
     expect(cancelBackup).toHaveBeenCalledTimes(1);
-    // Not the set id, not a prefix of its own invention: the key the card got
-    // from the progress stream, verbatim.
     expect(cancelBackup).toHaveBeenCalledWith("files:My_Backups");
   });
 
@@ -79,7 +72,6 @@ describe("BackupCancelButton", () => {
       fireEvent.click(screen.getByRole("button", { name: /backup.cancel/i }));
     });
     expect(onCancelled).not.toHaveBeenCalled();
-    // A failed cancel leaves the backup running, which is the safe outcome.
     expect(screen.getByRole("button", { name: /backup.cancel/i })).toHaveProperty("disabled", false);
   });
 });

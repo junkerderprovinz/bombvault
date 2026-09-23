@@ -8,11 +8,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 )
 
-// selfRestartFakeDocker embeds the Docker interface (left nil) and overrides only
-// the two methods ScheduleSelfRestart exercises: Self (own-name resolution) and
-// Restart (the recorded call). Any other method would panic on the nil embed, but
-// none is reached on these paths — keeping the fake minimal and self-contained in
-// package api (the api_test fakeServiceDocker isn't visible here).
+// selfRestartFakeDocker implements only the two methods ScheduleSelfRestart
+// calls; any other method panics on the nil embedded interface.
 type selfRestartFakeDocker struct {
 	dockercli.Docker
 	selfName  string
@@ -28,23 +25,18 @@ func (f *selfRestartFakeDocker) Restart(_ context.Context, name string, _ time.D
 	return nil
 }
 
-// TestScheduleSelfRestartReturnsFalseWithoutSelfName: when the own-container name
-// can't be resolved, no restart is scheduled and the caller is told to restart
-// manually (false).
+// Without the own container name nothing is scheduled, and false tells the
+// caller to restart manually.
 func TestScheduleSelfRestartReturnsFalseWithoutSelfName(t *testing.T) {
-	t.Setenv("BOMBVAULT_SELF_CONTAINER", "") // ignore any ambient override; force docker.Self resolution
+	t.Setenv("BOMBVAULT_SELF_CONTAINER", "")
 	svc := &Service{docker: &selfRestartFakeDocker{selfName: ""}}
 	if svc.ScheduleSelfRestart() {
 		t.Fatal("expected false when self-name is unknown")
 	}
 }
 
-// TestScheduleSelfRestartInvokesRestart: with a known self-name the restart is
-// scheduled (true) and the docker Restart is invoked with that exact name. The
-// delay is shrunk so the test observes the call promptly; the channel + timeout
-// makes it non-flaky (no sleep-then-assert).
 func TestScheduleSelfRestartInvokesRestart(t *testing.T) {
-	t.Setenv("BOMBVAULT_SELF_CONTAINER", "") // force resolution via the fake's Self
+	t.Setenv("BOMBVAULT_SELF_CONTAINER", "") // resolve the name through the fake's Self
 	fake := &selfRestartFakeDocker{selfName: "BombVault", restarted: make(chan string, 1)}
 	svc := &Service{docker: fake}
 
@@ -65,15 +57,12 @@ func TestScheduleSelfRestartInvokesRestart(t *testing.T) {
 	}
 }
 
-// TestStartRestoreConfigRefusesWhenBusy: with the single-flight guard already held
-// (a backup/restore in flight), StartRestoreConfig must decline WITHOUT staging or
-// scheduling a self-restart — started=false, err=nil — so a config self-restart can
-// never kill the container mid-write of another operation. It returns before
-// touching the store/docker, so a zero-value Service with the guard pre-set is
-// enough to exercise the guard.
+// While another backup or restore holds the guard, StartRestoreConfig declines
+// without an error, so its self-restart cannot kill that operation mid-write. It
+// returns before touching the store or docker, so a zero Service is enough.
 func TestStartRestoreConfigRefusesWhenBusy(t *testing.T) {
 	s := &Service{}
-	s.batchActive.Store(true) // simulate another backup/restore already running
+	s.batchActive.Store(true)
 
 	started, auto, err := s.StartRestoreConfig(context.Background(), "latest", "local")
 	if started {

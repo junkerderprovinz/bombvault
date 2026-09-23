@@ -1,32 +1,12 @@
-// ---------------------------------------------------------------------------
-// RestoreAction — the shared in-place restore control.
+// RestoreAction is the in-place restore control shared by Containers, VMs and
+// Recovery: the confirm gate, the leave-stopped toggle, the restore trigger and
+// the progress banner under it. The caller owns the row, the snapshot list and
+// the delete button.
 //
-// Containers, VMs, and Recovery each hand-rolled the SAME in-place restore
-// mechanics: a useBackupWatch(kind:'restore') fire-and-watch cycle, an optional
-// confirm gate, an optional "leave stopped" toggle, the accent restore trigger
-// (spinner while pending + a busy hint when another op blocks it), and the
-// <RestoreProgress> banner underneath. This owns that one control so the three
-// call sites stop diverging.
-//
-// The trigger has TWO shapes and exactly one behaviour: a text button (the
-// default — a restore FORM's submit, under a destination picker and a confirm)
-// or, with `iconBadge`, the app's square 32px icon badge flush at the row's far
-// edge (a per-item LIST ROW action). Both are built from the same
-// `triggerDisabled` expression and the same `handleRestore`, a few lines above
-// where they are rendered, so the two shapes cannot drift into two different
-// notions of "can this restore run" — see `iconBadge`'s own doc below.
-//
-// It owns neither the list nor the delete: the timeline draws the row (snapshot
-// id, time, places) and its own delete buttons. This watch's matchRun takes the
-// singular "container"/"vm" or it never resolves. RestoreAction only drives the
-// one restore.
-//
-// cancelledRef is load-bearing: this component owns the single ref instance,
-// hands it to useBackupWatch (whose no-run fallback reads it to report a neutral
-// "cancelled" instead of a phantom green "success"), and forwards the SAME
-// instance to RestoreProgress → RestoreCancelButton (which sets it true on a
-// successful cancel). They must all share one ref.
-// ---------------------------------------------------------------------------
+// cancelledRef goes to useBackupWatch, whose no-run fallback reads it to report
+// "cancelled" instead of success, and through RestoreProgress to
+// RestoreCancelButton, which sets it on a successful cancel. Both must see the
+// same ref.
 
 import { useRef, useState, type ReactNode } from "react";
 import { restore, restoreVM } from "../../lib/api";
@@ -39,97 +19,50 @@ import type { RepoSource } from "../SourceToggle";
 import { Button } from "../Button";
 import { IconRestore } from "../Sidebar";
 import { useConfirm } from "../../lib/useConfirm";
-
 import { Toggle } from "../Toggle";
+
 type T = ReturnType<typeof useT>["t"];
 
 interface RestoreActionProps {
-  /** Restore domain — drives the progressKey `${domain}:${name}`, the matchRun
-   *  domain string (SINGULAR: a plural typo makes the watch never resolve), and
-   *  the choice of restore() vs restoreVM(). */
+  /** Picks restore() or restoreVM() and keys the progress entry and run match.
+   *  Singular, like the run domains; a plural never matches a run. */
   domain: "container" | "vm";
-  /** Target container/VM identifier — the ONLY value restore()/restoreVM()
-   *  and the progressKey/matchRun below may use. For containers this is
-   *  always the container name (no display/identifier split there). For VMs
-   *  the caller MUST pass the raw libvirt name (VM.libvirtName), never the
-   *  display VM.name — see VM.libvirtName's doc comment (lib/api.ts). */
+  /** Identifier for the restore call and the run match. For VMs this is the
+   *  raw libvirt name (VM.libvirtName), not the display name. */
   name: string;
-  /** Human-readable name substituted into the in-place cancel warning.
-   *  Defaults to `name`. Callers whose domain has a display/identifier split
-   *  (VMs on TrueNAS) should pass the display name here while `name` above
-   *  stays the raw identifier. */
+  /** Name shown in the in-place cancel warning. Defaults to name. */
   displayName?: string;
-  /** Snapshot to restore — a snapshot id or the literal "latest". */
+  /** A snapshot id or "latest". */
   snapshotId: string;
-  /** Repo to restore from; undefined => the backend-default repo (Recovery). */
+  /** Repo to restore from; undefined uses the backend default. */
   source?: RepoSource;
-  /** "Something else is running" signal (anyActive) — busy-guards this restore.
-   *  Recovery wraps its plain boolean as { active }. */
+  /** Whether another operation is running, which blocks this restore. */
   otherActive: { active: boolean; phase?: string };
-  /** Sticky success-banner text (already localized by the caller). */
+  /** Localized success text. */
   successMessage: string;
-  /** Gate the restore behind an explicit confirm checkbox. Default true.
-   *  Recovery's per-row action passes false because the checkbox does not fit
-   *  in a single-line row action, and pairs it with `confirmMessage` instead —
-   *  it does NOT mean the restore is unguarded. */
+  /** Gates the restore behind a confirm toggle. Default true. Row actions
+   *  have no room for the toggle and pass confirmMessage instead. */
   requireConfirm?: boolean;
-  /** Ask this question in a modal before firing, the same way "Restore all"
-   *  and every other destructive action in the app does (useConfirm). Already
-   *  localized by the caller.
-   *
-   *  It exists because `requireConfirm={false}` used to mean genuinely
-   *  unguarded: Recovery's card-5 rows passed it on the strength of a prop doc
-   *  claiming "its own stepper gates the whole flow", and that stepper gates
-   *  nothing. One click on an unlabelled glyph badge started an in-place
-   *  restore over live appdata or VM disks, while the "Restore all" button in
-   *  the SAME card asked first. A row action needs a modal rather than the
-   *  checkbox, so it gets one here instead of a second fire() path at the call
-   *  site — nothing that decides WHETHER a restore runs may live twice. */
+  /** Localized question asked in a modal before the restore starts. */
   confirmMessage?: string;
-  /** Offer the "recreate but leave stopped" checkbox. Default true;
-   *  Recovery passes false. */
+  /** Offers the "leave stopped" toggle. Default true. */
   showLeaveStopped?: boolean;
-  /** Force leaveStopped on regardless of the checkbox — Recovery restores every
-   *  target left-stopped, then you start them from the tabs. Default false. */
+  /** Recreates the target stopped regardless of the toggle, so Recovery can
+   *  start targets in order afterwards. Default false. */
   forceLeaveStopped?: boolean;
-  /** Show the "another op is running" phrase beside a blocked button. Default
-   *  true; Recovery passes false. */
+  /** Names the operation that blocks the trigger. Default true. */
   showBusyHint?: boolean;
-  /** Forwarded to RestoreProgress — gates the started / bgHint lines. Default
-   *  true; Recovery passes false. */
+  /** Passed to RestoreProgress. Default true. */
   showStartedHint?: boolean;
-  /** Button label when idle. Default t("snapshots.restore"). In `iconBadge`
-   *  mode the glyph replaces this text on screen and it becomes the badge's
-   *  hover tooltip + accessible name instead — it is never dropped. */
+  /** Tooltip and accessible name of the icon badge trigger. Defaults to
+   *  t("snapshots.restore"). */
   label?: string;
-  /** Render the trigger as this app's square 32px icon badge (IconRestore
-   *  glyph, `tip` carrying `label`) pushed flush to the row's far edge, instead
-   *  of a text button sitting at the row's start.
-   *
-   *  jdp, live review: "Card 5: die ganzen Wiederherstellen-Buttons sollen
-   *  quadratische Badges mit Glyphen sein und ganz rechts platziert sein." The
-   *  recipe is the app's standard one, copied from the already-converted
-   *  RestorePanel/VMs/Flash/Config row actions rather than re-derived:
-   *  shape="square" size="icon" (32px, Badge.tsx's ONE square-icon-badge
-   *  stage), tone="active", and NO hueIndex — every list row that renders one
-   *  of these already carries `.glim-hue` with its own rainbow position, so the
-   *  custom-property cascade paints the badge in that row's colour. Passing a
-   *  hueIndex here would override the row and break the sequence.
-   *
-   *  `ms-auto`, not `ml-auto`: under dir="rtl" the row's far edge is its left
-   *  one and the badge has to follow it. Same idiom, and the same resulting
-   *  right edge, as the "Restore all" button an earlier round pushed to the far
-   *  edge of this same card.
-   *
-   *  Left OFF for the two call sites that submit a restore FORM (RestorePanel's
-   *  and VMs' expanded panels, where this control sits under a destination
-   *  picker and a confirm): those are not per-item row actions, and both are
-   *  already reached through an icon badge of their own. */
+  /** Renders the trigger as a square icon badge at the row's far edge instead
+   *  of a text button, for per-item list rows. The badge takes its hue from
+   *  the row's .glim-hue, so it gets no hueIndex. */
   iconBadge?: boolean;
-  /** Row content rendered at the START of the trigger's own flex row. Lets a
-   *  list row put its name/timestamp on the SAME line as an `iconBadge`
-   *  trigger, which is what "flush right in its row" requires — without this
-   *  the badge lands on a line of its own under the row it belongs to. */
+  /** Content placed before the trigger in the same row, so a list row can put
+   *  its name and time on the badge's line. */
   leading?: ReactNode;
   /** Called when the place answered snapshot-missing, so the timeline can offer the next one. */
   onMissing?: () => void;
@@ -163,8 +96,6 @@ export function RestoreAction({
   const [leaveStopped, setLeaveStopped] = useState(false);
 
   const progressKey = `${domain}:${name}`;
-  // The SAME ref instance flows to useBackupWatch AND (via RestoreProgress) to
-  // RestoreCancelButton — see the header note. Never split it.
   const cancelledRef = useRef(false);
   const { state, fire, isPending } = useBackupWatch({
     progressKey,
@@ -180,35 +111,26 @@ export function RestoreAction({
     },
   });
   const prog = useProgress()[progressKey];
-  // Busy-guard: block a new restore while any OTHER backup/restore/replication
-  // runs (this item's own in-flight op is covered by isPending, never blocked).
+  // otherActive also counts this target's own restore, which isPending covers.
   const blockedByOther = otherActive.active && !isPending;
   const done = state.phase === "success";
 
   async function handleRestore() {
     if (requireConfirm && !confirmed) return;
-    // The modal is the row action's stand-in for the checkbox, so it gates the
-    // SAME single fire() rather than adding a second path to it.
     if (confirmMessage && !(await confirm(confirmMessage))) return;
     void fire();
   }
 
-  // ONE disabled expression and ONE click handler for both trigger shapes
-  // below — the whole point of `iconBadge` is that a row action and a form
-  // submit reach the identical fire()/useBackupWatch cycle, so nothing that
-  // decides WHETHER a restore runs may be written twice.
+  // Both trigger shapes share this and handleRestore, so a row action and a
+  // form submit cannot disagree on whether a restore may run.
   const triggerDisabled = (requireConfirm && !confirmed) || isPending || blockedByOther || done;
-  // Rendered once, placed differently: in `iconBadge` mode the badge is the
-  // row's last child (that is what `ms-auto` pushes to the far edge), so the
-  // busy phrase has to come BEFORE it rather than trailing it.
+  // The icon badge is the row's last child, pushed to the far edge by ms-auto,
+  // so the busy phrase goes before it.
   const busyHint =
     showBusyHint && blockedByOther ? (
       <span className="text-caption text-carbon-textMuted shrink-0">{t(busyPhraseKey(otherActive.phase))}</span>
     ) : null;
 
-  // The caller's own `label` wins when it passes one: it names the action
-  // ("Restore this snapshot") rather than a state, so it is safe as the
-  // width-bearing label while `busy` carries the spinner.
   const trigger = iconBadge ? (
     <Button
       label={label ?? t("snapshots.restore")}
@@ -259,7 +181,6 @@ export function RestoreAction({
           </>
         )}
       </div>
-      {/* Leave stopped: recreate/restore but don't start (rebuild a stack in order). */}
       {showLeaveStopped && (
         <Toggle
           checked={leaveStopped}

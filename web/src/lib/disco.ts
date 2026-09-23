@@ -1,46 +1,36 @@
-// ---------------------------------------------------------------------------
-// Disco: rainbow, but the colours keep walking.
+// Disco walks the rainbow palette. Every animation frame it moves each root
+// --rb-* property a little further along the loop in discoLoop.ts, and every
+// hued element follows, because hueVars() points it at the root. One clock
+// drives the whole walk. A timer stepping the colours and a transition gliding
+// them would each keep their own time, and every step would land a little
+// early or late, as a jolt in the glide.
 //
-// Rainbow hands every row in a list its own colour out of a set of eight, read
-// through `rainbowAt(index)`, which rotates that set by the state's `seed` when
-// the state's `rotate` is on. Disco steps the seed once a second AND holds
-// `rotate` on while it runs - the second half is not optional, because `seed`
-// is only ever read as `rotate ? seed : 0`. So every hued element in the app
-// moves to the next colour together while nothing else changes.
-//
-// It animates NOTHING, deliberately. There are no keyframes here and no new
-// classes: a seed change re-renders the subscribers the colour engine already
-// has, which is a paint, not a compositing layer. #228 was two entrance
-// animations nesting their transforms and flashing on one engine, so a
-// second-by-second effect built out of transforms was never on the table.
-//
-// Persistence mirrors motion.ts/appearance.ts: localStorage plus
-// saveDisplayPrefs(), so the switch travels between browsers like every other
-// look setting. The TICK never persists - see applyStoredDisco.
-//
-// No prefers-reduced-motion gate, on jdp's call (2026-09-15): this is a hidden
-// mode somebody had to find, and finding it is a statement of intent. The same
-// call covers "storm" in index.css, which is why that level now sits outside
-// the (no-preference) block too.
-// ---------------------------------------------------------------------------
-import { applyRainbow, applyStoredRainbow, rainbowState } from "./appearance";
+// The switch is stored like the other look settings (localStorage plus
+// saveDisplayPrefs), the walk is not, and it never touches the rainbow state.
+// The walk has no prefers-reduced-motion gate: this is a hidden mode, and
+// finding it is a statement of intent. The storm level in index.css follows
+// the same reasoning. The glide is a colour fade and does follow the motion
+// engine, so with reduced motion, or at the "off" level, disco steps.
+import { RAINBOW, applyRainbow, rainbowState } from "./appearance";
+import { contrastOn } from "./accent";
+import { buildLoop, colourAt, type Loop } from "./discoLoop";
 import { save as saveDisplayPrefs } from "./displayPrefs";
 
 const STORAGE_KEY = "bv-disco";
 
-/** One colour step a second. Fast enough to read as a disco, slow enough to
- *  stay well under the 3Hz flicker threshold photosensitivity guidance names. */
-export const DISCO_TICK_MS = 1000;
+/** The walk covers one palette colour's worth of loop every 2.4 seconds, so a
+ *  full turn of eight colours takes 19.2 seconds. Stepping, it moves one
+ *  colour on at the same interval. */
+export const DISCO_TICK_MS = 2400;
 
-/** Turn-ons needed to unlock, matching motion.ts's STORM_CLICKS. */
+/** Turn-ons needed to unlock, like STORM_CLICKS in motion.ts. */
 export const DISCO_UNLOCK_CLICKS = 5;
 
-/** How long a run of turn-ons may pause before it counts as a new run.
- *  Without it, somebody comparing rainbow on against rainbow off over a
- *  minute would unlock a mode they never went looking for. */
+/** Longest pause between two turn-ons of one run, so somebody comparing
+ *  rainbow on and off over a minute does not unlock disco by accident. */
 export const DISCO_UNLOCK_WINDOW_MS = 3000;
 
-/** The stored switch, false when unset or unreadable. */
+/** getDisco returns the stored switch, false when unset or unreadable. */
 export function getDisco(): boolean {
   try {
     return localStorage.getItem(STORAGE_KEY) === "true";
@@ -49,103 +39,105 @@ export function getDisco(): boolean {
   }
 }
 
-let timer: ReturnType<typeof setInterval> | null = null;
+let frame: number | null = null;
+let lastFrame: number | undefined;
+let loop: Loop = buildLoop(RAINBOW);
+// The palette entry --rb-0 starts on, the same as at rest.
+let start = 0;
+// How much of a full turn the walk has covered, from 0 up to 1.
+let travelled = 0;
+// The colours last written. applyStoredDisco clears it, because applyRainbow
+// may have written the resting palette over them since.
+let painted: string[] = [];
+let reducedMotion: MediaQueryList | undefined;
 
-/** Stops the walk. Safe to call when nothing is running, which is what makes
- *  applyStoredDisco idempotent; the caller decides whether the palette the
- *  last tick left behind stays or gets handed back. */
+function paint(): void {
+  const root = document.documentElement;
+  reducedMotion ??= window.matchMedia("(prefers-reduced-motion: reduce)");
+  const steps = root.getAttribute("data-motion") === "off" || reducedMotion.matches;
+  const n = loop.palette.length;
+  for (let i = 0; i < n; i++) {
+    const colour = steps
+      ? loop.palette[(i + start + Math.floor(travelled * n)) % n]
+      : colourAt(loop, loop.at[(i + start) % n] + travelled * loop.at[n]);
+    if (painted[i] === colour) continue;
+    painted[i] = colour;
+    root.style.setProperty(`--rb-${i}`, colour);
+    root.style.setProperty(`--rb-ink-${i}`, contrastOn(colour));
+  }
+}
+
+function walk(now: number): void {
+  const turnMs = DISCO_TICK_MS * loop.palette.length;
+  travelled = (travelled + (now - (lastFrame ?? now)) / turnMs) % 1;
+  lastFrame = now;
+  paint();
+  frame = requestAnimationFrame(walk);
+}
+
+/** stopDisco stops the walk and is safe to call when nothing runs. The colours
+ *  stay where the last frame left them; the caller decides whether to restore
+ *  the palette. */
 export function stopDisco(): void {
-  if (timer !== null) {
-    clearInterval(timer);
-    timer = null;
+  if (frame !== null) {
+    cancelAnimationFrame(frame);
+    frame = null;
   }
 }
 
 /**
- * Starts or stops the walk to match the stored switch, and stamps
- * `data-disco` so a stylesheet or a test can tell disco from plain rainbow.
- *
- * Called at boot from main.tsx and again whenever the switch or rainbow
- * changes. Every entry stops the previous interval first: a second call would
- * otherwise leave two intervals racing and the colours would jump two steps a
- * second.
- *
- * The tick calls applyRainbow, never setRainbow. applyRainbow updates the live
- * state and notifies subscribers; setRainbow additionally writes localStorage
- * and calls saveDisplayPrefs. Ticking through the persisting path would mean a
- * storage write and a server sync every second for as long as the tab is open,
- * and it would grind the user's stored seed forward behind their back. The
- * seed disco shows is therefore live-only, and the stored one is whatever they
- * actually chose.
+ * applyStoredDisco starts or stops the walk to match the switch and sets
+ * `data-disco` on the root element. It runs at boot and whenever the switch or
+ * rainbow changes. A walk that is already running picks up the new palette
+ * and carries on from where it is, so re-applying never starts a second one or
+ * sends the colours back to the start.
  */
 export function applyStoredDisco(on: boolean = getDisco()): void {
-  const wasWalking = timer !== null;
-  stopDisco();
-
   const root = document.documentElement;
   if (on) root.setAttribute("data-disco", "on");
   else root.removeAttribute("data-disco");
 
-  // Rainbow off means there is nothing hued on screen, so a walking seed
-  // would be invisible work. The switch stays on and starts walking by
-  // itself once rainbow comes back, because main.tsx re-applies both.
-  if (!on || !rainbowState().on) {
-    // A walk that just ended leaves the palette turned by however many steps
-    // it managed, and `rotate` forced on (see the tick below). Both are
-    // live-only, so re-reading the stored state hands the user back exactly
-    // the rotation they chose - without which a stopped disco looks like the
-    // rotate switch having turned itself on. Only after a real walk: at boot
-    // main.tsx has applied the stored rainbow one line earlier already.
-    if (wasWalking) applyStoredRainbow({ animate: false });
+  // With rainbow off nothing on screen is hued. The switch stays on, and the
+  // walk resumes when main.tsx re-applies both after rainbow comes back.
+  const live = rainbowState();
+  if (!on || !live.on) {
+    if (frame !== null) {
+      stopDisco();
+      applyRainbow(live, { animate: false });
+    }
     return;
   }
 
-  const palette = rainbowState().palette.length || 1;
-  timer = setInterval(() => {
-    const live = rainbowState();
-    // `rotate: true` is what makes this visible at all. The seed is not a
-    // colour, it is an OFFSET, and rainbowColorAt() applies it as
-    // `rotate ? seed : 0` - so on the default setup (rotate off, which is
-    // where almost everybody is, it has a switch of its own further down the
-    // rainbow card) a walking seed renders byte-identically forever. Disco is
-    // rotation over time, so it rotates, and it overrides that switch for as
-    // long as it runs; the stored value is untouched and comes back above.
-    applyRainbow(
-      { ...live, rotate: true, seed: (live.seed + 1) % palette },
-      { animate: false },
-    );
-  }, DISCO_TICK_MS);
+  loop = buildLoop(live.palette);
+  start = live.rotate ? live.seed : 0;
+  painted = [];
+  if (frame === null) {
+    travelled = 0;
+    lastFrame = undefined;
+    frame = requestAnimationFrame(walk);
+  }
 }
 
-/** Persists the switch and immediately starts or stops the walk. */
+/** setDisco persists the switch and starts or stops the walk right away. */
 export function setDisco(on: boolean): void {
   try {
     localStorage.setItem(STORAGE_KEY, on ? "true" : "false");
     saveDisplayPrefs();
   } catch {
-    // Storage disabled, as in a private window. The choice cannot survive a
-    // reload there, which is the trade every sibling setting makes - but the
-    // apply below must not inherit the failure, which is why it is handed the
-    // intent rather than left to re-read a key the write never reached. A
-    // switch that reads ON while nothing walks is a worse outcome than a
-    // switch that forgets itself on reload.
+    // Storage disabled, as in a private window. The choice will not survive a
+    // reload, but `on` is passed on so the switch and the walk agree until then.
   }
   applyStoredDisco(on);
 }
 
 /**
- * The unlock gesture: five turn-ons of Rainbow Mode, each within
- * DISCO_UNLOCK_WINDOW_MS of the last. Returns true on the fifth.
+ * discoTap counts Rainbow Mode turn-ons that come within
+ * DISCO_UNLOCK_WINDOW_MS of each other and returns true on the fifth.
+ * Counting turn-ons rather than clicks means the gesture ends with rainbow on,
+ * the only state in which disco has colours to walk.
  *
- * Counting turn-ONs rather than clicks does two things at once. It halves the
- * clicks needed (five, not five on and five off), and it makes the gesture end
- * with rainbow ON, which is the only state where disco has colours to walk -
- * a reward that arrives invisible is a bug report waiting to happen.
- *
- * The count lives in the caller, exactly like motion.ts's stormTap: an unlock
- * that persisted would turn a found secret into a permanent settings row, and
- * the row is offered while the mode is on anyway, since a switch that hid the
- * value it is showing would be lying.
+ * The caller holds the count, as with stormTap in motion.ts, so the unlock
+ * itself is never persisted.
  */
 export function discoTap(
   state: { taps: number; last: number },

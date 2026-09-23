@@ -6,13 +6,12 @@ import (
 	"testing"
 )
 
-// TestProbePathWritableDoesNotCreateDir pins the Unraid-share fix: probing a
-// not-yet-existing backup path must report writability via an existing ancestor
-// WITHOUT creating the path (a new top-level dir under /mnt/user would become a
-// share the user can't easily delete).
+// TestProbePathWritableDoesNotCreateDir checks that the probe tests an existing
+// ancestor instead of creating the path, because on Unraid a new top-level
+// directory under /mnt/user becomes a share.
 func TestProbePathWritableDoesNotCreateDir(t *testing.T) {
 	root := t.TempDir()
-	target := filepath.Join(root, "bombvault", "container") // does not exist yet
+	target := filepath.Join(root, "bombvault", "container")
 
 	msg, err := probePathWritable(Deps{ContainerPath: target})
 	if err != nil {
@@ -26,7 +25,6 @@ func TestProbePathWritableDoesNotCreateDir(t *testing.T) {
 	}
 }
 
-// TestProbePathWritableExistingPath: an already-existing path probes in place.
 func TestProbePathWritableExistingPath(t *testing.T) {
 	dir := t.TempDir()
 	msg, err := probePathWritable(Deps{ContainerPath: dir})
@@ -38,7 +36,6 @@ func TestProbePathWritableExistingPath(t *testing.T) {
 	}
 }
 
-// TestProbePathWritableEmpty: no path configured is a clean skip.
 func TestProbePathWritableEmpty(t *testing.T) {
 	if _, err := probePathWritable(Deps{ContainerPath: ""}); err != nil {
 		t.Fatalf("empty path should be a clean skip, got %v", err)

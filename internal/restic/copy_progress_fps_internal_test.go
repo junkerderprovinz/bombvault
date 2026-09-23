@@ -11,22 +11,10 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 )
 
-// TestCopySetsProgressFPSWhenSinkPresent pins the ONE line that makes issue
-// #159's whole off-site percentage feature possible (see Copy's own doc
-// comment): Copy sets RESTIC_PROGRESS_FPS=3 in the child's environment
-// whenever a CopySink is installed on ctx, because restic only ever emits
-// its periodic (non-final) progress when stdout is a TTY or that var is set
-// — and BombVault's stdout is always a pipe. Before this test, removing that
-// one env-var append left the whole suite green: every other Copy test
-// drives it through fakes that never look at the real child process
-// environment, so nothing pinned this specific wiring.
-//
-// The fake "restic" here is a tiny POSIX shell script (needs a real shell to
-// interpret its shebang, hence the Windows skip — same convention as
-// backup_warn_test.go's TestBackupExit3Warning) that writes its own
-// RESTIC_PROGRESS_FPS to a file the test then reads. This sidesteps needing
-// to shape a fake binary's argv/stdout like real restic at all — Copy's
-// caller-built CopyArgs go straight to this script as plain argv it ignores.
+// TestCopySetsProgressFPSWhenSinkPresent checks that Copy sets
+// RESTIC_PROGRESS_FPS when a CopySink is installed. restic prints periodic
+// progress only to a TTY or with that variable set, and BombVault's stdout is
+// a pipe. The fake restic writes the value it sees to a file.
 func TestCopySetsProgressFPSWhenSinkPresent(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("needs a POSIX shell to exec a shebang script as the fake restic binary")

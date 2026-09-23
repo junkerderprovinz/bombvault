@@ -1,19 +1,4 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// OffsiteWizard — the second copy of the auto-saving secret field.
-//
-// Step 3's RESTIC_REST_PASSWORD writes through the same cloud-credential
-// endpoint CloudCard uses, with the same write-only "blank = keep the stored
-// one" contract, and it inherited the same post-save blanking from the "Save
-// credentials" button the Speichern-Button sweep deleted. On a debounce that
-// blanking is destructive: the timer fires 800 ms into a pause mid-password,
-// the field is emptied under the cursor, the rest is typed into an empty field
-// and overwrites the stored credential with a fragment.
-//
-// Same defect, same fix, its own test — the two components share no code, so
-// only a test each keeps them from drifting apart again. See
-// Settings.cloudCard.dom.test.tsx for the full story.
-// ---------------------------------------------------------------------------
 import { useState } from "react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
@@ -25,8 +10,8 @@ const updateTargetCalls: { id: string; credsRef: string }[] = [];
 let listTargetCalls = 0;
 let saveCalls = 0;
 
-// The domain's PRIMARY off-site destination: the row whose credsRef the
-// wizard's credential selector edits (#176). sortOrder 0 is what marks it.
+// The domain's primary off-site destination (sortOrder 0), whose credsRef the
+// wizard's credential selector edits.
 const PRIMARY_TARGET = {
   id: "tgt-primary",
   domain: "containers",
@@ -85,9 +70,8 @@ vi.mock("../lib/api", async (importOriginal) => {
 
 const { OffsiteWizard } = await import("./OffsiteWizard");
 
-// The REST username/password FIELDS render only for a rest: repo (s3/rclone
-// carry their own auth), but since #182 the credential-SET selector renders for
-// every remote backend — so the repo URL is a parameter here.
+// The credential-set selector renders for every remote backend, so the repo
+// URL is a parameter.
 const REST_REPO = "rest:http://192.168.20.199:8000/containers";
 
 function settingsWith(repo: string = REST_REPO): Settings {
@@ -119,8 +103,7 @@ function Harness({ repo }: { repo: string }) {
   );
 }
 
-// Self-backup ("config"): the domain whose settings key is configOffsite, not
-// containersOffsite, and which the wizard used to have no map entry for.
+// Self-backup ("config") keeps its repo in configOffsite.
 function SelfBackupHarness() {
   const { t } = useT();
   return (
@@ -163,27 +146,12 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-// The REST password debounce test that used to live here is gone with the
-// fields it covered: the wizard no longer edits the shared credentials at all
-// (#176, kramttocs). The same defect and the same fix are still pinned for the
-// component that DOES own them, in Settings.cloudCard.dom.test.tsx.
-
-// ---------------------------------------------------------------------------
-// #176 (kramttocs): the credentials step is opened per domain, but its fields
-// write the SHARED cloud credentials, so filling them in under Containers also
-// rewrote every other domain's. The plumbing for per-destination credentials
-// already existed (each destination carries a credsRef the replication path
-// resolves, and the primary destination is such a row) — the wizard simply had
-// no control that set it. These two tests pin the control and, just as
-// importantly, that choosing a set STOPS the shared fields from being offered,
-// since leaving them visible is what made the two look like the same thing.
-// ---------------------------------------------------------------------------
+// The wizard chooses credentials per destination and never edits the shared
+// ones.
 it("writes the chosen credential set onto this domain's primary destination", async () => {
   await renderWizard();
 
-  // The picker is the app's own listbox now, not a native <select> (#3425):
-  // it opens, and an option is picked, rather than a value being written into
-  // the element. Same question, one interaction further.
+  // The picker is the app's own listbox: it is opened and an option clicked.
   const picker = screen.getByRole("combobox", { name: /Credentials|Zugangsdaten/ });
   expect(picker.textContent).toContain("Shared");
 
@@ -197,11 +165,11 @@ it("writes the chosen credential set onto this domain's primary destination", as
   expect(updateTargetCalls).toEqual([{ id: "tgt-primary", credsRef: "set-a" }]);
 });
 
-it("never shows credential FIELDS, only the selector, whichever set is chosen", async () => {
+it("shows only the selector, never credential fields, whichever set is chosen", async () => {
   await renderWizard();
 
-  // Shared is the default, and even then the shared username and password are
-  // not editable here: the wizard picks credentials, it does not define them.
+  // Shared is the default, and even then its username and password are not
+  // editable here.
   expect(screen.getByLabelText(/Credentials|Zugangsdaten/)).toBeTruthy();
   expect(screen.queryByLabelText(/RESTIC_REST_USERNAME/)).toBeNull();
   expect(screen.queryByLabelText(/RESTIC_REST_PASSWORD/)).toBeNull();
@@ -229,6 +197,7 @@ it("saves the repository only when told to, after the question, and reads the de
     await vi.advanceTimersByTimeAsync(900);
   });
   expect(saveCalls).toBe(0);
+  // This harness keeps settings constant, so typing alone does not re-read.
   const beforeSave = listTargetCalls;
 
   await act(async () => {
@@ -249,16 +218,6 @@ it("saves the repository only when told to, after the question, and reads the de
   expect(listTargetCalls).toBe(beforeSave + 1);
 });
 
-// ---------------------------------------------------------------------------
-// #182 (manilx): "I can't set s3 credentials when i use s3 as main path and
-// offsite". The whole credentials block, selector included, used to be gated on
-// urlBackend === "rest", on the reasoning that only REST needs a username and
-// password here. True of the FIELDS, wrong for the SELECTOR: a credential set
-// carries S3 keys too, and the replication path resolves whichever set a
-// destination names. So an S3 user was never offered the choice at all and
-// could only ever run on the shared credentials.
-// ---------------------------------------------------------------------------
-
 it("offers the credential selector for an S3 destination, not just a REST one", async () => {
   await renderWizard("s3:https://s3.eu-central-1.example/bucket");
 
@@ -268,8 +227,7 @@ it("offers the credential selector for an S3 destination, not just a REST one", 
   // moving), so the set is offered here whether the list is open or not.
   expect(picker.textContent).toContain("Backblaze");
 
-  // The REST-only fields must stay away: S3 keys live in the credential set or
-  // the shared cloud credentials, never in this block (#131).
+  // S3 keys live in the credential set or the shared cloud credentials.
   expect(screen.queryByLabelText(/RESTIC_REST_USERNAME/)).toBeNull();
   expect(screen.queryByLabelText(/RESTIC_REST_PASSWORD/)).toBeNull();
 });
@@ -281,20 +239,7 @@ it("shows no credentials block at all for a local path", async () => {
   expect(screen.queryByLabelText(/RESTIC_REST_USERNAME/)).toBeNull();
 });
 
-// ---------------------------------------------------------------------------
-// #182 (manilx), reported against v8.3.0: opening the wizard for self-backup
-// rendered a blank page and needed a browser refresh. #176 had added the domain
-// to the off-site tab, but this file still carried its own four-domain copy of
-// the type plus an `as` cast asserting that off-site mode "never receives
-// config". So REPO_KEY had no entry, repoKey was undefined, settings[undefined]
-// was undefined, and inferBackend called .trim() on it during the first render.
-//
-// The cast is gone (a missing map entry is a compile error now), but the render
-// itself is pinned here: a type-level guarantee does not prove the component
-// mounts.
-// ---------------------------------------------------------------------------
-
-it("renders for the self-backup domain instead of blanking the page", async () => {
+it("renders for the self-backup domain", async () => {
   await act(async () => {
     render(
       <I18nProvider>
@@ -305,21 +250,13 @@ it("renders for the self-backup domain instead of blanking the page", async () =
     );
   });
 
-  // Reaching step 3 at all means the first render survived: this is exactly
-  // where the crash used to happen, on inferBackend(settings[repoKey]).
+  // Step 3 is only reached if the first render, which runs
+  // inferBackend(settings[repoKey]), got through.
   expect(screen.getByLabelText(/Credentials|Zugangsdaten/)).toBeTruthy();
 });
 
-// ---------------------------------------------------------------------------
-// #194: the 401 that is one character wide.
-//
-// A rest-server with --private-repos hands each htpasswd user only the tree
-// under its own name, so the URL's first path segment IS the user. The
-// reporter's credential set signed in as "bombvault_containers" while his URL
-// began "bombvault-containers", and nothing on this page ever put the two words
-// side by side. Both were already in front of it.
-// ---------------------------------------------------------------------------
-
+// With --private-repos each htpasswd user only reaches the tree under its own
+// name, so the URL's first path segment has to be the user.
 it("says so when the URL's user segment is not the user it signs in as", async () => {
   // The mocked shared credentials sign in as "bombvault" (see getCloud above).
   await renderWizard("rest:http://192.168.20.199:8000/bombvault-containers/containers");

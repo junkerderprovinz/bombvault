@@ -1,12 +1,9 @@
 // @vitest-environment jsdom
 /**
- * The passkey card's real job is the explanation, not the button.
- *
- * On a stock Unraid installation passkeys cannot work at all: the template opens
+ * On a stock Unraid installation passkeys cannot work: the template opens
  * https://[IP]:3443 with a certificate that covers only localhost, and WebAuthn
- * binds a credential to a DOMAIN. So the case this card meets most often is the
- * one where it has to say why there is nothing to click, and these tests pin
- * exactly that.
+ * binds a credential to a domain. So the case this card meets most often is
+ * explaining why there is nothing to click.
  */
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -29,8 +26,8 @@ describe("PasskeyCard", () => {
     passkeyStatus.mockResolvedValue({
       ok: true,
       supported: false,
-      // The server answers in English, as its errors do everywhere. This exact
-      // sentence must NOT be what the card shows.
+      // The server's reason is English. The card shows its own translated
+      // text instead.
       reason: "ZZZ-SERVER-SENTENCE-ZZZ",
       total: 0,
       here: 0,
@@ -38,13 +35,10 @@ describe("PasskeyCard", () => {
     });
     render(<PasskeyCard passwordSet />);
 
-    // The TRANSLATED explanation, which also carries the actionable half.
+    // The translated explanation, including what to do about it.
     await waitFor(() => expect(screen.getByText(/reverse proxy/i)).toBeTruthy());
     expect(screen.getByText(/host name/i)).toBeTruthy();
-    // Not the server's own sentence: this is the paragraph explaining the whole
-    // feature, in front of somebody whose interface is in their own language.
     expect(screen.queryByText(/ZZZ-SERVER-SENTENCE-ZZZ/)).toBeNull();
-    // …and no way to start something that would fail.
     expect(screen.queryByRole("button", { name: /set up/i })).toBeNull();
   });
 

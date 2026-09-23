@@ -1,26 +1,11 @@
-// ---------------------------------------------------------------------------
-// Orphaned translation keys — the guard that makes a dead key cost something.
+// Every en key has to be referenced somewhere in src. The parity test makes all
+// 42 tables carry the same key set, so a dead key is 42 dead strings.
 //
-// A key nobody renders is not free here. The parity test requires all 42 tables
-// to carry the SAME key set, so every orphan is 42 dead strings, and every
-// locale added later pays to translate it again. Five of them survived this
-// branch's own card and sweep rework — the Sidebar's theme toggle moved into
-// ThemeCard (theme.toggle), the image-cleanup card was retitled
-// (settings.imageCleanupTitle/-Hint), the rainbow switch's label became
-// settings.rainbow (settings.rainbowOn) and the reconcile card lost its
-// separate heading (settings.reconcileTitle) — and each was translated 42 times
-// over on the way out.
-//
-// The scan is deliberately CONSERVATIVE: it reads every .ts/.tsx file under
-// src/ except the tables themselves, TEST FILES INCLUDED. A guard that
-// false-positives gets switched off, so a key some test still names counts as
-// used; the case worth catching is a key with no reference anywhere at all.
-//
-// Dynamically composed keys are resolved rather than guessed at: every
-// t(`…${…}…`) template in the tree contributes a pattern built from its static
-// chunks, so t(`integrity.${a.key}Hint`) marks integrity.<anything>Hint used
-// without marking the whole integrity.* namespace used.
-// ---------------------------------------------------------------------------
+// The scan reads every .ts/.tsx file under src/ except the tables, tests
+// included: a key some test still names counts as used, because a guard that
+// raises false alarms gets switched off. Each t(`…${…}…`) template adds a
+// pattern built from its static parts, so t(`integrity.${a.key}Hint`) marks
+// integrity.<anything>Hint as used without covering all of integrity.*.
 import { describe, expect, it } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -46,7 +31,8 @@ const CORPUS = sourceFiles(SRC)
   .map((p) => readFileSync(p, "utf8"))
   .join("\n");
 
-/** t(`a.${x}b`) → /^a\..+b$/ — the keys that template can actually produce. */
+/** dynamicKeyPatterns turns each t(`a.${x}b`) template into /^a\..+b$/, the
+ *  keys that template can produce. */
 function dynamicKeyPatterns(corpus: string): RegExp[] {
   const out: RegExp[] = [];
   for (const m of corpus.matchAll(/\bt\(`([^`]*\$\{[^`]*)`/g)) {
@@ -60,11 +46,8 @@ function dynamicKeyPatterns(corpus: string): RegExp[] {
 
 const DYNAMIC = dynamicKeyPatterns(CORPUS);
 
-// KNOWN_ORPHANS is a RATCHET, not an approval. These 58 keys were already dead
-// before this branch, and clearing them is its own piece of work; what matters
-// here is that the list cannot GROW. The assertion is one-directional on
-// purpose: deleting one of these is free (nothing requires them to still
-// exist), adding a new one is not.
+// KNOWN_ORPHANS lists keys that are already dead. It is a ratchet: removing an
+// entry is free, since nothing requires them to exist, but it must not grow.
 const KNOWN_ORPHANS = new Set([
   "dashboard.recentRuns",
   "dashboard.spikeStatus",
@@ -127,11 +110,11 @@ const KNOWN_ORPHANS = new Set([
 ]);
 
 describe("translation keys", () => {
-  it("finds the app's dynamic key templates (so the scan below is not silently blind)", () => {
+  it("finds the app's dynamic key templates", () => {
     expect(DYNAMIC.length).toBeGreaterThan(0);
     expect(DYNAMIC.some((r) => r.test("integrity.unlockHint"))).toBe(true);
     expect(DYNAMIC.some((r) => r.test("settings.shape.round"))).toBe(true);
-    // …and is not so loose that it excuses everything under a namespace.
+    // A template must not excuse its whole namespace.
     expect(DYNAMIC.some((r) => r.test("integrity.title"))).toBe(false);
   });
 

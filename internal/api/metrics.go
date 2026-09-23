@@ -9,11 +9,8 @@ import (
 // metricsContentType is the Prometheus text exposition format media type.
 const metricsContentType = "text/plain; version=0.0.4; charset=utf-8"
 
-// MetricsAccess reports whether the opt-in /metrics endpoint is enabled and, if
-// so, the optional bearer token that scrapes must present (empty = open). It
-// reads settings directly so the handler can gate the endpoint without exposing
-// the whole settings struct. A store error yields (false, "", err) so the
-// handler can fail closed.
+// MetricsAccess reports whether /metrics is enabled and the bearer token a
+// scrape must present; an empty token leaves the endpoint open.
 func (s *Service) MetricsAccess() (enabled bool, token string, err error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -22,11 +19,8 @@ func (s *Service) MetricsAccess() (enabled bool, token string, err error) {
 	return settings.MetricsEnabled, settings.MetricsToken, nil
 }
 
-// escapeLabelValue escapes a Prometheus label value per the exposition format:
-// backslash, double-quote, and newline. The label values BombVault emits are
-// fixed enums (domain/source/status) plus the build version, none of which can
-// legitimately contain these, but the helper keeps the output well-formed for
-// any value regardless.
+// escapeLabelValue escapes backslash, double quote and newline in a Prometheus
+// label value.
 func escapeLabelValue(v string) string {
 	r := strings.NewReplacer(
 		`\`, `\\`,
@@ -36,12 +30,8 @@ func escapeLabelValue(v string) string {
 	return r.Replace(v)
 }
 
-// Metrics builds the Prometheus text exposition for the operational metrics:
-// build info, per-domain last-success timestamp + enabled flag, latest local
-// repo size + snapshot count, and per-domain backup run counts. It exposes only
-// non-sensitive values (no repo paths, secrets, or hostnames). Errors reading
-// the store are returned so the caller can answer 500; a missing repo stat for a
-// domain is simply omitted (not an error).
+// Metrics renders the Prometheus text exposition. It carries no repo paths,
+// secrets or hostnames.
 func (s *Service) Metrics() (string, error) {
 	statuses, err := s.DomainStatus()
 	if err != nil {
@@ -54,12 +44,10 @@ func (s *Service) Metrics() (string, error) {
 
 	var b strings.Builder
 
-	// build info — Version is the ldflags-injected build version.
 	b.WriteString("# HELP bombvault_build_info BombVault build information.\n")
 	b.WriteString("# TYPE bombvault_build_info gauge\n")
 	fmt.Fprintf(&b, "bombvault_build_info{version=\"%s\"} 1\n", escapeLabelValue(Version))
 
-	// last successful backup timestamp per domain (0 = none yet).
 	b.WriteString("# HELP bombvault_backup_last_success_timestamp_seconds Unix time of the last successful backup per domain (0 if none).\n")
 	b.WriteString("# TYPE bombvault_backup_last_success_timestamp_seconds gauge\n")
 	for _, d := range statuses {
@@ -67,7 +55,6 @@ func (s *Service) Metrics() (string, error) {
 			escapeLabelValue(d.Domain), d.LastSuccess)
 	}
 
-	// domain enabled flag.
 	b.WriteString("# HELP bombvault_domain_enabled Whether a backup domain is enabled (1) or disabled (0).\n")
 	b.WriteString("# TYPE bombvault_domain_enabled gauge\n")
 	for _, d := range statuses {
@@ -75,8 +62,7 @@ func (s *Service) Metrics() (string, error) {
 			escapeLabelValue(d.Domain), boolMetric(d.Enabled))
 	}
 
-	// latest local repo size (bytes) + snapshot count per domain. Skipped when no
-	// sample has been recorded yet for that domain.
+	// A domain without a repo stat sample yet gets no size or snapshot series.
 	var sizeBody, snapBody strings.Builder
 	for _, d := range statuses {
 		latest, found, lErr := s.store.LatestRepoStat(d.Domain, "local")
@@ -102,12 +88,9 @@ func (s *Service) Metrics() (string, error) {
 		b.WriteString(snapBody.String())
 	}
 
-	// ransomware-protection gauges per domain (from DomainStatus), gated to mirror
-	// the scorecard: only ENABLED domains carry a protection posture, and
-	// tamper_test_ok is emitted only where an append-only claim exists (an immutable
-	// off-site) — so a scraper never sees a phantom 0 for a domain that makes no
-	// such claim. The last off-site replication timestamp is the last SUCCESS (0 if
-	// none), consistent with bombvault_backup_last_success_timestamp.
+	// The protection gauges follow the scorecard: disabled domains get none, and
+	// tamper_test_ok only appears for an immutable off-site, so a domain that
+	// claims no append-only protection never shows a misleading 0.
 	b.WriteString("# HELP bombvault_offsite_immutable Whether a domain's off-site repo is flagged append-only (1) or not (0).\n")
 	b.WriteString("# TYPE bombvault_offsite_immutable gauge\n")
 	for _, d := range statuses {
@@ -121,7 +104,7 @@ func (s *Service) Metrics() (string, error) {
 	b.WriteString("# TYPE bombvault_tamper_test_ok gauge\n")
 	for _, d := range statuses {
 		if !d.Enabled || !d.OffsiteImmutable {
-			continue // only an immutable off-site makes an append-only claim to prove
+			continue
 		}
 		fmt.Fprintf(&b, "bombvault_tamper_test_ok{domain=\"%s\"} %d\n",
 			escapeLabelValue(d.Domain), boolMetric(d.LastTamperOK))
@@ -136,8 +119,8 @@ func (s *Service) Metrics() (string, error) {
 			escapeLabelValue(d.Domain), d.LastReplicationAt)
 	}
 
-	// backup run counts per domain + status. Emitted for every domain/status pair
-	// so a scraper always sees a series (0 when none), in a stable order.
+	// Every domain and status pair gets a series, 0 when there were no runs, in a
+	// stable order.
 	b.WriteString("# HELP bombvault_runs_total Total number of finished backup runs per domain and status.\n")
 	b.WriteString("# TYPE bombvault_runs_total counter\n")
 	domains := make([]string, 0, len(statuses))
@@ -155,7 +138,6 @@ func (s *Service) Metrics() (string, error) {
 	return b.String(), nil
 }
 
-// boolMetric maps a bool to the Prometheus 1/0 convention.
 func boolMetric(v bool) int {
 	if v {
 		return 1

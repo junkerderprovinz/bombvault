@@ -1,27 +1,8 @@
-// ---------------------------------------------------------------------------
-// randomId — a v4-UUID-shaped identifier that also works on plain HTTP.
-//
-// WHY THIS EXISTS (do not "simplify" it back to crypto.randomUUID()):
-// crypto.randomUUID() is a SECURE-CONTEXT-ONLY API. It exists on https:// and
-// on localhost/127.0.0.1, and is `undefined` everywhere else — so calling it
-// throws `TypeError: crypto.randomUUID is not a function`.
-//
-// BombVault is routinely reached over exactly such an insecure origin: the
-// container ships a documented plain-HTTP mode (HTTP_ONLY=true / the Unraid
-// template's "WebUI Port (HTTP)", whose own description tells the user to open
-// http://<ip>:3000/ instead of the HTTPS link), and that is a LAN IP, not
-// localhost, so the browser marks the page insecure. Any crypto.randomUUID()
-// on such a page throws — and when the call sits in a load path, the throw
-// takes the whole page down with it.
-//
-// crypto.getRandomValues() is NOT secure-context gated, so the same 122 bits
-// of randomness are available there; only the convenience wrapper is missing.
-// This helper prefers randomUUID() when present and otherwise assembles the
-// identical RFC 9562 v4 layout from getRandomValues(), with a last-resort
-// Math.random() path for any exotic environment that has neither (these ids
-// are opaque handles, never secrets or tokens — nothing here relies on them
-// being unguessable).
-// ---------------------------------------------------------------------------
+// crypto.randomUUID exists only in secure contexts, and BombVault is often
+// opened over plain HTTP on a LAN address (HTTP_ONLY=true), where calling it
+// throws. getRandomValues is not gated, so randomId builds the same v4 layout
+// from it. The Math.random fallback is acceptable because these ids are opaque
+// handles, not secrets.
 
 /** A random v4-UUID string, safe to call on insecure (plain-HTTP) origins. */
 export function randomId(): string {

@@ -12,19 +12,13 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// ---------------------------------------------------------------------------
-// Receiver dashboard CRUD + read-only monitoring endpoints
-// ---------------------------------------------------------------------------
-//
-// A box that RECEIVES immutable off-site copies registers the received repo here
-// and monitors it READ-ONLY (inventory, an independent restic check, dead-mans-
-// switch + integrity alerts). Every endpoint is under the existing authGate. The
-// stored SENDING APP_KEY is encrypted at rest (internal/secret) and NEVER returned
-// in the clear — the view only reports whether a key is stored (hasAppKey).
+// A box that receives off-site copies registers the received repo here and
+// monitors it read-only: inventory, an independent restic check, dead-man's
+// switch and integrity alerts. All endpoints sit behind authGate. The sending
+// instance's APP_KEY is encrypted at rest and never returned.
 
-// receivedRepoView is the JSON wire shape of a registered received repo's
-// configuration + persisted last-check status. It deliberately carries NO app key
-// (only hasAppKey) so the sending secret never leaves the box.
+// receivedRepoView is a received repo's configuration and last-check status as
+// the SPA sees it.
 type receivedRepoView struct {
 	ID                string `json:"id"`
 	Name              string `json:"name"`
@@ -39,14 +33,13 @@ type receivedRepoView struct {
 	Enabled           bool   `json:"enabled"`
 	CreatedAt         int64  `json:"createdAt"`
 	SortOrder         int    `json:"sortOrder"`
-	HasAppKey         bool   `json:"hasAppKey"` // a sending key is stored (the key itself is never returned)
+	HasAppKey         bool   `json:"hasAppKey"`
 }
 
-// receivedRepoStatus is a received repo's configuration/last-check view PLUS the
-// live read-only status the list endpoint probes: the newest received snapshot
-// time, the snapshot count, and whether the repo could be opened at all. The live
-// fields are best-effort — an unreachable repo lists with reachable=false and an
-// empty lastReceived rather than failing the whole list.
+// receivedRepoStatus adds the live status the list endpoint probes: the newest
+// received snapshot time, the snapshot count, and whether the repo opened at
+// all. An unreachable repo lists with reachable=false instead of failing the
+// whole list.
 type receivedRepoStatus struct {
 	receivedRepoView
 	LastReceived  string `json:"lastReceived"`
@@ -54,10 +47,9 @@ type receivedRepoStatus struct {
 	Reachable     bool   `json:"reachable"`
 }
 
-// receivedRepoInput is the create/update request body. AppKey is the SENDING
-// instance's 64-hex APP_KEY; on update an empty AppKey keeps the stored key
-// (so an edit need not resend the secret). Enabled is a pointer so its absence is
-// distinguishable from an explicit false.
+// receivedRepoInput is the create/update request body. AppKey is the sending
+// instance's 64-hex APP_KEY; on update an empty AppKey keeps the stored key.
+// Enabled is a pointer so its absence is distinguishable from an explicit false.
 type receivedRepoInput struct {
 	Name            string `json:"name"`
 	Repo            string `json:"repo"`
@@ -99,7 +91,7 @@ func receivedRepoToView(rr store.ReceivedRepo) receivedRepoView {
 func validateReceiverCadence(c string) (string, string) {
 	c = strings.TrimSpace(c)
 	if c == "" {
-		return "daily 04:00", "" // task default: a daily independent check
+		return "daily 04:00", ""
 	}
 	if strings.EqualFold(c, "off") {
 		return "off", ""
@@ -112,10 +104,8 @@ func validateReceiverCadence(c string) (string, string) {
 
 // buildReceivedRepo validates in and folds it onto existing (the zero value on
 // create), returning the row to persist or a user-facing error message. The app
-// key is validated (64 lowercase hex, the same shape the foreign flow enforces)
-// and encrypted at rest with THIS instance's APP_KEY before it ever reaches the
-// store; on update an empty AppKey preserves existing.AppKeyEnc. Identity and
-// last-check columns are carried from existing so an edit never re-stamps them.
+// key is encrypted with this instance's APP_KEY before it reaches the store.
+// Identity and last-check columns come from existing, so an edit keeps them.
 func (h *Handler) buildReceivedRepo(in receivedRepoInput, existing store.ReceivedRepo, isCreate bool) (store.ReceivedRepo, string) {
 	repo := strings.TrimSpace(in.Repo)
 	if repo == "" {
@@ -152,7 +142,7 @@ func (h *Handler) buildReceivedRepo(in receivedRepoInput, existing store.Receive
 
 	rr.DeadManHours = in.DeadManHours
 	if rr.DeadManHours <= 0 {
-		rr.DeadManHours = 26 // task default; matches the store column default
+		rr.DeadManHours = 26 // the store column default
 	}
 	rr.ReadDataPercent = in.ReadDataPercent
 	if rr.ReadDataPercent < 0 {
@@ -171,9 +161,8 @@ func (h *Handler) buildReceivedRepo(in receivedRepoInput, existing store.Receive
 	return rr, ""
 }
 
-// handleListReceiverRepos lists every registered received repo with its persisted
-// last-check status AND a live read-only probe of the newest received snapshot.
-// GET /api/receiver/repos. Never returns a decrypted app key.
+// handleListReceiverRepos lists every received repo with its last-check status
+// and a live read-only probe of the newest snapshot. GET /api/receiver/repos.
 func (h *Handler) handleListReceiverRepos(w http.ResponseWriter, r *http.Request) {
 	repos, err := h.store.ListReceivedRepos()
 	if err != nil {
@@ -183,9 +172,6 @@ func (h *Handler) handleListReceiverRepos(w http.ResponseWriter, r *http.Request
 	out := make([]receivedRepoStatus, 0, len(repos))
 	for _, rr := range repos {
 		st := receivedRepoStatus{receivedRepoView: receivedRepoToView(rr)}
-		// Best-effort live status: opening a received repo read-only can be slow or
-		// fail (backend down, wrong key). A failure lists the repo as unreachable
-		// rather than sinking the whole list.
 		if newest, count, pErr := h.svc.receiverNewest(r.Context(), rr); pErr == nil {
 			st.LastReceived = newest
 			st.SnapshotCount = count
@@ -197,9 +183,8 @@ func (h *Handler) handleListReceiverRepos(w http.ResponseWriter, r *http.Request
 }
 
 // handleCreateReceiverRepo registers a received repo. POST /api/receiver/repos.
-// The app key shape is validated AND the repo must OPEN read-only (a `restic cat
-// config` probe, never an init) before the row is saved — a repo that cannot be
-// opened is rejected so a mistyped location/key never lands in the dashboard.
+// The repo has to open read-only before the row is saved, so a mistyped
+// location or key never lands in the dashboard.
 func (h *Handler) handleCreateReceiverRepo(w http.ResponseWriter, r *http.Request) {
 	var in receivedRepoInput
 	if !decodeBody(w, r, &in) {
@@ -222,9 +207,8 @@ func (h *Handler) handleCreateReceiverRepo(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"repo": receivedRepoToView(stored)}))
 }
 
-// handleUpdateReceiverRepo edits a received repo in place. PUT /api/receiver/
-// repos/{id}. The id comes from the path; identity + last-check columns are
-// preserved. As with create, the (possibly key-changed) repo must open read-only
+// handleUpdateReceiverRepo edits a received repo in place.
+// PUT /api/receiver/repos/{id}. As with create, the repo has to open read-only
 // before the edit is saved.
 func (h *Handler) handleUpdateReceiverRepo(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
@@ -257,10 +241,9 @@ func (h *Handler) handleUpdateReceiverRepo(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"repo": receivedRepoToView(rr)}))
 }
 
-// handleDeleteReceiverRepo removes a received repo's DB row and its dead-mans-
-// switch episode state. DELETE /api/receiver/repos/{id}. It NEVER touches the
-// received repository itself (this box only ever read it). A missing id is a
-// harmless no-op.
+// handleDeleteReceiverRepo removes a received repo's row and its dead-man's
+// switch state. DELETE /api/receiver/repos/{id}. The repository itself is left
+// alone, since this box only reads it. A missing id is a no-op.
 func (h *Handler) handleDeleteReceiverRepo(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	if err := h.store.DeleteReceivedRepo(id); err != nil {
@@ -268,8 +251,8 @@ func (h *Handler) handleDeleteReceiverRepo(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	if err := h.store.DeleteReceivedAlertStatesForRepo(id); err != nil {
-		// Non-fatal: the row is gone; a leftover episode row would at worst suppress
-		// one future alert for a since-deleted repo. Log and still report success.
+		// The row is gone; a leftover episode row can at worst suppress one alert
+		// for a repo that no longer exists.
 		log.Printf("api: receiver: delete alert state for %s: %v", id, err)
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
@@ -295,12 +278,10 @@ func (h *Handler) handleReceiverInventory(w http.ResponseWriter, r *http.Request
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"inventory": inv}))
 }
 
-// handleReceiverCheck runs an INDEPENDENT restic check on one received repo now,
-// persists the verdict, and returns it. POST /api/receiver/repos/{id}/check
-// (optional ?readData=true forces the deep --read-data-subset check when a
-// percent is configured). This manual check does not itself fire an integrity
-// alert (mirroring a manual backup vs the watchdog): it records the verdict, and
-// the scheduled receiver run drives the debounced alerting off that state.
+// handleReceiverCheck runs an independent restic check on one received repo
+// now, persists the verdict and returns it. POST /api/receiver/repos/{id}/check;
+// ?readData=true adds --read-data-subset when a percent is configured. It fires
+// no alert itself: the scheduled run alerts from the recorded verdict.
 func (h *Handler) handleReceiverCheck(w http.ResponseWriter, r *http.Request) {
 	rr, ok, err := h.store.GetReceivedRepo(r.PathValue("id"))
 	if err != nil {
@@ -312,10 +293,8 @@ func (h *Handler) handleReceiverCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	readData := r.URL.Query().Get("readData") == "true"
-	// Refused, not queued, when one is already running — a second click used to
-	// start a second `restic check` on the same repository, and with
-	// --read-data-subset that is a second pack-data read. Received repos are
-	// outside repoMu, so nothing else was stopping it.
+	// Refused, not queued, while one is running. Received repos are outside
+	// repoMu, and a second check with --read-data-subset reads the packs again.
 	res, ran := h.svc.receiverCheckExclusive(r.Context(), rr, readData)
 	if !ran {
 		writeJSON(w, http.StatusConflict, failEnvelope(errReceiverCheckBusy))
@@ -328,18 +307,16 @@ func (h *Handler) handleReceiverCheck(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"result": res}))
 }
 
-// receiverProbe opens a received repo read-only (the create/update guard) and
-// discards the handle: it succeeds only when the location + key open a real restic
-// repository, and never initializes one.
+// receiverProbe opens a received repo read-only and discards the result. It
+// guards create and update and never initializes a repository.
 func (s *Service) receiverProbe(ctx context.Context, rr store.ReceivedRepo) error {
 	_, _, err := s.receiverOpen(ctx, rr)
 	return err
 }
 
 // receiverNewest opens a received repo read-only and returns the newest snapshot
-// time (raw, as restic reports it) and the total snapshot count — the live status
-// the list endpoint shows. Read-only; no stats, so it stays cheap enough to run
-// per repo on a list call.
+// time as restic reports it and the snapshot count. It skips stats, so it is
+// cheap enough to run per repo on every list call.
 func (s *Service) receiverNewest(ctx context.Context, rr store.ReceivedRepo) (string, int, error) {
 	repo, mode, err := s.receiverOpen(ctx, rr)
 	if err != nil {

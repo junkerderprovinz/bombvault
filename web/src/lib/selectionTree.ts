@@ -1,38 +1,29 @@
-// ---------------------------------------------------------------------------
-// Selection-tree logic (Phase 2, plan 01): the pure half of the container
-// panel's folder tree. No React, no network — everything here is list
-// arithmetic over the Phase 1 flat selection encoding, so it is node-env
-// table-testable and mirrors the Go semantic source of truth
-// (internal/api/selection.go) segment-for-segment.
+// The pure half of the container panel's folder tree: list arithmetic over the
+// flat selection encoding, mirroring internal/api/selection.go.
 //
-// THE LOAD-BEARING RULE: per-node state (checked/mixed/excluded/unchecked) is
-// computed ONLY from the two entry classes — includes I and exclusions E, both
-// held in HOST path space — never from lazily loaded children. Laziness
-// decides which rows render; (I, E) decides what they look like. That is what
-// makes TREE-04 exact: a reopened panel reconstructs every state without a
-// single browse call, including collapsed and never-expanded subtrees.
+// A node's state (checked, mixed, excluded, unchecked) is computed only from
+// the includes I and the exclusions E, both in host path space, never from
+// lazily loaded children. Laziness decides which rows render and (I, E) decides
+// what they look like, so a reopened panel restores every state, collapsed
+// subtrees included, without a single browse call.
 //
-// Mirrored Go invariants:
-//   - Segment-aligned prefix tests ("/c/plex" never matches "/c/plex2/x") —
-//     selection.go isStrictDescendant.
-//   - Canonical flat order: sorted bare includes, then sorted "!"-prefixed
-//     exclusions — byte-identical output for identical sets, like
-//     NormalizeSelection's deterministic ordering.
-//   - Orphan exclusions are PRESERVED, not repaired: unchecking a parent
-//     never deletes the exclusions strictly below it. They stay stored
-//     DORMANT so D-01's remembered partial round-trips — the exclusion list
-//     below a node IS the remembered partial state; there is no second
-//     UI-side memory to drift.
+// Invariants shared with the Go side:
+//   - Prefix tests are segment-aligned: "/c/plex" never matches "/c/plex2/x"
+//     (selection.go isStrictDescendant).
+//   - The canonical flat order is sorted includes, then sorted "!"-prefixed
+//     exclusions, so identical sets serialize identically.
+//   - Orphan exclusions are kept, not repaired. Unchecking a parent leaves the
+//     exclusions below it stored, because they are the only memory of the
+//     node's partial state.
 //
-// Expansion persistence (D-05) is comfort state ONLY: localStorage
-// bv-tree-expanded-{containerName}, capped, never consulted for selection.
-// Selection ALWAYS round-trips the server (D-03).
-// ---------------------------------------------------------------------------
+// Expansion state is kept in localStorage (bv-tree-expanded-{containerName})
+// for comfort only and never consulted for selection, which always round-trips
+// the server.
 
-/** Phase 1 wire prefix marking an exclusion entry ("!"). */
+/** Wire prefix marking an exclusion entry. */
 export const EXCLUSION_PREFIX = "!";
 
-/** Per-node visual state, derived purely from (I, E) — TREE-03. */
+/** Per-node visual state, derived from (I, E) alone. */
 export type NodeState = "checked" | "mixed" | "excluded" | "unchecked";
 
 /** The two entry classes of the flat selection, split and cleaned. */
@@ -41,13 +32,13 @@ export interface FlatSets {
   exclusions: Set<string>;
 }
 
-/** Cap on persisted expansion entries per container (D-05: bounded keys). */
+/** Cap on persisted expansion entries per container. */
 const MAX_EXPANDED = 64;
 
 const EXPANDED_KEY_PREFIX = "bv-tree-expanded-";
 
-/** POSIX path.Clean mirror (pure string form — no filesystem, no host calls):
- *  collapse slashes, drop trailing "/", resolve "." and ".." lexically. */
+/** Go's path.Clean on the string alone: collapses slashes, drops a trailing
+ *  "/" and resolves "." and ".." lexically. */
 function cleanPath(p: string): string {
   const isAbs = p.startsWith("/");
   const parts: string[] = [];
@@ -74,17 +65,16 @@ export function isAtOrUnder(path: string, ancestor: string): boolean {
   return p.startsWith(`${base}/`);
 }
 
-/** True when `path` lives STRICTLY under `ancestor` (segment-aligned). */
+/** True when `path` lives strictly under `ancestor` (segment-aligned). */
 export function isStrictlyUnder(path: string, ancestor: string): boolean {
   const p = cleanPath(path);
   const a = cleanPath(ancestor);
   return p !== a && isAtOrUnder(p, a);
 }
 
-/** Host path -> browse-relative path (swap the hostSourceRoot prefix).
- *  The root itself maps to "" (browse of the top level). An already-absolute
- *  path elsewhere passes through untranslated — the same precedent as the
- *  manual custom-path entry (Containers.tsx addCustom). */
+/** Host path to browse-relative path. The root itself maps to "", and a path
+ *  outside the root passes through untranslated, as the manual custom-path
+ *  entry does (Containers.tsx addCustom). */
 export function hostToBrowseRel(host: string, hostSourceRoot: string): string {
   const h = cleanPath(host);
   const root = cleanPath(hostSourceRoot);
@@ -95,8 +85,8 @@ export function hostToBrowseRel(host: string, hostSourceRoot: string): string {
   return h;
 }
 
-/** Browse-relative path -> host path (the inverse prefix swap; an
- *  already-absolute input passes through untranslated). */
+/** Browse-relative path to host path; an absolute input passes through
+ *  untranslated. */
 export function browseRelToHost(rel: string, hostSourceRoot: string): string {
   const r = cleanPath(rel);
   if (r.startsWith("/")) return r;
@@ -106,10 +96,10 @@ export function browseRelToHost(rel: string, hostSourceRoot: string): string {
   return `${base}/${r}`;
 }
 
-/** Split a stored flat list into its two classes, prefix stripped and paths
- *  cleaned. A bare "!" (prefix with no path) is skipped like selection.go;
- *  an exclusions-only result is the deliberate explicit-none carrier and is
- *  kept as-is — the client displays it, never repairs it. */
+/** Splits a stored flat list into its two classes, prefix stripped and paths
+ *  cleaned. A bare "!" is skipped as selection.go does. An exclusions-only
+ *  result is an explicit "nothing selected" and is kept as is: the client
+ *  shows it and never repairs it. */
 export function splitFlatSet(entries: readonly string[]): FlatSets {
   const includes = new Set<string>();
   const exclusions = new Set<string>();
@@ -123,9 +113,9 @@ export function splitFlatSet(entries: readonly string[]): FlatSets {
   return { includes, exclusions };
 }
 
-/** Serialize the two classes back to the canonical wire form: sorted bare
+/** Serializes the two classes back to the canonical wire form: sorted bare
  *  includes, then sorted "!"-prefixed exclusions. Identical sets produce
- *  byte-identical arrays, so the server's re-normalization is a no-op. */
+ *  identical arrays, so the server's re-normalization is a no-op. */
 export function toFlatList(includes: ReadonlySet<string>, exclusions: ReadonlySet<string>): string[] {
   const inc = [...includes]
     .map(cleanPath)
@@ -138,22 +128,17 @@ export function toFlatList(includes: ReadonlySet<string>, exclusions: ReadonlySe
   return [...inc, ...exc.map((e) => EXCLUSION_PREFIX + e)];
 }
 
-/** Split custom-row paths into under-mount (absorbed by the tree) and
- *  standalone entries (INTEG-01, D-02, RESEARCH Q1).
+/** Splits custom-row paths into those under a mount, which the tree absorbs,
+ *  and standalone ones.
  *
- * The server classifies a stored include as custom when it is not EXACTLY a
- * mount root (service.go ContainerMounts — matched[cp] only on equality), so
- * a sub-include under a reachable mount arrives as a custom row. Rendering it
- * as one would duplicate the path on screen (once under its mount, once as a
- * level-1 row). The tree instead absorbs it: the entry stays in the (I, E)
- * mirror — which already renders its mount mixed via the whitelist start-state
- * and the sub-include checked once browsed — and is filtered from the custom
- * row list. Exact mount-root equality is NOT a sub-include (that path IS the
- * mount row), and the test is segment-aligned like every prefix here:
- * "/mnt/user/appdata/plex2" is a sibling of "/mnt/user/appdata/plex", not a
- * descendant. Only REACHABLE mounts absorb — the caller passes their sources;
- * an unreachable mount cannot be browsed, so its sub-includes keep their
- * standalone rows. */
+ *  The server files a stored include as custom whenever it is not exactly a
+ *  mount root (service.go ContainerMounts), so a sub-include of a reachable
+ *  mount arrives as a custom row and would otherwise appear twice on screen.
+ *  It stays in the (I, E) mirror, which already renders its mount mixed, and
+ *  is left out of the custom rows. An exact mount root is the mount row itself,
+ *  not a sub-include. Only reachable mounts absorb, so the caller passes their
+ *  sources; an unreachable mount cannot be browsed and its sub-includes keep
+ *  their own rows. */
 export function partitionCustomPaths(
   customPaths: readonly string[],
   mountSources: readonly string[],
@@ -169,18 +154,15 @@ export function partitionCustomPaths(
   return { underMount, standalone };
 }
 
-/** Count the stored maximal includes at-or-under one root (Phase 3, D-01 —
- *  the per-root "{n} paths" preview).
+/** Counts the stored includes at or under one root, for the per-root
+ *  "{n} paths" preview.
  *
- *  The flat set IS the positional truth: what toFlatList serializes is what
- *  the next backup PATCH carries and what restic receives as positional
- *  sources, so the visible count must be derived from the includes set alone —
- *  never from checked nodes on screen (which would misread collapsed and
- *  never-loaded subtrees) and never filtered by existence: a stale or
- *  unreachable include still counts, because those cases are already
- *  row-level-warned (folders.notReachable / folders.customMissing) and the
- *  argv will still carry the entry. An include ABOVE the root does not count —
- *  only entries the root itself covers are this root's to announce. */
+ *  What toFlatList serializes is what the next backup hands restic as
+ *  positional sources, so the count comes from the includes alone. It does not
+ *  look at checked nodes on screen, which would miss collapsed and unloaded
+ *  subtrees, and it does not filter by existence: a stale or unreachable
+ *  include still goes to restic, and its row already warns about it. An include
+ *  above the root is not this root's to count. */
 export function rootIncludeCount(root: string, includes: ReadonlySet<string>): number {
   let n = 0;
   for (const p of includes) {
@@ -189,16 +171,13 @@ export function rootIncludeCount(root: string, includes: ReadonlySet<string>): n
   return n;
 }
 
-/** List the stored exclusions strictly under one root as RELATIVE paths,
- *  lexically sorted (Phase 3, D-03/D-04 — the "{n} exclusions" review list).
+/** Lists the stored exclusions strictly under one root as relative paths,
+ *  sorted, for the per-root "{n} exclusions" list.
  *
- *  This is the audit view of the remembered exclusions, complete by
- *  construction: it walks the FULL stored exclusion set including dormant
- *  entries (an exclusion whose root include is gone), never the set of tree
- *  nodes that happen to be loaded — a collapsed or never-expanded root lists
- *  its exclusions all the same. An exclusion EQUAL to the root is not listed
- *  (it would render as an empty relative path); only strictly-below entries
- *  are this root's rows. Purely presentational: callers render, never mutate. */
+ *  It walks the full stored set, dormant entries included, rather than the
+ *  loaded tree nodes, so a collapsed or never-expanded root still lists all of
+ *  its exclusions. An exclusion equal to the root is left out, since it would
+ *  be an empty relative path. Callers only render the result. */
 export function rootExclusions(root: string, exclusions: ReadonlySet<string>): string[] {
   const r = cleanPath(root);
   const base = r === "/" ? "" : r;
@@ -211,13 +190,12 @@ export function rootExclusions(root: string, exclusions: ReadonlySet<string>): s
   return out.sort();
 }
 
-/** Classify a node from (I, E) alone (RESEARCH Pattern 1, the pinned shape):
- *  excluded when at/under an E entry (exclusion dominates — the classifier
- *  stays total even for an equal include/exclude pair the reducer can never
- *  produce); mixed when an include applies AND an E lies strictly below
- *  (carve-out) or an I lies strictly below (whitelist start-state); checked
- *  when an include applies with nothing carved out and no deeper include;
- *  unchecked otherwise. */
+/** Classifies a node from (I, E) alone. Excluded when at or under an E entry
+ *  (exclusion wins, so the classifier stays total even for an equal
+ *  include/exclude pair the reducer never produces); mixed when an include
+ *  applies and an E lies strictly below (carve-out) or when an I lies strictly
+ *  below (whitelist); checked when an include applies with nothing carved out
+ *  and no deeper include; unchecked otherwise. */
 export function classifyNode(
   hostPath: string,
   includes: ReadonlySet<string>,
@@ -253,31 +231,23 @@ export function classifyNode(
   return "unchecked";
 }
 
-/** Apply one checkbox toggle to (I, E) — the D-01 remembered-partial cycle.
- *  Dispatch keys off the node's CURRENT state plus list membership:
+/** Applies one checkbox toggle to (I, E), dispatching on the node's current
+ *  state and list membership:
  *
- *    own include present        -> unselect: drop the own include and every
- *                                   strictly-below include; E below stays
- *                                   stored dormant (the remembered partial).
- *    checked via ancestor only  -> carve-out: add "!"+node to E; the parent
- *                                   include stays (TREE-02).
- *    mixed, no own include      -> two flavors by what sits below. An
- *                                   include strictly below is the whitelist
- *                                   unselect: drop each of those (pinned
- *                                   research reading of D-01). Otherwise the
- *                                   mixed-ness is a carve-out (an ancestor
- *                                   include applies, the exclusion is
- *                                   strictly below, nothing of ours lives
- *                                   below to drop) and the click deselects
- *                                   the branch — add "!"+node to E, same as
- *                                   "checked via ancestor only".
- *    excluded                   -> re-include: delete every COVERING exclusion
- *                                   (deeper ones stay, so the branch returns
- *                                   as the same partial state); add an own
- *                                   include only when nothing covers it.
- *    unchecked                  -> select: add node to I. Dormant E below
- *                                   wakes immediately (the partial state
- *                                   applies again with zero UI memory). */
+ *    own include present        -> drop it and every include strictly below;
+ *                                  the exclusions below stay stored.
+ *    checked via ancestor only  -> carve out: add the node to E.
+ *    mixed, no own include      -> drop the includes strictly below if there
+ *                                  are any (whitelist). Otherwise the node is
+ *                                  mixed because of an exclusion below an
+ *                                  ancestor include, and the click deselects
+ *                                  the branch by adding the node to E.
+ *    excluded                   -> delete every covering exclusion (deeper
+ *                                  ones stay, so the branch comes back in the
+ *                                  same partial state) and add an own include
+ *                                  only when nothing covers the node.
+ *    unchecked                  -> add the node to I; exclusions below apply
+ *                                  again at once. */
 export function applyToggle(
   hostPath: string,
   includes: ReadonlySet<string>,
@@ -319,17 +289,11 @@ export function applyToggle(
         }
       }
       if (!dropped) {
-        // Carve-out flavor: an ANCESTOR include applies and the mixed-ness
-        // is an exclusion strictly below, so nothing of ours lives under
-        // this node to deselect — the loop above dropped nothing and this
-        // click used to be a silent no-op while the editor still PATCHed
-        // the identical list and toasted "Saved" (review CR-01). The click
-        // is a deselect of this whole branch, identical in spirit to the
-        // "checked" case above: the rendered box reads checked/indeterminate
-        // (an ancestor include covers it), so it can only turn OFF. The
-        // strictly-below exclusion stays stored — redundant under ours now,
-        // but preserved like every orphan E entry so the remembered partial
-        // wakes again if the branch is re-included.
+        // Carve-out flavor: an ancestor include applies and the node is mixed
+        // because of an exclusion below it, so there is nothing of ours to
+        // drop. The box reads checked, so the click deselects the whole
+        // branch. The deeper exclusion stays stored like every orphan and
+        // applies again if the branch is re-included.
         next.exclusions.add(node);
       }
       return next;
@@ -340,9 +304,9 @@ export function applyToggle(
   }
 }
 
-/** localStorage access is lazy and guarded both directions (displayPrefs.ts
- *  discipline): Node's test env has no storage global until a test installs
- *  one, and a browser's private window throws on access or write. */
+/** Lazy, guarded localStorage access: Node's test environment has no storage
+ *  global until a test installs one, and a private browser window can throw
+ *  on access or write. */
 function storage(): Storage | null {
   try {
     return (globalThis as { localStorage?: Storage }).localStorage ?? null;
@@ -351,9 +315,8 @@ function storage(): Storage | null {
   }
 }
 
-/** Read the persisted expansion list for a container (D-05). Comfort state
- *  only — selection is NEVER read from or written here. Corrupted payloads
- *  and throwing storage degrade to "nothing expanded". */
+/** Reads the persisted expansion list for a container. Corrupt payloads and
+ *  throwing storage read as nothing expanded. */
 export function loadExpanded(containerName: string): string[] {
   const s = storage();
   if (!s) return [];
@@ -368,9 +331,8 @@ export function loadExpanded(containerName: string): string[] {
   }
 }
 
-/** Persist the expansion list (write order = recency, newest last), capped
- *  at MAX_EXPANDED with the oldest-expanded evicted first so the key stays
- *  bounded (D-05). Never throws. */
+/** Persists the expansion list (newest last), keeping only the last
+ *  MAX_EXPANDED entries so the key stays bounded. Never throws. */
 export function saveExpanded(containerName: string, paths: readonly string[]): void {
   const s = storage();
   if (!s) return;

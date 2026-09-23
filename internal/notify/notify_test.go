@@ -19,11 +19,11 @@ func TestSendRespectsPolicy(t *testing.T) {
 	defer srv.Close()
 
 	cfg := notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: srv.URL, WebhookFormat: "generic"}
-	notify.Send(context.Background(), cfg, "", notify.Event{OK: true}) // success under failure-policy → no send
+	notify.Send(context.Background(), cfg, "", notify.Event{OK: true})
 	if hits != 0 {
 		t.Fatalf("success under failure-policy should not send, hits=%d", hits)
 	}
-	notify.Send(context.Background(), cfg, "", notify.Event{OK: false}) // failure → send
+	notify.Send(context.Background(), cfg, "", notify.Event{OK: false})
 	if hits != 1 {
 		t.Fatalf("failure under failure-policy should send once, hits=%d", hits)
 	}
@@ -79,9 +79,6 @@ func TestHealthchecksFailEndpoint(t *testing.T) {
 	}
 }
 
-// TestSendHealthchecksSuccessDecoupledFromPolicy: Healthchecks is a monitor, not a
-// human message — a successful backup must ping the base URL (keeping the check
-// green) even under On=failure, while the webhook message channel stays suppressed.
 func TestSendHealthchecksSuccessDecoupledFromPolicy(t *testing.T) {
 	var hcPath string
 	hc := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { hcPath = r.URL.Path }))
@@ -102,9 +99,6 @@ func TestSendHealthchecksSuccessDecoupledFromPolicy(t *testing.T) {
 	}
 }
 
-// TestSendHealthchecksFailPathUnderFailurePolicy: a failed backup pings /fail under
-// the failure policy (and the message channels fire too, but here we assert the
-// Healthchecks lifecycle path).
 func TestSendHealthchecksFailPathUnderFailurePolicy(t *testing.T) {
 	var path string
 	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { path = r.URL.Path }))
@@ -117,8 +111,6 @@ func TestSendHealthchecksFailPathUnderFailurePolicy(t *testing.T) {
 	}
 }
 
-// TestSendStartPingsStart: SendStart pings the /start endpoint when a URL is set and
-// notifications are not "never".
 func TestSendStartPingsStart(t *testing.T) {
 	var path string
 	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { path = r.URL.Path }))
@@ -129,8 +121,6 @@ func TestSendStartPingsStart(t *testing.T) {
 	}
 }
 
-// TestSendStartSuppressed: SendStart is a no-op when notifications are "never" or no
-// Healthchecks URL is configured.
 func TestSendStartSuppressed(t *testing.T) {
 	var hits int
 	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
@@ -146,9 +136,8 @@ func TestSendStartSuppressed(t *testing.T) {
 	}
 }
 
-// TestSendUnknownPolicySuppressed: an unrecognized On value must be treated like
-// "never" (positive allowlist matching shouldSend), so neither Send nor SendStart
-// contacts any endpoint — including the Healthchecks monitor.
+// TestSendUnknownPolicySuppressed checks that an unrecognized On value sends
+// nothing, not even the Healthchecks ping.
 func TestSendUnknownPolicySuppressed(t *testing.T) {
 	var hits int
 	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
@@ -163,8 +152,6 @@ func TestSendUnknownPolicySuppressed(t *testing.T) {
 	}
 }
 
-// TestHealthchecksPhasePaths exercises the phase→path mapping through the exported
-// API: /start (SendStart), base (Send success) and /fail (Send failure).
 func TestHealthchecksPhasePaths(t *testing.T) {
 	var path string
 	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { path = r.URL.Path }))
@@ -185,8 +172,6 @@ func TestHealthchecksPhasePaths(t *testing.T) {
 	}
 }
 
-// TestSendPerDomainURLRouted: a domain with its own Healthchecks URL pings ONLY that
-// check, never the global one — the per-domain URL replaces the global for that domain.
 func TestSendPerDomainURLRouted(t *testing.T) {
 	var flashHits, globalHits int
 	flash := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { flashHits++ }))
@@ -208,8 +193,6 @@ func TestSendPerDomainURLRouted(t *testing.T) {
 	}
 }
 
-// TestSendUnmappedDomainFallsBackToGlobal: a domain with no per-domain entry pings the
-// global Healthchecks URL.
 func TestSendUnmappedDomainFallsBackToGlobal(t *testing.T) {
 	var flashHits, globalHits int
 	flash := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { flashHits++ }))
@@ -231,8 +214,6 @@ func TestSendUnmappedDomainFallsBackToGlobal(t *testing.T) {
 	}
 }
 
-// TestSendStartPerDomainURL: SendStart routes the /start ping to the domain's own
-// Healthchecks URL when one is configured.
 func TestSendStartPerDomainURL(t *testing.T) {
 	var flashPath string
 	var globalHits int
@@ -255,8 +236,6 @@ func TestSendStartPerDomainURL(t *testing.T) {
 	}
 }
 
-// TestSendTestPingsEveryDistinctURL: SendTest pings the global URL plus each distinct
-// per-domain URL exactly once (de-duplicated across recorders).
 func TestSendTestPingsEveryDistinctURL(t *testing.T) {
 	var globalHits, flashHits, configHits int
 	global := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { globalHits++ }))
@@ -271,7 +250,7 @@ func TestSendTestPingsEveryDistinctURL(t *testing.T) {
 		HealthchecksByDomain: map[string]string{
 			"flash":     flash.URL,
 			"config":    config.URL,
-			"container": global.URL, // duplicate of the global URL → must not double-ping
+			"container": global.URL, // same as the global URL
 		},
 	}
 	if err := notify.SendTest(context.Background(), cfg); err != nil {
@@ -282,8 +261,6 @@ func TestSendTestPingsEveryDistinctURL(t *testing.T) {
 	}
 }
 
-// TestConfiguredWithOnlyPerDomainURL: a config whose only Healthchecks setting is a
-// per-domain URL still counts as configured.
 func TestConfiguredWithOnlyPerDomainURL(t *testing.T) {
 	cfg := notify.Config{HealthchecksByDomain: map[string]string{"flash": "https://hc/flash"}}
 	if !cfg.Configured() {
@@ -297,8 +274,6 @@ func TestSendTestNoChannel(t *testing.T) {
 	}
 }
 
-// TestSendTestSMTPDisabledSkips: an SMTP block with SMTPEnabled=false is not a
-// configured channel, so SendTest reports "no channel" rather than dialing.
 func TestSendTestSMTPDisabledSkips(t *testing.T) {
 	cfg := notify.Config{SMTPHost: "smtp.example.com", SMTPFrom: "a@x.com", SMTPTo: "b@x.com"} // SMTPEnabled false
 	if err := notify.SendTest(context.Background(), cfg); err == nil {
@@ -306,8 +281,6 @@ func TestSendTestSMTPDisabledSkips(t *testing.T) {
 	}
 }
 
-// TestSendTestSMTPMissingHostErrors: enabling SMTP without a host means the
-// channel is not ready, so SendTest still reports nothing configured (no dial).
 func TestSendTestSMTPMissingHostErrors(t *testing.T) {
 	cfg := notify.Config{SMTPEnabled: true, SMTPFrom: "a@x.com", SMTPTo: "b@x.com"} // no host
 	if err := notify.SendTest(context.Background(), cfg); err == nil {
@@ -315,8 +288,6 @@ func TestSendTestSMTPMissingHostErrors(t *testing.T) {
 	}
 }
 
-// TestSendTestSMTPUnreachableErrorsClearly: a ready SMTP config pointed at a dead
-// port surfaces a clear dial error from the SMTP channel.
 func TestSendTestSMTPUnreachableErrorsClearly(t *testing.T) {
 	cfg := notify.Config{
 		SMTPEnabled: true,
@@ -335,9 +306,6 @@ func TestSendTestSMTPUnreachableErrorsClearly(t *testing.T) {
 	}
 }
 
-// TestSendTestWebhookDisabledSkips: a webhook URL with WebhookEnabled=false is not
-// a configured channel, mirroring TestSendTestSMTPDisabledSkips — WebhookEnabled
-// gates the channel the same way SMTPEnabled gates SMTP.
 func TestSendTestWebhookDisabledSkips(t *testing.T) {
 	var hits int
 	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
@@ -354,9 +322,6 @@ func TestSendTestWebhookDisabledSkips(t *testing.T) {
 	}
 }
 
-// TestSendMatrixDisabledSkips: a Matrix block with MatrixEnabled=false is not a
-// configured channel even with every other field set, mirroring
-// TestSendTestSMTPDisabledSkips.
 func TestSendMatrixDisabledSkips(t *testing.T) {
 	var hits int
 	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
@@ -372,8 +337,6 @@ func TestSendMatrixDisabledSkips(t *testing.T) {
 	}
 }
 
-// TestSendTestAppriseDisabledSkips: an Apprise URL with AppriseEnabled=false is not
-// a configured channel, mirroring TestSendTestSMTPDisabledSkips.
 func TestSendTestAppriseDisabledSkips(t *testing.T) {
 	var hits int
 	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
@@ -390,11 +353,6 @@ func TestSendTestAppriseDisabledSkips(t *testing.T) {
 	}
 }
 
-// TestSuppressedHealthchecksSkipsPingNotChannels: a context flagged with
-// WithHealthchecksSuppressed folds out the per-call Healthchecks ping in Send and
-// SendStart, while the message channels (here a webhook) still fire. This is what a
-// scheduled per-domain run sets on each item so the run's ONE aggregate ping
-// represents the whole domain (#49).
 func TestSuppressedHealthchecksSkipsPingNotChannels(t *testing.T) {
 	var hcHits, webhookHits int
 	hc := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hcHits++ }))
@@ -405,7 +363,7 @@ func TestSuppressedHealthchecksSkipsPingNotChannels(t *testing.T) {
 	cfg := notify.Config{On: "always", HealthchecksURL: hc.URL, WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic"}
 	ctx := notify.WithHealthchecksSuppressed(context.Background())
 
-	notify.SendStart(ctx, cfg, "container") // suppressed → no /start ping
+	notify.SendStart(ctx, cfg, "container")
 	notify.Send(ctx, cfg, "container", notify.Event{Title: "BombVault", Message: "ok", OK: true})
 
 	if hcHits != 0 {
@@ -416,10 +374,6 @@ func TestSuppressedHealthchecksSkipsPingNotChannels(t *testing.T) {
 	}
 }
 
-// TestPingDomainStartAndResultEndpoints: the aggregate per-domain-run pings hit the
-// right lifecycle endpoints — /start for the run start, the base URL (success) when
-// every item passed, and /fail when any failed — and carry the summary as the body so
-// it shows in the check's event feed.
 func TestPingDomainStartAndResultEndpoints(t *testing.T) {
 	var path, body string
 	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
@@ -452,9 +406,6 @@ func TestPingDomainStartAndResultEndpoints(t *testing.T) {
 	}
 }
 
-// TestPingDomainSuppressedWhenNeverOrNoURL: the aggregate pings honour the same gates
-// as the rest of the package — a no-op under On=never and when the domain resolves to
-// no Healthchecks URL.
 func TestPingDomainSuppressedWhenNeverOrNoURL(t *testing.T) {
 	var hits int
 	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
@@ -469,10 +420,6 @@ func TestPingDomainSuppressedWhenNeverOrNoURL(t *testing.T) {
 	}
 }
 
-// TestApprisePayloadAndTypeMapping: Send posts the apprise-api notify contract —
-// JSON {title, body, type} to the configured endpoint — mapping the event outcome
-// onto Apprise's native types: OK→"success", !OK→"failure". Without AppriseTags
-// no "tag" key is sent, so the key's default target selection applies.
 func TestApprisePayloadAndTypeMapping(t *testing.T) {
 	var got map[string]any
 	var path, contentType string
@@ -501,8 +448,6 @@ func TestApprisePayloadAndTypeMapping(t *testing.T) {
 	}
 }
 
-// TestAppriseTagPassedThrough: a configured AppriseTags value rides along as the
-// payload's "tag" field so a shared config key can route to a subset of targets.
 func TestAppriseTagPassedThrough(t *testing.T) {
 	var got map[string]any
 	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
@@ -518,10 +463,6 @@ func TestAppriseTagPassedThrough(t *testing.T) {
 	}
 }
 
-// TestAppriseStartPostsInfo: SendStart posts an Apprise "info" message under
-// On=always — including when the Healthchecks ping is context-suppressed, which
-// must keep affecting ONLY Healthchecks — but stays silent under On=failure (a
-// failure-only setup gets no routine start notices).
 func TestAppriseStartPostsInfo(t *testing.T) {
 	var got map[string]any
 	var hits int
@@ -540,7 +481,6 @@ func TestAppriseStartPostsInfo(t *testing.T) {
 		t.Fatalf("start payload = %v", got)
 	}
 
-	// The Healthchecks-suppress flag affects only Healthchecks, never Apprise.
 	notify.SendStart(notify.WithHealthchecksSuppressed(context.Background()),
 		notify.Config{On: "always", AppriseEnabled: true, AppriseURL: srv.URL}, "containers")
 	if hits != 2 {
@@ -553,10 +493,6 @@ func TestAppriseStartPostsInfo(t *testing.T) {
 	}
 }
 
-// TestAppriseScheduledSummarySuppression: Apprise is a message channel, so the
-// scheduled-summary collapse applies exactly like webhook/Matrix/SMTP — a
-// per-item send (WithMessagesSuppressed) is dropped in summary mode for BOTH the
-// result message and the start notice, and fires as before with the toggle off.
 func TestAppriseScheduledSummarySuppression(t *testing.T) {
 	var hits int
 	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
@@ -569,12 +505,11 @@ func TestAppriseScheduledSummarySuppression(t *testing.T) {
 	if hits != 0 {
 		t.Fatalf("summary mode must suppress per-item apprise sends, hits=%d", hits)
 	}
-	// A non-marked message (the summary itself) still fires.
+	// The summary itself is not marked.
 	notify.Send(context.Background(), cfg, "containers", notify.Event{OK: true})
 	if hits != 1 {
 		t.Fatalf("a non-marked apprise message must still send, hits=%d", hits)
 	}
-	// Toggle off → the marked per-item message fires as before.
 	cfg.ScheduledSummary = false
 	notify.Send(ictx, cfg, "container", notify.Event{OK: true})
 	if hits != 2 {
@@ -582,13 +517,10 @@ func TestAppriseScheduledSummarySuppression(t *testing.T) {
 	}
 }
 
-// TestAppriseSendErrorRedactsURL: the Apprise endpoint path carries the secret
-// notify key, so a failed send must log the error WITHOUT the URL (redactErr) —
-// only the operation and the underlying cause.
 func TestAppriseSendErrorRedactsURL(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
 	deadURL := srv.URL + "/notify/secretkey"
-	srv.Close() // now unreachable → *url.Error carrying the full URL
+	srv.Close() // makes the send fail with a *url.Error that carries the URL
 
 	var buf strings.Builder
 	prev := log.Writer()
@@ -607,11 +539,6 @@ func TestAppriseSendErrorRedactsURL(t *testing.T) {
 	}
 }
 
-// TestConfiguredWithOnlyAppriseURL: an enabled Apprise URL alone counts as a
-// configured channel, so SendTest reaches it (and posts a success-type test
-// message). AppriseEnabled now gates the channel the same way SMTPEnabled
-// gates SMTP, so a URL alone (Enabled left false) no longer counts — see
-// TestAppriseReadyGating in redact_internal_test.go for that negative case.
 func TestConfiguredWithOnlyAppriseURL(t *testing.T) {
 	var got map[string]any
 	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
@@ -631,28 +558,21 @@ func TestConfiguredWithOnlyAppriseURL(t *testing.T) {
 	}
 }
 
-// TestScheduledSummarySuppressesPerItemMessages: with ScheduledSummary on, a
-// message marked WithMessagesSuppressed (a scheduled per-item backup) is dropped so
-// the ONE domain summary speaks for the run; a non-marked message (the summary
-// itself, or a per-updated-container notice) still fires; and with the toggle OFF a
-// marked message fires as before (#56).
 func TestScheduledSummarySuppressesPerItemMessages(t *testing.T) {
 	var hits int
 	wh := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
 	defer wh.Close()
 	cfg := notify.Config{On: "always", WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic", ScheduledSummary: true}
 
-	// per-item scheduled message → suppressed in summary mode
 	notify.Send(notify.WithMessagesSuppressed(context.Background()), cfg, "container", notify.Event{OK: true})
 	if hits != 0 {
 		t.Fatalf("summary mode must suppress a per-item message, hits=%d", hits)
 	}
-	// non-marked message (the summary / an update notice) → still fires
+	// The summary and container update notices are not marked.
 	notify.Send(context.Background(), cfg, "containers", notify.Event{OK: true})
 	if hits != 1 {
 		t.Fatalf("a non-marked message must still send, hits=%d", hits)
 	}
-	// toggle off → a marked per-item message fires as before
 	cfg.ScheduledSummary = false
 	notify.Send(notify.WithMessagesSuppressed(context.Background()), cfg, "container", notify.Event{OK: true})
 	if hits != 2 {
@@ -660,15 +580,8 @@ func TestScheduledSummarySuppressesPerItemMessages(t *testing.T) {
 	}
 }
 
-// TestSendOnUnsetNotifiesFailures pins the fix for #195, and it exists because
-// its absence is the reason the defect shipped: every existing test in this
-// file passes an explicit On value, so the case a fresh install actually has —
-// the stored blob empty, On == "" — was never exercised at all.
-//
-// The rule: unset means "failure" and an explicit "never" still means never.
-// An unrecognised value stays silent, because that positive allowlist is an
-// older deliberate decision and this fix does not get to overturn it; only the
-// empty string joins the list, since that is the case a fresh install has.
+// TestSendOnUnsetNotifiesFailures covers the empty On a fresh install stores,
+// which must behave like "failure".
 func TestSendOnUnsetNotifiesFailures(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -680,11 +593,8 @@ func TestSendOnUnsetNotifiesFailures(t *testing.T) {
 		{"unset stays quiet on success", "", true, false},
 		{"explicit never stays silent on failure", "never", false, false},
 		{"explicit never stays silent on success", "never", true, false},
-		{"failure behaves as before", "failure", false, true},
+		{"failure sends a failure", "failure", false, true},
 		{"always sends a success too", "always", true, true},
-		// An unrecognised value stays silent, which is the older deliberate
-		// decision (see TestSendUnknownPolicySuppressed): a corrupted config
-		// must not start contacting endpoints. Only "" joins the allowlist.
 		{"an unknown value stays silent", "wat", false, false},
 	}
 	for _, c := range cases {

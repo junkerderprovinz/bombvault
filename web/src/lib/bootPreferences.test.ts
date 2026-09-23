@@ -1,28 +1,9 @@
-// ---------------------------------------------------------------------------
-// Every stored appearance preference is applied before the first paint.
-//
-// Found live, not by reading code: the running instance had no
-// `data-labels-sidebar` attribute on <html> at all. `controls.ts` exports
-// `applyStoredLabelModes`, its own doc says "called at boot in main.tsx before
-// first render", and nothing called it — the label engine shipped with that
-// half wired to nowhere for the whole round.
-//
-// Why it looked fine anyway, which is exactly why a test has to hold it: the
-// components read the mode through `useLabelMode` (localStorage, read
-// synchronously), so the rendering was right in every mode. And `setLabelMode`
-// DOES set the attribute, so changing the setting made it appear — until the
-// next reload dropped it again. Same app, same setting, attribute sometimes
-// there and sometimes not, with nothing on screen to give it away.
-//
-// Today no CSS keys off `data-labels-*`, so nothing was visibly broken. That is
-// the whole hazard: the first rule someone writes against it will work while
-// they are testing (they just changed the setting) and break on reload.
-//
-// The test is deliberately generic rather than a line about label modes: every
-// `applyStored*` helper in lib/ is a boot-time preference by construction, so a
-// future eighth one is covered the day it is written, not the day someone
-// notices it never ran.
-// ---------------------------------------------------------------------------
+// Every applyStored* helper in lib/ restores a preference before first paint,
+// so main.tsx has to call each one. A missing call does not show: components
+// read their mode from localStorage and render correctly, and changing the
+// setting applies the attribute, so only CSS keyed off the attribute breaks,
+// and only after a reload. Finding the helpers by name covers the next one the
+// day it is written.
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -44,15 +25,14 @@ function bootHelpers(): string[] {
 
 describe("boot-time preferences", () => {
   it("finds the helpers (the scan is not silently empty)", () => {
-    // Seven today: theme, language, accent, rainbow, shape, motion, labels.
+    // theme, language, accent, rainbow, shape, motion and labels
     expect(bootHelpers().length).toBeGreaterThanOrEqual(7);
   });
 
   it("main.tsx calls every applyStored* helper lib/ exports", () => {
     const main = readFileSync(MAIN, "utf8");
     const missing = bootHelpers().filter((n) => !new RegExp(`\\b${n}\\s*\\(`).test(main));
-    // Named in the failure, so the message says WHICH preference never runs
-    // rather than only that the count is wrong.
+    // A list rather than a count, so the failure names the missing helper.
     expect(missing).toEqual([]);
   });
 

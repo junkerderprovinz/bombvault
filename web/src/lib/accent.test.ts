@@ -1,10 +1,3 @@
-// GlimStone form-engine #1 — --accent-contrast must be COMPUTED from the
-// chosen accent's sRGB luminance, not hard-coded. Before this fix,
-// applyAccent() never touched --accent-contrast at all, so every custom
-// accent silently kept whatever ink colour the CSS default happened to have
-// baked in (#161616 in both themes) regardless of whether that accent was
-// actually dark or light. These tests pin the real bug: a dark accent must
-// resolve to light ink, and a light accent must resolve to dark ink.
 import { describe, expect, it } from "vitest";
 import {
   contrastOn,
@@ -24,9 +17,7 @@ describe("contrastOn", () => {
     expect(contrastOn("#FFF7CC")).toBe("#161616");
   });
 
-  it("matches the existing default ink for the built-in default accent", () => {
-    // Regression guard: DEFAULT_ACCENT_CONTRAST must stay the actual
-    // computed value for DEFAULT_ACCENT, not just a number nobody checks.
+  it("gives the default accent DEFAULT_ACCENT_CONTRAST", () => {
     expect(contrastOn(DEFAULT_ACCENT)).toBe(DEFAULT_ACCENT_CONTRAST);
   });
 
@@ -41,19 +32,10 @@ describe("contrastOn", () => {
   });
 });
 
-// Regression coverage for the fixed-0.55-luminance-threshold bug: these are
-// exactly the 5 of RAINBOW's 8 hues (lib/appearance.ts) a live contrast
-// review measured getting white ink at 2.35-3.04:1 (WCAG 1.4.3 needs 4.5:1)
-// under the old `> 0.55` cutoff, when #161616 gives every one of them
-// 5.95-7.70:1. Each case asserts BOTH the winning ink AND the actual
-// contrast ratio against it, independently recomputed here rather than by
-// reusing accent.ts's own luminance/contrastRatio helpers — a fix that just
-// nudges the threshold to a different-but-still-wrong constant would still
-// return "#161616" (passing a hex-only assertion) while failing contrast,
-// so the ratio check is the one that actually catches that regression.
-describe("contrastOn — rainbow hues previously broken by the fixed 0.55 threshold", () => {
-  // Standard WCAG relative luminance + contrast ratio, computed independently
-  // of accent.ts's own implementation.
+// A luminance cutoff at 0.55 gives these rainbow hues white ink at 2.35 to
+// 3.04:1, while #161616 reaches 5.95 to 7.70:1. The ratio is computed here
+// without accent.ts's helpers, so the check cannot share a bug with them.
+describe("contrastOn on mid-luminance rainbow hues", () => {
   function relLuminance(hex: string): number {
     const n = parseInt(hex.slice(1), 16);
     const channels = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
@@ -69,7 +51,7 @@ describe("contrastOn — rainbow hues previously broken by the fixed 0.55 thresh
     return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
   }
 
-  const PREVIOUSLY_BROKEN = [
+  const MID_HUES = [
     "#FF8389", // red 30
     "#FF832B", // orange 40
     "#1D99F3", // blue
@@ -77,7 +59,7 @@ describe("contrastOn — rainbow hues previously broken by the fixed 0.55 thresh
     "#FF7EB6", // magenta 30
   ];
 
-  it.each(PREVIOUSLY_BROKEN)("resolves %s to dark ink at >=4.5:1, not white at <4.5:1", (hex) => {
+  it.each(MID_HUES)("resolves %s to dark ink at >=4.5:1, not white at <4.5:1", (hex) => {
     const ink = contrastOn(hex);
     expect(ink).toBe("#161616");
     expect(wcagContrastRatio(hex, ink)).toBeGreaterThanOrEqual(4.5);
@@ -94,12 +76,7 @@ describe("softTint", () => {
   });
 });
 
-// GlimStone follow-up pass, live-review round 6 — presets became
-// individually editable + resettable, and the count grew from 5 to 8. Pure
-// logic only (no localStorage): the DOM/localStorage-touching half
-// (getAccentPresets/setAccentPresets) has its own jsdom-backed coverage in
-// accent.dom.test.ts, mirroring how appearance.test.ts/appearance.dom.test.tsx
-// already split the SAME kind of concern for the rainbow palette.
+// Storage is covered in accent.dom.test.ts.
 describe("DEFAULT_ACCENT_PRESETS", () => {
   it("is a fixed set of eight valid, unique hex colours", () => {
     expect(DEFAULT_ACCENT_PRESETS).toHaveLength(8);
@@ -113,7 +90,7 @@ describe("DEFAULT_ACCENT_PRESETS", () => {
     expect(DEFAULT_ACCENT_PRESETS).toContain(DEFAULT_ACCENT);
   });
 
-  it("keeps the original 5 presets in their original order, widened by 3", () => {
+  it("starts with the five GlimStone presets in their shared order", () => {
     expect(DEFAULT_ACCENT_PRESETS.slice(0, 5)).toEqual([
       "#FCC419",
       "#1D99F3",
@@ -134,7 +111,7 @@ describe("isValidAccentPresets", () => {
     expect(isValidAccentPresets(custom)).toBe(true);
   });
 
-  it("rejects the WHOLE set when even one entry is invalid — all-or-nothing", () => {
+  it("rejects the whole set when one entry is invalid", () => {
     const almostAllValid = [...DEFAULT_ACCENT_PRESETS.slice(0, 7), "javascript:alert(1)"];
     expect(isValidAccentPresets(almostAllValid)).toBe(false);
   });

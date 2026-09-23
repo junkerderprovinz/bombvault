@@ -6,17 +6,6 @@ import (
 	"time"
 )
 
-// ---------------------------------------------------------------------------
-// zvolDatasetFromDevPath
-// ---------------------------------------------------------------------------
-
-// TestZvolDatasetFromDevPath pins the ONLY convention this parser understands
-// (/dev/zvol/<pool>/<dataset...>) and — just as important — pins that it NEVER
-// guesses: anything that doesn't match exactly returns ok=false rather than an
-// invented dataset name. This is a pure function; no real ZFS/TrueNAS system
-// is touched by this test. See zvol.go's package-level doc comment for the
-// "reasoned from documentation, not verified against real hardware" caveat
-// this whole mechanism carries (Task 10, v8.0.0 TrueNAS platform expansion).
 func TestZvolDatasetFromDevPath(t *testing.T) {
 	cases := []struct {
 		name    string
@@ -51,15 +40,6 @@ func TestZvolDatasetFromDevPath(t *testing.T) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// RebaseZvolDatasetPool — the cross-instance restore rebase.
-// ---------------------------------------------------------------------------
-
-// TestRebaseZvolDatasetPool pins the ONLY thing this function does: swap the
-// dataset's leading pool segment for destPool, keeping every segment after it
-// — and, just as important, that it NEVER guesses past its own defensive
-// rules (an empty/unsafe destPool, or a dataset with no segment past its own
-// pool, is ok=false, never an invented or partially-rebased name).
 func TestRebaseZvolDatasetPool(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -99,12 +79,7 @@ func TestRebaseZvolDatasetPool(t *testing.T) {
 	}
 }
 
-// TestRebaseZvolDatasetPoolChainsWithZvolDatasetFromDevPath proves the
-// REALISTIC end-to-end shape: a dev path parsed by ZvolDatasetFromDevPath,
-// then rebased by RebaseZvolDatasetPool onto a different pool, produces a
-// dataset that still parses back as a valid /dev/zvol/<pool>/<dataset>-shaped
-// name for the destination pool — the exact chain prepareRestoreVMForTarget
-// drives (internal/api/service.go).
+// prepareRestoreVMForTarget parses the device path, then rebases the dataset.
 func TestRebaseZvolDatasetPoolChainsWithZvolDatasetFromDevPath(t *testing.T) {
 	dataset, ok := ZvolDatasetFromDevPath("/dev/zvol/tank/vms/win10/disk0")
 	if !ok {
@@ -118,10 +93,6 @@ func TestRebaseZvolDatasetPoolChainsWithZvolDatasetFromDevPath(t *testing.T) {
 		t.Fatalf("rebased dataset = %q, want %q", rebased, want)
 	}
 }
-
-// ---------------------------------------------------------------------------
-// ZFS argv builders — pure, unit-testable without a real ZFS system.
-// ---------------------------------------------------------------------------
 
 func TestZFSSnapshotArgs(t *testing.T) {
 	got := ZFSSnapshotArgs("tank/vm-disk1", "bombvault-20260816120000")
@@ -155,15 +126,8 @@ func TestZFSReceiveArgs(t *testing.T) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// RestoreZvolTargetDataset — the restore-side safety property.
-// ---------------------------------------------------------------------------
-
-// TestRestoreZvolTargetDatasetNeverEqualsSource is the core safety test for
-// Task 10's restore path: `zfs receive` into an EXISTING dataset can destroy
-// live data, so the generated target dataset must be structurally guaranteed
-// distinct from the source — never a value the caller could mistake for (or
-// that could collide with) the original live dataset.
+// zfs receive into an existing dataset can destroy live data, so the target
+// must never be the source.
 func TestRestoreZvolTargetDatasetNeverEqualsSource(t *testing.T) {
 	sources := []string{"tank/vm-disk1", "tank/vms/win10/disk0", "pool2/data"}
 	now := time.Date(2026, 8, 16, 12, 0, 0, 0, time.UTC)
@@ -178,9 +142,6 @@ func TestRestoreZvolTargetDatasetNeverEqualsSource(t *testing.T) {
 	}
 }
 
-// TestRestoreZvolTargetDatasetDistinctAcrossTime confirms two restores of the
-// same source dataset at different times land on different fresh datasets
-// (never silently collide/overwrite an earlier restore attempt either).
 func TestRestoreZvolTargetDatasetDistinctAcrossTime(t *testing.T) {
 	src := "tank/vm-disk1"
 	t1 := time.Date(2026, 8, 16, 12, 0, 0, 0, time.UTC)
@@ -191,10 +152,6 @@ func TestRestoreZvolTargetDatasetDistinctAcrossTime(t *testing.T) {
 		t.Fatalf("RestoreZvolTargetDataset produced the same target %q for two different times", a)
 	}
 }
-
-// ---------------------------------------------------------------------------
-// ZvolSnapshotName
-// ---------------------------------------------------------------------------
 
 func TestZvolSnapshotNameIsDeterministicPerInstant(t *testing.T) {
 	now := time.Date(2026, 8, 16, 12, 0, 0, 0, time.UTC)

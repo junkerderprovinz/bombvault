@@ -1,12 +1,8 @@
-// ---------------------------------------------------------------------------
-// Files page (#62) — first-class file-set backups ("point BombVault at any
-// folder"). Modeled on VMs.tsx, the closest per-item domain page: one card per
-// file set with an include-in-schedule switch, a fire-and-watch backup button
-// (progress key "files:<name>"), and an expandable Backups panel whose restore
-// control offers "original location" (confirm-gated, in place) vs "to a folder"
-// (non-destructive extract via FolderBrowser). Add/edit runs in a dialog with a
-// FolderBrowser path picker and an excludes textarea (one pattern per line).
-// ---------------------------------------------------------------------------
+// Files backs up arbitrary folders as file sets. It follows VMs.tsx: one card
+// per set with an include-in-schedule switch, a backup button that watches the
+// progress key "files:<name>", and a Backups panel that restores either in
+// place (after a confirm) or into a folder. Sets are added and edited in a
+// dialog with a folder picker and one exclude pattern per line.
 
 import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -61,16 +57,11 @@ import { useProgress, anyActive, busyPhraseKey } from "../lib/progress";
 import { useBackupWatch } from "../lib/backupWatch";
 import { loadErrorMessage } from "../lib/errors";
 import { useConfirm } from "../lib/useConfirm";
-import { hueVars, rainbowAt } from "../lib/appearance";
+import { hueVars } from "../lib/appearance";
 import { Selector, type SelectorItem } from "../components/Selector";
-import { useRainbow } from "../lib/useRainbow";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { InfoBubble } from "../components/InfoBubble";
-// ToggleRow, not the bare Toggle: FileSetEnabledToggle renders the shared row
-// (label + switch) rather than a naked switch its caller labels by hand — the
-// same import components/IncludeToggle.tsx already uses for the Container
-// tab's copy of that control.
 import { ToggleRow } from "./settings/shared";
 import { CheckDraw } from "../components/CheckDraw";
 import { useToast } from "../lib/toast";
@@ -81,26 +72,17 @@ import { Timeline } from "../components/timeline/Timeline";
 
 type T = ReturnType<typeof useT>["t"];
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 function formatTs(unix: number | null | undefined): string {
   if (!unix) return "—";
   return new Date(unix * 1000).toLocaleString();
 }
 
-// ---------------------------------------------------------------------------
-// Include-in-schedule toggle (mirrors components/IncludeToggle.tsx, PATCHes {enabled})
-// ---------------------------------------------------------------------------
-
+// FileSetEnabledToggle is the file-set copy of components/IncludeToggle.tsx.
 function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean }) {
   const { t } = useT();
   const { push } = useToast();
   const [enabled, setEnabled] = useState(initial);
   const [busy, setBusy] = useState(false);
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
-  // failed toggle toasts AND shakes, same mechanism as ToggleRow's shakeNonce.
   const [shake, setShake] = useState(0);
 
   // Re-seed when the parent passes a fresh value (rows are keyed by id and do
@@ -125,30 +107,6 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
     }
   }
 
-  // Renders through the SAME shared ToggleRow every other row-shaped toggle in
-  // the app already uses — the identical conversion components/IncludeToggle.tsx
-  // (the Container tab's copy of this exact control) already went through after
-  // jdp's live review: "Die Toggles ... bitte gleich anordnen und der Text
-  // gleich formatieren. Der Text soll immer ganz links stehen und der Toggle
-  // ganz rechts sein."
-  //
-  // That round only touched the Container tab, so THIS copy and VMs.tsx's own
-  // copy (since folded into IncludeToggle, #232) were left as the mirror image
-  // of the shape they were meant to match: a bare `hideLabel` Toggle whose
-  // caller hand-rolled a `<label
-  // className="flex items-center gap-2">` around it — switch FIRST, text
-  // SECOND, `text-xs text-carbon-textSub` — against ToggleRow's own
-  // text-first/switch-last, `text-sm text-carbon-text`. All three tabs render
-  // the SAME string (files.enabled and containers.includeInSchedule are
-  // byte-identical in every locale: "Include in schedule" / "Im Zeitplan
-  // einschließen"), so the drift was visible as the same label laid out two
-  // different ways on two adjacent tabs.
-  //
-  // Fixed at the shared mechanism rather than by hand-matching classes: this
-  // now IS ToggleRow, so it cannot drift from the Container tab's copy again.
-  // The visible label keeps this file's own `files.enabled` key (the string
-  // the call site was already displaying) rather than silently switching to
-  // the containers.* key the bare Toggle happened to use for its aria-label.
   return (
     <ToggleRow
       label={t("files.enabled")}
@@ -160,40 +118,10 @@ function FileSetEnabledToggle({ id, initial }: { id: string; initial: boolean })
   );
 }
 
-// ---------------------------------------------------------------------------
-// Backup button (fire-and-watch, mirrors VMBackupButton)
-// ---------------------------------------------------------------------------
-
-// GlimStone follow-up pass (v8.0.0) audit note: the state.phase "success"/
-// "error" result below is deliberately NOT migrated to a toast, unlike this
-// file's other flash sites (FileSetEnabledToggle/FileSetDialog above). Exact
-// same reasoning as Containers.tsx's BackupButton / VMs.tsx's VMBackupButton:
-// it's driven by the SHARED lib/backupWatch.ts useBackupWatch hook (kind
-// defaults to "backup" here, which already self-clears after 4s —
-// SUCCESS_CLEAR_MS, effectively already toast-like), but the identical state
-// shape also backs RESTORE outcomes elsewhere, which are explicitly STICKY BY
-// DESIGN. Splitting that shared, cross-file state machine's rendering by kind
-// is a hook-level architecture change, not the local flash-swap this pass
-// does everywhere else — left as its own deliberate follow-up.
-//
-// WHOLE-AREA SWEEP (icon-badge round for this tab, alongside jdp's two named
-// buttons above): the TRIGGER is now a square icon badge, while everything the
-// audit note above describes stays exactly as it was. This is the same control
-// jdp already had converted on the two other domains that own one —
-// components/BackupButton.tsx (Containers, "Jetzt sichern und Export sollen
-// quadratische Badges mit Glyph sein") and Flash.tsx — and it was the only
-// thing left in a FileSetRow card standing as a text pill beside two 32px glyph
-// tiles. Badge.tsx's own header is explicit about why that matters: a user sees
-// one card, not a set of independently-reasonable controls.
-//   Note this conversion does NOT drag the toast migration with it. Containers'
-// BackupButton had to move its terminal states to toasts because it lives in a
-// card corner with no room beneath it; this one sits in its own
-// `flex flex-col` column with the result lines stacked below the trigger — the
-// exact shape Containers.tsx's ExportButton keeps for its own sticky result —
-// so the deliberate decision recorded above survives untouched. The column
-// flips from `items-start` to `items-end` so the 32px tile lines up with the
-// card's right edge (its parent is already `items-end`) instead of anchoring a
-// wide text block whose left edge it would otherwise inherit.
+// FileSetBackupButton is a square icon badge like components/BackupButton.tsx.
+// That one sits in a card corner and reports through toasts; this one has a
+// column of its own, so the result stays below the trigger, where a backup
+// result clears itself after a few seconds.
 function FileSetBackupButton({
   set,
   t,
@@ -203,8 +131,8 @@ function FileSetBackupButton({
   set: FileSetView;
   t: T;
   onBackedUp?: () => void;
-  /** "Something is running" signal (anyActive): busy-guards this backup while
-   *  another op runs, but never for its OWN in-flight backup (isPending). */
+  /** Whether another operation runs (anyActive). It blocks this backup, but
+   *  not while this set's own backup is the one running. */
   running?: { active: boolean; phase?: string };
 }) {
   const { state, fire, isPending } = useBackupWatch({
@@ -214,16 +142,12 @@ function FileSetBackupButton({
     onDone: onBackedUp,
   });
   const blockedByOther = !!running?.active && !isPending;
-  // A path-less discovered set has nothing to back up until a folder is set
-  // (the server would refuse anyway) — restore-to-folder still works below.
+  // A discovered set without a path has nothing to back up until a folder is
+  // set; restoring into a folder still works.
   const noPath = set.path === "";
 
-  // One tip, resolved in the same priority order BackupButton.tsx uses, plus
-  // this domain's own extra refusal reason (a discovered set with no folder
-  // yet). The label the visible text used to carry is the last fallback — an
-  // icon-only trigger's tooltip has to say what the button DOES when nothing
-  // is blocking it.
-  // #178: stable name, exceptional states as tooltip only.
+  // The label stays fixed. Refusals and busy states go in the tooltip, in the
+  // order BackupButton.tsx uses, plus the missing folder.
   const stateTip = noPath
     ? t("files.noPathHint")
     : isPending
@@ -244,21 +168,8 @@ function FileSetBackupButton({
         busy={isPending}
         title={stateTip}
       />
-      {/* The "something else is running" note does NOT live here any more
-          (jdp, 2026-09-11: "eine sicherung läuft... text bitte über den text
-          von letztes backup"). It hung directly under the badge corner, which
-          put a status line at the top of the card and the fact it qualifies -
-          the last backup - at the bottom. FileSetRow renders it above that
-          line now.
-
-          Worth noting what the sibling does, because it is the reason this was
-          drift rather than a choice: components/BackupButton.tsx, the container
-          card's own, renders NO visible note at all and puts the same phrase in
-          `title`, per #178's "the button's name is stable, only exceptional
-          states get a tooltip". This button keeps its tooltip too (`stateTip`
-          above), so the phrase is in both places for the same reason it is on
-          the container card - the text below is the card talking, the tooltip
-          is the button talking. */}
+      {/* The "something else is running" note sits in FileSetRow, above the
+          last-backup line it qualifies. */}
       {state.phase === "success" && (
         <span className="inline-flex items-center gap-1 text-xs text-statusOk">
           <CheckDraw />
@@ -279,13 +190,9 @@ function FileSetBackupButton({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Selective restore — tick individual files/folders from a snapshot and restore
-// just those into a chosen folder (#65). Mirrors the container SnapshotFileBrowser,
-// reusing the shared SnapshotFileTree; scoped to the file-set routes and always
-// non-destructive (into a folder), so no in-place confirm is needed here.
-// ---------------------------------------------------------------------------
-
+// FileSetFileBrowser restores ticked files and folders from a snapshot into a
+// folder, like the container SnapshotFileBrowser. It never writes in place, so
+// it needs no confirm.
 function FileSetFileBrowser({
   set,
   snapshotId,
@@ -310,14 +217,11 @@ function FileSetFileBrowser({
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  // Same #69 fix as FileSetRestoreControl: seed from the global default instead
-  // of an empty string that only ever showed the FolderBrowser's placeholder.
   const [folder, setFolder] = useState(restoreFolder);
   const [restoredTarget, setRestoredTarget] = useState("");
 
   const progressKey = `files:${set.name}`;
-  // The SAME ref instance flows to useBackupWatch AND (via RestoreProgress) to the
-  // cancel button — see FileSetRestoreControl / RestoreAction. Never split it.
+  // One ref for useBackupWatch and, through RestoreProgress, the cancel button.
   const cancelledRef = useRef(false);
   const { state, fire, reset, isPending } = useBackupWatch({
     progressKey,
@@ -338,8 +242,8 @@ function FileSetFileBrowser({
     setLoading(true);
     listSnapshotFilesFileSet(set.id, snapshotId, source)
       .then((res) => {
-        // #129 — show the server's own reason (e.g. a stale repo lock) when it
-        // sent one; the generic message is only for a plain network failure.
+        // The server's own reason, such as a stale repo lock, beats the
+        // generic message.
         if (res.ok) setFiles(res.files ?? []);
         else setError(loadErrorMessage(res, t("files.loadFailed")));
       })
@@ -347,8 +251,7 @@ function FileSetFileBrowser({
       .finally(() => setLoading(false));
   }, [set.id, snapshotId, source, t]);
 
-  // A new selection / target clears any prior result banner so it can't linger
-  // over a fresh, unrun choice.
+  // A new selection or target clears the previous result.
   function toggle(p: string) {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -384,7 +287,7 @@ function FileSetFileBrowser({
         t={t}
       />
 
-      {/* Target folder + restore-selected action — shown once something is ticked. */}
+      {/* Target folder and restore action, once something is ticked. */}
       {count > 0 && (
         <div className="border-t border-carbon-border pt-2 flex flex-col gap-2">
           <FolderBrowser
@@ -430,11 +333,6 @@ function FileSetFileBrowser({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Restore control — "original location" (confirm, in place) vs "to a folder" vs
-// "select files" (selective, #65)
-// ---------------------------------------------------------------------------
-
 type RestoreDest = "original" | "folder" | "select";
 
 function FileSetRestoreControl({
@@ -456,26 +354,17 @@ function FileSetRestoreControl({
   onMissing: () => void;
   t: T;
 }) {
-  // A path-less discovered set can only restore into a chosen folder — the
-  // server refuses an in-place restore when it doesn't know the original path.
+  // Without a path the server cannot restore in place, so only a folder works.
   const noPath = set.path === "";
   const [dest, setDest] = useState<RestoreDest>(noPath ? "folder" : "original");
-  // "Select files" (the #65 selective restore) is an advanced option; basic
-  // mode keeps the whole-set original / to-folder pair. Read directly (rather
-  // than staying inside an <Advanced> JSX wrapper) because the destination
-  // Selector below needs to decide, in JS, whether "select" belongs in its
-  // items array at all — Selector renders a flat items list, not children a
-  // wrapper component could conditionally swallow.
+  // Selecting files is an advanced option. The flag is read here because the
+  // Selector takes a flat items list that an <Advanced> wrapper cannot filter.
   const { advanced } = useAdvanced();
-  // Seeded from the operator's global "Default restore folder" setting, exactly
-  // like the container restore panel — was hardcoded to "" (#69), which left the
-  // FolderBrowser showing only its generic placeholder example text instead of
-  // a real usable default.
+  // Seeded from the global default restore folder, as in the container panel.
   const [targetPath, setTargetPath] = useState(restoreFolder);
 
   const progressKey = `files:${set.name}`;
-  // The SAME ref instance flows to useBackupWatch AND (via RestoreProgress) to
-  // RestoreCancelButton — see RestoreAction's header note. Never split it.
+  // One ref for useBackupWatch and, through RestoreProgress, the cancel button.
   const cancelledRef = useRef(false);
   const { state, fire, reset, isPending } = useBackupWatch({
     progressKey,
@@ -492,8 +381,8 @@ function FileSetRestoreControl({
   const blockedByOther = otherActive.active && !isPending;
   const { confirm, confirmDialog } = useConfirm();
 
-  // A stale success/error banner would misdescribe a different destination —
-  // clear it when the choice changes (no-op while a restore is in flight).
+  // An old result would describe another destination, so a new choice clears
+  // it (a no-op while a restore runs).
   useEffect(() => reset(), [dest, targetPath, reset]);
 
   async function handleRestore() {
@@ -502,9 +391,6 @@ function FileSetRestoreControl({
     void fire();
   }
 
-  // Destination choice, on the shared Selector component (GlimStone
-  // form-engine Phase 2, Task 3). "select" only enters the items array in
-  // advanced mode — see the `advanced` comment above.
   const destItems: SelectorItem[] = [
     { id: "original", label: t("files.restoreOriginal"), disabled: noPath, title: noPath ? t("files.noPathHint") : undefined },
     { id: "folder", label: t("files.restoreToFolder") },
@@ -514,23 +400,9 @@ function FileSetRestoreControl({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2 flex-wrap">
-        {/* label reuses the existing "Restore" string rather than a new
-            aria-only i18n key: this strip's own three item labels already
-            describe the actual choice ("Restore to original location" /
-            "Restore to a folder" / "Select files"), and this repo's i18n
-            convention (see lib/i18n.ts's 26-locale parity test) requires a
-            brand-new key to land in every locale in the same pass — not
-            worth doing for a screen-reader-only group name that "Restore"
-            already names clearly enough in context. */}
-        {/* buttonHeight, because the Restore button sits in this same row
-            (jdp, 2026-09-11, on this exact strip: "soll das nicht besser ein
-            horizontaler selektor sein oder zumindest alle buttons gleiche
-            höhe?"). It already was a horizontal selector, so the answer is the
-            second half. Measured on the running build before changing
-            anything: these three segments came out 24px and the button beside
-            them 32px, which is why the square glyph-mode button read as too
-            tall - it was the only control in the row at the height the house
-            gives a button. */}
+        {/* The group reuses the "Restore" label, since the items name each
+            choice. buttonHeight gives the segments the height of the Restore
+            button beside them. */}
         <Selector
           items={destItems}
           label={t("snapshots.restore")}
@@ -540,8 +412,7 @@ function FileSetRestoreControl({
           onChange={(id) => setDest(id as RestoreDest)}
           disabled={isPending}
         />
-        {/* The whole-set restore button + its own picker/progress; the selective
-            mode renders its own controls below (FileSetFileBrowser). */}
+        {/* Selecting files brings its own controls in FileSetFileBrowser. */}
         {dest !== "select" && (
           <Button
             label={t("snapshots.restore")}
@@ -612,18 +483,10 @@ function FileSetRestorePanel({
   hostMountRoot: string;
   restoreFolder: string;
   t: T;
-  /** Delete-all forgets the whole set — the parent must reload the list. */
+  /** Delete-all forgets the whole set, so the parent must reload the list. */
   onSetsChanged: () => void;
-  /** Always-visible summary shown at the far end of the trigger's own row,
-   *  never inside the panel it opens.
-   *
-   *  This is the container card's shape, adopted here (jdp, 2026-09-11: "kannst
-   *  du die buttons und toggle in den ordner cards genauso anordnen wie in den
-   *  container cards?"). There, "Letztes Backup: …" shares the disclosure
-   *  row rather than occupying the card's top-right corner, and the corner
-   *  carries the action badges instead. A prop rather than a second row,
-   *  because the trigger row already exists and this text is one line of
-   *  summary, not a section of its own. */
+  /** A summary at the far end of the disclosure's row, always visible, as the
+   *  container card shows its last backup there. */
   trailing?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -631,8 +494,6 @@ function FileSetRestorePanel({
   const [deletingAll, setDeletingAll] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // the "Delete all" control on a failed delete, alongside the toast below.
   const [shakeDeleteAll, setShakeDeleteAll] = useState(0);
   const running = anyActive(useProgress());
 
@@ -642,14 +503,10 @@ function FileSetRestorePanel({
   // remounts the timeline below under a fresh key, so it reads the place
   // again instead of keeping the rows the delete just emptied.
   async function handleDeleteAll() {
-    // TODO(#follow-up): richer stake-detail copy ("N snapshots, X GB") belongs
-    // here once it ships (deferred — new interpolated i18n keys across all 25
-    // non-English locales, out of scope for this window.confirm() → dialog
-    // mechanism swap, form-engine Task 7). This is the highest-value site for
-    // it: an irreversible bulk delete of every backup this set has. Same
-    // flagged follow-up as OrphanRemoveButton.tsx's deleteConfirm and
-    // VMs.tsx's deleteAllConfirm.
-    if (!(await confirm(t("files.deleteBackupsConfirm")))) return;
+    // TODO: name the stake in the confirm ("N snapshots, X GB"); this one
+    // deletes every backup the set has. OrphanRemoveButton.tsx and VMs.tsx
+    // need the same.
+    if (!(await confirm(t("files.deleteBackupsConfirm"), { confirmKey: "snapshots.deleteAll" }))) return;
     setDeletingAll(true);
     deleteFileSetBackups(set.id)
       .then((res) => {
@@ -659,8 +516,7 @@ function FileSetRestorePanel({
           setReloadTick((n) => n + 1);
           return;
         }
-        // The set itself was forgotten along with its snapshots — reload the
-        // whole list so the card disappears instead of going stale.
+        // The set is forgotten with its snapshots, so the card has to go.
         onSetsChanged();
       })
       .catch(() => {
@@ -673,10 +529,8 @@ function FileSetRestorePanel({
 
   return (
     <div className="mt-1">
-      {/* Trigger left, summary flush right — the container card's own
-          disclosure row, class for class (`flex items-center gap-2 flex-wrap`
-          plus `ms-auto shrink-0` on the text), so the two cards line up
-          instead of each arranging the same two things its own way. */}
+      {/* Trigger left, summary right, class for class as in the container
+          card's disclosure row. */}
       <div className="flex items-center gap-2 flex-wrap">
         <Button
           label={t("snapshots.title")}
@@ -734,12 +588,7 @@ function FileSetRestorePanel({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Add / edit dialog
-// ---------------------------------------------------------------------------
-
-// Exported for this page's dom harness (the FoldersEditor precedent — the
-// harness renders the dialog against the mocked api client, not a whole page).
+// Exported for the page's dom tests, which render it against a mocked client.
 export function FileSetDialog({
   initial,
   presetSeed,
@@ -750,11 +599,9 @@ export function FileSetDialog({
 }: {
   /** null = create a new set; a view = edit that set. */
   initial: FileSetView | null;
-  /** Pre-fill values for a NEW set opened via "Add preset: Host system
-   *  config" (#134 — the files domain's flash-domain analogue on
-   *  generic/TrueNAS). Ignored when `initial` is set (editing an existing
-   *  set never seeds from a preset). Still just a starting point — every
-   *  field stays fully editable before Save, same as a blank create. */
+  /** Pre-fill for a new set opened through "Add preset: Host system config",
+   *  the counterpart of the flash domain on generic hosts and TrueNAS.
+   *  Ignored when editing; every field stays editable. */
   presetSeed: { name: string; path: string; excludes: string[] } | null;
   hostMountRoot: string;
   t: T;
@@ -770,9 +617,11 @@ export function FileSetDialog({
   );
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
   const [placement, setPlacement] = useState<PlacementDraftValue>({});
+  // A set with backups keeps its name, since nothing re-tags its snapshots.
+  // Locked here as well as refused by the server, so the reason shows before
+  // the attempt.
+  const hasBackups = Boolean(initial) && (initial?.lastBackup ?? 0) > 0;
   const [saving, setSaving] = useState(false);
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // the Save button alongside the toast on a failed save.
   const [shake, setShake] = useState(0);
 
   const canSave = name.trim() !== "" && path.trim() !== "" && !saving;
@@ -799,10 +648,7 @@ export function FileSetDialog({
     });
   }
 
-  // GlimStone follow-up pass (v8.0.0): the "error" flash below is now a toast
-  // — same shape as Settings.tsx's CloudCredSetsCard.save() (a dialog editor
-  // that closes on success via onSaved(), so a toast is the only outcome
-  // notice left, success or failure).
+  // The dialog closes on success, so every outcome is reported as a toast.
   async function handleSave() {
     if (!canSave) return;
     setSaving(true);
@@ -829,39 +675,20 @@ export function FileSetDialog({
     }
   }
 
-  // Portal to <body> so the fixed overlay can never be trapped by an ancestor's
-  // CSS transform (belt-and-braces with the glim-page-in keyframe fix, #62).
-  //
-  // GlimStone follow-up pass (jdp live review: "wird das Fenster zu weit oben
-  // eingeblendet, dort sitzt der Cardtitelbadge nicht richtig"): was
-  // `items-start` (top-anchored, only the backdrop's own `p-4` = 16px above
-  // the relative shell) — for THIS dialog's actual short, single-screen
-  // content that left the heading Badge's own -11px notch poking up to just
-  // ~5px below the literal browser-viewport edge (measured live), reading as
-  // a flat rectangle jammed into the corner rather than a notch with any
-  // breathing room. `items-center` is the same fix ConfirmDialog.tsx/
-  // WhatsNewDialog.tsx/ErrorDetailPanel.tsx already use for their own
-  // tone="heading" notch — safe here for the identical reason theirs is
-  // safe: the visible box below is capped at `max-h-[90vh]`, strictly under
-  // the 100vh flex container, so a centred item's top offset is always
-  // positive (never negative/off-screen) regardless of content height —
-  // short content (like this one) gets comfortable margin on all sides,
-  // and content that grows toward the 90vh cap still centres safely with
-  // `overflow-y-auto` on the backdrop covering the rest. The three sites this
-  // comment used to flag as "still owed" — Receiver.tsx's ReceiverDialog and
-  // Fleet.tsx's own two `items-start` dialogs, the identical copy-pasted
-  // shell — are now converted too (whole-app sweep), so every dialog backdrop
-  // in this app is `items-center` and there is no remaining copy to find.
+  // Portal to <body> so no ancestor's CSS transform can trap the fixed
+  // overlay. Centred rather than top-anchored, which would push the heading
+  // notch against the viewport edge; the box is capped at 90vh, so it never
+  // clips.
   return createPortal(
     <div
       className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
       onClick={onClose}
     >
-      {/* GlimStone follow-up pass ("half-overlap card notch"): non-scrolling
-          `relative` shell wraps the scrollable dialog box — see
-          Receiver.tsx's ReceiverDialog for the identical split and why. */}
+      {/* The heading notch sits on a non-scrolling shell around the
+          scrollable box, as in Receiver.tsx's ReceiverDialog. */}
       <div className="relative w-full max-w-lg">
-      {/* `px-5` matches the box's `p-5` so the heading notch lands where a Card's does ([542]) — see FolderBrowser.tsx for why the notch has no offset of its own. */}
+      {/* px-5 matches the box's p-5 so the notch lands where a Card's does;
+          FolderBrowser.tsx explains why the notch has no offset of its own. */}
       <h2 className="flex items-center px-5">
         <Badge tone="heading" size="heading" wrap>{initial ? t("files.editSet") : t("files.addSet")}</Badge>
       </h2>
@@ -872,17 +699,21 @@ export function FileSetDialog({
         onClick={(e) => e.stopPropagation()}
         className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
       >
-        {/* Name — feeds the restic tag, so the server validates it strictly. */}
+        {/* The name becomes a restic tag, so the server validates it strictly. */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-carbon-textSub">{t("files.name")}</label>
+          <label className="flex items-center gap-1 text-xs text-carbon-textSub">
+            {t("files.name")}
+            {hasBackups && <InfoBubble tip={t("files.nameLocked")} />}
+          </label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            disabled={hasBackups}
             spellCheck={false}
             autoComplete="off"
             placeholder="documents"
-            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
+            className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus disabled:opacity-50"
           />
         </div>
 
@@ -895,13 +726,9 @@ export function FileSetDialog({
             hostMountRoot={hostMountRoot}
             onChange={setPath}
           />
-          {/* A3 disclosure (04-02's PATCH-time clear rule): saving a changed
-              path clears the ticked sub-folder selection server-side, so the
-              consequence is named HERE, before it happens. Unconditional by
-              design — it states the consequence, not a condition, so it fires
-              whether or not a selection is stored (and for a create, where
-              none can exist yet). The tree-editing surface itself lives on the
-              card (FileSetFoldersEditor), never in this dialog. */}
+          {/* Saving a new path clears the ticked sub-folder selection on the
+              server, so the hint says so beforehand, whether or not a
+              selection exists. The tree itself lives on the card. */}
           <p className="text-caption text-carbon-textMuted">{t("files.pathChangeHint")}</p>
           <p className="text-caption text-carbon-textMuted">{t("files.pathHint")}</p>
         </div>
@@ -921,14 +748,8 @@ export function FileSetDialog({
           <p className="text-caption text-carbon-textMuted">{t("files.excludesHint")}</p>
         </div>
 
-        {/* Include in schedule */}
-        {/* ToggleRow, not a bare Toggle ([544]). A bare Toggle sets its label
-            immediately beside the switch; every setting row in this app puts the
-            words at the start and the switch at the end, which is what ToggleRow
-            renders (`flex items-start justify-between`). jdp: "der toggle soll
-            rechtsbuendig sein, der text linksbuendig". Fixed at the shared
-            component rather than by hand-matching classes here, the same reason
-            IncludeToggle.tsx gives for its own switch to ToggleRow. */}
+        {/* ToggleRow, not a bare Toggle: every setting row in this app puts
+            the words at the start and the switch at the end. */}
         {/* A new set has no card yet, so its placement is chosen here; an
             existing set changes it on its card. */}
         {!initial && <PlacementDraft value={placement} onChange={setPlacement} />}
@@ -938,7 +759,7 @@ export function FileSetDialog({
         <div className="flex items-center justify-end gap-2 pt-1">
           <Button
             label={t("files.cancel")}
-          labelKey="files.cancel"
+            labelKey="files.cancel"
             tone="neutral"
             onClick={onClose}
             disabled={saving}
@@ -962,74 +783,32 @@ export function FileSetDialog({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Choose folders — the Files-page selection tree (Phase 4, INTEG-02)
-// ---------------------------------------------------------------------------
-
-// The Phase 2 SelectionTree remounted over ONE set root, per the UI-SPEC reuse
-// contract (items 1-9): a row-level disclosure on the set card — never inside
-// FileSetDialog, whose full-set PATCHes would race the live-selection queue —
-// one synthetic root (the set's resolved host path), lazy children through
-// GET /api/browse with hostMountRoot as the browse prefix, and NO container
-// surfaces: no CACHEDIR switch (optional props skip the sub-row), no custom
-// rows, no dest←source arrow, no Reset (the files domain has no
-// auto-detection fallback; D-06's exit is Delete folder set, named by the refusal
-// copy).
-//
-// The genuinely new decision is the NULL mirror seed (UI-SPEC item 9): a set
-// whose selected_paths is NULL — never touched by this tree — is seeded with a
-// SYNTHETIC include of its root, so the root renders CHECKED and the preview
-// reads "1 path": exactly what the legacy argv [SourceDir] covers. Rendering
-// it unchecked would contradict both the trust posture and D-06's own logic.
-// The seed lives in client state only; nothing PATCHes until the first
-// toggle, so the column stays NULL (legacy argv pinned by plan 01's tests).
-//
-// The D-07 exclusions audit list needs no Files-side code either: the per-root
-// review disclosure (rootExclusions over the mirror — folders.exclusions
-// count + relative mono muted rows, collapsed on every reopen, rendered
-// identically for active and dormant roots, zero interactive controls) is
-// INSIDE SelectionTree since Phase 3 and lights up for this synthetic root the
-// moment the mirror holds exclusions. Restating it here would be a second
-// audit surface — the exact duplication the phase's zero-second-
-// implementation lock forbids; the Files.tree.dom pins lock this page's
-// rendering of it instead.
-//
-// Exported for this page's dom harness (the FoldersEditor precedent — the
-// harness renders the editor against the mocked api client, not a whole card).
-
-/** What one queued file-set PATCH was initiated for (Containers.tsx Pattern 4,
- *  narrowed to the files editor's single owed class — there are no caches or
- *  reset descriptors here). `pre`/`sent` carry the initiating mutation's
- *  mirror effect so a FAILURE can revert by set-difference inverse
- *  (revertFrom below) instead of a captured snapshot — a snapshot would also
- *  undo newer toggles stacked behind the failed one (Pitfall 5). `node` is
- *  the row a failure blames: its shake replays and (for a coded
- *  empty-selection refusal) the inline warn line routes under it. */
+/** What a queued file-set PATCH was sent for. `pre` and `sent` hold the
+ *  toggle's effect, so a failure undoes exactly that toggle (revertFrom)
+ *  rather than restoring a snapshot, which would also undo newer toggles
+ *  queued behind it. `node` is the row a failure points at: it shakes, and
+ *  an empty-selection refusal puts its warn line under it. */
 interface FileSetSaveDesc {
   node: string;
   pre: { includes: ReadonlySet<string>; exclusions: ReadonlySet<string> };
   sent: { includes: ReadonlySet<string>; exclusions: ReadonlySet<string> };
 }
 
-/** Remount key for FileSetFoldersEditor (review CR-01): set id + anchor +
- *  selection PRESENCE. The editor seeds its (includes, exclusions) mirror from
- *  the mount-time `set` prop and never re-syncs, so an edited `set` prop alone
- *  reaches nothing: after a folder edit through FileSetDialog — which fires the
- *  server-side A3 clear (selected_paths = NULL) — the still-mounted editor kept
- *  the OLD anchor's mirror, whose next full-list PATCH was either atomically
- *  refused against the new root (the editor wedged until a page reload) or,
- *  when the path moved deeper, silently resurrected entries the clear had just
- *  deleted. Keying the element on this string remounts the editor on every
- *  anchor/selection-presence change and reseeds from the fresh (post-clear)
- *  view — NULL reseeds to the synthetic root include (UI-SPEC item 9).
- *  Content-only changes of a PRESENT selection deliberately keep the same key:
- *  a list refetch must not reset the editor's expansion memory or browse
- *  cache, nor tear down the serialized save queue while a PATCH is in flight
- *  (Pattern 4). */
+/** fileSetEditorKey is the remount key for FileSetFoldersEditor: set id, path
+ *  and whether a selection is stored. The editor seeds its state from the
+ *  mount-time props and never re-syncs, so after a path edit, which clears the
+ *  selection on the server, it has to remount; otherwise its next PATCH would
+ *  be refused against the new root or bring the cleared entries back. A changed
+ *  selection keeps the key, so a list refetch leaves the expansion, the browse
+ *  cache and a PATCH in flight alone. */
 export function fileSetEditorKey(set: FileSetView): string {
   return `${set.id}:${set.path}:${set.selectedPaths ? "set" : "null"}`;
 }
 
+// FileSetFoldersEditor puts the SelectionTree over the set's one root, as a
+// disclosure on the set card. It stays out of FileSetDialog, whose full-set
+// PATCHes would race the live save queue, and leaves out the container extras
+// (CACHEDIR switch, custom rows, Reset). Exported for the page's dom tests.
 export function FileSetFoldersEditor({
   set,
   hostMountRoot,
@@ -1045,41 +824,30 @@ export function FileSetFoldersEditor({
   // The set's resolved host path, cleaned on both segments (browseRelToHost is
   // the exact inverse of the browse prefix swap the tree performs below).
   const root = noPath ? "" : browseRelToHost(set.path, hostMountRoot);
-  // The (includes, exclusions) mirror in host path space — splitFlatSet over
-  // the stored selection, with the NULL case seeded as a synthetic include of
-  // the root (UI-SPEC item 9; see the block comment above). Seeded once per
-  // editor instance — these seed inputs are read exactly here, never
-  // reactively. Reseeding is the CALL SITE's job (review CR-01): the element
-  // is keyed by fileSetEditorKey(set) (id + anchor + selection presence), so a
-  // folder edit through FileSetDialog — which fires the server-side A3 clear —
-  // remounts this component and re-runs this seed against the fresh
-  // (post-clear) view, instead of the mounted editor keeping the old anchor's
-  // mirror (wedged PATCHes against the new root, or silent resurrection of
-  // cleared entries).
+  // Includes and exclusions in host paths. A set without a stored selection is
+  // seeded with an include of its root, so the root renders checked and the
+  // preview reads "1 path", which is what its backup covers; nothing is
+  // written until the first toggle. The seed is read once per mount, and
+  // fileSetEditorKey remounts the editor when it has to change.
   const seed = splitFlatSet(noPath ? [] : (set.selectedPaths ?? [root]));
   const [includes, setIncludes] = useState<Set<string>>(seed.includes);
   const [exclusions, setExclusions] = useState<Set<string>>(seed.exclusions);
-  // The mirror the queue reads through a ref (Containers.tsx Pattern 4): the
-  // ref the save pipeline reads and the state the tree renders can never
-  // drift apart, because every mutation lands in this one helper.
+  // The save queue reads the selection through this ref; applyMirror keeps it
+  // in step with the state the tree renders.
   const mirrorRef = useRef<{ inc: Set<string>; exc: Set<string> }>({ inc: seed.includes, exc: seed.exclusions });
-  // Per-row busy/shake maps keyed by HOST path, exactly like FoldersEditor's;
-  // blockedPath carries the row whose last toggle was refused (client or
-  // server D-06) so SelectionTree renders the inline warn line under it.
+  // Per-row busy and shake state keyed by host path, as in FoldersEditor.
+  // blockedPath is the row whose last toggle was refused, for the warn line.
   const [rowBusy, setRowBusy] = useState<Record<string, boolean>>({});
   const [rowShake, setRowShake] = useState<Record<string, number>>({});
   const [blockedPath, setBlockedPath] = useState<string | null>(null);
-  // Editor-lifetime listings cache (Phase 2 research, Pitfall 3): survives the
-  // disclosure closing (this component stays mounted above its null return),
-  // dies with the page.
+  // Listings cached for the editor's lifetime, so closing the disclosure
+  // keeps them.
   const browseCache = useRef(new Map<string, Promise<BrowseResponse>>());
   const { push } = useToast();
-  // The one-deep serialized PATCH queue (T-04-11; Containers.tsx Pattern 4
-  // narrowed to ONE owed class): while an attempt is in flight a further
-  // toggle just updates the mirror and marks the queue dirty; when the
-  // attempt resolves, a single drain sends the LATEST full flat list. A slow
-  // or failing save can therefore never clobber a newer toggle, and a burst
-  // collapses to one draining request.
+  // A one-deep PATCH queue. While an attempt is in flight, further toggles
+  // only update the selection and mark the queue dirty; when it settles, one
+  // follow-up sends the latest full list. A slow or failing save can never
+  // overwrite a newer toggle.
   const queueRef = useRef<{ inFlight: boolean; dirty: boolean }>({ inFlight: false, dirty: false });
   const pendingDescRef = useRef<FileSetSaveDesc | null>(null);
   // Rows whose toggles are folded into the next attempt's body (an attempt
@@ -1093,9 +861,7 @@ export function FileSetFoldersEditor({
     setExclusions(exc);
   }
 
-  // Queue entry point — called AFTER the mirror has been updated (the exact
-  // FoldersEditor shape, minus the reset-stickiness: the files editor has no
-  // reset class).
+  // Called after the selection has been updated, as in FoldersEditor.
   function scheduleSave(desc: FileSetSaveDesc): void {
     if (queueRef.current.inFlight) {
       queueRef.current.dirty = true;
@@ -1106,11 +872,9 @@ export function FileSetFoldersEditor({
     void attemptSave();
   }
 
-  // One save attempt. The body is composed at attempt start from the LIVE
-  // mirror — never from desc.sent, which is already stale when later
-  // mutations stacked behind it. Every file-set selection PATCH the editor
-  // sends comes through here as a single fetchJSON call, so no two saves are
-  // ever concurrent (maxConcurrentPatches === 1, pinned in the harness).
+  // The body is built from the current selection when the attempt starts, not
+  // from desc.sent, which is stale once later toggles queued behind it. Every
+  // selection PATCH goes through here, so no two run at once.
   async function attemptSave(): Promise<void> {
     queueRef.current.inFlight = true;
     const rows = [...pendingRowsRef.current];
@@ -1121,15 +885,11 @@ export function FileSetFoldersEditor({
       const live = mirrorRef.current;
       const r = await patchFileSet(set.id, { selectedPaths: toFlatList(live.inc, live.exc) });
       if (r.ok) {
-        // The live-save house shape (FoldersEditor's paths class): the saved
-        // toast announces each acknowledged pick.
         push(t("folders.saved"), "success");
       } else {
-        // Server error text VERBATIM, coded envelope or not. A coded
-        // "empty-selection" refusal additionally routes to the same inline
-        // warn line the client-side block uses (defense-in-depth: unreachable
-        // while the client block below exists, honored when it fires — a
-        // concurrent writer or a stale anchor can still produce it).
+        // A coded empty-selection refusal also gets the client check's warn
+        // line. The client check normally prevents it, but a concurrent
+        // writer or a stale anchor can still cause one.
         push(r.error ?? t("settings.error"), "fail");
         if (desc) {
           if (r.code === "empty-selection") setBlockedPath(desc.node);
@@ -1153,11 +913,8 @@ export function FileSetFoldersEditor({
     }
   }
 
-  // Failure revert: un-apply the failed mutation's DELTA onto the live
-  // mirror — delete what it added, re-add what it removed. applyToggle's
-  // inverse computed as set differences, so a toggle that happened AFTER the
-  // failed one (but before its save resolved) survives untouched; restoring a
-  // captured pre-mutation snapshot here is the exact Pitfall 5 bug.
+  // Undoes only the failed toggle on the current selection: removes what it
+  // added and adds back what it removed, so a toggle made after it survives.
   function revertFrom(desc: FileSetSaveDesc): void {
     const live = mirrorRef.current;
     const inc = new Set(live.inc);
@@ -1166,13 +923,9 @@ export function FileSetFoldersEditor({
     for (const p of desc.pre.includes) if (!desc.sent.includes.has(p)) inc.add(p);
     for (const p of desc.sent.exclusions) if (!desc.pre.exclusions.has(p)) exc.delete(p);
     for (const p of desc.pre.exclusions) if (!desc.sent.exclusions.has(p)) exc.add(p);
-    // The same zero-include floor the container editor has. A toggle stacked
-    // behind this save was checked against a mirror that still carried this
-    // attempt's optimistic include; taking it back can leave none. The server
-    // refuses an include-less set outright, so unlike the container case this
-    // is not data loss - it is a tree that shows nothing ticked while the
-    // stored selection is still the old one, plus a fail toast. Falling back to
-    // this attempt's pre-state is server truth: the save never landed.
+    // A toggle queued behind this save was checked against a selection that
+    // still had this attempt's include, so undoing it can leave none. The
+    // server never stored that, so fall back to the includes it still has.
     if (inc.size === 0) {
       for (const p of desc.pre.includes) inc.add(p);
     }
@@ -1180,17 +933,13 @@ export function FileSetFoldersEditor({
     setRowShake((s) => ({ ...s, [desc.node]: (s[desc.node] ?? 0) + 1 }));
   }
 
-  // One tree checkbox toggle — optimistic reducer apply over the LIVE mirror
-  // (the ref, not the state closure), then the queue. The shared applyToggle
-  // is the ONLY mutation path (T-02-10; no second selection implementation
-  // exists here). D-06's client half runs BEFORE anything else: a toggle that
-  // would leave ZERO includes for the set never PATCHes — the refusal copy
-  // orients to Delete folder set (the files domain has no Reset and no
-  // auto-detection fallback to return to).
+  // Applies the toggle optimistically to the current selection (the ref, not
+  // the state closure) and queues the save. A toggle that would leave the set
+  // without includes never reaches the server; its warn line points to
+  // deleting the set, since file sets have no Reset.
   function onToggle(hostPath: string): void {
     const pre = { includes: mirrorRef.current.inc, exclusions: mirrorRef.current.exc };
     const next = applyToggle(hostPath, pre.includes, pre.exclusions);
-    // A reducer no-op must never become a save (review CR-01 discipline).
     const unchanged =
       next.includes.size === pre.includes.size &&
       [...next.includes].every((p) => pre.includes.has(p)) &&
@@ -1213,16 +962,11 @@ export function FileSetFoldersEditor({
     });
   }
 
-  // A no-Path set has nothing to present — the card's files.noPathHint line
-  // stands in (D-02). Guarded here AND at the FileSetRow call site, so the
-  // disclosure can never render for a set the tree cannot represent, even if
-  // a future caller forgets the gate. After the hooks (rules of hooks).
+  // A set without a path has no tree; the card's noPathHint line stands in.
+  // FileSetRow checks this too. The check comes after the hooks.
   if (noPath) return null;
 
   return (
-    // UI-SPEC item 1 placement: below the Backups/Restore disclosure,
-    // separated by a top border; full-width text button, rotating chevron,
-    // aria-expanded + aria-controls to the region it reveals.
     <div className="border-t border-carbon-border pt-3">
       <button
         type="button"
@@ -1247,13 +991,9 @@ export function FileSetFoldersEditor({
       {open && (
         <div id={regionId} role="region" aria-label={t("folders.title")} className="mt-2 flex flex-col gap-2">
           <p className="text-xs text-carbon-textMuted">{t("files.foldersHint")}</p>
-          {/* One synthetic root, per UI-SPEC item 2: source = the resolved
-              host path, dest = "" (the tree then labels the row with the bare
-              path — no dest←source arrow), reachable always. The preview count
-              line on that root row renders from rootIncludeCount inside
-              SelectionTree — the exact maximal-include membership the next
-              backup hands restic (T-04-10: never a DOM or loaded-children
-              count; pinned against toFlatList membership in the harness). */}
+          {/* One root: the resolved host path with an empty dest, so the row
+              is labelled with the bare path. Its count comes from
+              rootIncludeCount, the paths the next backup hands restic. */}
           <SelectionTree
             mounts={[{ source: root, dest: "", selected: true, isAppdata: false, reachable: true }]}
             customPaths={[]}
@@ -1269,9 +1009,7 @@ export function FileSetFoldersEditor({
             busyPaths={new Set(Object.keys(rowBusy).filter((k) => rowBusy[k]))}
             shakeCounts={rowShake}
             blockedPath={blockedPath}
-            // D-06 copy routing: the refusal orients to THIS card's exit
-            // ("Delete folder set"), not the folders page's "Reset" (UI-SPEC copy
-            // table; the files domain has no Reset and no auto-detect).
+            // Points to deleting the set rather than to a Reset.
             blockedMessage={t("files.emptySelectionBlocked")}
           />
         </div>
@@ -1279,10 +1017,6 @@ export function FileSetFoldersEditor({
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// File-set row
-// ---------------------------------------------------------------------------
 
 export function FileSetRow({
   set,
@@ -1302,9 +1036,7 @@ export function FileSetRow({
   onEdit: () => void;
   /** Takes the card view a placement change answered with. */
   onPlacement: (next: PlacementView) => void;
-  /** Position in the rendered list — the rainbow palette position (GlimStone
-   *  form-engine Phase 2, Task 2). Assigned by LIST INDEX, never a hash of
-   *  `set.id`/name — see the caller below. */
+  /** Rainbow position by list index, not a hash of the id or name. */
   index: number;
 }) {
   const progressMap = useProgress();
@@ -1313,15 +1045,13 @@ export function FileSetRow({
   const [removing, setRemoving] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
-  // failed action toasts AND shakes its button.
   const [shake, setShake] = useState(0);
 
   const noPath = set.path === "";
   const pathMissing = !noPath && !set.pathExists;
 
   async function handleRemove() {
-    if (!(await confirm(t("files.deleteSetConfirm")))) return;
+    if (!(await confirm(t("files.deleteSetConfirm"), { confirmKey: "common.delete" }))) return;
     setRemoving(true);
     try {
       const res = await deleteFileSet(set.id);
@@ -1340,17 +1070,14 @@ export function FileSetRow({
 
   return (
     <div
-      style={{ ...hueVars(rainbowAt(index)), "--row-i": String(index) } as CSSProperties}
-      // glim-tint washes the card (trap #2 — without it this card shows
-      // almost no colour at rest); glim-active while THIS set's own
-      // backup/restore is actively running — mirrors ContainerRow/VMRow.
-      // glim-stagger-row (GlimStone motion-engine animation 3) — see
-      // ContainerRow's identical comment.
+      style={{ ...hueVars(index), "--row-i": String(index) } as CSSProperties}
+      // glim-active while this set's own backup or restore runs, as in
+      // ContainerRow and VMRow.
       className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-stagger-row ${
         progress?.active ? "glim-active" : ""
       }`}
     >
-      {/* Top row: name + chips, path, last backup */}
+      {/* Top row: name, chips and path, with the action badges. */}
       <div className="flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -1358,13 +1085,6 @@ export function FileSetRow({
               {set.name}
             </span>
             {set.excludes.length > 0 && (
-              // GlimStone completeness sweep: was a hand-rolled span byte-
-              // identical to Badge's own tone="neutral" medium-stage classes
-              // (bg-carbon-surface2/text-carbon-textSub, rounded-control) —
-              // exactly the drift Badge.tsx exists to prevent. `wrap` matches
-              // this straggler's original un-clipped, content-grows sizing
-              // (no fixed height, just px-2/py-0.5) more closely than the
-              // default fixed-height stage would.
               <Badge tone="neutral" wrap>
                 {t("files.excludesCount").replace("{n}", String(set.excludes.length))}
               </Badge>
@@ -1392,43 +1112,13 @@ export function FileSetRow({
           )}
         </div>
 
-        {/* Action badges, top-right — the corner "Letztes Backup" used to
-            occupy (jdp, 2026-09-11: "kannst du die buttons und toggle in den
-            ordner cards genauso anordnen wie in den container cards?"). That is
-            exactly the move the container card already made, in the same words
-            from the same reviewer ("Jetzt sichern und Export sollen
-            quadratische Badges mit Glyph sein, die sollen rechts oben in der
-            Ecke sein wo jetzt Letztes Backup steht"), and this card was the one
-            left behind: it kept the badges scattered along a middle row while
-            the corner held text.
-
-            The date is not lost, it moves down beside the Backups trigger, the
-            same place the container card keeps its own `lastBackupText`. One
-            fact, one place.
-
-            Same `ms-auto flex items-start gap-1.5 shrink-0` wrapper, and the
-            same gap-1.5 between adjacent 32px tiles that every icon-badge pair
-            in this app uses. Backup first because it is the thing somebody
-            comes to the card to do; edit and remove follow. */}
+        {/* Action badges in the top-right corner, as on the container card;
+            the last backup sits beside the Backups trigger instead. Backup
+            comes first, since it is what the card is for. */}
         <div className="ms-auto flex items-start gap-1.5 shrink-0">
           <FileSetBackupButton set={set} t={t} onBackedUp={onRefresh} running={running} />
-          {/* Just the verb (jdp, 2026-09-11: "Odner-Set bearbeiten soll nur
-              Bearbeiten heißen, Ordner-Set löschen nur Löschen"). These two sit
-              INSIDE the card of the set they act on, so naming the set again on
-              the badge repeats what the heading two lines up already says - and
-              in reactive mode that repetition is the whole word that appears
-              under the pointer.
-
-              New `common.edit` / `common.delete` rather than editing
-              files.editSet: that key is ALSO the edit dialog's own heading
-              (see FileSetDialog), where "Bearbeiten" alone would stop saying
-              what is being edited. Two call sites, two jobs, two keys.
-
-              The words are not new translations - they are lifted from what
-              the app already says for these verbs (offsite.targets.edit and
-              snapshots.delete), so the house key cannot drift from the rest.
-              `common.delete` still matches glyphFor's `/\.(delete|remove)/`,
-              so the trash resolves the same way. */}
+          {/* Just the verb: the card already names the set. files.editSet
+              stays the dialog heading, where the set has to be named. */}
           <Button
             label={t("common.edit")}
             labelKey="common.edit"
@@ -1451,39 +1141,16 @@ export function FileSetRow({
         </div>
       </div>
 
-      {/* Actions row — the schedule toggle, flush right and nothing else.
-          The container card's own equivalent row is a single `ms-auto flex
-          flex-col items-end` stack of toggle rows, and it says why: once the
-          action badges moved into the top-right corner, this row was free to
-          become one flush-right column. The folder card now has the same two
-          moves behind it, so it gets the same row.
-
-          The edit and remove badges that used to sit here are in that corner
-          now, next to the backup badge. They are actions, not settings, and a
-          row that mixed a switch with two action tiles read as one group of
-          four unrelated controls. */}
+      {/* The schedule toggle, flush right below the badges, as on the
+          container card. */}
       <div className="flex items-start">
         <div className="ms-auto flex flex-col items-end gap-2">
-          {/* No wrapping `<label>`/`<span>` anymore: FileSetEnabledToggle now
-              renders the full ToggleRow itself (label included, text-first),
-              the identical shape Containers.tsx's IncludeToggle call site
-              already uses — see that component's own comment. */}
           <FileSetEnabledToggle id={set.id} initial={set.enabled} />
         </div>
       </div>
 
-      {/* #199: the consequence of the toggle right ABOVE, in words. This tab is
-          where a set is created and where the include switch is flipped, so it
-          is the second place a reader can walk away with the wrong belief about
-          whether the folder is protected. Same component, same server-computed
-          sentence as the Schedules card.
-
-          It sat between the badge corner and the toggle until now, which put a
-          sentence between the switch and the badges it belongs under. jdp asked
-          for the toggle directly beneath the buttons (2026-09-11: "der toggle
-          im zeitplan einschließen bitte direkt unter die oberen buttons"), so
-          the line moves below the switch it describes. It reads better there
-          anyway: a consequence after the control, not before it. */}
+      {/* What the toggle above means for this set, in the same
+          server-computed sentence as the Schedules card. */}
       <EffectiveScheduleLine effective={set.effectiveSchedule} />
 
       <PlacementRow
@@ -1493,8 +1160,8 @@ export function FileSetRow({
         onView={onPlacement}
       />
 
-      {/* Backups / Restore disclosure, with the last-backup date on its own
-          row — the container card's shape. See `trailing`'s own doc. */}
+      {/* Backups disclosure with the last-backup date on its row, as on the
+          container card. */}
       <FileSetRestorePanel
         set={set}
         hostMountRoot={hostMountRoot}
@@ -1502,12 +1169,8 @@ export function FileSetRow({
         t={t}
         onSetsChanged={onRefresh}
         trailing={
-          // A column, so the running note sits ON TOP of the date it qualifies
-          // (jdp, 2026-09-11). The two belong together: one says the card is
-          // busy right now, the other says when it last was not. Only ever one
-          // line tall at rest - the note renders only while something else is
-          // actually running, and `text-end` keeps both flush with the card's
-          // right edge whether or not it is there.
+          // A column, so the note that something else is running sits above
+          // the date it qualifies. At rest only the date shows.
           <span className="ms-auto shrink-0 flex flex-col items-end text-xs whitespace-nowrap">
             {running.active && !progress?.active && (
               <span className="text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
@@ -1521,18 +1184,13 @@ export function FileSetRow({
         }
       />
 
-      {/* Choose folders — the Phase 2 SelectionTree over this set's own root
-          (Phase 4, INTEG-02; UI-SPEC item 1: below the restore disclosure,
-          separated by the editor's own top border). A no-Path set renders no
-          disclosure — the files.noPathHint line in the header stands in.
-          Keyed by fileSetEditorKey (review CR-01): the editor seeds its mirror
-          from mount-time props only, so an anchor or selection-presence change
-          (a dialog path edit and its server-side A3 clear) must remount it. */}
+      {/* Keyed by fileSetEditorKey, because the editor seeds from its
+          mount-time props and has to remount after a path edit. */}
       {!noPath && (
         <FileSetFoldersEditor key={fileSetEditorKey(set)} set={set} hostMountRoot={hostMountRoot} t={t} />
       )}
 
-      {/* Live backup/restore progress, pinned to the card's bottom edge */}
+      {/* Pinned to the card's bottom edge. */}
       {progress && (
         <ProgressBar
           percent={progress.percent}
@@ -1540,16 +1198,9 @@ export function FileSetRow({
           label={progress.phase === "restore" ? t("common.restoring") : t("common.backingUp")}
         />
       )}
-      {/* Stop a backup that is running (#200). Beside the bar that shows it,
-          because that bar is the only place this card admits something is
-          happening at all, and a control for stopping a thing belongs where the
-          thing is visible.
-            Only while a BACKUP is actually running: the restore has its own
-          cancel inside the Backups panel above, with its own confirmation about
-          a half-restored target, and two cancel buttons on one card that mean
-          different things is worse than none. `progress.active` gates it so a
-          finished run's last frame does not leave a button that can only ever
-          answer "nothing to cancel". */}
+      {/* Stops a running backup, next to the bar that shows it. A restore has
+          its own cancel in the Backups panel, with its own warning about a
+          half-restored target. */}
       {progress && progress.active && progress.phase !== "restore" && (
         <div className="flex justify-end">
           <BackupCancelButton cancelKey={`files:${set.name}`} name={set.name} t={t} />
@@ -1560,18 +1211,10 @@ export function FileSetRow({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Files page
-// ---------------------------------------------------------------------------
-
 export function Files() {
   const { t } = useT();
   const { push } = useToast();
-  // One subscription for the whole list rather than one per row — see
-  // Containers.tsx's identical call for the same reasoning.
-  useRainbow();
-  // Broader "something is running" signal: any backup/restore/replication in
-  // flight disables the bulk start buttons + shows a hint.
+  // Any backup, restore or replication in flight disables the bulk buttons.
   const running = anyActive(useProgress());
   const [sets, setSets] = useState<FileSetView[]>([]);
   const [hostMountRoot, setHostMountRoot] = useState("/host/user");
@@ -1580,27 +1223,19 @@ export function Files() {
   const [error, setError] = useState<string | null>(null);
   // null = closed; "new" = create dialog; a view = edit dialog for that set.
   const [dialog, setDialog] = useState<"new" | FileSetView | null>(null);
-  // Pre-fill values for the create dialog when opened via "Add preset: Host
-  // system config" (null for a plain "Add folder set"). Only meaningful while
-  // dialog === "new"; cleared alongside it.
+  // Pre-fill for the create dialog when it was opened through "Add preset:
+  // Host system config"; null for a plain "Add folder set".
   const [presetSeed, setPresetSeed] = useState<{
     name: string;
     path: string;
     excludes: string[];
   } | null>(null);
-  // The "Host system config" preset suggestion for the current platform
-  // (#134, files domain's flash-domain analogue). null until loaded or on a
-  // failed fetch — either way the preset button stays hidden, never a
-  // half-working affordance.
+  // The "Host system config" preset for this platform. It stays null until
+  // loaded or after a failed fetch, and the preset button stays hidden.
   const [preset, setPreset] = useState<FileSetPresetResponse | null>(null);
   const [discovering, setDiscovering] = useState(false);
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // the Discover button on a failed discover, alongside its existing toast —
-  // same mechanism as Containers.tsx's/VMs.tsx's identical shakeDiscover.
   const [shakeDiscover, setShakeDiscover] = useState(0);
   const [backupAllBusy, setBackupAllBusy] = useState(false);
-  // Same shake-on-failure treatment for the "back up all" batch start — mirrors
-  // Containers.tsx's backupSelected/shakeBackupSelected.
   const [shakeBackupAll, setShakeBackupAll] = useState(0);
 
   // Only the newest read may land; an older answer arriving late would undo the
@@ -1614,8 +1249,7 @@ export function Files() {
         if (n !== read.current) return;
         if (res.ok) {
           setSets(res.fileSets ?? []);
-          // Clear any stale banner from a previous failed load — a later success
-          // must not leave "Failed to load file sets" up while the UI works.
+          // Clear the message of an earlier failed load.
           setError(null);
         } else setError(res.error ?? t("files.loadSetsFailed"));
       })
@@ -1625,12 +1259,9 @@ export function Files() {
   }
 
   useEffect(() => {
-    // Gate the loading flag on BOTH fetches (Promise.all, not two independent
-    // .finally()s): the file-set restore controls below seed their target-folder
-    // state from restoreFolder ONCE at mount (React only reads a useState
-    // initialiser the first render), so if they mounted before this settings
-    // fetch resolved they'd permanently miss the real default and fall back to
-    // the generic placeholder example instead — same class of bug as #69.
+    // Loading waits for both fetches: the restore controls seed their target
+    // folder from restoreFolder once at mount, so they must not mount before
+    // the settings arrive.
     const sets = loadSets();
     const settings = getSettings()
       .then((res) => {
@@ -1638,9 +1269,8 @@ export function Files() {
         if (res.settings?.restoreFolder) setRestoreFolder(res.settings.restoreFolder);
       })
       .catch(() => undefined);
-    // Independent of the two fetches above: a failed/slow preset lookup must
-    // never block the page (loading gate stays on sets+settings only) — the
-    // preset button just stays hidden until it resolves.
+    // A slow or failed preset lookup never holds up the page; the preset
+    // button just stays hidden.
     void getFileSetPreset()
       .then((res) => {
         if (res.ok) setPreset(res);
@@ -1658,42 +1288,31 @@ export function Files() {
     setSets((prev) => prev.map((s) => (s.id === id ? { ...s, placement: next } : s)));
   }
 
-  /** Opens the create dialog pre-filled with the "Host system config" preset
-   *  (still fully editable — Save persists through the SAME create-file-set
-   *  endpoint as a blank "Add folder set"). No-op until the preset has
-   *  loaded and is offered for this platform. */
+  /** Opens the create dialog pre-filled with the "Host system config" preset,
+   *  once it has loaded and is offered for this platform. */
   function handleAddPreset() {
     if (!preset?.offered) return;
     setPresetSeed({ name: preset.name, path: preset.path, excludes: preset.excludes });
     setDialog("new");
   }
 
-  /** Opens a blank create dialog — used by both "Add folder set" entry
-   *  points so a stale preset seed from a previous open can never leak in. */
+  /** Opens a blank create dialog, so no preset seed from an earlier open
+   *  leaks in. */
   function handleAddBlank() {
     setPresetSeed(null);
     setDialog("new");
   }
 
-  // GlimStone follow-up pass (v8.0.0): the "+N" / error note never
-  // auto-cleared (it stuck around next to the Discover button until the next
-  // click) — now a toast, mirroring Containers.tsx's/VMs.tsx's identical
-  // handleDiscover.
   async function handleDiscover() {
     setDiscovering(true);
     try {
       const res = await discoverFiles();
-      // Both paths reload the list and name what was left out. A failed pass no
-      // longer means nothing happened: the named repositories are searched
-      // before the domain's own, so when the domain's own is what failed, the
-      // rows already found are real and already written - and this page does no
-      // polling, so without the reload the operator reads a true red error over
-      // an unchanged, empty list.
+      // Both outcomes reload the list. The named repositories are searched
+      // before the domain's own, so a failed pass can still have written rows,
+      // and this page does not poll.
       if (res.skipped?.length) {
-        // A pass that could not open every repository says so. "+0" and "+3" look
-        // identical whether everything was read or a named repository was switched
-        // off, unresolvable or on a share that did not mount, and the second case
-        // is the one somebody has to act on.
+        // "+0" looks the same whether everything was read or a repository was
+        // switched off, unresolvable or on a share that did not mount.
         push(t("common.discoverSkipped").replace("{list}", res.skipped.join(", ")), "warn");
       }
       if (res.ok) {
@@ -1711,25 +1330,14 @@ export function Files() {
     }
   }
 
-  // "Back up all now" fires the SERVER-SIDE batch (batch:files) for every
-  // enabled set that has a source folder; per-set progress shows on the cards.
+  // "Back up all now" starts the server-side batch (batch:files) for every
+  // enabled set with a source folder; progress shows on the cards.
   const backupableIds = sets.filter((s) => s.enabled && s.path !== "").map((s) => s.id);
 
-  // jdp live review ("Ordnerset hinzufügen Button rechts oben kann weg, der
-  // ist redundant"): the empty-state Card below already carries its own
-  // prominent "Add folder set" (+ "Add preset", where offered) CTA, so
-  // showing the identical pair a second time in the top-right actions bar
-  // was pure duplication — confirmed both call the exact same handlers
-  // (handleAddPreset/handleAddBlank). Gate the top-right pair on NOT being in
-  // that empty state; once a set exists the empty-state Card stops rendering
-  // and the top-right pair is the page's only entry point again, so "Add" is
-  // never unreachable. Mirrors the loading/error/empty guard already used
-  // for the empty-state block itself below.
+  // The empty state has its own Add buttons, so the header ones wait for the
+  // first set.
   const showEmptyState = !loading && !error && sets.length === 0;
 
-  // GlimStone follow-up pass (v8.0.0): same "+N"/error note migrated off a
-  // stuck local span onto a toast — mirrors Containers.tsx's backupSelected
-  // (push + shakeBackupSelected).
   async function handleBackupAll() {
     setBackupAllBusy(true);
     try {
@@ -1749,13 +1357,8 @@ export function Files() {
   }
 
   return (
-    // PAGE_SHELL (jdp live-review, "Können wir die nicht überall gleich breit
-    // machen?"): was `gap-6 max-w-5xl` — the third page carrying that same
-    // off-standard pair, alongside Containers and VMs. Flat 40px, same
-    // reasoning as Containers: this page's "Alle jetzt sichern" action row is
-    // a sibling of the heading, not part of it. See lib/pageShell.ts.
     <div className={PAGE_SHELL}>
-      {/* Page heading + Discover (disaster-recovery) + Add actions */}
+      {/* Heading with Discover, for disaster recovery, and the Add actions. */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold text-carbon-text">{t("files.title")}</h1>
@@ -1774,10 +1377,8 @@ export function Files() {
             title={t("files.discoverHint")}
             className={shakeDiscover ? "glim-shake" : ""}
           />
-          {/* Generic/TrueNAS-only one-click starting point (#134): Unraid
-              already has the dedicated flash domain for host-level config, so
-              preset stays null (never offered) there. Also hidden in the
-              empty state — see showEmptyState's own comment above. */}
+          {/* Offered on generic hosts and TrueNAS only; Unraid has the flash
+              domain for host config. */}
           {!showEmptyState && preset?.offered && (
             <Button
               label={t("files.addPreset")}
@@ -1790,7 +1391,7 @@ export function Files() {
           {!showEmptyState && (
             <Button
               label={t("files.addSet")}
-          labelKey="files.addSet"
+              labelKey="files.addSet"
               tone="accent"
               onClick={handleAddBlank}
             />
@@ -1803,61 +1404,15 @@ export function Files() {
       )}
       {error && <p className="text-sm text-statusFail">{error}</p>}
 
-      {/* Empty state — the "no separate file-backup tool needed" pitch.
-          GlimStone follow-up pass (jdp live review: "Die Card im Ordner-Tab
-          hat keine Cardtitelbadge mit dem Infotext der in der Card steht"):
-          this card had no heading at all — just the icon, the permanent
-          pitch paragraph, and the buttons — the one Card-shaped box on this
-          page that never got the tone="heading" notch every other Card in
-          the app carries. `relative glim-notch-card` (no separate inner
-          overflow-hidden box needed — unlike Config.tsx's backupTitle split,
-          this card was never `overflow-hidden` to begin with, so a single
-          div can host both the badge's positioned ancestor and the visible
-          surface, matching Config.tsx's own snapshotsTitle card). The old
-          permanent `<p>{t("files.empty")}</p>` reads once and then costs
-          vertical space forever (rule 8) — moved verbatim onto the new
-          heading Badge as an `onAccent` InfoBubble instead, same content,
-          zero new i18n keys for the body (mirrors Flash.tsx's
-          backupTitle/restoreNote pass). hueIndex={0}: the only tone="heading"
-          notch on this page's own body (the dialog's h2 badge deliberately
-          carries no hueIndex, same as every other dialog title in the app),
-          and mutually exclusive with FileSetRow's OWN rainbowAt(index) tint
-          (this card only renders while the list is empty, i.e. never
-          alongside a single FileSetRow), so there is no position to collide
-          with.
-          insetStart={6} (GlimStone follow-up pass, jdp: "Files/Ordner-Tab:
-          Cardtitelbadge falsch platziert" — a SECOND, distinct root-cause
-          mechanism from the split-notch one Badge.tsx's own `insetStart` doc
-          otherwise documents: this card's `relative` ancestor and its p-6
-          padded content ARE the same single div (no structural split), so
-          the static-position fallback should already be correct here — but
-          this parent is ALSO `text-center flex flex-col items-center`
-          (centering the icon/button below), and the `<h2>` above them has NO
-          in-flow content of its own once its only child (the notch Badge)
-          becomes `position: absolute` — an h2 with nothing left in flow
-          collapses to a 0×0 box, which `items-center` then centers
-          horizontally in the card rather than stretching to the padding
-          edge. The static position then resolves against that zero-width,
-          CENTERED h2, landing the badge at the card's horizontal centre
-          (measured live: 488px right of the p-6 content edge) instead of
-          flush with it — confirmed identical on Fleet.tsx's and
-          Receiver.tsx's own empty-state Cards, which share this exact
-          `text-center items-center` recipe. `insetStart={6}` sidesteps the
-          collapsed-h2 quirk entirely: it's a real `start-6` CSS offset
-          resolved against the outer `relative` box directly, so it doesn't
-          care what the h2 collapsed to. */}
+      {/* Hue 0 cannot collide with a card's, since this only shows while the
+          list is empty. glim-hue gives the Add buttons the accent, which
+          glim-notch-card alone does not. The card centres its content, which
+          collapses the h2 to nothing, so insetStart={6} places the notch
+          against the card itself. */}
       {showEmptyState && (
-        // `.glim-hue` added (rainbow-mode completeness sweep, jdp live
-        // review: "Es sind nicht alle Buttons in den Regenbogen-Modus
-        // eingepflegt"): `glim-notch-card` alone only wires the reactive-mode
-        // hover reveal on the Badge's own notch, never --accent/--focus-ring
-        // itself, so the "Add set"/"Add from preset" buttons below stayed
-        // flat regardless of rainbow. Same hueIndex={0} the Badge already
-        // uses (Fleet.tsx's/Receiver.tsx's own identical fix, same
-        // reasoning).
         <div
           className="relative glim-notch-card glim-hue bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3"
-          style={hueVars(rainbowAt(0)) as CSSProperties}
+          style={hueVars(0) as CSSProperties}
         >
           <h2 className="flex items-center">
             <Badge tone="heading" size="heading" wrap hueIndex={0} insetStart={6}>
@@ -1878,7 +1433,7 @@ export function Files() {
             )}
             <Button
               label={t("files.addSet")}
-          labelKey="files.addSet"
+              labelKey="files.addSet"
               tone="accent"
               onClick={handleAddBlank}
             />
@@ -1886,7 +1441,6 @@ export function Files() {
         </div>
       )}
 
-      {/* Bulk "back up all" bar */}
       {!loading && sets.length > 0 && (
         <div className="flex items-center gap-3 flex-wrap">
           <Button
@@ -1907,7 +1461,6 @@ export function Files() {
         </div>
       )}
 
-      {/* File-set cards */}
       {!loading && sets.length > 0 && (
         <div className="flex flex-col gap-3 glim-content-fade">
           {sets.map((s, i) => (
@@ -1926,7 +1479,6 @@ export function Files() {
         </div>
       )}
 
-      {/* Add / edit dialog */}
       {dialog !== null && (
         <FileSetDialog
           initial={dialog === "new" ? null : dialog}

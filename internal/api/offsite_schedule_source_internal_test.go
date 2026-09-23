@@ -7,8 +7,6 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// newScheduleSourceTestService builds a Service over a migrated in-memory store —
-// enough for the settings/target reads these gate tests exercise.
 func newScheduleSourceTestService(t *testing.T) (*Service, *store.Repo) {
 	t.Helper()
 	db, err := store.Open(":memory:")
@@ -23,28 +21,10 @@ func newScheduleSourceTestService(t *testing.T) (*Service, *store.Repo) {
 	return &Service{store: st}, st
 }
 
-// TestOffsiteScheduleComesFromSettingsNotTarget is the issue #150 regression.
-//
-// The off-site CADENCE has exactly one owner: the per-domain Settings column that
-// Settings › Schedules edits. The scheduler registers each "<domain>-offsite" cron
-// entry from THAT column and nothing else (internal/schedule/schedule.go's offsite()
-// block), so if the coupled-vs-decoupled decision read the cadence from anywhere
-// else the two could disagree — and when they disagree in the direction "some other
-// source says decoupled, Settings says blank", the domain's off-site copy is
-// suppressed after every backup AND has no cron entry to run it instead: it simply
-// never happens, silently, forever.
-//
-// That is exactly what a per-target `schedule` value used to cause: offsiteScheduleFor
-// preferred the off-site TARGET ROW's schedule over the Settings column. A row can
-// carry one via the off-site-targets CRUD API (PUT /api/offsite/targets/{id} accepts
-// the field) or via a settings import, while Settings › Schedules — which reads the
-// Settings column — still shows the cadence as blank. The Folders domain then backed
-// up on schedule, pruned on schedule, and never replicated: no error, no log line, no
-// run row.
-//
-// Per-target schedules are deliberately NOT a feature (see OffsiteTargetsSection:
-// "every target of a domain replicates on that domain's off-site schedule"), so the
-// Settings column is authoritative and a stray row value must be ignored.
+// The scheduler registers the "<domain>-offsite" cron entry from the Settings
+// column alone. Reading a target row's schedule instead would let a blank
+// column plus a scheduled row skip the copy after each backup with no cron
+// entry to make up for it, and the domain would never replicate.
 func TestOffsiteScheduleComesFromSettingsNotTarget(t *testing.T) {
 	s, st := newScheduleSourceTestService(t)
 
@@ -52,9 +32,8 @@ func TestOffsiteScheduleComesFromSettingsNotTarget(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// The reporter's shape: Folders has a local repo + an off-site repo, and the
-	// off-site cadence in Settings › Schedules is BLANK ("replicate after each
-	// backup" — the coupled mode).
+	// Files has an off-site repo and a blank off-site cadence, so it replicates
+	// after each backup.
 	settings.FilesEnabled = true
 	settings.FilesPath = "backups/files"
 	settings.FilesSchedule = "daily 06:00"
@@ -63,7 +42,7 @@ func TestOffsiteScheduleComesFromSettingsNotTarget(t *testing.T) {
 	if err := st.UpdateSettings(settings); err != nil {
 		t.Fatal(err)
 	}
-	// ...but the domain's primary off-site target row carries a cadence of its own.
+	// The primary target row carries a cadence of its own.
 	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
 		Domain: "files", Name: "Primary", Repo: settings.FilesOffsite,
 		Schedule: "weekly Sun 03:00", Enabled: true, SortOrder: 0,
@@ -71,27 +50,22 @@ func TestOffsiteScheduleComesFromSettingsNotTarget(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// The scheduler registers the decoupled off-site entry from the SETTINGS column,
-	// which is blank — so there is no "files-offsite" cron entry at all.
 	if cad, err := schedule.ParseCadence(settings.FilesOffsiteSchedule); err != nil || cad.Enabled {
 		t.Fatalf("precondition: blank FilesOffsiteSchedule must not register a cron entry (enabled=%v err=%v)", cad.Enabled, err)
 	}
 
-	// Therefore the coupled path MUST own the replication: the domain must not be
-	// treated as replicating on its own schedule, or the copy is lost entirely.
 	if got := s.offsiteScheduleFor("files", settings); got != "" {
-		t.Fatalf("offsiteScheduleFor(files) = %q, want %q — the Settings column is the single source of truth for the off-site cadence; a stray target-row schedule must not override it (#150)", got, "")
+		t.Fatalf("offsiteScheduleFor(files) = %q, want %q; the Settings column is the single source of truth for the off-site cadence; a stray target-row schedule must not override it (#150)", got, "")
 	}
 	if s.offsiteReplicatesOnOwnSchedule("files", settings) {
 		t.Fatal("files must NOT be treated as replicating on its own off-site schedule: Settings › Schedules is blank, so no cron entry exists and the coupled after-backup copy is the only thing that can replicate it (#150)")
 	}
 }
 
-// TestOffsiteScheduleStillHonoursSettingsCadence is the other half of the contract:
-// when the Settings column DOES carry a cadence, the domain is decoupled (its own
-// cron entry drives replication) and the coupled after-backup copy stands down — so
-// the fix above cannot regress the decoupled mode into replicating twice.
-func TestOffsiteScheduleStillHonoursSettingsCadence(t *testing.T) {
+// With a cadence in the Settings column, the domain's own cron entry
+// replicates it and the copy after each backup stands down, whatever the
+// target row says.
+func TestOffsiteScheduleHonoursSettingsCadence(t *testing.T) {
 	s, st := newScheduleSourceTestService(t)
 
 	settings, err := st.GetSettings()
@@ -103,8 +77,6 @@ func TestOffsiteScheduleStillHonoursSettingsCadence(t *testing.T) {
 	if err := st.UpdateSettings(settings); err != nil {
 		t.Fatal(err)
 	}
-	// A target row whose schedule is blank must NOT drag the domain back into
-	// coupled mode either — Settings still wins.
 	if _, err := st.UpsertOffsiteTarget(store.OffsiteTarget{
 		Domain: "files", Name: "Primary", Repo: settings.FilesOffsite,
 		Schedule: "", Enabled: true, SortOrder: 0,

@@ -27,6 +27,10 @@ import { IconContainers, IconDownload, IconAdd } from "../components/Sidebar";
 import { IncludeToggle } from "../components/IncludeToggle";
 import { NotInstalledHeading } from "../components/NotInstalledHeading";
 import { OrphanRemoveButton } from "../components/OrphanRemoveButton";
+import { RenameTakeoverRow } from "../components/RenameTakeoverRow";
+import { LinkEntryPicker } from "../components/LinkEntryPicker";
+import { FormerNames } from "../components/FormerNames";
+import { containerTakeover } from "../lib/useTakeOver";
 import { Badge, type BadgeTone } from "../components/Badge";
 import { Button } from "../components/Button";
 import { groupStage } from "../lib/controls";
@@ -41,8 +45,7 @@ import { useConfirm } from "../lib/useConfirm";
 import { offsiteTargetLabel, useOffsiteTargets } from "../lib/useOffsiteTargets";
 import { useHostLabel } from "../lib/useHostLabel";
 import { placementErrorText } from "../lib/placementCodes";
-import { hueVars, rainbowAt } from "../lib/appearance";
-import { useRainbow } from "../lib/useRainbow";
+import { hueVars } from "../lib/appearance";
 import { Selector, type SelectorItem } from "../components/Selector";
 import { useToast } from "../lib/toast";
 import { IconSearch } from "../components/glyphs";
@@ -804,9 +807,8 @@ export function FoldersEditor({
   // persisted: no server-side include-count history exists to restore it
   // from, and reopening the section re-derives truth from the served state.
   const [narrowed, setNarrowed] = useState(false);
-  // D-05 reset confirm — fail tone with both consequences named in the
-  // message itself (ConfirmDialog's own precedent: the dialog carries the
-  // destructive weight, the trigger stays neutral).
+  // The reset confirm names both consequences in its message, so the dialog
+  // carries the weight and the trigger stays neutral.
   const { confirm, confirmDialog } = useConfirm();
 
   // Closing the section clears the note: the editor session it belongs to is
@@ -2209,6 +2211,7 @@ export function ContainerRow({
   onPlacement,
   selected,
   onToggleSelect,
+  linkCandidates = [],
   index,
 }: {
   container: Container;
@@ -2226,11 +2229,11 @@ export function ContainerRow({
   onPlacement: (next: PlacementView) => void;
   selected?: boolean;
   onToggleSelect?: () => void;
-  /** Position in the rendered list — the rainbow palette position (GlimStone
-   *  form-engine Phase 2, Task 2). A container list is exactly the case the
-   *  mode exists for: a variable, user-configured set a person tracks several
-   *  of at once. Assigned by LIST INDEX, never a hash of `container.name` —
-   *  see the callers below. */
+  /** The not-installed entries this card can take over by hand. */
+  linkCandidates?: string[];
+  /** Position in the rendered list, which picks the card's rainbow hue. It is
+   *  the list index rather than a hash of `container.name`; see the callers
+   *  below. */
   index: number;
 }) {
   const installed = container.installed;
@@ -2299,9 +2302,12 @@ export function ContainerRow({
 
   const lastBackupText = `${t("containers.lastBackup")}: ${container.lastBackup ? formatTs(container.lastBackup) : t("containers.never")}`;
 
+  const aliases = container.aliases ?? [];
+  const takeoverEntry = { name: container.name, displayName: container.name, api: containerTakeover };
+
   return (
     <div
-      style={{ ...hueVars(rainbowAt(index)), "--row-i": String(index) } as CSSProperties}
+      style={{ ...hueVars(index), "--row-i": String(index) } as CSSProperties}
       // glim-hue owns the position; glim-tint washes the WHOLE card with it
       // (trap #2, design-language.md's "Rainbow" section) — without the wash
       // this card shows almost no colour at rest, since nothing else on it
@@ -2392,25 +2398,39 @@ export function ContainerRow({
         </div>
       </div>
 
-      {/* Actions row — schedule-include + update-after-backup, both flush
-          right (Task 4/5, jdp live-review: "Im Zeitplan einschließen: Toggle
-          ganz nach rechts. Darunter der Toggle für Update nach Backup"). Both
-          toggles used to live at opposite ends of this row (include on the
-          left) / scattered among the advanced editors below (update-after-
-          backup) — "Jetzt sichern"/Export moving to the top-right icon-badge
-          corner above (Task 2) freed this row up to become a single flush-
-          right stack instead.
-          The include toggle shows on a not-installed card too (#232): such an
-          entry stays scheduled, every run records a skip for it, and the card
-          had no switch to end that short of deleting its backups.
-          IncludeToggle no longer needs a wrapping `<label>`/`<span>` here
-          (Task 2 follow-up, jdp live-review — "gleich anordnen ... Text ...
-          ganz links ... Toggle ganz rechts"): it now renders the full
-          ToggleRow itself, the identical shape UpdateAfterBackupRow already
-          renders right below it, so both toggles share one markup instead of
-          two independently hand-matched ones — see IncludeToggle.tsx's own
-          comment. */}
-      <div className="flex items-start">
+      {installed && !container.self && container.renameFrom && (
+        <RenameTakeoverRow
+          key={container.renameFrom}
+          from={container.renameFrom}
+          reason={container.renameReason ?? ""}
+          entry={takeoverEntry}
+          onDone={onDeleted}
+          t={t}
+        />
+      )}
+      {aliases.length > 0 && (
+        <FormerNames
+          aliases={aliases}
+          conflicts={container.aliasConflicts ?? []}
+          entry={takeoverEntry}
+          onDone={onDeleted}
+          t={t}
+        />
+      )}
+
+      {/* Actions row: the include toggle with update-after-backup under it,
+          both flush right. The include toggle shows on a not-installed card
+          too: such an entry stays scheduled and every run records a skip for
+          it, and this switch ends that without deleting its backups.
+          No wrapping `<label>`: IncludeToggle renders the full ToggleRow
+          itself, the same shape as UpdateAfterBackupRow. */}
+      <div className="flex items-start gap-3">
+        {/* The start of this row is free, so the link picker takes it instead
+            of a line of its own on every card without backups. A card with
+            former names is already linked, even before its first run. */}
+        {installed && !container.self && container.lastBackup == null && aliases.length === 0 && linkCandidates.length > 0 && (
+          <LinkEntryPicker candidates={linkCandidates} entry={takeoverEntry} onDone={onDeleted} t={t} />
+        )}
         <div className="ms-auto flex flex-col items-end gap-2">
           <IncludeToggle
             name={container.name}
@@ -2529,18 +2549,14 @@ export function ContainerRow({
             t={t}
           />
         </Advanced>
-        <RestorePanel name={container.name} t={t} installed={installed} open={openSections.has("backups")} />
+        <RestorePanel name={container.name} aliases={aliases} t={t} installed={installed} open={openSections.has("backups")} />
       </div>
 
-      {/* Stop a backup that is running (#200). The same control the Folders
-          page has carried since v8.7.0, and the reason it is here now: the
-          answer given on that issue promised it for any running backup, while
-          only folder sets actually had it - the server has accepted the key for
-          every domain all along. Gated exactly as it is there: not on a RESTORE,
-          which has its own control inside the Backups panel with its own warning
-          about a half-restored target, and only while the run is active, so a
-          finished run's last frame does not leave a button that can only answer
-          "nothing to cancel". */}
+      {/* Stop a running backup, gated as on the Folders page: not on a
+          restore, which has its own control and warning about a half-restored
+          target inside the Backups panel, and only while the run is active, so
+          a finished run's last frame does not leave a button that can only
+          answer "nothing to cancel". */}
       {progress && progress.active && progress.phase !== "restore" && (
         <div className="flex justify-end">
           <BackupCancelButton cancelKey={`container:${container.name}`} name={container.name} t={t} />
@@ -2679,24 +2695,10 @@ export function StackCard({
   group: StackGroup;
   onRestored: () => void;
   t: T;
-  /** Rainbow position for THIS card — GlimStone standing colour-engine rule
-   *  (jdp, live review, emphatic, five escalations deep: "Es soll immer
-   *  alles in die Farb- und Formengine integriert werden!! IMMER!!"). A gap
-   *  that survived even the fifth escalation's own sweep of this file (see
-   *  StacksPanel's own `hueIndex` doc comment above, which hued the panel's
-   *  HEADING but left every card underneath it flat): StackCard is the exact
-   *  same "row card in a list" shape as ContainerRow right above it in this
-   *  file (and Files.tsx/Fleet.tsx/Receiver.tsx/VMs.tsx's own list-row
-   *  cards) — glim-hue/glim-tint/glim-stagger-row + `hueVars(rainbowAt(index))`
-   *  — yet was the one card shape in this file with NO colour-engine wiring
-   *  at all. By LIST INDEX among the stacks rendered together (StacksPanel's
-   *  own `stacks.map`), a separate local 0-based sequence from
-   *  ContainerRow's own `live`/`orphans` index (a different list, own local
-   *  index per group — the same rule ToggleRow's own `hueIndex` doc
-   *  documents) and from the page-wide `nextHue()` counter the panel's own
-   *  heading badge uses (a heading notch and its list's row cards are two
-   *  independent sequences, same split as every other headed list on this
-   *  page). */
+  /** Rainbow position of this card among the stacks rendered together. It
+   *  counts separately from the container rows and from the page-wide
+   *  sequence the panel heading takes, as every headed list on this page
+   *  does. */
   index: number;
 }) {
   const [open, setOpen] = useState(false);
@@ -2807,7 +2809,7 @@ export function StackCard({
 
   return (
     <div
-      style={{ ...hueVars(rainbowAt(index)), "--row-i": String(index) } as CSSProperties}
+      style={{ ...hueVars(index), "--row-i": String(index) } as CSSProperties}
       // glim-hue owns the position; glim-tint washes the whole card with it,
       // glim-stagger-row reuses the same `index` for the entrance stagger — the
       // identical trio ContainerRow's own outer <div> carries above (see this
@@ -2818,7 +2820,7 @@ export function StackCard({
         <div className="min-w-0">
           <span className="font-semibold text-carbon-text text-sm wrap-break-word">{group.project}</span>
           <span className="ms-2 text-xs text-carbon-textMuted">
-            {t("stack.members").replace("{n}", String(group.members.length))}
+            {t("stack.members", group.members.length)}
           </span>
           <p className="mt-0.5 text-caption text-carbon-textMuted truncate">
             {group.members.map((m) => m.name).join(", ")}
@@ -2900,19 +2902,9 @@ function StacksPanel({
   containers: Container[];
   onRestored: () => void;
   t: T;
-  /** Rainbow position for THIS panel's own heading notch — GlimStone
-   *  follow-up pass (jdp, live review, emphatic, fifth escalation of the
-   *  standing colour-engine rule): this section heading was a
-   *  tone="heading" Badge with no hueIndex at all, so in rainbow mode it
-   *  stayed flat --accent instead of joining the same sequence the
-   *  ContainerRow cards below it clearly carry (rainbowAt(index)). Resolved
-   *  by the caller's own `nextHue()` counter, called DIRECTLY at the JSX
-   *  call site, gated on `stackGroups.length > 0` there (never an
-   *  unconditional call — see that call site's own comment for why: this
-   *  component returns null internally whenever there is no multi-member
-   *  stack, and hueIndex must never fire for a heading that won't actually
-   *  render). Omit for a genuine singleton — same rule as every other
-   *  hueIndex call site. */
+  /** Rainbow position of the panel heading. The caller passes it only when
+   *  a stack exists, because the panel renders nothing without one and an
+   *  unrendered heading must not use up a position. */
   hueIndex?: number;
 }) {
   const stacks = groupStacks(containers);
@@ -3144,7 +3136,7 @@ function BackupOrderPanel({
       className={`relative glim-notch-card bg-carbon-surface rounded-card p-4 mt-4 flex flex-col gap-3${
         hueIndex !== undefined ? " glim-hue" : ""
       }`}
-      style={hueIndex !== undefined ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined}
+      style={hueIndex !== undefined ? (hueVars(hueIndex) as CSSProperties) : undefined}
     >
       {/* Title notch, always visible regardless of collapse state (matches
           the PRE-fix behaviour, where title+count stayed visible collapsed
@@ -3293,10 +3285,6 @@ function BackupOrderPanel({
 
 export function Containers() {
   const { t } = useT();
-  // One subscription for the whole list rather than one per row: the palette
-  // changes for every row at once anyway, so this alone is what makes rainbow
-  // on/off/reactive/rotate/palette edits repaint the list live, no reload.
-  useRainbow();
   // Advanced-mode flag read directly (not just via the <Advanced> wrapper
   // below): BackupOrderPanel's own hueIndex must only be resolved via
   // `nextHue()` when the panel will ACTUALLY render — a JSX child's props
@@ -3442,21 +3430,18 @@ export function Containers() {
   const live = sorted.filter((c) => c.installed);
   const orphans = sorted.filter((c) => !c.installed);
 
-  // The FULL installed-container set, unaffected by the search/schedule/
-  // backup/installed filters above — StopContainersEditor's own multi-select
-  // picker (each ContainerRow below) needs every real candidate to stop, not
-  // just whatever this page's own view happens to have filtered down to.
+  // Unfiltered by the search and filters above: StopContainersEditor's picker in
+  // each ContainerRow needs every installed container, not just those in view.
   const installedContainers = containers.filter((c) => c.installed);
+  // Unfiltered for the same reason: a search must not hide the entry to link.
+  // An entry under another entry's former name is left out, because the server
+  // refuses to move it: that name's older backups belong to the other entry.
+  const formerNames = new Set(containers.flatMap((c) => c.aliases ?? []));
+  const notInstalledNames = containers.filter((c) => !c.installed && !formerNames.has(c.name)).map((c) => c.name);
 
-  // Precomputed here (against the UNFILTERED containers, matching
-  // StacksPanel's own internal groupStacks() call below) so its own
-  // emptiness can gate the heading's `nextHue()` call at the JSX render
-  // site — StacksPanel returns null internally when there are no
-  // multi-member stacks, and hueIndex must never fire for a heading that
-  // won't actually render (see this file's own `nextHue()` comment near the
-  // return statement for why an ungated call would shift every later
-  // heading's rainbow position by one, the exact bug class VMs.tsx's
-  // notInstalledTitle fix already caught once this session).
+  // Grouped from the unfiltered list, as StacksPanel does internally, so the
+  // heading's `nextHue()` call can be skipped when StacksPanel renders nothing.
+  // An ungated call would shift every later heading's rainbow position by one.
   const stackGroups = groupStacks(containers);
 
   // Sections the installed toggle actually renders below; when none show but the
@@ -3892,6 +3877,7 @@ export function Containers() {
               onPlacement={(next) => placeContainer(c.name, next)}
               selected={selected.has(c.name)}
               onToggleSelect={c.self ? undefined : () => toggleSelect(c.name)}
+              linkCandidates={notInstalledNames}
               index={i}
             />
           ))}

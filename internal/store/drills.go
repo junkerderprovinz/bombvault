@@ -6,10 +6,9 @@ import (
 	"fmt"
 )
 
-// RestoreDrill is one recorded restore-verification "drill" for a domain +
-// source: a `restic check --read-data-subset` run that read back real pack data
-// to prove the backup is restorable. It powers the "last verified restorable"
-// badge.
+// RestoreDrill is one restore-verification run for a domain and source, which
+// reads back real pack data to prove the backup is restorable. It backs the
+// "last verified restorable" badge.
 type RestoreDrill struct {
 	Domain string `json:"domain"`
 	Source string `json:"source"`
@@ -25,8 +24,7 @@ type RestoreDrill struct {
 const defaultRestoreDrillLimit = 365
 
 // AddRestoreDrill records a restore-verification drill result. An empty Kind
-// defaults to "subset" (mirroring the column default), so existing callers keep
-// recording the classic read-data-subset drill unchanged.
+// defaults to "subset", like the column default.
 func (r *Repo) AddRestoreDrill(d RestoreDrill) error {
 	if d.Kind == "" {
 		d.Kind = "subset"
@@ -42,7 +40,7 @@ func (r *Repo) AddRestoreDrill(d RestoreDrill) error {
 	return nil
 }
 
-// LatestRestoreDrill returns the most recent drill for a domain + source,
+// LatestRestoreDrill returns the most recent drill for a domain and source,
 // regardless of kind. The bool is false (with a zero RestoreDrill) when none
 // has been recorded yet.
 func (r *Repo) LatestRestoreDrill(domain, source string) (RestoreDrill, bool, error) {
@@ -62,9 +60,10 @@ func (r *Repo) LatestRestoreDrill(domain, source string) (RestoreDrill, bool, er
 	return d, true, nil
 }
 
-// LatestRestoreDrillKind returns the most recent drill of ONE kind ("subset" |
-// "dr") for a domain + source — e.g. the newest real-DR drill even when subset
-// checks ran since. The bool is false when that kind has never been recorded.
+// LatestRestoreDrillKind returns the most recent drill of one kind ("subset" or
+// "dr") for a domain and source, so the newest DR drill is found even when
+// subset checks ran since. The bool is false when that kind has never been
+// recorded.
 func (r *Repo) LatestRestoreDrillKind(domain, source, kind string) (RestoreDrill, bool, error) {
 	row := r.db.QueryRow(`
 		SELECT domain, source, at, ok, detail, kind
@@ -82,9 +81,8 @@ func (r *Repo) LatestRestoreDrillKind(domain, source, kind string) (RestoreDrill
 	return d, true, nil
 }
 
-// ListRestoreDrills returns up to limit drills for a domain + source, newest
-// first (descending by `at`). A limit of 0 or less falls back to
-// defaultRestoreDrillLimit.
+// ListRestoreDrills returns up to limit drills for a domain and source, newest
+// first. A limit of 0 or less falls back to defaultRestoreDrillLimit.
 func (r *Repo) ListRestoreDrills(domain, source string, limit int) ([]RestoreDrill, error) {
 	if limit <= 0 {
 		limit = defaultRestoreDrillLimit

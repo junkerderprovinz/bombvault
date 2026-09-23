@@ -1,17 +1,11 @@
 /**
- * Generates the self-contained BombVault banner SVG:
- *   bombvault-banner.svg : white 1600x500; the logo (embedded verbatim from
- *                          icon.svg) on the left, "BombVault" in Bree Serif + a
- *                          cheeky claim to the right. The text is converted to
- *                          SVG paths (opentype.js) so the SVG needs NO font and
- *                          renders identically with resvg or a browser.
+ * Writes bombvault-banner.svg and bombvault-banner-dark.svg: the logo from
+ * icon.svg on the left, the name in Bree Serif and the claim in Lato on the
+ * right. opentype.js converts the text to paths, so the SVGs need no font and
+ * render the same in resvg and in a browser. gen-assets.mjs turns them into
+ * PNGs.
  *
- * Then run gen-assets.mjs to rasterize it to bombvault-banner.png.
- *
- * Deps: `npm i -g opentype.js`. The Bree Serif (OFL) font is fetched at runtime
- * to the OS temp dir — it is NOT committed to the repo.
- *
- * Tweak NAME / CLAIM / sizes below, then: node .github/assets/gen-banner.mjs
+ * Needs `npm i -g opentype.js`. The fonts are downloaded to the OS temp dir.
  */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
@@ -25,27 +19,22 @@ const opentype = require(`${execSync("npm root -g").toString().trim()}/opentype.
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 
-// ---- content + styling -----------------------------------------------------
 const NAME = "BombVault";
 const CLAIM = "Drop a backup. Detonate a restore.";
-// Theme-adaptive banner pair (house rule, ShipLog reference): GitHub serves the
-// dark variant via <picture> prefers-color-scheme. Logo 2.0 reads on both
-// backgrounds by itself, so both themes embed the SAME logo.
+// The logo reads on both backgrounds, so only the text colours change.
 const THEMES = [
   { suffix: "",      bg: "#ffffff", name: "#1f2328", claim: "#5a5d5e" },
   { suffix: "-dark", bg: "#0d1117", name: "#e6edf3", claim: "#9aa4ad" },
 ];
 const W = 1600, H = 500;
-const LH = 386;                    // logo height (house standard)
-// Logo 2.0 geometry (viewBox 898.34 x 865.1). The logo's OPTICAL centre —
-// marked by the designer with a helper dot in the source file — is NOT the
-// geometric centre: the sparks at the top right add visual weight the eye
-// ignores. All placements centre on this point, not the bounding box.
+const LH = 386;                    // logo height
+// The designer marked the logo's optical centre in the source file. The sparks
+// at the top right widen the bounding box without adding visual weight, so the
+// logo is centred on this point rather than on the box.
 const LOGO_W = 898.34, LOGO_H = 865.1;
-const OPT_CX = 441.6, OPT_CY = 461.2; // designer-marked optical centre
-const LW = LH * (LOGO_W / LOGO_H); // keep logo aspect
-const nameSize = 132, claimSize = 44, gap = 70, lineGap = 8;   // house standard
-// ---------------------------------------------------------------------------
+const OPT_CX = 441.6, OPT_CY = 461.2;
+const LW = LH * (LOGO_W / LOGO_H);
+const nameSize = 132, claimSize = 44, gap = 70, lineGap = 8;
 
 const fontPath = join(tmpdir(), "BombVault-BreeSerif-Regular.ttf");
 if (!existsSync(fontPath)) {
@@ -57,8 +46,7 @@ if (!existsSync(fontPath)) {
 }
 const font = opentype.parse(readFileSync(fontPath));
 
-// Claim is set in Lato (a humanist sans that pairs with Bree Serif) — shared
-// across all Bree-Serif repos for a consistent look.
+// Lato for the claim, as on the other Bree Serif banners.
 const claimFontPath = join(tmpdir(), "BombVault-Lato-Regular.ttf");
 if (!existsSync(claimFontPath)) {
   const r = await fetch("https://github.com/google/fonts/raw/main/ofl/lato/Lato-Regular.ttf");
@@ -70,8 +58,7 @@ const claimFont = opentype.parse(readFileSync(claimFontPath));
 const nameW = font.getAdvanceWidth(NAME, nameSize);
 const claimW = claimFont.getAdvanceWidth(CLAIM, claimSize);
 const groupW = LW + gap + Math.max(nameW, claimW);
-const startX = 165; // left-anchored (house standard)
-// Vertically centre on the OPTICAL centre, not the bounding box.
+const startX = 165;
 const LX = startX, LY = H / 2 - OPT_CY * (LH / LOGO_H);
 const textX = startX + LW + gap;
 
@@ -83,9 +70,8 @@ const blockH = nameAsc + nameDesc + lineGap + claimAsc;
 const nameBaseline = H / 2 - blockH / 2 + nameAsc;
 const claimBaseline = nameBaseline + nameDesc + lineGap + claimAsc;
 
-// Render text as ONE <path> PER GLYPH, not a single merged path: resvg's tessellator
-// can silently abort a merged multi-subpath path partway through for certain
-// glyph/coordinate combinations, and per-glyph paths sidestep that entirely.
+// One <path> per glyph: resvg's tessellator can silently stop partway through a
+// single path with many subpaths.
 const glyphD = (f, text, x, baseline, size) =>
   f.getPaths(text, x, baseline, size).map((p) => p.toPathData(2)).filter(Boolean);
 const nameD = glyphD(font, NAME, textX, nameBaseline, nameSize);

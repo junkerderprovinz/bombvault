@@ -7,21 +7,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 )
 
-// TestProgEndPublishesStartedAt calls the REAL progBegin/progEnd pair — not a
-// hand-built progress.Event — and asserts the terminal SSE event they
-// produce carries the SAME StartedAt as the begin event. Before the review
-// fix this pinned, progEnd published StartedAt:0 on the terminal event,
-// which made a client-rendered live duration visibly vanish during the
-// terminal-event linger (see web/src/lib/progress.ts's COMPLETE_LINGER_MS
-// and OffsiteIndicator's MIN_VISIBLE_MS).
-//
-// progress_test.go's TestEventStartedAtSurvivesTerminalEvent has a doc
-// comment claiming to pin exactly this, but it only calls
-// progress.Store.Publish directly with a hand-built Event{StartedAt: ...} —
-// it never calls api.progEnd at all, so a regression that hardcoded
-// StartedAt:0 (or dropped the parameter entirely) inside progEnd itself
-// would leave that test green. This test closes that gap by driving the
-// actual production function.
+// Without StartedAt on the terminal event the live duration in the UI
+// disappears while that event lingers.
 func TestProgEndPublishesStartedAt(t *testing.T) {
 	prog := progress.NewStore()
 	svc := &Service{progress: prog}
@@ -53,9 +40,6 @@ func TestProgEndPublishesStartedAt(t *testing.T) {
 	}
 }
 
-// TestProgEndFailurePublishesStartedAtAndZeroPercent mirrors the failure
-// branch (ok=false): progEnd still owes StartedAt to the terminal event even
-// though the run failed, and reports 0% rather than 100%.
 func TestProgEndFailurePublishesStartedAtAndZeroPercent(t *testing.T) {
 	prog := progress.NewStore()
 	svc := &Service{progress: prog}

@@ -7,10 +7,10 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestReceivedAlertStateCRUD exercises the dead-mans-switch episode memory: an
-// unrecorded source is (false, nil); an upsert records it; a second upsert on the
-// same key refreshes in place; delete removes one source; and the per-repo purge
-// clears every episode for a repo (the DELETE-repo cleanup path).
+// TestReceivedAlertStateCRUD expects an unrecorded source to read as (false,
+// nil), an upsert on the same key to refresh in place, delete to remove one
+// source, and the per-repo purge used when a repo is deleted to clear all of
+// them.
 func TestReceivedAlertStateCRUD(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -36,7 +36,7 @@ func TestReceivedAlertStateCRUD(t *testing.T) {
 		t.Fatalf("round-trip mismatch: %+v", got)
 	}
 
-	// Refresh in place (a newer episode for the same source).
+	// A newer episode for the same source.
 	if err := r.UpsertReceivedAlertState(store.ReceivedAlertState{ReceivedRepoID: "repo1", Source: "src-a", NotifiedAt: 200, BasedOn: 150}); err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +44,6 @@ func TestReceivedAlertStateCRUD(t *testing.T) {
 		t.Fatalf("upsert did not refresh in place: %+v", got)
 	}
 
-	// Delete a single source leaves the other.
 	if err := r.DeleteReceivedAlertState("repo1", "src-a"); err != nil {
 		t.Fatal(err)
 	}
@@ -55,7 +54,6 @@ func TestReceivedAlertStateCRUD(t *testing.T) {
 		t.Fatal("src-b must survive a src-a delete")
 	}
 
-	// Per-repo purge clears everything for the repo (the DELETE-repo path).
 	if err := r.UpsertReceivedAlertState(store.ReceivedAlertState{ReceivedRepoID: "repo1", Source: "src-a", NotifiedAt: 1, BasedOn: 1}); err != nil {
 		t.Fatal(err)
 	}
@@ -70,9 +68,8 @@ func TestReceivedAlertStateCRUD(t *testing.T) {
 	}
 }
 
-// TestUpdateReceivedRepoCheckResult pins the focused check-result writer: it
-// updates ONLY the last-check columns (name/repo/cadence untouched) and records a
-// definite verdict as a non-NULL last_check_ok.
+// TestUpdateReceivedRepoCheckResult checks that the check-result writer touches
+// just the last-check columns and stores a verdict as a non-NULL last_check_ok.
 func TestUpdateReceivedRepoCheckResult(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -85,7 +82,7 @@ func TestUpdateReceivedRepoCheckResult(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Record a FAILED deep check.
+	// A failed deep check.
 	if err := r.UpdateReceivedRepoCheckResult(created.ID, 999, sql.NullBool{Bool: false, Valid: true}, "boom", true); err != nil {
 		t.Fatal(err)
 	}
@@ -101,7 +98,7 @@ func TestUpdateReceivedRepoCheckResult(t *testing.T) {
 		t.Fatalf("check result not persisted: %+v", got)
 	}
 
-	// Record a subsequent PASSING structural check.
+	// Then a passing structural check.
 	if err := r.UpdateReceivedRepoCheckResult(created.ID, 1000, sql.NullBool{Bool: true, Valid: true}, "", false); err != nil {
 		t.Fatal(err)
 	}

@@ -1,39 +1,13 @@
-// ---------------------------------------------------------------------------
-// CheckDraw — GlimStone motion-engine, animation 5 (drawn-checkmark).
-//
-// Replaces the plain "✓" glyph a handful of busy→success indicators across
-// this app render the instant an in-session action (verify/unlock/drill/
-// tamper-test/import/backup) finishes successfully, with a checkmark that
-// draws itself via SVG stroke-dashoffset instead of appearing all at once.
-//
-// `pathLength="1"` on the <path> makes the path's length exactly 1 unit
-// REGARDLESS of its real on-screen geometry — a plain `strokeDasharray: 1` +
-// animating `strokeDashoffset` from 1 (fully undrawn) to 0 (fully drawn)
-// therefore always draws the WHOLE glyph, with no getTotalLength() call or
-// per-shape magic number needed. `stroke="currentColor"` deliberately, not a
-// hard-coded colour: every call site already wraps this in a
-// `text-statusOk`-classed element for the "✓ " text it sits beside, and
-// `currentColor` picks that up for free — this glyph is a STATUS colour
-// (always "success green"), never a rainbow hue, matching every other
-// state-colour indicator in this app (design-language.md's own rule 4: the
-// four state hues are never rainbowed).
-//
-// The actual animation lives in index.css (`.glim-check-draw`, "Round 2, item
-// 5" — see that rule's own comment, and the SAFE-DEFAULT rule right above
-// the (prefers-reduced-motion: no-preference) block it lives inside, for
-// why a reduced-motion viewer sees a fully-drawn checkmark on the very
-// first frame instead of one stuck invisible). This component only ever
-// renders the markup; it carries no animation logic and no "did this just
-// change" state of its own — every call site already only renders it at the
-// exact moment a piece of state transitions from busy to a FRESH success
-// (never present at initial mount, never re-rendered while already "ok"),
-// so React creating a brand-new SVG node IS the "did this just happen"
-// signal, the same way glim-shake's own conditionally-rendered siblings
-// already work.
-// ---------------------------------------------------------------------------
-
-/** A small drawn checkmark. Sized to sit inline with `text-sm`/`text-xs`
- *  body text (the sizes every call site today uses) without a wrapper. */
+/**
+ * A checkmark that draws itself when an action finishes successfully. Sized to
+ * sit inline with `text-sm`/`text-xs` body text.
+ *
+ * `pathLength="1"` makes the path one unit long whatever its geometry, so the
+ * `.glim-check-draw` animation in index.css can run the dash offset from 1 to 0
+ * without measuring it. The stroke takes `currentColor`, the status colour of
+ * the element around it. Call sites render it only on the transition to
+ * success, so mounting is what starts the animation.
+ */
 export function CheckDraw() {
   return (
     <svg

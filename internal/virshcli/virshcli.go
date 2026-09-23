@@ -357,11 +357,12 @@ func (c *Client) GuestAgentPing(ctx context.Context, name string) bool {
 // is discarded (xml.Unmarshal ignores unknown elements by default).
 type domainXML struct {
 	XMLName xml.Name `xml:"domain"`
-	// Title is libvirt's own free-form display-name element — a direct
+	// Title is libvirt's own free-form display-name element: a direct
 	// child of <domain>, not nested under <devices> or <os>. See
 	// DomainInfo.Title's doc comment (types.go) for what it's used for
 	// (TrueNAS 26's friendly-name recovery).
 	Title   string `xml:"title"`
+	UUID    string `xml:"uuid"`
 	Devices struct {
 		Disks []struct {
 			Type   string `xml:"type,attr"`
@@ -392,12 +393,11 @@ type domainXML struct {
 }
 
 // ParseDomain parses a libvirt domain XML string and extracts the disk file
-// paths (type="file", device="disk"), the NVRAM path (empty for BIOS VMs),
-// and the vTPM device path (empty for a domain with no <tpm> element, or one
-// whose shape doesn't carry a path this package trusts — see tpm.go's
-// package doc comment for exactly which <tpm> shapes are recognized). It is
-// exported so the service layer can call it without importing virshcli
-// internals (the result is plain strings; no libvirt types cross the boundary).
+// paths (type="file", device="disk"), the NVRAM path (empty for BIOS VMs), the
+// vTPM device path (empty without a <tpm> element whose shape tpm.go trusts)
+// and the normalized UUID. It is exported so the service layer can call it
+// without importing virshcli internals (the result is plain strings; no
+// libvirt types cross the boundary).
 func ParseDomain(xmlStr string) (DomainInfo, error) {
 	var d domainXML
 	if err := xml.Unmarshal([]byte(xmlStr), &d); err != nil {
@@ -440,12 +440,14 @@ func ParseDomain(xmlStr string) (DomainInfo, error) {
 	nvram := strings.TrimSpace(d.OS.NVRAM)
 	tpm := tpmPathFromXML(d.Devices.TPM)
 	title := strings.TrimSpace(d.Title)
+	uuid := strings.ToLower(strings.TrimSpace(d.UUID))
 	return DomainInfo{
 		DiskPaths:        disks,
 		Disks:            diskRefs,
 		NVRAMPath:        nvram,
 		TPMPath:          tpm,
 		Title:            title,
+		UUID:             uuid,
 		DiskDevice:       device,
 		SkipSnapshotDevs: skip,
 		BlockDisks:       blockDisks,

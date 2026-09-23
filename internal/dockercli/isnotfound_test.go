@@ -10,10 +10,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 )
 
-// TestIsNotFound guards the structural "container removed" detection the scheduled
-// backup relies on (#57): it must recognise both the containerd typed error (even
-// after the fmt.Errorf("%w") inspect wraps) and the raw daemon string, and must be
-// nil-safe.
+// TestIsNotFound covers how the scheduled backup notices a removed container:
+// the typed containerd error, also when wrapped, and the daemon's plain text.
 func TestIsNotFound(t *testing.T) {
 	cases := []struct {
 		name string

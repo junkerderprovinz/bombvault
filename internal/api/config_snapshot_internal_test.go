@@ -10,10 +10,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestStageConfigSnapshot verifies stageConfigSnapshot builds a restic-ready
-// staging dir: a VACUUM-INTO snapshot of the live DB (readable as an independent
-// database) plus verbatim copies of rclone.conf and the ssh/ keypair. The store
-// is opened on-disk under DataDir so VacuumInto has a real source file.
+// TestStageConfigSnapshot: the staging dir holds a VACUUM INTO copy of the
+// database plus rclone.conf and the ssh keypair. The store is opened on disk so
+// VacuumInto has a real source file.
 func TestStageConfigSnapshot(t *testing.T) {
 	dataDir := t.TempDir()
 	db, err := store.Open(filepath.Join(dataDir, "bombvault.sqlite"))
@@ -49,7 +48,6 @@ func TestStageConfigSnapshot(t *testing.T) {
 		}
 	}
 
-	// The staged DB must open as a real, independent, readable SQLite database.
 	snap, err := store.Open(filepath.Join(dir, "bombvault.sqlite"))
 	if err != nil {
 		t.Fatalf("open staged snapshot: %v", err)
@@ -61,11 +59,10 @@ func TestStageConfigSnapshot(t *testing.T) {
 	}
 }
 
-// TestStageConfigSnapshotCleansUpOnError proves stageConfigSnapshot never leaves a
-// partial staging dir (which holds the plaintext settings DB + rclone.conf creds +
-// the ssh private key) behind when it fails. The failure is injected by closing the
-// store's DB so VacuumInto errors AFTER the staging dir has been created — the exact
-// window where the caller's `defer os.RemoveAll(stagingDir)` isn't registered yet.
+// TestStageConfigSnapshotCleansUpOnError: a failed snapshot must not leave the
+// staging dir behind, since it holds the plaintext settings, the rclone
+// credentials and the ssh private key. Closing the database makes VacuumInto fail after the
+// dir exists but before the caller has deferred its removal.
 func TestStageConfigSnapshotCleansUpOnError(t *testing.T) {
 	dataDir := t.TempDir()
 	db, err := store.Open(filepath.Join(dataDir, "bombvault.sqlite"))
@@ -79,8 +76,6 @@ func TestStageConfigSnapshotCleansUpOnError(t *testing.T) {
 		cfg:   config.Config{AppKey: strings.Repeat("a", 64), DataDir: dataDir},
 		store: store.New(db),
 	}
-	// Close the DB so the VACUUM INTO inside stageConfigSnapshot fails after the
-	// staging dir is created — exercising the cleanup path.
 	if err := db.Close(); err != nil {
 		t.Fatal(err)
 	}

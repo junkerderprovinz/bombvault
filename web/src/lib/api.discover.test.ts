@@ -1,11 +1,7 @@
 /**
- * discoverAll's skip handling.
- *
- * The server half of "discovery reports what it could not read" landed a round
- * before the client half, and the client half then landed without a test. Both
- * things this pins were real: the union has to survive a domain that FAILED (a
- * pass searches the named repositories first, so a failure in the domain's own
- * repository leaves real results behind), and the same named repository is
+ * discoverAll's skip handling. The union has to survive a domain that failed
+ * (a pass searches the named repositories first, so a failure in the domain's
+ * own repository leaves real results behind), and each named repository is
  * searched by all three domains, so an unmounted share must be named once.
  */
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
@@ -44,7 +40,7 @@ describe("discoverAll", () => {
     let n = 0;
     fetchMock.mockImplementation(() => {
       n += 1;
-      // The first domain fails AFTER the named repositories yielded something.
+      // The first domain fails after the named repositories yielded something.
       return n === 1
         ? answer({
             ok: false,
@@ -56,18 +52,17 @@ describe("discoverAll", () => {
     });
     const res = await discoverAll();
     expect(res.error).toMatch(/wrong password/);
-    // The partial rebuild is real and must not be thrown away with the error.
+    // The partial rebuild is real and stays despite the error.
     expect(res.containers + res.vms + res.files).toBe(4);
     expect(res.skipped).toEqual(["backups (it was there before and is not reachable now)"]);
   });
 
-  // What to SAY and what to FLAG are two answers. A repository switched off on
-  // purpose belongs in the sentence and must not colour a pill, or retiring one
-  // share leaves the Recovery readability step amber for good and swallows the
-  // save-success toast behind it. The server draws that line (repoSkip.Note) and
-  // sends it as its own field; the union here has to preserve it in both
-  // directions.
-  it("keeps a deliberate skip out of the flag while keeping it in the list", async () => {
+  // A repository switched off on purpose belongs in the sentence but must not
+  // colour a pill, or retiring one share leaves the Recovery readability step
+  // amber for good and hides the save-success toast behind it. The server
+  // decides (repoSkip.Note) and sends its own field, and the union keeps it
+  // in both directions.
+  it("keeps an intentional skip in the list but out of the flag", async () => {
     const { discoverAll } = await import("./api");
     fetchMock.mockImplementation(() =>
       answer({ ok: true, discovered: 1, skipped: ["Cold (switched off)"], skippedNeedsAction: false })

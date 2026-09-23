@@ -22,7 +22,6 @@ func TestEnsureKeyGeneratesAndReuses(t *testing.T) {
 	if err != nil || !strings.HasPrefix(pub, "ssh-ed25519 ") {
 		t.Fatalf("PublicKey = %q, err=%v", pub, err)
 	}
-	// Reuse: a second call must keep the same key.
 	first, _ := os.ReadFile(c.keyPath())
 	if err := c.EnsureKey(); err != nil {
 		t.Fatal(err)
@@ -33,9 +32,6 @@ func TestEnsureKeyGeneratesAndReuses(t *testing.T) {
 	}
 }
 
-// TestVirshURI pins TODAY'S built qemu+ssh:// string byte-for-byte (an
-// explicitURI-unset Conn, the Unraid/generic default) — a regression test
-// that must keep passing unchanged after the explicitURI override was added.
 func TestVirshURI(t *testing.T) {
 	c := &Conn{Host: "1.2.3.4", User: "root", Port: "1004", dir: "/config/ssh"}
 	got := c.VirshURI()
@@ -45,13 +41,9 @@ func TestVirshURI(t *testing.T) {
 	}
 }
 
-// TestVirshURI_ExplicitOverrideReturnsVerbatim: TrueNAS Scale's libvirtd runs
-// on a non-standard socket, so a real deployment needs
-// LIBVIRT_URI=qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_
-// libvirt/libvirt-sock — the override exists specifically so this extra
-// ?socket=... query param (which the built qemu+ssh:// string above has no
-// way to express) can be supplied verbatim.
-func TestVirshURI_ExplicitOverrideReturnsVerbatim(t *testing.T) {
+// TestVirshURIExplicitOverrideReturnsVerbatim uses a TrueNAS Scale URI, whose
+// ?socket= parameter the built URI cannot express.
+func TestVirshURIExplicitOverrideReturnsVerbatim(t *testing.T) {
 	override := "qemu+ssh://root@truenas.local/system?socket=/run/truenas_libvirt/libvirt-sock"
 	c := &Conn{Host: "1.2.3.4", User: "root", Port: "1004", dir: "/config/ssh", explicitURI: override}
 	if got := c.VirshURI(); got != override {
@@ -66,11 +58,7 @@ func TestNewDerivesSSHDir(t *testing.T) {
 	}
 }
 
-// TestNewPlumbsExplicitURI confirms New's explicitURI parameter reaches
-// VirshURI (verbatim, overriding the built string) and that an empty
-// explicitURI falls back to today's built string exactly as before this
-// parameter existed.
-func TestNewPlumbsExplicitURI(t *testing.T) {
+func TestNewPassesExplicitURI(t *testing.T) {
 	override := "qemu+ssh://root@truenas.local/system?socket=/run/truenas_libvirt/libvirt-sock"
 	withOverride := New("truenas.local", "root", "22", "/config", override)
 	if got := withOverride.VirshURI(); got != override {
@@ -84,9 +72,6 @@ func TestNewPlumbsExplicitURI(t *testing.T) {
 	}
 }
 
-// A VM named "Windows 11" yields an NVRAM path with a space; OpenSSH joins the
-// remote command args into one string the remote shell re-splits, so the path
-// must be shell-quoted or it breaks into two args.
 func TestShellQuote(t *testing.T) {
 	cases := map[string]string{
 		"/etc/libvirt/qemu/nvram/Windows 11_VARS.fd": `'/etc/libvirt/qemu/nvram/Windows 11_VARS.fd'`,

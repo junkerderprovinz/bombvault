@@ -1,16 +1,9 @@
-// ---------------------------------------------------------------------------
-// Selector — pure navigation math (GlimStone form-engine Phase 2, Task 3).
-//
-// Covers stepFor/nextFocusIndex/rovedIndex directly, with plain numbers and
-// booleans — no DOM, no React renderer, matching this repo's established
-// no-jsdom pattern for pure logic (Badge.test.ts, appearance.test.ts). The
-// DOM-touching half (real focus movement, the RTL getComputedStyle() read,
-// clicking/onChange wiring) is covered separately in Selector.dom.test.tsx.
-// ---------------------------------------------------------------------------
+// The navigation math of Selector. Focus, clicks and the RTL read are tested in
+// Selector.dom.test.tsx.
 import { describe, expect, it } from "vitest";
-import { nextFocusIndex, rovedIndex, stepFor, type SelectorNavKey } from "./Selector";
+import { nextFocusIndex, rovedIndex, rowFill, stepFor, type SelectorNavKey } from "./Selector";
 
-describe("stepFor — direction of \"further along the strip\"", () => {
+describe("stepFor", () => {
   it("ArrowRight steps +1 in LTR", () => {
     expect(stepFor("ArrowRight", false)).toBe(1);
   });
@@ -27,13 +20,13 @@ describe("stepFor — direction of \"further along the strip\"", () => {
     expect(stepFor("ArrowLeft", true)).toBe(1);
   });
 
-  it("Home/End don't step — they jump, handled separately by nextFocusIndex", () => {
+  it("returns 0 for Home and End, which nextFocusIndex handles as jumps", () => {
     expect(stepFor("Home", false)).toBe(0);
     expect(stepFor("End", true)).toBe(0);
   });
 });
 
-describe("nextFocusIndex — roving-tabindex target for a keypress", () => {
+describe("nextFocusIndex", () => {
   it("Home always jumps to 0, regardless of current position or direction", () => {
     expect(nextFocusIndex("Home", 4, 6, false)).toBe(0);
     expect(nextFocusIndex("Home", 0, 6, true)).toBe(0);
@@ -52,7 +45,7 @@ describe("nextFocusIndex — roving-tabindex target for a keypress", () => {
     expect(nextFocusIndex("ArrowLeft", 1, 5, false)).toBe(0);
   });
 
-  it("ArrowRight moves BACKWARD under RTL — the direction flips, not just the label", () => {
+  it("ArrowRight moves backward under RTL", () => {
     expect(nextFocusIndex("ArrowRight", 2, 5, true)).toBe(1);
   });
 
@@ -90,14 +83,14 @@ describe("nextFocusIndex — roving-tabindex target for a keypress", () => {
   });
 });
 
-describe("rovedIndex — which item holds tabIndex 0", () => {
+describe("rovedIndex", () => {
   it("prefers the active item when it isn't disabled", () => {
     expect(rovedIndex([false, false, false], 1)).toBe(1);
   });
 
   it("falls back to the first enabled item when the active item is disabled", () => {
-    // Mirrors Files.tsx's destChip: the active "original" chip goes disabled
-    // (no target path), so roving tabindex must land somewhere reachable.
+    // Files.tsx disables its active "original" chip when there is no target
+    // path, and the tab stop still has to be reachable.
     expect(rovedIndex([false, true, false], 1)).toBe(0);
   });
 
@@ -112,5 +105,43 @@ describe("rovedIndex — which item holds tabIndex 0", () => {
 
   it("falls back to index 0 for an empty items list", () => {
     expect(rovedIndex([], -1)).toBe(0);
+  });
+});
+
+describe("rowFill", () => {
+  // The widths are the settings column at the viewport named, measured on a
+  // running instance: the card's content box less the groove's own padding.
+  const PIN = 200;
+
+  it("keeps the pinned width while the whole strip fits one row", () => {
+    expect(rowFill(PIN, 4, 898.6)).toBe(PIN);
+    expect(rowFill(PIN, 2, 898.6)).toBe(PIN);
+  });
+
+  it("keeps it at the exact boundary, where the last segment still fits", () => {
+    expect(rowFill(PIN, 4, 4 * PIN + 3 * 3.2)).toBe(PIN);
+  });
+
+  it("gives a segment the whole row once two do not fit", () => {
+    // 390px viewport: four label modes, one under the other, no bare track.
+    expect(rowFill(PIN, 4, 287.6)).toBeCloseTo(287.6, 5);
+    expect(rowFill(PIN, 3, 287.6)).toBeCloseTo(287.6, 5);
+  });
+
+  it("divides into columns that go into the strip, not as many as fit", () => {
+    // 1024px viewport: three segments fit, so four come out two and two
+    // rather than three and a lone stretched one.
+    expect(rowFill(PIN, 4, 642.6)).toBeCloseTo(319.7, 5);
+  });
+
+  it("drops to one column when no wider one divides the strip", () => {
+    // 600px viewport: two fit, and three over two columns would leave the
+    // second row half empty, which is the track this is here to remove.
+    expect(rowFill(PIN, 3, 497.6)).toBeCloseTo(497.6, 5);
+  });
+
+  it("leaves the pinned width alone for a row that measures nothing", () => {
+    expect(rowFill(PIN, 4, 0)).toBe(PIN);
+    expect(rowFill(PIN, 4, -6.4)).toBe(PIN);
   });
 });

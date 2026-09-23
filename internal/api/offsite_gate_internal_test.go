@@ -7,23 +7,18 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestOffsiteReplicatesOnOwnSchedule pins the #95-review fix: the predicate that
-// decides "does a SEPARATE off-site cron drive this domain, or does the backup path
-// replicate it (coupled)?" must agree with the scheduler's cron registration, which
-// keys off ParseCadence(...).Enabled. Both a blank schedule AND the literal "off"
-// are disabled cadences → coupled. If this ever regressed to a bare `!= ""` check,
-// setting the off-site schedule to "off" would leave the domain replicated by
-// nobody (inline skips, batched skips, no cron registered) — a silently rotting DR
-// copy. Only a real enabled cadence means "its own schedule".
+// The predicate must agree with the scheduler, which registers a cron only for
+// an enabled cadence. Treating "off" as a schedule of its own would leave the
+// domain replicated by nobody.
 func TestOffsiteReplicatesOnOwnSchedule(t *testing.T) {
 	s := &Service{}
 	cases := []struct {
 		name     string
 		schedule string
-		wantOwn  bool // true = a separate cron drives it; false = coupled to the backup run
+		wantOwn  bool // false: replicated by the backup run
 	}{
 		{"blank couples", "", false},
-		{"off couples (regression: no silent DR rot)", "off", false},
+		{"off couples", "off", false},
 		{"whitespace couples", "   ", false},
 		{"invalid cadence defaults to coupled (safe direction)", "not-a-cadence", false},
 		{"daily is its own schedule", "daily 02:00", true},
@@ -40,16 +35,11 @@ func TestOffsiteReplicatesOnOwnSchedule(t *testing.T) {
 	}
 }
 
-// otherCtxKey is a distinct context key used to derive a CHILD context on top of
-// a bulk-suppressed one — proving the flag survives further derivation.
 type otherCtxKey struct{}
 
-// TestBulkReplicateSuppressedRoundTrip pins the #95 bulk-suppress mechanics: a
-// plain context is NOT suppressed, WithBulkReplicateSuppressed marks it, and the
-// mark survives further context derivation (the batch loops wrap bctx in
-// timeouts/progress contexts before replicateOffsite ever reads the flag — if a
-// child context dropped it, every batched run would silently regress to one full
-// off-site round-trip per item).
+// The batch loops wrap the suppressed context in timeouts and progress
+// contexts before replicateOffsite reads the flag, so it has to survive
+// derivation.
 func TestBulkReplicateSuppressedRoundTrip(t *testing.T) {
 	ctx := context.Background()
 	if bulkReplicateSuppressed(ctx) {

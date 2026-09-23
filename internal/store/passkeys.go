@@ -7,61 +7,44 @@ import (
 	"time"
 )
 
-// Passkey is one registered WebAuthn credential (#passkeys): a private key held
-// by the operator's phone, laptop or security key, of which this box stores only
-// the public half.
+// Passkey is a registered WebAuthn credential. Only the public half is stored,
+// and none of its columns is secret, so unlike the fleet token they are kept in
+// the clear.
 //
-// WHY THE RELYING-PARTY ID IS A COLUMN. A passkey is bound to the domain it was
-// created for, and the browser will not even offer one whose RP ID does not
-// match the page. So the SAME box reached two ways holds two different sets:
-// register through bombvault.example.com and the credential simply does not
-// exist at https://192.168.20.63:3443. Storing the RP ID means the interface can
-// say which address a key belongs to instead of showing a list that silently
-// does nothing, and the login ceremony can offer only the keys that can actually
-// answer for the address in the browser's bar.
-//
-// The credential id and the public key are NOT secrets: the public key verifies
-// a signature and the credential id names which key made it. Nothing here can
-// authenticate anybody on its own, which is the whole point of the scheme, so
-// unlike the fleet token these columns are stored in the clear.
+// A browser offers only passkeys whose relying-party ID matches the page, so
+// the same box reached through two addresses has two separate sets.
 type Passkey struct {
 	ID   string
 	Name string
-	// CredentialID is the authenticator's own handle for the key, raw bytes.
-	// Unique: it is what a login answer is looked up by.
+	// CredentialID is the authenticator's handle for the key. It is unique, and
+	// a login answer is looked up by it.
 	CredentialID []byte
 	// PublicKey is the COSE-encoded public half.
 	PublicKey []byte
-	// AAGUID identifies the authenticator MODEL (a YubiKey 5, iCloud Keychain,
-	// Windows Hello). Stored so the list can say what a key IS rather than only
-	// what it was named.
+	// AAGUID identifies the authenticator model (a YubiKey 5, iCloud Keychain,
+	// Windows Hello), so the list can show what kind of key it is.
 	AAGUID []byte
-	// SignCount is the authenticator's own counter, updated on every successful
-	// login. A counter that goes BACKWARDS is the documented signal of a cloned
-	// authenticator; many modern ones report 0 always and are exempt.
+	// SignCount is the authenticator's counter, updated on every successful
+	// login. A counter that goes backwards signals a cloned authenticator; many
+	// modern ones always report 0 and are exempt.
 	SignCount uint32
 	// Transports is the comma-joined hint list the authenticator reported
 	// ("internal", "usb", "hybrid"), passed back at login so the browser knows
 	// which prompt to raise.
 	Transports string
-	// RPID is the domain this credential is bound to. See the type comment.
+	// RPID is the domain the credential is bound to, so the login can offer
+	// only the keys that work at the current address.
 	RPID string
 	// BackedUp reports whether the authenticator says the key is synced to a
-	// cloud keychain. A key that is NOT backed up dies with the device, which is
-	// worth telling somebody who has only one.
+	// cloud keychain. A key that is not backed up is lost with the device.
 	BackedUp   bool
 	CreatedAt  int64
 	LastUsedAt int64
 }
 
-// The column list, not a credential: gosec's G101 matches on the words rather
-// than on what they are. Nothing secret is stored in this table at all, which is
-// the point of public-key authentication.
 const passkeyCols = `id, name, credential_id, public_key, aaguid, sign_count, transports, rp_id, backed_up, created_at, last_used_at` //nolint:gosec // G101: a SQL column list, and none of these columns holds a secret
 
-type rowScanner interface{ Scan(dest ...any) error }
-
-func scanPasskey(s rowScanner) (Passkey, error) {
+func scanPasskey(s scanner) (Passkey, error) {
 	var p Passkey
 	err := s.Scan(&p.ID, &p.Name, &p.CredentialID, &p.PublicKey, &p.AAGUID,
 		&p.SignCount, &p.Transports, &p.RPID, &p.BackedUp, &p.CreatedAt, &p.LastUsedAt)
@@ -90,8 +73,8 @@ func (r *Repo) ListPasskeys() ([]Passkey, error) {
 	return out, rows.Err()
 }
 
-// PasskeysForRP returns the credentials bound to one relying-party id, which is
-// the only set a login at that address can use. See the Passkey type comment.
+// PasskeysForRP returns the credentials bound to the relying-party ID rpID, the
+// only ones a login at that address can use.
 func (r *Repo) PasskeysForRP(rpID string) ([]Passkey, error) {
 	all, err := r.ListPasskeys()
 	if err != nil {
@@ -106,8 +89,8 @@ func (r *Repo) PasskeysForRP(rpID string) ([]Passkey, error) {
 	return out, nil
 }
 
-// PasskeyByCredentialID finds the credential an authenticator's answer names.
-// The bool is false (with a zero Passkey) when no such credential is registered.
+// PasskeyByCredentialID finds the credential an authenticator's answer names,
+// or reports false when it is not registered.
 func (r *Repo) PasskeyByCredentialID(credID []byte) (Passkey, bool, error) {
 	row := r.db.QueryRow(`SELECT `+passkeyCols+` FROM passkeys WHERE credential_id = ?`, credID)
 	p, err := scanPasskey(row)
@@ -121,7 +104,6 @@ func (r *Repo) PasskeyByCredentialID(credID []byte) (Passkey, bool, error) {
 }
 
 // ErrPasskeyExists is returned when the same authenticator is registered twice.
-// It is not an error condition so much as an answer: the key is already here.
 var ErrPasskeyExists = errors.New("this passkey is already registered")
 
 // AddPasskey stores a freshly registered credential and returns it with its id
@@ -136,10 +118,8 @@ func (r *Repo) AddPasskey(p Passkey) (Passkey, error) {
 	if p.CreatedAt == 0 {
 		p.CreatedAt = time.Now().Unix()
 	}
-	// A nil slice reaches SQLite as NULL, which the column refuses. An
-	// authenticator that reports no AAGUID (some security keys do not) is a
-	// normal case, not an error, so it is stored as empty rather than made every
-	// caller's problem to remember.
+	// Some security keys report no AAGUID, and a nil slice would bind as NULL,
+	// which the column rejects.
 	if p.AAGUID == nil {
 		p.AAGUID = []byte{}
 	}
@@ -148,11 +128,9 @@ func (r *Repo) AddPasskey(p Passkey) (Passkey, error) {
 		p.ID, p.Name, p.CredentialID, p.PublicKey, p.AAGUID,
 		p.SignCount, p.Transports, p.RPID, p.BackedUp, p.CreatedAt, p.LastUsedAt)
 	if err != nil {
-		// The UNIQUE index on credential_id is the guard: registering the same
-		// authenticator twice would leave two rows answering for one key, and the
-		// sign-counter check would then compare against whichever was found first.
-		if existing, ok, gErr := r.PasskeyByCredentialID(p.CredentialID); gErr == nil && ok {
-			_ = existing
+		// credential_id is unique, so a failed insert for a known credential
+		// means the authenticator is already registered.
+		if _, ok, gErr := r.PasskeyByCredentialID(p.CredentialID); gErr == nil && ok {
 			return Passkey{}, ErrPasskeyExists
 		}
 		return Passkey{}, fmt.Errorf("AddPasskey: %w", err)
@@ -169,8 +147,7 @@ func (r *Repo) TouchPasskey(id string, signCount uint32, at int64) error {
 	return nil
 }
 
-// RenamePasskey changes a credential's label. The name is the operator's own
-// text and means nothing to the protocol.
+// RenamePasskey changes a credential's label.
 func (r *Repo) RenamePasskey(id, name string) error {
 	res, err := r.db.Exec(`UPDATE passkeys SET name = ? WHERE id = ?`, name, id)
 	if err != nil {
@@ -182,8 +159,7 @@ func (r *Repo) RenamePasskey(id, name string) error {
 	return nil
 }
 
-// DeletePasskey removes a credential. Deleting one that is not there is not an
-// error: the caller wanted it gone and it is gone.
+// DeletePasskey removes a credential. Deleting a missing one is not an error.
 func (r *Repo) DeletePasskey(id string) error {
 	if _, err := r.db.Exec(`DELETE FROM passkeys WHERE id = ?`, id); err != nil {
 		return fmt.Errorf("DeletePasskey: %w", err)

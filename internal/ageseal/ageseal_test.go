@@ -10,8 +10,6 @@ import (
 	"filippo.io/age"
 )
 
-// TestWrapWriterRoundTrip encrypts bytes to an in-test identity's recipient and
-// decrypts them back with the identity.
 func TestWrapWriterRoundTrip(t *testing.T) {
 	id, err := age.GenerateX25519Identity()
 	if err != nil {
@@ -47,7 +45,6 @@ func TestWrapWriterRoundTrip(t *testing.T) {
 	}
 }
 
-// TestEncryptFileRoundTrip streams a plaintext file to an age file and decrypts it.
 func TestEncryptFileRoundTrip(t *testing.T) {
 	id, err := age.GenerateX25519Identity()
 	if err != nil {
@@ -86,7 +83,6 @@ func TestEncryptFileRoundTrip(t *testing.T) {
 	}
 }
 
-// TestParseRecipients covers the empty, garbage, comment and multi-recipient cases.
 func TestParseRecipients(t *testing.T) {
 	id1, _ := age.GenerateX25519Identity()
 	id2, _ := age.GenerateX25519Identity()
@@ -119,8 +115,8 @@ func TestParseRecipients(t *testing.T) {
 	})
 }
 
-// TestWrapWriterNoRecipients: wrapping with no recipients is an error (never a
-// silent plaintext passthrough).
+// TestWrapWriterNoRecipients checks that no recipients is an error rather than
+// a plaintext passthrough.
 func TestWrapWriterNoRecipients(t *testing.T) {
 	if _, err := WrapWriter(io.Discard, nil); err == nil {
 		t.Fatal("WrapWriter with no recipients must error")

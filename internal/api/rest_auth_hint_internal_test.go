@@ -6,12 +6,8 @@ import (
 	"testing"
 )
 
-// A 401 from a rest-server has two causes and the code knew both of them, in a
-// comment above isRepoUninitialized, where only a maintainer would ever read it.
-// Issue #194 is what that costs: a user spent hours on "I continue to get a 401
-// error", could not tell which of the two he had hit, and left. These checks
-// pin the hint to the case it belongs to and, just as importantly, keep it away
-// from the cases it would mislead.
+// The hint explains the two usual causes of a rest-server 401 and must stay off
+// errors it would mislead.
 func TestRestAuthHint(t *testing.T) {
 	cases := []struct {
 		name string
@@ -19,7 +15,7 @@ func TestRestAuthHint(t *testing.T) {
 		want bool
 	}{
 		{
-			name: "the real one from the issue",
+			name: "unexpected server response 401",
 			msg:  "Fatal: unable to open repository at rest:http://192.168.1.50:8000/backups: server response unexpected: 401 Unauthorized",
 			want: true,
 		},
@@ -34,22 +30,16 @@ func TestRestAuthHint(t *testing.T) {
 			want: true,
 		},
 		{
-			// The message the program ACTUALLY shows, taken off a reporter's
-			// screenshot rather than composed here. Every case above carries the
-			// repository URL; this one cannot, because runError keeps the most
-			// informative stderr line and restic prints the URL on the next one,
-			// which lastReason steps over as boilerplate. The hint therefore
-			// never fired on the single path #194 is about, and the reporter met
-			// the bare 401 again two releases after it was "fixed".
+			// runError keeps the most informative stderr line, and restic prints
+			// the URL on the next one, which lastReason skips as boilerplate. The
+			// message users actually see therefore has no rest: URL in it.
 			name: "the message BombVault itself shows, which carries no URL",
 			msg:  "restic cat failed: Fatal: unable to open config file: unexpected HTTP response (401): 401 Unauthorized",
 			want: true,
 		},
 		{
-			// An S3 403 is a different problem with different causes (a wrong
-			// access key, a bucket policy, a clock skew), and the rest-server
-			// advice would send that user looking for an htpasswd file that
-			// does not exist.
+			// An S3 403 has other causes (access key, bucket policy, clock skew),
+			// and rest-server advice would send the user looking for htpasswd.
 			name: "an S3 refusal keeps its own wording",
 			msg:  "Fatal: unable to open repository at s3:s3.amazonaws.com/bucket: Access Denied 403",
 			want: false,
@@ -75,8 +65,7 @@ func TestRestAuthHint(t *testing.T) {
 			if !c.want {
 				return
 			}
-			// The hint has to name both causes, or it sends the reader down
-			// one path and leaves the other one to be found by accident.
+			// The hint has to name both causes.
 			for _, must := range []string{"--private-repos", "first path segment", "credential set", "connection test"} {
 				if !strings.Contains(got, must) {
 					t.Errorf("hint does not mention %q: %s", must, got)
@@ -86,16 +75,14 @@ func TestRestAuthHint(t *testing.T) {
 	}
 }
 
-// scrubError is the single funnel every user-facing error goes through, so the
-// hint has to survive it rather than only exist next to it.
+// Every user-facing error goes through scrubError, so the hint has to survive it.
 func TestScrubErrorCarriesTheRestAuthHint(t *testing.T) {
 	err := errors.New("Fatal: unable to open repository at rest:http://box:8000/repo: server response unexpected: 401 Unauthorized")
 	got := scrubError(err)
 	if !strings.Contains(got, "--private-repos") {
 		t.Fatalf("scrubError dropped the hint: %s", got)
 	}
-	// The older mapping must keep winning where it applies: a key mismatch is
-	// not an auth refusal, and its own message is the more useful one.
+	// A key mismatch is not an auth refusal and keeps its own APP_KEY message.
 	keyErr := errors.New("Fatal: wrong password or no key found for rest:http://box:8000/repo")
 	if got := scrubError(keyErr); !strings.Contains(got, "APP_KEY") {
 		t.Fatalf("the APP_KEY mapping lost its precedence: %s", got)

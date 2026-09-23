@@ -1,19 +1,10 @@
 // @vitest-environment jsdom
-/**
- * The unlock button's honest answer.
- *
- * A repository shared with another domain gets `restic unlock` WITHOUT
- * --remove-all, because forcing there would yank the lock out from under that
- * domain's running backup. `restic unlock` removes only what restic itself calls
- * stale, and a lock a previous container incarnation left is not stale until it
- * is old enough - so the one case this button exists for is exactly the case
- * where it can come back green having changed nothing.
- *
- * The server was taught to name those repositories and to send them on BOTH the
- * success and the failure path. The server half had a test; the DISPLAY did not,
- * and the display was the entire point of the change. That gap is what this file
- * closes.
- */
+// A repository shared with another domain gets `restic unlock` without
+// --remove-all, so another domain's running backup keeps its lock. That clears
+// only locks restic considers stale, and a lock left by a previous container
+// is not stale until it is old enough, so the button can succeed while
+// changing nothing. The server names those repositories on success and
+// failure, and the card has to show them.
 import { render, screen, cleanup, waitFor, fireEvent, act } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -43,9 +34,8 @@ vi.mock("../../lib/toast", () => ({
 import { IntegrityCard } from "./IntegrityCard";
 import { en } from "../../lib/i18n";
 
-// The REAL English table, not the key-echoing stub the other card tests use: the
-// assertions below are about the sentence an operator reads, and a stub would
-// return the key and never substitute {list}.
+// The real English table rather than a key-echoing stub: the assertions are
+// about the sentence an operator reads, with {list} filled in.
 const t = ((key: string) => (en as Record<string, string>)[key] ?? key) as unknown as Parameters<typeof IntegrityCard>[0]["t"];
 
 const settings = { drDrillTarget: "", drDrillTargetVm: "" } as never;
@@ -68,7 +58,7 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("the unlock button", () => {
-  it("names the repository it could only clear stale locks on, even when it SUCCEEDS", async () => {
+  it("names the repository it could only clear stale locks on, even when it succeeds", async () => {
     unlockDomain.mockResolvedValue({
       ok: true,
       skipped: ["Cold (another domain writes to it too, so only stale locks were cleared there)"],
@@ -106,7 +96,7 @@ describe("the unlock button", () => {
     });
   });
 
-  it("says it on the FAILURE path too, alongside the error", async () => {
+  it("says it on the failure path too, alongside the error", async () => {
     unlockDomain.mockResolvedValue({
       ok: false,
       error: "unlocking the containers repository: boom",

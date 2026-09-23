@@ -1,19 +1,7 @@
 // @vitest-environment jsdom
-/**
- * The two things GlimStone 1.7.4 and 1.7.5 added to this field, and neither of
- * them is visible in the types.
- *
- * The wheel is a behaviour with a condition that IS the design: it steps only
- * while the field has focus, because a field that answers a wheel on hover
- * changes values somebody was scrolling past. A test that only asserts "the
- * wheel steps" would pass on the hazardous version too, so both halves are
- * checked here.
- *
- * The wrapper is a layout rule that typechecks perfectly either way. `block`
- * alone stretches inside a column flex parent, which is where this helper is
- * used most, and that put the steppers at the far edge of the row instead of
- * at the edge of the field.
- */
+// The wheel must step only while the field has focus, so both the focused and
+// the unfocused case are tested. The wrapper must not stretch in a column flex
+// parent, or the steppers leave the edge of the field.
 import { render, screen, cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { NumberField } from "./NumberField";
@@ -31,7 +19,7 @@ describe("NumberField, the wheel", () => {
     render(<NumberField defaultValue={5} min={0} max={10} step={1} aria-label="n" />);
     const input = screen.getByLabelText("n") as HTMLInputElement;
     input.focus();
-    wheelOn(input, -100); // up is more, matching the upper arrow and the up key
+    wheelOn(input, -100); // wheel up
     expect(input.value).toBe("6");
   });
 
@@ -43,7 +31,7 @@ describe("NumberField, the wheel", () => {
     expect(input.value).toBe("4");
   });
 
-  it("does NOTHING without focus, which is the whole point", () => {
+  it("does nothing without focus", () => {
     render(<NumberField defaultValue={5} min={0} max={10} step={1} aria-label="n" />);
     const input = screen.getByLabelText("n") as HTMLInputElement;
     expect(input.ownerDocument.activeElement).not.toBe(input);
@@ -93,12 +81,12 @@ describe("NumberField, the wheel", () => {
 });
 
 describe("NumberField, the wrapper", () => {
-  it("is sized by its content, so the steppers sit at the edge of the FIELD", () => {
+  it("is sized by its content, so the steppers sit at the edge of the field", () => {
     render(<NumberField defaultValue={5} aria-label="n" />);
     const input = screen.getByLabelText("n") as HTMLInputElement;
     const wrap = input.parentElement!;
-    // w-fit is the half that fixes it; the two alignment utilities stop a grid
-    // or flex parent stretching it back out on the cross axis.
+    // The alignment utilities stop a grid or flex parent stretching the
+    // wrapper on the cross axis.
     expect(wrap.className).toContain("w-fit");
     expect(wrap.className).toContain("self-start");
     expect(wrap.className).toContain("justify-self-start");

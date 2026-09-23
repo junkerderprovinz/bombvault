@@ -8,31 +8,26 @@ import (
 	"time"
 )
 
-// ErrEmptyMeshOffer is returned when a mesh offer has no repo location. An
-// offer with no storage address addresses nowhere and could never become a
-// working off-site target, so it is rejected at the store boundary (mirrors
-// ErrEmptyFleetPeer).
+// ErrEmptyMeshOffer is returned for a mesh offer without a repo location,
+// which could never become a working off-site target.
 var ErrEmptyMeshOffer = errors.New("mesh offer repo must not be empty")
 
-// MeshOffer is a fleet peer's offer of its own off-site storage: the peer
-// deploys a rest-server on its own infrastructure and sends this instance the
-// connection details (over the same self-gated fleet channel GET
-// /api/fleet/status uses) so this instance's admin can review it and, on
-// accept, turn it into a normal named CloudCredSet + OffsiteTarget. BombVault
-// never hosts storage itself — this table only ever carries connection
-// details a peer proposed, pending a human decision.
+// MeshOffer is a fleet peer's offer of its own off-site storage. The peer runs
+// a rest-server on its own infrastructure and sends the connection details
+// over the fleet channel; the admin here reviews the offer and, on accept,
+// turns it into a named CloudCredSet and OffsiteTarget. BombVault does not host
+// storage itself.
 type MeshOffer struct {
 	ID   string
 	From string
-	// SuggestedDomain is the sending peer's own guess at what domain this
-	// storage suits (purely informational — the accepting admin picks the
-	// actual domain when accepting).
+	// SuggestedDomain is the peer's guess at which domain this storage suits.
+	// The admin picks the actual domain when accepting.
 	SuggestedDomain string
 	Repo            string
 	RESTUser        string
 	// RESTPasswordEnc is the peer-generated one-time rest-server password,
-	// AES-256-GCM encrypted at rest via internal/secret with THIS instance's
-	// APP_KEY. Never logged, never returned in the clear.
+	// encrypted with this instance's APP_KEY (internal/secret). It is never
+	// logged or returned in the clear.
 	RESTPasswordEnc []byte
 	// Status is "pending" | "accepted" | "declined".
 	Status     string
@@ -42,9 +37,9 @@ type MeshOffer struct {
 
 const meshOfferCols = `id, from_name, suggested_domain, repo, rest_user, rest_password_enc, status, received_at, sort_order`
 
-// CreateMeshOffer inserts a new mesh offer. An empty ID is assigned via
-// newID(); ReceivedAt is stamped now when 0. Returns the stored row. The
-// repo must not be empty.
+// CreateMeshOffer inserts a new mesh offer and returns the stored row. An
+// empty ID is assigned via newID(), a zero ReceivedAt is set to now and an
+// empty Status becomes "pending". The repo must not be empty.
 func (r *Repo) CreateMeshOffer(o MeshOffer) (MeshOffer, error) {
 	if strings.TrimSpace(o.Repo) == "" {
 		return MeshOffer{}, ErrEmptyMeshOffer
@@ -59,7 +54,7 @@ func (r *Repo) CreateMeshOffer(o MeshOffer) (MeshOffer, error) {
 		o.Status = "pending"
 	}
 	if o.RESTPasswordEnc == nil {
-		o.RESTPasswordEnc = []byte{} // NOT NULL blob: bind an empty blob, never SQL NULL
+		o.RESTPasswordEnc = []byte{} // rest_password_enc is not nullable, and a nil slice binds as NULL
 	}
 	_, err := r.db.Exec(`
 		INSERT INTO mesh_offers (`+meshOfferCols+`)
@@ -72,7 +67,7 @@ func (r *Repo) CreateMeshOffer(o MeshOffer) (MeshOffer, error) {
 	return o, nil
 }
 
-// UpdateMeshOfferStatus writes ONLY the status column for the offer with the
+// UpdateMeshOfferStatus writes only the status column of the offer with the
 // given id. Updating a missing id affects no rows and is not an error.
 func (r *Repo) UpdateMeshOfferStatus(id, status string) error {
 	if _, err := r.db.Exec(`UPDATE mesh_offers SET status = ? WHERE id = ?`, status, id); err != nil {
@@ -81,8 +76,8 @@ func (r *Repo) UpdateMeshOfferStatus(id, status string) error {
 	return nil
 }
 
-// ListMeshOffers returns all mesh offers ordered by sort_order then
-// received_at (a stable display order).
+// ListMeshOffers returns all mesh offers ordered by sort_order, then
+// received_at.
 func (r *Repo) ListMeshOffers() ([]MeshOffer, error) {
 	rows, err := r.db.Query(`SELECT ` + meshOfferCols + ` FROM mesh_offers ORDER BY sort_order, received_at`)
 	if err != nil {

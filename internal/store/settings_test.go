@@ -25,8 +25,6 @@ func TestSettingsRoundtrip(t *testing.T) {
 		t.Fatalf("default containers_path wrong: %q", s.ContainersPath)
 	}
 
-	// Immutable off-site defaults: flags off, budget off, weekly tamper test,
-	// auto drill target.
 	if s.ContainersOffsiteImmutable || s.VMsOffsiteImmutable || s.FlashOffsiteImmutable {
 		t.Fatal("default *_offsite_immutable must be false")
 	}
@@ -39,8 +37,6 @@ func TestSettingsRoundtrip(t *testing.T) {
 	if s.DRDrillTarget != "" {
 		t.Fatalf("default dr_drill_target must be empty, got %q", s.DRDrillTarget)
 	}
-	// Off-site DR drill defaults ON (migration DEFAULT 1) so upgrades preserve the
-	// current scheduled-DR behavior.
 	if !s.OffsiteDrillsEnabled {
 		t.Fatal("default offsite_drills_enabled should be true")
 	}
@@ -213,10 +209,6 @@ func TestSettingsFlashZipExportRoundTrip(t *testing.T) {
 	}
 }
 
-// TestSettingsRestartHealthWaitRoundTrip pins the v79 health-gated ordered
-// restart columns (#119): the migration defaults are ON (true) with a 120s
-// per-container timeout so the reported bug is fixed out of the box, and both
-// values round-trip through UpdateSettings/GetSettings.
 func TestSettingsRestartHealthWaitRoundTrip(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -224,7 +216,7 @@ func TestSettingsRestartHealthWaitRoundTrip(t *testing.T) {
 	}
 	r := store.New(db)
 
-	// Migration defaults: enabled, 120s timeout.
+	// Defaults: enabled, 120s timeout.
 	s, err := r.GetSettings()
 	if err != nil {
 		t.Fatal(err)
@@ -236,7 +228,6 @@ func TestSettingsRestartHealthWaitRoundTrip(t *testing.T) {
 		t.Fatalf("default restart_health_timeout_sec must be 120, got %d", s.RestartHealthTimeoutSec)
 	}
 
-	// Turning it off and changing the timeout must persist.
 	s.RestartHealthWait = false
 	s.RestartHealthTimeoutSec = 45
 	if err := r.UpdateSettings(s); err != nil {
@@ -254,9 +245,6 @@ func TestSettingsRestartHealthWaitRoundTrip(t *testing.T) {
 	}
 }
 
-// TestSettingsReconcileUnraidUpdateStatusRoundTrip pins the v80 column (#116):
-// it defaults ON (Unraid is asked to refresh its own status after an applied
-// update) and round-trips being turned off.
 func TestSettingsReconcileUnraidUpdateStatusRoundTrip(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -285,10 +273,8 @@ func TestSettingsReconcileUnraidUpdateStatusRoundTrip(t *testing.T) {
 	}
 }
 
-// TestSettingsRegistryAuthsRoundTrip pins the v69 registry_auths column (#106):
-// the migration backfills existing rows with ” (no credentials → anonymous
-// pulls, unchanged behavior), and the opaque encrypted blob round-trips
-// verbatim through UpdateSettings/GetSettings like notify_conf/cloud_conf.
+// TestSettingsRegistryAuthsRoundTrip expects registry_auths to default to empty
+// (anonymous pulls) and the encrypted blob to round-trip unchanged.
 func TestSettingsRegistryAuthsRoundTrip(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -304,8 +290,6 @@ func TestSettingsRegistryAuthsRoundTrip(t *testing.T) {
 		t.Fatalf("default registry_auths must be empty, got %q", s.RegistryAuths)
 	}
 
-	// The store treats the value as an opaque (encrypted) blob — it must come
-	// back byte-identical.
 	const blob = "b64-ciphertext-opaque"
 	s.RegistryAuths = blob
 	if err := r.UpdateSettings(s); err != nil {
@@ -319,7 +303,6 @@ func TestSettingsRegistryAuthsRoundTrip(t *testing.T) {
 		t.Fatalf("registry_auths not round-tripped: %q", got.RegistryAuths)
 	}
 
-	// Clearing (removing every credential) persists too.
 	got.RegistryAuths = ""
 	if err := r.UpdateSettings(got); err != nil {
 		t.Fatal(err)
@@ -333,9 +316,8 @@ func TestSettingsRegistryAuthsRoundTrip(t *testing.T) {
 	}
 }
 
-// TestSettingsWidgetTokenRoundTrip pins the v70 widget_token column: the
-// migration backfills existing rows with ” (widget off — both widget endpoints
-// fail closed), and set/clear round-trips through UpdateSettings/GetSettings.
+// TestSettingsWidgetTokenRoundTrip expects widget_token to default to empty
+// (widget off), and setting and clearing it to persist.
 func TestSettingsWidgetTokenRoundTrip(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -364,7 +346,6 @@ func TestSettingsWidgetTokenRoundTrip(t *testing.T) {
 		t.Fatalf("widget_token not round-tripped: %q", got.WidgetToken)
 	}
 
-	// Clearing (Disable in the Settings card) persists too — back to fail-closed.
 	got.WidgetToken = ""
 	if err := r.UpdateSettings(got); err != nil {
 		t.Fatal(err)
@@ -378,10 +359,9 @@ func TestSettingsWidgetTokenRoundTrip(t *testing.T) {
 	}
 }
 
-// TestSettingsEverythingFieldsRoundTrip pins the v89 "Backup Everything"
-// settings columns: the migration defaults to schedule 'off' and empty hooks
-// (fully inert until the user opts in), and all three round-trip through
-// UpdateSettings/GetSettings.
+// TestSettingsEverythingFieldsRoundTrip expects the "Backup Everything"
+// schedule to default to 'off' with empty hooks, and all three fields to
+// round-trip.
 func TestSettingsEverythingFieldsRoundTrip(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -433,7 +413,6 @@ func TestSettingsAuthPasswordHashRoundtrip(t *testing.T) {
 		t.Fatalf("default auth_password_hash must be empty, got %q", s.AuthPasswordHash)
 	}
 
-	// Set a hash.
 	const fakeHash = "deadbeef"
 	s.AuthPasswordHash = fakeHash
 	if err := r.UpdateSettings(s); err != nil {

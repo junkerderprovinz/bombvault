@@ -1,11 +1,8 @@
 package api
 
-// Tests for the encryption-mode auto-detection (DetectEncryption).
-//
-// The interesting behaviour is not "an encrypted repo reports encrypted" — it
-// is the ambiguity handling: a probe failure must never be read as "plain", an
-// unreachable repo alongside an empty one must report "unknown" rather than
-// "absent", and only a definite verdict may write the setting.
+// The interesting part of DetectEncryption is the ambiguity handling: a probe
+// failure is never read as plain, an unreachable repo beside an empty one gives
+// unknown rather than absent, and only a definite verdict writes the setting.
 
 import (
 	"context"
@@ -20,9 +17,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// modeStubEngine opens a repo only under the mode recorded for it: true =
-// opens ONLY encrypted, false = opens ONLY plain. A repo absent from the map
-// fails both probes with failErr (default: restic's not-a-repo message).
+// modeStubEngine opens a repo only in the mode recorded for it (true means
+// encrypted). A repo missing from the map fails both probes with its failErr,
+// or with restic's not-a-repo message.
 type modeStubEngine struct {
 	ResticEngine
 	encrypted map[string]bool
@@ -46,9 +43,8 @@ func (e *modeStubEngine) RepoOpens(ctx context.Context, repo string, m restic.Mo
 	return e.RepoOpensErr(ctx, repo, m) == nil
 }
 
-// newDetectSvc builds a Service whose containers/vms/flash/files/config paths
-// all live under a real temp mount root, so resolveRepo succeeds and the local
-// on-disk checks (localRepoMissing) see a real filesystem.
+// newDetectSvc builds a Service whose repo paths resolve under a temp mount
+// root, so resolveRepo succeeds and localRepoMissing sees a real filesystem.
 func newDetectSvc(t *testing.T, eng ResticEngine) (*Service, *store.Repo, string) {
 	t.Helper()
 	s, st := newSyncTestService(t)
@@ -58,8 +54,8 @@ func newDetectSvc(t *testing.T, eng ResticEngine) (*Service, *store.Repo, string
 	return s, st, root
 }
 
-// setPaths configures only the named domains' LOCAL paths, blanking the rest so
-// exactly the intended repositories are probed.
+// setPaths sets the given local paths and containersOffsite and blanks the
+// rest, so only the intended repositories are probed.
 func setPaths(t *testing.T, st *store.Repo, paths map[string]string) store.Settings {
 	t.Helper()
 	settings, err := st.GetSettings()
@@ -82,11 +78,9 @@ func setPaths(t *testing.T, st *store.Repo, paths map[string]string) store.Setti
 	return settings
 }
 
-// mkrepo creates the location sub resolves to and drops a `config` file in it,
-// so localRepoMissing is false — a repository really is present on disk there.
-// It returns the path in the SAME form resolveRepo produces (paths.Resolve is
-// slash-based, so it does not match filepath.Join on Windows), which is the key
-// the engine stub is looked up under.
+// mkrepo creates the location sub resolves to with a `config` file in it. It
+// returns the path as resolveRepo produces it (slash-based, unlike
+// filepath.Join on Windows), which is the key the engine stub uses.
 func mkrepo(t *testing.T, s *Service, sub string) string {
 	t.Helper()
 	dir, err := s.resolveRepo(sub)
@@ -102,16 +96,13 @@ func mkrepo(t *testing.T, s *Service, sub string) string {
 	return dir
 }
 
-// TestDetectEncryptedRepoAppliesSetting is the common path: the repository
-// opens with the derived password, so the verdict is "encrypted" and the stored
-// setting FOLLOWS it — the user asserted nothing.
 func TestDetectEncryptedRepoAppliesSetting(t *testing.T) {
 	eng := &modeStubEngine{encrypted: map[string]bool{}}
 	s, st, _ := newDetectSvc(t, eng)
 	repo := mkrepo(t, s, "backups/containers")
 	eng.encrypted[repo] = true
 
-	// Start from the WRONG stored value, so "applied" is observable.
+	// Start from the wrong stored value so that applying is observable.
 	settings := setPaths(t, st, map[string]string{"containers": "backups/containers"})
 	settings.EncryptionEnabled = false
 	if err := st.UpdateSettings(settings); err != nil {
@@ -137,8 +128,6 @@ func TestDetectEncryptedRepoAppliesSetting(t *testing.T) {
 	}
 }
 
-// TestDetectPlainRepoAppliesSetting is the mirror case: a password-less repo
-// flips a wrongly-enabled setting back off.
 func TestDetectPlainRepoAppliesSetting(t *testing.T) {
 	eng := &modeStubEngine{encrypted: map[string]bool{}}
 	s, st, _ := newDetectSvc(t, eng)
@@ -163,11 +152,9 @@ func TestDetectPlainRepoAppliesSetting(t *testing.T) {
 	}
 }
 
-// TestDetectUnreachableIsNotPlain is THE safety property. A repository that
-// fails to open for an unrelated reason (dead backend, wrong credentials) must
-// report "unknown" and must NOT touch the setting — reading a probe failure as
-// "no password needed" is the one wrong answer that would quietly create an
-// empty repo beside the real backups.
+// A repository that fails to open for an unrelated reason reports unknown and
+// leaves the setting alone. Reading the failure as plain would create an empty
+// repo beside the real backups.
 func TestDetectUnreachableIsNotPlain(t *testing.T) {
 	eng := &modeStubEngine{
 		encrypted: map[string]bool{},
@@ -204,9 +191,7 @@ func TestDetectUnreachableIsNotPlain(t *testing.T) {
 	}
 }
 
-// TestDetectAbsentRepoIsFirstTimeSetup: a reachable REMOTE location that simply
-// holds no repository yet is "absent" — nothing to detect, the user's choice
-// genuinely decides how it gets created — and the setting is left alone.
+// A reachable remote without a repository is absent, and the setting stays.
 func TestDetectAbsentRepoIsFirstTimeSetup(t *testing.T) {
 	eng := &modeStubEngine{encrypted: map[string]bool{}}
 	s, st, _ := newDetectSvc(t, eng)
@@ -224,8 +209,7 @@ func TestDetectAbsentRepoIsFirstTimeSetup(t *testing.T) {
 	}
 }
 
-// TestDetectUnconfiguredWhenNoPathsSet: nothing configured at all is its own
-// verdict, distinct from "configured but empty".
+// Nothing configured is its own verdict, distinct from configured but empty.
 func TestDetectUnconfiguredWhenNoPathsSet(t *testing.T) {
 	eng := &modeStubEngine{encrypted: map[string]bool{}}
 	s, st, _ := newDetectSvc(t, eng)
@@ -243,9 +227,7 @@ func TestDetectUnconfiguredWhenNoPathsSet(t *testing.T) {
 	}
 }
 
-// TestDetectConflictWhenReposDisagree: two real repositories in DIFFERENT modes.
-// One global flag cannot open both, so there is no correct value to apply and
-// the verdict says so instead of picking a side.
+// One global flag cannot open repositories in both modes, so nothing is applied.
 func TestDetectConflictWhenReposDisagree(t *testing.T) {
 	eng := &modeStubEngine{encrypted: map[string]bool{}}
 	s, st, _ := newDetectSvc(t, eng)
@@ -273,7 +255,7 @@ func TestDetectConflictWhenReposDisagree(t *testing.T) {
 	if det.Applied {
 		t.Fatal("a conflict must never write the setting")
 	}
-	// The UI needs to name the odd one out, so both states must be reported.
+	// The UI names the odd one out, so both states must be reported.
 	var sawEnc, sawPlain bool
 	for _, r := range det.Repos {
 		switch r.State {
@@ -288,9 +270,8 @@ func TestDetectConflictWhenReposDisagree(t *testing.T) {
 	}
 }
 
-// TestDetectDetectionWinsOverAbsentSibling: a definite detection from ONE repo
-// settles the (global) setting even when another configured location is still
-// empty. Otherwise attaching a half-configured box could never auto-detect.
+// One definite detection settles the global setting while another location is
+// still empty; otherwise a half-configured box could never be detected.
 func TestDetectDetectionWinsOverAbsentSibling(t *testing.T) {
 	eng := &modeStubEngine{encrypted: map[string]bool{}}
 	s, st, _ := newDetectSvc(t, eng)
@@ -315,20 +296,18 @@ func TestDetectDetectionWinsOverAbsentSibling(t *testing.T) {
 	}
 }
 
-// TestFoldEncryptionUnknownBeatsAbsent pins the ordering rule directly: an
-// unreachable repository alongside an empty one is "cannot tell", NOT "fresh
-// install". The unreachable one may be the encrypted repo being restored.
+// The unreachable repository may be the encrypted one being restored, so an
+// empty sibling does not make this a fresh install.
 func TestFoldEncryptionUnknownBeatsAbsent(t *testing.T) {
 	got := foldEncryption([]RepoEncryption{
 		{Domain: "containers", Source: "local", State: RepoAbsent},
 		{Domain: "vms", Source: "offsite", State: RepoUnreachable, Err: "401"},
 	})
 	if got != VerdictUnknown {
-		t.Fatalf("fold = %q, want unknown — an unreachable repo must not be read as a fresh install", got)
+		t.Fatalf("fold = %q, want unknown; an unreachable repo must not be read as a fresh install", got)
 	}
 }
 
-// TestFoldEncryptionTable covers the remaining fold combinations in one place.
 func TestFoldEncryptionTable(t *testing.T) {
 	cases := []struct {
 		name string
@@ -354,10 +333,8 @@ func TestFoldEncryptionTable(t *testing.T) {
 	}
 }
 
-// TestClassifyClosedRepoLocalWithConfigIsUnreachable: a local location that DOES
-// have a `config` file but opened under neither mode is not a BombVault repo, is
-// corrupt, or is permission-denied. Never "absent" — there is clearly something
-// there.
+// A local `config` that opens under neither mode belongs to a foreign or
+// corrupt repository, or cannot be read. Either way something is there.
 func TestClassifyClosedRepoLocalWithConfigIsUnreachable(t *testing.T) {
 	eng := &modeStubEngine{encrypted: map[string]bool{}}
 	s, _, _ := newDetectSvc(t, eng)
@@ -365,15 +342,14 @@ func TestClassifyClosedRepoLocalWithConfigIsUnreachable(t *testing.T) {
 
 	state, msg := s.classifyClosedRepo(repo, errors.New("Fatal: wrong password or no key found"))
 	if state != RepoUnreachable {
-		t.Fatalf("state = %q, want unreachable — a present config that opens under neither mode is not an empty location", state)
+		t.Fatalf("state = %q, want unreachable; a present config that opens under neither mode is not an empty location", state)
 	}
 	if msg == "" {
 		t.Fatal("expected the probe failure to be reported")
 	}
 }
 
-// TestClassifyClosedRepoLocalMissingIsAbsent: a local location with no `config`
-// and no established marker is a genuine fresh location.
+// No `config` and no established marker means a fresh location.
 func TestClassifyClosedRepoLocalMissingIsAbsent(t *testing.T) {
 	eng := &modeStubEngine{encrypted: map[string]bool{}}
 	s, _, root := newDetectSvc(t, eng)
@@ -385,10 +361,8 @@ func TestClassifyClosedRepoLocalMissingIsAbsent(t *testing.T) {
 	}
 }
 
-// TestClassifyClosedRepoVanishedMountIsUnreachable is the #55 case: BombVault
-// established a repo here before, its `config` is gone, and the backing store is
-// not in the mount table. That is a real repository we cannot see — reporting it
-// as "absent" would be exactly the wrong guess.
+// An established repo whose `config` is gone and whose backing store is not
+// mounted is a real repository that cannot be seen right now.
 func TestClassifyClosedRepoVanishedMountIsUnreachable(t *testing.T) {
 	eng := &modeStubEngine{encrypted: map[string]bool{}}
 	s, st, root := newDetectSvc(t, eng)
@@ -399,8 +373,7 @@ func TestClassifyClosedRepoVanishedMountIsUnreachable(t *testing.T) {
 	if err := st.MarkRepoEstablished(repo); err != nil {
 		t.Fatal(err)
 	}
-	// destinationMounted reads /proc/self/mountinfo; the temp path is not a
-	// mount point, so it reports false — the vanished-backing-store case.
+	// The temp dir is not a mount point, so destinationMounted reports false.
 	state, msg := s.classifyClosedRepo(repo, errors.New("Fatal: unable to open config file"))
 	if state != RepoUnreachable {
 		t.Fatalf("state = %q, want unreachable for an established-but-unmounted repo", state)
@@ -410,13 +383,10 @@ func TestClassifyClosedRepoVanishedMountIsUnreachable(t *testing.T) {
 	}
 }
 
-// TestDeadRemoteHostIsUnreachableNotAbsent: pointed at a host with nothing
-// listening, restic answers with "unable to open config file" and the dial
-// failure. Calling that "absent" is the one wrong answer this feature must never
-// give, because "absent" licenses creating an empty repository beside backups
-// that were there all along.
-//
-// The message below is the verbatim text observed against the test container.
+// For a host with nothing listening restic prints "unable to open config file"
+// together with the dial failure. Reading that as "absent" would allow an empty
+// repository to be created beside backups that exist. The message is verbatim
+// from a real run.
 func TestDeadRemoteHostIsUnreachableNotAbsent(t *testing.T) {
 	eng := &modeStubEngine{encrypted: map[string]bool{}}
 	s, _, _ := newDetectSvc(t, eng)
@@ -440,9 +410,6 @@ rest:http://192.168.20.199:8000/norepo/`)
 	}
 }
 
-// TestReachableRemoteWithNoRepoIsAbsent is the other half: a REACHABLE backend
-// that simply holds no repository yet must still classify as absent, so the
-// stricter check above did not just turn every remote into "unknown".
 func TestReachableRemoteWithNoRepoIsAbsent(t *testing.T) {
 	eng := &modeStubEngine{encrypted: map[string]bool{}}
 	s, _, _ := newDetectSvc(t, eng)
@@ -457,8 +424,6 @@ func TestReachableRemoteWithNoRepoIsAbsent(t *testing.T) {
 	}
 }
 
-// TestTransportMarkersRejectAbsent walks the failure shapes a remote backend
-// realistically produces, each of which must read as "cannot tell".
 func TestTransportMarkersRejectAbsent(t *testing.T) {
 	cases := map[string]string{
 		"refused":     "Fatal: unable to open config file: dial tcp 10.0.0.5:8000: connect: connection refused",
@@ -478,9 +443,8 @@ func TestTransportMarkersRejectAbsent(t *testing.T) {
 	}
 }
 
-// TestDetectProbeNeverLocks proves the probe stays read-only in the one way that
-// can damage someone else's repository: every probe carries NoLock, so asking
-// what mode a repo is in never writes a lock file into it.
+// A lock file is the one thing a mode probe could write into someone else's
+// repository.
 func TestDetectProbeNeverLocks(t *testing.T) {
 	eng := &lockRecordingEngine{modeStubEngine: modeStubEngine{encrypted: map[string]bool{}}}
 	s, st, _ := newDetectSvc(t, eng)
@@ -495,7 +459,7 @@ func TestDetectProbeNeverLocks(t *testing.T) {
 		t.Fatal("expected at least one probe")
 	}
 	if eng.locking > 0 {
-		t.Fatalf("%d probe(s) ran without NoLock — detection must never lock a repository", eng.locking)
+		t.Fatalf("%d probe(s) ran without NoLock; detection must not lock a repository", eng.locking)
 	}
 }
 

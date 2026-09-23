@@ -11,20 +11,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 )
 
-// ---------------------------------------------------------------------------
-// Tests pinning Task 10 Step 5's wiring: BackupVMGraceful/BackupVMLive/
-// RestoreVM must actually invoke BackupZvolDisk/RestoreZvolDisk for a
-// domain's block-device-backed (zvol) disks — via VMBackupDeps.BlockDisks /
-// VMRestoreDeps.BlockDisks — while a domain with ONLY file-backed disks must
-// behave completely unchanged (the regression pin). Reuses fakeZFSHost/
-// fakeZvolRestic from vm_zvol_test.go and fakeVM/fakeRestic/fakeRuns/
-// sampleVMBackupDeps/sampleVMRestoreDeps/vmContains from vm_orchestrator_test.go
-// — no real SSH/ZFS/restic system is touched by any test in this file.
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// BackupVMGraceful + BlockDisks
-// ---------------------------------------------------------------------------
+// These tests check that BackupVMGraceful and RestoreVM run the zvol path for
+// a domain's block disks, in addition to the file-backed disks, and leave it
+// alone for a domain without any.
 
 func TestBackupVMGracefulInvokesZvolPathForBlockDisks(t *testing.T) {
 	vm := &fakeVM{active: true, stateVal: "shut off"}
@@ -42,14 +31,11 @@ func TestBackupVMGracefulInvokesZvolPathForBlockDisks(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	// The FILE-backed portion's summary is still what gets returned/recorded
-	// (unchanged contract) — the zvol backup is a separate mechanism.
+	// The returned summary is the file backup's.
 	if sum.SnapshotID != "fileSnap1234" {
 		t.Fatalf("summary.SnapshotID = %q, want the file-backup snapshot id unchanged", sum.SnapshotID)
 	}
 
-	// The zvol path must actually have run: snapshot create → stream send →
-	// snapshot destroy, exactly like a direct BackupZvolDisk call.
 	if !vmContains(host.log, "snapshotCreate:tank/vms/win10/disk1@") {
 		t.Fatalf("zfs snapshot was never created for the block disk; host.log = %v", host.log)
 	}
@@ -66,8 +52,6 @@ func TestBackupVMGracefulInvokesZvolPathForBlockDisks(t *testing.T) {
 		t.Fatalf("restic BackupStdin received %q, want the zfs send stream bytes", zr.capturedStdin)
 	}
 
-	// The FILE-backed restic.Backup call must still have happened too — the
-	// block-disk path is ADDITIVE, not a replacement.
 	if !vmContains(r.log, "backup:/repo/vms") {
 		t.Fatalf("file-backed restic backup not called: %v", r.log)
 	}
@@ -76,26 +60,21 @@ func TestBackupVMGracefulInvokesZvolPathForBlockDisks(t *testing.T) {
 	}
 }
 
-// TestBackupVMGracefulFileOnlyDiskUnchanged is the regression pin: a domain
-// with ONLY file-backed disks (BlockDisks empty, the zero value every
-// existing caller uses) must behave EXACTLY as before this wiring existed —
-// no zvol machinery is ever touched.
-func TestBackupVMGracefulFileOnlyDiskUnchanged(t *testing.T) {
+// TestBackupVMGracefulFileOnlyNeedsNoZFSHost leaves BlockDisks, ZFSHost and
+// ZvolRestic nil, so any use of the zvol path would panic.
+func TestBackupVMGracefulFileOnlyNeedsNoZFSHost(t *testing.T) {
 	vm := &fakeVM{active: true, stateVal: "shut off"}
 	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678", Bytes: 4096}}
 	runs := &fakeRuns{}
 
 	d := sampleVMBackupDeps(t, vm, r, runs)
-	// d.BlockDisks, d.ZFSHost, d.ZvolRestic are all left at their zero value
-	// (nil) — exactly what every real caller in internal/api/service.go does
-	// today.
 
 	sum, err := backup.BackupVMGraceful(t.Context(), d)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if sum.SnapshotID != "deadbeef12345678" || sum.Bytes != 4096 {
-		t.Fatalf("summary = %+v, unchanged from before this wiring existed", sum)
+		t.Fatalf("summary = %+v, want the restic summary unchanged", sum)
 	}
 	if !vmContains(vm.log, "isActive:") || !vmContains(vm.log, "shutdown:win10") || !vmContains(vm.log, "start:win10") {
 		t.Fatalf("graceful shutdown/restart sequence changed: %v", vm.log)
@@ -106,15 +85,10 @@ func TestBackupVMGracefulFileOnlyDiskUnchanged(t *testing.T) {
 	if len(runs.finishes) != 1 || runs.finishes[0] != "success" {
 		t.Fatalf("run finishes = %v, want [success]", runs.finishes)
 	}
-	// Passing nil ZFSHost/ZvolRestic must never be dereferenced — proves the
-	// zvol loop is a true no-op when BlockDisks is empty.
 }
 
-// TestBackupVMGracefulZvolFailureFailsWholeRun: a block disk's backup
-// failure must fail the whole VM backup run (never silently report success
-// while a disk's data never reached the repo) — and, since the VM was
-// running, it must STILL be restarted (the ALWAYS-restart guarantee is
-// unconditional).
+// TestBackupVMGracefulZvolFailureFailsWholeRun checks that a failed block disk
+// fails the whole run and the VM is still restarted.
 func TestBackupVMGracefulZvolFailureFailsWholeRun(t *testing.T) {
 	vm := &fakeVM{active: true, stateVal: "shut off"}
 	r := &fakeRestic{summary: backup.Summary{SnapshotID: "fileSnap1234"}}
@@ -139,17 +113,13 @@ func TestBackupVMGracefulZvolFailureFailsWholeRun(t *testing.T) {
 	}
 }
 
-// TestBackupVMGracefulZvolAttemptsAllDisksAfterOneFails: a multi-block-disk
-// VM must still attempt every remaining disk after an earlier one fails, so
-// as much data as possible reaches the repo (mirrors BackupVMLive's
-// "commit every overlay" pattern for the same reason).
+// TestBackupVMGracefulZvolAttemptsAllDisksAfterOneFails checks that the other
+// disks are still backed up after one fails, so as much data as possible
+// reaches the repository.
 func TestBackupVMGracefulZvolAttemptsAllDisksAfterOneFails(t *testing.T) {
 	vm := &fakeVM{active: true, stateVal: "shut off"}
 	r := &fakeRestic{summary: backup.Summary{SnapshotID: "fileSnap1234"}}
 	runs := &fakeRuns{}
-	// A single fakeZFSHost/fakeZvolRestic pair is shared across both disk
-	// calls (BackupZvolDisk doesn't care), so both attempts show up in one
-	// log — snapshotCreateErr only fires on disk1, disk2 must still be tried.
 	host := &fakeSelectiveZFSHost{failDataset: "tank/vms/win10/disk1"}
 	zr := &fakeZvolRestic{backupSummary: backup.Summary{SnapshotID: "zvolSnap"}}
 
@@ -170,9 +140,8 @@ func TestBackupVMGracefulZvolAttemptsAllDisksAfterOneFails(t *testing.T) {
 	}
 }
 
-// fakeSelectiveZFSHost fails SnapshotCreate only for one specific dataset,
-// so a test can prove a LATER disk is still attempted after an earlier one
-// fails.
+// fakeSelectiveZFSHost fails SnapshotCreate for failDataset and notes any
+// attempt on another dataset.
 type fakeSelectiveZFSHost struct {
 	failDataset    string
 	disk2Attempted bool
@@ -195,10 +164,6 @@ func (f *fakeSelectiveZFSHost) StreamReceive(_ context.Context, rd io.Reader, _ 
 	_, _ = io.ReadAll(rd)
 	return nil
 }
-
-// ---------------------------------------------------------------------------
-// RestoreVM + BlockDisks
-// ---------------------------------------------------------------------------
 
 func TestRestoreVMInvokesZvolPathForBlockDisks(t *testing.T) {
 	vm := &fakeVM{stateVal: "running"}
@@ -227,7 +192,7 @@ func TestRestoreVMInvokesZvolPathForBlockDisks(t *testing.T) {
 		t.Fatal("zfs receive was never invoked for the block disk")
 	}
 	if host.streamReceiveTarget == d.BlockDisks[0].SourceDataset {
-		t.Fatalf("zfs receive targeted the LIVE source dataset %q — data-destroying bug", host.streamReceiveTarget)
+		t.Fatalf("zfs receive targeted the live source dataset %q", host.streamReceiveTarget)
 	}
 	if !strings.HasPrefix(host.streamReceiveTarget, d.BlockDisks[0].SourceDataset+"-bombvault-restore-") {
 		t.Fatalf("zfs receive target %q does not carry the expected fresh-dataset marker", host.streamReceiveTarget)
@@ -236,8 +201,6 @@ func TestRestoreVMInvokesZvolPathForBlockDisks(t *testing.T) {
 		t.Fatalf("zfs receive stdin = %q, want the restic dump bytes", host.streamReceiveData)
 	}
 
-	// The file-based restic restore must ALSO still have happened — additive,
-	// not a replacement.
 	if !vmContains(r.log, "restore:/repo/vms") {
 		t.Fatalf("file-based restic restore not called: %v", r.log)
 	}
@@ -246,17 +209,14 @@ func TestRestoreVMInvokesZvolPathForBlockDisks(t *testing.T) {
 	}
 }
 
-// TestRestoreVMFileOnlyDiskUnchanged is the regression pin for restore: a
-// domain with ONLY file-backed disks (BlockDisks empty, the zero value every
-// existing caller uses today) must behave EXACTLY as before this wiring
-// existed.
-func TestRestoreVMFileOnlyDiskUnchanged(t *testing.T) {
+// TestRestoreVMFileOnlyNeedsNoZFSHost leaves BlockDisks, ZFSHost and
+// ZvolRestic nil, so any use of the zvol path would panic.
+func TestRestoreVMFileOnlyNeedsNoZFSHost(t *testing.T) {
 	vm := &fakeVM{stateVal: "running"}
 	r := &fakeRestic{}
 	runs := &fakeRuns{}
 
 	d := sampleVMRestoreDeps(t, vm, r, runs)
-	// d.BlockDisks, d.ZFSHost, d.ZvolRestic all left at zero value.
 
 	if err := backup.RestoreVM(t.Context(), d); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -272,9 +232,8 @@ func TestRestoreVMFileOnlyDiskUnchanged(t *testing.T) {
 	}
 }
 
-// TestRestoreVMZvolFailureAbortsBeforeDefine: a block disk's restore failure
-// must abort the WHOLE restore BEFORE the domain is (re)defined — a VM with
-// an incomplete/missing disk restore must never be defined/started.
+// TestRestoreVMZvolFailureAbortsBeforeDefine checks that a VM with a disk that
+// failed to restore is never defined.
 func TestRestoreVMZvolFailureAbortsBeforeDefine(t *testing.T) {
 	vm := &fakeVM{stateVal: "running"}
 	r := &fakeRestic{}
@@ -296,7 +255,7 @@ func TestRestoreVMZvolFailureAbortsBeforeDefine(t *testing.T) {
 		t.Fatal("expected an error when the zvol disk restore fails")
 	}
 	if vmContains(vm.log, "define:") {
-		t.Fatalf("domain must NOT be defined when a block disk's restore failed: %v", vm.log)
+		t.Fatalf("domain must not be defined when a block disk's restore failed: %v", vm.log)
 	}
 	if len(runs.finishes) != 1 || runs.finishes[0] != "failed" {
 		t.Fatalf("run finishes = %v, want [failed]", runs.finishes)

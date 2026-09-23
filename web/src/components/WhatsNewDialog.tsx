@@ -3,16 +3,6 @@ import { useT } from "../lib/i18n";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 
-// ---------------------------------------------------------------------------
-// WhatsNewDialog (#48) — a "What's new" modal shown once when a NEW BombVault
-// version is running since this browser last opened the app. It fetches the
-// GitHub release notes for the running version and renders them with a tiny,
-// dependency-free Markdown renderer (headings / bold / bullet lists / links /
-// horizontal rules). On any fetch failure it degrades to a short message plus
-// the "View on GitHub" link. Version-change detection + when to mount this lives
-// in app/Layout.tsx; this component just renders + fetches once it is shown.
-// ---------------------------------------------------------------------------
-
 const REPO = "junkerderprovinz/bombvault";
 const RELEASES_PAGE = `https://github.com/${REPO}/releases`;
 
@@ -28,8 +18,8 @@ function safeHref(url: string): string | null {
   return /^(https?:|mailto:)/i.test(u) ? u : null;
 }
 
-// Inline formatter: turns **bold** and [text](url) into React nodes; all other
-// text stays as (auto-escaped) plain strings. Deliberately minimal — no library.
+// renderInline turns **bold** and [text](url) into React nodes; everything else
+// stays plain text, which React escapes.
 function renderInline(text: string, keyBase: string): ReactNode[] {
   const nodes: ReactNode[] = [];
   const re = /\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*/g;
@@ -41,32 +31,15 @@ function renderInline(text: string, keyBase: string): ReactNode[] {
     if (m[0].startsWith("[")) {
       const href = safeHref(m[2]);
       if (href) {
-        // Task 5 (rule 13) deliberate exception, documented rather than
-        // converted: this link is rendered MID-SENTENCE inside dynamically
-        // fetched GitHub release-note prose, interleaved with plain text and
-        // **bold** runs from the same regex pass. A Badge is a block-ish
-        // filled chip built for a standalone action ("View on GitHub" below,
-        // now converted); dropping a filled pill into the middle of a
-        // flowing paragraph breaks the reading flow far worse than an inline
-        // underlined link does — this is exactly the spec's own escape
-        // hatch ("if something cannot be explained in a bubble, the control
-        // is wrong, not the label" — the inverse case here: if a link can't
-        // become a badge without breaking the thing it's part of, the link
-        // stays a link). The dialog's own standalone "View on GitHub" footer
-        // link (not inline prose) IS converted, immediately below.
+        // A plain link rather than a Badge, since it sits mid-sentence.
         nodes.push(
           <a
             key={`${keyBase}-a${i}`}
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            // text-accentText, not the flat text-accent ([381]). The same
-            // measurement the charts cite applies here and applies harder,
-            // because this is real text: flat accent gold is 1.61:1 on the
-            // light background, against the 4.5 WCAG asks of body copy. The
-            // token exists and four other places already use it; this inline
-            // link was the one the sweep missed, which is the ordinary way a
-            // rule ends up applied everywhere except once.
+            // Flat accent gold is 1.61:1 on the light background, too faint for
+            // body text; text-accentText meets 4.5:1.
             className="text-accentText underline hover:no-underline"
           >
             {m[1]}
@@ -89,8 +62,8 @@ function renderInline(text: string, keyBase: string): ReactNode[] {
   return nodes;
 }
 
-// Block-level renderer: splits into lines, groups consecutive bullet lines into
-// a list, and maps headings / rules / paragraphs to Carbon-styled elements.
+// renderMarkdown handles the subset release notes use: headings, bullet lists,
+// horizontal rules and paragraphs.
 function renderMarkdown(md: string): ReactNode[] {
   const lines = md.replace(/\r\n/g, "\n").split("\n");
   const blocks: ReactNode[] = [];
@@ -123,7 +96,7 @@ function renderMarkdown(md: string): ReactNode[] {
       blocks.push(<hr key={`hr${key++}`} className="my-4 border-carbon-border" />);
       continue;
     }
-    // Headings: # … ###### (## and higher → larger; ### and deeper → smaller)
+    // # and ## render large, deeper headings small.
     const h = line.match(/^(#{1,6})\s+(.*)$/);
     if (h) {
       flushList();
@@ -143,13 +116,11 @@ function renderMarkdown(md: string): ReactNode[] {
       }
       continue;
     }
-    // Bullet list item: "- " or "* "
     const bullet = line.match(/^[-*]\s+(.*)$/);
     if (bullet) {
       list.push(bullet[1]);
       continue;
     }
-    // Everything else → paragraph
     flushList();
     const k = key++;
     blocks.push(
@@ -162,6 +133,8 @@ function renderMarkdown(md: string): ReactNode[] {
   return blocks;
 }
 
+// WhatsNewDialog shows the release notes of the running version. app/Layout.tsx
+// decides when to mount it.
 export function WhatsNewDialog({ version, onClose }: { version: string; onClose: () => void }) {
   const { t } = useT();
   const [state, setState] = useState<"loading" | "ok" | "error">("loading");
@@ -170,25 +143,21 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
   const autoTriesRef = useRef(0);
   const closeRef = useRef<HTMLButtonElement>(null);
 
-  // Reset the auto-retry budget whenever the version changes.
   useEffect(() => {
     autoTriesRef.current = 0;
   }, [version]);
 
   const tagUrl = `${RELEASES_PAGE}/tag/${encodeURIComponent(version)}`;
 
-  // Fetch the notes from BombVault's OWN backend, not api.github.com — the app's
-  // Content-Security-Policy (connect-src 'self') blocks the cross-origin call, so
-  // the dialog always failed (#54). The backend serves its embedded release notes
-  // same-origin; the GitHub releases page stays only as the "view full" link.
+  // The notes come from our own backend because the CSP (connect-src 'self')
+  // blocks api.github.com.
   useEffect(() => {
     let active = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
     setState("loading");
 
-    // The request can land in the brief gap while the container restarts to apply
-    // an update, failing once with the old tab still open (#68). Auto-retry a few
-    // times with backoff before surfacing the error + a manual Retry button.
+    // The first request can land while the container restarts after an update,
+    // so a few retries with backoff come before the error and the Retry button.
     function fail() {
       if (!active) return;
       const MAX_AUTO = 3;
@@ -225,7 +194,7 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
     };
   }, [version, tagUrl, reloadKey]);
 
-  // Focus the close button on open + dismiss on Escape.
+  // Focus the close button on open and close on Escape.
   useEffect(() => {
     closeRef.current?.focus();
     function onKey(e: KeyboardEvent) {
@@ -250,27 +219,13 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
         aria-labelledby="whatsnew-title"
         className="glim-modal-card relative flex max-h-[85vh] w-full max-w-3xl flex-col rounded-card bg-carbon-surface shadow-2xl"
       >
-        {/* Header. No rule under it and none above the footer: a divider is
-            hierarchy drawn with a border, which this app's design language
-            avoids, and the padding already separates the three regions. The
-            same removal ConfirmDialog had in v8.5.4. */}
+        {/* No dividers between header, body and footer; the padding separates them. */}
         <div className="flex items-start justify-between gap-4 px-5 py-4">
-          {/* Task 5 follow-up (rule 15, "title as a badge" for window
-              chrome) — see ConfirmDialog.tsx for the aria-labelledby-safety
-              reasoning; identical here.
-              GlimStone follow-up pass ("half-overlap card notch"): `relative`
-              added on the OUTER dialog div above — same reasoning as
-              ConfirmDialog.tsx's identical structure. */}
           <h2 id="whatsnew-title" className="flex items-center">
             <Badge tone="heading" size="heading" wrap>{t("whatsnew.title").replace("{version}", version)}</Badge>
           </h2>
-          {/* The header's own close button is gone: the footer already carries
-              one, and two controls that do the same thing read as a choice
-              between two answers rather than one answer offered twice. The
-              open-focus moved with it, onto the footer button. */}
         </div>
 
-        {/* Body (scrolls) */}
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
           {state === "loading" && (
             <div className="flex items-center gap-3 py-6 text-sm text-carbon-textSub">
@@ -301,12 +256,7 @@ export function WhatsNewDialog({ version, onClose }: { version: string; onClose:
             ))}
         </div>
 
-        {/* Footer — the prominent "view full release" link is always present.
-            Task 5 (rule 13): was a plain underlined text link sitting right
-            next to the already badge-shaped Close button — literally the
-            "plain blue text link between badges is a foreign object" example
-            rule 13 names. size="large" matches Close's own visual weight
-            (px-4 py-2 text-sm) so the two don't read as mismatched siblings. */}
+        {/* size="large" gives the link the same weight as the Close button. */}
         <div className="flex items-center justify-between gap-3 px-5 py-4">
           <Badge
             as="a"

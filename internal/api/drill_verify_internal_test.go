@@ -2,11 +2,9 @@ package api
 
 import "testing"
 
-// TestDrillVerifyOK pins the restorability verdict to the ACTUAL restored sandbox
-// (on-disk file count vs restic ls, and on-disk bytes vs restic restore-size),
-// and specifically guards against the #30 regression where restic's
-// `stats --mode restore-size` file count differing from `ls` wrongly failed a
-// perfect restore.
+// The verdict compares the restored sandbox itself with restic: files on disk
+// against `ls`, bytes on disk against `stats --mode restore-size`. The file
+// count of restore-size can differ from ls and must not fail a perfect restore.
 func TestDrillVerifyOK(t *testing.T) {
 	const bytes = int64(2545593264)
 	cases := []struct {
@@ -16,9 +14,9 @@ func TestDrillVerifyOK(t *testing.T) {
 		want                 bool
 	}{
 		{
-			// #30 (manilx): the Unraid flash restored the exact file count and bytes,
-			// yet was flagged because restic stats' file count != ls'. Must pass now.
-			name:    "exact match passes (statsFiles no longer consulted)",
+			// Numbers from an Unraid flash restore whose restore-size file count
+			// differed from ls.
+			name:    "exact match passes",
 			lsFiles: 988, gotFiles: 988, statsBytes: bytes, gotBytes: bytes, want: true,
 		},
 		{

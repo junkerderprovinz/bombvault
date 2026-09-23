@@ -1,26 +1,12 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// Selector — real DOM/keyboard behaviour (GlimStone form-engine Phase 2, Task
-// 3). Covers what Selector.test.ts's pure nextFocusIndex/rovedIndex tests
-// can't: actual focus movement, click wiring, roving tabindex reflected in
-// the rendered DOM, and the `hue` opt-out's real class/style output. Named
-// `.dom.test.tsx` per appearance.dom.test.tsx's own convention for the
-// jsdom-opted-in exception (vitest.config.ts stays "node" by default).
+// Selector behaviour that needs a DOM: focus movement, clicks, the roving
+// tabindex and the hue classes. The pure navigation math is tested in
+// Selector.test.ts.
 //
-// RTL note: production code reads direction via
-// `getComputedStyle(strip.current).direction`, which in a real browser
-// resolves through the UA stylesheet's `[dir="rtl"] { direction: rtl }` rule
-// once `dir="rtl"` lands on `<html>` (lib/i18n.ts's isRtl). jsdom does not
-// implement that UA-stylesheet cascade, so the RTL test below sets
-// `direction: rtl` directly as an inline style on the strip — jsdom DOES
-// resolve inline styles through getComputedStyle reliably, so this still
-// exercises the real component code path (the same getComputedStyle read),
-// just without depending on jsdom's incomplete CSS engine for the
-// attribute→property mapping. The `dir`-attribute-driven path itself is only
-// verified live, in a real browser, per the plan's own "verify RTL on the
-// rendered page, not by reading the CSS" instruction (design-language.md,
-// "Right-to-left languages").
-// ---------------------------------------------------------------------------
+// The component reads direction with getComputedStyle. jsdom does not apply
+// the UA rule that maps dir="rtl" to direction: rtl, so the RTL tests set
+// direction inline on the strip; the dir attribute path is only checked in a
+// browser.
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
@@ -42,10 +28,8 @@ afterEach(() => {
   cleanup();
 });
 
-// A controlled wrapper mirroring how every real call site owns `active`
-// itself (Selector is stateless) — needed so keyboard navigation's onChange
-// call is actually reflected back into props across a re-render, the same
-// way Settings.tsx's tab === key comparison drives roving tabindex live.
+// Selector is stateless, so this wrapper owns active the way a real call site
+// does.
 function OneOfThree({ onChangeSpy, initial = "a" }: { onChangeSpy?: (id: string) => void; initial?: string }) {
   const [active, setActive] = useState(initial);
   return (
@@ -62,7 +46,7 @@ function OneOfThree({ onChangeSpy, initial = "a" }: { onChangeSpy?: (id: string)
   );
 }
 
-describe("Selector — click wiring", () => {
+describe("Selector click wiring", () => {
   it("calls onChange with the clicked item's id", () => {
     const spy = vi.fn();
     render(<OneOfThree onChangeSpy={spy} />);
@@ -85,11 +69,10 @@ describe("Selector — click wiring", () => {
   });
 });
 
-describe("Selector — roving tabindex", () => {
+describe("Selector roving tabindex", () => {
   it("only the active item is a tab stop (tabIndex 0); the rest are -1", () => {
     render(<OneOfThree initial="b" />);
-    // No @testing-library/jest-dom in this repo (see package.json) — plain
-    // DOM property access instead of the toHaveAttribute() matcher.
+    // jest-dom is not installed, so read the property directly.
     expect((screen.getByRole("tab", { name: "Alpha" }) as HTMLElement).tabIndex).toBe(-1);
     expect((screen.getByRole("tab", { name: "Beta" }) as HTMLElement).tabIndex).toBe(0);
     expect((screen.getByRole("tab", { name: "Gamma" }) as HTMLElement).tabIndex).toBe(-1);
@@ -105,7 +88,7 @@ describe("Selector — roving tabindex", () => {
   });
 });
 
-describe("Selector — keyboard navigation, LTR", () => {
+describe("Selector keyboard navigation, LTR", () => {
   it("ArrowRight moves focus to the next item and selects it (select=\"one\" activates on move)", () => {
     const spy = vi.fn();
     render(<OneOfThree onChangeSpy={spy} />);
@@ -157,9 +140,8 @@ describe("Selector — keyboard navigation, LTR", () => {
   });
 });
 
-describe("Selector — keyboard navigation, RTL", () => {
-  // See the file header for why direction is set inline rather than via a
-  // dir="rtl" attribute in this jsdom test.
+describe("Selector keyboard navigation, RTL", () => {
+  // See the file header for why direction is set inline.
   function renderRtl(spy?: (id: string) => void) {
     const utils = render(<OneOfThree onChangeSpy={spy} />);
     const list = screen.getByRole("tablist");
@@ -167,21 +149,21 @@ describe("Selector — keyboard navigation, RTL", () => {
     return utils;
   }
 
-  it("ArrowRight moves BACKWARD (toward the previous item) under RTL", () => {
+  it("ArrowRight moves backward to the previous item under RTL", () => {
     renderRtl();
     screen.getByRole("tab", { name: "Beta" }).focus();
     fireEvent.keyDown(screen.getByRole("tablist"), { key: "ArrowRight" });
     expect(document.activeElement).toBe(screen.getByRole("tab", { name: "Alpha" }));
   });
 
-  it("ArrowLeft moves FORWARD (toward the next item) under RTL", () => {
+  it("ArrowLeft moves forward to the next item under RTL", () => {
     renderRtl();
     screen.getByRole("tab", { name: "Beta" }).focus();
     fireEvent.keyDown(screen.getByRole("tablist"), { key: "ArrowLeft" });
     expect(document.activeElement).toBe(screen.getByRole("tab", { name: "Gamma" }));
   });
 
-  it("Home/End are direction-independent — still the first/last DOM item", () => {
+  it("End still jumps to the last DOM item under RTL", () => {
     renderRtl();
     screen.getByRole("tab", { name: "Beta" }).focus();
     fireEvent.keyDown(screen.getByRole("tablist"), { key: "End" });
@@ -189,7 +171,7 @@ describe("Selector — keyboard navigation, RTL", () => {
   });
 });
 
-describe("Selector — select=\"many\"", () => {
+describe("Selector select=\"many\"", () => {
   function ManySelector({ onChangeSpy }: { onChangeSpy: (id: string) => void }) {
     const [active, setActive] = useState<ReadonlySet<string>>(new Set(["a"]));
     return (
@@ -222,7 +204,7 @@ describe("Selector — select=\"many\"", () => {
     expect(spy).toHaveBeenCalledWith("b");
   });
 
-  it("arrow-key movement moves focus WITHOUT toggling — many-select never activates on move", () => {
+  it("arrow keys move focus without toggling", () => {
     const spy = vi.fn();
     render(<ManySelector onChangeSpy={spy} />);
     screen.getByRole("button", { name: "Alpha" }).focus();
@@ -232,7 +214,7 @@ describe("Selector — select=\"many\"", () => {
   });
 });
 
-describe("Selector — hue opt-out (Dashboard's heatmap toggle)", () => {
+describe("Selector hue opt-out", () => {
   it("hue=true (default) carries .glim-hue/.glim-hue-icon and an --item-hue inline style", () => {
     render(<OneOfThree />);
     const tab = screen.getByRole("tab", { name: "Alpha" });
@@ -252,7 +234,7 @@ describe("Selector — hue opt-out (Dashboard's heatmap toggle)", () => {
   });
 });
 
-describe("Selector — equalWidth (Settings.tsx's tab strip)", () => {
+describe("Selector equalWidth", () => {
   it("default (equalWidth unset) keeps content-hugging chips, flex-wrap, no flex-1", () => {
     render(<OneOfThree />);
     expect(screen.getByRole("tablist").className).toContain("flex-wrap");
@@ -260,24 +242,19 @@ describe("Selector — equalWidth (Settings.tsx's tab strip)", () => {
     expect(tab.className).not.toContain("flex-1");
   });
 
-  it("equalWidth keeps the strip flex-wrap (fixed-width segments can genuinely overflow a narrow row, unlike well's own measured-and-pinned segments) and every segment becomes flex-none (content-width matched, not stretched), while keeping the chip's own idle bg-carbon-surface2 fill (not well's transparent/shared-track look)", () => {
+  it("equalWidth keeps the strip wrapping and makes every segment flex-none with its own chip fill", () => {
     render(
       <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth />
     );
     const list = screen.getByRole("tablist");
-    // flex-wrap, NOT flex-nowrap (caught live — a fixed-pixel-width row can
-    // overflow a real viewport where "well"'s own row (always exactly the sum
-    // of its segments' pinned widths) never could; see Selector.tsx's own
-    // file header, item 5b, for the live overflow bug this corrects).
+    // A row of fixed-width segments can overflow a narrow viewport, so it wraps.
     expect(list.className).toContain("flex-wrap");
     expect(list.className).not.toContain("flex-nowrap");
-    // No shared well track — each segment still carries its own chip fill.
+    // No shared track; each segment carries its own chip fill.
     expect(list.className).not.toContain("bg-carbon-surface2");
 
     const idle = screen.getByRole("tab", { name: "Beta" });
-    // flex-none, NOT flex-1 (jdp's correction: pinned to the widest segment's
-    // own measured content width via inline style, not stretched to fill the
-    // row via a flex share — see Selector.tsx's own file header, item 5b).
+    // Pinned to a measured width, not stretched with a flex share.
     expect(idle.className).toContain("flex-none");
     expect(idle.className).not.toContain("flex-1");
     expect(idle.className).toContain("justify-center");
@@ -289,17 +266,9 @@ describe("Selector — equalWidth (Settings.tsx's tab strip)", () => {
     expect(active.className).toContain("text-accentContrast");
   });
 
-  it("equalWidth measures each segment's natural content width and pins EVERY segment to the WIDEST one's width, not a full-row stretch", () => {
-    // jsdom's getBoundingClientRect() is always a zero rect by default (see
-    // ColorPickerPopover.dom.test.tsx's own identical stub) — stub it here,
-    // keyed by data-sel-id, so the three segments report distinct, realistic
-    // natural widths for the component's own two-pass measurement effect to
-    // actually exercise, rather than every segment trivially "matching" 0.
-    // Widths are all comfortably ABOVE MIN_PINNED_WIDTH (round 3's own
-    // standardized floor, see Selector.tsx's own doc near that constant) so
-    // this test still isolates the pre-existing "widest segment wins" claim
-    // — the floor's own behaviour (every segment BELOW it) gets its own test
-    // right below this one.
+  it("equalWidth pins every segment to the widest segment's natural width", () => {
+    // jsdom returns zero rects, so each segment gets a stubbed width by
+    // data-sel-id. All are above MIN_PINNED_WIDTH; the floor has its own test.
     const restore = HTMLElement.prototype.getBoundingClientRect;
     const widths: Record<string, number> = { a: 220, b: 180, c: 260 };
     HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
@@ -311,11 +280,7 @@ describe("Selector — equalWidth (Settings.tsx's tab strip)", () => {
       render(
         <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth />
       );
-      // "Gamma" (id "c") is the widest at 260px — every segment, including the
-      // narrower "Alpha" (220px) and "Beta" (180px), must end up pinned to
-      // that SAME 260px, not their own natural width and not a
-      // container-filling stretch (there is no container width involved in
-      // this test at all).
+      // Gamma is the widest at 260px, so every segment gets 260px.
       for (const id of ["a", "b", "c"]) {
         const btn = document.querySelector(`[data-sel-id="${id}"]`) as HTMLElement;
         expect(btn.style.width).toBe("260px");
@@ -325,10 +290,9 @@ describe("Selector — equalWidth (Settings.tsx's tab strip)", () => {
     }
   });
 
-  it("equalWidth never pins narrower than MIN_PINNED_WIDTH, even when every segment's own natural content is smaller (round 3's own standardized floor — jdp: \"Die horizontalen Selektoren bitte breiter und möglichst gleich breit\")", () => {
+  it("equalWidth never pins narrower than MIN_PINNED_WIDTH, even when every segment is smaller", () => {
     const restore = HTMLElement.prototype.getBoundingClientRect;
-    // All three well below the floor — the widest of these (80px) alone would
-    // have been last round's own answer; the floor must win instead.
+    // All three are below the floor.
     const widths: Record<string, number> = { a: 60, b: 40, c: 80 };
     HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
       const id = this.getAttribute("data-sel-id");
@@ -348,22 +312,19 @@ describe("Selector — equalWidth (Settings.tsx's tab strip)", () => {
     }
   });
 
-  it("equalWidth is what turns a \"well\" strip into the BIG scale — pinned width AND the fixed --badge-md height (round 8: it is no longer ignored there)", () => {
+  it("equalWidth gives a \"well\" strip pinned widths and the fixed --badge-md height", () => {
     render(
       <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} equalWidth variant="well" />
     );
     const tab = screen.getByRole("tab", { name: "Alpha" });
-    // One flex-none + the fixed well height, not a second/duplicate class or
-    // a `flex-1` share (jdp's live-review correction, task 1 follow-up: a
-    // pinned strip pins to a MEASURED width via `pinWidth`, never flex-grow —
-    // see Selector.tsx's own `pinWidth` doc).
+    // A measured width, never a flex-1 share.
     expect(tab.className).toContain("flex-none");
     expect(tab.className).not.toContain("flex-1");
     expect(tab.className).toContain("h-[var(--badge-md)]");
     expect(tab.className).toContain("justify-center");
   });
 
-  it("keyboard navigation is unregressed under equalWidth", () => {
+  it("keyboard navigation still works with equalWidth", () => {
     const spy = vi.fn();
     render(<OneOfThree onChangeSpy={spy} />);
     // Re-render with equalWidth via a fresh controlled instance.
@@ -392,21 +353,9 @@ describe("Selector — equalWidth (Settings.tsx's tab strip)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// variant="well" — the app's ONE grooved horizontal selector, at both scales.
-//
-// Round 7 had shipped a SECOND grooved variant ("track") for the compact,
-// repeated-per-card selectors, whose one deliberate difference was that its
-// idle segments each carried their own visible fill. jdp reversed exactly
-// that in round 8 ("Die kleinen Selektoren sollen so aussehen wie die
-// grossen! Die nicht ausgewaehlten Optionen sollen kein Badge sein"), which
-// left the two variants differing only in the pinned-width/height bundle —
-// i.e. in the `equalWidth` prop that already existed. So "track" is gone and
-// `equalWidth` is now the pinning knob for both variants; these tests cover
-// the two scales of the one variant, and specifically the invariants that
-// stop them drifting apart again.
-// ---------------------------------------------------------------------------
-describe("Selector — variant=\"well\", shared by both scales", () => {
+// variant="well" is the grooved selector, at two scales: with and without
+// equalWidth. These tests keep the two scales from drifting apart.
+describe("Selector variant=\"well\" at both scales", () => {
   it("default variant (\"chip\") renders none of the groove's wrapper/segment classes", () => {
     render(<OneOfThree />);
     expect(screen.getByRole("tablist").className).not.toContain("bg-carbon-surface3");
@@ -417,14 +366,9 @@ describe("Selector — variant=\"well\", shared by both scales", () => {
     expect(tab.className).not.toContain("bg-transparent");
   });
 
-  // The groove has to differ from BOTH parent surfaces this variant legally
-  // sits on — a Card (`bg-carbon-surface`) and a CadenceBuilder well
-  // (`bg-carbon-surface2`). Round 7's first cut painted it `bg-carbon-surface2`,
-  // which measured literally identical to the well behind it at six of its
-  // nine live call sites, so the one thing the variant exists to add could
-  // not be seen at all. `bg-carbon-surface3` is the only surface token
-  // distinct from both, and round 8 unified BOTH scales onto it.
-  it("the strip itself becomes an enclosing groove at surface3 — never surface2, which is invisible inside a surface2 well", () => {
+  // The groove sits on a Card (surface) or a CadenceBuilder well (surface2),
+  // and surface3 is the only token distinct from both.
+  it("the strip is a groove at surface3, not surface2, which would vanish inside a surface2 well", () => {
     for (const props of [{}, { equalWidth: true }]) {
       cleanup();
       render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" {...props} />);
@@ -432,40 +376,32 @@ describe("Selector — variant=\"well\", shared by both scales", () => {
       expect(list.className).toContain("bg-carbon-surface3");
       expect(list.className).not.toContain("bg-carbon-surface2");
       expect(list.className).toContain("rounded-control");
-      // The established groove ring for this role, not a re-derived
-      // near-miss (round 7's own 0.15rem left a 2.4px ring, too thin to read
-      // as an enclosure). Scale separation comes from the segments.
+      // The standard groove ring; a thinner one does not read as an enclosure.
       expect(list.className).toContain("gap-[0.2rem]");
       expect(list.className).toContain("p-[0.2rem]");
     }
   });
 
-  it("the groove hugs its own segments (w-fit max-w-full) at BOTH scales, and never forces one row", () => {
+  it("the groove hugs its own segments (w-fit max-w-full) at both scales, and never forces one row", () => {
     for (const props of [{}, { equalWidth: true }]) {
       cleanup();
       render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" {...props} />);
       const list = screen.getByRole("tablist");
       expect(list.className).toContain("w-fit");
       expect(list.className).toContain("max-w-full");
-      // `flex-wrap`, never `flex-nowrap`: a pinned strip's width is the sum
-      // of N x max(widest label, MIN_PINNED_WIDTH), which has no guaranteed
-      // relationship to the available width — the same overflow "chip"'s own
-      // equalWidth already wraps for. Wrapping beats spilling off the page.
+      // A pinned strip is N x max(widest label, MIN_PINNED_WIDTH) wide, which
+      // can exceed the available width. Wrapping beats spilling off the page.
       expect(list.className).toContain("flex-wrap");
       expect(list.className).not.toContain("flex-nowrap");
-      // No `self-start`: `width: fit-content` already opts the strip out of a
-      // flex column's default `align-items: stretch`, and `self-start` would
-      // have top-aligned it inside the row-shaped parents (NotifyCard's "on"
-      // row, the weekday row, the drill-kind row) that centre a label beside
-      // it. This is what let Settings.tsx drop three wrapper divs.
+      // No self-start: width: fit-content already stops a flex column from
+      // stretching it, and self-start would top-align it in the rows that
+      // centre a label beside it.
       expect(list.className).not.toContain("self-start");
     }
   });
 
-  // THE round-8 fix, and the invariant that keeps the two scales one control:
-  // an unselected option is not a badge. Round 7's small variant filled every
-  // idle segment at `bg-carbon-surface`; that is what this asserts is gone.
-  it("idle segments are transparent at BOTH scales — no per-segment badge fill — while the active segment still fills with the accent", () => {
+  // An unselected option is not a badge, so idle segments have no fill.
+  it("idle segments are transparent at both scales while the active segment fills with the accent", () => {
     for (const props of [{}, { equalWidth: true }]) {
       cleanup();
       render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" {...props} />);
@@ -474,25 +410,19 @@ describe("Selector — variant=\"well\", shared by both scales", () => {
       expect(active.className).toContain("bg-accent");
       expect(active.className).toContain("text-accentContrast");
       expect(idle.className).toContain("bg-transparent");
-      // None of the three idle fills any other treatment could hand it: the
-      // round-7 key fill, the chip default, or `raised`.
       expect(idle.className).not.toContain("bg-carbon-surface ");
       expect(idle.className).not.toContain("bg-carbon-surface2");
       expect(idle.className).not.toContain("bg-carbon-surface3");
-      // CORRECTED (jdp, live-review — a well segment must reshape with
-      // round/soft/square too, the same as the groove itself and every "chip"
-      // segment already do; see Selector.tsx's own comment on this line for
-      // the live getComputedStyle proof of the regression this fixes).
+      // Segments follow the shape setting like the groove does.
       expect(active.className).toContain("rounded-control");
       expect(idle.className).toContain("rounded-control");
-      // TrickWork's own crossfade-only transition, at both scales — no
-      // sliding pill/thumb element, and no second element per segment.
+      // A background crossfade, with no sliding thumb element.
       expect(active.className).toContain("[transition:background-color_120ms_ease]");
       expect(screen.getByRole("tablist").querySelectorAll("[data-sel-id]").length).toBe(ITEMS.length);
     }
   });
 
-  it("the two scales differ in EXACTLY one thing: whether segments are pinned. Everything else is byte-identical", () => {
+  it("the two scales differ only in whether segments are pinned", () => {
     render(<Selector items={ITEMS} label="Small" active="a" onChange={() => {}} variant="well" />);
     const smallList = screen.getByRole("tablist").className;
     const smallTab = (screen.getByRole("tab", { name: "Alpha" }) as HTMLElement).className;
@@ -501,8 +431,6 @@ describe("Selector — variant=\"well\", shared by both scales", () => {
     const bigList = screen.getByRole("tablist").className;
     const bigTab = (screen.getByRole("tab", { name: "Alpha" }) as HTMLElement).className;
 
-    // The groove itself is literally the same string at both scales — this is
-    // the structural guarantee that replaced "two variants that looked alike."
     expect(bigList).toBe(smallList);
 
     // The segment differs only by the pinning classes.
@@ -515,7 +443,7 @@ describe("Selector — variant=\"well\", shared by both scales", () => {
     }
   });
 
-  it("without equalWidth a \"well\" strip is content-hugging — no pinned width, no fixed height — which is what makes it cheap to repeat on every schedule card", () => {
+  it("without equalWidth a \"well\" strip hugs its content, with no pinned width or fixed height", () => {
     render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" />);
     const tab = screen.getByRole("tab", { name: "Alpha" });
     expect(tab.className).not.toContain("flex-none");
@@ -523,7 +451,7 @@ describe("Selector — variant=\"well\", shared by both scales", () => {
     expect(tab.style.width).toBe("");
   });
 
-  it("`plain` and `raised` are both ignored under variant=\"well\" — an idle segment stays transparent either way", () => {
+  it("`plain` and `raised` are ignored under variant=\"well\"", () => {
     render(
       <Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" plain raised />
     );
@@ -532,7 +460,7 @@ describe("Selector — variant=\"well\", shared by both scales", () => {
     expect(idle.className).not.toContain("bg-carbon-surface3");
   });
 
-  it("keyboard navigation is unregressed under variant=\"well\" at both scales — arrow keys still move focus and select (TrickWork's own version has no arrow-key support at all)", () => {
+  it("arrow keys still move focus and select under variant=\"well\" at both scales", () => {
     for (const props of [{}, { equalWidth: true }]) {
       cleanup();
       const spy = vi.fn();
@@ -563,7 +491,7 @@ describe("Selector — variant=\"well\", shared by both scales", () => {
     }
   });
 
-  it("RTL still mirrors under variant=\"well\" — ArrowRight moves backward, same as \"chip\" (the direction read is variant-independent)", () => {
+  it("ArrowRight still moves backward under RTL with variant=\"well\"", () => {
     render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" />);
     const list = screen.getByRole("tablist");
     list.style.direction = "rtl";
@@ -572,7 +500,7 @@ describe("Selector — variant=\"well\", shared by both scales", () => {
     expect(document.activeElement).toBe(screen.getByRole("tab", { name: "Alpha" }));
   });
 
-  it("every segment still carries its own rainbow position at both scales — the active fill reads that position, so switching scale can never shift a hue", () => {
+  it("every segment carries its own rainbow position at both scales", () => {
     for (const props of [{}, { equalWidth: true }]) {
       cleanup();
       render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} variant="well" {...props} />);
@@ -590,7 +518,8 @@ describe("Selector — variant=\"well\", shared by both scales", () => {
     }
   });
 });
-describe("Selector — iconOnly/tip (PathModeSwitch's Local/Remote pair, GlimStone follow-up round)", () => {
+
+describe("Selector iconOnly and tip", () => {
   const ICON_ITEMS: SelectorItem[] = [
     { id: "local", label: "Local", icon: <span data-testid="icon-local" />, iconOnly: true, tip: "Local path on this host" },
     { id: "remote", label: "Remote", icon: <span data-testid="icon-remote" />, iconOnly: true, tip: "Remote restic repository" },
@@ -598,16 +527,14 @@ describe("Selector — iconOnly/tip (PathModeSwitch's Local/Remote pair, GlimSto
 
   it("iconOnly hides the visible label text but keeps it as the accessible name via aria-label", () => {
     render(<Selector items={ICON_ITEMS} label="Path mode" active="local" onChange={() => {}} />);
-    // getByRole({name}) matches the computed accessible name, which for an
-    // iconOnly segment now comes from aria-label, not visible text content —
-    // finding it this way IS the assertion that the accessible name survived.
+    // Finding it by name checks that aria-label supplies the accessible name.
     const local = screen.getByRole("tab", { name: "Local" });
     expect(local.querySelector("span.truncate")).toBeNull();
     expect(local.getAttribute("aria-label")).toBe("Local");
     expect(local.querySelector("[data-testid='icon-local']")).not.toBeNull();
   });
 
-  it("a non-iconOnly item is unaffected — visible label still renders, no aria-label added", () => {
+  it("a non-iconOnly item keeps its visible label and gets no aria-label", () => {
     render(<OneOfThree />);
     const alpha = screen.getByRole("tab", { name: "Alpha" });
     expect(alpha.querySelector("span.truncate")).not.toBeNull();
@@ -632,7 +559,7 @@ describe("Selector — iconOnly/tip (PathModeSwitch's Local/Remote pair, GlimSto
     expect(document.querySelector(".glim-bubble")).toBeNull();
   });
 
-  it("focusing an item with `tip` also reveals the tooltip (keyboard-accessible, same as InfoBubble)", () => {
+  it("focusing an item with `tip` also reveals the tooltip", () => {
     render(<Selector items={ICON_ITEMS} label="Path mode" active="local" onChange={() => {}} />);
     const remote = screen.getByRole("tab", { name: "Remote" });
     fireEvent.keyDown(document.body, { key: "Tab" });
@@ -653,7 +580,7 @@ describe("Selector — iconOnly/tip (PathModeSwitch's Local/Remote pair, GlimSto
     expect(spy).toHaveBeenCalledWith("b");
   });
 
-  it("keyboard arrow navigation is unregressed for iconOnly/tip items — roving tabindex and selection still work", () => {
+  it("arrow keys still move the roving tabindex and select with iconOnly and tip items", () => {
     const spy = vi.fn();
     function IconTwo() {
       const [active, setActive] = useState("local");
@@ -680,16 +607,9 @@ describe("Selector — iconOnly/tip (PathModeSwitch's Local/Remote pair, GlimSto
   });
 });
 
-// ---------------------------------------------------------------------------
-// The same ruling Button and the nav rail got, applied to the third axis: a
-// segment whose text the label engine has hidden says what it is in the real
-// `.glim-bubble`, and `title` stops being a native attribute anywhere in this
-// component. Before this, `tip` was the ONLY thing that produced a bubble, so
-// glyph mode turned every strip without one into unnamed pictures — with a
-// native balloon (Files' "pick a target folder first") as the only fallback,
-// which is the anti-pattern the round exists to remove.
-// ---------------------------------------------------------------------------
-describe("Selector — glyph mode names its segments (#178)", () => {
+// When the label engine hides a segment's text, the segment names itself in
+// the .glim-bubble tooltip, and title is never a native attribute.
+describe("Selector glyph mode names its segments", () => {
   const PLAIN: SelectorItem[] = [
     { id: "a", label: "Alpha", icon: <span data-testid="icon-a" /> },
     { id: "b", label: "Beta", icon: <span data-testid="icon-b" /> },
@@ -700,9 +620,7 @@ describe("Selector — glyph mode names its segments (#178)", () => {
   ];
 
   afterEach(() => {
-    // Both axes are stored, so either would otherwise leak into every later
-    // file. "buttons" joined the list when a strip stopped always obeying
-    // "tabs" - see the axis test at the end of this block.
+    // Both axes are persisted and would leak into later files.
     setLabelMode("tabs", "textGlyph");
     setLabelMode("buttons", "textGlyph");
     localStorage.clear();
@@ -721,8 +639,7 @@ describe("Selector — glyph mode names its segments (#178)", () => {
     setLabelMode("buttons", "glyph");
     render(<Selector items={WITH_TIPS} label="Path mode" active="local" onChange={() => {}} />);
     fireEvent.mouseEnter(screen.getByRole("tab", { name: "Local" }));
-    // These tips are already written as the fuller sentence that REPLACES the
-    // label; joining would read "Local — Local path on this host".
+    // These tips are full sentences that replace the label, not add to it.
     expect(document.querySelector(".glim-bubble")?.textContent).toBe("Local path on this host");
   });
 
@@ -742,27 +659,18 @@ describe("Selector — glyph mode names its segments (#178)", () => {
     );
     const alpha = screen.getByRole("tab", { name: "Alpha" });
     expect(alpha.getAttribute("title")).toBeNull();
-    // A disabled <button> emits no mouse events, so the hover has to land on
-    // the wrapper the tooltip puts around it — otherwise the reason the
-    // segment is dead is unreachable exactly when it is wanted.
+    // A disabled button emits no mouse events, so the hover lands on the
+    // tooltip's wrapper instead.
     const wrapper = container.querySelector("span.inline-flex") as HTMLElement;
     expect(wrapper.contains(alpha)).toBe(true);
     fireEvent.mouseEnter(wrapper);
     expect(document.querySelector(".glim-bubble")?.textContent).toBe("Pick a target folder first");
   });
 
-  // A strip follows the axis its SIZE says it is: `lg` is the page-level tab
-  // strip and obeys "tabs", every other stage is a control in a form row and
-  // obeys "buttons".
-  //
-  // Reported (jdp, 2026-09-11: "die button Graceful, live-snapshot, lokal und
-  // offsite sind nicht richtig in der beschriftungsengine"). Every strip in
-  // the app used to read "tabs", so somebody who set Buttons to glyph-only
-  // watched the buttons change while the source toggle and the VM method
-  // switch beside them stayed put - obeying a setting nobody had touched.
-  //
-  // Both directions are asserted. One alone would pass on a component that
-  // simply reads the wrong axis for everything.
+  // A strip follows the axis its size implies: lg is a page-level tab strip
+  // and follows "tabs", any other size sits in a form row and follows
+  // "buttons". Both directions are checked, since one alone would pass on a
+  // component that reads the wrong axis everywhere.
   it("reads the buttons axis for a form-row strip, and only that one", () => {
     setLabelMode("tabs", "glyph");
     render(<Selector items={PLAIN} label="Test strip" active="a" onChange={() => {}} />);
@@ -793,10 +701,8 @@ describe("Selector — glyph mode names its segments (#178)", () => {
     expect(document.querySelector(".glim-bubble")?.textContent).toBe("Alpha — Busy right now");
   });
 
-  // Found live, not reasoned about: the Settings tab strip passes
-  // `title: label` on purpose — equal-width segments can truncate a long label
-  // ("Benachrichtigungen" at 1400px) and the title was the only way to read
-  // the rest of it. The naive join printed "Allgemein — Allgemein".
+  // The Settings tab strip passes title: label so a truncated label can still
+  // be read in full; joining it to the name would repeat it.
   it("collapses a `title` that only repeats the name", () => {
     for (const mode of ["glyph", "textGlyph"] as const) {
       cleanup();
@@ -810,28 +716,16 @@ describe("Selector — glyph mode names its segments (#178)", () => {
         />
       );
       fireEvent.mouseEnter(screen.getByRole("tab", { name: "Allgemein" }));
-      // Text mode is unchanged from the native balloon it replaced: the title
-      // stands alone and still does its truncation job.
+      // In text mode the title stands alone.
       expect(document.querySelector(".glim-bubble")?.textContent).toBe("Allgemein");
     }
   });
 });
 
-// ---------------------------------------------------------------------------
-// hueOffset: two selectors stacked above each other must not wear the same
-// colours.
-//
-// A segment's colour comes from its POSITION, rainbowAt(i), which is what
-// makes a rainbow list readable: position three is the same colour wherever
-// you look. Stack three selectors with the same number of segments, though,
-// and every column repeats down the page, so the second selector tells you
-// nothing the first one did not (jdp, 2026-09-15, with a screenshot of the
-// three label-mode selectors all wearing the same orange in column two).
-//
-// hueOffset shifts where a selector starts reading the palette. Default 0, so
-// nothing changes for the single selectors that make up most call sites.
-// ---------------------------------------------------------------------------
-describe("Selector — hueOffset", () => {
+// A segment's colour comes from its position, so selectors stacked with the
+// same number of segments would repeat each column's colour down the page.
+// hueOffset shifts where a selector starts in the palette.
+describe("Selector hueOffset", () => {
   const styleOf = (name: string) =>
     screen.getByRole("tab", { name }).getAttribute("style") ?? "";
 

@@ -1,7 +1,3 @@
-// #112 — the copy helper must succeed via the async API in secure contexts,
-// fall back to execCommand elsewhere, and report false instead of throwing
-// when neither path exists (so buttons never silently "do nothing" again —
-// callers simply skip the "copied" feedback).
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { copyText } from "./clipboard";
 

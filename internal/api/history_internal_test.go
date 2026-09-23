@@ -7,20 +7,15 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestBucketRunsByDay covers the pure heatmap-bucketing core: a contiguous grid
-// of every local day in the window (zeros for empty days), success/failed
-// tallied into the right domain, and "running"/non-backup/unknown-target runs
-// ignored.
 func TestBucketRunsByDay(t *testing.T) {
-	// A 3-day window ending today (local), anchored at noon so day boundaries are
-	// unambiguous regardless of the test machine's timezone.
+	// Noon keeps the day boundaries clear in any timezone.
 	now := time.Now().Local()
 	mid := time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, now.Location())
-	day0 := mid.AddDate(0, 0, -2) // earliest day
+	day0 := mid.AddDate(0, 0, -2)
 	day1 := mid.AddDate(0, 0, -1)
-	day2 := mid // today
+	day2 := mid
 
-	// "unknown" is intentionally absent from the map → it resolves to "".
+	// "unknown" is left out of the map.
 	domain := map[string]string{
 		"c1":                 "container",
 		"v1":                 "vm",
@@ -47,12 +42,10 @@ func TestBucketRunsByDay(t *testing.T) {
 	if len(got) != 3 {
 		t.Fatalf("expected 3 contiguous days, got %d", len(got))
 	}
-	// Ascending dates.
 	if got[0].Date != day0.Format("2006-01-02") || got[2].Date != day2.Format("2006-01-02") {
 		t.Fatalf("dates not ascending/contiguous: %q .. %q", got[0].Date, got[2].Date)
 	}
 
-	// Day 0: one container ok + one container failed; nothing else.
 	if got[0].Containers != (DayStat{OK: 1, Failed: 1}) {
 		t.Fatalf("day0 containers = %+v, want {1 1}", got[0].Containers)
 	}
@@ -60,8 +53,6 @@ func TestBucketRunsByDay(t *testing.T) {
 		t.Fatalf("day0 vms/flash should be empty: %+v %+v", got[0].VMs, got[0].Flash)
 	}
 
-	// Day 1: one VM ok and one config ok (config must land in its own bucket,
-	// not be dropped by the switch default).
 	if got[1].VMs != (DayStat{OK: 1}) {
 		t.Fatalf("day1 vms = %+v, want {1 0}", got[1].VMs)
 	}
@@ -69,9 +60,6 @@ func TestBucketRunsByDay(t *testing.T) {
 		t.Fatalf("day1 config = %+v, want {1 0}", got[1].Config)
 	}
 
-	// Day 2: one flash ok and one files ok (a file-set run must land in its own
-	// bucket, not be dropped by the switch default); running/restore/unknown all
-	// ignored.
 	if got[2].Flash != (DayStat{OK: 1}) {
 		t.Fatalf("day2 flash = %+v, want {1 0}", got[2].Flash)
 	}

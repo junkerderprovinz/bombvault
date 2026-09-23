@@ -526,7 +526,9 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 		if err != nil {
 			return "", nil, nil, err
 		}
-		plan, err := s.prepareRestoreForTarget(ctx, ref, item, snapshotID, tg, destBase, overwrite)
+		// ref.repo belongs to the foreign instance, whose names this instance's
+		// aliases say nothing about, so only the item's own tag is restored.
+		plan, err := s.prepareRestoreForTarget(ctx, ref, item, snapshotID, tg, tagIdentity("container:"+item), destBase, overwrite)
 		if err != nil {
 			return "", nil, nil, err
 		}
@@ -570,7 +572,8 @@ func (s *Service) prepareForeignRestore(ctx context.Context, sessionID, domain, 
 		if err != nil {
 			return "", nil, nil, err
 		}
-		plan, err := s.prepareRestoreVMForTarget(ctx, ref, item, snapshotID, tg, destBase, zvolPool)
+		// Only the item's own tag, as for containers above.
+		plan, err := s.prepareRestoreVMForTarget(ctx, ref, item, snapshotID, tg, tagIdentity("vm:"+item), destBase, zvolPool)
 		if err != nil {
 			return "", nil, nil, err
 		}

@@ -12,8 +12,7 @@ copyright: Copyright (C) 2026 Junker der Provinz. Licensed AGPL-3.0.
 theme:
   name: material
   language: en
-  # App-style sidebar-footer controls (language picker + dark/light toggle) are
-  # injected by a partial override; see overrides/main.html.
+  # overrides/main.html adds the language picker and theme toggle to the sidebar.
   custom_dir: overrides
   logo: assets/logo.svg
   favicon: assets/favicon.png
@@ -21,20 +20,14 @@ theme:
     text: IBM Plex Sans
     code: IBM Plex Mono
   palette:
-    # Dark scheme listed FIRST, with no media query, so it is the unconditional
-    # default: with plain (media-less) palettes Material uses the first as the
-    # default and does not follow the OS preference. This documentation site
-    # (Carbon #161616, sunflower-yellow accent) opens dark for every visitor by
-    # design — a separate choice from the BombVault app itself, which follows
-    # the visitor's system theme.
+    # Without media queries Material opens with the first palette, so the docs
+    # start dark for everyone. The app itself follows the system theme.
     - scheme: slate
       primary: black
       accent: yellow
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
-    # Light scheme (IBM Carbon light: black chrome, dark-gold links for contrast).
-    # Reachable via the toggle and remembered per browser afterwards.
     - scheme: default
       primary: black
       accent: yellow
@@ -42,14 +35,12 @@ theme:
         icon: material/weather-night
         name: Switch to dark mode
   features:
-    # No top tabs: the left rail always shows the whole page tree, and
-    # toc.integrate expands only the active page's sections underneath it.
+    # No tabs: the sidebar shows the whole tree, and toc.integrate folds the
+    # current page's sections into it.
     - navigation.top
     - navigation.footer
-    # navigation.instant is intentionally NOT enabled: mkdocs-static-i18n warns
-    # (build --strict fails) that its language handling is incompatible with
-    # instant navigation, and our own sidebar language switcher navigates with a
-    # full load anyway, so instant nav buys nothing here.
+    # No navigation.instant: mkdocs-static-i18n does not support it, and the
+    # warning fails the strict build.
     - content.code.copy
     - search.suggest
     - toc.integrate
@@ -57,24 +48,16 @@ theme:
     repo: fontawesome/brands/github
 
 extra_css:
-  # Real flag images for the language picker (same library the app uses), so the
-  # flags render everywhere instead of degrading to letter pairs on Windows.
+  # Flag images for the language picker, since Windows shows flag emoji as
+  # letter pairs.
   - stylesheets/flag-icons.min.css
   - stylesheets/extra.css
 
 extra_javascript:
-  # Wires the sidebar-footer language picker + dark/light toggle injected by
-  # overrides/main.html. Uses event delegation + document$, so it survives
-  # Material's instant navigation.
   - javascripts/bv-sidebar-controls.js
 
-# =============================================================================
-# Multi-language (mkdocs-static-i18n). English is the default and the fallback:
-# every locale is built (26 in total, matching the app's language set), and any
-# page without a translation falls back to the English content, so no broken or
-# empty pages are ever produced. Translations are added later as suffixed files
-# (e.g. index.de.md next to index.md); until then every locale serves English.
-# =============================================================================
+# Every locale is built. A page without a translation (index.de.md next to
+# index.md) falls back to English.
 plugins:
   # Adding a plugins block disables the implicit search plugin, so re-add it.
   - search
@@ -115,8 +98,7 @@ plugins:
 markdown_extensions:
   - admonition
   - tables
-  # attr_list lets a heading carry an explicit, language-stable id ({#slug}) so
-  # cross-page anchor links keep working after the heading text is translated.
+  # attr_list gives headings a fixed {#id}, so anchors survive translation.
   - attr_list
   - pymdownx.details
   - pymdownx.superfences
@@ -127,14 +109,12 @@ markdown_extensions:
   - toc:
       permalink: true
 
-# Internal planning docs and the GitHub-only VM guide ship in docs/ but are not
-# part of the published site, so they are excluded from the build (keeps
-# mkdocs build --strict clean instead of warning on pages missing from nav).
+# The VM guide is read on GitHub. Leaving it out of the site keeps --strict from
+# failing on a page that is not in nav.
 exclude_docs: |
   vm-backup-ssh-setup.md
 
-# No explicit titles: each page's (translated) H1 becomes its nav label, so the
-# sidebar navigation is localized per language along with the page content.
+# No titles: each page's translated H1 becomes its nav label.
 nav:
   - index.md
   - getting-started.md

@@ -1,15 +1,4 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// IconTipButton — the shared engine behind an icon-only plain <button>'s
-// hover/focus tooltip (GlimStone follow-up round: "beim Ordnersymbol ist die
-// Hover-Infobubble nicht im GlimStone"). InfoBubble.dom tests and
-// Selector.dom.test.tsx's own "tip" tests already cover the identical
-// measure-then-clamp positioning contract for their own two trigger shapes
-// ("(i)" glyph, Selector segment); this file covers the THIRD trigger shape
-// (a bare `<button>`) this component exists for, plus the one thing that
-// actually caused this file to be written: a real `.glim-bubble` renders
-// instead of a native `title=` balloon.
-// ---------------------------------------------------------------------------
 import { describe, expect, it, vi, afterEach } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { IconTipButton } from "./IconTipButton";
@@ -19,7 +8,7 @@ afterEach(() => {
 });
 
 describe("IconTipButton", () => {
-  it("renders an icon-only button with no native title attribute — the tip is its own accessible name", () => {
+  it("uses the tip as its accessible name and sets no native title", () => {
     render(
       <IconTipButton tip="Browse folders" onClick={() => {}}>
         <svg aria-hidden="true" />
@@ -43,7 +32,7 @@ describe("IconTipButton", () => {
     expect(document.querySelector(".glim-bubble")).toBeNull();
   });
 
-  it("also opens on focus (keyboard-accessible, not mouse-only) and closes on blur", () => {
+  it("opens on focus and closes on blur", () => {
     render(
       <IconTipButton tip="Download recovery kit" onClick={() => {}}>
         <svg aria-hidden="true" />
@@ -57,7 +46,7 @@ describe("IconTipButton", () => {
     expect(document.querySelector(".glim-bubble")).toBeNull();
   });
 
-  it("Escape closes an open tooltip without requiring blur", () => {
+  it("closes an open tooltip on Escape", () => {
     render(
       <IconTipButton tip="Add registry" onClick={() => {}}>
         <svg aria-hidden="true" />
@@ -69,7 +58,7 @@ describe("IconTipButton", () => {
     expect(document.querySelector(".glim-bubble")).toBeNull();
   });
 
-  it("fires onClick when clicked, and never when disabled", () => {
+  it("does not fire onClick while disabled", () => {
     const onClick = vi.fn();
     render(
       <IconTipButton tip="Add registry" onClick={onClick} disabled>

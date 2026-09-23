@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// newPasskeyRepo is the in-package fixture: a migrated in-memory database.
+// newPasskeyRepo returns a Repo over a migrated in-memory database.
 func newPasskeyRepo(t *testing.T) *Repo {
 	t.Helper()
 	db := OpenMem(t)
@@ -56,16 +56,15 @@ func TestPasskeyRoundtrip(t *testing.T) {
 	if _, ok, _ := r.PasskeyByCredentialID([]byte{1, 2, 3}); ok {
 		t.Error("the credential is still there after being deleted")
 	}
-	// Deleting one that is not there is not an error: the caller wanted it gone.
 	if err := r.DeletePasskey(saved.ID); err != nil {
 		t.Errorf("deleting an absent passkey should be a no-op, got %v", err)
 	}
 }
 
-// One authenticator, one row. Two rows for one credential would make "which key
-// signed this" ambiguous, and the clone detection would then compare the
-// counter against whichever row the lookup happened to find first.
-func TestTheSameAuthenticatorCannotRegisterTwice(t *testing.T) {
+// TestAddPasskeyRejectsDuplicateCredential keeps one row per credential. Two
+// would make the clone check compare the counter against whichever row the
+// lookup found first.
+func TestAddPasskeyRejectsDuplicateCredential(t *testing.T) {
 	r := newPasskeyRepo(t)
 	p := Passkey{Name: "A", CredentialID: []byte{5}, PublicKey: []byte{1}, RPID: "a.example.com"}
 	if _, err := r.AddPasskey(p); err != nil {
@@ -77,11 +76,10 @@ func TestTheSameAuthenticatorCannotRegisterTwice(t *testing.T) {
 	}
 }
 
-// A passkey belongs to ONE address, and the login at an address may only offer
-// the keys that can answer there: the browser refuses a credential whose
-// relying-party id does not match the page, so listing the others would produce
-// a prompt that cannot succeed.
-func TestPasskeysAreScopedToTheirAddress(t *testing.T) {
+// TestPasskeysForRPFiltersByAddress expects only the keys bound to the login's
+// own address, because the browser refuses a credential whose relying-party ID
+// does not match the page.
+func TestPasskeysForRPFiltersByAddress(t *testing.T) {
 	r := newPasskeyRepo(t)
 	if _, err := r.AddPasskey(Passkey{Name: "Proxy", CredentialID: []byte{1}, PublicKey: []byte{1}, RPID: "bv.example.com"}); err != nil {
 		t.Fatal(err)
@@ -97,8 +95,8 @@ func TestPasskeysAreScopedToTheirAddress(t *testing.T) {
 	if len(here) != 1 || here[0].Name != "Proxy" {
 		t.Errorf("PasskeysForRP returned %d rows (%v), want only the one bound to that address", len(here), here)
 	}
-	// …while the full list keeps both, because the card has to SHOW a key that
-	// belongs elsewhere rather than let it look lost.
+	// The full list keeps both, so the interface can show keys bound to
+	// another address.
 	all, err := r.ListPasskeys()
 	if err != nil || len(all) != 2 {
 		t.Errorf("ListPasskeys returned %d rows, want both", len(all))

@@ -1,22 +1,10 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// What a pull source's card SAYS, in each state it can be in.
-//
-// The verdict badge reads the LAST RESULT rather than a live probe, and that is
-// the decision this file exists to hold. The receiver's card can afford to probe
-// on render because reading is free and tells you something true right now. A
-// pull is a thing that HAPPENED: "it worked at 04:00" is the honest report, and
-// a green tick from a probe run just now would be answering a different question
-// while looking like an answer to this one.
-//
-// The four states are asserted together because each one is a different sentence
-// to the person reading it: never pulled, it worked, it failed, and I am not
-// pulling from this at all. A card that collapsed two of them would be the kind
-// of wrong that reads as fine.
-// ---------------------------------------------------------------------------
+// A pull source's card reports the last pull instead of probing, because a pull
+// is something that happened: "it worked at 04:00" is the answer. Never pulled,
+// succeeded, failed and switched off each have their own wording.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { I18nProvider, en } from "../lib/i18n";
+import { I18nProvider, countText, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { PullSourceView } from "../lib/api";
 
@@ -80,9 +68,7 @@ describe("pull source card", () => {
   it("reports the last result, not a fresh probe", async () => {
     await renderPull();
     expect(screen.queryByText(en["pull.pullOk"])).not.toBeNull();
-    // And the count that came with it, so the row says how much arrived rather
-    // than only that something did.
-    expect(screen.queryByText(en["pull.snapshotsPulled"].replace("{n}", "7"))).not.toBeNull();
+    expect(screen.queryByText(countText(en["pull.snapshotsPulled"], "en", 7))).not.toBeNull();
   });
 
   it("says never pulled rather than guessing at a verdict", async () => {
@@ -92,7 +78,7 @@ describe("pull source card", () => {
     expect(screen.queryByText(en["pull.pullOk"])).toBeNull();
   });
 
-  it("shows the failure AND its reason, because a red badge alone is not a report", async () => {
+  it("shows the failure and its reason", async () => {
     rows = [{ ...base, lastPullOk: false, lastPullError: "could not open the pull source" }];
     await renderPull();
     expect(screen.queryByText(en["pull.pullFailed"])).not.toBeNull();
@@ -100,9 +86,7 @@ describe("pull source card", () => {
   });
 
   it("a disabled source says so instead of reporting an old success", async () => {
-    // The trap this pins: the row still carries lastPullOk=true from before it
-    // was switched off, so a verdict computed from that alone would show a green
-    // tick beside a source nothing is fetching from any more.
+    // lastPullOk is still true from before the source was switched off.
     rows = [{ ...base, enabled: false }];
     await renderPull();
     expect(screen.queryByText(en["pull.pullingOff"])).not.toBeNull();

@@ -251,7 +251,7 @@ func TestPrimarySlotMigrationRunsOnceUnderAnyNumber(t *testing.T) {
 		t.Fatal(err)
 	}
 	renumbered := migrationNamed(t, "offsite_targets_primary_slot")
-	renumbered.version = len(migrations) + 1
+	renumbered.version = migrations[len(migrations)-1].version + 1
 	withMigrations(t, append(append([]migration(nil), migrations...), renumbered))
 	if err := Migrate(db); err != nil {
 		t.Fatalf("Migrate: %v", err)
@@ -325,9 +325,9 @@ func TestPlacementMigrationsSurviveRenumbering(t *testing.T) {
 		m.version = first + len(incoming) + i
 		list = append(list, m)
 	}
-	if _, err := db.Exec(`DELETE FROM schema_migrations
-		WHERE version BETWEEN ? AND ? AND name NOT IN ('incoming_one', 'incoming_two')`,
-		first, first+len(branchMigrations)-1); err != nil {
+	// Everything from the first branch migration up, so the renumbered list is
+	// what decides where each body is recorded.
+	if _, err := db.Exec(`DELETE FROM schema_migrations WHERE version >= ?`, first); err != nil {
 		t.Fatal(err)
 	}
 	withMigrations(t, list)

@@ -18,6 +18,7 @@ import (
 	"io"
 	"io/fs"
 	"log"
+	"maps"
 	"os"
 	"path"
 	"path/filepath"
@@ -59,6 +60,24 @@ type containerDefinition struct {
 	Inspect      model.Inspect `json:"inspect"`
 	TemplateXML  string        `json:"template_xml"`
 	AppdataPaths []string      `json:"appdata_paths"`
+	// Aliases are the links the mirror on the backup storage records, the
+	// only ones Discover rebuilds. The alias rows are what everything else
+	// reads.
+	Aliases []definitionAlias `json:"aliases,omitempty"`
+}
+
+// templateNameRe matches the template's <Name> element, the container's
+// display name. A <Config Name="..."> attribute is a setting's label and does
+// not match.
+var templateNameRe = regexp.MustCompile(`<Name>[^<]*</Name>`)
+
+// rewriteTemplateXMLName sets the template's <Name> element to newName. A
+// template without one, including an empty template, is returned unchanged.
+func rewriteTemplateXMLName(xml, newName string) string {
+	if xml == "" {
+		return xml
+	}
+	return templateNameRe.ReplaceAllString(xml, "<Name>"+newName+"</Name>")
 }
 
 // ResticEngine is the subset of *restic.Restic the service depends on. Defining
@@ -93,13 +112,12 @@ type ResticEngine interface {
 	Snapshots(ctx context.Context, repo string, mode restic.Mode) ([]restic.Snapshot, error)
 	Forget(ctx context.Context, repo string, snapshotIDs []string, prune bool, mode restic.Mode) error
 	// ForgetPolicy applies a keep-policy (retention). Inert when the policy has
-	// no dimension set. tag scopes the policy to one item's snapshots as a
-	// single group (identity-stable retention, issue #91: path-grouped retention
-	// froze an item's old snapshots forever once its backed-up path set
-	// changed); tag=="" falls back to the repo-wide paths-grouped pass. prune
-	// reclaims freed space in the same run — batch callers pass false and Prune
-	// once at the end.
-	ForgetPolicy(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tag string, prune bool) error
+	// no dimension set. tags scopes the policy to one item's snapshots as a
+	// single group, so a change of the item's paths or a rename does not leave
+	// its older snapshots in a group that never ages out; empty tags fall back
+	// to the repo-wide paths-grouped pass. prune reclaims freed space in the
+	// same run; batch callers pass false and Prune once at the end.
+	ForgetPolicy(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tags []string, prune bool) error
 	// Ls lists the files in a snapshot (for file-level restore).
 	Ls(ctx context.Context, repo, snapshotID string, mode restic.Mode) ([]restic.FileEntry, error)
 	// LsStream lists a snapshot's nodes like Ls but hands each entry to onEntry
@@ -1551,20 +1569,21 @@ func (s *Service) retentionPolicyForSource(settings store.Settings, source strin
 }
 
 // applyRetention prunes the just-backed-up item to the configured keep-policy.
-// tag is the item's identity tag (container:<name>, vm:<name>, fileset:<name>,
-// flash, config): the policy is applied to that item's WHOLE history as one
-// group, immune to path/host changes (issue #91 — the previous paths-grouped
-// pass froze an item's old snapshots forever once its path set changed).
-// Best-effort: a failure never fails the backup that just succeeded — but it is
-// now NOTIFIED (not just logged), because silently skipped retention lets the
-// repo grow unseen for weeks.
+// id is the item's identity: container:<name>, vm:<name>, fileset:<name> or
+// the fixed flash/config tag, plus a renamed container's or VM's aliases. The
+// tags retentionTagsFor allows are forgotten as one group, so neither a path
+// change nor a rename leaves older snapshots in a group that never ages out.
+// Best-effort: a failure never fails the backup that just succeeded, but it is
+// notified rather than only logged, because silently skipped retention lets
+// the repo grow unseen for weeks.
 //
 // During a bulk run (the #95 bulk-suppress flag on ctx: scheduled multi-item
-// loops and the manual "back up all" batches) the expensive --prune is DEFERRED:
-// each item's forget runs without prune and PruneAfterBulk reclaims the space
-// ONCE after the whole loop — a 44-container night used to pay 44 full local
-// prunes. Single/manual backups (and flash/config, which never set the flag)
-// keep the immediate inline prune, byte-identical to before.
+// loops and the manual "back up all" batches) the expensive --prune is
+// deferred: each item's forget runs without prune, and PruneAfterBulk reclaims
+// the space once after the whole loop instead of once per item, since the
+// prune pass is the costly part and a 44-container night would otherwise pay
+// for it 44 times over. Single and manual backups (and flash/config, which
+// never set the flag) keep the immediate inline prune.
 //
 // domain identifies which domain repo belongs to, so this can check whether
 // repo is a remote PRIMARY flagged append-only in its saved safety settings
@@ -1578,7 +1597,7 @@ func (s *Service) retentionPolicyForSource(settings store.Settings, source strin
 // (#204) carries its own flag and may be a plain folder on a share, so this
 // applies to a local path as readily as to a cloud bucket. Anything with no
 // append-only flag anywhere is unaffected.
-func (s *Service) applyRetention(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, tag, domain string) {
+func (s *Service) applyRetention(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, id entryIdentity, domain string) {
 	p := s.retentionPolicyForRef(settings, s.refFor(settings, domain, repo))
 	if !p.Any() {
 		return
@@ -1591,11 +1610,62 @@ func (s *Service) applyRetention(ctx context.Context, repo string, settings stor
 		log.Printf("api: %s: retention skipped — %s is flagged append-only", domain, shortRepoName(repo)) //nolint:gosec // G706: domain is a fixed literal and the name is shortened
 		return
 	}
-	prune := !bulkReplicateSuppressed(ctx) // bulk run: one batched prune after the loop
-	if err := s.forgetWithLockHeal(ctx, repo, p, mode, tag, prune); err != nil {
-		log.Printf("api: retention prune failed (backup is safe): %v", err)
-		s.notifyRetentionFailed(ctx, tag, truncateRunErr(err))
+	// restic forget without a tag would select the whole repository.
+	if id.tag == "" {
+		log.Printf("api: %s: retention skipped: the item has no identity tag", domain) //nolint:gosec // G706: domain is a fixed literal
+		return
 	}
+	prune := !bulkReplicateSuppressed(ctx) // bulk run: one batched prune after the loop
+	tags, ok := s.retentionTagsFor(ctx, repo, mode, id)
+	if !ok {
+		return // paused, and said so: nothing is forgotten
+	}
+	if err := s.forgetWithLockHeal(ctx, repo, p, mode, tags, prune); err != nil {
+		log.Printf("api: retention prune failed (backup is safe): %v", err)
+		// The current name, the one an operator recognises after a rename.
+		s.notifyRetentionFailed(ctx, id.tag, truncateRunErr(err))
+	}
+}
+
+// retentionTagsFor returns the tags restic forget may take for id, and false
+// when the pass must not run at all. forget selects by tag and has no time
+// bound, so:
+//   - an alias tag joins only while every snapshot under it predates the
+//     link. One that does not, or whose listing fails, is left out and its
+//     pre-link snapshots are kept.
+//   - an entry whose current name is another entry's alias pauses while that
+//     entry's pre-link snapshots sit under the name, or when the listing
+//     fails, because its forget would age them under its own policy.
+//
+// Either way the cost is storage, never another entry's snapshots.
+func (s *Service) retentionTagsFor(ctx context.Context, repo string, mode restic.Mode, id entryIdentity) ([]string, bool) {
+	if len(id.aliases) == 0 && id.ceded == nil {
+		return id.listTags(), true
+	}
+	listed, err := s.snapshotsForTags(ctx, repo, mode, id.listTags())
+	if err != nil {
+		if id.ceded != nil {
+			log.Printf("api: retention of %s paused: listing it failed, and it may hold another entry's snapshots: %v", id.tag, err) //nolint:gosec // G706: tags are validated names
+			return nil, false
+		}
+		for _, a := range id.aliases {
+			log.Printf("api: retention: listing %s failed, so %s is left out of its retention and its snapshots are kept: %v", id.tag, a.tag, err) //nolint:gosec // G706: tags are validated names
+		}
+		return []string{id.tag}, true
+	}
+	tags, withheld, paused := id.retentionTags(listed)
+	if paused {
+		owner := id.ceded.owner
+		if owner == "" {
+			owner = "another entry"
+		}
+		log.Printf("api: retention of %s paused: it still holds snapshots of %s from before that entry was renamed away from the name, and forget cannot tell them apart; they are kept", id.tag, owner) //nolint:gosec // G706: tags are validated names
+		return nil, false
+	}
+	for _, a := range withheld {
+		log.Printf("api: retention: %s has snapshots from after it was linked to %s (the name is in use again), so it is left out of that retention and its older snapshots are kept", a.tag, id.tag) //nolint:gosec // G706: tags are validated names
+	}
+	return tags, true
 }
 
 // forgetWithLockHeal runs a ForgetPolicy pass, clearing a genuine stale orphan
@@ -1606,7 +1676,7 @@ func (s *Service) applyRetention(ctx context.Context, repo string, settings stor
 // used to fail a whole night's retentions across all items. A live lock is NOT
 // force-removed (see the body); it carries the same bounded prior-incarnation
 // hostname gap noted on CheckDomain.
-func (s *Service) forgetWithLockHeal(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tag string, prune bool) error {
+func (s *Service) forgetWithLockHeal(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tags []string, prune bool) error {
 	// Clear a genuine stale orphan (a dead-PID lock from a crashed run on this
 	// host) before forget, which needs an exclusive lock. A live/concurrent lock
 	// is NOT force-removed: reads run --no-lock, writes are serialized under the
@@ -1615,7 +1685,7 @@ func (s *Service) forgetWithLockHeal(ctx context.Context, repo string, p restic.
 	// live lock (the old #94 heal) could not fix a live holder and endangered a
 	// running op, so it was removed.
 	s.unlockStale(ctx, repo, mode)
-	return s.engine.ForgetPolicy(ctx, repo, p, mode, tag, prune)
+	return s.engine.ForgetPolicy(ctx, repo, p, mode, tags, prune)
 }
 
 // identityTags returns the distinct identity tags in snaps: container:, vm:,
@@ -1638,36 +1708,154 @@ func identityTags(snaps []restic.Snapshot) []string {
 	return out
 }
 
-// applyRetentionPerIdentity applies policy per identity tag — one ungrouped,
-// tag-scoped forget per item — then prunes once. Used where no single item is
-// in scope (manual prune, off-site retention). Falls back to the legacy
-// repo-wide paths-grouped pass when the snapshot listing fails or yields no
-// identity tags, so retention never silently does nothing.
+// applyRetentionPerIdentity applies policy per identity, one tag-scoped forget
+// per item, then prunes once. Used where no single item is in scope (manual
+// prune, off-site retention).
+//
+// A failed listing forgets nothing: the repo-wide paths-grouped pass ignores
+// identities and aliases, so it would age a renamed entry's pre-link snapshots
+// together with a later machine's under the same name. That pass runs only for
+// a repository with no identity tag at all, one written before identity tags
+// existed, so its retention does not silently stop.
 func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode) error {
 	if !p.Any() {
 		return nil
 	}
 	snaps, err := s.engine.Snapshots(ctx, repo, mode)
-	tags := identityTags(snaps)
-	if err != nil || len(tags) == 0 {
-		return s.forgetWithLockHeal(ctx, repo, p, mode, "", true)
+	if err != nil {
+		return fmt.Errorf("list snapshots for retention: %w", err)
 	}
-	return s.applyRetentionToTags(ctx, repo, p, mode, tags)
+	tags := identityTags(snaps)
+	if len(tags) == 0 {
+		return s.forgetWithLockHeal(ctx, repo, p, mode, nil, true)
+	}
+	return s.applyRetentionToTags(ctx, repo, p, mode, tags, snaps)
 }
 
-// applyRetentionToTags forgets per identity tag, ungrouped, and prunes once, for
-// a caller that already knows which tags the repository holds.
-func (s *Service) applyRetentionToTags(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tags []string) error {
+// applyRetentionToTags forgets per identity and prunes once, for a caller that
+// already knows what the repository holds. snaps is what the tags were read
+// from, which is what decides how an alias's old name folds.
+func (s *Service) applyRetentionToTags(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tags []string, snaps []restic.Snapshot) error {
+	groups, _ := s.foldAliasedIdentityTags(tags, snaps) // skipped tags are logged there and kept
 	var errs []error
-	for _, tag := range tags {
-		if fErr := s.forgetWithLockHeal(ctx, repo, p, mode, tag, false); fErr != nil {
-			errs = append(errs, fmt.Errorf("%s: %w", tag, fErr))
+	for _, group := range groups {
+		if fErr := s.forgetWithLockHeal(ctx, repo, p, mode, group, false); fErr != nil {
+			errs = append(errs, fmt.Errorf("%s: %w", strings.Join(group, ","), fErr))
 		}
 	}
 	if pErr := s.engine.Prune(ctx, repo, mode); pErr != nil {
 		errs = append(errs, pErr)
 	}
 	return errors.Join(errs...)
+}
+
+// foldAliasedIdentityTags groups the identity tags that belong to one entry,
+// so applyRetentionPerIdentity forgets them together. A rename leaves the old
+// tag on the snapshots already written; forgotten on its own, that tag never
+// receives another snapshot and its "keep last N" set never shrinks.
+//
+// An old name can be taken up again by a different machine, and restic forget
+// selects by tag, not by time. So for a tag that is an alias's old name, the
+// alias's link time decides (aliasClaim):
+//   - the tag holds snapshots the alias claims next to ones it does not: two
+//     machines' history under one tag. It gets no group and is returned in
+//     skipped, because its own pass would age the owner's pre-link snapshots
+//     out. An alias lookup that fails skips the tag the same way.
+//   - every snapshot under it is the alias's: it folds into the owner's
+//     group, unless a row holds the name and may back up under it at any
+//     time. Then it stays a group of its own, keyed apart from that row's.
+//   - none is: the later machine's own group.
+//
+// A domain whose rows cannot be read does not fold at all, since an empty
+// liveNames would switch off the reused-name check. A missed fold costs one
+// extra pass; a wrong one merges two entries' retention for good.
+func (s *Service) foldAliasedIdentityTags(tags []string, snaps []restic.Snapshot) (groups [][]string, skipped []string) {
+	domains := s.aliasFoldDomains()
+	byCanon := map[string][]string{}
+	var order []string
+	for _, tag := range tags {
+		canon, skip := s.foldTag(tag, snaps, domains)
+		if skip {
+			skipped = append(skipped, tag)
+			continue
+		}
+		if _, seen := byCanon[canon]; !seen {
+			order = append(order, canon)
+		}
+		byCanon[canon] = append(byCanon[canon], tag)
+	}
+	groups = make([][]string, 0, len(order))
+	for _, canon := range order {
+		groups = append(groups, byCanon[canon])
+	}
+	return groups, skipped
+}
+
+// aliasFoldDomain is one domain's rows as foldAliasedIdentityTags needs them.
+type aliasFoldDomain struct {
+	domain, prefix string
+	idToName       map[string]string
+	liveNames      map[string]bool
+	readable       bool
+}
+
+func (s *Service) aliasFoldDomains() []aliasFoldDomain {
+	c := aliasFoldDomain{domain: "container", prefix: "container:", idToName: map[string]string{}, liveNames: map[string]bool{}}
+	if targets, err := s.store.ListTargets(); err != nil {
+		log.Printf("api: retention: listing targets for alias fold: %v; leaving every container tag as its own identity", err)
+	} else {
+		c.readable = true
+		for _, t := range targets {
+			c.idToName[t.ID] = t.ContainerName
+			c.liveNames[t.ContainerName] = true
+		}
+	}
+	v := aliasFoldDomain{domain: "vm", prefix: "vm:", idToName: map[string]string{}, liveNames: map[string]bool{}}
+	if vms, err := s.store.ListVMTargets(); err != nil {
+		log.Printf("api: retention: listing VMs for alias fold: %v; leaving every VM tag as its own identity", err)
+	} else {
+		v.readable = true
+		for _, t := range vms {
+			v.idToName[t.ID] = t.Name
+			v.liveNames[t.Name] = true
+		}
+	}
+	return []aliasFoldDomain{c, v}
+}
+
+// foldTag is foldAliasedIdentityTags's decision for one tag: the group it
+// joins, or skip.
+func (s *Service) foldTag(tag string, snaps []restic.Snapshot, domains []aliasFoldDomain) (canon string, skip bool) {
+	for _, d := range domains {
+		name, ok := strings.CutPrefix(tag, d.prefix)
+		if !ok {
+			continue
+		}
+		a, err := s.store.AliasByOldName(d.domain, name)
+		if errors.Is(err, sql.ErrNoRows) {
+			return tag, false
+		}
+		if err != nil {
+			log.Printf("api: retention: %s left out: could not read whether it is a renamed entry's old name: %v", tag, err) //nolint:gosec // G706: tags are validated names
+			return tag, true
+		}
+		claim := newAliasClaim(d.prefix, a)
+		if claim.mixed(snaps) {
+			log.Printf("api: retention: %s left out: it holds a renamed entry's snapshots from before the rename next to a later machine's, and a forget by that tag cannot keep them apart; they are kept", tag) //nolint:gosec // G706: tags are validated names
+			return tag, true
+		}
+		if !claim.claimsEvery(snaps) {
+			return tag, false
+		}
+		if cur := d.idToName[a.TargetID]; d.readable && !d.liveNames[name] && cur != "" {
+			return d.prefix + cur, false
+		}
+		// Only the alias owner's snapshots, under a name a row may hold as its
+		// current one. That row folds its own aliases under this tag, so this
+		// group needs a key none of them can share.
+		return "former:" + tag, false
+	}
+	return tag, false
 }
 
 // notifyRetentionFailed sends a best-effort alert when the post-backup
@@ -1695,13 +1883,23 @@ func (s *Service) notifyRetentionFailed(ctx context.Context, tag, detail string)
 // empty one. A missing store (used by pure-settings unit tests) or a query error
 // falls back to empty so callers apply their Settings fallback.
 func (s *Service) offsiteTargetsFor(domain string) []store.OffsiteTarget {
-	if s.store == nil {
-		return nil
-	}
-	targets, err := s.store.OffsiteTargetsForDomain(domain)
+	out, err := s.enabledOffsiteTargets(domain)
 	if err != nil {
 		log.Printf("api: offsite %s: list targets failed (falling back to settings): %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 		return nil
+	}
+	return out
+}
+
+// enabledOffsiteTargets is offsiteTargetsFor with the store error returned,
+// for a check that has to refuse when it cannot see every copy.
+func (s *Service) enabledOffsiteTargets(domain string) ([]store.OffsiteTarget, error) {
+	if s.store == nil {
+		return nil, nil
+	}
+	targets, err := s.store.OffsiteTargetsForDomain(domain)
+	if err != nil {
+		return nil, err
 	}
 	var out []store.OffsiteTarget
 	for _, t := range targets {
@@ -1709,7 +1907,7 @@ func (s *Service) offsiteTargetsFor(domain string) []store.OffsiteTarget {
 			out = append(out, t)
 		}
 	}
-	return out
+	return out, nil
 }
 
 // offsiteReplicationTargets is the destination set copyToOffsite replicates a
@@ -1719,8 +1917,14 @@ func (s *Service) offsiteTargetsFor(domain string) []store.OffsiteTarget {
 // from those Settings columns. This keeps N=1 byte-identical whether or not the
 // row was backfilled.
 func (s *Service) offsiteReplicationTargets(domain string, settings store.Settings) []store.OffsiteTarget {
-	if ts := s.offsiteTargetsFor(domain); len(ts) > 0 {
-		return ts
+	return orSettingsOffsiteTarget(s.offsiteTargetsFor(domain), domain, settings)
+}
+
+// orSettingsOffsiteTarget is targets, or when there are none, the one target
+// the legacy Settings columns configure, if any.
+func orSettingsOffsiteTarget(targets []store.OffsiteTarget, domain string, settings store.Settings) []store.OffsiteTarget {
+	if len(targets) > 0 {
+		return targets
 	}
 	loc := offsiteRepoFromSettings(domain, settings)
 	if loc == "" {
@@ -4706,7 +4910,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	orchestrated := false
 	defer func() {
 		if retErr != nil && !orchestrated && !errors.Is(retErr, backup.ErrContainerNotInstalled) {
-			s.recordContainerFailure(name, targetID, retErr)
+			s.recordPreflightFailure("Backup", name, targetID, retErr)
 		}
 	}()
 
@@ -4792,6 +4996,14 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// selection inclusion would be a lie either way.
 	mode.ExcludeCaches = anyRootExcludeCaches(tg.ExcludeCaches)
 
+	// The formerly: tags take the bare former names, and the mirrored definition
+	// records each with its link time. A failed read costs this one backup
+	// those tags and the mirror update, not the backup itself.
+	aliases, aliasErr := s.store.TargetAliases("container", tg.ID)
+	if aliasErr != nil {
+		log.Printf("api: backup: aliases of %q: %v", name, aliasErr) //nolint:gosec // G706: %q-quoted
+	}
+
 	// Give each dependency its own run-state so the backup never starts a
 	// container the user had already stopped (#33): inspect each by name and
 	// carry WasRunning (mirroring the target's in.Running). A dependency we
@@ -4837,6 +5049,7 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	orchestrated = true
 	sum, err := backup.BackupContainer(bctx, backup.BackupDeps{
 		ContainerRef:           name,
+		FormerNames:            aliasOldNames(aliases),
 		ContainerName:          name,
 		RepoPath:               repo,
 		AppdataPaths:           effective,
@@ -4876,7 +5089,11 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 	// Mirror the definition (encrypted) onto the backup storage so a freshly
 	// installed BombVault can rebuild its state via Discover after losing
 	// /config. Best-effort: a write failure must never fail a good backup.
-	if wErr := s.writeDefToStorage(settings, name, repo, defBytes); wErr != nil {
+	// Without its aliases the mirror would lose its link records, so it keeps
+	// what the last write left.
+	if aliasErr != nil {
+		log.Printf("api: backup: WARN the stored definition of %q stays as it was, since its aliases could not be read", name) //nolint:gosec // G706: name is %q-quoted
+	} else if wErr := s.writeDefToStorage(settings, name, repo, defBytes, aliases); wErr != nil {
 		log.Printf("api: backup: WARN could not persist definition for %q to storage: %v", name, wErr) //nolint:gosec // G706: name is %q-quoted
 	}
 	// #52: the optional post-backup image update already ran, if enabled, as the
@@ -4903,7 +5120,9 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 			log.Printf("api: backup: %v", err)
 		}
 	}
-	s.applyRetention(ctx, repo, settings, mode, "container:"+name, "containers")
+	// A renamed container's "keep last N" counts across the rename, as long as
+	// no other machine has used the old name since.
+	s.applyRetention(ctx, repo, settings, mode, s.containerIdentity(name), "containers")
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "containers", settings, repo, "container:"+name)
 	s.collectStatsAfterItem(ctx, "containers")
@@ -5875,9 +6094,14 @@ func migrateLegacyDefsIfDomain(dir, domainDir, legacyDir string) {
 // writes it to <defsDir>/<name>.def (0644 — readable by the off-server sync tool
 // that copies the backup share; the contents are always encrypted). The env vars
 // inside the definition are sensitive, so the file is always encrypted regardless
-// of the restic encryption setting.
-func (s *Service) writeDefToStorage(settings store.Settings, name, itemRepo string, defJSON []byte) error {
+// of the restic encryption setting. aliases go in as the definition's link
+// records.
+func (s *Service) writeDefToStorage(settings store.Settings, name, itemRepo string, defJSON []byte, aliases []store.Alias) error {
 	fn, err := defFileName(name)
+	if err != nil {
+		return err
+	}
+	defJSON, err = withAliasRecords(defJSON, aliases)
 	if err != nil {
 		return err
 	}
@@ -5952,13 +6176,11 @@ func (s *Service) Discover(ctx context.Context, dryRun bool) (DiscoverResult, er
 	}
 	// The distinct container names from the container:<name> tags, across every
 	// repository this domain writes to, each with the named repository (#204) it
-	// was found in. A not-yet-created repo yields nothing quietly, as before.
-	// readErr, not an early return. The pass now comes back WITH whatever the
-	// named repositories yielded before the domain repository failed to open,
-	// so an install whose domain repository is unreadable is still rebuilt as
-	// far as it can be. The error still reaches the caller at the end, which is
-	// what the Recovery wizard classifies on.
-	names, skipped, directRows, readErr := s.discoverNamesAcrossRepos(ctx, settings, "containers", "container:")
+	// was found in. A not-yet-created repo yields nothing. A read failure comes
+	// back as readErr together with whatever the named repositories yielded, so
+	// an install whose domain repository is unreadable is still rebuilt as far
+	// as it can be; the Recovery wizard classifies on that error.
+	names, formerNames, skipped, directRows, readErr := s.discoverNamesAcrossRepos(ctx, settings, "containers", "container:")
 	findings, fErr := s.directFindings("containers", directRows)
 	if fErr != nil {
 		log.Printf("api: discover containers: could not match direct repositories to targets: %v", fErr)
@@ -5975,35 +6197,43 @@ func (s *Service) Discover(ctx context.Context, dryRun bool) (DiscoverResult, er
 	res := DiscoverResult{Skipped: skipped, LeftOpen: []string{}, Direct: findings}
 	unlock, locked := s.discoverLock("containers", dryRun)
 	defer unlock()
-	for name, repoID := range names {
-		fn, fnErr := defFileName(name)
-		if fnErr != nil {
-			log.Printf("api: discover: skipping unsafe container name %q: %v", name, fnErr) //nolint:gosec // G706: %q-quoted
-			continue
+	// storedDef reads name's mirrored definition. The item's own mirror comes
+	// first: a container on a named repository has its definition beside its
+	// snapshots, and the domain's mirror never had it.
+	storedDef := func(name, repoID string) ([]byte, containerDefinition, error) {
+		fn, err := defFileName(name)
+		if err != nil {
+			return nil, containerDefinition{}, err
 		}
-		// The item's OWN mirror first: a container on a named repository has its
-		// definition beside its snapshots, and the domain's mirror never had it.
 		lookIn := dir
 		if own := s.itemDefsDir(repoID, false); own != "" {
 			lookIn = own
 		}
-		enc, rErr := readStoredDef(lookIn, legacyDir, fn)
-		if rErr != nil && lookIn != dir {
-			enc, rErr = readStoredDef(dir, legacyDir, fn) // older backups mirrored to the domain
+		enc, err := readStoredDef(lookIn, legacyDir, fn)
+		if err != nil && lookIn != dir {
+			enc, err = readStoredDef(dir, legacyDir, fn) // older backups mirrored to the domain
 		}
-		if rErr != nil {
-			log.Printf("api: discover: no stored definition for %q — skipping (cannot recreate): %v", name, rErr) //nolint:gosec // G706: %q-quoted
-			continue
+		if err != nil {
+			return nil, containerDefinition{}, fmt.Errorf("no stored definition: %w", err)
 		}
-		plain, dErr := secret.Decrypt(s.cfg.AppKey, enc)
-		if dErr != nil {
-			log.Printf("api: discover: definition for %q is undecryptable (wrong APP_KEY?) — skipping: %v", name, dErr) //nolint:gosec // G706: %q-quoted
-			continue
+		plain, err := secret.Decrypt(s.cfg.AppKey, enc)
+		if err != nil {
+			return nil, containerDefinition{}, fmt.Errorf("the definition does not decrypt (wrong APP_KEY?): %w", err)
 		}
 		var def containerDefinition
-		if jErr := json.Unmarshal(plain, &def); jErr != nil {
-			log.Printf("api: discover: definition for %q is corrupt — skipping: %v", name, jErr) //nolint:gosec // G706: %q-quoted
-			continue
+		if err := json.Unmarshal(plain, &def); err != nil {
+			return nil, containerDefinition{}, fmt.Errorf("the definition is corrupt: %w", err)
+		}
+		return plain, def, nil
+	}
+	// rebuildOne reports whether name's stored definition is present,
+	// decryptable and parseable, whatever dryRun says; dryRun only gates the
+	// write.
+	rebuildOne := func(name, repoID string) bool {
+		plain, def, err := storedDef(name, repoID)
+		if err != nil {
+			log.Printf("api: discover: skipping %q, which cannot be recreated: %v", name, err) //nolint:gosec // G706: %q-quoted
+			return false
 		}
 		if !dryRun {
 			// A row this call is about to create takes its home from the pass only
@@ -6022,7 +6252,7 @@ func (s *Service) Discover(ctx context.Context, dryRun bool) (DiscoverResult, er
 				RepoChosen:    write.Choice,
 			}); uErr != nil {
 				log.Printf("api: discover: could not upsert target %q: %v", name, uErr) //nolint:gosec // G706: %q-quoted
-				continue
+				return false
 			}
 			left, hErr := s.discoverHome(ctx, store.ItemRef{Domain: "containers", Key: name}, repoID, readErr, locked)
 			if hErr != nil {
@@ -6032,14 +6262,128 @@ func (s *Service) Discover(ctx context.Context, dryRun bool) (DiscoverResult, er
 				res.LeftOpen = append(res.LeftOpen, name)
 			}
 		}
-		res.Found++
+		return true
+	}
+	// A name that a stored definition records as a former name is left to
+	// foldFormerNames, which runs once every other name has been rebuilt.
+	claims := recordedFormerNames(names, func(name, repoID string) []definitionAlias {
+		_, def, _ := storedDef(name, repoID) // rebuildOne logs why one does not read
+		return def.Aliases
+	})
+	for name, repoID := range names {
+		if len(claims[name]) > 0 {
+			continue
+		}
+		if rebuildOne(name, repoID) {
+			res.Found++
+		}
+	}
+	// The fold runs once the loop above has rebuilt what it could, and never on
+	// a dry run, which writes nothing.
+	if !dryRun {
+		logUnrecordedFormerNames("containers", formerNames, claims)
+		res.Found += s.foldFormerNames(ctx, settings, "container", names, claims, rebuildOne,
+			func(old, targetID string, record definitionAlias) error {
+				_, err := s.store.AddAliasAt("container", old, targetID, record.LinkedAt)
+				return err
+			})
 	}
 	if !dryRun && res.Found > 0 {
 		if err := s.pauseAfterDiscover(ctx, "containers", &res); err != nil {
 			readErr = errors.Join(readErr, err)
 		}
 	}
+	// The result first, the read failure last: a caller that branches on err
+	// still sees it, and one that shows a partial rebuild has something to show.
 	return res, readErr
+}
+
+// foldFormerNames links each name a rebuilt name's stored definition records
+// as a former name to the first claimant with a row, with that claimant's
+// record, and returns how many of those names it rebuilt as rows of their own:
+// a name no claimant could be rebuilt for, and a name another machine has been
+// backed up under since the link, which keeps its own row beside the link.
+// Names and claimants are taken in sorted order, so a repository always
+// rebuilds the same way.
+func (s *Service) foldFormerNames(ctx context.Context, settings store.Settings, domain string, names map[string]string, claims map[string][]formerNameClaim,
+	rebuild func(name, repoID string) bool, link func(old, targetID string, record definitionAlias) error) int {
+	settingsDomain, _, _ := aliasDomain(domain)
+	rebuilt := 0
+	for _, old := range slices.Sorted(maps.Keys(claims)) {
+		byOwner := claims[old]
+		slices.SortFunc(byOwner, func(a, b formerNameClaim) int { return strings.Compare(a.owner, b.owner) })
+		var owner, targetID string
+		var record definitionAlias
+		for _, c := range byOwner {
+			if id, err := s.entryIDByName(domain, c.owner); err == nil {
+				owner, targetID, record = c.owner, id, c.record
+				break
+			}
+		}
+		if owner == "" {
+			curs := make([]string, 0, len(byOwner))
+			for _, c := range byOwner {
+				curs = append(curs, c.owner)
+			}
+			log.Printf("api: discover %s: none of %q, which record %q as a former name, could be rebuilt, so it is rebuilt on its own", settingsDomain, curs, old) //nolint:gosec // G706: names %q-quoted, the domain a fixed literal
+			if rebuild(old, names[old]) {
+				rebuilt++
+			}
+			continue
+		}
+		if a, err := s.store.AliasByOldName(domain, old); err == nil {
+			if a.TargetID != targetID {
+				log.Printf("api: discover %s: %q is already linked to another entry; leaving it alone", settingsDomain, old) //nolint:gosec // G706: name %q-quoted, the domain a fixed literal
+				continue
+			}
+		} else {
+			if _, err := s.entryIDByName(domain, old); err == nil {
+				log.Printf("api: discover %s: %q already has its own row, so it is not linked to %q", settingsDomain, old, owner) //nolint:gosec // G706: names %q-quoted, the domain a fixed literal
+				continue
+			}
+			if !validFormerName(domain, old) {
+				log.Printf("api: discover %s: %q is not linked to %q: it cannot be written as a backup tag", settingsDomain, old, owner) //nolint:gosec // G706: names %q-quoted, the domain a fixed literal
+				continue
+			}
+			if err := link(old, targetID, record); err != nil {
+				log.Printf("api: discover %s: could not link %q to %q: %v", settingsDomain, old, owner, err) //nolint:gosec // G706: names %q-quoted, the domain a fixed literal
+				continue
+			}
+		}
+		if s.formerNameReusedSince(ctx, settings, domain, old, names[old], record.LinkedAt) && rebuild(old, names[old]) {
+			rebuilt++
+		}
+	}
+	return rebuilt
+}
+
+// formerNameReusedSince reports whether old's backups, in the repository
+// Discover found them in, hold one that a link at linkedAt does not claim:
+// another machine has been backed up under the name since. A listing that
+// fails counts too, so such a machine's backups never lose their entry.
+func (s *Service) formerNameReusedSince(ctx context.Context, settings store.Settings, domain, old, repoID string, linkedAt int64) bool {
+	settingsDomain, prefix, _ := aliasDomain(domain)
+	claim := newAliasClaim(prefix, store.Alias{OldName: old, LinkedAt: linkedAt})
+	repo, err := s.itemRepoPath(repoID, func() (string, error) { return s.repoFor(settings, settingsDomain, "local") })
+	var snaps []restic.Snapshot
+	if err == nil {
+		snaps, err = s.snapshotsForTag(ctx, repo, s.primaryModeFor(settings, settingsDomain, repo), claim.tag)
+	}
+	if err != nil {
+		log.Printf("api: discover %s: the backups of %q could not be listed, so it is rebuilt as its own entry beside the link: %v", settingsDomain, old, scrubError(err)) //nolint:gosec // G706: name %q-quoted, the domain a fixed literal and the error scrubbed
+		return true
+	}
+	return !claim.claimsEvery(snaps)
+}
+
+// validFormerName reports whether name may become an alias in domain. Every
+// later backup writes it into a formerly: tag, and restic splits a tag at a
+// comma.
+func validFormerName(domain, name string) bool {
+	if domain == "vm" {
+		return validVMName(name) && !strings.Contains(name, ",")
+	}
+	return validResourceName(name)
 }
 
 // vmDefsDir returns the directory INSIDE the vms repo (repo/vm-def) where the
@@ -6068,9 +6412,14 @@ func (s *Service) legacyVMDefsDir(settings store.Settings) (string, error) {
 // writeVMDefToStorage mirrors a VM's definition (encrypted) to the backup storage
 // so a freshly installed BombVault can rebuild it via DiscoverVMs after losing
 // its database. The definition holds the domain XML + NVRAM, so it is always
-// encrypted regardless of the restic encryption setting.
-func (s *Service) writeVMDefToStorage(settings store.Settings, name, itemRepo string, defJSON []byte) error {
+// encrypted regardless of the restic encryption setting. aliases go in as the
+// definition's link records.
+func (s *Service) writeVMDefToStorage(settings store.Settings, name, itemRepo string, defJSON []byte, aliases []store.Alias) error {
 	fn, err := defFileName(name)
+	if err != nil {
+		return err
+	}
+	defJSON, err = withAliasRecords(defJSON, aliases)
 	if err != nil {
 		return err
 	}
@@ -6116,19 +6465,20 @@ func (s *Service) writeVMDefToStorage(settings store.Settings, name, itemRepo st
 // repo and decrypts the definitions to prove readability and the APP_KEY, and
 // returns the same count, but writes no targets. The Recovery readability probe
 // uses this so it never resurrects orphan VM entries (#44).
+// A name that another VM's stored definition records as a former name is
+// linked to that VM, and rebuilt beside the link only when a later VM has been
+// backed up under it; see foldFormerNames.
 func (s *Service) DiscoverVMs(ctx context.Context, dryRun bool) (DiscoverResult, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return DiscoverResult{}, fmt.Errorf("read settings: %w", err)
 	}
 	// Every repository this domain writes to (#204), with the one each name was
-	// found in; a not-yet-created repo yields nothing quietly, as before.
-	// readErr, not an early return. The pass now comes back WITH whatever the
-	// named repositories yielded before the domain repository failed to open,
-	// so an install whose domain repository is unreadable is still rebuilt as
-	// far as it can be. The error still reaches the caller at the end, which is
-	// what the Recovery wizard classifies on.
-	names, skipped, directRows, readErr := s.discoverNamesAcrossRepos(ctx, settings, "vms", "vm:")
+	// found in; a not-yet-created repo yields nothing. A read failure comes back
+	// as readErr together with whatever the named repositories yielded, so an
+	// install whose domain repository is unreadable is still rebuilt as far as
+	// it can be; the Recovery wizard classifies on that error.
+	names, formerNames, skipped, directRows, readErr := s.discoverNamesAcrossRepos(ctx, settings, "vms", "vm:")
 	findings, fErr := s.directFindings("vms", directRows)
 	if fErr != nil {
 		log.Printf("api: discover vms: could not match direct repositories to targets: %v", fErr)
@@ -6145,34 +6495,39 @@ func (s *Service) DiscoverVMs(ctx context.Context, dryRun bool) (DiscoverResult,
 	res := DiscoverResult{Skipped: skipped, LeftOpen: []string{}, Direct: findings}
 	unlock, locked := s.discoverLock("vms", dryRun)
 	defer unlock()
-	for name, repoID := range names {
-		fn, fnErr := defFileName(name)
-		if fnErr != nil {
-			log.Printf("api: discover vms: skipping unsafe name %q: %v", name, fnErr) //nolint:gosec // G706: %q-quoted
-			continue
+	// storedDef reads name's definition file, from beside its own snapshots
+	// first as in Discover.
+	storedDef := func(name, repoID string) ([]byte, vmDefinition, error) {
+		fn, err := defFileName(name)
+		if err != nil {
+			return nil, vmDefinition{}, err
 		}
-		// The item's OWN mirror first - see Discover.
 		lookIn := dir
 		if own := s.itemDefsDir(repoID, true); own != "" {
 			lookIn = own
 		}
-		enc, rErr := readStoredDef(lookIn, legacyDir, fn)
-		if rErr != nil && lookIn != dir {
-			enc, rErr = readStoredDef(dir, legacyDir, fn)
+		enc, err := readStoredDef(lookIn, legacyDir, fn)
+		if err != nil && lookIn != dir {
+			enc, err = readStoredDef(dir, legacyDir, fn)
 		}
-		if rErr != nil {
-			log.Printf("api: discover vms: no stored definition for %q — skipping (cannot recreate): %v", name, rErr) //nolint:gosec // G706: %q-quoted
-			continue
+		if err != nil {
+			return nil, vmDefinition{}, fmt.Errorf("no stored definition: %w", err)
 		}
-		plain, dErr := secret.Decrypt(s.cfg.AppKey, enc)
-		if dErr != nil {
-			log.Printf("api: discover vms: definition for %q is undecryptable (wrong APP_KEY?) — skipping: %v", name, dErr) //nolint:gosec // G706: %q-quoted
-			continue
+		plain, err := secret.Decrypt(s.cfg.AppKey, enc)
+		if err != nil {
+			return nil, vmDefinition{}, fmt.Errorf("the definition does not decrypt (wrong APP_KEY?): %w", err)
 		}
 		var def vmDefinition
-		if jErr := json.Unmarshal(plain, &def); jErr != nil {
-			log.Printf("api: discover vms: definition for %q is corrupt — skipping: %v", name, jErr) //nolint:gosec // G706: %q-quoted
-			continue
+		if err := json.Unmarshal(plain, &def); err != nil {
+			return nil, vmDefinition{}, fmt.Errorf("the definition is corrupt: %w", err)
+		}
+		return plain, def, nil
+	}
+	rebuildOne := func(name, repoID string) bool {
+		plain, def, err := storedDef(name, repoID)
+		if err != nil {
+			log.Printf("api: discover vms: skipping %q, which cannot be recreated: %v", name, err) //nolint:gosec // G706: %q-quoted
+			return false
 		}
 		method := def.Method
 		if method == "" {
@@ -6194,7 +6549,7 @@ func (s *Service) DiscoverVMs(ctx context.Context, dryRun bool) (DiscoverResult,
 				RepoChosen: write.Choice,
 			}); uErr != nil {
 				log.Printf("api: discover vms: could not upsert target %q: %v", name, uErr) //nolint:gosec // G706: %q-quoted
-				continue
+				return false
 			}
 			left, hErr := s.discoverHome(ctx, store.ItemRef{Domain: "vms", Key: name}, repoID, readErr, locked)
 			if hErr != nil {
@@ -6204,13 +6559,40 @@ func (s *Service) DiscoverVMs(ctx context.Context, dryRun bool) (DiscoverResult,
 				res.LeftOpen = append(res.LeftOpen, name)
 			}
 		}
-		res.Found++
+		return true
+	}
+	// As in Discover, a recorded former name waits for the fold.
+	claims := recordedFormerNames(names, func(name, repoID string) []definitionAlias {
+		_, def, _ := storedDef(name, repoID) // rebuildOne logs why one does not read
+		return def.Aliases
+	})
+	for name, repoID := range names {
+		if len(claims[name]) > 0 {
+			continue
+		}
+		if rebuildOne(name, repoID) {
+			res.Found++
+		}
+	}
+	// As in Discover, the fold runs after the loop and never on a dry run.
+	if !dryRun {
+		logUnrecordedFormerNames("vms", formerNames, claims)
+		res.Found += s.foldFormerNames(ctx, settings, "vm", names, claims, rebuildOne,
+			func(old, targetID string, record definitionAlias) error {
+				if record.PrevDefinition == "" {
+					log.Printf("api: discover vms: the link record of %q carries no definition, so it is linked without one and cannot be unlinked", old) //nolint:gosec // G706: %q-quoted
+				}
+				_, err := s.store.AddVMAliasAt(old, targetID, record.LinkedAt, record.PrevDefinition)
+				return err
+			})
 	}
 	if !dryRun && res.Found > 0 {
 		if err := s.pauseAfterDiscover(ctx, "vms", &res); err != nil {
 			readErr = errors.Join(readErr, err)
 		}
 	}
+	// The result first, the read failure last: a caller that branches on err
+	// still sees it, and one that shows a partial rebuild has something to show.
 	return res, readErr
 }
 
@@ -6315,32 +6697,38 @@ func (s *Service) prepareRestoreIn(ctx context.Context, ref repoRef, name, snaps
 		log.Printf("api: restore: unknown target %q: %v", name, err) //nolint:gosec // G706: name is %q-quoted; no raw user bytes reach the log formatter
 		return containerRestorePlan{}, errors.New("container has not been backed up yet")
 	}
-	// Same-instance restore: no destBase (in-place), no overwrite prompt — the
-	// cross-pool remap path is foreign-only (#125).
-	return s.prepareRestoreForTarget(ctx, ref, name, snapshotID, tg, "", false)
+	// Same-instance restore: no destBase (in-place) and no overwrite prompt,
+	// since the cross-pool remap is foreign-only. ref is this instance's own
+	// repo, so the local alias history applies.
+	return s.prepareRestoreForTarget(ctx, ref, name, snapshotID, tg, s.containerIdentity(name), "", false)
 }
 
-// prepareRestoreForTarget builds a container restore plan for an ALREADY-RESOLVED
-// target tg against an explicit repo ref, WITHOUT reading or writing the store.
-// prepareRestoreIn passes the stored target; the foreign restore passes a target
-// built from the decrypted foreign definition, so snapshot ownership and appdata
-// containment are validated BEFORE that foreign recipe is ever persisted locally
-// (prepareForeignRestore adopts it only once this returns a plan — never on a
-// validation failure, which would otherwise clobber a same-named local target).
-// The caller runs the confirm / name / explicit-snapshot-id-shape guards first.
-func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name, snapshotID string, tg store.Target, destBase string, overwrite bool) (containerRestorePlan, error) {
+// prepareRestoreForTarget builds a container restore plan for an already
+// resolved target tg against an explicit repo ref, without reading or writing
+// the store. prepareRestoreIn passes the stored target; the foreign restore
+// passes a target built from the decrypted foreign definition, so snapshot
+// ownership and appdata containment are validated before that foreign recipe
+// is persisted locally (prepareForeignRestore adopts it only once this returns
+// a plan, never on a validation failure, which would clobber a same-named
+// local target). The caller runs the confirm / name / explicit-snapshot-id-shape
+// guards first.
+//
+// id is the identity the ownership check accepts. The caller decides it
+// because it depends on where ref points: prepareRestoreIn passes the local
+// containerIdentity, prepareForeignRestore only the literal container:<name>
+// tag, since this instance's rename history says nothing about a foreign
+// repository.
+func (s *Service) prepareRestoreForTarget(ctx context.Context, ref repoRef, name, snapshotID string, tg store.Target, id entryIdentity, destBase string, overwrite bool) (containerRestorePlan, error) {
 	explicitID := snapshotID != "latest" && snapshotID != ""
 
-	// "latest" (or empty) resolves to the container's newest snapshot — used by
-	// the bulk "restore selected" action. restic returns snapshots oldest-first,
-	// so the last tag-matching one is the newest.
-	// A definition-only backup (stateless container with no restic snapshot) has
-	// no snapshot to resolve — recreate it from the stored definition instead.
-	// An explicit id must belong to THIS container (tag-scoped, the same
-	// access-control check the file/to-path restores use) — listed against the
-	// caller's repo ref, NOT the settings repo.
+	// "latest" (or empty) resolves to the container's newest snapshot, as the
+	// bulk "restore selected" action needs; restic returns snapshots oldest
+	// first. A definition-only backup (stateless container with no restic
+	// snapshot) is recreated from the stored definition instead. An explicit id
+	// must be one id owns, the same access check the file and to-path restores
+	// make, listed against the caller's repo ref rather than the settings repo.
 	recreateOnly := false
-	snaps, snapErr := s.snapshotsForTag(ctx, ref.repo, ref.mode, "container:"+name)
+	snaps, snapErr := s.snapshotsOwnedBy(ctx, ref.repo, ref.mode, id)
 	if snapErr != nil {
 		return containerRestorePlan{}, snapErr
 	}
@@ -6714,16 +7102,50 @@ func (s *Service) StartRestore(ctx context.Context, name, snapshotID, source str
 	return true, nil
 }
 
-// Snapshots lists the snapshots for a single container. The containers repo is
-// shared across all containers, so snapshots are filtered by the
-// `container:<name>` tag the backup writes — otherwise the restore UI for one
-// container would list (and could restore) another container's snapshots.
-// LatestContainerBackupTimes returns, per container name, the unix time of its
-// NEWEST local snapshot (read from the container:<name> tag). It gives an orphan
-// row a real "last backup" date when its target was rebuilt by Discover and so
-// has NO run record — which would otherwise read "Never" even though the
-// container clearly still has backups in the repo (#44). One snapshot listing.
+// LatestContainerBackupTimes returns, per container name, the unix time of the
+// newest backup that name owns. A card's date is read from here rather than
+// from the run history, so it agrees with the list of backups under it: an
+// entry rebuilt by Discover has no run at all (#44), and a run stays with the
+// entry while a backup stays with the name it was written under.
 func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]int64, error) {
+	// When the targets cannot be read nothing folds, and each old name keeps
+	// its own date.
+	idToName := map[string]string{}
+	if targets, tErr := s.store.ListTargets(); tErr != nil {
+		log.Printf("api: last-backup times: listing targets for alias fold: %v; leaving every tag as its own identity", tErr)
+	} else {
+		for _, t := range targets {
+			idToName[t.ID] = t.ContainerName
+		}
+	}
+	return s.latestBackupTimes(ctx, "containers", "container", idToName)
+}
+
+// LatestFileSetBackupTimes is LatestContainerBackupTimes for the folder sets.
+// A set's name is fixed once it has backups, so no former name folds into it;
+// backups left under a name no set carries any more come back as their own set
+// through Discover.
+func (s *Service) LatestFileSetBackupTimes(ctx context.Context) (map[string]int64, error) {
+	return s.latestBackupTimes(ctx, "files", "fileset", nil)
+}
+
+// LatestVMBackupTimes is LatestContainerBackupTimes for the VMs domain.
+func (s *Service) LatestVMBackupTimes(ctx context.Context) (map[string]int64, error) {
+	idToName := map[string]string{}
+	if targets, tErr := s.store.ListVMTargets(); tErr != nil {
+		log.Printf("api: last-backup times: listing VM targets for alias fold: %v; leaving every tag as its own identity", tErr)
+	} else {
+		for _, t := range targets {
+			idToName[t.ID] = t.Name
+		}
+	}
+	return s.latestBackupTimes(ctx, "vms", "vm", idToName)
+}
+
+// latestBackupTimes reads one snapshot listing per repository of domain and
+// keeps, per name, the newest time under that name's tag. idToName carries the
+// current name of every entry, for the alias fold.
+func (s *Service) latestBackupTimes(ctx context.Context, domain, aliasDomain string, idToName map[string]string) (map[string]int64, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return nil, fmt.Errorf("read settings: %w", err)
@@ -6739,10 +7161,11 @@ func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]in
 	// caller that CHANGES something reports its skips; the two that do not are
 	// this one and repoSharedWithAnotherDomain, which asks a yes/no question and
 	// answers "shared" when it cannot tell.
-	repos, _, err := s.domainReposInUse(settings, "containers")
+	repos, _, err := s.domainReposInUse(settings, domain)
 	if err != nil {
 		return nil, err
 	}
+	prefix := aliasDomain + ":"
 	out := make(map[string]int64)
 	for _, repo := range repos {
 		if localRepoMissing(repo.Loc) {
@@ -6753,10 +7176,10 @@ func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]in
 		// own credentials could not be listed at all - and the dashboard then said
 		// it had never been backed up, which is the most alarming sentence a backup
 		// tool has.
-		all, lErr := s.listSnapshots(ctx, repo.Loc, s.primaryModeFor(settings, "containers", repo.Loc))
+		all, lErr := s.listSnapshots(ctx, repo.Loc, s.primaryModeFor(settings, domain, repo.Loc))
 		if lErr != nil {
 			// One unreachable repository must not blank the whole column: the
-			// other containers' times are still true. The item whose repo this
+			// other entries' times are still true. The item whose repo this
 			// is shows as never backed up, which is the honest answer when its
 			// repository cannot be read.
 			log.Printf("api: last-backup times: repository unreadable, skipping: %v", lErr)
@@ -6769,7 +7192,20 @@ func (s *Service) LatestContainerBackupTimes(ctx context.Context) (map[string]in
 			}
 			unix := ts.Unix()
 			for _, tag := range snap.Tags {
-				if name, ok := strings.CutPrefix(tag, "container:"); ok && name != "" && unix > out[name] {
+				name, ok := strings.CutPrefix(tag, prefix)
+				if !ok || name == "" {
+					continue
+				}
+				// A rename leaves the old tag on snapshots already written. One
+				// from before the link is the renamed entry's and counts for its
+				// current name, whoever holds the old name today; a later one
+				// stays under the old name.
+				if a, aErr := s.store.AliasByOldName(aliasDomain, name); aErr == nil {
+					if cur := idToName[a.TargetID]; cur != "" && newAliasClaim(prefix, a).claims(snap) {
+						name = cur
+					}
+				}
+				if unix > out[name] {
 					out[name] = unix
 				}
 			}
@@ -7169,22 +7605,25 @@ func nothingCoveredError(skipped []repoSkip) error {
 // was re-homed onto it - whereupon its next backup's retention forgot and
 // pruned the archive under the domain keep-policy, while its real history in
 // the domain repository was orphaned. The newest snapshot is the only evidence
-// available here about where an item is CURRENTLY sent, and it is evidence
+// available here about where an item is currently sent, and it is evidence
 // rather than a preference.
 //
-// The named repositories are searched BEFORE the domain's own for that reason:
-// aborting on the domain's own used to kill the whole pass, so the named
-// repositories this function exists to reach were never searched. Now they are
-// all searched first and only then does the domain's own error end the pass, so
-// the abort costs nothing it used to cost and the error still reaches the
+// The named repositories are searched before the domain's own for that reason:
+// if the domain's own repository failed first, the pass would abort before
+// ever reaching the named repositories this function exists to search. Doing
+// them first means an error on the domain's own only ends the pass after
+// everything else has already been searched, and that error still reaches the
 // caller who classifies on it.
 //
-// The third result is every plain named repository holding bv:direct snapshots
-// of the domain: a direct repository that lost its link.
-func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.Settings, domain, tagPrefix string) (map[string]string, []repoSkip, []store.OffsiteTarget, error) {
+// The second result maps a discovered name to the formerly: names on its own
+// snapshots, so Discover can name each one no stored definition records as a
+// link. Only container and VM backups write that tag. The fourth is every plain
+// named repository holding bv:direct snapshots of the domain: a direct
+// repository that lost its link.
+func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.Settings, domain, tagPrefix string) (map[string]string, map[string][]string, []repoSkip, []store.OffsiteTarget, error) {
 	own, err := s.repoFor(settings, domain, "local")
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	// Every enabled named repository that resolves somewhere else FIRST, then the
 	// domain's own last: the domain's listing failure ends the pass, so putting it
@@ -7226,6 +7665,10 @@ func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.S
 		when int64
 	}
 	best := map[string]candidate{}
+	// formerly[name] holds the former names on name's snapshots in every
+	// repository, not only the one best settles on: a formerly: tag holds
+	// wherever it was written.
+	formerly := map[string]map[string]bool{}
 	// id → display name, so the duplicate-name line below can actually name both
 	// sides instead of only saying that two exist. "" is the domain's own.
 	refNames := map[string]string{}
@@ -7264,7 +7707,7 @@ func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.S
 				for name, c := range best {
 					out[name] = c.id
 				}
-				return out, skipped, direct, errors.New("the " + domain + " repository is not reachable: " + reason)
+				return out, formerlyOut(formerly), skipped, direct, errors.New("the " + domain + " repository is not reachable: " + reason)
 			}
 			switch est {
 			case repoWasEstablished:
@@ -7321,7 +7764,7 @@ func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.S
 				for name, c := range best {
 					out[name] = c.id
 				}
-				return out, skipped, direct, sErr
+				return out, formerlyOut(formerly), skipped, direct, sErr
 			}
 			skipped = append(skipped, repoSkip{Name: s.refName(ref), Reason: scrubError(sErr), Unreachable: true})
 			log.Printf("api: discover %s: could not read %s (continuing): %v", domain, s.refName(ref), scrubError(sErr)) //nolint:gosec // G706: domain is a fixed literal, the name is the row's own and the error scrubbed
@@ -7339,10 +7782,29 @@ func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.S
 			if ts, pErr := time.Parse(time.RFC3339Nano, snap.Time); pErr == nil {
 				when = ts.Unix()
 			}
+			// A backup after a rename carries its identity tag and one formerly:
+			// tag per former name, so each former name here belongs to the
+			// identity tags on the same snapshot.
+			var formerHere []string
+			for _, tag := range snap.Tags {
+				if old, ok := strings.CutPrefix(tag, "formerly:"); ok && old != "" {
+					formerHere = append(formerHere, old)
+				}
+			}
 			for _, tag := range snap.Tags {
 				rest, ok := strings.CutPrefix(tag, tagPrefix)
 				if !ok || rest == "" {
 					continue
+				}
+				if len(formerHere) > 0 {
+					set, ok := formerly[rest]
+					if !ok {
+						set = map[string]bool{}
+						formerly[rest] = set
+					}
+					for _, old := range formerHere {
+						set[old] = true
+					}
 				}
 				prev, seen := best[rest]
 				if seen && prev.id != id && prev.when != 0 && when != 0 {
@@ -7375,7 +7837,25 @@ func (s *Service) discoverNamesAcrossRepos(ctx context.Context, settings store.S
 	for name, c := range best {
 		out[name] = c.id
 	}
-	return out, skipped, direct, nil
+	return out, formerlyOut(formerly), skipped, direct, nil
+}
+
+// formerlyOut flattens formerly into sorted lists, so Discover writes the same
+// aliases on every run.
+func formerlyOut(formerly map[string]map[string]bool) map[string][]string {
+	if len(formerly) == 0 {
+		return nil
+	}
+	out := make(map[string][]string, len(formerly))
+	for name, set := range formerly {
+		olds := make([]string, 0, len(set))
+		for old := range set {
+			olds = append(olds, old)
+		}
+		sort.Strings(olds)
+		out[name] = olds
+	}
+	return out
 }
 
 // offsiteReplicationSources returns the repositories a domain's off-site
@@ -7628,7 +8108,17 @@ func scrubSafeName(name string) string {
 	return strings.Join(strings.Fields(r.Replace(name)), " ")
 }
 
+// Snapshots lists the snapshots of a single container. The containers
+// repository is shared, so the listing is filtered by the container:<name> tag
+// the backup writes: otherwise the restore panel of one container would list,
+// and could restore, another's snapshots.
 func (s *Service) Snapshots(ctx context.Context, name, source string) ([]restic.Snapshot, error) {
+	return s.containerSnapshotsOf(ctx, name, source, s.containerIdentity(name))
+}
+
+// containerSnapshotsOf is Snapshots for an identity the caller has already
+// built, so a gate lists with the one it checked.
+func (s *Service) containerSnapshotsOf(ctx context.Context, name, source string, id entryIdentity) ([]restic.Snapshot, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return nil, fmt.Errorf("read settings: %w", err)
@@ -7637,17 +8127,139 @@ func (s *Service) Snapshots(ctx context.Context, name, source string) ([]restic.
 	if err != nil {
 		return nil, err
 	}
-	return s.snapshotsForTag(ctx, repo, s.repoModeFor(settings, "containers", source, repo), "container:"+name)
+	return s.snapshotsOwnedBy(ctx, repo, s.repoModeFor(settings, "containers", source, repo), id)
 }
 
-// snapshotsForTag lists an EXPLICIT repo (no settings resolution) and returns
-// only the snapshots carrying the given tag, oldest-first as restic reports
-// them. A missing local repo is "no snapshots yet", not an error — the SPA
-// shows an empty list, not a failure — unless the repo was established before
-// (share not mounted, #55). Remote repos skip that local check (see
-// localRepoMissing). The settings-driven Snapshots* wrappers delegate here;
-// non-settings callers (the foreign-repo session) pass their own repoRef parts.
+// containerIdentity is the container entry that answers to name, with every
+// name it had before. A rename records an alias but never rewrites the
+// snapshots under the old tag, so readers list the old tags too; which of
+// those snapshots the entry owns is entryIdentity's rule. A name with no row
+// has no aliases, and a name that is another entry's old name cedes that
+// entry's pre-link snapshots (cededClaimOn).
+func (s *Service) containerIdentity(name string) entryIdentity {
+	ownID := ""
+	tg, err := s.store.GetTargetByContainer(name)
+	if err == nil {
+		ownID = tg.ID
+	}
+	return withRowReadErr(s.aliasedIdentity("container", "container:", name, ownID), err)
+}
+
+// vmIdentity is containerIdentity for VMs. name is the libvirt name: on
+// TrueNAS the display name is one virsh does not know, so it never appears in
+// a tag.
+func (s *Service) vmIdentity(name string) entryIdentity {
+	ownID := ""
+	tg, err := s.store.GetVMTargetByName(name)
+	if err == nil {
+		ownID = tg.ID
+	}
+	return withRowReadErr(s.aliasedIdentity("vm", "vm:", name, ownID), err)
+}
+
+// withRowReadErr marks id partial when reading its row failed for any reason
+// other than there being no row, since the aliases were then never read.
+func withRowReadErr(id entryIdentity, err error) entryIdentity {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		id.readErr = errors.Join(id.readErr, err)
+	}
+	return id
+}
+
+// aliasedIdentity reads targetID's aliases with their link times ("" for a
+// name with no row: no aliases). A failed read leaves the entry with its own
+// tag alone: its pre-rename history is hidden until a read succeeds, nothing
+// is claimed that is not provably its own, and readErr records the failure.
+func (s *Service) aliasedIdentity(domain, prefix, name, targetID string) entryIdentity {
+	id := tagIdentity(prefix + name)
+	id.ceded, id.readErr = s.cededClaimOn(domain, prefix, name, targetID)
+	if targetID == "" {
+		return id
+	}
+	aliases, err := s.store.TargetAliases(domain, targetID)
+	if err != nil {
+		log.Printf("api: %s aliases for %q: %v", domain, name, err) //nolint:gosec // G706: domain is a fixed literal, name %q-quoted
+		id.readErr = errors.Join(id.readErr, err)
+		return id
+	}
+	for _, a := range aliases {
+		id.aliases = append(id.aliases, newAliasClaim(prefix, a))
+	}
+	return id
+}
+
+// cededClaimOn returns the alias another entry holds on name, if any: a
+// machine that took an old name up again must not own the renamed entry's
+// snapshots from before the link. An alias on the entry's own current name
+// cedes nothing. A failed read cannot rule another entry out, so it cedes the
+// whole name until a read succeeds, and the error comes back with it.
+func (s *Service) cededClaimOn(domain, prefix, name, targetID string) (*cededClaim, error) {
+	a, err := s.store.AliasByOldName(domain, name)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, nil
+	case err != nil:
+		log.Printf("api: %s alias on %q: %v; none of its snapshots count as its own until this reads", domain, name, err) //nolint:gosec // G706: domain is a fixed literal, name %q-quoted
+		return &cededClaim{aliasClaim: aliasClaim{tag: prefix + name}, unknown: true}, err
+	case a.TargetID == targetID:
+		return nil, nil
+	}
+	c := &cededClaim{aliasClaim: newAliasClaim(prefix, a)}
+	if owner, oErr := s.entryNameByID(domain, a.TargetID); oErr == nil {
+		c.owner = prefix + owner
+	}
+	return c, nil
+}
+
+// entryNameByID is the current name of the container or VM row id.
+func (s *Service) entryNameByID(domain, id string) (string, error) {
+	if domain == "vm" {
+		tg, err := s.store.GetVMTargetByID(id)
+		return tg.Name, err
+	}
+	tg, err := s.store.GetTargetByID(id)
+	return tg.ContainerName, err
+}
+
+// entryIDByName is the id of the container or VM row on name.
+func (s *Service) entryIDByName(domain, name string) (string, error) {
+	if domain == "vm" {
+		tg, err := s.store.GetVMTargetByName(name)
+		return tg.ID, err
+	}
+	tg, err := s.store.GetTargetByContainer(name)
+	return tg.ID, err
+}
+
+// snapshotsForTag lists an explicit repo (no settings resolution) and returns
+// the snapshots carrying tag, oldest first. It reads one literal tag, not an
+// entry's history: for the files and config domains, the zvol per-disk tags,
+// and the checks that ask about one name's own snapshots. An entry's history
+// is read through snapshotsOwnedBy.
 func (s *Service) snapshotsForTag(ctx context.Context, repo string, mode restic.Mode, tag string) ([]restic.Snapshot, error) {
+	return s.snapshotsForTags(ctx, repo, mode, []string{tag})
+}
+
+// snapshotsOwnedBy lists repo and keeps the snapshots id owns: those under its
+// current tag that no other entry's alias claims, plus each alias's from
+// before that alias was linked. Every reader of an entry's history goes
+// through here, so neither a renamed entry nor a machine that took its old
+// name up again can reach the other's snapshots.
+func (s *Service) snapshotsOwnedBy(ctx context.Context, repo string, mode restic.Mode, id entryIdentity) ([]restic.Snapshot, error) {
+	listed, err := s.snapshotsForTags(ctx, repo, mode, id.listTags())
+	if err != nil {
+		return nil, err
+	}
+	return id.owned(listed), nil
+}
+
+// snapshotsForTags is snapshotsForTag for several tags: a snapshot is included
+// if it carries any of them. It applies no ownership rule; snapshotsOwnedBy
+// narrows it to what an entry may claim, and retention reads it unfiltered. A
+// missing local repo is "no snapshots yet", not an error, unless the repo was
+// established before (share not mounted, #55). Remote repos skip that local
+// check (see localRepoMissing).
+func (s *Service) snapshotsForTags(ctx context.Context, repo string, mode restic.Mode, tags []string) ([]restic.Snapshot, error) {
 	if localRepoMissing(repo) {
 		// #55 vs #120: only surface "not mounted" when the backing store is truly
 		// absent. If the destination IS mounted, this is a fresh/phantom repo on a
@@ -7661,10 +8273,14 @@ func (s *Service) snapshotsForTag(ctx context.Context, repo string, mode restic.
 	if err != nil {
 		return nil, err
 	}
+	wanted := make(map[string]bool, len(tags))
+	for _, t := range tags {
+		wanted[t] = true
+	}
 	out := make([]restic.Snapshot, 0, len(all))
 	for _, snap := range all {
 		for _, t := range snap.Tags {
-			if t == tag {
+			if wanted[t] {
 				out = append(out, snap)
 				break
 			}
@@ -8493,8 +9109,15 @@ func sanitizeTags(in []string) ([]string, error) {
 // DeleteBackups removes every backup of a container. From the local source it
 // also forgets the container's entry; from an off-site source it deletes at that
 // target only and the entry stays.
+//
+// Forgetting the entry takes its aliases with it, so the pre-link part of an
+// old name falls to whichever entry uses that name next. The user asked for
+// these backups to go, so that is the answer they want.
 func (s *Service) DeleteBackups(ctx context.Context, name, source string) error {
 	if isOffsiteSource(source) {
+		if err := refuseDeleteWithPartialIdentity(name, s.containerIdentity(name)); err != nil {
+			return err
+		}
 		_, err := s.forgetAtTarget(ctx, "containers", "container:"+name, source, taggedForItem, nil)
 		return err
 	}
@@ -8546,8 +9169,11 @@ func (s *Service) DeleteBackups(ctx context.Context, name, source string) error 
 		s.unlockStale(ctx, repo, mode)
 	}
 
-	// Collect this container's snapshot IDs (tag-filtered) and forget them.
-	snaps, err := s.Snapshots(ctx, name, "")
+	id := s.containerIdentity(name)
+	if err := refuseDeleteWithPartialIdentity(name, id); err != nil {
+		return err
+	}
+	snaps, err := s.containerSnapshotsOf(ctx, name, "", id)
 	if err != nil {
 		return err
 	}
@@ -8599,8 +9225,13 @@ func (s *Service) DeleteBackups(ctx context.Context, name, source string) error 
 // forgets the VM's entry; from an off-site source it deletes the snapshots the
 // VM's backup list shows at that target and the entry stays. Its disk images
 // live under their own tags and go through the window that shows them first.
+// It is serialised against VM backups by the domain lock and clears stale locks
+// first, so a leftover lock cannot fail it.
 func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) error {
 	if isOffsiteSource(source) {
+		if err := refuseDeleteWithPartialIdentity(name, s.vmIdentity(name)); err != nil {
+			return err
+		}
 		_, err := s.forgetAtTarget(ctx, "vms", "vm:"+name, source, taggedForItem, nil)
 		return err
 	}
@@ -8650,6 +9281,9 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 			return errDomainBusy
 		}
 		defer unlock()
+		if err := refuseDeleteWithPartialIdentity(name, s.vmIdentity(name)); err != nil {
+			return err
+		}
 		if err := s.store.DeleteVMTarget(name); err != nil {
 			return fmt.Errorf("delete vm target: %w", err)
 		}
@@ -8663,9 +9297,11 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 	mode := s.repoModeFor(settings, "vms", source, repo)
 	s.unlockStale(ctx, repo, mode)
 
-	// Collect this VM's snapshot IDs (tag-filtered vm:<name>) and forget+prune them
-	// in one restic call (Forget with prune=true).
-	snaps, err := s.SnapshotsVM(ctx, name, source)
+	id := s.vmIdentity(name)
+	if err := refuseDeleteWithPartialIdentity(name, id); err != nil {
+		return err
+	}
+	snaps, err := s.vmSnapshotsOf(ctx, name, source, id)
 	if err != nil {
 		return err
 	}
@@ -8694,7 +9330,8 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 // (libvirt only while VMs are enabled), so a card left open while the VM came
 // back cannot wipe a live VM's settings and history. Serialised against VM
 // backups and restores like DeleteBackupsVM: a restore of this entry writes
-// the run row this would delete.
+// the run row this would delete. Refused too while the entry owns a backup
+// anywhere it replicates to (refuseRowRemovalWithBackups).
 func (s *Service) ForgetVMTarget(ctx context.Context, name string) error {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -8708,10 +9345,52 @@ func (s *Service) ForgetVMTarget(ctx context.Context, name string) error {
 		return errDomainBusy
 	}
 	defer unlock()
+	repo, err := s.vmRepoForName(settings, name, "")
+	if err != nil {
+		return fmt.Errorf("%q keeps its entry: its repository could not be resolved to check for backups: %w", name, err)
+	}
+	if err := s.refuseRowRemovalWithBackups(ctx, settings, "vms", name, repo, s.vmIdentity(name)); err != nil {
+		return err
+	}
 	if err := s.store.DeleteVMTarget(name); err != nil {
 		return fmt.Errorf("forget vm target: %w", err)
 	}
 	return nil
+}
+
+// refuseRowRemovalWithBackups refuses to remove the row of name while its
+// identity id owns a snapshot in repo or any off-site target of domain, or
+// while one of them cannot be read. The row carries the aliases that make its
+// older backups its own; without them those backups would fall to whichever
+// entry takes the name next.
+func (s *Service) refuseRowRemovalWithBackups(ctx context.Context, settings store.Settings, domain, name, repo string, id entryIdentity) error {
+	if id.readErr != nil {
+		return fmt.Errorf("%q keeps its entry: its backups could not be checked: %w", name, id.readErr)
+	}
+	places, err := s.backupPlaces(settings, domain, []string{repo})
+	if err != nil {
+		return fmt.Errorf("%q keeps its entry until its backups can be ruled out: %w", name, err)
+	}
+	for _, p := range places {
+		owned, err := s.snapshotsOwnedBy(ctx, p.repo, p.mode, id)
+		if err != nil {
+			return fmt.Errorf("%q keeps its entry until its backups can be ruled out: %s could not be read: %w", name, p.name, err)
+		}
+		if len(owned) > 0 {
+			return fmt.Errorf("%q still has backups in %s; delete its backups instead", name, p.name)
+		}
+	}
+	return nil
+}
+
+// refuseDeleteWithPartialIdentity refuses delete-all while id is partial,
+// because it would forget only part of the entry's backups and then drop the
+// aliases that make the rest its own.
+func refuseDeleteWithPartialIdentity(name string, id entryIdentity) error {
+	if id.readErr == nil {
+		return nil
+	}
+	return fmt.Errorf("nothing was deleted: the backups of %q could not be checked: %w", name, id.readErr)
 }
 
 // refuseDefinedVM answers an error when the VM is defined on the host, asked the
@@ -8740,7 +9419,9 @@ func (s *Service) refuseDefinedVM(ctx context.Context, settings store.Settings, 
 // Deleting actual backups is DeleteBackups; this is only the bookkeeping. Before
 // it existed, that button was the one way to remove such an entry, and on an
 // entry that still had snapshots it deleted them too. Refused for an installed
-// container and serialised like ForgetVMTarget, for the same reasons.
+// container and serialised like ForgetVMTarget, for the same reasons. Refused
+// too while the entry owns a backup anywhere it replicates to
+// (refuseRowRemovalWithBackups).
 func (s *Service) ForgetTarget(ctx context.Context, name string) error {
 	infos, err := s.docker.List(ctx)
 	if err != nil {
@@ -8756,10 +9437,546 @@ func (s *Service) ForgetTarget(ctx context.Context, name string) error {
 		return errDomainBusy
 	}
 	defer unlock()
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.containerRepoForName(settings, name, "")
+	if err != nil {
+		return fmt.Errorf("%q keeps its entry: its repository could not be resolved to check for backups: %w", name, err)
+	}
+	if err := s.refuseRowRemovalWithBackups(ctx, settings, "containers", name, repo, s.containerIdentity(name)); err != nil {
+		return err
+	}
 	if err := s.store.DeleteTarget(name); err != nil {
 		return fmt.Errorf("forget target: %w", err)
 	}
 	return nil
+}
+
+// rewriteDefinitionJSON returns definition, a target's stored recreate recipe,
+// with Inspect.Name and the template's <Name> set to name, so a restore before
+// the next backup recreates the container under its new name. It does no
+// store I/O because the takeover and the unlink write its result in the same
+// transaction as the rename; a restore can then never pair the new name with
+// the old definition. An empty definition (never backed up) is returned
+// unchanged.
+func rewriteDefinitionJSON(definition, name string) (string, error) {
+	if definition == "" {
+		return "", nil
+	}
+	var def containerDefinition
+	if err := json.Unmarshal([]byte(definition), &def); err != nil {
+		return "", fmt.Errorf("unmarshal: %w", err)
+	}
+	if strings.HasPrefix(def.Inspect.Name, "/") {
+		def.Inspect.Name = "/" + name
+	} else {
+		def.Inspect.Name = name
+	}
+	def.TemplateXML = rewriteTemplateXMLName(def.TemplateXML, name)
+	defBytes, err := json.Marshal(def)
+	if err != nil {
+		return "", fmt.Errorf("marshal: %w", err)
+	}
+	return string(defBytes), nil
+}
+
+// rewriteStopLists points every other entry's stop list from oldName to
+// newName, so a container that stops the renamed one during its own backup
+// keeps stopping it.
+func (s *Service) rewriteStopLists(oldName, newName string) error {
+	targets, err := s.store.ListTargets()
+	if err != nil {
+		return fmt.Errorf("rewrite stop lists: list targets: %w", err)
+	}
+	for _, t := range targets {
+		if t.ContainerName == newName {
+			continue
+		}
+		changed := false
+		stop := make([]string, len(t.StopContainers))
+		for i, n := range t.StopContainers {
+			if n == oldName {
+				n = newName
+				changed = true
+			}
+			stop[i] = n
+		}
+		if !changed {
+			continue
+		}
+		if err := s.store.SetStopContainers(t.ContainerName, stop); err != nil {
+			return fmt.Errorf("rewrite stop lists: %q: %w", t.ContainerName, err)
+		}
+	}
+	return nil
+}
+
+// configuredStateLabels lists the operator-set fields t carries, the ones a
+// takeover may not discard just because the row has no backups yet.
+func configuredStateLabels(t store.Target) []string {
+	var labels []string
+	if t.IncludeInSchedule {
+		labels = append(labels, "scheduled")
+	}
+	if t.PreHook != "" || t.PostHook != "" {
+		labels = append(labels, "hooks")
+	}
+	if len(t.Excludes) > 0 {
+		labels = append(labels, "excludes")
+	}
+	if len(t.ExcludeCaches) > 0 {
+		labels = append(labels, "exclude-caches")
+	}
+	if len(t.StopContainers) > 0 {
+		labels = append(labels, "stop list")
+	}
+	if len(t.SelectedPaths) > 0 {
+		labels = append(labels, "selected paths")
+	}
+	if t.Repo != "" {
+		labels = append(labels, "repository override")
+	}
+	if t.ScheduleCadence != "" {
+		labels = append(labels, "schedule cadence")
+	}
+	if t.BackupOrder != 0 {
+		labels = append(labels, "backup order")
+	}
+	if t.UpdateAfterBackup {
+		labels = append(labels, "update-after-backup")
+	}
+	return labels
+}
+
+// targetOccupyingNewNameIsEmpty reports whether t, the row already on a
+// takeover's new name, may be deleted to make way: it has neither backups nor
+// operator-set configuration. labels names the configuration it found, so the
+// refusal can say what would be lost.
+func (s *Service) targetOccupyingNewNameIsEmpty(ctx context.Context, t store.Target) (empty bool, labels []string, err error) {
+	if labels := configuredStateLabels(t); len(labels) > 0 {
+		return false, labels, nil
+	}
+	hasBackups, err := s.containerHasBackups(ctx, t.ContainerName)
+	if err != nil {
+		return false, nil, err
+	}
+	return !hasBackups, nil, nil
+}
+
+// ownNamesFor returns the target's current name and every alias recorded for
+// it.
+func (s *Service) ownNamesFor(domain, targetID, currentName string) (map[string]bool, error) {
+	own := map[string]bool{currentName: true}
+	names, err := s.store.AliasNames(domain, targetID)
+	if err != nil {
+		return nil, fmt.Errorf("read alias names for %q: %w", currentName, err)
+	}
+	for _, n := range names {
+		own[n] = true
+	}
+	return own, nil
+}
+
+// namesAFormerName reports whether snap carries a formerly: tag naming one of
+// ownNames, which marks it as a backup of that entry made after a takeover.
+func namesAFormerName(snap restic.Snapshot, ownNames map[string]bool) bool {
+	for _, t := range snap.Tags {
+		if n, ok := strings.CutPrefix(t, "formerly:"); ok && ownNames[n] {
+			return true
+		}
+	}
+	return false
+}
+
+// reposToCheckForTakeover returns the repositories an entry of domain
+// ("container" or "vm") could read newName's snapshots from after a takeover:
+// the one newName resolves to, and ownRepo, the entry's own, which the rename
+// keeps. A stranger's history in either would become the entry's.
+func (s *Service) reposToCheckForTakeover(settings store.Settings, domain, newName, ownRepo string) ([]string, error) {
+	repoForName := s.containerRepoForName
+	if domain == "vm" {
+		repoForName = s.vmRepoForName
+	}
+	newRepo, err := repoForName(settings, newName, "")
+	if err != nil {
+		return nil, err
+	}
+	if ownRepo == newRepo {
+		return []string{newRepo}, nil
+	}
+	return []string{newRepo, ownRepo}, nil
+}
+
+// refuseForeignBackups refuses to move entry targetID of domain from
+// currentName onto newName while a backup under newName in repos or an
+// off-site target is not the entry's, or while one of them cannot be read,
+// since retention would then age a stranger's snapshots with the entry's. A
+// backup naming one of the entry's names as a former name is its own, made
+// before an unlink.
+func (s *Service) refuseForeignBackups(ctx context.Context, settings store.Settings, domain, targetID, currentName, newName string, repos []string) error {
+	settingsDomain, prefix, _ := aliasDomain(domain)
+	own, err := s.ownNamesFor(domain, targetID, currentName)
+	if err != nil {
+		return fmt.Errorf("%q cannot be checked for backups: %w", newName, err)
+	}
+	places, err := s.backupPlaces(settings, settingsDomain, repos)
+	if err != nil {
+		return fmt.Errorf("%q cannot be checked for backups: %w", newName, err)
+	}
+	for _, p := range places {
+		// The literal tag: an identity widened by aliases would pull in the
+		// history of whatever row holds newName.
+		snaps, err := s.snapshotsForTag(ctx, p.repo, p.mode, prefix+newName)
+		if err != nil {
+			return fmt.Errorf("%q cannot be checked for backups: %s could not be read: %w", newName, p.name, err)
+		}
+		for _, snap := range snaps {
+			if namesAFormerName(snap, own) {
+				continue
+			}
+			// Nothing on screen explains an orphaned backup, so the refusal says
+			// whether an entry still owns the name.
+			owner := "a different, unrelated entry"
+			if _, err := s.entryIDByName(domain, newName); err == nil {
+				owner = "its own entry"
+			}
+			return fmt.Errorf("%q already has backups in %s that belong to %s; delete them, then take over again", newName, p.name, owner)
+		}
+	}
+	return nil
+}
+
+// moveDRDrillTargetTo repoints the DR drill from oldName to newName when it
+// names oldName. The drill verifies by the literal container:<name> tag, so
+// left alone it would keep checking an ever older snapshot under a name
+// nothing answers to.
+func (s *Service) moveDRDrillTargetTo(oldName, newName string) error {
+	_, err := s.store.MutateSettings(func(cur *store.Settings) error {
+		if cur.DRDrillTarget == oldName {
+			cur.DRDrillTarget = newName
+		}
+		return nil
+	})
+	return err
+}
+
+// TakeOverContainer moves a not-installed entry onto the name its container was
+// renamed to. Nothing in the repository is touched: the row keeps its id, so
+// history and settings follow, and the old name becomes an alias the readers
+// include. It is refused while the new name has backups that are not this
+// entry's own, since adopting a stranger's history cannot be undone.
+//
+// Another entry's former name is refused on either side (takeoverAliasCheck).
+// Onto the entry's own former name the takeover is a rename back: the store
+// drops that alias and links the name the entry leaves, once the former name
+// is shown to hold nothing from after its link (refuseTakeBackWhileNameReused).
+//
+// Both names are validated before anything is written, because the store does
+// not validate them and the old name ends up in a formerly: tag on every later
+// backup, which restic would split at a comma. The rewritten definition goes
+// into the same transaction as the rename, so a corrupt stored definition
+// fails the takeover before anything changes.
+func (s *Service) TakeOverContainer(ctx context.Context, oldName, newName string) error {
+	if oldName == newName {
+		return errors.New("an entry cannot take over itself")
+	}
+	if !validResourceName(oldName) || !validResourceName(newName) {
+		return errors.New("invalid container name")
+	}
+	// Locked before anything is checked: a backup or a restore finishing
+	// between a lock-free check and the rename would slip past it.
+	unlock, ok := s.tryLockDomainFor("containers", "takeover")
+	if !ok {
+		return errDomainBusy
+	}
+	defer unlock()
+	infos, err := s.docker.List(ctx)
+	if err != nil {
+		return fmt.Errorf("list containers: %w", err)
+	}
+	live := make(map[string]bool, len(infos))
+	for _, c := range infos {
+		live[c.Name] = true
+	}
+	if !live[newName] {
+		return fmt.Errorf("container %q is not installed", newName)
+	}
+	if live[oldName] {
+		return fmt.Errorf("container %q is installed again, so nothing was taken over", oldName)
+	}
+	// A restore from the entry would stop BombVault halfway.
+	if self := s.selfContainerName(ctx); self != "" && newName == self {
+		return fmt.Errorf("%q is BombVault's own container, so no entry can move onto it", newName)
+	}
+	oldTg, err := s.store.GetTargetByContainer(oldName)
+	if err != nil {
+		return fmt.Errorf("%q has no entry to take over", oldName)
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return fmt.Errorf("read settings: %w", err)
+	}
+	back, err := s.takeoverAliasCheck("container", oldTg.ID, oldName, newName)
+	if err != nil {
+		return err
+	}
+	ownRepo, err := s.containerRepoPath(settings, oldTg)
+	if err != nil {
+		return fmt.Errorf("resolve the entry's repository: %w", err)
+	}
+	repos, err := s.reposToCheckForTakeover(settings, "container", newName, ownRepo)
+	if err != nil {
+		return fmt.Errorf("%q cannot be checked for backups: %w", newName, err)
+	}
+	if back != nil {
+		err = s.refuseTakeBackWhileNameReused(ctx, settings, *back, repos)
+	} else {
+		err = s.refuseForeignBackups(ctx, settings, "container", oldTg.ID, oldName, newName, repos)
+	}
+	if err != nil {
+		return err
+	}
+	newDefinition, err := rewriteDefinitionJSON(oldTg.Definition, newName)
+	if err != nil {
+		return fmt.Errorf("rewrite definition for %q: %w", newName, err)
+	}
+	if existing, err := s.store.GetTargetByContainer(newName); err == nil {
+		// RenameTargetWithAlias refuses an occupied name, so an empty row on it
+		// is cleared first; one with backups or settings is kept.
+		empty, labels, err := s.targetOccupyingNewNameIsEmpty(ctx, existing)
+		if err != nil {
+			return fmt.Errorf("check the existing entry of %q: %w", newName, err)
+		}
+		if !empty {
+			return fmt.Errorf("%q already has its own configured entry (%s), refusing to delete it; unlink or remove it yourself first", newName, strings.Join(labels, ", "))
+		}
+		if err := s.store.DeleteTarget(newName); err != nil {
+			return fmt.Errorf("remove the empty entry of %q: %w", newName, err)
+		}
+	}
+	// Discover rebuilds a link only from the definition mirrors, so the name the
+	// entry leaves stops recording links before the rename and the new name
+	// records them after it.
+	if err := s.dropLinkRecords("container", settings, oldName, ownRepo, oldTg.Definition); err != nil {
+		return err
+	}
+	if err := s.store.RenameTargetWithAlias(oldName, newName, newDefinition); err != nil {
+		return err
+	}
+	s.recordLinks("container", settings, oldTg.ID, newName, ownRepo, newDefinition)
+	// Best-effort from here on: the rename, alias and definition are committed,
+	// and other rows' stop lists and the DR drill in Settings cannot share that
+	// transaction. A stop list still naming the old name stops nothing, which
+	// is harmless.
+	if err := s.rewriteStopLists(oldName, newName); err != nil {
+		log.Printf("api: takeover %q -> %q succeeded, but rewriting sibling stop lists failed; some entries may still try to stop %q by its old name until fixed: %v", oldName, newName, oldName, err) //nolint:gosec // G706: both %q-quoted
+	}
+	if err := s.moveDRDrillTargetTo(oldName, newName); err != nil {
+		log.Printf("api: takeover %q -> %q succeeded, but moving the DR-drill target failed; a drill may keep verifying the stale name %q until fixed: %v", oldName, newName, oldName, err) //nolint:gosec // G706: both %q-quoted
+	}
+	return nil
+}
+
+// takeoverAliasCheck refuses moving entry targetID from oldName to newName in
+// domain ("container" or "vm") while either name is another entry's former
+// name, because a former name and its older backups belong to one entry. When
+// newName is the entry's own former name the move is a rename back, and that
+// alias is returned.
+func (s *Service) takeoverAliasCheck(domain, targetID, oldName, newName string) (*store.Alias, error) {
+	_, _, kind := aliasDomain(domain)
+	a, err := s.store.AliasByOldName(domain, oldName)
+	switch {
+	case err == nil:
+		return nil, fmt.Errorf("%q is also a former name of %s, so its entry cannot move to %q; back up %q as a new entry instead", oldName, s.formerNameOwner(domain, a), newName, newName)
+	case !errors.Is(err, sql.ErrNoRows):
+		return nil, fmt.Errorf("read the former names: %w", err)
+	}
+	a, err = s.store.AliasByOldName(domain, newName)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, nil
+	case err != nil:
+		return nil, fmt.Errorf("read the former names: %w", err)
+	case a.TargetID == targetID:
+		return &a, nil
+	}
+	return nil, fmt.Errorf("%q is a former name of %s and still holds its older backups; give the %s a name of its own, then take over", newName, s.formerNameOwner(domain, a), kind)
+}
+
+// formerNameOwner is how a message names the entry that alias a belongs to.
+func (s *Service) formerNameOwner(domain string, a store.Alias) string {
+	if name, err := s.entryNameByID(domain, a.TargetID); err == nil {
+		return fmt.Sprintf("%q", name)
+	}
+	return "another entry"
+}
+
+// refuseTakeBackWhileNameReused refuses to rename an entry back onto one of its
+// former names, back.OldName, while that name holds a backup from the link on
+// in repos or an off-site target. Dropping the alias lifts the name's time
+// bound, so this is the check unlink makes.
+func (s *Service) refuseTakeBackWhileNameReused(ctx context.Context, settings store.Settings, back store.Alias, repos []string) error {
+	_, _, kind := aliasDomain(back.Domain)
+	reused, err := s.oldNameReused(ctx, settings, back, repos)
+	if err != nil {
+		return fmt.Errorf("%q cannot be taken back until newer backups under it can be ruled out: %w", back.OldName, err)
+	}
+	if reused {
+		return fmt.Errorf("%q cannot be taken back: another %s has been backed up under that name since this entry left it. Delete those backups, then take over again", back.OldName, kind)
+	}
+	return nil
+}
+
+// UnlinkContainerAlias reverses a takeover: the entry goes back to its old
+// name, the alias is removed and the stored definition is rewritten back, all
+// in one transaction as in TakeOverContainer. It is refused when oldName is no
+// alias, so a stale or mistyped name changes nothing, while another container
+// is installed under oldName next to the entry's own, since the entry would
+// move onto it, and while oldName holds another machine's backups from after
+// the link (refuseUnlinkWhileOldNameReused).
+func (s *Service) UnlinkContainerAlias(ctx context.Context, oldName string) error {
+	if !validResourceName(oldName) {
+		return errors.New("invalid container name")
+	}
+	alias, err := s.store.AliasByOldName("container", oldName)
+	if err != nil {
+		return fmt.Errorf("%q is not a taken-over name", oldName)
+	}
+	tg, err := s.store.GetTargetByID(alias.TargetID)
+	if err != nil {
+		return fmt.Errorf("read the linked entry: %w", err)
+	}
+	currentName := tg.ContainerName
+	newDefinition, err := rewriteDefinitionJSON(tg.Definition, oldName)
+	if err != nil {
+		return fmt.Errorf("rewrite definition for %q: %w", oldName, err)
+	}
+	unlock, ok := s.tryLockDomainFor("containers", "unlink")
+	if !ok {
+		return errDomainBusy
+	}
+	defer unlock()
+	// Under the lock, like the takeover gate: a backup of a machine under
+	// oldName landing between these checks and the unlink would slip past them.
+	infos, err := s.docker.List(ctx)
+	if err != nil {
+		return fmt.Errorf("%q stays linked until the installed containers can be listed: %w", oldName, err)
+	}
+	live := make(map[string]bool, len(infos))
+	for _, c := range infos {
+		live[c.Name] = true
+	}
+	if live[oldName] && live[currentName] {
+		return fmt.Errorf("%q stays linked: another container is installed under that name; rename that container first", oldName)
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return fmt.Errorf("read settings: %w", err)
+	}
+	ownRepo, err := s.containerRepoPath(settings, tg)
+	if err != nil {
+		return fmt.Errorf("resolve the linked entry's repository: %w", err)
+	}
+	if err := s.refuseUnlinkWhileOldNameReused(ctx, settings, alias, ownRepo); err != nil {
+		return err
+	}
+	// The definition mirrors follow as in TakeOverContainer.
+	if err := s.dropLinkRecords("container", settings, currentName, ownRepo, tg.Definition); err != nil {
+		return err
+	}
+	if err := s.store.UnlinkAlias(oldName, newDefinition); err != nil {
+		return err
+	}
+	s.recordLinks("container", settings, tg.ID, oldName, ownRepo, newDefinition)
+	// Best-effort, as in TakeOverContainer.
+	if err := s.rewriteStopLists(currentName, oldName); err != nil {
+		log.Printf("api: unlink %q succeeded, but rewriting sibling stop lists failed; some entries may still try to stop %q by its former name until fixed: %v", oldName, currentName, err) //nolint:gosec // G706: both %q-quoted
+	}
+	if err := s.moveDRDrillTargetTo(currentName, oldName); err != nil {
+		log.Printf("api: unlink %q succeeded, but moving the DR-drill target back failed; a drill may keep verifying the stale name %q until fixed: %v", oldName, currentName, err) //nolint:gosec // G706: both %q-quoted
+	}
+	return nil
+}
+
+// refuseUnlinkWhileOldNameReused refuses to unlink a while its old name holds
+// a snapshot a does not claim in ownRepo or any off-site target, or while one
+// of them cannot be read. Unlinking lifts the name's time bound, so a
+// later machine's backups under it would become the entry's own; the way out
+// is renaming that machine or deleting its backups.
+func (s *Service) refuseUnlinkWhileOldNameReused(ctx context.Context, settings store.Settings, a store.Alias, ownRepo string) error {
+	_, _, kind := aliasDomain(a.Domain)
+	reused, err := s.oldNameReused(ctx, settings, a, []string{ownRepo})
+	if err != nil {
+		return fmt.Errorf("%q stays linked until newer backups under that name can be ruled out: %w", a.OldName, err)
+	}
+	if reused {
+		return fmt.Errorf("%q stays linked: another %s has been backed up under that name since it was linked here, and unlinking would make those backups this entry's. Rename that %s, or delete its backups, then unlink", a.OldName, kind, kind)
+	}
+	return nil
+}
+
+// aliasDomain maps an alias domain ("container" or "vm") to its settings
+// domain, its identity tag prefix and the word a message uses for it.
+func aliasDomain(domain string) (settingsDomain, prefix, kind string) {
+	if domain == "vm" {
+		return "vms", "vm:", "VM"
+	}
+	return "containers", "container:", "container"
+}
+
+// oldNameReused reports whether a's old name holds a snapshot a does not
+// claim, one taken at or after the link or at a time that does not parse, in
+// repos or in any off-site target of the alias's domain. The error names the
+// place that could not be read.
+func (s *Service) oldNameReused(ctx context.Context, settings store.Settings, a store.Alias, repos []string) (bool, error) {
+	domain, prefix, _ := aliasDomain(a.Domain)
+	places, err := s.backupPlaces(settings, domain, repos)
+	if err != nil {
+		return false, err
+	}
+	claim := newAliasClaim(prefix, a)
+	for _, p := range places {
+		snaps, err := s.snapshotsForTag(ctx, p.repo, p.mode, claim.tag)
+		if err != nil {
+			return false, fmt.Errorf("%s could not be read: %w", p.name, err)
+		}
+		if !claim.claimsEvery(snaps) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// backupPlace is a repository an entry's snapshots may sit in, with the name
+// a message gives it.
+type backupPlace struct {
+	name string
+	repo string
+	mode restic.Mode
+}
+
+// backupPlaces is repos plus every off-site target domain replicates to. An
+// off-site target list that cannot be read is an error, because a check that
+// skips a copy it cannot see passes on nothing.
+func (s *Service) backupPlaces(settings store.Settings, domain string, repos []string) ([]backupPlace, error) {
+	places := make([]backupPlace, 0, len(repos)+1)
+	for _, repo := range repos {
+		places = append(places, backupPlace{"the repository (" + shortRepoName(repo) + ")", repo, s.repoModeFor(settings, domain, "", repo)})
+	}
+	targets, err := s.enabledOffsiteTargets(domain)
+	if err != nil {
+		return nil, fmt.Errorf("the off-site target list could not be read: %w", err)
+	}
+	for _, t := range orSettingsOffsiteTarget(targets, domain, settings) {
+		repo, err := s.resolveRepo(t.Repo)
+		if err != nil {
+			return nil, fmt.Errorf("off-site target %q could not be resolved: %w", t.Name, err)
+		}
+		places = append(places, backupPlace{fmt.Sprintf("off-site target %q", t.Name), repo, s.offsiteModeForTarget(settings, t)})
+	}
+	return places, nil
 }
 
 // SetInclude sets the include_in_schedule flag for a container, creating the
@@ -9197,6 +10414,8 @@ type vmDefinition struct {
 	// falls back to booting the VM (the historical behaviour). A non-nil value is
 	// honoured so restore mirrors the captured state, like containers do.
 	WasRunning *bool `json:"was_running,omitempty"`
+	// Aliases are the links the mirror records, as in containerDefinition.
+	Aliases []definitionAlias `json:"aliases,omitempty"`
 }
 
 // VMView is the per-VM row returned by ListVMs.
@@ -9224,6 +10443,48 @@ type VMView struct {
 	// perItemSchedules setting is on.
 	ScheduleCadence string        `json:"scheduleCadence"`
 	Placement       placementView `json:"placement"`
+	// RenameFrom and RenameReason suggest a rename: they are set on a live VM
+	// with no backups of its own whose libvirt UUID matches a not-installed
+	// entry's. They match containerView's fields so the frontend treats both
+	// alike.
+	RenameFrom   string `json:"renameFrom"`
+	RenameReason string `json:"renameReason"`
+	// AliasConflicts are the former names of this entry that are live domains
+	// again, alphabetically, as in containerView.
+	AliasConflicts []string `json:"aliasConflicts"`
+	// Aliases are the libvirt names this entry had before, oldest link first.
+	Aliases []string `json:"aliases"`
+}
+
+// vmUUID returns tg's libvirt UUID. An empty column is filled from the saved
+// domain XML and stored, because the migration that added the column cannot
+// parse XML. A definition that yields no UUID returns "" and writes nothing.
+func (s *Service) vmUUID(tg store.VMTarget) string {
+	if tg.UUID != "" {
+		return tg.UUID
+	}
+	uuid := definitionUUID(tg.Definition)
+	if uuid == "" {
+		return ""
+	}
+	if err := s.store.SetVMUUID(tg.Name, uuid); err != nil {
+		log.Printf("api: vmUUID: backfill %q: %v", tg.Name, err) //nolint:gosec // G706: %q-quoted
+	}
+	return uuid
+}
+
+// definitionUUID is the libvirt UUID in the domain XML of a stored VM
+// definition, "" when it names none or does not parse.
+func definitionUUID(definition string) string {
+	var def vmDefinition
+	if err := json.Unmarshal([]byte(definition), &def); err != nil {
+		return ""
+	}
+	info, err := virshcli.ParseDomain(def.DomainXML)
+	if err != nil {
+		return ""
+	}
+	return info.UUID
 }
 
 // ListVMs returns all known VMs (from virsh) merged with the DB targets.
@@ -9264,35 +10525,88 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 	isTrueNAS := s.platformFn().Kind() == platform.KindTrueNAS
 
 	live := make(map[string]bool, len(infos))
-	views := make([]VMView, 0, len(infos)+len(targets))
 	for _, vm := range infos {
 		live[vm.Name] = true
+	}
+
+	// A failed alias read only drops the conflict warnings and aliases: a
+	// missing warning does less harm than a VM list that does not load.
+	var formerNames, aliasConflicts aliasIndex
+	if aliases, aErr := s.store.ListAliases("vm"); aErr != nil {
+		log.Printf("api: list vms: alias conflict check: %v", aErr)
+	} else {
+		formerNames = newAliasIndex(aliases)
+		aliasConflicts = liveFormerNames(aliases, live)
+	}
+
+	var orphanTargets []store.VMTarget
+	for _, t := range targets {
+		if !live[t.Name] {
+			orphanTargets = append(orphanTargets, t)
+		}
+	}
+
+	// One listing dates every row and tells the rename pass whether a live VM
+	// has backups under its own name; a failed read keeps that pass from
+	// guessing, as on the container list. With no VM and no entry there is
+	// nothing to date.
+	var snapTimes map[string]int64
+	snapTimesFailed := false
+	if len(infos) > 0 || len(targets) > 0 {
+		if m, sErr := s.LatestVMBackupTimes(ctx); sErr != nil {
+			log.Printf("api: list vms: latest backup times: %v", sErr)
+			snapTimesFailed = true
+		} else {
+			snapTimes = m
+		}
+	}
+
+	views := make([]VMView, 0, len(infos)+len(targets))
+	viewIndex := make(map[string]int, len(infos)) // live rows only
+	hasOwnBackup := make(map[string]bool, len(infos))
+	needsRenameSuggestion := false
+	for _, vm := range infos {
 		displayName := vm.Name
 		if isTrueNAS {
 			displayName = vm.FriendlyName
 		}
-		v := VMView{Name: displayName, LibvirtName: vm.Name, State: vm.State, Method: "graceful"}
+		v := VMView{Name: displayName, LibvirtName: vm.Name, State: vm.State, Method: "graceful", AliasConflicts: []string{}, Aliases: []string{}}
+		var run *store.Run
 		if t, ok := byName[vm.Name]; ok {
+			v.AliasConflicts = aliasConflicts.of(t.ID)
+			v.Aliases = formerNames.of(t.ID)
 			v.Method = t.Method
 			v.IncludeInSchedule = t.IncludeInSchedule
 			v.ScheduleCadence = t.ScheduleCadence
-			if run, _ := s.store.LastSuccessfulBackup(t.ID); run != nil {
-				v.LastBackup = run.FinishedAt
-				v.LastBackupStarted = &run.StartedAt
-			}
+			run, _ = s.store.LastSuccessfulBackup(t.ID)
 		}
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(vm.Name, run, snapTimes, snapTimesFailed)
+		own := v.LastBackup != nil
+		hasOwnBackup[vm.Name] = own
+		if !own {
+			needsRenameSuggestion = true
+		}
+		viewIndex[vm.Name] = len(views)
 		views = append(views, v)
 	}
-	// Orphans: targets whose VM is no longer defined on the host.
-	for _, t := range targets {
-		if live[t.Name] {
+
+	// The match runs over every live domain to keep it one-to-one, so a VM
+	// with backups of its own can still come back matched and is skipped here.
+	for liveName, cand := range s.suggestVMRenames(ctx, infos, orphanTargets, needsRenameSuggestion && !snapTimesFailed) {
+		if hasOwnBackup[liveName] {
 			continue
 		}
-		v := VMView{Name: t.Name, LibvirtName: t.Name, State: "not-installed", Method: t.Method, IncludeInSchedule: t.IncludeInSchedule, ScheduleCadence: t.ScheduleCadence}
-		if run, _ := s.store.LastSuccessfulBackup(t.ID); run != nil {
-			v.LastBackup = run.FinishedAt
-			v.LastBackupStarted = &run.StartedAt
+		if idx, ok := viewIndex[liveName]; ok {
+			views[idx].RenameFrom = cand.OldName
+			views[idx].RenameReason = cand.Reason
 		}
+	}
+
+	// Orphans: targets whose VM is not defined on the host.
+	for _, t := range orphanTargets {
+		v := VMView{Name: t.Name, LibvirtName: t.Name, State: "not-installed", Method: t.Method, IncludeInSchedule: t.IncludeInSchedule, ScheduleCadence: t.ScheduleCadence, AliasConflicts: aliasConflicts.of(t.ID), Aliases: formerNames.of(t.ID)}
+		run, _ := s.store.LastSuccessfulBackup(t.ID)
+		v.LastBackup, v.LastBackupStarted = lastBackupDate(t.Name, run, snapTimes, snapTimesFailed)
 		views = append(views, v)
 	}
 	return views, nil
@@ -9421,7 +10735,26 @@ func (s *Service) failVMBackup(ctx context.Context, name string, cause error) {
 	s.notifyBackup(ctx, "VM", name, false, backup.Summary{}, cause)
 }
 
-func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, error) {
+// vmDiskContainerPaths is where restic reads the file disks of domain through
+// the Host Data mount, the paths a VM definition stores. A domain with no file
+// disk, or with one outside the mount, is an error: a snapshot of it would
+// restore nothing.
+func (s *Service) vmDiskContainerPaths(name string, domain virshcli.DomainInfo) ([]string, error) {
+	if len(domain.DiskPaths) == 0 {
+		return nil, fmt.Errorf("no disk paths found in domain XML for %q", name)
+	}
+	diskPaths := make([]string, 0, len(domain.DiskPaths))
+	for _, hp := range domain.DiskPaths {
+		cp, ok := s.toContainerPath(hp)
+		if !ok {
+			return nil, fmt.Errorf("disk %q is not under the host mount and can't be reached for backup. The VM disk must live under your Host Data mount (/mnt)", hp)
+		}
+		diskPaths = append(diskPaths, cp)
+	}
+	return diskPaths, nil
+}
+
+func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, retErr error) {
 	// Survive the client that triggered it disconnecting (see Backup): detach from
 	// the request's cancellation with a generous hard cap.
 	ctx, cancel := backupHoldCtx(ctx)
@@ -9429,6 +10762,21 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	s.registerBackupCancel("vm:"+name, cancel) // reachable by shutdown ([375])
 	defer s.unregisterBackupCancel("vm:" + name)
 	defer s.lockDomain("vms")() // serialise per repo; blocks maintenance ops meanwhile
+
+	// Everything down to the orchestrator returns before any run is recorded,
+	// so a failure there would leave the card that started this backup waiting
+	// for one. Record it as Backup does; a VM that is not defined on the host
+	// is a skip, not a failure.
+	var targetID string
+	if tg, tErr := s.store.GetVMTargetByName(name); tErr == nil {
+		targetID = tg.ID
+	}
+	orchestrated := false
+	defer func() {
+		if retErr != nil && !orchestrated && !errors.Is(retErr, backup.ErrVMNotInstalled) {
+			s.recordPreflightFailure("BackupVM", name, targetID, retErr)
+		}
+	}()
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
@@ -9476,22 +10824,9 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		return backup.Summary{}, err
 	}
 
-	// Guard: refuse to back up a VM with no disk images (would produce an
-	// empty restic snapshot that restores nothing useful).
-	if len(domain.DiskPaths) == 0 {
-		return backup.Summary{}, fmt.Errorf("backup vm: no disk paths found in domain XML for %q", name)
-	}
-
-	// Disks are read by restic through the broad Host Data mount (/mnt →
-	// /host/user). A disk MUST be reachable there — fail clearly otherwise rather
-	// than store an un-restorable path.
-	var diskPaths []string
-	for _, hp := range domain.DiskPaths {
-		cp, ok := s.toContainerPath(hp)
-		if !ok {
-			return backup.Summary{}, fmt.Errorf("backup vm: disk %q is not under the host mount and can't be reached for backup. The VM disk must live under your Host Data mount (/mnt)", hp)
-		}
-		diskPaths = append(diskPaths, cp)
+	diskPaths, err := s.vmDiskContainerPaths(name, domain)
+	if err != nil {
+		return backup.Summary{}, fmt.Errorf("backup vm: %w", err)
 	}
 
 	// The VM is now guaranteed on its base disks (recoverLeftoverOverlay committed
@@ -9592,7 +10927,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	repo, mode := step.repo, step.mode
 
 	tg, err := s.store.UpsertVMTarget(store.VMTarget{
-		Name: name, Method: method, Definition: string(defBytes),
+		Name: name, Method: method, Definition: string(defBytes), UUID: domain.UUID,
 	})
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("upsert vm target: %w", err)
@@ -9605,8 +10940,16 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 		commitDevs = append(commitDevs, disk.Dev)
 	}
 
+	// As in Backup, an alias read failure costs this one backup its formerly:
+	// tags and the mirror update, not the backup itself.
+	aliases, aliasErr := s.store.TargetAliasesWithDefinitions("vm", tg.ID)
+	if aliasErr != nil {
+		log.Printf("api: backup vm: aliases of %q: %v", name, aliasErr) //nolint:gosec // G706: %q-quoted
+	}
+
 	deps := backup.VMBackupDeps{
 		Name:             name,
+		FormerNames:      aliasOldNames(aliases),
 		DiskPaths:        diskPaths,
 		DiskDevice:       domain.DiskDevice,
 		CommitDevs:       commitDevs,
@@ -9677,6 +11020,9 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	// (incl. the ErrVMNotInstalled skip), so the paired done/fail notifyBackup below
 	// always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "VM")
+	// The orchestrator records its own run from here on, so the finisher above
+	// stands down.
+	orchestrated = true
 	bctx, startedAt := s.progBegin(ctx, vkey, "backup")
 	var sum backup.Summary
 	if live {
@@ -9698,23 +11044,21 @@ func (s *Service) BackupVM(ctx context.Context, name string) (backup.Summary, er
 	// Mirror the definition (encrypted) onto the backup storage so a freshly
 	// installed BombVault can rebuild this VM via DiscoverVMs after a database
 	// loss — and so a VM deleted from the host stays restorable. Best-effort.
-	if wErr := s.writeVMDefToStorage(settings, name, repo, defBytes); wErr != nil {
+	// A failed alias read leaves it as it was, as in Backup.
+	if aliasErr != nil {
+		log.Printf("api: backup vm: WARN the stored definition of %q stays as it was, since its aliases could not be read", name) //nolint:gosec // G706: name is %q-quoted
+	} else if wErr := s.writeVMDefToStorage(settings, name, repo, defBytes, aliases); wErr != nil {
 		log.Printf("api: backup vm: WARN could not persist definition for %q to storage: %v", name, wErr) //nolint:gosec // G706: name is %q-quoted
 	}
-	// Apply retention once per identity tag this backup actually produced: the
-	// main file-backed "vm:<name>" always, plus one call per distinct
-	// "vm:<name>:zvol:<dev>" tag (one per BlockDisks entry — see
-	// VMBlockDisk.Dev's doc comment) — reusing restic's own native per-tag
-	// forget so each disk's history is retained/pruned as its own group
-	// instead of being lumped in with the file-backed snapshot's (v8.0.0 VM
-	// service-layer integration, Task 2). A file-only VM (vmBlockDisks empty)
-	// makes exactly the one call it always has.
-	s.applyRetention(ctx, repo, settings, mode, "vm:"+name, "vms")
+	// Retention runs once for the VM's identity, aliases included, and once per
+	// zvol disk tag, so each disk's history ages as its own group. zvol tags
+	// have no aliases: a VM with block disks is never offered a takeover.
+	s.applyRetention(ctx, repo, settings, mode, s.vmIdentity(name), "vms")
 	for _, bd := range vmBlockDisks {
 		if bd.Dev == "" {
-			continue // no distinct identity tag without a target dev — lumped into "vm:<name>" above
+			continue // without a target dev it has no tag of its own and ages with "vm:<name>"
 		}
-		s.applyRetention(ctx, repo, settings, mode, "vm:"+name+":zvol:"+bd.Dev, "vms")
+		s.applyRetention(ctx, repo, settings, mode, tagIdentity("vm:"+name+":zvol:"+bd.Dev), "vms")
 	}
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "vms", settings, repo, "vm:"+name)
@@ -9743,9 +11087,9 @@ type vmRestorePlan struct {
 	diskPaths    []string
 	domainXML    string
 	wasAutostart bool
-	// restoreDirs drives a REMAPPED restore (cross-instance): each entry restores a
-	// snapshot subtree into a chosen destination dir. Empty = same-instance restore
-	// (each disk goes back to its own path), byte-for-byte the historical behaviour.
+	// restoreDirs restores each snapshot subtree into a destination dir, for a
+	// cross-instance restore or a snapshot from before a rename moved the disks.
+	// Empty means each disk goes back to its own path.
 	restoreDirs []backup.VMRestoreDir
 	// wasRunning is the captured run state (nil = old backup with no recorded
 	// state → boot after restore, the historical behaviour).
@@ -9805,78 +11149,80 @@ func (s *Service) prepareRestoreVMIn(ctx context.Context, ref repoRef, name, sna
 		return vmRestorePlan{}, errors.New("vm has not been backed up yet")
 	}
 	// Same-instance restore: no destination base and no destination zvol pool,
-	// so disks go back to their own paths and the domain XML is used verbatim
-	// (byte-for-byte historical behaviour).
-	return s.prepareRestoreVMForTarget(ctx, ref, name, snapshotID, tg, "", "")
+	// so each disk returns to the definition's path, from the old folder when a
+	// rename moved it, and the domain XML is used verbatim. ref is this
+	// instance's own repo, so the local alias history applies.
+	return s.prepareRestoreVMForTarget(ctx, ref, name, snapshotID, tg, s.vmIdentity(name), "", "")
 }
 
-// prepareRestoreVMForTarget builds a VM restore plan for an ALREADY-RESOLVED VM
-// target tg against an explicit repo ref, WITHOUT reading or writing the store —
+// prepareRestoreVMForTarget builds a VM restore plan for an already resolved VM
+// target tg against an explicit repo ref, without reading or writing the store:
 // the VM counterpart of prepareRestoreForTarget. The foreign restore passes a
-// target built from the decrypted foreign definition so its disk-path containment
-// is validated BEFORE that recipe is persisted locally (prepareForeignRestore
-// adopts it only once this returns a plan, never on a validation failure). The
-// caller runs the confirm / explicit-snapshot-id-shape guards first.
+// target built from the decrypted foreign definition so its disk-path
+// containment is validated before that recipe is persisted locally
+// (prepareForeignRestore adopts it only once this returns a plan, never on a
+// validation failure). The caller runs the confirm / explicit-snapshot-id-shape
+// guards first.
 //
-// destBase, when non-empty, REMAPS every FILE-backed disk (and the NVRAM) to
+// id is the identity the ownership check accepts, decided by the caller as in
+// prepareRestoreForTarget: the local vmIdentity for a same-instance restore,
+// only the literal vm:<name> tag for a foreign one, so a local rename cannot
+// widen what a foreign restore accepts.
+//
+// destBase, when non-empty, remaps every file-backed disk (and the NVRAM) to
 // <destBase>/<name>/<basename>: the restic restore target, the domain XML
 // <disk><source file> / <nvram> paths, and the SSH NVRAM write all point at the
-// destination FOLDER instead of the source server's paths. A remap ALSO gates
+// destination folder instead of the source server's paths. A remap also gates
 // the restore behind guardVMRestoreDestination, so it can never write a
 // multi-GB disk onto an unmounted path (the RAM rootfs) and brick the host
-// (#122). An empty destBase leaves the same-instance restore byte-for-byte
-// unchanged.
+// (#122). An empty destBase restores each disk to the definition's path, from
+// wherever the snapshot holds it.
 //
-// destZvolPool is the SEPARATE remap a BLOCK-DEVICE (zvol) disk needs: destBase
+// destZvolPool is the separate remap a block-device (zvol) disk needs: destBase
 // is a filesystem path under the host mount and carries no ZFS pool
 // information at all, so it cannot rebase a zvol's `zfs receive` target the
 // way it rebases a file-backed disk's path. When destBase is non-empty (a
 // cross-instance restore) and the domain has recognizable zvol disks,
-// destZvolPool MUST be supplied — every such disk's dataset is rebased onto it
+// destZvolPool must be supplied: every such disk's dataset is rebased onto it
 // via virshcli.RebaseZvolDatasetPool, so `zfs receive` lands on the
-// DESTINATION box's pool rather than the source box's. An empty destZvolPool
-// on a cross-instance restore with zvol disks REFUSES here, before any
+// destination box's pool rather than the source box's. An empty destZvolPool
+// on a cross-instance restore with zvol disks refuses here, before any
 // restic/SSH work starts (a destination pool cannot be guessed from destBase),
 // rather than silently attempting `zfs receive` against the source pool's name
 // and failing deep inside that call once the restore is already underway.
 // Ignored (never validated) for a same-instance restore or a VM with no zvol
-// disks — same-instance zvol restore keeps deriving its target from
-// SourceDataset exactly as before this parameter existed.
-func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, name, snapshotID string, tg store.VMTarget, destBase, destZvolPool string) (vmRestorePlan, error) {
+// disks; a same-instance zvol restore derives its target from SourceDataset.
+func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, name, snapshotID string, tg store.VMTarget, id entryIdentity, destBase, destZvolPool string) (vmRestorePlan, error) {
 	explicitID := snapshotID != "latest" && snapshotID != ""
 
 	// "latest" (or empty) resolves to the VM's newest snapshot. An explicit id
-	// must belong to THIS VM (tag-scoped, mirroring the container restores'
-	// access-control check) — listed against the caller's repo ref.
-	snaps, snapErr := s.snapshotsForTag(ctx, ref.repo, ref.mode, "vm:"+name)
+	// must be one id owns, listed against the caller's repo ref, the same
+	// access check the container restores make.
+	snaps, snapErr := s.snapshotsOwnedBy(ctx, ref.repo, ref.mode, id)
 	if snapErr != nil {
 		return vmRestorePlan{}, snapErr
 	}
+	var snap *restic.Snapshot
 	if explicitID {
-		if !snapshotBelongs(snaps, snapshotID) {
+		if snap = chosenSnapshot(snaps, snapshotID); snap == nil {
 			return vmRestorePlan{}, notInListing{snapshotID, "vm"}
 		}
 	} else {
 		if len(snaps) == 0 {
 			return vmRestorePlan{}, errors.New("no backups found for this vm")
 		}
-		snapshotID = snaps[len(snaps)-1].ID
+		snap = &snaps[len(snaps)-1]
+		snapshotID = snap.ID
 	}
 
-	// Resolve this run's "vmrun:<runID>" correlation group (v8.0.0 VM
-	// service-layer integration, Task 3): every restic snapshot ONE backup
-	// invocation produced — the main file-backed snapshot at snapshotID
-	// above plus one per zvol disk (see VMBackupDeps.RunTag's doc comment,
-	// internal/backup/vm_orchestrator.go). The tag is read straight off the
-	// already-resolved snapshot (found in snaps, the exact "vm:"+name-tagged
-	// list snapshotID above came from — explicit or latest, so no extra
-	// restic listing is needed just to find it), then ONE more
-	// snapshotsForTag call, over the SAME repo ref, keyed on that tag.
+	// Resolve this run's "vmrun:<runID>" group: every snapshot one backup
+	// produced, the main file-backed one plus one per zvol disk (see
+	// VMBackupDeps.RunTag). The tag is read off the snapshot resolved above,
+	// so one more listing over the same repo ref finds the group.
 	//
-	// vmrunGroup stays nil — the PERMANENT fallback (see vmRunTag's doc
-	// comment) — when the resolved snapshot carries no "vmrun:" tag at all.
-	// In that case vmRestoreBlockDisks below leaves every entry's
-	// SnapshotID/StdinPath at zero value, EXACTLY the pre-Task-3 behavior.
+	// vmrunGroup stays nil when that snapshot carries no "vmrun:" tag (see
+	// vmRunTag), and vmRestoreBlockDisks then leaves every entry's
+	// SnapshotID/StdinPath at their zero values.
 	var vmrunGroup []restic.Snapshot
 	if runTag := vmRunTag(snaps, snapshotID); runTag != "" {
 		group, gErr := s.snapshotsForTag(ctx, ref.repo, ref.mode, runTag)
@@ -9894,23 +11240,47 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		return vmRestorePlan{}, fmt.Errorf("restore vm: unmarshal definition: %w", err)
 	}
 
-	// Disks must live within the Host Data mount (that is how restic reaches
-	// them). SKIP any that don't rather than refusing the whole VM.
-	var diskPaths []string
+	// Disks must live within the Host Data mount, which is how restic reaches
+	// them. The backup refuses a VM with a disk outside it and refuses it whole,
+	// so the restore refuses too: leaving the disk out and defining the VM from
+	// an XML that still lists it hands back a machine with a missing or stale
+	// disk and says nothing.
 	for _, p := range def.DiskPaths {
-		if paths.Within(s.cfg.HostMountRoot, p) {
-			diskPaths = append(diskPaths, p)
-		} else {
-			log.Printf("api: RestoreVM: skipping disk path %q outside mount root", p) //nolint:gosec // G706: %q-quoted
+		if !paths.Within(s.cfg.HostMountRoot, p) {
+			return vmRestorePlan{}, destinationRefusal("disk %s in this backup is not under your Host Data mount (%s) and cannot be restored. Move it under that mount, or restore this VM to another instance with a destination folder", p, s.cfg.HostSourceRoot)
 		}
 	}
+	diskPaths := def.DiskPaths
 	if len(diskPaths) == 0 {
 		return vmRestorePlan{}, errors.New("no restorable disk paths found in this backup")
+	}
+	sources, err := snapshotDiskSources(diskPaths, snap.Paths)
+	if err != nil {
+		return vmRestorePlan{}, err
 	}
 
 	domainXML := def.DomainXML
 	nvramHostPath := def.NVRAMHostPath
 	var restoreDirs []backup.VMRestoreDir
+
+	// A snapshot from before a rename holds the disks in the old folder. Any
+	// folder list replaces the in-place restore, so it names every disk's
+	// folder, an unmoved one onto itself. A snapshot folder restored into two
+	// folders would copy all of its disks into both, over any file of the same
+	// name there.
+	if destBase == "" && !slices.Equal(sources, diskPaths) {
+		targets := make(map[string]string, len(diskPaths))
+		for i, cp := range diskPaths {
+			src, dst := path.Dir(sources[i]), path.Dir(cp)
+			switch t, seen := targets[src]; {
+			case !seen:
+				targets[src] = dst
+				restoreDirs = append(restoreDirs, backup.VMRestoreDir{Subtree: src, Target: dst})
+			case t != dst:
+				return vmRestorePlan{}, destinationRefusal("the snapshot folder %s holds disks that now sit in %s and in %s, and restoring it into both would copy all of its disks into each; move those disks into one folder or pick another snapshot", s.toHostPath(src), s.toHostPath(t), s.toHostPath(dst))
+			}
+		}
+	}
 
 	// REMAP (cross-instance restore): place every disk under <destBase>/<name>/ on
 	// the DESTINATION pool, rewrite the domain XML disk/nvram sources to match, and
@@ -9923,11 +11293,19 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		diskRemap := make(map[string]string, len(diskPaths))
 		seenDir := map[string]bool{}
 		remapped := make([]string, 0, len(diskPaths))
-		for _, cp := range diskPaths {
+		// Every disk lands in one folder here, so two disks that share a file
+		// name would land on each other. The same-instance path refuses the
+		// mirror image of this a few lines up.
+		takenBy := make(map[string]string, len(diskPaths))
+		for i, cp := range diskPaths {
 			base := path.Base(cp)
+			if other, taken := takenBy[base]; taken {
+				return vmRestorePlan{}, destinationRefusal("this VM has two disks called %s, %s and %s, and both would be restored into %s. Rename one of them in the VM, or restore to a destination that keeps their folders apart", base, s.toHostPath(other), s.toHostPath(cp), destHostDir)
+			}
+			takenBy[base] = cp
 			remapped = append(remapped, destDir+"/"+base)
 			diskRemap[s.toHostPath(cp)] = destHostDir + "/" + base
-			if src := path.Dir(cp); !seenDir[src] {
+			if src := path.Dir(sources[i]); !seenDir[src] {
 				seenDir[src] = true
 				restoreDirs = append(restoreDirs, backup.VMRestoreDir{Subtree: src, Target: destDir})
 			}
@@ -10098,6 +11476,42 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		preDefine:    preDefine,
 		blockDisks:   vmRestoreBlockDisks,
 	}, nil
+}
+
+// snapshotDiskSources returns the path the snapshot holds each disk under: the
+// disk's own path, or else the one file of the same name, which is where a
+// snapshot from before a rename that moved the disk folder keeps it. A disk the
+// snapshot lacks keeps its own path when another disk of its folder matched
+// there, because the snapshot then predates the disk rather than a move.
+func snapshotDiskSources(disks, snapshotPaths []string) ([]string, error) {
+	byName := make(map[string][]string, len(snapshotPaths))
+	for _, p := range snapshotPaths {
+		byName[path.Base(p)] = append(byName[path.Base(p)], p)
+	}
+	diskNames := make(map[string]int, len(disks))
+	inPlace := make(map[string]bool, len(disks))
+	for _, d := range disks {
+		diskNames[path.Base(d)]++
+		if slices.Contains(snapshotPaths, d) {
+			inPlace[path.Dir(d)] = true
+		}
+	}
+	sources := make([]string, len(disks))
+	for i, d := range disks {
+		name := path.Base(d)
+		held := byName[name]
+		switch {
+		case slices.Contains(held, d), len(held) == 0 && inPlace[path.Dir(d)]:
+			sources[i] = d
+		case len(held) == 0:
+			return nil, fmt.Errorf("this snapshot has no disk named %s; pick a snapshot that includes it", name)
+		case len(held) > 1 || diskNames[name] > 1:
+			return nil, fmt.Errorf("the disk name %s is not unique, so this snapshot's copy of it cannot be matched; pick another snapshot or give the disks distinct names", name)
+		default:
+			sources[i] = held[0]
+		}
+	}
+	return sources, nil
 }
 
 // guardVMRestoreDestination is the HOST-BRICK GUARD for a remapped (cross-instance)
@@ -10396,12 +11810,10 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 	// scheduled jobs DO respect (see executeRestore).
 	unlock := s.lockDomainFor("vms", "restore")
 	defer unlock()
-	// Same remap-destination handling as executeRestore (container path), and
-	// for the same reason: restic.RestoreSubtreeTo (vm_orchestrator.go) is the
-	// identical call the container path uses, so a cross-instance VM restore's
-	// freshly created destination directory is just as root:root/0700 as a
-	// container's — see #125. Pre-create readable now; the numeric owner:group
-	// is restored below, after a successful restore, by healRestoreDirOwnership.
+	// restic leaves a subtree target it creates root:root/0700, as in a container
+	// restore (#125), whether the target is another pool or the folder a rename
+	// moved the disks to. Pre-create each one readable; healRestoreDirOwnership
+	// restores owner and mode after a successful restore.
 	for _, rd := range plan.restoreDirs {
 		if err := paths.EnsureDirReadable(rd.Target); err != nil {
 			return fmt.Errorf("restore: prepare destination %q: %w", s.toHostPath(rd.Target), err)
@@ -10527,9 +11939,14 @@ func (s *Service) LibvirtReachable() error {
 	return s.ssh.Test(ctx)
 }
 
-// SnapshotsVM lists restic snapshots for a single VM, filtered by the
-// "vm:<name>" tag the backup writes.
+// SnapshotsVM lists the restic snapshots a VM's identity owns: those under its
+// "vm:<name>" tag plus each alias's from before that alias was linked.
 func (s *Service) SnapshotsVM(ctx context.Context, name, source string) ([]restic.Snapshot, error) {
+	return s.vmSnapshotsOf(ctx, name, source, s.vmIdentity(name))
+}
+
+// vmSnapshotsOf is containerSnapshotsOf for VMs.
+func (s *Service) vmSnapshotsOf(ctx context.Context, name, source string, id entryIdentity) ([]restic.Snapshot, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return nil, fmt.Errorf("read settings: %w", err)
@@ -10538,7 +11955,7 @@ func (s *Service) SnapshotsVM(ctx context.Context, name, source string) ([]resti
 	if err != nil {
 		return nil, err
 	}
-	return s.snapshotsForTag(ctx, repo, s.repoModeFor(settings, "vms", source, repo), "vm:"+name)
+	return s.snapshotsOwnedBy(ctx, repo, s.repoModeFor(settings, "vms", source, repo), id)
 }
 
 // resticAdapter also satisfies the flash domain's backup surface.
@@ -10592,7 +12009,7 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	s.applyRetention(ctx, repo, settings, mode, "flash", "flash")
+	s.applyRetention(ctx, repo, settings, mode, tagIdentity("flash"), "flash")
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "flash", settings, repo, "")
 	s.collectStatsAfterItem(ctx, "flash")
@@ -10810,6 +12227,31 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 		return backup.Summary{}, err
 	}
 	repo, mode := step.repo, step.mode
+	// An empty or unreadable source still makes a successful restic snapshot,
+	// and keep-N retention groups by tag alone, so each such snapshot would
+	// age a real one of a set with history out. The walk stops at the first
+	// file, so a populated folder never pays for the listing.
+	if empty, eErr := fileSetSourceEmpty(src); eErr != nil || empty {
+		hasHistory := true
+		if snaps, hErr := s.snapshotsForTag(ctx, repo, mode, "fileset:"+set.Name); hErr == nil {
+			hasHistory = len(snaps) > 0
+		} else {
+			log.Printf("api: files backup: %q: could not check existing history: %v", set.Name, hErr) //nolint:gosec // G706: name is %q-quoted
+		}
+		if hasHistory {
+			reason := fmt.Sprintf("source folder for %q has no files (%s); check whether it moved", set.Name, src)
+			if eErr != nil {
+				reason = fmt.Sprintf("source folder for %q could not be read (%s): %v", set.Name, src, eErr)
+			}
+			err := fmt.Errorf("files backup: %s", reason)
+			if runID, sErr := s.store.StartRun(set.ID, "backup"); sErr != nil {
+				log.Printf("api: files backup: %q: record failed run: %v", set.Name, sErr) //nolint:gosec // G706: name is %q-quoted
+			} else if fErr := s.store.FinishRun(runID, "failed", "", 0, truncateRunErr(err)); fErr != nil {
+				log.Printf("api: files backup: %q: finish failed run: %v", set.Name, fErr) //nolint:gosec // G706: name is %q-quoted
+			}
+			return backup.Summary{}, err
+		}
+	}
 	// Healthchecks /start ping: deferred to here, past the source-exists + EnsureRepo
 	// guards, so the paired done/fail notifyBackup below always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "files")
@@ -10864,12 +12306,36 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	s.applyRetention(ctx, repo, settings, mode, "fileset:"+set.Name, "files")
+	s.applyRetention(ctx, repo, settings, mode, tagIdentity("fileset:"+set.Name), "files")
 	makeRepoReadable(repo, s.cfg.DataDir) // keep the local repo copyable off-box by a non-root user
 	s.replicateOffsite(ctx, "files", settings, repo, "fileset:"+set.Name)
 	s.collectStatsAfterItem(ctx, "files")
 	s.checkPrimaryRemoteBudget(ctx, "files", repo, settings)
 	return sum, nil
+}
+
+// walkFileSetSource is fileSetSourceEmpty's directory walk, replaceable in
+// tests so a read failure can be forced.
+var walkFileSetSource = filepath.WalkDir
+
+// fileSetSourceEmpty reports whether src holds nothing but directories.
+// Excludes play no part: a fully excluded folder is still the real folder.
+func fileSetSourceEmpty(src string) (bool, error) {
+	empty := true
+	err := walkFileSetSource(src, func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if p == src || d.IsDir() {
+			return nil
+		}
+		empty = false
+		return filepath.SkipAll
+	})
+	if err != nil {
+		return false, err
+	}
+	return empty, nil
 }
 
 // errFileSetNotFound is the user-safe error for an unknown file-set id (the
@@ -10934,7 +12400,7 @@ type FileSetView struct {
 
 // ListFileSetViews returns all configured file sets with their last-backup
 // time and source-path existence.
-func (s *Service) ListFileSetViews(_ context.Context) ([]FileSetView, error) {
+func (s *Service) ListFileSetViews(ctx context.Context) ([]FileSetView, error) {
 	sets, err := s.store.ListFileSets()
 	if err != nil {
 		return nil, fmt.Errorf("list file sets: %w", err)
@@ -10944,6 +12410,17 @@ func (s *Service) ListFileSetViews(_ context.Context) ([]FileSetView, error) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return nil, fmt.Errorf("read settings: %w", err)
+	}
+	// Dated from the backups a set owns, as on the container and VM lists.
+	var snapTimes map[string]int64
+	snapTimesFailed := false
+	if len(sets) > 0 {
+		if m, sErr := s.LatestFileSetBackupTimes(ctx); sErr != nil {
+			log.Printf("api: list file sets: latest backup times: %v", sErr)
+			snapTimesFailed = true
+		} else {
+			snapTimes = m
+		}
 	}
 	views := make([]FileSetView, 0, len(sets))
 	for _, set := range sets {
@@ -10974,8 +12451,9 @@ func (s *Service) ListFileSetViews(_ context.Context) ([]FileSetView, error) {
 		// NormalizeSelection, and the view is a mirror of the column. nil stays
 		// nil so omitempty drops the key (the NULL legacy switch).
 		v.SelectedPaths = set.SelectedPaths
-		if run, _ := s.store.LastSuccessfulBackup(set.ID); run != nil && run.FinishedAt != nil {
-			v.LastBackup = *run.FinishedAt
+		run, _ := s.store.LastSuccessfulBackup(set.ID)
+		if finished, _ := lastBackupDate(set.Name, run, snapTimes, snapTimesFailed); finished != nil {
+			v.LastBackup = *finished
 		}
 		if resolved, rErr := paths.Resolve(s.cfg.HostMountRoot, set.Path); rErr == nil {
 			if _, statErr := os.Stat(resolved); statErr == nil { //nolint:gosec // G703: resolved is containment-validated under the host mount root
@@ -10988,16 +12466,14 @@ func (s *Service) ListFileSetViews(_ context.Context) ([]FileSetView, error) {
 }
 
 // validateFileSet guards everything a file set feeds into: the name becomes a
-// restic tag ("fileset:<Name>") and a progress key, so it passes the same
-// strict charset as container names (validResourceName); the path must be a
-// relative subpath under the host mount (paths.Resolve containment) AND exist
-// on disk at save time, so a typo fails at configuration instead of on the
-// next scheduled backup. The one exception: a PATH-LESS set is valid while it
-// stays DISABLED — DiscoverFileSets rebuilds sets from fileset: tags alone
-// (the files domain has no mirrored definitions), where the original path is
-// unknowable; such a set must remain storable/patchable, but can never be
-// enabled until a real path is set.
-func (s *Service) validateFileSet(fs store.FileSet) error {
+// restic tag and a progress key, so it passes the same strict charset as
+// container names; the path must be a relative subpath under the host mount,
+// and, when checkPathExists is true, must also exist on disk. A patch checks
+// the path only when it changes the path or enables the set, so a dead path
+// does not block the rest of the set's settings. A path-less set is valid
+// while it stays disabled, the shape DiscoverFileSets creates from fileset:
+// tags alone.
+func (s *Service) validateFileSet(fs store.FileSet, checkPathExists bool) error {
 	if !validResourceName(fs.Name) {
 		return errors.New("invalid file set name (letters, digits, . _ - only; must start with a letter or digit)")
 	}
@@ -11011,8 +12487,10 @@ func (s *Service) validateFileSet(fs store.FileSet) error {
 	if err != nil {
 		return errors.New("invalid path: must be a relative subpath under the host mount")
 	}
-	if _, statErr := os.Stat(resolved); statErr != nil { //nolint:gosec // G703: resolved is containment-validated under the host mount root
-		return errors.New("source path not found under the host mount")
+	if checkPathExists {
+		if _, statErr := os.Stat(resolved); statErr != nil { //nolint:gosec // G703: resolved is containment-validated under the host mount root
+			return errors.New("source path not found under the host mount")
+		}
 	}
 	return nil
 }
@@ -11088,6 +12566,155 @@ func (s *Service) SetFileSetSelectedPaths(_ context.Context, id string, entries 
 		return fmt.Errorf("store file set selection: %w", err)
 	}
 	return nil
+}
+
+// errFileSetRepoUnreachable means fileSetHasBackups could not ask the set's
+// repository: it is established but not mounted, or its established marker
+// could not be read. The set then counts as having backups.
+var errFileSetRepoUnreachable = errors.New("its repository could not be checked right now (not reachable)")
+
+// fileSetHasBackups reports whether the file set id already has at least one
+// recorded successful backup run, i.e. fileset:<Name>-tagged snapshots exist
+// in the repo. handlePatchFileSet refuses a name change when this is true,
+// since those snapshots stay tagged with the old name and are never
+// re-tagged.
+func (s *Service) fileSetHasBackups(ctx context.Context, id string) (bool, error) {
+	run, err := s.store.LastSuccessfulBackup(id)
+	if err != nil {
+		return false, err
+	}
+	if run != nil {
+		return true, nil
+	}
+	// The listing below reads a missing local repo directory as never
+	// established, even when the marker could not be read, so that case is
+	// caught here first.
+	set, sErr := s.store.GetFileSet(id)
+	if sErr != nil {
+		return false, errFileSetNotFound
+	}
+	settings, gErr := s.store.GetSettings()
+	if gErr != nil {
+		return false, fmt.Errorf("read settings: %w", gErr)
+	}
+	if repo, rErr := s.fileSetRepoPath(settings, set); rErr == nil {
+		if s.repoEstablishmentOf(repo) == repoEstablishmentUnknown {
+			return true, errFileSetRepoUnreachable
+		}
+	}
+	// A Discover-rebuilt set has real fileset:<Name> snapshots in the repo
+	// but a fresh id with no run rows, so the runs table alone would miss it.
+	snaps, err := s.SnapshotsFileSet(ctx, id, "local")
+	if err != nil {
+		if errors.Is(err, errFileSetNotFound) {
+			return false, err
+		}
+		if errors.Is(err, ErrBackupPathNotMounted) {
+			return true, errFileSetRepoUnreachable
+		}
+		return true, fmt.Errorf("%w: %v", errFileSetRepoUnreachable, err)
+	}
+	return len(snaps) > 0, nil
+}
+
+// fileSetNameAdoptable decides whether a create, or a repository or
+// pre-backup name change, may land a file set on name: it refuses when
+// fileset:<name> snapshots already exist in the repository this set will
+// use, unless every one of them recorded a path at or below the resolved
+// source, the same folder coming back. A listing failure refuses too, as in
+// fileSetHasBackups.
+func (s *Service) fileSetNameAdoptable(ctx context.Context, name, repoOverride, path string) error {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return fmt.Errorf("read settings: %w", err)
+	}
+	repo, err := s.fileSetRepoPath(settings, store.FileSet{Name: name, Repo: repoOverride})
+	if err != nil {
+		return err
+	}
+	mode := s.repoModeFor(settings, "files", "local", repo)
+	snaps, err := s.snapshotsForTag(ctx, repo, mode, "fileset:"+name)
+	if err != nil {
+		return fmt.Errorf("%q: leftover backups could not be checked: %w", name, err)
+	}
+	if len(snaps) == 0 {
+		return nil
+	}
+	resolved, rErr := paths.Resolve(s.cfg.HostMountRoot, path)
+	if rErr != nil {
+		return fmt.Errorf("%q already has backups; set a valid path so its source can be compared, or bring the old set back with Discover, or delete its old snapshots first", name)
+	}
+	for _, snap := range snaps {
+		if !snapshotPathsMatchRoot(snap.Paths, resolved) {
+			return fmt.Errorf("%q already has backups from a different source folder; bring the old set back with Discover, or delete its old snapshots first", name)
+		}
+	}
+	return nil
+}
+
+// snapshotPathsMatchRoot reports whether every one of a snapshot's recorded
+// paths is the resolved root itself or lies strictly below it. A set with a
+// tree selection records the selected subpaths, never the root, so this is
+// what tells "the same folder coming back" from a recorded parent or a
+// disjoint folder wearing the same name.
+func snapshotPathsMatchRoot(recorded []string, resolved string) bool {
+	if len(recorded) == 0 {
+		return false
+	}
+	for _, p := range recorded {
+		if p != resolved && !isStrictDescendant(p, resolved) {
+			return false
+		}
+	}
+	return true
+}
+
+// containerHasBackups / vmHasBackups are fileSetHasBackups for the other two
+// domains. An item's snapshots stay in the repository they were written to,
+// so re-pointing an item that already has some splits its history, and the
+// old half stays invisible, never pruned and reachable only through restic by
+// hand.
+//
+// The runs table alone is not enough: an item rebuilt by Discover after a
+// /config loss has real snapshots but a fresh id with no run rows. The
+// interface's lastBackup lock misses that case, so the server refuses.
+func (s *Service) containerHasBackups(ctx context.Context, name string) (bool, error) {
+	tg, err := s.store.GetTargetByContainer(name)
+	if err == nil {
+		if run, rErr := s.store.LastSuccessfulBackup(tg.ID); rErr == nil && run != nil {
+			return true, nil
+		}
+	}
+	id := s.containerIdentity(name)
+	if id.readErr != nil {
+		return false, fmt.Errorf("its backups could not be checked: %w", id.readErr)
+	}
+	snaps, err := s.containerSnapshotsOf(ctx, name, "local", id)
+	if err != nil {
+		// Unreadable is not "empty": refusing conservatively is the safe way
+		// round, because the cost of being wrong the other way is a split
+		// history nobody can see.
+		return true, nil //nolint:nilerr // deliberate: unknown counts as "has backups"
+	}
+	return len(snaps) > 0, nil
+}
+
+func (s *Service) vmHasBackups(ctx context.Context, name string) (bool, error) {
+	vm, err := s.store.GetVMTargetByName(name)
+	if err == nil {
+		if run, rErr := s.store.LastSuccessfulBackup(vm.ID); rErr == nil && run != nil {
+			return true, nil
+		}
+	}
+	id := s.vmIdentity(name)
+	if id.readErr != nil {
+		return false, fmt.Errorf("its backups could not be checked: %w", id.readErr)
+	}
+	snaps, err := s.vmSnapshotsOf(ctx, name, "local", id)
+	if err != nil {
+		return true, nil //nolint:nilerr // see containerHasBackups
+	}
+	return len(snaps) > 0, nil
 }
 
 // SnapshotsFileSet lists restic snapshots for a single file set, filtered by
@@ -11727,13 +13354,11 @@ func (s *Service) DiscoverFileSets(ctx context.Context, dryRun bool) (DiscoverRe
 		return DiscoverResult{}, fmt.Errorf("read settings: %w", err)
 	}
 	// Every repository this domain writes to (#204), with the one each name was
-	// found in; a not-yet-created repo yields nothing quietly, as before.
-	// readErr, not an early return. The pass now comes back WITH whatever the
-	// named repositories yielded before the domain repository failed to open,
-	// so an install whose domain repository is unreadable is still rebuilt as
-	// far as it can be. The error still reaches the caller at the end, which is
-	// what the Recovery wizard classifies on.
-	names, skipped, directRows, readErr := s.discoverNamesAcrossRepos(ctx, settings, "files", "fileset:")
+	// found in; a not-yet-created repo yields nothing. A read failure comes back
+	// as readErr together with whatever the named repositories yielded, so an
+	// install whose domain repository is unreadable is still rebuilt as far as
+	// it can be; the Recovery wizard classifies on that error.
+	names, _, skipped, directRows, readErr := s.discoverNamesAcrossRepos(ctx, settings, "files", "fileset:")
 	findings, fErr := s.directFindings("files", directRows)
 	if fErr != nil {
 		log.Printf("api: discover files: could not match direct repositories to targets: %v", fErr)
@@ -11850,7 +13475,7 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 	if err != nil {
 		return backup.Summary{}, err
 	}
-	s.applyRetention(ctx, repo, settings, mode, "config", "config")
+	s.applyRetention(ctx, repo, settings, mode, tagIdentity("config"), "config")
 	s.replicateOffsite(ctx, "config", settings, repo, "")
 	s.collectStatsAfterItem(ctx, "config")
 	s.checkPrimaryRemoteBudget(ctx, "config", repo, settings)
@@ -14842,29 +16467,27 @@ func (s *Service) recordAndNotifyContainerSkip(ctx context.Context, name string)
 	}
 }
 
-// recordContainerFailure records a FAILED backup run for a container that failed
-// BEFORE backup.BackupContainer could take over run bookkeeping — i.e. at one of
-// Backup's pre-flight early-returns (settings / repo path / EnsureRepo / inspect /
-// empty-paths / upsert). It mirrors recordAndNotifyContainerSkip: given the resolved
-// target, StartRun then FinishRun with the (truncated) reason, so a domain-wide fault
-// that trips these for every remaining container shows up as reds — each carrying its
-// cause — on the dashboard heatmap/history instead of vanishing (#64). Best-effort: a
-// bookkeeping error is logged, never returned (the caller is already returning the real
-// error). targetID is the caller's pre-resolved id; when empty (a brand-new container
-// with no target row yet) the failure can't be keyed to a run, so it is only logged
-// here — the scheduled-summary notification still names it from the returned error.
-func (s *Service) recordContainerFailure(name, targetID string, cause error) {
+// recordPreflightFailure records a failed backup run for an entry that failed
+// before the orchestrator could take over run bookkeeping, at one of the
+// pre-flight early returns (settings, repo path, EnsureRepo, inspect, upsert).
+// Without it a domain-wide fault that trips those for every entry leaves no red
+// anywhere (#64), and the card that started a single backup waits for a run that
+// never comes (#251). Best-effort: a bookkeeping error is logged, never returned,
+// since the caller is already returning the real one. An entry with no target row
+// yet has nothing to key a run to, so there the reason is only logged, and the
+// scheduled summary still names it from the returned error.
+func (s *Service) recordPreflightFailure(kind, name, targetID string, cause error) {
 	if targetID == "" {
-		log.Printf("api: Backup: %q failed before a run could be recorded (no target row yet): %v", name, cause) //nolint:gosec // G706: name is %q-quoted
+		log.Printf("api: %s: %q failed before a run could be recorded (no target row yet): %v", kind, name, cause) //nolint:gosec // G706: kind is a fixed literal, name is %q-quoted
 		return
 	}
 	runID, err := s.store.StartRun(targetID, "backup")
 	if err != nil {
-		log.Printf("api: Backup: %q: start failed run: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		log.Printf("api: %s: %q: start failed run: %v", kind, name, err) //nolint:gosec // G706: see above
 		return
 	}
 	if err := s.store.FinishRun(runID, "failed", "", 0, truncateRunErr(cause)); err != nil {
-		log.Printf("api: Backup: %q: finish failed run: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+		log.Printf("api: %s: %q: finish failed run: %v", kind, name, err) //nolint:gosec // G706: see above
 	}
 }
 

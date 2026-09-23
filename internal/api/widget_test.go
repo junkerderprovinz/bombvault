@@ -11,8 +11,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// setWidgetToken stores a widget token directly (what POST /api/widget/token
-// does), so gate tests can control the stored value precisely.
+// setWidgetToken stores a widget token directly, as POST /api/widget/token
+// would.
 func setWidgetToken(t *testing.T, st *store.Repo, token string) {
 	t.Helper()
 	s, err := st.GetSettings()
@@ -37,16 +37,10 @@ func widgetGet(t *testing.T, h http.Handler, path, headerToken string) *httptest
 	return w
 }
 
-// TestWidgetQueryTokenOnlyOnThePage pins the split introduced for #198: the
-// PAGE still takes ?token=, because an embedding iframe cannot set a header on
-// the document request, and the FEED does not, because the page fetches it
-// itself and a fetch can set one.
-//
-// The distinction is the whole security value. The feed is polled on a timer,
-// so the query form wrote the credential into the reverse proxy's access log
-// once per refresh for as long as a dashboard stayed open; the page's src is
-// requested once. A test that only checked "the right token works" would pass
-// on the old behaviour too, so the refusal is what is asserted here.
+// TestWidgetQueryTokenOnlyOnThePage checks that the page accepts ?token=,
+// because an iframe cannot set a header on the document request, and that the
+// feed refuses it: the feed is polled, and a token in its query would land in
+// the proxy's access log on every refresh.
 func TestWidgetQueryTokenOnlyOnThePage(t *testing.T) {
 	h, st := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
 	tok := "0123456789abcdef0123456789abcdef"
@@ -56,26 +50,21 @@ func TestWidgetQueryTokenOnlyOnThePage(t *testing.T) {
 		t.Fatalf("the page must still accept ?token=, got %d", w.Code)
 	}
 	if w := widgetGet(t, h, "/api/widget/data?token="+tok, ""); w.Code != http.StatusForbidden {
-		t.Fatalf("the feed must REFUSE ?token=, got %d", w.Code)
+		t.Fatalf("the feed must refuse ?token=, got %d", w.Code)
 	}
 	if w := widgetGet(t, h, "/api/widget/data", tok); w.Code != http.StatusOK {
 		t.Fatalf("the feed must accept the header, got %d", w.Code)
 	}
-	// The header keeps working on the page too, so a caller that can set one is
-	// never forced into the URL.
+	// A caller that can set a header never has to put the token in the URL.
 	if w := widgetGet(t, h, "/widget", tok); w.Code != http.StatusOK {
 		t.Fatalf("the page must accept the header, got %d", w.Code)
 	}
 }
 
-// TestWidgetTokenGate pins the fail-closed token gate on BOTH widget endpoints:
-// no stored token (feature off) → 403 even with an empty presented token; a
-// missing or wrong token → 403; the right token (query param or header) → 200.
 func TestWidgetTokenGate(t *testing.T) {
 	h, st := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
 
-	// Feature OFF (empty stored token): everything is 403, including the
-	// empty-presented-token probe (""=="" must NOT pass).
+	// With no stored token everything is 403, even an empty presented token.
 	for _, path := range []string{"/widget", "/api/widget/data", "/widget?token=", "/api/widget/data?token="} {
 		if w := widgetGet(t, h, path, ""); w.Code != http.StatusForbidden {
 			t.Fatalf("empty stored token: GET %s = %d, want 403", path, w.Code)
@@ -85,7 +74,6 @@ func TestWidgetTokenGate(t *testing.T) {
 	const tok = "0123456789abcdef0123456789abcdef"
 	setWidgetToken(t, st, tok)
 
-	// No token / wrong token → 403.
 	for _, path := range []string{"/widget", "/api/widget/data"} {
 		if w := widgetGet(t, h, path, ""); w.Code != http.StatusForbidden {
 			t.Fatalf("no token: GET %s = %d, want 403", path, w.Code)
@@ -95,7 +83,6 @@ func TestWidgetTokenGate(t *testing.T) {
 		}
 	}
 
-	// Right token via query param → 200; the page is the self-contained HTML.
 	w := widgetGet(t, h, "/widget?token="+tok, "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("right token (query): GET /widget = %d, want 200", w.Code)
@@ -107,7 +94,6 @@ func TestWidgetTokenGate(t *testing.T) {
 		t.Fatalf("widget page body does not look like the widget HTML")
 	}
 
-	// Right token via the X-Widget-Token header → 200 on the feed too.
 	if w := widgetGet(t, h, "/api/widget/data", tok); w.Code != http.StatusOK {
 		t.Fatalf("right token (header): GET /api/widget/data = %d, want 200", w.Code)
 	}
@@ -130,9 +116,6 @@ func widgetDataBody(t *testing.T, h http.Handler, tok string) map[string]any {
 	return m
 }
 
-// TestWidgetDataShape pins the slim feed: version present, runs carry the
-// resolved target/domain (items AND domain-scoped ops), error text is
-// truncated, and the schedule-next list is always an array.
 func TestWidgetDataShape(t *testing.T) {
 	h, st := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
 	const tok = "0123456789abcdef0123456789abcdef"
@@ -143,7 +126,7 @@ func TestWidgetDataShape(t *testing.T) {
 		t.Fatal(err)
 	}
 	// A successful item backup, a failed one with an oversized error, and a
-	// domain-scoped off-site run (recorded on the domain literal target id).
+	// domain-scoped off-site run.
 	okRun, err := st.StartRun(tg.ID, "backup")
 	if err != nil {
 		t.Fatal(err)
@@ -183,7 +166,6 @@ func TestWidgetDataShape(t *testing.T) {
 	for _, r := range runs {
 		row := r.(map[string]any)
 		byID[row["id"].(string)] = row
-		// Slim contract: none of the heavyweight run fields leak into the feed.
 		for _, forbidden := range []string{"snapshotId", "targetId"} {
 			if _, has := row[forbidden]; has {
 				t.Fatalf("widget run must not carry %q: %v", forbidden, row)
@@ -211,8 +193,6 @@ func TestWidgetDataShape(t *testing.T) {
 	}
 }
 
-// TestWidgetDataLimit pins the ~40-run cap: the feed is a glanceable tile, not
-// the 500-run dashboard history.
 func TestWidgetDataLimit(t *testing.T) {
 	h, st := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
 	const tok = "0123456789abcdef0123456789abcdef"
@@ -240,10 +220,6 @@ func TestWidgetDataLimit(t *testing.T) {
 
 var hex32Re = regexp.MustCompile(`^[0-9a-f]{32}$`)
 
-// TestWidgetTokenGenerateAndDisable pins the management endpoints: POST
-// generates+stores+returns a 32-hex token once, a second POST rotates it
-// (revoking the old one), and DELETE clears it so the widget fails closed
-// again.
 func TestWidgetTokenGenerateAndDisable(t *testing.T) {
 	h, st := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
 
@@ -266,7 +242,7 @@ func TestWidgetTokenGenerateAndDisable(t *testing.T) {
 		t.Fatalf("fresh token must authorize the feed, got %d", w.Code)
 	}
 
-	// Regenerate: a NEW token replaces (revokes) the old one.
+	// A second POST revokes the first token.
 	_, m2 := doJSON(t, h, http.MethodPost, "/api/widget/token", "")
 	tok2, _ := m2["token"].(string)
 	if !hex32Re.MatchString(tok2) || tok2 == tok {
@@ -279,7 +255,6 @@ func TestWidgetTokenGenerateAndDisable(t *testing.T) {
 		t.Fatalf("new token must authorize the feed, got %d", w.Code)
 	}
 
-	// Disable: clears the token → fail closed again.
 	w3, m3 := doJSON(t, h, http.MethodDelete, "/api/widget/token", "")
 	if w3.Code != http.StatusOK || m3["ok"] != true {
 		t.Fatalf("disable: code=%d body=%v", w3.Code, m3)
@@ -289,10 +264,9 @@ func TestWidgetTokenGenerateAndDisable(t *testing.T) {
 	}
 }
 
-// TestWidgetTokenSettingsRoundTrip pins the settingsView secret contract
-// (EXACTLY like metricsToken): GET returns widgetToken blank with
-// widgetTokenSet=true, and PUTting that round-tripped body back KEEPS the
-// stored token instead of wiping it.
+// TestWidgetTokenSettingsRoundTrip checks that GET /api/settings blanks the
+// widget token and reports it set, like metricsToken, and that putting that
+// body back keeps the stored token.
 func TestWidgetTokenSettingsRoundTrip(t *testing.T) {
 	h, _ := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
 
@@ -312,8 +286,6 @@ func TestWidgetTokenSettingsRoundTrip(t *testing.T) {
 			view["widgetToken"], view["widgetTokenSet"])
 	}
 
-	// Round-trip the GET body through PUT — the blank widgetToken must KEEP the
-	// stored one.
 	body, err := json.Marshal(view)
 	if err != nil {
 		t.Fatal(err)

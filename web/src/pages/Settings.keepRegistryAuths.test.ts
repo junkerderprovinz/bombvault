@@ -1,12 +1,5 @@
-// ---------------------------------------------------------------------------
-// keepRegistryAuths — the pure filtering logic behind the Image Cleanup &
-// Registries card's own auto-save (GlimStone follow-up round, merge A —
-// "no Speichern button, every field auto-saves"). Extracted specifically so
-// this decision (which rows survive a save, and whether a row's token
-// becomes "stored") is testable without mounting the whole SettingsPage —
-// same "pure logic, node environment, no DOM" footing as isRemotePath
-// (PathModeSwitch.tsx) and Selector.test.ts's own nextFocusIndex/rovedIndex.
-// ---------------------------------------------------------------------------
+// keepRegistryAuths decides which registry rows an auto-save sends and whether
+// a row's token counts as stored. It is pure, so it runs without a DOM.
 import { describe, expect, it } from "vitest";
 import { keepRegistryAuths, markRegistryTokensStored } from "./Settings";
 import type { RegistryAuthEntry } from "../lib/api";
@@ -69,19 +62,9 @@ describe("keepRegistryAuths", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// markRegistryTokensStored — what stays on SCREEN after a registry save, as
-// opposed to what keepRegistryAuths sends to the server.
-//
-// The two used to be one function, and that was correct while the card had a
-// Save button: clicking it meant "I am finished", so dropping the blank rows and
-// re-rendering the list from the trimmed result were the same act. Once every
-// keystroke arms an 800ms auto-save, they stopped being the same act — the trim
-// then ran mid-interaction and deleted the row the user had added seconds
-// earlier and was about to fill in, because they had gone back to fix a typo two
-// rows up first. A blank row is worth nothing to the server and everything to
-// the person typing into it.
-// ---------------------------------------------------------------------------
+// markRegistryTokensStored decides what stays on screen after a save. A blank
+// row is worth nothing to the server but may be the one someone is about to
+// fill in, so unlike keepRegistryAuths it keeps it.
 describe("markRegistryTokensStored", () => {
   it("keeps a blank row, which is exactly what keepRegistryAuths drops", () => {
     const rows = [entry({ host: "ghcr.io" }), entry()];

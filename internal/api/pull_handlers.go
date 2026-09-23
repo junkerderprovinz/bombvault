@@ -8,16 +8,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// HTTP for pull sources (#227). Shaped on receiver_handlers.go, including the
-// one contract that matters more than the rest of the file put together: THE
-// STORED KEY NEVER TRAVELS BACK OUT. The view reports whether a key is there,
-// never what it is, and an update that arrives without one keeps the stored
-// ciphertext rather than clearing it - so editing a name cannot silently
-// disarm a source, and reading the list cannot leak somebody else's key.
-
-// pullSourceView is a pull source as the SPA sees it. Note what is absent:
-// AppKeyEnc has no JSON tag of any kind, so it cannot be forgotten into a
-// response by adding a field later.
+// pullSourceView is a pull source as the SPA sees it. The stored APP_KEY never
+// goes back out, so the view only says whether one is set.
 type pullSourceView struct {
 	ID              string `json:"id"`
 	Name            string `json:"name"`
@@ -37,7 +29,7 @@ type pullSourceView struct {
 	HasAppKey       bool   `json:"hasAppKey"`
 }
 
-// pullSourceInput is the create/update request body. AppKey is the SOURCE
+// pullSourceInput is the create/update request body. AppKey is the source
 // instance's 64-hex APP_KEY; on update an empty AppKey keeps the stored one.
 // Enabled is a pointer so its absence is distinguishable from an explicit false.
 type pullSourceInput struct {
@@ -109,9 +101,8 @@ func (h *Handler) buildPullSource(in pullSourceInput, existing store.PullSource,
 	case key == "" && isCreate:
 		return store.PullSource{}, "the source instance's APP_KEY is required (64 lowercase hex characters)"
 	case key == "":
-		// An edit that sends no key keeps the stored one. Without this branch,
-		// renaming a source would quietly clear its key and the next pull would
-		// fail with a message about the key being wrong.
+		// An edit without a key keeps the stored one, so a rename does not
+		// clear it.
 		ps.AppKeyEnc = existing.AppKeyEnc
 	default:
 		if !foreignKeyRe.MatchString(key) {
@@ -157,11 +148,8 @@ func (h *Handler) handleListPullSources(w http.ResponseWriter, _ *http.Request) 
 }
 
 // handleCreatePullSource registers a source. POST /api/pull/sources.
-//
-// The source must OPEN read-only before the row is saved, exactly as a received
-// repo must: a mistyped location or key is rejected while the person who typed
-// it is still looking at the form, instead of becoming a scheduled job that
-// fails every night at four.
+// The source has to open read-only before the row is saved, so a mistyped
+// location or key is rejected on the form instead of failing every night.
 func (h *Handler) handleCreatePullSource(w http.ResponseWriter, r *http.Request) {
 	var in pullSourceInput
 	if !decodeBody(w, r, &in) {

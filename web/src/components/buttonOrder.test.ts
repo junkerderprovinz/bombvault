@@ -1,55 +1,29 @@
-// ---------------------------------------------------------------------------
-// The control that goes ahead sits on the right.
+// In a pair of buttons, the one that moves the thing forward comes last: Save
+// after Cancel, Confirm after Cancel, Run after Pause. The accent already marks
+// the primary control; its position repeats that in glyph-only mode and for
+// colour-blind readers. Under RTL the row mirrors, so the guard checks source
+// order rather than pixels.
 //
-// GlimStone 1.14.0 states it in terms of ROLE rather than vocabulary: ask which
-// control moves the thing forward and which holds it or takes it back. Save
-// right and Cancel left, Confirm right and Cancel left, Run right and Pause
-// left - the last pair being the one that forced the wording, because neither
-// of those is a save or a cancel and the rule still has to decide it.
-//
-// Position is a second signal that survives what colour does not. The accent
-// already says which control is primary; the position says it again in
-// glyph-only mode, to a colour-blind reader, and after the palette is switched.
-// Under RTL the pair mirrors with the page, so "right" means END rather than
-// the right of the glass - which is why this guard reasons about ORDER IN THE
-// SOURCE and never about a pixel.
-//
-// The audit that produced this found eleven pairs the wrong way round, and the
-// shape of the finding is the argument for a guard rather than a sweep: six of
-// the eleven sat in settings cards, all with the same container and the same
-// habit of writing the action first and the way out after it. Where
-// ConfirmDialog renders the footer, the order was right everywhere; where a
-// card wrote its own row, it was wrong in six cases out of seven. A rule that
-// only holds where a shared component happens to hold it is not a rule yet.
-//
-// Deliberately narrow: two <Button> tags that are ADJACENT in the source, one
-// naming a known hold key and one a known forward key. That misses a pair split
-// by a conditional and it misses one whose keys nothing here knows about, and
-// both of those are fine. A guard that tried to infer roles from arbitrary keys
-// would be guessing, and a guessing guard is answered with an allow-list.
-// ---------------------------------------------------------------------------
+// Only two <Button> tags adjacent in the source are checked, one with a known
+// hold key and one with a known forward key. Pairs split by a conditional or
+// with unknown keys are skipped, since inferring roles from arbitrary keys
+// would be guesswork.
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { buttonTags } from "./buttonTags.testsupport";
 
 const SRC = join(__dirname, "..");
 
-// Keys that HOLD or TAKE BACK. Matched against the whole labelKey, so
-// "common.cancel" and "settingsIO.cancel" are both caught by /cancel/.
+// Keys that hold or take back, matched anywhere in the labelKey.
 const HOLD = /cancel|close$|skip|decline|reset$|back$|dismiss/i;
 
-// Keys that move the thing FORWARD. `save` and `confirm` carry most of it; the
-// rest are the verbs this app uses for "do the thing the row is about".
+// Keys that move the thing forward.
 const FORWARD =
   /save$|confirm|apply|create$|accept|connect|restore|import|enable|disable|regenerate|proceed|continue/i;
 
-// The keys this guard MUST recognise, because they are the eleven pairs the
-// 1.14.0 audit actually found. A regex is easy to write so that it looks right
-// and matches nothing: `\bcreate$` was the first cut here and it silently
-// missed `auth.passkeyCreate`, because there is no word boundary between "y"
-// and "C". The guard stayed green while one of the pairs it exists for was
-// turned back the wrong way round, which is the failure a guard is supposed to
-// make impossible.
+// Keys from real pairs that the patterns must classify. A pattern can look
+// right and still miss: `\bcreate$` does not match `auth.passkeyCreate`, since
+// there is no word boundary between "y" and "C".
 const MUST_BE_FORWARD = [
   "offsite.targets.save",
   "settings.save",
@@ -87,11 +61,9 @@ for (let i = 0; i < tags.length - 1; i++) {
   const a = tags[i];
   const b = tags[i + 1];
   if (a.file !== b.file) continue;
-  // SIBLINGS, not merely close. Line distance was the first cut and it was
-  // wrong: it reported the two-factor card's Disable and Cancel buttons, which
-  // sit in the two branches of one ternary and never render together. What
-  // makes two buttons a pair is that nothing but whitespace and a closing tag
-  // lies between them - a `?`, a `:` or a `&&` in the gap means two branches.
+  // Only siblings form a pair: nothing but whitespace and a closing tag may lie
+  // between them. A `?`, `:`, `&&` or `||` in the gap means two branches that
+  // never render together.
   const gap = a.source.slice(a.end, b.start);
   if (/[?:]|&&|\|\|/.test(gap)) continue;
   if (!/^[\s]*(\/>|<\/[A-Za-z.]+>)?[\s]*$/.test(gap)) continue;
@@ -100,7 +72,6 @@ for (let i = 0; i < tags.length - 1; i++) {
   const kb = keyOf(b.props);
   if (!ka || !kb) continue;
 
-  // The wrong way round is: forward FIRST, hold SECOND.
   if (FORWARD.test(ka) && !HOLD.test(ka) && HOLD.test(kb)) {
     wrong.push({ where: `${a.file}:${a.line}`, forward: ka, hold: kb });
   }
@@ -123,8 +94,7 @@ describe("button order in a pair", () => {
       "no forward-role keys were recognised at all.",
     ).toBeGreaterThan(5);
 
-    // And the specific ones, by name. See MUST_BE_FORWARD's own comment: the
-    // counts above pass with a regex that happens to match a different set.
+    // The counts above would also pass with a pattern that matches the wrong set.
     for (const k of MUST_BE_FORWARD) {
       expect(FORWARD.test(k), `${k} is not recognised as a forward role`).toBe(true);
       expect(HOLD.test(k), `${k} is wrongly recognised as a hold role`).toBe(false);

@@ -22,10 +22,9 @@ func mustCadence(t *testing.T, s string) Cadence {
 	return cad
 }
 
-// TestCadenceLastFire pins the Prev semantics LastFire builds on top of
-// robfig's Next(): the returned time is the most recent fire at or before now.
-// Exact expectations are asserted in time.Local (the zone plain cadence specs
-// run in), with dates far from any DST transition.
+// TestCadenceLastFire checks that LastFire returns the most recent fire at or
+// before now. Plain cadences run in time.Local, so the expectations use it, on
+// dates away from any DST change.
 func TestCadenceLastFire(t *testing.T) {
 	cases := []struct {
 		name    string
@@ -59,8 +58,8 @@ func TestCadenceLastFire(t *testing.T) {
 			want:    time.Date(2026, 7, 19, 4, 30, 0, 0, time.Local),
 		},
 		{
-			// everyN uses a plain daily trigger spec; LastFire reflects the TRIGGER,
-			// the interval-days gate lives in missedRun / the wrapped job.
+			// everyN fires daily; the interval gate lives in missedRun and the
+			// wrapped job.
 			name:    "everyN trigger is daily",
 			cadence: "everyN 3 05:15",
 			now:     time.Date(2026, 1, 10, 22, 0, 0, 0, time.Local),
@@ -86,8 +85,6 @@ func TestCadenceLastFire(t *testing.T) {
 	}
 }
 
-// TestCadenceLastFireDisabledAndInvalid pins the no-claim paths: off/blank
-// cadences and an unparseable spec yield (zero, false).
 func TestCadenceLastFireDisabledAndInvalid(t *testing.T) {
 	now := time.Date(2026, 7, 20, 12, 0, 0, 0, time.UTC)
 	if _, ok := (Cadence{}).LastFire(now); ok {
@@ -98,12 +95,10 @@ func TestCadenceLastFireDisabledAndInvalid(t *testing.T) {
 	}
 }
 
-// TestCadenceLastFireDSTEdges pins the definition of "most recent past fire"
-// across both Europe/Berlin DST transitions of 2026 via the invariants that
-// hold regardless of how robfig resolves a skipped/repeated wall-clock time:
-// LastFire(now) ≤ now, and Next(LastFire(now)) > now (nothing fired between).
-// The specs pin their zone with CRON_TZ so the test is deterministic on UTC CI
-// runners and any developer machine alike.
+// TestCadenceLastFireDSTEdges checks both Europe/Berlin DST changes of 2026
+// against invariants that hold however robfig resolves a skipped or repeated
+// wall-clock time: LastFire(now) is not after now, and the next fire after it
+// is. CRON_TZ pins the zone so the result does not depend on the host.
 func TestCadenceLastFireDSTEdges(t *testing.T) {
 	berlin, err := time.LoadLocation("Europe/Berlin")
 	if err != nil {
@@ -115,7 +110,7 @@ func TestCadenceLastFireDSTEdges(t *testing.T) {
 		now  time.Time
 	}{
 		{
-			// Spring forward 2026-03-29: 02:00→03:00, 02:30 does not exist that day.
+			// Spring forward 2026-03-29: 02:00 -> 03:00, 02:30 does not exist that day.
 			name: "spring-forward skipped time",
 			spec: "CRON_TZ=Europe/Berlin 30 2 * * *",
 			now:  time.Date(2026, 3, 29, 12, 0, 0, 0, berlin),
@@ -126,7 +121,7 @@ func TestCadenceLastFireDSTEdges(t *testing.T) {
 			now:  time.Date(2026, 3, 29, 3, 5, 0, 0, berlin),
 		},
 		{
-			// Fall back 2026-10-25: 03:00→02:00, 02:30 occurs twice.
+			// Fall back 2026-10-25: 03:00 -> 02:00, 02:30 occurs twice.
 			name: "fall-back repeated time",
 			spec: "CRON_TZ=Europe/Berlin 30 2 * * *",
 			now:  time.Date(2026, 10, 25, 12, 0, 0, 0, berlin),
@@ -158,8 +153,8 @@ func TestCadenceLastFireDSTEdges(t *testing.T) {
 	}
 }
 
-// TestMissedRun pins the catch-up gate: missed vs covered vs never-ran vs the
-// everyN not-yet-due case, plus the grace window around the fire.
+// TestMissedRun covers the catch-up gate: missed, covered, never ran, everyN
+// not yet due, and the grace window before the fire.
 func TestMissedRun(t *testing.T) {
 	// A fixed "now" comfortably after today's 03:00 fire, away from DST edges.
 	now := time.Date(2026, 7, 20, 12, 0, 0, 0, time.Local)
@@ -177,10 +172,9 @@ func TestMissedRun(t *testing.T) {
 		{"not missed: success within grace before the fire", daily, fire.Add(-9 * time.Minute), false},
 		{"not missed: success after the fire", daily, fire.Add(30 * time.Minute), false},
 		{"never ran: no catch-up", daily, time.Time{}, false},
-		// everyN 3: the daily trigger fired at 03:00 today, but the domain is only
-		// 2 days past its last success — the due-gate would skip, so no miss.
+		// The trigger fired today, but two days after the last success
+		// everyN 3 is not due yet.
 		{"everyN not yet due", "everyN 3 03:00", now.Add(-48 * time.Hour), false},
-		// 4 days past the last success with everyN 3 → due AND fire missed.
 		{"everyN due and missed", "everyN 3 03:00", now.Add(-96 * time.Hour), true},
 	}
 	for _, c := range cases {
@@ -198,11 +192,9 @@ func TestMissedRun(t *testing.T) {
 	}
 }
 
-// TestCatchUpMissedTriggersBackupJob pins the scheduler-level catch-up seam: a
-// domain whose last success predates its last scheduled fire is re-run through
-// the SAME registered job the cron entry would fire (here: the containers loop,
-// observed via the injected backup fn), while a current domain is left alone.
-// Mirrors schedule_offsite_afterbulk_test.go's synchronous-entry style.
+// TestCatchUpMissedTriggersBackupJob checks that a domain whose last success
+// predates its last scheduled fire runs through the same job its cron entry
+// would fire, and that a current domain is left alone.
 func TestCatchUpMissedTriggersBackupJob(t *testing.T) {
 	var mu sync.Mutex
 	var backups []string
@@ -224,8 +216,8 @@ func TestCatchUpMissedTriggersBackupJob(t *testing.T) {
 		return nil
 	})
 
-	// Containers: last success two days ago → yesterday's/today's daily fire was
-	// missed. Flash: fresh success → covered.
+	// Containers last succeeded two days ago and missed a fire; flash is
+	// current.
 	staleLastRun := func() (time.Time, error) { return time.Now().Add(-48 * time.Hour), nil }
 	freshLastRun := func() (time.Time, error) { return time.Now(), nil }
 	settings := store.Settings{ContainersEnabled: true, FlashEnabled: true, ContainersSchedule: "daily 03:00",
@@ -246,9 +238,9 @@ func TestCatchUpMissedTriggersBackupJob(t *testing.T) {
 	}
 }
 
-// TestCatchUpMissedSkipsNeverRanAndErrors pins two quiet paths: a domain with
-// no success EVER is not caught up (no surprise first backup at boot), and a
-// failing last-run query skips the domain instead of running or panicking.
+// TestCatchUpMissedSkipsNeverRanAndErrors checks that a domain that never
+// succeeded is not caught up, which would start a first backup at boot, and
+// that a failing last-run query skips the domain.
 func TestCatchUpMissedSkipsNeverRanAndErrors(t *testing.T) {
 	var mu sync.Mutex
 	backups := 0
@@ -282,10 +274,9 @@ func TestCatchUpMissedSkipsNeverRanAndErrors(t *testing.T) {
 	}
 }
 
-// TestWatchdogEntryRegisteredAndFires pins the watchdog domainSpec: with
-// WatchdogEnabled the scheduler registers a "watchdog" entry on the fixed
-// cadence, and firing it invokes the wired watchdog fn; without the setting no
-// entry exists (existing zero-value Settings tests stay watchdog-free).
+// TestWatchdogEntryRegisteredAndFires checks that WatchdogEnabled registers a
+// "watchdog" entry that calls the watchdog job, and that a reload without the
+// setting removes it.
 func TestWatchdogEntryRegisteredAndFires(t *testing.T) {
 	noTargets := func() ([]store.Target, error) { return nil, nil }
 	sc := New(func(string) error { return nil }, noTargets)
@@ -309,7 +300,6 @@ func TestWatchdogEntryRegisteredAndFires(t *testing.T) {
 		t.Fatalf("watchdog fn fired %d times, want 1", fired)
 	}
 
-	// Disabled → the reload drops the entry again.
 	if err := sc.ReloadWithDueChecks(store.Settings{}, nil, nil, nil, nil, nil, nil); err != nil {
 		t.Fatalf("ReloadWithDueChecks(off): %v", err)
 	}

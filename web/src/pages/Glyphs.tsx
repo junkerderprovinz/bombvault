@@ -1,28 +1,8 @@
-// ---------------------------------------------------------------------------
-// The glyph contact sheet ([330]).
-//
-// Every icon the app owns, at the size it is actually used, with the one number
-// that decides whether a set looks like a set: how much of its box each drawing
-// fills.
-//
-// Why this page exists. Five rounds of live review each began the same way —
-// "this symbol looks too big" or "too small" — and every one of them needed
-// somebody to open a browser, call getBBox on the real markup and compare.
-// That is a slow loop for a question a page can answer at a glance, and the
-// answer only ever arrived AFTER a bad import had shipped. Here the outlier is
-// the row whose fill percentage does not match its neighbours, visible before
-// anything reaches a card.
-//
-// Deliberately not in the sidebar and not translated. This is a workbench, not
-// a feature: reachable at /glyphs by someone who knows it is there, costing the
-// interface nothing and the locale catalogue nothing. If it ever becomes a
-// feature it needs 42 translations and a nav entry, and that is a different
-// decision from "give the person maintaining the icons a mirror".
-//
-// The fill number is MEASURED here, not read from the generator's declared ink.
-// That is the entire point: if the two ever disagree, the declared value is
-// wrong and this page is the only thing that would say so.
-// ---------------------------------------------------------------------------
+// GlyphSheet shows every icon the app owns at the size it is used, with how
+// much of its box each drawing fills. A glyph whose fill differs from its
+// neighbours will look the wrong size beside them. The fill is measured here
+// rather than taken from the generator's declared ink, so a wrong declaration
+// shows up. It is a workbench at /glyphs: not in the navigation, not translated.
 import { useEffect, useRef, useState } from "react";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { Toggle } from "../components/Toggle";
@@ -44,9 +24,7 @@ function collect(): Row[] {
       out.push({ name, node: <Comp />, set });
     }
   }
-  // Same name in both sets is a real possibility (Sidebar re-exports), so the
-  // list is de-duplicated by name rather than showing a glyph twice and
-  // inviting a hunt for the difference.
+  // A name can appear in both sets through Sidebar's re-exports.
   const seen = new Set<string>();
   return out
     .filter((r) => (seen.has(r.name) ? false : (seen.add(r.name), true)))
@@ -58,24 +36,10 @@ function Cell({ row }: { row: Row }) {
   const [fill, setFill] = useState<number | null>(null);
   const [ratio, setRatio] = useState<number | null>(null);
 
-  // The number is RASTERISED, not read from geometry ([427]).
-  //
-  // It used to come from getBBox on the glyph's outermost <g>, which is wrong
-  // for exactly one shape and wrong badly: getBBox reports a transformed group's
-  // PRE-transform extent, so IconClose — a plus turned 45 degrees — measured as
-  // the plus it was before the rotation and scored 101% while painting 58% of
-  // its box. The two smallest marks in the set read as the two largest, and the
-  // "under 90%" flag below, which exists to catch precisely this, pointed the
-  // other way.
-  //
-  // It stayed hidden because every cheap way of asking is the same way of
-  // asking: getBoundingClientRect on the group has the identical blind spot, so
-  // a second and a third measurement agreed with the first. jdp saw it by eye
-  // instead ("die beiden glyphen ... sind unterschiedlich groß").
-  //
-  // Drawing it and counting the pixels cannot be fooled by a transform, because
-  // it measures the result rather than the recipe. It costs one off-screen
-  // 128x128 raster per glyph, on a page that exists to be looked at once.
+  // The glyph is rasterised and its pixels counted. getBBox and
+  // getBoundingClientRect report a transformed group's extent before the
+  // transform, so IconClose, a plus turned 45 degrees, would measure as the
+  // unrotated plus.
   useEffect(() => {
     const svg = box.current?.querySelector("svg");
     if (!svg) return;
@@ -117,9 +81,7 @@ function Cell({ row }: { row: Row }) {
       setFill(Math.max(w, h) / 128);
       setRatio(w / h);
     };
-    // A data: URI, not a blob:. The app's own CSP allows img-src 'self' data:
-    // and nothing else, so a blob: URL loads nowhere and this silently measures
-    // nothing — which is how the first attempt at this failed.
+    // The CSP allows img-src 'self' data: only, so a blob: URL would not load.
     img.src =
       "data:image/svg+xml;base64," +
       btoa(unescape(encodeURIComponent(new XMLSerializer().serializeToString(clone))));
@@ -129,9 +91,8 @@ function Cell({ row }: { row: Row }) {
     };
   }, []);
 
-  // Under 90% is the threshold the sizing rules put the crop there to hold. It
-  // colours the number rather than hiding the row: a low fill can be correct
-  // for a deliberately airy glyph, and this page reports, it does not judge.
+  // The sizing rules crop glyphs to fill at least 90%. A lower fill is only
+  // coloured, since it can be right for an airy glyph.
   const low = fill !== null && fill < 0.9;
 
   return (
@@ -165,12 +126,8 @@ export function GlyphSheet() {
         </p>
       </div>
 
-      {/* A glyph is `currentColor`, so the ground it sits on is half of whether
-          it reads. Both are one click apart rather than one theme switch.
-
-          A Toggle, not the raw checkbox this first had: the house rule is a
-          switch everywhere, and a workbench page is not an exemption from the
-          design language it exists to serve. */}
+      {/* A glyph is `currentColor`, so the ground it sits on is half of
+          whether it reads. */}
       <Toggle checked={dark} onChange={setDark} label="Dark ground" />
 
       <div

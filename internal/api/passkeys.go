@@ -20,47 +20,17 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// Passkeys: signing in with the key on a phone, a laptop or a security stick
-// instead of typing a password.
+// Passkeys are a second way to sign in and never replace the password: an
+// operator who lost the phone or reaches the box by IP still has to get into
+// the tool that restores everything.
 //
-// ---------------------------------------------------------------------------
-// THE CONSTRAINT THAT SHAPES ALL OF THIS, stated once here because every
-// decision below follows from it.
-//
-// WebAuthn binds a credential to a RELYING PARTY ID, which the specification
-// requires to be a DOMAIN. An IP address is not one, and browsers refuse the
-// ceremony outright on an origin whose host is a bare address. They refuse it a
-// second way on a page whose certificate the browser rejects, which is what a
-// self-signed certificate is.
-//
-// BombVault's own Unraid template points at https://[IP]:3443 with a
-// certificate that covers only localhost, so on the DEFAULT installation
-// passkeys cannot work at all. They work when the instance is reached through a
-// real hostname with a certificate the browser accepts, which in practice means
-// a reverse proxy - and that is the setup somebody who wants passkeys is
-// already running, because it is also the only sane way to expose this to the
-// internet.
-//
-// So the feature is built to say so. rpIDFor refuses with a sentence naming the
-// reason rather than letting the browser fail with "NotAllowedError", the card
-// explains it before anybody clicks, and a registered key records WHICH address
-// it belongs to, because a key registered through the proxy is invisible over
-// the IP and vice versa. A silent list that does nothing would be worse than no
-// feature.
-//
-// SECOND RULE: a passkey never replaces the password. It is an additional way
-// in, never the only one. An operator whose phone is lost, whose proxy is down
-// or who reaches the box by IP that day must still be able to open their own
-// backups, and a lockout here is a lockout from the one tool that recovers
-// everything else.
-// ---------------------------------------------------------------------------
+// WebAuthn binds a credential to a relying-party id, which has to be a domain,
+// and browsers refuse the ceremony on a certificate they do not trust. The
+// Unraid template opens https://[IP]:3443 with a self-signed certificate, so
+// passkeys only work behind a reverse proxy with a real host name.
 
-// passkeyCeremony is one in-flight registration or login.
-//
-// Kept in memory rather than in the database: it is valid for a minute or two,
-// it is worthless afterwards, and writing an authentication challenge to disk on
-// every button press buys nothing. The consequence is that a restart cancels a
-// half-finished ceremony, which costs a second click.
+// passkeyCeremony is one in-flight registration or login. It lives in memory
+// only: it expires within minutes, and a restart costs a second click at most.
 type passkeyCeremony struct {
 	session webauthn.SessionData
 	rpID    string
@@ -68,20 +38,16 @@ type passkeyCeremony struct {
 }
 
 const (
-	// passkeyCeremonyTTL bounds how long a started ceremony stays completable.
-	// The browser prompt itself usually times out sooner; this is the backstop
-	// that keeps an abandoned challenge from lingering.
+	// passkeyCeremonyTTL bounds how long a started ceremony can be finished.
+	// The browser prompt usually times out sooner.
 	passkeyCeremonyTTL = 5 * time.Minute
-	// passkeyCeremonyMax bounds the map. A ceremony is only started by a request
-	// this box answered, but the LOGIN one is reachable without a session, so it
-	// needs a ceiling that does not depend on the caller behaving.
+	// passkeyCeremonyMax caps the map, because a login ceremony can be started
+	// without a session.
 	passkeyCeremonyMax = 64
 )
 
-// beginPasskeyCeremony stores session data and returns the opaque handle the
-// finish call has to present. The handle is what proves the finishing request
-// belongs to the ceremony this box started; it is random, single-use and
-// short-lived.
+// beginPasskeyCeremony stores the session data and returns the random,
+// single-use handle the finish call has to present.
 func (h *Handler) beginPasskeyCeremony(s *webauthn.SessionData, rpID string) (string, error) {
 	raw := make([]byte, 32)
 	if _, err := rand.Read(raw); err != nil {
@@ -100,9 +66,8 @@ func (h *Handler) beginPasskeyCeremony(s *webauthn.SessionData, rpID string) (st
 			delete(h.passkeyCeremonies, k)
 		}
 	}
-	// Still full after the sweep: drop the oldest rather than grow without
-	// bound. Losing somebody else's in-flight ceremony costs one more click;
-	// an unbounded map reachable without a session does not.
+	// Still full: drop the oldest. That costs somebody one more click, while an
+	// unbounded map reachable without a session costs memory.
 	for len(h.passkeyCeremonies) >= passkeyCeremonyMax {
 		oldestKey, oldest := "", time.Time{}
 		for k, c := range h.passkeyCeremonies {
@@ -116,8 +81,8 @@ func (h *Handler) beginPasskeyCeremony(s *webauthn.SessionData, rpID string) (st
 	return id, nil
 }
 
-// takePasskeyCeremony consumes a handle. Single-use: a challenge that has been
-// answered once must not be answerable again.
+// takePasskeyCeremony consumes a handle, so an answered challenge cannot be
+// replayed.
 func (h *Handler) takePasskeyCeremony(id string) (passkeyCeremony, bool) {
 	h.passkeyMu.Lock()
 	defer h.passkeyMu.Unlock()
@@ -132,28 +97,19 @@ func (h *Handler) takePasskeyCeremony(id string) (passkeyCeremony, bool) {
 	return c, true
 }
 
-// errPasskeyOrigin is the refusal an IP-address origin gets. It carries the
-// whole explanation because this is the one message most operators will meet:
-// the default installation is exactly the case that cannot work.
-//
-// NO SLASH anywhere in it. Every error leaving the API goes through scrubError,
-// whose absolute-path regex redacts any slash-led token, so an example URL in
-// here would arrive mangled - the trap this package has now been bitten by
-// three times.
+// errPasskeyOrigin is the refusal for an IP-address origin, which is what the
+// default installation gets, so it carries the whole explanation. It must not
+// contain a slash: scrubError redacts slash-led tokens on the way out.
 var errPasskeyOrigin = errors.New(
 	"passkeys need a host name, and this page was opened on an IP address. " +
 		"The standard binds a passkey to a domain and browsers refuse the whole exchange on a bare address, " +
 		"and they refuse it again on a certificate the browser does not trust. " +
 		"Reach BombVault through a reverse proxy under a real name with a valid certificate, open it there, and register the key on that address")
 
-// rpIDFor derives the relying-party id from the request, and refuses when the
-// address cannot carry one.
-//
-// The id is the HOST of the page the operator has open, without the port. It is
-// taken from the request rather than from a setting on purpose: the same box is
-// commonly reachable several ways, the browser will only ever offer a key whose
-// id matches the bar, and a configured value would be wrong for every address
-// except the one somebody remembered to type.
+// rpIDFor derives the relying-party id from the request host, without the
+// port, and refuses an address that cannot carry one. It comes from the request
+// rather than a setting because the box is often reachable several ways and the
+// browser only offers a key whose id matches the address bar.
 func rpIDFor(r *http.Request) (string, error) {
 	host := r.Host
 	if h, _, err := net.SplitHostPort(host); err == nil {
@@ -163,9 +119,8 @@ func rpIDFor(r *http.Request) (string, error) {
 	if host == "" {
 		return "", errPasskeyOrigin
 	}
-	// localhost is the documented exception: the specification treats it as a
-	// secure context and browsers accept it as a relying-party id, which makes a
-	// port-forwarded tunnel a working way to use this.
+	// Browsers treat localhost as a secure context and accept it as a
+	// relying-party id, so a port-forwarded tunnel works.
 	if strings.EqualFold(host, "localhost") {
 		return "localhost", nil
 	}
@@ -182,9 +137,8 @@ func (h *Handler) originFor(r *http.Request) string {
 	if h.cfg.HTTPOnly {
 		scheme = "http"
 	}
-	// A proxy that terminates TLS forwards plain HTTP inwards, so the scheme the
-	// BROWSER saw is the one it reports and the one that has to match. Its own
-	// header is the only witness to it.
+	// A proxy that terminates TLS forwards plain HTTP, but the origin has to
+	// carry the scheme the browser saw.
 	if fp := strings.TrimSpace(r.Header.Get("X-Forwarded-Proto")); fp != "" {
 		if i := strings.IndexByte(fp, ','); i > 0 {
 			fp = strings.TrimSpace(fp[:i])
@@ -196,7 +150,7 @@ func (h *Handler) originFor(r *http.Request) string {
 	return scheme + "://" + r.Host
 }
 
-// webAuthnFor builds the library handle for THIS request's address.
+// webAuthnFor builds the library handle for the request's address.
 func (h *Handler) webAuthnFor(r *http.Request) (*webauthn.WebAuthn, string, error) {
 	rpID, err := rpIDFor(r)
 	if err != nil {
@@ -213,13 +167,10 @@ func (h *Handler) webAuthnFor(r *http.Request) (*webauthn.WebAuthn, string, erro
 	return w, rpID, nil
 }
 
-// passkeyUser adapts this instance to the library's one-user-account model.
-//
-// BombVault has a single operator and no user table, so the account is the
-// INSTANCE. Its handle has to be stable (a changed handle makes every existing
-// credential unusable) and must not be guessable from the outside, so it is
-// derived from the APP_KEY - the one secret that already defines this instance
-// and already survives a reinstall through the /config backup.
+// passkeyUser adapts the instance to the library's user model. BombVault has
+// one operator and no user table, so the instance is the account. Its id must
+// be stable, or every registered key stops working, and unguessable, so it is
+// derived from APP_KEY, which survives a reinstall through the config backup.
 type passkeyUser struct {
 	id    []byte
 	name  string
@@ -231,18 +182,16 @@ func (u passkeyUser) WebAuthnName() string                       { return u.name
 func (u passkeyUser) WebAuthnDisplayName() string                { return u.name }
 func (u passkeyUser) WebAuthnCredentials() []webauthn.Credential { return u.creds }
 
-// passkeyUserID derives the stable, unguessable account handle. Hashed rather
-// than used directly so the APP_KEY itself never leaves the box inside a
-// credential.
+// passkeyUserID derives the account id. It is hashed so APP_KEY itself never
+// leaves the box inside a credential.
 func passkeyUserID(appKey string) []byte {
 	sum := sha256.Sum256([]byte("bombvault-passkey-user:" + appKey))
 	return sum[:]
 }
 
-// passkeyUserFor builds the account with the credentials registered for THIS
-// address. Only those: a browser offered a key whose relying-party id does not
-// match the page would refuse it, so listing the others would produce a prompt
-// that cannot succeed.
+// passkeyUserFor builds the account with the credentials registered for rpID.
+// The browser refuses a key for any other relying-party id, so offering those
+// would produce a prompt that cannot succeed.
 func (h *Handler) passkeyUserFor(rpID string) (passkeyUser, []store.Passkey, error) {
 	rows, err := h.store.PasskeysForRP(rpID)
 	if err != nil {
@@ -292,10 +241,6 @@ func joinTransports(ts []protocol.AuthenticatorTransport) string {
 	return strings.Join(out, ",")
 }
 
-// ---------------------------------------------------------------------------
-// Views
-// ---------------------------------------------------------------------------
-
 type passkeyView struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
@@ -324,15 +269,9 @@ func passkeyViews(rows []store.Passkey, hereRPID string) []passkeyView {
 	return out
 }
 
-// ---------------------------------------------------------------------------
-// Endpoints
-// ---------------------------------------------------------------------------
-
-// handlePasskeyStatus serves GET /api/auth/passkeys.
-//
-// Public, like GET /api/auth, because the LOGIN screen has to know whether to
-// offer the button before anybody is signed in. It answers with counts and the
-// reason passkeys are unavailable when they are, never with a credential.
+// handlePasskeyStatus serves GET /api/auth/passkeys. It is public, like
+// GET /api/auth, because the login screen has to know whether to offer the
+// button. It never returns a credential.
 func (h *Handler) handlePasskeyStatus(w http.ResponseWriter, r *http.Request) {
 	rpID, rpErr := rpIDFor(r)
 	all, err := h.store.ListPasskeys()
@@ -348,7 +287,7 @@ func (h *Handler) handlePasskeyStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	body := map[string]any{
 		"ok": true,
-		// supported says whether THIS address can carry passkeys at all.
+		// supported says whether this address can carry passkeys at all.
 		"supported": rpErr == nil,
 		"rpId":      rpID,
 		"total":     len(all),
@@ -390,14 +329,12 @@ func (h *Handler) handlePasskeyRegisterBegin(w http.ResponseWriter, r *http.Requ
 	}
 	creation, session, err := wa.BeginRegistration(
 		user,
-		// The credentials already registered for this address are excluded, so an
-		// authenticator that is already enrolled says so in the browser's own
-		// prompt instead of producing a duplicate this box then has to refuse.
+		// Excluding the keys already registered here lets the browser say so
+		// itself instead of producing a duplicate this box has to refuse.
 		webauthn.WithExclusions(credentialDescriptors(user.creds)),
-		// Resident (discoverable) keys, because the point of a passkey is signing
-		// in without first saying who you are. Preferred rather than required:
-		// an older security key that cannot store one still works as a second way
-		// in rather than being rejected.
+		// Discoverable keys allow signing in without naming an account first.
+		// Preferred, not required, so an older security key without storage
+		// still works.
 		webauthn.WithAuthenticatorSelection(protocol.AuthenticatorSelection{
 			ResidentKey:      protocol.ResidentKeyRequirementPreferred,
 			UserVerification: protocol.VerificationPreferred,
@@ -427,10 +364,8 @@ func credentialDescriptors(creds []webauthn.Credential) []protocol.CredentialDes
 }
 
 // handlePasskeyRegisterFinish serves POST /api/auth/passkey/register/finish.
-//
-// The body is {ceremonyId, name, credential}. The credential is the browser's
-// own answer, handed to the library verbatim: re-encoding it here would mean
-// re-implementing the parsing that validates it.
+// The credential is the browser's own answer, handed to the library verbatim:
+// re-encoding it here would mean re-implementing the parsing that validates it.
 func (h *Handler) handlePasskeyRegisterFinish(w http.ResponseWriter, r *http.Request) {
 	if !h.requireAuthForSecrets(w, "registering a passkey") {
 		return
@@ -550,10 +485,9 @@ func (h *Handler) handlePasskeyLoginBegin(w http.ResponseWriter, r *http.Request
 // handlePasskeyLoginFinish serves POST /api/auth/passkey/login/finish and, on a
 // valid assertion, issues the session cookie.
 //
-// It goes through the SAME brute-force throttle the password login uses. A
-// signature cannot be guessed, so the throttle is not what stops an attack here;
-// it stops this endpoint from being the cheap way around the limit that does
-// protect the password.
+// It shares the password login's throttle. A signature cannot be guessed, but
+// without it this endpoint would be a way around the limit that protects the
+// password.
 func (h *Handler) handlePasskeyLoginFinish(w http.ResponseWriter, r *http.Request) {
 	hash, epoch, on := h.authEnabled()
 	if !on {
@@ -609,10 +543,9 @@ func (h *Handler) handlePasskeyLoginFinish(w http.ResponseWriter, r *http.Reques
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "that passkey was not accepted"})
 		return
 	}
-	// A counter that did not advance when the authenticator says it keeps one is
-	// the documented signal of a cloned key. Many modern authenticators report 0
-	// and never move, which is why this refuses only when BOTH sides are
-	// non-zero: a fixed zero is "no counter", not "no progress".
+	// A counter that failed to advance is the documented sign of a cloned key.
+	// The library does not warn when both counters are zero, which is how an
+	// authenticator without a counter reports.
 	if cred.Authenticator.CloneWarning {
 		h.recordLoginFail(key)
 		log.Printf("api: passkey sign-in refused: the authenticator's counter went backwards, which is how a cloned key shows")

@@ -10,8 +10,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/model"
 )
 
-// writeSized creates a file of exactly n bytes (parents included), so the
-// walker's recursive size attribution can be asserted byte-exact.
+// writeSized creates a file of exactly n bytes, parents included.
 func writeSized(t *testing.T, p string, n int) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(p), 0o750); err != nil {
@@ -29,9 +28,9 @@ func suggestTestOpts() suggestOpts {
 
 func TestScanExcludeCandidatesKnownAndLarge(t *testing.T) {
 	root := t.TempDir()
-	writeSized(t, filepath.Join(root, "Cache", "tiny.bin"), 10)         // junk by NAME, size irrelevant
-	writeSized(t, filepath.Join(root, "data", "deep", "blob.bin"), 2e3) // large by SIZE (attributed from depth 2)
-	writeSized(t, filepath.Join(root, "small", "f.bin"), 10)            // neither — must not appear
+	writeSized(t, filepath.Join(root, "Cache", "tiny.bin"), 10)         // junk by name, size irrelevant
+	writeSized(t, filepath.Join(root, "data", "deep", "blob.bin"), 2e3) // large by size, attributed from depth 2
+	writeSized(t, filepath.Join(root, "small", "f.bin"), 10)            // neither
 
 	sc := scanExcludeCandidates(context.Background(), root, nil, suggestTestOpts())
 	cands := sc.cands
@@ -64,17 +63,17 @@ func TestScanExcludeCandidatesKnownAndLarge(t *testing.T) {
 
 func TestScanExcludeCandidatesSkipsExcluded(t *testing.T) {
 	root := t.TempDir()
-	writeSized(t, filepath.Join(root, "app", "logs", "big.log"), 5e3) // excluded by BASENAME pattern
-	writeSized(t, filepath.Join(root, "skipme", "big.bin"), 5e3)      // excluded by ANCHORED pattern
-	writeSized(t, filepath.Join(root, "keep", "f.bin"), 2e3)          // stays
+	writeSized(t, filepath.Join(root, "app", "logs", "big.log"), 5e3) // excluded by a basename pattern
+	writeSized(t, filepath.Join(root, "skipme", "big.bin"), 5e3)      // excluded by an anchored pattern
+	writeSized(t, filepath.Join(root, "keep", "f.bin"), 2e3)
 
 	patterns := []string{
-		"logs", // basename — matches at any depth, like restic
-		filepath.ToSlash(filepath.Join(root, "skipme")), // anchored absolute
+		"logs", // basename, matches at any depth like restic
+		filepath.ToSlash(filepath.Join(root, "skipme")),
 	}
 	cands := scanExcludeCandidates(context.Background(), root, patterns, suggestTestOpts()).cands
-	// Excluded subtrees are pruned AND not counted: "app" holds only the pruned
-	// logs, so it stays under the threshold and must not qualify either.
+	// Excluded subtrees are pruned and not counted: "app" holds only the pruned
+	// logs, so it stays under the threshold too.
 	if len(cands) != 1 || cands[0].rel != "keep" || cands[0].size != 2000 {
 		t.Fatalf("expected only keep(2000), got %+v", cands)
 	}
@@ -82,7 +81,7 @@ func TestScanExcludeCandidatesSkipsExcluded(t *testing.T) {
 
 func TestScanExcludeCandidatesDepthBound(t *testing.T) {
 	root := t.TempDir()
-	// Cache sits at depth 5 — beyond the bound, so it is NOT suggested itself,
+	// Cache sits at depth 5, beyond the bound, so it is not suggested itself,
 	// but its bytes surface through every ancestor within the bound.
 	writeSized(t, filepath.Join(root, "a", "b", "c", "d", "Cache", "f.bin"), 2e3)
 
@@ -103,8 +102,8 @@ func TestScanExcludeCandidatesDepthBound(t *testing.T) {
 
 func TestScanExcludeCandidatesKnownSuppressesChildren(t *testing.T) {
 	root := t.TempDir()
-	// Cache qualifies by name; its child clears the size threshold too — but
-	// excluding Cache already covers it, so only Cache may be suggested.
+	// Cache qualifies by name and its child by size, but excluding Cache already
+	// covers the child.
 	writeSized(t, filepath.Join(root, "Cache", "sub", "big.bin"), 2e3)
 
 	cands := scanExcludeCandidates(context.Background(), root, nil, suggestTestOpts()).cands
@@ -118,7 +117,7 @@ func TestScanExcludeCandidatesTimeBound(t *testing.T) {
 	writeSized(t, filepath.Join(root, "Cache", "f.bin"), 10)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	cancel() // already expired — the walk must stop immediately and say so
+	cancel() // the walk must stop at once and say so
 	sc := scanExcludeCandidates(ctx, root, nil, suggestTestOpts())
 	if !sc.truncated {
 		t.Fatal("expired context must report truncated=true")
@@ -126,21 +125,20 @@ func TestScanExcludeCandidatesTimeBound(t *testing.T) {
 	if len(sc.cands) != 0 {
 		t.Fatalf("expired context must return no candidates, got %+v", sc.cands)
 	}
-	// The walk never got past the root, so that is where it stopped — the UI's
-	// truncation banner names a place, and there is always one to name.
+	// The walk never got past the root, so the truncation banner names the root.
 	if sc.stoppedAt != filepath.ToSlash(root) {
 		t.Fatalf("stoppedAt = %q, want the root %q", sc.stoppedAt, filepath.ToSlash(root))
 	}
 }
 
 func TestExcludeLineFor(t *testing.T) {
-	s := excludeSvc() // /mnt → /host/user (box-gate mapping, see excludeSvc)
+	s := excludeSvc()
 	in := model.Inspect{Mounts: []model.Mount{
 		{Type: "bind", Source: "/mnt/user/appdata/plex", Destination: "/config"},
 	}}
 
-	// A scanned dir under a mounted appdata folder maps back to the path as seen
-	// INSIDE the target container — the exact inverse of resolveExcludeLine.
+	// A scanned dir under a mounted folder maps back to the path inside the
+	// container, the inverse of resolveExcludeLine.
 	full := "/host/user/user/appdata/plex/Cache"
 	line := s.excludeLineFor(full, in)
 	if line != "/config/Cache" {
@@ -151,8 +149,8 @@ func TestExcludeLineFor(t *testing.T) {
 		t.Fatalf("round-trip: got (%q,%q), want (%q,translated)", pattern, status, full)
 	}
 
-	// A dir no container mount covers falls back to the scanned path verbatim —
-	// which resolves as a passthrough to itself, so it still excludes correctly.
+	// A dir no mount covers keeps the scanned path, which resolves to itself as a
+	// passthrough.
 	orphan := "/host/user/user/media/movies"
 	if line := s.excludeLineFor(orphan, in); line != orphan {
 		t.Fatalf("orphan line = %q, want %q", line, orphan)

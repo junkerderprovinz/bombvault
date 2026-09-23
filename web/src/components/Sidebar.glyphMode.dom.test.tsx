@@ -1,26 +1,6 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// Sidebar — what the rail does once the "sidebar" axis is set to glyphs, which
-// is where jdp's two standing decisions for this round land:
-//
-//   1. THE RAIL NARROWS, AND ONLY IN THIS MODE. Glyph mode drops to the house
-//      width (`--rail-narrow`, 85px) with the smaller mark (#178, manilx: "When using only buttons in sidebar it
-//      should shrink in width"); text and text+glyph need the words' width,
-//      and REACTIVE keeps 224px because its words slide back inside the row
-//      and its active row keeps them permanently, so a narrow rail would clip
-//      the one row that must stay readable. The glyphs still centre in
-//      whatever column they are given, which is what the second half of this
-//      file's first describe guards.
-//
-//   2. A ROW WITH NO VISIBLE TEXT EXPLAINS ITSELF IN THE REAL BUBBLE, never
-//      in a native `title=` balloon (design-language's anti-pattern, the one
-//      lint-rules/icon-badge-needs-tooltip.js fails the build over). Eleven
-//      unnamed pictures would otherwise be the whole rail.
-//
-// Both are class/DOM contracts, which is what jsdom can actually hold: the
-// real centring is CSS, verified live in a browser, exactly the split
-// Sidebar.tabColor.dom.test.tsx's own header describes.
-// ---------------------------------------------------------------------------
+// The rail in glyph mode. jsdom checks the classes and the DOM; the centring
+// itself is CSS and needs a browser.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -41,9 +21,7 @@ function renderSidebar() {
   );
 }
 
-/** Every row of the rail: the nav destinations, Settings, and the
- *  Simple/Advanced toggle — which is the one that has historically been
- *  forgotten (it was the single row not following this axis at all). */
+/** Every row of the rail, the view toggle included. */
 function railRows(): HTMLElement[] {
   return [
     ...document.querySelectorAll<HTMLElement>("aside .glim-nav-row"),
@@ -64,9 +42,8 @@ describe("glyph mode centres the rail", () => {
     setLabelMode("sidebar", "glyph");
     renderSidebar();
     const rows = railRows();
-    // Dashboard, Recovery, Containers, the view toggle, Settings — the rail
-    // with no optional domain enabled. If this ever reads 0 the selector is
-    // wrong and the assertion below would pass vacuously.
+    // Dashboard, Recovery, Containers, the view toggle and Settings. The count
+    // keeps the loop below from passing on an empty list.
     expect(rows.length).toBe(5);
     for (const row of rows) expect(row.className).toContain("justify-center");
   });
@@ -91,14 +68,11 @@ describe("glyph mode is the only mode that narrows the rail", () => {
   it("drops the rail to the house width and the mark to 48px in glyph mode", () => {
     setLabelMode("sidebar", "glyph");
     renderSidebar();
-    // The class names the TOKEN rather than a number, which is the point of the
-    // change: 85px is the house's width for a glyph-only rail, not this app's
-    // own sum of mark plus row padding (which gave 96 here and 64 next door).
+    // The shared token, not a width of this app's own.
     expect(rail().className).toContain("w-(--rail-narrow)");
     expect(rail().className).not.toContain("w-56");
-    // The mark's own box, and the size the shatter tiles read for their
-    // background: both have to move, or the tiles slice an image scaled to a
-    // box they are no longer in.
+    // The mark's box and the size the shatter tiles read have to change
+    // together, or the tiles slice an image scaled to the wrong box.
     const mark = document.querySelector<HTMLElement>(".glim-logo-mark");
     expect(mark?.className).toContain("h-12 w-12");
     expect(mark?.parentElement?.style.getPropertyValue("--egg-mark")).toBe("48px");
@@ -118,7 +92,7 @@ describe("glyph mode is the only mode that narrows the rail", () => {
   });
 });
 
-describe("glyph mode names the rows in a real bubble", () => {
+describe("glyph mode names the rows in a tooltip bubble", () => {
   it("reveals a nav row's name on hover and on focus, with no native title", () => {
     setLabelMode("sidebar", "glyph");
     renderSidebar();
@@ -131,13 +105,13 @@ describe("glyph mode names the rows in a real bubble", () => {
     fireEvent.mouseLeave(dashboard);
     expect(document.querySelector(".glim-bubble")).toBeNull();
 
-    // Keyboard reachable, which the native balloon never was.
+    // Keyboard focus shows it too, which a native title never does.
     fireEvent.keyDown(document.body, { key: "Tab" });
     act(() => dashboard.focus());
     expect(document.querySelector(".glim-bubble")?.textContent).toBe("Dashboard");
   });
 
-  it("gives the view toggle the same bubble, carrying the view it will show", () => {
+  it("gives the view toggle the same bubble, naming the current view", () => {
     setLabelMode("sidebar", "glyph");
     renderSidebar();
     // Simple is the default view, so that is the name currently on the row.
@@ -147,7 +121,7 @@ describe("glyph mode names the rows in a real bubble", () => {
     expect(document.querySelector(".glim-bubble")?.textContent).toBe("Simple view");
   });
 
-  it("drops the wordmark and centres the mark, so the header sits on the glyph column's axis", () => {
+  it("drops the wordmark and centres the mark on the glyph column", () => {
     setLabelMode("sidebar", "glyph");
     renderSidebar();
     const logo = screen.getByRole("button", { name: "Dashboard" });
@@ -173,9 +147,6 @@ describe("glyph mode names the rows in a real bubble", () => {
   it("says nothing on hover while the rows still show their own text", () => {
     setLabelMode("sidebar", "textGlyph");
     renderSidebar();
-    // Including the view toggle, which carried its name in a native `title`
-    // in EVERY mode before this round — the balloon on a row whose words are
-    // printed right next to it.
     for (const el of [
       screen.getByRole("link", { name: "Dashboard" }),
       screen.getByRole("button", { name: "Simple view" }),

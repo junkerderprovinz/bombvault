@@ -11,19 +11,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// ---------------------------------------------------------------------------
-// Fleet peer CRUD + manual poll endpoints
-// ---------------------------------------------------------------------------
-//
-// This box watches a list of PEER BombVault instances here, read-only: their
-// protection scorecard, nothing else. Every endpoint is under the existing
-// authGate. The stored peer token is encrypted at rest (internal/secret) and
-// NEVER returned in the clear — the view only reports whether one is stored
-// (hasToken). Modeled closely on receiver_handlers.go.
-
-// fleetPeerView is the JSON wire shape of a registered fleet peer's
-// configuration + persisted last-poll status. It deliberately carries NO
-// token (only hasToken) so the peer's secret never leaves the box.
+// fleetPeerView is a registered fleet peer with its last poll result. It
+// reports only whether a token is stored, never the token.
 type fleetPeerView struct {
 	ID                   string              `json:"id"`
 	Name                 string              `json:"name"`
@@ -37,13 +26,12 @@ type fleetPeerView struct {
 	LastPollDomains      []DomainStatusEntry `json:"lastPollDomains"`
 	CreatedAt            int64               `json:"createdAt"`
 	SortOrder            int                 `json:"sortOrder"`
-	HasToken             bool                `json:"hasToken"` // a peer token is stored (the token itself is never returned)
+	HasToken             bool                `json:"hasToken"`
 }
 
-// fleetPeerInput is the create/update request body. Token is the PEER's
-// fleet_token; on update an empty Token keeps the stored one (so an edit need
-// not resend the secret). Enabled is a pointer so its absence is
-// distinguishable from an explicit false.
+// fleetPeerInput is the create and update request body. Token is the peer's
+// fleet token; on update an empty Token keeps the stored one. Enabled is a
+// pointer so that leaving it out differs from sending false.
 type fleetPeerInput struct {
 	Name      string `json:"name"`
 	URL       string `json:"url"`
@@ -60,7 +48,7 @@ func fleetPeerToView(p store.FleetPeer) fleetPeerView {
 	}
 	var domains []DomainStatusEntry
 	if p.LastPollDomainsJSON != "" {
-		_ = json.Unmarshal([]byte(p.LastPollDomainsJSON), &domains) // best-effort: a decode failure just shows no cached domains
+		_ = json.Unmarshal([]byte(p.LastPollDomainsJSON), &domains) // on failure the view shows no cached domains
 	}
 	return fleetPeerView{
 		ID:                   p.ID,
@@ -79,12 +67,10 @@ func fleetPeerToView(p store.FleetPeer) fleetPeerView {
 	}
 }
 
-// buildFleetPeer validates in and folds it onto existing (the zero value on
-// create), returning the row to persist or a user-facing error message. The
-// token is encrypted at rest with THIS instance's APP_KEY before it ever
-// reaches the store; on update an empty Token preserves existing.TokenEnc.
-// Identity and last-poll columns are carried from existing so an edit never
-// re-stamps them.
+// buildFleetPeer validates in and applies it to existing (the zero value on
+// create). It returns the row to store, with the token encrypted under this
+// instance's app key, or a message for the user. Identity and last-poll
+// fields are kept from existing.
 func buildFleetPeer(cfgAppKey string, in fleetPeerInput, existing store.FleetPeer, isCreate bool) (store.FleetPeer, string) {
 	peerURL := strings.TrimSpace(in.URL)
 	if peerURL == "" {
@@ -100,7 +86,6 @@ func buildFleetPeer(cfgAppKey string, in fleetPeerInput, existing store.FleetPee
 	case token == "" && isCreate:
 		return store.FleetPeer{}, "the peer's fleet token is required (generated on that instance's Settings page)"
 	case token == "":
-		// Update with no new token: keep the stored ciphertext untouched.
 		p.TokenEnc = existing.TokenEnc
 	default:
 		enc, err := secret.Encrypt(cfgAppKey, []byte(token))
@@ -119,13 +104,10 @@ func buildFleetPeer(cfgAppKey string, in fleetPeerInput, existing store.FleetPee
 	return p, ""
 }
 
-// handleListFleetPeers lists every registered fleet peer with its persisted
-// last-poll status (including the cached scorecard). GET /api/fleet/peers.
-// Unlike the receiver dashboard's list endpoint, this does NOT live-probe
-// every peer on each page load — a peer poll is a real network round-trip to
-// another site, so freshness comes from the scheduled sweep (RunFleetPolls)
-// and the explicit poll-now button, never an implicit one from just opening
-// the page. Never returns a decrypted token.
+// handleListFleetPeers lists the fleet peers with their last stored poll
+// result. It does not poll them: a poll is a round-trip to another site, so
+// fresh results come from the scheduled sweep and the poll-now button.
+// GET /api/fleet/peers
 func (h *Handler) handleListFleetPeers(w http.ResponseWriter, _ *http.Request) {
 	peers, err := h.store.ListFleetPeers()
 	if err != nil {
@@ -139,11 +121,10 @@ func (h *Handler) handleListFleetPeers(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"peers": out}))
 }
 
-// handleCreateFleetPeer registers a fleet peer. POST /api/fleet/peers. The
-// peer must actually answer its /api/fleet/status with the given token before
-// the row is saved — a mistyped URL/token never lands silently in the list —
-// and the first poll's result is recorded immediately so the new row never
-// shows a misleading "never polled" for a peer that IS reachable.
+// handleCreateFleetPeer registers a fleet peer. The peer must answer with the
+// given token before it is saved, so a mistyped URL or token is caught here,
+// and the first poll is recorded right away.
+// POST /api/fleet/peers
 func (h *Handler) handleCreateFleetPeer(w http.ResponseWriter, r *http.Request) {
 	var in fleetPeerInput
 	if !decodeBody(w, r, &in) {
@@ -167,10 +148,9 @@ func (h *Handler) handleCreateFleetPeer(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"peer": fleetPeerToView(refetchedOrStored(h, stored))}))
 }
 
-// handleUpdateFleetPeer edits a fleet peer in place. PUT /api/fleet/peers/{id}.
-// The id comes from the path; identity + last-poll columns are preserved. As
-// with create, the (possibly token-changed) peer must answer before the edit
-// is saved.
+// handleUpdateFleetPeer edits a fleet peer. As on create, the peer must answer
+// before the edit is saved.
+// PUT /api/fleet/peers/{id}
 func (h *Handler) handleUpdateFleetPeer(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	existing, ok, err := h.store.GetFleetPeer(id)
@@ -193,8 +173,6 @@ func (h *Handler) handleUpdateFleetPeer(w http.ResponseWriter, r *http.Request) 
 	}
 	token := strings.TrimSpace(in.Token)
 	if token == "" {
-		// No new token presented: probe with the stored one so an edit that only
-		// changes e.g. the name still verifies the peer is reachable.
 		if dec, dErr := h.svc.decryptFleetPeerToken(p); dErr == nil {
 			token = dec
 		}
@@ -211,9 +189,9 @@ func (h *Handler) handleUpdateFleetPeer(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"peer": fleetPeerToView(refetchedOrStored(h, p))}))
 }
 
-// handleDeleteFleetPeer removes a fleet peer's DB row. DELETE
-// /api/fleet/peers/{id}. It NEVER contacts the peer (this box only ever
-// polled it read-only). A missing id is a harmless no-op.
+// handleDeleteFleetPeer removes a fleet peer without contacting it. An
+// unknown id is not an error.
+// DELETE /api/fleet/peers/{id}
 func (h *Handler) handleDeleteFleetPeer(w http.ResponseWriter, r *http.Request) {
 	if err := h.store.DeleteFleetPeer(r.PathValue("id")); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -222,8 +200,8 @@ func (h *Handler) handleDeleteFleetPeer(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleFleetPeerPoll polls one peer now and returns the fresh persisted
-// result. POST /api/fleet/peers/{id}/poll.
+// handleFleetPeerPoll polls one peer now and returns the recorded result.
+// POST /api/fleet/peers/{id}/poll
 func (h *Handler) handleFleetPeerPoll(w http.ResponseWriter, r *http.Request) {
 	p, ok, err := h.store.GetFleetPeer(r.PathValue("id"))
 	if err != nil {
@@ -239,9 +217,8 @@ func (h *Handler) handleFleetPeerPoll(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"peer": fleetPeerToView(fresh)}))
 }
 
-// refetchedOrStored re-reads a fleet peer by id so the response reflects the
-// just-recorded poll result; on a read error it falls back to fallback (the
-// pre-poll row) rather than failing the whole request over a cosmetic re-read.
+// refetchedOrStored re-reads a fleet peer so the response shows the poll just
+// recorded. If the read fails it returns fallback instead.
 func refetchedOrStored(h *Handler, fallback store.FleetPeer) store.FleetPeer {
 	if fresh, ok, err := h.store.GetFleetPeer(fallback.ID); err == nil && ok {
 		return fresh
@@ -249,12 +226,10 @@ func refetchedOrStored(h *Handler, fallback store.FleetPeer) store.FleetPeer {
 	return fallback
 }
 
-// handleFleetTokenGenerate handles POST /api/fleet/token — generates a fresh
-// random 32-hex token, stores it (replacing any previous one — regenerate ==
-// revoke old + issue new) and returns it ONCE. Every peer instance that had
-// this instance configured with the OLD token must be updated with the new
-// one, exactly like rotating a widget token breaks existing embeds. Session-
-// protected via authGate: only a logged-in admin can mint or rotate it.
+// handleFleetTokenGenerate creates a random token for peers to poll this
+// instance with, replaces any previous one and returns it once. Peers that
+// used the old token have to be given the new one.
+// POST /api/fleet/token
 func (h *Handler) handleFleetTokenGenerate(w http.ResponseWriter, _ *http.Request) {
 	buf := make([]byte, 16)
 	if _, err := rand.Read(buf); err != nil {
@@ -272,10 +247,9 @@ func (h *Handler) handleFleetTokenGenerate(w http.ResponseWriter, _ *http.Reques
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"token": token}))
 }
 
-// handleFleetTokenDisable handles DELETE /api/fleet/token — clears the stored
-// token, so GET /api/fleet/status immediately fails closed (403) again for
-// every peer polling this instance. Session-protected like the generate
-// endpoint.
+// handleFleetTokenDisable clears the fleet token, so every peer polling this
+// instance gets 403 from then on.
+// DELETE /api/fleet/token
 func (h *Handler) handleFleetTokenDisable(w http.ResponseWriter, _ *http.Request) {
 	if _, err := h.store.MutateSettings(func(s *store.Settings) error {
 		s.FleetToken = ""

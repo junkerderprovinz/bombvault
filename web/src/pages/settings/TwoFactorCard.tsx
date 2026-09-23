@@ -1,17 +1,3 @@
-// TwoFactorCard — the second login factor, v8.6.0.
-//
-// The card walks one line: OFF, or a three-step enrolment (scan, prove, write
-// the recovery codes down), or ON. Enrolment is a sequence, so the card renders
-// the step it is on rather than every control at once with most of them
-// disabled.
-//
-// Two rules the interface has to carry, because they are not obvious and the
-// consequence of missing either is being locked out of your own backups:
-//   - the recovery codes are shown exactly once, so the card says so before
-//     it shows them and asks for an acknowledgement before it puts them away;
-//   - the factor is not on until a code from the app has been accepted, so the
-//     status line never claims it is armed while the enrolment is half done.
-
 import { useState } from "react";
 import { Button } from "../../components/Button";
 import { QRCode } from "../../components/QRCode";
@@ -27,6 +13,15 @@ type Step =
   | { kind: "scan"; secret: string; uri: string }
   | { kind: "codes"; codes: string[] };
 
+// TwoFactorCard manages the TOTP second login factor. It renders one state at
+// a time: off, a three-step enrolment (scan, prove, write the recovery codes
+// down), or on.
+//
+// Missing either of two rules locks somebody out of their own backups. The
+// recovery codes are shown exactly once, so the card asks for an
+// acknowledgement before it puts them away. And the factor is not on until a
+// code from the app has been accepted, so the status line never claims it is
+// armed mid-enrolment.
 export function TwoFactorCard({
   /** Whether a login password exists at all. A second factor without a first
    *  one protects nothing, and the server refuses to set one up. */
@@ -123,12 +118,9 @@ export function TwoFactorCard({
         <p className="text-sm text-carbon-textSub">{t("auth.twoFactorNeedsPassword")}</p>
       )}
 
-      {/* OFF: one button starts the enrolment. */}
       {passwordSet && !enabled && step.kind === "idle" && (
-        // self-start, or the Card's flex column stretches it across the full
-        // width: a lone button in a column has nothing beside it to size
-        // against. Every other button in this card sits in a flex row and was
-        // therefore already the width of its own words.
+        // self-start, or the card's flex column stretches the lone button
+        // across the full width.
         <Button
           label={t("auth.twoFactorEnable")}
           labelKey="auth.twoFactorEnable"
@@ -231,13 +223,13 @@ export function TwoFactorCard({
         </div>
       )}
 
-      {/* ON: how many codes are left, and the way out. Turning it off needs a
-          live code, so a session somebody walked away from cannot remove it. */}
+      {/* Turning the factor off needs a live code, so a session somebody
+          walked away from cannot remove it. */}
       {enabled && step.kind === "idle" && (
         <div className="flex flex-col gap-3">
           {recoveryLeft !== undefined && (
             <p className="text-sm text-carbon-textSub">
-              {t("auth.recoveryLeft").replace("{n}", String(recoveryLeft))}
+              {t("auth.recoveryLeft", recoveryLeft)}
             </p>
           )}
           {!disarming ? (

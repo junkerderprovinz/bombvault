@@ -17,10 +17,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// composeInspectState builds a stored inspect for a compose stack member, carrying
-// the project/service/depends_on labels the restore enumeration + ordering read,
-// with an explicit run-state-at-backup (restore only starts members that were
-// running when backed up).
+// composeInspectState builds a stored inspect for a compose stack member with
+// its compose labels and its run state at backup time.
 func composeInspectState(name, project, service, dependsOn string, running bool) model.Inspect {
 	labels := map[string]string{
 		"com.docker.compose.project": project,
@@ -44,10 +42,9 @@ func composeInspect(name, project, service, dependsOn string) model.Inspect {
 	return composeInspectState(name, project, service, dependsOn, true)
 }
 
-// seedStackTargetState seeds a container target with a stored compose definition +
-// a backup path under the mount root, so RestoreStack enumerates it and Restore can
-// reach the fake docker. mountRoot is a Linux-absolute host mount (paths.Within
-// uses forward-slash semantics), so appdata paths are built with forward slashes.
+// seedStackTargetState stores a target with a compose definition and an appdata
+// path under mountRoot. paths.Within works with forward slashes, so the path is
+// built with them.
 func seedStackTargetState(t *testing.T, st *store.Repo, mountRoot, name, project, service, dependsOn string, running bool) {
 	t.Helper()
 	def, err := marshalDefinition(composeInspectState(name, project, service, dependsOn, running), "")
@@ -69,7 +66,7 @@ func seedStackTarget(t *testing.T, st *store.Repo, mountRoot, name, project, ser
 	seedStackTargetState(t, st, mountRoot, name, project, service, dependsOn, true)
 }
 
-// stackTestService builds a service + store with a real (empty) local containers
+// stackTestService builds a service and store with an empty local containers
 // repo on disk, so RestoreStack's "latest" resolves the fake engine's snapshots.
 func stackTestService(t *testing.T, eng *fakeResticEngine, d *fakeServiceDocker) (*api.Service, *store.Repo, string) {
 	t.Helper()
@@ -98,14 +95,11 @@ func stackTestService(t *testing.T, eng *fakeResticEngine, d *fakeServiceDocker)
 	return api.NewService(cfg, st, d, fakeVirsh{}, eng), st, mountRoot
 }
 
-// TestRestoreStack exercises the full stack-restore path: all members restore
-// STOPPED (leaveStopped), and with startAfter they start in dependency order.
+// Members are restored stopped and, with startAfter, started in dependency order.
 func TestRestoreStack(t *testing.T) {
 	dir := t.TempDir()
-	// HostMountRoot is a Linux-absolute host mount: paths.Within validates the
-	// stored appdata paths with forward-slash semantics (see the sibling
-	// TestRestoreUsesStoredDefinitionWhenContainerDeleted). The repo/templates live
-	// on the real Windows temp dir; the two are independent.
+	// paths.Within checks appdata paths with forward slashes, so the mount root is
+	// a Linux path while the repo lives in the temp dir.
 	const mountRoot = "/host/user"
 	cfg := config.Config{
 		AppKey:            strings.Repeat("a", 64),
@@ -130,15 +124,14 @@ func TestRestoreStack(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// media stack: a depends_on b, b depends_on c, c none → start order c,b,a.
+	// a depends on b and b on c, so the start order is c, b, a.
 	seedStackTarget(t, st, mountRoot, "svc-a", "media", "a", "b")
 	seedStackTarget(t, st, mountRoot, "svc-b", "media", "b", "c")
 	seedStackTarget(t, st, mountRoot, "svc-c", "media", "c", "")
-	// A target in a DIFFERENT project must never be touched.
+	// A target in another project stays untouched.
 	seedStackTarget(t, st, mountRoot, "other-1", "otherstack", "web", "")
 
-	d := &fakeServiceDocker{liveName: ""} // absent → fresh restore path
-	// Every stack member's snapshot resolves from this list (tag-scoped per name).
+	d := &fakeServiceDocker{liveName: ""} // no live container: fresh restore
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{
 		{ID: "aaaa1111", Tags: []string{"container:svc-a"}},
 		{ID: "bbbb2222", Tags: []string{"container:svc-b"}},
@@ -152,7 +145,7 @@ func TestRestoreStack(t *testing.T) {
 		t.Fatalf("RestoreStack: %v", err)
 	}
 
-	// Three members, in stable (alphabetical) enumeration order: svc-a, svc-b, svc-c.
+	// Members come back in alphabetical order.
 	if len(res.Members) != 3 {
 		t.Fatalf("members = %d, want 3 (%+v)", len(res.Members), res.Members)
 	}
@@ -169,14 +162,12 @@ func TestRestoreStack(t *testing.T) {
 		}
 	}
 
-	// Every member must have been recreated LEFT STOPPED — CreateAndStart's start
-	// flag false for each (leaveStopped overrides the running-at-backup state).
+	// leaveStopped overrides the run state at backup, so CreateAndStart never
+	// starts a member.
 	if d.createdStart {
 		t.Fatalf("last CreateAndStart start=true; every stack member must be recreated stopped")
 	}
 
-	// The Start calls must have happened in dependency order c, b, a. Extract the
-	// start:<name> calls from the recorded call log and check the sequence.
 	var starts []string
 	for _, c := range d.calls {
 		if name, ok := strings.CutPrefix(c, "start:"); ok {
@@ -193,7 +184,6 @@ func TestRestoreStack(t *testing.T) {
 		}
 	}
 
-	// The container in the OTHER project must NOT have been restored or started.
 	for _, c := range d.calls {
 		if strings.Contains(c, "other-1") {
 			t.Fatalf("other-project container was touched: %v", d.calls)
@@ -206,31 +196,24 @@ func TestRestoreStack(t *testing.T) {
 	}
 }
 
-// TestRestoreStackCancelledMemberAbortsLoop pins the clean-abort contract that
-// B1 makes reachable: when a member's restore is cancelled (the real restic
-// layer now surfaces context.Canceled — here the fake stands in for it), the
-// stack loop stops AT that member. The current member is recorded, the result
-// carries only the members processed so far, EVERY remaining member is left
-// untouched (no restore run is even started for them), and the dependency-ordered
-// start loop is skipped entirely (no container is started).
+// A cancelled member stops the stack loop there: the result holds only that
+// member, the remaining members get no run and nothing is started.
 func TestRestoreStackCancelledMemberAbortsLoop(t *testing.T) {
-	d := &fakeServiceDocker{liveName: ""} // absent → fresh restore path
-	// restoreErr fires for whichever member the loop reaches first; enumeration is
-	// alphabetical, so svc-a is cancelled and svc-b/svc-c must never be reached.
+	d := &fakeServiceDocker{liveName: ""} // no live container: fresh restore
+	// restoreErr hits the first member the loop reaches. Enumeration is
+	// alphabetical, so svc-a is cancelled and svc-b and svc-c are never reached.
 	eng := &fakeResticEngine{
 		restoreErr: context.Canceled,
 		snaps: []restic.Snapshot{
-			// Paths mirrors a real backup's recorded positional (RESTORE-01 maps
-			// the stored selection against the chosen snapshot's Paths).
+			// The restore maps the stored selection against the snapshot's Paths.
 			{ID: "aaaa1111", Tags: []string{"container:svc-a"}, Paths: []string{"/host/user/appdata/svc-a"}},
 			{ID: "bbbb2222", Tags: []string{"container:svc-b"}, Paths: []string{"/host/user/appdata/svc-b"}},
 			{ID: "cccc3333", Tags: []string{"container:svc-c"}, Paths: []string{"/host/user/appdata/svc-c"}},
 		},
 	}
-	// A REMOTE containers repo skips the local-existence probe so the restore
-	// actually reaches the engine (and its restoreErr) instead of silently taking
-	// the recreate-only path — the same reason TestStartRestoreStackSingleFlight
-	// uses a rest: URL. The mount root stays Linux-absolute for paths.Within.
+	// A remote repo skips the local-existence check, so the restore reaches the
+	// engine instead of taking the recreate-only path. The mount root stays a
+	// Linux path for paths.Within.
 	dir := t.TempDir()
 	const mountRoot = "/host/user"
 	cfg := config.Config{
@@ -242,7 +225,7 @@ func TestRestoreStackCancelledMemberAbortsLoop(t *testing.T) {
 	st := newMemStore(t)
 	s := mustSettings(t, st)
 	s.EncryptionEnabled = false
-	s.ContainersPath = "rest:http://127.0.0.1:8000/containers" // remote → no local-repo probe
+	s.ContainersPath = "rest:http://127.0.0.1:8000/containers"
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
@@ -256,7 +239,6 @@ func TestRestoreStackCancelledMemberAbortsLoop(t *testing.T) {
 		t.Fatalf("RestoreStack: %v", err)
 	}
 
-	// The loop aborted at the first (cancelled) member: only it is in the result.
 	if len(res.Members) != 1 {
 		t.Fatalf("a cancelled member must abort the loop: members = %d, want 1 (%+v)", len(res.Members), res.Members)
 	}
@@ -267,8 +249,7 @@ func TestRestoreStackCancelledMemberAbortsLoop(t *testing.T) {
 		t.Fatalf("a cancelled member must not be marked restored: %+v", res.Members[0])
 	}
 
-	// Remaining members got NO run: exactly one restore run exists, recorded
-	// "cancelled" (not "failed") for the aborted member. svc-b and svc-c never ran.
+	// The only restore run is svc-a's, recorded as cancelled rather than failed.
 	runs, err := st.ListRuns(10)
 	if err != nil {
 		t.Fatal(err)
@@ -286,7 +267,6 @@ func TestRestoreStackCancelledMemberAbortsLoop(t *testing.T) {
 		t.Fatalf("the cancelled member must record status %q, got %q", "cancelled", restoreRuns[0].Status)
 	}
 
-	// The start loop must be skipped entirely — nothing was started.
 	for _, c := range d.calls {
 		if strings.HasPrefix(c, "start:") {
 			t.Fatalf("a cancelled stack restore must start no containers, got %v", d.calls)
@@ -294,7 +274,6 @@ func TestRestoreStackCancelledMemberAbortsLoop(t *testing.T) {
 	}
 }
 
-// TestRestoreStackNotConfirmed pins the confirm gate.
 func TestRestoreStackNotConfirmed(t *testing.T) {
 	st := newMemStore(t)
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir(), HostMountRoot: t.TempDir()}
@@ -304,7 +283,7 @@ func TestRestoreStackNotConfirmed(t *testing.T) {
 	}
 }
 
-// TestRestoreStackEmpty errors when no backed-up container belongs to the project.
+// A project with no backed-up container is an error, not an empty result.
 func TestRestoreStackEmpty(t *testing.T) {
 	st := newMemStore(t)
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir(), HostMountRoot: t.TempDir()}
@@ -315,8 +294,7 @@ func TestRestoreStackEmpty(t *testing.T) {
 	}
 }
 
-// TestRestoreStackRespectsRunState: startAfter starts only members that were
-// running when backed up; a member stopped at backup is restored but not started.
+// With startAfter, only members that were running at backup time are started.
 func TestRestoreStackRespectsRunState(t *testing.T) {
 	d := &fakeServiceDocker{liveName: ""}
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{
@@ -348,27 +326,19 @@ func TestRestoreStackRespectsRunState(t *testing.T) {
 	}
 }
 
-// TestStartRestoreStackSingleFlight pins the async stack restore's guard model:
-// StartRestoreStack shares batchActive with every other backup/restore starter,
-// so while a stack restore is in flight every starter — including a second
-// stack restore and a backup — is rejected busy (started=false, no error). It
-// also pins per-member run recording (finding: outcomes must stay discoverable
-// after the async ack): each member's in-place restore records a kind
-// "restore" run via the orchestrator.
+// StartRestoreStack shares batchActive with every other backup and restore
+// starter, so while a stack restore runs they all report busy. Each member still
+// records its own restore run.
 //
-// Unlike the other stack tests this one must reach restic (so the restore can
-// be held in flight): with stackTestService's "/host/user" placeholder the
-// LOCAL repo resolves as missing, Snapshots comes back empty and every member
-// silently takes the recreate-only path — which never touches restic. A REMOTE
-// repo location skips the local-existence probe while the mount root stays
-// Linux-absolute (paths.Within needs "/"-rooted appdata paths).
+// The restore has to reach restic to be held in flight. A local repo under the
+// "/host/user" placeholder resolves as missing and every member would take the
+// recreate-only path, so the repo is remote.
 func TestStartRestoreStackSingleFlight(t *testing.T) {
-	d := &fakeServiceDocker{liveName: ""} // absent → fresh restore path
+	d := &fakeServiceDocker{liveName: ""} // no live container: fresh restore
 	eng := &fakeResticEngine{
 		blockRestore:   make(chan struct{}),
 		restoreEntered: make(chan struct{}, 1),
 		snaps: []restic.Snapshot{
-			// Paths mirrors a real backup's recorded positional (RESTORE-01).
 			{ID: "aaaa1111", Tags: []string{"container:web"}, Paths: []string{"/host/user/appdata/web"}},
 			{ID: "bbbb2222", Tags: []string{"container:worker"}, Paths: []string{"/host/user/appdata/worker"}},
 		},
@@ -384,7 +354,7 @@ func TestStartRestoreStackSingleFlight(t *testing.T) {
 	st := newMemStore(t)
 	s := mustSettings(t, st)
 	s.EncryptionEnabled = false
-	s.ContainersPath = "rest:http://127.0.0.1:8000/containers" // remote → no local-repo probe
+	s.ContainersPath = "rest:http://127.0.0.1:8000/containers"
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
@@ -397,7 +367,7 @@ func TestStartRestoreStackSingleFlight(t *testing.T) {
 	if err != nil || !started {
 		t.Fatalf("stack restore should start: started=%v err=%v", started, err)
 	}
-	// Wait until the first member's restore is inside the engine (in flight).
+	// Wait until the first member's restore is inside the engine.
 	select {
 	case <-eng.restoreEntered:
 	case <-time.After(5 * time.Second):
@@ -405,7 +375,6 @@ func TestStartRestoreStackSingleFlight(t *testing.T) {
 		t.Fatalf("stack restore never reached the engine; docker calls=%v runs=%+v restored=%v", d.calls, runs, eng.restored)
 	}
 
-	// Every starter sharing the guard must answer busy while it runs.
 	if started, err := svc.StartRestoreStack(ctx, "app", "local", "", true, true); err != nil || started {
 		t.Fatalf("second stack restore must be rejected busy: started=%v err=%v", started, err)
 	}
@@ -419,8 +388,6 @@ func TestStartRestoreStackSingleFlight(t *testing.T) {
 	close(eng.blockRestore) // let the member restores finish
 	waitForBackupDone(t, svc)
 
-	// Run recording still happens per member: one successful kind "restore" run
-	// each, recorded by the orchestrator against the member's target row.
 	runs, err := st.ListRuns(10)
 	if err != nil {
 		t.Fatal(err)
@@ -436,11 +403,8 @@ func TestStartRestoreStackSingleFlight(t *testing.T) {
 	}
 }
 
-// TestStartRestoreStackValidationFailsFast pins the sync/async split of the
-// stack starter: confirmation, source, project and member enumeration all run
-// SYNCHRONOUSLY, so a bad request — including an empty stack — fails
-// immediately with a clear error, no goroutine is started, and the shared
-// single-flight guard is released right away.
+// Validation runs before the goroutine starts, so a bad request fails at once
+// and releases the shared guard.
 func TestStartRestoreStackValidationFailsFast(t *testing.T) {
 	d := &fakeServiceDocker{}
 	eng := &fakeResticEngine{}
@@ -458,12 +422,9 @@ func TestStartRestoreStackValidationFailsFast(t *testing.T) {
 		t.Fatalf("an empty stack must fail synchronously, got started=%v err=%v", started, err)
 	}
 
-	// Every failed validation must have released the guard (no goroutine holds
-	// it), so a later valid start is not wrongly answered "busy"...
 	if svc.BackupInProgress() {
 		t.Fatal("failed validation must release the single-flight guard")
 	}
-	// ...and nothing ever reached docker or restic.
 	if len(eng.restored) != 0 {
 		t.Fatalf("no restore must have run for rejected requests, got %v", eng.restored)
 	}
@@ -472,19 +433,17 @@ func TestStartRestoreStackValidationFailsFast(t *testing.T) {
 	}
 }
 
-// TestRestoreStackBlocksDependentOnFailedDependency: when a dependency fails to
-// restore, its dependent is held back (not started) with a clear reason — exactly
-// the race the stack restore exists to avoid.
+// A member whose dependency failed to restore is not started, and its error
+// says why.
 func TestRestoreStackBlocksDependentOnFailedDependency(t *testing.T) {
-	// db's recreate fails deterministically, so its dependent app must be held back.
 	d := &fakeServiceDocker{liveName: "", createErrName: "db"}
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{
 		{ID: "aaaa1111", Tags: []string{"container:app"}},
 	}}
 	svc, st, mountRoot := stackTestService(t, eng, d)
 	seedStackTarget(t, st, mountRoot, "app", "shop", "app", "db") // app depends_on db
-	// db: definition-only (no snapshot) → recreate-only path → its CreateAndStart
-	// fails via createErrName, so db does not come up and app is blocked.
+	// db has a definition but no snapshot, so it takes the recreate-only path,
+	// where createErrName makes CreateAndStart fail.
 	dbDef, err := marshalDefinition(composeInspect("db", "shop", "db", ""), "")
 	if err != nil {
 		t.Fatal(err)

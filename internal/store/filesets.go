@@ -8,12 +8,11 @@ import (
 	"time"
 )
 
-// FileSet represents one named host folder the files domain backs up (#62).
+// FileSet is one named host folder the files domain backs up.
 type FileSet struct {
 	ID string
-	// Name is the user-visible label and the restic tag/item key
-	// (fileset:<Name>); ID is stable so renames never orphan run history
-	// (runs.target_id = file_sets.id).
+	// Name is the user-visible label and the restic tag (fileset:<Name>). Runs
+	// reference the stable ID, so a rename keeps the run history.
 	Name string
 	// Path is a relative subpath under the host mount root (like
 	// Settings.ContainersPath), resolved with paths.Resolve at backup time.
@@ -22,48 +21,31 @@ type FileSet struct {
 	Excludes []string
 	// Enabled gates the set's participation in scheduled and whole-domain runs.
 	Enabled bool
-	// ScheduleCadence is this set's OPTIONAL per-item schedule override (#199,
-	// the same mechanism containers and VMs got in #121). Empty means "follow the
-	// Folders domain schedule", which is what every set did before this existed.
-	// A concrete cadence takes the set OUT of the domain run and out of Backup
-	// Everything and gives it its own entry; the literal "off" excludes it from
-	// scheduling altogether. Only honoured while the per-item-schedules feature
-	// toggle is on, so an install that never turns it on behaves exactly as it
-	// did. Owned by SetFileSetScheduleCadence, never by UpdateFileSet, so an
-	// ordinary edit of the name or path cannot silently drop a cadence.
+	// ScheduleCadence is the set's optional per-item schedule. Empty follows the
+	// Folders domain schedule. A cadence gives the set its own entry and takes
+	// it out of the domain run and Backup Everything; "off" excludes it from
+	// scheduling. It only applies while per-item schedules are switched on.
+	// Only SetFileSetScheduleCadence writes it, so editing the name or path
+	// cannot drop it.
 	ScheduleCadence string
-	// Repo is this set's OPTIONAL own restic repository (#204). Empty means
-	// "use the Folders domain repository" (Settings.FilesPath), which is what
-	// every set did before this field existed.
-	//
-	// A concrete value is the ID of a NAMED REPOSITORY - a row in
-	// offsite_targets with role = RoleRepo - not a location. It started out as
-	// a free-text location (migration 103) and became an id inside the same
-	// feature, because typing the same bucket path into ten containers is
-	// miserable and correcting it later means finding all ten; migration 106
-	// clears any value that is not the id of an existing named repository. The
-	// id is turned into a location by the API tier (itemRepoPath), never here.
-	//
-	// CreateFileSet writes it with the row and WritePlacement afterwards, never
-	// UpdateFileSet: a save from the edit dialog must not move where a set's
-	// backups go.
+	// Repo is the ID of the set's own named repository (a RoleRepo row in
+	// offsite_targets), not a location. Empty means the Folders domain
+	// repository (Settings.FilesPath). The API tier turns the ID into a
+	// location (itemRepoPath). CreateFileSet writes it with the row and
+	// WritePlacement afterwards, never UpdateFileSet, so renaming a set cannot
+	// move its backups to another repository.
 	Repo string
 	// RepoChosen says whether Repo is settled. An open row has an empty Repo and
 	// takes the default's location at its first backup.
 	RepoChosen RepoChoice
-	// SelectedPaths is the set's OPTIONAL tree selection (Phase 4 file-sets
-	// parity, D-03/D-05): the same flat encoding as the containers' flat
-	// backupPaths set — bare mount-root-space absolute paths are included
-	// roots, "!"-prefixed entries are deselected branches (internal/api/
-	// selection.go owns the meaning of "!"; web selectionTree.ts mirrors it).
-	// nil means the column is NULL: "never touched by the tree" — the legacy
-	// switch that keeps the backup compiling to the single positional
-	// [resolved Path] byte-identically. Opaque to this package: the store
-	// marshals and scans the JSON blob and interprets nothing; normalization
-	// and backup-time compilation live in the API tier. Owned by
-	// SetFileSetSelectedPaths, never by UpdateFileSet (same rationale as the
-	// cadence above, verbatim: an edit that does not know about the selection
-	// must not be able to clear one by omitting it).
+	// SelectedPaths is the set's optional tree selection, in the same flat
+	// encoding as the containers' backupPaths: absolute paths under the mount
+	// root are included roots, "!"-prefixed entries are deselected branches
+	// (internal/api/selection.go defines the meaning and the web's
+	// selectionTree.ts mirrors it). nil, a NULL column, means the tree was
+	// never used and the backup takes the whole resolved Path. The store does
+	// not interpret the entries. Only SetFileSetSelectedPaths and
+	// UpdateFileSetClearingSelection write it.
 	SelectedPaths []string
 	CreatedAt     int64
 }
@@ -88,12 +70,10 @@ func (r *Repo) CreateFileSet(fs FileSet) (FileSet, error) {
 		return FileSet{}, fmt.Errorf("CreateFileSet marshal excludes: %w", err)
 	}
 
-	// repo is listed here, unlike in UpdateFileSet. The ownership rule that keeps
-	// it out of the UPDATE is about an EDIT silently moving a set's backups; a
-	// CREATE has nothing to overwrite, and splitting it into an insert plus a
-	// setter left a window where the set existed on the domain repository while
-	// the caller believed it was on the chosen one. Same shape, same fix, as
-	// UpdateFileSetClearingSelection in this file.
+	// Unlike UpdateFileSet, the INSERT includes repo: a new set has nothing to
+	// overwrite, and a separate setter call would leave a window in which the
+	// set sits on the domain repository while the caller believes it is on the
+	// chosen one.
 	_, err = r.db.Exec(`
 		INSERT INTO file_sets (id, name, path, excludes, enabled, created_at, repo, repo_chosen)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -128,23 +108,10 @@ func (r *Repo) UpdateFileSet(fs FileSet) error {
 	return nil
 }
 
-// UpdateFileSetClearingSelection updates name, path, excludes, and enabled for
-// the set with fs.ID AND stores SQL NULL in selected_paths, in the ONE UPDATE
-// statement. It is the path-change writer (the A3 clear rule, review WR-01): a
-// path edit moves the anchor every stored selection entry was validated
-// against, so the old selection must never survive the save — and writing row
-// + clear atomically makes that invariant hold at the storage layer, where the
-// handler's previous two-write sequence could fail in between and leave the
-// NEW path live while the response reported failure and the OLD-anchor
-// selection stayed stored. Either this statement lands whole or the row is
-// byte-identical to before.
-//
-// Deliberately a separate method, NOT a field on UpdateFileSet: the ownership
-// rule documented on both UpdateFileSet and SetFileSetSelectedPaths (an edit
-// that does not know about the selection must not be able to clear one by
-// omitting it) stands untouched — this method exists precisely for the caller
-// that DOES know the selection must go, and its name says so. The tree editor
-// remains the only writer of a non-NULL selection.
+// UpdateFileSetClearingSelection is UpdateFileSet plus a reset of
+// selected_paths to NULL, in one statement. A path change moves the anchor the
+// stored selection was validated against, so the selection has to go, and a
+// single statement cannot leave the new path saved next to the old selection.
 func (r *Repo) UpdateFileSetClearingSelection(fs FileSet) error {
 	if fs.Excludes == nil {
 		fs.Excludes = []string{}
@@ -217,16 +184,10 @@ func (r *Repo) SetFileSetEnabled(id string, enabled bool) error {
 	return nil
 }
 
-// DeleteFileSet removes a file set and ALL its run history by id, in a single
-// transaction. It is a no-op (no error) if the set does not exist.
-// SetFileSetScheduleCadence writes a file set's per-item schedule override (#199).
-// An empty string clears it, putting the set back on the Folders domain schedule.
-//
-// Deliberately its own statement rather than a field on UpdateFileSet: the cadence
-// is owned by the schedule editor, and folding it into the general update would
-// mean every rename or path edit carries a cadence with it, so a form that did not
-// know about the field would silently clear one. The same split targets.go makes
-// for SetScheduleCadence, and for the same reason.
+// SetFileSetScheduleCadence writes a file set's per-item schedule override. An
+// empty string puts the set back on the Folders domain schedule. It is
+// separate from UpdateFileSet so a form that does not know about the cadence
+// cannot clear it, the same split SetScheduleCadence makes for containers.
 func (r *Repo) SetFileSetScheduleCadence(id, cadence string) error {
 	res, err := r.db.Exec(
 		`UPDATE file_sets SET schedule_cadence = ? WHERE id = ?`, cadence, id)
@@ -239,21 +200,13 @@ func (r *Repo) SetFileSetScheduleCadence(id, cadence string) error {
 	return nil
 }
 
-// SetFileSetSelectedPaths writes a file set's tree selection (Phase 4, D-03)
-// as its JSON encoding — the same flat set the container backupPaths column
-// stores, but in its own column. A nil slice stores SQL NULL, never the JSON
-// literal '[]': the NULL/nil state IS the "never touched by the tree" legacy
-// switch the backup compile reads (a stored '[]' would decode to a non-nil
-// empty slice and mean something no caller can express). This package does
-// not interpret the entries — opaque blob in, opaque blob out; normalization
-// and boundary validation live in the API tier.
-//
-// Deliberately its own statement rather than a field on UpdateFileSet, for
-// exactly the reason SetFileSetScheduleCadence is (comment above): a save that
-// does not know about the selection must not be able to clear one by omitting
-// it. The tree editor is the only writer.
+// SetFileSetSelectedPaths writes a file set's tree selection as JSON. A nil
+// slice stores SQL NULL rather than '[]': NULL means the tree was never used,
+// while '[]' would read back as an empty non-nil slice. The entries are not
+// interpreted here. It is separate from UpdateFileSet so an edit that does not
+// know about the selection cannot clear it.
 func (r *Repo) SetFileSetSelectedPaths(id string, selected []string) error {
-	var encoded any // nil interface binds as SQL NULL for the legacy state
+	var encoded any // nil binds as SQL NULL
 	if selected != nil {
 		b, err := json.Marshal(selected)
 		if err != nil {
@@ -272,6 +225,8 @@ func (r *Repo) SetFileSetSelectedPaths(id string, selected []string) error {
 	return nil
 }
 
+// DeleteFileSet removes a file set and all its run history in one
+// transaction. Deleting a set that does not exist is not an error.
 func (r *Repo) DeleteFileSet(id string) error {
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -306,13 +261,8 @@ func scanFileSet(s scanner) (FileSet, error) {
 	var fs FileSet
 	var exJSON string
 	var enabled int
-	// selected_paths is the table's only nullable column (v102): NULL is the
-	// COMMON state (every row created before the tree existed, and every
-	// CreateFileSet INSERT omits the column), so it scans into *string —
-	// scanning a plain string would fail every legacy row and take down
-	// ListFileSets/GetFileSet at runtime. NULL ⇒ the field stays nil; any
-	// written value decodes as JSON below. Same nullable-scan precedent as
-	// received_repos.last_check_ok (migrate.go v76).
+	// selected_paths is nullable and NULL for most rows; scanning it into a
+	// plain string would fail on every one of them.
 	var selJSON *string
 	err := s.Scan(&fs.ID, &fs.Name, &fs.Path, &exJSON, &enabled, &fs.ScheduleCadence, &selJSON, &fs.Repo, &fs.RepoChosen, &fs.CreatedAt)
 	if err != nil {

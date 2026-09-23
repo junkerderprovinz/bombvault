@@ -1,18 +1,8 @@
-// ---------------------------------------------------------------------------
-// Pull (#227) — fetching backups OUT of another BombVault's repository into
-// this one.
-//
-// Modelled on Receiver.tsx, which is the page it sits closest to, and the one
-// difference is worth stating at the top because it governs every decision
-// below: THE RECEIVER WATCHES AND THIS ONE ACTS. A received repository is one
-// that already lies here and is only ever read. A pull source is somebody
-// else's, and what this page does with it lands on this disk.
-//
-// That is why the source card leads with its last RESULT rather than with a
-// live probe, why the remove button says plainly that neither repository is
-// touched, and why the page exists at all instead of a third tab on a
-// dashboard: a surface that moves data is not a surface that reports.
-// ---------------------------------------------------------------------------
+// Pull fetches backups out of another BombVault's repository into this one. It
+// follows Receiver.tsx, with one difference: a received repository is only
+// read, while a pull writes to this disk. So a source card leads with its last
+// result rather than a live probe, and removing a source touches neither
+// repository.
 import { useEffect, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -37,7 +27,7 @@ import { SelectField } from "../components/SelectField";
 import { useReveal } from "../lib/useReveal";
 import { useCloudCredSets } from "../lib/useCloudCredSets";
 import { useToast } from "../lib/toast";
-import { hueVars, rainbowAt } from "../lib/appearance";
+import { hueVars } from "../lib/appearance";
 import { Button } from "../components/Button";
 import { ToggleRow } from "./settings/shared";
 
@@ -78,7 +68,7 @@ function PullSourceCard({
       const res = await runPullSource(source.id);
       if (res.ok) {
         const n = res.snapshots ?? 0;
-        push(n === 0 ? t("pull.nothingNew") : t("pull.pulled").replace("{n}", String(n)), "success");
+        push(n === 0 ? t("pull.nothingNew") : t("pull.pulled", n), "success");
       } else {
         push(res.error ?? t("pull.pullFailed"), "fail");
       }
@@ -103,9 +93,8 @@ function PullSourceCard({
     onRefresh();
   }
 
-  // The verdict badge reads the LAST RESULT, never a live probe. A pull is a
-  // thing that happened, so "it worked at 04:00" is the honest report; a green
-  // tick from a probe run just now would say something else entirely.
+  // A pull is something that happened, so the badge reports the last result
+  // rather than a probe run now.
   const verdict = !source.enabled
     ? { label: t("pull.pullingOff"), tone: "neutral" as const }
     : source.lastPullOk === null
@@ -117,7 +106,7 @@ function PullSourceCard({
   return (
     <div
       className="relative glim-notch-card glim-hue bg-carbon-surface rounded-card p-4 flex flex-col gap-3"
-      style={hueVars(rainbowAt(index)) as CSSProperties}
+      style={hueVars(index) as CSSProperties}
     >
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
@@ -126,8 +115,8 @@ function PullSourceCard({
             <Badge tone={verdict.tone}>{verdict.label}</Badge>
             <Badge tone="neutral">{t(`nav.${source.domain}` as never)}</Badge>
           </div>
-          {/* dir="ltr" on the location: a repository address is not prose and
-              must not be reordered under an RTL interface. */}
+          {/* A repository address is not prose; an RTL interface must not
+              reorder it. */}
           <p className="mt-1 text-xs text-carbon-textMuted break-all" dir="ltr">
             {source.repo}
           </p>
@@ -139,7 +128,7 @@ function PullSourceCard({
           </div>
           {source.snapshotsPulled > 0 && (
             <div className="glim-num">
-              {t("pull.snapshotsPulled").replace("{n}", String(source.snapshotsPulled))}
+              {t("pull.snapshotsPulled", source.snapshotsPulled)}
             </div>
           )}
         </div>
@@ -215,12 +204,10 @@ function PullDialog({
   const revealAppKey = useReveal();
   const [domain, setDomain] = useState<PullDomain>((initial?.domain as PullDomain) ?? "containers");
   const [cadence, setCadence] = useState(initial?.cadence ?? "");
-  // The source's own backend login, separate from its APP_KEY: the key opens the
-  // restic repository, this opens the storage the repository lies on. A pull
-  // deliberately lends the source NOTHING of ours (pull.go withholds the ambient
-  // credentials), so without a set chosen here an s3:, b2: or authenticated
-  // rest: source has no way in at all - and the refusal that follows names the
-  // APP_KEY, which is the wrong thing to go and re-check.
+  // The login for the storage the source repository lies on; the APP_KEY only
+  // opens the repository itself. pull.go withholds this box's own credentials,
+  // so an s3:, b2: or authenticated rest: source needs a set here, and without
+  // one the refusal misleadingly names the APP_KEY.
   const [credsRef, setCredsRef] = useState(initial?.credsRef ?? "");
   const credSets = useCloudCredSets();
   const [limitDownload, setLimitDownload] = useState(initial?.limitDownload ?? 0);
@@ -267,9 +254,7 @@ function PullDialog({
     }
   }
 
-  // The dialog says what the button that opened it said, and "Edit" is a word
-  // the app already has in all 42 languages. Two new keys for two titles that
-  // are already written somewhere else would have been 84 strings for nothing.
+  // The title repeats the button that opened the dialog, so no new keys.
   const title = editing ? t("common.edit") : t("pull.addSource");
 
   return createPortal(
@@ -348,9 +333,8 @@ function PullDialog({
               onChange={setCredsRef}
               label={t("offsite.targets.credsLabel")}
               options={[
-                // "" is NOT "the shared default" here, the way it is on an
-                // off-site target. A pull never falls back to this box's own
-                // credentials, so the empty choice means the source needs none.
+                // Unlike on an off-site target, "" is not the shared default: a
+                // pull never falls back to this box's credentials.
                 { value: "", label: t("pull.credsNone") },
                 ...credSets.map((c) => ({ value: c.id, label: c.name })),
               ]}
@@ -424,10 +408,8 @@ function PullDialog({
   );
 }
 
-/** `embedded` is the Instances page rendering this as one of its tabs: the
- *  outer shell and the <h1> belong to that page then, because a tab panel
- *  that repeats the strip's own label reads as two headings for one thing.
- *  Everything else, the subtitle included, is the same page either way. */
+/** With `embedded` the page is a tab of Instances, which owns the shell and
+ *  the heading; the subtitle stays. */
 export function Pull({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useT();
   const [sources, setSources] = useState<PullSourceView[]>([]);
@@ -482,7 +464,7 @@ export function Pull({ embedded = false }: { embedded?: boolean } = {}) {
       {showEmptyState && (
         <div
           className="relative glim-notch-card glim-hue bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3"
-          style={hueVars(rainbowAt(0)) as CSSProperties}
+          style={hueVars(0) as CSSProperties}
         >
           <h2 className="flex items-center">
             <Badge tone="heading" size="heading" wrap hueIndex={0} insetStart={6}>

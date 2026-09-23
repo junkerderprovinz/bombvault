@@ -16,11 +16,8 @@ func repoPathSvc() *Service {
 	return &Service{cfg: config.Config{HostMountRoot: "/host/user", HostSourceRoot: "/mnt"}}
 }
 
-// TestResolveRepoAbsolutePathGuidance is the issue-#138 regression: entering the
-// ABSOLUTE host path of a mounted remote share (/mnt/remotes/...) — the obvious
-// thing to type — used to fail with the raw internal sentinel "paths: sub must
-// be a relative path", which reads like "local paths are unsupported". It must
-// now name the relative-path convention and spell out the exact value to enter.
+// An absolute host path is refused with the relative value to enter instead,
+// not with the raw paths sentinel.
 func TestResolveRepoAbsolutePathGuidance(t *testing.T) {
 	s := repoPathSvc()
 	const abs = "/mnt/remotes/192.168.2.53_backup/bombvault"
@@ -40,7 +37,6 @@ func TestResolveRepoAbsolutePathGuidance(t *testing.T) {
 	if strings.Contains(msg, "sub must be a relative path") {
 		t.Fatalf("the raw paths sentinel must not reach the operator, got: %s", msg)
 	}
-	// The cause is still inspectable, and the scrubber-bypass tag is set.
 	if !errors.Is(err, paths.ErrAbsoluteSub) {
 		t.Fatal("guidance must still unwrap to paths.ErrAbsoluteSub")
 	}
@@ -49,9 +45,8 @@ func TestResolveRepoAbsolutePathGuidance(t *testing.T) {
 	}
 }
 
-// TestResolveRepoGuidanceSurvivesScrubbing: the hint is worthless once the path
-// scrubber has eaten it, so it must reach the client verbatim even through the
-// caller's wrap ("resolve off-site repo: …") that the UI actually shows.
+// The hint has to reach the client unscrubbed, including through the caller's
+// wrap that the UI shows.
 func TestResolveRepoGuidanceSurvivesScrubbing(t *testing.T) {
 	s := repoPathSvc()
 	_, err := s.resolveRepo("/mnt/remotes/nas/bombvault")
@@ -67,15 +62,12 @@ func TestResolveRepoGuidanceSurvivesScrubbing(t *testing.T) {
 	}
 }
 
-// TestHostRelativeSuggestion: a path under the host storage root loses exactly
-// that prefix; one outside it just loses its leading slash (still the right
-// shape for the field, even if the folder has to be reachable under the mount).
 func TestHostRelativeSuggestion(t *testing.T) {
 	s := repoPathSvc()
 	cases := []struct{ in, want string }{
 		{"/mnt/remotes/nas/bv", "remotes/nas/bv"},
 		{"/mnt/user/backups/bv", "user/backups/bv"},
-		{"/mnt", "mnt"}, // no trailing slash → not a prefix match
+		{"/mnt", "mnt"}, // only "/mnt/" counts as the root prefix
 		{"/srv/backups", "srv/backups"},
 		{"//mnt/x", "mnt/x"},
 	}
@@ -86,8 +78,6 @@ func TestHostRelativeSuggestion(t *testing.T) {
 	}
 }
 
-// TestResolveRepoTraversalGuidance: an escaping path gets its own guidance and
-// still unwraps to the traversal sentinel.
 func TestResolveRepoTraversalGuidance(t *testing.T) {
 	s := repoPathSvc()
 	_, err := s.resolveRepo("backups/../../etc")
@@ -105,9 +95,8 @@ func TestResolveRepoTraversalGuidance(t *testing.T) {
 	}
 }
 
-// TestResolveRepoAcceptedForms pins that the guidance change did not narrow what
-// resolveRepo accepts: a relative subpath still resolves under the mount, and a
-// restic remote URL still passes through verbatim.
+// A relative subpath resolves under the mount and a restic remote URL passes
+// through unchanged.
 func TestResolveRepoAcceptedForms(t *testing.T) {
 	s := repoPathSvc()
 

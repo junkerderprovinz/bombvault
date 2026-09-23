@@ -1,19 +1,7 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// PathModeSwitch — icon-only Local/Remote control (GlimStone follow-up round,
-// Paths & Storage tab rework, points 2/5). Selector.dom.test.tsx already
-// covers the generic iconOnly/tip/roving-tabindex mechanics in isolation;
-// this file covers the INTEGRATION — that PathModeSwitch actually wires those
-// features up correctly (real Selector, real icons, real mode switch), and
-// that the label/Selector share one row with FolderBrowser's own label
-// suppressed rather than duplicated.
-//
-// `settings`/`setSettings`/`save` are only read by OffsiteWizard, which this
-// suite never opens (no test here sets a remote value AND clicks the wizard
-// toggle) — a minimal stub cast is enough, matching this repo's own
-// precedent for tests that construct a partial Settings for a prop the code
-// path under test never actually touches.
-// ---------------------------------------------------------------------------
+// Selector.dom.test.tsx covers the Selector itself; these check how
+// PathModeSwitch wires it up. settings, setSettings and save only reach
+// OffsiteWizard, which no test here opens, so stubs are enough.
 import { describe, expect, it, vi } from "vitest";
 import { setLabelMode } from "../lib/controls";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
@@ -45,7 +33,7 @@ function renderSwitch(value = "", onChange = vi.fn()) {
   return onChange;
 }
 
-describe("PathModeSwitch — icon-only Selector integration", () => {
+describe("PathModeSwitch, Selector integration", () => {
   it("renders a real tablist of two tabs, accessible by their plain-language names", () => {
     renderSwitch();
     const list = screen.getByRole("tablist");
@@ -56,17 +44,10 @@ describe("PathModeSwitch — icon-only Selector integration", () => {
     expect(screen.getByRole("tab", { name: "Remote" })).toBeTruthy();
   });
 
-  // These two segments used to be pinned to a square glyph with `iconOnly`, in
-  // every mode, which is the square badge jdp asked to abolish: neither the
-  // label mode nor the width system could reach them. They follow the label
-  // engine now, and the accessible name survives the glyph-only mode, which is
-  // the part that must never regress.
-  //
-  // The axis is "buttons", not "tabs" (2026-09-11). This pair sits in a PATH
-  // ROW beside a text field and a browse button; it is a control, not a tab
-  // strip, so it obeys the setting a reader is changing when they change how
-  // buttons are labelled. Selector resolves that from its own size - see the
-  // axis tests in Selector.dom.test.tsx.
+  // The segments keep their accessible names in glyph-only mode. They follow
+  // the "buttons" axis, not "tabs", because the pair is a control in a path
+  // row beside a text field; Selector derives the axis from its size (see
+  // Selector.dom.test.tsx).
   it("follows the buttons label mode instead of being pinned to a glyph", () => {
     setLabelMode("buttons", "textGlyph");
     renderSwitch();
@@ -91,7 +72,7 @@ describe("PathModeSwitch — icon-only Selector integration", () => {
     expect(screen.getByRole("tab", { name: "Remote" }).getAttribute("aria-selected")).toBe("true");
   });
 
-  it("hovering the Local/Remote icons reveals the InfoBubble-style tooltip explaining each", () => {
+  it("shows each segment's tooltip on hover", () => {
     renderSwitch();
     expect(document.querySelector(".glim-bubble")).toBeNull();
     fireEvent.mouseEnter(screen.getByRole("tab", { name: "Local" }));
@@ -101,7 +82,7 @@ describe("PathModeSwitch — icon-only Selector integration", () => {
     expect(document.querySelector(".glim-bubble")?.textContent).toBe("Remote restic repository");
   });
 
-  it("arrow-key navigation moves the roving tab stop AND switches mode (select=\"one\" activates on move) — proves this is a real Selector, not a hand-rolled pair", () => {
+  it("moves the roving tab stop and switches mode on an arrow key", () => {
     renderSwitch("user/appdata/containers");
     const local = screen.getByRole("tab", { name: "Local" });
     local.focus();
@@ -109,24 +90,22 @@ describe("PathModeSwitch — icon-only Selector integration", () => {
     expect(document.activeElement).toBe(screen.getByRole("tab", { name: "Remote" }));
     expect((screen.getByRole("tab", { name: "Remote" }) as HTMLElement).tabIndex).toBe(0);
     expect((screen.getByRole("tab", { name: "Local" }) as HTMLElement).tabIndex).toBe(-1);
-    // Now in Remote mode: the URL field replaces FolderBrowser's input.
+    // In Remote mode the URL field replaces FolderBrowser's input.
     expect(screen.getByPlaceholderText("s3:bucket/path or rest:http://host:8000/repo")).toBeTruthy();
   });
 
-  it("clicking Remote then Local clears a remote-shaped value (switchToLocal's existing behaviour, unchanged)", () => {
+  it("clears a remote URL when switched to Local", () => {
     const onChange = renderSwitch("rest:http://host:8000/repo");
     fireEvent.click(screen.getByRole("tab", { name: "Local" }));
-    // Already local-shaped active state at this value would keep it — but
-    // this value IS remote-shaped, so switching back to Local clears it.
     expect(onChange).toHaveBeenCalledWith("");
   });
 
-  it("renders exactly one copy of the label — FolderBrowser's own label row is suppressed, not duplicated", () => {
+  it("renders the label once, with FolderBrowser's own label turned off", () => {
     renderSwitch("user/appdata/containers");
     expect(screen.getAllByText("Containers path")).toHaveLength(1);
   });
 
-  it("the label and the Selector sit in the same row (label at the start, Selector at the end of one flex container)", () => {
+  it("puts the label and the Selector in the same row", () => {
     renderSwitch();
     const label = screen.getByText("Containers path");
     const tablist = screen.getByRole("tablist");

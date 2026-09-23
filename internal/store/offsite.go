@@ -7,9 +7,9 @@ import (
 	"time"
 )
 
-// TamperTest is one recorded off-site tamper-test verdict for a domain: an
-// active probe of the far side's delete path. Protected means the delete was
-// refused, i.e. append-only is actually enforced (not just configured).
+// TamperTest is one off-site tamper-test verdict for a domain, from an active
+// probe of the far side's delete path. A refused delete shows that append-only
+// is enforced and not just configured.
 type TamperTest struct {
 	Domain    string `json:"domain"`
 	At        int64  `json:"at"`        // unix seconds the test ran
@@ -30,12 +30,9 @@ func (r *Repo) RecordTamperTest(domain string, protected bool, detail string) er
 	return nil
 }
 
-// RecordTamperTestForTarget is RecordTamperTest that also attributes the verdict
-// to a specific off-site destination via offsite_target_id (the plural-destination
-// column added in migration v75). An EMPTY targetID delegates to RecordTamperTest
-// so the column is left at its default and the INSERT stays byte-identical for a
-// single-destination (N=1) install whose target was synthesized from Settings.
-// This mirrors RecordOffsiteRunForTarget.
+// RecordTamperTestForTarget is RecordTamperTest attributed to one off-site
+// target. An empty targetID, as for a single target synthesized from Settings,
+// leaves offsite_target_id at its default.
 func (r *Repo) RecordTamperTestForTarget(domain, targetID string, protected bool, detail string) error {
 	if targetID == "" {
 		return r.RecordTamperTest(domain, protected, detail)
@@ -51,9 +48,8 @@ func (r *Repo) RecordTamperTestForTarget(domain, targetID string, protected bool
 	return nil
 }
 
-// LatestTamperTest returns the most recent tamper test for a domain. The bool
-// is false (with a zero TamperTest) when none has been recorded yet. Ties on
-// `at` (two tests within the same second) are broken by insertion order.
+// LatestTamperTest returns the most recent tamper test for a domain, or false
+// when none exists. Tests within the same second are ordered by insertion.
 func (r *Repo) LatestTamperTest(domain string) (TamperTest, bool, error) {
 	row := r.db.QueryRow(`
 		SELECT domain, at, protected, detail
@@ -74,11 +70,9 @@ func (r *Repo) LatestTamperTest(domain string) (TamperTest, bool, error) {
 	return tt, true, nil
 }
 
-// LatestTamperTestForTarget returns the most recent tamper test for a domain
-// scoped to ONE off-site destination (offsite_target_id). It powers per-target
-// flip detection and the worst-of scorecard aggregation. An empty targetID
-// delegates to LatestTamperTest so an un-backfilled (N=1) install — whose rows
-// carry the default "" target id — reads byte-identically.
+// LatestTamperTestForTarget is LatestTamperTest scoped to one off-site target.
+// An empty targetID falls back to LatestTamperTest, which suits a single-target
+// install whose rows carry no target id.
 func (r *Repo) LatestTamperTestForTarget(domain, targetID string) (TamperTest, bool, error) {
 	if targetID == "" {
 		return r.LatestTamperTest(domain)
@@ -102,26 +96,19 @@ func (r *Repo) LatestTamperTestForTarget(domain, targetID string) (TamperTest, b
 	return tt, true, nil
 }
 
-// OffsiteRun is one off-site replication run (restic copy) for a domain:
-// begin/end timestamps, outcome and the scrubbed error on failure. restic copy
-// DOES have live per-snapshot progress (issue #159 — see restic.Copy's doc
-// comment), but that is a real-time SSE signal (api.progBeginCopySink), not
-// persisted history: this row deliberately stays duration + outcome only, since
-// a completed run's own duration is exactly as informative after the fact.
+// OffsiteRun is one off-site replication run (restic copy) for a domain. Live
+// progress goes out over SSE and is not stored.
 type OffsiteRun struct {
 	Domain     string `json:"domain"`
-	StartedAt  int64  `json:"startedAt"`  // unix seconds the run began
-	FinishedAt int64  `json:"finishedAt"` // unix seconds it ended; 0 = still running
-	OK         bool   `json:"ok"`         // true when the copy succeeded
-	Error      string `json:"error"`      // scrubbed error text on failure; empty otherwise
+	StartedAt  int64  `json:"startedAt"`  // unix seconds
+	FinishedAt int64  `json:"finishedAt"` // unix seconds; 0 while running
+	OK         bool   `json:"ok"`
+	Error      string `json:"error"` // scrubbed; empty on success
 }
 
 // RecordOffsiteRun records the start of an off-site replication run and returns
-// the row's id (rowid), to be passed to FinishOffsiteRun when the run ends. The
-// run is not attributed to a specific destination (offsite_target_id keeps its
-// default ""). This INSERT is deliberately column-minimal — it must keep working
-// against the pre-v75 schema (before offsite_target_id existed); use
-// RecordOffsiteRunForTarget to stamp the destination.
+// its rowid for FinishOffsiteRun. It leaves out offsite_target_id so it also
+// works on a schema older than that column.
 func (r *Repo) RecordOffsiteRun(domain string, startedAt int64) (int64, error) {
 	res, err := r.db.Exec(`
 		INSERT INTO offsite_runs (domain, started_at)
@@ -138,11 +125,9 @@ func (r *Repo) RecordOffsiteRun(domain string, startedAt int64) (int64, error) {
 	return id, nil
 }
 
-// RecordOffsiteRunForTarget is RecordOffsiteRun that also attributes the run to a
-// specific off-site destination via offsite_target_id (the plural-destination
-// column added in migration v75). An EMPTY targetID delegates to RecordOffsiteRun
-// so the column is left at its default and the INSERT stays byte-identical for a
-// single-destination (N=1) install whose target was synthesized from Settings.
+// RecordOffsiteRunForTarget is RecordOffsiteRun attributed to one off-site
+// target. An empty targetID, as for a single target synthesized from Settings,
+// leaves offsite_target_id at its default.
 func (r *Repo) RecordOffsiteRunForTarget(domain, targetID string, startedAt int64) (int64, error) {
 	if targetID == "" {
 		return r.RecordOffsiteRun(domain, startedAt)
@@ -162,8 +147,8 @@ func (r *Repo) RecordOffsiteRunForTarget(domain, targetID string, startedAt int6
 	return id, nil
 }
 
-// FinishOffsiteRun closes a replication run recorded by RecordOffsiteRun,
-// stamping the finish time and the outcome (errText is expected pre-scrubbed).
+// FinishOffsiteRun stamps the finish time and outcome of a replication run.
+// errText must already be scrubbed.
 func (r *Repo) FinishOffsiteRun(id int64, ok bool, errText string) error {
 	_, err := r.db.Exec(`
 		UPDATE offsite_runs SET finished_at = ?, ok = ?, error = ?
@@ -200,9 +185,8 @@ func (r *Repo) MarkOffsiteRunAgingOnly(domain, targetID string, startedAt int64)
 	return nil
 }
 
-// LatestOffsiteRun returns the most recent replication run for a domain (by
-// start time; a still-running row has FinishedAt 0). The bool is false (with a
-// zero OffsiteRun) when none has been recorded yet.
+// LatestOffsiteRun returns the most recently started replication run for a
+// domain, running or not, or false when none exists.
 func (r *Repo) LatestOffsiteRun(domain string) (OffsiteRun, bool, error) {
 	row := r.db.QueryRow(`
 		SELECT domain, started_at, finished_at, ok, error
@@ -220,17 +204,14 @@ func (r *Repo) LatestOffsiteRun(domain string) (OffsiteRun, bool, error) {
 	if err != nil {
 		return OffsiteRun{}, false, fmt.Errorf("LatestOffsiteRun: %w", err)
 	}
-	run.FinishedAt = finished.Int64 // 0 while the run is still open (NULL)
+	run.FinishedAt = finished.Int64
 	run.OK = ok != 0
 	return run, true, nil
 }
 
-// LatestSuccessfulOffsiteRun returns the most recent SUCCESSFUL replication run
-// for a domain (ok=1, by start time). The bool is false (with a zero OffsiteRun)
-// when no successful copy has ever landed. Unlike LatestOffsiteRun this ignores a
-// newer failed or still-running row, so a broken replication reads as stale (the
-// last real off-site copy) rather than fresh — this is the currency source the
-// scorecard uses, mirroring how backups use their last SUCCESS.
+// LatestSuccessfulOffsiteRun returns the most recently started successful
+// replication run for a domain, or false when none has succeeded. Skipping
+// newer failed runs lets the scorecard see a broken replication as stale.
 func (r *Repo) LatestSuccessfulOffsiteRun(domain string) (OffsiteRun, bool, error) {
 	row := r.db.QueryRow(`
 		SELECT domain, started_at, finished_at, ok, error
@@ -253,10 +234,8 @@ func (r *Repo) LatestSuccessfulOffsiteRun(domain string) (OffsiteRun, bool, erro
 	return run, true, nil
 }
 
-// LatestSuccessfulOffsiteRunForTarget is LatestSuccessfulOffsiteRun scoped to ONE
-// off-site destination (offsite_target_id) — the per-target currency source for
-// the worst-of scorecard aggregation. An empty targetID delegates to the
-// domain-wide query so an un-backfilled (N=1) install reads byte-identically.
+// LatestSuccessfulOffsiteRunForTarget is LatestSuccessfulOffsiteRun scoped to
+// one off-site target. An empty targetID falls back to the domain-wide query.
 func (r *Repo) LatestSuccessfulOffsiteRunForTarget(domain, targetID string) (OffsiteRun, bool, error) {
 	if targetID == "" {
 		return r.LatestSuccessfulOffsiteRun(domain)

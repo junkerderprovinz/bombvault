@@ -6,9 +6,6 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestRepoStatsRoundTrip covers the repo-size history: adding samples, reading
-// the latest, the empty-store "not found" case, and that listing returns the
-// samples ascending by `at`.
 func TestRepoStatsRoundTrip(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -16,14 +13,12 @@ func TestRepoStatsRoundTrip(t *testing.T) {
 	}
 	r := store.New(db)
 
-	// Empty store: no latest sample.
 	if _, found, err := r.LatestRepoStat("containers", "local"); err != nil {
 		t.Fatalf("LatestRepoStat (empty): %v", err)
 	} else if found {
 		t.Fatal("expected found=false on an empty store")
 	}
 
-	// Add three samples with increasing `at`.
 	for i, at := range []int64{100, 200, 300} {
 		if err := r.AddRepoStat(store.RepoStat{
 			Domain:      "containers",
@@ -37,7 +32,6 @@ func TestRepoStatsRoundTrip(t *testing.T) {
 		}
 	}
 
-	// Latest is the newest (at=300).
 	latest, found, err := r.LatestRepoStat("containers", "local")
 	if err != nil {
 		t.Fatalf("LatestRepoStat: %v", err)
@@ -49,7 +43,6 @@ func TestRepoStatsRoundTrip(t *testing.T) {
 		t.Fatalf("latest = %+v, want at=300 snapshots=3", latest)
 	}
 
-	// List returns them ascending by `at`.
 	list, err := r.ListRepoStats("containers", "local", 0)
 	if err != nil {
 		t.Fatalf("ListRepoStats: %v", err)
@@ -63,7 +56,6 @@ func TestRepoStatsRoundTrip(t *testing.T) {
 		}
 	}
 
-	// A different domain/source is isolated.
 	if _, found, err := r.LatestRepoStat("vms", "local"); err != nil {
 		t.Fatalf("LatestRepoStat (other domain): %v", err)
 	} else if found {

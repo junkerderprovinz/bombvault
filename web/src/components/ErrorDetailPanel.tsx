@@ -1,14 +1,8 @@
-// ---------------------------------------------------------------------------
-// ErrorDetailPanel (#126) — the modal opened by clicking the dashboard's error
-// count. It lists the failed backup runs behind that count, GROUPED by their
-// (normalized) error message so one fault hitting many targets reads as a single
-// row with a count + the affected target names, and lets the user acknowledge
-// ("Resolve") a group — or every failure at once ("Mark all resolved") — which
-// dismisses them from the count without touching SQLite by hand.
-//
-// It fetches its own run list (listRuns) and, after any acknowledge, refetches
-// and fires onChanged so the parent can refresh the headline error count.
-// ---------------------------------------------------------------------------
+// ErrorDetailPanel is the modal behind the dashboard's error count. It groups
+// the failed runs by error message, so one fault across many targets reads as
+// one row, and lets the user acknowledge a group or every failure at once.
+// After an acknowledge it reloads and calls onChanged so the parent can
+// refresh its count.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -24,14 +18,9 @@ import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { IconClose } from "./Sidebar";
 
-// The domain <select> reuses ActivityLog's PLURAL vocabulary
-// (containers/vms/…), but a Run carries the SINGULAR domain tag
-// (container/vm/…, with flash/config/files identical in both) — so a filter
-// selection must be translated to the run shape before comparing (#126 note).
-// "everything" (the Backup Everything pseudo-domain) is spelled the same in
-// both vocabularies, like flash/config/files — the backend tags that pass's
-// PARENT run with store.EverythingTargetID and runTargetMaps maps it straight
-// to the "everything" domain, with no singular form to translate.
+// The domain filter uses the Activity Log's plural values (containers, vms),
+// while a Run carries the singular tag (container, vm). flash, config, files
+// and everything are spelled the same in both.
 const DOMAIN_SELECT_TO_RUN: Record<string, string> = {
   containers: "container",
   vms: "vm",
@@ -42,8 +31,8 @@ const DOMAIN_SELECT_TO_RUN: Record<string, string> = {
 };
 
 interface ErrorGroup {
-  key: string; // normalized (trimmed) error message — the group identity
-  message: string; // display text (may be empty → rendered as "—")
+  key: string; // trimmed error message, the group identity
+  message: string; // display text, may be empty
   ids: string[]; // the run ids in this group (the acknowledge targets)
   targets: string[]; // unique affected target names (run.target, never the UUID)
   domains: string[]; // unique singular domains present in the group
@@ -76,7 +65,7 @@ export function ErrorDetailPanel({
         if (res.ok) setRuns(res.runs ?? []);
       })
       .catch(() => {
-        /* non-fatal — keep the last known runs */
+        /* keep the last known runs */
       })
       .finally(() => setLoading(false));
   };
@@ -85,7 +74,6 @@ export function ErrorDetailPanel({
     load();
   }, []);
 
-  // Focus the close button on open + dismiss on Escape (mirrors WhatsNewDialog).
   useEffect(() => {
     closeRef.current?.focus();
     function onKey(e: KeyboardEvent) {
@@ -95,8 +83,7 @@ export function ErrorDetailPanel({
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  // Translate a singular run.domain to a human label, reusing the Activity Log's
-  // already-translated domain keys.
+  // Label for a run's singular domain, using the Activity Log's translations.
   const domainLabel = (d: string): string => {
     switch (d) {
       case "container":
@@ -116,8 +103,8 @@ export function ErrorDetailPanel({
     }
   };
 
-  // Only UNACKNOWLEDGED failures, narrowed by the filter bar, grouped by their
-  // trimmed error message; groups sorted newest-failure-first.
+  // Unacknowledged failures that pass the filters, grouped by trimmed error
+  // message, newest group first.
   const groups = useMemo<ErrorGroup[]>(() => {
     const wantDomain = filterDomain === "all" ? null : (DOMAIN_SELECT_TO_RUN[filterDomain] ?? filterDomain);
     const text = filterText.trim().toLowerCase();
@@ -158,22 +145,14 @@ export function ErrorDetailPanel({
         onChanged?.();
       })
       .catch(() => {
-        /* non-fatal — leave the list as-is */
+        /* leave the list as it is */
       })
       .finally(() => setBusy(false));
   };
 
-  // Portalled to <body> — this panel is rendered from inside Dashboard, which
-  // Layout wraps in .glim-page-enter, and that wrapper's animation leaves a
-  // computed `transform: matrix(1, 0, 0, 1, 0, 0)` behind. An identity matrix is
-  // still a transform, so it makes the wrapper a containing block for
-  // `position: fixed` descendants: measured inline, this backdrop covered
-  // 248,24 1113x1594 instead of the real 0,0 1400x1000 viewport — the sidebar
-  // stayed uncovered and clickable behind an "aria-modal" dialog, and the
-  // bottom 594px hung below the fold. Same fix, same reason, as InfoBubble.tsx
-  // and lib/useConfirm.tsx (the @keyframes glim-page-in comment in index.css tries
-  // to avoid this by ending at `transform: none`, but the computed value is the
-  // identity matrix regardless, so the portal is what actually cures it).
+  // Portalled to <body>: Dashboard sits inside .glim-page-enter, whose
+  // animation leaves a transform behind, and that makes the wrapper the
+  // containing block for `position: fixed`, leaving the sidebar clickable.
   return createPortal(
     <div
       className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -187,14 +166,7 @@ export function ErrorDetailPanel({
         aria-labelledby="errorpanel-title"
         className="glim-modal-card relative flex max-h-[85vh] w-full max-w-3xl flex-col rounded-card bg-carbon-surface shadow-2xl"
       >
-        {/* Header */}
         <div className="flex items-start justify-between gap-4 border-b border-carbon-border px-5 py-4">
-          {/* Task 5 follow-up (rule 15, "title as a badge" for window
-              chrome) — see ConfirmDialog.tsx for the aria-labelledby-safety
-              reasoning; identical here.
-              GlimStone follow-up pass ("half-overlap card notch"): `relative`
-              added on the OUTER dialog div above — same reasoning as
-              ConfirmDialog.tsx's identical structure. */}
           <h2 id="errorpanel-title" className="flex items-center">
             <Badge tone="heading" size="heading" wrap>{t("errorPanel.title")}</Badge>
           </h2>
@@ -206,9 +178,6 @@ export function ErrorDetailPanel({
               onClick={() => acknowledge({ all: true })}
               disabled={busy || groups.length === 0}
             />
-            {/* #178, [201]: the dialog's close control is a Button like every
-                other clickable thing, so it follows the label mode instead of
-                being a permanently glyph-only square of its own. */}
             <Button
               ref={closeRef}
               label={t("common.close")}
@@ -221,7 +190,7 @@ export function ErrorDetailPanel({
           </div>
         </div>
 
-        {/* Filter bar — mirrors the Activity Log's text + domain + type filters. */}
+        {/* The same text, domain and type filters as the Activity Log. */}
         <div className="flex flex-wrap items-center gap-2 border-b border-carbon-border px-5 py-3">
           <input
             type="text"
@@ -247,7 +216,7 @@ export function ErrorDetailPanel({
           />
         </div>
 
-        {/* Body (scrolls) — one row per distinct error message. */}
+        {/* One row per distinct error message. */}
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
           {loading && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
           {!loading && groups.length === 0 && (
@@ -262,10 +231,8 @@ export function ErrorDetailPanel({
                       <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-statusFailSolid" />
                       <p className="min-w-0 wrap-break-word text-sm text-statusFail">{g.message || "—"}</p>
                     </div>
-                    {/* Count badge + Resolve button share one stage (size="large")
-                        so their heights are pixel-identical regardless of the
-                        <span> vs <button> element underneath — see Badge.tsx's
-                        file header for why that isn't automatic. */}
+                    {/* Both badges take size="large" so they are the same height,
+                        although one renders a span and the other a button. */}
                     <div className="flex shrink-0 items-center gap-2">
                       <Badge tone="fail" shape="pill" size="large" className="tabular-nums">
                         {countLabel(g.count)}

@@ -1,42 +1,18 @@
-// ---------------------------------------------------------------------------
-// no-status-color-on-control — settled convention 5.
+// no-status-color-on-control: status colours (green, amber, red) are readouts
+// and stay off controls, and a destructive action gets no red of its own.
 //
-// "Status colours (green/amber/red) stay OUTSIDE the accent/rainbow engine.
-// Destructive actions get no special red badge treatment either."
+// The rule reads the element, so it sees both spellings of the same red: a
+// `bg-statusFailBg`/`text-statusFail` class and Badge's `tone="fail"`.
 //
-// jdp has now said this three separate ways on three separate controls:
-//   * "Der Löschen-Badge ist auch anders eingefärbt, soll nicht so sein, ganz
-//     normal in die Farbmodi integrieren."  (RestorePanel's delete badge)
-//   * "Keine Sonderfarbe für den Entfernen-Badge."
-//   * and the same for "Deaktivieren" buttons.
+// The line is readout versus control:
+//   * A status surface keeps its colour: a fault callout, a red dot on a poll
+//     line, a `<Badge tone="fail">Fehlgeschlagen</Badge>` state chip.
+//   * A control (a button, a link, a Badge with `as="button"`, anything with
+//     an onClick) takes the same neutral chrome as the controls beside it. Its
+//     label names the action, and destructive ones confirm first anyway.
 //
-// Commit d336e532 then swept eight controls across six files — and found them
-// by "grepping the whole tree for statusFail on an interactive element". That
-// grep could only see Tailwind CLASSES, so it swept every hand-written
-// `bg-statusFailBg`/`text-statusFail` button and walked straight past four
-// controls carrying the identical bespoke red through Badge's own `tone="fail"`
-// prop instead. Same treatment, different spelling, invisible to the tool.
-//
-// This rule sees both spellings, because it reads the element rather than the
-// text of the line.
-//
-// The line it draws is READOUT vs CONTROL, which is the line the convention
-// itself draws:
-//   * A status SURFACE keeps its colour — a fault callout, a red "·" on a poll
-//     line, a `<Badge tone="fail">Fehlgeschlagen</Badge>` state chip. Not
-//     interactive, not touched.
-//   * A CONTROL — a button, a link, a Badge with `as="button"`, anything with
-//     an onClick — takes the same neutral chrome as the controls beside it.
-//     The label already names the action, and every one of these routes
-//     through a confirm dialog or a two-click inline confirm anyway.
-//
-// There is no sanctioned exception any more. ConfirmDialog's commit button used
-// to be one, with a marker at its own call site arguing that the dialog IS the
-// status surface. GlimStone 1.12.0 took the red off that button - what warns is
-// the QUESTION - so the carve-out was removed rather than relocated, and this
-// rule now covers that file like every other one. That is the tidiest thing a
-// rule change can do: delete the exception instead of finding it a new home.
-// ---------------------------------------------------------------------------
+// There are no exceptions, ConfirmDialog's commit button included: in a
+// confirm dialog the question does the warning, not the button.
 import {
   attrStringValue,
   baseUtility,
@@ -50,7 +26,7 @@ import {
 
 const RULE_ID = "no-status-color-on-control";
 
-/** Badge tones that are load-bearing STATUS signals rather than chrome. */
+/** Badge tones that signal a status rather than being chrome. */
 const STATUS_TONES = new Set(["fail", "warn", "ok"]);
 
 /** `text-statusFail`, `hover:bg-statusWarnBg`, `border-statusOkSolid`, … */

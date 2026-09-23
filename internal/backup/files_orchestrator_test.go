@@ -8,9 +8,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 )
 
-// fakeFilesRestic implements backup.FilesRestic (Backup only — file-set restore
-// lives in the service layer, not the orchestrator), recording the paths, tags,
-// and excludes it was asked to back up.
+// fakeFilesRestic records the paths, tags and excludes it was asked to back up.
 type fakeFilesRestic struct {
 	backedUpPaths []string
 	tags          []string
@@ -49,33 +47,24 @@ func TestBackupFileSetDir(t *testing.T) {
 	if len(rc.backedUpPaths) != 1 || rc.backedUpPaths[0] != "/host/user/data/docs" {
 		t.Fatalf("expected to back up the set's source dir, got %v", rc.backedUpPaths)
 	}
-	// The snapshot must carry the fileset:<Name> tag — it is the ONLY link
-	// between a snapshot and its file set (the files domain has no defs dir).
+	// The tag is the only link between a snapshot and its file set.
 	if len(rc.tags) != 1 || rc.tags[0] != "fileset:docs" {
 		t.Fatalf("expected tag fileset:docs, got %v", rc.tags)
 	}
-	// The set's excludes pass through to restic verbatim, in order.
 	if len(rc.excludes) != 2 || rc.excludes[0] != "*.tmp" || rc.excludes[1] != "cache/**" {
 		t.Fatalf("expected the set's excludes passed through, got %v", rc.excludes)
 	}
 	if len(runs.finishes) != 1 || runs.finishes[0] != "success" {
 		t.Fatalf("expected one success run, got %v", runs.finishes)
 	}
-	// The run is attributed to the set's stable id, not its name — a rename must
-	// never orphan run history (runs.target_id = file_sets.id).
+	// Runs belong to the set's id, not its name, so a rename keeps the history.
 	if len(runs.log) == 0 || runs.log[0] != "runStart:set-1:backup" {
 		t.Fatalf("expected the run recorded against the set id, got %v", runs.log)
 	}
 }
 
-// TestBackupFileSetDirSourcePaths pins the additive SourcePaths passthrough
-// (Phase 4 file-sets parity; D-01 as corrected by RESEARCH A1/Pitfall 1 —
-// "orchestrator unchanged" is interface-true and file-false): a compiled
-// multi-root selection travels to restic as the positional source list
-// verbatim, while nil (or empty — a zero-include list must never reach argv)
-// keeps the legacy []string{SourceDir} wrap byte-identical.
 func TestBackupFileSetDirSourcePaths(t *testing.T) {
-	t.Run("nil SourcePaths is the legacy single-positional wrap", func(t *testing.T) {
+	t.Run("nil SourcePaths backs up SourceDir", func(t *testing.T) {
 		rc := &fakeFilesRestic{}
 		runs := &fakeRuns{}
 		if _, err := backup.BackupFileSetDir(context.Background(), backup.FileSetBackupDeps{
@@ -90,7 +79,7 @@ func TestBackupFileSetDirSourcePaths(t *testing.T) {
 		}
 	})
 
-	t.Run("non-nil SourcePaths is the positional list verbatim", func(t *testing.T) {
+	t.Run("SourcePaths are passed through unchanged", func(t *testing.T) {
 		rc := &fakeFilesRestic{}
 		runs := &fakeRuns{}
 		paths := []string{"/host/user/data/docs/a", "/host/user/data/docs/b"}
@@ -106,9 +95,6 @@ func TestBackupFileSetDirSourcePaths(t *testing.T) {
 		if len(rc.backedUpPaths) != 2 || rc.backedUpPaths[0] != paths[0] || rc.backedUpPaths[1] != paths[1] {
 			t.Fatalf("expected SourcePaths passed through verbatim, got %v", rc.backedUpPaths)
 		}
-		// The snapshot tag and excludes are unchanged by the multi-root compile:
-		// the fileset:<Name> tag stays the ONLY snapshot↔set link, and excludes
-		// pass through positionally.
 		if len(rc.tags) != 1 || rc.tags[0] != "fileset:docs" {
 			t.Fatalf("expected tag fileset:docs, got %v", rc.tags)
 		}

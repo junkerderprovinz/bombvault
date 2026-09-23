@@ -1,22 +1,9 @@
 package store_test
 
-// Convention guard: production code must not call Repo.UpdateSettings.
-//
-// UpdateSettings writes the WHOLE settings row from the struct it is handed.
-// Paired with GetSettings that is a lost-update bug wearing a patch's clothes:
-// every column another writer changed between the read and the write is
-// reverted, and the writer that lost is told it succeeded. That is not a
-// hypothetical — it is what made a minutes-long encryption probe undo the
-// backup paths a user had just saved, and what made a settings save wipe the
-// named cloud-credential sets. Both were one instance each of the same shape.
-//
-// MutateSettings closes the window structurally (read, mutate and write in one
-// serialized transaction), so the fix only stays fixed if nothing reintroduces
-// the pairing. Tests keep using UpdateSettings freely — seeding a whole row is
-// exactly what it is for — so the guard is scoped to non-test sources.
-//
-// This is a source scan, deliberately: the pairing is a shape, not a type
-// error, so no compiler or linter available here can refuse it.
+// Production code must not call Repo.UpdateSettings: a read-modify-write around
+// it reverts every column another writer changed in between. No compiler or
+// linter catches that, so this scans the non-test sources; tests may still use
+// it to seed a row.
 
 import (
 	"os"
@@ -26,9 +13,7 @@ import (
 	"testing"
 )
 
-// moduleRoot walks up from the test's working directory to the directory
-// holding go.mod, so the scan below covers the whole module rather than this
-// one package.
+// moduleRoot walks up from the working directory to the one holding go.mod.
 func moduleRoot(t *testing.T) string {
 	t.Helper()
 	dir, err := os.Getwd()
@@ -64,8 +49,7 @@ func TestNoProductionCallerUsesUpdateSettings(t *testing.T) {
 			if !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
 				return nil
 			}
-			// The declaration itself lives here; it is the thing being guarded,
-			// not a caller of it.
+			// settings.go declares the method.
 			if path == filepath.Join(root, "internal", "store", "settings.go") {
 				return nil
 			}

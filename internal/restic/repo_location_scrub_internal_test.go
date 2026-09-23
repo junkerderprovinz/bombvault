@@ -5,24 +5,10 @@ import (
 	"testing"
 )
 
-// ---------------------------------------------------------------------------
-// Issue #206: a failure message about a repository has to say WHICH repository.
-//
-// manilx reported "Fatal: create repository at s3:http:[path]:8333[path]
-// failed" - his S3 host was rebooting, he accepted the failure, and objected to
-// the message. The path scrubber had eaten the address: "//192.168.1.50" first,
-// then "/bucket". With named repositories (#204) an install has several, so the
-// answer to "which one" stopped being cosmetic.
-//
-// The three tables below are one set of cases, run against the three
-// independent copies of this scrubber (here, internal/api, internal/backup).
-// They are deliberately identical: the whole risk of three copies is that they
-// drift, and the only thing that catches drift is asking all three the same
-// questions.
-// ---------------------------------------------------------------------------
-
-// repoScrubCases is the shared table. keep is what must SURVIVE the scrub, gone
-// is what must NOT appear in the output.
+// repoScrubCases are failure messages that must still name their repository
+// after the scrub: keep must survive it, gone must not appear in the output.
+// internal/api and internal/backup carry their own copies of the scrubber and
+// of this table, and identical tables catch the copies drifting apart.
 var repoScrubCases = []struct {
 	name string
 	in   string
@@ -30,7 +16,6 @@ var repoScrubCases = []struct {
 	gone []string
 }{
 	{
-		// The reported case, verbatim in shape.
 		name: "the reported case keeps its whole address",
 		in:   "Fatal: create repository at s3:http://192.168.1.50:8333/bucket failed",
 		keep: []string{"s3:http://192.168.1.50:8333/bucket", "create repository"},
@@ -43,11 +28,9 @@ var repoScrubCases = []struct {
 		gone: []string{"Tr0ub4dor", "backupuser"},
 	},
 	{
-		// The one the exemption could have made WORSE. The generic credential
-		// regex stops at "/", so before this change the path scrubber chewed the
-		// back half of such a password into path noise and left the front half
-		// exposed. Exempting the location without a structural userinfo scrubber
-		// would have left the whole thing standing.
+		// The generic credential regex stops at "/". With the location exempt
+		// from path scrubbing, only the userinfo scrubber keeps this password
+		// from surviving whole.
 		name: "a password containing a slash goes whole",
 		in:   "rest:https://backupuser:wJalrXUtnFEMI/K7MDENG@host:8000/repo is unreachable",
 		keep: []string{"host:8000/repo", "[redacted]@"},
@@ -60,9 +43,9 @@ var repoScrubCases = []struct {
 		gone: []string{"backupuser"},
 	},
 	{
-		// The exemption is for REMOTE locations only. A local repository is a
-		// filesystem path on this box, indistinguishable from the appdata and
-		// mount paths the scrubber exists to keep out of surfaced errors.
+		// Only remote locations are exempt. A local repository is a path on
+		// this host, no different from the appdata and mount paths the
+		// scrubber keeps out of surfaced errors.
 		name: "a local path is still scrubbed",
 		in:   "unable to open repository at /mnt/user/appdata/bombvault/containers",
 		keep: []string{"[path]"},
@@ -75,15 +58,15 @@ var repoScrubCases = []struct {
 		gone: []string{"/mnt/user/logs"},
 	},
 	{
-		// Userinfo OUTSIDE a repo location is still the generic regex's job.
+		// Userinfo outside a repo location is left to the generic regex.
 		name: "credentials outside a location still go",
 		in:   "the proxy at admin:hunter2@proxy.local refused",
 		keep: []string{"[redacted]@proxy.local"},
 		gone: []string{"hunter2", "admin:"},
 	},
 	{
-		// The word boundary earns its keep here: without it the "rest" inside
-		// "latest" would start a location and exempt the path behind it.
+		// Without the word boundary the "rest" inside "latest" would start a
+		// location and exempt the path behind it.
 		name: "a scheme name inside another word is not a location",
 		in:   "pulling latest:/mnt/user/appdata/thing failed",
 		keep: []string{"[path]"},
@@ -109,9 +92,8 @@ func TestScrubSecretsKeepsRemoteRepoLocations(t *testing.T) {
 	}
 }
 
-// TestLastReasonNamesTheRepository is the end-to-end half: the message reaches
-// the UI through lastReason, not through scrubSecrets directly, and that is the
-// path issue #206 was reported on.
+// TestLastReasonNamesTheRepository covers the path the UI uses: errors reach it
+// through lastReason, not through scrubSecrets directly.
 func TestLastReasonNamesTheRepository(t *testing.T) {
 	stderr := "some noise\nFatal: create repository at s3:http://192.168.1.50:8333/bucket failed\n"
 	got := lastReason(stderr)

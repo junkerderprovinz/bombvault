@@ -1,54 +1,29 @@
-// ---------------------------------------------------------------------------
-// page-uses-page-shell — settled convention 7.
+// page-uses-page-shell: every page uses the shared shell from
+// src/lib/pageShell.ts, one max-width and one card gap. Two ways to drift are
+// checked:
 //
-// "Every page uses the shared page shell (web/src/lib/pageShell.ts): one
-// max-width, one card gap. Settings is the one documented exception."
+//   1. The root of the page component, the one the file is named for, must be
+//      `className={PAGE_SHELL}`, so a new page in src/pages is covered as soon
+//      as it exists. A page that also renders as a tab panel of another page
+//      may pick between the two shared shells with a ternary
+//      (`embedded ? PAGE_SHELL_TABBED : PAGE_SHELL`), as long as one arm is the
+//      shell this file requires.
+//   2. Nothing in src/pages may hand-roll the shell: a `className` that pairs
+//      a `max-w-*xl` cap with `flex-col` and a card-sized `gap-*` is a page
+//      shell, whatever it is called.
 //
-// pageShell.ts records what this cost to find: FIVE different rendered card
-// widths and TWO different card gaps across ten pages, measured live, after
-// several earlier rounds had each "made it consistent" on whichever single
-// page jdp happened to open that day. The constant fixed the ten pages that
-// existed. Nothing stopped page eleven.
-//
-// Two halves, because there are two ways to drift:
-//
-//   1. The page component's root must be `className={PAGE_SHELL}`. Checked on
-//      the component the file is named for, so a NEW page in src/pages is
-//      covered the moment it is created. A page that ALSO renders as a tab
-//      panel of another page may write a ternary between the two shells
-//      pageShell.ts exports (`embedded ? PAGE_SHELL_TABBED : PAGE_SHELL`) —
-//      both arms must be shared constants and one must be this file's required
-//      shell, so the choice is still between the app's two widths and never a
-//      third one of the page's own.
-//   2. Nothing anywhere in src/pages may hand-roll the shell as literal
-//      classes — a `className` that pairs a `max-w-*` cap with `flex-col` and
-//      a `gap-*` IS a page shell, whatever it is called. That is the exact
-//      shape of every one of the ten originals.
-//
-// The exceptions are DATA, in eslint.config.js, not something a rule infers:
+// Exceptions are configured in eslint.config.js rather than inferred:
 //
 //     exceptions: {
 //       "Settings.tsx": "PAGE_SHELL_TABBED",  // its 7-tab strip needs 1424px
 //       "Login.tsx": null,                    // not a routed page at all
 //     }
 //
-// so "Settings is allowed to differ" is a line someone wrote on purpose and
-// can read back, not a hole a page fell through. A page not listed there gets
-// no latitude.
-//
-// The rule's one structural blind spot is what it is HANDED. It returns `{}`
-// for anything outside src/pages/*.tsx, and inside such a file it recognises
-// the page component only as the default export or an export named after the
-// file (`Fleet` / `FleetPage` in Fleet.tsx). A routed page that is neither — a
-// Reports.tsx exporting `function ReportsView()`, or a routed component living
-// outside src/pages — would ship with its own width and gap and this rule would
-// say nothing at all. src/lib/uiConventions.test.ts closes that gap: its
-// "page-uses-page-shell sees every routed page" block reads the REAL router,
-// resolves every routed element back to its file, and fails when that file is
-// not one this rule would visit and recognise. (This citation previously named
-// a test that had never been written; it now names one that has, and that has
-// been seen to fail on exactly the shape above.)
-// ---------------------------------------------------------------------------
+// The rule only visits src/pages/*.tsx and only recognises the default export
+// or an export named after the file (`Fleet` or `FleetPage` in Fleet.tsx). A
+// routed page outside that scope would go unchecked, so
+// src/lib/uiConventions.test.ts resolves every route to its file and fails
+// when this rule would not see it.
 import { baseUtility, escapeHatch, getAttr, hasException } from "./helpers.js";
 
 const RULE_ID = "page-uses-page-shell";
@@ -56,26 +31,20 @@ const RULE_ID = "page-uses-page-shell";
 const DEFAULT_SHELL = "PAGE_SHELL";
 
 /**
- * `flex flex-col gap-10 max-w-6xl` written out by hand instead of imported.
+ * `flex flex-col gap-10 max-w-6xl` written out instead of imported.
  *
- * All three parts have to be the PAGE-scale versions, or this fires on every
- * small stacked column in a settings row. Calibrated against the real tree:
- *   * `max-w-*xl` only — a CONTENT COLUMN cap. Every one of the ten original
- *     page roots was max-w-3xl / max-w-5xl / max-w-6xl. `max-w-40`,
- *     `max-w-xs`, `max-w-full` are element widths and are left alone (four
- *     such columns exist in Settings.tsx today, and none of them is a page).
- *   * a Card-rhythm gap (>= gap-5, i.e. 20px). The two real values in the
- *     survey were gap-6 (24px) and gap-10 (40px); `gap-1`/`gap-2` is a label
- *     stack, not a page.
+ * All three parts have to be page-scale, or this would fire on every small
+ * stacked column in a settings row:
+ *   * `max-w-*xl` only, a content column cap; `max-w-40`, `max-w-xs` and
+ *     `max-w-full` are element widths.
+ *   * a card-rhythm gap of at least gap-5 (20px); `gap-1` or `gap-2` is a
+ *     label stack.
  */
 const PAGE_WIDTH_CAP = /^max-w-\d*xl$/;
 const CARD_RHYTHM_GAP = /^gap(?:-x|-y)?-(\d+)$/;
 
 function isHandRolledShell(tokens) {
-  // Matched on the BASE utility, so a variant prefix cannot hide a token from
-  // the patterns: they are ^-anchored, and `md:max-w-6xl` therefore missed
-  // PAGE_WIDTH_CAP entirely. helpers.js exports baseUtility for exactly this and
-  // every sibling rule already uses it.
+  // The patterns are anchored, so variant prefixes like `md:` come off first.
   const bases = tokens.map(baseUtility);
   const has = (re) => bases.some((t) => re.test(t));
   const gap = bases.map((t) => CARD_RHYTHM_GAP.exec(t)).find(Boolean);
@@ -126,7 +95,7 @@ export default {
     const stem = base.replace(/\.tsx$/, "");
     const wanted = new Set([stem, `${stem}Page`]);
 
-    /** Every function in this file that could be THE page component. */
+    /** Every function in this file that could be the page component. */
     const candidates = [];
 
     function noteExport(decl, isDefault) {
@@ -143,9 +112,7 @@ export default {
       } else if (isDefault && (decl.type === "ArrowFunctionExpression" || decl.type === "FunctionExpression")) {
         candidates.push(decl);
       } else if (isDefault && decl.type === "Identifier") {
-        // `export default Fleet;` — the function is declared elsewhere in the
-        // file. Dropping it here meant the whole page went unchecked, which is
-        // the same silent pass the arrow-body gap produced.
+        // `export default Fleet;` with the function declared elsewhere.
         const scope = context.sourceCode.getScope(decl);
         const variable = scope.references.find((r) => r.identifier === decl)?.resolved
           ?? scope.set.get(decl.name);
@@ -164,10 +131,8 @@ export default {
     /** The `return` statements written directly in a function's own body. */
     function ownReturns(fn) {
       const out = [];
-      // An arrow with an EXPRESSION body has no ReturnStatement at all, so the
-      // walk below found nothing and the component was skipped in silence — a
-      // page written as `const Fleet = () => (<div>…</div>)` was never checked.
-      // Synthesised here as the return it is.
+      // An arrow with an expression body has no ReturnStatement; its body is
+      // the return.
       if (fn.type === "ArrowFunctionExpression" && fn.body?.type !== "BlockStatement") {
         return [{ type: "ReturnStatement", argument: fn.body }];
       }
@@ -175,8 +140,8 @@ export default {
         if (!node || typeof node !== "object") return;
         if (Array.isArray(node)) return node.forEach(walk);
         if (node.type === "ReturnStatement") out.push(node);
-        // Do not descend into a nested function — its returns are not the
-        // page's root (a row renderer, a useMemo callback, an event handler).
+        // A nested function's returns (a row renderer, a useMemo callback) are
+        // not the page's root.
         if (
           node !== fn &&
           (node.type === "FunctionDeclaration" ||
@@ -193,10 +158,8 @@ export default {
       return out;
     }
 
-    // The two shells lib/pageShell.ts exports. Kept as a list here rather than
-    // read from that file because the rule must work on a single file's AST,
-    // and a page that names one of these is by definition not hand-rolling the
-    // width and gap this rule exists to stop.
+    // The two shells lib/pageShell.ts exports, listed here because a rule only
+    // sees one file's AST.
     const SHARED_SHELLS = ["PAGE_SHELL", "PAGE_SHELL_TABBED"];
 
     function usesShell(returnStatement) {
@@ -207,13 +170,10 @@ export default {
       if (!v || v.type !== "JSXExpressionContainer") return false;
       const e = v.expression;
       if (e.type === "Identifier") return e.name === requiredShell;
-      // `embedded ? PAGE_SHELL_TABBED : PAGE_SHELL` — a page that also renders
-      // as a tab panel of another page (Receiver, Fleet and Pull inside
-      // Instances). Both arms must name a SHARED shell and one of them must be
-      // the shell this file is required to use, so the page still cannot drift
-      // to its own width: it can only pick between the two the app already has.
-      // A ternary with a literal in either arm is still a violation, which is
-      // the case worth keeping strict.
+      // `embedded ? PAGE_SHELL_TABBED : PAGE_SHELL` for a page that is also a
+      // tab panel of another (Receiver, Fleet and Pull inside Instances). Both
+      // arms must be shared shells and one must be the required one; a literal
+      // in either arm is a violation.
       if (e.type === "ConditionalExpression") {
         const arms = [e.consequent, e.alternate];
         return (

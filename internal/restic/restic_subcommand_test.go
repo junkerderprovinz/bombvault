@@ -16,8 +16,6 @@ func TestSubcommand(t *testing.T) {
 		}
 	})
 	t.Run("all flags no positional falls back to unknown", func(t *testing.T) {
-		// An argv with only flags and no positional word returns the documented
-		// fallback so error messages still make sense.
 		got := subcommand([]string{"-r", "/repo", "--json", "--insecure-no-password"})
 		if got != "unknown" {
 			t.Fatalf("got %q want %q", got, "unknown")

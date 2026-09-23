@@ -1,14 +1,10 @@
-// Pure hex<->HSV math for ColorPickerSwatch — ported verbatim from
-// GlimStone's reference/colorPicker.ts. These are the calculations the SV
-// square + hue bar drag handlers and the hex text field both read/write, so
-// a round-trip regression here would silently desync the picker's dot
-// positions from whatever hex the caller (setAccent, a rainbow-palette
-// entry) actually receives. No DOM needed — same "pure colour math" split
-// lib/accent.test.ts already uses for contrastOn/softTint.
+// The hex and HSV conversions behind ColorPickerSwatch. The drag handlers and
+// the hex field both go through them, so a lossy round trip would move the
+// picker's dots away from the colour the caller receives.
 import { describe, expect, it } from "vitest";
 import { hexToHsv, hsvToHex, normalizeHex } from "./ColorPickerPopover";
 
-describe("hexToHsv / hsvToHex — round trip", () => {
+describe("hexToHsv / hsvToHex round trip", () => {
   it.each([
     "#fcc419", // default accent (yellow)
     "#1d99f3", // blue

@@ -1,21 +1,7 @@
-// ---------------------------------------------------------------------------
-// The donation addresses, checked as far as each format allows ([3524]).
-//
-// This is the one list in the app where a typo costs a stranger real money and
-// nobody ever finds out: the person it happens to is not a user, they are
-// someone who tried to give something away and got nothing back. Two of the
-// five formats carry a real checksum, so those are verified rather than
-// eyeballed; the rest are pinned by length and alphabet.
-//
-// The FIRST version of this list was grouped by coin and named "Tether" with
-// the networks "BNB, Tron, Solana, Ethereum" above a single 0x… address. That
-// address exists on EVM chains only. A donor picking Tron would have sent USDT
-// into nothing. The list is coin-first again since [3554], and what keeps it
-// safe now is that every network carries its OWN address — so the check that
-// matters most here is the one holding each chain to the wallet it is supposed
-// to reach, read from a table written out by hand rather than derived from the
-// list it guards.
-// ---------------------------------------------------------------------------
+// A typo in a donation address loses a stranger's money without anyone noticing,
+// so each address is checked as far as its format allows: Bitcoin and XRP carry
+// a real checksum, the rest are held to length and alphabet. Each chain is also
+// held to the wallet it is meant to reach, from a table written out by hand.
 import { createHash } from "node:crypto";
 import { expect, it } from "vitest";
 import { ADDRESS_BY_CHAIN, CRYPTO_COINS } from "./donate";
@@ -36,8 +22,8 @@ function bech32Polymod(values: number[]): number {
   return chk;
 }
 
-/** BIP-173/350: the checksum an address carries about itself. A single wrong
- *  character fails this, which is the whole point of the format. */
+/** bech32Ok verifies the BIP-173/350 checksum, which any single wrong character
+ *  fails. */
 function bech32Ok(addr: string): boolean {
   const lower = addr.toLowerCase();
   if (addr !== lower && addr !== addr.toUpperCase()) return false;
@@ -70,10 +56,8 @@ const networks = CRYPTO_COINS.flatMap((c) => c.networks);
 const chain = (id: string) => networks.find((n) => n.id === id);
 
 it("points every chain at the wallet it is supposed to reach", () => {
-  // The check this list exists for. A chain entry whose address belongs to
-  // another chain is money sent into nothing, and it is invisible in review:
-  // both strings look like addresses. Compared against a table written out by
-  // hand in donate.ts, so a mistake in the list cannot also be in the guard.
+  // An address that belongs to another chain looks fine in review, so compare
+  // against the hand-written table in donate.ts rather than the list itself.
   for (const coin of CRYPTO_COINS) {
     expect(coin.networks.length, `${coin.id} offers no network`).toBeGreaterThan(0);
     for (const n of coin.networks) {
@@ -81,15 +65,14 @@ it("points every chain at the wallet it is supposed to reach", () => {
       expect(n.address, `${coin.id}/${n.id} points at the wrong wallet`).toBe(ADDRESS_BY_CHAIN[n.id]);
     }
   }
-  // And the table holds exactly the five wallets, so a sixth cannot be slipped
-  // in without one of the checksum tests below noticing it has none.
+  // Exactly five wallets, each covered by a format test below.
   expect(new Set(Object.values(ADDRESS_BY_CHAIN)).size).toBe(5);
 });
 
 it("the Bitcoin address passes its own bech32 checksum", () => {
   const btc = chain("bitcoin")!.address;
   expect(bech32Ok(btc)).toBe(true);
-  // And the check is not a rubber stamp: one flipped character must fail it.
+  // One flipped character must fail it.
   expect(bech32Ok(btc.replace(/.$/, (c) => (c === "a" ? "q" : "a")))).toBe(false);
 });
 
@@ -116,8 +99,7 @@ it("the EVM and Sui addresses are hex of the right length", () => {
 });
 
 it("offers no chain an address cannot live on", () => {
-  // Stated as a check: Tron is the one that nearly shipped, and there is no
-  // Tron address here, so the word must not appear anywhere in the list.
+  // There is no Tron address, so Tron must not be offered at all.
   expect(JSON.stringify(CRYPTO_COINS).toLowerCase()).not.toContain("tron");
   // The EVM wallet is offered for EVM chains only. The others have their own,
   // and a 0x… address on any of them is unreachable.
@@ -131,12 +113,11 @@ it("gives every coin a mark, a ticker and a unique id", () => {
   for (const c of CRYPTO_COINS) {
     expect(c.symbol.length, c.id).toBeGreaterThan(1);
     expect(c.name.length, c.id).toBeGreaterThan(1);
-    // A tile with no mark is a bare ticker beside seven drawn ones, which
-    // reads as a missing image rather than as a deliberate plain tile.
+    // A tile without a mark reads as a missing image.
     expect(hasCoinMark(c.id), `${c.id} has no mark in donateMarks.tsx`).toBe(true);
   }
   expect(new Set(CRYPTO_COINS.map((c) => c.id)).size).toBe(CRYPTO_COINS.length);
-  // Ids are unique WITHIN a coin as well, since the chain row keys on them.
+  // Network ids are unique within a coin too, since the chain row keys on them.
   for (const c of CRYPTO_COINS) {
     expect(new Set(c.networks.map((n) => n.id)).size, c.id).toBe(c.networks.length);
   }

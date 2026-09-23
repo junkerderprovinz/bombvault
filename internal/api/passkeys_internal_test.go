@@ -11,25 +11,20 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/config"
 )
 
-// The constraint this whole feature is shaped around, pinned.
-//
-// WebAuthn binds a credential to a relying-party ID, which the specification
-// requires to be a DOMAIN. BombVault's own Unraid template opens
-// https://[IP]:3443, so the DEFAULT installation is exactly the case that
-// cannot work, and the product has to say so rather than raise a browser
-// prompt that fails with "NotAllowedError".
-// webauthnSessionForTest is a stand-in for real session data. The ceremony
-// bookkeeping below never looks inside it, so its contents are irrelevant; what
-// is being tested is the handle around it.
+// webauthnSessionForTest stands in for real session data; the ceremony
+// bookkeeping never looks inside it.
 var webauthnSessionForTest = webauthn.SessionData{Challenge: "test-challenge"}
 
+// The relying-party id has to be a domain, and the Unraid template opens
+// https://[IP]:3443. That case must be refused with an explanation instead of
+// a browser prompt that fails with NotAllowedError.
 func TestAnIPAddressCannotCarryAPasskey(t *testing.T) {
 	for _, host := range []string{
 		"192.168.20.63:3443", // the template's own shape
 		"192.168.20.63",
 		"10.0.0.1:80",
-		"[fd00::1]:3443", // IPv6, brackets and all
-		"[::1]:3443",     // the loopback address is still an ADDRESS
+		"[fd00::1]:3443",
+		"[::1]:3443", // loopback is still an address
 		"",
 	} {
 		r := httptest.NewRequest(http.MethodGet, "/api/auth/passkeys", nil)
@@ -42,9 +37,8 @@ func TestAnIPAddressCannotCarryAPasskey(t *testing.T) {
 	}
 }
 
-// …and the addresses that CAN. localhost is the documented exception: the
-// specification treats it as a secure context and browsers accept it as a
-// relying-party id, which is what makes an SSH tunnel a working way to use this.
+// localhost is the exception: browsers treat it as a secure context and accept
+// it as a relying-party id, so an SSH tunnel works.
 func TestAHostNameCarriesAPasskey(t *testing.T) {
 	cases := map[string]string{
 		"bombvault.example.com:3443": "bombvault.example.com",
@@ -66,11 +60,8 @@ func TestAHostNameCarriesAPasskey(t *testing.T) {
 	}
 }
 
-// The refusal has to reach the screen as it was written. Every error leaving
-// the API goes through scrubError, whose absolute-path regex redacts any
-// slash-led token, so an example URL inside this sentence would arrive as
-// "[path]" and the advice would be unusable. This package has been bitten by
-// that trap three times; this is the guard for the fourth.
+// Every API error goes through scrubError, which redacts slash-led tokens, so a
+// URL in the refusal would reach the screen as "[path]".
 func TestThePasskeyRefusalSurvivesTheScrubber(t *testing.T) {
 	msg := errPasskeyOrigin.Error()
 	if got := scrubError(errPasskeyOrigin); got != msg {
@@ -82,10 +73,9 @@ func TestThePasskeyRefusalSurvivesTheScrubber(t *testing.T) {
 	}
 }
 
-// The origin the library checks against has to be the one the BROWSER saw. A
-// reverse proxy terminates TLS and forwards plain HTTP inwards, so the server's
-// own scheme is the wrong one exactly in the deployment where passkeys work at
-// all.
+// The origin has to carry the scheme the browser saw. A reverse proxy
+// terminates TLS and forwards plain HTTP, so the server's own scheme is wrong
+// in exactly the setup where passkeys work.
 func TestTheOriginFollowsTheProxysScheme(t *testing.T) {
 	h := &Handler{cfg: config.Config{HTTPOnly: true}}
 
@@ -104,7 +94,7 @@ func TestTheOriginFollowsTheProxysScheme(t *testing.T) {
 			"origin the ceremony is checked against is the browser's.", got)
 	}
 
-	// A chain of proxies appends, and the FIRST value is the client's.
+	// Each proxy in a chain appends; the first value is the client's.
 	chained := httptest.NewRequest(http.MethodGet, "/api/auth/passkeys", nil)
 	chained.Host = "bombvault.example.com"
 	chained.Header.Set("X-Forwarded-Proto", "https, http")
@@ -130,8 +120,8 @@ func TestACeremonyHandleWorksOnce(t *testing.T) {
 	}
 }
 
-// The map is reachable without a session (the LOGIN half has to be), so it
-// needs a ceiling that does not depend on the caller behaving.
+// Login ceremonies start without a session, so the map needs a ceiling that
+// does not depend on the caller behaving.
 func TestCeremoniesAreBounded(t *testing.T) {
 	h := &Handler{}
 	for i := 0; i < passkeyCeremonyMax*3; i++ {

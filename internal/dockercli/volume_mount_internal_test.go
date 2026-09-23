@@ -7,13 +7,9 @@ import (
 	"github.com/docker/docker/api/types/mount"
 )
 
-// TestNeedsVolumeMountpoint pins the predicate fillVolumeMountSources uses to
-// decide which Mounts entries still need a VolumeInspect round-trip: only a
-// volume-type mount the daemon reported with an empty Source (the rare case —
-// it normally already carries the volume's real host storage location) AND a
-// resolvable Name. A bind mount, a volume that already has its Source filled
-// in, and a nameless mount must all be left alone (no extra API call, and
-// nothing to look up by for the nameless case).
+// TestNeedsVolumeMountpoint checks that only a named volume mount without a
+// Source needs a VolumeInspect call. The daemon usually fills Source in
+// already.
 func TestNeedsVolumeMountpoint(t *testing.T) {
 	cases := []struct {
 		name string

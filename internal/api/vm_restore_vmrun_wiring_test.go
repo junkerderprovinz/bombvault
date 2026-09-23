@@ -1,24 +1,12 @@
 package api_test
 
-// End-to-end proof that the real RestoreVM (via prepareRestoreVMForTarget's
-// "vmrun:<runID>" group resolution, internal/api/service.go) actually reaches
-// the restic engine with the CORRECT values — v8.0.0 VM service-layer
-// integration, Task 3 (the design notes). Complements
-// vm_restore_vmrun_internal_test.go's plan-level assertions by driving a real
-// BackupVM->RestoreVM round trip through fakeResticEngine (service_test.go)
-// and confirming DumpRaw (the zvol restore-side dump, resticZvolAdapter.
-// DumpTo's target) and RestorePath (the main file-backed restore) each
-// receive the right (snapshotID, path) pair for the right disk.
+// These tests run a real BackupVM and RestoreVM through fakeResticEngine and
+// check that DumpRaw (zvol disks) and RestorePath (the file disk) get the right
+// snapshot and path for each disk, including the "vmrun:<runID>" grouping.
 //
-// Windows-skipped, same reason and same precedent as
-// foreign_vm_restore_internal_test.go's TestForeignRestoreVMLeavesStoppedAndRemaps:
-// this drives BackupVM/RestoreVM through vmZvolTestService's REAL OS temp dir
-// as HostMountRoot, and paths.Within requires a leading "/" — a real Windows
-// path never has one, so the disk-path containment check that guards restore
-// always (correctly, structurally) refuses it there. Unaffected by Task 3;
-// vm_restore_vmrun_internal_test.go covers the same requirements cross-platform
-// via prepareRestoreVMForTarget directly with the project's established
-// slash-literal HostMountRoot convention.
+// They skip on Windows: HostMountRoot is a real temp dir there, and paths.Within
+// needs a leading "/". vm_restore_vmrun_internal_test.go covers the same plan on
+// every platform through prepareRestoreVMForTarget.
 
 import (
 	"context"
@@ -32,13 +20,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
-// seedVMsRepoConfig writes restic's "config" marker into <root>/backups/vms —
-// the vms domain's local repo dir (settings.VMsPath, set by
-// vmZvolTestService) — so snapshotsForTag's localRepoMissing check reads the
-// repo as present and actually lists eng.snaps instead of silently reporting
-// "no snapshots yet". BackupVM never needs this (the fake engine's
-// Backup/BackupStdin calls never touch the filesystem), but RestoreVM's
-// snapshot-listing path does.
+// seedVMsRepoConfig writes restic's config marker into <root>/backups/vms, so
+// snapshotsForTag sees the repo and lists eng.snaps. Only the restore side
+// needs it; the fake engine's backups never touch the filesystem.
 func seedVMsRepoConfig(t *testing.T, root string) {
 	t.Helper()
 	repoDir := filepath.Join(root, "backups", "vms")
@@ -50,10 +34,8 @@ func seedVMsRepoConfig(t *testing.T, root string) {
 	}
 }
 
-// zvolTagOf returns the tag of the zvol identity form "vm:<name>:zvol:<dev>"
-// out of a "path:tag,tag,..." BackupStdin recording (fakeResticEngine.
-// stdinBackups' shape) — used to attribute each recorded zvol backup call to
-// its device, and pull out its stdin path, without hardcoding call order.
+// zvolTagOf splits a "path:tag,tag,..." BackupStdin recording into its stdin
+// path and its "vm:<name>:zvol:<dev>" tag.
 func zvolTagOf(entry string) (path, tag string) {
 	path, tags, _ := strings.Cut(entry, ":")
 	for _, t := range strings.Split(tags, ",") {
@@ -64,14 +46,10 @@ func zvolTagOf(entry string) (path, tag string) {
 	return path, ""
 }
 
-// TestRestoreVMWithVmrunGroupRestoresAllThreeSnapshotsToCorrectTargets pins
-// requirement (a)+(c): a "latest" restore of a mixed file+2-zvol-disk VM
-// backup dumps EACH zvol disk from ITS OWN restic snapshot (not the main
-// file-backed one, not each other's) and restores the main file disk from
-// the file-backed snapshot — proven by inspecting the fake engine's actual
-// DumpRaw/RestorePath call recordings, the same fakes the rest of this
-// package's restore tests verify against.
-func TestRestoreVMWithVmrunGroupRestoresAllThreeSnapshotsToCorrectTargets(t *testing.T) {
+// A "latest" restore of a VM with one file disk and two zvol disks dumps each
+// zvol from its own snapshot and restores the file disk from the file-backed
+// one.
+func TestRestoreVMRestoresEachDiskFromItsOwnSnapshot(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("drives BackupVM/RestoreVM with a real OS temp dir as HostMountRoot (paths.Within needs a leading /) — see file header comment")
 	}
@@ -88,13 +66,10 @@ func TestRestoreVMWithVmrunGroupRestoresAllThreeSnapshotsToCorrectTargets(t *tes
 		t.Fatalf("stdinBackups = %v, want 2 zvol backup calls", eng.stdinBackups)
 	}
 
-	// Build the restic snapshot listing the backup above would have produced:
-	// the main file-backed snapshot (the fake's fixed Backup id) plus one per
-	// zvol disk (the fake's fixed, sequential BackupStdin ids), each carrying
-	// its own identity tag + the shared runTag, with Paths = the exact stdin
-	// path BackupStdin recorded (mirrors what a real restic snapshot listing
-	// reports).
-	snaps := []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:mixedvm", "p2", runTag}}}
+	// The listing the backup would have produced: the file-backed snapshot plus
+	// one per zvol disk, each with its identity tag, the run tag and its stdin
+	// path.
+	snaps := []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:mixedvm", "p2", runTag}, Paths: eng.lastPaths}}
 	for i, entry := range eng.stdinBackups {
 		path, tag := zvolTagOf(entry)
 		if tag == "" {
@@ -113,17 +88,15 @@ func TestRestoreVMWithVmrunGroupRestoresAllThreeSnapshotsToCorrectTargets(t *tes
 		t.Fatalf("RestoreVM: %v", err)
 	}
 
-	// The main file disk was restored from the FILE-BACKED snapshot.
 	if len(eng.restored) != 1 || !strings.Contains(eng.restored[0], ":deadbeef12345678:") {
 		t.Fatalf("restored = %v, want exactly one RestorePath call against deadbeef12345678", eng.restored)
 	}
 
-	// Each zvol disk was dumped from ITS OWN snapshot at ITS OWN stdin path —
-	// never the main snapshot, never the other disk's.
+	// Each zvol disk is dumped from its own snapshot at its own stdin path.
 	if len(eng.dumpRawCalls) != 2 {
 		t.Fatalf("dumpRawCalls = %v, want 2 (one per zvol disk)", eng.dumpRawCalls)
 	}
-	wantByPath := map[string]string{} // stdin path -> expected snapshot id, from the backup-side recording
+	wantByPath := map[string]string{} // stdin path to expected snapshot ID
 	for i, entry := range eng.stdinBackups {
 		path, _ := zvolTagOf(entry)
 		wantByPath[path] = "zvolSnap" + strconv.Itoa(i+1)
@@ -143,13 +116,9 @@ func TestRestoreVMWithVmrunGroupRestoresAllThreeSnapshotsToCorrectTargets(t *tes
 	}
 }
 
-// TestRestoreVMFileOnlyByteIdenticalWithNoVmrunGroupQuery pins requirement
-// (b), the critical regression case: a file-only VM's restore (every Unraid
-// VM, and most VMs in production generally — BackupVM never sets RunTag for
-// one, so its snapshot never carries a "vmrun:" tag) must restore EXACTLY the
-// one file-backed snapshot, with zero zvol dump calls — completely unaffected
-// by the vmrun: group-resolution logic Task 3 adds.
-func TestRestoreVMFileOnlyByteIdenticalWithNoVmrunGroupQuery(t *testing.T) {
+// BackupVM sets no run tag for a file-only VM, which covers most VMs, so its
+// restore uses the one file-backed snapshot and dumps no zvol.
+func TestRestoreVMFileOnlyUsesSingleSnapshot(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("drives BackupVM/RestoreVM with a real OS temp dir as HostMountRoot (paths.Within needs a leading /) — see file header comment")
 	}
@@ -162,7 +131,7 @@ func TestRestoreVMFileOnlyByteIdenticalWithNoVmrunGroupQuery(t *testing.T) {
 		t.Fatalf("tags = %v, want [vm:plainvm p2] (no vmrun: tag for a file-only VM)", eng.lastTags)
 	}
 
-	eng.snaps = []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:plainvm", "p2"}}}
+	eng.snaps = []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:plainvm", "p2"}, Paths: eng.lastPaths}}
 	seedVMsRepoConfig(t, root)
 
 	if err := svc.RestoreVM(context.Background(), "plainvm", "latest", true, "", true); err != nil {
@@ -176,14 +145,9 @@ func TestRestoreVMFileOnlyByteIdenticalWithNoVmrunGroupQuery(t *testing.T) {
 	}
 }
 
-// TestRestoreVMMixedDiskHistoricalRunFallsBackWithoutInventingSnapshots pins
-// requirement (b)'s OTHER shape: a mixed file+zvol VM whose Run predates the
-// "vmrun:" correlation tag (its snapshot carries none) must restore the main
-// disk from the plain "vm:"+name tag exactly as before, and must NOT invent a
-// snapshot id for the zvol disks — RestoreZvolDisk is still invoked (a no-op
-// domain-XML-driven decision, unchanged since Task 2) but with an EMPTY
-// snapshot id, exactly as it was before this task, rather than silently
-// resolving to the wrong (or any) snapshot.
+// A mixed VM backed up before the vmrun: tag existed restores its file disk from
+// the plain "vm:"+name tag. RestoreZvolDisk still runs for each zvol disk, but
+// with an empty snapshot ID instead of a guessed one.
 func TestRestoreVMMixedDiskHistoricalRunFallsBackWithoutInventingSnapshots(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("drives BackupVM/RestoreVM with a real OS temp dir as HostMountRoot (paths.Within needs a leading /) — see file header comment")
@@ -194,9 +158,8 @@ func TestRestoreVMMixedDiskHistoricalRunFallsBackWithoutInventingSnapshots(t *te
 		t.Fatalf("BackupVM: %v", err)
 	}
 
-	// Simulate a pre-existing Run: only the main file-backed snapshot is
-	// listed, and it carries NO "vmrun:" tag at all.
-	eng.snaps = []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:mixedvm", "p2"}}}
+	// Only the file-backed snapshot is listed, without a vmrun: tag.
+	eng.snaps = []restic.Snapshot{{ID: "deadbeef12345678", Tags: []string{"vm:mixedvm", "p2"}, Paths: eng.lastPaths}}
 	seedVMsRepoConfig(t, root)
 
 	if err := svc.RestoreVM(context.Background(), "mixedvm", "latest", true, "", true); err != nil {

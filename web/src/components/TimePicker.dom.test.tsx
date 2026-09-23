@@ -1,16 +1,4 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// TimePicker — real DOM/keyboard/popover behaviour TimePicker.test.ts's pure
-// parseTime/formatTime/minutesFor/nearestStep tests can't cover: the trigger
-// rendering the current value, the popover actually opening/closing, hour/
-// minute selection updating the value, keyboard navigation, and outside-
-// click/Escape/scroll dismissal. Named `.dom.test.tsx` per
-// ColorPickerPopover.dom.test.tsx's own convention for the jsdom-opted-in
-// exception (vitest.config.ts stays "node" by default). No
-// @testing-library/jest-dom in this repo — plain DOM property/attribute
-// access instead of the toBeInTheDocument()/toHaveAttribute() matchers,
-// matching ColorPickerPopover's/Selector's own tests.
-// ---------------------------------------------------------------------------
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { TimePicker } from "./TimePicker";
@@ -19,27 +7,27 @@ afterEach(() => {
   cleanup();
 });
 
-describe("TimePicker — trigger", () => {
-  it("shows the current value as its label, with no dialog until activated", () => {
+describe("TimePicker trigger", () => {
+  it("shows the current value and no dialog until activated", () => {
     render(<TimePicker value="14:30" onChange={vi.fn()} label="Time" />);
     const trigger = screen.getByRole("button", { name: "Time: 14:30" });
     expect(trigger.textContent).toContain("14:30");
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("is a real button, never a typeable text field", () => {
+  it("is a button, not a text field", () => {
     render(<TimePicker value="14:30" onChange={vi.fn()} label="Time" />);
     const trigger = screen.getByRole("button", { name: "Time: 14:30" });
     expect(trigger.tagName).toBe("BUTTON");
     expect(trigger.getAttribute("type")).toBe("button");
   });
 
-  it("forces dir=ltr on the trigger regardless of page direction", () => {
+  it("forces dir=ltr on the trigger", () => {
     render(<TimePicker value="14:30" onChange={vi.fn()} label="Time" />);
     expect(screen.getByRole("button", { name: "Time: 14:30" }).getAttribute("dir")).toBe("ltr");
   });
 
-  it("disabled renders a disabled trigger that never opens the popover", () => {
+  it("does not open when disabled", () => {
     render(<TimePicker value="14:30" onChange={vi.fn()} label="Time" disabled />);
     const trigger = screen.getByRole("button", { name: "Time: 14:30" }) as HTMLButtonElement;
     expect(trigger.disabled).toBe(true);
@@ -48,7 +36,7 @@ describe("TimePicker — trigger", () => {
   });
 });
 
-describe("TimePicker — popover open/selection", () => {
+describe("TimePicker popover", () => {
   it("clicking the trigger opens a dialog with hour and minute listboxes", () => {
     render(<TimePicker value="14:30" onChange={vi.fn()} label="Time" />);
     fireEvent.click(screen.getByRole("button", { name: "Time: 14:30" }));
@@ -67,13 +55,12 @@ describe("TimePicker — popover open/selection", () => {
     expect(within(minuteBox).getByRole("option", { name: "30" }).getAttribute("aria-selected")).toBe("true");
   });
 
-  it("highlights the nearest 5-minute step for an off-grid stored value, without rewriting it", () => {
+  it("highlights the nearest step for an off-grid value without rewriting it", () => {
     const spy = vi.fn();
     render(<TimePicker value="14:32" onChange={spy} label="Time" />);
     fireEvent.click(screen.getByRole("button", { name: "Time: 14:32" }));
     const minuteBox = screen.getByRole("listbox", { name: "Minute" });
     expect(within(minuteBox).getByRole("option", { name: "30" }).getAttribute("aria-selected")).toBe("true");
-    // Merely opening the popover must not call onChange — no silent rewrite.
     expect(spy).not.toHaveBeenCalled();
   });
 
@@ -95,7 +82,7 @@ describe("TimePicker — popover open/selection", () => {
     expect(spy).toHaveBeenCalledWith("14:05");
   });
 
-  it("picking a value does not close the popover — both hour and minute can be set in one visit", () => {
+  it("stays open after a pick so hour and minute can be set together", () => {
     render(<TimePicker value="14:30" onChange={vi.fn()} label="Time" />);
     fireEvent.click(screen.getByRole("button", { name: "Time: 14:30" }));
     const hourBox = screen.getByRole("listbox", { name: "Hour" });
@@ -104,7 +91,7 @@ describe("TimePicker — popover open/selection", () => {
   });
 });
 
-describe("TimePicker — keyboard navigation", () => {
+describe("TimePicker keyboard navigation", () => {
   it("ArrowDown on the hour listbox steps to the next hour and commits it", () => {
     const spy = vi.fn();
     render(<TimePicker value="14:30" onChange={spy} label="Time" />);
@@ -153,7 +140,7 @@ describe("TimePicker — keyboard navigation", () => {
     expect(document.activeElement).toBe(selectedHourOption);
   });
 
-  it("only the currently selected option in each column is a Tab stop (roving tabindex)", () => {
+  it("makes only the selected option a Tab stop", () => {
     render(<TimePicker value="14:30" onChange={vi.fn()} label="Time" />);
     fireEvent.click(screen.getByRole("button", { name: "Time: 14:30" }));
     const hourBox = screen.getByRole("listbox", { name: "Hour" });
@@ -164,7 +151,7 @@ describe("TimePicker — keyboard navigation", () => {
   });
 });
 
-describe("TimePicker — dismissal", () => {
+describe("TimePicker dismissal", () => {
   it("Escape closes the open popover", () => {
     render(<TimePicker value="14:30" onChange={vi.fn()} label="Time" />);
     fireEvent.click(screen.getByRole("button", { name: "Time: 14:30" }));
@@ -193,7 +180,7 @@ describe("TimePicker — dismissal", () => {
     expect(screen.queryByRole("dialog")).not.toBeNull();
   });
 
-  it("scrolling the page closes the open popover (a fixed popover would otherwise de-anchor from its trigger)", () => {
+  it("scrolling the page closes the open popover", () => {
     render(<TimePicker value="14:30" onChange={vi.fn()} label="Time" />);
     fireEvent.click(screen.getByRole("button", { name: "Time: 14:30" }));
     expect(screen.queryByRole("dialog")).not.toBeNull();
@@ -201,15 +188,7 @@ describe("TimePicker — dismissal", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("scrolling INSIDE one of the popover's own listbox columns does not close it", () => {
-    // Regression test for a live bug: the dismissal scroll listener is
-    // capture-phase on window, so it also receives scroll events from the
-    // popover's own two internal `.glim-time-col` columns — and this
-    // component's own scrollIntoView calls (bringing the current hour/minute
-    // into view) fire exactly such an event. Confirmed live against the real
-    // container: the popover opened and closed again ~2ms later on every
-    // single open, before this guard existed. A scroll INSIDE the popover
-    // never de-anchors it from its trigger, unlike a page/ancestor scroll.
+  it("scrolling a listbox column does not close it", () => {
     render(<TimePicker value="14:30" onChange={vi.fn()} label="Time" />);
     fireEvent.click(screen.getByRole("button", { name: "Time: 14:30" }));
     const hourBox = screen.getByRole("listbox", { name: "Hour" });
@@ -217,7 +196,7 @@ describe("TimePicker — dismissal", () => {
     expect(screen.queryByRole("dialog")).not.toBeNull();
   });
 
-  it("only one TimePicker popover is ever open at once — opening a second closes the first", () => {
+  it("opening a second picker closes the first", () => {
     render(
       <div>
         <TimePicker value="09:00" onChange={vi.fn()} label="First" />
@@ -232,13 +211,10 @@ describe("TimePicker — dismissal", () => {
   });
 });
 
-describe("TimePicker — positioning", () => {
-  it("clamps the popover into the viewport using its own real measured size (computeBubblePosition)", () => {
-    // jsdom's getBoundingClientRect()/offsetWidth/offsetHeight default to
-    // zero — stub them with a realistic trigger rect pinned to the right
-    // edge, matching bubblePosition.test.ts's own "Wiederherstellungskit"
-    // reproduction, so the horizontal clamp math actually has something to
-    // clamp against.
+describe("TimePicker positioning", () => {
+  it("clamps the popover into the viewport", () => {
+    // jsdom measures everything as zero, so the trigger gets a rect near the
+    // right edge.
     Object.defineProperty(window, "innerWidth", { configurable: true, value: 1024 });
     Object.defineProperty(window, "innerHeight", { configurable: true, value: 768 });
     render(<TimePicker value="14:30" onChange={vi.fn()} label="Time" />);
@@ -248,9 +224,8 @@ describe("TimePicker — positioning", () => {
     fireEvent.click(trigger);
     const dialog = screen.getByRole("dialog", { name: "Time" }) as HTMLElement;
     const left = parseFloat(dialog.style.left);
-    // The popover is translateX(-50%)'d around `left` (matching
-    // computeBubblePosition's centred-trigger contract) — its right edge is
-    // left + halfWidth, which must stay within the 8px viewport margin.
+    // The popover is centred on `left`, so its right edge is left plus half
+    // its width, which must stay inside the 8px margin.
     expect(left + dialog.offsetWidth / 2).toBeLessThanOrEqual(1024 - 8 + 0.001);
   });
 });

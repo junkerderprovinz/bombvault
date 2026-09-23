@@ -9,8 +9,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// newTestStore is an in-memory, migrated store, the same shape
-// newAuthGateHandler builds for the auth tests.
+// newTestStore returns a migrated in-memory store.
 func newTestStore(t *testing.T) *store.Repo {
 	t.Helper()
 	db, err := store.Open(":memory:")
@@ -23,16 +22,6 @@ func newTestStore(t *testing.T) *store.Repo {
 	}
 	return store.New(db)
 }
-
-// Cancelling a running backup (#200, scooterscott1: "Is there a way to cancel
-// an in flight backup of folders?").
-//
-// The machinery for this existed before the feature did: every backup has held
-// its own cancel func since [375], reachable only by shutdown. What these tests
-// pin is the second door and, more importantly, the bookkeeping behind it. A
-// cancelled backup must not read as a failure - a red row in Run History, a
-// count on the dashboard and an alert for something somebody asked for on
-// purpose is the exact outcome this feature would otherwise buy.
 
 func TestCancelBackupRunCancelsAndReportsIt(t *testing.T) {
 	s := &Service{}
@@ -66,8 +55,8 @@ func TestCancelBackupRunIsIdempotentOnAnUnknownKey(t *testing.T) {
 }
 
 func TestUnregisterClearsTheCancellationMark(t *testing.T) {
-	// Without this, the NEXT backup under the same key would relabel its own
-	// genuine failure as somebody's cancellation.
+	// Otherwise the next backup under the same key would report its own
+	// failure as a cancellation.
 	s := &Service{}
 	s.registerBackupCancel("files:abc", func() {})
 	s.CancelBackupRun("files:abc")
@@ -78,9 +67,8 @@ func TestUnregisterClearsTheCancellationMark(t *testing.T) {
 }
 
 func TestCancelBackupRunLeavesRestoresAlone(t *testing.T) {
-	// The whole reason there are two maps: interrupting a restore is
-	// destructive, and a caller must not be able to reach it through the
-	// backup door by getting a key prefix wrong.
+	// Restores have a map of their own because interrupting one is
+	// destructive; a wrong key prefix must not reach it through here.
 	s := &Service{}
 	reached := false
 	s.registerCancel("container:plex", func() { reached = true })
@@ -105,6 +93,9 @@ func TestBackupWasCancelledIgnoresTheEmptyKey(t *testing.T) {
 	}
 }
 
+// TestCancelledBackupRecordsCancelledNotFailed: a backup the user cancelled
+// must not show up as a failure, with a red row, a dashboard count and an
+// alert.
 func TestCancelledBackupRecordsCancelledNotFailed(t *testing.T) {
 	st := newTestStore(t)
 	s := &Service{store: st}
@@ -139,9 +130,8 @@ func TestCancelledBackupRecordsCancelledNotFailed(t *testing.T) {
 }
 
 func TestAGenuineFailureKeepsItsStatus(t *testing.T) {
-	// The relabel is deliberately narrow: only a FAILED run, and only one whose
-	// key was actually marked. Break either half and a real failure disappears
-	// from the dashboard.
+	// Only a failed run whose key was marked is relabelled. Anything wider
+	// hides real failures from the dashboard.
 	st := newTestStore(t)
 	s := &Service{store: st}
 
@@ -192,19 +182,10 @@ func TestASuccessfulBackupIsNeverRelabelled(t *testing.T) {
 	}
 }
 
-// TestFilesCancelKeyMatchesTheProgressKey pins the mismatch that #200 uncovered.
-//
-// Files was the one domain where the cancel entry and the progress stream
-// disagreed: "files:<id>" against "files:<name>". Nothing noticed, because the
-// only caller was shutdown, which walks the whole map without reading keys. The
-// moment a user can press Cancel, the interface has exactly one key in hand -
-// the one the progress stream gave it - and a mismatch means a button that
-// answers "cancelled: false" forever with nothing anywhere to explain it.
-//
-// A source scan rather than a behavioural test, deliberately: reaching the real
-// registration means running a real restic backup, and the thing worth guarding
-// is the LITERAL agreement between two lines that sit 80 lines apart in one
-// function and are edited by different people for different reasons.
+// TestFilesCancelKeyMatchesTheProgressKey: the Cancel button can only send the
+// key the progress stream published, so BackupFileSet has to register its
+// cancel func under the same "files:" + set.Name. It scans the source because
+// reaching the real registration takes a real restic backup.
 func TestFilesCancelKeyMatchesTheProgressKey(t *testing.T) {
 	raw, err := os.ReadFile("service.go")
 	if err != nil {
@@ -225,7 +206,7 @@ func TestFilesCancelKeyMatchesTheProgressKey(t *testing.T) {
 				"stream published.", want)
 		}
 	}
-	// The old shape, which looked harmless and was not.
+	// Keyed by the set id, which the progress stream never uses.
 	for _, forbidden := range []string{
 		`s.registerBackupCancel("files:"+id`,
 		`cancelKey: "files:" + id`,

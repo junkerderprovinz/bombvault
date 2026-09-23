@@ -2,6 +2,7 @@ package restic
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -99,7 +100,7 @@ func TestNoLockArgs(t *testing.T) {
 func TestForgetPolicyArgs(t *testing.T) {
 	t.Run("legacy repo-wide pass: paths grouping, emits only set dimensions + prune", func(t *testing.T) {
 		got := ForgetPolicyArgs("/repo",
-			RetentionPolicy{KeepLast: 5, KeepMonthly: 6}, Mode{Encrypted: true}, "", true)
+			RetentionPolicy{KeepLast: 5, KeepMonthly: 6}, Mode{Encrypted: true}, nil, true)
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--group-by", "paths", "--keep-last", "5", "--keep-monthly", "6",
 			"--keep-tag", "bv:direct", "--prune"}
 		if !reflect.DeepEqual(got, want) {
@@ -109,20 +110,19 @@ func TestForgetPolicyArgs(t *testing.T) {
 	t.Run("unencrypted adds insecure flag, full policy", func(t *testing.T) {
 		got := ForgetPolicyArgs("/repo",
 			RetentionPolicy{KeepLast: 3, KeepDaily: 7, KeepWeekly: 4, KeepMonthly: 12},
-			Mode{Encrypted: false}, "", true)
+			Mode{Encrypted: false}, nil, true)
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--insecure-no-password", "--group-by", "paths",
 			"--keep-last", "3", "--keep-daily", "7", "--keep-weekly", "4", "--keep-monthly", "12", "--keep-tag", "bv:direct", "--prune"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
-	// Identity-stable retention (issue #91): a tag scopes the policy to one
-	// item's snapshots and disables grouping, so the item's WHOLE history is one
-	// group — old snapshots whose path set changed can no longer freeze in a
-	// stale paths-group that never receives new snapshots.
+	// A tag scopes the policy to one item's snapshots and disables grouping, so
+	// snapshots whose path set changed cannot freeze in a paths-group that never
+	// receives new ones (#91).
 	t.Run("tag-scoped: --tag + ungrouped, with prune", func(t *testing.T) {
 		got := ForgetPolicyArgs("/repo",
-			RetentionPolicy{KeepLast: 5}, Mode{Encrypted: true}, "container:plex", true)
+			RetentionPolicy{KeepLast: 5}, Mode{Encrypted: true}, []string{"container:plex"}, true)
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--tag", "container:plex", "--group-by", "",
 			"--keep-last", "5", "--keep-tag", "bv:direct", "--prune"}
 		if !reflect.DeepEqual(got, want) {
@@ -131,7 +131,7 @@ func TestForgetPolicyArgs(t *testing.T) {
 	})
 	t.Run("tag-scoped batch pass: no prune flag", func(t *testing.T) {
 		got := ForgetPolicyArgs("/repo",
-			RetentionPolicy{KeepDaily: 7}, Mode{Encrypted: true}, "vm:win11", false)
+			RetentionPolicy{KeepDaily: 7}, Mode{Encrypted: true}, []string{"vm:win11"}, false)
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--tag", "vm:win11", "--group-by", "",
 			"--keep-daily", "7", "--keep-tag", "bv:direct"}
 		if !reflect.DeepEqual(got, want) {
@@ -140,13 +140,28 @@ func TestForgetPolicyArgs(t *testing.T) {
 	})
 	t.Run("a direct repository's own rules age its direct snapshots", func(t *testing.T) {
 		got := ForgetPolicyArgs("/repo",
-			RetentionPolicy{KeepLast: 3, Direct: true}, Mode{Encrypted: true}, "vm:win11", true)
+			RetentionPolicy{KeepLast: 3, Direct: true}, Mode{Encrypted: true}, []string{"vm:win11"}, true)
 		want := []string{"-r", "/repo", "--retry-lock", "5m", "forget", "--tag", "vm:win11", "--group-by", "",
 			"--keep-last", "3", "--prune"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
+}
+
+// TestForgetPolicyArgsSeveralTagsAreOneGroup: a renamed container's old and new
+// tags go in as separate --tag flags, which restic matches as alternatives, not
+// as one comma-joined value that no snapshot would satisfy.
+func TestForgetPolicyArgsSeveralTagsAreOneGroup(t *testing.T) {
+	args := ForgetPolicyArgs("/repo", RetentionPolicy{KeepLast: 3},
+		Mode{Encrypted: true}, []string{"container:radarr", "container:radarr-movies"}, false)
+	joined := strings.Join(args, " ")
+	if !strings.Contains(joined, "--tag container:radarr ") || !strings.Contains(joined, "--tag container:radarr-movies") {
+		t.Fatalf("both tags must be passed: %v", args)
+	}
+	if strings.Count(joined, "--group-by") != 1 || !strings.Contains(joined, `--group-by  `) && !strings.Contains(joined, "--group-by \"\"") {
+		t.Fatalf("the two tags must form one group: %v", args)
+	}
 }
 
 // TestForgetArgs pins that ForgetArgs (forgetting specific snapshot IDs, as
@@ -802,7 +817,7 @@ func TestSubcommandSkipsGlobalFlagValues(t *testing.T) {
 		want string
 	}{
 		{"backup", BackupArgs("repo", []string{"/x"}, nil, Mode{}), "backup"},
-		{"forget", ForgetPolicyArgs("repo", RetentionPolicy{KeepLast: 1}, Mode{}, "container:x", true), "forget"},
+		{"forget", ForgetPolicyArgs("repo", RetentionPolicy{KeepLast: 1}, Mode{}, []string{"container:x"}, true), "forget"},
 		{"check", CheckArgs("repo", Mode{}), "check"},
 		{"prune", PruneArgs("repo", Mode{}), "prune"},
 		{"copy", CopyArgs("dest", "src", nil, Limits{UploadKBps: 100, DownloadKBps: 50}, Mode{}), "copy"},

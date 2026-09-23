@@ -1,13 +1,5 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// The colour picker is operable without a mouse.
-//
-// The SV square and the hue bar were bare <div>s wired to mousedown/touchstart:
-// no tabindex, no role, no aria-valuenow, no keydown. That is a regression
-// against the native <input type="color"> they replaced, which was fully
-// keyboard-operable. The accent swatch at least kept its 8 presets as a way
-// round it; the rainbow palette swatches had nothing at all.
-// ---------------------------------------------------------------------------
+// The SV square and the hue bar are sliders that work from the keyboard.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { I18nProvider, en } from "../lib/i18n";
@@ -42,7 +34,6 @@ describe("colour picker keyboard operation", () => {
   it("exposes both axes as sliders with real values", async () => {
     renderPicker();
     await openPanel();
-    // Reachable at all: a bare div matches no role and no accessible name.
     expect(hue().getAttribute("tabindex")).toBe("0");
     expect(sv().getAttribute("tabindex")).toBe("0");
     expect(hue().getAttribute("aria-valuenow")).toBeTruthy();

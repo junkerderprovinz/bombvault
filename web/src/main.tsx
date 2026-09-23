@@ -14,7 +14,7 @@ import { applyStoredDisco } from "./lib/disco";
 import { applyStoredLabelModes } from "./lib/controls";
 import { ADOPTED_EVENT, sync as syncDisplayPrefs } from "./lib/displayPrefs";
 
-// Apply persisted preferences before first paint (flash prevention).
+// Apply stored preferences before the first paint, so the defaults never flash.
 applyStoredTheme();
 applyStoredLanguage();
 applyStoredAccent();
@@ -22,20 +22,15 @@ applyStoredRainbow();
 applyStoredShape();
 applyStoredMotionIntensity();
 applyStoredLabelModes();
-// After the rainbow: the walk only starts when there are hued elements to
-// walk, so it reads the rainbow state this line just set.
+// Disco only walks hued elements, so it needs the rainbow state applied first.
 applyStoredDisco();
 
-// Every axis above reads localStorage exactly once, which is all a page needs
-// while nothing changes underneath it. When the server hands this browser a
-// different look a moment from now, the values in localStorage change and
-// nobody is looking, so each one has to be applied again — the same calls, in
-// the same order (#191). Registered BEFORE the sync that can fire it.
-// `{ animate: false }` on the rainbow (#228): this is the same look arriving
-// late, not somebody flipping a mode. Animated, it walked every hued element
-// from the flat accent to its own rainbow hue across the whole page a moment
-// after paint, which is what "the screen flashes green when switching options"
-// was. The value still lands here; only the excursion is skipped.
+// When the server hands this browser a different look after boot, localStorage
+// changes underneath the page and every axis has to be applied again, in the
+// same order. Registered before the sync below, which can fire it. The rainbow
+// does not animate here: this is the stored look arriving late, and animating
+// it would sweep every hued element from the flat accent to its hue just after
+// the first paint.
 window.addEventListener(ADOPTED_EVENT, () => {
   applyStoredTheme();
   applyStoredAccent();
@@ -46,12 +41,9 @@ window.addEventListener(ADOPTED_EVENT, () => {
   applyStoredDisco();
 });
 
-// Then reconcile with the server, which is where the look actually lives
-// (#191). Deliberately AFTER the calls above and deliberately not awaited: the
-// point of those is that they are synchronous, so the page paints in the right
-// theme instead of flashing the default one, and no network round trip can be.
-// On a browser that still has its cache this changes nothing; on one that was
-// cleared it brings the stored look back a moment after paint.
+// The server holds the look; localStorage is only a cache. Not awaited, so the
+// synchronous calls above decide the first paint and a cleared browser gets its
+// stored look back a moment later.
 void syncDisplayPrefs();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -62,9 +54,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   </React.StrictMode>
 );
 
-// GlimStone motion-engine, animation 1 (shape-morph) — armed two animation
-// frames after the render call above, never before: see armShapeTransitions()'s
-// own comment in lib/shape.ts for why two frames, not zero or one.
+// Shape changes animate only once the first render has settled. lib/shape.ts
+// explains why that takes two frames.
 requestAnimationFrame(() => {
   requestAnimationFrame(() => {
     armShapeTransitions();

@@ -1,20 +1,5 @@
 package api_test
 
-// GET /api/settings/export?includeCredentials — the second gate.
-//
-// authGate is a pass-through when no login password is set: that is the
-// trusted-LAN model, and it is fine for CURRENT data. The credentialed export
-// is not current data — it is the keys to it: the S3 access key and secret, the
-// restic-REST password, the entire rclone config (every remote's tokens), the
-// SMTP password and the Matrix access token, all decrypted. That is the
-// recovery kit's class of payload, and the recovery kit fails closed for
-// exactly this reason. This one did not, so any host on the LAN could fetch
-// every backend credential the instance held with one unauthenticated GET.
-//
-// The tests below pin all three halves of the fix: refused without auth,
-// allowed with auth, and the plain (secret-free) export still open — a gate
-// that also blocked the harmless variant would just be a different bug.
-
 import (
 	"net/http"
 	"net/http/httptest"
@@ -73,23 +58,22 @@ func getRaw(t *testing.T, h http.Handler, path string, c *http.Cookie) *httptest
 	return w
 }
 
-// TestCredentialedExportRefusedWhenAuthDisabled is the regression proof: with
-// no login password set, the credentialed export must refuse — exactly as the
-// recovery kit does — and must not put a single stored secret on the wire.
+// Without a login password authGate lets every request through. The
+// credentialed export carries every backend secret decrypted, so like the
+// recovery kit it has to refuse in that case.
 func TestCredentialedExportRefusedWhenAuthDisabled(t *testing.T) {
 	h, _, svc := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
 	seedExportSecrets(t, svc)
 
-	// The recovery kit, the acknowledged precedent, refuses here.
 	if kit := getRaw(t, h, "/api/recovery-kit", nil); kit.Code != http.StatusForbidden {
 		t.Fatalf("precondition: recovery kit status = %d, want 403 with auth off", kit.Code)
 	}
 
-	// ?includeCredentials accepts every truthy spelling; each must be gated.
+	// includeCredentials accepts several truthy spellings; each has to be gated.
 	for _, q := range []string{"true", "1", "yes", "on", "TRUE", "On"} {
 		w := getRaw(t, h, "/api/settings/export?includeCredentials="+q, nil)
 		if w.Code != http.StatusForbidden {
-			t.Fatalf("includeCredentials=%s: status = %d, want 403 — the credentialed export must fail closed when auth is off", q, w.Code)
+			t.Fatalf("includeCredentials=%s: status = %d, want 403; the credentialed export must fail closed when auth is off", q, w.Code)
 		}
 		body := w.Body.String()
 		for _, secret := range allSeededSecrets() {
@@ -106,13 +90,10 @@ func TestCredentialedExportRefusedWhenAuthDisabled(t *testing.T) {
 	}
 }
 
-// TestPlainExportStillWorksWithoutAuth: the gate must be on the SECRETS, not on
-// the export. The plain file carries no credentials (tokens blanked, registry
-// auths dropped, and the "user:pass@" a repo location may hold inside its own
-// URL redacted — see scrubRepoLocation, whose own regression test is in
-// settings_portable_internal_test.go), so it stays available in trusted-LAN mode
-// like the rest of the read API.
-func TestPlainExportStillWorksWithoutAuth(t *testing.T) {
+// The plain export carries no credentials (tokens blanked, registry auths
+// dropped, userinfo in repo URLs redacted by scrubRepoLocation), so it stays
+// open without a login like the rest of the read API.
+func TestPlainExportWorksWithoutAuth(t *testing.T) {
 	h, _, svc := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
 	seedExportSecrets(t, svc)
 
@@ -127,15 +108,14 @@ func TestPlainExportStillWorksWithoutAuth(t *testing.T) {
 		body := w.Body.String()
 		for _, secret := range allSeededSecrets() {
 			if strings.Contains(body, secret) {
-				t.Fatalf("plain export%q leaked a stored secret — it must never carry credentials at all", q)
+				t.Fatalf("plain export%q leaked a stored secret; it must not carry credentials at all", q)
 			}
 		}
 	}
 }
 
-// TestCredentialedExportWorksWhenAuthEnabled: with a login password set and a
-// valid session, the export does its job. Otherwise the gate would have turned
-// a leak into a broken feature.
+// With a login password and a valid session the credentialed export carries
+// every secret.
 func TestCredentialedExportWorksWhenAuthEnabled(t *testing.T) {
 	h, _, svc := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
 	seedExportSecrets(t, svc)
@@ -155,7 +135,7 @@ func TestCredentialedExportWorksWhenAuthEnabled(t *testing.T) {
 		}
 	}
 
-	// …and the same request without the session cookie is refused by authGate.
+	// Without the session cookie authGate refuses it.
 	if unauth := getRaw(t, h, "/api/settings/export?includeCredentials=true", nil); unauth.Code != http.StatusUnauthorized {
 		t.Fatalf("no cookie with auth on: status = %d, want 401", unauth.Code)
 	}

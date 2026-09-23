@@ -85,7 +85,7 @@ type DomainInfo struct {
 	// correctly without needing to know which of the two cases it was.
 	TPMPath string
 	// Title is the domain XML's <title> element, trimmed — libvirt's own
-	// free-form display-name field, a direct child of <domain> (NOT nested
+	// free-form display-name field, a direct child of <domain> (not nested
 	// under <devices> or <os>). Empty when the domain has no <title>
 	// element — the common case on Unraid and TrueNAS 25.10, where the
 	// friendly name lives in the domain NAME itself, not this element.
@@ -96,11 +96,16 @@ type DomainInfo struct {
 	// bother reading this field, and Client.titleFromXML for the one caller
 	// that does. Mirrors NVRAMPath/TPMPath's own "empty = nothing to
 	// report" convention exactly.
-	Title      string
+	Title string
+	// UUID is the domain XML's <uuid>, lower-cased and trimmed so two
+	// spellings of one UUID never read as two VMs. Unraid keeps it across a
+	// rename, which makes it the rename signal for VMs. Empty only when the
+	// XML has no <uuid>.
+	UUID       string
 	DiskDevice string
-	// SkipSnapshotDevs are target devices that must NOT be snapshotted in a live
-	// backup (cdrom / read-only / source-less disks, AND block-device disks —
-	// see BlockDisks) — snapshotting them fails with "external snapshot file
+	// SkipSnapshotDevs are target devices that must not be snapshotted in a live
+	// backup (cdrom, read-only or source-less disks, and block-device disks;
+	// see BlockDisks): snapshotting them fails with "external snapshot file
 	// ... already exists and is not a block device".
 	SkipSnapshotDevs []string
 	// BlockDisks are writable disks whose backing store is a raw block device

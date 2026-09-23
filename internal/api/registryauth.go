@@ -1,16 +1,8 @@
 package api
 
-// Private container-registry credentials (#106): the post-backup update pull
-// (updateContainerAfterBackup) previously always pulled anonymously, so an
-// image living in a private/sponsor-gated registry (e.g. a ghcr.io sponsor
-// image) could never be update-checked. The user stores per-registry
-// credentials in Settings; the update pull resolves the registry host from the
-// image ref and, when a credential matches, sends it as the Docker Engine
-// API's RegistryAuth. No credential → the existing anonymous behavior.
-//
-// At rest the list follows the house pattern for nested secret configs
-// (notify_conf / cloud_conf): one AES-256-GCM-encrypted JSON blob (base64),
-// keyed by the APP_KEY via internal/secret, in settings.registry_auths.
+// Per-registry credentials let the post-backup update pull reach private
+// images. Like notify_conf and cloud_conf they are stored as one encrypted
+// JSON blob (internal/secret with APP_KEY, base64) in settings.registry_auths.
 
 import (
 	"encoding/base64"
@@ -25,9 +17,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// RegistryAuth is one stored private-registry credential. Token is the registry
-// password / personal access token and is write-only over the API: the settings
-// GET exposes only host + username + a tokenSet flag (see registryAuthView).
+// RegistryAuth is one stored registry credential. Token is write-only over the
+// API; the settings GET only reports whether it is set (see registryAuthView).
 type RegistryAuth struct {
 	Host     string `json:"host"`
 	Username string `json:"username"`
@@ -43,8 +34,8 @@ func (s *Service) RegistryAuths() ([]RegistryAuth, error) {
 	return s.decodeRegistryAuths(settings)
 }
 
-// decodeRegistryAuths decrypts the stored credential list from the given
-// settings (an empty/blank registry_auths yields nil, no error).
+// decodeRegistryAuths decrypts the credential list stored in settings. A blank
+// value yields nil.
 func (s *Service) decodeRegistryAuths(settings store.Settings) ([]RegistryAuth, error) {
 	if strings.TrimSpace(settings.RegistryAuths) == "" {
 		return nil, nil
@@ -65,7 +56,7 @@ func (s *Service) decodeRegistryAuths(settings store.Settings) ([]RegistryAuth, 
 }
 
 // EncodeRegistryAuths encrypts the credential list into the value stored in
-// settings.registry_auths. An empty list encodes to "" (credentials cleared).
+// settings.registry_auths. An empty list encodes to "".
 func (s *Service) EncodeRegistryAuths(list []RegistryAuth) (string, error) {
 	if len(list) == 0 {
 		return "", nil
@@ -81,11 +72,9 @@ func (s *Service) EncodeRegistryAuths(list []RegistryAuth) (string, error) {
 	return base64.StdEncoding.EncodeToString(enc), nil
 }
 
-// registryAuthFor resolves the stored credential for an image ref's registry
-// host and returns it encoded for the Docker Engine API, or "" (anonymous)
-// when no credential matches. Any error (store, decrypt, encode) is logged and
-// degrades to anonymous, so a broken credential store can never break the pull
-// path that worked before credentials existed.
+// registryAuthFor returns the credential for ref's registry encoded for the
+// Docker Engine API, or "" to pull anonymously. Errors are logged instead of
+// returned so a broken credential store cannot break the pull.
 func (s *Service) registryAuthFor(ref string) string {
 	auths, err := s.RegistryAuths()
 	if err != nil {
@@ -107,25 +96,23 @@ func (s *Service) registryAuthFor(ref string) string {
 	return ""
 }
 
-// registryHost resolves the registry host an image ref pulls from, using the
-// standard docker reference heuristic: the part before the first "/" is a
-// registry host only when it contains a "." or ":" (a domain or a port) or is
-// "localhost" — otherwise the whole ref is a Docker Hub path ("nginx",
-// "library/nginx"). Hub aliases normalize to "docker.io".
+// registryHost returns the registry an image ref pulls from. As in docker's
+// reference parsing, the part before the first "/" is a host if it contains
+// "." or ":" or is "localhost"; otherwise the ref is a Docker Hub path such as
+// "nginx" or "library/nginx".
 func registryHost(ref string) string {
 	first, _, found := strings.Cut(ref, "/")
 	if !found {
-		return "docker.io" // bare image, e.g. "nginx:latest"
+		return "docker.io"
 	}
 	if !strings.ContainsAny(first, ".:") && first != "localhost" {
-		return "docker.io" // namespaced Hub path, e.g. "library/nginx"
+		return "docker.io"
 	}
 	return normalizeRegistryHost(first)
 }
 
-// normalizeRegistryHost canonicalizes a user-entered or ref-derived registry
-// host for matching: lowercase, no scheme, no trailing slash, and the Docker
-// Hub endpoint aliases collapse to "docker.io".
+// normalizeRegistryHost lowercases host, strips the scheme and trailing slash,
+// and maps the Docker Hub endpoint aliases to "docker.io".
 func normalizeRegistryHost(host string) string {
 	h := strings.ToLower(strings.TrimSpace(host))
 	h = strings.TrimPrefix(h, "https://")
@@ -137,11 +124,10 @@ func normalizeRegistryHost(host string) string {
 	return h
 }
 
-// mergeRegistryAuths turns the submitted settings-view entries into the list to
-// store, applying the house write-only-secret contract: the GET never echoes
-// tokens, so a submitted entry with a blank token KEEPS the stored token for
-// that host, a non-blank token replaces it, and a host absent from the
-// submitted list is deleted. Returned errors are user-facing.
+// mergeRegistryAuths builds the list to store from the submitted entries. The
+// settings GET never returns tokens, so a blank token keeps the stored one for
+// that host, and hosts missing from the submission are dropped. Errors are
+// shown to the user.
 func mergeRegistryAuths(submitted []registryAuthView, stored []RegistryAuth) ([]RegistryAuth, error) {
 	prev := make(map[string]string, len(stored))
 	for _, a := range stored {
@@ -163,7 +149,7 @@ func mergeRegistryAuths(submitted []registryAuthView, stored []RegistryAuth) ([]
 		seen[host] = true
 		token := strings.TrimSpace(v.Token)
 		if token == "" {
-			token = prev[host] // blank = keep the stored token (never echoed by GET)
+			token = prev[host]
 		}
 		if token == "" {
 			return nil, fmt.Errorf("a token is required for registry %q", host)

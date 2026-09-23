@@ -1,17 +1,9 @@
-// ---------------------------------------------------------------------------
-// ActivityLog — the dashboard "activity log": one flat, scrollable,
-// docker-logs-style list of timestamped lines. NO zones: history, live
-// progress and the next scheduled run are one merged, filterable list (see
-// web/src/lib/activityLog.ts for the pure merge/dedupe/order logic this
-// component just fetches data for and renders).
-//
-// Mounted on Dashboard.tsx as its own customizable block, directly below the
-// summary tier — self-contained (its own card chrome + heading), so it drops
-// in as `<ActivityLog />` with no further changes.
-// ---------------------------------------------------------------------------
+// The dashboard activity log: one scrollable, docker-logs-style list of
+// timestamped lines. Finished runs, live progress and the next scheduled run
+// share the list; lib/activityLog.ts merges, dedupes and orders them.
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { hueVars, rainbowAt } from "../lib/appearance";
+import { hueVars } from "../lib/appearance";
 import { listRuns, getScheduleNext } from "../lib/api";
 import type { Run, ScheduleNext } from "../lib/api";
 import { useProgress } from "../lib/progress";
@@ -26,17 +18,11 @@ import { Button } from "./Button";
 
 const POLL_RUNS_MS = 10000;
 const POLL_SCHEDULE_MS = 30000;
-// The idle line's countdown ("in 2h 14m") only needs to visibly tick at
-// minute granularity — no point re-rendering more often just for that.
-// Deliberately UNCHANGED by issue #159's live-duration fix below — this cadence
-// still governs the idle countdown and the staleness check exactly as before.
+// The idle countdown ("in 2h 14m") only shows minutes.
 const TICK_MS = 60000;
-// How often the live off-site line's elapsed duration re-renders — see
-// liveNow's doc comment below. Matches OffsiteIndicator's own ELAPSED_TICK_MS
-// so the two surfaces tick at the same visible rate.
+// Same rate as OffsiteIndicator's elapsed time, so both tick together.
 const LIVE_TICK_MS = 1000;
-// How close to the bottom (px) still counts as "at the bottom" for
-// auto-follow — a few pixels of rounding slack, not a hard 0.
+// Rounding slack for "scrolled to the bottom".
 const BOTTOM_THRESHOLD_PX = 24;
 
 function glyphFor(status: LogStatus): string {
@@ -54,38 +40,11 @@ function glyphFor(status: LogStatus): string {
   }
 }
 
-// Reuses the exact hex values Dashboard's Badge uses for success/failed/
-// running so a log line reads as the same colour language as the rest of the
-// app (#66-style shared vocabulary), not a new palette.
-//
-// "running" (Task 7: resolve the fifth hue) — was text-statusInfo, the old
-// fifth hue. It means genuine activity happening right now, so accent-derived
-// text — but plain colour on text in a scrolling list, never a solid fill:
-// this log routinely shows several "running" lines at once (independent
-// domains backing up concurrently all merge into one list), and rule 3's "at
-// most one solid accent" cap is specifically about SOLID accent claiming the
-// page's one primary-action weight. Coloured text reads at the same register
-// as the success/failed lines right next to it. text-accentText, not the flat
-// text-accent: that same commit's spec-compliance follow-up found the flat
-// accent gold measures ~1.6:1 in light theme against this log's surfaces —
-// badly under the 4.5:1 text minimum (dark theme is fine). Same fix as
-// Recovery.tsx's identical pattern; see index.css's --accent-text comment for
-// the measured numbers.
-//
-// "offsite" (issue #164) — deliberately NOT the accent, and split back out of
-// the "running" arm Task 7 merged it into. Task 7's stated premise was "both
-// mean genuine activity happening right now"; for this status that is simply
-// false. lib/activityLog.ts's finishedLineText returns status "offsite" for a
-// FINISHED, successful replication run ("Off-site replication done —
-// Containers (4m 17s)"), so the merged arm painted completed runs with the
-// "in progress" accent — and, because colorFor("info") is text-statusWarn
-// #f1c21b and the default accent is #FCC419 (~11 RGB / 1.05:1 apart, see
-// index.css's --status-warn-text KNOWN LIMITATION), it also made off-site
-// lines and info lines near-indistinguishable amber in the same log, which is
-// exactly the glance value #164 reported losing. text-statusOffsite is a
-// DOMAIN IDENTITY colour for one job type, not a resurrected fifth state hue
-// — index.css's --color-statusOffsite comment has the full reasoning and the
-// pairing note for internal/api/widget.html, which hard-codes the same hex.
+// Matches Badge. "running" is coloured text rather than a solid fill because
+// several runs can be live at once, and it uses accentText because the flat
+// accent falls under 4.5:1 in the light theme. A finished "offsite" run gets its
+// domain colour, since the accent would read as in progress and is close to the
+// amber of "info".
 export function colorFor(status: LogStatus): string {
   switch (status) {
     case "success":
@@ -121,21 +80,13 @@ export function ActivityLog({
   onClearDayFilter,
   hueIndex,
 }: {
-  /** Externally-controlled day filter (ISO YYYY-MM-DD, local calendar day) —
-   *  the Dashboard sets it when a heatmap cell is clicked; null = off. Shown
-   *  as a filled chip next to the filter bar and combined with the local
-   *  text/domain/type filters. */
+  /** Local calendar day (YYYY-MM-DD) picked in the Dashboard heatmap, or null.
+   *  Combines with the text, domain and type filters. */
   dayFilter?: string | null;
-  /** Invoked by the chip's × — the owner (Dashboard) clears its state. */
+  /** Called by the day chip's clear button; the Dashboard owns the state. */
   onClearDayFilter?: () => void;
-  /** Rainbow position for this block's own heading notch — GlimStone
-   *  follow-up pass, jdp's live review of Dashboard.tsx: "Cardtitelbadges
-   *  sind falsch platziert. Alle sind nicht im Regenbogenmodus." This
-   *  component is self-contained (own card chrome + heading, per this file's
-   *  own header comment) but is mounted as one of Dashboard's own
-   *  customizable blocks, so its own hue position comes from that page's
-   *  shared, running `nextHue()` counter — see Dashboard.tsx's own
-   *  `hueSeq`/`nextHue` comment. Omit for the flat, un-rainbowed default. */
+  /** Rainbow position of the heading, from Dashboard's nextHue() counter.
+   *  Omit for the plain accent. */
   hueIndex?: number;
 } = {}) {
   const { t } = useT();
@@ -151,7 +102,7 @@ export function ActivityLog({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [autoFollow, setAutoFollow] = useState(true);
 
-  // Finished runs — polled; the live tail comes from useProgress()'s SSE push.
+  // Finished runs are polled; live progress arrives through useProgress().
   useEffect(() => {
     let alive = true;
     const load = () => {
@@ -160,7 +111,7 @@ export function ActivityLog({
           if (alive && res.ok) setRuns(res.runs ?? []);
         })
         .catch(() => {
-          /* non-fatal — keep showing the last known runs */
+          /* keep showing the last known runs */
         });
     };
     load();
@@ -171,7 +122,7 @@ export function ActivityLog({
     };
   }, []);
 
-  // Next scheduled fire — only needed for the trailing idle line.
+  // The next scheduled run, for the idle line at the end.
   useEffect(() => {
     let alive = true;
     const load = () => {
@@ -180,7 +131,7 @@ export function ActivityLog({
           if (alive) setScheduleNext(next);
         })
         .catch(() => {
-          /* non-fatal */
+          /* keep the last known schedule */
         });
     };
     load();
@@ -191,26 +142,15 @@ export function ActivityLog({
     };
   }, []);
 
-  // Advance `now` periodically so the idle line's countdown keeps ticking
-  // even when nothing else (a run, an SSE event) triggers a re-render.
+  // Keeps the idle countdown moving when nothing else re-renders.
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), TICK_MS);
     return () => clearInterval(id);
   }, []);
 
-  // liveNow is a SEPARATE, faster clock feeding ONLY the off-site live line's
-  // elapsed-duration computation (lib/activityLog.ts's buildLiveLines takes it
-  // as an explicit param distinct from `now`) — issue #159 review: `now`'s
-  // 60s TICK_MS above is coarse on purpose for the idle countdown, but reusing
-  // it for a live run's elapsed duration meant that for the run's first ~60s,
-  // `now` could still sit BEHIND the backend-stamped startedAt (captured
-  // before this component's next 60s tick), making the computed elapsed span
-  // go NEGATIVE — reltime.ts's elapsedSince/formatDuration reject a negative
-  // span by returning "", so the duration rendered blank, then jumped straight
-  // to a large value once `now` finally caught up. Only ticks while at least
-  // one progress entry is active, so the log pays zero extra render cost while
-  // idle — TICK_MS above is UNCHANGED for the idle countdown and the
-  // staleness check, which don't need this.
+  // A faster clock for the elapsed time of a live off-site line. The minute
+  // clock can still be behind the run's server-side start, and a negative span
+  // renders as an empty duration.
   const hasActiveProgress = Object.values(progressMap).some((s) => s.active);
   const [liveNow, setLiveNow] = useState<number>(() => Date.now());
   useEffect(() => {
@@ -219,9 +159,8 @@ export function ActivityLog({
     return () => clearInterval(id);
   }, [hasActiveProgress]);
 
-  // Resolves a translation key (+ optional {placeholder} params) — the only
-  // i18n dependency buildLogLines takes, so its merge/dedupe/order logic
-  // stays pure and testable without a live I18nProvider.
+  // buildLogLines takes this instead of `t`, so it can be tested without an
+  // I18nProvider.
   const resolveName: ResolveName = (key, params) => {
     let s = t(key as TranslationKey);
     if (params) {
@@ -235,10 +174,8 @@ export function ActivityLog({
     [runs, progressMap, scheduleNext, now, liveNow, t]
   );
 
-  // Date locale is deliberately OMITTED (undefined): formatLogDate and the
-  // filter haystack then run the browser's default-locale negotiation — the
-  // exact same one every other date in the app uses (formatTs), so the log
-  // can never disagree with the rest of the UI again (#108).
+  // Without lang the date search uses the browser locale, the same one
+  // formatLogDate and every other date in the app render with.
   const filteredLines = useMemo(
     () =>
       filterLogLines(lines, {
@@ -250,9 +187,7 @@ export function ActivityLog({
     [lines, filterDomain, filterType, filterText, dayFilter]
   );
 
-  // Auto-follow tail: while pinned to the bottom, stay pinned as new lines
-  // arrive. The moment the user scrolls up (handleScroll below), stop —
-  // "jump to latest" returns to the tail.
+  // Stay at the bottom as lines arrive, until the user scrolls up.
   useEffect(() => {
     if (!autoFollow) return;
     const el = scrollRef.current;
@@ -274,49 +209,20 @@ export function ActivityLog({
   };
 
   return (
-    // GlimStone follow-up pass, CORRECTED (jdp: "warum ist das immer wieder
-    // ein Problem?" — root-mechanism sweep): an EARLIER round (see git
-    // history around the "die Cardtitelbadges sind nicht richtig platziert"
-    // fix this replaces) moved this card FROM a single merged div TO the
-    // outer/inner split Dashboard.tsx's Card()/SummaryCell() use, reasoning
-    // that "every OTHER Dashboard card's notch sits flush with its card's
-    // own left edge" was the correct reference to match. That reference was
-    // itself wrong — flush-with-the-BARE-card-edge is the bug, not the
-    // target; the correct position is flush with the card's own CONTENT
-    // padding (this box's own `p-5`, matching the filter bar/log body
-    // sitting right under it), which is exactly what this card rendered
-    // BEFORE that round's "fix" moved it away. Reverted to the single merged
-    // div: `relative` + `glim-notch-card` + the visible surface all live on
-    // ONE box again, so the badge's `<h2>` is a normal-flow child of the
-    // SAME box that owns the p-5 padding — the CSS static-position fallback
-    // (see Badge.tsx's own `insetStart` doc) now derives the correct content
-    // edge for free, the same mechanism Settings.tsx's/Config.tsx's/
-    // Containers.tsx's/VMs.tsx's own Card helpers already rely on. This
-    // simple merge is possible here (unlike Dashboard.tsx's Card()/
-    // SummaryCell() or Flash.tsx's/Config.tsx's backup Cards, which stay
-    // split and now pass Badge's explicit `insetStart` instead) because this
-    // card's own content box was NEVER `overflow-hidden` — nothing here
-    // needed the split's actual reason to exist (clipping a child, e.g.
-    // ProgressBar's square-ended bar, to the card's rounded corners) in the
-    // first place; the split was only ever copied over by visual analogy to
-    // Dashboard's OTHER cards, which is what let the wrong reference bug in.
+    // One box carries the position context, the notch hook and the padding, so
+    // the heading badge lines up with the content. Nothing needs clipping to the
+    // rounded corners, so unlike Dashboard's Card() there is no outer/inner split.
     <div
       className={`relative glim-notch-card bg-carbon-surface rounded-card p-5 flex flex-col gap-3${
         hueIndex !== undefined ? " glim-hue" : ""
       }`}
-      style={hueIndex !== undefined ? (hueVars(rainbowAt(hueIndex)) as CSSProperties) : undefined}
+      style={hueIndex !== undefined ? (hueVars(hueIndex) as CSSProperties) : undefined}
     >
-      {/* `.glim-hue` above (rainbow-mode completeness sweep, jdp live review:
-          "Es sind nicht alle Buttons in den Regenbogen-Modus eingepflegt"):
-          `glim-notch-card` alone never redefines --accent/--focus-ring, only
-          the reactive-mode hover reveal — so the filter inputs' focus ring
-          and the heatmap day-filter chip further down (bg-accent) stayed
-          flat regardless of rainbow. Same hueIndex prop the heading Badge
-          already uses. */}
+      {/* glim-hue on the card carries the rainbow accent to the focus rings
+          and the day chip; glim-notch-card does not set --accent. */}
       <h2 className="flex items-center">
         <Badge tone="heading" size="heading" wrap hueIndex={hueIndex}>{t("activityLog.title")}</Badge>
       </h2>
-      {/* Filter bar — narrows the ONE list below; never a second zone. */}
       <div className="flex flex-wrap items-center gap-2">
         <input
           type="text"
@@ -340,11 +246,8 @@ export function ActivityLog({
           options={LOG_FILTER_KINDS.map((o) => ({ value: o.value, label: t(o.key as TranslationKey) }))}
           className="rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text glim-field-focus"
         />
-        {/* Heatmap day-filter chip — a filled pill (accent, no border, same
-            language as the heatmap's active domain toggle) showing which day
-            the Dashboard heatmap narrowed the log to; its × hands the clear
-            back to the owner. The ISO day is parsed as LOCAL midnight so the
-            label always names the same calendar day the cell was. */}
+        {/* Parsed as local midnight, so the label names the same calendar day
+            as the heatmap cell. */}
         {dayFilter && (
           <span className="inline-flex items-center gap-1 rounded-pill bg-accent text-accentContrast ps-2.5 pe-1 py-0.5 text-xs font-medium">
             {resolveName("activityLog.dayFilterChip", {
@@ -360,7 +263,6 @@ export function ActivityLog({
         )}
       </div>
 
-      {/* The log itself — a single scrollable, monospace, newest-at-bottom list. */}
       <div className="relative">
         <div
           ref={scrollRef}
@@ -375,15 +277,8 @@ export function ActivityLog({
               <span className={`shrink-0 w-4 text-center ${colorFor(l.status)}`} aria-label={t(glyphLabelKey(l.status))}>
                 {glyphFor(l.status)}
               </span>
-              {/* Which domain the line belongs to. The line used to carry the
-                  NAME alone, and a container and a folder set may well share
-                  one: a user chasing a running backup read "Backing up HomeDVR"
-                  on the dashboard, went to the Folders page and found the set of
-                  that name sitting idle with no Stop button, because it was the
-                  CONTAINER that was running ([#200]). The domain was in the data
-                  all along - it drives the filter above - just never on the
-                  line. The idle "next up" line has no domain of its own and is
-                  exempt, the same way the filters exempt it. */}
+              {/* A container and a folder set can share a name, so every line
+                  but the idle one names its domain. */}
               {!l.idle && (
                 <span className="shrink-0 text-carbon-textMuted">{domainLabel(resolveName, l.domain)}</span>
               )}

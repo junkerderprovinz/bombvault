@@ -1,13 +1,2 @@
-# GitHub Sponsors, and nothing else.
-#
-# The custom link to the donation page is deliberately gone (jdp, 2026-09-13).
-# GitHub's Sponsor menu has no label field and prints a custom entry as the
-# bare URL, so the path had to carry the meaning; docs/more-ways-to-support/
-# existed for that and redirected onward, which landed people on
-# junkerderprovinz.github.io/junkerderprovinz/#ways. An anchor is not a label,
-# and a menu entry nobody can read before clicking it is worse than one entry
-# fewer.
-#
-# The commented-out platforms from GitHub's template are deliberately gone too:
-# a file full of services nobody uses hides the lines that matter.
+# No custom link: GitHub's Sponsor menu shows one as a bare URL without a label.
 github: [junkerderprovinz]

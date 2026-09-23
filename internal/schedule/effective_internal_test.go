@@ -6,10 +6,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// The sentence the Folders card shows must be the truth about what the scheduler
-// will do, not a second opinion. These tests pin every outcome, and the last two
-// rebuild manilx's screenshots from #199 literally rather than reasoning about
-// them - reasoning about them is exactly what produced the wrong answer twice.
+// EffectiveFileSetSchedule feeds the sentence the Folders card shows, so it has
+// to agree with what the scheduler actually does.
 
 func baseSettings() store.Settings {
 	return store.Settings{
@@ -35,8 +33,8 @@ func TestEffectiveNoneWhenTheFoldersDomainIsOff(t *testing.T) {
 	}
 }
 
-// The branch whose label lies. "Include in schedule" off is not "skipped by the
-// Folders schedule", it is "never backed up by anything".
+// TestEffectiveNoneWhenIncludeInScheduleIsOff checks that with "Include in
+// schedule" off nothing backs the set up, not even Backup Everything.
 func TestEffectiveNoneWhenIncludeInScheduleIsOff(t *testing.T) {
 	s := baseSettings()
 	s.FilesSchedule = "weekly mon 02:00"
@@ -83,8 +81,6 @@ func TestEffectiveDomainWhenOnlyTheFoldersScheduleIsOn(t *testing.T) {
 	}
 }
 
-// The shape #199 was actually built for, and the one manilx wanted: Folders
-// schedule off, Backup Everything doing the work.
 func TestEffectiveEverythingWhenTheFoldersScheduleIsOff(t *testing.T) {
 	s := baseSettings()
 	s.EverythingSchedule = "daily 05:00"
@@ -117,8 +113,8 @@ func TestEffectiveIgnoresOverridesWhilePerItemSchedulesIsOff(t *testing.T) {
 	}
 }
 
-// An unparseable cadence never fires (registerJobs logs and skips it), so the
-// card must not promise a run.
+// TestEffectiveTreatsAnUnparseableCadenceAsNotRunning checks that the card does
+// not promise a run for a cadence the scheduler cannot register.
 func TestEffectiveTreatsAnUnparseableCadenceAsNotRunning(t *testing.T) {
 	s := baseSettings()
 	s.FilesSchedule = "wöchentlich am Dienstag"
@@ -128,10 +124,10 @@ func TestEffectiveTreatsAnUnparseableCadenceAsNotRunning(t *testing.T) {
 	}
 }
 
-// manilx's first screenshot, verbatim: Folders weekly Mon 02:00, Backup
-// Everything daily 05:00, all four sets included and none overridden. He asked
-// "Now ALL folders backup weekly, right?" - no. Weekly AND daily, all four.
-func TestManilxFirstScreenshotBacksUpEveryFolderTwice(t *testing.T) {
+// TestBothSchedulesBackUpEveryIncludedFolderTwice checks that with both the
+// Folders and the Backup Everything schedule on, every included set without an
+// override is backed up by both.
+func TestBothSchedulesBackUpEveryIncludedFolderTwice(t *testing.T) {
 	s := baseSettings()
 	s.FilesSchedule = "weekly mon 02:00"
 	s.EverythingSchedule = "daily 05:00"
@@ -144,10 +140,9 @@ func TestManilxFirstScreenshotBacksUpEveryFolderTwice(t *testing.T) {
 	}
 }
 
-// manilx's second screenshot: same schedules, but only My_Backups left with
-// "Include in schedule" on. He assumed the other three would fall back to
-// Backup Everything. They fall out of everything instead.
-func TestManilxSecondScreenshotLeavesThreeFoldersUnprotected(t *testing.T) {
+// TestExcludedFoldersAreNotBackedUpByAnySchedule checks that sets with "Include
+// in schedule" off do not fall back to Backup Everything.
+func TestExcludedFoldersAreNotBackedUpByAnySchedule(t *testing.T) {
 	s := baseSettings()
 	s.FilesSchedule = "weekly mon 02:00"
 	s.EverythingSchedule = "daily 05:00"
@@ -163,10 +158,10 @@ func TestManilxSecondScreenshotLeavesThreeFoldersUnprotected(t *testing.T) {
 	}
 }
 
-// And the configuration he should have: Folders schedule off, every set
-// included, one override. Exactly one run each, nothing duplicated, nothing
-// dropped.
-func TestManilxTargetConfigurationRunsEachFolderExactlyOnce(t *testing.T) {
+// TestEverythingPlusOneOverrideRunsEachFolderExactlyOnce checks that with the
+// Folders schedule off, every set included and one override, each set runs
+// exactly once.
+func TestEverythingPlusOneOverrideRunsEachFolderExactlyOnce(t *testing.T) {
 	s := baseSettings()
 	s.FilesSchedule = "off"
 	s.EverythingSchedule = "daily 05:00"

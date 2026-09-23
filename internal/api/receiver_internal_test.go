@@ -15,22 +15,20 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// receiverTestService builds a minimal Service wired to the REAL restic engine and
-// carrying appKey as this instance's secret key (used to encrypt/decrypt the stored
-// sending key). No store/docker/ssh is needed: the receiver engine is read-only.
+// receiverTestService builds a minimal Service on the real restic engine with
+// appKey as this instance's key, which encrypts the stored sending key. The
+// receiver only reads, so no store, docker or ssh is needed.
 func receiverTestService(appKey string) *Service {
 	return &Service{
-		// HostMountRoot is the OS temp root so a t.TempDir() repo counts as a path
-		// INSIDE the mount, which is the only shape a container can reach ([554]).
-		// Before that change this field was unused here and the location was taken
-		// verbatim — the very gap the receiver had against every other repo field.
+		// With the OS temp root as the mount, a t.TempDir() repo lies inside it,
+		// the only place a container can reach.
 		cfg:    config.Config{AppKey: appKey, HostMountRoot: os.TempDir()},
 		engine: restic.Restic{Bin: "restic"},
 	}
 }
 
 // makeReceivedRepo encrypts sendingKey under appKey and returns a ReceivedRepo
-// pointing at repo — exactly what a registered off-site receiver row looks like.
+// pointing at repo, as a registered receiver row would.
 func makeReceivedRepo(t *testing.T, appKey, sendingKey, repo string, readDataPct int) store.ReceivedRepo {
 	t.Helper()
 	enc, err := secret.Encrypt(appKey, []byte(sendingKey))
@@ -40,9 +38,8 @@ func makeReceivedRepo(t *testing.T, appKey, sendingKey, repo string, readDataPct
 	return store.ReceivedRepo{Repo: repo, AppKeyEnc: enc, ReadDataPercent: readDataPct, Enabled: true}
 }
 
-// seedReceivedRepo initializes a real encrypted restic repo (as the SENDING
-// instance would) and writes snapshots with the given host/item tags. Returns the
-// repo path. Each (path, tag) pair is one `restic backup` run = one snapshot.
+// seedReceivedRepo initializes a real encrypted restic repo as the sending
+// instance would, backs up three tagged snapshots into it and returns its path.
 func seedReceivedRepo(t *testing.T, sendingKey string) string {
 	t.Helper()
 	ctx := context.Background()
@@ -61,8 +58,8 @@ func seedReceivedRepo(t *testing.T, sendingKey string) string {
 	if err := r.Init(ctx, repo, m); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
-	// Two snapshots for container:web (proves per-source grouping counts), one for
-	// vm:db. All share this machine's hostname, so grouping distinguishes by item.
+	// Two snapshots for container:web and one for vm:db. All share this
+	// machine's hostname, so only the item tells the groups apart.
 	for _, tag := range []string{"container:web", "container:web", "vm:db"} {
 		if _, err := r.Backup(ctx, repo, []string{src}, []string{tag}, m); err != nil {
 			t.Fatalf("Backup %s: %v", tag, err)
@@ -71,9 +68,6 @@ func seedReceivedRepo(t *testing.T, sendingKey string) string {
 	return repo
 }
 
-// TestReceiverInventoryGroupsBySource opens a real received repo READ-ONLY and
-// verifies the inventory groups snapshots by source with the right counts, a
-// non-empty lastReceived, a positive per-source size and repo totals.
 func TestReceiverInventoryGroupsBySource(t *testing.T) {
 	if _, err := exec.LookPath("restic"); err != nil {
 		t.Skip("no restic")
@@ -117,10 +111,6 @@ func TestReceiverInventoryGroupsBySource(t *testing.T) {
 	}
 }
 
-// TestReceiverCheckGoodAndWrongKey verifies receiverCheck returns ok on a healthy
-// repo opened with the right key, and a not-ok verdict (with an error, no panic)
-// when the stored sending key is wrong — and that a deep --read-data check runs
-// when requested.
 func TestReceiverCheckGoodAndWrongKey(t *testing.T) {
 	if _, err := exec.LookPath("restic"); err != nil {
 		t.Skip("no restic")
@@ -130,18 +120,15 @@ func TestReceiverCheckGoodAndWrongKey(t *testing.T) {
 	repo := seedReceivedRepo(t, sendingKey)
 	s := receiverTestService(appKey)
 
-	// Right key, structural check.
 	good := makeReceivedRepo(t, appKey, sendingKey, repo, 0)
 	if res := s.receiverCheck(context.Background(), good, false); !res.OK || res.Error != "" || res.RanReadData {
 		t.Fatalf("structural check on a good repo should pass without read-data: %+v", res)
 	}
-	// Right key, deep read-data check (percent configured).
 	deep := makeReceivedRepo(t, appKey, sendingKey, repo, 100)
 	if res := s.receiverCheck(context.Background(), deep, true); !res.OK || !res.RanReadData {
 		t.Fatalf("deep check on a good repo should pass and ran read-data: %+v", res)
 	}
 
-	// Wrong sending key stored -> the repo cannot be opened -> not-ok with an error.
 	wrong := makeReceivedRepo(t, appKey, strings.Repeat("ef", 32), repo, 0)
 	res := s.receiverCheck(context.Background(), wrong, false)
 	if res.OK || res.Error == "" {
@@ -149,9 +136,6 @@ func TestReceiverCheckGoodAndWrongKey(t *testing.T) {
 	}
 }
 
-// TestReceiverNeverInitializesRepo is the read-only guarantee: opening a
-// non-existent location must return an error and MUST NOT initialize a repo there
-// (no restic 'config' object is written). Both engine entry points are checked.
 func TestReceiverNeverInitializesRepo(t *testing.T) {
 	if _, err := exec.LookPath("restic"); err != nil {
 		t.Skip("no restic")
@@ -168,16 +152,12 @@ func TestReceiverNeverInitializesRepo(t *testing.T) {
 	if res := s.receiverCheck(context.Background(), rr, false); res.OK {
 		t.Fatalf("receiverCheck on a missing repo must not report ok: %+v", res)
 	}
-	// The read-only engine must never have created the repo (no config object,
-	// ideally nothing at all under the location).
 	if _, err := os.Stat(filepath.Join(missing, "config")); !os.IsNotExist(err) {
 		t.Fatalf("engine initialized a repo (config exists): err=%v", err)
 	}
 }
 
-// TestReceiverEnabledInSettingsView pins that the receiverEnabled flag surfaces in
-// the settings view (GET/PUT via toView, and the portable export via
-// buildSettingsView) so the SPA can gate the receiver tab on it.
+// The SPA gates the receiver tab on receiverEnabled.
 func TestReceiverEnabledInSettingsView(t *testing.T) {
 	on := toView(store.Settings{ReceiverEnabled: true})
 	if !on.ReceiverEnabled {
@@ -192,19 +172,10 @@ func TestReceiverEnabledInSettingsView(t *testing.T) {
 	}
 }
 
-// TestReceiverOpenResolvesTheHostPath: a received repo's location goes through the
-// same path resolution as every other repo field in this app ([554]).
-//
-// Reported from a working setup: the user entered the path Unraid shows them,
-// /mnt/user/<share>/<repo>, and got "could not open the received repository: wrong
-// APP_KEY, or the location is not a BombVault/restic repository". The key was
-// fine. BombVault runs in a container, where /mnt/user does not exist — this was
-// the ONE repo location taken verbatim instead of resolved, while the field's own
-// hint has always ended "…or a subpath under the host mount".
-//
-// The message must name the path problem and suggest what to type, which is what
-// repoPathError already produces for every other field. Against the old build the
-// error is the APP_KEY sentence and this test fails.
+// A received repo's location goes through the same path resolution as every
+// other repo field. BombVault runs in a container without /mnt/user, so a user
+// who types the path Unraid shows has to be told the path is the problem and
+// what to type instead, not that the APP_KEY is wrong.
 func TestReceiverOpenResolvesTheHostPath(t *testing.T) {
 	appKey := strings.Repeat("a", 64)
 	svc := receiverTestService(appKey)
@@ -223,15 +194,13 @@ func TestReceiverOpenResolvesTheHostPath(t *testing.T) {
 	if !strings.Contains(msg, "absolute host path") {
 		t.Fatalf("the message must name the path problem, got %q", msg)
 	}
-	// And it must hand the user the line to type instead, not just say no.
 	if !strings.Contains(msg, "user/LJSNAS01_restic_repo/LJSNAS01/folders") {
 		t.Fatalf("the message must suggest the relative path, got %q", msg)
 	}
 }
 
-// TestReceiverOpenKeepsRemoteLocations: rest:/s3:/rclone: locations are backends,
-// not paths, and must reach restic untouched ([554]). Resolving one would mangle
-// it into a subpath of the host mount.
+// rest:, s3: and rclone: locations are backends, not paths, and have to reach
+// restic untouched. Resolving one would turn it into a subpath of the mount.
 func TestReceiverOpenKeepsRemoteLocations(t *testing.T) {
 	appKey := strings.Repeat("a", 64)
 	svc := receiverTestService(appKey)
@@ -240,8 +209,8 @@ func TestReceiverOpenKeepsRemoteLocations(t *testing.T) {
 	for _, loc := range []string{"rest:http://box:8000/repo", "s3:s3.example.com/bucket", "rclone:remote:path"} {
 		rr := makeReceivedRepo(t, appKey, strings.Repeat("b", 64), loc, 0)
 		_, _, err := svc.receiverOpen(context.Background(), rr)
-		// The repo does not exist, so opening fails — but it must fail at the OPEN,
-		// never at path resolution.
+		// The repo does not exist, so opening fails, but at the open and not at
+		// path resolution.
 		if err != nil && strings.Contains(err.Error(), "absolute host path") {
 			t.Errorf("%q is a backend URL and must not be path-resolved: %v", loc, err)
 		}

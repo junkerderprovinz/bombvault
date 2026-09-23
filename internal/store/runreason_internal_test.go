@@ -1,14 +1,8 @@
 package store
 
-// The two halves of [377] have to agree, and only a test can hold them there.
-//
-// The frontend translates a run reason by matching the EXACT English string
-// (web/src/lib/runReason.ts, RUN_REASONS). That works, and it works silently
-// until somebody rewords a constant here: nothing breaks, nothing fails to
-// compile, the interface just quietly goes back to English for that one line.
-// Which is the original bug, re-entering through the door built to fix it.
-//
-// So this reads the frontend table and checks the constants are in it.
+// The frontend translates a run reason by matching the exact English string in
+// RUN_REASONS (web/src/lib/runReason.ts). Rewording a constant here breaks no
+// build, it only leaves the reason untranslated, so these tests read that table.
 
 import (
 	"os"
@@ -31,8 +25,7 @@ func TestRunReasonsMatchTheFrontend(t *testing.T) {
 		{"ReasonContainerGone", ReasonContainerGone},
 		{"ReasonCancelled", ReasonCancelled},
 	} {
-		// The key in the table is the reason wrapped in quotes, so a substring
-		// check would pass on a partial reword. Match the quoted form.
+		// A bare substring check would still pass after a partial reword.
 		if !strings.Contains(table, `"`+tc.reason+`"`) {
 			t.Errorf("%s = %q is not in runReason.ts, so the UI will show it untranslated.\n"+
 				"Change both, or neither.", tc.name, tc.reason)
@@ -60,9 +53,8 @@ func TestRunReasonsAreDistinct(t *testing.T) {
 }
 
 func TestReapWritesTheNamedReason(t *testing.T) {
-	// ReapInterruptedRuns builds its UPDATE from the constant now, not from a
-	// literal in the SQL. If that ever drifts back to an inline string, the
-	// frontend match breaks without anything else noticing.
+	// If ReapInterruptedRuns wrote a literal instead of the constant, the
+	// frontend match could break without anything noticing.
 	db := OpenMem(t)
 	if err := Migrate(db); err != nil {
 		t.Fatal(err)

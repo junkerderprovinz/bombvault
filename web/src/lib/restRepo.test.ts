@@ -1,10 +1,6 @@
-// The one character that cost issue #194 its reporter three rounds of
-// screenshots: a credential set signing in as "bombvault_containers" against a
-// URL beginning "bombvault-containers".
-//
-// These checks pin the comparison to the case it can prove, and keep it quiet
-// everywhere it would be guessing. A hint that fires when nothing is wrong is
-// worse than none: it sends somebody off to rename a value that was already
+// The hint compares a rest-server URL's user segment with the credential's
+// username and stays quiet wherever it would be guessing. A hint that fires
+// when nothing is wrong sends somebody off to rename a value that was already
 // right.
 import { expect, it } from "vitest";
 import { restPathUserMismatch, restRepoUserSegment } from "./restRepo";
@@ -14,8 +10,8 @@ it("reads the user segment only when a repository follows it", () => {
   expect(restRepoUserSegment("rest:https://box:8000/tower/containers/")).toBe("tower");
   expect(restRepoUserSegment("rest:http://user:pw@box:8000/tower/flash")).toBe("tower");
   expect(restRepoUserSegment("  rest:http://box:8000/tower/containers  ")).toBe("tower");
-  // One segment is an ordinary path on a server WITHOUT --private-repos, where
-  // a 401 means a wrong password and this hint would be a wrong steer.
+  // One segment is an ordinary path on a server without --private-repos, where
+  // a 401 means a wrong password and this hint would mislead.
   expect(restRepoUserSegment("rest:http://box:8000/containers")).toBe("");
   expect(restRepoUserSegment("rest:http://box:8000/")).toBe("");
   expect(restRepoUserSegment("rest:http://box:8000")).toBe("");

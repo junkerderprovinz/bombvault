@@ -1,57 +1,35 @@
 # syntax=docker/dockerfile:1@sha256:ecfaec9ed6d810b56388c508f4121597bfbba70d41a6dfeee4d8cad5f295fc32
-# =============================================================================
-# bombvault — backup & disaster recovery for Docker containers + KVM/libvirt VMs
-#
-# GitHub:  https://github.com/junkerderprovinz/bombvault
-# Image:   ghcr.io/junkerderprovinz/bombvault
-# License: AGPL-3.0-only
-#
-# Single static Go binary that serves the JSON API + an embedded React SPA and
-# shells out to restic over the mounted docker.sock (Docker SDK, no docker-cli)
-# and to virsh for KVM/libvirt VM backup/restore.
-# Multi-arch amd64 + arm64; buildx provides TARGETOS/TARGETARCH for cross-build.
-# =============================================================================
 
-# buildx injects BUILDPLATFORM (the runner's native platform). Pinning the web
-# and build stages to it makes them run NATIVELY and cross-compile, instead of
-# being emulated under slow QEMU for the arm64 target.
+# The web and build stages run on the runner's own platform and cross-compile,
+# so the arm64 image is not built under QEMU.
 ARG BUILDPLATFORM
 
-# ---- Stage 1: web (build the React SPA → web/dist) --------------------------
-# Arch-independent JS output: build once on the native runner platform.
 FROM --platform=$BUILDPLATFORM node:24-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS web
 WORKDIR /src
 COPY web/ ./web/
 RUN npm --prefix web ci --no-audit --no-fund
 RUN npm --prefix web run build
 
-# ---- Stage 2: build (cross-compile the static Go binary) --------------------
-# Runs natively on BUILDPLATFORM and cross-compiles via GOOS/GOARCH (set below).
 FROM --platform=$BUILDPLATFORM golang:1.27-bookworm@sha256:648f440f42a0958804efb24df176f806f9d353b41f1c0627f666428e40310f6b AS build
 WORKDIR /src
 
-# Module graph first so `go mod download` is cached across source changes.
+# Modules first, so the download stays cached across source changes.
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Go sources + the web package (embed.go lives at web/). The built dist from
-# stage 1 lands at web/dist so the `//go:embed all:dist` in web/embed.go resolves.
+# web/embed.go embeds web/dist, so the built SPA goes there.
 COPY cmd ./cmd
 COPY internal ./internal
 COPY web/*.go ./web/
 COPY --from=web /src/web/dist ./web/dist
 
-# buildx injects TARGETOS / TARGETARCH for the requested platform.
 ARG TARGETOS
 ARG TARGETARCH
-# VERSION is stamped into the binary (printed in the startup banner + READY box)
-# so the running image's version is obvious in the container log. Defaults to
-# "dev" for un-stamped local builds; CI passes the release tag.
+# Shown in the startup banner; CI passes the release tag.
 ARG VERSION=dev
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
     go build -ldflags "-s -w -X github.com/junkerderprovinz/bombvault/internal/api.Version=${VERSION}" -o /out/bombvault ./cmd/bombvault
 
-# ---- Stage 3: runtime (lean Debian + restic from upstream release) ----------
 FROM debian:stable-slim@sha256:04634311a8d5fc442b6eb06d792293c4f3e2268652ca7634e00ce8ef5cc0a28a AS runtime
 
 LABEL org.opencontainers.image.title="bombvault" \
@@ -59,29 +37,27 @@ LABEL org.opencontainers.image.title="bombvault" \
       org.opencontainers.image.source="https://github.com/junkerderprovinz/bombvault" \
       org.opencontainers.image.licenses="AGPL-3.0-only"
 
-# restic ≥0.17 is required for `--insecure-no-password`; Debian's apt restic is
-# too old, so pull the official static binary from GitHub for the target arch.
-# (amd64 → linux_amd64, arm64 → linux_arm64.)
+# Debian's restic is older than 0.17, which --insecure-no-password needs, so the
+# upstream binary is used instead.
 ARG RESTIC_VERSION=0.17.3
-# rclone: Debian's apt package is far too old (v1.60.1) and fails on some backends
-# — e.g. Jottacloud returns HTTP 500 "AllocationException" on `restic init` (#32) —
-# so pull the official current static binary instead, same approach as restic.
-# NOTE: rclone reads RCLONE_* env vars as flag overrides, so RCLONE_* build ARGs
-# shadow rclone flags; the `rclone version` check below runs with them unset.
+# Debian's rclone 1.60 breaks some backends (Jottacloud fails restic init), so
+# rclone comes from upstream too. rclone reads RCLONE_* variables as flags,
+# which is why the version check below runs with these build args unset.
 ARG RCLONE_VERSION=1.75.1
-# Supply-chain integrity: pinned SHA256 checksums for the exact release artifacts
-# above, taken from the upstream-published checksum files
+# From upstream's SHA256SUMS for the versions above
 # (https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/SHA256SUMS
-# and https://downloads.rclone.org/v${RCLONE_VERSION}/SHA256SUMS). A version bump
-# MUST update these in the same change or the build fails on the mismatch.
+# and https://downloads.rclone.org/v${RCLONE_VERSION}/SHA256SUMS). Update them
+# with every version bump, or the build fails.
 ARG RESTIC_SHA256_AMD64=5097faeda6aa13167aae6e36efdba636637f8741fed89bbf015678334632d4d3
 ARG RESTIC_SHA256_ARM64=db27b803534d301cef30577468cf61cb2e242165b8cd6d8cd6efd7001be2e557
 ARG RCLONE_SHA256_AMD64=982b5aa772841168f8e380f139e9e787b2a105403e32b94da8676a0e1c0a13ab
 ARG RCLONE_SHA256_ARM64=03f2504174034b6d004152ed7369251c9a9ec1f7e0836eda420f5c7a5ec0dff9
 ARG TARGETARCH
-# pipefail so a failed download can never slip past the `| sha256sum -c -`
-# checks below (bash is Essential in Debian, so it exists in the slim image).
+# pipefail so no pipe below can hide a failure. bash is essential in Debian,
+# so the slim image has it.
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+# curl survives the purge below because the Backup Everything hooks run in this
+# container and use it for health pings.
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends ca-certificates libvirt-clients qemu-utils openssh-client tini curl bzip2 wget unzip; \
@@ -114,31 +90,19 @@ ENV DATA_DIR=/config \
     PORT=3000 \
     HTTPS_PORT=3443
 
-# BACKUP_MAX_HOURS caps how long a single backup run may hold its domain lock
-# before being force-cancelled (a guard against a wedged run). Empty = the 48h
-# default; set an integer number of hours for very large/slow cloud backups, or
-# 0 to disable the cap entirely. Left empty here so operators opt in.
+# Hours one backup may hold its domain lock before it is cancelled. Empty means
+# 48, 0 means no limit.
 ENV BACKUP_MAX_HOURS=
 
 VOLUME /config
 EXPOSE 3000 3443
 
-# Docker healthcheck (#60): the engine answers its own /api/health while serving,
-# so auto-heal tools (Autoheal etc.) can restart a wedged container. It runs the
-# binary itself (`bombvault healthcheck`), so the check itself needs no shell or
-# curl invocation, even though curl is present in the image (for the "Backup
-# Everything" global post-hook's dead-man's-switch ping — see hostshell.go).
-# start-period covers the cold start (store open + first sweep); a backup never
-# blocks the API from binding, so 40s is plenty.
+# The binary checks its own /api/health, so the healthcheck needs no shell. A
+# backup never keeps the API from starting, so 40s covers the cold start.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
     CMD ["/usr/local/bin/bombvault", "healthcheck"]
 
-# tini is PID 1 (the container init) so orphaned grandchild processes get reaped.
-# BombVault shells out to restic, which forks its own `rclone` child for off-site
-# repos; when restic is cancelled/killed (a cancelled backup, the off-site check
-# timeout, a WAN drop) restic dies and its rclone child is orphaned onto PID 1.
-# BombVault-as-PID-1 was not a reaping init, so those piled up as `[rclone]
-# <defunct>` (#35). tini reaps them (and virsh→ssh orphans) automatically; `-g`
-# forwards SIGTERM/SIGINT to the whole process group for a clean `docker stop`.
-# The binary still prints its own ASCII init + READY banner; no entrypoint script.
+# A killed restic leaves its rclone child to PID 1, and virsh does the same with
+# ssh. tini reaps them, and -g passes SIGTERM to the whole process group so
+# docker stop shuts everything down.
 ENTRYPOINT ["/usr/bin/tini", "-g", "--", "/usr/local/bin/bombvault"]

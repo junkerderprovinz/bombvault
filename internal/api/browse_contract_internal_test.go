@@ -1,14 +1,5 @@
 package api
 
-// White-box table for the browse read-error classifier (BROWSE-02).
-//
-// classifyReadDirError is unexported, so this table lives in package api
-// (house convention for white-box tests, cf. selection_readers_internal_test.go
-// and path_internal_test.go) and runs on EVERY OS: the endpoint-level
-// permission fixture in browse_contract_test.go must skip on Windows dev, but
-// the KIND mapping itself must not go untested there — it is pinned here over
-// constructed *fs.PathError values instead of real filesystem fixtures.
-
 import (
 	"errors"
 	"fmt"
@@ -17,6 +8,8 @@ import (
 	"testing"
 )
 
+// TestClassifyReadDirError uses constructed errors, so it also runs on Windows,
+// where browse_contract_test.go cannot build a permission-denied fixture.
 func TestClassifyReadDirError(t *testing.T) {
 	tests := []struct {
 		name string
@@ -40,9 +33,8 @@ func TestClassifyReadDirError(t *testing.T) {
 		},
 		{
 			name: "os.Root escape rejection stays opaque",
-			// The stdlib escape error is its own value (not fs.ErrNotExist /
-			// fs.ErrPermission) — it must land in the generic bucket: an
-			// escape attempt is indistinguishable from any other failure.
+			// os.Root's escape error is a value of its own, and an escape
+			// attempt has to look like any other failure.
 			err:  errors.New("path escapes from parent"),
 			want: "error",
 		},

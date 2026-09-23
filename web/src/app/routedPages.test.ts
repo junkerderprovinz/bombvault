@@ -1,23 +1,11 @@
-// ---------------------------------------------------------------------------
-// Routed pages — the coverage guard for bombvault/page-uses-page-shell.
-//
-// That lint rule can only govern what it is pointed at: files matching
-// src/pages/*.tsx, and inside each one, the component named for the file
-// (`Config`, `SettingsPage`, or the default export). Both halves of that are
-// conventions in their own right, and both are invisible to the rule itself —
-// a page added under src/components/, or a page component named something
-// unrelated to its file, is simply never looked at. It would pass lint while
-// rendering at whatever width it liked, which is exactly the state
-// lib/pageShell.ts was written to end.
-//
-// So this test asserts the rule's scope still matches reality:
-//   1. every component used as a <Route element={…}> comes from ../pages/…
-//   2. every page module the router imports actually exists
-//   3. each one exports a component the rule's name lookup will find
+// bombvault/page-uses-page-shell only visits src/pages/*.tsx, and in each file
+// only the component named for it (`Config`, `SettingsPage`) or the default
+// export. A page outside that scope would pass lint at any width, so these
+// tests keep the rule's scope in step with the router:
+//   1. every component used as a <Route element={…}> comes from ../pages/
+//   2. every page module the router imports exists
+//   3. each one exports a component the rule's name lookup finds
 //   4. the exception list in eslint.config.js names only real files
-//
-// Node environment, no DOM: this reads source text, it does not render.
-// ---------------------------------------------------------------------------
 import { readFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -58,7 +46,7 @@ function ruleWillFind(stem: string, source: string): boolean {
 const ROUTED = routedComponents();
 
 describe("routed pages stay inside the page-shell rule's scope", () => {
-  it("finds the routes at all (guards against this test silently matching nothing)", () => {
+  it("finds the routes", () => {
     expect(ROUTED.length).toBeGreaterThanOrEqual(9);
   });
 
@@ -70,7 +58,7 @@ describe("routed pages stay inside the page-shell rule's scope", () => {
     ).toBeDefined();
     expect(
       source,
-      `<${name} /> is routed from "${source}". bombvault/page-uses-page-shell only governs src/pages/*.tsx, so a page anywhere else silently escapes the shared page shell — move it to src/pages/.`
+      `<${name} /> is routed from "${source}". bombvault/page-uses-page-shell only governs src/pages/*.tsx, so a page anywhere else escapes the shared page shell. Move it to src/pages/.`
     ).toMatch(/^\.\.\/pages\//);
   });
 
@@ -106,7 +94,7 @@ describe("the page-shell exception list is real", () => {
       expect(
         existsSync(join(SRC, "pages", f)),
         `eslint.config.js exempts src/pages/${f} from the page shell, but that file does not exist. ` +
-          `A stale exception quietly exempts nothing and hides that the list is out of date — remove it.`
+          `A stale exception quietly exempts nothing and hides that the list is out of date. Remove it.`
       ).toBe(true);
     }
   });

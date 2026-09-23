@@ -6,10 +6,9 @@ import (
 	"time"
 )
 
-// RFC 6238 ships test vectors, and they are the only real check that this
-// implementation is the same algorithm every authenticator app runs. The secret
-// in the RFC is the ASCII string "12345678901234567890"; here it is base32 as an
-// app would receive it.
+// The RFC 6238 test vectors check that this is the algorithm authenticator apps
+// run. The secret in the RFC is the ASCII string "12345678901234567890"; here it
+// is base32 as an app would receive it.
 const rfcSecret = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ" //nolint:gosec // G101: RFC 6238's own published test vector, not a credential
 
 func TestTOTPMatchesRFC6238Vectors(t *testing.T) {
@@ -45,14 +44,11 @@ func TestValidTOTPAcceptsTheCurrentCode(t *testing.T) {
 	if !ValidTOTP(rfcSecret, code, now) {
 		t.Fatal("the code for this moment must be accepted")
 	}
-	// A space in the middle is what a phone screen invites; it must not matter.
 	if !ValidTOTP(rfcSecret, code[:3]+" "+code[3:], now) {
 		t.Fatal("a code typed with a space must be accepted")
 	}
 }
 
-// One step of skew each way, and no more. Both halves matter: too narrow locks
-// out a phone whose clock drifted, too wide hands an attacker extra seconds.
 func TestValidTOTPWindowIsOneStepEitherSide(t *testing.T) {
 	now := time.Unix(1111111109, 0)
 	code, err := TOTPCode(rfcSecret, now)
@@ -128,10 +124,6 @@ func TestTOTPURICarriesWhatAnAppNeeds(t *testing.T) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Recovery codes
-// ---------------------------------------------------------------------------
-
 func TestRecoveryCodesMatchOnlyThemselves(t *testing.T) {
 	plain, hashed, err := NewRecoveryCodes(appKey)
 	if err != nil {
@@ -154,12 +146,10 @@ func TestRecoveryCodesMatchOnlyThemselves(t *testing.T) {
 		t.Fatal("an invented code must not match")
 	}
 	if MatchRecoveryCode(appKey, "", hashed) >= 0 {
-		t.Fatal("an empty code must not match — every stored hash would be a target")
+		t.Fatal("an empty code must not match, or every stored hash would be a target")
 	}
 }
 
-// Somebody reading a code off paper types it as they see it. Case and dashes
-// must not be the reason a lost phone becomes a lost instance.
 func TestRecoveryCodeIsForgivingAboutTyping(t *testing.T) {
 	plain, hashed, err := NewRecoveryCodes(appKey)
 	if err != nil {
@@ -188,9 +178,6 @@ func TestRecoveryCodesNeedTheAppKey(t *testing.T) {
 	}
 }
 
-// A clock that has not been set yet must not push the counter into a window no
-// verifier can reach. Before the clamp, a pre-epoch time wrapped the int64 into
-// an enormous uint64 step and TOTPCode happily returned six digits for it.
 func TestTOTPClampsAPreEpochClockToStepZero(t *testing.T) {
 	before := time.Unix(-86400, 0) // a day before 1970
 	got, err := TOTPCode(rfcSecret, before)
@@ -204,8 +191,7 @@ func TestTOTPClampsAPreEpochClockToStepZero(t *testing.T) {
 	if got != atZero {
 		t.Fatalf("a pre-epoch clock must fall back to the first step: got %s, step 0 is %s", got, atZero)
 	}
-	// And the code for that step must still verify, so the fallback is a real
-	// window rather than a value nothing accepts.
+	// The clamped step must still be a window the verifier accepts.
 	if !ValidTOTP(rfcSecret, got, before) {
 		t.Fatal("the clamped code must verify at the same clamped time")
 	}

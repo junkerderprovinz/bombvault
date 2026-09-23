@@ -1,40 +1,18 @@
-// ---------------------------------------------------------------------------
-// Two guards over the glyph set and the buttons that wear it ([331], [332]).
-//
-// Both exist because the failures they catch are SILENT. Nothing throws, no
-// test goes red, the page renders — it just renders slightly wrong, and the
-// only detection method so far has been jdp noticing across five rounds of
-// live review. A guard that fires in CI is a cheaper reviewer.
-//
-// These read source text rather than rendering. That is deliberate for the
-// second one: the question is not "what colour is this button now" (a rendered
-// test answers that for one state on one page) but "does any call site carry a
-// literal that could beat its tone" — a property of the code, checkable in one
-// pass over the tree.
-// ---------------------------------------------------------------------------
+// Guards over the glyph set and the buttons that wear it. What they catch is
+// silent: the page renders, just slightly wrong. They read source text rather
+// than rendering, because the question is whether any call site could go
+// wrong, not how one page looks.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { buttonTags as scanButtonTags, walkTsx } from "./buttonTags.testsupport";
+import { buttonTags, walkTsx } from "./buttonTags.testsupport";
 
 const SRC = join(__dirname, "..");
 
-// Der Tag-Parser liegt seit [5126] in buttonTags.testsupport.ts, weil die
-// Reichweiten-Wache nebenan ihn auch braucht. Zwei Kopien haetten zwei
-// verschiedene Baeume geprueft, waehrend beide gruen melden.
-const buttonTags = () => scanButtonTags(SRC);
-const walk = (dir: string) => walkTsx(dir);
-
 describe("glyph sizing", () => {
-  // [331]: the crop test next door proves the viewBox is computed correctly
-  // FROM the declared ink. It cannot prove the declared ink is right — a
-  // mis-measured import produces a perfectly consistent, perfectly wrong
-  // result. What catches that is the consequence: a glyph whose declared ink
-  // is too small crops to a box larger than its drawing and renders visibly
-  // smaller than everything beside it.
-  //
-  // Read out of the generator rather than the emitted file, because that is
-  // where a human types the number a human measured.
+  // navGlyphs.fit.dom.test.tsx proves the viewBox follows from the declared
+  // ink, not that the ink was measured right. The numbers are read from the
+  // generator, where they are typed.
   const gen = readFileSync(join(SRC, "..", "..", "scripts", "gen_glyphs.py"), "utf8");
   const entries = [...gen.matchAll(
     /imported\(\s*"(\w+)"[^)]*?\(([\d.]+),\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\)/gs,
@@ -50,28 +28,21 @@ describe("glyph sizing", () => {
       // Zero or negative is a typo; the crop would divide by it.
       expect(w, `${name} has no declared width`).toBeGreaterThan(0);
       expect(h, `${name} has no declared height`).toBeGreaterThan(0);
-      // Nothing in this set is more than 4:1. A ratio past that is a
-      // transposed or half-copied measurement, which crops to a box four
-      // times too big in one direction and renders a quarter of the size.
+      // Nothing in this set is beyond 4:1 either way, so a ratio past that is a
+      // transposed or half-copied measurement.
       const ratio = Math.max(w / h, h / w);
-      expect(ratio, `${name} is ${ratio.toFixed(1)}:1 — measurement transposed?`).toBeLessThan(4);
+      expect(ratio, `${name} is ${ratio.toFixed(1)}:1, measurement transposed?`).toBeLessThan(4);
     },
   );
 });
 
 describe("buttons", () => {
-  // [332]: `tone` sets the background; a `bg-*` class in the call site's own
-  // className sets it too. Which one wins is decided by their order in the
-  // COMPILED stylesheet, not by the order they appear in the attribute — so
-  // the class list reads correctly and the button paints wrong. It cost a
-  // round: [326] was set to accent, shipped grey, and only measuring the
-  // deployed page found it.
-  //
-  // The three call sites that restated a neutral surface were harmless right
-  // up until somebody set a tone on one of them, which is the definition of a
-  // trap rather than a style issue.
+  // `tone` sets a button's background, and so does a bg-* class in its
+  // className. Which one wins depends on their order in the compiled
+  // stylesheet, not in the attribute, so the class list reads right and the
+  // button paints wrong.
   it("never lets a call site paint its own background", () => {
-    const offenders = buttonTags()
+    const offenders = buttonTags(SRC)
       .filter((b) => /className/.test(b.props))
       .filter((b) => /\bbg-(?!accent\b)[\w-]+/.test(b.props))
       .map((b) => `${b.file}:${b.line}`);
@@ -83,47 +54,26 @@ describe("buttons", () => {
   });
 
   it("gives every button a labelKey, even if the answer is null", () => {
-    // TypeScript already requires the prop ([335]); this catches the other
-    // half — a call site that satisfies the compiler by writing `null` where a
-    // real key exists. It cannot know the intent, so it only checks the prop
-    // is present, and stands as the record of why it is required at all.
-    const missing = buttonTags()
+    // TypeScript requires the prop as well. This cannot tell whether a `null`
+    // hides a real key, only that the prop is there.
+    const missing = buttonTags(SRC)
       .filter((b) => !/\blabelKey\b/.test(b.props))
       .map((b) => `${b.file}:${b.line}`);
     expect(missing, "Buttons without labelKey cannot pick a glyph.").toEqual([]);
   });
 
-  it("crops the viewBox of any rotated glyph ([426])", () => {
-    // A rotated drawing does not fill the box its own numbers say it does.
-    // IconClose is IconAdd's plus turned 45 degrees: the plus reads at 72% of
-    // its 14-unit box, the cross at 58%, because the axis-aligned extent of a
-    // diagonal is smaller than the arms making it. Both crosses were the
-    // smallest marks among 48 while their geometry claimed otherwise.
-    //
-    // Nothing caught it, and could not have: getBBox and getBoundingClientRect
-    // BOTH report a transformed group's pre-transform extent, so every cheap
-    // measurement agreed with every other cheap measurement. The contact sheet
-    // rated the glyph 101% filled while it painted 58%.
-    //
-    // So the rule is structural rather than measured: if a glyph rotates, its
-    // viewBox has to be cropped to what the rotation actually leaves, which
-    // means it cannot still be the full nominal grid. That is checkable in the
-    // source and cannot be fooled by the same blind spot twice.
-    // Only a WHOLLY rotated glyph is affected, and the distinction is the
-    // difference between a real guard and a nuisance. Six drawings rotate a
-    // DETAIL inside themselves — a tick inside a circle, a strike-through
-    // across an eye — while an unrotated outer shape still fills the box. Those
-    // lose nothing and must not be flagged, or the rule gets switched off.
-    //
-    // The case that loses size is the one where every mark sits inside a single
-    // rotated group: then the group IS the glyph, and turning it shrinks the
-    // whole thing.
+  it("crops the viewBox of a wholly rotated glyph", () => {
+    // A rotated drawing does not fill the box its numbers claim: IconClose, the
+    // plus turned 45 degrees, fills 58% of its box against the plus's 72%.
+    // getBBox and getBoundingClientRect report the extent before the transform,
+    // so the rule is structural: a glyph drawn as one rotated group needs a
+    // cropped viewBox. A detail rotated inside an unrotated shape (a tick in a
+    // circle) still fills its box and is not flagged.
     const offenders: string[] = [];
-    for (const file of walk(SRC)) {
+    for (const file of walkTsx(SRC)) {
       const src = readFileSync(file, "utf8");
-      // Each <svg …> element with everything up to its closing bracket, plus
-      // the body that follows, so the viewBox and the transform are compared
-      // within one glyph rather than across neighbours.
+      // One svg at a time, so the viewBox and the transform belong to the same
+      // glyph.
       for (const m of src.matchAll(/<svg\b([^>]*)>([\s\S]*?)<\/svg>/g)) {
         const [, attrs, rawBody] = m;
         const body = rawBody.trim();
@@ -146,33 +96,14 @@ describe("buttons", () => {
     ).toEqual([]);
   });
 
-  it("crops a rotated glyph to its REACH, not past it ([526])", () => {
-    // The test above knows that a rotated glyph must be cropped. It does not
-    // know how far, and "how far" is where the next two rounds went.
-    //
-    // [426] cropped to the axis-aligned EXTENT of the turned drawing, which
-    // makes the ink fill its box like the other 45 glyphs. That is the wrong
-    // target, and the reason is worth the paragraph: A CROSS PUTS ITS FOUR TIPS
-    // ON THE CORNERS OF ITS BOUNDING BOX, while a circular glyph puts its ink on
-    // the edge midpoints. Fill the same box with both and the cross reaches
-    // sqrt(2) further from centre — 14.1px against 10px at a 20px render. jdp
-    // saw it twice ("wirkt viel zu klobig", then "das X Glyph ist zu groß")
-    // while three separate measurements said the pair matched.
-    //
-    // They did match, on the things they measured. Extent matched. Area matched
-    // (37.7% against 36.6%). REACH — the distance from centre to furthest ink —
-    // was never asked, and reach is what the eye calls size across marks of
-    // different shape. THREE MEASUREMENTS THAT AGREE ARE ONE MEASUREMENT IF
-    // THEY ASK THE SAME QUESTION.
-    //
-    // So the invariant is reach: an arm tip must land exactly where a full-grid
-    // glyph puts its outermost ink, which is half the viewBox from the centre.
-    // Checkable from source, immune to the transform blind spot that defeated
-    // getBBox, and it fails in BOTH directions — a box that is too wide makes
-    // the mark small, too narrow makes it big and clips the tips besides (the
-    // 7.1 box before this one held 21.9px of ink in a 20px frame).
+  it("crops a rotated glyph to its reach", () => {
+    // The eye compares reach, the distance from the centre to the furthest
+    // ink. A cross cropped to its extent puts its tips on the box corners and
+    // reads sqrt(2) larger than a round glyph, so an arm tip must land at half
+    // the viewBox from the centre. Too wide a box makes the mark small, too
+    // narrow makes it large and clips the tips.
     const offenders: string[] = [];
-    for (const file of walk(SRC)) {
+    for (const file of walkTsx(SRC)) {
       const src = readFileSync(file, "utf8");
       for (const m of src.matchAll(/<svg\b([^>]*)>([\s\S]*?)<\/svg>/g)) {
         const [, attrs, rawBody] = m;
@@ -186,9 +117,8 @@ describe("buttons", () => {
         if (!vb) continue;
         const half = Number(vb.split(/\s+/)[2]) / 2;
 
-        // The tip of an arm is the midpoint of its SHORT end. Corners would
-        // measure the drawing's diagonal instead, which is the same mistake one
-        // dimension down: a bar's corner is not where the arm points.
+        // The tip of an arm is the midpoint of its short end; a bar's corner is
+        // not where the arm points.
         let reach = 0;
         for (const r of whole[2].matchAll(/<rect\b([^>]*)>/g)) {
           const at = (k: string) =>
@@ -217,47 +147,26 @@ describe("buttons", () => {
     ).toEqual([]);
   });
 
-  it("gives a dialog heading outside its padded box the box's own inset ([542])", () => {
-    // The heading notch carries NO left offset of its own, by design: it is
-    // `position: absolute` with both left and right `auto`, so it falls back to
-    // its static position and inherits whatever padding surrounds it. That one
-    // decision is why every Card's badge sits 20px in from the card edge with
-    // no per-call-site class, and why it is automatically RTL-correct.
+  it("gives a dialog heading outside its padded box the box's own inset", () => {
+    // The heading notch takes its inset from the padding around it (it is
+    // absolutely positioned with left and right auto). A dialog whose <h2> sits
+    // outside its scrolling box, which would clip the notch, has to repeat the
+    // box's horizontal padding, or the badge sits flush with the card edge.
     //
-    // It also means the padding has to actually BE there. Five dialogs put the
-    // <h2> OUTSIDE their padded box — they have to, because the box scrolls and
-    // an absolute notch inside a scrolling box gets clipped — so their badge
-    // inherited the unpadded shell and sat flush with the card's own edge. jdp:
-    // "ist mit der card links buendig. soll ja etwas nach rechts verrueckt
-    // sein".
-    //
-    // Worth a test rather than five comments because the failure is invisible
-    // in the file: nothing about `<h2 className="flex items-center">` looks
-    // wrong, and the class that makes it right lives one line away from the
-    // `p-5` it has to agree with. This checks the agreement itself.
-    // JSX comments are blanked BEFORE the scan, keeping the line count so the
-    // reported numbers stay real. The first draft of this test scanned six raw
-    // lines above the <h2> for the shell, which silently stopped finding it the
-    // moment a call site grew a ten-line comment between the two — the comment
-    // this very fix added. It then passed on the broken markup, which is the
-    // failure mode a guard exists to prevent: verified by reverting the class
-    // and watching it stay green.
+    // JSX comments are blanked, keeping the line count, so a long comment
+    // between the shell and the heading cannot hide the shell.
     const blankComments = (s: string) =>
       s.replace(/\{\/\*[\s\S]*?\*\/\}/g, (m) => "\n".repeat(m.split("\n").length - 1));
     const offenders: string[] = [];
-    for (const file of walk(SRC)) {
+    for (const file of walkTsx(SRC)) {
       const lines = blankComments(readFileSync(file, "utf8")).split("\n");
       for (let i = 0; i < lines.length; i++) {
         if (!/<h2\b/.test(lines[i])) continue;
         const head = lines.slice(i, i + 4).join("\n");
         if (!/tone="heading" size="heading"/.test(head)) continue;
-        // Is this <h2> a sibling of the padded dialog box rather than a child?
-        // The shell is the nearest `relative … max-w-*` wrapper above it; the
-        // box is the `p-N rounded-card` element below.
-        // The previous few NON-BLANK lines, not the previous few lines. Blanking
-        // the comments leaves holes exactly where a well-commented call site has
-        // its explanation, so a fixed-size window measured in raw lines is the
-        // second way this test managed to find nothing and pass.
+        // Is this <h2> a sibling of the padded box rather than a child? The
+        // shell is the `relative … max-w-*` wrapper among the previous
+        // non-blank lines; the box is the `p-N rounded-card` below.
         const above: string[] = [];
         for (let j = i - 1; j >= 0 && above.length < 3; j--) {
           if (lines[j].trim()) above.unshift(lines[j]);
@@ -265,15 +174,9 @@ describe("buttons", () => {
         const joined = above.join("\n");
         const shell = /className=[`"]([^`"]*\brelative\b[^`"]*\bmax-w-[^`"]*)/.exec(joined);
         if (!shell || /\bp[xl]?-\d/.test(shell[1])) continue;
-        // A wrapper BETWEEN the shell and the heading that already insets it.
-        // Then the heading is not flush with the card edge and this rule has
-        // nothing to say about it — it is the ordinary dialog header row, the
-        // shape ConfirmDialog has always had. Without this the test reads the
-        // next `p-N rounded-card` it can find below the heading, which is only
-        // the heading's own box when nothing sits between them: a window whose
-        // first content block happens to be a padded card gets reported for
-        // markup that is correct. Found when one grew a QR panel directly under
-        // its header ([3554]).
+        // A wrapper that already insets the heading makes this an ordinary
+        // header row, as in ConfirmDialog, whose padded card below would
+        // otherwise be taken for the heading's box.
         if (/\bpx-\d/.test(joined.slice(shell.index + shell[0].length))) continue;
         const box = /\bp-(\d+)\b/.exec(
           lines.slice(i, i + 16).filter((l) => /rounded-card|bg-carbon-surface/.test(l)).join("\n")
@@ -293,39 +196,21 @@ describe("buttons", () => {
     ).toEqual([]);
   });
 
-  it("never paints text or graphics with the flat accent ([381])", () => {
-    // accentText and accent are not two shades of one idea, they are opposites:
-    // `accent` is a FILL, meant to have text on top of it, and `accentText` is
-    // the accent mixed toward the ink so it can BE the text.
-    //
-    // Using the fill as text is not a taste question, it is measured: flat
-    // accent gold sits at 1.61:1 on the light background, against 4.5 for body
-    // copy and 3:1 for a graphic. The charts carry that measurement in their
-    // own comment and four call sites were converted then.
-    //
-    // One was not. WhatsNewDialog's inline link kept `text-accent` and stayed
-    // unreadable, which is the ordinary shape of this miss: the rule got
-    // applied everywhere the sweep looked, and afterwards nobody could tell
-    // which places it had not looked at. So the sweep is a test now, which is
-    // the only version of it that runs again next time.
+  it("never paints text or graphics with the flat accent", () => {
+    // `accent` is a fill meant to carry text, and `accentText` is the accent
+    // mixed toward the ink so it can be the text. Flat accent gold measures
+    // 1.61:1 on the light background, against 4.5:1 for body text and 3:1 for
+    // a graphic.
     const offenders: string[] = [];
-    for (const file of walk(SRC)) {
-      // Comments have to go BEFORE the split into lines, not after. Several of
-      // them quote the flat name while explaining why not to use it, and the
-      // longest — Recovery.tsx's, which carries the original measurement —
-      // spans ten lines of a JSX {/* … */} block. A per-line strip cannot see
-      // that it is inside one, so it flagged the very comment that documents
-      // the rule. A guard that trips on its own rationale teaches people to
-      // delete the rationale.
-      //
-      // Comment bodies become blank lines rather than disappearing, so the
-      // reported line numbers still point at the real file.
+    for (const file of walkTsx(SRC)) {
+      // Comments quote the flat name to warn against it, some across several
+      // lines, so they are blanked first, keeping the line numbers.
       const src = readFileSync(file, "utf8")
         .replace(/\/\*[\s\S]*?\*\//g, (m) => "\n".repeat((m.match(/\n/g) ?? []).length))
         .replace(/\/\/.*$/gm, "");
       src.split("\n").forEach((line, i) => {
-        // The exact utility only: `text-accent` with nothing appended, so
-        // text-accentText and text-accentContrast (the deliberate ones) pass.
+        // Only `text-accent` itself, so text-accentText and text-accentContrast
+        // pass.
         if (/\btext-accent(?![A-Za-z-])/.test(line)) {
           offenders.push(`${file.slice(SRC.length + 1)}:${i + 1}`);
         }

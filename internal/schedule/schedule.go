@@ -1,6 +1,6 @@
-// Package schedule provides a per-domain in-process scheduler backed by
-// github.com/robfig/cron/v3. Each domain (containers / VMs / flash) has its
-// own cadence parsed from the settings row.
+// Package schedule runs BombVault's scheduled jobs in-process on
+// github.com/robfig/cron/v3. Each backup domain has its own cadence, parsed from
+// the settings row.
 package schedule
 
 import (
@@ -18,8 +18,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// BackupFunc is the function called for each container that is due for backup.
-// It is injected so the scheduler is unit-testable.
+// BackupFunc backs up one scheduled item. It is injected so the scheduler can be
+// tested without the backup service.
 type BackupFunc func(containerName string) error
 
 // ListTargetsFunc returns the current list of targets.
@@ -32,50 +32,43 @@ type ListVMTargetsFunc func() ([]store.VMTarget, error)
 type ListFileSetsFunc func() ([]store.FileSet, error)
 
 // LastRunFunc returns the time of the last successful backup for a domain, or
-// a zero time when there has been none. It is injected so the schedule package
-// stays store-free (DI seam).
+// a zero time when there has been none. It keeps this package independent of
+// the store.
 type LastRunFunc func() (time.Time, error)
 
-// ItemFailure names one scheduled item (container / VM / file set) that failed
-// during a per-domain run, with a short reason (the backupFn error's message).
-// A scheduled run continues past a failing item, so the aggregated outcome
-// carries these so the scheduled-summary notification can enumerate WHICH items
-// failed and WHY instead of only a count — the core of #64, where a domain-wide
-// fault made 35 of 45 containers fail invisibly.
+// ItemFailure is one scheduled item (container, VM or file set) that failed
+// during a run, with the backup error's message as the reason. The summary
+// notification lists them.
 type ItemFailure struct {
 	Name   string
 	Reason string
 }
 
-// Cadence is the parsed result of a cadence string.
+// Cadence is a parsed cadence string.
 //
 //   - Enabled=false: the domain is off (Spec is empty, IntervalDays is 0).
-//   - Enabled=true, IntervalDays=0: a regular cron spec fires unconditionally.
-//   - Enabled=true, IntervalDays>0: the spec is a daily trigger (fires once per
-//     day at the given HH:MM) but the job must consult a due-check before doing
-//     any real work — only proceed when the last run falls at least IntervalDays
-//     CALENDAR days back (EveryNDue, which is where that "calendar" is argued).
+//   - Enabled=true, IntervalDays=0: Spec fires unconditionally.
+//   - Enabled=true, IntervalDays>0: Spec is a daily trigger at HH:MM, and the job
+//     runs only when the last run is at least IntervalDays calendar days back
+//     (see EveryNDue).
 type Cadence struct {
 	Spec         string // 5-field cron expression; empty when Enabled=false
 	Enabled      bool
 	IntervalDays int // >0 for everyN cadences only
 }
 
-// ParseCadence converts a user-facing cadence string into a Cadence.
-// Recognised forms:
+// ParseCadence converts a user-facing cadence string into a Cadence. The
+// accepted forms are:
 //
-//   - "off"                        → Cadence{Enabled:false}
-//   - "daily HH:MM"                → daily cron spec, unconditional
-//   - "weekly DOW[,DOW,...] HH:MM" → weekly on named days; DOW = Sun–Sat
-//     (single or comma-separated set, case-insensitive)
-//   - "everyN <N> HH:MM"           → daily cron spec + IntervalDays=N (N ≥ 1)
-//   - raw 5-field cron              → passed through unconditionally
-//
-// Any other input returns an error.
+//   - "off"
+//   - "daily HH:MM"
+//   - "weekly DOW[,DOW,...] HH:MM", days Sun to Sat in any case
+//   - "everyN N HH:MM", a daily trigger with IntervalDays=N, N >= 1
+//   - a raw 5-field cron expression, passed through unchanged
 func ParseCadence(s string) (Cadence, error) {
 	s = strings.TrimSpace(s)
 	if s == "" {
-		// Treat empty string as "off" — defensive against settings PUT with "".
+		// A settings PUT may send an empty cadence; it means "off".
 		return Cadence{}, nil
 	}
 
@@ -99,7 +92,6 @@ func ParseCadence(s string) (Cadence, error) {
 		return Cadence{Spec: fmt.Sprintf("%d %d * * *", m, h), Enabled: true}, nil
 
 	case "weekly":
-		// Accepts "weekly DOW HH:MM" or "weekly DOW,DOW,... HH:MM".
 		if len(parts) != 3 {
 			return Cadence{}, fmt.Errorf("schedule: 'weekly' requires DOW (or DOW,DOW,...) and HH:MM arguments")
 		}
@@ -114,7 +106,6 @@ func ParseCadence(s string) (Cadence, error) {
 		return Cadence{Spec: fmt.Sprintf("%d %d * * %s", m, h, dowSpec), Enabled: true}, nil
 
 	case "everyN":
-		// "everyN <N> HH:MM" — every N days at HH:MM.
 		if len(parts) != 3 {
 			return Cadence{}, fmt.Errorf("schedule: 'everyN' requires an integer N and HH:MM arguments")
 		}
@@ -133,11 +124,9 @@ func ParseCadence(s string) (Cadence, error) {
 		}, nil
 
 	default:
-		// Accept a raw 5-field cron expression.
 		if len(parts) != 5 {
 			return Cadence{}, fmt.Errorf("schedule: unrecognised cadence %q (expected 'off', 'daily HH:MM', 'weekly DOW[,DOW,...] HH:MM', 'everyN N HH:MM', or a 5-field cron)", s)
 		}
-		// Validate it parses correctly.
 		parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
 		if _, parseErr := parser.Parse(s); parseErr != nil {
 			return Cadence{}, fmt.Errorf("schedule: invalid cron expression %q: %w", s, parseErr)
@@ -146,66 +135,53 @@ func ParseCadence(s string) (Cadence, error) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Per-item schedule overrides (#121)
-// ---------------------------------------------------------------------------
-
-// itemSchedule is how one INCLUDED item participates when per-item schedules are
-// ON, derived from its optional per-item override string.
+// itemSchedule is how one included item takes part in scheduling when per-item
+// schedules are on, derived from its optional override string. With both flags
+// false the item is not scheduled at all.
 type itemSchedule struct {
-	// ownEntry is true when the item has a concrete, valid cadence override and
-	// should therefore get its OWN cron entry firing on Spec. When false the item
-	// is handled by the domain (inDomainRun) unless it is explicitly off.
+	// ownEntry means the item has a valid cadence override and gets its own
+	// cron entry firing on Spec.
 	ownEntry bool
-	// inDomainRun is true when the item is backed up as part of the domain-cadence
-	// run (an empty or invalid override falls back to the domain default exactly as
-	// today). Mutually exclusive with ownEntry.
+	// inDomainRun means the domain's run backs the item up. An empty or invalid
+	// override falls back to the domain default. Exclusive with ownEntry.
 	inDomainRun bool
-	// Spec is the 5-field cron expression for the item's own entry (valid only when
-	// ownEntry is true).
+	// Spec is the cron expression of the item's own entry, set with ownEntry.
 	Spec string
 }
 
-// classifyItemOverride decides how an item participates under per-item schedules
-// from its override string. It is the single seam both the per-item entry
-// registration and the domain-run filter consult, so their decisions can never
-// diverge — and it is a pure function so the due-selection logic is unit-testable
-// without cron or a store.
+// classifyItemOverride decides from an override string how an item takes part
+// under per-item schedules. Entry registration and the domain-run filter both
+// use it, so they cannot disagree about an item.
 //
-//   - ""  (empty)            → follow the domain default (inDomainRun). This is the
-//     "no override, unchanged" case: exactly as today.
-//   - invalid (ParseCadence  → follow the domain default. A garbage override never
-//     errors)                  silently drops an item from all scheduling.
-//   - "everyN N HH:MM"        → follow the domain default. Per-item entries have no
-//     per-item last-run gate, so an everyN override cannot enforce its interval;
-//     it degrades to the domain schedule rather than firing every day. The API
-//     rejects everyN overrides at save time, so this only guards a legacy value.
-//   - "off"                   → the item is NOT scheduled at all (no entry, and
-//     excluded from the domain run). A deliberate per-item pause.
-//   - any concrete cadence    → the item gets its OWN entry on that cadence.
+//   - empty: follow the domain default.
+//   - invalid: follow the domain default, so a bad override never drops an item
+//     from scheduling.
+//   - "everyN N HH:MM": follow the domain default. A per-item entry has no
+//     last-run gate, so it could not enforce the interval and would fire daily.
+//     The API rejects everyN overrides on save; this covers older stored values.
+//   - "off": not scheduled at all, neither on its own nor in the domain run.
+//   - any other cadence: the item gets its own entry.
 func classifyItemOverride(override string) itemSchedule {
 	if strings.TrimSpace(override) == "" {
 		return itemSchedule{inDomainRun: true}
 	}
 	cad, err := ParseCadence(override)
 	if err != nil {
-		return itemSchedule{inDomainRun: true} // invalid → domain default
+		return itemSchedule{inDomainRun: true}
 	}
 	if cad.IntervalDays > 0 {
-		return itemSchedule{inDomainRun: true} // everyN unsupported per-item → domain default
+		return itemSchedule{inDomainRun: true}
 	}
 	if !cad.Enabled {
-		return itemSchedule{} // "off" → not scheduled at all
+		return itemSchedule{}
 	}
 	return itemSchedule{ownEntry: true, Spec: cad.Spec}
 }
 
-// DomainRunTargets filters container targets to those the DOMAIN-cadence job
-// should back up. When perItem is false it returns targets UNCHANGED (byte-for-
-// byte as before — overrides are ignored). When true it drops targets that have
-// their own per-item entry (a concrete override) or that are explicitly "off",
-// leaving the items that follow the domain default. IncludeInSchedule is still
-// checked by RunContainersJob, so this only removes overridden/off items.
+// DomainRunTargets filters container targets to those the domain job should
+// back up. With perItem false it returns targets unchanged. With perItem true it
+// drops targets that have their own per-item entry or are "off".
+// RunContainersJob still checks IncludeInSchedule.
 func DomainRunTargets(targets []store.Target, perItem bool) []store.Target {
 	if !perItem {
 		return targets
@@ -219,9 +195,8 @@ func DomainRunTargets(targets []store.Target, perItem bool) []store.Target {
 	return out
 }
 
-// DomainRunFileSets is the file-set counterpart of DomainRunTargets (#199).
-// Enabled is still checked by RunFilesJob, so this only removes sets that carry
-// their own cadence or are explicitly "off".
+// DomainRunFileSets is the file-set counterpart of DomainRunTargets. RunFilesJob
+// still checks Enabled.
 func DomainRunFileSets(sets []store.FileSet, perItem bool) []store.FileSet {
 	if !perItem {
 		return sets
@@ -249,35 +224,15 @@ func DomainRunVMTargets(vms []store.VMTarget, perItem bool) []store.VMTarget {
 	return out
 }
 
-// DomainRunHasWork reports whether a FILTERED container list still holds an item
-// the domain job would actually back up. IncludeInSchedule is the very check
-// RunContainersJob loops on, so this asks exactly "would that loop attempt
-// anything".
+// DomainRunHasWork reports whether a filtered container list still holds an item
+// the domain job would back up. It is exported for the "Backup Everything" pass
+// (internal/api/everything.go), which runs the same domain loops.
 //
-// Exported because the "Backup Everything" pass (internal/api/everything.go)
-// reproduces these same domain loops inline and needs the SAME answer, not a
-// second copy of the rule: a private helper here is exactly how the two drifted
-// apart in the first place.
-//
-// The three multi-item domain closures gate their whole pass on it, and the
-// reason is the batched TAIL, not the loop: RunContainersJob over an empty list
-// is free, but what follows it is not. pruneAfterBulkFn is a real `restic prune`
-// that records a run of its own, replicateAfterBulkFn opens the off-site repo,
-// loads its index and copies, and the aggregated Healthchecks ping and summary
-// message in between report a green "0 of 0 items succeeded" for a pass that
-// touched nothing.
-//
-// An empty list is not an exotic state once per-item schedules are on (#121): it
-// is the ORDINARY one as soon as every included item carries its own override or
-// is switched off, which leaves the domain schedule vestigial. Its everyN gate
-// reads the last success among exactly those (zero) items, so it answers the
-// zero time — "never ran" — at every fire, for good, because an empty pass
-// writes no run row to move it. A user who configured "everyN 7" would be buying
-// a nightly prune plus a nightly full off-site replication with it. The domain
-// has nothing to do; it must do nothing.
-//
-// The legitimate "first ever run, nothing backed up yet" case is untouched:
-// that list is NON-empty, so the zero time genuinely means due and the pass runs.
+// The domain jobs skip their whole pass when it is false. The loop itself is
+// free, but the prune, the off-site copy and the "0 of 0 items succeeded" ping
+// after it are not. With per-item schedules on an empty list is common, and its
+// everyN gate reads the zero time and reports due at every fire, because an
+// empty pass records no run.
 func DomainRunHasWork(targets []store.Target) bool {
 	for _, t := range targets {
 		if t.IncludeInSchedule {
@@ -297,10 +252,8 @@ func DomainRunHasVMWork(vms []store.VMTarget) bool {
 	return false
 }
 
-// DomainRunHasFileWork is the file-set counterpart of DomainRunHasWork. File sets
-// carry no per-item cadence override, so Enabled is the whole filter — and the
-// check RunFilesJob itself loops on. A user who switched every set off must not
-// keep paying for the domain's prune and off-site copy.
+// DomainRunHasFileWork is the file-set counterpart of DomainRunHasWork. It checks
+// Enabled, as RunFilesJob does.
 func DomainRunHasFileWork(sets []store.FileSet) bool {
 	for _, fs := range sets {
 		if fs.Enabled {
@@ -310,10 +263,9 @@ func DomainRunHasFileWork(sets []store.FileSet) bool {
 	return false
 }
 
-// DomainGateStore is the store surface a multi-item domain's everyN due-gate
-// needs: the settings (for the per-item-schedules switch), the domain's item
-// list, and "when was any of THESE items last backed up successfully". Same DI
-// seam LastRunFunc and JobRunStore already are.
+// DomainGateStore is what a multi-item domain's everyN due-gate reads: the
+// settings (for the per-item switch), the domain's items, and the last
+// successful backup among a given set of them.
 type DomainGateStore interface {
 	GetSettings() (store.Settings, error)
 	ListTargets() ([]store.Target, error)
@@ -322,30 +274,12 @@ type DomainGateStore interface {
 	LastSuccessfulBackupAmong(ids []string) (time.Time, error)
 }
 
-// ContainersDueGate builds the containers everyN due-gate query: the last
-// successful backup among the items THIS DOMAIN'S RUN actually covers.
-//
-// "Actually covers" is the whole point, and it applies the same two filters the
-// domain job itself applies at fire time:
-//
-//   - DomainRunTargets drops items carrying a concrete per-item cadence
-//     override (#121) — those run on their OWN cron entry and are deliberately
-//     removed from the domain run — and items set to "off".
-//   - IncludeInSchedule is what RunContainersJob itself skips on.
-//
-// Feeding the gate from "the newest success anywhere in the table" instead is
-// how a domain starves: with per-item schedules on, one container overridden to
-// "daily 01:00" writes a fresh success every night, so the containers domain's
-// "everyN 7" gate saw a two-hour-old timestamp at 03:00 and skipped — every
-// night, for good, while the other 43 containers were never backed up by the
-// schedule again and the dashboard's RPO chip stayed green because it reads the
-// same "anything at all" query. The same starvation follows from backing up a
-// single container by hand more often than every N days. An item the pass does
-// not run cannot answer for the pass.
-//
-// A store error is returned, never flattened into a zero time: the gate skips
-// the fire on an error ("cannot tell" is not "due") and runs only on a definite
-// answer.
+// ContainersDueGate returns the containers everyN due-gate query: the last
+// successful backup among the items the domain run covers, filtered the way the
+// domain job filters them. Counting any container's newest success instead would
+// let one container on its own daily cadence keep the gate closed for all the
+// others. A store error is returned rather than read as a zero time, because the
+// gate skips a fire it cannot judge and a zero time would mean due.
 func ContainersDueGate(st DomainGateStore) LastRunFunc {
 	return func() (time.Time, error) {
 		settings, err := st.GetSettings()
@@ -387,12 +321,9 @@ func VMsDueGate(st DomainGateStore) LastRunFunc {
 	}
 }
 
-// FilesDueGate is the file-set counterpart. The participating set is the ENABLED
-// sets that still follow the domain cadence — narrower than "every file set ever
-// backed up" in two ways: a set the user switched off must not hold the gate
-// closed for the sets that are still on, and since #199 a set on its own cadence
-// must not either, because the domain job will not back it up and its own entry
-// answers for it instead.
+// FilesDueGate is the file-set counterpart of ContainersDueGate. It counts only
+// enabled sets that follow the domain cadence: the domain job does not back up a
+// disabled set or one on its own cadence, so neither may answer for the others.
 func FilesDueGate(st DomainGateStore) LastRunFunc {
 	return func() (time.Time, error) {
 		settings, err := st.GetSettings()
@@ -413,37 +344,12 @@ func FilesDueGate(st DomainGateStore) LastRunFunc {
 	}
 }
 
-// PeriodSeconds returns the expected interval between fires for this cadence, in
-// seconds — the RPO (recovery-point objective) window a backup is expected to
-// stay within. It is the basis of the per-domain protection status: a backup
-// older than the period is overdue.
-//
-//   - off / disabled (Enabled=false)   → 0 (no RPO expectation)
-//   - everyN (IntervalDays>0)           → IntervalDays * 86400
-//   - daily / weekly / raw cron (Spec)  → the LARGEST gap between consecutive
-//     fires of the parsed cron schedule (covers "daily" = 86400 and a
-//     single-day "weekly" = 604800 too, so there is one code path and no
-//     special-casing)
-//
-// The largest gap, not the first one. An RPO window is the longest a backup can
-// legitimately be missing, and a weekly cadence with SEVERAL weekdays — what the
-// UI's own cadence builder produces the moment a second day is ticked — has
-// unequal gaps. "0 3 * * 0,6" (Sun and Sat) fires a day apart and then six days
-// apart; reading the first pair called it a daily schedule and put the domain on
-// warn from Monday and overdue from Tuesday, sending a weekly "expected every 1d"
-// alert about a schedule that was running exactly as configured. Since this value
-// also feeds the tamper, off-site, drill and digest windows, the same understated
-// number was quietly making all of them impatient too.
-//
-// The scan is bounded twice over: it stops once the fires cover a year (long
-// enough for any cadence the builder can produce, monthly and day-of-week
-// included) or after periodScanMaxFires steps, whichever comes first — a
-// once-a-minute raw cron would otherwise walk half a million fires to conclude
-// "60". Both bounds still leave at least two fires, so there is always a gap to
-// measure.
-//
-// A Spec that fails to parse (should never happen for a Cadence built by
-// ParseCadence, which validates) yields 0.
+// PeriodSeconds returns the expected interval between fires in seconds, the RPO
+// window a backup should stay within: 0 when disabled, IntervalDays*86400 for
+// everyN, and otherwise the largest gap between consecutive cron fires. It is
+// the largest gap because a cadence on several weekdays has unequal gaps;
+// "0 3 * * 0,6" fires a day apart and then six days apart. A Spec that fails to
+// parse yields 0.
 func (c Cadence) PeriodSeconds() int64 {
 	if !c.Enabled {
 		return 0
@@ -458,9 +364,9 @@ func (c Cadence) PeriodSeconds() int64 {
 	if err != nil {
 		return 0
 	}
-	// A fixed base keeps the result deterministic regardless of when this is
-	// called. UTC deliberately: this is a window length, not a wall-clock time,
-	// and a DST transition inside the scan would otherwise add or drop an hour.
+	// A fixed base keeps the result deterministic. UTC, because this is a length
+	// rather than a wall-clock time, and a DST switch inside the scan would add
+	// or drop an hour.
 	base := time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)
 	first := sched.Next(base)
 	if first.IsZero() {
@@ -488,31 +394,20 @@ func (c Cadence) PeriodSeconds() int64 {
 }
 
 // periodScanWindow and periodScanMaxFires bound PeriodSeconds' walk over a cron
-// spec's fires. The window is a full year so a monthly or day-of-week cadence
-// shows its whole cycle (February's short month included); the fire cap keeps a
-// high-frequency raw cron from walking that entire year one minute at a time,
-// and a cadence dense enough to hit the cap has repeated its cycle many times
-// over long before it does.
+// spec's fires. A year shows the whole cycle of a monthly or day-of-week cadence,
+// February included. The fire cap stops a high-frequency raw cron from walking
+// that year minute by minute, and a cadence that dense has repeated its cycle
+// many times before it reaches the cap.
 const (
 	periodScanWindow   = 366 * 24 * time.Hour
 	periodScanMaxFires = 2048
 )
 
-// LastFire returns the most recent fire time of this cadence's cron spec at or
-// before now — the "Prev" robfig/cron does not provide. It is the basis of the
-// anacron-style catch-up: a domain whose last successful backup predates its
-// last scheduled fire MISSED that run (the box was off).
-//
-// robfig only exposes Next(), so the last fire is found by walking Next() from
-// a reference in the past: a doubling search window locates SOME fire at or
-// before now, then the walk steps forward to the LAST one. Both loops are
-// bounded — the window at most doubles once past one period, so the final walk
-// crosses at most ~2× period worth of fires (≤ ~61 steps even for a
-// every-minute spec at the initial 1-hour window).
-//
-// The bool is false when the cadence is disabled, unparseable, or has no fire
-// within the two-year lookback (a spec that fires less than every two years has
-// no meaningful catch-up semantics).
+// LastFire returns the most recent fire of the cadence at or before now, the
+// Prev that robfig/cron lacks, for the catch-up after downtime. It walks Next
+// forward from a point in the past, doubling the lookback until a fire falls
+// inside it. The bool is false when the cadence is disabled, unparseable, or has
+// no fire within two years.
 func (c Cadence) LastFire(now time.Time) (time.Time, bool) {
 	if !c.Enabled || c.Spec == "" {
 		return time.Time{}, false
@@ -525,7 +420,7 @@ func (c Cadence) LastFire(now time.Time) (time.Time, bool) {
 	for window := time.Hour; window <= maxLookback; window *= 2 {
 		first := sched.Next(now.Add(-window))
 		if first.IsZero() || first.After(now) {
-			continue // no fire inside this window yet — widen it
+			continue
 		}
 		last := first
 		for {
@@ -539,82 +434,44 @@ func (c Cadence) LastFire(now time.Time) (time.Time, bool) {
 	return time.Time{}, false
 }
 
-// WatchdogCadence is the fixed daily cadence of the overdue-backup watchdog.
-// It is deliberately not user-configurable: the check is cheap and only its
-// once-a-day rhythm matters — 09:00 is late enough that any overnight backup
-// window has had its chance to complete before the currency verdict is taken.
+// WatchdogCadence is the fixed daily cadence of the overdue-backup watchdog. The
+// check is cheap and only its daily rhythm matters; 09:00 is late enough for
+// overnight backups to have finished.
 const WatchdogCadence = "daily 09:00"
 
-// ReceiverCadence is the fixed daily cadence of the receiver watch (dead-mans-
-// switch sweep + due integrity checks for received off-site repos). Like the
-// watchdog it is not user-configurable at the app level: the per-repo integrity
-// check cadence is configured on each received repo, and the daily tick only
-// decides which repos are due and evaluates each repo's dead-mans-switch. 09:15 is
-// just after the watchdog so the two currency passes do not fire in the same
-// minute.
+// ReceiverCadence is the fixed daily cadence of the receiver watch, which runs
+// the dead-mans-switch and the due integrity checks for received off-site repos.
+// Each repo sets its own check cadence; the daily tick only decides which are
+// due. 09:15 keeps it out of the watchdog's minute.
 const ReceiverCadence = "daily 09:15"
 
-// PullCadence is the fixed daily cadence of the pull sweep: the tick that asks
-// which sources are due, not how often any of them runs. Each source carries its
-// own cadence, which the sweep gates on per row, exactly as the receiver gates
-// its per-repo integrity checks. 09:30 keeps it clear of the watchdog and the
-// receiver so the three currency passes do not land in the same minute.
+// PullCadence is the fixed daily cadence of the pull sweep. The tick decides
+// which sources are due; each source carries its own cadence, as received repos
+// do for their integrity checks.
 const PullCadence = "daily 09:30"
 
-// FleetCadence is the fixed daily cadence of the fleet peer sweep (polling
-// every enabled peer's protection status). Not user-configurable, like the
-// watchdog/receiver: a Fleet page reflects the cached result of the last sweep
-// plus whatever the manual poll-now button fetched, not a live poll on every
-// page load. 09:30 is just after the receiver watch so the three daily
-// currency passes do not fire in the same minute.
+// FleetCadence is the fixed daily cadence of the fleet sweep, which polls every
+// enabled peer's protection status. The Fleet page shows the result of the last
+// sweep plus any manual poll, not a live poll per page load.
 const FleetCadence = "daily 09:30"
 
-// catchUpGrace is the slack applied when deciding whether a scheduled fire was
-// missed: a success within this margin BEFORE the fire still counts as covering
-// it (a manual run moments before the trigger, or clock jitter, must not cause
-// a duplicate catch-up backup right after boot).
+// catchUpGrace is how far before a fire a success may lie and still cover it, so
+// a manual run moments before the trigger, or clock jitter, does not cause a
+// duplicate catch-up backup right after boot.
 const catchUpGrace = 10 * time.Minute
 
-// EveryNDue reports whether an "every N days" cadence may proceed at `now`,
-// given when it last ran. It is THE everyN due-gate: the registration loop's
-// gate and missedRun both call it, so the rule has one implementation and one
-// place to be right.
+// EveryNDue reports whether an "every N days" cadence may run at now, given when
+// it last ran. The registration gate and missedRun both use it.
 //
-// The comparison is in local CALENDAR DAYS, not against an exact N*24h
-// threshold, because the two instants are not the same kind of thing. `now` is
-// a fixed wall-clock cron fire (an everyN cadence is a DAILY trigger at HH:MM,
-// see ParseCadence), while `last` is when the previous pass FINISHED, which is
-// always later than its own HH:MM fire by however long the pass took. Measured
-// as a duration, the Nth day therefore always comes up SHORT by exactly the
-// pass's own runtime: a 7-day drill pass that takes four minutes measures
-// 6d23h56m at the next fire, skips it, and lands on day 8 instead — and since
-// that fire re-stamps the record even later, every later cycle keeps the extra
-// day. Every everyN schedule was really an everyN+1 schedule, and "everyN 1",
-// which the UI renders as "daily at HH:MM", ran every second day. A
-// spring-forward DST transition inside the window shortens the local gap by
-// another hour and does the same to an instantaneous pass.
+// It counts local calendar days rather than N*24h. last is when the previous
+// pass finished, later than its fire by the pass's runtime, so as a duration the
+// Nth day would always come up short and every everyN schedule would run every
+// N+1 days. The count starts from the fire behind last; see
+// calendarDaysSinceFire.
 //
-// Calendar days remove both: "every 7 days at 03:00" means the same weekday at
-// 03:00, whatever the pass costs and whatever the clocks did in between.
-//
-// Calendar days alone remove them only for a pass that finishes on the day it
-// FIRED, though, which is why the count runs from the fire rather than from the
-// stamp — see calendarDaysSinceFire for the late-evening pass that does not.
-//
-// A zero `last` ("never ran") is due — see the registration loop's own doc
-// comment for why the first fire after enabling must proceed.
-//
-// A `last` that lies in the FUTURE is not a measurement either, and is read the
-// same way. It was written while this box's clock was wrong — a dead CMOS
-// battery, or the early-boot window before NTP steps the clock, the same window
-// catchUpStartupDelay exists for — and the clock was then corrected back.
-// calendarDaysBetween is negative for it, and a negative count is always below
-// any interval, so the plain comparison would skip EVERY fire from then on,
-// forever, with nothing to show for it but a log line reading "last run
-// -78840h0m0s ago". Nothing overwrites the stamp either, because the job that
-// would overwrite it is the one being skipped. Treating it as "never ran" is the
-// only reading that heals: the pass runs once, re-stamps the record with a sane
-// instant, and the interval applies normally from there.
+// A zero last (never ran) is due. So is a last in the future, written while the
+// clock was wrong: its negative day count would skip every fire, and the job
+// that would write a new stamp is the one being skipped.
 func EveryNDue(last, now time.Time, intervalDays int) bool {
 	if intervalDays <= 0 || notAMeasurement(last, now) {
 		return true
@@ -622,39 +479,21 @@ func EveryNDue(last, now time.Time, intervalDays int) bool {
 	return calendarDaysSinceFire(last, now) >= intervalDays
 }
 
-// notAMeasurement reports the two `last` values that are not a measurement of a
-// previous pass at all, and which therefore always read as due: the zero time
-// ("never ran") and a stamp from the FUTURE (a wrong clock — the reasoning is in
-// EveryNDue's doc comment above). Both due-gates share it rather than spelling
-// it out twice, so the reading of a broken stamp cannot drift between them.
+// notAMeasurement reports whether last is no measurement of a previous pass at
+// all: the zero time (never ran) or a stamp from the future (a wrong clock; see
+// EveryNDue). Both due-gates read such a stamp as due.
 func notAMeasurement(last, now time.Time) bool {
 	return last.IsZero() || last.After(now)
 }
 
-// calendarDaysSinceFire counts local calendar days from the FIRE that produced
-// the `last` stamp to `now`.
+// calendarDaysSinceFire counts local calendar days from the fire that produced
+// last to now. A pass that fires at 23:30 and runs forty minutes stamps 00:10 the
+// next day, and counting from the stamp would come out a day short.
 //
-// The fire is what the cadence is anchored on; `last` records when that pass
-// FINISHED, and the two are not always on the same calendar day. A pass that
-// fires at 23:30 and takes forty minutes stamps 00:10 the next morning, so a
-// count taken from the stamp is one day short: the Nth day's fire is skipped,
-// the fire that finally does run stamps later still, and the schedule settles
-// back into exactly the everyN+1 rhythm counting whole calendar days was
-// introduced to remove — for the late-evening schedules most likely to have a
-// pass long enough to cross midnight in the first place.
-//
-// The fire is derived, not guessed. An everyN cadence is a DAILY trigger at a
-// fixed HH:MM (ParseCadence) and `now` IS one of those fires, so the cadence's
-// fires are exactly `now`'s clock time on each preceding day. The fire that
-// produced `last` is the latest of them at or before `last`: `last`'s own day
-// when its clock time is at or after the fire's, the day before when it is
-// earlier. Nothing is fuzzed and no tolerance is involved — a stamp from a
-// same-day pass is counted from its own day exactly as before.
-//
-// A pass that runs for more than a whole day is counted from the last fire it
-// overran instead of the one that started it, which defers the next run rather
-// than doubling it — the safe direction, and the same one the gate takes
-// whenever it cannot tell.
+// now is one of the cadence's daily fires, so the fire behind last is at now's
+// clock time on last's day, or on the day before when last's clock time is
+// earlier. A pass longer than a day is counted from the last fire it overran,
+// which delays the next run rather than doubling it.
 func calendarDaysSinceFire(last, now time.Time) int {
 	days := calendarDaysBetween(last, now)
 	l := last.In(now.Location())
@@ -668,41 +507,19 @@ func calendarDaysSinceFire(last, now time.Time) int {
 	return days
 }
 
-// PeriodDue is EveryNDue's rule generalised to a cadence expressed as a PERIOD
-// in seconds (Cadence.PeriodSeconds), for the due-gates that are evaluated by a
-// sweep of their own rather than by the cadence's own cron entry.
+// PeriodDue applies EveryNDue's calendar-day rule to a cadence given as a period
+// in seconds (Cadence.PeriodSeconds), for gates evaluated by a daily sweep rather
+// than by the cadence's own cron entry. Measured in seconds, a check that took a
+// few minutes last time would push a daily cadence to every 48h.
 //
-// Those gates have exactly the phase-slip EveryNDue was written for, and worse:
-// `last` is stamped when the previous pass FINISHED, `now` is the sweep's fixed
-// fire time, and the sweep fires only once a day. Measured as elapsed seconds
-// against the full period, the day the check is due always comes up short by
-// however long the previous check took — a restic check on a large repo takes
-// minutes — so the gate closes, the next evaluation is a whole sweep interval
-// (a day) later, and a cadence configured as daily really runs every 48h.
+// It counts from the stamp rather than from a fire: now is the sweep's fire, and
+// the gated cadence never fires on its own, so there is no fire to map the stamp
+// onto.
 //
-// The comparison is therefore in local CALENDAR days, exactly as EveryNDue
-// argues: "daily 04:00" means the next day, whatever the check cost and
-// whatever the clocks did in between.
-//
-// What it does NOT take from EveryNDue is that gate's fire anchor
-// (calendarDaysSinceFire). There `now` is the cadence's own daily trigger, so
-// the fires a stamp can belong to are known exactly. Here `now` is a FOREIGN
-// sweep's fire — the receiver watch's 09:15 — while the cadence being gated is
-// the repo's own ("daily 04:00"), which never fires on a trigger of its own at
-// all. There is no fire grid to map a stamp onto, so the stamp itself is the
-// only honest anchor, and the sweep's once-a-day granularity is the binding
-// constraint anyway. It keeps the reading of a never-run and a wrong-clock
-// stamp identical, through the same notAMeasurement both gates share.
-//
-//   - periodSeconds <= 0 ("off"/unparseable) → due is not meaningful; the
-//     caller gates on its own cadence check first. Reported as due.
-//   - periodSeconds < 86400 (a sub-daily cron) → due on every evaluation. The
-//     sweep's own daily granularity is the binding constraint there, and
-//     measuring a 6-hourly cadence in elapsed seconds against a daily sweep
-//     reproduces the very skip this function removes.
-//   - otherwise → whole days, rounded DOWN. Rounding down errs toward running
-//     the check slightly early rather than skipping a day of it, which is the
-//     safe direction for an integrity check.
+// A period under a day is due at every evaluation, since the sweep runs only
+// daily; this includes a period <= 0, and callers check their own cadence first.
+// Otherwise whole days are compared, rounded down, which errs toward checking
+// early.
 func PeriodDue(last, now time.Time, periodSeconds int64) bool {
 	if periodSeconds < 86400 || notAMeasurement(last, now) {
 		return true
@@ -722,17 +539,15 @@ func calendarDaysBetween(from, to time.Time) int {
 	return int(math.Round(toMidnight.Sub(fromMidnight).Hours() / 24))
 }
 
-// missedRun decides whether a domain MISSED its most recent scheduled run:
-// the cadence is enabled, the last fire lies more than catchUpGrace after the
-// last successful backup, and (for everyN cadences) the interval-days due-gate
-// would actually let a run proceed. It returns the computed last fire time for
-// logging alongside the verdict.
+// missedRun reports whether a domain missed its most recent scheduled run: the
+// cadence is enabled, the last fire lies more than catchUpGrace after the last
+// success, and for everyN cadences the due-gate would have let that fire
+// through. It also returns the last fire for logging.
 //
-// A domain that has NEVER succeeded (lastSuccess zero) is deliberately not
-// treated as missed: the last computed fire may predate the schedule's very
-// creation (we do not record when a cadence was configured), and surprising a
-// fresh setup with a full backup on every restart until the first scheduled
-// success would be worse than waiting for the next regular fire.
+// A domain that never succeeded is not treated as missed. Its last computed fire
+// may predate the schedule itself (when a cadence was configured is not
+// recorded), and a fresh setup would get a full backup on every restart until
+// its first scheduled success.
 func missedRun(cad Cadence, lastSuccess, now time.Time) (lastFire time.Time, missed bool) {
 	if !cad.Enabled || lastSuccess.IsZero() {
 		return time.Time{}, false
@@ -741,17 +556,10 @@ func missedRun(cad Cadence, lastSuccess, now time.Time) (lastFire time.Time, mis
 	if !ok {
 		return time.Time{}, false
 	}
-	// everyN: the daily trigger fires every day but the due-gate only runs the
-	// job once the interval elapsed — mirror it here (through the SAME EveryNDue
-	// the gate itself uses, so the two can never drift) so a not-yet-due domain
-	// is never flagged missed (the invoked job re-checks the gate anyway).
-	//
-	// The gate is asked about the FIRE, not about `now`. `now` is whenever this
-	// sweep happens to run (boot, mostly), so it is not a fire of this cadence at
-	// all, and the question here is precisely whether lastFire would have been let
-	// through. Asked at the boot instant instead, a cadence whose fire is still
-	// hours away reads as already due and the catch-up runs a full pass a day
-	// early — on every boot, since the pass it runs does not move the fire.
+	// Ask the everyN gate about the fire, not about now. now is whenever this
+	// sweep runs (mostly at boot) and is no fire of this cadence; asked at now,
+	// a fire still hours away would read as due and the catch-up would run the
+	// pass a day early on every boot.
 	if !EveryNDue(lastSuccess, lastFire, cad.IntervalDays) {
 		return lastFire, false
 	}
@@ -775,7 +583,7 @@ func parseHHMM(s string) (h, m int, err error) {
 	return h, m, nil
 }
 
-// dowMap maps 3-letter day abbreviations to cron DOW numbers (Sun=0 … Sat=6).
+// dowMap maps 3-letter day abbreviations to cron DOW numbers, Sun=0 to Sat=6.
 var dowMap = map[string]int{
 	"Sun": 0, "Mon": 1, "Tue": 2, "Wed": 3,
 	"Thu": 4, "Fri": 5, "Sat": 6,
@@ -784,7 +592,6 @@ var dowMap = map[string]int{
 // parseDOW parses a single day-of-week string (case-insensitive) and returns
 // its cron number.
 func parseDOW(s string) (int, error) {
-	// Normalize to title-case so "mon", "MON", "Mon" all work.
 	var normalized string
 	if len(s) > 0 {
 		normalized = strings.ToUpper(s[:1]) + strings.ToLower(s[1:])
@@ -796,10 +603,8 @@ func parseDOW(s string) (int, error) {
 	return n, nil
 }
 
-// parseDOWSet parses a comma-separated list of day-of-week strings and returns
-// a cron-compatible DOW field string (e.g. "1,3,5" for Mon,Wed,Fri).
-// A single day is returned as just its number string (e.g. "1") for
-// backwards-compatibility with existing single-DOW weekly schedules.
+// parseDOWSet parses a comma-separated list of days and returns the cron DOW
+// field, e.g. "1,3,5" for Mon,Wed,Fri.
 func parseDOWSet(s string) (string, error) {
 	tokens := strings.Split(s, ",")
 	nums := make([]string, 0, len(tokens))
@@ -825,96 +630,69 @@ func parseDOWSet(s string) (string, error) {
 	return strings.Join(nums, ","), nil
 }
 
-// ---------------------------------------------------------------------------
-// Scheduler
-// ---------------------------------------------------------------------------
-
-// Scheduler manages per-domain cron entries using robfig/cron/v3.
+// Scheduler manages the cron entries of all scheduled jobs. Each job is wired
+// with its Set method before Reload; a job that has not been wired logs and does
+// nothing when it fires.
 type Scheduler struct {
 	c              *cron.Cron
 	backup         BackupFunc
 	listFn         ListTargetsFunc
-	backupVM       BackupFunc                // nil until SetVMJob wires VM backup
-	listVMsFn      ListVMTargetsFunc         // nil until SetVMJob wires VM backup
-	backupFiles    BackupFunc                // nil until SetFilesJob wires file-set backup
-	listFileSetsFn ListFileSetsFunc          // nil until SetFilesJob wires file-set backup
-	backupFlash    func() error              // nil until SetFlashJob wires flash backup
-	configJob      func() error              // nil until SetConfigJob wires config self-backup
-	replicateOffFn func(domain string) error // nil until SetOffsiteJob wires off-site replication
-	// replicateAfterBulkFn runs ONE batched off-site replication after a scheduled
-	// multi-item backup loop (containers/VMs/files) when the domain replicates on a
-	// blank (coupled) schedule — the per-item inline replication is suppressed in
-	// that case, so the whole domain is copied once at the end instead of 44× (#95).
-	// nil until SetOffsiteAfterBulkJob wires it; then it is a no-op for domains with
-	// no off-site repo or a separate off-site schedule (the callee gates that).
+	backupVM       BackupFunc
+	listVMsFn      ListVMTargetsFunc
+	backupFiles    BackupFunc
+	listFileSetsFn ListFileSetsFunc
+	backupFlash    func() error
+	configJob      func() error
+	replicateOffFn func(domain string) error
+	// replicateAfterBulkFn replicates a domain off-site once after a scheduled
+	// multi-item run, for domains that replicate on the backup schedule. Those
+	// runs suppress the per-item copies, so the domain is copied once instead of
+	// once per item.
 	replicateAfterBulkFn func(domain string)
-	// pruneAfterBulkFn runs ONE local prune after a scheduled multi-item backup
-	// loop (containers/VMs/files): each item's post-backup retention runs forget
-	// WITHOUT --prune under the bulk flag, so the expensive space-reclaim happens
-	// once per run instead of once per item. Invoked BEFORE replicateAfterBulkFn
-	// (retention first = fewer snapshots to copy off-site). nil until
-	// SetPruneAfterBulkJob wires it; then it is a no-op for domains without a
-	// retention policy (the callee gates that).
+	// pruneAfterBulkFn prunes a domain once after a scheduled multi-item run. In
+	// a bulk run each item's retention runs forget without --prune, so space is
+	// reclaimed once per run. It runs before replicateAfterBulkFn so there are
+	// fewer snapshots to copy.
 	pruneAfterBulkFn func(domain string)
-	// stacksAfterBulkFn backs up each Docker Compose project's working directory
-	// ONCE after a scheduled container round, instead of once per member. The
-	// directory used to ride along in every member's own snapshot: restic
-	// deduplicated the stored bytes, so it looked free, while every service still
-	// walked and hashed the whole folder on every run. nil until
-	// SetStacksAfterBulkJob wires it, so a scheduler without it behaves as before.
+	// stacksAfterBulkFn backs up each Docker Compose project directory once after
+	// a scheduled container run instead of with every member service.
 	stacksAfterBulkFn func(names []string)
-	drillFn           func(domain, source, kind string) error // nil until SetDrillJob wires restore-verification drills
-	tamperFn          func(domain string) error               // nil until SetTamperJob wires off-site tamper tests
-	digestFn          func() error                            // nil until SetDigestJob wires the weekly digest notification
-	watchdogFn        func() error                            // nil until SetWatchdogJob wires the overdue-backup watchdog
-	receiverFn        func() error                            // nil until SetReceiverJob wires the receiver watch (dead-mans-switch + integrity checks)
-	pullFn            func() error                            // nil until SetPullJob wires the pull sweep (#227)
-	fleetFn           func() error                            // nil until SetFleetJob wires the fleet peer sweep
-	everythingFn      func() error                            // nil until SetEverythingJob wires the "Backup Everything" pass
-	// hcRunStart / hcRunFinish aggregate the Healthchecks ping across a scheduled
-	// multi-item domain run (containers/VMs): one /start before the first item and
-	// one success/fail after the last, instead of once per item (#49). nil until
-	// SetHealthchecksAggregator wires them; then per-item pings are suppressed by the
-	// injected backup closures (see cmd/bombvault/main.go).
+	drillFn           func(domain, source, kind string) error
+	tamperFn          func(domain string) error
+	digestFn          func() error
+	watchdogFn        func() error
+	receiverFn        func() error
+	pullFn            func() error
+	fleetFn           func() error
+	everythingFn      func() error
+	// hcRunStart and hcRunFinish send one Healthchecks start and one result ping
+	// per scheduled multi-item run instead of one per item.
 	hcRunStart  func(domain string)
 	hcRunFinish func(domain string, attempted, failed int, failures []ItemFailure)
-	// jobRuns is the durable "when did this scheduled job last run" record for
-	// the three jobs that have no natural last-run signal of their own — the
-	// drill pass, the tamper sweep and the digest (#166). nil until
-	// SetJobRunStore wires it; an everyN cadence on any of the three then fails
-	// the due-gate CLOSED (the job skips and says so) rather than degrading into
-	// a daily fire. See jobLastRun.
+	// jobRuns records when the drill, tamper and digest jobs last ran, since
+	// they have no last-run signal of their own. Without it an everyN cadence on
+	// those jobs skips every fire; see jobLastRun.
 	jobRuns JobRunStore
 
-	// mu guards entries and catchUps: ReloadWithDueChecks (settings POST
-	// goroutine) mutates them while NextRuns (the /api/schedule/next GET handler
-	// goroutine) and CatchUpMissed (the startup goroutine) read them
-	// concurrently. It guards ONLY the slice access — never held while
-	// calling into cron.Cron (AddFunc/Remove/Entry), which has its own
-	// internal locking, so the two locks never nest and cannot deadlock.
+	// mu guards entries and catchUps, which a reload writes while NextRuns and
+	// CatchUpMissed read them. It is never held while calling into cron, which
+	// has its own lock, so the two cannot deadlock.
 	mu sync.Mutex
-	// reloadMu serialises whole RELOAD operations, which mu deliberately cannot:
-	// mu is dropped between clearing the old entries and registering the new ones,
-	// because cron must never be called while holding it. Two reloads arriving in
-	// the same millisecond therefore interleaved — both snapshot the same old set,
-	// both remove it, and both register a full set, leaving every domain in cron
-	// TWICE. SkipIfStillRunning does not help: it only stops an entry overlapping
-	// itself, and these are two distinct entries, so a nightly backup ran twice
-	// over the same repo. Held for the whole call, never while mu is also held, so
-	// the two cannot nest.
+	// reloadMu serialises whole reloads. mu is released between removing the old
+	// entries and adding the new ones, so two interleaved reloads would each
+	// register a full set and leave every job in cron twice. It is taken before
+	// mu, never while holding it.
 	reloadMu sync.Mutex
 	entries  []scheduledEntry
-	// catchUps is the anacron seam: one entry per registered BACKUP domain
-	// (containers/vms/flash/config/files) with a last-run query, so
-	// CatchUpMissed can compare each domain's last scheduled fire against its
-	// last success and re-run what the box slept through. Rebuilt on every
-	// ReloadWithDueChecks alongside entries.
+	// catchUps holds one entry per registered backup domain with a last-run
+	// query, so CatchUpMissed can re-run what the box slept through. It is
+	// rebuilt on every reload.
 	catchUps []catchUpEntry
 }
 
-// catchUpEntry pairs a backup domain's parsed cadence and last-run query with
-// its registered cron entry, so a missed run can be triggered through the SAME
-// wrapped job chain (SkipIfStillRunning + Recover) a real cron fire would use.
+// catchUpEntry pairs a backup domain's cadence and last-run query with its cron
+// entry, so a missed run goes through the same wrapped job (SkipIfStillRunning
+// and Recover) a real fire would use.
 type catchUpEntry struct {
 	domain  string
 	cadence Cadence
@@ -922,39 +700,30 @@ type catchUpEntry struct {
 	id      cron.EntryID
 }
 
-// scheduledEntry pairs a registered cron.EntryID with the job+domain label
-// derived from the domainSpec that registered it, so NextRuns() can report
-// WHAT each upcoming fire time belongs to (not just when).
-//
-// It also carries what the everyN DUE-GATE needs, because for an everyN cadence
-// the cron entry's own Next is not the next RUN. ParseCadence compiles
-// "everyN N HH:MM" to a bare DAILY spec and keeps N on the side, so cron fires
-// every night and the wrapped job decides; without the interval and the last-run
-// query here, NextRuns could only report tomorrow, on every one of the N-1
-// nights the gate is going to close.
+// scheduledEntry is a registered cron entry with the job and domain it belongs
+// to, so NextRuns can say what each fire is for. For an everyN cadence it also
+// carries the interval and last-run query, because cron fires that entry daily
+// and only the gate decides which fire actually runs.
 type scheduledEntry struct {
 	id           cron.EntryID
 	job          string
 	domain       string
 	intervalDays int         // >0 for everyN cadences only
-	lastRun      LastRunFunc // read only when intervalDays > 0; never nil then (see the everyN registration guard)
+	lastRun      LastRunFunc // set whenever intervalDays > 0
 }
 
-// NextRun is one upcoming scheduled fire time for the dashboard activity log's
-// "what's next" line. Domain is "" for schedules that are not domain-specific
-// (drills and tamper tests each iterate their own set of domains internally).
+// NextRun is one upcoming scheduled fire for the activity log's "up next" line.
+// Domain is empty for jobs that are not domain-specific.
 type NextRun struct {
 	Job    string    `json:"job"`
 	Domain string    `json:"domain"`
 	Next   time.Time `json:"next"`
 }
 
-// jobDomainFromName derives the (job, domain) label from a domainSpec.name, so
-// the label logic lives in one place next to the names it interprets. Names in
-// use: "containers"|"vms"|"flash"|"config"|"files" (job=backup, domain=name),
-// "<domain>-offsite" (job=offsite, domain=<domain>), "drills" and "tamper"
-// (job=drill/tamper, domain="" — each iterates multiple domains per fire), and
-// "digest" (job=digest, domain="" — one app-wide summary per fire).
+// jobDomainFromName derives the job and domain label from a domainSpec name. A
+// backup domain maps to ("backup", name), "<domain>-offsite" to ("offsite",
+// domain), and the app-wide jobs (drills, tamper, digest, watchdog, receiver,
+// pull, fleet) to their own job with an empty domain.
 func jobDomainFromName(name string) (job, domain string) {
 	switch name {
 	case "drills":
@@ -964,17 +733,12 @@ func jobDomainFromName(name string) (job, domain string) {
 	case "digest":
 		return "digest", ""
 	case "watchdog":
-		return "watchdog", "" // one app-wide overdue check per fire
+		return "watchdog", ""
 	case "receiver":
-		return "receiver", "" // one app-wide received-repo watch per fire
+		return "receiver", ""
 	case "pull":
-		return "pull", "" // one app-wide pull sweep per fire
+		return "pull", ""
 	case "fleet":
-		// One app-wide peer sweep per fire, same shape as the four above. Without
-		// this it fell through to the "backup" default and GET /api/schedule/next
-		// advertised {job:"backup", domain:"fleet"} — which the frontend knows
-		// neither half of, so the activity log's "up next" line read
-		// "Backup (fleet)" for something that backs nothing up.
 		return "fleet", ""
 	}
 	if d, ok := strings.CutSuffix(name, "-offsite"); ok {
@@ -983,31 +747,19 @@ func jobDomainFromName(name string) (job, domain string) {
 	return "backup", name
 }
 
-// NextRuns returns the next time every currently registered schedule entry will
-// actually RUN (a registered-but-not-yet-computed entry — the cron runner has
-// not been started — has a zero Next and is omitted), sorted soonest-first. It is
-// the data source for the dashboard activity log's "up next" line.
+// NextRuns returns the next time each registered entry will actually run, sorted
+// soonest first, for the activity log's "up next" line. Entries without a
+// computed Next (the cron runner has not started) are left out.
 //
-// For everyN cadences the cron entry's Next is deliberately not the answer. An
-// everyN cadence is a DAILY trigger plus a due-gate (see ParseCadence and the
-// registration loop), so on the N-1 nights the gate is going to close, the cron
-// entry says "tomorrow 03:00" and nothing runs. Reporting that told the user a
-// drill was happening tomorrow when the real one was four days out — and now
-// that everyN is reachable for the drill, tamper and digest schedules as well as
-// the six backup domains, it said so for nine of them. Each everyN entry is
-// therefore walked forward through its own cron schedule until it reaches a fire
-// the SAME gate (EveryNDue) would let through.
-//
-// A last-run query that fails is reported as the raw cron fire: "cannot tell" is
-// not a licence to invent a later date, and the gate is conservative in the
-// other direction anyway (it skips the fire), so the honest answer is the
-// earliest time this could run.
+// An everyN entry fires daily and its gate skips most of those fires, so its
+// cron Next is walked forward to the first fire EveryNDue would let through. If
+// the last-run query fails, the raw cron fire is reported as the earliest the
+// job could run.
 func (s *Scheduler) NextRuns() []NextRun {
 	if s.c == nil {
 		return nil
 	}
-	// Take a locked snapshot of the entry list, then call into cron (s.c.Entry)
-	// OUTSIDE the lock — s.mu only ever guards the entries slice itself.
+	// Copy the entries under the lock and call into cron outside it.
 	s.mu.Lock()
 	entries := make([]scheduledEntry, len(s.entries))
 	copy(entries, s.entries)
@@ -1027,13 +779,9 @@ func (s *Scheduler) NextRuns() []NextRun {
 }
 
 // nextDueFire advances an everyN entry's next cron fire to the first one its
-// due-gate would actually let through. Anything that is not an everyN entry, or
-// whose last-run query fails, is returned unchanged.
-//
-// The walk is bounded by the interval itself: the trigger is daily and the gate
-// measures whole calendar days, so at most intervalDays fires can be skipped
-// before one is due. The bound is a correctness guard, not an expectation — a
-// cron schedule that stops producing fires (a zero Next) also ends the walk.
+// due-gate would let through. Other entries, and entries whose last-run query
+// fails, get next back unchanged. The trigger is daily and the gate counts whole
+// days, so at most intervalDays fires can be skipped.
 func nextDueFire(sched cron.Schedule, next time.Time, e scheduledEntry) time.Time {
 	if e.intervalDays <= 0 || e.lastRun == nil || sched == nil {
 		return next
@@ -1055,188 +803,126 @@ func nextDueFire(sched cron.Schedule, next time.Time, e scheduledEntry) time.Tim
 	return next
 }
 
-// New creates a Scheduler. backupFn is called for each due container;
-// listFn retrieves the current target list when the job fires.
+// New creates a Scheduler. backupFn is called for each due container; listFn
+// returns the current target list when the job fires.
 func New(backupFn BackupFunc, listFn ListTargetsFunc) *Scheduler {
 	return &Scheduler{
-		// SkipIfStillRunning: if a domain's previous nightly run is still going when
-		// its next trigger fires, skip the new one instead of starting a second
-		// concurrent run over the same repo (#95 — a run that overran its window used
-		// to spawn an overlapping run that re-processed the head and starved the tail
-		// further). Each job gets its own guard (the wrapper is applied per entry).
-		// Recover then wraps every job so a panic in one backup is logged and
-		// contained instead of crashing the whole process (which would silently stop
-		// ALL schedules and take the web UI down).
+		// SkipIfStillRunning keeps a slow run from overlapping the next fire on
+		// the same repo. Recover keeps a panic in one job from taking down the
+		// process, and with it every schedule and the web UI.
 		//
-		// NO WithLocation, and that is not the oversight it looks like. A wall-clock
-		// cadence really does behave oddly across a DST switch — measured against
-		// robfig/cron v3.0.1 with "30 2 * * *" in Europe/Berlin: 2026-03-29 is
-		// skipped entirely (02:30 does not exist that day, so the next fire is the
-		// 30th) and 2026-10-25 fires TWICE an hour apart (02:30 CEST, then 02:30
-		// CET). Both reproduced in a standalone program rather than reasoned about.
-		//
-		// WithLocation changes neither. The library's default is already
-		// time.Local, and walking the same schedule through
-		// cron.New(cron.WithLocation(Berlin)) returns fire times identical to
-		// cron.New(). That was measured too, precisely because the review finding
-		// proposed it as the fix — adding it would look like a repair and be a
-		// placebo.
-		//
-		// A real fix is a product decision rather than a constructor argument:
-		// either a minimum-gap gate so the second fire of a doubled hour is dropped
-		// (new logic on the path that starts every backup), or extending
-		// CatchUpMissed beyond boot so a skipped day is picked up the next day.
-		//
-		// DECIDED 2026-08-27: build NEITHER, deliberately. Twice a year one run is
-		// skipped and one runs twice, and both are cheap here — restic dedupes, so a
-		// doubled run stores almost nothing and costs one extra snapshot against
-		// retention, while a skipped run is picked up by the next day's schedule.
-		// Weigh that against a minimum-gap gate sitting on the path that starts
-		// EVERY backup, where a bug suppresses runs that should have happened: the
-		// guard would be more dangerous than the thing it guards. Not a gap left
-		// open by accident, and not to be re-proposed without a concrete report of
-		// the doubled run actually causing harm.
-		//
-		// This is also why the wall-clock behaviour is kept at all: running to the
-		// clock the operator typed is worth more than dodging two edge days a year.
-		// A deployment that would rather have exact 24h intervals can simply leave
-		// TZ unset and run in UTC, which has no transitions (see logSchedulerTimezone
-		// in cmd/bombvault, and the TZ row in docs/configuration*.md).
+		// Cron runs in time.Local, so across DST a wall-clock cadence skips a day
+		// in spring (02:30 does not exist) and fires twice in autumn. restic
+		// dedupes the doubled run and the next day covers the skipped one; a
+		// deployment that wants exact 24h intervals can leave TZ unset.
+		// WithLocation would change nothing, since time.Local is already the
+		// default, and a minimum-gap gate on the path that starts every backup
+		// would risk more than the two odd days a year it avoids.
 		c:      cron.New(cron.WithChain(cron.SkipIfStillRunning(cron.DefaultLogger), cron.Recover(cron.DefaultLogger))),
 		backup: backupFn,
 		listFn: listFn,
 	}
 }
 
-// SetVMJob wires the VMs domain so scheduled VM backups actually run. backupVMFn
-// is called for each due VM; listVMsFn retrieves the current VM target list when
-// the job fires. Until this is called the VMs domain is a no-op (logged), so the
-// containers-only callers and tests keep working unchanged. Call before Reload.
+// SetVMJob wires scheduled VM backups: backupVMFn is called for each due VM and
+// listVMsFn returns the VM targets when the job fires. Call before Reload.
 func (s *Scheduler) SetVMJob(backupVMFn BackupFunc, listVMsFn ListVMTargetsFunc) {
 	s.backupVM = backupVMFn
 	s.listVMsFn = listVMsFn
 }
 
-// SetFilesJob wires the files domain so scheduled file-set backups actually run.
-// backupFilesFn is called with each due file set's stable ID (not its name — the
-// ID survives renames, keeping run attribution intact); listFn retrieves the
-// current file-set list when the job fires. Until this is called the files
-// domain is a no-op (logged). Call before Reload.
+// SetFilesJob wires scheduled file-set backups: backupFilesFn is called with each
+// due set's ID, which survives renames, and listFn returns the file sets when the
+// job fires. Call before Reload.
 func (s *Scheduler) SetFilesJob(backupFilesFn BackupFunc, listFn ListFileSetsFunc) {
 	s.backupFiles = backupFilesFn
 	s.listFileSetsFn = listFn
 }
 
-// SetFlashJob wires the flash domain so a scheduled flash backup actually runs.
-// Flash is a singleton (the Unraid USB), so the job takes no arguments. Until
-// this is called the flash domain is a no-op (logged). Call before Reload.
+// SetFlashJob wires the scheduled flash backup. Flash is a singleton (the Unraid
+// USB), so the job takes no arguments. Call before Reload.
 func (s *Scheduler) SetFlashJob(backupFlashFn func() error) {
 	s.backupFlash = backupFlashFn
 }
 
-// SetConfigJob wires the config domain so a scheduled self-backup of BombVault's
-// own settings actually runs. Config is a singleton (BombVault's own state), so
-// the job takes no arguments. Until this is called the config domain is a no-op
-// (logged). Call before Reload.
+// SetConfigJob wires the scheduled self-backup of BombVault's own settings.
+// Call before Reload.
 func (s *Scheduler) SetConfigJob(backupConfigFn func() error) {
 	s.configJob = backupConfigFn
 }
 
-// SetOffsiteJob wires off-site replication so the per-domain off-site schedules
-// actually run. replicateFn is called with the domain ("containers"|"vms"|"flash")
-// when an off-site schedule fires. Until this is called the off-site schedules are
-// a no-op (logged). Call before Reload.
+// SetOffsiteJob wires the per-domain off-site schedules. replicateFn is called
+// with the domain when one of them fires. Call before Reload.
 func (s *Scheduler) SetOffsiteJob(replicateFn func(domain string) error) {
 	s.replicateOffFn = replicateFn
 }
 
-// SetOffsiteAfterBulkJob wires the batched post-loop off-site replication used by
-// scheduled multi-item domains (containers/VMs/files). After the whole backup loop
-// finishes, the job calls replicateFn(domain) ONCE — replacing the per-item inline
-// replication those runs suppress — so a high-latency off-site backend is opened and
-// its index reloaded a single time per domain instead of once per item (#95). The
-// callee no-ops when the domain has no off-site repo or uses its own off-site
-// schedule. Until this is called the batched pass is skipped. Call before Reload.
+// SetOffsiteAfterBulkJob wires the off-site replication that runs once after a
+// scheduled multi-item run (containers, VMs, files), in place of the per-item
+// copies those runs suppress. A slow off-site backend is then opened and its
+// index loaded once per domain instead of once per item. replicateFn does
+// nothing for a domain without an off-site repo or with its own off-site
+// schedule. Call before Reload.
 func (s *Scheduler) SetOffsiteAfterBulkJob(replicateFn func(domain string)) {
 	s.replicateAfterBulkFn = replicateFn
 }
 
-// SetPruneAfterBulkJob wires the batched post-loop local prune used by scheduled
-// multi-item domains (containers/VMs/files). After the whole backup loop finishes,
-// the job calls pruneFn(domain) ONCE — replacing the per-item inline prune those
-// runs defer (each item's forget runs without --prune under the bulk flag) — so a
-// 44-container night pays one local prune instead of 44. It runs BEFORE the
-// batched off-site replication: retention first means fewer snapshots to copy.
-// The callee no-ops when the domain has no retention policy configured. Until
-// this is called the batched prune is skipped. Call before Reload.
+// SetPruneAfterBulkJob wires the local prune that runs once after a scheduled
+// multi-item run, in place of the per-item prunes those runs defer, so a night
+// of 44 containers pays for one prune instead of 44. It runs before the off-site
+// replication so there are fewer snapshots to copy. pruneFn does nothing for a
+// domain without a retention policy. Call before Reload.
 func (s *Scheduler) SetPruneAfterBulkJob(pruneFn func(domain string)) {
 	s.pruneAfterBulkFn = pruneFn
 }
 
-// SetStacksAfterBulkJob wires the once-per-round compose-stack backup. Called
-// with the container names the round attempted, so it can visit each distinct
-// project exactly once regardless of how many of its services took part.
+// SetStacksAfterBulkJob wires the once-per-run Compose stack backup. fn receives
+// the container names the run attempted and visits each project once, however
+// many of its services took part.
 func (s *Scheduler) SetStacksAfterBulkJob(fn func(names []string)) {
 	s.stacksAfterBulkFn = fn
 }
 
-// SetDrillJob wires scheduled restore-verification drills so the single drill
-// schedule actually runs. drillFn is called with (domain, source, kind) for each
-// scheduled drill task when the drill schedule fires — a local "subset" integrity
-// check per enabled domain, plus a real off-site "dr" drill for containers, flash
-// and files when off-site is configured (see drillTasks). Until this is called the
-// drill schedule is a no-op (logged). Call before Reload.
+// SetDrillJob wires the scheduled restore-verification drills. drillFn is called
+// with (domain, source, kind) for each task from drillTasks. Call before Reload.
 func (s *Scheduler) SetDrillJob(drillFn func(domain, source, kind string) error) {
 	s.drillFn = drillFn
 }
 
-// SetTamperJob wires scheduled off-site tamper tests so the single tamper schedule
-// actually runs. tamperFn is called with each domain whose off-site repo is flagged
-// immutable when the tamper schedule fires. Until this is called the tamper
-// schedule is a no-op (logged). Call before Reload.
+// SetTamperJob wires the scheduled off-site tamper tests. tamperFn is called for
+// each domain whose off-site repo is flagged immutable. Call before Reload.
 func (s *Scheduler) SetTamperJob(tamperFn func(domain string) error) {
 	s.tamperFn = tamperFn
 }
 
-// SetDigestJob wires the weekly digest notification so the digest schedule
-// actually runs. digestFn composes and sends ONE app-wide summary message when
-// the digest schedule fires. Until this is called the digest schedule is a
-// no-op (logged). Call before Reload.
+// SetDigestJob wires the weekly digest. digestFn sends one app-wide summary per
+// fire. Call before Reload.
 func (s *Scheduler) SetDigestJob(digestFn func() error) {
 	s.digestFn = digestFn
 }
 
-// JobRunStore is the durable "when did this scheduled job last run" record for
-// the drill, tamper and digest schedules (#166) — the DI seam that keeps this
-// package store-free, exactly like LastRunFunc does for the backup domains.
+// JobRunStore records when the drill, tamper and digest schedules last ran.
 //
-// LastScheduleJobRun MUST distinguish its two zero-ish answers: a zero time with
-// a NIL error means "this job has never run" (a definite fact), while an error
-// means "cannot tell". The due-gate treats those oppositely — never-ran lets the
-// first fire through, cannot-tell skips — so an implementation that flattens a
-// query failure into a zero time would silently convert an unknown into a run.
+// LastScheduleJobRun has to keep its two empty answers apart. A zero time with a
+// nil error means the job never ran, and the gate lets the first fire through;
+// an error means the answer is unknown, and the gate skips. Flattening a query
+// error into a zero time would turn an unknown into a run.
 type JobRunStore interface {
 	LastScheduleJobRun(job string) (time.Time, error)
 	RecordScheduleJobRun(job string, at time.Time) error
 }
 
-// SetJobRunStore wires the last-run record that lets the drill, tamper and
-// digest schedules honour an "every N days" cadence (#166). Until this is
-// called those three still run fine on off/daily/weekly/cron cadences, but an
-// everyN cadence on them SKIPS every fire (loudly logged) rather than firing
-// daily — see jobLastRun. Call before Reload.
+// SetJobRunStore wires the last-run record the drill, tamper and digest schedules
+// need for an "every N days" cadence. Without it they still run on other
+// cadences, but an everyN cadence skips every fire; see jobLastRun. Call before
+// Reload.
 func (s *Scheduler) SetJobRunStore(jobRuns JobRunStore) {
 	s.jobRuns = jobRuns
 }
 
-// jobLastRun is the everyN due-gate query for one self-recording job.
-//
-// It deliberately NEVER returns nil. A nil LastRunFunc is what makes Reload skip
-// wrapping the job in the due-check, which for an everyN cadence means the daily
-// trigger fires the real job EVERY day — a nightly DR restore for the drill
-// schedule. So an unwired store is reported as an ERROR here instead, which the
-// due-gate turns into a skip: the failure mode of forgetting SetJobRunStore is a
-// job that does not run and says why, never a job that runs 14x too often.
+// jobLastRun is the everyN due-gate query for a job that records its own runs.
+// Without a store it returns an error, so the gate skips each fire and logs why
+// rather than running the job ungated.
 func (s *Scheduler) jobLastRun(job string) LastRunFunc {
 	return func() (time.Time, error) {
 		store := s.jobRuns
@@ -1247,29 +933,15 @@ func (s *Scheduler) jobLastRun(job string) LastRunFunc {
 	}
 }
 
-// recordJobRun stamps a self-recording job's last-run time. Call it only after
-// the pass has actually done its work — what counts as "done" is decided per job
-// at the call site, and each of the three call sites documents its own choice.
+// recordJobRun stamps a self-recording job's last-run time once its pass has done
+// its work. A failed write is only logged; the worst case is that the next
+// trigger runs the pass again.
 //
-// A failure to record is logged, not propagated: the work already happened, and
-// the only consequence is that the next daily trigger sees a stale (or absent)
-// timestamp and runs the pass again. That is the safe direction for a
-// verification job — repeat the check rather than silently drop it.
-//
-// THE INVARIANT THAT MAKES THIS SAFE, written down because it is not obvious and
-// is not enforced anywhere: jobLastRun's due-gate reads a timestamp that this
-// function writes only AFTER the pass has run, so it cannot see a pass that is
-// still running. That is the exact shape which, elsewhere in this product, let a
-// repo-size sample start once per container instead of once per round (#189).
-// It is safe HERE for two reasons that both belong to the call site rather than
-// to the gate: recordJobRun is the last statement of a single cron entry, which
-// cron's own SkipIfStillRunning serialises against itself, and nothing else in
-// the tree calls it (the manual drill endpoint records into restore_drills, a
-// different table). Add a second caller — a "run drills now" button that also
-// records a job run, drills wired into CatchUpMissed, or the drills pass split
-// into per-domain entries the way containers are — and the gate stops holding,
-// with a nightly DR restore behind it. Any such change needs an in-flight guard
-// first.
+// The gate cannot see a pass that is still running, since the stamp is written
+// at the end. That is safe while recordJobRun ends a single cron entry, which
+// SkipIfStillRunning serialises, and nothing else calls it. A second caller
+// needs an in-flight guard first, or overlapping passes would each run a DR
+// restore.
 func (s *Scheduler) recordJobRun(job string) {
 	store := s.jobRuns
 	if store == nil {
@@ -1280,60 +952,47 @@ func (s *Scheduler) recordJobRun(job string) {
 	}
 }
 
-// SetWatchdogJob wires the daily overdue-backup watchdog so its fixed schedule
-// (WatchdogCadence) actually runs. watchdogFn checks every enabled domain's
-// backup currency and notifies once per overdue episode. Until this is called
-// the watchdog schedule is a no-op (logged). Call before Reload.
+// SetWatchdogJob wires the daily overdue-backup watchdog (WatchdogCadence).
+// watchdogFn checks every enabled domain and notifies once per overdue episode.
+// Call before Reload.
 func (s *Scheduler) SetWatchdogJob(watchdogFn func() error) {
 	s.watchdogFn = watchdogFn
 }
 
-// SetReceiverJob wires the daily receiver watch so its fixed schedule
-// (ReceiverCadence) actually runs. receiverFn evaluates every enabled received
-// repo's dead-mans-switch and runs each repo's due integrity check, notifying once
-// per stale episode / once per integrity-failure transition. Until this is called
-// the receiver schedule is a no-op (logged). Call before Reload.
+// SetReceiverJob wires the daily receiver watch (ReceiverCadence). receiverFn
+// evaluates each enabled received repo's dead-mans-switch and runs its integrity
+// check when due. Call before Reload.
 func (s *Scheduler) SetReceiverJob(receiverFn func() error) {
 	s.receiverFn = receiverFn
 }
 
-// SetPullJob wires the daily pull sweep so its fixed schedule (PullCadence)
-// actually runs. pullFn walks every enabled pull source and fetches the ones
-// whose own cadence says they are due. Until this is called the pull schedule is
-// a no-op (logged). Call before Reload.
+// SetPullJob wires the daily pull sweep (PullCadence). pullFn fetches every
+// enabled pull source whose own cadence is due. Call before Reload.
 func (s *Scheduler) SetPullJob(pullFn func() error) {
 	s.pullFn = pullFn
 }
 
-// SetFleetJob wires the daily fleet peer sweep so its fixed schedule
-// (FleetCadence) actually runs. fleetFn polls every enabled fleet peer's
-// protection status and records the result (read-only, no notifications — a
-// peer's own instance already alerts on its own overdue backups). Until this
-// is called the fleet schedule is a no-op (logged). Call before Reload.
+// SetFleetJob wires the daily fleet sweep (FleetCadence). fleetFn polls every
+// enabled peer's protection status and records it without notifying, since each
+// peer alerts on its own backups. Call before Reload.
 func (s *Scheduler) SetFleetJob(fleetFn func() error) {
 	s.fleetFn = fleetFn
 }
 
-// SetEverythingJob wires the "Backup Everything" pass so its own schedule
-// actually runs. Everything is a singleton from the scheduler's point of view
-// (like flash/config): everythingFn already loops over all five domains
-// internally (internal/api/everything.go's BackupEverything), so the job
-// takes no arguments. Until this is called the everything domain is a no-op
-// (logged). Call before Reload.
+// SetEverythingJob wires the "Backup Everything" schedule. everythingFn already
+// covers all five domains (BackupEverything in internal/api/everything.go), so
+// the job takes no arguments. Call before Reload.
 func (s *Scheduler) SetEverythingJob(everythingFn func() error) {
 	s.everythingFn = everythingFn
 }
 
-// SetHealthchecksAggregator wires per-domain Healthchecks aggregation for SCHEDULED
-// multi-item runs (containers + VMs). A scheduled run then pings the domain's check
-// /start ONCE via startFn before the first item and success/fail ONCE via finishFn
-// after the last — instead of once per item — so the check reflects the whole domain
-// job rather than each container/VM (#49). finishFn receives the run's attempted and
-// failed counts (success when failed == 0) plus the per-item failures so the summary
-// notification can name which items failed and why (#64). The per-item Healthchecks ping is
-// suppressed separately: the backup closures injected into New/SetVMJob run each item
-// with a suppress-flagged context (see cmd/bombvault/main.go). Passing nil funcs
-// leaves scheduled runs un-aggregated (each item pings as before). Call before Reload.
+// SetHealthchecksAggregator makes scheduled multi-item runs (containers, VMs)
+// report to Healthchecks once per domain: startFn before the first item, and
+// finishFn after the last with the attempted and failed counts (success when
+// failed == 0) and the per-item failures for the summary notification. The
+// per-item pings are suppressed by the backup closures passed to New and
+// SetVMJob (see cmd/bombvault/main.go). Nil funcs leave each item pinging on its
+// own. Call before Reload.
 func (s *Scheduler) SetHealthchecksAggregator(
 	startFn func(domain string),
 	finishFn func(domain string, attempted, failed int, failures []ItemFailure),
@@ -1347,22 +1006,15 @@ func (s *Scheduler) Start() {
 	s.c.Start()
 }
 
-// Stop halts the scheduler and blocks until all in-flight jobs finish.
-// robfig/cron v3's Stop() returns a context that is cancelled when the last
-// running job exits — we wait on it so main.go can shut down gracefully.
+// Stop halts the scheduler and waits until all running jobs have finished.
 func (s *Scheduler) Stop() {
 	ctx := s.c.Stop()
 	<-ctx.Done()
 }
 
-// domainSpec bundles everything needed to register one scheduler domain entry.
-//
-// off carries the operator's own on/off switch for the five backup domains
-// (settings.ContainersEnabled and friends) and their off-site counterparts. It
-// is stated in the NEGATIVE on purpose: every other spec built below — drills,
-// tamper, digest, receiver, fleet — is appended only when its own gate already
-// says yes, so the zero value has to mean "registered", or adding this field
-// would silently switch all of them off.
+// domainSpec is one entry to register. off is the domain's own on/off switch,
+// stated negatively so that the zero value means "registered" for the specs that
+// are appended only when already enabled.
 type domainSpec struct {
 	cadence string
 	name    string
@@ -1371,40 +1023,27 @@ type domainSpec struct {
 	lastRun LastRunFunc // nil for domains without everyN support
 }
 
-// Reload re-reads the schedule settings and re-registers all domain entries.
-// It removes any previously registered entries first, so it is safe to call
-// repeatedly (e.g. after a settings change).
-//
-// For everyN domains the lastRunFn is consulted when the daily trigger fires;
-// the job is a no-op when now − lastRun < IntervalDays. A nil lastRunFn leaves a
-// plain cron cadence (daily/weekly/cron) completely unaffected, but it makes an
-// everyN cadence unenforceable — such a domain is NOT registered at all, since
-// firing it daily would be N times too often (see the loop below).
+// Reload registers all entries from settings, replacing earlier ones, so it can
+// be called after every settings change. It passes no last-run queries, so a
+// backup domain with an everyN cadence is not registered; ReloadWithDueChecks
+// handles those.
 func (s *Scheduler) Reload(settings store.Settings) error {
 	return s.ReloadWithDueChecks(settings, nil, nil, nil, nil, nil, nil)
 }
 
-// ReloadWithDueChecks is the full-fidelity Reload that accepts per-domain
-// last-run queries so the everyN due-gate is enforced. Pass nil for any BACKUP
-// domain that does not need the gate — that domain then simply cannot use an
-// everyN cadence (see Reload's doc and the registration loop).
-//
-// The drill, tamper and digest schedules are NOT parameters here: their last-run
-// record is a fixed store binding rather than a per-reload input, so it is wired
-// once via SetJobRunStore alongside SetDrillJob / SetTamperJob / SetDigestJob.
+// ReloadWithDueChecks is Reload with a last-run query per backup domain, which
+// the everyN due-gate needs. A nil query means that domain cannot use an everyN
+// cadence. The drill, tamper and digest schedules get theirs from
+// SetJobRunStore instead.
 func (s *Scheduler) ReloadWithDueChecks(
 	settings store.Settings,
 	containersLastRun, vmsLastRun, flashLastRun, configLastRun, filesLastRun, everythingLastRun LastRunFunc,
 ) error {
-	// ONE reload at a time — see reloadMu's own comment for what interleaving
-	// two of them produced.
 	s.reloadMu.Lock()
 	defer s.reloadMu.Unlock()
 
-	// Snapshot + clear the existing entries under the lock, then remove them
-	// from cron OUTSIDE the lock — never call into cron while holding s.mu.
-	// catchUps is rebuilt alongside entries: a stale catch-up entry would point
-	// at a removed cron EntryID (CatchUpMissed additionally nil-guards that).
+	// Clear the entries under mu and remove them from cron after releasing it.
+	// catchUps goes too, since its entries point at the removed IDs.
 	s.mu.Lock()
 	oldEntries := make([]scheduledEntry, len(s.entries))
 	copy(oldEntries, s.entries)
@@ -1416,14 +1055,11 @@ func (s *Scheduler) ReloadWithDueChecks(
 		s.c.Remove(e.id)
 	}
 
-	// Per-item schedule overrides (#121). When OFF (the default) every item follows
-	// its domain schedule and the domain jobs run the FULL included list exactly as
-	// before; the override column is ignored. When ON, an item with a concrete
-	// override runs on its own per-item entry (registered after the domain loop) and
-	// is filtered out of the domain run, so it is never backed up twice.
+	// With per-item schedules on, an item with its own cadence gets its own entry
+	// (registered below) and is left out of the domain run, so it is never backed
+	// up twice. With them off, overrides are ignored.
 	perItem := settings.PerItemSchedules
 
-	// Register enabled domains.
 	domains := []domainSpec{
 		{
 			cadence: settings.ContainersSchedule,
@@ -1435,17 +1071,15 @@ func (s *Scheduler) ReloadWithDueChecks(
 					log.Printf("schedule: containers job: list targets: %v", err)
 					return
 				}
-				targets = DomainRunTargets(targets, perItem) // drop items on their own per-item cadence (#121)
+				targets = DomainRunTargets(targets, perItem)
 				if !DomainRunHasWork(targets) {
-					// Nothing left for this domain to back up: no loop, no ping,
-					// and above all no prune and no off-site copy (DomainRunHasWork).
 					return
 				}
 				s.runAggregatedHC("containers", func() (int, int, []ItemFailure) {
 					return RunContainersJob(targets, s.backup)
 				})
-				// Each compose stack's project directory, once for the whole
-				// round, before the prune so it lands in the same retention pass.
+				// Compose project directories, once per run and before the prune
+				// so they fall into the same retention pass.
 				if s.stacksAfterBulkFn != nil {
 					names := make([]string, 0, len(targets))
 					for _, t := range targets {
@@ -1455,15 +1089,10 @@ func (s *Scheduler) ReloadWithDueChecks(
 					}
 					s.stacksAfterBulkFn(names)
 				}
-				// Retention first: ONE local prune for the whole loop (each item's
-				// forget ran without --prune under the bulk flag), then the batched
-				// off-site copy — fewer snapshots left to replicate.
+				// Prune before replicating so there are fewer snapshots to copy.
 				if s.pruneAfterBulkFn != nil {
 					s.pruneAfterBulkFn("containers")
 				}
-				// #95: one batched off-site replication after the whole loop (no-op
-				// unless containers replicate on a blank/coupled schedule with an
-				// off-site repo configured — the per-item inline copy was suppressed).
 				if s.replicateAfterBulkFn != nil {
 					s.replicateAfterBulkFn("containers")
 				}
@@ -1476,7 +1105,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 			off:     !settings.VMsEnabled,
 			fn: func() {
 				if s.backupVM == nil || s.listVMsFn == nil {
-					log.Print("schedule: vms job skipped — VM backup not wired (SetVMJob)")
+					log.Print("schedule: vms job skipped, VM backup not wired (SetVMJob)")
 					return
 				}
 				vms, err := s.listVMsFn()
@@ -1484,19 +1113,19 @@ func (s *Scheduler) ReloadWithDueChecks(
 					log.Printf("schedule: vms job: list VM targets: %v", err)
 					return
 				}
-				store.SortVMTargetsForRun(vms)         // #119: explicit VM backup order first, name-order tiebreak
-				vms = DomainRunVMTargets(vms, perItem) // drop VMs on their own per-item cadence (#121)
+				store.SortVMTargetsForRun(vms)
+				vms = DomainRunVMTargets(vms, perItem)
 				if !DomainRunHasVMWork(vms) {
-					return // nothing to back up — skip the loop and the batched tail (DomainRunHasWork)
+					return
 				}
 				s.runAggregatedHC("vms", func() (int, int, []ItemFailure) {
 					return RunVMsJob(vms, s.backupVM)
 				})
 				if s.pruneAfterBulkFn != nil {
-					s.pruneAfterBulkFn("vms") // one batched local prune first (retention before replication)
+					s.pruneAfterBulkFn("vms")
 				}
 				if s.replicateAfterBulkFn != nil {
-					s.replicateAfterBulkFn("vms") // #95: one batched off-site copy after the loop
+					s.replicateAfterBulkFn("vms")
 				}
 			},
 			lastRun: vmsLastRun,
@@ -1507,7 +1136,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 			off:     !settings.FlashEnabled,
 			fn: func() {
 				if s.backupFlash == nil {
-					log.Print("schedule: flash job skipped — flash backup not wired (SetFlashJob)")
+					log.Print("schedule: flash job skipped, flash backup not wired (SetFlashJob)")
 					return
 				}
 				if err := s.backupFlash(); err != nil {
@@ -1522,7 +1151,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 			off:     !settings.ConfigEnabled,
 			fn: func() {
 				if s.configJob == nil {
-					log.Print("schedule: config job skipped — config backup not wired (SetConfigJob)")
+					log.Print("schedule: config job skipped, config backup not wired (SetConfigJob)")
 					return
 				}
 				if err := s.configJob(); err != nil {
@@ -1537,7 +1166,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 			off:     !settings.FilesEnabled,
 			fn: func() {
 				if s.backupFiles == nil || s.listFileSetsFn == nil {
-					log.Print("schedule: files job skipped — file-set backup not wired (SetFilesJob)")
+					log.Print("schedule: files job skipped, file-set backup not wired (SetFilesJob)")
 					return
 				}
 				sets, err := s.listFileSetsFn()
@@ -1545,22 +1174,18 @@ func (s *Scheduler) ReloadWithDueChecks(
 					log.Printf("schedule: files job: list file sets: %v", err)
 					return
 				}
-				// #199: a set on its own cadence has its own entry and must not
-				// also ride the domain run, or it is backed up twice a night.
-				// The containers and VMs jobs have applied their filter here
-				// since #121; this one was the gap manilx ran into.
 				sets = DomainRunFileSets(sets, settings.PerItemSchedules)
 				if !DomainRunHasFileWork(sets) {
-					return // no enabled set — skip the loop and the batched tail (DomainRunHasWork)
+					return
 				}
 				s.runAggregatedHC("files", func() (int, int, []ItemFailure) {
 					return RunFilesJob(sets, s.backupFiles)
 				})
 				if s.pruneAfterBulkFn != nil {
-					s.pruneAfterBulkFn("files") // one batched local prune first (retention before replication)
+					s.pruneAfterBulkFn("files")
 				}
 				if s.replicateAfterBulkFn != nil {
-					s.replicateAfterBulkFn("files") // #95: one batched off-site copy after the loop
+					s.replicateAfterBulkFn("files")
 				}
 			},
 			lastRun: filesLastRun,
@@ -1570,7 +1195,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 			name:    "everything",
 			fn: func() {
 				if s.everythingFn == nil {
-					log.Print("schedule: everything job skipped — Backup Everything not wired (SetEverythingJob)")
+					log.Print("schedule: everything job skipped, Backup Everything not wired (SetEverythingJob)")
 					return
 				}
 				if err := s.everythingFn(); err != nil {
@@ -1581,14 +1206,10 @@ func (s *Scheduler) ReloadWithDueChecks(
 		},
 	}
 
-	// Off-site replication on its own per-domain schedule (decoupled from the
-	// backup schedules above). A blank cadence means "replicate after every local
-	// backup" and is handled in the backup path, not here.
-	//
-	// It carries the same domain switch as the backup schedule it replicates:
-	// a domain that is switched off produces no new snapshots, so a nightly
-	// replication for it is a repo open, an index load and a copy pass for
-	// nothing — and it is a scheduled job the UI shows no tab for.
+	// Off-site replication on its own per-domain schedule. A blank cadence means
+	// "replicate after every local backup" and is handled in the backup path. A
+	// switched-off domain makes no new snapshots, so its off-site schedule is off
+	// as well.
 	offsite := func(domain, cadence string, enabled bool) domainSpec {
 		return domainSpec{
 			cadence: cadence,
@@ -1596,7 +1217,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 			off:     !enabled,
 			fn: func() {
 				if s.replicateOffFn == nil {
-					log.Printf("schedule: %s-offsite job skipped — off-site not wired (SetOffsiteJob)", domain)
+					log.Printf("schedule: %s-offsite job skipped, off-site not wired (SetOffsiteJob)", domain)
 					return
 				}
 				if err := s.replicateOffFn(domain); err != nil {
@@ -1613,11 +1234,6 @@ func (s *Scheduler) ReloadWithDueChecks(
 		offsite("files", settings.FilesOffsiteSchedule, settings.FilesEnabled),
 	)
 
-	// Restore-verification drills run on a single schedule across a set of
-	// (domain, source, kind) tasks: a local "subset" integrity check per enabled
-	// domain plus a real off-site "dr" drill for containers, flash and files when
-	// off-site is configured (see drillTasks). A drill error just records ok=false (see drillFn);
-	// it never aborts the others. The schedule is inert unless explicitly enabled.
 	if settings.DrillsEnabled {
 		tasks := drillTasks(settings)
 		domains = append(domains, domainSpec{
@@ -1625,14 +1241,13 @@ func (s *Scheduler) ReloadWithDueChecks(
 			name:    "drills",
 			fn: func() {
 				if s.drillFn == nil {
-					log.Print("schedule: drills job skipped — drills not wired (SetDrillJob)")
+					log.Print("schedule: drills job skipped, drills not wired (SetDrillJob)")
 					return
 				}
 				if len(tasks) == 0 {
-					// Drills are on but no domain is enabled, so nothing was
-					// attempted. Recording a "run" here would let an empty pass
-					// suppress the first REAL one for a whole everyN interval
-					// after the user enables a domain.
+					// Nothing was attempted. Recording a run here would hold off
+					// the first real pass for a whole everyN interval once a
+					// domain is switched on.
 					return
 				}
 				for _, tk := range tasks {
@@ -1640,34 +1255,25 @@ func (s *Scheduler) ReloadWithDueChecks(
 						log.Printf("schedule: drills job: %s/%s(%s): %v", tk.domain, tk.source, tk.kind, err)
 					}
 				}
-				// The pass counts as a run once every task has been ATTEMPTED,
-				// whatever each one concluded (#166). A drill's cost is paid on
-				// attempt — `restic check --read-data-subset` reads back real pack
-				// data, a "dr" task restores a whole off-site snapshot into a
-				// sandbox — and that cost is identical whether the verdict comes
-				// back good or bad. Gating on success instead would re-run the
-				// full pass, DR restore included, every single night for as long
-				// as one repo stayed broken: maximum expense at exactly the moment
-				// the system is already unhealthy. A failed drill is not lost
-				// either way — drillFn records an ok=false row per task, which is
-				// what the dashboard badge and the notifications read.
+				// The pass counts as a run once every task was attempted, whatever
+				// the verdicts. A drill costs the same whether it passes or fails
+				// (a "dr" task restores a whole off-site snapshot), so gating on
+				// success would repeat the full pass every night while one repo
+				// stays broken. Failures are not lost: drillFn records an ok=false
+				// row per task.
 				s.recordJobRun(store.ScheduleJobDrills)
 			},
 			lastRun: s.jobLastRun(store.ScheduleJobDrills),
 		})
 	}
 
-	// Off-site tamper tests run on their own schedule across every domain whose
-	// off-site repo is flagged immutable (append-only). Inert unless at least one
-	// domain is flagged AND the schedule is enabled — the far side is what enforces
-	// immutability, so there is nothing to verify for a non-immutable repo.
 	if tamperDomains := immutableOffsiteDomains(settings); len(tamperDomains) > 0 {
 		domains = append(domains, domainSpec{
 			cadence: settings.TamperTestSchedule,
 			name:    "tamper",
 			fn: func() {
 				if s.tamperFn == nil {
-					log.Print("schedule: tamper job skipped — tamper test not wired (SetTamperJob)")
+					log.Print("schedule: tamper job skipped, tamper test not wired (SetTamperJob)")
 					return
 				}
 				for _, dom := range tamperDomains {
@@ -1675,43 +1281,30 @@ func (s *Scheduler) ReloadWithDueChecks(
 						log.Printf("schedule: tamper job: %s: %v", dom, err)
 					}
 				}
-				// Same rule as the drill pass: a sweep counts as a run once every
-				// immutable domain has been PROBED, pass or fail (#166). Each probe
-				// is a real round-trip to the off-site backend, so gating on
-				// success would hammer an unreachable destination nightly while
-				// the user's cadence asked for every N days. The verdict itself is
-				// preserved per domain by tamperFn (a tamper_tests row), which is
-				// what the ransomware scorecard reads. tamperDomains is non-empty
-				// by construction — this spec is only registered when at least one
-				// domain is flagged immutable — so there is no empty-pass case to
-				// exclude here.
+				// As with drills, a sweep counts as a run whatever the verdicts,
+				// or an unreachable backend would be probed every night. tamperFn
+				// records each verdict, and tamperDomains is never empty here.
 				s.recordJobRun(store.ScheduleJobTamper)
 			},
 			lastRun: s.jobLastRun(store.ScheduleJobTamper),
 		})
 	}
 
-	// Weekly digest notification: ONE app-wide summary per fire, on its own
-	// cadence. Inert unless explicitly enabled (mirrors the drills gate).
 	if settings.DigestEnabled {
 		domains = append(domains, domainSpec{
 			cadence: settings.DigestSchedule,
 			name:    "digest",
 			fn: func() {
 				if s.digestFn == nil {
-					log.Print("schedule: digest job skipped — digest not wired (SetDigestJob)")
+					log.Print("schedule: digest job skipped, digest not wired (SetDigestJob)")
 					return
 				}
 				if err := s.digestFn(); err != nil {
-					// The digest is the one of the three that records ONLY on
-					// success (#166). It is a single cheap, idempotent message
-					// with no expensive side effects, so retrying on tomorrow's
-					// trigger costs almost nothing — whereas recording a failed
-					// send would drop that digest entirely and leave the user
-					// silent until the next interval. digestFn returns nil when
-					// notifications are switched off (it is a deliberate no-op
-					// then, not a failure), so a "never" configuration still
-					// records and stays gated instead of retrying daily.
+					// Unlike drills and tamper tests, the digest records only on
+					// success. It is one cheap message, so retrying tomorrow costs
+					// nothing, while recording a failed send would drop that digest.
+					// digestFn returns nil when notifications are off, so that
+					// configuration still records and stays gated.
 					log.Printf("schedule: digest job: %v", err)
 					return
 				}
@@ -1721,17 +1314,13 @@ func (s *Scheduler) ReloadWithDueChecks(
 		})
 	}
 
-	// Overdue-backup watchdog: ONE lightweight app-wide currency check per fire
-	// on the fixed WatchdogCadence (no per-user cadence — the check is cheap and
-	// its exact hour does not matter, only that it runs daily after the usual
-	// overnight backup window). Gated on WatchdogEnabled (default on).
 	if settings.WatchdogEnabled {
 		domains = append(domains, domainSpec{
 			cadence: WatchdogCadence,
 			name:    "watchdog",
 			fn: func() {
 				if s.watchdogFn == nil {
-					log.Print("schedule: watchdog job skipped — watchdog not wired (SetWatchdogJob)")
+					log.Print("schedule: watchdog job skipped, watchdog not wired (SetWatchdogJob)")
 					return
 				}
 				if err := s.watchdogFn(); err != nil {
@@ -1741,17 +1330,13 @@ func (s *Scheduler) ReloadWithDueChecks(
 		})
 	}
 
-	// Receiver watch: ONE app-wide pass per fire on the fixed ReceiverCadence,
-	// evaluating every enabled received repo's dead-mans-switch and running each
-	// repo's due integrity check. Gated on ReceiverEnabled (default off), exactly
-	// like the domain toggles the receiver dashboard hangs off.
 	if settings.ReceiverEnabled {
 		domains = append(domains, domainSpec{
 			cadence: ReceiverCadence,
 			name:    "receiver",
 			fn: func() {
 				if s.receiverFn == nil {
-					log.Print("schedule: receiver job skipped — receiver not wired (SetReceiverJob)")
+					log.Print("schedule: receiver job skipped, receiver not wired (SetReceiverJob)")
 					return
 				}
 				if err := s.receiverFn(); err != nil {
@@ -1761,11 +1346,6 @@ func (s *Scheduler) ReloadWithDueChecks(
 		})
 	}
 
-	// Pull sweep: ONE app-wide pass per fire on the fixed PullCadence, fetching
-	// every enabled source whose own cadence says it is due. Gated on
-	// PullEnabled (default off) like the two above, and for a stronger reason
-	// than either: this is the only one of the three app-wide sweeps that writes
-	// data into this box's repositories.
 	if settings.PullEnabled {
 		domains = append(domains, domainSpec{
 			cadence: PullCadence,
@@ -1782,16 +1362,13 @@ func (s *Scheduler) ReloadWithDueChecks(
 		})
 	}
 
-	// Fleet peer sweep: ONE app-wide pass per fire on the fixed FleetCadence,
-	// polling every enabled fleet peer's protection status. Gated on
-	// FleetEnabled (default off), exactly like ReceiverEnabled.
 	if settings.FleetEnabled {
 		domains = append(domains, domainSpec{
 			cadence: FleetCadence,
 			name:    "fleet",
 			fn: func() {
 				if s.fleetFn == nil {
-					log.Print("schedule: fleet job skipped — fleet not wired (SetFleetJob)")
+					log.Print("schedule: fleet job skipped, fleet not wired (SetFleetJob)")
 					return
 				}
 				if err := s.fleetFn(); err != nil {
@@ -1810,68 +1387,31 @@ func (s *Scheduler) ReloadWithDueChecks(
 			continue
 		}
 
-		// The domain's own on/off switch, checked AFTER the cadence so this only
-		// speaks up for the case that is actually surprising: a real schedule is
-		// configured and the domain it belongs to is switched off.
-		//
-		// Registration used to ignore the switch entirely, and svc.Backup gates
-		// only on path/repo, so switching a domain off left its nightly run going
-		// — container stop/start, prune and off-site replication included — while
-		// the dashboard, the overdue watchdog and the drill set all reported the
-		// domain as off, and for VMs, flash, folders and self-backup the tab it
-		// was configured on had disappeared from the UI. It said off in every
-		// place a user can look, and ran anyway. It is logged rather than dropped
-		// in silence because the reverse mistake — a schedule the user believes is
-		// running and is not — is the one that costs backups.
+		// Checked after the cadence, so only a real schedule on a switched-off
+		// domain is logged. A schedule the user believes is running, and is not,
+		// is the mistake that costs backups.
 		if d.off {
-			log.Printf("schedule: %s NOT registered — the domain is switched off in Settings; its schedule stays inert until the domain is switched back on", d.name)
+			log.Printf("schedule: %s not registered: the domain is switched off in Settings, so its schedule stays inert until the domain is switched back on", d.name)
 			continue
 		}
 
 		domainName := d.name
 		jobFn := d.fn
 
-		// An everyN cadence is a DAILY cron trigger plus a due-gate, so a domain
-		// that cannot answer "when did this last run?" cannot enforce the interval
-		// at all — the trigger would just fire the real job every single day, N
-		// times too often, silently. Refuse to register it rather than run it
-		// wrong: an unenforceable everyN is a permanent misconfiguration, and the
-		// honest outcome is a schedule that does not run and says so loudly.
-		//
-		// No supported configuration reaches this: the five backup domains supply
-		// a last-run query, the drill/tamper/digest schedules supply one via
-		// jobLastRun, and handlers.go still rejects everyN at save time for the
-		// off-site schedules — the only remaining specs without one. It catches a
-		// legacy cadence stored before that rejection existed, an imported
-		// settings file carrying one, and any future domain wired up without its
-		// gate.
+		// An everyN cadence is a daily trigger plus a due-gate, so without a
+		// last-run query the job would run every day. The API rejects everyN for
+		// the off-site schedules, the only specs without a query; this catches
+		// older stored values, imported settings and a domain wired up without
+		// its gate.
 		if cad.IntervalDays > 0 && d.lastRun == nil {
-			log.Printf("schedule: %s NOT registered — an 'everyN' cadence needs a last-run query to enforce its interval and this schedule has none; it would fire daily. Use daily/weekly/cron instead.", d.name)
+			log.Printf("schedule: %s not registered: an 'everyN' cadence needs a last-run query to enforce its interval and this schedule has none, so it would fire daily. Use daily/weekly/cron instead.", d.name)
 			continue
 		}
 
-		// For everyN cadences wrap the job with the due-check so the daily
-		// trigger does nothing when the interval has not elapsed yet.
-		//
-		// The gate has three outcomes, and the difference between the last two is
-		// the whole safety property:
-		//
-		//   - query FAILED       → skip. "Cannot tell" is never treated as due; a
-		//                          broken database must not authorise a run.
-		//   - last run recently  → skip, the interval has not elapsed.
-		//   - zero time, no error → RUN. This is not an unknown, it is a definite
-		//                          "has never run": a fresh install, or a schedule
-		//                          just switched on. Deferring the first pass by a
-		//                          whole interval would mean a user who enables
-		//                          drills every 14 days gets no verification at all
-		//                          for 14 days while the UI says drills are on —
-		//                          and if the record never appeared (a wiped table,
-		//                          a bug) the job would skip FOREVER, silently. The
-		//                          five backup domains already read a
-		//                          never-backed-up domain as due for exactly this
-		//                          reason, so all eight schedules now agree: the
-		//                          first fire after enabling runs, then the
-		//                          interval applies.
+		// A failed last-run query skips the fire, because a broken database must
+		// not authorise a run. A zero time with no error means the job never ran,
+		// and that fire runs: only a run writes the record, so deferring it would
+		// skip forever.
 		if cad.IntervalDays > 0 {
 			innerFn := jobFn
 			intervalDays := cad.IntervalDays
@@ -1884,7 +1424,7 @@ func (s *Scheduler) ReloadWithDueChecks(
 				}
 				now := time.Now()
 				if !EveryNDue(last, now, intervalDays) {
-					log.Printf("schedule: %s everyN skipped — last run %v ago (%d calendar day(s)), interval %d days",
+					log.Printf("schedule: %s everyN skipped, last run %v ago (%d calendar day(s)), interval %d days",
 						domainName, now.Sub(last).Round(time.Second), calendarDaysBetween(last, now), intervalDays)
 					return
 				}
@@ -1901,30 +1441,20 @@ func (s *Scheduler) ReloadWithDueChecks(
 		}
 		job, domain := jobDomainFromName(d.name)
 		s.mu.Lock()
-		// cad.IntervalDays/d.lastRun ride along so NextRuns can report the fire
-		// this entry will actually RUN on rather than tomorrow's daily trigger.
-		// The everyN guard above has already refused to register an entry with an
-		// interval and no last-run query, so the two are set together or not at all.
+		// The interval and last-run query let NextRuns report the fire this entry
+		// will actually run on. The guard above keeps them set together.
 		s.entries = append(s.entries, scheduledEntry{
 			id: id, job: job, domain: domain,
 			intervalDays: cad.IntervalDays, lastRun: d.lastRun,
 		})
-		// Backup domains with a last-run query join the anacron catch-up set —
-		// only they can tell whether the last scheduled fire was actually covered
-		// by a success. job=="backup" is exactly the five per-domain backup specs
-		// (offsite/drills/tamper/digest/watchdog map to their own job labels).
+		// Backup entries with a last-run query join the catch-up, since only they
+		// can tell whether their last fire was covered by a success.
 		if job == "backup" && d.lastRun != nil {
 			s.catchUps = append(s.catchUps, catchUpEntry{domain: d.name, cadence: cad, lastRun: d.lastRun, id: id})
 		}
 		s.mu.Unlock()
 	}
 
-	// #121: register one cron entry per INCLUDED container/VM that carries a concrete
-	// per-item cadence override (only when the feature is on). Each fires on its OWN
-	// cadence and backs up just that item through the SAME batched machinery a domain
-	// run uses (aggregated Healthchecks + after-bulk prune/off-site), so off-site
-	// replication and retention still happen. Items without an override stay in the
-	// domain run above. A no-op when the feature is off.
 	if perItem {
 		if err := s.registerPerItemEntries(); err != nil {
 			return err
@@ -1934,13 +1464,12 @@ func (s *Scheduler) ReloadWithDueChecks(
 	return nil
 }
 
-// registerPerItemEntries adds a dedicated cron entry for every INCLUDED item whose
-// per-item override is a concrete cadence (#121). It is called only when the
-// feature is on and after the domain entries are registered. The item list is read
-// once here (not re-listed at fire time like the domain jobs), so a settings save —
-// which reloads the scheduler — is what picks up a newly added or newly overridden
-// item. A per-item entry re-checks the item still exists and is still included at
-// fire time, so a container removed or excluded between reloads is skipped cleanly.
+// registerPerItemEntries adds a cron entry for every included item whose override
+// is a concrete cadence. Each entry backs its item up through the same path as a
+// domain run (aggregated Healthchecks, then prune and off-site). The item lists
+// are read once here, so a new or changed override takes effect at the next
+// reload, which every settings save triggers. Each entry re-checks its item when
+// it fires and skips one that was removed or excluded since.
 func (s *Scheduler) registerPerItemEntries() error {
 	if s.listFn != nil {
 		targets, err := s.listFn()
@@ -2011,11 +1540,9 @@ func (s *Scheduler) registerPerItemEntries() error {
 	return nil
 }
 
-// addPerItemEntry registers one per-item cron entry (#121) and records it under the
-// domain's "backup" label so it surfaces in NextRuns like any other backup fire.
-// It is deliberately NOT added to the anacron catch-up set: per-item entries have
-// no per-item last-run query, so a missed override run is simply picked up on the
-// next fire (the domain catch-up still covers the domain-default items).
+// addPerItemEntry registers one per-item cron entry under the domain's "backup"
+// label so it shows in NextRuns. It does not join the catch-up set: there is no
+// per-item last-run query, so a missed run waits for the next fire.
 func (s *Scheduler) addPerItemEntry(spec, domain string, jobFn func()) error {
 	id, err := s.c.AddFunc(spec, func() {
 		log.Printf("schedule: running per-item %s job", domain)
@@ -2030,9 +1557,9 @@ func (s *Scheduler) addPerItemEntry(spec, domain string, jobFn func()) error {
 	return nil
 }
 
-// runContainerItem backs up a single container on its per-item cadence (#121)
-// through the same batched machinery a scheduled containers run uses. It re-lists
-// at fire time so a container removed or excluded since the last reload is skipped.
+// runContainerItem backs up one container on its own cadence through the same
+// path as a domain run. It re-reads the targets so that a container removed or
+// excluded since the last reload is skipped.
 func (s *Scheduler) runContainerItem(name string) {
 	targets, err := s.listFn()
 	if err != nil {
@@ -2047,7 +1574,7 @@ func (s *Scheduler) runContainerItem(name string) {
 		}
 	}
 	if one == nil || !one.IncludeInSchedule {
-		return // removed or excluded since the last reload
+		return
 	}
 	s.runAggregatedHC("containers", func() (int, int, []ItemFailure) {
 		return RunContainersJob([]store.Target{*one}, s.backup)
@@ -2060,7 +1587,7 @@ func (s *Scheduler) runContainerItem(name string) {
 	}
 }
 
-// runVMItem is the VM counterpart of runContainerItem (#121).
+// runVMItem is the VM counterpart of runContainerItem.
 func (s *Scheduler) runVMItem(name string) {
 	vms, err := s.listVMsFn()
 	if err != nil {
@@ -2075,7 +1602,7 @@ func (s *Scheduler) runVMItem(name string) {
 		}
 	}
 	if one == nil || !one.IncludeInSchedule {
-		return // removed or excluded since the last reload
+		return
 	}
 	s.runAggregatedHC("vms", func() (int, int, []ItemFailure) {
 		return RunVMsJob([]store.VMTarget{*one}, s.backupVM)
@@ -2088,15 +1615,9 @@ func (s *Scheduler) runVMItem(name string) {
 	}
 }
 
-// runFileSetItem is the file-set counterpart of runContainerItem (#199): one
-// set's own scheduled fire.
-//
-// It keys on the stable ID rather than the name, which is the one place this
-// differs from its two siblings. A file set can be renamed without losing its
-// run history (runs.target_id references file_sets.id), so a name captured at
-// registration time can go stale between scheduler reloads while the ID cannot.
-// The list is re-read at fire time and the set re-checked, so a set deleted or
-// switched off since the last reload is skipped rather than backed up.
+// runFileSetItem is the file-set counterpart of runContainerItem. It looks the
+// set up by ID rather than name, because a set can be renamed between reloads
+// without losing its run history.
 func (s *Scheduler) runFileSetItem(id string) {
 	sets, err := s.listFileSetsFn()
 	if err != nil {
@@ -2111,7 +1632,7 @@ func (s *Scheduler) runFileSetItem(id string) {
 		}
 	}
 	if one == nil || !one.Enabled {
-		return // removed or switched off since the last reload
+		return
 	}
 	s.runAggregatedHC("files", func() (int, int, []ItemFailure) {
 		return RunFilesJob([]store.FileSet{*one}, s.backupFiles)
@@ -2124,22 +1645,14 @@ func (s *Scheduler) runFileSetItem(id string) {
 	}
 }
 
-// CatchUpMissed runs, once, every enabled backup domain that MISSED its most
-// recent scheduled fire while the app was down (anacron-style): a home server
-// that is off overnight simply never sees its "daily 03:00" trigger, so the
-// backup silently ages until the RPO indicator goes red. Call it once shortly
-// after startup (main.go delays it a couple of minutes so the array/Docker are
-// up); it compares each domain's last scheduled fire (Cadence.LastFire) with
-// its last successful backup and, when the fire was missed (missedRun), invokes
-// the SAME wrapped cron job a real fire would run — including its
-// SkipIfStillRunning guard, so a concurrent scheduled run is never doubled, and
-// the run records/notifies exactly like a normal scheduled run (no new run
-// kinds). Domains run sequentially on the caller's goroutine: at boot the box
-// is busy enough without five concurrent repo jobs.
+// CatchUpMissed runs, once, every backup domain that missed its most recent fire
+// while the app was down, as anacron does for a server that is off overnight. A
+// missed domain (see missedRun) runs through the same wrapped cron job a real
+// fire uses, so SkipIfStillRunning still applies and the run records and
+// notifies as usual. Domains run one after another on the caller's goroutine.
 //
-// It returns the domains it caught up (for tests/logging). Deliberately NOT
-// re-run after a settings reload: editing a schedule must not surprise the user
-// with an immediate backup.
+// Call it once shortly after startup, not after a reload, so that editing a
+// schedule does not start a backup. It returns the domains it ran.
 func (s *Scheduler) CatchUpMissed(now time.Time) []string {
 	s.mu.Lock()
 	pending := make([]catchUpEntry, len(s.catchUps))
@@ -2159,7 +1672,7 @@ func (s *Scheduler) CatchUpMissed(now time.Time) []string {
 		}
 		entry := s.c.Entry(e.id)
 		if entry.WrappedJob == nil {
-			continue // entry vanished under a concurrent Reload — its fresh set will judge again
+			continue // removed by a concurrent reload
 		}
 		log.Printf("schedule: catching up missed %s backup (last fire %s, last success %s)",
 			e.domain, lastFire.Format(time.RFC3339), last.Format(time.RFC3339))
@@ -2177,23 +1690,18 @@ type drillTask struct {
 	kind   string
 }
 
-// drillTasks returns the scheduled drill tasks for the current settings: a local
-// "subset" integrity check for every enabled domain, plus a real off-site "dr"
-// drill for containers, VMs, flash and files when their off-site repo is
-// configured (a file-set snapshot is as cheap to sandbox-restore as a flash one).
-// config is intentionally excluded from DR drills — a sandbox restore of
-// BombVault's own settings DB is meaningless (its real recovery path is the
-// in-place staged restart); it still gets the local subset integrity check like
-// every other domain.
+// drillTasks returns the scheduled drill tasks: a local "subset" integrity check
+// for every enabled domain, plus an off-site "dr" drill for containers, VMs,
+// flash and files when their off-site repo is configured. Config gets no DR
+// drill, because a sandbox restore of the settings DB proves nothing; its real
+// recovery path is the staged restart.
 func drillTasks(settings store.Settings) []drillTask {
 	var out []drillTask
 	for _, d := range enabledDrillDomains(settings) {
 		out = append(out, drillTask{domain: d, source: "local", kind: "subset"})
 	}
-	// The scheduled off-site DR drills are gated behind OffsiteDrillsEnabled: they
-	// re-download the whole off-site snapshot each run (egress cost on metered
-	// clouds), so the user can opt out of them while keeping the free local subset
-	// integrity check above and running the off-site DR check manually (#37).
+	// An off-site DR drill downloads a whole snapshot, which costs egress on
+	// metered clouds, so these have their own switch.
 	if settings.OffsiteDrillsEnabled {
 		if settings.ContainersEnabled && settings.ContainersOffsite != "" {
 			out = append(out, drillTask{domain: "containers", source: "offsite", kind: "dr"})
@@ -2211,9 +1719,8 @@ func drillTasks(settings store.Settings) []drillTask {
 	return out
 }
 
-// enabledDrillDomains returns the domains a scheduled restore-verification drill
-// should run against: each domain switched on in Settings. A disabled domain has
-// no (current) backups worth drilling, so it is skipped.
+// enabledDrillDomains returns each domain switched on in Settings. A disabled
+// domain has no current backups to drill.
 func enabledDrillDomains(settings store.Settings) []string {
 	var out []string
 	if settings.ContainersEnabled {
@@ -2235,9 +1742,8 @@ func enabledDrillDomains(settings store.Settings) []string {
 }
 
 // immutableOffsiteDomains returns the domains whose off-site repo is flagged
-// immutable (append-only) — the domains a scheduled tamper test should verify. A
-// domain without the flag has nothing to prove (BombVault never claimed it was
-// protected), so it is skipped.
+// immutable, which the tamper test verifies. BombVault never claimed an
+// unflagged repo was protected, so there is nothing to test there.
 func immutableOffsiteDomains(settings store.Settings) []string {
 	var out []string
 	if settings.ContainersOffsiteImmutable {
@@ -2258,13 +1764,9 @@ func immutableOffsiteDomains(settings store.Settings) []string {
 	return out
 }
 
-// runAggregatedHC runs a scheduled per-domain item loop bracketed by a single
-// Healthchecks /start (before the first item) and success/fail (after the last) ping
-// when the aggregator is wired (SetHealthchecksAggregator). run performs the loop and
-// returns (attempted, failed, failures). When the aggregator is not wired it just runs
-// the loop — no pings — so container-only callers and the schedule package's tests are
-// unchanged. The failures list is threaded to hcRunFinish so the summary notification
-// can name which items failed and why (#64).
+// runAggregatedHC runs a scheduled item loop between one Healthchecks start ping
+// and one result ping, when SetHealthchecksAggregator has wired them. run returns
+// the attempted and failed counts and the failures for the summary notification.
 func (s *Scheduler) runAggregatedHC(domain string, run func() (attempted, failed int, failures []ItemFailure)) {
 	if s.hcRunStart != nil {
 		s.hcRunStart(domain)
@@ -2275,16 +1777,11 @@ func (s *Scheduler) runAggregatedHC(domain string, run func() (attempted, failed
 	}
 }
 
-// RunContainersJob backs up each target that has IncludeInSchedule=true,
-// calling backupFn sequentially. Errors from individual containers are logged
-// but do not abort the remaining containers. It returns how many targets were
-// attempted (IncludeInSchedule=true), how many of those failed, and the per-item
-// failures (name + reason) — so a scheduled run can aggregate the outcome into a
-// single Healthchecks ping (see runAggregatedHC) and name the failed containers
-// in the summary notification (#64).
-//
-// This function is exported so tests can invoke the job synchronously without
-// waiting for real wall-clock time.
+// RunContainersJob backs up each target with IncludeInSchedule set, one after
+// another. A failing container is logged and does not stop the rest. It returns
+// the attempted and failed counts and the failures, which feed the aggregated
+// Healthchecks ping and the summary notification. It is exported so tests can
+// run the job synchronously.
 func RunContainersJob(targets []store.Target, backupFn BackupFunc) (attempted, failed int, failures []ItemFailure) {
 	for _, t := range targets {
 		if !t.IncludeInSchedule {
@@ -2300,12 +1797,7 @@ func RunContainersJob(targets []store.Target, backupFn BackupFunc) (attempted, f
 	return attempted, failed, failures
 }
 
-// RunVMsJob backs up each VM target that has IncludeInSchedule=true, calling
-// backupFn sequentially. As with RunContainersJob, an individual VM failure is
-// logged but does not abort the remaining VMs, and it returns the attempted/failed
-// counts plus the per-item failures for Healthchecks and summary aggregation.
-// Exported so tests can invoke the job synchronously without waiting for real
-// wall-clock time.
+// RunVMsJob is RunContainersJob for VM targets.
 func RunVMsJob(vms []store.VMTarget, backupFn BackupFunc) (attempted, failed int, failures []ItemFailure) {
 	for _, v := range vms {
 		if !v.IncludeInSchedule {
@@ -2321,14 +1813,9 @@ func RunVMsJob(vms []store.VMTarget, backupFn BackupFunc) (attempted, failed int
 	return attempted, failed, failures
 }
 
-// RunFilesJob backs up each file set that is Enabled, calling backupFn
-// sequentially with the set's stable ID (not its name — run attribution keys on
-// file_sets.id, which survives renames). As with RunVMsJob, an individual set
-// failure is logged but does not abort the remaining sets, and it returns the
-// attempted/failed counts plus the per-item failures for Healthchecks and summary
-// aggregation. The failure is named by the set's human Name (not its ID) so the
-// summary reads naturally. Exported so tests can invoke the job synchronously
-// without waiting for real wall-clock time.
+// RunFilesJob is RunContainersJob for enabled file sets. backupFn receives the
+// set's ID, which survives renames, while failures are reported under the set's
+// name.
 func RunFilesJob(sets []store.FileSet, backupFn BackupFunc) (attempted, failed int, failures []ItemFailure) {
 	for _, fs := range sets {
 		if !fs.Enabled {

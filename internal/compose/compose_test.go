@@ -38,8 +38,6 @@ func TestParseDependsOnEncodings(t *testing.T) {
 	}
 }
 
-// StartOrder must place every dependency before the nodes that depend on it, for a
-// db <- app <- web chain given in a scrambled input order.
 func TestStartOrderDependenciesFirst(t *testing.T) {
 	services := []string{"web", "app", "db"}
 	deps := [][]string{{"app"}, {"db"}, nil}
@@ -54,8 +52,8 @@ func TestStartOrderDependenciesFirst(t *testing.T) {
 	}
 }
 
-// A dependency cycle must not hang or drop nodes: every node is still returned
-// exactly once (cycle members appended in original order).
+// TestStartOrderCycleFallsBack checks that a cycle neither hangs nor drops
+// nodes.
 func TestStartOrderCycleFallsBack(t *testing.T) {
 	services := []string{"a", "b"}
 	deps := [][]string{{"b"}, {"a"}} // a<->b cycle
@@ -72,10 +70,8 @@ func TestStartOrderCycleFallsBack(t *testing.T) {
 	}
 }
 
-// A depends_on that names a service outside the set produces no edge (it is
-// ignored), and a shared service name resolves to every matching node.
 func TestDepGraphExternalAndReplicaEdges(t *testing.T) {
-	// two "db" replicas (0,1), one "app" (2) depending on db and on an out-of-set svc.
+	// two db replicas and an app that also depends on a service outside the set
 	services := []string{"db", "db", "app"}
 	deps := [][]string{nil, nil, {"db", "external"}}
 	g := compose.DepGraph(services, deps)

@@ -5,15 +5,12 @@ import (
 	"testing"
 )
 
-// "Not initialised yet", "the server refused you" and "the server never
-// answered" are different answers, and restic's wrapper text does not
-// distinguish them: it prefixes "unable to open config file" onto every failure
-// to read the config.
-//
-// The rest-server messages are verbatim from restic 0.17.3 against a real
-// rest-server started with --private-repos and an htpasswd file, the transport
-// failures verbatim from the same restic against a name that does not resolve
-// and a port with nothing listening.
+// restic prefixes "unable to open config file" onto every failure to read the
+// config, so its wrapper text does not tell an empty repository from a refused
+// login or a server that never answered. The rest-server messages are verbatim
+// from restic 0.17.3 against a server running --private-repos with an htpasswd
+// file, the transport failures from the same restic against an unresolvable
+// name and a port with nothing listening.
 func TestIsRepoUninitializedTellsRefusalFromEmptiness(t *testing.T) {
 	for _, tc := range []struct {
 		name string
@@ -21,28 +18,25 @@ func TestIsRepoUninitializedTellsRefusalFromEmptiness(t *testing.T) {
 		want bool
 	}{
 		{
-			// The only genuine case: credentials accepted, no repository there.
 			name: "right password, no repository yet",
 			msg:  "Fatal: repository does not exist: unable to open config file: <config/> does not exist",
 			want: true,
 		},
 		{
-			// Wrong password. "Reachable, not initialized" would read as
-			// "your destination is fine, just empty".
+			// "Reachable, not initialized" would tell the user the destination
+			// is fine, just empty.
 			name: "wrong password",
 			msg:  "Fatal: unable to open config file: unexpected HTTP response (401): 401 Unauthorized",
 			want: false,
 		},
 		{
-			// Right password, but the URL's first path segment is not the
-			// htpasswd user, which --private-repos refuses. Same misleading
-			// result, and one of the two commonest setup mistakes.
+			// --private-repos refuses a URL whose first path segment is not the
+			// htpasswd user, even with the right password.
 			name: "private-repos path belongs to another user",
 			msg:  "Fatal: unable to open config file: unexpected HTTP response (401): 401 Unauthorized",
 			want: false,
 		},
 		{
-			// The same shape from an S3-style backend.
 			name: "forbidden",
 			msg:  "unable to open config file: AccessDenied: 403 Forbidden",
 			want: false,
@@ -65,8 +59,7 @@ func TestIsRepoUninitializedTellsRefusalFromEmptiness(t *testing.T) {
 			want: true,
 		},
 		{
-			// A local repository that was never initialised: no transport, no
-			// status code, still genuinely empty.
+			// A local repository that was never initialised is genuinely empty.
 			name: "local path with no repository",
 			msg:  "Fatal: unable to open config file: stat /mnt/user/backups/config: no such file or directory",
 			want: true,

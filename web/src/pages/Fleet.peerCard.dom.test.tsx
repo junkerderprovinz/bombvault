@@ -1,15 +1,6 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// Issue #179 (manilx): "Have to open it every time. Collapsed not a lot of info
-// is shown."
-//
-// The scorecard IS the peer card's content — collapsed, a card shows little more
-// than a name and a URL — so the open state is remembered per browser instead of
-// resetting to closed on every visit.
-//
-// The screenshots on that issue also carry a second, unreported defect: the
-// version read "vv8.0.0+main.e3db401". The value already carries its own "v".
-// ---------------------------------------------------------------------------
+// The scorecard is most of what a peer card shows, so its open state is
+// remembered per browser. The peer version already carries its own "v".
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { I18nProvider, en } from "../lib/i18n";
@@ -84,7 +75,6 @@ describe("fleet peer card", () => {
     expect(scorecardVisible()).toBe(true);
     expect(localStorage.getItem("bombvault.fleetDetailsOpen")).toBe("1");
 
-    // The whole point of the issue: come back and it is still open.
     cleanup();
     await renderFleet();
     expect(scorecardVisible()).toBe(true);

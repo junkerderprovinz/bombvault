@@ -10,18 +10,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/model"
 )
 
-// resolveAppdataPaths must treat a Docker named-volume mount (Type=="volume")
-// as persistent data unconditionally — a named volume has no equivalent of a
-// throwaway bind mount, so unlike a bind source it is never filtered by an
-// "appdata" path segment. This is the fix for the majority case on non-Unraid
-// hosts: a container using Docker Compose named volumes previously produced
-// ZERO discovered data paths (#platform-expansion, direction 4/4, Task 2).
-
-// TestResolveAppdataPathsIncludesNamedVolumeUnconditionally is the failing
-// test that pins the fix: a volume mount whose resolved host path has NO
-// "appdata" segment (unlike every bind case below) must still be included,
-// proving the volume branch is genuinely unconditional and not just a second
-// segment to match against.
+// TestResolveAppdataPathsIncludesNamedVolumeUnconditionally: a named volume
+// has no throwaway counterpart the way a bind mount does, so it counts as data
+// even without an "appdata" segment in its path.
 func TestResolveAppdataPathsIncludesNamedVolumeUnconditionally(t *testing.T) {
 	s := svcWithMount()
 	in := model.Inspect{Mounts: []model.Mount{
@@ -34,11 +25,7 @@ func TestResolveAppdataPathsIncludesNamedVolumeUnconditionally(t *testing.T) {
 	}
 }
 
-// TestResolveAppdataPathsBindMountBehaviorUnchanged pins the EXISTING Unraid
-// bind-mount behavior byte-for-byte before/after the volume branch is added:
-// an appdata-segment bind is translated and kept, a non-appdata bind is
-// dropped. This is the regression guard for "do not touch bind-mount logic".
-func TestResolveAppdataPathsBindMountBehaviorUnchanged(t *testing.T) {
+func TestResolveAppdataPathsBindMounts(t *testing.T) {
 	s := svcWithMount()
 
 	t.Run("appdata bind is translated and kept", func(t *testing.T) {
@@ -63,9 +50,6 @@ func TestResolveAppdataPathsBindMountBehaviorUnchanged(t *testing.T) {
 	})
 }
 
-// TestResolveAppdataPathsVolumeAndBindBothIncluded: a container with one
-// appdata bind AND one named volume gets BOTH as backup paths — the volume
-// branch is additive, not a replacement for bind discovery.
 func TestResolveAppdataPathsVolumeAndBindBothIncluded(t *testing.T) {
 	s := svcWithMount()
 	in := model.Inspect{Mounts: []model.Mount{
@@ -87,9 +71,6 @@ func TestResolveAppdataPathsVolumeAndBindBothIncluded(t *testing.T) {
 	}
 }
 
-// TestResolveAppdataPathsVolumeDedupedAgainstBind: a volume mount resolving to
-// the SAME container path as an already-recorded bind must not be listed
-// twice — the volume branch shares the bind branch's dedup ("seen") set.
 func TestResolveAppdataPathsVolumeDedupedAgainstBind(t *testing.T) {
 	s := svcWithMount()
 	in := model.Inspect{Mounts: []model.Mount{
@@ -102,10 +83,8 @@ func TestResolveAppdataPathsVolumeDedupedAgainstBind(t *testing.T) {
 	}
 }
 
-// TestResolveAppdataPathsVolumeSkippedWhenUnresolved: a volume mount the
-// daemon reported with no Source (and dockercli's VolumeInspect fallback also
-// could not resolve it) must be skipped, not turned into a phantom empty-path
-// entry — mirrors how an empty-Source bind is already skipped.
+// TestResolveAppdataPathsVolumeSkippedWhenUnresolved: an empty Source means
+// neither the daemon nor dockercli's VolumeInspect could resolve the volume.
 func TestResolveAppdataPathsVolumeSkippedWhenUnresolved(t *testing.T) {
 	s := svcWithMount()
 	in := model.Inspect{Mounts: []model.Mount{
@@ -117,17 +96,9 @@ func TestResolveAppdataPathsVolumeSkippedWhenUnresolved(t *testing.T) {
 	}
 }
 
-// TestResolveAppdataPathsRealFallbackFolderIncluded exercises the actual
-// last-resort branch end to end: no bind/volume matches anything, but a REAL
-// directory sits at the platform's conventional appdata path (Unraid's fixed
-// "/mnt/user/appdata/<name>" literal, translated through HostSourceRoot/
-// HostMountRoot) and os.Stat finds it. Every other test in this file that
-// reaches the fallback (e.g. "non-appdata bind ... no fallback folder
-// exists" above) only exercises the os.Stat-FAILS side, because their
-// translated candidate never exists on the machine running the test. This is
-// the one that actually creates the folder and confirms the OK side, which
-// is also the branch platform.Platform.AppdataFallback's return value feeds
-// into — the fallback this whole package now goes through.
+// TestResolveAppdataPathsRealFallbackFolderIncluded: when no mount matches,
+// the platform's conventional appdata folder is used if it exists. The other
+// tests only reach this fallback with the folder missing.
 func TestResolveAppdataPathsRealFallbackFolderIncluded(t *testing.T) {
 	root := t.TempDir()
 	s := &Service{cfg: config.Config{
@@ -149,11 +120,9 @@ func TestResolveAppdataPathsRealFallbackFolderIncluded(t *testing.T) {
 	}
 }
 
-// TestResolveAppdataPathsVolumeUnreachableHostPathSkipped: a volume mount whose
-// resolved host path is not reachable through the configured host mount (e.g.
-// Docker's default /var/lib/docker/volumes/... when HostSourceRoot is /mnt)
-// goes through the SAME containment check as a bind source and is silently
-// skipped, not force-included.
+// TestResolveAppdataPathsVolumeUnreachableHostPathSkipped: a volume skips the
+// segment filter but not the containment check, so one outside the host mount
+// is skipped like a bind.
 func TestResolveAppdataPathsVolumeUnreachableHostPathSkipped(t *testing.T) {
 	s := svcWithMount()
 	in := model.Inspect{Mounts: []model.Mount{
@@ -165,14 +134,6 @@ func TestResolveAppdataPathsVolumeUnreachableHostPathSkipped(t *testing.T) {
 	}
 }
 
-// --- Task 3: configurable data-root segments + compose-label discovery + ---
-// --- per-container override (#platform-expansion, direction 4/4, Task 3) ---
-
-// TestResolveAppdataPathsConfigurableSegmentMatches: a bind whose host source
-// matches a NON-default configured segment (e.g. "config", for a
-// /srv/plex/config-style layout) must be included even though it has no
-// "appdata" segment at all — proving the single hardcoded literal was
-// replaced by a loop over s.cfg.DataRootSegments, not just widened in place.
 func TestResolveAppdataPathsConfigurableSegmentMatches(t *testing.T) {
 	s := svcWithMount()
 	s.cfg.DataRootSegments = []string{"appdata", "config"}
@@ -187,14 +148,9 @@ func TestResolveAppdataPathsConfigurableSegmentMatches(t *testing.T) {
 }
 
 // TestResolveAppdataPathsComposeWorkingDirBelongsToTheStack: the compose
-// working_dir is NOT a per-member path. It used to be added to every member,
-// which stored one copy (restic deduplicates) but re-read and re-hashed the
-// whole project folder once per service — invisible in the size column, very
-// visible in CPU, and the cause of issue #189's slower container backups.
-//
-// It is backed up once per project instead (stack_backup.go). This pins both
-// halves: the member no longer carries it, and stackDirFor still finds it, so
-// "moved" cannot silently become "lost".
+// project directory is backed up once per stack (stack_backup.go). Adding it
+// to every member would re-read and re-hash it once per service. stackDirFor
+// has to find it instead.
 func TestResolveAppdataPathsComposeWorkingDirBelongsToTheStack(t *testing.T) {
 	s := svcWithMount()
 	in := model.Inspect{
@@ -203,7 +159,7 @@ func TestResolveAppdataPathsComposeWorkingDirBelongsToTheStack(t *testing.T) {
 			"com.docker.compose.project.working_dir": "/mnt/opt/stacks/myapp",
 		}},
 		Mounts: []model.Mount{
-			// Non-matching bind (no configured segment) — must stay excluded.
+			// No configured segment, so excluded.
 			{Type: "bind", Source: "/mnt/data/media", Destination: "/media"},
 		},
 	}
@@ -223,10 +179,6 @@ func TestResolveAppdataPathsComposeWorkingDirBelongsToTheStack(t *testing.T) {
 	}
 }
 
-// TestStackDirForIgnoresNonComposeAndUnreachable: a container that is not part
-// of a compose project has no stack directory, and neither does one whose
-// project folder lies outside the host mount — the same containment rule every
-// other path obeys, rather than a guess at where it might be.
 func TestStackDirForIgnoresNonComposeAndUnreachable(t *testing.T) {
 	s := svcWithMount()
 
@@ -253,11 +205,9 @@ func TestStackDirForIgnoresNonComposeAndUnreachable(t *testing.T) {
 	}
 }
 
-// TestResolveAppdataPathsBombvaultDataLabelOverridesSegmentFilter: a
-// container carrying a truthy "bombvault.data" label gets ALL of its bind
-// mounts included, regardless of segment match — the documented escape hatch
-// for a layout neither the segment filter nor the compose convention catches.
-// An explicit "false" value must NOT trigger the override (falsy pin).
+// TestResolveAppdataPathsBombvaultDataLabelOverridesSegmentFilter: the
+// bombvault.data label is the documented way to include every bind of a
+// container whose layout the segment filter and the compose label both miss.
 func TestResolveAppdataPathsBombvaultDataLabelOverridesSegmentFilter(t *testing.T) {
 	in := func(labelVal string, present bool) model.Inspect {
 		labels := map[string]string{}
@@ -298,13 +248,10 @@ func TestResolveAppdataPathsBombvaultDataLabelOverridesSegmentFilter(t *testing.
 	})
 }
 
-// TestResolveAppdataPathsDefaultSegmentsUnchanged is the regression pin: with
-// DATA_ROOT_SEGMENTS UNSET, config.Load's default DataRootSegments (["appdata"])
-// must reproduce the exact pre-Task-3 Unraid-only-appdata-segment behavior
-// byte-for-byte — an appdata bind is kept, a non-appdata bind is dropped, same
-// as TestResolveAppdataPathsBindMountBehaviorUnchanged pins directly against
-// the (now removed) hardcoded literal.
-func TestResolveAppdataPathsDefaultSegmentsUnchanged(t *testing.T) {
+// TestResolveAppdataPathsDefaultSegments runs on config.Load's defaults rather
+// than the svcWithMount fixture: with DATA_ROOT_SEGMENTS unset, only binds with
+// an appdata segment are kept.
+func TestResolveAppdataPathsDefaultSegments(t *testing.T) {
 	cfg, err := config.Load(map[string]string{"APP_KEY": strings.Repeat("a", 64)})
 	if err != nil {
 		t.Fatalf("config.Load: %v", err)
@@ -312,9 +259,6 @@ func TestResolveAppdataPathsDefaultSegmentsUnchanged(t *testing.T) {
 	if len(cfg.DataRootSegments) != 1 || cfg.DataRootSegments[0] != "appdata" {
 		t.Fatalf("default DataRootSegments = %v, want [\"appdata\"] (unset DATA_ROOT_SEGMENTS regression guard)", cfg.DataRootSegments)
 	}
-	// config.Load's real defaults for HostSourceRoot/HostMountRoot happen to
-	// equal the Unraid-shaped svcWithMount fixture, so this exercises the
-	// production default end to end, not just the test fixture's shortcut.
 	s := &Service{cfg: cfg}
 
 	in := model.Inspect{Mounts: []model.Mount{

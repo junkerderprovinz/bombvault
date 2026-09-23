@@ -1,13 +1,7 @@
-// Package progress carries live backup/restore/replicate progress from the
-// restic layer (which reports a percentage as it streams) up to an SSE
-// endpoint that the SPA subscribes to. Three pieces:
-//
-//   - A context-carried Sink: restic.run pulls it from ctx and calls it with the
-//     current percentage, so no method signatures need a progress argument.
-//   - A context-carried CopySink: restic.Copy's counterpart to Sink, for
-//     `restic copy`'s different (per-snapshot, not whole-run) progress shape.
-//   - A Store: a tiny in-process pub/sub the API service publishes to and the
-//     SSE handler subscribes to, keyed per backup target.
+// Package progress carries live backup, restore and replication progress from
+// the restic layer to the SSE endpoint the web UI subscribes to. A Sink or
+// CopySink travels in the context, so restic calls need no progress argument,
+// and a Store fans the events out to subscribers.
 package progress
 
 import (
@@ -18,7 +12,6 @@ import (
 // Sink receives a 0..100 completion percentage for the in-flight restic command.
 type Sink func(percent float64)
 
-// ctxKey is the unexported context key for the Sink.
 type ctxKey struct{}
 
 // WithSink returns a context carrying fn so a downstream restic call can report
@@ -38,30 +31,19 @@ func SinkFrom(ctx context.Context) Sink {
 	return nil
 }
 
-// CopyProgress is one live update from a `restic copy` run (see restic.Copy):
-// SnapshotIndex is the 1-based index of the snapshot currently being copied
-// (restarting a fresh pack-copy count for each one — copy has no whole-run
-// total across snapshots) and Percent is that ONE snapshot's own 0..100
-// pack-copy completion, parsed straight from restic's real stdout. restic
-// itself never reports how many snapshots a run will touch in total; a
-// consumer that wants "snapshot k of N" phrasing supplies its own best-effort
-// N (see api.progBeginCopySink / restic.PendingCopyIDs) — CopyProgress only
-// carries what restic actually said.
+// CopyProgress is one update from `restic copy`. SnapshotIndex is the 1-based
+// snapshot being copied and Percent that snapshot's own completion. restic
+// reports no total across snapshots, so a caller that wants "k of N" has to
+// estimate N itself (restic.PendingCopyIDs).
 type CopyProgress struct {
 	SnapshotIndex int
 	Percent       float64
 }
 
-// CopySink receives live restic-copy progress (see CopyProgress). A separate
-// type from Sink (not a reuse of its plain float64 shape) because copy's
-// progress genuinely has an extra dimension — which snapshot of the batch —
-// that a single backup/restore run never does; the SAME ctx-carried-callback
-// PATTERN is reused (WithCopySink/CopySinkFrom mirror WithSink/SinkFrom
-// exactly), so restic.Copy needs no parallel plumbing to report progress
-// without a percent argument threaded through every signature.
+// CopySink receives restic copy progress. It is separate from Sink because
+// copy progress also says which snapshot it is on.
 type CopySink func(CopyProgress)
 
-// copySinkKey is the unexported context key for the CopySink.
 type copySinkKey struct{}
 
 // WithCopySink returns a context carrying fn so restic.Copy can report live
@@ -81,31 +63,17 @@ func CopySinkFrom(ctx context.Context) CopySink {
 	return nil
 }
 
-// Event is one progress update for a target. Key identifies the target
-// ("container:<name>", "vm:<name>", or "flash"); Phase is "backup", "restore",
-// "replicate" or "maintenance"; Percent is 0..100; Active is false on the
-// terminal event (finished/failed). StartedAt is the Unix-seconds timestamp
-// (time.Now().Unix()) the operation began, repeated on every event for the
-// same key — including the terminal one — so a client can render a live
-// elapsed duration for the whole run. Zero/omitted for older call sites that
-// predate this field; a client must treat 0 as "unknown", never as an actual
-// epoch second.
+// Event is one progress update for a target. Key is "container:<name>",
+// "vm:<name>", "flash" or "offsite:<domain>"; Phase is "backup", "restore",
+// "replicate" or "maintenance". Active is false on the final event. StartedAt
+// is the Unix time the run began, repeated on every event including the final
+// one so a client can show the elapsed time; 0 means unknown.
 //
-// SnapshotIndex/SnapshotTotal are set only for off-site replication
-// ("offsite:<domain>", Phase "replicate" — see api.copyToOffsiteTarget):
-// issue #159 asked for a percentage on off-site upload progress, and — despite
-// this feature's first cut concluding otherwise — restic copy DOES print real,
-// parseable progress on its stdout (a plain-text line, not --json: copy has no
-// JSON mode at all), it just needed RESTIC_PROGRESS_FPS wired up the same way
-// backup/restore already get it (see restic.Copy's doc comment for the whole
-// story). What restic copy genuinely does NOT report is a whole-run total
-// across multiple snapshots — each snapshot's pack-copy percentage restarts at
-// 0 — so Percent here is scoped to the CURRENT snapshot (SnapshotIndex, 1-based)
-// of an estimated SnapshotTotal (a best-effort candidate count the caller
-// computes itself; restic never reports one — see restic.PendingCopyIDs).
-// Both are 0/omitted whenever no live per-snapshot signal is available yet
-// (e.g. the initial tree-walk before the first pack is copied) or for every
-// other Phase, which never set them.
+// SnapshotIndex and SnapshotTotal are set only for off-site replication.
+// restic copy restarts its percentage for every snapshot, so Percent then
+// covers snapshot SnapshotIndex of SnapshotTotal, an estimate the caller
+// computes because restic reports no total. Both stay 0 until the first pack
+// is copied.
 type Event struct {
 	Key           string  `json:"key"`
 	Phase         string  `json:"phase"`
@@ -169,8 +137,8 @@ func (s *Store) Publish(e Event) {
 		select {
 		case ch <- e:
 		default:
-			// Slow subscriber — drop this frequent percent update rather than
-			// block the backup goroutine.
+			// Drop the update rather than block the backup on a slow
+			// subscriber.
 		}
 	}
 }

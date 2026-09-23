@@ -1,6 +1,8 @@
 package store
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"sort"
 	"time"
@@ -35,11 +37,18 @@ type VMTarget struct {
 	// first in ascending order; 0 (the default) is unordered and keeps the
 	// name-order tiebreak. Owned by SetVMBackupOrders (never reset by UpsertVMTarget).
 	BackupOrder int
+	// UUID is the VM's libvirt UUID, lower-cased and trimmed like
+	// virshcli.DomainInfo.UUID. Unraid keeps it across a rename, which makes it
+	// the rename signal for VMs. Empty means not yet known, since libvirt always
+	// assigns one; SetVMUUID backfills it.
+	UUID string
 }
 
 // UpsertVMTarget inserts or updates a VM target by name.
 // On conflict, method and definition are refreshed; id, created_at, and
 // include_in_schedule are preserved (include_in_schedule is owned by SetVMInclude).
+// uuid is refreshed only when the incoming value is non-empty, so a caller
+// that does not know the UUID cannot erase a stored one.
 // Returns the authoritative VMTarget (original ID when a conflict fires).
 func (r *Repo) UpsertVMTarget(t VMTarget) (VMTarget, error) {
 	if t.ID == "" {
@@ -56,12 +65,13 @@ func (r *Repo) UpsertVMTarget(t VMTarget) (VMTarget, error) {
 	}
 
 	_, err := r.db.Exec(`
-		INSERT INTO vms (id, name, method, include_in_schedule, definition, created_at, schedule_cadence, backup_order, repo, repo_chosen)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO vms (id, name, method, include_in_schedule, definition, created_at, schedule_cadence, backup_order, repo, repo_chosen, uuid)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(name) DO UPDATE SET
 		  method     = excluded.method,
-		  definition = excluded.definition`,
-		t.ID, t.Name, t.Method, boolInt(t.IncludeInSchedule), t.Definition, t.CreatedAt, t.ScheduleCadence, t.BackupOrder, t.Repo, t.RepoChosen,
+		  definition = excluded.definition,
+		  uuid       = CASE WHEN excluded.uuid <> '' THEN excluded.uuid ELSE vms.uuid END`,
+		t.ID, t.Name, t.Method, boolInt(t.IncludeInSchedule), t.Definition, t.CreatedAt, t.ScheduleCadence, t.BackupOrder, t.Repo, t.RepoChosen, t.UUID,
 	)
 	if err != nil {
 		return VMTarget{}, fmt.Errorf("UpsertVMTarget: %w", err)
@@ -72,15 +82,23 @@ func (r *Repo) UpsertVMTarget(t VMTarget) (VMTarget, error) {
 // GetVMTargetByName returns the VM target for the named domain.
 func (r *Repo) GetVMTargetByName(name string) (VMTarget, error) {
 	row := r.db.QueryRow(`
-		SELECT id, name, method, include_in_schedule, definition, created_at, schedule_cadence, backup_order, repo, repo_chosen
+		SELECT id, name, method, include_in_schedule, definition, created_at, schedule_cadence, backup_order, repo, repo_chosen, uuid
 		FROM vms WHERE name = ?`, name)
+	return scanVMTarget(row)
+}
+
+// GetVMTargetByID is GetTargetByID for VM entries.
+func (r *Repo) GetVMTargetByID(id string) (VMTarget, error) {
+	row := r.db.QueryRow(`
+		SELECT id, name, method, include_in_schedule, definition, created_at, schedule_cadence, backup_order, repo, repo_chosen, uuid
+		FROM vms WHERE id = ?`, id)
 	return scanVMTarget(row)
 }
 
 // ListVMTargets returns all known VM targets ordered by name.
 func (r *Repo) ListVMTargets() ([]VMTarget, error) {
 	rows, err := r.db.Query(`
-		SELECT id, name, method, include_in_schedule, definition, created_at, schedule_cadence, backup_order, repo, repo_chosen
+		SELECT id, name, method, include_in_schedule, definition, created_at, schedule_cadence, backup_order, repo, repo_chosen, uuid
 		FROM vms ORDER BY name`)
 	if err != nil {
 		return nil, fmt.Errorf("ListVMTargets: %w", err)
@@ -106,6 +124,20 @@ func (r *Repo) SetVMMethod(name, method string) error {
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
 		return fmt.Errorf("SetVMMethod: vm %q not found", name)
+	}
+	return nil
+}
+
+// SetVMUUID writes a VM's libvirt UUID, for backfilling a row whose UUID is
+// still empty from its saved domain XML. Like SetVMMethod it does not create a
+// missing row.
+func (r *Repo) SetVMUUID(name, uuid string) error {
+	res, err := r.db.Exec(`UPDATE vms SET uuid = ? WHERE name = ?`, uuid, name)
+	if err != nil {
+		return fmt.Errorf("SetVMUUID: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return fmt.Errorf("SetVMUUID: vm %q not found", name)
 	}
 	return nil
 }
@@ -138,30 +170,61 @@ func (r *Repo) SetVMInclude(name string, include bool) error {
 	return nil
 }
 
-// DeleteVMTarget removes a VM target and ALL its run history by name, in a
+// DeleteVMTarget removes a VM target and all its run history by name, in a
 // single transaction. It is a no-op (no error) if the target does not exist.
+// Like DeleteTarget it also deletes the VM aliases whose target_id is this row.
 func (r *Repo) DeleteVMTarget(name string) error {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return fmt.Errorf("DeleteVMTarget begin: %w", err)
 	}
+	defer tx.Rollback() //nolint:errcheck // no-op after Commit
+	var id string
+	hasRow := true
+	if err := tx.QueryRow(`SELECT id FROM vms WHERE name = ?`, name).Scan(&id); err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("DeleteVMTarget: read id: %w", err)
+		}
+		hasRow = false
+	}
 	if _, err := tx.Exec(
 		`DELETE FROM runs WHERE target_id IN (SELECT id FROM vms WHERE name = ?)`, name,
 	); err != nil {
-		tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
 		return fmt.Errorf("DeleteVMTarget runs: %w", err)
 	}
 	if _, err := tx.Exec(`DELETE FROM vms WHERE name = ?`, name); err != nil {
-		tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
 		return fmt.Errorf("DeleteVMTarget: %w", err)
 	}
-	return tx.Commit()
+	if hasRow {
+		if _, err := tx.Exec(`DELETE FROM target_aliases WHERE domain = 'vm' AND target_id = ?`, id); err != nil {
+			return fmt.Errorf("DeleteVMTarget aliases: %w", err)
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("DeleteVMTarget commit: %w", err)
+	}
+	return nil
+}
+
+// RenameVMTargetWithAlias is RenameTargetWithAlias for a VM entry, with the
+// definition the row had under oldName kept on the alias for an unlink or a
+// rename back to restore, and uuid, the libvirt UUID of newDefinition, stored
+// with it. Renamed back onto one of its own former names, the entry owns that
+// name again without a link time, so that alias is dropped.
+func (r *Repo) RenameVMTargetWithAlias(oldName, newName, newDefinition, uuid string) error {
+	return r.renameWithAlias(vmEntries, oldName, newName, newDefinition, uuid)
+}
+
+// UnlinkVMAlias is UnlinkAlias for a VM entry, reversing
+// RenameVMTargetWithAlias; uuid is the libvirt UUID of newDefinition.
+func (r *Repo) UnlinkVMAlias(oldName, newDefinition, uuid string) error {
+	return r.unlinkAlias(vmEntries, oldName, newDefinition, uuid)
 }
 
 func scanVMTarget(s scanner) (VMTarget, error) {
 	var t VMTarget
 	var include int
-	err := s.Scan(&t.ID, &t.Name, &t.Method, &include, &t.Definition, &t.CreatedAt, &t.ScheduleCadence, &t.BackupOrder, &t.Repo, &t.RepoChosen)
+	err := s.Scan(&t.ID, &t.Name, &t.Method, &include, &t.Definition, &t.CreatedAt, &t.ScheduleCadence, &t.BackupOrder, &t.Repo, &t.RepoChosen, &t.UUID)
 	if err != nil {
 		return VMTarget{}, fmt.Errorf("scanVMTarget: %w", err)
 	}

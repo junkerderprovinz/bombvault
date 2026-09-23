@@ -11,19 +11,15 @@ import (
 	"time"
 )
 
-// SetDrillLockTimingsForTest overrides the scheduled-drill bounded-wait timings
-// (drillLockWait/drillLockPoll) so external (api_test) tests can exercise the
-// wait/timeout paths without real multi-hour/second delays. It returns a restore
-// func to defer. Test-only: it lives in a _test.go file, so it is never compiled
-// into the production binary.
+// SetDrillLockTimingsForTest shortens the scheduled drill's lock wait and poll
+// interval so api_test tests can reach the timeout path quickly. It returns a
+// function that restores the old values.
 func SetDrillLockTimingsForTest(wait, poll time.Duration) (restore func()) {
 	oldWait, oldPoll := drillLockWait, drillLockPoll
 	drillLockWait, drillLockPoll = wait, poll
 	return func() { drillLockWait, drillLockPoll = oldWait, oldPoll }
 }
 
-// TestDedupPaths verifies exact duplicates and paths nested under another are
-// dropped, so overlapping selections never archive a file twice.
 func TestDedupPaths(t *testing.T) {
 	in := []string{"/a/b", "/a/b", "/a/b/c", "/a/d", "/a/b/c/d"}
 	got := dedupPaths(in)
@@ -38,10 +34,8 @@ func TestDedupPaths(t *testing.T) {
 	}
 }
 
-// TestAddToTarNeverEscapes guards the archive-traversal hardening: a source path
-// OUTSIDE the mount root must NOT produce a "../"-prefixed tar entry (which would
-// write outside the target tree on extraction). Such a path is re-rooted at its
-// own base name instead.
+// A source path outside the mount root is archived under its base name, never
+// with a "../" prefix that would escape the target on extraction.
 func TestAddToTarNeverEscapes(t *testing.T) {
 	dir := t.TempDir()
 	root := filepath.Join(dir, "mount") // need not exist

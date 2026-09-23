@@ -38,8 +38,7 @@ func TestSetBackupPathsRoundTripAndUpsertPreserves(t *testing.T) {
 		t.Fatalf("selected paths not stored: %v", got.SelectedPaths)
 	}
 
-	// A subsequent backup-time UpsertTarget (which sets AppdataPaths/Definition)
-	// must NOT clobber the user's selection.
+	// A backup-time UpsertTarget keeps the user's selection.
 	if _, err := r.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/host/user/appdata/plex"}, Definition: "{}"}); err != nil {
 		t.Fatal(err)
 	}
@@ -77,8 +76,7 @@ func TestSetExcludesRoundTripAndUpsertPreserves(t *testing.T) {
 		t.Fatalf("excludes not stored: %v", got.Excludes)
 	}
 
-	// A subsequent backup-time UpsertTarget (which sets AppdataPaths/Definition)
-	// must NOT clobber the user's excludes (the ON CONFLICT omission).
+	// A backup-time UpsertTarget keeps the user's excludes.
 	if _, err := r.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/host/user/appdata/plex"}, Definition: "{}"}); err != nil {
 		t.Fatal(err)
 	}
@@ -97,9 +95,8 @@ func TestSetExcludesRoundTripAndUpsertPreserves(t *testing.T) {
 	}
 }
 
-// TestSetExcludeCachesRoundTripAndUpsertPreserves mirrors the excludes lifecycle
-// for the per-root CACHEDIR.TAG toggle (RESTIC-01, D-07): a root-to-bool JSON map
-// on the targets row, owned by SetExcludeCaches and never reset by Upsert.
+// ExcludeCaches, the per-root CACHEDIR.TAG toggle stored as a JSON map, has the
+// same lifecycle as the excludes.
 func TestSetExcludeCachesRoundTripAndUpsertPreserves(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -120,8 +117,7 @@ func TestSetExcludeCachesRoundTripAndUpsertPreserves(t *testing.T) {
 		t.Fatalf("exclude caches not stored: %v", got.ExcludeCaches)
 	}
 
-	// A subsequent backup-time UpsertTarget (which sets AppdataPaths/Definition)
-	// must NOT clobber the user's per-root toggles (the ON CONFLICT omission).
+	// A backup-time UpsertTarget keeps the per-root toggles.
 	if _, err := r.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/host/user/appdata/plex"}, Definition: "{}"}); err != nil {
 		t.Fatal(err)
 	}
@@ -130,8 +126,8 @@ func TestSetExcludeCachesRoundTripAndUpsertPreserves(t *testing.T) {
 		t.Fatalf("Upsert clobbered exclude caches: %v", got.ExcludeCaches)
 	}
 
-	// A row created before the column existed (a pre-v100 deployment) carries the
-	// schema default '{}' and must scan as an empty map without error.
+	// A row inserted without the column gets the schema default '{}' and scans
+	// as an empty map.
 	if _, err := db.Exec(`INSERT INTO targets (id, container_name, appdata_paths, created_at) VALUES ('legacy', 'legacyrow', '[]', 1)`); err != nil {
 		t.Fatal(err)
 	}
@@ -143,9 +139,8 @@ func TestSetExcludeCachesRoundTripAndUpsertPreserves(t *testing.T) {
 		t.Fatalf("never-set column should scan empty, got %v", legacy.ExcludeCaches)
 	}
 
-	// Re-setting the same logical map stores byte-identical JSON: encoding/json
-	// sorts map keys, so the stored column is deterministic regardless of the
-	// order the caller built the map in (idempotent whole-map replace).
+	// encoding/json sorts map keys, so the same map stores the same bytes
+	// however it was built.
 	again := map[string]bool{"/host/user/user/appdata/plex/custom": false, "/host/user/user/appdata/plex": true}
 	if err := r.SetExcludeCaches("plex", again); err != nil {
 		t.Fatalf("SetExcludeCaches again: %v", err)
@@ -203,9 +198,7 @@ func TestTargetIncludeToggle(t *testing.T) {
 	}
 }
 
-// TestTargetDefinitionRoundtrip verifies that the definition field is persisted
-// and retrieved correctly via both GetTargetByContainer and ListTargets, and
-// that a second upsert replaces the definition.
+// Unlike the user's settings, the definition is replaced by every upsert.
 func TestTargetDefinitionRoundtrip(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -222,7 +215,6 @@ func TestTargetDefinitionRoundtrip(t *testing.T) {
 		t.Fatalf("upsert with definition: %v", err)
 	}
 
-	// GetTargetByContainer must return the definition.
 	got, err := r.GetTargetByContainer("myapp")
 	if err != nil {
 		t.Fatalf("get: %v", err)
@@ -231,7 +223,6 @@ func TestTargetDefinitionRoundtrip(t *testing.T) {
 		t.Fatalf("definition mismatch: got %q want %q", got.Definition, def1)
 	}
 
-	// ListTargets must also return the definition.
 	list, err := r.ListTargets()
 	if err != nil {
 		t.Fatalf("list: %v", err)
@@ -240,7 +231,6 @@ func TestTargetDefinitionRoundtrip(t *testing.T) {
 		t.Fatalf("list definition mismatch: %+v", list)
 	}
 
-	// Second upsert must update the definition.
 	const def2 = `{"inspect":{"Image":"myapp:2.0"},"template_xml":"<xml2/>"}}`
 	if _, err := r.UpsertTarget(store.Target{
 		ContainerName: "myapp",
@@ -258,8 +248,6 @@ func TestTargetDefinitionRoundtrip(t *testing.T) {
 	}
 }
 
-// TestTargetDefinitionEmptyDefault verifies that a target upserted without a
-// definition has an empty Definition field (migration v2 DEFAULT ” applies).
 func TestTargetDefinitionEmptyDefault(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -282,10 +270,8 @@ func TestTargetDefinitionEmptyDefault(t *testing.T) {
 	}
 }
 
-// TestSetUpdateCheckRoundTripAndUpsertPreserves pins the "checked, up to date"
-// signal (v67): SetUpdateCheck stamps last_update_check/last_update_result on
-// the target, a backup-time UpsertTarget never resets it, and an unknown
-// container errors instead of silently stamping nothing.
+// A backup-time UpsertTarget keeps the update-check stamp, and stamping an
+// unknown container is an error rather than a silent no-op.
 func TestSetUpdateCheckRoundTripAndUpsertPreserves(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -307,7 +293,6 @@ func TestSetUpdateCheckRoundTripAndUpsertPreserves(t *testing.T) {
 		t.Fatalf("update check not stored: at=%d result=%q", got.LastUpdateCheck, got.LastUpdateResult)
 	}
 
-	// A subsequent backup-time UpsertTarget must NOT clobber the stamp.
 	if _, err := r.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/host/user/appdata/plex"}, Definition: "{}"}); err != nil {
 		t.Fatal(err)
 	}

@@ -13,8 +13,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// stage4Store opens a migrated on-disk SQLite store for the per-target monitoring
-// unit tests (mirrors the budget/tamper internal tests' setup).
+// stage4Store opens a migrated SQLite store in a temp directory.
 func stage4Store(t *testing.T) *store.Repo {
 	t.Helper()
 	db, err := store.Open(filepath.Join(t.TempDir(), "test.db"))
@@ -28,9 +27,6 @@ func stage4Store(t *testing.T) *store.Repo {
 	return store.New(db)
 }
 
-// TestCollectStatsSource pins the stage-3 carry-over fix: a per-target
-// "offsite:<id>" source must survive normalisation (it addresses the off-site
-// repo), not be clobbered to "local" as the old `source != "offsite"` compare did.
 func TestCollectStatsSource(t *testing.T) {
 	cases := []struct{ in, want string }{
 		{"local", "local"},
@@ -46,9 +42,8 @@ func TestCollectStatsSource(t *testing.T) {
 	}
 }
 
-// TestOffsiteStatSourceAndLatchKey pins the per-target source + latch-key helpers:
-// an empty (settings-synthesised) target samples under bare "offsite" so N=1 stays
-// byte-identical, and each destination gets a distinct latch key.
+// A target without an id, built from the settings, samples under the bare
+// "offsite" source. Each target gets its own latch key.
 func TestOffsiteStatSourceAndLatchKey(t *testing.T) {
 	if got := offsiteStatSource(""); got != "offsite" {
 		t.Fatalf("offsiteStatSource(\"\") = %q, want offsite", got)
@@ -64,13 +59,11 @@ func TestOffsiteStatSourceAndLatchKey(t *testing.T) {
 	}
 }
 
-// TestCheckOffsiteBudgetForTargetPerTargetLatch: each destination alarms on its
-// OWN size vs its OWN GrowthBudgetGB, latched independently — a second check of the
-// same destination while still over stays silent, while a different destination
-// over its budget still alarms.
+// Each target alarms on its own size against its own GrowthBudgetGB, and the
+// alarm latches per target.
 func TestCheckOffsiteBudgetForTargetPerTargetLatch(t *testing.T) {
 	st := stage4Store(t)
-	// Per-target size samples: both destinations are 2 GiB.
+	// Both targets hold 2 GiB.
 	for _, id := range []string{"t1", "t2"} {
 		if err := st.AddRepoStat(store.RepoStat{
 			Domain: "containers", Source: offsiteStatSource(id), At: 1700000000,
@@ -90,21 +83,20 @@ func TestCheckOffsiteBudgetForTargetPerTargetLatch(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t1 := store.OffsiteTarget{ID: "t1", Domain: "containers", GrowthBudgetGB: 1} // 2 GiB > 1 GiB
+	t1 := store.OffsiteTarget{ID: "t1", Domain: "containers", GrowthBudgetGB: 1}
 	t2 := store.OffsiteTarget{ID: "t2", Domain: "containers", GrowthBudgetGB: 1}
 	tHi := store.OffsiteTarget{ID: "t1", Domain: "containers", GrowthBudgetGB: 10}
 
 	svc.checkOffsiteBudgetForTarget(context.Background(), "containers", t1)
-	svc.checkOffsiteBudgetForTarget(context.Background(), "containers", t1) // still over → no second alarm
+	svc.checkOffsiteBudgetForTarget(context.Background(), "containers", t1)
 	if len(ssh.runs) != 1 {
 		t.Fatalf("t1 must alarm exactly once per crossing, got %d", len(ssh.runs))
 	}
-	svc.checkOffsiteBudgetForTarget(context.Background(), "containers", t2) // different destination → its own alarm
+	svc.checkOffsiteBudgetForTarget(context.Background(), "containers", t2)
 	if len(ssh.runs) != 2 {
 		t.Fatalf("t2 over its own budget must alarm independently, got %d", len(ssh.runs))
 	}
 
-	// A destination with a high budget (under it) never alarms, even sharing a domain.
 	ssh2 := &fakeHostSSH{}
 	svc2 := &Service{cfg: config.Config{AppKey: strings.Repeat("a", 64)}, store: st, ssh: ssh2, offsiteOverBudget: map[string]bool{}}
 	if err := svc2.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
@@ -126,14 +118,13 @@ func enableTarget(t *testing.T, st *store.Repo, domain, id string) {
 	}
 }
 
-// TestAggregateTamperWorstOf: N=1 (no target rows) delegates to LatestTamperTest;
-// with two destinations the domain is protected only when BOTH are, unproven when
-// any destination lacks a verdict, and its currency is the OLDEST verdict.
+// Without target rows the domain-wide verdict applies. With several targets
+// the domain is protected only when all are, has no verdict while any target
+// lacks one, and is dated by the oldest verdict.
 func TestAggregateTamperWorstOf(t *testing.T) {
 	st := stage4Store(t)
 	svc := &Service{cfg: config.Config{AppKey: strings.Repeat("a", 64)}, store: st}
 
-	// N=1: no target rows, one domain-wide verdict → delegates byte-identically.
 	if err := st.RecordTamperTest("containers", true, ""); err != nil {
 		t.Fatal(err)
 	}
@@ -142,7 +133,6 @@ func TestAggregateTamperWorstOf(t *testing.T) {
 		t.Fatalf("N=1 aggregate = (had=%v protected=%v at=%d), want protected", had, protected, at)
 	}
 
-	// Two enabled destinations, both protected → domain protected.
 	enableTarget(t, st, "vms", "t1")
 	enableTarget(t, st, "vms", "t2")
 	if err := st.RecordTamperTestForTarget("vms", "t1", true, ""); err != nil {
@@ -160,7 +150,6 @@ func TestAggregateTamperWorstOf(t *testing.T) {
 		t.Fatalf("currency must be the OLDEST verdict (%d), got %d", t1.At, at)
 	}
 
-	// Flip t2 to unprotected → domain no longer protected (worst-of).
 	if err := st.RecordTamperTestForTarget("vms", "t2", false, "accepted"); err != nil {
 		t.Fatal(err)
 	}
@@ -168,7 +157,6 @@ func TestAggregateTamperWorstOf(t *testing.T) {
 		t.Fatal("one unprotected destination must make the domain UNprotected")
 	}
 
-	// A destination with NO verdict → no protected claim at all.
 	enableTarget(t, st, "flash", "f1")
 	enableTarget(t, st, "flash", "f2")
 	if err := st.RecordTamperTestForTarget("flash", "f1", true, ""); err != nil {
@@ -180,14 +168,13 @@ func TestAggregateTamperWorstOf(t *testing.T) {
 	}
 }
 
-// TestRunTamperTestPerTargetWorstOf: with two off-site destinations — one that
-// refuses deletes (protected) and one that accepts them (unprotected) — the
-// aggregate verdict is worst-of (testable but NOT protected), and each
-// destination's verdict is recorded independently under its offsite_target_id.
+// One target refuses deletes and one accepts them. The domain verdict is
+// testable but not protected, and each target's verdict is recorded under its
+// own id.
 func TestRunTamperTestPerTargetWorstOf(t *testing.T) {
-	refuse := httptest.NewServer(deleteRecorder(http.StatusForbidden, new([]string))) // protected
+	refuse := httptest.NewServer(deleteRecorder(http.StatusForbidden, new([]string)))
 	defer refuse.Close()
-	accept := httptest.NewServer(deleteRecorder(http.StatusOK, new([]string))) // NOT protected
+	accept := httptest.NewServer(deleteRecorder(http.StatusOK, new([]string)))
 	defer accept.Close()
 
 	st := stage4Store(t)
@@ -217,14 +204,13 @@ func TestRunTamperTestPerTargetWorstOf(t *testing.T) {
 	}
 }
 
-// TestAggregateReplicationCurrencyWorstOf: N=1 delegates; with two destinations the
-// currency is the OLDEST successful copy, and a never-replicated destination makes
-// the domain not-current.
+// With several targets the domain is as current as its oldest successful copy,
+// and a target that never replicated makes it not current.
 func TestAggregateReplicationCurrencyWorstOf(t *testing.T) {
 	st := stage4Store(t)
 	svc := &Service{cfg: config.Config{AppKey: strings.Repeat("a", 64)}, store: st}
 
-	// N=1: no target rows, one domain-wide success.
+	// No target rows: the domain-wide run counts.
 	id, err := st.RecordOffsiteRun("containers", 5000)
 	if err != nil {
 		t.Fatal(err)
@@ -236,7 +222,6 @@ func TestAggregateReplicationCurrencyWorstOf(t *testing.T) {
 		t.Fatalf("N=1 currency = (at=%d ok=%v), want 5000/true", at, ok)
 	}
 
-	// Two destinations, both successful at different times → oldest wins.
 	enableTarget(t, st, "vms", "t1")
 	enableTarget(t, st, "vms", "t2")
 	id1, _ := st.RecordOffsiteRunForTarget("vms", "t1", 1000)
@@ -247,7 +232,6 @@ func TestAggregateReplicationCurrencyWorstOf(t *testing.T) {
 		t.Fatalf("worst-of currency = (at=%d ok=%v), want 1000/true (oldest)", at, ok)
 	}
 
-	// A never-replicated second destination → domain not current.
 	enableTarget(t, st, "flash", "f1")
 	enableTarget(t, st, "flash", "f2")
 	idf, _ := st.RecordOffsiteRunForTarget("flash", "f1", 3000)

@@ -13,23 +13,18 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestBackupRecordsFailedRunOnPreflightFault pins #64: a container backup that fails
-// at one of Backup's PRE-FLIGHT early-returns — before backup.BackupContainer (the
-// only place a failed run used to be recorded) is ever reached — must still record a
-// FAILED run carrying the real reason. This is what made BaukeZwart's report possible:
-// a domain-wide fault (repo mount lost / disk full / restic repo error) that begins
-// mid-batch trips these guards for every remaining container, and before this fix each
-// failure vanished — no run, nothing on the dashboard heatmap/history, and only a bare
-// "N failed" count in the notification. The failure must now be visible, per container.
+// TestBackupRecordsFailedRunOnPreflightFault: a backup that fails before
+// backup.BackupContainer runs still records a failed run with the reason. A
+// fault that hits the whole domain mid-batch (lost mount, full disk, broken
+// repository) fails every remaining container here, and each of those has to
+// show up in the run history.
 func TestBackupRecordsFailedRunOnPreflightFault(t *testing.T) {
 	cases := []struct {
 		name string
-		// seedRepo initialises the containers repo on disk so EnsureRepo passes (used
-		// by the inspect-fault case); when false EnsureRepo itself is the fault.
+		// seedRepo creates the repository so EnsureRepo passes.
 		seedRepo bool
-		// initErr fails the restic repo Init (simulates disk full / repo error at
-		// EnsureRepo); inspectErr fails docker.Inspect with a NON-NotFound daemon error
-		// (simulates the Docker socket vanishing) — only one is set per case.
+		// initErr fails restic init inside EnsureRepo. inspectErr is a daemon
+		// error other than NotFound, as when the Docker socket disappears.
 		initErr    error
 		inspectErr error
 		wantReason string // substring the recorded failed run's error must carry
@@ -87,15 +82,13 @@ func TestBackupRecordsFailedRunOnPreflightFault(t *testing.T) {
 				t.Fatal("expected Backup to fail on the injected fault")
 			}
 
-			// The orchestrator must never run for a pre-flight fault (no stop/start/create).
+			// A pre-flight fault must not stop, start or recreate anything.
 			for _, c := range d.calls {
 				if strings.HasPrefix(c, "stop:") || strings.HasPrefix(c, "start:") || strings.HasPrefix(c, "createAndStart:") {
 					t.Fatalf("unexpected orchestrator side effect after a pre-flight fault: %q (calls=%v)", c, d.calls)
 				}
 			}
 
-			// Exactly one run, and it is a FAILED run attributed to the target carrying
-			// the real reason — so the dashboard heatmap/history shows the red with a cause.
 			runs, err := st.ListRuns(10)
 			if err != nil {
 				t.Fatalf("ListRuns: %v", err)
@@ -120,9 +113,8 @@ func TestBackupRecordsFailedRunOnPreflightFault(t *testing.T) {
 	}
 }
 
-// TestBackupSuccessRecordsSingleRun guards against a double-record regression from the
-// #64 pre-flight finisher: a SUCCESSFUL backup must still record exactly ONE run (the
-// orchestrator's), never an extra failed row from the deferred pre-flight finisher.
+// TestBackupSuccessRecordsSingleRun: the deferred pre-flight finisher must not
+// add a failed run next to the orchestrator's successful one.
 func TestBackupSuccessRecordsSingleRun(t *testing.T) {
 	dir := t.TempDir()
 	cfg := config.Config{
@@ -138,8 +130,8 @@ func TestBackupSuccessRecordsSingleRun(t *testing.T) {
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
-	// Seed the repo so EnsureRepo passes; a stateless container (no appdata) makes it a
-	// definition-only backup that still records a successful run.
+	// A stateless container makes this a definition-only backup, which still
+	// records a run.
 	repo := filepath.Join(dir, "backups", "containers")
 	if err := os.MkdirAll(repo, 0o700); err != nil {
 		t.Fatal(err)

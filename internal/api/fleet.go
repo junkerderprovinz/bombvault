@@ -19,42 +19,18 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// ---------------------------------------------------------------------------
-// Fleet view — GET /api/fleet/status (self-gating, polled by OTHER instances)
-// + the CRUD/poll endpoints in fleet_handlers.go (session-protected) this
-// instance uses to watch its own list of peers.
-//
-// Read-only monitoring only: a peer's Fleet page can see another instance's
-// protection scorecard, never trigger an action on it. Two distinct tokens are
-// involved per peer relationship: THIS instance's own FleetToken (what OTHER
-// instances present to poll THIS instance, managed via POST/DELETE
-// /api/fleet/token) and the PEER's FleetToken (what THIS instance presents
-// when polling THAT peer, stored encrypted per-row in fleet_peers.token_enc).
-// Modeled closely on the receiver dashboard (received_repos): a named registry
-// row with a location + encrypted credential + last-check-verdict columns,
-// polled on a schedule, with a manual on-demand check too.
-// ---------------------------------------------------------------------------
-
-// fleetPollTimeout bounds a single peer status poll — a peer on the LAN or a
-// remote site should answer in well under this; a wedged/unreachable peer must
-// not hold up the sweep for every other peer.
+// fleetPollTimeout bounds one peer poll, so an unreachable peer does not hold
+// up the others.
 const fleetPollTimeout = 15 * time.Second
 
-// fleetResponseMax caps how much of a peer's response body is read — a
-// malicious or misbehaving peer answering with an unbounded body must not
-// exhaust memory on the polling side.
+// fleetResponseMax caps how much of a peer's response is read, so a peer that
+// sends an endless body cannot exhaust memory here.
 const fleetResponseMax = 1 << 20 // 1 MiB
 
-// fleetHTTPClient is the bounded HTTP client for peer status polls. Redirects
-// are not followed (a redirect is not the peer answering) and the timeout
-// backstops the per-request context, mirroring tamperHTTPClient. TLS
-// verification is skipped: every BombVault instance serves HTTPS off a
-// self-signed certificate scoped to loopback names (see the Dockerfile/
-// healthcheckAt), never one valid for its real LAN/WAN address, so a peer at
-// a real IP would otherwise always fail verification. This matches the
-// app's existing LAN-trust posture (the same InsecureSkipVerify choice
-// healthcheckAt already makes, and the "LAN trust model" /metrics already
-// documents) — the fleet token itself is still the real access control.
+// fleetHTTPClient polls peers. Redirects are not followed, since a redirect is
+// not the peer answering. TLS verification is off because every instance
+// serves a self-signed certificate for loopback names only; the fleet token is
+// the access control.
 var fleetHTTPClient = &http.Client{
 	Timeout: fleetPollTimeout,
 	CheckRedirect: func(*http.Request, []*http.Request) error {
@@ -65,42 +41,20 @@ var fleetHTTPClient = &http.Client{
 	},
 }
 
-// fleetStatusResponse is the JSON shape GET /api/fleet/status returns, and
-// what a peer poll decodes on the other side.
+// fleetStatusResponse is what GET /api/fleet/status returns and a peer poll
+// decodes. Domains has the shape of GET /api/status, so the Fleet page reuses
+// the dashboard's rendering.
 type fleetStatusResponse struct {
 	OK           bool                `json:"ok"`
 	InstanceName string              `json:"instanceName"`
 	Version      string              `json:"version"`
 	Domains      []DomainStatusEntry `json:"domains"`
-	// The shape stays interchangeable with GET /api/status, so a Fleet page can
-	// reuse the dashboard's rendering. Both dropped their `everythingSchedule`
-	// field together (#187): each DomainStatusEntry already reports whether the
-	// "Backup Everything" pass is what covers it, via CoveredBy.
 }
 
-// fleetTokenOK reports whether the request carries the stored fleet token, in
-// the X-Fleet-Token header. Constant-time compare; an EMPTY stored token always
-// fails (feature off = fail closed).
-//
-// THE ?token= QUERY FORM IS GONE, deliberately. It used to be accepted as a
-// fallback, and nothing ever used it: this instance's own peer poll
-// (peerStatus) and its mesh-offer sender both set the header, and they are the
-// only callers there are. What it did do is offer the one way this secret could
-// end up somewhere nobody controls. A URL is a poor container for a credential
-// even over TLS, because the transport is not where it leaks: it leaks into
-// browser history, into bookmarks, and above all into the access log of
-// whatever reverse proxy stands in front, which records the full request line
-// including the query. That was measured rather than assumed on 2026-09-07, in
-// this deployment's own proxy log.
-//
-// Encrypting the token would not have helped and is worth writing down so
-// nobody proposes it again: the connection is already encrypted, and a
-// ciphertext handed to a client IS the credential, replayable by anyone who
-// copies it. The fix for a secret in a URL is to take it out of the URL.
-//
-// The widget keeps a query form on its PAGE, and only there, because an
-// embedding iframe cannot set a header on the document request. Its data feed
-// does not: see widgetTokenOK.
+// fleetTokenOK reports whether the request carries the stored fleet token in
+// the X-Fleet-Token header. An empty stored token never matches. The token is
+// not accepted as a query parameter, because URLs end up in browser history
+// and in reverse proxy access logs.
 func fleetTokenOK(r *http.Request, stored string) bool {
 	if stored == "" {
 		return false
@@ -109,10 +63,8 @@ func fleetTokenOK(r *http.Request, stored string) bool {
 	return subtle.ConstantTimeCompare([]byte(got), []byte(stored)) == 1
 }
 
-// fleetGate loads settings and enforces the fleet token, mirroring widgetGate.
-// On success it returns the loaded settings (so the handler needs no second
-// read for InstanceName) and true; on failure it has already written the
-// refusal (503 on a store error, 403 on a missing/mismatched/absent token).
+// fleetGate loads the settings and checks the fleet token. On failure it has
+// already written the response: 503 on a store error, 403 on a bad token.
 func (h *Handler) fleetGate(w http.ResponseWriter, r *http.Request) (store.Settings, bool) {
 	s, err := h.store.GetSettings()
 	if err != nil {
@@ -127,17 +79,14 @@ func (h *Handler) fleetGate(w http.ResponseWriter, r *http.Request) (store.Setti
 	return s, true
 }
 
-// handleFleetStatus serves GET /api/fleet/status (X-Fleet-Token) — the read-only
-// protection-scorecard summary a peer's Fleet view polls. Same payload shape
-// as GET /api/status (DomainStatusEntry[]) plus this instance's name/version,
-// so a Fleet page can reuse the same rendering as the local dashboard.
+// handleFleetStatus serves the protection summary a peer's Fleet view polls.
+// It is read-only: a peer can see the scorecard but never act on it.
+// GET /api/fleet/status
 func (h *Handler) handleFleetStatus(w http.ResponseWriter, r *http.Request) {
 	s, ok := h.fleetGate(w, r)
 	if !ok {
 		return
 	}
-	// The token gate already read settings, so hand that row straight on rather
-	// than making DomainStatus fetch it again.
 	domains, err := h.svc.domainStatusFrom(s)
 	if err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": err.Error()})
@@ -151,9 +100,8 @@ func (h *Handler) handleFleetStatus(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// decryptFleetPeerToken decrypts a stored peer's token (the credential THIS
-// instance presents when polling THAT peer) with this instance's own APP_KEY.
-// An empty/unset token is a clear configuration error, not a transport one.
+// decryptFleetPeerToken returns the token this instance presents when polling
+// peer p.
 func (s *Service) decryptFleetPeerToken(p store.FleetPeer) (string, error) {
 	if len(p.TokenEnc) == 0 {
 		return "", errors.New("no token configured for this peer")
@@ -165,10 +113,8 @@ func (s *Service) decryptFleetPeerToken(p store.FleetPeer) (string, error) {
 	return string(plain), nil
 }
 
-// pollFleetPeer issues one GET against peerURL's /api/fleet/status with token
-// as the X-Fleet-Token header and decodes the response. A non-200 status or an
-// "ok": false body is returned as an error — a peer poll either fully succeeds
-// with a usable scorecard or is treated as failed, no partial credit.
+// pollFleetPeer fetches /api/fleet/status from peerURL. A non-200 status or an
+// "ok": false body is an error.
 func pollFleetPeer(ctx context.Context, peerURL, token string) (fleetStatusResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, fleetPollTimeout)
 	defer cancel()
@@ -185,7 +131,7 @@ func pollFleetPeer(ctx context.Context, peerURL, token string) (fleetStatusRespo
 
 	resp, err := fleetHTTPClient.Do(req)
 	if err != nil {
-		return fleetStatusResponse{}, err // transport error — propagate unchanged
+		return fleetStatusResponse{}, err
 	}
 	defer resp.Body.Close() //nolint:errcheck // response body close error is not actionable
 	body := io.LimitReader(resp.Body, fleetResponseMax)
@@ -204,11 +150,9 @@ func pollFleetPeer(ctx context.Context, peerURL, token string) (fleetStatusRespo
 	return out, nil
 }
 
-// pollAndRecordFleetPeer polls one peer and persists the result (success or
-// failure) via UpdateFleetPeerPollResult. It never returns an error itself —
-// a poll failure is a normal, recorded outcome, not a caller-facing error —
-// except the returned fleetStatusResponse/error pair for callers (like the
-// manual poll-now endpoint) that want the live result immediately.
+// pollAndRecordFleetPeer polls one peer and stores the outcome, keeping the
+// last good scorecard on failure. It also returns the result, for the poll-now
+// endpoint.
 func (s *Service) pollAndRecordFleetPeer(ctx context.Context, p store.FleetPeer) (fleetStatusResponse, error) {
 	token, err := s.decryptFleetPeerToken(p)
 	var resp fleetStatusResponse
@@ -218,7 +162,7 @@ func (s *Service) pollAndRecordFleetPeer(ctx context.Context, p store.FleetPeer)
 
 	ok := sql.NullBool{Valid: true, Bool: err == nil}
 	detail := ""
-	domainsJSON := p.LastPollDomainsJSON // keep the last-good cache on failure
+	domainsJSON := p.LastPollDomainsJSON
 	instanceName := p.LastPollInstanceName
 	version := p.LastPollVersion
 	if err != nil {
@@ -239,11 +183,9 @@ func (s *Service) pollAndRecordFleetPeer(ctx context.Context, p store.FleetPeer)
 	return resp, err
 }
 
-// RunFleetPolls polls every enabled fleet peer once and records each result.
-// It is the scheduler's fleet job (SetFleetJob in cmd/bombvault/main.go). Only
-// a genuine failure to even LIST the peers is returned as an error; an
-// individual unreachable peer is a normal recorded outcome, not a sweep
-// failure (mirrors RunReceiverChecks's per-row best-effort discipline).
+// RunFleetPolls is the scheduler's fleet job: it polls every enabled peer once
+// and records each result. Only failing to list the peers is an error; an
+// unreachable peer is a recorded outcome.
 func (s *Service) RunFleetPolls(ctx context.Context) error {
 	peers, err := s.store.ListFleetPeers()
 	if err != nil {

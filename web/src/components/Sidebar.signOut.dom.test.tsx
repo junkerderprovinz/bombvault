@@ -1,16 +1,4 @@
 // @vitest-environment jsdom
-/**
- * The sidebar's sign-out row (jdp).
- *
- * Two things, and the second is the one worth a test: the row appears when a
- * login password is set, and it is absent when there is none. An instance
- * without a password has nothing to sign out of, and a control that offers to
- * do nothing is worse than no control.
- *
- * It also has to sit ABOVE the view toggle, because that is where it was asked
- * for and because the footer's order is the only thing distinguishing it from
- * every other row in that column.
- */
 import { render, screen, cleanup, fireEvent, act, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -59,11 +47,10 @@ describe("Sidebar sign-out", () => {
     draw(true);
     const out = screen.getByRole("button", { name: /sign out/i });
     const view = screen.getByRole("button", { name: /view/i });
-    // Node.compareDocumentPosition: FOLLOWING (4) means `view` comes after.
     expect(out.compareDocumentPosition(view) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it("signs out and reloads, which is what puts the login screen back", async () => {
+  it("signs out and reloads to bring back the login screen", async () => {
     draw(true);
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: /sign out/i }));
@@ -73,34 +60,22 @@ describe("Sidebar sign-out", () => {
   });
 
   it("hides its label in glyph mode without losing its accessible name", () => {
-    // The storage key is `bv-labels-sidebar`, NOT `glim-`: the prefix sweep
-    // renamed the CSS classes and deliberately left the storage keys alone. The
-    // first version of this test used glim-, never entered glyph mode, and
-    // therefore passed for the wrong reason.
+    // Storage keys keep the bv- prefix, unlike the glim- CSS classes.
     localStorage.setItem("bv-labels-sidebar", "glyph");
     draw(true);
     const out = screen.getByRole("button", { name: /sign out/i });
     const label = within(out).getByText(/sign out/i);
-    // Hidden, never removed: sr-only is what makes the row readable to a screen
-    // reader while the words are off the screen. In any other mode this class is
-    // absent, so the assertion fails if the mode did not take.
+    // No other mode sets sr-only, so this also fails if glyph mode did not take.
     expect(label.className).toContain("sr-only");
   });
 });
 
-// The labelling engine, the half jdp reported on 2026-09-08 ("... und auch
-// nicht in der beschriftungengine"). Hiding the words already worked; what did
-// not was the rail's OTHER rule — text mode drops the glyph — so this row sat
-// under a column of text-only nav rows wearing a symbol none of them wore.
 describe("Sidebar sign-out and the labelling engine", () => {
   it("drops its glyph in text mode, like every nav row above it", () => {
-    // The storage key is `bv-labels-sidebar`, NOT `glim-`: the prefix sweep
-    // renamed the CSS classes and deliberately left the storage keys alone.
     localStorage.setItem("bv-labels-sidebar", "text");
     draw(true);
     const out = screen.getByRole("button", { name: /sign out/i });
     expect(out.querySelector("svg")).toBeNull();
-    // The words are the whole row in this mode, so they must be plain text.
     expect(within(out).getByText(/sign out/i).className).not.toContain("sr-only");
   });
 
@@ -111,10 +86,19 @@ describe("Sidebar sign-out and the labelling engine", () => {
     expect(out.querySelector("svg")).not.toBeNull();
   });
 
-  it("is in the colour engine: glim-hue plus a real --item-hue", () => {
+  // The door's arrow points out along the reading direction, so it turns
+  // round with the layout; the power mark it replaced was symmetric.
+  it("wears a sign-out glyph that mirrors in a right-to-left layout", () => {
+    localStorage.setItem("bv-labels-sidebar", "glyph");
+    draw(true);
+    const glyph = screen.getByRole("button", { name: /sign out/i }).querySelector("svg");
+    expect(glyph?.getAttribute("class")).toContain("rtl:-scale-x-100");
+  });
+
+  it("carries glim-hue and a --item-hue of its own", () => {
     draw(true);
     const out = screen.getByRole("button", { name: /sign out/i });
     expect(out.className).toContain("glim-hue");
-    expect(out.style.getPropertyValue("--item-hue")).toMatch(/^#/);
+    expect(out.style.getPropertyValue("--item-hue")).toMatch(/^var\(--rb-[0-7]\)$/);
   });
 });

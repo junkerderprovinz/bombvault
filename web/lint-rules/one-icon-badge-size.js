@@ -1,34 +1,19 @@
-// ---------------------------------------------------------------------------
-// one-icon-badge-size — settled convention 4.
+// one-icon-badge-size: every square icon badge is 32px, Badge size="icon".
 //
-// "Square icon badges are ONE size app-wide: 32px, Badge size='icon'. A
-// role-based split was tried and rejected."
-//
-// Badge.tsx's own header block spells this out at length ("ONE SIZE FOR SQUARE
-// ICON BADGES — 32px (`size="icon"`, h-8/w-8). Full stop.") because the split
-// it warns about had already happened twice: 28px `icon` + 32px `compact` +
-// 36px `field`, grouped by what each badge DID rather than by what it looked
-// like, which is how a settings row ended up with the reset badge visibly
-// bigger than the colour swatches beside it (jdp, twice: "der Reset-Badge ist
-// größer als die Farbfelder").
-//
-// A prose block cannot stop the third attempt. This can. Three ways to get the
-// wrong size, all three checked:
+// Badges sized by role end up side by side at different sizes, so there is one
+// size. Three ways to get it wrong are checked:
 //
 //   1. `size` on a square icon Badge is anything but "icon".
-//   2. A sizing utility in a square icon Badge's `className` overriding the
-//      stage table (`h-9`, `w-7`, `size-10`, `p-2`, `text-[10px]`). Badge owns
-//      height, width, padding and font-size together — that pairing is the
-//      whole point of SIZE_TOKENS, and a className that reaches past it
-//      re-creates exactly the px-2/px-1.5/no-size-class drift Badge replaced.
-//   3. A hand-rolled square icon tile that never became a Badge at all: an
+//   2. A sizing utility in a square icon Badge's `className` (`h-9`, `w-7`,
+//      `size-10`, `p-2`, `text-[10px]`). Badge sets height, width, padding and
+//      font size together in SIZE_TOKENS, and a className that reaches past it
+//      lets them drift apart.
+//   3. A hand-rolled square icon tile that never became a Badge: an
 //      interactive element with a glyph, no text, and an equal h-N/w-N pair
-//      that is not the canonical h-8/w-8.
+//      other than h-8/w-8.
 //
-// Deliberately NOT checked: non-square badges (a pill chip's width follows its
-// text, which is the point), and any element that renders text (that is a
-// labelled control, not an icon badge).
-// ---------------------------------------------------------------------------
+// Non-square badges (a pill's width follows its text) and anything that
+// renders text (a labelled control) are not checked.
 import {
   attrStringValue,
   baseUtility,
@@ -45,7 +30,7 @@ const RULE_ID = "one-icon-badge-size";
 
 /** The one canonical square-icon-badge stage. Badge.tsx SIZE_TOKENS.icon. */
 const CANONICAL_SIZE = "icon";
-/** …and the px it resolves to, as Tailwind utilities: h-8 / w-8 = 32px. */
+/** The Tailwind step it resolves to: h-8 / w-8 = 32px. */
 const CANONICAL_STEP = "8";
 
 /** Utilities that fight Badge's own stage table if they appear on a Badge. */
@@ -100,8 +85,8 @@ export default {
             });
             return;
           }
-          // A computed size (`size={ROW_BADGE_SIZE}`) is not something this
-          // rule can read; the shared constant is the good pattern anyway.
+          // A computed size such as `size={ROW_BADGE_SIZE}` cannot be read
+          // and passes.
           if (size !== undefined && size !== CANONICAL_SIZE) {
             context.report({
               node: sizeAttr,

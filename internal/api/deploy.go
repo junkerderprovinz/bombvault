@@ -9,11 +9,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// DeploySnippet is a one-time rest-server deployment recipe for a domain's
-// append-only off-site repo. It gives the user everything to stand up a far-side
-// `restic/rest-server --append-only` on their storage box, with generated
-// credentials. Password is the PLAINTEXT htpasswd password — shown once and never
-// persisted server-side; Htpasswd is its bcrypt line for the far-side htpasswd file.
+// DeploySnippet is a one-time recipe for an append-only rest-server holding a
+// domain's off-site repo. Password is the plaintext htpasswd password, shown
+// once and never stored; Htpasswd is its bcrypt line.
 type DeploySnippet struct {
 	User      string `json:"user"`      // htpasswd user "bombvault-<domain>"
 	Password  string `json:"password"`  // one-time plaintext password (never stored)
@@ -23,21 +21,15 @@ type DeploySnippet struct {
 	Unraid    string `json:"unraid"`    // Unraid container template (XML), same values
 }
 
-// bcryptDeployCost is the bcrypt work factor for the generated htpasswd hash.
-// rest-server verifies htpasswd bcrypt hashes; cost 12 is a sensible 2026 default.
+// bcryptDeployCost is the work factor of the generated htpasswd hash.
 const bcryptDeployCost = 12
 
-// tlsGuidance is an honest caveat appended to both deploy recipes. restic sends
-// the htpasswd credential as HTTP Basic auth, so on plain http:// it travels in
-// the clear — fine on a trusted LAN/VPN, but a WAN-reachable box should terminate
-// TLS at a reverse proxy so the append-only repository credential is not exposed
-// to on-path observers.
+// tlsGuidance ends each recipe: restic sends the htpasswd credential as HTTP
+// Basic auth, so over plain http it travels in the clear.
 const tlsGuidance = "# Plain HTTP is fine on a trusted LAN/VPN. For a WAN-reachable box, terminate TLS (a reverse proxy) so the repository credential is not sent in the clear."
 
-// randomDeployPassword returns a URL-safe 24-character password. 18 random bytes
-// base64url-encode to exactly 24 chars (no padding), all in the URL-safe alphabet
-// so the password is safe to paste into a shell/htpasswd line without quoting
-// surprises.
+// randomDeployPassword returns 24 URL-safe characters (18 random bytes in
+// unpadded base64url), safe to paste into a shell or an htpasswd line.
 func randomDeployPassword() (string, error) {
 	buf := make([]byte, 18)
 	if _, err := rand.Read(buf); err != nil {
@@ -46,11 +38,9 @@ func randomDeployPassword() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(buf), nil
 }
 
-// buildDeploySnippet builds a fresh rest-server deployment snippet for a domain's
-// off-site repo: a random one-time password, its bcrypt htpasswd line, and the
-// docker-run + compose recipes to run an append-only rest-server. Nothing is
-// persisted — the caller returns it once and the plaintext password is shown only
-// in that response. domain is one of the fixed backup domains.
+// buildDeploySnippet builds a fresh recipe with a new password for one of the
+// fixed backup domains. Nothing is stored, so the password appears only in the
+// response that returns it.
 func buildDeploySnippet(domain string) (DeploySnippet, error) {
 	switch domain {
 	case "containers", "vms", "flash", "config", "files":
@@ -69,7 +59,7 @@ func buildDeploySnippet(domain string) (DeploySnippet, error) {
 	}
 	htpasswd := user + ":" + string(hash)
 
-	// A generic placeholder IP only (192.168.x.x) — never a real host address.
+	// A placeholder address, never a real one.
 	repoHint := fmt.Sprintf("# repo URL for BombVault: rest:http://192.168.x.x:8000/%s/%s", user, domain)
 
 	dockerRun := fmt.Sprintf(`# 1) create the append-only credential on the storage box:
@@ -110,44 +100,15 @@ services:
 	}, nil
 }
 
-// unraidTemplate renders the same rest-server recipe as an Unraid container
-// template ([601]).
-// ---------------------------------------------------------------------------
-// Why this exists, in the reporter's own words: "I couldn't get the scripted
-// deployment of a restic docker functional, and it couldn't be edited in the
-// docker UI, so I used one from CA instead."
+// unraidTemplate renders the rest-server recipe as an Unraid container
+// template. A container started with a bare docker run has no Edit form in
+// Unraid, so its port, path and options could only be changed by recreating it.
 //
-// The docker-run recipe is not broken. Verified end to end against a real
-// rest-server: the container starts, loads the htpasswd, reports "Append only
-// mode enabled" and "Private repositories enabled", and `restic init` creates
-// the repository through it. The defect is the FORMAT, not the command.
-//
-// A container Unraid did not create from a template has no template. It shows
-// up in the Docker tab with no Edit form behind it, so the port, the path and
-// the options can only ever be changed by deleting it and retyping the whole
-// command. BombVault is an Unraid application; handing its users a bare
-// `docker run` asks them to give up the one management surface their platform
-// has. This is the same rule the project already applies to its OWN containers.
-//
-// Saved as /boot/config/plugins/dockerMan/templates-user/my-rest-server.xml,
-// the Docker tab's "Add Container" template dropdown picks it up, and every
-// value below becomes an editable field.
-//
-// The htpasswd line still has to be written by hand: it carries a bcrypt hash
-// of a password shown exactly once, and a template that embedded it would put
-// that credential into a file Unraid keeps on the flash drive forever.
-//
-// EVERY note belongs inside the leading comment, and nothing may follow the root
-// element. The first version appended the shared `# ...` guidance lines after
-// </Container>, the way the docker-run and compose snippets carry them, which
-// made the whole file invalid XML: shell comments are not XML comments, and
-// nothing but whitespace may follow a root element. It got that far because the
-// test truncated the string at </Container> before parsing, so it proved that a
-// PREFIX parsed rather than the file the user actually saves. Caught by asking
-// the deployed instance for a real recipe and parsing what came back.
+// The htpasswd line stays out of the template fields because Unraid keeps
+// templates on the flash drive and the credential is shown only once. All notes
+// go in the leading comment: nothing but whitespace may follow the root element.
 func unraidTemplate(htpasswd, repoHint string) string {
-	// The declaration comes FIRST. An XML comment before it is not valid XML,
-	// and this text is meant to be saved verbatim as a file that Unraid parses.
+	// The XML declaration has to come before the comment.
 	return fmt.Sprintf(`<?xml version="1.0"?>
 <!--
   1) create the append-only credential on the storage box FIRST:
@@ -180,16 +141,13 @@ func unraidTemplate(htpasswd, repoHint string) string {
 `, xmlCommentSafe(htpasswd), xmlCommentSafe(noteText(tlsGuidance)), xmlCommentSafe(noteText(repoHint)))
 }
 
-// noteText strips the leading "# " the shared guidance lines carry for the
-// shell snippets. Inside an XML comment the hash is just noise.
+// noteText strips the "# " the shared notes carry for the shell snippets.
 func noteText(s string) string { return strings.TrimPrefix(s, "# ") }
 
-// xmlCommentSafe makes text safe to sit inside an XML comment: a comment may
-// not contain "--", and may not end with "-" (XML 1.0 §2.5). Neither the
-// generated repo URL nor a bcrypt hash produces those today, which is exactly
-// why this belongs in the code rather than in a reviewer's memory. A value that
-// grew a double dash later would otherwise turn the whole template into a file
-// Unraid drops from the dropdown without saying why.
+// xmlCommentSafe keeps text valid inside an XML comment, which may not contain
+// "--" or end with "-" (XML 1.0 §2.5). The repo URL and a bcrypt hash never do,
+// but a template that stopped parsing would vanish from Unraid's dropdown
+// without a word.
 func xmlCommentSafe(s string) string {
 	for strings.Contains(s, "--") {
 		s = strings.ReplaceAll(s, "--", "- -")

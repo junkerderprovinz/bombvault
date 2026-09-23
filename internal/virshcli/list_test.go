@@ -6,17 +6,9 @@ import (
 	"testing"
 )
 
-// vmInfoFromNames is List's wiring logic split out into a pure function that
-// takes plain fake func values for the state/title lookups — this package
-// has no fake-exec test harness for the real virsh binary (see
-// virshcli_uri_test.go/nvram_test.go/zvol_test.go for its established
-// convention of testing pure/injectable logic directly instead of shelling
-// out in tests), so these tests exercise the friendly-name resolution
-// wiring at that level rather than through Client.List itself.
+// There is no fake virsh, so these tests call vmInfoFromNames, the part of
+// List that takes the state and title lookups as functions.
 
-// TestVMInfoFromNamesUnraidStylePassesThrough pins the no-op case: a plain
-// Unraid-style name never triggers the extra title lookup, and FriendlyName
-// equals Name unchanged.
 func TestVMInfoFromNamesUnraidStylePassesThrough(t *testing.T) {
 	titleCalls := 0
 	titleFn := func(_ context.Context, _ string) (string, error) {
@@ -43,9 +35,6 @@ func TestVMInfoFromNamesUnraidStylePassesThrough(t *testing.T) {
 	}
 }
 
-// TestVMInfoFromNamesTrueNAS2510StyleNeedsNoExtraCall pins that the 25.10
-// "{id}_{name}" style is fully resolved from the raw name alone — no extra
-// virsh call (titleFn) is needed or made.
 func TestVMInfoFromNamesTrueNAS2510StyleNeedsNoExtraCall(t *testing.T) {
 	titleCalls := 0
 	titleFn := func(_ context.Context, _ string) (string, error) {
@@ -70,10 +59,8 @@ func TestVMInfoFromNamesTrueNAS2510StyleNeedsNoExtraCall(t *testing.T) {
 	}
 }
 
-// TestVMInfoFromNamesUUIDStyleResolvesTitle pins the TrueNAS 26 happy path:
-// a UUID-shaped name triggers exactly one titleFn call, and a non-empty
-// <title> result becomes FriendlyName — while Name (the identifier every
-// real virsh command must keep using) stays the raw UUID.
+// Name stays the raw UUID because every virsh command needs it; only
+// FriendlyName takes the <title>.
 func TestVMInfoFromNamesUUIDStyleResolvesTitle(t *testing.T) {
 	const uuid = "550e8400-e29b-41d4-a716-446655440000"
 	titleCalls := 0
@@ -102,10 +89,8 @@ func TestVMInfoFromNamesUUIDStyleResolvesTitle(t *testing.T) {
 	}
 }
 
-// TestVMInfoFromNamesUUIDStyleFallsBackOnTitleError proves a failed title
-// lookup (e.g. the extra DumpXML call errors) does not fail the whole List —
-// it falls back to the UUID itself as FriendlyName, mirroring how a failed
-// State lookup already falls back to "unknown" rather than erroring out.
+// A failed title lookup does not fail List, just as a failed state lookup
+// does not.
 func TestVMInfoFromNamesUUIDStyleFallsBackOnTitleError(t *testing.T) {
 	const uuid = "550e8400-e29b-41d4-a716-446655440000"
 	titleFn := func(_ context.Context, _ string) (string, error) {
@@ -123,9 +108,6 @@ func TestVMInfoFromNamesUUIDStyleFallsBackOnTitleError(t *testing.T) {
 	}
 }
 
-// TestVMInfoFromNamesUUIDStyleFallsBackOnEmptyTitle mirrors the error case
-// but for a successful call that simply found no <title> element (empty
-// string, not an error) — same fallback to the UUID.
 func TestVMInfoFromNamesUUIDStyleFallsBackOnEmptyTitle(t *testing.T) {
 	const uuid = "550e8400-e29b-41d4-a716-446655440000"
 	titleFn := func(_ context.Context, _ string) (string, error) { return "", nil }
@@ -141,9 +123,6 @@ func TestVMInfoFromNamesUUIDStyleFallsBackOnEmptyTitle(t *testing.T) {
 	}
 }
 
-// TestVMInfoFromNamesStateFailureFallsBackToUnknown is the pre-existing
-// State-failure-tolerance regression pin (List already behaved this way
-// before FriendlyName existed) — must be unaffected by this task's changes.
 func TestVMInfoFromNamesStateFailureFallsBackToUnknown(t *testing.T) {
 	stateFn := func(_ context.Context, _ string) (string, error) { return "", errors.New("boom") }
 	titleFn := func(_ context.Context, _ string) (string, error) { return "", nil }

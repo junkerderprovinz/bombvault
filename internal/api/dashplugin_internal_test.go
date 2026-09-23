@@ -9,8 +9,8 @@ import (
 	"testing"
 )
 
-// dashHandler wires a Handler over a Service holding only the (fake or nil)
-// HostSSH — the dashboard-plugin endpoints touch nothing else.
+// dashHandler returns a Handler whose Service has only a HostSSH, the one thing
+// the dashboard plugin endpoints use.
 func dashHandler(ssh HostSSH) *Handler {
 	return &Handler{svc: &Service{ssh: ssh}}
 }
@@ -24,9 +24,9 @@ func dashDecode(t *testing.T, rec *httptest.ResponseRecorder) map[string]any {
 	return body
 }
 
-// TestDashboardPluginStatusNoSSH: without a host SSH connection the status is
-// unknowable — the endpoint answers ok with sshConfigured:false (NOT an error)
-// so the UI can show the manual-install instructions.
+// TestDashboardPluginStatusNoSSH: without host SSH the status is unknown, so
+// the endpoint answers ok with sshConfigured:false and the UI shows the manual
+// install instructions.
 func TestDashboardPluginStatusNoSSH(t *testing.T) {
 	h := dashHandler(nil)
 	rec := httptest.NewRecorder()
@@ -43,9 +43,8 @@ func TestDashboardPluginStatusNoSSH(t *testing.T) {
 	}
 }
 
-// TestDashboardPluginInstallRemoveNoSSH: the mutating endpoints return the
-// clean "SSH not configured" refusal when s.ssh is nil (mirrors the house
-// nil-guard) and never panic.
+// TestDashboardPluginInstallRemoveNoSSH: without SSH, install and remove return
+// the "not configured" error instead of panicking.
 func TestDashboardPluginInstallRemoveNoSSH(t *testing.T) {
 	h := dashHandler(nil)
 	for _, ep := range []struct {
@@ -68,8 +67,8 @@ func TestDashboardPluginInstallRemoveNoSSH(t *testing.T) {
 	}
 }
 
-// TestDashboardPluginStatusInstalled: the status probe runs the exact pinned
-// marker-check command and parses INSTALLED + version from its output.
+// TestDashboardPluginStatusInstalled: the status probe runs the fixed marker
+// check and reads the version from its second line.
 func TestDashboardPluginStatusInstalled(t *testing.T) {
 	ssh := &fakeHostSSH{runOut: "INSTALLED\n2026.07.26"}
 	h := dashHandler(ssh)
@@ -79,9 +78,8 @@ func TestDashboardPluginStatusInstalled(t *testing.T) {
 	if len(ssh.runs) != 1 {
 		t.Fatalf("expected exactly one SSH round-trip, got %d", len(ssh.runs))
 	}
-	// The command string is a hard-coded constant — pin the LITERAL here so an
-	// accidental edit of the constant (user input creeping in, marker change)
-	// fails loudly.
+	// Compare against the literal rather than the constant, so any edit to the
+	// command shows up here.
 	want := []string{"sh", "-c",
 		"if [ -e /var/log/plugins/bombvaultwidget.plg ]; then echo INSTALLED; " +
 			"/usr/local/sbin/plugin version /var/log/plugins/bombvaultwidget.plg 2>/dev/null; else echo ABSENT; fi"}
@@ -98,8 +96,6 @@ func TestDashboardPluginStatusInstalled(t *testing.T) {
 	}
 }
 
-// TestDashboardPluginStatusAbsent: ABSENT output → installed:false (still ok),
-// and no version field.
 func TestDashboardPluginStatusAbsent(t *testing.T) {
 	h := dashHandler(&fakeHostSSH{runOut: "ABSENT"})
 	rec := httptest.NewRecorder()
@@ -113,8 +109,9 @@ func TestDashboardPluginStatusAbsent(t *testing.T) {
 	}
 }
 
-// TestDashboardPluginStatusSSHError: an SSH failure is a normal fail envelope
-// that still reports sshConfigured:true (configured but unreachable ≠ not set up).
+// TestDashboardPluginStatusSSHError: an SSH failure still reports
+// sshConfigured:true, since configured but unreachable is not the same as not
+// set up.
 func TestDashboardPluginStatusSSHError(t *testing.T) {
 	h := dashHandler(&fakeHostSSH{runErr: errors.New("connection refused")})
 	rec := httptest.NewRecorder()
@@ -125,9 +122,8 @@ func TestDashboardPluginStatusSSHError(t *testing.T) {
 	}
 }
 
-// TestDashboardPluginInstallRunsPinnedCommand: install runs EXACTLY the
-// hard-coded `plugin install <const URL>` (no user input, ever) and returns
-// the transcript.
+// TestDashboardPluginInstallRunsPinnedCommand: install runs the fixed plugin
+// command, with no user input in it, and returns the transcript.
 func TestDashboardPluginInstallRunsPinnedCommand(t *testing.T) {
 	ssh := &fakeHostSSH{runOut: "plugin: installing: bombvaultwidget.plg\nplugin: bombvaultwidget.plg installed"}
 	h := dashHandler(ssh)
@@ -153,8 +149,6 @@ func TestDashboardPluginInstallRunsPinnedCommand(t *testing.T) {
 	}
 }
 
-// TestDashboardPluginRemoveRunsPinnedCommand: remove runs EXACTLY the
-// hard-coded `plugin remove bombvaultwidget.plg`.
 func TestDashboardPluginRemoveRunsPinnedCommand(t *testing.T) {
 	ssh := &fakeHostSSH{}
 	h := dashHandler(ssh)
@@ -173,8 +167,8 @@ func TestDashboardPluginRemoveRunsPinnedCommand(t *testing.T) {
 	}
 }
 
-// TestDashboardPluginInstallFailureCarriesOutputTail: a failing install still
-// returns the transcript tail so the UI can show WHY the plugin CLI refused.
+// TestDashboardPluginInstallFailureCarriesOutputTail: a failed install still
+// returns the transcript tail so the UI can show why.
 func TestDashboardPluginInstallFailureCarriesOutputTail(t *testing.T) {
 	ssh := &fakeHostSSH{
 		runOut: "plugin: downloading: bombvaultwidget.txz\nplugin: bad file MD5",
@@ -193,8 +187,8 @@ func TestDashboardPluginInstallFailureCarriesOutputTail(t *testing.T) {
 	}
 }
 
-// TestDashOutputTailTruncates: only the LAST dashPluginOutputMax bytes survive
-// (the failure reason lives at the end of an install log).
+// TestDashOutputTailTruncates: the failure reason is at the end of an install
+// log, so the tail is kept.
 func TestDashOutputTailTruncates(t *testing.T) {
 	long := strings.Repeat("x", dashPluginOutputMax) + "TAIL-MARKER"
 	got := dashOutputTail(long)

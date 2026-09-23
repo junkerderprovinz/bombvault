@@ -15,11 +15,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
-// buildTestStoredZip builds an in-memory zip with every entry stored
-// uncompressed (Method: Store), matching how restic's `dump -a zip` actually
-// writes its output — the shape recompressFlashZip is meant to read. files
-// maps entry name -> content; a name ending in "/" is written as an explicit
-// directory entry (content is ignored for those).
+// buildTestStoredZip builds a zip with every entry stored uncompressed, the
+// way restic's `dump -a zip` writes it. A name ending in "/" becomes a
+// directory entry and its content is ignored.
 func buildTestStoredZip(t *testing.T, files map[string][]byte) []byte {
 	t.Helper()
 	var buf bytes.Buffer
@@ -46,10 +44,6 @@ func buildTestStoredZip(t *testing.T, files map[string][]byte) []byte {
 	return buf.Bytes()
 }
 
-// TestFlashZipJunkEntry pins the exact classification rules from bombvault#136:
-// stray git checkout, Windows System Volume Information, fsck recovery dumps,
-// and 0-byte .bmp remnants are junk; anything merely resembling one of those
-// (a substring match, a non-fsck .REC, a real non-empty .bmp) is not.
 func TestFlashZipJunkEntry(t *testing.T) {
 	cases := []struct {
 		name string
@@ -68,12 +62,12 @@ func TestFlashZipJunkEntry(t *testing.T) {
 		{"previous", 0, true},
 		{"previous/bzimage", 9821184, true},
 		{"previous/bzmodules", 771751936, true},
-		{"config/plugins/gitkeep-note.txt", 12, false}, // merely contains "git" as a substring
-		{"notFSCK.REC", 10, false},                     // does not match the FSCK\d+.REC shape
-		{"syslinux/splash.bmp", 45678, false},          // non-empty .bmp: a real syslinux background must survive
+		{"config/plugins/gitkeep-note.txt", 12, false},
+		{"notFSCK.REC", 10, false},
+		{"syslinux/splash.bmp", 45678, false},
 		{"bzfirmware", 323293184, false},
 		{"EFI/boot/bootx64.efi", 199952, false},
-		{"config/previous-attempt.log", 40, false}, // "previous" only as a prefix of a different name
+		{"config/previous-attempt.log", 40, false},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -84,9 +78,6 @@ func TestFlashZipJunkEntry(t *testing.T) {
 	}
 }
 
-// TestRecompressFlashZipConvertsStoreToDeflate proves the core fix: an
-// all-Store input (restic's shape) comes out all-Deflate, with content
-// round-tripping byte-for-byte.
 func TestRecompressFlashZipConvertsStoreToDeflate(t *testing.T) {
 	content := bytes.Repeat([]byte("compressible-content-"), 500)
 	raw := buildTestStoredZip(t, map[string][]byte{"bzfirmware": content})
@@ -129,8 +120,6 @@ func TestRecompressFlashZipConvertsStoreToDeflate(t *testing.T) {
 	}
 }
 
-// TestRecompressFlashZipDropsJunkEntries proves the filtering half of the fix
-// end-to-end through recompressFlashZip, not just the predicate in isolation.
 func TestRecompressFlashZipDropsJunkEntries(t *testing.T) {
 	raw := buildTestStoredZip(t, map[string][]byte{
 		"bzfirmware":                 []byte("real boot content"),
@@ -142,7 +131,7 @@ func TestRecompressFlashZipDropsJunkEntries(t *testing.T) {
 		"System Volume Information/": nil,
 		"System Volume Information/IndexerVolumeGuid": []byte("guid"),
 		"FSCK0000.REC":       bytes.Repeat([]byte{0}, 100),
-		"260325124039.BMP":   nil, // 0 bytes
+		"260325124039.BMP":   nil,
 		"previous/":          nil,
 		"previous/bzimage":   []byte("stale prior-version kernel"),
 		"previous/bzmodules": []byte("stale prior-version modules"),
@@ -172,9 +161,6 @@ func TestRecompressFlashZipDropsJunkEntries(t *testing.T) {
 	}
 }
 
-// TestRecompressFlashZipPreservesNonEmptyBMP guards the deliberately narrow
-// exclusion: a real, non-empty .bmp (e.g. a custom syslinux splash image)
-// must never be dropped, only 0-byte ones.
 func TestRecompressFlashZipPreservesNonEmptyBMP(t *testing.T) {
 	raw := buildTestStoredZip(t, map[string][]byte{
 		"syslinux/splash.bmp": bytes.Repeat([]byte{0x42, 0x4d}, 200),
@@ -193,8 +179,6 @@ func TestRecompressFlashZipPreservesNonEmptyBMP(t *testing.T) {
 	}
 }
 
-// TestRecompressFlashZipPreservesDirectoryEntries proves directory entries
-// round-trip as directories (not flattened or reclassified as files).
 func TestRecompressFlashZipPreservesDirectoryEntries(t *testing.T) {
 	raw := buildTestStoredZip(t, map[string][]byte{
 		"EFI/":      nil,
@@ -219,8 +203,6 @@ func TestRecompressFlashZipPreservesDirectoryEntries(t *testing.T) {
 	}
 }
 
-// TestRecompressFlashZipRejectsInvalidInput proves malformed input is a clean
-// error, not a panic.
 func TestRecompressFlashZipRejectsInvalidInput(t *testing.T) {
 	garbage := []byte("not a zip file at all")
 	var out bytes.Buffer
@@ -229,9 +211,8 @@ func TestRecompressFlashZipRejectsInvalidInput(t *testing.T) {
 	}
 }
 
-// compatFakeEngine is a minimal ResticEngine for dumpFlashZipCompat tests —
-// only DumpZip is exercised on this path (same embed-nil-interface pattern as
-// self_restart_internal_test.go).
+// compatFakeEngine implements only DumpZip, the one engine method
+// dumpFlashZipCompat calls.
 type compatFakeEngine struct {
 	ResticEngine
 	dumpBytes []byte
@@ -246,9 +227,6 @@ func (f *compatFakeEngine) DumpZip(_ context.Context, _, _, _ string, w io.Write
 	return err
 }
 
-// TestDumpFlashZipCompatRecompressesAndFilters is the end-to-end proof: given
-// a raw all-Store dump containing both real content and junk, dst receives
-// only the real content, deflated, and the scratch file is gone afterward.
 func TestDumpFlashZipCompatRecompressesAndFilters(t *testing.T) {
 	raw := buildTestStoredZip(t, map[string][]byte{
 		"bzfirmware":     bytes.Repeat([]byte("firmware-bytes-"), 100),
@@ -282,9 +260,6 @@ func TestDumpFlashZipCompatRecompressesAndFilters(t *testing.T) {
 	}
 }
 
-// TestDumpFlashZipCompatDumpErrorCleansUpTempFile proves a DumpZip failure
-// surfaces as an error, writes nothing to dst, and still leaves no scratch
-// file behind.
 func TestDumpFlashZipCompatDumpErrorCleansUpTempFile(t *testing.T) {
 	dataDir := t.TempDir()
 	svc := &Service{

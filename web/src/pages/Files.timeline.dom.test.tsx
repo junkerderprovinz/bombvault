@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import type { FileSetView } from "../lib/api";
 import { useT } from "../lib/i18n";
 import {
@@ -78,7 +78,7 @@ describe("folder set backups", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Delete all backups" }));
 
     expect(await screen.findByText(/ALL local backups/)).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Delete all backups" }));
     await waitFor(() => expect(deleteFileSetBackups).toHaveBeenCalledWith("set1"));
   });
 });

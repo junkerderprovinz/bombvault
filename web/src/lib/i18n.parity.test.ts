@@ -1,15 +1,6 @@
-// ---------------------------------------------------------------------------
-// Locale parity — the permanent regression guard for the 26-locale sweep.
-//
-// en is the source of truth. Every locale table in the registry must carry
-// EXACTLY the en key set (zero missing, zero extra), and every value must use
-// the same {placeholder} token set as its en counterpart — a locale that
-// drops or renames a placeholder renders a literal "{name}" (or loses the
-// value entirely) at runtime.
-//
-// Pure logic, node environment: importing ./i18n only builds the tables (all
-// DOM access in that module lives inside functions).
-// ---------------------------------------------------------------------------
+// Every locale table carries exactly the en key set, and every value uses the
+// same {placeholder} tokens as its en counterpart. A dropped or renamed
+// placeholder renders a literal "{name}" at runtime.
 import { describe, expect, it } from "vitest";
 import { de, en, LANGUAGES } from "./i18n";
 import { allLocales as locales } from "./localesForTests";
@@ -32,7 +23,7 @@ describe("locale registry", () => {
     expect(Object.keys(locales).sort()).toEqual(offered);
   });
 
-  it("en carries the full key set (sanity floor)", () => {
+  it("en carries the full key set", () => {
     expect(EN_KEYS.length).toBeGreaterThan(700);
   });
 });

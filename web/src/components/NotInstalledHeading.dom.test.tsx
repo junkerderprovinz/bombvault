@@ -1,14 +1,6 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// The "Not installed (backups only)" section heading, shared by the Containers
-// and VMs pages (#232).
-//
-// The issue's screenshot showed the heading badge covering the hint line under
-// it: the badge is a notch, pulled up by half its height, and its lower half
-// landed on that line. The hint now sits in the badge's own (i), the way every
-// other card-less group heading carries its explanation (Recovery.tsx), so
-// there is no line under the notch left to cover.
-// ---------------------------------------------------------------------------
+// The badge is a notch pulled up by half its height, so a hint line under it
+// would be covered by its lower half. The hint belongs in the badge's (i).
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { NotInstalledHeading } from "./NotInstalledHeading";

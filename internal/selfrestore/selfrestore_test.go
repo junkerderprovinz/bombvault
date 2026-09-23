@@ -11,13 +11,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/selfrestore"
 )
 
-// newDataDir returns a RELATIVE data dir inside a fresh temp working directory.
-// A relative dir is used deliberately: RestoredSnapshotDir joins the (absolute)
-// dataDir as trailing components under the staging root, which on Windows would
-// embed a "C:" mid-path that MkdirAll rejects. A relative dataDir exercises the
-// exact same RestoredSnapshotDir logic (and keeps the swap self-consistent) while
-// staying creatable on every OS. Production runs on Linux where the absolute
-// "/config" form joins cleanly.
+// newDataDir returns a relative data dir inside a fresh temp working directory.
+// RestoredSnapshotDir joins dataDir under the staging root, and on Windows an
+// absolute dataDir would put a "C:" mid-path that MkdirAll rejects.
 func newDataDir(t *testing.T) string {
 	t.Helper()
 	t.Chdir(t.TempDir())
@@ -28,8 +24,8 @@ func newDataDir(t *testing.T) string {
 	return dataDir
 }
 
-// writeSQLiteMarker writes a minimal, valid single-file SQLite DB at path holding
-// one marker string, so a byte-level swap can be proven by reading the marker back.
+// writeSQLiteMarker writes a minimal single-file SQLite DB at path holding one
+// marker string, so a swap can be proven by reading the marker back.
 func writeSQLiteMarker(t *testing.T, path, marker string) {
 	t.Helper()
 	db, err := sql.Open("sqlite", path)
@@ -61,10 +57,6 @@ func readSQLiteMarker(t *testing.T, path string) string {
 	return v
 }
 
-// TestApplyPendingSwapsValidStaging: a valid staged DB (plus rclone.conf + ssh/)
-// with the marker present is swapped into place — the live DB becomes the staged
-// one, stale -wal/-shm are removed, rclone.conf/ssh/ are replaced, and both the
-// marker and the staging root are cleared.
 func TestApplyPendingSwapsValidStaging(t *testing.T) {
 	dataDir := newDataDir(t)
 
@@ -76,7 +68,6 @@ func TestApplyPendingSwapsValidStaging(t *testing.T) {
 	if err := os.WriteFile(live+"-shm", []byte("stale"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	// Pre-existing rclone.conf + ssh/ that must be overwritten by the staged ones.
 	if err := os.WriteFile(filepath.Join(dataDir, "rclone.conf"), []byte("OLDCONF"), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -87,7 +78,6 @@ func TestApplyPendingSwapsValidStaging(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Staged restore at the deterministic restic path.
 	staged := selfrestore.RestoredSnapshotDir(dataDir)
 	if err := os.MkdirAll(filepath.Join(staged, "ssh"), 0o700); err != nil {
 		t.Fatal(err)
@@ -99,9 +89,8 @@ func TestApplyPendingSwapsValidStaging(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(staged, "ssh", "id_ed25519"), []byte("NEWKEY"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	// A stale <root>.bad from an earlier failed restore (holding a plaintext
-	// rclone.conf + ssh private key) must be GC'd by a SUCCESSFUL apply, not left to
-	// linger until the next failed rename reuses the name.
+	// A <root>.bad left by an earlier failed restore holds a plaintext
+	// rclone.conf and ssh key, so a successful apply has to remove it.
 	badRoot := selfrestore.StagingRoot(dataDir) + ".bad"
 	if err := os.MkdirAll(badRoot, 0o700); err != nil {
 		t.Fatal(err)
@@ -144,12 +133,9 @@ func TestApplyPendingSwapsValidStaging(t *testing.T) {
 	}
 }
 
-// TestApplyPendingRejectsTruncatedDB: a staged DB whose SQLite HEADER is intact but
-// whose pages have been truncated away must be rejected — proving validSQLite runs a
-// real integrity scan (PRAGMA quick_check), not a header-only probe. Such a file
-// opens fine yet is not a usable database; swapping it over the live settings DB
-// would destroy it. The live DB must be left untouched and the bad staging moved
-// aside to <root>.bad.
+// TestApplyPendingRejectsTruncatedDB stages a DB truncated behind an intact
+// header. Such a file opens fine, so rejecting it proves validSQLite runs PRAGMA
+// quick_check rather than only probing the header.
 func TestApplyPendingRejectsTruncatedDB(t *testing.T) {
 	dataDir := newDataDir(t)
 
@@ -161,8 +147,6 @@ func TestApplyPendingRejectsTruncatedDB(t *testing.T) {
 		t.Fatal(err)
 	}
 	stagedDB := filepath.Join(staged, "bombvault.sqlite")
-	// Build a real, valid multi-page SQLite DB, then truncate it so the header
-	// survives but the data pages are gone — a header-only check would wrongly pass.
 	writeSQLiteMarker(t, stagedDB, "NEW")
 	if fi, err := os.Stat(stagedDB); err != nil {
 		t.Fatal(err)
@@ -194,8 +178,6 @@ func TestApplyPendingRejectsTruncatedDB(t *testing.T) {
 	}
 }
 
-// TestApplyPendingNoMarkerIsNoop: with no pending marker, ApplyPending does
-// nothing and reports applied=false, err=nil (the ordinary boot path).
 func TestApplyPendingNoMarkerIsNoop(t *testing.T) {
 	dataDir := newDataDir(t)
 	applied, err := selfrestore.ApplyPending(dataDir)
@@ -204,9 +186,9 @@ func TestApplyPendingNoMarkerIsNoop(t *testing.T) {
 	}
 }
 
-// TestApplyPendingInvalidStagingKeepsLive: a garbage (non-SQLite) staged DB must
-// NOT be swapped in — the live DB is left untouched, the marker is cleared, and
-// the bad staging is moved aside to <root>.bad so the next boot can't loop on it.
+// TestApplyPendingInvalidStagingKeepsLive checks that a staged file that is not
+// SQLite leaves the live DB alone and is moved aside to <root>.bad, so the next
+// boot cannot loop on it.
 func TestApplyPendingInvalidStagingKeepsLive(t *testing.T) {
 	dataDir := newDataDir(t)
 
@@ -217,7 +199,6 @@ func TestApplyPendingInvalidStagingKeepsLive(t *testing.T) {
 	if err := os.MkdirAll(staged, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	// Not a SQLite database — validSQLite must reject it.
 	if err := os.WriteFile(filepath.Join(staged, "bombvault.sqlite"), []byte("this is not sqlite"), 0o600); err != nil {
 		t.Fatal(err)
 	}

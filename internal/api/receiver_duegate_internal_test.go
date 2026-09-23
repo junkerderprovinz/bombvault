@@ -1,25 +1,10 @@
 package api
 
-// ---------------------------------------------------------------------------
-// The received-repo integrity check runs on its configured cadence, not double
-// it.
-//
-// The receiver watch is a FIXED daily sweep (schedule.ReceiverCadence, "daily
-// 09:15") that walks every enabled received repo and asks each one whether its
-// own CheckCadence is due. `now` is the sweep's fire time; last_check_at is
-// stamped when the previous check FINISHED, and an independent restic check on a
-// received repo takes minutes. So the day a "daily 04:00" repo comes due,
-// elapsed seconds measured a few minutes short of 86400, the gate closed, and
-// the next chance was the following day's sweep: every received repo was checked
-// every 48h, an "everyN 7" one every eight days, and the skipped day logged
-// nothing at all.
-//
-// These drive the real sweep (runReceiverChecksAt) over a real store, so what is
-// pinned is the whole tick → gate → check → persist chain. No restic binary is
-// needed: the check fails (there is no repo at the path), which is still a
-// definite verdict the sweep persists, and "was a verdict written?" is exactly
-// the observation these need.
-// ---------------------------------------------------------------------------
+// The received-repo integrity check has to run on its configured cadence. The
+// receiver watch is a fixed daily sweep, and last_check_at is stamped when the
+// previous check finished, minutes after its sweep fired. Measured in elapsed
+// seconds, the next sweep then falls just short of a day and the check slips
+// to the sweep after.
 
 import (
 	"context"
@@ -34,7 +19,7 @@ import (
 )
 
 // dueGateService is a Service over a real in-memory store with notifications
-// muted — these tests are about whether the CHECK runs, not about alerts.
+// muted, since these tests are about whether the check runs.
 func dueGateService(t *testing.T, appKey string) (*Service, *store.Repo) {
 	t.Helper()
 	db, err := store.Open(":memory:")
@@ -46,14 +31,13 @@ func dueGateService(t *testing.T, appKey string) (*Service, *store.Repo) {
 		t.Fatal(err)
 	}
 	st := store.New(db)
-	// The real engine, pointed at a path with no repo: the check FAILS, which is
-	// still a definite verdict the sweep persists, and no restic binary is needed
-	// for that. Whether a verdict was written is exactly the observation here.
+	// The real engine, pointed at a path with no repo. The check fails without
+	// needing a restic binary, and a failure is still a recorded verdict.
 	return &Service{cfg: config.Config{AppKey: appKey}, store: st, engine: restic.Restic{Bin: "restic"}}, st
 }
 
-// seedDueGateRepo registers one enabled received repo on `cadence` whose last
-// check FINISHED at `lastCheck` with no verdict recorded yet, so a check that
+// seedDueGateRepo registers one enabled received repo on cadence whose last
+// check finished at lastCheck with no verdict recorded yet, so a check that
 // runs is visible as last_check_ok turning non-NULL. The dead-man's switch is
 // off, leaving the integrity gate as the only thing that can act.
 func seedDueGateRepo(t *testing.T, st *store.Repo, appKey, cadence string, lastCheck time.Time) store.ReceivedRepo {
@@ -83,9 +67,8 @@ func checked(t *testing.T, st *store.Repo, id string) bool {
 	return got.LastCheckOK.Valid
 }
 
-// TestReceiverDailyCheckRunsTheNextDayNotTheDayAfter is the regression. A daily
-// repo whose previous check finished ten minutes after yesterday's sweep must be
-// checked on TODAY's sweep.
+// A daily repo whose previous check finished ten minutes after yesterday's
+// sweep has to be checked on today's.
 func TestReceiverDailyCheckRunsTheNextDayNotTheDayAfter(t *testing.T) {
 	appKey := strings.Repeat("ab", 32)
 	svc, st := dueGateService(t, appKey)
@@ -103,13 +86,13 @@ func TestReceiverDailyCheckRunsTheNextDayNotTheDayAfter(t *testing.T) {
 		t.Fatalf("runReceiverChecksAt: %v", err)
 	}
 	if !checked(t, st, rr.ID) {
-		t.Fatal("a repo on a DAILY check cadence was not checked on the next day's sweep — " +
+		t.Fatal("a repo on a daily check cadence was not checked on the next day's sweep; " +
 			"it is being checked every 48h, at half the configured frequency, and the skipped day logs nothing")
 	}
 }
 
-// TestReceiverWeeklyCheckRunsOnTheSeventhDay is the same slip at the weekly
-// cadence, where it costs a check every 14 days instead of every 7.
+// At the weekly cadence the same slip would mean a check every 14 days instead
+// of every 7.
 func TestReceiverWeeklyCheckRunsOnTheSeventhDay(t *testing.T) {
 	appKey := strings.Repeat("ab", 32)
 	svc, st := dueGateService(t, appKey)
@@ -126,9 +109,8 @@ func TestReceiverWeeklyCheckRunsOnTheSeventhDay(t *testing.T) {
 	}
 }
 
-// TestReceiverCheckStillHeldInsideTheCadence pins the other half: the gate must
-// still close, or every daily sweep would run a full restic check on every
-// received repo regardless of what the user configured.
+// Inside the cadence the gate stays closed, or every daily sweep would run a
+// full check on every received repo.
 func TestReceiverCheckStillHeldInsideTheCadence(t *testing.T) {
 	appKey := strings.Repeat("ab", 32)
 	svc, st := dueGateService(t, appKey)
@@ -144,8 +126,7 @@ func TestReceiverCheckStillHeldInsideTheCadence(t *testing.T) {
 	}
 }
 
-// TestReceiverCheckOffCadenceNeverRuns pins that "off" still means off — the new
-// gate must not turn a disabled cadence into a daily check.
+// A cadence of "off" must not turn into a daily check.
 func TestReceiverCheckOffCadenceNeverRuns(t *testing.T) {
 	appKey := strings.Repeat("ab", 32)
 	svc, st := dueGateService(t, appKey)

@@ -1,16 +1,5 @@
 package api
 
-// Two more guards of the same family as stats_fanout_internal_test.go's, found
-// by auditing for the shape rather than by anything failing: a gate that reads
-// state its own work writes last, with an expensive restic run behind it.
-//
-//   - The received-repo integrity check gated on LastCheckAt, whose manual twin
-//     (POST /api/receiver/repos/{id}/check) had no gate at all, and whose work is
-//     `restic check`, optionally re-reading pack data. Received repos sit outside
-//     repoMu, so nothing else serialised them.
-//   - The restic cache trim, which rides an after-bulk hook that fires once per
-//     per-item cron entry rather than once per night.
-
 import (
 	"context"
 	"os"
@@ -22,9 +11,11 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// Two callers, one repository: the second is refused, and refused is not a
-// verdict. Nothing about the repository's integrity may be inferred from it,
-// which is why the guard sits outside receiverCheck rather than inside it.
+// TestReceiverCheckRefusesASecondOnTheSameRepo: a second check on a received
+// repository is refused while one runs. Received repos sit outside repoMu, so
+// nothing else serialises the scheduled and the manual check. The guard sits
+// outside receiverCheck because a refusal says nothing about the repository's
+// integrity.
 func TestReceiverCheckRefusesASecondOnTheSameRepo(t *testing.T) {
 	svc := &Service{}
 	rr := store.ReceivedRepo{ID: "repo-1"}
@@ -35,7 +26,7 @@ func TestReceiverCheckRefusesASecondOnTheSameRepo(t *testing.T) {
 	if svc.claimReceiverCheck(rr.ID) {
 		t.Fatal("a second check on the same repo must be refused while one runs")
 	}
-	// A different repository is unaffected: the slot is per repo, not global.
+	// The slot is per repository.
 	if !svc.claimReceiverCheck("repo-2") {
 		t.Fatal("a check on another repo must not be blocked")
 	}
@@ -46,9 +37,9 @@ func TestReceiverCheckRefusesASecondOnTheSameRepo(t *testing.T) {
 	}
 }
 
-// The refusal reaches the caller as "nothing ran", never as a result. A result
-// would be persisted by both call sites and read back as a FAILED integrity
-// check, and the scheduled path would alert on it.
+// TestReceiverCheckRefusalIsNotAVerdict: a refusal reaches the caller as
+// "nothing ran". A result would be stored as a failed integrity check, and the
+// scheduled path would alert on it.
 func TestReceiverCheckRefusalIsNotAVerdict(t *testing.T) {
 	svc := &Service{}
 	rr := store.ReceivedRepo{ID: "repo-1"}
@@ -66,9 +57,9 @@ func TestReceiverCheckRefusalIsNotAVerdict(t *testing.T) {
 	}
 }
 
-// Both callers must go through the guarded wrapper. The scheduled sweep alone
-// is harmless (it is sequential); the bug was the manual endpoint beside it, and
-// a future third caller would be just as invisible.
+// TestBothReceiverCheckCallersAreGuarded: both callers must use the guarded
+// wrapper. The scheduled sweep is sequential on its own; the manual endpoint
+// runs beside it.
 func TestBothReceiverCheckCallersAreGuarded(t *testing.T) {
 	for _, f := range []string{"receiver_watch.go", "receiver_handlers.go"} {
 		src, err := os.ReadFile(f) //nolint:gosec // G304: fixed file name in this package's own directory
@@ -79,18 +70,18 @@ func TestBothReceiverCheckCallersAreGuarded(t *testing.T) {
 			t.Errorf("%s runs a received-repo check without the in-flight guard", f)
 		}
 		if strings.Contains(string(src), ".receiverCheck(") {
-			t.Errorf("%s calls receiverCheck directly — use receiverCheckExclusive", f)
+			t.Errorf("%s calls receiverCheck directly; use receiverCheckExclusive", f)
 		}
 	}
 }
 
-// The cache trim admits one caller and turns the rest away. Ten per-item cron
-// entries firing in the same minute used to give ten independent measure-and-
-// evict passes over one cache directory.
+// TestCacheTrimAdmitsOneCaller: the cache trim admits one caller and turns the
+// rest away, since per-item cron entries can start it several times in the same
+// minute.
 func TestCacheTrimAdmitsOneCaller(t *testing.T) {
+	// The Service has no engine or store, so a caller that got past the flag
+	// would panic.
 	svc := &Service{}
-	// No cache dir and no store: a caller that gets past the flag would panic on
-	// the settings read, which is exactly the observation this test wants.
 	if !svc.cacheTrimming.CompareAndSwap(false, true) {
 		t.Fatal("setup: the flag must start clear")
 	}
@@ -102,7 +93,7 @@ func TestCacheTrimAdmitsOneCaller(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			svc.TrimResticCache(context.Background()) // must return immediately
+			svc.TrimResticCache(context.Background())
 		}()
 	}
 	go func() { wg.Wait(); close(done) }()

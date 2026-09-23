@@ -924,6 +924,36 @@ func TestRunTagSetAppearsOnAllBackupCalls(t *testing.T) {
 	}
 }
 
+// TestVMBackupCarriesOneFormerlyTagPerFormerName: a taken-over entry's
+// snapshot names every former name, graceful or live, so the link can be
+// rebuilt from the repository alone.
+func TestVMBackupCarriesOneFormerlyTagPerFormerName(t *testing.T) {
+	for _, c := range []struct {
+		name string
+		vm   *fakeVM
+		deps func(*testing.T, *fakeVM, *fakeRestic, *fakeRuns) backup.VMBackupDeps
+		run  func(context.Context, backup.VMBackupDeps) (backup.Summary, error)
+		want string
+	}{
+		{"graceful", &fakeVM{active: true, stateVal: "shut off"}, sampleVMBackupDeps, backup.BackupVMGraceful,
+			"vm:win10,p2,formerly:windows-10,formerly:win-10"},
+		{"live", &fakeVM{guestAgent: true}, liveDeps, backup.BackupVMLive,
+			"vm:win10,p2,live,formerly:windows-10,formerly:win-10"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678"}}
+			d := c.deps(t, c.vm, r, &fakeRuns{})
+			d.FormerNames = []string{"windows-10", "win-10"}
+			if _, err := c.run(t.Context(), d); err != nil {
+				t.Fatalf("backup: %v", err)
+			}
+			if len(r.log) != 1 || !strings.HasSuffix(r.log[0], ":"+c.want) {
+				t.Fatalf("restic backup call = %v, want tags %q", r.log, c.want)
+			}
+		})
+	}
+}
+
 // TestVMBlockDiskDevGivesDistinctIdentityTag proves that when a BlockDisks
 // entry carries a Dev (v8.0.0 VM service-layer integration, Task 2 — see
 // VMBlockDisk.Dev's doc comment), its restic backup call is tagged with its

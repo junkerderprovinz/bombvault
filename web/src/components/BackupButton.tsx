@@ -16,45 +16,19 @@ interface BackupButtonProps {
   t: T;
   /** Called after a successful backup so the caller can refresh (e.g. last-backup time). */
   onBackedUp?: () => void;
-  /** "Something is running" signal (anyActive): disables this backup with a
-   *  friendly hint while another op runs — but never for its OWN in-flight
-   *  backup (that is isPending, handled below). */
+  /** Another operation is running (anyActive). Disables the button with a
+   *  hint, except while this button's own backup is the one running. */
   running?: { active: boolean; phase?: string };
 }
 
-// Square icon-only badge (Containers.tsx Task 2, jdp live-review: "Jetzt
-// sichern und Export sollen quadratische Badges mit Glyph sein... rechts
-// oben in der Ecke"). Was a full-width text button with FOUR different
-// permanently-inline states living below it (pending spinner+label,
-// success checkmark+snapshot id, a stateless-container "config only" note,
-// a red error message, a neutral "skipped" note) — there is no room for any
-// of that next to a small square glyph in the row's top-right corner, so
-// every TERMINAL state (success/error/skipped) now surfaces as a toast
-// instead, matching the "failed action toasts AND shakes its button"
-// standing rule this exact file's ExportButton/HooksEditor save() already
-// follow. Only the PENDING state stays genuinely inline — swapped for the
-// glyph itself (a spinner replacing the icon while running), since a badge
-// has no separate space to put a spinner NEXT TO its own glyph.
-// `size="icon"` (Badge.tsx, h-8/w-8 = 32px) — the app's ONE square-icon-badge
-// size, not a number derived here. This badge used to be 28px, measured
-// against its own pre-conversion self, which was correct per-control and
-// wrong per-card: sitting in the same Container card as the 32px Lokal/
-// Offsite pair and the (then) 24px restore/delete pair, it was one of three
-// badge sizes a user saw at once. jdp reported that twice; the fix was to
-// delete the per-role sizes entirely. Do not re-measure this button against
-// its neighbours and "improve" the number — see Badge.tsx's own "ONE SIZE
-// FOR SQUARE ICON BADGES" block for why that reasoning is the defect.
-// Per-browser acknowledgement of the stop warning (#197). A storage key, not a
-// class name, so it keeps the app's own bv- prefix: those keys were left alone
-// when the CSS classes moved to glim-, precisely because renaming one resets
-// every user's stored state.
+// Per-browser acknowledgement of the stop warning. Storage keys keep the bv-
+// prefix, since renaming one resets every user's stored state.
 const STOP_ACK_KEY = "bv-container-stop-ack";
 
 export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps) {
-  // Fire-and-watch: the server runs the backup detached and answers immediately,
-  // so we watch the "container:<name>" progress + recorded run for the outcome
-  // instead of awaiting (which would die if we back up the proxy the UI runs
-  // through). See useBackupWatch.
+  // The server runs the backup detached and answers at once; the outcome comes
+  // from the progress stream and the recorded run. Awaiting the backup itself
+  // would break when the container is the proxy this UI runs through.
   const { state, fire, isPending } = useBackupWatch({
     progressKey: `container:${name}`,
     start: () => backupNow(name),
@@ -64,22 +38,19 @@ export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps
   const blockedByOther = !!running?.active && !isPending;
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
-  // failed action toasts AND shakes its button.
+  // A failure toasts and shakes the button. The count doubles as the button's
+  // key, so each failure remounts it and replays the animation.
   const [shake, setShake] = useState(0);
-  // Tracks the last phase already reported, so this effect toasts exactly
-  // once per NEW terminal transition — state.phase can only ever start at
-  // "idle" (useBackupWatch never begins mid-run), so this never fires on
-  // mount, only on a real fire()-driven change.
+  // The last phase already toasted. useBackupWatch always starts at "idle",
+  // so mounting toasts nothing.
   const seenPhase = useRef(state.phase);
 
   useEffect(() => {
     if (state.phase === seenPhase.current) return;
     seenPhase.current = state.phase;
     if (state.phase === "success") {
-      // No snapshot id ⇒ a stateless container with no data folders (the
-      // definition/template is still captured for recreate) — say so
-      // instead of a bare, opaque "Done".
+      // No snapshot id: a stateless container without data folders, so only
+      // its definition was saved.
       push(
         state.snapshotId ? `${t("common.done")} · ${state.snapshotId.slice(0, 8)}` : t("backup.configOnly"),
         "success"
@@ -88,51 +59,36 @@ export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps
       push(state.message, "fail");
       setShake((n) => n + 1);
     } else if (state.phase === "skipped") {
-      // Neutral terminal: the container is gone, so the backup was skipped
-      // (not failed) — "warn" severity, the same neutral-not-red tone this
-      // file's own batch actions already use for a partial/non-failure result.
+      // The container is gone, so the backup was skipped rather than failed.
       push(`↷ ${t("containers.notInstalledTitle")}`, "warn");
     }
   }, [state, push, t]);
 
-  // #197: a container backup STOPS the container for the duration of the run
-  // and starts it again afterwards. That is the right default — it is what
-  // makes the appdata consistent — and it was stated nowhere at all. Somebody
-  // pressing this on Plex or a database in the afternoon takes it offline for
-  // as long as the first full backup takes, which is minutes rather than
-  // seconds, and reads the result as the tool misbehaving.
-  //
-  // So it is said ONCE, before the first backup this browser has ever started,
-  // and then never again: a warning that returns on every press is a warning
-  // people click away without reading, which would put us back where we
-  // started. The acknowledgement is per browser rather than per container,
-  // because the fact being taught is about how backups work here, not about
-  // one container.
+  // A container backup stops the container for the whole run, minutes on a
+  // first full backup. Only the first backup in this browser warns: a warning on
+  // every press gets clicked away unread, and it is about how backups work, not
+  // about one container.
   const confirmStopThenFire = useCallback(async () => {
     let acked = false;
     try {
       acked = localStorage.getItem(STOP_ACK_KEY) === "1";
     } catch {
-      // A browser that refuses storage (private window, blocked site data) asks
-      // every time rather than never. Annoying beats silent downtime.
+      // Without storage (private window, blocked site data) it asks every time.
     }
     if (!acked) {
-      const ok = await confirm(t("containers.stopWarning"), {
-        confirmLabel: t("containers.backupNow"),
-      });
+      const ok = await confirm(t("containers.stopWarning"), { confirmKey: "containers.backupNow" });
       if (!ok) return;
       try {
         localStorage.setItem(STOP_ACK_KEY, "1");
       } catch {
-        /* see above */
+        /* asks again next time */
       }
     }
     await fire();
   }, [confirm, fire, t]);
 
-  // #178: the button's NAME is stable; only the exceptional states get a
-  // tooltip. A label that changed to "Backing up…" would resize the control
-  // mid-action, which the width stages exist to prevent.
+  // The label stays fixed and busy states go into the tooltip; a changing
+  // label would resize the button mid-action.
   const stateTip = isPending
     ? t("common.backingUp")
     : blockedByOther
@@ -142,24 +98,21 @@ export function BackupButton({ name, t, onBackedUp, running }: BackupButtonProps
   return (
     <>
       {confirmDialog}
-    <Button
-      key={shake}
-      label={t("containers.backupNow")}
-      labelKey="containers.backupNow"
-      glyph={<IconBackupNow />}
-      tone="accent"
-      // Shares a width with the Export button it sits beside in every card
-      // (jdp: "die buttons jetzt sichern und Export sollen gleich breit
-      // sein"). Both compute it from the SAME two labels rather than one
-      // handing a number to the other, so they agree in all 42 languages and
-      // keep agreeing when either word is retranslated.
-      stage={groupStage([t("containers.backupNow"), t("export.button")])}
-      onClick={() => void confirmStopThenFire()}
-      disabled={isPending || blockedByOther}
-      busy={isPending}
-      title={stateTip}
-      className={shake ? "glim-shake" : ""}
-    />
+      <Button
+        key={shake}
+        label={t("containers.backupNow")}
+        labelKey="containers.backupNow"
+        glyph={<IconBackupNow />}
+        tone="accent"
+        // Same width as the Export button beside it: both derive it from the
+        // same two labels, so they match in every language.
+        stage={groupStage([t("containers.backupNow"), t("export.button")])}
+        onClick={() => void confirmStopThenFire()}
+        disabled={isPending || blockedByOther}
+        busy={isPending}
+        title={stateTip}
+        className={shake ? "glim-shake" : ""}
+      />
     </>
   );
 }

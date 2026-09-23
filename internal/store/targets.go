@@ -1,7 +1,9 @@
 package store
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"time"
@@ -168,6 +170,15 @@ func (r *Repo) GetTargetByContainer(name string) (Target, error) {
 	row := r.db.QueryRow(`
 		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence, repo, repo_chosen
 		FROM targets WHERE container_name = ?`, name)
+	return scanTarget(row)
+}
+
+// GetTargetByID returns the target with the given row id, which is how an
+// alias's target_id resolves to the entry's current name.
+func (r *Repo) GetTargetByID(id string) (Target, error) {
+	row := r.db.QueryRow(`
+		SELECT id, container_name, appdata_paths, include_in_schedule, created_at, definition, pre_hook, post_hook, selected_paths, stop_containers, excludes, exclude_caches, update_after_backup, last_update_check, last_update_result, backup_order, schedule_cadence, repo, repo_chosen
+		FROM targets WHERE id = ?`, id)
 	return scanTarget(row)
 }
 
@@ -560,27 +571,48 @@ func (r *Repo) SetExcludeCaches(containerName string, m map[string]bool) error {
 	return nil
 }
 
-// DeleteTarget removes a target and ALL its run history by container name, in a
+// DeleteTarget removes a target and all its run history by container name, in a
 // single transaction. It is a no-op (no error) if the target does not exist.
 // Used to forget a container that is no longer installed once its backups have
 // been deleted from the restic repo.
+//
+// It also deletes the container aliases whose target_id is this row. Left
+// behind, they could never be unlinked, and the unique (domain, old_name)
+// index would keep those names from ever becoming aliases again. An alias
+// whose old_name only equals name but points at another row is that row's
+// history and stays.
 func (r *Repo) DeleteTarget(name string) error {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return fmt.Errorf("DeleteTarget begin: %w", err)
 	}
+	defer tx.Rollback() //nolint:errcheck // no-op after Commit
+	var id string
+	hasRow := true
+	if err := tx.QueryRow(`SELECT id FROM targets WHERE container_name = ?`, name).Scan(&id); err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("DeleteTarget: read id: %w", err)
+		}
+		hasRow = false
+	}
 	// Child runs first (runs.target_id references targets.id).
 	if _, err := tx.Exec(
 		`DELETE FROM runs WHERE target_id IN (SELECT id FROM targets WHERE container_name = ?)`, name,
 	); err != nil {
-		tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
 		return fmt.Errorf("DeleteTarget runs: %w", err)
 	}
 	if _, err := tx.Exec(`DELETE FROM targets WHERE container_name = ?`, name); err != nil {
-		tx.Rollback() //nolint:errcheck,gosec // best-effort rollback; original error takes priority
 		return fmt.Errorf("DeleteTarget: %w", err)
 	}
-	return tx.Commit()
+	if hasRow {
+		if _, err := tx.Exec(`DELETE FROM target_aliases WHERE domain = 'container' AND target_id = ?`, id); err != nil {
+			return fmt.Errorf("DeleteTarget aliases: %w", err)
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("DeleteTarget commit: %w", err)
+	}
+	return nil
 }
 
 // scanner abstracts *sql.Row and *sql.Rows so scanTarget works for both.
@@ -616,4 +648,30 @@ func scanTarget(s scanner) (Target, error) {
 	t.IncludeInSchedule = include != 0
 	t.UpdateAfterBackup = updateAfter != 0
 	return t, nil
+}
+
+// RenameTargetWithAlias moves an entry to a new container name and records the
+// old one as an alias, in one transaction. The row id stays, so the run
+// history and every per-item setting follow. The caller must remove an empty
+// row of the new name first; a name that still has its own entry, or is
+// another entry's former name, is refused rather than merged. Renamed back
+// onto one of its own former names, the entry owns that name again with no
+// link time bounding it, so that alias is dropped.
+//
+// newDefinition replaces the stored definition in the same statement, so a
+// restore right after a takeover cannot recreate the container under the name
+// it just gave up. The caller rewrites it beforehand, so a definition that
+// fails to rewrite fails before anything is written; pass the current
+// definition when there is nothing to rewrite.
+func (r *Repo) RenameTargetWithAlias(oldName, newName, newDefinition string) error {
+	return r.renameWithAlias(containerEntries, oldName, newName, newDefinition, "")
+}
+
+// UnlinkAlias reverses RenameTargetWithAlias: the alias's target moves back to
+// oldName and the alias row is removed, in one transaction. It refuses when
+// oldName is no container's former name, and when an unrelated entry has
+// taken oldName since, rather than merge the two. newDefinition is written
+// with the rename back, for the same reason as in RenameTargetWithAlias.
+func (r *Repo) UnlinkAlias(oldName, newDefinition string) error {
+	return r.unlinkAlias(containerEntries, oldName, newDefinition, "")
 }

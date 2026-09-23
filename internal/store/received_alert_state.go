@@ -6,13 +6,10 @@ import (
 	"fmt"
 )
 
-// ReceivedAlertState is the receiver dead-mans-switch's once-per-episode memory
-// for one stale SOURCE on a received repo: when the alert fired and which newest
-// snapshot time (unix) the stale verdict was based on. An episode is identified by
-// that BasedOn timestamp — while it is unchanged the source is still in the SAME
-// stale episode and the receiver stays quiet; a newer received snapshot changes it
-// (or the recovery path removes the row), re-arming the alert. It mirrors
-// WatchdogState, scoped by (ReceivedRepoID, Source) instead of a single domain.
+// ReceivedAlertState is WatchdogState for one stale source on a received repo:
+// when the dead man's switch alert fired and the snapshot time it was based
+// on. While BasedOn is unchanged no new alert is sent; a newer snapshot, or the
+// recovery path deleting the row, re-arms it.
 type ReceivedAlertState struct {
 	ReceivedRepoID string
 	Source         string
@@ -20,9 +17,8 @@ type ReceivedAlertState struct {
 	BasedOn        int64
 }
 
-// GetReceivedAlertState returns the recorded dead-mans-switch episode for a
-// (received repo, source) pair. The bool is false (with a zero value) when the
-// source has no active episode.
+// GetReceivedAlertState returns the alert episode of a source on a received
+// repo, or false when the source has none.
 func (r *Repo) GetReceivedAlertState(receivedRepoID, source string) (ReceivedAlertState, bool, error) {
 	row := r.db.QueryRow(`
 		SELECT received_repo_id, source, notified_at, based_on
@@ -53,8 +49,8 @@ func (r *Repo) UpsertReceivedAlertState(st ReceivedAlertState) error {
 	return nil
 }
 
-// DeleteReceivedAlertState removes a single source's episode (the source
-// recovered — a newer snapshot arrived). Deleting a missing row is a no-op.
+// DeleteReceivedAlertState removes one source's episode once a newer snapshot
+// has arrived. Deleting a missing row is a no-op.
 func (r *Repo) DeleteReceivedAlertState(receivedRepoID, source string) error {
 	if _, err := r.db.Exec(`DELETE FROM received_alert_state WHERE received_repo_id = ? AND source = ?`, receivedRepoID, source); err != nil {
 		return fmt.Errorf("DeleteReceivedAlertState: %w", err)
@@ -63,8 +59,7 @@ func (r *Repo) DeleteReceivedAlertState(receivedRepoID, source string) error {
 }
 
 // DeleteReceivedAlertStatesForRepo removes every episode recorded for a received
-// repo, so deleting the repo leaves no orphaned alert state behind. A no-op when
-// the repo has none.
+// repo, so deleting the repo leaves no orphaned alert state behind.
 func (r *Repo) DeleteReceivedAlertStatesForRepo(receivedRepoID string) error {
 	if _, err := r.db.Exec(`DELETE FROM received_alert_state WHERE received_repo_id = ?`, receivedRepoID); err != nil {
 		return fmt.Errorf("DeleteReceivedAlertStatesForRepo: %w", err)

@@ -1,18 +1,8 @@
 package api_test
 
-// PUT /api/settings must not destroy what it does not manage.
-//
-// The settings form owns a fixed set of columns. Everything else in the row —
-// the login password, the session epoch, the encrypted credential blobs — is
-// owned by its own endpoint. Building a whole store.Settings literal and
-// writing it back makes those columns the form's responsibility by accident:
-// a column nobody remembered to copy across is wiped on every save, silently,
-// for as long as it takes someone to notice. cloud_cred_sets was exactly that
-// (every named S3/REST credential set disappeared the next time any settings
-// field was saved from any tab).
-//
-// These tests pin the columns the form does not own, so the same omission
-// cannot come back the next time a column is added.
+// The settings form owns a fixed set of columns. The rest of the row (login
+// password, session epoch, encrypted credential blobs) belongs to other
+// endpoints, and PUT /api/settings must leave it alone.
 
 import (
 	"context"
@@ -27,10 +17,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// loginCookie sets a login password through the real endpoint and logs in,
-// returning the session cookie. Used so the assertions below can run with auth
-// ENABLED — the stored password hash is the single most damaging column a
-// settings save could revert (reverting it turns authentication back off).
+// loginCookie sets a login password through the API, logs in and returns the
+// session cookie. A save that reverted the password hash would turn
+// authentication off, so the tests run with it set.
 func loginCookie(t *testing.T, h http.Handler, password string) *http.Cookie {
 	t.Helper()
 	if _, m := doJSON(t, h, http.MethodPost, "/api/auth/password", `{"password":"`+password+`"}`); m["ok"] != true {
@@ -67,8 +56,8 @@ func putWithCookie(t *testing.T, h http.Handler, path, body string, c *http.Cook
 	return m
 }
 
-// A minimal, valid settings form — the shape any card on the Settings page
-// PUTs. It names none of the columns asserted below.
+// settingsFormBody is a minimal settings form. It names none of the columns the
+// tests check.
 const settingsFormBody = `{
 	"containersPath": "backups/c",
 	"vmsPath": "backups/v",
@@ -78,9 +67,8 @@ const settingsFormBody = `{
 	"flashSchedule": "off"
 }`
 
-// TestSettingsSaveKeepsNamedCloudCredentialSets is the regression proof: named
-// credential sets survive a plain settings save. They are managed by
-// POST /api/cloud/creds-sets and are not part of the settings form at all.
+// Named credential sets belong to POST /api/cloud/creds-sets, not to the
+// settings form.
 func TestSettingsSaveKeepsNamedCloudCredentialSets(t *testing.T) {
 	h, st, svc := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
 
@@ -108,7 +96,7 @@ func TestSettingsSaveKeepsNamedCloudCredentialSets(t *testing.T) {
 		t.Fatal(err)
 	}
 	if after.CloudCredSets != before.CloudCredSets {
-		t.Fatalf("cloud_cred_sets = %q after a settings save (was %q) — saving unrelated settings destroyed every named credential set",
+		t.Fatalf("cloud_cred_sets = %q after a settings save (was %q); saving unrelated settings destroyed every named credential set",
 			after.CloudCredSets, before.CloudCredSets)
 	}
 	sets, err := svc.CloudCredSets()
@@ -120,9 +108,6 @@ func TestSettingsSaveKeepsNamedCloudCredentialSets(t *testing.T) {
 	}
 }
 
-// TestSettingsSaveKeepsInstanceOwnedColumns covers the rest of the row the form
-// does not own. Each of these has its own endpoint, so a settings save must
-// leave every one of them exactly as it found it.
 func TestSettingsSaveKeepsInstanceOwnedColumns(t *testing.T) {
 	h, st, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
 
@@ -139,9 +124,8 @@ func TestSettingsSaveKeepsInstanceOwnedColumns(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	// Auth ON, so the password hash under test is a real one and the save below
-	// is a real logged-in request. (Seeded first: the session token is bound to
-	// the epoch, so rotating the epoch afterwards would revoke the cookie.)
+	// Log in after seeding: the session is bound to the epoch, so changing the
+	// epoch afterwards would revoke the cookie.
 	cookie := loginCookie(t, h, "correct horse battery staple")
 
 	seeded, err := st.GetSettings()
@@ -170,20 +154,18 @@ func TestSettingsSaveKeepsInstanceOwnedColumns(t *testing.T) {
 		{"FleetToken", seeded.FleetToken, after.FleetToken},
 	} {
 		if c.got != c.want {
-			t.Errorf("%s = %q after a settings save, want %q — the form wrote a column it does not own", c.name, c.got, c.want)
+			t.Errorf("%s = %q after a settings save, want %q; the form wrote a column it does not own", c.name, c.got, c.want)
 		}
 	}
-	// …and the fields the form DOES own really were saved.
+	// The form's own fields were saved.
 	if after.ContainersPath != "backups/c" || after.ContainersSchedule != "daily 02:30" {
 		t.Fatalf("the form's own fields were not saved: %+v", after)
 	}
 }
 
-// rotatingSSH is an api.HostSSH whose connection test runs a hook once. It is
-// the seam that makes the settings-save window deterministic: the VM SSH test
-// is the ONLY thing handlePutSettings does between reading its pre-transaction
-// snapshot and opening the write transaction, so a hook there lands exactly
-// where a save from another tab would.
+// rotatingSSH is an api.HostSSH whose connection test runs onTest once.
+// handlePutSettings runs that test between reading its snapshot and opening the
+// write transaction, which is where a save from another tab would land.
 type rotatingSSH struct {
 	onTest func()
 	fired  bool
@@ -208,15 +190,9 @@ func (s *rotatingSSH) StreamCommand(context.Context, ...string) (io.ReadCloser, 
 }
 func (s *rotatingSSH) RunWithStdin(context.Context, io.Reader, ...string) error { return nil }
 
-// TestSettingsSaveMergesRegistryTokensAgainstTheCurrentRow pins the merge path
-// the test above never reaches (its form body names no registryAuths at all,
-// so it only exercises the nil "keep the stored blob" branch).
-//
-// A registry token is write-only: the GET sends tokenSet and a blank token, so
-// EVERY tab's baseline carries blanks for the stored hosts, and the SPA PUTs a
-// full settings object — meaning this merge runs on every save from every card.
-// Resolving those blanks against a snapshot read BEFORE the transaction means
-// any save that started before a token rotation silently reverts it.
+// A registry token is write-only: the GET sends tokenSet and a blank token, and
+// the SPA PUTs the full settings object. Resolving the blank against a snapshot
+// read before the transaction would revert a token rotated in the meantime.
 func TestSettingsSaveMergesRegistryTokensAgainstTheCurrentRow(t *testing.T) {
 	h, st, svc := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
 
@@ -236,12 +212,12 @@ func TestSettingsSaveMergesRegistryTokensAgainstTheCurrentRow(t *testing.T) {
 	}
 	seed("old-token")
 
-	// The concurrent save: it rotates the stored token after this request has
-	// read its snapshot but before the request writes.
+	// Rotate the stored token after the request has read its snapshot but
+	// before it writes.
 	svc.SetHostSSH(&rotatingSSH{onTest: func() { seed("rotated-token") }})
 
-	// vmsEnabled flips OFF→ON, which is what makes the request run the SSH test.
-	// The registry row carries a BLANK token, exactly as the UI submits it.
+	// Turning vmsEnabled on makes the request run the SSH test. The registry row
+	// has a blank token, as the UI sends it.
 	body := `{
 		"containersPath": "backups/c",
 		"vmsPath": "backups/v",
@@ -265,15 +241,13 @@ func TestSettingsSaveMergesRegistryTokensAgainstTheCurrentRow(t *testing.T) {
 		t.Fatalf("registry auths = %+v, want exactly the one seeded host", auths)
 	}
 	if auths[0].Token != "rotated-token" {
-		t.Fatalf("registry token = %q, want %q — the blank token was resolved against a stale snapshot, so an unrelated save reverted the rotation",
+		t.Fatalf("registry token = %q, want %q; the blank token was resolved against a stale snapshot, so an unrelated save reverted the rotation",
 			auths[0].Token, "rotated-token")
 	}
 }
 
-// TestSettingsSaveRejectsAnInvalidRegistryHostVerbatim pins the one merge
-// failure whose message must reach the client unscrubbed: the rejected host
-// contains "/", which the path scrubber would otherwise eat, leaving the user
-// with a complaint that no longer names what it rejected.
+// The rejected host contains "/", which the path scrubber would otherwise strip
+// from the error message.
 func TestSettingsSaveRejectsAnInvalidRegistryHostVerbatim(t *testing.T) {
 	h, _, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
 

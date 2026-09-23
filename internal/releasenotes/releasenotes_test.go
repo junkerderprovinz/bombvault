@@ -12,11 +12,7 @@ func TestTagNormalizes(t *testing.T) {
 		"v5.2.1":           "v5.2.1",
 		"5.2.1":            "v5.2.1",
 		"v5.2.1+main.abc1": "v5.2.1", // :latest build metadata
-		// The build metadata names the BRANCH now, not the hard-coded word
-		// "main" — a dispatched feature-branch build used to report itself as
-		// main, which reads like a push to main and is not one. Slashes are
-		// hyphenated in the workflow so the metadata stays parseable; this pins
-		// that the release lookup still ignores everything after the "+".
+		// A branch build names its branch, slashes turned into hyphens.
 		"v5.2.1+feature-control-engine.abc1": "v5.2.1",
 		"dev":                                "",
 		"0.0.0+main.abc":                     "",
@@ -40,15 +36,14 @@ func TestNotesForKnownVersion(t *testing.T) {
 	}
 }
 
-// TestNotesInSyncWithReleaseNotes guarantees every .github/release-notes/*.md is
-// embedded (copied into internal/releasenotes/notes/), so a newly-released
-// version never 404s the What's-new dialog (#54). If this fails after adding a
-// release note, run: cp .github/release-notes/*.md internal/releasenotes/notes/
+// TestNotesInSyncWithReleaseNotes checks that every note in
+// .github/release-notes is embedded as well. After adding one, run:
+// cp .github/release-notes/*.md internal/releasenotes/notes/
 func TestNotesInSyncWithReleaseNotes(t *testing.T) {
 	srcDir := filepath.Join("..", "..", ".github", "release-notes")
 	entries, err := os.ReadDir(srcDir)
 	if err != nil {
-		t.Skipf("release-notes source dir not available (%v) — skipping sync check", err)
+		t.Skipf("release-notes source dir not available (%v), skipping sync check", err)
 	}
 	for _, e := range entries {
 		if e.IsDir() || !strings.HasSuffix(e.Name(), ".md") {
@@ -60,11 +55,11 @@ func TestNotesInSyncWithReleaseNotes(t *testing.T) {
 		}
 		got, err := notesFS.ReadFile("notes/" + e.Name())
 		if err != nil {
-			t.Errorf("release note %s is not embedded — copy it into internal/releasenotes/notes/", e.Name())
+			t.Errorf("release note %s is not embedded; copy it into internal/releasenotes/notes/", e.Name())
 			continue
 		}
 		if strings.TrimSpace(string(want)) != strings.TrimSpace(string(got)) {
-			t.Errorf("embedded note %s differs from .github/release-notes/%s — re-copy it", e.Name(), e.Name())
+			t.Errorf("embedded note %s differs from .github/release-notes/%s; re-copy it", e.Name(), e.Name())
 		}
 	}
 }

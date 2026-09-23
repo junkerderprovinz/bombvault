@@ -12,14 +12,11 @@ interface NotInstalledHeadingProps {
   t: T;
 }
 
-// The heading over the "Not installed (backups only)" list, one component for
-// the Containers and VMs pages so the two cannot drift apart again (#232).
-//
-// The explanation sits in the badge's own (i), like Recovery.tsx's card-less
-// group heading. It used to be a line under the heading, and the notch, pulled
-// up by half its height, covered that line with its lower half: the screenshot
-// in #232. `relative` on the h2 because nothing else here anchors the notch,
-// same as StacksPanel.
+// The heading over the "Not installed (backups only)" list on the Containers
+// and VMs pages. The explanation sits in the badge's (i), as in Recovery.tsx's
+// card-less group headings, because the notch is pulled up by half its height
+// and would cover a line under the heading. The h2 is `relative` because
+// nothing else here anchors the notch.
 export function NotInstalledHeading({ tip, hueIndex, t }: NotInstalledHeadingProps) {
   return (
     <h2 className="relative flex items-center">

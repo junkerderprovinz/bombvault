@@ -1,14 +1,10 @@
 package schedule_test
 
-// Two reloads arriving together must leave ONE set of entries, not two.
-//
-// mu is deliberately dropped between clearing the old entries and registering
-// the new ones, because cron must never be called while holding it. That gap is
-// what let two concurrent reloads interleave: both snapshot the same old set,
-// both remove it, and both register a full set — leaving every domain in cron
-// twice. SkipIfStillRunning does not help, since it only stops an entry
-// overlapping ITSELF and these are two distinct entries, so a nightly backup
-// ran twice over the same repo.
+// Two concurrent reloads must leave one set of entries. Reload drops mu between
+// clearing the old entries and registering the new ones, because cron must not
+// be called while holding it, so two reloads could each register a full set.
+// SkipIfStillRunning only stops an entry from overlapping itself, so the
+// duplicates would each run the nightly backup over the same repo.
 
 import (
 	"sync"
@@ -27,8 +23,8 @@ func TestConcurrentReloadsDoNotDoubleRegister(t *testing.T) {
 		FlashSchedule:      "daily 04:00",
 	}
 
-	// Hammer it from several goroutines at once: the window is a few
-	// instructions wide, so one pair would be a coin flip.
+	// The window is a few instructions wide, so a single pair would rarely hit
+	// it.
 	const workers = 8
 	var wg sync.WaitGroup
 	wg.Add(workers)

@@ -157,6 +157,10 @@ type StopContainer struct {
 type BackupDeps struct {
 	// ContainerRef is the name/id used for stop/start and the `container:<ref>` tag.
 	ContainerRef string
+	// FormerNames are the entry's aliases. Each becomes a "formerly:<name>" tag,
+	// so the link to a renamed entry's history survives in the repository even
+	// when the local alias table is lost.
+	FormerNames []string
 	// ContainerName is the display name used for the template filename.
 	ContainerName string
 	// RepoPath is the local restic repository path.
@@ -383,6 +387,12 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		stopTimeout = defaultStopTimeout
 	}
 	tags := []string{"container:" + d.ContainerRef, "p1"}
+	// One tag per alias, so a reader matches the snapshot on any of them.
+	// restic splits a tag value on commas; the names go unescaped because the
+	// takeover only stores names that pass the Docker name check.
+	for _, f := range d.FormerNames {
+		tags = append(tags, "formerly:"+f)
+	}
 
 	var (
 		summary     Summary

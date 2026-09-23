@@ -8,17 +8,13 @@ import (
 	"time"
 )
 
-// resticHelperEnv, when "1" in a spawned copy of the test binary, makes
-// TestResticSleeper act as a long-running stand-in for restic: it blocks until
-// its process is killed. That lets the parent point run()'s restic binary at
-// this test binary, cancel run()'s context mid-execution, and observe the error
-// run() surfaces for a killed child.
+// resticHelperEnv set to "1" turns a child copy of the test binary into a
+// restic stand-in that blocks until it is killed.
 const resticHelperEnv = "BOMBVAULT_RESTIC_SLEEPER"
 
-// TestResticSleeper is not a real test. When the helper env is set (only in the
-// child process run() spawns) it blocks, simulating a long restic restore, so
-// exec.CommandContext can kill it on cancel. In a normal test run the env is
-// unset and it returns immediately.
+// TestResticSleeper is a helper, not a test. In the child process run() spawns
+// it blocks like a long restore until exec.CommandContext kills it; in a normal
+// test run it returns at once.
 func TestResticSleeper(t *testing.T) {
 	if os.Getenv(resticHelperEnv) != "1" {
 		return
@@ -26,17 +22,13 @@ func TestResticSleeper(t *testing.T) {
 	time.Sleep(30 * time.Second) // bounded so a stray child can't wedge CI
 }
 
-// TestRunWrapsCancelAsContextCanceled is the REAL-path cancel test the fake
-// engine cannot provide. run() spawns a killable child; the test cancels the
-// context mid-run. exec.CommandContext then kills the child, which cmd.Wait
-// reports as an *ExitError ("signal: killed" / "exit status ...") — NOT
-// context.Canceled. run() must detect ctx.Err() and re-wrap so
-// errors.Is(err, context.Canceled) holds; otherwise every finish site records a
-// user cancel as "failed" (the whole cancel feature is inert in production).
+// TestRunWrapsCancelAsContextCanceled cancels a real child mid-run. cmd.Wait
+// reports the kill as an *ExitError, so run() has to check ctx.Err() and wrap
+// context.Canceled itself, or every caller would record a user cancel as a
+// failure.
 func TestRunWrapsCancelAsContextCanceled(t *testing.T) {
-	// Point restic at THIS test binary and mark it (via the env authEnv passes on
-	// to the child) as the blocking sleeper. t.Setenv also forbids t.Parallel, so
-	// TestResticSleeper never sees the env set during an unrelated parallel test.
+	// authEnv passes the helper env on to the child. t.Setenv also rules out
+	// t.Parallel, so TestResticSleeper never sees the env during another test.
 	r := Restic{Bin: os.Args[0]}
 	t.Setenv(resticHelperEnv, "1")
 
@@ -46,9 +38,9 @@ func TestRunWrapsCancelAsContextCanceled(t *testing.T) {
 		cancel()
 	}()
 
-	// run() execs os.Args[0] with these args: -test.run filters the child to the
-	// sleeper, "--" ends the go-test flags. subcommand() reads "restore" only for
-	// the error string; no sink is in ctx, so run() takes the buffered path.
+	// -test.run limits the child to the sleeper and "--" ends the go test flags.
+	// "restore" only feeds subcommand() for the error text; with no sink in ctx,
+	// run() takes the buffered path.
 	_, err := r.run(ctx, []string{"-test.run=^TestResticSleeper$", "--", "restore"}, Mode{})
 	if err == nil {
 		t.Fatal("run() must return an error when its context is cancelled mid-run")
@@ -61,10 +53,9 @@ func TestRunWrapsCancelAsContextCanceled(t *testing.T) {
 	}
 }
 
-// TestRunKeepsDeadlineExceededDistinct pins that a ctx DEADLINE (the 48h restore
-// cap) stays context.DeadlineExceeded and does NOT collapse into
-// context.Canceled — a wedged restore that blew its cap must still record
-// "failed", never "cancelled".
+// TestRunKeepsDeadlineExceededDistinct checks that a deadline such as the 48h
+// restore cap stays context.DeadlineExceeded. A restore that ran past its cap
+// has failed; it was not cancelled.
 func TestRunKeepsDeadlineExceededDistinct(t *testing.T) {
 	r := Restic{Bin: os.Args[0]}
 	t.Setenv(resticHelperEnv, "1")

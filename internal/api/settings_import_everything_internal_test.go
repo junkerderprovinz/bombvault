@@ -1,19 +1,5 @@
 package api
 
-// What an import may change, and what it may not.
-//
-// mergeImportedSettings used to build a FRESH store.Settings from the imported
-// view, so every column nobody had listed in that literal was written as its Go
-// zero value. Three of them were the Backup Everything fields: applying a
-// settings file switched the whole-server pass off (everything_schedule = '')
-// and deleted its dead-man's-switch post-hook, silently — the export itself
-// carried all three, the cadence was even grammar-checked on the way in, and
-// then the write dropped them on the floor.
-//
-// The fix is structural (start from the row, overwrite what the file is allowed
-// to set), so these tests pin both halves: the field that must now travel, and
-// the fields that must NOT travel because they are commands this host runs.
-
 import (
 	"encoding/json"
 	"strings"
@@ -22,8 +8,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// withEverything seeds an instance that runs the whole-server pass nightly and
-// pings a dead-man's-switch when it completes.
+// withEverything stores a whole-server pass schedule and its hooks.
 func withEverything(t *testing.T, st *store.Repo, schedule, pre, post string) {
 	t.Helper()
 	s, err := st.GetSettings()
@@ -38,8 +23,6 @@ func withEverything(t *testing.T, st *store.Repo, schedule, pre, post string) {
 	}
 }
 
-// TestImportCarriesEverythingSchedule is the reported defect: the pass's cadence
-// must survive an export/import instead of being cleared to "off".
 func TestImportCarriesEverythingSchedule(t *testing.T) {
 	src, srcStore := newPortableHandler(t, appKeyA)
 	seedSource(t, src, srcStore)
@@ -60,17 +43,13 @@ func TestImportCarriesEverythingSchedule(t *testing.T) {
 		t.Fatal(err)
 	}
 	if got.EverythingSchedule != "daily 04:00" {
-		t.Fatalf("everythingSchedule = %q after import, want \"daily 04:00\" — an import that clears it switches the whole-server pass off", got.EverythingSchedule)
+		t.Fatalf("everythingSchedule = %q after import, want \"daily 04:00\"; an import that clears it switches the whole-server pass off", got.EverythingSchedule)
 	}
 }
 
-// TestImportNeverOverwritesConfiguredEverythingPass is the same defect seen from
-// the destination's side, which is the damaging one: the box being imported into
-// already runs the pass, and applying an unrelated settings file must not switch
-// it off or delete the hook that proves it completed.
-func TestImportNeverOverwritesConfiguredEverythingPass(t *testing.T) {
+func TestImportKeepsDestinationEverythingHooks(t *testing.T) {
 	src, srcStore := newPortableHandler(t, appKeyA)
-	seedSource(t, src, srcStore) // no everything config at all on the source
+	seedSource(t, src, srcStore) // the source has no whole-server pass
 	body, _ := doExport(t, src, "")
 
 	dst, dstStore := newPortableHandler(t, appKeyB)
@@ -85,16 +64,15 @@ func TestImportNeverOverwritesConfiguredEverythingPass(t *testing.T) {
 		t.Fatal(err)
 	}
 	if got.EverythingPostHook != "curl -fsS https://hc-ping.com/dst-uuid" {
-		t.Fatalf("post-hook = %q — the dead-man's-switch ping was deleted by an import", got.EverythingPostHook)
+		t.Fatalf("post-hook = %q; the dead-man's-switch ping was deleted by an import", got.EverythingPostHook)
 	}
 	if got.EverythingPreHook != "/usr/local/bin/pre.sh" {
-		t.Fatalf("pre-hook = %q — an import must not clear it", got.EverythingPreHook)
+		t.Fatalf("pre-hook = %q; an import must not clear it", got.EverythingPreHook)
 	}
 }
 
-// TestImportedFileCannotInstallHookCommands: the hooks are shell commands this
-// host runs. A settings file is something users mail each other, so it may not
-// install one — the instance's own value stands, whatever the file says.
+// Hooks are shell commands this host runs, and a settings file can come from
+// anyone, so an import never sets them.
 func TestImportedFileCannotInstallHookCommands(t *testing.T) {
 	src, srcStore := newPortableHandler(t, appKeyA)
 	seedSource(t, src, srcStore)
@@ -102,9 +80,7 @@ func TestImportedFileCannotInstallHookCommands(t *testing.T) {
 
 	body, _ := doExport(t, src, "")
 
-	// A file that carries hook commands — hand-built, because this build's own
-	// export blanks them (they are host-local, so shipping them only leaks the
-	// ping URL, which IS the secret).
+	// Added by hand, because the export blanks the hooks.
 	var raw map[string]any
 	if err := json.Unmarshal(body, &raw); err != nil {
 		t.Fatal(err)
@@ -129,15 +105,13 @@ func TestImportedFileCannotInstallHookCommands(t *testing.T) {
 	if got.EverythingPreHook != "" || got.EverythingPostHook != "" {
 		t.Fatalf("an imported file installed a host command: pre=%q post=%q", got.EverythingPreHook, got.EverythingPostHook)
 	}
-	// The rest of the file still applied — this is a scoped refusal, not a
-	// rejected import.
+	// The rest of the file still applies.
 	if got.EverythingSchedule != "daily 04:00" {
 		t.Fatalf("everythingSchedule = %q, want the imported cadence", got.EverythingSchedule)
 	}
 }
 
-// TestExportOmitsHookCommands: the export drops them for the same reason. A hook
-// is typically a monitoring ping whose URL is its credential.
+// A hook is usually a monitoring ping whose URL is its credential.
 func TestExportOmitsHookCommands(t *testing.T) {
 	src, srcStore := newPortableHandler(t, appKeyA)
 	seedSource(t, src, srcStore)
@@ -152,9 +126,8 @@ func TestExportOmitsHookCommands(t *testing.T) {
 	}
 }
 
-// TestImportPreviewNamesTheEverythingArea: an apply can switch the whole-server
-// pass ON for a box that never ran it, so the preview has to say so rather than
-// folding it into "schedules".
+// An apply can switch the whole-server pass on, so the preview lists it as its
+// own area instead of folding it into "schedules".
 func TestImportPreviewNamesTheEverythingArea(t *testing.T) {
 	src, srcStore := newPortableHandler(t, appKeyA)
 	seedSource(t, src, srcStore)
@@ -173,10 +146,8 @@ func TestImportPreviewNamesTheEverythingArea(t *testing.T) {
 	}
 }
 
-// TestImportKeepsFieldsTheFileDoesNotSet is the STRUCTURAL guard, and the reason
-// this class of defect does not come back: whatever the mapper does not assign
-// must be left standing. A future column added to store.Settings and forgotten
-// here is then a no-op instead of a silent wipe.
+// Whatever the mapper does not assign keeps its stored value, so a column added
+// to store.Settings later is not wiped by an import.
 func TestImportKeepsFieldsTheFileDoesNotSet(t *testing.T) {
 	existing := store.Settings{
 		AuthPasswordHash:   "keep-me",
@@ -216,7 +187,7 @@ func TestImportKeepsFieldsTheFileDoesNotSet(t *testing.T) {
 		{"EverythingPostHook", out.EverythingPostHook, "post.sh"},
 	} {
 		if c.got != c.want {
-			t.Errorf("%s = %q, want %q — an import wiped a field it does not carry", c.name, c.got, c.want)
+			t.Errorf("%s = %q, want %q; an import wiped a field it does not carry", c.name, c.got, c.want)
 		}
 	}
 	if !out.FleetEnabled || !out.RecoveryKitAck || out.SessionEpoch != "epoch-7" {

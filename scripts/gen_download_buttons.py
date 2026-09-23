@@ -1,42 +1,15 @@
 """Generate the README's download buttons from one template.
 
-From a template, because hand-drawn buttons are chances to type one number
-differently, and the point of a row of them is that they look like one control
-repeated.
+One template, so every button in the row is the same control and no number is
+typed twice. The geometry matches ArrowLoop's buttons: 245.3 high with rx
+38.2, the Buy Me a Coffee button's own height and corner, and 720 wide,
+because at that button's 841.9 a third of the face sits empty beside the
+longest word. Each button is filled in a colour people already connect with
+its target and has no outline.
 
-THE GEOMETRY is ArrowLoop's, so the buttons here and there are the same object:
-245.3 tall with rx 38.2, which is the Buy Me a Coffee button's own height and
-corner, and 720 wide rather than that button's 841.9 because at 841.9 a third
-of the face sits empty next to the longest word.
-
-THE COLOUR is the thing's own and there is no outline (jdp: "die butotns sollen
-keine rahmenliniehaben und farbig sein"). A filled shape in a colour somebody
-already associates with the thing does the work an outline was doing, faster:
-the eye finds "the blue one" before it reads the word.
-
-WHAT A CONTAINER REPO ACTUALLY OFFERS is not a bundle, it is an image, and a
-browser cannot download one of those: a click on it can only open a page. So
-the first button downloads the `docker-compose.yml` instead, which IS a file
-and is the thing somebody needs in order to run the image. It is attached to
-every release, because a release asset is served with Content-Disposition
-attachment and therefore actually downloads, where a raw file in the repo would
-open as text in a tab.
-
-The second button is the source archive, and it is labelled as exactly that.
-GitHub attaches "Source code (zip)" to every release automatically: it is the
-whole repository at that tag, not the Dockerfile alone. Calling it anything
-else on the button would send somebody looking for an image to a folder of
-YAML.
-
-THE GLYPHS are Font Awesome Free (icons CC BY 4.0), from the brands set and
-the solid one. The brand marks are trademarks of their owners and are used the
-one way a trademark may be used without permission: to name the thing they
-point at. Each button links to that thing, the marks are unmodified, and
-nothing here claims endorsement by anyone.
-
-The source button carries a ZIP glyph rather than the GitHub mark, because
-what it hands over is an archive, not a visit to GitHub. The mark named the
-host; the glyph names the file.
+The glyphs are Font Awesome Free (icons CC BY 4.0), from the brands and solid
+sets. Brand marks are trademarks of their owners, used unmodified only to name
+what each button links to; nothing here claims endorsement.
 
 Run from anywhere:  python scripts/gen_download_buttons.py
 Writes .github/assets/download-buttons/*.svg, which are committed, and the
@@ -121,30 +94,16 @@ TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 </svg>
 """
 
-# THE SHEEN IS DEFINED ON SCREEN, NOT ON THIS CANVAS, and that sentence is the
-# whole of this block.
+# The sheen is a tilted white band crossing each button once per cycle. Its
+# width and speed are in screen pixels, the same for every button row in every
+# README, so this row's band matches the donation row's even though the
+# canvases (720 against 841.9) and rendered widths (195 against 160) differ.
+# Everything else is derived from the width this row renders at.
 #
-# A tilted white band, clipped to the button, crossing once every seven seconds:
-# the donation row's own, and the point is that it is the SAME band there and
-# here. It was not. Both rows described their band in their own canvas units,
-# and the two canvases differ (720 here, 841.9 there) as do the widths the
-# READMEs render them at (195 here, 160 there), so what reached the page was a
-# 38px band at 304px per second above a 31px band at 249. Two effects on one
-# page, which is what got reported.
-#
-# So the three numbers below are in SCREEN pixels and are the same for every row
-# in the house (see the GitHub style guide, "Der Schein"). Everything else is
-# derived from the width this row is rendered at.
-#
-# THE GAP IS MEASURED, not assumed. The row is `<img width="195">` with a
-# newline, two spaces and a `&nbsp;` between the images, which HTML collapses to
-# space-nbsp-space: 13.16px at GitHub's 16px body text, measured in a browser.
-# It used to be taken as 4px, which left the band hanging in the gap 17% too
-# long here - the visible half of the defect.
-#
-# The separator matters and is part of the rule: `&nbsp;` glued to the closing
-# `</a>` instead of standing on its own line measures 8.77px, and a row written
-# that way needs its own number.
+# GAP_PX was measured in a browser: a newline, two spaces and an &nbsp; between
+# the images collapse to space-nbsp-space, 13.16px at GitHub's 16px body text.
+# An &nbsp; glued to the closing </a> measures 8.77px instead, so row() keeps it
+# on its own line.
 BAND_PX = 33.0     # the band's width on screen
 SPEED = 250.0      # screen pixels per second
 GAP_PX = 13.16     # measured, see above
@@ -169,91 +128,56 @@ PASS = (SHEEN_TO - SHEEN_FROM) / SCALE / SPEED
 STEP = (RENDER_PX + GAP_PX) / SPEED
 PASS_PCT = PASS / CYCLE * 100.0
 
-# slug, brand file, background, ink, heading, second line, accessible name
+# slug, brand file, background, ink, heading, second line, accessible name, link
 #
-# GitHub's own colour is black, and a black button without an outline vanishes
-# into GitHub's dark theme, exactly as a black macOS button did in ArrowLoop's
-# row. The slate below stays visible on both themes.
+# The link lives here because this file also writes the README row, see
+# write_readme().
 #
-# WINDOWS AND LINUX are start scripts, not builds, and the second line says so.
-# There is one image and it runs on both; what differs is the twenty lines of
-# checking in front of it. On Windows that check is the whole point: the
-# emulator needs /dev/kvm, which inside WSL2 exists only with
-# nestedVirtualization=true in a file nothing prompts you to create.
-#
-# Linux yellow is Tux's own #fcc624 and is the one bright face in the row, so
-# its ink is dark rather than white. White on that yellow fails every contrast
-# check and looks washed out next to the other three.
-#
-# The delay is the button's POSITION times STEP, computed below rather than
-# written out here: a hand-kept column of seconds is a column somebody edits the
-# row without touching, and then the band hands off into nothing.
-#
-# THIS ROW STARTS AT ZERO because it is the FIRST row on the page. One band
-# works its way down the README rather than one band per row running beside the
-# others: the whole first row, then the whole second. The give row below carries
-# the other half of that schedule - a fixed 3.8s offset, which is when the
-# longest download row in the house (ArrowLoop's four buttons) has finished. It
-# has to be a fixed number rather than a derived one, because those three
-# buttons are one shared asset referenced by twenty-six repositories and cannot
-# know what a given README puts above them.
-#
-# The last column is where the button leads. It lives here with the rest of the
-# button because this file writes the README row too, see write_readme().
+# Each button's animation delay is its position times STEP, computed in main()
+# so that reordering the row cannot break the hand-off from one button to the
+# next. This row starts at zero because it is the first on the page. The
+# donation buttons below it carry a fixed 3.8s offset, when the longest
+# download row across the READMEs (ArrowLoop's four buttons) has finished; it
+# is fixed because those buttons are one asset shared by every repository and
+# cannot know what a README puts above them.
 BUTTONS = [
-    # DOCS IS FIRST, and it is in this row rather than on a line of its own
-    # (jdp, 2026-09-13: "der Dokubutton soll in der zeile der downloadbuttons
-    # als erstes stehen und genau das gleiche format haben"). It used to be a
-    # hand-drawn 841.9-wide SVG above the row, which meant two buttons claiming
-    # the same job at two different sizes. The head reads "Docs" rather than
-    # "Documentation" because the long word runs past the face at this width -
-    # measured, not guessed: 13 characters at font-size 82 need more room than
-    # the 482 units left of the right edge.
-    #
-    # It keeps its yellow. That is the coffee button's own #fd0, which is where
-    # this button's colour came from originally, and it is the one warm face in
-    # a row that is otherwise blue and slate. Dark ink on it for the same reason
-    # the Linux button has dark ink.
+    # "Docs" rather than "Documentation": 13 characters at font-size 82 need
+    # more than the 482 units left of the right edge. The yellow is the coffee
+    # button's #fd0, and white on yellow fails contrast, so the ink is dark.
     ("docs", "book", "#fd0", "#0d0c23",
      "Docs", "online manual", "Read the documentation",
      "https://junkerderprovinz.github.io/bombvault/"),
-    # The image itself. A browser cannot download an image, so this one opens
-    # the package page rather than pretending to hand over a file: the second
-    # line says "ghcr.io image" and not "download".
+    # A browser cannot download an image, so this opens the package page and
+    # the second line says "ghcr.io image" rather than "download".
     ("docker-image", "docker", "#1d63ed", "#ffffff",
      "Docker", "ghcr.io image", "The container image on ghcr.io",
      "https://github.com/junkerderprovinz/bombvault/pkgs/container/bombvault"),
-    # GitHub attaches "Source code (zip)" to every release: the whole repository
-    # at that tag, not the Dockerfile alone. The button says Source for that
-    # reason. The glyph is a ZIP rather than GitHub's mark, because what arrives
-    # is an archive - the mark would name the host, the glyph names the file.
+    # A release's "Source code (zip)" is the whole repository at that tag, hence
+    # "Source". The glyph is a ZIP rather than GitHub's mark because it names
+    # the file, not the host. Slate rather than GitHub's black, which vanishes
+    # in the dark theme without an outline.
     ("source-zip", "zip", "#4d5562", "#ffffff",
      "Source", "zip archive", "Download the source archive for this release",
      "https://github.com/junkerderprovinz/bombvault/releases/latest"),
 ]
 
-# THE README ROWS are written here as well, between markers, so a button added
-# to BUTTONS reaches the page by running this file and nothing else: the
-# download row, and every donation row (the one under the description and the one in
-# Support).
+# The README rows are written here too, between markers, so a button added to
+# BUTTONS reaches the page by running this file alone: the download row and
+# every donation row (under the description and in Support).
 #
-# ALL OF THEM SHOW ONE FILE, buttons.svg, each button through its own
-# #svgView fragment inside its own link. The shine is a CSS animation, and a
-# browser runs it on a clock that starts when that <img> gets its file. Separate
-# files arrive at separate moments, so the band jumped between buttons; and
-# Firefox reuses an image it already has when GitHub swaps the page without a
-# reload, starting a new clock on it. One file arrives once for every button on
-# the page and all of its <img> are inserted together, so all clocks start
-# together: the download row, then the donation row, in order. That is
-# also why the donation buttons are copied into this file rather than linked
-# from the profile repository's give.svg: two files would be two arrivals again.
-# Measured on github.com in Firefox, loaded fresh and after in-page navigation.
-# The layout of a sprite is explained in
+# All of them show one file, buttons.svg, each button through its own #svgView
+# fragment inside its own link. The sheen is a CSS animation whose clock starts
+# when an <img> gets its file. Separate files arrive at separate moments and
+# the band jumps between buttons, and Firefox restarts the clock on a cached
+# image when GitHub swaps the page without a reload. One file arrives once for
+# every button, so all clocks start together. That is also why the donation
+# buttons are copied into the sprite rather than linked from the profile
+# repository's give.svg. The sprite layout is explained in
 # junkerderprovinz/junkerderprovinz, donate/buttons/sprite.mjs.
 #
-# The donation buttons are read from the profile repository when this runs, so
-# after they change there, run this again. The sprite is read from main, so a
-# branch's README preview shows main's buttons.
+# The donation buttons are fetched from the profile repository on every run,
+# so run this again after they change there. The sprite is read from main, so
+# a branch's README preview shows main's buttons.
 REPO = "bombvault"
 SPRITE = os.path.join(OUT, "buttons.svg")
 SPRITE_URL = "https://raw.githubusercontent.com/junkerderprovinz/%s/main/.github/assets/download-buttons/buttons.svg" % REPO
@@ -270,6 +194,7 @@ ROW_OPEN = "<!-- download-buttons: written by scripts/gen_download_buttons.py --
 ROW_CLOSE = "<!-- /download-buttons -->"
 GIVE_OPEN = "<!-- give-buttons: written by scripts/gen_download_buttons.py -->"
 GIVE_CLOSE = "<!-- /give-buttons -->"
+
 
 def brand(name):
     """Path data plus the viewBox width and height it was drawn in."""
@@ -412,7 +337,7 @@ def row(opener, items, nl):
 def write_readme(text, xs, gives):
     """Replace every marked row, each taking the line ending of its own marker.
 
-    width AND height are both set, because the image's own proportions are the
+    Both width and height are set, because the image's own proportions are the
     whole sprite's, not the button's.
     """
     downloads = [(href, alt, xs[i], W, H, RENDER_PX) for i, (_s, *_, alt, href) in enumerate(BUTTONS)]
@@ -432,7 +357,7 @@ def main():
     svgs = []
     for index, (slug, mark, bg, ink, head, sub, alt, _href) in enumerate(BUTTONS):
         path, bw, bh = brand(mark)
-        # Scale on the LONGER axis so glyphs of different proportions end up
+        # Scale on the longer axis so glyphs of different proportions end up
         # the same optical size. Docker's box is 640 by 512, the ZIP glyph's is
         # 384 by 512; scaling on width alone would leave the narrow one huge.
         scale = GLYPH / max(bw, bh)

@@ -65,7 +65,7 @@ func TestThePlacementEngineCopiesWhatTheTargetLacks(t *testing.T) {
 	if len(held) != 2 || restic.Identity(held[1]) != "a2" || held[1].ID != copyID(dst, "a2") {
 		t.Fatalf("after Copy the target holds %+v", held)
 	}
-	if err := f.eng.ForgetPolicy(ctx, dst, restic.RetentionPolicy{KeepLast: 1}, restic.Mode{}, "container:nginx", false); err != nil {
+	if err := f.eng.ForgetPolicy(ctx, dst, restic.RetentionPolicy{KeepLast: 1}, restic.Mode{}, []string{"container:nginx"}, false); err != nil {
 		t.Fatal(err)
 	}
 	if held, _ = f.eng.Snapshots(ctx, dst, restic.Mode{}); len(held) != 1 || restic.Identity(held[0]) != "a2" {

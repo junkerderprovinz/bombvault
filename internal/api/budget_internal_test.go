@@ -11,10 +11,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestCheckOffsiteBudgetFiresOncePerCrossing: with a growth budget set and an
-// off-site repo_stats sample over it, the first budget check fires exactly one
-// notification; a second check while STILL over budget stays silent (the alarm
-// is once per false→true crossing, not per replication).
+// TestCheckOffsiteBudgetFiresOncePerCrossing: an off-site sample over the
+// growth budget alarms once per crossing, and a second check while still over
+// budget stays silent.
 func TestCheckOffsiteBudgetFiresOncePerCrossing(t *testing.T) {
 	db, err := store.Open(filepath.Join(t.TempDir(), "test.db"))
 	if err != nil {
@@ -26,7 +25,6 @@ func TestCheckOffsiteBudgetFiresOncePerCrossing(t *testing.T) {
 	}
 	st := store.New(db)
 
-	// Budget of 1 GB, and an off-site sample of 2 GiB (over budget).
 	s, err := st.GetSettings()
 	if err != nil {
 		t.Fatal(err)
@@ -37,12 +35,12 @@ func TestCheckOffsiteBudgetFiresOncePerCrossing(t *testing.T) {
 	}
 	if err := st.AddRepoStat(store.RepoStat{
 		Domain: "flash", Source: "offsite", At: 1700000000,
-		RawSize: 2 * 1024 * 1024 * 1024, // 2 GiB > 1 GiB budget
+		RawSize: 2 * 1024 * 1024 * 1024, // over the 1 GB budget
 	}); err != nil {
 		t.Fatal(err)
 	}
 
-	// Recording notifier: the Unraid channel records over fakeHostSSH.Run.
+	// The Unraid channel sends through fakeHostSSH.Run, which records each call.
 	ssh := &fakeHostSSH{}
 	svc := &Service{
 		cfg:               config.Config{AppKey: strings.Repeat("a", 64)},
@@ -59,7 +57,7 @@ func TestCheckOffsiteBudgetFiresOncePerCrossing(t *testing.T) {
 		t.Fatal(err)
 	}
 	svc.checkOffsiteBudget(context.Background(), "flash", settings)
-	svc.checkOffsiteBudget(context.Background(), "flash", settings) // still over → no second alarm
+	svc.checkOffsiteBudget(context.Background(), "flash", settings)
 
 	if len(ssh.runs) != 1 {
 		t.Fatalf("a budget breach must alarm exactly once per crossing, got %d", len(ssh.runs))
@@ -69,8 +67,6 @@ func TestCheckOffsiteBudgetFiresOncePerCrossing(t *testing.T) {
 	}
 }
 
-// TestCheckOffsiteBudgetDisabledAndUnder: no alarm when the budget is off, and no
-// alarm when the sample is under budget.
 func TestCheckOffsiteBudgetDisabledAndUnder(t *testing.T) {
 	db, err := store.Open(filepath.Join(t.TempDir(), "test.db"))
 	if err != nil {
@@ -98,14 +94,13 @@ func TestCheckOffsiteBudgetDisabledAndUnder(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Budget disabled (0) → skipped entirely.
+	// The default budget of 0 is off.
 	settings, err := st.GetSettings()
 	if err != nil {
 		t.Fatal(err)
 	}
 	svc.checkOffsiteBudget(context.Background(), "flash", settings)
 
-	// Budget set high (10 GB) → the 2 GiB sample is under it → no alarm.
 	settings.OffsiteGrowthBudgetGB = 10
 	svc.checkOffsiteBudget(context.Background(), "flash", settings)
 

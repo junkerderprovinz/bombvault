@@ -4,30 +4,10 @@ import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 
 /**
- * One window, one backdrop, one darkness.
- *
- * A modal backdrop in this app is `.glim-modal-backdrop`, and that class now
- * carries BOTH halves of what a backdrop does: the fade-in it always carried,
- * and the darkness, which used to be written beside it at every call site as
- * `bg-black/60`. jdp asked for a darker one (2026-09-10: "wenn man es öffnet
- * dunkelt es den Hintergrund zu wenig ab"), and a value repeated at nine call
- * sites is standardised only until the first time somebody wants it changed.
- *
- * A test rather than a note, because counting is what caught the bug and
- * nothing else would have. Removing `bg-black/60` from all nine looked like a
- * clean sweep and would have left FIVE windows with no darkness at all: four
- * of the nine backdrops carried `.glim-modal-backdrop`, five had only the
- * literal, and the two sets were never the same set. Nobody reading one call
- * site could see that - each one is correct on its own page.
- *
- * So both halves are checked, and the second is the one with teeth: a new
- * window whose backdrop forgets the class is now a failing test rather than a
- * dialog that opens over a fully readable page.
- *
- * Matched on `fixed inset-0 z-50`, which is what makes a div a backdrop here
- * (nine of them, all written that way). It reads string and template literals
- * rather than lines, the same way hoverRamp.test.ts does and for the same
- * reason: neighbouring lines belong to different elements.
+ * Every modal backdrop takes its fade and darkness from `.glim-modal-backdrop`.
+ * One that forgets the class opens over an undimmed page, and nothing at its
+ * call site looks wrong. A backdrop is a div with `fixed inset-0 z-50`, found
+ * in string and template literals rather than lines, as in hoverRamp.test.ts.
  */
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -57,8 +37,7 @@ const backdrops = tsxFiles(src).flatMap((file) =>
 );
 
 it("finds the backdrops at all", () => {
-  // The guard below passes vacuously if the search stops matching - a rename
-  // of the shared class list would silently switch this whole file off.
+  // The checks below pass vacuously if the search stops matching.
   expect(backdrops.length).toBeGreaterThanOrEqual(9);
 });
 
@@ -68,23 +47,14 @@ it("gives every modal backdrop the class that darkens it", () => {
   }
 });
 
-it("paints the darkness unconditionally, never inside a motion query", () => {
-  // The third half of this, found by the GlimStone 1.11.0 lift and worth its
-  // own test because it is invisible from every call site: the class had the
-  // darkness, and the class itself sat inside
-  // `@media (prefers-reduced-motion: no-preference)` together with its fade.
-  // So somebody whose system asks for less motion got no scrim at all - a
-  // dialog floating over a fully undimmed page - and every check above passed,
-  // because the call sites were all correct and the class did exist.
-  //
-  // Darkening the page is not motion. The fade is, and that one may stay
-  // gated. The test reads the stylesheet's own structure rather than a
-  // rendered page, because no test that renders a dialog can see a media query
-  // it is not currently matching.
+it("paints the darkness outside any motion query", () => {
+  // Darkening is not motion. Inside a prefers-reduced-motion query it would
+  // vanish for anyone who asks for less motion. A rendered dialog only sees the
+  // queries it matches, so this reads the stylesheet.
   const css = readFileSync(join(src, "index.css"), "utf8");
 
-  // Everything that lies INSIDE a prefers-reduced-motion query, by brace
-  // counting from each query's own opening brace.
+  // Everything inside a prefers-reduced-motion query, by brace counting from
+  // each query's opening brace.
   const gated: string[] = [];
   const q = /@media\s*\([^)]*prefers-reduced-motion[^)]*\)\s*\{/g;
   let m: RegExpExecArray | null;
@@ -120,10 +90,8 @@ it("paints the darkness unconditionally, never inside a motion query", () => {
 });
 
 it("takes its darkness from the token, not from a literal", () => {
-  // GlimStone 1.11.0 made the value a token because a literal is a value the
-  // rule describes and nothing holds: asked to change it, somebody has to find
-  // every place it was typed. This app had it in one place, which was the
-  // previous fix - one place is still not the same as one NAME.
+  // A literal has to be found wherever it was typed before it can change; a
+  // token has one name.
   const css = readFileSync(join(src, "index.css"), "utf8");
   const rules = Array.from(css.matchAll(/\.glim-modal-backdrop\s*\{([^}]*)\}/g)).map((r) => r[1]);
   const painting = rules.filter((body) => /background/.test(body));

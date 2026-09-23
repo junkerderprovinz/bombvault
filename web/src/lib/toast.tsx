@@ -3,13 +3,14 @@ import { createPortal } from "react-dom";
 import { ToastViewport } from "../components/Toast";
 import {
   NO_ENGAGEMENT,
-  TOAST_DURATION_MS,
   addToast,
   applyEngagement,
   pauseToast,
   removeToast,
   resumeToast,
   shouldShowToast,
+  toastDuration,
+  type ToastAction,
   type ToastEngagement,
   type ToastEngagementKind,
   type ToastEntry,
@@ -17,53 +18,15 @@ import {
 } from "./toastEngine";
 import { useT } from "./i18n";
 
-// ---------------------------------------------------------------------------
-// useToast / ToastProvider — the stateful half of the GlimStone toast system
-// (form-engine Task 9, design-language.md "Toasts"), a Context + Provider
-// mounted once at the app root — the same shape as lib/advanced.tsx's
-// AdvancedProvider (this repo's existing precedent for a global,
-// localStorage-persisted client preference), extended here to also own a
-// live queue instead of a single boolean.
+// ToastProvider owns the live toast queue: the timers, the portal and the
+// quiet-mode preference. The pure rules (stacking, pause and resume arithmetic,
+// which hover or focus edge pauses or resumes) live in toastEngine.ts and are
+// unit tested there; this file keeps only what needs React, real timers and
+// the document, and is not unit tested.
 //
-// Mirrors useConfirm.tsx/useReveal.ts's split: the pure component
-// (components/Toast.tsx) never touches `document` or a hook, so it stays
-// directly callable in a node-environment test; every real-timer/DOM
-// concern lives HERE instead:
-//   - setTimeout handles per toast (scheduled on push/resume, cleared on
-//     pause/dismiss) — toastEngine.ts's pure pause/resume MATH is what this
-//     file's timers are built on top of; see that file's header comment for
-//     why the pause/resume precision itself is tested there, not here.
-//   - createPortal(..., document.body) — same fix as useConfirm.tsx/
-//     InfoBubble.tsx: a `position: fixed` viewport nested under any
-//     .glim-page-enter/.glim-modal-card ancestor (both use `transform`, which
-//     creates a new containing block) would be clipped to that ancestor's
-//     box instead of covering the real viewport.
-//   - quiet-mode persistence (localStorage), read once at mount exactly
-//     like AdvancedProvider's own `advanced` flag.
-//   - the per-toast-id hover/focus ENGAGEMENT map (`engagement` below), which
-//     is bookkeeping a pure function can't hold. The RULE that map feeds —
-//     "pause on either edge, resume only once BOTH are disengaged" — is
-//     toastEngine.applyEngagement's, so the one rule this task's first
-//     implementation actually got wrong is unit-tested rather than stranded
-//     in this deliberately-untested file. See setEngagement below.
-// This hook itself is NOT unit tested for the same reason useConfirm.tsx
-// isn't (see that file's header comment): real timers + `document` are
-// exactly what a node-environment test can't exercise directly. Covered by
-// live Playwright verification instead — precisely timed hover-pause-then-
-// resume measurements (including the combined hover+focus case above),
-// multi-toast stacking (bounded at toastEngine.MAX_VISIBLE_TOASTS — see that
-// file), keyboard dismissal, and the non-blocking click-through requirement.
-//
-// Adoption note: this file, plus Fleet.tsx's CopyBlock and Settings.tsx's
-// VMSSHCard/handleSetPassword and Config.tsx's ConfigSettingsCard, are 4
-// self-contained proof-of-adoption sites. The ~35 remaining inline-status
-// sites across this codebase (most of them the `SaveBar` component's ~30
-// call sites in Settings.tsx, which all share one generic `save()` helper)
-// are DELIBERATELY left on their original inline-flash behaviour — see the
-// SaveBar comment at the top of Settings.tsx for why converting that shared
-// helper is out of scope here and left as explicit, deliberate follow-up
-// work rather than something folded into this task silently.
-// ---------------------------------------------------------------------------
+// The viewport is portalled to <body> because a `position: fixed` element under
+// a transformed ancestor (.glim-page-enter, .glim-modal-card) is clipped to
+// that ancestor instead of covering the viewport.
 
 const QUIET_STORAGE_KEY = "bombvault.quietToasts";
 
@@ -76,11 +39,10 @@ function readStoredQuiet(): boolean {
 }
 
 interface ToastContextValue {
-  /** Queue a toast. Severity defaults to "success" (the routine,
-   *  quiet-mode-suppressible case). A push that quiet mode filters out is a
-   *  silent no-op — it never queues invisibly for later; see
-   *  toastEngine.shouldShowToast for the exact rule. */
-  push: (message: string, severity?: ToastSeverity) => void;
+  /** Queues a toast. Severity defaults to "success", the routine case quiet
+   *  mode may suppress. A suppressed push is dropped, not queued for later
+   *  (see toastEngine.shouldShowToast). */
+  push: (message: string, severity?: ToastSeverity, action?: ToastAction) => void;
   /** Current quiet-toasts preference (Settings › General › Appearance). */
   quiet: boolean;
   setQuiet: (next: boolean) => void;
@@ -88,32 +50,27 @@ interface ToastContextValue {
 
 const noop = () => {};
 
-// Safe default so useToast() never throws outside a Provider (mirrors
-// i18n.ts's I18nContext default for the same reason: tests / early renders).
+// A no-op default so useToast() works outside the provider, in tests and
+// early renders.
 const ToastContext = createContext<ToastContextValue>({
   push: noop,
   quiet: false,
   setQuiet: noop,
 });
 
-/** Mount once at the app root, inside <I18nProvider> (the dismiss button's
- *  aria-label needs a live translation) — see app/router.tsx. */
+/** Mount once at the app root, inside <I18nProvider>, since the dismiss
+ *  button's aria-label is translated. */
 export function ToastProvider({ children }: { children: ReactNode }) {
   const { t } = useT();
   const [toasts, setToasts] = useState<ToastEntry[]>([]);
   const [quiet, setQuietState] = useState<boolean>(readStoredQuiet);
-  // One live setTimeout handle per toast id — never more than one at a time
-  // per toast (pause always clears before resume schedules a new one), so a
-  // Map keyed by id is enough to find-and-clear the right timer on dismiss/
-  // pause without touching any other toast's timer.
+  // One live timer per toast id; pause always clears it before resume
+  // schedules a new one.
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const nextId = useRef(0);
-  // Hover and focus engagement, tracked as two INDEPENDENT booleans per
-  // toast id — see this file's header comment for the bug this exists to
-  // fix. A ref, not React state: this bookkeeping never needs to trigger a
-  // re-render on its own — only the actual pause/resume (which does live in
-  // `toasts` state, below) does. Absent from the map == fully disengaged
-  // (setEngagement deletes rather than storing an all-false entry).
+  // Hover and focus engagement per toast id, in a ref because it never needs
+  // a render of its own; the pause itself lives in `toasts`. A toast without
+  // an entry is disengaged.
   const engagement = useRef(new Map<string, ToastEngagement>());
 
   const clearTimer = useCallback((id: string) => {
@@ -142,20 +99,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 
   const push = useCallback(
-    (message: string, severity: ToastSeverity = "success") => {
+    (message: string, severity: ToastSeverity = "success", action?: ToastAction) => {
       if (!shouldShowToast(severity, quiet)) return;
       const id = `toast-${++nextId.current}`;
       setToasts((list) => {
-        const next = addToast(list, { id, message, severity }, Date.now());
-        // addToast caps the stack at MAX_VISIBLE_TOASTS, dropping the oldest
-        // un-engaged entries once the cap is exceeded (toastEngine.ts — the
-        // fix for the unbounded-stack bug: rapid repeated triggers, e.g.
-        // holding Enter on a focused button at keyboard auto-repeat rate,
-        // used to grow the stack without limit). A dropped toast still has a
-        // live setTimeout scheduled from its own earlier push, so clear it
-        // now — otherwise it fires a pointless dismiss(id) later against an
-        // id that's already gone. Its engagement entry goes too, for the
-        // fallback case where the cap had to drop a paused toast after all.
+        const next = addToast(list, { id, message, severity, action }, Date.now());
+        // addToast caps the stack at MAX_VISIBLE_TOASTS by dropping the oldest
+        // entries. A dropped toast still has the timer from its own push, so
+        // clear it here rather than let it fire a stale dismiss, and drop its
+        // engagement entry in case the cap had to evict a paused toast.
         for (const dropped of list) {
           if (!next.some((t) => t.id === dropped.id)) {
             clearTimer(dropped.id);
@@ -164,16 +116,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         }
         return next;
       });
-      scheduleTimer(id, TOAST_DURATION_MS);
+      scheduleTimer(id, toastDuration({ action }));
     },
     [quiet, scheduleTimer, clearTimer]
   );
 
-  // Hover/focus enters a toast: stop its live timer (so it can never fire
-  // mid-hover/mid-focus) and freeze remainingMs at the pure engine's own
-  // math. A no-op via pauseToast's own already-paused guard when the OTHER
-  // engagement flag already paused it (e.g. focus arrives while the toast is
-  // already hover-paused) — see toastEngine.pauseToast.
+  // Stops the timer and freezes the remaining time. pauseToast ignores a toast
+  // that is already paused, e.g. when focus arrives while it is hovered.
   const pause = useCallback(
     (id: string) => {
       clearTimer(id);
@@ -182,11 +131,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     [clearTimer]
   );
 
-  // Restart the timer from whatever pauseToast froze — NOT the full
-  // TOAST_DURATION_MS again (that would be the exact "resets to full
-  // duration" bug the spec calls out by name). Only ever invoked once BOTH
-  // engagement flags read false — that decision is applyEngagement's, routed
-  // through setEngagement below; never called directly from DOM event wiring.
+  // Restarts the timer from the time pauseToast froze, not from the full
+  // duration. Called only through setEngagement, once neither hover nor focus
+  // is engaged.
   const resume = useCallback(
     (id: string) => {
       setToasts((list) => {
@@ -201,17 +148,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     [scheduleTimer]
   );
 
-  // The one place the four DOM-facing engagement events are handled. Whether
-  // an edge should pause or resume is toastEngine.applyEngagement's call (see
-  // that function for the bug the combined rule exists to fix, and for why
-  // the rule lives in the unit-tested pure engine rather than inline here).
-  // This function only does the two things a pure function can't: keep the
-  // per-id map, and drive the real timers.
+  // Handles the four hover and focus events. applyEngagement decides whether
+  // an edge pauses or resumes; this keeps the per-id map and drives the timers.
   const setEngagement = useCallback(
     (id: string, kind: ToastEngagementKind, active: boolean) => {
       const { next, engaged } = applyEngagement(engagement.current.get(id) ?? NO_ENGAGEMENT, kind, active);
-      // The map holds ONLY currently-engaged toasts, so it self-prunes rather
-      // than accumulating a dead entry per toast id for the life of the tab.
+      // Only engaged toasts keep an entry, so the map does not grow with every
+      // toast shown.
       if (engaged) engagement.current.set(id, next);
       else engagement.current.delete(id);
       if (active) pause(id);
@@ -230,15 +173,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem(QUIET_STORAGE_KEY, next ? "1" : "0");
     } catch {
-      /* ignore — quiet mode just won't survive a reload */
+      /* quiet mode just won't survive a reload */
     }
   }, []);
 
-  // Every live timer is cleared on unmount so a stray callback can never
-  // setState after ToastProvider goes away (ToastProvider mounts once at
-  // the app root and in practice never unmounts, but this plan has already
-  // hit a real leaked-timer/leaked-state bug once — see RevealInput.tsx's
-  // sibling fix commit — so this is the same discipline applied here).
+  // Clear every timer on unmount so no callback sets state afterwards.
   useEffect(() => {
     const timerMap = timers.current;
     return () => {
@@ -247,9 +186,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Portal-rendered to <body> — see this file's header comment for why
-  // (the same transform-containing-block bug useConfirm.tsx/InfoBubble.tsx
-  // already fixed for their own fixed-position overlays).
   const viewport = createPortal(
     <ToastViewport
       toasts={toasts}
@@ -263,11 +199,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     document.body
   );
 
-  // Memoized so every consumer of useToast() (every page that pushes a
-  // toast, including large ones like Settings) doesn't re-render just
-  // because ToastProvider itself re-rendered — push/setQuiet are already
-  // stable useCallback references, so only an actual `quiet` change should
-  // ever produce a new context value here.
+  // Memoized so consumers such as Settings re-render only when `quiet`
+  // changes, not whenever the queue does.
   const value = useMemo(() => ({ push, quiet, setQuiet }), [push, quiet, setQuiet]);
 
   return (

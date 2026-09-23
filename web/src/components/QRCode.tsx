@@ -1,21 +1,11 @@
 import qrcode from "qrcode-generator";
 import { useMemo } from "react";
 
-// ---------------------------------------------------------------------------
-// QRCode — an otpauth:// URI as a scannable square.
+// An otpauth:// URI as a scannable QR code, drawn as one SVG path rather than a
+// <rect> per module: a typical code has around a thousand dark modules.
 //
-// Drawn as ONE SVG path rather than a grid of <rect>s. A typical otpauth URI
-// lands on a 33x33 module code, which is around a thousand dark modules; as
-// elements that is a thousand DOM nodes for a picture, and as a path it is one.
-//
-// The colours are fixed black on white and do NOT follow the theme, which is
-// deliberate. A phone camera needs contrast in the direction it expects, and a
-// code drawn in the interface's own dark surface with a light foreground is
-// inverted: some scanners cope, plenty do not, and "my authenticator will not
-// read it" is a bad first minute with a security feature. The white square is
-// given a little padding of its own because the quiet zone is part of the spec,
-// not decoration.
-// ---------------------------------------------------------------------------
+// Black on white in every theme, because many scanners cannot read an inverted
+// code. The white margin is the quiet zone the spec requires.
 
 export function QRCode({
   value,

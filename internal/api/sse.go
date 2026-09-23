@@ -10,10 +10,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 )
 
-// handleProgress streams live backup/restore progress as Server-Sent Events.
-// The SPA opens a single EventSource on this endpoint and renders a per-target
-// bar. Each message body is one progress.Event JSON object. A periodic comment
-// line keeps idle connections (and any intermediary proxy) alive.
+// handleProgress streams live backup and restore progress as Server-Sent Events,
+// one progress.Event JSON object per message. A periodic comment line keeps idle
+// connections and any proxy in between alive.
 func (h *Handler) handleProgress(w http.ResponseWriter, r *http.Request) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {

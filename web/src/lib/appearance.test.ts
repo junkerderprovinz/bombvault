@@ -1,16 +1,7 @@
-// GlimStone form-engine Phase 2, Task 1 — rainbow/reactive colour engine.
-//
-// Covers the pure logic only (rainbowColorAt's position/rotation math,
-// hueVars, isValidPalette's all-or-nothing rule) — no `document`/
-// `localStorage` needed, so this file stays on the default node environment.
-// applyRainbow/getRainbow/setRainbow (the DOM/localStorage-touching half,
-// including the security-relevant all-or-nothing palette rejection and the
-// persist-before-validate regression) have their own jsdom-backed coverage
-// in appearance.dom.test.tsx — see that file's header comment for why a
-// jsdom opt-in is available and used here despite this file staying node.
+// The pure half of appearance.ts: rainbowColorAt's position and rotation
+// math, hueVars and isValidPalette. The DOM half is in appearance.dom.test.tsx.
 import { describe, expect, it } from "vitest";
 import { RAINBOW, hueVars, isValidPalette, rainbowColorAt } from "./appearance";
-import { contrastOn } from "./accent";
 
 describe("RAINBOW", () => {
   it("is a fixed set of eight valid hex colours", () => {
@@ -26,7 +17,7 @@ describe("RAINBOW", () => {
 });
 
 describe("rainbowColorAt", () => {
-  it("hands out colours by LIST POSITION, in order, when rotation is off", () => {
+  it("hands out colours by list position when rotation is off", () => {
     for (let i = 0; i < RAINBOW.length; i++) {
       expect(rainbowColorAt(i, RAINBOW, false, /* seed */ 3)).toBe(RAINBOW[i]);
     }
@@ -38,7 +29,7 @@ describe("rainbowColorAt", () => {
   });
 
   it("offsets the starting colour by seed when rotate is true", () => {
-    // seed=1 means position 0 now reads what used to be position 1.
+    // seed=1 gives position 0 the colour at index 1.
     expect(rainbowColorAt(0, RAINBOW, true, 1)).toBe(RAINBOW[1]);
     expect(rainbowColorAt(0, RAINBOW, true, 3)).toBe(RAINBOW[3]);
   });
@@ -75,36 +66,29 @@ describe("rainbowColorAt", () => {
 });
 
 describe("hueVars", () => {
-  it("returns the full custom-property set for a valid hex", () => {
-    const vars = hueVars("#1D99F3");
-    expect(vars["--item-hue"]).toBe("#1D99F3");
-    expect(vars["--item-hue-ink"]).toBe(contrastOn("#1D99F3"));
-    expect(vars["--item-hue-soft"]).toBe("rgba(29, 153, 243, 0.14)");
-    expect(vars["--item-hue-wash"]).toBe("rgba(29, 153, 243, 0.07)");
-    expect(vars["--item-hue-ring"]).toBe("rgba(29, 153, 243, 0.55)");
+  // No colour is baked into the element: a palette or rotation change, and
+  // disco's glide, reach it only through the root.
+  it("points every property at the root's palette position", () => {
+    const vars = hueVars(5);
+    expect(vars["--item-hue"]).toBe("var(--rb-5)");
+    expect(vars["--item-hue-ink"]).toBe("var(--rb-ink-5)");
+    expect(vars["--item-hue-soft"]).toBe("color-mix(in srgb, var(--rb-5) 14%, transparent)");
+    expect(vars["--item-hue-wash"]).toBe("color-mix(in srgb, var(--rb-5) 7%, transparent)");
+    expect(vars["--item-hue-ring"]).toBe("color-mix(in srgb, var(--rb-5) 55%, transparent)");
   });
 
-  // --item-hue-ink-inv is GONE, and this asserts that rather than just no
-  // longer mentioning it. It existed for exactly one treatment — the shaded
-  // leading cell of Badge's split heading badge, which had to shade a hued
-  // fill AWAY from its own ink — and jdp reversed that design in favour of
-  // two separate, equally-filled badges. A silent reappearance would mean
-  // something started shading a hued fill again without the contrast work
-  // that direction needs; better to fail here than to find out on screen.
-  it("hands out no inverse-ink token — nothing shades a hued fill away from its ink anymore", () => {
-    for (const hex of RAINBOW) {
-      expect(hueVars(hex)).not.toHaveProperty("--item-hue-ink-inv");
+  it("wraps a position past either end of the palette, as rainbowColorAt does", () => {
+    expect(hueVars(RAINBOW.length + 2)).toEqual(hueVars(2));
+    expect(hueVars(-1)).toEqual(hueVars(RAINBOW.length - 1));
+  });
+
+  // Nothing shades a hued fill away from its own ink. Code that starts to would
+  // need contrast work an inverse-ink token skips, and failing here is cheaper
+  // than finding that on screen.
+  it("hands out no inverse-ink token", () => {
+    for (let i = 0; i < RAINBOW.length; i++) {
+      expect(hueVars(i)).not.toHaveProperty("--item-hue-ink-inv");
     }
-    expect(hueVars("#0F1B33")).not.toHaveProperty("--item-hue-ink-inv");
-  });
-
-  it("returns an empty object for an invalid hex, never a partial/garbage set", () => {
-    expect(hueVars("not-a-color")).toEqual({});
-    expect(hueVars("#12345")).toEqual({});
-  });
-
-  it("returns an empty object for undefined (no position owned)", () => {
-    expect(hueVars(undefined)).toEqual({});
   });
 });
 
@@ -118,7 +102,7 @@ describe("isValidPalette", () => {
     expect(isValidPalette(custom)).toBe(true);
   });
 
-  it("rejects the WHOLE palette when even one entry is invalid — all-or-nothing, not 87% safe", () => {
+  it("rejects the whole palette when one entry is invalid", () => {
     const almostAllValid = [...RAINBOW.slice(0, 7), "javascript:alert(1)"];
     expect(almostAllValid).toHaveLength(8);
     expect(isValidPalette(almostAllValid)).toBe(false);
@@ -130,7 +114,7 @@ describe("isValidPalette", () => {
     expect(isValidPalette([])).toBe(false);
   });
 
-  it("rejects a 3-digit shorthand hex — only the full 6-digit form is accepted", () => {
+  it("rejects a 3-digit shorthand hex", () => {
     const withShorthand = [...RAINBOW.slice(0, 7), "#fff"];
     expect(isValidPalette(withShorthand)).toBe(false);
   });

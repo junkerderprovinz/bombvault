@@ -1,22 +1,15 @@
 package api
 
-// The exclusion assistant must not count what it already excludes.
-//
-// add() checked the exclude patterns only in its directory branch. A FILE went
-// straight into ancestor attribution, so a stored line like `*.log` still let
-// every log file's bytes flow into its parents' totals — and the assistant then
-// proposed a mostly-log folder at its full on-disk size, i.e. recommended
-// excluding a folder on the strength of bytes the user had already excluded.
-// The function's own doc had said "already excluded — restic skips it, so do
-// we" the whole time.
+// The exclusion assistant must not count what the stored patterns already
+// exclude, or a folder of mostly `*.log` files would be suggested at its full
+// size on the strength of bytes restic already skips.
 
 import (
 	"path"
 	"testing"
 )
 
-// feed replays a small tree parents-before-children, the contract add()
-// attributes sizes with.
+// feed replays a tree parents before children, the order add() expects.
 func feed(c *suggestCollector, nodes []struct {
 	rel   string
 	isDir bool
@@ -46,8 +39,6 @@ func TestSuggestCollectorSkipsExcludedFiles(t *testing.T) {
 		if got == nil {
 			t.Fatal("appdata should still be a candidate")
 		}
-		// Only data.db counts. Before the fix this was 1000, so the folder looked
-		// ~100x bigger than what backing it up actually costs.
 		if got.size != 10 {
 			t.Fatalf("appdata size = %d, want 10 (the excluded .log files must not be counted)", got.size)
 		}
@@ -57,7 +48,7 @@ func TestSuggestCollectorSkipsExcludedFiles(t *testing.T) {
 		c := newSuggestCollector("/host/user", nil, suggestOpts{maxDepth: 3, largeBytes: 1})
 		feed(c, tree)
 		if got := c.byRel["appdata"].size; got != 1000 {
-			t.Fatalf("appdata size = %d, want 1000 — the guard must only drop what a pattern covers", got)
+			t.Fatalf("appdata size = %d, want 1000; the guard must only drop what a pattern covers", got)
 		}
 	})
 
@@ -92,11 +83,9 @@ func TestSuggestCollectorSkipsExcludedFiles(t *testing.T) {
 	})
 }
 
-// TestAnchoredWildcardPatternsMatch: the path branch of matchesExcludePatterns
-// compared literally while the basename branch used path.Match, so a pattern
-// with a wildcard in a path — `/config/*/Cache`, the shape the assistant's own
-// suggestions take — matched nothing. The already excluded folders were then
-// suggested again AND counted against their parent.
+// A wildcard inside an anchored path, the shape the assistant's own suggestions
+// take, has to match; otherwise excluded folders are suggested and counted
+// again.
 func TestAnchoredWildcardPatternsMatch(t *testing.T) {
 	pats := []string{"/config/*/Cache"}
 	cases := []struct {
@@ -108,7 +97,7 @@ func TestAnchoredWildcardPatternsMatch(t *testing.T) {
 		// One level only: path.Match does not let "*" cross a separator, which is
 		// how restic reads it too.
 		{"/config/a/b/Cache", false},
-		// The literal branch must keep working alongside it.
+		// Literal segments still have to match.
 		{"/config/plex/Media", false},
 		{"/config", false},
 	}
@@ -120,9 +109,8 @@ func TestAnchoredWildcardPatternsMatch(t *testing.T) {
 	}
 }
 
-// TestDropNestedRoots: each root gets its own collector, so overlapping roots
-// emitted the same directory twice — same exclude line, same React key, two of
-// the twenty suggestion slots.
+// Each root gets its own collector, so overlapping roots would suggest the same
+// directory twice.
 func TestDropNestedRoots(t *testing.T) {
 	got := dropNestedRoots([]string{"/appdata/plex/Media", "/appdata/plex", "/appdata/sonarr"})
 	want := []string{"/appdata/plex", "/appdata/sonarr"}
@@ -135,9 +123,9 @@ func TestDropNestedRoots(t *testing.T) {
 		}
 	}
 
-	// A shared prefix is NOT nesting: only a real path boundary counts.
+	// A shared prefix is not nesting; only a path boundary counts.
 	sibling := dropNestedRoots([]string{"/appdata/plex", "/appdata/plex-extra"})
 	if len(sibling) != 2 {
-		t.Fatalf("dropNestedRoots kept %v — /appdata/plex-extra is a sibling, not a child", sibling)
+		t.Fatalf("dropNestedRoots kept %v; /appdata/plex-extra is a sibling, not a child", sibling)
 	}
 }

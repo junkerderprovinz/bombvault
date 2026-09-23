@@ -134,6 +134,7 @@ type fakeRestic struct {
 	summary          backup.Summary
 	capturedPaths    []string
 	capturedExcludes []string // --exclude args passed to the last Backup call
+	capturedTags     []string // tags passed to the last Backup call
 }
 
 func (r *fakeRestic) VerifySnapshot(_ context.Context, repo, snapshotID string) error {
@@ -144,6 +145,7 @@ func (r *fakeRestic) VerifySnapshot(_ context.Context, repo, snapshotID string) 
 func (r *fakeRestic) Backup(_ context.Context, repo string, paths, tags []string, excludes ...string) (backup.Summary, error) {
 	r.log = append(r.log, "backup:"+repo+":"+strings.Join(paths, ",")+":"+strings.Join(tags, ","))
 	r.capturedExcludes = excludes
+	r.capturedTags = tags
 	if r.backupErr != nil {
 		return backup.Summary{}, r.backupErr
 	}
@@ -496,6 +498,96 @@ func TestBackupForwardsExcludes(t *testing.T) {
 	}
 	if !equalStrings(r.capturedExcludes, excludes) {
 		t.Fatalf("restic excludes = %v, want %v", r.capturedExcludes, excludes)
+	}
+}
+
+// TestBackupTagsCarryFormerNames: the repository keeps a renamed entry's link
+// to its history even when the local alias table is lost.
+func TestBackupTagsCarryFormerNames(t *testing.T) {
+	d := &fakeDocker{}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678", Bytes: 1024}}
+	tpl := &fakeTemplates{readXML: "<xml/>", readOK: true}
+	runs := &fakeRuns{}
+
+	_, err := backup.BackupContainer(t.Context(), backup.BackupDeps{
+		ContainerRef:         "radarr",
+		ContainerName:        "radarr",
+		RepoPath:             "/repo",
+		AppdataPaths:         []string{"/host/user/appdata/radarr"},
+		TargetID:             "target-1",
+		WasRunning:           true,
+		FormerNames:          []string{"radarr-movies"},
+		SnapshotTemplatesDir: "/data/templates",
+		FlashTemplatesDir:    "/boot/templates",
+		Docker:               d,
+		Restic:               r,
+		Templates:            tpl,
+		Runs:                 runs,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := []string{"container:radarr", "p1", "formerly:radarr-movies"}
+	if !equalStrings(r.capturedTags, want) {
+		t.Fatalf("tags = %v, want %v", r.capturedTags, want)
+	}
+}
+
+// TestBackupTagsOneFormerlyTagPerAlias: an entry renamed twice gets two tags
+// rather than one combined value, so a reader matches the snapshot on either
+// of its past names.
+func TestBackupTagsOneFormerlyTagPerAlias(t *testing.T) {
+	d := &fakeDocker{}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678", Bytes: 1024}}
+	tpl := &fakeTemplates{readXML: "<xml/>", readOK: true}
+	runs := &fakeRuns{}
+
+	_, err := backup.BackupContainer(t.Context(), backup.BackupDeps{
+		ContainerRef:  "radarr",
+		ContainerName: "radarr",
+		RepoPath:      "/repo",
+		AppdataPaths:  []string{"/host/user/appdata/radarr"},
+		TargetID:      "target-1",
+		WasRunning:    true,
+		FormerNames:   []string{"radarr-movies", "radarr-media"},
+		Docker:        d,
+		Restic:        r,
+		Templates:     tpl,
+		Runs:          runs,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := []string{"container:radarr", "p1", "formerly:radarr-movies", "formerly:radarr-media"}
+	if !equalStrings(r.capturedTags, want) {
+		t.Fatalf("tags = %v, want %v", r.capturedTags, want)
+	}
+}
+
+func TestBackupWithoutFormerNamesAddsNoFormerlyTag(t *testing.T) {
+	d := &fakeDocker{}
+	r := &fakeRestic{summary: backup.Summary{SnapshotID: "deadbeef12345678", Bytes: 1024}}
+	tpl := &fakeTemplates{readXML: "<xml/>", readOK: true}
+	runs := &fakeRuns{}
+
+	_, err := backup.BackupContainer(t.Context(), backup.BackupDeps{
+		ContainerRef:  "plex",
+		ContainerName: "Plex",
+		RepoPath:      "/repo",
+		AppdataPaths:  []string{"/host/user/appdata/plex"},
+		TargetID:      "target-1",
+		WasRunning:    true,
+		Docker:        d,
+		Restic:        r,
+		Templates:     tpl,
+		Runs:          runs,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := []string{"container:plex", "p1"}
+	if !equalStrings(r.capturedTags, want) {
+		t.Fatalf("tags = %v, want %v", r.capturedTags, want)
 	}
 }
 

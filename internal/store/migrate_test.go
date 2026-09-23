@@ -23,12 +23,11 @@ func TestMigrateIdempotent(t *testing.T) {
 	}
 }
 
-func TestMigrateV4VMsTable(t *testing.T) {
+func TestMigrateCreatesVMsTable(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
-	// Verify vms table exists with the expected columns.
 	_, err := db.Exec(`INSERT INTO vms (id, name, method, include_in_schedule, definition, created_at)
 		VALUES ('test-id', 'testvm', 'graceful', 0, '', 1234567890)`)
 	if err != nil {

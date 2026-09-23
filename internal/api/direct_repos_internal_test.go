@@ -633,12 +633,12 @@ func TestADirectRepositoryAgesByItsTargetsRules(t *testing.T) {
 	f.container("web", d.ID)
 	ctx := context.Background()
 
-	f.svc.applyRetention(ctx, loc, settings, restic.Mode{}, "container:web", "containers")
+	f.svc.applyRetention(ctx, loc, settings, restic.Mode{}, tagIdentity("container:web"), "containers")
 	want := restic.RetentionPolicy{KeepLast: 3, KeepDaily: 2, Direct: true}
 	if got := forgetsAt(f, loc); len(got) != 1 || got[0].Policy != want {
 		t.Fatalf("after a backup the direct repository forgot with %+v, want %+v", got, want)
 	}
-	f.svc.applyRetention(ctx, f.domainPath("containers"), settings, restic.Mode{}, "container:db", "containers")
+	f.svc.applyRetention(ctx, f.domainPath("containers"), settings, restic.Mode{}, tagIdentity("container:db"), "containers")
 	if got := forgetsAt(f, f.domainPath("containers")); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 7}) {
 		t.Fatalf("the domain path forgot with %+v, want the local rule", got)
 	}
@@ -659,7 +659,7 @@ func TestADirectRepositoryAgesByItsTargetsRules(t *testing.T) {
 
 	v, vLoc := directWithRules(t, f, "vms", 3, 0, true)
 	f.vm("win11", v.ID)
-	f.svc.applyRetention(ctx, vLoc, settings, restic.Mode{}, "vm:win11", "vms")
+	f.svc.applyRetention(ctx, vLoc, settings, restic.Mode{}, tagIdentity("vm:win11"), "vms")
 	if got := forgetsAt(f, vLoc); len(got) != 0 {
 		t.Fatalf("an append-only direct repository was forgotten: %+v", got)
 	}
@@ -688,7 +688,7 @@ type keepTagEngine struct {
 	*placementEngine
 }
 
-func (e keepTagEngine) ForgetPolicy(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tag string, prune bool) error {
+func (e keepTagEngine) ForgetPolicy(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tags []string, prune bool) error {
 	loc := filepath.ToSlash(repo)
 	var kept []restic.Snapshot
 	if !p.Direct {
@@ -700,7 +700,7 @@ func (e keepTagEngine) ForgetPolicy(ctx context.Context, repo string, p restic.R
 		}
 		e.mu.Unlock()
 	}
-	if err := e.placementEngine.ForgetPolicy(ctx, repo, p, mode, tag, prune); err != nil {
+	if err := e.placementEngine.ForgetPolicy(ctx, repo, p, mode, tags, prune); err != nil {
 		return err
 	}
 	e.mu.Lock()
@@ -756,7 +756,7 @@ func TestDirectSnapshotsOutliveTheLocalRuleUntilTheirTargetClaimsThem(t *testing
 	)
 	ctx := context.Background()
 
-	f.svc.applyRetention(ctx, loc, settings, restic.Mode{}, "container:web", "containers")
+	f.svc.applyRetention(ctx, loc, settings, restic.Mode{}, tagIdentity("container:web"), "containers")
 	if got := heldIDs(f, loc); !slices.Equal(got, []string{"d1", "d2", "d3", "n2"}) {
 		t.Fatalf("the local rule on a repository that lost its link left %v, want every direct snapshot and the newest", got)
 	}
@@ -764,7 +764,7 @@ func TestDirectSnapshotsOutliveTheLocalRuleUntilTheirTargetClaimsThem(t *testing
 	if err := f.st.ConnectCompanion(old.ID, target.ID); err != nil {
 		t.Fatal(err)
 	}
-	f.svc.applyRetention(ctx, loc, settings, restic.Mode{}, "container:web", "containers")
+	f.svc.applyRetention(ctx, loc, settings, restic.Mode{}, tagIdentity("container:web"), "containers")
 	if got := heldIDs(f, loc); !slices.Equal(got, []string{"d3", "n2"}) {
 		t.Fatalf("the target's rules left %v, want the two newest", got)
 	}
@@ -1067,7 +1067,7 @@ func TestDiscoverNamesAPlainRepositoryHoldingDirectSnapshots(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, _, rows, err := f.svc.discoverNamesAcrossRepos(context.Background(), settings, "containers", "container:")
+	_, _, _, rows, err := f.svc.discoverNamesAcrossRepos(context.Background(), settings, "containers", "container:")
 	if err != nil {
 		t.Fatal(err)
 	}

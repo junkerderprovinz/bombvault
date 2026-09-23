@@ -1,13 +1,8 @@
-// ---------------------------------------------------------------------------
-// isRemotePath — the client-side mirror of restic's remoteRepoRe
-// (internal/restic/restic.go), used by PathModeSwitch to decide whether a
-// backup path field opens in Local or Remote mode. It must accept exactly the
-// same schemes the backend's resolveRepo treats as a remote restic backend
-// (issue #152) — a false negative here would silently show the folder
-// browser for a path the backend actually hands straight to restic as a
-// remote URL, and a false positive would hide the ordinary local-path field
-// behind the remote dialog for a real subpath that merely contains a colon.
-// ---------------------------------------------------------------------------
+// isRemotePath mirrors restic's remoteRepoRe (internal/restic/restic.go) and
+// decides whether PathModeSwitch opens a path in Local or Remote mode. It has to
+// accept exactly the schemes resolveRepo treats as remote: a false negative
+// shows the folder browser for a remote URL, and a false positive hides a local
+// subpath that merely contains a colon behind the remote dialog.
 import { describe, expect, it } from "vitest";
 import { isRemotePath } from "./PathModeSwitch";
 
@@ -37,10 +32,9 @@ describe("isRemotePath", () => {
   });
 
   it("rejects a scheme-like prefix that isn't a recognised remote backend", () => {
-    // Mirrors restic.LooksLikeUnprefixedRemote's negative space: an rclone
-    // remote NAME typed without the required "rclone:" prefix (the common
-    // mistake) must NOT be treated as already-remote — it needs the same
-    // "not a recognised URL" local-mode fallback a typo would get.
+    // An rclone remote name typed without the "rclone:" prefix, the mistake
+    // restic.LooksLikeUnprefixedRemote looks for, is not remote yet and gets
+    // the same local-mode fallback as a typo.
     expect(isRemotePath("BackBlaze:bucket/path")).toBe(false);
   });
 

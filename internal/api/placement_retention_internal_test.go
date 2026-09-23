@@ -40,7 +40,7 @@ func TestAnItemOnANamedRepositoryAgesByTheLocalPolicy(t *testing.T) {
 	nas := f.namedRepo("NAS", "nas")
 	f.container("nginx", nas.ID)
 	settings := localKeepLast(t, f, 3)
-	f.svc.applyRetention(context.Background(), f.root+"/nas", settings, restic.Mode{}, "container:nginx", "containers")
+	f.svc.applyRetention(context.Background(), f.root+"/nas", settings, restic.Mode{}, tagIdentity("container:nginx"), "containers")
 	want := []forgetCall{{Repo: f.root + "/nas", Tags: []string{"container:nginx"}, Policy: restic.RetentionPolicy{KeepLast: 3}, Prune: true}}
 	if !reflect.DeepEqual(f.eng.forgets, want) {
 		t.Fatalf("forgets = %+v, want %+v", f.eng.forgets, want)

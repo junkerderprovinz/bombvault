@@ -1,11 +1,5 @@
-// ---------------------------------------------------------------------------
-// Badge — the one shared status chip/pill (GlimStone form-engine Task 5).
-//
-// Same rationale as Toggle.test.ts: Badge is a pure, hookless function
-// component, so it's invoked directly as a plain function and its returned
-// element tree walked as plain objects — no jsdom/testing-library needed, on
-// the same environment: "node" footing as the rest of this repo's tests.
-// ---------------------------------------------------------------------------
+// Badge has no hooks, so these tests call it as a plain function and inspect
+// the element tree it returns, without a DOM.
 import { describe, expect, it } from "vitest";
 import { Badge } from "./Badge";
 import type { BadgeShape, BadgeSize, BadgeTone } from "./Badge";
@@ -32,7 +26,7 @@ function visibleText(node: unknown): string {
   return "";
 }
 
-describe("Badge — size stages", () => {
+describe("Badge size stages", () => {
   it("small stage is an 18px-tall, 11px-text, tight-padding chip", () => {
     const el = root(Badge({ children: "x", size: "small" }));
     expect(el.type).toBe("span");
@@ -42,7 +36,7 @@ describe("Badge — size stages", () => {
     expect(cls).toContain("px-1.5");
   });
 
-  it("medium stage is a 20px-tall, 12px-text chip (the dominant predecessor weight)", () => {
+  it("medium stage is a 20px-tall, 12px-text chip", () => {
     const el = root(Badge({ children: "x", size: "medium" }));
     const cls = el.props!.className as string;
     expect(cls).toContain("h-5");
@@ -64,7 +58,7 @@ describe("Badge — size stages", () => {
     expect(cls).toContain("h-5");
   });
 
-  it("heading stage is a 22px-tall, 12px-text, uppercase+tracked chip (rule 11)", () => {
+  it("heading stage is a 22px-tall, 12px-text, uppercase and tracked chip", () => {
     const el = root(Badge({ children: "x", size: "heading" }));
     const cls = el.props!.className as string;
     expect(cls).toContain("h-[22px]");
@@ -74,21 +68,15 @@ describe("Badge — size stages", () => {
     expect(cls).toContain("px-3");
   });
 
-  it("icon stage is 32px — THE one size every square icon-only badge in the app renders at", () => {
+  it("icon stage is 32px", () => {
     const el = root(Badge({ children: "x", size: "icon" }));
     const cls = el.props!.className as string;
     expect(cls).toContain("h-8");
   });
 
-  // Regression guard for the defect jdp reported twice: a previous round split
-  // square icon badges into three role-based stages (icon 28px / compact 32px /
-  // field 36px) that each matched their own nearest neighbour — and all three
-  // then appeared side by side inside a single Container card. The split is
-  // gone; this fails if anyone reintroduces a second icon-badge stage.
-  // `BadgeSize` is a closed union, so a new member must be added there first,
-  // and this list has to be updated in the same edit — which is exactly the
-  // moment to read Badge.tsx's "ONE SIZE FOR SQUARE ICON BADGES" block.
-  it("has exactly ONE size stage for square icon badges — no role-based split", () => {
+  // Icon badges sit side by side in the same card, so they share one size.
+  // A new BadgeSize has to be added to this list as well.
+  it("has exactly one size stage for square icon badges", () => {
     const allSizes: BadgeSize[] = ["small", "medium", "large", "heading", "icon"];
     const heights = allSizes.map((size) => {
       const cls = root(Badge({ children: "x", size })).props!.className as string;
@@ -97,9 +85,6 @@ describe("Badge — size stages", () => {
     expect(heights.filter(([, h]) => h === "h-8").map(([s]) => s)).toEqual(["icon"]);
   });
 
-  // The user-visible contract jdp actually asked for ("alle gleich groß"),
-  // checked across every shape/tone combination a call site can produce: an
-  // icon-only badge is the same 32px square whatever else it carries.
   it.each<BadgeShape>(["pill", "rounded", "square", "circle"])(
     "an icon-only badge at shape=%s is 32px square",
     (shape) => {
@@ -121,7 +106,7 @@ describe("Badge — size stages", () => {
     }
   );
 
-  it("heading stage is a distinct height from every status-chip stage, so a heading never has the exact footprint of a real status/activity chip", () => {
+  it("heading stage differs in height from every status-chip stage", () => {
     const heading = root(Badge({ children: "x", size: "heading" })).props!.className as string;
     for (const size of ["small", "medium", "large"] as BadgeSize[]) {
       const statusCls = root(Badge({ children: "x", size })).props!.className as string;
@@ -132,7 +117,7 @@ describe("Badge — size stages", () => {
   });
 });
 
-describe("Badge — pixel-identical height between <span>, <button> and <a> at the same stage", () => {
+describe("Badge span, button and a variants", () => {
   const sizes: BadgeSize[] = ["small", "medium", "large", "heading"];
 
   it.each(sizes)("the %s stage's height/padding/font classes match across span/button/a", (size) => {
@@ -168,14 +153,14 @@ describe("Badge — pixel-identical height between <span>, <button> and <a> at t
     expect(cls).toContain("appearance-none");
   });
 
-  it("the span variant also claims box-sizing and min-height:0 (same box model contract)", () => {
+  it("the span variant also claims box-sizing and min-height:0", () => {
     const span = root(Badge({ children: "x", as: "span" }));
     const cls = span.props!.className as string;
     expect(cls).toContain("box-border");
     expect(cls).toContain("min-h-0");
   });
 
-  it("the a variant also claims box-sizing and min-height:0 (same box model contract), with no appearance-none (anchors have no native chrome to strip)", () => {
+  it("the a variant also claims box-sizing and min-height:0, without appearance-none", () => {
     const anchor = root(Badge({ children: "x", as: "a", href: "https://example.test" }));
     const cls = anchor.props!.className as string;
     expect(cls).toContain("box-border");
@@ -194,7 +179,7 @@ describe("Badge — pixel-identical height between <span>, <button> and <a> at t
     expect(clicked).toBe(true);
   });
 
-  it("the a variant passes href/target/rel straight through, for real anchor semantics (rule 13)", () => {
+  it("the a variant passes href, target and rel through", () => {
     const anchor = root(
       Badge({ children: "x", as: "a", href: "https://example.test", target: "_blank", rel: "noopener noreferrer" })
     );
@@ -204,8 +189,8 @@ describe("Badge — pixel-identical height between <span>, <button> and <a> at t
   });
 });
 
-describe("Badge — shape", () => {
-  it("pill shape uses the plain rounded-pill utility, never a percentage-capped radius", () => {
+describe("Badge shape", () => {
+  it("pill shape uses the plain rounded-pill utility, not a percentage-capped radius", () => {
     const el = root(Badge({ children: "3", shape: "pill" }));
     const cls = el.props!.className as string;
     expect(cls).toContain("rounded-pill");
@@ -219,14 +204,7 @@ describe("Badge — shape", () => {
     expect(cls).toContain("rounded-control");
   });
 
-  // FIXED (GlimStone follow-up round, jdp's live review of the off-site
-  // tab's four square icon badges: "nicht in der Formengine... die sind
-  // falsch eingefaerbt"): `square` used to hard-code `rounded-none` (0px,
-  // in EVERY shape-engine mode) instead of reading the shape engine's own
-  // --radius-control token like every other control does — the same mistake
-  // pattern as a Selector or field ignoring the shape engine. Now shares the
-  // exact same `rounded-control` class `rounded` uses below.
-  it("square shape reads the shape-engine's own rounded-control token, not a hard-coded 0", () => {
+  it("square shape follows the shape engine's rounded-control radius, not a hard-coded 0", () => {
     const el = root(Badge({ children: "x", shape: "square" }));
     const cls = el.props!.className as string;
     expect(cls).toContain("rounded-control");
@@ -250,7 +228,7 @@ describe("Badge — shape", () => {
     }
   );
 
-  it("circle + icon stage locks the app-wide 32px icon-badge footprint, zero padding, 1:1 aspect", () => {
+  it("circle at the icon stage is a 32px square footprint with no padding", () => {
     const el = root(Badge({ children: "!", shape: "circle", size: "icon" }));
     const cls = el.props!.className as string;
     expect(cls).toContain("h-8");
@@ -259,30 +237,17 @@ describe("Badge — shape", () => {
   });
 });
 
-describe("Badge — tone/status-color mapping", () => {
+describe("Badge tones", () => {
   const cases: Array<[BadgeTone, string, string]> = [
     ["ok", "bg-statusOkBg", "text-statusOk"],
     ["fail", "bg-statusFailBg", "text-statusFail"],
-    // warn uses the STRONG token (-bg-strong), not the plain one: index.css
-    // labels -strong "emphasised warn chip" — matching Receiver/Fleet's old
-    // local Badge and Files.tsx/Containers.tsx's still-inline warn chips,
-    // not the softer tone full-width warning panels use.
+    // The strong warn background is for chips; the plain one is for
+    // full-width warning panels.
     ["warn", "bg-statusWarnBgStrong", "text-statusWarn"],
-    // active replaces the old "info" tone (Task 7: resolve the fifth hue) —
-    // a soft accent wash, not one of the four real state hues. text-accentText,
-    // not the flat text-accent: a spec-compliance review measured the flat
-    // accent gold at only 1.50:1 on this exact accent-soft-tinted background
-    // in light theme (badly fails the 4.5:1 text minimum, though dark theme
-    // was fine) — see index.css's --accent-text comment for the fix and the
-    // measured numbers.
+    // The flat accent is too faint on accentSoft in the light theme, so the
+    // text uses accentText.
     ["active", "bg-accentSoft", "text-accentText"],
     ["neutral", "bg-carbon-surface2", "text-carbon-textSub"],
-    // heading (rule 11, REVISED — live-review round: "the notch reads as
-    // darkened/dimmed, not the real accent colour"): the full, solid
-    // bg-accent fill + text-accentContrast ink, the same pairing this app's
-    // other solid CTAs (navActive, "Speichern") already use — not a
-    // translucent or opaque-composited wash of it. See the file header's
-    // tone="heading" section for the two earlier (now-superseded) rounds.
     ["heading", "bg-accent", "text-accentContrast"],
   ];
 
@@ -293,7 +258,7 @@ describe("Badge — tone/status-color mapping", () => {
     expect(cls).toContain(text);
   });
 
-  it("heading tone renders the full solid bg-accent fill (REVISED, live-review round: a pale accent-soft wash always reads as darkened, whatever its alpha)", () => {
+  it("heading tone renders a solid bg-accent fill, not the accent-soft wash", () => {
     const el = root(Badge({ children: "x", tone: "heading" }));
     const cls = el.props!.className as string;
     const tokens = cls.split(/\s+/);
@@ -308,14 +273,8 @@ describe("Badge — tone/status-color mapping", () => {
     expect(cls).toContain("text-carbon-textSub");
   });
 
-  // GlimStone follow-up round (jdp, live review: "Die Versionsnummern sollen
-  // keinen hellen Hintergrund haben" — see this tone's own file-header
-  // comment for the live-measured #e8e8e8 pill this replaces). Not part of
-  // the `cases` loop above: every OTHER tone there asserts a real `bg-*`
-  // class is present, so `muted`'s whole point — NO background utility at
-  // all, not even a transparent one — needs its own negative assertion
-  // rather than a `bg` string that would make `toContain("")` trivially
-  // pass.
+  // Not in the table above: muted has no background class at all, and an
+  // empty bg string would make toContain("") pass trivially.
   it("muted renders plain caption text with no background utility at all", () => {
     const el = root(Badge({ children: "x", tone: "muted" }));
     const cls = (el.props!.className as string).split(/\s+/);
@@ -324,8 +283,8 @@ describe("Badge — tone/status-color mapping", () => {
   });
 });
 
-describe("Badge — heading notch (tone=heading + size=heading straddles the card's top edge)", () => {
-  it("positions absolutely, straddling the edge via top-0 + a self-relative -50% translate (not a fixed pixel offset — see Badge.tsx's own REGRESSION comment: a fixed px value is only ever right for ONE assumed height, silently wrong the moment a wrapped badge renders taller)", () => {
+describe("Badge heading notch on the card's top edge", () => {
+  it("straddles the edge with top-0 and a -50% translate, which stays centred when a wrapped badge grows", () => {
     const el = root(Badge({ children: "x", tone: "heading", size: "heading" }));
     const cls = el.props!.className as string;
     expect(cls).toContain("absolute");
@@ -335,14 +294,14 @@ describe("Badge — heading notch (tone=heading + size=heading straddles the car
     expect(cls).toContain("z-10");
   });
 
-  it("forces a pill radius, overriding the default shape-engine-driven rounded-control", () => {
+  it("forces a pill radius instead of rounded-control", () => {
     const el = root(Badge({ children: "x", tone: "heading", size: "heading" }));
     const cls = el.props!.className as string;
     expect(cls).toContain("rounded-pill");
     expect(cls).not.toContain("rounded-control");
   });
 
-  it("forces rounded-pill even if a shape prop is explicitly passed — the notch is fixed chrome, not shape-engine-governed", () => {
+  it("forces rounded-pill even when a shape is passed", () => {
     const el = root(Badge({ children: "x", tone: "heading", size: "heading", shape: "square" }));
     const cls = el.props!.className as string;
     expect(cls).toContain("rounded-pill");
@@ -356,28 +315,28 @@ describe("Badge — heading notch (tone=heading + size=heading straddles the car
     expect(cls).not.toContain("hairline");
   });
 
-  it("with insetStart omitted, sets no explicit left/right/start/end offset — relies on the CSS static-position fallback so the notch inherits each call site's own padding and flips correctly under RTL for free (correct for a single-merged-div Card)", () => {
+  it("without insetStart, sets no horizontal offset, so the static position follows the card's padding and RTL", () => {
     const el = root(Badge({ children: "x", tone: "heading", size: "heading" }));
     const cls = el.props!.className as string;
     const tokens = cls.split(/\s+/);
     expect(tokens.some((c) => /^-?(left|right|start|end|inset)-/.test(c))).toBe(false);
   });
 
-  it("a plain heading-SIZED badge without tone=heading does NOT get the notch treatment (both props must match)", () => {
+  it("a heading-sized badge with another tone is not a notch", () => {
     const el = root(Badge({ children: "x", tone: "neutral", size: "heading" }));
     const cls = el.props!.className as string;
     expect(cls).not.toContain("absolute");
     expect(cls).not.toContain("-translate-y-1/2");
   });
 
-  it("a heading-TONED badge at a non-heading size does NOT get the notch treatment (both props must match)", () => {
+  it("a heading-toned badge at another size is not a notch", () => {
     const el = root(Badge({ children: "x", tone: "heading", size: "medium" }));
     const cls = el.props!.className as string;
     expect(cls).not.toContain("absolute");
     expect(cls).not.toContain("-translate-y-1/2");
   });
 
-  it("every other tone/size combination stays static-positioned (no regression to non-heading badges)", () => {
+  it("other tone and size combinations stay statically positioned", () => {
     const cases: Array<[BadgeTone, BadgeSize]> = [
       ["ok", "small"],
       ["fail", "medium"],
@@ -391,16 +350,9 @@ describe("Badge — heading notch (tone=heading + size=heading straddles the car
     }
   });
 
-  // Live-review round history: an earlier fix here swapped the notch's fill
-  // to an OPAQUE color-mix() of --accent-soft (to fix a semi-transparent
-  // two-tone seam at the card edge), but jdp reviewed that live and said it
-  // still read as "abgedunkelt" (darkened/dimmed) — a 14%-accent-into-
-  // surface wash is inherently pale no matter its alpha. Fix: drop the wash
-  // entirely and use the same full, solid bg-accent/text-accentContrast
-  // pairing this app's other solid CTAs already use — see Badge.tsx's file
-  // header for the full history and index.css's (now-removed)
-  // --accent-soft-solid comment for the superseded intermediate fix.
-  it("uses the full solid bg-accent fill, not any accent-soft wash (opaque or translucent)", () => {
+  // An accent-soft wash reads as dimmed at any opacity, so the notch uses the
+  // solid fill of the app's other calls to action.
+  it("uses a solid bg-accent fill, not an opaque or translucent accent-soft wash", () => {
     const el = root(Badge({ children: "x", tone: "heading", size: "heading" }));
     const cls = el.props!.className as string;
     const tokens = cls.split(/\s+/);
@@ -410,7 +362,7 @@ describe("Badge — heading notch (tone=heading + size=heading straddles the car
     expect(tokens).not.toContain("bg-accentSoftSolid");
   });
 
-  it("a heading-toned badge WITHOUT the notch (non-heading size) renders the identical solid bg-accent fill — no separate 'notch-only' colour anymore", () => {
+  it("a heading-toned badge without the notch has the same solid bg-accent fill", () => {
     const el = root(Badge({ children: "x", tone: "heading", size: "medium" }));
     const cls = el.props!.className as string;
     const tokens = cls.split(/\s+/);
@@ -420,12 +372,9 @@ describe("Badge — heading notch (tone=heading + size=heading straddles the car
   });
 });
 
-describe("Badge — insetStart (explicit override for a split-recipe Card's notch position)", () => {
-  // Root-mechanism fix for a defect class that independently recurred on
-  // Dashboard.tsx's Card() AND SummaryCell(), ActivityLog.tsx, Flash.tsx's
-  // and Config.tsx's backup Cards — see Badge.tsx's own `insetStart` doc and
-  // the long "Deliberately no explicit..."/NotchInset comments inside
-  // badgeClassName for the full mechanism this replaces.
+// insetStart places the notch on cards split into an outer and an inner box,
+// where the static position would miss the content padding.
+describe("Badge insetStart", () => {
   it.each<[4 | 5 | 6, string]>([
     [4, "start-4"],
     [5, "start-5"],
@@ -436,13 +385,13 @@ describe("Badge — insetStart (explicit override for a split-recipe Card's notc
     expect(cls).toContain(expected);
   });
 
-  it("insetStart is silently ignored on a non-notch badge (not tone=heading+size=heading together) — it never renders a stray start-N class outside the notch", () => {
+  it("insetStart is ignored on a badge that is not a notch", () => {
     const el = root(Badge({ children: "x", tone: "heading", size: "medium", insetStart: 5 }));
     const cls = (el.props!.className as string).split(/\s+/);
     expect(cls.some((c) => /^start-[456]$/.test(c))).toBe(false);
   });
 
-  it("insetStart coexists with the notch's other fixed positioning classes (top-0/-translate-y-1/2/z-10) rather than replacing them — only the horizontal axis is overridden", () => {
+  it("insetStart only sets the horizontal position and keeps the other notch classes", () => {
     const el = root(Badge({ children: "x", tone: "heading", size: "heading", insetStart: 5 }));
     const cls = (el.props!.className as string).split(/\s+/);
     expect(cls).toContain("absolute");
@@ -453,33 +402,25 @@ describe("Badge — insetStart (explicit override for a split-recipe Card's notc
   });
 });
 
-describe("Badge — hueIndex (rainbow position) and the card-wide reactive-hover marker", () => {
-  // jdp, live-review: a reactive-mode section-title badge only lit up on
-  // hover of the ~22px badge glyph itself — an impractically small target.
-  // The fix lives mostly in index.css (a `.glim-notch-card:hover
-  // .glim-notch-hue` rule scoped to each notch's own enclosing card), but
-  // that rule needs a marker class narrower than the general `.glim-hue`
-  // every rainbow-hued element carries (Selector segments, ContainerRow/
-  // VMRow/FileSetRow) — otherwise hovering a card would also light up some
-  // unrelated hued control sitting in the same card body. `.glim-notch-hue`
-  // is that marker, applied only when hueIndex is actually driving a real
-  // heading NOTCH (tone AND size both "heading" — badgeClassName's own
-  // isHeadingNotch gates the identical pair for the positioning treatment).
-  it("a hueIndex'd heading notch carries both glim-hue and the notch-specific glim-notch-hue marker", () => {
+// In reactive mode, index.css lights a notch while its whole card is hovered
+// (.glim-notch-card:hover .glim-notch-hue). Other hued controls in the card
+// carry glim-hue too, so the notch needs a marker of its own.
+describe("Badge hueIndex and the notch hover marker", () => {
+  it("a heading notch with hueIndex carries glim-hue and glim-notch-hue", () => {
     const el = root(Badge({ children: "x", tone: "heading", size: "heading", hueIndex: 2 }));
     const cls = el.props!.className as string;
     expect(cls).toContain("glim-hue");
     expect(cls).toContain("glim-notch-hue");
   });
 
-  it("omitting hueIndex on a heading notch renders neither hue class (the pre-existing flat-accent singleton case)", () => {
+  it("a heading notch without hueIndex carries neither hue class", () => {
     const el = root(Badge({ children: "x", tone: "heading", size: "heading" }));
     const cls = el.props!.className as string;
     expect(cls).not.toContain("glim-hue");
     expect(cls).not.toContain("glim-notch-hue");
   });
 
-  it("hueIndex is silently ignored for any real state tone (ok/fail/warn/neutral) — no glim-hue, no glim-notch-hue", () => {
+  it("hueIndex is ignored on the ok, fail, warn and neutral tones", () => {
     for (const tone of ["ok", "fail", "warn", "neutral"] as BadgeTone[]) {
       const cls = root(Badge({ children: "x", tone, size: "medium", hueIndex: 2 })).props!.className as string;
       expect(cls).not.toContain("glim-hue");
@@ -487,31 +428,25 @@ describe("Badge — hueIndex (rainbow position) and the card-wide reactive-hover
     }
   });
 
-  // offsite-tab card-split follow-up (jdp: "Die Buttons Verbindung testen,
-  // Jetzt replizieren, Einrichten, Ziel hinzufügen in die Farbengine
-  // aufnehmen"): tone="active" is accent-derived (bg-accentSoft/
-  // text-accentText), never one of rule 4's four state hues, so it is the
-  // one other tone `hueIndex` is allowed to drive — see Badge()'s own
-  // `hueOn` comment for the full reasoning.
-  it("hueIndex DOES drive tone=\"active\" — the one other accent-derived (non-state) tone", () => {
+  it("hueIndex also applies to tone=\"active\", which is accent-derived rather than a state colour", () => {
     const el = root(Badge({ children: "x", tone: "active", size: "medium", hueIndex: 3 }));
     const cls = el.props!.className as string;
     expect(cls).toContain("glim-hue");
   });
 
-  it("a hueIndex'd tone=\"active\" badge never picks up the card-notch-only glim-notch-hue marker (only a real heading NOTCH gets that)", () => {
+  it("a tone=\"active\" badge with hueIndex does not get glim-notch-hue", () => {
     const el = root(Badge({ children: "x", tone: "active", size: "medium", hueIndex: 3 }));
     const cls = el.props!.className as string;
     expect(cls).not.toContain("glim-notch-hue");
   });
 
-  it("omitting hueIndex on tone=\"active\" renders the flat, un-rainbowed accent-soft wash (no glim-hue)", () => {
+  it("a tone=\"active\" badge without hueIndex has no glim-hue", () => {
     const el = root(Badge({ children: "x", tone: "active", size: "medium" }));
     const cls = el.props!.className as string;
     expect(cls).not.toContain("glim-hue");
   });
 
-  it("a hueIndex'd heading badge at a non-heading size gets the general glim-hue but NOT the card-wide glim-notch-hue marker (it isn't the notch treatment, so it must not opt into the card-wide reveal)", () => {
+  it("a heading-toned badge at another size gets glim-hue but not glim-notch-hue", () => {
     const el = root(Badge({ children: "x", tone: "heading", size: "medium", hueIndex: 2 }));
     const cls = el.props!.className as string;
     expect(cls).toContain("glim-hue");
@@ -519,15 +454,10 @@ describe("Badge — hueIndex (rainbow position) and the card-wide reactive-hover
   });
 });
 
-// GlimStone follow-up round (jdp's live review of the off-site tab's four
-// icon-only "active" badges, on top of the earlier "farbige Schrift" fix
-// that made this branch neutral-ink-on-a-wash in the first place): "die sind
-// falsch eingefaerbt, so halb abgedunkelt" — bg-accentSoft IS a 14%-alpha
-// wash (the exact same "half-darkened" failure mode tone="heading" above
-// already fixed once), so an icon-only tone="active" badge gets the
-// identical treatment: full solid bg-accent, computed-contrast ink.
-describe("Badge — icon-only tone=\"active\" (tip set) uses a full solid fill, not the accent-soft wash", () => {
-  it("renders bg-accent + text-accentContrast, never the accent-soft wash or the old flat neutral ink", () => {
+// An icon on the accent-soft wash reads as dimmed, so icon-only active badges
+// get the solid fill the heading notch uses.
+describe("Badge icon-only tone=\"active\" (tip set)", () => {
+  it("renders bg-accent and text-accentContrast, not the accent-soft wash or neutral ink", () => {
     const el = root(Badge({ children: "!", as: "button", tone: "active", shape: "square", tip: "Test" }));
     const cls = el.props!.className as string;
     const tokens = cls.split(/\s+/);
@@ -537,7 +467,7 @@ describe("Badge — icon-only tone=\"active\" (tip set) uses a full solid fill, 
     expect(tokens).not.toContain("text-carbon-textSub");
   });
 
-  it("still holds with a hueIndex — a rainbow-positioned icon badge is a solid hue fill, not a hued wash", () => {
+  it("stays a solid fill with hueIndex", () => {
     const el = root(
       Badge({ children: "!", as: "button", tone: "active", shape: "square", tip: "Test", hueIndex: 1 })
     );
@@ -549,7 +479,7 @@ describe("Badge — icon-only tone=\"active\" (tip set) uses a full solid fill, 
     expect(tokens).not.toContain("bg-accentSoft");
   });
 
-  it("a non-icon-only tone=\"active\" text badge is unaffected — still the soft wash + text-accentText pairing", () => {
+  it("a text badge with tone=\"active\" keeps the soft wash and text-accentText", () => {
     const el = root(Badge({ children: "running", tone: "active" }));
     const cls = el.props!.className as string;
     const tokens = cls.split(/\s+/);
@@ -558,7 +488,7 @@ describe("Badge — icon-only tone=\"active\" (tip set) uses a full solid fill, 
   });
 });
 
-describe("Badge — content and extension", () => {
+describe("Badge content and pass-through props", () => {
   it("renders children as visible text", () => {
     const el = Badge({ children: "3 failed" });
     expect(visibleText(el)).toBe("3 failed");
@@ -578,7 +508,7 @@ describe("Badge — content and extension", () => {
     expect(button.props!.title).toBe("hint");
   });
 
-  it("passes ariaLabel through as aria-label on span, button and a — the accessible name for an icon-only badge whose content is a decorative glyph", () => {
+  it("passes ariaLabel through as aria-label on span, button and a", () => {
     const span = root(Badge({ children: "!", ariaLabel: "Reset" }));
     const button = root(Badge({ children: "!", as: "button", ariaLabel: "Reset" }));
     const anchor = root(Badge({ children: "!", as: "a", href: "https://example.test", ariaLabel: "Reset" }));
@@ -588,7 +518,7 @@ describe("Badge — content and extension", () => {
   });
 });
 
-describe("Badge — wrap (grow-to-fit instead of clipping)", () => {
+describe("Badge wrap", () => {
   it("without wrap, a stage renders a fixed h-* height with leading-none and no min-h floor", () => {
     const el = root(Badge({ children: "x", size: "medium" }));
     const cls = el.props!.className as string;
@@ -607,7 +537,7 @@ describe("Badge — wrap (grow-to-fit instead of clipping)", () => {
     expect(cls).toContain(minHeight);
   });
 
-  it("wrap drops leading-none and gains readable multi-line spacing + word wrapping", () => {
+  it("wrap swaps leading-none for multi-line spacing and word wrapping", () => {
     const el = root(Badge({ children: "x", wrap: true }));
     const cls = el.props!.className as string;
     expect(cls).not.toContain("leading-none");
@@ -619,8 +549,7 @@ describe("Badge — wrap (grow-to-fit instead of clipping)", () => {
     const el = root(Badge({ children: "x", size: "large", wrap: true }));
     const cls = el.props!.className as string;
     expect(cls).toContain("min-h-6");
-    // "h-6" would also match as a substring of "min-h-6", so check for the
-    // exact standalone class token instead of a naive .toContain("h-6").
+    // "h-6" is a substring of "min-h-6", so compare whole tokens.
     const tokens = cls.split(/\s+/);
     expect(tokens).not.toContain("h-6");
   });
@@ -639,19 +568,10 @@ describe("Badge — wrap (grow-to-fit instead of clipping)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// inFlow — the notch's LOOK without its own POSITIONING, so a caller can place
-// a GROUP of heading badges as one unit (StepCard's number + name pair). See
-// Badge.tsx's `inFlow` prop doc and file header for the full reasoning,
-// including the split-badge machinery this replaced.
-//
-// The point of these is the SPLIT of the notch treatment into two halves: what
-// the badge still keeps (fill, radius, lift, hue hooks) and the one thing it
-// gives up (placement). A later edit that folded the lift back in with the
-// positioning, or that quietly restored `absolute`, would break the pair
-// silently — both badges would stack on the same static position again.
-// ---------------------------------------------------------------------------
-describe("Badge — inFlow (caller-positioned heading notch)", () => {
+// inFlow keeps the notch's look but drops its placement, so a caller can place
+// several heading badges as one group (StepCard's number and name). If the
+// placement came back, the pair would stack on the same spot.
+describe("Badge inFlow", () => {
   const notch = { children: "Attach", tone: "heading", size: "heading" } as const;
 
   it("drops every placement class so the caller's own wrapper positions it", () => {
@@ -663,7 +583,7 @@ describe("Badge — inFlow (caller-positioned heading notch)", () => {
     expect(tokens).not.toContain("z-10");
   });
 
-  it("keeps the notch's look — solid fill, fixed pill radius and the elevation lift", () => {
+  it("keeps the notch's solid fill, pill radius and elevation", () => {
     const cls = root(Badge({ ...notch, inFlow: true })).props!.className as string;
     expect(cls).toContain("bg-accent");
     expect(cls).toContain("text-accentContrast");
@@ -677,7 +597,7 @@ describe("Badge — inFlow (caller-positioned heading notch)", () => {
     expect(cls).toContain("glim-notch-hue");
   });
 
-  it("ignores insetStart — the caller owns the horizontal position now", () => {
+  it("ignores insetStart, since the caller sets the position", () => {
     const cls = root(Badge({ ...notch, inFlow: true, insetStart: 5 })).props!.className as string;
     expect(cls.split(/\s+/)).not.toContain("start-5");
   });
@@ -701,13 +621,13 @@ describe("Badge — inFlow (caller-positioned heading notch)", () => {
     expect(cls).toContain("gap-1");
   });
 
-  it("is inert on a badge that was never the notch in the first place", () => {
+  it("has no effect on a badge that is not a notch", () => {
     for (const tone of ["ok", "fail", "warn", "active", "neutral", "muted"] as BadgeTone[]) {
       const withFlag = root(Badge({ children: "x", tone, inFlow: true })).props!.className as string;
       const without = root(Badge({ children: "x", tone })).props!.className as string;
       expect(withFlag).toBe(without);
     }
-    // …and on a heading-TONED badge that isn't at the heading SIZE either.
+    // Nor on a heading-toned badge at another size.
     const small = root(Badge({ children: "x", tone: "heading", size: "small", inFlow: true })).props!.className as string;
     expect(small).toBe(root(Badge({ children: "x", tone: "heading", size: "small" })).props!.className as string);
   });

@@ -14,8 +14,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// webhookCounter is an httptest server that counts the notifications posted to it,
-// so a test can assert a channel actually fired without a real endpoint.
+// webhookCounter starts a server that counts the notifications posted to it.
 func webhookCounter(t *testing.T) (url string, hits *int32) {
 	t.Helper()
 	var n int32
@@ -27,10 +26,8 @@ func webhookCounter(t *testing.T) (url string, hits *int32) {
 	return srv.URL, &n
 }
 
-// TestScheduledReplicateOffsiteNotifiesOnFailure pins H3(c): a scheduled off-site
-// replication that FAILS must fire a notification (not just log), so a silently
-// rotting off-site copy is surfaced. The interactive ReplicateOffsite stays
-// notify-free (the UI surfaces its error directly).
+// Nobody watches a scheduled replication, so a failure has to notify.
+// ReplicateOffsite does not, because the UI shows its error.
 func TestScheduledReplicateOffsiteNotifiesOnFailure(t *testing.T) {
 	url, hits := webhookCounter(t)
 	eng := &fakeResticEngine{copyErr: errors.New("copy exploded")}
@@ -47,22 +44,21 @@ func TestScheduledReplicateOffsiteNotifiesOnFailure(t *testing.T) {
 	}
 }
 
-// TestReplicateOffsiteFirstOverBudgetAlarms pins M4: the FIRST replication that
-// exceeds the growth budget must alarm — the budget is evaluated against a FRESH
-// size sampled for this replication (no prior sample to lag behind), which for an
-// immutable repo (no far-side prune) is the only growth backstop.
+// The budget is checked against a size sampled for this replication, so even
+// the first one over it alarms. For an append-only repo, where nothing prunes
+// the far side, this is the only check on growth.
 func TestReplicateOffsiteFirstOverBudgetAlarms(t *testing.T) {
 	url, hits := webhookCounter(t)
 	eng := &fakeResticEngine{
 		snaps:        []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}, // non-empty so the size sample lands
-		rawSizeBytes: 2 * 1024 * 1024 * 1024,                      // 2 GiB
+		rawSizeBytes: 2 * 1024 * 1024 * 1024,
 	}
 	svc, st := offsiteReplTestService(t, eng)
 	s, err := st.GetSettings()
 	if err != nil {
 		t.Fatal(err)
 	}
-	s.OffsiteGrowthBudgetGB = 1 // 2 GiB > 1 GiB budget
+	s.OffsiteGrowthBudgetGB = 1
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
@@ -78,8 +74,8 @@ func TestReplicateOffsiteFirstOverBudgetAlarms(t *testing.T) {
 	}
 }
 
-// latestRunOfKind returns the newest run of the given kind from the shared runs
-// table, failing the test when none was recorded.
+// latestRunOfKind returns the newest run of the given kind and fails the test
+// when there is none.
 func latestRunOfKind(t *testing.T, st *store.Repo, kind string) store.Run {
 	t.Helper()
 	runs, err := st.ListRuns(50)
@@ -95,11 +91,9 @@ func latestRunOfKind(t *testing.T, st *store.Repo, kind string) store.Run {
 	return store.Run{}
 }
 
-// TestReplicateOffsiteRecordsActivityRun pins the Activity Log feed (G2): a
-// replication ALSO lands a kind="offsite" row in the SHARED runs table, on the
-// reserved domain target id (the prune/verify pattern) — additive to the
-// offsite_runs bookkeeping the scorecard's currency checks rely on, which must
-// keep being recorded exactly as before.
+// A replication shows up in the activity log as an "offsite" run on the
+// domain's reserved target id, like prune and verify. The offsite_runs rows
+// the scorecard reads are recorded as well.
 func TestReplicateOffsiteRecordsActivityRun(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc, st := offsiteReplTestService(t, eng)
@@ -118,15 +112,11 @@ func TestReplicateOffsiteRecordsActivityRun(t *testing.T) {
 		t.Fatalf("a successful offsite run must carry no error, got %q", run.Error)
 	}
 
-	// The offsite_runs history (currency source) is unchanged and still recorded.
 	if _, found, err := st.LatestSuccessfulOffsiteRun("flash"); err != nil || !found {
 		t.Fatalf("offsite_runs bookkeeping must still be recorded, found=%v err=%v", found, err)
 	}
 }
 
-// TestReplicateOffsiteFailureRecordsFailedActivityRun pins the failure side of
-// the same feed: a failed copy records the kind="offsite" run as failed with
-// the (truncated) error text.
 func TestReplicateOffsiteFailureRecordsFailedActivityRun(t *testing.T) {
 	eng := &fakeResticEngine{copyErr: errors.New("copy exploded")}
 	svc, st := offsiteReplTestService(t, eng)
@@ -143,15 +133,13 @@ func TestReplicateOffsiteFailureRecordsFailedActivityRun(t *testing.T) {
 	}
 }
 
-// TestReplicateOffsitePanicRecordsFailure pins L5: a panic during the copy must
-// NOT stamp a phantom successful replication — the deferred FinishOffsiteRun
-// records ok=false because the local success flag was never set.
+// A panic during the copy must close the run as failed, not as a success.
 func TestReplicateOffsitePanicRecordsFailure(t *testing.T) {
 	eng := &fakeResticEngine{copyPanic: true}
 	svc, st := offsiteReplTestService(t, eng)
 
 	func() {
-		defer func() { _ = recover() }() // swallow the propagating panic
+		defer func() { _ = recover() }()
 		_ = svc.ReplicateOffsite(context.Background(), "flash")
 	}()
 

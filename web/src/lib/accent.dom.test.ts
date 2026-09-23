@@ -1,13 +1,4 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// GlimStone follow-up pass, live-review round 6 — accent presets became
-// individually editable + resettable. Covers the localStorage-touching half
-// accent.test.ts's own header deliberately leaves out (getAccentPresets/
-// setAccentPresets), the same split appearance.test.ts/
-// appearance.dom.test.tsx already established for the rainbow palette's own
-// persistence pair — see that file's header comment for why a per-file
-// jsdom opt-in is used here despite most of this module staying node.
-// ---------------------------------------------------------------------------
 import { beforeEach, describe, expect, it } from "vitest";
 import { DEFAULT_ACCENT_PRESETS, getAccentPresets, setAccentPresets } from "./accent";
 
@@ -56,7 +47,7 @@ describe("setAccentPresets", () => {
     expect(getAccentPresets()).toEqual(CUSTOM_PRESETS);
   });
 
-  it("editing ONE preset's slot never touches the others (persists correctly)", () => {
+  it("stores an edit to one preset without touching the others", () => {
     setAccentPresets(DEFAULT_ACCENT_PRESETS);
     const edited = DEFAULT_ACCENT_PRESETS.slice();
     edited[2] = "#abcdef";
@@ -69,7 +60,7 @@ describe("setAccentPresets", () => {
     expect(getAccentPresets()).toEqual(result);
   });
 
-  it("resetting restores the ORIGINAL shipped defaults, not just some other colour", () => {
+  it("restores the built-in defaults on reset", () => {
     setAccentPresets(CUSTOM_PRESETS);
     expect(getAccentPresets()).toEqual(CUSTOM_PRESETS);
     const result = setAccentPresets(DEFAULT_ACCENT_PRESETS);
@@ -77,7 +68,7 @@ describe("setAccentPresets", () => {
     expect(getAccentPresets()).toEqual(DEFAULT_ACCENT_PRESETS);
   });
 
-  it("persists the REJECTED-and-replaced set, not the raw invalid one — all-or-nothing", () => {
+  it("stores the defaults instead of a set with one invalid entry", () => {
     const bad = [...DEFAULT_ACCENT_PRESETS.slice(0, 7), "javascript:alert(1)"];
     const result = setAccentPresets(bad);
     expect(result).toEqual(DEFAULT_ACCENT_PRESETS);

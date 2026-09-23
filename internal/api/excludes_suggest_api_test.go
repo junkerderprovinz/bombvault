@@ -8,16 +8,14 @@ import (
 	"testing"
 )
 
-// TestExcludesSuggest pins the exclusion assistant's API surface end-to-end:
-// GET /api/containers/{name}/excludes/suggest walks the container's backed-up
-// folder (the conventional appdata dir under the host mount in this harness),
-// surfaces a well-known junk dir by name, and skips a dir the stored excludes
-// already cover. The returned line is ready to store via the excludes PATCH.
+// The suggest endpoint walks the container's backed-up folder, suggests a
+// well-known junk dir by name and skips a dir the stored excludes already
+// cover. The returned line can be stored through the excludes PATCH as is.
 func TestExcludesSuggest(t *testing.T) {
 	d := &fakeServiceDocker{}
 	h, _, _, dir := newTestRouterSvcDir(t, d, &fakeResticEngine{})
 
-	// Seed the scanned tree: appdata/plex is the auto-detected backup root.
+	// appdata/plex is the auto-detected backup root.
 	appdata := filepath.Join(dir, "appdata", "plex")
 	if err := os.MkdirAll(filepath.Join(appdata, "Cache"), 0o750); err != nil {
 		t.Fatal(err)
@@ -32,7 +30,7 @@ func TestExcludesSuggest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Store an exclude covering "logs" — the scan must skip it, not re-suggest it.
+	// With "logs" excluded, the scan must not suggest it.
 	w, m := doJSON(t, h, http.MethodPatch, "/api/containers/plex", `{"excludes":["logs"]}`)
 	if w.Code != http.StatusOK || m["ok"] != true {
 		t.Fatalf("patch status=%d body=%s", w.Code, w.Body.String())
@@ -56,8 +54,7 @@ func TestExcludesSuggest(t *testing.T) {
 	if sg["path"] != "Cache" || sg["reason"] != "known-cache" || sg["sizeBytes"] != float64(10) {
 		t.Fatalf("suggestion = %v, want Cache/known-cache/10", sg)
 	}
-	// No mount covers the harness dir, so the line falls back to the scanned
-	// path verbatim (a passthrough line resolves to itself).
+	// No mount covers the harness dir, so the line is the scanned path itself.
 	wantLine := filepath.ToSlash(filepath.Join(appdata, "Cache"))
 	line, _ := sg["line"].(string)
 	if line != wantLine {

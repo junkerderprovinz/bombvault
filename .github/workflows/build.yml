@@ -1,18 +1,10 @@
 name: Build Docker Image
 
-# Build the multi-arch image and push it to GHCR so it can be pulled on the Unraid
-# box. Pull requests build only (no push).
+# Builds the multi-arch image and pushes it to GHCR; pull requests only build.
 #
-# EVERY branch builds and pushes, not just main. A feature branch used to produce
-# no image at all, which sounds harmless and is not: the only way to try a change
-# on the real server was to put it on main first, so feature work and hotfixes kept
-# landing in the same place and had to be untangled afterwards. A branch push now
-# lands at ghcr.io/junkerderprovinz/bombvault:<branch> (slashes become hyphens), so
-# a branch can be tested on bottich for as long as it needs before it is merged.
-#
-# What a branch build deliberately does NOT touch: `latest`, `edge`, the semver
-# tags, the Docker Hub mirror and the Docker Hub description. Those belong to main
-# and to release tags — see the metadata step below.
+# Every branch is pushed as ghcr.io/junkerderprovinz/bombvault:<branch> (slashes
+# become hyphens), so it can be tried on a server before it is merged. latest,
+# edge, the semver tags and Docker Hub stay with main and release tags.
 on:
   push:
     branches: ["**"]
@@ -30,10 +22,9 @@ permissions:
   packages: write
   security-events: write # Trivy uploads its CVE report (SARIF) to the Security tab
 
-# One build per ref. A branch under active development gets pushed to repeatedly,
-# and without this every push queues another full multi-arch build behind the last.
-# Superseded branch builds are cancelled; main and tags are never cancelled, because
-# a release build that dies halfway leaves the registry half-written.
+# A newer push cancels a running branch build. Builds of main and of tags are
+# left to finish, since a release build cut off halfway leaves the registry
+# half-written.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref_type != 'tag' && github.ref_name != github.event.repository.default_branch }}
@@ -43,10 +34,8 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  # Boot smoke test: a green build is not a booting container. Build the amd64
-  # image, run it, and confirm it serves /api/health before we push :latest /
-  # the release tag. The push job depends on this, so a non-booting image can
-  # never reach the registry.
+  # The build job waits for this, so an image that does not boot never reaches
+  # the registry.
   smoke:
     name: Boot smoke test (amd64)
     runs-on: ubuntu-latest
@@ -83,10 +72,8 @@ jobs:
           exit 1
       - name: Verify tini is PID 1 (zombie reaper, #35)
         run: |
-          # BombVault shells out to restic, which forks rclone for off-site repos.
-          # A cancelled/killed restic orphans its rclone child onto PID 1; if PID 1
-          # is not a reaping init those pile up as [rclone] <defunct> (#35). tini as
-          # PID 1 reaps them. /proc/1/comm is the live proof the ENTRYPOINT took.
+          # Without tini as PID 1, the rclone children of a killed restic pile up
+          # as zombies (see the Dockerfile).
           pid1=$(docker exec bv-smoke cat /proc/1/comm)
           echo "PID 1 is: $pid1"
           if [ "$pid1" != "tini" ]; then
@@ -94,10 +81,8 @@ jobs:
             exit 1
           fi
           echo "✓ tini is PID 1 — orphaned rclone/ssh grandchildren get reaped"
-      # Non-blocking CVE scan of the just-built image. Reports HIGH/CRITICAL
-      # findings to the Security tab (SARIF). Deliberately does NOT fail the
-      # build (exit-code 0): most findings live in the upstream base image and
-      # can't be fixed here, so this is visibility, not a release gate.
+      # Reports to the Security tab without failing the build: most findings are
+      # in the base image and cannot be fixed here.
       - name: Scan image for CVEs (Trivy)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
@@ -127,7 +112,6 @@ jobs:
       - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
 
-      # Push only on main / manual runs, never from pull requests.
       - name: Log in to GHCR
         if: github.event_name != 'pull_request'
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
@@ -136,8 +120,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Docker Hub mirror — active only once DOCKERHUB_USERNAME (variable) and
-      # DOCKERHUB_TOKEN (secret) are set together; otherwise skipped (GHCR-only).
+      # Without the DOCKERHUB_USERNAME variable the image goes to GHCR only.
       - name: Log in to Docker Hub
         if: ${{ github.event_name != 'pull_request' && vars.DOCKERHUB_USERNAME != '' }}
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
@@ -145,17 +128,9 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Is the tag being built the newest release in this repo?
-      #
-      # `latest` moves only for a tag build (see the metadata block below), and
-      # only for the highest version. Both halves are needed and they guard
-      # different accidents: gating on tags stops an unreleased merge from
-      # reaching everybody who pulls `latest`, and gating on "newest" stops a
-      # re-cut of an older version from dragging `latest` backwards, which is
-      # exactly what happened on 2026-09-02 with v8.3.0.
-      #
-      # checkout gives no tags by default, so they are fetched here rather than
-      # assumed. `sort -V` orders versions, not strings, so v8.10.0 beats v8.9.0.
+      # latest moves only for the newest tag, so re-cutting an older version
+      # cannot drag it backwards. checkout fetches no tags, and sort -V puts
+      # v8.10.0 after v8.9.0.
       - name: Is this the newest release tag?
         id: newest
         if: github.ref_type == 'tag'
@@ -176,43 +151,19 @@ jobs:
         id: meta
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
         with:
-          # The Docker Hub mirror carries releases and main, never a feature
-          # branch: it is the address people pull by hand from the template, and
-          # an unfinished branch has no business appearing in that tag list.
+          # Docker Hub is what the template pulls, so it gets main and releases
+          # but no branches.
           images: |
             ${{ env.IMAGE }}
             name=docker.io/${{ vars.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }},enable=${{ vars.DOCKERHUB_USERNAME != '' && (github.ref_type == 'tag' || github.ref_name == github.event.repository.default_branch) }}
-          # `latest` MEANS "the newest released version", and nothing else.
+          # latest is the newest release, so an unreleased merge never reaches
+          # people who pull it. The tip of main goes to edge, and any other
+          # branch gets a tag of its own name and nothing else.
           #
-          # It used to mean "the tip of main", which is not the same thing and
-          # was not meant to be: the comment here even argued that main is at or
-          # ahead of the newest tag whenever a release is cut, so latest tracks
-          # the newest code. That is true and it is the problem. On 2026-09-14 a
-          # 23-commit merge to main put an unreleased build in front of everyone
-          # pulling `latest` before a release existed, and the first bug report
-          # against it arrived before the release notes did.
-          #
-          # So: a tag build sets `latest`, and only when that tag is the newest
-          # release (see the step above). Gating on the tag alone would bring
-          # back the older accident in the other direction - on 2026-09-02 a
-          # re-cut of v8.3.0, long after v8.4.0 shipped, moved `latest` back onto
-          # 8.3.0 - which is why both halves are there.
-          #
-          # `edge` is where the tip of main goes now. Still pullable, still
-          # built, still smoke-tested; just nobody gets it without asking.
-          #
-          # STILL SHARP, deliberately: {{major}} and {{major}}.{{minor}} below
-          # are moved by whichever tag built last, so re-cutting an old version
-          # drags `8` back with it. Correct for a normal forward release and
-          # wrong only while folding, which is rare enough to handle by hand.
-          # After folding, re-run the NEWEST tag's build and check that
-          # latest/8/8.<minor> all resolve to the same digest.
-          #
-          # A branch that is not main gets its own name as the tag and nothing
-          # else, so `docker pull ghcr.io/.../bombvault:feat-retention-preview`
-          # fetches exactly that branch's tip and no moving tag follows along.
-          # The semver lines below only ever match a tag build, so they stay out
-          # of a branch build on their own.
+          # {{major}} and {{major}}.{{minor}} follow whichever tag built last,
+          # so re-cutting an old version moves them back. After that, re-run
+          # the newest tag's build and check that latest, 8 and 8.<minor> share
+          # a digest.
           tags: |
             type=sha,format=short
             type=ref,event=branch,enable=${{ github.ref_type == 'branch' && github.ref_name != github.event.repository.default_branch }}
@@ -222,24 +173,11 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
 
-      # Stamp a meaningful version into the binary. Tag builds use the tag
-      # (e.g. v3.1.0); every other build uses the latest release tag plus the
-      # BRANCH and the short SHA (e.g. v3.1.0+main.4c0c987), so the log banner
-      # and the WebUI show a real version rather than the literal branch name
-      # (issue #22).
-      #
-      # The branch used to be the hard-coded word "main", which was true while
-      # the only non-tag builds came from main. It stopped being true the day a
-      # feature branch was built by `workflow_dispatch`, and it misled exactly
-      # as you would expect: an image built from `feature/control-engine`
-      # reported `v8.3.1+main.56dedc8`, and jdp reasonably read that as "you
-      # pushed to main". Nothing had been pushed to main; the string was simply
-      # not looking at the branch. It looks now.
-      #
-      # Slashes become hyphens because SemVer build metadata (everything after
-      # the "+") allows only alphanumerics, hyphens and dots — `feature/x` would
-      # make the whole version unparseable, and `internal/releasenotes` does
-      # parse it.
+      # Tag builds use the tag. Other builds use the latest release plus branch
+      # and short SHA (v3.1.0+main.4c0c987), so the log banner and the WebUI
+      # show where the image came from. SemVer build metadata allows only
+      # alphanumerics, hyphens and dots, and internal/releasenotes parses the
+      # version, so slashes and underscores become hyphens.
       - name: Compute version
         id: ver
         env:
@@ -267,24 +205,12 @@ jobs:
             VERSION=${{ steps.ver.outputs.v }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          # Supply-chain attestations: SLSA build provenance + an SBOM, attached
-          # to the image in the registry so consumers can verify how it was built
-          # and what it contains.
           provenance: true
           sbom: true
 
-      # Mirror the GitHub README to the Docker Hub repo's Overview.
-      #
-      # This uses DOCKERHUB_TOKEN, the same access token the push above uses.
-      # It used to use a separate DOCKERHUB_PASSWORD, on the belief that a push
-      # token cannot edit a description. That was measured wrong on 2026-09-05:
-      # an access token with read, write and delete scope edits it fine, while
-      # the account password is refused outright with 401, because Docker Hub's
-      # legacy login endpoint rejects a password once 2FA is on. One secret,
-      # and the one that actually works.
-      # Releases and main only, for the same reason the mirror itself is: a README
-      # edited on a feature branch would otherwise rewrite the public Docker Hub
-      # overview before anyone had agreed to the change.
+      # The push token can edit the Docker Hub overview when it has read, write
+      # and delete scope; the account password is refused once 2FA is on. Main
+      # and releases only, so a branch cannot rewrite the public overview.
       - name: Docker Hub description sync ready?
         id: dhdesc
         if: ${{ vars.DOCKERHUB_USERNAME != '' && github.event_name != 'pull_request' && (github.ref_type == 'tag' || github.ref_name == github.event.repository.default_branch) }}
@@ -300,8 +226,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: ${{ vars.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
           short-description: "Backup and full disaster recovery for Unraid: Docker containers, KVM VMs and the USB flash."
-          # The full README exceeds Docker Hub's 25000-byte description limit (it
-          # gets truncated mid-page), so Docker Hub gets a condensed edition that
-          # links back to GitHub for the full docs.
+          # Docker Hub cuts descriptions at 25000 bytes, so it gets a shorter
+          # README that links back to GitHub.
           readme-filepath: .github/DOCKERHUB.md
           enable-url-completion: true

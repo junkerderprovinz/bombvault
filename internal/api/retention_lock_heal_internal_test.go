@@ -23,7 +23,7 @@ type lockHealEngine struct {
 	unlockAll    bool
 }
 
-func (e *lockHealEngine) ForgetPolicy(_ context.Context, _ string, _ restic.RetentionPolicy, _ restic.Mode, _ string, _ bool) error {
+func (e *lockHealEngine) ForgetPolicy(_ context.Context, _ string, _ restic.RetentionPolicy, _ restic.Mode, _ []string, _ bool) error {
 	e.forgetCalls++
 	return e.forgetErr
 }
@@ -41,7 +41,7 @@ func TestForgetWithLockHealClearsStaleOrphanThenForgetsOnce(t *testing.T) {
 	eng := &lockHealEngine{}
 	s := &Service{engine: eng}
 
-	err := s.forgetWithLockHeal(context.Background(), "/repo", restic.RetentionPolicy{KeepLast: 5}, restic.Mode{}, "container:x", true)
+	err := s.forgetWithLockHeal(context.Background(), "/repo", restic.RetentionPolicy{KeepLast: 5}, restic.Mode{}, []string{"container:x"}, true)
 	if err != nil {
 		t.Fatalf("want no error, got %v", err)
 	}
@@ -64,7 +64,7 @@ func TestForgetWithLockHealDoesNotForceUnlockOrRetryOnLockErr(t *testing.T) {
 	eng := &lockHealEngine{forgetErr: lockErr}
 	s := &Service{engine: eng}
 
-	err := s.forgetWithLockHeal(context.Background(), "/repo", restic.RetentionPolicy{KeepLast: 5}, restic.Mode{}, "container:x", true)
+	err := s.forgetWithLockHeal(context.Background(), "/repo", restic.RetentionPolicy{KeepLast: 5}, restic.Mode{}, []string{"container:x"}, true)
 	if !errors.Is(err, lockErr) {
 		t.Fatalf("want the original lock error surfaced unchanged, got %v", err)
 	}
@@ -84,7 +84,7 @@ func TestForgetWithLockHealPassesThroughOtherErrors(t *testing.T) {
 	eng := &lockHealEngine{forgetErr: boom}
 	s := &Service{engine: eng}
 
-	err := s.forgetWithLockHeal(context.Background(), "/repo", restic.RetentionPolicy{KeepLast: 5}, restic.Mode{}, "container:x", true)
+	err := s.forgetWithLockHeal(context.Background(), "/repo", restic.RetentionPolicy{KeepLast: 5}, restic.Mode{}, []string{"container:x"}, true)
 	if !errors.Is(err, boom) {
 		t.Fatalf("want the original error back, got %v", err)
 	}

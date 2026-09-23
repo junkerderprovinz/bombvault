@@ -17,10 +17,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// fakeHostSSH records Run calls so the Unraid-notification channel (and the
-// dashboard-plugin endpoints) can be tested without a real host. runOut scripts
-// the remote command's stdout; the zero value keeps the original "empty output"
-// behaviour.
+// fakeHostSSH records Run calls. runOut and runErr are what Run returns.
 type fakeHostSSH struct {
 	runs   [][]string
 	runOut string
@@ -63,8 +60,6 @@ func unraidNotifyService(t *testing.T, ssh HostSSH) *Service {
 	}
 }
 
-// TestNotifyBackupUnraidHonoursPolicy: the Unraid channel runs the host notify
-// script over SSH, on failure when policy="failure", and never on success then.
 func TestNotifyBackupUnraidHonoursPolicy(t *testing.T) {
 	ssh := &fakeHostSSH{}
 	s := unraidNotifyService(t, ssh)
@@ -72,13 +67,11 @@ func TestNotifyBackupUnraidHonoursPolicy(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Success with policy=failure → no notification.
 	s.notifyBackup(context.Background(), "container", "plex", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
 	if len(ssh.runs) != 0 {
 		t.Fatalf("no Unraid notify expected on success (policy=failure), got %v", ssh.runs)
 	}
 
-	// Failure → one notification via the host notify script, level "warning".
 	s.notifyBackup(context.Background(), "container", "plex", false, backup.Summary{}, errors.New("boom"))
 	if len(ssh.runs) != 1 {
 		t.Fatalf("expected 1 Unraid notify on failure, got %d", len(ssh.runs))
@@ -92,19 +85,16 @@ func TestNotifyBackupUnraidHonoursPolicy(t *testing.T) {
 	}
 }
 
-// TestNotifyBackupUnraidSkippedWithoutSSH: with no SSH set up, the Unraid channel
-// is silently skipped (never panics).
 func TestNotifyBackupUnraidSkippedWithoutSSH(t *testing.T) {
-	s := unraidNotifyService(t, nil) // no SSH
+	s := unraidNotifyService(t, nil)
 	if err := s.SetNotifyConfig(notify.Config{On: "always", Unraid: true}); err != nil {
 		t.Fatal(err)
 	}
-	s.notifyBackup(context.Background(), "flash", "", true, backup.Summary{}, nil) // must not panic
+	s.notifyBackup(context.Background(), "flash", "", true, backup.Summary{}, nil)
 }
 
-// TestNotifyBackupConfigLabel: the singleton config domain (no per-item name) must
-// render a clean human label ("BombVault configuration"), never the empty-quote
-// `config ""` a generic "%s %q" format would produce.
+// The config domain has no item name, so a generic "%s %q" label would read
+// `config ""`.
 func TestNotifyBackupConfigLabel(t *testing.T) {
 	ssh := &fakeHostSSH{}
 	s := unraidNotifyService(t, ssh)
@@ -125,8 +115,6 @@ func TestNotifyBackupConfigLabel(t *testing.T) {
 	}
 }
 
-// TestTestNotifyUnraid: the Test button path sends a test through the Unraid
-// channel over SSH.
 func TestTestNotifyUnraid(t *testing.T) {
 	ssh := &fakeHostSSH{}
 	s := unraidNotifyService(t, ssh)
@@ -138,7 +126,6 @@ func TestTestNotifyUnraid(t *testing.T) {
 	}
 }
 
-// TestTestNotifyNothingConfigured: a test with no channels is a clear error.
 func TestTestNotifyNothingConfigured(t *testing.T) {
 	s := unraidNotifyService(t, &fakeHostSSH{})
 	if err := s.TestNotify(context.Background(), notify.Config{}); err == nil {
@@ -146,15 +133,14 @@ func TestTestNotifyNothingConfigured(t *testing.T) {
 	}
 }
 
-// TestNotifyBackupStartPingsHealthchecks: notifyBackupStart pings the Healthchecks
-// /start endpoint at the beginning of a backup when a URL is configured — even under
-// On="failure", since Healthchecks tracks the whole lifecycle independent of policy.
+// Healthchecks tracks the whole run, so /start is pinged even when the policy
+// only notifies on failure.
 func TestNotifyBackupStartPingsHealthchecks(t *testing.T) {
 	var path string
 	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { path = r.URL.Path }))
 	defer srv.Close()
 
-	s := unraidNotifyService(t, nil) // SendStart is HTTP-only; no SSH needed
+	s := unraidNotifyService(t, nil)
 	if err := s.SetNotifyConfig(notify.Config{On: "failure", HealthchecksURL: srv.URL}); err != nil {
 		t.Fatal(err)
 	}
@@ -164,8 +150,6 @@ func TestNotifyBackupStartPingsHealthchecks(t *testing.T) {
 	}
 }
 
-// TestNotifyBackupStartSuppressedWhenNever: with On="never" the start ping is a no-op,
-// so a Healthchecks server configured only for reference is never contacted.
 func TestNotifyBackupStartSuppressedWhenNever(t *testing.T) {
 	var hits int
 	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
@@ -181,9 +165,8 @@ func TestNotifyBackupStartSuppressedWhenNever(t *testing.T) {
 	}
 }
 
-// TestNotifyBackupStartPerDomainURL: notifyBackupStart routes the /start ping to the
-// domain's own Healthchecks URL when HealthchecksByDomain has an entry for it, while a
-// domain without an entry falls back to the global URL.
+// A domain with its own Healthchecks URL is pinged there; one without falls
+// back to the global URL.
 func TestNotifyBackupStartPerDomainURL(t *testing.T) {
 	var flashPath string
 	var globalHits int
@@ -192,7 +175,7 @@ func TestNotifyBackupStartPerDomainURL(t *testing.T) {
 	global := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { globalHits++ }))
 	defer global.Close()
 
-	s := unraidNotifyService(t, nil) // SendStart is HTTP-only; no SSH needed
+	s := unraidNotifyService(t, nil)
 	if err := s.SetNotifyConfig(notify.Config{
 		On:                   "failure",
 		HealthchecksURL:      global.URL,
@@ -209,16 +192,12 @@ func TestNotifyBackupStartPerDomainURL(t *testing.T) {
 		t.Fatalf("global URL must not be pinged for the flash domain, hits=%d", globalHits)
 	}
 
-	// A domain without a per-domain entry falls back to the global URL.
 	s.notifyBackupStart(context.Background(), "config")
 	if globalHits != 1 {
 		t.Fatalf("config domain (no per-domain entry) should ping the global URL once, hits=%d", globalHits)
 	}
 }
 
-// TestNotifyBackupStartFilesPerDomainURL pins the files domain's Healthchecks
-// routing: "files" is a canonical HealthchecksByDomain key, so a files backup's
-// /start ping goes to the files check URL, never the global one.
 func TestNotifyBackupStartFilesPerDomainURL(t *testing.T) {
 	var filesPath string
 	var globalHits int
@@ -227,7 +206,7 @@ func TestNotifyBackupStartFilesPerDomainURL(t *testing.T) {
 	global := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { globalHits++ }))
 	defer global.Close()
 
-	s := unraidNotifyService(t, nil) // SendStart is HTTP-only; no SSH needed
+	s := unraidNotifyService(t, nil)
 	if err := s.SetNotifyConfig(notify.Config{
 		On:                   "failure",
 		HealthchecksURL:      global.URL,
@@ -245,10 +224,10 @@ func TestNotifyBackupStartFilesPerDomainURL(t *testing.T) {
 	}
 }
 
-// runScheduledContainers simulates one SCHEDULED containers-domain run the way
-// cmd/bombvault/main.go + the scheduler wire it: ONE aggregate /start, then every item
-// backed up under a Healthchecks-suppressed context (its per-item ping folded into the
-// run), then ONE aggregate success/fail. fail names the items that should fail.
+// runScheduledContainers plays a scheduled containers run as cmd/bombvault
+// wires it: one /start for the run, each item backed up with per-item
+// Healthchecks pings suppressed, then one result. fail names the items that
+// fail.
 func runScheduledContainers(s *Service, items []string, fail map[string]bool) {
 	s.ScheduledHealthchecksStart(context.Background(), "containers")
 	attempted, failed := 0, 0
@@ -267,9 +246,8 @@ func runScheduledContainers(s *Service, items []string, fail map[string]bool) {
 	s.ScheduledHealthchecksResult(context.Background(), "containers", attempted, failed)
 }
 
-// TestScheduledContainersRunSendsOneStartOneSuccess: a scheduled containers run of 3
-// items sends exactly ONE Healthchecks /start and ONE success ping for the whole run
-// (no per-item pings), while every item still fires its own message channel (#49).
+// Healthchecks sees one /start and one success for the whole run, while every
+// item still sends its own message.
 func TestScheduledContainersRunSendsOneStartOneSuccess(t *testing.T) {
 	var mu sync.Mutex
 	var hcPaths []string
@@ -306,9 +284,6 @@ func TestScheduledContainersRunSendsOneStartOneSuccess(t *testing.T) {
 	}
 }
 
-// TestScheduledContainersRunFailsWhenAnyItemFails: if any item in a scheduled run
-// fails, the whole run pings Healthchecks /fail exactly once (after one /start), and
-// the message channels still fire per item.
 func TestScheduledContainersRunFailsWhenAnyItemFails(t *testing.T) {
 	var mu sync.Mutex
 	var hcPaths []string
@@ -345,9 +320,8 @@ func TestScheduledContainersRunFailsWhenAnyItemFails(t *testing.T) {
 	}
 }
 
-// TestManualSingleBackupStillPingsHealthchecksOnce: a MANUAL single backup uses a
-// normal (unsuppressed) context, so it keeps pinging its own Healthchecks lifecycle
-// (/start then success) — the aggregation is scheduled-run only and must not change it.
+// Only scheduled runs aggregate the pings; a manual backup sends its own
+// /start and result.
 func TestManualSingleBackupStillPingsHealthchecksOnce(t *testing.T) {
 	var mu sync.Mutex
 	var paths []string
@@ -363,7 +337,7 @@ func TestManualSingleBackupStillPingsHealthchecksOnce(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ctx := context.Background() // manual path: not suppressed
+	ctx := context.Background()
 	s.notifyBackupStart(ctx, "container")
 	s.notifyBackup(ctx, "container", "plex", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
 

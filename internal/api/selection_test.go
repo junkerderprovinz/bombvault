@@ -7,24 +7,6 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/api"
 )
 
-// Table style mirrors internal/restic/restic_args_test.go: fully literal want
-// slices + one reflect.DeepEqual per case, so a mismatch prints the exact
-// got/want lists. These tables ARE the locked normalization invariants
-// (01-CONTEXT.md encoding Q1-Q4; 01-RESEARCH.md R3):
-//
-//   - maximal roots only (an include elides its include-descendants)
-//   - per-class pruning (an exclusion elides exclusion-descendants; the two
-//     classes deliberately coexist so an included root can carry an excluded
-//     branch)
-//   - orphan exclusions are preserved (the exclusions-only "explicitly
-//     deselected" carrier — distinct from [] = auto-detection)
-//   - a pure include list (the whitelist start-state) passes through the same
-//     normalizer with no special case
-//   - canonical output order: sorted includes, then sorted exclusions
-//
-// All paths below are container-form POSIX paths, so the string prefix tests
-// are build-OS independent (same POSIX-only note as internal/paths).
-
 func TestSplitExclusion(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -34,8 +16,6 @@ func TestSplitExclusion(t *testing.T) {
 	}{
 		{"exclusion entry", "!/mnt/x", "/mnt/x", true},
 		{"include entry", "/mnt/x", "/mnt/x", false},
-		// A bare "!" parses to an empty path; rejecting it is the SETTER's job
-		// (service.SetBackupPaths) so the parser itself stays pure.
 		{"bare prefix parses empty", "!", "", true},
 		{"deep exclusion", "!/c/appdata/plex/transcoding/cache", "/c/appdata/plex/transcoding/cache", true},
 	}
@@ -57,8 +37,6 @@ func TestPruneMaximal(t *testing.T) {
 		want  []string
 	}{
 		{
-			// The paths.go:44-48 strictness primitive: /c/plex must not swallow
-			// its SIBLING /c/plex2 — only strict descendants are elided.
 			name:  "sibling prefix is not an ancestor",
 			paths: []string{"/c/plex", "/c/plex/config", "/c/plex2/config"},
 			want:  []string{"/c/plex", "/c/plex2/config"},
@@ -96,25 +74,18 @@ func TestNormalizeSelection(t *testing.T) {
 		want    []string
 	}{
 		{
-			// The canonical mixed case (RESEARCH "Normalization invariant"):
-			// include elides include-descendant, exclusion elides
-			// exclusion-descendant, and the classes coexist (included root +
-			// excluded branch).
 			name:    "mixed selection collapses to maximal roots + branch exclusions",
 			entries: []string{"/c/appdata/plex", "/c/appdata/plex/config", "!/c/appdata/plex/transcoding", "!/c/appdata/plex/transcoding/cache"},
 			want:    []string{"/c/appdata/plex", "!/c/appdata/plex/transcoding"},
 		},
 		{
-			// Preserved, not dropped: an exclusions-only list is the "item
-			// explicitly deselected" carrier that separates it from an empty
-			// list = auto-detection (encoding Q3).
+			// An exclusions-only list marks an explicitly deselected item; an
+			// empty list means auto-detect.
 			name:    "orphan exclusion preserved (explicit-none carrier)",
 			entries: []string{"!/c/appdata/plex/transcoding"},
 			want:    []string{"!/c/appdata/plex/transcoding"},
 		},
 		{
-			// The whitelist start-state goes through the SAME normalizer with no
-			// special case (SELECT-04).
 			name:    "pure include list passes through",
 			entries: []string{"/c/appdata/plex/config", "/c/appdata/plex"},
 			want:    []string{"/c/appdata/plex"},
@@ -125,8 +96,6 @@ func TestNormalizeSelection(t *testing.T) {
 			want:    []string{},
 		},
 		{
-			// Adjacent, non-nested keep-lists all survive (only strict
-			// descendants are elided).
 			name:    "siblings both survive",
 			entries: []string{"/c/appdata/plex", "/c/appdata/media"},
 			want:    []string{"/c/appdata/media", "/c/appdata/plex"},
@@ -137,9 +106,6 @@ func TestNormalizeSelection(t *testing.T) {
 			want:    []string{"/c/a", "!/c/b"},
 		},
 		{
-			// Canonical order: sorted includes first, then sorted exclusions,
-			// regardless of the order the client sent — equal selections must
-			// produce byte-identical stored sets.
 			name:    "output order is canonical, not input order",
 			entries: []string{"!/c/appdata/plex/transcoding", "/c/appdata/plex", "!/c/appdata/aaa", "/c/appdata/media"},
 			want:    []string{"/c/appdata/media", "/c/appdata/plex", "!/c/appdata/aaa", "!/c/appdata/plex/transcoding"},
@@ -150,9 +116,6 @@ func TestNormalizeSelection(t *testing.T) {
 			want:    []string{"!/c/appdata/plex"},
 		},
 		{
-			// Cleaning on the bare path (the setter already translates through
-			// toContainerPath, which Cleans — this keeps the pure function
-			// self-consistent and idempotent).
 			name:    "trailing slashes and dot segments normalize away",
 			entries: []string{"/c/appdata/plex/", "/c/appdata/plex/./config"},
 			want:    []string{"/c/appdata/plex"},
@@ -164,8 +127,6 @@ func TestNormalizeSelection(t *testing.T) {
 			if !reflect.DeepEqual(got, tc.want) {
 				t.Fatalf("NormalizeSelection(%v) = %v, want %v", tc.entries, got, tc.want)
 			}
-			// Idempotency: normalizing an already-normalized set is the identity,
-			// so re-saves and readers can never drift the stored form.
 			again := api.NormalizeSelection(got)
 			if !reflect.DeepEqual(again, tc.want) {
 				t.Fatalf("NormalizeSelection is not idempotent: %v -> %v", got, again)

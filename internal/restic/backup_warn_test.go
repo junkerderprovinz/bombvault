@@ -8,10 +8,10 @@ import (
 	"testing"
 )
 
-// TestBackupExit3Warning verifies that a BACKUP exiting with restic's code 3
-// ("at least one source file could not be read"; the snapshot IS still created)
-// maps to the ErrBackupSourceUnreadable success-with-warning sentinel, while any
-// other exit code, or a non-backup command, stays a hard failure (nil sentinel).
+// TestBackupExit3Warning checks that a backup exiting with code 3, where restic
+// could not read some source files but still wrote the snapshot, is the
+// ErrBackupSourceUnreadable warning. Any other code, and any other command,
+// stays a failure.
 func TestBackupExit3Warning(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("needs a POSIX shell to produce a real *exec.ExitError with a chosen code")

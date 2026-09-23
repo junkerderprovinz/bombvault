@@ -5,18 +5,16 @@ import (
 	"time"
 )
 
-func TestOffsiteBackfillV75(t *testing.T) {
+func TestMigrateBackfillsOffsiteTargetsFromSettings(t *testing.T) {
 	db := OpenMem(t)
 	// Reconstruct a pre-v75 install: everything up to v74, no offsite_targets yet.
 	migrateThrough(t, db, 74)
 	r := New(db)
 
-	// Configure a single off-site repo for the containers domain, plus the GLOBAL
-	// retention / limits / growth-budget the backfill copies. Leave every other
-	// domain's off-site repo empty. Written with direct SQL against the v74 schema:
-	// GetSettings/UpdateSettings track the CURRENT settings columns (including the
-	// later v76 receiver_enabled), which do not exist in this reconstructed pre-v75
-	// install.
+	// An off-site repo for containers only, plus the global retention, limits
+	// and growth budget the backfill copies. This uses direct SQL because
+	// UpdateSettings writes columns (v76's receiver_enabled, for one) that the
+	// v74 schema does not have.
 	if _, err := db.Exec(`UPDATE settings SET
 		containers_offsite            = ?,
 		containers_offsite_schedule   = ?,
@@ -32,9 +30,8 @@ func TestOffsiteBackfillV75(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// A couple of history rows for containers that must be stamped with the new
-	// target id, plus off-site history for a domain with NO off-site repo (vms),
-	// which must stay unstamped.
+	// History rows for containers, which must get the new target id, and for
+	// vms, which has no off-site repo and must stay unstamped.
 	if _, err := r.RecordOffsiteRun("containers", time.Now().Unix()); err != nil {
 		t.Fatal(err)
 	}
@@ -53,7 +50,6 @@ func TestOffsiteBackfillV75(t *testing.T) {
 		t.Fatalf("Migrate v75: %v", err)
 	}
 
-	// Exactly ONE target overall, for containers, with the copied values.
 	all, err := r.ListOffsiteTargets()
 	if err != nil {
 		t.Fatal(err)
@@ -72,13 +68,13 @@ func TestOffsiteBackfillV75(t *testing.T) {
 	if ct.CreatedAt == 0 {
 		t.Fatalf("backfilled target created_at not stamped: %+v", ct)
 	}
-	// storage_class is intentionally left empty (lives in the encrypted cloud_conf
-	// blob the pure-SQL migration cannot decode).
+	// storage_class stays empty: it lives in the encrypted cloud_conf blob,
+	// which an SQL migration cannot decode.
 	if ct.StorageClass != "" {
 		t.Fatalf("backfilled storage_class = %q, want empty (stage 2 copies it)", ct.StorageClass)
 	}
 
-	// The containers off-site history now carries the new target id.
+	// The containers off-site history carries the new target id.
 	assertStamped := func(query, wantID string) {
 		t.Helper()
 		rows, err := db.Query(query)

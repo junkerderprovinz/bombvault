@@ -1,22 +1,11 @@
 package api_test
 
-// ---------------------------------------------------------------------------
-// The "Backup Everything" single-flight guard covers BOTH entry points.
-//
-// The guard used to live only in StartBackupEverything — the HTTP one. The
-// SCHEDULED closure (cmd/bombvault/main.go's SetEverythingJob) calls
-// BackupEverything directly, so it neither set the flag nor tested it: a manual
-// "Run now" during the nightly pass found the flag still false, took it, and
-// started a second concurrent pass. Two parent run rows on target_id
-// "everything", every domain backed up twice (lockDomain BLOCKS rather than
-// failing, so the two interleave and both complete), and the post-hook fired
-// twice — the dead-man's-switch reporting the whole server protected twice for
-// one nightly window. cron's SkipIfStillRunning only stops a scheduled pass
-// overlapping ITSELF.
-//
-// These drive the two entry points against each other in both directions, with
-// the fake engine's block channel holding the first pass genuinely in flight.
-// ---------------------------------------------------------------------------
+// The "Backup Everything" single-flight guard covers both StartBackupEverything
+// and the scheduler's direct call to BackupEverything. cron's
+// SkipIfStillRunning only keeps a scheduled pass from overlapping itself, and
+// lockDomain blocks rather than failing, so two passes would both complete:
+// every domain backed up twice and the post-hook fired twice. The fake engine's
+// block channel holds the first pass in flight.
 
 import (
 	"context"
@@ -28,9 +17,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// waitForEverythingInFlight blocks until a pass has actually taken the guard, so
-// the assertions below are about the guard and not about a race with goroutine
-// scheduling.
+// waitForEverythingInFlight blocks until a pass has taken the guard.
 func waitForEverythingInFlight(t *testing.T, svc *api.Service) {
 	t.Helper()
 	deadline := time.Now().Add(5 * time.Second)
@@ -43,9 +30,7 @@ func waitForEverythingInFlight(t *testing.T, svc *api.Service) {
 	t.Fatal("timed out waiting for the Backup Everything pass to take the guard")
 }
 
-// everythingParentRuns counts the parent run rows one or more passes opened.
-// Two of them is the observable damage: one nightly window, two whole-server
-// passes.
+// everythingParentRuns counts the parent run rows of all passes.
 func everythingParentRuns(t *testing.T, st *store.Repo) int {
 	t.Helper()
 	runs, err := st.ListRuns(50)
@@ -61,14 +46,13 @@ func everythingParentRuns(t *testing.T, st *store.Repo) int {
 	return n
 }
 
-// TestScheduledEverythingPassRefusesAManualOne is the regression. The scheduled
-// closure's own call is in flight; pressing the badge must be refused with the
-// 409 the handler documents, not started alongside it.
+// A manual "Run now" during the scheduled pass is refused, which the handler
+// answers with 409.
 func TestScheduledEverythingPassRefusesAManualOne(t *testing.T) {
 	eng := &fakeResticEngine{block: make(chan struct{})}
 	svc, st, _, _ := everythingTestService(t, eng)
 
-	// Exactly what cmd/bombvault/main.go's SetEverythingJob closure does.
+	// What the SetEverythingJob closure in cmd/bombvault/main.go does.
 	done := make(chan error, 1)
 	go func() {
 		_, err := svc.BackupEverything(context.Background())
@@ -96,9 +80,8 @@ func TestScheduledEverythingPassRefusesAManualOne(t *testing.T) {
 	}
 }
 
-// TestManualEverythingPassRefusesTheScheduledOne is the same guard from the
-// other side: the nightly trigger arriving on top of a manual pass is refused
-// with ErrEverythingInFlight, which the scheduled closure reads as a skip.
+// The nightly trigger during a manual pass gets ErrEverythingInFlight, which
+// the scheduled closure treats as a skip.
 func TestManualEverythingPassRefusesTheScheduledOne(t *testing.T) {
 	eng := &fakeResticEngine{block: make(chan struct{})}
 	svc, st, _, _ := everythingTestService(t, eng)
@@ -121,8 +104,6 @@ func TestManualEverythingPassRefusesTheScheduledOne(t *testing.T) {
 	}
 }
 
-// TestEverythingGuardIsReleasedForTheNextPass pins that owning the guard inside
-// BackupEverything does not leave it stuck: the next pass must be able to run.
 func TestEverythingGuardIsReleasedForTheNextPass(t *testing.T) {
 	svc, st, _, _ := everythingTestService(t, &fakeResticEngine{})
 

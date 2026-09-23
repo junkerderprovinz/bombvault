@@ -1,23 +1,8 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// Disco: the hidden fourth thing the colour engine can do.
-//
-// Rainbow gives every row its own colour from a set of eight. Disco walks
-// that set, one step a second, so the colours a list is already wearing keep
-// moving. It reuses the seed the palette is already read through rather than
-// animating anything, which is the whole reason it is cheap: no keyframes, no
-// extra compositing layers, and after #228 that distinction is not academic.
-//
-// Four things here are easy to get wrong and every one of them is quiet:
-//   - A tick that PERSISTS would write to localStorage and sync to the server
-//     once a second, forever. The tick applies; only the switch stores.
-//   - Disco without rainbow has nothing to colour, so it must not run.
-//   - A hidden tab keeps its interval unless somebody stops it.
-//   - An unlock gesture that counts plain toggle clicks fires while somebody
-//     is merely comparing the mode on and off. It counts turn-ONs, inside a
-//     time window, and lands on "on" so the reward arrives in a state that
-//     can show it.
-// ---------------------------------------------------------------------------
+// Disco: a persisted walk would write localStorage and sync to the server on
+// every frame, so only the switch is stored. The unlock gesture counts
+// turn-ons inside a time window, so comparing rainbow on and off does not
+// trigger it.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DISCO_TICK_MS,
@@ -29,19 +14,35 @@ import {
   setDisco,
   stopDisco,
 } from "./disco";
-import { getRainbow, rainbowAt, rainbowState, setRainbow } from "./appearance";
+import { RAINBOW, getRainbow, rainbowAt, rainbowState, setRainbow } from "./appearance";
+import { contrastOn } from "./accent";
 
 const STORAGE_KEY = "bv-disco";
 
+// jsdom has no matchMedia. The walk asks it once and keeps the answer, so the
+// stub reads `reduceMotion` live.
+let reduceMotion = false;
+window.matchMedia = ((query: string) => ({
+  media: query,
+  get matches() {
+    return reduceMotion;
+  },
+})) as unknown as typeof window.matchMedia;
+
+const root = document.documentElement;
+const hue = (i: number) => root.style.getPropertyValue(`--rb-${i}`);
+
 beforeEach(() => {
   localStorage.clear();
-  document.documentElement.removeAttribute("data-rainbow");
-  document.documentElement.removeAttribute("data-disco");
+  root.removeAttribute("data-rainbow");
+  root.removeAttribute("data-disco");
+  root.removeAttribute("data-motion");
+  reduceMotion = false;
   vi.useFakeTimers();
 });
 
 afterEach(() => {
-  stopDisco();
+  setDisco(false);
   vi.useRealTimers();
 });
 
@@ -64,120 +65,169 @@ describe("the switch", () => {
   });
 });
 
-describe("the tick", () => {
-  it("walks the seed once per second while rainbow is on", () => {
-    setRainbow({ on: true, seed: 0 });
+describe("the walk", () => {
+  it("starts from the colours at rest", () => {
+    setRainbow({ on: true, rotate: true, seed: 3 });
     setDisco(true);
-    applyStoredDisco();
-    const before = rainbowState().seed;
-    vi.advanceTimersByTime(DISCO_TICK_MS);
-    expect(rainbowState().seed).not.toBe(before);
-    const after = rainbowState().seed;
-    vi.advanceTimersByTime(DISCO_TICK_MS);
-    expect(rainbowState().seed).not.toBe(after);
+    vi.advanceTimersByTime(20);
+    expect(hue(0)).toBe(RAINBOW[3]);
   });
 
-  it("never persists, so a second of disco is not a write", () => {
+  it("glides through the colours between two palette entries", () => {
     setRainbow({ on: true, seed: 0 });
     setDisco(true);
-    applyStoredDisco();
+    vi.advanceTimersByTime(DISCO_TICK_MS / 2);
+    expect(RAINBOW).not.toContain(hue(0));
+  });
+
+  it("keeps moving from one frame to the next", () => {
+    setRainbow({ on: true });
+    setDisco(true);
+    const seen = new Set<string>();
+    for (let i = 0; i < 20; i++) {
+      vi.advanceTimersByTime(DISCO_TICK_MS / 20);
+      seen.add(hue(0));
+    }
+    expect(seen.size).toBe(20);
+  });
+
+  it("writes the ink for the colour it paints", () => {
+    setRainbow({ on: true, palette: ["#161616", ...RAINBOW.slice(1)] });
+    setDisco(true);
+    for (let i = 0; i < 8; i++) {
+      vi.advanceTimersByTime(DISCO_TICK_MS / 3);
+      expect(root.style.getPropertyValue("--rb-ink-7")).toBe(contrastOn(hue(7)));
+    }
+  });
+
+  it("comes back round to where it started after a full turn", () => {
+    setRainbow({ on: true });
+    setDisco(true);
+    vi.advanceTimersByTime(20);
+    const first = hue(2);
+    vi.advanceTimersByTime(DISCO_TICK_MS * RAINBOW.length);
+    expect(hue(2)).toBe(first);
+  });
+
+  it("leaves the rainbow state and the stored look alone", () => {
+    setRainbow({ on: true, seed: 0 });
+    setDisco(true);
     const stored = localStorage.getItem("bv-rainbow");
     vi.advanceTimersByTime(DISCO_TICK_MS * 5);
     expect(localStorage.getItem("bv-rainbow")).toBe(stored);
     expect(getRainbow().seed).toBe(0);
+    expect(rainbowState().seed).toBe(0);
   });
 
-  it("does not run while rainbow is off, since there is nothing to colour", () => {
-    setRainbow({ on: false, seed: 0 });
+  it("does not run while rainbow is off", () => {
+    setRainbow({ on: false });
     setDisco(true);
-    applyStoredDisco();
-    const before = rainbowState().seed;
+    const before = hue(0);
     vi.advanceTimersByTime(DISCO_TICK_MS * 3);
-    expect(rainbowState().seed).toBe(before);
+    expect(hue(0)).toBe(before);
   });
 
   it("does not run while the switch is off", () => {
-    setRainbow({ on: true, seed: 0 });
-    setDisco(false);
-    applyStoredDisco();
-    const before = rainbowState().seed;
+    setRainbow({ on: true });
+    applyStoredDisco(false);
+    const before = hue(0);
     vi.advanceTimersByTime(DISCO_TICK_MS * 3);
-    expect(rainbowState().seed).toBe(before);
+    expect(hue(0)).toBe(before);
   });
 
-  it("starts only one interval however often it is applied", () => {
-    setRainbow({ on: true, seed: 0 });
+  it("walks at one pace however often it is applied", () => {
+    setRainbow({ on: true });
+    setDisco(true);
+    vi.advanceTimersByTime(DISCO_TICK_MS);
+    const once = hue(0);
+    setDisco(false);
+
     setDisco(true);
     applyStoredDisco();
     applyStoredDisco();
-    applyStoredDisco();
     vi.advanceTimersByTime(DISCO_TICK_MS);
-    // One step, not three: a second apply must replace the interval rather
-    // than add a second one racing it.
-    expect(rainbowState().seed).toBe(1);
+    expect(hue(0)).toBe(once);
   });
 
-  it("stops when the switch goes off", () => {
-    setRainbow({ on: true, seed: 0 });
+  it("carries on from where it is when applied again", () => {
+    setRainbow({ on: true });
     setDisco(true);
+    vi.advanceTimersByTime(DISCO_TICK_MS / 2);
+    const halfway = hue(0);
     applyStoredDisco();
-    vi.advanceTimersByTime(DISCO_TICK_MS);
-    setDisco(false);
-    // Read AFTER the switch-off, because switching off also hands the user
-    // their own rotation back (see the two tests below). What this one is
-    // about is that no further tick moves anything.
-    const parked = rainbowState().seed;
-    vi.advanceTimersByTime(DISCO_TICK_MS * 3);
-    expect(rainbowState().seed).toBe(parked);
+    vi.advanceTimersByTime(20);
+    const channels = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+    const now = channels(hue(0));
+    channels(halfway).forEach((c, i) => expect(Math.abs(c - now[i])).toBeLessThanOrEqual(3));
   });
 
-  // The seed is only HALF of what makes a colour: rainbowColorAt() applies it
-  // as an offset `rotate ? seed : 0`, and `rotate` is a switch of its own that
-  // defaults to off. A tick that walks the seed and nothing else therefore
-  // renders identically forever for anybody who never found that switch -
-  // which is to say for almost everybody. Disco IS rotation over time, so it
-  // rotates; the tests above watch the seed and would all have stayed green.
-  it("moves the colours even when the user's own rotate switch is off", () => {
+  it("puts the resting palette back when the switch goes off", () => {
     setRainbow({ on: true, rotate: false, seed: 0 });
-    const resting = rainbowAt(0);
     setDisco(true);
-    vi.advanceTimersByTime(DISCO_TICK_MS);
-    expect(rainbowAt(0)).not.toBe(resting);
-  });
-
-  it("hands the rotate switch back when it stops, instead of leaving the palette turned", () => {
-    // Otherwise a stopped disco looks exactly like the rotate toggle having
-    // switched itself on: the palette sits at whatever offset the last tick
-    // left, and the switch in Settings says off.
-    setRainbow({ on: true, rotate: false, seed: 0 });
-    const resting = rainbowAt(0);
-    setDisco(true);
-    vi.advanceTimersByTime(DISCO_TICK_MS * 3);
+    vi.advanceTimersByTime(DISCO_TICK_MS * 2.5);
     setDisco(false);
+    vi.advanceTimersByTime(DISCO_TICK_MS);
+    for (let i = 0; i < RAINBOW.length; i++) expect(hue(i)).toBe(rainbowAt(i));
     expect(rainbowState().rotate).toBe(false);
-    expect(rainbowAt(0)).toBe(resting);
   });
 
-  it("leaves a real rotate choice alone when it stops", () => {
-    // The restore reads the STORED state, so somebody who did find the
-    // rotate switch keeps it, seed and all.
+  it("keeps a chosen rotation and seed when it stops", () => {
     setRainbow({ on: true, rotate: true, seed: 3 });
-    const chosen = rainbowAt(0);
     setDisco(true);
     vi.advanceTimersByTime(DISCO_TICK_MS * 2);
     setDisco(false);
     expect(rainbowState().rotate).toBe(true);
     expect(rainbowState().seed).toBe(3);
-    expect(rainbowAt(0)).toBe(chosen);
+    expect(hue(0)).toBe(RAINBOW[3]);
   });
 
-  it("marks the document so a reader can tell disco from plain rainbow", () => {
+  it("leaves the colours where the last frame put them when stopped", () => {
     setRainbow({ on: true });
     setDisco(true);
+    vi.advanceTimersByTime(DISCO_TICK_MS / 2);
+    stopDisco();
+    const frozen = hue(0);
+    vi.advanceTimersByTime(DISCO_TICK_MS);
+    expect(hue(0)).toBe(frozen);
+    stopDisco();
+  });
+
+  it("stops when rainbow goes off", () => {
+    setRainbow({ on: true });
+    setDisco(true);
+    vi.advanceTimersByTime(DISCO_TICK_MS / 2);
+    setRainbow({ on: false });
     applyStoredDisco();
-    expect(document.documentElement.getAttribute("data-disco")).toBe("on");
+    vi.advanceTimersByTime(DISCO_TICK_MS);
+    expect(hue(0)).toBe(RAINBOW[0]);
+  });
+
+  it("sets data-disco on the document while it is on", () => {
+    setRainbow({ on: true });
+    setDisco(true);
+    expect(root.getAttribute("data-disco")).toBe("on");
     setDisco(false);
-    expect(document.documentElement.hasAttribute("data-disco")).toBe(false);
+    expect(root.hasAttribute("data-disco")).toBe(false);
+  });
+
+  it("steps a colour at a time at the off level", () => {
+    root.setAttribute("data-motion", "off");
+    setRainbow({ on: true });
+    setDisco(true);
+    vi.advanceTimersByTime(DISCO_TICK_MS / 2);
+    expect(hue(0)).toBe(RAINBOW[0]);
+    vi.advanceTimersByTime(DISCO_TICK_MS / 2 + 20);
+    expect(hue(0)).toBe(RAINBOW[1]);
+  });
+
+  it("steps a colour at a time when the system asks for reduced motion", () => {
+    reduceMotion = true;
+    setRainbow({ on: true });
+    setDisco(true);
+    vi.advanceTimersByTime(DISCO_TICK_MS / 2);
+    expect(hue(0)).toBe(RAINBOW[0]);
+    vi.advanceTimersByTime(DISCO_TICK_MS / 2 + 20);
+    expect(hue(0)).toBe(RAINBOW[1]);
   });
 });
 
@@ -192,7 +242,7 @@ describe("the unlock gesture", () => {
     expect(discoTap(s, true, at(DISCO_UNLOCK_CLICKS * 500))).toBe(true);
   });
 
-  it("ignores turn-offs, so the gesture ends in a state that can show it", () => {
+  it("ignores turn-offs", () => {
     const s = { taps: 0, last: 0 };
     for (let i = 0; i < DISCO_UNLOCK_CLICKS * 2; i += 1) {
       expect(discoTap(s, false, at(i * 500))).toBe(false);
@@ -204,12 +254,11 @@ describe("the unlock gesture", () => {
     const s = { taps: 0, last: 0 };
     discoTap(s, true, at(0));
     discoTap(s, true, at(DISCO_UNLOCK_WINDOW_MS + 1));
-    // The second click restarted the run rather than continuing it, so this
-    // is click two of five, not four of five.
+    // The second click starts a new run.
     expect(s.taps).toBe(1);
   });
 
-  it("starts over after it has opened, so a sixth turn-on is not a seventh", () => {
+  it("resets the count once it opens", () => {
     const s = { taps: 0, last: 0 };
     for (let i = 1; i <= DISCO_UNLOCK_CLICKS; i += 1) discoTap(s, true, at(i * 500));
     expect(s.taps).toBe(0);

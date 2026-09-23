@@ -1,12 +1,5 @@
 package api
 
-// What a clean stop has to get right ([375]).
-//
-// Every one of these fails against the code before it: there was no shutdown
-// path at all, so a backup interrupted by `docker stop` left its row 'running'
-// for the next boot's reaper to call "interrupted", and a restore had no
-// protection from being cancelled because nothing was cancelling anything.
-
 import (
 	"context"
 	"sync"
@@ -17,7 +10,7 @@ import (
 func TestShutdownRelabelsOnlyAFailedRunAndOnlyWhileLeaving(t *testing.T) {
 	s := &Service{}
 
-	// Business as usual: nothing is touched, whatever the status.
+	// Before shutdown no status changes.
 	for _, st := range []string{"failed", "success", "cancelled", "skipped"} {
 		if got, _, changed := s.shutdownStatus(st); changed || got != st {
 			t.Errorf("before shutdown, %q became %q (changed=%v)", st, got, changed)
@@ -26,7 +19,7 @@ func TestShutdownRelabelsOnlyAFailedRunAndOnlyWhileLeaving(t *testing.T) {
 
 	s.shuttingDown.Store(true)
 
-	// A failure during shutdown is an abort, and says so.
+	// A failure during shutdown becomes a cancellation with a reason.
 	got, msg, changed := s.shutdownStatus("failed")
 	if !changed || got != "cancelled" {
 		t.Errorf("failed during shutdown = %q (changed=%v), want cancelled", got, changed)
@@ -35,8 +28,7 @@ func TestShutdownRelabelsOnlyAFailedRunAndOnlyWhileLeaving(t *testing.T) {
 		t.Error("the relabelled run carries no reason, so the row cannot explain itself")
 	}
 
-	// Everything else keeps its meaning. A run that SUCCEEDED while the server
-	// was on its way out still succeeded.
+	// Every other status stays as it is.
 	for _, st := range []string{"success", "cancelled", "skipped"} {
 		if out, _, ch := s.shutdownStatus(st); ch || out != st {
 			t.Errorf("during shutdown, %q became %q (changed=%v)", st, out, ch)
@@ -52,11 +44,9 @@ func TestBeginShutdownCancelsBackupsAndSparesRestores(t *testing.T) {
 	defer restoreCancel()
 
 	s.registerBackupCancel("container:plex", backupCancel)
-	s.registerCancel("container:plex", restoreCancel) // the RESTORE registry
+	s.registerCancel("container:plex", restoreCancel) // the restore registry
 
-	// A real backup unwinds and unregisters; without that BeginShutdown would
-	// (correctly) wait out its grace, which would make this test slow rather
-	// than wrong.
+	// Unregister like a real backup does, or BeginShutdown waits out the grace.
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -72,8 +62,8 @@ func TestBeginShutdownCancelsBackupsAndSparesRestores(t *testing.T) {
 	if backupCtx.Err() == nil {
 		t.Error("the backup was not cancelled, so it dies with the process instead of unwinding")
 	}
-	// The point of two maps: a restore that is interrupted has already removed
-	// the container and half-written its appdata.
+	// An interrupted restore has already removed the container and half-written
+	// its appdata.
 	if restoreCtx.Err() != nil {
 		t.Error("the restore was cancelled - that is destructive and must never happen on shutdown")
 	}
@@ -86,9 +76,8 @@ func TestBeginShutdownCancelsBackupsAndSparesRestores(t *testing.T) {
 }
 
 func TestBeginShutdownGivesUpRatherThanHanging(t *testing.T) {
-	// A backup that never notices its context must not hold the process open
-	// past the grace: Docker sends SIGKILL 10s after SIGTERM, so an unbounded
-	// wait here just means being killed mid-wait with nothing written.
+	// Docker sends SIGKILL 10s after SIGTERM, so waiting longer for a backup
+	// that ignores its context gains nothing.
 	s := &Service{}
 	_, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -116,9 +105,7 @@ func TestBeginShutdownIsSafeTwiceAndWithNothingRunning(t *testing.T) {
 }
 
 func TestRunsAdapterWithoutAServiceStillWorks(t *testing.T) {
-	// The bookkeeping-only call sites pass no Service. That must stay a
-	// no-relabel rather than a nil dereference, or a shutdown during an
-	// unrelated update crashes the process it was trying to stop cleanly.
+	// Bookkeeping-only call sites pass no Service.
 	defer func() {
 		if r := recover(); r != nil {
 			t.Fatalf("runsAdapter with a nil svc panicked: %v", r)

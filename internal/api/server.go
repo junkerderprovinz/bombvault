@@ -24,66 +24,43 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/config"
 )
 
-// brandArt is the shared Junker der Provinz brand ASCII art, embedded from
-// banner.txt (which mirrors .github/assets/banner-raw.txt at build time).
+// brandArt is the brand ASCII art from banner.txt, which is copied from
+// .github/assets/banner-raw.txt at build time.
 //
 //go:embed banner.txt
 var brandArt string
 
-// bindAddr is the listen address. We bind 0.0.0.0 explicitly (NOT $HOSTNAME) —
-// binding to the container hostname was a real boot bug in the old version that
-// made the WebUI unreachable.
+// bindHost is explicit because binding to the container's hostname leaves the
+// WebUI unreachable.
 const bindHost = "0.0.0.0"
 
-// Server runs the HTTP(S) server serving the API + embedded SPA.
+// Server serves the API and the embedded SPA over HTTP or HTTPS.
 type Server struct {
 	cfg     config.Config
 	handler http.Handler
 }
 
-// NewServer wires the SPA handler over the embedded FS and the API router.
-// The combined handler is wrapped in securityHeaders so every response —
-// both API and SPA — carries the baseline HTTP security headers.
-//
-// Compression sits INSIDE securityHeaders ([364]): the security headers are
-// then written by the outermost wrapper, where nothing below can drop or
-// reorder them, and the encoding layer only ever sees a response whose headers
-// are already settled.
+// NewServer returns a Server for the API router and the SPA in spaFS.
+// securityHeaders is the outermost wrapper, so the compression layer below it
+// cannot drop or reorder the security headers.
 func NewServer(cfg config.Config, spaFS fs.FS, apiRouter http.Handler) *Server {
 	return &Server{cfg: cfg, handler: securityHeaders(withCompression(NewSPAHandler(spaFS, apiRouter)))}
 }
 
-// securityHeaders is a middleware that sets baseline HTTP security headers on
-// every response served by the handler (both API and SPA).
+// securityHeaders sets baseline security headers on every response.
 //
-// CSP notes: the SPA is bundled JS/CSS only, with ONE deliberate inline
-// script — web/index.html's theme-boot script. It stamps data-theme on
-// <html> synchronously before first paint (GlimStone form-engine #1's
-// "system" default reads prefers-color-scheme, so without this the page
-// flashes the wrong theme while the module bundle is still loading). It's
-// allowed by a CSP hash source below, not 'unsafe-inline' — that would let
-// ANY inline script run, not just this one. TestThemeBootScriptCSPHashMatches
-// (widget_internal_test.go) recomputes the script's actual sha256 from
-// web/index.html and fails the build if it no longer matches the hash
-// configured here, so an edited script can't silently start failing CSP in
-// production while dev/preview (which send no CSP at all) stay green.
-// React inline style= props and CSS variables → style-src needs
-// 'unsafe-inline'. 'unsafe-eval' is intentionally absent. img-src and
-// font-src allow data: for flag-icons and any inline SVG/font the SPA
-// embeds.
+// The only inline script the CSP allows is the theme boot script in
+// web/index.html, by its hash rather than 'unsafe-inline'. It sets data-theme
+// before first paint so the page does not flash the wrong theme while the
+// bundle loads. style-src needs 'unsafe-inline' for React style props, and
+// img-src and font-src allow data: for flag-icons and inlined assets.
 //
-// GET /widget is the ONE deliberate exception: the embeddable dashboard-widget
-// page exists to be framed by OTHER dashboards (Homepage/Organizr/…), so it
-// gets its own CSP with `frame-ancestors *` and NO X-Frame-Options — and,
-// being a single self-contained page, inline script/style instead of 'self'
-// bundles. Every other path (the SPA and all /api routes, including the
-// widget's own /api/widget/data feed) keeps the strict DENY/'none' posture.
+// GET /widget is meant to be framed by other dashboards, so it gets its own CSP
+// with frame-ancestors * and no X-Frame-Options. Every other path, including
+// the widget's /api/widget/data feed, is sent with DENY.
 func securityHeaders(next http.Handler) http.Handler {
-	// The hash source below is the theme-boot script — see the securityHeaders
-	// doc comment. TestThemeBootScriptCSPHashMatches pins it to the script's
-	// actual current content; if you edit web/index.html's inline script
-	// (including its whitespace), recompute the hash and update it here, or
-	// that test fails on purpose.
+	// TestThemeBootScriptCSPHashMatches fails when this hash does not match the
+	// inline script in web/index.html, whitespace included.
 	const csp = "default-src 'self'; " +
 		"script-src 'self' 'sha256-OyogNhfMmFOmnpKoxuucDcL3wuNp1ArXH1kHMlcPetY='; " +
 		"style-src 'self' 'unsafe-inline'; " +
@@ -94,9 +71,8 @@ func securityHeaders(next http.Handler) http.Handler {
 		"base-uri 'self'; " +
 		"frame-ancestors 'none'"
 
-	// The widget page is fully self-contained (inline style + script, fetches
-	// only its same-origin /api/widget/data feed) and must stay frame-able
-	// cross-origin.
+	// The widget is a single page with inline style and script that only
+	// fetches /api/widget/data.
 	const widgetCSP = "default-src 'none'; " +
 		"script-src 'unsafe-inline'; " +
 		"style-src 'unsafe-inline'; " +
@@ -111,7 +87,6 @@ func securityHeaders(next http.Handler) http.Handler {
 		w.Header().Set("Referrer-Policy", "no-referrer")
 		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
 		if r.URL.Path == "/widget" {
-			// Frame-able by design: no X-Frame-Options, frame-ancestors *.
 			w.Header().Set("Content-Security-Policy", widgetCSP)
 		} else {
 			w.Header().Set("X-Frame-Options", "DENY")
@@ -121,22 +96,16 @@ func securityHeaders(next http.Handler) http.Handler {
 	})
 }
 
-// httpShutdownGrace bounds how long Run waits for in-flight HTTP requests after
-// the context is cancelled. Short on purpose: by the time we get here the
-// backups have already been dealt with (api.Service.BeginShutdown), so what is
-// left is browser traffic and the SSE progress stream, and an SSE connection
-// never closes on its own — waiting on it would mean always waiting the full
-// grace, every single stop.
+// httpShutdownGrace bounds how long Run waits for in-flight requests on
+// shutdown. Backups are handled by Service.BeginShutdown before this, and an
+// SSE progress stream never closes on its own, so a long grace would only
+// delay every stop.
 const httpShutdownGrace = 3 * time.Second
 
-// Run starts the server, blocking until it stops or ctx is cancelled. It serves
-// HTTPS with a self-signed cert by default, or plain HTTP when cfg.HTTPOnly is
-// set.
-//
-// On ctx cancellation it calls srv.Shutdown, which stops accepting new
-// connections and lets in-flight requests finish ([375]). ErrServerClosed is
-// then the EXPECTED outcome, not a failure, so it is swallowed: reporting it
-// would turn every clean stop into a non-zero exit and an error in the log.
+// Run serves HTTPS with a self-signed certificate, or plain HTTP when
+// cfg.HTTPOnly is set, until the listener fails or ctx is cancelled. On
+// cancellation it shuts down gracefully, and the resulting ErrServerClosed is
+// a clean stop, not an error.
 func (s *Server) Run(ctx context.Context) error {
 	var srv *http.Server
 	var serve func() error
@@ -172,8 +141,6 @@ func (s *Server) Run(ctx context.Context) error {
 
 	select {
 	case err := <-errCh:
-		// The listener died on its own (port taken, cert unreadable). That is a
-		// real error and must surface.
 		return err
 	case <-ctx.Done():
 		shutCtx, cancel := context.WithTimeout(context.Background(), httpShutdownGrace)
@@ -188,9 +155,9 @@ func (s *Server) Run(ctx context.Context) error {
 	}
 }
 
-// EnsureSelfSigned generates a self-signed ECDSA (P-256) certificate in PURE GO
-// (no openssl) under dataDir/certs on first boot and reuses it afterwards.
-// It returns the cert and key file paths. The key file is written 0o600.
+// EnsureSelfSigned creates a self-signed P-256 certificate under dataDir/certs
+// on first boot and reuses it afterwards. It returns the certificate and key
+// paths; the key file is written 0600.
 func EnsureSelfSigned(dataDir string) (certPath, keyPath string, err error) {
 	certDir := filepath.Join(dataDir, "certs")
 	if mkErr := os.MkdirAll(certDir, 0o700); mkErr != nil {
@@ -199,7 +166,6 @@ func EnsureSelfSigned(dataDir string) (certPath, keyPath string, err error) {
 	certPath = filepath.Join(certDir, "cert.pem")
 	keyPath = filepath.Join(certDir, "key.pem")
 
-	// Reuse an existing pair.
 	if fileExists(certPath) && fileExists(keyPath) {
 		return certPath, keyPath, nil
 	}
@@ -219,7 +185,7 @@ func EnsureSelfSigned(dataDir string) (certPath, keyPath string, err error) {
 		SerialNumber:          serial,
 		Subject:               pkix.Name{CommonName: "bombvault", Organization: []string{"BombVault"}},
 		NotBefore:             now.Add(-1 * time.Hour),
-		NotAfter:              now.AddDate(10, 0, 0), // 10 years
+		NotAfter:              now.AddDate(10, 0, 0),
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		DNSNames:              []string{"localhost"},
@@ -232,13 +198,11 @@ func EnsureSelfSigned(dataDir string) (certPath, keyPath string, err error) {
 		return "", "", fmt.Errorf("create certificate: %w", err)
 	}
 
-	// Write cert.pem (0o644 — public).
 	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
 	if wErr := os.WriteFile(certPath, certPEM, 0o644); wErr != nil { //nolint:gosec // G306: a self-signed server certificate is public, not a secret
 		return "", "", fmt.Errorf("write cert: %w", wErr)
 	}
 
-	// Write key.pem (0o600 — private).
 	keyDER, err := x509.MarshalECPrivateKey(priv)
 	if err != nil {
 		return "", "", fmt.Errorf("marshal key: %w", err)
@@ -256,23 +220,18 @@ func fileExists(p string) bool {
 	return err == nil
 }
 
-// ---------------------------------------------------------------------------
-// banners
-// ---------------------------------------------------------------------------
-
 const (
 	bannerName     = "bombvault"
 	bannerSubtitle = "Backup & disaster recovery for Docker containers and KVM/libvirt VMs"
 )
 
-// Version is the build version, injected at build time via
+// Version is the build version, set with
 // -ldflags "-X github.com/junkerderprovinz/bombvault/internal/api.Version=vX.Y.Z".
-// It defaults to "dev" for local/un-stamped builds and is printed in the startup
-// banner + READY box so the running image's version is obvious in the log.
+// Unstamped builds report "dev".
 var Version = "dev"
 
-// versionTag renders the version for the log banners: " vX.Y.Z" for a stamped
-// build, " (dev)" otherwise, so it slots cleanly after the app name.
+// versionTag formats Version to follow the app name in the log: " vX.Y.Z", or
+// " (dev)" for an unstamped build.
 func versionTag() string {
 	if Version == "" || Version == "dev" {
 		return " (dev)"
@@ -280,21 +239,14 @@ func versionTag() string {
 	return " " + Version
 }
 
-// printBanner prints the shared brand ASCII art followed by the app name and
-// subtitle, matching the house print-banner.sh format used by all own-image
-// containers.
-//
-// Output format (mirrors print-banner.sh exactly):
+// printBanner prints the brand art and the app line in the same layout as
+// print-banner.sh in the other container images:
 //
 //	<blank>
 //	<brand ASCII art>
 //	<blank>
 //	  bombvault vX.Y.Z · Backup & disaster recovery for Docker containers and KVM/libvirt VMs
 //	<blank>
-//
-// A leading blank, the brand art, ONE blank line, then a clean name+subtitle
-// line (no rules). TrimRight makes the spacing deterministic regardless of
-// the embedded file's trailing newline.
 func printBanner() {
 	art := strings.TrimRight(brandArt, "\n")
 	fmt.Println()
@@ -304,11 +256,9 @@ func printBanner() {
 	fmt.Println()
 }
 
-// printReady prints the loud "<APP> IS READY" line once the server is about
-// to listen, in the shared house one-line format (matches
-// jdownloader/krusader/matrix/handbrake/featherdrop). Writes to stdout (via
-// fmt) so it shares the banner's stream; this is always the LAST thing this
-// process prints before it blocks on ListenAndServe.
+// printReady prints the ready line in the format the other container images
+// use, to stdout like the banner. It is the last output before the server
+// starts listening.
 func printReady(scheme string, port int) {
 	fmt.Printf("  \033[0;32m✓ BOMBVAULT%s IS READY\033[0m - Open the WebUI now (%s %d)\n", versionTag(), scheme, port)
 	fmt.Println()

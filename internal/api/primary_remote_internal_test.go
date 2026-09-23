@@ -88,7 +88,7 @@ type forgetTrackingEngine struct {
 	unlockN int
 }
 
-func (e *forgetTrackingEngine) ForgetPolicy(context.Context, string, restic.RetentionPolicy, restic.Mode, string, bool) error {
+func (e *forgetTrackingEngine) ForgetPolicy(context.Context, string, restic.RetentionPolicy, restic.Mode, []string, bool) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.forgetN++
@@ -133,7 +133,7 @@ func TestApplyRetentionSkipsPruneForImmutableRemotePrimary(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	s.applyRetention(context.Background(), "s3:bucket/containers", settings, restic.Mode{}, "container:plex", "containers")
+	s.applyRetention(context.Background(), "s3:bucket/containers", settings, restic.Mode{}, tagIdentity("container:plex"), "containers")
 	if n := eng.forgetCalls(); n != 0 {
 		t.Fatalf("an immutable remote primary must never be pruned, got %d ForgetPolicy call(s)", n)
 	}
@@ -161,7 +161,7 @@ func TestApplyRetentionStillPrunesWhenNotImmutable(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	s.applyRetention(context.Background(), "s3:bucket/containers", settings, restic.Mode{}, "container:plex", "containers")
+	s.applyRetention(context.Background(), "s3:bucket/containers", settings, restic.Mode{}, tagIdentity("container:plex"), "containers")
 	if n := eng.forgetCalls(); n != 1 {
 		t.Fatalf("a non-immutable remote primary must prune normally, got %d ForgetPolicy call(s), want 1", n)
 	}
@@ -176,7 +176,7 @@ func TestApplyRetentionStillPrunesLocalPrimary(t *testing.T) {
 	s.engine = eng
 
 	settings := store.Settings{RetentionKeepLast: 5}
-	s.applyRetention(context.Background(), "/mnt/user/bombvault/containers", settings, restic.Mode{}, "container:plex", "containers")
+	s.applyRetention(context.Background(), "/mnt/user/bombvault/containers", settings, restic.Mode{}, tagIdentity("container:plex"), "containers")
 	if n := eng.forgetCalls(); n != 1 {
 		t.Fatalf("a local primary must prune normally, got %d ForgetPolicy call(s), want 1", n)
 	}

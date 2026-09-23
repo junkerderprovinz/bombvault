@@ -2,41 +2,8 @@ import { useT } from "../lib/i18n";
 import { Badge, type BadgeTone } from "./Badge";
 import { InfoBubble } from "./InfoBubble";
 
-// ---------------------------------------------------------------------------
-// Resolved-schedule badge (the green "Täglich um 02:00" chip above a cadence
-// editor) — extracted from Settings.tsx, unchanged in appearance.
-//
-// WHY THIS FILE EXISTS (jdp, live-review, with a screenshot of a schedule card
-// showing the green badge "Täglich um 02:00" above the card AND the line
-// "täglich um 2:00 Uhr" inside it: "Bei den ganzen Zeitplänen den Text in der
-// Auswahlcard entfernen. Das wird ja über der Card schon als grüner Badge
-// angezeigt. Ist redundant."):
-//
-// CadenceBuilder used to render its OWN one-line preview paragraph of the
-// cadence it was editing. That paragraph is gone now (see CadenceBuilder.tsx's
-// own comment where it was), which is only correct as long as EVERY cadence
-// editor in the app has a resolved-schedule badge above it instead — otherwise
-// removing the paragraph would delete information rather than a duplicate.
-// Five of the nine call sites already had one (the four domain Cards +
-// Selbst-Backup, all hand-rolling the same row markup and the same
-// off/cadence ternary); three had nothing at all (Restore-Prüfungen,
-// Wochenbericht, Wiederherstellungs-Prüfplan) and ItemScheduleOverride had a
-// plain-text summary instead of a badge.
-//
-// Rather than hand-roll the row an 8th and 9th time, the row itself is a
-// component now (`ScheduleRow`) and lives here with the status/label helpers
-// it needs, so "does this cadence editor show its resolved schedule?" has ONE
-// answer for the whole app instead of nine independently-drifting ones. A
-// shared file rather than an export from Settings.tsx specifically because
-// ItemScheduleOverride.tsx also needs the badge and Settings.tsx already
-// imports THAT — exporting from Settings.tsx would be an import cycle.
-//
-// STATUS COLOURS STAY OUT OF THE HUE ENGINE. jdp confirmed the green badge's
-// own colour is correct as-is; ok/warn/neutral are rule 4 state hues that
-// Badge deliberately exempts from `hueIndex` (see Badge.tsx's own `hueIndex`
-// doc: "ok/fail/warn/neutral are load-bearing status signals hueIndex must
-// never overwrite"). Nothing here passes a hueIndex, and nothing here should.
-// ---------------------------------------------------------------------------
+// The schedule badge lives in its own file rather than in Settings.tsx because
+// ItemScheduleOverride.tsx needs it too, and Settings.tsx imports that file.
 
 export type ScheduleStatus = "active" | "paused" | "off";
 
@@ -48,11 +15,8 @@ export function scheduleStatus(schedule: string): ScheduleStatus {
 type ScheduleT = ReturnType<typeof useT>["t"];
 
 /**
- * cadenceLabel renders a stored cadence string in the badge's own short,
- * capitalized grammar ("Täglich um 02:00") — deliberately NOT CadenceBuilder's
- * `formatCadence` ("täglich um 2:00 Uhr"), which is the sentence-cased prose
- * form used inside running text. Moved here verbatim from Settings.tsx along
- * with the badge it has always fed.
+ * cadenceLabel renders a stored cadence in the badge's short form ("Täglich um
+ * 02:00"). CadenceBuilder's formatCadence is the prose form for running text.
  */
 export function cadenceLabel(raw: string, t: ScheduleT): string {
   const s = (raw ?? "").trim();
@@ -65,17 +29,12 @@ export function cadenceLabel(raw: string, t: ScheduleT): string {
   if (weeklyM) return t("jobs.cadenceWeekly").replace("{days}", weeklyM[1]).replace("{time}", weeklyM[2]);
 
   const everyNM = /^everyN\s+(\d+)\s+(\d{1,2}:\d{2})$/.exec(s);
-  if (everyNM) return t("jobs.cadenceEveryN").replace("{n}", everyNM[1]).replace("{time}", everyNM[2]);
+  if (everyNM) return t("jobs.cadenceEveryN", Number(everyNM[1])).replace("{time}", everyNM[2]);
 
   return s;
 }
 
-// ScheduleBadge → Badge tone mapping (GlimStone form-engine Task 5 follow-up):
-// this was its own hand-rolled `px-2 py-0.5 rounded-control text-xs
-// font-medium` + tone-lookup pair, byte-for-byte the same shape the shared
-// Badge component now owns — a 6th duplicate the migration's audit found
-// alongside the five named in the plan. active/paused/off map onto Badge's
-// ok/warn/neutral tones (the only three a schedule status ever needs).
+// Status tones, which Badge keeps out of the hue engine, so no hueIndex.
 const SCHEDULE_BADGE_TONE: Record<ScheduleStatus, BadgeTone> = {
   active: "ok",
   paused: "warn",
@@ -93,10 +52,8 @@ export function ScheduleBadge({
 }
 
 /**
- * ScheduleRow is the full "Zeitplan: [badge]" line that sits directly above a
- * CadenceBuilder well. Every cadence editor in the app renders one — that is
- * what makes CadenceBuilder's own removed preview paragraph redundant rather
- * than missed.
+ * ScheduleRow is the "Zeitplan: [badge]" line above a CadenceBuilder. Every
+ * cadence editor has one, since CadenceBuilder shows no summary of its own.
  */
 export function ScheduleRow({
   schedule,
@@ -105,24 +62,13 @@ export function ScheduleRow({
 }: {
   /** The stored cadence string ("" / "off" = not scheduled). */
   schedule: string;
-  /** Optional master switch for the whole feature this cadence belongs to
-   *  (Restore-Prüfungen's `drillsEnabled`, Wochenbericht's `digestEnabled`).
-   *  A stored cadence whose feature toggle is OFF genuinely does not run, so
-   *  the badge reads "Kein Zeitplan" rather than showing a green time the
-   *  scheduler will never honour — the same thing the CadenceBuilder below it
-   *  already says by rendering `disabled`. Omit where the cadence's own "off"
-   *  mode IS the on/off control (the four domain Cards, Selbst-Backup). NOTE
-   *  this deliberately does NOT reach for the `"paused"`/amber status: that
-   *  would be a new warning-coloured state nobody asked for, and rule 5 keeps
-   *  status colours out of any redesign. */
+  /** The switch of the feature this cadence belongs to (drillsEnabled,
+   *  digestEnabled). A cadence whose feature is off never runs, so the badge
+   *  reads as not scheduled. Omit where the cadence's own "off" mode is the
+   *  switch. */
   enabled?: boolean;
-  /** Why this row shows a value its own editor below cannot change. The
-   *  editor under a synced schedule stays visible and dimmed rather than
-   *  disappearing, because the value it shows STILL ACTS - it is simply
-   *  owned elsewhere, and GlimStone 1.16.0 asks such a control to say who is
-   *  in charge. Pass the sentence naming that owner (the three synced domain
-   *  Cards pass `jobs.syncSchedulesHint`, which also says how to take charge
-   *  back); omit it wherever the editor below is the owner. */
+  /** Names who owns the schedule when the dimmed editor below cannot change
+   *  it, such as a synced schedule. Omit where the editor is the owner. */
   hint?: string;
 }) {
   const { t } = useT();

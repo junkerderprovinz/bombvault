@@ -13,9 +13,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// meshHandlerFixture mirrors receiverHandlerFixture/drDrillService: a Handler
-// wired to a real (temp) store, sharing one app secret key. Enough for the
-// mesh endpoints, which use only h.store, h.svc and h.cfg.
+// meshHandlerFixture returns a Handler on an in-memory store whose Service
+// shares appKey.
 func meshHandlerFixture(t *testing.T, appKey string) (*Handler, *store.Repo) {
 	t.Helper()
 	db, err := store.Open(":memory:")
@@ -50,7 +49,6 @@ func TestFleetMeshOfferReceive(t *testing.T) {
 		RESTUser: "bombvault-containers", RESTPassword: "s3cr3t",
 	})
 
-	// Wrong token -> 403, nothing persisted.
 	w := httptest.NewRecorder()
 	r := jsonReq(http.MethodPost, "/api/fleet/mesh-offer", strings.NewReader(string(body)))
 	r.Header.Set("X-Fleet-Token", "wrong")
@@ -62,7 +60,6 @@ func TestFleetMeshOfferReceive(t *testing.T) {
 		t.Fatalf("a refused offer must persist nothing, got %d rows", len(all))
 	}
 
-	// Correct token -> stored as pending, password encrypted at rest.
 	w = httptest.NewRecorder()
 	r = jsonReq(http.MethodPost, "/api/fleet/mesh-offer", strings.NewReader(string(body)))
 	r.Header.Set("X-Fleet-Token", "correct-token")
@@ -107,7 +104,6 @@ func TestAcceptMeshOffer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Invalid domain -> rejected, offer stays pending.
 	w := httptest.NewRecorder()
 	r := postJSONReq(t, "/api/fleet/mesh-offers/"+offer.ID+"/accept", map[string]any{"domain": "not-a-domain"})
 	r.SetPathValue("id", offer.ID)
@@ -116,7 +112,6 @@ func TestAcceptMeshOffer(t *testing.T) {
 		t.Fatalf("invalid domain must be rejected: %v", resp)
 	}
 
-	// Valid accept -> creates a CloudCredSet + OffsiteTarget, marks accepted.
 	w = httptest.NewRecorder()
 	r = postJSONReq(t, "/api/fleet/mesh-offers/"+offer.ID+"/accept", map[string]any{"domain": "containers"})
 	r.SetPathValue("id", offer.ID)
@@ -154,7 +149,6 @@ func TestAcceptMeshOffer(t *testing.T) {
 		t.Fatalf("created credential set mismatch: %+v (target CredsRef=%q)", sets, tg.CredsRef)
 	}
 
-	// Re-accepting an already-decided offer is rejected, no duplicate target.
 	w = httptest.NewRecorder()
 	r = postJSONReq(t, "/api/fleet/mesh-offers/"+offer.ID+"/accept", map[string]any{"domain": "containers"})
 	r.SetPathValue("id", offer.ID)
@@ -224,7 +218,6 @@ func TestDeclineMeshOffer(t *testing.T) {
 		t.Fatalf("want status 'declined', got %q", updated.Status)
 	}
 
-	// Unknown id -> 404.
 	w = httptest.NewRecorder()
 	r = jsonReq(http.MethodPost, "/api/fleet/mesh-offers/does-not-exist/decline", nil)
 	r.SetPathValue("id", "does-not-exist")
@@ -234,10 +227,8 @@ func TestDeclineMeshOffer(t *testing.T) {
 	}
 }
 
-// TestProposeMeshOffer pins the sending side end to end: a fake peer server
-// verifies it received the right token and a well-formed offer, built from
-// the admin-provided base URL rather than the deploy-snippet's generic
-// placeholder.
+// The fake peer records the token and the offer, whose repo must be built
+// from the base URL the admin gave.
 func TestProposeMeshOffer(t *testing.T) {
 	var gotToken string
 	var gotOffer meshOfferRequest

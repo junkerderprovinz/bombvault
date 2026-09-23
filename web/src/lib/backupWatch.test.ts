@@ -1,30 +1,9 @@
-// ---------------------------------------------------------------------------
-// Regression test for #154: "select all VMs, back up selected" silently
-// skipped exactly one VM (Windows Server 2022) with NO success line, NO
-// failure line, nothing in the activity log at all.
-//
-// Root cause: fireAndWaitRun (the bulk "back up / restore selected" fire-
-// retry-wait helper every batch item runs through) used to give up firing a
-// batch item after a FIXED 30s "busy" retry budget (the old BUSY_RETRY_MS).
-// But the PREVIOUS item's single-flight guard (service.go's batchActive)
-// does not release until that item's entire backup call returns — which
-// includes its own inline, synchronous off-site replication
-// (Service.replicateOffsite, called from BackupVM/Backup AFTER the run row
-// is already marked "success" but BEFORE the wrapping goroutine, and
-// therefore batchActive, releases). The reported activity log shows real
-// inline replications taking 20-40s; a 37s one sits right past the old 30s
-// budget. The next batch item's start() kept getting rejected "a backup is
-// already running" until the retry gave up — and because start() never
-// actually SUCCEEDED for that item, no run was ever recorded for it: nothing
-// to show in the activity log, exactly the silent skip reported.
-//
-// The fix folds the fire-retry budget into the SAME generous watchTimeoutMs
-// deadline already used to wait out a real in-progress backup/restore, so a
-// transient "still releasing" busy signal is retried for as long as a batch
-// item is allowed to run at all, never abandoned on an arbitrary shorter
-// clock. This test pins that: it fails against the pre-fix 30s cap (the
-// batch item never starts) and passes once the retry survives past it.
-// ---------------------------------------------------------------------------
+// fireAndWaitRun retries a busy start for as long as a batch item may run.
+// The previous item holds the server's single-flight guard (batchActive in
+// service.go) until its whole backup call returns, and that includes its
+// inline off-site replication, which can take 20 to 40 seconds. A shorter
+// retry budget gives up on the next item before it ever starts, so no run is
+// recorded and the item vanishes from the activity log without a line.
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { Run } from "./api";
 
@@ -56,7 +35,7 @@ function makeRun(overrides: Partial<Run> = {}): Run {
   };
 }
 
-describe("fireAndWaitRun busy-retry (#154)", () => {
+describe("fireAndWaitRun busy retry", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     mockedListRuns.mockReset();
@@ -66,15 +45,12 @@ describe("fireAndWaitRun busy-retry (#154)", () => {
     vi.useRealTimers();
   });
 
-  it("keeps retrying a busy start well past the old 30s cap and still starts + succeeds", async () => {
+  it("keeps retrying a busy start past 30 seconds, then succeeds", async () => {
     const t0 = Date.now();
     // No prior runs for this target before we fire.
     mockedListRuns.mockResolvedValue({ ok: true, runs: [] });
 
-    // Simulate the PREVIOUS batch item's inline off-site replication holding
-    // the shared single-flight guard for 40 real seconds — longer than the
-    // old fixed 30s retry budget, matching the ~37-40s replication windows
-    // visible in the reported activity log.
+    // The previous item's off-site replication holds the guard for 40s.
     const BUSY_FOR_MS = 40_000;
     let startCalls = 0;
     const start = vi.fn(async () => {
@@ -82,8 +58,7 @@ describe("fireAndWaitRun busy-retry (#154)", () => {
       if (Date.now() - t0 < BUSY_FOR_MS) {
         return { ok: false, error: "a backup is already running" };
       }
-      // The guard has freed up: this start actually succeeds and a run gets
-      // recorded — from here on, listRuns() must surface it.
+      // The guard is free: this start succeeds and listRuns reports the run.
       mockedListRuns.mockResolvedValue({
         ok: true,
         runs: [makeRun({ id: "new-run", status: "success" })],
@@ -95,19 +70,15 @@ describe("fireAndWaitRun busy-retry (#154)", () => {
       kind: "backup",
       matchRun: (r) => r.domain === "vm" && r.target === "Windows Server 2022",
       start,
-      // fireAndWaitRun now takes the translate function for its failure tail
-      // (bombvault/user-message-is-translated). This test never reaches that
-      // tail, so identity is enough and keeps the assertions reading in keys.
+      // The failure path is never reached, so an identity translator will do.
       t: ((key: string) => key) as never,
     });
 
-    // Fast-forward well past the old 30s cap (retry) AND the poll interval
-    // (watch) — the batch item must still complete successfully.
+    // Past the busy window and several poll intervals.
     await vi.advanceTimersByTimeAsync(70_000);
 
     await expect(resultPromise).resolves.toEqual({ ok: true });
-    // Proves the helper kept retrying the busy start past the old 30s/30-call
-    // ceiling instead of giving up early.
+    // One attempt a second, all the way through the busy window.
     expect(startCalls).toBeGreaterThan(35);
   });
 });

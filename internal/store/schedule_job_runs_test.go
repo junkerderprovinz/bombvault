@@ -1,10 +1,8 @@
 package store_test
 
-// #166 — the durable last-run record behind an "every N days" cadence on the
-// drills / tamper-test / digest schedules. These exercise the real SQLite path
-// (migration v89 included), not a fake, because the safety property the
-// scheduler leans on lives here: a MISSING row must be reported as a definite
-// "never ran" (zero time, nil error) while a real failure must stay an error.
+// These run against real SQLite because the property the scheduler relies on
+// lives here: a missing row reads as "never ran" (zero time, nil error), while
+// a real failure stays an error.
 
 import (
 	"strings"
@@ -23,11 +21,8 @@ func newJobRunRepo(t *testing.T) *store.Repo {
 	return store.New(db)
 }
 
-// TestScheduleJobRunNeverRanIsZeroAndNil is the case a fresh install and a
-// just-upgraded install both hit: no row for the job. It must come back as a
-// zero time with a NIL error — the scheduler reads that as "has never run" and
-// lets the first fire after enabling proceed, so flattening a real error into it
-// would silently authorise a run.
+// TestScheduleJobRunNeverRanIsZeroAndNil covers a job without a row, as after a
+// fresh install or an upgrade: the result is the zero time and a nil error.
 func TestScheduleJobRunNeverRanIsZeroAndNil(t *testing.T) {
 	r := newJobRunRepo(t)
 	for _, job := range []string{store.ScheduleJobDrills, store.ScheduleJobTamper, store.ScheduleJobDigest} {
@@ -41,9 +36,8 @@ func TestScheduleJobRunNeverRanIsZeroAndNil(t *testing.T) {
 	}
 }
 
-// TestScheduleJobRunRoundTrip records and reads back each job's stamp, and pins
-// that the three are stored INDEPENDENTLY — a drill pass must not satisfy the
-// tamper or digest gate.
+// TestScheduleJobRunRoundTrip expects each job to keep its own stamp, so a
+// drill pass does not satisfy the tamper or digest gate.
 func TestScheduleJobRunRoundTrip(t *testing.T) {
 	r := newJobRunRepo(t)
 	want := time.Now().Add(-36 * time.Hour).Truncate(time.Second)
@@ -69,9 +63,8 @@ func TestScheduleJobRunRoundTrip(t *testing.T) {
 	}
 }
 
-// TestScheduleJobRunOverwrites pins the upsert: a job keeps ONE row, and each
-// recorded pass replaces the previous timestamp rather than appending. A second
-// row would make the table grow without bound and make "the last run" ambiguous.
+// TestScheduleJobRunOverwrites expects one row per job, with each recorded run
+// replacing the previous stamp.
 func TestScheduleJobRunOverwrites(t *testing.T) {
 	r := newJobRunRepo(t)
 	first := time.Now().Add(-10 * 24 * time.Hour).Truncate(time.Second)
@@ -92,11 +85,8 @@ func TestScheduleJobRunOverwrites(t *testing.T) {
 	}
 }
 
-// TestScheduleJobRunQueryFailureIsAnError is the safety property stated the
-// other way round: when the table is genuinely unreadable the read must ERROR,
-// never quietly return the zero time that means "never ran". The scheduler skips
-// on the error and would RUN on the zero time, so the two must not be confused.
-// Driven by dropping the table out from under the query.
+// TestScheduleJobRunQueryFailureIsAnError drops the table and expects an error,
+// not the zero time: the scheduler skips on an error but runs on zero.
 func TestScheduleJobRunQueryFailureIsAnError(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -118,8 +108,8 @@ func TestScheduleJobRunQueryFailureIsAnError(t *testing.T) {
 	}
 }
 
-// TestScheduleJobRunsTableCreatedByMigration pins that v89 actually ran, so an
-// UPGRADE (not just a fresh install) has the table the gate depends on.
+// TestScheduleJobRunsTableCreatedByMigration expects migration 89 to create the
+// table and record itself.
 func TestScheduleJobRunsTableCreatedByMigration(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
@@ -135,8 +125,7 @@ func TestScheduleJobRunsTableCreatedByMigration(t *testing.T) {
 	if err := row.Scan(&applied); err != nil || applied != 1 {
 		t.Fatalf("migration v89 not recorded (applied=%d, err=%v)", applied, err)
 	}
-	// And a freshly migrated database is EMPTY — every job reads as never-ran,
-	// which is exactly the upgrade case: the table exists, nothing has run yet.
+	// A fresh table is empty, so every job reads as never ran.
 	var rows int
 	if err := db.QueryRow(`SELECT count(*) FROM schedule_job_runs`).Scan(&rows); err != nil {
 		t.Fatalf("count: %v", err)

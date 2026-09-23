@@ -20,14 +20,12 @@ func newSyncTestService(t *testing.T) (*Service, *store.Repo) {
 	return &Service{store: st}, st
 }
 
-// TestSyncPrimaryOffsiteTargetDualWrite is the core edit-regression proof: after
-// the off-site repo is changed through the legacy Settings columns, syncing the
-// primary target makes offsiteRepoFor return the NEW repo AND updates the existing
-// primary row IN PLACE (same id, still a single target — N=1 identity preserved).
-func TestSyncPrimaryOffsiteTargetDualWrite(t *testing.T) {
+// After the off-site repo changes in Settings, the sync updates the existing
+// primary row, so offsiteRepoFor returns the new repo and the domain keeps one
+// target with the same id.
+func TestSyncPrimaryOffsiteTargetUpdatesInPlace(t *testing.T) {
 	s, st := newSyncTestService(t)
 
-	// A backfilled N=1 install: one primary target mirroring the Settings column.
 	settings, err := st.GetSettings()
 	if err != nil {
 		t.Fatal(err)
@@ -43,7 +41,6 @@ func TestSyncPrimaryOffsiteTargetDualWrite(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// The user edits the off-site repo through the existing setter (Settings).
 	settings.ContainersOffsite = "s3:new"
 	if err := st.UpdateSettings(settings); err != nil {
 		t.Fatal(err)
@@ -52,13 +49,10 @@ func TestSyncPrimaryOffsiteTargetDualWrite(t *testing.T) {
 		t.Fatalf("syncPrimaryOffsiteTarget: %v", err)
 	}
 
-	// offsiteRepoFor (read via the target rows) now sees the new repo.
 	if got := s.offsiteRepoFor("containers", settings); got != "s3:new" {
 		t.Fatalf("offsiteRepoFor after sync = %q, want s3:new", got)
 	}
 
-	// Still exactly one target for the domain, and it is the SAME row updated in
-	// place (id preserved) — not a duplicate.
 	targets, err := st.OffsiteTargetsForDomain("containers")
 	if err != nil {
 		t.Fatal(err)
@@ -74,9 +68,6 @@ func TestSyncPrimaryOffsiteTargetDualWrite(t *testing.T) {
 	}
 }
 
-// TestSyncPrimaryOffsiteTargetCreatesWhenMissing: a post-backfill install that
-// configured off-site only through Settings (no target row yet) gets a primary
-// row synthesized on the next save.
 func TestSyncPrimaryOffsiteTargetCreatesWhenMissing(t *testing.T) {
 	s, st := newSyncTestService(t)
 

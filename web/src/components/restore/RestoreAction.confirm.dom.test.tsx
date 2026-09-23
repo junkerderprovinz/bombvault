@@ -1,17 +1,7 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// A row-action restore asks before it overwrites anything.
-//
-// Recovery's card-5 rows passed `requireConfirm={false}` on the strength of a
-// prop doc claiming "its own stepper gates the whole flow". The stepper gates
-// nothing, so one click on an unlabelled glyph badge started an in-place
-// restore over live appdata or VM disks — while the "Restore all" button in the
-// same card asked first. It was the only requireConfirm={false} in the tree.
-//
-// The checkbox does not fit a one-line row action, so the guard is the modal
-// every other destructive action already uses. These tests pin that the restore
-// call itself is what waits for the answer, not just that a dialog appears.
-// ---------------------------------------------------------------------------
+// A row-action restore overwrites live appdata or VM disks, so it asks in a
+// modal first. These tests check that the restore call waits for the answer,
+// not only that a dialog appears.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { I18nProvider, en } from "../../lib/i18n";
@@ -65,7 +55,6 @@ function renderAction(props: Record<string, unknown> = {}) {
   );
 }
 
-/** The row action's trigger, by the accessible name its `tip`/label gives it. */
 function trigger() {
   return screen.getByRole("button", { name: en["snapshots.restore"] });
 }
@@ -82,7 +71,6 @@ describe("row-action restore confirmation", () => {
 
     fireEvent.click(trigger());
     await waitFor(() => expect(screen.getByText("Really restore plex?")).toBeTruthy());
-    // The dialog is up and nothing has been overwritten yet.
     expect(restore).not.toHaveBeenCalled();
   });
 
@@ -108,9 +96,8 @@ describe("row-action restore confirmation", () => {
     await waitFor(() => expect(restore).toHaveBeenCalledTimes(1));
   });
 
-  it("leaves a caller without confirmMessage exactly as it was", async () => {
-    // The form call sites (RestorePanel, VMs) gate on the checkbox instead and
-    // must not grow a second question.
+  it("restores without a question when there is no confirmMessage", async () => {
+    // The form call sites gate on the confirm toggle and must not ask twice.
     renderAction();
     await act(async () => {
       fireEvent.click(trigger());

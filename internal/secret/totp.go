@@ -14,26 +14,21 @@ import (
 	"time"
 )
 
-// Time-based one-time passwords (RFC 6238), the second factor for the login.
+// TOTP (RFC 6238) is the second login factor. It is implemented here rather than
+// imported because the algorithm is a few dozen lines, and the login path does
+// not need a supply-chain dependency for it.
 //
-// WRITTEN OUT RATHER THAN IMPORTED, on purpose. The whole algorithm is the
-// forty lines below: an HMAC over a 30-second counter, truncated to six digits.
-// Pulling a module in to get that would add a supply-chain dependency to the one
-// code path whose whole job is to be trustworthy, and the spec has not moved
-// since 2011.
-//
-// SHA-1 is not a mistake here. RFC 6238 names it, every authenticator app
-// implements it, and the construction is HMAC, where SHA-1's collision weakness
-// does not apply. An install using SHA-256 would simply fail to enrol in Google
-// Authenticator.
+// SHA-1 is what RFC 6238 specifies and what authenticator apps implement. It is
+// used inside HMAC, where its collision weakness does not apply, and an install
+// using SHA-256 could not enrol in Google Authenticator.
 
 const (
 	totpDigits = 6
 	totpPeriod = 30 * time.Second
 	// totpSkew is how many steps either side of "now" are accepted. One step
-	// each way covers the ordinary case of a phone clock a few seconds off and
-	// a code typed just as it rolls over. Wider windows buy an attacker time
-	// and buy the operator nothing.
+	// each way covers a phone clock a few seconds off and a code typed just as
+	// it rolls over. A wider window gives an attacker time and the operator
+	// nothing.
 	totpSkew = 1
 	// totpSecretLen is 20 bytes, the length RFC 4226 recommends and the length
 	// authenticator apps expect from a base32 secret.
@@ -60,13 +55,10 @@ func TOTPCode(secret string, t time.Time) (string, error) {
 	return totpAt(key, totpStep(t)), nil
 }
 
-// totpStep converts a wall-clock time into an RFC 6238 counter.
-//
-// The clamp is the point: Unix() is an int64 and the counter is a uint64, so a
-// time before the epoch would wrap to an enormous step and hand out codes from
-// a window no verifier will ever reach, silently. A box whose clock has not
-// been set yet is the realistic way to get there, and it is exactly the moment
-// a second factor must not start producing nonsense.
+// totpStep converts a wall-clock time into an RFC 6238 counter. Times before the
+// Unix epoch clamp to step 0: converting the negative int64 would wrap to a huge
+// counter no verifier reaches, and a box whose clock has not been set yet is
+// exactly when that would happen.
 func totpStep(t time.Time) uint64 {
 	sec := t.Unix()
 	if sec < 0 {
@@ -100,9 +92,8 @@ func totpAt(key []byte, counter uint64) string {
 // ValidTOTP reports whether code is valid for secret around time t, allowing one
 // step of clock skew either side.
 //
-// The comparison is constant-time. That matters less for a six-digit code than
-// for a password, but a timing oracle on the FIRST digits would let an attacker
-// find each digit independently, which turns a million guesses into sixty.
+// The comparison is constant-time. A timing leak on the leading digits would let
+// an attacker find each digit separately, turning a million guesses into sixty.
 func ValidTOTP(secret, code string, t time.Time) bool {
 	code = strings.TrimSpace(code)
 	// Some apps and some people insert a space in the middle.
@@ -127,8 +118,8 @@ func ValidTOTP(secret, code string, t time.Time) bool {
 		case d > 0:
 			c += uint64(d)
 		}
-		// No early return: every window is compared, so the time taken does not
-		// reveal WHICH window matched.
+		// Compare every window so the time taken does not reveal which one
+		// matched.
 		if subtle.ConstantTimeCompare([]byte(totpAt(key, c)), []byte(code)) == 1 {
 			ok = true
 		}
@@ -136,9 +127,9 @@ func ValidTOTP(secret, code string, t time.Time) bool {
 	return ok
 }
 
-// TOTPURI builds the otpauth:// URI an authenticator app scans. Issuer appears
-// both as the label prefix and as a parameter, which is what the apps that
-// disagree about the format each need.
+// TOTPURI builds the otpauth:// URI an authenticator app scans. The issuer goes
+// both into the label prefix and into a parameter, because apps disagree about
+// which one they read.
 func TOTPURI(issuer, account, secret string) string {
 	label := url.PathEscape(issuer + ":" + account)
 	q := url.Values{}
@@ -149,10 +140,6 @@ func TOTPURI(issuer, account, secret string) string {
 	q.Set("period", fmt.Sprint(int(totpPeriod.Seconds())))
 	return "otpauth://totp/" + label + "?" + q.Encode()
 }
-
-// ---------------------------------------------------------------------------
-// Recovery codes
-// ---------------------------------------------------------------------------
 
 const (
 	// recoveryCodeCount is how many single-use codes are handed out when 2FA is
@@ -169,10 +156,9 @@ const recoveryAlphabet = "abcdefghjkmnpqrstuvwxyz23456789"
 // NewRecoveryCodes returns fresh single-use codes in plain text (shown to the
 // operator once) together with their stored hashes.
 //
-// The stored form is a plain HMAC, NOT Argon2id, and that is deliberate: unlike a
-// human-chosen password these codes carry about 50 bits of entropy each, so
-// there is no dictionary to slow down. Argon2id would only make the login slower
-// by eight verifications.
+// The stored form is a plain HMAC rather than Argon2id. Each code carries about
+// 50 bits of entropy, so there is no dictionary to slow down, and Argon2id would
+// only make a login eight verifications slower.
 func NewRecoveryCodes(appKey string) (plain []string, hashed []string, err error) {
 	plain = make([]string, 0, recoveryCodeCount)
 	hashed = make([]string, 0, recoveryCodeCount)
@@ -197,9 +183,8 @@ func randomRecoveryCode() (string, error) {
 		if i == recoveryHalfLen {
 			b.WriteByte('-')
 		}
-		// Modulo bias over a 31-character alphabet drawn from 256 values is
-		// under half a bit per character and irrelevant next to the 50 bits the
-		// code carries. Rejection sampling here would be ceremony.
+		// Modulo bias over a 31-character alphabet is under half a bit per
+		// character, irrelevant next to the 50 bits a code carries.
 		b.WriteByte(recoveryAlphabet[int(v)%len(recoveryAlphabet)])
 	}
 	return b.String(), nil

@@ -13,36 +13,19 @@ import (
 	"golang.org/x/crypto/argon2"
 )
 
-// Password storage.
+// Login passwords are stored as Argon2id over an HMAC of the password keyed with
+// APP_KEY. APP_KEY sits in the same /config as the database, so one copied volume
+// yields both; Argon2id makes each guess cost memory and time instead of a single
+// SHA-256 block. The HMAC pepper still makes a database worthless without
+// APP_KEY, and the salt gives two installs with the same password different
+// hashes.
 //
-// WHY THIS EXISTS. Until v8.5.5 a login password was stored as
-// HMAC-SHA256(APP_KEY, "bombvault:auth:"+password) — see hashPasswordLegacy
-// below. That is a good MAC and a bad password hash, for one reason: it is fast
-// on purpose. The only thing standing between a stolen /config and the operator's
-// password was the secrecy of APP_KEY, and APP_KEY lives in the SAME /config
-// directory as the database that holds the hash. One copied volume — an old
-// backup, a pulled disk, a snapshot shared for support — hands an attacker both
-// halves, and from there a commodity GPU walks the whole realistic keyspace in
-// hours.
-//
-// Argon2id fixes the half that can be fixed in software: each guess now costs
-// memory and time instead of a single SHA-256 block.
-//
-// THE PEPPER IS KEPT. The password is still HMAC'd with APP_KEY before it
-// reaches Argon2id, so the old property survives: an attacker holding only the
-// database and not APP_KEY cannot even begin. Argon2id's own salt handles the
-// property HMAC never had (two installs with the same password now store
-// different hashes). Belt and braces, and the braces are the cheap part.
-//
-// PARAMETERS. m=19 MiB, t=2, p=1 is OWASP's first recommended Argon2id profile.
-// The temptation is to reach for 64 MiB, and it was resisted deliberately:
-// BombVault ships as an Unraid container that people cap with --memory, often at
-// 256 MB, and a login must not be the allocation that pushes the process into
-// the OOM killer. The login throttle (5 attempts per minute per client) already
-// bounds how often this runs, so the marginal value of more memory here is small
-// next to the cost of a container that dies when someone signs in.
+// m=19 MiB, t=2, p=1 is OWASP's first recommended Argon2id profile. More memory
+// is not worth it here: the container is often capped at 256 MB, and a login
+// must not be what pushes the process into the OOM killer. The login throttle
+// (5 attempts per minute per client) already bounds how often this runs.
 const (
-	argonMemoryKiB = 19 * 1024 // 19 MiB
+	argonMemoryKiB = 19 * 1024
 	argonTime      = 2
 	argonThreads   = 1
 	argonKeyLen    = 32
@@ -53,28 +36,27 @@ const (
 	argonPrefix = "argon2id$"
 )
 
-// hashPasswordLegacy is the pre-v8.6.0 storage format: a bare HMAC-SHA256 hex
-// string. Kept ONLY so that an install that has not yet seen a successful login
-// since the upgrade can still verify (and then be migrated by NeedsRehash). Never
-// call it to WRITE a new hash.
+// hashPasswordLegacy returns the legacy storage format, a bare HMAC-SHA256 hex
+// string. It verifies hashes that NeedsRehash has not replaced yet and serves as
+// the pepper; new hashes are never stored in this form.
 func hashPasswordLegacy(appKey, password string) string {
 	return hmacHex(appKey, "bombvault:auth:"+password)
 }
 
-// pepper returns the APP_KEY-keyed input Argon2id actually hashes. Reusing the
-// legacy message means the pepper is domain-separated exactly as before.
+// pepper returns the APP_KEY-keyed value that Argon2id hashes. It uses the same
+// domain-separated message as the legacy format.
 func pepper(appKey, password string) []byte {
 	return []byte(hashPasswordLegacy(appKey, password))
 }
 
 // HashPassword derives a stored password hash from appKey and password using
 // Argon2id over an APP_KEY-keyed pepper. The returned string carries its own
-// parameters and salt, so a future parameter change can still verify hashes
-// written today.
+// parameters and salt, so hashes written today still verify after a parameter
+// change.
 //
 // Format: argon2id$<m>$<t>$<p>$<salt-b64>$<key-b64>
 //
-// It panics on an invalid (non-hex) appKey, like the rest of this package.
+// It panics on a non-hex appKey.
 func HashPassword(appKey, password string) (string, error) {
 	salt := make([]byte, argonSaltLen)
 	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
@@ -92,20 +74,17 @@ func hashPasswordWithSalt(appKey, password string, salt []byte, m uint32, t uint
 	)
 }
 
-// VerifyPassword returns true when password matches storedHash under appKey.
-//
-// It accepts BOTH storage formats. A stored value beginning with "argon2id$" is
-// verified with the parameters recorded in the value itself; anything else is
-// treated as the legacy HMAC hex string. Both comparisons are constant-time.
-//
-// It panics on an invalid (non-hex) appKey.
+// VerifyPassword reports whether password matches storedHash under appKey. A
+// value starting with argonPrefix is checked with the parameters recorded in it;
+// anything else is treated as a legacy HMAC hex string. Both comparisons are
+// constant-time. It panics on a non-hex appKey.
 func VerifyPassword(appKey, password, storedHash string) bool {
 	if strings.HasPrefix(storedHash, argonPrefix) {
 		return verifyArgon(appKey, password, storedHash)
 	}
 	got := hashPasswordLegacy(appKey, password)
-	// Compare the hex STRINGS, not decoded bytes: a stored value that is not
-	// valid hex must fail, not decode to empty and match another empty.
+	// Compare the hex strings rather than decoded bytes, so a stored value that
+	// is not valid hex cannot decode to empty and match another empty.
 	return hmac.Equal([]byte(got), []byte(storedHash))
 }
 
@@ -114,10 +93,8 @@ func verifyArgon(appKey, password, storedHash string) bool {
 	if !ok {
 		return false
 	}
-	// argon2 wants the key length as a uint32 and len() is an int. parseArgon
-	// already refuses an empty key, and a stored hash is one base64 field in a
-	// settings row, so this can never be near 4 GiB - but a bound costs nothing
-	// and makes the conversion provably safe instead of safe by argument.
+	// parseArgon refuses an empty key; the upper bound keeps the uint32
+	// conversion from overflowing.
 	n := len(want)
 	if n <= 0 || n > math.MaxUint32 {
 		return false
@@ -143,8 +120,8 @@ func parseArgon(s string) (m uint32, t uint32, p uint8, salt, key []byte, ok boo
 	if err1 != nil || err2 != nil || err3 != nil || err4 != nil || err5 != nil {
 		return 0, 0, 0, nil, nil, false
 	}
-	// Zero anywhere would make argon2.IDKey panic, and an empty key would make
-	// hmac.Equal a coin flip against another empty result.
+	// argon2.IDKey panics on a zero time or thread count, and an empty key
+	// would match any password.
 	if mv == 0 || tv == 0 || pv == 0 || len(salt) == 0 || len(key) == 0 {
 		return 0, 0, 0, nil, nil, false
 	}
@@ -152,37 +129,28 @@ func parseArgon(s string) (m uint32, t uint32, p uint8, salt, key []byte, ok boo
 }
 
 // NeedsRehash reports whether storedHash should be replaced with a freshly
-// derived one. True for every legacy HMAC value and for an Argon2id value whose
-// recorded parameters are weaker than the current ones.
-//
-// The caller (the login handler) rehashes on a SUCCESSFUL login, which is the
-// only moment the plaintext password is available. An install whose operator
-// never signs in again keeps its old hash, which is exactly as safe as it was
-// before the upgrade and no worse.
+// derived one: every legacy HMAC value, and an Argon2id value whose recorded
+// parameters are weaker than the current ones. The login handler rehashes after
+// a successful login, the only moment the plaintext password is available.
 func NeedsRehash(storedHash string) bool {
 	if !strings.HasPrefix(storedHash, argonPrefix) {
 		return true
 	}
 	m, t, p, _, key, ok := parseArgon(storedHash)
 	if !ok {
-		// Unparseable: it can never verify anyway, so there is nothing to
-		// preserve. Say false — rehashing happens only after a successful
-		// verify, which this value cannot produce.
+		// An unparseable value never verifies, so no login could reach the
+		// rehash anyway.
 		return false
 	}
 	return m < argonMemoryKiB || t < argonTime || p < argonThreads || len(key) < argonKeyLen
 }
 
-// MinPasswordLen is the shortest password the settings page will store.
+// MinPasswordLen is the shortest password the settings page will store. The
+// login throttle allows 5 attempts a minute, about 7200 a day, which exhausts a
+// four-digit PIN in under two days; twelve characters put brute force out of
+// reach regardless of the throttle.
 //
-// There was no minimum at all before v8.6.0: handleSetPassword accepted any
-// non-empty string, so "1234" was a valid password on an instance somebody had
-// just published through a reverse proxy. The throttle allows 5 attempts a
-// minute, which is 7200 a day, which walks a four-digit PIN in under two days.
-// Twelve characters is the number that makes the throttle irrelevant instead of
-// load-bearing.
-//
-// It is checked when SETTING a password, never when verifying one: an existing
-// short password keeps working, and its owner is told to change it rather than
-// locked out by an upgrade.
+// It applies when a password is set, not when one is verified, so an existing
+// shorter password keeps working and its owner is asked to change it instead of
+// being locked out.
 const MinPasswordLen = 12

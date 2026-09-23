@@ -1,19 +1,14 @@
-// ---------------------------------------------------------------------------
-// Fleet page — the READ-ONLY fleet view. Watches a list of PEER BombVault
-// instances and shows each one's cached protection scorecard (same red/amber/
-// green aggregate the local dashboard shows). Polling GET /api/fleet/status is
-// the only thing this box does TO a peer's protection data — never a remote
-// backup/restore/drill trigger. The one exception is Mesh off-site: this page
-// can also PROPOSE this instance's own off-site storage to a peer (sending
-// connection metadata only, never backup data) and review storage offers a
-// peer has sent here; BombVault still never hosts storage itself, accepting
-// an offer only ever creates a normal named credential set + off-site target.
+// Fleet is the read-only view of peer BombVault instances and their cached
+// protection scorecards, the same red/amber/green aggregate as the local
+// dashboard. Polling GET /api/fleet/status is all this box does to a peer's
+// protection data; it never starts a backup, restore or drill there. The
+// exception is Mesh off-site: the page can offer this instance's off-site
+// storage to a peer (connection details, never backup data) and review offers
+// peers sent here. Accepting one creates an ordinary credential set and
+// off-site target, since BombVault never hosts storage itself.
 //
-// Gated behind settings.fleetEnabled (the Fleet tab only shows when on).
-// Freshness comes from the daily scheduled sweep + the explicit "Poll now"
-// button, never an implicit poll from opening this page (a peer poll is a
-// real network round-trip to another site). Modeled on Receiver.tsx.
-// ---------------------------------------------------------------------------
+// Peers are polled by the daily sweep and by "Poll now", not by opening the
+// page, because each poll is a round trip to another site.
 
 import { useEffect, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
@@ -46,36 +41,24 @@ import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
 import { copyText } from "../lib/clipboard";
 import { useToast } from "../lib/toast";
-import { hueVars, rainbowAt } from "../lib/appearance";
-import { useRainbow } from "../lib/useRainbow";
+import { hueVars } from "../lib/appearance";
 import { Button } from "../components/Button";
 
 import { ToggleRow } from "./settings/shared";
 type T = ReturnType<typeof useT>["t"];
 
-// CopyBlock mirrors OffsiteWizard's copy pattern (module-private there too): a
-// monospace <pre> with a copy button. GlimStone form-engine Task 9 (toasts):
-// this was one of the ad-hoc 2000ms-inline-text-swap "copied" patterns the
-// audit flagged as a natural toast candidate — the "Copied" feedback now
-// surfaces as a routine (quiet-mode-suppressible) toast instead of the
-// button's own label flipping for two seconds. While here: switched the raw
-// `navigator.clipboard.writeText` call to this repo's shared `copyText()`
-// helper (lib/clipboard.ts), which already exists specifically because a
-// direct call silently does nothing on a non-secure (plain HTTP) origin —
-// this was the one remaining call site still bypassing it (#112).
+// CopyBlock is a monospace <pre> with a copy button, like OffsiteWizard's.
+// copyText() is used because the Clipboard API alone silently does nothing on
+// a plain HTTP origin.
 function CopyBlock({ text, t }: { text: string; t: T }) {
   const { push } = useToast();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // the Copy button alongside its existing toast on a failed copy.
   const [shake, setShake] = useState(0);
   async function copy() {
     if (await copyText(text)) {
       push(t("common.copied"), "success");
     } else {
-      // "failures always surface" (design-language.md) — copyText() only
-      // returns false when BOTH the Clipboard API and the execCommand
-      // fallback failed, so this is a real, user-actionable failure, not
-      // routine noise a quiet-mode user would want suppressed.
+      // Both the Clipboard API and the execCommand fallback failed, which is
+      // worth telling even in quiet mode.
       push(t("vm.ssh.copyFailed"), "fail");
       setShake((n) => n + 1);
     }
@@ -101,11 +84,7 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
 
 const MESH_DOMAINS = ["containers", "vms", "flash", "config", "files"] as const;
 
-// ---------------------------------------------------------------------------
-// Protection chip — mirrors Dashboard's protectionChip mapping (not exported
-// there, so duplicated here: green/amber/red/"" -> ok/warn/fail/neutral).
-// ---------------------------------------------------------------------------
-
+// Same mapping as Dashboard's protectionChip, which is not exported.
 function protectionTone(level: string): "ok" | "fail" | "warn" | "neutral" {
   switch (level) {
     case "green":
@@ -119,17 +98,11 @@ function protectionTone(level: string): "ok" | "fail" | "warn" | "neutral" {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Per-browser: whether a peer card shows its scorecard (#179 — manilx: "Have to
-// open it every time"). Same "bombvault.*" localStorage convention as the other
-// UI preferences.
+// Whether peer cards show their scorecard, remembered per browser.
 const FLEET_DETAILS_OPEN_KEY = "bombvault.fleetDetailsOpen";
 
-// Cached scorecard (one row per domain the peer reported)
-// ---------------------------------------------------------------------------
-
-// Domain -> label key. An explicit map (not a template literal) so every
-// lookup is a real, statically-checked TranslationKey.
+// An explicit map rather than a template literal, so every lookup is a
+// checked TranslationKey.
 const DOMAIN_LABEL_KEYS: Record<string, TranslationKey> = {
   containers: "settings.containersEnabled",
   vms: "settings.vmsEnabled",
@@ -177,10 +150,6 @@ function PeerScorecard({ domains, t }: { domains: DomainStatus[]; t: T }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Mesh: offers received FROM peers
-// ---------------------------------------------------------------------------
-
 function meshStatusTone(status: string): "ok" | "fail" | "warn" | "neutral" {
   switch (status) {
     case "accepted":
@@ -208,9 +177,6 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
   const { ask, dialog } = useNewTargetQuestion();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // whichever button was actually clicked — separate nonces since Accept/
-  // Decline are two different failable actions.
   const [shakeAccept, setShakeAccept] = useState(0);
   const [shakeDecline, setShakeDecline] = useState(0);
 
@@ -233,10 +199,8 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
     try {
       const res = await acceptMeshOffer(offer.id, domain, answer.alsoExclude ?? undefined);
       if (res.ok) {
-        // Accepting mints BOTH a named credential set (holding the peer's REST
-        // credentials) and an off-site target — announce both so any mounted
-        // reader of either list is current, not just this page's offer rows
-        // (#173's invalidation contract; see useCloudCredSets).
+        // Accepting creates a credential set with the peer's REST login and
+        // an off-site target, so every mounted reader of either list reloads.
         credSetsChanged();
         offsiteTargetsChanged();
         if (answer.alsoExclude) placementChanged();
@@ -321,28 +285,16 @@ function MeshOfferRow({ offer, t, onChanged }: { offer: MeshOffer; t: T; onChang
   );
 }
 
-// ---------------------------------------------------------------------------
-// Mesh: propose this instance's own storage TO a peer
-// ---------------------------------------------------------------------------
-
 function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClose: () => void }) {
   const [domain, setDomain] = useState<string>("containers");
   const [baseUrl, setBaseUrl] = useState("");
   const [sending, setSending] = useState(false);
   const { push } = useToast();
   const [snippet, setSnippet] = useState<(DeploySnippetData & { repo: string }) | null>(null);
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // the Send button alongside the toast on a failed send.
   const [shake, setShake] = useState(0);
 
-  // GlimStone follow-up pass (v8.0.0): the form-stage "error" flash below is
-  // now a toast (matches this file's already-migrated CopyBlock/MeshOfferRow
-  // shape) — the client-side baseUrlRequired check is reachable through the
-  // UI (Send isn't disabled while baseUrl is blank), so it gets the same
-  // push() treatment as the API failure. The POST-send `snippet` view further
-  // down is deliberately UNCHANGED: "Offer sent" + the docker-run/compose
-  // blocks are a persistent reference the user copies down, not a one-shot
-  // ping — same reasoning as ExportButton/RestoreProgress's reference values.
+  // Send stays enabled while the base URL is blank, so the check below can
+  // fire. The snippet shown after sending stays on screen to be copied from.
   async function handleSend() {
     if (baseUrl.trim() === "") {
       push(t("fleet.mesh.baseUrlRequired"), "fail");
@@ -368,26 +320,16 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
   const inputCls =
     "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
-  // `items-center`, NOT `items-start` (whole-app sweep — this was one of the
-  // three sites Files.tsx's own FileSetDialog comment explicitly recorded as
-  // "same fix still owed", after that round scoped itself to the Ordner tab).
-  // Top-anchored, this dialog's heading Badge poked to 5px below the literal
-  // browser-viewport edge — measured live on the deployed container at a
-  // 1000px-tall viewport: badge top = 5px — reading as a flat bar jammed into
-  // the screen corner rather than a notch straddling the card. Safe here for
-  // the identical reason it is safe in ConfirmDialog/WhatsNewDialog/
-  // ErrorDetailPanel/FileSetDialog: the visible box below is capped at
-  // `max-h-[90vh]`, strictly under the 100vh flex container, so a centred
-  // item's top offset is always positive and never clips off-screen, while
-  // `overflow-y-auto` on this backdrop still covers content that grows toward
-  // the cap.
+  // Centred rather than top-anchored, which would push the heading notch
+  // against the viewport edge. The box is capped at 90vh, so it never clips,
+  // and the backdrop scrolls when the content grows.
   return createPortal(
     <div className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4" onClick={onClose}>
-      {/* GlimStone follow-up pass ("half-overlap card notch"): non-scrolling
-          `relative` shell wraps the scrollable dialog box, same split as
-          Receiver.tsx's ReceiverDialog — see that call site's comment. */}
+      {/* The heading notch sits on a non-scrolling shell around the
+          scrollable box, as in Receiver.tsx's ReceiverDialog. */}
       <div className="relative w-full max-w-lg">
-      {/* `px-5` matches the box's `p-5` so the heading notch lands where a Card's does ([542]) — see FolderBrowser.tsx for why the notch has no offset of its own. */}
+      {/* px-5 matches the box's p-5 so the notch lands where a Card's does;
+          FolderBrowser.tsx explains why the notch has no offset of its own. */}
       <h2 className="flex items-center px-5">
         <Badge tone="heading" size="heading" wrap>{t("fleet.mesh.proposeTitle")}</Badge>
       </h2>
@@ -429,7 +371,7 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
             <div className="flex items-center justify-end gap-2 pt-1">
               <Button
                 label={t("files.cancel")}
-          labelKey="files.cancel"
+                labelKey="files.cancel"
                 tone="neutral"
                 onClick={onClose}
                 disabled={sending}
@@ -462,7 +404,7 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
             <div className="flex items-center justify-end pt-1">
               <Button
                 label={t("common.close")}
-          labelKey="common.close"
+                labelKey="common.close"
                 tone="accent"
                 onClick={onClose}
               />
@@ -476,10 +418,6 @@ function ProposeMeshDialog({ peer, t, onClose }: { peer: FleetPeer; t: T; onClos
   );
 }
 
-// ---------------------------------------------------------------------------
-// Peer card
-// ---------------------------------------------------------------------------
-
 function FleetPeerCard({
   peer,
   t,
@@ -491,24 +429,11 @@ function FleetPeerCard({
   t: T;
   onRefresh: () => void;
   onEdit: () => void;
-  /** Position in the rendered list — the rainbow palette position (GlimStone
-   *  colour engine), matching Containers.tsx's ContainerRow / VMs.tsx's VMRow /
-   *  Files.tsx's FileSetRow: a peer list is exactly the case the mode exists
-   *  for, a variable, user-configured set someone tracks several of at once.
-   *  Assigned by LIST INDEX, never a hash of `peer.name` — see the caller
-   *  below. */
+  /** Rainbow position by list index, as for ContainerRow and VMRow. */
   index: number;
 }) {
-  // #179 (manilx): "Have to open it every time. Collapsed not a lot of info is
-  // shown." The scorecard IS the page's content — collapsed a peer card shows
-  // little more than its name — so the state is remembered instead of resetting
-  // to closed on every visit. Open one card and every card opens next time.
-  //
-  // Deliberately ONE key rather than one per peer: the request is "let it stay
-  // open", not "remember each card separately", and a per-peer key would leave a
-  // renamed or removed peer's entry behind forever. Same "bombvault.*"
-  // localStorage convention, and the same try/catch shape, as the backup-order
-  // card's own collapsed state.
+  // One key for all cards rather than one per peer, so a renamed or removed
+  // peer leaves no entry behind.
   const [open, setOpen] = useState(() => {
     try {
       return localStorage.getItem(FLEET_DETAILS_OPEN_KEY) === "1";
@@ -525,35 +450,21 @@ function FleetPeerCard({
       try {
         localStorage.setItem(FLEET_DETAILS_OPEN_KEY, next ? "1" : "0");
       } catch {
-        /* private mode / quota — it just will not be remembered */
+        /* private mode or full quota: not remembered */
       }
       return next;
     });
   }
   const { push } = useToast();
   const [showPropose, setShowPropose] = useState(false);
-  // Reversible action: removing a monitoring entry never contacts the peer
-  // instance (re-addable in one step), so per the design-language's
-  // "reversible actions don't ask" rule this gets the LIGHTER two-click
-  // inline-confirm — click "Remove" → button becomes "Confirm remove" —
-  // matching OffsiteTargetsSection's / Receiver.tsx's `confirmRemove`
-  // pattern exactly, not a full window.confirm()/ConfirmDialog (form-engine
-  // Task 7).
+  // Removing a monitoring entry never contacts the peer and is undone by adding
+  // it again, so a two-click inline confirm is enough, as in Receiver.tsx.
   const [confirmRemove, setConfirmRemove] = useState(false);
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // the Poll/Remove buttons alongside their existing toasts on failure.
   const [shakePoll, setShakePoll] = useState(0);
   const [shakeRemove, setShakeRemove] = useState(0);
 
-  // BUG FIX (found alongside this card's handleRemove migration below,
-  // GlimStone follow-up pass v8.0.0): this never checked pollFleetPeer's
-  // `res.ok`, and had no catch at all — a server-reported poll failure was
-  // silently ignored, and a network-level failure threw past the missing
-  // catch as an unhandled rejection, skipping onRefresh() with zero feedback
-  // to the user either way. Now both are surfaced; onRefresh() still only
-  // runs when the request itself resolved (preserving the original "reload
-  // only on a real response" behavior), so the persistent pollTone/pollLabel
-  // badge below picks up the server-recorded outcome exactly as before.
+  // Any answer from the server reloads the list, so the poll badge shows the
+  // outcome the server recorded.
   async function handlePoll() {
     setPolling(true);
     try {
@@ -579,10 +490,8 @@ function FleetPeerCard({
         onRefresh();
         setConfirmRemove(false);
       } else {
-        // Keep the two-click confirm UP on failure (don't reset to "Remove") —
-        // otherwise the shake below would fire on a button that unmounts in
-        // the same tick, and the user would lose their confirm click for a
-        // failure that wasn't their mistake.
+        // The confirm button stays, so it can shake and the user keeps their
+        // confirm click for a failure that was not their mistake.
         push(res.error ?? t("fleet.saveError"), "fail");
         setShakeRemove((n) => n + 1);
       }
@@ -600,17 +509,9 @@ function FleetPeerCard({
 
   return (
     <div
-      style={{ ...hueVars(rainbowAt(index)), "--row-i": String(index) } as CSSProperties}
-      // glim-hue owns the position; glim-tint washes the WHOLE card with it
-      // (trap #2, design-language.md's "Rainbow" section) — same
-      // relative/overflow-hidden/glim-hue/glim-tint shell as
-      // ContainerRow/VMRow/FileSetRow, so a rainbow-mode Fleet list colours
-      // each monitored peer instead of leaving every row the flat accent. No
-      // glim-active here: unlike those three, a peer card has no
-      // progressMap-tracked backup/restore job of its own to key it off —
-      // Poll/Propose are quick request/response actions, not a tracked job.
-      // glim-stagger-row (GlimStone motion-engine animation 3) — see
-      // ContainerRow's identical comment.
+      style={{ ...hueVars(index), "--row-i": String(index) } as CSSProperties}
+      // The same hued shell as ContainerRow, without glim-active: polling and
+      // proposing are quick requests, not a tracked job.
       className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-stagger-row"
     >
       <div className="flex items-start gap-3 flex-wrap">
@@ -624,10 +525,7 @@ function FleetPeerCard({
           </div>
           <p dir="ltr" className="mt-1 text-xs font-mono text-carbon-textMuted truncate text-start">{peer.url}</p>
         </div>
-        {/* No "v" prefix: the value already carries one (api.Version is
-            "v8.0.0+…"), so this rendered "vv8.0.0+main.e3db401" — visible in
-            both screenshots on #179. Every other version render in the app
-            prints the string as-is. */}
+        {/* api.Version already starts with "v". */}
         {peer.lastPollVersion && (
           <span className="text-xs text-carbon-textMuted shrink-0">{peer.lastPollVersion}</span>
         )}
@@ -673,32 +571,13 @@ function FleetPeerCard({
           />
           <Button
             label={t("fleet.edit")}
-          labelKey="fleet.edit"
+            labelKey="fleet.edit"
             tone="neutral"
             onClick={onEdit}
           />
-          {/* NO bespoke red on either state (whole-app sweep): both were
-              `bg-statusFailBg`/`text-statusFail`. The standing rule is that a
-              destructive action gets no special red treatment (jdp: "Keine
-              Sonderfarbe fuer den Entfernen-Badge"; RestorePanel's own delete
-              badge records the same reversal). Now the identical neutral
-              secondary chrome as the "Bearbeiten"/"Details"/"Speicher
-              anbieten" buttons it shares this row with, so the whole action
-              group reads as one set instead of one odd red member.
-                DELIBERATELY STILL A TEXT BUTTON, not the square icon badge
-              the Ordner/Flash/Container row actions became — do not "fix"
-              this to a glyph. The two-click inline confirm is a considered,
-              documented decision (i18n.ts, fleet.confirmRemove: "Downgraded
-              from window.confirm() to the two-click inline-confirm pattern
-              (form-engine Task 7) — removing a monitoring entry is
-              reversible"), and the LABEL is what carries the confirm state:
-              it flips "Entfernen" → "Entfernen bestätigen" → "Wird
-              entfernt…". An icon-only badge has no label to flip, so
-              converting it would silently delete the confirm affordance and
-              leave a trash glyph that appears to do nothing on first click.
-              The converted sites (Files' set remove, RestorePanel's delete)
-              could take a glyph precisely because they route through a
-              useConfirm DIALOG instead. */}
+          {/* A text button rather than an icon badge, because the label
+              carries the two-click confirm state and a glyph cannot. Neutral
+              like its neighbours, with no red of its own. */}
           {confirmRemove ? (
             <Button
               key={shakeRemove}
@@ -733,10 +612,6 @@ function FleetPeerCard({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Add / edit dialog
-// ---------------------------------------------------------------------------
-
 function FleetDialog({
   initial,
   t,
@@ -756,20 +631,12 @@ function FleetDialog({
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
   const [saving, setSaving] = useState(false);
   const revealToken = useReveal();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // the Save button alongside the toast on a failed save.
   const [shake, setShake] = useState(0);
 
   const editing = initial !== null;
   const canSave = name.trim() !== "" && url.trim() !== "" && (token.trim() !== "" || editing) && !saving;
 
-  // GlimStone follow-up pass (v8.0.0): the "error" flash below is now a
-  // toast — same shape as Files.tsx's FileSetDialog.handleSave (a dialog
-  // editor that closes on success via onSaved(), so a toast is the only
-  // outcome notice left, success or failure). The two client-side
-  // nameRequired/urlRequired checks are effectively unreachable through the
-  // UI (canSave already disables Save for the same conditions), but get the
-  // same push() treatment as the API failure below for consistency.
+  // The dialog closes on success, so every outcome is reported as a toast.
   async function handleSave() {
     if (name.trim() === "") {
       push(t("fleet.nameRequired"), "fail");
@@ -809,20 +676,13 @@ function FleetDialog({
   const inputCls =
     "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
-  // `items-center` — same whole-app sweep fix, and for the same measured
-  // reason, as this file's own proposeTitle dialog above; see that call site's
-  // comment for the full writeup.
+  // Centred and split into shell and scrolling box like ProposeMeshDialog.
   return createPortal(
     <div
       className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
       onClick={onClose}
     >
-      {/* GlimStone follow-up pass ("half-overlap card notch"): non-scrolling
-          `relative` shell wraps the scrollable dialog box — see
-          Receiver.tsx's ReceiverDialog and this file's own proposeTitle
-          dialog above for the identical split. */}
       <div className="relative w-full max-w-lg">
-      {/* `px-5` matches the box's `p-5` so the heading notch lands where a Card's does ([542]) — see FolderBrowser.tsx for why the notch has no offset of its own. */}
       <h2 className="flex items-center px-5">
         <Badge tone="heading" size="heading" wrap>{editing ? t("fleet.editTitle") : t("fleet.addTitle")}</Badge>
       </h2>
@@ -876,19 +736,14 @@ function FleetDialog({
           <p className="text-caption text-carbon-textMuted">{t("fleet.tokenHint")}</p>
         </div>
 
-        {/* ToggleRow, not a bare Toggle ([544]). A bare Toggle sets its label
-            immediately beside the switch; every setting row in this app puts the
-            words at the start and the switch at the end, which is what ToggleRow
-            renders (`flex items-start justify-between`). jdp: "der toggle soll
-            rechtsbuendig sein, der text linksbuendig". Fixed at the shared
-            component rather than by hand-matching classes here, the same reason
-            IncludeToggle.tsx gives for its own switch to ToggleRow. */}
-<ToggleRow checked={enabled} onChange={setEnabled} label={t("fleet.enabledLabel")} />
+        {/* ToggleRow puts the words at the start and the switch at the end,
+            like every setting row. */}
+        <ToggleRow checked={enabled} onChange={setEnabled} label={t("fleet.enabledLabel")} />
 
         <div className="flex items-center justify-end gap-2 pt-1">
           <Button
             label={t("files.cancel")}
-          labelKey="files.cancel"
+            labelKey="files.cancel"
             tone="neutral"
             onClick={onClose}
             disabled={saving}
@@ -912,21 +767,10 @@ function FleetDialog({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Fleet page
-// ---------------------------------------------------------------------------
-
-/** `embedded` is the Instances page rendering this as one of its tabs: the
- *  outer shell and the <h1> belong to that page then, because a tab panel
- *  that repeats the strip's own label reads as two headings for one thing.
- *  Everything else, the subtitle included, is the same page either way. */
+/** With `embedded` the page is a tab of Instances, which owns the shell and
+ *  the heading; the subtitle stays. */
 export function Fleet({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useT();
-  // Registers this page for a re-render on any rainbow-state change (on/off/
-  // reactive/rotate/palette edit) — the FleetPeerCard list below reads
-  // rainbowAt()/hueVars() directly during render; see lib/useRainbow.ts's own
-  // header for why a caller doesn't need the returned value.
-  useRainbow();
   const [peers, setPeers] = useState<FleetPeer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -962,46 +806,18 @@ export function Fleet({ embedded = false }: { embedded?: boolean } = {}) {
 
   const pendingOffers = offers.filter((o) => o.status === "pending");
 
-  // jdp live review ("Fleet Tab: Button rechts oben ist redundant"): the
-  // empty-state Card below already carries its own prominent "Add peer" CTA,
-  // so showing the identical button a second time in the top-right actions
-  // bar was pure duplication — confirmed both call the exact same handler
-  // (`() => setDialog("new")`). Mirrors Files.tsx's/Receiver.tsx's own
-  // showEmptyState fix for the identical pattern. Once a peer exists the
-  // empty-state Card stops rendering and the top-right button is the page's
-  // only entry point again, so "Add" is never unreachable.
+  // The empty state has its own Add button, so the header one waits for the
+  // first peer.
   const showEmptyState = !loading && !error && peers.length === 0;
 
-  // hueSeq/nextHue (GlimStone follow-up pass — see VMs.tsx's/Settings.tsx's
-  // own identical hueSeq/nextHue comment for the full reasoning): a plain,
-  // freshly-reset-every-render counter assigning 0,1,2,... to this page's
-  // heading notches in the exact order the JSX below actually evaluates each
-  // `hueIndex={nextHue()}` call — safe here because both call sites below are
-  // plain `cond && (<div>…)` blocks evaluated directly in this component's
-  // own JSX (never handed down as a prop into a child that might itself
-  // decide not to render, the one shape that would evaluate a hueIndex
-  // expression before its own gate — see VMs.tsx's <Advanced> caution).
-  //   Two heading notches can exist on this page at once: the mesh-offers
-  // Card (offers a PEER sent TO this instance, independent of whether this
-  // instance is itself watching that peer) and the new empty-state Card
-  // below (zero watched peers) — genuinely independent conditions, so both
-  // CAN render together (a peer proposed storage here while this instance
-  // watches no peers of its own yet). The mesh-offers badge used to be this
-  // page's only heading notch and correctly rendered flat/un-rainbowed as a
-  // genuine singleton (proactive sweep, memory always-integrate-new-
-  // elements-into-color-modes: found live while adding the empty-state
-  // Card's own badge) — neither is a singleton anymore once both can be
-  // visible together, so both are threaded through this one counter instead.
+  // Heading notches take hues in render order. The offers card and the empty
+  // state can show together (a peer offered storage before any peer is
+  // watched), so neither can assume hue 0. Both calls sit directly in this
+  // component's JSX, so a notch that does not render takes no hue.
   let hueSeq = 0;
   const nextHue = () => hueSeq++;
 
   return (
-    // PAGE_SHELL (jdp live-review, "Können wir die nicht überall gleich breit
-    // machen?"): the gap here was already the correct 40px from the earlier
-    // "Im Fleet Tab ist die Card zu weit oben" round; only the width changes,
-    // max-w-5xl (1024px) → the shared 1152px. This page's heading is a single
-    // bare h1+p row, so the one flat shell gap still governs every gap on it.
-    // See lib/pageShell.ts for the full before/after table.
     <div className={embedded ? PAGE_SHELL_TABBED : PAGE_SHELL}>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
@@ -1025,18 +841,8 @@ export function Fleet({ embedded = false }: { embedded?: boolean } = {}) {
       {!loading && pendingOffers.length > 0 && (
         <div className="relative bg-carbon-surface rounded-card p-4 flex flex-col gap-3">
           <div>
-            {/* Task 5 (rule 11): outermost heading of this rounded-card p-4
-                panel — not nested inside anything already badged — same
-                Badge-in-<h2> treatment as every other converted Card
-                heading. GlimStone follow-up pass ("half-overlap card
-                notch"): `relative` added on the outer p-4 card above (not
-                this bare inner div) — the heading Badge is now
-                `position: absolute` and needs to straddle the padded card's
-                real edge, not just this inner div's own (padding-less)
-                position within it. hueIndex={nextHue()} (proactive
-                rainbow-hue sweep, this round) — see this page's own
-                hueSeq/nextHue comment above for why this is no longer a
-                genuine singleton. */}
+            {/* The padded card is `relative`, so the notch straddles its edge
+                and not this inner div's. */}
             <h2 className="flex items-center">
               <Badge tone="heading" size="heading" wrap hueIndex={nextHue()}>{t("fleet.mesh.offersTitle")}</Badge>
             </h2>
@@ -1050,44 +856,15 @@ export function Fleet({ embedded = false }: { embedded?: boolean } = {}) {
         </div>
       )}
 
-      {/* Empty state — GlimStone follow-up pass (jdp live review: "Card hat
-          keinen Cardtitelbadge mit dem Infotext der in der Card steht"): this
-          card had no heading at all — just the icon, the permanent pitch
-          paragraph, and the Add button — the one Card-shaped box on this page
-          that never got the tone="heading" notch every other Card in the app
-          carries. `relative glim-notch-card` (Files.tsx's own setsTitle Card
-          precedent). The old permanent `<p>{t("fleet.empty")}</p>` reads once
-          and then costs vertical space forever — moved verbatim onto the new
-          heading Badge as an `onAccent` InfoBubble instead, zero new i18n
-          keys for the body, only the new title key.
-          hueIndex={nextHue()}, not a fixed 0: see this page's own
-          hueSeq/nextHue comment above — the mesh-offers Card can render
-          simultaneously with this one, so this can't assume it is always the
-          sole heading notch on the page the way Receiver.tsx's identical
-          empty-state Card can.
-          insetStart={6} (GlimStone follow-up pass, jdp: "Empfaenger/Fleet-
-          Tab: Cardtitelbadge falsch platziert" — the SAME `text-center
-          items-center` collapsed-h2 mismatch as Files.tsx's own setsTitle
-          Card and Receiver.tsx's identical empty-state Card; see Files.tsx's
-          own call site for the full "why a single-merged-div Card can still
-          get this wrong" mechanism and Badge.tsx's `insetStart` doc). */}
+      {/* insetStart corrects the notch in a centred card, see Badge.tsx. */}
       {showEmptyState && (() => {
-        // Single nextHue() call (unchanged sequence position — see this
-        // page's own hueSeq/nextHue comment above) reused for BOTH the
-        // heading Badge and this card's own wrapper: rainbow-mode
-        // completeness sweep (jdp, live review: "Es sind nicht alle Buttons
-        // in den Regenbogen-Modus eingepflegt"). `glim-notch-card` alone only
-        // wires the reactive-mode hover reveal on the Badge's own notch — it
-        // never redefines --accent/--focus-ring, so the "Add" button below
-        // stayed the flat theme accent regardless of rainbow. Adding
-        // `.glim-hue` here too (same mechanism as StepCard.tsx/Dashboard.tsx
-        // Card()'s own identical fix) makes it inherit the SAME hue via
-        // ordinary CSS custom-property cascade, no button-level change.
+        // One hue for the notch and the card, so glim-hue gives the Add
+        // button the same accent.
         const emptyHue = nextHue();
         return (
           <div
             className="relative glim-notch-card glim-hue bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3"
-            style={hueVars(rainbowAt(emptyHue)) as CSSProperties}
+            style={hueVars(emptyHue) as CSSProperties}
           >
             <h2 className="flex items-center">
               <Badge tone="heading" size="heading" wrap hueIndex={emptyHue} insetStart={6}>

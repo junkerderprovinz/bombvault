@@ -1,29 +1,7 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// The selection tree is fully operable from the keyboard (TREE-05): the APG
-// TreeView checkbox-variant key map, pinned through document.activeElement.
-//
-// The map's easy-to-get-wrong halves (RESEARCH Pattern 4): Right EXPANDS a
-// closed node with focus staying on the parent and only moves to the first
-// child on a SECOND Right — and while children are still loading there is no
-// child to move to, so that second Right is a no-op; Left collapses an open
-// node, walks UP from a closed child, and does nothing on a closed level-1
-// root; Down/Up/Home/End move focus without ever expanding anything; Enter is
-// the expansion default action; Space is the ONLY selection toggler and rides
-// the exact same onToggle path as checkbox clicks (threat T-02-10: one toggle
-// semantics, so the D-04 guard and the save queue cannot be bypassed by key).
-//
-// Geometry (Pitfall 7): aria-level/setsize/posinset computed from the flat
-// model on EVERY node uniformly — including lazy-loaded deep nodes — and the
-// notice rows (loading, truncated, empty) are plain rows outside both the
-// treeitem role and the setsize arithmetic. Selection stays aria-checked only
-// (never aria-selected), and exactly one treeitem is tabbable at a time.
-//
-// Harness: the FoldersEditor mock-api shape from SelectionTree.dom.test.tsx
-// (so Space assertions can read the PATCH bodies), driven line-for-line in the
-// DropdownListbox.keyboard.dom.test.tsx style — scrollIntoView stubbed in
-// beforeEach, act-wrapped keyDown on the tree element, activeElement asserts.
-// ---------------------------------------------------------------------------
+// Keyboard behaviour of the selection tree (the APG tree view with
+// checkboxes), driven through FoldersEditor with a mocked api module so Space
+// can be checked against the request it sends.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { I18nProvider, useT } from "../lib/i18n";
@@ -33,8 +11,7 @@ import type { BrowseResponse, ContainerMountsResponse, OkEnvelope } from "../lib
 const browseCalls: string[] = [];
 const patches: { name: string; paths: string[]; opts?: { selectionSource?: string } }[] = [];
 let mountsReply: ContainerMountsResponse;
-// Plain values or promises: a deferred promise pins the per-node loading row,
-// which an immediately-resolving mock can never show.
+// A reply may be a pending promise, which keeps the loading row on screen.
 let browseReplies: (BrowseResponse | Promise<BrowseResponse>)[] = [];
 let patchReplies: (OkEnvelope | Promise<OkEnvelope>)[] = [];
 
@@ -48,9 +25,7 @@ vi.mock("../lib/api", async (importOriginal) => {
       const reply = browseReplies.shift() ?? { ok: true, dirs: [], status: "ok", truncated: false };
       return Promise.resolve(reply);
     },
-    // The composed PATCH endpoint (plan 03 Task 2) with the flat paths/source
-    // view the keyboard Space assertions pin, projected out of the body — the
-    // same wire contract the retired setBackupPaths mock captured.
+    // Records the paths and selectionSource from the request body.
     setContainerTargets: (name: string, body: Record<string, unknown>) => {
       patches.push({
         name,
@@ -63,16 +38,14 @@ vi.mock("../lib/api", async (importOriginal) => {
   };
 });
 
-// Imported AFTER vi.mock so the components pick up the mocked client.
+// Imported after vi.mock so the components pick up the mocked client.
 const { FoldersEditor } = await import("../pages/Containers");
 
 const HOST_ROOT = "/mnt";
 const MOUNT = "/mnt/user/appdata/plex";
 const OTHER = "/mnt/user/appdata/other";
 const CUSTOM = "/mnt/user/backups";
-// A custom path outside the served root: server containment means it can never
-// be browsed, so it is the tree's honest LEAF (aria-expanded omitted, Enter and
-// Right are no-ops on it).
+// Outside the served root, so it cannot be browsed and is a leaf.
 const OUTSIDE = "/srv/data";
 
 /** A controllable promise: `resolve` releases it from inside act(). */
@@ -84,9 +57,8 @@ function deferred<T>(): { promise: Promise<T>; resolve: (v: T) => void } {
   return { promise, resolve };
 }
 
-/** Two selected mounts plus two custom includes: every key walk below stays
- *  above the D-04 zero-include floor, and the custom list ends in one true
- *  leaf so end-node behavior is pinnable in the same tree. */
+/** Two mounts and two custom paths, the last of them a leaf. No toggle below
+ *  empties the selection. */
 function keyboardMounts(): ContainerMountsResponse {
   return {
     ok: true,
@@ -151,8 +123,7 @@ async function renderEditor(): Promise<void> {
   await act(async () => {});
 }
 
-/** The tree element — fetched BY ACCESSIBLE NAME so every test also pins
- *  folders.treeLabel (TREE-05: the tree carries its accessible name). */
+/** Found by accessible name, so every test also checks that the tree has one. */
 function tree(): HTMLElement {
   return screen.getByRole("tree", { name: "Backup folder selection" });
 }
@@ -161,11 +132,8 @@ function item(name: string | RegExp): HTMLElement {
   return screen.getByRole("treeitem", { name });
 }
 
-/** Focus a treeitem the way a keyboard user reaches it. The act() wrapper
- *  matters: focusing fires the row's onFocus (which moves the roving tabindex
- *  in component state), and that commit must land BEFORE the next key press
- *  reads it — exactly the browser's own ordering, where the discrete focus
- *  event is always dispatched before the subsequent keydown. */
+/** Focuses a treeitem inside act(), so the roving tabindex update from
+ *  onFocus is committed before the next key press, as in a browser. */
 async function focusItem(name: string | RegExp): Promise<HTMLElement> {
   const el = item(name);
   await act(async () => {
@@ -187,8 +155,7 @@ function focused(): Element | null {
 }
 
 beforeEach(() => {
-  // jsdom does not implement scrollIntoView; the tree calls it to keep the
-  // newly focused row visible. Its absence is not what these tests are about.
+  // jsdom has no scrollIntoView, which the tree calls on the focused row.
   Element.prototype.scrollIntoView = function () {};
   localStorage.clear();
   localStorage.setItem("bv-lang", "en");
@@ -201,7 +168,7 @@ beforeEach(() => {
 
 afterEach(cleanup);
 
-describe("SelectionTree keyboard map (TREE-05)", () => {
+describe("SelectionTree keyboard map", () => {
   it("Right expands a closed root with focus staying on the parent, then moves to the first child on a second Right", async () => {
     browseReplies = [plexListing()];
     await renderEditor();
@@ -209,7 +176,7 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     const root = await focusItem(/user\/appdata\/plex/);
     await press("ArrowRight");
 
-    // APG: focus STAYS on the parent while (async) children load.
+    // Focus stays on the parent while the children load.
     expect(root.getAttribute("aria-expanded")).toBe("true");
     expect(focused()).toBe(root);
     expect(item(/transcoding/)).toBeTruthy();
@@ -228,7 +195,7 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     await press("ArrowRight");
     expect(screen.getByText("Loading…")).toBeTruthy();
 
-    // No child treeitem exists yet — the loading row is NOT focusable.
+    // No child treeitem yet, and the loading row is not focusable.
     await press("ArrowRight");
     expect(focused()).toBe(root);
 
@@ -288,7 +255,7 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     await press("ArrowUp");
     expect(focused()).toBe(other);
 
-    // Arrow moves never expand/collapse: only the deliberate plex expand browsed.
+    // Arrow keys never expand or collapse; only the plex expand browsed.
     expect(other.getAttribute("aria-expanded")).toBe("false");
     expect(custom.getAttribute("aria-expanded")).toBe("false");
     expect(browseCalls).toEqual(["user/appdata/plex"]);
@@ -319,8 +286,7 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     await press("Enter");
     expect(other.getAttribute("aria-expanded")).toBe("false");
 
-    // The outside-root custom is a leaf: Enter and Right are no-ops, and
-    // aria-expanded is honestly OMITTED (APG end-node rule, Pitfall 7).
+    // The leaf ignores Enter and Right and has no aria-expanded.
     const leaf = await focusItem(/srv\/data/);
     await press("Enter");
     expect(focused()).toBe(leaf);
@@ -341,8 +307,7 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     const before = [OTHER, MOUNT, CUSTOM, OUTSIDE]; // canonical sorted wire order
     const transcoding = await focusItem(/transcoding/);
 
-    // Space = the checkbox: the carve-out PATCH changes for exactly this node
-    // (one new "!"+host entry; every bare include untouched).
+    // Space excludes exactly this node: one new "!" entry, includes unchanged.
     await press(" ");
     expect(patches).toEqual([
       {
@@ -354,8 +319,7 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     expect(transcoding.getAttribute("aria-checked")).toBe("false");
     expect(root.getAttribute("aria-checked")).toBe("mixed");
 
-    // Space again on the same (now excluded) node: the exclusion is released
-    // and the wire list is byte-identical to the pre-toggle list.
+    // Space again releases the exclusion and restores the original list.
     await press(" ");
     expect(patches[1].paths).toEqual(before);
     expect(transcoding.getAttribute("aria-checked")).toBe("true");
@@ -393,7 +357,7 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     const transcoding = await focusItem(/transcoding/);
     await press("ArrowRight"); // transcoding children (level 3, lazily loaded)
 
-    // Geometry on the deep lazy node — uniform, not a post-load special case.
+    // A lazily loaded level-3 node gets the same attributes as any other.
     const cache = item(/cache/);
     expect(cache.getAttribute("aria-level")).toBe("3");
     expect(cache.getAttribute("aria-setsize")).toBe("1");
@@ -443,8 +407,8 @@ describe("SelectionTree keyboard map (TREE-05)", () => {
     expect(loading.closest('[role="treeitem"]')).toBeNull();
     expect(item(/transcoding/).getAttribute("aria-setsize")).toBe("2");
 
-    // An expanded EMPTY directory honestly reports aria-expanded true with
-    // zero children — its folder.none row is a notice, not a treeitem.
+    // An expanded empty directory reports aria-expanded true, and its
+    // "No subdirectories" row is not a treeitem.
     await act(async () => {
       hold.resolve({ ok: true, status: "ok", truncated: false, dirs: [] });
     });

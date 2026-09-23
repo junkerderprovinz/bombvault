@@ -1,15 +1,7 @@
-// ---------------------------------------------------------------------------
-// Receiver page — the READ-ONLY receiver dashboard. On the box that RECEIVES
-// immutable off-site copies (an append-only rest-server / repo another BombVault
-// pushes to), this registers that repo and monitors it read-only: snapshot
-// inventory grouped by source, last-received time, an independent restic check
-// on the receiving hardware, and dead-mans-switch + integrity status.
-//
-// Gated behind settings.receiverEnabled (the Receiver tab only shows when on).
-// Nothing here writes to the received repo: it is opened read-only with the
-// SENDING instance's APP_KEY (encrypted at rest, never shown again). Modeled on
-// Files.tsx — one card per received repo with an expandable inventory panel.
-// ---------------------------------------------------------------------------
+// Receiver monitors the repositories other BombVault instances push off-site
+// copies to: snapshots per source, last-received time, an independent restic
+// check on this hardware and the dead man's switch. A repo is opened read-only
+// with the sending instance's APP_KEY, stored encrypted and never shown again.
 
 import { useEffect, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
@@ -38,33 +30,23 @@ import { InfoBubble } from "../components/InfoBubble";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
 import { useToast } from "../lib/toast";
-import { hueVars, rainbowAt } from "../lib/appearance";
-import { useRainbow } from "../lib/useRainbow";
+import { hueVars } from "../lib/appearance";
 import { Button } from "../components/Button";
-
 import { Toggle } from "../components/Toggle";
 import { ToggleRow } from "./settings/shared";
 import { IconDisclosure } from "../components/IconDisclosure";
+
 type T = ReturnType<typeof useT>["t"];
 
-// The sending APP_KEY shape guard mirrors the backend foreignKeyRe (64 lowercase
-// hex). The server re-validates + probes; this just gives instant feedback.
+// Mirrors the backend's foreignKeyRe for instant feedback; the server checks
+// the key again and probes the repo with it.
 const APP_KEY_RE = /^[0-9a-f]{64}$/;
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/** Render an RFC3339 (or empty) received-time string as a localized date/time. */
 function fmtReceived(iso: string, t: T): string {
   if (!iso) return t("receiver.never");
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
 }
-
-// ---------------------------------------------------------------------------
-// Inventory panel (grouped by source) — lazy-loaded on expand
-// ---------------------------------------------------------------------------
 
 function InventoryPanel({ repo, t }: { repo: ReceivedRepoStatus; t: T }) {
   const [inv, setInv] = useState<ReceiverInventory | null>(null);
@@ -139,10 +121,6 @@ function InventoryPanel({ repo, t }: { repo: ReceivedRepoStatus; t: T }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Repo card
-// ---------------------------------------------------------------------------
-
 function ReceivedRepoCard({
   repo,
   t,
@@ -154,12 +132,7 @@ function ReceivedRepoCard({
   t: T;
   onRefresh: () => void;
   onEdit: () => void;
-  /** Position in the rendered list — the rainbow palette position (GlimStone
-   *  colour engine), matching Containers.tsx's ContainerRow / VMs.tsx's VMRow /
-   *  Files.tsx's FileSetRow (and now Fleet.tsx's FleetPeerCard): a list of
-   *  received repos is exactly the case the mode exists for, a variable,
-   *  user-configured set someone tracks several of at once. Assigned by LIST
-   *  INDEX, never a hash of `repo.name` — see the caller below. */
+  /** Position in the list, which picks the card's rainbow hue. */
   index: number;
 }) {
   const [open, setOpen] = useState(false);
@@ -167,26 +140,15 @@ function ReceivedRepoCard({
   const [checking, setChecking] = useState(false);
   const [removing, setRemoving] = useState(false);
   const { push } = useToast();
-  // Reversible action: removing a monitoring entry never touches the repo on
-  // disk (re-addable in one step), so per the design-language's "reversible
-  // actions don't ask" rule this gets the LIGHTER two-click inline-confirm —
-  // click "Remove" → button becomes "Confirm remove" — matching
-  // OffsiteTargetsSection's `confirmRemove` pattern exactly, not a full
-  // window.confirm()/ConfirmDialog (form-engine Task 7).
+  // Removing only drops the monitoring entry and leaves the repo on disk, so a
+  // two-click inline confirm is enough.
   const [confirmRemove, setConfirmRemove] = useState(false);
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // the Check/Remove buttons alongside their existing toasts on failure.
+  // Bumped on a failure and used as the button key, so the shake replays.
   const [shakeCheck, setShakeCheck] = useState(0);
   const [shakeRemove, setShakeRemove] = useState(0);
 
-  // GlimStone follow-up pass (v8.0.0): the ok/fail checkMsg result below moved
-  // to a toast — found alongside this card's handleRemove migration (same
-  // component). Same ok/uninit/fail shape as the already-migrated
-  // TestConnectionButton/TargetTestButton: onRefresh() reloads the repo,
-  // whose persistent checkTone/checkLabel Badge + "last checked" line already
-  // carry this exact outcome, so the ephemeral checkMsg was pure duplicate
-  // (and, since it never auto-cleared, a stale one could linger next to the
-  // button until the NEXT check).
+  // The outcome is only a toast: onRefresh() reloads the repo, and its badge
+  // and "last checked" line carry the lasting result.
   async function handleCheck() {
     setChecking(true);
     try {
@@ -218,8 +180,8 @@ function ReceivedRepoCard({
         onRefresh();
         setConfirmRemove(false);
       } else {
-        // Keep the two-click confirm UP on failure (don't reset to "Remove")
-        // — see FleetPeerCard's identical handleRemove for the fuller reason.
+        // The confirm stays armed, so the shake lands on a mounted button and a
+        // retry needs no second click.
         push(res.error ?? t("receiver.saveError"), "fail");
         setShakeRemove((n) => n + 1);
       }
@@ -231,7 +193,6 @@ function ReceivedRepoCard({
     }
   }
 
-  // Check-result badge tone: never checked / passed / failed.
   const checkTone = repo.lastCheckOk === null ? "neutral" : repo.lastCheckOk ? "ok" : "fail";
   const checkLabel =
     repo.lastCheckOk === null
@@ -242,21 +203,11 @@ function ReceivedRepoCard({
 
   return (
     <div
-      style={{ ...hueVars(rainbowAt(index)), "--row-i": String(index) } as CSSProperties}
-      // glim-hue owns the position; glim-tint washes the WHOLE card with it
-      // (trap #2, design-language.md's "Rainbow" section) — same
-      // relative/overflow-hidden/glim-hue/glim-tint shell as
-      // ContainerRow/VMRow/FileSetRow/FleetPeerCard, so a rainbow-mode
-      // Receiver list colours each monitored repo instead of leaving every
-      // row the flat accent. No glim-active here: unlike those first three,
-      // a received-repo card has no progressMap-tracked backup/restore job of
-      // its own to key it off — Check is a quick request/response action,
-      // not a tracked job.
-      // glim-stagger-row (GlimStone motion-engine animation 3) — see
-      // ContainerRow's identical comment.
+      style={{ ...hueVars(index), "--row-i": String(index) } as CSSProperties}
+      // Unlike ContainerRow, no glim-active: a check is a quick request, not a
+      // tracked backup or restore job.
       className="relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-stagger-row"
     >
-      {/* Header: name + badges */}
       <div className="flex items-start gap-3 flex-wrap">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -273,17 +224,15 @@ function ReceivedRepoCard({
           <p dir="ltr" className="mt-1 text-xs font-mono text-carbon-textMuted truncate text-start">{repo.repo}</p>
         </div>
 
-        {/* Last received + snapshot count */}
         <div className="text-end shrink-0">
           <p className="text-xs text-carbon-textMuted">{t("receiver.lastReceived")}</p>
           <p className="text-xs text-carbon-textSub">{fmtReceived(repo.lastReceived, t)}</p>
           <p className="text-xs text-carbon-textMuted mt-0.5">
-            {t("receiver.snapshotsCount").replace("{n}", String(repo.snapshotCount))}
+            {t("receiver.snapshotsCount", repo.snapshotCount)}
           </p>
         </div>
       </div>
 
-      {/* Last check line */}
       {repo.lastCheckAt > 0 && (
         <p className="text-xs text-carbon-textMuted">
           {t("receiver.lastChecked").replace("{time}", relativeTime(t, repo.lastCheckAt))}
@@ -293,21 +242,13 @@ function ReceivedRepoCard({
         </p>
       )}
 
-      {/* What to do about a failed check.
-          ------------------------------------------------------------------
-          Reported from the support forum: a received repo came back "restic
-          check failed: repository contains errors", and the page said nothing
-          beyond the restic message. The reporter went to the receiving box,
-          opened a shell in the container and could not get past restic's
-          password prompt, because the password for a RECEIVED repo is derived
-          from the SENDING instance's APP_KEY, not from this one's. Nothing on
-          this page said so, and that is the whole reason the detour happened.
-          Shown only on a failure, so a healthy list stays quiet. */}
+      {/* A received repo's password derives from the sending instance's
+          APP_KEY, which is the first wall anyone debugging a failed check from
+          a shell on this box runs into. */}
       {repo.lastCheckOk === false && (
         <p className="text-xs text-carbon-textSub wrap-break-word">{t("receiver.checkFailedHelp")}</p>
       )}
 
-      {/* Actions row */}
       <div className="flex items-center gap-3 flex-wrap">
         <Button
           key={shakeCheck}
@@ -337,17 +278,12 @@ function ReceivedRepoCard({
           />
           <Button
             label={t("receiver.edit")}
-          labelKey="receiver.edit"
+            labelKey="receiver.edit"
             tone="neutral"
             onClick={onEdit}
           />
-          {/* NO bespoke red on either state (whole-app sweep) — the exact
-              twin of Fleet.tsx's peer-row remove pair, converted in the same
-              pass; see that call site for the full writeup, including why
-              this DELIBERATELY stays a text button rather than becoming a
-              square icon badge (the two-click inline confirm documented at
-              i18n.ts's receiver.confirmRemove needs a label to flip, which an
-              icon-only badge does not have). */}
+          {/* A text button rather than an icon: the two-click confirm needs a
+              label to flip. */}
           {confirmRemove ? (
             <Button
               key={shakeRemove}
@@ -371,7 +307,6 @@ function ReceivedRepoCard({
         </div>
       </div>
 
-      {/* Inventory disclosure */}
       {open && (
         <div className="rounded-card bg-carbon-background px-3 py-2">
           <p className="text-xs font-medium text-carbon-textSub">{t("receiver.inventoryTitle")}</p>
@@ -381,10 +316,6 @@ function ReceivedRepoCard({
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Add / edit dialog
-// ---------------------------------------------------------------------------
 
 function ReceiverDialog({
   initial,
@@ -408,8 +339,6 @@ function ReceiverDialog({
   const [readDataPercent, setReadDataPercent] = useState(initial?.readDataPercent ?? 0);
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
   const [saving, setSaving] = useState(false);
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): shake
-  // the Save button alongside the toast on a failed save.
   const [shake, setShake] = useState(0);
 
   const editing = initial !== null;
@@ -417,16 +346,7 @@ function ReceiverDialog({
   const keyOk = appKey === "" ? editing : APP_KEY_RE.test(appKey);
   const canSave = name.trim() !== "" && repo.trim() !== "" && keyOk && !saving;
 
-  // GlimStone follow-up pass (v8.0.0): the "error" flash below is now a
-  // toast — same shape as Files.tsx's FileSetDialog.handleSave (a dialog
-  // editor that closes on success via onSaved(), so a toast is the only
-  // outcome notice left, success or failure). The three client-side checks
-  // are effectively unreachable through the UI (canSave already disables
-  // Save for the same conditions), but get the same push() treatment as the
-  // API failure below for consistency. The separate appKey-format hint
-  // further down (`appKey !== "" && !APP_KEY_RE.test(appKey)`) is untouched —
-  // that's a live field-validation hint recomputed every render, not a
-  // submit-triggered one-shot notice.
+  // The dialog closes on success, so a toast is the only notice either way.
   async function handleSave() {
     if (name.trim() === "") {
       push(t("receiver.nameRequired"), "fail");
@@ -476,34 +396,17 @@ function ReceiverDialog({
   const inputCls =
     "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
-  // `items-center` — the third and last of the three sites Files.tsx's own
-  // FileSetDialog comment recorded as "same fix still owed" when that round
-  // scoped itself to the Ordner tab (Fleet.tsx's two dialogs are the other
-  // two, fixed in the same pass as this). Top-anchored, the heading Badge
-  // poked to within a few px of the browser-viewport edge instead of
-  // straddling the card with any breathing room. Safe for the identical
-  // reason it is safe in every other dialog in this app: the box below is
-  // capped at `max-h-[90vh]`, strictly under the 100vh flex container, so a
-  // centred item's top offset is always positive, and this backdrop's own
-  // `overflow-y-auto` still covers content that grows toward the cap.
+  // Centring is safe: the box is capped at 90vh, so its top never goes
+  // negative, and the backdrop scrolls if the content grows.
   return createPortal(
     <div
       className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
       onClick={onClose}
     >
-      {/* GlimStone follow-up pass ("half-overlap card notch"): the dialog box
-          itself scrolls (`max-h-[90vh] overflow-y-auto`), which would clip
-          the heading Badge's own -11px poke above it — a scrollable box
-          can't reveal content positioned above its own top edge at
-          scrollTop 0. So this wraps in a non-scrolling, non-clipping
-          `relative` shell that hosts the badge, with the ORIGINAL
-          scrollable box moved one level in as its only child. `w-full
-          max-w-lg` moves to this outer shell (it's now the actual flex item
-          inside the centring backdrop below) and the inner box gets a plain
-          `w-full` instead, so the rendered width/centring is pixel-identical
-          to before this split. */}
+      {/* The box scrolls and would clip the heading badge that pokes above
+          its top edge, so a non-clipping shell carries the badge. */}
       <div className="relative w-full max-w-lg">
-        {/* `px-5` matches the box's `p-5` so the heading notch lands where a Card's does ([542]) — see FolderBrowser.tsx for why the notch has no offset of its own. */}
+        {/* px-5 matches the box's p-5, so the notch sits where a Card's does. */}
         <h2 className="flex items-center px-5">
           <Badge tone="heading" size="heading" wrap>{editing ? t("receiver.editTitle") : t("receiver.addTitle")}</Badge>
         </h2>
@@ -514,147 +417,125 @@ function ReceiverDialog({
           onClick={(e) => e.stopPropagation()}
           className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 flex flex-col gap-4 shadow-2xl"
         >
-          {/* Name */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-carbon-textSub">{t("receiver.name")}</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            spellCheck={false}
-            autoComplete="off"
-            placeholder="tower off-site"
-            className={inputCls}
-          />
-        </div>
-
-        {/* Repository location */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-carbon-textSub">{t("receiver.repoLocation")}</label>
-          <input
-            type="text"
-            value={repo}
-            onChange={(e) => setRepo(e.target.value)}
-            spellCheck={false}
-            autoComplete="off"
-            placeholder="rest:http://192.168.x.x:8000/tower-containers"
-            dir="ltr"
-            className={`${inputCls} font-mono text-start`}
-          />
-          <p className="text-caption text-carbon-textMuted">{t("receiver.repoLocationHint")}</p>
-        </div>
-
-        {/* Sending APP_KEY */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-carbon-textSub">{t("receiver.appKey")}</label>
-          <RevealInput
-            {...revealAppKey}
-            value={appKey}
-            onChange={(e) => setAppKey(e.target.value)}
-            spellCheck={false}
-            autoComplete="off"
-            placeholder={editing ? t("receiver.appKeyKeep") : "0123456789abcdef…"}
-            wrapperClassName="w-full"
-            className={`${inputCls} font-mono`}
-          />
-          <p className="text-caption text-carbon-textMuted">{t("receiver.appKeyHint")}</p>
-          {appKey !== "" && !APP_KEY_RE.test(appKey) && (
-            <p className="text-caption text-statusFail">{t("receiver.appKeyInvalid")}</p>
-          )}
-        </div>
-
-        {/* Dead-mans-switch + check cadence + deep-check percent */}
-        <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-carbon-textSub">{t("receiver.deadManHours")}</label>
-            <NumberField
-              min={1}
-              value={deadManHours}
-              onChange={(e) => setDeadManHours(parseInt(e.target.value, 10))}
+            <label className="text-xs text-carbon-textSub">{t("receiver.name")}</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              spellCheck={false}
+              autoComplete="off"
+              placeholder="tower off-site"
               className={inputCls}
             />
           </div>
+
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-carbon-textSub">{t("receiver.readDataPercent")}</label>
-            <NumberField
-              min={0}
-              max={100}
-              value={readDataPercent}
-              onChange={(e) => setReadDataPercent(parseInt(e.target.value, 10))}
-              className={inputCls}
+            <label className="text-xs text-carbon-textSub">{t("receiver.repoLocation")}</label>
+            <input
+              type="text"
+              value={repo}
+              onChange={(e) => setRepo(e.target.value)}
+              spellCheck={false}
+              autoComplete="off"
+              placeholder="rest:http://192.168.x.x:8000/tower-containers"
+              dir="ltr"
+              className={`${inputCls} font-mono text-start`}
+            />
+            <p className="text-caption text-carbon-textMuted">{t("receiver.repoLocationHint")}</p>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs text-carbon-textSub">{t("receiver.appKey")}</label>
+            <RevealInput
+              {...revealAppKey}
+              value={appKey}
+              onChange={(e) => setAppKey(e.target.value)}
+              spellCheck={false}
+              autoComplete="off"
+              placeholder={editing ? t("receiver.appKeyKeep") : "0123456789abcdef…"}
+              wrapperClassName="w-full"
+              className={`${inputCls} font-mono`}
+            />
+            <p className="text-caption text-carbon-textMuted">{t("receiver.appKeyHint")}</p>
+            {appKey !== "" && !APP_KEY_RE.test(appKey) && (
+              <p className="text-caption text-statusFail">{t("receiver.appKeyInvalid")}</p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-carbon-textSub">{t("receiver.deadManHours")}</label>
+              <NumberField
+                min={1}
+                value={deadManHours}
+                onChange={(e) => setDeadManHours(parseInt(e.target.value, 10))}
+                className={inputCls}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-carbon-textSub">{t("receiver.readDataPercent")}</label>
+              <NumberField
+                min={0}
+                max={100}
+                value={readDataPercent}
+                onChange={(e) => setReadDataPercent(parseInt(e.target.value, 10))}
+                className={inputCls}
+              />
+            </div>
+          </div>
+          <p className="text-caption text-carbon-textMuted -mt-2">{t("receiver.deadManHoursHint")}</p>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs text-carbon-textSub">{t("receiver.checkCadence")}</label>
+            <input
+              type="text"
+              value={checkCadence}
+              onChange={(e) => setCheckCadence(e.target.value)}
+              spellCheck={false}
+              autoComplete="off"
+              placeholder={t("receiver.checkCadencePlaceholder")}
+              dir="ltr"
+              className={`${inputCls} font-mono text-start`}
+            />
+            <p className="text-caption text-carbon-textMuted">{t("receiver.checkCadenceHint")}</p>
+          </div>
+
+          {/* ToggleRow puts the label at the start and the switch at the end,
+              like every other settings row. */}
+          <ToggleRow checked={enabled} onChange={setEnabled} label={t("receiver.enabledLabel")} />
+
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <Button
+              label={t("files.cancel")}
+              labelKey="files.cancel"
+              tone="neutral"
+              onClick={onClose}
+              disabled={saving}
+            />
+            <Button
+              key={shake}
+              label={t("settings.save")}
+              labelKey="settings.save"
+              tone="accent"
+              onClick={() => void handleSave()}
+              disabled={!canSave}
+              busy={saving}
+              title={saving ? t("common.saving") : undefined}
+              className={shake ? "glim-shake" : ""}
             />
           </div>
         </div>
-        <p className="text-caption text-carbon-textMuted -mt-2">{t("receiver.deadManHoursHint")}</p>
-
-        {/* Check cadence */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-carbon-textSub">{t("receiver.checkCadence")}</label>
-          <input
-            type="text"
-            value={checkCadence}
-            onChange={(e) => setCheckCadence(e.target.value)}
-            spellCheck={false}
-            autoComplete="off"
-            placeholder={t("receiver.checkCadencePlaceholder")}
-            dir="ltr"
-            className={`${inputCls} font-mono text-start`}
-          />
-          <p className="text-caption text-carbon-textMuted">{t("receiver.checkCadenceHint")}</p>
-        </div>
-
-        {/* Monitor toggle */}
-        {/* ToggleRow, not a bare Toggle ([544]). A bare Toggle sets its label
-            immediately beside the switch; every setting row in this app puts the
-            words at the start and the switch at the end, which is what ToggleRow
-            renders (`flex items-start justify-between`). jdp: "der toggle soll
-            rechtsbuendig sein, der text linksbuendig". Fixed at the shared
-            component rather than by hand-matching classes here, the same reason
-            IncludeToggle.tsx gives for its own switch to ToggleRow. */}
-<ToggleRow checked={enabled} onChange={setEnabled} label={t("receiver.enabledLabel")} />
-
-        <div className="flex items-center justify-end gap-2 pt-1">
-          <Button
-            label={t("files.cancel")}
-          labelKey="files.cancel"
-            tone="neutral"
-            onClick={onClose}
-            disabled={saving}
-          />
-          <Button
-            key={shake}
-            label={t("settings.save")}
-            labelKey="settings.save"
-            tone="accent"
-            onClick={() => void handleSave()}
-            disabled={!canSave}
-            busy={saving}
-            title={saving ? t("common.saving") : undefined}
-            className={shake ? "glim-shake" : ""}
-          />
-        </div>
-      </div>
       </div>
     </div>,
     document.body,
   );
 }
 
-// ---------------------------------------------------------------------------
-// Receiver page
-// ---------------------------------------------------------------------------
-
-/** `embedded` is the Instances page rendering this as one of its tabs: the
- *  outer shell and the <h1> belong to that page then, because a tab panel
- *  that repeats the strip's own label reads as two headings for one thing.
- *  Everything else, the subtitle included, is the same page either way. */
+/** With `embedded`, the Instances page shows this as a tab and owns the outer
+ *  shell and the heading, so the tab does not repeat the strip's label. */
 export function Receiver({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useT();
-  // Registers this page for a re-render on any rainbow-state change (on/off/
-  // reactive/rotate/palette edit) — the ReceivedRepoCard list below reads
-  // rainbowAt()/hueVars() directly during render; see lib/useRainbow.ts's own
-  // header for why a caller doesn't need the returned value.
-  useRainbow();
   const [repos, setRepos] = useState<ReceivedRepoStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -679,26 +560,11 @@ export function Receiver({ embedded = false }: { embedded?: boolean } = {}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // jdp live review ("Empfänger Tab: Button rechts oben ist redundant"): the
-  // empty-state Card below already carries its own prominent "Add received
-  // repo" CTA, so showing the identical button a second time in the
-  // top-right actions bar was pure duplication — confirmed both call the
-  // exact same handler (`() => setDialog("new")`). Gate the top-right button
-  // on NOT being in that empty state — mirrors Files.tsx's own
-  // showEmptyState fix for the identical pattern. Once a repo exists the
-  // empty-state Card stops rendering and the top-right button is the page's
-  // only entry point again, so "Add" is never unreachable.
+  // The empty state carries its own Add button, so the header one hides then.
   const showEmptyState = !loading && !error && repos.length === 0;
 
   return (
-    // PAGE_SHELL (jdp live-review, "Können wir die nicht überall gleich breit
-    // machen?"): the gap here was already the correct 40px from the earlier
-    // "Im Empfänger Tab ist die Card zu weit oben" round; only the width
-    // changes, max-w-5xl (1024px) → the shared 1152px. This page's heading is
-    // a single bare h1+p row, so the one flat shell gap still governs every
-    // gap on it. See lib/pageShell.ts for the full before/after table.
     <div className={embedded ? PAGE_SHELL_TABBED : PAGE_SHELL}>
-      {/* Heading + Add */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           {!embedded && <h1 className="text-2xl font-semibold text-carbon-text">{t("receiver.title")}</h1>}
@@ -718,40 +584,14 @@ export function Receiver({ embedded = false }: { embedded?: boolean } = {}) {
       {loading && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
       {error && <p className="text-sm text-statusFail wrap-break-word">{error}</p>}
 
-      {/* Empty state — GlimStone follow-up pass (jdp live review: "Card hat
-          keinen Cardtitelbadge mit dem Infotext der in der Card steht"): this
-          card had no heading at all — just the icon, the permanent pitch
-          paragraph, and the Add button — the one Card-shaped box on this page
-          that never got the tone="heading" notch every other Card in the app
-          carries. `relative glim-notch-card` (Files.tsx's own setsTitle Card
-          precedent — no separate inner overflow-hidden box needed, this card
-          was never overflow-hidden to begin with). The old permanent
-          `<p>{t("receiver.empty")}</p>` reads once and then costs vertical
-          space forever — moved verbatim onto the new heading Badge as an
-          `onAccent` InfoBubble instead, zero new i18n keys for the body, only
-          the new title key. hueIndex={0}: the only tone="heading" notch on
-          this page's own body (ReceiverDialog's own h2 badge deliberately
-          carries no hueIndex, same as every other dialog title in the app),
-          and mutually exclusive with ReceivedRepoCard's OWN rainbowAt(index)
-          tint (this card only renders while the list is empty), so there is
-          no position to collide with.
-          insetStart={6} (GlimStone follow-up pass, jdp: "Empfaenger/Fleet-
-          Tab: Cardtitelbadge falsch platziert" — the SAME `text-center
-          items-center` collapsed-h2 mismatch as Files.tsx's own setsTitle
-          Card and Fleet.tsx's identical empty-state Card; see Files.tsx's
-          own call site for the full "why a single-merged-div Card can still
-          get this wrong" mechanism and Badge.tsx's `insetStart` doc). */}
+      {/* Hue 0 cannot collide with a card's, since this only shows while the
+          list is empty. glim-hue sets the accent for the Add button, which
+          glim-notch-card alone does not. insetStart corrects the notch in a
+          centred card, see Badge.tsx. */}
       {showEmptyState && (
-        // `.glim-hue` added (rainbow-mode completeness sweep, jdp live
-        // review: "Es sind nicht alle Buttons in den Regenbogen-Modus
-        // eingepflegt"): `glim-notch-card` alone only wires the reactive-mode
-        // hover reveal on the Badge's own notch, never --accent/--focus-ring
-        // itself, so the "Add" button below stayed flat regardless of
-        // rainbow. Same hueIndex={0} the Badge already uses (Fleet.tsx's own
-        // identical fix for the same reasoning).
         <div
           className="relative glim-notch-card glim-hue bg-carbon-surface rounded-card p-6 text-center flex flex-col items-center gap-3"
-          style={hueVars(rainbowAt(0)) as CSSProperties}
+          style={hueVars(0) as CSSProperties}
         >
           <h2 className="flex items-center">
             <Badge tone="heading" size="heading" wrap hueIndex={0} insetStart={6}>
@@ -769,7 +609,6 @@ export function Receiver({ embedded = false }: { embedded?: boolean } = {}) {
         </div>
       )}
 
-      {/* Repo cards */}
       {!loading && repos.length > 0 && (
         <div className="flex flex-col gap-3 glim-content-fade">
           {repos.map((r, i) => (
@@ -785,7 +624,6 @@ export function Receiver({ embedded = false }: { embedded?: boolean } = {}) {
         </div>
       )}
 
-      {/* Add / edit dialog */}
       {dialog !== null && (
         <ReceiverDialog
           initial={dialog === "new" ? null : dialog}

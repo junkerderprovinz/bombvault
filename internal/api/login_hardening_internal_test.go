@@ -16,17 +16,6 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// The three things v8.6.0 changed about signing in, and the one it added.
-//
-// Each of these was a real gap read out of this file, not a hypothetical:
-// the password field had no minimum at all, the throttle collapsed into a
-// single shared bucket the moment a reverse proxy was in front, and the stored
-// hash was a fast MAC an offline attacker walks in hours.
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 func mustCIDR(t *testing.T, s string) net.IPNet {
 	t.Helper()
 	_, n, err := net.ParseCIDR(s)
@@ -76,12 +65,8 @@ func storeTOTP(t *testing.T, h *Handler, repo *store.Repo, plainSecret string, r
 	}
 }
 
-// ---------------------------------------------------------------------------
-// The throttle behind a reverse proxy
-// ---------------------------------------------------------------------------
-
-// Without TRUSTED_PROXY nothing changes, and that is the point: believing a
-// forwarded-for header by default would let any caller pick their own bucket.
+// Believing a forwarded-for header by default would let any caller pick their
+// own throttle bucket.
 func TestLoginKeyIgnoresForwardedHeaderByDefault(t *testing.T) {
 	h, _, _ := newAuthGateHandler(t)
 	r := httptest.NewRequest(http.MethodPost, "/api/login", nil)
@@ -103,8 +88,8 @@ func TestLoginKeyUsesForwardedClientBehindATrustedProxy(t *testing.T) {
 	}
 }
 
-// The header is only believed from the proxy. Somebody reaching the port
-// directly must not inherit the trust by sending the same header.
+// Somebody reaching the port directly must not inherit the proxy's trust by
+// sending the same header.
 func TestForwardedHeaderIsIgnoredFromAnUntrustedPeer(t *testing.T) {
 	h, _, _ := newAuthGateHandler(t)
 	h.cfg.TrustedProxies = []net.IPNet{mustCIDR(t, "192.168.20.0/24")}
@@ -116,9 +101,8 @@ func TestForwardedHeaderIsIgnoredFromAnUntrustedPeer(t *testing.T) {
 	}
 }
 
-// The chain is read right to left. An attacker controls the LEFT end, so a
-// left-to-right reader would hand them a fresh bucket per request, which is the
-// whole hole this setting was meant to avoid opening.
+// An attacker controls the left end of the chain, so reading it from the left
+// would hand them a fresh bucket per request.
 func TestForwardedChainIsReadFromTheRight(t *testing.T) {
 	proxies := []net.IPNet{mustCIDR(t, "192.168.20.0/24"), mustCIDR(t, "10.0.0.0/8")}
 	cases := []struct{ header, want string }{
@@ -129,8 +113,8 @@ func TestForwardedChainIsReadFromTheRight(t *testing.T) {
 		// Every entry trusted: nothing left to name a client.
 		{"10.0.0.5, 192.168.20.11", ""},
 		{"", ""},
-		// Garbage anywhere means the whole header is refused, so an attacker
-		// cannot steer which entry we land on by inserting one.
+		// One bad entry refuses the whole header, so an attacker cannot steer
+		// which entry is picked by inserting one.
 		{"1.2.3.4, nonsense, 10.0.0.5", ""},
 	}
 	for _, c := range cases {
@@ -140,9 +124,8 @@ func TestForwardedChainIsReadFromTheRight(t *testing.T) {
 	}
 }
 
-// The failure this whole setting exists to stop: two clients arriving through
-// one proxy must not share a bucket, or an attacker's failures lock the
-// operator out of their own instance.
+// Two clients behind one proxy must not share a bucket, or an attacker's
+// failures lock the operator out of their own instance.
 func TestTwoClientsBehindOneProxyGetSeparateBuckets(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	h.cfg.TrustedProxies = []net.IPNet{mustCIDR(t, "192.168.20.0/24")}
@@ -168,10 +151,9 @@ func TestTwoClientsBehindOneProxyGetSeparateBuckets(t *testing.T) {
 	}
 }
 
-// And the regression it replaces: with no TRUSTED_PROXY set, they DO share a
-// bucket. Asserted so nobody reads the test above as a promise the default
-// deployment makes.
-func TestWithoutTrustedProxyTheBucketIsStillShared(t *testing.T) {
+// Without TRUSTED_PROXY, clients behind one proxy share a bucket; the test
+// above is not a promise the default deployment makes.
+func TestWithoutTrustedProxyClientsShareABucket(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	enableAuth(t, h, repo)
 	attacker := http.Header{"X-Forwarded-For": []string{"203.0.113.7"}}
@@ -184,10 +166,6 @@ func TestWithoutTrustedProxyTheBucketIsStillShared(t *testing.T) {
 		t.Fatalf("without TRUSTED_PROXY the operator shares the bucket; got %d", code)
 	}
 }
-
-// ---------------------------------------------------------------------------
-// The password minimum
-// ---------------------------------------------------------------------------
 
 func TestSetPasswordRefusesAShortOne(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
@@ -220,11 +198,10 @@ func TestSetPasswordAcceptsTheMinimum(t *testing.T) {
 	}
 }
 
-// Counted in runes. A passphrase in a script that spends three bytes per
-// character is not twice as long for it.
+// A passphrase in a script that spends several bytes per character is not
+// longer for it.
 func TestPasswordLengthIsCountedInCharactersNotBytes(t *testing.T) {
 	h, _, _ := newAuthGateHandler(t)
-	// Eleven characters, well over twelve bytes.
 	short := strings.Repeat("ä", secret.MinPasswordLen-1)
 	_, body := postJSON(t, h.handleSetPassword, "/api/auth/password", `{"password":"`+short+`"}`, "10.0.0.1:1", nil)
 	if body["ok"] != false {
@@ -232,8 +209,8 @@ func TestPasswordLengthIsCountedInCharactersNotBytes(t *testing.T) {
 	}
 }
 
-// An existing short password must keep working. Locking somebody out of their
-// own backups because they upgraded is a worse outcome than the weak password.
+// Locking somebody out of their own backups because they upgraded is worse
+// than the weak password.
 func TestAnExistingShortPasswordStillSignsIn(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	s, err := repo.GetSettings()
@@ -254,8 +231,8 @@ func TestAnExistingShortPasswordStillSignsIn(t *testing.T) {
 	}
 }
 
-// Switching the login off must take the second factor with it, or re-enabling
-// the password later would demand a code from an app that is long gone.
+// A second factor left behind would demand a code from a long-gone app once a
+// password is set again.
 func TestClearingThePasswordAlsoClearsTheSecondFactor(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	enableAuth(t, h, repo)
@@ -274,19 +251,14 @@ func TestClearingThePasswordAlsoClearsTheSecondFactor(t *testing.T) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Upgrading the stored hash
-// ---------------------------------------------------------------------------
-
-// The migration that matters: a database written before v8.6.0 holds a bare
-// HMAC, the owner signs in as always, and the hash is Argon2id afterwards.
+// An old database holds a bare HMAC; after the owner signs in, it holds
+// Argon2id.
 func TestLegacyHashIsUpgradedOnASuccessfulLogin(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	s, err := repo.GetSettings()
 	if err != nil {
 		t.Fatal(err)
 	}
-	// The pre-v8.6.0 format, written the way the old code wrote it.
 	s.AuthPasswordHash = legacyHashForTest(h.cfg.AppKey, "correct horse battery")
 	if err := repo.UpdateSettings(s); err != nil {
 		t.Fatal(err)
@@ -308,9 +280,9 @@ func TestLegacyHashIsUpgradedOnASuccessfulLogin(t *testing.T) {
 	}
 }
 
-// The subtle one. The session token signs the stored hash, so if the cookie were
-// minted before the rehash it would be invalid the instant the rehash landed and
-// the operator would bounce straight back to the login screen.
+// The session token signs the stored hash. A cookie minted before the rehash
+// would be invalid right after it, sending the operator back to the login
+// screen.
 func TestTheCookieFromAnUpgradingLoginIsStillValidAfterwards(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	s, err := repo.GetSettings()
@@ -346,10 +318,6 @@ func TestTheCookieFromAnUpgradingLoginIsStillValidAfterwards(t *testing.T) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// The second factor
-// ---------------------------------------------------------------------------
-
 const testTOTPSecret = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ" //nolint:gosec // G101: the RFC 6238 test vector, not a credential
 
 func currentCode(t *testing.T) string {
@@ -361,7 +329,6 @@ func currentCode(t *testing.T) string {
 	return c
 }
 
-// The right password alone must not be a session once a second factor is armed.
 func TestPasswordAloneDoesNotSignInWithTOTPOn(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	enableAuth(t, h, repo)
@@ -411,8 +378,8 @@ func TestAWrongCodeDoesNotSignIn(t *testing.T) {
 	}
 }
 
-// Asking without a code is the client discovering it needs one. Counting that
-// as a failed attempt would throttle people for doing the right thing.
+// Asking without a code is how the client learns it needs one, so it must not
+// count as a failed attempt.
 func TestAskingWithoutACodeIsNotAFailedAttempt(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	enableAuth(t, h, repo)
@@ -428,8 +395,8 @@ func TestAskingWithoutACodeIsNotAFailedAttempt(t *testing.T) {
 	}
 }
 
-// But a wrong code IS a failed attempt, or the code becomes guessable at speed:
-// six digits is a million, which falls in under a day at full rate.
+// A million six-digit codes fall in under a day at full rate unless wrong
+// codes are throttled.
 func TestAWrongCodeCountsTowardsTheThrottle(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	enableAuth(t, h, repo)
@@ -445,8 +412,7 @@ func TestAWrongCodeCountsTowardsTheThrottle(t *testing.T) {
 	}
 }
 
-// A recovery code works once and then never again. A code that survives its own
-// use is a permanent second password.
+// A recovery code that survives its own use is a permanent second password.
 func TestARecoveryCodeIsSpentWhenUsed(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	enableAuth(t, h, repo)
@@ -475,7 +441,6 @@ func TestARecoveryCodeIsSpentWhenUsed(t *testing.T) {
 	}
 }
 
-// An enrolment that was started and never confirmed must leave the login alone.
 func TestAnUnconfirmedEnrolmentDoesNotDemandACode(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	enableAuth(t, h, repo)
@@ -488,7 +453,7 @@ func TestAnUnconfirmedEnrolmentDoesNotDemandACode(t *testing.T) {
 		t.Fatal(err)
 	}
 	s.TOTPSecret = sealed
-	s.TOTPEnabled = false // setup ran, confirm never did
+	s.TOTPEnabled = false
 	if err := repo.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
@@ -498,7 +463,6 @@ func TestAnUnconfirmedEnrolmentDoesNotDemandACode(t *testing.T) {
 	}
 }
 
-// The full enrolment, through the handlers, the way the settings page does it.
 func TestEnrolmentRoundTrip(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	enableAuth(t, h, repo)
@@ -511,7 +475,6 @@ func TestEnrolmentRoundTrip(t *testing.T) {
 	if sec == "" {
 		t.Fatalf("setup must return a secret: %v", body)
 	}
-	// Not armed yet.
 	s, err := repo.GetSettings()
 	if err != nil {
 		t.Fatal(err)
@@ -556,8 +519,7 @@ func TestEnrolmentRoundTrip(t *testing.T) {
 	}
 }
 
-// A second factor on an instance with no password would protect nothing and
-// would be the only thing standing between the LAN and the API.
+// A second factor without a password protects nothing.
 func TestSetupRefusesWithoutAPassword(t *testing.T) {
 	h, _, _ := newAuthGateHandler(t)
 	code, body := postJSON(t, h.handleTOTPSetup, "/api/auth/totp/setup", `{}`, "10.0.0.1:1", nil)
@@ -566,8 +528,8 @@ func TestSetupRefusesWithoutAPassword(t *testing.T) {
 	}
 }
 
-// The public status endpoint may say a code is needed (the login screen has to
-// know), but must not count somebody's remaining recovery codes for them.
+// The public status endpoint tells the login screen a code is needed, but not
+// how many recovery codes are left.
 func TestAuthStatusKeepsRecoveryCountForSignedInCallers(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	enableAuth(t, h, repo)
@@ -588,9 +550,9 @@ func TestAuthStatusKeepsRecoveryCountForSignedInCallers(t *testing.T) {
 	}
 }
 
-// legacyHashForTest reproduces the pre-v8.6.0 stored format from outside the
-// secret package, written out here on purpose: the upgrade is proved against
-// the real old value, not against whatever the current code happens to produce.
+// legacyHashForTest writes the bare HMAC format by hand, so the upgrade is
+// tested against a real stored value rather than whatever the secret package
+// happens to produce.
 func legacyHashForTest(appKey, password string) string {
 	keyBytes, err := hex.DecodeString(appKey)
 	if err != nil {
@@ -601,22 +563,10 @@ func legacyHashForTest(appKey, password string) string {
 	return hex.EncodeToString(mac.Sum(nil))
 }
 
-// ---------------------------------------------------------------------------
-// Setting a password signs the operator in
-// ---------------------------------------------------------------------------
-
-// TestSetPasswordIssuesASession pins the answer to a defect jdp hit in the
-// browser: after setting a password, the second factor could not be switched on
-// until the page was reloaded.
-//
-// The chain was: this route is reachable without a session only while the login
-// is OFF; the moment it stores a hash, authGate demands a session cookie; and
-// nobody had issued one. So the Security card showed the enable button, and the
-// request behind it answered 401. The page had to be reloaded and the password
-// typed a second time before anything worked.
-//
-// It grants nothing new: whoever reaches this route unauthenticated already had
-// unauthenticated access to the whole API.
+// The route is reachable without a session only while the login is off. Once
+// it stores a hash, authGate wants a cookie, and without one every following
+// request answers 401. Issuing it grants nothing: whoever reaches the route
+// unauthenticated already had the whole API.
 func TestSetPasswordIssuesASession(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	pw := strings.Repeat("x", secret.MinPasswordLen)
@@ -648,8 +598,8 @@ func TestSetPasswordIssuesASession(t *testing.T) {
 			"again - the second factor above all, which is exactly what somebody sets up next.")
 	}
 
-	// …and it has to be valid against what was just stored. A token minted
-	// before the write would be signed against the old (empty) hash.
+	// A token minted before the write would be signed against the old, empty
+	// hash.
 	s, err := repo.GetSettings()
 	if err != nil {
 		t.Fatal(err)
@@ -659,9 +609,8 @@ func TestSetPasswordIssuesASession(t *testing.T) {
 	}
 }
 
-// TestClearingThePasswordSendsTheSessionAway is the other direction. A token
-// signed against a hash that no longer exists means nothing, and leaving it in
-// the browser leaves a cookie that looks like a session and is not one.
+// A token signed against a hash that no longer exists means nothing; left in
+// the browser it looks like a session and is not one.
 func TestClearingThePasswordSendsTheSessionAway(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	enableAuth(t, h, repo)
@@ -694,27 +643,14 @@ func TestClearingThePasswordSendsTheSessionAway(t *testing.T) {
 	}
 }
 
-// TestSetPasswordEndsEveryOtherSession pins the capability that moved when the
-// Security card lost its "sign out everywhere" button (GlimStone 2.1.0: a card
-// configures, the shell operates - and removing an operation must not remove
-// what it could do).
-//
-// The session tokens are stateless and signed against the stored epoch, so
-// rotating that epoch is the ONLY way to revoke them; nothing else reaches a
-// cookie sitting in a browser somewhere else. With the button gone, a password
-// change is where that lives, which is what somebody changing a password out of
-// suspicion assumed was happening anyway.
-//
-// Both halves are asserted, because each has a failure that looks like success:
-// the old cookie must DIE, and the caller's own new cookie must WORK. Mint the
-// new one from the old epoch and the operator locks themselves out in the same
-// request that was meant to secure them.
+// Session tokens are stateless and signed against the stored epoch, so
+// rotating it is the one way to revoke a cookie held by another browser, which
+// is what somebody changing a password out of suspicion expects. The caller's
+// own new cookie has to survive the rotation.
 func TestSetPasswordEndsEveryOtherSession(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	pw := strings.Repeat("x", secret.MinPasswordLen)
 
-	// A login that already exists, and a session minted under it: the other
-	// browser, the one nobody can reach any more.
 	first := postPassword(t, h, pw)
 	before, err := repo.GetSettings()
 	if err != nil {
@@ -724,7 +660,6 @@ func TestSetPasswordEndsEveryOtherSession(t *testing.T) {
 		t.Fatal("the first session is invalid before anything was changed - the test cannot prove what it is here for")
 	}
 
-	// The password changes. Same account, new secret.
 	second := postPassword(t, h, pw+"2")
 	after, err := repo.GetSettings()
 	if err != nil {
@@ -747,7 +682,7 @@ func TestSetPasswordEndsEveryOtherSession(t *testing.T) {
 	}
 }
 
-// postPassword posts a password and returns the session cookie it issued.
+// postPassword sets a password and returns the session cookie it issued.
 func postPassword(t *testing.T, h *Handler, pw string) string {
 	t.Helper()
 	r := httptest.NewRequest(http.MethodPost, "/api/auth/password", strings.NewReader(`{"password":"`+pw+`"}`))

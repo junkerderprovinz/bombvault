@@ -1,36 +1,15 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// DropdownListbox — the shared portalled listbox panel. This is the
-// regression guard for the live bug it was extracted to fix (jdp, Containers
-// tab): the panel used to render as an `absolute` child of its trigger's
-// wrapper, and ContainerRow's card is `relative overflow-hidden`, which
-// hard-clips absolutely-positioned descendants no matter what z-index they
-// carry — so the list stopped dead at the card's bottom edge.
-//
-// The first test therefore asserts the thing that actually fixes it: the
-// panel is NOT a descendant of the overflow-hidden box at all. Asserting
-// "the panel exists and has role=listbox" would have passed against the
-// broken build too — it always existed, it was just clipped.
-//
-// The second half covers the behaviours the portal put at risk. The one that
-// matters most is option-press: the old per-call-site dismissal handlers
-// asked "is this mousedown inside the TRIGGER's wrapper?", which a portalled
-// option button is not, so keeping them would have unmounted the panel on
-// mousedown and the option's own click would never have fired — a list that
-// closes without selecting anything.
-//
-// jsdom opted in explicitly (real DOM/click/keyboard behaviour needed) — see
-// Selector.dom.test.tsx's own header for this repo's naming convention.
-// ---------------------------------------------------------------------------
+// DropdownListbox portals its panel into document.body, because a card with
+// `overflow-hidden` clips an absolutely positioned child whatever its z-index.
+// The second half checks the interactions the portal puts at risk, above all
+// that pressing an option does not count as an outside click.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useRef, useState } from "react";
 import { DropdownListbox } from "./DropdownListbox";
 
-/** A miniature of the real call site: a trigger inside the exact
- *  `relative overflow-hidden` card shell ContainerRow renders (Containers.tsx
- *  line ~1465), so the clipping ancestor this component exists to escape is
- *  genuinely present in the tree under test. */
+/** A trigger inside a `relative overflow-hidden` card like ContainerRow's, so
+ *  the clipping ancestor is present. */
 function Harness({
   onPick,
   multiselectable,
@@ -39,8 +18,7 @@ function Harness({
   multiselectable?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  // On the BUTTON, exactly as both real call sites attach it — see the width
-  // test below for the live bug that pinned this down.
+  // On the button, as the real call sites attach it; see the width test.
   const ref = useRef<HTMLButtonElement>(null);
   return (
     <div data-testid="card" className="relative overflow-hidden bg-carbon-surface rounded-card p-4">
@@ -71,14 +49,12 @@ afterEach(() => {
   cleanup();
 });
 
-describe("DropdownListbox — escaping the clipping ancestor", () => {
+describe("DropdownListbox escaping the clipping ancestor", () => {
   it("renders the panel outside the overflow-hidden card, as a direct child of document.body", () => {
     render(<Harness />);
     fireEvent.click(screen.getByRole("button", { name: "Trigger" }));
     const panel = screen.getByRole("listbox");
     const card = screen.getByTestId("card");
-    // THE assertion: not merely "the panel exists", but "no overflow-hidden
-    // ancestor can clip it any more".
     expect(card.contains(panel)).toBe(false);
     expect(panel.parentElement).toBe(document.body);
   });
@@ -87,11 +63,10 @@ describe("DropdownListbox — escaping the clipping ancestor", () => {
     render(<Harness />);
     fireEvent.click(screen.getByRole("button", { name: "Trigger" }));
     const panel = screen.getByRole("listbox");
-    // Class, not computed style: no stylesheet is loaded under jsdom, so the
-    // Tailwind utility is the only observable form the positioning takes here.
+    // jsdom loads no stylesheet, so the class is what can be checked.
     expect(panel.classList.contains("fixed")).toBe(true);
-    // Centred on the trigger — computeBubblePosition's `left` is a CENTRE, so
-    // the translate is what makes the panel line up with the button.
+    // computeBubblePosition's `left` is the centre, so the panel is shifted
+    // back by half its width.
     expect(panel.style.transform).toBe("translateX(-50%)");
   });
 
@@ -100,19 +75,10 @@ describe("DropdownListbox — escaping the clipping ancestor", () => {
     expect(screen.queryByRole("listbox")).toBeNull();
   });
 
-  it("takes the trigger's width as a FLOOR, and its content decides the rest", () => {
-    // Caught live and only live: the ref used to sit on the trigger's
-    // `inline-block` WRAPPER, which — being a flex item of the editor's
-    // `flex flex-col` box — is blockified and stretched to the card's full
-    // content width. The panel dutifully took that width and opened ~970px
-    // wide instead of the button's 256px. jsdom reports 0 for every layout
-    // read, so the width has to be stubbed for this to mean anything.
-    //
-    // It is a MINIMUM rather than the width since #3425, and that correction
-    // also came off the running app: pinned exactly, a compact filter bar's
-    // panel truncated every one of its own options, because each row spends
-    // 24px of the trigger's width on padding. A replacement narrower than its
-    // own options is a downgrade on the native control it replaces.
+  it("takes the trigger's width as a minimum and lets its content decide the rest", () => {
+    // The trigger's width is only a floor, since a panel pinned to it would
+    // truncate options wider than a compact trigger. jsdom reports 0 for every
+    // layout read, so the rect is stubbed.
     render(<Harness />);
     const trigger = screen.getByRole("button", { name: "Trigger" });
     trigger.getBoundingClientRect = () =>
@@ -124,14 +90,14 @@ describe("DropdownListbox — escaping the clipping ancestor", () => {
   });
 });
 
-describe("DropdownListbox — interaction contract kept across the portal", () => {
-  it("pressing an option fires its onClick and does NOT dismiss the panel first", () => {
+describe("DropdownListbox interaction across the portal", () => {
+  it("pressing an option fires its onClick without dismissing the panel first", () => {
     const onPick = vi.fn();
     render(<Harness onPick={onPick} multiselectable />);
     fireEvent.click(screen.getByRole("button", { name: "Trigger" }));
 
-    // mousedown lands inside the (portalled) panel — the dismissal listener
-    // must exempt it, or the panel unmounts before the click arrives.
+    // The mousedown lands in the portalled panel, which the dismissal listener
+    // has to exempt, or the panel unmounts before the click arrives.
     const option = screen.getByRole("option", { name: "alpha" });
     fireEvent.mouseDown(option);
     expect(screen.queryByRole("listbox")).not.toBeNull();
@@ -156,7 +122,7 @@ describe("DropdownListbox — interaction contract kept across the portal", () =
     expect(screen.queryByRole("listbox")).toBeNull();
   });
 
-  it("a mousedown on the trigger itself does not run the dismissal (the trigger owns its own toggle)", () => {
+  it("leaves a mousedown on the trigger to the trigger's own toggle", () => {
     render(<Harness />);
     const trigger = screen.getByRole("button", { name: "Trigger" });
     fireEvent.click(trigger);
@@ -164,11 +130,10 @@ describe("DropdownListbox — interaction contract kept across the portal", () =
     expect(screen.queryByRole("listbox")).not.toBeNull();
   });
 
-  it("closes when an ancestor scrolls, but NOT when the panel's own scrollable list is scrolled", () => {
+  it("closes when an ancestor scrolls, but not when its own list scrolls", () => {
     render(<Harness />);
     fireEvent.click(screen.getByRole("button", { name: "Trigger" }));
-    // The panel is `max-h-60 overflow-y-auto`: scrolling the list itself
-    // never de-anchors it from its trigger, so it must survive that.
+    // Scrolling the list itself does not move it away from its trigger.
     fireEvent.scroll(screen.getByRole("listbox"));
     expect(screen.queryByRole("listbox")).not.toBeNull();
     fireEvent.scroll(window);

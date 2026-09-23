@@ -1,16 +1,4 @@
 // @vitest-environment jsdom
-// ---------------------------------------------------------------------------
-// SelectField — the three promises that make it a replacement rather than a
-// button with a list attached (#3425, GlimStone rule 18).
-//
-//   1. The width does not move when the value does. A native select is as wide
-//      as its widest option; a plain button is as wide as its current label,
-//      which makes a row of converted pickers reflow on every pick.
-//   2. It has an accessible name and announces as a listbox trigger. Replacing
-//      a native control is exactly where an app loses both without noticing.
-//   3. The wheel steps the CLOSED control, clamped, skipping what cannot be
-//      picked.
-// ---------------------------------------------------------------------------
 import { useState } from "react";
 import { afterEach, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
@@ -40,10 +28,8 @@ function trigger(): HTMLElement {
   return screen.getByRole("combobox", { name: "Domain" });
 }
 
-// fireEvent, not a raw dispatchEvent: the handler changes React state, and an
-// event fired outside act() leaves the re-render unflushed when the assertion
-// reads the value one line later. The listener itself is a real, non-passive
-// one (lib/selectScroll) and fireEvent reaches it exactly the same way.
+// fireEvent wraps the event in act(), so the state update is flushed before
+// the next assertion reads it.
 function wheel(el: HTMLElement, deltaY: number) {
   fireEvent.wheel(el, { deltaY });
 }
@@ -56,8 +42,8 @@ it("announces as a named listbox trigger, the way a select does", () => {
 
 it("carries every label so the width is the widest one, not the current one", () => {
   render(<Harness />);
-  // All five are in the trigger; four are invisible. That is the whole
-  // mechanism: the button's intrinsic width is the longest label's.
+  // All five labels are in the trigger and four are invisible, so the width
+  // is the longest label's.
   for (const o of OPTIONS) {
     expect(trigger().textContent).toContain(o.label);
   }
@@ -74,17 +60,16 @@ it("opens a listbox and picks an option", () => {
   expect(trigger().getAttribute("aria-expanded")).toBe("true");
   fireEvent.click(screen.getByRole("option", { name: "Containers" }));
   expect(screen.getByTestId("value").textContent).toBe("containers");
-  // Picking closes it; a single-select list that stays open is a second click
-  // to dismiss.
+  // Picking closes the list.
   expect(trigger().getAttribute("aria-expanded")).toBe("false");
 });
 
-it("steps with the wheel while closed, and steps OVER a disabled option", () => {
+it("steps with the wheel while closed and skips a disabled option", () => {
   render(<Harness start="vms" />);
-  // vms -> flash is disabled, so one notch down lands on files.
+  // flash is disabled, so one notch down from vms lands on files.
   wheel(trigger(), 120);
   expect(screen.getByTestId("value").textContent).toBe("files");
-  // And it clamps at the end rather than wrapping to the top.
+  // Clamps at the end instead of wrapping.
   wheel(trigger(), 120);
   expect(screen.getByTestId("value").textContent).toBe("files");
   // Back up, over the disabled entry again.

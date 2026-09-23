@@ -9,29 +9,11 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
-// A read-only caller must never write to the repository it is reading, and the
-// one place that could was a retry nobody looks at.
-//
-// listSnapshots self-heals a stale lock: on a lock error it runs `restic
-// unlock` and lists again. That is right for our own repositories, where an
-// interrupted run leaves a marker nobody else will clear, and it is what fixed
-// "Failed to load backups" after a crash.
-//
-// It is wrong for somebody else's. Two surfaces read a FOREIGN repository and
-// both promise read-only in their own words on screen: the foreign restore
-// session (foreign.go) and the receiver dashboard (receiver.go). Both call this
-// function. So on a lock error, BombVault deleted lock files in another
-// instance's repository, and a lock error there usually means the far instance
-// is backing up RIGHT NOW - the marker is not stale, it is in use.
-//
-// It stayed invisible because of the shape of the bug rather than its size: a
-// lock error is rare, and when the repair works the read succeeds, so the
-// symptom is an operation that looks correct.
-//
-// Mode.NoLock is the declaration "I never write to this repository", and both
-// foreign.go and receiver.go already set it. Keying the self-heal off it makes
-// the promise hold for every future read-only caller, including the pull, whose
-// source is a foreign repository by definition.
+// lockOnceEngine fails the first listing with a lock error. listSnapshots then
+// clears the lock and retries, which is right for our own repositories, where
+// an interrupted run leaves a stale lock. On a foreign repository a lock
+// usually means its owner is backing up, so callers that only read (foreign
+// restore, the receiver, the pull) set Mode.NoLock and must get the error.
 type lockOnceEngine struct {
 	ResticEngine
 	calls   int
@@ -72,10 +54,7 @@ func TestListSnapshotsNeverUnlocksAReadOnlyRepository(t *testing.T) {
 	})
 
 	t.Run("our own repository still self-heals", func(t *testing.T) {
-		// The other half, and it has to be asserted in the same file: a guard
-		// that only proves the new restriction would pass just as well if the
-		// self-heal had been deleted outright, which would bring back the
-		// failure it was written for.
+		// Without this half, deleting the self-heal altogether would pass too.
 		eng := &lockOnceEngine{}
 		svc := &Service{engine: eng}
 

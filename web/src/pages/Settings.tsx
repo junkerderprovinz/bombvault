@@ -2362,7 +2362,7 @@ export function SettingsPage() {
     // puts the message next to the field instead of in a toast. An EMPTY
     // password is not "too short": it means "switch authentication off".
     if (pwNew !== "" && [...pwNew].length < minPasswordLen) {
-      setPwSaveMsg(t("auth.passwordMinHint").replace("{n}", String(minPasswordLen)));
+      setPwSaveMsg(t("auth.passwordMinHint", minPasswordLen));
       setPwSaveState("error");
       setPwSaveShake((n) => n + 1);
       return;
@@ -2507,112 +2507,16 @@ export function SettingsPage() {
         </p>
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Tab strip (7 tabs), on the shared Selector component (GlimStone     */}
-      {/* form-engine Phase 2, Task 3 — design-language's "top, with an       */}
-      {/* icon" rule for a settings-style tab row). `tab` is the single owner */}
-      {/* of which card group renders. Each tab still owns a rainbow         */}
-      {/* position by its LIST INDEX (never a hash of `key`) — Selector's     */}
-      {/* default hue=true carries over exactly the rainbow wiring this strip */}
-      {/* had before the migration (see Task 2's own audit comment, now      */}
-      {/* removed from here since Selector owns the useRainbow() subscription */}
-      {/* itself). Icons are new: the pre-migration hand-rolled strip had     */}
-      {/* none — TAB_ICON above is this task's own addition, satisfying the   */}
-      {/* "no icon beats the wrong one" rule with a per-section glyph rather  */}
-      {/* than a placeholder.                                                */}
-      {/*                                                                    */}
-      {/* GlimStone follow-up pass, live-review point 7 (real bug, not a     */}
-      {/* Selector defect): this strip used to live INSIDE the same           */}
-      {/* `max-w-3xl` reading column as the form content below, which capped  */}
-      {/* it to 768px — narrower than the ~814px seven icon+label "lg"        */}
-      {/* segments need in German (the longest-label locale), so it wrapped   */}
-      {/* to two lines (a lone "System" tab stranded on row 2) even on a wide  */}
-      {/* desktop window. Selector's own "wraps, it never scrolls" rule       */}
-      {/* (design-language.md, "The one horizontal selector") is working      */}
-      {/* exactly as designed — the bug was Settings.tsx capping its PRIMARY   */}
-      {/* NAVIGATION to the same narrow column as its prose/form content, the  */}
-      {/* one page in the app that did (every sibling page's own <h1> above    */}
-      {/* renders un-capped too). Moving `max-w-3xl` down onto the tab panels  */}
-      {/* wrapper below (and off this strip + the heading above) restores a    */}
-      {/* one-line fit at any normal desktop width without touching Selector   */}
-      {/* itself, so its wrap-not-scroll fallback still protects every OTHER   */}
-      {/* call site (and this one too, on a genuinely narrow viewport) exactly */}
-      {/* as before.                                                          */}
-      {/*                                                                    */}
-      {/* `plain` dropped (live-review point 8): the ten toolbar-chip call    */}
-      {/* sites across Containers/VMs/Files/CadenceBuilder give an unselected  */}
-      {/* segment a visible bg-carbon-surface2 idle fill, so the WHOLE strip   */}
-      {/* reads as a row of badges with one filled/active — `plain` (this     */}
-      {/* strip's pre-migration look, preserved verbatim by Task 3 on purpose) */}
-      {/* instead rendered unselected tabs as bare text with no badge shape at */}
-      {/* all. Matching the dominant convention instead of the one other      */}
-      {/* `plain` call site (Dashboard's heatmap toggle, left untouched — out  */}
-      {/* of THIS strip's scope) is a deliberate, requested style change, not  */}
-      {/* a migration-fidelity slip.                                          */}
-      {/*                                                                    */}
-      {/* `equalWidth` (GlimStone follow-up pass, live-review round — "make    */}
-      {/* the tab strip's badges all equal width, then size the cards to      */}
-      {/* match that row"): each of the 7 tabs used to hug its own label       */}
-      {/* width ("Allgemein" narrower than "Pfade & Speicher"), so the wrapped */}
-      {/* row left a stretch of bare gap after the last tab ("System") even    */}
-      {/* though the Card below (its own width cap already removed, see that  */}
-      {/* wrapper's own comment below) renders edge-to-edge across the same    */}
-      {/* container — a container-width match that still LOOKED mismatched     */}
-      {/* because the visible pills never filled it.                          */}
-      {/*                                                                    */}
-      {/* CORRECTED (jdp, round 2, explicit): a full-row `flex-1` stretch was   */}
-      {/* the wrong fix — "Ich wollte die Tab-Badges nur so breit wie sie       */}
-      {/* breit sein müssen... alle so breit wie der Benachrichtigungen-        */}
-      {/* Badge." Selector's `equalWidth` now measures the widest label's own   */}
-      {/* content width and pins every segment to THAT fixed width instead      */}
-      {/* (see Selector.tsx's own file header, item 5b, for the full            */}
-      {/* corrected mechanism) — the row hugs its own content again, just       */}
-      {/* with 7 equal segments instead of 7 ragged ones. That makes this       */}
-      {/* strip narrower than the page's full width once more, which is why     */}
-      {/* it's now wrapped in its own measured container below (`tabStripEl`/   */}
-      {/* `tabStripWidth`, this component's own state block): the Card panels   */}
-      {/* wrapper further down reads that SAME measured width back as its own   */}
-      {/* max-width, instead of the old "both happen to be full-width, so they  */}
-      {/* match automatically" assumption — see that wrapper's own comment for  */}
-      {/* why that assumption no longer holds.                                 */}
-      {/*                                                                    */}
-      {/* `title: label` (equalWidth follow-up): equal-width segments trade    */}
-      {/* away content-hugging, so the single longest label at a given         */}
-      {/* viewport ("Benachrichtigungen" in German, verified live at 1400px)  */}
-      {/* can now truncate where it never did before — the label span's own    */}
-      {/* `truncate` class (Selector.tsx) already handles the ellipsis, but    */}
-      {/* nothing previously surfaced the untruncated text anywhere, because   */}
-      {/* no pre-migration "chip" segment ever needed to (each was always      */}
-      {/* exactly as wide as its own content). A native title tooltip is the   */}
-      {/* same low-cost fallback Files.tsx's destChip already uses for its own */}
-      {/* disabled-hint case — cheap insurance for the one truncation case     */}
-      {/* this specific change can newly introduce, at any label length in     */}
-      {/* any of the 42 locales, not just the one word measured live today.    */}
-      {/* ------------------------------------------------------------------ */}
-      {/* self-start (verified live — first pass shipped WITHOUT this and      */}
-      {/* silently under-measured): this wrapper's own parent is itself a      */}
-      {/* `flex flex-col` column (the gap-6 heading+strip group above), so a   */}
-      {/* child here is a genuine FLEX ITEM regardless of what display value   */}
-      {/* the child itself specifies — flex items are always "blockified"      */}
-      {/* (the CSS Display spec forces a flex child's used display to a        */}
-      {/* block-outside value, `inline-flex` included), and the column's own   */}
-      {/* default `align-items: stretch` then stretches that blockified item's */}
-      {/* CROSS axis (width, since the column's main axis is vertical) to the  */}
-      {/* line's full width regardless of content. A plain `inline-flex`       */}
-      {/* class alone does NOT opt out of that — it only changes what would    */}
-      {/* happen in a normal block-flow parent, which this isn't. `self-start` */}
-      {/* is the actual escape hatch (align-self overriding the inherited      */}
-      {/* stretch), letting this item's width resolve via ordinary shrink-to-  */}
-      {/* fit sizing instead — confirmed live: without it, `tabStripRef`       */}
-      {/* measured the STRETCHED (column-width, ~1113px) box while the         */}
-      {/* Selector strip inside it kept rendering at its own real, narrower    */}
-      {/* content width (~1243px in German at 1400px viewport) and simply      */}
-      {/* overflowed the stretched wrapper — capping the Card panels below to  */}
-      {/* the WRONG, too-narrow number. `max-w-full` still guards the opposite */}
-      {/* edge (a genuinely narrow viewport), and `inline-flex` is kept        */}
-      {/* alongside `self-start` for correctness if this wrapper is ever moved */}
-      {/* under a non-flex (normal block-flow) parent instead, where the       */}
-      {/* inline-level box model would matter again. */}
+      {/* The tab strip. Each tab owns the rainbow position of its list index.
+          It sits outside the max-w-3xl column of the panels, because seven
+          segments need about 814px in German and a capped strip wraps a lone
+          tab onto a second line. equalWidth pins every segment to the widest
+          label, and the panels below take the strip's measured width, so both
+          line up. `title` shows a label that equalWidth truncates.
+
+          self-start keeps the wrapper at the strip's own width: as a child of
+          a flex column it would stretch to the column, and the measurement
+          would read the column instead of the strip. */}
       <div ref={setTabStripEl} className="inline-flex self-start max-w-full">
       <Selector
         items={([
@@ -4599,7 +4503,7 @@ export function SettingsPage() {
             {/* The rule, stated before it is broken rather than after. There
                 was no minimum at all before v8.6.0, and "1234" was accepted. */}
             <span className="text-xs text-carbon-textSub">
-              {t("auth.passwordMinHint").replace("{n}", String(minPasswordLen))}
+              {t("auth.passwordMinHint", minPasswordLen)}
             </span>
           </div>
 
@@ -4986,23 +4890,9 @@ export function SettingsPage() {
       <Card title={t("settings.colors")} hueIndex={hueIdx}>
         <AccentCard t={t} rainbowOn={rainbow.on} />
         <div className="flex flex-col gap-3">
-          {/* hueIndex 0/1/2 (jdp, live-review, extremely emphatic — "auch
-              nicht die Toggles der Regenbogen-Card! ... Es soll immer alles
-              in die Farb- und Formengine integriert werden!! IMMER!!"):
-              these three ToggleRows used to carry NO hueIndex at all,
-              reasoned in ToggleRow's own doc comment as "not members of an
-              equal, trackable list the way seven independent domain toggles
-              are, so they correctly keep the flat single accent." That
-              exclusion — like the Shape Selector's own former `hue={false}`
-              right above — is exactly the self-authored design exception jdp
-              has now ruled out: three toggles rendered together, one per
-              row, are a list by construction regardless of whether they're
-              logically independent or a master-plus-two-sub-options group.
-              Given the SAME `.glim-hue`/`hueVars(rainbowAt(i))` treatment
-              the Domains Card's seven rows already use (own local 0-based
-              index, unrelated to this Card's own `nextHue()` sequence — see
-              ToggleRow's `hueIndex` doc). ToggleRow's own comment excluding
-              this exact trio by name has been corrected to match. */}
+          {/* Three toggles rendered together are a list, so each takes a
+              rainbow position of its own, counted locally like the Domains
+              card's rows. */}
           <ToggleRow
             label={t("settings.rainbow")}
             // Moved DOWN from the Card's own `hint` (jdp, live-review: "die

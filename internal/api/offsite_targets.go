@@ -8,12 +8,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// offsiteConfigDomains is the set of domains that can have an off-site
-// destination — the same whitelist every off-site handler validates against.
+// offsiteConfigDomains lists the domains that can have an off-site target.
 var offsiteConfigDomains = []string{"containers", "vms", "flash", "config", "files"}
 
-// validOffsiteDomain reports whether domain is one of the five off-site-capable
-// domains (the CRUD/setter whitelist).
 func validOffsiteDomain(domain string) bool {
 	for _, d := range offsiteConfigDomains {
 		if d == domain {
@@ -58,12 +55,9 @@ func (s *Service) syncPrimaryOffsiteTarget(domain string, settings store.Setting
 	return err
 }
 
-// syncAllPrimaryOffsiteTargets reconciles every domain's primary off-site target
-// with the given Settings. Best-effort per domain: a failure is logged and does
-// not abort the others (Settings remain the source of truth for the fallback
-// path, so a sync miss degrades to the legacy read, not data loss). Called after
-// any write that changes off-site config: the settings save and the cloud-creds
-// save (which changes the storage class).
+// syncAllPrimaryOffsiteTargets runs syncPrimaryOffsiteTarget for every domain
+// after the settings or the cloud credentials are saved. A failure is logged
+// and does not stop the other domains.
 func (s *Service) syncAllPrimaryOffsiteTargets(settings store.Settings) {
 	for _, d := range offsiteConfigDomains {
 		if err := s.syncPrimaryOffsiteTarget(d, settings); err != nil {
@@ -151,14 +145,8 @@ func (s *Service) offsiteSourceImmutable(settings store.Settings, domain, source
 	return t.Immutable, nil
 }
 
-// primaryOffsiteTarget returns the first ENABLED off-site target for a domain in
-// the store's per-domain order (sort_order, then created_at), or ok=false when
-// the domain has no enabled off-site target.
-//
-// Stage 1: this helper is dormant. Nothing in the live replication path calls it
-// yet — offsiteRepoFor and copyToOffsite still read the single-repo Settings
-// columns, so behavior is unchanged. Stage 2 rewires callers onto this. It is
-// proven correct by a unit test in the meantime.
+// primaryOffsiteTarget returns the domain's first enabled off-site target in
+// store order.
 func (s *Service) primaryOffsiteTarget(domain string) (store.OffsiteTarget, bool) {
 	targets, err := s.store.OffsiteTargetsForDomain(domain)
 	if err != nil {

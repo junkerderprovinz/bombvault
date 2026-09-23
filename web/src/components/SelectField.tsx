@@ -1,42 +1,12 @@
-import { useId, useRef, useState, type ReactNode } from "react";
+import { useId, useRef, useState, type ReactNode, type Ref } from "react";
 import { DropdownListbox } from "./DropdownListbox";
+import { mergeRefs } from "../lib/mergeRefs";
 import { stepIndex } from "../lib/selectScroll";
 
-// ---------------------------------------------------------------------------
-// SelectField — the app's own replacement for a native <select> (#3425).
-//
-// GlimStone rule 18: a native control gets replaced, not persuaded. An open
-// native <select> is drawn by the operating system, so no rule in this house
-// reaches inside it: not the shape engine, not the palette, not the type scale.
-// "Closed, it looks on-brand" is a half-finished rebuild and reads as one.
-//
-// This app already had the PANEL (DropdownListbox, portalled, positioned,
-// dismissed, keyboard-navigable) and used it twice. What it did not have was
-// the whole CONTROL, so every other picker stayed native: converting one meant
-// hand-rolling a trigger, an open/close state, a wheel handler and a list of
-// option buttons, which is 30 lines of markup nobody writes for a filter bar.
-// That is why twenty-one of them were still native. This is the missing half,
-// so a call site is a field again rather than a construction kit.
-//
-// What it owns, and what makes it more than markup:
-//
-//   1. THE WIDTH DOES NOT MOVE. A native select is as wide as its widest
-//      option; a button is as wide as its current label, so a plain conversion
-//      makes the control resize whenever the value changes, and a row of them
-//      reflows on every pick. Every label is rendered stacked in one grid cell
-//      and all but the current one are `invisible`, so the intrinsic width is
-//      the widest label in the CURRENT language and stays put.
-//   2. THE ARROW IS THE HOUSE'S. Rule 14: whoever sets `appearance: none` owes
-//      the arrow. It is the same solid rounded triangle NumberField's steppers
-//      draw, not a chevron from somewhere else.
-//   3. THE WHEEL WORKS ON THE CLOSED CONTROL (rule 14's addendum), clamped at
-//      both ends and skipping disabled options.
-//
-// It deliberately does NOT invent a size taxonomy: the trigger takes the same
-// `className` its <select> carried, so a filter bar stays small and a settings
-// field stays field-sized, and this component never becomes the place where
-// those two drift apart.
-// ---------------------------------------------------------------------------
+// SelectField replaces a native <select>, whose open list is drawn by the
+// operating system and cannot be styled. The trigger takes the className the
+// select had, so each call site keeps its size, and the mouse wheel steps the
+// closed control.
 
 export interface SelectOption<T extends string> {
   value: T;
@@ -46,9 +16,7 @@ export interface SelectOption<T extends string> {
   disabled?: boolean;
 }
 
-/** The house's downward arrow: NumberField's own stepper triangle, which is a
- *  filled shape with rounded corners rather than a two-stroke chevron (an icon
- *  set is filled shapes, and a chevron is the one outline in the interface). */
+/** The rounded filled triangle NumberField's steppers use. */
 function Arrow() {
   return (
     <svg viewBox="0 0 10 6" width="10" height="6" aria-hidden="true" className="shrink-0 opacity-70">
@@ -67,28 +35,28 @@ export function SelectField<T extends string>({
   disabled = false,
   className = "",
   id,
+  ref,
 }: {
   value: T;
   onChange: (next: T) => void;
   options: SelectOption<T>[];
-  /** The control's accessible name — what a `<label>` or `aria-label` said on
-   *  the `<select>` this replaces. A picker without one announces as an
-   *  unlabelled button, which is the one thing this conversion must not cost. */
+  /** Accessible name, what the replaced select's label or aria-label said. */
   label: string;
   disabled?: boolean;
-  /** The trigger's own look, taken over verbatim from the field it replaces. */
+  /** Classes for the trigger. */
   className?: string;
-  /** Forwarded to the trigger, for a visible `<label htmlFor>` that already
-   *  points at this control. */
+  /** Set on the trigger, for a visible <label htmlFor>. */
   id?: string;
+  /** The trigger's own DOM node, for a caller that opens this field already
+   *  focused (LinkEntryPicker does, the moment the picker itself opens). */
+  ref?: Ref<HTMLButtonElement>;
 }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listId = useId();
   const current = options.find((o) => o.value === value);
 
-  // A wheel notch moves to the next option that can actually be picked, so a
-  // disabled entry is stepped OVER rather than landed on and silently ignored.
+  // A wheel notch skips disabled options instead of landing on one.
   function step(delta: 1 | -1) {
     if (disabled || options.length < 2) return;
     let at = options.findIndex((o) => o.value === value);
@@ -107,14 +75,12 @@ export function SelectField<T extends string>({
   return (
     <>
       <button
-        ref={triggerRef}
+        ref={mergeRefs(ref, triggerRef)}
         id={id}
         type="button"
         disabled={disabled}
-        // The ARIA select-only combobox: a trigger that owns a listbox, which
-        // is what a <select> announces as. Replacing a native control is
-        // exactly where an app quietly changes what a screen reader says about
-        // it, and "button" would have.
+        // The ARIA select-only combobox, so screen readers announce it the
+        // way they announce a <select>.
         role="combobox"
         aria-label={label}
         aria-haspopup="listbox"
@@ -124,9 +90,9 @@ export function SelectField<T extends string>({
         className={`inline-flex items-center gap-2 text-start ${className}`}
       >
         {current?.glyph}
-        {/* One grid cell, every label stacked in it: the button is as wide as
-            the widest option, exactly like the select it replaces, and picking
-            a shorter value does not shrink it under the pointer. */}
+        {/* Every label is stacked in one grid cell, so the button is as wide
+            as the widest option and does not shrink when a shorter one is
+            picked. */}
         <span className="grid min-w-0 flex-1">
           {options.map((o) => (
             <span

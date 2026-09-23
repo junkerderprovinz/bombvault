@@ -9,18 +9,11 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// The guards in this file all pin the SAME shape of defect, the one the third
-// review round found six times over: an operation that says "this domain" and
-// reaches only the domain's own repository, while an item's data sits in a named
-// one (#204).
-//
-// They are source scans on purpose. What has to hold is which RESOLUTION a call
-// site uses - domainReposForOp (every repository) versus domainRepoSource (one)
-// - and that is a property of the line, not of an outcome a fake engine can be
-// driven to produce. A behavioural test here would assert that a check ran twice
-// against a stub, which is satisfied by a loop over one repository listed twice.
+// These guards check that operations on a whole domain also reach the named
+// repositories its items use, not only the domain's own. They scan the source
+// because what matters is which resolution a call site uses: domainReposForOp
+// returns every repository, domainRepoSource only one.
 
-// mustReadService returns internal/api/service.go as a string.
 func mustReadService(t *testing.T) string {
 	t.Helper()
 	raw, err := os.ReadFile("service.go")
@@ -30,26 +23,15 @@ func mustReadService(t *testing.T) string {
 	return string(raw)
 }
 
-// funcBody returns the source of one top-level method, from its "func (s
-// *Service) <name>(" line to that function's own closing brace - the first line
-// that is exactly "}" at column zero, which gofmt guarantees for a top-level
-// declaration and for nothing inside it.
-//
-// It used to run to the next "^func " instead, which silently swallowed
-// everything between the end of the function and the start of the next one:
-// package-level vars, consts, types, and any doc COMMENT of the following
-// function. A guard looking for a call string could therefore be satisfied by
-// that call appearing in the next function's comment, which is exactly the
-// false green a source scan must not have.
+// funcBody returns the source of a *Service method in service.go, up to its
+// closing brace at column zero. Stopping there keeps the next function's doc
+// comment from satisfying a guard.
 func funcBody(t *testing.T, src, name string) string {
 	t.Helper()
 	return receiverFuncBody(t, src, `\(s \*Service\)`, name, "service.go")
 }
 
-// receiverFuncBody is funcBody for any receiver and any file. A guard that reads
-// the WHOLE file cannot tell a call from a mention of one in a comment, which is
-// exactly the failure the funcBody helper was written for - and then two guards
-// below kept scanning whole files anyway.
+// receiverFuncBody is funcBody for any receiver and file.
 func receiverFuncBody(t *testing.T, src, receiver, name, file string) string {
 	t.Helper()
 	start := regexp.MustCompile(`(?m)^func ` + receiver + ` ` + regexp.QuoteMeta(name) + `\(`).FindStringIndex(src)
@@ -64,14 +46,8 @@ func receiverFuncBody(t *testing.T, src, receiver, name, file string) string {
 	return ""
 }
 
-// TestDomainWideOpsReachEveryRepository pins the four operations that have to
-// see ALL of a domain's data.
-//
-// Each of them resolved the domain's own repository alone, which turned each
-// into its own kind of lie: a green integrity check over a repository the data
-// is not in, an unlock that leaves the stuck lock where it is, a prune that
-// never reclaims what retention freed, and a restorability drill that reads back
-// somebody else's bytes.
+// Check, unlock, prune and the restore drill only mean something over all of a
+// domain's data.
 func TestDomainWideOpsReachEveryRepository(t *testing.T) {
 	src := mustReadService(t)
 	for _, fn := range []string{"CheckDomain", "UnlockDomain", "pruneDomain", "runSubsetDrill"} {
@@ -87,30 +63,18 @@ func TestDomainWideOpsReachEveryRepository(t *testing.T) {
 	}
 }
 
-// TestDomainWideOpsBuildTheModePerRepository pins the other half of the same
-// change. A named repository carries its own credentials, storage class and
-// bandwidth caps, and an off-site copy carries its target's; running the loop
-// with one mode would address somebody else's bucket with the wrong keys.
-//
-// It matches on the LOOP VARIABLE, not just the helper name, because the shape
-// this is meant to catch keeps the call and hoists it out of the loop. A source
-// scan can only go that far; the assertion that the engine really saw two
-// different modes lives in TestCheckDomainChecksBothRepositoriesWithTheirOwnModes
-// (named_repos_multi_test.go), which is the instrument this one used to be
-// mistaken for.
-// modePerRepoRe matches the mode being built from the loop variable, whatever
-// the element's type happens to be today.
+// modePerRepoRe matches the mode being built from the loop variable r or one
+// of its fields.
 var modePerRepoRe = regexp.MustCompile(`s\.repoModeFor\(settings, domain, source, r\b`)
 
+// A named repository has its own credentials, storage class and bandwidth
+// caps, and an off-site copy has its target's, so the mode must be built
+// inside the loop. TestCheckDomainChecksBothRepositoriesWithTheirOwnModes
+// checks what the engine actually receives.
 func TestDomainWideOpsBuildTheModePerRepository(t *testing.T) {
 	src := mustReadService(t)
 	for _, fn := range []string{"CheckDomain", "UnlockDomain", "pruneDomain", "runSubsetDrill"} {
 		body := funcBody(t, src, fn)
-		// Matched WITHOUT the argument's exact spelling. Pinning "…, source, r)"
-		// made this guard fail the day the loop variable became a struct and the
-		// call became "…, source, r.Loc)" - a failure about a rename, in a test
-		// whose whole job is to be believed when it speaks. What has to hold is
-		// that the mode is built INSIDE the loop from the loop's own element.
 		if !modePerRepoRe.MatchString(body) {
 			t.Errorf("%s no longer builds the restic mode per repository from the loop variable.\n"+
 				"A named repository's credentials, storage class and limits are its own, and an\n"+
@@ -123,10 +87,8 @@ func TestDomainWideOpsBuildTheModePerRepository(t *testing.T) {
 	}
 }
 
-// TestDeleteSnapshotFindsTheRepositoryHoldingIt pins the one operation that
-// cannot simply loop: a snapshot id names ONE snapshot, and forgetting it has to
-// happen in the repository it is in. Resolving the domain repository answered
-// "no matching ID" for a snapshot the list beside the button was showing.
+// A snapshot id names one snapshot, so the delete has to find the repository
+// holding it instead of looping.
 func TestDeleteSnapshotFindsTheRepositoryHoldingIt(t *testing.T) {
 	body := funcBody(t, mustReadService(t), "DeleteSnapshot")
 	if !strings.Contains(body, "s.repoHoldingSnapshot(") {
@@ -136,16 +98,10 @@ func TestDeleteSnapshotFindsTheRepositoryHoldingIt(t *testing.T) {
 	}
 }
 
-// TestReplicationAgreesWithItself pins the resolution of a contradiction the
-// review found: the per-item hook replicated whatever repository the backup had
-// just written (a named one included), while the manual and scheduled passes
-// replicated the domain repository only. The same snapshot was therefore copied
-// off-site or not depending on WHICH trigger fired.
-//
-// The answer is that the two cover different ground on purpose - the hook copies
-// the repository that just changed, the whole-domain passes cover every source -
-// so both must go through offsiteReplicationSources' rule about which
-// repositories qualify.
+// The per-item hook copies the repository a backup just wrote, and the manual
+// and scheduled passes cover every source. Both must apply the same rule about
+// which repositories qualify, or a snapshot's off-site copy would depend on the
+// trigger.
 func TestReplicationAgreesWithItself(t *testing.T) {
 	src := mustReadService(t)
 	for _, fn := range []string{"ReplicateOffsite", "StartReplicateOffsite"} {
@@ -155,17 +111,10 @@ func TestReplicationAgreesWithItself(t *testing.T) {
 				"and the operation still reports success.", fn)
 		}
 	}
-	// The hook's own half: it must refuse a REMOTE named repository rather than
-	// trying to copy one cloud into another, which one restic process cannot do
-	// (it carries a single set of backend credentials) and which nobody asked
-	// for - a remote named repository IS the off-site copy.
-	//
-	// Asserted as the SHARED predicate, not as the condition spelled out twice.
-	// The two spellings drifted: the hook additionally required a non-empty
-	// Named.ID, so when namedRepoForLocation's store read failed - refFor then
-	// yields Own=false with no named row - the hook attempted a copy the
-	// whole-domain pass had excluded. One helper is the only way a source scan
-	// can see that they still agree.
+	// A remote named repository is already the off-site copy, and one restic
+	// process cannot copy between two clouds with a single set of backend
+	// credentials. Both paths must skip it through the same predicate so they
+	// cannot drift apart.
 	for _, fn := range []string{"replicateOffsite", "offsiteReplicationSources"} {
 		if !strings.Contains(funcBody(t, src, fn), "alreadyOffSite(") {
 			t.Errorf("%s no longer asks the shared predicate about a REMOTE named repository.\n"+
@@ -176,11 +125,8 @@ func TestReplicationAgreesWithItself(t *testing.T) {
 	}
 }
 
-// TestDiscoverLooksInEveryRepository pins the data-loss half of the same family.
-//
-// Discover is the path back from a lost /config: it rebuilds items out of the
-// snapshots that still exist. Reading only the domain repository left an item
-// pointed at a named one unrecoverable, with its backups sitting there intact.
+// Discover rebuilds items from their snapshots after /config is lost, so it has
+// to look in the named repositories too.
 func TestDiscoverLooksInEveryRepository(t *testing.T) {
 	src := mustReadService(t)
 	for _, fn := range []string{"Discover", "DiscoverVMs", "DiscoverFileSets"} {
@@ -193,12 +139,8 @@ func TestDiscoverLooksInEveryRepository(t *testing.T) {
 	}
 }
 
-// TestTheRecoveryKitNamesTheNamedRepositories pins the last resort.
-//
-// Every other location in the kit is one the user configured and could re-derive
-// from their own settings. A named repository's location existed ONLY in the
-// database, so losing /config without this section leaves the data in a place
-// nothing left on the box can name.
+// A named repository's location lives only in the database, so after losing
+// /config the recovery kit is the one place that still names it.
 func TestTheRecoveryKitNamesTheNamedRepositories(t *testing.T) {
 	body := funcBody(t, mustReadService(t), "RecoveryKit")
 	for _, want := range []string{"s.store.ListNamedRepos()", "Named repositories"} {
@@ -209,16 +151,9 @@ func TestTheRecoveryKitNamesTheNamedRepositories(t *testing.T) {
 	}
 }
 
-// TestTheUnprefixedRemoteAdviceSurvivesTheScrubber pins a message against the
-// machinery that carries it.
-//
-// Every error leaving the API goes through scrubError, and its absPathRe
-// (`(/[^\s:"']+)+`) redacts any slash-led token - not only a real filesystem
-// path. A refusal that told the user "write it as rclone:myremote:bucket/path"
-// therefore arrived on screen as "...bucket[path]": advice that cannot be
-// typed, in the one message whose whole job is to say what to type. It happened
-// twice in a row, first by echoing the caller's location back and then in a
-// fixed example, which is why the invariant is pinned rather than the wording.
+// scrubError redacts any token starting with a slash, not only real paths. An
+// example such as rclone:myremote:bucket/path in this refusal would reach the
+// user as "bucket[path]", advice that cannot be typed.
 func TestTheUnprefixedRemoteAdviceSurvivesTheScrubber(t *testing.T) {
 	h := &Handler{}
 	err := h.validateNamedRepo(store.OffsiteTarget{Name: "Kalte Ablage", Repo: "BackBlaze:bucket/cold"}, true, true)
@@ -232,24 +167,15 @@ func TestTheUnprefixedRemoteAdviceSurvivesTheScrubber(t *testing.T) {
 	}
 }
 
-// TestTheInUseRefusalsAreOneTransaction pins that the two refusals which protect
-// a live repository re-count INSIDE their own write.
-//
-// Counting first and writing second leaves a window: an item that starts
-// pointing at the repository in between is silently put back on its domain
-// repository, and its next backup lands there looking exactly like a working
-// backup. That is precisely the outcome the refusal exists to prevent, so it may
-// not have a race that reproduces it.
+// Deleting or moving a repository that is in use must count its users inside
+// the same write. Counting first leaves a window in which an item starts using
+// it and is then silently put back on its domain repository.
 func TestTheInUseRefusalsAreOneTransaction(t *testing.T) {
 	raw, err := os.ReadFile("named_repos_crud.go")
 	if err != nil {
 		t.Fatalf("read named_repos_crud.go: %v", err)
 	}
 	src := string(raw)
-	// Scoped to the two handlers' own bodies. A whole-file Contains passes on a
-	// mention in a comment - including the comment that explains why the guarded
-	// transaction exists - so the guard would keep reporting green over a handler
-	// rewritten back to a separate count and write.
 	for _, c := range []struct{ fn, want string }{
 		{"handleDeleteNamedRepo", "h.store.DeleteNamedRepoIfUnused("},
 		{"handleUpdateNamedRepo", "h.store.SetNamedRepoLocationIfUnused("},

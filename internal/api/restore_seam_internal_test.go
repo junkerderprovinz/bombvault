@@ -11,12 +11,10 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// TestPrepareRestoreSeamEquivalence pins Task 8's refactor promise: the
-// settings-driven prepareRestore and the explicit-repo prepareRestoreIn
-// produce IDENTICAL plans (and errors) for the same inputs when the ref
-// carries exactly the settings-resolved repo and mode. Uses a recreate-only
-// target (definition, no snapshots) so no engine is needed: with the local
-// repo not yet initialised, snapshotsForTag reports "no snapshots yet".
+// prepareRestore resolves the repo from settings, prepareRestoreIn takes it
+// explicitly; given the same repo and mode both return the same plan and error.
+// A recreate-only target needs no engine, because the uninitialised local repo
+// reports no snapshots.
 func TestPrepareRestoreSeamEquivalence(t *testing.T) {
 	db, err := store.Open(":memory:")
 	if err != nil {

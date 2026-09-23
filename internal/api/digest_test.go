@@ -17,11 +17,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// digestTestService builds a Service over a mem store with a webhook capture
-// server wired as the (only) notify channel, so a test can read the exact
-// digest message that was delivered. The generic webhook format posts JSON
-// {"title","message","ok"}, so substring asserts against the body see the
-// composed digest text.
+// digestTestService returns a Service whose only notify channel is a webhook,
+// and a func that returns the last body the webhook received.
 func digestTestService(t *testing.T, on string) (*api.Service, *store.Repo, func() string) {
 	t.Helper()
 	var mu sync.Mutex
@@ -61,9 +58,6 @@ func seedBackupRun(t *testing.T, st *store.Repo, targetID, status, errMsg string
 	}
 }
 
-// TestSendDigestCarriesCountsAndFailureLine pins G6: the digest message carries
-// the per-kind ok/failed counts of the seeded window (2 ok + 1 failed backup)
-// and names the failed item with its reason.
 func TestSendDigestCarriesCountsAndFailureLine(t *testing.T) {
 	svc, st, body := digestTestService(t, "always")
 
@@ -89,18 +83,16 @@ func TestSendDigestCarriesCountsAndFailureLine(t *testing.T) {
 	if !strings.Contains(got, "backup plex: disk full") {
 		t.Fatalf("digest must name the failed item with its reason, got %q", got)
 	}
-	// 1 KiB + 2 KiB from the two successful backups must be summed in.
 	if !strings.Contains(got, "New backup data: 3.0 KiB") {
 		t.Fatalf("digest must sum the successful backup bytes, got %q", got)
 	}
-	// With a failure in the window the event is delivered as NOT-ok.
 	if !strings.Contains(got, `"ok":false`) {
 		t.Fatalf("a digest with failures must be delivered as ok=false, got %q", got)
 	}
 }
 
-// TestSendDigestRespectsNeverPolicy pins the policy gate: with notifications
-// muted ("never") the digest sends nothing and errors nothing.
+// TestSendDigestRespectsNeverPolicy: a muted policy sends nothing and returns
+// no error.
 func TestSendDigestRespectsNeverPolicy(t *testing.T) {
 	url, hits := webhookCounter(t)
 	dir := t.TempDir()

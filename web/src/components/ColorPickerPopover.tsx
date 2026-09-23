@@ -9,29 +9,10 @@ import {
 import { createPortal } from "react-dom";
 import { useT } from "../lib/i18n";
 
-// ---------------------------------------------------------------------------
-// ColorPickerSwatch — the shared custom-colour trigger (design-language.md,
-// "The user-owned axes" > Accent: "every custom colour value ... gets the
-// SAME trigger: a flat colour swatch, same size and shape as the preset
-// swatches beside it. Clicking it opens the shared popover anchored to that
-// swatch, pre-synced to its current value"). React port of GlimStone's
-// framework-free reference/colorPicker.ts + its openColorPickerPopover() —
-// a REAL saturation/value square + hue bar the app owns, never a native
-// `<input type="color">` (which hands control to a browser/OS surface
-// entirely outside the page — jdp: "der Farbpicker soll... eine Blase die
-// eingeblendet wird, kein eigenes Fenster welches sich öffnet").
-//
-// Structural reference for the portal + dismissal wiring: InfoBubble.tsx
-// (createPortal(..., document.body), position measured off the trigger's own
-// rect, closes on scroll) and FilterPopover.tsx (outside-mousedown + Escape
-// dismissal, role="dialog"). Neither of those needs to size itself against
-// its OWN rendered content, so this adds a useLayoutEffect position pass
-// (reference's own `position()`, called only after the panel is already in
-// the DOM) to clamp against the viewport using the popover's real measured
-// width/height, matching reference/colorPicker.ts's openColorPickerPopover
-// exactly — including its choice to CLOSE (not reposition) on scroll/resize,
-// since a de-anchored fixed popover reads as broken either way.
-// ---------------------------------------------------------------------------
+// ColorPickerSwatch is the shared custom-colour control: a swatch sized like
+// the preset swatches beside it, opening a popover with a saturation/value
+// square, a hue bar and a hex field. The popover is the app's own rather than a
+// native <input type="color">, which would open a window outside the page.
 
 export interface Hsv {
   h: number;
@@ -41,11 +22,7 @@ export interface Hsv {
 
 const DEFAULT_HSV: Hsv = { h: 220, s: 0.8, v: 0.9 };
 
-/** hexToHsv/hsvToHex/normalizeHex are ported verbatim (same math, same edge
- * cases) from GlimStone's reference/colorPicker.ts — kept pure/DOM-free so
- * they're unit-tested directly, the same split lib/accent.ts's own
- * contrastOn/softTint use between "pure colour math" and "the DOM-owning
- * caller". */
+/** hexToHsv parses "#rrggbb" or "rrggbb" in either case, or returns null. */
 export function hexToHsv(hex: string): Hsv | null {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
   const group = m?.[1];
@@ -104,11 +81,7 @@ export function normalizeHex(value: string): string | null {
   return /^[0-9a-f]{6}$/i.test(trimmed) ? `#${trimmed.toLowerCase()}` : null;
 }
 
-// Only ONE popover is ever open across the whole app — mirrors reference/
-// colorPicker.ts's own module-level `openPopover` singleton (opening a new
-// one closes whichever was already open, the same idiom a native <select>'s
-// single open dropdown already follows). React has no built-in shared slot
-// for this, so a tiny module-level closer reference stands in for it.
+// Only one popover is open across the app; opening one closes the other.
 let activeCloser: (() => void) | null = null;
 
 export function ColorPickerSwatch({
@@ -118,23 +91,16 @@ export function ColorPickerSwatch({
   disabled,
   className,
 }: {
-  /** Current 6-digit hex value the swatch displays and the popover opens
-   *  pre-synced to. */
+  /** The 6-digit hex the swatch shows and the popover opens with. */
   value: string;
-  /** Fires with a normalized "#rrggbb" on every drag update and on every
-   *  valid typed hex — same call shape the native `<input type="color">`
-   *  this replaces used, so callers (setAccent, a palette-array updater)
-   *  are unaffected by the swap. */
+  /** Called with a normalized "#rrggbb" on every drag or key step and every
+   *  valid typed hex. */
   onChange: (hex: string) => void;
-  /** Accessible name + native hover title, and the popover dialog's own
-   *  aria-label. */
+  /** The swatch's accessible name and hover title, and the popover's label. */
   label: string;
   disabled?: boolean;
-  /** Caller-supplied size/shape/border classes — kept out of this
-   *  component so both call sites (the single accent swatch, sized like its
-   *  presets; the 8 rainbow-palette swatches, sized like their own
-   *  neighbours) keep owning their own visual footprint instead of this
-   *  component hard-coding one. */
+  /** Size, shape and border of the swatch, so each call site can match its
+   *  neighbours. */
   className?: string;
 }) {
   const { t } = useT();
@@ -147,13 +113,9 @@ export function ColorPickerSwatch({
   const panelRef = useRef<HTMLDivElement>(null);
   const svRef = useRef<HTMLDivElement>(null);
   const hueRef = useRef<HTMLDivElement>(null);
-  // hsvRef mirrors `hsv` state but is mutated synchronously during a drag —
-  // the drag effect below attaches its document-level mousemove/touchmove
-  // listeners once per open/close transition (re-attaching mid-drag on every
-  // hsv change would drop whatever mouse/touch session was in progress), so
-  // it needs a way to read/write the CURRENT value without `hsv` in its own
-  // dependency array. onChangeRef is the same fix for the caller's onChange
-  // identity, which is under no obligation to stay stable across renders.
+  // The drag listeners are attached once per opening, since re-attaching them
+  // on every change would break a drag in progress. They reach the current
+  // colour and the caller's latest onChange through these refs.
   const hsvRef = useRef<Hsv>(hsv);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
@@ -180,12 +142,9 @@ export function ColorPickerSwatch({
     setOpen(true);
   }
 
-  // Position the popover off the trigger's own rect, clamped so it never
-  // overflows the viewport — same math as reference's own `position()`,
-  // which is likewise only called once the panel already has real dimensions
-  // to measure. A useLayoutEffect (not a plain effect) so the corrected
-  // position lands before the browser's next paint — no visible jump from a
-  // top-left flash to the real spot.
+  // Below the trigger, or above it when there is no room, clamped to the
+  // viewport. It needs the panel's rendered size, and a layout effect places it
+  // before the first paint.
   useLayoutEffect(() => {
     if (!open) return;
     const trigger = triggerRef.current;
@@ -202,10 +161,8 @@ export function ColorPickerSwatch({
     setPos({ left, top });
   }, [open]);
 
-  // Dismissal: outside pointerdown, Escape, or scroll/resize — reference's
-  // own documented set. Scroll/resize CLOSE rather than reposition (a fixed
-  // popover de-anchored from its trigger reads as broken either way; see
-  // this file's header comment).
+  // Scroll and resize close the popover rather than moving it, because a fixed
+  // popover that drifts from its trigger looks broken.
   useEffect(() => {
     if (!open) return;
     function onPointerDown(e: MouseEvent) {
@@ -229,9 +186,7 @@ export function ColorPickerSwatch({
     };
   }, [open, closeSelf]);
 
-  // ONE update path for every input: drag, keyboard, and the hex field all end
-  // here. It used to live inside the drag effect, which is why the keyboard had
-  // nowhere to plug in.
+  // Drag and keyboard input both end here.
   const apply = useCallback((patch: Partial<Hsv>) => {
     const next = { ...hsvRef.current, ...patch };
     hsvRef.current = next;
@@ -241,15 +196,9 @@ export function ColorPickerSwatch({
     onChangeRef.current(hex);
   }, []);
 
-  // Keyboard equivalents of the two drags. The SV square and the hue bar were
-  // bare <div>s with mousedown/touchstart and nothing else: no tabindex, no
-  // role, no keys. That made the palette swatches unreachable without a mouse —
-  // a regression against the native <input type="color"> they replaced, which
-  // was fully keyboard-operable. (The accent swatch at least kept its 8
-  // presets; the palette had nothing.)
-  //
-  // Step sizes follow the usual slider convention: arrows nudge, PageUp/Down
-  // and Shift take the coarse step, Home/End go to the ends.
+  // Keyboard equivalents of the two drags, with the usual slider steps: arrows
+  // nudge, PageUp/PageDown and Shift take the coarse step, Home/End go to the
+  // ends.
   const HUE_STEP = 1;
   const HUE_PAGE = 15;
   const SV_STEP = 0.01;
@@ -321,9 +270,7 @@ export function ColorPickerSwatch({
     apply(patch);
   }
 
-  // Drag wiring for the SV square + hue bar — mouse and touch both, exactly
-  // reference/colorPicker.ts's own `drag()` helper, ported to attach/detach
-  // via a ref-scoped effect instead of returning plain DOM nodes.
+  // Mouse and touch dragging on the SV square and the hue bar.
   useEffect(() => {
     if (!open) return;
     const svEl = svRef.current;
@@ -376,9 +323,7 @@ export function ColorPickerSwatch({
       detachSv();
       detachHue();
     };
-    // `apply` is a useCallback with no dependencies of its own, so listing it
-    // does not re-attach the listeners on every render — it just stops the
-    // dependency list from lying about what this effect reads.
+    // `apply` is stable, so listing it does not re-attach the listeners.
   }, [open, apply]);
 
   return (
@@ -408,13 +353,10 @@ export function ColorPickerSwatch({
             style={{ left: pos?.left ?? -9999, top: pos?.top ?? -9999 }}
           >
             <div className="glim-picker">
-              {/* role="slider" on a 2-D control is a deliberate approximation:
-                  ARIA has no two-axis slider, and the alternatives (two linked
-                  sliders, or role="application") either double the tab stops or
-                  hand the whole panel's key handling to the page. aria-valuetext
-                  carries BOTH axes so a screen reader still announces the real
-                  position; aria-valuenow tracks saturation, the axis the arrow
-                  keys move first. */}
+              {/* ARIA has no two-axis slider, and two linked sliders would
+                  double the tab stops. aria-valuetext carries both axes;
+                  aria-valuenow tracks saturation, the axis the arrow keys move
+                  first. */}
               <div
                 ref={svRef}
                 role="slider"
@@ -454,11 +396,7 @@ export function ColorPickerSwatch({
               value={hexDraft}
               onChange={(e) => {
                 const raw = e.target.value;
-                // The field's own displayed text stays exactly what was
-                // typed (reference never overwrites it back to a normalized
-                // form here) — only the DRAG handlers above resync it to a
-                // freshly-computed hex. See this component's header comment
-                // for why.
+                // The field keeps what was typed; only the sliders rewrite it.
                 setHexDraft(raw);
                 const normalized = normalizeHex(raw);
                 if (!normalized) return;
