@@ -86,6 +86,23 @@ describe("Timeline", () => {
     expect(fake.callsTo("getTimelinePlace").map((c) => c[2])).toEqual(["offsite:t-b2", "offsite:t-hz"]);
   });
 
+  it("locks both ways of reading a place while that read is out", async () => {
+    fake.reply("getTimeline", {
+      ok: true,
+      places: [home, { ...b2, state: "unchecked" }],
+      rows: [],
+    });
+    const answer = fake.hold("getTimelinePlace");
+    open();
+    const check = (await screen.findByRole("button", { name: "Check" })) as HTMLButtonElement;
+    const older = screen.getByRole("button", { name: "Load older" }) as HTMLButtonElement;
+    fireEvent.click(check);
+    await waitFor(() => expect(check.disabled).toBe(true));
+    expect(older.disabled).toBe(true);
+    answer();
+    await waitFor(() => expect(fake.callsTo("getTimelinePlace")).toHaveLength(1));
+  });
+
   it("offers the item's location first and hands the page the chosen place's newest id", async () => {
     fake.reply("getTimeline", {
       ok: true,
