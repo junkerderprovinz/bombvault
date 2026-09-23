@@ -154,15 +154,23 @@ func mcpErrorMessage(t *testing.T, res *mcp.CallToolResult) string {
 
 func mcpErrorField(t *testing.T, res *mcp.CallToolResult, field string) string {
 	t.Helper()
+	s, _ := mcpErrorBody(t, res)[field].(string)
+	return s
+}
+
+// mcpErrorBody is a refusal's error object, which carries the code and the
+// message next to whatever numbers the refusal explains itself with.
+func mcpErrorBody(t *testing.T, res *mcp.CallToolResult) map[string]any {
+	t.Helper()
 	raw, err := json.Marshal(res.StructuredContent)
 	if err != nil {
 		t.Fatal(err)
 	}
 	var body struct {
-		Error map[string]string `json:"error"`
+		Error map[string]any `json:"error"`
 	}
 	if err := json.Unmarshal(raw, &body); err != nil {
 		t.Fatalf("decode %s: %v", raw, err)
 	}
-	return body.Error[field]
+	return body.Error
 }

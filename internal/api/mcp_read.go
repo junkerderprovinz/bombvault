@@ -63,7 +63,7 @@ func (h *Handler) toolGetHealth(ctx context.Context, _ *mcp.CallToolRequest) (*m
 		"key": map[string]any{
 			"label":              caller.Label,
 			"canStartBackups":    caller.CanStartBackups,
-			"startsLeftThisHour": mcpStartsPerHour,
+			"startsLeftThisHour": h.mcp.starts.remaining(caller.KeyID, h.mcp.now()),
 		},
 	}), nil
 }
@@ -382,7 +382,7 @@ func (h *Handler) mcpItems(ctx context.Context, settings store.Settings, domain 
 				ID:       vm.ID,
 				Name:     vm.Name,
 				Included: vm.IncludeInSchedule,
-				Paused:   schedule.PausedByOverride(vm.ScheduleCadence),
+				Paused:   schedule.PausedByOverride(vm.ScheduleCadence, settings.PerItemSchedules),
 				Schedule: schedule.EffectiveVMSchedule(vm, settings).Kind,
 				Stops:    mcpStops{Self: vm.Method != "live", Containers: []string{}, Known: true},
 			}
@@ -402,7 +402,7 @@ func (h *Handler) mcpItems(ctx context.Context, settings store.Settings, domain 
 				ID:       set.ID,
 				Name:     set.Name,
 				Included: set.Enabled,
-				Paused:   schedule.PausedByOverride(set.ScheduleCadence),
+				Paused:   schedule.PausedByOverride(set.ScheduleCadence, settings.PerItemSchedules),
 				Schedule: schedule.EffectiveFileSetSchedule(set, settings).Kind,
 				Stops:    mcpStops{Containers: []string{}, Known: true},
 			}
@@ -459,7 +459,7 @@ func (h *Handler) mcpContainerItems(ctx context.Context, settings store.Settings
 			ID:       t.ID,
 			Name:     t.ContainerName,
 			Included: t.IncludeInSchedule,
-			Paused:   schedule.PausedByOverride(t.ScheduleCadence),
+			Paused:   schedule.PausedByOverride(t.ScheduleCadence, settings.PerItemSchedules),
 			Schedule: schedule.EffectiveContainerSchedule(t, settings).Kind,
 			Stops:    mcpStops{Containers: []string{}, Known: dockerAnswered},
 		}

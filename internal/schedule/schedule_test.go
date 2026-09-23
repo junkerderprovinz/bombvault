@@ -746,3 +746,27 @@ func TestSchedulerStopReturnsWhileAJobRunsOutsideCron(t *testing.T) {
 	default:
 	}
 }
+
+// A manual "back up this domain now" takes everything the operator protects and
+// has not paused, which is a different question from the one the scheduler's
+// domain pass asks.
+func TestPausedByOverride(t *testing.T) {
+	cases := []struct {
+		override string
+		perItem  bool
+		want     bool
+	}{
+		{"off", true, true},
+		{"", true, false},
+		{"daily 02:00", true, false},
+		{"everyN 3 02:00", true, false},
+		{"nonsense", true, false},
+		{"off", false, false},
+		{"daily 02:00", false, false},
+	}
+	for _, c := range cases {
+		if got := schedule.PausedByOverride(c.override, c.perItem); got != c.want {
+			t.Errorf("PausedByOverride(%q, %v) = %v, want %v", c.override, c.perItem, got, c.want)
+		}
+	}
+}

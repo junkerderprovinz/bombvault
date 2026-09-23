@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -21,6 +22,14 @@ var mcpReadTools = []string{
 	"list_items",
 	"list_runs",
 	"list_restore_points",
+}
+
+// mcpStartTools are the tools a key needs the start permission for. They are in
+// every key's tool list all the same.
+var mcpStartTools = []string{
+	"start_backup",
+	"start_domain_backup",
+	"start_backup_everything",
 }
 
 // The era Claude Code and mcp-remote negotiate today. A client that speaks it
@@ -71,7 +80,7 @@ func TestMCPLegacyEraHandshake(t *testing.T) {
 func TestMCPToolAllowlist(t *testing.T) {
 	h, _, _, key := newMCPToolRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
 
-	want := append([]string(nil), mcpReadTools...)
+	want := append(append([]string(nil), mcpReadTools...), mcpStartTools...)
 	sort.Strings(want)
 	if got := mcpToolNames(t, mcpListTools(t, h, key)); !reflect.DeepEqual(got, want) {
 		t.Fatalf("tools = %v, want %v", got, want)
@@ -117,12 +126,15 @@ func TestMCPToolAnnotationsAndSchemas(t *testing.T) {
 			t.Fatalf("%s carries no annotations", name)
 		}
 		// Listing restore points is the one read that leaves the machine: a
-		// primary repository can be an S3 bucket or a REST server.
+		// primary repository can be an S3 bucket or a REST server. A start
+		// leaves it too, and a second call makes a second backup, but nothing
+		// it does destroys a restore point.
+		starts := slices.Contains(mcpStartTools, name)
 		for hint, want := range map[string]any{
-			"readOnlyHint":    true,
+			"readOnlyHint":    !starts,
 			"destructiveHint": false,
-			"idempotentHint":  true,
-			"openWorldHint":   name == "list_restore_points",
+			"idempotentHint":  !starts,
+			"openWorldHint":   starts || name == "list_restore_points",
 		} {
 			if ann[hint] != want {
 				t.Fatalf("%s %s = %v, want %v", name, hint, ann[hint], want)

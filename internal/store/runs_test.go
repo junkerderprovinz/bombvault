@@ -1118,6 +1118,7 @@ func TestMCPStartQueries(t *testing.T) {
 		{id: "mcp3", targetID: "a", kind: "backup", status: "failed", startedAt: 400, finishedAt: 410, via: "mcp", viaKey: "k1"},
 		{id: "mcp4", targetID: "a", kind: "dbdump", status: "success", startedAt: 500, finishedAt: 510, via: "mcp", viaKey: "k1"},
 		{id: "mcp5", targetID: "b", kind: "backup", status: "success", startedAt: 600, finishedAt: 610, via: "mcp", viaKey: "k1"},
+		{id: "mcp6", targetID: "c", kind: "backup", status: "running", startedAt: 700, via: "mcp", viaKey: "k1"},
 	}
 	for _, row := range rows {
 		insertRunRow(t, db, row)
@@ -1130,9 +1131,10 @@ func TestMCPStartQueries(t *testing.T) {
 		want    int64
 	}{
 		{"newest mcp start of the target", []string{"a"}, 0, 500},
+		{"a run still in flight does not count", []string{"c"}, 0, 0},
 		{"several targets", []string{"a", "b"}, 0, 600},
 		{"since cuts the older starts", []string{"a"}, 501, 0},
-		{"a target without mcp runs", []string{"c"}, 0, 0},
+		{"a target without mcp runs", []string{"d"}, 0, 0},
 		{"no targets", nil, 0, 0},
 	}
 	for _, c := range latest {
@@ -1146,22 +1148,24 @@ func TestMCPStartQueries(t *testing.T) {
 	}
 
 	counts := []struct {
-		target string
-		since  int64
-		want   int
+		target     string
+		since      int64
+		want       int
+		wantOldest int64
 	}{
-		{"a", 0, 2},
-		{"a", 250, 1},
-		{"b", 0, 1},
-		{"c", 0, 0},
+		{"a", 0, 2, 200},
+		{"a", 250, 1, 300},
+		{"b", 0, 1, 600},
+		{"c", 0, 1, 700},
+		{"d", 0, 0, 0},
 	}
 	for _, c := range counts {
-		got, err := r.MCPBackupsSince(c.target, c.since)
+		got, oldest, err := r.MCPBackupsSince(c.target, c.since)
 		if err != nil {
 			t.Fatalf("MCPBackupsSince(%s, %d): %v", c.target, c.since, err)
 		}
-		if got != c.want {
-			t.Fatalf("MCPBackupsSince(%s, %d) = %d, want %d", c.target, c.since, got, c.want)
+		if got != c.want || oldest != c.wantOldest {
+			t.Fatalf("MCPBackupsSince(%s, %d) = %d/%d, want %d/%d", c.target, c.since, got, oldest, c.want, c.wantOldest)
 		}
 	}
 
