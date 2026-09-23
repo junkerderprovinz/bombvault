@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -1071,4 +1072,156 @@ func TestIntegrityKeepsEveryDrillSeriesApart(t *testing.T) {
 	if len(found) != 0 || len(absent) != 0 {
 		t.Fatalf("a check outside the catalogue was judged: %+v %+v", found, absent)
 	}
+}
+
+// volumeSamples builds n readings a day apart, the oldest at start, oldest
+// first as ListVolumeSamples returns them. free(i) is the free space of
+// reading i.
+func volumeSamples(n int, start int64, total *int64, free func(i int) int64) []store.VolumeSample {
+	out := make([]store.VolumeSample, n)
+	for i := range n {
+		out[i] = store.VolumeSample{
+			Volume: "dev:801", At: start + int64(i)*anomalyDay,
+			FreeBytes: free(i), TotalBytes: total, Domains: []string{"containers"},
+		}
+	}
+	return out
+}
+
+func totalOf(b int64) *int64 { return &b }
+
+func capacityInput(samples []store.VolumeSample) volumeInput {
+	return volumeInput{
+		Volume: "dev:801", Domains: []string{"containers"},
+		Samples: samples, Sens: sensBalanced, Now: anomalyNow,
+	}
+}
+
+func TestCapacityEtaFromGrowthAndFreeSlope(t *testing.T) {
+	const perDay = 10 * gib
+	falling := func(free int64) []store.VolumeSample {
+		return volumeSamples(20, anomalyNow-20*anomalyDay, totalOf(4<<40), func(i int) int64 {
+			return free + int64(19-i)*perDay
+		})
+	}
+
+	found, _ := detectCapacity(capacityInput(falling(200 * gib)))
+	if got := findingFor(t, found, metricCapacityETA); got.Severity != "warning" {
+		t.Fatalf("twenty days of room = %+v, want a warning below the 28 day mark", got)
+	}
+
+	found, _ = detectCapacity(capacityInput(falling(50 * gib)))
+	if got := findingFor(t, found, metricCapacityETA); got.Severity != "critical" {
+		t.Fatalf("five days of room = %+v, want critical below the 7 day mark", got)
+	}
+
+	rising := volumeSamples(20, anomalyNow-20*anomalyDay, totalOf(4<<40), func(i int) int64 {
+		return 200*gib + int64(i)*perDay
+	})
+	found, absent := detectCapacity(capacityInput(rising))
+	noFindingFor(t, found, metricCapacityETA)
+	absenceFor(t, absent, metricCapacityETA)
+
+	t.Run("too few readings leave only the growth", func(t *testing.T) {
+		short := volumeSamples(4, anomalyNow-4*anomalyDay, nil, func(i int) int64 {
+			return 200*gib + int64(3-i)*perDay
+		})
+		in := capacityInput(short)
+		found, absent := detectCapacity(in)
+		noFindingFor(t, found, metricCapacityETA)
+		absenceFor(t, absent, metricCapacityETA)
+
+		in.Growth = map[string]int64{"containers": 70 * gib} // ten gibibytes a day
+		grown, _ := detectCapacity(in)
+		if got := findingFor(t, grown, metricCapacityETA).Severity; got != "warning" {
+			t.Fatalf("the growth alone gave %q, want a warning at 20 days of room", got)
+		}
+	})
+
+	t.Run("the nearer of the two wins", func(t *testing.T) {
+		in := capacityInput(falling(200 * gib))
+		in.Growth = map[string]int64{"containers": 7 * gib} // 200 days, far beyond the slope's 20
+		both, _ := detectCapacity(in)
+		if got := findingFor(t, both, metricCapacityETA).Observed; math.Abs(got-20) > 0.5 {
+			t.Fatalf("eta = %v days, want the slope's 20", got)
+		}
+	})
+
+	t.Run("the growth reads like the storage forecast", func(t *testing.T) {
+		stats := []store.RepoStat{
+			{At: anomalyNow - 28*anomalyDay, RawSize: 100 * gib},
+			{At: anomalyNow, RawSize: 128 * gib},
+		}
+		week, ok := growthBytesPerWeek(stats, time.Unix(anomalyNow, 0))
+		if !ok {
+			t.Fatal("the forecast found no growth to compare against")
+		}
+		in := capacityInput(volumeSamples(2, anomalyNow-anomalyDay, totalOf(4<<40), func(int) int64 { return 200 * gib }))
+		in.Growth = map[string]int64{"containers": week}
+		eta, known := capacityETA(in)
+		if !known {
+			t.Fatal("no projection from the forecast's own growth")
+		}
+		if want := float64(200*gib) / (float64(week) / 7); math.Abs(eta-want) > 0.001 {
+			t.Fatalf("eta = %v days, want %v", eta, want)
+		}
+	})
+}
+
+func TestCapacityWindowResetAndLowFree(t *testing.T) {
+	small, large := totalOf(1<<40), totalOf(13<<39) // a thirty per cent bigger disk
+
+	t.Run("a resized volume forgets the readings before it", func(t *testing.T) {
+		var samples []store.VolumeSample
+		samples = append(samples, volumeSamples(10, anomalyNow-20*anomalyDay, small, func(i int) int64 {
+			return 500*gib - int64(i)*10*gib
+		})...)
+		samples = append(samples, volumeSamples(10, anomalyNow-10*anomalyDay, large, func(int) int64 {
+			return 50 * gib
+		})...)
+		found, absent := detectCapacity(capacityInput(samples))
+		noFindingFor(t, found, metricCapacityETA)
+		absenceFor(t, absent, metricCapacityETA)
+	})
+
+	t.Run("a nearly full volume is critical", func(t *testing.T) {
+		samples := volumeSamples(6, anomalyNow-6*anomalyDay, small, func(int) int64 { return (1 << 40) / 25 })
+		found, _ := detectCapacity(capacityInput(samples))
+		if got := findingFor(t, found, metricCapacityLow); got.Severity != "critical" {
+			t.Fatalf("four per cent free = %+v, want critical", got)
+		}
+	})
+
+	t.Run("a warning holds until the volume is properly free again", func(t *testing.T) {
+		open := map[string]store.Anomaly{metricCapacityLow: {Metric: metricCapacityLow, Severity: "warning"}}
+
+		at11 := volumeSamples(6, anomalyNow-6*anomalyDay, small, func(int) int64 { return (1 << 40) * 11 / 100 })
+		in := capacityInput(at11)
+		in.Open = open
+		found, _ := detectCapacity(in)
+		if got := findingFor(t, found, metricCapacityLow); got.Severity != "warning" {
+			t.Fatalf("eleven per cent free cleared the open warning: %+v", got)
+		}
+
+		at13 := volumeSamples(6, anomalyNow-6*anomalyDay, small, func(int) int64 { return (1 << 40) * 13 / 100 })
+		in = capacityInput(at13)
+		in.Open = open
+		found, absent := detectCapacity(in)
+		noFindingFor(t, found, metricCapacityLow)
+		absenceFor(t, absent, metricCapacityLow)
+	})
+
+	t.Run("a backend without a size is only projected", func(t *testing.T) {
+		samples := volumeSamples(20, anomalyNow-20*anomalyDay, nil, func(i int) int64 {
+			return 50*gib + int64(19-i)*10*gib
+		})
+		found, absent := detectCapacity(capacityInput(samples))
+		findingFor(t, found, metricCapacityETA)
+		noFindingFor(t, found, metricCapacityLow)
+		for _, a := range absent {
+			if a.Metric == metricCapacityLow {
+				t.Fatal("a volume of unknown size reported its free share as fine")
+			}
+		}
+	})
 }

@@ -112,3 +112,32 @@ func unescapeOctal(s string) string {
 	}
 	return b.String()
 }
+
+// zfsPoolAt returns the ZFS pool that holds path, read from mountinfo records.
+//
+// Every dataset of a pool is a filesystem of its own with its own device
+// number while they all draw on the same free space, so keying a volume by the
+// device would split one pool into as many volumes as it has datasets. The
+// pool is the part of the mount source before the first slash.
+func zfsPoolAt(r io.Reader, target string) (string, bool) {
+	clean := strings.TrimRight(path.Clean(filepath.ToSlash(target)), "/")
+	pool, deepest := "", -1
+	sc := bufio.NewScanner(r)
+	sc.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	for sc.Scan() {
+		left, right, ok := strings.Cut(sc.Text(), " - ")
+		if !ok {
+			continue
+		}
+		fields, rest := strings.Fields(left), strings.Fields(right)
+		if len(fields) < 5 || len(rest) < 2 || rest[0] != "zfs" {
+			continue
+		}
+		point := strings.TrimRight(path.Clean(unescapeOctal(fields[4])), "/")
+		if len(point) <= deepest || (clean != point && !strings.HasPrefix(clean, point+"/")) {
+			continue
+		}
+		pool, deepest = strings.Split(unescapeOctal(rest[1]), "/")[0], len(point)
+	}
+	return pool, pool != ""
+}

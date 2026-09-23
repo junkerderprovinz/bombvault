@@ -288,6 +288,11 @@ type Service struct {
 	// case) uses the platform statfs implementation (diskFreeBytes); tests
 	// inject a fake. Accessed via diskFreeFn.
 	diskFree func(path string) (uint64, error)
+	// diskStat and rcloneAbout are the capacity rule's probes, seams for the
+	// same reason diskFree is one: nil uses the platform statfs and the rclone
+	// binary. Accessed via diskStatFn and rcloneAboutFn.
+	diskStat    func(path string) (diskStatResult, error)
+	rcloneAbout func(ctx context.Context, remote string) (aboutResult, error)
 	// dirNonEmptyProbe is the container-restore overwrite guard's "does this
 	// destination already hold data" seam: nil uses the real filesystem
 	// (dirNonEmpty); tests inject a fake. Accessed via dirNonEmptyFn.
@@ -3085,6 +3090,7 @@ func (s *Service) CollectStatsOnStartup() {
 	if err != nil {
 		return
 	}
+	var domains []string
 	for _, d := range []struct {
 		name    string
 		enabled bool
@@ -3098,8 +3104,124 @@ func (s *Service) CollectStatsOnStartup() {
 	} {
 		if d.enabled {
 			s.CollectStatsAsync(d.name, "local")
+			domains = append(domains, d.name)
 		}
 	}
+	// One reading per volume before the first backup of the day, so a disk that
+	// is already filling has a trend to show rather than a single point.
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+		for _, domain := range domains {
+			s.sampleVolumesFor(ctx, domain)
+		}
+	}()
+}
+
+const (
+	// volumeSampleEvery and volumeSampleRemoteEvery throttle the free-space
+	// readings. A statfs is free, so a busy night should not fill the table; an
+	// rclone probe is an API call against somebody else's service.
+	volumeSampleEvery       = int64(3600)
+	volumeSampleRemoteEvery = int64(6 * 3600)
+)
+
+// sampleVolumesFor records how much room every repository of a domain still
+// has. It runs on the way out of a backup attempt, successful or not: a backup
+// that failed because the disk is full is exactly the reading the capacity rule
+// needs, and the repository statistics are written only after a good one.
+func (s *Service) sampleVolumesFor(ctx context.Context, domain string) {
+	_, repos, _, err := s.domainReposForOp(domain, "local")
+	if err != nil {
+		log.Printf("api: capacity: %s: the repositories could not be resolved: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return
+	}
+	now := s.anomalies.nowUnix()
+	recent, err := s.store.ListVolumeSamples(now - volumeSampleRemoteEvery)
+	if err != nil {
+		log.Printf("api: capacity: %s: the previous readings could not be read: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return
+	}
+	seen := map[string]int64{}
+	for _, sample := range recent {
+		seen[sample.Volume] = max(seen[sample.Volume], sample.At)
+	}
+
+	var unmeasured []string
+	wrote := false
+	for _, ref := range repos {
+		sample, err := s.probeVolume(ctx, ref, seen, now)
+		switch {
+		case errors.Is(err, errAboutUnsupported) || errors.Is(err, errVolumeUnmeasurable):
+			unmeasured = append(unmeasured, s.refName(ref))
+		case err != nil:
+			log.Printf("api: capacity: %s: %s could not be measured: %v", domain, s.refName(ref), scrubError(err)) //nolint:gosec // G706: domain is a literal, the name is scrubbed
+		case sample == nil:
+			continue // read recently enough
+		default:
+			sample.Domains = []string{domain}
+			if addErr := s.store.AddVolumeSample(*sample); addErr != nil {
+				log.Printf("api: capacity: %s: the reading could not be stored: %v", domain, addErr) //nolint:gosec // G706: domain is a fixed literal
+				continue
+			}
+			seen[sample.Volume] = sample.At
+			wrote = true
+		}
+	}
+	s.anomalies.noteUnmeasuredVolumes(domain, unmeasured)
+	if wrote {
+		s.anomalies.MarkVolumeDirty()
+	}
+}
+
+// errVolumeUnmeasurable is a repository this box cannot ask about at all: S3,
+// B2, a REST server or SFTP answer no capacity question.
+var errVolumeUnmeasurable = errors.New("this backend reports no capacity")
+
+// probeVolume measures one repository, or returns nil when the volume it sits
+// on was read recently enough.
+func (s *Service) probeVolume(ctx context.Context, ref domainRepoRef,
+	seen map[string]int64, now int64) (*store.VolumeSample, error) {
+
+	if !restic.IsRemoteRepo(ref.Loc) {
+		if localRepoMissing(ref.Loc) {
+			return nil, nil
+		}
+		res, err := s.diskStatFn()(ref.Loc)
+		if err != nil {
+			return nil, err
+		}
+		if now-seen[res.Volume] < volumeSampleEvery {
+			return nil, nil
+		}
+		total := clampToInt64(res.Total)
+		return &store.VolumeSample{
+			Volume: res.Volume, At: now, Source: "statfs",
+			FreeBytes: clampToInt64(res.Free), TotalBytes: &total,
+		}, nil
+	}
+	if !isRcloneLocation(ref.Loc) {
+		return nil, errVolumeUnmeasurable
+	}
+	volume := "remote:" + repoLocationKey(ref.Loc)
+	if now-seen[volume] < volumeSampleRemoteEvery {
+		return nil, nil
+	}
+	about, err := s.rcloneAboutFn()(ctx, rcloneRemoteOf(ref.Loc))
+	if err != nil {
+		return nil, err
+	}
+	return &store.VolumeSample{
+		Volume: volume, At: now, Source: "rclone",
+		FreeBytes: about.Free, TotalBytes: about.Total,
+	}, nil
+}
+
+// repoLocationKey names a remote repository's volume without writing the
+// location itself into the table, which can carry a bucket and a user name.
+func repoLocationKey(loc string) string {
+	sum := sha256.Sum256([]byte(strings.TrimSpace(loc)))
+	return hex.EncodeToString(sum[:])[:16]
 }
 
 // copyToOffsite replicates a domain's local repo to its off-site DESTINATIONS with
@@ -5029,6 +5151,9 @@ func (s *Service) Backup(ctx context.Context, name string) (_ backup.Summary, re
 		return backup.Summary{}, ErrSelfBackup
 	}
 	defer s.lockDomain("containers")() // serialise per repo; blocks maintenance ops meanwhile
+	// Whether this attempt succeeds or not: a backup that failed on a full disk
+	// is the reading the capacity rule most needs.
+	defer s.sampleVolumesFor(ctx, "containers")
 
 	// #64: a domain-wide fault (repo mount lost, disk full, restic repo error) that
 	// begins mid-batch trips one of the pre-flight early-returns below — settings,
@@ -11259,6 +11384,9 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	s.registerBackupCancel("vm:"+name, cancel) // reachable by shutdown ([375])
 	defer s.unregisterBackupCancel("vm:" + name)
 	defer s.lockDomain("vms")() // serialise per repo; blocks maintenance ops meanwhile
+	// Whether this attempt succeeds or not: a backup that failed on a full disk
+	// is the reading the capacity rule most needs.
+	defer s.sampleVolumesFor(ctx, "vms")
 
 	// Everything down to the orchestrator returns before any run is recorded,
 	// so a failure there would leave the card that started this backup waiting
@@ -12484,6 +12612,9 @@ func (s *Service) BackupFlash(ctx context.Context) (backup.Summary, error) {
 	s.registerBackupCancel("flash", cancel)
 	defer s.unregisterBackupCancel("flash")
 	defer s.lockDomain("flash")() // serialise per repo; blocks maintenance ops meanwhile
+	// Whether this attempt succeeds or not: a backup that failed on a full disk
+	// is the reading the capacity rule most needs.
+	defer s.sampleVolumesFor(ctx, "flash")
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
@@ -12667,6 +12798,9 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
 	defer s.lockDomain("files")() // serialise per repo; blocks maintenance ops meanwhile
+	// Whether this attempt succeeds or not: a backup that failed on a full disk
+	// is the reading the capacity rule most needs.
+	defer s.sampleVolumesFor(ctx, "files")
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
@@ -13977,6 +14111,9 @@ func (s *Service) BackupConfig(ctx context.Context) (backup.Summary, error) {
 	s.registerBackupCancel("config", cancel) // reachable by shutdown ([375])
 	defer s.unregisterBackupCancel("config")
 	defer s.lockDomain("config")() // serialise per repo; blocks maintenance ops meanwhile
+	// Whether this attempt succeeds or not: a backup that failed on a full disk
+	// is the reading the capacity rule most needs.
+	defer s.sampleVolumesFor(ctx, "config")
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("read settings: %w", err)
