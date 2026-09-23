@@ -227,14 +227,22 @@ func (s *Service) removalPreviewOf(ctx context.Context, settings store.Settings,
 	if err != nil {
 		return removalPreview{}, err
 	}
+	placement, err := s.readPlacement(settings, item.Domain)
+	if err != nil {
+		return removalPreview{}, err
+	}
+	// An open item's own column reads empty however far its default points
+	// elsewhere, and comparing against the domain path instead would call copies
+	// the only ones that exist while the default's repository holds them.
+	repoID, _ := placement.effectiveHome(home)
 	_, name, _ := strings.Cut(identity, ":")
 	p := removalPreview{Target: at.Target, Name: name, Snapshots: at.Snaps}
-	if home.Repo != "" {
-		if named, nErr := s.store.GetNamedRepo(home.Repo); nErr == nil {
+	if repoID != "" {
+		if named, nErr := s.store.GetNamedRepo(repoID); nErr == nil {
 			p.HomeLabel = named.Name
 		}
 	}
-	held, err := s.homeIdentities(ctx, settings, item.Domain, home.Repo)
+	held, err := s.homeIdentities(ctx, settings, item.Domain, repoID)
 	if err != nil {
 		p.HomeUnreadable = true
 		p.OnlyThere = at.Snaps

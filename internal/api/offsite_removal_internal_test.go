@@ -68,6 +68,24 @@ func TestRemovalPreviewNamesTheItemTheTypedNameIsComparedWith(t *testing.T) {
 	}
 }
 
+func TestRemovalPreviewJudgesAnOpenItemAgainstItsEffectiveHome(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.openContainer("vaultwarden")
+	nas := f.namedRepo("NAS Keller", "nas/bv")
+	f.setDefault("containers", nas.ID)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	f.hold(f.root+"/nas/bv", snap("a1", 1_758_000_000, "container:vaultwarden"))
+	f.hold("b2:bucket:containers", copied("b1", "a1", 1_758_000_000, "container:vaultwarden"))
+
+	m := f.do("GET", removalPath(b2.ID), nil)
+	if m["homeLabel"] != "NAS Keller" {
+		t.Fatalf("preview = %v, want the default's repository named", m)
+	}
+	if got := onlyThereIDs(m); len(got) != 0 {
+		t.Fatalf("only there = %v, want none: the copy of a1 lies at NAS Keller", got)
+	}
+}
+
 func TestRemovalPreviewCountsEveryCopyWhenTheHomeCannotBeRead(t *testing.T) {
 	f, b2 := vaultwardenAtB2(t)
 	f.eng.listErr[f.domainPath("containers")] = errors.New("permission denied")
