@@ -206,10 +206,9 @@ export function RestoreAction({
       <span className="text-caption text-carbon-textMuted shrink-0">{t(busyPhraseKey(otherActive.phase))}</span>
     ) : null;
 
-  // The caller's own `label` wins when it passes one, exactly as before; it is
-  // a per-site NAME (e.g. "Restore this snapshot"), not a state, so it is safe
-  // as the width-bearing label. The spinner is now the component's own `busy`
-  // rather than a hand-rolled conditional child (#178, [201]).
+  // The caller's own `label` wins when it passes one: it names the action
+  // ("Restore this snapshot") rather than a state, so it is safe as the
+  // width-bearing label while `busy` carries the spinner.
   const trigger = iconBadge ? (
     <Button
       label={label ?? t("snapshots.restore")}
@@ -223,12 +222,13 @@ export function RestoreAction({
     />
   ) : (
     <Button
-      label={t("common.restoring")}
-      labelKey="common.restoring"
+      label={label ?? t("snapshots.restore")}
+      labelKey="snapshots.restore"
       tone="accent"
       onClick={() => void handleRestore()}
       disabled={triggerDisabled}
       busy={isPending}
+      title={isPending ? t("common.restoring") : undefined}
       className="shrink-0"
     />
   );

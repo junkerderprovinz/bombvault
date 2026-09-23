@@ -24,10 +24,12 @@ const { RestorePanel } = await import("./RestorePanel");
 
 stubEventSource();
 
-function Panel() {
+function Panel({ installed = true }: { installed?: boolean }) {
   const { t } = useT();
-  return <RestorePanel name="nginx" t={t} open />;
+  return <RestorePanel name="nginx" t={t} open installed={installed} />;
 }
+
+const b2 = timelinePlace({ place: "offsite:t-b2", label: "B2", kind: "target", remote: true });
 
 describe("RestorePanel", () => {
   beforeEach(() => {
@@ -42,17 +44,35 @@ describe("RestorePanel", () => {
     expect(screen.queryByRole("tab", { name: "Off-site" })).toBeNull();
   });
 
+  it("calls a container config-only once every place has answered, not before", async () => {
+    fake.reply("getTimeline", { ok: true, places: [timelinePlace(), { ...b2, state: "unchecked" }], rows: [] });
+    fake.reply("getTimelinePlace", { ok: true, place: b2, rows: [] });
+    renderWithProviders(<Panel />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Check" }));
+    expect(screen.queryByText(/Config-only backup/)).toBeNull();
+    expect(await screen.findByText(/Config-only backup/)).toBeTruthy();
+  });
+
+  it("offers no recreate while a place is unchecked", async () => {
+    fake.reply("getTimeline", { ok: true, places: [timelinePlace(), { ...b2, state: "unchecked" }], rows: [] });
+    renderWithProviders(<Panel installed={false} />);
+
+    await screen.findByRole("button", { name: "Check" });
+    expect(screen.queryByRole("button", { name: "Recreate from saved config" })).toBeNull();
+  });
+
   it("restores the snapshot of the place picked in the row", async () => {
     fake.reply("getTimeline", {
       ok: true,
-      places: [timelinePlace(), timelinePlace({ place: "offsite:t-b2", label: "B2", kind: "target", remote: true })],
+      places: [timelinePlace(), b2],
       rows: [timelineRow("a1a1a1a1", "2026-09-18T03:00:00Z", timelineMark("local", "a1a1a1a1"), timelineMark("offsite:t-b2", "b9b9b9b9"))],
     });
     renderWithProviders(<Panel />);
     fireEvent.click(await screen.findByRole("tab", { name: "B2" }));
     fireEvent.click(screen.getByRole("button", { name: "Restore…" }));
     fireEvent.click(screen.getAllByRole("switch")[0]);
-    fireEvent.click(screen.getByRole("button", { name: "Restoring…" }));
+    fireEvent.click(screen.getByRole("button", { name: "Restore" }));
     await waitFor(() => expect(restore).toHaveBeenCalledWith("nginx", "b9b9b9b9", true, "offsite:t-b2", false));
   });
 });

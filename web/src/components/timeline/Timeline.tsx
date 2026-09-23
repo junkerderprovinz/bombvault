@@ -39,8 +39,9 @@ export function Timeline({
   itemName: string;
   open: boolean;
   renderActions: (pick: TimelinePick) => ReactNode;
-  /** Rendered above the rows once they are loaded. */
-  header?: (rows: TimelineRow[]) => ReactNode;
+  /** Rendered above the rows once they are loaded. The places come with it so
+   *  a header can tell an empty list from one whose places nobody has read. */
+  header?: (rows: TimelineRow[], places: TimelinePlace[]) => ReactNode;
 }) {
   const { t } = useT();
   const host = useHostLabel();
@@ -105,7 +106,7 @@ export function Timeline({
       ))}
       {loading && <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>}
       {error !== null && <p className="py-3 text-xs text-statusFail">{error || t("common.loadBackupsFailed")}</p>}
-      {!loading && error === null && header?.(rows)}
+      {!loading && error === null && header?.(rows, places)}
       {!loading && error === null && rows.length === 0 && pending.length === 0 && (
         <p className="py-3 text-xs text-carbon-textMuted">{t("snapshots.none")}</p>
       )}

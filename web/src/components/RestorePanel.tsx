@@ -833,8 +833,12 @@ export function RestorePanel({ name, t, installed = true, open }: RestorePanelPr
         itemKey={name}
         itemName={name}
         open={open}
-        header={(rows) => {
-          if (rows.length > 0) return null;
+        header={(rows, places) => {
+          // A place nobody has read may hold every backup this container has,
+          // so neither sentence below is true yet: the container would be
+          // called config-only, or offered a recreate from an empty local place.
+          const answered = places.length > 0 && places.every((p) => p.state === "read");
+          if (rows.length > 0 || !answered) return null;
           if (installed) return <p className="py-2 text-xs text-carbon-textMuted">{t("snapshots.configOnlyHint")}</p>;
           return <RecreateButton name={name} source="local" t={t} />;
         }}
