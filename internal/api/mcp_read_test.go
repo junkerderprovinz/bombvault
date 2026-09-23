@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -786,6 +788,340 @@ func TestMCPListRunsDomainLevelRowsAndVocabulary(t *testing.T) {
 		items := mcpCallTool(t, h, key, "list_items", fmt.Sprintf(`{"domain":%q}`, domain))
 		if items.IsError {
 			t.Fatalf("list_items refuses the domain value %q that list_runs returned: %v", domain, items.Structured)
+		}
+		points := mcpCallTool(t, h, key, "list_restore_points", fmt.Sprintf(`{"domain":%q,"item":"nothing"}`, domain))
+		if code := points.code(t); code == "invalid_argument" {
+			t.Fatalf("list_restore_points refuses the domain value %q that list_runs returned: %v", domain, points.Structured)
+		}
+	}
+}
+
+// snapshotAt is one restic snapshot with the tag that makes it an item's own,
+// carrying the paths and host name no tool result may repeat.
+func snapshotAt(id, when, tag string) restic.Snapshot {
+	return restic.Snapshot{
+		ID:       id,
+		Time:     when,
+		Tags:     []string{tag},
+		Paths:    []string{"/host/user/appdata/plex"},
+		Hostname: "tower",
+	}
+}
+
+func TestMCPRestorePointsValidateBeforeRestic(t *testing.T) {
+	eng := &fakeResticEngine{}
+	h, st, _, key, dir := newMCPToolRouterDir(t, &fakeServiceDocker{}, eng)
+	mcpEstablishRepos(t, st, dir)
+	seedTarget(t, st, "plex")
+	if _, err := st.UpsertVMTarget(store.VMTarget{Name: "Windows11", IncludeInSchedule: true}); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, item := range []string{"../x", "-rf", "a/b", strings.Repeat("p", 200)} {
+		args := fmt.Sprintf(`{"domain":"containers","item":%q}`, item)
+		if code := mcpCallTool(t, h, key, "list_restore_points", args).code(t); code != "invalid_argument" {
+			t.Fatalf("item %q gives %q, want invalid_argument", item, code)
+		}
+	}
+	if code := mcpCallTool(t, h, key, "list_restore_points", `{"domain":"vms","item":"bad\u0001"}`).code(t); code != "invalid_argument" {
+		t.Fatalf("a VM name with a control character gives %q, want invalid_argument", code)
+	}
+	if eng.snapshotsCalls != 0 {
+		t.Fatalf("a refused item reached restic %d times", eng.snapshotsCalls)
+	}
+
+	if res := mcpCallTool(t, h, key, "list_restore_points", `{"domain":"vms","item":"Windows11"}`); res.IsError {
+		t.Fatalf("a valid item was refused too, so the count above proves nothing: %v", res.Structured)
+	}
+	if eng.snapshotsCalls != 1 {
+		t.Fatalf("a valid item reached restic %d times, want once", eng.snapshotsCalls)
+	}
+}
+
+func TestMCPRestorePointsFileSetByNameWithoutRuns(t *testing.T) {
+	eng := &fakeResticEngine{snaps: []restic.Snapshot{
+		snapshotAt("aa11", "2026-09-16T02:31:07Z", "fileset:Documents"),
+		snapshotAt("bb22", "2026-09-15T02:31:07Z", "fileset:Pictures"),
+	}}
+	h, st, _, key, dir := newMCPToolRouterDir(t, &fakeServiceDocker{}, eng)
+	mcpEstablishRepos(t, st, dir)
+	docs, err := st.CreateFileSet(store.FileSet{Name: "Documents", Path: "documents", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, item := range []string{"Documents", "documents", docs.ID} {
+		res := mcpCallTool(t, h, key, "list_restore_points", fmt.Sprintf(`{"domain":"files","item":%q}`, item))
+		rows := mcpRows(t, res, "restorePoints")
+		if len(rows) != 1 || rows[0]["id"] != "aa11" {
+			t.Fatalf("%q listed %v, want the one snapshot of the set", item, rows)
+		}
+		named, _ := res.Structured["item"].(map[string]any)
+		if named["id"] != docs.ID || named["name"] != "Documents" {
+			t.Fatalf("%q resolved to %v", item, named)
+		}
+	}
+}
+
+func TestMCPRestorePointsAmbiguousFileSetName(t *testing.T) {
+	eng := &fakeResticEngine{}
+	h, st, _, key, dir := newMCPToolRouterDir(t, &fakeServiceDocker{}, eng)
+	mcpEstablishRepos(t, st, dir)
+	for _, name := range []string{"Docs", "docs"} {
+		if _, err := st.CreateFileSet(store.FileSet{Name: name, Path: strings.ToLower(name), Enabled: true}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	res := mcpCallTool(t, h, key, "list_restore_points", `{"domain":"files","item":"DOCS"}`)
+	if code := res.code(t); code != "ambiguous" {
+		t.Fatalf("code = %q, want ambiguous", code)
+	}
+	body, _ := res.Structured["error"].(map[string]any)
+	candidates, _ := body["candidates"].([]any)
+	if len(candidates) != 2 {
+		t.Fatalf("candidates = %v, want both sets", candidates)
+	}
+	seen := map[string]bool{}
+	for _, raw := range candidates {
+		row, _ := raw.(map[string]any)
+		name, _ := row["name"].(string)
+		if id, _ := row["id"].(string); id == "" {
+			t.Fatalf("candidate %v carries no id to pass back", row)
+		}
+		seen[name] = true
+	}
+	if !seen["Docs"] || !seen["docs"] {
+		t.Fatalf("candidates name %v, want both spellings", seen)
+	}
+	if eng.snapshotsCalls != 0 {
+		t.Fatalf("an ambiguous name reached restic %d times", eng.snapshotsCalls)
+	}
+}
+
+func TestMCPRestorePointsUnknownItemNotFound(t *testing.T) {
+	eng := &fakeResticEngine{}
+	h, st, _, key, dir := newMCPToolRouterDir(t, &fakeServiceDocker{}, eng)
+	mcpEstablishRepos(t, st, dir)
+
+	res := mcpCallTool(t, h, key, "list_restore_points", `{"domain":"containers","item":"plex"}`)
+	if code := res.code(t); code != "not_found" {
+		t.Fatalf("code = %q, want not_found", code)
+	}
+	if msg := res.message(t); !strings.Contains(msg, "web interface") {
+		t.Fatalf("message %q does not say where a container is added", msg)
+	}
+	if eng.snapshotsCalls != 0 {
+		t.Fatalf("a container nobody added reached restic %d times", eng.snapshotsCalls)
+	}
+}
+
+func TestMCPRestorePointsPrimaryOnly(t *testing.T) {
+	eng := &fakeResticEngine{}
+	h, st, _, key, dir := newMCPToolRouterDir(t, &fakeServiceDocker{}, eng)
+	repos := mcpEstablishRepos(t, st, dir)
+	seedTarget(t, st, "plex")
+	if _, err := st.UpsertVMTarget(store.VMTarget{Name: "Windows11", IncludeInSchedule: true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.CreateFileSet(store.FileSet{Name: "Documents", Path: "documents", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, args := range []string{
+		`{"domain":"containers","item":"plex"}`,
+		`{"domain":"vms","item":"Windows11"}`,
+		`{"domain":"files","item":"Documents"}`,
+		`{"domain":"flash"}`,
+		`{"domain":"config"}`,
+	} {
+		res := mcpCallTool(t, h, key, "list_restore_points", args)
+		if res.IsError {
+			t.Fatalf("%s: %v", args, res.Structured)
+		}
+		if res.Structured["repository"] != "primary" {
+			t.Fatalf("%s: repository = %v", args, res.Structured["repository"])
+		}
+	}
+
+	want := make([]string, 0, len(repos))
+	for _, repo := range repos {
+		want = append(want, repo)
+	}
+	got := slices.Compact(sortedCopy(eng.listedRepos))
+	if !reflect.DeepEqual(got, sortedCopy(want)) {
+		t.Fatalf("the listings read %v, want only the five primary repositories %v", got, want)
+	}
+
+	for _, tool := range mcpListTools(t, h, key) {
+		if tool["name"] != "list_restore_points" {
+			continue
+		}
+		schema, _ := tool["inputSchema"].(map[string]any)
+		props, _ := schema["properties"].(map[string]any)
+		if _, ok := props["source"]; ok {
+			t.Fatalf("the schema offers a source property: %v", props)
+		}
+	}
+	res := mcpCallTool(t, h, key, "list_restore_points", `{"domain":"flash","source":"offsite"}`)
+	if code := res.code(t); code != "invalid_argument" {
+		t.Fatalf("a source argument gives %q, want invalid_argument", code)
+	}
+}
+
+func TestMCPRestorePointsIncludeDatabaseDumps(t *testing.T) {
+	dump := func(id, when string, tags ...string) restic.Snapshot {
+		sn := snapshotAt(id, when, "dbdump:immich_postgres")
+		sn.Tags = append(sn.Tags, tags...)
+		sn.Paths = []string{"/dbdump/immich_postgres.sql"}
+		sn.Summary = &restic.SnapshotSummary{TotalBytesProcessed: 4096}
+		return sn
+	}
+	eng := &fakeResticEngine{}
+	h, st, _, key, dir := newMCPToolRouterDir(t, &fakeServiceDocker{}, eng)
+	mcpEstablishRepos(t, st, dir)
+	pg := seedTarget(t, st, "immich_postgres")
+	if _, err := st.UpsertVMTarget(store.VMTarget{Name: "Windows11", IncludeInSchedule: true}); err != nil {
+		t.Fatal(err)
+	}
+
+	backupRun := seedRun(t, st, pg.ID, "backup", "running", store.RunMeta{})
+	if err := st.FinishRun(backupRun, "success", "cc33", 0, ""); err != nil {
+		t.Fatal(err)
+	}
+	brokenRun := seedRun(t, st, pg.ID, "dbdump", "running", store.RunMeta{})
+	if err := st.FinishRun(brokenRun, "failed", "bb22", 0, "dump aborted"); err != nil {
+		t.Fatal(err)
+	}
+	// restic reports its snapshots oldest first.
+	eng.snaps = []restic.Snapshot{
+		dump("bb22", "2026-09-15T02:29:03Z"),
+		dump("aa11", "2026-09-16T02:29:03Z", "dbengine:postgres", "dbversion:16.4", "dbname:immich", "bvrun:"+backupRun),
+		snapshotAt("cc33", "2026-09-16T02:31:07Z", "container:immich_postgres"),
+	}
+
+	res := mcpCallTool(t, h, key, "list_restore_points", `{"domain":"containers","item":"immich_postgres"}`)
+	points := mcpRows(t, res, "restorePoints")
+	if len(points) != 1 || points[0]["id"] != "cc33" {
+		t.Fatalf("restorePoints = %v, want only the volume snapshot", points)
+	}
+	dumps := mcpRows(t, res, "databaseDumps")
+	if len(dumps) != 2 || dumps[0]["id"] != "aa11" {
+		t.Fatalf("databaseDumps = %v, want both dumps newest first", dumps)
+	}
+	newest := dumps[0]
+	if newest["engine"] != "postgres" || newest["version"] != "16.4" {
+		t.Fatalf("the newest dump reads %v", newest)
+	}
+	if names, _ := newest["databases"].([]any); len(names) != 1 || names[0] != "immich" {
+		t.Fatalf("databases = %v", newest["databases"])
+	}
+	if newest["bytes"] != float64(4096) || newest["damaged"] != false {
+		t.Fatalf("the newest dump reads %v", newest)
+	}
+	if newest["pairedSnapshotId"] != "cc33" {
+		t.Fatalf("pairedSnapshotId = %v, want the volume snapshot of the same backup", newest["pairedSnapshotId"])
+	}
+	if dumps[1]["damaged"] != true {
+		t.Fatalf("the dump a failed run left behind reads %v", dumps[1])
+	}
+
+	vm := mcpCallTool(t, h, key, "list_restore_points", `{"domain":"vms","item":"Windows11"}`)
+	if _, ok := vm.Structured["databaseDumps"]; ok {
+		t.Fatalf("a VM answer carries a databaseDumps key: %v", vm.Structured)
+	}
+
+	capped := mcpCallTool(t, h, key, "list_restore_points", `{"domain":"containers","item":"immich_postgres","dumpLimit":1}`)
+	if rows := mcpRows(t, capped, "databaseDumps"); len(rows) != 1 {
+		t.Fatalf("dumpLimit 1 returned %v", rows)
+	}
+	if capped.Structured["databaseDumpsTruncated"] != true || capped.Structured["databaseDumpsTotal"] != float64(2) {
+		t.Fatalf("a capped dump list reads %v", capped.Structured)
+	}
+}
+
+func TestMCPRestorePointsSlimNewestFirstCapped(t *testing.T) {
+	snaps := make([]restic.Snapshot, 0, 60)
+	for i := 0; i < 60; i++ {
+		snaps = append(snaps, snapshotAt(fmt.Sprintf("%064x", i),
+			time.Date(2026, 7, 1, 2, 0, 0, 0, time.UTC).AddDate(0, 0, i).Format(time.RFC3339), "container:plex"))
+	}
+	eng := &fakeResticEngine{snaps: snaps}
+	h, st, _, key, dir := newMCPToolRouterDir(t, &fakeServiceDocker{}, eng)
+	mcpEstablishRepos(t, st, dir)
+	seedTarget(t, st, "plex")
+
+	res := mcpCallTool(t, h, key, "list_restore_points", `{"domain":"containers","item":"plex"}`)
+	rows := mcpRows(t, res, "restorePoints")
+	if len(rows) != 50 {
+		t.Fatalf("%d restore points came back, want the default 50", len(rows))
+	}
+	if res.Structured["total"] != float64(60) || res.Structured["truncated"] != true {
+		t.Fatalf("total = %v truncated = %v", res.Structured["total"], res.Structured["truncated"])
+	}
+	if rows[0]["id"] != snaps[59].ID || rows[49]["id"] != snaps[10].ID {
+		t.Fatalf("the listing does not read newest first: %v … %v", rows[0], rows[49])
+	}
+	for _, row := range rows {
+		if len(row) != 3 {
+			t.Fatalf("a restore point carries more than its id, short id and time: %v", row)
+		}
+		id, _ := row["id"].(string)
+		if row["shortId"] != id[:8] {
+			t.Fatalf("shortId = %v, want the first eight characters of %q", row["shortId"], id)
+		}
+		if row["time"] == "" {
+			t.Fatalf("a restore point carries no time: %v", row)
+		}
+	}
+	for _, leak := range []string{"tower", "/host/user"} {
+		if strings.Contains(res.text(t), leak) {
+			t.Fatalf("the answer repeats %q: %s", leak, res.text(t))
+		}
+	}
+
+	small := mcpCallTool(t, h, key, "list_restore_points", `{"domain":"containers","item":"plex","limit":2}`)
+	if rows := mcpRows(t, small, "restorePoints"); len(rows) != 2 || rows[0]["id"] != snaps[59].ID {
+		t.Fatalf("limit 2 returned %v", rows)
+	}
+	for _, args := range []string{
+		`{"domain":"containers","item":"plex","limit":0}`,
+		`{"domain":"containers","item":"plex","limit":201}`,
+		`{"domain":"containers","item":"plex","dumpLimit":0}`,
+	} {
+		if code := mcpCallTool(t, h, key, "list_restore_points", args).code(t); code != "invalid_argument" {
+			t.Fatalf("%s: code = %q, want invalid_argument", args, code)
+		}
+	}
+}
+
+func TestMCPRestorePointsRemotePrimaryFlag(t *testing.T) {
+	const remote = "rest:http://backup.example:8000/containers"
+	eng := &fakeResticEngine{}
+	h, st, _, key, dir := newMCPToolRouterDir(t, &fakeServiceDocker{}, eng)
+	mcpEstablishRepos(t, st, dir)
+	seedTarget(t, st, "plex")
+
+	local := mcpCallTool(t, h, key, "list_restore_points", `{"domain":"containers","item":"plex"}`)
+	if local.Structured["remote"] != false {
+		t.Fatalf("a repository under the mount root reports remote = %v", local.Structured["remote"])
+	}
+
+	settings := mustSettings(t, st)
+	settings.ContainersPath = remote
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	res := mcpCallTool(t, h, key, "list_restore_points", `{"domain":"containers","item":"plex"}`)
+	if res.IsError {
+		t.Fatalf("list_restore_points on a remote primary: %v", res.Structured)
+	}
+	if res.Structured["remote"] != true {
+		t.Fatalf("a remote primary reports remote = %v", res.Structured["remote"])
+	}
+	for _, leak := range []string{remote, "backup.example"} {
+		if strings.Contains(res.text(t), leak) {
+			t.Fatalf("the answer names the repository %q: %s", leak, res.text(t))
 		}
 	}
 }

@@ -51,6 +51,11 @@ const (
 	mcpInvalidRequest = -32600
 )
 
+// mcpResticTimeout is how long a tool that spawns restic may take; listing a
+// remote repository is the slow case it is cut for. A variable, so a test can
+// shorten it.
+var mcpResticTimeout = time.Minute
+
 // mcpCaller is the key a request came in with. The gate puts it into the
 // request context, which is how a tool learns who is asking.
 type mcpCaller struct {
@@ -81,6 +86,10 @@ type mcpState struct {
 	http  http.Handler
 	calls *slidingWindow
 
+	// listSem is the single slot the restic-spawning tools share, so a key
+	// cannot put a dozen listings on one repository at once.
+	listSem chan struct{}
+
 	touchMu sync.Mutex
 	touched map[string]int64
 
@@ -105,6 +114,7 @@ type mcpToolOutcome struct {
 func newMCPState() *mcpState {
 	return &mcpState{
 		calls:     newSlidingWindow(time.Minute, mcpCallsPerMinute),
+		listSem:   make(chan struct{}, 1),
 		touched:   map[string]int64{},
 		authLog:   map[string]int64{},
 		requests:  map[string]uint64{},
@@ -398,6 +408,18 @@ func (h *Handler) mcpToolContext(ctx context.Context, d time.Duration) (context.
 	return ctx, func() {
 		stop()
 		cancel()
+	}
+}
+
+// acquireList takes the listing slot without waiting for it. A call that finds
+// it taken answers busy rather than queueing behind a listing that may hold it
+// for a minute.
+func (s *mcpState) acquireList() (release func(), ok bool) {
+	select {
+	case s.listSem <- struct{}{}:
+		return func() { <-s.listSem }, true
+	default:
+		return nil, false
 	}
 }
 

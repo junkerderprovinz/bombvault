@@ -151,9 +151,70 @@ func enableLogin(t *testing.T, st *store.Repo, appKey string) string {
 // what every tool test needs before it can call anything.
 func newMCPToolRouter(t *testing.T, d *fakeServiceDocker, eng *fakeResticEngine) (http.Handler, *store.Repo, *api.Service, string) {
 	t.Helper()
-	h, st, svc := newTestRouterSvc(t, d, eng)
-	key, _ := createMCPKey(t, h, "Laptop", true)
+	h, st, svc, key, _ := newMCPToolRouterDir(t, d, eng)
 	return h, st, svc, key
+}
+
+// newMCPToolRouterDir is newMCPToolRouter that also hands back the host mount
+// root, so a test can establish the repositories a listing reads.
+func newMCPToolRouterDir(t *testing.T, d *fakeServiceDocker, eng *fakeResticEngine) (http.Handler, *store.Repo, *api.Service, string, string) {
+	t.Helper()
+	h, st, svc, dir := newTestRouterSvcDir(t, d, eng)
+	key, _ := createMCPKey(t, h, "Laptop", true)
+	return h, st, svc, key, dir
+}
+
+// mcpEstablishRepos switches every domain on, gives each its own repository
+// under dir and creates them, so a listing reaches the engine instead of
+// reporting "no backups yet". It returns where each domain landed.
+func mcpEstablishRepos(t *testing.T, st *store.Repo, dir string) map[string]string {
+	t.Helper()
+	settings := mustSettings(t, st)
+	settings.ContainersEnabled = true
+	settings.VMsEnabled = true
+	settings.FilesEnabled = true
+	settings.FlashEnabled = true
+	settings.ConfigEnabled = true
+	settings.ContainersPath = "backups/containers"
+	settings.VMsPath = "backups/vms"
+	settings.FilesPath = "backups/files"
+	settings.FlashPath = "backups/flash"
+	settings.ConfigPath = "backups/config"
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	repos := map[string]string{}
+	for domain, rel := range map[string]string{
+		"containers": settings.ContainersPath,
+		"vms":        settings.VMsPath,
+		"files":      settings.FilesPath,
+		"flash":      settings.FlashPath,
+		"config":     settings.ConfigPath,
+	} {
+		repos[domain] = establishLocalRepo(t, dir, rel)
+	}
+	return repos
+}
+
+// mcpRows reads one array of objects out of a tool result.
+func mcpRows(t *testing.T, res mcpToolResult, field string) []map[string]any {
+	t.Helper()
+	if res.IsError {
+		t.Fatalf("the call was refused: %v", res.Structured)
+	}
+	raw, ok := res.Structured[field].([]any)
+	if !ok {
+		t.Fatalf("the answer carries no %s array: %v", field, res.Structured)
+	}
+	out := make([]map[string]any, 0, len(raw))
+	for _, item := range raw {
+		row, ok := item.(map[string]any)
+		if !ok {
+			t.Fatalf("a %s entry is not an object: %v", field, item)
+		}
+		out = append(out, row)
+	}
+	return out
 }
 
 // mcpToolResult is one tools/call answer with the JSON-RPC envelope taken off.

@@ -12,6 +12,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -32,6 +33,14 @@ const (
 // mcpItemsPerDomain caps one domain's item list, so a single answer stays a
 // size a client can read.
 const mcpItemsPerDomain = 500
+
+// How many restore points and database dumps one call may ask for, and how many
+// it gets without asking.
+const (
+	mcpPointsLimitMax     = 200
+	mcpPointsLimitDefault = 50
+	mcpDumpLimitDefault   = 20
+)
 
 func (h *Handler) toolGetHealth(ctx context.Context, _ *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	caller, ok := mcpCallerFrom(ctx)
@@ -748,6 +757,191 @@ func (h *Handler) mcpDomainTargetIDs(domain string) ([]string, error) {
 		}
 	}
 	return ids, nil
+}
+
+// mcpRestorePoint is one restic snapshot as a tool reports it. The paths and
+// the host name restic also stores describe this machine and stay here.
+type mcpRestorePoint struct {
+	ID      string `json:"id"`
+	ShortID string `json:"shortId"`
+	Time    string `json:"time"`
+}
+
+// mcpDatabaseDump is one database dump of a container. Damaged marks a dump a
+// failed run left behind, which the web interface offers delete for and nothing
+// else.
+type mcpDatabaseDump struct {
+	ID               string   `json:"id"`
+	ShortID          string   `json:"shortId"`
+	Time             string   `json:"time"`
+	Engine           string   `json:"engine"`
+	Version          string   `json:"version"`
+	Databases        []string `json:"databases"`
+	Bytes            int64    `json:"bytes"`
+	Damaged          bool     `json:"damaged"`
+	PairedSnapshotID string   `json:"pairedSnapshotId,omitempty"`
+}
+
+type listRestorePointsInput struct {
+	Domain    string `json:"domain"`
+	Item      string `json:"item"`
+	Limit     *int   `json:"limit"`
+	DumpLimit *int   `json:"dumpLimit"`
+}
+
+func (h *Handler) toolListRestorePoints(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	if _, ok := mcpCallerFrom(ctx); !ok {
+		return mcpNoCaller(), nil
+	}
+	var in listRestorePointsInput
+	if err := decodeMCPArgs(req.Params.Arguments, &in); err != nil {
+		h.logMCPCall(ctx, "list_restore_points", "invalid_argument")
+		return mcpToolError("invalid_argument", err.Error(), nil), nil
+	}
+	limit := mcpPointsLimitDefault
+	if in.Limit != nil {
+		limit = *in.Limit
+	}
+	dumpLimit := mcpDumpLimitDefault
+	if in.DumpLimit != nil {
+		dumpLimit = *in.DumpLimit
+	}
+	refuse := func(msg string) (*mcp.CallToolResult, error) {
+		h.logMCPCall(ctx, "list_restore_points", "invalid_argument")
+		return mcpToolError("invalid_argument", msg, nil), nil
+	}
+	switch {
+	case !slices.Contains(mcpDomains, in.Domain):
+		return refuse("domain must be one of " + strings.Join(mcpDomains, ", "))
+	case limit < 1 || limit > mcpPointsLimitMax:
+		return refuse(fmt.Sprintf("limit must be between 1 and %d", mcpPointsLimitMax))
+	case dumpLimit < 1 || dumpLimit > mcpPointsLimitMax:
+		return refuse(fmt.Sprintf("dumpLimit must be between 1 and %d", mcpPointsLimitMax))
+	}
+
+	item, bad := h.resolveMCPItem(in.Domain, in.Item)
+	if bad != nil {
+		h.logMCPCall(ctx, "list_restore_points", "refused")
+		return bad, nil
+	}
+	settings, err := h.store.GetSettings()
+	if err != nil {
+		h.logMCPCall(ctx, "list_restore_points", "unavailable")
+		return mcpToolError("unavailable", "settings could not be read", nil), nil
+	}
+
+	release, free := h.mcp.acquireList()
+	if !free {
+		h.logMCPCall(ctx, "list_restore_points", "busy")
+		return mcpToolError("busy", "another restore point listing is still running; try again in a moment", nil), nil
+	}
+	defer release()
+
+	ctx, cancel := h.mcpToolContext(ctx, mcpResticTimeout)
+	defer cancel()
+
+	snaps, err := h.mcpSnapshotsOf(ctx, item)
+	if err != nil {
+		return h.mcpListingFailed(ctx, err), nil
+	}
+	points := mcpRestorePointsOf(snaps)
+	total := len(points)
+	truncated := total > limit
+	if truncated {
+		points = points[:limit]
+	}
+
+	repoItem := item.Name
+	if item.Domain == "files" {
+		repoItem = item.ID
+	}
+	out := map[string]any{
+		"domain":        item.Domain,
+		"item":          map[string]any{"id": item.ID, "name": item.Name},
+		"repository":    "primary",
+		"remote":        h.svc.primaryRepoIsRemote(settings, item.Domain, repoItem),
+		"total":         total,
+		"truncated":     truncated,
+		"restorePoints": points,
+	}
+	if item.Domain == "containers" {
+		views, dErr := h.svc.DBDumps(ctx, item.Name, "local")
+		if dErr != nil {
+			return h.mcpListingFailed(ctx, dErr), nil
+		}
+		dumps := mcpDatabaseDumpsOf(views)
+		out["databaseDumpsTotal"] = len(dumps)
+		out["databaseDumpsTruncated"] = len(dumps) > dumpLimit
+		if len(dumps) > dumpLimit {
+			dumps = dumps[:dumpLimit]
+		}
+		out["databaseDumps"] = dumps
+	}
+
+	h.logMCPCall(ctx, "list_restore_points", "ok")
+	return mcpOK(out), nil
+}
+
+// mcpSnapshotsOf lists an item's restore points in its primary repository.
+func (h *Handler) mcpSnapshotsOf(ctx context.Context, item mcpItem) ([]restic.Snapshot, error) {
+	switch item.Domain {
+	case "containers":
+		return h.svc.Snapshots(ctx, item.Name, "local")
+	case "vms":
+		return h.svc.SnapshotsVM(ctx, item.Name, "local")
+	case "files":
+		return h.svc.SnapshotsFileSet(ctx, item.ID, "local")
+	case "flash":
+		return h.svc.SnapshotsFlash(ctx, "local")
+	case "config":
+		return h.svc.SnapshotsConfig(ctx, "local")
+	default:
+		return nil, fmt.Errorf("unknown domain %q", item.Domain)
+	}
+}
+
+// mcpListingFailed answers a listing that did not come back. A deadline the
+// tool set itself reads as a timeout whatever restic reported on its way out.
+func (h *Handler) mcpListingFailed(ctx context.Context, err error) *mcp.CallToolResult {
+	if ctx.Err() != nil {
+		h.logMCPCall(ctx, "list_restore_points", "timeout")
+		return mcpToolError("timeout", "BombVault did not finish reading the repository in time", nil)
+	}
+	h.logMCPCall(ctx, "list_restore_points", "failed")
+	return mcpServiceError(err)
+}
+
+// mcpRestorePointsOf slims restic's snapshots down to what an assistant may
+// see, newest first.
+func mcpRestorePointsOf(snaps []restic.Snapshot) []mcpRestorePoint {
+	out := make([]mcpRestorePoint, 0, len(snaps))
+	for _, sn := range snaps {
+		out = append(out, mcpRestorePoint{ID: sn.ID, ShortID: shortID(sn.ID), Time: sn.Time})
+	}
+	slices.SortStableFunc(out, func(a, b mcpRestorePoint) int {
+		return parseSnapshotTime(b.Time).Compare(parseSnapshotTime(a.Time))
+	})
+	return out
+}
+
+// mcpDatabaseDumpsOf is mcpRestorePointsOf for the dump series of a container,
+// which DBDumps already hands over newest first.
+func mcpDatabaseDumpsOf(views []DBDumpView) []mcpDatabaseDump {
+	out := make([]mcpDatabaseDump, 0, len(views))
+	for _, v := range views {
+		out = append(out, mcpDatabaseDump{
+			ID:               v.ID,
+			ShortID:          shortID(v.ID),
+			Time:             v.Time,
+			Engine:           v.Engine,
+			Version:          v.Version,
+			Databases:        v.Databases,
+			Bytes:            v.Bytes,
+			Damaged:          v.Damaged,
+			PairedSnapshotID: v.PairedSnapshotID,
+		})
+	}
+	return out
 }
 
 // mcpRunRow is one run in the shape a tool answers with: no snapshot id, no
