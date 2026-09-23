@@ -136,7 +136,7 @@ func TestSetNamedRepoLocationIfUnusedRefusesWhileInUse(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	use, err := r.SetNamedRepoLocationIfUnused(repo.ID, "backups/elsewhere")
+	use, err := r.SetNamedRepoLocationIfUnused(repo.ID, "backups/elsewhere", false)
 	if err != nil {
 		t.Fatalf("SetNamedRepoLocationIfUnused: %v", err)
 	}
@@ -163,7 +163,7 @@ func TestSetNamedRepoLocationIfUnusedRefusesWhileADefaultPointsAtIt(t *testing.T
 	store.SeedDefault(t, r, "vms", repo.ID)
 	store.SeedDefault(t, r, "containers", repo.ID)
 
-	use, err := r.SetNamedRepoLocationIfUnused(repo.ID, "backups/elsewhere")
+	use, err := r.SetNamedRepoLocationIfUnused(repo.ID, "backups/elsewhere", false)
 	if err != nil {
 		t.Fatalf("SetNamedRepoLocationIfUnused: %v", err)
 	}
@@ -184,7 +184,7 @@ func TestSetNamedRepoLocationIfUnusedWritesWhenUnused(t *testing.T) {
 	r := namedRepoStore(t)
 	repo := aNamedRepo(t, r, "Cold", "backups/cold")
 
-	use, err := r.SetNamedRepoLocationIfUnused(repo.ID, "backups/elsewhere")
+	use, err := r.SetNamedRepoLocationIfUnused(repo.ID, "backups/elsewhere", false)
 	if err != nil {
 		t.Fatalf("SetNamedRepoLocationIfUnused: %v", err)
 	}
@@ -197,6 +197,47 @@ func TestSetNamedRepoLocationIfUnusedWritesWhenUnused(t *testing.T) {
 	}
 	if back.Repo != "backups/elsewhere" {
 		t.Fatalf("location = %q, want the move written", back.Repo)
+	}
+}
+
+// TestTheMoveWritesTheOffPremisesMarkWithTheLocation pins the pair: the mark
+// describes the location, so it is written by the statement that moves it and
+// stays untouched when the move is refused.
+func TestTheMoveWritesTheOffPremisesMarkWithTheLocation(t *testing.T) {
+	r := namedRepoStore(t)
+	box := aNamedRepo(t, r, "Storagebox", "sftp:u@box:/bv")
+	box.OffPremises = true
+	if _, err := r.UpsertOffsiteTarget(box); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := r.SetNamedRepoLocationIfUnused(box.ID, "backups/cold", false); err != nil {
+		t.Fatalf("SetNamedRepoLocationIfUnused: %v", err)
+	}
+	moved, err := r.GetNamedRepo(box.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if moved.Repo != "backups/cold" || moved.OffPremises {
+		t.Fatalf("after the move: %q, off premises %v; want the array and no mark", moved.Repo, moved.OffPremises)
+	}
+
+	if err := chooseRepo(r, "vms", "win11", box.ID); err != nil {
+		t.Fatal(err)
+	}
+	use, err := r.SetNamedRepoLocationIfUnused(box.ID, "sftp:u@box:/bv", true)
+	if err != nil {
+		t.Fatalf("SetNamedRepoLocationIfUnused: %v", err)
+	}
+	if !use.InUse() {
+		t.Fatalf("use = %+v, want the item counted", use)
+	}
+	back, err := r.GetNamedRepo(box.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if back.Repo != "backups/cold" || back.OffPremises {
+		t.Fatalf("a refused move wrote %q, off premises %v", back.Repo, back.OffPremises)
 	}
 }
 

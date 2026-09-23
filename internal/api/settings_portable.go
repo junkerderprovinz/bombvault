@@ -981,7 +981,13 @@ func (h *Handler) replaceNamedRepos(views []offsiteTargetView) error {
 			log.Printf("api: settings import: repository %q takes its location from its target, so the file's %s was not applied", t.Name, shortRepoName(wanted)) //nolint:gosec // G706: the name is %q-quoted and the location is shortened
 			continue
 		}
-		use, mErr := h.store.SetNamedRepoLocationIfUnused(t.ID, wanted)
+		// The mark describes the location and moves with it; a file that carries
+		// one is taken at its word.
+		mark := restic.IsRemoteRepo(wanted)
+		if tv.OffPremises != nil {
+			mark = *tv.OffPremises
+		}
+		use, mErr := h.store.SetNamedRepoLocationIfUnused(t.ID, wanted, mark)
 		if mErr != nil {
 			return mErr
 		}
