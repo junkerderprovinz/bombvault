@@ -157,6 +157,53 @@ func (c *Conn) Run(ctx context.Context, args ...string) (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
+// sshBinary is a var so a test can put a stand-in in its place; the argv
+// sshExec builds starts with -i, which a go test helper process would take for
+// one of its own flags.
+var sshBinary = "ssh"
+
+const (
+	captureStdoutLimit = 16 << 20
+	captureStderrLimit = 64 << 10
+)
+
+// RunCapture executes a command on the host over SSH and returns its two
+// streams apart. Run discards stderr, which leaves a remote "permission
+// denied" as a bare exit status; the ZFS domain reads its reason codes out of
+// that text.
+func (c *Conn) RunCapture(ctx context.Context, args ...string) (string, string, error) {
+	cmd := exec.CommandContext(ctx, sshBinary, c.sshExec(args...)...) //nolint:gosec // remote args shell-quoted; host/user from config
+	stdout := &cappedBuffer{max: captureStdoutLimit}
+	stderr := &cappedBuffer{max: captureStderrLimit}
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+	err := cmd.Run()
+	out, errOut := strings.TrimSpace(stdout.buf.String()), strings.TrimSpace(stderr.buf.String())
+	if err != nil {
+		return out, errOut, fmt.Errorf("sshconn: run %q: %w", args[0], err)
+	}
+	return out, errOut, nil
+}
+
+// cappedBuffer keeps the first max bytes and reports the rest as written, so a
+// remote command that floods a stream neither fills the container's memory nor
+// dies of a broken pipe.
+type cappedBuffer struct {
+	buf bytes.Buffer
+	max int
+}
+
+func (b *cappedBuffer) Write(p []byte) (int, error) {
+	n := len(p)
+	if room := b.max - b.buf.Len(); room > 0 {
+		if n > room {
+			p = p[:room]
+		}
+		b.buf.Write(p) //nolint:errcheck // bytes.Buffer.Write never fails
+	}
+	return n, nil
+}
+
 // ReadFile returns the bytes of a file on the host (used for NVRAM).
 func (c *Conn) ReadFile(ctx context.Context, path string) ([]byte, error) {
 	out, err := exec.CommandContext(ctx, "ssh", c.sshExec("cat", path)...).Output() //nolint:gosec // remote args shell-quoted
