@@ -114,6 +114,20 @@ func (f *placementFixture) localRepo(rel string) string {
 	return loc
 }
 
+// singletonRepo gives flash or config its domain repository and returns its
+// location slash-spelled.
+func (f *placementFixture) singletonRepo(domain string) string {
+	f.t.Helper()
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	if domain == "flash" {
+		return f.localRepo(settings.FlashPath)
+	}
+	return f.localRepo(settings.ConfigPath)
+}
+
 // target adds an enabled target behind the domain's last one.
 func (f *placementFixture) target(domain, name, location string) store.OffsiteTarget {
 	f.t.Helper()
