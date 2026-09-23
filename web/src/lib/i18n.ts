@@ -1757,6 +1757,7 @@ export const en = {
   "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
   "placementCode.nameMismatch": "The typed name does not match.",
   "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
+  "placementCode.snapshotMissing": "This backup is no longer at the chosen place.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct now keeps less. Items whose only copy is there: {n}.",
@@ -3641,6 +3642,7 @@ export const de: Translations = {
   "placementCode.removalGrown": "Inzwischen liegen dort mehr Snapshots nur an diesem Ort als angezeigt. Bitte die Liste noch einmal prüfen.",
   "placementCode.nameMismatch": "Der eingetippte Name stimmt nicht.",
   "placementCode.homeUnreadable": "Der Ort des Eintrags ließ sich nicht lesen, deshalb wurde nichts gelöscht.",
+  "placementCode.snapshotMissing": "Diese Sicherung liegt nicht mehr am gewählten Ort.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkt bewahrt jetzt weniger auf. Einträge, deren einzige Kopie dort liegt: {n}.",

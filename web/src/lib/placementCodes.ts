@@ -28,6 +28,7 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "removal-grown": "placementCode.removalGrown",
   "name-mismatch": "placementCode.nameMismatch",
   "home-unreadable": "placementCode.homeUnreadable",
+  "snapshot-missing": "placementCode.snapshotMissing",
 };
 
 const WARNING_KEYS: Record<SaveWarning["code"], TranslationKey> = {

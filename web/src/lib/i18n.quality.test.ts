@@ -70,6 +70,7 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   "placementCode.removalGrown",
   "placementCode.nameMismatch",
   "placementCode.homeUnreadable",
+  "placementCode.snapshotMissing",
   "offsiteRemoval.delete",
   "offsiteRemoval.ask",
   "offsiteRemoval.onlyThere",

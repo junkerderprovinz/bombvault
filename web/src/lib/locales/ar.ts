@@ -1657,6 +1657,7 @@ const ar: Partial<Translations> = {
   "placementCode.removalGrown": "More snapshots now exist only there than were shown. Check the list again.",
   "placementCode.nameMismatch": "The typed name does not match.",
   "placementCode.homeUnreadable": "The item's location could not be read, so nothing was deleted.",
+  "placementCode.snapshotMissing": "This backup is no longer at the chosen place.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} المباشر يحتفظ الآن بأقل. العناصر التي نسختها الوحيدة هناك: {n}.",

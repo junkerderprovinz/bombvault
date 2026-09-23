@@ -58,6 +58,7 @@ describe("placementErrorText for deleting at a target", () => {
     ["removal-grown", "More snapshots now exist only there than were shown. Check the list again."],
     ["name-mismatch", "The typed name does not match."],
     ["home-unreadable", "The item's location could not be read, so nothing was deleted."],
+    ["snapshot-missing", "This backup is no longer at the chosen place."],
   ])("translates %s instead of showing the server's sentence", (code, text) => {
     expect(placementErrorText(t, "en", { ok: false, code, error: "server sentence" }, "settings.error")).toBe(text);
   });
