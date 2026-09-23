@@ -266,18 +266,21 @@ func (r *Repo) ApplyAnomalyChanges(ch AnomalyChanges) (AnomalyApplyResult, error
 		if a.Details == "" {
 			a.Details = "{}"
 		}
+		if a.Occurrences == 0 {
+			a.Occurrences = 1
+		}
 		_, eErr := tx.Exec(`
 			INSERT INTO anomalies (
 				id, fingerprint, detector, metric, severity,
 				scope_kind, scope_id, target_id, domain,
 				run_id, last_run_id, last_run_at, last_good_run_id,
-				observed, expected, threshold, samples, sensitivity, details,
+				observed, expected, threshold, samples, sensitivity, details, occurrences,
 				first_seen_at, last_seen_at)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			a.ID, a.Fingerprint, a.Detector, a.Metric, a.Severity,
 			a.ScopeKind, a.ScopeID, a.TargetID, a.Domain,
 			a.RunID, a.LastRunID, a.LastRunAt, a.LastGoodRunID,
-			a.Observed, a.Expected, a.Threshold, a.Samples, a.Sensitivity, a.Details,
+			a.Observed, a.Expected, a.Threshold, a.Samples, a.Sensitivity, a.Details, a.Occurrences,
 			a.FirstSeenAt, a.LastSeenAt,
 		)
 		if eErr != nil {
