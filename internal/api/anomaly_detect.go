@@ -27,10 +27,39 @@ const (
 )
 
 const (
-	detectorNewData      = "new_data"
-	metricNewData        = "new_data"
-	metricNewDataRewrite = "new_data_rewrite"
-	metricNewDataFull    = "new_data_full"
+	detectorNewData     = "new_data"
+	detectorSource      = "source"
+	detectorDuration    = "duration"
+	detectorReliability = "reliability"
+)
+
+const (
+	metricNewData            = "new_data"
+	metricNewDataRewrite     = "new_data_rewrite"
+	metricNewDataFull        = "new_data_full"
+	metricSourceBytesShrink  = "source_bytes_shrink"
+	metricSourceBytesGrowth  = "source_bytes_growth"
+	metricSourceFilesShrink  = "source_files_shrink"
+	metricDumpBytesShrink    = "dump_bytes_shrink"
+	metricDumpBytesGrowth    = "dump_bytes_growth"
+	metricDurationSlower     = "duration_slower"
+	metricDumpDurationSlower = "dump_duration_slower"
+	metricFailureStreak      = "failure_streak"
+	metricFlaky              = "flaky"
+	metricDumpFailureStreak  = "dump_failure_streak"
+	metricDumpFlaky          = "dump_flaky"
+)
+
+// The families a user marks as expected, one per rule and direction, so that
+// accepting a new level leaves the opposite direction watching.
+const (
+	familySourceBytesDown = "source_bytes_down"
+	familySourceBytesUp   = "source_bytes_up"
+	familySourceFilesDown = "source_files_down"
+	familyDuration        = "duration"
+	familyDumpBytesDown   = "dump_bytes_down"
+	familyDumpBytesUp     = "dump_bytes_up"
+	familyDumpDuration    = "dump_duration"
 )
 
 // anomalyDomainVM is the domain of a VM item, whose runs only carry the data
@@ -53,6 +82,35 @@ const (
 	newDataMaxGap = 30 * 86400
 	rewriteShare  = 0.5
 	rewriteFloor  = 64 << 20
+	// anomalyWindow is how many of a series' newest samples the size and
+	// duration rules take their level from.
+	anomalyWindow = 30
+	// collapseRefSamples keeps the collapse reference close to the present, so
+	// that a source which was larger years ago cannot make today's emptying
+	// look mild.
+	collapseRefSamples = 5
+	anomalyDrainDays   = 30
+	collapseFloorItem  = 64 << 20
+	collapseFloorDump  = 1 << 20
+	collapseFloorFiles = 100
+	// dumpCollapseMinRef keeps the dump of a nearly empty database out of the
+	// collapse rule, where a few kilobytes of noise are a large share.
+	dumpCollapseMinRef  = 4 << 20
+	strongShrinkFrac    = 0.5
+	shrinkClearedFrac   = 0.9
+	growthClearedFrac   = 1.1
+	durationClearedFrac = 1.2
+	// The spread floors below which a series counts as noise-free, absolute and
+	// relative to its own level.
+	sizeMADFloorBytes        = 1 << 20
+	sizeMADFloorFiles        = 10
+	sizeRelativeMADFloor     = 0.02
+	durationMADFloorMS       = 1000
+	durationRelativeMADFloor = 0.05
+	// reliabilityRuns is how far back a failure streak and a flaky series are
+	// counted, and flakyMinRuns how much history that judgement needs.
+	reliabilityRuns = 10
+	flakyMinRuns    = 5
 )
 
 // sensParams are the thresholds one preset hands every detector.
@@ -120,9 +178,14 @@ func resolveSensitivity(item, global string) Sensitivity {
 type itemInput struct {
 	Kind   seriesKind
 	Domain string
+	// Series is the item's own history, newest first, as the store returns it.
+	Series []store.SeriesRun
 	// NewData is the new-data window, newest first, with enough history around
 	// it for every evaluated run to find its own samples.
 	NewData []store.SeriesRun
+	// Open are the rows a previous pass left open, by metric. A condition's
+	// level is frozen on them.
+	Open map[string]store.Anomaly
 	// Expectations are what a user marked as expected, by family.
 	Expectations map[string]store.AnomalyExpectation
 	Sens         Sensitivity
@@ -141,6 +204,13 @@ type finding struct {
 	Samples                       int
 	Details                       map[string]any
 	Event                         bool
+}
+
+// absence is a metric that was evaluated and whose condition is not there, so
+// that an open row can resolve and a closed episode can end.
+type absence struct {
+	Metric   string
+	Observed float64
 }
 
 // detectNewData raises the three rules around the data one backup added: an
@@ -349,6 +419,418 @@ func oldestFirst(runs []store.SeriesRun) []store.SeriesRun {
 		out[len(runs)-1-i] = run
 	}
 	return out
+}
+
+// detectSource watches how much a series backs up: a source that collapsed or
+// drained away, one that shrank or grew far beyond its own spread, and the same
+// rules on the file count. The number that comes back is how much history the
+// size rules could learn from.
+func detectSource(in itemInput, p sensParams) ([]finding, []absence, int) {
+	rows := oldestFirst(eligibleRuns(in.Series))
+	rebase := selectionRebaseAt(in.Series)
+
+	var found []finding
+	var absent []absence
+	learning := 0
+	for i, rule := range sourceRules(in.Kind, p) {
+		ruleFound, ruleAbsent, samples := rule.evaluate(in.Open, in.Expectations, rows, rebase, p)
+		found = append(found, ruleFound...)
+		absent = append(absent, ruleAbsent...)
+		if i == 0 {
+			learning = min(samples, anomalyMinSamples)
+		}
+	}
+	return found, absent, learning
+}
+
+// sourceRules are the size metrics a series is watched on. A dump is one
+// logical export written to standard input, so it has its own floors and no
+// file count to speak of.
+func sourceRules(kind seriesKind, p sensParams) []sizeRule {
+	bytes := sizeRule{
+		shrinkMetric: metricSourceBytesShrink, growthMetric: metricSourceBytesGrowth,
+		downFamily: familySourceBytesDown, upFamily: familySourceBytesUp,
+		value:         func(run store.SeriesRun) *int64 { return run.SourceBytes },
+		collapseFloor: collapseFloorItem,
+		shrinkFloor:   float64(p.ShrinkFloor),
+		growthFloor:   float64(p.GrowthFloor),
+		madFloor:      sizeMADFloorBytes,
+	}
+	if kind == seriesDump {
+		bytes.shrinkMetric, bytes.growthMetric = metricDumpBytesShrink, metricDumpBytesGrowth
+		bytes.downFamily, bytes.upFamily = familyDumpBytesDown, familyDumpBytesUp
+		bytes.collapseFloor, bytes.minCollapseRef = collapseFloorDump, dumpCollapseMinRef
+		return []sizeRule{bytes}
+	}
+	files := sizeRule{
+		shrinkMetric:  metricSourceFilesShrink,
+		downFamily:    familySourceFilesDown,
+		value:         func(run store.SeriesRun) *int64 { return run.SourceFiles },
+		collapseFloor: collapseFloorFiles,
+		shrinkFloor:   float64(p.FilesFloor),
+		madFloor:      sizeMADFloorFiles,
+	}
+	return []sizeRule{bytes, files}
+}
+
+// sizeRule is one metric of a series and the floors below which a change on it
+// is too small to mean anything. A rule without a growth metric watches one
+// direction only.
+type sizeRule struct {
+	shrinkMetric, growthMetric string
+	downFamily, upFamily       string
+	value                      func(store.SeriesRun) *int64
+	collapseFloor              float64
+	minCollapseRef             float64
+	shrinkFloor                float64
+	growthFloor                float64
+	madFloor                   float64
+}
+
+func (r sizeRule) evaluate(open map[string]store.Anomaly, expectations map[string]store.AnomalyExpectation,
+	rows []store.SeriesRun, rebase int64, p sensParams) ([]finding, []absence, int) {
+	samples := measurements(rows, r.value)
+	if len(samples) == 0 {
+		return nil, nil, 0
+	}
+	current, prior := samples[len(samples)-1], samples[:len(samples)-1]
+
+	// Both downward rules write the same fingerprint, and a collapse is the one
+	// that holds retention, so it wins where they overlap. It also reads the
+	// samples a user's expectation cut away, because accepting a smaller source
+	// must not switch the data-loss guard off.
+	down := newestSamples(samplesFrom(prior, max(rebase, expectations[r.downFamily].SinceAt)), anomalyWindow)
+	raised := r.collapsed(current, samplesFrom(prior, rebase), p)
+	if raised == nil {
+		raised = r.shrank(current, down, p)
+	}
+	found, absent := verdict(open, r.shrinkMetric, current, raised, func(expected float64) bool {
+		return current.value >= shrinkClearedFrac*expected
+	})
+
+	if r.growthMetric != "" {
+		up := newestSamples(samplesFrom(prior, max(rebase, expectations[r.upFamily].SinceAt)), anomalyWindow)
+		grownFound, grownAbsent := verdict(open, r.growthMetric, current, r.grew(current, up, p),
+			func(expected float64) bool { return current.value <= growthClearedFrac*expected })
+		found = append(found, grownFound...)
+		absent = append(absent, grownAbsent...)
+	}
+	return found, absent, len(down)
+}
+
+// collapsed is the data-loss rule: what the item backs up is a fraction of what
+// it backed up before, measured both against the level of the last few runs and
+// against the highest level of the last month. The second reference catches a
+// source emptied in steps that each stayed under the per-run rules and were
+// absorbed into the first.
+func (r sizeRule) collapsed(current measurement, prior []measurement, p sensParams) *finding {
+	if len(prior) == 0 {
+		return nil
+	}
+	reference := newestSamples(prior, collapseRefSamples)
+	month := samplesFrom(prior, current.at-anomalyDrainDays*86400)
+	level := median(sampleValues(reference))
+	peak := 0.0
+	if len(month) > 0 {
+		peak = slices.Max(sampleValues(month))
+	}
+
+	collapse, drain := r.lost(current.value, level, p), r.lost(current.value, peak, p)
+	if !collapse && !drain {
+		return nil
+	}
+	expected, samples := level, len(reference)
+	if !collapse {
+		expected, samples = peak, len(month)
+	}
+	details := map[string]any{"ratio": current.value / expected}
+	if collapse {
+		details["collapse"] = true
+	}
+	if drain {
+		details["drain"] = true
+	}
+	return &finding{
+		Detector: detectorSource, Metric: r.shrinkMetric, Severity: "critical",
+		RunID: current.runID, RunAt: current.at,
+		Observed: current.value, Expected: expected, Threshold: p.CollapseFrac * expected,
+		Samples: samples, Details: finiteDetails(details),
+	}
+}
+
+// lost is how much of a reference level has to be gone before it counts as data
+// loss rather than as a source that simply changed.
+func (r sizeRule) lost(value, reference float64, p sensParams) bool {
+	return reference >= r.minCollapseRef &&
+		value <= p.CollapseFrac*reference &&
+		reference-value >= r.collapseFloor
+}
+
+// shrank is the rule for a source that lost a large share of itself without
+// collapsing: far under the level of its window, far enough in absolute terms
+// to matter, and outside the spread the series usually has.
+func (r sizeRule) shrank(current measurement, samples []measurement, p sensParams) *finding {
+	if len(samples) < anomalyMinSamples {
+		return nil
+	}
+	xs := sampleValues(samples)
+	level := median(xs)
+	spread := r.spread(xs, level)
+	z := modifiedZ(current.value, level, spread)
+	if current.value >= p.ShrinkRatio*level || level-current.value < r.shrinkFloor || z > -p.K {
+		return nil
+	}
+	severity := "warning"
+	if current.value < strongShrinkFrac*level {
+		severity = "critical"
+	}
+	return &finding{
+		Detector: detectorSource, Metric: r.shrinkMetric, Severity: severity,
+		RunID: current.runID, RunAt: current.at,
+		Observed: current.value, Expected: level, Threshold: p.ShrinkRatio * level,
+		Samples: len(samples), Details: levelDetails(current.value, level, spread, z),
+	}
+}
+
+// grew is the same rule in the other direction. A source that gained a lot is
+// worth a look and never an alarm: nothing is lost.
+func (r sizeRule) grew(current measurement, samples []measurement, p sensParams) *finding {
+	if len(samples) < anomalyMinSamples {
+		return nil
+	}
+	xs := sampleValues(samples)
+	level := median(xs)
+	spread := r.spread(xs, level)
+	z := modifiedZ(current.value, level, spread)
+	if current.value <= p.GrowthRatio*level || current.value-level < r.growthFloor || z < p.K {
+		return nil
+	}
+	return &finding{
+		Detector: detectorSource, Metric: r.growthMetric, Severity: "warning",
+		RunID: current.runID, RunAt: current.at,
+		Observed: current.value, Expected: level, Threshold: p.GrowthRatio * level,
+		Samples: len(samples), Details: levelDetails(current.value, level, spread, z),
+	}
+}
+
+// spread is the series' own noise, floored so that a series which always
+// measures the same value does not put every later value infinitely far out.
+func (r sizeRule) spread(xs []float64, level float64) float64 {
+	return math.Max(math.Max(mad(xs, level), sizeRelativeMADFloor*level), r.madFloor)
+}
+
+// detectDuration watches restic's own time for a series, the figure that leaves
+// out container stops, hooks and BombVault's own lock waits. A faster run is
+// never reported, and a live stall is the stall guard's business.
+func detectDuration(in itemInput, p sensParams) ([]finding, []absence, int) {
+	metric, family := metricDurationSlower, familyDuration
+	if in.Kind == seriesDump {
+		metric, family = metricDumpDurationSlower, familyDumpDuration
+	}
+	rows := oldestFirst(eligibleRuns(in.Series))
+	measured := measurements(rows, func(run store.SeriesRun) *int64 { return run.ResticMS })
+	if len(measured) == 0 {
+		return nil, nil, 0
+	}
+	current, prior := measured[len(measured)-1], measured[:len(measured)-1]
+	from := max(selectionRebaseAt(in.Series), in.Expectations[family].SinceAt)
+	samples := newestSamples(samplesFrom(prior, from), anomalyWindow)
+
+	found, absent := verdict(in.Open, metric, current, slowerRun(current, samples, metric, p),
+		func(expected float64) bool { return current.value <= durationClearedFrac*expected })
+	return found, absent, min(len(samples), anomalyMinSamples)
+}
+
+func slowerRun(current measurement, samples []measurement, metric string, p sensParams) *finding {
+	if len(samples) < anomalyMinSamples {
+		return nil
+	}
+	xs := sampleValues(samples)
+	level := median(xs)
+	spread := math.Max(math.Max(mad(xs, level), durationRelativeMADFloor*level), durationMADFloorMS)
+	z := modifiedZ(current.value, level, spread)
+	if current.value < p.DurRatio*level || current.value-level < float64(p.DurFloorMS) || z < p.K {
+		return nil
+	}
+	return &finding{
+		Detector: detectorDuration, Metric: metric, Severity: "warning",
+		RunID: current.runID, RunAt: current.at,
+		Observed: current.value, Expected: level, Threshold: p.DurRatio * level,
+		Samples: len(samples), Details: levelDetails(current.value, level, spread, z),
+	}
+}
+
+// detectReliability watches whether a series finishes at all: failures one
+// after another, and a series that fails often enough to be unreliable without
+// ever failing twice in a row.
+func detectReliability(in itemInput, p sensParams) ([]finding, []absence) {
+	streakMetric, flakyMetric := metricFailureStreak, metricFlaky
+	if in.Kind == seriesDump {
+		streakMetric, flakyMetric = metricDumpFailureStreak, metricDumpFlaky
+	}
+	runs := newestFinished(in.Series)
+	if len(runs) == 0 {
+		return nil, nil
+	}
+
+	streak, failed, unbroken := 0, 0, true
+	for _, run := range runs {
+		if run.Status != "failed" {
+			unbroken = false
+			continue
+		}
+		failed++
+		if unbroken {
+			streak++
+		}
+	}
+	raise := func(metric, severity string, observed, threshold float64) finding {
+		return finding{
+			Detector: detectorReliability, Metric: metric, Severity: severity,
+			RunID: runs[0].ID, RunAt: runs[0].StartedAt,
+			Observed: observed, Threshold: threshold, Samples: len(runs),
+			Details: map[string]any{"streak": streak, "failed": failed, "total": len(runs)},
+		}
+	}
+
+	var found []finding
+	var absent []absence
+	switch {
+	case streak >= 2*p.StreakWarn:
+		found = append(found, raise(streakMetric, "critical", float64(streak), float64(p.StreakWarn)))
+	case streak >= p.StreakWarn:
+		found = append(found, raise(streakMetric, "warning", float64(streak), float64(p.StreakWarn)))
+	default:
+		absent = append(absent, absence{Metric: streakMetric, Observed: float64(streak)})
+	}
+	if len(runs) >= flakyMinRuns && failed >= p.FlakyK && streak < p.StreakWarn {
+		found = append(found, raise(flakyMetric, "warning", float64(failed), float64(p.FlakyK)))
+	} else {
+		absent = append(absent, absence{Metric: flakyMetric, Observed: float64(failed)})
+	}
+	return found, absent
+}
+
+// verdict turns one metric's rules into what the lifecycle needs: the finding
+// while the condition holds, an absence once it is gone. An open row carries
+// the level its episode started from, and only a return to that level ends it,
+// so a baseline that slowly absorbs the new value cannot clear an alarm on its
+// own.
+func verdict(open map[string]store.Anomaly, metric string, current measurement,
+	raised *finding, cleared func(expected float64) bool) ([]finding, []absence) {
+	row, isOpen := open[metric]
+	switch {
+	case isOpen && cleared(row.Expected):
+		return nil, []absence{{Metric: metric, Observed: current.value}}
+	case raised != nil:
+		return []finding{*raised}, nil
+	case isOpen:
+		return []finding{{
+			Detector: row.Detector, Metric: metric, Severity: row.Severity,
+			RunID: current.runID, RunAt: current.at,
+			Observed: current.value, Expected: row.Expected, Threshold: row.Threshold,
+			Samples: row.Samples,
+		}}, nil
+	default:
+		return nil, []absence{{Metric: metric, Observed: current.value}}
+	}
+}
+
+// selectionRebaseAt is when the series last started to cover different data by
+// configuration. The rules that compare against a level begin again there,
+// because the runs before it measured something else.
+func selectionRebaseAt(series []store.SeriesRun) int64 {
+	rows := oldestFirst(eligibleRuns(series))
+	for i := len(rows) - 1; i > 0; i-- {
+		if selectionChangedAt(rows, i) {
+			return rows[i].StartedAt
+		}
+	}
+	return 0
+}
+
+// eligibleRuns keeps the runs a detector may learn from: a success that left a
+// snapshot or a measurement behind. A success that recorded a decision instead
+// of a backup, such as a container that was gone, carries neither and would
+// otherwise read as a source that vanished.
+func eligibleRuns(series []store.SeriesRun) []store.SeriesRun {
+	out := make([]store.SeriesRun, 0, len(series))
+	for _, run := range series {
+		if run.Status == "success" && (run.SnapshotID != "" || run.SourceBytes != nil) {
+			out = append(out, run)
+		}
+	}
+	return out
+}
+
+// newestFinished keeps the runs the item is answerable for, newest first: a
+// success or a failure of its own, never one somebody cancelled, one that was
+// skipped, or one a restart cut short.
+func newestFinished(series []store.SeriesRun) []store.SeriesRun {
+	out := make([]store.SeriesRun, 0, reliabilityRuns)
+	for _, run := range series {
+		ownFailure := run.Status == "failed" && run.Error != store.ReasonInterrupted
+		if run.Status != "success" && !ownFailure {
+			continue
+		}
+		out = append(out, run)
+		if len(out) == reliabilityRuns {
+			break
+		}
+	}
+	return out
+}
+
+// measurement is what one run of a series measured for one metric.
+type measurement struct {
+	runID string
+	at    int64
+	value float64
+}
+
+// measurements reads a metric off the runs that carry it, keeping the order it
+// is given. A run whose column is NULL never measured it and is no sample.
+func measurements(rows []store.SeriesRun, of func(store.SeriesRun) *int64) []measurement {
+	out := make([]measurement, 0, len(rows))
+	for _, run := range rows {
+		if value := of(run); value != nil {
+			out = append(out, measurement{runID: run.ID, at: run.StartedAt, value: float64(*value)})
+		}
+	}
+	return out
+}
+
+func samplesFrom(samples []measurement, at int64) []measurement {
+	for i, sample := range samples {
+		if sample.at >= at {
+			return samples[i:]
+		}
+	}
+	return nil
+}
+
+func newestSamples(samples []measurement, n int) []measurement {
+	if len(samples) <= n {
+		return samples
+	}
+	return samples[len(samples)-n:]
+}
+
+func sampleValues(samples []measurement) []float64 {
+	xs := make([]float64, len(samples))
+	for i, sample := range samples {
+		xs[i] = sample.value
+	}
+	return xs
+}
+
+func levelDetails(value, level, spread, z float64) map[string]any {
+	return finiteDetails(map[string]any{
+		"median": level,
+		"mad":    spread,
+		"z":      z,
+		"ratio":  value / level,
+	})
 }
 
 // finiteDetails drops what JSON cannot carry, so writing a finding can never

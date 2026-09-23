@@ -494,3 +494,501 @@ func TestSensitivityPresets(t *testing.T) {
 		}
 	}
 }
+
+// byteRuns is a daily series that measured its source, with a file count that
+// stays put so that only the size rules can speak.
+func byteRuns(n int, start int64, bytes func(i int) int64) []store.SeriesRun {
+	return daily(n, start, func(i int) store.SeriesRun {
+		return mkRun(fmt.Sprintf("r%d", i), 0, "success", 0, withSource(bytes(i), 1000))
+	})
+}
+
+// fileRuns is the same series seen from the other side: a steady size and a
+// moving file count.
+func fileRuns(n int, start int64, files func(i int) int64) []store.SeriesRun {
+	return daily(n, start, func(i int) store.SeriesRun {
+		return mkRun(fmt.Sprintf("r%d", i), 0, "success", 0, withSource(10<<30, files(i)))
+	})
+}
+
+func durationRuns(n int, start int64, ms func(i int) int64) []store.SeriesRun {
+	return daily(n, start, func(i int) store.SeriesRun {
+		return mkRun(fmt.Sprintf("r%d", i), 0, "success", 0, withSnapshot("snap"), withResticMS(ms(i)))
+	})
+}
+
+// outcomeRuns builds a series from a list of outcomes, oldest first: s a
+// success, f a failure, c a cancelled run, k a skipped one and i a run the
+// startup sweep marked as interrupted.
+func outcomeRuns(outcomes string) []store.SeriesRun {
+	return daily(len(outcomes), anomalyNow-int64(len(outcomes))*anomalyDay, func(i int) store.SeriesRun {
+		id := fmt.Sprintf("r%d", i)
+		switch outcomes[i] {
+		case 'f':
+			return mkRun(id, 0, "failed", 0)
+		case 'c':
+			return mkRun(id, 0, "cancelled", 0)
+		case 'k':
+			return mkRun(id, 0, "skipped", 0)
+		case 'i':
+			return mkRun(id, 0, "failed", 0, withError(store.ReasonInterrupted))
+		default:
+			return mkRun(id, 0, "success", 0, withSnapshot("snap"))
+		}
+	})
+}
+
+func flatSize(v int64) func(int) int64 {
+	return func(int) int64 { return v }
+}
+
+func sourceInput(rows []store.SeriesRun) itemInput {
+	return itemInput{Kind: seriesItem, Series: rows, Sens: sensBalanced}
+}
+
+func runSource(in itemInput) ([]finding, []absence) {
+	found, absent, _ := detectSource(in, paramsFor(in.Sens))
+	return found, absent
+}
+
+func findingFor(t *testing.T, found []finding, metric string) finding {
+	t.Helper()
+	for _, f := range found {
+		if f.Metric == metric {
+			return f
+		}
+	}
+	t.Fatalf("no %s finding in %+v", metric, found)
+	return finding{}
+}
+
+func noFindingFor(t *testing.T, found []finding, metric string) {
+	t.Helper()
+	for _, f := range found {
+		if f.Metric == metric {
+			t.Fatalf("%s raised %+v", metric, f)
+		}
+	}
+}
+
+func absenceFor(t *testing.T, absent []absence, metric string) absence {
+	t.Helper()
+	for _, a := range absent {
+		if a.Metric == metric {
+			return a
+		}
+	}
+	t.Fatalf("%s is neither present nor absent: %+v", metric, absent)
+	return absence{}
+}
+
+func TestSourceCollapseFromSecondBackup(t *testing.T) {
+	history := byteRuns(1, anomalyNow-anomalyDay, flatSize(40<<30))
+	emptied := mkRun("emptied", anomalyNow, "success", 0, withSource(30<<20, 1000))
+
+	found, absent, learning := detectSource(sourceInput(after(emptied, history)), paramsFor(sensBalanced))
+	got := findingFor(t, found, metricSourceBytesShrink)
+	if got.Severity != "critical" || got.RunID != "emptied" {
+		t.Fatalf("finding = %+v", got)
+	}
+	if got.Details["collapse"] != true {
+		t.Fatalf("details = %v", got.Details)
+	}
+	if got.Observed != float64(30<<20) || got.Expected != float64(40<<30) {
+		t.Fatalf("finding = %+v", got)
+	}
+	if learning != 1 {
+		t.Fatalf("learning = %d, want 1", learning)
+	}
+	absenceFor(t, absent, metricSourceFilesShrink)
+
+	small := after(mkRun("small", anomalyNow, "success", 0, withSource(1<<20, 1000)),
+		byteRuns(1, anomalyNow-anomalyDay, flatSize(40<<20)))
+	found, absent = runSource(sourceInput(small))
+	noFindingFor(t, found, metricSourceBytesShrink)
+	if got := absenceFor(t, absent, metricSourceBytesShrink); got.Observed != float64(1<<20) {
+		t.Fatalf("absence = %+v", got)
+	}
+}
+
+func TestSourceShrinkNeedsSamplesAndZ(t *testing.T) {
+	tight := byteRuns(30, anomalyNow-31*anomalyDay, func(i int) int64 {
+		return 100<<30 + int64(i%3-1)*(1<<30)
+	})
+
+	shrunk := mkRun("shrunk", anomalyNow, "success", 0, withSource(65<<30, 1000))
+	found, _ := runSource(sourceInput(after(shrunk, tight)))
+	got := findingFor(t, found, metricSourceBytesShrink)
+	if got.Severity != "warning" || got.Samples != 30 {
+		t.Fatalf("finding = %+v", got)
+	}
+	if got.Details["collapse"] == true {
+		t.Fatalf("a shrink was reported as a collapse: %v", got.Details)
+	}
+
+	strong := mkRun("strong", anomalyNow, "success", 0, withSource(45<<30, 1000))
+	found, _ = runSource(sourceInput(after(strong, tight)))
+	if got := findingFor(t, found, metricSourceBytesShrink); got.Severity != "critical" {
+		t.Fatalf("finding = %+v", got)
+	}
+
+	noisy := byteRuns(30, anomalyNow-31*anomalyDay, func(i int) int64 {
+		return 100<<30 + int64(i%3-1)*(40<<30)
+	})
+	found, absent := runSource(sourceInput(after(shrunk, noisy)))
+	noFindingFor(t, found, metricSourceBytesShrink)
+	absenceFor(t, absent, metricSourceBytesShrink)
+}
+
+func TestSourceGrowthWarningOnly(t *testing.T) {
+	history := byteRuns(30, anomalyNow-31*anomalyDay, flatSize(10<<30))
+
+	grown := mkRun("grown", anomalyNow, "success", 0, withSource(25<<30, 1000))
+	found, _ := runSource(sourceInput(after(grown, history)))
+	got := findingFor(t, found, metricSourceBytesGrowth)
+	if got.Severity != "warning" || got.Observed != float64(25<<30) {
+		t.Fatalf("finding = %+v", got)
+	}
+
+	huge := mkRun("huge", anomalyNow, "success", 0, withSource(400<<30, 1000))
+	found, _ = runSource(sourceInput(after(huge, history)))
+	if got := findingFor(t, found, metricSourceBytesGrowth); got.Severity != "warning" {
+		t.Fatalf("growth turned critical: %+v", got)
+	}
+
+	steady := byteRuns(30, anomalyNow-31*anomalyDay, flatSize(1<<30))
+	nudged := mkRun("nudged", anomalyNow, "success", 0, withSource(4<<30, 1000))
+	found, absent := runSource(sourceInput(after(nudged, steady)))
+	noFindingFor(t, found, metricSourceBytesGrowth)
+	absenceFor(t, absent, metricSourceBytesGrowth)
+}
+
+func TestSourceConditionUsesFrozenExpected(t *testing.T) {
+	settled := byteRuns(11, anomalyNow-11*anomalyDay, flatSize(50<<30))
+	in := sourceInput(settled)
+	in.Open = map[string]store.Anomaly{
+		metricSourceBytesShrink: {
+			Detector: detectorSource, Metric: metricSourceBytesShrink,
+			Severity: "critical", Expected: float64(100 << 30), Samples: 30,
+		},
+	}
+
+	found, absent := runSource(in)
+	got := findingFor(t, found, metricSourceBytesShrink)
+	if got.Severity != "critical" || got.Observed != float64(50<<30) {
+		t.Fatalf("the settled baseline cleared the finding: %+v %+v", got, absent)
+	}
+
+	in.Series = after(mkRun("back", anomalyNow, "success", 0, withSource(95<<30, 1000)), settled)
+	found, absent = runSource(in)
+	noFindingFor(t, found, metricSourceBytesShrink)
+	if got := absenceFor(t, absent, metricSourceBytesShrink); got.Observed != float64(95<<30) {
+		t.Fatalf("absence = %+v", got)
+	}
+}
+
+func TestSourceDrainOverThirtyDays(t *testing.T) {
+	const steps = 21
+	sizes := make([]int64, steps)
+	sizes[0] = 40 << 30
+	for i := 1; i < steps; i++ {
+		sizes[i] = sizes[i-1] * 88 / 100
+	}
+	series := byteRuns(steps, anomalyNow-steps*anomalyDay, func(i int) int64 { return sizes[i] })
+
+	drained := -1
+	for i := range sizes {
+		if sizes[i]*10 <= sizes[0] {
+			drained = i
+			break
+		}
+	}
+	if drained < 1 {
+		t.Fatalf("the series never falls to a tenth of where it started: %v", sizes)
+	}
+
+	// series is newest first, so cutting from the front leaves run i newest.
+	upTo := func(i int) []store.SeriesRun { return series[steps-1-i:] }
+
+	for i := 1; i < drained; i++ {
+		found, _ := runSource(sourceInput(upTo(i)))
+		noFindingFor(t, found, metricSourceBytesShrink)
+	}
+
+	found, _ := runSource(sourceInput(upTo(drained)))
+	got := findingFor(t, found, metricSourceBytesShrink)
+	if got.Severity != "critical" || got.Details["drain"] != true {
+		t.Fatalf("finding = %+v", got)
+	}
+	if got.Details["collapse"] == true {
+		t.Fatalf("a drain was reported as a collapse: %v", got.Details)
+	}
+}
+
+func TestSourceRebaseRelearnsButKeepsCollapse(t *testing.T) {
+	history := byteRuns(30, anomalyNow-40*anomalyDay, flatSize(100<<30))
+	marked := mkRun("marked", anomalyNow-3*anomalyDay, "success", 0, withSource(50<<30, 1000))
+	next := mkRun("next", anomalyNow-2*anomalyDay, "success", 0, withSource(60<<30, 1000))
+	third := mkRun("third", anomalyNow-anomalyDay, "success", 0, withSource(45<<30, 1000))
+	rows := after(third, after(next, after(marked, history)))
+
+	if found, _ := runSource(sourceInput(rows)); len(found) == 0 {
+		t.Fatal("the new level raised nothing even without an expectation")
+	}
+
+	in := sourceInput(rows)
+	in.Expectations = map[string]store.AnomalyExpectation{
+		familySourceBytesDown: {Family: familySourceBytesDown, SinceAt: marked.StartedAt},
+	}
+	found, _ := runSource(in)
+	noFindingFor(t, found, metricSourceBytesShrink)
+
+	in.Series = after(mkRun("gone", anomalyNow, "success", 0, withSource(10<<20, 1000)), rows)
+	found, _ = runSource(in)
+	got := findingFor(t, found, metricSourceBytesShrink)
+	if got.Severity != "critical" || got.Details["collapse"] != true {
+		t.Fatalf("a re-base switched the collapse rule off: %+v", got)
+	}
+}
+
+func TestSelectionChangeRestartsCollapseReference(t *testing.T) {
+	excluded := daily(6, anomalyNow-6*anomalyDay, func(i int) store.SeriesRun {
+		fp, size := "before", int64(40<<30)
+		if i == 5 {
+			fp, size = "after", int64(2<<30)
+		}
+		return mkRun(fmt.Sprintf("r%d", i), 0, "success", 0, withSource(size, 1000), withSelection(fp))
+	})
+
+	found, _ := runSource(sourceInput(excluded))
+	noFindingFor(t, found, metricSourceBytesShrink)
+
+	gone := mkRun("gone", anomalyNow, "success", 0, withSource(5<<20, 1000), withSelection("after"))
+	found, _ = runSource(sourceInput(after(gone, excluded)))
+	if got := findingFor(t, found, metricSourceBytesShrink); got.Details["collapse"] != true {
+		t.Fatalf("finding = %+v", got)
+	}
+
+	vanished := daily(6, anomalyNow-6*anomalyDay, func(i int) store.SeriesRun {
+		size := int64(40 << 30)
+		if i == 5 {
+			size = 2 << 30
+		}
+		return mkRun(fmt.Sprintf("r%d", i), 0, "success", 0, withSource(size, 1000), withSelection("before"))
+	})
+	found, _ = runSource(sourceInput(vanished))
+	got := findingFor(t, found, metricSourceBytesShrink)
+	if got.Severity != "critical" || got.Details["collapse"] != true {
+		t.Fatalf("a source that vanished under an unchanged selection raised %+v", got)
+	}
+}
+
+func TestGrowthExpectationKeepsShrinkActive(t *testing.T) {
+	history := byteRuns(30, anomalyNow-31*anomalyDay, flatSize(10<<30))
+	grown := mkRun("grown", anomalyNow-3*anomalyDay, "success", 0, withSource(25<<30, 1000))
+	rows := after(grown, history)
+
+	if found, _ := runSource(sourceInput(rows)); len(found) == 0 {
+		t.Fatal("the growth raised nothing even without an expectation")
+	}
+
+	in := sourceInput(rows)
+	in.Expectations = map[string]store.AnomalyExpectation{
+		familySourceBytesUp: {Family: familySourceBytesUp, SinceAt: grown.StartedAt},
+	}
+	found, _ := runSource(in)
+	noFindingFor(t, found, metricSourceBytesGrowth)
+
+	in.Series = after(mkRun("drop", anomalyNow-2*anomalyDay, "success", 0, withSource(6<<30, 1000)), rows)
+	found, _ = runSource(in)
+	if got := findingFor(t, found, metricSourceBytesShrink); got.Severity != "warning" {
+		t.Fatalf("finding = %+v", got)
+	}
+
+	in.Series = after(mkRun("half", anomalyNow-2*anomalyDay, "success", 0, withSource(4<<30, 1000)), rows)
+	found, _ = runSource(in)
+	if got := findingFor(t, found, metricSourceBytesShrink); got.Severity != "critical" {
+		t.Fatalf("finding = %+v", got)
+	}
+}
+
+func TestFilesCollapseAndShrink(t *testing.T) {
+	history := fileRuns(1, anomalyNow-anomalyDay, flatSize(3000))
+	emptied := mkRun("emptied", anomalyNow, "success", 0, withSource(10<<30, 12))
+	found, _ := runSource(sourceInput(after(emptied, history)))
+	got := findingFor(t, found, metricSourceFilesShrink)
+	if got.Severity != "critical" || got.Details["collapse"] != true {
+		t.Fatalf("finding = %+v", got)
+	}
+
+	many := fileRuns(30, anomalyNow-31*anomalyDay, flatSize(50000))
+	fewer := mkRun("fewer", anomalyNow, "success", 0, withSource(10<<30, 30000))
+	found, _ = runSource(sourceInput(after(fewer, many)))
+	if got := findingFor(t, found, metricSourceFilesShrink); got.Severity != "warning" {
+		t.Fatalf("finding = %+v", got)
+	}
+
+	half := mkRun("half", anomalyNow, "success", 0, withSource(10<<30, 20000))
+	found, _ = runSource(sourceInput(after(half, many)))
+	if got := findingFor(t, found, metricSourceFilesShrink); got.Severity != "critical" {
+		t.Fatalf("finding = %+v", got)
+	}
+
+	// The ratio passes both times, and ninety-five files are still too few to
+	// mean anything.
+	tiny := after(mkRun("tiny", anomalyNow, "success", 0, withSource(10<<30, 5)),
+		fileRuns(1, anomalyNow-anomalyDay, flatSize(100)))
+	found, absent := runSource(sourceInput(tiny))
+	noFindingFor(t, found, metricSourceFilesShrink)
+	absenceFor(t, absent, metricSourceFilesShrink)
+
+	// Growth in the file count is not a finding at all.
+	more := mkRun("more", anomalyNow, "success", 0, withSource(10<<30, 500000))
+	found, absent = runSource(sourceInput(after(more, many)))
+	for _, f := range found {
+		if f.Metric == "source_files_growth" {
+			t.Fatalf("a growing file count raised %+v", f)
+		}
+	}
+	for _, a := range absent {
+		if a.Metric == "source_files_growth" {
+			t.Fatalf("a file growth metric was evaluated: %+v", a)
+		}
+	}
+}
+
+func TestDumpSeriesUsesDumpFloorsAndNoFileRule(t *testing.T) {
+	dumps := func(rows []store.SeriesRun) itemInput {
+		in := sourceInput(rows)
+		in.Kind = seriesDump
+		return in
+	}
+
+	history := byteRuns(1, anomalyNow-anomalyDay, flatSize(30<<20))
+	shrunk := mkRun("shrunk", anomalyNow, "success", 0, withSource(200<<10, 1))
+	in := dumps(after(shrunk, history))
+	found, absent := runSource(in)
+	got := findingFor(t, found, metricDumpBytesShrink)
+	if got.Severity != "critical" || got.Details["collapse"] != true {
+		t.Fatalf("finding = %+v", got)
+	}
+	noFindingFor(t, found, metricSourceBytesShrink)
+	noFindingFor(t, found, metricSourceFilesShrink)
+	for _, a := range absent {
+		if a.Metric == metricSourceFilesShrink || a.Metric == metricSourceBytesShrink {
+			t.Fatalf("a dump series evaluated %q", a.Metric)
+		}
+	}
+
+	small := byteRuns(1, anomalyNow-anomalyDay, flatSize(3<<20))
+	found, absent = runSource(dumps(after(mkRun("crumb", anomalyNow, "success", 0, withSource(10<<10, 1)), small)))
+	noFindingFor(t, found, metricDumpBytesShrink)
+	absenceFor(t, absent, metricDumpBytesShrink)
+
+	if found, _ := detectNewData(in, paramsFor(sensBalanced)); len(found) != 0 {
+		t.Fatalf("a dump series raised %+v", found)
+	}
+}
+
+func TestDurationSlowerOnly(t *testing.T) {
+	steady := durationRuns(30, anomalyNow-31*anomalyDay, func(i int) int64 {
+		return 60_000 + int64(i%3-1)*3_000
+	})
+
+	slow := mkRun("slow", anomalyNow, "success", 0, withSnapshot("snap"), withResticMS(20*60*1000))
+	found, _, _ := detectDuration(sourceInput(after(slow, steady)), paramsFor(sensBalanced))
+	got := findingFor(t, found, metricDurationSlower)
+	if got.Severity != "warning" || got.Samples != 30 {
+		t.Fatalf("finding = %+v", got)
+	}
+
+	fast := mkRun("fast", anomalyNow, "success", 0, withSnapshot("snap"), withResticMS(1_000))
+	found, absent, _ := detectDuration(sourceInput(after(fast, steady)), paramsFor(sensBalanced))
+	noFindingFor(t, found, metricDurationSlower)
+	absenceFor(t, absent, metricDurationSlower)
+
+	quick := durationRuns(30, anomalyNow-31*anomalyDay, flatSize(2_000))
+	found, _, _ = detectDuration(sourceInput(after(
+		mkRun("blip", anomalyNow, "success", 0, withSnapshot("snap"), withResticMS(40_000)), quick)),
+		paramsFor(sensBalanced))
+	noFindingFor(t, found, metricDurationSlower)
+
+	lockWait := mkRun("lock", anomalyNow, "success", 0, withSnapshot("snap"), withResticMS(5*60*1000+30_000))
+	in := sourceInput(after(lockWait, steady))
+	in.Sens = sensStrict
+	found, _, _ = detectDuration(in, paramsFor(in.Sens))
+	noFindingFor(t, found, metricDurationSlower)
+}
+
+func TestDurationIgnoresNullAndWallClock(t *testing.T) {
+	steady := durationRuns(30, anomalyNow-31*anomalyDay, flatSize(60_000))
+	unmeasured := daily(5, anomalyNow-5*anomalyDay, func(i int) store.SeriesRun {
+		return mkRun(fmt.Sprintf("u%d", i), 0, "success", 0, withSnapshot("snap"))
+	})
+	history := append(unmeasured, steady...)
+
+	slow := mkRun("slow", anomalyNow, "success", 0, withSnapshot("snap"), withResticMS(20*60*1000))
+	found, _, _ := detectDuration(sourceInput(after(slow, history)), paramsFor(sensBalanced))
+	if got := findingFor(t, found, metricDurationSlower); got.Samples != 30 {
+		t.Fatalf("samples = %d, want the thirty measured runs", got.Samples)
+	}
+
+	waited := mkRun("waited", anomalyNow, "success", 0, withSnapshot("snap"), withResticMS(60_000))
+	waited.FinishedAt = waited.StartedAt + 3*3600
+	found, absent, _ := detectDuration(sourceInput(after(waited, history)), paramsFor(sensBalanced))
+	noFindingFor(t, found, metricDurationSlower)
+	absenceFor(t, absent, metricDurationSlower)
+}
+
+func TestReliabilityStreak(t *testing.T) {
+	warn, _ := detectReliability(sourceInput(outcomeRuns("sssssssfff")), paramsFor(sensBalanced))
+	got := findingFor(t, warn, metricFailureStreak)
+	if got.Severity != "warning" || got.Observed != 3 {
+		t.Fatalf("finding = %+v", got)
+	}
+	if got.Details["streak"] != 3 || got.Details["failed"] != 3 || got.Details["total"] != 10 {
+		t.Fatalf("details = %v", got.Details)
+	}
+
+	crit, _ := detectReliability(sourceInput(outcomeRuns("ssssffffff")), paramsFor(sensBalanced))
+	if got := findingFor(t, crit, metricFailureStreak); got.Severity != "critical" {
+		t.Fatalf("finding = %+v", got)
+	}
+
+	found, absent := detectReliability(sourceInput(outcomeRuns("ssssfffffs")), paramsFor(sensBalanced))
+	noFindingFor(t, found, metricFailureStreak)
+	absenceFor(t, absent, metricFailureStreak)
+
+	found, _ = detectReliability(sourceInput(outcomeRuns("ssssfcfkfi")), paramsFor(sensBalanced))
+	if got := findingFor(t, found, metricFailureStreak); got.Severity != "warning" || got.Observed != 3 {
+		t.Fatalf("a cancelled, skipped or interrupted run broke the streak: %+v", got)
+	}
+}
+
+func TestReliabilityFlaky(t *testing.T) {
+	found, _ := detectReliability(sourceInput(outcomeRuns("sssfsfssfs")), paramsFor(sensBalanced))
+	got := findingFor(t, found, metricFlaky)
+	if got.Severity != "warning" || got.Observed != 3 {
+		t.Fatalf("finding = %+v", got)
+	}
+	noFindingFor(t, found, metricFailureStreak)
+
+	found, absent := detectReliability(sourceInput(outcomeRuns("ffsf")), paramsFor(sensBalanced))
+	noFindingFor(t, found, metricFlaky)
+	absenceFor(t, absent, metricFlaky)
+
+	found, absent = detectReliability(sourceInput(outcomeRuns("ssssssffff")), paramsFor(sensBalanced))
+	findingFor(t, found, metricFailureStreak)
+	noFindingFor(t, found, metricFlaky)
+	absenceFor(t, absent, metricFlaky)
+}
+
+func TestDumpSeriesHasItsOwnReliabilityMetrics(t *testing.T) {
+	in := sourceInput(outcomeRuns("sssssssfff"))
+	in.Kind = seriesDump
+	found, _ := detectReliability(in, paramsFor(sensBalanced))
+	if got := findingFor(t, found, metricDumpFailureStreak); got.Severity != "warning" {
+		t.Fatalf("finding = %+v", got)
+	}
+	noFindingFor(t, found, metricFailureStreak)
+}
