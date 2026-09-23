@@ -451,10 +451,10 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 		// The restart is split across TWO defers so a dependency is NEVER left
 		// stopped. This one is registered FIRST, so it runs LAST on unwind: it always
 		// brings the stopped dependents back (in compose depends_on order, optionally
-		// health-gated — see restartStoppedDeps), even if the target-restart/hook
+		// health-gated, see RestartInOrder), even if the target-restart/hook
 		// defer below fails or panics. It is the "never leave a dep stopped" guard.
 		defer func() {
-			restartStoppedDeps(restartCtx, d, stoppedDeps)
+			RestartInOrder(restartCtx, d.Docker, stoppedDeps, d.HealthWait, d.HealthTimeout)
 		}()
 
 		// Registered SECOND, so it runs FIRST on unwind. Order matters: bring the
@@ -580,37 +580,37 @@ func BackupContainer(ctx context.Context, d BackupDeps) (Summary, error) {
 	return summary, nil
 }
 
-// restartStoppedDeps brings the dependency containers we stopped for a backup
-// back up, in compose depends_on order (a dependency before the containers that
-// depend on it), reusing the same topological sort the stack restore uses. It is
-// fully best-effort: every failure is logged, never returned, so the restart of
-// one dependency can never abort the restart of the others or the backup flow.
+// DockerHealth is the part of Docker an ordered restart needs, so a caller
+// outside a container backup can reuse it without building a BackupDeps.
+type DockerHealth interface {
+	Start(ctx context.Context, name string) error
+	Health(ctx context.Context, name string) (model.Health, error)
+}
+
+// RestartInOrder brings the containers a backup stopped back up in compose
+// depends_on order (a dependency before the containers that depend on it),
+// reusing the same topological sort the stack restore uses. It is fully
+// best-effort: every failure is logged, never returned, so the restart of one
+// container can never abort the restart of the others or the flow around it.
 //
-// The depends_on ORDERING is ALWAYS applied — it is strictly safer than the old
-// unordered restart and cannot make things worse. When d.HealthWait is set, the
-// restart additionally waits for each dependency to become ready (its Docker
-// healthcheck reports "healthy", or — with no healthcheck — Running plus a short
-// grace) BEFORE it starts the containers that depend on it, bounded by a
-// per-container timeout after which it warns and proceeds so nothing hangs. This
-// is what fixes the real case where a service (Authelia/Nextcloud) came back
-// before the dependency it needs (Pi-hole) and stayed broken (#119).
+// With healthWait set, it also waits for each dependency to become ready (its
+// Docker healthcheck reports "healthy", or, with no healthcheck, Running plus a
+// short grace) before it starts the containers that depend on it, bounded by a
+// per-container timeout after which it warns and proceeds so nothing hangs. That
+// is what keeps a service (Authelia/Nextcloud) from coming back before the
+// dependency it needs (Pi-hole) and staying broken (#119).
 //
-// Containers not in a compose project (no service label / no depends_on) have no
+// Containers not in a compose project (no service label, no depends_on) have no
 // edges, so they keep a stable order among themselves and are simply started.
-func restartStoppedDeps(ctx context.Context, d BackupDeps, deps []StopContainer) {
+func RestartInOrder(ctx context.Context, d DockerHealth, deps []StopContainer, healthWait bool, healthTimeout time.Duration) {
 	if len(deps) == 0 {
 		return
 	}
-	services := make([]string, len(deps))
-	dependsOn := make([][]string, len(deps))
-	for i, dep := range deps {
-		services[i] = dep.Service
-		dependsOn[i] = dep.DependsOn
-	}
+	services, dependsOn := composeIdentity(deps)
 	order := compose.StartOrder(services, dependsOn)
 	graph := compose.DepGraph(services, dependsOn)
 
-	timeout := d.HealthTimeout
+	timeout := healthTimeout
 	if timeout <= 0 {
 		timeout = defaultHealthTimeout
 	}
@@ -625,7 +625,7 @@ func restartStoppedDeps(ctx context.Context, d BackupDeps, deps []StopContainer)
 		// resolved (ready or given up on). Processing in topological order means
 		// those dependencies were started in an earlier iteration; here we wait for
 		// them lazily, exactly when a dependent needs them.
-		if d.HealthWait {
+		if healthWait {
 			for _, j := range graph[i] {
 				if !resolved[j] {
 					waitHealthy(ctx, d, deps[j].ref(), timeout)
@@ -633,11 +633,61 @@ func restartStoppedDeps(ctx context.Context, d BackupDeps, deps []StopContainer)
 				}
 			}
 		}
-		if startErr := d.Docker.Start(ctx, deps[i].ref()); startErr != nil {
+		if startErr := d.Start(ctx, deps[i].ref()); startErr != nil {
 			log.Printf("backup: restart dependency %q failed: %v", deps[i].Name, startErr)
 			resolved[i] = true // never let a dependent block on a container that failed to start
 		}
 	}
+}
+
+// StopLevels groups deps into the levels a stop walks through: level 0 holds the
+// containers nothing else in the set depends on, so the containers of one level
+// can be stopped in parallel and a dependency is only stopped once everything
+// that needs it is down.
+func StopLevels(deps []StopContainer) [][]int {
+	if len(deps) == 0 {
+		return nil
+	}
+	services, dependsOn := composeIdentity(deps)
+	graph := compose.DepGraph(services, dependsOn)
+	dependents := make([][]int, len(deps))
+	for i, needs := range graph {
+		for _, j := range needs {
+			dependents[j] = append(dependents[j], i)
+		}
+	}
+
+	// A container's dependents come after it in the start order, so walking that
+	// order backwards has every dependent's level ready when its turn comes.
+	level := make([]int, len(deps))
+	order := compose.StartOrder(services, dependsOn)
+	for k := len(order) - 1; k >= 0; k-- {
+		i := order[k]
+		for _, dependent := range dependents[i] {
+			if level[dependent]+1 > level[i] {
+				level[i] = level[dependent] + 1
+			}
+		}
+	}
+
+	levels := make([][]int, 0, len(deps))
+	for i, l := range level {
+		for len(levels) <= l {
+			levels = append(levels, nil)
+		}
+		levels[l] = append(levels[l], i)
+	}
+	return levels
+}
+
+func composeIdentity(deps []StopContainer) (services []string, dependsOn [][]string) {
+	services = make([]string, len(deps))
+	dependsOn = make([][]string, len(deps))
+	for i, dep := range deps {
+		services[i] = dep.Service
+		dependsOn[i] = dep.DependsOn
+	}
+	return services, dependsOn
 }
 
 // waitHealthy polls a container until it is ready or timeout elapses. Readiness
@@ -649,10 +699,10 @@ func restartStoppedDeps(ctx context.Context, d BackupDeps, deps []StopContainer)
 // (e.g. the container was removed mid-wait, or docker is briefly unreachable)
 // stops the wait and returns rather than blocking, and a cancelled context
 // returns immediately. It never returns an error — the restart is best-effort.
-func waitHealthy(ctx context.Context, d BackupDeps, name string, timeout time.Duration) {
+func waitHealthy(ctx context.Context, d DockerHealth, name string, timeout time.Duration) {
 	deadline := time.Now().Add(timeout)
 	for {
-		h, err := d.Docker.Health(ctx, name)
+		h, err := d.Health(ctx, name)
 		if err != nil {
 			// Cannot see the container (removed mid-wait, transient docker error):
 			// do not block the whole restart on it — log and move on.
@@ -995,28 +1045,24 @@ func scrubRunErrOutsideARepoLocation(s string) string {
 	return runErrCredentialRe.ReplaceAllString(s, "[redacted]@")
 }
 
-// restoreConflictBypass reports whether err carries this package's own
-// ErrRestoreConflict sentinel and, if so, returns its message completely
-// UNSCRUBBED, and true. checkRestoreConflicts' message ("host port 8080/tcp
-// is already used by container ...") is already user-safe — IP/host-port/
-// container names, never a host filesystem path — and runErrPathRe's regex
-// matches ANY slash-containing token, not just a real path, so routing it
-// through scrubRunErr unconditionally mangles "8080/tcp" into "8080[path]",
-// destroying exactly the information the message exists to convey.
+// bypassMessage reports whether err carries one of the sentinels whose message
+// is already safe to show and has to reach the run row unscrubbed.
+//
+// checkRestoreConflicts' message ("host port 8080/tcp is already used by
+// container ...") holds IP addresses, host ports and container names, never a
+// host filesystem path, and runErrPathRe matches every slash-containing token, so
+// scrubbing it mangles "8080/tcp" into "8080[path]" and destroys exactly the
+// information the message exists to convey. A ZFSRefusal is built from validated
+// dataset names and reason codes for the same reason: scrubbed, "cache/appdata"
+// becomes "[path]" and the run history no longer says which dataset failed.
 //
 // This mirrors internal/api/handlers.go's scrubBypassMessage, which the api
-// package's own copy of truncateRunErr consults for the identical reason —
-// including this exact sentinel, plus 4 more that are only ever constructed
-// inside package api. This package can't import internal/api to share that
-// helper directly (internal/api already imports internal/backup, so the
-// reverse import would cycle) and, per the package doc comment above,
-// deliberately doesn't take on that kind of dependency anyway — same
-// reasoning as runErrPathRe/runErrCredentialRe's duplication above.
-// ErrRestoreConflict is the only one of those 5 sentinels this package's own
-// error paths can ever produce or receive, so it's the only one this bypass
-// needs to know about.
-func restoreConflictBypass(err error) (string, bool) {
-	if errors.Is(err, ErrRestoreConflict) {
+// package's own copy of truncateRunErr consults for the identical reason.
+// internal/api already imports this package, so the reverse import would cycle,
+// and the package doc above rules that dependency out anyway; the duplication is
+// the same trade as runErrPathRe/runErrCredentialRe above.
+func bypassMessage(err error) (string, bool) {
+	if errors.Is(err, ErrRestoreConflict) || errors.Is(err, ErrZFSRefusal) {
 		return err.Error(), true
 	}
 	return "", false
@@ -1025,8 +1071,7 @@ func restoreConflictBypass(err error) (string, bool) {
 // truncateErr scrubs and bounds an error message so it fits the DB's
 // runs.error column.
 //
-// This scrubs every error EXCEPT one carrying ErrRestoreConflict (see
-// restoreConflictBypass), which passes through unscrubbed instead. Every
+// This scrubs every error except the ones bypassMessage lets through. Every
 // other error is scrubbed unconditionally, not just for the restic/dockercli
 // adapters whose errors already come pre-scrubbed through their own
 // interfaces (scrubbing an already-clean string is a no-op, so that costs
@@ -1035,20 +1080,12 @@ func restoreConflictBypass(err error) (string, bool) {
 // runs.error, so scrubbing HERE protects every current caller and
 // every future one, instead of relying on every backupErr/restoreErr this
 // package ever builds having been routed through a scrubbing adapter first.
-//
-// An earlier version of this function scrubbed EVERYTHING unconditionally,
-// including an ErrRestoreConflict-wrapped error, on the theory that running
-// the scrub regexes over already-clean text is a harmless no-op. That was
-// false for exactly this sentinel — see restoreConflictBypass — so
-// checkRestoreConflicts' host:port conflict list used to reach runs.error
-// with its port numbers mangled into "[path]" even though the identical
-// error survives intact through the api package's scrubError.
 func truncateErr(err error) string {
 	if err == nil {
 		return ""
 	}
 	msg := err.Error()
-	if bypass, ok := restoreConflictBypass(err); ok {
+	if bypass, ok := bypassMessage(err); ok {
 		msg = bypass
 	} else {
 		msg = scrubRunErr(msg)
