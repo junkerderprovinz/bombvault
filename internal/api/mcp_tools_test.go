@@ -20,6 +20,7 @@ var mcpReadTools = []string{
 	"get_storage_stats",
 	"list_items",
 	"list_runs",
+	"list_restore_points",
 }
 
 // The era Claude Code and mcp-remote negotiate today. A client that speaks it
@@ -115,11 +116,13 @@ func TestMCPToolAnnotationsAndSchemas(t *testing.T) {
 		if !ok {
 			t.Fatalf("%s carries no annotations", name)
 		}
+		// Listing restore points is the one read that leaves the machine: a
+		// primary repository can be an S3 bucket or a REST server.
 		for hint, want := range map[string]any{
 			"readOnlyHint":    true,
 			"destructiveHint": false,
 			"idempotentHint":  true,
-			"openWorldHint":   false,
+			"openWorldHint":   name == "list_restore_points",
 		} {
 			if ann[hint] != want {
 				t.Fatalf("%s %s = %v, want %v", name, hint, ann[hint], want)
@@ -147,18 +150,27 @@ func TestMCPUnknownArgumentIsToolError(t *testing.T) {
 // be empty rather than absent: a null reads as "unknown" where the truth is
 // "none", and an assistant passes that difference on to the operator.
 func TestMCPReadToolsOnEmptyInstall(t *testing.T) {
-	h, _, _, key := newMCPToolRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	h, st, _, key := newMCPToolRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	settings := mustSettings(t, st)
+	settings.FlashPath = "backups/flash"
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
 
 	// The argument object a tool needs to answer at all; the tools that take no
 	// input are absent from it.
-	args := map[string]string{"get_storage_stats": `{"domain":"containers"}`}
+	args := map[string]string{
+		"get_storage_stats":   `{"domain":"containers"}`,
+		"list_restore_points": `{"domain":"flash"}`,
+	}
 	arrays := map[string][]string{
-		"get_status":        {"domains", "nextRuns"},
-		"get_coverage":      {"domains"},
-		"get_activity":      {"running"},
-		"get_storage_stats": {"samples"},
-		"list_items":        {"domains"},
-		"list_runs":         {"runs"},
+		"get_status":          {"domains", "nextRuns"},
+		"get_coverage":        {"domains"},
+		"get_activity":        {"running"},
+		"get_storage_stats":   {"samples"},
+		"list_items":          {"domains"},
+		"list_runs":           {"runs"},
+		"list_restore_points": {"restorePoints"},
 	}
 	for _, tool := range mcpReadTools {
 		res := mcpCallTool(t, h, key, tool, args[tool])

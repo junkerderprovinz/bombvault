@@ -1220,6 +1220,30 @@ func (s *Service) fileSetRepoFor(settings store.Settings, set store.FileSet, sou
 	return s.fileSetRepoPath(settings, set)
 }
 
+// primaryRepoIsRemote reports whether an item's primary repository is a restic
+// remote backend, which is what makes listing it cost time and traffic. item is
+// what the domain's listing function takes: a container or VM name, a folder
+// set's id, and nothing for flash and config. A location that does not resolve
+// counts as not remote.
+func (s *Service) primaryRepoIsRemote(settings store.Settings, domain, item string) bool {
+	var repo string
+	var err error
+	switch domain {
+	case "containers":
+		repo, err = s.containerRepoForName(settings, item, "local")
+	case "vms":
+		repo, err = s.vmRepoForName(settings, item, "local")
+	case "files":
+		var set store.FileSet
+		if set, err = s.store.GetFileSet(item); err == nil {
+			repo, err = s.fileSetRepoFor(settings, set, "local")
+		}
+	default:
+		repo, err = s.repoFor(settings, domain, "local")
+	}
+	return err == nil && restic.IsRemoteRepo(repo)
+}
+
 // flashZipExportDir resolves the operator-configured output folder for the
 // scheduled flash zip export. Unlike flashRepoPath (which, via resolveRepo, may
 // hand a remote-backend string like "s3:…" straight to restic), this is always a
