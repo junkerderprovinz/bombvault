@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"slices"
@@ -16,9 +17,9 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// mcpStartItem is one item a start tool acted on. Stops and the last duration
-// are what an assistant tells the user before the apps go down; the Backup
-// Everything pass lists domains rather than items and carries neither.
+// mcpStartItem is one item a start or a cancel acted on. Stops and the last
+// duration are what an assistant tells the user before the apps go down; the
+// Backup Everything pass lists domains rather than items and carries neither.
 type mcpStartItem struct {
 	ID                  string    `json:"id"`
 	Name                string    `json:"name"`
@@ -36,6 +37,7 @@ type mcpSkipped struct {
 
 const (
 	mcpReadOnlyKeyMessage = "this key may only read; allow backups for it under Settings > System > MCP server"
+	mcpNotRunningMessage  = "this run is not running any more"
 	mcpItemFollowUp       = "Call get_activity for progress and list_runs with this domain and item for the result."
 	mcpEverythingFollowUp = "Call get_activity for progress and list_runs with domain everything for the result."
 )
@@ -264,6 +266,78 @@ func (h *Handler) toolStartBackupEverything(ctx context.Context, req *mcp.CallTo
 		"skipped":  []mcpSkipped{},
 		"followUp": mcpEverythingFollowUp,
 	}), nil
+}
+
+type cancelBackupInput struct {
+	RunID string `json:"runId"`
+}
+
+func (h *Handler) toolCancelBackup(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	const tool = "cancel_backup"
+	caller, ok := mcpCallerFrom(ctx)
+	if !ok {
+		return mcpNoCaller(), nil
+	}
+	var in cancelBackupInput
+	if err := decodeMCPArgs(req.Params.Arguments, &in); err != nil {
+		h.logMCPCall(ctx, tool, "invalid_argument")
+		return mcpToolError("invalid_argument", err.Error(), nil), nil
+	}
+	if !caller.CanStartBackups {
+		h.logMCPCall(ctx, tool, "not_permitted")
+		return mcpToolError("not_permitted", mcpReadOnlyKeyMessage, nil), nil
+	}
+	if !validRunID(in.RunID) {
+		h.logMCPCall(ctx, tool, "invalid_argument")
+		return mcpToolError("invalid_argument", "runId must be a run id as list_runs and get_activity report it", nil), nil
+	}
+
+	run, err := h.store.GetRun(in.RunID)
+	if errors.Is(err, store.ErrRunNotFound) {
+		h.logMCPCall(ctx, tool, "not_found")
+		return mcpToolError("not_found", "no run with this id", nil), nil
+	}
+	if err != nil {
+		h.logMCPCall(ctx, tool, "failed")
+		return mcpServiceError(err), nil
+	}
+	if run.Kind != "backup" || run.Status != "running" {
+		h.logMCPCall(ctx, tool, "not_running")
+		return mcpToolError("not_running", mcpNotRunningMessage, nil), nil
+	}
+	if run.StartedVia != "mcp" || run.StartedViaKey != caller.KeyID {
+		h.logMCPCall(ctx, tool, "not_permitted")
+		return mcpToolError("not_permitted", "this run was not started by this key; cancel it in the web interface", nil), nil
+	}
+	if run.TargetID == store.EverythingTargetID {
+		h.logMCPCall(ctx, tool, "not_permitted")
+		return mcpToolError("not_permitted", "a Backup Everything pass cannot be cancelled as a whole; cancel the item backup running inside it", nil), nil
+	}
+	key, item, ok := h.mcpCancelKey(run)
+	if !ok {
+		h.logMCPCall(ctx, tool, "not_found")
+		return mcpToolError("not_found", "the item this run belongs to is not set up in BombVault any more", nil), nil
+	}
+	if !h.svc.CancelBackupRun(key) {
+		h.logMCPCall(ctx, tool, "not_running")
+		return mcpToolError("not_running", mcpNotRunningMessage, nil), nil
+	}
+
+	out := map[string]any{
+		"cancelled": true,
+		"runId":     run.ID,
+		"domain":    item.Domain,
+		"item":      mcpStartItem{ID: item.ID, Name: item.Name},
+	}
+	// The row is read once more because the run could have ended between the
+	// check above and the cancel, in which case the cancel reached whatever
+	// registered the same progress key next.
+	if after, aErr := h.store.GetRun(run.ID); aErr == nil && after.Status != "running" && after.Status != "cancelled" {
+		out["cancelled"] = false
+		out["warning"] = "this backup had already finished; the cancellation may have reached a later backup of the same item"
+	}
+	h.logMCPCall(ctx, tool, "ok")
+	return mcpOK(out), nil
 }
 
 // mcpEnabledDomains lists the domains a Backup Everything pass walks, in the
@@ -580,6 +654,29 @@ func (h *Handler) mcpStopsFor(ctx context.Context, domain string, items []mcpIte
 		}
 	}
 	return out
+}
+
+// mcpCancelKey is the progress key the service registered a run's backup under,
+// with the item behind it. It has to read exactly as the key in Backup,
+// BackupVM, BackupFileSet, BackupFlash and BackupConfig, or a cancel reaches
+// nothing.
+func (h *Handler) mcpCancelKey(run store.Run) (string, mcpItem, bool) {
+	switch run.TargetID {
+	case store.FlashTargetID:
+		return "flash", mcpItem{Domain: "flash", ID: run.TargetID, Name: "flash"}, true
+	case store.ConfigTargetID:
+		return "config", mcpItem{Domain: "config", ID: run.TargetID, Name: "config"}, true
+	}
+	if t, err := h.store.GetTargetByID(run.TargetID); err == nil {
+		return "container:" + t.ContainerName, mcpItem{Domain: "containers", ID: t.ID, Name: t.ContainerName}, true
+	}
+	if vm, err := h.store.GetVMTargetByID(run.TargetID); err == nil {
+		return "vm:" + vm.Name, mcpItem{Domain: "vms", ID: vm.ID, Name: vm.Name}, true
+	}
+	if set, err := h.store.GetFileSet(run.TargetID); err == nil {
+		return "files:" + set.Name, mcpItem{Domain: "files", ID: set.ID, Name: set.Name}, true
+	}
+	return "", mcpItem{}, false
 }
 
 func mcpItemIDs(items []mcpItem) []string {

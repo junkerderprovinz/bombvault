@@ -171,6 +171,17 @@ func (h *Handler) mcpToolDefs() []mcpToolDef {
 				objectSchema(nil)),
 			run: h.toolStartBackupEverything,
 		},
+		{
+			tool: cancelTool("cancel_backup", "Cancel a backup this key started",
+				"Cancels a running backup that this key started, named by the run id list_runs and get_activity report. "+
+					"Backups the schedule or the web interface started cannot be cancelled here. "+
+					"A cancelled backup leaves no half-written restore point behind, and the containers it stopped are started again. "+
+					"One item of a domain backup can be cancelled on its own; the rest of the domain goes on.",
+				objectSchema(map[string]any{
+					"runId": strProp("The id of the running backup to cancel."),
+				}, "runId")),
+			run: h.toolCancelBackup,
+		},
 	}
 }
 
@@ -240,6 +251,14 @@ func startTool(name, title, description string, schema map[string]any) *mcp.Tool
 			OpenWorldHint:   boolPtr(true),
 		},
 	}
+}
+
+// cancelTool builds the one tool that writes without making anything: it stops
+// work that is already under way, and a second call finds nothing left to stop.
+func cancelTool(name, title, description string, schema map[string]any) *mcp.Tool {
+	tool := startTool(name, title, description, schema)
+	tool.Annotations.IdempotentHint = true
+	return tool
 }
 
 // remoteReadTool is readTool for a read that can leave this machine, which is

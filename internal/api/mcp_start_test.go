@@ -438,6 +438,178 @@ func wantNoRuns(t *testing.T, st *store.Repo) {
 	}
 }
 
+// The tool list is cached by the client, so a permission the operator takes
+// away has to bite on the next call rather than on the next connection.
+func TestMCPPermissionChangeAppliesToNextCall(t *testing.T) {
+	docker := &fakeServiceDocker{inspect: model.Inspect{Name: "/plex", Image: "plex:latest", Running: true}}
+	rig := newMCPStartRig(t, docker, &fakeResticEngine{})
+	rig.target(t, "plex")
+	rig.target(t, "immich")
+
+	if res := mcpCallTool(t, rig.h, rig.key, "start_backup", `{"domain":"containers","item":"plex"}`); res.IsError {
+		t.Fatalf("start_backup: %v", res.Structured)
+	}
+	waitForBackupDone(t, rig.svc)
+
+	setMCPKeyStart(t, rig, false)
+	res := mcpCallTool(t, rig.h, rig.key, "start_backup", `{"domain":"containers","item":"immich"}`)
+	if code := res.code(t); code != "not_permitted" {
+		t.Fatalf("code = %q, want not_permitted (result %v)", code, res.Structured)
+	}
+
+	setMCPKeyStart(t, rig, true)
+	if res := mcpCallTool(t, rig.h, rig.key, "start_backup", `{"domain":"containers","item":"immich"}`); res.IsError {
+		t.Fatalf("the permission was given back but the start was refused: %v", res.Structured)
+	}
+	waitForBackupDone(t, rig.svc)
+}
+
+func TestMCPCancelOwnRun(t *testing.T) {
+	eng := &fakeResticEngine{block: make(chan struct{}), backupEntered: make(chan struct{}, 1)}
+	docker := &fakeServiceDocker{inspect: model.Inspect{Name: "/plex", Image: "plex:latest", Running: true}}
+	rig := newMCPStartRig(t, docker, eng)
+	tg := rig.target(t, "plex")
+
+	if res := mcpCallTool(t, rig.h, rig.key, "start_backup", `{"domain":"containers","item":"plex"}`); res.IsError {
+		t.Fatalf("start_backup: %v", res.Structured)
+	}
+	select {
+	case <-eng.backupEntered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the backup never reached the engine")
+	}
+	runID := mcpRunningBackupID(t, rig, rig.key)
+
+	res := mcpCallTool(t, rig.h, rig.key, "cancel_backup", fmt.Sprintf(`{"runId":%q}`, runID))
+	if res.IsError {
+		t.Fatalf("cancel_backup: %v", res.Structured)
+	}
+	if res.Structured["cancelled"] != true || res.Structured["runId"] != runID {
+		t.Fatalf("cancel_backup answered %v", res.Structured)
+	}
+	if res.Structured["domain"] != "containers" {
+		t.Fatalf("domain = %v, want containers", res.Structured["domain"])
+	}
+	item, _ := res.Structured["item"].(map[string]any)
+	if item["id"] != tg.ID || item["name"] != "plex" {
+		t.Fatalf("item = %v, want the container that was cancelled", item)
+	}
+
+	waitForBackupDone(t, rig.svc)
+	run, err := rig.st.GetRun(runID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if run.Status != "cancelled" {
+		t.Fatalf("the run ended as %q, want cancelled", run.Status)
+	}
+	if !slices.Contains(docker.calls, "start:plex") {
+		t.Fatalf("the container was left stopped: %v", docker.calls)
+	}
+
+	again := mcpCallTool(t, rig.h, rig.key, "cancel_backup", fmt.Sprintf(`{"runId":%q}`, runID))
+	if code := again.code(t); code != "not_running" {
+		t.Fatalf("a second cancel gives %q, want not_running (result %v)", code, again.Structured)
+	}
+}
+
+// A key may only stop what it started itself. Everything else belongs to the
+// person at the web interface, who can see what a cancellation would interrupt.
+func TestMCPCancelRefusesForeignRuns(t *testing.T) {
+	eng := &fakeResticEngine{block: make(chan struct{}), backupEntered: make(chan struct{}, 1)}
+	docker := &fakeServiceDocker{inspect: model.Inspect{Name: "/plex", Image: "plex:latest", Running: true}}
+	rig := newMCPStartRig(t, docker, eng)
+	tg := rig.target(t, "plex")
+	_, otherKeyID := createMCPKey(t, rig.h, "Desktop", true)
+
+	w, body := doJSON(t, rig.h, http.MethodPost, "/api/containers/plex/backup", "")
+	if w.Code != http.StatusOK || body["ok"] != true {
+		t.Fatalf("start a backup in the web interface: status=%d body=%v", w.Code, body)
+	}
+	select {
+	case <-eng.backupEntered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the backup never reached the engine")
+	}
+	fromUI := mcpRunningBackupID(t, rig, rig.key)
+
+	foreign := seedRunningBackup(t, rig, tg.ID, store.RunMeta{StartedVia: "mcp", StartedViaKey: otherKeyID})
+	scheduled := seedRunningBackup(t, rig, tg.ID, store.RunMeta{})
+	pass := seedRunningBackup(t, rig, store.EverythingTargetID, store.RunMeta{StartedVia: "mcp", StartedViaKey: rig.keyID})
+
+	for _, c := range []struct{ name, runID, want string }{
+		{"a backup the web interface started", fromUI, "not_permitted"},
+		{"a backup another key started", foreign, "not_permitted"},
+		{"a scheduled backup", scheduled, "not_permitted"},
+		{"a Backup Everything pass", pass, "not_permitted"},
+		{"an id no run carries", strings.Repeat("a", 32), "not_found"},
+	} {
+		res := mcpCallTool(t, rig.h, rig.key, "cancel_backup", fmt.Sprintf(`{"runId":%q}`, c.runID))
+		if code := res.code(t); code != c.want {
+			t.Fatalf("%s: code = %q, want %s (result %v)", c.name, code, c.want, res.Structured)
+		}
+	}
+	if !rig.svc.BackupInProgress() {
+		t.Fatal("a refused cancel stopped the backup it was refused for")
+	}
+
+	readOnly, _ := createMCPKey(t, rig.h, "Tablet", false)
+	res := mcpCallTool(t, rig.h, readOnly, "cancel_backup", fmt.Sprintf(`{"runId":%q}`, fromUI))
+	if code := res.code(t); code != "not_permitted" {
+		t.Fatalf("a read-only key: code = %q, want not_permitted (result %v)", code, res.Structured)
+	}
+
+	close(eng.block)
+	waitForBackupDone(t, rig.svc)
+
+	finished := seedFinishedBackup(t, rig, tg.ID, store.RunMeta{StartedVia: "mcp", StartedViaKey: rig.keyID})
+	done := mcpCallTool(t, rig.h, rig.key, "cancel_backup", fmt.Sprintf(`{"runId":%q}`, finished))
+	if code := done.code(t); code != "not_running" {
+		t.Fatalf("a finished run of this key: code = %q, want not_running (result %v)", code, done.Structured)
+	}
+}
+
+// setMCPKeyStart changes the key's permission the way the settings card does.
+func setMCPKeyStart(t *testing.T, rig *mcpStartRig, canStart bool) {
+	t.Helper()
+	w, body := doMCPKey(t, rig.h, http.MethodPatch, "/api/mcp/keys/"+rig.keyID,
+		fmt.Sprintf(`{"canStartBackups":%t}`, canStart))
+	if w.Code != http.StatusOK || body["ok"] != true {
+		t.Fatalf("set canStartBackups=%t: status=%d body=%v", canStart, w.Code, body)
+	}
+}
+
+// mcpRunningBackupID is the id of the one running backup, read the way an
+// assistant reads it before it cancels.
+func mcpRunningBackupID(t *testing.T, rig *mcpStartRig, key string) string {
+	t.Helper()
+	res := mcpCallTool(t, rig.h, key, "list_runs", `{"status":"running","kind":"backup"}`)
+	rows := mcpRows(t, res, "runs")
+	if len(rows) != 1 {
+		t.Fatalf("%d running backups, want the one that was started: %v", len(rows), rows)
+	}
+	id, _ := rows[0]["id"].(string)
+	return id
+}
+
+func seedRunningBackup(t *testing.T, rig *mcpStartRig, targetID string, meta store.RunMeta) string {
+	t.Helper()
+	id, err := rig.st.StartRunWith(targetID, "backup", meta)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return id
+}
+
+func seedFinishedBackup(t *testing.T, rig *mcpStartRig, targetID string, meta store.RunMeta) string {
+	t.Helper()
+	id := seedRunningBackup(t, rig, targetID, meta)
+	if err := rig.st.FinishRun(id, "success", "snap1", 1, ""); err != nil {
+		t.Fatal(err)
+	}
+	return id
+}
+
 // A start returns at once and the backup goes on in BombVault, so the call
 // ending must not reach it.
 func TestMCPStartSurvivesTheEndOfTheCall(t *testing.T) {
