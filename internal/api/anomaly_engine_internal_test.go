@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -640,6 +641,22 @@ func TestAnomalyEngineNilReceiverIsInert(t *testing.T) {
 	held, why, err := s.anomalies.RetentionHeld(context.Background(), anomalyScope{Kind: anomalyScopeItem, ID: "x"})
 	if held || why != "" || err != nil {
 		t.Fatalf("RetentionHeld on a nil engine = %v %q %v", held, why, err)
+	}
+	tags, err := s.anomalies.HeldIdentityTags()
+	if len(tags) != 0 || err != nil {
+		t.Fatalf("HeldIdentityTags on a nil engine = %v %v", tags, err)
+	}
+	forget := &forgetTrackingEngine{}
+	s.engine = forget
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.RetentionKeepLast = 5
+	s.applyRetention(context.Background(), "/repo", settings, restic.Mode{},
+		tagIdentity("container:plex"), "containers", anomalyScope{Kind: anomalyScopeItem, ID: "x"})
+	if forget.forgetCalls() != 1 {
+		t.Fatalf("a service without an engine still forgets, got %d call(s)", forget.forgetCalls())
 	}
 	if sum := s.AnomalySummary(context.Background()); sum.Ready {
 		t.Fatal("a service without an engine is never ready")

@@ -1599,7 +1599,7 @@ func TestDeleteSnapshotPrimaryImmutableRefused(t *testing.T) {
 func TestPruneDomainOffsiteImmutableRefused(t *testing.T) {
 	svc, eng := newImmutableOffsiteSvc(t)
 
-	err := svc.PruneDomain(context.Background(), "containers", "offsite")
+	_, err := svc.PruneDomain(context.Background(), "containers", "offsite")
 	if err == nil || !strings.Contains(err.Error(), "append-only") {
 		t.Fatalf("off-site prune on an immutable repo must fail with an append-only error, got %v", err)
 	}
@@ -1608,7 +1608,7 @@ func TestPruneDomainOffsiteImmutableRefused(t *testing.T) {
 	}
 
 	// The LOCAL repo is unaffected by the off-site immutable flag.
-	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("local prune must stay allowed: %v", err)
 	}
 	if len(eng.manualPruned) != 1 {
@@ -6937,7 +6937,7 @@ func TestCheckDomainFailureRecordsFailedRunAndProgress(t *testing.T) {
 func TestPruneDomainCallsPrune(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc := initRepoSvc(t, eng)
-	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
 	}
 	if len(eng.manualPruned) != 1 {
@@ -6955,7 +6955,7 @@ func TestPruneDomainCallsPrune(t *testing.T) {
 func TestPruneDomainClearsStaleLockFirst(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc := initRepoSvc(t, eng)
-	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
 	}
 	if len(eng.unlockedRepos) != 1 {
@@ -6989,7 +6989,7 @@ func TestPruneDomainAppliesRetentionWhenSet(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
 	}
 	if len(eng.prunedRepos) != 1 {
@@ -7029,7 +7029,7 @@ func TestPruneDomainPerSourceRetention(t *testing.T) {
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
 	// Off-site prune → off-site policy is set → applies retention (ForgetPolicy).
-	if err := svc.PruneDomain(context.Background(), "containers", "offsite"); err != nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", "offsite"); err != nil {
 		t.Fatalf("PruneDomain offsite: %v", err)
 	}
 	if len(eng.prunedRepos) != 1 || len(eng.manualPruned) != 0 {
@@ -7037,7 +7037,7 @@ func TestPruneDomainPerSourceRetention(t *testing.T) {
 	}
 
 	// Local prune → local policy is off → plain space-reclaim, not the off-site policy.
-	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("PruneDomain local: %v", err)
 	}
 	if len(eng.prunedRepos) != 1 {
@@ -7061,7 +7061,7 @@ func TestPruneDomainEmitsMaintenanceProgressAndRunRecord(t *testing.T) {
 	ch, cancel := prog.Subscribe()
 	defer cancel()
 
-	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
 	}
 	if len(eng.manualPruned) != 1 {
@@ -7100,7 +7100,7 @@ func TestPruneDomainFailureRecordsFailedRunAndProgress(t *testing.T) {
 	ch, cancel := prog.Subscribe()
 	defer cancel()
 
-	if err := svc.PruneDomain(context.Background(), "containers", ""); err == nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err == nil {
 		t.Fatal("expected PruneDomain to surface the engine's prune error")
 	}
 
@@ -8014,7 +8014,7 @@ func TestPruneDomainFoldsRenamedContainerAliasIntoOneRetentionGroup(t *testing.T
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
 	}
 	if len(eng.forgetTags) != 2 {
@@ -8070,7 +8070,7 @@ func TestPruneDomainDoesNotFoldAReusedAliasNameIntoTheOldEntry(t *testing.T) {
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
-	if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
 	}
 	if len(eng.forgetTags) != 2 {

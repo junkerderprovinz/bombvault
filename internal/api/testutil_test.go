@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"io"
 	"strings"
@@ -17,6 +18,14 @@ import (
 // newMemStore opens an in-memory SQLite store, migrates it, and returns a Repo.
 func newMemStore(t *testing.T) *store.Repo {
 	t.Helper()
+	st, _ := newMemStoreDB(t)
+	return st
+}
+
+// newMemStoreDB is newMemStore with the connection, for a test that has to
+// backdate what it seeded so a series reads as history and not as one burst.
+func newMemStoreDB(t *testing.T) (*store.Repo, *sql.DB) {
+	t.Helper()
 	db, err := store.Open(":memory:")
 	if err != nil {
 		t.Fatalf("open mem store: %v", err)
@@ -25,7 +34,7 @@ func newMemStore(t *testing.T) *store.Repo {
 	if err := store.Migrate(db); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
-	return store.New(db)
+	return store.New(db), db
 }
 
 // fakeServiceDocker is a configurable Docker fake satisfying dockercli.Docker.

@@ -411,7 +411,7 @@ func TestPruneDomainFoldsAliasOnlyWhileAllItsSnapshotsPredateLink(t *testing.T) 
 		}
 		eng := &fakeResticEngine{snaps: snaps}
 		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
-		if err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
+		if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 			t.Fatalf("PruneDomain: %v", err)
 		}
 		return sortedCopy(eng.forgetTags)

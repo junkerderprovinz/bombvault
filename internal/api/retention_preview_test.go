@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -177,4 +178,34 @@ func TestRetentionPreviewRoute(t *testing.T) {
 			t.Fatalf("expected ok:false, got %v", m)
 		}
 	})
+}
+
+// A preview that showed a held item's snapshots as about to be removed would
+// contradict the pass it exists to mirror.
+func TestRetentionPreviewMarksPausedItem(t *testing.T) {
+	eng := &fakeResticEngine{previewGroups: []restic.ForgetGroup{{
+		Keep:   []restic.Snapshot{snapTagged("a1", "fileset:docs")},
+		Remove: []restic.Snapshot{snapTagged("z9", "fileset:docs")},
+	}}}
+	svc, _, _ := heldRepo(t, eng)
+
+	preview, err := svc.PreviewRetention(context.Background(), "files", "local")
+	if err != nil {
+		t.Fatalf("PreviewRetention: %v", err)
+	}
+	seen := 0
+	for _, repo := range preview.Repos {
+		for _, item := range repo.Items {
+			if item.Tag != "container:plex" {
+				continue
+			}
+			seen++
+			if !item.Paused || len(item.Remove) != 0 {
+				t.Fatalf("a held item previews as paused with nothing to remove, got %+v", item)
+			}
+		}
+	}
+	if seen != 1 {
+		t.Fatalf("want the held item in the preview once, got %d: %+v", seen, preview.Repos)
+	}
 }

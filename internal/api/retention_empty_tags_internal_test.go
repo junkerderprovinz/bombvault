@@ -30,7 +30,7 @@ func TestApplyRetentionForgetsNothingWithoutAnIdentityTag(t *testing.T) {
 	}
 	settings.RetentionKeepLast = 5 // p.Any() must be true to reach forgetWithLockHeal
 
-	s.applyRetention(context.Background(), "/repo", settings, restic.Mode{}, entryIdentity{}, "containers")
+	s.applyRetention(context.Background(), "/repo", settings, restic.Mode{}, entryIdentity{}, "containers", anomalyScope{})
 
 	if eng.forgetCalls != 0 {
 		t.Fatalf("retention ran %d forgets for an identity without a tag, want none", eng.forgetCalls)

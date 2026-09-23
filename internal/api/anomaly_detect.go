@@ -579,7 +579,7 @@ func (r sizeRule) collapsed(current measurement, prior []measurement, p sensPara
 	if !collapse {
 		expected, samples = peak, len(month)
 	}
-	details := map[string]any{"ratio": current.value / expected}
+	details := map[string]any{"ratio": current.value / expected, "lastGoodAt": float64(prior[len(prior)-1].at)}
 	if collapse {
 		details["collapse"] = true
 	}
@@ -620,11 +620,14 @@ func (r sizeRule) shrank(current measurement, samples []measurement, p sensParam
 	if current.value < strongShrinkFrac*level {
 		severity = "critical"
 	}
+	lastGood := samples[len(samples)-1]
+	details := levelDetails(current.value, level, spread, z)
+	details["lastGoodAt"] = float64(lastGood.at)
 	return &finding{
 		Metric: r.shrinkMetric, Severity: severity,
-		RunID: current.runID, RunAt: current.at, LastGoodRunID: samples[len(samples)-1].runID,
+		RunID: current.runID, RunAt: current.at, LastGoodRunID: lastGood.runID,
 		Observed: current.value, Expected: level, Threshold: p.ShrinkRatio * level,
-		Samples: len(samples), Details: levelDetails(current.value, level, spread, z),
+		Samples: len(samples), Details: details,
 	}
 }
 

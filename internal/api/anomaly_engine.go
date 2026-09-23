@@ -457,6 +457,9 @@ func (e *anomalyEngine) passOnce(ctx context.Context) error {
 	if full {
 		e.markReady()
 	}
+	if nErr := e.sendNotifications(ctx, settings); nErr != nil {
+		log.Printf("anomaly: send the findings of this pass: %v", nErr)
+	}
 	return e.rebuildCache()
 }
 
@@ -789,17 +792,19 @@ func (e *anomalyEngine) EvaluateNow(ctx context.Context, sc anomalyScope) error 
 // wait, and why. It judges the series first, so a rewrite found in the running
 // backup is already on record when that backup's own retention step asks.
 func (e *anomalyEngine) RetentionHeld(ctx context.Context, sc anomalyScope) (bool, string, error) {
-	if e == nil {
+	if e == nil || sc.Kind == "" {
 		return false, "", nil
 	}
 	settings, err := e.svc.store.GetSettings()
 	if err != nil {
+		e.noteEvalError()
 		return false, "", err
 	}
 	if !settings.AnomalyEnabled || !settings.AnomalyRetentionHold {
 		return false, "", nil
 	}
 	if err := e.EvaluateNow(ctx, sc); err != nil {
+		e.noteEvalError()
 		return false, "", err
 	}
 	rows, _, err := e.svc.store.ListAnomalies(store.AnomalyFilter{
@@ -818,6 +823,105 @@ func (e *anomalyEngine) RetentionHeld(ctx context.Context, sc anomalyScope) (boo
 		return true, "its source shrank sharply", nil
 	}
 	return false, "", nil
+}
+
+// HeldIdentityTags is every identity tag whose old backups a finding is
+// keeping, across every domain. A pass that forgets by tag without knowing
+// which domain a repository holds asks this before it deletes anything.
+func (e *anomalyEngine) HeldIdentityTags() (heldIdentityTags, error) {
+	if e == nil {
+		return nil, nil
+	}
+	settings, err := e.svc.store.GetSettings()
+	if err != nil {
+		return nil, err
+	}
+	if !settings.AnomalyEnabled || !settings.AnomalyRetentionHold {
+		return nil, nil
+	}
+	rows, _, err := e.svc.store.ListAnomalies(store.AnomalyFilter{Limit: anomalyOpenRowLimit})
+	if err != nil {
+		return nil, err
+	}
+	items, err := e.svc.readAnomalyItems(settings)
+	if err != nil {
+		return nil, err
+	}
+	out := heldIdentityTags{}
+	for _, row := range rows {
+		if !anomalyHolds(row) {
+			continue
+		}
+		for _, tag := range e.svc.heldTagsOf(row, items) {
+			out[tag] = struct{}{}
+		}
+	}
+	return out, nil
+}
+
+// heldIdentityTags is the set of tags a retention pass has to leave alone.
+type heldIdentityTags map[string]struct{}
+
+// holds reports whether tag belongs to a held series. A VM's block disks carry
+// a tag of their own and are kept with the VM they belong to.
+func (h heldIdentityTags) holds(tag string) bool {
+	if _, exact := h[tag]; exact {
+		return true
+	}
+	for candidate := range h {
+		if strings.HasPrefix(tag, candidate+":zvol:") {
+			return true
+		}
+	}
+	return false
+}
+
+func (h heldIdentityTags) holdsAny(tags []string) bool {
+	return slices.ContainsFunc(tags, h.holds)
+}
+
+func (h heldIdentityTags) names() []string {
+	return slices.Sorted(maps.Keys(h))
+}
+
+// heldTagsOf is every tag the snapshots of one held series can carry: the
+// series' own tag and, after a rename, the old names that are still on the
+// snapshots already written.
+func (s *Service) heldTagsOf(row store.Anomaly, items map[string]anomalyItemRef) []string {
+	ref, known := items[row.TargetID]
+	if !known {
+		return nil
+	}
+	if row.ScopeKind == anomalyScopeDump {
+		return s.containerDumpIdentity(ref.Name).listTags()
+	}
+	if row.ScopeKind != anomalyScopeItem {
+		return nil
+	}
+	switch ref.Domain {
+	case anomalyDomainContainer:
+		return s.containerIdentity(ref.Name).listTags()
+	case anomalyDomainVM:
+		return s.vmIdentity(ref.Name).listTags()
+	case "files":
+		return []string{"fileset:" + ref.Name}
+	case "flash", "config":
+		return []string{ref.Domain}
+	}
+	return nil
+}
+
+// errRetentionPaused is what the repository-wide pass returns instead of
+// running: it selects by path rather than by item, so it cannot spare the items
+// a finding is holding.
+func errRetentionPaused(n int) error {
+	return fmt.Errorf("retention over the whole repository was skipped: deleting old backups is paused for %d item(s)", n)
+}
+
+func (e *anomalyEngine) noteEvalError() {
+	e.mu.Lock()
+	e.evalErrors++
+	e.mu.Unlock()
 }
 
 func (e *anomalyEngine) takeDirty() (dirtySets, bool) {
