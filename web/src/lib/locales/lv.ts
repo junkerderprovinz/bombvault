@@ -1400,7 +1400,7 @@ const lv: Partial<Translations> = {
   "files.noPathHint": "Atjaunots no rezerves kopijām bez mapes. Iestatiet mapi, lai atkal dublētu. Atjaunošana mapē jau darbojas.",
   "files.deleteSet": "Dzēst mapju kopu",
   "files.deleteSetConfirm": "Noņemt šo mapju kopu no saraksta? Tās rezerves kopijas netiek dzēstas, un tās var atkal atklāt vēlāk.",
-  "files.deleteBackupsConfirm": "Dzēst VISAS šīs mapju kopas rezerves kopijas? Momentuzņēmumi tiek neatgriezeniski noņemti, repozitorijs tiek iztīrīts, un kopa tiek aizmirsta. Šo darbību nevar atsaukt.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Atjaunot sākotnējā atrašanās vietā",
   "files.restoreOriginalConfirm": "Atjaunot šo rezerves kopiju virs kopas mapes? Esošie faili tiks pārrakstīti.",
   "files.restoreToFolder": "Atjaunot mapē",

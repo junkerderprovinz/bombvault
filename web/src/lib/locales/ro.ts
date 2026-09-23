@@ -1202,7 +1202,7 @@ const ro: Partial<Translations> = {
   "files.noPathHint": "Reconstruit din copiile de rezervă fără folder. Setați un folder pentru a-l copia din nou. Restaurarea într-un folder funcționează deja.",
   "files.deleteSet": "Șterge setul de foldere",
   "files.deleteSetConfirm": "Eliminați acest set de foldere din listă? Copiile sale de rezervă nu sunt șterse și pot fi redescoperite mai târziu.",
-  "files.deleteBackupsConfirm": "Ștergeți TOATE copiile de rezervă ale acestui set de foldere? Instantaneele sunt eliminate permanent, depozitul este curățat, iar setul este uitat. Nu poate fi anulat.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Restaurare în locația originală",
   "files.restoreOriginalConfirm": "Restaurați această copie peste folderul setului? Fișierele existente vor fi suprascrise.",
   "files.restoreToFolder": "Restaurare într-un folder",

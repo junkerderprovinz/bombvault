@@ -1199,7 +1199,7 @@ const pt: Partial<Translations> = {
   "files.noPathHint": "Reconstruído a partir dos backups sem pasta. Defina uma pasta para voltar a fazer backup. Restaurar para uma pasta já funciona.",
   "files.deleteSet": "Eliminar conjunto de pastas",
   "files.deleteSetConfirm": "Remover este conjunto de pastas da lista? Os seus backups não são eliminados e podem ser redescobertos mais tarde.",
-  "files.deleteBackupsConfirm": "Eliminar TODOS os backups deste conjunto de pastas? Os snapshots são removidos permanentemente, o repositório é podado e o conjunto é esquecido. Não pode ser desfeito.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Restaurar no local original",
   "files.restoreOriginalConfirm": "Restaurar este backup sobre a pasta do conjunto? Os ficheiros existentes serão sobrescritos.",
   "files.restoreToFolder": "Restaurar para uma pasta",

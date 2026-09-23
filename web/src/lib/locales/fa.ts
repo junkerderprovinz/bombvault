@@ -1400,7 +1400,7 @@ const fa: Partial<Translations> = {
   "files.noPathHint": "از پشتیبان‌های بدون پوشه بازسازی شده. برای پشتیبان‌گیری دوباره، پوشه‌ای تنظیم کنید. بازیابی در یک پوشه از قبل کار می‌کند.",
   "files.deleteSet": "حذف مجموعه پوشه‌ها",
   "files.deleteSetConfirm": "این مجموعه پوشه از فهرست حذف شود؟ پشتیبان‌های آن حذف نمی‌شوند و بعداً قابل کشف دوباره‌اند.",
-  "files.deleteBackupsConfirm": "همه پشتیبان‌های این مجموعه پوشه حذف شوند؟ اسنپ‌شات‌ها برای همیشه حذف می‌شوند، مخزن پاک‌سازی می‌شود و مجموعه فراموش می‌شود. این کار قابل بازگشت نیست.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "بازیابی در مکان اصلی",
   "files.restoreOriginalConfirm": "این پشتیبان روی پوشه مجموعه بازیابی شود؟ فایل‌های موجود بازنویسی می‌شوند.",
   "files.restoreToFolder": "بازیابی در یک پوشه",

@@ -1400,7 +1400,7 @@ const ms: Partial<Translations> = {
   "files.noPathHint": "Dibina semula daripada sandaran tanpa folder. Tetapkan folder untuk menyandarkan semula. Pemulihan ke folder sudah berfungsi.",
   "files.deleteSet": "Padam set folder",
   "files.deleteSetConfirm": "Alih keluar set folder ini daripada senarai? Sandarannya tidak dipadamkan dan boleh ditemui semula kemudian.",
-  "files.deleteBackupsConfirm": "Padam SEMUA sandaran set folder ini? Snapshot dipadamkan secara kekal, repositori di-prune, dan set dilupakan. Ini tidak boleh dibuat asal.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Pulihkan ke lokasi asal",
   "files.restoreOriginalConfirm": "Pulihkan sandaran ini ke atas folder set? Fail sedia ada akan ditulis ganti.",
   "files.restoreToFolder": "Pulihkan ke folder",

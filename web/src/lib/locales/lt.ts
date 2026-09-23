@@ -1400,7 +1400,7 @@ const lt: Partial<Translations> = {
   "files.noPathHint": "Atkurta iš atsarginių kopijų be aplanko. Nustatykite aplanką, kad vėl kopijuotumėte. Atkūrimas į aplanką jau veikia.",
   "files.deleteSet": "Ištrinti aplankų rinkinį",
   "files.deleteSetConfirm": "Pašalinti šį aplankų rinkinį iš sąrašo? Jo atsarginės kopijos netrinamos ir vėliau gali būti vėl rastos.",
-  "files.deleteBackupsConfirm": "Ištrinti VISAS šio aplankų rinkinio atsargines kopijas? Momentinės kopijos negrįžtamai pašalinamos, saugykla išvaloma, o rinkinys pamirštamas. Šio veiksmo negalima atšaukti.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Atkurti į pradinę vietą",
   "files.restoreOriginalConfirm": "Atkurti šią atsarginę kopiją ant rinkinio aplanko? Esami failai bus perrašyti.",
   "files.restoreToFolder": "Atkurti į aplanką",

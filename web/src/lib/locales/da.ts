@@ -1199,7 +1199,7 @@ const da: Partial<Translations> = {
   "files.noPathHint": "Genopbygget fra sikkerhedskopier uden mappe. Angiv en mappe for at sikkerhedskopiere igen. Gendannelse til en mappe virker allerede.",
   "files.deleteSet": "Slet mappesæt",
   "files.deleteSetConfirm": "Fjerne dette mappesæt fra listen? Dets sikkerhedskopier slettes ikke og kan genopdages senere.",
-  "files.deleteBackupsConfirm": "Slet ALLE sikkerhedskopier af dette mappesæt? Øjebliksbillederne fjernes permanent, repositoriet beskæres, og sættet glemmes. Kan ikke fortrydes.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Gendan på oprindelig placering",
   "files.restoreOriginalConfirm": "Gendanne denne sikkerhedskopi oven i sættets mappe? Eksisterende filer overskrives.",
   "files.restoreToFolder": "Gendan til en mappe",

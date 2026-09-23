@@ -1400,7 +1400,7 @@ const gl: Partial<Translations> = {
   "files.noPathHint": "Reconstruído desde copias sen cartafol. Configura un cartafol para volver copiar. Restaurar nun cartafol xa funciona.",
   "files.deleteSet": "Eliminar conxunto de cartafoles",
   "files.deleteSetConfirm": "Eliminar este conxunto de cartafoles da lista? As súas copias non se eliminan e pódense volver descubrir máis tarde.",
-  "files.deleteBackupsConfirm": "Eliminar TODAS as copias deste conxunto de cartafoles? As instantáneas elimínanse para sempre, o repositorio límpase e o conxunto esquécese. Isto non se pode desfacer.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Restaurar na localización orixinal",
   "files.restoreOriginalConfirm": "Restaurar esta copia sobre o cartafol do conxunto? Os ficheiros existentes sobrescribiranse.",
   "files.restoreToFolder": "Restaurar nun cartafol",

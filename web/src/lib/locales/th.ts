@@ -1202,7 +1202,7 @@ const th: Partial<Translations> = {
   "files.noPathHint": "สร้างขึ้นใหม่จากการสำรองข้อมูลโดยไม่มีโฟลเดอร์ กำหนดโฟลเดอร์เพื่อสำรองข้อมูลอีกครั้ง การกู้คืนไปยังโฟลเดอร์ใช้งานได้แล้ว",
   "files.deleteSet": "ลบชุดโฟลเดอร์",
   "files.deleteSetConfirm": "นำชุดโฟลเดอร์นี้ออกจากรายการ? การสำรองข้อมูลของมันจะไม่ถูกลบและสามารถค้นพบใหม่ได้ภายหลัง",
-  "files.deleteBackupsConfirm": "ลบการสำรองข้อมูลทั้งหมดของชุดโฟลเดอร์นี้? สแนปช็อตจะถูกลบอย่างถาวร รีพอสิทอรีจะถูกตัดทิ้ง และชุดจะถูกลืม ไม่สามารถเลิกทำได้",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "กู้คืนไปยังตำแหน่งเดิม",
   "files.restoreOriginalConfirm": "กู้คืนการสำรองข้อมูลนี้ทับโฟลเดอร์ของชุด? ไฟล์ที่มีอยู่จะถูกเขียนทับ",
   "files.restoreToFolder": "กู้คืนไปยังโฟลเดอร์",

@@ -1197,7 +1197,7 @@ const cs: Partial<Translations> = {
   "files.noPathHint": "Obnoveno ze záloh bez složky. Nastavte složku, aby se sada znovu zálohovala. Obnova do složky funguje už teď.",
   "files.deleteSet": "Smazat sadu složek",
   "files.deleteSetConfirm": "Odebrat tuto sadu složek ze seznamu? Její zálohy se nesmažou a lze je později znovu objevit.",
-  "files.deleteBackupsConfirm": "Smazat VŠECHNY zálohy této sady složek? Snímky budou trvale odstraněny, repozitář vyčištěn a sada zapomenuta. Nelze vrátit zpět.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Obnovit na původní místo",
   "files.restoreOriginalConfirm": "Obnovit tuto zálohu přes složku sady? Stávající soubory budou přepsány.",
   "files.restoreToFolder": "Obnovit do složky",

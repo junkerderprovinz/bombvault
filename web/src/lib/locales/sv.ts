@@ -1199,7 +1199,7 @@ const sv: Partial<Translations> = {
   "files.noPathHint": "Återuppbyggd från säkerhetskopior utan mapp. Ange en mapp för att säkerhetskopiera igen. Återställning till en mapp fungerar redan.",
   "files.deleteSet": "Ta bort mappuppsättning",
   "files.deleteSetConfirm": "Ta bort denna mappuppsättning från listan? Dess säkerhetskopior tas inte bort och kan återupptäckas senare.",
-  "files.deleteBackupsConfirm": "Ta bort ALLA säkerhetskopior av denna mappuppsättning? Ögonblicksbilderna tas bort permanent, repositoriet rensas och uppsättningen glöms. Detta kan inte ångras.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Återställ till ursprunglig plats",
   "files.restoreOriginalConfirm": "Återställa denna säkerhetskopia över uppsättningens mapp? Befintliga filer skrivs över.",
   "files.restoreToFolder": "Återställ till en mapp",

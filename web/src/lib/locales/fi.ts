@@ -1199,7 +1199,7 @@ const fi: Partial<Translations> = {
   "files.noPathHint": "Rakennettu uudelleen varmuuskopioista ilman kansiota. Aseta kansio, jotta varmuuskopiointi onnistuu taas. Palautus kansioon toimii jo nyt.",
   "files.deleteSet": "Poista kansiojoukko",
   "files.deleteSetConfirm": "Poistetaanko tämä kansiojoukko luettelosta? Sen varmuuskopioita ei poisteta, ja ne voi löytää myöhemmin uudelleen.",
-  "files.deleteBackupsConfirm": "Poistetaanko KAIKKI tämän kansiojoukon varmuuskopiot? Tilannevedokset poistetaan pysyvästi, repositorio karsitaan ja joukko unohdetaan. Tätä ei voi peruuttaa.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Palauta alkuperäiseen sijaintiin",
   "files.restoreOriginalConfirm": "Palautetaanko tämä varmuuskopio joukon kansion päälle? Olemassa olevat tiedostot korvataan.",
   "files.restoreToFolder": "Palauta kansioon",

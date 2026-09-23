@@ -1199,7 +1199,7 @@ const no: Partial<Translations> = {
   "files.noPathHint": "Gjenoppbygd fra sikkerhetskopier uten mappe. Angi en mappe for å sikkerhetskopiere igjen. Gjenoppretting til en mappe virker allerede.",
   "files.deleteSet": "Slett mappesett",
   "files.deleteSetConfirm": "Fjerne dette mappesettet fra listen? Sikkerhetskopiene slettes ikke og kan gjenoppdages senere.",
-  "files.deleteBackupsConfirm": "Slette ALLE sikkerhetskopier av dette mappesettet? Snapshotene fjernes permanent, repositoriet beskjæres og settet glemmes. Kan ikke angres.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Gjenopprett til opprinnelig plassering",
   "files.restoreOriginalConfirm": "Gjenopprette denne sikkerhetskopien over settets mappe? Eksisterende filer overskrives.",
   "files.restoreToFolder": "Gjenopprett til en mappe",

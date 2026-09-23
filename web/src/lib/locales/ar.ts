@@ -1202,7 +1202,7 @@ const ar: Partial<Translations> = {
   "files.noPathHint": "أُعيد بناؤه من النسخ الاحتياطية دون مجلد. حدِّد مجلداً لنسخه احتياطياً من جديد. الاستعادة إلى مجلد تعمل بالفعل.",
   "files.deleteSet": "حذف مجموعة المجلدات",
   "files.deleteSetConfirm": "إزالة مجموعة المجلدات هذه من القائمة؟ لن تُحذف نسخها الاحتياطية ويمكن اكتشافها مجدداً لاحقاً.",
-  "files.deleteBackupsConfirm": "حذف جميع النسخ الاحتياطية لمجموعة المجلدات هذه؟ تُزال اللقطات نهائياً ويُقلَّم المستودع وتُنسى المجموعة. لا يمكن التراجع.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "الاستعادة إلى الموقع الأصلي",
   "files.restoreOriginalConfirm": "استعادة هذه النسخة الاحتياطية فوق مجلد المجموعة؟ سيتم استبدال الملفات الموجودة.",
   "files.restoreToFolder": "الاستعادة إلى مجلد",

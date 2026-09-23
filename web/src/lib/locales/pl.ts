@@ -1194,7 +1194,7 @@ const pl: Partial<Translations> = {
   "files.noPathHint": "Odbudowany z kopii zapasowych bez folderu. Ustaw folder, aby znów tworzyć kopie. Przywracanie do folderu działa już teraz.",
   "files.deleteSet": "Usuń zestaw folderów",
   "files.deleteSetConfirm": "Usunąć ten zestaw folderów z listy? Jego kopie zapasowe nie zostaną usunięte i można je później odkryć ponownie.",
-  "files.deleteBackupsConfirm": "Usunąć WSZYSTKIE kopie zapasowe tego zestawu folderów? Migawki zostaną trwale usunięte, repozytorium przycięte, a zestaw zapomniany. Nie można cofnąć.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Przywróć do oryginalnej lokalizacji",
   "files.restoreOriginalConfirm": "Przywrócić tę kopię na folder zestawu? Istniejące pliki zostaną nadpisane.",
   "files.restoreToFolder": "Przywróć do folderu",

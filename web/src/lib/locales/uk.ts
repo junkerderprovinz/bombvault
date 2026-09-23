@@ -1194,7 +1194,7 @@ const uk: Partial<Translations> = {
   "files.noPathHint": "Відновлено з резервних копій без папки. Задайте папку, щоб знову створювати копії — відновлення до папки вже працює.",
   "files.deleteSet": "Видалити набір папок",
   "files.deleteSetConfirm": "Видалити цей набір папок зі списку? Його резервні копії не видаляються, і їх можна буде знайти знову пізніше.",
-  "files.deleteBackupsConfirm": "Видалити ВСІ резервні копії цього набору папок? Знімки буде безповоротно видалено, репозиторій очищено, а набір забуто. Це не можна скасувати.",
+  "files.deleteBackupsConfirm": "Delete ALL local backups of this folder set? The snapshots are permanently removed, the local repository is pruned and the set is forgotten. Copies at off-site targets stay, with no set left that knows them. This cannot be undone.",
   "files.restoreOriginal": "Відновити до початкового розташування",
   "files.restoreOriginalConfirm": "Відновити цю резервну копію поверх папки набору? Наявні файли буде перезаписано.",
   "files.restoreToFolder": "Відновити до папки",
