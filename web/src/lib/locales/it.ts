@@ -243,7 +243,7 @@ const it: Partial<Translations> = {
   "settings.containersEnabledHint": "Backup e ripristino dei container Docker, il dominio principale di BombVault, attivo per impostazione predefinita.",
   "settings.dbDumps": "Dump automatici dei database",
   "settings.dbDumpsHint": "Prima di ogni backup i contenitori PostgreSQL, MySQL e MariaDB riconosciuti vengono dumpati come punti di ripristino a sé. Qui lo disattivi per tutti i contenitori in una volta, per esempio se i tuoi database si dumpano già da soli. Un singolo contenitore si disattiva dalla sua scheda.",
-  "settings.dbDumpsOffConfirm": "Disattivare i dump dei database per tutti i contenitori? Per {names} il dump è l'unica copia coerente del database.",
+  "settings.dbDumpsOffConfirm": "one=Disattivare i dump dei database per tutti i contenitori? Per {names} il dump è l'unica copia coerente del database.|many=Disattivare i dump dei database per tutti i contenitori? Per {names} i dump sono le uniche copie coerenti dei loro database.|other=Disattivare i dump dei database per tutti i contenitori? Per {names} i dump sono le uniche copie coerenti dei loro database.",
   "settings.dbDumpsOffConfirmPlain": "Disattivare i dump dei database per tutti i contenitori?",
   "settings.vmsEnabled": "VM",
   "settings.vmsEnabledHint": "Backup e ripristino delle macchine virtuali via SSH tramite libvirt.",

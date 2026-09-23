@@ -412,7 +412,7 @@ const lv: Partial<Translations> = {
   "settings.containersEnabledHint": "Dublējiet un atjaunojiet Docker konteinerus, BombVault galvenais domēns, pēc noklusējuma iespējots.",
   "settings.dbDumps": "Automātiskās datubāžu izgāztuves",
   "settings.dbDumpsHint": "Pirms katra dublējuma atpazītie PostgreSQL, MySQL un MariaDB konteineri tiek izgāzti kā savi atjaunošanas punkti. Šeit to izslēdz visiem konteineriem uzreiz, piemēram, kad tavas datubāzes jau izgāžas pašas. Atsevišķu konteineru var izslēgt tā kartītē.",
-  "settings.dbDumpsOffConfirm": "Izslēgt datubāžu izgāztuves visiem konteineriem? Šiem izgāztuve ir vienīgā saskanīgā datubāzes kopija: {names}.",
+  "settings.dbDumpsOffConfirm": "zero=Izslēgt datubāžu izgāztuves visiem konteineriem? Šiem izgāztuves ir vienīgās saskanīgās to datubāzu kopijas: {names}.|one=Izslēgt datubāžu izgāztuves visiem konteineriem? Šim izgāztuve ir vienīgā saskanīgā datubāzes kopija: {names}.|other=Izslēgt datubāžu izgāztuves visiem konteineriem? Šiem izgāztuves ir vienīgās saskanīgās to datubāzu kopijas: {names}.",
   "settings.dbDumpsOffConfirmPlain": "Izslēgt datubāžu izgāztuves visiem konteineriem?",
   "settings.vmsEnabled": "VM",
   "settings.vmsEnabledHint": "Dublējiet un atjaunojiet virtuālās mašīnas, izmantojot SSH ar libvirt.",

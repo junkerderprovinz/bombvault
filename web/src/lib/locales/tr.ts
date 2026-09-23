@@ -243,7 +243,7 @@ const tr: Partial<Translations> = {
   "settings.containersEnabledHint": "Docker konteynerlerini yedekle ve geri yükle. BombVault'un ana alanı, varsayılan olarak açık.",
   "settings.dbDumps": "Otomatik veritabanı dökümleri",
   "settings.dbDumpsHint": "Her yedeklemeden önce tanınan PostgreSQL, MySQL ve MariaDB kapsayıcılarının dökümü kendi geri yükleme noktası olarak alınır. Burada bunu tüm kapsayıcılar için bir kerede kapatırsın, örneğin veritabanların zaten kendi dökümünü alıyorsa. Tek tek kapsayıcılar kendi kartından kapatılabilir.",
-  "settings.dbDumpsOffConfirm": "Tüm kapsayıcılar için veritabanı dökümleri kapatılsın mı? {names} için döküm, veritabanının tek tutarlı kopyasıdır.",
+  "settings.dbDumpsOffConfirm": "one=Tüm kapsayıcılar için veritabanı dökümleri kapatılsın mı? {names} için döküm, veritabanının tek tutarlı kopyasıdır.|other=Tüm kapsayıcılar için veritabanı dökümleri kapatılsın mı? {names} için dökümler, veritabanlarının tek tutarlı kopyalarıdır.",
   "settings.dbDumpsOffConfirmPlain": "Tüm kapsayıcılar için veritabanı dökümleri kapatılsın mı?",
   "settings.vmsEnabled": "VM'ler",
   "settings.vmsEnabledHint": "Sanal makineleri libvirt ile SSH üzerinden yedekle ve geri yükle.",

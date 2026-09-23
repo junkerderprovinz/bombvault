@@ -412,7 +412,7 @@ const is: Partial<Translations> = {
   "settings.containersEnabledHint": "Afritaðu og endurheimtu Docker-gáma. Kjarnasvæði BombVault, sjálfgefið virkt.",
   "settings.dbDumps": "Sjálfvirk gagnagrunnsafrit",
   "settings.dbDumpsHint": "Fyrir hverja öryggisafritun eru þekktir PostgreSQL-, MySQL- og MariaDB-gámar afritaðir sem eigin endurheimtupunktar. Hér slekkur þú á því fyrir alla gáma í einu, til dæmis þegar gagnagrunnarnir þínir afrita sig sjálfir. Einstaka gám má slökkva á á spjaldi hans.",
-  "settings.dbDumpsOffConfirm": "Slökkva á gagnagrunnsafritum fyrir alla gáma? Hjá {names} er afritið eina samræmda eintakið af gagnagrunninum.",
+  "settings.dbDumpsOffConfirm": "one=Slökkva á gagnagrunnsafritum fyrir alla gáma? Hjá {names} er afritið eina samræmda eintakið af gagnagrunninum.|other=Slökkva á gagnagrunnsafritum fyrir alla gáma? Hjá {names} eru afritin einu samræmdu eintökin af gagnagrunnum þeirra.",
   "settings.dbDumpsOffConfirmPlain": "Slökkva á gagnagrunnsafritum fyrir alla gáma?",
   "settings.vmsEnabled": "Sýndarvélar",
   "settings.vmsEnabledHint": "Afritaðu og endurheimtu sýndarvélar í gegnum SSH með libvirt.",

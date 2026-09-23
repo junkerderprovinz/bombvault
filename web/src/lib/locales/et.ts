@@ -412,7 +412,7 @@ const et: Partial<Translations> = {
   "settings.containersEnabledHint": "Varunda ja taasta Dockeri konteinereid, BombVaulti põhivaldkond, vaikimisi lubatud.",
   "settings.dbDumps": "Automaatsed andmebaasi tõmmised",
   "settings.dbDumpsHint": "Enne iga varundust tehakse tuntud PostgreSQL-i, MySQL-i ja MariaDB konteineritest tõmmis oma taastepunktina. Siin lülitad selle kõigil konteineritel korraga välja, näiteks kui su andmebaasid teevad tõmmiseid juba ise. Üksiku konteineri saab välja lülitada tema kaardilt.",
-  "settings.dbDumpsOffConfirm": "Kas lülitada andmebaasi tõmmised kõigil konteineritel välja? Nende puhul on tõmmis andmebaasi ainus terviklik koopia: {names}.",
+  "settings.dbDumpsOffConfirm": "one=Kas lülitada andmebaasi tõmmised kõigil konteineritel välja? Selle puhul on tõmmis andmebaasi ainus terviklik koopia: {names}.|other=Kas lülitada andmebaasi tõmmised kõigil konteineritel välja? Nende puhul on tõmmised andmebaaside ainsad terviklikud koopiad: {names}.",
   "settings.dbDumpsOffConfirmPlain": "Kas lülitada andmebaasi tõmmised kõigil konteineritel välja?",
   "settings.vmsEnabled": "VM-id",
   "settings.vmsEnabledHint": "Varunda ja taasta virtuaalmasinaid üle SSH libvirti kaudu.",

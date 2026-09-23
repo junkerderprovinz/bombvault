@@ -242,7 +242,7 @@ const ro: Partial<Translations> = {
   "settings.containersEnabledHint": "Copiere de rezervă și restaurare a containerelor Docker: domeniul principal al BombVault, activat implicit.",
   "settings.dbDumps": "Copii SQL automate ale bazelor de date",
   "settings.dbDumpsHint": "Înainte de fiecare copie de rezervă, containerele PostgreSQL, MySQL și MariaDB recunoscute sunt copiate ca puncte de restaurare proprii. De aici oprești asta pentru toate containerele deodată, de exemplu când bazele tale se copiază deja singure. Un container anume se oprește de pe fișa lui.",
-  "settings.dbDumpsOffConfirm": "Oprești copiile SQL pentru toate containerele? Pentru {names}, copia SQL este singura copie coerentă a bazei.",
+  "settings.dbDumpsOffConfirm": "one=Oprești copiile SQL pentru toate containerele? Pentru {names}, copia SQL este singura copie coerentă a bazei.|few=Oprești copiile SQL pentru toate containerele? Pentru {names}, copiile SQL sunt singurele copii coerente ale bazelor lor.|other=Oprești copiile SQL pentru toate containerele? Pentru {names}, copiile SQL sunt singurele copii coerente ale bazelor lor.",
   "settings.dbDumpsOffConfirmPlain": "Oprești copiile SQL ale bazelor de date pentru toate containerele?",
   "settings.vmsEnabled": "VM-uri",
   "settings.vmsEnabledHint": "Copiere de rezervă și restaurare a mașinilor virtuale prin SSH cu libvirt.",

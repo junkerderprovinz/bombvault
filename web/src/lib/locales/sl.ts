@@ -412,7 +412,7 @@ const sl: Partial<Translations> = {
   "settings.containersEnabledHint": "Varnostno kopiraj in obnavljaj Docker vsebnike, osrednja domena BombVaulta, privzeto omogočena.",
   "settings.dbDumps": "Samodejni izvozi baz podatkov",
   "settings.dbDumpsHint": "Pred vsako varnostno kopijo se prepoznani vsebniki PostgreSQL, MySQL in MariaDB izvozijo kot lastne obnovitvene točke. Tu to izklopiš za vse vsebnike hkrati, na primer ko se tvoje baze že izvažajo same. Posamezen vsebnik izklopiš na njegovi kartici.",
-  "settings.dbDumpsOffConfirm": "Izklopim izvoze baz za vse vsebnike? Pri {names} je izvoz edina celovita kopija baze.",
+  "settings.dbDumpsOffConfirm": "one=Izklopim izvoze baz za vse vsebnike? Pri {names} je izvoz edina celovita kopija baze.|two=Izklopim izvoze baz za vse vsebnike? Pri {names} sta izvoza edini celoviti kopiji njunih baz.|few=Izklopim izvoze baz za vse vsebnike? Pri {names} so izvozi edine celovite kopije njihovih baz.|other=Izklopim izvoze baz za vse vsebnike? Pri {names} so izvozi edine celovite kopije njihovih baz.",
   "settings.dbDumpsOffConfirmPlain": "Izklopim izvoze baz podatkov za vse vsebnike?",
   "settings.vmsEnabled": "VM-ji",
   "settings.vmsEnabledHint": "Varnostno kopiraj in obnavljaj navidezne stroje prek SSH z libvirt.",

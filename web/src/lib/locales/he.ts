@@ -243,7 +243,7 @@ const he: Partial<Translations> = {
   "settings.containersEnabledHint": "גיבוי ושחזור של קונטיינרים של Docker, התחום המרכזי של BombVault, מופעל כברירת מחדל.",
   "settings.dbDumps": "גיבויי SQL אוטומטיים",
   "settings.dbDumpsHint": "לפני כל גיבוי נלקח גיבוי SQL ממכולות PostgreSQL, MySQL ו־MariaDB מזוהות, כנקודת שחזור משלו. כאן מכבים זאת לכל המכולות בבת אחת, למשל כשמסדי הנתונים שלך כבר מגבים את עצמם. מכולה בודדת אפשר לכבות בכרטיס שלה.",
-  "settings.dbDumpsOffConfirm": "לכבות את גיבויי ה־SQL לכל המכולות? עבור {names} הגיבוי הוא העותק העקבי היחיד של מסד הנתונים.",
+  "settings.dbDumpsOffConfirm": "one=לכבות את גיבויי ה־SQL לכל המכולות? עבור {names} הגיבוי הוא העותק העקבי היחיד של מסד הנתונים.|two=לכבות את גיבויי ה־SQL לכל המכולות? עבור {names} הגיבויים הם העותקים העקביים היחידים של שני מסדי הנתונים.|other=לכבות את גיבויי ה־SQL לכל המכולות? עבור {names} הגיבויים הם העותקים העקביים היחידים של מסדי הנתונים שלהם.",
   "settings.dbDumpsOffConfirmPlain": "לכבות את גיבויי ה־SQL לכל המכולות?",
   "settings.vmsEnabled": "VMs",
   "settings.vmsEnabledHint": "גיבוי ושחזור של מכונות וירטואליות דרך SSH באמצעות libvirt.",

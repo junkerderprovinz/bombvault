@@ -412,7 +412,7 @@ const hr: Partial<Translations> = {
   "settings.containersEnabledHint": "Izradi sigurnosnu kopiju i vrati Docker kontejnere: glavna domena BombVaulta, zadano omogućena.",
   "settings.dbDumps": "Automatski ispisi baza podataka",
   "settings.dbDumpsHint": "Prije svake sigurnosne kopije prepoznati PostgreSQL, MySQL i MariaDB kontejneri ispisuju se kao vlastite točke vraćanja. Ovdje to isključuješ za sve kontejnere odjednom, primjerice kad se tvoje baze već same ispisuju. Pojedini kontejner isključuje se na svojoj kartici.",
-  "settings.dbDumpsOffConfirm": "Isključiti ispise baza za sve kontejnere? Za {names} je ispis jedina dosljedna kopija baze.",
+  "settings.dbDumpsOffConfirm": "one=Isključiti ispise baza za sve kontejnere? Za {names} je ispis jedina dosljedna kopija baze.|few=Isključiti ispise baza za sve kontejnere? Za {names} su ispisi jedine dosljedne kopije njihovih baza.|other=Isključiti ispise baza za sve kontejnere? Za {names} su ispisi jedine dosljedne kopije njihovih baza.",
   "settings.dbDumpsOffConfirmPlain": "Isključiti ispise baza za sve kontejnere?",
   "settings.vmsEnabled": "VM-ovi",
   "settings.vmsEnabledHint": "Izradi sigurnosnu kopiju i vrati virtualne strojeve putem SSH-a koristeći libvirt.",

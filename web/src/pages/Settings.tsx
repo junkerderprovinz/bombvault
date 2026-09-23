@@ -1848,7 +1848,7 @@ export function SettingsPage() {
         )
         .map((c) => c.name);
       const question = atRisk.length
-        ? t("settings.dbDumpsOffConfirm").replace("{names}", atRisk.join(", "))
+        ? t("settings.dbDumpsOffConfirm", atRisk.length).replace("{names}", atRisk.join(", "))
         : t("settings.dbDumpsOffConfirmPlain");
       if (!(await confirm(question, { confirmKey: "common.confirm" }))) return;
     }

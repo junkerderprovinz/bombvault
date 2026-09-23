@@ -243,7 +243,7 @@ const hu: Partial<Translations> = {
   "settings.containersEnabledHint": "Docker konténerek mentése és visszaállítása: a BombVault fő területe, alapértelmezetten bekapcsolva.",
   "settings.dbDumps": "Automatikus adatbázis-mentések",
   "settings.dbDumpsHint": "Minden mentés előtt a felismert PostgreSQL-, MySQL- és MariaDB-konténerekről saját visszaállítási pont készül. Itt kapcsolhatod ki az összes konténerre egyszerre, például ha az adatbázisaid már maguk mentik magukat. Egy-egy konténer a saját kártyáján kapcsolható ki.",
-  "settings.dbDumpsOffConfirm": "Kikapcsolod az adatbázis-mentést minden konténernél? A következőknél a mentés az adatbázis egyetlen ép másolata: {names}.",
+  "settings.dbDumpsOffConfirm": "one=Kikapcsolod az adatbázis-mentést minden konténernél? Ennél a mentés az adatbázis egyetlen ép másolata: {names}.|other=Kikapcsolod az adatbázis-mentést minden konténernél? A következőknél a mentés az adatbázisuk egyetlen ép másolata: {names}.",
   "settings.dbDumpsOffConfirmPlain": "Kikapcsolod az adatbázis-mentést minden konténernél?",
   "settings.vmsEnabled": "VM-ek",
   "settings.vmsEnabledHint": "Virtuális gépek mentése és visszaállítása SSH-n keresztül libvirttel.",

@@ -242,7 +242,7 @@ const no: Partial<Translations> = {
   "settings.containersEnabledHint": "Sikkerhetskopiér og gjenopprett Docker-containere: BombVaults kjernedomene, slått på som standard.",
   "settings.dbDumps": "Automatiske databasedumper",
   "settings.dbDumpsHint": "Før hver sikkerhetskopi dumpes gjenkjente PostgreSQL-, MySQL- og MariaDB-containere som egne gjenopprettingspunkter. Her slår du det av for alle containere på én gang, for eksempel når databasene dine allerede dumper seg selv. Enkeltcontainere kan slås av på kortet sitt.",
-  "settings.dbDumpsOffConfirm": "Slå av databasedumper for alle containere? For {names} er dumpen den eneste konsistente kopien av databasen.",
+  "settings.dbDumpsOffConfirm": "one=Slå av databasedumper for alle containere? For {names} er dumpen den eneste konsistente kopien av databasen.|other=Slå av databasedumper for alle containere? For {names} er dumpene de eneste konsistente kopiene av databasene deres.",
   "settings.dbDumpsOffConfirmPlain": "Slå av databasedumper for alle containere?",
   "settings.vmsEnabled": "VM-er",
   "settings.vmsEnabledHint": "Sikkerhetskopiér og gjenopprett virtuelle maskiner via SSH med libvirt.",

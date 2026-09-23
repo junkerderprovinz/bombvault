@@ -243,7 +243,7 @@ const es: Partial<Translations> = {
   "settings.containersEnabledHint": "Copia de seguridad y restauración de contenedores Docker, el dominio principal de BombVault, activado por defecto.",
   "settings.dbDumps": "Volcados automáticos de bases de datos",
   "settings.dbDumpsHint": "Antes de cada copia, los contenedores PostgreSQL, MySQL y MariaDB reconocidos se vuelcan como puntos de restauración propios. Aquí lo desactivas para todos los contenedores a la vez, por ejemplo si tus bases ya se vuelcan solas. Los contenedores sueltos se desactivan en su tarjeta.",
-  "settings.dbDumpsOffConfirm": "¿Desactivar los volcados para todos los contenedores? Para {names} el volcado es la única copia coherente de la base de datos.",
+  "settings.dbDumpsOffConfirm": "one=¿Desactivar los volcados para todos los contenedores? Para {names} el volcado es la única copia coherente de la base de datos.|many=¿Desactivar los volcados para todos los contenedores? Para {names} los volcados son las únicas copias coherentes de sus bases de datos.|other=¿Desactivar los volcados para todos los contenedores? Para {names} los volcados son las únicas copias coherentes de sus bases de datos.",
   "settings.dbDumpsOffConfirmPlain": "¿Desactivar los volcados de bases de datos para todos los contenedores?",
   "settings.vmsEnabled": "VMs",
   "settings.vmsEnabledHint": "Copia de seguridad y restauración de máquinas virtuales por SSH mediante libvirt.",

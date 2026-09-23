@@ -243,7 +243,7 @@ const cs: Partial<Translations> = {
   "settings.containersEnabledHint": "Zálohování a obnova kontejnerů Docker: hlavní doména BombVaultu, ve výchozím nastavení zapnutá.",
   "settings.dbDumps": "Automatické výpisy databází",
   "settings.dbDumpsHint": "Před každou zálohou se rozpoznané kontejnery PostgreSQL, MySQL a MariaDB vypisují jako vlastní body obnovy. Tady to vypneš pro všechny kontejnery najednou, třeba když se tvoje databáze vypisují samy. Jednotlivé kontejnery lze vypnout na jejich kartě.",
-  "settings.dbDumpsOffConfirm": "Vypnout výpisy databází pro všechny kontejnery? U {names} je výpis jedinou konzistentní kopií databáze.",
+  "settings.dbDumpsOffConfirm": "one=Vypnout výpisy databází pro všechny kontejnery? U {names} je výpis jedinou konzistentní kopií databáze.|few=Vypnout výpisy databází pro všechny kontejnery? U {names} jsou výpisy jedinými konzistentními kopiemi jejich databází.|many=Vypnout výpisy databází pro všechny kontejnery? U {names} jsou výpisy jedinými konzistentními kopiemi jejich databází.|other=Vypnout výpisy databází pro všechny kontejnery? U {names} jsou výpisy jedinými konzistentními kopiemi jejich databází.",
   "settings.dbDumpsOffConfirmPlain": "Vypnout výpisy databází pro všechny kontejnery?",
   "settings.vmsEnabled": "VMs",
   "settings.vmsEnabledHint": "Zálohování a obnova virtuálních strojů přes SSH pomocí libvirt.",
