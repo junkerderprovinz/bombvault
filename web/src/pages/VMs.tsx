@@ -543,9 +543,11 @@ function VMRestorePanel({
   // the "Delete all" control on a failed delete, alongside the toast below.
   const [shakeDeleteAll, setShakeDeleteAll] = useState(0);
 
-  // "Delete all" fails as a toast, not inline. Bumping reloadTick remounts
-  // the timeline below under a fresh key, so it reads the place again instead
-  // of keeping the rows the delete just emptied.
+  // "Delete all" empties the local place, which is what the question it asks
+  // says; a copy at a target goes through its own row in the timeline. It
+  // fails as a toast, not inline. Bumping reloadTick remounts the timeline
+  // below under a fresh key, so it reads the place again instead of keeping
+  // the rows the delete just emptied.
   async function handleDeleteAll() {
     // TODO(#follow-up): richer stake-detail copy ("N snapshots, X GB") belongs
     // here once it ships (deferred — new interpolated i18n keys across all 25

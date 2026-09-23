@@ -143,7 +143,7 @@ const is: Partial<Translations> = {
   "snapshots.files": "Skrár",
   "snapshots.delete": "Eyða",
   "snapshots.deleteAll": "Eyða öllum afritum",
-  "snapshots.deleteAllConfirm": "Eyða ÖLLUM afritum þessarar sýndarvélar frá völdum uppruna (staðbundinn eða fjarlægur)? Snapshottin eru fjarlægð varanlega og geymslusafnið hreinsað. Þessu verður ekki afturkallað.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Eyði…",
   "snapshots.recreate": "Endurgera úr vistaðri stillingu",
   "snapshots.recreateConfirm": "Endurgera þennan gám úr vistaðri stillingu hans? Hann er búinn til og ræstur samkvæmt vistuðu skilgreiningunni (ímynd, umhverfi, gáttir, gagnahirslur).",

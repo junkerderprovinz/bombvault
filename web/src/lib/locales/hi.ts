@@ -143,7 +143,7 @@ const hi: Partial<Translations> = {
   "snapshots.files": "फ़ाइलें",
   "snapshots.delete": "हटाएँ",
   "snapshots.deleteAll": "सभी बैकअप हटाएँ",
-  "snapshots.deleteAllConfirm": "चुने गए स्रोत (लोकल या ऑफ़-साइट) से इस VM के सभी बैकअप हटाएँ? स्नैपशॉट स्थायी रूप से हटा दिए जाते हैं और रिपॉज़िटरी को प्रून कर दिया जाता है। इसे वापस नहीं किया जा सकता।",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "हटाया जा रहा है…",
   "snapshots.recreate": "सहेजी गई कॉन्फ़िगरेशन से फिर बनाएँ",
   "snapshots.recreateConfirm": "इस कंटेनर को इसकी सहेजी गई कॉन्फ़िगरेशन से फिर से बनाएँ? यह सहेजी गई परिभाषा (इमेज, एनवायरनमेंट, पोर्ट, वॉल्यूम) से बनाया और शुरू किया जाता है।",

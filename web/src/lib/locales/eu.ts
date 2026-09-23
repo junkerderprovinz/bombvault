@@ -143,7 +143,7 @@ const eu: Partial<Translations> = {
   "snapshots.files": "Fitxategiak",
   "snapshots.delete": "Ezabatu",
   "snapshots.deleteAll": "Ezabatu babeskopia guztiak",
-  "snapshots.deleteAllConfirm": "MB honen babeskopia GUZTIAK ezabatu nahi dituzu hautatutako iturritik (lokala edo kanpokoa)? Argazkiak betiko ezabatzen dira eta biltegia garbitzen da. Ezin da desegin.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Ezabatzen…",
   "snapshots.recreate": "Berriz sortu gordetako konfiguraziotik",
   "snapshots.recreateConfirm": "Edukiontzi hau bere gordetako konfiguraziotik berriz sortu nahi duzu? Gordetako definiziotik (irudia, ingurunea, ataka, bolumenak) sortu eta abiarazten da.",

@@ -760,7 +760,7 @@ const nl: Partial<Translations> = {
 
   // Backups (delete all)
   "snapshots.deleteAll": "Alle back-ups verwijderen",
-  "snapshots.deleteAllConfirm": "ALLE back-ups van deze VM uit de geselecteerde bron (lokaal of off-site) verwijderen? De snapshots worden permanent verwijderd en de repository wordt opgeschoond. Kan niet ongedaan worden gemaakt.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Verwijderen…",
 
   // Restore to folder

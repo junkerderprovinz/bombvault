@@ -143,7 +143,7 @@ const sk: Partial<Translations> = {
   "snapshots.files": "Súbory",
   "snapshots.delete": "Odstrániť",
   "snapshots.deleteAll": "Odstrániť všetky zálohy",
-  "snapshots.deleteAllConfirm": "Odstrániť VŠETKY zálohy tohto VM z vybraného zdroja (lokálneho alebo vzdialeného)? Snímky sa natrvalo odstránia a repozitár sa vyčistí. Túto akciu nemožno vrátiť späť.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Odstraňuje sa…",
   "snapshots.recreate": "Znova vytvoriť z uloženej konfigurácie",
   "snapshots.recreateConfirm": "Znova vytvoriť tento kontajner z jeho uloženej konfigurácie? Vytvorí sa a spustí podľa uloženej definície (obraz, prostredie, porty, zväzky).",

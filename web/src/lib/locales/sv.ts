@@ -685,7 +685,7 @@ const sv: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Ta bort alla säkerhetskopior",
-  "snapshots.deleteAllConfirm": "Ta bort ALLA säkerhetskopior av denna VM från den valda källan (lokal eller off-site)? Ögonblicksbilderna tas bort permanent och arkivet rensas. Detta kan inte ångras.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Tar bort…",
 
   // Snapshot tags + compare (diff)

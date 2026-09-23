@@ -677,7 +677,7 @@ const zh: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "删除所有备份",
-  "snapshots.deleteAllConfirm": "删除此虚拟机在所选来源（本地或异地）的所有备份？快照将被永久移除，并对仓库执行清理。此操作无法撤销。",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "删除中…",
 
   // Snapshot tags + compare (diff)

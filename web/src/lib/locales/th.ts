@@ -685,7 +685,7 @@ const th: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "ลบการสำรองข้อมูลทั้งหมด",
-  "snapshots.deleteAllConfirm": "ลบการสำรองข้อมูลทั้งหมดของ VM นี้จากแหล่งที่เลือก (ในเครื่องหรือนอกสถานที่)? สแนปช็อตจะถูกลบอย่างถาวรและรีพอสิทอรีจะถูกตัดทิ้ง ไม่สามารถเลิกทำได้",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "กำลังลบ…",
 
   // Snapshot tags + compare (diff)

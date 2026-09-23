@@ -18,19 +18,19 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, cleanup, within } from "@testing-library/react";
 import { VMRow } from "./VMs";
 import type { VM } from "../lib/api";
-import { homeOption, placementOptions, placementView } from "../lib/placement.testsupport";
+import {
+  homeOption,
+  placementOptions,
+  placementView,
+  stubEventSource,
+  timelineMark,
+  timelinePlace,
+  timelineRow,
+} from "../lib/placement.testsupport";
 
 // useProgress() (lib/progress.ts) opens a real EventSource on mount; jsdom
-// does not implement it. A minimal stub is all the hook touches
-// (.onmessage, .close()).
-class FakeEventSource {
-  onmessage: ((ev: MessageEvent) => void) | null = null;
-  close() {
-    /* no-op */
-  }
-}
-
-vi.stubGlobal("EventSource", FakeEventSource);
+// does not implement it.
+stubEventSource();
 
 vi.mock("../lib/api", async () => {
   const actual = await vi.importActual<typeof import("../lib/api")>("../lib/api");
@@ -60,6 +60,8 @@ const noop = () => {
 // VMRow only needs t() to return a stable string per key; none of this test's
 // assertions depend on real translations.
 const t = ((key: string) => key) as unknown as Parameters<typeof VMRow>[0]["t"];
+// For the one test that reads a sentence rather than a key.
+const tEn = ((key: string) => en[key as keyof typeof en] ?? key) as unknown as Parameters<typeof VMRow>[0]["t"];
 
 // A TrueNAS-shaped VM: the display name and the raw libvirt identifier
 // deliberately differ, exactly the case that exposed the bug.
@@ -182,6 +184,21 @@ describe("VMRow matches the container card's structure", () => {
     render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} onPlacement={noop} index={0} />);
     fireEvent.click(screen.getByRole("button", { name: "snapshots.title" }));
     await waitFor(() => expect(getTimeline).toHaveBeenCalledWith("vms", trueNasVM.libvirtName));
+  });
+
+  it("deletes the local backups its question names", async () => {
+    vi.mocked(getTimeline).mockResolvedValueOnce({
+      ok: true,
+      places: [timelinePlace()],
+      rows: [timelineRow("a1a1a1a1", "2026-09-18T03:00:00Z", timelineMark("local", "a1a1a1a1"))],
+    });
+    render(<VMRow vm={trueNasVM} t={tEn} onRefresh={noop} onPlacement={noop} index={0} />);
+    fireEvent.click(screen.getByRole("button", { name: en["snapshots.title"] }));
+    fireEvent.click(await screen.findByRole("button", { name: en["snapshots.deleteAll"] }));
+
+    expect(await screen.findByText(/ALL local backups/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: en["common.confirm"] }));
+    await waitFor(() => expect(deleteBackupsVM).toHaveBeenCalledWith(trueNasVM.libvirtName, "local"));
   });
 });
 

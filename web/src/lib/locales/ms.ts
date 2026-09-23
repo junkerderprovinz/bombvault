@@ -143,7 +143,7 @@ const ms: Partial<Translations> = {
   "snapshots.files": "Fail",
   "snapshots.delete": "Padam",
   "snapshots.deleteAll": "Padam semua sandaran",
-  "snapshots.deleteAllConfirm": "Padam SEMUA sandaran VM ini daripada sumber yang dipilih (setempat atau luar tapak)? Snapshot dipadamkan secara kekal dan repositori di-prune. Ini tidak boleh dibuat asal.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Memadam…",
   "snapshots.recreate": "Cipta semula daripada konfigurasi tersimpan",
   "snapshots.recreateConfirm": "Cipta semula bekas ini daripada konfigurasi tersimpannya? Ia dicipta dan dimulakan mengikut takrifan tersimpan (imej, persekitaran, port, volum).",

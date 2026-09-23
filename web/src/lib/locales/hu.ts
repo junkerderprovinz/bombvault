@@ -685,7 +685,7 @@ const hu: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Összes mentés törlése",
-  "snapshots.deleteAllConfirm": "Törli ennek a VM-nek az ÖSSZES mentését a kiválasztott forrásból (helyi vagy telephelyen kívüli)? A pillanatképek véglegesen eltávolításra kerülnek, és a tároló megnyesésre kerül. Ez nem vonható vissza.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Törlés…",
 
   // Snapshot tags + compare (diff)

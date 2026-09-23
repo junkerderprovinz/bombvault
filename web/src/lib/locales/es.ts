@@ -693,7 +693,7 @@ const es: Partial<Translations> = {
 
   // Backups — delete all
   "snapshots.deleteAll": "Eliminar todas las copias",
-  "snapshots.deleteAllConfirm": "¿Eliminar TODAS las copias de esta VM de la fuente seleccionada (local o externa)? Las instantáneas se eliminan permanentemente y el repositorio se poda. No se puede deshacer.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "Eliminando…",
 
   // Snapshot tags + compare (diff)

@@ -143,7 +143,7 @@ const fa: Partial<Translations> = {
   "snapshots.files": "فایل‌ها",
   "snapshots.delete": "حذف",
   "snapshots.deleteAll": "حذف همه پشتیبان‌ها",
-  "snapshots.deleteAllConfirm": "همه پشتیبان‌های این ماشین مجازی از منبع انتخاب‌شده (محلی یا خارج از محل) حذف شوند؟ اسنپ‌شات‌ها برای همیشه حذف می‌شوند و مخزن پاک‌سازی می‌شود. این کار قابل بازگشت نیست.",
+  "snapshots.deleteAllConfirm": "Delete ALL local backups of this VM? The snapshots are permanently removed and the local repository is pruned. Copies at off-site targets stay. This cannot be undone.",
   "snapshots.deletingAll": "در حال حذف…",
   "snapshots.recreate": "بازسازی از پیکربندی ذخیره‌شده",
   "snapshots.recreateConfirm": "این کانتینر از پیکربندی ذخیره‌شده‌اش بازسازی شود؟ از تعریف ذخیره‌شده (ایمیج، محیط، پورت‌ها، volumeها) ساخته و اجرا می‌شود.",
