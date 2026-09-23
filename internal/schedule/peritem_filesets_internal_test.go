@@ -11,6 +11,7 @@ import (
 // gate asked about.
 type fakeGateStore struct {
 	sets     []store.FileSet
+	zfs      []store.ZFSDataset
 	settings store.Settings
 	askedFor []string
 }
@@ -19,6 +20,9 @@ func (f *fakeGateStore) GetSettings() (store.Settings, error)     { return f.set
 func (f *fakeGateStore) ListTargets() ([]store.Target, error)     { return nil, nil }
 func (f *fakeGateStore) ListVMTargets() ([]store.VMTarget, error) { return nil, nil }
 func (f *fakeGateStore) ListFileSets() ([]store.FileSet, error)   { return f.sets, nil }
+func (f *fakeGateStore) ListZFSDatasets() ([]store.ZFSDataset, error) {
+	return f.zfs, nil
+}
 func (f *fakeGateStore) LastSuccessfulBackupAmong(ids []string) (time.Time, error) {
 	f.askedFor = append([]string{}, ids...)
 	return time.Time{}, nil

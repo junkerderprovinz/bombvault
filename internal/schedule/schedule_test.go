@@ -642,6 +642,8 @@ func TestSwitchedOffDomainIsNotRegistered(t *testing.T) {
 		ConfigSchedule:            "daily 06:00",
 		FilesEnabled:              false,
 		FilesSchedule:             "daily 07:00",
+		ZFSEnabled:                false,
+		ZFSSchedule:               "daily 07:30",
 		VMsOffsiteSchedule:        "daily 08:00",
 		ContainersOffsiteSchedule: "daily 09:00",
 	}
@@ -657,7 +659,7 @@ func TestSwitchedOffDomainIsNotRegistered(t *testing.T) {
 	}
 	for _, r := range sched.NextRuns() {
 		switch r.Domain {
-		case "vms", "flash", "config", "files":
+		case "vms", "flash", "config", "files", "zfs":
 			t.Fatalf("domain %q is switched off and must not be registered, got %+v (all: %v)", r.Domain, r, domains)
 		}
 	}
@@ -744,5 +746,69 @@ func TestSchedulerStopReturnsWhileAJobRunsOutsideCron(t *testing.T) {
 	select {
 	case <-finished:
 	default:
+	}
+}
+
+// TestReloadWithDueChecksDelegatesToGates checks that the per-argument
+// signature registers exactly what ReloadWithGates registers for the same
+// settings, so its callers keep their schedules.
+func TestReloadWithDueChecksDelegatesToGates(t *testing.T) {
+	settings := store.Settings{
+		ContainersEnabled:         true,
+		ContainersSchedule:        "everyN 2 03:00",
+		ContainersOffsiteSchedule: "daily 03:30",
+		VMsEnabled:                true,
+		VMsSchedule:               "daily 04:00",
+		FlashEnabled:              true,
+		FlashSchedule:             "weekly sun 05:00",
+		ConfigEnabled:             true,
+		ConfigSchedule:            "daily 06:00",
+		FilesEnabled:              true,
+		FilesSchedule:             "everyN 3 07:00",
+		ZFSEnabled:                true,
+		ZFSSchedule:               "daily 08:00",
+		ZFSOffsiteSchedule:        "daily 08:30",
+		EverythingSchedule:        "everyN 7 01:00",
+		DrillsEnabled:             true,
+		DrillsSchedule:            "weekly sun 05:00",
+		DigestEnabled:             true,
+		DigestSchedule:            "daily 09:00",
+	}
+	lastRun := func() (time.Time, error) { return time.Time{}, nil }
+
+	build := func(reload func(*schedule.Scheduler) error) []schedule.NextRun {
+		sched := schedule.New(func(string) error { return nil }, func() ([]store.Target, error) { return nil, nil })
+		sched.SetVMJob(func(string) error { return nil }, func() ([]store.VMTarget, error) { return nil, nil })
+		sched.SetFilesJob(func(string) error { return nil }, func() ([]store.FileSet, error) { return nil, nil })
+		sched.SetZFSJob(func(string) error { return nil }, func() ([]store.ZFSDataset, error) { return nil, nil })
+		if err := reload(sched); err != nil {
+			t.Fatalf("reload: %v", err)
+		}
+		sched.Start()
+		defer sched.Stop()
+		return sched.NextRuns()
+	}
+
+	perArgument := build(func(sched *schedule.Scheduler) error {
+		return sched.ReloadWithDueChecks(settings, lastRun, lastRun, lastRun, lastRun, lastRun, lastRun)
+	})
+	gated := build(func(sched *schedule.Scheduler) error {
+		return sched.ReloadWithGates(settings, schedule.DueGates{
+			Containers: lastRun,
+			VMs:        lastRun,
+			Flash:      lastRun,
+			Config:     lastRun,
+			Files:      lastRun,
+			Everything: lastRun,
+		})
+	})
+
+	if len(perArgument) != len(gated) {
+		t.Fatalf("got %d entries through the per-argument signature, %d through the gates: %+v vs %+v", len(perArgument), len(gated), perArgument, gated)
+	}
+	for i := range perArgument {
+		if perArgument[i].Job != gated[i].Job || perArgument[i].Domain != gated[i].Domain {
+			t.Fatalf("entry %d: got %s/%s, want %s/%s", i, perArgument[i].Job, perArgument[i].Domain, gated[i].Job, gated[i].Domain)
+		}
 	}
 }
