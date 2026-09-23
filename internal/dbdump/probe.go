@@ -22,9 +22,12 @@ type Probe struct {
 	Dropped   int
 }
 
-// versionAnchors precede the version number in the three --version formats:
-// pg_dumpall, mariadb-dump and mysqldump.
-var versionAnchors = []string{"(PostgreSQL) ", "from ", "Ver "}
+// versionAnchors precede the server version in the --version formats of
+// pg_dumpall, mariadb-dump and mysqldump, most specific first. The older
+// format of both MySQL and MariaDB prints the dump tool's own version after
+// "Ver " and the server's after "Distrib ", so "Ver " is the last resort: it
+// is the server version only where the tool shares its number, as MySQL 8 does.
+var versionAnchors = []string{"(PostgreSQL) ", "from ", "Distrib ", "Ver "}
 
 var versionRe = regexp.MustCompile(`\d+\.\d+(\.\d+)?`)
 
