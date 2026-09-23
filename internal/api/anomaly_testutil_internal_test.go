@@ -56,3 +56,15 @@ func spacedRuns(n int, start, step int64, f func(i int) store.SeriesRun) []store
 	}
 	return out
 }
+
+func withResticMS(ms int64) runOpt {
+	return func(run *store.SeriesRun) { run.ResticMS = &ms }
+}
+
+func withSnapshot(id string) runOpt {
+	return func(run *store.SeriesRun) { run.SnapshotID = id }
+}
+
+func withError(msg string) runOpt {
+	return func(run *store.SeriesRun) { run.Error = msg }
+}
