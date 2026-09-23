@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -144,4 +145,124 @@ func enableLogin(t *testing.T, st *store.Repo, appKey string) string {
 		t.Fatal(err)
 	}
 	return secret.NewSessionToken(appKey, hash, s.SessionEpoch, 7*24*time.Hour)
+}
+
+// newMCPToolRouter is a router with one key that may start backups, which is
+// what every tool test needs before it can call anything.
+func newMCPToolRouter(t *testing.T, d *fakeServiceDocker, eng *fakeResticEngine) (http.Handler, *store.Repo, *api.Service, string) {
+	t.Helper()
+	h, st, svc := newTestRouterSvc(t, d, eng)
+	key, _ := createMCPKey(t, h, "Laptop", true)
+	return h, st, svc, key
+}
+
+// mcpToolResult is one tools/call answer with the JSON-RPC envelope taken off.
+type mcpToolResult struct {
+	IsError bool `json:"isError"`
+	Content []struct {
+		Type string `json:"type"`
+		Text string `json:"text"`
+	} `json:"content"`
+	Structured map[string]any `json:"structuredContent"`
+}
+
+// text is the one text block a tool result carries next to its structured form.
+func (r mcpToolResult) text(t *testing.T) string {
+	t.Helper()
+	if len(r.Content) != 1 || r.Content[0].Type != "text" {
+		t.Fatalf("want exactly one text content block, got %+v", r.Content)
+	}
+	return r.Content[0].Text
+}
+
+// code is the error code of a refused call and "" for a successful one.
+func (r mcpToolResult) code(t *testing.T) string {
+	t.Helper()
+	if !r.IsError {
+		return ""
+	}
+	e, ok := r.Structured["error"].(map[string]any)
+	if !ok {
+		t.Fatalf("a failed call carries no error object: %v", r.Structured)
+	}
+	s, _ := e["code"].(string)
+	return s
+}
+
+// message is the sentence of a refused call.
+func (r mcpToolResult) message(t *testing.T) string {
+	t.Helper()
+	e, ok := r.Structured["error"].(map[string]any)
+	if !ok {
+		t.Fatalf("a failed call carries no error object: %v", r.Structured)
+	}
+	s, _ := e["message"].(string)
+	return s
+}
+
+// mcpCallTool calls one tool through the gate. args is the JSON arguments
+// object; an empty string means none.
+func mcpCallTool(t *testing.T, h http.Handler, key, tool, args string) mcpToolResult {
+	t.Helper()
+	if args == "" {
+		args = "{}"
+	}
+	body := fmt.Sprintf(`{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":%q,"arguments":%s}}`, tool, args)
+	w := (mcpReq{key: key, body: body}).do(t, h)
+	if w.Code != http.StatusOK {
+		t.Fatalf("tools/call %s: status = %d body = %q", tool, w.Code, w.Body.String())
+	}
+	var env struct {
+		Result mcpToolResult `json:"result"`
+		Error  *struct {
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &env); err != nil {
+		t.Fatalf("decode tools/call %s response %q: %v", tool, w.Body.String(), err)
+	}
+	if env.Error != nil {
+		t.Fatalf("tools/call %s answered a protocol error: %s", tool, env.Error.Message)
+	}
+	return env.Result
+}
+
+// mcpListTools returns the tools/list entries as decoded JSON objects, which is
+// what a client sees rather than what the Go definitions hold.
+func mcpListTools(t *testing.T, h http.Handler, key string) []map[string]any {
+	t.Helper()
+	w := (mcpReq{key: key, body: `{"jsonrpc":"2.0","id":3,"method":"tools/list"}`}).do(t, h)
+	if w.Code != http.StatusOK {
+		t.Fatalf("tools/list: status = %d body = %q", w.Code, w.Body.String())
+	}
+	var env struct {
+		Result struct {
+			Tools []map[string]any `json:"tools"`
+		} `json:"result"`
+		Error *struct {
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &env); err != nil {
+		t.Fatalf("decode tools/list response %q: %v", w.Body.String(), err)
+	}
+	if env.Error != nil {
+		t.Fatalf("tools/list answered a protocol error: %s", env.Error.Message)
+	}
+	return env.Result.Tools
+}
+
+// mcpToolNames is the sorted name list of a tools/list answer.
+func mcpToolNames(t *testing.T, tools []map[string]any) []string {
+	t.Helper()
+	out := make([]string, 0, len(tools))
+	for _, tool := range tools {
+		name, _ := tool["name"].(string)
+		if name == "" {
+			t.Fatalf("a tool entry has no name: %v", tool)
+		}
+		out = append(out, name)
+	}
+	sort.Strings(out)
+	return out
 }
