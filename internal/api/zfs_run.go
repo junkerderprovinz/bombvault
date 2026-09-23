@@ -306,6 +306,8 @@ func (s *Service) BackupZFSDataset(ctx context.Context, id string) (backup.Summa
 		Restic:        &resticAdapter{engine: s.engine, mode: mode},
 		Visible:       s.visibleSnapshot,
 		DirEmpty:      zfsDirEmpty,
+		Consistency:   s.newZFSConsistency(d, settings, zfsLockWait(ctx)),
+		Hooks:         s.newZFSHooks(d),
 		Runs:          runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: key},
 		Recorder:      zfsRunRecorder{st: s.store, itemID: d.ID, stops: len(d.StopContainers) > 0},
 		DestroyBudget: zfsDestroyBudget,
@@ -500,6 +502,10 @@ func (s *Service) SweepZFSLeftoversOnStartup(ctx context.Context) {
 	rows, err := s.store.ListZFSDatasets()
 	if err != nil {
 		log.Printf("api: zfs: the startup sweep could not list the items: %v", err)
+		return
+	}
+	if len(rows) == 0 {
+		log.Print("api: zfs: the startup sweep found no dataset items, nothing to do")
 		return
 	}
 	for _, d := range rows {

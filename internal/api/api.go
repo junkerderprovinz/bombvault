@@ -29,6 +29,7 @@ type Handler struct {
 	flashLastRun      schedule.LastRunFunc
 	configLastRun     schedule.LastRunFunc
 	filesLastRun      schedule.LastRunFunc
+	zfsLastRun        schedule.LastRunFunc
 	everythingLastRun schedule.LastRunFunc
 
 	// Cached host-integration check, warmed once at startup so the dashboard
@@ -87,7 +88,7 @@ func NewHandler(
 		svc:       svc,
 		scheduler: scheduler,
 		probes:    probes,
-		// Same six gate queries main.go wires for the initial reload — a settings
+		// Same gate queries main.go wires for the initial reload. A settings
 		// save re-arms the scheduler through this handler, so a divergence here
 		// would mean the gates changed meaning the first time a user pressed a
 		// switch. See main.go's own comment for why each is what it is.
@@ -96,6 +97,7 @@ func NewHandler(
 		flashLastRun:      schedule.LastRunFunc(st.LastSuccessfulFlashBackup),
 		configLastRun:     schedule.LastRunFunc(st.LastSuccessfulConfigBackup),
 		filesLastRun:      schedule.FilesDueGate(st),
+		zfsLastRun:        schedule.ZFSDueGate(st),
 		everythingLastRun: schedule.LastRunFunc(st.LastEverythingPass),
 		// Initialized explicitly rather than relying on every loginFails call
 		// site happening to only read-or-delete a nil map without ever

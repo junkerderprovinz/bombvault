@@ -1915,6 +1915,20 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+// dueGates is the set of last-run queries the everyN cadence needs, one per
+// backup domain.
+func (h *Handler) dueGates() schedule.DueGates {
+	return schedule.DueGates{
+		Containers: h.containersLastRun,
+		VMs:        h.vmsLastRun,
+		Flash:      h.flashLastRun,
+		Config:     h.configLastRun,
+		Files:      h.filesLastRun,
+		ZFS:        h.zfsLastRun,
+		Everything: h.everythingLastRun,
+	}
+}
+
 // reloadScheduler re-reads the settings and re-registers every schedule entry,
 // including the per-item override entries (#121). Called after a change that alters
 // the schedule structure outside the settings form (a per-item cadence PATCH).
@@ -1923,7 +1937,7 @@ func (h *Handler) reloadScheduler() error {
 	if err != nil {
 		return err
 	}
-	return h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun, h.everythingLastRun)
+	return h.scheduler.ReloadWithGates(s, h.dueGates())
 }
 
 // handleScheduleIncludeAll sets the include_in_schedule flag for EVERY installed
@@ -2921,7 +2935,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// child it starts ([558]), so applying it here takes effect without a
 	// restart — a backup already in flight keeps the value it began with.
 	restic.SetMaxProcs(s.BackupCores)
-	if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun, h.everythingLastRun); err != nil {
+	if err := h.scheduler.ReloadWithGates(s, h.dueGates()); err != nil {
 		// Settings persisted but the scheduler could not re-register — report it.
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
 		return

@@ -64,8 +64,9 @@ func zfsRunFixture(t *testing.T, tree []zfs.ListEntry) (*Service, *store.Repo, *
 			HostMountRoot:  "/host/user",
 			HostSourceRoot: "/mnt",
 			DataDir:        t.TempDir(),
+			AppKey:         strings.Repeat("a", 64),
 		},
-		repoMu: map[string]*sync.Mutex{"zfs": {}},
+		repoMu: map[string]*sync.Mutex{"zfs": {}, "containers": {}},
 	}
 	settings, err := st.GetSettings()
 	if err != nil {
