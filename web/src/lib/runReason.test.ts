@@ -91,6 +91,7 @@ describe("runReason", () => {
       head: "runReason.dbimportKeptOld {apps}",
       detail: "/mnt/pg.old",
       note: "runReason.dbimportAppsDown immich_server, immich_ml",
+      apps: { key: "runReason.dbimportAppsDown", names: ["immich_server", "immich_ml"] },
     });
     expect(
       runReason(
@@ -146,6 +147,26 @@ describe("RunReasonText", () => {
     expect(parts[0]).toBe("runReason.dbdumpTool");
     expect((parts[2] as ElementNode).props?.children).toBe("ERROR 1045");
     expect(parts.slice(3)).toEqual(["; ", "runReason.dbdumpOrphan"]);
+  });
+
+  it("isolates every app name in the note that says which apps stay stopped", () => {
+    const withApps = (key: TranslationKey): string => `${key} {apps}`;
+    const parts = children(
+      RunReasonText({
+        reason:
+          "database import failed: the import tool reported an error: exit 1; " +
+          "these apps stay stopped until the data folder is sorted out: immich_server, immich_ml",
+        t: withApps,
+      })
+    );
+    const note = children(parts[parts.length - 1]);
+    expect(note[0]).toBe("runReason.dbimportAppsStopped ");
+    const first = note[1] as ElementNode;
+    expect(first.type).toBe("bdi");
+    expect(first.props?.dir).toBe("ltr");
+    expect(first.props?.children).toBe("immich_server");
+    expect(note[2]).toBe(", ");
+    expect((note[3] as ElementNode).props?.children).toBe("immich_ml");
   });
 
   it("renders a reason without a detail as bare text", () => {

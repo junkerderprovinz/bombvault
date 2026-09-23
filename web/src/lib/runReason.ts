@@ -8,7 +8,7 @@
 // the string is what `docker logs`, a support paste or a sqlite3 shell show, and
 // it also covers rows written by older versions without a migration.
 
-import { createElement, Fragment, type ReactElement } from "react";
+import { createElement, Fragment, type ReactElement, type ReactNode } from "react";
 import { dumpLeftRunning, ORPHAN_NOTE } from "./dbdump";
 import type { TranslationKey, useT } from "./i18n";
 
@@ -74,12 +74,20 @@ const IMPORT_APP_TAILS: Record<string, TranslationKey> = {
 
 /** Splits the tail naming the apps an import stopped off a note or reason. The
  *  names come back separated, because how many there are picks the sentence. */
-function importAppTail(text: string): { rest: string; key: TranslationKey; apps: string[] } | undefined {
+function importAppTail(text: string): { rest: string; apps: StoppedApps } | undefined {
   for (const [tail, key] of Object.entries(IMPORT_APP_TAILS)) {
     const at = text.lastIndexOf(`; ${tail}: `);
-    if (at >= 0) return { rest: text.slice(0, at), key, apps: text.slice(at + tail.length + 4).split(", ") };
+    if (at >= 0) {
+      return { rest: text.slice(0, at), apps: { key, names: text.slice(at + tail.length + 4).split(", ") } };
+    }
   }
   return undefined;
+}
+
+/** The sentence about the apps an import stopped, and the names it lists. */
+export interface StoppedApps {
+  key: TranslationKey;
+  names: string[];
 }
 
 /**
@@ -108,6 +116,8 @@ export interface RunReasonParts {
   head: string;
   detail: string;
   note?: string;
+  /** Set when the note names stopped apps, so a renderer can isolate each name. */
+  apps?: StoppedApps;
 }
 
 /**
@@ -121,11 +131,13 @@ export function runReasonParts(raw: string | null | undefined, t: T): RunReasonP
     const parts = runReasonParts(text.slice(0, -(ORPHAN_NOTE.length + 2)), t);
     return { ...parts, note: t("runReason.dbdumpOrphan") };
   }
-  const apps = importAppTail(text);
-  if (apps) {
+  const stopped = importAppTail(text);
+  if (stopped) {
+    const { key, names } = stopped.apps;
     return {
-      ...runReasonParts(apps.rest, t),
-      note: t(apps.key, apps.apps.length).replace("{apps}", apps.apps.join(", ")),
+      ...runReasonParts(stopped.rest, t),
+      note: t(key, names.length).replace("{apps}", names.join(", ")),
+      apps: stopped.apps,
     };
   }
   if (!text) return { head: "", detail: "" };
@@ -154,6 +166,20 @@ export function runReason(raw: string | null | undefined, t: T): string {
 }
 
 /**
+ * The note about stopped apps with every container name in its own isolate.
+ * The names come from the host, so an Arabic or Hebrew page must not reorder
+ * them or drag their underscores to the far end of the sentence.
+ */
+function stoppedAppsNote(apps: StoppedApps, t: T): ReactElement {
+  const [before, after = ""] = t(apps.key, apps.names.length).split("{apps}");
+  const listed = apps.names.flatMap((name, i): ReactNode[] => {
+    const isolated = createElement("bdi", { dir: "ltr" }, name);
+    return i === 0 ? [isolated] : [", ", isolated];
+  });
+  return createElement(Fragment, null, before, ...listed, after);
+}
+
+/**
  * RunReasonText renders a reason with its detail isolated. The head is
  * translated and follows the page, while the detail is a tool's own message:
  * on an Arabic or Hebrew page it stays left-to-right instead of scattering its
@@ -166,8 +192,8 @@ export function RunReasonText({
   reason: string | null | undefined;
   t: T;
 }): ReactElement {
-  const { head, detail, note } = runReasonParts(reason, t);
-  const tail = note ? ["; ", note] : [];
+  const { head, detail, note, apps } = runReasonParts(reason, t);
+  const tail: ReactNode[] = note ? ["; ", apps ? stoppedAppsNote(apps, t) : note] : [];
   if (!detail) return createElement(Fragment, null, head, ...tail);
   return createElement(Fragment, null, head, ": ", createElement("bdi", { dir: "ltr" }, detail), ...tail);
 }
