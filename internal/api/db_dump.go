@@ -243,7 +243,7 @@ func (s *Service) dbDumpRows(ctx context.Context, infos []dockercli.ContainerInf
 		if engine == dbdump.EngineNone {
 			engine = rec.Suggested
 		}
-		effective, _ := s.effectiveBackupPathsWithSelection(c.Name, in)
+		effective, _, _ := s.effectiveBackupPathsWithSelection(c.Name, in)
 		_, stackDir, _ := s.stackDirFor(in)
 
 		row.Engine, row.Suggested, row.Tier = string(rec.Engine), string(rec.Suggested), string(rec.Tier)
@@ -444,7 +444,7 @@ func (a *dbDumpAdapter) decide(ctx, dumpCtx context.Context, req backup.DBDumpRe
 		case hasRes && sum.TotalBytesProcessed != uint64(res.Bytes): //nolint:gosec // G115: ParseResult refuses a negative byte count
 			return a.forget(ctx, req.Repo, sum.SnapshotID, store.ReasonDBDumpMismatch)
 		}
-		return a.success(sum, res, hasRes, lines), nil
+		return a.success(req, sum, res, hasRes, lines), nil
 	}
 
 	switch {
@@ -461,11 +461,12 @@ func (a *dbDumpAdapter) decide(ctx, dumpCtx context.Context, req backup.DBDumpRe
 // success reads the finished dump. restic's snapshot is authoritative: a
 // missing result line costs the byte count the helper would have confirmed,
 // not the dump.
-func (a *dbDumpAdapter) success(sum restic.Summary, res dbdump.Result, hasRes bool, lines []string) backup.DBDumpResult {
-	out := backup.DBDumpResult{Summary: backup.Summary{
-		SnapshotID: sum.SnapshotID,
-		Bytes:      int64(sum.TotalBytesProcessed), //nolint:gosec // G115: a dump stream is gigabytes at most, nowhere near MaxInt64
-	}}
+func (a *dbDumpAdapter) success(req backup.DBDumpRequest, sum restic.Summary, res dbdump.Result, hasRes bool, lines []string) backup.DBDumpResult {
+	// A dump run counts the stream, not what restic had to store of it: a dump
+	// that deduplicates away is still a full dump.
+	measured := backupSummaryFrom(sum)
+	measured.Bytes = int64(sum.TotalBytesProcessed) //nolint:gosec // G115: a dump stream is gigabytes at most, nowhere near MaxInt64
+	out := backup.DBDumpResult{Summary: measured}
 	scope := dbdump.ParseScope(lines)
 	if hasRes {
 		out.Summary.Bytes = res.Bytes
@@ -475,6 +476,10 @@ func (a *dbDumpAdapter) success(sum restic.Summary, res dbdump.Result, hasRes bo
 	} else {
 		log.Printf("api: database dump of %q: restic wrote snapshot %s but the helper reported no result", a.container, shortID(sum.SnapshotID)) //nolint:gosec // G706: name is %q-quoted
 	}
+	// The dump is a series of its own, so it carries its own fingerprint: a
+	// container that narrows to one database must re-base its dump history
+	// without touching the history of the folders beside it.
+	out.Summary.SelectionFP = selectionFingerprint(itemSelection{Kind: "dbdump", Engine: req.Plan.Engine, Scope: scope})
 	if scope == dbDumpScopeOneDatabase {
 		out.Note = store.NoteDBDumpOneDatabase
 	}
