@@ -44,13 +44,14 @@ vi.mock("../lib/api", async () => {
     forgetVM: vi.fn(async () => ({ ok: true })),
     deleteBackupsVM: vi.fn(async () => ({ ok: true })),
     setVMInclude: vi.fn(async () => ({ ok: true })),
+    getTimeline: vi.fn(async () => ({ ok: true, places: [], rows: [] })),
     getPlacementOptions: vi.fn(async () => ({ ok: true, options: placementOptions({ homes: [homeOption()] }) })),
     getSettings: vi.fn(async () => ({ ok: true, platform: "unraid" })),
   };
 });
 
 // Imported AFTER vi.mock so this binding is the mocked function.
-import { backupVMNow, deleteBackupsVM, forgetVM, setVMInclude } from "../lib/api";
+import { backupVMNow, deleteBackupsVM, forgetVM, getTimeline, setVMInclude } from "../lib/api";
 import { en } from "../lib/i18n";
 
 const noop = () => {
@@ -175,6 +176,12 @@ describe("VMRow matches the container card's structure", () => {
     // precisely so the alternative never has to be inferred.
     expect(graceful.getAttribute("aria-selected")).toBe("true");
     expect(live.getAttribute("aria-selected")).toBe("false");
+  });
+
+  it("opens the backups timeline under the libvirt name", async () => {
+    render(<VMRow vm={trueNasVM} t={t} onRefresh={noop} onPlacement={noop} index={0} />);
+    fireEvent.click(screen.getByRole("button", { name: "snapshots.title" }));
+    await waitFor(() => expect(getTimeline).toHaveBeenCalledWith("vms", trueNasVM.libvirtName));
   });
 });
 

@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { listVMs, backupVMNow, restoreVM, listVMSnapshots, setVMInclude, setVMIncludeAll, setVMMethod, deleteSnapshot, deleteBackupsVM, forgetVM, discoverVMs, exportVM, getVmBackupOrder, setVmBackupOrder } from "../lib/api";
-import { SourceToggle, type RepoSource } from "../components/SourceToggle";
+import { listVMs, backupVMNow, restoreVM, setVMInclude, setVMIncludeAll, setVMMethod, deleteBackupsVM, forgetVM, discoverVMs, exportVM, getVmBackupOrder, setVmBackupOrder } from "../lib/api";
 import { FilterPopover } from "../components/FilterPopover";
 import { IconTipButton } from "../components/IconTipButton";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
-import type { VM, Snapshot, VmOrder, PlacementView } from "../lib/api";
+import type { VM, VmOrder, PlacementView } from "../lib/api";
 import { BULK_HUE } from "../lib/bulkHue";
 import { useT, stateLabel } from "../lib/i18n";
 import { PAGE_SHELL } from "../lib/pageShell";
@@ -15,7 +14,7 @@ import { ProgressBar } from "../components/ProgressBar";
 import { RestoreAction } from "../components/restore/RestoreAction";
 import { RecentRunsList } from "../components/RecentRunsList";
 import { EmptyStateIcon } from "../components/EmptyStateIcon";
-import { IconVM, IconRestore, IconTrash, IconBackupNow, IconDownload, IconPower, IconLive } from "../components/Sidebar";
+import { IconVM, IconRestore, IconBackupNow, IconDownload, IconPower, IconLive } from "../components/Sidebar";
 import { InfoBubble } from "../components/InfoBubble";
 import { NotInstalledHeading } from "../components/NotInstalledHeading";
 import { OrphanRemoveButton } from "../components/OrphanRemoveButton";
@@ -34,6 +33,7 @@ import { useToast } from "../lib/toast";
 import { PlacementRow } from "../components/placement/PlacementRow";
 import { subscribePlacement } from "../lib/placementEvents";
 import { subscribeRepos } from "../lib/useNamedRepos";
+import { Timeline, type TimelinePick } from "../components/timeline/Timeline";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -468,155 +468,49 @@ function VMBackupButton({
 // VM-aware RestorePanel variant
 // ---------------------------------------------------------------------------
 
-function VMSnapshotRow({
-  snap,
+function VMSnapshotActions({
+  pick,
   vmName,
   vmDisplayName,
-  source,
-  onDeleted,
   t,
 }: {
-  snap: Snapshot;
-  /** Raw libvirt name — drives the progress key and the restore action. */
+  pick: TimelinePick;
+  /** Raw libvirt name: drives the progress key and the restore action. */
   vmName: string;
-  /** Display name for the cancel-confirm text; falls back to vmName. */
   vmDisplayName?: string;
-  source: RepoSource;
-  onDeleted: () => void;
   t: T;
 }) {
-  const progressMap = useProgress();
-  // Busy-guard handed to the shared RestoreAction: block a new restore while any
-  // OTHER backup/restore/replication runs (this VM's own in-flight restore is
-  // covered inside RestoreAction via isPending, never self-blocked).
-  const running = anyActive(progressMap);
-  // The delete button is guarded only against THIS VM's own in-flight
-  // backup/restore, not any global activity — deleting VM A's snapshot must stay
-  // available while VM B is backing up.
-  const busy = progressMap[`vm:${vmName}`]?.active ?? false;
-  const [deleting, setDeleting] = useState(false);
-  const { push } = useToast();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
-  // failed delete toasts AND shakes the delete button (bumped nonce → fresh
-  // key → `.glim-shake` replays, same mechanism as ToggleRow's shakeNonce).
-  const [shake, setShake] = useState(0);
-  // Collapsed by default so the list stays compact (mirrors Containers'
-  // SnapshotRow) — the restore controls (confirm + leave-stopped + progress
-  // banner) only render once the user opts in.
+  const running = anyActive(useProgress());
   const [showRestore, setShowRestore] = useState(false);
-  const { confirm, confirmDialog } = useConfirm();
-
-  async function handleDelete() {
-    if (!(await confirm(t("snapshots.deleteConfirm")))) return;
-    setDeleting(true);
-    try {
-      const res = await deleteSnapshot("vms", snap.id, source);
-      if (res.ok) onDeleted();
-      else {
-        push(res.error ?? t("common.deleteFailed"), "fail");
-        setShake((n) => n + 1);
-      }
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("common.deleteFailed"), "fail");
-      setShake((n) => n + 1);
-    } finally {
-      setDeleting(false);
-    }
-  }
-
   return (
-    // py-1.5, not the py-2.5 this row used to carry — the identical trade
-    // components/RestorePanel.tsx's SnapshotRow, pages/Config.tsx's
-    // ConfigSnapshotRow, pages/Files.tsx's FileSetSnapshotRow and
-    // pages/Flash.tsx's FlashSnapshotRow each already made: the controls grew
-    // from ~24px text buttons to the app's one 32px square icon badge, and
-    // trimming 4px of padding per side keeps the row at exactly the 44px it
-    // measured before.
-    <div className="flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0">
-      <div className="flex items-center gap-3 text-sm">
-        <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">
-          {snap.id.slice(0, 8)}
-        </span>
-        <span className="text-carbon-textMuted text-xs flex-1">
-          {new Date(snap.time).toLocaleString()}
-        </span>
-        {snap.tags && snap.tags.length > 0 && (
-          <span className="text-carbon-textMuted text-xs hidden sm:block">
-            {snap.tags.join(", ")}
-          </span>
-        )}
-        {/* WHOLE-TREE SWEEP FINDING — this row was NOT in the brief.
-            This round was scoped as "Flash's FlashSnapshotRow is the FOURTH
-            and last copy of the row-action pattern already converted in
-            RestorePanel, Config and Files". Grepping the tree for the
-            pattern's own signature (`hover:bg-statusFailBg
-            hover:text-statusFail` on a row-action text button) instead of
-            trusting that count turned up a FIFTH: this one. Its own comment
-            below says it "mirrors Containers' SnapshotRow" — it is a direct
-            copy of the very row that was converted first, so it carried the
-            identical defect the whole time and would have been reported as
-            "the same bug, again" on the next VM-tab review.
-              Both controls take the same recipe as all four siblings:
-            shape="square" size="icon" (32px, Badge.tsx's ONE square-icon-badge
-            stage), tone="active", NO hueIndex — VMRow's own card carries
-            `.glim-hue` with this VM's list position, so the custom-property
-            cascade paints both badges in that row's rainbow position. Glyphs
-            are IconRestore and IconTrash, reused verbatim from RestorePanel's
-            already-converted pair, and each badge carries a `tip` with the
-            label its glyph replaced.
-              The delete badge gets NO special colour: not the
-            `hover:bg-statusFailBg hover:text-statusFail` red it carried, and
-            not a grey neutral (neutral is exempt from the rainbow and would
-            leave it flat beside a hued sibling). Meaning is carried by
-            IconTrash, its tip, and the untouched confirm dialog. Its "…"
-            in-flight label shows as `disabled` instead, exactly like the
-            other four.
-              The restore toggle's "highlighted while open"
-            `bg-carbon-surface3` swap is dropped rather than layered onto
-            Badge's own tone fill — equal-specificity Tailwind utilities
-            resolve by stylesheet order, not className order, so that was
-            never a safe override. The panel appearing below is the visible
-            feedback, the same call RestorePanel's converted toggle made. */}
-        <Button
-          label={t("restore.open")}
-          labelKey="restore.open"
-          glyph={<IconRestore />}
-          tone="accent"
-          onClick={() => setShowRestore((p) => !p)}
-          className={"shrink-0"}
-        />
-        <Button
-          key={shake}
-          label={t("snapshots.delete")}
-          labelKey="snapshots.delete"
-          glyph={<IconTrash />}
-          tone="accent"
-          onClick={() => void handleDelete()}
-          disabled={deleting || busy}
-          className={`shrink-0${shake ? " glim-shake" : ""}`}
-        />
-      </div>
-      {/* Restore control (confirm + leave-stopped + progress banner), indented
-          under the id column (ps-24, LOGICAL — the row's content column sits
-          at the reading-direction start, not a fixed physical left) to match
-          the row's content alignment. Only rendered once the user opts in via
-          the toggle above. */}
+    <>
+      {pick.mark.tags.length > 0 && (
+        <span className="text-carbon-textMuted text-xs hidden sm:block">{pick.mark.tags.join(", ")}</span>
+      )}
+      <Button
+        label={t("restore.open")}
+        labelKey="restore.open"
+        glyph={<IconRestore />}
+        tone="accent"
+        onClick={() => setShowRestore((p) => !p)}
+        className="shrink-0"
+      />
       {showRestore && (
-        <div className="ps-24">
+        <div className="basis-full ps-24">
           <RestoreAction
             domain="vm"
             name={vmName}
             displayName={vmDisplayName}
-            snapshotId={snap.id}
-            source={source}
+            snapshotId={pick.snapshotId}
+            source={pick.source}
             otherActive={running}
             successMessage={t("restore.completeVM")}
+            onMissing={pick.onMissing}
             t={t}
           />
         </div>
       )}
-      {confirmDialog}
-    </div>
+    </>
   );
 }
 
@@ -641,16 +535,6 @@ function VMRestorePanel({
    *  row, the other a bare text button with a hand-rotated 12px svg. */
   open: boolean;
 }) {
-  const [source, setSource] = useState<RepoSource>("local");
-  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
-  const [loading, setLoading] = useState(false);
-  // Section-load error (list failed to load) — NOT migrated to a toast
-  // (GlimStone follow-up pass, v8.0.0 audit note): it replaces the whole
-  // snapshot-list content area, the same "the section failed to load"
-  // structural condition as the page-level `error` in VMs()/Containers(), not
-  // a one-shot button-click confirmation.
-  const [error, setError] = useState<string | null>(null);
-
   const [reloadTick, setReloadTick] = useState(0);
   const [deletingAll, setDeletingAll] = useState(false);
   const { push } = useToast();
@@ -659,26 +543,9 @@ function VMRestorePanel({
   // the "Delete all" control on a failed delete, alongside the toast below.
   const [shakeDeleteAll, setShakeDeleteAll] = useState(0);
 
-  useEffect(() => {
-    if (!open) return;
-    setLoading(true);
-    setError(null);
-    listVMSnapshots(name, source)
-      .then((res) => {
-        if (res.ok) setSnapshots(res.snapshots ?? []);
-        else setError(res.error ?? t("common.loadBackupsFailed"));
-      })
-      .catch(() => setError(t("common.loadBackupsFailed")))
-      .finally(() => setLoading(false));
-  }, [open, name, source, reloadTick]); // eslint-disable-line react-hooks/exhaustive-deps -- t() is only read to build a failure message; re-fetching on a language switch would be a wasted round-trip
-
-  // GlimStone follow-up pass (v8.0.0): "Delete all" is a one-shot action
-  // failure — was ALSO routed through the section-load `error` above, but the
-  // .finally() below unconditionally bumps reloadTick, which re-fires the
-  // effect and clears `error` again almost immediately (setError(null) at the
-  // top of that effect) — so this failure was already near-invisible before
-  // this pass, a latent dead branch this migration also resolves (same shape
-  // as 0d4d195's CloudCredSetsCard fix). A toast survives that reload.
+  // "Delete all" fails as a toast, not inline. Bumping reloadTick remounts
+  // the timeline below under a fresh key, so it reads the place again instead
+  // of keeping the rows the delete just emptied.
   async function handleDeleteAll() {
     // TODO(#follow-up): richer stake-detail copy ("N snapshots, X GB") belongs
     // here once it ships (deferred — new interpolated i18n keys across all 25
@@ -687,7 +554,7 @@ function VMRestorePanel({
     // deleteConfirm and Files.tsx's deleteBackupsConfirm.
     if (!(await confirm(t("snapshots.deleteAllConfirm")))) return;
     setDeletingAll(true);
-    deleteBackupsVM(name, source)
+    deleteBackupsVM(name, "local")
       .then((res) => {
         if (!res.ok) {
           push(res.error ?? t("common.deleteBackupsFailed"), "fail");
@@ -704,94 +571,41 @@ function VMRestorePanel({
       });
   }
 
-  // Closed renders nothing at all — the trigger lives in VMRow now, so there
+  // Closed renders nothing at all: the trigger lives in VMRow now, so there
   // is no header left to keep painting. Mirrors components/RestorePanel.tsx's
-  // own `if (!open) return null`. The hooks above run either way, so the
-  // snapshot list still refetches on the render that opens it.
+  // own `if (!open) return null`.
   if (!open) return null;
 
   return (
     <>
-        <div className="rounded-card bg-carbon-background px-3 py-1">
-          {/* `source.hint` moved from a permanent `text-caption` <p> under
-              this row onto the "Quelle" label as an InfoBubble — rule 8's
-              "read once, costs vertical space forever" case, the same
-              conversion Flash.tsx got in 63f53d5 and the other three copies
-              (components/RestorePanel.tsx, pages/Config.tsx, pages/Files.tsx)
-              get in this same pass.
-                Moving it also fixes a latent mismatch this row had: the
-              label + SourceToggle are wrapped in <Advanced>, but the <p>
-              explaining what choosing a source DOES sat outside it, so basic
-              mode rendered a hint about a control it wasn't showing. As part
-              of the label it now appears exactly when the toggle does.
-                The old outer `flex flex-col gap-1` wrapper is gone with the
-              <p> (one child left); its `py-2 border-b` moves onto this row,
-              so the row's own box is unchanged. */}
-          <div className="flex items-center gap-2 py-2 border-b border-carbon-border">
-              {/* Source (Local / Off-site) toggle is advanced; basic mode uses local. */}
-              <Advanced>
-                <span className="flex items-center gap-1 text-xs text-carbon-textMuted">
-                  {t("source.label")}
-                  <InfoBubble tip={t("source.hint")} />
-                </span>
-                <SourceToggle source={source} onChange={setSource} disabled={loading} domain="vms" />
-              </Advanced>
-              {snapshots.length > 0 && (
-                // NO bespoke red — byte-identical case to Files.tsx's own
-                // delete-all badge (see that call site for the full history).
-                // The comment here made the same superseded claim, that a
-                // destructive control "is always the fault colour". It is
-                // not: jdp reversed that ("Keine Sonderfarbe für den
-                // Entfernen-Badge"), and d336e532's sweep missed this badge
-                // because that sweep grepped for `statusFail` classes and
-                // this red arrived through Badge's `tone` prop instead.
-                //   `tone="neutral"` matches the neutral secondary chrome
-                // VMs' own "Eintrag entfernen" button took in that sweep.
-                // The label and the confirm dialog carry the meaning;
-                // `glim-shake` survives untouched.
-                // A BUTTON now, same as the folder card and the container card.
-                // jdp reported this on the FOLDER card; it is fixed here in the
-                // same round because it is the same control - byte-identical
-                // props, same key, same shake - and a fix that lands on one of
-                // two identical call sites is how the two started disagreeing
-                // in the first place. See Files.tsx's copy for the full
-                // reasoning on the glyph and on why the label stays stable.
-                <Button
-                  key={shakeDeleteAll}
-                  label={t("snapshots.deleteAll")}
-                  labelKey="snapshots.deleteAll"
-                  tone="neutral"
-                  onClick={() => void handleDeleteAll()}
-                  disabled={deletingAll || loading}
-                  busy={deletingAll}
-                  title={deletingAll ? t("snapshots.deletingAll") : undefined}
-                  className={`ms-auto${shakeDeleteAll ? " glim-shake" : ""}`}
-                />
-              )}
-          </div>
-          <RecentRunsList name={name} domain="vm" t={t} />
-          {loading && (
-            <p className="py-3 text-xs text-carbon-textMuted">{t("common.loadingBackups")}</p>
-          )}
-          {error && (
-            <p className="py-3 text-xs text-statusFail">{error}</p>
-          )}
-          {!loading && !error && snapshots.length === 0 && (
-            <p className="py-3 text-xs text-carbon-textMuted">{t("snapshots.none")}</p>
-          )}
-          {!loading &&
-            snapshots.map((snap) => (
-              <VMSnapshotRow
-                key={snap.id}
-                snap={snap}
-                vmName={name}
-                vmDisplayName={displayName}
-                source={source}
-                onDeleted={() => setReloadTick((n) => n + 1)}
-                t={t}
+      <div className="rounded-card bg-carbon-background px-3 py-1">
+        <RecentRunsList name={name} domain="vm" t={t} />
+        <Timeline
+          key={reloadTick}
+          domain="vms"
+          itemKey={name}
+          itemName={displayName ?? name}
+          open={open}
+          header={(rows) =>
+            rows.some((r) => r.places.some((m) => m.place === "local")) && (
+              <Button
+                key={shakeDeleteAll}
+                label={t("snapshots.deleteAll")}
+                labelKey="snapshots.deleteAll"
+                tone="neutral"
+                onClick={() => void handleDeleteAll()}
+                disabled={deletingAll}
+                busy={deletingAll}
+                title={deletingAll ? t("snapshots.deletingAll") : undefined}
+                className={`self-end my-1${shakeDeleteAll ? " glim-shake" : ""}`}
               />
-            ))}
-        </div>
+            )
+          }
+          renderActions={(pick) => (
+            <VMSnapshotActions pick={pick} vmName={name} vmDisplayName={displayName} t={t} />
+          )}
+        />
+      </div>
       {confirmDialog}
     </>
   );
