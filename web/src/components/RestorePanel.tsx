@@ -427,10 +427,8 @@ function CompareSnapshots({ containerName, t }: { containerName: string; t: T })
   const [error, setError] = useState<string | null>(null);
   const [diff, setDiff] = useState<SnapshotDiff | null>(null);
   const { push } = useToast();
-  // GlimStone standing rule (jdp, live review, emphatic, system-wide): a
-  // failed action toasts AND shakes its button, layered ON TOP of this
-  // button's own pre-existing sticky inline error (kept deliberately — see
-  // this component's header comment above).
+  // A failed compare toasts and shakes the button; the inline error below
+  // stays as well, for the reason the comment above run() gives.
   const [shake, setShake] = useState(0);
 
   // renderActions only ever gets one picked mark at a time, so compare reads
@@ -450,18 +448,10 @@ function CompareSnapshots({ containerName, t }: { containerName: string; t: T })
       .catch(() => setSnapshots([]));
   }, [open, containerName]);
 
-  // GlimStone follow-up pass (v8.0.0) audit note: `diff`/`error` below are
-  // deliberately NOT migrated to a toast, unlike this file's SnapshotTags.submit
-  // sibling. A successful compare renders
-  // a real comparison RESULT the user reads at their own pace — added/changed/
-  // removed file counts and byte totals — not a one-shot completion ping; the
-  // same "reference value" reasoning ExportButton and RestoreProgress's
-  // restored-to path already established. `error` stays paired with it for
-  // the same reason ExportButton/VMExportButton's own error stays inline next
-  // to their "done" result: the two are mutually exclusive views of the SAME
-  // last-compare outcome (a fresh run clears whichever one is showing), so
-  // splitting them onto different UI surfaces (one ephemeral toast, one
-  // sticky inline result) would read as inconsistent.
+  // A compare result is a value the reader works through at their own pace,
+  // not a completion ping, so `diff` stays inline where ExportButton and the
+  // restored-to path keep theirs. `error` shares the slot: the two are the
+  // same last-compare outcome, and the next run clears whichever is showing.
   async function run() {
     if (!from || !to || from === to) return;
     setLoading(true);
@@ -582,15 +572,9 @@ function SnapshotTags({
   const { push } = useToast();
   const shown = displayTags(tags, containerName);
 
-  // NOTE (Task 2 audit, GlimStone standing rule sweep): deliberately NOT given
-  // a `.glim-shake` here, unlike this file's other fixes — there is no
-  // dedicated submit button, only this input's onBlur, and the established
-  // shake mechanism replays by giving the element a fresh `key` (forcing an
-  // unmount+remount). Unmounting a FOCUSED input fires a native blur first,
-  // which would re-invoke submit() with the same still-bad value — a
-  // shake-triggered infinite retry loop. The toast (below, pre-existing)
-  // still fires; the animation is the one piece left as a follow-up pending a
-  // non-remount replay mechanism (e.g. a rAF class-remove-then-readd).
+  // A failed tag toasts but does not shake: the shake replays by remounting
+  // the element under a fresh key, and remounting this still focused input
+  // fires a blur that submits the same rejected value again.
   async function submit() {
     const tag = value.trim();
     if (!tag) {
