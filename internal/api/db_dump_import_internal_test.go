@@ -34,6 +34,9 @@ type importFakeDocker struct {
 	inspect model.Inspect
 
 	stopErr error
+	// stopPanic makes the stop of the database itself panic, once the apps
+	// around it are already down.
+	stopPanic bool
 	// others answers Inspect for the containers around the database.
 	others map[string]model.Inspect
 	// rollbackStopErr answers every stop of the database after the first one.
@@ -72,6 +75,9 @@ func (f *importFakeDocker) Stop(_ context.Context, name string, _ time.Duration)
 	f.calls = append(f.calls, "stop:"+name)
 	if name != f.inspect.ID {
 		return nil
+	}
+	if f.stopPanic {
+		panic("boom while stopping the database")
 	}
 	if f.stops++; f.stops > 1 {
 		return f.rollbackStopErr
@@ -769,6 +775,50 @@ func TestImportStopsTheAppsOfTheDatabaseUntilItIsDone(t *testing.T) {
 			t.Errorf("note = %q, want the app that stayed down named", runs[0].Error)
 		}
 	})
+}
+
+func TestImportPanicNamesTheAppsItLeftStopped(t *testing.T) {
+	rig := newImportRig(t)
+	if err := rig.svc.store.SetStopContainers("pg", []string{"immich_server"}); err != nil {
+		t.Fatal(err)
+	}
+	rig.dock.others = map[string]model.Inspect{
+		"immich_server": {ID: "5e7e7e01", Name: "/immich_server", Running: true},
+	}
+	rig.dock.stopPanic = true
+
+	var run store.Run
+	captureLog(t, func() {
+		if _, err := rig.svc.StartImportDBDump(context.Background(), "pg", "local", importDumpID); err != nil {
+			t.Fatal(err)
+		}
+		run = waitForImportRunClosed(t, rig.svc.store)
+	})
+
+	if run.Status != "failed" {
+		t.Fatalf("run = %+v, want a failed import", run)
+	}
+	if !strings.Contains(run.Error, "recovered panic") {
+		t.Errorf("reason = %q, want the panic recorded", run.Error)
+	}
+	if !strings.HasSuffix(run.Error, "; "+store.ImportTailAppsStopped+": immich_server") {
+		t.Errorf("reason = %q, want the app that stays stopped named, as a normal failure does", run.Error)
+	}
+}
+
+// waitForImportRunClosed polls until the import's run row leaves "running".
+// The panic path closes it after the single-flight guard is already clear.
+func waitForImportRunClosed(t *testing.T, st *store.Repo) store.Run {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		if runs := runsOfKind(t, st, "dbimport"); len(runs) == 1 && runs[0].Status != "running" {
+			return runs[0]
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatal("timed out waiting for the import's run to be closed")
+	return store.Run{}
 }
 
 func TestImportFailureLogLeavesOutTheToolsMessage(t *testing.T) {
