@@ -122,4 +122,19 @@ describe("TimelineDeleteDialog", () => {
     expect(await screen.findByText("A backup is running. Choose again once it has finished.")).toBeTruthy();
     expect(onDone).toHaveBeenCalled();
   });
+
+  it("names the places a refused delete had already emptied", async () => {
+    const atB2 = { place: "offsite:t-b2", label: "B2", snapshotIds: ["a1a1a1a1"] };
+    fake.reply("getTimelineDeletePreview", { ok: true, delete: [atHome, atB2], others: [] });
+    fake.reply("deleteTimelineRow", {
+      ok: false,
+      error: "the credentials of Hetzner have expired",
+      deleted: [atB2],
+      skipped: [],
+    });
+    open([]);
+    fireEvent.click(await screen.findByRole("button", { name: "Delete everywhere" }));
+    expect(await screen.findByText("the credentials of Hetzner have expired")).toBeTruthy();
+    expect(await screen.findByText("Already deleted at: B2")).toBeTruthy();
+  });
 });
