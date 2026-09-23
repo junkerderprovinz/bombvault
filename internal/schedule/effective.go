@@ -122,6 +122,11 @@ func EffectiveFileSetSchedule(fs store.FileSet, s store.Settings) EffectiveSched
 	return effectiveItemSchedule(s.FilesEnabled, fs.Enabled, fs.ScheduleCadence, s.FilesSchedule, s)
 }
 
+// EffectiveZFSDatasetSchedule computes the outcome for one ZFS item.
+func EffectiveZFSDatasetSchedule(d store.ZFSDataset, s store.Settings) EffectiveSchedule {
+	return effectiveItemSchedule(s.ZFSEnabled, d.Enabled, d.ScheduleCadence, s.ZFSSchedule, s)
+}
+
 // cadenceRuns reports whether a cadence string would ever fire. An unparseable
 // cadence counts as not running, which matches registerJobs: it logs and skips.
 func cadenceRuns(cadence string) bool {
