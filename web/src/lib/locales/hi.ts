@@ -142,7 +142,6 @@ const hi: Partial<Translations> = {
   "snapshots.none": "कोई बैकअप नहीं मिला",
   "snapshots.files": "फ़ाइलें",
   "snapshots.delete": "हटाएँ",
-  "snapshots.deleteConfirm": "यह बैकअप हटाएँ? स्नैपशॉट रिपॉज़िटरी से हटा दिया जाता है (जगह खाली करने के लिए सेटिंग्स में Prune चलाएँ)। इसे वापस नहीं किया जा सकता।",
   "snapshots.deleteAll": "सभी बैकअप हटाएँ",
   "snapshots.deleteAllConfirm": "चुने गए स्रोत (लोकल या ऑफ़-साइट) से इस VM के सभी बैकअप हटाएँ? स्नैपशॉट स्थायी रूप से हटा दिए जाते हैं और रिपॉज़िटरी को प्रून कर दिया जाता है। इसे वापस नहीं किया जा सकता।",
   "snapshots.deletingAll": "हटाया जा रहा है…",
@@ -284,7 +283,6 @@ const hi: Partial<Translations> = {
   "source.localTip": "इस होस्ट पर लोकल रिपॉज़िटरी",
   "source.offsiteTip": "ऑफ़-साइट कॉपी",
   "source.offsiteTarget": "ऑफ़-साइट गंतव्य",
-  "source.hint": "रीस्टोर और हटाना केवल चुने गए स्रोत पर असर करते हैं: लोकल बैकअप हटाना कभी ऑफ़-साइट कॉपी को नहीं छूता, और इसका उल्टा भी सही है।",
   "offsite.copyDomainTitle": "ऑफ़-साइट कॉपी {domain}",
   "offsite.schedulePlaceholder": "खाली = हर बैकअप के बाद · जैसे weekly Sun 03:00",
   "offsite.replicateNow": "अभी रेप्लिकेट करें",
@@ -1002,8 +1000,6 @@ const hi: Partial<Translations> = {
   "containers.updateSettingFailed": "सेटिंग अपडेट नहीं हो पाई",
   "vms.loadFailed": "VM लोड नहीं हो पाईं",
   "files.loadSetsFailed": "फ़ोल्डर सेट लोड नहीं हो पाए",
-  "flash.loadBackupsFailed": "फ़्लैश बैकअप लोड नहीं हो पाए",
-  "config.loadBackupsFailed": "सेटिंग्स के बैकअप लोड नहीं हो पाए",
   "config.loadSettingsFailed": "मौजूदा सेटिंग्स लोड नहीं हो पाईं",
   "dashboard.loadRunsFailed": "रन लोड नहीं हो पाए",
 
@@ -1029,7 +1025,6 @@ const hi: Partial<Translations> = {
   "flash.backingUp": "बैकअप लिया जा रहा है…",
   "flash.download": "डाउनलोड करें (.zip)",
   "flash.restoreNote": "रीस्टोर स्नैपशॉट का एक ZIP डाउनलोड करता है। चल रहे /boot को कभी नहीं छुआ जाता। .zip को सीधे Unraid USB क्रिएटर में डालें, या अपना फ़्लैश फिर से बनाने के लिए इसे किसी नए USB पर अनज़िप करें।",
-  "flash.none": "अभी तक कोई फ़्लैश बैकअप नहीं है। ऊपर से एक चलाएँ।",
   "settings.exportsEncryptionTitle": "एक्सपोर्ट और रिपॉज़िटरी एन्क्रिप्शन",
   "settings.exportsEncryptionHint": "सादे एक्सपोर्ट आर्टिफ़ैक्ट्स के एन्क्रिप्शन और restic रिपॉज़िटरीज़ के अपने एन्क्रिप्शन के लिए नियंत्रण।",
   // Scheduled flash zip export
@@ -1073,7 +1068,6 @@ const hi: Partial<Translations> = {
   "config.backingUp": "बैकअप लिया जा रहा है…",
   "config.snapshotsTitle": "सेटिंग्स के बैकअप",
   "config.snapshotsHint": "फिर से बनाए गए सर्वर पर इन सेटिंग्स को रीस्टोर करने के लिए, Recovery टैब का उपयोग करें। सेटिंग्स रीस्टोर करने से BombVault उन्हें लागू करने के लिए फिर से शुरू होता है, इसलिए यह बाकी डिज़ास्टर-रिकवरी फ़्लो के साथ वहीं रहता है।",
-  "config.none": "अभी तक सेटिंग्स का कोई बैकअप नहीं है। ऊपर से एक चलाएँ।",
 
   // Receiver dashboard
   "receiver.title": "रिसीवर",

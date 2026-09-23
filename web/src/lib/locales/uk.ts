@@ -194,7 +194,6 @@ const uk: Partial<Translations> = {
   "source.localTip": "Локальний репозиторій на цьому хості",
   "source.offsiteTip": "Зовнішня копія",
   "source.offsiteTarget": "Зовнішнє призначення",
-  "source.hint": "Відновлення та видалення діють лише на вибране джерело — видалення локальної копії ніколи не зачіпає зовнішню, і навпаки.",
   "offsite.schedulePlaceholder": "порожньо = після кожного бекапу · напр. weekly Sun 03:00",
   "offsite.replicateNow": "Реплікувати зараз",
   "offsite.copyDomainTitle": "Зовнішня копія {domain}",
@@ -440,7 +439,6 @@ const uk: Partial<Translations> = {
   // Files
   "snapshots.files": "Файли",
   "snapshots.delete": "Видалити",
-  "snapshots.deleteConfirm": "Видалити цю резервну копію? Знімок буде видалено з репозиторію (щоб звільнити місце, запустіть Очистити в Налаштуваннях). Не можна скасувати.",
   "snapshots.recreate": "Відтворити зі збереженої конфігурації",
   "snapshots.recreateConfirm": "Відтворити цей контейнер зі збереженої конфігурації? Його буде створено та запущено зі збереженого визначення.",
   "snapshots.configOnlyHint": "Резервна копія лише конфігурації: визначення контейнера збережено, але він не має тек з даними для знімка. Якщо видалити контейнер, він з'явиться в розділі «Не встановлено», де його можна відтворити з цієї конфігурації.",
@@ -537,7 +535,6 @@ const uk: Partial<Translations> = {
   "flash.backingUp": "Копіювання…",
   "flash.download": "Завантажити (.zip)",
   "flash.restoreNote": "Відновлення завантажує ZIP знімка — робочий /boot ніколи не зачіпається. Передайте .zip прямо у створювач USB Unraid або розпакуйте його на нову флешку, щоб відтворити flash.",
-  "flash.none": "Копій Flash ще немає — створіть копію вище.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Шифрування експорту та репозиторію",
@@ -615,8 +612,6 @@ const uk: Partial<Translations> = {
   "containers.updateSettingFailed": "Не вдалося змінити налаштування",
   "vms.loadFailed": "Не вдалося завантажити віртуальні машини",
   "files.loadSetsFailed": "Не вдалося завантажити набори папок",
-  "flash.loadBackupsFailed": "Не вдалося завантажити копії Flash",
-  "config.loadBackupsFailed": "Не вдалося завантажити копії налаштувань",
   "config.loadSettingsFailed": "Не вдалося завантажити поточні налаштування",
   "dashboard.loadRunsFailed": "Не вдалося завантажити запуски",
 
@@ -793,7 +788,6 @@ const uk: Partial<Translations> = {
   "config.backingUp": "Копіювання…",
   "config.snapshotsTitle": "Резервні копії налаштувань",
   "config.snapshotsHint": "Щоб відновити ці налаштування на перебудованому сервері, скористайтеся вкладкою Відновлення — відновлення налаштувань перезапускає BombVault, щоб застосувати їх, тож воно міститься там разом з рештою процесу аварійного відновлення.",
-  "config.none": "Резервних копій налаштувань ще немає — створіть копію вище.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Зовнішня пропускна здатність",

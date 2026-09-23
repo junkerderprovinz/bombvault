@@ -142,7 +142,6 @@ const bg: Partial<Translations> = {
   "snapshots.none": "Не са намерени архивирания",
   "snapshots.files": "Файлове",
   "snapshots.delete": "Изтрий",
-  "snapshots.deleteConfirm": "Да изтрия ли това архивиране? Снапшотът се премахва от хранилището (изпълни Прочистване в Настройки, за да освободиш мястото). Това не може да бъде отменено.",
   "snapshots.deleteAll": "Изтрий всички архивирания",
   "snapshots.deleteAllConfirm": "Да изтрия ли ВСИЧКИ архивирания на тази ВМ от избрания източник (локален или извън обекта)? Снапшотите се премахват завинаги и хранилището се прочиства. Това не може да бъде отменено.",
   "snapshots.deletingAll": "Изтриване…",
@@ -284,7 +283,6 @@ const bg: Partial<Translations> = {
   "source.localTip": "Локално хранилище на този хост",
   "source.offsiteTip": "Копие извън обекта",
   "source.offsiteTarget": "Цел извън обекта",
-  "source.hint": "Възстановяването и изтриването действат само на избрания източник — изтриването на локално архивиране никога не засяга копието извън обекта и обратно.",
   "offsite.copyDomainTitle": "Копие извън обекта {domain}",
   "offsite.schedulePlaceholder": "празно = след всяко архивиране · напр. weekly Sun 03:00",
   "offsite.replicateNow": "Реплицирай сега",
@@ -1002,8 +1000,6 @@ const bg: Partial<Translations> = {
   "containers.updateSettingFailed": "Настройката не можа да бъде променена",
   "vms.loadFailed": "ВМ не можаха да се заредят",
   "files.loadSetsFailed": "Наборите от папки не можаха да се заредят",
-  "flash.loadBackupsFailed": "Архивиранията на Flash не можаха да се заредят",
-  "config.loadBackupsFailed": "Архивиранията на настройките не можаха да се заредят",
   "config.loadSettingsFailed": "Текущите настройки не можаха да се заредят",
   "dashboard.loadRunsFailed": "Изпълненията не можаха да се заредят",
 
@@ -1029,7 +1025,6 @@ const bg: Partial<Translations> = {
   "flash.backingUp": "Архивиране…",
   "flash.download": "Изтегли (.zip)",
   "flash.restoreNote": "Възстановяването изтегля ZIP на снапшота — работещото /boot никога не се засяга. Пусни .zip директно в USB инструмента на Unraid, или го разархивирай на нов USB, за да пресъздадеш своя флаш.",
-  "flash.none": "Все още няма Flash архивирания — стартирай едно по-горе.",
   "settings.exportsEncryptionTitle": "Криптиране на експорти и хранилища",
   "settings.exportsEncryptionHint": "Настройки за криптиране на обикновените експортни артефакти и собственото криптиране на restic хранилищата.",
   // Scheduled flash zip export
@@ -1073,7 +1068,6 @@ const bg: Partial<Translations> = {
   "config.backingUp": "Архивиране…",
   "config.snapshotsTitle": "Архивирания на настройките",
   "config.snapshotsHint": "За да възстановиш тези настройки на пресъздаден сървър, използвай таба Възстановяване — възстановяването на настройки рестартира BombVault, за да ги приложи, затова живее там заедно с останалия процес за възстановяване при бедствие.",
-  "config.none": "Все още няма архивирания на настройки — стартирай едно по-горе.",
 
   // Receiver dashboard
   "receiver.title": "Приемник",

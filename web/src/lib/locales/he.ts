@@ -196,7 +196,6 @@ const he: Partial<Translations> = {
   "source.localTip": "מאגר מקומי במארח הזה",
   "source.offsiteTip": "עותק מחוץ לאתר",
   "source.offsiteTarget": "יעד מחוץ לאתר",
-  "source.hint": "שחזור ומחיקה פועלים רק על המקור הנבחר: מחיקת גיבוי מקומי לעולם לא נוגעת בעותק מחוץ לאתר, ולהפך.",
   "offsite.schedulePlaceholder": "ריק = אחרי כל גיבוי · לדוגמה weekly Sun 03:00",
   "offsite.replicateNow": "שכפל עכשיו",
   "offsite.copyDomainTitle": "עותק מחוץ לאתר {domain}",
@@ -443,7 +442,6 @@ const he: Partial<Translations> = {
   // Backups — files
   "snapshots.files": "קבצים",
   "snapshots.delete": "מחיקה",
-  "snapshots.deleteConfirm": "למחוק את הגיבוי הזה? תמונת המצב מוסרת מהמאגר (הרץ גיזום בהגדרות לשחרור המקום). לא ניתן לבטל.",
   "snapshots.recreate": "צור מחדש מההגדרה השמורה",
   "snapshots.recreateConfirm": "ליצור מחדש את הקונטיינר הזה מההגדרה השמורה? הוא ייווצר ויופעל מההגדרה המאוחסנת.",
   "snapshots.configOnlyHint": "גיבוי הגדרה בלבד: הגדרת הקונטיינר נשמרה, אך אין לו תיקיות נתונים לצילום. אם תמחק אותו הוא יופיע תחת \"לא מותקן\", שם תוכל ליצור אותו מחדש מההגדרה הזו.",
@@ -542,7 +540,6 @@ const he: Partial<Translations> = {
   "flash.backingUp": "מגבה…",
   "flash.download": "הורדה (.zip)",
   "flash.restoreNote": "השחזור מוריד קובץ ZIP של התמונה. ה‑/boot הפעיל לעולם לא נוגעים בו. גררו את ה‑.zip ישירות אל יוצר ה‑USB של Unraid, או חלצו אותו ל‑USB חדש כדי לבנות מחדש את ה‑flash.",
-  "flash.none": "אין עדיין גיבויי flash. הרץ גיבוי למעלה.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "הצפנת ייצוא ומאגר",
@@ -620,8 +617,6 @@ const he: Partial<Translations> = {
   "containers.updateSettingFailed": "לא ניתן היה לעדכן את ההגדרה",
   "vms.loadFailed": "טעינת ה-VMs נכשלה",
   "files.loadSetsFailed": "טעינת ערכות התיקיות נכשלה",
-  "flash.loadBackupsFailed": "טעינת גיבויי ה-Flash נכשלה",
-  "config.loadBackupsFailed": "טעינת גיבויי ההגדרות נכשלה",
   "config.loadSettingsFailed": "לא ניתן היה לטעון את ההגדרות הנוכחיות",
   "dashboard.loadRunsFailed": "טעינת ההרצות נכשלה",
 
@@ -1075,7 +1070,6 @@ const he: Partial<Translations> = {
   "config.backingUp": "מגבה…",
   "config.snapshotsTitle": "גיבויי הגדרות",
   "config.snapshotsHint": "כדי לשחזר הגדרות אלה על שרת שנבנה מחדש, השתמש בלשונית ההתאוששות: שחזור ההגדרות מפעיל מחדש את BombVault כדי להחיל אותן, ולכן הוא נמצא שם יחד עם שאר תהליך ההתאוששות מאסון.",
-  "config.none": "אין עדיין גיבויי הגדרות. הרץ גיבוי למעלה.",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "תבניות החרגה",

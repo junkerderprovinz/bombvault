@@ -196,7 +196,6 @@ const ko: Partial<Translations> = {
   "source.localTip": "이 호스트의 로컬 저장소",
   "source.offsiteTip": "오프사이트 복사",
   "source.offsiteTarget": "오프사이트 대상",
-  "source.hint": "복원과 삭제는 선택한 소스에만 적용됩니다. 로컬 백업을 삭제해도 오프사이트 사본은 건드리지 않으며 그 반대도 마찬가지입니다.",
   "offsite.schedulePlaceholder": "비움 = 매 백업 후 · 예: weekly Sun 03:00",
   "offsite.replicateNow": "지금 복제",
   "offsite.copyDomainTitle": "오프사이트 복사 {domain}",
@@ -442,7 +441,6 @@ const ko: Partial<Translations> = {
 
   "snapshots.files": "파일",
   "snapshots.delete": "삭제",
-  "snapshots.deleteConfirm": "이 백업을 삭제할까요? 스냅샷이 저장소에서 제거됩니다(공간 회수는 설정에서 정리 실행). 되돌릴 수 없습니다.",
   "snapshots.recreate": "저장된 설정에서 재생성",
   "snapshots.recreateConfirm": "이 컨테이너를 저장된 설정에서 재생성할까요? 저장된 정의에서 생성되어 시작됩니다.",
   "snapshots.configOnlyHint": "구성 전용 백업: 컨테이너 정의는 저장되어 있지만 스냅샷할 데이터 폴더가 없습니다. 컨테이너를 삭제하면 \"설치되지 않음\"에 표시되며 이 구성에서 재생성할 수 있습니다.",
@@ -535,7 +533,6 @@ const ko: Partial<Translations> = {
   "flash.backingUp": "백업 중…",
   "flash.download": "다운로드 (.zip)",
   "flash.restoreNote": "복원은 스냅샷의 ZIP을 다운로드합니다. 실행 중인 /boot은 절대 건드리지 않습니다. .zip을 Unraid USB 작성기에 바로 넣거나 새 USB에 압축 해제하여 플래시를 다시 구성하세요.",
-  "flash.none": "아직 플래시 백업이 없습니다. 위에서 백업을 실행하세요.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "내보내기 및 저장소 암호화",
@@ -612,8 +609,6 @@ const ko: Partial<Translations> = {
   "containers.updateSettingFailed": "설정을 변경하지 못했습니다",
   "vms.loadFailed": "VM을 불러오지 못했습니다",
   "files.loadSetsFailed": "폴더 세트를 불러오지 못했습니다",
-  "flash.loadBackupsFailed": "플래시 백업을 불러오지 못했습니다",
-  "config.loadBackupsFailed": "설정 백업을 불러오지 못했습니다",
   "config.loadSettingsFailed": "현재 설정을 불러올 수 없습니다",
   "dashboard.loadRunsFailed": "실행 기록을 불러오지 못했습니다",
 
@@ -1067,7 +1062,6 @@ const ko: Partial<Translations> = {
   "config.backingUp": "백업 중…",
   "config.snapshotsTitle": "설정 백업",
   "config.snapshotsHint": "이 설정을 재구축된 서버에 복원하려면 복구 탭을 사용하세요. 설정을 복원하면 BombVault가 재시작되어 적용되므로, 나머지 재해 복구 흐름과 함께 그곳에 있습니다.",
-  "config.none": "아직 설정 백업이 없습니다. 위에서 백업을 실행하세요.",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "제외 패턴",

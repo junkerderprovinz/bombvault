@@ -196,7 +196,6 @@ const ja: Partial<Translations> = {
   "source.localTip": "このホスト上のローカルリポジトリ",
   "source.offsiteTip": "オフサイトコピー",
   "source.offsiteTarget": "オフサイトの宛先",
-  "source.hint": "復元と削除は選択中のソースにのみ作用します。ローカルバックアップを削除してもオフサイトのコピーには影響せず、その逆も同様です。",
   "offsite.schedulePlaceholder": "空欄 = 毎回のバックアップ後 · 例: weekly Sun 03:00",
   "offsite.replicateNow": "今すぐ複製",
   "offsite.copyDomainTitle": "オフサイトコピー {domain}",
@@ -442,7 +441,6 @@ const ja: Partial<Translations> = {
 
   "snapshots.files": "ファイル",
   "snapshots.delete": "削除",
-  "snapshots.deleteConfirm": "このバックアップを削除しますか？スナップショットはリポジトリから削除されます（領域回収は設定の「整理」を実行）。元に戻せません。",
   "snapshots.recreate": "保存した設定から再作成",
   "snapshots.recreateConfirm": "このコンテナを保存した設定から再作成しますか？保存された定義から作成して起動します。",
   "snapshots.configOnlyHint": "設定のみのバックアップ: コンテナの定義は保存されていますが、スナップショットを取るデータフォルダはありません。削除すると「未インストール」に表示され、この設定から再作成できます。",
@@ -535,7 +533,6 @@ const ja: Partial<Translations> = {
   "flash.backingUp": "バックアップ中…",
   "flash.download": "ダウンロード (.zip)",
   "flash.restoreNote": "復元はスナップショットの ZIP をダウンロードします。実行中の /boot には一切触れません。.zip をそのまま Unraid の USB クリエーターに入れるか、新しい USB に展開してフラッシュを再構築してください。",
-  "flash.none": "フラッシュバックアップはまだありません。上でバックアップを実行してください。",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "エクスポートとリポジトリの暗号化",
@@ -612,8 +609,6 @@ const ja: Partial<Translations> = {
   "containers.updateSettingFailed": "設定を変更できませんでした",
   "vms.loadFailed": "VM を読み込めませんでした",
   "files.loadSetsFailed": "フォルダーセットを読み込めませんでした",
-  "flash.loadBackupsFailed": "フラッシュバックアップを読み込めませんでした",
-  "config.loadBackupsFailed": "設定のバックアップを読み込めませんでした",
   "config.loadSettingsFailed": "現在の設定を読み込めませんでした",
   "dashboard.loadRunsFailed": "実行履歴を読み込めませんでした",
 
@@ -1067,7 +1062,6 @@ const ja: Partial<Translations> = {
   "config.backingUp": "バックアップ中…",
   "config.snapshotsTitle": "設定バックアップ",
   "config.snapshotsHint": "これらの設定を再構築したサーバーに復元するには、リカバリータブを使用してください。設定を復元すると BombVault が再起動して適用するため、他の災害復旧フローと共にそこにあります。",
-  "config.none": "設定バックアップはまだありません。上でバックアップを実行してください。",
 
   // Per-container exclude patterns (#36)
   "excludes.title": "除外パターン",

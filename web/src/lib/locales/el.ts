@@ -196,7 +196,6 @@ const el: Partial<Translations> = {
   "source.localTip": "Τοπικό αποθετήριο σε αυτόν τον υπολογιστή",
   "source.offsiteTip": "Αντίγραφο εκτός τόπου",
   "source.offsiteTarget": "Προορισμός εκτός τόπου",
-  "source.hint": "Η επαναφορά και η διαγραφή επενεργούν μόνο στην επιλεγμένη πηγή: η διαγραφή τοπικού αντιγράφου δεν αγγίζει ποτέ το αντίγραφο εκτός τόπου, και αντίστροφα.",
   "offsite.schedulePlaceholder": "κενό = μετά από κάθε αντίγραφο · π.χ. weekly Sun 03:00",
   "offsite.replicateNow": "Αναπαραγωγή τώρα",
   "offsite.copyDomainTitle": "Αντίγραφο εκτός τόπου {domain}",
@@ -443,7 +442,6 @@ const el: Partial<Translations> = {
   // Backups — files
   "snapshots.files": "Αρχεία",
   "snapshots.delete": "Διαγραφή",
-  "snapshots.deleteConfirm": "Διαγραφή αυτού του αντιγράφου; Το στιγμιότυπο αφαιρείται από το αποθετήριο (εκτελέστε Εκκαθάριση στις Ρυθμίσεις για ανάκτηση χώρου). Μη αναστρέψιμο.",
   "snapshots.recreate": "Επαναδημιουργία από αποθηκευμένη ρύθμιση",
   "snapshots.recreateConfirm": "Επαναδημιουργία αυτού του container από την αποθηκευμένη ρύθμιση; Δημιουργείται και ξεκινά από τον αποθηκευμένο ορισμό.",
   "snapshots.configOnlyHint": "Αντίγραφο μόνο ρυθμίσεων: ο ορισμός του container αποθηκεύεται, αλλά δεν έχει φακέλους δεδομένων για στιγμιότυπο. Αν το διαγράψετε, εμφανίζεται στο \"Μη εγκατεστημένα\", όπου μπορείτε να το επαναδημιουργήσετε από αυτή τη ρύθμιση.",
@@ -542,7 +540,6 @@ const el: Partial<Translations> = {
   "flash.backingUp": "Δημιουργία αντιγράφου…",
   "flash.download": "Λήψη (.zip)",
   "flash.restoreNote": "Η επαναφορά κατεβάζει ένα ZIP του στιγμιότυπου. Το /boot που εκτελείται δεν αγγίζεται ποτέ. Ρίξτε το .zip απευθείας στο εργαλείο δημιουργίας USB του Unraid ή αποσυμπιέστε το σε ένα νέο USB για να αναδημιουργήσετε το flash.",
-  "flash.none": "Δεν υπάρχουν ακόμα αντίγραφα flash. Εκτελέστε ένα αντίγραφο παραπάνω.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Κρυπτογράφηση Εξαγωγής & Αποθετηρίου",
@@ -620,8 +617,6 @@ const el: Partial<Translations> = {
   "containers.updateSettingFailed": "Αποτυχία ενημέρωσης της ρύθμισης",
   "vms.loadFailed": "Αποτυχία φόρτωσης VMs",
   "files.loadSetsFailed": "Αποτυχία φόρτωσης συνόλων φακέλων",
-  "flash.loadBackupsFailed": "Αποτυχία φόρτωσης αντιγράφων Flash",
-  "config.loadBackupsFailed": "Αποτυχία φόρτωσης αντιγράφων ρυθμίσεων",
   "config.loadSettingsFailed": "Δεν ήταν δυνατή η φόρτωση των τρεχουσών ρυθμίσεων",
   "dashboard.loadRunsFailed": "Αποτυχία φόρτωσης εκτελέσεων",
 
@@ -782,7 +777,6 @@ const el: Partial<Translations> = {
   "config.backingUp": "Δημιουργία αντιγράφου…",
   "config.snapshotsTitle": "Αντίγραφα ρυθμίσεων",
   "config.snapshotsHint": "Για να επαναφέρετε αυτές τις ρυθμίσεις σε έναν ανακατασκευασμένο διακομιστή, χρησιμοποιήστε την καρτέλα Ανάκτηση. Η επαναφορά των ρυθμίσεων επανεκκινεί το BombVault για να τις εφαρμόσει, γι' αυτό βρίσκεται εκεί μαζί με την υπόλοιπη ροή ανάκτησης από καταστροφή.",
-  "config.none": "Δεν υπάρχουν ακόμα αντίγραφα ρυθμίσεων. Εκτελέστε ένα αντίγραφο παραπάνω.",
 
   // Recovery — restore BombVault's own settings step
   "recovery.stepConfig": "Επαναφορά των ρυθμίσεων του ίδιου του BombVault",

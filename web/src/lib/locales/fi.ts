@@ -196,7 +196,6 @@ const fi: Partial<Translations> = {
   "source.localTip": "Paikallinen tietovarasto tällä isännällä",
   "source.offsiteTip": "Etäkopio",
   "source.offsiteTarget": "Etäkohde",
-  "source.hint": "Palautus ja poisto kohdistuvat vain valittuun lähteeseen. Paikallisen varmuuskopion poisto ei koskaan vaikuta etäkopioon ja päinvastoin.",
   "offsite.schedulePlaceholder": "tyhjä = jokaisen varmuuskopion jälkeen · esim. weekly Sun 03:00",
   "offsite.replicateNow": "Replikoi nyt",
   "offsite.copyDomainTitle": "Etäkopio {domain}",
@@ -443,7 +442,6 @@ const fi: Partial<Translations> = {
   // Backups — files
   "snapshots.files": "Tiedostot",
   "snapshots.delete": "Poista",
-  "snapshots.deleteConfirm": "Poistetaanko tämä varmuuskopio? Tilannevedos poistetaan repositoriosta (vapauta tila ajamalla Karsi Asetuksissa). Ei voi perua.",
   "snapshots.recreate": "Luo uudelleen tallennetusta asetuksesta",
   "snapshots.recreateConfirm": "Luodaanko tämä säiliö uudelleen tallennetusta asetuksesta? Se luodaan ja käynnistetään tallennetusta määrityksestä.",
   "snapshots.configOnlyHint": "Vain-asetukset-varmuuskopio: säiliön määritys on tallennettu, mutta sillä ei ole datakansioita kuvattavaksi. Jos poistat säiliön, se näkyy kohdassa \"Ei asennettu\", jossa voit luoda sen uudelleen tästä asetuksesta.",
@@ -542,7 +540,6 @@ const fi: Partial<Translations> = {
   "flash.backingUp": "Varmuuskopioidaan…",
   "flash.download": "Lataa (.zip)",
   "flash.restoreNote": "Palautus lataa tilannevedoksesta ZIP-tiedoston. Käynnissä olevaan /boot-osioon ei kosketa. Vie .zip suoraan Unraidin USB-luojaan tai pura se uudelle USB-tikulle flashin uudelleenrakentamiseksi.",
-  "flash.none": "Ei vielä flash-varmuuskopioita. Suorita varmuuskopio yllä.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Viennin ja tietovaraston salaus",
@@ -620,8 +617,6 @@ const fi: Partial<Translations> = {
   "containers.updateSettingFailed": "Asetuksen päivitys epäonnistui",
   "vms.loadFailed": "VM:ien lataus epäonnistui",
   "files.loadSetsFailed": "Kansiojoukkojen lataus epäonnistui",
-  "flash.loadBackupsFailed": "Flash-varmuuskopioiden lataus epäonnistui",
-  "config.loadBackupsFailed": "Asetusten varmuuskopioiden lataus epäonnistui",
   "config.loadSettingsFailed": "Nykyisiä asetuksia ei voitu ladata",
   "dashboard.loadRunsFailed": "Ajojen lataus epäonnistui",
 
@@ -782,7 +777,6 @@ const fi: Partial<Translations> = {
   "config.backingUp": "Varmuuskopioidaan…",
   "config.snapshotsTitle": "Asetusten varmuuskopiot",
   "config.snapshotsHint": "Palauttaaksesi nämä asetukset uudelleenrakennetulle palvelimelle käytä Palautus-välilehteä. Asetusten palautus käynnistää BombVaultin uudelleen ottaakseen ne käyttöön, joten se sijaitsee siellä muun katastrofista toipumisen kulun kanssa.",
-  "config.none": "Ei vielä asetusten varmuuskopioita. Suorita varmuuskopio yllä.",
 
   // Recovery — restore BombVault's own settings step
   "recovery.stepConfig": "Palauta BombVaultin omat asetukset",

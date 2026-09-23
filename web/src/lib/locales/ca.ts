@@ -142,7 +142,6 @@ const ca: Partial<Translations> = {
   "snapshots.none": "No s'ha trobat cap còpia",
   "snapshots.files": "Fitxers",
   "snapshots.delete": "Elimina",
-  "snapshots.deleteConfirm": "Vols eliminar aquesta còpia? L'instantani s'esborra del repositori (executa Neteja a Configuració per alliberar l'espai). Això no es pot desfer.",
   "snapshots.deleteAll": "Elimina totes les còpies",
   "snapshots.deleteAllConfirm": "Vols eliminar TOTES les còpies d'aquesta MV des de l'origen seleccionat (local o extern)? Els instantanis s'eliminen permanentment i el repositori es neteja. Això no es pot desfer.",
   "snapshots.deletingAll": "Eliminant…",
@@ -284,7 +283,6 @@ const ca: Partial<Translations> = {
   "source.localTip": "Repositori local en aquest amfitrió",
   "source.offsiteTip": "Còpia externa",
   "source.offsiteTarget": "Destí extern",
-  "source.hint": "Restaurar i eliminar només afecten l'origen seleccionat. Eliminar una còpia local mai toca la còpia externa, i viceversa.",
   "offsite.copyDomainTitle": "Còpia externa {domain}",
   "offsite.schedulePlaceholder": "buit = després de cada còpia · p. ex. weekly Sun 03:00",
   "offsite.replicateNow": "Replica ara",
@@ -1002,8 +1000,6 @@ const ca: Partial<Translations> = {
   "containers.updateSettingFailed": "No s'ha pogut actualitzar l'opció",
   "vms.loadFailed": "No s'han pogut carregar les MV",
   "files.loadSetsFailed": "No s'han pogut carregar els conjunts de carpetes",
-  "flash.loadBackupsFailed": "No s'han pogut carregar les còpies del Flash",
-  "config.loadBackupsFailed": "No s'han pogut carregar les còpies de la configuració",
   "config.loadSettingsFailed": "No s'ha pogut carregar la configuració actual",
   "dashboard.loadRunsFailed": "No s'han pogut carregar les execucions",
 
@@ -1029,7 +1025,6 @@ const ca: Partial<Translations> = {
   "flash.backingUp": "Fent còpia…",
   "flash.download": "Descarrega (.zip)",
   "flash.restoreNote": "Restaurar descarrega un ZIP de l'instantani. El /boot en execució mai es toca. Posa el .zip directament al creador de USB d'Unraid, o descomprimeix-lo en un USB nou per reconstruir el teu Flash.",
-  "flash.none": "Encara no hi ha còpies de Flash. Engega'n una a dalt.",
   "settings.exportsEncryptionTitle": "Xifratge d'exportacions i repositoris",
   "settings.exportsEncryptionHint": "Controls per xifrar els artefactes d'exportació simples i el xifratge propi dels repositoris restic.",
   // Scheduled flash zip export
@@ -1073,7 +1068,6 @@ const ca: Partial<Translations> = {
   "config.backingUp": "Fent còpia…",
   "config.snapshotsTitle": "Còpies de configuració",
   "config.snapshotsHint": "Per restaurar aquesta configuració en un servidor reconstruït, fes servir la pestanya de Recuperació. Restaurar la configuració reinicia BombVault per aplicar-la, per això hi viu junt amb la resta del flux de recuperació d'avaries.",
-  "config.none": "Encara no hi ha còpies de configuració. Engega'n una a dalt.",
 
   // Receiver dashboard
   "receiver.title": "Receptor",

@@ -193,7 +193,6 @@ const pl: Partial<Translations> = {
   "source.localTip": "Lokalne repozytorium na tym hoście",
   "source.offsiteTip": "Kopia poza siedzibą",
   "source.offsiteTarget": "Cel poza siedzibą",
-  "source.hint": "Przywracanie i usuwanie działają tylko na wybranym źródle: usunięcie kopii lokalnej nigdy nie narusza kopii poza siedzibą i odwrotnie.",
   "offsite.schedulePlaceholder": "puste = po każdej kopii · np. weekly Sun 03:00",
   "offsite.replicateNow": "Replikuj teraz",
   "offsite.copyDomainTitle": "Kopia poza siedzibą {domain}",
@@ -437,7 +436,6 @@ const pl: Partial<Translations> = {
   // Files
   "snapshots.files": "Pliki",
   "snapshots.delete": "Usuń",
-  "snapshots.deleteConfirm": "Usunąć tę kopię? Migawka zostanie usunięta z repozytorium (aby odzyskać miejsce, uruchom Przytnij w Ustawieniach). Nie można cofnąć.",
   "snapshots.recreate": "Odtwórz z zapisanej konfiguracji",
   "snapshots.recreateConfirm": "Odtworzyć ten kontener z zapisanej konfiguracji? Zostanie utworzony i uruchomiony z zapisanej definicji.",
   "snapshots.configOnlyHint": "Kopia tylko konfiguracji: definicja kontenera jest zapisana, ale nie ma folderów danych do migawki. Po usunięciu pojawi się w sekcji „Niezainstalowane“, gdzie można go odtworzyć z tej konfiguracji.",
@@ -534,7 +532,6 @@ const pl: Partial<Translations> = {
   "flash.backingUp": "Tworzenie kopii…",
   "flash.download": "Pobierz (.zip)",
   "flash.restoreNote": "Przywracanie pobiera ZIP migawki. Działający /boot nigdy nie jest naruszany. Wrzuć .zip bezpośrednio do kreatora USB Unraid lub rozpakuj go na nowy nośnik USB, aby odtworzyć flash.",
-  "flash.none": "Brak kopii Flash. Utwórz kopię powyżej.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Szyfrowanie eksportu i repozytorium",
@@ -612,8 +609,6 @@ const pl: Partial<Translations> = {
   "containers.updateSettingFailed": "Nie udało się zmienić ustawienia",
   "vms.loadFailed": "Nie udało się załadować maszyn wirtualnych",
   "files.loadSetsFailed": "Nie udało się załadować zestawów folderów",
-  "flash.loadBackupsFailed": "Nie udało się załadować kopii Flash",
-  "config.loadBackupsFailed": "Nie udało się załadować kopii ustawień",
   "config.loadSettingsFailed": "Nie udało się załadować bieżących ustawień",
   "dashboard.loadRunsFailed": "Nie udało się załadować uruchomień",
 
@@ -1066,7 +1061,6 @@ const pl: Partial<Translations> = {
   "config.backingUp": "Tworzenie kopii…",
   "config.snapshotsTitle": "Kopie ustawień",
   "config.snapshotsHint": "Aby przywrócić te ustawienia na odbudowanym serwerze, użyj zakładki Odzyskiwanie. Przywrócenie ustawień restartuje BombVault, aby je zastosować, dlatego znajduje się tam wraz z resztą procesu odzyskiwania po awarii.",
-  "config.none": "Brak kopii ustawień. Utwórz kopię powyżej.",
   "nav.config": "Autokopia",
   "settings.configEnabled": "Autokopia",
   "settings.configEnabledHint": "Kopia zapasowa własnych ustawień, celów i danych uwierzytelniających BombVault, dzięki czemu świeża instalacja też może przywrócić swoją konfigurację (autokopia).",

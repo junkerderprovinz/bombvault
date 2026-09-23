@@ -142,7 +142,6 @@ const lt: Partial<Translations> = {
   "snapshots.none": "Atsarginių kopijų nerasta",
   "snapshots.files": "Failai",
   "snapshots.delete": "Ištrinti",
-  "snapshots.deleteConfirm": "Ištrinti šią atsarginę kopiją? Momentinė kopija pašalinama iš saugyklos (norėdami atlaisvinti vietą, Nustatymuose paleiskite Valymą). Šio veiksmo negalima atšaukti.",
   "snapshots.deleteAll": "Ištrinti visas atsargines kopijas",
   "snapshots.deleteAllConfirm": "Ištrinti VISAS šios VM kopijas iš pasirinkto šaltinio (vietinio arba nuotolinio)? Momentinės kopijos negrįžtamai pašalinamos, o saugykla išvaloma. Šio veiksmo negalima atšaukti.",
   "snapshots.deletingAll": "Trinama…",
@@ -284,7 +283,6 @@ const lt: Partial<Translations> = {
   "source.localTip": "Vietinė saugykla šiame pagrindiniame kompiuteryje",
   "source.offsiteTip": "Nuotolinė kopija",
   "source.offsiteTarget": "Nuotolinė paskirtis",
-  "source.hint": "Atkūrimas ir trynimas veikia tik pasirinktą šaltinį. Ištrynus vietinę kopiją niekada nepaliečiama nuotolinė kopija, ir atvirkščiai.",
   "offsite.copyDomainTitle": "Nuotolinė kopija {domain}",
   "offsite.schedulePlaceholder": "tuščia = po kiekvienos atsarginės kopijos · pvz. weekly Sun 03:00",
   "offsite.replicateNow": "Replikuoti dabar",
@@ -1002,8 +1000,6 @@ const lt: Partial<Translations> = {
   "containers.updateSettingFailed": "Nepavyko pakeisti nustatymo",
   "vms.loadFailed": "Nepavyko įkelti VM",
   "files.loadSetsFailed": "Nepavyko įkelti aplankų rinkinių",
-  "flash.loadBackupsFailed": "Nepavyko įkelti Flash atsarginių kopijų",
-  "config.loadBackupsFailed": "Nepavyko įkelti nustatymų atsarginių kopijų",
   "config.loadSettingsFailed": "Nepavyko įkelti dabartinių nustatymų",
   "dashboard.loadRunsFailed": "Nepavyko įkelti vykdymų",
 
@@ -1029,7 +1025,6 @@ const lt: Partial<Translations> = {
   "flash.backingUp": "Kopijuojama…",
   "flash.download": "Atsisiųsti (.zip)",
   "flash.restoreNote": "Atkūrimas atsisiunčia momentinės kopijos ZIP. Veikiantis /boot niekada nekeičiamas. Įdėkite .zip tiesiai į Unraid USB kūrimo įrankį arba išpakuokite jį į naują USB, kad atkurtumėte savo Flash.",
-  "flash.none": "Flash atsarginių kopijų dar nėra. Paleiskite vieną aukščiau.",
   "settings.exportsEncryptionTitle": "Eksportų ir saugyklų šifravimas",
   "settings.exportsEncryptionHint": "Paprastų eksporto artefaktų šifravimo valdikliai ir pačių restic saugyklų šifravimas.",
   // Scheduled flash zip export
@@ -1073,7 +1068,6 @@ const lt: Partial<Translations> = {
   "config.backingUp": "Kopijuojama…",
   "config.snapshotsTitle": "Nustatymų atsarginės kopijos",
   "config.snapshotsHint": "Norėdami atkurti šiuos nustatymus atkurtame serveryje, naudokite Atkūrimo skirtuką. Nustatymų atkūrimas iš naujo paleidžia BombVault, kad juos pritaikytų, todėl jis gyvena ten kartu su likusiu nelaimių atkūrimo procesu.",
-  "config.none": "Nustatymų atsarginių kopijų dar nėra. Paleiskite vieną aukščiau.",
 
   // Receiver dashboard
   "receiver.title": "Imtuvas",

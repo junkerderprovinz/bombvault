@@ -142,7 +142,6 @@ const id: Partial<Translations> = {
   "snapshots.none": "Tidak ada cadangan yang ditemukan",
   "snapshots.files": "File",
   "snapshots.delete": "Hapus",
-  "snapshots.deleteConfirm": "Hapus cadangan ini? Snapshot dihapus dari repositori (jalankan Prune di Pengaturan untuk membebaskan ruang). Ini tidak dapat dibatalkan.",
   "snapshots.deleteAll": "Hapus semua cadangan",
   "snapshots.deleteAllConfirm": "Hapus SEMUA cadangan VM ini dari sumber yang dipilih (lokal atau off-site)? Snapshot dihapus secara permanen dan repositori di-prune. Ini tidak dapat dibatalkan.",
   "snapshots.deletingAll": "Menghapus…",
@@ -284,7 +283,6 @@ const id: Partial<Translations> = {
   "source.localTip": "Repositori lokal di host ini",
   "source.offsiteTip": "Salinan off-site",
   "source.offsiteTarget": "Target off-site",
-  "source.hint": "Pemulihan dan penghapusan hanya bertindak pada sumber yang dipilih: menghapus cadangan lokal tidak pernah menyentuh salinan off-site, dan sebaliknya.",
   "offsite.copyDomainTitle": "Salinan off-site {domain}",
   "offsite.schedulePlaceholder": "kosong = setelah setiap pencadangan · mis. weekly Sun 03:00",
   "offsite.replicateNow": "Replikasi sekarang",
@@ -1002,8 +1000,6 @@ const id: Partial<Translations> = {
   "containers.updateSettingFailed": "Pengaturan gagal diperbarui",
   "vms.loadFailed": "VM gagal dimuat",
   "files.loadSetsFailed": "Set folder gagal dimuat",
-  "flash.loadBackupsFailed": "Cadangan Flash gagal dimuat",
-  "config.loadBackupsFailed": "Cadangan pengaturan gagal dimuat",
   "config.loadSettingsFailed": "Pengaturan saat ini tidak dapat dimuat",
   "dashboard.loadRunsFailed": "Eksekusi gagal dimuat",
 
@@ -1029,7 +1025,6 @@ const id: Partial<Translations> = {
   "flash.backingUp": "Mencadangkan…",
   "flash.download": "Unduh (.zip)",
   "flash.restoreNote": "Pemulihan mengunduh ZIP dari snapshot. /boot yang sedang berjalan tidak pernah disentuh. Masukkan .zip langsung ke pembuat USB Unraid, atau ekstrak ke USB baru untuk membangun kembali flash Anda.",
-  "flash.none": "Belum ada cadangan flash. Jalankan satu di atas.",
   "settings.exportsEncryptionTitle": "Enkripsi ekspor & repositori",
   "settings.exportsEncryptionHint": "Kontrol untuk mengenkripsi artefak ekspor biasa dan enkripsi repositori restic itu sendiri.",
   // Scheduled flash zip export
@@ -1073,7 +1068,6 @@ const id: Partial<Translations> = {
   "config.backingUp": "Mencadangkan…",
   "config.snapshotsTitle": "Cadangan pengaturan",
   "config.snapshotsHint": "Untuk memulihkan pengaturan ini di server yang dibangun ulang, gunakan tab Pemulihan. Memulihkan pengaturan memulai ulang BombVault untuk menerapkannya, karena itu ia berada di sana bersama alur pemulihan bencana lainnya.",
-  "config.none": "Belum ada cadangan pengaturan. Jalankan satu di atas.",
 
   // Receiver dashboard
   "receiver.title": "Penerima",

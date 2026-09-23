@@ -142,7 +142,6 @@ const ms: Partial<Translations> = {
   "snapshots.none": "Tiada sandaran dijumpai",
   "snapshots.files": "Fail",
   "snapshots.delete": "Padam",
-  "snapshots.deleteConfirm": "Padam sandaran ini? Snapshot dipadamkan daripada repositori (jalankan Prune dalam Tetapan untuk membebaskan ruang). Ini tidak boleh dibuat asal.",
   "snapshots.deleteAll": "Padam semua sandaran",
   "snapshots.deleteAllConfirm": "Padam SEMUA sandaran VM ini daripada sumber yang dipilih (setempat atau luar tapak)? Snapshot dipadamkan secara kekal dan repositori di-prune. Ini tidak boleh dibuat asal.",
   "snapshots.deletingAll": "Memadam…",
@@ -284,7 +283,6 @@ const ms: Partial<Translations> = {
   "source.localTip": "Repositori setempat pada hos ini",
   "source.offsiteTip": "Salinan luar tapak",
   "source.offsiteTarget": "Sasaran luar tapak",
-  "source.hint": "Pemulihan dan pemadaman hanya bertindak ke atas sumber yang dipilih. Memadam sandaran setempat tidak sekali-kali menyentuh salinan luar tapak, dan sebaliknya.",
   "offsite.copyDomainTitle": "Salinan luar tapak {domain}",
   "offsite.schedulePlaceholder": "kosong = selepas setiap sandaran · cth. weekly Sun 03:00",
   "offsite.replicateNow": "Replikasikan sekarang",
@@ -1002,8 +1000,6 @@ const ms: Partial<Translations> = {
   "containers.updateSettingFailed": "Gagal mengemas kini tetapan",
   "vms.loadFailed": "Gagal memuatkan VM",
   "files.loadSetsFailed": "Gagal memuatkan set folder",
-  "flash.loadBackupsFailed": "Gagal memuatkan sandaran Flash",
-  "config.loadBackupsFailed": "Gagal memuatkan sandaran tetapan",
   "config.loadSettingsFailed": "Tetapan semasa tidak dapat dimuatkan",
   "dashboard.loadRunsFailed": "Gagal memuatkan larian",
 
@@ -1029,7 +1025,6 @@ const ms: Partial<Translations> = {
   "flash.backingUp": "Menyandarkan…",
   "flash.download": "Muat turun (.zip)",
   "flash.restoreNote": "Pemulihan memuat turun ZIP snapshot. /boot yang sedang berjalan tidak sekali-kali disentuh. Letakkan .zip terus ke dalam pencipta USB Unraid, atau nyahzipkannya pada USB baharu untuk membina semula Flash anda.",
-  "flash.none": "Belum ada sandaran Flash. Jalankan satu di atas.",
   "settings.exportsEncryptionTitle": "Penyulitan eksport & repositori",
   "settings.exportsEncryptionHint": "Kawalan untuk menyulitkan artifak eksport biasa dan penyulitan repositori restic itu sendiri.",
   // Scheduled flash zip export
@@ -1073,7 +1068,6 @@ const ms: Partial<Translations> = {
   "config.backingUp": "Menyandarkan…",
   "config.snapshotsTitle": "Sandaran tetapan",
   "config.snapshotsHint": "Untuk memulihkan tetapan ini pada pelayan yang dibina semula, gunakan tab Pemulihan. Memulihkan tetapan memulakan semula BombVault untuk menerapkannya, jadi ia terletak di sana bersama-sama aliran pemulihan bencana yang lain.",
-  "config.none": "Belum ada sandaran tetapan. Jalankan satu di atas.",
 
   // Receiver dashboard
   "receiver.title": "Penerima",

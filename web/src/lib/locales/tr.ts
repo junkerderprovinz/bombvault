@@ -196,7 +196,6 @@ const tr: Partial<Translations> = {
   "source.localTip": "Bu sunucudaki yerel depo",
   "source.offsiteTip": "Site dışı kopya",
   "source.offsiteTarget": "Site dışı hedef",
-  "source.hint": "Geri yükleme ve silme yalnızca seçili kaynağı etkiler. Yerel bir yedeği silmek site dışı kopyaya asla dokunmaz ve tersi de geçerlidir.",
   "offsite.schedulePlaceholder": "boş = her yedeklemeden sonra · örn. weekly Sun 03:00",
   "offsite.replicateNow": "Şimdi çoğalt",
   "offsite.copyDomainTitle": "Site dışı kopya {domain}",
@@ -443,7 +442,6 @@ const tr: Partial<Translations> = {
   // Backups — files
   "snapshots.files": "Dosyalar",
   "snapshots.delete": "Sil",
-  "snapshots.deleteConfirm": "Bu yedek silinsin mi? Anlık görüntü depodan kaldırılır (alanı geri kazanmak için Ayarlar'da Buda'yı çalıştırın). Geri alınamaz.",
   "snapshots.recreate": "Kayıtlı yapılandırmadan yeniden oluştur",
   "snapshots.recreateConfirm": "Bu konteyner kayıtlı yapılandırmasından yeniden oluşturulsun mu? Saklanan tanımdan oluşturulup başlatılır.",
   "snapshots.configOnlyHint": "Yalnızca yapılandırma yedeği: konteynerin tanımı kaydedilir, ancak anlık görüntü alınacak veri klasörü yoktur. Silersen \"Yüklü değil\" altında görünür ve bu yapılandırmadan yeniden oluşturabilirsin.",
@@ -542,7 +540,6 @@ const tr: Partial<Translations> = {
   "flash.backingUp": "Yedekleniyor…",
   "flash.download": "İndir (.zip)",
   "flash.restoreNote": "Geri yükleme, anlık görüntünün ZIP'ini indirir. Çalışan /boot'a asla dokunulmaz. .zip dosyasını doğrudan Unraid USB oluşturucuya bırakın veya flash'ınızı yeniden oluşturmak için yeni bir USB'ye çıkarın.",
-  "flash.none": "Henüz flash yedeği yok. Yukarıdan bir yedekleme çalıştırın.",
 
   // Flash zip export
   "settings.exportsEncryptionTitle": "Dışa Aktarma ve Depo Şifrelemesi",
@@ -620,8 +617,6 @@ const tr: Partial<Translations> = {
   "containers.updateSettingFailed": "Ayar güncellenemedi",
   "vms.loadFailed": "VM'ler yüklenemedi",
   "files.loadSetsFailed": "Klasör setleri yüklenemedi",
-  "flash.loadBackupsFailed": "Flash yedekleri yüklenemedi",
-  "config.loadBackupsFailed": "Ayar yedekleri yüklenemedi",
   "config.loadSettingsFailed": "Mevcut ayarlar yüklenemedi",
   "dashboard.loadRunsFailed": "Çalışmalar yüklenemedi",
 
@@ -798,7 +793,6 @@ const tr: Partial<Translations> = {
   "config.backingUp": "Yedekleniyor…",
   "config.snapshotsTitle": "Ayar yedekleri",
   "config.snapshotsHint": "Bu ayarları yeniden oluşturulan bir sunucuya geri yüklemek için Kurtarma sekmesini kullanın. Ayarları geri yüklemek, bunları uygulamak için BombVault'u yeniden başlatır; bu yüzden felaket kurtarma akışının geri kalanıyla birlikte orada bulunur.",
-  "config.none": "Henüz ayar yedeği yok. Yukarıdan bir yedekleme çalıştırın.",
 
   // Off-site bandwidth
   "settings.offsiteLimits": "Site dışı bant genişliği",

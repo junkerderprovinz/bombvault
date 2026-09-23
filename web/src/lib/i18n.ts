@@ -194,7 +194,6 @@ export const en = {
   "snapshots.none": "No backups found",
   "snapshots.files": "Files",
   "snapshots.delete": "Delete",
-  "snapshots.deleteConfirm": "Delete this backup? The snapshot is removed from the repository (run Prune in Settings to reclaim the space). This cannot be undone.",
   "snapshots.deleteAll": "Delete all backups",
   "snapshots.deleteAllConfirm": "Delete ALL backups of this VM from the selected source (local or off-site)? The snapshots are permanently removed and the repository is pruned. This cannot be undone.",
   "snapshots.deletingAll": "Deleting…",
@@ -364,7 +363,6 @@ export const en = {
   // Only rendered when a domain has 2+ off-site targets: the picker choosing
   // WHICH off-site copy to browse/restore from.
   "source.offsiteTarget": "Off-site target",
-  "source.hint": "Restore and delete act on the selected source only: deleting a local backup never touches the off-site copy, and vice versa.",
   // jdp (live-review, offsite tab card split): "Können wir für Container, VMs,
   // Flash, Ordner jeweils eine eigene Card machen? ... Titel dann jeweils
   // OFFSITE-KOPIE CONTAINER, OFFSITE-KOPIE VMS, etc." — one templated key
@@ -1265,8 +1263,6 @@ export const en = {
   "containers.updateSettingFailed": "Failed to update setting",
   "vms.loadFailed": "Failed to load VMs",
   "files.loadSetsFailed": "Failed to load folder sets",
-  "flash.loadBackupsFailed": "Failed to load flash backups",
-  "config.loadBackupsFailed": "Failed to load settings backups",
   "config.loadSettingsFailed": "Could not load current settings",
   "dashboard.loadRunsFailed": "Failed to load runs",
 
@@ -1292,7 +1288,6 @@ export const en = {
   "flash.backingUp": "Backing up…",
   "flash.download": "Download (.zip)",
   "flash.restoreNote": "Restore downloads a ZIP of the snapshot. The running /boot is never touched. Drop the .zip straight into the Unraid USB creator, or unzip it onto a fresh USB to rebuild your flash.",
-  "flash.none": "No flash backups yet. Run a backup above.",
   // Merged card (GlimStone follow-up round, Paths & Storage tab rework, merge
   // B) — the flash zip export, plain-export encryption, and the restic
   // repositories' own encryption all sit under one roof: how backup exports
@@ -1354,7 +1349,6 @@ export const en = {
   "config.backingUp": "Backing up…",
   "config.snapshotsTitle": "Settings backups",
   "config.snapshotsHint": "To restore these settings onto a rebuilt server, use the Recovery tab: restoring settings restarts BombVault to apply them, so it lives there with the rest of the disaster-recovery flow.",
-  "config.none": "No settings backups yet. Run a backup above.",
 
   // Receiver dashboard (read-only monitoring of an append-only off-site repo
   // another BombVault pushes to)
@@ -2335,7 +2329,6 @@ export const de: Translations = {
   "snapshots.none": "Keine Backups gefunden",
   "snapshots.files": "Dateien",
   "snapshots.delete": "Löschen",
-  "snapshots.deleteConfirm": "Dieses Backup löschen? Der Snapshot wird aus dem Repository entfernt (zum Freigeben des Speichers in den Einstellungen „Aufräumen“ ausführen). Kann nicht rückgängig gemacht werden.",
   "snapshots.deleteAll": "Alle Backups löschen",
   "snapshots.deleteAllConfirm": "ALLE Backups dieser VM aus der gewählten Quelle (lokal oder Off-site) löschen? Die Snapshots werden dauerhaft entfernt und das Repository wird aufgeräumt. Kann nicht rückgängig gemacht werden.",
   "snapshots.deletingAll": "Wird gelöscht…",
@@ -2483,7 +2476,6 @@ export const de: Translations = {
   "source.localTip": "Lokales Repository auf diesem Host",
   "source.offsiteTip": "Offsite-Kopie",
   "source.offsiteTarget": "Offsite-Ziel",
-  "source.hint": "Restore und Löschen wirken nur auf die gewählte Quelle: ein lokales Backup zu löschen rührt die Offsite-Kopie nie an und umgekehrt.",
   "offsite.copyDomainTitle": "Offsite-Kopie {domain}",
   "offsite.schedulePlaceholder": "leer = nach jedem Backup · z.B. weekly Sun 03:00",
   "offsite.replicateNow": "Jetzt replizieren",
@@ -3204,8 +3196,6 @@ export const de: Translations = {
   "containers.updateSettingFailed": "Einstellung konnte nicht geändert werden",
   "vms.loadFailed": "VMs konnten nicht geladen werden",
   "files.loadSetsFailed": "Ordnersets konnten nicht geladen werden",
-  "flash.loadBackupsFailed": "Flash-Sicherungen konnten nicht geladen werden",
-  "config.loadBackupsFailed": "Einstellungs-Sicherungen konnten nicht geladen werden",
   "config.loadSettingsFailed": "Aktuelle Einstellungen konnten nicht geladen werden",
   "dashboard.loadRunsFailed": "Läufe konnten nicht geladen werden",
 
@@ -3231,7 +3221,6 @@ export const de: Translations = {
   "flash.backingUp": "Sichere…",
   "flash.download": "Download (.zip)",
   "flash.restoreNote": "Restore lädt ein ZIP des Snapshots herunter. Der laufende /boot wird nie angefasst. Das .zip direkt in den Unraid-USB-Creator geben oder auf einen frischen USB-Stick entpacken, um deinen Flash neu aufzubauen.",
-  "flash.none": "Noch keine Flash-Backups. Oben eines starten.",
   "settings.exportsEncryptionTitle": "Export- und Repository-Verschlüsselung",
   "settings.exportsEncryptionHint": "Einstellungen für die Verschlüsselung der Plain-Export-Artefakte und die Verschlüsselung der restic-Repositories selbst.",
   // Geplanter Flash-ZIP-Export (#28): ein einfaches .zip, das nach jedem Flash-Backup in einen Ordner geschrieben wird.
@@ -3276,7 +3265,6 @@ export const de: Translations = {
   "config.backingUp": "Sichere…",
   "config.snapshotsTitle": "Einstellungs-Backups",
   "config.snapshotsHint": "Um diese Einstellungen auf einem neu aufgesetzten Server wiederherzustellen, den Wiederherstellungs-Tab verwenden: das Wiederherstellen der Einstellungen startet BombVault neu, damit sie angewendet werden, daher liegt es dort beim übrigen Notfall-Ablauf.",
-  "config.none": "Noch keine Einstellungs-Backups. Oben eines starten.",
 
   // Empfänger-Dashboard (nur lesende Überwachung eines Append-only-Off-site-Repos,
   // in das ein anderes BombVault schiebt)
