@@ -56,6 +56,11 @@ describe("plural forms in the tables", () => {
   it("are declared on the strings that carry a count", () => {
     expect(labelled).toContain("takeover.backups");
     expect(labelled).toContain("time.minutesAgo");
+    expect(labelled).toContain("dbdump.introNotice");
+    expect(labelled).toContain("dbdump.stackRestoreWarn");
+    expect(labelled).toContain("recovery.foreignDbDumps");
+    expect(labelled).toContain("recovery.dumpOnlySkipped");
+    expect(labelled).toContain("runReason.dbimportAppsStopped");
   });
 
   it.each(Object.entries(locales))("locale %s offers only categories it uses", (code, table) => {

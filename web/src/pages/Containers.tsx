@@ -2838,7 +2838,7 @@ function StackCard({
     // files that may not start, so the question names it.
     const live = group.members.filter((m) => m.dbDataCoverage === "live").map((m) => m.name);
     const question = live.length
-      ? `${t("stack.restoreConfirm")} ${t("dbdump.stackRestoreWarn").replace("{names}", listSeparated(lang, live))}`
+      ? `${t("stack.restoreConfirm")} ${t("dbdump.stackRestoreWarn", live.length).replace("{names}", listSeparated(lang, live))}`
       : t("stack.restoreConfirm");
     if (!(await confirm(question))) return;
     setBusy(true);
@@ -3677,9 +3677,7 @@ export function Containers() {
   const nextHue = () => hueSeq++;
 
   const recognisedDatabases = introDatabases(containers);
-  const [introBefore, introAfter] = t("dbdump.introNotice")
-    .replace("{count}", String(recognisedDatabases.length))
-    .split("{name}");
+  const [introBefore, introAfter] = t("dbdump.introNotice", recognisedDatabases.length).split("{name}");
 
   function dismissIntro() {
     setIntroDismissed(true);

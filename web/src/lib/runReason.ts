@@ -72,11 +72,12 @@ const IMPORT_APP_TAILS: Record<string, TranslationKey> = {
   "these apps stay stopped until the data folder is sorted out": "runReason.dbimportAppsStopped",
 };
 
-/** Splits the tail naming the apps an import stopped off a note or reason. */
-function importAppTail(text: string): { rest: string; key: TranslationKey; apps: string } | undefined {
+/** Splits the tail naming the apps an import stopped off a note or reason. The
+ *  names come back separated, because how many there are picks the sentence. */
+function importAppTail(text: string): { rest: string; key: TranslationKey; apps: string[] } | undefined {
   for (const [tail, key] of Object.entries(IMPORT_APP_TAILS)) {
     const at = text.lastIndexOf(`; ${tail}: `);
-    if (at >= 0) return { rest: text.slice(0, at), key, apps: text.slice(at + tail.length + 4) };
+    if (at >= 0) return { rest: text.slice(0, at), key, apps: text.slice(at + tail.length + 4).split(", ") };
   }
   return undefined;
 }
@@ -122,7 +123,10 @@ export function runReasonParts(raw: string | null | undefined, t: T): RunReasonP
   }
   const apps = importAppTail(text);
   if (apps) {
-    return { ...runReasonParts(apps.rest, t), note: t(apps.key).replace("{apps}", apps.apps) };
+    return {
+      ...runReasonParts(apps.rest, t),
+      note: t(apps.key, apps.apps.length).replace("{apps}", apps.apps.join(", ")),
+    };
   }
   if (!text) return { head: "", detail: "" };
 
