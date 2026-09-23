@@ -498,7 +498,7 @@ func TestDBDumpFailureNotifiesAfterTheBackup(t *testing.T) {
 		if len(ssh.runs) != 1 {
 			t.Fatalf("%d summaries, want one", len(ssh.runs))
 		}
-		if sent := strings.Join(ssh.runs[0], " "); !strings.Contains(sent, "1 database dumps failed: pg") {
+		if sent := strings.Join(ssh.runs[0], " "); !strings.Contains(sent, "1 database dump failed: pg") {
 			t.Fatalf("summary = %s", sent)
 		}
 	})
@@ -525,7 +525,7 @@ func TestScheduledRoundNamesAFailedDumpInItsSummary(t *testing.T) {
 		if len(ssh.runs) != 1 {
 			t.Fatalf("%d summaries, want one", len(ssh.runs))
 		}
-		if sent := strings.Join(ssh.runs[0], " "); !strings.Contains(sent, "1 database dumps failed: pg") {
+		if sent := strings.Join(ssh.runs[0], " "); !strings.Contains(sent, "1 database dump failed: pg") {
 			t.Errorf("summary = %s", sent)
 		}
 	})
