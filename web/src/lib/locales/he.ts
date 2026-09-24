@@ -1573,6 +1573,7 @@ const he: Partial<Translations> = {
   "mcp.snippetShellHistory": "הפקודה מכילה את המפתח, והמעטפת שלך עשויה לשמור אותו בהיסטוריה. התיעוד מראה צורה בלי זה.",
   "mcp.snippetDesktopHint": "הוסף את הרשומה הזאת בתוך \"mcpServers\" בקובץ claude_desktop_config.json (ב-Claude Desktop: Settings, Developer, Edit Config) והפעל את Claude Desktop מחדש. דרוש Node.js, כי mcp-remote הוא שמחבר את אפליקציית שולחן העבודה לשרת הזה.",
   "mcp.snippetOtherHint": "כל לקוח שמדבר Streamable HTTP מתאים. שלח את המפתח בתור Authorization: Bearer או בתור X-API-Key.",
+  "mcp.snippetOtherCert": "הלקוח צריך לסמוך גם על bombvault-cert.pem. הורד אותו בכפתור שליד נקודת החיבור.",
   "mcp.copySnippet": "העתק קטע",
   "mcp.tlsHint": "Claude Code ו-Claude Desktop מתחברים רק דרך אישור שהם סומכים עליו. עם האישור של BombVault עצמו, הוסף כאן בכרטיס את הכתובת הזאת והורד אותו; הקטעים מפנים אז את Node.js לקובץ הזה. פרוקסי הפוך או Tailscale עם אישור מהימן עובדים בלי הצעד הזה. HTTP_ONLY מעביר את כל הממשק ל-HTTP רגיל, דורש שינוי בהגדרות המכולה ושולח את המפתח ללא הצפנה. אל תכבה אף פעם את בדיקת האישורים. מחברים שמוסיפים בהגדרות של Claude עצמו לא עובדים עם מפתחות BombVault, כי הם נכנסים דרך OAuth, וזה לא קיים ב-BombVault.",
   "mcp.privacyHint": "מה שהעוזר קורא, כמו שמות פריטים, היסטוריית הרצות, הודעות שגיאה וגיבויים חריגים, נשלח לספק הבינה המלאכותית שמאחוריו. BombVault מסיר נתיבים של המארח, מיקומי מאגרים ופרטי גישה לפני שמשהו יוצא.",

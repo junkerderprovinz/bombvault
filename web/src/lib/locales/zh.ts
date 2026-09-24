@@ -1565,6 +1565,7 @@ const zh: Partial<Translations> = {
   "mcp.snippetShellHistory": "这条命令里带着密钥，你的 shell 可能把它留在历史记录中。文档里给出了不留痕迹的写法。",
   "mcp.snippetDesktopHint": "把这段内容加到 claude_desktop_config.json 的 \"mcpServers\" 里（在 Claude Desktop 中：Settings、Developer、Edit Config），然后重启 Claude Desktop。需要 Node.js，因为把桌面应用接到本服务器的是 mcp-remote。",
   "mcp.snippetOtherHint": "任何会说 Streamable HTTP 的客户端都可以。把密钥作为 Authorization: Bearer 或 X-API-Key 发送。",
+  "mcp.snippetOtherCert": "客户端还必须信任 bombvault-cert.pem。用连接地址旁边的按钮下载它。",
   "mcp.copySnippet": "复制代码片段",
   "mcp.tlsHint": "Claude Code 和 Claude Desktop 只通过它们信任的证书连接。使用 BombVault 自己的证书时，请在这张卡片里把本地址加进证书并下载证书；代码片段随后会把 Node.js 指向那个文件。带受信任证书的反向代理或 Tailscale 不需要这一步。HTTP_ONLY 会把整个网页界面切到普通 HTTP，需要改动容器设置，并以明文发送密钥。永远不要关闭证书校验。在 Claude 自己的设置里添加的连接器无法使用 BombVault 密钥，因为它们通过 OAuth 登录，而 BombVault 不提供 OAuth。",
   "mcp.privacyHint": "助手读到的内容，比如项目名称、运行历史、错误信息和异常备份，会发送给它背后的 AI 提供商。在任何内容离开之前，BombVault 会去掉主机路径、仓库位置和凭据。",

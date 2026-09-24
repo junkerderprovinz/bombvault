@@ -435,6 +435,9 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
               {client === "code" && (
                 <p className="text-xs text-carbon-textSub">{t("mcp.snippetShellHistory")}</p>
               )}
+              {client === "other" && ownCertificate && (
+                <p className="text-xs text-carbon-textSub">{t("mcp.snippetOtherCert")}</p>
+              )}
               <Button
                 label={t("mcp.copySnippet")}
                 labelKey="common.copy"
