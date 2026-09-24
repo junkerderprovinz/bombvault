@@ -22,6 +22,8 @@ var mcpReadTools = []string{
 	"list_items",
 	"list_runs",
 	"list_restore_points",
+	"list_anomalies",
+	"get_anomaly",
 }
 
 // mcpStartTools are the tools a key needs the start permission for. They are in
@@ -186,8 +188,12 @@ func TestMCPReadToolsOnEmptyInstall(t *testing.T) {
 		"list_items":          {"domains"},
 		"list_runs":           {"runs"},
 		"list_restore_points": {"restorePoints"},
+		"list_anomalies":      {"anomalies"},
 	}
 	for _, tool := range mcpReadTools {
+		if tool == "get_anomaly" {
+			continue // reads one finding by its id, and a fresh install has none
+		}
 		res := mcpCallTool(t, h, key, tool, args[tool])
 		if res.IsError {
 			t.Fatalf("%s on a fresh install: %v", tool, res.Structured)

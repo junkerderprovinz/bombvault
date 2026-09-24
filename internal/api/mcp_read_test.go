@@ -1337,3 +1337,187 @@ func TestMCPStatusDrillDetailsLeaveTheBoxScrubbed(t *testing.T) {
 		}
 	}
 }
+
+// mcpAnomalyRig seeds the findings the two anomaly tools are compared on: a
+// critical data loss on a container that holds its retention and names the
+// backup to go back to, a warning on one dataset of a ZFS item, and a finding
+// the operator already acknowledged.
+type mcpAnomalyRig struct {
+	h                        http.Handler
+	key                      string
+	lost, dataset, dismissed string
+}
+
+func newMCPAnomalyRig(t *testing.T) mcpAnomalyRig {
+	t.Helper()
+	h, st, _, key := newMCPToolRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	settings := mustSettings(t, st)
+	settings.AnomalyEnabled = true
+	settings.AnomalyRetentionHold = true
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	plex := seedTarget(t, st, "plex")
+	good, err := st.StartRunWith(plex.ID, "backup", store.RunMeta{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishRun(good, "success", "4e1f00aa", 1, ""); err != nil {
+		t.Fatal(err)
+	}
+	appdata, err := st.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/appdata", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	now := time.Now().Unix()
+	rig := mcpAnomalyRig{h: h, key: key}
+	rig.lost = seedAnomaly(t, st, store.Anomaly{
+		ID: fmt.Sprintf("%032x", 1), Detector: "source", Metric: "source_bytes_shrink", Severity: "critical",
+		ScopeKind: "item", ScopeID: plex.ID, TargetID: plex.ID, Domain: "container",
+		LastGoodRunID: good, Details: `{"collapse":true}`, LastSeenAt: now - 10,
+	})
+	rig.dataset = seedAnomaly(t, st, store.Anomaly{
+		ID: fmt.Sprintf("%032x", 2), Detector: "duration", Metric: "duration_slower", Severity: "warning",
+		ScopeKind: "zfsds", ScopeID: "cache/appdata/plex", TargetID: appdata.ID, Domain: "zfs", LastSeenAt: now,
+	})
+	rig.dismissed = seedAnomaly(t, st, store.Anomaly{
+		ID: fmt.Sprintf("%032x", 3), Detector: "new_data", Metric: "new_data", Severity: "info",
+		ScopeKind: "item", ScopeID: plex.ID, TargetID: plex.ID, Domain: "container", LastSeenAt: now - 20,
+	})
+	if _, err := st.AcknowledgeAnomalies([]string{rig.dismissed}, "seen it, a new library", now); err != nil {
+		t.Fatal(err)
+	}
+	return rig
+}
+
+// mcpAnomalyRows indexes the rows of a list_anomalies answer by id and keeps
+// the order they came in.
+func mcpAnomalyRows(t *testing.T, res mcpToolResult) ([]string, map[string]map[string]any) {
+	t.Helper()
+	rows := mcpRows(t, res, "anomalies")
+	ids := make([]string, 0, len(rows))
+	byID := make(map[string]map[string]any, len(rows))
+	for _, row := range rows {
+		id, _ := row["id"].(string)
+		ids = append(ids, id)
+		byID[id] = row
+	}
+	return ids, byID
+}
+
+// An assistant asked about unusual backups has to see what the Anomalies page
+// shows, so the tool reads through the same service calls and filters.
+func TestMCPListAnomaliesCallsTheServiceAPI(t *testing.T) {
+	rig := newMCPAnomalyRig(t)
+
+	res := mcpCallTool(t, rig.h, rig.key, "list_anomalies", "")
+	ids, rows := mcpAnomalyRows(t, res)
+	_, page := doJSON(t, rig.h, http.MethodGet, "/api/anomalies", "")
+	if web := anomalyIDs(t, page); !slices.Equal(ids, web) || len(ids) != 2 {
+		t.Fatalf("the tool lists %v, the Anomalies page %v; want the two open findings in the same order", ids, web)
+	}
+	if res.Structured["truncated"] != false {
+		t.Fatalf("truncated = %v", res.Structured["truncated"])
+	}
+
+	lost := rows[rig.lost]
+	if lost["domain"] != "containers" || lost["part"] != "" || lost["retentionHeld"] != true || lost["itemName"] != "plex" {
+		t.Fatalf("the container finding reads %v", lost)
+	}
+	webRows, _ := page["anomalies"].([]any)
+	for _, raw := range webRows {
+		web, _ := raw.(map[string]any)
+		if web["id"] == rig.lost && !reflect.DeepEqual(lost["lastGood"], web["lastGood"]) {
+			t.Fatalf("lastGood = %v, the page offers %v", lost["lastGood"], web["lastGood"])
+		}
+	}
+	if good, _ := lost["lastGood"].(map[string]any); good["snapshotId"] != "4e1f00aa" {
+		t.Fatalf("lastGood = %v, want the backup before the loss", lost["lastGood"])
+	}
+	dataset := rows[rig.dataset]
+	if dataset["domain"] != "zfs" || dataset["part"] != "cache/appdata/plex" || dataset["scopeKind"] != "zfsds" {
+		t.Fatalf("the dataset finding reads %v", dataset)
+	}
+	if _, ok := dataset["lastGood"]; ok {
+		t.Fatalf("a finding that lost no data names a restore point: %v", dataset)
+	}
+
+	summary, _ := res.Structured["summary"].(map[string]any)
+	_, body := doJSON(t, rig.h, http.MethodGet, "/api/anomalies/summary", "")
+	web, _ := body["summary"].(map[string]any)
+	for _, field := range []string{"enabled", "ready", "open", "learningItems", "retentionHeld"} {
+		if !reflect.DeepEqual(summary[field], web[field]) {
+			t.Fatalf("summary %s = %v, the page shows %v", field, summary[field], web[field])
+		}
+	}
+
+	for _, c := range []struct {
+		args string
+		want []string
+	}{
+		{`{"severity":["critical"]}`, []string{rig.lost}},
+		{`{"domain":"zfs"}`, []string{rig.dataset}},
+		{`{"domain":"containers"}`, []string{rig.lost}},
+		{`{"state":"closed"}`, []string{rig.dismissed}},
+		{`{"state":"all","limit":3}`, []string{rig.dataset, rig.lost, rig.dismissed}},
+	} {
+		got, _ := mcpAnomalyRows(t, mcpCallTool(t, rig.h, rig.key, "list_anomalies", c.args))
+		if !slices.Equal(got, c.want) {
+			t.Fatalf("%s listed %v, want %v", c.args, got, c.want)
+		}
+	}
+	capped := mcpCallTool(t, rig.h, rig.key, "list_anomalies", `{"limit":1}`)
+	if got, _ := mcpAnomalyRows(t, capped); len(got) != 1 || capped.Structured["truncated"] != true {
+		t.Fatalf("limit 1 listed %v with truncated %v", got, capped.Structured["truncated"])
+	}
+	for _, args := range []string{`{"limit":0}`, `{"limit":101}`, `{"state":"broken"}`, `{"severity":["loud"]}`, `{"domain":"nas"}`} {
+		if code := mcpCallTool(t, rig.h, rig.key, "list_anomalies", args).code(t); code != "invalid_argument" {
+			t.Fatalf("%s: code = %q, want invalid_argument", args, code)
+		}
+	}
+
+	for _, tool := range mcpListTools(t, rig.h, rig.key) {
+		if tool["name"] != "list_anomalies" {
+			continue
+		}
+		desc, _ := tool["description"].(string)
+		for _, word := range []string{"new_data", "source", "duration", "reliability", "integrity", "capacity", "Anomalies", "web interface"} {
+			if !strings.Contains(desc, word) {
+				t.Fatalf("the description does not name %q:\n%s", word, desc)
+			}
+		}
+	}
+}
+
+func TestMCPGetAnomaly(t *testing.T) {
+	rig := newMCPAnomalyRig(t)
+
+	res := mcpCallTool(t, rig.h, rig.key, "get_anomaly", fmt.Sprintf(`{"id":%q}`, rig.dismissed))
+	if res.IsError {
+		t.Fatalf("get_anomaly: %v", res.Structured)
+	}
+	got, _ := res.Structured["anomaly"].(map[string]any)
+	_, body := doJSON(t, rig.h, http.MethodGet, "/api/anomalies/"+rig.dismissed, "")
+	web, _ := body["anomaly"].(map[string]any)
+	if got["domain"] != "containers" || web["domain"] != "container" {
+		t.Fatalf("domain = %v, the page reads %v; want the tool's vocabulary", got["domain"], web["domain"])
+	}
+	for tool, page := range map[string]string{
+		"id": "id", "metric": "metric", "state": "state", "itemId": "targetId", "itemName": "name",
+		"part": "part", "ackNote": "ackNote", "expectable": "expectable", "lastSeenAt": "lastSeenAt",
+	} {
+		if !reflect.DeepEqual(got[tool], web[page]) {
+			t.Fatalf("%s = %v, the page reads %s = %v", tool, got[tool], page, web[page])
+		}
+	}
+
+	if code := mcpCallTool(t, rig.h, rig.key, "get_anomaly", fmt.Sprintf(`{"id":%q}`, strings.Repeat("f", 32))).code(t); code != "not_found" {
+		t.Fatalf("an unknown id gives %q, want not_found", code)
+	}
+	for _, args := range []string{`{"id":"nope"}`, `{}`} {
+		if code := mcpCallTool(t, rig.h, rig.key, "get_anomaly", args).code(t); code != "invalid_argument" {
+			t.Fatalf("%s gives %q, want invalid_argument", args, code)
+		}
+	}
+}
