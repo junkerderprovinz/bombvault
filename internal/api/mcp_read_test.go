@@ -37,7 +37,7 @@ func TestMCPGetStatusMatchesAPIStatus(t *testing.T) {
 	}
 
 	_, body := doJSON(t, h, http.MethodGet, "/api/status", "")
-	if domains, _ := body["domains"].([]any); len(domains) != 5 {
+	if domains, _ := body["domains"].([]any); len(domains) != 6 {
 		t.Fatalf("GET /api/status reports %v, so the comparison below proves nothing", body["domains"])
 	}
 	if !reflect.DeepEqual(res.Structured["domains"], body["domains"]) {
