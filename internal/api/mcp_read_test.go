@@ -1524,3 +1524,39 @@ func TestMCPGetAnomaly(t *testing.T) {
 		}
 	}
 }
+
+func TestMCPListRunsKeepsTheDatabaseToolsOwnWordsOut(t *testing.T) {
+	docker := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{runningContainer("mariadb")}}
+	h, st, _, key := newMCPToolRouter(t, docker, &fakeResticEngine{})
+	db := seedTarget(t, st, "mariadb")
+
+	const detail = "role \"postgres\" does not exist"
+	dumpID, err := st.StartRun(db.ID, "dbdump")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishRun(dumpID, "failed", "", 0, "database dump failed: the database refused the login: "+detail); err != nil {
+		t.Fatal(err)
+	}
+	const row = "Duplicate entry 'alice@example.com' for key 'users.email'"
+	importID, err := st.StartRun(db.ID, "dbimport")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishRun(importID, "failed", "", 0, store.ReasonDBImportFailed+
+		": the previous data folder is kept at /host/mnt/user/appdata/mariadb.bombvault-before-import-20260917-021403; exit 1: ERROR 1062 (23000) at line 5234: "+row); err != nil {
+		t.Fatal(err)
+	}
+
+	errs := map[string]string{}
+	for _, r := range mcpRunRows(t, mcpCallTool(t, h, key, "list_runs", `{"limit":100}`)) {
+		id, _ := r["id"].(string)
+		errs[id], _ = r["error"].(string)
+	}
+	if !strings.Contains(errs[dumpID], "the database refused the login") || strings.Contains(errs[dumpID], detail) {
+		t.Fatalf("dump error reads %q, want the reason without the tool's message", errs[dumpID])
+	}
+	if !strings.Contains(errs[importID], store.ReasonDBImportFailed) || strings.Contains(errs[importID], "alice@example.com") {
+		t.Fatalf("import error reads %q, want the reason without the quoted row", errs[importID])
+	}
+}

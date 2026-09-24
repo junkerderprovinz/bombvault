@@ -1104,7 +1104,8 @@ func mcpDatabaseDumpsOf(views []DBDumpView) []mcpDatabaseDump {
 }
 
 // mcpRunRow is one run in the shape a tool answers with: no snapshot id, no
-// host paths in the error, and a domain an assistant can pass back in. The web
+// host paths and no database tool output in the error, and a domain an
+// assistant can pass back in. The web
 // interface reads a domain operation by its target id, so a row that carries no
 // item domain takes that literal id as its domain here.
 func mcpRunRow(v runView) map[string]any {
@@ -1126,7 +1127,7 @@ func mcpRunRow(v runView) map[string]any {
 		"startedAt":       v.StartedAt,
 		"finishedAt":      finished,
 		"bytes":           v.Bytes,
-		"error":           mcpScrubText(v.Error),
+		"error":           mcpScrubText(shareableRunError(v.Kind, v.Error)),
 		"acknowledged":    v.Acknowledged,
 		"groupId":         v.GroupID,
 		"startedVia":      v.StartedVia,
