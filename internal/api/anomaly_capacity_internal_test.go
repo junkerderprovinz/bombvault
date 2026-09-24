@@ -347,3 +347,27 @@ func TestRcloneAboutReportsAnUnsupportedBackend(t *testing.T) {
 		t.Fatalf("a backend that reports no free space gave %v", err)
 	}
 }
+
+// A repository location is operator input. It travels as a positional behind
+// the end-of-flags marker, and one that names no remote never reaches rclone.
+func TestRcloneAboutTakesTheRemoteAsAPositional(t *testing.T) {
+	args := rcloneAboutArgs("box:bv")
+	if len(args) < 2 || args[len(args)-2] != "--" || args[len(args)-1] != "box:bv" {
+		t.Fatalf("args = %v, want the remote behind an end-of-flags marker", args)
+	}
+
+	got, err := rcloneRemoteOf(" rclone:box:bv ")
+	if err != nil || got != "box:bv" {
+		t.Fatalf("rcloneRemoteOf = %q, %v", got, err)
+	}
+	for _, loc := range []string{
+		"rclone:--config=/mnt/user/appdata/bombvault/rclone.conf",
+		"rclone:-vv",
+		"rclone:box",
+		"rclone:",
+	} {
+		if _, err := rcloneRemoteOf(loc); !errors.Is(err, errNotAnRcloneRemote) {
+			t.Fatalf("%q was accepted as a remote: %v", loc, err)
+		}
+	}
+}
