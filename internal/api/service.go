@@ -9820,7 +9820,7 @@ func vmrunGroupSnapshot(group []restic.Snapshot, tag string) (restic.Snapshot, b
 // snapshots a name holds, which is why "add tag" refuses them.
 var reservedTagPrefixes = []string{
 	"container:", "vm:", "fileset:", "stack:", "vmrun:", "formerly:",
-	dbDumpIdentityPrefix, "dbengine:", "dbimage:", "dbversion:", "dbname:", "bvrun:",
+	dbDumpIdentityPrefix, "dbengine:", "dbimage:", "dbversion:", "dbname:", "bvrun:", "zfs:",
 }
 
 // tagValueError reports why a string cannot be a restic tag. restic stores tags

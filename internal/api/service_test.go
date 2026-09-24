@@ -4294,7 +4294,7 @@ func TestTagSnapshot(t *testing.T) {
 
 	// A tag under one of BombVault's own prefixes is refused: it would place the
 	// snapshot in an item's retention series or in its rename history.
-	for _, tag := range []string{"container:other", "dbdump:plex", "formerly:plex-old"} {
+	for _, tag := range []string{"container:other", "dbdump:plex", "formerly:plex-old", "zfs:cache/appdata"} {
 		if err := svc.TagSnapshot(ctx, "plex", "local", "aaaa1111", []string{tag}); err == nil || !strings.Contains(err.Error(), "reserved") {
 			t.Fatalf("%q must be refused as reserved, got %v", tag, err)
 		}
