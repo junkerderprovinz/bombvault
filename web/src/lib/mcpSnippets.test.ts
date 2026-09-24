@@ -33,6 +33,13 @@ function desktopEntry(input: McpSnippetInput): DesktopEntry["bombvault"] {
   return (JSON.parse(`{${claudeDesktopSnippet(input)}}`) as DesktopEntry).bombvault;
 }
 
+// Splits a command the way a shell does over the pieces these snippets use:
+// whitespace separates arguments unless it sits inside quotes.
+function shellWords(command: string): string[] {
+  const words = command.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) ?? [];
+  return words.map((w) => w.replace(/"([^"]*)"/g, "$1"));
+}
+
 describe("the client snippets", () => {
   it("builds the Claude Code command", () => {
     expect(claudeCodeSnippet(trusted)).toBe(
@@ -44,10 +51,17 @@ describe("the client snippets", () => {
     );
 
     expect(claudeCodeSnippet(own)).toBe(
-      `claude mcp add bombvault --scope user -e NODE_EXTRA_CA_CERTS=${CERT_PATH_PLACEHOLDER} ` +
-        `-e BOMBVAULT_MCP_KEY=${KEY} -- npx -y mcp-remote https://192.168.1.10:3443/mcp ` +
+      `claude mcp add bombvault --scope user -e "NODE_EXTRA_CA_CERTS=${CERT_PATH_PLACEHOLDER}" ` +
+        `-e "BOMBVAULT_MCP_KEY=${KEY}" -- npx -y mcp-remote https://192.168.1.10:3443/mcp ` +
         "--header 'X-API-Key:${BOMBVAULT_MCP_KEY}'"
     );
+  });
+
+  it("keeps a certificate path with a space in one argument", () => {
+    const path = "/Users/sam/My Downloads/bombvault-cert.pem";
+    const words = shellWords(claudeCodeSnippet(own).replace(CERT_PATH_PLACEHOLDER, path));
+    expect(words).toContain(`NODE_EXTRA_CA_CERTS=${path}`);
+    expect(words).toContain(`BOMBVAULT_MCP_KEY=${KEY}`);
   });
 
   it("builds a valid Claude Desktop entry", () => {

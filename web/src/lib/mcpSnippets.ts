@@ -27,7 +27,9 @@ export function mcpUrl(i: McpSnippetInput): string {
  * Behind BombVault's own certificate it reaches the server through mcp-remote,
  * because the client's HTTP transport would want NODE_EXTRA_CA_CERTS in the
  * environment the client itself started in, while `-e` sets it for this server
- * alone. The header reference keeps its single quotes so no shell expands it.
+ * alone. The header reference keeps its single quotes so no shell expands it,
+ * and both `-e` pairs are quoted because the operator fills the certificate
+ * path in by hand and a path with a space would otherwise split in two.
  */
 export function claudeCodeSnippet(i: McpSnippetInput): string {
   if (!i.selfSigned) {
@@ -37,8 +39,8 @@ export function claudeCodeSnippet(i: McpSnippetInput): string {
     );
   }
   return (
-    `claude mcp add bombvault --scope user -e NODE_EXTRA_CA_CERTS=${CERT_PATH_PLACEHOLDER} ` +
-    `-e BOMBVAULT_MCP_KEY=${i.key} -- npx -y mcp-remote ${mcpUrl(i)} ` +
+    `claude mcp add bombvault --scope user -e "NODE_EXTRA_CA_CERTS=${CERT_PATH_PLACEHOLDER}" ` +
+    `-e "BOMBVAULT_MCP_KEY=${i.key}" -- npx -y mcp-remote ${mcpUrl(i)} ` +
     "--header 'X-API-Key:${BOMBVAULT_MCP_KEY}'"
   );
 }
