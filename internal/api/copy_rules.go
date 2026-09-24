@@ -589,11 +589,9 @@ func withTarget(skip []string, targetID string) []string {
 
 const copyRuleLabel = "copy rule"
 
-// withCopyRule adds "copy rule" to the settings a takeover from one name onto
-// another would drop: a rule on to that the entry on from does not share. The
-// store refuses the rename that moves a rule onto such a name, but by then the
-// row on that name is gone. The entry's own rule there is no loss, since the
-// store keeps it for the entry.
+// withCopyRule adds "copy rule" to labels when to holds a copy rule other than
+// the moving entry's own. The takeover is then refused while the row on to
+// still exists, where the store would refuse it only after that row is gone.
 func (s *Service) withCopyRule(labels []string, domain, from, to string) ([]string, error) {
 	err := s.store.CheckCopyRuleMove(domain, from, to)
 	switch {
