@@ -482,9 +482,51 @@ describe("the items tab", () => {
     await openItems();
     expect(screen.getByText(en["anomaly.items.empty"])).toBeTruthy();
   });
+
+  it("offers another try instead of an empty list when the items were refused", async () => {
+    getAnomalyItems.mockRejectedValueOnce(new Error("offline"));
+    await renderPage();
+    await openItems();
+    expect(screen.getByText(en["anomaly.loadFailed"])).toBeTruthy();
+    expect(screen.queryByText(en["anomaly.items.empty"])).toBeNull();
+
+    getAnomalyItems.mockResolvedValue({ ok: true, items: [item()] });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["anomaly.retry"] }));
+    });
+    expect(screen.getByText("plex")).toBeTruthy();
+  });
+
+  it("keeps quiet about an empty list while the first pass is still out", async () => {
+    getAnomalySummary.mockReturnValue(new Promise<never>(() => undefined));
+    await renderPage("/anomalies#items");
+    expect(screen.getByText(en["dashboard.checking"])).toBeTruthy();
+    expect(screen.queryByText(en["anomaly.items.empty"])).toBeNull();
+  });
+
+  it("says the list is unreadable when the pass behind it was refused", async () => {
+    getAnomalySummary.mockResolvedValue({ ok: false, error: "no session", summary: summary() });
+    await renderPage("/anomalies#items");
+    expect(screen.getByText(en["anomaly.loadFailed"])).toBeTruthy();
+    expect(screen.queryByText(en["anomaly.items.empty"])).toBeNull();
+    expect(getAnomalyItems).not.toHaveBeenCalled();
+  });
+
+  it("groups a four-digit open count in the badge's label", async () => {
+    getAnomalyItems.mockResolvedValue({
+      ok: true,
+      items: [item({ open: { critical: 0, warning: 1200, info: 0 } })],
+    });
+    await renderPage();
+    await openItems();
+    const label = en["anomaly.itemBadgeAria"]
+      .replace("{name}", "plex")
+      .replace("{n}", (1200).toLocaleString());
+    expect(screen.getByRole("link", { name: label })).toBeTruthy();
+  });
 });
 
-it("draws no native select anywhere on the page", async () => {
+it("draws no native select on either tab", async () => {
   getAnomalyItems.mockResolvedValue({ ok: true, items: [item()] });
   getAnomalies.mockImplementation(() => page([finding({ name: "plex" })]));
   const { container } = render(
@@ -499,5 +541,12 @@ it("draws no native select anywhere on the page", async () => {
     </I18nProvider>
   );
   await act(async () => undefined);
+  expect(screen.getByRole("combobox", { name: en["anomaly.filter.state"] })).toBeTruthy();
+  expect(container.querySelectorAll("select")).toHaveLength(0);
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole("tab", { name: en["anomaly.tab.items"] }));
+  });
+  expect(screen.getByRole("combobox", { name: en["anomaly.items.sensitivity"] })).toBeTruthy();
   expect(container.querySelectorAll("select")).toHaveLength(0);
 });

@@ -141,7 +141,7 @@ export function Anomalies() {
   const { t } = useT();
   const location = useLocation();
   const navigate = useNavigate();
-  const { items, byTarget } = useAnomalyItems();
+  const { items, byTarget, error: itemsFailed, loading: itemsLoading, retry } = useAnomalyItems();
   const [settings, setSettings] = useState<Settings | null>(null);
 
   useEffect(() => {
@@ -197,7 +197,14 @@ export function Anomalies() {
         {tab === "findings" ? (
           <FindingsTab t={t} byTarget={byTarget} />
         ) : (
-          <ItemsTab t={t} items={items} settings={settings} />
+          <ItemsTab
+            t={t}
+            items={items}
+            settings={settings}
+            failed={itemsFailed}
+            loading={itemsLoading}
+            onRetry={retry}
+          />
         )}
       </div>
     </div>
@@ -547,14 +554,39 @@ function SeriesLine({ t, label, series }: { t: T; label: string; series: Anomaly
   );
 }
 
-function ItemsTab({ t, items, settings }: { t: T; items: AnomalyItem[]; settings: Settings | null }) {
+function ItemsTab({
+  t,
+  items,
+  settings,
+  failed,
+  loading,
+  onRetry,
+}: {
+  t: T;
+  items: AnomalyItem[];
+  settings: Settings | null;
+  failed: boolean;
+  loading: boolean;
+  onRetry: () => void;
+}) {
   const globalPreset = settings?.anomalySensitivity ?? "balanced";
   const globalNotify = settings?.anomalyNotifyMin ?? "warning";
 
-  if (items.length === 0) {
+  if (failed || loading || items.length === 0) {
     return (
       <Card title={t("anomaly.tab.items")} hint={t("anomaly.items.hint")} hueIndex={0}>
-        <p className="text-sm text-carbon-textSub">{t("anomaly.items.empty")}</p>
+        {failed ? (
+          // A listing that never arrived says nothing about what is watched,
+          // so it must not borrow the empty list's wording.
+          <div className="flex flex-col items-start gap-2">
+            <p className="text-sm text-statusWarn">{t("anomaly.loadFailed")}</p>
+            <Button label={t("anomaly.retry")} labelKey="anomaly.retry" onClick={onRetry} />
+          </div>
+        ) : (
+          <p className="text-sm text-carbon-textSub">
+            {t(loading ? "dashboard.checking" : "anomaly.items.empty")}
+          </p>
+        )}
       </Card>
     );
   }
@@ -685,7 +717,7 @@ function ItemRow({
         {openCount > 0 && worst && (
           <Link
             to={`/anomalies?scope=item:${encodeURIComponent(item.targetId)}#findings`}
-            aria-label={t("anomaly.itemBadgeAria", openCount)
+            aria-label={t("anomaly.itemBadgeAria")
               .replace("{name}", item.name)
               .replace("{n}", openCount.toLocaleString())}
           >

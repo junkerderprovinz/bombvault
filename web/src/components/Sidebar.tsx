@@ -491,7 +491,7 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
                   count={{
                     value: loudAnomalies,
                     tone: summary && summary.open.critical > 0 ? "fail" : "warn",
-                    label: t("anomaly.navCountAria", loudAnomalies),
+                    label: t("anomaly.navCountAria").replace("{n}", loudAnomalies.toLocaleString()),
                   }}
                 />
               )}
