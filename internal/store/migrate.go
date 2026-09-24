@@ -1990,6 +1990,33 @@ ALTER TABLE zfs_run_members ADD COLUMN has_parent INTEGER;
 CREATE INDEX IF NOT EXISTS idx_zfs_run_members_snapshot ON zfs_run_members(restic_snapshot);`,
 		alreadySatisfied: columnPresent("zfs_run_members", "source_bytes"),
 	},
+	{
+		// The published anomaly branch build recorded its own migrations as
+		// 136 to 138, so a database that ran it skips the two ZFS steps this
+		// build numbers 136 and 137. This one and the next put them back; the
+		// body is CREATE-only and needs no guard.
+		version: zfsRecoveryMigration,
+		name:    "zfs_safety_snapshots_recovery",
+		sql: `CREATE TABLE IF NOT EXISTS zfs_safety_snapshots (
+  item_id          TEXT    NOT NULL,
+  dataset          TEXT    NOT NULL,
+  name             TEXT    NOT NULL,
+  created_at       INTEGER NOT NULL,
+  used_bytes       INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (dataset, name)
+);`,
+	},
+	{
+		version: zfsRecoveryMigration + 1,
+		name:    "settings_zfs_schedule_joins_sync_recovery",
+		sql: `UPDATE settings SET zfs_schedule = containers_schedule
+WHERE zfs_schedule = 'off'
+  AND containers_schedule NOT IN ('off', '')
+  AND vms_schedule = containers_schedule
+  AND flash_schedule = containers_schedule
+  AND files_schedule = containers_schedule;`,
+		alreadySatisfied: migrationRecorded("settings_zfs_schedule_joins_sync"),
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -2012,6 +2039,12 @@ const mcpMigrationBase = 141
 // a ZFS table for anomaly detection, so they need both schemas and come after
 // every block above.
 const zfsMemberMetricsMigration = mcpMigrationBase + 2
+
+// zfsRecoveryMigration numbers the two steps that restore what the anomaly
+// branch numbering hid. The next migration takes 148: the published MCP
+// branch build recorded its two as 146 and 147, and a database that ran it
+// would skip anything else numbered so.
+const zfsRecoveryMigration = zfsMemberMetricsMigration + 1
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.

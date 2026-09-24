@@ -671,3 +671,50 @@ func TestZFSScheduleJoinsSchedulesThatWereInStep(t *testing.T) {
 		})
 	}
 }
+
+// The published build of the anomaly branch numbered its migrations from 136,
+// where this build keeps the last two ZFS steps. A database that ran it has
+// 136 and 137 recorded under other names, so the upgrade skips both bodies.
+func TestAnomalyBranchDatabaseGetsTheZFSStepsItsNumbersHid(t *testing.T) {
+	db := OpenMem(t)
+	if err := Migrate(db); err != nil {
+		t.Fatalf("first migrate: %v", err)
+	}
+	if _, err := db.Exec(`DROP TABLE zfs_safety_snapshots`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`DELETE FROM schema_migrations WHERE version >= ?`, zfsMigrationBase+10); err != nil {
+		t.Fatal(err)
+	}
+	record(t, db, zfsMigrationBase+10, "runs_source_metrics")
+	record(t, db, zfsMigrationBase+11, "anomalies")
+	record(t, db, anomalyMigrationBase, "settings_anomaly")
+	if _, err := db.Exec(`UPDATE settings SET zfs_schedule = 'off', containers_schedule = 'daily 03:00',
+		vms_schedule = 'daily 03:00', flash_schedule = 'daily 03:00', files_schedule = 'daily 03:00' WHERE id = 1`); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := Migrate(db); err != nil {
+		t.Fatalf("migrate over the anomaly branch's numbering: %v", err)
+	}
+	if !hasTable(t, db, "zfs_safety_snapshots") {
+		t.Fatal("zfs_safety_snapshots is missing, so every in-place ZFS restore fails")
+	}
+	var schedule string
+	if err := db.QueryRow(`SELECT zfs_schedule FROM settings WHERE id = 1`).Scan(&schedule); err != nil {
+		t.Fatal(err)
+	}
+	if schedule != "daily 03:00" {
+		t.Fatalf("zfs_schedule = %q, want it joined to the shared schedule", schedule)
+	}
+}
+
+// The published build of the MCP branch recorded its two migrations as 146
+// and 147, and a database that ran it would skip whatever else took them.
+func TestNoMigrationTakesTheNumbersTheMCPBranchRecorded(t *testing.T) {
+	for _, m := range migrations {
+		if m.version == 146 || m.version == 147 {
+			t.Fatalf("v%d (%s) would be skipped on a database that ran the MCP branch build", m.version, m.name)
+		}
+	}
+}
