@@ -156,7 +156,7 @@ func (s *Service) collectDigestStats(now time.Time) (digestStats, error) {
 	if err != nil {
 		return digestStats{}, fmt.Errorf("read settings: %w", err)
 	}
-	for _, domain := range []string{"containers", "vms", "flash", "config", "files"} {
+	for _, domain := range offsiteConfigDomains {
 		if s.offsiteRepoFor(domain, settings) == "" {
 			continue
 		}

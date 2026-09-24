@@ -229,3 +229,23 @@ func TestDigestMentionsOpenAnomalies(t *testing.T) {
 		t.Fatalf("digest must carry %q, got %q", want, body())
 	}
 }
+
+func TestDigestReportsTheZFSOffsiteCopy(t *testing.T) {
+	svc, st, body := digestTestService(t, "always")
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ZFSEnabled = true
+	s.ZFSOffsite = "s3:offsite-zfs"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := svc.SendDigest(context.Background()); err != nil {
+		t.Fatalf("SendDigest: %v", err)
+	}
+	if got := body(); !strings.Contains(got, "- zfs: no successful copy yet") {
+		t.Fatalf("the digest must say how current the ZFS off-site copy is, got %q", got)
+	}
+}
