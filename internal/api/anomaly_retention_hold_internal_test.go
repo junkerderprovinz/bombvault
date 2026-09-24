@@ -181,3 +181,39 @@ func TestHoldCheckErrorSkipsTheForgetAndAlerts(t *testing.T) {
 		t.Fatalf("evalErrors = %d, want the failed check counted once", got)
 	}
 }
+
+// A container's dumps are a series of their own with a tag of their own. A
+// database that was emptied keeps its dumps, and the volume backup beside it
+// prunes as usual; the manual prune spares the same tag the live pass does.
+func TestDumpCollapseHoldsOnlyTheDumpSeries(t *testing.T) {
+	f := newEngineFixture(t)
+	id := f.container(t, "pg")
+	f.steadySeries(t, id, "backup", 11, 40*gib)
+	f.steadySeries(t, id, "dbdump", 11, 300*mib)
+	f.run(t, id, "dbdump", f.now-3600, 100<<10)
+	forget := &forgetTrackingEngine{}
+	f.svc.engine = forget
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.RetentionKeepLast = 5
+
+	f.svc.forgetDBDumpSeries(context.Background(), "/repo", settings, restic.Mode{}, "pg", id)
+	if forget.forgetCalls() != 0 {
+		t.Fatalf("the emptied database's dumps were forgotten (%d call(s))", forget.forgetCalls())
+	}
+	f.svc.applyRetention(context.Background(), "/repo", settings, restic.Mode{},
+		f.svc.containerIdentity("pg"), "containers", anomalyScope{Kind: anomalyScopeItem, ID: id})
+	if forget.forgetCalls() != 1 {
+		t.Fatalf("the volume backup made %d forget call(s), want its own one", forget.forgetCalls())
+	}
+
+	held, err := f.e.HeldIdentityTags()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !held.holds("dbdump:pg") || held.holds("container:pg") {
+		t.Fatalf("held = %v, want the dump series and not the container", held.names())
+	}
+}
