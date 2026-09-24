@@ -667,6 +667,22 @@ describe("Selector glyph mode names its segments", () => {
     expect(document.querySelector(".glim-bubble")?.textContent).toBe("Pick a target folder first");
   });
 
+  it("gives a disabled item with a title an accessible description, with no hover needed", () => {
+    const items: SelectorItem[] = [
+      { id: "a", label: "Alpha", disabled: true, title: "Pick a target folder first" },
+      { id: "b", label: "Beta" },
+    ];
+    render(<Selector items={items} label="Test strip" active="b" onChange={() => {}} />);
+    const alpha = screen.getByRole("tab", { name: "Alpha" });
+    const describedBy = alpha.getAttribute("aria-describedby");
+    expect(describedBy).toBeTruthy();
+    const desc = document.getElementById(describedBy!);
+    expect(desc?.textContent).toBe("Pick a target folder first");
+    expect(desc?.className).toContain("sr-only");
+    // No hover or focus happened, so the bubble itself stays closed.
+    expect(document.querySelector(".glim-bubble")).toBeNull();
+  });
+
   // A strip follows the axis its size implies: lg is a page-level tab strip
   // and follows "tabs", any other size sits in a form row and follows
   // "buttons". Both directions are checked, since one alone would pass on a

@@ -11,6 +11,7 @@
 // not a <label> around the row: a label around several tabs forwards its clicks
 // to the first one and gives screen readers that tab's name.
 import {
+  useId,
   useLayoutEffect,
   useRef,
   useState,
@@ -284,6 +285,12 @@ function SelectorTab({
   // that says why.
   const tooltip = useTipBubble(reactive && !disabled ? undefined : tip, disabled);
 
+  // A disabled segment takes no hover or focus, so its tip needs a
+  // description that is there from the start rather than one that exists
+  // only while the bubble happens to be open.
+  const descId = useId();
+  const hiddenDescId = disabled && tip ? descId : undefined;
+
   return (
     <>
       {tooltip.wrap(
@@ -298,7 +305,7 @@ function SelectorTab({
           aria-selected={tab ? on : undefined}
           aria-pressed={tab ? undefined : on}
           aria-label={nameHidden ? item.label : undefined}
-          aria-describedby={tooltip.describedBy}
+          aria-describedby={hiddenDescId ?? tooltip.describedBy}
           disabled={disabled}
           tabIndex={roved ? 0 : -1}
           style={
@@ -323,6 +330,11 @@ function SelectorTab({
             )
           )}
         </button>,
+      )}
+      {hiddenDescId && (
+        <span id={hiddenDescId} className="sr-only">
+          {tip}
+        </span>
       )}
       {tooltip.bubble}
     </>
