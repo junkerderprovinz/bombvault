@@ -1468,7 +1468,7 @@ export async function discoverAll(): Promise<{
     zfs: z.discovered ?? 0,
     ...(failed ? { error: failed.error ?? "discover failed" } : {}),
     skipped,
-    // ANY domain that hit something actionable. The sentence lists every
+    // Any domain that hit something actionable. The sentence lists every
     // domain's skips together, so the flag has to be the union too.
     skippedNeedsAction: results.some((r) => r.skippedNeedsAction === true),
   };
@@ -3265,8 +3265,9 @@ export function deleteBackupsZFSDataset(id: string): Promise<ZFSCodedEnvelope> {
   return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/backups`, { method: "DELETE" });
 }
 
-/** POST /api/zfs/datasets/{id}/backup. ASYNC (see BackupResponse): watch the
- *  "zfs:<root>" SSE key and the recorded run for the outcome. */
+/** POST /api/zfs/datasets/{id}/backup. Answers before the run ends (see
+ *  BackupResponse): watch the "zfs:<root>" SSE key and the recorded run for the
+ *  outcome. */
 export function backupZFSDataset(id: string): Promise<BackupResponse> {
   return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/backup`, { method: "POST" });
 }
@@ -3312,8 +3313,9 @@ export function listSnapshotFilesZFS(
   );
 }
 
-/** POST /api/zfs/datasets/{id}/restore. ASYNC: the ack carries the resolved
- *  target and the safety snapshot's name; watch the "zfs:<root>" SSE key. */
+/** POST /api/zfs/datasets/{id}/restore. Answers before the restore ends: the
+ *  ack carries the resolved target and the safety snapshot's name; watch the
+ *  "zfs:<root>" SSE key. */
 export function restoreZFS(
   id: string,
   req: ZFSRestoreRequest,
@@ -3327,7 +3329,7 @@ export function restoreZFS(
 
 /** POST /api/zfs/discover, rebuilding the item list from the zfs: tags in
  *  storage. `probe` = read-only readiness check (see discover). Rebuilt items
- *  arrive DISABLED, and `rootsToCheck` counts the ones whose root was inferred
+ *  arrive switched off, and `rootsToCheck` counts the ones whose root was inferred
  *  from tags alone and wants a look. */
 export function discoverZFS(probe = false): Promise<DiscoverEnvelope & { rootsToCheck?: number }> {
   return fetchJSON(`/api/zfs/discover${probe ? "?probe=true" : ""}`, { method: "POST" });

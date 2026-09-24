@@ -311,7 +311,7 @@ func (r *Repo) SetNamedRepoLocationIfUnused(id, location string) (int, error) {
 }
 
 // ItemsUsingNamedRepo counts the containers, VMs, file sets and ZFS items that
-// currently point at this named repository. Used for DISPLAY (the "n in use"
+// currently point at this named repository. Used for display (the "n in use"
 // badge) and to explain a refusal before it happens; the refusals themselves
 // are enforced by DeleteNamedRepoIfUnused / SetNamedRepoLocationIfUnused, which
 // re-count inside their own transaction so the answer cannot go stale between

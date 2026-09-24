@@ -639,7 +639,7 @@ func RestoreSubtreeToArgs(repo, snapshotID, subtreePath, target string, m Mode) 
 		args = append(args, insecureFlag)
 	}
 	if m.NoLock {
-		args = append(args, "--no-lock") // a foreign restore only READS the source repo
+		args = append(args, "--no-lock") // a foreign restore only reads the source repo
 	}
 	args = append(args, "--json")
 	args = append(args, "--target", target)
