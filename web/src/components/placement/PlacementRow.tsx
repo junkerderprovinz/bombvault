@@ -127,6 +127,9 @@ export function PlacementRow({
 
   const unreadable = shown.unreadable || options?.unreadable === true || (options === null && error !== null);
   const line = followLine(shown);
+  // An item fixed on a remote or direct repository is never copied and cannot
+  // move, so a line about its copies and a Reset would only mislead.
+  const copiesLine = !(shown.locked && shown.segment === "offsite-only");
   const warn = options ? noCopyNow(shown, options) : [];
 
   return (
@@ -159,22 +162,24 @@ export function PlacementRow({
       </div>
       {!unreadable && options && (
         <div className="flex flex-col gap-1">
-          <p className="flex items-center gap-2 flex-wrap text-xs text-carbon-textMuted">
-            <span>
-              {line === "home-set"
-                ? t("placement.homeSet").replace("{home}", () => viewHomeLabel(t, host, shown, options))
-                : t(FOLLOW_KEYS[line])}
-            </span>
-            {(line === "own-copies" || line === "home-set") && (
-              <Button
-                label={t("placement.reset")}
-                labelKey="placement.reset"
-                tone="neutral"
-                disabled={asking}
-                onClick={() => void run(stepForReset(shown))}
-              />
-            )}
-          </p>
+          {copiesLine && (
+            <p className="flex items-center gap-2 flex-wrap text-xs text-carbon-textMuted">
+              <span>
+                {line === "home-set"
+                  ? t("placement.homeSet").replace("{home}", () => viewHomeLabel(t, host, shown, options))
+                  : t(FOLLOW_KEYS[line])}
+              </span>
+              {(line === "own-copies" || line === "home-set") && (
+                <Button
+                  label={t("placement.reset")}
+                  labelKey="placement.reset"
+                  tone="neutral"
+                  disabled={asking}
+                  onClick={() => void run(stepForReset(shown))}
+                />
+              )}
+            </p>
+          )}
           {warn.length > 0 && (
             <p className="text-xs text-statusWarn">
               {t("placement.noCopyNow").replace("{targets}", () => formatList(lang, warn))}
