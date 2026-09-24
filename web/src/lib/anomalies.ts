@@ -158,6 +158,20 @@ export function anomalyErrorText(code: string | undefined, t: TranslateAnomaly):
   }
 }
 
+/** How far a series has come, as a badge caption. */
+export function anomalyLearningText(
+  t: TranslateAnomaly,
+  samples: number,
+  needed: number,
+  noData: boolean
+): string {
+  if (noData) return t("anomaly.noData");
+  if (samples >= needed) return t("anomaly.learningDone");
+  return t("anomaly.learning")
+    .replace("{n}", samples.toLocaleString())
+    .replace("{needed}", needed.toLocaleString());
+}
+
 export function worstSeverity(open: Record<AnomalySeverity, number>): AnomalySeverity | null {
   if (open.critical > 0) return "critical";
   if (open.warning > 0) return "warning";
