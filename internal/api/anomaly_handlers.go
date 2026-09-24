@@ -147,7 +147,8 @@ func anomalyWriteEnvelope(err error) map[string]any {
 		return okEnvelope(nil)
 	case errors.Is(err, errNotAnAnomalyItem):
 		return codedFailEnvelope(err, "not-found")
-	case errors.Is(err, errUnknownSensitivity), errors.Is(err, errUnknownNotifyMin), errors.Is(err, errUnknownAnomalyScope):
+	case errors.Is(err, errUnknownSensitivity), errors.Is(err, errUnknownNotifyMin),
+		errors.Is(err, errUnknownAnomalyScope), errors.Is(err, errUnknownAnomalyFamily):
 		return codedFailEnvelope(err, "bad-request")
 	default:
 		return failEnvelope(err)

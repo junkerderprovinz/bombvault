@@ -25,10 +25,11 @@ const anomalyActionLimit = 500
 const newDataCeilingFactor = 1.25
 
 var (
-	errNotAnAnomalyItem    = errors.New("not a backed-up item")
-	errUnknownSensitivity  = errors.New("unknown sensitivity preset")
-	errUnknownNotifyMin    = errors.New("unknown notification minimum")
-	errUnknownAnomalyScope = errors.New("unknown scope kind")
+	errNotAnAnomalyItem     = errors.New("not a backed-up item")
+	errUnknownSensitivity   = errors.New("unknown sensitivity preset")
+	errUnknownNotifyMin     = errors.New("unknown notification minimum")
+	errUnknownAnomalyScope  = errors.New("unknown scope kind")
+	errUnknownAnomalyFamily = errors.New("unknown expectation family")
 )
 
 // AnomalyView is one finding with everything the page needs to write a sentence
@@ -474,6 +475,17 @@ func (s *Service) SetItemAnomalyPrefs(ctx context.Context, targetID string, patc
 // ForgetAnomalyExpectation drops one expectation, so its rule watches the
 // series again from the next pass on.
 func (s *Service) ForgetAnomalyExpectation(ctx context.Context, targetID, scopeKind, part, family string) error {
+	if !anomalyFamilyKnown(family) {
+		return fmt.Errorf("%s: %w", family, errUnknownAnomalyFamily)
+	}
+	items, err := s.anomalyItemRefs()
+	if err != nil {
+		return err
+	}
+	if _, known := items[targetID]; !known {
+		return fmt.Errorf("%s: %w", targetID, errNotAnAnomalyItem)
+	}
+
 	scopeID := targetID
 	switch scopeKind {
 	case anomalyScopeItem, anomalyScopeDump:
@@ -485,10 +497,10 @@ func (s *Service) ForgetAnomalyExpectation(ctx context.Context, targetID, scopeK
 
 	scope := anomalyScope{Kind: scopeKind, ID: scopeID}
 	release := s.anomalies.lockScopes([]anomalyScope{scope})
-	err := s.store.DeleteAnomalyExpectation(scopeKind, scopeID, family)
+	dErr := s.store.DeleteAnomalyExpectation(scopeKind, scopeID, family)
 	release()
-	if err != nil {
-		return err
+	if dErr != nil {
+		return dErr
 	}
 
 	s.anomalies.markScopesDirty([]anomalyScope{scope})
@@ -553,6 +565,18 @@ func anomalyHolds(row store.Anomaly, settings store.Settings) bool {
 func anomalyExpectable(metric string) bool {
 	_, ok := anomalyFamilies[metric]
 	return ok
+}
+
+// anomalyFamilyKnown reports whether a rule writes expectations under this
+// name. A stale page that sends another one would delete nothing and be told
+// the expectation is gone.
+func anomalyFamilyKnown(family string) bool {
+	for _, known := range anomalyFamilies {
+		if known != "" && known == family {
+			return true
+		}
+	}
+	return false
 }
 
 func anomalyDetails(raw string) map[string]any {

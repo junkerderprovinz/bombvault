@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -279,6 +280,36 @@ func TestSetItemPrefsRefusesAnythingButAnItemAndAKnownSetting(t *testing.T) {
 	}
 	if item.NotifyMin != "warning" || item.EffectiveNotifyMin != "warning" {
 		t.Fatalf("notify minimum = %q/%q", item.NotifyMin, item.EffectiveNotifyMin)
+	}
+}
+
+// Forgetting an expectation reports success, and the page acts on it. A family
+// or an item the store knows nothing about deletes nothing, so it is refused
+// rather than answered with an ok.
+func TestForgetExpectationRefusesAnUnknownFamilyOrItem(t *testing.T) {
+	f := newEngineFixture(t)
+	id, row := f.collapsedContainer(t, "nextcloud")
+	if _, _, _, err := f.svc.MarkAnomaliesExpected(context.Background(), []string{row.ID}, ""); err != nil {
+		t.Fatal(err)
+	}
+
+	ctx := context.Background()
+	if err := f.svc.ForgetAnomalyExpectation(ctx, id, anomalyScopeItem, "", "sourceBytesDown"); !errors.Is(err, errUnknownAnomalyFamily) {
+		t.Fatalf("a misspelt family gave %v", err)
+	}
+	if err := f.svc.ForgetAnomalyExpectation(ctx, "containers", anomalyScopeItem, "", familySourceBytesDown); !errors.Is(err, errNotAnAnomalyItem) {
+		t.Fatalf("a domain literal is not an item: %v", err)
+	}
+
+	if err := f.svc.ForgetAnomalyExpectation(ctx, id, anomalyScopeItem, "", familySourceBytesDown); err != nil {
+		t.Fatal(err)
+	}
+	left, err := f.st.ListAnomalyExpectationsForTarget(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(left) != 0 {
+		t.Fatalf("the expectation was not forgotten: %+v", left)
 	}
 }
 
