@@ -11,14 +11,16 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const SETTINGS_DIR = HERE;
+const SETTINGS_DIRS = [HERE, join(HERE, "tabs")];
 const SETTINGS_PAGE = join(HERE, "..", "Settings.tsx");
 
 function settingsSources(): { file: string; text: string }[] {
   const out = [{ file: "Settings.tsx", text: readFileSync(SETTINGS_PAGE, "utf8") }];
-  for (const name of readdirSync(SETTINGS_DIR)) {
-    if (!/\.tsx$/.test(name) || /\.test\.tsx$/.test(name)) continue;
-    out.push({ file: name, text: readFileSync(join(SETTINGS_DIR, name), "utf8") });
+  for (const dir of SETTINGS_DIRS) {
+    for (const name of readdirSync(dir)) {
+      if (!/\.tsx$/.test(name) || /\.test\.tsx$/.test(name)) continue;
+      out.push({ file: name, text: readFileSync(join(dir, name), "utf8") });
+    }
   }
   return out;
 }
