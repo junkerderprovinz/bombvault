@@ -1683,7 +1683,7 @@ const gl: Partial<Translations> = {
   "placementCode.targetInUseItems": "Aínda hai elementos facendo copia de seguranza no repositorio directo deste destino: {n}. Apúntaos a outro lugar primeiro.",
   "placementCode.targetInUseDefault": "O valor predeterminado de {domains} apunta ao repositorio directo deste destino. Cambia primeiro o valor predeterminado.",
   "placementCode.directRepo": "Este repositorio vai con {target}. Quita ese destino no seu lugar.",
-  "placementCode.appendOnly": "O destino é só de engadir. Desde aquí non se pode borrar nada del.",
+  "placementCode.appendOnly": "O destino é append-only. Desde aquí non se pode borrar nada del.",
   "placementCode.removalGrown": "Agora existen alí máis instantáneas das que se mostraron. Comproba a lista de novo.",
   "placementCode.nameMismatch": "O nome escrito non coincide.",
   "placementCode.homeUnreadable": "Non se puido ler a localización do elemento, así que non se borrou nada.",
@@ -1749,7 +1749,7 @@ const gl: Partial<Translations> = {
   "timeline.deleteRow": "Borrar en todas partes",
   "timeline.deleteLast": "Esta é a última copia desta copia de seguranza.",
   "timeline.deleteHeldBy": "Aínda retida por: {list}",
-  "timeline.deleteSkipped": "Excluída, só engadir: {list}",
+  "timeline.deleteSkipped": "Excluída, append-only: {list}",
   "timeline.deletePartial": "Xa borrada en: {list}",
   "timeline.deleteSpace": "O espazo non se recupera ata que se executa unha limpeza.",
   "timeline.deleteFinal": "Isto non se pode desfacer.",
@@ -1857,7 +1857,7 @@ const gl: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Non se puido comprobar se {home} aínda as ten.",
   "offsiteRemoval.typeName": "Escribe {name} para confirmar",
   "offsiteRemoval.done": "Borrada en {target}: {n}",
-  "offsiteRemoval.appendOnly": "{target} é só de engadir. Desde aquí non se pode borrar nada del.",
+  "offsiteRemoval.appendOnly": "{target} é append-only. Desde aquí non se pode borrar nada del.",
 };
 
 export default gl;

@@ -1664,7 +1664,7 @@ const vi: Partial<Translations> = {
   "placementCode.targetInUseItems": "Vẫn còn mục đang sao lưu vào kho trực tiếp của đích này: {n}. Trỏ chúng sang nơi khác trước.",
   "placementCode.targetInUseDefault": "Giá trị mặc định cho {domains} đang trỏ đến kho trực tiếp của đích này. Đổi giá trị mặc định trước.",
   "placementCode.directRepo": "Kho này đi cùng với {target}. Hãy gỡ đích đó thay vì kho.",
-  "placementCode.appendOnly": "Đích này chỉ thêm. Không thể xóa bất cứ thứ gì khỏi đó từ đây.",
+  "placementCode.appendOnly": "Đích này là append-only. Không thể xóa bất cứ thứ gì khỏi đó từ đây.",
   "placementCode.removalGrown": "Hiện có nhiều bản chụp nhanh ở đó hơn số được hiển thị. Kiểm tra lại danh sách.",
   "placementCode.nameMismatch": "Tên đã nhập không khớp.",
   "placementCode.homeUnreadable": "Không thể đọc vị trí của mục, vì vậy không có gì bị xóa.",
@@ -1730,7 +1730,7 @@ const vi: Partial<Translations> = {
   "timeline.deleteRow": "Xóa ở mọi nơi",
   "timeline.deleteLast": "Đây là bản sao cuối cùng của bản sao lưu này.",
   "timeline.deleteHeldBy": "Vẫn đang được giữ bởi: {list}",
-  "timeline.deleteSkipped": "Bỏ qua, chỉ thêm: {list}",
+  "timeline.deleteSkipped": "Bỏ qua, append-only: {list}",
   "timeline.deletePartial": "Đã xóa tại: {list}",
   "timeline.deleteSpace": "Dung lượng không được thu hồi cho đến khi chạy dọn dẹp.",
   "timeline.deleteFinal": "Việc này không thể hoàn tác.",
@@ -1838,7 +1838,7 @@ const vi: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Không thể kiểm tra liệu {home} có còn chúng hay không.",
   "offsiteRemoval.typeName": "Gõ {name} để xác nhận",
   "offsiteRemoval.done": "Đã xóa tại {target}: {n}",
-  "offsiteRemoval.appendOnly": "{target} chỉ thêm. Không thể xóa bất cứ thứ gì khỏi đó từ đây.",
+  "offsiteRemoval.appendOnly": "{target} là append-only. Không thể xóa bất cứ thứ gì khỏi đó từ đây.",
 };
 
 export default vi;

@@ -1667,7 +1667,7 @@ const ru: Partial<Translations> = {
   "placementCode.targetInUseItems": "Элементы всё ещё резервируются в прямой репозиторий этой цели: {n}. Сначала перенаправь их в другое место.",
   "placementCode.targetInUseDefault": "Значение по умолчанию для {domains} указывает на прямой репозиторий этой цели. Сначала измени значение по умолчанию.",
   "placementCode.directRepo": "Этот репозиторий идёт вместе с целью {target}. Убери вместо него цель.",
-  "placementCode.appendOnly": "Цель доступна только для добавления. Отсюда из неё нельзя ничего удалить.",
+  "placementCode.appendOnly": "Цель работает в режиме append-only. Отсюда из неё нельзя ничего удалить.",
   "placementCode.removalGrown": "Там теперь существует больше снимков, чем было показано. Проверьте список снова.",
   "placementCode.nameMismatch": "Введённое имя не совпадает.",
   "placementCode.homeUnreadable": "Не удалось прочитать расположение элемента, поэтому ничего не было удалено.",
@@ -1733,7 +1733,7 @@ const ru: Partial<Translations> = {
   "timeline.deleteRow": "Удалить везде",
   "timeline.deleteLast": "Это последняя копия этой резервной копии.",
   "timeline.deleteHeldBy": "Всё ещё удерживается: {list}",
-  "timeline.deleteSkipped": "Пропущено, только добавление: {list}",
+  "timeline.deleteSkipped": "Пропущено, append-only: {list}",
   "timeline.deletePartial": "Уже удалено в: {list}",
   "timeline.deleteSpace": "Место не освобождается, пока не запустится очистка.",
   "timeline.deleteFinal": "Это нельзя отменить.",
@@ -1841,7 +1841,7 @@ const ru: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Не удалось проверить, есть ли они ещё в {home}.",
   "offsiteRemoval.typeName": "Введите {name} для подтверждения",
   "offsiteRemoval.done": "Удалено в {target}: {n}",
-  "offsiteRemoval.appendOnly": "{target} доступен только для добавления. Отсюда из него нельзя ничего удалить.",
+  "offsiteRemoval.appendOnly": "{target} работает в режиме append-only. Отсюда из него нельзя ничего удалить.",
 };
 
 export default ru;

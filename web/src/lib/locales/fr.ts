@@ -1672,7 +1672,7 @@ const fr: Partial<Translations> = {
   "placementCode.targetInUseItems": "Des éléments sauvegardent encore vers le dépôt direct de cette cible : {n}. Pointez-les ailleurs d'abord.",
   "placementCode.targetInUseDefault": "La valeur par défaut de {domains} pointe vers le dépôt direct de cette cible. Changez d'abord la valeur par défaut.",
   "placementCode.directRepo": "Ce dépôt va avec {target}. Retirez plutôt cette cible.",
-  "placementCode.appendOnly": "La cible est en ajout seul. Rien ici ne peut en être supprimé.",
+  "placementCode.appendOnly": "La cible est en append-only. Rien ici ne peut en être supprimé.",
   "placementCode.removalGrown": "Il existe maintenant là-bas plus d'instantanés que ceux affichés. Vérifiez la liste de nouveau.",
   "placementCode.nameMismatch": "Le nom saisi ne correspond pas.",
   "placementCode.homeUnreadable": "Impossible de lire l'emplacement de l'élément, donc rien n'a été supprimé.",
@@ -1738,7 +1738,7 @@ const fr: Partial<Translations> = {
   "timeline.deleteRow": "Supprimer partout",
   "timeline.deleteLast": "C'est la dernière copie de cette sauvegarde.",
   "timeline.deleteHeldBy": "Encore retenue par : {list}",
-  "timeline.deleteSkipped": "Laissée de côté, ajout seul : {list}",
+  "timeline.deleteSkipped": "Laissée de côté, append-only : {list}",
   "timeline.deletePartial": "Déjà supprimée à : {list}",
   "timeline.deleteSpace": "L'espace n'est récupéré qu'après l'exécution d'un élagage.",
   "timeline.deleteFinal": "Ceci est irréversible.",
@@ -1846,7 +1846,7 @@ const fr: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Impossible de vérifier si {home} les a encore.",
   "offsiteRemoval.typeName": "Tapez {name} pour confirmer",
   "offsiteRemoval.done": "Supprimée dans {target} : {n}",
-  "offsiteRemoval.appendOnly": "{target} est en ajout seul. Rien ici ne peut en être supprimé.",
+  "offsiteRemoval.appendOnly": "{target} est en append-only. Rien ici ne peut en être supprimé.",
 };
 
 export default fr;

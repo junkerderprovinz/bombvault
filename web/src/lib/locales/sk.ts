@@ -1683,7 +1683,7 @@ const sk: Partial<Translations> = {
   "placementCode.targetInUseItems": "Do priameho repozitára tohto cieľa stále zálohujú položky: {n}. Najprv ich nasmeruj inam.",
   "placementCode.targetInUseDefault": "Predvolená hodnota pre {domains} ukazuje na priamy repozitár tohto cieľa. Najprv zmeň predvolenú hodnotu.",
   "placementCode.directRepo": "Tento repozitár patrí k cieľu {target}. Odstráň namiesto neho cieľ.",
-  "placementCode.appendOnly": "Cieľ je iba na pridávanie. Odtiaľto sa z neho nesmie nič mazať.",
+  "placementCode.appendOnly": "Cieľ je append-only. Odtiaľto sa z neho nesmie nič mazať.",
   "placementCode.removalGrown": "Teraz tam existuje viac snímok, než koľko ich bolo zobrazených. Skontroluj zoznam znova.",
   "placementCode.nameMismatch": "Zadaný názov sa nezhoduje.",
   "placementCode.homeUnreadable": "Umiestnenie položky sa nepodarilo načítať, takže nič nebolo vymazané.",
@@ -1749,7 +1749,7 @@ const sk: Partial<Translations> = {
   "timeline.deleteRow": "Vymazať všade",
   "timeline.deleteLast": "Toto je posledná kópia tejto zálohy.",
   "timeline.deleteHeldBy": "Stále drží: {list}",
-  "timeline.deleteSkipped": "Vynechané, iba pridávanie: {list}",
+  "timeline.deleteSkipped": "Vynechané, append-only: {list}",
   "timeline.deletePartial": "Už vymazané v: {list}",
   "timeline.deleteSpace": "Miesto sa neuvoľní, kým neprebehne upratovanie.",
   "timeline.deleteFinal": "Toto nemožno vrátiť späť.",
@@ -1857,7 +1857,7 @@ const sk: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Nepodarilo sa skontrolovať, či ich {home} ešte má.",
   "offsiteRemoval.typeName": "Na potvrdenie napíš {name}",
   "offsiteRemoval.done": "Vymazané v {target}: {n}",
-  "offsiteRemoval.appendOnly": "{target} je iba na pridávanie. Odtiaľto sa z neho nesmie nič mazať.",
+  "offsiteRemoval.appendOnly": "{target} je append-only. Odtiaľto sa z neho nesmie nič mazať.",
 };
 
 export default sk;

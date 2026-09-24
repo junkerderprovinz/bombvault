@@ -94,4 +94,16 @@ describe("placement texts", () => {
       expect(allLocales.lt[key], key).toMatch(/iš \{target\}/);
     }
   });
+
+  it("names append-only the same way a locale already does in placement.droppedAppendOnly", () => {
+    const keys = ["placementCode.appendOnly", "timeline.deleteSkipped", "offsiteRemoval.appendOnly"] as const;
+    for (const [code, table] of Object.entries(allLocales)) {
+      if (code === "en") continue;
+      const reference = table["placement.droppedAppendOnly"];
+      if (!reference?.includes("append-only")) continue;
+      for (const key of keys) {
+        expect(table[key], `${code} ${key}`).toContain("append-only");
+      }
+    }
+  });
 });

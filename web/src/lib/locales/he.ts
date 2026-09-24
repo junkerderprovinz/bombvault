@@ -1672,7 +1672,7 @@ const he: Partial<Translations> = {
   "placementCode.targetInUseItems": "פריטים עדיין מגבים אל המאגר הישיר של היעד הזה: {n}. הפנה אותם קודם למקום אחר.",
   "placementCode.targetInUseDefault": "ברירת המחדל של {domains} מצביעה על המאגר הישיר של היעד הזה. שנה קודם את ברירת המחדל.",
   "placementCode.directRepo": "המאגר הזה הולך יחד עם {target}. הסר במקום זאת את היעד.",
-  "placementCode.appendOnly": "היעד הוא הוספה בלבד. אי אפשר למחוק ממנו מכאן.",
+  "placementCode.appendOnly": "היעד הוא append-only. אי אפשר למחוק ממנו מכאן.",
   "placementCode.removalGrown": "כעת יש שם יותר תצלומים ממה שהוצג. בדוק את הרשימה שוב.",
   "placementCode.nameMismatch": "השם שהוקלד אינו תואם.",
   "placementCode.homeUnreadable": "לא ניתן היה לקרוא את מיקום הפריט, ולכן לא נמחק דבר.",
@@ -1738,7 +1738,7 @@ const he: Partial<Translations> = {
   "timeline.deleteRow": "מחיקה בכל מקום",
   "timeline.deleteLast": "זו העותק האחרון של הגיבוי הזה.",
   "timeline.deleteHeldBy": "עדיין מוחזק על ידי: {list}",
-  "timeline.deleteSkipped": "הושמט, הוספה בלבד: {list}",
+  "timeline.deleteSkipped": "הושמט, append-only: {list}",
   "timeline.deletePartial": "כבר נמחק ב: {list}",
   "timeline.deleteSpace": "השטח לא משתחרר עד שהרצת ניקוי מתבצעת.",
   "timeline.deleteFinal": "אי אפשר לבטל את זה.",
@@ -1846,7 +1846,7 @@ const he: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "לא ניתן היה לבדוק אם ל-{home} עדיין יש אותם.",
   "offsiteRemoval.typeName": "הקלד/י {name} לאישור",
   "offsiteRemoval.done": "נמחק ב-{target}: {n}",
-  "offsiteRemoval.appendOnly": "{target} הוא הוספה בלבד. אי אפשר למחוק ממנו מכאן.",
+  "offsiteRemoval.appendOnly": "{target} הוא append-only. אי אפשר למחוק ממנו מכאן.",
 };
 
 export default he;

@@ -1672,7 +1672,7 @@ const fi: Partial<Translations> = {
   "placementCode.targetInUseItems": "Kohteet varmuuskopioituvat yhä tämän kohteen suoraan arkistoon: {n}. Osoita ne ensin muualle.",
   "placementCode.targetInUseDefault": "{domains} oletusarvo osoittaa tämän kohteen suoraan arkistoon. Vaihda oletusarvo ensin.",
   "placementCode.directRepo": "Tämä arkisto kuuluu yhteen kohteen {target} kanssa. Poista sen sijaan kohde.",
-  "placementCode.appendOnly": "Kohde on vain lisäystä varten. Täältä ei saa poistaa siitä mitään.",
+  "placementCode.appendOnly": "Kohde on append-only. Täältä ei saa poistaa siitä mitään.",
   "placementCode.removalGrown": "Siellä on nyt enemmän tilannevedoksia kuin näytettiin. Tarkista luettelo uudelleen.",
   "placementCode.nameMismatch": "Kirjoitettu nimi ei täsmää.",
   "placementCode.homeUnreadable": "Kohteen sijaintia ei voitu lukea, joten mitään ei poistettu.",
@@ -1738,7 +1738,7 @@ const fi: Partial<Translations> = {
   "timeline.deleteRow": "Poista kaikkialta",
   "timeline.deleteLast": "Tämä on tämän varmuuskopion viimeinen kopio.",
   "timeline.deleteHeldBy": "Vielä säilyttää: {list}",
-  "timeline.deleteSkipped": "Jätetty pois, vain lisäys: {list}",
+  "timeline.deleteSkipped": "Jätetty pois, append-only: {list}",
   "timeline.deletePartial": "Jo poistettu kohteessa: {list}",
   "timeline.deleteSpace": "Tila ei vapaudu ennen kuin karsinta ajetaan.",
   "timeline.deleteFinal": "Tätä ei voi perua.",
@@ -1846,7 +1846,7 @@ const fi: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Ei voitu tarkistaa, onko {home}-lla ne yhä.",
   "offsiteRemoval.typeName": "Vahvista kirjoittamalla {name}",
   "offsiteRemoval.done": "Poistettu kohteessa {target}: {n}",
-  "offsiteRemoval.appendOnly": "{target} on vain lisäystä varten. Täältä ei saa poistaa siitä mitään.",
+  "offsiteRemoval.appendOnly": "{target} on append-only. Täältä ei saa poistaa siitä mitään.",
 };
 
 export default fi;

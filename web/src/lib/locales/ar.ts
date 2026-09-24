@@ -1675,7 +1675,7 @@ const ar: Partial<Translations> = {
   "placementCode.targetInUseItems": "لا تزال عناصر تُنسخ احتياطيًا إلى المستودع المباشر لهذا الهدف: {n}. وجّهها إلى مكان آخر أولًا.",
   "placementCode.targetInUseDefault": "القيمة الافتراضية لـ {domains} تشير إلى المستودع المباشر لهذا الهدف. غيّر القيمة الافتراضية أولًا.",
   "placementCode.directRepo": "هذا المستودع مرتبط بـ {target}. أزل ذلك الهدف بدلاً منه.",
-  "placementCode.appendOnly": "الهدف إضافة فقط. لا يجوز حذف أي شيء من هنا.",
+  "placementCode.appendOnly": "الهدف append-only. لا يجوز حذف أي شيء من هنا.",
   "placementCode.removalGrown": "توجد الآن لقطات هناك فقط أكثر مما عُرض. تحقّق من القائمة مجددًا.",
   "placementCode.nameMismatch": "الاسم المكتوب لا يطابق.",
   "placementCode.homeUnreadable": "تعذّرت قراءة موقع العنصر، لذا لم يُحذف شيء.",
@@ -1741,7 +1741,7 @@ const ar: Partial<Translations> = {
   "timeline.deleteRow": "حذف في كل مكان",
   "timeline.deleteLast": "هذه آخر نسخة من هذه النسخة الاحتياطية.",
   "timeline.deleteHeldBy": "ما زالت محفوظة لدى: {list}",
-  "timeline.deleteSkipped": "استُبعدت، إضافة فقط: {list}",
+  "timeline.deleteSkipped": "استُبعدت، append-only: {list}",
   "timeline.deletePartial": "محذوفة مسبقًا في: {list}",
   "timeline.deleteSpace": "لا تُستعاد المساحة إلا عند تشغيل عملية تقليم.",
   "timeline.deleteFinal": "لا يمكن التراجع عن ذلك.",
@@ -1849,7 +1849,7 @@ const ar: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "تعذّر التحقق مما إذا كانت {home} لا تزال تملكها.",
   "offsiteRemoval.typeName": "اكتب {name} للتأكيد",
   "offsiteRemoval.done": "حُذفت في {target}: {n}",
-  "offsiteRemoval.appendOnly": "{target} إضافة فقط. لا يجوز حذف أي شيء من هنا.",
+  "offsiteRemoval.appendOnly": "{target} append-only. لا يجوز حذف أي شيء من هنا.",
 };
 
 export default ar;

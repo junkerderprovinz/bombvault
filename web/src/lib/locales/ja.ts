@@ -1664,7 +1664,7 @@ const ja: Partial<Translations> = {
   "placementCode.targetInUseItems": "項目はまだこのターゲットのダイレクトリポジトリにバックアップされています: {n}。先に別の場所を指定してください。",
   "placementCode.targetInUseDefault": "{domains} の既定値はこのターゲットのダイレクトリポジトリを指しています。まず既定値を変更してください。",
   "placementCode.directRepo": "このリポジトリは{target}と一緒に存在します。代わりにそのターゲットを削除してください。",
-  "placementCode.appendOnly": "対象は追記のみです。ここから削除することはできません。",
+  "placementCode.appendOnly": "対象はappend-onlyです。ここから削除することはできません。",
   "placementCode.removalGrown": "表示時より多くのスナップショットがそこにだけ存在します。リストをもう一度確認してください。",
   "placementCode.nameMismatch": "入力した名前が一致しません。",
   "placementCode.homeUnreadable": "項目の保存場所を読み取れなかったため、何も削除されませんでした。",
@@ -1730,7 +1730,7 @@ const ja: Partial<Translations> = {
   "timeline.deleteRow": "すべての場所から削除",
   "timeline.deleteLast": "これはこのバックアップの最後のコピーです。",
   "timeline.deleteHeldBy": "まだ保持されています: {list}",
-  "timeline.deleteSkipped": "除外されました（追記のみ）: {list}",
+  "timeline.deleteSkipped": "除外されました（append-only）: {list}",
   "timeline.deletePartial": "すでに削除済み: {list}",
   "timeline.deleteSpace": "整理が実行されるまで領域は解放されません。",
   "timeline.deleteFinal": "これは元に戻せません。",
@@ -1838,7 +1838,7 @@ const ja: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "{home} がまだそれらを保持しているか確認できませんでした。",
   "offsiteRemoval.typeName": "確認のため {name} と入力してください",
   "offsiteRemoval.done": "{target} で削除済み: {n}",
-  "offsiteRemoval.appendOnly": "{target} は追記のみです。ここから削除することはできません。",
+  "offsiteRemoval.appendOnly": "{target} はappend-onlyです。ここから削除することはできません。",
 };
 
 export default ja;

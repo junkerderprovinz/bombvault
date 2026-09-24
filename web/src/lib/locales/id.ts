@@ -1683,7 +1683,7 @@ const id: Partial<Translations> = {
   "placementCode.targetInUseItems": "Item masih dicadangkan ke repositori langsung target ini: {n}. Arahkan dulu ke tempat lain.",
   "placementCode.targetInUseDefault": "Bawaan untuk {domains} menunjuk ke repositori langsung target ini. Ubah dulu bawaannya.",
   "placementCode.directRepo": "Repositori ini menyertai {target}. Hapus target itu sebagai gantinya.",
-  "placementCode.appendOnly": "Target ini hanya tambah. Tidak ada yang boleh dihapus dari sini.",
+  "placementCode.appendOnly": "Target ini bersifat append-only. Tidak ada yang boleh dihapus dari sini.",
   "placementCode.removalGrown": "Sekarang ada lebih banyak snapshot di sana daripada yang ditampilkan. Periksa lagi daftarnya.",
   "placementCode.nameMismatch": "Nama yang diketik tidak cocok.",
   "placementCode.homeUnreadable": "Lokasi item tidak dapat dibaca, jadi tidak ada yang dihapus.",
@@ -1749,7 +1749,7 @@ const id: Partial<Translations> = {
   "timeline.deleteRow": "Hapus di mana saja",
   "timeline.deleteLast": "Ini adalah salinan terakhir dari cadangan ini.",
   "timeline.deleteHeldBy": "Masih ditahan oleh: {list}",
-  "timeline.deleteSkipped": "Dilewati, hanya tambah: {list}",
+  "timeline.deleteSkipped": "Dilewati, append-only: {list}",
   "timeline.deletePartial": "Sudah dihapus di: {list}",
   "timeline.deleteSpace": "Ruang tidak dipulihkan sampai pemangkasan dijalankan.",
   "timeline.deleteFinal": "Ini tidak dapat dibatalkan.",
@@ -1857,7 +1857,7 @@ const id: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Tidak dapat diperiksa apakah {home} masih memilikinya.",
   "offsiteRemoval.typeName": "Ketik {name} untuk konfirmasi",
   "offsiteRemoval.done": "Dihapus di {target}: {n}",
-  "offsiteRemoval.appendOnly": "{target} hanya tambah. Tidak ada yang boleh dihapus dari sini.",
+  "offsiteRemoval.appendOnly": "{target} bersifat append-only. Tidak ada yang boleh dihapus dari sini.",
 };
 
 export default id;

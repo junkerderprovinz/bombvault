@@ -1672,7 +1672,7 @@ const tr: Partial<Translations> = {
   "placementCode.targetInUseItems": "Ögeler hâlâ bu hedefin doğrudan deposuna yedekleniyor: {n}. Önce onları başka bir yere yönlendir.",
   "placementCode.targetInUseDefault": "{domains} için varsayılan bu hedefin doğrudan deposunu gösteriyor. Önce varsayılanı değiştir.",
   "placementCode.directRepo": "Bu depo {target} hedefiyle birlikte gider. Onun yerine o hedefi kaldır.",
-  "placementCode.appendOnly": "Hedef yalnızca ekleme içindir. Buradan hiçbir şey silinemez.",
+  "placementCode.appendOnly": "Hedef append-only. Buradan hiçbir şey silinemez.",
   "placementCode.removalGrown": "Artık orada gösterilenden daha fazla anlık görüntü var. Listeyi tekrar kontrol et.",
   "placementCode.nameMismatch": "Yazılan ad eşleşmiyor.",
   "placementCode.homeUnreadable": "Ögenin konumu okunamadı, bu yüzden hiçbir şey silinmedi.",
@@ -1738,7 +1738,7 @@ const tr: Partial<Translations> = {
   "timeline.deleteRow": "Her yerden sil",
   "timeline.deleteLast": "Bu, bu yedeğin son kopyası.",
   "timeline.deleteHeldBy": "Hâlâ şunlar tarafından tutuluyor: {list}",
-  "timeline.deleteSkipped": "Atlandı, yalnızca ekleme: {list}",
+  "timeline.deleteSkipped": "Atlandı, append-only: {list}",
   "timeline.deletePartial": "Zaten silindi: {list}",
   "timeline.deleteSpace": "Bir budama çalışana kadar alan geri kazanılmaz.",
   "timeline.deleteFinal": "Bu geri alınamaz.",
@@ -1846,7 +1846,7 @@ const tr: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "{home} hâlâ bunlara sahip mi kontrol edilemedi.",
   "offsiteRemoval.typeName": "Onaylamak için {name} yaz",
   "offsiteRemoval.done": "{target} içinde silindi: {n}",
-  "offsiteRemoval.appendOnly": "{target} yalnızca ekleme içindir. Buradan hiçbir şey silinemez.",
+  "offsiteRemoval.appendOnly": "{target} append-only. Buradan hiçbir şey silinemez.",
 };
 
 export default tr;

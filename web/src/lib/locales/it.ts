@@ -1672,7 +1672,7 @@ const it: Partial<Translations> = {
   "placementCode.targetInUseItems": "Elementi eseguono ancora il backup sul repository diretto di questa destinazione: {n}. Puntali altrove prima.",
   "placementCode.targetInUseDefault": "Il valore predefinito per {domains} punta al repository diretto di questa destinazione. Cambia prima il valore predefinito.",
   "placementCode.directRepo": "Questo repository va insieme a {target}. Rimuovi invece quella destinazione.",
-  "placementCode.appendOnly": "La destinazione è di sola aggiunta. Da qui non si può eliminare nulla.",
+  "placementCode.appendOnly": "La destinazione è append-only. Da qui non si può eliminare nulla.",
   "placementCode.removalGrown": "Ora esistono lì più snapshot di quelli mostrati. Controlla di nuovo l'elenco.",
   "placementCode.nameMismatch": "Il nome digitato non corrisponde.",
   "placementCode.homeUnreadable": "Impossibile leggere la posizione dell'elemento, quindi non è stato eliminato nulla.",
@@ -1738,7 +1738,7 @@ const it: Partial<Translations> = {
   "timeline.deleteRow": "Elimina ovunque",
   "timeline.deleteLast": "Questa è l'ultima copia di questo backup.",
   "timeline.deleteHeldBy": "Ancora trattenuta da: {list}",
-  "timeline.deleteSkipped": "Esclusa, sola aggiunta: {list}",
+  "timeline.deleteSkipped": "Esclusa, append-only: {list}",
   "timeline.deletePartial": "Già eliminata in: {list}",
   "timeline.deleteSpace": "Lo spazio non viene recuperato finché non viene eseguita una pulizia.",
   "timeline.deleteFinal": "Questa operazione non è reversibile.",
@@ -1846,7 +1846,7 @@ const it: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Impossibile controllare se {home} le ha ancora.",
   "offsiteRemoval.typeName": "Digita {name} per confermare",
   "offsiteRemoval.done": "Eliminata in {target}: {n}",
-  "offsiteRemoval.appendOnly": "{target} è di sola aggiunta. Da qui non si può eliminare nulla.",
+  "offsiteRemoval.appendOnly": "{target} è append-only. Da qui non si può eliminare nulla.",
 };
 
 export default it;

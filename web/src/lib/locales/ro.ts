@@ -1675,7 +1675,7 @@ const ro: Partial<Translations> = {
   "placementCode.targetInUseItems": "Elemente încă se salvează în depozitul direct al acestei ținte: {n}. Îndreaptă-le mai întâi în altă parte.",
   "placementCode.targetInUseDefault": "Valoarea implicită pentru {domains} indică spre depozitul direct al acestei ținte. Schimbă mai întâi valoarea implicită.",
   "placementCode.directRepo": "Acest depozit merge împreună cu {target}. Elimină în schimb ținta.",
-  "placementCode.appendOnly": "Ținta este doar adăugare. De aici nu se poate șterge nimic din ea.",
+  "placementCode.appendOnly": "Ținta este append-only. De aici nu se poate șterge nimic din ea.",
   "placementCode.removalGrown": "Acum există acolo mai multe instantanee decât cele afișate. Verifică din nou lista.",
   "placementCode.nameMismatch": "Numele introdus nu se potrivește.",
   "placementCode.homeUnreadable": "Locația elementului nu a putut fi citită, așa că nu s-a șters nimic.",
@@ -1741,7 +1741,7 @@ const ro: Partial<Translations> = {
   "timeline.deleteRow": "Șterge peste tot",
   "timeline.deleteLast": "Aceasta este ultima copie a acestei copii de rezervă.",
   "timeline.deleteHeldBy": "Încă reținută de: {list}",
-  "timeline.deleteSkipped": "Omisă, doar adăugare: {list}",
+  "timeline.deleteSkipped": "Omisă, append-only: {list}",
   "timeline.deletePartial": "Deja ștearsă la: {list}",
   "timeline.deleteSpace": "Spațiul nu este recuperat până nu rulează o curățare.",
   "timeline.deleteFinal": "Aceasta nu poate fi anulată.",
@@ -1849,7 +1849,7 @@ const ro: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Nu s-a putut verifica dacă {home} le mai are.",
   "offsiteRemoval.typeName": "Tastează {name} pentru a confirma",
   "offsiteRemoval.done": "Șters în {target}: {n}",
-  "offsiteRemoval.appendOnly": "{target} este doar adăugare. De aici nu se poate șterge nimic din ea.",
+  "offsiteRemoval.appendOnly": "{target} este append-only. De aici nu se poate șterge nimic din ea.",
 };
 
 export default ro;

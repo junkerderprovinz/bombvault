@@ -1672,7 +1672,7 @@ const da: Partial<Translations> = {
   "placementCode.targetInUseItems": "Elementer sikkerhedskopierer stadig til dette måls direkte depot: {n}. Peg dem et andet sted hen først.",
   "placementCode.targetInUseDefault": "Standarden for {domains} peger på dette måls direkte depot. Skift standarden først.",
   "placementCode.directRepo": "Dette depot hører sammen med {target}. Fjern målet i stedet.",
-  "placementCode.appendOnly": "Målet er kun-tilføj. Herfra kan intet slettes fra det.",
+  "placementCode.appendOnly": "Målet er append-only. Herfra kan intet slettes fra det.",
   "placementCode.removalGrown": "Der findes nu flere snapshots kun der, end der blev vist. Tjek listen igen.",
   "placementCode.nameMismatch": "Det indtastede navn stemmer ikke.",
   "placementCode.homeUnreadable": "Elementets placering kunne ikke læses, så intet blev slettet.",
@@ -1738,7 +1738,7 @@ const da: Partial<Translations> = {
   "timeline.deleteRow": "Slet overalt",
   "timeline.deleteLast": "Dette er den sidste kopi af denne sikkerhedskopi.",
   "timeline.deleteHeldBy": "Holdes stadig af: {list}",
-  "timeline.deleteSkipped": "Udeladt, kun-tilføj: {list}",
+  "timeline.deleteSkipped": "Udeladt, append-only: {list}",
   "timeline.deletePartial": "Allerede slettet i: {list}",
   "timeline.deleteSpace": "Pladsen frigøres ikke, før en oprydning kører.",
   "timeline.deleteFinal": "Dette kan ikke fortrydes.",
@@ -1846,7 +1846,7 @@ const da: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Om {home} stadig har dem, kunne ikke tjekkes.",
   "offsiteRemoval.typeName": "Skriv {name} for at bekræfte",
   "offsiteRemoval.done": "Slettet i {target}: {n}",
-  "offsiteRemoval.appendOnly": "{target} er kun-tilføj. Herfra kan intet slettes fra det.",
+  "offsiteRemoval.appendOnly": "{target} er append-only. Herfra kan intet slettes fra det.",
 };
 
 export default da;

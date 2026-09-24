@@ -1669,7 +1669,7 @@ const nl: Partial<Translations> = {
   "placementCode.targetInUseItems": "Er back-uppen nog items naar de directe repository van deze bestemming: {n}. Wijs ze eerst ergens anders naartoe.",
   "placementCode.targetInUseDefault": "De standaard voor {domains} wijst naar de directe repository van deze bestemming. Wijzig eerst de standaard.",
   "placementCode.directRepo": "Deze repository hoort bij {target}. Verwijder in plaats daarvan die bestemming.",
-  "placementCode.appendOnly": "Het doel is alleen-toevoegen. Hiervandaan mag er niets uit worden verwijderd.",
+  "placementCode.appendOnly": "Het doel is append-only. Hiervandaan mag er niets uit worden verwijderd.",
   "placementCode.removalGrown": "Er bestaan nu meer snapshots daar dan werden getoond. Controleer de lijst opnieuw.",
   "placementCode.nameMismatch": "De ingetypte naam komt niet overeen.",
   "placementCode.homeUnreadable": "De locatie van het item kon niet worden gelezen, dus is er niets verwijderd.",
@@ -1735,7 +1735,7 @@ const nl: Partial<Translations> = {
   "timeline.deleteRow": "Overal verwijderen",
   "timeline.deleteLast": "Dit is de laatste kopie van deze back-up.",
   "timeline.deleteHeldBy": "Nog vastgehouden door: {list}",
-  "timeline.deleteSkipped": "Overgeslagen, alleen toevoegen: {list}",
+  "timeline.deleteSkipped": "Overgeslagen, append-only: {list}",
   "timeline.deletePartial": "Al verwijderd bij: {list}",
   "timeline.deleteSpace": "De ruimte komt pas vrij als er een opschoning draait.",
   "timeline.deleteFinal": "Dit kan niet ongedaan worden gemaakt.",
@@ -1843,7 +1843,7 @@ const nl: Partial<Translations> = {
   "offsiteRemoval.homeUnreadable": "Er kon niet worden gecontroleerd of {home} ze nog heeft.",
   "offsiteRemoval.typeName": "Typ {name} om te bevestigen",
   "offsiteRemoval.done": "Verwijderd bij {target}: {n}",
-  "offsiteRemoval.appendOnly": "{target} is alleen-toevoegen. Hiervandaan mag er niets uit worden verwijderd.",
+  "offsiteRemoval.appendOnly": "{target} is append-only. Hiervandaan mag er niets uit worden verwijderd.",
 };
 
 export default nl;
