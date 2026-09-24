@@ -61,6 +61,14 @@ Import zastaví kontejner, odsune jeho datovou složku stranou a nechá image vy
 
 Ruční návrat: zastavte kontejner, přejmenujte současnou datovou složku stranou, přejmenujte zachovanou složku zpět na původní název a kontejner spusťte. Na Unraidu to zvládne správce souborů na kartě Shares.
 
+## Záloha datové sady ZFS selhala nebo nějakou sadu přeskočila {#zfs-datasets}
+
+Každý problém nese kód důvodu v hranatých závorkách a stránka [Datové sady ZFS](zfs-datasets.md#reason-codes) je uvádí všechny i s nápravou. Tři nejčastější:
+
+- **`snapshot-loop`**: snímek se k BombVaultu nedostal, protože Host Data nepředává nová připojení. Uprav kontejner, nastav Access Mode u Host Data na Read/Write - Slave a restartuj BombVault.
+- **`key-not-loaded`**: šifrovaná datová sada bez načteného klíče se přeskočí. Načti klíč pomocí `zfs load-key` a připoj sadu; příští záloha ji zahrne.
+- **`ssh-auth`**: server odmítl klíč BombVaultu. Karta připojení na stránce ZFS ukazuje příkaz, který ho povolí; spusť ho jednou na serveru.
+
 ## Kontejner se stále restartuje nebo vypadá unhealthy
 
 BombVault hlásí healthy/unhealthy ze svého vlastního `/api/health`. Nástroj pro automatické hojení (například Autoheal) jej může restartovat automaticky, pokud se engine kdy zasekne. Zkontrolujte log kontejneru a report `/spike` pro základní příčinu.

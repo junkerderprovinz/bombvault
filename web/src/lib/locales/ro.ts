@@ -653,7 +653,7 @@ const ro: Partial<Translations> = {
   "vm.ssh.testFail": "Conexiune eșuată",
   "vm.ssh.setupTitle": "Configurare (o singură dată)",
   "vm.ssh.step1": "Copiați comanda de mai jos și rulați-o în terminalul Unraid pentru a autoriza această cheie (rezistă la reporniri).",
-  "vm.ssh.step2": "Setați variabila „VM Backup: Host” a containerului la IP-ul LAN al serverului dvs. Unraid (de ex. 192.168.x.x); pe rețea bridge simplă funcționează și host.docker.internal.",
+  "vm.ssh.step2": "Setați variabila „Host SSH: Address” a containerului la IP-ul LAN al serverului dvs. Unraid (de ex. 192.168.x.x); pe rețea bridge simplă funcționează și host.docker.internal.",
   "vm.ssh.step3": "Faceți clic pe Testează conexiunea. Odată ce e verde, activați VM-urile sub Domenii.",
   "vm.ssh.copyCmd": "Copiază comanda",
   "vm.ssh.guide": "Ghid complet de configurare și rețea",

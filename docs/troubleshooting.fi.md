@@ -61,6 +61,14 @@ Tuonti pysäyttää kontin, siirtää sen datakansion sivuun ja antaa levykuvan 
 
 Käsin palautus: pysäytä kontti, nimeä nykyinen datakansio pois tieltä, nimeä säilytetty kansio takaisin alkuperäiselle nimelleen ja käynnistä kontti. Unraidissa tämän hoitaa Shares-välilehden tiedostonhallinta.
 
+## ZFS-tietojoukon varmuuskopio epäonnistui tai ohitti tietojoukon {#zfs-datasets}
+
+Jokaisella ongelmalla on syykoodi hakasulkeissa, ja sivu [ZFS-tietojoukot](zfs-datasets.md#reason-codes) luettelee ne kaikki korjauksineen. Kolme yleisintä:
+
+- **`snapshot-loop`**: tilannevedos ei päässyt BombVaultiin, koska Host Data ei välitä uusia liitoksia. Muokkaa konttia, aseta Host Datan Access Mode arvoon Read/Write - Slave ja käynnistä BombVault uudelleen.
+- **`key-not-loaded`**: salattu tietojoukko, jonka avainta ei ole ladattu, ohitetaan. Lataa avain komennolla `zfs load-key` ja liitä tietojoukko; seuraava varmuuskopio ottaa sen mukaan.
+- **`ssh-auth`**: palvelin hylkäsi BombVaultin avaimen. ZFS-sivun yhteyskortti näyttää komennon, joka valtuuttaa sen; aja se kerran palvelimella.
+
 ## Kontti käynnistyy jatkuvasti uudelleen tai näyttää epäterveeltä
 
 BombVault raportoi terve/epäterve omasta `/api/health`-päätepisteestään. Automaattinen korjaustyökalu (kuten Autoheal) voi käynnistää sen uudelleen automaattisesti, jos moottori koskaan jumiutuu. Tarkista kontin loki ja `/spike`-raportti taustalla olevan syyn selvittämiseksi.

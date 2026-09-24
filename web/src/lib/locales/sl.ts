@@ -1444,7 +1444,7 @@ const sl: Partial<Translations> = {
   "vm.ssh.testFail": "Povezava ni uspela",
   "vm.ssh.setupTitle": "Nastavitev (enkratno)",
   "vm.ssh.step1": "Kopiraj spodnji ukaz in ga zaženi v Unraidovem terminalu za pooblastitev tega ključa (preživi ponovne zagone).",
-  "vm.ssh.step2": "Spremenljivko vsebnika \"VM Backup: Host\" nastavi na svoj Unraid LAN IP (npr. 192.168.x.x); pri preprostem bridge omrežju deluje tudi host.docker.internal.",
+  "vm.ssh.step2": "Spremenljivko vsebnika \"Host SSH: Address\" nastavi na svoj Unraid LAN IP (npr. 192.168.x.x); pri preprostem bridge omrežju deluje tudi host.docker.internal.",
   "vm.ssh.step3": "Klikni Preizkusi povezavo. Ko je zelena, omogoči VM-je pod Domene.",
   "vm.ssh.copyCmd": "Kopiraj ukaz",
   "vm.ssh.guide": "Popoln vodnik za nastavitev in omrežje",

@@ -1450,7 +1450,7 @@ const ms: Partial<Translations> = {
   "vm.ssh.testFail": "Sambungan gagal",
   "vm.ssh.setupTitle": "Sediakan (sekali)",
   "vm.ssh.step1": "Salin arahan di bawah dan jalankannya dalam terminal Unraid untuk membenarkan kunci ini (bertahan selepas but semula).",
-  "vm.ssh.step2": "Tetapkan pemboleh ubah bekas \"VM Backup: Host\" kepada IP LAN Unraid anda (cth. 192.168.x.x); pada rangkaian bridge mudah, host.docker.internal turut berfungsi.",
+  "vm.ssh.step2": "Tetapkan pemboleh ubah bekas \"Host SSH: Address\" kepada IP LAN Unraid anda (cth. 192.168.x.x); pada rangkaian bridge mudah, host.docker.internal turut berfungsi.",
   "vm.ssh.step3": "Klik Uji sambungan. Apabila hijau, dayakan VM di bawah Domain.",
   "vm.ssh.copyCmd": "Salin arahan",
   "vm.ssh.guide": "Panduan persediaan & rangkaian lengkap",

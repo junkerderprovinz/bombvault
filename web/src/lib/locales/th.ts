@@ -656,7 +656,7 @@ const th: Partial<Translations> = {
   "vm.ssh.testFail": "การเชื่อมต่อล้มเหลว",
   "vm.ssh.setupTitle": "ตั้งค่า (ครั้งเดียว)",
   "vm.ssh.step1": "คัดลอกคำสั่งด้านล่างแล้วเรียกใช้ในเทอร์มินัล Unraid เพื่ออนุญาตคีย์นี้ (คงอยู่หลังรีบูต)",
-  "vm.ssh.step2": "ตั้งตัวแปร «VM Backup: Host» ของ container เป็น LAN IP ของ Unraid (เช่น 192.168.x.x); บนเครือข่าย bridge แบบง่าย host.docker.internal ก็ใช้ได้",
+  "vm.ssh.step2": "ตั้งตัวแปร «Host SSH: Address» ของ container เป็น LAN IP ของ Unraid (เช่น 192.168.x.x); บนเครือข่าย bridge แบบง่าย host.docker.internal ก็ใช้ได้",
   "vm.ssh.step3": "คลิกทดสอบการเชื่อมต่อ เมื่อเป็นสีเขียวแล้ว เปิดใช้งาน VMs ภายใต้โดเมน",
   "vm.ssh.copyCmd": "คัดลอกคำสั่ง",
   "vm.ssh.guide": "คู่มือการตั้งค่าและเครือข่ายฉบับเต็ม",

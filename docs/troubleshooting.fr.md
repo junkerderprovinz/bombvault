@@ -61,6 +61,14 @@ Un import arrête le conteneur, met son dossier de données de côté et laisse 
 
 Pour le remettre à la main : arrêtez le conteneur, renommez le dossier de données actuel pour le dégager, renommez le dossier conservé sous son nom d'origine, puis démarrez le conteneur. Sur Unraid, le gestionnaire de fichiers de l'onglet Shares fait cela.
 
+## Une sauvegarde de jeu de données ZFS a échoué ou a ignoré un jeu {#zfs-datasets}
+
+Chaque problème porte un code de raison entre crochets, et la page [Jeux de données ZFS](zfs-datasets.md#reason-codes) les liste tous avec leur solution. Les trois plus fréquents :
+
+- **`snapshot-loop`** : l'instantané n'est pas parvenu à BombVault parce que Host Data ne transmet pas les nouveaux montages. Modifiez le conteneur, réglez l'Access Mode de Host Data sur Read/Write - Slave et redémarrez BombVault.
+- **`key-not-loaded`** : un jeu de données chiffré dont la clé n'est pas chargée est ignoré. Chargez la clé avec `zfs load-key` et montez le jeu ; la sauvegarde suivante l'inclut.
+- **`ssh-auth`** : le serveur a refusé la clé de BombVault. La carte de connexion de la page ZFS affiche la commande qui l'autorise ; exécutez-la une fois sur le serveur.
+
 ## Le conteneur redémarre sans cesse ou semble non sain
 
 BombVault se signale sain/non sain depuis son propre `/api/health`. Un outil d'auto-réparation (comme Autoheal) peut le redémarrer automatiquement si le moteur venait à se coincer. Vérifiez le journal du conteneur et le rapport `/spike` pour la cause sous-jacente.

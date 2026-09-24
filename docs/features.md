@@ -15,6 +15,7 @@ BombVault is simple by default and deep when you need it. The interface shows on
 | **Unraid flash** | The whole USB flash (`/boot`): OS, license, array config, shares, network and plugin config. Restore is a one-click `.zip` download and never overwrites the live flash. |
 | **App configuration** | BombVault's own `/config` (settings database, off-site credentials, libvirt SSH keypair), snapshotted with SQLite `VACUUM INTO` so a WAL-mode database is never captured mid-write. Restored via a self-restart, so the live database is never overwritten under an open handle. |
 | **Files & folders** | Named **file sets**: any folder on the server (a share, your documents, a photo library), each with optional per-set exclude patterns. Full parity with the other domains (schedules, retention, off-site copy, integrity checks and restore drills). |
+| **ZFS datasets** | A dataset together with every dataset below it, read from one ZFS snapshot so all of them come from the same instant, and stored with restic like a folder: deduplicated, browsable, single files restorable. New child datasets join on their own, single children can be left out, and a child that cannot be read is skipped and named. Optionally, containers are stopped or a command runs for just the instant of the snapshot. Volumes are not included: a VM's volume is backed up with its VM, a volume without a VM is not backed up yet. See [ZFS datasets](zfs-datasets.md). |
 
 ## Restore
 
@@ -32,6 +33,7 @@ BombVault is simple by default and deep when you need it. The interface shows on
 - **Pre-flight conflict check.** Before anything is stopped or removed, restore verifies the container's static IP and published host ports are free, and aborts with a clear message instead of leaving a half-finished restore.
 - **File-level restore.** Expand a container snapshot's **Files**, filter, tick any number of files and folders, then restore the selection in place or into a folder you pick.
 - **File-set restore.** Restore a file-set snapshot in place (after an explicit confirmation) or into a folder you pick, never silently. Selective restore works here too.
+- **ZFS dataset restore.** Restore one dataset of an item into its place (after a ZFS safety snapshot that stays until you delete it), into a folder, or only the files you pick, or every dataset of a backup into a folder. A dataset is never rolled back or replaced.
 - **Restore keeps the run-state.** A container or VM that was running when backed up comes back running; one that was stopped stays stopped. Tick **Leave stopped after restore** to recreate without starting.
 - **Restore a whole stack.** Containers from the same Docker Compose project are grouped into a **Stacks** panel. **Restore stack** rebuilds every member from its latest backup left stopped, then optionally starts them in `depends_on` order.
 - **Live progress, cancel and busy feedback.** A long restore shows a live percentage bar and can be cancelled with a type-aware confirmation. A cancelled restore is recorded as *cancelled*, not failed.

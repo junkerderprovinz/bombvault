@@ -656,7 +656,7 @@ const el: Partial<Translations> = {
   "vm.ssh.testFail": "Η σύνδεση απέτυχε",
   "vm.ssh.setupTitle": "Ρύθμιση (μία φορά)",
   "vm.ssh.step1": "Αντιγράψτε την παρακάτω εντολή και εκτελέστε την στο τερματικό Unraid για να εξουσιοδοτήσετε αυτό το κλειδί (επιβιώνει των επανεκκινήσεων).",
-  "vm.ssh.step2": "Ορίστε τη μεταβλητή «VM Backup: Host» του container στη LAN IP του Unraid σας (π.χ. 192.168.x.x)· σε απλό bridge networking λειτουργεί και το host.docker.internal.",
+  "vm.ssh.step2": "Ορίστε τη μεταβλητή «Host SSH: Address» του container στη LAN IP του Unraid σας (π.χ. 192.168.x.x)· σε απλό bridge networking λειτουργεί και το host.docker.internal.",
   "vm.ssh.step3": "Κάντε κλικ στη Δοκιμή σύνδεσης. Μόλις γίνει πράσινη, ενεργοποιήστε τα VMs στους Τομείς.",
   "vm.ssh.copyCmd": "Αντιγραφή εντολής",
   "vm.ssh.guide": "Πλήρης οδηγός ρύθμισης & δικτύου",

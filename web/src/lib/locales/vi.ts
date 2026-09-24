@@ -648,7 +648,7 @@ const vi: Partial<Translations> = {
   "vm.ssh.testFail": "Kết nối thất bại",
   "vm.ssh.setupTitle": "Thiết lập (một lần)",
   "vm.ssh.step1": "Sao chép lệnh bên dưới và chạy trong terminal Unraid để cấp quyền cho khóa này (giữ nguyên sau khi khởi động lại).",
-  "vm.ssh.step2": "Đặt biến \"VM Backup: Host\" của container thành IP LAN Unraid của bạn (ví dụ 192.168.x.x); với mạng bridge đơn giản thì host.docker.internal cũng dùng được.",
+  "vm.ssh.step2": "Đặt biến \"Host SSH: Address\" của container thành IP LAN Unraid của bạn (ví dụ 192.168.x.x); với mạng bridge đơn giản thì host.docker.internal cũng dùng được.",
   "vm.ssh.step3": "Nhấp Kiểm tra kết nối. Khi nó chuyển xanh, bật VM trong mục Domain.",
   "vm.ssh.copyCmd": "Sao chép lệnh",
   "vm.ssh.guide": "Hướng dẫn thiết lập & mạng đầy đủ",

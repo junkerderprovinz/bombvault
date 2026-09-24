@@ -7,10 +7,10 @@ Trang này bao quát các biến môi trường của container, các điểm g�
 | Biến | Bắt buộc | Mô tả |
 |---|---|---|
 | `APP_KEY` | **Có** | Bí mật hex 32 byte (64 ký tự hex) dùng để dẫn xuất mật khẩu kho restic. Tạo bằng `openssl rand -hex 32`. Giữ nó an toàn: đánh mất nó khiến các bản sao lưu đã mã hóa không thể khôi phục được. |
-| `LIBVIRT_HOST` | Cho VM | Máy chủ Unraid được kết nối qua SSH để sao lưu VM (mặc định `host.docker.internal`; template điền sẵn một chỗ giữ chỗ IP-LAN). Dùng IP LAN Unraid của bạn, bắt buộc trên một mạng `br0.x` tùy chỉnh. |
-| `LIBVIRT_SSH_PORT` | Không | Cổng SSH của máy chủ để sao lưu VM (mặc định `22`). |
-| `LIBVIRT_SSH_USER` | Không | Người dùng SSH trên máy chủ để sao lưu VM (mặc định `root`). |
-| `LIBVIRT_URI` | Không | URI kết nối libvirt đầy đủ, được dùng **nguyên văn** thay vì xây dựng từ ba biến `LIBVIRT_*` phía trên (khi đó các biến này bị bỏ qua đối với chuỗi kết nối). Mặc định không đặt. Cần thiết trên TrueNAS Scale, nơi libvirtd của nó lắng nghe trên một socket không chuẩn mà dạng chuỗi dựng sẵn không thể diễn đạt được: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Xem phần TrueNAS Scale trong [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). |
+| `LIBVIRT_HOST` | Cho VM | Máy chủ Unraid được kết nối qua SSH để sao lưu VM (mặc định `host.docker.internal`; template điền sẵn một chỗ giữ chỗ IP-LAN). Dùng IP LAN Unraid của bạn, bắt buộc trên một mạng `br0.x` tùy chỉnh. Cũng dùng cho sao lưu tập dữ liệu ZFS (trường mẫu **Host SSH: Address**); giá trị giữ chỗ `192.168.x.x` được coi là chưa đặt. |
+| `LIBVIRT_SSH_PORT` | Không | Cổng SSH của máy chủ để sao lưu VM (mặc định `22`). Trường mẫu **Host SSH: Port**, cũng dùng cho tập dữ liệu ZFS. |
+| `LIBVIRT_SSH_USER` | Không | Người dùng SSH trên máy chủ để sao lưu VM (mặc định `root`). Trường mẫu **Host SSH: User**, cũng dùng cho tập dữ liệu ZFS. |
+| `LIBVIRT_URI` | Không | URI kết nối libvirt đầy đủ, được dùng **nguyên văn** thay vì xây dựng từ ba biến `LIBVIRT_*` phía trên (khi đó các biến này bị bỏ qua đối với chuỗi kết nối). Mặc định không đặt. Cần thiết trên TrueNAS Scale, nơi libvirtd của nó lắng nghe trên một socket không chuẩn mà dạng chuỗi dựng sẵn không thể diễn đạt được: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Xem phần TrueNAS Scale trong [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Nếu là URI `qemu+ssh://`, mỗi biến trong `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` và `LIBVIRT_SSH_PORT` chưa đặt sẽ lấy từ đó, kể cả cho các lệnh SSH riêng của BombVault (chuyển NVRAM, tập dữ liệu ZFS). |
 | `PORT` | Không | Cổng HTTP (mặc định `3000`; chỉ dùng với `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | Không | Cổng HTTPS (mặc định `3443`; template công bố nó 1:1, nên WebUI trả lời tại `https://<ip>:3443`). |
 | `HTTP_ONLY` | Không | Đặt `true` để tắt trình lắng nghe HTTPS tự ký và chỉ phục vụ HTTP thuần (để dùng phía sau một reverse proxy kết thúc TLS). |
@@ -26,6 +26,8 @@ Trang này bao quát các biến môi trường của container, các điểm g�
 ## Điểm gắn kết
 
 Gắn kết Docker socket, flash (`/boot`) và gốc **Host Data** (`/mnt`) như hiển thị trong template CA. Cả *nguồn* và *đích* sao lưu đều nằm dưới Host Data, và nó được gắn kết **slave** nên một share từ xa được gắn kết sau khi container khởi động (ví dụ dưới `/mnt/remotes`) trở nên hiển thị mà không cần khởi động lại.
+
+Sao lưu tập dữ liệu ZFS cũng cần chế độ này: máy chủ chỉ gắn ảnh chụp của một tập dữ liệu sau khi container đã khởi động. Xem [Tập dữ liệu ZFS](zfs-datasets.md).
 
 Các đường dẫn kho sao lưu mặc định là `/mnt/user/bombvault/{container,vms,flash,config,files}`, được tạo ở lần sao lưu đầu tiên. Thay đổi vị trí bất cứ lúc nào trong **Settings, Backup paths**.
 

@@ -656,7 +656,7 @@ const sv: Partial<Translations> = {
   "vm.ssh.testFail": "Anslutningen misslyckades",
   "vm.ssh.setupTitle": "Konfigurera (en gång)",
   "vm.ssh.step1": "Kopiera kommandot nedan och kör det i Unraid-terminalen för att auktorisera den här nyckeln (överlever omstarter).",
-  "vm.ssh.step2": "Ange containerns variabel ”VM Backup: Host” till din Unraids LAN-IP (t.ex. 192.168.x.x); vid enkel bridge-nätverk fungerar host.docker.internal också.",
+  "vm.ssh.step2": "Ange containerns variabel ”Host SSH: Address” till din Unraids LAN-IP (t.ex. 192.168.x.x); vid enkel bridge-nätverk fungerar host.docker.internal också.",
   "vm.ssh.step3": "Klicka på Testa anslutning. När den är grön, aktivera VMs under Domäner.",
   "vm.ssh.copyCmd": "Kopiera kommando",
   "vm.ssh.guide": "Fullständig installations- och nätverksguide",

@@ -7,10 +7,10 @@
 | المتغير | مطلوب | الوصف |
 |---|---|---|
 | `APP_KEY` | **نعم** | سر سداسي عشري بحجم 32 بايت (64 حرفاً سداسياً عشرياً) يُستخدم لاشتقاق كلمة مرور مستودع restic. أنشئه بـ `openssl rand -hex 32`. احفظه بأمان: فقدانه يجعل النسخ الاحتياطية المشفّرة غير قابلة للاسترداد. |
-| `LIBVIRT_HOST` | للـ VMs | مضيف Unraid المُتصَل به عبر SSH لنسخ الـ VM الاحتياطي (افتراضياً `host.docker.internal`؛ يملأ القالب مسبقاً عنصراً نائباً بعنوان LAN-IP). استخدم عنوان LAN IP الخاص بـ Unraid، مطلوب على شبكة `br0.x` مخصصة. |
-| `LIBVIRT_SSH_PORT` | لا | منفذ SSH للمضيف لنسخ الـ VM الاحتياطي (افتراضياً `22`). |
-| `LIBVIRT_SSH_USER` | لا | مستخدم SSH على المضيف لنسخ الـ VM الاحتياطي (افتراضياً `root`). |
-| `LIBVIRT_URI` | لا | رابط اتصال libvirt الكامل، يُستخدَم **حرفياً** بدلاً من بنائه من متغيرات `LIBVIRT_*` الثلاثة أعلاه (التي تُتجاهَل حينئذٍ في سلسلة الاتصال). غير مضبوط افتراضياً. مطلوب على TrueNAS Scale، حيث يستمع libvirtd فيه على مقبس غير قياسي لا تستطيع الصيغة المبنية تلقائياً التعبير عنه: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. راجع قسم TrueNAS Scale في [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). |
+| `LIBVIRT_HOST` | للـ VMs | مضيف Unraid المُتصَل به عبر SSH لنسخ الـ VM الاحتياطي (افتراضياً `host.docker.internal`؛ يملأ القالب مسبقاً عنصراً نائباً بعنوان LAN-IP). استخدم عنوان LAN IP الخاص بـ Unraid، مطلوب على شبكة `br0.x` مخصصة. يُستخدم أيضًا لنسخ مجموعات بيانات ZFS (حقل القالب **Host SSH: Address**)؛ والقيمة المؤقتة `192.168.x.x` تُعدّ غير مضبوطة. |
+| `LIBVIRT_SSH_PORT` | لا | منفذ SSH للمضيف لنسخ الـ VM الاحتياطي (افتراضياً `22`). حقل القالب **Host SSH: Port**، ويُستخدم أيضًا لمجموعات بيانات ZFS. |
+| `LIBVIRT_SSH_USER` | لا | مستخدم SSH على المضيف لنسخ الـ VM الاحتياطي (افتراضياً `root`). حقل القالب **Host SSH: User**، ويُستخدم أيضًا لمجموعات بيانات ZFS. |
+| `LIBVIRT_URI` | لا | رابط اتصال libvirt الكامل، يُستخدَم **حرفياً** بدلاً من بنائه من متغيرات `LIBVIRT_*` الثلاثة أعلاه (التي تُتجاهَل حينئذٍ في سلسلة الاتصال). غير مضبوط افتراضياً. مطلوب على TrueNAS Scale، حيث يستمع libvirtd فيه على مقبس غير قياسي لا تستطيع الصيغة المبنية تلقائياً التعبير عنه: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. راجع قسم TrueNAS Scale في [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). إذا كان رابط `qemu+ssh://` فإن كل متغير من `LIBVIRT_HOST` و`LIBVIRT_SSH_USER` و`LIBVIRT_SSH_PORT` غير مضبوط يُؤخذ منه، وكذلك لأوامر SSH الخاصة بـ BombVault (نقل NVRAM ومجموعات بيانات ZFS). |
 | `PORT` | لا | منفذ HTTP (افتراضياً `3000`؛ يُستخدَم فقط مع `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | لا | منفذ HTTPS (افتراضياً `3443`؛ ينشره القالب 1:1، فتجيب واجهة الويب على `https://<ip>:3443`). |
 | `HTTP_ONLY` | لا | اضبط `true` لتعطيل مستمع HTTPS الموقّع ذاتياً وتقديم HTTP عادي فقط (للاستخدام خلف عاكس بروكسي ينهي TLS). |
@@ -26,6 +26,8 @@
 ## نقاط التركيب
 
 ركّب مقبس Docker والفلاش (`/boot`) وجذر **Host Data** (`/mnt`) كما هو موضّح في قالب CA. تعيش *مصادر* النسخ الاحتياطي و*وجهاته* كلاهما ضمن Host Data، وهي مركَّبة **slave** فتصبح مشاركة بعيدة تُركَّب بعد بدء الحاوية (مثلاً ضمن `/mnt/remotes`) مرئية دون إعادة تشغيل.
+
+نسخ مجموعات بيانات ZFS يحتاج هذا الوضع أيضًا: المضيف لا يركّب لقطة مجموعة البيانات إلا بعد أن تبدأ الحاوية. راجع [مجموعات بيانات ZFS](zfs-datasets.md).
 
 تُضبَط مسارات مستودع النسخ الاحتياطي افتراضياً على `/mnt/user/bombvault/{container,vms,flash,config,files}`، وتُنشَأ عند أول نسخة احتياطية. غيّر الموقع في أي وقت في **Settings, Backup paths**.
 

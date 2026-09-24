@@ -61,6 +61,14 @@ An import stops the container, moves its data folder aside and lets the image cr
 
 To put it back by hand: stop the container, rename the current data folder out of the way, rename the kept folder back to the original name, and start the container. On Unraid, the file manager does this from the Shares tab.
 
+## A ZFS dataset backup failed or skipped a dataset {#zfs-datasets}
+
+Every problem carries a reason code in brackets, and the [ZFS datasets](zfs-datasets.md#reason-codes) page lists all of them with the fix. The three most common:
+
+- **`snapshot-loop`**: the snapshot did not reach BombVault because Host Data does not pass new mounts through. Edit the container, set the Access Mode of Host Data to Read/Write - Slave and restart BombVault.
+- **`key-not-loaded`**: an encrypted dataset whose key is not loaded is skipped. Load the key with `zfs load-key` and mount the dataset; the next backup includes it.
+- **`ssh-auth`**: the server refused BombVault's key. The connection card on the ZFS page shows the command that authorizes it; run it once on the server.
+
 ## The container keeps restarting or looks unhealthy
 
 BombVault reports healthy/unhealthy from its own `/api/health`. An auto-heal tool (such as Autoheal) can restart it automatically if the engine ever wedges. Check the container log and the `/spike` report for the underlying cause.

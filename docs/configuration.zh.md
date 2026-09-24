@@ -7,10 +7,10 @@
 | 变量 | 是否必需 | 描述 |
 |---|---|---|
 | `APP_KEY` | **是** | 用于派生 restic 仓库密码的 32 字节十六进制密钥（64 个十六进制字符）。用 `openssl rand -hex 32` 生成。请妥善保管：丢失它将使加密备份无法恢复。 |
-| `LIBVIRT_HOST` | 虚拟机需要 | 用于虚拟机备份、通过 SSH 连接的 Unraid 主机（默认 `host.docker.internal`；模板会预填一个 LAN-IP 占位符）。请使用您的 Unraid LAN IP，在自定义 `br0.x` 网络上为必需。 |
-| `LIBVIRT_SSH_PORT` | 否 | 用于虚拟机备份的主机 SSH 端口（默认 `22`）。 |
-| `LIBVIRT_SSH_USER` | 否 | 用于虚拟机备份的主机上的 SSH 用户（默认 `root`）。 |
-| `LIBVIRT_URI` | 否 | 完整的 libvirt 连接 URI，将**原样**使用，而不再由上方三个 `LIBVIRT_*` 变量拼接而成（此时这三个变量对连接字符串不再生效）。默认未设置。TrueNAS Scale 上需要用到它，因为其 libvirtd 监听在拼接形式无法表达的非标准套接字上：`qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`。参见 [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) 的 TrueNAS Scale 部分。 |
+| `LIBVIRT_HOST` | 虚拟机需要 | 用于虚拟机备份、通过 SSH 连接的 Unraid 主机（默认 `host.docker.internal`；模板会预填一个 LAN-IP 占位符）。请使用您的 Unraid LAN IP，在自定义 `br0.x` 网络上为必需。 ZFS 数据集备份也使用它（模板字段 **Host SSH: Address**）；占位值 `192.168.x.x` 视为未设置。 |
+| `LIBVIRT_SSH_PORT` | 否 | 用于虚拟机备份的主机 SSH 端口（默认 `22`）。 模板字段 **Host SSH: Port**，ZFS 数据集也使用。 |
+| `LIBVIRT_SSH_USER` | 否 | 用于虚拟机备份的主机上的 SSH 用户（默认 `root`）。 模板字段 **Host SSH: User**，ZFS 数据集也使用。 |
+| `LIBVIRT_URI` | 否 | 完整的 libvirt 连接 URI，将**原样**使用，而不再由上方三个 `LIBVIRT_*` 变量拼接而成（此时这三个变量对连接字符串不再生效）。默认未设置。TrueNAS Scale 上需要用到它，因为其 libvirtd 监听在拼接形式无法表达的非标准套接字上：`qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`。参见 [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) 的 TrueNAS Scale 部分。 如果是 `qemu+ssh://` URI，`LIBVIRT_HOST`、`LIBVIRT_SSH_USER` 和 `LIBVIRT_SSH_PORT` 中未设置的每一项都从中获取，BombVault 自己的 SSH 命令（NVRAM 传输、ZFS 数据集）也是如此。 |
 | `PORT` | 否 | HTTP 端口（默认 `3000`；仅在 `HTTP_ONLY=true` 时使用）。 |
 | `HTTPS_PORT` | 否 | HTTPS 端口（默认 `3443`；模板以 1:1 发布它，因此 WebUI 在 `https://<ip>:3443` 上应答）。 |
 | `HTTP_ONLY` | 否 | 设为 `true` 以禁用自签名 HTTPS 监听器，仅提供纯 HTTP 服务（用于在一个终止 TLS 的反向代理之后）。 |
@@ -26,6 +26,8 @@
 ## 挂载
 
 按 CA 模板所示挂载 Docker 套接字、闪存（`/boot`）和 **Host Data** 根目录（`/mnt`）。备份的*来源*和*目标*都位于 Host Data 之下，且它以 **slave** 方式挂载，因此在容器启动后才挂载的远程共享（例如位于 `/mnt/remotes` 之下）无需重启即可可见。
+
+ZFS 数据集备份同样需要这种模式：主机要在容器启动之后才挂载数据集的快照。参见 [ZFS 数据集](zfs-datasets.md)。
 
 备份仓库路径默认为 `/mnt/user/bombvault/{container,vms,flash,config,files}`，在首次备份时创建。可随时在**设置，备份路径**中更改位置。
 

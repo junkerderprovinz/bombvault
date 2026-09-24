@@ -61,6 +61,14 @@ Việc nhập sẽ dừng container, dời thư mục dữ liệu của nó sang
 
 Để đặt lại bằng tay: dừng container, đổi tên thư mục dữ liệu hiện tại cho khuất lối, đổi tên thư mục được giữ về tên gốc, rồi khởi động container. Trên Unraid, trình quản lý tệp ở thẻ Shares làm được việc này.
 
+## Sao lưu tập dữ liệu ZFS thất bại hoặc bỏ qua một tập dữ liệu {#zfs-datasets}
+
+Mỗi sự cố có một mã lý do trong ngoặc vuông, và trang [Tập dữ liệu ZFS](zfs-datasets.md#reason-codes) liệt kê tất cả cùng cách khắc phục. Ba trường hợp hay gặp nhất:
+
+- **`snapshot-loop`**: ảnh chụp không tới được BombVault vì Host Data không chuyển tiếp các lần gắn mới. Sửa container, đặt Access Mode của Host Data thành Read/Write - Slave rồi khởi động lại BombVault.
+- **`key-not-loaded`**: tập dữ liệu mã hóa chưa nạp khóa sẽ bị bỏ qua. Nạp khóa bằng `zfs load-key` và gắn tập dữ liệu; lần sao lưu sau sẽ gồm nó.
+- **`ssh-auth`**: máy chủ từ chối khóa của BombVault. Thẻ kết nối trên trang ZFS hiện lệnh cấp quyền cho khóa; chạy lệnh đó một lần trên máy chủ.
+
 ## Container cứ khởi động lại hoặc trông không khỏe mạnh
 
 BombVault báo khỏe mạnh/không khỏe mạnh từ `/api/health` của chính nó. Một công cụ tự phục hồi (chẳng hạn Autoheal) có thể khởi động lại nó tự động nếu công cụ có bao giờ bị kẹt. Kiểm tra nhật ký container và báo cáo `/spike` để tìm nguyên nhân cơ bản.

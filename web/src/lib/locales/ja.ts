@@ -648,7 +648,7 @@ const ja: Partial<Translations> = {
   "vm.ssh.testFail": "接続に失敗しました",
   "vm.ssh.setupTitle": "セットアップ（初回のみ）",
   "vm.ssh.step1": "下のコマンドをコピーして Unraid ターミナルで実行し、この鍵を許可してください（再起動後も維持されます）。",
-  "vm.ssh.step2": "コンテナの「VM Backup: Host」変数を Unraid の LAN IP（例：192.168.x.x）に設定します。単純なブリッジネットワークなら host.docker.internal も使えます。",
+  "vm.ssh.step2": "コンテナの「Host SSH: Address」変数を Unraid の LAN IP（例：192.168.x.x）に設定します。単純なブリッジネットワークなら host.docker.internal も使えます。",
   "vm.ssh.step3": "「接続をテスト」をクリックし、緑になったらドメインで VM を有効にしてください。",
   "vm.ssh.copyCmd": "コマンドをコピー",
   "vm.ssh.guide": "完全なセットアップとネットワークガイド",

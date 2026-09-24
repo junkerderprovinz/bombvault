@@ -7,10 +7,10 @@ Această pagină acoperă variabilele de mediu ale containerului, montările pe 
 | Variabilă | Obligatorie | Descriere |
 |---|---|---|
 | `APP_KEY` | **Da** | Secret hex de 32 de octeți (64 de caractere hex) folosit pentru a deriva parola depozitului restic. Generează cu `openssl rand -hex 32`. Păstrează-l în siguranță: pierderea lui face ca backupurile criptate să nu mai poată fi recuperate. |
-| `LIBVIRT_HOST` | Pentru VM-uri | Gazda Unraid accesată prin SSH pentru backupul VM (implicit `host.docker.internal`; șablonul precompletează un placeholder cu IP-LAN). Folosește IP-ul LAN al Unraid, obligatoriu pe o rețea `br0.x` personalizată. |
-| `LIBVIRT_SSH_PORT` | Nu | Portul SSH al gazdei pentru backupul VM (implicit `22`). |
-| `LIBVIRT_SSH_USER` | Nu | Utilizatorul SSH de pe gazdă pentru backupul VM (implicit `root`). |
-| `LIBVIRT_URI` | Nu | URI-ul complet de conexiune libvirt, folosit **ca atare** în locul construirii unuia dintre cele trei variabile `LIBVIRT_*` de mai sus (care sunt apoi ignorate pentru șirul de conexiune). Nesetat implicit. Necesar pe TrueNAS Scale, al cărui libvirtd ascultă pe un socket non-standard pe care forma construită nu îl poate exprima: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Vezi secțiunea TrueNAS Scale din [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). |
+| `LIBVIRT_HOST` | Pentru VM-uri | Gazda Unraid accesată prin SSH pentru backupul VM (implicit `host.docker.internal`; șablonul precompletează un placeholder cu IP-LAN). Folosește IP-ul LAN al Unraid, obligatoriu pe o rețea `br0.x` personalizată. Folosit și pentru backup-urile seturilor de date ZFS (câmpul de șablon **Host SSH: Address**); substituentul `192.168.x.x` contează ca nesetat. |
+| `LIBVIRT_SSH_PORT` | Nu | Portul SSH al gazdei pentru backupul VM (implicit `22`). Câmpul de șablon **Host SSH: Port**, și pentru seturile de date ZFS. |
+| `LIBVIRT_SSH_USER` | Nu | Utilizatorul SSH de pe gazdă pentru backupul VM (implicit `root`). Câmpul de șablon **Host SSH: User**, și pentru seturile de date ZFS. |
+| `LIBVIRT_URI` | Nu | URI-ul complet de conexiune libvirt, folosit **ca atare** în locul construirii unuia dintre cele trei variabile `LIBVIRT_*` de mai sus (care sunt apoi ignorate pentru șirul de conexiune). Nesetat implicit. Necesar pe TrueNAS Scale, al cărui libvirtd ascultă pe un socket non-standard pe care forma construită nu îl poate exprima: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Vezi secțiunea TrueNAS Scale din [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Dacă este un URI `qemu+ssh://`, fiecare dintre `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` și `LIBVIRT_SSH_PORT` care nu este setată se ia din el, și pentru comenzile SSH proprii ale BombVault (transferul NVRAM, seturile de date ZFS). |
 | `PORT` | Nu | Portul HTTP (implicit `3000`; folosit doar cu `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | Nu | Portul HTTPS (implicit `3443`; șablonul îl publică 1:1, deci WebUI răspunde la `https://<ip>:3443`). |
 | `HTTP_ONLY` | Nu | Setează `true` pentru a dezactiva ascultătorul HTTPS auto-semnat și a servi doar HTTP simplu (pentru utilizare în spatele unui reverse proxy care termină TLS). |
@@ -26,6 +26,8 @@ Această pagină acoperă variabilele de mediu ale containerului, montările pe 
 ## Montări
 
 Montează socket-ul Docker, flash-ul (`/boot`) și rădăcina **Host Data** (`/mnt`) așa cum se arată în șablonul CA. Atât *sursele* cât și *destinațiile* backupurilor se află sub Host Data, iar aceasta este montată **slave** astfel încât o partajare la distanță care se montează după ce containerul pornește (de exemplu sub `/mnt/remotes`) devine vizibilă fără repornire.
+
+Backup-urile seturilor de date ZFS au și ele nevoie de acest mod: gazda montează instantaneul unui set de date abia după ce containerul a pornit. Vezi [Seturi de date ZFS](zfs-datasets.md).
 
 Căile depozitelor de backup sunt implicit `/mnt/user/bombvault/{container,vms,flash,config,files}`, create la primul backup. Schimbă locația oricând în **Setări, Căi de backup**.
 

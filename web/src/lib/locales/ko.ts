@@ -648,7 +648,7 @@ const ko: Partial<Translations> = {
   "vm.ssh.testFail": "연결 실패",
   "vm.ssh.setupTitle": "설정 (최초 1회)",
   "vm.ssh.step1": "아래 명령을 복사하여 Unraid 터미널에서 실행해 이 키를 승인하세요(재부팅 후에도 유지됩니다).",
-  "vm.ssh.step2": "컨테이너의 \"VM Backup: Host\" 변수를 Unraid LAN IP(예: 192.168.x.x)로 설정하세요. 단순 브리지 네트워크에서는 host.docker.internal도 작동합니다.",
+  "vm.ssh.step2": "컨테이너의 \"Host SSH: Address\" 변수를 Unraid LAN IP(예: 192.168.x.x)로 설정하세요. 단순 브리지 네트워크에서는 host.docker.internal도 작동합니다.",
   "vm.ssh.step3": "연결 테스트를 클릭하고, 녹색이 되면 도메인에서 VM을 활성화하세요.",
   "vm.ssh.copyCmd": "명령 복사",
   "vm.ssh.guide": "전체 설정 및 네트워크 가이드",

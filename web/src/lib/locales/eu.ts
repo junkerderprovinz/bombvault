@@ -1450,7 +1450,7 @@ const eu: Partial<Translations> = {
   "vm.ssh.testFail": "Konexioak huts egin du",
   "vm.ssh.setupTitle": "Konfiguratu (behin bakarrik)",
   "vm.ssh.step1": "Kopiatu beheko komandoa eta exekutatu Unraid-en terminalean gako hau baimentzeko (berrabiarazteek bizirauten dute).",
-  "vm.ssh.step2": "Ezarri edukiontziaren «VM Backup: Host» aldagaia zure Unraid LANeko IP helbidera (adib. 192.168.x.x); bridge sare soilarekin host.docker.internal-ek ere balio du.",
+  "vm.ssh.step2": "Ezarri edukiontziaren «Host SSH: Address» aldagaia zure Unraid LANeko IP helbidera (adib. 192.168.x.x); bridge sare soilarekin host.docker.internal-ek ere balio du.",
   "vm.ssh.step3": "Klikatu Probatu konexioa. Berdea denean, gaitu MB Domeinuen azpian.",
   "vm.ssh.copyCmd": "Kopiatu komandoa",
   "vm.ssh.guide": "Konfigurazio- eta sare-gida osoa",

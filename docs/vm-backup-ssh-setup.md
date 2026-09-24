@@ -9,20 +9,30 @@ can never interfere with the Unraid VM Manager.
 This guide is the exact configuration. Container backup needs none of this — it
 is only for VM backup.
 
+**Also used by ZFS datasets.** ZFS dataset backups run their `zfs` commands over
+the same SSH link, with the same key, host and user. Once VM backup connects,
+the ZFS page connects too; nothing else needs setting up for it. See
+[ZFS datasets](https://junkerderprovinz.github.io/bombvault/zfs-datasets/).
+
 ---
 
 ## What you configure
 
 | Setting | Where | Default | Meaning |
 |---|---|---|---|
-| `VM Backup: Host` (`LIBVIRT_HOST`) | template var | `host.docker.internal` | Unraid host address reached over SSH |
-| `VM Backup: SSH Port` (`LIBVIRT_SSH_PORT`) | template var | `22` | Unraid's SSH port |
-| `VM Backup: SSH User` (`LIBVIRT_SSH_USER`) | template var | `root` | SSH user on the host |
+| `Host SSH: Address` (`LIBVIRT_HOST`) | template var | `host.docker.internal` | Unraid host address reached over SSH |
+| `Host SSH: Port` (`LIBVIRT_SSH_PORT`) | template var | `22` | Unraid's SSH port |
+| `Host SSH: User` (`LIBVIRT_SSH_USER`) | template var | `root` | SSH user on the host |
 | Public key | Settings → VM Backup over SSH | (auto-generated) | Authorize on the host |
 
 The SSH keypair is generated automatically on first start at
 `/config/ssh/id_ed25519` (persisted in appdata). The host key is pinned in
 `/config/ssh/known_hosts` on first connect.
+
+The template pre-fills `Host SSH: Address` with the placeholder `192.168.x.x`.
+BombVault treats that value as unset and tries `host.docker.internal`, which
+works on the default `bridge` network. On a custom network, replace it with the
+host's LAN IP (Step 3 B).
 
 ---
 
@@ -30,7 +40,7 @@ The SSH keypair is generated automatically on first start at
 
 1. **Settings → Management Access → Use SSH = Yes.**
 2. If you changed the **SSH port** (e.g. to a non-default port), note it — you'll set
-   `VM Backup: SSH Port` to match.
+   `Host SSH: Port` to match.
 
 ## Step 2 — Authorize BombVault's public key (persistent)
 
@@ -55,16 +65,16 @@ BombVault must be able to open a TCP connection from the container to the host's
 SSH port. Pick the row matching your setup:
 
 ### A. BombVault on the default `bridge` network (simplest)
-- Leave `VM Backup: Host = host.docker.internal` (the template adds
+- Leave `Host SSH: Address = host.docker.internal`, or the template placeholder (the template adds
   `--add-host=host.docker.internal:host-gateway`, which resolves to the docker0
   gateway = the host).
-- `VM Backup: SSH Port` = your SSH port.
+- `Host SSH: Port` = your SSH port.
 
 ### B. BombVault on a custom network (`br0.x`, macvlan/ipvlan)
 A container on `br0.x` cannot reach the host via `host.docker.internal`
 (172.17.0.1 is docker0, unreachable from `br0.x`). Instead:
 1. **Settings → Docker → Host access to custom networks = Enabled.**
-2. Set `VM Backup: Host` to the **Unraid host's LAN IP** (the IP you open the
+2. Set `Host SSH: Address` to the **Unraid host's LAN IP** (the IP you open the
    web UI on, e.g. `192.168.x.x`).
 3. If the container's network and the host are on **different VLANs**, allow the
    route on your router/firewall: `container VLAN → host-IP : SSH-port (tcp)`.
@@ -81,7 +91,7 @@ docker exec BombVault timeout 6 bash -c 'echo > /dev/tcp/192.168.x.x/<port>' && 
 
 ## Step 4 — Set the variables & test
 
-1. **Docker → BombVault → Edit** → set `VM Backup: Host` (+ `SSH Port` if not 22)
+1. **Docker → BombVault → Edit** → set `Host SSH: Address` (+ `Host SSH: Port` if not 22)
    → **Apply**. *(If the variables don't appear, re-import the template — Unraid
    keeps an existing container's saved config.)*
 2. **Settings → VM Backup over SSH → Test connection** → green.
@@ -118,7 +128,7 @@ names its libvirt domains (5).
 ### 1. TrueNAS's libvirtd socket is non-standard
 
 TrueNAS Scale's libvirtd does not listen where the default `qemu+ssh://`
-connection string built from `VM Backup: Host`/`User`/`Port` expects. Set
+connection string built from `Host SSH: Address`/`User`/`Port` expects. Set
 `LIBVIRT_URI` directly instead, with the extra `?socket=...` query parameter
 the built-string form has no way to express:
 
@@ -128,8 +138,13 @@ LIBVIRT_URI=qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/
 
 When `LIBVIRT_URI` is set, BombVault uses it **verbatim** — `LIBVIRT_HOST`,
 `LIBVIRT_SSH_USER`, and `LIBVIRT_SSH_PORT` are ignored for the connection
-string itself (they still don't need to be set at all for VM backup to work,
-since the URI already carries the user/host).
+string itself. They don't need to be set at all: for every one of them that is
+unset, BombVault takes the host, user and port from the URI for its own SSH
+commands too, so the NVRAM transfer and ZFS dataset backups reach the same
+machine as `virsh`. An explicitly set variable always wins, and the boot log
+names the target taken from the URI. On TrueNAS a user other than root also
+needs `zfs allow <user> snapshot,destroy,mount <dataset>` for ZFS dataset
+backups; see [ZFS datasets](https://junkerderprovinz.github.io/bombvault/zfs-datasets/#truenas).
 
 ### 2. Root SSH is disabled by default since TrueNAS 24.10
 
@@ -423,7 +438,7 @@ unchanged.
 
 | Symptom | Cause / fix |
 |---|---|
-| Test hangs then fails | Host unreachable — re-check Step 3 (network/VLAN/firewall) and `VM Backup: Host`/`Port`. |
+| Test hangs then fails | Host unreachable: re-check Step 3 (network/VLAN/firewall) and `Host SSH: Address`/`Port`. |
 | `Permission denied (publickey)` despite the key being in `authorized_keys` | sshd **StrictModes** rejects the key file because of bad ownership/modes on a parent dir — common when `/root/.ssh` is symlinked to the **FAT flash** (`/boot/config/ssh/...`), which is world-writable. The host log shows `Authentication refused: bad ownership or modes for directory ...`. Fix: add `StrictModes no` to the host's sshd config **in the global section (before any `Match` block)**, then `/etc/rc.d/rc.sshd restart`. Persist it (see below) — Unraid regenerates `/etc/ssh/sshd_config` on boot. |
 | `Permission denied (publickey)` (key truly missing) | Key not authorized — redo Step 2; confirm SSH is enabled. |
 | `Host key verification failed` | `docker exec BombVault rm -f /config/ssh/known_hosts`, then retry. |

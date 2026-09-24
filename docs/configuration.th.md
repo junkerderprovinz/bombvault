@@ -7,10 +7,10 @@
 | ตัวแปร | จำเป็น | คำอธิบาย |
 |---|---|---|
 | `APP_KEY` | **ใช่** | ค่าลับ hex ขนาด 32 ไบต์ (64 อักขระ hex) ที่ใช้นำมาสร้างรหัสผ่านของรีพอสิทอรี restic สร้างด้วย `openssl rand -hex 32` เก็บไว้ให้ปลอดภัย: การทำหายจะทำให้การสำรองข้อมูลที่เข้ารหัสไว้ไม่สามารถกู้คืนได้ |
-| `LIBVIRT_HOST` | สำหรับ VMs | โฮสต์ Unraid ที่เข้าถึงผ่าน SSH สำหรับการสำรองข้อมูล VM (ค่าเริ่มต้น `host.docker.internal`; เทมเพลตเติมค่าตัวยึด LAN-IP ไว้ล่วงหน้า) ใช้ LAN IP ของ Unraid ของคุณ จำเป็นบนเครือข่าย `br0.x` ที่กำหนดเอง |
-| `LIBVIRT_SSH_PORT` | ไม่ | พอร์ต SSH ของโฮสต์สำหรับการสำรองข้อมูล VM (ค่าเริ่มต้น `22`) |
-| `LIBVIRT_SSH_USER` | ไม่ | ผู้ใช้ SSH บนโฮสต์สำหรับการสำรองข้อมูล VM (ค่าเริ่มต้น `root`) |
-| `LIBVIRT_URI` | ไม่ | URI การเชื่อมต่อ libvirt แบบเต็ม ใช้ **ตามตัวอักษร** แทนการสร้างจากตัวแปร `LIBVIRT_*` ทั้งสามตัวข้างต้น (ซึ่งจะถูกละเว้นสำหรับสตริงการเชื่อมต่อในกรณีนี้) ค่าเริ่มต้นไม่ได้ตั้งไว้ จำเป็นบน TrueNAS Scale ซึ่ง libvirtd ของมันรับฟังอยู่บนซ็อกเก็ตที่ไม่ได้มาตรฐาน ซึ่งรูปแบบสตริงที่สร้างขึ้นไม่สามารถแสดงออกได้: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock` ดูส่วน TrueNAS Scale ใน [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) |
+| `LIBVIRT_HOST` | สำหรับ VMs | โฮสต์ Unraid ที่เข้าถึงผ่าน SSH สำหรับการสำรองข้อมูล VM (ค่าเริ่มต้น `host.docker.internal`; เทมเพลตเติมค่าตัวยึด LAN-IP ไว้ล่วงหน้า) ใช้ LAN IP ของ Unraid ของคุณ จำเป็นบนเครือข่าย `br0.x` ที่กำหนดเอง ใช้กับการสำรองชุดข้อมูล ZFS ด้วย (ช่องในเทมเพลต **Host SSH: Address**) ค่าตัวอย่าง `192.168.x.x` ถือว่ายังไม่ได้ตั้ง |
+| `LIBVIRT_SSH_PORT` | ไม่ | พอร์ต SSH ของโฮสต์สำหรับการสำรองข้อมูล VM (ค่าเริ่มต้น `22`) ช่องในเทมเพลต **Host SSH: Port** ใช้กับชุดข้อมูล ZFS ด้วย |
+| `LIBVIRT_SSH_USER` | ไม่ | ผู้ใช้ SSH บนโฮสต์สำหรับการสำรองข้อมูล VM (ค่าเริ่มต้น `root`) ช่องในเทมเพลต **Host SSH: User** ใช้กับชุดข้อมูล ZFS ด้วย |
+| `LIBVIRT_URI` | ไม่ | URI การเชื่อมต่อ libvirt แบบเต็ม ใช้ **ตามตัวอักษร** แทนการสร้างจากตัวแปร `LIBVIRT_*` ทั้งสามตัวข้างต้น (ซึ่งจะถูกละเว้นสำหรับสตริงการเชื่อมต่อในกรณีนี้) ค่าเริ่มต้นไม่ได้ตั้งไว้ จำเป็นบน TrueNAS Scale ซึ่ง libvirtd ของมันรับฟังอยู่บนซ็อกเก็ตที่ไม่ได้มาตรฐาน ซึ่งรูปแบบสตริงที่สร้างขึ้นไม่สามารถแสดงออกได้: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock` ดูส่วน TrueNAS Scale ใน [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) ถ้าเป็น URI แบบ `qemu+ssh://` ตัวแปร `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` และ `LIBVIRT_SSH_PORT` ตัวใดที่ไม่ได้ตั้งจะเอาค่ามาจาก URI นี้ รวมถึงคำสั่ง SSH ของ BombVault เอง (การส่ง NVRAM และชุดข้อมูล ZFS) |
 | `PORT` | ไม่ | พอร์ต HTTP (ค่าเริ่มต้น `3000`; ใช้เฉพาะกับ `HTTP_ONLY=true`) |
 | `HTTPS_PORT` | ไม่ | พอร์ต HTTPS (ค่าเริ่มต้น `3443`; เทมเพลตเผยแพร่แบบ 1:1 ดังนั้น WebUI จึงตอบที่ `https://<ip>:3443`) |
 | `HTTP_ONLY` | ไม่ | ตั้งค่า `true` เพื่อปิดตัวรับฟัง HTTPS แบบ self-signed และให้บริการ HTTP ธรรมดาเท่านั้น (สำหรับใช้หลัง reverse proxy ที่ terminate TLS) |
@@ -26,6 +26,8 @@
 ## การเมานต์
 
 เมานต์ Docker socket, แฟลช (`/boot`) และราก **Host Data** (`/mnt`) ตามที่แสดงในเทมเพลต CA ทั้ง *แหล่งที่มา* และ *ปลายทาง* ของการสำรองข้อมูลอยู่ภายใต้ Host Data และมันถูกเมานต์แบบ **slave** ดังนั้นแชร์ระยะไกลที่เมานต์หลังจาก container เริ่มทำงาน (เช่น ภายใต้ `/mnt/remotes`) จะปรากฏให้เห็นโดยไม่ต้องรีสตาร์ท
+
+การสำรองชุดข้อมูล ZFS ก็ต้องใช้โหมดนี้ เพราะโฮสต์จะเมานต์สแนปช็อตของชุดข้อมูลหลังจากคอนเทนเนอร์เริ่มทำงานแล้วเท่านั้น ดู [ชุดข้อมูล ZFS](zfs-datasets.md)
 
 พาธของรีพอสิทอรีการสำรองข้อมูลตั้งค่าเริ่มต้นเป็น `/mnt/user/bombvault/{container,vms,flash,config,files}` สร้างขึ้นในการสำรองข้อมูลครั้งแรก เปลี่ยนตำแหน่งได้ทุกเมื่อใน **Settings, Backup paths**
 

@@ -20,6 +20,7 @@ Napędzany przez [restic](https://restic.net), więc każda kopia zapasowa jest 
 | **Flash Unraid** | Cały nośnik USB flash (`/boot`): system operacyjny, licencja, konfiguracja macierzy, udziały, sieć i konfiguracja wtyczek. |
 | **Konfiguracja aplikacji** | Własny katalog `/config` BombVault: baza ustawień, poświadczenia poza siedzibą oraz para kluczy SSH libvirt. |
 | **Pliki i foldery** | Nazwane **zestawy plików**, dowolny folder na serwerze, każdy z opcjonalnymi wzorcami wykluczeń per zestaw. |
+| **Zbiory danych ZFS** | Zbiór danych ze wszystkimi zbiorami pod nim, odczytany z jednej migawki ZFS i zapisany jak folder. Zobacz [Zbiory danych ZFS](zfs-datasets.md). |
 
 ## Przywracanie to gwiazda
 

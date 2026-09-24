@@ -20,6 +20,7 @@ Assente em [restic](https://restic.net), por isso cada backup é deduplicado, in
 | **Flash do Unraid** | Toda a pen USB flash (`/boot`): SO, licença, configuração do array, partilhas, rede e configuração de plugins. |
 | **Configuração da aplicação** | O próprio `/config` do BombVault: a sua base de dados de definições, as credenciais externas e o par de chaves SSH do libvirt. |
 | **Ficheiros e pastas** | **Conjuntos de ficheiros** nomeados, qualquer pasta no servidor, cada um com padrões de exclusão opcionais por conjunto. |
+| **Conjuntos de dados ZFS** | Um conjunto de dados com todos os que estão abaixo dele, lido de um instantâneo ZFS e guardado como uma pasta. Veja [Conjuntos de dados ZFS](zfs-datasets.md). |
 
 ## O restauro é a estrela
 

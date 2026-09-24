@@ -61,6 +61,14 @@ Uma importação para o container, põe a pasta de dados de lado e deixa a image
 
 Para a repor à mão: para o container, muda o nome da pasta de dados atual para a tirar do caminho, muda o nome da pasta guardada de volta ao original e arranca o container. No Unraid, o gestor de ficheiros no separador Shares faz isto.
 
+## Uma cópia de um conjunto de dados ZFS falhou ou ignorou um conjunto {#zfs-datasets}
+
+Cada problema tem um código de motivo entre parênteses retos, e a página [Conjuntos de dados ZFS](zfs-datasets.md#reason-codes) lista-os todos com a solução. Os três mais comuns:
+
+- **`snapshot-loop`**: o instantâneo não chegou ao BombVault porque o Host Data não passa as novas montagens. Edite o container, ponha o Access Mode do Host Data em Read/Write - Slave e reinicie o BombVault.
+- **`key-not-loaded`**: um conjunto cifrado cuja chave não está carregada é ignorado. Carregue a chave com `zfs load-key` e monte o conjunto; a próxima cópia inclui-o.
+- **`ssh-auth`**: o servidor recusou a chave do BombVault. O cartão de ligação da página ZFS mostra o comando que a autoriza; execute-o uma vez no servidor.
+
 ## O container continua a reiniciar ou parece não-saudável
 
 O BombVault reporta saudável/não-saudável a partir do seu próprio `/api/health`. Uma ferramenta de auto-recuperação (como o Autoheal) pode reiniciá-lo automaticamente se o motor alguma vez encravar. Verifique o registo do container e o relatório `/spike` para a causa subjacente.

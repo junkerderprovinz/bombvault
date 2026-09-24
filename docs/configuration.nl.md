@@ -7,10 +7,10 @@ Deze pagina behandelt de omgevingsvariabelen van de container, de mounts die de 
 | Variabele | Vereist | Beschrijving |
 |---|---|---|
 | `APP_KEY` | **Ja** | 32-byte hex-geheim (64 hex-tekens) gebruikt om het restic-repo-wachtwoord af te leiden. Genereer met `openssl rand -hex 32`. Bewaar dit veilig: kwijtraken maakt versleutelde back-ups onherstelbaar. |
-| `LIBVIRT_HOST` | Voor VM's | Unraid-host bereikt via SSH voor VM-back-up (standaard `host.docker.internal`; de template vult vooraf een LAN-IP-placeholder in). Gebruik je Unraid LAN-IP, vereist op een custom `br0.x`-netwerk. |
-| `LIBVIRT_SSH_PORT` | Nee | SSH-poort van de host voor VM-back-up (standaard `22`). |
-| `LIBVIRT_SSH_USER` | Nee | SSH-gebruiker op de host voor VM-back-up (standaard `root`). |
-| `LIBVIRT_URI` | Nee | Volledige libvirt-verbindings-URI, **letterlijk** gebruikt in plaats van er één op te bouwen uit de drie `LIBVIRT_*`-variabelen hierboven (die dan voor de verbindingsstring worden genegeerd). Standaard niet ingesteld. Nodig op TrueNAS Scale, waar libvirtd luistert op een niet-standaard socket die de opgebouwde vorm niet kan uitdrukken: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Zie de TrueNAS Scale-sectie van [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). |
+| `LIBVIRT_HOST` | Voor VM's | Unraid-host bereikt via SSH voor VM-back-up (standaard `host.docker.internal`; de template vult vooraf een LAN-IP-placeholder in). Gebruik je Unraid LAN-IP, vereist op een custom `br0.x`-netwerk. Ook gebruikt voor back-ups van ZFS-datasets (templateveld **Host SSH: Address**); de plaatshouder `192.168.x.x` geldt als niet ingesteld. |
+| `LIBVIRT_SSH_PORT` | Nee | SSH-poort van de host voor VM-back-up (standaard `22`). Templateveld **Host SSH: Port**, ook voor ZFS-datasets. |
+| `LIBVIRT_SSH_USER` | Nee | SSH-gebruiker op de host voor VM-back-up (standaard `root`). Templateveld **Host SSH: User**, ook voor ZFS-datasets. |
+| `LIBVIRT_URI` | Nee | Volledige libvirt-verbindings-URI, **letterlijk** gebruikt in plaats van er één op te bouwen uit de drie `LIBVIRT_*`-variabelen hierboven (die dan voor de verbindingsstring worden genegeerd). Standaard niet ingesteld. Nodig op TrueNAS Scale, waar libvirtd luistert op een niet-standaard socket die de opgebouwde vorm niet kan uitdrukken: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Zie de TrueNAS Scale-sectie van [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Is het een `qemu+ssh://`-URI, dan wordt elk van `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` en `LIBVIRT_SSH_PORT` die niet is ingesteld eruit overgenomen, ook voor BombVaults eigen SSH-opdrachten (NVRAM-overdracht, ZFS-datasets). |
 | `PORT` | Nee | HTTP-poort (standaard `3000`; alleen gebruikt met `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | Nee | HTTPS-poort (standaard `3443`; de template publiceert hem 1:1, dus de WebUI antwoordt op `https://<ip>:3443`). |
 | `HTTP_ONLY` | Nee | Zet `true` om de zelfondertekende HTTPS-listener uit te schakelen en alleen platte HTTP te serveren (voor gebruik achter een TLS-terminerende reverse proxy). |
@@ -26,6 +26,8 @@ Deze pagina behandelt de omgevingsvariabelen van de container, de mounts die de 
 ## Mounts
 
 Mount de Docker-socket, de flash (`/boot`) en de root **Host Data** (`/mnt`) zoals getoond in de CA-template. Back-up*bronnen* en *bestemmingen* leven allebei onder Host Data, en het wordt **slave** gemount zodat een remote share die na de start van de container mount (bijvoorbeeld onder `/mnt/remotes`) zichtbaar wordt zonder herstart.
+
+Back-ups van ZFS-datasets hebben deze modus ook nodig: de host koppelt de snapshot van een dataset pas aan nadat de container is gestart. Zie [ZFS-datasets](zfs-datasets.md).
 
 Back-uprepository-paden gaan standaard naar `/mnt/user/bombvault/{container,vms,flash,config,files}`, aangemaakt bij de eerste back-up. Wijzig de locatie op elk moment in **Instellingen, Back-uppaden**.
 

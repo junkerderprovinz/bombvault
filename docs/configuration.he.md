@@ -7,10 +7,10 @@
 | משתנה | נדרש | תיאור |
 |---|---|---|
 | `APP_KEY` | **כן** | סוד hex באורך 32 בתים (64 תווי hex) המשמש לגזירת סיסמת מאגר ה-restic. צור עם `openssl rand -hex 32`. שמור עליו: אובדנו הופך את הגיבויים המוצפנים לבלתי ניתנים לשחזור. |
-| `LIBVIRT_HOST` | ל-VMs | מארח Unraid שאליו מגיעים דרך SSH לגיבוי VM (ברירת מחדל `host.docker.internal`; התבנית ממלאה מראש placeholder של LAN-IP). השתמש בכתובת ה-LAN IP של Unraid שלך, נדרש ברשת `br0.x` מותאמת אישית. |
-| `LIBVIRT_SSH_PORT` | לא | פורט ה-SSH של המארח לגיבוי VM (ברירת מחדל `22`). |
-| `LIBVIRT_SSH_USER` | לא | משתמש ה-SSH במארח לגיבוי VM (ברירת מחדל `root`). |
-| `LIBVIRT_URI` | לא | URI מלא לחיבור libvirt, בשימוש **כלשונו** במקום בניית URI משלושת משתני `LIBVIRT_*` שלעיל (שבמקרה זה מתעלמים מהם לצורך מחרוזת החיבור). ברירת המחדל אינה מוגדרת. נדרש ב-TrueNAS Scale, שבו ה-libvirtd מאזין ל-socket לא סטנדרטי שצורת המחרוזת הבנויה אינה יכולה לבטא: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. ראה את הפרק על TrueNAS Scale ב-[docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). |
+| `LIBVIRT_HOST` | ל-VMs | מארח Unraid שאליו מגיעים דרך SSH לגיבוי VM (ברירת מחדל `host.docker.internal`; התבנית ממלאה מראש placeholder של LAN-IP). השתמש בכתובת ה-LAN IP של Unraid שלך, נדרש ברשת `br0.x` מותאמת אישית. משמש גם לגיבוי מערכי נתונים של ZFS (שדה התבנית **Host SSH: Address**); ערך מציין המקום `192.168.x.x` נחשב כלא מוגדר. |
+| `LIBVIRT_SSH_PORT` | לא | פורט ה-SSH של המארח לגיבוי VM (ברירת מחדל `22`). שדה התבנית **Host SSH: Port**, גם עבור מערכי נתונים של ZFS. |
+| `LIBVIRT_SSH_USER` | לא | משתמש ה-SSH במארח לגיבוי VM (ברירת מחדל `root`). שדה התבנית **Host SSH: User**, גם עבור מערכי נתונים של ZFS. |
+| `LIBVIRT_URI` | לא | URI מלא לחיבור libvirt, בשימוש **כלשונו** במקום בניית URI משלושת משתני `LIBVIRT_*` שלעיל (שבמקרה זה מתעלמים מהם לצורך מחרוזת החיבור). ברירת המחדל אינה מוגדרת. נדרש ב-TrueNAS Scale, שבו ה-libvirtd מאזין ל-socket לא סטנדרטי שצורת המחרוזת הבנויה אינה יכולה לבטא: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. ראה את הפרק על TrueNAS Scale ב-[docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). אם זו כתובת `qemu+ssh://`, כל אחד מ-`LIBVIRT_HOST`, `LIBVIRT_SSH_USER` ו-`LIBVIRT_SSH_PORT` שאינו מוגדר נלקח ממנה, גם עבור פקודות ה-SSH של BombVault עצמו (העברת NVRAM, מערכי נתונים של ZFS). |
 | `PORT` | לא | פורט HTTP (ברירת מחדל `3000`; בשימוש רק עם `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | לא | פורט HTTPS (ברירת מחדל `3443`; התבנית מפרסמת אותו 1:1, כך שה-WebUI עונה על `https://<ip>:3443`). |
 | `HTTP_ONLY` | לא | קבע `true` כדי להשבית את מאזין ה-HTTPS בחתימה עצמית ולהגיש HTTP פשוט בלבד (לשימוש מאחורי reverse proxy מסיים-TLS). |
@@ -26,6 +26,8 @@
 ## עיגונים
 
 עגן את ה-Docker socket, את ה-flash (`/boot`) ואת שורש **Host Data** (`/mnt`) כפי שמוצג בתבנית ה-CA. *מקורות* הגיבוי וגם *היעדים* חיים תחת Host Data, והוא מעוגן **slave** כך ששיתוף מרוחק שמתעגן לאחר שה-container מתחיל (למשל תחת `/mnt/remotes`) הופך גלוי ללא הפעלה מחדש.
+
+גם גיבוי מערכי נתונים של ZFS צריך את המצב הזה: המארח מעגן את התצלום של מערך נתונים רק אחרי שהקונטיינר עלה. ראה [מערכי נתונים של ZFS](zfs-datasets.md).
 
 נתיבי מאגר הגיבוי מוגדרים כברירת מחדל ל-`/mnt/user/bombvault/{container,vms,flash,config,files}`, נוצרים בגיבוי הראשון. שנה את המיקום בכל עת ב**הגדרות, נתיבי גיבוי**.
 

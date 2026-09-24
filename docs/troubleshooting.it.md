@@ -61,6 +61,14 @@ Un import ferma il container, sposta di lato la sua cartella dati e lascia che l
 
 Per rimetterla a mano: ferma il container, rinomina la cartella dati attuale per toglierla di mezzo, rinomina la cartella conservata al nome originale e avvia il container. Su Unraid lo fa il gestore file nella scheda Shares.
 
+## Un backup di un dataset ZFS è fallito o ha saltato un dataset {#zfs-datasets}
+
+Ogni problema porta un codice di motivo tra parentesi quadre, e la pagina [Dataset ZFS](zfs-datasets.md#reason-codes) li elenca tutti con la soluzione. I tre più comuni:
+
+- **`snapshot-loop`**: lo snapshot non è arrivato a BombVault perché Host Data non inoltra i nuovi mount. Modifica il container, imposta l'Access Mode di Host Data su Read/Write - Slave e riavvia BombVault.
+- **`key-not-loaded`**: un dataset cifrato la cui chiave non è caricata viene saltato. Carica la chiave con `zfs load-key` e monta il dataset; il backup successivo lo include.
+- **`ssh-auth`**: il server ha rifiutato la chiave di BombVault. La scheda di connessione nella pagina ZFS mostra il comando che la autorizza; eseguilo una volta sul server.
+
 ## Il container continua a riavviarsi o sembra non sano
 
 BombVault segnala sano/non sano dal proprio `/api/health`. Uno strumento di auto-heal (come Autoheal) può riavviarlo automaticamente se il motore dovesse mai incepparsi. Controlla il log del container e il report `/spike` per la causa sottostante.

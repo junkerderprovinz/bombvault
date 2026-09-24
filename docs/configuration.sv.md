@@ -7,10 +7,10 @@ Den här sidan täcker containerns miljövariabler, monteringarna som mallen til
 | Variabel | Obligatorisk | Beskrivning |
 |---|---|---|
 | `APP_KEY` | **Ja** | 32-byte hex-hemlighet (64 hex-tecken) som används för att härleda restic-repo-lösenordet. Generera med `openssl rand -hex 32`. Förvara den säkert: att förlora den gör krypterade säkerhetskopior oåterställbara. |
-| `LIBVIRT_HOST` | För VM:ar | Unraid-värd nådd över SSH för VM-säkerhetskopiering (standard `host.docker.internal`; mallen förifyller en LAN-IP-platshållare). Använd din Unraid-LAN-IP, obligatorisk på ett anpassat `br0.x`-nätverk. |
-| `LIBVIRT_SSH_PORT` | Nej | Värdens SSH-port för VM-säkerhetskopiering (standard `22`). |
-| `LIBVIRT_SSH_USER` | Nej | SSH-användare på värden för VM-säkerhetskopiering (standard `root`). |
-| `LIBVIRT_URI` | Nej | Fullständig anslutnings-URI för libvirt, används **ordagrant** i stället för att bygga en från de tre `LIBVIRT_*`-variablerna ovan (som då ignoreras för anslutningssträngen). Inte satt som standard. Behövs på TrueNAS Scale, vars libvirtd lyssnar på en icke-standardsocket som den sammansatta strängformen inte kan uttrycka: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Se TrueNAS Scale-avsnittet i [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). |
+| `LIBVIRT_HOST` | För VM:ar | Unraid-värd nådd över SSH för VM-säkerhetskopiering (standard `host.docker.internal`; mallen förifyller en LAN-IP-platshållare). Använd din Unraid-LAN-IP, obligatorisk på ett anpassat `br0.x`-nätverk. Används också för säkerhetskopior av ZFS-datauppsättningar (mallfält **Host SSH: Address**); platshållaren `192.168.x.x` räknas som inte satt. |
+| `LIBVIRT_SSH_PORT` | Nej | Värdens SSH-port för VM-säkerhetskopiering (standard `22`). Mallfält **Host SSH: Port**, även för ZFS-datauppsättningar. |
+| `LIBVIRT_SSH_USER` | Nej | SSH-användare på värden för VM-säkerhetskopiering (standard `root`). Mallfält **Host SSH: User**, även för ZFS-datauppsättningar. |
+| `LIBVIRT_URI` | Nej | Fullständig anslutnings-URI för libvirt, används **ordagrant** i stället för att bygga en från de tre `LIBVIRT_*`-variablerna ovan (som då ignoreras för anslutningssträngen). Inte satt som standard. Behövs på TrueNAS Scale, vars libvirtd lyssnar på en icke-standardsocket som den sammansatta strängformen inte kan uttrycka: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Se TrueNAS Scale-avsnittet i [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Är det en `qemu+ssh://`-URI hämtas var och en av `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` och `LIBVIRT_SSH_PORT` som inte är satt från den, även för BombVaults egna SSH-kommandon (NVRAM-överföring, ZFS-datauppsättningar). |
 | `PORT` | Nej | HTTP-port (standard `3000`; används endast med `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | Nej | HTTPS-port (standard `3443`; mallen publicerar den 1:1, så WebUI svarar på `https://<ip>:3443`). |
 | `HTTP_ONLY` | Nej | Sätt `true` för att inaktivera den självsignerade HTTPS-lyssnaren och servera enbart vanlig HTTP (för användning bakom en TLS-terminerande reverse proxy). |
@@ -26,6 +26,8 @@ Den här sidan täcker containerns miljövariabler, monteringarna som mallen til
 ## Monteringar
 
 Montera Docker-socketen, flashen (`/boot`) och **Host Data**-roten (`/mnt`) som visas i CA-mallen. Både säkerhetskopieringens *källor* och *mål* ligger under Host Data, och den monteras **slave** så att en fjärresurs som monteras efter att containern startat (till exempel under `/mnt/remotes`) blir synlig utan en omstart.
+
+Säkerhetskopior av ZFS-datauppsättningar behöver också det här läget: värden monterar en uppsättnings ögonblicksbild först efter att containern har startat. Se [ZFS-datauppsättningar](zfs-datasets.md).
 
 Säkerhetskopieringens repository-sökvägar har standardvärdet `/mnt/user/bombvault/{container,vms,flash,config,files}`, skapade vid den första säkerhetskopieringen. Ändra platsen när som helst i **Inställningar, Säkerhetskopiesökvägar**.
 

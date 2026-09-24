@@ -61,6 +61,14 @@ Ein Import stoppt den Container, schiebt seinen Datenordner zur Seite und lässt
 
 Von Hand zurücklegen: Container stoppen, den aktuellen Datenordner aus dem Weg umbenennen, den aufbewahrten Ordner auf den ursprünglichen Namen zurück umbenennen und den Container starten. Auf Unraid erledigt das der Dateimanager im Tab Shares.
 
+## Ein ZFS-Dataset-Backup schlug fehl oder hat ein Dataset übersprungen {#zfs-datasets}
+
+Jedes Problem trägt einen Grundcode in eckigen Klammern, und die Seite [ZFS-Datasets](zfs-datasets.md#reason-codes) listet alle mit der Abhilfe. Die drei häufigsten:
+
+- **`snapshot-loop`**: Der Snapshot kam nicht bei BombVault an, weil Host Data neue Einhängungen nicht weiterreicht. Bearbeite den Container, setze den Access Mode von Host Data auf Read/Write - Slave und starte BombVault neu.
+- **`key-not-loaded`**: Ein verschlüsseltes Dataset, dessen Schlüssel nicht geladen ist, wird übersprungen. Lade den Schlüssel mit `zfs load-key` und hänge das Dataset ein; das nächste Backup nimmt es mit.
+- **`ssh-auth`**: Der Server hat BombVaults Schlüssel abgelehnt. Die Verbindungskarte auf der ZFS-Seite zeigt den Befehl, der ihn freischaltet; führe ihn einmal auf dem Server aus.
+
 ## Der Container startet ständig neu oder wirkt ungesund
 
 BombVault meldet gesund/ungesund aus seinem eigenen `/api/health`. Ein Auto-Heal-Werkzeug (wie Autoheal) kann ihn automatisch neu starten, falls sich die Engine je verklemmt. Prüfe das Container-Log und den `/spike`-Bericht auf die zugrunde liegende Ursache.

@@ -656,7 +656,7 @@ const tr: Partial<Translations> = {
   "vm.ssh.testFail": "Bağlantı başarısız",
   "vm.ssh.setupTitle": "Kurulum (tek seferlik)",
   "vm.ssh.step1": "Bu anahtarı yetkilendirmek için aşağıdaki komutu kopyalayıp Unraid terminalinde çalıştırın (yeniden başlatmalarda kalıcıdır).",
-  "vm.ssh.step2": "Konteynerin “VM Backup: Host” değişkenini Unraid sunucunuzun LAN IP'sine ayarlayın (örn. 192.168.x.x); basit köprü ağında host.docker.internal de çalışır.",
+  "vm.ssh.step2": "Konteynerin “Host SSH: Address” değişkenini Unraid sunucunuzun LAN IP'sine ayarlayın (örn. 192.168.x.x); basit köprü ağında host.docker.internal de çalışır.",
   "vm.ssh.step3": "Bağlantıyı test et'e tıklayın. Yeşil olduğunda Etki Alanları altında VM'leri etkinleştirin.",
   "vm.ssh.copyCmd": "Komutu kopyala",
   "vm.ssh.guide": "Tam kurulum ve ağ kılavuzu",

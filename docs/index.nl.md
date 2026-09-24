@@ -20,6 +20,7 @@ Aangedreven door [restic](https://restic.net), zodat elke back-up gededupliceerd
 | **Unraid-flash** | De hele USB-flash (`/boot`): OS, licentie, array-configuratie, shares, netwerk- en plugin-configuratie. |
 | **App-configuratie** | BombVaults eigen `/config`: de instellingendatabase, off-site inloggegevens en het libvirt SSH-sleutelpaar. |
 | **Bestanden en mappen** | Benoemde **bestandssets**, elke map op de server, elk met optionele exclude-patronen per set. |
+| **ZFS-datasets** | Een dataset met alle datasets eronder, gelezen uit één ZFS-snapshot en opgeslagen als een map. Zie [ZFS-datasets](zfs-datasets.md). |
 
 ## Herstel is de ster
 

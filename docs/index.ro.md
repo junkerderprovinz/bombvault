@@ -20,6 +20,7 @@ Bazat pe [restic](https://restic.net), așa că fiecare backup este deduplicat, 
 | **Flash Unraid** | Întregul flash USB (`/boot`): sistemul de operare, licența, configurația array-ului, partajările, rețeaua și configurația plugin-urilor. |
 | **Configurația aplicației** | Propriul `/config` al BombVault: baza sa de date de setări, credențialele off-site și perechea de chei SSH pentru libvirt. |
 | **Fișiere și foldere** | **Seturi de fișiere** denumite, orice folder de pe server, fiecare cu tipare de excludere opționale per set. |
+| **Seturi de date ZFS** | Un set de date cu toate seturile de sub el, citit dintr-un instantaneu ZFS și salvat ca un folder. Vezi [Seturi de date ZFS](zfs-datasets.md). |
 
 ## Restaurarea este vedeta
 

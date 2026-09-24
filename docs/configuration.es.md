@@ -7,10 +7,10 @@ Esta página cubre las variables de entorno del contenedor, los montajes que pro
 | Variable | Requerida | Descripción |
 |---|---|---|
 | `APP_KEY` | **Sí** | Secreto hexadecimal de 32 bytes (64 caracteres hex) usado para derivar la contraseña del repo restic. Genera con `openssl rand -hex 32`. Mantenlo a salvo: perderlo hace que las copias cifradas queden irrecuperables. |
-| `LIBVIRT_HOST` | Para VMs | Host de Unraid alcanzado por SSH para la copia de VMs (por defecto `host.docker.internal`; la plantilla rellena de antemano un marcador de IP LAN). Usa la IP LAN de tu Unraid, requerida en una red `br0.x` personalizada. |
-| `LIBVIRT_SSH_PORT` | No | Puerto SSH del host para la copia de VMs (por defecto `22`). |
-| `LIBVIRT_SSH_USER` | No | Usuario SSH en el host para la copia de VMs (por defecto `root`). |
-| `LIBVIRT_URI` | No | URI de conexión libvirt completa, usada **literalmente** en lugar de construirla a partir de las tres variables `LIBVIRT_*` anteriores (que en ese caso se ignoran para la cadena de conexión). Por defecto, sin definir. Necesaria en TrueNAS Scale, cuyo libvirtd escucha en un socket no estándar que la forma construida no puede expresar: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Consulta la sección de TrueNAS Scale en [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). |
+| `LIBVIRT_HOST` | Para VMs | Host de Unraid alcanzado por SSH para la copia de VMs (por defecto `host.docker.internal`; la plantilla rellena de antemano un marcador de IP LAN). Usa la IP LAN de tu Unraid, requerida en una red `br0.x` personalizada. También lo usan las copias de conjuntos de datos ZFS (campo de plantilla **Host SSH: Address**); el marcador `192.168.x.x` cuenta como no definido. |
+| `LIBVIRT_SSH_PORT` | No | Puerto SSH del host para la copia de VMs (por defecto `22`). Campo de plantilla **Host SSH: Port**, también para conjuntos de datos ZFS. |
+| `LIBVIRT_SSH_USER` | No | Usuario SSH en el host para la copia de VMs (por defecto `root`). Campo de plantilla **Host SSH: User**, también para conjuntos de datos ZFS. |
+| `LIBVIRT_URI` | No | URI de conexión libvirt completa, usada **literalmente** en lugar de construirla a partir de las tres variables `LIBVIRT_*` anteriores (que en ese caso se ignoran para la cadena de conexión). Por defecto, sin definir. Necesaria en TrueNAS Scale, cuyo libvirtd escucha en un socket no estándar que la forma construida no puede expresar: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Consulta la sección de TrueNAS Scale en [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Si es una URI `qemu+ssh://`, cada una de `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` y `LIBVIRT_SSH_PORT` que no esté definida se toma de ella, también para los propios comandos SSH de BombVault (transferencia de NVRAM, conjuntos de datos ZFS). |
 | `PORT` | No | Puerto HTTP (por defecto `3000`; solo se usa con `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | No | Puerto HTTPS (por defecto `3443`; la plantilla lo publica 1:1, de modo que la WebUI responde en `https://<ip>:3443`). |
 | `HTTP_ONLY` | No | Establece `true` para deshabilitar el listener HTTPS autofirmado y servir solo HTTP en texto plano (para uso detrás de un proxy inverso que termina TLS). |
@@ -26,6 +26,8 @@ Esta página cubre las variables de entorno del contenedor, los montajes que pro
 ## Montajes
 
 Monta el socket de Docker, el flash (`/boot`) y la raíz de **Host Data** (`/mnt`) como se muestra en la plantilla de CA. Tanto los *orígenes* como los *destinos* de las copias viven bajo Host Data, y se monta como **slave** para que un recurso compartido remoto que se monte después de que arranque el contenedor (por ejemplo bajo `/mnt/remotes`) se vuelva visible sin reiniciar.
+
+Las copias de conjuntos de datos ZFS también necesitan este modo: el host monta la instantánea de un conjunto solo después de que el contenedor haya arrancado. Consulta [Conjuntos de datos ZFS](zfs-datasets.md).
 
 Las rutas de repositorio de copia son por defecto `/mnt/user/bombvault/{container,vms,flash,config,files}`, creadas en la primera copia. Cambia la ubicación en cualquier momento en **Ajustes, Rutas de copia**.
 

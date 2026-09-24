@@ -1450,7 +1450,7 @@ const is: Partial<Translations> = {
   "vm.ssh.testFail": "Tenging mistókst",
   "vm.ssh.setupTitle": "Setja upp (einu sinni)",
   "vm.ssh.step1": "Afritaðu skipunina hér að neðan og keyrðu hana í Unraid-flugstöðinni til að heimila þennan lykil (lifir af endurræsingar).",
-  "vm.ssh.step2": "Stilltu breytu gámsins „VM Backup: Host“ á staðarnets-IP-tölu Unraid þíns (t.d. 192.168.x.x); með einföldu bridge-netkerfi virkar host.docker.internal líka.",
+  "vm.ssh.step2": "Stilltu breytu gámsins „Host SSH: Address“ á staðarnets-IP-tölu Unraid þíns (t.d. 192.168.x.x); með einföldu bridge-netkerfi virkar host.docker.internal líka.",
   "vm.ssh.step3": "Smelltu á Prófa tengingu. Þegar það er grænt, virkjaðu sýndarvélar undir Svæðum.",
   "vm.ssh.copyCmd": "Afrita skipun",
   "vm.ssh.guide": "Fullkominn uppsetningar- og netleiðbeiningar",

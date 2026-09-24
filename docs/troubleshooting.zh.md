@@ -61,6 +61,14 @@ BombVault 开箱即用地在端口 `3443` 上提供 HTTPS（自签名证书）�
 
 手动放回的做法：停止容器，把当前的数据目录改名挪开，把保留的目录改回原名，然后启动容器。在 Unraid 上，Shares 标签页的文件管理器就能做到。
 
+## ZFS 数据集备份失败或跳过了某个数据集 {#zfs-datasets}
+
+每个问题都带有方括号中的原因代码，[ZFS 数据集](zfs-datasets.md#reason-codes)页面列出了全部代码及解决办法。最常见的三个：
+
+- **`snapshot-loop`**：Host Data 不传递新的挂载，所以快照没有到达 BombVault。编辑容器，把 Host Data 的 Access Mode 设为 Read/Write - Slave，然后重启 BombVault。
+- **`key-not-loaded`**：密钥未加载的加密数据集会被跳过。用 `zfs load-key` 加载密钥并挂载数据集，下次备份就会包含它。
+- **`ssh-auth`**：服务器拒绝了 BombVault 的密钥。ZFS 页面上的连接卡片显示授权该密钥的命令，在服务器上运行一次即可。
+
 ## 容器不断重启或看起来不健康
 
 BombVault 从其自身的 `/api/health` 报告健康/不健康。如果引擎卡死，一个自愈工具（例如 Autoheal）可以自动重启它。检查容器日志和 `/spike` 报告以找出根本原因。

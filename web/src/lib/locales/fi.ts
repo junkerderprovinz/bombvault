@@ -656,7 +656,7 @@ const fi: Partial<Translations> = {
   "vm.ssh.testFail": "Yhteys epäonnistui",
   "vm.ssh.setupTitle": "Määritä (kertaluonteinen)",
   "vm.ssh.step1": "Kopioi alla oleva komento ja suorita se Unraid-terminaalissa valtuuttaaksesi tämän avaimen (se säilyy uudelleenkäynnistysten yli).",
-  "vm.ssh.step2": "Aseta kontin „VM Backup: Host” -muuttuja Unraid-palvelimesi LAN-IP-osoitteeseen (esim. 192.168.x.x); yksinkertaisessa siltaverkossa myös host.docker.internal toimii.",
+  "vm.ssh.step2": "Aseta kontin „Host SSH: Address” -muuttuja Unraid-palvelimesi LAN-IP-osoitteeseen (esim. 192.168.x.x); yksinkertaisessa siltaverkossa myös host.docker.internal toimii.",
   "vm.ssh.step3": "Napsauta Testaa yhteys. Kun se on vihreä, ota VM:t käyttöön kohdassa Toimialueet.",
   "vm.ssh.copyCmd": "Kopioi komento",
   "vm.ssh.guide": "Täydellinen asennus- ja verkko-opas",

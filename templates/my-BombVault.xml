@@ -12,9 +12,9 @@
   <ReadMe>https://github.com/junkerderprovinz/bombvault/blob/main/README.md</ReadMe>
   <Overview>The best and only backup tool you'll ever need for Unraid.
 
-One-click backup and full disaster recovery for your Docker containers, VMs, the flash USB and any folders you point it at, powered by restic.
+One-click backup and full disaster recovery for your Docker containers, VMs, the flash USB, ZFS datasets and any folders you point it at, powered by restic.
 
-The restore is the star: a backed-up container or VM reappears in the Docker or VM tab exactly as before, with no reinstall and no reconfiguration. Incremental, deduplicated and always encrypted, with off-site repos (including immutable, ransomware-resistant append-only copies with tamper verification), retention, file-level restore, restore from another BombVault server, live restore progress and cancel, integrity checks and off-site DR drills, scheduling and pre/post-backup hooks, all configured in the WebUI. A single "Backup Everything" pass covers containers, VMs, flash, folders and BombVault's own config in one run, so one ping afterwards tells you the whole server is protected.
+The restore is the star: a backed-up container or VM reappears in the Docker or VM tab exactly as before, with no reinstall and no reconfiguration. Incremental, deduplicated and always encrypted, with off-site repos (including immutable, ransomware-resistant append-only copies with tamper verification), retention, file-level restore, restore from another BombVault server, live restore progress and cancel, integrity checks and off-site DR drills, scheduling and pre/post-backup hooks, all configured in the WebUI. A single "Backup Everything" pass covers containers, VMs, flash, folders, ZFS datasets and BombVault's own config in one run, so one ping afterwards tells you the whole server is protected.
 
 Full documentation: https://junkerderprovinz.github.io/bombvault/</Overview>
   <Category>Backup:</Category>
@@ -80,7 +80,7 @@ Full documentation: https://junkerderprovinz.github.io/bombvault/</Overview>
     Target="/host/user"
     Default="/mnt"
     Mode="rw,slave"
-    Description="Your Unraid storage root /mnt, which covers the user share and the cache and pool mounts, so any container's appdata is reachable wherever it lives. Backup sources and destinations both live here; pick the exact subpaths in the WebUI under Settings. Read for backup, written on restore. Read/Write - Slave, so a share or disk that mounts after the container starts (e.g. /mnt/remotes at boot) becomes visible without restarting BombVault."
+    Description="Your Unraid storage root /mnt, which covers the user share and the cache and pool mounts, so any container's appdata is reachable wherever it lives. Backup sources and destinations both live here; pick the exact subpaths in the WebUI under Settings. Read for backup, written on restore. Read/Write - Slave, so a share or disk that mounts after the container starts (e.g. /mnt/remotes at boot) becomes visible without restarting BombVault. Keep the Access Mode at Read/Write - Slave: ZFS dataset backups read snapshots that the host mounts after BombVault starts."
     Type="Path"
     Display="always"
     Required="true"
@@ -136,31 +136,31 @@ Full documentation: https://junkerderprovinz.github.io/bombvault/</Overview>
     Required="false"
     Mask="false"></Config>
   <Config
-    Name="VM Backup: Host"
+    Name="Host SSH: Address"
     Target="LIBVIRT_HOST"
     Default="192.168.x.x"
     Mode=""
-    Description="VM backup only. Set this to your Unraid host's LAN IP (the IP you open the web UI on, e.g. 192.168.x.x) — replace the placeholder. On simple bridge networking you may instead use host.docker.internal. Leave the placeholder if you don't use VM backup."
+    Description="Used by VM backups and ZFS dataset backups to run commands on this server over SSH. Leave the placeholder to use the server itself through host.docker.internal. On a custom network (br0), set this server's LAN IP instead."
     Type="Variable"
     Display="always"
     Required="false"
     Mask="false">192.168.x.x</Config>
   <Config
-    Name="VM Backup: SSH Port"
+    Name="Host SSH: Port"
     Target="LIBVIRT_SSH_PORT"
     Default="22"
     Mode=""
-    Description="VM backup only. Unraid's SSH port. Change only if you changed it from 22."
+    Description="SSH port of this server, usually 22."
     Type="Variable"
     Display="always"
     Required="false"
     Mask="false">22</Config>
   <Config
-    Name="VM Backup: SSH User"
+    Name="Host SSH: User"
     Target="LIBVIRT_SSH_USER"
     Default="root"
     Mode=""
-    Description="VM backup only. SSH user on the host. Leave as root."
+    Description="SSH user, usually root."
     Type="Variable"
     Display="always"
     Required="false"

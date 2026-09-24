@@ -1450,7 +1450,7 @@ const hi: Partial<Translations> = {
   "vm.ssh.testFail": "कनेक्शन विफल हुआ",
   "vm.ssh.setupTitle": "सेट अप करें (एक बार)",
   "vm.ssh.step1": "नीचे दिया कमांड कॉपी करें और इस कुंजी को अधिकृत करने के लिए Unraid टर्मिनल में चलाएँ (यह रीबूट के बाद भी बना रहता है)।",
-  "vm.ssh.step2": "कंटेनर के \"VM Backup: Host\" वैरिएबल को अपने Unraid LAN IP पर सेट करें (जैसे 192.168.x.x); सरल ब्रिज नेटवर्किंग में host.docker.internal भी काम करता है।",
+  "vm.ssh.step2": "कंटेनर के \"Host SSH: Address\" वैरिएबल को अपने Unraid LAN IP पर सेट करें (जैसे 192.168.x.x); सरल ब्रिज नेटवर्किंग में host.docker.internal भी काम करता है।",
   "vm.ssh.step3": "Test connection पर क्लिक करें। हरा होने पर, Domains के अंतर्गत VM सक्षम करें।",
   "vm.ssh.copyCmd": "कमांड कॉपी करें",
   "vm.ssh.guide": "पूरी सेटअप और नेटवर्किंग गाइड",
