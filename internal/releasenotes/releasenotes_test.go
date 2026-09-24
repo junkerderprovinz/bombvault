@@ -63,3 +63,21 @@ func TestNotesInSyncWithReleaseNotes(t *testing.T) {
 		}
 	}
 }
+
+// A note removed from .github/release-notes but still embedded would show as
+// "What's new" for a version that was never released.
+func TestEveryEmbeddedNoteHasASource(t *testing.T) {
+	srcDir := filepath.Join("..", "..", ".github", "release-notes")
+	if _, err := os.Stat(srcDir); err != nil {
+		t.Skipf("release-notes source dir not available (%v), skipping", err)
+	}
+	embedded, err := notesFS.ReadDir("notes")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range embedded {
+		if _, err := os.Stat(filepath.Join(srcDir, e.Name())); err != nil {
+			t.Errorf("notes/%s is embedded but .github/release-notes/%s does not exist; delete the embedded copy", e.Name(), e.Name())
+		}
+	}
+}
