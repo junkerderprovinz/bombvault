@@ -272,6 +272,43 @@ func TestATakeoverKeepsTheRowOfANameWithACopyRule(t *testing.T) {
 	}
 }
 
+func TestATakeoverOntoARowWithOnlyACopyRuleAnswersWithItsCode(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("nginx", "")
+	f.container("web", "")
+	f.rule("containers", "container:web", store.SkipAll)
+	f.dock.installed = map[string]bool{"web": true}
+
+	res := f.do(http.MethodPost, "/api/containers/web/takeover", map[string]any{"from": "nginx"})
+	if res["ok"] != false || res["code"] != "copy-rule-taken" {
+		t.Fatalf("takeover = %v, want the copy-rule-taken refusal", res)
+	}
+	if err := f.st.SetInclude("web", true); err != nil {
+		t.Fatal(err)
+	}
+	res = f.do(http.MethodPost, "/api/containers/web/takeover", map[string]any{"from": "nginx"})
+	if res["ok"] != false || res["code"] != nil || !strings.Contains(res["error"].(string), "scheduled, copy rule") {
+		t.Fatalf("takeover = %v, want a refusal that names both settings", res)
+	}
+}
+
+func TestAVMTakeoverOntoARowWithOnlyACopyRuleIsACopyRuleRefusal(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.vm("win11", "")
+	f.rule("vms", "vm:win11", store.SkipAll)
+
+	if err := f.svc.removeEmptyVMRow(context.Background(), "win11"); !errors.Is(err, store.ErrCopyRuleTaken) {
+		t.Fatalf("err = %v, want ErrCopyRuleTaken", err)
+	}
+	if err := f.st.SetVMInclude("win11", true); err != nil {
+		t.Fatal(err)
+	}
+	err := f.svc.removeEmptyVMRow(context.Background(), "win11")
+	if errors.Is(err, store.ErrCopyRuleTaken) || err == nil || !strings.Contains(err.Error(), "scheduled, copy rule") {
+		t.Fatalf("err = %v, want a refusal that names both settings", err)
+	}
+}
+
 func TestAVMTakeoverKeepsTheRowOfANameWithACopyRule(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.vm("win11", "")

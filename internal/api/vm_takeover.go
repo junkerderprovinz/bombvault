@@ -267,6 +267,9 @@ func (s *Service) removeEmptyVMRow(ctx context.Context, name string) error {
 	if err != nil {
 		return err
 	}
+	if onlyACopyRule(labels) {
+		return fmt.Errorf("%q: %w", name, store.ErrCopyRuleTaken)
+	}
 	if len(labels) > 0 {
 		return fmt.Errorf("%q already has its own configured entry (%s); remove it yourself first", name, strings.Join(labels, ", "))
 	}

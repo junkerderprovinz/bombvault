@@ -9766,6 +9766,9 @@ func (s *Service) TakeOverContainer(ctx context.Context, oldName, newName string
 			return fmt.Errorf("check the existing entry of %q: %w", newName, err)
 		}
 		if !empty {
+			if onlyACopyRule(labels) {
+				return fmt.Errorf("%q: %w", newName, store.ErrCopyRuleTaken)
+			}
 			return fmt.Errorf("%q already has its own configured entry (%s), refusing to delete it; unlink or remove it yourself first", newName, strings.Join(labels, ", "))
 		}
 		if err := s.store.DeleteTarget(newName); err != nil {
