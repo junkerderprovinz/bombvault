@@ -109,6 +109,7 @@ type anomalyEngine struct {
 	evalErrors   int
 	ready        bool
 	unmeasured   map[string][]string
+	volumeProbes map[string]int64
 
 	signal     chan struct{}
 	scopeLocks sync.Map
@@ -140,6 +141,7 @@ func newAnomalyEngine(s *Service, now func() time.Time) *anomalyEngine {
 		evaluatedTo:  map[anomalyScope]int64{},
 		results:      map[anomalyScope]anomalyScopeResult{},
 		unmeasured:   map[string][]string{},
+		volumeProbes: map[string]int64{},
 		signal:       make(chan struct{}, 1),
 		debounce:     anomalyDebounce,
 		idleTick:     anomalyIdleTick,
@@ -254,6 +256,28 @@ func (e *anomalyEngine) MarkVolumeDirty() {
 	e.volumeDirty = true
 	e.mu.Unlock()
 	e.wake()
+}
+
+// noteVolumeProbe records that a volume was asked how much room it has.
+func (e *anomalyEngine) noteVolumeProbe(volume string, at int64) {
+	if e == nil {
+		return
+	}
+	e.mu.Lock()
+	e.volumeProbes[volume] = at
+	e.mu.Unlock()
+}
+
+// lastVolumeProbes is when each volume was last asked, as far as this process
+// knows. A probe that failed left no reading behind, so this is what keeps it
+// from being repeated on every backup.
+func (e *anomalyEngine) lastVolumeProbes() map[string]int64 {
+	if e == nil {
+		return map[string]int64{}
+	}
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return maps.Clone(e.volumeProbes)
 }
 
 // noteUnmeasuredVolumes records the repositories of one domain whose backend
@@ -1029,14 +1053,18 @@ func (e *anomalyEngine) pruneDue(now int64) bool {
 	return now-e.lastPrune >= anomalyPruneEvery
 }
 
-// prune drops the closed findings nobody needs any more. It runs whether
-// detection is on or off, so switching it off does not freeze the history.
+// prune drops the closed findings and the free-space readings nobody needs any
+// more. It runs whether detection is on or off, so switching it off does not
+// freeze the history.
 func (e *anomalyEngine) prune(now int64) {
 	e.mu.Lock()
 	e.lastPrune = now
 	e.mu.Unlock()
 	if _, err := e.svc.store.PruneAnomalies(now - anomalyKeepClosedDays*86400); err != nil {
 		log.Printf("anomaly: prune the closed findings: %v", err)
+	}
+	if _, err := e.svc.store.PruneVolumeSamples(now - capacityWindowDays*86400); err != nil {
+		log.Printf("anomaly: prune the free-space readings: %v", err)
 	}
 }
 
