@@ -53,9 +53,14 @@ For each container, BombVault auto-selects which bind mounts and named volumes t
 - Because the gate is opt-in, when unset the whole UI and API (including the off-site setup, tamper-test routes and the recovery kit) are reachable by anyone who can reach the port. Enable the gate once off-site, immutable backups or encryption are in use.
 - Run BombVault only on a trusted, non-exposed network. For remote access put it behind a reverse proxy that adds authentication and TLS. Responses carry baseline security headers (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Behind a reverse proxy every request carries the proxy's address, so without `TRUSTED_PROXY` the login throttle counts every client in one bucket and an attacker's failures lock you out as well. Name the proxy in `TRUSTED_PROXY` to get per-client counting back.
+- A reverse proxy in front of BombVault has to pass the `Authorization` or `X-API-Key` header through to `/mcp` and must not buffer its responses, or assistants cannot connect. See [MCP server](mcp.md#tls).
 - With `HTTP_ONLY=true` the session cookie loses its `Secure` flag (it has to, to work over plain HTTP), so only enable the password behind a TLS-terminating proxy if confidentiality matters.
 - The VM-backup SSH connection trusts the host key on first connect (TOFU) and pins it thereafter. Verify the host's key out-of-band if your container-to-host path is not trusted.
 - Backups are encrypted by restic when encryption is enabled (Settings; on by default), with the key derived from `APP_KEY`.
+
+## MCP server {#mcp-server}
+
+The MCP server needs no environment variable. You switch it on by creating a key under **Settings, System, MCP server**, and it answers at `/mcp` on the same port as the web interface (for example `https://192.168.1.10:3443/mcp`). Without an active key that path answers `404`. Clients, certificates and limits are described on [MCP server](mcp.md).
 
 ## VM backup over SSH
 
