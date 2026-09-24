@@ -1540,7 +1540,7 @@ const th: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (ผ่าน MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (ผ่าน MCP, {key}, เพิกถอนแล้ว)",
   "activityLog.viaMcpUnknownKey": "{line} (ผ่าน MCP)",
-  "activityLog.viaMcpLine": "เริ่มผ่าน MCP ด้วยคีย์ {key}",
+  "activityLog.viaMcpLine": "เริ่มผ่าน MCP ด้วยคีย์ {keys}",
   "activityLog.viaMcpLineUnknownKey": "เริ่มผ่าน MCP",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

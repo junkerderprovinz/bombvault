@@ -1529,7 +1529,7 @@ const ko: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (MCP 경유, {key})",
   "activityLog.viaMcpRevoked": "{line} (MCP 경유, {key}, 해지됨)",
   "activityLog.viaMcpUnknownKey": "{line} (MCP 경유)",
-  "activityLog.viaMcpLine": "MCP를 통해 키 {key}(으)로 시작됨",
+  "activityLog.viaMcpLine": "MCP를 통해 키 {keys}(으)로 시작됨",
   "activityLog.viaMcpLineUnknownKey": "MCP를 통해 시작됨",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

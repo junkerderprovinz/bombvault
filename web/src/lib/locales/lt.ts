@@ -1761,7 +1761,7 @@ const lt: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (per MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (per MCP, {key}, atšauktas)",
   "activityLog.viaMcpUnknownKey": "{line} (per MCP)",
-  "activityLog.viaMcpLine": "Paleista per MCP su raktu {key}",
+  "activityLog.viaMcpLine": "one=Paleista per MCP su raktu {keys}|other=Paleista per MCP su raktais {keys}",
   "activityLog.viaMcpLineUnknownKey": "Paleista per MCP",
 
   // Export / import settings

@@ -1761,7 +1761,7 @@ const is: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (um MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (um MCP, {key}, afturkallaður)",
   "activityLog.viaMcpUnknownKey": "{line} (um MCP)",
-  "activityLog.viaMcpLine": "Ræst um MCP með lyklinum {key}",
+  "activityLog.viaMcpLine": "one=Ræst um MCP með lyklinum {keys}|other=Ræst um MCP með lyklunum {keys}",
   "activityLog.viaMcpLineUnknownKey": "Ræst um MCP",
 
   // Export / import settings

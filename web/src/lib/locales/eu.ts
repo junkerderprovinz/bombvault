@@ -1761,7 +1761,7 @@ const eu: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (MCP bidez, {key})",
   "activityLog.viaMcpRevoked": "{line} (MCP bidez, {key}, baliogabetua)",
   "activityLog.viaMcpUnknownKey": "{line} (MCP bidez)",
-  "activityLog.viaMcpLine": "MCP bidez abiarazia {key} gakoarekin",
+  "activityLog.viaMcpLine": "one=MCP bidez abiarazia {keys} gakoarekin|other=MCP bidez abiarazia {keys} gakoekin",
   "activityLog.viaMcpLineUnknownKey": "MCP bidez abiarazia",
 
   // Export / import settings

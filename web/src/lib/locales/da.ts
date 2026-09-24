@@ -1537,7 +1537,7 @@ const da: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (via MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (via MCP, {key}, tilbagekaldt)",
   "activityLog.viaMcpUnknownKey": "{line} (via MCP)",
-  "activityLog.viaMcpLine": "Startet via MCP med nøglen {key}",
+  "activityLog.viaMcpLine": "one=Startet via MCP med nøglen {keys}|other=Startet via MCP med nøglerne {keys}",
   "activityLog.viaMcpLineUnknownKey": "Startet via MCP",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

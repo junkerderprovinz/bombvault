@@ -1761,7 +1761,7 @@ const sk: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (cez MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (cez MCP, {key}, zrušený)",
   "activityLog.viaMcpUnknownKey": "{line} (cez MCP)",
-  "activityLog.viaMcpLine": "Spustené cez MCP kľúčom {key}",
+  "activityLog.viaMcpLine": "one=Spustené cez MCP kľúčom {keys}|other=Spustené cez MCP kľúčmi {keys}",
   "activityLog.viaMcpLineUnknownKey": "Spustené cez MCP",
 
   // Export / import settings

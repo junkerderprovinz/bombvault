@@ -1532,7 +1532,7 @@ const pl: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (przez MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (przez MCP, {key}, unieważniony)",
   "activityLog.viaMcpUnknownKey": "{line} (przez MCP)",
-  "activityLog.viaMcpLine": "Uruchomiono przez MCP kluczem {key}",
+  "activityLog.viaMcpLine": "one=Uruchomiono przez MCP kluczem {keys}|other=Uruchomiono przez MCP kluczami {keys}",
   "activityLog.viaMcpLineUnknownKey": "Uruchomiono przez MCP",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

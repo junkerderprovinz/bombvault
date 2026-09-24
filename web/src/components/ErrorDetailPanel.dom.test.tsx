@@ -5,7 +5,7 @@
 // container backup. listRuns and ackRuns are mocked.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor, fireEvent } from "@testing-library/react";
-import { I18nProvider, en } from "../lib/i18n";
+import { I18nProvider, countText, en } from "../lib/i18n";
 import type { Run } from "../lib/api";
 
 const listRuns = vi.fn();
@@ -133,7 +133,38 @@ describe("a failure an assistant caused", () => {
 
     await waitFor(() => expect(listRuns).toHaveBeenCalled());
     const panel = screen.getByRole("dialog").textContent ?? "";
-    expect(panel).toContain(en["activityLog.viaMcpLine"].replace("{key}", "office laptop"));
+    expect(panel).toContain(
+      countText(en["activityLog.viaMcpLine"], "en", 1).replace("{keys}", "office laptop")
+    );
+  });
+
+  it("names every key behind the same failure", async () => {
+    renderPanel([
+      run({ id: "m1", startedVia: "mcp", startedViaKey: "k1", startedViaLabel: "office laptop" }),
+      run({ id: "m2", startedVia: "mcp", startedViaKey: "k2", startedViaLabel: "desktop" }),
+    ]);
+
+    await waitFor(() => expect(listRuns).toHaveBeenCalled());
+    const panel = screen.getByRole("dialog").textContent ?? "";
+    expect(panel).toContain(
+      countText(en["activityLog.viaMcpLine"], "en", 2).replace("{keys}", "office laptop, desktop")
+    );
+  });
+
+  it("keeps a failure of the scheduler out of the assistant's group", async () => {
+    renderPanel([
+      run({ id: "s1", startedAt: 1_700_000_000 }),
+      run({ id: "s2", startedAt: 1_700_086_400 }),
+      run({ id: "m1", startedVia: "mcp", startedViaKey: "k1", startedViaLabel: "office laptop" }),
+    ]);
+
+    await waitFor(() => expect(listRuns).toHaveBeenCalled());
+    const line = await screen.findByText(
+      countText(en["activityLog.viaMcpLine"], "en", 1).replace("{keys}", "office laptop")
+    );
+    const group = line.closest("div.py-3");
+    expect(group?.textContent).toContain(en["errorPanel.count"].replace("{count}", "1"));
+    expect(screen.getAllByRole("button", { name: en["errorPanel.resolve"] })).toHaveLength(2);
   });
 
   it("says only that MCP started it when the key is gone", async () => {

@@ -1,7 +1,8 @@
 // ErrorDetailPanel is the modal behind the dashboard's error count. It groups
-// the failed runs by kind and error message, so one fault across many targets
-// reads as one row while a failed database dump never reads as the container's
-// backup, and lets the user acknowledge a group or every failure at once.
+// the failed runs by kind, origin and error message, so one fault across many
+// targets reads as one row while a failed database dump never reads as the
+// container's backup, and lets the user acknowledge a group or every failure
+// at once.
 // After an acknowledge it reloads and calls onChanged so the parent can
 // refresh its count.
 
@@ -36,7 +37,7 @@ const DOMAIN_SELECT_TO_RUN: Record<string, string> = {
 };
 
 interface ErrorGroup {
-  key: string; // kind and trimmed error message, the group identity
+  key: string; // kind, origin and trimmed error message, the group identity
   kind: string; // the run kind every member of the group has
   message: string; // display text, may be empty
   ids: string[]; // the run ids in this group (the acknowledge targets)
@@ -44,8 +45,8 @@ interface ErrorGroup {
   domains: string[]; // unique singular domains present in the group
   latest: number; // newest startedAt across the group (unix seconds)
   count: number; // number of failed runs in the group
-  viaMcp: boolean; // at least one member was started by an assistant
-  mcpLabels: string[]; // the MCP keys behind those members, without the purged ones
+  viaMcp: boolean; // the whole group was started by an assistant
+  mcpLabels: string[]; // the MCP keys behind the members, without the purged ones
 }
 
 export function ErrorDetailPanel({
@@ -127,8 +128,12 @@ export function ErrorDetailPanel({
         const hay = `${message} ${r.target} ${domainLabel(r.domain)}`.toLowerCase();
         if (!hay.includes(text)) continue;
       }
-      // A kind never contains a space, so the pair cannot be read two ways.
-      const key = `${r.kind} ${message}`;
+      // The origin belongs in the identity: merged into the scheduler's
+      // failures, the MCP line below would speak for occurrences no assistant
+      // caused. Neither a kind nor an origin contains a space, so the triple
+      // cannot be read two ways.
+      const origin = r.startedVia === "mcp" ? "mcp" : "self";
+      const key = `${r.kind} ${origin} ${message}`;
       let g = byMsg.get(key);
       if (!g) {
         g = { key, kind: r.kind, message, ids: [], targets: [], domains: [], latest: 0, count: 0, viaMcp: false, mcpLabels: [] };
@@ -286,7 +291,10 @@ export function ErrorDetailPanel({
                     {g.viaMcp && (
                       <span className="wrap-break-word">
                         {g.mcpLabels.length > 0
-                          ? t("activityLog.viaMcpLine").replace("{key}", g.mcpLabels.join(", "))
+                          ? t("activityLog.viaMcpLine", g.mcpLabels.length).replace(
+                              "{keys}",
+                              g.mcpLabels.join(", ")
+                            )
                           : t("activityLog.viaMcpLineUnknownKey")}
                       </span>
                     )}

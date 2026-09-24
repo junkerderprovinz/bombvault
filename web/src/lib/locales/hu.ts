@@ -1540,7 +1540,7 @@ const hu: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (MCP-n keresztül, {key})",
   "activityLog.viaMcpRevoked": "{line} (MCP-n keresztül, {key}, visszavonva)",
   "activityLog.viaMcpUnknownKey": "{line} (MCP-n keresztül)",
-  "activityLog.viaMcpLine": "MCP-n keresztül indítva a(z) {key} kulccsal",
+  "activityLog.viaMcpLine": "one=MCP-n keresztül indítva a(z) {keys} kulccsal|other=MCP-n keresztül indítva a(z) {keys} kulcsokkal",
   "activityLog.viaMcpLineUnknownKey": "MCP-n keresztül indítva",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

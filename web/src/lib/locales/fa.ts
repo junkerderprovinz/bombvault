@@ -1761,7 +1761,7 @@ const fa: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (از طریق MCP، {key})",
   "activityLog.viaMcpRevoked": "{line} (از طریق MCP، {key}، باطل‌شده)",
   "activityLog.viaMcpUnknownKey": "{line} (از طریق MCP)",
-  "activityLog.viaMcpLine": "از طریق MCP با کلید {key} آغاز شد",
+  "activityLog.viaMcpLine": "one=از طریق MCP با کلید {keys} آغاز شد|other=از طریق MCP با کلیدهای {keys} آغاز شد",
   "activityLog.viaMcpLineUnknownKey": "از طریق MCP آغاز شد",
 
   // Export / import settings

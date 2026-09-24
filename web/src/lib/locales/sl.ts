@@ -1745,7 +1745,7 @@ const sl: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (prek MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (prek MCP, {key}, preklican)",
   "activityLog.viaMcpUnknownKey": "{line} (prek MCP)",
-  "activityLog.viaMcpLine": "Zagnano prek MCP s ključem {key}",
+  "activityLog.viaMcpLine": "one=Zagnano prek MCP s ključem {keys}|two=Zagnano prek MCP s ključema {keys}|other=Zagnano prek MCP s ključi {keys}",
   "activityLog.viaMcpLineUnknownKey": "Zagnano prek MCP",
 
   // Export / import settings

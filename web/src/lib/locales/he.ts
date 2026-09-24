@@ -1537,7 +1537,7 @@ const he: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (דרך MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (דרך MCP, {key}, בוטל)",
   "activityLog.viaMcpUnknownKey": "{line} (דרך MCP)",
-  "activityLog.viaMcpLine": "הופעל דרך MCP עם המפתח {key}",
+  "activityLog.viaMcpLine": "one=הופעל דרך MCP עם המפתח {keys}|other=הופעל דרך MCP עם המפתחות {keys}",
   "activityLog.viaMcpLineUnknownKey": "הופעל דרך MCP",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
