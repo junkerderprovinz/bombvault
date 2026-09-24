@@ -1119,6 +1119,7 @@ func TestMCPStartQueries(t *testing.T) {
 		{id: "mcp4", targetID: "a", kind: "dbdump", status: "success", startedAt: 500, finishedAt: 510, via: "mcp", viaKey: "k1"},
 		{id: "mcp5", targetID: "b", kind: "backup", status: "success", startedAt: 600, finishedAt: 610, via: "mcp", viaKey: "k1"},
 		{id: "mcp6", targetID: "c", kind: "backup", status: "running", startedAt: 700, via: "mcp", viaKey: "k1"},
+		{id: "mcp7", targetID: "e", kind: "backup", status: "cancelled", startedAt: 800, finishedAt: 805, via: "mcp", viaKey: "k1"},
 	}
 	for _, row := range rows {
 		insertRunRow(t, db, row)
@@ -1153,11 +1154,12 @@ func TestMCPStartQueries(t *testing.T) {
 		want       int
 		wantOldest int64
 	}{
-		{"a", 0, 2, 200},
-		{"a", 250, 1, 300},
+		{"a", 0, 3, 200},
+		{"a", 250, 2, 300},
 		{"b", 0, 1, 600},
 		{"c", 0, 1, 700},
 		{"d", 0, 0, 0},
+		{"e", 0, 0, 0},
 	}
 	for _, c := range counts {
 		got, oldest, err := r.MCPBackupsSince(c.target, c.since)
