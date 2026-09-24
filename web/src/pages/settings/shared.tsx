@@ -10,6 +10,11 @@ import { useT } from "../../lib/i18n";
 
 export type SaveState = "idle" | "saving" | "saved" | "error";
 
+/** The new-password field on the System tab. The MCP card sends the operator
+ *  there, because a key created while the web interface has no password is
+ *  handed to whoever can reach the page. */
+export const LOGIN_PASSWORD_FIELD = "bv-login-password";
+
 export function Card({
   title,
   hint,

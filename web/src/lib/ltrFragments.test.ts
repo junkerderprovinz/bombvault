@@ -267,6 +267,8 @@ const NOT_A_PATH: Record<string, string> = {
   "dashboard.forecastShrink": "same unit as forecastGrowth",
   "rclone.pathHint": "the example is rclone:<remote>:<bucket>/path. It begins with letters, a strong LTR class that anchors the whole run; only a leading `/` misrenders",
   "recovery.foreignVMDestHint": "the run is <destination>/<vm-name>/ and BOTH placeholder words are translated (sl 'ime-vm', sr 'naziv-vm'), so no literal fragment can match in every locale; the leading character is `<`, not `/`",
+  "mcp.snippetClaudeCodeHint":
+    "/mcp is a command typed inside Claude Code, not a path, and the sentence lives in an InfoBubble tip, which takes a string and not nodes; ar, he and fa carry a left-to-right mark before it",
   "folders.customPlaceholder": "orphaned key, rendered nowhere (see i18n.orphans.test.ts's ratchet)",
   "anomaly.learning": "a fraction, not a path: {n}/{needed} counts the backups the detector has learned from",
 };

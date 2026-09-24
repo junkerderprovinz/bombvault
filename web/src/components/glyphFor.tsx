@@ -63,7 +63,7 @@ const RULES: Rule[] = [
   [/unlock/i, () => <IconUnlock />],
 
   // Creation and editing.
-  [/\.add|addSet|addPreset|addTarget|addTag|credSets\.add|registryAdd|passkeyAdd|passkeyCreate/i, () => <IconAdd />],
+  [/\.add|addSet|addPreset|addTarget|addTag|credSets\.add|registryAdd|passkeyAdd|passkeyCreate|certAddAddress/i, () => <IconAdd />],
   // A list that fetches its next page grows by the same plus as one that gains
   // an entry.
   [/loadMore/i, () => <IconAdd />],
@@ -109,7 +109,9 @@ const RULES: Rule[] = [
   [/signIn|logIn\b/i, () => <IconSignIn />],
   [/logout|signOut/i, () => <IconSignOut />],
   [/twoFactorEnable|totpEnable/i, () => <IconShieldOn />],
-  [/twoFactorDisable|totpDisable/i, () => <IconShieldOff />],
+  // Revoking withdraws what a credential was allowed to do, which is the
+  // shield going down rather than the row being deleted.
+  [/twoFactorDisable|totpDisable|revoke/i, () => <IconShieldOff />],
   [/compare|diff\b/i, () => <IconCompare />],
   [/credential|password|secret|token|key\b/i, () => <IconKey />],
 
@@ -134,7 +136,7 @@ const RULES: Rule[] = [
   // Places and configuration, last because they are the vaguest.
   [/folder|path|directory/i, () => <IconFolder />],
   [/settings|config|setup|wizard|options/i, () => <IconGear />],
-  [/refresh|reload|retry|tryAgain/i, () => <IconRefresh />],
+  [/refresh|reload|retry|tryAgain|rotate/i, () => <IconRefresh />],
 ];
 
 /**
