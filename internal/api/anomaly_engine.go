@@ -82,6 +82,8 @@ type anomalyScopeResult struct {
 	Runs      int
 	NewestAt  int64
 	Selection int64
+	// Owner is the item a dataset series was judged for.
+	Owner string
 }
 
 // anomalyCache is the whole read side, replaced in one go at the end of a pass
@@ -405,6 +407,51 @@ type anomalyPass struct {
 	volumesRead bool
 	growth      map[string]int64
 	growthRead  bool
+
+	owners     map[string]string
+	ownersRead bool
+}
+
+// datasetOwners maps every dataset a ZFS run recorded to the item that backs it
+// up now, once per pass.
+func (e *anomalyEngine) datasetOwners(p *anomalyPass) (map[string]string, error) {
+	if p.ownersRead {
+		return p.owners, nil
+	}
+	owners, err := e.svc.store.ZFSDatasetOwners()
+	if err != nil {
+		return nil, err
+	}
+	p.owners, p.ownersRead = owners, true
+	return owners, nil
+}
+
+// datasetScopes are the datasets of the ZFS items among the scopes, which a
+// pass judges together with their tree: the dataset a run no longer read is
+// the one that has to be looked at.
+func (e *anomalyEngine) datasetScopes(scopes map[anomalyScope]struct{}, p *anomalyPass) []anomalyScope {
+	trees := map[string]bool{}
+	for sc := range scopes {
+		if sc.Kind == anomalyScopeItem && p.items[sc.ID].Domain == zfsDomain {
+			trees[sc.ID] = true
+		}
+	}
+	if len(trees) == 0 {
+		return nil
+	}
+	owners, err := e.datasetOwners(p)
+	if err != nil {
+		log.Printf("anomaly: list the datasets of the ZFS items: %v", err)
+		p.errs++
+		return nil
+	}
+	var out []anomalyScope
+	for dataset, owner := range owners {
+		if trees[owner] {
+			out = append(out, anomalyScope{Kind: anomalyScopeZFSDS, ID: dataset})
+		}
+	}
+	return out
 }
 
 // volumeHistory is one volume's readings and the domains that keep a
@@ -545,6 +592,10 @@ func (e *anomalyEngine) scopesToEvaluate(dirty dirtySets, full bool, p *anomalyP
 		}
 	}
 
+	for _, sc := range e.datasetScopes(want, p) {
+		want[sc] = struct{}{}
+	}
+
 	if len(dirtyDomains) > 0 {
 		keys, err := e.drillKeys(p)
 		if err != nil {
@@ -580,6 +631,8 @@ func (e *anomalyEngine) evaluateScope(ctx context.Context, sc anomalyScope, p *a
 	switch sc.Kind {
 	case anomalyScopeItem, anomalyScopeDump:
 		return e.evaluateSeries(ctx, sc, p)
+	case anomalyScopeZFSDS:
+		return e.evaluateDataset(ctx, sc, p)
 	case anomalyScopeDomain:
 		return e.evaluateDrillSeries(ctx, sc, p)
 	case anomalyScopeVolume:
@@ -712,8 +765,11 @@ func (e *anomalyEngine) evaluateSeries(ctx context.Context, sc anomalyScope, p *
 		return nil
 	}
 	kind, series := "backup", seriesItem
-	if sc.Kind == anomalyScopeDump {
+	switch {
+	case sc.Kind == anomalyScopeDump:
 		kind, series = "dbdump", seriesDump
+	case ref.Domain == zfsDomain:
+		series = seriesTree
 	}
 	from := e.evaluatedFrom(sc, p.now)
 
@@ -758,6 +814,74 @@ func (e *anomalyEngine) evaluateSeries(ctx context.Context, sc anomalyScope, p *
 	e.recordScope(sc, anomalyScopeResult{
 		Learning: res.Learning, Typical: res.Typical, Runs: len(rows),
 		NewestAt: newestEligibleAt(rows), Selection: selectionRebaseAt(rows),
+	})
+	return ctx.Err()
+}
+
+// evaluateDataset judges one dataset of a ZFS tree against its own history,
+// which is keyed by its name and so survives the tree moving to another item.
+// It follows the preferences of the item that backs it up now.
+func (e *anomalyEngine) evaluateDataset(ctx context.Context, sc anomalyScope, p *anomalyPass) error {
+	owners, err := e.datasetOwners(p)
+	if err != nil {
+		return err
+	}
+	ref, known := p.items[owners[sc.ID]]
+	if !known {
+		return nil
+	}
+	from := e.evaluatedFrom(sc, p.now)
+
+	members, err := e.svc.store.DatasetSeries(sc.ID, p.now, anomalyNewDataMaxRows)
+	if err != nil {
+		return err
+	}
+	treeRuns, err := e.svc.store.ItemSeries(ref.TargetID, "backup", p.now, anomalySeriesRuns)
+	if err != nil {
+		return err
+	}
+	state, err := e.svc.store.AnomalyScopeState(sc.Kind, sc.ID)
+	if err != nil {
+		return err
+	}
+	expectations, err := e.svc.store.ListAnomalyExpectations(sc.Kind, sc.ID)
+	if err != nil {
+		return err
+	}
+
+	all := datasetRuns(members, treeRuns)
+	rows := all[:min(len(all), anomalySeriesRuns)]
+	// The new-data window takes what restic actually stored. The zero of a
+	// dataset the run could not read added nothing and is no sample there.
+	windowFrom := min(from-anomalyNewDataDays*86400, p.now-anomalySeriesRuns*86400)
+	var window []store.SeriesRun
+	for _, run := range all {
+		if run.Status == "success" && run.StartedAt >= windowFrom &&
+			(run.Outcome == outcomeBackedUp || run.Outcome == zfsOutcomeEmpty) {
+			window = append(window, run)
+		}
+	}
+
+	sens := resolveSensitivity(p.prefs[ref.TargetID].Sensitivity, p.settings.AnomalySensitivity)
+	if e.beforeWrite != nil {
+		e.beforeWrite(sc)
+	}
+	res := evaluateItem(itemInput{
+		Kind: seriesDataset, Domain: ref.Domain, Series: rows, NewData: window,
+		Open: openByMetric(state.Open), Expectations: byFamily(expectations),
+		Sens: sens, EvaluateFrom: from,
+	})
+	changes := applyFindings(scopeRef{
+		Kind: sc.Kind, ID: sc.ID, TargetID: ref.TargetID, Domain: ref.Domain,
+		Sensitivity: string(sens),
+	}, res.Findings, res.Absent, state, p.now)
+
+	if err := e.apply(sc, changes); err != nil {
+		return err
+	}
+	e.recordScope(sc, anomalyScopeResult{
+		Learning: res.Learning, Typical: res.Typical, Runs: len(rows),
+		NewestAt: newestEligibleAt(rows), Selection: selectionRebaseAt(rows), Owner: ref.TargetID,
 	})
 	return ctx.Err()
 }
@@ -963,8 +1087,13 @@ func (s *Service) heldTagsOf(row store.Anomaly, items map[string]anomalyItemRef)
 	if !known {
 		return nil
 	}
-	if row.ScopeKind == anomalyScopeDump {
+	switch row.ScopeKind {
+	case anomalyScopeDump:
 		return s.containerDumpIdentity(ref.Name).listTags()
+	case anomalyScopeZFSDS:
+		// Every dataset of a tree ages under its own tag, so its siblings keep
+		// pruning.
+		return []string{"zfs:" + row.ScopeID}
 	}
 	if row.ScopeKind != anomalyScopeItem {
 		return nil
@@ -1226,6 +1355,15 @@ func (e *anomalyEngine) itemView(ref anomalyItemRef, prefs store.ItemPrefs, sett
 		item.Dump = &series
 		item.RetentionHeld = item.RetentionHeld || series.RetentionHeld
 	}
+	if ref.Domain == zfsDomain {
+		item.Datasets = datasetViews(ref.TargetID, results, open, held)
+		for _, ds := range item.Datasets {
+			item.RetentionHeld = item.RetentionHeld || ds.RetentionHeld
+		}
+		if ref.Scheduled {
+			item.Learning = treeLearning(ref.TargetID, results)
+		}
+	}
 
 	expectations, err := e.svc.store.ListAnomalyExpectationsForTarget(ref.TargetID)
 	if err != nil {
@@ -1243,6 +1381,57 @@ func (e *anomalyEngine) itemView(ref anomalyItemRef, prefs store.ItemPrefs, sett
 		item.Expectations = append(item.Expectations, view)
 	}
 	return item, true, nil
+}
+
+// datasetViews are the dataset rows under a ZFS item on the Items tab, by name.
+func datasetViews(itemID string, results map[anomalyScope]anomalyScopeResult, open []store.Anomaly,
+	held heldScopes) []AnomalySeriesInfo {
+	out := []AnomalySeriesInfo{}
+	for _, sc := range treeDatasets(itemID, results) {
+		res := results[sc]
+		info := AnomalySeriesInfo{
+			Part: sc.ID,
+			Learning: AnomalySeriesLearning{
+				Samples: min(res.Learning.NewData, res.Learning.Source, res.Learning.Duration),
+				Needed:  anomalyMinSamples,
+			},
+			Typical: AnomalySeriesTypical{SourceBytes: res.Typical.SourceBytes, ResticMS: res.Typical.ResticMS},
+		}
+		info.Open, info.RetentionHeld = scopeCounts(open, sc), held[sc]
+		out = append(out, info)
+	}
+	return out
+}
+
+// treeLearning is how far a ZFS item has come, which is as far as the dataset
+// that has learned least: the item's own runs are judged only on whether they
+// finish.
+func treeLearning(itemID string, results map[anomalyScope]anomalyScopeResult) AnomalyLearning {
+	scopes := treeDatasets(itemID, results)
+	out := AnomalyLearning{Needed: anomalyMinSamples}
+	if len(scopes) == 0 {
+		return out
+	}
+	out.NewData, out.Source, out.Duration = anomalyMinSamples, anomalyMinSamples, anomalyMinSamples
+	out.NoData = true
+	for _, sc := range scopes {
+		l := results[sc].Learning
+		out.NewData, out.Source, out.Duration = min(out.NewData, l.NewData), min(out.Source, l.Source), min(out.Duration, l.Duration)
+		out.NoData = out.NoData && l.NoData
+	}
+	out.Samples = min(out.NewData, out.Source, out.Duration)
+	return out
+}
+
+func treeDatasets(itemID string, results map[anomalyScope]anomalyScopeResult) []anomalyScope {
+	var out []anomalyScope
+	for sc, res := range results {
+		if sc.Kind == anomalyScopeZFSDS && res.Owner == itemID {
+			out = append(out, sc)
+		}
+	}
+	slices.SortFunc(out, func(a, b anomalyScope) int { return strings.Compare(a.ID, b.ID) })
+	return out
 }
 
 // readAnomalyItems is the domain map of one pass. It reads the item tables
@@ -1278,6 +1467,16 @@ func (s *Service) readAnomalyItems(settings store.Settings) (map[string]anomalyI
 		out[fs.ID] = anomalyItemRef{
 			TargetID: fs.ID, Domain: "files", Name: fs.Name,
 			Scheduled: settings.FilesEnabled && fs.Enabled,
+		}
+	}
+	trees, err := s.store.ListZFSDatasets()
+	if err != nil {
+		return nil, err
+	}
+	for _, d := range trees {
+		out[d.ID] = anomalyItemRef{
+			TargetID: d.ID, Domain: zfsDomain, Name: d.Dataset,
+			Scheduled: settings.ZFSEnabled && d.Enabled && d.ScheduleCadence != "off",
 		}
 	}
 	out[store.FlashTargetID] = anomalyItemRef{

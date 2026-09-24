@@ -1,6 +1,7 @@
 package api
 
 import (
+	"cmp"
 	"maps"
 	"math"
 	"slices"
@@ -19,13 +20,18 @@ const (
 	sensPermissive Sensitivity = "permissive"
 )
 
-// seriesKind is which history a scope reads: an item's own backups or the
-// database dumps of a container.
+// seriesKind is which history a scope reads: an item's own backups, the
+// database dumps of a container, the runs of a ZFS tree or one dataset of it.
+// A tree's total hides a child that was emptied, so its size, new data and
+// duration are judged per dataset, and whether a run finishes stays the tree's
+// because a run succeeds or fails as a whole.
 type seriesKind string
 
 const (
-	seriesItem seriesKind = "item"
-	seriesDump seriesKind = "dump"
+	seriesItem    seriesKind = "item"
+	seriesDump    seriesKind = "dump"
+	seriesTree    seriesKind = "tree"
+	seriesDataset seriesKind = "zfsds"
 )
 
 const (
@@ -257,7 +263,7 @@ type absence struct {
 func detectNewData(in itemInput, p sensParams) ([]finding, int) {
 	// A dump is a full logical export every time, so there is no such thing as
 	// an unusual amount of new data in one.
-	if in.Kind == seriesDump {
+	if in.Kind == seriesDump || in.Kind == seriesTree {
 		return nil, 0
 	}
 	rows := oldestFirst(in.NewData)
@@ -465,6 +471,9 @@ func oldestFirst(runs []store.SeriesRun) []store.SeriesRun {
 // rules on the file count. The number that comes back is how much history the
 // size rules could learn from.
 func detectSource(in itemInput, p sensParams) ([]finding, []absence, int) {
+	if in.Kind == seriesTree {
+		return nil, nil, 0
+	}
 	rows := oldestFirst(eligibleRuns(in.Series))
 	rebase := selectionRebaseAt(in.Series)
 
@@ -665,6 +674,9 @@ func (r sizeRule) spread(xs []float64, level float64) float64 {
 // out container stops, hooks and BombVault's own lock waits. A faster run is
 // never reported, and a live stall is the stall guard's business.
 func detectDuration(in itemInput, p sensParams) ([]finding, []absence, int) {
+	if in.Kind == seriesTree {
+		return nil, nil, 0
+	}
 	metric, family := metricDurationSlower, familyDuration
 	if in.Kind == seriesDump {
 		metric, family = metricDumpDurationSlower, familyDumpDuration
@@ -706,6 +718,9 @@ func slowerRun(current measurement, samples []measurement, metric string, p sens
 // after another, and a series that fails often enough to be unreliable without
 // ever failing twice in a row.
 func detectReliability(in itemInput, p sensParams) ([]finding, []absence) {
+	if in.Kind == seriesDataset {
+		return nil, nil
+	}
 	streakMetric, flakyMetric := metricFailureStreak, metricFlaky
 	if in.Kind == seriesDump {
 		streakMetric, flakyMetric = metricDumpFailureStreak, metricDumpFlaky
@@ -841,6 +856,83 @@ func eligibleRuns(series []store.SeriesRun) []store.SeriesRun {
 		}
 	}
 	return out
+}
+
+// datasetRuns turns one dataset's rows into the series its detectors judge.
+// members are its rows as DatasetSeries returns them, itemRuns the runs of the
+// item that backs it up now, both newest first.
+//
+// A dataset that was backed up or found empty is a sample. One the run could
+// not read right after a run that did, under an unchanged selection, is a
+// measured zero, whether a skip code says why or the tree simply no longer has
+// it: from the outside that is an emptied dataset, and retention must not age
+// its good backups out. A run that still cannot read it adds nothing, so that
+// zero stays the newest value. A dataset the user excluded, or one restic
+// failed on, is never a sample.
+func datasetRuns(members, itemRuns []store.SeriesRun) []store.SeriesRun {
+	if len(members) == 0 {
+		return nil
+	}
+	recorded := make(map[string]bool, len(members))
+	for _, m := range members {
+		recorded[m.ID] = true
+	}
+	oldest := members[len(members)-1].StartedAt
+	rows := slices.Clone(members)
+	for _, run := range itemRuns {
+		if run.Status == "success" && run.StartedAt >= oldest && !recorded[run.ID] {
+			rows = append(rows, store.SeriesRun{
+				ID: run.ID, Status: run.Status, StartedAt: run.StartedAt, FinishedAt: run.FinishedAt,
+				SelectionFP: run.SelectionFP, Outcome: zfsOutcomeGone,
+			})
+		}
+	}
+	slices.SortStableFunc(rows, func(a, b store.SeriesRun) int { return cmp.Compare(b.StartedAt, a.StartedAt) })
+
+	out := make([]store.SeriesRun, len(rows))
+	for i, row := range rows {
+		var previous *store.SeriesRun
+		if i+1 < len(rows) {
+			previous = &rows[i+1]
+		}
+		out[i] = datasetSample(row, previous)
+	}
+	return out
+}
+
+// The member outcomes a dataset series tells apart, next to outcomeBackedUp.
+const (
+	zfsOutcomeEmpty = "empty"
+	zfsOutcomeGone  = "gone"
+)
+
+// datasetSample is one row of a dataset's series as a detector sees it.
+// Anything that is not a sample keeps its place with a status no rule learns
+// from.
+func datasetSample(row store.SeriesRun, previous *store.SeriesRun) store.SeriesRun {
+	switch row.Outcome {
+	case outcomeBackedUp:
+		row.Status = "success"
+		return row
+	case zfsOutcomeEmpty:
+		row.Status, row.ResticMS = "success", nil
+		return row
+	case "excluded", "backup-failed", "snapshot-not-visible", "snapshot-loop", "not-reached":
+		row.Status = "skipped"
+		return row
+	}
+	readBefore := previous != nil && (previous.Outcome == outcomeBackedUp || previous.Outcome == zfsOutcomeEmpty)
+	reselected := previous != nil && row.SelectionFP != nil && previous.SelectionFP != nil &&
+		*row.SelectionFP != *previous.SelectionFP
+	if !readBefore || reselected {
+		row.Status = "skipped"
+		return row
+	}
+	var noBytes, noFiles int64
+	return store.SeriesRun{
+		ID: row.ID, Status: "success", StartedAt: row.StartedAt, FinishedAt: row.FinishedAt,
+		Outcome: row.Outcome, SourceBytes: &noBytes, SourceFiles: &noFiles, SelectionFP: row.SelectionFP,
+	}
 }
 
 // newestFinished keeps the runs the item is answerable for, newest first: a
