@@ -1917,3 +1917,105 @@ func TestForeignZFSRestoreOverALocalItemCreatesNoOverlappingRow(t *testing.T) {
 		t.Fatalf("the local item now overlaps %s", other)
 	}
 }
+
+// foreignZFSTreeFixture opens a session on a repository holding one run of
+// tank/data and its child tank/data/sub, and returns the service, the session,
+// the engine and the target folder a restore may write into.
+func foreignZFSTreeFixture(t *testing.T, snaps []restic.Snapshot) (*Service, string, *foreignRecordingEngine, string) {
+	t.Helper()
+	const location = "backups/other"
+	eng := &foreignRecordingEngine{opens: opensEncrypted, snaps: snaps}
+	s := newForeignTestService(t, eng)
+	s.cfg.HostMountRoot = filepath.ToSlash(s.cfg.HostMountRoot)
+	seedForeignRepoMarker(t, s, location)
+	zfsMountedFixture(t, s.cfg.HostMountRoot)
+	id, _, err := s.OpenForeign(context.Background(), location, foreignTestKey, nil)
+	if err != nil {
+		t.Fatalf("OpenForeign: %v", err)
+	}
+	target, err := paths.Resolve(s.cfg.HostMountRoot, zfsMountedSub+"/from-other")
+	if err != nil {
+		t.Fatalf("resolve the target: %v", err)
+	}
+	return s, id, eng, target
+}
+
+func foreignZFSSnapshot(id, dataset string) restic.Snapshot {
+	return restic.Snapshot{
+		ID:    id,
+		Time:  "2026-07-05T10:00:00Z",
+		Tags:  []string{"zfs:" + dataset},
+		Paths: []string{"/host/user/" + dataset + "/.zfs/snapshot/bombvault-20260705100000"},
+	}
+}
+
+func foreignRestores(eng *foreignRecordingEngine) []string {
+	eng.mu.Lock()
+	defer eng.mu.Unlock()
+	return append([]string(nil), eng.restores...)
+}
+
+func TestForeignZFSRestoreReachesEveryDatasetOfTheTree(t *testing.T) {
+	tree := []restic.Snapshot{foreignZFSSnapshot("aaaa1111", "tank/data"), foreignZFSSnapshot("bbbb2222", "tank/data/sub")}
+	cases := []struct {
+		name, item, snapshot string
+		snaps                []restic.Snapshot
+		want                 string
+	}{
+		{"a child's snapshot picked on the tree", "tank/data", "bbbb2222", tree, "bbbb2222"},
+		{"the child as the item", "tank/data/sub", "latest", tree, "bbbb2222"},
+		{"the tree's newest when the root was never read", "tank/data", "latest", tree[1:], "bbbb2222"},
+		{"the root's own newest", "tank/data", "latest", tree, "aaaa1111"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			s, id, eng, target := foreignZFSTreeFixture(t, tc.snaps)
+			started, err := s.StartForeignRestore(context.Background(), id, "zfs", tc.item, tc.snapshot, true, zfsMountedSub+"/from-other", nil, false, "")
+			if !started || err != nil {
+				t.Fatalf("started = %v, err = %v", started, err)
+			}
+			waitForeignIdle(t, s)
+			restores := foreignRestores(eng)
+			if len(restores) != 1 || !strings.HasSuffix(restores[0], "|"+tc.want+"->"+target) {
+				t.Fatalf("restore calls = %v, want %s into %s", restores, tc.want, target)
+			}
+		})
+	}
+}
+
+func TestForeignZFSRestoreWholeTreeToFolder(t *testing.T) {
+	s, id, eng, target := foreignZFSTreeFixture(t, []restic.Snapshot{
+		foreignZFSSnapshot("aaaa1111", "tank/data"),
+		foreignZFSSnapshot("bbbb2222", "tank/data/sub"),
+		{ID: "cccc3333", Tags: []string{"zfs:tank/data"}, Paths: []string{"/host/user/tank/data/.zfs/snapshot/bombvault-20260706100000"}},
+	})
+
+	started, err := s.StartForeignRestoreZFSTree(context.Background(), id, "tank/data", "bbbb2222", true, zfsMountedSub+"/from-other")
+	if !started || err != nil {
+		t.Fatalf("started = %v, err = %v", started, err)
+	}
+	waitForeignIdle(t, s)
+	got := strings.Join(foreignRestores(eng), " ")
+	want := []string{"|aaaa1111->" + target, "|bbbb2222->" + target + "/sub"}
+	for _, w := range want {
+		if !strings.Contains(got, w) {
+			t.Fatalf("restore calls = %q, want every member of the run instant, missing %q", got, w)
+		}
+	}
+	if strings.Contains(got, "cccc3333") {
+		t.Fatalf("restore calls = %q, want only the run instant that was picked", got)
+	}
+}
+
+func TestListForeignFilesOfAChildSnapshot(t *testing.T) {
+	s, id, _, _ := foreignZFSTreeFixture(t, []restic.Snapshot{
+		foreignZFSSnapshot("aaaa1111", "tank/data"),
+		foreignZFSSnapshot("bbbb2222", "tank/data/sub"),
+	})
+	if _, err := s.ListForeignFiles(context.Background(), id, "zfs", "tank/data", "bbbb2222"); err != nil {
+		t.Fatalf("the files of a member snapshot: %v", err)
+	}
+	if _, err := s.ListForeignFiles(context.Background(), id, "zfs", "tank/other", "bbbb2222"); err == nil {
+		t.Fatal("a snapshot of another tree was listed")
+	}
+}
