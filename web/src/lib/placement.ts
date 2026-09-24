@@ -82,12 +82,17 @@ function homeLabel(t: T, host: string, repoId: string, options: PlacementOptions
 }
 
 /** viewHomeLabel names a card's home: as the lists offer it, or marked when it
- *  is switched off or has no row any more. */
+ *  is switched off or has no row any more. A direct repository the lists leave
+ *  out, because its target is switched off, still takes backups and goes by
+ *  its own name. */
 export function viewHomeLabel(t: T, host: string, view: PlacementView, options: PlacementOptions): string {
   const listed = homeLabel(t, host, view.repo, options);
   if (listed !== null) return listed;
   if (view.repo === "") return host;
-  return t(view.repoOff ? "placement.off" : "placement.unknown").replace("{name}", () => view.repoLabel || view.repo);
+  const name = view.repoLabel || view.repo;
+  if (view.repoOff) return t("placement.off").replace("{name}", () => name);
+  if (view.repoKind === "direct") return name;
+  return t("placement.unknown").replace("{name}", () => name);
 }
 
 const LOCK_KEYS: Record<SegmentLockReason, TranslationKey> = {
