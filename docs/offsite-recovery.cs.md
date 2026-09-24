@@ -21,7 +21,7 @@ Každá karta kontejneru, VM a sady složek má řádek **Umístění** se třem
 
 - **Místní** zapíše položku do repozitáře zobrazeného pod **Uloženo na** a nikam ji nekopíruje. Použijte to pro data, která už mají druhou kopii, například sdílenou složku, jež žije na NAS.
 - **Místní + mimo lokalitu** ji zapíše i tam a zkopíruje ji do cílů zaškrtnutých pod **Kopírovat do**, jeden čip na každý cíl domény mimo lokalitu. Odškrtněte čip a ten cíl už od této položky nedostane nic nového.
-- **Jen mimo lokalitu** zapíše položku přímo na místo pod **Odeslat do**: přímý repozitář vedle cíle mimo lokalitu, nebo vzdálený repozitář, který si nastavíte v Nastavení, Úložiště, Repozitáře.
+- **Jen mimo lokalitu** zapíše položku přímo na místo pod **Odeslat do**: přímý repozitář vedle cíle mimo lokalitu, nebo vzdálený repozitář, který si nastavíte v Nastavení, Cesty a úložiště, Repozitáře.
 
 Umístění je pevné od první zálohy položky, protože BombVault nikdy nepřesouvá zálohy mezi repozitáři. Kopie se mohou kdykoli změnit. Cíl, který už položku nedostává, si ponechá kopie, které má, a při dalším běhu mimo lokalitu dané domény je zkrátí podle vlastního uchovávání; **Smazat v B2** na kartě je odstraní okamžitě. Pokud některé z těchto kopií neexistují nikde jinde, potvrzení je vypíše podle data a požádá o název položky. Z cílů append-only mazat nelze.
 
@@ -29,7 +29,7 @@ Pod řádkem karta ukazuje, kam položka směřuje a co tam skutečně je: na ko
 
 ### Výchozí umístění
 
-Nastavení, Úložiště, **Výchozí umístění** má jeden řádek na doménu se stejnými třemi segmenty. Kopie platí okamžitě pro každou položku bez vlastní volby a pro projektové složky Compose stacků. Umístění platí pro novou položku při její první záloze; jeho změna žádné zálohy nepřesune. Před uložením řádek jmenuje každý cíl, který získává nebo ztrácí položky, a kolik snímků to znamená. **Použít na položky bez záloh** vrátí každou položku bez dosavadní zálohy na výchozí nastavení.
+Nastavení, Cesty a úložiště, **Výchozí umístění** má jeden řádek na doménu se stejnými třemi segmenty. Kopie platí okamžitě pro každou položku bez vlastní volby a pro projektové složky Compose stacků. Umístění platí pro novou položku při její první záloze; jeho změna žádné zálohy nepřesune. Před uložením řádek jmenuje každý cíl, který získává nebo ztrácí položky, a kolik snímků to znamená. **Použít na položky bez záloh** vrátí každou položku bez dosavadní zálohy na výchozí nastavení.
 
 Nový cíl mimo lokalitu dostane každou položku, která není nastavena na Místní. Dialog, který jej přidává, uvádí počet položek a, je-li známa, kolik historie to představuje, a nabízí vynechat položky, které jsou už vyloučené u jiných cílů.
 

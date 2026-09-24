@@ -21,7 +21,7 @@ Chaque carte de conteneur, VM et jeu de fichiers a une ligne **Emplacement** ave
 
 - **Local** écrit l'élément dans le dépôt indiqué sous **Stocké sur** et ne le copie nulle part. Utilisez-le pour des données qui ont déjà une seconde copie, par exemple un partage qui vit sur un NAS.
 - **Local + hors site** l'écrit là aussi et le copie vers les cibles cochées sous **Copier vers**, un chip par cible hors site du domaine. Décochez un chip et cette cible ne reçoit plus rien de nouveau de cet élément.
-- **Hors site uniquement** écrit l'élément directement à l'endroit indiqué sous **Envoyer vers** : un dépôt direct à côté d'une cible hors site, ou un dépôt distant que vous avez configuré sous Paramètres, Stockage, Dépôts.
+- **Hors site uniquement** écrit l'élément directement à l'endroit indiqué sous **Envoyer vers** : un dépôt direct à côté d'une cible hors site, ou un dépôt distant que vous avez configuré sous Paramètres, Chemins et stockage, Dépôts.
 
 L'emplacement est fixé dès la première sauvegarde de l'élément, parce que BombVault ne déplace jamais les sauvegardes entre dépôts. Les copies peuvent changer à tout moment. Une cible qui ne reçoit plus un élément conserve les copies qu'elle a et les ramène à sa propre rétention à la prochaine exécution hors site du domaine ; **Supprimer dans B2** sur la carte les supprime aussitôt. Quand certaines de ces copies n'existent nulle part ailleurs, la confirmation les liste par date et demande le nom de l'élément. On ne peut rien supprimer des cibles en ajout seul.
 
@@ -29,7 +29,7 @@ Sous la ligne, la carte dit où va l'élément et ce qui s'y trouve réellement 
 
 ### Emplacements par défaut
 
-Paramètres, Stockage, **Emplacements par défaut** a une ligne par domaine avec les mêmes trois segments. Les copies s'appliquent aussitôt à chaque élément sans choix propre, et aux dossiers de projet des piles Compose. L'emplacement s'applique à un nouvel élément à sa première sauvegarde ; le changer ne déplace aucune sauvegarde. Avant d'enregistrer, la ligne nomme chaque cible qui gagne ou perd des éléments et combien d'instantanés cela représente. **Appliquer aux éléments sans sauvegarde** remet au défaut chaque élément qui n'a pas encore de sauvegarde.
+Paramètres, Chemins et stockage, **Emplacements par défaut** a une ligne par domaine avec les mêmes trois segments. Les copies s'appliquent aussitôt à chaque élément sans choix propre, et aux dossiers de projet des piles Compose. L'emplacement s'applique à un nouvel élément à sa première sauvegarde ; le changer ne déplace aucune sauvegarde. Avant d'enregistrer, la ligne nomme chaque cible qui gagne ou perd des éléments et combien d'instantanés cela représente. **Appliquer aux éléments sans sauvegarde** remet au défaut chaque élément qui n'a pas encore de sauvegarde.
 
 Une nouvelle cible hors site reçoit chaque élément qui n'est pas réglé sur Local. La boîte de dialogue qui l'ajoute dit combien d'éléments et, quand c'est connu, combien d'historique cela représente, et propose de laisser de côté les éléments déjà exclus des autres cibles.
 

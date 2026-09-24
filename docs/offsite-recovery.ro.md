@@ -21,7 +21,7 @@ Fiecare card de container, VM și set de fișiere are un rând **Amplasare** cu 
 
 - **Local** scrie elementul în depozitul arătat la **Stocat pe** și nu îl copiază nicăieri. Folosește-l pentru date care au deja o a doua copie, de exemplu o partajare care trăiește pe un NAS.
 - **Local + extern** îl scrie și acolo și îl copiază la țintele bifate la **Copiază în**, câte un chip pentru fiecare țintă off-site a domeniului. Debifează un chip și acea țintă nu mai primește nimic nou de la acest element.
-- **Doar extern** scrie elementul direct în locul de la **Trimite către**: un depozit direct alături de o țintă off-site, sau un depozit la distanță configurat în Setări, Stocare, Depozite.
+- **Doar extern** scrie elementul direct în locul de la **Trimite către**: un depozit direct alături de o țintă off-site, sau un depozit la distanță configurat în Setări, Căi și stocare, Depozite.
 
 Locația este fixată de la prima copie de siguranță a elementului, pentru că BombVault nu mută niciodată copiile între depozite. Copiile se pot schimba oricând. O țintă care nu mai primește un element păstrează copiile pe care le are și le taie la propria retenție la următoarea rulare off-site a domeniului; **Șterge în B2** de pe card le elimină imediat. Când unele dintre acele copii nu există nicăieri altundeva, confirmarea le listează după dată și cere numele elementului. Din țintele append-only nu se poate șterge.
 
@@ -29,7 +29,7 @@ Sub rând, cardul spune unde ajunge elementul și ce se află de fapt acolo: câ
 
 ### Amplasări implicite
 
-Setări, Stocare, **Amplasări implicite** are un rând per domeniu cu aceleași trei segmente. Copiile se aplică imediat fiecărui element fără alegere proprie, și folderelor de proiect ale stack-urilor Compose. Locația se aplică unui element nou la prima lui copie de siguranță; schimbarea ei nu mută nicio copie. Înainte de salvare, rândul numește fiecare țintă care câștigă sau pierde elemente și câte instantanee înseamnă asta. **Aplică elementelor fără copii de siguranță** readuce la valoarea implicită orice element care nu are încă o copie de siguranță.
+Setări, Căi și stocare, **Amplasări implicite** are un rând per domeniu cu aceleași trei segmente. Copiile se aplică imediat fiecărui element fără alegere proprie, și folderelor de proiect ale stack-urilor Compose. Locația se aplică unui element nou la prima lui copie de siguranță; schimbarea ei nu mută nicio copie. Înainte de salvare, rândul numește fiecare țintă care câștigă sau pierde elemente și câte instantanee înseamnă asta. **Aplică elementelor fără copii de siguranță** readuce la valoarea implicită orice element care nu are încă o copie de siguranță.
 
 O țintă off-site nouă primește orice element care nu este setat pe Local. Dialogul care o adaugă spune câte elemente și, unde se știe, cât istoric înseamnă asta, și oferă opțiunea de a lăsa deoparte elementele deja excluse din alte ținte.
 

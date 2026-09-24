@@ -21,7 +21,7 @@ Minden konténer-, VM- és fájlkészlet-kártyának van egy **Elhelyezés** sor
 
 - **Helyi** a **Tárolva itt** alatt látható tárolóba írja az elemet, és sehova nem másolja. Olyan adathoz használd, amelynek már van egy második másolata, például egy NAS-on élő megosztáshoz.
 - **Helyi + telephelyen kívüli** ott is megírja, és a **Másolás ide** alatt kipipált célokra másolja, egy chip a tartomány minden telephelyen kívüli céljára. Vedd ki egy chip pipáját, és az a cél semmi újat nem kap ettől az elemtől.
-- **Csak telephelyen kívüli** egyenesen a **Küldés ide** alatti helyre írja az elemet: egy közvetlen tárolóba egy telephelyen kívüli cél mellett, vagy egy távoli tárolóba, amelyet a Beállítások, Tárolás, Tárolók alatt állítottál be.
+- **Csak telephelyen kívüli** egyenesen a **Küldés ide** alatti helyre írja az elemet: egy közvetlen tárolóba egy telephelyen kívüli cél mellett, vagy egy távoli tárolóba, amelyet a Beállítások, Útvonalak és tárolás, Tárolók alatt állítottál be.
 
 A hely az elem első biztonsági mentésétől fogva rögzített, mert a BombVault soha nem mozgat mentéseket tárolók között. A másolatok bármikor változhatnak. Az a cél, amely már nem kap egy elemet, megtartja a meglévő másolatait, és a tartomány következő telephelyen kívüli futásakor a saját megőrzésére vágja őket vissza; a kártyán a **Törlés itt: B2** azonnal eltávolítja őket. Ha ezek közül a másolatok közül néhány sehol máshol nem létezik, a megerősítés dátum szerint felsorolja őket, és kéri az elem nevét. A csak hozzáfűzésre szolgáló célokból nem lehet törölni.
 
@@ -29,7 +29,7 @@ A sor alatt a kártya megmondja, hova kerül az elem, és mi van ott ténylegese
 
 ### Elhelyezési alapértelmezések
 
-A Beállítások, Tárolás, **Elhelyezési alapértelmezések** alatt tartományonként egy sor van, ugyanazzal a három szegmenssel. A másolatok azonnal érvényesek minden saját választás nélküli elemre, és a Compose-stackek projektmappáira is. A hely egy új elemre az első mentésekor válik érvényessé; a megváltoztatása egyetlen mentést sem mozgat. Mentés előtt a sor megnevez minden célt, amely elemeket nyer vagy veszít, és hogy ez hány pillanatképet jelent. Az **Alkalmazás a biztonsági mentés nélküli elemekre** minden még mentés nélküli elemet visszaállít az alapértelmezésre.
+A Beállítások, Útvonalak és tárolás, **Elhelyezési alapértelmezések** alatt tartományonként egy sor van, ugyanazzal a három szegmenssel. A másolatok azonnal érvényesek minden saját választás nélküli elemre, és a Compose-stackek projektmappáira is. A hely egy új elemre az első mentésekor válik érvényessé; a megváltoztatása egyetlen mentést sem mozgat. Mentés előtt a sor megnevez minden célt, amely elemeket nyer vagy veszít, és hogy ez hány pillanatképet jelent. Az **Alkalmazás a biztonsági mentés nélküli elemekre** minden még mentés nélküli elemet visszaállít az alapértelmezésre.
 
 Egy új telephelyen kívüli cél megkap minden elemet, amely nincs Helyire állítva. Az azt hozzáadó párbeszédablak megmondja, hány elemről van szó, és ahol ismert, mennyi előzményt jelent ez, és felajánlja, hogy kihagyja azokat az elemeket, amelyeket más céloknál is kihagytak.
 

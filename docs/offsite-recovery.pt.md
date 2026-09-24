@@ -21,7 +21,7 @@ Cada cartão de container, VM e conjunto de ficheiros tem uma linha **Localizaç
 
 - **Local** escreve o item no repositório mostrado em **Guardado em** e não o copia para lado nenhum. Use-o para dados que já têm uma segunda cópia, por exemplo uma partilha que vive num NAS.
 - **Local + externo** escreve-o lá também e copia-o para os destinos marcados em **Copiar para**, um chip por destino externo do domínio. Desmarque um chip e esse destino deixa de receber algo de novo deste item.
-- **Apenas externo** escreve o item diretamente no local em **Enviar para**: um repositório direto ao lado de um destino externo, ou um repositório remoto configurado em Definições, Armazenamento, Repositórios.
+- **Apenas externo** escreve o item diretamente no local em **Enviar para**: um repositório direto ao lado de um destino externo, ou um repositório remoto configurado em Definições, Caminhos e armazenamento, Repositórios.
 
 A localização fica fixa desde o primeiro backup do item, porque o BombVault nunca move backups entre repositórios. As cópias podem mudar a qualquer momento. Um destino que deixa de receber um item mantém as cópias que tem e apara-as pela sua própria retenção na próxima execução externa do domínio; **Apagar em B2** no cartão remove-as de imediato. Quando algumas dessas cópias não existem em mais lado nenhum, a confirmação lista-as por data e pede o nome do item. De destinos append-only não se pode apagar.
 
@@ -29,7 +29,7 @@ Sob a linha, o cartão diz para onde vai o item e o que está lá de facto: quan
 
 ### Localizações padrão
 
-Definições, Armazenamento, **Localizações padrão** tem uma linha por domínio com os mesmos três segmentos. As cópias aplicam-se de imediato a cada item sem escolha própria, e às pastas de projeto das stacks Compose. A localização aplica-se a um item novo no seu primeiro backup; alterá-la não move nenhum backup. Antes de guardar, a linha nomeia cada destino que ganha ou perde itens e quantos instantâneos isso significa. **Aplicar a itens sem backups** repõe no padrão todo o item que ainda não tem backup.
+Definições, Caminhos e armazenamento, **Localizações padrão** tem uma linha por domínio com os mesmos três segmentos. As cópias aplicam-se de imediato a cada item sem escolha própria, e às pastas de projeto das stacks Compose. A localização aplica-se a um item novo no seu primeiro backup; alterá-la não move nenhum backup. Antes de guardar, a linha nomeia cada destino que ganha ou perde itens e quantos instantâneos isso significa. **Aplicar a itens sem backups** repõe no padrão todo o item que ainda não tem backup.
 
 Um destino externo novo recebe todo o item que não está definido como Local. O diálogo que o adiciona diz quantos itens e, quando conhecido, quanto histórico isso representa, e propõe deixar de fora os itens já excluídos de outros destinos.
 

@@ -21,7 +21,7 @@ Hvert container-, VM- og mappesæt-kort har en række **Placering** med tre segm
 
 - **Lokal** skriver elementet til det arkiv, der vises under **Gemt på**, og kopierer det ingen steder. Brug det til data, der allerede har en anden kopi, for eksempel en deling, der ligger på et NAS.
 - **Lokal + ekstern** skriver det også dertil og kopierer det til de destinationer, der er markeret under **Kopiér til**, én chip pr. off-site-destination i domænet. Fjern et flueben, og den destination får ikke længere noget nyt fra dette element.
-- **Kun ekstern** skriver elementet direkte til stedet under **Send til**: et direkte arkiv ved siden af en off-site-destination, eller et fjernarkiv, du sætter op under Indstillinger, Lager, Depoter.
+- **Kun ekstern** skriver elementet direkte til stedet under **Send til**: et direkte arkiv ved siden af en off-site-destination, eller et fjernarkiv, du sætter op under Indstillinger, Stier og lagring, Depoter.
 
 Placeringen er fast fra elementets første sikkerhedskopi, fordi BombVault aldrig flytter sikkerhedskopier mellem arkiver. Kopierne kan ændres når som helst. En destination, der ikke længere får et element, beholder de kopier, den har, og beskærer dem til sin egen opbevaring ved domænets næste off-site-kørsel; **Slet i B2** på kortet fjerner dem med det samme. Findes nogle af de kopier ingen andre steder, lister bekræftelsen dem efter dato og spørger om elementets navn. Der kan ikke slettes fra append-only-destinationer.
 
@@ -29,7 +29,7 @@ Under rækken viser kortet, hvor elementet går hen, og hvad der faktisk er der:
 
 ### Standardplaceringer
 
-Indstillinger, Lager, **Standardplaceringer** har en række pr. domæne med de samme tre segmenter. Kopierne gælder med det samme for hvert element uden eget valg, og for projektmapperne i Compose-stacks. Placeringen gælder for et nyt element ved dets første sikkerhedskopi; at ændre den flytter ingen sikkerhedskopier. Før den gemmes, navngiver rækken hver destination, der vinder eller mister elementer, og hvor mange øjebliksbilleder det betyder. **Anvend på elementer uden sikkerhedskopier** sætter hvert element uden nogen sikkerhedskopi endnu tilbage på standarden.
+Indstillinger, Stier og lagring, **Standardplaceringer** har en række pr. domæne med de samme tre segmenter. Kopierne gælder med det samme for hvert element uden eget valg, og for projektmapperne i Compose-stacks. Placeringen gælder for et nyt element ved dets første sikkerhedskopi; at ændre den flytter ingen sikkerhedskopier. Før den gemmes, navngiver rækken hver destination, der vinder eller mister elementer, og hvor mange øjebliksbilleder det betyder. **Anvend på elementer uden sikkerhedskopier** sætter hvert element uden nogen sikkerhedskopi endnu tilbage på standarden.
 
 En ny off-site-destination modtager hvert element, der ikke er sat til Lokal. Dialogen, der tilføjer den, angiver, hvor mange elementer det er, og hvor det er kendt, hvor meget historik det udgør, og tilbyder at udelade de elementer, der allerede er udelukket fra andre destinationer.
 
