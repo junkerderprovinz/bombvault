@@ -159,6 +159,14 @@
 .glim-btn-md { min-width: var(--btn-w-md); }
 .glim-btn-lg { min-width: var(--btn-w-lg); }
 
+/* Gives up the stage's width floor, for a button in a row too narrow to
+   honour it (a per-domain card at phone width). Tailwind's own `min-w-0`
+   cannot do this: it lives in the utilities layer and this file does not, so
+   an unlayered rule always wins over it regardless of class order. Without a
+   floor the button shrinks to whatever the row leaves it, down to the
+   ellipsis `.glim-btn-label` already sets up. */
+.glim-btn-elastic { min-width: 0; }
+
 /* The remove control inside a pill (Button variant="chip"). No width stage and
    no button height: it has to fit inside a 0.75rem-text pill. It takes the
    pill's ink instead of painting its own surface, so it works on an accent pill
