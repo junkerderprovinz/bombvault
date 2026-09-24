@@ -44,7 +44,7 @@ A dataset can belong to one item only. BombVault refuses a new item that lies in
 
 A snapshot of a running database is like a sudden power cut: the database will usually recover, but it has to. Each item can do two things about that, and both only cover the instant of the snapshot, not the whole backup.
 
-- **Stop these containers for the snapshot.** BombVault stops the listed containers, takes the snapshot and starts them again right away. Containers that write into the item's datasets are suggested first. Containers of one level of dependencies stop in parallel, dependents first, so the whole window is usually a few seconds; the run shows how long it was. The backup then reads the frozen snapshot while the apps are already running again. Only containers that were running are stopped.
+- **Stop these containers for the snapshot.** BombVault stops the listed containers, takes the snapshot and starts them again right away. Containers of one level of dependencies stop in parallel, dependents first, so the whole window is usually a few seconds; the run shows how long it was. The backup then reads the frozen snapshot while the apps are already running again. Only containers that were running are stopped.
 - **A command before and after the snapshot.** It runs inside a container you choose, for example to dump a database into the dataset right before the snapshot, without stopping anything. If the command before the snapshot fails, the backup fails and no snapshot is taken. A failing command after the snapshot is shown on the run but does not fail the backup.
 
 What happens when something goes wrong:
