@@ -528,6 +528,21 @@ func TestDeleteZFSSafetySnapshotOnlyPreRestoreNames(t *testing.T) {
 	}
 }
 
+func TestDeleteZFSSafetySnapshotWaitsForNothingWhileTheDomainIsBusy(t *testing.T) {
+	s, st, host, _ := zfsRestoreFixture(t)
+	d := zfsSeedItem(t, st, zfsRoot)
+	release := s.lockDomainFor(zfsDomain, "restore")
+	defer release()
+
+	err := s.DeleteZFSSafetySnapshot(context.Background(), d.ID, zfsRoot, "bombvault-prerestore-20260101000000")
+	if !errors.Is(err, errDomainBusy) {
+		t.Fatalf("err = %v, want the domain reported busy", err)
+	}
+	if hostDid(host, "destroy ") {
+		t.Fatalf("the undo of a running restore was destroyed: %v", host.recorded())
+	}
+}
+
 func TestListZFSRestorePointsGroupsMembersByRunInstant(t *testing.T) {
 	s, st, _, _ := zfsRestoreFixture(t)
 	d := zfsSeedItem(t, st, zfsRoot)

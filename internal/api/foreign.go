@@ -754,8 +754,9 @@ func (s *Service) prepareForeignZFSRestore(ctx context.Context, sess foreignSess
 }
 
 // adoptForeignZFSDataset gives the restore a row to record its run against: the
-// item that already covers the dataset, or a new switched-off one, the way a
-// foreign folder set is adopted.
+// item that already covers the dataset, a local item inside the restored tree,
+// or a new switched-off one, the way a foreign folder set is adopted. A new row
+// over a local item would refuse that item's every backup as overlapping.
 func (s *Service) adoptForeignZFSDataset(dataset string) (string, error) {
 	rows, err := s.store.ListZFSDatasets()
 	if err != nil {
@@ -765,6 +766,9 @@ func (s *Service) adoptForeignZFSDataset(dataset string) (string, error) {
 		if d.Dataset == dataset || zfs.DescendantOf(dataset, d.Dataset) {
 			return d.ID, nil
 		}
+	}
+	if below, ok := zfsItemBelow(dataset, rows); ok {
+		return below.ID, nil
 	}
 	created, err := s.store.CreateZFSDataset(store.ZFSDataset{Dataset: dataset, Enabled: false})
 	if err != nil {

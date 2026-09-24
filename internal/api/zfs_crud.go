@@ -21,6 +21,11 @@ const (
 	// zfsMaxExcludedChildren bounds the per-item exclusion list, which is
 	// written into the row as one JSON value.
 	zfsMaxExcludedChildren = 500
+	// zfsMaxStopContainers bounds the consistency stop, whose worst case is one
+	// stop grace per dependency level.
+	zfsMaxStopContainers = 32
+	// zfsMaxCommandBytes bounds a pre- or post-snapshot command.
+	zfsMaxCommandBytes = 4 << 10
 )
 
 // ZFSCreateItem is one item the add dialog asks for.
@@ -134,6 +139,9 @@ func (s *Service) createZFSDataset(ctx context.Context, item ZFSCreateItem, rows
 	if err := s.zfsValidateStopContainers(ctx, item.StopContainers); err != nil {
 		return store.ZFSDataset{}, err
 	}
+	if err := s.validateItemRepoID(item.Repo); err != nil {
+		return store.ZFSDataset{}, err
+	}
 	enabled := item.Enabled == nil || *item.Enabled
 	return s.store.CreateZFSDataset(store.ZFSDataset{
 		Dataset:          item.Dataset,
@@ -169,8 +177,16 @@ func (s *Service) PatchZFSDataset(ctx context.Context, id string, p ZFSDatasetPa
 		}
 	}
 	if p.HookContainer != nil && *p.HookContainer != "" {
+		if *p.HookContainer == s.selfContainerName(ctx) {
+			return zfsRefuse("container-is-self", *p.HookContainer)
+		}
 		if _, iErr := s.inspectNamed(ctx, *p.HookContainer); iErr != nil {
 			return zfsRefuse("container-unknown", *p.HookContainer)
+		}
+	}
+	for _, cmd := range []*string{p.PreSnapshot, p.PostSnapshot} {
+		if cmd != nil && len(*cmd) > zfsMaxCommandBytes {
+			return fmt.Errorf("a snapshot command may be at most %d bytes", zfsMaxCommandBytes)
 		}
 	}
 	if p.ScheduleCadence != nil {
@@ -186,6 +202,9 @@ func (s *Service) PatchZFSDataset(ctx context.Context, id string, p ZFSDatasetPa
 		if has {
 			return errors.New("cannot change the repository of a dataset item that already has backups; " +
 				"they stay in the repository they were written to and nothing moves them. Delete its backups first")
+		}
+		if vErr := s.validateItemRepoID(*p.Repo); vErr != nil {
+			return vErr
 		}
 	}
 
@@ -331,32 +350,33 @@ func (s *Service) destroyZFSSafetySnapshots(ctx context.Context, d store.ZFSData
 }
 
 // DeleteBackupsZFSDataset forgets every snapshot the item's tree ever wrote,
-// reclaims the space and then removes the item itself.
-func (s *Service) DeleteBackupsZFSDataset(ctx context.Context, id string) error {
+// reclaims the space and then removes the item itself, answering like
+// DeleteZFSDataset what is still on the pool.
+func (s *Service) DeleteBackupsZFSDataset(ctx context.Context, id string, removeSafety bool) (ZFSDeleteResult, error) {
 	d, err := s.store.GetZFSDataset(id)
 	if err != nil {
-		return fmt.Errorf("zfs: load dataset: %w", err)
+		return ZFSDeleteResult{}, fmt.Errorf("zfs: load dataset: %w", err)
 	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return fmt.Errorf("read settings: %w", err)
+		return ZFSDeleteResult{}, fmt.Errorf("read settings: %w", err)
 	}
 	// The item's own repository, not the domain's: its snapshots live wherever
 	// it backs up, and reading the domain repository would report an empty
 	// history for an item that has one.
 	repo, err := s.zfsDatasetRepoPath(settings, d)
 	if err != nil {
-		return err
+		return ZFSDeleteResult{}, err
 	}
 	if f := s.primaryAppendOnly(zfsDomain, repo); f != appendOnlyNone {
-		return appendOnlyRefusal(f)
+		return ZFSDeleteResult{}, appendOnlyRefusal(f)
 	}
 	if err := s.requireExistingRepo(repo, "no backups to delete yet"); err != nil {
-		return err
+		return ZFSDeleteResult{}, err
 	}
 	unlock, ok := s.tryLockDomainFor(zfsDomain, "delete")
 	if !ok {
-		return errDomainBusy
+		return ZFSDeleteResult{}, errDomainBusy
 	}
 	defer unlock()
 	mode := s.repoModeFor(settings, zfsDomain, "local", repo)
@@ -364,7 +384,7 @@ func (s *Service) DeleteBackupsZFSDataset(ctx context.Context, id string) error 
 
 	snaps, err := s.zfsItemSnapshots(ctx, d, "local")
 	if err != nil {
-		return err
+		return ZFSDeleteResult{}, err
 	}
 	ids := make([]string, 0, len(snaps))
 	for _, snap := range snaps {
@@ -372,11 +392,10 @@ func (s *Service) DeleteBackupsZFSDataset(ctx context.Context, id string) error 
 	}
 	if len(ids) > 0 {
 		if err := s.engine.Forget(ctx, repo, ids, true, mode); err != nil {
-			return fmt.Errorf("forget snapshots: %w", err)
+			return ZFSDeleteResult{}, fmt.Errorf("forget snapshots: %w", err)
 		}
 	}
-	_, err = s.deleteZFSDatasetLocked(ctx, id, false)
-	return err
+	return s.deleteZFSDatasetLocked(ctx, id, removeSafety)
 }
 
 // DiscoverZFSDatasets rebuilds the item list from the zfs: tags in storage,
@@ -404,10 +423,24 @@ func (s *Service) DiscoverZFSDatasets(ctx context.Context, dryRun bool) (int, []
 	for name := range usable {
 		found = append(found, name)
 	}
+	rows, err := s.store.ListZFSDatasets()
+	if err != nil {
+		return 0, skipped, fmt.Errorf("discover zfs: list the items: %w", err)
+	}
 
 	discovered := 0
 	for name, repoID := range usable {
 		if zfsMinimalRoot(name, found) != name {
+			continue
+		}
+		if zfsCoveredByItem(name, rows) {
+			discovered++
+			continue
+		}
+		// An item below this name is where its history went when the old root
+		// was split into child items; a row over it would refuse its every run.
+		if other, ok := zfsItemBelow(name, rows); ok {
+			log.Printf("api: discover zfs: not rebuilding %q, the item %q lies inside it", name, other.Dataset) //nolint:gosec // G706: %q-quoted
 			continue
 		}
 		if dryRun {
@@ -442,6 +475,27 @@ func (s *Service) DiscoverZFSDatasets(ctx context.Context, dryRun bool) (int, []
 		discovered++
 	}
 	return discovered, skipped, readErr
+}
+
+// zfsCoveredByItem reports whether an existing item's tree holds name below its
+// root, so the name's history already belongs to that item.
+func zfsCoveredByItem(name string, rows []store.ZFSDataset) bool {
+	for _, d := range rows {
+		if zfs.DescendantOf(name, d.Dataset) {
+			return true
+		}
+	}
+	return false
+}
+
+// zfsItemBelow finds the first existing item whose root lies below name.
+func zfsItemBelow(name string, rows []store.ZFSDataset) (store.ZFSDataset, bool) {
+	for _, d := range rows {
+		if zfs.DescendantOf(d.Dataset, name) {
+			return d, true
+		}
+	}
+	return store.ZFSDataset{}, false
 }
 
 // zfsMinimalRoot names the item a dataset belongs to: the shortest of the found
@@ -579,6 +633,9 @@ func (s *Service) zfsValidateExcludes(d store.ZFSDataset, patterns []string) err
 // zfsValidateStopContainers checks that every container of the consistency stop
 // list exists and is not BombVault itself, which would stop the run with it.
 func (s *Service) zfsValidateStopContainers(ctx context.Context, names []string) error {
+	if len(names) > zfsMaxStopContainers {
+		return fmt.Errorf("at most %d containers can be stopped for one item", zfsMaxStopContainers)
+	}
 	if len(names) == 0 || s.docker == nil {
 		return nil
 	}

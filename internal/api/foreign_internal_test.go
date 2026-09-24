@@ -1878,3 +1878,42 @@ func TestForeignZFSRestoreRequiresFolderAndGuards(t *testing.T) {
 		t.Fatal("an adopted foreign dataset must stay switched off")
 	}
 }
+
+func TestForeignZFSRestoreOverALocalItemCreatesNoOverlappingRow(t *testing.T) {
+	const location = "backups/other"
+	eng := &foreignRecordingEngine{
+		opens: opensEncrypted,
+		snaps: []restic.Snapshot{
+			{ID: "aaaa1111", Time: "2026-07-05T10:00:00Z", Tags: []string{"zfs:tank/data"}},
+		},
+	}
+	s := newForeignTestService(t, eng)
+	s.cfg.HostMountRoot = filepath.ToSlash(s.cfg.HostMountRoot)
+	seedForeignRepoMarker(t, s, location)
+	zfsMountedFixture(t, s.cfg.HostMountRoot)
+	local, err := s.store.CreateZFSDataset(store.ZFSDataset{Dataset: "tank/data/sub", Enabled: true})
+	if err != nil {
+		t.Fatalf("create the local item: %v", err)
+	}
+
+	id, _, err := s.OpenForeign(context.Background(), location, foreignTestKey, nil)
+	if err != nil {
+		t.Fatalf("OpenForeign: %v", err)
+	}
+	started, err := s.StartForeignRestore(context.Background(), id, "zfs", "tank/data", "latest", true, zfsMountedSub+"/from-other", nil, false, "")
+	if !started || err != nil {
+		t.Fatalf("started = %v, err = %v", started, err)
+	}
+	waitForeignIdle(t, s)
+
+	rows, err := s.store.ListZFSDatasets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 1 || rows[0].ID != local.ID {
+		t.Fatalf("rows = %+v, want only the local item, which a row over its tree would block", rows)
+	}
+	if other, overlaps := s.zfsOverlappingItem(local); overlaps {
+		t.Fatalf("the local item now overlaps %s", other)
+	}
+}

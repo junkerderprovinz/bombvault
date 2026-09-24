@@ -191,13 +191,15 @@ func (h *Handler) handleDeleteZFSDataset(w http.ResponseWriter, r *http.Request)
 }
 
 // handleDeleteBackupsZFSDataset forgets every member's snapshots and then the
-// item. DELETE /api/zfs/datasets/{id}/backups
+// item, and says what is still on the pool.
+// DELETE /api/zfs/datasets/{id}/backups?safety=true|false
 func (h *Handler) handleDeleteBackupsZFSDataset(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.zfsIDParam(w, r)
 	if !ok {
 		return
 	}
-	if err := h.svc.DeleteBackupsZFSDataset(r.Context(), id); err != nil {
+	res, err := h.svc.DeleteBackupsZFSDataset(r.Context(), id, r.URL.Query().Get("safety") == "true")
+	if err != nil {
 		if errors.Is(err, errDomainBusy) {
 			writeJSON(w, http.StatusConflict, failEnvelope(err))
 			return
@@ -208,7 +210,9 @@ func (h *Handler) handleDeleteBackupsZFSDataset(w http.ResponseWriter, r *http.R
 	if rErr := h.reloadScheduler(); rErr != nil {
 		log.Printf("api: zfs: reloading the scheduler after a delete failed: %v", rErr)
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"leftoversRemaining": res.LeftoversRemaining, "safetyRemaining": res.SafetyRemaining,
+	}))
 }
 
 // handleListZFSSafetySnapshots lists what in-place restores kept, reconciled
