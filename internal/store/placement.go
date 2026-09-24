@@ -325,6 +325,13 @@ func (r *Repo) ImportPlacement(in PlacementImport) error {
 					return fmt.Errorf("ImportPlacement %s: %w", rule.Identity, err)
 				}
 			}
+			// A file written before a takeover keeps the rule under the name the
+			// entry has left since.
+			for _, e := range []entryTable{containerEntries, vmEntries} {
+				if err := carryFormerNameRulesTx(tx, e, ""); err != nil {
+					return fmt.Errorf("ImportPlacement: %w", err)
+				}
+			}
 		}
 		return nil
 	})

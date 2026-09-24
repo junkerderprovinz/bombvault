@@ -2,14 +2,18 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -77,6 +81,86 @@ func TestAnUnlinkKeepsTheBackupsOfTheLinkedPeriodOutOfTheTarget(t *testing.T) {
 
 	if err := f.svc.UnlinkContainerAlias(ctx, "nginx"); err != nil {
 		t.Fatalf("UnlinkContainerAlias: %v", err)
+	}
+	if err := f.svc.ReplicateOffsite(ctx, "containers"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	if got, want := copiedTo(f, b2.Repo), []string{"aaaa0003"}; !slices.Equal(got, want) {
+		t.Fatalf("copied %v to B2, want %v", got, want)
+	}
+}
+
+func TestAFileExportedBeforeATakeoverKeepsTheOldHistoryOutOfTheTarget(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket/containers")
+	f.container("nginx", "")
+	f.rule("containers", "container:nginx", store.SkipAll)
+	exp := f.do(http.MethodGet, "/api/settings/export", nil)
+	f.dock.installed = map[string]bool{"web": true}
+	ctx := context.Background()
+	if err := f.svc.TakeOverContainer(ctx, "nginx", "web"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+	if res := f.do(http.MethodPost, "/api/settings/import?apply=true", exp); res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+	f.listing("containers", b2.ID, 50)
+	linked := time.Now().Add(5 * time.Second).Unix()
+	f.hold(f.domainPath("containers"),
+		snap("aaaa0001", 100, "container:nginx"),
+		snap("aaaa0002", linked, "container:web", "formerly:nginx"),
+		snap("aaaa0003", linked, "container:db"))
+
+	if err := f.svc.ReplicateOffsite(ctx, "containers"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	if got, want := copiedTo(f, b2.Repo), []string{"aaaa0003"}; !slices.Equal(got, want) {
+		t.Fatalf("copied %v to B2, want %v", got, want)
+	}
+}
+
+// writeLinkedContainerDef leaves the definition mirror of name at the domain
+// path, recording old as the former name linked to it at linkedAt.
+func writeLinkedContainerDef(t *testing.T, f *placementFixture, name, old string, linkedAt int64) {
+	t.Helper()
+	def, err := json.Marshal(map[string]any{
+		"appdataPaths": []string{},
+		"aliases":      []definitionAlias{{Name: old, LinkedAt: linkedAt}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	enc, err := secret.Encrypt(f.svc.cfg.AppKey, def)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := defsDirFor(filepath.FromSlash(f.domainPath("containers")))
+	if err := os.MkdirAll(dir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, name+".def"), enc, 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestARuleOnAFormerNameDiscoverLinksKeepsItsHistoryOutOfTheTarget(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket/containers")
+	f.listing("containers", b2.ID, 50)
+	f.rule("containers", "container:nginx", store.SkipAll)
+	f.hold(f.domainPath("containers"),
+		snap("aaaa0001", 100, "container:nginx"),
+		snap("aaaa0002", 300, "container:web", "formerly:nginx"),
+		snap("aaaa0003", 300, "container:db"))
+	writeLinkedContainerDef(t, f, "web", "nginx", 200)
+	writeContainerDef(t, f, f.domainPath("containers"), "db")
+	ctx := context.Background()
+
+	if _, err := f.svc.Discover(ctx, false); err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	if err := f.st.ConfirmPlacement("containers", nil); err != nil {
+		t.Fatal(err)
 	}
 	if err := f.svc.ReplicateOffsite(ctx, "containers"); err != nil {
 		t.Fatalf("ReplicateOffsite: %v", err)

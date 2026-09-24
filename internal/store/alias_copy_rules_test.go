@@ -232,6 +232,100 @@ func TestADeletedEntryWithoutARuleLeavesItsFormerNamesFollowing(t *testing.T) {
 	mustNoRule(t, r, "containers", "container:web")
 }
 
+// linkedTo is an entry called name with each of olds linked to it as a former
+// name, the first one oldest.
+func linkedTo(t *testing.T, r *store.Repo, name string, olds ...string) {
+	t.Helper()
+	tg, err := r.UpsertTarget(store.Target{ContainerName: name})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i, old := range olds {
+		if _, err := r.AddAliasAt("container", old, tg.ID, int64(100*(i+1))); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func importRules(t *testing.T, r *store.Repo, rules ...store.CopyRule) {
+	t.Helper()
+	if err := r.ImportPlacement(store.PlacementImport{HasRules: true, Rules: rules}); err != nil {
+		t.Fatalf("ImportPlacement: %v", err)
+	}
+}
+
+func TestAnImportedRuleOnAFormerNameMovesToTheEntry(t *testing.T) {
+	r := newRepo(t)
+	linkedTo(t, r, "web", "nginx")
+
+	importRules(t, r, store.CopyRule{Domain: "containers", Identity: "container:nginx", Skip: []string{store.SkipAll}})
+	mustRule(t, r, "containers", "container:web", store.SkipAll)
+	mustNoRule(t, r, "containers", "container:nginx")
+}
+
+func TestAnImportedRuleOnAFormerNameStaysWithItsOwner(t *testing.T) {
+	t.Run("the entry has a rule of its own", func(t *testing.T) {
+		r := newRepo(t)
+		linkedTo(t, r, "web", "nginx")
+		importRules(t, r,
+			store.CopyRule{Domain: "containers", Identity: "container:nginx", Skip: []string{store.SkipAll}},
+			store.CopyRule{Domain: "containers", Identity: "container:web", Skip: []string{"t-b2"}})
+		mustRule(t, r, "containers", "container:web", "t-b2")
+		mustRule(t, r, "containers", "container:nginx", store.SkipAll)
+	})
+	t.Run("a row carries the former name", func(t *testing.T) {
+		r := newRepo(t)
+		linkedTo(t, r, "web", "nginx")
+		if _, err := r.UpsertTarget(store.Target{ContainerName: "nginx"}); err != nil {
+			t.Fatal(err)
+		}
+		importRules(t, r, store.CopyRule{Domain: "containers", Identity: "container:nginx", Skip: []string{store.SkipAll}})
+		mustRule(t, r, "containers", "container:nginx", store.SkipAll)
+		mustNoRule(t, r, "containers", "container:web")
+	})
+}
+
+func TestTheRuleOfTheLatestFormerNameMovesToTheEntry(t *testing.T) {
+	r := newRepo(t)
+	linkedTo(t, r, "app", "nginx", "web")
+
+	importRules(t, r,
+		store.CopyRule{Domain: "containers", Identity: "container:nginx", Skip: []string{store.SkipAll}},
+		store.CopyRule{Domain: "containers", Identity: "container:web", Skip: []string{"t-b2"}})
+	mustRule(t, r, "containers", "container:app", "t-b2")
+	mustRule(t, r, "containers", "container:nginx", store.SkipAll)
+}
+
+func TestAnImportedRuleOnAVMsFormerNameMovesToTheVM(t *testing.T) {
+	r := newRepo(t)
+	vm, err := r.UpsertVMTarget(store.VMTarget{Name: "win11"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.AddVMAliasAt("windows-11", vm.ID, 200, ""); err != nil {
+		t.Fatal(err)
+	}
+
+	importRules(t, r, store.CopyRule{Domain: "vms", Identity: "vm:windows-11", Skip: []string{store.SkipAll}})
+	mustRule(t, r, "vms", "vm:win11", store.SkipAll)
+	mustNoRule(t, r, "vms", "vm:windows-11")
+}
+
+func TestARuleOnANewlyLinkedFormerNameMovesToTheEntry(t *testing.T) {
+	r := newRepo(t)
+	store.SeedCopyRule(t, r, "containers", "container:nginx", store.SkipAll)
+	store.SeedCopyRule(t, r, "containers", "container:db", store.SkipAll)
+	linkedTo(t, r, "web", "nginx")
+	linkedTo(t, r, "postgres", "db")
+
+	if err := r.CarryFormerNameRule("container", "nginx"); err != nil {
+		t.Fatalf("CarryFormerNameRule: %v", err)
+	}
+	mustRule(t, r, "containers", "container:web", store.SkipAll)
+	mustNoRule(t, r, "containers", "container:nginx")
+	mustRule(t, r, "containers", "container:db", store.SkipAll)
+}
+
 func TestARenamedVMTakesItsCopyRuleAndGivesItBackOnUnlink(t *testing.T) {
 	r := newRepo(t)
 	if _, err := r.UpsertVMTarget(store.VMTarget{Name: "windows-11"}); err != nil {
