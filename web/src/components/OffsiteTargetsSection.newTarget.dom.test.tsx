@@ -185,4 +185,17 @@ describe("the off-site targets and a new location", () => {
       expect(action.querySelector("svg")).not.toBeNull();
     }
   });
+
+  it("marks a switched-off target with the same qualifier placement uses, not an enabled one", async () => {
+    listed.targets = [hetzner];
+    renderWithProviders(<OffsiteTargetsSection domain="containers" t={t} />);
+    await screen.findByText(hetzner.name);
+    expect(screen.queryByText("(off)")).toBeNull();
+    cleanup();
+
+    listed.targets = [{ ...hetzner, enabled: false }];
+    renderWithProviders(<OffsiteTargetsSection domain="containers" t={t} />);
+    await screen.findByText(hetzner.name);
+    expect(screen.queryByText("(off)")).not.toBeNull();
+  });
 });

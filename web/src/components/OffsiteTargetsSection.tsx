@@ -23,7 +23,7 @@ import { withLtrFragments, REPO_LOCAL_HINT_LTR_FRAGMENTS } from "../lib/ltrFragm
 import { useToast } from "../lib/toast";
 import { useConfirm } from "../lib/useConfirm";
 import { useNamedRepos } from "../lib/useNamedRepos";
-import { isPlacementDomain } from "../lib/placement";
+import { isPlacementDomain, offQualifier } from "../lib/placement";
 import { placementErrorText, pushSaveWarnings } from "../lib/placementCodes";
 import { placementChanged } from "../lib/placementEvents";
 import { alsoDirectText, directAsk, directUse, retentionLowered } from "../lib/directRepo";
@@ -363,6 +363,11 @@ export function OffsiteTargetsSection({
               <Badge tone="neutral" size={ROW_BADGE_SIZE} wrap>
                 {tgt.storageClass || t("cloud.storageClass.default")}
               </Badge>
+              {!tgt.enabled && (
+                <Badge tone="muted" size={ROW_BADGE_SIZE} wrap>
+                  {offQualifier(t)}
+                </Badge>
+              )}
               {tgt.immutable && (
                 <Badge tone="ok" size={ROW_BADGE_SIZE} wrap>
                   {t("offsite.immutable")}

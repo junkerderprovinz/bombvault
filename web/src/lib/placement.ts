@@ -95,6 +95,13 @@ export function viewHomeLabel(t: T, host: string, view: PlacementView, options: 
   return t("placement.unknown").replace("{name}", () => name);
 }
 
+/** The bracketed "off" word alone, the same one viewHomeLabel and TargetChips
+ *  append to a switched-off target's name, for a badge that carries only that
+ *  word next to the name rather than folded into it. */
+export function offQualifier(t: T): string {
+  return t("placement.off").replace("{name}", () => "").trim();
+}
+
 const LOCK_KEYS: Record<SegmentLockReason, TranslationKey> = {
   "no-target": "placement.noTarget",
   "own-credentials": "placement.lockOwnCredentials",
