@@ -209,8 +209,11 @@ exec "$client" $conn --user="$user" "$db"
 // in the official image is the postmaster: it takes a signalled child it never
 // started for a crashed backend, drops every connection and reinitialises the
 // cluster. So no process is signalled while it still has a child of the dump
-// under it, and in practice the first signal is enough, because pg_dumpall
-// ends when its pg_dump does and timeout ends with the tool it wraps.
+// under it, and a process that does not come down in time ends the stop: a
+// dump that runs on until its own time limit costs a backup, signalling its
+// parent costs the database. In practice the first signal is enough, because
+// pg_dumpall ends when its pg_dump does and timeout ends with the tool it
+// wraps.
 const orphanStopScript = `case "$(tr '\0' ' ' </proc/$1/cmdline 2>/dev/null)" in *dump*) ;; *) exit 0 ;; esac
 bv_parent() {
   [ -r "/proc/$1/stat" ] || return 1
@@ -232,10 +235,11 @@ while [ "$depth" -lt 8 ]; do
   done
   [ -n "$grew" ] || break
 done
-budget=60
+budget=100
 below=""
 for pid in $order; do
-  while [ -n "$below" ] && [ "$budget" -gt 0 ] && [ -e "/proc/$below" ]; do
+  while [ -n "$below" ] && [ -e "/proc/$below" ]; do
+    [ "$budget" -gt 0 ] || exit 1
     budget=$((budget - 1))
     sleep 0.05
   done

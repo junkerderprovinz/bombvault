@@ -1076,3 +1076,68 @@ func TestOrphanStopSignalsTheDumpTreeAndNothingElse(t *testing.T) {
 		t.Errorf("the middle process hung under %s when it was signalled, want its own parent %s", got["mid"], pids["fakedump"])
 	}
 }
+
+// deaf writes a script that ignores a TERM, the process the stop cannot get
+// past.
+func deaf(t *testing.T, dir, name, started string) string {
+	t.Helper()
+	body := "#!/bin/sh\n" +
+		"trap '' TERM\n" +
+		"echo \"" + name + " $$\" >> " + started + "\n" +
+		"while :; do sleep 30 & wait; done\n"
+	path := filepath.Join(dir, name+".sh")
+	if err := os.WriteFile(path, []byte(body), 0o755); err != nil { //nolint:gosec // G306: the script has to be executable
+		t.Fatal(err)
+	}
+	return path
+}
+
+// TestOrphanStopStopsAtAProcessThatWillNotGo pins the trade the stop makes when
+// a dump process does not answer its signal. Going on would signal the parent
+// of a process still running, which hands that process to PID 1, the server
+// itself, and costs the cluster a crash recovery; stopping leaves the dump to
+// its own time limit and reports that it is still there.
+func TestOrphanStopStopsAtAProcessThatWillNotGo(t *testing.T) {
+	if _, err := os.Stat("/proc/self/stat"); err != nil {
+		t.Skip("no /proc to walk")
+	}
+	dir := t.TempDir()
+	signalled := filepath.Join(dir, "signalled")
+	started := filepath.Join(dir, "started")
+
+	stubborn := deaf(t, dir, "stubborn", started)
+	top := waiter(t, dir, "fakedump", stubborn, signalled, started)
+
+	cmd := exec.Command(top) //nolint:gosec // G204: a script this test wrote
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = cmd.Process.Kill()
+		_ = cmd.Wait()
+	})
+	pids := waitFor(t, started, 2)
+	t.Cleanup(func() {
+		if n, err := strconv.Atoi(pids["stubborn"]); err == nil {
+			if p, fErr := os.FindProcess(n); fErr == nil {
+				_ = p.Kill()
+			}
+		}
+	})
+
+	n, err := strconv.Atoi(pids["fakedump"])
+	if err != nil {
+		t.Fatalf("pid %q: %v", pids["fakedump"], err)
+	}
+	argv, err := dbdump.OrphanStopArgv(n)
+	if err != nil {
+		t.Fatalf("OrphanStopArgv: %v", err)
+	}
+	out, err := exec.Command(argv[0], argv[1:]...).CombinedOutput() //nolint:gosec // G204: the argv is this package's own constant script
+	if err == nil {
+		t.Errorf("the stop reported the dump ended, output %q", out)
+	}
+	if got := readPairs(t, signalled); len(got) != 0 {
+		t.Errorf("the stop signalled %v above a process that was still running", got)
+	}
+}
