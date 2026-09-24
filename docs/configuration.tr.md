@@ -52,9 +52,14 @@ Her kapsayıcı için hangi bind bağlarının ve adlandırılmış birimlerin y
 - Kapı isteğe bağlı olduğu için, ayarlanmadığında tüm arayüz ve API (site dışı kurulum, kurcalama testi rotaları ve kurtarma kiti dahil) porta ulaşabilen herkes tarafından erişilebilirdir. Site dışı, değiştirilemez yedekler ya da şifreleme kullanıldığında kapıyı etkinleştirin.
 - BombVault'u yalnızca güvenilen, dışarıya açık olmayan bir ağda çalıştırın. Uzaktan erişim için onu kimlik doğrulama ve TLS ekleyen bir ters proxy arkasına yerleştirin. Yanıtlar temel güvenlik başlıklarını taşır (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Ters vekil sunucunun arkasında her istek vekilin adresini taşır; bu yüzden `TRUSTED_PROXY` olmadan fren tüm istemcileri tek kovada sayar ve bir saldırganın başarısızlıkları seni de dışarıda bırakır. Vekili `TRUSTED_PROXY` içinde belirt ki sayım yeniden istemci başına yapılsın.
+- BombVault'un önündeki bir ters vekil sunucu `Authorization` ya da `X-API-Key` başlığını `/mcp` yoluna iletmeli ve yanıtları arabelleğe almamalıdır; aksi hâlde asistanlar bağlanamaz. Bkz. [MCP sunucusu](mcp.md#tls).
 - `HTTP_ONLY=true` ile oturum çerezi `Secure` bayrağını kaybeder (düz HTTP üzerinde çalışması için buna zorunludur), bu nedenle gizlilik önemliyse parolayı yalnızca TLS'yi sonlandıran bir proxy arkasında etkinleştirin.
 - VM yedekleme SSH bağlantısı, ilk bağlantıda host anahtarına güvenir (TOFU) ve sonrasında onu sabitler. Konteynerden host'a giden yolunuz güvenilir değilse host'un anahtarını bant dışı doğrulayın.
 - Şifreleme etkinleştirildiğinde (Ayarlar; varsayılan olarak açık) yedekler restic tarafından şifrelenir, anahtar `APP_KEY`'den türetilir.
+
+## MCP sunucusu {#mcp-server}
+
+MCP sunucusu hiçbir ortam değişkeni gerektirmez. **Ayarlar, Sistem, MCP sunucusu** altında bir anahtar oluşturarak açarsınız ve web arayüzüyle aynı bağlantı noktasında `/mcp` yolunda yanıt verir (örneğin `https://192.168.1.10:3443/mcp`). Etkin anahtar yokken bu yol `404` ile yanıt verir. İstemciler, sertifikalar ve sınırlar [MCP sunucusu](mcp.md) sayfasında anlatılır.
 
 ## SSH üzerinden VM yedeklemesi
 

@@ -61,6 +61,10 @@ Başarısız bir döküm, çevresindeki yedeklemeyi asla düşürmez; kendi baş
 
 Elle geri koymak için: konteyneri durdurun, mevcut veri klasörünün adını değiştirip yoldan çekin, saklanan klasörü özgün adına geri döndürün ve konteyneri başlatın. Unraid'de bunu Shares sekmesindeki dosya yöneticisi yapar.
 
+## Bir yapay zekâ asistanı bağlanamıyor
+
+[MCP sunucusu](mcp.md#troubleshooting) sayfası, MCP uç noktasının her durum kodunun ve her reddinin ne anlama geldiğini ve ne yapılacağını anlatır.
+
 ## Konteyner sürekli yeniden başlıyor ya da sağlıksız görünüyor
 
 BombVault, kendi `/api/health`'inden sağlıklı/sağlıksız bildirir. Motor bir şekilde sıkışırsa bir otomatik onarma aracı (Autoheal gibi) onu otomatik olarak yeniden başlatabilir. Altta yatan neden için konteyner günlüğünü ve `/spike` raporunu denetleyin.
