@@ -341,8 +341,11 @@ type zfsFakeContainer struct {
 	// startLeavesDown makes Start succeed while the container stays down, the
 	// way a container that crashes on start behaves.
 	startLeavesDown bool
-	stopErr         error
-	startErr        error
+	// stopsAnyway makes the container go down although Stop returns stopErr,
+	// the way the daemon finishes a stop whose client gave up waiting.
+	stopsAnyway bool
+	stopErr     error
+	startErr    error
 }
 
 // zfsFakeDocker answers the container calls a consistency window makes and
@@ -361,6 +364,10 @@ type zfsFakeDocker struct {
 	// onStop runs while a stop is in flight, so a test can hold two stops
 	// against each other.
 	onStop func(name string)
+	// stopCtxErrs and stopBudgets are what each stop's context said once onStop
+	// had run: whether it was cancelled, and how long it still had.
+	stopCtxErrs []error
+	stopBudgets []time.Duration
 }
 
 func newZFSFakeDocker(running ...string) *zfsFakeDocker {
@@ -420,7 +427,7 @@ func (d *zfsFakeDocker) Inspect(_ context.Context, ref string) (model.Inspect, e
 	}, nil
 }
 
-func (d *zfsFakeDocker) Stop(_ context.Context, ref string, _ time.Duration) error {
+func (d *zfsFakeDocker) Stop(ctx context.Context, ref string, _ time.Duration) error {
 	c := d.byID(ref)
 	if c == nil {
 		return fmt.Errorf("no such container %q", ref)
@@ -430,12 +437,19 @@ func (d *zfsFakeDocker) Stop(_ context.Context, ref string, _ time.Duration) err
 	if d.onStop != nil {
 		d.onStop(name)
 	}
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.stopCtxErrs = append(d.stopCtxErrs, ctx.Err())
+	if deadline, ok := ctx.Deadline(); ok {
+		d.stopBudgets = append(d.stopBudgets, time.Until(deadline))
+	}
 	if c.stopErr != nil {
+		if c.stopsAnyway {
+			c.running = false
+		}
 		return c.stopErr
 	}
-	d.mu.Lock()
 	c.running = false
-	d.mu.Unlock()
 	return nil
 }
 

@@ -172,6 +172,9 @@ func BackupZFSItem(ctx context.Context, d ZFSBackupDeps) (Summary, error) {
 	if d.Consistency != nil {
 		frozen, measured, freezeErr := d.Consistency.Freeze(ctx)
 		if freezeErr != nil {
+			// The pre command has already put the app into its backup state, and
+			// only the post command takes it out again.
+			d.post(ctx)
 			return Summary{}, d.failRun(runID, freezeErr)
 		}
 		thaw, windowOf = frozen, measured
@@ -188,13 +191,7 @@ func BackupZFSItem(ctx context.Context, d ZFSBackupDeps) (Summary, error) {
 		thaw(detached)
 		window = windowOf()
 	}
-	hookDetail := ""
-	if d.Hooks != nil {
-		if hookErr := d.Hooks.Post(detached); hookErr != nil {
-			hookDetail = truncateErr(hookErr)
-			log.Printf("zfs backup: post-snapshot command for %s failed: %v", d.Root, hookErr)
-		}
-	}
+	hookDetail := d.post(detached)
 	if recErr := d.Recorder.RecordRun(runID, snap, window, hookDetail); recErr != nil {
 		log.Printf("zfs backup: record run for %s: %v", d.Root, recErr)
 	}
@@ -223,6 +220,19 @@ func BackupZFSItem(ctx context.Context, d ZFSBackupDeps) (Summary, error) {
 
 	d.destroy(ctx, snap)
 	return summary, runErr
+}
+
+// post runs the post-snapshot command on a context nothing cancels and returns
+// what a failing command said, for the run's detail.
+func (d ZFSBackupDeps) post(ctx context.Context) string {
+	if d.Hooks == nil {
+		return ""
+	}
+	if err := d.Hooks.Post(context.WithoutCancel(ctx)); err != nil {
+		log.Printf("zfs backup: post-snapshot command for %s failed: %v", d.Root, err)
+		return truncateErr(err)
+	}
+	return ""
 }
 
 // failRun records a refusal that ends the run before any member was read.

@@ -606,6 +606,20 @@ func TestBackupZFSItemFreezeErrorTakesNoSnapshot(t *testing.T) {
 	}
 }
 
+func TestBackupZFSItemRunsPostHookWhenFreezeFails(t *testing.T) {
+	f := newZFSFixture()
+	f.deps.Consistency = &fakeZFSConsistency{log: f.log, freezeErr: &backup.ZFSRefusal{Code: "container-unknown", Detail: "db"}}
+	f.deps.Hooks = &fakeZFSHooks{log: f.log}
+	if _, err := f.run(t, t.Context()); err == nil {
+		t.Fatal("a failed freeze must fail the run")
+	}
+	f.requireOrder(t, "pre", "freeze")
+	f.requireOrder(t, "freeze", "post")
+	if f.log.count("post") != 1 {
+		t.Fatalf("post ran %d times, want once: %v", f.log.count("post"), f.log.entries)
+	}
+}
+
 func TestBackupZFSItemPreHookFailureTakesNoSnapshot(t *testing.T) {
 	f := newZFSFixture()
 	cons := &fakeZFSConsistency{log: f.log}

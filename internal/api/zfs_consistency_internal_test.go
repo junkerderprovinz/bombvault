@@ -134,6 +134,50 @@ func TestZFSConsistencyStopFailureRestartsAndSkipsSnapshot(t *testing.T) {
 	}
 }
 
+func TestZFSConsistencyStopThatOutlivesItsCallStillCountsAsStopped(t *testing.T) {
+	dock := newZFSFakeDocker("db", "web")
+	dock.containers["db"].stopErr = context.DeadlineExceeded
+	dock.containers["db"].stopsAnyway = true
+	s, st, _, d := zfsStopFixture(t, dock, "db", "web")
+
+	if _, err := s.BackupZFSDataset(context.Background(), d.ID); err != nil {
+		t.Fatalf("a container that did stop must not fail the run: %v", err)
+	}
+	if callIndex(dock.recorded(), "start:db") < 0 {
+		t.Fatalf("calls = %v, want the container that went down started again", dock.recorded())
+	}
+	if !dock.containers["db"].running {
+		t.Fatal("db was left stopped")
+	}
+	row, err := st.GetZFSDataset(d.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(row.RestartPending) != 0 {
+		t.Fatalf("restart marker = %v, want it cleared once db runs again", row.RestartPending)
+	}
+}
+
+func TestZFSConsistencyStopOutlastsTheGraceAndTheCancel(t *testing.T) {
+	dock := newZFSFakeDocker("db")
+	s, _, _, d := zfsStopFixture(t, dock, "db")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	dock.onStop = func(string) { cancel() }
+
+	_, _ = s.BackupZFSDataset(ctx, d.ID)
+
+	if len(dock.stopCtxErrs) != 1 || dock.stopCtxErrs[0] != nil {
+		t.Fatalf("stop context errors = %v, want a stop a cancel cannot cut short", dock.stopCtxErrs)
+	}
+	if len(dock.stopBudgets) != 1 || dock.stopBudgets[0] <= zfsStopTimeout {
+		t.Fatalf("stop budgets = %v, want more than the %v grace the daemon waits before it kills", dock.stopBudgets, zfsStopTimeout)
+	}
+	if callIndex(dock.recorded(), "start:db") < 0 {
+		t.Fatalf("calls = %v, want db started again after the cancelled run", dock.recorded())
+	}
+}
+
 func TestZFSConsistencyTimesOutOnBusyContainersLock(t *testing.T) {
 	dock := newZFSFakeDocker("db")
 	s, st, host, d := zfsStopFixture(t, dock, "db")
@@ -182,9 +226,37 @@ func TestZFSConsistencyGetsLockBetweenRelockingContainerBackups(t *testing.T) {
 		<-done
 	})
 
-	unlock, ok := s.lockWithin("containers", "zfs-consistency", 5*time.Second)
+	unlock, ok := s.lockWithin(context.Background(), "containers", "zfs-consistency", 5*time.Second)
 	if !ok {
 		t.Fatal("the window never got the lock between two container backups")
+	}
+	unlock()
+}
+
+func TestZFSConsistencyWaitForContainersEndsOnCancel(t *testing.T) {
+	s, _, _, _ := zfsRunFixture(t, zfsTwoDatasetTree())
+	release := s.lockDomainFor("containers", "backup")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	time.AfterFunc(20*time.Millisecond, cancel)
+	done := make(chan bool, 1)
+	go func() {
+		_, ok := s.lockWithin(ctx, "containers", "zfs-consistency", time.Hour)
+		done <- ok
+	}()
+	select {
+	case ok := <-done:
+		if ok {
+			t.Fatal("the wait reported the lock although the holder never let go")
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("a cancelled run kept waiting for the containers domain")
+	}
+
+	release()
+	unlock, ok := s.lockWithin(context.Background(), "containers", "backup", 5*time.Second)
+	if !ok {
+		t.Fatal("the abandoned wait kept the containers domain locked")
 	}
 	unlock()
 }

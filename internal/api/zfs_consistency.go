@@ -18,6 +18,11 @@ import (
 // grace a container backup gives.
 const zfsStopTimeout = 30 * time.Second
 
+// zfsStopKillMargin is what the stop call gets beyond the grace. The daemon
+// answers only once the container has exited, which for an app that ignores
+// SIGTERM is after the kill at the end of the grace.
+const zfsStopKillMargin = 15 * time.Second
+
 // zfsManualLockWait is how long a run a user started waits for the containers
 // domain. It is a var so tests can reach the timeout without waiting it out.
 var zfsManualLockWait = 30 * time.Minute
@@ -33,12 +38,12 @@ func zfsLockWait(ctx context.Context) time.Duration {
 	return zfsManualLockWait
 }
 
-// lockWithin waits up to wait for a domain's lock and gives up cleanly. Go
-// hands a mutex over to a waiter that has been queued for more than a
-// millisecond before it hands it to a fresh contender, so the window slots in
-// between two container backups instead of waiting out the whole batch. A wait
-// of zero or less blocks until the lock is free.
-func (s *Service) lockWithin(domain, reason string, wait time.Duration) (func(), bool) {
+// lockWithin waits up to wait for a domain's lock and gives up cleanly, also
+// when ctx ends first. Go hands a mutex over to a waiter that has been queued
+// for more than a millisecond before it hands it to a fresh contender, so the
+// window slots in between two container backups instead of waiting out the
+// whole batch. A wait of zero or less blocks until the lock is free.
+func (s *Service) lockWithin(ctx context.Context, domain, reason string, wait time.Duration) (func(), bool) {
 	if wait <= 0 {
 		return s.lockDomainFor(domain, reason), true
 	}
@@ -61,12 +66,13 @@ func (s *Service) lockWithin(domain, reason string, wait time.Duration) (func(),
 			mu.Unlock()
 		}, true
 	case <-timer.C:
-		go func() {
-			<-got
-			mu.Unlock()
-		}()
-		return nil, false
+	case <-ctx.Done():
 	}
+	go func() {
+		<-got
+		mu.Unlock()
+	}()
+	return nil, false
 }
 
 // zfsConsistency holds an item's containers down for the snapshot instant, so
@@ -101,8 +107,11 @@ func (c *zfsConsistency) Freeze(ctx context.Context) (func(context.Context), fun
 	if len(deps) == 0 {
 		return func(context.Context) {}, func() time.Duration { return 0 }, nil
 	}
-	unlock, ok := c.svc.lockWithin("containers", "zfs-consistency", c.wait)
+	unlock, ok := c.svc.lockWithin(ctx, "containers", "zfs-consistency", c.wait)
 	if !ok {
+		if ctx.Err() != nil {
+			return nil, nil, ctx.Err()
+		}
 		return nil, nil, &backup.ZFSRefusal{Code: "containers-busy", Detail: c.item.Dataset}
 	}
 	c.unlock = unlock
@@ -164,17 +173,16 @@ func (c *zfsConsistency) stop(ctx context.Context, deps []backup.StopContainer) 
 			wg.Add(1)
 			go func(dep backup.StopContainer) {
 				defer wg.Done()
-				sctx, cancel := context.WithTimeout(ctx, zfsStopTimeout)
-				defer cancel()
-				err := c.svc.docker.Stop(sctx, dep.ID, zfsStopTimeout)
+				down, err := c.stopOne(ctx, dep)
 				mu.Lock()
 				defer mu.Unlock()
+				if down {
+					c.stopped = append(c.stopped, dep)
+				}
 				if err != nil {
 					log.Printf("api: zfs: stopping %q for the snapshot of %s failed: %v", dep.Name, c.item.Dataset, err) //nolint:gosec // G706: %q-quoted
 					failed = append(failed, dep.Name)
-					return
 				}
-				c.stopped = append(c.stopped, dep)
 			}(deps[i])
 		}
 		wg.Wait()
@@ -183,6 +191,29 @@ func (c *zfsConsistency) stop(ctx context.Context, deps []backup.StopContainer) 
 		}
 	}
 	return nil
+}
+
+// stopOne stops one container and reports whether it may be down, which is
+// what thaw has to start again. The stop runs on a context no cancel reaches,
+// because the daemon carries on with a stop its client gave up on; a failed
+// call is therefore checked against the container itself.
+func (c *zfsConsistency) stopOne(ctx context.Context, dep backup.StopContainer) (bool, error) {
+	detached := context.WithoutCancel(ctx)
+	sctx, cancel := context.WithTimeout(detached, zfsStopTimeout+zfsStopKillMargin)
+	defer cancel()
+	err := c.svc.docker.Stop(sctx, dep.ID, zfsStopTimeout)
+	if err == nil {
+		return true, nil
+	}
+	in, iErr := c.svc.docker.Inspect(detached, dep.ID)
+	if iErr != nil {
+		return true, err
+	}
+	if !in.Running {
+		log.Printf("api: zfs: %q is stopped although the stop call reported %v", dep.Name, err) //nolint:gosec // G706: %q-quoted
+		return true, nil
+	}
+	return false, err
 }
 
 // thaw starts the containers again in dependency order and releases the
