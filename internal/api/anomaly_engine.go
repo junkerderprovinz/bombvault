@@ -842,7 +842,7 @@ func (e *anomalyEngine) HeldIdentityTags() (heldIdentityTags, error) {
 	if !settings.AnomalyEnabled || !settings.AnomalyRetentionHold {
 		return nil, nil
 	}
-	rows, _, err := e.svc.store.ListAnomalies(store.AnomalyFilter{Limit: anomalyOpenRowLimit})
+	rows, err := e.svc.store.HeldAnomalies(holdingMetrics)
 	if err != nil {
 		return nil, err
 	}
@@ -852,12 +852,28 @@ func (e *anomalyEngine) HeldIdentityTags() (heldIdentityTags, error) {
 	}
 	out := heldIdentityTags{}
 	for _, row := range rows {
-		if !anomalyHolds(row, settings) {
-			continue
-		}
 		for _, tag := range e.svc.heldTagsOf(row, items) {
 			out[tag] = struct{}{}
 		}
+	}
+	return out, nil
+}
+
+// heldScopes are the series whose old backups a finding is keeping.
+type heldScopes map[anomalyScope]bool
+
+// heldScopes reads that set, which is empty while either switch is off.
+func (e *anomalyEngine) heldScopes(settings store.Settings) (heldScopes, error) {
+	if !settings.AnomalyEnabled || !settings.AnomalyRetentionHold {
+		return nil, nil
+	}
+	rows, err := e.svc.store.HeldAnomalies(holdingMetrics)
+	if err != nil {
+		return nil, err
+	}
+	out := make(heldScopes, len(rows))
+	for _, row := range rows {
+		out[anomalyScope{Kind: row.ScopeKind, ID: row.ScopeID}] = true
 	}
 	return out, nil
 }
@@ -1039,6 +1055,10 @@ func (e *anomalyEngine) rebuildCache() error {
 	if err != nil {
 		return err
 	}
+	held, err := e.heldScopes(settings)
+	if err != nil {
+		return err
+	}
 	notifyCfg, err := e.svc.NotifyConfig()
 	if err != nil {
 		return err
@@ -1057,7 +1077,8 @@ func (e *anomalyEngine) rebuildCache() error {
 		UnmeasuredVolumes: unmeasured,
 		// The same gate sendNotifications applies, so the page cannot promise a
 		// message that nothing would deliver.
-		NotifyMuted: !notifyCfg.Active() || !notifyCfg.Configured(),
+		NotifyMuted:   !notifyCfg.Active() || !notifyCfg.Configured(),
+		RetentionHeld: len(held),
 	}
 	for _, row := range open {
 		switch row.Severity {
@@ -1071,14 +1092,11 @@ func (e *anomalyEngine) rebuildCache() error {
 		case "info":
 			next.Summary.Open.Info++
 		}
-		if anomalyHolds(row, settings) {
-			next.Summary.RetentionHeld++
-		}
 	}
 
 	now := e.now().Unix()
 	for _, ref := range sortedItemRefs(items) {
-		item, listed, iErr := e.itemView(ref, prefs[ref.TargetID], settings, results, open, now)
+		item, listed, iErr := e.itemView(ref, prefs[ref.TargetID], settings, results, open, held, now)
 		if iErr != nil {
 			return iErr
 		}
@@ -1104,7 +1122,8 @@ func (e *anomalyEngine) rebuildCache() error {
 // itemView assembles one row of the Items tab. An item that is neither
 // scheduled nor backed up in the last ninety days is not listed at all.
 func (e *anomalyEngine) itemView(ref anomalyItemRef, prefs store.ItemPrefs, settings store.Settings,
-	results map[anomalyScope]anomalyScopeResult, open []store.Anomaly, now int64) (AnomalyItem, bool, error) {
+	results map[anomalyScope]anomalyScopeResult, open []store.Anomaly, held heldScopes,
+	now int64) (AnomalyItem, bool, error) {
 
 	itemScope := anomalyScope{Kind: anomalyScopeItem, ID: ref.TargetID}
 	res, judged := results[itemScope]
@@ -1132,7 +1151,7 @@ func (e *anomalyEngine) itemView(ref anomalyItemRef, prefs store.ItemPrefs, sett
 			ResticMS: res.Typical.ResticMS,
 		}
 	}
-	item.Open, item.RetentionHeld = scopeCounts(open, itemScope, settings)
+	item.Open, item.RetentionHeld = scopeCounts(open, itemScope), held[itemScope]
 
 	dumpScope := anomalyScope{Kind: anomalyScopeDump, ID: ref.TargetID}
 	if dump, hasDumps := results[dumpScope]; hasDumps && dump.Runs > 0 {
@@ -1142,7 +1161,7 @@ func (e *anomalyEngine) itemView(ref anomalyItemRef, prefs store.ItemPrefs, sett
 			},
 			Typical: AnomalySeriesTypical{SourceBytes: dump.Typical.SourceBytes, ResticMS: dump.Typical.ResticMS},
 		}
-		series.Open, series.RetentionHeld = scopeCounts(open, dumpScope, settings)
+		series.Open, series.RetentionHeld = scopeCounts(open, dumpScope), held[dumpScope]
 		item.Dump = &series
 		item.RetentionHeld = item.RetentionHeld || series.RetentionHeld
 	}
@@ -1271,9 +1290,8 @@ func newestEligibleAt(rows []store.SeriesRun) int64 {
 	return newest
 }
 
-func scopeCounts(open []store.Anomaly, sc anomalyScope, settings store.Settings) (AnomalyOpenCounts, bool) {
+func scopeCounts(open []store.Anomaly, sc anomalyScope) AnomalyOpenCounts {
 	var counts AnomalyOpenCounts
-	held := false
 	for _, row := range open {
 		if row.ScopeKind != sc.Kind || row.ScopeID != sc.ID {
 			continue
@@ -1286,9 +1304,8 @@ func scopeCounts(open []store.Anomaly, sc anomalyScope, settings store.Settings)
 		case "info":
 			counts.Info++
 		}
-		held = held || anomalyHolds(row, settings)
 	}
-	return counts, held
+	return counts
 }
 
 // unmeasuredNames is every repository no backend can measure, each named once

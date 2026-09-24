@@ -1,6 +1,7 @@
 package store_test
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 
@@ -673,6 +674,45 @@ func TestOpenAnomalyCountsSplitBySeverity(t *testing.T) {
 	}
 	if recovered != 1 {
 		t.Fatalf("recovered criticals = %d", recovered)
+	}
+}
+
+// The retention pass asks for the holding rows through this query, so it has to
+// return all of them, not the first page a listing would serve.
+func TestHeldAnomaliesReadsEveryOpenCriticalOfItsMetrics(t *testing.T) {
+	r := anomalyRepo(t)
+	var rows []store.Anomaly
+	for i := range store.MaxAnomalyLimit + 1 {
+		row := finding("source_bytes_shrink", "critical", 1000)
+		row.ScopeID = "tg-" + strconv.Itoa(i)
+		row.Fingerprint = store.AnomalyFingerprint("source", "item", row.ScopeID, "source_bytes_shrink")
+		rows = append(rows, row)
+	}
+	slow := finding("duration_slower", "warning", 1000)
+	slow.Detector = "duration"
+	slow.Fingerprint = store.AnomalyFingerprint("duration", "item", "tg", "duration_slower")
+	rows = append(rows, slow)
+	if _, err := r.ApplyAnomalyChanges(store.AnomalyChanges{Insert: rows, Now: 1000}); err != nil {
+		t.Fatalf("insert: %v", err)
+	}
+
+	held, err := r.HeldAnomalies([]string{"source_bytes_shrink", "duration_slower"})
+	if err != nil {
+		t.Fatalf("HeldAnomalies: %v", err)
+	}
+	if len(held) != store.MaxAnomalyLimit+1 {
+		t.Fatalf("got %d row(s), want %d", len(held), store.MaxAnomalyLimit+1)
+	}
+
+	if _, err := r.ApplyAnomalyChanges(store.AnomalyChanges{Recover: []string{held[0].ID}, Now: 2000}); err != nil {
+		t.Fatalf("recover: %v", err)
+	}
+	held, err = r.HeldAnomalies([]string{"source_bytes_shrink", "duration_slower"})
+	if err != nil {
+		t.Fatalf("HeldAnomalies: %v", err)
+	}
+	if len(held) != store.MaxAnomalyLimit {
+		t.Fatalf("a recovered finding still holds: %d row(s)", len(held))
 	}
 }
 

@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"sync/atomic"
 	"testing"
 
@@ -58,6 +59,55 @@ func TestHeldFlagFollowsTheRetentionHoldSwitch(t *testing.T) {
 	f.e.MarkAllDirty()
 	f.pass(t)
 	held("with the hold switched off", false)
+}
+
+// A repository outage can open more criticals than one page of findings holds.
+// The rows that pause deleting old backups are read without that limit, or a
+// retention pass would delete the snapshots one of them was keeping.
+func TestHoldSurvivesAFloodOfOpenCriticals(t *testing.T) {
+	f := newEngineFixture(t)
+	id := f.container(t, "nextcloud")
+
+	// A rewrite is an event: its last_seen_at never moves again, so it sorts
+	// below every critical a later pass refreshes.
+	rows := []store.Anomaly{openCritical("rewrite", metricNewDataRewrite, id, f.now-2*86400)}
+	rows[0].TargetID, rows[0].Domain = id, anomalyDomainContainer
+	for i := range anomalyOpenRowLimit {
+		scope := "gone-" + strconv.Itoa(i)
+		rows = append(rows, openCritical(scope, metricFailureStreak, scope, f.now))
+	}
+	if _, err := f.st.ApplyAnomalyChanges(store.AnomalyChanges{Insert: rows, Now: f.now}); err != nil {
+		t.Fatal(err)
+	}
+
+	tags, err := f.e.HeldIdentityTags()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !tags.holds("container:nextcloud") {
+		t.Fatalf("the hold was lost behind %d other criticals: %v", anomalyOpenRowLimit, tags.names())
+	}
+	f.e.refresh()
+	if n := f.e.summary().RetentionHeld; n != 1 {
+		t.Fatalf("the summary counts %d held item(s), want 1", n)
+	}
+	items := f.e.itemViews()
+	if len(items) != 1 || !items[0].RetentionHeld {
+		t.Fatalf("the item badge lost the hold: %+v", items)
+	}
+}
+
+// openCritical is one open critical finding on its own scope, so a test can
+// fill the findings table with rows that differ.
+func openCritical(id, metric, scopeID string, lastSeenAt int64) store.Anomaly {
+	return store.Anomaly{
+		ID:          id,
+		Fingerprint: store.AnomalyFingerprint(anomalyDetectors[metric], anomalyScopeItem, scopeID, metric),
+		Detector:    anomalyDetectors[metric], Metric: metric,
+		Severity: "critical", State: "open",
+		ScopeKind: anomalyScopeItem, ScopeID: scopeID,
+		FirstSeenAt: lastSeenAt, LastSeenAt: lastSeenAt, Occurrences: 1,
+	}
 }
 
 // A guard that cannot look must not wave the forget through: a retention pass
