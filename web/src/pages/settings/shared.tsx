@@ -25,7 +25,7 @@ export function Card({
   hint?: string;
   children: React.ReactNode;
   /** Rainbow position of the heading notch among the cards on the active
-   *  tab. Call sites take it from SettingsPage's nextHue() counter. */
+   *  tab. Call sites take it from their tab's nextHue() counter. */
   hueIndex?: number;
   /** Rendered inside another card that already provides the surface and the
    *  padding, as CloudCard and RcloneCard are in Recovery's step 3, so both
