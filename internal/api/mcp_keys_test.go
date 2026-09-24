@@ -1,6 +1,7 @@
 package api_test
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -603,16 +604,6 @@ func TestMCPKeyListCarriesEndpointAndAuthState(t *testing.T) {
 	if rows := mcpKeyRows(t, list, "keys"); len(rows) != 1 || rows[0]["inUse"] != false {
 		t.Fatalf("a key no run names must not be inUse: %v", rows)
 	}
-	cert, _ := list["certificate"].(map[string]any)
-	if cert["selfIssued"] != true {
-		t.Fatalf("certificate = %v, want BombVault's own on a fresh data dir", list["certificate"])
-	}
-	if names, _ := cert["names"].([]any); len(names) != 3 || names[0] != "localhost" || names[1] != "127.0.0.1" || names[2] != "::1" {
-		t.Fatalf("certificate names = %v", cert["names"])
-	}
-	if fp, _ := cert["fingerprint"].(string); len(fp) != 64 {
-		t.Fatalf("fingerprint = %q, want a sha256 in hex", fp)
-	}
 
 	if _, err := st.StartRunWith("container:plex", "backup", store.RunMeta{StartedVia: "mcp", StartedViaKey: id}); err != nil {
 		t.Fatal(err)
@@ -634,6 +625,60 @@ func TestMCPKeyListCarriesEndpointAndAuthState(t *testing.T) {
 	revoked := mcpKeyRows(t, list, "revoked")
 	if len(revoked) != 1 || revoked[0]["id"] != revokedID {
 		t.Fatalf("revoked keys = %v", revoked)
+	}
+}
+
+// The card warns about BombVault's certificate only to a browser that sees it.
+// Behind a proxy that ends TLS the browser sees the proxy's certificate, and a
+// warning about BombVault's would send the operator after the wrong fix.
+func TestMCPKeyListNamesTheCertificateOnlyToABrowserThatSeesIt(t *testing.T) {
+	st := newMemStore(t)
+	h, _ := newMCPKeyRouter(t, st, mcpAppKey)
+
+	list := func(host, serverName string, tlsOn bool, header ...string) map[string]any {
+		t.Helper()
+		r := httptest.NewRequest(http.MethodGet, "/api/mcp/keys", nil)
+		r.Host = host
+		if tlsOn {
+			r.TLS = &tls.ConnectionState{Version: tls.VersionTLS13, HandshakeComplete: true, ServerName: serverName}
+		}
+		for i := 0; i+1 < len(header); i += 2 {
+			r.Header.Set(header[i], header[i+1])
+		}
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		var m map[string]any
+		if err := json.Unmarshal(w.Body.Bytes(), &m); err != nil || m["ok"] != true {
+			t.Fatalf("list keys from %s: status=%d body=%q", host, w.Code, w.Body.String())
+		}
+		return m
+	}
+
+	direct := list("192.168.1.10:3443", "", true)
+	cert, _ := direct["certificate"].(map[string]any)
+	if cert["selfIssued"] != true {
+		t.Fatalf("certificate = %v, want BombVault's own on a fresh data dir", direct["certificate"])
+	}
+	if names, _ := cert["names"].([]any); len(names) != 3 || names[0] != "localhost" || names[1] != "127.0.0.1" || names[2] != "::1" {
+		t.Fatalf("certificate names = %v", cert["names"])
+	}
+	if fp, _ := cert["fingerprint"].(string); len(fp) != 64 {
+		t.Fatalf("fingerprint = %q, want a sha256 in hex", fp)
+	}
+	if byName := list("tower.local:3443", "tower.local", true); byName["certificate"] == nil {
+		t.Fatal("a browser that asked for tower.local by name was served BombVault's certificate, want it described")
+	}
+
+	for name, m := range map[string]map[string]any{
+		"plain HTTP from a proxy":            list("bombvault.home.example.com", "", false),
+		"TLS from a proxy without a name":    list("bombvault.home.example.com", "", true),
+		"TLS from a proxy naming its target": list("bv.tail1234.ts.net", "192.168.1.10", true),
+		"TLS with forwarding headers":        list("tower.local", "tower.local", true, "X-Forwarded-For", "100.64.0.7"),
+		"TLS with a Forwarded header":        list("tower.local", "tower.local", true, "Forwarded", "for=100.64.0.7"),
+	} {
+		if m["certificate"] != nil {
+			t.Fatalf("%s: certificate = %v, want null", name, m["certificate"])
+		}
 	}
 }
 

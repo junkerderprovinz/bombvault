@@ -322,6 +322,15 @@ describe("the certificate of this address", () => {
     }
   });
 
+  it("says nothing about certificates behind a proxy that ends TLS", async () => {
+    vi.stubGlobal("location", new URL("https://bombvault.home.example.com/settings"));
+    await renderCard(payload({ keys: [key()], certificate: null }));
+
+    await waitFor(() => expect(screen.getByText(en["mcp.snippetsLabel"])).toBeTruthy());
+    expect(screen.queryByRole("button", { name: en["mcp.certAddAddress"] })).toBeNull();
+    expect(cardText()).not.toContain("NODE_EXTRA_CA_CERTS");
+  });
+
   it("says nothing about certificates over plain HTTP", async () => {
     vi.stubGlobal("location", new URL("http://tower:3443/settings"));
     await renderCard(payload({ keys: [key()], certificate: selfIssued }));
