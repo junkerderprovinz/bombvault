@@ -1019,8 +1019,8 @@ func zvolBackupSnapshotName(now time.Time) string {
 // not) — the FIRST failure is returned to the caller, which fails the whole
 // VM backup run, so the summed summary returned here is never a partial one.
 // A disk's own restic snapshot id is only logged: nothing persists it anywhere
-// a later restore can find it — see VMBackupDeps.BlockDisks's doc comment for
-// that known, intentionally-unsolved gap.
+// a later restore can find it. See VMBackupDeps.BlockDisks's doc comment for
+// that known, unsolved gap.
 //
 // logPrefix lets each caller's log/error lines carry ITS OWN prefix ("vm
 // backup" for runVMGraceful, "vm live backup" for runVMLive) rather than a
