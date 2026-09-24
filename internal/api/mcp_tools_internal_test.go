@@ -79,7 +79,7 @@ func TestMCPToolFailuresAreScrubbedToolErrors(t *testing.T) {
 
 // A domain BombVault knows but the MCP vocabulary does not would be invisible
 // to every tool, and the tools would still answer as if they had seen
-// everything. With stage 4 merged this test is what fails first.
+// everything. A domain the service learns later fails here first.
 func TestMCPDomainsCoverEveryServiceDomain(t *testing.T) {
 	h, _, repo, _ := newMCPGateHandler(t)
 	h.svc = NewService(h.cfg, repo, &foreignFakeDocker{}, nil, nil)
