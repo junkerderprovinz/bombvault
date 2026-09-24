@@ -248,6 +248,27 @@ describe("PlacementRow", () => {
     expect(fake.callsTo("previewItemPlacement")).toHaveLength(1);
   });
 
+  it("has no copies line once it backs up to a repository that is never copied", async () => {
+    const onDirect = {
+      segment: "offsite-only",
+      repo: "repo-b2-direct",
+      repoKind: "direct",
+      repoLabel: "B2 direct",
+      skip: ["*"],
+      locked: true,
+      lockReason: "first-backup",
+      segmentLocks: { local: "home-fixed", "local-offsite": "at-target" },
+    } as const;
+    for (const copiesFollow of [true, false]) {
+      renderRow(placementView({ ...onDirect, skip: [...onDirect.skip], copiesFollow }));
+      expect((await segment("Off-site only")).getAttribute("aria-pressed")).toBe("true");
+      expect(screen.queryByText("Copies follow the default")).toBeNull();
+      expect(screen.queryByText("Own copies")).toBeNull();
+      expect(screen.queryByRole("button", { name: "Reset" })).toBeNull();
+      cleanup();
+    }
+  });
+
   it("follows the default while nothing is chosen", async () => {
     renderRow(placementView({ homeFollows: true }));
     expect(await screen.findByText("Follows the default")).toBeTruthy();
