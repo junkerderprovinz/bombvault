@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
@@ -431,4 +432,21 @@ func formatEverythingDomain(r EverythingDomainResult) string {
 		details = append(details, fmt.Sprintf("%s: %s", f.Name, f.Reason))
 	}
 	return fmt.Sprintf("%s: %d/%d ok (%s)", r.Domain, ok, r.Attempted, strings.Join(details, ", "))
+}
+
+// handleBackupEverything starts a "Backup Everything" pass, which runs the
+// containers, vms, flash, files and config domains in sequence (everything.go),
+// on the server and returns immediately. Like handleBackupAll it answers 409
+// with a reason when the pass fails to start or one is already running.
+func (h *Handler) handleBackupEverything(w http.ResponseWriter, r *http.Request) {
+	started, err := h.svc.StartBackupEverything(r.Context())
+	if err != nil { // mirrors handleBackupAll: any failure to even start is reported the same way
+		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	if !started {
+		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": "a Backup Everything pass is already running"})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
 }
