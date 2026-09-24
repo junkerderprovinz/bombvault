@@ -3531,6 +3531,9 @@ export async function foreignRestore(req: {
    *  belong to a different container (#125). Default off; the backend refuses
    *  without it. */
   overwrite?: boolean;
+  /** zfs domain: restore every dataset of the snapshot's run, each into its
+   *  own subfolder of `target`. */
+  wholeTree?: boolean;
 }): Promise<OkEnvelope & { started?: boolean }> {
   const res = await fetch("/api/foreign/restore", {
     method: "POST",
@@ -3545,18 +3548,20 @@ export async function foreignRestore(req: {
   }
 }
 
-/** POST /api/foreign/files — list the files of one file set's snapshot in an open
- *  foreign session, so the Recovery card can offer a subfolder/file picker before
- *  a selective foreign restore (#123). Read-only and files-domain only; `snapshot`
- *  accepts "latest". The foreign, session-scoped twin of listSnapshotFilesFileSet. */
+/** POST /api/foreign/files — list the files of one file set's or one dataset's
+ *  snapshot in an open foreign session, so the Recovery card can offer a
+ *  subfolder/file picker before a selective foreign restore (#123). Read-only;
+ *  `snapshot` accepts "latest". The foreign, session-scoped twin of
+ *  listSnapshotFilesFileSet. */
 export function listForeignFiles(
   session: string,
   item: string,
-  snapshot: string
+  snapshot: string,
+  domain: "files" | "zfs" = "files"
 ): Promise<ListFilesResponse> {
   return fetchJSON("/api/foreign/files", {
     method: "POST",
-    body: JSON.stringify({ session, domain: "files", item, snapshot }),
+    body: JSON.stringify({ session, domain, item, snapshot }),
   });
 }
 

@@ -62,6 +62,7 @@ import {
   type FileEntry,
   type ForeignInventory,
   type ForeignItem,
+  type Snapshot,
 } from "../lib/api";
 import { SnapshotFileTree } from "../components/SnapshotFileTree";
 import { useConfirm } from "../lib/useConfirm";
@@ -345,6 +346,23 @@ function isForeignSessionGone(err: string | undefined): boolean {
   return !!err && /session/i.test(err) && /(expired|unknown)/i.test(err);
 }
 
+/** The dataset a foreign ZFS snapshot holds, from its zfs: tag. */
+function zfsSnapshotDataset(s: Snapshot): string {
+  return s.tags.find((tag) => tag.startsWith("zfs:"))?.slice(4) ?? "";
+}
+
+/** The host snapshot a ZFS backup read, which every dataset of one run
+ *  shares; a snapshot without one stands for itself. */
+function zfsRunStamp(s: Snapshot): string {
+  return /\/\.zfs\/snapshot\/([^/]+)$/.exec(s.paths[0] ?? "")?.[1] ?? s.id;
+}
+
+/** Whether two datasets are one, or one lies below the other. A restore is
+ *  recorded on the item that covers the dataset, which may be its parent. */
+function zfsSameTree(a: string, b: string): boolean {
+  return a === b || a.startsWith(b + "/") || b.startsWith(a + "/");
+}
+
 // ForeignItemRow restores one foreign item from a chosen snapshot; its runs are
 // recorded under the same domains as local ones. Files and VMs need a
 // destination folder: a foreign file set has no trusted local source path, and
@@ -403,7 +421,14 @@ function ForeignItemRow({
   const [filesError, setFilesError] = useState<string | null>(null);
   const [filesFilter, setFilesFilter] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const subsetActive = domain === "files" && filesMode === "subset";
+
+  // ZFS only: the whole tree of one run, or one dataset of it, whole or a
+  // picked part.
+  const [zfsDataset, setZFSDataset] = useState("");
+  const [zfsPickFiles, setZFSPickFiles] = useState(false);
+  const subsetActive =
+    (domain === "files" && filesMode === "subset") || (domain === "zfs" && zfsDataset !== "" && zfsPickFiles);
+  const restoreItem = domain === "zfs" && zfsDataset !== "" ? zfsDataset : item.name;
 
   // Containers only: appdata is remapped onto this host. `overwrite` confirms
   // writing into a non-empty destination that may belong to another container;
@@ -420,8 +445,24 @@ function ForeignItemRow({
 
   const runDomain =
     domain === "containers" ? "container" : domain === "vms" ? "vm" : domain === "zfs" ? "zfs" : "files";
-  // Newest first for the picker; restic lists oldest first.
-  const snaps = [...item.snapshots].reverse();
+  // Newest first for the picker; restic lists oldest first. A whole tree is
+  // restored per run, so each run is offered once, and a single dataset offers
+  // only its own snapshots.
+  const newestFirst = [...item.snapshots].reverse();
+  const zfsDatasets =
+    domain === "zfs" ? [...new Set(item.snapshots.map(zfsSnapshotDataset).filter(Boolean))].sort() : [];
+  const snaps =
+    domain !== "zfs"
+      ? newestFirst
+      : zfsDataset !== ""
+        ? newestFirst.filter((s) => zfsSnapshotDataset(s) === zfsDataset)
+        : newestFirst.filter((s, i) => newestFirst.findIndex((o) => zfsRunStamp(o) === zfsRunStamp(s)) === i);
+
+  function chooseZFSDataset(next: string) {
+    setZFSDataset(next);
+    setSnapshot("latest");
+    if (next === "") setZFSPickFiles(false);
+  }
 
   // Best effort: the restore guards the destination either way.
   useEffect(() => {
@@ -448,7 +489,7 @@ function ForeignItemRow({
     setFilesLoading(true);
     setFilesError(null);
     setSelected(new Set());
-    listForeignFiles(session, item.name, snapshot)
+    listForeignFiles(session, restoreItem, snapshot, domain === "zfs" ? "zfs" : "files")
       .then((res) => {
         if (cancelled) return;
         if (res.ok) setForeignFiles(res.files ?? []);
@@ -467,7 +508,7 @@ function ForeignItemRow({
     return () => {
       cancelled = true;
     };
-  }, [subsetActive, session, item.name, snapshot, t]);
+  }, [subsetActive, session, restoreItem, snapshot, domain, t]);
 
   function toggleSelected(p: string) {
     setSelected((prev) => {
@@ -493,12 +534,14 @@ function ForeignItemRow({
     try {
       const res = await fireAndWaitRun({
         kind: "restore",
-        matchRun: (r) => r.domain === runDomain && r.target === item.name,
+        matchRun: (r) =>
+          r.domain === runDomain &&
+          (domain === "zfs" ? zfsSameTree(r.target, restoreItem) : r.target === item.name),
         start: () =>
           foreignRestore({
             session,
             domain,
-            item: item.name,
+            item: restoreItem,
             snapshot,
             confirm: true,
             // Empty leaves the default to the backend: user/domains for VMs,
@@ -506,6 +549,7 @@ function ForeignItemRow({
             target: target.trim() || undefined,
             paths: subsetActive ? [...selected] : undefined,
             overwrite: domain === "containers" ? overwrite : undefined,
+            wholeTree: domain === "zfs" ? zfsDataset === "" : undefined,
           }),
         t,
       });
@@ -620,6 +664,50 @@ function ForeignItemRow({
             onChange={setTarget}
             placeholder="user/domains"
             hint={t("recovery.foreignVMDestHint")}
+          />
+        </div>
+      )}
+      {domain === "zfs" && (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-3 flex-wrap text-xs">
+            <span className="text-carbon-textSub">{t("zfs.restore.dataset")}</span>
+            <SelectField
+              value={zfsDataset}
+              onChange={chooseZFSDataset}
+              label={t("zfs.restore.dataset")}
+              disabled={busy}
+              options={[
+                { value: "", label: t("zfs.restore.wholeTree") },
+                ...zfsDatasets.map((d) => ({ value: d, label: d })),
+              ]}
+              className="rounded-control bg-carbon-surface2 px-2 py-1.5 text-xs text-carbon-text glim-field-focus"
+            />
+            {zfsDataset !== "" && (
+              <Toggle
+                checked={zfsPickFiles}
+                onChange={setZFSPickFiles}
+                disabled={busy}
+                label={t("zfs.restore.selectFiles")}
+              />
+            )}
+          </div>
+          {subsetActive && (
+            <SnapshotFileTree
+              files={foreignFiles}
+              loading={filesLoading}
+              error={filesError}
+              filter={filesFilter}
+              onFilterChange={setFilesFilter}
+              selected={selected}
+              onToggle={toggleSelected}
+              t={t}
+            />
+          )}
+          <FolderBrowser
+            label={t("recovery.foreignTargetFolder")}
+            value={target}
+            hostMountRoot={hostMountRoot}
+            onChange={setTarget}
           />
         </div>
       )}
