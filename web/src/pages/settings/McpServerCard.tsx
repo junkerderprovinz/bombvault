@@ -281,14 +281,6 @@ export function McpServerCard({ hueIndex }: { hueIndex?: number }) {
             </p>
           )}
 
-          {showRestoreNotice && (
-            <p className="text-sm text-statusWarn">{t("mcp.restoreRevokedNotice")}</p>
-          )}
-
-          {keys.some((k) => k.unusable === "app-key-changed") && (
-            <p className="text-sm text-statusWarn">{t("mcp.appKeyChanged")}</p>
-          )}
-
           {secure && certificate !== null && !certCovers && (
             <div className="flex flex-col items-start gap-2 rounded-card bg-statusWarnBgSoft px-3 py-2.5 text-sm leading-relaxed text-carbon-text">
               <p>
@@ -309,6 +301,14 @@ export function McpServerCard({ hueIndex }: { hueIndex?: number }) {
                 />
               )}
             </div>
+          )}
+
+          {showRestoreNotice && (
+            <p className="text-sm text-statusWarn">{t("mcp.restoreRevokedNotice")}</p>
+          )}
+
+          {keys.some((k) => k.unusable === "app-key-changed") && (
+            <p className="text-sm text-statusWarn">{t("mcp.appKeyChanged")}</p>
           )}
 
           {keys.length > 0 && (
