@@ -677,6 +677,52 @@ func TestZFSBackupRecordsWhatResticReadOfEachDataset(t *testing.T) {
 	}
 }
 
+// The retention pass after a run ages every dataset under its own tag. A
+// dataset whose data just vanished keeps its old backups until the user has
+// seen the finding, and its siblings prune as usual.
+func TestZFSRetentionPausesOnlyTheDatasetThatLostItsData(t *testing.T) {
+	s, st, _, eng := zfsRunFixture(t, zfsTwoDatasetTree())
+	s.anomalies = newAnomalyEngine(s, time.Now)
+	secs := 60.0
+	eng.sum = restic.Summary{BytesAdded: 1 << 20, TotalBytesProcessed: 20 << 30, TotalFilesProcessed: 900, TotalDuration: &secs}
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.RetentionKeepDaily = 7
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	d := zfsSeedItem(t, st, zfsRoot)
+	fp := selectionFingerprint(zfsSelection(d))
+	for range 5 {
+		runID, sErr := st.StartRun(d.ID, "backup")
+		if sErr != nil {
+			t.Fatal(sErr)
+		}
+		for _, dataset := range []string{zfsRoot, zfsChild} {
+			source, files, parent := int64(20<<30), int64(900), true
+			if err := st.AddZFSRunMember(store.ZFSRunMember{
+				RunID: runID, Dataset: dataset, Outcome: outcomeBackedUp, ResticSnapshot: "old-" + dataset,
+				SourceBytes: &source, SourceFiles: &files, HasParent: &parent, DurationMS: 60_000,
+			}); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if err := st.FinishRunMeasured(runID, "success", "old", 0, "", &store.RunMetrics{SourceBytes: 40 << 30}, fp); err != nil {
+			t.Fatal(err)
+		}
+	}
+	zfsDirEmpty = func(dir string) (bool, error) { return strings.HasPrefix(dir, zfsChildPath+"/"), nil }
+
+	if _, err := s.BackupZFSDataset(context.Background(), d.ID); err != nil {
+		t.Fatalf("backup: %v", err)
+	}
+	if got := eng.readForgetTags(); strings.Join(got, ",") != "zfs:"+zfsRoot {
+		t.Fatalf("forget tags = %v, want only the root: the emptied child keeps its backups", got)
+	}
+}
+
 func TestZFSBackupUsesDatasetRepoOverride(t *testing.T) {
 	s, st, _, eng := zfsRunFixture(t, zfsTwoDatasetTree())
 	named, err := st.UpsertOffsiteTarget(store.OffsiteTarget{

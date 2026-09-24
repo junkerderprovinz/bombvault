@@ -191,7 +191,9 @@ func (s *Service) notifyZFSUnsuppressed(ev notify.Event) {
 
 // applyRetentionTags ages every member of a tree under its own identity tag and
 // reclaims the space once at the end. One tag for the whole item would put all
-// its datasets into a single keep-N group and age whole datasets out.
+// its datasets into a single keep-N group and age whole datasets out. A
+// dataset whose data a finding says was lost keeps its old backups, the way a
+// container's do, while its siblings prune.
 func (s *Service) applyRetentionTags(ctx context.Context, repo string, settings store.Settings, mode restic.Mode, tags []string, domain string) {
 	p := s.retentionPolicy(settings)
 	if !p.Any() || len(tags) == 0 {
@@ -202,6 +204,17 @@ func (s *Service) applyRetentionTags(ctx context.Context, repo string, settings 
 		return
 	}
 	for _, tag := range tags {
+		hold := anomalyScope{Kind: anomalyScopeZFSDS, ID: strings.TrimPrefix(tag, "zfs:")}
+		held, why, hErr := s.anomalies.RetentionHeld(ctx, hold)
+		if hErr != nil {
+			log.Printf("api: %s: retention skipped for %s: the anomaly check failed: %v", domain, tag, hErr)
+			s.notifyRetentionFailed(ctx, tag, "the anomaly check could not run, so nothing was deleted: "+scrubError(hErr))
+			continue
+		}
+		if held {
+			log.Printf("api: %s: retention paused for %s: %s", domain, tag, why)
+			continue
+		}
 		if err := s.forgetWithLockHeal(ctx, repo, p, mode, []string{tag}, false); err != nil {
 			log.Printf("api: retention prune failed (backup is safe): %v", err)
 			s.notifyRetentionFailed(ctx, tag, truncateRunErr(err))
