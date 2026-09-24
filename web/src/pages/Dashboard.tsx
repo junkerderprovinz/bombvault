@@ -738,7 +738,7 @@ export function AnomaliesCard({
       ) : !summary.enabled ? (
         <div className="flex flex-col gap-1 text-sm text-carbon-textSub">
           <p>{t("anomaly.off")}</p>
-          <Link to="/settings#integrity" className="text-accentText hover:underline">
+          <Link to="/settings#anomalies" className="text-accentText hover:underline">
             {t("anomaly.openSettings")}
           </Link>
           {open.length > 0 && (

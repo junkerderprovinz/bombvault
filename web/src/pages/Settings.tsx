@@ -972,6 +972,12 @@ const TAB_ORDER: TabKey[] = [
   "system",
 ];
 
+/** Hashes that name a card rather than a tab: the tab holding the card opens
+ *  and the card scrolls into view, since it sits below the fold. */
+const CARD_TAB: Record<string, TabKey> = {
+  anomalies: "integrity",
+};
+
 // ---------------------------------------------------------------------------
 // Settings tab icons (GlimStone form-engine Phase 2, Task 3 — design-language
 // "top, with an icon": "Settings pages line their tabs up horizontally at the
@@ -1756,29 +1762,39 @@ export function SettingsPage() {
       });
   }
 
-  // Deep-link support: /settings#offsite (and every other tab hash) selects the
-  // matching tab instead of scrolling. Read once on mount, and also listen for
-  // hashchange so an in-app "#offsite" link fired while already on /settings
-  // switches the tab (no remount happens in that case). The Dashboard's
-  // "Link to /settings#offsite" therefore lands on the Off-site tab.
+  // A tab hash such as /settings#offsite selects that tab, and a card hash
+  // (CARD_TAB) selects the card's tab. Read on mount and on hashchange, since
+  // an in-app hash link fired while already on /settings remounts nothing.
+  const [cardAnchor, setCardAnchor] = useState("");
   useEffect(() => {
     const applyHash = () => {
       const h = window.location.hash.replace(/^#/, "");
-      if ((TAB_ORDER as string[]).includes(h)) {
-        // Direction (motion-engine animation 7): computed the same way the
-        // tab strip's own onChange below does, just reading the CURRENT tab
-        // off tabRef instead of a closed-over (and here, permanently stale —
-        // this effect only ever runs once, at mount) `tab` value.
+      const target = CARD_TAB[h] ?? h;
+      if ((TAB_ORDER as string[]).includes(target)) {
+        // The slide direction reads the current tab off tabRef: this effect
+        // runs once, so its own `tab` is the one from mount.
         const from = TAB_ORDER.indexOf(tabRef.current);
-        const to = TAB_ORDER.indexOf(h as TabKey);
+        const to = TAB_ORDER.indexOf(target as TabKey);
         if (from !== -1 && to !== -1) setTabDir(to > from ? 1 : -1);
-        setTab(h as TabKey);
+        setTab(target as TabKey);
+        setCardAnchor(target === h ? "" : h);
       }
     };
     applyHash();
     window.addEventListener("hashchange", applyHash);
     return () => window.removeEventListener("hashchange", applyHash);
   }, []);
+
+  // The card exists only once the settings have loaded and its tab is showing.
+  const settingsLoaded = settings !== null;
+  useEffect(() => {
+    if (!cardAnchor || !settingsLoaded) return;
+    const card = document.getElementById(cardAnchor);
+    if (!card) return;
+    // jsdom has no scrollIntoView.
+    card.scrollIntoView?.({ block: "start" });
+    setCardAnchor("");
+  }, [cardAnchor, settingsLoaded, tab]);
 
   // While "sync" is on, mirror the Containers cadence onto VMs + Flash +
   // Folders (Task 2 — "der toggle soll auch ordner einschließen") in live
@@ -4585,16 +4601,20 @@ export function SettingsPage() {
           hueIndex={nextHue()}
         />
 
-        <AnomalyCard
-          t={t}
-          settings={settings}
-          summary={anomalySummary}
-          save={(key, next) => void autoSaveToggle(key, next, setAnomalySaveState, setAnomalySaveError)}
-          busy={fieldBusy}
-          shake={fieldShake}
-          pulse={fieldPulse}
-          hueIndex={nextHue()}
-        />
+        {/* The target of /settings#anomalies. The margin keeps the heading
+            badge, which straddles the card's top edge, in view. */}
+        <div id="anomalies" className="scroll-mt-6">
+          <AnomalyCard
+            t={t}
+            settings={settings}
+            summary={anomalySummary}
+            save={(key, next) => void autoSaveToggle(key, next, setAnomalySaveState, setAnomalySaveError)}
+            busy={fieldBusy}
+            shake={fieldShake}
+            pulse={fieldPulse}
+            hueIndex={nextHue()}
+          />
+        </div>
 
         {/* Restore-check schedule (schedulesChecks): the scheduled off-site
             append-only tamper test — moved from the Schedules tab (see that
