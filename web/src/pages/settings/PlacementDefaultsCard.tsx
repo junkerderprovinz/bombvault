@@ -333,6 +333,7 @@ function DefaultEditor({ row, options, hueOffset }: { row: DefaultRow; options: 
           tone="neutral"
           onClick={() => void apply()}
           disabled={busy}
+          className="glim-btn-elastic"
         />
         {row.paused && (
           <Button

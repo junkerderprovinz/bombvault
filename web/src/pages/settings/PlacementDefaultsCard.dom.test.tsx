@@ -175,6 +175,12 @@ describe("PlacementDefaultsCard", () => {
     expect(await screen.findByText("Changed in the meantime and left alone: redis")).toBeTruthy();
   });
 
+  it("lets the apply button give up its width floor so a narrow card can shrink it", async () => {
+    const row = await containersRow();
+    const apply = within(row).getByRole("button", { name: "Apply to items without backups" });
+    expect(apply.className).toContain("glim-btn-elastic");
+  });
+
   it("says to apply again once a running backup has finished", async () => {
     fake.reply("getApplyDefaultPreview", {
       ok: true,
