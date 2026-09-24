@@ -135,6 +135,13 @@ func TestMCPKeyCreateHostRuleWithoutPassword(t *testing.T) {
 			t.Fatalf("host %q: rotate code = %v, want mcp-key-needs-password", host, rm["code"])
 		}
 
+		// A page that rebound its DNS to this address could otherwise spend the
+		// certificate's sixteen names, and nothing in the product takes one back.
+		_, cm := doMCPKeyJSON(t, h, http.MethodPost, "/api/mcp/certificate/names", `{"host":"1.2.3.4"}`, host, "")
+		if cm["code"] != "mcp-key-needs-password" {
+			t.Fatalf("host %q: certificate name code = %v, want mcp-key-needs-password", host, cm["code"])
+		}
+
 		w, lm := doMCPKeyJSON(t, h, http.MethodGet, "/api/mcp/keys", "", host, "")
 		if w.Code != http.StatusOK || lm["hostAllowsKeys"] != false {
 			t.Fatalf("host %q: hostAllowsKeys = %v, want false", host, lm["hostAllowsKeys"])
