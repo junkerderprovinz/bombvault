@@ -117,7 +117,7 @@ export function CloudCard({
           has to be visible. */}
       {loadErr && <span className="text-xs text-statusFail">{t("settings.notLoadedNoSave")}</span>}
       {/* Plain text rather than an info bubble: it is the only place that
-          lists all four remote URL prefixes (s3:, rest:, b2:, sftp:) the
+          lists the remote URL prefixes (s3:, rest:, sftp:) the
           Backup Path fields accept, and people copy from it. */}
       <p className="text-xs text-carbon-textMuted -mt-1">{t("cloud.hint")}</p>
 

@@ -3907,12 +3907,12 @@ export function SettingsPage() {
         return (
         <Card key={repoKey} title={t("offsite.copyDomainTitle").replace("{domain}", t(label))} hueIndex={hueIdx}>
           {/* GlimStone follow-up pass: the one genuine toss-up in this pass —
-              left as permanent text rather than force a call. It names three
-              backend URL prefixes (rest:/s3:/b2:), but that's only PARTIALLY
+              left as permanent text rather than force a call. It names two
+              backend URL prefixes (rest:/s3:), but that's only a partially
               unique reference: the field's own placeholder already shows a
               rest: example, and offsite.repoLocalHint right below each field
               already documents the relative-path option. What it adds beyond
-              those is s3: and b2: as valid prefixes here specifically — real
+              those is s3: as a valid prefix here specifically, real
               but thinner value than RcloneCard's/CloudCard's own hints above
               (the sole documentation of their syntax anywhere). Whether that
               remainder is enough to justify a permanent paragraph, or should
