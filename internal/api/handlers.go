@@ -755,9 +755,9 @@ func (h *Handler) handleListContainers(w http.ResponseWriter, r *http.Request) {
 		it := placementItem{Key: v.Name, Identity: "container:" + v.Name, Stack: v.Stack}
 		if t, ok := byName[v.Name]; ok {
 			it.Home = store.HomeState{Exists: true, Repo: t.Repo, Choice: t.RepoChosen}
-		}
-		if v.LastBackupStarted != nil {
-			it.LastSuccess = *v.LastBackupStarted
+			if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
+				it.LastSuccess = run.StartedAt
+			}
 		}
 		items = append(items, it)
 	}
@@ -4603,9 +4603,9 @@ func (h *Handler) handleListVMs(w http.ResponseWriter, r *http.Request) {
 		it := placementItem{Key: v.LibvirtName, Identity: "vm:" + v.LibvirtName}
 		if t, ok := byName[v.LibvirtName]; ok {
 			it.Home = store.HomeState{Exists: true, Repo: t.Repo, Choice: t.RepoChosen}
-		}
-		if v.LastBackupStarted != nil {
-			it.LastSuccess = *v.LastBackupStarted
+			if run, _ := h.store.LastSuccessfulBackup(t.ID); run != nil {
+				it.LastSuccess = run.StartedAt
+			}
 		}
 		items = append(items, it)
 	}
