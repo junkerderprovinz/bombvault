@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"net/http"
 	"slices"
 	"strings"
 	"testing"
@@ -67,6 +68,28 @@ func TestATakeoverOntoANameWithOnlyACopyRuleIsRefused(t *testing.T) {
 	}
 	if _, err := f.st.GetTargetByContainer("nginx"); err != nil {
 		t.Fatalf("the entry left its name after a refused takeover: %v", err)
+	}
+}
+
+func TestTheContainerTakeoverRoutesRefuseACopyRuleWithItsCode(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("nginx", "")
+	f.container("db", "")
+	f.rule("containers", "container:web", store.SkipAll)
+	f.dock.installed = map[string]bool{"web": true, "postgres": true}
+
+	res := f.do(http.MethodPost, "/api/containers/web/takeover", map[string]any{"from": "nginx"})
+	if res["ok"] != false || res["code"] != "copy-rule-taken" {
+		t.Fatalf("takeover = %v, want the copy-rule-taken refusal", res)
+	}
+
+	if err := f.svc.TakeOverContainer(context.Background(), "db", "postgres"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+	f.rule("containers", "container:db", store.SkipAll)
+	res = f.do(http.MethodDelete, "/api/containers/postgres/alias/db", nil)
+	if res["ok"] != false || res["code"] != "copy-rule-taken" {
+		t.Fatalf("unlink = %v, want the copy-rule-taken refusal", res)
 	}
 }
 
