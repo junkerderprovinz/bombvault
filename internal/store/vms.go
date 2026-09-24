@@ -173,8 +173,9 @@ func (r *Repo) SetVMInclude(name string, include bool) error {
 // DeleteVMTarget removes a VM target and all its run history by name, in a
 // single transaction. It is a no-op (no error) if the target does not exist.
 // Like DeleteTarget it also deletes the VM aliases whose target_id is this row,
-// and leaves the entry's copy rule on each former name no other row carries.
-func (r *Repo) DeleteVMTarget(name string) error {
+// and leaves the entry's copy rule on each former name that no other row
+// carries and that is not in installed, the VMs the host reports.
+func (r *Repo) DeleteVMTarget(name string, installed map[string]bool) error {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return fmt.Errorf("DeleteVMTarget begin: %w", err)
@@ -197,7 +198,7 @@ func (r *Repo) DeleteVMTarget(name string) error {
 		return fmt.Errorf("DeleteVMTarget: %w", err)
 	}
 	if hasRow {
-		if err := keepRuleOnAliasesTx(tx, vmEntries, id, name); err != nil {
+		if err := keepRuleOnAliasesTx(tx, vmEntries, id, name, installed); err != nil {
 			return fmt.Errorf("DeleteVMTarget: %w", err)
 		}
 		if _, err := tx.Exec(`DELETE FROM target_aliases WHERE domain = 'vm' AND target_id = ?`, id); err != nil {
@@ -220,9 +221,10 @@ func (r *Repo) RenameVMTargetWithAlias(oldName, newName, newDefinition, uuid str
 }
 
 // UnlinkVMAlias is UnlinkAlias for a VM entry, reversing
-// RenameVMTargetWithAlias; uuid is the libvirt UUID of newDefinition.
-func (r *Repo) UnlinkVMAlias(oldName, newDefinition, uuid string) error {
-	return r.unlinkAlias(vmEntries, oldName, newDefinition, uuid)
+// RenameVMTargetWithAlias; uuid is the libvirt UUID of newDefinition and
+// installed the VMs the host reports.
+func (r *Repo) UnlinkVMAlias(oldName, newDefinition, uuid string, installed map[string]bool) error {
+	return r.unlinkAlias(vmEntries, oldName, newDefinition, uuid, installed)
 }
 
 func scanVMTarget(s scanner) (VMTarget, error) {

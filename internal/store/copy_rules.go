@@ -322,7 +322,7 @@ func cloneCopyRuleTx(tx *sql.Tx, domain, from, to string) error {
 // keepRuleOnAliasesTx leaves the rule of an entry of e that is about to be
 // deleted on each of its former names, because the snapshots taken under them
 // outlive the row.
-func keepRuleOnAliasesTx(tx *sql.Tx, e entryTable, targetID, name string) error {
+func keepRuleOnAliasesTx(tx *sql.Tx, e entryTable, targetID, name string, installed map[string]bool) error {
 	rows, err := tx.Query(`SELECT old_name FROM target_aliases WHERE domain = ? AND target_id = ?`, e.domain, targetID)
 	if err != nil {
 		return fmt.Errorf("read the former names of %s: %w", name, err)
@@ -340,7 +340,7 @@ func keepRuleOnAliasesTx(tx *sql.Tx, e entryTable, targetID, name string) error 
 		return fmt.Errorf("read the former names of %s: %w", name, err)
 	}
 	for _, old := range olds {
-		if err := keepRuleOnNameTx(tx, e, name, old); err != nil {
+		if err := keepRuleOnNameTx(tx, e, name, old, installed); err != nil {
 			return err
 		}
 	}
@@ -348,16 +348,16 @@ func keepRuleOnAliasesTx(tx *sql.Tx, e entryTable, targetID, name string) error 
 }
 
 // keepRuleOnNameTx writes the rule of the entry of e called name onto left, a
-// name the entry has given up, unless a row of e carries left today: that
-// entry's placement is its own, whatever the older snapshots under the name
+// name the entry has given up, unless something holds left today (see holds):
+// that one's placement is its own, whatever the older snapshots under the name
 // need.
-func keepRuleOnNameTx(tx *sql.Tx, e entryTable, name, left string) error {
+func keepRuleOnNameTx(tx *sql.Tx, e entryTable, name, left string, installed map[string]bool) error {
 	domain, prefix, err := placementDomainForAlias(e.domain)
 	if err != nil {
 		return err
 	}
-	carried, err := e.carries(tx, left)
-	if err != nil || carried {
+	held, err := e.holds(tx, left, installed)
+	if err != nil || held {
 		return err
 	}
 	return cloneCopyRuleTx(tx, domain, prefix+name, prefix+left)

@@ -582,8 +582,8 @@ func (r *Repo) SetExcludeCaches(containerName string, m map[string]bool) error {
 // whose old_name only equals name but points at another row is that row's
 // history and stays. Each former name keeps the entry's copy rule, because the
 // snapshots taken under it outlive the row, unless another row carries that
-// name today.
-func (r *Repo) DeleteTarget(name string) error {
+// name today or it is in installed, the containers Docker lists.
+func (r *Repo) DeleteTarget(name string, installed map[string]bool) error {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return fmt.Errorf("DeleteTarget begin: %w", err)
@@ -607,7 +607,7 @@ func (r *Repo) DeleteTarget(name string) error {
 		return fmt.Errorf("DeleteTarget: %w", err)
 	}
 	if hasRow {
-		if err := keepRuleOnAliasesTx(tx, containerEntries, id, name); err != nil {
+		if err := keepRuleOnAliasesTx(tx, containerEntries, id, name, installed); err != nil {
 			return fmt.Errorf("DeleteTarget: %w", err)
 		}
 		if _, err := tx.Exec(`DELETE FROM target_aliases WHERE domain = 'container' AND target_id = ?`, id); err != nil {
@@ -683,8 +683,10 @@ func (r *Repo) RenameTargetWithAlias(oldName, newName, newDefinition string) err
 // with the rename back, for the same reason as in RenameTargetWithAlias.
 //
 // The copy rule comes back with the name and stays on the name the entry
-// leaves, whose snapshots from the linked time are the entry's. An old name
-// that carries a rule of its own is ErrCopyRuleTaken.
-func (r *Repo) UnlinkAlias(oldName, newDefinition string) error {
-	return r.unlinkAlias(containerEntries, oldName, newDefinition, "")
+// leaves, whose snapshots from the linked time are the entry's, unless that
+// name is in installed, the containers Docker lists: the one installed under
+// it follows its own rule. An old name that carries a rule of its own is
+// ErrCopyRuleTaken.
+func (r *Repo) UnlinkAlias(oldName, newDefinition string, installed map[string]bool) error {
+	return r.unlinkAlias(containerEntries, oldName, newDefinition, "", installed)
 }

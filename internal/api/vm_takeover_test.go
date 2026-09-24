@@ -696,6 +696,42 @@ func TestUnlinkVMAliasPutsBackTheDefinitionFromBeforeTheTakeover(t *testing.T) {
 	}
 }
 
+// win11 is still defined when the takeover is undone, so its own backups
+// follow the domain default rather than the entry's rule.
+func TestUnlinkVMAliasLeavesNoRuleOnTheVMDefinedUnderTheNameItLeaves(t *testing.T) {
+	f := newVMTakeover(t, vmPre)
+	if err := f.st.SetCopyRule("vms", "vm:windows-11", []string{store.SkipAll}); err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	if err := f.svc.TakeOverVM(ctx, "windows-11", "win11"); err != nil {
+		t.Fatalf("TakeOverVM: %v", err)
+	}
+
+	if err := f.svc.UnlinkVMAlias(ctx, "windows-11"); err != nil {
+		t.Fatalf("UnlinkVMAlias: %v", err)
+	}
+	if rule, found, err := f.st.CopyRuleFor("vms", "vm:win11"); err != nil || found {
+		t.Fatalf("rule of win11 = %v (found %v), %v; want none", rule.Skip, found, err)
+	}
+	if rule, found, err := f.st.CopyRuleFor("vms", "vm:windows-11"); err != nil || !found {
+		t.Fatalf("rule of windows-11 = %v (found %v), %v; want the entry's", rule.Skip, found, err)
+	}
+}
+
+func TestDeleteBackupsVMWaitsForTheVMsOnTheHost(t *testing.T) {
+	f := newVMTakeover(t, vmPre)
+	f.virsh.listErr = errors.New("libvirt is not running")
+
+	err := f.svc.DeleteBackupsVM(context.Background(), "windows-11", "local")
+	if err == nil || !strings.Contains(err.Error(), "nothing was deleted") {
+		t.Fatalf("DeleteBackupsVM = %v, want a refusal", err)
+	}
+	if _, err := f.st.GetVMTargetByName("windows-11"); err != nil {
+		t.Fatalf("the entry went although the delete was refused: %v", err)
+	}
+}
+
 // The backups taken under win11 while the entry answered to it name
 // windows-11 as a former name, so taking win11 over again counts them as the
 // entry's own.
