@@ -1,7 +1,9 @@
-// Catches what the parity and quality guards do not: an English sentence left
-// in a Latin-script locale (the non-Latin check in i18n.quality.test.ts skips
-// those), a term that drifts between two placement sentences in the same
-// language, and the 3-2-1 phrasing dropped from a translation.
+// Placement-family strings across every locale: prefixes and keys are found
+// correctly, no locale leaves a placement sentence in English, the literal
+// "3-2-1" survives translation, German keeps off-site and append-only as
+// loanwords, the Lithuanian delete texts use the interface's own delete verb
+// and name their target, and append-only is named the way each locale
+// already names it in placement.droppedAppendOnly.
 import { describe, expect, it } from "vitest";
 import { en } from "./i18n";
 import { allLocales } from "./localesForTests";
@@ -34,9 +36,6 @@ const SINGLE_KEYS = new Set<string>([
   "settingsIO.previewNotInFile",
 ]);
 
-// placement.rule321NothingOff does not exist: every target counts as a site
-// of its own, so with two counting places one is always off the premises,
-// leaving no path that reaches that message.
 const RULE_321: Key[] = [
   "placement.rule321Met",
   "placement.rule321OneCopy",
