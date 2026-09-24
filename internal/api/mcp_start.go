@@ -149,7 +149,7 @@ func (h *Handler) toolStartDomainBackup(ctx context.Context, req *mcp.CallToolRe
 	ctx, cancel := h.mcpToolContext(ctx, mcpReadTimeout)
 	defer cancel()
 
-	items, skipped, err := h.domainStartSelection(ctx, settings, in.Domain)
+	items, skipped, err := h.domainStartSelection(ctx, settings, in.Domain, false)
 	if err != nil {
 		h.logMCPCall(ctx, tool, "failed")
 		return mcpServiceError(err), nil
@@ -297,7 +297,7 @@ type mcpEverythingHold struct {
 func (h *Handler) everythingRetentionHold(ctx context.Context, s store.Settings, domains []string, now time.Time) (mcpEverythingHold, error) {
 	out := mcpEverythingHold{skipped: []mcpSkipped{}}
 	for _, domain := range domains {
-		items, _, err := h.domainStartSelection(ctx, s, domain)
+		items, _, err := h.domainStartSelection(ctx, s, domain, true)
 		if err != nil {
 			return out, err
 		}
@@ -610,8 +610,10 @@ func secondsUntil(d time.Duration) int {
 // has not paused, in the order a batch runs them, plus the ones it leaves out
 // with the reason. Items with a cadence of their own are in: a person asking to
 // back up a domain now means those too, which is where this parts company with
-// the scheduler's domain pass.
-func (h *Handler) domainStartSelection(ctx context.Context, s store.Settings, domain string) ([]mcpItem, []mcpSkipped, error) {
+// the scheduler's domain pass. passOnly narrows it to what that pass runs, which
+// is all a Backup Everything pass backs up.
+func (h *Handler) domainStartSelection(ctx context.Context, s store.Settings, domain string, passOnly bool) ([]mcpItem, []mcpSkipped, error) {
+	perItem := passOnly && s.PerItemSchedules
 	skipped := []mcpSkipped{}
 	var items []mcpItem
 	switch domain {
@@ -621,7 +623,7 @@ func (h *Handler) domainStartSelection(ctx context.Context, s store.Settings, do
 			return nil, nil, err
 		}
 		self := h.svc.SelfContainerName(ctx)
-		for _, t := range targets {
+		for _, t := range schedule.DomainRunTargets(targets, perItem) {
 			if !t.IncludeInSchedule || t.ContainerName == self {
 				continue
 			}
@@ -636,7 +638,7 @@ func (h *Handler) domainStartSelection(ctx context.Context, s store.Settings, do
 			return nil, nil, err
 		}
 		store.SortVMTargetsForRun(vms)
-		for _, vm := range vms {
+		for _, vm := range schedule.DomainRunVMTargets(vms, perItem) {
 			if !vm.IncludeInSchedule || schedule.PausedByOverride(vm.ScheduleCadence, s.PerItemSchedules) {
 				continue
 			}
@@ -647,7 +649,7 @@ func (h *Handler) domainStartSelection(ctx context.Context, s store.Settings, do
 		if err != nil {
 			return nil, nil, err
 		}
-		for _, set := range sets {
+		for _, set := range schedule.DomainRunFileSets(sets, perItem) {
 			if !set.Enabled || schedule.PausedByOverride(set.ScheduleCadence, s.PerItemSchedules) {
 				continue
 			}
