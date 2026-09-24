@@ -92,6 +92,23 @@ describe("the anomalies entry", () => {
     expect(count.textContent).toBe("5");
   });
 
+  it("groups a four-digit count in the badge's label", async () => {
+    getAnomalySummary.mockResolvedValue({
+      ok: true,
+      summary: summary({ critical: 200, warning: 1000, info: 0 }),
+    });
+    renderRail(settings(true));
+
+    const entry = await screen.findByRole("link", { name: new RegExp(en["nav.anomalies"]) });
+    // The default normalizer turns the group separator into a plain space,
+    // which is the difference this asserts.
+    const count = await within(entry).findByLabelText(
+      en["anomaly.navCountAria"].replace("{n}", (1200).toLocaleString()),
+      { normalizer: (text) => text }
+    );
+    expect(count.textContent).toBe("1200");
+  });
+
   it("shows no count while nothing is open", async () => {
     renderRail(settings(true));
     const entry = screen.getByRole("link", { name: new RegExp(en["nav.anomalies"]) });

@@ -32,16 +32,18 @@ export interface AnomalySummaryState {
   /** The request failed or was refused. Consumers must not read this as calm. */
   error: boolean;
   loading: boolean;
+  reload: () => void;
 }
 
 const AnomalyContext = createContext<AnomalySummaryState>({
   summary: null,
   error: false,
   loading: false,
+  reload: () => undefined,
 });
 
 export function AnomalyProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AnomalySummaryState>({
+  const [state, setState] = useState<Omit<AnomalySummaryState, "reload">>({
     summary: null,
     error: false,
     loading: true,
@@ -79,7 +81,9 @@ export function AnomalyProvider({ children }: { children: ReactNode }) {
     };
   }, [load]);
 
-  return createElement(AnomalyContext.Provider, { value: state }, children);
+  const value = useMemo(() => ({ ...state, reload: load }), [state, load]);
+
+  return createElement(AnomalyContext.Provider, { value }, children);
 }
 
 export function useAnomalySummary(): AnomalySummaryState {
@@ -126,8 +130,10 @@ export function useOpenAnomalies(): { list: AnomalyView[]; error: boolean } {
 export interface AnomalyItemsState {
   items: AnomalyItem[];
   byTarget: Map<string, AnomalyItem>;
+  /** The request failed or was refused. Consumers must not read this as calm. */
   error: boolean;
   loading: boolean;
+  retry: () => void;
 }
 
 /**
@@ -136,14 +142,23 @@ export interface AnomalyItemsState {
  * never two requests apart.
  */
 export function useAnomalyItems(): AnomalyItemsState {
-  const { summary } = useAnomalySummary();
+  const { summary, error: summaryFailed, reload } = useAnomalySummary();
   const generation = summary?.generation;
   const [items, setItems] = useState<AnomalyItem[]>([]);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    if (generation === undefined) return;
+    if (generation === undefined) {
+      // A refused summary leaves nothing to list against, and a caller still
+      // waiting would read that as a list on its way.
+      if (summaryFailed) {
+        setError(true);
+        setLoading(false);
+      }
+      return;
+    }
     let active = true;
     getAnomalyItems()
       .then((res) => {
@@ -164,10 +179,15 @@ export function useAnomalyItems(): AnomalyItemsState {
     return () => {
       active = false;
     };
-  }, [generation]);
+  }, [generation, summaryFailed, attempt]);
+
+  const retry = useCallback(() => {
+    reload();
+    setAttempt((n) => n + 1);
+  }, [reload]);
 
   return useMemo(
-    () => ({ items, byTarget: new Map(items.map((i) => [i.targetId, i])), error, loading }),
-    [items, error, loading]
+    () => ({ items, byTarget: new Map(items.map((i) => [i.targetId, i])), error, loading, retry }),
+    [items, error, loading, retry]
   );
 }
