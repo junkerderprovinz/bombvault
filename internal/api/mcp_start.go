@@ -506,9 +506,9 @@ func (h *Handler) mcpRetentionHold(s store.Settings, item mcpItem, now time.Time
 		}, nil
 	}
 
-	keepLast := countOnlyKeepLast(h.svc.retentionPolicy(s))
-	if offsite := countOnlyKeepLast(h.svc.offsiteRetentionPolicy(s)); offsite > 0 && (keepLast == 0 || offsite < keepLast) {
-		keepLast = offsite
+	keepLast, err := h.mcpKeepLast(s, item.Domain)
+	if err != nil {
+		return nil, err
 	}
 	if keepLast == 0 {
 		return nil, nil
@@ -535,6 +535,28 @@ func (h *Handler) mcpRetentionHold(s store.Settings, item mcpItem, now time.Time
 		}
 	}
 	return nil, nil
+}
+
+// mcpKeepLast is the smallest count-only window a domain's restore points live
+// under: the local policy's and that of every off-site destination the domain
+// replicates to, read from the destinations themselves because each one prunes
+// by its own policy. An append-only destination prunes on the far side, out of
+// reach of anything BombVault starts.
+func (h *Handler) mcpKeepLast(s store.Settings, domain string) (int, error) {
+	targets, err := h.svc.enabledOffsiteTargets(domain)
+	if err != nil {
+		return 0, err
+	}
+	keepLast := countOnlyKeepLast(h.svc.retentionPolicy(s))
+	for _, t := range orSettingsOffsiteTarget(targets, domain, s) {
+		if t.Immutable {
+			continue
+		}
+		if n := countOnlyKeepLast(targetOffsiteRetentionPolicy(t)); n > 0 && (keepLast == 0 || n < keepLast) {
+			keepLast = n
+		}
+	}
+	return keepLast, nil
 }
 
 // mcpRetentionSeries are the run kinds whose restore points share one count-only
