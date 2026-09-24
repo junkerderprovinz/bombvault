@@ -402,7 +402,7 @@ func (h *Handler) recordMCPKeyChange(r *http.Request, k store.MCPKey, logged, ev
 		return
 	}
 	ctx, addr := context.WithoutCancel(r.Context()), loginClientKey(r)
-	go h.svc.notifyMCPKeyChange(ctx, event, k.Label, k.Hint, addr)
+	h.svc.notifyMCPKeyChange(ctx, event, k.Label, k.Hint, addr)
 }
 
 // newMCPKeyID returns a 32 hex character id. The caller mints it because the
