@@ -1746,7 +1746,7 @@ const lt: Partial<Translations> = {
   "placement.flow": "{from} → {to}",
   // Timeline
   "timeline.deleteAsk": "Ištrinti šią atsarginę kopiją čia: {list}?",
-  "timeline.deleteRow": "Trinti visur",
+  "timeline.deleteRow": "Ištrinti visur",
   "timeline.deleteLast": "Tai paskutinė šios atsarginės kopijos kopija.",
   "timeline.deleteHeldBy": "Vis dar laiko: {list}",
   "timeline.deleteSkipped": "Praleista, tik pridėti: {list}",
@@ -1851,12 +1851,12 @@ const lt: Partial<Translations> = {
   "placement.notListedYet": "{place}: dar neįtraukta į sąrašą",
 
   // Removal
-  "offsiteRemoval.delete": "Trinti {target}",
-  "offsiteRemoval.ask": "Ištrinti kiekvieną {name} kopiją {target}? Kopijos: {n}.",
+  "offsiteRemoval.delete": "Ištrinti iš {target}",
+  "offsiteRemoval.ask": "Ištrinti kiekvieną {name} kopiją iš {target}? Kopijos: {n}.",
   "offsiteRemoval.onlyThere": "Šios momentinės kopijos niekur kitur neegzistuoja ir po to dings visam laikui:",
   "offsiteRemoval.homeUnreadable": "Nepavyko patikrinti, ar {home} jas dar turi.",
   "offsiteRemoval.typeName": "Įvesk {name} patvirtinimui",
-  "offsiteRemoval.done": "Ištrinta {target}: {n}",
+  "offsiteRemoval.done": "Ištrinta iš {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} yra tik pridėti. Iš čia iš jos nieko negalima trinti.",
 };
 

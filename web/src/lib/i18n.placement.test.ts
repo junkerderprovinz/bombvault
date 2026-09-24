@@ -82,4 +82,16 @@ describe("placement texts", () => {
       if (en[key].includes("append-only")) expect(allLocales.de[key], key).toContain("append-only");
     }
   });
+
+  it("uses the same delete verb in Lithuanian as every other delete button", () => {
+    const verb = allLocales.lt["common.delete"];
+    expect(allLocales.lt["offsiteRemoval.delete"]).toContain(verb);
+    expect(allLocales.lt["timeline.deleteRow"]).toContain(verb);
+  });
+
+  it("names the target the Lithuanian off-site delete texts act on", () => {
+    for (const key of ["offsiteRemoval.delete", "offsiteRemoval.ask", "offsiteRemoval.done"] as const) {
+      expect(allLocales.lt[key], key).toMatch(/iš \{target\}/);
+    }
+  });
 });
