@@ -1482,6 +1482,9 @@ func TestMCPListAnomaliesCallsTheServiceAPI(t *testing.T) {
 			continue
 		}
 		desc, _ := tool["description"].(string)
+		if !strings.HasPrefix(desc, "Anomalies") {
+			t.Fatalf("the description does not open with the name the page uses:\n%s", desc)
+		}
 		for _, word := range []string{"new_data", "source", "duration", "reliability", "integrity", "capacity", "Anomalies", "web interface"} {
 			if !strings.Contains(desc, word) {
 				t.Fatalf("the description does not name %q:\n%s", word, desc)
