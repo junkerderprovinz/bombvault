@@ -349,12 +349,75 @@ func keepRuleOnNameTx(tx *sql.Tx, e entryTable, name, left string) error {
 	if err != nil {
 		return err
 	}
-	var carried int
-	if err := tx.QueryRow(`SELECT count(*) FROM `+e.table+` WHERE `+e.nameCol+` = ?`, left).Scan(&carried); err != nil {
-		return fmt.Errorf("check the entry of %s: %w", left, err)
-	}
-	if carried > 0 {
-		return nil
+	carried, err := e.carries(tx, left)
+	if err != nil || carried {
+		return err
 	}
 	return cloneCopyRuleTx(tx, domain, prefix+name, prefix+left)
+}
+
+// CarryFormerNameRule moves the copy rule on oldName, a former name in
+// aliasDomain ("container" or "vm"), onto the entry it is linked to, as the
+// takeover that linked them would have; see carryFormerNameRulesTx.
+func (r *Repo) CarryFormerNameRule(aliasDomain, oldName string) error {
+	e, err := entriesOf(aliasDomain)
+	if err != nil {
+		return err
+	}
+	if err := r.inTx(func(tx *sql.Tx) error { return carryFormerNameRulesTx(tx, e, oldName) }); err != nil {
+		return fmt.Errorf("CarryFormerNameRule: %w", err)
+	}
+	return nil
+}
+
+// carryFormerNameRulesTx moves the rule on each former name of e, or on oldName
+// alone when it is given, onto the entry the name is linked to. A rule stays
+// where it is while that entry has one of its own, and while a row carries the
+// former name, since the rule is that row's then. The latest link goes first:
+// its rule is the one a chain of takeovers would have carried to the end.
+func carryFormerNameRulesTx(tx *sql.Tx, e entryTable, oldName string) error {
+	domain, prefix, err := placementDomainForAlias(e.domain)
+	if err != nil {
+		return err
+	}
+	query := `SELECT a.old_name, t.` + e.nameCol + ` FROM target_aliases a JOIN ` + e.table + ` t ON t.id = a.target_id WHERE a.domain = ?`
+	args := []any{e.domain}
+	if oldName != "" {
+		query += ` AND a.old_name = ?`
+		args = append(args, oldName)
+	}
+	rows, err := tx.Query(query+` ORDER BY a.linked_at DESC`, args...)
+	if err != nil {
+		return fmt.Errorf("read the former names: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // read-only
+	type link struct{ old, current string }
+	var links []link
+	for rows.Next() {
+		var l link
+		if err := rows.Scan(&l.old, &l.current); err != nil {
+			return fmt.Errorf("read the former names: %w", err)
+		}
+		links = append(links, l)
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("read the former names: %w", err)
+	}
+	for _, l := range links {
+		carried, err := e.carries(tx, l.old)
+		if err != nil {
+			return err
+		}
+		_, ruled, err := storedSkipQ(tx, domain, prefix+l.current)
+		if err != nil {
+			return err
+		}
+		if carried || ruled {
+			continue
+		}
+		if err := moveCopyRuleTx(tx, domain, prefix+l.old, prefix+l.current); err != nil {
+			return fmt.Errorf("carry the rule of %s: %w", l.old, err)
+		}
+	}
+	return nil
 }

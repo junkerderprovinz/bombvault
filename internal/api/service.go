@@ -6303,7 +6303,8 @@ func (s *Service) Discover(ctx context.Context, dryRun bool) (DiscoverResult, er
 // record, and returns how many of those names it rebuilt as rows of their own:
 // a name no claimant could be rebuilt for, and a name another machine has been
 // backed up under since the link, which keeps its own row beside the link.
-// Names and claimants are taken in sorted order, so a repository always
+// A copy rule on a name it links moves to the claimant, as a takeover moves
+// it. Names and claimants are taken in sorted order, so a repository always
 // rebuilds the same way.
 func (s *Service) foldFormerNames(ctx context.Context, settings store.Settings, domain string, names map[string]string, claims map[string][]formerNameClaim,
 	rebuild func(name, repoID string) bool, link func(old, targetID string, record definitionAlias) error) int {
@@ -6331,6 +6332,7 @@ func (s *Service) foldFormerNames(ctx context.Context, settings store.Settings, 
 			}
 			continue
 		}
+		linked := false
 		if a, err := s.store.AliasByOldName(domain, old); err == nil {
 			if a.TargetID != targetID {
 				log.Printf("api: discover %s: %q is already linked to another entry; leaving it alone", settingsDomain, old) //nolint:gosec // G706: name %q-quoted, the domain a fixed literal
@@ -6349,9 +6351,19 @@ func (s *Service) foldFormerNames(ctx context.Context, settings store.Settings, 
 				log.Printf("api: discover %s: could not link %q to %q: %v", settingsDomain, old, owner, err) //nolint:gosec // G706: names %q-quoted, the domain a fixed literal
 				continue
 			}
+			linked = true
 		}
 		if s.formerNameReusedSince(ctx, settings, domain, old, names[old], record.LinkedAt) && rebuild(old, names[old]) {
 			rebuilt++
+		}
+		// After the rebuild, so a reused name that got its row back keeps its rule.
+		if linked {
+			s.placementMu.Lock()
+			err := s.store.CarryFormerNameRule(domain, old)
+			s.placementMu.Unlock()
+			if err != nil {
+				log.Printf("api: discover %s: the copy rule of %q could not move to %q, so it stays on the former name: %v", settingsDomain, old, owner, err) //nolint:gosec // G706: names %q-quoted, the domain a fixed literal
+			}
 		}
 	}
 	return rebuilt

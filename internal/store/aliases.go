@@ -103,6 +103,25 @@ var (
 	vmEntries        = entryTable{"vm", "vms", "name"}
 )
 
+// entriesOf returns the entry table whose aliases carry aliasDomain.
+func entriesOf(aliasDomain string) (entryTable, error) {
+	for _, e := range []entryTable{containerEntries, vmEntries} {
+		if e.domain == aliasDomain {
+			return e, nil
+		}
+	}
+	return entryTable{}, fmt.Errorf("no entries have aliases of %q", aliasDomain)
+}
+
+// carries reports whether a row of e has name.
+func (e entryTable) carries(tx *sql.Tx, name string) (bool, error) {
+	var n int
+	if err := tx.QueryRow(`SELECT count(*) FROM `+e.table+` WHERE `+e.nameCol+` = ?`, name).Scan(&n); err != nil {
+		return false, fmt.Errorf("check the entry of %s: %w", name, err)
+	}
+	return n > 0, nil
+}
+
 // renameWithAlias moves the entry of e on oldName to newName and links
 // oldName to it, in one transaction; see RenameTargetWithAlias. A VM alias
 // keeps the definition the entry had under oldName, and a VM row takes uuid.
