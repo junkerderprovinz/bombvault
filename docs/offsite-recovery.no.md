@@ -35,7 +35,7 @@ Et nytt eksternt mål mottar hvert element som ikke er satt til Lokal. Dialogen 
 
 ### Direkte depoter
 
-Å velge et måls direkte depot under Kun ekstern åpner en dialog med en foreslått plassering ved siden av målet, for eksempel `b2:bucket:containers-direct`, og en tilkoblingstest som ikke oppretter noe. **Opprett og bruk** oppretter depotet og peker elementet dit. Et direkte depot overtar målets nøkkel, lagringsklasse, grenser, append-only-innstilling og oppbevaring, og endres med dem; Depoter-kortet viser det skrivebeskyttet. Når en ny nøkkel for målet ikke kan åpne det, beholder det direkte depotet nøkkelen det har, og lagringen sier fra om det. Øyeblikksbildene bærer taggen `bv:direct`, og hver annen oppbevaringsrunde lar dem være, så et direkte depot som har mistet lenken til målet sitt, aldri eldes etter de lokale reglene.
+Å velge et måls direkte depot under Kun ekstern åpner en dialog med en foreslått plassering ved siden av målet, for eksempel `b2:bucket:containers-direct`, og en tilkoblingstest som ikke oppretter noe. **Opprett og bruk** oppretter depotet og peker elementet dit. Et direkte depot overtar målets nøkkel, lagringsklasse, grenser, append-only-innstilling og oppbevaring, og endres med dem; Depoter-kortet viser det skrivebeskyttet. Når en ny nøkkel for målet ikke kan åpne det, beholder det direkte depotet nøkkelen det har, og lagringen sier fra om det. Øyeblikksbildene bærer taggen `bv:direct`, og hver annen oppbevaringsrunde lar dem være, så et direkte depot som har mistet lenken til målet sitt, aldri eldes etter de lokale reglene. En B2-nøkkel som er begrenset til målets egen mappe, når ikke mappen ved siden av; begrens i stedet nøkkelen til mappen over målet.
 
 ### Utenfor bygningen
 

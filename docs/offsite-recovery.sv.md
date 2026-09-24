@@ -35,7 +35,7 @@ Ett nytt off-site-mål tar emot varje objekt som inte är satt till Lokal. Dialo
 
 ### Direkta arkiv
 
-Att välja ett måls direkta arkiv under Endast utanför platsen öppnar en dialog med en föreslagen plats intill målet, till exempel `b2:bucket:containers-direct`, och ett anslutningstest som inte skapar något. **Skapa och använd** skapar arkivet och pekar objektet mot det. Ett direkt arkiv tar över målets nyckel, lagringsklass, gränser, append-only-inställning och retention, och ändras med dem; kortet Arkiv visar det skrivskyddat. När en ny nyckel för målet inte kan öppna det behåller det direkta arkivet den nyckel det har, och sparningen säger det. Dess ögonblicksbilder bär taggen `bv:direct`, och varje annan retention-passering behåller dem, så ett direkt arkiv som förlorat kopplingen till sitt mål åldras aldrig efter de lokala reglerna.
+Att välja ett måls direkta arkiv under Endast utanför platsen öppnar en dialog med en föreslagen plats intill målet, till exempel `b2:bucket:containers-direct`, och ett anslutningstest som inte skapar något. **Skapa och använd** skapar arkivet och pekar objektet mot det. Ett direkt arkiv tar över målets nyckel, lagringsklass, gränser, append-only-inställning och retention, och ändras med dem; kortet Arkiv visar det skrivskyddat. När en ny nyckel för målet inte kan öppna det behåller det direkta arkivet den nyckel det har, och sparningen säger det. Dess ögonblicksbilder bär taggen `bv:direct`, och varje annan retention-passering behåller dem, så ett direkt arkiv som förlorat kopplingen till sitt mål åldras aldrig efter de lokala reglerna. En B2-nyckel som är begränsad till målets egen mapp når inte mappen bredvid den; begränsa i stället nyckeln till mappen ovanför målet.
 
 ### Utanför lokalerna
 
