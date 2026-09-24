@@ -1656,7 +1656,7 @@ const no: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Et element i et eksternt eller direkte depot får ingen kopier.",
   "placementCode.unknownTarget": "Det eksterne målet finnes ikke i dette domenet.",
   "placementCode.stackRule": "Prosjektmapper følger standardverdien for containere og har ingen egen regel.",
-  "placementCode.copyRuleTaken": "Det navnet har allerede sine egne kopieringsregler. Tilbakestill dem der først.",
+  "placementCode.copyRuleTaken": "Det navnet har allerede sine egne kopieringsregler.",
   "placementCode.domainBusy": "En sikkerhetskopiering pågår. Velg på nytt når den er ferdig.",
   "placementCode.hasBackups": "Plasseringen kan ikke endres når elementet har sikkerhetskopier. De blir værende der de ble skrevet.",
   "placementCode.homeUncheckable": "Det kunne ikke sjekkes om dette elementet allerede har sikkerhetskopier, så plasseringen forblir som den er. Prøv igjen når depotet kan leses.",

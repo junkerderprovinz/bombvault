@@ -1648,7 +1648,7 @@ const ja: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "リモートまたは直接のリポジトリ上の項目はコピーを受け取りません。",
   "placementCode.unknownTarget": "そのオフサイトターゲットはこのドメインに存在しません。",
   "placementCode.stackRule": "プロジェクトフォルダーはコンテナの既定値に従い、独自のルールを持ちません。",
-  "placementCode.copyRuleTaken": "その名前にはすでに独自のコピールールがあります。まずそちらでリセットしてください。",
+  "placementCode.copyRuleTaken": "その名前にはすでに独自のコピールールがあります。",
   "placementCode.domainBusy": "バックアップが実行中です。完了したらもう一度選んでください。",
   "placementCode.hasBackups": "項目にバックアップがあると、場所はもう変更できません。書き込まれた場所にとどまります。",
   "placementCode.homeUncheckable": "この項目にすでにバックアップがあるかどうかを確認できなかったため、保存場所はそのままになります。リポジトリを読み取れるようになったら、もう一度試してください。",

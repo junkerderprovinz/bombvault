@@ -1656,7 +1656,7 @@ const tr: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Uzak veya doğrudan bir depodaki öge kopya almaz.",
   "placementCode.unknownTarget": "Bu dış hedef bu alanda yok.",
   "placementCode.stackRule": "Proje klasörleri konteynerlerin varsayılanını izler ve kendi kuralına sahip değildir.",
-  "placementCode.copyRuleTaken": "Bu adın zaten kendi kopyalama kuralları var. Önce orada sıfırla.",
+  "placementCode.copyRuleTaken": "Bu adın zaten kendi kopyalama kuralları var.",
   "placementCode.domainBusy": "Bir yedekleme çalışıyor. Bittiğinde tekrar seç.",
   "placementCode.hasBackups": "Öge yedeklere sahip olduktan sonra konum artık değişemez. Yazıldıkları yerde kalırlar.",
   "placementCode.homeUncheckable": "Bu ögenin zaten yedeklerinin olup olmadığı kontrol edilemedi, bu yüzden konumu olduğu gibi kalır. Depo okunabilir hale geldiğinde tekrar dene.",

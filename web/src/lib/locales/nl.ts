@@ -1653,7 +1653,7 @@ const nl: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Een item op een externe of directe repository krijgt geen kopieën.",
   "placementCode.unknownTarget": "Die off-site bestemming bestaat niet in dit domein.",
   "placementCode.stackRule": "Projectmappen volgen de standaard van containers en hebben geen eigen regel.",
-  "placementCode.copyRuleTaken": "Die naam heeft al eigen kopieerregels. Herstel ze daar eerst.",
+  "placementCode.copyRuleTaken": "Die naam heeft al eigen kopieerregels.",
   "placementCode.domainBusy": "Er loopt een back-up. Kies opnieuw zodra die klaar is.",
   "placementCode.hasBackups": "De locatie kan niet meer wijzigen zodra het item back-ups heeft. Ze blijven staan waar ze geschreven zijn.",
   "placementCode.homeUncheckable": "Er kon niet worden gecontroleerd of dit item al back-ups heeft, dus de locatie blijft zoals ze is. Probeer het opnieuw zodra de repository gelezen kan worden.",

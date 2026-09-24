@@ -1667,7 +1667,7 @@ const et: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Kauge- või otsehoidlas olev üksus koopiaid ei saa.",
   "placementCode.unknownTarget": "Seda kaugsihtkohta ei ole selles domeenis.",
   "placementCode.stackRule": "Projektikaustad järgivad konteinerite vaikeväärtust ega saa oma reeglit.",
-  "placementCode.copyRuleTaken": "Sellel nimel on juba oma kopeerimisreeglid. Lähtesta need kõigepealt seal.",
+  "placementCode.copyRuleTaken": "Sellel nimel on juba oma kopeerimisreeglid.",
   "placementCode.domainBusy": "Varundamine on käimas. Vali uuesti, kui see on lõppenud.",
   "placementCode.hasBackups": "Asukohta ei saa enam muuta, kui üksusel on varukoopiaid. Need jäävad sinna, kuhu need kirjutati.",
   "placementCode.homeUncheckable": "Ei õnnestunud kontrollida, kas sellel üksusel on juba varukoopiaid, seega jääb selle asukoht samaks. Proovi uuesti, kui hoidlat saab lugeda.",

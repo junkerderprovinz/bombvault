@@ -1,8 +1,8 @@
 // Placement-family strings across every locale: prefixes and keys are found
 // correctly, no locale leaves a placement sentence in English, the literal
 // "3-2-1" survives translation, German keeps off-site and append-only as
-// loanwords, and append-only is named the way each locale already names it in
-// placement.droppedAppendOnly.
+// loanwords, the copy-rule-taken refusal stops at the fact, and append-only is
+// named the way each locale already names it in placement.droppedAppendOnly.
 import { describe, expect, it } from "vitest";
 import { en } from "./i18n";
 import { allLocales } from "./localesForTests";
@@ -79,6 +79,12 @@ describe("placement texts", () => {
       if (/off-site/i.test(en[key])) expect(allLocales.de[key], key).toMatch(/off-site/i);
       if (en[key].includes("append-only")) expect(allLocales.de[key], key).toContain("append-only");
     }
+  });
+
+  // A folder set rename, a takeover and an unlink all meet this refusal, and
+  // not every name it refuses has a card to act on.
+  it.each(Object.entries(allLocales))("%s states the copy-rule-taken refusal without advice", (_code, table) => {
+    expect(table["placementCode.copyRuleTaken"]).not.toMatch(/[.。।!?؟]\s*\S/u);
   });
 
   it("names append-only the same way a locale already does in placement.droppedAppendOnly", () => {

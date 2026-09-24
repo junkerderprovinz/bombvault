@@ -1667,7 +1667,7 @@ const lt: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Elementas nuotolinėje ar tiesioginėje saugykloje kopijų negauna.",
   "placementCode.unknownTarget": "Ši nuotolinė paskirtis šioje srityje neegzistuoja.",
   "placementCode.stackRule": "Projekto aplankai seka konteinerių numatytąja reikšme ir neturi savo taisyklės.",
-  "placementCode.copyRuleTaken": "Šis pavadinimas jau turi savo kopijavimo taisykles. Pirma atstatyk jas ten.",
+  "placementCode.copyRuleTaken": "Šis pavadinimas jau turi savo kopijavimo taisykles.",
   "placementCode.domainBusy": "Vyksta atsarginė kopija. Pasirink dar kartą, kai ji baigsis.",
   "placementCode.hasBackups": "Vieta nebegali keistis, kai elementas turi atsargines kopijas. Jos lieka ten, kur buvo įrašytos.",
   "placementCode.homeUncheckable": "Nepavyko patikrinti, ar šis elementas jau turi atsarginių kopijų, todėl jo vieta lieka tokia, kokia yra. Bandyk dar kartą, kai saugyklą bus galima nuskaityti.",
