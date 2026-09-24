@@ -673,8 +673,11 @@ func (e *anomalyEngine) evaluateSeries(ctx context.Context, sc anomalyScope, p *
 	if err != nil {
 		return err
 	}
+	// A series that runs less often than every three days has fewer than ten
+	// backups in a month, and the rule then falls back to the newest ten of any
+	// age. The query has to reach that far back or the fallback finds nothing.
 	window, err := e.svc.store.NewDataWindow(sc.ID, kind,
-		from-anomalyNewDataDays*86400, p.now, anomalyNewDataMaxRows)
+		min(from-anomalyNewDataDays*86400, p.now-anomalySeriesRuns*86400), p.now, anomalyNewDataMaxRows)
 	if err != nil {
 		return err
 	}

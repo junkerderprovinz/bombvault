@@ -165,6 +165,37 @@ func TestEngineRaisesAfterFinishRun(t *testing.T) {
 	}
 }
 
+// An item backed up once a week has ten backups behind it after three months,
+// so the new-data rule judges it instead of learning forever.
+func TestWeeklySeriesIsJudgedByTheNewDataRule(t *testing.T) {
+	f := newEngineFixture(t)
+	id := f.container(t, "docs")
+	for i := 12; i >= 1; i-- {
+		f.run(t, id, "backup", f.now-int64(i)*7*86400, 40*gib)
+	}
+	f.run(t, id, "backup", f.now-3600, 400*gib)
+
+	f.pass(t)
+
+	items, err := f.svc.AnomalyItems(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("want the one container, got %+v", items)
+	}
+	if got := items[0].Learning.NewData; got != anomalyMinSamples {
+		t.Fatalf("the new-data rule has %d sample(s), want %d", got, anomalyMinSamples)
+	}
+	raised := false
+	for _, row := range f.openRows(t) {
+		raised = raised || row.Metric == metricNewData
+	}
+	if !raised {
+		t.Fatalf("the spike after a weekly history was not raised: %+v", f.openRows(t))
+	}
+}
+
 // A database dump is a series of its own. Its few hundred megabytes must not
 // read as the container's source shrinking, and a collapsed dump holds only the
 // dump series.
