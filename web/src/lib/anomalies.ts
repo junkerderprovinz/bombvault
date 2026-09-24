@@ -199,13 +199,18 @@ export function findingSnapshotId(snap: { id: string; original?: string }): stri
 }
 
 /**
- * heldTagLabel names an item from the identity tag retention works with, for
- * the message that says whose backups a prune kept.
+ * heldTagLabels names the items behind the identity tags a prune kept. A VM's
+ * block disks carry tags of their own and read as the VM, and the flash drive
+ * and the self-backup have no name beyond their backup type.
  */
-export function heldTagLabel(tag: string, t: TranslateAnomaly): string {
-  if (isDbDumpIdentity(tag)) return t("anomaly.dumpOf").replace("{name}", dbDumpNameOf(tag));
-  const colon = tag.indexOf(":");
-  return colon >= 0 ? tag.slice(colon + 1) : tag;
+export function heldTagLabels(tags: string[], t: TranslateAnomaly): string[] {
+  const labels = tags.map((tag) => {
+    if (isDbDumpIdentity(tag)) return t("anomaly.dumpOf").replace("{name}", dbDumpNameOf(tag));
+    if (tag === "flash" || tag === "config") return t(ANOMALY_DOMAIN_LABEL[tag]);
+    const name = tag.slice(tag.indexOf(":") + 1);
+    return tag.startsWith("vm:") ? name.replace(/:zvol:.*$/, "") : name;
+  });
+  return [...new Set(labels)];
 }
 
 const SEVERITY_RANK: Record<AnomalySeverity, number> = { critical: 0, warning: 1, info: 2 };
