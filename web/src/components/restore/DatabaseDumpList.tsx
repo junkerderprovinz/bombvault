@@ -98,6 +98,7 @@ function DumpRow({
   onFormat,
   onChanged,
   flagged,
+  preselected,
   t,
 }: {
   dump: DBDumpView;
@@ -112,6 +113,9 @@ function DumpRow({
   onChanged: () => void;
   /** An open finding says this dump lost most of the database. */
   flagged: boolean;
+  /** A finding's restore link asked for this dump, so the row stands out from
+   *  its neighbours. */
+  preselected: boolean;
   t: T;
 }) {
   const { lang } = useT();
@@ -219,7 +223,11 @@ function DumpRow({
   }
 
   return (
-    <div className="flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0">
+    <div
+      className={`flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0${
+        preselected ? " bg-carbon-surface2 px-2 rounded-control" : ""
+      }`}
+    >
       <div className="flex items-center gap-3 text-sm flex-wrap">
         <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">
           {dump.id.slice(0, 8)}
@@ -383,6 +391,7 @@ export function DatabaseDumpList({
   defaultFolder,
   reloadTick,
   onDumps,
+  preselect = "",
   t,
 }: {
   containerName: string;
@@ -401,6 +410,8 @@ export function DatabaseDumpList({
   /** Hands the loaded dumps to the panel, whose snapshot rows mark the one
    *  taken in the same backup. */
   onDumps?: (dumps: DBDumpView[]) => void;
+  /** The dump a finding's restore link asked for. */
+  preselect?: string;
   t: T;
 }) {
   const [dumps, setDumps] = useState<DBDumpView[]>([]);
@@ -477,6 +488,7 @@ export function DatabaseDumpList({
           onFormat={pickFormat}
           onChanged={() => setOwnTick((n) => n + 1)}
           flagged={flagged.has(dump.id)}
+          preselected={dump.id === preselect}
           t={t}
         />
       ))}

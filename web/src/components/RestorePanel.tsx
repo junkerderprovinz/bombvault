@@ -239,6 +239,8 @@ interface RestorePanelProps {
   name: string;
   /** The snapshot a finding's restore link asked for. */
   preselect?: string;
+  /** The same for a finding about the container's database dump. */
+  preselectDump?: string;
   /** The entry's former names, whose ownership tags are hidden like its own. */
   aliases?: string[];
   t: T;
@@ -848,6 +850,7 @@ export const DEFAULT_RESTORE_FOLDER = "user/bombvault/restore";
 export function RestorePanel({
   name,
   preselect = "",
+  preselectDump = "",
   aliases = [],
   t,
   installed = true,
@@ -975,6 +978,7 @@ export function RestorePanel({
         defaultFolder={restoreFolder}
         reloadTick={reloadTick}
         onDumps={setDumps}
+        preselect={preselectDump}
         t={t}
       />
     </div>
