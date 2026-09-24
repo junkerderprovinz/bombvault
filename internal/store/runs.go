@@ -867,17 +867,17 @@ func (r *Repo) LatestMCPStartAt(targetIDs []string, since int64) (int64, error) 
 
 // MCPBackupsSince counts the backups an MCP key started for targetID at or
 // after since and returns when the oldest of them began. It is the daily budget
-// a single item has, and oldest says when the next slot frees up. A failed
-// attempt counts: the budget is about the downtime a start costs, and a backup
-// that failed stopped the container all the same. Only a cancelled run is left
-// out, because the caller gave its slot back.
+// a single item has, and oldest says when the next slot frees up. Every attempt
+// counts whatever became of it: the budget is about the downtime a start costs,
+// and a backup that failed or was cancelled had stopped the container all the
+// same.
 func (r *Repo) MCPBackupsSince(targetID string, since int64) (count int, oldest int64, err error) {
 	var first sql.NullInt64
 	err = r.db.QueryRow(`
 		SELECT count(*), min(started_at)
 		FROM runs
 		WHERE target_id = ? AND kind = 'backup' AND started_via = 'mcp'
-		  AND started_at >= ? AND status <> 'cancelled'`, targetID, since).Scan(&count, &first)
+		  AND started_at >= ?`, targetID, since).Scan(&count, &first)
 	if err != nil {
 		return 0, 0, fmt.Errorf("MCPBackupsSince: %w", err)
 	}

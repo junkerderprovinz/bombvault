@@ -320,6 +320,31 @@ func TestMCPRetentionGuardKeepsOlderRestorePoints(t *testing.T) {
 		}
 	})
 
+	t.Run("a start that was cancelled again still counts against the day", func(t *testing.T) {
+		h, repo, sets := newMCPStartHandler(t, "media")
+		set := sets["media"]
+		for range mcpItemStartsPerDay {
+			id, err := repo.StartRunWith(set.ID, "backup", store.RunMeta{StartedVia: "mcp", StartedViaKey: "0b7e"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := repo.FinishRun(id, "cancelled", "", 0, store.ReasonCancelled); err != nil {
+				t.Fatal(err)
+			}
+		}
+		s, err := repo.GetSettings()
+		if err != nil {
+			t.Fatal(err)
+		}
+		hold, err := h.mcpRetentionHold(s, mcpItem{Domain: "files", ID: set.ID, Name: set.Name}, time.Now())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if hold == nil {
+			t.Fatal("start and cancel took the item down more often than the daily limit allows")
+		}
+	})
+
 	t.Run("a domain start leaves the guarded item out", func(t *testing.T) {
 		h, repo, sets := newMCPStartHandler(t, "docs", "media")
 		s, err := repo.GetSettings()
