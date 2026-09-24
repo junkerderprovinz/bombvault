@@ -196,10 +196,7 @@ func BackupZFSItem(ctx context.Context, d ZFSBackupDeps) (Summary, error) {
 		log.Printf("zfs backup: record run for %s: %v", d.Root, recErr)
 	}
 	if snapErr != nil {
-		// The stderr of zfs carries the dataset name, and the run history is
-		// where a user reads which one failed, so it goes in whole and is
-		// bounded by the refusal's own truncation.
-		return Summary{}, d.failRun(runID, &ZFSRefusal{Code: "snapshot-failed", Detail: snapErr.Error()})
+		return Summary{}, d.failRun(runID, &ZFSRefusal{Code: "snapshot-failed", Detail: d.Root + ": " + zfsHostDetail(snapErr)})
 	}
 
 	for _, m := range d.Skipped {
@@ -351,6 +348,17 @@ func (d ZFSBackupDeps) destroy(ctx context.Context, snap string) {
 }
 
 func memberFailure(m ZFSMemberResult) string { return m.Dataset + " [" + m.Outcome + "]" }
+
+// zfsHostDetail makes what the host wrote fit for a refusal, which passes the
+// run row's scrubber untouched: the host's paths and control characters go.
+func zfsHostDetail(err error) string {
+	return scrubRunErr(strings.Map(func(r rune) rune {
+		if r == '\n' || r == '\t' || r >= 0x20 {
+			return r
+		}
+		return -1
+	}, err.Error()))
+}
 
 // refusalCode returns the reason code a refusal carries, or fallback when the
 // seam answered with an ordinary error.

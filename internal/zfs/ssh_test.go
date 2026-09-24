@@ -3,6 +3,7 @@ package zfs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -51,16 +52,27 @@ func TestSSHHostKeepsStderrInCmdError(t *testing.T) {
 	}
 }
 
-func TestSSHHostTreeCapsOutput(t *testing.T) {
+func TestSSHHostRefusesACutListing(t *testing.T) {
+	// The cut falls on a line boundary, so what arrives parses cleanly and only
+	// the transport knows that datasets are missing.
 	f := &fakeRunner{reply: func(int, []string) (string, string, error) {
-		return strings.Repeat("a", 16<<20+1), "", nil
+		return treeFixture, "", fmt.Errorf("sshconn: run %q: %w", "zfs", sshconn.ErrStdoutCut)
 	}}
 	h := NewSSHHost(f)
 
-	_, err := h.Tree(context.Background(), "cache/appdata")
-	var ce *CmdError
-	if !errors.As(err, &ce) || ce.Code != "zfs-error" {
-		t.Fatalf("Tree of a flood = %v, want a zfs-error CmdError", err)
+	for name, list := range map[string]func() error{
+		"tree": func() error { _, err := h.Tree(context.Background(), "cache/appdata"); return err },
+		"list": func() error { _, err := h.List(context.Background()); return err },
+		"snapshots": func() error {
+			_, err := h.Snapshots(context.Background(), "cache/appdata")
+			return err
+		},
+	} {
+		err := list()
+		var ce *CmdError
+		if !errors.As(err, &ce) || ce.Code != "zfs-error" || !strings.Contains(err.Error(), "16 MiB") {
+			t.Errorf("%s of a cut listing = %v, want a zfs-error naming the limit", name, err)
+		}
 	}
 }
 

@@ -535,15 +535,16 @@ func zfsErrCode(err error) string {
 	return "zfs-error"
 }
 
-// zfsDetail prepares host output for a details block: control characters out,
-// cut to what one is worth reading.
+// zfsDetail prepares host output for a details block and a refusal, which the
+// scrubber lets through: control characters and paths out, cut to what one is
+// worth reading.
 func zfsDetail(text string) string {
-	clean := strings.Map(func(r rune) rune {
+	clean := scrubSecrets(strings.Map(func(r rune) rune {
 		if r == '\n' || r == '\t' || r >= 0x20 {
 			return r
 		}
 		return -1
-	}, text)
+	}, text))
 	if len(clean) > zfsDetailLimit {
 		clean = clean[:zfsDetailLimit]
 	}

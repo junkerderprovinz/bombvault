@@ -182,6 +182,13 @@ func TestRestoreZFSInPlaceRefusesUnmountedReadOnlyOrOutsideHostMountRoot(t *test
 			},
 			want: "not-visible",
 		},
+		{
+			name: "the host refuses BombVault's key",
+			world: func(_ *testing.T, _ *Service, host *fakeZFSHost) {
+				host.treeErr = &zfs.CmdError{Code: "ssh-auth", Stderr: "root@tower: Permission denied (publickey)."}
+			},
+			want: "ssh-auth",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
