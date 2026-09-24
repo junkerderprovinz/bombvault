@@ -273,16 +273,16 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
   const fleetEnabled = settings?.fleetEnabled ?? false;
   const pullEnabled = settings?.pullEnabled ?? false;
 
-  // The logo row follows the rail's label mode too: with labels hidden the mark
-  // centres on the glyph column and the wordmark goes. The button's aria-label
-  // names it in every mode.
+  // The brand block is GlimStone's: the mark centred above the name, smaller
+  // and without the name in the narrow rail. The button's aria-label names it
+  // in every mode.
   const railMode = useLabelMode("sidebar");
   const railLabels = !hidesLabel(railMode);
   const railReactive = railMode === "reactive";
   const railNarrow = railMode === "glyph";
   // One size for all four boxes the mark is drawn in, or the shatter grid and
   // the image end up in differently sized boxes.
-  const markBox = railNarrow ? "h-12 w-12" : "h-16 w-16";
+  const markBox = railNarrow ? "h-11 w-11" : "h-26 w-26";
 
 
   // Easter egg: hold the logo and it wobbles, explodes and comes back. A short
@@ -357,13 +357,13 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
         onPointerLeave={cancelHold}
         onPointerCancel={cancelHold}
         onContextMenu={(e) => e.preventDefault()}
-        className={`glim-logo-btn flex items-center ${railLabels ? "gap-2.5 px-4 text-start" : "justify-center px-0"}${railReactive ? " glim-reactive" : ""} py-5 w-full cursor-pointer select-none hover:opacity-90 transition-opacity`}
+        className={`glim-logo-btn flex flex-col items-center gap-2 ${railNarrow ? "px-2 py-4" : "px-4 py-6"}${railReactive ? " glim-reactive" : ""} w-full cursor-pointer select-none hover:opacity-90 transition-opacity`}
       >
         {/* `--egg-mark` passes the mark size to the shatter tiles, whose
             background is sized to the whole mark. */}
         <span
           className={`relative inline-flex ${markBox} shrink-0 items-center justify-center`}
-          style={{ "--egg-mark": railNarrow ? "48px" : "64px" } as CSSProperties}
+          style={{ "--egg-mark": railNarrow ? "44px" : "104px" } as CSSProperties}
         >
           <span className={`glim-logo-mark flex ${markBox} items-center justify-center ${eggClass}`}>
             <img

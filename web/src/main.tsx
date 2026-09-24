@@ -1,5 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import "@fontsource-variable/noto-sans";
+import "@fontsource-variable/noto-sans-arabic";
+import "@fontsource-variable/noto-sans-hebrew";
+import "@fontsource-variable/noto-sans-thai";
 import "./index.css";
 import "flag-icons/css/flag-icons.min.css";
 import { AppRouter } from "./app/router";

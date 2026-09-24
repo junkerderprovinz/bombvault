@@ -153,16 +153,15 @@ export function CryptoDonateDialog({ onClose }: { onClose: () => void }) {
                 onClick={() => pickCoin(c)}
                 style={hueVars(i) as CSSProperties}
                 // `aspect-square` keeps the tile square in every label mode, so
-                // the grid does not reflow when the mode changes. A one step
-                // lighter hover goes unnoticed on a dark ground, so the dark
-                // theme hovers to white with flipped ink. The marks keep their
-                // colours; index.css recolours XRP's colourless mark there.
+                // the grid does not reflow when the mode changes. The hover is
+                // GlimStone's tile grey with its dark ink, and index.css
+                // deepens the marks that would fade on it.
                 className={`glim-coin-tile glim-hue flex aspect-square flex-col items-center justify-center gap-2 rounded-control px-2 transition-colors ${
                   reactive ? "glim-reactive " : ""
                 }${
                   c.id === coin.id
                     ? "glim-active bg-accent text-accentContrast"
-                    : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-surface3 hover:text-carbon-text dark:hover:bg-white dark:hover:text-carbon-background"
+                    : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-tileHover hover:text-carbon-tileHoverInk"
                 }`}
               >
                 {/* About half the tile. */}
