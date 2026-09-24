@@ -681,8 +681,9 @@ func (r *Repo) RenameTargetWithAlias(oldName, newName, newDefinition string) err
 // taken oldName since, rather than merge the two. newDefinition is written
 // with the rename back, for the same reason as in RenameTargetWithAlias.
 //
-// The copy rule comes back with the name, and an old name that carries a rule
-// of its own is ErrCopyRuleTaken.
+// The copy rule comes back with the name and stays on the name the entry
+// leaves, whose snapshots from the linked time are the entry's. An old name
+// that carries a rule of its own is ErrCopyRuleTaken.
 func (r *Repo) UnlinkAlias(oldName, newDefinition string) error {
 	return r.unlinkAlias(containerEntries, oldName, newDefinition, "")
 }

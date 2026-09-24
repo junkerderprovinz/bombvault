@@ -256,16 +256,48 @@ func placementDomainForAlias(aliasDomain string) (domain, prefix string, err err
 
 // renameCopyRuleTx carries an entry's rule to the name it moves to. A rule
 // already on that name refuses the move, even when the entry has none, so the
-// entry cannot inherit a choice made for something else.
+// entry cannot inherit a choice made for something else. The very rule the
+// entry has, as an unlink leaves it on the name it gives up, is no such choice.
 func renameCopyRuleTx(tx *sql.Tx, domain, from, to string) error {
-	var taken int
-	if err := tx.QueryRow(`SELECT count(*) FROM offsite_copy_rules WHERE domain = ? AND identity = ?`, domain, to).Scan(&taken); err != nil {
-		return fmt.Errorf("read the copy rule of %s: %w", to, err)
+	same, err := checkRuleMoveQ(tx, domain, from, to)
+	if err != nil {
+		return err
 	}
-	if taken > 0 {
-		return fmt.Errorf("%s: %w", to, ErrCopyRuleTaken)
+	if same {
+		return deleteCopyRuleTx(tx, domain, from)
 	}
 	return moveCopyRuleTx(tx, domain, from, to)
+}
+
+// checkRuleMoveQ is ErrCopyRuleTaken while to has a rule that from does not
+// share, and reports whether to already holds the rule of from.
+func checkRuleMoveQ(q queryer, domain, from, to string) (same bool, err error) {
+	toSkip, taken, err := storedSkipQ(q, domain, to)
+	if err != nil || !taken {
+		return false, err
+	}
+	fromSkip, _, err := storedSkipQ(q, domain, from)
+	if err != nil {
+		return false, err
+	}
+	if fromSkip != toSkip {
+		return false, fmt.Errorf("%s: %w", to, ErrCopyRuleTaken)
+	}
+	return true, nil
+}
+
+// storedSkipQ returns the skip list of identity as stored, which encodeSkip
+// keeps in one spelling per list.
+func storedSkipQ(q queryer, domain, identity string) (string, bool, error) {
+	var raw string
+	err := q.QueryRow(`SELECT skip FROM offsite_copy_rules WHERE domain = ? AND identity = ?`, domain, identity).Scan(&raw)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", false, nil
+	}
+	if err != nil {
+		return "", false, fmt.Errorf("read the copy rule of %s: %w", identity, err)
+	}
+	return raw, true, nil
 }
 
 // cloneCopyRuleTx writes the rule of from onto to as well. A rule already on to
