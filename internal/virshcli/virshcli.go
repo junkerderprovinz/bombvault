@@ -1,4 +1,3 @@
-// Package virshcli — concrete virsh CLI adapter. See types.go for the interface.
 package virshcli
 
 import (
@@ -11,22 +10,20 @@ import (
 	"strings"
 )
 
-// Client is the real virsh adapter that shells out to the virsh CLI. It connects
-// over the configured URI — qemu+ssh://root@<host>/system — so virsh runs ON the
-// Unraid host (no libvirt socket is bind-mounted into the container).
+// Client shells out to the virsh CLI. It connects over the configured URI
+// (qemu+ssh://root@<host>/system), so virsh runs on the host and no libvirt
+// socket has to be mounted into the container.
 type Client struct {
-	bin string // "virsh" normally
-	uri string // qemu+ssh://… ("" = virsh's local default; used only in tests)
+	bin string
+	uri string // empty means virsh's local default, which only tests use
 }
 
-// compile-time interface check.
 var _ Virsh = (*Client)(nil)
 
-// New returns a Client that connects via the given libvirt URI (qemu+ssh://…).
-// An empty URI uses virsh's default (local) connection.
+// New returns a Client that connects through the given libvirt URI. An empty
+// URI uses virsh's local default connection.
 func New(uri string) *Client { return &Client{bin: "virsh", uri: uri} }
 
-// baseArgs prefixes "-c <uri>" when a connection URI is configured.
 func (c *Client) baseArgs(args ...string) []string {
 	if c.uri == "" {
 		return args
@@ -35,24 +32,17 @@ func (c *Client) baseArgs(args ...string) []string {
 }
 
 // absPathRe strips absolute paths from error messages so host paths do not
-// leak to the caller (mirrors restic's lastReason scrubbing).
+// leak to the caller, as restic's lastReason does.
 var absPathRe = regexp.MustCompile(`(/[^\s:'"]+)+`)
 
-// credentialRe matches a "user:password@" URL-userinfo segment — the same
-// defense-in-depth scrub internal/restic/restic.go and internal/api/handlers.go
-// apply to their own surfaced errors (see restic.go's credentialRe doc
-// comment for the full reasoning: the username class, why it covers a
-// fully-numeric username, the known Docker-digest-style false-positive
-// tradeoff, the known unencoded-"/"-in-password false-negative tradeoff, and
-// why it runs AFTER absPathRe rather than before). Applied here too, for the
-// parity this package's own doc comment above already claims, even though a
-// libvirt "qemu+ssh://user@host/system" URI doesn't normally carry a
-// password.
+// credentialRe matches a "user:password@" URL userinfo segment. It is the
+// same scrub internal/restic applies to its errors (its credentialRe comment
+// covers the trade-offs). A libvirt URI rarely carries a password, so this is
+// defence in depth.
 var credentialRe = regexp.MustCompile(`[\w.+%-]+:[^\s/@"']+@`)
 
-// run executes virsh with the given arguments. It returns the trimmed stdout
-// on success. On failure it logs the full stderr server-side and returns a
-// scrubbed error containing only the last non-empty stderr line (paths stripped).
+// run executes virsh and returns its trimmed stdout. On failure it logs the
+// full stderr and returns only the scrubbed last line of it.
 func (c *Client) run(ctx context.Context, args ...string) (string, error) {
 	cmd := exec.CommandContext(ctx, c.bin, c.baseArgs(args...)...) //nolint:gosec // G204: args are separate (never shell-interpolated); virsh name/path args come from libvirt, not raw user input
 	out, err := cmd.Output()
@@ -67,13 +57,9 @@ func (c *Client) run(ctx context.Context, args ...string) (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
-// lastReason extracts the last non-empty line of virsh stderr and scrubs
-// absolute paths and URL-embedded credentials so host filesystem layout and
-// secrets do not reach the caller. Paths are scrubbed BEFORE credentials —
-// not a correctness requirement, both orders fully redact a password, but
-// this order avoids also destroying the hostname; see
-// internal/restic/restic.go's scrubSecrets doc comment for the full
-// reasoning.
+// lastReason returns the last non-empty line of virsh stderr with absolute
+// paths and URL credentials scrubbed. Paths go first because the other order
+// would also swallow the hostname.
 func lastReason(stderr string) string {
 	lines := strings.Split(strings.TrimSpace(stderr), "\n")
 	for i := len(lines) - 1; i >= 0; i-- {
@@ -100,12 +86,8 @@ func (c *Client) List(ctx context.Context) ([]VMInfo, error) {
 	return vmInfoFromNames(ctx, names, c.State, c.titleFromXML), nil
 }
 
-// titleFromXML fetches a domain's <title> via DumpXML + ParseDomain — the
-// one extra virsh call vmInfoFromNames makes per UUID-style (TrueNAS 26)
-// domain name, to try to recover a friendly name. Wrapping DumpXML+
-// ParseDomain here (rather than passing both separately) keeps
-// vmInfoFromNames's fake surface down to a single func value, matching
-// stateFn (c.State).
+// titleFromXML returns a domain's <title>. List calls it for UUID-named
+// TrueNAS 26 domains, whose friendly name only lives there.
 func (c *Client) titleFromXML(ctx context.Context, name string) (string, error) {
 	x, err := c.DumpXML(ctx, name)
 	if err != nil {
@@ -118,50 +100,20 @@ func (c *Client) titleFromXML(ctx context.Context, name string) (string, error) 
 	return d.Title, nil
 }
 
-// truenas2510DomainNameRe matches TrueNAS 25.10 "Goldeye"'s libvirt
-// domain-naming convention: "{id}_{name}" (id = TrueNAS's own numeric VM id,
-// name = the user-chosen VM name), e.g. "1_debian". Anchored at both ends so
-// a name that merely CONTAINS a digits-then-underscore run somewhere (e.g.
-// "my_2_vm", an ordinary Unraid-style name) never false-positives — the run
-// must be the very start of the string.
+// truenas2510DomainNameRe matches the "{id}_{name}" domain names of TrueNAS
+// 25.10, such as "1_debian". It is anchored so that "my_2_vm" does not match.
 var truenas2510DomainNameRe = regexp.MustCompile(`^\d+_(.+)$`)
 
-// uuidDomainNameRe matches a standard 8-4-4-4-12 hex UUID — TrueNAS 26's
-// libvirt domain-naming convention, where the domain name IS the VM's UUID
-// and the user-friendly name moves to the domain XML's <title> element
-// instead (see normalizeDomainName's doc comment).
+// uuidDomainNameRe matches a bare UUID, which TrueNAS 26 uses as the domain
+// name while the VM's own name moves to the <title> element.
 var uuidDomainNameRe = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
 
-// normalizeDomainName is a cheap, pure, XML-free classifier for TrueNAS
-// Scale's version-dependent libvirt domain-naming schemes. It never talks to
-// virsh or reads a domain XML — it only pattern-matches the raw string
-// already in hand. Three outcomes:
-//
-//   - TrueNAS 25.10 "Goldeye" style, "{id}_{name}" (e.g. "1_debian"): fully
-//     resolved from the string alone — friendlyName is the part after the
-//     first underscore ("debian"), isVersioned26Style is false.
-//   - TrueNAS 26 style, a bare UUID (e.g.
-//     "550e8400-e29b-41d4-a716-446655440000"): the raw string carries NO
-//     friendly-name information — the user-chosen name lives only in the
-//     domain XML's <title> element, which requires a separate `virsh
-//     dumpxml` call this function deliberately does not make (it stays pure
-//     and XML-free). friendlyName falls back to the UUID itself, and
-//     isVersioned26Style is true — the caller's signal to try to resolve a
-//     better name from <title> if it has (or is willing to fetch) the
-//     domain XML. See Client.List/vmInfoFromNames below for the one caller
-//     that does this.
-//   - Anything else (an ordinary Unraid-style name, or an empty string):
-//     passed through unchanged, isVersioned26Style false. This is the no-op
-//     path — Unraid domain names never match either TrueNAS pattern, so
-//     Unraid behavior is byte-identical to before this function existed.
-//
-// This classification is purely SHAPE-based (regex on raw) — it is not, and
-// cannot be, platform-gated in here, since it never sees which platform it's
-// running on. A domain name that merely happens to look like one of the two
-// TrueNAS shapes (e.g. an Unraid VM literally named "10_Windows") is
-// misclassified exactly like a real TrueNAS domain would be. See
-// VMInfo.FriendlyName's doc comment (types.go) for the exact scenario and
-// the mitigation a future caller must apply before trusting the result.
+// normalizeDomainName derives a display name from a domain name by its shape
+// alone. "{id}_{name}" (TrueNAS 25.10) yields the part after the underscore;
+// a bare UUID (TrueNAS 26) comes back unchanged with isVersioned26Style set,
+// telling the caller the real name has to come from <title>; anything else
+// passes through. Because it cannot see the platform, an Unraid VM named
+// "10_Windows" comes back as "Windows", so callers gate on the platform.
 func normalizeDomainName(raw string) (friendlyName string, isVersioned26Style bool) {
 	if m := truenas2510DomainNameRe.FindStringSubmatch(raw); m != nil {
 		return m[1], false
@@ -172,11 +124,8 @@ func normalizeDomainName(raw string) (friendlyName string, isVersioned26Style bo
 	return raw, false
 }
 
-// vmInfoFromNames builds List's result from already-split raw domain names,
-// given the state and (versioned-domain) title lookups to use. Split out of
-// List so the friendly-name resolution logic — including the one extra
-// virsh call a TrueNAS 26 (UUID-named) domain needs — is unit-testable with
-// plain fake func values, without a real virsh binary.
+// vmInfoFromNames builds List's result from raw domain names. The lookups are
+// passed in so the name resolution can be tested without a virsh binary.
 func vmInfoFromNames(
 	ctx context.Context,
 	names []string,
@@ -186,17 +135,13 @@ func vmInfoFromNames(
 	var vms []VMInfo
 	for _, name := range names {
 		state, stErr := stateFn(ctx, name)
-		if stErr != nil { // mirrors List's own pre-existing State-failure tolerance
+		if stErr != nil {
 			state = "unknown"
 		}
 		friendly, versioned26 := normalizeDomainName(name)
 		if versioned26 {
-			// One extra virsh call, only for a UUID-style name, to try to
-			// recover the friendly name from <title>. A failure here (or an
-			// absent/empty <title>) must not fail List — fall back to the
-			// UUID normalizeDomainName already returned, the same way a
-			// failed State lookup falls back to "unknown" above rather than
-			// failing the whole call.
+			// A missing or unreadable <title> keeps the UUID rather than
+			// failing the whole list.
 			if title, tErr := titleFn(ctx, name); tErr == nil && title != "" {
 				friendly = title
 			}
@@ -206,10 +151,8 @@ func vmInfoFromNames(
 	return vms
 }
 
-// IsNotFound reports whether a virsh error means the domain does not exist on the
-// host (it was deleted/undefined, or is a template that is no longer defined).
-// Exported so callers — e.g. a scheduled backup — can skip a vanished VM instead
-// of treating libvirt's "failed to get domain" as a hard failure.
+// IsNotFound reports whether a virsh error means the domain is gone from the
+// host, so a scheduled backup can skip a vanished VM instead of failing.
 func IsNotFound(err error) bool {
 	if err == nil {
 		return false
@@ -220,12 +163,12 @@ func IsNotFound(err error) bool {
 		strings.Contains(msg, "no domain")
 }
 
-// State returns the domain state ("running", "shut off", …) or ("", nil) when
-// the domain does not exist — mirrors dockercli.InspectName not-found tolerance.
+// State returns the domain state ("running", "shut off", ...), or ("", nil)
+// when the domain does not exist, like dockercli.InspectName.
 func (c *Client) State(ctx context.Context, name string) (string, error) {
 	out, err := c.run(ctx, "domstate", name)
 	if err != nil {
-		if IsNotFound(err) { // a missing domain has no state, not an error
+		if IsNotFound(err) {
 			return "", nil
 		}
 		return "", err
@@ -242,8 +185,8 @@ func (c *Client) DumpXML(ctx context.Context, name string) (string, error) {
 	return out, nil
 }
 
-// DumpXMLInactive returns the persistent (inactive) domain XML (virsh dumpxml
-// --inactive) — the defined config without runtime-only/hot-plugged devices.
+// DumpXMLInactive returns the persistent domain XML (virsh dumpxml --inactive),
+// the defined config without runtime-only or hot-plugged devices.
 func (c *Client) DumpXMLInactive(ctx context.Context, name string) (string, error) {
 	out, err := c.run(ctx, "dumpxml", "--inactive", name)
 	if err != nil {
@@ -326,9 +269,9 @@ func (c *Client) SnapshotCreateDiskOnly(ctx context.Context, name, snapName stri
 	if quiesce {
 		args = append(args, "--quiesce")
 	}
-	// Exclude non-writable disks (cdrom / read-only). Snapshotting them fails with
-	// "external snapshot file ... already exists and is not a block device". The
-	// writable disks default to an external snapshot under --disk-only.
+	// Snapshotting a cdrom or read-only disk fails with "external snapshot file
+	// ... already exists and is not a block device"; writable disks get an
+	// external snapshot by default under --disk-only.
 	for _, dev := range skipDevs {
 		args = append(args, "--diskspec", dev+",snapshot=no")
 	}
@@ -348,33 +291,19 @@ func (c *Client) GuestAgentPing(ctx context.Context, name string) bool {
 	return err == nil
 }
 
-// ---------------------------------------------------------------------------
-// Domain XML parsing
-// ---------------------------------------------------------------------------
-
-// domainXML is the minimal struct for parsing a libvirt domain XML document.
-// Only the fields BombVault needs (disk sources + NVRAM) are decoded; the rest
-// is discarded (xml.Unmarshal ignores unknown elements by default).
+// domainXML decodes the parts of a libvirt domain XML that BombVault reads.
 type domainXML struct {
 	XMLName xml.Name `xml:"domain"`
-	// Title is libvirt's own free-form display-name element: a direct
-	// child of <domain>, not nested under <devices> or <os>. See
-	// DomainInfo.Title's doc comment (types.go) for what it's used for
-	// (TrueNAS 26's friendly-name recovery).
-	Title   string `xml:"title"`
-	UUID    string `xml:"uuid"`
+	Title   string   `xml:"title"`
+	UUID    string   `xml:"uuid"`
 	Devices struct {
 		Disks []struct {
 			Type   string `xml:"type,attr"`
 			Device string `xml:"device,attr"`
 			Source struct {
 				File string `xml:"file,attr"`
-				// Dev is libvirt's own signal that the backing store is a raw
-				// block device (type="block") rather than a regular file
-				// (type="file", which uses Source.File instead) — e.g. a
-				// TrueNAS Scale zvol at /dev/zvol/<pool>/<dataset>. See
-				// zvol.go's package doc comment for the "reasoned from
-				// documentation, unverified against real hardware" caveat.
+				// Dev is set instead of File for a type="block" disk, such
+				// as a TrueNAS zvol at /dev/zvol/<pool>/<dataset>.
 				Dev string `xml:"dev,attr"`
 			} `xml:"source"`
 			Target struct {
@@ -382,9 +311,6 @@ type domainXML struct {
 			} `xml:"target"`
 			ReadOnly *struct{} `xml:"readonly"`
 		} `xml:"disk"`
-		// TPM is nil when the domain has no <tpm> element at all — see
-		// tpmPathFromXML (tpm.go) for how its presence/shape is turned into
-		// DomainInfo.TPMPath.
 		TPM *tpmXML `xml:"tpm"`
 	} `xml:"devices"`
 	OS struct {
@@ -392,12 +318,8 @@ type domainXML struct {
 	} `xml:"os"`
 }
 
-// ParseDomain parses a libvirt domain XML string and extracts the disk file
-// paths (type="file", device="disk"), the NVRAM path (empty for BIOS VMs), the
-// vTPM device path (empty without a <tpm> element whose shape tpm.go trusts)
-// and the normalized UUID. It is exported so the service layer can call it
-// without importing virshcli internals (the result is plain strings; no
-// libvirt types cross the boundary).
+// ParseDomain extracts the disks, NVRAM and vTPM paths, title and UUID from a
+// libvirt domain XML document.
 func ParseDomain(xmlStr string) (DomainInfo, error) {
 	var d domainXML
 	if err := xml.Unmarshal([]byte(xmlStr), &d); err != nil {
@@ -410,30 +332,23 @@ func ParseDomain(xmlStr string) (DomainInfo, error) {
 	var skip []string
 	for _, disk := range d.Devices.Disks {
 		writable := disk.Type == "file" && disk.Device == "disk" && disk.Source.File != "" && disk.ReadOnly == nil
-		// blockWritable: libvirt's own signal (<source dev="..."> under
-		// type="block") that this disk's backing store is a raw block device —
-		// e.g. a TrueNAS Scale zvol — not a regular file. See zvol.go.
 		blockWritable := disk.Type == "block" && disk.Device == "disk" && disk.Source.Dev != "" && disk.ReadOnly == nil
 		switch {
 		case writable:
 			disks = append(disks, disk.Source.File)
 			diskRefs = append(diskRefs, DiskRef{Dev: disk.Target.Dev, Source: disk.Source.File})
 			if device == "" {
-				device = disk.Target.Dev // first writable disk's target dev = blockcommit target
+				device = disk.Target.Dev // the blockcommit target
 			}
 		case blockWritable:
-			// Recorded ADDITIVELY in BlockDisks (see its doc comment) — never in
-			// DiskPaths/Disks/DiskDevice, which stay file-backed-only. PRESERVES
-			// pre-Task-10 behavior for SkipSnapshotDevs: before BlockDisks existed,
-			// this disk already fell through to the skip branch below (it failed
-			// the file-only `writable` check), since qemu's external-file live
-			// snapshot cannot target a raw block device the way it does a qcow2.
+			// The external-file live snapshot cannot target a raw block
+			// device, so it is skipped there and backed up through BlockDisks.
 			blockDisks = append(blockDisks, DiskRef{Dev: disk.Target.Dev, Source: disk.Source.Dev, IsBlockDevice: true})
 			if disk.Target.Dev != "" {
 				skip = append(skip, disk.Target.Dev)
 			}
 		case disk.Target.Dev != "":
-			// cdrom, read-only, or source-less disk → exclude from the live snapshot.
+			// A cdrom, read-only or source-less disk stays out of the live snapshot.
 			skip = append(skip, disk.Target.Dev)
 		}
 	}

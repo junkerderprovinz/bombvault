@@ -1,6 +1,5 @@
-// Package virshcli wraps the virsh CLI behind the Virsh interface so the
-// VM backup orchestrator is unit-testable without a real libvirt socket.
-// The concrete Client lives in virshcli.go and is wired only in cmd/bombvault.
+// Package virshcli wraps the virsh CLI behind the Virsh interface so the VM
+// backup orchestrator can be tested without a libvirt host.
 package virshcli
 
 import "context"
@@ -9,93 +8,40 @@ import "context"
 type VMInfo struct {
 	Name  string
 	State string // "running", "shut off", "paused", ...
-	// FriendlyName is Name normalized for DISPLAY/MATCHING purposes only —
-	// see normalizeDomainName (virshcli.go) for the classifier, and
-	// vmInfoFromNames/Client.titleFromXML for how List resolves it. On a
-	// plain libvirt host it is always identical to Name (neither TrueNAS
-	// pattern matches an ordinary hand-chosen domain name). On TrueNAS 25.10
-	// "Goldeye" it strips the "{id}_" prefix TrueNAS's own libvirt naming
-	// convention adds (e.g. Name "1_debian" → FriendlyName "debian"). On
-	// TrueNAS 26, where Name becomes the VM's bare UUID, FriendlyName is the
-	// domain XML's <title> when List could recover one (one extra DumpXML
-	// call per UUID-named domain), or the UUID itself as a fallback when it
-	// couldn't. Name — never FriendlyName — stays the identifier every
-	// virsh command in this package/interface takes; nothing in this
-	// package uses FriendlyName for that.
-	//
-	// ⚠ On Unraid, "always identical to Name" is true in PRACTICE, not by
-	// CONSTRUCTION: normalizeDomainName classifies by shape alone (regex on
-	// the raw string), with no platform check. A hand-named Unraid VM that
-	// happens to collide with the TrueNAS 25.10 shape — e.g. literally named
-	// "10_Windows" — gets misclassified the same way a real TrueNAS domain
-	// would, and FriendlyName comes back "Windows", not "10_Windows". This
-	// is inert today because nothing consumes FriendlyName yet (see below),
-	// but a future caller MUST NOT trust it unconditionally: gate on the
-	// detected platform (platform.KindTrueNAS) before relying on
-	// FriendlyName over Name, rather than assuming the shape match alone
-	// means "this is TrueNAS".
-	//
-	// Consumed one layer up by internal/api/service.go's ListVMs, which uses
-	// it as the display name only (service.go:6650, guarded by the detected
-	// platform), so a TrueNAS VM shows its real name instead of a bare UUID.
-	// vm.Name stays the identifier everywhere that matters: DB target
-	// matching, backup tags and restore all key off it, never off
-	// FriendlyName, because the friendly name is presentation and can
-	// change under you.
+	// FriendlyName is the display name of a TrueNAS domain: "debian" for
+	// "1_debian" on 25.10, the <title> of a UUID-named domain on 26 (or the
+	// UUID when there is none). It is guessed from the name's shape alone, so
+	// an Unraid VM named "10_Windows" also comes back as "Windows"; callers
+	// use it only on a detected TrueNAS host and only for display. Name stays
+	// the identifier for virsh calls, target matching, tags and restore.
 	FriendlyName string
 }
 
-// DiskRef pairs a writable disk's target device with its current source. It
-// lets the service spot (and target) a leftover BombVault snapshot overlay
-// precisely — i.e. the exact device whose source is "*.bombvault-tmp".
-//
-// IsBlockDevice reports whether Source is a raw block device path
-// (libvirt <source dev="...">, e.g. a TrueNAS Scale zvol at
-// /dev/zvol/<pool>/<dataset>) rather than a regular file
-// (<source file="...">). It is always false for entries in DomainInfo.Disks
-// (file-backed disks only, unchanged since before Task 10) and always true
-// for entries in DomainInfo.BlockDisks (see that field's doc comment) — the
-// two lists are never mixed, so a caller can tell which backup mechanism
-// applies purely from which list an entry came from; the field itself exists
-// so a single DiskRef value remains self-describing.
+// DiskRef pairs a writable disk's target device with its current source, so
+// the service can find the exact device still running on a leftover
+// "*.bombvault-tmp" overlay. IsBlockDevice is true for the entries of
+// DomainInfo.BlockDisks and false for those of DomainInfo.Disks.
 type DiskRef struct {
 	Dev           string // target dev, e.g. "hdc"
-	Source        string // current source file path OR block device path
+	Source        string // file path or block device path
 	IsBlockDevice bool
 }
 
-// DomainInfo contains the artifacts parsed from a libvirt domain XML:
-// the disk image path(s), the NVRAM path (empty for BIOS VMs), and the first
-// disk's target device (e.g. "vda") used as the live-backup blockcommit target.
+// DomainInfo holds what ParseDomain reads from a domain XML. DiskDevice is
+// the first writable disk's target, used as the blockcommit target of a live
+// backup; the path fields are empty when there is nothing to capture.
 type DomainInfo struct {
 	DiskPaths []string
-	// Disks pairs each writable FILE-backed disk's target dev with its source
-	// (parallels DiskPaths). Used to detect/commit a leftover live-snapshot
-	// overlay. NEVER includes a block-device disk — see BlockDisks.
+	// Disks pairs each file-backed writable disk with its source, in the
+	// order of DiskPaths. Block devices are in BlockDisks instead.
 	Disks     []DiskRef
 	NVRAMPath string
-	// TPMPath is the vTPM device's discoverable state/device path, parsed
-	// from the domain XML's <tpm> element — empty in exactly two cases that
-	// are deliberately indistinguishable to a caller: no <tpm> element at
-	// all, or a <tpm> element present whose shape doesn't carry a path
-	// BombVault recognizes as safe to trust (see ParseDomain's doc comment
-	// for exactly which shapes are recognized). Both degrade to "nothing to
-	// capture" — mirrors NVRAMPath's own "empty = nothing to do" contract
-	// exactly, so a caller checking `if domain.TPMPath != ""` behaves
-	// correctly without needing to know which of the two cases it was.
+	// TPMPath is the vTPM state path from the <tpm> element. It is empty both
+	// without a <tpm> element and for a shape tpm.go does not trust, since
+	// either way there is nothing safe to capture.
 	TPMPath string
-	// Title is the domain XML's <title> element, trimmed — libvirt's own
-	// free-form display-name field, a direct child of <domain> (not nested
-	// under <devices> or <os>). Empty when the domain has no <title>
-	// element — the common case on Unraid and TrueNAS 25.10, where the
-	// friendly name lives in the domain NAME itself, not this element.
-	// TrueNAS 26 is the one platform BombVault knows of that relies on this:
-	// its libvirt domain name becomes the VM's bare UUID, with the
-	// user-chosen name moved here instead — see normalizeDomainName
-	// (virshcli.go) for the classifier that decides when a caller should
-	// bother reading this field, and Client.titleFromXML for the one caller
-	// that does. Mirrors NVRAMPath/TPMPath's own "empty = nothing to
-	// report" convention exactly.
+	// Title is the trimmed <title> element. Only TrueNAS 26 relies on it,
+	// where the domain name is a UUID and the VM's own name lives here.
 	Title string
 	// UUID is the domain XML's <uuid>, lower-cased and trimmed so two
 	// spellings of one UUID never read as two VMs. Unraid keeps it across a
@@ -108,40 +54,27 @@ type DomainInfo struct {
 	// see BlockDisks): snapshotting them fails with "external snapshot file
 	// ... already exists and is not a block device".
 	SkipSnapshotDevs []string
-	// BlockDisks are writable disks whose backing store is a raw block device
-	// (libvirt <source dev="...">, e.g. a TrueNAS Scale zvol at
-	// /dev/zvol/<pool>/<dataset> — see internal/virshcli/zvol.go) rather than a
-	// regular file. Populated ADDITIVELY to (never overlapping with) DiskPaths/
-	// Disks/DiskDevice, which stay file-backed-only and byte-identical to their
-	// pre-Task-10 behavior. A block-device disk needs a fundamentally different
-	// backup mechanism (ZFS snapshot + `zfs send` streamed into restic, see
-	// internal/backup/vm_orchestrator.go's BackupZvolDisk/RestoreZvolDisk) since
-	// restic cannot back up a block device by path the way it backs up a file.
-	//
-	// Verified against a real TrueNAS SCALE box 2026-08-27, including that a
-	// running domain's <source dev=…> carries the /dev/zvol/… path verbatim —
-	// see zvol.go's package doc comment for the full measurement and for the
-	// two paths that remain unverified.
+	// BlockDisks are writable disks backed by a raw block device, such as a
+	// TrueNAS zvol at /dev/zvol/<pool>/<dataset>, and never appear in
+	// DiskPaths, Disks or DiskDevice. restic cannot read a block device by
+	// path, so these go through a ZFS snapshot and zfs send instead (see
+	// BackupZvolDisk in internal/backup and zvol.go).
 	BlockDisks []DiskRef
 }
 
 // Virsh is the host-control surface the VM backup orchestrator depends on.
-// It is deliberately small and interface-shaped so orchestrators and the
-// service layer can be unit-tested with fakes without a real libvirt socket.
 type Virsh interface {
 	// List returns all domains (running and stopped).
 	List(ctx context.Context) ([]VMInfo, error)
-	// State returns the domain state string ("running", "shut off", …), or
-	// ("", nil) when the domain does not exist (mirror of dockercli.InspectName's
-	// not-found tolerance).
+	// State returns the domain state string ("running", "shut off", ...), or
+	// ("", nil) when the domain does not exist.
 	State(ctx context.Context, name string) (string, error)
-	// DumpXML returns the domain XML for the named VM (the LIVE config for a
-	// running VM — includes hot-plugged/transient devices and current disk paths).
+	// DumpXML returns the domain XML for the named VM. For a running VM that is
+	// the live config, including hot-plugged devices and current disk paths.
 	DumpXML(ctx context.Context, name string) (string, error)
-	// DumpXMLInactive returns the PERSISTENT (inactive) domain XML (virsh dumpxml
-	// --inactive): the VM's defined config without runtime-only/hot-plugged
-	// devices. Used to capture the restore definition so a live-snapshot restore
-	// doesn't pin transient devices a guest re-adds itself.
+	// DumpXMLInactive returns the persistent domain XML (virsh dumpxml
+	// --inactive). The restore definition is taken from it so a restore does
+	// not pin transient devices the guest re-adds itself.
 	DumpXMLInactive(ctx context.Context, name string) (string, error)
 	// Shutdown sends an ACPI graceful-shutdown signal (virsh shutdown).
 	Shutdown(ctx context.Context, name string) error
