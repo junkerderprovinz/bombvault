@@ -1597,7 +1597,7 @@ const tr: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "{dataset} havuzunun tamamı tek bir kayıt olarak yedeklensin mi? İçinde şunlar var: {names}",
   "zfs.add.shareSplit": "{dataset} {names} üzerinde de var. mover oraya taşıdığı dosyalar bu kayıtta yok.",
   "zfs.add.hiddenLegacy": "Docker katmanı veri kümeleri: {n}",
-  "zfs.add.truncated": "Yalnızca ilk {n} veri kümesi gösteriliyor. Kalanları süzgeçle bul.",
+  "zfs.add.truncated": "Liste kısaltıldı. Gösterilen veri kümeleri: {n}. Kalanları süzgeçle bul.",
   "zfs.add.submit": "Seçilenleri ekle ({n})",
   "zfs.add.result.ok": "{dataset} eklendi",
   "zfs.add.result.failed": "{dataset} eklenmedi: {reason}",

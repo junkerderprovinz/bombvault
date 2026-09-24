@@ -1597,7 +1597,7 @@ const fi: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "Varmuuskopioidaanko koko pooli {dataset} yhtenä kohteena? Se sisältää: {names}",
   "zfs.add.shareSplit": "{dataset} on myös levyllä {names}. Tiedostot, jotka mover on siirtänyt sinne, eivät ole tässä kohteessa.",
   "zfs.add.hiddenLegacy": "Dockerin kerrostietojoukkoja: {n}",
-  "zfs.add.truncated": "Näkyvissä on vain ensimmäiset {n} tietojoukkoa. Etsi loput suodattimella.",
+  "zfs.add.truncated": "Luetteloa on lyhennetty. Näytetyt tietojoukot: {n}. Etsi loput suodattimella.",
   "zfs.add.submit": "Lisää valitut ({n})",
   "zfs.add.result.ok": "{dataset} lisätty",
   "zfs.add.result.failed": "{dataset} jäi lisäämättä: {reason}",

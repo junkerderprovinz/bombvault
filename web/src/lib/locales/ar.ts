@@ -1600,7 +1600,7 @@ const ar: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "أننسخ المخزن {dataset} كله كعنصر واحد؟ يحتوي على: {names}",
   "zfs.add.shareSplit": "يوجد {dataset} أيضًا على {names}. الملفات التي نقلها الموفر إلى هناك ليست في هذا العنصر.",
   "zfs.add.hiddenLegacy": "مجموعات بيانات طبقات Docker: {n}",
-  "zfs.add.truncated": "تُعرض أول {n} مجموعة بيانات فقط. استخدم التصفية للعثور على البقية.",
+  "zfs.add.truncated": "القائمة مقتطعة. مجموعات البيانات المعروضة: {n}. استخدم التصفية للعثور على البقية.",
   "zfs.add.submit": "أضف المحدد ({n})",
   "zfs.add.result.ok": "أُضيف {dataset}",
   "zfs.add.result.failed": "لم يُضف {dataset}: {reason}",

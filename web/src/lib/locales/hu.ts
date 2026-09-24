@@ -1600,7 +1600,7 @@ const hu: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "A teljes {dataset} tároló egyetlen tételként mentődjön? Ezt tartalmazza: {names}",
   "zfs.add.shareSplit": "A(z) {dataset} itt is megvan: {names}. Azok a fájlok, amiket a mover odavitt, nincsenek ebben a tételben.",
   "zfs.add.hiddenLegacy": "Docker rétegek adatkészletei: {n}",
-  "zfs.add.truncated": "Csak az első {n} adatkészlet látszik. A többit a szűrővel találod meg.",
+  "zfs.add.truncated": "A lista le van rövidítve. Látható adatkészletek: {n}. A többit a szűrővel találod meg.",
   "zfs.add.submit": "Kijelöltek hozzáadása ({n})",
   "zfs.add.result.ok": "{dataset} hozzáadva",
   "zfs.add.result.failed": "{dataset} nem lett hozzáadva: {reason}",

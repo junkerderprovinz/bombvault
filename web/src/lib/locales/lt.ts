@@ -1802,7 +1802,7 @@ const lt: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "Kopijuoti visą telkinį {dataset} kaip vieną įrašą? Jame yra: {names}",
   "zfs.add.shareSplit": "{dataset} yra ir {names}. Failai, kuriuos mover perkėlė ten, į šį įrašą nepatenka.",
   "zfs.add.hiddenLegacy": "Docker sluoksnių duomenų rinkiniai: {n}",
-  "zfs.add.truncated": "Rodomi tik pirmi {n} duomenų rinkiniai. Likusius rask filtru.",
+  "zfs.add.truncated": "Sąrašas sutrumpintas. Rodomi duomenų rinkiniai: {n}. Likusius rask filtru.",
   "zfs.add.submit": "Pridėti pasirinktus ({n})",
   "zfs.add.result.ok": "{dataset} pridėtas",
   "zfs.add.result.failed": "{dataset} nepridėtas: {reason}",

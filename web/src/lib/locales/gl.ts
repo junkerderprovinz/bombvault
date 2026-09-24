@@ -1802,7 +1802,7 @@ const gl: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "Copiar todo o pool {dataset} como un só elemento? Contén: {names}",
   "zfs.add.shareSplit": "{dataset} tamén existe en {names}. Os ficheiros que o mover puxo alí non están neste elemento.",
   "zfs.add.hiddenLegacy": "Conxuntos de datos de capas de Docker: {n}",
-  "zfs.add.truncated": "Só se amosan os primeiros {n} conxuntos de datos. Usa o filtro para atopar o resto.",
+  "zfs.add.truncated": "A lista está recortada. Conxuntos de datos amosados: {n}. Usa o filtro para atopar o resto.",
   "zfs.add.submit": "Engadir os escollidos ({n})",
   "zfs.add.result.ok": "{dataset} engadido",
   "zfs.add.result.failed": "{dataset} non se engadiu: {reason}",

@@ -1802,7 +1802,7 @@ const lv: Partial<Translations> = {
   "zfs.add.poolRootConfirm": "Dublēt visu kopni {dataset} kā vienu vienumu? Tajā ir: {names}",
   "zfs.add.shareSplit": "{dataset} ir arī uz {names}. Faili, ko mover pārvietoja turp, šajā vienumā nav.",
   "zfs.add.hiddenLegacy": "Docker slāņu datu kopas: {n}",
-  "zfs.add.truncated": "Rādītas tikai pirmās {n} datu kopas. Pārējās atrodi ar filtru.",
+  "zfs.add.truncated": "Saraksts ir saīsināts. Rādītās datu kopas: {n}. Pārējās atrodi ar filtru.",
   "zfs.add.submit": "Pievienot atlasītos ({n})",
   "zfs.add.result.ok": "{dataset} pievienots",
   "zfs.add.result.failed": "{dataset} netika pievienots: {reason}",
