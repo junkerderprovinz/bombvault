@@ -398,6 +398,36 @@ func (r *Repo) ListAnomalies(f AnomalyFilter) ([]Anomaly, string, error) {
 	return out, next, nil
 }
 
+// HeldAnomalies returns every open critical finding of the given metrics that
+// has not recovered, oldest episode last and with no page limit. These are the
+// rows that pause deleting old backups, and a flood of unrelated criticals must
+// not push one of them out of sight.
+func (r *Repo) HeldAnomalies(metrics []string) ([]Anomaly, error) {
+	clause, args := inClause("metric", metrics)
+	//nolint:gosec // G202: the clause is built from a literal and placeholders.
+	rows, err := r.db.Query(`SELECT `+anomalyColumns+`
+		FROM anomalies
+		WHERE state = 'open' AND severity = 'critical' AND recovered_at = 0 AND `+clause+`
+		ORDER BY last_seen_at DESC, id DESC`, args...)
+	if err != nil {
+		return nil, fmt.Errorf("HeldAnomalies: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	var out []Anomaly
+	for rows.Next() {
+		a, sErr := scanAnomaly(rows)
+		if sErr != nil {
+			return nil, fmt.Errorf("HeldAnomalies: %w", sErr)
+		}
+		out = append(out, a)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("HeldAnomalies: %w", err)
+	}
+	return out, nil
+}
+
 // GetAnomaly reads one finding. The bool is false when the id is unknown.
 func (r *Repo) GetAnomaly(id string) (Anomaly, bool, error) {
 	row := r.db.QueryRow(`SELECT `+anomalyColumns+` FROM anomalies WHERE id = ?`, id)
