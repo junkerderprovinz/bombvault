@@ -20,7 +20,7 @@ vi.mock("../lib/api", async (importOriginal) => {
 });
 
 // Imported after vi.mock so the component picks up the mocked client.
-const { EverythingSection } = await import("./Settings");
+const { EverythingSection } = await import("./settings/tabs/SchedulesTab");
 const { ApiError } = await import("../lib/api");
 
 /** A Settings object with only the fields this card reads. */
