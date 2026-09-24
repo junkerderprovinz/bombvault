@@ -52,6 +52,34 @@ export const ANOMALY_DETECTOR_LABEL: Record<AnomalyDetector, TranslationKey> = {
   capacity: "anomaly.detector.capacity",
 };
 
+/** The three presets. The empty setting, "follow the global one", is not a
+ *  preset and carries the global name in its own label. */
+export const ANOMALY_SENSITIVITY_LABEL: Record<string, TranslationKey> = {
+  strict: "anomaly.sensitivity.strict",
+  balanced: "anomaly.sensitivity.balanced",
+  permissive: "anomaly.sensitivity.permissive",
+};
+
+/** The lowest severity that still sends a message. */
+export const ANOMALY_NOTIFY_LABEL: Record<string, TranslationKey> = {
+  critical: "anomaly.settings.notify.critical",
+  warning: "anomaly.settings.notify.warning",
+  info: "anomaly.settings.notify.info",
+  off: "anomaly.settings.notify.off",
+};
+
+/** What a user can declare normal, one entry per rule and direction. */
+export const ANOMALY_FAMILY_LABEL: Record<string, TranslationKey> = {
+  new_data: "anomaly.family.newData",
+  source_bytes_down: "anomaly.family.sourceBytesDown",
+  source_bytes_up: "anomaly.family.sourceBytesUp",
+  source_files_down: "anomaly.family.sourceFilesDown",
+  duration: "anomaly.family.duration",
+  dump_bytes_down: "anomaly.family.dumpBytesDown",
+  dump_bytes_up: "anomaly.family.dumpBytesUp",
+  dump_duration: "anomaly.family.dumpDuration",
+};
+
 // An item carries the singular domain of its own table ("container"), a drill
 // scope the plural of the domain it ran for ("containers"), so both spellings
 // resolve to one label.

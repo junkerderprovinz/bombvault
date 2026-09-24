@@ -268,6 +268,7 @@ const NOT_A_PATH: Record<string, string> = {
   "rclone.pathHint": "the example is rclone:<remote>:<bucket>/path. It begins with letters, a strong LTR class that anchors the whole run; only a leading `/` misrenders",
   "recovery.foreignVMDestHint": "the run is <destination>/<vm-name>/ and BOTH placeholder words are translated (sl 'ime-vm', sr 'naziv-vm'), so no literal fragment can match in every locale; the leading character is `<`, not `/`",
   "folders.customPlaceholder": "orphaned key, rendered nowhere (see i18n.orphans.test.ts's ratchet)",
+  "anomaly.learning": "a fraction, not a path: {n}/{needed} counts the backups the detector has learned from",
 };
 
 describe("coverage: every en string that embeds a path is accounted for", () => {

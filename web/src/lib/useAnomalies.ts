@@ -14,7 +14,14 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { getAnomalies, getAnomalySummary, type AnomalySummary, type AnomalyView } from "./api";
+import {
+  getAnomalies,
+  getAnomalyItems,
+  getAnomalySummary,
+  type AnomalyItem,
+  type AnomalySummary,
+  type AnomalyView,
+} from "./api";
 import { ANOMALY_CHANGED_EVENT } from "./anomalies";
 
 const POLL_MS = 15000;
@@ -114,4 +121,53 @@ export function useOpenAnomalies(): { list: AnomalyView[]; error: boolean } {
   }, [generation]);
 
   return useMemo(() => ({ list, error }), [list, error]);
+}
+
+export interface AnomalyItemsState {
+  items: AnomalyItem[];
+  byTarget: Map<string, AnomalyItem>;
+  error: boolean;
+  loading: boolean;
+}
+
+/**
+ * useAnomalyItems reads the watched items once per pass. Badges beside item
+ * names and the Items tab both come from here, so a name and its figures are
+ * never two requests apart.
+ */
+export function useAnomalyItems(): AnomalyItemsState {
+  const { summary } = useAnomalySummary();
+  const generation = summary?.generation;
+  const [items, setItems] = useState<AnomalyItem[]>([]);
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (generation === undefined) return;
+    let active = true;
+    getAnomalyItems()
+      .then((res) => {
+        if (!active) return;
+        if (!res.ok) {
+          setError(true);
+        } else {
+          setItems(res.items);
+          setError(false);
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        if (!active) return;
+        setError(true);
+        setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [generation]);
+
+  return useMemo(
+    () => ({ items, byTarget: new Map(items.map((i) => [i.targetId, i])), error, loading }),
+    [items, error, loading]
+  );
 }

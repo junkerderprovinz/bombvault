@@ -10,6 +10,7 @@ import { IconDisclosure } from "./IconDisclosure";
 import { InfoBubble } from "./InfoBubble";
 import type { AnomalyView } from "../lib/api";
 import {
+  ANOMALY_SENSITIVITY_LABEL,
   ANOMALY_SEVERITY_LABEL,
   ANOMALY_STATE_LABEL,
   anomalyErrorText,
@@ -38,12 +39,6 @@ const COUNT_METRICS = new Set([
   "flaky",
   "dump_flaky",
 ]);
-
-const SENSITIVITY_LABEL: Record<string, TranslationKey> = {
-  strict: "anomaly.sensitivity.strict",
-  balanced: "anomaly.sensitivity.balanced",
-  permissive: "anomaly.sensitivity.permissive",
-};
 
 // The statistics the detector stored, in the order they explain the finding.
 const DETAIL_LABEL: [string, TranslationKey][] = [
@@ -142,7 +137,7 @@ export function AnomalyRow({
       String(a.samples),
     ]);
   }
-  const sensitivity = SENSITIVITY_LABEL[a.sensitivity];
+  const sensitivity = ANOMALY_SENSITIVITY_LABEL[a.sensitivity];
   if (sensitivity) details.push([t("anomaly.detail.sensitivity"), t(sensitivity)]);
   details.push([t("anomaly.detail.firstSeen"), formatTs(a.firstSeenAt)]);
   details.push([t("anomaly.detail.lastSeen"), formatTs(a.lastSeenAt)]);
