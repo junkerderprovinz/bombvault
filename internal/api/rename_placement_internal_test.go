@@ -302,6 +302,134 @@ func TestDiscoverLinksButLeavesTheRuleWhileTheInstalledContainersCannotBeListed(
 	}
 }
 
+// linkedVMWithARuleOnItsFormerName is win11, linked at 200 to windows-11, a
+// name whose rule leaves every target out.
+func linkedVMWithARuleOnItsFormerName(t *testing.T, f *placementFixture) {
+	t.Helper()
+	win := f.vm("win11", "")
+	if _, err := f.st.AddVMAliasAt("windows-11", win.ID, 200, ""); err != nil {
+		t.Fatal(err)
+	}
+	f.rule("vms", "vm:windows-11", store.SkipAll)
+}
+
+// windows-11 is defined again and set to Local before its first backup, while
+// VMs are switched off here.
+func TestAnImportWhileVMsAreOffLeavesTheRuleOfADefinedVMOnItsName(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("vms", "B2", "b2:bucket/vms")
+	f.listing("vms", b2.ID, 50)
+	linkedVMWithARuleOnItsFormerName(t, f)
+	f.virsh.defined = []string{"win11", "windows-11"}
+	exp := f.do(http.MethodGet, "/api/settings/export", nil)
+
+	if res := f.do(http.MethodPost, "/api/settings/import?apply=true", exp); res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+	if skip, ok := ruleOf(t, f, "vms", "vm:windows-11"); !ok || !slices.Equal(skip, []string{store.SkipAll}) {
+		t.Fatalf("rule of windows-11 = %v (found %v), want [*]", skip, ok)
+	}
+	f.openVM("windows-11")
+	f.hold(f.domainPath("vms"),
+		snap("bbbb0001", time.Now().Unix()+5, "vm:windows-11"),
+		snap("bbbb0003", 300, "vm:win11"))
+	if err := f.svc.ReplicateOffsite(context.Background(), "vms"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	if got, want := copiedTo(f, b2.Repo), []string{"bbbb0003"}; !slices.Equal(got, want) {
+		t.Fatalf("copied %v to B2, want %v", got, want)
+	}
+}
+
+func TestAnImportLeavesTheRuleOnAFormerVMNameWhileLibvirtCannotAnswer(t *testing.T) {
+	for _, vmsOn := range []bool{false, true} {
+		t.Run(map[bool]string{false: "VMs off", true: "VMs on"}[vmsOn], func(t *testing.T) {
+			f := newPlacementFixture(t)
+			linkedVMWithARuleOnItsFormerName(t, f)
+			f.settings(func(s *store.Settings) { s.VMsEnabled = vmsOn })
+			exp := f.do(http.MethodGet, "/api/settings/export", nil)
+			f.virsh.listErr = errors.New("libvirt is not running")
+
+			if res := f.do(http.MethodPost, "/api/settings/import?apply=true", exp); res["ok"] != true {
+				t.Fatalf("import = %v", res)
+			}
+			if skip, ok := ruleOf(t, f, "vms", "vm:windows-11"); !ok || !slices.Equal(skip, []string{store.SkipAll}) {
+				t.Fatalf("rule of windows-11 = %v (found %v), want [*]", skip, ok)
+			}
+			if skip, ok := ruleOf(t, f, "vms", "vm:win11"); ok {
+				t.Fatalf("win11 took the rule %v", skip)
+			}
+		})
+	}
+}
+
+// renamedVMThatCopiesEverywhere is windows-11 renamed to win11, with a rule
+// that copies it to every target.
+func renamedVMThatCopiesEverywhere(t *testing.T, f *placementFixture) {
+	t.Helper()
+	f.vm("windows-11", "")
+	f.rule("vms", "vm:windows-11")
+	if err := f.st.RenameVMTargetWithAlias("windows-11", "win11", "", ""); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// A new windows-11 is defined without a row while VMs are switched off here.
+func TestRemovingAVMWhileVMsAreOffLeavesNoRuleOnAVMDefinedUnderAFormerName(t *testing.T) {
+	for _, c := range []struct {
+		name   string
+		remove func(*Service) error
+	}{
+		{"delete", func(s *Service) error { return s.DeleteBackupsVM(context.Background(), "win11", "local") }},
+		{"forget", func(s *Service) error { return s.ForgetVMTarget(context.Background(), "win11") }},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			f := newPlacementFixture(t)
+			b2 := f.target("vms", "B2", "b2:bucket/vms")
+			f.listing("vms", b2.ID, 50)
+			f.setDefault("vms", "", b2.ID)
+			renamedVMThatCopiesEverywhere(t, f)
+			f.virsh.defined = []string{"windows-11"}
+
+			if err := c.remove(f.svc); err != nil {
+				t.Fatalf("%s: %v", c.name, err)
+			}
+			if skip, ok := ruleOf(t, f, "vms", "vm:windows-11"); ok {
+				t.Fatalf("windows-11, defined without a row, took the rule %v", skip)
+			}
+			f.openVM("windows-11")
+			f.hold(f.domainPath("vms"), snap("bbbb0001", time.Now().Unix()+5, "vm:windows-11"))
+			if err := f.svc.ReplicateOffsite(context.Background(), "vms"); err != nil {
+				t.Fatalf("ReplicateOffsite: %v", err)
+			}
+			if got := copiedTo(f, b2.Repo); len(got) > 0 {
+				t.Fatalf("copied %v to B2, which the default leaves out", got)
+			}
+		})
+	}
+}
+
+func TestAVMDeleteLeavesEveryFormerNameAloneWhileLibvirtCannotAnswer(t *testing.T) {
+	for _, vmsOn := range []bool{false, true} {
+		t.Run(map[bool]string{false: "VMs off", true: "VMs on"}[vmsOn], func(t *testing.T) {
+			f := newPlacementFixture(t)
+			renamedVMThatCopiesEverywhere(t, f)
+			f.settings(func(s *store.Settings) { s.VMsEnabled = vmsOn })
+			f.virsh.listErr = errors.New("libvirt is not running")
+
+			if err := f.svc.DeleteBackupsVM(context.Background(), "win11", "local"); err != nil {
+				t.Fatalf("DeleteBackupsVM: %v", err)
+			}
+			if _, err := f.st.GetVMTargetByName("win11"); err == nil {
+				t.Fatal("the entry of win11 stayed")
+			}
+			if skip, ok := ruleOf(t, f, "vms", "vm:windows-11"); ok {
+				t.Fatalf("windows-11 took the rule %v although libvirt could not say what is defined there", skip)
+			}
+		})
+	}
+}
+
 // writeLinkedContainerDef leaves the definition mirror of name at the domain
 // path, recording old as the former name linked to it at linkedAt.
 func writeLinkedContainerDef(t *testing.T, f *placementFixture, name, old string, linkedAt int64) {

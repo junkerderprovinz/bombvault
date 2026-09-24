@@ -26,19 +26,21 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/spike"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/bombvault/internal/virshcli"
 )
 
 // placementFixture is a Service and a Handler over an in-memory store, with a
 // restic fake that answers per location and domain paths that exist.
 type placementFixture struct {
-	t    *testing.T
-	svc  *Service
-	h    *Handler
-	st   *store.Repo
-	db   *sql.DB // for facts no store writer can set, such as when a run happened
-	eng  *placementEngine
-	dock *placementDocker
-	root string // host mount root, slash-spelled
+	t     *testing.T
+	svc   *Service
+	h     *Handler
+	st    *store.Repo
+	db    *sql.DB // for facts no store writer can set, such as when a run happened
+	eng   *placementEngine
+	dock  *placementDocker
+	virsh *placementVirsh
+	root  string // host mount root, slash-spelled
 }
 
 func newPlacementFixture(t *testing.T) *placementFixture {
@@ -72,11 +74,12 @@ func newPlacementFixture(t *testing.T) *placementFixture {
 		lists:   map[string]int{},
 	}
 	dock := &placementDocker{installed: map[string]bool{}}
-	svc := NewService(cfg, st, dock, nil, eng)
+	virsh := &placementVirsh{}
+	svc := NewService(cfg, st, dock, virsh, eng)
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 	f := &placementFixture{
 		t: t, svc: svc, h: NewHandler(cfg, st, dock, svc, sched, spike.DefaultProbes()),
-		st: st, db: db, eng: eng, dock: dock, root: root,
+		st: st, db: db, eng: eng, dock: dock, virsh: virsh, root: root,
 	}
 	for _, domain := range store.PlacementDomains {
 		f.makeRepo(f.domainPath(domain))
@@ -579,6 +582,24 @@ func (d *placementDocker) List(context.Context) ([]dockercli.ContainerInfo, erro
 // Self reports no own container: the placement fixture never runs as BombVault
 // itself, and the list routes must not panic on the embedded nil Docker.
 func (d *placementDocker) Self(context.Context) (string, error) { return "", nil }
+
+// placementVirsh reports the named VMs as defined, or listErr.
+type placementVirsh struct {
+	virshcli.Virsh
+	defined []string
+	listErr error
+}
+
+func (v *placementVirsh) List(context.Context) ([]virshcli.VMInfo, error) {
+	if v.listErr != nil {
+		return nil, v.listErr
+	}
+	out := make([]virshcli.VMInfo, 0, len(v.defined))
+	for _, name := range v.defined {
+		out = append(out, virshcli.VMInfo{Name: name})
+	}
+	return out, nil
+}
 
 // openContainer adds a container row whose location is still open.
 func (f *placementFixture) openContainer(name string) {

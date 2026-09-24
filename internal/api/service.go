@@ -6316,7 +6316,7 @@ func (s *Service) foldFormerNames(ctx context.Context, settings store.Settings, 
 	var installed map[string]bool
 	var listErr error
 	if domain == "vm" {
-		installed, listErr = s.installedVMs(ctx, settings)
+		installed, listErr = s.definedVMs(ctx)
 	} else {
 		installed, listErr = s.installedContainers(ctx)
 	}
@@ -9320,7 +9320,11 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 		if err := refuseDeleteWithPartialIdentity(name, s.vmIdentity(name)); err != nil {
 			return err
 		}
-		if err := s.store.DeleteVMTarget(name, installed); err != nil {
+		held, err := s.heldVMNames(ctx)
+		if err != nil {
+			return fmt.Errorf("%q keeps its entry: %w", name, err)
+		}
+		if err := s.store.DeleteVMTarget(name, held); err != nil {
 			return fmt.Errorf("delete vm target: %w", err)
 		}
 		return nil
@@ -9330,18 +9334,18 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 		return errDomainBusy
 	}
 	defer unlock()
-	// The entry's former names keep its copy rule unless a VM defined under
-	// one follows its own.
-	installed, err := s.installedVMs(ctx, settings)
-	if err != nil {
-		return fmt.Errorf("nothing was deleted: the VMs on the host could not be listed: %w", err)
-	}
 	mode := s.repoModeFor(settings, "vms", source, repo)
 	s.unlockStale(ctx, repo, mode)
 
 	id := s.vmIdentity(name)
 	if err := refuseDeleteWithPartialIdentity(name, id); err != nil {
 		return err
+	}
+	// The entry's former names keep its copy rule unless a VM defined under
+	// one follows its own.
+	held, err := s.heldVMNames(ctx)
+	if err != nil {
+		return fmt.Errorf("nothing was deleted: %w", err)
 	}
 	snaps, err := s.vmSnapshotsOf(ctx, name, source, id)
 	if err != nil {
@@ -9357,7 +9361,7 @@ func (s *Service) DeleteBackupsVM(ctx context.Context, name, source string) erro
 		}
 	}
 
-	if err := s.store.DeleteVMTarget(name, installed); err != nil {
+	if err := s.store.DeleteVMTarget(name, held); err != nil {
 		return fmt.Errorf("delete vm target: %w", err)
 	}
 	return nil
@@ -9398,7 +9402,11 @@ func (s *Service) ForgetVMTarget(ctx context.Context, name string) error {
 	if err := s.refuseRowRemovalWithBackups(ctx, settings, "vms", name, repo, s.vmIdentity(name)); err != nil {
 		return err
 	}
-	if err := s.store.DeleteVMTarget(name, installed); err != nil {
+	held, err := s.heldVMNames(ctx)
+	if err != nil {
+		return fmt.Errorf("%q keeps its entry: %w", name, err)
+	}
+	if err := s.store.DeleteVMTarget(name, held); err != nil {
 		return fmt.Errorf("forget vm target: %w", err)
 	}
 	return nil
@@ -9467,18 +9475,47 @@ func (s *Service) installedContainers(ctx context.Context) (map[string]bool, err
 // libvirt defines while VMs are enabled, and none while they are off, when
 // every entry is listed as not installed.
 func (s *Service) installedVMs(ctx context.Context, settings store.Settings) (map[string]bool, error) {
-	installed := map[string]bool{}
 	if !settings.VMsEnabled {
-		return installed, nil
+		return map[string]bool{}, nil
 	}
+	return s.definedVMs(ctx)
+}
+
+// definedVMs is the set of VMs libvirt defines, whatever the VMs setting says.
+func (s *Service) definedVMs(ctx context.Context) (map[string]bool, error) {
 	infos, err := s.virsh.List(ctx)
 	if err != nil {
 		return nil, err
 	}
+	defined := make(map[string]bool, len(infos))
 	for _, vm := range infos {
-		installed[vm.Name] = true
+		defined[vm.Name] = true
 	}
-	return installed, nil
+	return defined, nil
+}
+
+// heldVMNames is what the store is told libvirt defines when it decides on the
+// copy rule of a former VM name. libvirt is asked whatever the VMs setting says,
+// since a rule written while VMs are off applies once they are on again, and
+// when it cannot answer every former name counts as held.
+func (s *Service) heldVMNames(ctx context.Context) (map[string]bool, error) {
+	aliases, err := s.store.ListAliases("vm")
+	if err != nil {
+		return nil, err
+	}
+	if len(aliases) == 0 {
+		return nil, nil
+	}
+	defined, err := s.definedVMs(ctx)
+	if err == nil {
+		return defined, nil
+	}
+	log.Printf("api: the VMs on the host could not be listed, so every former VM name keeps the copy rule it has: %v", err)
+	held := make(map[string]bool, len(aliases))
+	for _, a := range aliases {
+		held[a.OldName] = true
+	}
+	return held, nil
 }
 
 // ForgetTarget removes a container's target row + run history WITHOUT touching

@@ -12,6 +12,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/bombvault/internal/virshcli"
 )
 
 // A VM backup names each former name of its entry, oldest link first, and an
@@ -49,6 +50,13 @@ const (
 // mirrors beside them.
 func vmsAfterConfigLoss(t *testing.T, snaps []restic.Snapshot, defs map[string]string) (*api.Service, *store.Repo, *fakeResticEngine) {
 	t.Helper()
+	return vmsAfterConfigLossOn(t, fakeVirsh{}, snaps, defs)
+}
+
+// vmsAfterConfigLossOn is vmsAfterConfigLoss on a host where virsh defines
+// what it lists.
+func vmsAfterConfigLossOn(t *testing.T, virsh virshcli.Virsh, snaps []restic.Snapshot, defs map[string]string) (*api.Service, *store.Repo, *fakeResticEngine) {
+	t.Helper()
 	dir := filepath.ToSlash(t.TempDir())
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
 	st := newMemStore(t)
@@ -59,7 +67,7 @@ func vmsAfterConfigLoss(t *testing.T, snaps []restic.Snapshot, defs map[string]s
 	}
 	writeVMDefs(t, filepath.Join(establishLocalRepo(t, dir, s.VMsPath), "vm-def"), defs)
 	eng := &fakeResticEngine{snaps: snaps}
-	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng), st, eng
+	return api.NewService(cfg, st, &fakeServiceDocker{}, virsh, eng), st, eng
 }
 
 func writeVMDefs(t *testing.T, dir string, defs map[string]string) {
@@ -146,6 +154,26 @@ func TestDiscoverVMsFoldsAFormerNameIntoItsSuccessor(t *testing.T) {
 	snaps, err := svc.SnapshotsVM(ctx, "win11", "")
 	if err != nil || joined(snapshotIDs(snaps)) != "post1,post2,pre1" {
 		t.Fatalf("SnapshotsVM(win11) = %v, %v; want both names' backups", snapshotIDs(snaps), err)
+	}
+}
+
+// windows-11 is defined again with a rule of its own while VMs are switched
+// off here, so the link Discover makes leaves that rule where it is.
+func TestDiscoverVMsLeavesTheRuleOfAVMDefinedUnderTheFormerName(t *testing.T) {
+	defined := &renameSuggestVirsh{vms: []virshcli.VMInfo{{Name: "windows-11"}}}
+	svc, st, _ := vmsAfterConfigLossOn(t, defined, renamedVMSnaps, map[string]string{"windows-11": windows11Def, "win11": win11Linked(t)})
+	if err := st.SetCopyRule("vms", "vm:windows-11", []string{store.SkipAll}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := svc.DiscoverVMs(context.Background(), false); err != nil {
+		t.Fatalf("DiscoverVMs: %v", err)
+	}
+	if _, err := st.AliasByOldName("vm", "windows-11"); err != nil {
+		t.Fatalf("windows-11 is not linked to win11: %v", err)
+	}
+	if rule, found, err := st.CopyRuleFor("vms", "vm:win11"); err != nil || found {
+		t.Fatalf("win11 took the rule %v (found %v, %v)", rule.Skip, found, err)
 	}
 }
 
