@@ -138,3 +138,34 @@ export function SelectField<T extends string>({
     </>
   );
 }
+
+/** A SelectField under its own visible caption, the shape a filter row and a
+ *  settings row share. */
+export function LabelledSelect<T extends string>({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: T;
+  onChange: (next: T) => void;
+  options: SelectOption<T>[];
+}) {
+  const id = useId();
+  return (
+    <div className="flex flex-col gap-1">
+      <label htmlFor={id} className="text-xs text-carbon-textMuted">
+        {label}
+      </label>
+      <SelectField
+        id={id}
+        label={label}
+        value={value}
+        onChange={onChange}
+        options={options}
+        className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
+      />
+    </div>
+  );
+}

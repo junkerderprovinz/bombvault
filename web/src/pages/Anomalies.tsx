@@ -9,7 +9,7 @@ import { AnomalyRow } from "../components/AnomalyRow";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { InfoBubble } from "../components/InfoBubble";
-import { SelectField } from "../components/SelectField";
+import { LabelledSelect } from "../components/SelectField";
 import { Selector } from "../components/Selector";
 import { Card } from "./settings/shared";
 import {
@@ -37,6 +37,7 @@ import {
   ANOMALY_SEVERITY_LABEL,
   anomalyErrorText,
   anomalyItemLabel,
+  anomalyLearningText,
   anomalySeverityTone,
   worstSeverity,
 } from "../lib/anomalies";
@@ -134,36 +135,6 @@ function storeFilters(filters: Filters) {
 function periodSince(period: PeriodFilter): number {
   if (period === "all") return 0;
   return Math.floor(Date.now() / 1000) - Number(period) * 86400;
-}
-
-/** A dropdown with its own visible caption, the filter row's one shape. */
-function LabelledSelect<V extends string>({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: V;
-  onChange: (next: V) => void;
-  options: { value: V; label: string }[];
-}) {
-  const id = useId();
-  return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-xs text-carbon-textMuted">
-        {label}
-      </label>
-      <SelectField
-        id={id}
-        label={label}
-        value={value}
-        onChange={onChange}
-        options={options}
-        className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
-      />
-    </div>
-  );
 }
 
 export function Anomalies() {
@@ -563,7 +534,7 @@ function SeriesLine({ t, label, series }: { t: T; label: string; series: Anomaly
   return (
     <div className="flex flex-wrap items-baseline gap-x-3 ps-4 text-xs text-carbon-textSub">
       <span className="text-carbon-text">{label}</span>
-      <span>{learningText(t, series.learning.samples, series.learning.needed, false)}</span>
+      <span>{anomalyLearningText(t, series.learning.samples, series.learning.needed, false)}</span>
       {series.typical.sourceBytes !== null && series.typical.resticMs !== null && (
         <span>
           {t("anomaly.items.typicalSize")
@@ -574,14 +545,6 @@ function SeriesLine({ t, label, series }: { t: T; label: string; series: Anomaly
       {series.retentionHeld && <span className="text-statusWarn">{t("anomaly.retentionPaused")}</span>}
     </div>
   );
-}
-
-function learningText(t: T, samples: number, needed: number, noData: boolean): string {
-  if (noData) return t("anomaly.noData");
-  if (samples >= needed) return t("anomaly.learningDone");
-  return t("anomaly.learning")
-    .replace("{n}", samples.toLocaleString())
-    .replace("{needed}", needed.toLocaleString());
 }
 
 function ItemsTab({ t, items, settings }: { t: T; items: AnomalyItem[]; settings: Settings | null }) {
@@ -697,7 +660,7 @@ function ItemRow({
           <span className="text-xs text-carbon-textSub">{t("anomaly.items.notScheduled")}</span>
         ) : (
           <span className="inline-flex items-center gap-1 text-xs text-carbon-textSub">
-            {learningText(t, item.learning.samples, item.learning.needed, item.learning.noData)}
+            {anomalyLearningText(t, item.learning.samples, item.learning.needed, item.learning.noData)}
             <InfoBubble
               tip={t("anomaly.items.learningDetail")
                 .replace("{newData}", item.learning.newData.toLocaleString())
