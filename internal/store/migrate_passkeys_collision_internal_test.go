@@ -14,8 +14,8 @@ import (
 //     so the passkeys migration never runs there. Migration 107 repairs that.
 //   - a database from a partial run of the other build (only 100 recorded)
 //     needs the alreadySatisfied guards: the renumbered 101 would repeat an
-//     ALTER for an existing column, and SQLite has no ADD COLUMN IF NOT
-//     EXISTS, so the boot would abort.
+//     ALTER for an existing column, and SQLite cannot add a column only when
+//     it is missing, so the boot would abort.
 
 func applied(t *testing.T, db *sql.DB, version int) bool {
 	t.Helper()
