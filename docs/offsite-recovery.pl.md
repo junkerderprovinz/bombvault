@@ -21,7 +21,7 @@ Każda karta kontenera, VM i zestawu plików ma wiersz **Rozmieszczenie** z trze
 
 - **Lokalne** zapisuje element w repozytorium pokazanym pod **Zapisane na** i nigdzie go nie kopiuje. Użyj tego dla danych, które mają już drugą kopię, na przykład udziału, który leży na NAS.
 - **Lokalne + poza siedzibą** zapisuje go tam tak samo i kopiuje do celów zaznaczonych pod **Kopiuj do**, po jednym znaczniku na każdy cel poza siedzibą domeny. Odznacz znacznik, a ten cel nie dostanie od tego elementu nic nowego.
-- **Tylko poza siedzibą** zapisuje element wprost w miejscu pod **Wyślij do**: repozytorium bezpośrednim obok celu poza siedzibą albo zdalnym repozytorium skonfigurowanym w Ustawienia, Magazyn, Repozytoria.
+- **Tylko poza siedzibą** zapisuje element wprost w miejscu pod **Wyślij do**: repozytorium bezpośrednim obok celu poza siedzibą albo zdalnym repozytorium skonfigurowanym w Ustawienia, Ścieżki i pamięć, Repozytoria.
 
 Lokalizacja jest ustalona od pierwszej kopii elementu, ponieważ BombVault nigdy nie przenosi kopii między repozytoriami. Kopie można zmieniać w dowolnym momencie. Cel, który przestaje otrzymywać element, zachowuje posiadane kopie i przycina je do własnego przechowywania przy następnym uruchomieniu poza siedzibą tej domeny; **Usuń w B2** na karcie usuwa je od razu. Gdy część tych kopii nie istnieje nigdzie indziej, potwierdzenie wylistowuje je według daty i prosi o nazwę elementu. Z celów tylko do dopisywania nie da się usuwać.
 
@@ -29,7 +29,7 @@ Pod wierszem karta mówi, dokąd trafia element i co faktycznie tam jest: ile mi
 
 ### Domyślne rozmieszczenie
 
-Ustawienia, Magazyn, **Domyślne rozmieszczenie** ma jeden wiersz na domenę z tymi samymi trzema segmentami. Kopie stosują się od razu do każdego elementu bez własnego wyboru oraz do folderów projektu stosów Compose. Lokalizacja stosuje się do nowego elementu przy jego pierwszej kopii; jej zmiana nie przenosi żadnych kopii. Przed zapisem wiersz wymienia każdy cel, który zyskuje lub traci elementy, i ile to znaczy migawek. **Zastosuj do elementów bez kopii zapasowych** przywraca do domyślnego każdy element, który nie ma jeszcze kopii.
+Ustawienia, Ścieżki i pamięć, **Domyślne rozmieszczenie** ma jeden wiersz na domenę z tymi samymi trzema segmentami. Kopie stosują się od razu do każdego elementu bez własnego wyboru oraz do folderów projektu stosów Compose. Lokalizacja stosuje się do nowego elementu przy jego pierwszej kopii; jej zmiana nie przenosi żadnych kopii. Przed zapisem wiersz wymienia każdy cel, który zyskuje lub traci elementy, i ile to znaczy migawek. **Zastosuj do elementów bez kopii zapasowych** przywraca do domyślnego każdy element, który nie ma jeszcze kopii.
 
 Nowy cel poza siedzibą otrzymuje każdy element, który nie jest ustawiony na Lokalne. Okno dialogowe, które go dodaje, mówi, ile to elementów i, gdzie to wiadome, ile historii to oznacza, oraz proponuje pominięcie elementów już wykluczonych z innych celów.
 

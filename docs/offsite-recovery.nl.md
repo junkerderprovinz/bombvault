@@ -21,7 +21,7 @@ Elke kaart van een container, VM en bestandsset heeft een rij **Plaatsing** met 
 
 - **Lokaal** schrijft het item naar de repository die onder **Opgeslagen op** staat en kopieert het nergens naartoe. Gebruik dit voor data die al een tweede kopie heeft, bijvoorbeeld een share die op een NAS leeft.
 - **Lokaal + off-site** schrijft het ook daar en kopieert het naar de doelen die onder **Kopieer naar** zijn aangevinkt, één chip per off-site doel van het domein. Vink een chip uit en dat doel krijgt niets nieuws meer van dit item.
-- **Alleen off-site** schrijft het item rechtstreeks naar de plek onder **Verstuur naar**: een directe repository naast een off-site doel, of een remote repository die je hebt ingesteld onder Instellingen, Opslag, Repository's.
+- **Alleen off-site** schrijft het item rechtstreeks naar de plek onder **Verstuur naar**: een directe repository naast een off-site doel, of een remote repository die je hebt ingesteld onder Instellingen, Paden en opslag, Repository's.
 
 De locatie ligt vast vanaf de eerste back-up van het item, omdat BombVault back-ups nooit tussen repositories verplaatst. De kopieën kunnen op elk moment veranderen. Een doel dat een item niet meer krijgt, houdt de kopieën die het heeft en trimt ze naar zijn eigen retentie bij de volgende off-site run van het domein; **Verwijderen bij B2** op de kaart verwijdert ze meteen. Als sommige van die kopieën nergens anders bestaan, toont de bevestiging ze op datum en vraagt om de naam van het item. Bij append-only doelen kan niet worden verwijderd.
 
@@ -29,7 +29,7 @@ Onder de rij zegt de kaart waar het item naartoe gaat en wat er werkelijk is: ho
 
 ### Standaardplaatsing
 
-Instellingen, Opslag, **Standaardplaatsing** heeft één rij per domein met dezelfde drie segmenten. De kopieën gelden meteen voor elk item zonder eigen keuze, en voor de projectmappen van Compose-stacks. De locatie geldt voor een nieuw item bij zijn eerste back-up; wijzigen verplaatst geen back-ups. Voor het opslaan noemt de rij elk doel dat items wint of verliest en hoeveel snapshots dat betekent. **Toepassen op items zonder back-ups** zet elk item dat nog geen back-up heeft terug op de standaard.
+Instellingen, Paden en opslag, **Standaardplaatsing** heeft één rij per domein met dezelfde drie segmenten. De kopieën gelden meteen voor elk item zonder eigen keuze, en voor de projectmappen van Compose-stacks. De locatie geldt voor een nieuw item bij zijn eerste back-up; wijzigen verplaatst geen back-ups. Voor het opslaan noemt de rij elk doel dat items wint of verliest en hoeveel snapshots dat betekent. **Toepassen op items zonder back-ups** zet elk item dat nog geen back-up heeft terug op de standaard.
 
 Een nieuw off-site doel ontvangt elk item dat niet op Lokaal staat. Het venster dat het toevoegt, zegt hoeveel items en, waar bekend, hoeveel geschiedenis dat is, en biedt aan om de items over te slaan die al bij andere doelen zijn uitgesloten.
 

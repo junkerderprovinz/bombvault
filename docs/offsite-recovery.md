@@ -21,7 +21,7 @@ Each container, VM and folder set card has a **Placement** row with three segmen
 
 - **Local** writes the item to the repository shown under **Stored on** and copies it nowhere. Use it for data that already has a second copy, for example a share that lives on a NAS.
 - **Local + off-site** writes it there as well and copies it to the targets ticked under **Copy to**, one chip per off-site target of the domain. Untick a chip and that target gets nothing new from this item.
-- **Off-site only** writes the item straight to the place under **Send to**: a direct repository beside an off-site target, or a remote repository you set up under Settings, Storage, Repositories.
+- **Off-site only** writes the item straight to the place under **Send to**: a direct repository beside an off-site target, or a remote repository you set up under Settings, Paths & Storage, Repositories.
 
 The location is fixed from the item's first backup on, because BombVault never moves backups between repositories. The copies can change at any time. A target that no longer gets an item keeps the copies it has and trims them to its own retention at the next off-site run of the domain; **Delete in B2** on the card removes them at once. When some of those copies exist nowhere else, the confirmation lists them by date and asks for the item's name. Append-only targets cannot be deleted from.
 
@@ -29,7 +29,7 @@ Under the row the card says where the item goes and what is actually there: how 
 
 ### Placement defaults
 
-Settings, Storage, **Placement defaults** has one row per domain with the same three segments. The copies apply at once to every item without a choice of its own, and to the project folders of Compose stacks. The location applies to a new item at its first backup; changing it moves no backups. Before saving, the row names every target that gains or loses items and how many snapshots that means. **Apply to items without backups** puts every item that has no backup yet back on the default.
+Settings, Paths & Storage, **Placement defaults** has one row per domain with the same three segments. The copies apply at once to every item without a choice of its own, and to the project folders of Compose stacks. The location applies to a new item at its first backup; changing it moves no backups. Before saving, the row names every target that gains or loses items and how many snapshots that means. **Apply to items without backups** puts every item that has no backup yet back on the default.
 
 A new off-site target receives every item that is not set to Local. The dialog that adds it says how many items and, where known, how much history that is, and offers to leave out the items already excluded from other targets.
 

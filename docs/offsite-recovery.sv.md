@@ -21,7 +21,7 @@ Varje kort för container, VM och filuppsättning har en rad **Placering** med t
 
 - **Lokal** skriver objektet till arkivet som visas under **Sparad på** och kopierar det ingenstans. Använd det för data som redan har en andra kopia, till exempel en resurs som ligger på en NAS.
 - **Lokal + utanför platsen** skriver det dit också och kopierar det till målen ikryssade under **Kopiera till**, ett chip per off-site-mål för domänen. Kryssa ur ett chip och det målet får inget nytt från det här objektet.
-- **Endast utanför platsen** skriver objektet direkt till platsen under **Skicka till**: ett direkt arkiv bredvid ett off-site-mål, eller ett fjärrarkiv du satt upp under Inställningar, Lagring, Arkiv.
+- **Endast utanför platsen** skriver objektet direkt till platsen under **Skicka till**: ett direkt arkiv bredvid ett off-site-mål, eller ett fjärrarkiv du satt upp under Inställningar, Sökvägar och lagring, Arkiv.
 
 Platsen är fast från objektets första säkerhetskopiering, eftersom BombVault aldrig flyttar säkerhetskopior mellan arkiv. Kopiorna kan ändras när som helst. Ett mål som inte längre får ett objekt behåller de kopior det har och trimmar dem till sin egen retention vid domänens nästa off-site-körning; **Radera hos B2** på kortet tar bort dem direkt. När några av de kopiorna inte finns någon annanstans listar bekräftelsen dem efter datum och ber om objektets namn. Från append-only-mål går det inte att radera.
 
@@ -29,7 +29,7 @@ Under raden berättar kortet vart objektet går och vad som faktiskt finns där:
 
 ### Standardplaceringar
 
-Inställningar, Lagring, **Standardplaceringar** har en rad per domän med samma tre segment. Kopiorna gäller genast för varje objekt utan eget val, och för projektmapparna i Compose-stackar. Platsen gäller för ett nytt objekt vid dess första säkerhetskopiering; att ändra den flyttar inga säkerhetskopior. Innan du sparar namnger raden varje mål som vinner eller förlorar objekt och hur många ögonblicksbilder det innebär. **Tillämpa på objekt utan säkerhetskopior** sätter tillbaka varje objekt som ännu inte har en säkerhetskopia till standarden.
+Inställningar, Sökvägar och lagring, **Standardplaceringar** har en rad per domän med samma tre segment. Kopiorna gäller genast för varje objekt utan eget val, och för projektmapparna i Compose-stackar. Platsen gäller för ett nytt objekt vid dess första säkerhetskopiering; att ändra den flyttar inga säkerhetskopior. Innan du sparar namnger raden varje mål som vinner eller förlorar objekt och hur många ögonblicksbilder det innebär. **Tillämpa på objekt utan säkerhetskopior** sätter tillbaka varje objekt som ännu inte har en säkerhetskopia till standarden.
 
 Ett nytt off-site-mål tar emot varje objekt som inte är satt till Lokal. Dialogen som lägger till det säger hur många objekt det är och, där det är känt, hur mycket historik det motsvarar, och erbjuder att lämna ute objekt som redan är uteslutna från andra mål.
 

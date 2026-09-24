@@ -21,7 +21,7 @@ Cada tarjeta de contenedor, VM y conjunto de archivos tiene una fila de **Ubicac
 
 - **Local** escribe el elemento en el repositorio que se muestra bajo **Almacenado en** y no lo copia a ningún sitio. Úsalo para datos que ya tienen una segunda copia, por ejemplo un recurso compartido que vive en un NAS.
 - **Local + externo** lo escribe también ahí y lo copia a los destinos marcados bajo **Copiar a**, un chip por cada destino externo del dominio. Desmarca un chip y ese destino no recibe nada nuevo de este elemento.
-- **Solo externo** escribe el elemento directamente en el lugar bajo **Enviar a**: un repositorio directo junto a un destino externo, o un repositorio remoto que configuraste en Ajustes, Almacenamiento, Repositorios.
+- **Solo externo** escribe el elemento directamente en el lugar bajo **Enviar a**: un repositorio directo junto a un destino externo, o un repositorio remoto que configuraste en Ajustes, Rutas y almacenamiento, Repositorios.
 
 La ubicación queda fija desde la primera copia de seguridad del elemento, porque BombVault nunca mueve copias entre repositorios. Las copias pueden cambiar en cualquier momento. Un destino que deja de recibir un elemento conserva las copias que tiene y las recorta a su propia retención en la siguiente ejecución externa del dominio; **Borrar en B2** en la tarjeta las elimina de inmediato. Cuando algunas de esas copias no existen en ningún otro lugar, la confirmación las enumera por fecha y pide el nombre del elemento. De los destinos de solo añadir no se puede borrar.
 
@@ -29,7 +29,7 @@ Bajo la fila, la tarjeta dice adónde va el elemento y qué hay realmente ahí: 
 
 ### Valores predeterminados de ubicación
 
-Ajustes, Almacenamiento, **Valores predeterminados de ubicación** tiene una fila por dominio con los mismos tres segmentos. Las copias se aplican de inmediato a cada elemento sin elección propia, y a las carpetas de proyecto de las pilas de Compose. La ubicación se aplica a un elemento nuevo en su primera copia de seguridad; cambiarla no mueve ninguna copia. Antes de guardar, la fila nombra cada destino que gana o pierde elementos y cuántas instantáneas supone eso. **Aplicar a elementos sin copias de seguridad** devuelve al valor predeterminado a todo elemento que aún no tiene copia de seguridad.
+Ajustes, Rutas y almacenamiento, **Valores predeterminados de ubicación** tiene una fila por dominio con los mismos tres segmentos. Las copias se aplican de inmediato a cada elemento sin elección propia, y a las carpetas de proyecto de las pilas de Compose. La ubicación se aplica a un elemento nuevo en su primera copia de seguridad; cambiarla no mueve ninguna copia. Antes de guardar, la fila nombra cada destino que gana o pierde elementos y cuántas instantáneas supone eso. **Aplicar a elementos sin copias de seguridad** devuelve al valor predeterminado a todo elemento que aún no tiene copia de seguridad.
 
 Un destino externo nuevo recibe todo elemento que no esté en Local. El diálogo que lo añade dice cuántos elementos son y, cuando se sabe, cuánto historial supone eso, y ofrece dejar fuera los elementos ya excluidos de otros destinos.
 

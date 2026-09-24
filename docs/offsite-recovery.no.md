@@ -21,7 +21,7 @@ Hvert kort for container, VM og filsett har en **Plassering**-rad med tre segmen
 
 - **Lokal** skriver elementet til depotet vist under **Lagret på** og kopierer det ingen steder. Bruk det for data som allerede har en ekstra kopi, for eksempel en deling som ligger på en NAS.
 - **Lokal + ekstern** skriver det dit også og kopierer det til målene som er huket av under **Kopier til**, én chip per eksternt mål i domenet. Fjern haken fra en chip, og det målet får ingenting nytt fra dette elementet.
-- **Kun ekstern** skriver elementet rett til stedet under **Send til**: et direkte depot ved siden av et eksternt mål, eller et fjernt depot du har satt opp under Innstillinger, Lagring, Depoter.
+- **Kun ekstern** skriver elementet rett til stedet under **Send til**: et direkte depot ved siden av et eksternt mål, eller et fjernt depot du har satt opp under Innstillinger, Stier og lagring, Depoter.
 
 Plasseringen er fast fra elementets første sikkerhetskopi, fordi BombVault aldri flytter sikkerhetskopier mellom depoter. Kopiene kan endres når som helst. Et mål som ikke lenger får et element, beholder kopiene det har og trimmer dem til sin egen oppbevaring ved domenets neste eksterne kjøring; **Slett hos B2** på kortet fjerner dem med det samme. Når noen av de kopiene ikke finnes noe annet sted, viser bekreftelsen dem etter dato og ber om elementets navn. Append-only-mål kan det ikke slettes fra.
 
@@ -29,7 +29,7 @@ Under raden sier kortet hvor elementet går og hva som faktisk finnes: hvor mang
 
 ### Standardplasseringer
 
-Innstillinger, Lagring, **Standardplasseringer** har én rad per domene med de samme tre segmentene. Kopiene gjelder med det samme for hvert element uten eget valg, og for prosjektmappene til Compose-stabler. Plasseringen gjelder for et nytt element ved dets første sikkerhetskopi; å endre den flytter ingen sikkerhetskopier. Før lagring lister raden opp hvert mål som får eller mister elementer, og hvor mange øyeblikksbilder det betyr. **Bruk på elementer uten sikkerhetskopier** setter hvert element som ennå ikke har en sikkerhetskopi, tilbake på standarden.
+Innstillinger, Stier og lagring, **Standardplasseringer** har én rad per domene med de samme tre segmentene. Kopiene gjelder med det samme for hvert element uten eget valg, og for prosjektmappene til Compose-stabler. Plasseringen gjelder for et nytt element ved dets første sikkerhetskopi; å endre den flytter ingen sikkerhetskopier. Før lagring lister raden opp hvert mål som får eller mister elementer, og hvor mange øyeblikksbilder det betyr. **Bruk på elementer uten sikkerhetskopier** setter hvert element som ennå ikke har en sikkerhetskopi, tilbake på standarden.
 
 Et nytt eksternt mål mottar hvert element som ikke er satt til Lokal. Dialogen som legger det til, sier hvor mange elementer og, der det er kjent, hvor mye historikk det er, og tilbyr å utelate elementene som allerede er utelatt fra andre mål.
 

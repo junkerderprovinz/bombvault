@@ -21,7 +21,7 @@ Jede Container-, VM- und Ordner-Set-Karte hat eine Zeile **Ablage** mit drei Seg
 
 - **Lokal** schreibt das Element in das unter **Gespeichert auf** gezeigte Repository und kopiert es nirgendwohin. Nutze es für Daten, die schon eine zweite Kopie haben, zum Beispiel eine Freigabe, die auf einem NAS liegt.
 - **Lokal + Off-site** schreibt es zusätzlich dorthin und kopiert es zu den unter **Kopie nach** angehakten Zielen, ein Chip pro Off-site-Ziel des Bereichs. Ein Häkchen entfernen, und das Ziel bekommt von diesem Element nichts Neues mehr.
-- **Nur Off-site** schreibt das Element direkt an den Ort unter **Senden an**: ein direktes Repository neben einem Off-site-Ziel, oder ein entferntes Repository, das du unter Einstellungen, Speicher, Repositories einrichtest.
+- **Nur Off-site** schreibt das Element direkt an den Ort unter **Senden an**: ein direktes Repository neben einem Off-site-Ziel, oder ein entferntes Repository, das du unter Einstellungen, Pfade & Speicher, Repositories einrichtest.
 
 Der Ort ist ab dem ersten Backup des Elements fest, weil BombVault Backups nie zwischen Repositories verschiebt. Die Kopien können sich jederzeit ändern. Ein Ziel, das ein Element nicht mehr bekommt, behält seine vorhandenen Kopien und kürzt sie beim nächsten Off-site-Lauf des Bereichs auf seine eigene Aufbewahrung; **In B2 löschen** auf der Karte entfernt sie sofort. Existieren manche dieser Kopien nirgendwo sonst, listet die Bestätigung sie nach Datum auf und fragt nach dem Namen des Elements. Bei Append-only-Zielen lässt sich nicht löschen.
 
@@ -29,7 +29,7 @@ Unter der Zeile zeigt die Karte, wohin das Element geht und was tatsächlich da 
 
 ### Ablage-Vorgaben
 
-Einstellungen, Speicher, **Ablage-Vorgaben** haben eine Zeile pro Bereich mit denselben drei Segmenten. Die Kopien gelten sofort für jedes Element ohne eigene Wahl, sowie für die Projektordner von Compose-Stacks. Der Ort gilt für ein neues Element bei seinem ersten Backup; ihn zu ändern verschiebt keine Backups. Vor dem Speichern nennt die Zeile jedes Ziel, das Elemente gewinnt oder verliert, und wie viele Snapshots das bedeutet. **Auf Einträge ohne Backups anwenden** setzt jedes Element ohne bisheriges Backup auf die Vorgabe zurück.
+Einstellungen, Pfade & Speicher, **Ablage-Vorgaben** haben eine Zeile pro Bereich mit denselben drei Segmenten. Die Kopien gelten sofort für jedes Element ohne eigene Wahl, sowie für die Projektordner von Compose-Stacks. Der Ort gilt für ein neues Element bei seinem ersten Backup; ihn zu ändern verschiebt keine Backups. Vor dem Speichern nennt die Zeile jedes Ziel, das Elemente gewinnt oder verliert, und wie viele Snapshots das bedeutet. **Auf Einträge ohne Backups anwenden** setzt jedes Element ohne bisheriges Backup auf die Vorgabe zurück.
 
 Ein neues Off-site-Ziel bekommt jedes Element, das nicht auf Lokal steht. Der Dialog, der es hinzufügt, nennt die Anzahl der Elemente und, wo bekannt, wie viel Verlauf das ist, und bietet an, die Elemente auszulassen, die schon bei anderen Zielen ausgeschlossen sind.
 

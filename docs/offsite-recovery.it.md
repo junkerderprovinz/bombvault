@@ -21,7 +21,7 @@ Ogni scheda di container, VM e set di file ha una riga **Collocazione** con tre 
 
 - **Locale** scrive l'elemento sul repository mostrato sotto **Salvato su** e non lo copia da nessuna parte. Usalo per dati che hanno già una seconda copia, per esempio una condivisione che vive su un NAS.
 - **Locale + off-site** lo scrive anche lì e lo copia sulle destinazioni spuntate sotto **Copia su**, un chip per ogni destinazione off-site del dominio. Togli la spunta a un chip e quella destinazione non riceve più nulla di nuovo da questo elemento.
-- **Solo off-site** scrive l'elemento direttamente nel luogo sotto **Invia a**: un repository diretto accanto a una destinazione off-site, oppure un repository remoto che hai impostato in Impostazioni, Archiviazione, Repository.
+- **Solo off-site** scrive l'elemento direttamente nel luogo sotto **Invia a**: un repository diretto accanto a una destinazione off-site, oppure un repository remoto che hai impostato in Impostazioni, Percorsi e archiviazione, Repository.
 
 La posizione è fissa dal primo backup dell'elemento in poi, perché BombVault non sposta mai i backup tra repository. Le copie possono cambiare in qualsiasi momento. Una destinazione che non riceve più un elemento mantiene le copie che ha e le pota secondo la propria conservazione alla prossima esecuzione off-site del dominio; **Elimina in B2** sulla scheda le rimuove subito. Quando alcune di quelle copie non esistono da nessun'altra parte, la conferma le elenca per data e chiede il nome dell'elemento. Dalle destinazioni append-only non si può eliminare.
 
@@ -29,7 +29,7 @@ Sotto la riga la scheda indica dove va l'elemento e cosa c'è realmente: quante 
 
 ### Collocazioni predefinite
 
-Impostazioni, Archiviazione, **Collocazioni predefinite** ha una riga per dominio con gli stessi tre segmenti. Le copie si applicano subito a ogni elemento senza una scelta propria, e alle cartelle di progetto degli stack Compose. La posizione si applica a un nuovo elemento al suo primo backup; cambiarla non sposta nessun backup. Prima di salvare, la riga elenca ogni destinazione che guadagna o perde elementi e quanti snapshot significa. **Applica agli elementi senza backup** riporta al valore predefinito ogni elemento che non ha ancora un backup.
+Impostazioni, Percorsi e archiviazione, **Collocazioni predefinite** ha una riga per dominio con gli stessi tre segmenti. Le copie si applicano subito a ogni elemento senza una scelta propria, e alle cartelle di progetto degli stack Compose. La posizione si applica a un nuovo elemento al suo primo backup; cambiarla non sposta nessun backup. Prima di salvare, la riga elenca ogni destinazione che guadagna o perde elementi e quanti snapshot significa. **Applica agli elementi senza backup** riporta al valore predefinito ogni elemento che non ha ancora un backup.
 
 Una nuova destinazione off-site riceve ogni elemento non impostato su Locale. La finestra che la aggiunge indica quanti elementi e, dove noto, quanta cronologia significa, e offre di escludere gli elementi già esclusi dalle altre destinazioni.
 

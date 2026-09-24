@@ -21,7 +21,7 @@ Mỗi thẻ container, VM và bộ tập tin có một hàng **Nơi lưu trữ**
 
 - **Cục bộ** ghi mục vào kho được hiển thị dưới **Lưu tại** và không sao chép nó đi đâu cả. Dùng cho dữ liệu đã có sẵn một bản sao thứ hai, ví dụ một share nằm trên NAS.
 - **Cục bộ + ngoài site** cũng ghi vào đó, đồng thời sao chép đến các đích đã đánh dấu dưới **Sao chép đến**, mỗi chip ứng với một đích off-site của miền. Bỏ đánh dấu một chip thì đích đó sẽ không nhận thêm gì mới từ mục này nữa.
-- **Chỉ ngoài site** ghi mục thẳng vào nơi dưới **Gửi đến**: một kho trực tiếp bên cạnh một đích off-site, hoặc một kho từ xa bạn đã thiết lập dưới Settings, Đường dẫn và lưu trữ, Kho lưu trữ.
+- **Chỉ ngoài site** ghi mục thẳng vào nơi dưới **Gửi đến**: một kho trực tiếp bên cạnh một đích off-site, hoặc một kho từ xa bạn đã thiết lập dưới Cài đặt, Đường dẫn và lưu trữ, Kho lưu trữ.
 
 Vị trí được cố định kể từ lần sao lưu đầu tiên của mục, vì BombVault không bao giờ di chuyển bản sao lưu giữa các kho. Các bản sao thì có thể thay đổi bất cứ lúc nào. Một đích không còn nhận mục nữa vẫn giữ các bản sao đang có và cắt bớt chúng theo mức lưu giữ riêng ở lần chạy off-site tiếp theo của miền; **Xóa tại B2** trên thẻ sẽ xóa chúng ngay lập tức. Khi một số bản sao đó không tồn tại ở nơi nào khác, xác nhận sẽ liệt kê chúng theo ngày và yêu cầu nhập tên của mục. Không thể xóa bất cứ thứ gì khỏi các đích append-only.
 
@@ -29,7 +29,7 @@ Dưới hàng này, thẻ cho biết mục đang đi đến đâu và thực s�
 
 ### Nơi lưu trữ mặc định
 
-Settings, Đường dẫn và lưu trữ, **Nơi lưu trữ mặc định** có một hàng cho mỗi miền với cùng ba phân đoạn. Các bản sao áp dụng ngay cho mọi mục không có lựa chọn riêng, và cho các thư mục dự án của các stack Compose. Vị trí áp dụng cho một mục mới ở lần sao lưu đầu tiên của nó; thay đổi nó không di chuyển bất kỳ bản sao lưu nào. Trước khi lưu, hàng này nêu tên mọi đích sẽ nhận thêm hoặc mất mục, và điều đó có nghĩa là bao nhiêu snapshot. **Áp dụng cho các mục chưa có bản sao lưu** đưa mọi mục chưa có bản sao lưu nào trở về mặc định.
+Cài đặt, Đường dẫn và lưu trữ, **Nơi lưu trữ mặc định** có một hàng cho mỗi miền với cùng ba phân đoạn. Các bản sao áp dụng ngay cho mọi mục không có lựa chọn riêng, và cho các thư mục dự án của các stack Compose. Vị trí áp dụng cho một mục mới ở lần sao lưu đầu tiên của nó; thay đổi nó không di chuyển bất kỳ bản sao lưu nào. Trước khi lưu, hàng này nêu tên mọi đích sẽ nhận thêm hoặc mất mục, và điều đó có nghĩa là bao nhiêu snapshot. **Áp dụng cho các mục chưa có bản sao lưu** đưa mọi mục chưa có bản sao lưu nào trở về mặc định.
 
 Một đích off-site mới sẽ nhận mọi mục không đặt là Cục bộ. Hộp thoại thêm đích đó cho biết có bao nhiêu mục và, nếu biết, đó là bao nhiêu lịch sử, đồng thời đề nghị bỏ qua những mục đã bị loại trừ khỏi các đích khác.
 
