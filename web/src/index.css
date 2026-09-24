@@ -14,6 +14,8 @@
   --color-carbon-border: var(--carbon-border);
   --color-carbon-hover: var(--carbon-hover);
   --color-carbon-hoverRaised: var(--carbon-hover-raised);
+  --color-carbon-tileHover: var(--carbon-tile-hover);
+  --color-carbon-tileHoverInk: var(--carbon-tile-hover-ink);
 
   /* accent is the raw accent as a solid fill; accentContrast the black or white
      ink on that fill; accentSoft a 14% wash of it; accentText accent-coloured
@@ -378,6 +380,14 @@
   margin-inline-start: var(--btn-gap);
 }
 
+/* The sidebar's brand name sits under the mark, not beside a glyph, so it
+   opens from its centre with no inline gap. Its line box stays at rest, which
+   keeps the rail from moving when the name comes back. */
+.glim-logo-btn.glim-reactive .glim-label-reactive {
+  margin-inline-start: 0;
+  transform-origin: center;
+}
+
 /* The reveal animates per motion level and only inside the OS gate; with
    reduced motion the words simply appear. */
 @media (prefers-reduced-motion: no-preference) {
@@ -429,7 +439,7 @@
 
   /* The rail's width in glyph mode, GlimStone's `--rail-narrow`. A shared
      number rather than one derived from this app's padding, so the rails of
-     all apps using the design language match; the 48px mark sits centred in
+     all apps using the design language match; the 44px mark sits centred in
      it. The wide rail is Tailwind's `w-56`. */
   --rail-narrow:      85px;
 
@@ -476,10 +486,17 @@
 [data-theme="dark"] {
   color-scheme: dark;
 
-  /* XRP's mark is near-black, so unlike the other coins it cannot be one
-     literal colour. The brand publishes a white variant for dark grounds. See
-     donateMarks.tsx's PATHS. */
-  --coin-xrp: #ffffff;
+  /* The crypto window's coin marks in their brand colours (donateMarks.tsx's
+     PATHS). XRP's own colour is near-black, so the dark theme takes the white
+     variant the brand publishes for dark grounds. */
+  --coin-btc:  #f7931a;
+  --coin-eth:  #627eea;
+  --coin-usdt: #26a17b;
+  --coin-usdc: #2775ca;
+  --coin-bnb:  #f3ba2f;
+  --coin-sol:  #9945ff;
+  --coin-sui:  #4da2ff;
+  --coin-xrp:  #ffffff;
 
   /* The About card's brand marks at rest on a neutral button: brand colours
      adjusted to reach the 3:1 a graphic needs, not the brand colours
@@ -513,6 +530,12 @@
      brightness() filter cannot stand in: the two themes need opposite
      directions. */
   --carbon-hover-raised: #6f6f6f;
+
+  /* The hover of a picker tile that carries brand marks, and its ink. One step
+     up the ramp goes unnoticed on a dark ground and white shouts, so this is a
+     light grey; the marks on it switch to their light-ground values. */
+  --carbon-tile-hover: #a8a8a8;
+  --carbon-tile-hover-ink: #161616;
 
   /* The same tone as --carbon-surface, one step above the content, so the rail
      reads as its own column. */
@@ -657,6 +680,8 @@
   --carbon-hover:     #e0e0e0;
   /* The third hover tier, one step darker here (see the dark block). */
   --carbon-hover-raised: #c6c6c6;
+  --carbon-tile-hover: #d1d1d1;
+  --carbon-tile-hover-ink: #161616;
 
   /* The raised surface tone, as in the reference. */
   --carbon-sidebar:   #ffffff;
@@ -766,6 +791,8 @@
     --carbon-surface3:  #d1d1d1;
     --carbon-hover:     #e0e0e0;
     --carbon-hover-raised: #c6c6c6;
+    --carbon-tile-hover: #d1d1d1;
+    --carbon-tile-hover-ink: #161616;
     --carbon-border:    #d1d1d1;
     --carbon-text:      #161616;
     --carbon-text-sub:  #525252;
@@ -1133,12 +1160,10 @@ body {
   color: inherit;
 }
 
-/* The crypto window's coin tiles (CryptoDonateDialog). Seven marks are brand
-   colours that read on any ground, written as literals in donateMarks.tsx.
-   XRP's mark has no colour of its own and uses --coin-xrp, white on dark and
-   #23292f on light. Where a tile's ground stops matching its theme, the rules
-   below change the token or the fill, never give a mark a second colour.
-   :not(.glim-active):hover and .glim-active never both apply. */
+/* The crypto window's coin tiles (CryptoDonateDialog). Each mark is drawn in
+   its --coin-* token. Where a tile's ground stops matching its theme, the rules
+   below change the tokens or the fill. :not(.glim-active):hover and
+   .glim-active never both apply. */
 
 /* Selected: the tile is filled with the accent, so every mark drops its brand
    colour and takes the ink paired with that fill, as with .glim-hue-icon. The
@@ -1151,10 +1176,19 @@ body {
   fill: currentColor;
 }
 
-/* On the dark theme a hovered tile turns white (KnightLoader's tile hover), so
-   XRP takes its own dark colour from the light theme. */
-[data-theme="dark"] .glim-coin-tile:not(.glim-active):hover {
-  --coin-xrp: #23292f;
+/* A hovered tile turns --carbon-tile-hover, a light grey in both themes, where
+   most brand colours fade to about 1:1 (Bitcoin 1.04, Sui 1.11). Each mark
+   switches to a deeper value of its own hue that keeps 2.5:1 on #a8a8a8 and
+   3.9:1 on the light theme's #d1d1d1, and XRP to its own near-black. */
+.glim-coin-tile:not(.glim-active):hover {
+  --coin-btc:  #8f550f;
+  --coin-eth:  #495eaf;
+  --coin-usdt: #1a6f55;
+  --coin-usdc: #2163ac;
+  --coin-bnb:  #7c5f18;
+  --coin-sol:  #813ad6;
+  --coin-sui:  #30649e;
+  --coin-xrp:  #23292f;
 }
 
 /* Reactive labels on a coin tile, the vertical twin of
@@ -1182,10 +1216,11 @@ body {
 /* In reactive mode a hovered tile takes the selected tile's fill in its own
    palette position, so the tile under the pointer looks like the one a click
    would select. The tiles carry .glim-hue, but an unselected tile spends no
-   --accent (surface2 at rest, surface3 on hover), so without this the engine
-   would have nothing to show. The other modes keep KnightLoader's hover. No
-   :not(.glim-active) needed: the selected tile already has this fill. The
-   mark drops its brand colour as on the selected tile. */
+   --accent (surface2 at rest, --carbon-tile-hover under the pointer), so
+   without this the engine would have nothing to show. The other modes keep
+   the grey tile hover. No :not(.glim-active) needed: the selected tile
+   already has this fill. The mark drops its brand colour as on the selected
+   tile. */
 [data-rainbow="reactive"] .glim-coin-tile:hover {
   background-color: var(--accent);
   color: var(--accent-contrast);
@@ -1755,7 +1790,7 @@ body {
 
 /* The logo mark holds the <img> and, during the boom, the fragment grid. The
    effects overlay (.glim-boom-fx) is a sibling, so the mark never clips or
-   transforms the flash, shockwave, cloud and sparks. Both overflow the 64px box
+   transforms the flash, shockwave, cloud and sparks. Both overflow the mark
    and are absolutely positioned, so the sidebar layout never shifts. */
 .glim-logo-mark { transform-origin: center; will-change: transform; overflow: visible; }
 
@@ -1768,8 +1803,8 @@ body {
   position: absolute;
   background-image: var(--egg-logo);
   /* Sized to the whole mark, not the tile. `--egg-mark` comes from the logo
-     row, because the narrow rail draws a 48px mark. */
-  background-size: var(--egg-mark, 64px) var(--egg-mark, 64px);
+     row, because the narrow rail draws a smaller mark. */
+  background-size: var(--egg-mark, 104px) var(--egg-mark, 104px);
   background-repeat: no-repeat;
   transform-origin: center;
   will-change: transform, opacity;

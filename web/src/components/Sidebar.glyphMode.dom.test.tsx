@@ -65,7 +65,7 @@ describe("glyph mode is the only mode that narrows the rail", () => {
     return el;
   }
 
-  it("drops the rail to the house width and the mark to 48px in glyph mode", () => {
+  it("drops the rail to the house width and the mark to 44px in glyph mode", () => {
     setLabelMode("sidebar", "glyph");
     renderSidebar();
     // The shared token, not a width of this app's own.
@@ -74,11 +74,11 @@ describe("glyph mode is the only mode that narrows the rail", () => {
     // The mark's box and the size the shatter tiles read have to change
     // together, or the tiles slice an image scaled to the wrong box.
     const mark = document.querySelector<HTMLElement>(".glim-logo-mark");
-    expect(mark?.className).toContain("h-12 w-12");
-    expect(mark?.parentElement?.style.getPropertyValue("--egg-mark")).toBe("48px");
+    expect(mark?.className).toContain("h-11 w-11");
+    expect(mark?.parentElement?.style.getPropertyValue("--egg-mark")).toBe("44px");
   });
 
-  it("keeps 224px and the 64px mark in the other three modes, reactive included", () => {
+  it("keeps 224px and the 104px mark in the other three modes, reactive included", () => {
     for (const mode of ["text", "textGlyph", "reactive"] as const) {
       cleanup();
       setLabelMode("sidebar", mode);
@@ -86,8 +86,8 @@ describe("glyph mode is the only mode that narrows the rail", () => {
       expect(rail().className, mode).toContain("w-56");
       expect(rail().className, mode).not.toContain("w-(--rail-narrow)");
       const mark = document.querySelector<HTMLElement>(".glim-logo-mark");
-      expect(mark?.className, mode).toContain("h-16 w-16");
-      expect(mark?.parentElement?.style.getPropertyValue("--egg-mark"), mode).toBe("64px");
+      expect(mark?.className, mode).toContain("h-26 w-26");
+      expect(mark?.parentElement?.style.getPropertyValue("--egg-mark"), mode).toBe("104px");
     }
   });
 });
@@ -121,26 +121,25 @@ describe("glyph mode names the rows in a tooltip bubble", () => {
     expect(document.querySelector(".glim-bubble")?.textContent).toBe("Simple view");
   });
 
-  it("drops the wordmark and centres the mark on the glyph column", () => {
+  it("drops the wordmark and keeps the mark centred", () => {
     setLabelMode("sidebar", "glyph");
     renderSidebar();
     const logo = screen.getByRole("button", { name: "Dashboard" });
-    expect(logo.className).toContain("justify-center");
+    expect(logo.className).toContain("items-center");
     expect(screen.queryByText("BombVault")).toBeNull();
     // Removed, not `sr-only`: the button's own aria-label is the name, so a
     // hidden copy would only make a screen reader say "Dashboard BombVault".
     expect(logo.querySelector(".sr-only")).toBeNull();
   });
 
-  it("keeps the wordmark in both text modes", () => {
+  it("stands the wordmark under the mark in both text modes", () => {
     for (const mode of ["text", "textGlyph"] as const) {
       cleanup();
       setLabelMode("sidebar", mode);
       renderSidebar();
-      expect(screen.getByText("BombVault")).toBeTruthy();
-      expect(screen.getByRole("button", { name: "Dashboard" }).className).not.toContain(
-        "justify-center",
-      );
+      const logo = screen.getByRole("button", { name: "Dashboard" });
+      expect(logo.className, mode).toContain("flex-col");
+      expect(logo.lastElementChild?.textContent, mode).toBe("BombVault");
     }
   });
 
