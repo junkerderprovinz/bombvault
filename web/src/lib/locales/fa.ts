@@ -1758,6 +1758,11 @@ const fa: Partial<Translations> = {
   "activityLog.lineEmpty": "هنوز چیزی نیست",
   "activityLog.dayFilterChip": "نمایش {date}",
   "activityLog.clearDayFilter": "پاک کردن فیلتر روز",
+  "activityLog.viaMcp": "{line} (از طریق MCP، {key})",
+  "activityLog.viaMcpRevoked": "{line} (از طریق MCP، {key}، باطل‌شده)",
+  "activityLog.viaMcpUnknownKey": "{line} (از طریق MCP)",
+  "activityLog.viaMcpLine": "از طریق MCP با کلید {key} آغاز شد",
+  "activityLog.viaMcpLineUnknownKey": "از طریق MCP آغاز شد",
 
   // Export / import settings
   "settingsIO.title": "خروجی/ورودی گرفتن از تنظیمات",

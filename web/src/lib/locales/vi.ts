@@ -1526,6 +1526,11 @@ const vi: Partial<Translations> = {
   "activityLog.lineEmpty": "chưa có gì",
   "activityLog.dayFilterChip": "Đang hiển thị {date}",
   "activityLog.clearDayFilter": "Xóa bộ lọc ngày",
+  "activityLog.viaMcp": "{line} (qua MCP, {key})",
+  "activityLog.viaMcpRevoked": "{line} (qua MCP, {key}, đã thu hồi)",
+  "activityLog.viaMcpUnknownKey": "{line} (qua MCP)",
+  "activityLog.viaMcpLine": "Được khởi động qua MCP bằng khóa {key}",
+  "activityLog.viaMcpLineUnknownKey": "Được khởi động qua MCP",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

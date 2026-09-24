@@ -1758,6 +1758,11 @@ const lt: Partial<Translations> = {
   "activityLog.lineEmpty": "dar nieko",
   "activityLog.dayFilterChip": "Rodoma {date}",
   "activityLog.clearDayFilter": "Išvalyti dienos filtrą",
+  "activityLog.viaMcp": "{line} (per MCP, {key})",
+  "activityLog.viaMcpRevoked": "{line} (per MCP, {key}, atšauktas)",
+  "activityLog.viaMcpUnknownKey": "{line} (per MCP)",
+  "activityLog.viaMcpLine": "Paleista per MCP su raktu {key}",
+  "activityLog.viaMcpLineUnknownKey": "Paleista per MCP",
 
   // Export / import settings
   "settingsIO.title": "Eksportuoti / importuoti nustatymus",

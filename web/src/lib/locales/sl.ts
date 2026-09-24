@@ -1742,6 +1742,11 @@ const sl: Partial<Translations> = {
   "activityLog.lineEmpty": "še nič",
   "activityLog.dayFilterChip": "Prikazujem {date}",
   "activityLog.clearDayFilter": "Počisti filter dneva",
+  "activityLog.viaMcp": "{line} (prek MCP, {key})",
+  "activityLog.viaMcpRevoked": "{line} (prek MCP, {key}, preklican)",
+  "activityLog.viaMcpUnknownKey": "{line} (prek MCP)",
+  "activityLog.viaMcpLine": "Zagnano prek MCP s ključem {key}",
+  "activityLog.viaMcpLineUnknownKey": "Zagnano prek MCP",
 
   // Export / import settings
   "settingsIO.title": "Izvoz/uvoz nastavitev",

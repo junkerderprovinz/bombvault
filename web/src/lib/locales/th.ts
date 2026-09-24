@@ -1537,6 +1537,11 @@ const th: Partial<Translations> = {
   "activityLog.lineEmpty": "ยังไม่มีข้อมูล",
   "activityLog.dayFilterChip": "กำลังแสดง {date}",
   "activityLog.clearDayFilter": "ล้างตัวกรองวัน",
+  "activityLog.viaMcp": "{line} (ผ่าน MCP, {key})",
+  "activityLog.viaMcpRevoked": "{line} (ผ่าน MCP, {key}, เพิกถอนแล้ว)",
+  "activityLog.viaMcpUnknownKey": "{line} (ผ่าน MCP)",
+  "activityLog.viaMcpLine": "เริ่มผ่าน MCP ด้วยคีย์ {key}",
+  "activityLog.viaMcpLineUnknownKey": "เริ่มผ่าน MCP",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

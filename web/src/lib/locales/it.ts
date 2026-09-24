@@ -1534,6 +1534,11 @@ const it: Partial<Translations> = {
   "activityLog.lineEmpty": "ancora nulla",
   "activityLog.dayFilterChip": "Visualizzazione di {date}",
   "activityLog.clearDayFilter": "Rimuovi il filtro del giorno",
+  "activityLog.viaMcp": "{line} (tramite MCP, {key})",
+  "activityLog.viaMcpRevoked": "{line} (tramite MCP, {key}, revocata)",
+  "activityLog.viaMcpUnknownKey": "{line} (tramite MCP)",
+  "activityLog.viaMcpLine": "Avviato tramite MCP con la chiave {key}",
+  "activityLog.viaMcpLineUnknownKey": "Avviato tramite MCP",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

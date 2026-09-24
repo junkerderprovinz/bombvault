@@ -1758,6 +1758,11 @@ const is: Partial<Translations> = {
   "activityLog.lineEmpty": "ekkert ennþá",
   "activityLog.dayFilterChip": "Sýni {date}",
   "activityLog.clearDayFilter": "Hreinsa dagssíu",
+  "activityLog.viaMcp": "{line} (um MCP, {key})",
+  "activityLog.viaMcpRevoked": "{line} (um MCP, {key}, afturkallaður)",
+  "activityLog.viaMcpUnknownKey": "{line} (um MCP)",
+  "activityLog.viaMcpLine": "Ræst um MCP með lyklinum {key}",
+  "activityLog.viaMcpLineUnknownKey": "Ræst um MCP",
 
   // Export / import settings
   "settingsIO.title": "Flytja út / flytja inn stillingar",

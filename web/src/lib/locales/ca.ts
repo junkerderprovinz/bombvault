@@ -1758,6 +1758,11 @@ const ca: Partial<Translations> = {
   "activityLog.lineEmpty": "encara res",
   "activityLog.dayFilterChip": "Mostrant {date}",
   "activityLog.clearDayFilter": "Neteja el filtre del dia",
+  "activityLog.viaMcp": "{line} (mitjançant MCP, {key})",
+  "activityLog.viaMcpRevoked": "{line} (mitjançant MCP, {key}, revocada)",
+  "activityLog.viaMcpUnknownKey": "{line} (mitjançant MCP)",
+  "activityLog.viaMcpLine": "Iniciat mitjançant MCP amb la clau {key}",
+  "activityLog.viaMcpLineUnknownKey": "Iniciat mitjançant MCP",
 
   // Export / import settings
   "settingsIO.title": "Exporta / importa configuració",

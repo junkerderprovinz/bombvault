@@ -511,6 +511,18 @@ function isDomainOpKind(kind: string): boolean {
   return kind === "prune" || kind === "verify" || kind === "offsite" || kind === "drill" || kind === "drdrill" || kind === "tamper" || kind === "export";
 }
 
+/** withMcpOrigin names the key behind a run an assistant started. Every kind
+ *  gets the suffix, so a prune or an off-site copy an MCP start caused reads
+ *  the same way as the backup. */
+function withMcpOrigin(resolveName: ResolveName, run: Run, line: string): string {
+  if (run.startedVia !== "mcp") return line;
+  if (!run.startedViaLabel) return resolveName("activityLog.viaMcpUnknownKey", { line });
+  const key = run.startedViaLabel;
+  return run.startedViaRevoked
+    ? resolveName("activityLog.viaMcpRevoked", { line, key })
+    : resolveName("activityLog.viaMcp", { line, key });
+}
+
 function buildHistoryLines(runs: Run[], resolveName: ResolveName, liveSignatures: Set<string>): LogLine[] {
   const lines: LogLine[] = [];
   for (const run of runs) {
@@ -525,7 +537,15 @@ function buildHistoryLines(runs: Run[], resolveName: ResolveName, liveSignatures
     if (liveSignatures.has(signature)) continue;
 
     const { status, text } = finishedLineText(resolveName, run, domain, name);
-    const line: LogLine = { id: `run:${run.id}`, atMs: run.finishedAt * 1000, status, text, domain, kind: asLogKind(run.kind), live: false };
+    const line: LogLine = {
+      id: `run:${run.id}`,
+      atMs: run.finishedAt * 1000,
+      status,
+      text: withMcpOrigin(resolveName, run, text),
+      domain,
+      kind: asLogKind(run.kind),
+      live: false,
+    };
     if (run.status === "success" && isWarningNote(run.error)) line.warn = true;
     lines.push(line);
   }

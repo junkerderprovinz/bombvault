@@ -1758,6 +1758,11 @@ const id: Partial<Translations> = {
   "activityLog.lineEmpty": "belum ada apa pun",
   "activityLog.dayFilterChip": "Menampilkan {date}",
   "activityLog.clearDayFilter": "Hapus filter hari",
+  "activityLog.viaMcp": "{line} (melalui MCP, {key})",
+  "activityLog.viaMcpRevoked": "{line} (melalui MCP, {key}, dicabut)",
+  "activityLog.viaMcpUnknownKey": "{line} (melalui MCP)",
+  "activityLog.viaMcpLine": "Dimulai melalui MCP dengan kunci {key}",
+  "activityLog.viaMcpLineUnknownKey": "Dimulai melalui MCP",
 
   // Export / import settings
   "settingsIO.title": "Ekspor / impor pengaturan",

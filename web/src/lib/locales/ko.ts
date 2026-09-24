@@ -1526,6 +1526,11 @@ const ko: Partial<Translations> = {
   "activityLog.lineEmpty": "아직 없음",
   "activityLog.dayFilterChip": "{date} 표시 중",
   "activityLog.clearDayFilter": "날짜 필터 지우기",
+  "activityLog.viaMcp": "{line} (MCP 경유, {key})",
+  "activityLog.viaMcpRevoked": "{line} (MCP 경유, {key}, 해지됨)",
+  "activityLog.viaMcpUnknownKey": "{line} (MCP 경유)",
+  "activityLog.viaMcpLine": "MCP를 통해 키 {key}(으)로 시작됨",
+  "activityLog.viaMcpLineUnknownKey": "MCP를 통해 시작됨",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

@@ -437,6 +437,14 @@ export interface Run {
   // store.EverythingTargetID). main's own follow-up commit updated the Go-side
   // runView.Domain value comment for it and missed this, its TS counterpart.
   domain: string;
+  /** What asked for the run: "" for the web interface and the scheduler,
+   *  "mcp" for an assistant. */
+  startedVia?: "" | "mcp";
+  startedViaKey?: string;
+  /** The operator's name for the MCP key behind the run, "" once that key is
+   *  purged from the list. */
+  startedViaLabel?: string;
+  startedViaRevoked?: boolean;
 }
 
 export interface ListRunsResponse {
@@ -3959,5 +3967,98 @@ export function addRcloneRemote(
   return fetchJSON("/api/offsite/rclone-remote", {
     method: "POST",
     body: JSON.stringify(form),
+  });
+}
+
+/** One MCP key as the settings card sees it. The key itself is handed out once
+ *  at creation and never again; `hint` is what tells two of them apart. */
+export interface McpKeyView {
+  id: string;
+  label: string;
+  hint: string;
+  canStartBackups: boolean;
+  createdAt: number;
+  rotatedAt: number;
+  lastUsedAt: number;
+  /** Address of the last request that used the key, "" when it has not been used. */
+  lastUsedFrom: string;
+  revokedAt: number;
+  revokedReason: "" | "user" | "config-restore";
+  /** The run history still names this key, so purging it would orphan those rows. */
+  inUse: boolean;
+  unusable: "" | "app-key-changed";
+}
+
+/** The certificate the web interface serves, from GET /api/mcp/keys. */
+export interface McpCertificateInfo {
+  selfIssued: boolean;
+  names: string[];
+  fingerprint: string;
+}
+
+export interface McpKeysResponse extends OkEnvelope {
+  endpointPath: string;
+  limit: number;
+  authEnabled: boolean;
+  /** False when the request came in under a public-looking host name while no
+   *  login password is set: keys can then neither be created nor replaced. */
+  hostAllowsKeys: boolean;
+  startsPerHour: number;
+  cooldownMinutes: number;
+  itemStartsPerDay: number;
+  certificate: McpCertificateInfo | null;
+  keys: McpKeyView[];
+  revoked: McpKeyView[];
+}
+
+/** The answer to creating or replacing a key: the secret, shown once. */
+export interface McpKeySecretResponse extends OkEnvelope {
+  key?: string;
+  item?: McpKeyView;
+}
+
+export const MCP_CERTIFICATE_URL = "/api/mcp/certificate";
+
+export function listMcpKeys(): Promise<McpKeysResponse> {
+  return fetchJSON("/api/mcp/keys");
+}
+
+export function createMcpKey(label: string, canStartBackups: boolean): Promise<McpKeySecretResponse> {
+  return fetchJSON("/api/mcp/keys", {
+    method: "POST",
+    body: JSON.stringify({ label, canStartBackups }),
+  });
+}
+
+export function updateMcpKey(
+  id: string,
+  patch: { label?: string; canStartBackups?: boolean }
+): Promise<OkEnvelope & { item?: McpKeyView }> {
+  return fetchJSON(`/api/mcp/keys/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export function rotateMcpKey(id: string): Promise<McpKeySecretResponse> {
+  return fetchJSON(`/api/mcp/keys/${encodeURIComponent(id)}/rotate`, { method: "POST" });
+}
+
+export function revokeMcpKey(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/mcp/keys/${encodeURIComponent(id)}/revoke`, { method: "POST" });
+}
+
+export function purgeMcpKey(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/mcp/keys/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+/** Reissues BombVault's own certificate with `host` among its names, so a
+ *  client reaching it at that address trusts it. */
+export function addMcpCertificateName(
+  host: string
+): Promise<OkEnvelope & { certificate?: McpCertificateInfo }> {
+  return fetchJSON("/api/mcp/certificate/names", {
+    method: "POST",
+    body: JSON.stringify({ host }),
   });
 }

@@ -1529,6 +1529,11 @@ const uk: Partial<Translations> = {
   "activityLog.lineEmpty": "поки що нічого",
   "activityLog.dayFilterChip": "Показано: {date}",
   "activityLog.clearDayFilter": "Скинути фільтр за днем",
+  "activityLog.viaMcp": "{line} (через MCP, {key})",
+  "activityLog.viaMcpRevoked": "{line} (через MCP, {key}, відкликано)",
+  "activityLog.viaMcpUnknownKey": "{line} (через MCP)",
+  "activityLog.viaMcpLine": "Запущено через MCP ключем {key}",
+  "activityLog.viaMcpLineUnknownKey": "Запущено через MCP",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)
