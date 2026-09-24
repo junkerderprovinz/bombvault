@@ -36,10 +36,6 @@ import (
 	"runtime"
 )
 
-// ---------------------------------------------------------------------------
-// JSON helpers + error scrubbing
-// ---------------------------------------------------------------------------
-
 // writeJSON encodes v as JSON with the given status code.
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
@@ -65,12 +61,9 @@ func failEnvelope(err error) map[string]any {
 	return map[string]any{"ok": false, "error": scrubError(err)}
 }
 
-// codedFailEnvelope is failEnvelope plus a machine-routable code. The code lets
-// a client branch on the failure KIND without parsing error text — used for the
-// empty-selection refusal ("empty-selection"), which the Phase 3 tree UI turns
-// into guidance instead of a bare failure (CONTEXT INTEG-04 Q2). Error text is
-// scrubbed exactly like failEnvelope, and the response stays in the house HTTP
-// 200 envelope.
+// codedFailEnvelope is failEnvelope plus a machine-readable code, so a client
+// can branch on the kind of failure without parsing the error text. The tree
+// view uses "empty-selection" to show guidance instead of a bare failure.
 func codedFailEnvelope(err error, code string) map[string]any {
 	return map[string]any{"ok": false, "error": scrubError(err), "code": code}
 }
@@ -79,105 +72,36 @@ func codedFailEnvelope(err error, code string) map[string]any {
 // message that slips through to the API surface.
 var absPathRe = regexp.MustCompile(`(/[^\s:"']+)+`)
 
-// credentialRe matches a "user:password@" URL-userinfo segment, e.g. the
-// backupuser:Tr0ub4dor&3@ in "rest:https://backupuser:Tr0ub4dor&3@host:8000/repo"
-// — a syntax the generated deploy recipe documents as valid for restic's
-// rest:/s3: remote backends. absPathRe alone can't catch this: it stops at the
-// first ":", so it never reaches past "user" into the password. The username
-// class covers a fully-numeric username too (e.g. "123456:SuperSecret@host")
-// — an earlier version of this regex required the FIRST character to be a
-// letter, which let a numeric-only username through completely unscrubbed.
-// Requiring the closing "@" and excluding "/" from the password body keeps
-// this from matching ordinary "host:port" text (which has no "@") or a
-// "name/tag" split by "/" from something after it (excluded from the password
-// body) — only a real userinfo segment has a ":"-separated pair immediately
-// followed by "@".
-// See internal/restic/restic.go's identically-reasoned twin (and
-// internal/virshcli/virshcli.go's, for libvirt URIs): this is one of several
-// independent applications of the same defense-in-depth scrub, so an error
-// that reaches this handler without having gone through restic.lastReason
-// first still gets its credentials stripped here.
+// credentialRe matches a "user:password@" userinfo segment such as the one in
+// "rest:https://backupuser:Tr0ub4dor&3@host:8000/repo", which absPathRe misses
+// because it stops at the first ":". The username may be all digits. Requiring
+// the "@" and keeping "/" out of the password keeps it off plain "host:port"
+// text. internal/restic and internal/virshcli run the same scrub, so an error
+// that never went through restic.lastReason is still cleaned here.
 //
-// Known cosmetic limitation, not a security issue: this also matches benign
-// "word:word@word" shapes that merely look like userinfo, e.g. a Docker image
-// digest reference "nginx:1.25@sha256:abc123" scrubs to
-// "[redacted]@sha256:abc123", or an SFTP host reference like "user:1@host".
-// A regex tight enough to exclude that class without risking a false
-// NEGATIVE on a real credential (a numeric-looking password is legal; a
-// scheme/"://" anchor doesn't survive scrubSecrets' ordering below, since
-// absPathRe already strips it) wasn't obvious to construct safely, so this is
-// accepted as a known tradeoff rather than forced.
-//
-// There is also a real, separate false NEGATIVE, pre-existing and independent
-// of the false positive above: a password containing an unencoded "/" is only
-// partially caught. credentialRe's password class excludes "/", and by the
-// time it runs, scrubSecrets' path pass has already consumed the credential's
-// leading "//...@" span as an ordinary path token (see scrubSecrets' doc
-// comment for why paths must run first) — leaving no "@" left for
-// credentialRe to anchor on, so its "[redacted]@" marker never fires at all.
-// Depending on where the "/" falls inside the password, a fragment of the
-// actual secret survives in the clear: e.g.
-// "rest:https://user:wJalrXUtnFEMI/K7MDENG@host:8000/repo" scrubs to
-// "rest:https:[path]:wJalrXUtnFEMI[path]:8000[path]" — the username and the
-// back half of the password vanish as unlabeled path noise, but
-// "wJalrXUtnFEMI" (the front half) is left sitting in the output in plain
-// text. A password with no embedded "/" is unaffected.
+// It also matches benign shapes such as "nginx:1.25@sha256:abc123", because a
+// tighter pattern would risk missing a real credential. Outside a repository
+// location, a password with an unencoded "/" is only partly caught: the path
+// pass runs first and consumes the "//...@" span, so the part of the password
+// before the "/" survives.
 var credentialRe = regexp.MustCompile(`[\w.+%-]+:[^\s/@"']+@`)
 
-// scrubSecrets strips absolute-path-like tokens and then URL-embedded
-// "user:pass@" credentials from s, in that order.
-//
-// This order is NOT a correctness requirement — both orders fully redact the
-// password — but running credentialRe FIRST produces a worse result: once it
-// replaces "user:pass@" with "[redacted]@", the leftover
-// "scheme://[redacted]@host" is exactly the path-like shape absPathRe matches
-// next, so absPathRe's pass eats the HOSTNAME right along with it (verified:
-// "rest:https://user:pass@storage.example.com:8000/repo" scrubs to
-// "rest:https:[path]:8000[path]" — storage.example.com is gone, along with
-// any hope of telling which off-site target failed). Running absPathRe FIRST
-// consumes the bare scheme separator "//" before credentialRe ever runs, so
-// the only "word:...@" shape left for credentialRe to match stops at the
-// real "@" — producing "[redacted]@storage.example.com:8000[path]" instead,
-// which hides the password exactly as well while keeping the hostname an
-// operator with multiple off-site targets needs to diagnose a failure.
-
-// repoLocationRe matches a restic REMOTE repository location where it appears
-// INSIDE a sentence.
-//
-// It exists because the path scrubber was destroying the one thing a failure
-// message about a repository has to carry: which repository. On
-// "Fatal: create repository at s3:http://192.168.1.50:8333/bucket failed" the
-// path regex eats "//192.168.1.50" and then "/bucket" and leaves
-// "s3:http:[path]:8333[path]" - reported as issue #206 by an operator whose S3
-// host was rebooting, who accepted the failure and objected to not being able to
-// tell WHICH repository it was about. With named repositories (#204) an install
-// has several, so that stopped being cosmetic.
-//
-// A remote location is not a filesystem path: its host, port and bucket are the
-// operator's own storage layout, which errRepoPathGuidance already argues is
-// never a credential and never a secret. The credential in one is the userinfo,
-// scrubbed structurally by repoUserinfoRe rather than as path noise.
-//
-// See internal/restic/restic.go for the full reasoning; this package keeps its
-// own copy for the same reason it keeps its own copy of the path and credential
-// regexes.
+// repoLocationRe matches a remote restic repository location inside a
+// sentence. Such a location skips the path scrubber, because a failure message
+// about a repository has to say which one: its host, port and bucket are the
+// operator's own storage layout, and repoUserinfoRe removes the credential.
+// internal/restic/restic.go keeps the same pattern.
 var repoLocationRe = regexp.MustCompile(`\b(?:rclone|sftp|rest|s3|b2|azure|gs|swift):[^\s"']+`)
 
-// repoUserinfoRe matches the "user:password@" of a remote repository location,
-// anchored to the location's own structure rather than to generic word shapes.
-//
-// The generic credential regex cannot do this job, and the difference is a real
-// leak rather than a nicety. Its password body excludes "/", because outside a
-// repo location it has nothing to anchor on and a greedy body would swallow half
-// a sentence. That was survivable only because the path regex ran FIRST and
-// chewed the rest of such a password into path noise, leaving its front half
-// exposed. Stop path-scrubbing inside the location and that same password would
-// survive WHOLE - so the exemption brings its own scrubber, and this one can be
-// greedy safely: it is bounded by the scheme on the left and the "@" on the
-// right, and its body excludes whitespace and quotes, so it can never cross out
-// of the location it started in.
+// repoUserinfoRe matches the "user:password@" of a remote repository location.
+// Unlike credentialRe its password body may contain "/", which is safe because
+// the match is bounded by the scheme on the left and the "@" on the right and
+// never crosses whitespace or quotes. Without it, a password inside a location
+// that skips the path scrubber would survive whole.
 var repoUserinfoRe = regexp.MustCompile(`\b(rclone|sftp|rest|s3|b2|azure|gs|swift):((?:[A-Za-z0-9+.-]+:)?//)?[^@\s"']*@`)
 
+// scrubSecrets redacts the userinfo of every remote repository location in s
+// and scrubs the text around those locations with scrubOutsideARepoLocation.
 func scrubSecrets(s string) string {
 	var b strings.Builder
 	last := 0
@@ -190,23 +114,19 @@ func scrubSecrets(s string) string {
 	return b.String()
 }
 
-// scrubOutsideARepoLocation is the original scrubbing, applied to the parts of a
-// message that are NOT a remote repository location: paths first, then
-// URL-embedded credentials, for the reason the doc comment above gives.
+// scrubOutsideARepoLocation strips paths and then userinfo credentials from the
+// parts of a message that are not a remote repository location. Paths go first:
+// the other way round, the leftover "scheme://[redacted]@host" is path-shaped
+// and absPathRe eats the hostname an operator needs to tell targets apart.
 func scrubOutsideARepoLocation(s string) string {
 	s = absPathRe.ReplaceAllString(s, "[path]")
 	return credentialRe.ReplaceAllString(s, "[redacted]@")
 }
 
-// errRestoreDestination tags a restore-DESTINATION refusal whose message is only
-// actionable WITH the path in it: "this destination already holds data", "this
-// destination is not on a mounted pool", "this destination has no room". The path
-// is the operator's own chosen restore location on their own storage (or their own
-// container's appdata layout, which the folder selector and the foreign bind
-// warnings already show verbatim) — never a repo path, credential or secret — so
-// these bypass the path scrubber. Without the bypass the UI rendered the literal
-// placeholder, e.g. `restore destination "[path]" already contains data`, which
-// tells the operator nothing about WHICH folder is in the way.
+// errRestoreDestination tags a restore destination refusal whose message only
+// helps with the path in it, such as "already holds data", "not on a mounted
+// pool" or "no room". The path is the operator's own chosen location, never a
+// repo path or a secret, so these bypass the path scrubber.
 var errRestoreDestination = errors.New("restore destination refused")
 
 // restoreDestErr carries a destination refusal's ready-to-show message and
@@ -225,57 +145,32 @@ func destinationRefusal(format string, a ...any) error {
 	return &restoreDestErr{msg: fmt.Sprintf(format, a...)}
 }
 
-// scrubBypassMessage reports whether err carries one of the sentinel types
-// this codebase creates specifically because their Error() text is
-// deliberately UNSAFE to run through scrubSecrets: the path-shaped content
-// inside the message (a restore destination folder, the relative repo
-// location an operator should type instead, /boot vs /host/boot, a ZFS
-// dataset/pool name, a host:port conflict list) IS the actionable content the
-// message exists to convey, not an internal filesystem/secret leak that
-// needs hiding. When it matches, it returns err's message completely
-// unscrubbed, and true.
-//
-// Both scrubError below and truncateRunErr (service.go — the other place
-// error text is persisted, to runs.error) call this FIRST, before
-// ever touching scrubSecrets, so the two can never independently drift on
-// which shapes are safe to show verbatim. truncateRunErr didn't always do
-// this: an earlier version scrubbed every error unconditionally, on the
-// (false) theory that running the regexes over already-clean text is a
-// harmless no-op. That broke exactly for these sentinels — scrubSecrets'
-// path regex matches ANY slash-containing token, not just a filesystem path —
-// mangling e.g. "host port 8080/tcp is already used by container ..." into
-// "host port 8080[path] is already used ..." and eating a zvol rebase
-// failure's ZFS dataset name the same way, even though scrubError itself had
-// already solved precisely this problem for its own callers.
+// scrubBypassMessage returns err's message unscrubbed, and true, when err is a
+// sentinel whose path-shaped content (a restore folder, the relative repo
+// location to type instead, /boot vs /host/boot, a ZFS dataset, a host:port
+// conflict list) is what the message is for. scrubError and truncateRunErr
+// both ask it first, so they cannot disagree on what is shown verbatim.
 func scrubBypassMessage(err error) (string, bool) {
 	switch {
 	case errors.Is(err, backup.ErrRestoreConflict):
-		// Already user-safe (IP / host-port / container names, no host paths) and
-		// must bypass the path scrubber, which would mangle "8080/tcp" → "8080[path]".
+		// IPs, host ports and container names only, and the path scrubber would
+		// turn "8080/tcp" into "8080[path]".
 		return err.Error(), true
 	case errors.Is(err, errRestoreDestination):
-		// The destination path IS the message (see errRestoreDestination).
 		return err.Error(), true
 	case errors.Is(err, errRepoPathGuidance):
-		// Same deal: the rejected location AND the relative form to use instead
-		// are the whole point of the message (see errRepoPathGuidance).
+		// The rejected location and the relative form to use instead are the
+		// message.
 		return err.Error(), true
 	case errors.Is(err, errUnraidPlatformMismatch):
-		// Same deal again: /boot and /host/boot ARE the actionable content of
-		// a platform-mismatch refusal (TestNotify's Unraid channel, the
-		// dashboard-tile plugin) — see unraidPlatformMismatchError.
+		// /boot and /host/boot are what the operator has to act on.
 		return err.Error(), true
 	case errors.Is(err, errZvolRebaseFailed):
-		// Same deal again: the ZFS dataset/pool names ARE the message, and
-		// necessarily contain "/" — see errZvolRebaseFailed.
+		// The ZFS dataset and pool names are the message and contain "/".
 		return err.Error(), true
 	case errors.Is(err, errRestPathUser):
-		// This one is here for a different reason than its neighbours: the
-		// message holds no path-shaped content at all (two htpasswd-user words,
-		// built by restPathUserMismatch, never a secret). It bypasses because it
-		// has to reach the operator INSTEAD OF restAuthHint's generic two-cause
-		// list further down, which would otherwise replace a message naming the
-		// exact difference with one listing the possibilities.
+		// No path here, just two htpasswd user names. It bypasses so the exact
+		// difference reaches the operator instead of restAuthHint's generic list.
 		return err.Error(), true
 	}
 	return "", false
@@ -290,7 +185,7 @@ func scrubError(err error) string {
 	case errors.Is(err, backup.ErrNotConfirmed):
 		return "restore not confirmed: set confirm:true to proceed"
 	case errors.Is(err, backup.ErrInvalidSnapshotID):
-		return "invalid snapshot id (must be 8–64 lowercase hex)"
+		return "invalid snapshot id (must be 8 to 64 lowercase hex)"
 	}
 	if msg, ok := scrubBypassMessage(err); ok {
 		return msg
@@ -308,28 +203,8 @@ func scrubError(err error) string {
 	return strings.TrimSpace(msg)
 }
 
-// restAuthHint turns a bare "401 Unauthorized" into the two things that
-// actually cause it, or returns "" when the message is not an auth refusal.
-//
-// The knowledge was already in this codebase, in a comment above
-// isRepoUninitialized: a rest-server 401 is almost always the first path
-// segment not matching the htpasswd user (which `--private-repos` requires), or
-// a repository reaching for credentials it was never pointed at. Being written
-// down where only a maintainer reads it is not the same as being said. Issue
-// #194: a user spent hours on "I continue to get a 401 error", gave up, and
-// wrote "until someone creates a step by step walk through ... I can't invest
-// more time in this". The walkthrough exists (docs/offsite-recovery.md has a
-// two-box worked example); what was missing is that the error itself never
-// pointed anywhere.
-//
-// Scoped deliberately. Only 401 and only when the repository is a rest one, so
-// an S3 403 (a different problem with different causes) keeps its own wording,
-// and a message that merely contains the digits 401 somewhere else cannot
-// trigger this.
 // restStatus401 matches 401 as a status code rather than as three digits inside
-// a longer number. Without the boundaries, `rest:http://box:8401/repo:
-// connection refused` claims to be an auth failure, because the port contains
-// it. Caught by the test, not by reading the line back.
+// a longer number, such as the port in `rest:http://box:8401/repo`.
 var restStatus401 = regexp.MustCompile(`(^|[^0-9])401([^0-9]|$)`)
 
 // isAuthRefusal reports whether a lowercased restic message is a rejection
@@ -340,30 +215,20 @@ func isAuthRefusal(low string) bool {
 }
 
 // isRestBackendMessage reports whether a lowercased restic message came from the
-// REST backend.
-//
-// It takes TWO markers, and the second one is the whole point. The first version
-// asked only for "rest:" in the message, on the assumption that a failure names
-// the repository it failed on. The message a BombVault user actually sees does
-// not: runError builds it from the most informative stderr line, which for a
-// refused rest-server is
+// REST backend. "rest:" alone is not enough, because for a refused rest-server
+// the stderr line runError keeps is
 //
 //	restic cat failed: Fatal: unable to open config file: unexpected HTTP response (401): 401 Unauthorized
 //
-// restic prints the URL underneath that, on its "Is there a repository at the
-// following location?" line, which lastReason deliberately steps over as
-// boilerplate. So the hint written for issue #194 never fired on the one path
-// that issue is about, and the reporter got the bare 401 again in v8.6.x. Every
-// case in the first test carried a URL because they were composed by hand rather
-// than taken from the running program.
-//
-// "unexpected HTTP response" is restic's own REST-backend phrasing (backend/rest
-// formats exactly that string). S3, sftp and the local backend word their
-// failures differently, so this stays as narrow as the "rest:" marker was.
+// and the URL follows on a line lastReason skips as boilerplate. Only restic's
+// REST backend words a failure as "unexpected HTTP response".
 func isRestBackendMessage(low string) bool {
 	return strings.Contains(low, "rest:") || strings.Contains(low, "unexpected http response")
 }
 
+// restAuthHint turns a rest-server "401 Unauthorized" into its two usual causes,
+// or returns "" for any other message. It is limited to rest repositories, so an
+// S3 403 keeps its own wording.
 func restAuthHint(msg string) string {
 	low := strings.ToLower(msg)
 	if !isAuthRefusal(low) || !isRestBackendMessage(low) {
@@ -378,19 +243,13 @@ func restAuthHint(msg string) string {
 }
 
 // sameSiteOnly refuses a request a browser fired from another website, judged by
-// the Sec-Fetch-Site header the browser attaches itself and a page cannot forge.
+// the Sec-Fetch-Site header, which the browser sets and a page cannot forge.
+// Only "cross-site" is refused: what a browser counts as one site for a bare LAN
+// IP is too uncertain to bet an install on, and a missing header means a
+// non-browser client such as curl or a peer's mesh POST.
 //
-// Only the explicit cross-site value is refused. same-site is left alone: what a
-// browser counts as one "site" for a bare LAN IP is not something to bet a
-// working install on. An ABSENT header means a non-browser client (curl, another
-// BombVault's mesh POST, a script), which was never the threat — the attack this
-// closes needs a browser to carry it.
-//
-// It runs as middleware over every unsafe method rather than only inside
-// decodeBody, because plenty of state-changing routes take no body at all:
-// POST /api/containers/{name}/backup, POST /api/prune/{domain},
-// POST /api/backup-everything. A guard that only covered request bodies would
-// have left exactly those reachable from any page the operator happens to open.
+// It runs over every unsafe method, not only in decodeBody, because several
+// state-changing routes take no body, such as POST /api/backup-everything.
 func sameSiteOnly(w http.ResponseWriter, r *http.Request) bool {
 	if r.Header.Get("Sec-Fetch-Site") != "cross-site" {
 		return true
@@ -421,34 +280,17 @@ func csrfGate(next http.Handler) http.Handler {
 }
 
 // crossOriginGuard refuses a body-carrying request that a browser fired from
-// another website. Every handler that takes a body goes through decodeBody, so
-// this sits there rather than in each of its forty-odd call sites.
+// another website. With no login password set, authGate lets every request
+// through on the assumption that an attacker has to be on the LAN, but a
+// cross-site HTML form with enctype="text/plain" can post a body the JSON
+// decoder accepts from the operator's own browser, with no preflight and no
+// cookie. That would be enough to repoint notifications or set the Backup
+// Everything hooks, which run as `sh -c` next to the Docker socket.
 //
-// WHY THIS IS NEEDED AT ALL. authGate is a deliberate pass-through when no login
-// password is set — the documented trusted-LAN mode, and the default. That model
-// assumes the attacker has to be ON the LAN. A cross-site form does not: an HTML
-// form with enctype="text/plain" posts a body the JSON decoder accepts, to any
-// address the attacker names, from the operator's own browser, with no preflight
-// and needing no cookie. Reaching a LAN address from a public page is enough to
-// repoint every notification (POST /api/notify) or set the Backup Everything
-// hooks, which run as `sh -c` in a container holding the Docker socket and /mnt.
-//
-// TWO CHECKS, and the first one is the one that does the work:
-//
-//   - Content-Type must be JSON. A cross-origin form can only send
-//     application/x-www-form-urlencoded, multipart/form-data or text/plain;
-//     anything else, fetch() included, needs a CORS preflight that this server
-//     never answers. So requiring JSON removes the whole form-post class.
-//   - Sec-Fetch-Site must not say cross-site. Browsers attach it themselves and
-//     a page cannot forge it. Only the explicit cross-site value is refused:
-//     same-site is left alone because a browser's notion of "site" for a bare IP
-//     is not something to bet a working install on, and an ABSENT header means a
-//     non-browser client (curl, another BombVault's mesh POST, a script), which
-//     was never the threat here.
-//
-// Both are cheap and neither needs a token, session or any state, which matters:
-// a CSRF token would need somewhere to live, and in trusted-LAN mode there is no
-// session to hang it on.
+// Requiring a JSON Content-Type does the work: a cross-origin form cannot send
+// it, and fetch() with it needs a CORS preflight this server never answers.
+// sameSiteOnly adds the Sec-Fetch-Site check. Neither needs a token, which
+// matters because trusted-LAN mode has no session to hang one on.
 func crossOriginGuard(w http.ResponseWriter, r *http.Request) bool {
 	if !sameSiteOnly(w, r) {
 		return false
@@ -510,10 +352,6 @@ func decodeOptionalBody(w http.ResponseWriter, r *http.Request, v any) bool {
 	return true
 }
 
-// ---------------------------------------------------------------------------
-// handlers
-// ---------------------------------------------------------------------------
-
 func (h *Handler) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "version": Version})
 }
@@ -566,8 +404,8 @@ func (h *Handler) handleMetrics(w http.ResponseWriter, r *http.Request) {
 }
 
 // containerView is the per-container row returned by GET /api/containers.
-// Installed is false for "orphan" rows: containers that are no longer installed
-// on the host but still have backups (so the user can restore or delete them).
+// Installed is false for "orphan" rows: containers gone from the host that still
+// have backups, so the user can restore or delete them.
 type containerView struct {
 	Name              string   `json:"name"`
 	Image             string   `json:"image"`
@@ -583,17 +421,16 @@ type containerView struct {
 	StopContainers    []string `json:"stopContainers"`
 	Excludes          []string `json:"excludes"`
 	UpdateAfterBackup bool     `json:"updateAfterBackup"`
-	// BackupOrder is the container's explicit manual backup position (#119): a
-	// positive value runs earlier, 0 means unordered (overdue-first tiebreak).
+	// BackupOrder is the container's manual backup position: a positive value
+	// runs earlier, 0 means unordered (overdue first).
 	BackupOrder int `json:"backupOrder"`
-	// ScheduleCadence is the container's optional per-item schedule override (#121);
-	// "" means it follows the containers domain schedule. Only takes effect when the
-	// perItemSchedules setting is on.
+	// ScheduleCadence is the container's own schedule; "" follows the containers
+	// domain schedule. It takes effect only with the perItemSchedules setting on.
 	ScheduleCadence string `json:"scheduleCadence"`
-	// LastUpdateCheck / LastUpdateResult: when the post-backup update check last
-	// completed (unix seconds, 0 = never) and its outcome ('' | 'up-to-date' |
-	// 'updated' | 'failed') — so "checked, up to date" is visible without a
-	// per-night run row.
+	// LastUpdateCheck and LastUpdateResult record when the post-backup update
+	// check last completed (unix seconds, 0 = never) and its outcome ('' |
+	// 'up-to-date' | 'updated' | 'failed'), so "checked, up to date" shows
+	// without a run row per night.
 	LastUpdateCheck  int64  `json:"lastUpdateCheck"`
 	LastUpdateResult string `json:"lastUpdateResult"`
 	// Stack is the compose project (com.docker.compose.project label) this
@@ -825,12 +662,12 @@ func (idx aliasIndex) of(targetID string) []string {
 	return []string{}
 }
 
-// resourceNameRe matches a safe Docker container / libvirt VM name: it starts
-// with an alphanumeric and contains only [A-Za-z0-9._-]. This forbids path
-// separators, a leading "-" (argv option-injection) and an empty name; the
-// extra ".." check forbids parent-dir traversal even within the charset. The
-// Go 1.22 router decodes "%2f"/"%2e%2e" into the path value, so an unvalidated
-// {name} could otherwise carry "../" into the template/XML file sinks (CWE-22).
+// resourceNameRe matches a safe Docker container or libvirt VM name: it starts
+// with an alphanumeric and contains only [A-Za-z0-9._-]. That rules out path
+// separators, a leading "-" (argv option injection) and an empty name, and
+// validResourceName adds a ".." check. The router decodes "%2f" and "%2e%2e"
+// into the path value, so an unchecked {name} could carry "../" into the
+// template and XML file sinks.
 var resourceNameRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`)
 
 func validResourceName(name string) bool {
@@ -838,8 +675,8 @@ func validResourceName(name string) bool {
 }
 
 // runIDRe matches an opaque run id: exactly 32 lowercase hex chars (newID is 16
-// random bytes hex-encoded). The acknowledge route validates its ids against
-// this — NOT validResourceName, whose Docker/VM name shape is a different thing.
+// random bytes hex-encoded). The acknowledge route checks its ids against this,
+// not against validResourceName, whose Docker and VM name shape is different.
 var runIDRe = regexp.MustCompile(`^[0-9a-f]{32}$`)
 
 func validRunID(id string) bool {
@@ -858,13 +695,11 @@ func (h *Handler) nameParam(w http.ResponseWriter, r *http.Request) (string, boo
 	return name, true
 }
 
-// validVMName accepts libvirt domain names, which (unlike Docker container
-// names) routinely contain spaces — e.g. "Windows 11", "Home Assistant". The VM
-// name never becomes a filesystem path or template filename (it only flows into
-// argv-separated virsh args, restic tags after "--", and SQLite params), so the
-// strict resourceNameRe is wrong here. We still block what could be dangerous:
-// empty, over-long, path separators / "..", a leading "-" (option injection),
-// and control characters.
+// validVMName accepts libvirt domain names, which unlike Docker names often
+// contain spaces ("Windows 11"). A VM name only reaches argv-separated virsh
+// args, restic tags after "--" and SQLite parameters, never a file path, so it
+// rejects just the dangerous shapes: empty, over-long, path separators or "..",
+// a leading "-" and control characters.
 func validVMName(name string) bool {
 	if name == "" || len(name) > 128 {
 		return false
@@ -880,8 +715,8 @@ func validVMName(name string) bool {
 	return true
 }
 
-// vmNameParam is nameParam for VM routes — it uses the libvirt-aware validator
-// so VMs with spaces in their names are not rejected with a 400.
+// vmNameParam is nameParam for VM routes, using validVMName so a VM name with
+// spaces is not refused with a 400.
 func (h *Handler) vmNameParam(w http.ResponseWriter, r *http.Request) (string, bool) {
 	name := r.PathValue("name")
 	if !validVMName(name) {
@@ -906,7 +741,7 @@ func (h *Handler) handleDeleteBackups(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleForgetContainer clears a container's stale "Not installed" entry (its
-// target row) without touching any repo, the twin of handleForgetVM (#232).
+// target row) without touching any repo, the twin of handleForgetVM.
 // DELETE /api/containers/{name}
 func (h *Handler) handleForgetContainer(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
@@ -1020,9 +855,8 @@ func (h *Handler) handleUnlinkVMAlias(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleDeleteBackupsVM removes ALL backups of a VM from the selected source
-// (local or off-site) in one go and prunes the freed space. The one-shot
-// counterpart to deleting each snapshot individually per source.
+// handleDeleteBackupsVM removes every backup of a VM from the selected source
+// (local or off-site) in one go and prunes the freed space.
 // DELETE /api/vms/{name}/backups?source=
 func (h *Handler) handleDeleteBackupsVM(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.vmNameParam(w, r)
@@ -1036,9 +870,9 @@ func (h *Handler) handleDeleteBackupsVM(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleForgetVM clears a VM's stale "Not installed" entry (its target row),
-// without touching any repo — for a no-longer-defined VM that has no backups
-// (DeleteBackupsVM handles VMs that still have snapshots). DELETE /api/vms/{name}
+// handleForgetVM clears the stale "Not installed" entry of a VM that is gone and
+// has no backups, without touching any repo (DeleteBackupsVM handles one that
+// still has snapshots). DELETE /api/vms/{name}
 func (h *Handler) handleForgetVM(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.vmNameParam(w, r)
 	if !ok {
@@ -1072,32 +906,24 @@ func discoverFields(res DiscoverResult) map[string]any {
 // handleDiscover rebuilds the target list from the backup storage (disaster
 // recovery after a fresh install / loss of /config).
 func (h *Handler) handleDiscover(w http.ResponseWriter, r *http.Request) {
-	// ?probe=true = a read-only readability check (Recovery tab): open + decrypt
-	// to prove the repo/APP_KEY, but write no targets — so a readiness check never
-	// resurrects orphan entries. The default (no probe) is the real rebuild (#44).
+	// probe=true is the Recovery tab's read-only check: it opens and decrypts
+	// to prove the repo and APP_KEY but writes no targets, so a readiness check
+	// never brings orphan entries back.
 	probe := r.URL.Query().Get("probe") == "true"
 	res, err := h.svc.Discover(r.Context(), probe)
 	if err != nil {
-		// The failure envelope carries the partial result too. The pass searches
-		// the named repositories BEFORE the domain's own, so when the domain's own
-		// is what failed, everything already found is real - and the screen that
-		// asks this question is the one somebody opens after losing their
-		// configuration. "Could not open the domain repository" and "…and nothing
-		// was rebuilt" are two different answers.
+		// The partial result goes along: named repositories are searched before
+		// the domain's own, so when that one fails, everything found so far is
+		// real, and this is the screen opened after losing the configuration.
 		body := failEnvelope(err)
 		maps.Copy(body, discoverFields(res))
 		writeJSON(w, http.StatusOK, body)
 		return
 	}
-	// `repo` names the folder this pass actually read (#196): the wizard asks
-	// for an off-site repository a step earlier and then reads the PRIMARY
-	// path, and an empty answer about an unnamed folder is unreadable.
-	//
-	// `skipped` names the repositories it could NOT read. Discovery was the one
-	// domain-wide operation with no such report, so "0 found" after a /config
-	// loss looked identical whether the repositories were empty or unreachable -
-	// in the one screen whose entire job is to tell somebody their backups are
-	// still there.
+	// `repo` names the folder this pass read, since the wizard asks for an
+	// off-site repository a step earlier and then reads the primary path.
+	// `skipped` names the repositories it could not read, so "0 found" after a
+	// /config loss tells empty repositories apart from unreachable ones.
 	fields := discoverFields(res)
 	fields["repo"] = h.svc.DiscoverSource("containers")
 	writeJSON(w, http.StatusOK, okEnvelope(fields))
@@ -1106,34 +932,25 @@ func (h *Handler) handleDiscover(w http.ResponseWriter, r *http.Request) {
 // handleDiscoverVMs rebuilds the VM target list from backup storage, so a VM
 // deleted from the host (or lost with the database) becomes restorable again.
 func (h *Handler) handleDiscoverVMs(w http.ResponseWriter, r *http.Request) {
-	probe := r.URL.Query().Get("probe") == "true" // read-only readiness check, see handleDiscover (#44)
+	probe := r.URL.Query().Get("probe") == "true" // read-only readiness check, see handleDiscover
 	res, err := h.svc.DiscoverVMs(r.Context(), probe)
 	if err != nil {
-		// The failure envelope carries the partial result too. The pass searches
-		// the named repositories BEFORE the domain's own, so when the domain's own
-		// is what failed, everything already found is real - and the screen that
-		// asks this question is the one somebody opens after losing their
-		// configuration. "Could not open the domain repository" and "…and nothing
-		// was rebuilt" are two different answers.
+		// The partial result goes along, as in handleDiscover.
 		body := failEnvelope(err)
 		maps.Copy(body, discoverFields(res))
 		writeJSON(w, http.StatusOK, body)
 		return
 	}
-	// `repo` names the folder this pass actually read (#196): the wizard asks
-	// for an off-site repository a step earlier and then reads the PRIMARY
-	// path, and an empty answer about an unnamed folder is unreadable.
 	fields := discoverFields(res)
 	fields["repo"] = h.svc.DiscoverSource("vms")
 	writeJSON(w, http.StatusOK, okEnvelope(fields))
 }
 
-// handleBackup starts a single container backup ON THE SERVER and returns
-// immediately. The work runs in the background (independent of this request) so
-// a long backup — or backing up the reverse-proxy container the UI runs through,
-// which severs this connection — can't make the SPA report a phantom failure for
-// a backup the server actually completes. The SPA watches the "container:<name>"
-// progress key over SSE and reads the recorded run for the outcome.
+// handleBackup starts a single container backup on the server and returns
+// immediately, so a long backup, or a backup of the reverse proxy the UI runs
+// through, cannot make the SPA report a failure for a backup that completes.
+// The SPA follows the "container:<name>" progress key over SSE and reads the
+// recorded run for the outcome.
 func (h *Handler) handleBackup(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
 	if !ok {
@@ -1151,10 +968,10 @@ func (h *Handler) handleBackup(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
 }
 
-// handleBackupAll starts a SERVER-SIDE batch backup of the selected containers.
-// The work runs in the background (independent of this request) so closing the
-// browser — even stopping the container the UI runs in — can't interrupt it; the
-// SPA watches progress over SSE ("batch:containers" + per-container keys).
+// handleBackupAll starts a server-side batch backup of the selected containers.
+// It runs apart from this request, so closing the browser or stopping the
+// container the UI runs in cannot interrupt it; the SPA follows progress over
+// SSE ("batch:containers" and the per-container keys).
 func (h *Handler) handleBackupAll(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Names []string `json:"names"`
@@ -1166,7 +983,7 @@ func (h *Handler) handleBackupAll(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "no containers selected"})
 		return
 	}
-	if len(body.Names) > 1000 { // far beyond any real container count — reject abuse
+	if len(body.Names) > 1000 { // far beyond any real container count
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "too many containers"})
 		return
 	}
@@ -1190,14 +1007,10 @@ func (h *Handler) handleBackupAll(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": len(body.Names)}))
 }
 
-// handleBackupEverything starts a "Backup Everything" pass — a 6th,
-// independent pseudo-domain that runs containers/vms/flash/files/config in
-// sequence (internal/api/everything.go) — ON THE SERVER and returns
-// immediately. The pass runs in a background goroutine independent of this
-// request, mirroring handleBackupAll's exact response-shape/status-code
-// convention: a 409 with a reason both when StartBackupEverything itself
-// fails and when it reports the pass could not start (one already in
-// flight), a plain 200 {ok:true, started:true} once it is launched.
+// handleBackupEverything starts a "Backup Everything" pass, which runs the
+// containers, vms, flash, files and config domains in sequence (everything.go),
+// on the server and returns immediately. Like handleBackupAll it answers 409
+// with a reason when the pass fails to start or one is already running.
 func (h *Handler) handleBackupEverything(w http.ResponseWriter, r *http.Request) {
 	started, err := h.svc.StartBackupEverything(r.Context())
 	if err != nil { // mirrors handleBackupAll: any failure to even start is reported the same way
@@ -1260,13 +1073,11 @@ func (h *Handler) handleSnapshots(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"snapshots": snaps}))
 }
 
-// handleRestore starts an in-place container restore ON THE SERVER and returns
-// immediately (see handleBackup — restores got the same treatment in issue #24:
-// a multi-hour restore held this request open until the browser/proxy dropped
-// it, which canceled the context and killed restic mid-restore). Validation
-// still runs synchronously, so a bad request fails right away; the SPA watches
-// the "container:<name>" progress key over SSE and reads the recorded run for
-// the outcome.
+// handleRestore starts an in-place container restore on the server and returns
+// immediately, because a restore that held the request open for hours died
+// with it when the browser or proxy dropped the connection. Validation still
+// runs first, so a bad request fails right away; the SPA follows the
+// "container:<name>" progress key over SSE and reads the recorded run.
 func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
 	if !ok {
@@ -1280,9 +1091,8 @@ func (h *Handler) handleRestore(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	// Confirmation is guarded here so an unconfirmed request fails synchronously
-	// with the familiar sentinel (the sync service core re-checks it for the
-	// stack-restore path — defense-in-depth).
+	// Checked here so an unconfirmed request fails synchronously with the usual
+	// sentinel; the service checks again for the stack restore path.
 	if !body.Confirm {
 		writeJSON(w, http.StatusOK, failEnvelope(backup.ErrNotConfirmed))
 		return
@@ -1314,20 +1124,12 @@ func (h *Handler) handleRestoreCancel(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "cancelled": cancelled})
 }
 
-// handleBackupCancel cancels an in-flight BACKUP by its progress key
-// (POST /api/backup/cancel {key}), the counterpart of handleRestoreCancel
-// above (#200).
-//
-// Deliberately a second route rather than a shared one that switches on the
-// key's prefix. The two are not the same operation: a cancelled backup is safe
-// and leaves nothing half-written, a cancelled restore leaves a container gone
-// and its appdata partial. Keeping them apart is what stops a caller reaching
-// the destructive one by getting a prefix wrong, which is the same reasoning
-// the Service uses for keeping two cancel maps.
-//
-// Cancelling a key that is not running is an idempotent success
-// (cancelled:false): a browser tab that still shows the button for a backup
-// that finished a second ago must not produce an error.
+// handleBackupCancel cancels an in-flight backup by its progress key
+// (POST /api/backup/cancel {key}). It is a separate route from
+// handleRestoreCancel because a cancelled restore leaves a container gone and
+// its appdata partial, and a wrong key prefix must not reach that. A key that
+// is not running is an idempotent success (cancelled:false), so a tab still
+// showing the button for a finished backup gets no error.
 func (h *Handler) handleBackupCancel(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Key string `json:"key"`
@@ -1350,16 +1152,13 @@ func stackParam(w http.ResponseWriter, r *http.Request) (string, bool) {
 	return project, true
 }
 
-// handleRestoreStack restores every backed-up member of a compose stack STOPPED,
-// then (optionally) starts them in dependency order. POST /api/stacks/{project}/restore
-// The {project} is a compose project name, which is laxer than a container name
-// (validResourceName would wrongly reject some), so it gets its own minimal check
-// that still blocks path traversal / separators reaching the store enumeration.
+// handleRestoreStack restores every backed-up member of a compose stack stopped,
+// then optionally starts them in dependency order.
+// POST /api/stacks/{project}/restore
 //
-// ASYNC (see handleRestore): validation + member enumeration run synchronously
-// (a bad request — including an empty stack — still fails right away); the
-// per-member restore + start loops run detached. Per-member outcomes land in
-// the run history (each member's restore records a kind "restore" run).
+// Like handleRestore it runs detached after validation and member enumeration,
+// so a bad request or an empty stack still fails right away. Each member's
+// restore records its own "restore" run.
 func (h *Handler) handleRestoreStack(w http.ResponseWriter, r *http.Request) {
 	project, ok := stackParam(w, r)
 	if !ok {
@@ -1412,9 +1211,8 @@ func (h *Handler) handleListFiles(w http.ResponseWriter, r *http.Request) {
 // either back to their original locations (targetPath empty) or into an alternate
 // folder under the host mount. POST /api/containers/{name}/restore-files
 //
-// ASYNC (see handleRestore): validation + target resolution run synchronously
-// (the resolved target is returned in the ack); the restic work runs detached,
-// publishing "container:<name>" progress and recording a run for the outcome.
+// Like handleRestore it runs detached; validation and target resolution run
+// first, and the resolved target comes back in the answer.
 func (h *Handler) handleRestoreFiles(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
 	if !ok {
@@ -1441,15 +1239,12 @@ func (h *Handler) handleRestoreFiles(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true, "target": target}))
 }
 
-// handleRestoreContainerTo extracts a whole container snapshot into an ALTERNATE
-// folder under the host mount (non-destructive — the live container is never
-// touched). POST /api/containers/{name}/restore-to
+// handleRestoreContainerTo extracts a whole container snapshot into another
+// folder under the host mount, leaving the live container untouched.
+// POST /api/containers/{name}/restore-to
 //
-// ASYNC (see handleRestore — this is THE flow of issue #24: a 700GB extraction
-// held the request open for hours until the connection dropped and killed
-// restic). Validation + target resolution run synchronously (the resolved
-// target is returned in the ack); the restic work runs detached, publishing
-// "container:<name>" progress and recording a run for the outcome.
+// Like handleRestore it runs detached; validation and target resolution run
+// first, and the resolved target comes back in the answer.
 func (h *Handler) handleRestoreContainerTo(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
 	if !ok {
@@ -1525,33 +1320,24 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	// Pointers so a hooks-only PATCH doesn't reset the schedule flag (and vice
-	// versa) — only the fields actually sent are applied.
+	// Pointers, so a hooks-only PATCH does not reset the schedule flag and only
+	// the fields actually sent are applied.
 	var body struct {
 		IncludeInSchedule *bool     `json:"includeInSchedule"`
 		PreHook           *string   `json:"preHook"`
 		PostHook          *string   `json:"postHook"`
 		BackupPaths       *[]string `json:"backupPaths"`
-		// SelectionSource is the optional intent carrier for a backupPaths save.
-		// Only the literal "tree" carries meaning (it enables the empty-selection
-		// guard — a deselect-everything from the tree over a prior non-empty
-		// selection is refused); any other value is ignored and treated exactly
-		// as absent, so no source value can ever fail a save (CONTEXT INTEG-04
-		// Q1 / RESEARCH Pitfall 7). The field MUST be declared even though it is
-		// optional: decodeBody runs DisallowUnknownFields, so an undeclared
-		// selectionSource would reject every tree save at the boundary. Omitting
-		// it stays legal (pointer field), and SPA + server ship in one binary
-		// (embedded web/dist), so version skew is a non-issue.
+		// SelectionSource says where a backupPaths save came from. Only "tree"
+		// means anything: it refuses deselecting everything over a non-empty
+		// selection. Any other value counts as absent, so it can never fail a
+		// save. It has to be declared because decodeBody disallows unknown fields.
 		SelectionSource *string   `json:"selectionSource"`
 		StopContainers  *[]string `json:"stopContainers"`
 		Excludes        *[]string `json:"excludes"`
-		// ExcludeCaches is the per-mount-root CACHEDIR.TAG toggle (RESTIC-01):
-		// a map of host path → bool. nil means untouched (the key was absent),
-		// an explicit empty object clears every root toggle. Non-pointer map is
-		// deliberate: an absent key decodes to nil, which IS the untouched
-		// signal — maps natively distinguish absent from zero, unlike scalars.
-		// Keys are host paths, boundary-validated in Service.SetExcludeCaches;
-		// only the boolean union of the values ever reaches restic argv (D-06).
+		// ExcludeCaches maps a mount root's host path to its CACHEDIR.TAG toggle.
+		// nil means untouched and an empty object clears every toggle, which a
+		// plain map already tells apart. Service.SetExcludeCaches validates the
+		// keys, and only the union of the values reaches restic argv.
 		ExcludeCaches     map[string]bool `json:"excludeCaches"`
 		UpdateAfterBackup *bool           `json:"updateAfterBackup"`
 		ScheduleCadence   *string         `json:"scheduleCadence"`
@@ -1592,11 +1378,8 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.BackupPaths != nil {
 		if err := h.svc.SetBackupPaths(r.Context(), name, *body.BackupPaths, strOr(body.SelectionSource)); err != nil {
-			// The empty-selection refusal gets a machine-routable code so the
-			// Phase 3 UI can offer guidance ("nothing would be backed up")
-			// instead of a bare failure; every other error keeps the plain
-			// envelope (CONTEXT INTEG-04 Q2). Both stay in the HTTP 200
-			// envelope.
+			// The empty-selection refusal gets a code so the UI can offer
+			// guidance ("nothing would be backed up") instead of a bare failure.
 			if errors.Is(err, errEmptySelection) {
 				writeJSON(w, http.StatusOK, codedFailEnvelope(err, "empty-selection"))
 				return
@@ -1634,9 +1417,9 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}
-		// A per-item override registers/removes a dedicated cron entry (#121), which
-		// only takes effect on a scheduler reload — settings changes reload, but a
-		// container PATCH does not, so reload here.
+		// A per-item cadence adds or removes its own cron entry, which takes
+		// effect only on a scheduler reload, and a container PATCH does not
+		// otherwise reload.
 		if err := h.reloadScheduler(); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
@@ -1653,8 +1436,8 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 }
 
 // reloadScheduler re-reads the settings and re-registers every schedule entry,
-// including the per-item override entries (#121). Called after a change that alters
-// the schedule structure outside the settings form (a per-item cadence PATCH).
+// including the per-item entries, after a change outside the settings form
+// such as a per-item cadence PATCH.
 func (h *Handler) reloadScheduler() error {
 	s, err := h.store.GetSettings()
 	if err != nil {
@@ -1663,9 +1446,9 @@ func (h *Handler) reloadScheduler() error {
 	return h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun, h.everythingLastRun)
 }
 
-// handleScheduleIncludeAll sets the include_in_schedule flag for EVERY installed
-// container in one call — the one-click "include all in schedule" / "exclude all"
-// action. Excluding also reaches containers that are no longer installed (#232).
+// handleScheduleIncludeAll sets the include_in_schedule flag for every installed
+// container in one call, for the "include all" and "exclude all" actions.
+// Excluding also reaches containers that are not installed.
 // POST /api/containers/schedule-include  body {include: bool}
 func (h *Handler) handleScheduleIncludeAll(w http.ResponseWriter, r *http.Request) {
 	var body struct {
@@ -1681,8 +1464,8 @@ func (h *Handler) handleScheduleIncludeAll(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleGetBackupOrder returns the current manual backup ordering (#119): the
-// containers with an explicit order, sorted by order ascending.
+// handleGetBackupOrder returns the manual backup ordering: the containers with
+// an explicit order, ascending.
 // GET /api/containers/backup-order  →  {order: [{container, order}, ...]}
 func (h *Handler) handleGetBackupOrder(w http.ResponseWriter, r *http.Request) {
 	orders, err := h.svc.BackupOrders(r.Context())
@@ -1696,10 +1479,9 @@ func (h *Handler) handleGetBackupOrder(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"order": orders}))
 }
 
-// handleSetBackupOrder replaces the manual backup ordering (#119) from an ordered
-// list of container names: the first name runs earliest. Any container omitted
-// from the list is returned to the most-overdue-first tiebreak. The ordering is
-// authoritative, so an empty list clears all explicit orders.
+// handleSetBackupOrder replaces the manual backup ordering from a list of
+// container names, the first running earliest. A container left out goes back
+// to the most-overdue-first tiebreak, so an empty list clears every order.
 // PUT /api/containers/backup-order  body {order: ["nameA", "nameB", ...]}
 func (h *Handler) handleSetBackupOrder(w http.ResponseWriter, r *http.Request) {
 	var body struct {
@@ -1708,7 +1490,7 @@ func (h *Handler) handleSetBackupOrder(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) { // caps the body at 1 MiB
 		return
 	}
-	if len(body.Order) > 1000 { // far beyond any real container count — reject abuse
+	if len(body.Order) > 1000 { // far beyond any real container count
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "too many containers"})
 		return
 	}
@@ -1727,7 +1509,7 @@ func (h *Handler) handleSetBackupOrder(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleGetVmBackupOrder returns the explicit VM backup ordering (#119, VMs).
+// handleGetVmBackupOrder returns the explicit VM backup ordering.
 // GET /api/vms/backup-order
 func (h *Handler) handleGetVmBackupOrder(w http.ResponseWriter, r *http.Request) {
 	orders, err := h.svc.VMBackupOrders(r.Context())
@@ -1741,8 +1523,8 @@ func (h *Handler) handleGetVmBackupOrder(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"order": orders}))
 }
 
-// handleSetVmBackupOrder replaces the VM backup ordering (#119, VMs) from an
-// ordered list of VM names: the first name runs earliest in a scheduled VM run.
+// handleSetVmBackupOrder replaces the VM backup ordering from a list of VM
+// names, the first running earliest in a scheduled VM run.
 // A VM omitted from the list returns to the name-order tiebreak; an empty list
 // clears all explicit orders.
 // PUT /api/vms/backup-order  body {order: ["vmA", "vmB", ...]}
@@ -1753,12 +1535,12 @@ func (h *Handler) handleSetVmBackupOrder(w http.ResponseWriter, r *http.Request)
 	if !decodeBody(w, r, &body) { // caps the body at 1 MiB
 		return
 	}
-	if len(body.Order) > 1000 { // far beyond any real VM count — reject abuse
+	if len(body.Order) > 1000 { // far beyond any real VM count
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "too many vms"})
 		return
 	}
 	for _, n := range body.Order {
-		if !validVMName(n) { // VM names may contain spaces ("Windows 11"); validResourceName wrongly rejected them (#127)
+		if !validVMName(n) { // VM names may contain spaces ("Windows 11")
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid VM name"})
 			return
 		}
@@ -1772,8 +1554,8 @@ func (h *Handler) handleSetVmBackupOrder(w http.ResponseWriter, r *http.Request)
 
 // handleContainerMounts lists a container's bind mounts (annotated with the
 // current selection) for the backup-folder selector. Stored exclusions come
-// back additively in a top-level excluded array (host form) — never mixed into
-// custom as stale paths (INTEG-04 read side).
+// back in their own top-level excluded array (host form), not mixed into custom
+// as stale paths.
 // GET /api/containers/{name}/mounts
 func (h *Handler) handleContainerMounts(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
@@ -1795,8 +1577,7 @@ func (h *Handler) handleContainerMounts(w http.ResponseWriter, r *http.Request) 
 		excluded = []string{}
 	}
 	if excludeCaches == nil {
-		// Nil-safe wire shape: the SPA must always read an OBJECT under
-		// excludeCaches, never null (RESTIC-01 read side).
+		// The SPA expects an object under excludeCaches, never null.
 		excludeCaches = map[string]bool{}
 	}
 	// hostMountRoot/hostSourceRoot let the folder picker translate a browsed path
@@ -1895,33 +1676,29 @@ type settingsView struct {
 	// Off-site transfer bandwidth caps (KiB/s; 0 = unlimited).
 	OffsiteLimitUpload   int `json:"offsiteLimitUpload"`
 	OffsiteLimitDownload int `json:"offsiteLimitDownload"`
-	// BackupCores caps the CPU threads each restic child uses (GOMAXPROCS).
-	// 0 = every core, restic's own default ([558], issue #189).
+	// BackupCores caps the CPU threads each restic child uses (GOMAXPROCS);
+	// 0 means every core, restic's own default.
 	BackupCores int `json:"backupCores"`
-	// Opt-in Prometheus /metrics endpoint + its optional bearer scrape token.
-	// The token is a secret and follows the house blank-and-report-is-set
-	// contract (see handleGetNotify/handleGetCloud): GET always returns
-	// MetricsToken blank + MetricsTokenSet reporting whether one is stored; on
-	// PUT a blank MetricsToken means "keep the stored one". MetricsTokenSet is
-	// on the struct (not a sibling) because the strict PUT decoder
-	// (DisallowUnknownFields) must accept a round-tripped GET body.
+	// The opt-in Prometheus /metrics endpoint and its optional bearer token.
+	// Like every secret here, GET returns the token blank with MetricsTokenSet
+	// reporting whether one is stored, and a blank token on PUT keeps the
+	// stored one. MetricsTokenSet sits on the struct because the strict PUT
+	// decoder has to accept a round-tripped GET body.
 	MetricsEnabled  bool   `json:"metricsEnabled"`
 	MetricsToken    string `json:"metricsToken"`
 	MetricsTokenSet bool   `json:"metricsTokenSet"`
-	// Embeddable dashboard-widget token (GET /widget + GET /api/widget/data).
-	// Same secret contract as MetricsToken: GET always returns WidgetToken blank
-	// with WidgetTokenSet reporting presence; on PUT a blank WidgetToken keeps
-	// the stored one. Generated/cleared via POST/DELETE /api/widget/token (the
-	// Settings card), but the field participates in the PUT round-trip so a
-	// full settings save can never silently wipe it.
+	// WidgetToken authorizes the embeddable dashboard widget, with the same
+	// secret contract as MetricsToken. POST and DELETE /api/widget/token set
+	// and clear it; it is part of the PUT round-trip so a full settings save
+	// cannot wipe it.
 	WidgetToken    string `json:"widgetToken"`
 	WidgetTokenSet bool   `json:"widgetTokenSet"`
 	// Scheduled restore-verification drills (restic check --read-data-subset).
 	DrillsEnabled   bool   `json:"drillsEnabled"`
 	DrillsSchedule  string `json:"drillsSchedule"`
 	DrillsSubsetPct int    `json:"drillsSubsetPct"`
-	// OffsiteDrillsEnabled gates ONLY the scheduled off-site DR drill (#37); the
-	// local subset check + the manual DR button are unaffected. Default on.
+	// OffsiteDrillsEnabled gates the scheduled off-site DR drill alone; the local
+	// subset check and the manual DR button are unaffected. Default on.
 	OffsiteDrillsEnabled bool `json:"offsiteDrillsEnabled"`
 	// RecoveryKitAck dismisses the dashboard nag once the user has downloaded +
 	// safely stored the encryption-key recovery kit.
@@ -1955,75 +1732,57 @@ type settingsView struct {
 	// notification per overdue episode through the notify channels. Default on.
 	WatchdogEnabled bool `json:"watchdogEnabled"`
 	// Optional age public-key encryption for the plain export paths (tool-free
-	// tar.gz / xml / zip exports). Recipients are PUBLIC keys (age1... or SSH), so
-	// they are not secret and round-trip in the clear. With encryption on and no
-	// valid recipient every export fails loudly rather than writing plaintext.
+	// tar.gz, xml and zip exports). Recipients are public keys (age1... or SSH),
+	// so they round-trip in the clear. With encryption on and no valid recipient
+	// every export fails rather than writing plaintext.
 	ExportEncryptEnabled bool   `json:"exportEncryptEnabled"`
 	ExportAgeRecipients  string `json:"exportAgeRecipients"`
-	// ReceiverEnabled gates the read-only receiver dashboard (a box that RECEIVES
-	// immutable off-site copies and monitors the received repo). Default false
-	// (opt-in), like the Files/VMs domain tabs; the sidebar gates its tab on it.
+	// ReceiverEnabled gates the read-only receiver dashboard, for a box that
+	// receives immutable off-site copies and monitors them. Off by default.
 	ReceiverEnabled bool `json:"receiverEnabled"`
-	// RestartHealthWait toggles the health-gated ordered restart of the "stop other
-	// containers during backup" set (#119): when on, the restart waits for each
-	// stopped dependency to become healthy (or Running plus a short grace when it
-	// has no healthcheck) before starting the containers that depend on it. The
-	// depends_on ordering is always applied; only this wait is toggled. Default on.
-	// RestartHealthTimeoutSec caps that per-container wait (default 120).
+	// RestartHealthWait makes the restart of the "stop other containers during
+	// backup" set wait for each stopped dependency to become healthy (or running
+	// plus a short grace without a healthcheck) before starting what depends on
+	// it. The depends_on order always applies. Default on.
+	// RestartHealthTimeoutSec caps that wait per container (default 120).
 	RestartHealthWait       bool `json:"restartHealthWait"`
 	RestartHealthTimeoutSec int  `json:"restartHealthTimeoutSec"`
-	// ReconcileUnraidUpdateStatus asks Unraid to refresh its OWN cached container
-	// "update available" status after BombVault recreates a container in the
-	// post-backup update step (#116), so the Docker tab's stale banner clears. The
-	// recheck runs over the existing host SSH link; best-effort and non-fatal.
-	// Default on.
+	// ReconcileUnraidUpdateStatus asks Unraid to refresh its own cached "update
+	// available" status after the post-backup update step recreates a container,
+	// so the Docker tab's stale banner clears. It runs over the host SSH link and
+	// a failure is not fatal. Default on.
 	ReconcileUnraidUpdateStatus bool `json:"reconcileUnraidUpdateStatus"`
-	// PerItemSchedules opts into per-container/VM schedule overrides (#121). Default
-	// false: the per-domain schedule stays authoritative for every item and the UI
-	// is unchanged. When on, an included item with a non-empty scheduleCadence runs
-	// on its own cadence; an item with an empty override follows its domain schedule.
+	// PerItemSchedules lets an included container or VM with a non-empty
+	// scheduleCadence run on its own cadence. Off by default, which keeps the
+	// domain schedule in charge of every item.
 	PerItemSchedules bool `json:"perItemSchedules"`
-	// Private container-registry credentials for the post-backup update pull
-	// (#106). Per-entry the token follows the house blank-and-report-is-set
-	// contract (see MetricsToken): GET returns every token blank with TokenSet
-	// reporting presence; on PUT a blank token keeps the stored one for that
-	// host, and a host missing from the list is deleted. nil (field absent, an
-	// old client) keeps the stored list unchanged.
+	// RegistryAuths are the private registry credentials for the post-backup
+	// update pull. Each token follows the MetricsToken contract; a host missing
+	// from the list is deleted, and nil (an old client) keeps the stored list.
 	RegistryAuths []registryAuthView `json:"registryAuths"`
-	// FleetEnabled gates the read-only Fleet view (a list of peer BombVault
-	// instances this box polls for their protection status). Default false
-	// (opt-in), like ReceiverEnabled; the sidebar gates its tab on it.
+	// FleetEnabled gates the read-only Fleet view of peer instances this box
+	// polls for their protection status. Off by default.
 	FleetEnabled bool `json:"fleetEnabled"`
-	// PullEnabled gates fetching another instance's backups INTO this box's own
-	// repository (#227). Default false (opt-in) like the two flags above, and the
-	// only one of the three that writes data here rather than reading.
+	// PullEnabled gates fetching another instance's backups into this box's own
+	// repository. Off by default, and unlike the two flags above it writes data.
 	PullEnabled bool `json:"pullEnabled"`
-	// InstanceName is this instance's own display name, reported to polling
-	// fleet peers so a peer's Fleet page can label this box. Not a secret.
+	// InstanceName is this instance's display name, reported to polling fleet
+	// peers so their Fleet page can label this box. Not a secret.
 	InstanceName string `json:"instanceName"`
-	// Peer status token (GET /api/fleet/status), authorizing OTHER instances'
-	// Fleet views to poll THIS instance. Same secret contract as WidgetToken:
-	// GET always returns FleetToken blank with FleetTokenSet reporting presence;
-	// on PUT a blank FleetToken keeps the stored one. Generated/cleared via
-	// POST/DELETE /api/fleet/token (the Settings card).
+	// FleetToken lets other instances' Fleet views poll GET /api/fleet/status,
+	// with the same secret contract as WidgetToken. POST and DELETE
+	// /api/fleet/token set and clear it.
 	FleetToken    string `json:"fleetToken"`
 	FleetTokenSet bool   `json:"fleetTokenSet"`
-	// EverythingSchedule is the cadence for the "Backup Everything" pass (a 6th,
-	// independent pseudo-domain that runs containers/vms/flash/files/config in
-	// sequence). 'off' (the default) leaves it fully inert. EverythingPreHook /
-	// EverythingPostHook are optional shell commands run in BombVault's own
-	// container (HostShell) before/after the whole pass — not secrets, so they
-	// round-trip plainly like every other schedule/hook field.
+	// EverythingSchedule is the cadence of the "Backup Everything" pass over all
+	// domains; 'off', the default, leaves it inert.
 	EverythingSchedule string `json:"everythingSchedule"`
-	// Never echoed, for the same reason FleetToken above is not: a hook is a
-	// shell command the operator wrote, and the useful ones carry a secret in
-	// the URL (a healthchecks.io ping is a UUID, an ntfy call a token). With no
-	// login password set authGate is a pass-through by design, so returning
-	// them verbatim handed those to anyone on the LAN. The ...Set flags report
-	// presence, and a blank field on PUT keeps the stored command.
-	// The ...Clear flags are the deliberate way to REMOVE a hook. Without them
-	// "blank keeps the stored one" would make a set hook impossible to get rid
-	// of: the field looks empty while the command still runs.
+	// The hooks run in BombVault's own container before and after the whole
+	// pass. They are never echoed, because a useful hook often carries a secret
+	// in its URL (a healthchecks.io ping is a UUID) and without a login password
+	// anyone on the LAN can read this. The ...Set flags report presence, a blank
+	// field on PUT keeps the stored command, and the ...Clear flags remove one,
+	// since blank alone could never get rid of it.
 	EverythingPreHook       string `json:"everythingPreHook"`
 	EverythingPostHook      string `json:"everythingPostHook"`
 	EverythingPreHookSet    bool   `json:"everythingPreHookSet"`
@@ -2032,9 +1791,9 @@ type settingsView struct {
 	EverythingPostHookClear bool   `json:"everythingPostHookClear"`
 }
 
-// registryAuthView is one container-registry credential in the settings view
-// (#106). Token is write-only; TokenSet lives on the struct (not a sibling)
-// because the strict PUT decoder must accept a round-tripped GET body.
+// registryAuthView is one container registry credential in the settings view.
+// Token is write-only; TokenSet sits on the struct because the strict PUT
+// decoder has to accept a round-tripped GET body.
 type registryAuthView struct {
 	Host     string `json:"host"`
 	Username string `json:"username"`
@@ -2056,11 +1815,9 @@ func toView(s store.Settings) settingsView {
 		ConfigPath:        s.ConfigPath,
 		FilesPath:         s.FilesPath,
 		RestoreFolder:     s.RestoreFolder,
-		// Verbatim here on purpose. toView is the faithful store-to-view
-		// mapping that BOTH exits share, and the credentialed settings export
-		// is gated on a login password precisely so it can hand out a complete
-		// copy. Each exit applies its own policy instead: redactExportLocations
-		// for the plain export, scrubGetSettingsSecrets for GET /api/settings.
+		// Verbatim: the credentialed export, gated on a login password, needs a
+		// complete copy. The other exits scrub on their own, through
+		// redactExportLocations and scrubGetSettingsSecrets.
 		ContainersOffsite:           s.ContainersOffsite,
 		VMsOffsite:                  s.VMsOffsite,
 		FlashOffsite:                s.FlashOffsite,
@@ -2092,9 +1849,9 @@ func toView(s store.Settings) settingsView {
 		OffsiteLimitDownload:        s.OffsiteLimitDownload,
 		BackupCores:                 s.BackupCores,
 		MetricsEnabled:              s.MetricsEnabled,
-		MetricsToken:                "", // secret — never echoed; MetricsTokenSet reports presence
+		MetricsToken:                "", // secret, never echoed; MetricsTokenSet reports presence
 		MetricsTokenSet:             s.MetricsToken != "",
-		WidgetToken:                 "", // secret — never echoed; WidgetTokenSet reports presence
+		WidgetToken:                 "", // secret, never echoed; WidgetTokenSet reports presence
 		WidgetTokenSet:              s.WidgetToken != "",
 		DrillsEnabled:               s.DrillsEnabled,
 		DrillsSchedule:              s.DrillsSchedule,
@@ -2126,7 +1883,7 @@ func toView(s store.Settings) settingsView {
 		FleetEnabled:                s.FleetEnabled,
 		PullEnabled:                 s.PullEnabled,
 		InstanceName:                s.InstanceName,
-		FleetToken:                  "", // secret — never echoed; FleetTokenSet reports presence
+		FleetToken:                  "", // secret, never echoed; FleetTokenSet reports presence
 		FleetTokenSet:               s.FleetToken != "",
 		EverythingSchedule:          s.EverythingSchedule,
 		EverythingPreHook:           s.EverythingPreHook,
@@ -2136,10 +1893,9 @@ func toView(s store.Settings) settingsView {
 	}
 }
 
-// clampHealthTimeoutSec keeps the per-container restart health-wait timeout in a
-// sane range: a non-positive value falls back to the 120s default (so a client
-// that omits or zeroes it never persists a nonsense 0), and it is capped at one
-// hour so a typo cannot make a single stuck dependency block a restart for days.
+// clampHealthTimeoutSec keeps the restart health-wait timeout between 5 seconds
+// and an hour, so a typo cannot let one stuck dependency block a restart for
+// days. A non-positive value falls back to the 120s default.
 func clampHealthTimeoutSec(sec int) int {
 	if sec <= 0 {
 		return 120
@@ -2147,25 +1903,14 @@ func clampHealthTimeoutSec(sec int) int {
 	return min(3600, max(5, sec))
 }
 
-// scrubGetSettingsSecrets applies this endpoint's own policy to the shared view.
+// scrubGetSettingsSecrets applies GET /api/settings' own policy to the shared
+// view, which without a login password any host on the LAN can read.
 //
-// authGate is a pass-through with no login password set (the trusted-LAN model),
-// so everything below would otherwise go to any host on the LAN unauthenticated.
-// Two different treatments, because the two fields are not the same kind of thing:
-//
-//   - The off-site LOCATIONS are scrubbed, not blanked. scrubRepoLocation's own
-//     doc comment settles it: a location is not itself a secret, "which bucket a
-//     box replicates to is the portable part", but it CAN carry one, because
-//     restic accepts rest:https://user:pass@host/repo. Blanking would take the
-//     wizard's backend inference, its cron snippet and the plain answer to "where
-//     does my off-site copy live" with it. A location that comes back on PUT still
-//     carrying the marker keeps the stored one.
-//   - The HOOKS are blanked, with ...Set reporting presence, because a hook's
-//     whole value is often the secret (a healthchecks.io ping is a UUID). The
-//     settings export already blanks them for exactly this reason
-//     (buildSettingsView); this endpoint, the other way they leave the process,
-//     did not. Blank on PUT keeps the stored command, and the ...Clear flags
-//     remove one.
+// Off-site locations are scrubbed rather than blanked: a location is not a
+// secret, and the wizard's backend inference and cron snippet need it, but it
+// can carry one (rest:https://user:pass@host/repo). A location that comes back
+// on PUT with the marker keeps the stored one. Hooks are blanked, because a
+// hook's whole value is often the secret; the ...Set flags report presence.
 func scrubGetSettingsSecrets(v settingsView) settingsView {
 	v.ContainersOffsite = scrubRepoLocation(v.ContainersOffsite)
 	v.VMsOffsite = scrubRepoLocation(v.VMsOffsite)
@@ -2184,9 +1929,8 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 	view := scrubGetSettingsSecrets(toView(s))
-	// Registry credentials (#106) live encrypted in the settings row, so toView
-	// (a pure store.Settings mapping) can't decode them — fill the view here.
-	// Tokens are secrets and never echoed; TokenSet reports presence.
+	// Registry credentials are stored encrypted, which toView cannot decode.
+	// Tokens are never echoed; TokenSet reports presence.
 	regs, err := h.svc.decodeRegistryAuths(s)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -2198,14 +1942,10 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
 			Host: a.Host, Username: a.Username, TokenSet: a.Token != "",
 		})
 	}
-	// Nest under "settings" so the GET response is shape-symmetric with the PUT
-	// body: a client can GET, edit, and PUT back the same settings object without
-	// the envelope's "ok" leaking into the strict PUT decoder.
-	// hostMountRoot/platform are siblings (not inside settings) so the strict PUT
-	// decoder never sees them and cannot reject them as unknown fields.
-	// platform is the detected/overridden platform.Kind ("unraid"/"generic"/
-	// "truenas", see internal/platform) — read-only host-environment info, not a
-	// setting the UI can change.
+	// Nested under "settings" so a client can GET, edit and PUT back the same
+	// object; hostMountRoot and platform sit beside it so the strict PUT
+	// decoder never sees them. platform is the detected or overridden
+	// platform.Kind ("unraid", "generic", "truenas") and cannot be changed here.
 	writeJSON(w, http.StatusOK, map[string]any{
 		"ok":            true,
 		"settings":      view,
@@ -2214,36 +1954,17 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, _ *http.Request) {
 	})
 }
 
-// rejectEveryNSchedules reports the user-facing error for a settings view whose
-// OFF-SITE replication cadence uses "everyN". An everyN cadence is a daily cron
-// trigger plus a "has the interval elapsed?" gate, and a replication job has no
-// last-run fact to answer that with, so its interval could not be enforced and
-// the job would silently fire daily. The five off-site schedules are restricted
-// to off / daily / weekly / cron, which all fire on an exact schedule. Returns
-// "" when the view is acceptable.
+// rejectEveryNSchedules returns the user-facing error for a view whose off-site
+// replication cadence uses "everyN", or "" when it is acceptable. everyN is a
+// daily trigger plus a "has the interval elapsed?" gate, and a replication job
+// has no last run to answer that with, so it would fire daily.
 //
-// This is THE authority for that split, called from every path that writes
-// settings: handlePutSettings (the UI save) and validateExport (settings import,
-// #166). An import that slipped an everyN into one of these fields would persist
-// it and then break every later settings save from any card, because the UI
-// always PUTs the full settings object.
-//
-// The drills, tamper-test and digest schedules used to be in this list and no
-// longer are (#166): each now records when its scheduled pass last ran
-// (store.RecordScheduleJobRun, migration v89's schedule_job_runs) and hands that
-// back to the due-gate through SetJobRunStore, so their interval is genuinely
-// enforced. Accepting them here is what makes an IMPORTED everyN drills/tamper/
-// digest cadence behave exactly like a UI-set one, rather than being refused on
-// one path and accepted on the other.
-//
-// The five domain schedules plus EverythingSchedule are deliberately absent for
-// the same reason: each has a last-run gate that makes everyN meaningful (the
-// multi-item domains through schedule.ContainersDueGate/VMsDueGate/FilesDueGate,
-// the two singletons through LastSuccessfulFlash/ConfigBackup, and the whole-
-// server pass through LastEverythingPass). The scheduler also refuses to
-// REGISTER an unenforceable everyN (internal/schedule), so a legacy value that
-// predates this guard cannot fire daily either — this is the friendly save-time
-// half of that same rule.
+// Every settings write path calls it, handlePutSettings and validateExport
+// alike, because the UI always PUTs the full object and one bad imported field
+// would break every later save. The domain, drill, tamper-test, digest and
+// Everything schedules record their last run, so everyN works for them. The
+// scheduler also refuses to register an everyN it cannot enforce; this is the
+// friendlier check at save time.
 func rejectEveryNSchedules(v settingsView) string {
 	for _, cad := range []string{
 		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule,
@@ -2255,21 +1976,14 @@ func rejectEveryNSchedules(v settingsView) string {
 	return ""
 }
 
-// rejectSettingsPathOnNamedRepo refuses a settings save that MOVES a domain's
-// own repository (or an off-site destination) onto a location an existing named
-// repository already occupies. Returns a user-facing sentence, or "".
+// rejectSettingsPathOnNamedRepo refuses a settings save that moves a domain's
+// own repository or an off-site destination onto a location a named repository
+// already occupies. It returns a user-facing sentence, or "".
 //
-// Only the fields this save CHANGES are checked, against `cur`. That scoping is
-// not a nicety: the SPA sends the whole settings object from every card, so an
-// install that upgraded carrying a standing collision - legal to create on the
-// previous build, which had neither this guard nor its counterpart - had every
-// settings save refused, from every card, over a path the operator was not
-// touching and a repository they may not remember. The guard is here to stop
-// somebody CREATING that state, and a state that already exists is not created
-// by saving a notification address.
-//
-// A store read that fails does NOT drop the guard: an unanswerable question is
-// not a yes, and the save can be repeated.
+// Only the fields this save changes, compared with cur, are checked. The SPA
+// sends the whole settings object from every card, so checking everything would
+// refuse every save over an existing collision the operator is not touching. A
+// failed store read refuses the save, since it can simply be repeated.
 func (h *Handler) rejectSettingsPathOnNamedRepo(v settingsView, cur store.Settings) string {
 	rows, err := h.store.ListNamedRepos()
 	if err != nil {
@@ -2364,27 +2078,16 @@ func (h *Handler) rejectNestedSettingsPath(v settingsView, cur store.Settings) s
 // carries: the restore folder is always local, a remote backend (rclone:/s3:/
 // rest:/sftp:/b2:) is accepted verbatim, an unprefixed remote-looking value is
 // refused with guidance, and a local path must resolve under the mount root.
-// Returns a user-facing message, or "" when the whole set is acceptable.
-//
-// It is shared by BOTH settings write paths for the reason rejectEveryNSchedules
-// gives, and the everyN guard is the precedent: this validation used to live
-// only in handlePutSettings, so an imported file could persist an absolute
-// containersPath that the UI's own save path then refused FOREVER. The SPA
-// always PUTs the whole settings object, so one poisoned field failed every
-// later save from every card — including the card that would fix it. One guard,
-// both write paths, or the two drift apart again the next time one is extended.
+// Returns a user-facing message, or "" when the whole set is acceptable. Both
+// settings write paths share it, for the reason rejectEveryNSchedules gives.
 func rejectInvalidSettingsPaths(v settingsView, mountRoot string) string {
-	// RestoreFolder is ALWAYS a local filesystem path (restores land on the local
-	// mount root). A remote-looking value (e.g. "s3:foo") would slip past the
-	// containment check below, which skips remotes with `continue`, so reject it
-	// up front — it can never legitimately be a remote backend.
+	// Restores land on the local mount root. A remote-looking value such as
+	// "s3:foo" would slip past the containment check below, which skips remotes.
 	if v.RestoreFolder != "" && restic.IsRemoteRepo(v.RestoreFolder) {
 		return "restore folder must be a local path under the mount root"
 	}
 
-	// Local domain repos, plus any configured off-site repos (off-site may be
-	// blank = none). A remote backend (rclone:/s3:/rest:…) is accepted verbatim;
-	// a local path must stay under the mount root.
+	// A blank off-site field means none.
 	for _, sub := range []string{
 		v.ContainersPath, v.VMsPath, v.FlashPath, v.ConfigPath, v.FilesPath, v.RestoreFolder,
 		v.ContainersOffsite, v.VMsOffsite, v.FlashOffsite, v.ConfigOffsite, v.FilesOffsite,
@@ -2392,12 +2095,11 @@ func rejectInvalidSettingsPaths(v settingsView, mountRoot string) string {
 		if sub == "" || restic.IsRemoteRepo(sub) {
 			continue
 		}
-		// A "word:" prefix that isn't a recognized remote is almost always a
-		// mistyped off-site path (e.g. "BackBlaze:bucket" instead of
-		// "rclone:BackBlaze:bucket"); reject it with guidance rather than
-		// silently treating it as a local folder named after the string.
+		// A "word:" prefix that is not a known remote is almost always a
+		// mistyped off-site path ("BackBlaze:bucket" for
+		// "rclone:BackBlaze:bucket"), not a local folder of that name.
 		if restic.LooksLikeUnprefixedRemote(sub) {
-			return fmt.Sprintf("%q looks like a remote backend but is missing its prefix — off-site backends need one of rclone:/s3:/rest:/sftp:/b2:, for example rclone:%s", sub, sub)
+			return fmt.Sprintf("%q looks like a remote backend but is missing its prefix; off-site backends need one of rclone:/s3:/rest:/sftp:/b2:, for example rclone:%s", sub, sub)
 		}
 		if _, err := paths.Resolve(mountRoot, sub); err != nil {
 			log.Printf("api: settings: rejected path %q: %v", sub, err)
@@ -2408,15 +2110,13 @@ func rejectInvalidSettingsPaths(v settingsView, mountRoot string) string {
 }
 
 // rejectInvalidSettingsNames validates the DR-drill targets, which are
-// container/VM names the UI dropdown supplies and every name-keyed handler path
-// re-validates. Shared by both settings write paths for the same reason
-// rejectInvalidSettingsPaths is.
+// container and VM names from the UI dropdown, with the same rules as the
+// name-keyed routes. Both settings write paths share it.
 func rejectInvalidSettingsNames(v settingsView) string {
 	if dt := strings.TrimSpace(v.DRDrillTarget); dt != "" && !validResourceName(dt) {
 		return "invalid DR-drill target"
 	}
-	// VM names may contain spaces ("Windows 11"); validResourceName wrongly
-	// rejected them (#127).
+	// VM names may contain spaces ("Windows 11").
 	if dt := strings.TrimSpace(v.DRDrillTargetVM); dt != "" && !validVMName(dt) {
 		return "invalid DR-drill target"
 	}
@@ -2429,22 +2129,16 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Repo locations and the restore folder — the same guard the import path
-	// applies, so a value one path refuses cannot arrive through the other.
+	// The same guard the import path applies, so a value one path refuses
+	// cannot arrive through the other.
 	if msg := rejectInvalidSettingsPaths(v, h.cfg.HostMountRoot); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
-	// The RECIPROCAL of the named-repository refusal. validateNamedRepo stops a
-	// named repository being created on a domain's own path, but the collision
-	// has two directions: moving a DOMAIN's path onto an existing named
-	// repository produces the identical state - a row that then answers for the
-	// domain, with its own (empty) credentials and an append-only flag the domain
-	// never set - and the one-directional guard let it through.
-	//
-	// Scoped to what this save CHANGES, against the stored row: the SPA posts the
-	// whole settings object from every card, so an unscoped check let one standing
-	// collision refuse every save on the page.
+	// validateNamedRepo keeps a named repository off a domain's own path; this
+	// is the other direction, a domain path moved onto a named repository,
+	// which would leave a row answering for the domain with its own empty
+	// credentials and an append-only flag the domain never set.
 	cur, curErr := h.store.GetSettings()
 	if curErr != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(curErr))
@@ -2459,8 +2153,6 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate each cadence parses (backup schedules + off-site + drills +
-	// tamper-test schedules).
 	for _, cad := range []string{
 		v.ContainersSchedule, v.VMsSchedule, v.FlashSchedule, v.ConfigSchedule, v.FilesSchedule,
 		v.ContainersOffsiteSchedule, v.VMsOffsiteSchedule, v.FlashOffsiteSchedule, v.ConfigOffsiteSchedule, v.FilesOffsiteSchedule,
@@ -2473,7 +2165,6 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	// One shared guard for both settings write paths — see rejectEveryNSchedules.
 	if msg := rejectEveryNSchedules(v); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"ok": false, "error": msg,
@@ -2481,31 +2172,24 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// A DR-drill target, when set, is a container/VM name fed by the UI dropdown.
-	// Validated with the same rule that guards name-keyed handler paths, so a
-	// garbage/injection-shaped value is rejected at save time rather than stored —
-	// and through the same shared guard the import path uses.
 	if msg := rejectInvalidSettingsNames(v); msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
 		return
 	}
 
-	// A pre-transaction snapshot, used ONLY to spot the VMs OFF→ON transition
-	// below. Nothing that gets written back may be read from here: by the time
-	// the write runs this snapshot can be minutes old (the SSH test in between
-	// can burn its whole timeout), so anything preserved from it would revert a
-	// change another save made meanwhile. Preserving happens inside the
-	// transaction, against the current row.
+	// This snapshot only spots the VMs domain being switched on. Nothing written
+	// back may come from it: the SSH test below can burn its whole timeout, so
+	// by the time of the write it may be minutes old and would revert another
+	// save. What is kept is read inside the transaction.
 	existing, err := h.store.GetSettings()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
 
-	// Enabling the VMs domain requires a working SSH connection to the host —
-	// otherwise the tab would appear but nothing could be backed up. Verify only
-	// on the OFF→ON transition so unrelated saves aren't blocked by a transient
-	// host outage.
+	// Enabling the VMs domain needs a working SSH connection to the host, or the
+	// tab would appear with nothing able to back up. It is checked only when the
+	// domain is switched on, so a brief host outage does not block other saves.
 	if v.VMsEnabled && !existing.VMsEnabled {
 		if tErr := h.svc.VMSSHTest(r.Context()); tErr != nil {
 			writeJSON(w, http.StatusOK, map[string]any{
@@ -2516,24 +2200,15 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// mergeRegistryAuths (called inside the transaction below) rejects malformed
-	// input with a message the client must get VERBATIM — a rejected registry
-	// host legitimately contains "/", which failEnvelope's path scrubber would
-	// mangle into "[path]". Carried out of the callback so that one shape
-	// survives while every other failure keeps going through failEnvelope.
+	// mergeRegistryAuths refuses malformed input with a message the client has
+	// to get verbatim, since a registry host can contain "/" and failEnvelope
+	// would turn it into "[path]". It is carried out of the callback for that.
 	var registryInputErr error
 
-	// Write the form's OWN fields onto the CURRENT row, one assignment each —
-	// never `*cur = store.Settings{…}`. A whole-struct literal writes every
-	// column, including the ones it forgot to list, so a field that is not part
-	// of this form is wiped by every save until someone notices (cloud_cred_sets
-	// was, until this pass). Assigning only what the form owns cannot do that: a
-	// column nobody here names simply keeps its stored value. The read happens
-	// inside MutateSettings' transaction, so the preserved fields are the CURRENT
-	// ones — the `existing` snapshot above is already stale by the time we get
-	// here (the VM SSH test between them can burn its whole timeout), and writing
-	// its auth hash / session epoch back would revert a password change made
-	// meanwhile.
+	// The form's own fields are assigned one by one onto the current row inside
+	// the transaction, never as a whole struct literal, so a column this form
+	// does not own keeps its stored value, and the auth hash and session epoch
+	// come from the row as it is now rather than from the stale snapshot.
 	before := h.svc.fieldTargets()
 	s, err := h.store.MutateSettings(func(cur *store.Settings) error {
 		cur.EncryptionEnabled = v.EncryptionEnabled
@@ -2548,12 +2223,10 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.ConfigPath = v.ConfigPath
 		cur.FilesPath = v.FilesPath
 		cur.RestoreFolder = v.RestoreFolder
-		// keepLocation: the GET now hands out these locations with any embedded
-		// credential replaced by the redaction marker, so every client's
-		// baseline carries the redacted form. Writing that back verbatim would
-		// destroy the stored password on the next unrelated save. A location
-		// that still carries the marker therefore keeps the stored one, exactly
-		// as the settings IMPORT already resolves a redacted location.
+		// GET hands these locations out with any credential replaced by the
+		// redaction marker, so a location that still carries it keeps the stored
+		// one, as the settings import does. Otherwise the next unrelated save
+		// would destroy the stored password.
 		keepLocation := func(incoming, stored string) string {
 			if locationRedacted(incoming) {
 				return stored
@@ -2589,8 +2262,8 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.OffsiteRetentionKeepMonthly = max(0, v.OffsiteRetentionKeepMonthly)
 		cur.OffsiteLimitUpload = max(0, v.OffsiteLimitUpload)
 		cur.OffsiteLimitDownload = max(0, v.OffsiteLimitDownload)
-		// Clamped to the machine's own thread count: a number above it is not a
-		// cap at all, and a negative one is meaningless. 0 stays 0 (= every core).
+		// A number above the machine's thread count caps nothing. 0 means every
+		// core.
 		cur.BackupCores = min(max(0, v.BackupCores), runtime.NumCPU())
 		cur.MetricsEnabled = v.MetricsEnabled
 		cur.DrillsEnabled = v.DrillsEnabled
@@ -2624,12 +2297,9 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		cur.PullEnabled = v.PullEnabled
 		cur.InstanceName = strings.TrimSpace(v.InstanceName)
 		cur.EverythingSchedule = v.EverythingSchedule
-		// Blank keeps the stored command, same contract as the three tokens
-		// below: the GET never echoes a hook, so EVERY tab's baseline submits
-		// blanks for them, and taking those at face value would erase a hook on
-		// the next save of an unrelated card. Removing one on purpose therefore
-		// needs its own signal, which is what the ...Clear flags are for. The
-		// card renders a Remove control next to a hook it reports as set.
+		// Blank keeps the stored command, like the tokens below: GET never
+		// echoes a hook, so every card submits blanks, and removing one needs
+		// the ...Clear flag.
 		switch {
 		case v.EverythingPreHookClear:
 			cur.EverythingPreHook = ""
@@ -2643,10 +2313,9 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 			cur.EverythingPostHook = strings.TrimSpace(v.EverythingPostHook)
 		}
 
-		// Write-only secrets: blank in the form means "keep the stored one", and
-		// the stored one is read here, inside the transaction — so a token minted
-		// by POST /api/{widget,fleet}/token while this form was open is kept, not
-		// reverted to the value it had when the page loaded.
+		// Blank keeps the stored token. It is read inside the transaction, so a
+		// token minted by POST /api/{widget,fleet}/token while the form was open
+		// is kept, not reverted.
 		if t := strings.TrimSpace(v.MetricsToken); t != "" {
 			cur.MetricsToken = t
 		}
@@ -2656,14 +2325,10 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		if t := strings.TrimSpace(v.FleetToken); t != "" {
 			cur.FleetToken = t
 		}
-		// Registry credentials (#106): nil = the field was absent (an old client)
-		// → keep the stored blob. A present list REPLACES it, with a blank token
-		// per host filled from the stored one — resolved HERE, against `cur`, for
-		// exactly the reason the three tokens above are: the GET never echoes a
-		// token, so EVERY tab's baseline submits blanks for the stored hosts, and
-		// resolving them against the pre-transaction snapshot would revert a token
-		// rotated by a save that landed meanwhile — even a save that only touched
-		// an unrelated card. decode/encode touch no store, so both are safe here.
+		// nil (an old client) keeps the stored registry list. A present list
+		// replaces it, a blank token taking the stored one for its host, read
+		// here for the same reason as the tokens above. Decoding and encoding
+		// touch no store, so both are safe inside the transaction.
 		if v.RegistryAuths != nil {
 			stored, dErr := h.svc.decodeRegistryAuths(*cur)
 			if dErr != nil {
@@ -2690,22 +2355,21 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	// Dual-write: mirror the just-saved off-site config into each domain's PRIMARY
-	// offsite_targets row so the replication path (which now reads those rows) sees
-	// the change. Settings stays authoritative for the fallback/rollback path.
+	// The replication path reads each domain's primary offsite_targets row, so
+	// the saved off-site config is mirrored there; settings stay the source for
+	// the fallback path.
 	h.svc.syncAllPrimaryOffsiteTargets(s)
-	// The CPU cap reaches restic through the process environment of the NEXT
-	// child it starts ([558]), so applying it here takes effect without a
-	// restart — a backup already in flight keeps the value it began with.
+	// The CPU cap reaches restic through the environment of the next child it
+	// starts, so it applies without a restart; a running backup keeps its value.
 	restic.SetMaxProcs(s.BackupCores)
 	if err := h.scheduler.ReloadWithDueChecks(s, h.containersLastRun, h.vmsLastRun, h.flashLastRun, h.configLastRun, h.filesLastRun, h.everythingLastRun); err != nil {
-		// Settings persisted but the scheduler could not re-register — report it.
+		// The settings are saved, but the scheduler could not re-register.
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
 		return
 	}
-	// Immutable off-site + an off-site retention policy both set: note it, don't
-	// fail. BombVault never prunes an append-only repo, so the policy is inert
-	// until enforced far-side.
+	// An immutable off-site repo with an off-site retention policy gets a note,
+	// not a failure: BombVault never prunes an append-only repo, so the policy
+	// does nothing until the far side enforces it.
 	notes := []string{}
 	if (s.ContainersOffsiteImmutable || s.VMsOffsiteImmutable || s.FlashOffsiteImmutable || s.ConfigOffsiteImmutable || s.FilesOffsiteImmutable) &&
 		(s.OffsiteRetentionKeepLast > 0 || s.OffsiteRetentionKeepDaily > 0 ||
@@ -2725,17 +2389,14 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleDetectEncryption probes the configured repositories and reports which
-// encryption mode they are actually in, applying a DEFINITE result to
-// Settings.EncryptionEnabled so a user restoring on a fresh instance never has
-// to assert it. POST /api/encryption/detect
+// encryption mode they are in, applying a definite result to
+// Settings.EncryptionEnabled so a restore on a fresh instance need not assert
+// it. POST /api/encryption/detect
 //
-// The verdict is the honest part of the contract and the UI branches on it:
-// "encrypted"/"plain" are detected and applied; "conflict", "absent",
-// "unknown" and "unconfigured" all leave the setting untouched and are shown as
-// undecided. A probe failure is NEVER reported as "plain".
-//
-// Per-repo Err values are already scrubbed by the service (scrubError), so no
-// repo path or backend credential reaches the client here.
+// "encrypted" and "plain" are applied; "conflict", "absent", "unknown" and
+// "unconfigured" leave the setting alone and show as undecided. A failed probe
+// is never reported as "plain". The service has already scrubbed each repo's
+// Err.
 func (h *Handler) handleDetectEncryption(w http.ResponseWriter, r *http.Request) {
 	det, err := h.svc.DetectEncryption(r.Context())
 	if err != nil {
@@ -2751,15 +2412,13 @@ func (h *Handler) handleDetectEncryption(w http.ResponseWriter, r *http.Request)
 }
 
 // handleRecoveryKit streams the encryption-key recovery kit as a download.
-// GET /api/recovery-kit — BEHIND authGate AND additionally requires auth to be
-// ENABLED: the kit is the master secret (the APP_KEY + the derived restic
-// password + the stored off-site backend credentials). The rest of the
-// trusted-LAN API is intentionally open to CURRENT data when auth is off, but
-// this export permanently decrypts EVERY repo — including the append-only
-// off-site archives designed to survive host compromise — so it fails CLOSED
-// when auth is disabled instead of handing the master key to any LAN client.
-// The body is the owner's own recovery document and carries the real repo
-// locations (no path scrubbing here), and it is never logged.
+// GET /api/recovery-kit
+//
+// Besides authGate it requires a login password to be set: the kit holds the
+// APP_KEY, the derived restic password and the off-site credentials, and
+// decrypts every repo for good, including the append-only off-site archives
+// meant to survive a host compromise. The body carries the real repo
+// locations, unscrubbed, and is never logged.
 func (h *Handler) handleRecoveryKit(w http.ResponseWriter, _ *http.Request) {
 	if !h.requireAuthForSecrets(w, "downloading the recovery kit") {
 		return
@@ -2781,11 +2440,8 @@ func (h *Handler) handleRecoveryKit(w http.ResponseWriter, _ *http.Request) {
 }
 
 // handleRecoveryKitAck records that the user has stored the recovery kit, which
-// dismisses the dashboard nag. It flips ONLY that flag, so acknowledging never
-// overwrites unrelated settings changes made elsewhere (a full-settings
-// round-trip from the dashboard could clobber them) — which is exactly what
-// MutateSettings guarantees, and what reading + writing the whole row back only
-// LOOKED like it did.
+// dismisses the dashboard nag. It changes that one flag through
+// MutateSettings, so a settings change made elsewhere meanwhile survives.
 // POST /api/recovery-kit/ack
 func (h *Handler) handleRecoveryKitAck(w http.ResponseWriter, _ *http.Request) {
 	if _, err := h.store.MutateSettings(func(s *store.Settings) error {
@@ -2892,11 +2548,9 @@ func (h *Handler) handleUnlock(w http.ResponseWriter, r *http.Request) {
 	}
 	skipped, err := h.svc.UnlockDomain(r.Context(), domain, sourceParam(r))
 	if err != nil {
-		// The skip list rides along on BOTH paths. A repository that only got the
-		// stale-lock clear is a Note - it never becomes the error - so on the
-		// success path this is its only channel, and on the failure path the
-		// operator needs both halves: what went wrong, and which other repository
-		// got the weaker treatment.
+		// The skip list goes along on both paths. A repository that only got the
+		// stale-lock clear is a note, never the error, so the operator needs it
+		// next to whatever did fail.
 		body := failEnvelope(err)
 		body["skipped"] = skipped
 		writeJSON(w, http.StatusOK, body)
@@ -2939,19 +2593,13 @@ func (h *Handler) handleDeleteSnapshot(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleReplicateOffsite STARTS an on-demand replication of a domain's local
-// repo to its off-site repo (restic copy) and returns immediately — the copy
-// runs in the background (a long first replication used to die when the
-// browser/proxy timed the synchronous request out and cancelled its context,
-// #93). Config errors and a busy domain still report synchronously.
-// POST /api/offsite/{domain}
+// handleReplicateOffsite starts an on-demand replication of a domain's local
+// repo to its off-site repo (restic copy) and returns immediately, because a
+// long first replication outlives a browser or proxy timeout. Config errors
+// and a busy domain still report synchronously. POST /api/offsite/{domain}
 func (h *Handler) handleReplicateOffsite(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	// #176: "config" (self-backup) belongs here too. Its service side has
-	// supported the domain all along; this handler-local copy of the domain
-	// list was the only thing rejecting it, which is why self-backup alone had
-	// no connection test, no replicate-now and no wizard snippet.
 	case "containers", "vms", "flash", "config", "files":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
@@ -2970,10 +2618,6 @@ func (h *Handler) handleReplicateOffsite(w http.ResponseWriter, r *http.Request)
 func (h *Handler) handleTestOffsite(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	// #176: "config" (self-backup) belongs here too. Its service side has
-	// supported the domain all along; this handler-local copy of the domain
-	// list was the only thing rejecting it, which is why self-backup alone had
-	// no connection test, no replicate-now and no wizard snippet.
 	case "containers", "vms", "flash", "config", "files":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
@@ -2992,15 +2636,11 @@ func (h *Handler) handleTestOffsite(w http.ResponseWriter, r *http.Request) {
 
 // handleDeploySnippet returns a one-time rest-server deployment recipe for a
 // domain's append-only off-site repo (docker run + compose + generated htpasswd
-// credentials). Nothing is persisted server-side — the plaintext password is
+// credentials). Nothing is stored on the server, so the plaintext password is
 // shown once. GET /api/offsite/{domain}/deploy-snippet
 func (h *Handler) handleDeploySnippet(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	// #176: "config" (self-backup) belongs here too. Its service side has
-	// supported the domain all along; this handler-local copy of the domain
-	// list was the only thing rejecting it, which is why self-backup alone had
-	// no connection test, no replicate-now and no wizard snippet.
 	case "containers", "vms", "flash", "config", "files":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
@@ -3021,10 +2661,6 @@ func (h *Handler) handleDeploySnippet(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleTamperTest(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
-	// #176: "config" (self-backup) belongs here too. Its service side has
-	// supported the domain all along; this handler-local copy of the domain
-	// list was the only thing rejecting it, which is why self-backup alone had
-	// no connection test, no replicate-now and no wizard snippet.
 	case "containers", "vms", "flash", "config", "files":
 	default:
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
@@ -3072,10 +2708,9 @@ func (h *Handler) handleSetRclone(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleGetNotify returns the notification config WITHOUT the stored credentials:
-// the SMTP password and Matrix access token are blanked and reported via "is-set"
-// flags, so the UI can show what's configured and edit it without shipping the
-// secrets to the browser (mirrors the cloud-credentials endpoint). GET /api/notify
+// handleGetNotify returns the notification config without the stored
+// credentials: the SMTP password and Matrix access token are blanked and
+// reported through "is-set" flags, like the cloud credentials. GET /api/notify
 func (h *Handler) handleGetNotify(w http.ResponseWriter, _ *http.Request) {
 	c, err := h.svc.NotifyConfig()
 	if err != nil {
@@ -3093,13 +2728,10 @@ func (h *Handler) handleGetNotify(w http.ResponseWriter, _ *http.Request) {
 	}))
 }
 
-// decodeNotifyBody decodes a POSTed notify.Config with the unknown-field
-// rejection every other request body gets. It cannot go through decodeBody
-// alone: notify.Config has its own UnmarshalJSON (it back-fills the channel
-// gates), and encoding/json hands the whole object to that method, so
-// DisallowUnknownFields never reaches the fields and a misspelled key would be
-// dropped in silence. The body is taken raw here and decoded by
-// notify.Config.DecodeStrict, which owns the field names.
+// decodeNotifyBody decodes a POSTed notify.Config, refusing unknown fields like
+// every other body. notify.Config has its own UnmarshalJSON, which
+// DisallowUnknownFields cannot see into, so the raw body goes to
+// notify.Config.DecodeStrict instead.
 func decodeNotifyBody(w http.ResponseWriter, r *http.Request, c *notify.Config) bool {
 	var raw json.RawMessage
 	if !decodeBody(w, r, &raw) {
@@ -3112,9 +2744,8 @@ func decodeNotifyBody(w http.ResponseWriter, r *http.Request, c *notify.Config) 
 	return true
 }
 
-// fillNotifySecrets fills blank credential fields from the stored config. Because
-// handleGetNotify never ships the SMTP password / Matrix token to the browser, an
-// unchanged form re-submits them blank — blank therefore means "keep the stored one".
+// fillNotifySecrets fills blank credential fields from the stored config. An
+// unchanged form submits them blank, since handleGetNotify never sends them.
 func (h *Handler) fillNotifySecrets(c notify.Config) (notify.Config, error) {
 	if c.SMTPPassword != "" && c.MatrixToken != "" {
 		return c, nil
@@ -3123,18 +2754,11 @@ func (h *Handler) fillNotifySecrets(c notify.Config) (notify.Config, error) {
 	if err != nil {
 		return c, nil
 	}
-	// A stored secret is only ever refilled for the destination it was stored
-	// FOR. Both fields are refilled from the encrypted store while the rest of
-	// the config comes from the request, so without this check a request could
-	// name any destination it liked, leave the secret blank, and have the real
-	// one attached: POST /api/notify/test with matrixEnabled, a homeserver of
-	// the caller's choosing and an empty token sent the stored Matrix token
-	// there as a bearer header. It is a read of a secret the API otherwise
-	// never hands back, dressed as a connection test.
-	//
-	// Refusing rather than blanking, because blanking would be a silent
-	// half-configuration: notifications would simply stop, at the moment
-	// somebody was setting them up and being told it worked.
+	// A stored secret is refilled only for the destination it was stored for.
+	// Otherwise POST /api/notify/test with a homeserver of the caller's choice
+	// and a blank token would send the stored Matrix token there. A changed
+	// destination is refused rather than blanked, which would silently stop
+	// notifications while the setup reported success.
 	if c.MatrixToken == "" && cur.MatrixToken != "" {
 		if !sameMatrixTarget(c, cur) {
 			return c, errors.New("enter the Matrix access token again: the stored one belongs to the previous homeserver")
@@ -3151,9 +2775,8 @@ func (h *Handler) fillNotifySecrets(c notify.Config) (notify.Config, error) {
 }
 
 // sameMatrixTarget reports whether a request names the same Matrix destination
-// the stored token was saved for. The homeserver is where the token is SENT;
-// the room is where it grants access, so a changed room is a changed
-// destination too.
+// the stored token was saved for. The token is sent to the homeserver and
+// grants access to the room, so a changed room is a changed destination too.
 func sameMatrixTarget(req, cur notify.Config) bool {
 	return req.MatrixHomeserver == cur.MatrixHomeserver && req.MatrixRoom == cur.MatrixRoom
 }
@@ -3165,7 +2788,7 @@ func sameSMTPTarget(req, cur notify.Config) bool {
 }
 
 // handleSetNotify stores the notification config (encrypted). A blank SMTP password
-// or Matrix token keeps the previously stored one. POST /api/notify
+// or Matrix token keeps the stored one. POST /api/notify
 func (h *Handler) handleSetNotify(w http.ResponseWriter, r *http.Request) {
 	var c notify.Config
 	if !decodeNotifyBody(w, r, &c) {
@@ -3183,9 +2806,8 @@ func (h *Handler) handleSetNotify(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleGetCloud returns the cloud-backend credentials WITHOUT the secrets: the
-// non-secret fields plus "is-set" flags so the UI can show what's configured and
-// edit it without exposing the stored keys. GET /api/cloud
+// handleGetCloud returns the cloud backend credentials without the secrets:
+// the other fields plus "is-set" flags. GET /api/cloud
 func (h *Handler) handleGetCloud(w http.ResponseWriter, _ *http.Request) {
 	c, err := h.svc.CloudConfig()
 	if err != nil {
@@ -3203,7 +2825,7 @@ func (h *Handler) handleGetCloud(w http.ResponseWriter, _ *http.Request) {
 }
 
 // handleSetCloud stores the cloud-backend credentials (encrypted). A blank secret
-// field keeps the previously stored one. POST /api/cloud
+// field keeps the stored one. POST /api/cloud
 func (h *Handler) handleSetCloud(w http.ResponseWriter, r *http.Request) {
 	var c CloudCreds
 	if !decodeBody(w, r, &c) {
@@ -3218,9 +2840,8 @@ func (h *Handler) handleSetCloud(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	// The S3 storage class rides the cloud creds, so a change here must re-flow
-	// into each domain's primary off-site target (whose storage_class the
-	// replication path reads). Best-effort; a store read failure just skips it.
+	// The S3 storage class is part of the cloud creds, and replication reads it
+	// from each domain's primary off-site target. A failed read skips the sync.
 	if settings, sErr := h.store.GetSettings(); sErr == nil {
 		h.svc.syncAllPrimaryOffsiteTargets(settings)
 	}
@@ -3231,8 +2852,8 @@ func (h *Handler) handleSetCloud(w http.ResponseWriter, r *http.Request) {
 	}))
 }
 
-// handleGetCloudCredSets returns the additional named credential sets (#141
-// stage 2) WITHOUT secrets, same is-set-flag contract as handleGetCloud.
+// handleGetCloudCredSets returns the additional named credential sets without
+// secrets, with the same is-set flags as handleGetCloud.
 // GET /api/cloud/creds-sets
 func (h *Handler) handleGetCloudCredSets(w http.ResponseWriter, _ *http.Request) {
 	sets, err := h.svc.CloudCredSets()
@@ -3257,9 +2878,8 @@ func (h *Handler) handleGetCloudCredSets(w http.ResponseWriter, _ *http.Request)
 }
 
 // handleSetCloudCredSets replaces the whole list of additional named
-// credential sets. A blank secret field on a set matched by id (against the
-// previously stored set) keeps the previously stored one, same as
-// handleSetCloud. POST /api/cloud/creds-sets
+// credential sets. A blank secret field on a set whose id matches a stored set
+// keeps the stored secret, as in handleSetCloud. POST /api/cloud/creds-sets
 func (h *Handler) handleSetCloudCredSets(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Sets []CloudCredSet `json:"sets"`
@@ -3302,12 +2922,10 @@ func (h *Handler) handleTestNotify(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleReleaseNotes serves the running version's own embedded release notes so
-// the "What's new" dialog (#48) works without a runtime call to api.github.com —
-// which the app's own CSP (connect-src 'self') blocks, so the dialog always
-// failed (#54). Same-origin, so the CSP allows it. GET /api/release-notes?version=vX.Y.Z
-// (version defaults to the running build). Returns {ok, version, body, htmlUrl};
-// ok=false when there are no bundled notes so the dialog shows its GitHub link.
+// handleReleaseNotes serves the embedded release notes for the "What's new"
+// dialog, since the app's CSP (connect-src 'self') blocks api.github.com.
+// GET /api/release-notes?version=vX.Y.Z, defaulting to the running build.
+// ok is false when no notes are bundled, so the dialog shows its GitHub link.
 func (h *Handler) handleReleaseNotes(w http.ResponseWriter, r *http.Request) {
 	version := r.URL.Query().Get("version")
 	if version == "" {
@@ -3343,11 +2961,11 @@ func (h *Handler) runSpikeAndCache() (any, bool) {
 }
 
 // WarmSpike runs the host-integration check once at startup so the cached result
-// is ready the instant the dashboard loads — no manual click required.
+// is ready when the dashboard loads.
 func (h *Handler) WarmSpike() { _, _ = h.runSpikeAndCache() }
 
-// handleSpikeFresh (POST /api/spike) always re-runs the probes — the dashboard's
-// "Host Integration Check" button — and refreshes the cache.
+// handleSpikeFresh re-runs the probes for the dashboard's "Host Integration
+// Check" button and refreshes the cache. POST /api/spike
 func (h *Handler) handleSpikeFresh(w http.ResponseWriter, _ *http.Request) {
 	checks, allOK := h.runSpikeAndCache()
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -3373,9 +2991,8 @@ func (h *Handler) handleSpikeCached(w http.ResponseWriter, _ *http.Request) {
 	})
 }
 
-// runView enriches a stored Run with the human target name + domain so the
-// dashboard's run history can show WHICH container/VM/flash each run was for —
-// and, on a failure, the error — instead of an opaque snapshot id.
+// runView adds the target's name and domain to a stored Run, so the run history
+// shows which container, VM or flash backup a run was for.
 type runView struct {
 	store.Run
 	Target string `json:"target"`
@@ -3434,7 +3051,7 @@ func (h *Handler) handleRuns(w http.ResponseWriter, _ *http.Request) {
 }
 
 // handleAckRuns marks failed runs as acknowledged so the dashboard's error panel
-// can dismiss them from the failure count (#126). POST /api/runs/ack with body
+// can dismiss them from the failure count. POST /api/runs/ack with body
 // {"ids": []string (optional), "all": bool (optional)}: when `all` is set every
 // unacknowledged failed run is acknowledged; otherwise the given run ids (capped
 // at 5000, each a 32-hex opaque run id) are acknowledged. Responds {ok, count}.
@@ -3489,22 +3106,13 @@ func (h *Handler) handleStatus(w http.ResponseWriter, _ *http.Request) {
 	if domains == nil {
 		domains = []DomainStatusEntry{}
 	}
-	// The "Backup Everything" pass used to ride alongside the domains here, as
-	// its own `everythingSchedule` field, so the dashboard's "next backup" cell
-	// could weigh it against the five domain cadences (#186). That cell no longer
-	// ranks cadence strings at all — it reads the scheduler's real fire times
-	// from GET /api/schedule/next, where the pass is already one entry among the
-	// rest (#187) — and nothing else ever read the field, so it is gone.
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"domains": domains}))
 }
 
-// handleScheduleNext returns the next fire time for every currently registered
-// schedule entry, soonest first — the dashboard activity log's "up next" line.
-// GET /api/schedule/next. Like every other GET endpoint this wraps the payload
-// in the {"ok":...} envelope (here under "runs"); the frontend's getScheduleNext
-// unwraps it via the shared fetchJSON + envelope shape. A nil scheduler (should
-// not happen outside tests that build a Handler without one) yields an empty
-// array rather than panicking.
+// handleScheduleNext returns the next fire time of every registered schedule
+// entry, soonest first, for the activity log's "up next" line.
+// GET /api/schedule/next. Tests build a Handler without a scheduler, which
+// yields an empty list.
 func (h *Handler) handleScheduleNext(w http.ResponseWriter, _ *http.Request) {
 	var runs []schedule.NextRun
 	if h.scheduler != nil {
@@ -3517,7 +3125,7 @@ func (h *Handler) handleScheduleNext(w http.ResponseWriter, _ *http.Request) {
 }
 
 // handleHistory returns per-day backup outcomes for the dashboard's
-// backup-health heatmap. GET /api/history?days=90 — days defaults to 90 and is
+// backup-health heatmap. GET /api/history?days=90; days defaults to 90 and is
 // clamped to 1..366.
 func (h *Handler) handleHistory(w http.ResponseWriter, r *http.Request) {
 	days := 90
@@ -3544,16 +3152,12 @@ func (h *Handler) handleHistory(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleStats returns a domain's recorded repository-size samples for the
-// size/dedup trend. GET /api/stats?domain=&source=&limit= — domain ∈ {containers,
-// vms, flash, files}; source ∈ {local, offsite} (default local); limit defaults to
-// 90, clamped to 1..365. The response carries the ascending sample list plus the
-// latest sample (or null when there is none) for the headline figure. "files" is
-// accepted because CollectStatsOnStartup / maybeCollectStats already sample the
-// files repo, so the Storage card can show it (#61 Task 2).
-//
-// The response additionally carries "forecast" — growth rate + free space +
-// time-to-full for the Storage card (see StorageForecast for the exact field
-// contract) — null when nothing could be determined.
+// size and dedup trend. GET /api/stats?domain=&source=&limit=, where domain is
+// containers, vms, flash or files, source is local (default) or offsite, and
+// limit defaults to 90, clamped to 1..365. The answer carries the samples in
+// ascending order, the latest one (or null) for the headline figure, and a
+// "forecast" of growth, free space and time to full (see StorageForecast), or
+// null when nothing could be determined.
 func (h *Handler) handleStats(w http.ResponseWriter, r *http.Request) {
 	domain := r.URL.Query().Get("domain")
 	switch domain {
@@ -3589,9 +3193,8 @@ func (h *Handler) handleStats(w http.ResponseWriter, r *http.Request) {
 	if len(stats) > 0 {
 		latest = stats[len(stats)-1]
 	} else {
-		// No sample yet (a repo that predates this feature, or no backup since
-		// upgrading): kick off a detached, throttled collection so the Storage card
-		// fills in on the next load instead of staying on "no data".
+		// Without a sample, a detached and throttled collection fills the Storage
+		// card in on the next load instead of leaving it on "no data".
 		h.svc.CollectStatsAsync(domain, source)
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
@@ -3607,28 +3210,20 @@ type browseDirEntry struct {
 	Path string `json:"path"` // relative to HostMountRoot (e.g. "appdata/plex")
 }
 
-// maxBrowseEntries caps one browse listing (D-08 / phase research R1): appdata
-// trees can hold tens of thousands of entries and a single unbounded ReadDir
-// response would balloon into a multi-megabyte JSON body the SPA has to parse
-// just to render one tree level (threat T-01-07). The cap is deterministic —
-// the lexically-FIRST maxBrowseEntries after the sort — and the response's
-// "truncated" flag tells the tree a deeper listing exists beyond this page.
-// 500 entries is tens of KB of JSON, fine on the LAN this is served on.
+// maxBrowseEntries caps one browse listing, because an appdata tree can hold
+// tens of thousands of entries and the SPA would parse megabytes of JSON to draw
+// one level. The first entries in sorted order are kept, and the "truncated"
+// flag tells the tree there are more.
 const maxBrowseEntries = 500
-
-// ---------------------------------------------------------------------------
-// Authentication
-// ---------------------------------------------------------------------------
 
 const (
 	sessionCookieName = "bv_session"
 	sessionTTL        = 7 * 24 * time.Hour // 7 days
 )
 
-// authEnabled reads the stored password hash + session epoch and reports whether
-// authentication is enabled.  On a store error it logs and treats auth as OFF
-// (safe default for a trusted-LAN tool — a transient DB error should not lock
-// everyone out).
+// authEnabled reads the stored password hash and session epoch and reports
+// whether authentication is enabled. A store error counts as off, so a passing
+// database error does not lock everyone out of a trusted-LAN tool.
 func (h *Handler) authEnabled() (hash, epoch string, on bool) {
 	s, err := h.store.GetSettings()
 	if err != nil {
@@ -3638,22 +3233,13 @@ func (h *Handler) authEnabled() (hash, epoch string, on bool) {
 	return s.AuthPasswordHash, s.SessionEpoch, s.AuthPasswordHash != ""
 }
 
-// requireAuthForSecrets is the second gate every handler that hands out STORED
-// SECRETS in the clear must pass. It reports whether the request may proceed,
-// and answers 403 itself when it may not.
-//
-// authGate alone is not enough for these: with no login password set it is a
-// pass-through by design (the trusted-LAN model — the rest of the API is open
-// to current data), so a handler that decrypts credentials would hand them to
-// any host on the LAN, unauthenticated. Current data is a lesser thing than the
-// keys to it: these payloads decrypt every repository, including the append-only
-// off-site archives that exist to survive a host compromise, and the backend
-// accounts they live in. So they fail CLOSED instead.
-//
-// A store read error blocks too (authEnabled reports auth OFF then), which is
-// the safe direction.
-//
-// action names what is being refused, e.g. "downloading the recovery kit".
+// requireAuthForSecrets reports whether a handler that hands out stored secrets
+// in the clear may proceed, answering 403 itself when it may not. Without a
+// login password authGate lets everything through, which is acceptable for
+// current data but not for keys that decrypt every repository, including the
+// append-only off-site archives, so these require a password. A store error
+// refuses too. action names what is refused, such as "downloading the
+// recovery kit".
 func (h *Handler) requireAuthForSecrets(w http.ResponseWriter, action string) bool {
 	if _, _, on := h.authEnabled(); on {
 		return true
@@ -3665,10 +3251,8 @@ func (h *Handler) requireAuthForSecrets(w http.ResponseWriter, action string) bo
 	return false
 }
 
-// newSessionCookie constructs the bv_session cookie with the correct attributes.
-// Secure is set to true when the server is in HTTPS mode (cfg.HTTPOnly == false)
-// and false for plain HTTP — which is intentional for local/LAN HTTP-only
-// deployments.
+// newSessionCookie builds the bv_session cookie. Secure is off only in HTTP-only
+// mode, for LAN installs without TLS.
 func (h *Handler) newSessionCookie(value string, maxAge int) *http.Cookie {
 	return &http.Cookie{ //nolint:gosec // G124: Secure is conditionally false only in HTTP-only (cfg.HTTPOnly) mode; intentional for LAN deployments
 		Name:     sessionCookieName,
@@ -3681,15 +3265,10 @@ func (h *Handler) newSessionCookie(value string, maxAge int) *http.Cookie {
 	}
 }
 
-// handleAuthStatus handles GET /api/auth.
-// Returns {ok, enabled, authed, totp, ...} so the SPA can decide whether to show
-// the login screen, and what the settings page should say about the account.
-//
-// This endpoint is PUBLIC (allow-listed in authGate), so it says only what an
-// unauthenticated caller may know: whether a password is set, and whether this
-// cookie is currently good for one. The second-factor detail is added only for a
-// caller that is already signed in — how many recovery codes are left is the
-// settings page's business, not a stranger's.
+// handleAuthStatus handles GET /api/auth, telling the SPA whether to show the
+// login screen and what the settings page should say about the account. The
+// route is public, so second-factor details such as the recovery codes left
+// go only to a caller who is signed in.
 func (h *Handler) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
 	hash, epoch, on := h.authEnabled()
 	authed := false
@@ -3722,43 +3301,19 @@ func (h *Handler) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, out)
 }
 
-// handleLogin handles POST /api/login.
-// Body: {password string}
-// login brute-force throttle: lock out after loginMaxFails failures within
-// loginWindow, so the optional password gate can't be guessed at full speed.
-//
-// The throttle is checked BEFORE secret.VerifyPassword runs, deliberately: a
-// throttled key is rejected without ever hashing the submitted password, not
-// merely denied credit for a correct guess afterwards. If verification ran
-// FIRST and the throttle only gated on failure, a throttled attacker could
-// keep submitting guesses at full, unthrottled rate: a correct guess would
-// still get verified before the throttle check ever saw it, letting the
-// attacker infer correct/incorrect from response timing or content alone —
-// making the throttle purely cosmetic for exactly the attacker it exists to
-// stop. Checking the throttle first, unconditionally, is what actually caps
-// *attempts* rather than just successes. The tradeoff is that a client which
-// is currently throttled gets a 429 even on a correct password rather than
-// having it be honored immediately; see loginClientKey's doc for why that
-// tradeoff is now scoped to the offending client instead of every client.
+// A client is locked out after loginMaxFails failed logins within loginWindow.
+// The throttle is checked before the password is hashed, so a locked-out
+// client cannot learn from a correct guess either; it gets a 429 even with the
+// right password.
 const (
 	loginMaxFails = 5
 	loginWindow   = time.Minute
 )
 
-// passwordHashSlots bounds how many Argon2id verifications run at the same time.
-//
-// This is the bill for making the password hash expensive. Until v8.6.0 an
-// unauthenticated login attempt cost one SHA-256 block; now it costs 19 MiB and
-// a few milliseconds, and the throttle above only bounds attempts PER CLIENT.
-// An attacker rotating source addresses is not throttled at all, and without a
-// cap here their request rate multiplies straight into resident memory — on an
-// Unraid container someone capped at --memory 256m, that is the OOM killer
-// stopping a backup tool, which is a worse outcome than the weak hash was.
-//
-// Two slots, so the worst case is around 38 MiB of hashing no matter how hard
-// the door is hammered. Excess logins queue instead of allocating; a login that
-// waits a moment under attack is the correct failure mode, and nothing else in
-// BombVault is behind this queue.
+// passwordHashSlots bounds how many Argon2id verifications run at once. Each
+// costs about 19 MiB, and the login throttle is per client, so an attacker
+// rotating source addresses could otherwise push a memory-capped container into
+// the OOM killer. Two slots cap hashing at about 38 MiB; further logins wait.
 var passwordHashSlots = make(chan struct{}, 2)
 
 // verifyPassword is secret.VerifyPassword behind that cap.
@@ -3768,35 +3323,15 @@ func verifyPassword(appKey, password, storedHash string) bool {
 	return secret.VerifyPassword(appKey, password, storedHash)
 }
 
-// loginClientKey returns the throttle key for r: the connecting peer's IP,
-// with any port stripped.
-//
-// This deliberately reads net/http's RemoteAddr — the actual TCP peer — and
-// NOT a client-supplied header such as X-Forwarded-For. This codebase has no
-// trusted-proxy configuration (no allowlisted proxy CIDR, no "trust this hop"
-// setting anywhere), so honoring a forwarded-for header here would let any
-// caller pick their own throttle bucket at will, which defeats the point of
-// keying by client in the first place. When BombVault does sit behind a
-// reverse proxy (the documented remote-access setup, see
-// docs/configuration.md), every request the proxy forwards shares the
-// proxy's address here — clients behind it share one throttle bucket, same as
-// they would for any other per-IP limiter with no trusted-proxy support. That
-// is a coarser bucket than per-real-client, but it is still strictly better
-// than the single global bucket this replaces, and it can't be spoofed by an
-// unauthenticated caller.
-//
-// SINCE v8.6.0 that last paragraph has an opt-out: set TRUSTED_PROXY to the
-// address or range your reverse proxy connects from, and the right-most
-// X-Forwarded-For entry contributed by that hop is used instead. See
-// (*Handler).loginClientKey and clientIP below. It stays OFF by default, because
-// a forwarded-for header believed unconditionally is worse than no throttle at
-// all: it lets the attacker choose a fresh bucket per request.
+// loginClientKey returns the throttle key for r: the TCP peer's IP without its
+// port. It never reads X-Forwarded-For, which a caller could set to pick a fresh
+// bucket per request; behind a reverse proxy all clients share the proxy's
+// bucket unless TRUSTED_PROXY is set (see (*Handler).loginClientKey).
 func loginClientKey(r *http.Request) string {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		// No port present (or an otherwise unparseable value, e.g. in tests
-		// that set RemoteAddr directly) — fall back to the raw value rather
-		// than collapsing every such caller onto one shared "" bucket.
+		// The raw value, so callers without a port (tests set RemoteAddr
+		// directly) do not all share one "" bucket.
 		return r.RemoteAddr
 	}
 	return host
@@ -3812,9 +3347,8 @@ func (h *Handler) loginClientKey(r *http.Request) string {
 	}
 	ip := net.ParseIP(peer)
 	if ip == nil || !trusted(h.cfg.TrustedProxies, ip) {
-		// Somebody other than the proxy is talking to us directly. Their own
-		// address is the key, and their header is ignored — otherwise naming a
-		// trusted proxy would hand the spoofing hole to everyone else.
+		// Someone other than the proxy connects directly, so their header is
+		// ignored, or naming a trusted proxy would let anyone spoof the key.
 		return peer
 	}
 	if fwd := forwardedClient(r.Header.Get("X-Forwarded-For"), h.cfg.TrustedProxies); fwd != "" {
@@ -3824,15 +3358,9 @@ func (h *Handler) loginClientKey(r *http.Request) string {
 }
 
 // forwardedClient returns the client address from an X-Forwarded-For chain,
-// reading RIGHT TO LEFT and stopping at the first entry that is not itself a
-// trusted proxy.
-//
-// Right to left is the only defensible direction. The header is a list each hop
-// appends to, so the LEFT-most entry is whatever the original caller sent, which
-// an attacker writes themselves; the right-hand end is what our own trusted hops
-// added. Walking in from the right and stopping at the first address we did not
-// vouch for lands exactly on the last hop we trust talking about a client we do
-// not.
+// reading right to left and stopping at the first entry that is not a trusted
+// proxy. Each hop appends to the header, so the left end is whatever the caller
+// sent and only the right end was written by hops we trust.
 func forwardedClient(header string, proxies []net.IPNet) string {
 	parts := strings.Split(header, ",")
 	for i := len(parts) - 1; i >= 0; i-- {
@@ -3846,9 +3374,8 @@ func forwardedClient(header string, proxies []net.IPNet) string {
 		}
 		ip := net.ParseIP(strings.Trim(entry, "[]"))
 		if ip == nil {
-			// Garbage in the chain. Refuse the whole header rather than
-			// skipping past it: an attacker who can insert an unparseable
-			// entry must not be able to steer which entry we land on.
+			// Refuse the whole header, so an unparseable entry cannot steer
+			// which entry is used.
 			return ""
 		}
 		if trusted(proxies, ip) {
@@ -3868,33 +3395,19 @@ func trusted(proxies []net.IPNet, ip net.IP) bool {
 	return false
 }
 
-// loginSweepEvery bounds how often loginThrottled performs a full-map sweep
-// (pruning every key's window, not just the one just queried), independent of
-// the per-key prune below. Without this, a flood of one-off distinct keys
-// that each fail exactly once — a botnet, or a single attacker rotating
-// through an IPv6 /64 (effectively unlimited source addresses) — would each
-// leave a permanent map entry: loginThrottled on its own only prunes the ONE
-// key it was asked about, so a key that's never queried again never gets
-// cleaned up. Sweeping the whole map every loginSweepEvery calls bounds that
-// growth to at most loginSweepEvery stale one-off entries between sweeps,
-// without paying the cost of a full sweep on every single request.
+// loginSweepEvery is how many throttle checks pass between sweeps of the whole
+// failure map. loginThrottled prunes only the key it is asked about, so keys
+// that fail once and never return, such as an attacker rotating through an
+// IPv6 /64, would otherwise stay forever.
 const loginSweepEvery = 256
 
-// loginMaxTracked hard-caps the number of distinct keys loginFails holds,
-// independent of the periodic sweep above. If a burst of one-off keys arrives
-// faster than loginSweepEvery calls apart, the map could otherwise grow past
-// that sweep's protection before it fires; this is the backstop that kicks in
-// immediately once the map exceeds the cap, evicting the
-// least-recently-touched entries down to the limit rather than letting an
-// unauthenticated caller grow it without bound.
+// loginMaxTracked caps the keys loginFails holds, for a burst of one-off keys
+// that arrives faster than the periodic sweep.
 const loginMaxTracked = 10_000
 
-// loginThrottled prunes key's failed-attempt window and reports whether
-// logins from it are currently locked out. An empty window after pruning
-// deletes key's own map entry. Separately (see loginSweepEvery/loginMaxTracked
-// above), it also periodically sweeps EVERY key's window — not just key's —
-// and hard-caps the map's total size, so a flood of one-off distinct keys
-// that are each queried only once still can't accumulate unbounded memory.
+// loginThrottled prunes key's failure window and reports whether logins from it
+// are locked out. It also sweeps the whole map now and then and caps its size,
+// so keys queried only once cannot pile up.
 func (h *Handler) loginThrottled(key string) bool {
 	h.loginMu.Lock()
 	defer h.loginMu.Unlock()
@@ -3921,14 +3434,9 @@ func pruneLoginFails(fails []time.Time, cutoff time.Time) []time.Time {
 	return kept
 }
 
-// sweepLoginFailsLocked prunes every key's window (not just the single key the
-// caller is asking about) once every loginSweepEvery calls (see
-// loginSweepCalls, api.go), or immediately if the map has already grown past
-// loginMaxTracked — so a flood of one-off distinct keys that are each queried
-// exactly once still gets cleaned up eventually, instead of leaving a
-// permanent entry per key forever. If the map is still over loginMaxTracked
-// after that full prune, hands off to evictLeastRecentlyTouchedLocked. Must
-// be called with loginMu held.
+// sweepLoginFailsLocked prunes every key's window once every loginSweepEvery
+// calls, or at once when the map has grown past loginMaxTracked, and evicts
+// when a full prune still leaves it over the cap. The caller holds loginMu.
 func (h *Handler) sweepLoginFailsLocked() {
 	h.loginSweepCalls++
 	if h.loginSweepCalls < loginSweepEvery && len(h.loginFails) <= loginMaxTracked {
@@ -3948,38 +3456,15 @@ func (h *Handler) sweepLoginFailsLocked() {
 	}
 }
 
-// evictLeastRecentlyTouchedLocked deletes entries from h.loginFails, oldest
-// first, until it is back at or under loginMaxTracked. Only called by
-// sweepLoginFailsLocked, and only once a full prune still leaves the map over
-// that cap — e.g. loginMaxTracked distinct keys are ALL currently within
-// their window, so none of them were empty for the prune to remove. Must be
-// called with loginMu held.
+// evictLeastRecentlyTouchedLocked deletes entries from h.loginFails, the one
+// with the oldest latest failure first, until it is back under loginMaxTracked.
+// The caller holds loginMu.
 //
-// "Least recently touched" = the LATEST remaining failure timestamp
-// (fails[len(fails)-1], since recordLoginFail appends in chronological
-// order), so an attacker actively retrying stays tracked longer than one who
-// fired once and went quiet.
-//
-// Eviction candidates EXCLUDE any key that is currently throttled (len(fails)
-// >= loginMaxFails, the same condition loginThrottled itself uses to return
-// true). This matters because a throttled key's own timestamps stop
-// advancing the instant it starts being throttled: handleLogin checks
-// loginThrottled BEFORE ever calling recordLoginFail, so a blocked attacker
-// can't add new entries to its own window while waiting it out. Its "last
-// touched" timestamp therefore goes stale immediately, even though the
-// attacker is still very much active from a security standpoint — sorting on
-// recency and evicting the oldest would evict a genuinely-throttled attacker
-// BEFORE a flood of one-off keys that only just arrived, un-throttling them
-// mid-lockout. (Reproduced end-to-end: attacker throttled after
-// loginMaxFails failures, then a flood of one-off keys large enough to push
-// the map over loginMaxTracked evicted the attacker's own entry — since
-// their last fail predated the flood — and the attacker's very next request
-// came back 200 instead of 429.) A bounded number of currently-throttled keys
-// sitting over the nominal cap is an acceptable, self-limiting exception:
-// it's bounded by how many callers actually reach loginMaxFails failures, a
-// far smaller and self-capping population than an unlimited flood of one-off
-// keys that only ever fail once — not the same unbounded-growth risk the cap
-// exists to guard against.
+// A throttled key is never evicted. Its timestamps stop advancing once it is
+// locked out, because handleLogin checks the throttle before recording a
+// failure, so by age alone a flood of fresh one-off keys would evict it and
+// lift its lockout. Throttled keys may sit over the cap, but only callers that
+// reach loginMaxFails count, which is a small population.
 func (h *Handler) evictLeastRecentlyTouchedLocked() {
 	type keyAge struct {
 		key  string
@@ -3988,7 +3473,7 @@ func (h *Handler) evictLeastRecentlyTouchedLocked() {
 	ages := make([]keyAge, 0, len(h.loginFails))
 	for k, fails := range h.loginFails {
 		if len(fails) >= loginMaxFails {
-			continue // currently throttled — never an eviction candidate
+			continue // throttled, see above
 		}
 		ages = append(ages, keyAge{k, fails[len(fails)-1]})
 	}
@@ -4016,6 +3501,7 @@ func (h *Handler) recordLoginSuccess(key string) {
 	h.loginMu.Unlock()
 }
 
+// handleLogin handles POST /api/login.
 func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	hash, epoch, on := h.authEnabled()
 	if !on {
@@ -4024,7 +3510,7 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	key := h.loginClientKey(r)
 	if h.loginThrottled(key) {
-		writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many failed attempts — wait a minute and try again"})
+		writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many failed attempts; wait a minute and try again"})
 		return
 	}
 
@@ -4044,9 +3530,9 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// The password is right. If a second factor is armed, nothing is granted
-	// until it is satisfied too — including the throttle reset, so an attacker
-	// who has the password still gets five tries a minute at the code.
+	// With a second factor on, nothing is granted until it passes too, not even
+	// the throttle reset, so someone with the password still gets five tries a
+	// minute at the code.
 	s, err := h.store.GetSettings()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -4054,9 +3540,7 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	if s.TOTPEnabled {
 		if strings.TrimSpace(body.Code) == "" {
-			// Not a failure: the client asked with what it had and now knows to
-			// show the code field. Counting this would lock people out for
-			// doing exactly the right thing.
+			// Not a failure: the client now knows to show the code field.
 			writeJSON(w, http.StatusOK, map[string]any{
 				"ok":       false,
 				"needCode": true,
@@ -4076,13 +3560,10 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	h.recordLoginSuccess(key)
 
-	// Upgrade a legacy password hash now, while the plaintext is in hand and
-	// verified. This is the ONLY moment it can happen.
-	//
-	// It must come BEFORE the token is minted: the session HMAC signs the stored
-	// hash, so a token issued against the old value would be invalidated by the
-	// rehash a line later and the operator would be bounced straight back to the
-	// login screen.
+	// A legacy password hash can only be upgraded while the verified plaintext
+	// is at hand. It happens before the token is minted, because the session
+	// HMAC signs the stored hash and the rehash would invalidate a token issued
+	// against the old one.
 	if secret.NeedsRehash(hash) {
 		if fresh, hErr := secret.HashPassword(h.cfg.AppKey, body.Password); hErr != nil {
 			log.Printf("api: login: rehash: %v", hErr)
@@ -4094,8 +3575,7 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 			}
 			return nil
 		}); mErr != nil {
-			// Not fatal. The login succeeded; the storage format simply stays
-			// old for another round.
+			// Not fatal: the hash stays in the old format until the next login.
 			log.Printf("api: login: storing upgraded password hash: %v", mErr)
 		} else {
 			hash = fresh
@@ -4108,8 +3588,8 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 // secondFactorOK checks code against the time-based secret and, failing that,
-// against the single-use recovery codes. A recovery code that matches is SPENT
-// here (removed from the stored list) before this returns true.
+// against the single-use recovery codes. A matching recovery code is removed
+// from the stored list before this returns true.
 func (h *Handler) secondFactorOK(s *store.Settings, code string) bool {
 	if sec, err := h.decryptTOTPSecret(s.TOTPSecret); err == nil && sec != "" {
 		if secret.ValidTOTP(sec, code, time.Now()) {
@@ -4184,12 +3664,9 @@ func (h *Handler) encryptTOTPSecret(plain string) (string, error) {
 	return hex.EncodeToString(sealed), nil
 }
 
-// handleLogout handles POST /api/logout.
-// Clears the session cookie unconditionally. This is CLIENT-SIDE cookie removal
-// only: the stateless token itself stays valid until it expires, so a copied
-// cookie would still work. Revocation is handleLogoutAll (POST /api/logout-all),
-// which rotates the session epoch and thereby invalidates every outstanding
-// cookie server-side.
+// handleLogout handles POST /api/logout by clearing the session cookie. The
+// stateless token stays valid until it expires, so a copied cookie would still
+// work; handleLogoutAll is the revocation.
 func (h *Handler) handleLogout(w http.ResponseWriter, _ *http.Request) {
 	http.SetCookie(w, h.newSessionCookie("", -1))
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
@@ -4204,12 +3681,9 @@ func newSessionEpoch() (string, error) {
 	return hex.EncodeToString(buf), nil
 }
 
-// handleLogoutAll handles POST /api/logout-all — "log out everywhere".
-// It rotates the stored session epoch to a fresh random value; because every
-// session token's HMAC is bound to the epoch, ALL outstanding cookies (on every
-// browser/device) become invalid at once. This is the revocation path for the
-// otherwise stateless 7-day tokens. The caller's own cookie is cleared too, so
-// the SPA lands on the login screen immediately.
+// handleLogoutAll handles POST /api/logout-all ("log out everywhere"). It
+// rotates the session epoch that every token's HMAC is bound to, so every
+// outstanding cookie becomes invalid at once, and clears the caller's own.
 func (h *Handler) handleLogoutAll(w http.ResponseWriter, _ *http.Request) {
 	epoch, err := newSessionEpoch()
 	if err != nil {
@@ -4227,8 +3701,8 @@ func (h *Handler) handleLogoutAll(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleSetPassword handles POST /api/auth/password.
-// Body: {password string} — empty string disables auth.
+// handleSetPassword handles POST /api/auth/password with body {password}; an
+// empty password turns the login off.
 func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Password string `json:"password"`
@@ -4239,13 +3713,9 @@ func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
 
 	hash := ""
 	if body.Password != "" {
-		// The minimum is checked HERE and nowhere else. Verification stays
-		// unconditional, so an instance whose password predates this rule keeps
-		// working and its owner is asked to change it rather than shut out by an
-		// upgrade. See secret.MinPasswordLen for why twelve.
-		//
-		// Counted in runes, not bytes: a passphrase in a language that spends
-		// three bytes a character is not longer for it.
+		// The minimum applies only when a password is set, so an older, shorter
+		// password still verifies and its owner is asked to change it. Runes,
+		// not bytes, so a passphrase in a multi-byte script is not favoured.
 		if utf8.RuneCountInString(body.Password) < secret.MinPasswordLen {
 			writeJSON(w, http.StatusOK, map[string]any{
 				"ok":     false,
@@ -4264,34 +3734,17 @@ func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
 	if _, err := h.store.MutateSettings(func(s *store.Settings) error {
 		s.AuthPasswordHash = hash
 		if hash == "" {
-			// Switching the login off takes the second factor with it. Leaving
-			// an armed TOTP secret behind a disabled password would mean a
-			// re-enabled login silently demanding a code from an app the
-			// operator may have deleted months ago.
+			// Switching the login off takes the second factor with it, so a
+			// login switched on again later does not ask for a code from an app
+			// the operator may have deleted long ago.
 			s.TOTPEnabled = false
 			s.TOTPSecret = ""
 			s.TOTPRecovery = ""
 		}
-		// SETTING A PASSWORD ENDS EVERY OTHER SESSION, and that is a deliberate
-		// widening of what this route used to do (GlimStone 2.1.0, rule 22).
-		//
-		// The Security card used to carry a separate "sign out everywhere"
-		// button, and the card lost it: a card configures, the shell operates,
-		// and a form with unsaved fields in it should not end with the two
-		// controls that throw the form away. Deleting a button must not delete
-		// the CAPABILITY, though, and this was the only way to revoke the
-		// outstanding seven-day tokens - they are stateless and bound to this
-		// epoch, so nothing else can reach them.
-		//
-		// Moving it here is not a workaround for the removal. It is what
-		// somebody changing a password out of suspicion already believed was
-		// happening: a password that may have leaked is worth nothing while the
-		// sessions minted under it stay alive. Rotating on the FIRST set costs
-		// nothing (no other session exists yet), so this needs no branch.
-		//
-		// The caller keeps working because the cookie minted below is minted
-		// from THIS value rather than the old one - see the token line further
-		// down, which signs hash and epoch together.
+		// Setting a password ends every other session, because a password that
+		// may have leaked is worth nothing while sessions minted under it stay
+		// alive. The caller keeps working: the cookie below is signed with the
+		// new epoch.
 		next, err := newSessionEpoch()
 		if err != nil {
 			return err
@@ -4304,25 +3757,11 @@ func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Setting a password SIGNS THE OPERATOR IN. Without this the instance locks
-	// itself behind the operator in the same breath: the request that turns the
-	// login on is the last one this browser is allowed to make, because authGate
-	// now demands a session cookie nobody has issued yet. Every control that
-	// writes anything then answers 401 until the page is reloaded and the
-	// password typed a second time - which is how the second factor became
-	// unreachable right after it became relevant, the one moment somebody is
-	// most likely to want it.
-	//
-	// It grants nothing that was not already granted: this route is only
-	// reachable without a session while the login is OFF, so whoever calls it
-	// already had unauthenticated access to the whole API. Once the login is on,
-	// authGate holds the route like any other, and a password CHANGE is made by
-	// a session that already exists.
-	//
-	// The token signs the NEW hash, so it has to be minted after the write.
-	// Clearing the password sends the cookie away instead: the session it
-	// authenticated no longer means anything, and leaving it in the browser
-	// leaves a token signed against a hash that is gone.
+	// Setting a password signs the operator in, or every later request would
+	// get a 401 until the page is reloaded and the password typed again. It
+	// grants nothing new: without a login this route was already open to the
+	// caller, and with one authGate guards it. The token signs the new hash,
+	// so it is minted after the write; clearing the password clears the cookie.
 	if hash == "" {
 		http.SetCookie(w, h.newSessionCookie("", -1))
 	} else {
@@ -4338,18 +3777,11 @@ func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
 	}))
 }
 
-// ---------------------------------------------------------------------------
-// Second factor (TOTP)
-// ---------------------------------------------------------------------------
-
-// handleTOTPSetup handles POST /api/auth/totp/setup: mint a fresh secret, store
-// it encrypted but NOT yet armed, and return the otpauth URI for the QR code.
-//
-// The secret is stored before it is proved so that the confirm step has
-// something server-side to check against, which keeps the plaintext secret out
-// of the client's hands between the two steps. TOTPEnabled stays false until
-// handleTOTPConfirm sees a working code, so an enrolment abandoned halfway
-// leaves the login exactly as it was.
+// handleTOTPSetup handles POST /api/auth/totp/setup: it mints a fresh secret,
+// stores it encrypted but not yet armed, and returns the otpauth URI for the QR
+// code. Storing it lets the confirm step check against the server's copy, and
+// TOTPEnabled stays false until a working code arrives, so an enrolment
+// abandoned halfway leaves the login as it was.
 func (h *Handler) handleTOTPSetup(w http.ResponseWriter, r *http.Request) {
 	if !h.requireAuthForSecrets(w, "setting up two-factor authentication") {
 		return
@@ -4362,14 +3794,14 @@ func (h *Handler) handleTOTPSetup(w http.ResponseWriter, r *http.Request) {
 	if s.AuthPasswordHash == "" {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"ok":    false,
-			"error": "set a login password first — a second factor with no first one protects nothing",
+			"error": "set a login password first: a second factor with no first one protects nothing",
 		})
 		return
 	}
 	if s.TOTPEnabled {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"ok":    false,
-			"error": "two-factor authentication is already on — turn it off before setting it up again",
+			"error": "two-factor authentication is already on; turn it off before setting it up again",
 		})
 		return
 	}
@@ -4403,12 +3835,10 @@ func (h *Handler) handleTOTPSetup(w http.ResponseWriter, r *http.Request) {
 	}))
 }
 
-// handleTOTPConfirm handles POST /api/auth/totp/confirm: arm the second factor
-// once the operator has typed a code the stored secret actually produces, and
-// hand back the recovery codes.
-//
-// The recovery codes are shown exactly once, here. They are stored hashed, so
-// this response is the only chance to write them down, and the frontend says so.
+// handleTOTPConfirm handles POST /api/auth/totp/confirm: it arms the second
+// factor once the operator types a code the stored secret produces, and returns
+// the recovery codes. They are stored hashed, so this answer is the only time
+// they are shown.
 func (h *Handler) handleTOTPConfirm(w http.ResponseWriter, r *http.Request) {
 	if !h.requireAuthForSecrets(w, "setting up two-factor authentication") {
 		return
@@ -4428,14 +3858,14 @@ func (h *Handler) handleTOTPConfirm(w http.ResponseWriter, r *http.Request) {
 	if err != nil || plain == "" {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"ok":    false,
-			"error": "no pending setup — start again",
+			"error": "no pending setup; start again",
 		})
 		return
 	}
 	if !secret.ValidTOTP(plain, body.Code, time.Now()) {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"ok":    false,
-			"error": "that code is not valid — check the clock on your phone and try the next one",
+			"error": "that code is not valid; check the clock on your phone and try the next one",
 		})
 		return
 	}
@@ -4458,9 +3888,8 @@ func (h *Handler) handleTOTPConfirm(w http.ResponseWriter, r *http.Request) {
 	}))
 }
 
-// handleTOTPDisable handles POST /api/auth/totp/disable: turn the second factor
-// off. It requires a current code or a recovery code, so that a session someone
-// walked away from cannot be used to quietly remove the factor.
+// handleTOTPDisable handles POST /api/auth/totp/disable. It requires a current
+// code or a recovery code, so an unattended session cannot remove the factor.
 func (h *Handler) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 	if !h.requireAuthForSecrets(w, "changing two-factor authentication") {
 		return
@@ -4499,33 +3928,21 @@ func (h *Handler) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"enabled": false}))
 }
 
-// authGate is a middleware that enforces authentication when auth is enabled.
-// When auth is OFF it is a no-op passthrough, preserving today's behaviour.
-// The following paths are always permitted (so the SPA and health-check work):
-//   - GET  /api/auth
-//   - POST /api/login
-//   - GET  /api/health
-//   - GET  /metrics  (Prometheus can't carry the session cookie; the endpoint
-//     gates itself via its own enabled flag + optional bearer token)
-//   - GET  /widget and GET /api/widget/data  (the embeddable dashboard widget —
-//     an iframe on another dashboard can't carry the session cookie either;
-//     both endpoints gate themselves via the stored widget token instead,
-//     failing closed with 403 when none is set. POST/DELETE /api/widget/token
-//     stay session-protected — only a logged-in admin manages the token.)
-//   - GET  /api/fleet/status  (another BombVault instance's Fleet view polling
-//     this one — same reasoning as the widget, self-gated on the stored fleet
-//     token instead, failing closed with 403 when none is set. POST/DELETE
-//     /api/fleet/token and the /api/fleet/peers CRUD stay session-protected.)
-//   - POST /api/fleet/mesh-offer  (a peer offering its own off-site storage —
-//     same self-gated fleet token as the status poll above; the ONLY write
-//     endpoint on this allowlist. It only ever stores a pending offer for a
-//     human to review; accept/decline/propose stay session-protected.)
+// authGate requires a session cookie once a login password is set, and passes
+// everything through while none is. These paths are always open:
+//   - GET /api/auth, POST /api/login and GET /api/health, so the SPA can load
+//     and sign in.
+//   - GET /metrics, GET /widget, GET /api/widget/data and GET
+//     /api/fleet/status. Prometheus, an embedding iframe and a polling peer
+//     cannot carry the cookie, so each gates itself on its own token and
+//     refuses with 403 when none is set. Managing those tokens needs a session.
+//   - POST /api/fleet/mesh-offer, the one write on this list, behind the same
+//     fleet token. It only stores a pending offer for a person to review.
+//   - The passkey status and the two passkey login halves.
 func (h *Handler) authGate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Read auth state directly so we can fail CLOSED on a store error: a
-		// transient DB failure must never silently drop the auth gate and expose
-		// the API. Public liveness/auth endpoints stay reachable so the SPA can
-		// still render and recover.
+		// A store error must not drop the gate, so it fails closed, keeping
+		// only the public endpoints reachable so the SPA can still recover.
 		s, err := h.store.GetSettings()
 		if err != nil {
 			log.Printf("api: authGate: GetSettings: %v", err)
@@ -4548,19 +3965,12 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 			return
 		}
 
-		// Always allow the public auth + health endpoints, plus the self-gating
-		// /metrics scrape endpoint (Prometheus can't carry the session cookie),
-		// the self-gating widget endpoints (an embedding iframe can't either),
-		// the self-gating fleet status endpoint (a polling peer can't either),
-		// and the self-gating mesh-offer inbox (same reasoning, and the same
-		// fleet token — see the doc comment above).
+		// The public paths from the doc comment above.
 		switch r.URL.Path {
 		case "/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data", "/api/fleet/status", "/api/fleet/mesh-offer",
-			// The passkey status and the two login halves, beside /api/login for
-			// the same reason: they are how somebody who is not signed in signs in.
-			// The status answers an unauthenticated caller with counts and whether
-			// this address can carry a passkey at all, never with a credential; the
-			// list of registered keys is gated inside the handler on a session.
+			// The passkey login halves are how someone signs in. The status
+			// tells an unauthenticated caller only counts and whether this
+			// address can carry a passkey; the key list needs a session.
 			"/api/auth/passkeys", "/api/auth/passkey/login/begin", "/api/auth/passkey/login/finish":
 			next.ServeHTTP(w, r)
 			return
@@ -4579,10 +3989,6 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-// ---------------------------------------------------------------------------
-// VM handlers
-// ---------------------------------------------------------------------------
 
 func (h *Handler) handleListVMs(w http.ResponseWriter, r *http.Request) {
 	views, err := h.svc.ListVMs(r.Context())
@@ -4616,8 +4022,8 @@ func (h *Handler) handleListVMs(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "vms": views})
 }
 
-// handleBackupVM starts a single VM backup ON THE SERVER and returns
-// immediately (see handleBackup). The SPA watches "vm:<name>" over SSE.
+// handleBackupVM starts a single VM backup on the server and returns
+// immediately, like handleBackup. The SPA follows "vm:<name>" over SSE.
 func (h *Handler) handleBackupVM(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.vmNameParam(w, r)
 	if !ok {
@@ -4651,8 +4057,8 @@ func (h *Handler) handleSnapshotsVM(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"snapshots": snaps}))
 }
 
-// handleRestoreVM starts a VM restore ON THE SERVER and returns immediately
-// (see handleRestore). The SPA watches "vm:<name>" over SSE and reads the
+// handleRestoreVM starts a VM restore on the server and returns immediately,
+// like handleRestore. The SPA follows "vm:<name>" over SSE and reads the
 // recorded run for the outcome.
 func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.vmNameParam(w, r)
@@ -4667,8 +4073,8 @@ func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	// Confirmation is guarded here so an unconfirmed request fails synchronously
-	// with the familiar sentinel (the sync service core re-checks it).
+	// Checked here so an unconfirmed request fails synchronously with the usual
+	// sentinel; the service checks again.
 	if !body.Confirm {
 		writeJSON(w, http.StatusOK, failEnvelope(backup.ErrNotConfirmed))
 		return
@@ -4685,9 +4091,9 @@ func (h *Handler) handleRestoreVM(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
 }
 
-// handleBackupFlash starts the Unraid USB flash backup (singleton domain) ON
-// THE SERVER and returns immediately (see handleBackup). The SPA watches the
-// "flash" progress key over SSE.
+// handleBackupFlash starts the Unraid USB flash backup on the server and
+// returns immediately, like handleBackup. The SPA follows the "flash" progress
+// key over SSE.
 func (h *Handler) handleBackupFlash(w http.ResponseWriter, r *http.Request) {
 	started, err := h.svc.StartBackupFlash(r.Context())
 	if err != nil { // the flash domain is busy with another op → 409 with the reason
@@ -4714,9 +4120,9 @@ func (h *Handler) handleSnapshotsFlash(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"snapshots": snaps}))
 }
 
-// handleBackupConfig starts the singleton config self-backup — BombVault's own
-// /config (settings DB + rclone.conf + ssh keypair) — ON THE SERVER and returns
-// immediately, mirroring handleBackupFlash. The SPA watches the "config" progress
+// handleBackupConfig starts the self-backup of BombVault's own /config
+// (settings database, rclone.conf, SSH key pair) on the server and returns
+// immediately, like handleBackupFlash. The SPA follows the "config" progress
 // key over SSE.
 func (h *Handler) handleBackupConfig(w http.ResponseWriter, r *http.Request) {
 	started, err := h.svc.StartBackupConfig(r.Context())
@@ -4744,14 +4150,11 @@ func (h *Handler) handleSnapshotsConfig(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"snapshots": snaps}))
 }
 
-// handleRestoreConfig STAGES a restore of BombVault's own /config and then triggers
-// a self-restart so the boot-time staging→live swap applies it (see RestoreConfig /
-// selfrestore.ApplyPending — the live SQLite DB can't be swapped while this process
-// holds it open). It reports whether an auto-restart was scheduled; when it wasn't
-// (Docker unreachable), autoRestart:false tells the SPA to ask the user to restart
-// the container manually. Restore errors are mapped exactly like the other restore
-// handlers — a scrubbed fail envelope (e.g. an APP_KEY / encryption mismatch surfaces
-// as a plain message, not a raw restic error).
+// handleRestoreConfig stages a restore of BombVault's own /config and triggers
+// a restart, because the live SQLite database cannot be swapped while this
+// process holds it open; selfrestore.ApplyPending swaps it in at boot. When
+// Docker is unreachable, autoRestart:false tells the SPA to ask for a manual
+// restart. Errors go through restoreFail like the other restores.
 func (h *Handler) handleRestoreConfig(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Source   string `json:"source"`
@@ -4760,8 +4163,7 @@ func (h *Handler) handleRestoreConfig(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	// The source rides the BODY here (not ?source=), so normalize it explicitly —
-	// same contract as sourceParam, incl. the "offsite:<id>" per-target form.
+	// The source comes in the body here, not as ?source=.
 	source := normalizeSource(body.Source)
 	started, auto, err := h.svc.StartRestoreConfig(r.Context(), body.Snapshot, source)
 	if err != nil {
@@ -4776,10 +4178,9 @@ func (h *Handler) handleRestoreConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 // headerOnFirstWrite defers the download headers (and so the 200 status) until
-// the first byte is actually streamed. That way a restic failure BEFORE any
-// output (bad id, repo locked, no backups) is reported as a clean JSON error
-// instead of a truncated 200 zip; only a genuine mid-stream failure can leave a
-// partial body.
+// the first byte is streamed, so a restic failure before any output (bad id,
+// repo locked, no backups) is reported as a JSON error instead of a truncated
+// 200 zip.
 type headerOnFirstWrite struct {
 	w      http.ResponseWriter
 	header func()
@@ -4795,8 +4196,8 @@ func (h *headerOnFirstWrite) Write(p []byte) (int, error) {
 }
 
 // handleDownloadFlash streams a flash snapshot to the browser as a zip download
-// (restic dump). GET so it can be a plain link; non-destructive — the live /boot
-// is never touched. ?snapshot=<id> selects the snapshot ("" / "latest" = newest).
+// (restic dump), as a GET so it can be a plain link. ?snapshot=<id> selects the
+// snapshot; "" or "latest" is the newest.
 func (h *Handler) handleDownloadFlash(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("snapshot")
 	// When export encryption is on, DownloadFlashZip age-seals the stream, so the
@@ -4814,9 +4215,9 @@ func (h *Handler) handleDownloadFlash(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Disposition", `attachment; filename="`+name+`"`)
 	}}
 	err := h.svc.DownloadFlashZip(r.Context(), id, sourceParam(r), func(rid string) { resolved = rid }, lw)
-	// No bytes streamed yet → headers not sent, so report the failure as JSON
-	// (bad/ambiguous id, no backups, repo locked). A mid-stream failure (after
-	// bytes flowed) can only truncate the body; the failed run is recorded.
+	// With nothing streamed the headers are unsent and the failure can go out
+	// as JSON. A failure mid-stream can only truncate the body; its run is
+	// recorded.
 	if err != nil && !lw.wrote {
 		restoreFail(w, sourceParam(r), err)
 	}
@@ -4870,8 +4271,8 @@ func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}
-		// A per-item override (#121) is structural: reload so the VM's own cron entry
-		// is (de)registered (a VM PATCH does not otherwise reload the scheduler).
+		// A per-item cadence adds or removes the VM's own cron entry, and a VM
+		// PATCH does not otherwise reload the scheduler.
 		if err := h.reloadScheduler(); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
@@ -4888,8 +4289,8 @@ func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleVMScheduleIncludeAll sets the include_in_schedule flag for every VM on
-// the host in one call — the VM counterpart to handleScheduleIncludeAll.
-// Excluding also reaches VMs that are no longer defined (#232).
+// the host in one call, like handleScheduleIncludeAll. Excluding also reaches
+// VMs that are not defined any more.
 // POST /api/vms/schedule-include  body {include: bool}
 func (h *Handler) handleVMScheduleIncludeAll(w http.ResponseWriter, r *http.Request) {
 	var body struct {
@@ -4922,15 +4323,11 @@ func (h *Handler) handleVMSSHTest(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// classifyReadDirError maps a browse read failure to the additive per-listing
-// `status` KIND (BROWSE-02, threat T-01-08): the status carries the error
-// CLASS and never the path, so the wire keeps the generic scrubbed "could not
-// read directory" message while the tree can still tell a vanished node
-// ("missing") from an unreadable one ("restricted"). errors.Is on the
-// *fs.PathError, not text matching — error text breaks across platforms and
-// locales. Anything else, including an os.Root escape rejection, lands in the
-// opaque "error" bucket on purpose: an attempted escape must be
-// indistinguishable from any other failure on the wire.
+// classifyReadDirError maps a browse read failure to the listing's `status`, so
+// the tree can tell a vanished node ("missing") from an unreadable one
+// ("restricted") without the path leaving the server. Anything else, an os.Root
+// escape included, is plain "error", so an attempted escape looks like any
+// other failure.
 func classifyReadDirError(err error) string {
 	switch {
 	case errors.Is(err, fs.ErrPermission):
@@ -4942,46 +4339,26 @@ func classifyReadDirError(err error) string {
 	}
 }
 
-// handleBrowse serves GET /api/browse?path=<subpath>[&hidden=1].
-// It lists the immediate subdirectories of <HostMountRoot>/<subpath>,
-// excluding hidden entries (dot-prefixed names) unless hidden=1 opts in,
-// sorted alphabetically and capped at maxBrowseEntries with a "truncated"
-// flag on overflow.
+// handleBrowse serves GET /api/browse?path=<subpath>[&hidden=1], listing the
+// subdirectories of <HostMountRoot>/<subpath> sorted by name and capped at
+// maxBrowseEntries. Dot-prefixed entries appear only with hidden=1. An empty
+// path lists the mount root.
 //
-// Containment is two-layered (BROWSE-03): paths.Resolve is the cheap lexical
-// first reject (its rejection response is byte-identical to the pre-Root
-// handler and carries NO status field — the FolderBrowser contract), then
-// os.OpenRoot/Root.Open (Go 1.24+ stdlib) enforces the same boundary in the
-// kernel, so a symlink planted inside the mount root cannot be listed through
-// to a location outside it. Every read outcome — success, empty, missing,
-// restricted, failed — lands in the HTTP 200 envelope carrying a "status"
-// kind; empty + status:"ok" is the real-empty signal.
-//
-// The hidden flag is a pinned additive opt-in (BROWSE-04): absent or anything
-// but "1" keeps the default byte-identical behavior, so the existing
-// FolderBrowser and every destination picker keep agreeing with the tree.
-//
-// The response is always HTTP 200; errors use {ok:false,error,status} so the
-// UI can display a graceful message. A missing or empty `path` query parameter
-// lists the mount root itself.
+// paths.Resolve rejects a traversal lexically, and os.Root then enforces the
+// same boundary at open time, so a symlink inside the mount root cannot list a
+// location outside it. Every outcome is an HTTP 200 with a "status"; an empty
+// list with status "ok" means the folder is empty.
 func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 	subpath := r.URL.Query().Get("path")
-	// Opt-in hidden visibility (D-05): only the literal "1" opts in, so a
-	// client cannot turn hidden entries on by accident with an empty or
-	// mistyped value.
+	// Only the literal "1" opts in, so an empty or mistyped value cannot.
 	includeHidden := r.URL.Query().Get("hidden") == "1"
 
-	// Lexical containment check. An empty subpath lists the mount root itself —
-	// paths.Resolve requires a non-empty child (strict containment). Only the
-	// verdict is used here; Root.Open below does the actual resolution, so the
-	// resolved absolute is no longer needed.
+	// paths.Resolve needs a non-empty child, and only its verdict is used;
+	// Root.Open below does the resolving.
 	if subpath != "" {
 		if _, err := paths.Resolve(h.cfg.HostMountRoot, subpath); err != nil {
-			// paths.Resolve returns ErrTraversal or ErrAbsoluteSub — neither
-			// leaks host paths; report a generic message for defense-in-depth.
-			// Deliberately no "status" field: this rejection response stays
-			// byte-identical to the pre-Root handler (contract drift on an
-			// untouched branch would break the existing FolderBrowser tests).
+			// No "status" field here: the FolderBrowser relies on this exact
+			// response.
 			writeJSON(w, http.StatusOK, map[string]any{
 				"ok":    false,
 				"error": "invalid path: must be a relative subpath under the mount root",
@@ -4990,12 +4367,8 @@ func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// os.Root containment (BROWSE-03, threat T-01-05): paths.Resolve above is
-	// purely lexical and cannot see a symlink created INSIDE the mount root
-	// that points outside it, but os.Root re-checks every component against
-	// the root at open time — "symbolic links may not reference a location
-	// outside the root" (stdlib contract). One fd per request, closed on
-	// return; goroutine-safe per the stdlib docs.
+	// paths.Resolve cannot see a symlink inside the mount root that points
+	// outside it; os.Root checks every component at open time.
 	root, err := os.OpenRoot(h.cfg.HostMountRoot)
 	if err != nil {
 		log.Printf("api: browse: OpenRoot: %v", err)
@@ -5008,15 +4381,14 @@ func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 	}
 	defer root.Close() //nolint:errcheck // read-only browse descriptor: close error is not actionable
 
-	// An empty subpath opens the root itself — "." is the root directory's own
-	// name under the Root naming contract.
+	// "." names the root itself.
 	rel := subpath
 	if rel == "" {
 		rel = "."
 	}
 	f, err := root.Open(rel)
 	if err != nil {
-		log.Printf("api: browse: open %q: %v", rel, err) //nolint:gosec // G706: rel is client-influenced (the request's path query) but paths.Resolve-validated upstream, and %q escapes quotes/backslashes/newlines/control chars — no log-injection or format-string surface
+		log.Printf("api: browse: open %q: %v", rel, err) //nolint:gosec // G706: rel comes from the query but passed paths.Resolve, and %q escapes control characters
 		writeJSON(w, http.StatusOK, map[string]any{
 			"ok":     false,
 			"error":  "could not read directory",
@@ -5028,7 +4400,7 @@ func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 
 	entries, err := f.ReadDir(-1)
 	if err != nil {
-		log.Printf("api: browse: ReadDir %q: %v", rel, err) //nolint:gosec // G706: rel is client-influenced (the request's path query) but paths.Resolve-validated upstream, and %q escapes quotes/backslashes/newlines/control chars — no log-injection or format-string surface
+		log.Printf("api: browse: ReadDir %q: %v", rel, err) //nolint:gosec // G706: rel comes from the query but passed paths.Resolve, and %q escapes control characters
 		writeJSON(w, http.StatusOK, map[string]any{
 			"ok":     false,
 			"error":  "could not read directory",
@@ -5046,7 +4418,6 @@ func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 		if !includeHidden && strings.HasPrefix(name, ".") {
 			continue // skip hidden entries unless hidden=1 opted in
 		}
-		// Build the relative path from HostMountRoot to this entry.
 		var entryPath string
 		if subpath == "" {
 			entryPath = name
@@ -5056,18 +4427,9 @@ func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 		dirs = append(dirs, browseDirEntry{Name: name, Path: entryPath})
 	}
 
-	// ReadDir(-1) returns entries in directory order (usually alphabetical on
-	// most filesystems), but sort explicitly to guarantee it. The sort runs on
-	// the FILTERED slice, then truncation takes the lexically-first page — so
-	// a capped listing is a deterministic prefix of the full sorted one.
-	//
-	// Hidden entries sort AFTER the rest when they are included at all. A dot
-	// sorts before every digit and letter, so without this they would take the
-	// front of the page and push exactly as many real folders off the end of a
-	// capped listing - the selection tree would then be missing rows for
-	// ORDINARY folders, which is the same defect the hidden opt-in was added to
-	// remove, just pointed the other way. This keeps a hidden-inclusive listing
-	// a superset of the plain one for the first maxBrowseEntries entries.
+	// Sorted after filtering, so a capped listing is a stable prefix of the
+	// full one. Hidden entries go last: a dot sorts before letters, and they
+	// would otherwise push ordinary folders off the end of a capped page.
 	sort.Slice(dirs, func(i, j int) bool {
 		hi, hj := strings.HasPrefix(dirs[i].Name, "."), strings.HasPrefix(dirs[j].Name, ".")
 		if hi != hj {
@@ -5095,7 +4457,7 @@ func (h *Handler) handleBrowse(w http.ResponseWriter, r *http.Request) {
 // mkdirRequest is the JSON body for POST /api/browse/mkdir.
 type mkdirRequest struct {
 	Path string `json:"path"` // parent subpath under HostMountRoot ("" = the root)
-	Name string `json:"name"` // new folder name — a single plain path component
+	Name string `json:"name"` // new folder name, a single plain path component
 }
 
 // handleMkdir serves POST /api/browse/mkdir: it creates a new folder <name>
@@ -5109,17 +4471,13 @@ func (h *Handler) handleMkdir(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	name := strings.TrimSpace(req.Name)
-	// The name must be one plain path component: reject empty, ".", "..", any
-	// separator, NUL, or a leading dot. paths.Resolve below re-checks containment,
-	// but this keeps "create ONE folder here" honest (no nested paths, no traversal,
-	// and no hidden entry the browser would then hide again).
+	// One plain path component: no nested path, no traversal, and no leading
+	// dot, which the browser would hide again.
 	if name == "" || name == "." || name == ".." ||
 		strings.ContainsAny(name, "/\\\x00") || strings.HasPrefix(name, ".") {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid folder name"})
 		return
 	}
-	// Build the new subpath under the mount root and validate containment exactly
-	// the way handleBrowse does (rejecting traversal / absolute paths defensively).
 	sub := name
 	if req.Path != "" {
 		sub = req.Path + "/" + name
@@ -5132,8 +4490,8 @@ func (h *Handler) handleMkdir(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	// os.Mkdir (not MkdirAll) so an existing folder is reported instead of silently
-	// reused; then force 0755 in case a strict umask stripped the mode.
+	// Mkdir rather than MkdirAll, so an existing folder is reported instead of
+	// reused; the Chmod undoes a strict umask.
 	if err := os.Mkdir(abs, 0o755); err != nil { //nolint:gosec // G301: a backup destination on a user-visible share must be operator-readable
 		if os.IsExist(err) {
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a folder with that name already exists"})
@@ -5143,18 +4501,12 @@ func (h *Handler) handleMkdir(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "could not create folder"})
 		return
 	}
-	_ = os.Chmod(abs, 0o755) //nolint:gosec // G302: see above — must be readable by the non-root share user
+	_ = os.Chmod(abs, 0o755) //nolint:gosec // G302: must be readable by the non-root share user
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "path": sub, "name": name})
 }
 
-// ---------------------------------------------------------------------------
-// Files handlers (the files domain — named host folders backed up as file sets)
-// ---------------------------------------------------------------------------
-
-// fileSetIDParam extracts and validates the {id} path value. Set ids are
-// store-generated 32-hex strings, so the strict container-name charset fits;
-// validating at the boundary blocks traversal / option-injection ids from ever
-// reaching the service layer (same discipline as nameParam).
+// fileSetIDParam extracts and validates the {id} path value like nameParam.
+// Set ids are 32 hex characters, which the container name charset covers.
 func (h *Handler) fileSetIDParam(w http.ResponseWriter, r *http.Request) (string, bool) {
 	id := r.PathValue("id")
 	if !validResourceName(id) {
@@ -5266,10 +4618,9 @@ func (h *Handler) handleCreateFileSet(w http.ResponseWriter, r *http.Request) {
 }
 
 // handlePatchFileSet partially updates a file set. PATCH /api/files/sets/{id}
-// body {name?, path?, excludes?, enabled?, selectedPaths?} — pointers so an
-// enabled-only PATCH doesn't reset the other fields; the MERGED set is
-// re-validated so a patch can never sneak an invalid name/path past the
-// create-time checks.
+// body {name?, path?, excludes?, enabled?, selectedPaths?}. Pointers keep an
+// enabled-only PATCH from resetting the other fields, and the merged set is
+// validated again so a patch cannot slip past the create-time checks.
 func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.fileSetIDParam(w, r)
 	if !ok {
@@ -5280,17 +4631,11 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		Path     *string   `json:"path"`
 		Excludes *[]string `json:"excludes"`
 		Enabled  *bool     `json:"enabled"`
-		// #199. Its own field rather than part of the set, because the store
-		// setter is separate for the same reason: a form that does not know
-		// about the cadence must not be able to clear one by omitting it.
+		// Kept apart from the set, like its store setter, so a form that does
+		// not know about the cadence cannot clear one by leaving it out.
 		ScheduleCadence *string `json:"scheduleCadence"`
-		// The set's tree selection (Phase 4 plan 02, D-03). A pointer like the
-		// fields above, and declared explicitly because decodeBody runs
-		// DisallowUnknownFields — the container PATCH's SelectionSource field
-		// exists for exactly this reason. Absent (nil) = untouched: the tree
-		// editor always sends the full list, but an ordinary name/path form
-		// must never clear a selection by omitting it. [] decodes non-nil and
-		// is refused downstream (D-06), never silently stored.
+		// SelectedPaths is the set's tree selection. nil leaves it untouched, so
+		// a plain name or path form cannot clear it; [] is refused, not stored.
 		SelectedPaths *[]string `json:"selectedPaths"`
 		// Repo is the older spelling of home {repo}.
 		Repo *string `json:"repo"`
@@ -5320,9 +4665,8 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	oldName := fs.Name
-	// Captured before the merge: the path edit below overwrites fs.Path, and
-	// the clear-on-path-edit rule needs the old value as the anchor the stored
-	// selection was validated against.
+	// The stored selection was validated against the old path, which the merge
+	// below overwrites.
 	oldPath := fs.Path
 	wasEnabled := fs.Enabled
 	if body.Name != nil {
@@ -5373,10 +4717,9 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 		}
 		defer unlock()
 	}
-	// Refuse a rename once the set has backups: its snapshots are tagged
-	// fileset:<oldName> and are never re-tagged, so a rename would strand them
-	// (DeleteBackupsFileSet then can't find them). Path, excludes and enabled
-	// edits stay allowed; only the name is load-bearing for the snapshot tags.
+	// A set with backups cannot be renamed: its snapshots are tagged
+	// fileset:<oldName> and never re-tagged, so a rename would strand them where
+	// DeleteBackupsFileSet cannot find them.
 	if nameChanging {
 		presence, bErr := h.svc.itemBackups(r.Context(), store.ItemRef{Domain: "files", Key: id})
 		if bErr != nil && presence != backupsUnreadable {
@@ -5398,10 +4741,9 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	// On a path change the row and the selection clear go out as one statement
-	// (UpdateFileSetClearingSelection), so either the whole save lands or the
-	// row is untouched, and a failure cannot leave the new path live with the
-	// old-anchor selection still stored.
+	// On a path change the row and the cleared selection are one statement
+	// (UpdateFileSetClearingSelection), so a failure cannot leave the new path
+	// live with the old selection still stored.
 	if fs.Name != oldName {
 		if err := h.svc.moveFileSetRule(oldName, fs.Name); err != nil {
 			placementFail(w, err, nil)
@@ -5429,15 +4771,12 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 	}
 	switch {
 	case pathChanged:
-		// The selection was already cleared atomically by
-		// UpdateFileSetClearingSelection above — nothing further to write, and
-		// no second write to fail after the path went live.
+		// UpdateFileSetClearingSelection already cleared the selection.
 	case body.SelectedPaths != nil:
 		if err := h.svc.SetFileSetSelectedPaths(r.Context(), id, *body.SelectedPaths); err != nil {
 			if errors.Is(err, errFileSetEmptySelection) {
-				// D-06: machine-routable, so the tree can tell "empty" apart
-				// from any other failure and keep its local state (nothing was
-				// stored).
+				// The code lets the tree tell "empty" from other failures and
+				// keep its local state, since nothing was stored.
 				writeJSON(w, http.StatusOK, codedFailEnvelope(err, "empty-selection"))
 				return
 			}
@@ -5450,9 +4789,8 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}
-		// Structural, exactly like the VM case above: reload so the set's own
-		// cron entry is registered or dropped. A file-set PATCH does not
-		// otherwise reload the scheduler.
+		// As for VMs: the set's own cron entry comes or goes, and a file-set
+		// PATCH does not otherwise reload the scheduler.
 		if err := h.reloadScheduler(); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
@@ -5471,10 +4809,9 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 	}))
 }
 
-// handleDeleteFileSet removes a file set (row + run history) WITHOUT touching
-// any repo — its existing snapshots stay in the repo and can be resurfaced via
-// DiscoverFileSets. Deleting the backups too is handleDeleteBackupsFileSet
-// (the ForgetVM/DeleteBackupsVM split). DELETE /api/files/sets/{id}
+// handleDeleteFileSet removes a file set and its run history without touching
+// any repo, so DiscoverFileSets can bring its snapshots back;
+// handleDeleteBackupsFileSet deletes the backups. DELETE /api/files/sets/{id}
 func (h *Handler) handleDeleteFileSet(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.fileSetIDParam(w, r)
 	if !ok {
@@ -5501,9 +4838,9 @@ func (h *Handler) handleDeleteBackupsFileSet(w http.ResponseWriter, r *http.Requ
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleBackupFileSet starts a single file-set backup ON THE SERVER and
-// returns immediately (see handleBackup). The SPA watches "files:<name>" over
-// SSE. POST /api/files/sets/{id}/backup
+// handleBackupFileSet starts a single file-set backup on the server and returns
+// immediately, like handleBackup. The SPA follows "files:<name>" over SSE.
+// POST /api/files/sets/{id}/backup
 func (h *Handler) handleBackupFileSet(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.fileSetIDParam(w, r)
 	if !ok {
@@ -5521,9 +4858,9 @@ func (h *Handler) handleBackupFileSet(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
 }
 
-// handleBackupFilesAll starts a SERVER-SIDE batch backup of the selected file
-// sets (see handleBackupAll — same detached-batch semantics; the SPA watches
-// "batch:files" + per-set keys). POST /api/files/backup-all  body {ids: [...]}
+// handleBackupFilesAll starts a server-side batch backup of the selected file
+// sets, like handleBackupAll; the SPA follows "batch:files" and the per-set
+// keys. POST /api/files/backup-all  body {ids: [...]}
 func (h *Handler) handleBackupFilesAll(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		IDs []string `json:"ids"`
@@ -5535,7 +4872,7 @@ func (h *Handler) handleBackupFilesAll(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "no file sets selected"})
 		return
 	}
-	if len(body.IDs) > 1000 { // far beyond any real set count — reject abuse
+	if len(body.IDs) > 1000 { // far beyond any real set count
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "too many file sets"})
 		return
 	}
@@ -5576,13 +4913,11 @@ func (h *Handler) handleSnapshotsFileSet(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"snapshots": snaps}))
 }
 
-// handleRestoreFileSet starts a file-set restore ON THE SERVER and returns
-// immediately (see handleRestore). An empty targetPath restores IN PLACE over
-// the set's source folder (confirm-gated, never silent); a non-empty
-// targetPath extracts the snapshot into that folder under the host mount
-// (non-destructive). Validation + target resolution run synchronously (the
-// resolved target is returned in the ack); the restic work runs detached,
-// publishing "files:<name>" progress and recording a run for the outcome.
+// handleRestoreFileSet starts a file-set restore on the server and returns
+// immediately, like handleRestore. An empty targetPath restores in place over
+// the set's source folder and needs confirm; otherwise the snapshot is
+// extracted into that folder under the host mount. The resolved target comes
+// back in the answer, and the SPA follows "files:<name>".
 // POST /api/files/sets/{id}/restore  body {snapshotId, targetPath, confirm}
 func (h *Handler) handleRestoreFileSet(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.fileSetIDParam(w, r)
@@ -5628,13 +4963,9 @@ func (h *Handler) handleListSnapshotFilesFileSet(w http.ResponseWriter, r *http.
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"files": files}))
 }
 
-// handleRestoreFileSetFiles starts a SELECTIVE file-set restore ON THE SERVER and
-// returns immediately (see handleRestoreFileSet). An empty targetPath restores the
-// selected paths IN PLACE (original locations, confirm-gated); a non-empty
-// targetPath extracts the selection into that folder under the host mount
-// (non-destructive). Validation + target resolution run synchronously (the
-// resolved target is returned in the ack); the restic work runs detached,
-// publishing "files:<name>" progress and recording a run for the outcome.
+// handleRestoreFileSetFiles starts a selective file-set restore of the given
+// paths, otherwise like handleRestoreFileSet: an empty targetPath restores them
+// in place and needs confirm.
 // POST /api/files/sets/{id}/restore-files  body {snapshotId, paths, targetPath, confirm}
 func (h *Handler) handleRestoreFileSetFiles(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.fileSetIDParam(w, r)
@@ -5662,46 +4993,36 @@ func (h *Handler) handleRestoreFileSetFiles(w http.ResponseWriter, r *http.Reque
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true, "target": target}))
 }
 
-// handleDiscoverFiles rebuilds the file-set list from backup storage (from the
-// fileset: snapshot tags alone — the files domain mirrors no definitions), so
-// sets lost with the database become restorable again. POST /api/files/discover
+// handleDiscoverFiles rebuilds the file-set list from the fileset: snapshot
+// tags alone, since the files domain stores no definitions in the repository,
+// so sets lost with the database become restorable again.
+// POST /api/files/discover
 func (h *Handler) handleDiscoverFiles(w http.ResponseWriter, r *http.Request) {
-	probe := r.URL.Query().Get("probe") == "true" // read-only readiness check, see handleDiscover (#44)
+	probe := r.URL.Query().Get("probe") == "true" // read-only readiness check, see handleDiscover
 	res, err := h.svc.DiscoverFileSets(r.Context(), probe)
 	if err != nil {
-		// The failure envelope carries the partial result too. The pass searches
-		// the named repositories BEFORE the domain's own, so when the domain's own
-		// is what failed, everything already found is real - and the screen that
-		// asks this question is the one somebody opens after losing their
-		// configuration. "Could not open the domain repository" and "…and nothing
-		// was rebuilt" are two different answers.
+		// The partial result goes along, as in handleDiscover.
 		body := failEnvelope(err)
 		maps.Copy(body, discoverFields(res))
 		writeJSON(w, http.StatusOK, body)
 		return
 	}
-	// `repo` names the folder this pass actually read (#196): the wizard asks
-	// for an off-site repository a step earlier and then reads the PRIMARY
-	// path, and an empty answer about an unnamed folder is unreadable.
 	fields := discoverFields(res)
 	fields["repo"] = h.svc.DiscoverSource("files")
 	writeJSON(w, http.StatusOK, okEnvelope(fields))
 }
 
-// handleForeignOpen opens ANOTHER BombVault instance's repository READ-ONLY
-// with that instance's APP_KEY and returns an in-memory session id plus the
-// full snapshot inventory (#61). Nothing is persisted — the session (and the
-// foreign key) lives only in memory with a TTL, and the foreign repo is only
-// probed (never initialised). The key is never logged or echoed; errors go
-// through the scrubber (failEnvelope) like every other handler.
+// handleForeignOpen opens another BombVault instance's repository read-only
+// with that instance's APP_KEY and returns an in-memory session id and the
+// snapshot inventory. The session and the key live only in memory with a TTL,
+// the repo is never initialised, and the key is never logged or echoed.
 // POST /api/foreign/open  body {location, key}
 func (h *Handler) handleForeignOpen(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Location string `json:"location"`
 		Key      string `json:"key"`
-		// Creds are the FOREIGN repository's own backend credentials, required
-		// for a remote location and used for this session only (#185). They are
-		// never persisted: OpenForeign does not write Settings.
+		// Creds are the foreign repository's own backend credentials, needed for
+		// a remote location and used for this session only, never stored.
 		Creds *CloudCreds `json:"creds"`
 	}
 	if !decodeBody(w, r, &body) {
@@ -5729,25 +5050,18 @@ func (h *Handler) handleForeignClose(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleForeignRestore restores ONE item (container, VM or file set) from an
-// open foreign-repo session ON THE SERVER and returns immediately (see
-// handleRestore — the restic work runs detached; the SPA watches the item's
-// "container:/vm:/files:<item>" progress key over SSE and reads the recorded
-// run for the outcome). Validation runs synchronously: a bad request — an
-// unknown/expired session, an unconfirmed restore, a missing file-set target —
-// fails right away with a 4xx and nothing starts; the shared single-flight
-// guard answers 409 like the other backup/restore starters. The session key
-// stays server-side (never in this request), and errors are scrubbed.
+// handleForeignRestore restores one container, VM or file set from an open
+// foreign-repo session on the server and returns immediately, like
+// handleRestore. A bad request (unknown or expired session, no confirm, a file
+// set without target) fails with a 4xx before anything starts, and a busy
+// guard answers 409. The session key stays on the server.
 // POST /api/foreign/restore  body {session, domain, item, snapshot, confirm, target, paths, zvolPool}
-// A non-empty paths[] (files domain only) restores just those subfolders/files
-// from the set into target; empty restores the whole set (issue #123). zvolPool
-// is VMS-DOMAIN-ONLY and OPTIONAL: a destination ZFS pool name for a VM whose
-// disks include a TrueNAS zvol (block-device) disk — required for such a VM's
-// zvol disk(s) to actually restore on a cross-instance (target set) restore;
-// see StartForeignRestore's doc comment. There is no UI for this field yet —
-// it is reachable via a direct API call only; the request fails with a clear,
-// actionable error instead of a deep zfs-receive failure when it's needed but
-// missing.
+//
+// A non-empty paths restores just those entries of a file set into target.
+// zvolPool, for VMs only, names the destination ZFS pool a TrueNAS zvol disk
+// needs on a restore to another instance (see StartForeignRestore). Only a
+// direct API call sets it; without it such a restore fails early with a clear
+// message.
 func (h *Handler) handleForeignRestore(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Session   string   `json:"session"`
@@ -5764,7 +5078,7 @@ func (h *Handler) handleForeignRestore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	started, err := h.svc.StartForeignRestore(r.Context(), body.Session, body.Domain, body.Item, body.Snapshot, body.Confirm, body.Target, body.Paths, body.Overwrite, body.ZvolPool)
-	if err != nil { // synchronous validation failed — nothing was started
+	if err != nil { // validation failed, nothing was started
 		writeJSON(w, http.StatusBadRequest, failEnvelope(err))
 		return
 	}
@@ -5776,10 +5090,9 @@ func (h *Handler) handleForeignRestore(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleForeignFiles lists the files of one file set's snapshot in an open foreign
-// session, so the recovery UI can offer a subfolder/file picker before a selective
-// restore (issue #123). Read-only; the session key stays server-side and errors
-// are scrubbed. The response mirrors the local list-files endpoint so the SPA
-// reuses the same shape. POST /api/foreign/files  body {session, domain, item, snapshot}
+// session, so the recovery UI can offer a picker before a selective restore.
+// The answer has the shape of the local list-files endpoint.
+// POST /api/foreign/files  body {session, domain, item, snapshot}
 func (h *Handler) handleForeignFiles(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Session  string `json:"session"`
@@ -5803,9 +5116,9 @@ func (h *Handler) handleForeignFiles(w http.ResponseWriter, r *http.Request) {
 
 // handleForeignContainerWarnings returns the non-appdata binds of a foreign
 // container that point at a pool this host lacks, so the Recovery card can warn
-// the operator BEFORE a cross-pool restore (appdata is remapped automatically;
-// these binds are theirs to fix in the template). Read-only; key stays
-// server-side. POST /api/foreign/container-warnings  body {session, item}
+// before a cross-pool restore. Appdata is remapped automatically; these binds
+// are the operator's to fix in the template.
+// POST /api/foreign/container-warnings  body {session, item}
 func (h *Handler) handleForeignContainerWarnings(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Session string `json:"session"`
