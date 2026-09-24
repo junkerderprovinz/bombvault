@@ -88,6 +88,29 @@ func TestTheVMAndFileSetListsCarryThePlacement(t *testing.T) {
 	}
 }
 
+// A successful run fixes the location whether or not a snapshot under the name
+// dates it: a container without appdata writes none, and the newest one can be
+// deleted from the timeline.
+func TestTheContainerAndVMListsLockAnItemByItsLastSuccessfulRun(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.target("containers", "B2", "b2:bucket:containers")
+	f.target("vms", "B2", "b2:bucket:vms")
+	for _, id := range []string{f.container("stateless", "").ID, f.container("pruned", "").ID, f.vm("win11", "").ID} {
+		f.backupRun(id, 1_758_000_000)
+	}
+	f.hold(f.domainPath("containers"), snap("a1a1a1a1", 1_757_000_000, "container:pruned"))
+	f.dock.installed = map[string]bool{"stateless": true}
+
+	containers := placementsByKey(t, f.do(http.MethodGet, "/api/containers", nil)["containers"].([]any), "name")
+	vms := placementsByKey(t, f.do(http.MethodGet, "/api/vms", nil)["vms"].([]any), "libvirtName")
+	for name, p := range map[string]map[string]any{"stateless": containers["stateless"], "pruned": containers["pruned"], "win11": vms["win11"]} {
+		observed, _ := p["observed"].(map[string]any)
+		if p["locked"] != true || p["lockReason"] != "first-backup" || observed["noBackup"] != false {
+			t.Errorf("%s = %v, want it locked and backed up", name, p)
+		}
+	}
+}
+
 func TestAnItemPatchAnswersWithTheNewPlacement(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.target("vms", "B2", "b2:bucket:vms")
