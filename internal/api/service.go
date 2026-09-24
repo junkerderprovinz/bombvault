@@ -9191,20 +9191,20 @@ func (s *Service) DeleteBackups(ctx context.Context, name, source string) error 
 		return errDomainBusy
 	}
 	defer unlock()
+	id := s.containerIdentity(name)
+	if err := refuseDeleteWithPartialIdentity(name, id); err != nil {
+		return err
+	}
 	// The entry's former names keep its copy rule unless a container installed
 	// under one follows its own.
-	installed, err := s.installedContainers(ctx)
+	held, err := s.heldContainerNames(ctx)
 	if err != nil {
-		return fmt.Errorf("nothing was deleted: the installed containers could not be listed: %w", err)
+		return fmt.Errorf("nothing was deleted: %w", err)
 	}
 	if protection == appendOnlyNone {
 		s.unlockStale(ctx, repo, mode)
 	}
 
-	id := s.containerIdentity(name)
-	if err := refuseDeleteWithPartialIdentity(name, id); err != nil {
-		return err
-	}
 	snaps, err := s.containerSnapshotsOf(ctx, name, "", id)
 	if err != nil {
 		return err
@@ -9247,7 +9247,7 @@ func (s *Service) DeleteBackups(ctx context.Context, name, source string) error 
 
 	// Remove the target row + its run history so the container disappears from
 	// the "not installed" list once its backups are gone.
-	if err := s.store.DeleteTarget(name, installed); err != nil {
+	if err := s.store.DeleteTarget(name, held); err != nil {
 		return fmt.Errorf("delete target: %w", err)
 	}
 	return nil
@@ -9467,6 +9467,24 @@ func (s *Service) installedContainers(ctx context.Context) (map[string]bool, err
 	installed := make(map[string]bool, len(infos))
 	for _, c := range infos {
 		installed[c.Name] = true
+	}
+	return installed, nil
+}
+
+// heldContainerNames is what the store is told Docker lists when it decides on
+// the copy rule of a former container name. Docker is asked only while some
+// container has a former name, so nothing else waits for it.
+func (s *Service) heldContainerNames(ctx context.Context) (map[string]bool, error) {
+	aliases, err := s.store.ListAliases("container")
+	if err != nil {
+		return nil, err
+	}
+	if len(aliases) == 0 {
+		return nil, nil
+	}
+	installed, err := s.installedContainers(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("the installed containers could not be listed: %w", err)
 	}
 	return installed, nil
 }

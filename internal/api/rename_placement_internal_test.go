@@ -161,9 +161,14 @@ func TestADeleteLeavesNoRuleOnALiveContainerUnderAFormerName(t *testing.T) {
 	}
 }
 
+// web answered to nginx before, so its delete has to know whether a container
+// is installed under that name.
 func TestADeleteWaitsForTheInstalledContainers(t *testing.T) {
 	f := newPlacementFixture(t)
-	f.container("web", "")
+	web := f.container("web", "")
+	if _, err := f.st.AddAliasAt("container", "nginx", web.ID, 200); err != nil {
+		t.Fatal(err)
+	}
 	f.hold(f.domainPath("containers"), snap("aaaa0001", 100, "container:web"))
 	f.dock.listErr = errors.New("docker socket unreachable")
 
@@ -176,6 +181,25 @@ func TestADeleteWaitsForTheInstalledContainers(t *testing.T) {
 	}
 	if len(f.eng.deletes) > 0 {
 		t.Fatalf("forgot %v although the delete was refused", f.eng.deletes)
+	}
+}
+
+func TestADeleteWithoutFormerNamesGoesAheadWhileNothingCanBeListed(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("web", "")
+	f.vm("win11", "")
+	f.hold(f.domainPath("containers"), snap("aaaa0001", 100, "container:web"))
+	f.hold(f.domainPath("vms"), snap("bbbb0001", 100, "vm:win11"))
+	f.settings(func(s *store.Settings) { s.VMsEnabled = true })
+	f.dock.listErr = errors.New("docker socket unreachable")
+	f.virsh.listErr = errors.New("libvirt is not running")
+	ctx := context.Background()
+
+	if err := f.svc.DeleteBackups(ctx, "web", "local"); err != nil {
+		t.Errorf("DeleteBackups: %v", err)
+	}
+	if err := f.svc.DeleteBackupsVM(ctx, "win11", "local"); err != nil {
+		t.Errorf("DeleteBackupsVM: %v", err)
 	}
 }
 
@@ -246,6 +270,10 @@ func TestAnImportLeavesTheRuleOfAnInstalledContainerOnItsName(t *testing.T) {
 
 func TestAnImportWithCopyRulesWaitsForTheInstalledContainers(t *testing.T) {
 	f := newPlacementFixture(t)
+	web := f.container("web", "")
+	if _, err := f.st.AddAliasAt("container", "nginx", web.ID, 200); err != nil {
+		t.Fatal(err)
+	}
 	exp := f.do(http.MethodGet, "/api/settings/export", nil)
 	f.rule("containers", "container:nginx", store.SkipAll)
 	f.dock.listErr = errors.New("docker socket unreachable")
@@ -256,6 +284,27 @@ func TestAnImportWithCopyRulesWaitsForTheInstalledContainers(t *testing.T) {
 	}
 	if _, ok := ruleOf(t, f, "containers", "container:nginx"); !ok {
 		t.Fatal("the refused import replaced the copy rules")
+	}
+}
+
+func TestAnImportWithoutFormerNamesGoesAheadWhileNothingCanBeListed(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("web", "")
+	f.vm("win11", "")
+	f.rule("containers", "container:web", store.SkipAll)
+	f.rule("vms", "vm:win11", store.SkipAll)
+	f.settings(func(s *store.Settings) { s.VMsEnabled = true })
+	exp := f.do(http.MethodGet, "/api/settings/export", nil)
+	f.dock.listErr = errors.New("docker socket unreachable")
+	f.virsh.listErr = errors.New("libvirt is not running")
+
+	if res := f.do(http.MethodPost, "/api/settings/import?apply=true", exp); res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+	for domain, identity := range map[string]string{"containers": "container:web", "vms": "vm:win11"} {
+		if skip, ok := ruleOf(t, f, domain, identity); !ok || !slices.Equal(skip, []string{store.SkipAll}) {
+			t.Errorf("rule of %s = %v (found %v), want [*]", identity, skip, ok)
+		}
 	}
 }
 
