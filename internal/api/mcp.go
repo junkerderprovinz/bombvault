@@ -96,6 +96,11 @@ type mcpState struct {
 	// began.
 	starts *slidingWindow
 
+	// startMu makes the in-flight check of a start and the start itself one
+	// step, so a Backup Everything pass and a narrower start cannot both get
+	// past their check.
+	startMu sync.Mutex
+
 	// listSem is the single slot the restic-spawning tools share, so a key
 	// cannot put a dozen listings on one repository at once.
 	listSem chan struct{}

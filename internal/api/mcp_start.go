@@ -100,7 +100,7 @@ func (h *Handler) toolStartBackup(ctx context.Context, req *mcp.CallToolRequest)
 	}
 
 	sctx := WithRunOrigin(ctx, RunOrigin{Via: "mcp", KeyID: caller.KeyID})
-	started, err := h.startMCPItem(sctx, item)
+	started, err := h.mcpStartOutsideEverything(func() (bool, error) { return h.startMCPItem(sctx, item) })
 	return h.mcpStartOutcome(ctx, tool, release, started, err, "a backup is already running", map[string]any{
 		"started":  true,
 		"domain":   in.Domain,
@@ -196,7 +196,7 @@ func (h *Handler) toolStartDomainBackup(ctx context.Context, req *mcp.CallToolRe
 	}
 
 	sctx := WithRunOrigin(ctx, RunOrigin{Via: "mcp", KeyID: caller.KeyID})
-	started, err := h.startMCPDomain(sctx, in.Domain, kept)
+	started, err := h.mcpStartOutsideEverything(func() (bool, error) { return h.startMCPDomain(sctx, in.Domain, kept) })
 	return h.mcpStartOutcome(ctx, tool, release, started, err, "a backup is already running", map[string]any{
 		"started":  true,
 		"domain":   in.Domain,
@@ -270,7 +270,7 @@ func (h *Handler) toolStartBackupEverything(ctx context.Context, req *mcp.CallTo
 		rows = append(rows, mcpStartItem{ID: domain, Name: domain})
 	}
 	sctx := WithEverythingSkips(WithRunOrigin(ctx, RunOrigin{Via: "mcp", KeyID: caller.KeyID}), guard.skip)
-	started, err := h.svc.StartBackupEverything(sctx)
+	started, err := h.mcpStartEverythingAlone(sctx)
 	return h.mcpStartOutcome(ctx, tool, release, started, err, "a Backup Everything pass is already running", map[string]any{
 		"started":  true,
 		"domain":   "everything",
@@ -463,6 +463,37 @@ func (h *Handler) mcpStartPreflight(ctx context.Context, tool, keyID, what strin
 			map[string]any{"retryAfterSeconds": secondsUntil(retry)})
 	}
 	return release, nil
+}
+
+// The retention guard counts finished restore points only, so a Backup
+// Everything pass must not run beside a narrower MCP start: the pass would back
+// up again what the other one is still backing up, and neither guard would have
+// counted it.
+var (
+	errMCPEverythingRunning = errors.New("a Backup Everything pass is running; start this once it has finished")
+	errMCPBackupRunning     = errors.New("a backup is already running; start Backup Everything once it has finished")
+)
+
+// mcpStartOutsideEverything runs start unless a Backup Everything pass is in
+// flight.
+func (h *Handler) mcpStartOutsideEverything(start func() (bool, error)) (bool, error) {
+	h.mcp.startMu.Lock()
+	defer h.mcp.startMu.Unlock()
+	if h.svc.EverythingInProgress() {
+		return false, errMCPEverythingRunning
+	}
+	return start()
+}
+
+// mcpStartEverythingAlone starts a Backup Everything pass unless another backup
+// is in flight.
+func (h *Handler) mcpStartEverythingAlone(ctx context.Context) (bool, error) {
+	h.mcp.startMu.Lock()
+	defer h.mcp.startMu.Unlock()
+	if h.svc.BackupInProgress() {
+		return false, errMCPBackupRunning
+	}
+	return h.svc.StartBackupEverything(ctx)
 }
 
 // mcpStartOutcome maps what a Start function answered onto the tool result and

@@ -147,6 +147,56 @@ func TestMCPStartBackupBusyReasons(t *testing.T) {
 	}
 }
 
+// The retention guard only sees finished restore points, so a Backup Everything
+// pass and a narrower start must never be in flight together: the pass would
+// back up again what the other one is still backing up, and neither guard
+// would have counted it.
+func TestMCPStartsDoNotOverlapABackupEverythingPass(t *testing.T) {
+	h, repo, _ := newMCPStartHandler(t, "docs")
+	s, err := repo.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ContainersEnabled, s.VMsEnabled, s.FlashEnabled, s.ConfigEnabled = false, false, false, false
+	if err := repo.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	ctx := mcpStartCaller("0b7e", true)
+	everything := &mcp.CallToolRequest{Params: &mcp.CallToolParamsRaw{
+		Name: "start_backup_everything", Arguments: json.RawMessage(`{}`),
+	}}
+
+	h.svc.batchActive.Store(true)
+	res, _ := h.toolStartBackupEverything(ctx, everything)
+	h.svc.batchActive.Store(false)
+	if code := mcpErrorCode(t, res); code != "busy" {
+		t.Fatalf("with a backup in flight start_backup_everything gives %q, want busy", code)
+	}
+	if h.svc.EverythingInProgress() {
+		t.Fatal("the refused call started a pass anyway")
+	}
+
+	h.svc.everythingActive.Store(true)
+	res = startFileSet(ctx, h, "docs")
+	h.svc.everythingActive.Store(false)
+	if code := mcpErrorCode(t, res); code != "busy" {
+		t.Fatalf("with a pass in flight start_backup gives %q, want busy", code)
+	}
+	if msg := mcpErrorMessage(t, res); !strings.Contains(msg, "Backup Everything") {
+		t.Fatalf("message = %q, want it to name the pass", msg)
+	}
+	runs, err := repo.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(runs) != 0 {
+		t.Fatalf("%d runs were recorded, want none", len(runs))
+	}
+	if left := h.mcp.starts.remaining("0b7e", h.mcp.now()); left != mcpStartsPerHour {
+		t.Fatalf("%d starts left of %d: a refused call kept a slot", left, mcpStartsPerHour)
+	}
+}
+
 // The budget counts what a key really launched, so an assistant cannot keep the
 // server busy by retrying, and one key's spending is not another's.
 func TestMCPStartBudget(t *testing.T) {
