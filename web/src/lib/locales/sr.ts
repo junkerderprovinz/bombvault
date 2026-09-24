@@ -1745,7 +1745,7 @@ const sr: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (преко MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (преко MCP, {key}, опозван)",
   "activityLog.viaMcpUnknownKey": "{line} (преко MCP)",
-  "activityLog.viaMcpLine": "one=Покренуто преко MCP кључем {keys}|other=Покренуто преко MCP кључевима {keys}",
+  "activityLog.viaMcpLine": "one=Покренуто преко MCP кључем {keys}|few=Покренуто преко MCP кључевима {keys}|other=Покренуто преко MCP кључевима {keys}",
   "activityLog.viaMcpLineUnknownKey": "Покренуто преко MCP",
 
   "mcp.title": "MCP сервер",

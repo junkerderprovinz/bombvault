@@ -1537,7 +1537,7 @@ const he: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (דרך MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (דרך MCP, {key}, בוטל)",
   "activityLog.viaMcpUnknownKey": "{line} (דרך MCP)",
-  "activityLog.viaMcpLine": "one=הופעל דרך MCP עם המפתח {keys}|other=הופעל דרך MCP עם המפתחות {keys}",
+  "activityLog.viaMcpLine": "one=הופעל דרך MCP עם המפתח {keys}|two=הופעל דרך MCP עם המפתחות {keys}|other=הופעל דרך MCP עם המפתחות {keys}",
   "activityLog.viaMcpLineUnknownKey": "הופעל דרך MCP",
 
   "mcp.title": "שרת MCP",

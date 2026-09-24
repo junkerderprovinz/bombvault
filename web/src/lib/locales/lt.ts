@@ -1761,7 +1761,7 @@ const lt: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (per MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (per MCP, {key}, atšauktas)",
   "activityLog.viaMcpUnknownKey": "{line} (per MCP)",
-  "activityLog.viaMcpLine": "one=Paleista per MCP su raktu {keys}|other=Paleista per MCP su raktais {keys}",
+  "activityLog.viaMcpLine": "one=Paleista per MCP su raktu {keys}|few=Paleista per MCP su raktais {keys}|many=Paleista per MCP su raktais {keys}|other=Paleista per MCP su raktais {keys}",
   "activityLog.viaMcpLineUnknownKey": "Paleista per MCP",
 
   "mcp.title": "MCP serveris",

@@ -1761,7 +1761,7 @@ const hr: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (putem MCP-a, {key})",
   "activityLog.viaMcpRevoked": "{line} (putem MCP-a, {key}, opozvan)",
   "activityLog.viaMcpUnknownKey": "{line} (putem MCP-a)",
-  "activityLog.viaMcpLine": "one=Pokrenuto putem MCP-a ključem {keys}|other=Pokrenuto putem MCP-a ključevima {keys}",
+  "activityLog.viaMcpLine": "one=Pokrenuto putem MCP-a ključem {keys}|few=Pokrenuto putem MCP-a ključevima {keys}|other=Pokrenuto putem MCP-a ključevima {keys}",
   "activityLog.viaMcpLineUnknownKey": "Pokrenuto putem MCP-a",
 
   "mcp.title": "MCP poslužitelj",

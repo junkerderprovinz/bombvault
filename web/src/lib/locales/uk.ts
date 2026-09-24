@@ -1532,7 +1532,7 @@ const uk: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (через MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (через MCP, {key}, відкликано)",
   "activityLog.viaMcpUnknownKey": "{line} (через MCP)",
-  "activityLog.viaMcpLine": "one=Запущено через MCP ключем {keys}|other=Запущено через MCP ключами {keys}",
+  "activityLog.viaMcpLine": "one=Запущено через MCP ключем {keys}|few=Запущено через MCP ключами {keys}|many=Запущено через MCP ключами {keys}|other=Запущено через MCP ключами {keys}",
   "activityLog.viaMcpLineUnknownKey": "Запущено через MCP",
 
   "mcp.title": "Сервер MCP",

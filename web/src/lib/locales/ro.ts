@@ -1540,7 +1540,7 @@ const ro: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (prin MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (prin MCP, {key}, revocată)",
   "activityLog.viaMcpUnknownKey": "{line} (prin MCP)",
-  "activityLog.viaMcpLine": "one=Pornit prin MCP cu cheia {keys}|other=Pornit prin MCP cu cheile {keys}",
+  "activityLog.viaMcpLine": "one=Pornit prin MCP cu cheia {keys}|few=Pornit prin MCP cu cheile {keys}|other=Pornit prin MCP cu cheile {keys}",
   "activityLog.viaMcpLineUnknownKey": "Pornit prin MCP",
 
   "mcp.title": "Server MCP",
