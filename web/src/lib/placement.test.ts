@@ -318,7 +318,7 @@ describe("planLines", () => {
 
 describe("observedLine", () => {
   it("reads sites, each target and the 3-2-1 mark", () => {
-    expect(observedLine(tEn, "en", placementObserved())).toEqual([
+    expect(observedLine(tEn, placementObserved())).toEqual([
       { text: "At 2 sites", tone: "normal" },
       { text: `B2 last seen ${formatTs(1_758_170_400)}`, tone: "normal" },
       { text: "3-2-1 met", tone: "normal" },
@@ -326,7 +326,7 @@ describe("observedLine", () => {
   });
 
   it("says one site in words of its own", () => {
-    expect(observedLine(tEn, "en", placementObserved({ sites: 1, places: [], rule321: "one-copy", tone: "warn" }))).toEqual([
+    expect(observedLine(tEn, placementObserved({ sites: 1, places: [], rule321: "one-copy", tone: "warn" }))).toEqual([
       { text: "At one site", tone: "normal" },
       { text: "3-2-1 not met: one backup", tone: "warn" },
     ]);
@@ -335,7 +335,6 @@ describe("observedLine", () => {
   it("warns about a target that could not be reached", () => {
     const lines = observedLine(
       tEn,
-      "en",
       placementObserved({
         places: [observedPlace({ state: "unreachable", since: 1_758_200_000, counts: false })],
         rule321: "one-copy",
@@ -350,7 +349,6 @@ describe("observedLine", () => {
   it("dims a target whose state is unknown and marks 3-2-1 unconfirmed", () => {
     const lines = observedLine(
       tEn,
-      "en",
       placementObserved({
         places: [observedPlace({ state: "unknown", since: 1_758_000_000, stale: true, counts: false })],
         rule321: "unconfirmed",
@@ -366,7 +364,6 @@ describe("observedLine", () => {
   it("dates a copy that is too old and names a switched-off target", () => {
     const lines = observedLine(
       tEn,
-      "en",
       placementObserved({
         places: [
           observedPlace({ state: "old-copy", latest: 1_757_000_000, stale: true, counts: false }),
@@ -375,7 +372,7 @@ describe("observedLine", () => {
       })
     );
     expect(lines.slice(1, 3)).toEqual([
-      { text: `B2: latest copy from ${new Date(1_757_000_000 * 1000).toLocaleDateString("en")}`, tone: "muted" },
+      { text: `B2: latest copy from ${new Date(1_757_000_000 * 1000).toLocaleDateString()}`, tone: "muted" },
       { text: "Hetzner (off)", tone: "muted" },
     ]);
   });
@@ -383,7 +380,6 @@ describe("observedLine", () => {
   it("says a ticked target holds no copy yet and dates nothing", () => {
     const lines = observedLine(
       tEn,
-      "en",
       placementObserved({
         places: [observedPlace({ state: "no-copy", count: 0, latest: 0, seenAt: 0, counts: false })],
         sites: 1,
@@ -397,7 +393,6 @@ describe("observedLine", () => {
   it("says a target has not been listed yet instead of standing there as a bare name", () => {
     const lines = observedLine(
       tEn,
-      "en",
       placementObserved({
         places: [observedPlace({ state: "unknown", since: 0, stale: true, counts: false })],
         sites: 1,
@@ -409,7 +404,7 @@ describe("observedLine", () => {
   });
 
   it("says no backup yet before the first one", () => {
-    expect(observedLine(tEn, "en", placementObserved({ noBackup: true }))).toEqual([
+    expect(observedLine(tEn, placementObserved({ noBackup: true }))).toEqual([
       { text: "No backup yet.", tone: "muted" },
     ]);
   });

@@ -39,7 +39,7 @@ describe("PlacementStatus", () => {
   it("offers to delete older copies at a target no longer ticked", async () => {
     const view = placementView({ observed: placementObserved({ older: [olderCopies()] }) });
     renderWithProviders(<PlacementStatus item={item} name="nginx" view={view} onChanged={vi.fn()} />);
-    const date = new Date(1_758_000_000 * 1000).toLocaleDateString("en");
+    const date = new Date(1_758_000_000 * 1000).toLocaleDateString();
     expect(await screen.findByText(`Older copies at Hetzner: 14, last seen ${date}`)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Delete in Hetzner" }));
     await waitFor(() => expect(fake.callsTo("getOffsiteRemoval")).toEqual([[item, "t-hz"]]));
