@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
@@ -285,6 +286,54 @@ func TestPatchZFSDatasetExcludedChildrenValidated(t *testing.T) {
 	}
 }
 
+func TestZFSSettingsAreBoundedAtSaveTime(t *testing.T) {
+	s, st, _, _ := zfsRunFixture(t, zfsTwoDatasetTree())
+	docker := newZFSFakeDocker("plex")
+	docker.self = "bombvault"
+	docker.containers["bombvault"] = &zfsFakeContainer{id: "id-bombvault", running: true, service: "bombvault"}
+	s.docker = docker
+	d := zfsSeedItem(t, st, zfsRoot)
+
+	tooMany := make([]string, zfsMaxStopContainers+1)
+	for i := range tooMany {
+		tooMany[i] = "plex"
+	}
+	results := s.CreateZFSDatasets(context.Background(), []ZFSCreateItem{
+		{Dataset: "tank/one", Repo: "no-such-repo"},
+		{Dataset: "tank/two", StopContainers: tooMany},
+	})
+	for _, res := range results {
+		if res.Code == "ok" {
+			t.Errorf("%s was stored although its settings are out of bounds", res.Dataset)
+		}
+	}
+
+	repo := "no-such-repo"
+	longCommand := strings.Repeat("x", zfsMaxCommandBytes+1)
+	self := "bombvault"
+	for name, patch := range map[string]ZFSDatasetPatch{
+		"an unknown repository":   {Repo: &repo},
+		"too many containers":     {StopContainers: &tooMany},
+		"a long pre command":      {PreSnapshot: &longCommand},
+		"a long post command":     {PostSnapshot: &longCommand},
+		"BombVault as hook place": {HookContainer: &self},
+	} {
+		if err := s.PatchZFSDataset(context.Background(), d.ID, patch); err == nil {
+			t.Errorf("%s was accepted", name)
+		}
+	}
+	if code := zfsCodeOf(t, s.PatchZFSDataset(context.Background(), d.ID, ZFSDatasetPatch{HookContainer: &self})); code != "container-is-self" {
+		t.Fatalf("code = %q, want container-is-self", code)
+	}
+	row, err := st.GetZFSDataset(d.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if row.Repo != "" || len(row.StopContainers) != 0 || row.PreSnapshot != "" || row.HookContainer != "" {
+		t.Fatalf("row = %+v, want nothing of the refused patches stored", row)
+	}
+}
+
 func TestPatchZFSDatasetCadenceFollowsTheDomainGrammar(t *testing.T) {
 	s, st, _, _ := zfsRunFixture(t, zfsTwoDatasetTree())
 	d := zfsSeedItem(t, st, zfsRoot)
@@ -426,7 +475,7 @@ func TestDeleteBackupsZFSDatasetForgetsEveryMemberTag(t *testing.T) {
 		{ID: "s5", Tags: []string{"fileset:Photos"}},
 	}
 
-	if err := s.DeleteBackupsZFSDataset(context.Background(), d.ID); err != nil {
+	if _, err := s.DeleteBackupsZFSDataset(context.Background(), d.ID, false); err != nil {
 		t.Fatalf("delete the backups: %v", err)
 	}
 	got := strings.Join(eng.readForgotten(), ",")
@@ -435,6 +484,49 @@ func TestDeleteBackupsZFSDatasetForgetsEveryMemberTag(t *testing.T) {
 	}
 	if _, err := st.GetZFSDataset(d.ID); err == nil {
 		t.Fatal("the row survived its backups")
+	}
+}
+
+func TestDeleteBackupsZFSDatasetAnswersWhatStaysOnThePool(t *testing.T) {
+	for _, removeSafety := range []bool{false, true} {
+		s, st, host, eng := zfsRepoFixture(t)
+		d := zfsSeedItem(t, st, zfsRoot)
+		eng.snaps = []restic.Snapshot{{ID: "s1", Tags: []string{"zfs:" + zfsRoot}}}
+		if err := st.UpsertZFSSafetySnapshot(store.ZFSSafetySnapshot{
+			ItemID: d.ID, Dataset: zfsRoot, Name: "bombvault-prerestore-20260101000000", CreatedAt: 1,
+		}); err != nil {
+			t.Fatalf("record a safety snapshot: %v", err)
+		}
+
+		target := "/api/zfs/datasets/" + d.ID + "/backups"
+		if removeSafety {
+			target += "?safety=true"
+		}
+		req := httptest.NewRequest(http.MethodDelete, target, nil)
+		req.SetPathValue("id", d.ID)
+		w := httptest.NewRecorder()
+		h := NewHandler(s.cfg, st, nil, s, schedule.New(func(string) error { return nil }, st.ListTargets), nil)
+		h.handleDeleteBackupsZFSDataset(w, req)
+
+		var resp struct {
+			OK                 bool `json:"ok"`
+			LeftoversRemaining *int `json:"leftoversRemaining"`
+			SafetyRemaining    *int `json:"safetyRemaining"`
+		}
+		if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+			t.Fatalf("decode: %v (%s)", err, w.Body.String())
+		}
+		if !resp.OK || resp.LeftoversRemaining == nil || resp.SafetyRemaining == nil {
+			t.Fatalf("answer = %s, want both counts", w.Body.String())
+		}
+		destroyed := hostDid(host, "destroy "+zfsRoot+"@bombvault-prerestore-20260101000000")
+		want := 1
+		if removeSafety {
+			want = 0
+		}
+		if *resp.SafetyRemaining != want || destroyed != removeSafety {
+			t.Fatalf("safety=%v: remaining %d, destroyed %v", removeSafety, *resp.SafetyRemaining, destroyed)
+		}
 	}
 }
 
@@ -473,6 +565,33 @@ func TestDiscoverZFSDatasetsRebuildsMinimalRoots(t *testing.T) {
 		if row.Enabled {
 			t.Errorf("%s came back enabled, but its stop list and commands are lost", name)
 		}
+	}
+}
+
+func TestDiscoverZFSDatasetsLeavesARootThatOverlapsAnItem(t *testing.T) {
+	s, st, _, eng := zfsRepoFixture(t)
+	child := zfsSeedItem(t, st, zfsChild)
+	media := zfsSeedItem(t, st, "tank/media/photos")
+	eng.snaps = []restic.Snapshot{
+		{ID: "s1", Tags: []string{"zfs:" + zfsRoot}},
+		{ID: "s2", Tags: []string{"zfs:" + zfsChild}},
+		{ID: "s3", Tags: []string{"zfs:tank/media"}},
+		{ID: "s4", Tags: []string{"zfs:tank/docs"}},
+	}
+
+	if _, _, err := s.DiscoverZFSDatasets(context.Background(), false); err != nil {
+		t.Fatalf("discover: %v", err)
+	}
+	rows, err := st.ListZFSDatasets()
+	if err != nil {
+		t.Fatalf("list items: %v", err)
+	}
+	got := map[string]bool{}
+	for _, row := range rows {
+		got[row.Dataset] = true
+	}
+	if len(got) != 3 || !got[child.Dataset] || !got[media.Dataset] || !got["tank/docs"] {
+		t.Fatalf("rows = %v, want the two items kept and only the tree that overlaps nothing rebuilt", got)
 	}
 }
 
