@@ -17194,9 +17194,10 @@ func (s *Service) RecoveryKit() (string, error) {
 	// the kit answers both "where is it" and "what is in there".
 	if named, nErr := s.store.ListNamedRepos(); nErr == nil && len(named) > 0 {
 		w("## Named repositories (per-item)\n\n")
-		w("These repositories hold the backups of individual containers, VMs or folder\n")
-		w("sets that were pointed at them instead of their domain repository above. They\n")
-		w("are ordinary restic repositories and use the SAME password as the rest.\n\n")
+		w("These repositories hold the backups of individual containers, VMs, folder\n")
+		w("sets or ZFS datasets that were pointed at them instead of their domain\n")
+		w("repository above. They are ordinary restic repositories and use the SAME\n")
+		w("password as the rest.\n\n")
 		for _, n := range named {
 			loc := n.Repo
 			if resolved, rErr := s.resolveRepo(n.Repo); rErr == nil {
@@ -17344,6 +17345,11 @@ file, /dbdump/<container>.sql.
    "-- Dump completed":
 
        restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+
+   After data loss the newest dump can be the one taken of an emptied
+   database. The list from step 1 shows each dump's size; skip one that is far
+   smaller than those before it. If BombVault still runs, its Anomalies page
+   names the last good dump.
 
 3. Create the database container again with an empty data folder and the same or
    a newer version (PostgreSQL), or the same major version (MySQL, MariaDB). Let

@@ -28,6 +28,11 @@ List the snapshots of one dataset:
 Restore the newest snapshot of one dataset into a new folder:
     restic -r '<repo>' restore latest --tag 'zfs:<dataset>' --target '/mnt/<pool>/restored-<name>'
 
+After data loss the newest snapshot can be the emptied or encrypted one. The
+list above shows each snapshot's size; use the id of an older one when the
+newest is far smaller. If BombVault still runs, its Anomalies page names the
+last good backup of each dataset.
+
 Restore into the dataset itself (files with the same name are overwritten).
 Take a ZFS snapshot first so you can go back:
     zfs snapshot '<dataset>@before-restore'
