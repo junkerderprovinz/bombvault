@@ -73,7 +73,6 @@ export function ZFSRestorePanel({
   const [filesLoading, setFilesLoading] = useState(false);
   const [fileFilter, setFileFilter] = useState("");
   const [picked, setPicked] = useState<Set<string>>(new Set());
-  const [refusal, setRefusal] = useState("");
   const [ack, setAck] = useState<ZFSRestoreAck | null>(null);
 
   useEffect(() => {
@@ -140,7 +139,6 @@ export function ZFSRestorePanel({
     matchRun: (r) => r.domain === "zfs" && r.target === item.dataset,
     cancelledRef,
     start: async () => {
-      setRefusal("");
       setAck(null);
       const res = await restoreZFS(
         item.id,
@@ -158,7 +156,9 @@ export function ZFSRestorePanel({
         source,
       );
       if (res.ok) setAck(res);
-      else if (res.code) setRefusal(zfsCodeSentence(t, res.code, { hostMountpoint: mountpoint }));
+      // The coded sentence replaces the raw "code: detail" line the server
+      // sends along with it.
+      else if (res.code) return { ...res, error: zfsCodeSentence(t, res.code, { hostMountpoint: mountpoint }) };
       return res;
     },
   });
@@ -170,7 +170,6 @@ export function ZFSRestorePanel({
   useEffect(() => {
     reset();
     setAck(null);
-    setRefusal("");
   }, [dataset, stamp, active, targetPath, reset]);
 
   useEffect(() => {
@@ -214,9 +213,12 @@ export function ZFSRestorePanel({
     else push(t("vm.ssh.copyFailed"), "fail");
   }
 
-  function outcomeLabel(outcome: string): string {
+  function outcomeLabel(memberDataset: string, outcome: string): string {
     const key = zfsMemberKey(outcome);
-    return key ? t(key) : zfsCodeSentence(t, outcome);
+    if (key) return t(key);
+    const hostMountpoint =
+      item.members.find((m) => m.dataset === memberDataset)?.hostMountpoint ?? host.get(memberDataset)?.hostMountpoint;
+    return zfsCodeSentence(t, outcome, { hostMountpoint });
   }
 
   const pointOptions = points.map((p) => ({
@@ -228,7 +230,7 @@ export function ZFSRestorePanel({
     ...(advanced ? [{ value: WHOLE_TREE, label: t("zfs.restore.wholeTree") }] : []),
     ...(point?.members ?? []).map((m) => ({
       value: m.dataset,
-      label: `${m.dataset} (${outcomeLabel(m.outcome)})`,
+      label: `${m.dataset} (${outcomeLabel(m.dataset, m.outcome)})`,
       disabled: m.snapshotId === "",
     })),
   ];
@@ -389,8 +391,6 @@ export function ZFSRestorePanel({
                   )}
                 </div>
               )}
-
-              {refusal !== "" && <p className="text-sm text-statusFail">{refusal}</p>}
 
               {ack && (
                 <div className="flex flex-col gap-1">

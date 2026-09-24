@@ -14,6 +14,7 @@ let results: ZFSCreateResult[] = [];
 const created: ZFSCreateItem[][] = [];
 const calls: string[] = [];
 let probeGate: (() => void) | null = null;
+const probeRefused = new Set<string>();
 
 vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
@@ -27,6 +28,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
     },
     probeZFSDataset: (id: string) => {
       calls.push(`probe:${id}`);
+      if (probeRefused.has(id)) return Promise.reject(new actual.ApiError(409, "HTTP 409 Conflict"));
       if (!probeGate) return Promise.resolve({ ok: true });
       return new Promise((resolve) => {
         probeGate = () => resolve({ ok: true });
@@ -117,6 +119,7 @@ beforeEach(() => {
   created.length = 0;
   calls.length = 0;
   probeGate = null;
+  probeRefused.clear();
   onClose.mockClear();
   onAdded.mockClear();
 });
@@ -300,6 +303,28 @@ describe("ZFS add dialog", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: en["zfs.add.done"] }));
     expect(onAdded).toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("goes on past a probe the server turns away and can still be closed", async () => {
+    host = hostResult([POOL, APPDATA, TANK, TANK_MEDIA]);
+    results = [
+      { dataset: "cache/appdata", id: "z1", code: "ok", detail: "" },
+      { dataset: "tank/media", id: "z2", code: "ok", detail: "" },
+    ];
+    probeRefused.add("z1");
+    await openDialog();
+    fireEvent.click(rootSwitch("cache/appdata"));
+    fireEvent.click(rootSwitch("tank/media"));
+    fireEvent.click(screen.getByRole("button", { name: en["zfs.add.submit"].replace("{n}", "2") }));
+
+    await waitFor(() => expect(calls).toEqual(["probe:z1", "probe:z2"]));
+    expect(
+      await screen.findByText(en["zfs.add.probeFailed"].replace("{dataset}", "cache/appdata")),
+    ).toBeTruthy();
+    const done = screen.getByRole("button", { name: en["zfs.add.done"] });
+    await waitFor(() => expect(done.hasAttribute("disabled")).toBe(false));
+    fireEvent.click(done);
     expect(onClose).toHaveBeenCalled();
   });
 

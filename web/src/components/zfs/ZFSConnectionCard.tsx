@@ -71,6 +71,19 @@ export function ZFSConnectionCard() {
 
       {testing && <p className="text-sm text-carbon-textMuted">{t("zfs.connection.testing")}</p>}
 
+      {!testing && !result && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="text-sm text-statusFail">{t("common.networkError")}</p>
+          <Button
+            label={t("zfs.connection.test")}
+            labelKey="zfs.connection.test"
+            tone="neutral"
+            onClick={test}
+            className="ms-auto"
+          />
+        </div>
+      )}
+
       {!testing && result && (
         <div className="flex flex-col gap-2">
           {connected && (

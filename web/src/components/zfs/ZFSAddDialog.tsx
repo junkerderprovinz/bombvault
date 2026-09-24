@@ -14,10 +14,12 @@ import { RepoPicker } from "../RepoPicker";
 import { isBelow, ZFSDatasetTree } from "./ZFSDatasetTree";
 import { ZFSMemberList } from "./ZFSMemberList";
 
-/** What one probe found about one freshly added item. */
+/** What one probe found about one freshly added item. `failed` is a probe the
+ *  server did not run, for example while a ZFS backup holds the domain. */
 interface ProbeResult {
   dataset: string;
   check?: ZFSCheck;
+  failed?: boolean;
 }
 
 /** The refusal's own text, without the code the server put in front of it. */
@@ -109,11 +111,17 @@ export function ZFSAddDialog({ onClose, onAdded }: { onClose: () => void; onAdde
       // two of them on the same pool would fight over the same names.
       for (const item of created.filter((r) => r.id !== "")) {
         setProbing(item.dataset);
-        const probe = await probeZFSDataset(item.id);
-        setProbed((prev) => [...prev, { dataset: item.dataset, check: probe.check }]);
+        try {
+          const probe = await probeZFSDataset(item.id);
+          setProbed((prev) => [...prev, { dataset: item.dataset, check: probe.check, failed: !probe.check }]);
+        } catch {
+          setProbed((prev) => [...prev, { dataset: item.dataset, failed: true }]);
+        }
       }
-      setProbing("");
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
     } finally {
+      setProbing("");
       setSubmitting(false);
     }
   }
@@ -169,8 +177,12 @@ export function ZFSAddDialog({ onClose, onAdded }: { onClose: () => void; onAdde
                   {t("zfs.add.testing").replace("{dataset}", probing)}
                 </p>
               )}
-              {probed.map(
-                (item) =>
+              {probed.map((item) =>
+                item.failed ? (
+                  <p key={item.dataset} className="text-sm text-statusWarn">
+                    {t("zfs.add.probeFailed").replace("{dataset}", item.dataset)}
+                  </p>
+                ) : (
                   item.check && (
                     <div key={item.dataset} className="flex flex-col gap-1">
                       <p className="text-sm text-carbon-textSub">
@@ -182,7 +194,8 @@ export function ZFSAddDialog({ onClose, onAdded }: { onClose: () => void; onAdde
                       </p>
                       <ZFSMemberList members={item.check.members} root={item.check.dataset} t={t} />
                     </div>
-                  ),
+                  )
+                ),
               )}
               <div className="flex items-center justify-end pt-1">
                 <Button

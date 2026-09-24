@@ -32,6 +32,7 @@ let runDetail: ZFSRunDetail = { ok: true, members: [], windowSeconds: -1 };
 let safety: ZFSSafetySnapshot[] = [];
 let deleteResult: ZFSDeleteResult = { ok: true };
 let hostCounts = { notInItem: 0, unusedZvols: 0 };
+let domainBusy = false;
 
 const patches: { id: string; body: Record<string, unknown> }[] = [];
 const calls: string[] = [];
@@ -80,6 +81,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     },
     deleteZFSSafetySnapshot: (id: string, dataset: string, name: string) => {
       calls.push(`safetyDelete:${dataset}@${name}`);
+      items = items.map((i) => (i.id === id ? { ...i, safetyCount: 0, safetyOldestAt: 0 } : i));
       return Promise.resolve({ ok: true });
     },
     patchZFSDataset: (id: string, body: Record<string, unknown>) => {
@@ -88,6 +90,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     },
     deleteZFSDataset: (id: string, safetyToo: boolean) => {
       calls.push(`delete:${id}:${safetyToo}`);
+      if (domainBusy) return Promise.reject(new actual.ApiError(409, "HTTP 409 Conflict"));
       return Promise.resolve(deleteResult);
     },
     sweepZFSDataset: (id: string) => {
@@ -172,6 +175,7 @@ beforeEach(() => {
   safety = [];
   deleteResult = { ok: true };
   hostCounts = { notInItem: 0, unusedZvols: 0 };
+  domainBusy = false;
   patches.length = 0;
   calls.length = 0;
   localStorage.clear();
@@ -199,6 +203,66 @@ describe("ZFS page", () => {
     items = [item({ lastRunStatus: "failed", lastCheckCode: "ok" })];
     await renderWithItems();
     expect(screen.getByText(en["run.statusFailed"])).toBeTruthy();
+  });
+
+  it("names the reason next to a run the preflight refused", async () => {
+    items = [item({ lastRunStatus: "failed", lastCheckCode: "nothing-readable" })];
+    await renderWithItems();
+    expect(screen.getByText(en["run.statusFailed"])).toBeTruthy();
+    expect(screen.getByText(en["zfs.code.nothing-readable"])).toBeTruthy();
+  });
+
+  it("says why a delete the server turned away did nothing", async () => {
+    domainBusy = true;
+    await renderWithItems();
+    fireEvent.click(screen.getByRole("button", { name: en["common.delete"] }));
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: en["common.delete"] }));
+    expect(await screen.findByText("HTTP 409 Conflict")).toBeTruthy();
+  });
+
+  it("names where a dataset the run could not see is mounted", async () => {
+    items = [
+      item({
+        members: [
+          member({}),
+          member({ dataset: "cache/appdata/plex", relPath: "plex", hostMountpoint: "/mnt/cache/appdata/plex" }),
+        ],
+      }),
+    ];
+    runs = [
+      {
+        id: "r3",
+        targetId: "z1",
+        kind: "backup",
+        status: "success",
+        startedAt: 1_700_000_000,
+        finishedAt: 1_700_000_060,
+        snapshotId: "abc",
+        bytes: 10,
+        error: "",
+        acknowledged: true,
+        target: "cache/appdata",
+        domain: "zfs",
+      },
+    ];
+    const unseen = (dataset: string) => ({
+      dataset,
+      outcome: "not-visible",
+      resticSnapshot: "",
+      isNew: false,
+      bytesAdded: 0,
+      filesNew: 0,
+      filesChanged: 0,
+      filesUnmodified: 0,
+      durationMs: 0,
+    });
+    runDetail = { ok: true, windowSeconds: -1, members: [unseen("cache/appdata/plex"), unseen("cache/appdata/gone")] };
+    await renderWithItems();
+    fireEvent.click(await screen.findByRole("button", { name: /→/ }));
+    expect(
+      await screen.findByText(en["zfs.code.not-visible"].replace("{path}", "/mnt/cache/appdata/plex")),
+    ).toBeTruthy();
+    expect(screen.getByText(en["zfs.notVisibleNoPath"])).toBeTruthy();
   });
 
   it("says an item was never checked instead of calling its state unknown", async () => {
@@ -334,6 +398,26 @@ describe("ZFS page", () => {
     await waitFor(() =>
       expect(calls).toContain("safetyDelete:cache/appdata@bombvault-prerestore-20260101120000"),
     );
+  });
+
+  it("drops the count and the age warning once the last safety snapshot is gone", async () => {
+    items = [item({ safetyCount: 1, safetyOldestAt: 1_600_000_000 })];
+    safety = [
+      {
+        dataset: "cache/appdata",
+        name: "bombvault-prerestore-20200101120000",
+        createdAt: 1_600_000_000,
+        usedBytes: 2048,
+      },
+    ];
+    await renderWithItems();
+    expect(screen.getByText(en["zfs.safety.old"])).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: en["zfs.safety.title"].replace("{n}", "1") }));
+    const list = await screen.findByRole("list", { name: en["zfs.safety.title"].replace("{n}", "1") });
+    fireEvent.click(within(list).getByRole("button", { name: en["common.delete"] }));
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: en["common.delete"] }));
+    await waitFor(() => expect(screen.queryByText(en["zfs.safety.old"])).toBeNull());
+    expect(screen.queryByText(en["zfs.safety.title"].replace("{n}", "1"))).toBeNull();
   });
 
   it("offers to remove an item whose root is gone", async () => {
