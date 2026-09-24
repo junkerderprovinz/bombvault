@@ -284,6 +284,7 @@ func (s *Service) BackupZFSDataset(ctx context.Context, id string) (backup.Summa
 	ctx, cancel := backupHoldCtx(ctx)
 	defer cancel()
 	defer s.lockDomain(zfsDomain)()
+	defer s.sampleVolumesFor(ctx, zfsDomain)
 
 	settings, err := s.store.GetSettings()
 	if err != nil {

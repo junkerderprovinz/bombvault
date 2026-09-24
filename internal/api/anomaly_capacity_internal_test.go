@@ -18,13 +18,18 @@ import (
 
 func TestVolumeSamplesOnEveryAttempt(t *testing.T) {
 	t.Run("an attempt is sampled whether or not it succeeded", func(t *testing.T) {
-		src, err := os.ReadFile("service.go")
+		service, err := os.ReadFile("service.go")
 		if err != nil {
 			t.Fatal(err)
 		}
-		for _, domain := range []string{"containers", "vms", "flash", "files", "config"} {
-			if !strings.Contains(string(src), `defer s.sampleVolumesFor(ctx, "`+domain+`")`) {
-				t.Errorf("%s must sample its volumes on the way out of every attempt, not only a good one", domain)
+		zfs, err := os.ReadFile("zfs_run.go")
+		if err != nil {
+			t.Fatal(err)
+		}
+		src := append(service, zfs...)
+		for _, arg := range []string{`"containers"`, `"vms"`, `"flash"`, `"files"`, `"config"`, "zfsDomain"} {
+			if !strings.Contains(string(src), "defer s.sampleVolumesFor(ctx, "+arg+")") {
+				t.Errorf("%s must sample its volumes on the way out of every attempt, not only a good one", arg)
 			}
 		}
 	})
