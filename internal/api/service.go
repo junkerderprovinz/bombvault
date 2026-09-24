@@ -11004,18 +11004,25 @@ func metricsOf(sum backup.Summary) *store.RunMetrics {
 }
 
 // BackupDir carries restic's per-file counters through, which a ZFS run
-// records per member and the domain's baselines read back.
+// records per member and the domain's baselines read back, together with the
+// totals anomaly detection watches every dataset by.
 func (a *resticAdapter) BackupDir(ctx context.Context, repo, dir string, tags []string, excludes ...string) (backup.ZFSBackupSummary, error) {
 	sum, err := a.engine.BackupDir(ctx, repo, dir, tags, a.mode, excludes...)
 	if err != nil {
 		return backup.ZFSBackupSummary{}, err
 	}
+	measured := backupSummaryFrom(sum)
 	return backup.ZFSBackupSummary{
 		SnapshotID:      sum.SnapshotID,
 		BytesAdded:      int64(sum.BytesAdded),
 		FilesNew:        int64(sum.FilesNew),
 		FilesChanged:    int64(sum.FilesChanged),
 		FilesUnmodified: int64(sum.FilesUnmodified),
+		Measured:        measured.Measured,
+		SourceBytes:     measured.SourceBytes,
+		SourceFiles:     measured.SourceFiles,
+		ResticMS:        measured.ResticMS,
+		HasParent:       a.parentFlag(ctx, repo, measured),
 	}, nil
 }
 

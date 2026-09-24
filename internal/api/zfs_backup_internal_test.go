@@ -13,6 +13,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/config"
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
@@ -622,6 +623,57 @@ func TestZFSBackupExcludedChildIsLeftOut(t *testing.T) {
 		if m.Outcome != "excluded" {
 			t.Fatalf("%s recorded as %q, want excluded for the child and its subtree", m.Dataset, m.Outcome)
 		}
+	}
+}
+
+// Every dataset of a tree is watched on its own, so a run keeps what restic
+// read of each one, and the run itself carries the sum and the fingerprint of
+// the tree as it was configured.
+func TestZFSBackupRecordsWhatResticReadOfEachDataset(t *testing.T) {
+	s, st, _, eng := zfsRunFixture(t, zfsTwoDatasetTree())
+	secs := 2.5
+	eng.sum = restic.Summary{
+		BytesAdded: 100, FilesNew: 3, TotalBytesProcessed: 8 << 20, TotalFilesProcessed: 40, TotalDuration: &secs,
+	}
+	d := zfsSeedItem(t, st, zfsRoot)
+
+	if _, err := s.BackupZFSDataset(context.Background(), d.ID); err != nil {
+		t.Fatalf("backup: %v", err)
+	}
+	run := zfsLastRun(t, st, d.ID)
+	members, err := st.ListZFSRunMembers(run.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range members {
+		if m.SourceBytes == nil || *m.SourceBytes != 8<<20 || m.SourceFiles == nil || *m.SourceFiles != 40 {
+			t.Fatalf("member %s = %+v, want what restic read of it", m.Dataset, m)
+		}
+	}
+	series, err := st.ItemSeries(d.ID, "backup", time.Now().Unix()+60, 10)
+	if err != nil || len(series) != 1 {
+		t.Fatalf("item series = %+v, %v", series, err)
+	}
+	first := series[0]
+	if first.SourceBytes == nil || *first.SourceBytes != 16<<20 || first.ResticMS == nil || *first.ResticMS != 5000 {
+		t.Fatalf("the run = %+v, want both datasets summed", first)
+	}
+	if first.SelectionFP == nil || *first.SelectionFP == "" {
+		t.Fatal("the run carries no selection fingerprint")
+	}
+
+	if err := st.SetZFSExcludedChildren(d.ID, []string{zfsChild}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.BackupZFSDataset(context.Background(), d.ID); err != nil {
+		t.Fatalf("second backup: %v", err)
+	}
+	series, err = st.ItemSeries(d.ID, "backup", time.Now().Unix()+60, 10)
+	if err != nil || len(series) != 2 {
+		t.Fatalf("item series = %+v, %v", series, err)
+	}
+	if series[0].SelectionFP == nil || *series[0].SelectionFP == *first.SelectionFP {
+		t.Fatal("excluding a child left the fingerprint unchanged, so the dataset it dropped would read as lost data")
 	}
 }
 

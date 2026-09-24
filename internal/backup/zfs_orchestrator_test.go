@@ -101,6 +101,8 @@ type fakeZFSRestic struct {
 	errs    map[string]error
 	onCall  func(dataset string)
 	summary backup.ZFSBackupSummary
+	// byDataset answers for one dataset instead of summary.
+	byDataset map[string]backup.ZFSBackupSummary
 }
 
 func (f *fakeZFSRestic) BackupDir(_ context.Context, repo, dir string, tags []string, excludes ...string) (backup.ZFSBackupSummary, error) {
@@ -114,6 +116,9 @@ func (f *fakeZFSRestic) BackupDir(_ context.Context, repo, dir string, tags []st
 		return backup.ZFSBackupSummary{}, err
 	}
 	sum := f.summary
+	if own, ok := f.byDataset[dataset]; ok {
+		sum = own
+	}
 	sum.SnapshotID = fmt.Sprintf("snap%d", len(f.calls))
 	return sum, nil
 }
@@ -407,6 +412,91 @@ func TestBackupZFSItemSumsMemberBytesAndReportsTheRootSnapshot(t *testing.T) {
 	}
 	if plex.BytesAdded != 1024 || plex.FilesNew != 3 || plex.FilesChanged != 1 || plex.FilesUnmodified != 7 {
 		t.Fatalf("plex counters = %+v, want restic's own numbers", plex)
+	}
+}
+
+// Anomaly detection watches every dataset of a tree on its own, so each member
+// keeps what restic read of it. An empty snapshot directory is a dataset that
+// holds nothing, not one nobody looked at.
+func TestZFSRunMembersCarryTheSourceMetrics(t *testing.T) {
+	f := newZFSFixture()
+	parent := true
+	f.restic.byDataset = map[string]backup.ZFSBackupSummary{
+		zfsTestRoot: {BytesAdded: 100, FilesNew: 1, Measured: true, SourceBytes: 4000, SourceFiles: 40, ResticMS: 300, HasParent: &parent},
+		zfsTestDB:   {BytesAdded: 20, FilesNew: 2, Measured: true, SourceBytes: 900, SourceFiles: 9, ResticMS: 200},
+	}
+	f.emptyDirs[zfsPlexSnapD] = true
+	f.deps.Skipped = []backup.ZFSMemberResult{{Dataset: "cache/appdata/old", Outcome: "not-mounted"}}
+	f.deps.SelectionFP = "fp-tree"
+
+	summary, err := f.run(t, t.Context())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	root := f.recorder.member(t, zfsTestRoot)
+	if !root.Measured || root.SourceBytes != 4000 || root.SourceFiles != 40 {
+		t.Fatalf("root = %+v, want its own source figures", root)
+	}
+	if root.HasParent == nil || !*root.HasParent {
+		t.Fatalf("root parent flag = %v, want what restic reported", root.HasParent)
+	}
+	if db := f.recorder.member(t, zfsTestDB); !db.Measured || db.SourceBytes != 900 || db.SourceFiles != 9 {
+		t.Fatalf("db = %+v, want its own source figures", db)
+	}
+	plex := f.recorder.member(t, zfsTestPlex)
+	if plex.Outcome != "empty" || !plex.Measured || plex.SourceBytes != 0 || plex.SourceFiles != 0 {
+		t.Fatalf("empty member = %+v, want a measured zero", plex)
+	}
+	if old := f.recorder.member(t, "cache/appdata/old"); old.Measured || old.Outcome != "not-mounted" {
+		t.Fatalf("skipped member = %+v, want its skip code and no measurement", old)
+	}
+
+	if !summary.Measured {
+		t.Fatal("the run's summary is unmeasured although every member it read was measured")
+	}
+	if summary.SourceBytes != 4900 || summary.SourceFiles != 49 || summary.FilesNew != 3 || summary.ResticMS != 500 {
+		t.Fatalf("summary = %+v, want the members summed", summary)
+	}
+	if summary.Bytes != 120 {
+		t.Fatalf("summary bytes = %d, want 120", summary.Bytes)
+	}
+	if summary.SelectionFP != "fp-tree" {
+		t.Fatalf("summary fingerprint = %q, want the item's", summary.SelectionFP)
+	}
+	finished := f.runs.finishCalls[len(f.runs.finishCalls)-1]
+	if finished.sum.SourceBytes != 4900 || finished.sum.SelectionFP != "fp-tree" {
+		t.Fatalf("the run finished with %+v, want the summed summary", finished.sum)
+	}
+}
+
+func TestZFSRunWithOnlyEmptyMembersIsAMeasuredZero(t *testing.T) {
+	f := newZFSFixture()
+	for _, dir := range []string{zfsRootSnapD, zfsPlexSnapD, zfsDBSnapDir} {
+		f.emptyDirs[dir] = true
+	}
+	summary, err := f.run(t, t.Context())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !summary.Measured || summary.SourceBytes != 0 || summary.SourceFiles != 0 {
+		t.Fatalf("summary = %+v, want a measured zero", summary)
+	}
+}
+
+func TestZFSRunWithAnUnmeasuredMemberRecordsNoTotals(t *testing.T) {
+	f := newZFSFixture()
+	f.restic.summary = backup.ZFSBackupSummary{BytesAdded: 10, Measured: true, SourceBytes: 100, SourceFiles: 1}
+	f.restic.byDataset = map[string]backup.ZFSBackupSummary{zfsTestDB: {BytesAdded: 10}}
+	summary, err := f.run(t, t.Context())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if summary.Measured {
+		t.Fatalf("summary = %+v, want no totals when one member went unmeasured", summary)
+	}
+	if db := f.recorder.member(t, zfsTestDB); db.Measured {
+		t.Fatalf("db = %+v, want it unmeasured", db)
 	}
 }
 

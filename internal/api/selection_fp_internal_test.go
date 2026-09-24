@@ -80,6 +80,7 @@ func TestSelectionFingerprintFollowsTheConfiguredSelection(t *testing.T) {
 			{Kind: "flash"},
 			{Kind: "config"},
 			{Kind: "dbdump", Engine: "postgres", Scope: "one-database"},
+			zfsSelection(store.ZFSDataset{Dataset: "tank/media", ExcludedChildren: []string{"tank/media/cache"}}),
 		} {
 			fp := selectionFingerprint(sel)
 			if other, clash := seen[fp]; clash {
@@ -90,6 +91,21 @@ func TestSelectionFingerprintFollowsTheConfiguredSelection(t *testing.T) {
 		if selectionFingerprint(itemSelection{Kind: "dbdump", Engine: "postgres", Scope: "one-database"}) ==
 			selectionFingerprint(itemSelection{Kind: "dbdump", Engine: "postgres"}) {
 			t.Fatal("a dump narrowed to one database fingerprints like a dump of all of them")
+		}
+	})
+
+	t.Run("a ZFS tree fingerprints its root, its excluded children and its excludes", func(t *testing.T) {
+		tree := store.ZFSDataset{Dataset: "tank/media", Excludes: []string{"*.part"}}
+		base := selectionFingerprint(zfsSelection(tree))
+		for name, changed := range map[string]store.ZFSDataset{
+			"another root":       {Dataset: "tank/photos", Excludes: tree.Excludes},
+			"an excluded child":  {Dataset: tree.Dataset, Excludes: tree.Excludes, ExcludedChildren: []string{"tank/media/cache"}},
+			"one more exclude":   {Dataset: tree.Dataset, Excludes: []string{"*.part", "*.tmp"}},
+			"no exclude pattern": {Dataset: tree.Dataset},
+		} {
+			if selectionFingerprint(zfsSelection(changed)) == base {
+				t.Fatalf("%s left the fingerprint unchanged", name)
+			}
 		}
 	})
 }

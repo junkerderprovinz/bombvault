@@ -46,13 +46,20 @@ type ZFSSnapshotter interface {
 }
 
 // ZFSBackupSummary is what restic reports for one member. It carries the file
-// counters the run records per member, which the domain's baselines read.
+// counters the run records per member, which the domain's baselines read, and
+// the totals anomaly detection watches each dataset by. Measured says whether
+// restic reported those totals at all, as it does on Summary.
 type ZFSBackupSummary struct {
 	SnapshotID      string
 	BytesAdded      int64
 	FilesNew        int64
 	FilesChanged    int64
 	FilesUnmodified int64
+	Measured        bool
+	SourceBytes     int64
+	SourceFiles     int64
+	ResticMS        int64
+	HasParent       *bool
 }
 
 // ZFSRestic backs up the contents of a snapshot directory as the snapshot's own
@@ -86,7 +93,9 @@ type ZFSMemberPlan struct {
 	IsNew               bool
 }
 
-// ZFSMemberResult is what a run records per member.
+// ZFSMemberResult is what a run records per member. Measured is false for a
+// member restic never read, whose source figures are then unknown rather than
+// zero.
 type ZFSMemberResult struct {
 	Dataset         string
 	Outcome         string
@@ -97,6 +106,10 @@ type ZFSMemberResult struct {
 	FilesChanged    int64
 	FilesUnmodified int64
 	DurationMS      int64
+	Measured        bool
+	SourceBytes     int64
+	SourceFiles     int64
+	HasParent       *bool
 }
 
 // ZFSRunRecorder stores the run's snapshot, its consistency window and the
@@ -118,6 +131,9 @@ type ZFSBackupDeps struct {
 	TargetID string
 	// Excludes are the item's patterns, relative to its logical tree.
 	Excludes []string
+	// SelectionFP fingerprints what the item is configured to back up, and
+	// travels on the run's summary like every other item's.
+	SelectionFP string
 	// Now names the snapshot; Clock measures durations and the destroy budget.
 	Now    func() time.Time
 	Clock  func() time.Time
@@ -255,7 +271,9 @@ func (d ZFSBackupDeps) backupMembers(ctx context.Context, runID, snap string) (S
 	}
 	split := SplitExcludes(d.Excludes, relPaths)
 
-	var summary Summary
+	// The tree is measured when every member it read was, so a tree whose
+	// datasets were all empty is a measured zero.
+	summary := Summary{Measured: true, SelectionFP: d.SelectionFP}
 	var failures []string
 	for i, m := range d.Members {
 		if ctx.Err() != nil {
@@ -267,13 +285,13 @@ func (d ZFSBackupDeps) backupMembers(ctx context.Context, runID, snap string) (S
 			break
 		}
 		start := d.Clock()
-		res := d.backupMember(ctx, m, snap, split[m.RelPath])
+		res, read := d.backupMember(ctx, m, snap, split[m.RelPath])
 		res.DurationMS = d.Clock().Sub(start).Milliseconds()
 		d.addMember(runID, res)
 
 		switch res.Outcome {
 		case outcomeBackedUp:
-			summary.Bytes += res.BytesAdded
+			summary = summary.Plus(read)
 			// The root's restic snapshot identifies the restore point; a tree
 			// whose root could not be read falls back to its first member.
 			if summary.SnapshotID == "" || m.RelPath == "/" {
@@ -284,10 +302,15 @@ func (d ZFSBackupDeps) backupMembers(ctx context.Context, runID, snap string) (S
 			failures = append(failures, memberFailure(res))
 		}
 	}
+	if len(failures) > 0 {
+		summary.Measured = false
+	}
 	return summary, failures
 }
 
-func (d ZFSBackupDeps) backupMember(ctx context.Context, m ZFSMemberPlan, snap string, excludes []string) ZFSMemberResult {
+// backupMember reads one member and returns what the run records for it,
+// together with the member's share of the run's summary.
+func (d ZFSBackupDeps) backupMember(ctx context.Context, m ZFSMemberPlan, snap string, excludes []string) (ZFSMemberResult, Summary) {
 	res := ZFSMemberResult{Dataset: m.Dataset, IsNew: m.IsNew}
 	snapDir := m.ContainerMountpoint + "/.zfs/snapshot/" + snap
 
@@ -299,19 +322,21 @@ func (d ZFSBackupDeps) backupMember(ctx context.Context, m ZFSMemberPlan, snap s
 	}
 	if err := d.Visible(ctx, m.Dataset, snap, snapDir); err != nil {
 		res.Outcome = refusalCode(err, codeSnapshotNotVisible)
-		return res
+		return res, Summary{}
 	}
 	empty, err := d.DirEmpty(snapDir)
 	if err != nil {
 		log.Printf("zfs backup: reading the snapshot of %s failed: %v", m.Dataset, err)
 		res.Outcome = codeSnapshotNotVisible
-		return res
+		return res, Summary{}
 	}
 	if empty {
 		// restic fails on an empty source, and a dataset may legitimately hold
-		// nothing at this instant.
+		// nothing at this instant. That is a measurement of nothing, which is
+		// what an emptied dataset has to look like to anomaly detection.
 		res.Outcome = outcomeEmpty
-		return res
+		res.Measured = true
+		return res, Summary{Measured: true}
 	}
 
 	// Exactly one tag. restic groups retention by it and finds the previous
@@ -322,7 +347,7 @@ func (d ZFSBackupDeps) backupMember(ctx context.Context, m ZFSMemberPlan, snap s
 	if err != nil {
 		log.Printf("zfs backup: reading %s failed: %v", m.Dataset, err)
 		res.Outcome = codeBackupFailed
-		return res
+		return res, Summary{}
 	}
 	res.Outcome = outcomeBackedUp
 	res.ResticSnapshot = sum.SnapshotID
@@ -330,7 +355,15 @@ func (d ZFSBackupDeps) backupMember(ctx context.Context, m ZFSMemberPlan, snap s
 	res.FilesNew = sum.FilesNew
 	res.FilesChanged = sum.FilesChanged
 	res.FilesUnmodified = sum.FilesUnmodified
-	return res
+	res.Measured = sum.Measured
+	res.HasParent = sum.HasParent
+	read := Summary{Bytes: sum.BytesAdded, Measured: sum.Measured}
+	if sum.Measured {
+		res.SourceBytes, res.SourceFiles = sum.SourceBytes, sum.SourceFiles
+		read.SourceBytes, read.SourceFiles = sum.SourceBytes, sum.SourceFiles
+		read.FilesNew, read.ResticMS = sum.FilesNew, sum.ResticMS
+	}
+	return res, read
 }
 
 func (d ZFSBackupDeps) destroy(ctx context.Context, snap string) {

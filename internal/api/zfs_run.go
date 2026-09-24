@@ -264,7 +264,7 @@ func (r zfsRunRecorder) AddMember(runID string, m backup.ZFSMemberResult) error 
 	if err := r.st.SetZFSMemberOutcome(r.itemID, m.Dataset, m.Outcome, backedUpAt); err != nil {
 		log.Printf("api: zfs: recording the outcome of %s on its tree failed: %v", m.Dataset, err)
 	}
-	return r.st.AddZFSRunMember(store.ZFSRunMember{
+	row := store.ZFSRunMember{
 		RunID:           runID,
 		Dataset:         m.Dataset,
 		Outcome:         m.Outcome,
@@ -275,7 +275,20 @@ func (r zfsRunRecorder) AddMember(runID string, m backup.ZFSMemberResult) error 
 		FilesChanged:    m.FilesChanged,
 		FilesUnmodified: m.FilesUnmodified,
 		DurationMS:      m.DurationMS,
-	})
+		HasParent:       m.HasParent,
+	}
+	if m.Measured {
+		row.SourceBytes, row.SourceFiles = &m.SourceBytes, &m.SourceFiles
+	}
+	return r.st.AddZFSRunMember(row)
+}
+
+// zfsSelection is what a ZFS item is configured to back up. The datasets
+// themselves come from the host on every run and are not part of it, so a
+// child that disappears from the pool keeps the fingerprint and reads as the
+// loss it is, while one the user excluded starts its series again.
+func zfsSelection(d store.ZFSDataset) itemSelection {
+	return itemSelection{Kind: zfsDomain, Root: d.Dataset, Children: d.ExcludedChildren, Excludes: d.Excludes}
 }
 
 // BackupZFSDataset backs up one item: its whole tree from a single recursive
@@ -335,6 +348,7 @@ func (s *Service) BackupZFSDataset(ctx context.Context, id string) (backup.Summa
 		Repo:          repo,
 		TargetID:      d.ID,
 		Excludes:      d.Excludes,
+		SelectionFP:   selectionFingerprint(zfsSelection(d)),
 		Now:           time.Now,
 		Clock:         time.Now,
 		ZFS:           zfsRunHost{h: s.zfs},

@@ -20,6 +20,8 @@ type itemSelection struct {
 	Caches   []string `json:"caches,omitempty"`
 	Engine   string   `json:"engine,omitempty"`
 	Scope    string   `json:"scope,omitempty"`
+	// Children are the datasets a ZFS item leaves out with their subtrees.
+	Children []string `json:"children,omitempty"`
 }
 
 // selectionFingerprint returns the first 16 hex characters of the SHA-256 over
@@ -29,6 +31,7 @@ func selectionFingerprint(sel itemSelection) string {
 	sel.Paths = canonicalStrings(sel.Paths)
 	sel.Excludes = canonicalStrings(sel.Excludes)
 	sel.Caches = canonicalStrings(sel.Caches)
+	sel.Children = canonicalStrings(sel.Children)
 	raw, _ := json.Marshal(sel) //nolint:errcheck // a struct of strings always marshals
 	sum := sha256.Sum256(raw)
 	return hex.EncodeToString(sum[:])[:16]
