@@ -54,9 +54,14 @@ Voor elke container kiest BombVault zelf welke bind mounts en benoemde volumes w
 - Omdat de poort opt-in is, zijn wanneer die niet is ingesteld de hele UI en API (inclusief de off-site setup, tamper-test-routes en de herstelkit) bereikbaar voor iedereen die de poort kan bereiken. Schakel de beveiliging in zodra off-site, onveranderlijke back-ups of versleuteling in gebruik zijn.
 - Draai BombVault alleen op een vertrouwd, niet-blootgesteld netwerk. Zet het voor externe toegang achter een reverse proxy die authenticatie en TLS toevoegt. Antwoorden dragen basis-beveiligingsheaders (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Achter een reverse proxy draagt elk verzoek het adres van de proxy, dus zonder `TRUSTED_PROXY` telt de inlogrem alle clients bij elkaar en sluiten de mislukte pogingen van een aanvaller ook jou buiten. Noem de proxy in `TRUSTED_PROXY` om weer per client te tellen.
+- Een reverse proxy voor BombVault moet de header `Authorization` of `X-API-Key` doorgeven aan `/mcp` en mag de antwoorden niet bufferen, anders kunnen assistenten geen verbinding maken. Zie [MCP-server](mcp.md#tls).
 - Met `HTTP_ONLY=true` verliest de sessiecookie zijn `Secure`-vlag (dat moet, om over platte HTTP te werken), dus schakel het wachtwoord alleen achter een TLS-terminerende proxy in als vertrouwelijkheid ertoe doet.
 - De VM-back-up-SSH-verbinding vertrouwt de host key bij het eerste contact (TOFU) en pint hem daarna vast. Verifieer de host key van de host out-of-band als je container-naar-host-pad niet vertrouwd is.
 - Back-ups worden door restic versleuteld wanneer versleuteling is ingeschakeld (Instellingen; standaard aan), met de sleutel afgeleid van `APP_KEY`.
+
+## MCP-server {#mcp-server}
+
+De MCP-server heeft geen omgevingsvariabele nodig. Je schakelt hem in door een sleutel aan te maken onder **Instellingen, Systeem, MCP-server**, en hij antwoordt op `/mcp` op dezelfde poort als de webinterface (bijvoorbeeld `https://192.168.1.10:3443/mcp`). Zonder actieve sleutel antwoordt dat pad met `404`. Clients, certificaten en grenzen staan op [MCP-server](mcp.md).
 
 ## VM-back-up via SSH
 

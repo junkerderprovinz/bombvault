@@ -89,6 +89,10 @@ Depois da atualização, o BombVault lê uma vez o tamanho dos backups anteriore
 
 Na partilha de utilizador do Unraid (`/mnt/user`) o espaço livre é o de todo o array, não o de um disco. Os repositórios remotos só são medidos através de remotes rclone que indicam o seu espaço livre; os repositórios S3, B2, REST e SFTP não têm valor e aparecem como não medidos no cartão **Anomalias**.
 
+## Um assistente de IA não consegue ligar-se
+
+A página [Servidor MCP](mcp.md#troubleshooting) explica o que significa cada código de estado e cada recusa do ponto de ligação MCP, e o que fazer.
+
 ## O container continua a reiniciar ou parece não-saudável
 
 O BombVault reporta saudável/não-saudável a partir do seu próprio `/api/health`. Uma ferramenta de auto-recuperação (como o Autoheal) pode reiniciá-lo automaticamente se o motor alguma vez encravar. Verifique o registo do container e o relatório `/spike` para a causa subjacente.

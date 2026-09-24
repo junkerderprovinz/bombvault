@@ -89,6 +89,10 @@ Etter oppgraderingen leser BombVault én gang størrelsen på tidligere sikkerhe
 
 På Unraids brukershare (`/mnt/user`) er den ledige plassen hele arrayets, ikke én disks. Eksterne repositorier måles bare via rclone-remoter som oppgir ledig plass; S3-, B2-, REST- og SFTP-repositorier har ikke noe tall og står som ikke målt i kortet **Avvik**.
 
+## En AI-assistent får ikke koblet til
+
+Siden [MCP-server](mcp.md#troubleshooting) viser hva hver statuskode og hvert avslag fra MCP-endepunktet betyr, og hva du kan gjøre med det.
+
 ## Containeren fortsetter å starte på nytt eller ser usunn ut
 
 BombVault rapporterer sunn/usunn fra sin egen `/api/health`. Et auto-heal-verktøy (som Autoheal) kan starte den på nytt automatisk hvis motoren noen gang skulle sette seg fast. Sjekk containerloggen og `/spike`-rapporten for den underliggende årsaken.

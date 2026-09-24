@@ -89,6 +89,10 @@ Na de update leest BombVault één keer de groottes van eerdere back-ups uit elk
 
 Op de Unraid-gebruikersshare (`/mnt/user`) is de vrije ruimte die van de hele array, niet van één schijf. Externe repositories worden alleen gemeten via rclone-remotes die hun vrije ruimte melden; S3-, B2-, REST- en SFTP-repositories hebben geen waarde en staan als niet gemeten op de kaart **Anomalieën**.
 
+## Een AI-assistent krijgt geen verbinding
+
+De pagina [MCP-server](mcp.md#troubleshooting) zet op een rij wat elke statuscode en elke weigering van het MCP-eindpunt betekent en wat je eraan kunt doen.
+
 ## De container blijft herstarten of ziet er unhealthy uit
 
 BombVault meldt healthy/unhealthy vanuit zijn eigen `/api/health`. Een auto-heal-tool (zoals Autoheal) kan hem automatisch herstarten als de engine ooit vastloopt. Controleer het containerlog en het `/spike`-rapport voor de onderliggende oorzaak.
