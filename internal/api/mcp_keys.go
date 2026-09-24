@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
@@ -383,11 +384,18 @@ func (h *Handler) handleAddMCPCertificateName(w http.ResponseWriter, r *http.Req
 // recordMCPKeyChange logs the mutation and, for a change worth waking the
 // operator for, notifies as well. The log line carries the id and the hint and
 // never the label, because it ends up in the diagnostics bundle.
+//
+// The notification is sent beside the response, not in front of it: a create
+// and a rotate carry the one-time key, and an endpoint that swallows the
+// connection would otherwise hold that key back for the notifier's whole
+// budget and leave an unusable row behind if the client gave up first.
 func (h *Handler) recordMCPKeyChange(r *http.Request, k store.MCPKey, logged, event string) {
 	log.Printf("api: mcp: key %s ...%s %s", k.ID, k.Hint, logged)
-	if event != "" {
-		h.svc.notifyMCPKeyChange(r.Context(), event, k.Label, k.Hint, loginClientKey(r))
+	if event == "" {
+		return
 	}
+	ctx, addr := context.WithoutCancel(r.Context()), loginClientKey(r)
+	go h.svc.notifyMCPKeyChange(ctx, event, k.Label, k.Hint, addr)
 }
 
 // newMCPKeyID returns a 32 hex character id. The caller mints it because the
