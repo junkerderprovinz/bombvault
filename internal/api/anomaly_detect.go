@@ -283,7 +283,7 @@ func detectNewData(in itemInput, p sensParams) ([]finding, int) {
 		}
 		samples := newDataSamples(rows, isSample, i)
 		switch {
-		case rewroteMostOfTheSource(run, len(samples), ceiling):
+		case rewroteMostOfTheSource(run, ceiling):
 			found = append(found, rewriteFinding(run, rows[i-1], len(samples)))
 		case freshUpload(run) && allFilesNew(run):
 			found = append(found, fullUploadFinding(run, len(samples)))
@@ -365,9 +365,11 @@ func newDataSpike(rows []store.SeriesRun, samples []int, i int, p sensParams, ce
 // rewroteMostOfTheSource is true when at least half of everything the item backs
 // up was stored again although an earlier backup existed, the trace ransomware
 // leaves when it encrypts files in place. An unknown parent counts as one, so a
-// failed parent probe cannot silence the rule.
-func rewroteMostOfTheSource(run store.SeriesRun, samples int, ceiling float64) bool {
-	if freshUpload(run) || run.SourceBytes == nil || samples == 0 {
+// failed parent probe cannot silence the rule. It judges a run against its own
+// figures, so it holds from the second backup on, where the rules that need a
+// baseline are still learning.
+func rewroteMostOfTheSource(run store.SeriesRun, ceiling float64) bool {
+	if freshUpload(run) || run.SourceBytes == nil {
 		return false
 	}
 	observed := float64(run.Bytes)

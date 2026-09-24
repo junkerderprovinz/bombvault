@@ -288,6 +288,26 @@ func TestNewDataRewriteIsCritical(t *testing.T) {
 	}
 }
 
+// Ransomware does not wait for a series to grow a history. A second backup
+// that stored most of the source again is the rule's own case, whatever the
+// spike rule still needs to know about the item.
+func TestRewriteIsRaisedOnTheSecondBackup(t *testing.T) {
+	first := mkRun("first", anomalyNow-anomalyDay, "success", 40<<30, withParent(false))
+	second := mkRun("second", anomalyNow, "success", 30<<30, withParent(true), withSource(40<<30, 900))
+
+	found, _ := runNewData(newDataInput(after(second, []store.SeriesRun{first}), first.StartedAt-1))
+	got := onlyFinding(t, found)
+	if got.Metric != "new_data_rewrite" || got.Severity != "critical" {
+		t.Fatalf("finding = %+v", got)
+	}
+	if got.LastGoodRunID != "first" {
+		t.Fatalf("last good = %q, want the backup before the rewrite", got.LastGoodRunID)
+	}
+	if got.Samples != 0 {
+		t.Fatalf("samples = %d, want none: the rule judged one run against its parent", got.Samples)
+	}
+}
+
 func TestRewriteBelowTheNewDataFloor(t *testing.T) {
 	history := steadyRuns(3, anomalyNow-3*anomalyDay, 10<<20)
 
