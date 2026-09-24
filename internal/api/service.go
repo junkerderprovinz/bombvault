@@ -240,6 +240,9 @@ type Service struct {
 	// zfs owns the pools the ZFS domain snapshots. Optional; nil refuses every
 	// entry point of that domain with ssh-missing rather than skipping silently.
 	zfs zfs.Host
+	// zfsHostLast is the last host listing that worked, guarded by zfsHostMu.
+	zfsHostMu   sync.Mutex
+	zfsHostLast *zfsHostListing
 	// hostShell runs the "Backup Everything" global pre/post hook commands in
 	// BombVault's OWN container (see hostshell.go). Defaulted to the real
 	// execHostShell adapter in NewService, so it is never nil in production;

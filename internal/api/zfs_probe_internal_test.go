@@ -223,7 +223,7 @@ func TestDiscoverZFSHostTreeFields(t *testing.T) {
 			`</devices></domain>`,
 	}}
 
-	res := s.DiscoverZFSHost(context.Background())
+	res := s.DiscoverZFSHost(context.Background(), true)
 	if !res.Available || res.Code != "ok" {
 		t.Fatalf("available = %v code = %q, want a usable listing", res.Available, res.Code)
 	}
@@ -264,11 +264,64 @@ func TestDiscoverZFSHostTreeFields(t *testing.T) {
 	}
 }
 
+func TestDiscoverZFSHostMarksOnlyTheDatasetThatHoldsAVMDisk(t *testing.T) {
+	s, _, host := zfsProbeFixture(t, config.Config{})
+	host.tree = []zfs.ListEntry{
+		zfsEntry("tank", "/mnt/tank"),
+		zfsEntry("tank/data", "/mnt/tank/data"),
+		zfsEntry("tank/data/photos", "/mnt/tank/data/photos"),
+		zfsEntry("tank/data/vms", "/mnt/tank/data/vms"),
+	}
+	s.virsh = &zfsFakeVirsh{domains: map[string]string{
+		"win": `<domain><devices><disk type="file" device="disk">` +
+			`<source file="/mnt/tank/data/vms/win/vdisk1.img"/><target dev="hdc"/></disk></devices></domain>`,
+	}}
+
+	res := s.DiscoverZFSHost(context.Background(), true)
+	for _, e := range res.Datasets {
+		if want := e.Dataset == "tank/data/vms"; e.VMDisk != want {
+			t.Errorf("%s vmDisk = %v, want %v: only the dataset the disk lives on holds it", e.Dataset, e.VMDisk, want)
+		}
+	}
+}
+
+func TestDiscoverZFSHostCachedAnswersFromTheLastListing(t *testing.T) {
+	s, st, host := zfsProbeFixture(t, config.Config{})
+	host.tree = zfsTwoDatasetTree()
+
+	first := s.DiscoverZFSHost(context.Background(), true)
+	if !first.Available || first.NotInItem != 2 || first.ListedAt == 0 {
+		t.Fatalf("first listing = %+v, want both datasets counted and the time kept", first)
+	}
+	host.listErr = &zfs.CmdError{Code: "ssh-unreachable", Stderr: "connection refused"}
+	zfsSeedItem(t, st, zfsRoot)
+
+	cached := s.DiscoverZFSHost(context.Background(), false)
+	if !cached.Available || cached.ListedAt != first.ListedAt {
+		t.Fatalf("cached listing = %+v, want the last one that worked", cached)
+	}
+	if cached.NotInItem != 0 {
+		t.Fatalf("notInItem = %d, want the items as they are now", cached.NotInItem)
+	}
+	lists := 0
+	for _, c := range host.recorded() {
+		if c == "list" {
+			lists++
+		}
+	}
+	if lists != 1 {
+		t.Fatalf("host listings = %d, want the cached answer to reach no host", lists)
+	}
+	if fresh := s.DiscoverZFSHost(context.Background(), true); fresh.Code != "ssh-unreachable" {
+		t.Fatalf("fresh listing code = %q, want the host's own failure", fresh.Code)
+	}
+}
+
 func TestDiscoverZFSHostUnavailable(t *testing.T) {
 	s, _, host := zfsProbeFixture(t, config.Config{LibvirtHost: "tower", LibvirtSSHUser: "root", LibvirtSSHPort: "22"})
 	host.listErr = &zfs.CmdError{Code: "zfs-permission", Stderr: "permission denied"}
 
-	res := s.DiscoverZFSHost(context.Background())
+	res := s.DiscoverZFSHost(context.Background(), true)
 	if res.Available {
 		t.Fatal("a listing the host refused must not read as available")
 	}
@@ -280,7 +333,7 @@ func TestDiscoverZFSHostUnavailable(t *testing.T) {
 	}
 
 	s.zfs = nil
-	if res := s.DiscoverZFSHost(context.Background()); res.Code != "ssh-missing" {
+	if res := s.DiscoverZFSHost(context.Background(), true); res.Code != "ssh-missing" {
 		t.Fatalf("code without a host = %q, want ssh-missing", res.Code)
 	}
 }

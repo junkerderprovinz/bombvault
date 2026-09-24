@@ -64,14 +64,16 @@ func (h *Handler) handleZFSConnection(w http.ResponseWriter, r *http.Request) {
 
 // handleZFSHostDatasets lists the pools as the host has them, with what each
 // dataset may become. The name limit travels along because a name-too-long
-// blocker's sentence states it. GET /api/zfs/host
+// blocker's sentence states it. With cached=true the last listing that worked
+// answers, which is enough for the page's counts.
+// GET /api/zfs/host?cached=true|false
 func (h *Handler) handleZFSHostDatasets(w http.ResponseWriter, r *http.Request) {
-	res := h.svc.DiscoverZFSHost(r.Context())
+	res := h.svc.DiscoverZFSHost(r.Context(), r.URL.Query().Get("cached") != "true")
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 		"available": res.Available, "code": res.Code, "target": res.Target,
 		"datasets": res.Datasets, "hiddenLegacy": res.HiddenLegacy,
 		"unusedZvols": res.UnusedZvols, "notInItem": res.NotInItem, "truncated": res.Truncated,
-		"maxNameLength": zfs.MaxDatasetNameLen,
+		"listedAt": res.ListedAt, "maxNameLength": zfs.MaxDatasetNameLen,
 	}))
 }
 
