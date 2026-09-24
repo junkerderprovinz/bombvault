@@ -3,6 +3,7 @@ package store_test
 import (
 	"database/sql"
 	"errors"
+	"maps"
 	"slices"
 	"testing"
 
@@ -313,6 +314,44 @@ func TestMirrorCompanionCredsCopiesTheTargetsCredentials(t *testing.T) {
 	}
 	if changed, err := r.MirrorCompanionCreds("missing"); err != nil || changed {
 		t.Fatalf("an unknown target changed something: %v, %v", changed, err)
+	}
+}
+
+func TestSwapCompanionCredsNeedsTheSelectorItReplaces(t *testing.T) {
+	r, _ := migratedStore(t)
+	target := richTarget(t, r)
+	direct := store.SeedCompanion(t, r, target)
+	if swapped, err := r.SwapCompanionCreds(direct.ID, "set-2", "kept"); err != nil || swapped {
+		t.Fatalf("a swap from a selector the row does not name = %v, %v", swapped, err)
+	}
+	if swapped, err := r.SwapCompanionCreds(target.ID, "set-1", "kept"); err != nil || swapped {
+		t.Fatalf("a swap on the target itself = %v, %v", swapped, err)
+	}
+	if swapped, err := r.SwapCompanionCreds(direct.ID, "set-1", "kept"); err != nil || !swapped {
+		t.Fatalf("SwapCompanionCreds = %v, %v", swapped, err)
+	}
+	if got, err := r.GetNamedRepo(direct.ID); err != nil || got.CredsRef != "kept" {
+		t.Fatalf("direct row = %+v, %v", got, err)
+	}
+}
+
+func TestCredsRefsInUseNamesEveryRowThatPointsAtASet(t *testing.T) {
+	r, _ := migratedStore(t)
+	target := richTarget(t, r)
+	store.SeedCompanion(t, r, target)
+	if _, err := r.UpsertOffsiteTarget(store.OffsiteTarget{Role: store.RoleRepo, Name: "cold", Repo: "b2:bkt:cold", CredsRef: "set-3", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.CreatePullSource(store.PullSource{Name: "peer", Repo: "rest:http://peer:8000/bv", CredsRef: "set-4"}); err != nil {
+		t.Fatal(err)
+	}
+	store.SeedOffsiteTarget(t, r, "vms", "b2:bkt:vms")
+	got, err := r.CredsRefsInUse()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := map[string]bool{"set-1": true, "set-3": true, "set-4": true}; !maps.Equal(got, want) {
+		t.Fatalf("CredsRefsInUse = %v, want %v", got, want)
 	}
 }
 

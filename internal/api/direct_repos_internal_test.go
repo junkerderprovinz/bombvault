@@ -1224,6 +1224,9 @@ func TestSharedCloudCredentialsAreProbedOnDirectRepositories(t *testing.T) {
 	empty := f.direct(f.target("vms", "B2 vms", "b2:bkt:vms"))
 	f.eng.opens[d.Repo] = false
 	f.eng.opens[empty.Repo] = false
+	if codes := warningCodes(t, f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": []any{}})); len(codes) != 0 {
+		t.Fatalf("a direct repository on the shared credentials was probed for a set change: %v", codes)
+	}
 	res := f.do("POST", "/api/cloud", map[string]any{
 		"s3KeyId": "k", "s3Secret": "s", "s3Region": "", "restUser": "", "restPassword": "", "s3StorageClass": "",
 	})
@@ -1231,7 +1234,298 @@ func TestSharedCloudCredentialsAreProbedOnDirectRepositories(t *testing.T) {
 	if codes := warningCodes(t, res); !slices.Equal(codes, []string{"direct-creds-kept"}) {
 		t.Fatalf("warnings = %v", codes)
 	}
-	if codes := warningCodes(t, f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": []any{}})); len(codes) != 0 {
-		t.Fatalf("a direct repository on the shared credentials was probed for a set change: %v", codes)
+}
+
+// restDirect is a rest-server target on the credential set bv204rest, whose
+// password is old, and its direct repository, which a container uses.
+func (f *placementFixture) restDirect() (store.OffsiteTarget, store.OffsiteTarget) {
+	f.t.Helper()
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{{ID: "bv204rest", Name: "bv204 rest", CloudCreds: CloudCreds{RESTUser: "bv", RESTPassword: "old"}}}); err != nil {
+		f.t.Fatal(err)
+	}
+	target := f.target("containers", "bv204 rest", "rest:http://bv204:8000/bv/containers")
+	target.CredsRef = "bv204rest"
+	target, err := f.st.UpsertOffsiteTarget(target)
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	d := f.direct(target)
+	f.container("web", d.ID)
+	return target, d
+}
+
+// runsWith is the environment a backup into a containers direct repository gets,
+// built the way the backup builds it.
+func (f *placementFixture) runsWith(direct store.OffsiteTarget) []string {
+	f.t.Helper()
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	loc, err := f.svc.resolveRepo(direct.Repo)
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	return f.svc.primaryModeFor(settings, "containers", loc).Env
+}
+
+func (f *placementFixture) storedCredSets() []CloudCredSet {
+	f.t.Helper()
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	sets, err := f.svc.decodeCloudCredSets(settings)
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	return sets
+}
+
+func (f *placementFixture) keptFor(directID string) []CloudCredSet {
+	f.t.Helper()
+	return slices.DeleteFunc(f.storedCredSets(), func(c CloudCredSet) bool { return c.KeptFor != directID })
+}
+
+// credSetDrafts is the list the Settings page posts back: every set as it read
+// it, secrets blank, and without fields it does not know.
+func (f *placementFixture) credSetDrafts() []map[string]any {
+	f.t.Helper()
+	listed, ok := f.do("GET", "/api/cloud/creds-sets", nil)["sets"].([]any)
+	if !ok {
+		f.t.Fatal("no sets list")
+	}
+	out := make([]map[string]any, 0, len(listed))
+	for _, l := range listed {
+		s := l.(map[string]any)
+		out = append(out, map[string]any{
+			"id": s["id"], "name": s["name"], "s3KeyId": s["s3KeyId"], "s3Secret": "", "s3Region": s["s3Region"],
+			"restUser": s["restUser"], "restPassword": "", "s3StorageClass": s["s3StorageClass"],
+		})
+	}
+	return out
+}
+
+func withPassword(drafts []map[string]any, id, password string) []map[string]any {
+	for _, d := range drafts {
+		if d["id"] == id {
+			d["restPassword"] = password
+		}
+	}
+	return drafts
+}
+
+func TestADirectRepositoryKeepsTheSetValuesItOpenedWith(t *testing.T) {
+	f := newPlacementFixture(t)
+	target, d := f.restDirect()
+	f.eng.opens[d.Repo] = false
+	res := f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": withPassword(f.credSetDrafts(), "bv204rest", "wrong")})
+	if codes := warningCodes(t, res); !slices.Equal(codes, []string{"direct-creds-kept"}) {
+		t.Fatalf("warnings = %v", codes)
+	}
+	kept := f.keptFor(d.ID)
+	if len(kept) != 1 || kept[0].RESTUser != "bv" || kept[0].RESTPassword != "old" || kept[0].Name != "bv204 rest direct (kept credentials)" {
+		t.Fatalf("kept sets = %+v, want one holding the old password", kept)
+	}
+	if got, err := f.st.GetNamedRepo(d.ID); err != nil || got.CredsRef != kept[0].ID {
+		t.Fatalf("direct repository = %+v, %v; want it on the kept set %s", got, err, kept[0].ID)
+	}
+	if env := f.runsWith(d); !slices.Contains(env, "RESTIC_REST_PASSWORD=old") || !slices.Contains(env, "RESTIC_REST_USERNAME=bv") {
+		t.Fatalf("a backup into the direct repository runs with %v, want the old password", env)
+	}
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if env := f.svc.offsiteModeForTarget(settings, target).Env; !slices.Contains(env, "RESTIC_REST_PASSWORD=wrong") {
+		t.Fatalf("the target runs with %v, want the saved password", env)
+	}
+}
+
+func TestADirectRepositoryKeepsTheSharedValuesItOpenedWith(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCreds(CloudCreds{RESTUser: "bv", RESTPassword: "old"}); err != nil {
+		t.Fatal(err)
+	}
+	d := f.direct(f.target("containers", "bv204 rest", "rest:http://bv204:8000/bv/containers"))
+	f.container("web", d.ID)
+	f.eng.opens[d.Repo] = false
+	res := f.do("POST", "/api/cloud", map[string]any{"restUser": "bv", "restPassword": "wrong"})
+	if codes := warningCodes(t, res); !slices.Equal(codes, []string{"direct-creds-kept"}) {
+		t.Fatalf("warnings = %v", codes)
+	}
+	kept := f.keptFor(d.ID)
+	if len(kept) != 1 || kept[0].RESTPassword != "old" {
+		t.Fatalf("kept sets = %+v, want one holding the old password", kept)
+	}
+	if got, err := f.st.GetNamedRepo(d.ID); err != nil || got.CredsRef != kept[0].ID {
+		t.Fatalf("direct repository = %+v, %v; want it on the kept set %s", got, err, kept[0].ID)
+	}
+	if env := f.runsWith(d); !slices.Contains(env, "RESTIC_REST_PASSWORD=old") {
+		t.Fatalf("a backup into the direct repository runs with %v, want the old password", env)
+	}
+}
+
+func TestCredentialsThatOpenADirectRepositoryAgainRetireItsKeptSet(t *testing.T) {
+	f := newPlacementFixture(t)
+	_, d := f.restDirect()
+	spare := map[string]any{"id": "spare", "name": "Spare", "restUser": "u", "restPassword": "mine"}
+	f.eng.opens[d.Repo] = false
+	f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": append(withPassword(f.credSetDrafts(), "bv204rest", "wrong"), spare)})
+	if len(f.keptFor(d.ID)) != 1 {
+		t.Fatalf("nothing kept: %+v", f.storedCredSets())
+	}
+
+	f.eng.opens[d.Repo] = true
+	res := f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": withPassword(f.credSetDrafts(), "bv204rest", "right")})
+	if codes := warningCodes(t, res); len(codes) != 0 {
+		t.Fatalf("warnings = %v", codes)
+	}
+	if got, err := f.st.GetNamedRepo(d.ID); err != nil || got.CredsRef != "bv204rest" {
+		t.Fatalf("direct repository = %+v, %v; want it back on bv204rest", got, err)
+	}
+	if kept := f.keptFor(d.ID); len(kept) != 0 {
+		t.Fatalf("kept sets = %+v, want none", kept)
+	}
+	ids := []string{}
+	for _, s := range f.storedCredSets() {
+		ids = append(ids, s.ID)
+		if s.ID == "spare" && s.RESTPassword != "mine" {
+			t.Fatalf("the user's set changed: %+v", s)
+		}
+	}
+	if !slices.Equal(ids, []string{"bv204rest", "spare"}) {
+		t.Fatalf("sets = %v, want bv204rest and spare", ids)
+	}
+	if env := f.runsWith(d); !slices.Contains(env, "RESTIC_REST_PASSWORD=right") {
+		t.Fatalf("a backup into the direct repository runs with %v, want the new password", env)
+	}
+}
+
+func TestSharedCredentialsThatOpenADirectRepositoryAgainRetireItsKeptSet(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCreds(CloudCreds{RESTUser: "bv", RESTPassword: "old"}); err != nil {
+		t.Fatal(err)
+	}
+	d := f.direct(f.target("containers", "bv204 rest", "rest:http://bv204:8000/bv/containers"))
+	f.container("web", d.ID)
+	f.eng.opens[d.Repo] = false
+	f.do("POST", "/api/cloud", map[string]any{"restUser": "bv", "restPassword": "wrong"})
+	if len(f.keptFor(d.ID)) != 1 {
+		t.Fatalf("nothing kept: %+v", f.storedCredSets())
+	}
+
+	f.eng.opens[d.Repo] = true
+	if codes := warningCodes(t, f.do("POST", "/api/cloud", map[string]any{"restUser": "bv", "restPassword": "right"})); len(codes) != 0 {
+		t.Fatalf("warnings = %v", codes)
+	}
+	if got, err := f.st.GetNamedRepo(d.ID); err != nil || got.CredsRef != "" {
+		t.Fatalf("direct repository = %+v, %v; want it back on the shared credentials", got, err)
+	}
+	if sets := f.storedCredSets(); len(sets) != 0 {
+		t.Fatalf("sets = %+v, want none", sets)
+	}
+}
+
+func TestAKeptSetSomethingElseNamesStays(t *testing.T) {
+	f := newPlacementFixture(t)
+	_, d := f.restDirect()
+	f.eng.opens[d.Repo] = false
+	f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": withPassword(f.credSetDrafts(), "bv204rest", "wrong")})
+	kept := f.keptFor(d.ID)
+	if len(kept) != 1 {
+		t.Fatalf("nothing kept: %+v", f.storedCredSets())
+	}
+	other := f.target("vms", "bv204 vms", "rest:http://bv204:8000/bv/vms")
+	other.CredsRef = kept[0].ID
+	if _, err := f.st.UpsertOffsiteTarget(other); err != nil {
+		t.Fatal(err)
+	}
+
+	f.eng.opens[d.Repo] = true
+	f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": withPassword(f.credSetDrafts(), "bv204rest", "right")})
+	if got, err := f.st.GetNamedRepo(d.ID); err != nil || got.CredsRef != "bv204rest" {
+		t.Fatalf("direct repository = %+v, %v; want it back on bv204rest", got, err)
+	}
+	if got := f.keptFor(d.ID); len(got) != 1 || got[0].ID != kept[0].ID || got[0].RESTPassword != "old" {
+		t.Fatalf("kept sets = %+v, want the one another target names", got)
+	}
+}
+
+func TestPostingTheSetsBackKeepsWhatASetWasKeptFor(t *testing.T) {
+	f := newPlacementFixture(t)
+	_, d := f.restDirect()
+	f.eng.opens[d.Repo] = false
+	f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": withPassword(f.credSetDrafts(), "bv204rest", "wrong")})
+	kept := f.keptFor(d.ID)
+	if len(kept) != 1 {
+		t.Fatalf("nothing kept: %+v", f.storedCredSets())
+	}
+	f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": f.credSetDrafts()})
+	if got := f.keptFor(d.ID); !slices.Equal(got, kept) {
+		t.Fatalf("kept sets = %+v, want %+v", got, kept)
+	}
+}
+
+func TestCredentialsThatOpenADirectRepositoryKeepNothing(t *testing.T) {
+	f := newPlacementFixture(t)
+	_, d := f.restDirect()
+	res := f.do("POST", "/api/cloud/creds-sets", map[string]any{"sets": withPassword(f.credSetDrafts(), "bv204rest", "rotated")})
+	if codes := warningCodes(t, res); len(codes) != 0 {
+		t.Fatalf("warnings = %v", codes)
+	}
+	if sets := f.storedCredSets(); len(sets) != 1 || sets[0].ID != "bv204rest" {
+		t.Fatalf("sets = %+v, want bv204rest alone", sets)
+	}
+	if env := f.runsWith(d); !slices.Contains(env, "RESTIC_REST_PASSWORD=rotated") {
+		t.Fatalf("a backup into the direct repository runs with %v, want the new password", env)
+	}
+}
+
+// passwordEngine opens a location only with the REST password it holds for it.
+type passwordEngine struct {
+	*placementEngine
+	passwords map[string]string
+}
+
+func (e *passwordEngine) RepoOpens(_ context.Context, repo string, mode restic.Mode) bool {
+	return slices.Contains(mode.Env, "RESTIC_REST_PASSWORD="+e.passwords[repo])
+}
+
+// A direct repository that kept the shared credentials when its target moved to
+// a set of its own is probed with its own new values, not only the target's.
+func TestADirectRepositoryOnItsOwnSelectorIsProbedWithItsNewValues(t *testing.T) {
+	f := newPlacementFixture(t)
+	if err := f.svc.SetCloudCreds(CloudCreds{RESTUser: "bv", RESTPassword: "old"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.svc.SetCloudCredSets([]CloudCredSet{{ID: "other", Name: "Other", CloudCreds: CloudCreds{RESTUser: "bv", RESTPassword: "other"}}}); err != nil {
+		t.Fatal(err)
+	}
+	target := f.target("containers", "bv204 rest", "rest:http://bv204:8000/bv/containers")
+	d := f.direct(target)
+	f.container("web", d.ID)
+	eng := &passwordEngine{placementEngine: f.eng, passwords: map[string]string{d.Repo: "old"}}
+	f.svc.engine = eng
+	v := offsiteTargetToView(target)
+	v.CredsRef = "other"
+	f.do("PUT", "/api/offsite/targets/"+target.ID, v)
+	if got, err := f.st.GetNamedRepo(d.ID); err != nil || got.CredsRef != "" {
+		t.Fatalf("direct repository = %+v, %v; want it still on the shared credentials", got, err)
+	}
+
+	eng.passwords[d.Repo] = "rotated"
+	f.do("POST", "/api/cloud", map[string]any{"restUser": "bv", "restPassword": "rotated"})
+	if sets := f.storedCredSets(); len(sets) != 1 {
+		t.Fatalf("sets = %+v, want only Other: the new shared values open it", sets)
+	}
+	if env := f.runsWith(d); !slices.Contains(env, "RESTIC_REST_PASSWORD=rotated") {
+		t.Fatalf("a backup into the direct repository runs with %v, want the new shared password", env)
+	}
+
+	f.do("POST", "/api/cloud", map[string]any{"restUser": "bv", "restPassword": "typo"})
+	kept := f.keptFor(d.ID)
+	if len(kept) != 1 || kept[0].RESTPassword != "rotated" {
+		t.Fatalf("kept sets = %+v, want one holding rotated", kept)
 	}
 }

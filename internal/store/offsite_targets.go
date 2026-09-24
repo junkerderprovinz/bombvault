@@ -562,6 +562,39 @@ func (r *Repo) MirrorCompanionCreds(targetID string) (bool, error) {
 	return n > 0, err
 }
 
+// SwapCompanionCreds moves a direct repository from one credential selector to
+// another and reports whether it did. A row that no longer names from is left
+// as it is.
+func (r *Repo) SwapCompanionCreds(repoID, from, to string) (bool, error) {
+	res, err := r.db.Exec(`UPDATE offsite_targets SET creds_ref = ?
+		WHERE id = ? AND role = ? AND companion_of <> '' AND creds_ref = ?`, to, repoID, RoleRepo, from)
+	if err != nil {
+		return false, fmt.Errorf("SwapCompanionCreds: %w", err)
+	}
+	n, err := res.RowsAffected()
+	return n > 0, err
+}
+
+// CredsRefsInUse returns the credential set ids that an off-site target, a
+// named repository or a pull source names.
+func (r *Repo) CredsRefsInUse() (map[string]bool, error) {
+	rows, err := r.db.Query(`SELECT creds_ref FROM offsite_targets WHERE creds_ref <> ''
+		UNION SELECT creds_ref FROM pull_sources WHERE creds_ref <> ''`)
+	if err != nil {
+		return nil, fmt.Errorf("CredsRefsInUse: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+	out := map[string]bool{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("CredsRefsInUse: %w", err)
+		}
+		out[id] = true
+	}
+	return out, rows.Err()
+}
+
 // ConnectCompanion makes a named repository the direct repository of a target:
 // it sets the link, clears the lost label and mirrors every field, credentials
 // included, in one transaction.

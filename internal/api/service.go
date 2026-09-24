@@ -15975,6 +15975,9 @@ func (s *Service) SetCloudCreds(c CloudCreds) error {
 type CloudCredSet struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
+	// KeptFor is the id of the direct repository this set holds the values
+	// of, from before a save changed them to ones that do not open it.
+	KeptFor string `json:"keptFor,omitempty"`
 	CloudCreds
 }
 
@@ -16024,14 +16027,15 @@ func (s *Service) CloudCredSets() ([]CloudCredSet, error) {
 // SetCloudCredSets replaces the whole list of additional named credential
 // sets. Each set's secret fields follow the same keep-prior-if-blank rule as
 // SetCloudCreds (matched by ID against the previously stored set), so the UI
-// can rename a set or edit its non-secret fields without re-entering keys. A
-// set with a blank Name or a duplicate ID is rejected — both would make
+// can rename a set or edit its non-secret fields without re-entering keys.
+// KeptFor is carried over the same way, since the Settings page never sends
+// it. A set with a blank Name or a duplicate ID is rejected: both would make
 // CredsRef resolution ambiguous or the set unreachable from the UI.
 func (s *Service) SetCloudCredSets(sets []CloudCredSet) error {
 	// Same reasoning as SetCloudCreds: the keep-prior-if-blank merge reads the
-	// CURRENTLY stored sets, so it belongs in the same transaction as the write.
-	// The incoming slice is copied rather than normalized in place — the caller's
-	// value is theirs, and the merged one carries real secrets.
+	// sets stored right now, so it belongs in the same transaction as the write.
+	// The incoming slice is copied rather than normalized in place, because the
+	// caller's value is theirs and the merged one carries real secrets.
 	_, err := s.store.MutateSettings(func(settings *store.Settings) error {
 		next := make([]CloudCredSet, len(sets))
 		copy(next, sets)
@@ -16065,21 +16069,54 @@ func (s *Service) SetCloudCredSets(sets []CloudCredSet) error {
 				if next[i].RESTPassword == "" {
 					next[i].RESTPassword = old.RESTPassword
 				}
+				if next[i].KeptFor == "" {
+					next[i].KeptFor = old.KeptFor
+				}
 			}
 		}
-		if len(next) == 0 {
-			settings.CloudCredSets = ""
+		enc, err := s.encodeCloudCredSets(next)
+		if err != nil {
+			return err
+		}
+		settings.CloudCredSets = enc
+		return nil
+	})
+	return err
+}
+
+func (s *Service) encodeCloudCredSets(sets []CloudCredSet) (string, error) {
+	if len(sets) == 0 {
+		return "", nil
+	}
+	blob, err := json.Marshal(sets)
+	if err != nil {
+		return "", fmt.Errorf("marshal cloud cred sets: %w", err)
+	}
+	enc, err := secret.Encrypt(s.cfg.AppKey, blob)
+	if err != nil {
+		return "", fmt.Errorf("encrypt cloud cred sets: %w", err)
+	}
+	return base64.StdEncoding.EncodeToString(enc), nil
+}
+
+// editCloudCredSets applies edit to the stored credential sets, secrets
+// included, inside one settings mutation. A list that comes back unchanged is
+// not written, since encrypting it again would still change the row.
+func (s *Service) editCloudCredSets(edit func([]CloudCredSet) []CloudCredSet) error {
+	_, err := s.store.MutateSettings(func(settings *store.Settings) error {
+		sets, err := s.decodeCloudCredSets(*settings)
+		if err != nil {
+			return fmt.Errorf("read the credential sets: %w", err)
+		}
+		next := edit(slices.Clone(sets))
+		if slices.Equal(next, sets) {
 			return nil
 		}
-		blob, mErr := json.Marshal(next)
-		if mErr != nil {
-			return fmt.Errorf("marshal cloud cred sets: %w", mErr)
+		enc, err := s.encodeCloudCredSets(next)
+		if err != nil {
+			return err
 		}
-		enc, eErr := secret.Encrypt(s.cfg.AppKey, blob)
-		if eErr != nil {
-			return fmt.Errorf("encrypt cloud cred sets: %w", eErr)
-		}
-		settings.CloudCredSets = base64.StdEncoding.EncodeToString(enc)
+		settings.CloudCredSets = enc
 		return nil
 	})
 	return err
