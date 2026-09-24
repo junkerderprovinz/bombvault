@@ -12,8 +12,38 @@ Păstrează backupul local rapid și adaugă una sau mai multe replici off-site.
 - **Limitele de lățime de bandă** (Setări, Off-site) limitează rata de upload/download restic astfel încât replicarea să nu satureze WAN-ul tău.
 - Un **indicator de replicare** arată care domeniu se replică în timp ce rulează (pe pagina sa și pe panoul principal). Este un indicator activ, nu o bară de procente, deoarece `restic copy` nu expune niciun progres citibil de mașină.
 
-!!! note "Restaurează direct din off-site"
-    Fiecare browser de backup are un comutator **Local / Off-site**, așa că dacă un depozit local este pierdut sau corupt poți lista și restaura direct din replica off-site. Ștergerea este per sursă: eliminarea unui backup afectează doar copia pe care o vizualizezi.
+!!! note "Restaurează din orice loc"
+    Fiecare container, VM, set de fișiere, flash-ul și configurația aplicației își listează backupurile ca o singură cronologie de-a lungul tuturor locurilor unde stă o copie. O copie de siguranță trimisă în B2 apare o singură dată, marcată cu fiecare loc care o deține. O restaurare folosește primul loc pe care îl poate atinge, începând cu depozitul în care este scris elementul, și poți alege alt loc pentru fiecare rând. Locurile off-site sunt citite doar când le deschizi. Ștergerea într-un loc verifică mai întâi celelalte și spune dacă a fost ultima copie.
+
+## Amplasare per element {#placement}
+
+Fiecare card de container, VM și set de fișiere are un rând **Amplasare** cu trei segmente:
+
+- **Local** scrie elementul în depozitul arătat la **Stocat pe** și nu îl copiază nicăieri. Folosește-l pentru date care au deja o a doua copie, de exemplu o partajare care trăiește pe un NAS.
+- **Local + extern** îl scrie și acolo și îl copiază la țintele bifate la **Copiază în**, câte un chip pentru fiecare țintă off-site a domeniului. Debifează un chip și acea țintă nu mai primește nimic nou de la acest element.
+- **Doar extern** scrie elementul direct în locul de la **Trimite către**: un depozit direct alături de o țintă off-site, sau un depozit la distanță configurat în Setări, Stocare, Depozite.
+
+Locația este fixată de la prima copie de siguranță a elementului, pentru că BombVault nu mută niciodată copiile între depozite. Copiile se pot schimba oricând. O țintă care nu mai primește un element păstrează copiile pe care le are și le taie la propria retenție la următoarea rulare off-site a domeniului; **Șterge în B2** de pe card le elimină imediat. Când unele dintre acele copii nu există nicăieri altundeva, confirmarea le listează după dată și cere numele elementului. Din țintele append-only nu se poate șterge.
+
+Sub rând, cardul spune unde ajunge elementul și ce se află de fapt acolo: câte locuri îl dețin, când a fost văzută ultima dată fiecare țintă și dacă este îndeplinită regula 3-2-1. Un loc este serverul cu datele originale, fiecare țintă off-site și fiecare depozit marcat **În afara sediului**. BombVault verifică copiile și locurile; nu verifică partea de „două medii” a regulii 3-2-1.
+
+### Amplasări implicite
+
+Setări, Stocare, **Amplasări implicite** are un rând per domeniu cu aceleași trei segmente. Copiile se aplică imediat fiecărui element fără alegere proprie, și folderelor de proiect ale stack-urilor Compose. Locația se aplică unui element nou la prima lui copie de siguranță; schimbarea ei nu mută nicio copie. Înainte de salvare, rândul numește fiecare țintă care câștigă sau pierde elemente și câte instantanee înseamnă asta. **Aplică elementelor fără copii de siguranță** readuce la valoarea implicită orice element care nu are încă o copie de siguranță.
+
+O țintă off-site nouă primește orice element care nu este setat pe Local. Dialogul care o adaugă spune câte elemente și, unde se știe, cât istoric înseamnă asta, și oferă opțiunea de a lăsa deoparte elementele deja excluse din alte ținte.
+
+### Depozite directe
+
+Alegerea depozitului direct al unei ținte sub Doar extern deschide un dialog cu o locație sugerată lângă țintă, de exemplu `b2:bucket:containers-direct`, și un test de conexiune care nu creează nimic. **Creează și folosește** creează depozitul și îndreaptă elementul spre el. Un depozit direct preia cheia, clasa de stocare, limitele, setarea append-only și retenția țintei, și se schimbă odată cu ele; cardul Depozite îl arată doar în citire. Când o cheie nouă a țintei nu îl poate deschide, depozitul direct păstrează cheia pe care o are, iar salvarea spune asta. Instantaneele lui poartă eticheta `bv:direct`, iar fiecare altă trecere de retenție le păstrează, așa că un depozit direct care și-a pierdut legătura cu ținta lui nu îmbătrânește niciodată după regulile locale.
+
+### În afara sediului
+
+Un depozit numit poate fi marcat **În afara sediului** pe cardul Depozite. Depozitele la distanță pornesc marcate; dezactivează asta pentru un rest-server din aceeași clădire. Marcajul contează doar pentru locuri și pentru regula 3-2-1 de pe carduri. Nu schimbă nicio copie.
+
+### După o reconstrucție
+
+Alegerile de copiere trăiesc în propriile setări ale BombVault. După o reconstrucție prin Descoperă fără un `/config` restaurat, ele dispar, iar copierea a tot ar trimite din nou în B2 elementele pe care le lăsaseși deoparte. Replicarea off-site a fiecărui domeniu reconstruit se suspendă de aceea. Panoul principal arată asta în galben, iar Amplasările implicite oferă **Confirmă valoarea implicită** cu o previzualizare a ceea ce copiază următoarea rulare și numele din backupuri care nu au o intrare, pe care le poți lăsa deoparte acolo. Doar confirmarea încheie suspendarea; importarea unui fișier de setări readuce regulile și valorile implicite, dar nu o încheie.
 
 ## Depozite primare la distanță {#remote-primary-repositories}
 
@@ -124,6 +154,9 @@ O filă dedicată **Recuperare** conduce o instalare nouă sau reconstruită pri
 3. Îți permite să **îndrepți către depozitul tău existent** (local sau off-site).
 4. **Descoperă** containerele, VM-urile și seturile de fișiere stocate în el.
 5. **Le restaurează pe toate** (lăsate oprite, ca să le pornești deliberat), cu kitul tău de recuperare la un clic distanță.
+
+!!! note "Copiile off-site așteaptă după o reconstrucție"
+    Când pasul 4 reconstruiește intrări fără setările vechi, replicarea off-site a acelor domenii se suspendă până când amplasarea implicită este confirmată. Vezi [Amplasare per element](#placement).
 
 !!! tip "Migrare planificată versus dezastru"
     Recuperarea ghidată restaurează propriile setări ale BombVault dintr-un backup. Pentru o mutare *planificată* pe o stație nouă, poți în schimb să-ți muți configurația direct cu cardul **Export și import setări** (un fișier JSON portabil). Vezi [Configurare](configuration.md#portable-settings-export-and-import).

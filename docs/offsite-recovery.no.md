@@ -12,8 +12,38 @@ Behold den raske lokale sikkerhetskopien og legg til én eller flere eksterne re
 - **Båndbreddegrenser** (Innstillinger, Ekstern) begrenser resticts opplastings-/nedlastingshastighet så replikering ikke metter WAN-et ditt.
 - En **replikeringsindikator** viser hvilket domene som replikerer mens det pågår (på siden sin og på Dashboardet). Det er en aktiv indikator, ikke en prosentbjelke, fordi `restic copy` ikke eksponerer noen maskinlesbar fremdrift.
 
-!!! note "Gjenopprett rett fra ekstern"
-    Hver sikkerhetskopileser har en **Lokal / Ekstern**-bryter, så hvis et lokalt repo går tapt eller blir korrupt, kan du liste og gjenopprette direkte fra den eksterne replikaen. Sletting er per kilde: å fjerne en sikkerhetskopi påvirker bare kopien du ser på.
+!!! note "Gjenopprett fra hvilket som helst sted"
+    Hver container, VM, filsett, flashen og appkonfigurasjonen lister sikkerhetskopiene sine som én tidslinje på tvers av alle stedene en sikkerhetskopi finnes. En sikkerhetskopi kopiert til B2 vises én gang, merket med hvert sted som har den. En gjenoppretting bruker det første stedet den kan nå, med utgangspunkt i depotet elementet er skrevet til, og du kan velge et annet sted per rad. Eksterne steder leses bare når du åpner dem. Sletting på ett sted sjekker de andre først og sier om det var siste kopi.
+
+## Plassering per element {#placement}
+
+Hvert kort for container, VM og filsett har en **Plassering**-rad med tre segmenter:
+
+- **Lokal** skriver elementet til depotet vist under **Lagret på** og kopierer det ingen steder. Bruk det for data som allerede har en ekstra kopi, for eksempel en deling som ligger på en NAS.
+- **Lokal + ekstern** skriver det dit også og kopierer det til målene som er huket av under **Kopier til**, én chip per eksternt mål i domenet. Fjern haken fra en chip, og det målet får ingenting nytt fra dette elementet.
+- **Kun ekstern** skriver elementet rett til stedet under **Send til**: et direkte depot ved siden av et eksternt mål, eller et fjernt depot du har satt opp under Innstillinger, Lagring, Depoter.
+
+Plasseringen er fast fra elementets første sikkerhetskopi, fordi BombVault aldri flytter sikkerhetskopier mellom depoter. Kopiene kan endres når som helst. Et mål som ikke lenger får et element, beholder kopiene det har og trimmer dem til sin egen oppbevaring ved domenets neste eksterne kjøring; **Slett hos B2** på kortet fjerner dem med det samme. Når noen av de kopiene ikke finnes noe annet sted, viser bekreftelsen dem etter dato og ber om elementets navn. Append-only-mål kan det ikke slettes fra.
+
+Under raden sier kortet hvor elementet går og hva som faktisk finnes: hvor mange steder som har det, når hvert mål sist ble sett, og om 3-2-1 er oppfylt. Et sted er serveren med originaldataene, hvert eksternt mål og hvert depot merket **Utenfor bygningen**. BombVault sjekker kopier og steder; det sjekker ikke «to medier»-delen av 3-2-1.
+
+### Standardplasseringer
+
+Innstillinger, Lagring, **Standardplasseringer** har én rad per domene med de samme tre segmentene. Kopiene gjelder med det samme for hvert element uten eget valg, og for prosjektmappene til Compose-stabler. Plasseringen gjelder for et nytt element ved dets første sikkerhetskopi; å endre den flytter ingen sikkerhetskopier. Før lagring lister raden opp hvert mål som får eller mister elementer, og hvor mange øyeblikksbilder det betyr. **Bruk på elementer uten sikkerhetskopier** setter hvert element som ennå ikke har en sikkerhetskopi, tilbake på standarden.
+
+Et nytt eksternt mål mottar hvert element som ikke er satt til Lokal. Dialogen som legger det til, sier hvor mange elementer og, der det er kjent, hvor mye historikk det er, og tilbyr å utelate elementene som allerede er utelatt fra andre mål.
+
+### Direkte depoter
+
+Å velge et måls direkte depot under Kun ekstern åpner en dialog med en foreslått plassering ved siden av målet, for eksempel `b2:bucket:containers-direct`, og en tilkoblingstest som ikke oppretter noe. **Opprett og bruk** oppretter depotet og peker elementet dit. Et direkte depot overtar målets nøkkel, lagringsklasse, grenser, append-only-innstilling og oppbevaring, og endres med dem; Depoter-kortet viser det skrivebeskyttet. Når en ny nøkkel for målet ikke kan åpne det, beholder det direkte depotet nøkkelen det har, og lagringen sier fra om det. Øyeblikksbildene bærer taggen `bv:direct`, og hver annen oppbevaringsrunde lar dem være, så et direkte depot som har mistet lenken til målet sitt, aldri eldes etter de lokale reglene.
+
+### Utenfor bygningen
+
+Et navngitt depot kan merkes **Utenfor bygningen** på Depoter-kortet. Fjerndepoter starter merket; slå det av for en rest-server i samme bygning. Merket teller bare med i steder og 3-2-1 på kortene. Det endrer ingen kopi.
+
+### Etter en ombygging
+
+Kopivalgene lever i BombVaults egne innstillinger. Etter en ombygging via Oppdag uten et gjenopprettet `/config` er de borte, og å kopiere alt ville sendt elementene du hadde utelatt, til B2 igjen. Ekstern replikering av hvert ombygde domene settes derfor på pause. Dashboardet viser det i rav, og Standardplasseringer tilbyr **Bekreft standard** med en forhåndsvisning av hva neste kjøring kopierer, og navnene i sikkerhetskopiene som mangler en oppføring, som du kan utelate der. Bare bekreftelsen avslutter pausen; å importere en innstillingsfil bringer tilbake regler og standarder, men avslutter den ikke.
 
 ## Eksterne primære arkiver {#remote-primary-repositories}
 
@@ -124,6 +154,9 @@ En egen **Gjenoppretting**-fane leder en ny eller gjenoppbygd installasjon gjenn
 3. Lar deg **peke mot ditt eksisterende repo** (lokalt eller eksternt).
 4. **Oppdager** containerne, VM-ene og filsettene lagret i det.
 5. **Gjenoppretter dem alle** (la stå stoppet, så du starter dem bevisst), med gjenopprettingssettet ditt ett klikk unna.
+
+!!! note "Eksterne kopier venter etter en ombygging"
+    Når steg 4 bygger opp igjen oppføringer uten de gamle innstillingene, settes ekstern replikering av de domenene på pause til standardplasseringen er bekreftet. Se [Plassering per element](#placement).
 
 !!! tip "Planlagt migrering versus katastrofe"
     Veiledet gjenoppretting gjenoppretter BombVaults egne innstillinger fra en sikkerhetskopi. For en *planlagt* flytting til en ny boks kan du i stedet ta med konfigurasjonen din direkte via kortet **Eksporter og importer innstillinger** (en portabel JSON-fil). Se [Konfigurasjon](configuration.md#portable-settings-export-and-import).

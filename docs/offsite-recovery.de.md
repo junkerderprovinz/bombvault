@@ -12,8 +12,38 @@ Behalte das schnelle lokale Backup und füge eine oder mehrere Off-site-Repliken
 - **Bandbreitenlimits** (Einstellungen, Off-site) begrenzen die restic-Upload-/Download-Rate, sodass die Replikation dein WAN nicht auslastet.
 - Eine **Replikationsanzeige** zeigt, welcher Bereich gerade repliziert, während es läuft (auf seiner Seite und im Dashboard). Es ist eine aktive Anzeige, kein Prozentbalken, weil `restic copy` keinen maschinenlesbaren Fortschritt bereitstellt.
 
-!!! note "Direkt aus dem Off-site wiederherstellen"
-    Jeder Backup-Browser hat einen Schalter **Lokal / Off-site**, sodass du bei verlorenem oder beschädigtem lokalem Repo direkt aus der Off-site-Replik auflisten und wiederherstellen kannst. Das Löschen erfolgt pro Quelle: Ein Backup zu entfernen betrifft nur die Kopie, die du gerade ansiehst.
+!!! note "Von jedem Ort wiederherstellen"
+    Jeder Container, jede VM, jedes Ordner-Set, der Flash und die App-Konfiguration listen ihre Backups als eine Zeitleiste über alle Orte, an denen ein Backup liegt. Ein nach B2 kopiertes Backup erscheint einmal, markiert mit jedem Ort, der es hält. Eine Wiederherstellung nimmt den ersten erreichbaren Ort, beginnend mit dem Repository, in das das Element geschrieben wird, und du kannst pro Zeile einen anderen Ort wählen. Off-site-Orte werden erst gelesen, wenn du sie öffnest. Das Löschen an einem Ort prüft zuerst die anderen und sagt, ob es die letzte Kopie war.
+
+## Ablage pro Element {#placement}
+
+Jede Container-, VM- und Ordner-Set-Karte hat eine Zeile **Ablage** mit drei Segmenten:
+
+- **Lokal** schreibt das Element in das unter **Gespeichert auf** gezeigte Repository und kopiert es nirgendwohin. Nutze es für Daten, die schon eine zweite Kopie haben, zum Beispiel eine Freigabe, die auf einem NAS liegt.
+- **Lokal + Off-site** schreibt es zusätzlich dorthin und kopiert es zu den unter **Kopie nach** angehakten Zielen, ein Chip pro Off-site-Ziel des Bereichs. Ein Häkchen entfernen, und das Ziel bekommt von diesem Element nichts Neues mehr.
+- **Nur Off-site** schreibt das Element direkt an den Ort unter **Senden an**: ein direktes Repository neben einem Off-site-Ziel, oder ein entferntes Repository, das du unter Einstellungen, Speicher, Repositories einrichtest.
+
+Der Ort ist ab dem ersten Backup des Elements fest, weil BombVault Backups nie zwischen Repositories verschiebt. Die Kopien können sich jederzeit ändern. Ein Ziel, das ein Element nicht mehr bekommt, behält seine vorhandenen Kopien und kürzt sie beim nächsten Off-site-Lauf des Bereichs auf seine eigene Aufbewahrung; **In B2 löschen** auf der Karte entfernt sie sofort. Existieren manche dieser Kopien nirgendwo sonst, listet die Bestätigung sie nach Datum auf und fragt nach dem Namen des Elements. Bei Append-only-Zielen lässt sich nicht löschen.
+
+Unter der Zeile zeigt die Karte, wohin das Element geht und was tatsächlich da ist: an wie vielen Standorten es liegt, wann jedes Ziel zuletzt gesehen wurde, und ob 3-2-1 erfüllt ist. Ein Standort ist der Server mit den Originaldaten, jedes Off-site-Ziel und jedes als **Außer Haus** markierte Repository. BombVault prüft Kopien und Standorte; den Teil "zwei Medien" von 3-2-1 prüft es nicht.
+
+### Ablage-Vorgaben
+
+Einstellungen, Speicher, **Ablage-Vorgaben** haben eine Zeile pro Bereich mit denselben drei Segmenten. Die Kopien gelten sofort für jedes Element ohne eigene Wahl, sowie für die Projektordner von Compose-Stacks. Der Ort gilt für ein neues Element bei seinem ersten Backup; ihn zu ändern verschiebt keine Backups. Vor dem Speichern nennt die Zeile jedes Ziel, das Elemente gewinnt oder verliert, und wie viele Snapshots das bedeutet. **Auf Einträge ohne Backups anwenden** setzt jedes Element ohne bisheriges Backup auf die Vorgabe zurück.
+
+Ein neues Off-site-Ziel bekommt jedes Element, das nicht auf Lokal steht. Der Dialog, der es hinzufügt, nennt die Anzahl der Elemente und, wo bekannt, wie viel Verlauf das ist, und bietet an, die Elemente auszulassen, die schon bei anderen Zielen ausgeschlossen sind.
+
+### Direkte Repositories
+
+Wählst du das direkte Repository eines Ziels unter Nur Off-site, öffnet sich ein Dialog mit einem vorgeschlagenen Ort neben dem Ziel, zum Beispiel `b2:bucket:containers-direct`, und ein Verbindungstest, der nichts anlegt. **Anlegen und nutzen** erstellt das Repository und richtet das Element darauf aus. Ein direktes Repository übernimmt Schlüssel, Speicherklasse, Limits, Append-only-Einstellung und Aufbewahrung des Ziels und ändert sich mit ihnen; die Repositories-Karte zeigt es schreibgeschützt. Kann ein neuer Schlüssel für das Ziel es nicht öffnen, behält das direkte Repository seinen bisherigen Schlüssel, und das Speichern sagt das. Seine Snapshots tragen das Tag `bv:direct`, und jeder andere Aufbewahrungslauf lässt sie stehen, sodass ein direktes Repository, das die Verbindung zu seinem Ziel verloren hat, nie nach den lokalen Regeln altert.
+
+### Außer Haus
+
+Ein benanntes Repository lässt sich auf der Repositories-Karte als **Außer Haus** markieren. Entfernte Repositories starten markiert; schalte es für einen rest-server im selben Gebäude aus. Die Markierung zählt nur bei Standorten und 3-2-1 auf den Karten. Sie ändert keine Kopie.
+
+### Nach einem Neuaufbau
+
+Kopier-Entscheidungen leben in BombVaults eigenen Einstellungen. Nach einem Neuaufbau über Backups entdecken ohne wiederhergestelltes `/config` sind sie weg, und alles zu kopieren würde die Elemente, die du ausgelassen hattest, wieder nach B2 schicken. Die Off-site-Replikation jedes neu aufgebauten Bereichs pausiert deshalb. Das Dashboard zeigt es in Gelb, und Ablage-Vorgaben bieten **Vorgabe bestätigen** mit einer Vorschau, was der nächste Lauf kopiert, und den Namen in den Backups, die keinen Eintrag haben, die du dort auslassen kannst. Nur die Bestätigung beendet die Pause; eine Einstellungsdatei zu importieren bringt Regeln und Vorgaben zurück, beendet die Pause aber nicht.
 
 ## Entfernte primäre Repositories {#remote-primary-repositories}
 
@@ -124,6 +154,9 @@ Ein eigener **Recovery**-Tab führt eine frische oder neu aufgebaute Installatio
 3. Lässt dich **auf dein bestehendes Repo verweisen** (lokal oder Off-site).
 4. **Entdeckt** die darin gespeicherten Container, VMs und Dateisätze.
 5. **Stellt sie alle wieder her** (gestoppt belassen, sodass du sie bewusst startest), mit deinem Recovery-Kit einen Klick entfernt.
+
+!!! note "Off-site-Kopien warten nach einem Neuaufbau"
+    Wenn Schritt 4 Einträge ohne die alten Einstellungen neu aufbaut, pausiert die Off-site-Replikation dieser Bereiche, bis die Ablage-Vorgabe bestätigt ist. Siehe [Ablage pro Element](#placement).
 
 !!! tip "Geplante Migration versus Katastrophe"
     Die geführte Wiederherstellung stellt BombVaults eigene Einstellungen aus einem Backup wieder her. Für einen *geplanten* Umzug auf eine neue Box kannst du deine Konfiguration stattdessen direkt mit der Karte **Einstellungen exportieren und importieren** (eine portable JSON-Datei) mitnehmen. Siehe [Konfiguration](configuration.md#portable-settings-export-and-import).

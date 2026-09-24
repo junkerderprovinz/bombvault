@@ -12,8 +12,38 @@ Behåll den snabba lokala säkerhetskopian och lägg till en eller flera off-sit
 - **Bandbreddsgränser** (Inställningar, Off-site) begränsar restics uppladdnings-/nedladdningshastighet så att replikering inte mättar din WAN.
 - En **replikeringsindikator** visar vilken domän som replikeras medan det pågår (på dess sida och Översikten). Det är en aktiv indikator, inte en procentstapel, eftersom `restic copy` inte exponerar något maskinläsbart förlopp.
 
-!!! note "Återställ direkt från off-site"
-    Varje säkerhetskopieringsläsare har en omkopplare **Lokal / Off-site**, så om ett lokalt repo förloras eller skadas kan du lista och återställa direkt från off-site-repliken. Radering sker per källa: att ta bort en säkerhetskopia påverkar bara den kopia du tittar på.
+!!! note "Återställ från vilken plats som helst"
+    Varje container, VM, filuppsättning, flashen och app-konfigurationen listar sina säkerhetskopior som en enda tidslinje över alla platser en kopia ligger på. En säkerhetskopia kopierad till B2 dyker upp en gång, märkt med varje plats som har den. En återställning tar den första platsen den kan nå, med start i det arkiv objektet skrivs till, och du kan välja en annan plats per rad. Off-site-platser läses bara när du öppnar dem. Att radera på en plats kontrollerar först de andra och säger om det var den sista kopian.
+
+## Placering per objekt {#placement}
+
+Varje kort för container, VM och filuppsättning har en rad **Placering** med tre segment:
+
+- **Lokal** skriver objektet till arkivet som visas under **Sparad på** och kopierar det ingenstans. Använd det för data som redan har en andra kopia, till exempel en resurs som ligger på en NAS.
+- **Lokal + utanför platsen** skriver det dit också och kopierar det till målen ikryssade under **Kopiera till**, ett chip per off-site-mål för domänen. Kryssa ur ett chip och det målet får inget nytt från det här objektet.
+- **Endast utanför platsen** skriver objektet direkt till platsen under **Skicka till**: ett direkt arkiv bredvid ett off-site-mål, eller ett fjärrarkiv du satt upp under Inställningar, Lagring, Arkiv.
+
+Platsen är fast från objektets första säkerhetskopiering, eftersom BombVault aldrig flyttar säkerhetskopior mellan arkiv. Kopiorna kan ändras när som helst. Ett mål som inte längre får ett objekt behåller de kopior det har och trimmar dem till sin egen retention vid domänens nästa off-site-körning; **Radera hos B2** på kortet tar bort dem direkt. När några av de kopiorna inte finns någon annanstans listar bekräftelsen dem efter datum och ber om objektets namn. Från append-only-mål går det inte att radera.
+
+Under raden berättar kortet vart objektet går och vad som faktiskt finns där: hur många platser som har det, när varje mål senast sågs, och om 3-2-1 är uppfyllt. En plats är servern med originaldata, varje off-site-mål och varje arkiv märkt **Utanför lokalerna**. BombVault kontrollerar kopior och platser; det kontrollerar inte ”två medier”-delen av 3-2-1.
+
+### Standardplaceringar
+
+Inställningar, Lagring, **Standardplaceringar** har en rad per domän med samma tre segment. Kopiorna gäller genast för varje objekt utan eget val, och för projektmapparna i Compose-stackar. Platsen gäller för ett nytt objekt vid dess första säkerhetskopiering; att ändra den flyttar inga säkerhetskopior. Innan du sparar namnger raden varje mål som vinner eller förlorar objekt och hur många ögonblicksbilder det innebär. **Tillämpa på objekt utan säkerhetskopior** sätter tillbaka varje objekt som ännu inte har en säkerhetskopia till standarden.
+
+Ett nytt off-site-mål tar emot varje objekt som inte är satt till Lokal. Dialogen som lägger till det säger hur många objekt det är och, där det är känt, hur mycket historik det motsvarar, och erbjuder att lämna ute objekt som redan är uteslutna från andra mål.
+
+### Direkta arkiv
+
+Att välja ett måls direkta arkiv under Endast utanför platsen öppnar en dialog med en föreslagen plats intill målet, till exempel `b2:bucket:containers-direct`, och ett anslutningstest som inte skapar något. **Skapa och använd** skapar arkivet och pekar objektet mot det. Ett direkt arkiv tar över målets nyckel, lagringsklass, gränser, append-only-inställning och retention, och ändras med dem; kortet Arkiv visar det skrivskyddat. När en ny nyckel för målet inte kan öppna det behåller det direkta arkivet den nyckel det har, och sparningen säger det. Dess ögonblicksbilder bär taggen `bv:direct`, och varje annan retention-passering behåller dem, så ett direkt arkiv som förlorat kopplingen till sitt mål åldras aldrig efter de lokala reglerna.
+
+### Utanför lokalerna
+
+Ett namngivet arkiv kan märkas **Utanför lokalerna** på kortet Arkiv. Fjärrarkiv börjar märkta; stäng av det för en rest-server i samma byggnad. Märkningen räknas bara för platser och 3-2-1 på korten. Den ändrar ingen kopia.
+
+### Efter en ombyggnad
+
+Kopieringsval lever i BombVaults egna inställningar. Efter en ombyggnad via Identifiera utan en återställd `/config` är de borta, och att kopiera allt skulle skicka objekten du hade lämnat ute till B2 igen. Off-site-replikering för varje ombyggd domän pausar därför. Översikten visar det i gult, och Standardplaceringar erbjuder **Bekräfta standard** med en förhandsgranskning av vad nästa körning kopierar och namnen i säkerhetskopiorna som saknar en post, vilka du kan lämna ute där. Endast bekräftelsen avslutar pausen; att importera en inställningsfil tar tillbaka regler och standarder men avslutar den inte.
 
 ## Fjärranslutna primära arkiv {#remote-primary-repositories}
 
@@ -124,6 +154,9 @@ En dedikerad **Återställning**-flik lotsar en ny eller ombyggd installation ge
 3. Låter dig **peka mot ditt befintliga repo** (lokalt eller off-site).
 4. **Identifierar** containrarna, VM:arna och filuppsättningarna lagrade i det.
 5. **Återställer dem alla** (lämnade stoppade, så att du startar dem medvetet), med ditt återställningskit ett klick bort.
+
+!!! note "Off-site-kopior väntar efter en ombyggnad"
+    När steg 4 återbygger poster utan de gamla inställningarna pausar off-site-replikeringen för de domänerna tills standardplaceringen bekräftas. Se [Placering per objekt](#placement).
 
 !!! tip "Planerad migrering kontra katastrof"
     Guidad återställning återställer BombVaults egna inställningar från en säkerhetskopia. För en *planerad* flytt till en ny box kan du istället ta med din konfiguration direkt med kortet **Exportera och importera inställningar** (en portabel JSON-fil). Se [Konfiguration](configuration.md#portable-settings-export-and-import).
