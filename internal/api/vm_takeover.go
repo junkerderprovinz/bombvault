@@ -173,6 +173,7 @@ func (s *Service) UnlinkVMAlias(ctx context.Context, oldName string) error {
 	if err := s.store.UnlinkVMAlias(oldName, alias.PrevDefinition, definitionUUID(alias.PrevDefinition)); err != nil {
 		return err
 	}
+	s.relistAfterUnlink("vms", "vm:"+tg.Name)
 	s.recordLinks("vm", settings, tg.ID, oldName, ownRepo, alias.PrevDefinition)
 	if err := s.moveDRDrillTargetVMTo(tg.Name, oldName); err != nil {
 		log.Printf("api: unlink of VM %q succeeded, but moving the DR-drill pin back failed; set it again in Settings: %v", oldName, err) //nolint:gosec // G706: %q-quoted

@@ -9905,6 +9905,7 @@ func (s *Service) UnlinkContainerAlias(ctx context.Context, oldName string) erro
 	if err := s.store.UnlinkAlias(oldName, newDefinition); err != nil {
 		return err
 	}
+	s.relistAfterUnlink("containers", "container:"+currentName)
 	s.recordLinks("container", settings, tg.ID, oldName, ownRepo, newDefinition)
 	// Best-effort, as in TakeOverContainer.
 	if err := s.rewriteStopLists(currentName, oldName); err != nil {
@@ -9914,6 +9915,20 @@ func (s *Service) UnlinkContainerAlias(ctx context.Context, oldName string) erro
 		log.Printf("api: unlink %q succeeded, but moving the DR-drill target back failed; a drill may keep verifying the stale name %q until fixed: %v", oldName, currentName, err) //nolint:gosec // G706: both %q-quoted
 	}
 	return nil
+}
+
+// relistAfterUnlink lists again, in the background, each target that counted
+// copies under identity, the name an entry has just left. Some of them are the
+// entry's again and some stay with the name, and only a listing tells which.
+func (s *Service) relistAfterUnlink(domain, identity string) {
+	held, err := s.store.ItemCopiesFor(domain, identity)
+	if err != nil {
+		log.Printf("api: unlink: the copies counted under %q stay there until the next replication: %v", identity, err) //nolint:gosec // G706: identity is %q-quoted
+		return
+	}
+	for _, c := range held {
+		s.listTargetInBackground(domain, c.TargetID)
+	}
 }
 
 // refuseUnlinkWhileOldNameReused refuses to unlink a while its old name holds

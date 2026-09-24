@@ -110,6 +110,42 @@ func TestAgingNeedsAListingAndCanBeReset(t *testing.T) {
 	}
 }
 
+func TestATakeoverTakesTheCopiesItsTargetsHold(t *testing.T) {
+	r := newRepo(t)
+	if _, err := r.UpsertTarget(store.Target{ContainerName: "nginx"}); err != nil {
+		t.Fatal(err)
+	}
+	store.SeedListing(t, r, "containers", "t1", 100, store.CopiesOf("container:nginx", 3, 90), store.CopiesOf("container:web", 2, 95))
+	store.SeedListing(t, r, "containers", "t2", 120, store.CopiesOf("container:nginx", 1, 80))
+
+	if err := r.RenameTargetWithAlias("nginx", "web", ""); err != nil {
+		t.Fatalf("RenameTargetWithAlias: %v", err)
+	}
+	want := []store.ItemCopies{
+		{Domain: "containers", Identity: "container:web", TargetID: "t1", SnapshotCount: 5, LatestSnapshotAt: 95, ObservedAt: 100},
+		{Domain: "containers", Identity: "container:web", TargetID: "t2", SnapshotCount: 1, LatestSnapshotAt: 80, ObservedAt: 120},
+	}
+	if got, err := r.ItemCopiesForDomain("containers"); err != nil || !slices.Equal(got, want) {
+		t.Fatalf("ItemCopiesForDomain = %+v, %v, want %+v", got, err, want)
+	}
+}
+
+func TestAVMTakeoverTakesTheCopiesItsTargetsHold(t *testing.T) {
+	r := newRepo(t)
+	if _, err := r.UpsertVMTarget(store.VMTarget{Name: "windows-11"}); err != nil {
+		t.Fatal(err)
+	}
+	store.SeedListing(t, r, "vms", "t1", 100, store.CopiesOf("vm:windows-11", 3, 90))
+
+	if err := r.RenameVMTargetWithAlias("windows-11", "win11", "", ""); err != nil {
+		t.Fatalf("RenameVMTargetWithAlias: %v", err)
+	}
+	want := []store.ItemCopies{{Domain: "vms", Identity: "vm:win11", TargetID: "t1", SnapshotCount: 3, LatestSnapshotAt: 90, ObservedAt: 100}}
+	if got, err := r.ItemCopiesForDomain("vms"); err != nil || !slices.Equal(got, want) {
+		t.Fatalf("ItemCopiesForDomain = %+v, %v, want %+v", got, err, want)
+	}
+}
+
 func TestDeletingATargetDropsWhatWasObservedThere(t *testing.T) {
 	r := newRepo(t)
 	b2 := store.SeedOffsiteTarget(t, r, "containers", "b2:bucket:containers")

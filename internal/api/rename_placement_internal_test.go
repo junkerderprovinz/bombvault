@@ -170,6 +170,55 @@ func TestARuleOnAFormerNameDiscoverLinksKeepsItsHistoryOutOfTheTarget(t *testing
 	}
 }
 
+func TestATakenOverCardCountsTheCopiesItsTargetHolds(t *testing.T) {
+	f := newPlacementFixture(t)
+	dailyContainerBackups(f)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	f.container("nginx", "")
+	now := time.Now().Unix()
+	f.listing("containers", b2.ID, now-hour, copiesRow("container:nginx", 20, now-2*hour))
+	f.dock.installed = map[string]bool{"web": true}
+
+	if err := f.svc.TakeOverContainer(context.Background(), "nginx", "web"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+	o := f.cardOf("containers", "web", now-2*hour).Observed
+	if o.Sites != 2 || o.Rule321 != "met" {
+		t.Fatalf("observed = %+v, want two sites, 3-2-1 met", o)
+	}
+	if got := placeAt(o, "offsite:"+b2.ID); got.State != "counts" || got.Count != 20 {
+		t.Fatalf("B2 = %+v, want the 20 copies counted", got)
+	}
+}
+
+func TestAnUnlinkListsTheTargetsThatHoldTheEntryAgain(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket:containers")
+	f.container("nginx", "")
+	f.dock.installed = map[string]bool{"web": true}
+	ctx := context.Background()
+	if err := f.svc.TakeOverContainer(ctx, "nginx", "web"); err != nil {
+		t.Fatalf("TakeOverContainer: %v", err)
+	}
+	linked := time.Now().Add(5 * time.Second).Unix()
+	f.listing("containers", b2.ID, linked, copiesRow("container:web", 2, linked))
+	f.hold("b2:bucket:containers",
+		copied("bbbb0001", "aaaa0001", 100, "container:nginx"),
+		copied("bbbb0002", "aaaa0002", linked, "container:web", "formerly:nginx"))
+	f.dock.installed = map[string]bool{"nginx": true}
+
+	if err := f.svc.UnlinkContainerAlias(ctx, "nginx"); err != nil {
+		t.Fatalf("UnlinkContainerAlias: %v", err)
+	}
+	waitForListings(t, f)
+	for identity, want := range map[string]int{"container:nginx": 1, "container:web": 1} {
+		got, err := f.st.ItemCopiesFor("containers", identity)
+		if err != nil || len(got) != 1 || got[0].SnapshotCount != want {
+			t.Errorf("copies of %s = %+v, %v, want %d at B2", identity, got, err, want)
+		}
+	}
+}
+
 func TestATakeoverOntoANameWithOnlyACopyRuleIsRefused(t *testing.T) {
 	f := newPlacementFixture(t)
 	f.container("nginx", "")
