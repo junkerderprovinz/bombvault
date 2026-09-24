@@ -32,6 +32,7 @@ var AllCodes = []string{
 	"pre-snapshot-failed",
 	"container-unknown",
 	"container-is-self",
+	"hook-container-missing",
 	"leftover-snapshots",
 
 	// Member

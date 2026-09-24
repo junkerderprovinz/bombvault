@@ -46,6 +46,7 @@ export const ZFS_CODE_KEY = {
   "pre-snapshot-failed": "zfs.code.pre-snapshot-failed",
   "container-unknown": "zfs.code.container-unknown",
   "container-is-self": "zfs.code.container-is-self",
+  "hook-container-missing": "zfs.code.hook-container-missing",
   "leftover-snapshots": "zfs.code.leftover-snapshots",
   zvol: "zfs.code.zvol",
   "canmount-off": "zfs.code.canmount-off",
