@@ -1167,6 +1167,26 @@ func TestCapacityEtaFromGrowthAndFreeSlope(t *testing.T) {
 		}
 	})
 
+	t.Run("the finding says where the projection comes from", func(t *testing.T) {
+		in := capacityInput(falling(200 * gib))
+		in.Growth = map[string]int64{"containers": 7 * gib} // a gibibyte a day, so 200 days
+		found, _ := detectCapacity(in)
+		got := findingFor(t, found, metricCapacityETA)
+
+		growth, _ := got.Details["etaGrowthDays"].(float64)
+		free, _ := got.Details["etaFreeDays"].(float64)
+		drain, _ := got.Details["slopePerDay"].(float64)
+		if math.Abs(growth-200) > 1 {
+			t.Fatalf("eta from the growth = %v days, want 200", growth)
+		}
+		if math.Abs(free-20) > 0.5 {
+			t.Fatalf("eta from the free space = %v days, want 20", free)
+		}
+		if math.Abs(drain-perDay) > gib/10 {
+			t.Fatalf("drain = %v bytes a day, want %v", drain, float64(perDay))
+		}
+	})
+
 	t.Run("the growth reads like the storage forecast", func(t *testing.T) {
 		stats := []store.RepoStat{
 			{At: anomalyNow - 28*anomalyDay, RawSize: 100 * gib},
@@ -1182,8 +1202,8 @@ func TestCapacityEtaFromGrowthAndFreeSlope(t *testing.T) {
 		if !known {
 			t.Fatal("no projection from the forecast's own growth")
 		}
-		if want := float64(200*gib) / (float64(week) / 7); math.Abs(eta-want) > 0.001 {
-			t.Fatalf("eta = %v days, want %v", eta, want)
+		if want := float64(200*gib) / (float64(week) / 7); math.Abs(eta.Days-want) > 0.001 {
+			t.Fatalf("eta = %v days, want %v", eta.Days, want)
 		}
 	})
 }

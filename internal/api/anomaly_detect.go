@@ -1,6 +1,7 @@
 package api
 
 import (
+	"maps"
 	"math"
 	"slices"
 	"strings"
@@ -1109,14 +1110,14 @@ func detectCapacity(in volumeInput) ([]finding, []absence) {
 	eta, known := capacityETA(in)
 	open, isOpen := in.Open[metricCapacityETA]
 	switch {
-	case known && eta < p.EtaCritDays:
-		found = append(found, capacityFinding(metricCapacityETA, "critical", eta, p.EtaCritDays, newest, len(window)))
-	case known && eta < p.EtaWarnDays:
-		found = append(found, capacityFinding(metricCapacityETA, "warning", eta, p.EtaWarnDays, newest, len(window)))
-	case known && isOpen && eta < capacityEtaCleared*p.EtaWarnDays:
-		found = append(found, capacityFinding(metricCapacityETA, open.Severity, eta, open.Threshold, newest, len(window)))
+	case known && eta.Days < p.EtaCritDays:
+		found = append(found, capacityFinding(metricCapacityETA, "critical", eta.Days, p.EtaCritDays, newest, len(window), eta.details()))
+	case known && eta.Days < p.EtaWarnDays:
+		found = append(found, capacityFinding(metricCapacityETA, "warning", eta.Days, p.EtaWarnDays, newest, len(window), eta.details()))
+	case known && isOpen && eta.Days < capacityEtaCleared*p.EtaWarnDays:
+		found = append(found, capacityFinding(metricCapacityETA, open.Severity, eta.Days, open.Threshold, newest, len(window), eta.details()))
 	default:
-		absent = append(absent, absence{Metric: metricCapacityETA, Observed: eta})
+		absent = append(absent, absence{Metric: metricCapacityETA, Observed: eta.Days})
 	}
 
 	if newest.TotalBytes == nil || *newest.TotalBytes <= 0 {
@@ -1126,11 +1127,11 @@ func detectCapacity(in volumeInput) ([]finding, []absence) {
 	open, isOpen = in.Open[metricCapacityLow]
 	switch {
 	case share < capacityLowCrit:
-		found = append(found, capacityFinding(metricCapacityLow, "critical", share, capacityLowCrit, newest, len(window)))
+		found = append(found, capacityFinding(metricCapacityLow, "critical", share, capacityLowCrit, newest, len(window), nil))
 	case share < capacityLowWarn:
-		found = append(found, capacityFinding(metricCapacityLow, "warning", share, capacityLowWarn, newest, len(window)))
+		found = append(found, capacityFinding(metricCapacityLow, "warning", share, capacityLowWarn, newest, len(window), nil))
 	case isOpen && share < capacityLowCleared:
-		found = append(found, capacityFinding(metricCapacityLow, open.Severity, share, open.Threshold, newest, len(window)))
+		found = append(found, capacityFinding(metricCapacityLow, open.Severity, share, open.Threshold, newest, len(window), nil))
 	default:
 		absent = append(absent, absence{Metric: metricCapacityLow, Observed: share})
 	}
@@ -1141,25 +1142,47 @@ func detectCapacity(in volumeInput) ([]finding, []absence) {
 // growth and from the slope of its own free space. A volume nobody measures a
 // trend for has no projection at all, which is different from having a
 // comfortable one.
-func capacityETA(in volumeInput) (float64, bool) {
+func capacityETA(in volumeInput) (capacityETAResult, bool) {
 	newest := in.Samples[len(in.Samples)-1]
 	free := float64(newest.FreeBytes)
-	eta, known := math.Inf(1), false
+	out := capacityETAResult{Days: math.Inf(1)}
+	known := false
 
 	var perWeek int64
 	for _, domain := range in.Domains {
 		perWeek += in.Growth[domain]
 	}
 	if perWeek > 0 {
-		eta, known = free/(float64(perWeek)/7), true
+		out.FromGrowth = free / (float64(perWeek) / 7)
+		out.Days, known = out.FromGrowth, true
 	}
 	if drain, ok := freeSpaceDrainPerDay(in.Samples); ok {
-		eta, known = min(eta, free/drain), true
+		out.FromFree, out.DrainPerDay = free/drain, drain
+		out.Days, known = min(out.Days, out.FromFree), true
 	}
 	if !known {
-		return 0, false
+		return capacityETAResult{}, false
 	}
-	return eta, true
+	return out, true
+}
+
+// capacityETAResult is the projection and the two answers behind it, so a
+// reader can tell BombVault's own growth from another writer filling the same
+// disk.
+type capacityETAResult struct {
+	Days, FromGrowth, FromFree, DrainPerDay float64
+}
+
+func (r capacityETAResult) details() map[string]any {
+	out := map[string]any{}
+	if r.FromGrowth > 0 {
+		out["etaGrowthDays"] = r.FromGrowth
+	}
+	if r.FromFree > 0 {
+		out["etaFreeDays"] = r.FromFree
+		out["slopePerDay"] = r.DrainPerDay
+	}
+	return out
 }
 
 // freeSpaceDrainPerDay fits the free space over time and reports how fast it
@@ -1211,12 +1234,13 @@ func volumeResized(previous, current store.VolumeSample) bool {
 }
 
 func capacityFinding(metric, severity string, observed, threshold float64,
-	newest store.VolumeSample, samples int) finding {
+	newest store.VolumeSample, samples int, extra map[string]any) finding {
 
 	details := map[string]any{"freeBytes": float64(newest.FreeBytes), "source": newest.Source}
 	if newest.TotalBytes != nil {
 		details["totalBytes"] = float64(*newest.TotalBytes)
 	}
+	maps.Copy(details, extra)
 	return finding{
 		Metric: metric, Severity: severity, RunAt: newest.At,
 		Observed: observed, Threshold: threshold, Samples: samples,
