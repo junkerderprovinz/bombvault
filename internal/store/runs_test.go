@@ -1636,7 +1636,7 @@ func TestMCPStartQueries(t *testing.T) {
 		{"b", 0, 1, 600},
 		{"c", 0, 1, 700},
 		{"d", 0, 0, 0},
-		{"e", 0, 0, 0},
+		{"e", 0, 1, 800},
 	}
 	for _, c := range counts {
 		got, oldest, err := r.MCPBackupsSince(c.target, c.since)
