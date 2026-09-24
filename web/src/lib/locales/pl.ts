@@ -1672,6 +1672,7 @@ const pl: Partial<Translations> = {
   "placementCode.nameMismatch": "Wpisana nazwa się nie zgadza.",
   "placementCode.homeUnreadable": "Nie udało się odczytać lokalizacji elementu, więc nic nie zostało usunięte.",
   "placementCode.snapshotMissing": "Tej kopii zapasowej nie ma już w wybranym miejscu.",
+  "placementCode.directAccessDenied": "Klucz nie może odczytać tego miejsca. Klucz ograniczony do własnego katalogu celu nie sięga do katalogu obok niego; ogranicz klucz zamiast tego do katalogu nad celem.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} bezpośrednio przechowuje teraz mniej. Elementy, których jedyna kopia tam jest: {n}.",

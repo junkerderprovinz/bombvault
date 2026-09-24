@@ -1672,6 +1672,7 @@ const sr: Partial<Translations> = {
   "placementCode.nameMismatch": "Унето име се не поклапа.",
   "placementCode.homeUnreadable": "Локација ставке није могла да се прочита, па ништа није избрисано.",
   "placementCode.snapshotMissing": "Ова резервна копија више није на изабраном месту.",
+  "placementCode.directAccessDenied": "Кључ не може да прочита ово место. Кључ ограничен на сопствену фасциклу циља не може да досегне суседну фасциклу; уместо тога, ограничи кључ на фасциклу изнад циља.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} директно сада чува мање. Ставке чија је једина копија тамо: {n}.",

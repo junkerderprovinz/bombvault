@@ -1688,6 +1688,7 @@ const hi: Partial<Translations> = {
   "placementCode.nameMismatch": "टाइप किया गया नाम मेल नहीं खाता।",
   "placementCode.homeUnreadable": "प्रविष्टि का स्थान पढ़ा नहीं जा सका, इसलिए कुछ भी मिटाया नहीं गया।",
   "placementCode.snapshotMissing": "यह बैकअप अब चुनी गई जगह पर नहीं है।",
+  "placementCode.directAccessDenied": "कुंजी इस स्थान को नहीं पढ़ सकती। लक्ष्य के अपने ही फ़ोल्डर तक सीमित कुंजी उसके बगल वाले फ़ोल्डर तक नहीं पहुँच सकती; इसके बजाय कुंजी को लक्ष्य के ऊपर वाले फ़ोल्डर तक सीमित करें।",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} डायरेक्ट अब कम रखता है। जिन प्रविष्टियों की एकमात्र कॉपी वहाँ है: {n}।",

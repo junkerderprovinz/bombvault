@@ -1677,6 +1677,7 @@ const fi: Partial<Translations> = {
   "placementCode.nameMismatch": "Kirjoitettu nimi ei täsmää.",
   "placementCode.homeUnreadable": "Kohteen sijaintia ei voitu lukea, joten mitään ei poistettu.",
   "placementCode.snapshotMissing": "Tätä varmuuskopiota ei enää ole valitussa paikassa.",
+  "placementCode.directAccessDenied": "Avain ei voi lukea tätä paikkaa. Kohteen omaan kansioon rajattu avain ei pääse sen vieressä olevaan kansioon; rajaa avain sen sijaan kohteen yläpuolella olevaan kansioon.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} suoraan säilyttää nyt vähemmän. Kohteet, joiden ainoa kopio on siellä: {n}.",

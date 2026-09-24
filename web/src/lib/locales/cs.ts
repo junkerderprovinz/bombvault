@@ -1675,6 +1675,7 @@ const cs: Partial<Translations> = {
   "placementCode.nameMismatch": "Zadaný název nesouhlasí.",
   "placementCode.homeUnreadable": "Umístění položky se nepodařilo načíst, takže nic nebylo smazáno.",
   "placementCode.snapshotMissing": "Tato záloha už není na zvoleném místě.",
+  "placementCode.directAccessDenied": "Klíč nemůže tento cíl přečíst. Klíč omezený na vlastní složku cíle se nedostane do složky vedle ní; omezte klíč místo toho na složku nad cílem.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} přímo teď uchovává méně. Položky, jejichž jediná kopie je tam: {n}.",

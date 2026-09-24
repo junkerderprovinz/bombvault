@@ -1688,6 +1688,7 @@ const ms: Partial<Translations> = {
   "placementCode.nameMismatch": "Nama yang ditaip tidak sepadan.",
   "placementCode.homeUnreadable": "Lokasi item tidak dapat dibaca, jadi tiada apa-apa yang dipadam.",
   "placementCode.snapshotMissing": "Sandaran ini tidak lagi berada di tempat yang dipilih.",
+  "placementCode.directAccessDenied": "Kunci tidak dapat membaca tempat ini. Kunci yang terhad kepada folder sasaran itu sendiri tidak dapat mencapai folder di sebelahnya; hadkan kunci itu kepada folder di atas sasaran sebagai gantinya.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} terus kini menyimpan lebih sedikit. Item yang satu-satunya salinan ada di situ: {n}.",

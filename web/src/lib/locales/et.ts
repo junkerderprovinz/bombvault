@@ -1688,6 +1688,7 @@ const et: Partial<Translations> = {
   "placementCode.nameMismatch": "Sisestatud nimi ei ühti.",
   "placementCode.homeUnreadable": "Üksuse asukohta ei õnnestunud lugeda, seega midagi ei kustutatud.",
   "placementCode.snapshotMissing": "Seda varukoopiat pole enam valitud kohas.",
+  "placementCode.directAccessDenied": "Võti ei saa seda kohta lugeda. Sihtmärgi enda kausta piiratud võti ei pääse selle kõrval olevasse kausta; piira võti selle asemel sihtmärgist ülalpool oleva kaustaga.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} otse säilitab nüüd vähem. Üksused, mille ainus koopia on seal: {n}.",

@@ -79,6 +79,18 @@ describe("DirectRepoDialog", () => {
     expect(await screen.findByText("Not reachable: connection refused")).toBeTruthy();
   });
 
+  it("explains a key scoped too narrowly to read the place", async () => {
+    fake.reply("testDirectLocation", { ok: false, code: "direct-access-denied", error: "Stat: Access Denied." });
+    renderDialog();
+    await screen.findByDisplayValue("b2:bucket:containers-direct");
+    fireEvent.click(screen.getByRole("button", { name: "Test connection" }));
+    expect(
+      await screen.findByText(
+        "Not reachable: The key cannot read this place. A key limited to the target's own folder cannot reach the folder next to it; limit the key to the folder above the target instead."
+      )
+    ).toBeTruthy();
+  });
+
   it("says why the test could not be made", async () => {
     fake.reply("testDirectLocation", new Error("network unreachable"));
     renderDialog();

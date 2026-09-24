@@ -1669,6 +1669,7 @@ const zh: Partial<Translations> = {
   "placementCode.nameMismatch": "输入的名称不匹配。",
   "placementCode.homeUnreadable": "无法读取该项目的位置，因此未删除任何内容。",
   "placementCode.snapshotMissing": "此备份不再位于所选位置。",
+  "placementCode.directAccessDenied": "密钥无法读取此位置。限定在目标自身文件夹的密钥无法到达它旁边的文件夹；应把密钥限定在目标上一级的文件夹。",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} 直接现在保留得更少。唯一副本在那里的项目：{n}。",

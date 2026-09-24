@@ -1675,6 +1675,7 @@ const es: Partial<Translations> = {
   "placementCode.nameMismatch": "El nombre escrito no coincide.",
   "placementCode.homeUnreadable": "No se pudo leer la ubicación del elemento, así que no se borró nada.",
   "placementCode.snapshotMissing": "Esta copia de seguridad ya no está en el lugar elegido.",
+  "placementCode.directAccessDenied": "La clave no puede leer este lugar. Una clave limitada a la carpeta propia del destino no puede alcanzar la carpeta contigua a ella; limita la clave a la carpeta superior al destino en su lugar.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} directo ahora conserva menos. Elementos cuya única copia está ahí: {n}.",
