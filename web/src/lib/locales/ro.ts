@@ -1662,6 +1662,7 @@ const ro: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Acel nume are deja reguli de copiere. Alege alt nume.",
   "placementCode.domainBusy": "O copie de siguranță este în curs. Alege din nou după ce se termină.",
   "placementCode.hasBackups": "Locația nu se mai poate schimba după ce elementul are copii de siguranță. Rămân unde au fost scrise.",
+  "placementCode.homeUncheckable": "Nu s-a putut verifica dacă acest element are deja copii de siguranță, așa că locația lui rămâne așa cum este. Încearcă din nou după ce depozitul poate fi citit.",
   "placementCode.stale": "Numerele s-au schimbat de când au fost afișate. Verifică-le din nou.",
   "placementCode.repoInvalid": "Acel depozit lipsește, este dezactivat sau nu poate fi rezolvat.",
   "placementCode.repoInUseDefault": "Valoarea implicită pentru {domains} indică spre acest depozit. Schimbă mai întâi valoarea implicită.",

@@ -1670,6 +1670,7 @@ const lt: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Šis pavadinimas jau turi kopijavimo taisykles. Pasirink kitą pavadinimą.",
   "placementCode.domainBusy": "Vyksta atsarginė kopija. Pasirink dar kartą, kai ji baigsis.",
   "placementCode.hasBackups": "Vieta nebegali keistis, kai elementas turi atsargines kopijas. Jos lieka ten, kur buvo įrašytos.",
+  "placementCode.homeUncheckable": "Nepavyko patikrinti, ar šis elementas jau turi atsarginių kopijų, todėl jo vieta lieka tokia, kokia yra. Bandyk dar kartą, kai saugyklą bus galima nuskaityti.",
   "placementCode.stale": "Skaičiai pasikeitė nuo tada, kai buvo parodyti. Patikrink juos dar kartą.",
   "placementCode.repoInvalid": "Šios saugyklos trūksta, ji išjungta arba jos nepavyksta išspręsti.",
   "placementCode.repoInUseDefault": "{domains} numatytoji reikšmė rodo į šią saugyklą. Pirma pakeisk numatytąją reikšmę.",

@@ -1657,6 +1657,7 @@ const cs: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Tento název už má kopírovací pravidla. Zvol jiný název.",
   "placementCode.domainBusy": "Probíhá zálohování. Zvol znovu, až skončí.",
   "placementCode.hasBackups": "Umístění se už nedá změnit, jakmile má položka zálohy. Zůstávají tam, kam byly zapsány.",
+  "placementCode.homeUncheckable": "Nepodařilo se ověřit, zda tato položka už má zálohy, takže její umístění zůstává, jaké je. Zkus to znovu, až půjde repozitář přečíst.",
   "placementCode.stale": "Čísla se od zobrazení změnila. Zkontroluj je znovu.",
   "placementCode.repoInvalid": "Tento repozitář chybí, je vypnutý nebo se nedá vyřešit.",
   "placementCode.repoInUseDefault": "Výchozí hodnota pro {domains} ukazuje na tento repozitář. Nejdřív změň výchozí hodnotu.",

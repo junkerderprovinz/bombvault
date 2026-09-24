@@ -11,6 +11,7 @@ describe("placementErrorText", () => {
       "placement-unreadable", "invalid-placement", "copies-not-allowed", "unknown-target", "stack-rule",
       "copy-rule-taken", "domain-busy", "has-backups", "stale", "repo-invalid", "default-repo-missing",
       "nested-location", "foreign-domain", "mirrored-field", "companion-taken", "exclusion-unsaved",
+      "home-uncheckable",
     ];
     for (const code of codes) {
       const text = placementErrorText(t, "en", { ok: false, error: "server text", code }, "settings.error");

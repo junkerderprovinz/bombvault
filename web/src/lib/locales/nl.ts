@@ -1656,6 +1656,7 @@ const nl: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Die naam heeft al kopieerregels. Kies een andere naam.",
   "placementCode.domainBusy": "Er loopt een back-up. Kies opnieuw zodra die klaar is.",
   "placementCode.hasBackups": "De locatie kan niet meer wijzigen zodra het item back-ups heeft. Ze blijven staan waar ze geschreven zijn.",
+  "placementCode.homeUncheckable": "Er kon niet worden gecontroleerd of dit item al back-ups heeft, dus de locatie blijft zoals ze is. Probeer het opnieuw zodra de repository gelezen kan worden.",
   "placementCode.stale": "De getallen zijn veranderd sinds ze werden getoond. Controleer ze opnieuw.",
   "placementCode.repoInvalid": "Die repository ontbreekt, staat uit of kan niet worden herleid.",
   "placementCode.repoInUseDefault": "De standaard voor {domains} wijst naar deze repository. Wijzig eerst de standaard.",

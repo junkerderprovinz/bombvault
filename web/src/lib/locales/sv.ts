@@ -1659,6 +1659,7 @@ const sv: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Det namnet har redan kopieringsregler. Välj ett annat namn.",
   "placementCode.domainBusy": "En säkerhetskopiering pågår. Välj igen när den är klar.",
   "placementCode.hasBackups": "Platsen kan inte ändras när objektet har säkerhetskopior. De stannar där de skrevs.",
+  "placementCode.homeUncheckable": "Det gick inte att kontrollera om det här objektet redan har säkerhetskopior, så dess plats förblir som den är. Försök igen när arkivet kan läsas.",
   "placementCode.stale": "Siffrorna har ändrats sedan de visades. Kontrollera dem igen.",
   "placementCode.repoInvalid": "Det arkivet saknas, är avstängt eller kan inte matchas.",
   "placementCode.repoInUseDefault": "Standardvärdet för {domains} pekar på det här arkivet. Ändra standardvärdet först.",

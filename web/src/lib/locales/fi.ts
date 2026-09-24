@@ -1659,6 +1659,7 @@ const fi: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Tällä nimellä on jo kopiointisääntöjä. Valitse toinen nimi.",
   "placementCode.domainBusy": "Varmuuskopiointi on käynnissä. Valitse uudelleen, kun se on valmis.",
   "placementCode.hasBackups": "Sijaintia ei voi enää muuttaa, kun kohteella on varmuuskopioita. Ne pysyvät siellä, minne ne kirjoitettiin.",
+  "placementCode.homeUncheckable": "Ei voitu tarkistaa, onko tällä kohteella jo varmuuskopioita, joten sen sijainti pysyy ennallaan. Yritä uudelleen, kun arkisto voidaan lukea.",
   "placementCode.stale": "Luvut ovat muuttuneet niiden näyttämisen jälkeen. Tarkista ne uudelleen.",
   "placementCode.repoInvalid": "Tämä arkisto puuttuu, on pois käytöstä tai sitä ei voida ratkaista.",
   "placementCode.repoInUseDefault": "{domains} oletusarvo osoittaa tähän arkistoon. Vaihda oletusarvo ensin.",

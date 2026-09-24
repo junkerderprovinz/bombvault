@@ -1670,6 +1670,7 @@ const eu: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Izen horrek jada baditu kopiatze-arauak. Aukeratu beste izen bat.",
   "placementCode.domainBusy": "Babeskopia bat ari da egiten. Aukeratu berriro amaitzen denean.",
   "placementCode.hasBackups": "Kokapena ezin da gehiago aldatu elementuak babeskopiak dituenean. Idatzi ziren tokian gelditzen dira.",
+  "placementCode.homeUncheckable": "Ezin izan da egiaztatu elementu honek jada babeskopiarik duen, beraz haren kokapenak dagoen bezala jarraitzen du. Saiatu berriro biltegia irakurri ahal denean.",
   "placementCode.stale": "Zenbakiak aldatu egin dira erakutsi zirenetik. Egiaztatu berriro.",
   "placementCode.repoInvalid": "Biltegi hori falta da, itzalita dago edo ezin da ebatzi.",
   "placementCode.repoInUseDefault": "{domains} arloaren balio lehenetsiak biltegi honetara seinalatzen du. Aldatu lehenik balio lehenetsia.",

@@ -1670,6 +1670,7 @@ const gl: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Ese nome xa ten regras de copia. Escolle outro nome.",
   "placementCode.domainBusy": "Hai unha copia de seguranza en curso. Escolle de novo cando remate.",
   "placementCode.hasBackups": "O lugar non pode cambiar unha vez que o elemento ten copias de seguranza. Quedan onde foron escritas.",
+  "placementCode.homeUncheckable": "Non se puido comprobar se este elemento xa ten copias de seguranza, así que a súa localización queda como está. Téntao de novo cando se poida ler o repositorio.",
   "placementCode.stale": "Os números cambiaron desde que se mostraron. Compróbaos de novo.",
   "placementCode.repoInvalid": "Ese repositorio falta, está desactivado ou non se pode resolver.",
   "placementCode.repoInUseDefault": "O valor por defecto de {domains} apunta a este repositorio. Cambia primeiro o valor por defecto.",

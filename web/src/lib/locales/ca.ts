@@ -1670,6 +1670,7 @@ const ca: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Aquest nom ja té regles de còpia. Tria un altre nom.",
   "placementCode.domainBusy": "Hi ha una còpia de seguretat en curs. Torna a triar quan hagi acabat.",
   "placementCode.hasBackups": "La ubicació no pot canviar un cop l'element té còpies de seguretat. Es queden on es van escriure.",
+  "placementCode.homeUncheckable": "No s'ha pogut comprovar si aquest element ja té còpies de seguretat, així que la seva ubicació es queda tal com està. Torna-ho a provar quan es pugui llegir el repositori.",
   "placementCode.stale": "Els números han canviat des que es van mostrar. Comprova'ls de nou.",
   "placementCode.repoInvalid": "Aquest repositori falta, està desactivat o no es pot resoldre.",
   "placementCode.repoInUseDefault": "El valor per defecte de {domains} apunta a aquest repositori. Canvia primer el valor per defecte.",

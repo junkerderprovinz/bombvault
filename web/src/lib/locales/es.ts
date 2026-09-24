@@ -1657,6 +1657,7 @@ const es: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Ese nombre ya tiene reglas de copia. Elige otro nombre.",
   "placementCode.domainBusy": "Hay una copia de seguridad en curso. Vuelve a elegir cuando termine.",
   "placementCode.hasBackups": "La ubicación no se puede cambiar una vez que el elemento tiene copias de seguridad. Permanecen donde se escribieron.",
+  "placementCode.homeUncheckable": "No se pudo comprobar si este elemento ya tiene copias de seguridad, así que su ubicación se queda como está. Vuelve a intentarlo cuando se pueda leer el repositorio.",
   "placementCode.stale": "Los números cambiaron desde que se mostraron. Compruébalos de nuevo.",
   "placementCode.repoInvalid": "Ese repositorio falta, está desactivado o no se puede resolver.",
   "placementCode.repoInUseDefault": "El valor predeterminado de {domains} apunta a este repositorio. Cambia primero el valor predeterminado.",

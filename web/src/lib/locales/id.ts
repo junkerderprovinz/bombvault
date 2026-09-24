@@ -1670,6 +1670,7 @@ const id: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Nama itu sudah punya aturan penyalinan. Pilih nama lain.",
   "placementCode.domainBusy": "Sedang berlangsung pencadangan. Pilih lagi setelah selesai.",
   "placementCode.hasBackups": "Lokasi tidak bisa lagi berubah setelah item memiliki cadangan. Cadangan tetap di tempat ia ditulis.",
+  "placementCode.homeUncheckable": "Tidak dapat diperiksa apakah item ini sudah memiliki cadangan, jadi lokasinya tetap seperti sekarang. Coba lagi setelah repositori dapat dibaca.",
   "placementCode.stale": "Angkanya berubah sejak ditampilkan. Periksa lagi.",
   "placementCode.repoInvalid": "Repositori itu hilang, dimatikan, atau tidak dapat diselesaikan.",
   "placementCode.repoInUseDefault": "Bawaan untuk {domains} menunjuk ke repositori ini. Ubah dulu bawaannya.",

@@ -1659,6 +1659,7 @@ const fr: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Ce nom a déjà des règles de copie. Choisissez un autre nom.",
   "placementCode.domainBusy": "Une sauvegarde est en cours. Choisissez de nouveau une fois qu'elle est terminée.",
   "placementCode.hasBackups": "L'emplacement ne peut plus changer une fois que l'élément a des sauvegardes. Elles restent là où elles ont été écrites.",
+  "placementCode.homeUncheckable": "Impossible de vérifier si cet élément a déjà des sauvegardes, donc son emplacement reste tel quel. Réessayez une fois que le dépôt pourra être lu.",
   "placementCode.stale": "Les chiffres ont changé depuis leur affichage. Vérifiez-les de nouveau.",
   "placementCode.repoInvalid": "Ce dépôt est manquant, désactivé ou ne peut pas être résolu.",
   "placementCode.repoInUseDefault": "La valeur par défaut de {domains} pointe vers ce dépôt. Changez d'abord la valeur par défaut.",

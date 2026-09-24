@@ -1670,6 +1670,7 @@ const lv: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Šim nosaukumam jau ir kopēšanas noteikumi. Izvēlies citu nosaukumu.",
   "placementCode.domainBusy": "Notiek dublēšana. Izvēlies vēlreiz, kad tā pabeigta.",
   "placementCode.hasBackups": "Atrašanās vietu vairs nevar mainīt, tiklīdz vienumam ir dublējumi. Tie paliek tur, kur bija rakstīti.",
+  "placementCode.homeUncheckable": "Neizdevās pārbaudīt, vai šim vienumam jau ir dublējumi, tāpēc tā atrašanās vieta paliek tāda, kāda ir. Mēģini vēlreiz, kad krātuvi varēs nolasīt.",
   "placementCode.stale": "Skaitļi ir mainījušies kopš parādīšanas. Pārbaudi tos vēlreiz.",
   "placementCode.repoInvalid": "Šīs krātuves trūkst, tā ir izslēgta vai to nevar atrisināt.",
   "placementCode.repoInUseDefault": "{domains} noklusējuma vērtība norāda uz šo krātuvi. Vispirms mainiet noklusējuma vērtību.",

@@ -1670,6 +1670,7 @@ const sk: Partial<Translations> = {
   "placementCode.copyRuleTaken": "Tento názov už má kopírovacie pravidlá. Zvoľ iný názov.",
   "placementCode.domainBusy": "Prebieha zálohovanie. Zvoľ znova, keď skončí.",
   "placementCode.hasBackups": "Umiestnenie sa už nedá zmeniť, keď má položka zálohy. Zostávajú tam, kam boli zapísané.",
+  "placementCode.homeUncheckable": "Nepodarilo sa overiť, či táto položka už má zálohy, takže jej umiestnenie zostáva, aké je. Skús to znova, keď bude možné repozitár prečítať.",
   "placementCode.stale": "Čísla sa od zobrazenia zmenili. Skontroluj ich znova.",
   "placementCode.repoInvalid": "Tento repozitár chýba, je vypnutý alebo sa nedá vyriešiť.",
   "placementCode.repoInUseDefault": "Predvolená hodnota pre {domains} ukazuje na tento repozitár. Najprv zmeň predvolenú hodnotu.",

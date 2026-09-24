@@ -1651,6 +1651,7 @@ const zh: Partial<Translations> = {
   "placementCode.copyRuleTaken": "该名称已有复制规则。请选择其他名称。",
   "placementCode.domainBusy": "备份正在进行。完成后请重新选择。",
   "placementCode.hasBackups": "项目一旦有了备份，位置就不能再更改。它们保留在写入时的位置。",
+  "placementCode.homeUncheckable": "无法检查该项目是否已有备份，因此其位置保持不变。等存储库可以读取后再试一次。",
   "placementCode.stale": "数字自显示以来已发生变化。请重新检查。",
   "placementCode.repoInvalid": "该存储库缺失、已关闭或无法解析。",
   "placementCode.repoInUseDefault": "{domains} 的默认设置指向此存储库。请先更改默认设置。",
