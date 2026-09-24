@@ -142,6 +142,34 @@ func TestMCPDomainsCoverEveryServiceDomain(t *testing.T) {
 	}
 }
 
+// An item that is not there is counted and logged under the code the caller
+// got, so an alert on not_found sees a client probing names.
+func TestMCPItemLookupRecordsTheCodeItAnswers(t *testing.T) {
+	h, _, _ := newMCPStartHandler(t)
+	ctx := mcpStartCaller("0b7e", true)
+	args := json.RawMessage(`{"domain":"files","item":"ghost"}`)
+
+	for _, c := range []struct {
+		tool string
+		run  func(context.Context, *mcp.CallToolRequest) (*mcp.CallToolResult, error)
+	}{
+		{"start_backup", h.toolStartBackup},
+		{"list_runs", h.toolListRuns},
+		{"list_restore_points", h.toolListRestorePoints},
+	} {
+		res, _ := c.run(ctx, &mcp.CallToolRequest{Params: &mcp.CallToolParamsRaw{Name: c.tool, Arguments: args}})
+		if code := mcpErrorCode(t, res); code != "not_found" {
+			t.Fatalf("%s answers %q, want not_found", c.tool, code)
+		}
+		h.mcp.countMu.Lock()
+		got := h.mcp.toolCalls[mcpToolOutcome{tool: c.tool, outcome: "not_found"}]
+		h.mcp.countMu.Unlock()
+		if got != 1 {
+			t.Fatalf("%s counted %d calls under not_found, want 1", c.tool, got)
+		}
+	}
+}
+
 func mcpErrorCode(t *testing.T, res *mcp.CallToolResult) string {
 	t.Helper()
 	return mcpErrorField(t, res, "code")
