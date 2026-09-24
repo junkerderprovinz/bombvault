@@ -15,6 +15,7 @@ import {
   revokeMcpKey,
   rotateMcpKey,
   updateMcpKey,
+  type McpKeySecretResponse,
   type McpKeyView,
   type McpKeysResponse,
   type OkEnvelope,
@@ -71,13 +72,20 @@ type Pending =
   | { kind: "rotate" | "revoke" | "purge"; item: McpKeyView }
   | { kind: "certificate" };
 
-export function McpServerCard({ hueIndex }: { hueIndex?: number }) {
+/** A key handed out by create or rotate, with the row it belongs to. */
+interface FreshKey {
+  key: string;
+  id: string;
+  hint: string;
+}
+
+export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; passwordSet?: boolean }) {
   const { t } = useT();
   const { push } = useToast();
   const [data, setData] = useState<McpKeysResponse | null>(null);
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [fresh, setFresh] = useState("");
+  const [fresh, setFresh] = useState<FreshKey | null>(null);
   const [keyVisible, setKeyVisible] = useState(true);
   const [adding, setAdding] = useState(false);
   const [label, setLabel] = useState("");
@@ -94,19 +102,29 @@ export function McpServerCard({ hueIndex }: { hueIndex?: number }) {
   const reload = useCallback(async () => {
     try {
       const res = await listMcpKeys();
+      if (!res.ok) {
+        setFailed(true);
+        return;
+      }
       setData(res);
-      setFailed(!res.ok);
+      setFailed(false);
+      // A handed-out key stays until it is dismissed, unless the list shows
+      // that it stopped working: revoked, or replaced from another tab.
+      setFresh((f) => (f && res.keys.some((k) => k.id === f.id && k.hint === f.hint) ? f : null));
     } catch {
       setFailed(true);
     }
   }, []);
 
+  // Setting or clearing the login password further down the tab changes what
+  // this card may offer, so it asks the server again.
   useEffect(() => {
     void reload();
-  }, [reload]);
+  }, [reload, passwordSet]);
 
   const origin = window.location.origin;
-  const host = window.location.hostname;
+  // An IPv6 hostname keeps its brackets, the certificate names do not.
+  const host = window.location.hostname.replace(/^\[(.*)\]$/, "$1");
   const secure = origin.toLowerCase().startsWith("https:");
 
   const keys = data?.keys ?? [];
@@ -144,7 +162,7 @@ export function McpServerCard({ hueIndex }: { hueIndex?: number }) {
       if (!res.ok) {
         push(refusal(res), "fail");
         bumpShake(id);
-        if (res.code === "mcp-key-not-found") await reload();
+        if (res.code === "mcp-key-not-found" || res.code === "mcp-key-needs-password") await reload();
         return null;
       }
       if (okMessage) push(okMessage, "success");
@@ -160,25 +178,33 @@ export function McpServerCard({ hueIndex }: { hueIndex?: number }) {
     }
   }
 
+  function showFresh(res: McpKeySecretResponse) {
+    if (res.key && res.item) setFresh({ key: res.key, id: res.item.id, hint: res.item.hint });
+  }
+
   async function create() {
     const res = await act("create", () => createMcpKey(label.trim(), allowStart), t("mcp.created"));
     if (!res) return;
-    setFresh(res.key ?? "");
+    showFresh(res);
     setAdding(false);
     setLabel("");
     setAllowStart(true);
   }
 
   async function rotate(item: McpKeyView) {
-    const res = await act(item.id, () => rotateMcpKey(item.id), t("mcp.rotated"));
-    if (res) setFresh(res.key ?? "");
+    const res = await act(`rotate:${item.id}`, () => rotateMcpKey(item.id), t("mcp.rotated"));
+    if (res) showFresh(res);
   }
 
   async function rename(item: McpKeyView) {
     const next = draft.trim();
-    setRenaming("");
-    if (next === "" || next === item.label) return;
-    await act(item.id, () => updateMcpKey(item.id, { label: next }), "");
+    if (next === "" || next === item.label) {
+      setRenaming("");
+      return;
+    }
+    // A refused name stays in the field, so the operator can correct it.
+    const res = await act(`rename:${item.id}`, () => updateMcpKey(item.id, { label: next }), "");
+    if (res) setRenaming("");
   }
 
   async function setCanStart(item: McpKeyView, on: boolean) {
@@ -217,7 +243,7 @@ export function McpServerCard({ hueIndex }: { hueIndex?: number }) {
   const snippetInput: McpSnippetInput = {
     origin,
     endpointPath: data?.endpointPath ?? "/mcp",
-    key: fresh || KEY_PLACEHOLDER,
+    key: fresh?.key ?? KEY_PLACEHOLDER,
     selfSigned: ownCertificate,
   };
   const snippet =
@@ -289,7 +315,7 @@ export function McpServerCard({ hueIndex }: { hueIndex?: number }) {
                   : t("mcp.certOwnNotForThisAddress")
                 ).replace("{host}", host)}
               </p>
-              {certificate.selfIssued && (
+              {certificate.selfIssued && canMint && (
                 <Button
                   label={t("mcp.certAddAddress")}
                   labelKey="mcp.certAddAddress"
@@ -341,41 +367,47 @@ export function McpServerCard({ hueIndex }: { hueIndex?: number }) {
               </div>
             </div>
           )}
+        </>
+      )}
 
-          {fresh !== "" && (
-            <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 px-3 py-2.5">
-              <p className="text-sm font-medium text-carbon-text">{t("mcp.newKeyTitle")}</p>
-              <p className="text-sm text-carbon-textSub">{t("mcp.showOnce")}</p>
-              <RevealInput
-                visible={keyVisible}
-                onToggleVisible={() => setKeyVisible((v) => !v)}
-                showLabel={t("common.showValue")}
-                hideLabel={t("common.hideValue")}
-                value={fresh}
-                readOnly
-                aria-label={t("mcp.newKeyTitle")}
-                wrapperClassName="w-full"
-                className="rounded-control bg-carbon-surface px-3 py-1.5 font-mono text-sm text-carbon-text glim-field-focus"
-              />
-              <div className="flex items-center gap-3">
-                <Button
-                  label={t("mcp.copyKey")}
-                  labelKey="common.copy"
-                  tone="subtle"
-                  onClick={() => void copy(fresh)}
-                  hueIndex={hueIndex}
-                />
-                <Button
-                  label={t("mcp.dismissKey")}
-                  labelKey="mcp.dismissKey"
-                  tone="accent"
-                  onClick={() => setFresh("")}
-                  hueIndex={hueIndex}
-                />
-              </div>
-            </div>
-          )}
+      {/* Outside the load gate: the server keeps no copy of this key, so a
+          failed reload must not hide it. */}
+      {fresh !== null && (
+        <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 px-3 py-2.5">
+          <p className="text-sm font-medium text-carbon-text">{t("mcp.newKeyTitle")}</p>
+          <p className="text-sm text-carbon-textSub">{t("mcp.showOnce")}</p>
+          <RevealInput
+            visible={keyVisible}
+            onToggleVisible={() => setKeyVisible((v) => !v)}
+            showLabel={t("common.showValue")}
+            hideLabel={t("common.hideValue")}
+            value={fresh.key}
+            readOnly
+            aria-label={t("mcp.newKeyTitle")}
+            wrapperClassName="w-full"
+            className="rounded-control bg-carbon-surface px-3 py-1.5 font-mono text-sm text-carbon-text glim-field-focus"
+          />
+          <div className="flex items-center gap-3">
+            <Button
+              label={t("mcp.copyKey")}
+              labelKey="common.copy"
+              tone="subtle"
+              onClick={() => void copy(fresh.key)}
+              hueIndex={hueIndex}
+            />
+            <Button
+              label={t("mcp.dismissKey")}
+              labelKey="mcp.dismissKey"
+              tone="accent"
+              onClick={() => setFresh(null)}
+              hueIndex={hueIndex}
+            />
+          </div>
+        </div>
+      )}
 
+      {data !== null && !failed && (
+        <>
           {keys.length > 0 && (
             <div className="flex flex-col gap-2">
               <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
@@ -429,13 +461,15 @@ export function McpServerCard({ hueIndex }: { hueIndex?: number }) {
                         maxLength={64}
                         aria-label={t("mcp.labelLabel")}
                         onChange={(e) => setDraft(e.target.value)}
-                        onBlur={() => void rename(k)}
+                        onBlur={() => {
+                          if (!busy) void rename(k);
+                        }}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") void rename(k);
                           if (e.key === "Escape") setRenaming("");
                         }}
                         className={`w-64 rounded-control bg-carbon-surface px-3 py-1 text-sm text-carbon-text glim-field-focus${
-                          shake[k.id] ? " glim-shake" : ""
+                          shake[`rename:${k.id}`] ? " glim-shake" : ""
                         }`}
                       />
                     ) : (
@@ -492,7 +526,7 @@ export function McpServerCard({ hueIndex }: { hueIndex?: number }) {
                         tone="neutral"
                         onClick={() => setPending({ kind: "revoke", item: k })}
                         disabled={busy}
-                        className={shake[k.id] ? "glim-shake" : ""}
+                        className={shake[`revoke:${k.id}`] ? "glim-shake" : ""}
                         hueIndex={hueIndex}
                       />
                       {canMint && (
@@ -502,6 +536,7 @@ export function McpServerCard({ hueIndex }: { hueIndex?: number }) {
                           tone="neutral"
                           onClick={() => setPending({ kind: "rotate", item: k })}
                           disabled={busy}
+                          className={shake[`rotate:${k.id}`] ? "glim-shake" : ""}
                           hueIndex={hueIndex}
                         />
                       )}
@@ -613,7 +648,7 @@ export function McpServerCard({ hueIndex }: { hueIndex?: number }) {
                         onClick={() => setPending({ kind: "purge", item: k })}
                         disabled={busy || k.inUse}
                         title={k.inUse ? t("mcp.inUseTip") : undefined}
-                        className={shake[k.id] ? "glim-shake" : ""}
+                        className={shake[`purge:${k.id}`] ? "glim-shake" : ""}
                         hueIndex={hueIndex}
                       />
                     </li>
@@ -659,7 +694,7 @@ export function McpServerCard({ hueIndex }: { hueIndex?: number }) {
           confirmLabelKey="mcp.revoke"
           cancelLabel={t("common.cancel")}
           onConfirm={() =>
-            void act(pending.item.id, () => revokeMcpKey(pending.item.id), t("mcp.revoked"))
+            void act(`revoke:${pending.item.id}`, () => revokeMcpKey(pending.item.id), t("mcp.revoked"))
           }
           onCancel={() => setPending(null)}
         />
@@ -673,7 +708,7 @@ export function McpServerCard({ hueIndex }: { hueIndex?: number }) {
           confirmLabelKey="common.delete"
           cancelLabel={t("common.cancel")}
           onConfirm={() =>
-            void act(pending.item.id, () => purgeMcpKey(pending.item.id), t("mcp.purged"))
+            void act(`purge:${pending.item.id}`, () => purgeMcpKey(pending.item.id), t("mcp.purged"))
           }
           onCancel={() => setPending(null)}
         />
