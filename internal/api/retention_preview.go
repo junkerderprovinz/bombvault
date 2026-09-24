@@ -10,9 +10,9 @@ import (
 
 // RetentionPolicyView is the keep-policy a preview was computed with, carried
 // back so the answer can say WHICH rule produced it. Three different policies
-// are in play across the product — the local one, the off-site one a manual
+// are in play across the product (the local one, the off-site one a manual
 // off-site prune uses, and the per-destination one the post-replication hook
-// applies — so a removal list without its policy is a confident prediction
+// applies), so a removal list without its policy is a confident prediction
 // about nobody knows which rule.
 type RetentionPolicyView struct {
 	On          bool `json:"on"`
@@ -42,7 +42,7 @@ type RetentionPreviewRepo struct {
 	// AppendOnly marks a repository retention never touches from this box.
 	// Reported rather than hidden: an empty removal list reads as "nothing to
 	// do", while the truth is "this archive is immutable and is never trimmed
-	// here" — and the opposite, a removal list for an append-only repository,
+	// here", and the opposite, a removal list for an append-only repository,
 	// would be the most alarming false positive this feature could produce.
 	AppendOnly bool                   `json:"appendOnly"`
 	Items      []RetentionPreviewItem `json:"items"`
@@ -66,7 +66,7 @@ type RetentionPreview struct {
 // previewPerRepoTimeout bounds one repository's share of a preview.
 //
 // The cost is real and worth stating: the preview mirrors the per-identity pass,
-// so it is one restic invocation per identity per repository — a 44-container
+// so it is one restic invocation per identity per repository: a 44-container
 // domain across two repositories is 88 of them, each opening the repo, and over
 // a high-latency cloud backend that is minutes rather than seconds. That is why
 // this is a button the operator presses rather than something the page polls.
@@ -75,14 +75,13 @@ const previewPerRepoTimeout = 10 * time.Minute
 // PreviewRetention reports what the next retention run would remove for a
 // domain, per repository and per item, without changing anything.
 //
-// It mirrors pruneDomain's resolution exactly — the same repository set, the
-// same per-repository credentials, the same per-source policy — and none of its
-// bookkeeping. Specifically it does NOT take the domain lock (a preview that
-// refused while a backup runs would be unavailable exactly when someone wants
-// to know what tonight's run will delete), does NOT clear stale locks (that
-// writes to the repository), and does NOT record a run or publish progress (an
-// operation that changed nothing has no business colouring the dashboard or
-// appearing in the run history).
+// It mirrors pruneDomain's resolution exactly (the same repository set, the
+// same per-repository credentials, the same per-source policy) and none of its
+// bookkeeping. It takes no domain lock (a preview that refused while a backup
+// runs would be unavailable exactly when someone wants to know what tonight's
+// run will delete), clears no stale locks (that writes to the repository), and
+// records no run and publishes no progress (an operation that changed nothing
+// has no business colouring the dashboard or appearing in the run history).
 //
 // Not locking has a price, and it is the right one: the answer can race a
 // concurrent forget and name a snapshot that is already gone. Stale but
@@ -103,8 +102,8 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 	}}
 
 	// Append-only repositories are classified exactly as pruneDomain classifies
-	// them, and then REPORTED instead of refused. pruneDomain has to refuse —
-	// it is about to write. A preview's job is to explain, so an immutable
+	// them, and then REPORTED instead of refused. pruneDomain has to refuse,
+	// because it is about to write. A preview's job is to explain, so an immutable
 	// archive becomes a named row saying retention never runs there, rather
 	// than an absence the operator has to interpret.
 	previewable := make([]domainRepoRef, 0, len(repos))

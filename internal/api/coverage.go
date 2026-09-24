@@ -11,7 +11,7 @@ import (
 )
 
 // Coverage answers a question the Dashboard could not: what on this server is
-// NOT backed up by anything?
+// backed up by nothing at all?
 //
 // The protection card next to it is per DOMAIN. It reports whether the
 // containers that ARE scheduled ran on time, which is worth knowing and says
@@ -23,7 +23,7 @@ import (
 // "Protected" here means precisely what the scheduler means: some automatic run
 // would back this item up. It is computed with schedule.Effective*Schedule, the
 // same functions the scheduler's own reasoning uses, rather than by re-deriving
-// the rules — three toggles and an override reach every item, and three of the
+// the rules: three toggles and an override reach every item, and three of the
 // four can silently mean "never".
 
 // CoverageReason says WHY an item is unprotected, so the interface can offer
@@ -134,7 +134,7 @@ func (s *Service) coverContainers(ctx context.Context, settings store.Settings) 
 	out := CoverageDomain{Domain: "containers", Enabled: settings.ContainersEnabled}
 	// A switched-off domain produces no unprotected items, only the fact that it
 	// is off. Listing its items would put a permanent red list in front of an
-	// operator who deliberately does not use that domain, and the only way to
+	// operator who chose not to use that domain, and the only way to
 	// clear it would be to switch on a domain they do not want.
 	if !out.Enabled {
 		return out
@@ -227,18 +227,17 @@ func (s *Service) dbDumpGap(settings store.Settings, tg store.Target, db dbDumpR
 
 // coverVMs reads the STORED VM rows rather than asking libvirt.
 //
-// Deliberately different from containers, and the asymmetry is not an
-// oversight: ListVMs only connects to libvirt when the VM domain is on, because
-// an unconditional virsh-over-SSH connect spams the log of every user who does
-// not back up VMs. A coverage report must not be the thing that starts doing
-// that. The cost is that a VM defined on the host but never added to BombVault
-// is not named here the way an unknown container is; the VM tab is where that
-// one shows up.
+// This differs from containers on purpose: ListVMs only connects to libvirt
+// when the VM domain is on, because an unconditional virsh-over-SSH connect
+// spams the log of every user who does not back up VMs. A coverage report must
+// not be the thing that starts doing that. The cost is that a VM defined on the
+// host but never added to BombVault is not named here the way an unknown
+// container is; the VM tab is where that one shows up.
 func (s *Service) coverVMs(settings store.Settings) CoverageDomain {
 	out := CoverageDomain{Domain: "vms", Enabled: settings.VMsEnabled}
 	// A switched-off domain produces no unprotected items, only the fact that it
 	// is off. Listing its items would put a permanent red list in front of an
-	// operator who deliberately does not use that domain, and the only way to
+	// operator who chose not to use that domain, and the only way to
 	// clear it would be to switch on a domain they do not want.
 	if !out.Enabled {
 		return out
@@ -270,7 +269,7 @@ func (s *Service) coverFileSets(settings store.Settings) CoverageDomain {
 	out := CoverageDomain{Domain: "files", Enabled: settings.FilesEnabled}
 	// A switched-off domain produces no unprotected items, only the fact that it
 	// is off. Listing its items would put a permanent red list in front of an
-	// operator who deliberately does not use that domain, and the only way to
+	// operator who chose not to use that domain, and the only way to
 	// clear it would be to switch on a domain they do not want.
 	if !out.Enabled {
 		return out

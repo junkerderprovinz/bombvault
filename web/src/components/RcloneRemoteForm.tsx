@@ -19,8 +19,8 @@ type RemoteType = "smb" | "webdav";
  * repository on a CIFS mount, which restic's own documentation advises against.
  * So this form is not only the easier route, it is the sounder one.
  *
- * NFS is deliberately not offered. Neither rclone nor restic has an NFS
- * backend, and a form that cannot work would be worse than the honest note that
+ * NFS is left out. Neither rclone nor restic has an NFS
+ * backend, and a form that cannot work would be worse than telling the user
  * NFS still needs a host mount.
  */
 export function RcloneRemoteForm({

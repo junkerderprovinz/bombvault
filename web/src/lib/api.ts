@@ -2015,7 +2015,7 @@ export type RetentionPreviewItem = {
 
 /**
  * One repository's part of the answer. A domain can write to several
- * repositories (#204), so the preview is reported per repository — and an
+ * repositories (#204), so the preview is reported per repository, and an
  * append-only one is named as such rather than shown with an empty list, which
  * would read as "nothing to do" instead of "retention never runs here".
  */
@@ -2040,7 +2040,7 @@ export type RetentionPreview = {
 };
 
 /**
- * GET /api/retention/preview/{domain} — what the next retention run WOULD
+ * GET /api/retention/preview/{domain}: what the next retention run WOULD
  * remove. Read-only: it takes no repository lock and answers while a backup is
  * running, which is exactly when someone wants to know what tonight will delete.
  */
@@ -4284,7 +4284,7 @@ export function deletePasskey(id: string): Promise<OkEnvelope> {
 }
 
 /**
- * GET /api/diagnostics — download the redacted support bundle.
+ * GET /api/diagnostics: download the redacted support bundle.
  *
  * Modelled on downloadRecoveryKit, and for the same reason: every failure path
  * (the 403 refusal when no login password is set, a 200 fail envelope while
@@ -4321,8 +4321,8 @@ export async function downloadDiagnostics(): Promise<string | null> {
     const res = await g.fetch("/api/diagnostics");
     const ct = res.headers.get("content-type") ?? "";
     if (!res.ok || ct.includes("application/json")) {
-      // Backend-provided error text shown verbatim BY DESIGN — the API answers
-      // English and is not translated client-side (i18n-wave decision).
+      // Backend-provided error text shown verbatim by design: the API answers
+      // English, and the client does not translate it.
       try {
         const body = (await res.json()) as { error?: string };
         return body.error || `download failed (HTTP ${res.status})`;
@@ -4376,7 +4376,7 @@ export type CoverageReport = {
 };
 
 /**
- * GET /api/coverage — the items nothing backs up.
+ * GET /api/coverage: the items nothing backs up.
  *
  * Distinct from getStatus(), which is per domain: it reports whether the items
  * that ARE scheduled ran on time and cannot see the container nobody ever
@@ -4399,7 +4399,7 @@ export type RcloneRemoteForm = {
 };
 
 /**
- * POST /api/offsite/rclone-remote — store an SMB or WebDAV destination.
+ * POST /api/offsite/rclone-remote: store an SMB or WebDAV destination.
  *
  * The password is obscured server-side by rclone itself and never stored in
  * the clear. On success the answer carries the finished repository location to

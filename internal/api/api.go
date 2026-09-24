@@ -244,8 +244,8 @@ func (h *Handler) Router() http.Handler {
 	// (requireAuthForSecrets), so trusted-LAN mode cannot hand every stored
 	// backend credential to an unauthenticated LAN client.
 	mux.HandleFunc("GET /api/settings/export", h.handleExportSettings)
-	// The support bundle. Gated by requireAuthForSecrets inside the handler, NOT
-	// on either authGate allowlist: it carries the whole configuration and the
+	// The support bundle. Gated by requireAuthForSecrets inside the handler and
+	// on neither authGate allowlist: it carries the whole configuration and the
 	// recent log, so it fails closed in trusted-LAN mode like the recovery kit.
 	mux.HandleFunc("GET /api/diagnostics", h.handleDiagnostics)
 	mux.HandleFunc("POST /api/settings/import", h.handleImportSettings)
@@ -313,7 +313,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/runs", h.handleRuns)
 	mux.HandleFunc("POST /api/runs/ack", h.handleAckRuns)
 	mux.HandleFunc("GET /api/status", h.handleStatus)
-	// What is NOT backed up. The status route above is per domain and cannot
+	// What nothing backs up. The status route above is per domain and cannot
 	// answer it: a container nobody ever added is absent from every list it has.
 	mux.HandleFunc("GET /api/coverage", h.handleCoverage)
 

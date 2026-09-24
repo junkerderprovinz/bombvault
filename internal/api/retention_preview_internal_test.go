@@ -12,7 +12,7 @@ import (
 
 // TestPreviewRetentionTakesNoLockAndKeepsNoRecord guards the four things that
 // separate a preview from a prune, by reading the source rather than by
-// exercising it — the same technique the repo already uses where a behaviour is
+// exercising it, the same technique the repo already uses where a behaviour is
 // easier to state than to provoke.
 //
 //   - tryLockDomainFor would make the preview refuse with errDomainBusy while a
@@ -31,18 +31,18 @@ func TestPreviewRetentionTakesNoLockAndKeepsNoRecord(t *testing.T) {
 	body := receiverFuncBody(t, string(raw), `\(s \*Service\)`, "PreviewRetention", "retention_preview.go")
 	for _, forbidden := range []string{"tryLockDomainFor", "lockDomainFor", "unlockStale", "progBegin", "StartRun"} {
 		if strings.Contains(body, forbidden) {
-			t.Errorf("PreviewRetention calls %s — a preview must neither lock the domain, "+
+			t.Errorf("PreviewRetention calls %s: a preview must neither lock the domain, "+
 				"clear a lock, nor leave a record of an operation that changed nothing", forbidden)
 		}
 	}
 }
 
 // previewEngine records what a retention preview asks the engine for. Every
-// call that is NOT overridden here panics through the nil ResticEngine embed,
-// which is the point: it proves a preview reaches for nothing that writes.
-// Unlock, ForgetPolicy, Forget and Prune are deliberately left unimplemented.
+// call left without an override here panics through the nil ResticEngine
+// embed, which proves a preview reaches for nothing that writes. Unlock,
+// ForgetPolicy, Forget and Prune stay unimplemented for that reason.
 type previewEngine struct {
-	ResticEngine // nil — any non-overridden call panics loudly
+	ResticEngine // nil, so any call without an override panics
 
 	snaps      []restic.Snapshot
 	snapsErr   error
@@ -133,7 +133,7 @@ func TestPreviewRetentionFallsBackToRepoWide(t *testing.T) {
 }
 
 // TestPreviewRetentionInertPolicyAsksNothing pins that retention which is
-// switched off produces no engine traffic at all — not even a snapshot listing.
+// switched off produces no engine traffic at all, not even a snapshot listing.
 // Asking restic with an inert policy would report the entire repository as
 // about to be removed (forget with no --keep-* flag keeps nothing).
 func TestPreviewRetentionInertPolicyAsksNothing(t *testing.T) {

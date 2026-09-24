@@ -42,8 +42,8 @@ function stamp(iso: string): string {
  * Settings page's own tests mock the API module by spreading the real one, so a
  * fetch fired during render would escape to real fetch under jsdom. The real
  * one: the answer costs one restic invocation per item per repository, which on
- * a large domain over a cloud backend is minutes — that is a question an
- * operator asks deliberately, not something a page polls.
+ * a large domain over a cloud backend is minutes. That is a question an
+ * operator asks on purpose, not something a page polls.
  */
 export function RetentionPreview({
   t,

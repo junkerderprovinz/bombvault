@@ -1,6 +1,6 @@
 package api_test
 
-// GET /api/coverage — what on this server is NOT backed up.
+// GET /api/coverage: what on this server nothing backs up.
 //
 // The question the dashboard could not answer: it showed a traffic light per
 // domain, which says whether the containers that ARE scheduled ran on time. It
@@ -39,7 +39,7 @@ func coverageNames(t *testing.T, m map[string]any) map[string]bool {
 	return out
 }
 
-// TestCoverageNamesAContainerNobodyEverAdded is the whole point. A container
+// TestCoverageNamesAContainerNobodyEverAdded is the core case. A container
 // running on the host with no target row has no include flag, no schedule and
 // no backup: there is no row to hold any of them. Reading only the stored rows
 // would miss exactly the item that most needs naming.

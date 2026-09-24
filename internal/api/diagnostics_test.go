@@ -1,6 +1,6 @@
 package api_test
 
-// GET /api/diagnostics — the support bundle.
+// GET /api/diagnostics: the support bundle.
 //
 // A file made to be attached to a bug report is the worst possible place for a
 // credential, and it is also the file most likely to be posted in public. So it
@@ -101,7 +101,7 @@ func TestDiagnosticsCarriesNoSecretInAnyMember(t *testing.T) {
 
 // TestDiagnosticsCarriesTheMembersSupportNeeds: the gate and the redaction are
 // worth nothing if the file is empty. These are the four questions a support
-// thread opens with — what does the host look like, how is it configured, what
+// thread opens with: what does the host look like, how is it configured, what
 // ran recently, and what is scheduled next.
 func TestDiagnosticsCarriesTheMembersSupportNeeds(t *testing.T) {
 	h, _, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
@@ -136,7 +136,7 @@ func memberNames(m map[string]string) []string {
 
 // TestDiagnosticsScrubsTheLog closes the loop the log member opens. Run errors
 // are scrubbed because restic and rclone print their repository URL, credential
-// and all, on failure — and the same output goes to the standard logger, which
+// and all, on failure, and the same output goes to the standard logger, which
 // is what the ring records. A bundle that redacted the runs table and then
 // shipped the identical string inside log.txt would be redacted in name only.
 func TestDiagnosticsScrubsTheLog(t *testing.T) {

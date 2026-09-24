@@ -652,7 +652,7 @@ func backupHardCap() time.Duration {
 // It is also where the stall guard is armed, because this function is the one
 // gate every backup run passes and nothing else does. Arming it any further
 // down (at progBegin, say) would have caught restores and maintenance runs too:
-// a restore is deliberately not cancellable, and a prune emits no byte counters
+// a restore is not cancellable by design, and a prune emits no byte counters
 // at all, so silence there means nothing and cancelling on it would be wrong.
 func backupHoldCtx(ctx context.Context) (context.Context, context.CancelFunc) {
 	base := context.WithoutCancel(ctx)
@@ -1977,14 +1977,15 @@ func (s *Service) foldTag(tag string, snaps []restic.Snapshot, domains []aliasFo
 
 // previewRetentionPerIdentity is the read-only twin of
 // applyRetentionPerIdentity: it reports what that pass WOULD remove, asking the
-// same question in the same shape — one tag-scoped preview per identity, with
+// same question in the same shape: one tag-scoped preview per identity, with
 // the same repo-wide fallback when the listing fails or carries no identity
-// tags. Mirroring it is the whole point. A single repo-wide dry run is cheaper
-// and answers a DIFFERENT question: it would show removals that never happen
-// and hide ones that do, because the per-identity pass is what actually runs.
+// tags. The mirroring is what makes it right. A single repo-wide dry run is
+// cheaper and answers a DIFFERENT question: it would show removals that never
+// happen and hide ones that do, because the per-identity pass is what actually
+// runs.
 //
-// It deliberately does not go through forgetWithLockHeal. That helper's first
-// act is unlockStale, which DELETES lock files — a preview must never write to
+// It stays away from forgetWithLockHeal. That helper's first act is
+// unlockStale, which DELETES lock files, and a preview must never write to
 // a repository, least of all one another process is holding.
 //
 // One failing identity does not blank the answer: the remaining tags are still

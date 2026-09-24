@@ -3,10 +3,10 @@
 //
 // BombVault logs to stdout and nowhere else: `docker logs` is the only place
 // the output exists. That is fine while someone can reach the host, and useless
-// in the case a support bundle is for — a user who can open the web UI, cannot
+// in the case a support bundle is for: a user who can open the web UI, cannot
 // or will not run docker commands, and is asked to attach "the log".
 //
-// A ring rather than a file, deliberately. A log file would need a path, a
+// A ring rather than a file, on purpose. A log file would need a path, a
 // rotation policy, disk budget and a decision about which volume it lives on,
 // for output that is already being written to stdout. The ring costs a fixed
 // number of bytes and adds no new place for data to pile up.

@@ -619,7 +619,7 @@ function chipForRpo(status: string): string {
  * for it. This card names it.
  *
  * A switched-off backup type is left out of the ratio entirely. Counting an
- * operator VMs they deliberately do not back up would put a permanent red list
+ * operator VMs they chose not to back up would put a permanent red list
  * in front of a correctly configured server, and a card that cries wolf is a
  * card people hide.
  */
@@ -656,7 +656,7 @@ export function CoverageCard({
 
   return (
     <Card title={t("coverage.title")} hueIndex={hueIndex}>
-      {/* The card says what it counts and what it deliberately does not, right
+      {/* The card says what it counts and what it leaves out on purpose, right
           where it is read. Without it the ratio invites the wrong reading: a
           switched-off backup type is missing from it on purpose. */}
       <p className="mb-2 text-xs text-carbon-textSub">{t("coverage.hint")}</p>

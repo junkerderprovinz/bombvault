@@ -25,7 +25,7 @@ import (
 // through rclone skips the mount entirely, so this is not only more convenient,
 // it is the sounder of the two routes.
 //
-// NFS is deliberately absent. rclone has no NFS backend and restic has no NFS
+// NFS is left out. rclone has no NFS backend and restic has no NFS
 // backend, so for NFS the host mount remains the only way, and saying so beats
 // offering a form that cannot work.
 const (
@@ -43,7 +43,7 @@ type rcloneRemote struct {
 	// SMB.
 	Host string
 	// Share is carried for the caller's convenience when it builds the
-	// repository location. It is deliberately NOT written into the config: an
+	// repository location. It stays out of the config on purpose: an
 	// rclone SMB remote addresses the share as the first path segment, so a
 	// "share =" key would make every path double up.
 	Share string
@@ -241,7 +241,7 @@ func (s *Service) AddRcloneRemote(ctx context.Context, r rcloneRemote, plainPass
 //
 // Behind requireAuthForSecrets: the request body carries a live password for a
 // storage backend, and a route that accepts one must not be open in
-// trusted-LAN mode the way the read API deliberately is.
+// trusted-LAN mode the way the read API is by design.
 //
 // The answer never echoes the password back, not even on failure. The most
 // likely failure by far is a typo in it.

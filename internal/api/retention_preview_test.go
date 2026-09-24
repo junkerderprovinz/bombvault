@@ -12,7 +12,7 @@ import (
 )
 
 // withLocalRetention switches the local keep-policy on. twoRepoDomain leaves
-// retention off, which is the honest default for a fresh install — and an
+// retention off, which is the honest default for a fresh install, and an
 // inert policy is a no-op by design, so without this every assertion below
 // would pass for the wrong reason.
 func withLocalRetention(t *testing.T, st *store.Repo) {
@@ -30,7 +30,7 @@ func withLocalRetention(t *testing.T, st *store.Repo) {
 // TestPreviewRetentionCoversEveryRepositoryOfTheDomain pins the #204 rule for
 // the preview: a domain is no longer one repository. Previewing only the
 // domain's own repo would give a confident answer about a domain it looked at
-// half of — the exact bug the per-repository rewrite exists to prevent.
+// half of, the exact bug the per-repository rewrite exists to prevent.
 func TestPreviewRetentionCoversEveryRepositoryOfTheDomain(t *testing.T) {
 	eng := &fakeResticEngine{}
 	svc, st, own, cold := twoRepoDomain(t, eng)
@@ -49,7 +49,7 @@ func TestPreviewRetentionCoversEveryRepositoryOfTheDomain(t *testing.T) {
 }
 
 // TestPreviewRetentionNeverWrites is the promise the whole feature rests on.
-// A preview answers a question; it must not forget, prune, or clear a lock —
+// A preview answers a question; it must not forget, prune, or clear a lock,
 // not even the "stale" clear the real retention pass opens with, because a
 // read-only endpoint that deletes lock files is a repository writer.
 func TestPreviewRetentionNeverWrites(t *testing.T) {

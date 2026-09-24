@@ -21,7 +21,7 @@ import (
 // really aimed at, a run wedged on an unresponsive mount, and leaves the slow
 // but healthy one alone.
 //
-// Called a guard rather than a watchdog deliberately. "Watchdog" already means
+// Called a guard rather than a watchdog on purpose. "Watchdog" already means
 // the overdue-backup watcher in this product, with its own setting, its own
 // scheduler job and its own strings; a second one by the same name would be
 // ambiguous in the code, in the log line and in a support thread.
@@ -158,7 +158,7 @@ const stallTickInterval = time.Minute
 // keeps asking even when restic has gone completely silent, which is the state
 // a wedged run is actually in.
 //
-// Only ever called on backup paths. A restore is deliberately not cancellable
+// Called on backup paths alone. A restore is not cancellable by design
 // (an interrupted restore has already removed the container and half-written
 // its appdata) and maintenance commands emit no counters at all, so silence
 // there would mean nothing.

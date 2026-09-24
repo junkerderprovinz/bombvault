@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// TestRingKeepsTheNewestWithinItsCap pins the whole point of the ring: it holds
+// TestRingKeepsTheNewestWithinItsCap pins what the ring is for: it holds
 // a bounded amount of the MOST RECENT log output. A support bundle wants the
 // lines just before something went wrong, and a buffer that filled up and then
 // stopped recording would hold exactly the wrong end of the run.

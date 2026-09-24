@@ -37,7 +37,7 @@ type appAdvisory struct {
 	id    string
 }
 
-// appAdvisories is deliberately short. Every entry is a claim about how an
+// appAdvisories is kept short. Every entry is a claim about how an
 // application stores its data, which can go out of date, so this holds only
 // cases where being wrong about it costs data rather than disk space.
 var appAdvisories = []appAdvisory{
@@ -76,7 +76,7 @@ func appAdvisoriesFor(image string) []string {
 // part: lower-cased, with the digest and the tag removed.
 //
 // The tag has to go or a rule would only fire on whichever tag it was written
-// against, missing every pinned install — which is most of them. The digest has
+// against, missing every pinned install, which is most of them. The digest has
 // to go for the same reason. Splitting the tag off is done AFTER the digest so
 // "repo:tag@sha256:…" reduces correctly, and only on the last path segment, so
 // a registry port ("registry.example:5000/app") is not mistaken for a tag.

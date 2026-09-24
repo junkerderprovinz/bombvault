@@ -32,7 +32,7 @@ func TestSMBSectionCarriesEveryFieldRcloneNeeds(t *testing.T) {
 			t.Errorf("the section is missing %q:\n%s", want, got)
 		}
 	}
-	// The share is NOT part of the remote: rclone addresses it as the first
+	// The share stays out of the remote: rclone addresses it as the first
 	// path segment (nas:backups/repo). Writing it into the section would make
 	// every path double up.
 	if strings.Contains(got, "share") {

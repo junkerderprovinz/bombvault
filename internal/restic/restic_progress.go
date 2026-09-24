@@ -23,7 +23,7 @@ type Progress struct {
 	// FilesDone and BytesDone are the work actually completed.
 	FilesDone uint64
 	BytesDone uint64
-	// SecondsElapsed is restic's own clock. Deliberately NOT a sign of life: it
+	// SecondsElapsed is restic's own clock, and no sign of life: it
 	// advances whether or not anything is happening, so a guard that accepted it
 	// could never fire. Kept because it is useful in a log line.
 	SecondsElapsed uint64
@@ -31,7 +31,7 @@ type Progress struct {
 
 // MovedSince reports whether anything advanced between two status lines.
 //
-// Any counter changing counts, and that is the whole point. The failure this
+// Any counter changing counts, and that matters. The failure this
 // prevents is killing a healthy backup during the SCAN phase: before restic
 // writes its first pack it walks the tree, and on a large appdata tree
 // bytes_done stays at 0 for minutes while total_bytes climbs. A guard watching
@@ -96,7 +96,7 @@ type watcherKey struct{}
 // reports its counters. A nil watcher returns ctx unchanged, which is what
 // keeps every existing call site behaving exactly as before.
 //
-// Deliberately opt-in per call: a watcher must reach BACKUP runs only. A
+// Opt-in per call, because a watcher must reach backup runs alone. A
 // restore is not cancellable on purpose (an interrupted restore has already
 // removed the container and half-written its appdata), and maintenance
 // commands emit no byte counters at all, so silence there means nothing.

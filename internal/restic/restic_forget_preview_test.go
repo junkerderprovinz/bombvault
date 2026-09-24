@@ -10,7 +10,7 @@ import (
 //
 // This is not a micro-optimisation. `restic forget` with no --keep-* flag keeps
 // nothing, so a preview that reached the binary with an inert policy would
-// report every snapshot in the repository as about to be removed — and the
+// report every snapshot in the repository as about to be removed, and the
 // operator would be looking at a list that says their whole history is going
 // away, produced by a policy that in reality does nothing.
 //
@@ -32,7 +32,7 @@ func TestForgetPreviewInertPolicy(t *testing.T) {
 //
 // The empty case is the one that matters in practice. restic 0.17.3 guards its
 // JSON print with `if gopts.JSON && len(jsonGroups) > 0`, so a policy that
-// matches no group prints NOTHING AT ALL — not `[]`. That is the perfectly
+// matches no group prints NOTHING AT ALL, not even `[]`. That is the perfectly
 // normal "nothing would be removed" answer, and a naive json.Unmarshal turns it
 // into a parse error on the user's screen.
 func TestParseForgetGroups(t *testing.T) {

@@ -3092,9 +3092,9 @@ func (h *Handler) handleRecoveryKit(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 	// The seal decision is made BEFORE the kit is built, from ONE settings read,
-	// and a failed read refuses outright. Deliberately not ExportEncryptionOn():
+	// and a failed read refuses outright. ExportEncryptionOn() will not do:
 	// that is a second, best-effort read which reports false when the store
-	// errors — harmless where it only picks a filename, and catastrophic here,
+	// errors, harmless where it only picks a filename and catastrophic here,
 	// where it would answer "encryption off" to a transient error and hand out
 	// the master key in the clear.
 	settings, sErr := h.store.GetSettings()
@@ -3300,8 +3300,8 @@ func (h *Handler) handlePrune(w http.ResponseWriter, r *http.Request) {
 //
 // A GET on purpose: csrfGate exempts GET, so a read-only question needs no
 // token, while authGate still protects it like every other /api route. The
-// domain whitelist matches handlePrune's deliberately — the preview and the
-// prune must never disagree about which domains exist.
+// domain whitelist is handlePrune's own, because the preview and the prune
+// must never disagree about which domains exist.
 func (h *Handler) handleRetentionPreview(w http.ResponseWriter, r *http.Request) {
 	domain := r.PathValue("domain")
 	switch domain {
@@ -3315,7 +3315,7 @@ func (h *Handler) handleRetentionPreview(w http.ResponseWriter, r *http.Request)
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	// Nil slices are normalised so the client always meets a list, never null —
+	// Nil slices are normalised so the client always meets a list, never null,
 	// the same courtesy handleExcludesPreview extends.
 	if preview.Repos == nil {
 		preview.Repos = []RetentionPreviewRepo{}

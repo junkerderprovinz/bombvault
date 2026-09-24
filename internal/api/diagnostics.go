@@ -233,7 +233,7 @@ func (h *Handler) dbDumpDiagnostics(ctx context.Context) ([]diagDBDump, error) {
 // recent log: not credentials, but far more than the read API's usual fare, and
 // the one file most likely to be posted in public.
 //
-// Deliberately NOT age-sealed, even when export encryption is on. The flash
+// Never age-sealed, even when export encryption is on. The flash
 // download and the plain exports seal because they are the user's own data
 // going somewhere the user controls. This file's entire purpose is to be opened
 // by somebody else, and a sealed bundle the recipient cannot read would defeat
@@ -275,7 +275,7 @@ func (h *Handler) handleDiagnostics(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/zip")
 	w.Header().Set("Content-Disposition", `attachment; filename="`+name+`"`)
 	if _, err := w.Write(buf.Bytes()); err != nil {
-		// The body is never logged, only the fact that writing it failed —
+		// The body is never logged, only the fact that writing it failed:
 		// the same rule the settings export follows.
 		log.Printf("api: diagnostics: writing the bundle failed: %v", err)
 	}
@@ -304,7 +304,7 @@ func (h *Handler) buildDiagnostics(ctx context.Context) ([]diagFile, error) {
 		files = append(files, diagFile{Name: name, Data: b})
 	}
 
-	// manifest.json — what this file is.
+	// manifest.json: what this file is.
 	mcpCounts, mErr := h.mcpDiagnostics()
 	if mErr != nil {
 		log.Printf("api: diagnostics: reading the MCP key counts failed: %v", mErr)
@@ -331,7 +331,7 @@ func (h *Handler) buildDiagnostics(ctx context.Context) ([]diagFile, error) {
 		},
 	}, nil)
 
-	// spike.json — the host-integration check. Read from the cache the way
+	// spike.json: the host-integration check. Read from the cache the way
 	// handleSpikeCached does; the probes shell out, so a bundle must not be a
 	// way to re-run them on every request.
 	h.spikeMu.RLock()
@@ -342,7 +342,7 @@ func (h *Handler) buildDiagnostics(ctx context.Context) ([]diagFile, error) {
 	}
 	add("spike.json", map[string]any{"checks": checks, "allOK": allOK}, nil)
 
-	// settings.json — through the export's own redaction, so this file and the
+	// settings.json, through the export's own redaction, so this file and the
 	// portable export can never disagree about what counts as a secret.
 	s, sErr := h.store.GetSettings()
 	if sErr != nil {
@@ -362,7 +362,7 @@ func (h *Handler) buildDiagnostics(ctx context.Context) ([]diagFile, error) {
 	zfsDiag, zErr := h.zfsDiagnostics()
 	add("zfs.json", zfsDiag, zErr)
 
-	// runs.json — recent history. Run.Error holds raw restic/rclone/Docker
+	// runs.json: recent history. Run.Error holds raw restic/rclone/Docker
 	// output, which handleRuns can serve as-is because it sits behind the
 	// session gate. A file meant to be attached to a public bug report cannot,
 	// so every error goes through scrubSecrets here, and a dump or an import
@@ -395,7 +395,7 @@ func (h *Handler) buildDiagnostics(ctx context.Context) ([]diagFile, error) {
 		}, nil)
 	}
 
-	// scheduler.json — what is planned next, nil-guarded the way
+	// scheduler.json: what is planned next, nil-guarded the way
 	// handleScheduleNext is.
 	if h.scheduler == nil {
 		add("scheduler.json", map[string]any{"next": []any{}}, nil)
@@ -403,7 +403,7 @@ func (h *Handler) buildDiagnostics(ctx context.Context) ([]diagFile, error) {
 		add("scheduler.json", map[string]any{"next": h.scheduler.NextRuns()}, nil)
 	}
 
-	// log.txt — the recent output, scrubbed like the run errors and capped so
+	// log.txt: the recent output, scrubbed like the run errors and capped so
 	// the bundle stays mailable.
 	logText := scrubSecrets(logring.Default.String())
 	if len(logText) > diagLogCap {
