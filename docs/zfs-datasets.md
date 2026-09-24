@@ -59,7 +59,7 @@ A container can be on this list and on the **Containers** page at the same time.
 
 Open **Backups** on the item, pick the backup, then the dataset. By default that is the item's top dataset.
 
-- **Into the dataset.** Files from the backup are written into the dataset's mountpoint. Files with the same name are overwritten, other files stay. The dataset is never rolled back or replaced. BombVault checks that the dataset is mounted, visible and writable, once before it starts and again right before it writes.
+- **Into the dataset.** Files from the backup are written into the dataset's mountpoint. Files with the same name are overwritten, other files stay. The dataset is never rolled back or replaced. BombVault checks that the dataset is mounted, visible and writable, once before it starts and again right before it writes. Where a child dataset is mounted inside it, nothing is written: the child keeps its files, owner and permissions, and is restored from its own backup.
 - **To a folder.** Pick a folder below `/mnt`. BombVault checks that the folder is on a mounted pool or share and that there is enough free space. This works without the SSH link and for datasets that no longer exist.
 - **Select files** (Advanced): write only the files and folders you pick back into the dataset.
 - **All datasets of this backup** (Advanced): every dataset of the tree into its own subfolder of the folder you pick. Datasets that were skipped in that backup are named.
