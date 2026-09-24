@@ -52,9 +52,14 @@ Para cada contenedor, BombVault elige por sí mismo qué montajes bind y volúme
 - Como la protección es opcional, cuando no se define, toda la interfaz y la API (incluidas la configuración externa, las rutas de prueba de manipulación y el kit de recuperación) están al alcance de cualquiera que pueda llegar al puerto. Activa la protección en cuanto uses copias externas, inmutables o cifrado.
 - Ejecuta BombVault solo en una red de confianza y no expuesta. Para acceso remoto, ponlo detrás de un proxy inverso que añada autenticación y TLS. Las respuestas llevan cabeceras de seguridad básicas (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Detrás de un proxy inverso cada petición lleva la dirección del proxy, así que sin `TRUSTED_PROXY` el límite de intentos cuenta a todos los clientes en el mismo contador y los fallos de un atacante te dejan fuera a ti también. Indica el proxy en `TRUSTED_PROXY` para recuperar el conteo por cliente.
+- Un proxy inverso delante de BombVault tiene que pasar la cabecera `Authorization` o `X-API-Key` a `/mcp` y no debe almacenar sus respuestas en búfer; si no, los asistentes no pueden conectarse. Ver [Servidor MCP](mcp.md#tls).
 - Con `HTTP_ONLY=true`, la cookie de sesión pierde su marca `Secure` (tiene que hacerlo para funcionar por HTTP en texto plano), así que activa la contraseña detrás de un proxy que termina TLS solo si la confidencialidad importa.
 - La conexión SSH de la copia de VMs confía en la clave del host en la primera conexión (TOFU) y la fija a partir de entonces. Verifica la clave del host fuera de banda si tu ruta contenedor-a-host no es de confianza.
 - Las copias están cifradas por restic cuando el cifrado está habilitado (Ajustes; activado por defecto), con la clave derivada de `APP_KEY`.
+
+## Servidor MCP {#mcp-server}
+
+El servidor MCP no necesita ninguna variable de entorno. Lo activas creando una clave en **Ajustes, Sistema, Servidor MCP**, y responde en `/mcp` en el mismo puerto que la interfaz web (por ejemplo `https://192.168.1.10:3443/mcp`). Sin una clave activa, esa ruta responde `404`. Los clientes, los certificados y los límites se describen en [Servidor MCP](mcp.md).
 
 ## Copia de VMs por SSH
 

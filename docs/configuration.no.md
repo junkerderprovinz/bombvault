@@ -52,9 +52,14 @@ For hver container velger BombVault selv hvilke bind-monteringer og navngitte vo
 - Fordi porten er valgfri, er hele grensesnittet og API-et (inkludert ekstern-oppsettet, tamper-test-rutene og gjenopprettingssettet) tilgjengelig for alle som når porten når den ikke er satt. Aktiver porten så snart ekstern lagring, uforanderlige sikkerhetskopier eller kryptering er i bruk.
 - Kjør BombVault kun på et betrodd, ikke-eksponert nettverk. For fjerntilgang, sett den bak en revers-proxy som legger til autentisering og TLS. Svar bærer grunnleggende sikkerhetsheadere (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Bak en omvendt proxy bærer hver forespørsel proxyens adresse, så uten `TRUSTED_PROXY` teller påloggingsbremsen alle klienter i én bøtte, og en angripers feil låser deg også ute. Oppgi proxyen i `TRUSTED_PROXY` for å få telling per klient tilbake.
+- En omvendt proxy foran BombVault må sende headeren `Authorization` eller `X-API-Key` videre til `/mcp` og må ikke bufre svarene, ellers kan ikke assistenter koble til. Se [MCP-server](mcp.md#tls).
 - Med `HTTP_ONLY=true` mister øktinformasjonskapselen sitt `Secure`-flagg (det må den, for å fungere over ren HTTP), så aktiver bare passordet bak en TLS-terminerende proxy hvis konfidensialitet betyr noe.
 - VM-sikkerhetskopi-SSH-tilkoblingen stoler på host-nøkkelen ved første tilkobling (TOFU) og fester den deretter. Verifiser hostens nøkkel utenfor båndet hvis container-til-host-veien din ikke er betrodd.
 - Sikkerhetskopier krypteres av restic når kryptering er aktivert (Innstillinger; på som standard), med nøkkelen utledet fra `APP_KEY`.
+
+## MCP-server {#mcp-server}
+
+MCP-serveren trenger ingen miljøvariabel. Du slår den på ved å lage en nøkkel under **Innstillinger, System, MCP-server**, og den svarer på `/mcp` på samme port som webgrensesnittet (for eksempel `https://192.168.1.10:3443/mcp`). Uten en aktiv nøkkel svarer den stien med `404`. Klienter, sertifikater og grenser er beskrevet på [MCP-server](mcp.md).
 
 ## VM-sikkerhetskopiering over SSH
 

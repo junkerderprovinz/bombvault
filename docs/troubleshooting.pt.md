@@ -61,6 +61,10 @@ Uma importação para o container, põe a pasta de dados de lado e deixa a image
 
 Para a repor à mão: para o container, muda o nome da pasta de dados atual para a tirar do caminho, muda o nome da pasta guardada de volta ao original e arranca o container. No Unraid, o gestor de ficheiros no separador Shares faz isto.
 
+## Um assistente de IA não consegue ligar-se
+
+A página [Servidor MCP](mcp.md#troubleshooting) explica o que significa cada código de estado e cada recusa do ponto de ligação MCP, e o que fazer.
+
 ## O container continua a reiniciar ou parece não-saudável
 
 O BombVault reporta saudável/não-saudável a partir do seu próprio `/api/health`. Uma ferramenta de auto-recuperação (como o Autoheal) pode reiniciá-lo automaticamente se o motor alguma vez encravar. Verifique o registo do container e o relatório `/spike` para a causa subjacente.

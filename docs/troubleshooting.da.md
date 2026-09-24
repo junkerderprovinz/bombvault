@@ -61,6 +61,10 @@ En import stopper containeren, sætter dens datamappe til side og lader imaget o
 
 Sådan lægger du den tilbage i hånden: stop containeren, omdøb den nuværende datamappe væk, omdøb den gemte mappe tilbage til det oprindelige navn, og start containeren. På Unraid klarer filhåndteringen under fanen Shares det.
 
+## En AI-assistent kan ikke oprette forbindelse
+
+Siden [MCP-server](mcp.md#troubleshooting) viser, hvad hver statuskode og hver afvisning fra MCP-endepunktet betyder, og hvad du kan gøre ved det.
+
 ## Containeren bliver ved med at genstarte eller ser usund ud
 
 BombVault rapporterer sund/usund fra sin egen `/api/health`. Et auto-heal-værktøj (såsom Autoheal) kan genstarte den automatisk, hvis motoren nogensinde går i baglås. Tjek containerloggen og `/spike`-rapporten for den underliggende årsag.

@@ -61,6 +61,10 @@ Een import stopt de container, zet zijn datamap opzij en laat de image er een le
 
 Met de hand terugzetten: stop de container, hernoem de huidige datamap uit de weg, hernoem de bewaarde map terug naar de oorspronkelijke naam en start de container. Op Unraid doet de bestandsbeheerder op het tabblad Shares dit.
 
+## Een AI-assistent krijgt geen verbinding
+
+De pagina [MCP-server](mcp.md#troubleshooting) zet op een rij wat elke statuscode en elke weigering van het MCP-eindpunt betekent en wat je eraan kunt doen.
+
 ## De container blijft herstarten of ziet er unhealthy uit
 
 BombVault meldt healthy/unhealthy vanuit zijn eigen `/api/health`. Een auto-heal-tool (zoals Autoheal) kan hem automatisch herstarten als de engine ooit vastloopt. Controleer het containerlog en het `/spike`-rapport voor de onderliggende oorzaak.

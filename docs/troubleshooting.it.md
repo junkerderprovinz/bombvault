@@ -61,6 +61,10 @@ Un import ferma il container, sposta di lato la sua cartella dati e lascia che l
 
 Per rimetterla a mano: ferma il container, rinomina la cartella dati attuale per toglierla di mezzo, rinomina la cartella conservata al nome originale e avvia il container. Su Unraid lo fa il gestore file nella scheda Shares.
 
+## Un assistente IA non riesce a collegarsi
+
+La pagina [Server MCP](mcp.md#troubleshooting) spiega cosa significano ogni codice di stato e ogni rifiuto del punto di connessione MCP, e cosa fare.
+
 ## Il container continua a riavviarsi o sembra non sano
 
 BombVault segnala sano/non sano dal proprio `/api/health`. Uno strumento di auto-heal (come Autoheal) può riavviarlo automaticamente se il motore dovesse mai incepparsi. Controlla il log del container e il report `/spike` per la causa sottostante.

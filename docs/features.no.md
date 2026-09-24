@@ -82,6 +82,10 @@ BombVault er enkel som standard og dyp når du trenger det. Grensesnittet viser 
 - **VM-vanlig-eksport.** VM-er har den samme **Eksporter (vanlig tar)**: `<name>.tar.gz` av diskimage(r) pluss `<name>.xml`, gjenopprettbar med `virsh define` pluss disken, uten at BombVault eller restic trengs.
 - **Krypter de vanlige eksportene (age).** Eksportene ligger utenfor restic, så de er klartekst som standard. Slå på age-kryptering under Innstillinger og legg til én eller flere mottakere (en age-offentlig nøkkel eller en SSH-offentlig nøkkel). Hver eksport (container- og VM-`.tar.gz`, deres `.xml`-sidefiler og flash-ZIP-en) forsegles deretter for de mottakerne, og du dekrypterer den senere bort fra boksen med den tilhørende private nøkkelen. Som en sikkerhetsregel, med kryptering på og ingen gyldig mottaker satt, feiler en eksport med en tydelig feil i stedet for noensinne å skrive klartekst.
 
+## AI-assistenter (MCP) {#mcp}
+
+BombVault har en innebygd MCP-server, slik at en assistent som Claude Code eller Claude Desktop kan lese status for sikkerhetskopiene, dekningen, kjøringshistorikken, gjenopprettingspunkter og pågående aktivitet. Med en nøkkel som tillater det, kan assistenten også starte en sikkerhetskopi av ett element, ett domene eller alt, og avbryte sikkerhetskopiene den selv har startet. Gjenopprettinger, slettinger, prune og innstillinger blir værende i webgrensesnittet. Hver klient får sin egen nøkkel under **Innstillinger, System, MCP-server**; en nøkkel vises én gang, lagres bare som fingeravtrykk og kan gis nytt navn, byttes eller tilbakekalles når som helst. Starter er begrenset per time og per element, og et oppbevaringsvern hindrer at en assistents sikkerhetskopier skyver dine egne gjenopprettingspunkter ut av en policy med "behold de siste N". Hver kjøring en assistent starter, er merket "via MCP" med nøkkelens navn. Se [MCP-server](mcp.md).
+
 ## Annet
 
 - **Sikkerhetskopier mange samtidig.** Flervelg containere og trykk **Sikkerhetskopier valgte**. Batchen kjører på serversiden, så den fortsetter selv om du lukker fanen eller mister tilkoblingen. BombVault sikkerhetskopierer aldri (og stopper derfor aldri) sin egen container.

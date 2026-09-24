@@ -61,6 +61,10 @@ En import stoppar containern, flyttar undan dess datamapp och låter avbilden sk
 
 Så lägger du tillbaka den för hand: stoppa containern, byt namn på den nuvarande datamappen så att den är ur vägen, byt tillbaka den bevarade mappen till det ursprungliga namnet och starta containern. På Unraid gör filhanteraren under fliken Shares detta.
 
+## En AI-assistent kan inte ansluta
+
+Sidan [MCP-server](mcp.md#troubleshooting) visar vad varje statuskod och varje nekande från MCP-slutpunkten betyder och vad du kan göra åt det.
+
 ## Containern startar om hela tiden eller ser osund ut
 
 BombVault rapporterar frisk/osund från sin egen `/api/health`. Ett auto-heal-verktyg (som Autoheal) kan starta om den automatiskt om motorn någonsin skulle kärva. Kontrollera containerloggen och `/spike`-rapporten för den underliggande orsaken.

@@ -61,6 +61,10 @@ Una importación para el contenedor, aparta su carpeta de datos y deja que la im
 
 Para devolverla a mano: para el contenedor, renombra la carpeta de datos actual para quitarla de en medio, renombra la carpeta guardada a su nombre original y arranca el contenedor. En Unraid, el gestor de archivos de la pestaña Shares hace esto.
 
+## Un asistente de IA no consigue conectarse
+
+La página [Servidor MCP](mcp.md#troubleshooting) explica qué significa cada código de estado y cada rechazo del punto de conexión MCP, y qué hacer en cada caso.
+
 ## El contenedor se reinicia constantemente o parece no saludable
 
 BombVault informa de saludable/no saludable desde su propio `/api/health`. Una herramienta de autorreparación (como Autoheal) puede reiniciarlo automáticamente si el motor se atasca alguna vez. Comprueba el registro del contenedor y el informe de `/spike` para conocer la causa subyacente.

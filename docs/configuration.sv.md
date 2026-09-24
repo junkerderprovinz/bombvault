@@ -52,9 +52,14 @@ För varje container väljer BombVault själv vilka bind-monteringar och namngiv
 - Eftersom spärren är opt-in är hela gränssnittet och API:et (inklusive off-site-uppsättningen, manipulationstest-rutterna och återställningskitet) nåbara av vem som helst som kan nå porten när den är osatt. Aktivera spärren när off-site, oföränderliga säkerhetskopior eller kryptering används.
 - Kör BombVault endast på ett betrott, icke-exponerat nätverk. För fjärråtkomst, placera den bakom en reverse proxy som lägger till autentisering och TLS. Svar bär baslinje-säkerhetsrubriker (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Bakom en omvänd proxy bär varje begäran proxyns adress, så utan `TRUSTED_PROXY` räknar inloggningsbromsen alla klienter i samma hink och en angripares misslyckanden låser ute även dig. Ange proxyn i `TRUSTED_PROXY` för att få tillbaka räkning per klient.
+- En omvänd proxy framför BombVault måste skicka vidare headern `Authorization` eller `X-API-Key` till `/mcp` och får inte buffra svaren, annars kan assistenter inte ansluta. Se [MCP-server](mcp.md#tls).
 - Med `HTTP_ONLY=true` förlorar sessionscookien sin `Secure`-flagga (den måste det, för att fungera över vanlig HTTP), så aktivera bara lösenordet bakom en TLS-terminerande proxy om konfidentialitet är viktig.
 - VM-säkerhetskopieringens SSH-anslutning litar på värdnyckeln vid första anslutningen (TOFU) och pinnar den därefter. Verifiera värdens nyckel out-of-band om din container-till-värd-väg inte är betrodd.
 - Säkerhetskopior krypteras av restic när kryptering är aktiverad (Inställningar; på som standard), med nyckeln härledd från `APP_KEY`.
+
+## MCP-server {#mcp-server}
+
+MCP-servern behöver ingen miljövariabel. Du slår på den genom att skapa en nyckel under **Inställningar, System, MCP-server**, och den svarar på `/mcp` på samma port som webbgränssnittet (till exempel `https://192.168.1.10:3443/mcp`). Utan en aktiv nyckel svarar den sökvägen med `404`. Klienter, certifikat och gränser beskrivs på [MCP-server](mcp.md).
 
 ## VM-säkerhetskopiering över SSH
 

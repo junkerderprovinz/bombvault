@@ -52,9 +52,14 @@ Para cada contentor, o BombVault escolhe por si que bind mounts e volumes nomead
 - Como o controlo é opcional, quando não está definido, toda a interface e API (incluindo a configuração do externo, as rotas de teste de adulteração e o kit de recuperação) ficam acessíveis a qualquer pessoa que consiga alcançar a porta. Ative o controlo assim que estiver a usar externo, backups imutáveis ou encriptação.
 - Corra o BombVault apenas numa rede de confiança e não exposta. Para acesso remoto, coloque-o por trás de um proxy reverso que adicione autenticação e TLS. As respostas transportam cabeçalhos de segurança de base (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Atrás de um proxy reverso cada pedido traz o endereço do proxy, por isso sem `TRUSTED_PROXY` o travão conta todos os clientes no mesmo balde e as falhas de um atacante também te trancam de fora. Indica o proxy em `TRUSTED_PROXY` para voltar a contar por cliente.
+- Um proxy inverso à frente do BombVault tem de passar o cabeçalho `Authorization` ou `X-API-Key` para `/mcp` e não pode reter as respostas em buffer; caso contrário os assistentes não conseguem ligar-se. Ver [Servidor MCP](mcp.md#tls).
 - Com `HTTP_ONLY=true`, o cookie de sessão perde a sua flag `Secure` (tem de perder, para funcionar sobre HTTP simples), por isso ative a palavra-passe por trás de um proxy que termina o TLS apenas se a confidencialidade importar.
 - A ligação SSH do backup de VMs confia na chave do host no primeiro contacto (TOFU) e fixa-a a partir daí. Verifique a chave do host fora de banda se o seu caminho container-para-host não for de confiança.
 - Os backups são encriptados pelo restic quando a encriptação está ativada (Definições; ligada por predefinição), com a chave derivada da `APP_KEY`.
+
+## Servidor MCP {#mcp-server}
+
+O servidor MCP não precisa de nenhuma variável de ambiente. Ativa-o criando uma chave em **Definições, Sistema, Servidor MCP**, e ele responde em `/mcp` na mesma porta da interface web (por exemplo `https://192.168.1.10:3443/mcp`). Sem uma chave ativa, esse caminho responde `404`. Clientes, certificados e limites estão descritos em [Servidor MCP](mcp.md).
 
 ## Backup de VMs por SSH
 

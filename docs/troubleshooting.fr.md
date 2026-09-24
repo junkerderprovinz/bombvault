@@ -61,6 +61,10 @@ Un import arrête le conteneur, met son dossier de données de côté et laisse 
 
 Pour le remettre à la main : arrêtez le conteneur, renommez le dossier de données actuel pour le dégager, renommez le dossier conservé sous son nom d'origine, puis démarrez le conteneur. Sur Unraid, le gestionnaire de fichiers de l'onglet Shares fait cela.
 
+## Un assistant IA n'arrive pas à se connecter
+
+La page [Serveur MCP](mcp.md#troubleshooting) indique ce que signifie chaque code d'état et chaque refus du point de connexion MCP, et ce qu'il faut faire.
+
 ## Le conteneur redémarre sans cesse ou semble non sain
 
 BombVault se signale sain/non sain depuis son propre `/api/health`. Un outil d'auto-réparation (comme Autoheal) peut le redémarrer automatiquement si le moteur venait à se coincer. Vérifiez le journal du conteneur et le rapport `/spike` pour la cause sous-jacente.

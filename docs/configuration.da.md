@@ -52,9 +52,14 @@ For hver container vælger BombVault selv, hvilke bind-monteringer og navngivne 
 - Fordi sikringen er et tilvalg, er hele UI'en og API'en (inklusive off-site-opsætningen, manipulationstest-ruterne og gendannelseskittet), når den er usat, tilgængelige for enhver, der kan nå porten. Aktivér sikringen, når off-site, uforanderlige sikkerhedskopier eller kryptering er i brug.
 - Kør kun BombVault på et betroet, ikke-eksponeret netværk. For fjernadgang, sæt den bag en reverse proxy, der tilføjer autentificering og TLS. Svar bærer grundlæggende sikkerhedsheaders (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Bag en reverse proxy bærer hver forespørgsel proxyens adresse, så uden `TRUSTED_PROXY` tæller login-bremsen alle klienter i én pulje, og en angribers fejl låser også dig ude. Angiv proxyen i `TRUSTED_PROXY` for at få optælling pr. klient tilbage.
+- En reverse proxy foran BombVault skal sende headeren `Authorization` eller `X-API-Key` videre til `/mcp` og må ikke buffere svarene, ellers kan assistenter ikke oprette forbindelse. Se [MCP-server](mcp.md#tls).
 - Med `HTTP_ONLY=true` mister session-cookien sit `Secure`-flag (det er nødvendigt for at virke over almindelig HTTP), så aktivér kun adgangskoden bag en TLS-terminerende proxy, hvis fortrolighed betyder noget.
 - VM-sikkerhedskopiets SSH-forbindelse stoler på værtsnøglen ved første forbindelse (TOFU) og pinner den derefter. Verificér værtens nøgle out-of-band, hvis din container-til-vært-sti ikke er betroet.
 - Sikkerhedskopier er krypteret af restic, når kryptering er aktiveret (Indstillinger; som standard til), med nøglen afledt af `APP_KEY`.
+
+## MCP-server {#mcp-server}
+
+MCP-serveren kræver ingen miljøvariabel. Du slår den til ved at oprette en nøgle under **Indstillinger, System, MCP-server**, og den svarer på `/mcp` på samme port som webgrænsefladen (for eksempel `https://192.168.1.10:3443/mcp`). Uden en aktiv nøgle svarer den sti med `404`. Klienter, certifikater og grænser er beskrevet på [MCP-server](mcp.md).
 
 ## VM-sikkerhedskopiering over SSH
 
