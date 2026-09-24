@@ -522,8 +522,8 @@ func TestZFSMigrationsAreSatisfiedWhenAlreadyApplied(t *testing.T) {
 			zfsNames = append(zfsNames, m.name)
 		}
 	}
-	if len(zfsNames) != 11 {
-		t.Fatalf("found %d migrations from v%d up, want the 11 of the ZFS domain", len(zfsNames), zfsMigrationBase)
+	if len(zfsNames) != 12 {
+		t.Fatalf("found %d migrations from v%d up, want the 12 of the ZFS domain", len(zfsNames), zfsMigrationBase)
 	}
 	for i, name := range zfsNames {
 		if _, err := db.Exec(`DELETE FROM schema_migrations WHERE name = ?`, name); err != nil {
@@ -632,4 +632,42 @@ func schemaFingerprint(t *testing.T, db *sql.DB) string {
 		out += "INDEX " + idx + "[" + ddl.String + "] "
 	}
 	return out
+}
+
+// TestZFSScheduleJoinsSchedulesThatWereInStep upgrades a database whose
+// Containers, VMs, Flash and Folders schedules were kept in step. The ZFS
+// schedule arrives as "off", and unless it joins them the page reads the
+// shared schedule as switched off.
+func TestZFSScheduleJoinsSchedulesThatWereInStep(t *testing.T) {
+	for name, tc := range map[string]struct {
+		containers, vms, want string
+	}{
+		"in step":          {containers: "daily 03:00", vms: "daily 03:00", want: "daily 03:00"},
+		"one differs":      {containers: "daily 03:00", vms: "weekly 0 04:00", want: "off"},
+		"all switched off": {containers: "off", vms: "off", want: "off"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			db := OpenMem(t)
+			if err := Migrate(db); err != nil {
+				t.Fatalf("first migrate: %v", err)
+			}
+			if _, err := db.Exec(`DELETE FROM schema_migrations WHERE name = 'settings_zfs_schedule_joins_sync'`); err != nil {
+				t.Fatalf("forget the backfill: %v", err)
+			}
+			if _, err := db.Exec(`UPDATE settings SET containers_schedule = ?, vms_schedule = ?, flash_schedule = ?,
+				files_schedule = ?, zfs_schedule = 'off' WHERE id = 1`, tc.containers, tc.vms, tc.containers, tc.containers); err != nil {
+				t.Fatalf("set the schedules: %v", err)
+			}
+			if err := Migrate(db); err != nil {
+				t.Fatalf("upgrade: %v", err)
+			}
+			var got string
+			if err := db.QueryRow(`SELECT zfs_schedule FROM settings WHERE id = 1`).Scan(&got); err != nil {
+				t.Fatal(err)
+			}
+			if got != tc.want {
+				t.Fatalf("zfs_schedule = %q, want %q", got, tc.want)
+			}
+		})
+	}
 }
