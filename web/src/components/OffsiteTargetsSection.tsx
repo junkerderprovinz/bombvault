@@ -29,9 +29,8 @@ import { placementChanged } from "../lib/placementEvents";
 import { alsoDirectText, directAsk, directUse, retentionLowered } from "../lib/directRepo";
 import { useNewTargetQuestion } from "./placement/NewTargetQuestion";
 
-// The badges and the Test, Edit and Remove buttons of a target row share one
-// size, so spans and buttons in the row have the same height. Medium is the
-// app's usual chip size.
+// The storage-class and immutable tags on a target row. Medium is the app's
+// usual chip size.
 const ROW_BADGE_SIZE: BadgeSize = "medium";
 
 // Editor for a domain's additional off-site targets (sortOrder > 0). The
@@ -76,7 +75,7 @@ function emptyDraft(domain: Domain): OffsiteTarget {
 
 // TargetTestButton probes one additional target. The primary editor's "Test
 // connection" probes only the primary.
-function TargetTestButton({ id, t }: { id: string; t: T }) {
+function TargetTestButton({ id, t, hueIndex }: { id: string; t: T; hueIndex?: number }) {
   const { push } = useToast();
   const [busy, setBusy] = useState(false);
   // Bumped on a failure to replay the shake. A reachable but uninitialised
@@ -104,18 +103,18 @@ function TargetTestButton({ id, t }: { id: string; t: T }) {
   }
 
   return (
-    <Badge
+    <Button
       key={shake}
-      as="button"
+      label={t("offsite.targets.test")}
+      labelKey="offsite.targets.test"
       tone="neutral"
-      size={ROW_BADGE_SIZE}
+      hueIndex={hueIndex}
       onClick={() => void go()}
       disabled={busy}
-      title={t("offsite.test")}
-      className={shake ? "glim-shake" : undefined}
-    >
-      {busy ? t("offsite.testing") : t("offsite.targets.test")}
-    </Badge>
+      busy={busy}
+      title={busy ? t("offsite.testing") : undefined}
+      className={shake ? "glim-shake" : ""}
+    />
   );
 }
 
@@ -126,8 +125,9 @@ export function OffsiteTargetsSection({
 }: {
   domain: Domain;
   t: T;
-  /** The enclosing Card's hue, for the add-target button. The row buttons act
-   *  on an existing target and stay neutral. */
+  /** The enclosing Card's hue. Every button in the section takes it,
+   *  including a row's Test/Edit/Remove, which stay tone="neutral" but still
+   *  pick up its focus ring. */
   hueIndex?: number;
 }) {
   const { push } = useToast();
@@ -371,33 +371,37 @@ export function OffsiteTargetsSection({
             </span>
           </div>
           <div className="flex shrink-0 items-start gap-2">
-            <TargetTestButton id={tgt.id} t={t} />
-            <Badge as="button" tone="neutral" size={ROW_BADGE_SIZE} onClick={() => openEdit(tgt)}>
-              {t("offsite.targets.edit")}
-            </Badge>
+            <TargetTestButton id={tgt.id} t={t} hueIndex={hueIndex} />
+            <Button
+              label={t("offsite.targets.edit")}
+              labelKey="offsite.targets.edit"
+              tone="neutral"
+              hueIndex={hueIndex}
+              onClick={() => openEdit(tgt)}
+            />
             {/* Neutral like Edit, not red. The two-click confirm, whose label
                 changes, is what guards the removal. */}
             {confirmRemove === tgt.id ? (
-              <Badge
+              <Button
                 key={removeShake}
-                as="button"
+                label={t("offsite.targets.confirmRemove")}
+                labelKey="offsite.targets.confirmRemove"
                 tone="neutral"
-                size={ROW_BADGE_SIZE}
+                hueIndex={hueIndex}
                 onClick={() => void remove(tgt.id)}
                 disabled={removingId === tgt.id}
-                className={removeShake ? "glim-shake" : undefined}
-              >
-                {removingId === tgt.id ? t("offsite.targets.removing") : t("offsite.targets.confirmRemove")}
-              </Badge>
+                busy={removingId === tgt.id}
+                title={removingId === tgt.id ? t("offsite.targets.removing") : undefined}
+                className={removeShake ? "glim-shake" : ""}
+              />
             ) : (
-              <Badge
-                as="button"
+              <Button
+                label={t("offsite.targets.remove")}
+                labelKey="offsite.targets.remove"
                 tone="neutral"
-                size={ROW_BADGE_SIZE}
+                hueIndex={hueIndex}
                 onClick={() => setConfirmRemove(tgt.id)}
-              >
-                {t("offsite.targets.remove")}
-              </Badge>
+              />
             )}
           </div>
         </div>

@@ -173,4 +173,16 @@ describe("the off-site targets and a new location", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(fake.callsTo("getNewTargetPreview")).toEqual([]);
   });
+
+  it("gives a target row's Test, Edit and Remove their own glyph, like the rest of the app's buttons", async () => {
+    listed.targets = [hetzner];
+    renderWithProviders(<OffsiteTargetsSection domain="containers" t={t} />);
+    const test = await screen.findByRole("button", { name: en["offsite.targets.test"] });
+    const edit = screen.getByRole("button", { name: en["offsite.targets.edit"] });
+    const remove = screen.getByRole("button", { name: en["offsite.targets.remove"] });
+    for (const action of [test, edit, remove]) {
+      expect(action.tagName).toBe("BUTTON");
+      expect(action.querySelector("svg")).not.toBeNull();
+    }
+  });
 });
