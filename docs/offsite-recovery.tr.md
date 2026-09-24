@@ -35,7 +35,7 @@ Yeni bir site dışı hedef, Yerel'e ayarlanmamış her ögeyi alır. Onu ekleye
 
 ### Doğrudan depolar
 
-Yalnızca site dışı altında bir hedefin doğrudan deposunu seçmek, hedefin yanında önerilen bir konumla, örneğin `b2:bucket:containers-direct`, ve hiçbir şey oluşturmayan bir bağlantı testiyle bir iletişim kutusu açar. **Oluştur ve kullan**, depoyu oluşturur ve ögeyi ona yöneltir. Doğrudan bir depo, hedefin anahtarını, depolama sınıfını, sınırlarını, append-only ayarını ve saklamasını alır ve onlarla birlikte değişir; Depolar kartı onu salt okunur gösterir. Hedef için yeni bir anahtar onu açamadığında, doğrudan depo sahip olduğu anahtarı tutar ve kayıt bunu belirtir. Anlık görüntüleri `bv:direct` etiketini taşır ve diğer her budama bunları tutar, böylece hedefiyle bağlantısını kaybetmiş bir doğrudan depo yerel kurallara göre asla yaşlanmaz.
+Yalnızca site dışı altında bir hedefin doğrudan deposunu seçmek, hedefin yanında önerilen bir konumla, örneğin `b2:bucket:containers-direct`, ve hiçbir şey oluşturmayan bir bağlantı testiyle bir iletişim kutusu açar. **Oluştur ve kullan**, depoyu oluşturur ve ögeyi ona yöneltir. Doğrudan bir depo, hedefin anahtarını, depolama sınıfını, sınırlarını, append-only ayarını ve saklamasını alır ve onlarla birlikte değişir; Depolar kartı onu salt okunur gösterir. Hedef için yeni bir anahtar onu açamadığında, doğrudan depo sahip olduğu anahtarı tutar ve kayıt bunu belirtir. Anlık görüntüleri `bv:direct` etiketini taşır ve diğer her budama bunları tutar, böylece hedefiyle bağlantısını kaybetmiş bir doğrudan depo yerel kurallara göre asla yaşlanmaz. Hedefin kendi klasörüyle sınırlı bir B2 anahtarı, yanındaki klasöre erişemez; bunun yerine anahtarı hedefin üstündeki klasörle sınırla.
 
 ### Bina dışında
 

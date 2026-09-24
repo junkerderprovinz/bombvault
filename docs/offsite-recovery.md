@@ -35,7 +35,7 @@ A new off-site target receives every item that is not set to Local. The dialog t
 
 ### Direct repositories
 
-Choosing a target's direct repository under Off-site only opens a dialog with a suggested location next to the target, for example `b2:bucket:containers-direct`, and a connection test that creates nothing. **Create and use** creates the repository and points the item at it. A direct repository takes the target's key, storage class, limits, append-only setting and retention, and changes with them; the Repositories card shows it read-only. When a new key for the target cannot open it, the direct repository keeps the key it has and the save says so. Its snapshots carry the tag `bv:direct`, and every other retention pass keeps them, so a direct repository that lost its link to its target never ages by the local rules.
+Choosing a target's direct repository under Off-site only opens a dialog with a suggested location next to the target, for example `b2:bucket:containers-direct`, and a connection test that creates nothing. **Create and use** creates the repository and points the item at it. A direct repository takes the target's key, storage class, limits, append-only setting and retention, and changes with them; the Repositories card shows it read-only. When a new key for the target cannot open it, the direct repository keeps the key it has and the save says so. Its snapshots carry the tag `bv:direct`, and every other retention pass keeps them, so a direct repository that lost its link to its target never ages by the local rules. A B2 key that is limited to the target's own folder cannot reach the folder next to it; limit the key to the folder above the target instead.
 
 ### Off the premises
 

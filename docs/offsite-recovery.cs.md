@@ -35,7 +35,7 @@ Nový cíl mimo lokalitu dostane každou položku, která není nastavena na Mí
 
 ### Přímé repozitáře
 
-Volba přímého repozitáře cíle pod Jen mimo lokalitu otevře dialog s navrhovaným umístěním vedle cíle, například `b2:bucket:containers-direct`, a testem připojení, který nic nezaloží. **Vytvořit a použít** vytvoří repozitář a nasměruje na něj položku. Přímý repozitář přebírá klíč cíle, třídu úložiště, limity, nastavení append-only a uchovávání a mění se s nimi; karta Repozitáře jej zobrazuje jako jen pro čtení. Když nový klíč cíle repozitář neotevře, přímý repozitář si ponechá klíč, který má, a uložení to oznámí. Jeho snímky nesou značku `bv:direct` a každý další běh uchovávání je ponechá, takže přímý repozitář, který ztratil spojení se svým cílem, nikdy nestárne podle místních pravidel.
+Volba přímého repozitáře cíle pod Jen mimo lokalitu otevře dialog s navrhovaným umístěním vedle cíle, například `b2:bucket:containers-direct`, a testem připojení, který nic nezaloží. **Vytvořit a použít** vytvoří repozitář a nasměruje na něj položku. Přímý repozitář přebírá klíč cíle, třídu úložiště, limity, nastavení append-only a uchovávání a mění se s nimi; karta Repozitáře jej zobrazuje jako jen pro čtení. Když nový klíč cíle repozitář neotevře, přímý repozitář si ponechá klíč, který má, a uložení to oznámí. Jeho snímky nesou značku `bv:direct` a každý další běh uchovávání je ponechá, takže přímý repozitář, který ztratil spojení se svým cílem, nikdy nestárne podle místních pravidel. Klíč B2 omezený na vlastní složku cíle se nedostane do složky vedle ní; omezte klíč místo toho na složku nad cílem.
 
 ### Mimo objekt
 

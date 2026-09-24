@@ -35,7 +35,7 @@ Một đích off-site mới sẽ nhận mọi mục không đặt là Cục bộ
 
 ### Kho trực tiếp
 
-Chọn kho trực tiếp của một đích dưới Chỉ ngoài site sẽ mở một hộp thoại với vị trí được đề xuất bên cạnh đích đó, ví dụ `b2:bucket:containers-direct`, và một lần kiểm tra kết nối không tạo ra gì cả. **Tạo và dùng** sẽ tạo kho và trỏ mục vào đó. Một kho trực tiếp nhận khóa, lớp lưu trữ, giới hạn, cài đặt append-only và mức lưu giữ của đích, và thay đổi theo chúng; thẻ Kho lưu trữ hiển thị nó ở chế độ chỉ đọc. Khi một khóa mới của đích không thể mở được nó, kho trực tiếp giữ nguyên khóa đang có và lần lưu sẽ cho biết điều đó. Các snapshot của nó mang nhãn `bv:direct`, và mọi lần cắt tỉa khác đều giữ chúng lại, nên một kho trực tiếp đã mất liên kết với đích của nó sẽ không bao giờ già đi theo các quy tắc cục bộ.
+Chọn kho trực tiếp của một đích dưới Chỉ ngoài site sẽ mở một hộp thoại với vị trí được đề xuất bên cạnh đích đó, ví dụ `b2:bucket:containers-direct`, và một lần kiểm tra kết nối không tạo ra gì cả. **Tạo và dùng** sẽ tạo kho và trỏ mục vào đó. Một kho trực tiếp nhận khóa, lớp lưu trữ, giới hạn, cài đặt append-only và mức lưu giữ của đích, và thay đổi theo chúng; thẻ Kho lưu trữ hiển thị nó ở chế độ chỉ đọc. Khi một khóa mới của đích không thể mở được nó, kho trực tiếp giữ nguyên khóa đang có và lần lưu sẽ cho biết điều đó. Các snapshot của nó mang nhãn `bv:direct`, và mọi lần cắt tỉa khác đều giữ chúng lại, nên một kho trực tiếp đã mất liên kết với đích của nó sẽ không bao giờ già đi theo các quy tắc cục bộ. Khóa B2 chỉ giới hạn trong thư mục riêng của đích sẽ không thể tiếp cận thư mục bên cạnh nó; hãy giới hạn khóa vào thư mục phía trên đích thay vì vậy.
 
 ### Ngoài cơ sở
 
