@@ -1736,7 +1736,7 @@ const pl: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (przez MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (przez MCP, {key}, unieważniony)",
   "activityLog.viaMcpUnknownKey": "{line} (przez MCP)",
-  "activityLog.viaMcpLine": "one=Uruchomiono przez MCP kluczem {keys}|other=Uruchomiono przez MCP kluczami {keys}",
+  "activityLog.viaMcpLine": "one=Uruchomiono przez MCP kluczem {keys}|few=Uruchomiono przez MCP kluczami {keys}|many=Uruchomiono przez MCP kluczami {keys}|other=Uruchomiono przez MCP kluczami {keys}",
   "activityLog.viaMcpLineUnknownKey": "Uruchomiono przez MCP",
 
   "mcp.title": "Serwer MCP",
