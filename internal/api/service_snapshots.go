@@ -421,11 +421,10 @@ func snapshotBelongs(snaps []restic.Snapshot, id string) bool {
 }
 
 // chosenSnapshot returns the snapshot in snaps matching id (exact or
-// unambiguous prefix, like snapshotBelongs/snapshotSubtree), or nil when
-// there is no match. The restore path mapping reads the chosen snapshot's
-// full recorded Paths from it, the source of truth for which selectors are
-// valid in this snapshot (a recompute from the stored list would miss
-// after the selection changed).
+// unambiguous prefix, like snapshotBelongs), or nil when there is no match.
+// The restore path mapping reads the chosen snapshot's full recorded Paths
+// from it, the source of truth for which selectors are valid in this snapshot
+// (a recompute from the stored list would miss after the selection changed).
 func chosenSnapshot(snaps []restic.Snapshot, id string) *restic.Snapshot {
 	for i := range snaps {
 		if snaps[i].ID == id || strings.HasPrefix(snaps[i].ID, id) {

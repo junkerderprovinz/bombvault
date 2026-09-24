@@ -194,7 +194,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (backup.Summary,
 		err := fmt.Errorf("files backup: source path not found for %q (%s does not exist under the host mount)", set.Name, src)
 		if runID, sErr := s.store.StartRun(set.ID, "backup"); sErr != nil {
 			log.Printf("api: files backup: %q: record missing-path run: %v", set.Name, sErr) //nolint:gosec // G706: name is %q-quoted
-			// truncateRunErr, like every other FinishRun in this file: the message
+			// truncateRunErr, like every other FinishRun of the service: the message
 			// embeds the resolved host path (scrub), and a file set's name and path
 			// are never length-validated at creation, so an arbitrarily long string
 			// could otherwise reach runs.error uncapped and travel on into the weekly

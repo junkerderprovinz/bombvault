@@ -402,7 +402,7 @@ func TestBackupFileSetSelectedPaths(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		// Same shape as the container compile (service.go, BackupDeps literal):
+		// Same shape as the container compile (the BackupDeps literal in Service.Backup):
 		// user-owned exclude patterns stay first, the selection-derived tail
 		// enforces the stored exclusion branch strictly below the included root.
 		if err := st.SetFileSetSelectedPaths(set.ID, []string{srcDir, "!" + srcDir + "/transcoding"}); err != nil {
@@ -3371,23 +3371,14 @@ func TestServiceSetVMIncludeAll(t *testing.T) {
 	}
 }
 
-// TestListVMsTrueNASDisplaysFriendlyName pins Task 4 of the VM
-// service-layer-integration plan: on TrueNAS, ListVMs must display
-// virshcli.VMInfo.FriendlyName in VMView.Name (so the UI shows a real name
-// instead of the bare UUID libvirt uses on TrueNAS 26), while every internal
-// lookup — the store.VMTarget match via byName[vm.Name] here, and (per
-// service.go's other call sites) every virsh/backup/restore call elsewhere —
-// keeps using vm.Name (the raw libvirt/UUID name). FriendlyName must never
-// leak into an identifier role.
-//
-// It also pins the fix for the bug Task 4's own review deferred: VMView must
-// carry the raw libvirt name in a SEPARATE field (LibvirtName) so the frontend
-// can send that — not the display Name — back on every action call
-// (backup/restore/forget/etc). Before this fix, VMView had no field but Name,
-// so the UI had no choice but to POST the friendly name to
-// /api/vms/{name}/..., which virsh always rejects as "domain not found" on
-// TrueNAS. See internal/api/handlers.go's vmNameParam: it does zero
-// resolution and passes the path segment straight to virsh.
+// TestListVMsTrueNASDisplaysFriendlyName checks that on TrueNAS ListVMs shows
+// virshcli.VMInfo.FriendlyName as VMView.Name, so the UI shows a real name
+// instead of the bare UUID libvirt uses on TrueNAS 26, while the
+// store.VMTarget match and every virsh, backup and restore call keep using
+// the raw libvirt name. VMView carries that name in LibvirtName for the
+// frontend to send back on every action: vmNameParam does no resolution and
+// hands the path segment to virsh, which rejects a friendly name as "domain
+// not found".
 func TestListVMsTrueNASDisplaysFriendlyName(t *testing.T) {
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}

@@ -38,36 +38,21 @@ type Handler struct {
 	spikeAllOK  bool
 	spikeRan    bool
 
-	// login brute-force throttle: timestamps of recent failed logins, keyed by
-	// client IP (see loginClientKey) so one source locking itself out can't also
-	// lock out every other client — including the legitimate operator logging in
-	// from a different address. A single shared counter would let an
-	// unauthenticated caller with no credentials permanently deny the real
-	// password from anywhere else.
-	//
-	// This genuinely fixes that for BombVault's default deployment — direct
-	// exposure or bridge networking, where each client's real address reaches
-	// RemoteAddr unmodified: an attacker's failures on one IP no longer touch
-	// the operator's bucket on another. It does NOT help the OTHER documented
-	// topology, remote access behind a reverse proxy (docs/configuration.md):
-	// every request the proxy forwards shares the proxy's address in
-	// RemoteAddr, so every client behind that proxy — attacker and operator
-	// alike — still lands in one shared bucket, same as the single global
-	// counter this replaces. See loginClientKey's doc comment (handlers.go)
-	// for the full reasoning and why trusting a forwarded-for header to fix
-	// that isn't safe here.
 	// In-flight WebAuthn ceremonies (see internal/api/passkeys.go). A challenge
 	// is worthless once answered or expired, so it lives here rather than in the
 	// database; the cost is that a restart cancels a half-finished registration.
 	passkeyMu         sync.Mutex
 	passkeyCeremonies map[string]passkeyCeremony
 
+	// loginFails holds recent failed-login times per client (see
+	// loginClientKey), so a caller without credentials cannot lock out the
+	// operator logging in from another address. Behind a reverse proxy all
+	// clients share the proxy's bucket unless TRUSTED_PROXY is set.
 	loginMu    sync.Mutex
 	loginFails map[string][]time.Time
 	// loginSweepCalls counts loginThrottled calls since the last full sweep of
-	// loginFails (see loginSweepEvery/sweepLoginFailsLocked in handlers.go) —
-	// bounds the map's total memory even under a flood of one-off keys that
-	// are each queried exactly once. Guarded by loginMu, like loginFails.
+	// loginFails (see loginSweepEvery), which bounds the map's memory even under
+	// a flood of one-off keys. Guarded by loginMu, like loginFails.
 	loginSweepCalls int
 }
 

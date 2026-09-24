@@ -1393,28 +1393,24 @@ CREATE INDEX IF NOT EXISTS idx_passkeys_rp ON passkeys(rp_id);`,
 		sql:              "ALTER TABLE targets ADD COLUMN exclude_caches TEXT NOT NULL DEFAULT '{}';",
 	},
 	{
-		// The file set's tree selection (Phase 4 file-sets parity, D-03): the
-		// same flat encoding as the containers' backupPaths set — bare entries
-		// are included roots, "!"-prefixed entries are deselected branches —
-		// stored as ONE JSON array in one nullable TEXT column.
+		// The file set's tree selection, in the same flat encoding as the
+		// containers' backupPaths: bare entries are included roots,
+		// "!"-prefixed entries are deselected branches, stored as one JSON
+		// array.
 		//
-		// Nullable, deliberately with NO default and NO NOT NULL: NULL means
-		// "never touched by the tree" and is the legacy switch — a NULL set
-		// backs up exactly as it did before this column existed (the single
-		// positional [resolved Path]), so every existing row reads NULL after
-		// the ALTER and nothing about existing sets changes. A nullable ADD
-		// COLUMN also accepts the existing CreateFileSet INSERT, which omits
-		// the column, unchanged. '[]' is never stored for that state (a
-		// non-nil empty slice would be a third, meaningless state); the
-		// nil/NULL vs written distinction IS the compile-time switch
-		// (internal/api service.go BackupFileSet is its only reader).
+		// Nullable with no default: NULL means the tree was never used, and
+		// such a set backs up its single resolved Path, so existing rows keep
+		// their behaviour and the CreateFileSet INSERT, which omits the column,
+		// still works. '[]' is never stored, since a non-nil empty slice would
+		// be a third, meaningless state. NULL versus a written value is the
+		// switch the api package's BackupFileSet reads.
 		//
-		// Owned by SetFileSetSelectedPaths, never written by UpdateFileSet —
+		// Owned by SetFileSetSelectedPaths and never written by UpdateFileSet,
 		// the same split as schedule_cadence above: an edit that does not know
 		// about the selection must not be able to clear one by omitting it.
-		// This package treats the column as an opaque TEXT blob; normalization
-		// and compilation of the entries live in the API tier
-		// (internal/api/selection.go), which owns the meaning of "!".
+		// This package treats the column as an opaque TEXT blob; the API tier
+		// (internal/api/selection.go) normalizes and compiles the entries and
+		// owns the meaning of "!".
 		version:          102,
 		name:             "file_set_selected_paths",
 		alreadySatisfied: columnPresent("file_sets", "selected_paths"),

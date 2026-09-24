@@ -827,7 +827,7 @@ func (s *Service) progEnd(key, phase string, ok bool, startedAt int64) {
 }
 
 // recoverOperation is deferred first in every backup, restore and
-// replication goroutine below; defers run LIFO, so it runs last, after the
+// replication goroutine; defers run LIFO, so it runs last, after the
 // other cleanup defers (releasing batchActive, unregistering a cancel key)
 // have fired normally. It contains a panic to the one operation that raised
 // it, logged here with a stack trace, instead of letting it reach the top of
@@ -853,7 +853,7 @@ func (s *Service) progEnd(key, phase string, ok bool, startedAt int64) {
 // recoverOperation must always be the direct target of `defer`, never
 // wrapped in a `defer func(){ ... }()` closure, and a return value would be
 // unreachable from there. A caller with nothing to propagate to (every
-// single-target Start* goroutine below) passes nil.
+// single-target Start* goroutine) passes nil.
 func (s *Service) recoverOperation(op string, errOut *error, onPanic func(msg string)) {
 	r := recover()
 	if r == nil {

@@ -122,27 +122,13 @@ type VMBackupDeps struct {
 	SkipSnapshotDevs []string
 	// NVRAMPath is the container-visible NVRAM path (empty for BIOS VMs).
 	NVRAMPath string
-	// TPMPath is the container-visible vTPM device/state path (empty for a
-	// VM with no vTPM — see virshcli.DomainInfo.TPMPath's doc comment for
-	// how that's determined). Populated ADDITIVELY alongside NVRAMPath and
-	// given the EXACT SAME treatment in runVMGraceful/runVMLive below: when
-	// non-empty it is appended to the restic backup path list right after
-	// NVRAMPath, so it rides along with the disks/NVRAM in the same restic
-	// snapshot — no separate best-effort/non-fatal handling exists AT THIS
-	// LAYER, because NVRAMPath doesn't get any either; that degrade (a
-	// failed capture logs a warning and continues rather than failing the
-	// whole backup) is entirely a property of internal/api/service.go's
-	// SEPARATE SSH-based NVRAM read/write mechanism (bytes captured over SSH
-	// and stored inline in the VM's definition, never touching this
-	// path-list field) — see docs/vm-backup-ssh-setup.md's TrueNAS section
-	// for the precise, honest statement of which mechanism is real. ⚠ LIKE
-	// NVRAMPath, THIS FIELD IS NOT POPULATED BY internal/api/service.go's
-	// ACTUAL BackupVM CALLER TODAY (confirmed by reading the real code, not
-	// assumed) — service.go's BackupVM builds VMBackupDeps without ever
-	// setting NVRAMPath, so both fields are exercised only by this package's
-	// own direct unit tests until a caller wires them up. TPM introduces NO
-	// gap beyond that PRE-EXISTING one; it does not make anything less
-	// wired than NVRAM already is.
+	// TPMPath is the container-visible vTPM device or state path, empty for a
+	// VM without one (see virshcli.DomainInfo.TPMPath). runVMGraceful and
+	// runVMLive treat it exactly like NVRAMPath: appended to the restic path
+	// list right after it, with no error handling of its own. Neither field is
+	// set by the api package's BackupVM, which captures NVRAM and TPM state
+	// over SSH into the stored VM definition instead
+	// (docs/vm-backup-ssh-setup.md); only this package's tests use them.
 	TPMPath string
 	// RepoPath is the local restic repository path for the vms domain.
 	RepoPath string
@@ -155,45 +141,24 @@ type VMBackupDeps struct {
 	// Set to 1 in tests for instant timeout.
 	ShutdownTimeout int
 
-	// BlockDisks are the domain's block-device-backed (zvol) disks — additive
-	// to DiskPaths above (see virshcli.DomainInfo.BlockDisks's doc comment) —
-	// each backed up via BackupZvolDisk (snapshot → zfs send → restic --stdin
-	// → destroy-snapshot, see backupBlockDisksAndLog below) INSTEAD of the
-	// file-copy d.Restic.Backup call above, since restic cannot back up a raw
-	// block device by path the way it backs up a file. The caller resolves
-	// each entry's Dataset from the domain's block-device disk source path
-	// (this package never imports virshcli — see the DI-seam comment at the
-	// top of this file). Empty for a VM with only file-backed disks (every VM
-	// in production today) — in that case this field, ZFSHost and ZvolRestic
-	// below are never touched and backup behavior is BYTE-IDENTICAL to before
-	// this field existed.
+	// BlockDisks are the domain's zvol disks, in addition to DiskPaths (see
+	// virshcli.DomainInfo.BlockDisks). Each goes through BackupZvolDisk
+	// (snapshot, zfs send, restic --stdin, destroy the snapshot) instead of the
+	// file-copy restic call, because restic cannot back up a raw block device
+	// by path. The caller resolves each Dataset from the disk's source path,
+	// since this package does not import virshcli. Empty for a VM with only
+	// file-backed disks, in which case ZFSHost and ZvolRestic are never used.
 	//
-	// A mixed file+block VM backup produces MULTIPLE restic snapshots (one
-	// for the file disks, recorded as summary.SnapshotID below; one PER block
-	// disk, from its own BackupZvolDisk call), because restic's --stdin mode
-	// cannot be combined with a normal path-list backup in one invocation.
-	// This package's run-recording call (Runs.Finish takes exactly one
-	// snapshotID per run) only records the file-portion's snapshot id; each
-	// block disk's snapshot id is logged (see backupBlockDisksAndLog) but not
-	// otherwise persisted BY THIS PACKAGE anywhere a later restore can find
-	// it.
-	//
-	// UPDATE (Task 2 of the plan cited on RunTag's own doc comment above):
-	// the real caller (internal/api/service.go's BackupVM) now DOES close
-	// this gap end to end — it populates BlockDisks/ZFSHost/ZvolRestic/Dev
-	// from the parsed domain, sets RunTag so every snapshot this backup
-	// produces is correlatable, and applies retention once per identity tag
-	// actually present (the main "vm:<name>" plus one per distinct
-	// "vm:<name>:zvol:<dev>").
-	//
-	// UPDATE (Task 3): RESTORE resolving which snapshot id belongs to which
-	// disk via the "vmrun:<runID>" tag is ALSO now closed —
-	// internal/api/service.go's prepareRestoreVMForTarget queries restic for
-	// the resolved snapshot's own "vmrun:" tag and groups by it; see
-	// VMRestoreDeps.BlockDisks's own doc comment.
+	// restic's --stdin mode cannot share an invocation with a path-list
+	// backup, so a mixed VM produces one snapshot for the file disks and one
+	// per zvol disk. Runs.Finish records only the file snapshot's id; the
+	// others are logged, and RunTag ties them to the run. The api package's
+	// BackupVM fills BlockDisks, ZFSHost, ZvolRestic and RunTag from the
+	// parsed domain, and its prepareRestoreVMForTarget finds each disk's
+	// snapshot through that tag (see VMRestoreDeps.BlockDisks).
 	BlockDisks []VMBlockDisk
-	// ZFSHost / ZvolRestic are BackupZvolDisk's own dependencies (see their
-	// doc comments below) — required only when BlockDisks is non-empty.
+	// ZFSHost and ZvolRestic are BackupZvolDisk's dependencies, required only
+	// when BlockDisks is non-empty.
 	ZFSHost    ZFSHost
 	ZvolRestic ZvolRestic
 
@@ -263,18 +228,11 @@ type VMRestoreDeps struct {
 	RestoreDirs []VMRestoreDir
 	// NVRAMPath is the absolute container-visible NVRAM path (may be empty).
 	NVRAMPath string
-	// TPMPath is the absolute container-visible vTPM device/state path (may
-	// be empty). Mirrors NVRAMPath's exact treatment in runVMRestore below —
-	// included in the same path-safety validation and the same restic
-	// restore-directory list as DiskPaths/NVRAMPath — and mirrors NVRAMPath's
-	// own real-world wiring status too: see VMBackupDeps.TPMPath's doc
-	// comment above for the full, precise statement of what is and is not
-	// wired today. The SEPARATE, actually-live NVRAM write-back mechanism
-	// (internal/api/service.go's SSH WriteFile, best-effort/non-fatal) is
-	// invoked through PreDefine below, NOT through this field — PreDefine is
-	// already a generic caller-supplied hook, so it needs no change here to
-	// carry TPM state too once a caller (service.go, out of this task's
-	// file scope) builds a closure that does so.
+	// TPMPath is the absolute container-visible vTPM device or state path (may
+	// be empty). runVMRestore treats it exactly like NVRAMPath: the same path
+	// validation and the same restic restore-directory list. Like NVRAMPath it
+	// is not set by the api package, which writes NVRAM and TPM state back over
+	// SSH through PreDefine instead (see VMBackupDeps.TPMPath).
 	TPMPath string
 	// DomainXML is the captured libvirt domain XML, written to a temp file and
 	// passed to virsh define so the VM reappears in the VM Manager.
@@ -296,36 +254,23 @@ type VMRestoreDeps struct {
 	// DataDir is used to write temp files (the domain XML before virsh define).
 	DataDir string
 
-	// BlockDisks are the domain's block-device-backed (zvol) disks to restore
-	// via RestoreZvolDisk instead of the file-based restic restore above —
-	// each restored into a FRESH dataset (see RestoreZvolDisk's doc comment;
-	// the live original dataset is NEVER touched — renaming/promoting the
-	// fresh one over it is a documented manual operator step, see
-	// docs/vm-backup-ssh-setup.md's TrueNAS section). The caller must resolve,
-	// for EACH entry, the restic snapshot id that actually holds THAT disk's
-	// backup — NOT necessarily SnapshotID above (see VMBackupDeps.BlockDisks's
-	// doc comment for why a mixed file+block VM backup produces multiple
-	// distinct restic snapshots). Empty for a VM with only file-backed disks
-	// — in that case restore behavior is BYTE-IDENTICAL to before this field
-	// existed.
+	// BlockDisks are the domain's zvol disks, restored through RestoreZvolDisk
+	// instead of the file-based restic restore. Each lands in a fresh dataset
+	// and the live original is left alone; swapping the restored one in is a
+	// manual step (docs/vm-backup-ssh-setup.md). The caller resolves, per
+	// entry, the snapshot that holds that disk, which need not be SnapshotID
+	// (see VMBackupDeps.BlockDisks). Empty for a VM with only file-backed
+	// disks.
 	//
-	// WIRED (v8.0.0 VM service-layer integration, Task 2 + 3): the real
-	// caller (internal/api/service.go's prepareRestoreVMForTarget) populates
-	// SourceDataset for every entry (resolved from the stored domain XML,
-	// same as backup time) AND, since Task 3, resolves SnapshotID/StdinPath
-	// too — it reads the resolved main snapshot's own "vmrun:<runID>" tag
-	// (set by BackupVM only when the VM has zvol disks) and queries restic
-	// for every other snapshot sharing that tag, matching each entry by its
-	// "vm:<name>:zvol:<dev>" identity tag. When the resolved snapshot
-	// carries no "vmrun:" tag — a Run predating this plan, or (the common,
-	// PERMANENT case) a file-only VM's snapshot, which never gets one —
-	// SnapshotID/StdinPath stay at zero value on every entry, EXACTLY the
-	// pre-Task-3 fallback: RestoreZvolDisk then reaches restic with an empty
-	// SnapshotID and fails loudly there rather than silently skipping the
-	// disk. See the design notes' Task 3.
+	// The api package's prepareRestoreVMForTarget fills SourceDataset from the
+	// stored domain XML and resolves SnapshotID and StdinPath through the
+	// resolved snapshot's "vmrun:<runID>" tag, matching each disk by its
+	// "vm:<name>:zvol:<dev>" tag. When the snapshot carries no such tag, both
+	// stay empty and RestoreZvolDisk fails at restic instead of skipping the
+	// disk.
 	BlockDisks []VMRestoreBlockDisk
-	// ZFSHost / ZvolRestic are RestoreZvolDisk's own dependencies — required
-	// only when BlockDisks is non-empty.
+	// ZFSHost and ZvolRestic are RestoreZvolDisk's dependencies, required only
+	// when BlockDisks is non-empty.
 	ZFSHost    ZFSHost
 	ZvolRestic ZvolRestic
 
@@ -772,66 +717,20 @@ func isFreezeErr(err error) bool {
 		strings.Contains(m, "quiesce")
 }
 
-// ---------------------------------------------------------------------------
-// Zvol-aware VM disk backup/restore (v8.0.0 TrueNAS platform expansion,
-// Task 10)
+// Zvol disks are backed up and restored through ZFS on the host. Each host
+// command used here (zfs snapshot, zfs send into restic backup --stdin, the
+// dump back out, zfs receive into a fresh target, zfs destroy) has been run
+// against a TrueNAS SCALE 25.10.0 box with a zvol attached to a running VM,
+// and the stream came back byte-identical; internal/virshcli/zvol.go has the
+// measurement. The ordering and the error and cleanup paths around them are
+// covered by vm_zvol_test.go and vm_zvol_wiring_test.go only.
 //
-// HARDWARE STATUS. Every individual host command the orchestrators below emit
-// — `zfs snapshot`, `zfs send` piped into `restic backup --stdin`, the dump
-// back out, `zfs receive` into a fresh restore target, `zfs destroy` — was run
-// against a real TrueNAS SCALE 25.10.0 box on 2026-08-27, against a zvol
-// attached to a RUNNING VM, and the round-tripped stream came back
-// byte-identical. See internal/virshcli/zvol.go's package doc comment for the
-// full measurement.
-//
-// What is still fake-only is the Go ORCHESTRATION in this file: the ordering,
-// the error/cleanup paths, and the deferred snapshot destroy are exercised
-// solely by vm_zvol_test.go and vm_zvol_wiring_test.go. So the commands are
-// proven; the sequencing around them is not yet proven end-to-end on hardware.
-//
-// WIRED IN (Task 10 Step 5): BackupZvolDisk/RestoreZvolDisk below ARE called
-// from BackupVMGraceful/BackupVMLive/RestoreVM above, via the
-// VMBackupDeps.BlockDisks / VMRestoreDeps.BlockDisks fields and the
-// backupBlockDisksAndLog/restoreBlockDisksAndLog helpers — when a domain's
-// disk is block-device-backed, it goes through the
-// snapshot→stream→restic-backup→destroy-snapshot path here INSTEAD of the
-// file-copy path, exactly as planned. File-backed (Unraid) VM disk
-// backup/restore is completely UNTOUCHED: BlockDisks defaults to nil, and the
-// real caller (internal/api/service.go, wired in Task 2) only ever populates
-// it for a domain whose parsed virshcli.DomainInfo.BlockDisks is non-empty —
-// so this stays a dormant, zero-behavior-change no-op for every file-only VM
-// (every Unraid VM, and most VMs in production generally) — proven by the
-// regression tests in vm_zvol_wiring_test.go that pin file-only backup/restore
-// as byte-identical to before this wiring existed.
-//
-// UPDATE (v8.0.0 VM service-layer integration, Task 2): the design decision
-// this section originally deferred HAS now been made and wired end to end on
-// the BACKUP side — see the design notes' "Design decision" section: a
-// shared "vmrun:<runID>" correlation tag, additive to each snapshot's own
-// identity tag, resolved at restore time by querying restic directly (no DB
-// migration). internal/api/service.go's real BackupVM now reads
-// virshcli.DomainInfo.BlockDisks, resolves each entry's Dataset via the
-// now-exported virshcli.ZvolDatasetFromDevPath, populates
-// VMBackupDeps.BlockDisks/ZFSHost/ZvolRestic/RunTag with a real SSH-backed
-// ZFSHost adapter and the same restic engine the file-backed path already
-// uses, gives each disk its own "vm:<name>:zvol:<dev>" identity tag (see
-// VMBlockDisk.Dev's doc comment) so retention can be applied per disk
-// instead of lumping every zvol disk's history in with the file-backed
-// snapshot's, and applies that retention once per identity tag actually
-// produced.
-//
-// UPDATE (Task 3): the RESTORE side of that same gap — resolving which
-// specific restic snapshot id belongs to which disk via the "vmrun:<runID>"
-// tag — is now ALSO closed. internal/api/service.go's RestoreVM/
-// prepareRestoreVMForTarget populate VMRestoreDeps.BlockDisks/ZFSHost/
-// ZvolRestic (SourceDataset resolved the same way as backup) AND resolve
-// each entry's SnapshotID/StdinPath by reading the resolved main snapshot's
-// own "vmrun:" tag and querying restic for every other snapshot sharing it,
-// matched by each disk's "vm:<name>:zvol:<dev>" identity tag. See
-// VMRestoreDeps.BlockDisks's own doc comment for the permanent fallback (no
-// "vmrun:" tag at all) that keeps every pre-existing single-snapshot VM
-// backup's restore byte-identical to before this task.
-// ---------------------------------------------------------------------------
+// BackupVMGraceful, BackupVMLive and RestoreVM reach this code through
+// VMBackupDeps.BlockDisks and VMRestoreDeps.BlockDisks. The api package's
+// BackupVM fills them only for a domain with block-device disks, so a
+// file-only VM never gets here; vm_zvol_wiring_test.go pins that. The
+// "vmrun:<runID>" tag that ties one backup's snapshots together is resolved
+// at restore time by querying restic, so it needs no database column.
 
 // ZFSHost is the host-control surface the zvol backup/restore orchestrators
 // need — the SSH-transported ZFS snapshot/send/receive steps. Semantic (not
@@ -1080,23 +979,19 @@ func zvolRestoreTargetDataset(dataset string, now time.Time) string {
 // RestoreZvolDeps bundles everything RestoreZvolDisk needs to restore ONE
 // block-device-backed VM disk's backup.
 type RestoreZvolDeps struct {
-	// SourceDataset is the ORIGINAL zvol dataset the disk was backed up from.
-	// RestoreZvolDisk NEVER issues a `zfs receive` against this value
-	// directly — see zvolRestoreTargetDataset's safety property.
+	// SourceDataset is the original zvol dataset the disk was backed up from.
+	// RestoreZvolDisk never runs `zfs receive` against it directly; see
+	// zvolRestoreTargetDataset.
 	SourceDataset string
 	// RestoreBaseDataset, when non-empty, is the dataset RestoreZvolDisk bases
-	// its fresh `-bombvault-restore-<ts>` target name on INSTEAD OF
-	// SourceDataset. This is how a CROSS-INSTANCE restore lands its `zfs
-	// receive` on the DESTINATION box's own pool: the caller (internal/api/
-	// service.go's prepareRestoreVMForTarget) rebases SourceDataset's pool
-	// segment onto an explicit destination pool via
-	// virshcli.RebaseZvolDatasetPool and passes the result here — the SOURCE
-	// dataset name (SourceDataset, above) is kept around only for logging/
-	// error messages, never used to build the receive target when this field
-	// is set. Empty (the default) restores EXACTLY the pre-existing
-	// same-instance behavior: the target is derived from SourceDataset
-	// itself, which is already guaranteed to live on a pool that exists on
-	// this box (it was resolved from THIS box's own domain XML).
+	// its fresh `-bombvault-restore-<ts>` target name on instead of
+	// SourceDataset. A cross-instance restore uses it to receive onto the
+	// destination box's own pool: the api package's prepareRestoreVMForTarget
+	// rebases SourceDataset onto the chosen pool with
+	// virshcli.RebaseZvolDatasetPool, and SourceDataset is then used only in
+	// logs and error messages. Empty derives the target from SourceDataset,
+	// which was resolved from this box's own domain XML and so lives on a pool
+	// that exists here.
 	RestoreBaseDataset string
 	// RepoPath is the local restic repository path for the vms domain.
 	RepoPath string
