@@ -7,10 +7,10 @@
 | 변수 | 필수 | 설명 |
 |---|---|---|
 | `APP_KEY` | **예** | restic 저장소 비밀번호를 파생하는 데 사용되는 32바이트 16진수 비밀 값(64개의 16진수 문자). `openssl rand -hex 32`로 생성하세요. 안전하게 보관하세요: 잃어버리면 암호화된 백업을 복구할 수 없게 됩니다. |
-| `LIBVIRT_HOST` | VM용 | VM 백업을 위해 SSH로 도달하는 Unraid 호스트(기본값 `host.docker.internal`; 템플릿이 LAN IP 자리 표시자를 미리 채웁니다). Unraid LAN IP를 사용하세요. 사용자 지정 `br0.x` 네트워크에서는 필수입니다. |
-| `LIBVIRT_SSH_PORT` | 아니요 | VM 백업용 호스트 SSH 포트(기본값 `22`). |
-| `LIBVIRT_SSH_USER` | 아니요 | VM 백업용 호스트의 SSH 사용자(기본값 `root`). |
-| `LIBVIRT_URI` | 아니요 | 전체 libvirt 연결 URI입니다. 위의 세 `LIBVIRT_*` 변수로 조합하는 대신 이 값을 **그대로** 사용합니다(이 경우 위 변수들은 연결 문자열 생성에 쓰이지 않습니다). 기본값은 설정되지 않음입니다. TrueNAS Scale에서 필요합니다. 이곳의 libvirtd는 조합 방식으로는 표현할 수 없는 비표준 소켓에서 대기합니다. 예: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. TrueNAS Scale 섹션은 [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md)를 참고하세요. |
+| `LIBVIRT_HOST` | VM용 | VM 백업을 위해 SSH로 도달하는 Unraid 호스트(기본값 `host.docker.internal`; 템플릿이 LAN IP 자리 표시자를 미리 채웁니다). Unraid LAN IP를 사용하세요. 사용자 지정 `br0.x` 네트워크에서는 필수입니다. ZFS 데이터세트 백업에도 쓰입니다(템플릿 필드 **Host SSH: Address**). 자리 표시자 `192.168.x.x`는 설정되지 않은 것으로 봅니다. |
+| `LIBVIRT_SSH_PORT` | 아니요 | VM 백업용 호스트 SSH 포트(기본값 `22`). 템플릿 필드 **Host SSH: Port**, ZFS 데이터세트에도 쓰입니다. |
+| `LIBVIRT_SSH_USER` | 아니요 | VM 백업용 호스트의 SSH 사용자(기본값 `root`). 템플릿 필드 **Host SSH: User**, ZFS 데이터세트에도 쓰입니다. |
+| `LIBVIRT_URI` | 아니요 | 전체 libvirt 연결 URI입니다. 위의 세 `LIBVIRT_*` 변수로 조합하는 대신 이 값을 **그대로** 사용합니다(이 경우 위 변수들은 연결 문자열 생성에 쓰이지 않습니다). 기본값은 설정되지 않음입니다. TrueNAS Scale에서 필요합니다. 이곳의 libvirtd는 조합 방식으로는 표현할 수 없는 비표준 소켓에서 대기합니다. 예: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. TrueNAS Scale 섹션은 [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md)를 참고하세요. `qemu+ssh://` URI이면 `LIBVIRT_HOST`, `LIBVIRT_SSH_USER`, `LIBVIRT_SSH_PORT` 중 설정되지 않은 것은 각각 여기서 가져오며, BombVault 자체의 SSH 명령(NVRAM 전송, ZFS 데이터세트)에도 적용됩니다. |
 | `PORT` | 아니요 | HTTP 포트(기본값 `3000`; `HTTP_ONLY=true`에서만 사용됨). |
 | `HTTPS_PORT` | 아니요 | HTTPS 포트(기본값 `3443`; 템플릿이 1:1로 게시하므로 WebUI가 `https://<ip>:3443`에서 응답함). |
 | `HTTP_ONLY` | 아니요 | 자체 서명 HTTPS 리스너를 비활성화하고 일반 HTTP만 제공하려면 `true`로 설정(TLS 종료 리버스 프록시 뒤에서 사용). |
@@ -26,6 +26,8 @@
 ## 마운트
 
 CA 템플릿에 표시된 대로 Docker 소켓, 플래시(`/boot`), **Host Data** 루트(`/mnt`)를 마운트하세요. 백업 *소스*와 *대상*은 모두 Host Data 아래에 있으며, **slave**로 마운트되므로 컨테이너 시작 후에 마운트되는 원격 공유(예: `/mnt/remotes` 아래)가 재시작 없이 보이게 됩니다.
+
+ZFS 데이터세트 백업에도 이 모드가 필요합니다. 호스트는 컨테이너가 시작된 뒤에야 데이터세트의 스냅샷을 마운트하기 때문입니다. [ZFS 데이터세트](zfs-datasets.md)를 참고하세요.
 
 백업 저장소 경로는 기본적으로 `/mnt/user/bombvault/{container,vms,flash,config,files}`이며 첫 백업 시 생성됩니다. **설정, 백업 경로**에서 언제든지 위치를 변경할 수 있습니다.
 

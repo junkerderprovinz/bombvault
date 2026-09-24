@@ -656,7 +656,7 @@ const he: Partial<Translations> = {
   "vm.ssh.testFail": "החיבור נכשל",
   "vm.ssh.setupTitle": "הגדרה (פעם אחת)",
   "vm.ssh.step1": "העתק את הפקודה למטה והרץ אותה במסוף Unraid כדי לאשר מפתח זה (שורד אתחולים).",
-  "vm.ssh.step2": "הגדר את משתנה ה-container „VM Backup: Host‟ לכתובת ה-LAN IP של Unraid (למשל 192.168.x.x); ברשת bridge פשוטה גם host.docker.internal עובד.",
+  "vm.ssh.step2": "הגדר את משתנה ה-container „Host SSH: Address‟ לכתובת ה-LAN IP של Unraid (למשל 192.168.x.x); ברשת bridge פשוטה גם host.docker.internal עובד.",
   "vm.ssh.step3": "לחץ על בדוק חיבור: ברגע שהוא ירוק, הפעל VMs תחת דומיינים.",
   "vm.ssh.copyCmd": "העתק פקודה",
   "vm.ssh.guide": "מדריך הגדרה ורשת מלא",

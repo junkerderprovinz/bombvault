@@ -61,6 +61,14 @@ Import zatrzymuje kontener, odsuwa jego folder danych na bok i pozwala obrazowi 
 
 Ręczne przywrócenie: zatrzymaj kontener, zmień nazwę bieżącego folderu danych, żeby zszedł z drogi, przywróć zachowanemu folderowi pierwotną nazwę i uruchom kontener. Na Unraidzie robi to menedżer plików w zakładce Shares.
 
+## Kopia zbioru danych ZFS się nie udała albo pominęła zbiór {#zfs-datasets}
+
+Każdy problem ma kod przyczyny w nawiasach kwadratowych, a strona [Zbiory danych ZFS](zfs-datasets.md#reason-codes) wymienia wszystkie wraz z rozwiązaniem. Trzy najczęstsze:
+
+- **`snapshot-loop`**: migawka nie dotarła do BombVault, bo Host Data nie przekazuje nowych montowań. Edytuj kontener, ustaw Access Mode dla Host Data na Read/Write - Slave i uruchom ponownie BombVault.
+- **`key-not-loaded`**: zaszyfrowany zbiór, którego klucz nie jest załadowany, jest pomijany. Załaduj klucz poleceniem `zfs load-key` i zamontuj zbiór; następna kopia go obejmie.
+- **`ssh-auth`**: serwer odrzucił klucz BombVault. Karta połączenia na stronie ZFS pokazuje polecenie, które go autoryzuje; uruchom je raz na serwerze.
+
 ## Kontener wciąż się restartuje lub wygląda na niesprawny
 
 BombVault zgłasza stan healthy/unhealthy z własnego `/api/health`. Narzędzie do auto-naprawy (takie jak Autoheal) może go automatycznie zrestartować, jeśli silnik kiedykolwiek się zaklinuje. Sprawdź log kontenera oraz raport `/spike` w poszukiwaniu przyczyny źródłowej.

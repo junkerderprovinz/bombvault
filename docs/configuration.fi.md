@@ -7,10 +7,10 @@ Tämä sivu käsittelee kontin ympäristömuuttujat, mallin tarjoamat liitokset,
 | Muuttuja | Vaadittu | Kuvaus |
 |---|---|---|
 | `APP_KEY` | **Kyllä** | 32-tavuinen heksadesimaalisalaisuus (64 heksamerkkiä), jota käytetään restic-repon salasanan johtamiseen. Luo komennolla `openssl rand -hex 32`. Pidä tämä turvassa: sen menettäminen tekee salatuista varmuuskopioista palautuskelvottomia. |
-| `LIBVIRT_HOST` | Virtuaalikoneille | Unraid-isäntä, johon otetaan yhteys SSH:n yli VM-varmuuskopiointia varten (oletus `host.docker.internal`; malli esitäyttää LAN-IP-paikanvaraajan). Käytä Unraidin LAN-IP-osoitetta, vaadittu mukautetussa `br0.x`-verkossa. |
-| `LIBVIRT_SSH_PORT` | Ei | Isännän SSH-portti VM-varmuuskopiointiin (oletus `22`). |
-| `LIBVIRT_SSH_USER` | Ei | SSH-käyttäjä isännällä VM-varmuuskopiointiin (oletus `root`). |
-| `LIBVIRT_URI` | Ei | Täydellinen libvirt-yhteys-URI, jota käytetään **sellaisenaan** sen sijaan, että se rakennettaisiin yllä olevista kolmesta `LIBVIRT_*`-muuttujasta (jotka jätetään silloin huomiotta yhteysmerkkijonon osalta). Oletuksena asettamaton. Tarvitaan TrueNAS Scalessa, jonka libvirtd kuuntelee epästandardissa soketissa, jota rakennettu merkkijonomuoto ei pysty ilmaisemaan: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Katso TrueNAS Scale -osio tiedostosta [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). |
+| `LIBVIRT_HOST` | Virtuaalikoneille | Unraid-isäntä, johon otetaan yhteys SSH:n yli VM-varmuuskopiointia varten (oletus `host.docker.internal`; malli esitäyttää LAN-IP-paikanvaraajan). Käytä Unraidin LAN-IP-osoitetta, vaadittu mukautetussa `br0.x`-verkossa. Käytössä myös ZFS-tietojoukkojen varmuuskopioissa (mallin kenttä **Host SSH: Address**); paikkamerkki `192.168.x.x` lasketaan asettamattomaksi. |
+| `LIBVIRT_SSH_PORT` | Ei | Isännän SSH-portti VM-varmuuskopiointiin (oletus `22`). Mallin kenttä **Host SSH: Port**, myös ZFS-tietojoukoille. |
+| `LIBVIRT_SSH_USER` | Ei | SSH-käyttäjä isännällä VM-varmuuskopiointiin (oletus `root`). Mallin kenttä **Host SSH: User**, myös ZFS-tietojoukoille. |
+| `LIBVIRT_URI` | Ei | Täydellinen libvirt-yhteys-URI, jota käytetään **sellaisenaan** sen sijaan, että se rakennettaisiin yllä olevista kolmesta `LIBVIRT_*`-muuttujasta (jotka jätetään silloin huomiotta yhteysmerkkijonon osalta). Oletuksena asettamaton. Tarvitaan TrueNAS Scalessa, jonka libvirtd kuuntelee epästandardissa soketissa, jota rakennettu merkkijonomuoto ei pysty ilmaisemaan: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Katso TrueNAS Scale -osio tiedostosta [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Jos se on `qemu+ssh://`-URI, jokainen asettamaton muuttujista `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` ja `LIBVIRT_SSH_PORT` otetaan siitä, myös BombVaultin omiin SSH-komentoihin (NVRAM-siirto, ZFS-tietojoukot). |
 | `PORT` | Ei | HTTP-portti (oletus `3000`; käytetään vain asetuksella `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | Ei | HTTPS-portti (oletus `3443`; malli julkaisee sen 1:1, joten WebUI vastaa osoitteessa `https://<ip>:3443`). |
 | `HTTP_ONLY` | Ei | Aseta `true` poistaaksesi itse allekirjoitetun HTTPS-kuuntelijan käytöstä ja tarjotaksesi vain selkeää HTTP:tä (käytettäväksi TLS:n päättävän käänteisen välityspalvelimen takana). |
@@ -26,6 +26,8 @@ Tämä sivu käsittelee kontin ympäristömuuttujat, mallin tarjoamat liitokset,
 ## Liitokset
 
 Liitä Docker-soketti, flash (`/boot`) ja **Host Data** -juuri (`/mnt`) kuten CA-mallissa on näytetty. Varmuuskopioinnin *lähteet* ja *kohteet* asuvat molemmat Host Datan alla, ja se liitetään **slave**-tilassa, joten etäjako, joka liittyy kontin käynnistymisen jälkeen (esimerkiksi kohtaan `/mnt/remotes`), tulee näkyviin ilman uudelleenkäynnistystä.
+
+ZFS-tietojoukkojen varmuuskopiot tarvitsevat myös tämän tilan: isäntä liittää tietojoukon tilannevedoksen vasta sen jälkeen, kun kontti on käynnistynyt. Katso [ZFS-tietojoukot](zfs-datasets.md).
 
 Varmuuskopioinnin repopolut ovat oletuksena `/mnt/user/bombvault/{container,vms,flash,config,files}`, luotuina ensimmäisen varmuuskopion yhteydessä. Vaihda sijaintia milloin tahansa kohdassa **Asetukset, Varmuuskopiopolut**.
 

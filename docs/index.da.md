@@ -20,6 +20,7 @@ Drevet af [restic](https://restic.net), så hver sikkerhedskopi er dedupliseret,
 | **Unraid-flash** | Hele USB-flashen (`/boot`): OS, licens, array-konfiguration, shares, netværks- og plugin-konfiguration. |
 | **App-konfiguration** | BombVaults egen `/config`: dens indstillingsdatabase, off-site-legitimationsoplysninger og libvirt-SSH-nøgleparret. |
 | **Filer og mapper** | Navngivne **filsæt**, en hvilken som helst mappe på serveren, hver med valgfrie udelukkelsesmønstre pr. sæt. |
+| **ZFS-datasæt** | Et datasæt med alle datasæt under det, læst fra ét ZFS-snapshot og gemt som en mappe. Se [ZFS-datasæt](zfs-datasets.md). |
 
 ## Gendannelse er stjernen
 

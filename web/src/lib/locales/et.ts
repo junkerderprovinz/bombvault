@@ -1449,7 +1449,7 @@ const et: Partial<Translations> = {
   "vm.ssh.testFail": "Ühendus ebaõnnestus",
   "vm.ssh.setupTitle": "Seadista (ühekordselt)",
   "vm.ssh.step1": "Kopeeri allolev käsk ja käivita see Unraidi terminalis, et see võti lubada (jääb alles ka taaskäivituste järel).",
-  "vm.ssh.step2": "Määra konteineri muutuja „VM Backup: Host” sinu Unraidi kohaliku võrgu IP-ks (nt 192.168.x.x); lihtsa bridge-võrgu korral toimib ka host.docker.internal.",
+  "vm.ssh.step2": "Määra konteineri muutuja „Host SSH: Address” sinu Unraidi kohaliku võrgu IP-ks (nt 192.168.x.x); lihtsa bridge-võrgu korral toimib ka host.docker.internal.",
   "vm.ssh.step3": "Klõpsa Testi ühendust. Kui see on roheline, luba VM-id valdkondade all.",
   "vm.ssh.copyCmd": "Kopeeri käsk",
   "vm.ssh.guide": "Täielik seadistus- ja võrgujuhend",

@@ -1449,7 +1449,7 @@ const lt: Partial<Translations> = {
   "vm.ssh.testFail": "Ryšys nepavyko",
   "vm.ssh.setupTitle": "Nustatyti (vieną kartą)",
   "vm.ssh.step1": "Nukopijuokite žemiau esančią komandą ir paleiskite ją Unraid terminale, kad autorizuotumėte šį raktą (išlieka po paleidimo iš naujo).",
-  "vm.ssh.step2": "Nustatykite konteinerio kintamąjį „VM Backup: Host“ į savo Unraid vietinio tinklo IP (pvz., 192.168.x.x); esant paprastam bridge tinklui taip pat veikia host.docker.internal.",
+  "vm.ssh.step2": "Nustatykite konteinerio kintamąjį „Host SSH: Address“ į savo Unraid vietinio tinklo IP (pvz., 192.168.x.x); esant paprastam bridge tinklui taip pat veikia host.docker.internal.",
   "vm.ssh.step3": "Spustelėkite Tikrinti ryšį. Kai bus žalia, įjunkite VM skiltyje Sritys.",
   "vm.ssh.copyCmd": "Kopijuoti komandą",
   "vm.ssh.guide": "Išsamus nustatymo ir tinklo vadovas",

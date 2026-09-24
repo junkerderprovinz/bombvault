@@ -20,6 +20,7 @@ Geri yüklemeler otomatiktir. Konteynerler, Unraid Docker sekmesinde tam olarak 
 | **Unraid flash** | Tüm USB flash (`/boot`): işletim sistemi, lisans, dizi yapılandırması, paylaşımlar, ağ ve eklenti yapılandırması. |
 | **Uygulama yapılandırması** | BombVault'un kendi `/config`'i: ayar veritabanı, site dışı kimlik bilgileri ve libvirt SSH anahtar çifti. |
 | **Dosyalar ve klasörler** | **Dosya kümeleri** olarak adlandırılan, sunucudaki herhangi bir klasör, her biri isteğe bağlı küme başına hariç tutma desenleriyle. |
+| **ZFS veri kümeleri** | Bir veri kümesi ve altındaki tüm kümeler, tek bir ZFS anlık görüntüsünden okunur ve bir klasör gibi saklanır. Bkz. [ZFS veri kümeleri](zfs-datasets.md). |
 
 ## Yıldız, geri yüklemedir
 

@@ -650,7 +650,7 @@ const nl: Partial<Translations> = {
   "vm.ssh.testFail": "Verbinding mislukt",
   "vm.ssh.setupTitle": "Instellen (eenmalig)",
   "vm.ssh.step1": "Kopieer het onderstaande commando en voer het uit in de Unraid-terminal om deze sleutel te autoriseren (overleeft herstarts).",
-  "vm.ssh.step2": "Stel de containervariabele „VM Backup: Host” in op het LAN-IP van je Unraid (bijv. 192.168.x.x); bij eenvoudig bridge-netwerk werkt host.docker.internal ook.",
+  "vm.ssh.step2": "Stel de containervariabele „Host SSH: Address” in op het LAN-IP van je Unraid (bijv. 192.168.x.x); bij eenvoudig bridge-netwerk werkt host.docker.internal ook.",
   "vm.ssh.step3": "Klik op Verbinding testen. Zodra die groen is, schakel VM's in onder Domeinen.",
   "vm.ssh.copyCmd": "Commando kopiëren",
   "vm.ssh.guide": "Volledige installatie- & netwerkgids",

@@ -20,6 +20,7 @@ Basato su [restic](https://restic.net), quindi ogni backup è deduplicato, incre
 | **Flash Unraid** | L'intera chiavetta USB flash (`/boot`): SO, licenza, configurazione dell'array, condivisioni, rete e configurazione dei plugin. |
 | **Configurazione dell'app** | Il `/config` di BombVault stesso: il suo database delle impostazioni, le credenziali off-site e la coppia di chiavi SSH di libvirt. |
 | **File e cartelle** | **Set di file** con nome, qualsiasi cartella sul server, ciascuno con pattern di esclusione opzionali per set. |
+| **Dataset ZFS** | Un dataset con tutti i dataset sottostanti, letto da uno snapshot ZFS e salvato come una cartella. Vedi [Dataset ZFS](zfs-datasets.md). |
 
 ## Il ripristino è la star
 

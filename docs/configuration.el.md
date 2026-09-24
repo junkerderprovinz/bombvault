@@ -7,10 +7,10 @@
 | Μεταβλητή | Απαιτείται | Περιγραφή |
 |---|---|---|
 | `APP_KEY` | **Ναι** | Δεκαεξαδικό μυστικό 32 byte (64 δεκαεξαδικοί χαρακτήρες) που χρησιμοποιείται για την παραγωγή του κωδικού του αποθετηρίου restic. Δημιουργήστε το με `openssl rand -hex 32`. Κρατήστε το ασφαλές: η απώλειά του καθιστά τα κρυπτογραφημένα αντίγραφα μη ανακτήσιμα. |
-| `LIBVIRT_HOST` | Για VMs | Ο host Unraid που προσεγγίζεται μέσω SSH για το αντίγραφο VM (προεπιλογή `host.docker.internal`· το template προσυμπληρώνει ένα placeholder LAN-IP). Χρησιμοποιήστε τη LAN IP του Unraid σας, απαιτείται σε ένα προσαρμοσμένο δίκτυο `br0.x`. |
-| `LIBVIRT_SSH_PORT` | Όχι | Η θύρα SSH του host για το αντίγραφο VM (προεπιλογή `22`). |
-| `LIBVIRT_SSH_USER` | Όχι | Ο χρήστης SSH στον host για το αντίγραφο VM (προεπιλογή `root`). |
-| `LIBVIRT_URI` | Όχι | Πλήρες URI σύνδεσης libvirt, που χρησιμοποιείται **αυτούσιο** αντί να κατασκευάζεται ένα από τις τρεις μεταβλητές `LIBVIRT_*` παραπάνω (οι οποίες τότε αγνοούνται για το connection string). Χωρίς προεπιλεγμένη τιμή. Απαιτείται στο TrueNAS Scale, του οποίου το libvirtd ακούει σε ένα μη τυπικό socket που η μορφή του κατασκευασμένου string δεν μπορεί να εκφράσει: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Δείτε την ενότητα TrueNAS Scale του [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). |
+| `LIBVIRT_HOST` | Για VMs | Ο host Unraid που προσεγγίζεται μέσω SSH για το αντίγραφο VM (προεπιλογή `host.docker.internal`· το template προσυμπληρώνει ένα placeholder LAN-IP). Χρησιμοποιήστε τη LAN IP του Unraid σας, απαιτείται σε ένα προσαρμοσμένο δίκτυο `br0.x`. Χρησιμοποιείται και για αντίγραφα συνόλων δεδομένων ZFS (πεδίο προτύπου **Host SSH: Address**)· η τιμή κράτησης θέσης `192.168.x.x` θεωρείται μη ορισμένη. |
+| `LIBVIRT_SSH_PORT` | Όχι | Η θύρα SSH του host για το αντίγραφο VM (προεπιλογή `22`). Πεδίο προτύπου **Host SSH: Port**, και για σύνολα δεδομένων ZFS. |
+| `LIBVIRT_SSH_USER` | Όχι | Ο χρήστης SSH στον host για το αντίγραφο VM (προεπιλογή `root`). Πεδίο προτύπου **Host SSH: User**, και για σύνολα δεδομένων ZFS. |
+| `LIBVIRT_URI` | Όχι | Πλήρες URI σύνδεσης libvirt, που χρησιμοποιείται **αυτούσιο** αντί να κατασκευάζεται ένα από τις τρεις μεταβλητές `LIBVIRT_*` παραπάνω (οι οποίες τότε αγνοούνται για το connection string). Χωρίς προεπιλεγμένη τιμή. Απαιτείται στο TrueNAS Scale, του οποίου το libvirtd ακούει σε ένα μη τυπικό socket που η μορφή του κατασκευασμένου string δεν μπορεί να εκφράσει: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Δείτε την ενότητα TrueNAS Scale του [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Αν είναι URI `qemu+ssh://`, κάθε μία από τις `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` και `LIBVIRT_SSH_PORT` που δεν έχει οριστεί λαμβάνεται από αυτό, και για τις δικές του εντολές SSH του BombVault (μεταφορά NVRAM, σύνολα δεδομένων ZFS). |
 | `PORT` | Όχι | Θύρα HTTP (προεπιλογή `3000`· χρησιμοποιείται μόνο με `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | Όχι | Θύρα HTTPS (προεπιλογή `3443`· το template τη δημοσιεύει 1:1, οπότε το WebUI απαντά στο `https://<ip>:3443`). |
 | `HTTP_ONLY` | Όχι | Ορίστε `true` για να απενεργοποιήσετε τον αυτο-υπογεγραμμένο listener HTTPS και να εξυπηρετείτε μόνο απλό HTTP (για χρήση πίσω από έναν reverse proxy που τερματίζει το TLS). |
@@ -26,6 +26,8 @@
 ## Προσαρτήσεις
 
 Προσαρτήστε το Docker socket, το flash (`/boot`) και τη ρίζα **Host Data** (`/mnt`) όπως φαίνεται στο template CA. Οι *πηγές* και οι *προορισμοί* των αντιγράφων βρίσκονται και οι δύο κάτω από το Host Data, και προσαρτάται **slave** ώστε ένας απομακρυσμένος κοινόχρηστος πόρος που προσαρτάται αφού ξεκινήσει το container (για παράδειγμα κάτω από το `/mnt/remotes`) να γίνεται ορατός χωρίς επανεκκίνηση.
+
+Τα αντίγραφα συνόλων δεδομένων ZFS χρειάζονται κι αυτά αυτή τη λειτουργία: ο host προσαρτά το στιγμιότυπο ενός συνόλου μόνο αφού έχει ξεκινήσει το container. Δες [Σύνολα δεδομένων ZFS](zfs-datasets.md).
 
 Οι διαδρομές αποθετηρίου των αντιγράφων έχουν προεπιλογή `/mnt/user/bombvault/{container,vms,flash,config,files}`, που δημιουργούνται στο πρώτο αντίγραφο. Αλλάξτε την τοποθεσία οποιαδήποτε στιγμή στις **Ρυθμίσεις, Διαδρομές αντιγράφων**.
 

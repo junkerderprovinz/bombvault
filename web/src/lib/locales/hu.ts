@@ -656,7 +656,7 @@ const hu: Partial<Translations> = {
   "vm.ssh.testFail": "A kapcsolat sikertelen",
   "vm.ssh.setupTitle": "Beállítás (egyszeri)",
   "vm.ssh.step1": "Másolja az alábbi parancsot, és futtassa az Unraid terminálban a kulcs engedélyezéséhez (túléli az újraindításokat).",
-  "vm.ssh.step2": "Állítsa a konténer „VM Backup: Host” változóját az Unraid szerver LAN IP-címére (pl. 192.168.x.x); egyszerű bridge hálózaton a host.docker.internal is működik.",
+  "vm.ssh.step2": "Állítsa a konténer „Host SSH: Address” változóját az Unraid szerver LAN IP-címére (pl. 192.168.x.x); egyszerű bridge hálózaton a host.docker.internal is működik.",
   "vm.ssh.step3": "Kattintson a Kapcsolat tesztelése gombra. Ha zöld, engedélyezze a VM-eket a Tartományok alatt.",
   "vm.ssh.copyCmd": "Parancs másolása",
   "vm.ssh.guide": "Teljes beállítási és hálózati útmutató",

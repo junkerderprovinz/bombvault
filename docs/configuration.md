@@ -7,10 +7,10 @@ This page covers the container's environment variables, the mounts the template 
 | Variable | Required | Description |
 |---|---|---|
 | `APP_KEY` | **Yes** | 32-byte hex secret (64 hex chars) used to derive the restic repo password. Generate with `openssl rand -hex 32`. Keep this safe: losing it makes encrypted backups unrecoverable. |
-| `LIBVIRT_HOST` | For VMs | Unraid host reached over SSH for VM backup (default `host.docker.internal`; the template pre-fills a LAN-IP placeholder). Use your Unraid LAN IP, required on a custom `br0.x` network. |
-| `LIBVIRT_SSH_PORT` | No | Host SSH port for VM backup (default `22`). |
-| `LIBVIRT_SSH_USER` | No | SSH user on the host for VM backup (default `root`). |
-| `LIBVIRT_URI` | No | Full libvirt connection URI, used **verbatim** instead of building one from the three `LIBVIRT_*` variables above (which are then ignored for the connection string). Default unset. Needed on TrueNAS Scale, whose libvirtd listens on a non-standard socket the built-string form cannot express: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. See [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md)'s TrueNAS Scale section. |
+| `LIBVIRT_HOST` | For VMs and ZFS datasets | Unraid host reached over SSH for VM and ZFS dataset backups (template field **Host SSH: Address**, default `host.docker.internal`). The template pre-fills the placeholder `192.168.x.x`, which counts as unset. Use your Unraid LAN IP, required on a custom `br0.x` network. |
+| `LIBVIRT_SSH_PORT` | No | Host SSH port for VM and ZFS dataset backups (template field **Host SSH: Port**, default `22`). |
+| `LIBVIRT_SSH_USER` | No | SSH user on the host for VM and ZFS dataset backups (template field **Host SSH: User**, default `root`). |
+| `LIBVIRT_URI` | No | Full libvirt connection URI, used **verbatim** instead of building one from the three `LIBVIRT_*` variables above (which are then ignored for the connection string). Default unset. Needed on TrueNAS Scale, whose libvirtd listens on a non-standard socket the built-string form cannot express: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. See [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md)'s TrueNAS Scale section. When it is a `qemu+ssh://` URI, each of `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` and `LIBVIRT_SSH_PORT` that is not set is taken from it, also for BombVault's own SSH commands (NVRAM transfer, ZFS datasets). |
 | `PORT` | No | HTTP port (default `3000`; only used with `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | No | HTTPS port (default `3443`; the template publishes it 1:1, so the WebUI answers on `https://<ip>:3443`). |
 | `HTTP_ONLY` | No | Set `true` to disable the self-signed HTTPS listener and serve plain HTTP only (for use behind a TLS-terminating reverse proxy). |
@@ -27,6 +27,8 @@ This page covers the container's environment variables, the mounts the template 
 ## Mounts
 
 Mount the Docker socket, the flash (`/boot`) and the **Host Data** root (`/mnt`) as shown in the CA template. Backup *sources* and *destinations* both live under Host Data, and it is mounted **slave** so a remote share that mounts after the container starts (for example under `/mnt/remotes`) becomes visible without a restart.
+
+ZFS dataset backups need this mode too: the host mounts a dataset's snapshot only after the container has started. See [ZFS datasets](zfs-datasets.md).
 
 Backup repository paths default to `/mnt/user/bombvault/{container,vms,flash,config,files}`, created on the first backup. Change the location any time in **Settings, Backup paths**. Each path field also has an inline **Local / Remote** switch — a path can be a restic remote (`s3:...`, `rest:...`, `b2:...`, `sftp:...`, `rclone:...`) instead of a local folder, backing up straight to it with no separate local copy; see [Remote primary repositories](offsite-recovery.md#remote-primary-repositories).
 

@@ -7,10 +7,10 @@
 | 変数 | 必須 | 説明 |
 |---|---|---|
 | `APP_KEY` | **はい** | restic リポジトリのパスワードを導出するために使う 32 バイトの 16 進シークレット（16 進数 64 文字）。`openssl rand -hex 32` で生成します。これを安全に保管してください: 失うと暗号化されたバックアップは復元不能になります。 |
-| `LIBVIRT_HOST` | VM に必要 | VM バックアップのために SSH で到達する Unraid ホスト（デフォルト `host.docker.internal`。テンプレートは LAN-IP のプレースホルダーをあらかじめ入力します）。Unraid の LAN IP を使ってください。カスタムの `br0.x` ネットワークでは必須です。 |
-| `LIBVIRT_SSH_PORT` | いいえ | VM バックアップのためのホスト SSH ポート（デフォルト `22`）。 |
-| `LIBVIRT_SSH_USER` | いいえ | VM バックアップのためのホスト上の SSH ユーザー（デフォルト `root`）。 |
-| `LIBVIRT_URI` | いいえ | 完全な libvirt 接続 URI。上記 3 つの `LIBVIRT_*` 変数から組み立てる代わりに、これを**そのまま**使用します（設定するとそれらは接続文字列には使われなくなります）。デフォルトは未設定です。TrueNAS Scale では必須です。TrueNAS の libvirtd は非標準のソケットで待ち受けており、組み立て式の URI ではそれを表現できません: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`。詳細は [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) の TrueNAS Scale の節を参照してください。 |
+| `LIBVIRT_HOST` | VM に必要 | VM バックアップのために SSH で到達する Unraid ホスト（デフォルト `host.docker.internal`。テンプレートは LAN-IP のプレースホルダーをあらかじめ入力します）。Unraid の LAN IP を使ってください。カスタムの `br0.x` ネットワークでは必須です。 ZFS データセットのバックアップでも使われます（テンプレート項目 **Host SSH: Address**）。プレースホルダー `192.168.x.x` は未設定として扱われます。 |
+| `LIBVIRT_SSH_PORT` | いいえ | VM バックアップのためのホスト SSH ポート（デフォルト `22`）。 テンプレート項目 **Host SSH: Port**。ZFS データセットでも使われます。 |
+| `LIBVIRT_SSH_USER` | いいえ | VM バックアップのためのホスト上の SSH ユーザー（デフォルト `root`）。 テンプレート項目 **Host SSH: User**。ZFS データセットでも使われます。 |
+| `LIBVIRT_URI` | いいえ | 完全な libvirt 接続 URI。上記 3 つの `LIBVIRT_*` 変数から組み立てる代わりに、これを**そのまま**使用します（設定するとそれらは接続文字列には使われなくなります）。デフォルトは未設定です。TrueNAS Scale では必須です。TrueNAS の libvirtd は非標準のソケットで待ち受けており、組み立て式の URI ではそれを表現できません: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`。詳細は [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) の TrueNAS Scale の節を参照してください。 `qemu+ssh://` の URI なら、`LIBVIRT_HOST`・`LIBVIRT_SSH_USER`・`LIBVIRT_SSH_PORT` のうち未設定のものはそれぞれこの URI から取られ、BombVault 自身の SSH コマンド（NVRAM の転送、ZFS データセット）にも使われます。 |
 | `PORT` | いいえ | HTTP ポート（デフォルト `3000`。`HTTP_ONLY=true` の場合にのみ使用）。 |
 | `HTTPS_PORT` | いいえ | HTTPS ポート（デフォルト `3443`。テンプレートは 1:1 で公開するため、WebUI は `https://<ip>:3443` で応答します）。 |
 | `HTTP_ONLY` | いいえ | `true` に設定すると、自己署名 HTTPS リスナーを無効にし、プレーン HTTP のみを提供します（TLS を終端するリバースプロキシの背後での使用向け）。 |
@@ -26,6 +26,8 @@
 ## マウント
 
 CA テンプレートに示されているとおり、Docker ソケット、フラッシュ（`/boot`）、そして **Host Data** ルート（`/mnt`）をマウントします。バックアップの*ソース*と*デスティネーション*はどちらも Host Data の配下に存在し、それは **slave** でマウントされます。そのため、コンテナ起動後にマウントされるリモート共有（たとえば `/mnt/remotes` の配下）が、再起動なしで見えるようになります。
+
+ZFS データセットのバックアップにもこのモードが必要です。ホストはコンテナの起動後にデータセットのスナップショットをマウントするためです。[ZFS データセット](zfs-datasets.md)を参照してください。
 
 バックアップのリポジトリパスはデフォルトで `/mnt/user/bombvault/{container,vms,flash,config,files}` になり、初回バックアップ時に作成されます。場所はいつでも **Settings, Backup paths** で変更できます。
 

@@ -7,10 +7,10 @@ Denne siden dekker containerens miljøvariabler, monteringene malen tilbyr, VM-s
 | Variabel | Påkrevd | Beskrivelse |
 |---|---|---|
 | `APP_KEY` | **Ja** | 32-byte hex-hemmelighet (64 hex-tegn) brukt til å utlede passordet til restic-repoet. Generer med `openssl rand -hex 32`. Hold dette trygt: mister du det, blir krypterte sikkerhetskopier umulige å gjenopprette. |
-| `LIBVIRT_HOST` | For VM-er | Unraid-host nådd over SSH for VM-sikkerhetskopiering (standard `host.docker.internal`; malen forhåndsutfyller en LAN-IP-plassholder). Bruk din Unraid-LAN-IP, påkrevd på et egendefinert `br0.x`-nettverk. |
-| `LIBVIRT_SSH_PORT` | Nei | Host-SSH-port for VM-sikkerhetskopiering (standard `22`). |
-| `LIBVIRT_SSH_USER` | Nei | SSH-bruker på hosten for VM-sikkerhetskopiering (standard `root`). |
-| `LIBVIRT_URI` | Nei | Full libvirt-tilkoblings-URI, brukt **ordrett** i stedet for å bygge en fra de tre `LIBVIRT_*`-variablene over (som da ignoreres for tilkoblingsstrengen). Ikke satt som standard. Nødvendig på TrueNAS Scale, der libvirtd lytter på en ikke-standard socket som den bygde strengformen ikke kan uttrykke: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Se TrueNAS Scale-delen i [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). |
+| `LIBVIRT_HOST` | For VM-er | Unraid-host nådd over SSH for VM-sikkerhetskopiering (standard `host.docker.internal`; malen forhåndsutfyller en LAN-IP-plassholder). Bruk din Unraid-LAN-IP, påkrevd på et egendefinert `br0.x`-nettverk. Brukes også til sikkerhetskopi av ZFS-datasett (malfelt **Host SSH: Address**); plassholderen `192.168.x.x` regnes som ikke satt. |
+| `LIBVIRT_SSH_PORT` | Nei | Host-SSH-port for VM-sikkerhetskopiering (standard `22`). Malfelt **Host SSH: Port**, også for ZFS-datasett. |
+| `LIBVIRT_SSH_USER` | Nei | SSH-bruker på hosten for VM-sikkerhetskopiering (standard `root`). Malfelt **Host SSH: User**, også for ZFS-datasett. |
+| `LIBVIRT_URI` | Nei | Full libvirt-tilkoblings-URI, brukt **ordrett** i stedet for å bygge en fra de tre `LIBVIRT_*`-variablene over (som da ignoreres for tilkoblingsstrengen). Ikke satt som standard. Nødvendig på TrueNAS Scale, der libvirtd lytter på en ikke-standard socket som den bygde strengformen ikke kan uttrykke: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Se TrueNAS Scale-delen i [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Er det en `qemu+ssh://`-URI, hentes hver av `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` og `LIBVIRT_SSH_PORT` som ikke er satt, fra den, også for BombVaults egne SSH-kommandoer (NVRAM-overføring, ZFS-datasett). |
 | `PORT` | Nei | HTTP-port (standard `3000`; brukes kun med `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | Nei | HTTPS-port (standard `3443`; malen publiserer den 1:1, så WebUI-en svarer på `https://<ip>:3443`). |
 | `HTTP_ONLY` | Nei | Sett `true` for å deaktivere den selvsignerte HTTPS-lytteren og kun servere ren HTTP (til bruk bak en TLS-terminerende revers-proxy). |
@@ -26,6 +26,8 @@ Denne siden dekker containerens miljøvariabler, monteringene malen tilbyr, VM-s
 ## Monteringer
 
 Monter Docker-socketen, flashen (`/boot`) og **Host Data**-roten (`/mnt`) som vist i CA-malen. Sikkerhetskopi-*kilder* og -*destinasjoner* ligger begge under Host Data, og den er montert **slave** så en fjerndeling som monteres etter at containeren starter (for eksempel under `/mnt/remotes`) blir synlig uten en omstart.
+
+Sikkerhetskopi av ZFS-datasett trenger også denne modusen: verten monterer øyeblikksbildet av et datasett først etter at containeren har startet. Se [ZFS-datasett](zfs-datasets.md).
 
 Sikkerhetskopi-repository-stier har som standard `/mnt/user/bombvault/{container,vms,flash,config,files}`, opprettet ved den første sikkerhetskopieringen. Endre plasseringen når som helst i **Innstillinger, Sikkerhetskopistier**.
 

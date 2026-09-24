@@ -61,6 +61,14 @@ Un import oprește containerul, pune deoparte folderul lui de date și lasă ima
 
 Ca să îl pui la loc manual: oprește containerul, redenumește folderul de date curent ca să îl dai la o parte, redenumește folderul păstrat înapoi la numele original și pornește containerul. Pe Unraid, managerul de fișiere din fila Shares face asta.
 
+## Un backup al unui set de date ZFS a eșuat sau a sărit un set {#zfs-datasets}
+
+Fiecare problemă are un cod de motiv între paranteze drepte, iar pagina [Seturi de date ZFS](zfs-datasets.md#reason-codes) le enumeră pe toate cu remedierea. Cele mai frecvente trei:
+
+- **`snapshot-loop`**: instantaneul nu a ajuns la BombVault, pentru că Host Data nu transmite montările noi. Editează containerul, setează Access Mode pentru Host Data la Read/Write - Slave și repornește BombVault.
+- **`key-not-loaded`**: un set de date criptat a cărui cheie nu este încărcată este sărit. Încarcă cheia cu `zfs load-key` și montează setul; următorul backup îl include.
+- **`ssh-auth`**: serverul a refuzat cheia BombVault. Cardul de conexiune de pe pagina ZFS arată comanda care o autorizează; rulează-o o dată pe server.
+
 ## Containerul se tot repornește sau pare nesănătos
 
 BombVault raportează sănătos/nesănătos din propriul `/api/health`. Un instrument de auto-vindecare (precum Autoheal) îl poate reporni automat dacă motorul se blochează vreodată. Verifică jurnalul containerului și raportul `/spike` pentru cauza de bază.

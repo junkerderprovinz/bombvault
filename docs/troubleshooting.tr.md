@@ -61,6 +61,14 @@ Başarısız bir döküm, çevresindeki yedeklemeyi asla düşürmez; kendi baş
 
 Elle geri koymak için: konteyneri durdurun, mevcut veri klasörünün adını değiştirip yoldan çekin, saklanan klasörü özgün adına geri döndürün ve konteyneri başlatın. Unraid'de bunu Shares sekmesindeki dosya yöneticisi yapar.
 
+## Bir ZFS veri kümesi yedeği başarısız oldu veya bir kümeyi atladı {#zfs-datasets}
+
+Her sorunun köşeli parantez içinde bir neden kodu vardır ve [ZFS veri kümeleri](zfs-datasets.md#reason-codes) sayfası hepsini çözümüyle listeler. En sık üçü:
+
+- **`snapshot-loop`**: Host Data yeni bağlamaları iletmediği için anlık görüntü BombVault'a ulaşmadı. Konteyneri düzenleyin, Host Data'nın Access Mode ayarını Read/Write - Slave yapın ve BombVault'u yeniden başlatın.
+- **`key-not-loaded`**: anahtarı yüklenmemiş şifreli bir veri kümesi atlanır. Anahtarı `zfs load-key` ile yükleyin ve kümeyi bağlayın; sonraki yedek onu da alır.
+- **`ssh-auth`**: sunucu BombVault'un anahtarını reddetti. ZFS sayfasındaki bağlantı kartı, anahtarı yetkilendiren komutu gösterir; sunucuda bir kez çalıştırın.
+
 ## Konteyner sürekli yeniden başlıyor ya da sağlıksız görünüyor
 
 BombVault, kendi `/api/health`'inden sağlıklı/sağlıksız bildirir. Motor bir şekilde sıkışırsa bir otomatik onarma aracı (Autoheal gibi) onu otomatik olarak yeniden başlatabilir. Altta yatan neden için konteyner günlüğünü ve `/spike` raporunu denetleyin.

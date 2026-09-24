@@ -61,6 +61,14 @@ En import stopper containeren, setter datamappen til side og lar imaget lage en 
 
 Slik legger du den tilbake for hånd: stopp containeren, gi den nåværende datamappen et annet navn så den er av veien, gi den bevarte mappen tilbake det opprinnelige navnet, og start containeren. På Unraid gjør filbehandleren under fanen Shares dette.
 
+## En sikkerhetskopi av ZFS-datasett feilet eller hoppet over et datasett {#zfs-datasets}
+
+Hvert problem har en årsakskode i hakeparenteser, og siden [ZFS-datasett](zfs-datasets.md#reason-codes) viser alle med løsningen. De tre vanligste:
+
+- **`snapshot-loop`**: øyeblikksbildet nådde ikke BombVault fordi Host Data ikke sender nye monteringer videre. Rediger containeren, sett Access Mode for Host Data til Read/Write - Slave og start BombVault på nytt.
+- **`key-not-loaded`**: et kryptert datasett der nøkkelen ikke er lastet, hoppes over. Last nøkkelen med `zfs load-key` og monter datasettet; neste sikkerhetskopi tar det med.
+- **`ssh-auth`**: serveren avviste BombVaults nøkkel. Tilkoblingskortet på ZFS-siden viser kommandoen som godkjenner den; kjør den én gang på serveren.
+
 ## Containeren fortsetter å starte på nytt eller ser usunn ut
 
 BombVault rapporterer sunn/usunn fra sin egen `/api/health`. Et auto-heal-verktøy (som Autoheal) kan starte den på nytt automatisk hvis motoren noen gang skulle sette seg fast. Sjekk containerloggen og `/spike`-rapporten for den underliggende årsaken.

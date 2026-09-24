@@ -1449,7 +1449,7 @@ const ca: Partial<Translations> = {
   "vm.ssh.testFail": "Connexió fallida",
   "vm.ssh.setupTitle": "Configura (un cop)",
   "vm.ssh.step1": "Copia l'ordre de sota i executa-la al terminal d'Unraid per autoritzar aquesta clau (sobreviu els reinicis).",
-  "vm.ssh.step2": "Configura la variable «VM Backup: Host» del contenidor amb la IP LAN del teu Unraid (p. ex. 192.168.x.x); amb xarxa bridge simple també funciona host.docker.internal.",
+  "vm.ssh.step2": "Configura la variable «Host SSH: Address» del contenidor amb la IP LAN del teu Unraid (p. ex. 192.168.x.x); amb xarxa bridge simple també funciona host.docker.internal.",
   "vm.ssh.step3": "Fes clic a Prova la connexió. Un cop verd, activa les MV a Dominis.",
   "vm.ssh.copyCmd": "Copia l'ordre",
   "vm.ssh.guide": "Guia completa de configuració i xarxa",

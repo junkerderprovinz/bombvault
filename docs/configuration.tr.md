@@ -7,10 +7,10 @@ Bu sayfa konteynerin ortam değişkenlerini, şablonun sağladığı bağlamalar
 | Değişken | Gerekli | Açıklama |
 |---|---|---|
 | `APP_KEY` | **Evet** | restic depo parolasını türetmek için kullanılan 32 baytlık onaltılık gizli anahtar (64 onaltılık karakter). `openssl rand -hex 32` ile oluşturun. Bunu güvende tutun: kaybetmek şifreli yedekleri kurtarılamaz hale getirir. |
-| `LIBVIRT_HOST` | VM'ler için | VM yedeklemesi için SSH üzerinden ulaşılan Unraid host'u (varsayılan `host.docker.internal`; şablon bir LAN-IP yer tutucusunu önceden doldurur). Unraid LAN IP'nizi kullanın, özel bir `br0.x` ağında gereklidir. |
-| `LIBVIRT_SSH_PORT` | Hayır | VM yedeklemesi için host SSH portu (varsayılan `22`). |
-| `LIBVIRT_SSH_USER` | Hayır | VM yedeklemesi için host'taki SSH kullanıcısı (varsayılan `root`). |
-| `LIBVIRT_URI` | Hayır | Tam libvirt bağlantı URI'si; yukarıdaki üç `LIBVIRT_*` değişkeninden bir tane oluşturmak yerine **harfiyen** kullanılır (bu durumda söz konusu değişkenler bağlantı dizesi için yok sayılır). Varsayılan olarak ayarlanmamıştır. libvirtd'i standart olmayan, oluşturulan dize biçiminin ifade edemediği bir soket üzerinden dinleyen TrueNAS Scale'de gereklidir: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. TrueNAS Scale bölümü GitHub'daki [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) adresinde yer alır. |
+| `LIBVIRT_HOST` | VM'ler için | VM yedeklemesi için SSH üzerinden ulaşılan Unraid host'u (varsayılan `host.docker.internal`; şablon bir LAN-IP yer tutucusunu önceden doldurur). Unraid LAN IP'nizi kullanın, özel bir `br0.x` ağında gereklidir. ZFS veri kümesi yedekleri de bunu kullanır (şablon alanı **Host SSH: Address**); `192.168.x.x` yer tutucusu ayarlanmamış sayılır. |
+| `LIBVIRT_SSH_PORT` | Hayır | VM yedeklemesi için host SSH portu (varsayılan `22`). Şablon alanı **Host SSH: Port**, ZFS veri kümeleri için de. |
+| `LIBVIRT_SSH_USER` | Hayır | VM yedeklemesi için host'taki SSH kullanıcısı (varsayılan `root`). Şablon alanı **Host SSH: User**, ZFS veri kümeleri için de. |
+| `LIBVIRT_URI` | Hayır | Tam libvirt bağlantı URI'si; yukarıdaki üç `LIBVIRT_*` değişkeninden bir tane oluşturmak yerine **harfiyen** kullanılır (bu durumda söz konusu değişkenler bağlantı dizesi için yok sayılır). Varsayılan olarak ayarlanmamıştır. libvirtd'i standart olmayan, oluşturulan dize biçiminin ifade edemediği bir soket üzerinden dinleyen TrueNAS Scale'de gereklidir: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. TrueNAS Scale bölümü GitHub'daki [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) adresinde yer alır. Bir `qemu+ssh://` URI ise `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` ve `LIBVIRT_SSH_PORT` değişkenlerinden ayarlanmamış olan her biri ondan alınır, BombVault'un kendi SSH komutları için de (NVRAM aktarımı, ZFS veri kümeleri). |
 | `PORT` | Hayır | HTTP portu (varsayılan `3000`; yalnızca `HTTP_ONLY=true` ile kullanılır). |
 | `HTTPS_PORT` | Hayır | HTTPS portu (varsayılan `3443`; şablon onu 1:1 yayımlar, böylece WebUI `https://<ip>:3443` üzerinde yanıt verir). |
 | `HTTP_ONLY` | Hayır | Kendinden imzalı HTTPS dinleyicisini devre dışı bırakmak ve yalnızca düz HTTP sunmak için `true` ayarlayın (TLS'yi sonlandıran bir ters proxy arkasında kullanım için). |
@@ -26,6 +26,8 @@ Bu sayfa konteynerin ortam değişkenlerini, şablonun sağladığı bağlamalar
 ## Bağlamalar
 
 Docker soketini, flash'ı (`/boot`) ve **Host Data** kökünü (`/mnt`) CA şablonunda gösterildiği gibi bağlayın. Yedekleme *kaynakları* ve *hedefleri* her ikisi de Host Data altında yer alır ve o **slave** olarak bağlanır, böylece konteyner başladıktan sonra bağlanan bir uzak paylaşım (örneğin `/mnt/remotes` altında) yeniden başlatma olmadan görünür hale gelir.
+
+ZFS veri kümesi yedeklerinin de bu moda ihtiyacı vardır: ana makine bir veri kümesinin anlık görüntüsünü ancak konteyner başladıktan sonra bağlar. Bkz. [ZFS veri kümeleri](zfs-datasets.md).
 
 Yedekleme depo yolları varsayılan olarak `/mnt/user/bombvault/{container,vms,flash,config,files}` şeklindedir, ilk yedeklemede oluşturulur. Konumu istediğiniz zaman **Ayarlar, Yedekleme yolları**'nda değiştirin.
 

@@ -656,7 +656,7 @@ const ar: Partial<Translations> = {
   "vm.ssh.testFail": "فشل الاتصال",
   "vm.ssh.setupTitle": "الإعداد (لمرة واحدة)",
   "vm.ssh.step1": "انسخ الأمر أدناه ونفّذه في طرفية Unraid لتفويض هذا المفتاح (يبقى بعد إعادة التشغيل).",
-  "vm.ssh.step2": "اضبط متغيّر الـ container «VM Backup: Host» على عنوان LAN IP الخاص بـ Unraid (مثلاً 192.168.x.x)؛ مع شبكة الجسر البسيطة يعمل host.docker.internal أيضاً.",
+  "vm.ssh.step2": "اضبط متغيّر الـ container «Host SSH: Address» على عنوان LAN IP الخاص بـ Unraid (مثلاً 192.168.x.x)؛ مع شبكة الجسر البسيطة يعمل host.docker.internal أيضاً.",
   "vm.ssh.step3": "انقر على اختبار الاتصال. عندما يصبح أخضر، فعّل VMs ضمن النطاقات.",
   "vm.ssh.copyCmd": "نسخ الأمر",
   "vm.ssh.guide": "دليل الإعداد والشبكة الكامل",

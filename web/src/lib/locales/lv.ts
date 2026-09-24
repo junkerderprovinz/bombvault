@@ -1449,7 +1449,7 @@ const lv: Partial<Translations> = {
   "vm.ssh.testFail": "Savienojums neizdevās",
   "vm.ssh.setupTitle": "Iestatīt (vienreiz)",
   "vm.ssh.step1": "Nokopējiet zemāk esošo komandu un palaidiet to Unraid terminālī, lai autorizētu šo atslēgu (saglabājas pēc restartēšanas).",
-  "vm.ssh.step2": "Iestatiet konteinera mainīgo „VM Backup: Host” uz jūsu Unraid LAN IP (piem., 192.168.x.x); vienkāršā bridge tīklā darbojas arī host.docker.internal.",
+  "vm.ssh.step2": "Iestatiet konteinera mainīgo „Host SSH: Address” uz jūsu Unraid LAN IP (piem., 192.168.x.x); vienkāršā bridge tīklā darbojas arī host.docker.internal.",
   "vm.ssh.step3": "Noklikšķiniet uz Pārbaudīt savienojumu. Kad tas ir zaļš, iespējojiet VM sadaļā Domēni.",
   "vm.ssh.copyCmd": "Kopēt komandu",
   "vm.ssh.guide": "Pilnīga iestatīšanas un tīkla rokasgrāmata",

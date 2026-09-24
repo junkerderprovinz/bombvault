@@ -7,10 +7,10 @@ Diese Seite behandelt die Umgebungsvariablen des Containers, die vom Template be
 | Variable | Erforderlich | Beschreibung |
 |---|---|---|
 | `APP_KEY` | **Ja** | 32-Byte-Hex-Geheimnis (64 Hex-Zeichen) zum Ableiten des restic-Repo-Passworts. Erzeuge es mit `openssl rand -hex 32`. Bewahre es sicher auf: geht es verloren, sind verschlüsselte Backups unwiederbringlich. |
-| `LIBVIRT_HOST` | Für VMs | Über SSH erreichter Unraid-Host für das VM-Backup (Standard `host.docker.internal`; das Template füllt einen LAN-IP-Platzhalter vor). Nutze deine Unraid-LAN-IP, erforderlich in einem benutzerdefinierten `br0.x`-Netzwerk. |
-| `LIBVIRT_SSH_PORT` | Nein | Host-SSH-Port für das VM-Backup (Standard `22`). |
-| `LIBVIRT_SSH_USER` | Nein | SSH-Benutzer auf dem Host für das VM-Backup (Standard `root`). |
-| `LIBVIRT_URI` | Nein | Vollständige libvirt-Verbindungs-URI, wird **wortwörtlich** verwendet statt sie aus den drei obigen `LIBVIRT_*`-Variablen zusammenzusetzen (die dann für den Verbindungsstring ignoriert werden). Standardmäßig nicht gesetzt. Wird auf TrueNAS Scale benötigt, dessen libvirtd auf einem nicht standardmäßigen Socket lauscht, den die zusammengesetzte Form nicht abbilden kann: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Siehe den TrueNAS-Scale-Abschnitt in [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). |
+| `LIBVIRT_HOST` | Für VMs | Über SSH erreichter Unraid-Host für das VM-Backup (Standard `host.docker.internal`; das Template füllt einen LAN-IP-Platzhalter vor). Nutze deine Unraid-LAN-IP, erforderlich in einem benutzerdefinierten `br0.x`-Netzwerk. Auch für ZFS-Dataset-Backups genutzt (Template-Feld **Host SSH: Address**); der Platzhalter `192.168.x.x` gilt als nicht gesetzt. |
+| `LIBVIRT_SSH_PORT` | Nein | Host-SSH-Port für das VM-Backup (Standard `22`). Template-Feld **Host SSH: Port**, auch für ZFS-Datasets. |
+| `LIBVIRT_SSH_USER` | Nein | SSH-Benutzer auf dem Host für das VM-Backup (Standard `root`). Template-Feld **Host SSH: User**, auch für ZFS-Datasets. |
+| `LIBVIRT_URI` | Nein | Vollständige libvirt-Verbindungs-URI, wird **wortwörtlich** verwendet statt sie aus den drei obigen `LIBVIRT_*`-Variablen zusammenzusetzen (die dann für den Verbindungsstring ignoriert werden). Standardmäßig nicht gesetzt. Wird auf TrueNAS Scale benötigt, dessen libvirtd auf einem nicht standardmäßigen Socket lauscht, den die zusammengesetzte Form nicht abbilden kann: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Siehe den TrueNAS-Scale-Abschnitt in [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Ist es eine `qemu+ssh://`-URI, wird jede der Variablen `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` und `LIBVIRT_SSH_PORT`, die nicht gesetzt ist, daraus übernommen, auch für BombVaults eigene SSH-Befehle (NVRAM-Übertragung, ZFS-Datasets). |
 | `PORT` | Nein | HTTP-Port (Standard `3000`; nur mit `HTTP_ONLY=true` verwendet). |
 | `HTTPS_PORT` | Nein | HTTPS-Port (Standard `3443`; das Template veröffentlicht ihn 1:1, sodass die WebUI unter `https://<ip>:3443` antwortet). |
 | `HTTP_ONLY` | Nein | Setze `true`, um den selbstsignierten HTTPS-Listener zu deaktivieren und nur schlichtes HTTP auszuliefern (zur Verwendung hinter einem TLS-terminierenden Reverse Proxy). |
@@ -26,6 +26,8 @@ Diese Seite behandelt die Umgebungsvariablen des Containers, die vom Template be
 ## Mounts
 
 Hänge den Docker-Socket, den Flash (`/boot`) und das Wurzelverzeichnis **Host Data** (`/mnt`) ein, wie im CA-Template gezeigt. Backup-*Quellen* und -*Ziele* liegen beide unter Host Data, und es ist **slave** eingehängt, sodass eine Remote-Freigabe, die nach dem Containerstart eingehängt wird (zum Beispiel unter `/mnt/remotes`), ohne Neustart sichtbar wird.
+
+ZFS-Dataset-Backups brauchen diesen Modus ebenfalls: Den Snapshot eines Datasets hängt der Host erst ein, nachdem der Container gestartet ist. Siehe [ZFS-Datasets](zfs-datasets.md).
 
 Backup-Repository-Pfade sind standardmäßig `/mnt/user/bombvault/{container,vms,flash,config,files}`, angelegt beim ersten Backup. Ändere den Ort jederzeit unter **Einstellungen, Backup-Pfade**.
 

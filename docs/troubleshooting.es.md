@@ -61,6 +61,14 @@ Una importación para el contenedor, aparta su carpeta de datos y deja que la im
 
 Para devolverla a mano: para el contenedor, renombra la carpeta de datos actual para quitarla de en medio, renombra la carpeta guardada a su nombre original y arranca el contenedor. En Unraid, el gestor de archivos de la pestaña Shares hace esto.
 
+## Una copia de un conjunto de datos ZFS falló u omitió un conjunto {#zfs-datasets}
+
+Cada problema lleva un código de motivo entre corchetes, y la página [Conjuntos de datos ZFS](zfs-datasets.md#reason-codes) los enumera todos con su solución. Los tres más habituales:
+
+- **`snapshot-loop`**: la instantánea no llegó a BombVault porque Host Data no transmite los montajes nuevos. Edita el contenedor, pon el Access Mode de Host Data en Read/Write - Slave y reinicia BombVault.
+- **`key-not-loaded`**: un conjunto cifrado cuya clave no está cargada se omite. Carga la clave con `zfs load-key` y monta el conjunto; la siguiente copia lo incluye.
+- **`ssh-auth`**: el servidor rechazó la clave de BombVault. La tarjeta de conexión de la página ZFS muestra el comando que la autoriza; ejecútalo una vez en el servidor.
+
 ## El contenedor se reinicia constantemente o parece no saludable
 
 BombVault informa de saludable/no saludable desde su propio `/api/health`. Una herramienta de autorreparación (como Autoheal) puede reiniciarlo automáticamente si el motor se atasca alguna vez. Comprueba el registro del contenedor y el informe de `/spike` para conocer la causa subyacente.

@@ -7,10 +7,10 @@ Questa pagina copre le variabili d'ambiente del container, i mount forniti dal t
 | Variabile | Richiesta | Descrizione |
 |---|---|---|
 | `APP_KEY` | **Sì** | Segreto esadecimale di 32 byte (64 caratteri esadecimali) usato per derivare la password del repo restic. Genera con `openssl rand -hex 32`. Tienilo al sicuro: perderlo rende i backup cifrati irrecuperabili. |
-| `LIBVIRT_HOST` | Per le VM | Host Unraid raggiunto via SSH per il backup delle VM (predefinito `host.docker.internal`; il template precompila un placeholder di IP LAN). Usa l'IP LAN del tuo Unraid, richiesto su una rete `br0.x` personalizzata. |
-| `LIBVIRT_SSH_PORT` | No | Porta SSH dell'host per il backup delle VM (predefinita `22`). |
-| `LIBVIRT_SSH_USER` | No | Utente SSH sull'host per il backup delle VM (predefinito `root`). |
-| `LIBVIRT_URI` | No | URI di connessione libvirt completo, usato **testualmente** al posto di comporne uno dalle tre variabili `LIBVIRT_*` sopra (che a quel punto vengono ignorate per la stringa di connessione). Predefinito non impostato. Necessario su TrueNAS Scale, il cui libvirtd resta in ascolto su un socket non standard che il formato costruito automaticamente non può esprimere: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Vedi la sezione TrueNAS Scale di [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). |
+| `LIBVIRT_HOST` | Per le VM | Host Unraid raggiunto via SSH per il backup delle VM (predefinito `host.docker.internal`; il template precompila un placeholder di IP LAN). Usa l'IP LAN del tuo Unraid, richiesto su una rete `br0.x` personalizzata. Usato anche per i backup dei dataset ZFS (campo del template **Host SSH: Address**); il segnaposto `192.168.x.x` conta come non impostato. |
+| `LIBVIRT_SSH_PORT` | No | Porta SSH dell'host per il backup delle VM (predefinita `22`). Campo del template **Host SSH: Port**, anche per i dataset ZFS. |
+| `LIBVIRT_SSH_USER` | No | Utente SSH sull'host per il backup delle VM (predefinito `root`). Campo del template **Host SSH: User**, anche per i dataset ZFS. |
+| `LIBVIRT_URI` | No | URI di connessione libvirt completo, usato **testualmente** al posto di comporne uno dalle tre variabili `LIBVIRT_*` sopra (che a quel punto vengono ignorate per la stringa di connessione). Predefinito non impostato. Necessario su TrueNAS Scale, il cui libvirtd resta in ascolto su un socket non standard che il formato costruito automaticamente non può esprimere: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Vedi la sezione TrueNAS Scale di [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Se è un URI `qemu+ssh://`, ognuna tra `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` e `LIBVIRT_SSH_PORT` non impostata viene presa da lì, anche per i comandi SSH di BombVault stesso (trasferimento NVRAM, dataset ZFS). |
 | `PORT` | No | Porta HTTP (predefinita `3000`; usata solo con `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | No | Porta HTTPS (predefinita `3443`; il template la pubblica 1:1, così la WebUI risponde su `https://<ip>:3443`). |
 | `HTTP_ONLY` | No | Imposta `true` per disabilitare il listener HTTPS autofirmato e servire solo HTTP in chiaro (per l'uso dietro un reverse proxy che termina il TLS). |
@@ -26,6 +26,8 @@ Questa pagina copre le variabili d'ambiente del container, i mount forniti dal t
 ## Mount
 
 Monta il socket Docker, il flash (`/boot`) e la radice **Host Data** (`/mnt`) come mostrato nel template CA. Le *origini* e le *destinazioni* dei backup risiedono entrambe sotto Host Data, ed è montato **slave** così una condivisione remota che si monta dopo l'avvio del container (per esempio sotto `/mnt/remotes`) diventa visibile senza un riavvio.
+
+Anche i backup dei dataset ZFS hanno bisogno di questa modalità: l'host monta lo snapshot di un dataset solo dopo l'avvio del container. Vedi [Dataset ZFS](zfs-datasets.md).
 
 I percorsi dei repository di backup hanno come predefinito `/mnt/user/bombvault/{container,vms,flash,config,files}`, creati al primo backup. Cambia la posizione in qualsiasi momento in **Impostazioni, Percorsi di backup**.
 

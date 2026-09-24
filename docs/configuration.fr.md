@@ -7,10 +7,10 @@ Cette page couvre les variables d'environnement du conteneur, les montages fourn
 | Variable | Requise | Description |
 |---|---|---|
 | `APP_KEY` | **Oui** | Secret hexadécimal de 32 octets (64 caractères hexa) utilisé pour dériver le mot de passe du dépôt restic. Générez avec `openssl rand -hex 32`. Gardez-le en lieu sûr : le perdre rend les sauvegardes chiffrées irrécupérables. |
-| `LIBVIRT_HOST` | Pour les VMs | Hôte Unraid atteint via SSH pour la sauvegarde de VM (par défaut `host.docker.internal` ; le modèle pré-remplit un placeholder d'IP LAN). Utilisez l'IP LAN de votre Unraid, requis sur un réseau `br0.x` personnalisé. |
-| `LIBVIRT_SSH_PORT` | Non | Port SSH de l'hôte pour la sauvegarde de VM (par défaut `22`). |
-| `LIBVIRT_SSH_USER` | Non | Utilisateur SSH sur l'hôte pour la sauvegarde de VM (par défaut `root`). |
-| `LIBVIRT_URI` | Non | URI de connexion libvirt complète, utilisée **telle quelle** au lieu d'en construire une à partir des trois variables `LIBVIRT_*` ci-dessus (qui sont alors ignorées pour la chaîne de connexion). Non définie par défaut. Nécessaire sur TrueNAS Scale, dont le libvirtd écoute sur un socket non standard que le format construit automatiquement ne peut pas exprimer : `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Voir la section TrueNAS Scale de [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). |
+| `LIBVIRT_HOST` | Pour les VMs | Hôte Unraid atteint via SSH pour la sauvegarde de VM (par défaut `host.docker.internal` ; le modèle pré-remplit un placeholder d'IP LAN). Utilisez l'IP LAN de votre Unraid, requis sur un réseau `br0.x` personnalisé. Sert aussi aux sauvegardes de jeux de données ZFS (champ du modèle **Host SSH: Address**) ; la valeur fictive `192.168.x.x` compte comme non définie. |
+| `LIBVIRT_SSH_PORT` | Non | Port SSH de l'hôte pour la sauvegarde de VM (par défaut `22`). Champ du modèle **Host SSH: Port**, aussi pour les jeux de données ZFS. |
+| `LIBVIRT_SSH_USER` | Non | Utilisateur SSH sur l'hôte pour la sauvegarde de VM (par défaut `root`). Champ du modèle **Host SSH: User**, aussi pour les jeux de données ZFS. |
+| `LIBVIRT_URI` | Non | URI de connexion libvirt complète, utilisée **telle quelle** au lieu d'en construire une à partir des trois variables `LIBVIRT_*` ci-dessus (qui sont alors ignorées pour la chaîne de connexion). Non définie par défaut. Nécessaire sur TrueNAS Scale, dont le libvirtd écoute sur un socket non standard que le format construit automatiquement ne peut pas exprimer : `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Voir la section TrueNAS Scale de [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Si c'est une URI `qemu+ssh://`, chacune des variables `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` et `LIBVIRT_SSH_PORT` qui n'est pas définie en est tirée, y compris pour les commandes SSH de BombVault (transfert NVRAM, jeux de données ZFS). |
 | `PORT` | Non | Port HTTP (par défaut `3000` ; utilisé uniquement avec `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | Non | Port HTTPS (par défaut `3443` ; le modèle le publie en 1:1, de sorte que l'interface web répond sur `https://<ip>:3443`). |
 | `HTTP_ONLY` | Non | Mettez `true` pour désactiver l'écouteur HTTPS auto-signé et ne servir que du HTTP simple (pour un usage derrière un reverse proxy terminant le TLS). |
@@ -26,6 +26,8 @@ Cette page couvre les variables d'environnement du conteneur, les montages fourn
 ## Montages
 
 Montez le socket Docker, la flash (`/boot`) et la racine **Host Data** (`/mnt`) comme indiqué dans le modèle CA. Les *sources* et les *destinations* de sauvegarde vivent toutes deux sous Host Data, et elle est montée en **slave** afin qu'un partage distant qui se monte après le démarrage du conteneur (par exemple sous `/mnt/remotes`) devienne visible sans redémarrage.
+
+Les sauvegardes de jeux de données ZFS ont aussi besoin de ce mode : l'hôte ne monte l'instantané d'un jeu de données qu'après le démarrage du conteneur. Voir [Jeux de données ZFS](zfs-datasets.md).
 
 Les chemins de dépôt de sauvegarde ont pour valeur par défaut `/mnt/user/bombvault/{container,vms,flash,config,files}`, créés à la première sauvegarde. Changez l'emplacement à tout moment dans **Paramètres, Chemins de sauvegarde**.
 

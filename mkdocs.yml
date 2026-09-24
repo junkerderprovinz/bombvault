@@ -120,5 +120,6 @@ nav:
   - getting-started.md
   - features.md
   - configuration.md
+  - zfs-datasets.md
   - offsite-recovery.md
   - troubleshooting.md

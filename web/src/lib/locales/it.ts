@@ -656,7 +656,7 @@ const it: Partial<Translations> = {
   "vm.ssh.testFail": "Connessione fallita",
   "vm.ssh.setupTitle": "Configura (una volta)",
   "vm.ssh.step1": "Copia il comando qui sotto ed eseguilo nel terminale di Unraid per autorizzare questa chiave (sopravvive ai riavvii).",
-  "vm.ssh.step2": "Imposta la variabile «VM Backup: Host» del container sull'IP LAN del tuo Unraid (es. 192.168.x.x); con rete bridge semplice funziona anche host.docker.internal.",
+  "vm.ssh.step2": "Imposta la variabile «Host SSH: Address» del container sull'IP LAN del tuo Unraid (es. 192.168.x.x); con rete bridge semplice funziona anche host.docker.internal.",
   "vm.ssh.step3": "Clicca su Prova connessione. Quando è verde, abilita le VM sotto Domini.",
   "vm.ssh.copyCmd": "Copia comando",
   "vm.ssh.guide": "Guida completa a configurazione e rete",

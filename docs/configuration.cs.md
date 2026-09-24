@@ -7,10 +7,10 @@ Tato stránka pokrývá proměnné prostředí kontejneru, připojení, která �
 | Proměnná | Povinná | Popis |
 |---|---|---|
 | `APP_KEY` | **Ano** | 32bajtové hex tajemství (64 hex znaků) použité k odvození hesla k restic repozitáři. Vygenerujte pomocí `openssl rand -hex 32`. Uchovejte v bezpečí: jeho ztráta učiní šifrované zálohy neobnovitelnými. |
-| `LIBVIRT_HOST` | Pro VM | Hostitel Unraidu dosažený přes SSH pro zálohu VM (výchozí `host.docker.internal`; šablona předvyplní zástupný symbol LAN IP). Použijte svou LAN IP Unraidu, povinné na vlastní síti `br0.x`. |
-| `LIBVIRT_SSH_PORT` | Ne | SSH port hostitele pro zálohu VM (výchozí `22`). |
-| `LIBVIRT_SSH_USER` | Ne | SSH uživatel na hostiteli pro zálohu VM (výchozí `root`). |
-| `LIBVIRT_URI` | Ne | Úplné URI připojení k libvirt, použité **doslovně** místo sestavení ze tří výše uvedených proměnných `LIBVIRT_*` (ty se pak pro sestavení URI ignorují). Ve výchozím stavu nenastaveno. Potřebné na TrueNAS Scale, jehož libvirtd naslouchá na nestandardním socketu, který sestavená podoba nedokáže vyjádřit: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Viz sekce TrueNAS Scale v [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). |
+| `LIBVIRT_HOST` | Pro VM | Hostitel Unraidu dosažený přes SSH pro zálohu VM (výchozí `host.docker.internal`; šablona předvyplní zástupný symbol LAN IP). Použijte svou LAN IP Unraidu, povinné na vlastní síti `br0.x`. Používá se i pro zálohy datových sad ZFS (pole šablony **Host SSH: Address**); zástupná hodnota `192.168.x.x` se bere jako nenastavená. |
+| `LIBVIRT_SSH_PORT` | Ne | SSH port hostitele pro zálohu VM (výchozí `22`). Pole šablony **Host SSH: Port**, platí i pro datové sady ZFS. |
+| `LIBVIRT_SSH_USER` | Ne | SSH uživatel na hostiteli pro zálohu VM (výchozí `root`). Pole šablony **Host SSH: User**, platí i pro datové sady ZFS. |
+| `LIBVIRT_URI` | Ne | Úplné URI připojení k libvirt, použité **doslovně** místo sestavení ze tří výše uvedených proměnných `LIBVIRT_*` (ty se pak pro sestavení URI ignorují). Ve výchozím stavu nenastaveno. Potřebné na TrueNAS Scale, jehož libvirtd naslouchá na nestandardním socketu, který sestavená podoba nedokáže vyjádřit: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Viz sekce TrueNAS Scale v [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Je-li to URI `qemu+ssh://`, převezme se z něj každá z proměnných `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` a `LIBVIRT_SSH_PORT`, která není nastavená, i pro vlastní SSH příkazy BombVaultu (přenos NVRAM, datové sady ZFS). |
 | `PORT` | Ne | HTTP port (výchozí `3000`; použit jen s `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | Ne | HTTPS port (výchozí `3443`; šablona jej publikuje 1:1, takže WebUI odpovídá na `https://<ip>:3443`). |
 | `HTTP_ONLY` | Ne | Nastavte `true` pro zakázání samopodepsaného HTTPS listeneru a obsluhu pouze prostého HTTP (pro použití za reverzní proxy terminující TLS). |
@@ -26,6 +26,8 @@ Tato stránka pokrývá proměnné prostředí kontejneru, připojení, která �
 ## Připojení
 
 Připojte Docker socket, flash (`/boot`) a kořen **Host Data** (`/mnt`), jak je zobrazeno v CA šabloně. *Zdroje* i *cíle* záloh žijí pod Host Data, a to je připojeno jako **slave**, takže vzdálená sdílená složka, která se připojí až po spuštění kontejneru (například pod `/mnt/remotes`), se stane viditelnou bez restartu.
+
+Zálohy datových sad ZFS tento režim potřebují také: snímek datové sady hostitel připojí až poté, co kontejner nastartoval. Viz [Datové sady ZFS](zfs-datasets.md).
 
 Cesty repozitářů záloh mají výchozí hodnotu `/mnt/user/bombvault/{container,vms,flash,config,files}`, vytvořené při první záloze. Umístění změňte kdykoli v **Nastavení, Zálohovací cesty**.
 

@@ -7,10 +7,10 @@ Ta strona omawia zmienne środowiskowe kontenera, montaże udostępniane przez s
 | Zmienna | Wymagana | Opis |
 |---|---|---|
 | `APP_KEY` | **Tak** | 32-bajtowy sekret hex (64 znaki hex) używany do wyprowadzenia hasła repozytorium restic. Wygeneruj poleceniem `openssl rand -hex 32`. Chroń go: jego utrata sprawia, że zaszyfrowane kopie zapasowe stają się nieodzyskiwalne. |
-| `LIBVIRT_HOST` | Dla VM | Host Unraid osiągany przez SSH do kopii VM (domyślnie `host.docker.internal`; szablon wstępnie wypełnia zastępczy adres IP w LAN). Użyj swojego IP Unraid w LAN, wymagane w niestandardowej sieci `br0.x`. |
-| `LIBVIRT_SSH_PORT` | Nie | Port SSH hosta do kopii VM (domyślnie `22`). |
-| `LIBVIRT_SSH_USER` | Nie | Użytkownik SSH na hoście do kopii VM (domyślnie `root`). |
-| `LIBVIRT_URI` | Nie | Pełny URI połączenia libvirt, używany **dosłownie** zamiast budowania go z trzech powyższych zmiennych `LIBVIRT_*` (które są wtedy ignorowane przy tworzeniu ciągu połączenia). Domyślnie brak. Wymagany na TrueNAS Scale, którego libvirtd nasłuchuje na niestandardowym gnieździe, którego nie da się wyrazić w formie budowanego ciągu: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Zobacz sekcję TrueNAS Scale w [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). |
+| `LIBVIRT_HOST` | Dla VM | Host Unraid osiągany przez SSH do kopii VM (domyślnie `host.docker.internal`; szablon wstępnie wypełnia zastępczy adres IP w LAN). Użyj swojego IP Unraid w LAN, wymagane w niestandardowej sieci `br0.x`. Używane też przez kopie zbiorów danych ZFS (pole szablonu **Host SSH: Address**); symbol zastępczy `192.168.x.x` liczy się jako nieustawiony. |
+| `LIBVIRT_SSH_PORT` | Nie | Port SSH hosta do kopii VM (domyślnie `22`). Pole szablonu **Host SSH: Port**, także dla zbiorów danych ZFS. |
+| `LIBVIRT_SSH_USER` | Nie | Użytkownik SSH na hoście do kopii VM (domyślnie `root`). Pole szablonu **Host SSH: User**, także dla zbiorów danych ZFS. |
+| `LIBVIRT_URI` | Nie | Pełny URI połączenia libvirt, używany **dosłownie** zamiast budowania go z trzech powyższych zmiennych `LIBVIRT_*` (które są wtedy ignorowane przy tworzeniu ciągu połączenia). Domyślnie brak. Wymagany na TrueNAS Scale, którego libvirtd nasłuchuje na niestandardowym gnieździe, którego nie da się wyrazić w formie budowanego ciągu: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Zobacz sekcję TrueNAS Scale w [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md). Jeśli to URI `qemu+ssh://`, każda z `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` i `LIBVIRT_SSH_PORT`, która nie jest ustawiona, jest z niego brana, także dla własnych poleceń SSH BombVault (przesyłanie NVRAM, zbiory danych ZFS). |
 | `PORT` | Nie | Port HTTP (domyślnie `3000`; używany tylko z `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | Nie | Port HTTPS (domyślnie `3443`; szablon publikuje go 1:1, więc WebUI odpowiada pod `https://<ip>:3443`). |
 | `HTTP_ONLY` | Nie | Ustaw `true`, aby wyłączyć samopodpisany nasłuch HTTPS i serwować wyłącznie zwykły HTTP (do użytku za odwrotnym proxy terminującym TLS). |
@@ -26,6 +26,8 @@ Ta strona omawia zmienne środowiskowe kontenera, montaże udostępniane przez s
 ## Montaże
 
 Zamontuj gniazdo Docker, flash (`/boot`) oraz katalog główny **Host Data** (`/mnt`), jak pokazano w szablonie CA. Zarówno *źródła*, jak i *cele* kopii zapasowych znajdują się pod Host Data i jest on montowany jako **slave**, więc zdalny udział, który montuje się po uruchomieniu kontenera (na przykład pod `/mnt/remotes`), staje się widoczny bez restartu.
+
+Kopie zbiorów danych ZFS też potrzebują tego trybu: host montuje migawkę zbioru dopiero po starcie kontenera. Zobacz [Zbiory danych ZFS](zfs-datasets.md).
 
 Ścieżki repozytoriów kopii domyślnie wynoszą `/mnt/user/bombvault/{container,vms,flash,config,files}`, tworzone przy pierwszej kopii. Zmień lokalizację w dowolnym momencie w **Ustawienia, Ścieżki kopii**.
 

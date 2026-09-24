@@ -26,7 +26,7 @@ Powered by <a href="https://restic.net">restic</a> — deduplicated, incremental
 
 BombVault is a self-hosted, **Unraid-native** web app for **backup and full disaster recovery**. One container, a modern web UI that follows your system's light/dark preference, and the whole lifecycle:
 
-- **Backs up** Docker appdata + container definitions, KVM/libvirt VM disks + XML (incl. UEFI NVRAM), the whole Unraid flash (`/boot`), any folders you point it at (named **file sets** with per-set excludes), and its own `/config`.
+- **Backs up** Docker appdata + container definitions, KVM/libvirt VM disks + XML (incl. UEFI NVRAM), the whole Unraid flash (`/boot`), any folders you point it at (named **file sets** with per-set excludes), ZFS datasets with their child datasets (read from one snapshot), and its own `/config`.
 - **Restores automatically** — containers are reinstalled and restarted so they reappear in the Docker tab exactly as before; VMs are re-defined in the VM Manager with their disks + NVRAM reattached.
 - **Schedules** incremental backups per domain from one place, with one-click *"include all in schedule"*.
 - **Optionally updates a container right after its backup** (advanced, off by default) — a fresh restore point always exists first, so a bad update is one restore away; it can notify per updated container and clean up the superseded image.
@@ -63,9 +63,9 @@ https://github.com/junkerderprovinz/unraid-apps
 | Variable | Required | Description |
 |---|---|---|
 | `APP_KEY` | **Yes** | 32-byte hex secret (64 hex chars) used to derive the restic repo password. Generate with `openssl rand -hex 32`. **Keep this safe** — losing it makes encrypted backups unrecoverable. |
-| `LIBVIRT_HOST` | For VMs | Unraid host reached over SSH for VM backup (default `host.docker.internal`; the template pre-fills a LAN-IP placeholder — use your Unraid LAN IP, required on a custom `br0.x` network). |
-| `LIBVIRT_SSH_PORT` | No | Host SSH port for VM backup (default `22`). |
-| `LIBVIRT_SSH_USER` | No | SSH user on the host for VM backup (default `root`). |
+| `LIBVIRT_HOST` | For VMs and ZFS datasets | Unraid host reached over SSH for VM and ZFS dataset backups (template field **Host SSH: Address**, default `host.docker.internal`). The template pre-fills the placeholder `192.168.x.x`, which counts as unset. Use your Unraid LAN IP, required on a custom `br0.x` network. |
+| `LIBVIRT_SSH_PORT` | No | Host SSH port for VM and ZFS dataset backups (template field **Host SSH: Port**, default `22`). |
+| `LIBVIRT_SSH_USER` | No | SSH user on the host for VM and ZFS dataset backups (template field **Host SSH: User**, default `root`). |
 | `PORT` | No | HTTP port (default `3000`; only used with `HTTP_ONLY=true`). |
 | `HTTPS_PORT` | No | HTTPS port (default `3443`; the template publishes it 1:1, so the WebUI answers on `https://<ip>:3443`). |
 | `HTTP_ONLY` | No | Set `true` to disable the self-signed HTTPS listener and serve plain HTTP only (for use behind a TLS-terminating reverse proxy). |

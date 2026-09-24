@@ -1449,7 +1449,7 @@ const sk: Partial<Translations> = {
   "vm.ssh.testFail": "Pripojenie zlyhalo",
   "vm.ssh.setupTitle": "Nastaviť (jednorazovo)",
   "vm.ssh.step1": "Skopírujte nižšie uvedený príkaz a spustite ho v termináli Unraid, aby ste autorizovali tento kľúč (prežije reštarty).",
-  "vm.ssh.step2": "Nastavte premennú kontajnera „VM Backup: Host“ na IP vašej lokálnej siete Unraid (napr. 192.168.x.x); pri jednoduchom bridge sieťovaní funguje aj host.docker.internal.",
+  "vm.ssh.step2": "Nastavte premennú kontajnera „Host SSH: Address“ na IP vašej lokálnej siete Unraid (napr. 192.168.x.x); pri jednoduchom bridge sieťovaní funguje aj host.docker.internal.",
   "vm.ssh.step3": "Kliknite na Otestovať pripojenie. Keď bude zelené, zapnite VM v časti Domény.",
   "vm.ssh.copyCmd": "Kopírovať príkaz",
   "vm.ssh.guide": "Kompletná príručka nastavenia a sieťovania",

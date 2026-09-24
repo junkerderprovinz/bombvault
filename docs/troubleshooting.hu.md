@@ -61,6 +61,14 @@ Az import leállítja a konténert, félreteszi az adatmappáját, és hagyja, h
 
 Kézi visszaállítás: állítsd le a konténert, nevezd át az aktuális adatmappát az útból, nevezd vissza a megőrzött mappát az eredeti nevére, majd indítsd el a konténert. Unraidon ezt a Shares fül fájlkezelője elvégzi.
 
+## Egy ZFS-adatkészlet mentése hibára futott vagy kihagyott egy adatkészletet {#zfs-datasets}
+
+Minden problémához szögletes zárójelben ok-kód tartozik, és a [ZFS-adatkészletek](zfs-datasets.md#reason-codes) oldal mindet felsorolja a javítással. A három leggyakoribb:
+
+- **`snapshot-loop`**: a pillanatkép nem jutott el a BombVaulthoz, mert a Host Data nem adja tovább az új csatolásokat. Szerkeszd a konténert, állítsd a Host Data Access Mode értékét Read/Write - Slave-re, és indítsd újra a BombVaultot.
+- **`key-not-loaded`**: a titkosított adatkészletet, amelynek kulcsa nincs betöltve, kihagyja. Töltsd be a kulcsot a `zfs load-key` paranccsal, és csatold az adatkészletet; a következő mentés már tartalmazza.
+- **`ssh-auth`**: a kiszolgáló elutasította a BombVault kulcsát. A ZFS oldal kapcsolatkártyája mutatja a parancsot, amely engedélyezi; futtasd egyszer a kiszolgálón.
+
 ## A konténer folyamatosan újraindul vagy egészségtelennek tűnik
 
 A BombVault a saját `/api/health`-jéből jelent egészségeset/egészségtelent. Egy automatikus gyógyító eszköz (mint az Autoheal) automatikusan újraindíthatja, ha a motor valaha beragadna. Ellenőrizd a konténer naplóját és a `/spike` jelentést a mögöttes okért.

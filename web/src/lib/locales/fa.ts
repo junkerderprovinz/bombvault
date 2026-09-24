@@ -1449,7 +1449,7 @@ const fa: Partial<Translations> = {
   "vm.ssh.testFail": "اتصال ناموفق بود",
   "vm.ssh.setupTitle": "راه‌اندازی (یک‌بار)",
   "vm.ssh.step1": "دستور زیر را کپی کرده و در ترمینال Unraid اجرا کنید تا این کلید مجاز شود (پس از راه‌اندازی مجدد باقی می‌ماند).",
-  "vm.ssh.step2": "متغیر «VM Backup: Host» کانتینر را روی IP شبکه محلی Unraid خود تنظیم کنید (مثلاً 192.168.x.x)؛ در شبکه bridge ساده، host.docker.internal هم کار می‌کند.",
+  "vm.ssh.step2": "متغیر «Host SSH: Address» کانتینر را روی IP شبکه محلی Unraid خود تنظیم کنید (مثلاً 192.168.x.x)؛ در شبکه bridge ساده، host.docker.internal هم کار می‌کند.",
   "vm.ssh.step3": "روی آزمایش اتصال کلیک کنید. وقتی سبز شد، ماشین‌های مجازی را زیر حوزه‌ها فعال کنید.",
   "vm.ssh.copyCmd": "کپی دستور",
   "vm.ssh.guide": "راهنمای کامل راه‌اندازی و شبکه",

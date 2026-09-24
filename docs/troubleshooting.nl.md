@@ -61,6 +61,14 @@ Een import stopt de container, zet zijn datamap opzij en laat de image er een le
 
 Met de hand terugzetten: stop de container, hernoem de huidige datamap uit de weg, hernoem de bewaarde map terug naar de oorspronkelijke naam en start de container. Op Unraid doet de bestandsbeheerder op het tabblad Shares dit.
 
+## Een back-up van een ZFS-dataset mislukte of sloeg een dataset over {#zfs-datasets}
+
+Elk probleem heeft een redencode tussen vierkante haken, en de pagina [ZFS-datasets](zfs-datasets.md#reason-codes) noemt ze allemaal met de oplossing. De drie meest voorkomende:
+
+- **`snapshot-loop`**: de snapshot bereikte BombVault niet, omdat Host Data nieuwe koppelingen niet doorgeeft. Bewerk de container, zet de Access Mode van Host Data op Read/Write - Slave en herstart BombVault.
+- **`key-not-loaded`**: een versleutelde dataset waarvan de sleutel niet geladen is, wordt overgeslagen. Laad de sleutel met `zfs load-key` en koppel de dataset aan; de volgende back-up neemt hem mee.
+- **`ssh-auth`**: de server weigerde de sleutel van BombVault. De verbindingskaart op de ZFS-pagina toont de opdracht die hem toestaat; voer die één keer uit op de server.
+
 ## De container blijft herstarten of ziet er unhealthy uit
 
 BombVault meldt healthy/unhealthy vanuit zijn eigen `/api/health`. Een auto-heal-tool (zoals Autoheal) kan hem automatisch herstarten als de engine ooit vastloopt. Controleer het containerlog en het `/spike`-rapport voor de onderliggende oorzaak.

@@ -648,7 +648,7 @@ const zh: Partial<Translations> = {
   "vm.ssh.testFail": "连接失败",
   "vm.ssh.setupTitle": "设置（一次性）",
   "vm.ssh.step1": "复制下面的命令并在 Unraid 终端中运行，以授权此密钥（重启后仍然有效）。",
-  "vm.ssh.step2": "将容器的「VM Backup: Host」变量设置为你的 Unraid LAN IP（例如 192.168.x.x）；在简单的桥接网络下 host.docker.internal 也可用。",
+  "vm.ssh.step2": "将容器的「Host SSH: Address」变量设置为你的 Unraid LAN IP（例如 192.168.x.x）；在简单的桥接网络下 host.docker.internal 也可用。",
   "vm.ssh.step3": "点击「测试连接」。变绿后，在「域」下启用 VM。",
   "vm.ssh.copyCmd": "复制命令",
   "vm.ssh.guide": "完整的设置与网络指南",

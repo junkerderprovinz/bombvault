@@ -7,10 +7,10 @@ Ez az oldal a konténer környezeti változóit, a sablon által biztosított cs
 | Változó | Kötelező | Leírás |
 |---|---|---|
 | `APP_KEY` | **Igen** | 32 bájtos hexadecimális titok (64 hexadecimális karakter), amely a restic tároló jelszavának származtatására szolgál. Generáld az `openssl rand -hex 32` paranccsal. Óvd ezt: az elvesztése visszaállíthatatlanná teszi a titkosított mentéseket. |
-| `LIBVIRT_HOST` | VM-ekhez | Az SSH-n keresztül elért Unraid hoszt a VM-mentéshez (alapból `host.docker.internal`; a sablon egy LAN-IP helyőrzővel tölti ki előre). Használd az Unraid LAN IP-jét, egyéni `br0.x` hálózaton kötelező. |
-| `LIBVIRT_SSH_PORT` | Nem | A hoszt SSH-portja a VM-mentéshez (alapból `22`). |
-| `LIBVIRT_SSH_USER` | Nem | SSH-felhasználó a hoszton a VM-mentéshez (alapból `root`). |
-| `LIBVIRT_URI` | Nem | Teljes libvirt kapcsolati URI, amelyet a rendszer **szó szerint** használ a fenti három `LIBVIRT_*` változóból történő összeállítás helyett (ezeket a kapcsolati karakterlánc előállításakor ekkor figyelmen kívül hagyja). Alapból nincs beállítva. TrueNAS Scale-en szükséges, ahol a libvirtd egy nem szabványos socketen figyel, amit az összeállított forma nem tud kifejezni: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Lásd a [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) TrueNAS Scale szakaszát. |
+| `LIBVIRT_HOST` | VM-ekhez | Az SSH-n keresztül elért Unraid hoszt a VM-mentéshez (alapból `host.docker.internal`; a sablon egy LAN-IP helyőrzővel tölti ki előre). Használd az Unraid LAN IP-jét, egyéni `br0.x` hálózaton kötelező. A ZFS-adatkészletek mentése is ezt használja (sablonmező: **Host SSH: Address**); a `192.168.x.x` helykitöltő nem beállítottnak számít. |
+| `LIBVIRT_SSH_PORT` | Nem | A hoszt SSH-portja a VM-mentéshez (alapból `22`). Sablonmező: **Host SSH: Port**, a ZFS-adatkészletekhez is. |
+| `LIBVIRT_SSH_USER` | Nem | SSH-felhasználó a hoszton a VM-mentéshez (alapból `root`). Sablonmező: **Host SSH: User**, a ZFS-adatkészletekhez is. |
+| `LIBVIRT_URI` | Nem | Teljes libvirt kapcsolati URI, amelyet a rendszer **szó szerint** használ a fenti három `LIBVIRT_*` változóból történő összeállítás helyett (ezeket a kapcsolati karakterlánc előállításakor ekkor figyelmen kívül hagyja). Alapból nincs beállítva. TrueNAS Scale-en szükséges, ahol a libvirtd egy nem szabványos socketen figyel, amit az összeállított forma nem tud kifejezni: `qemu+ssh://<user>@<truenas-host>/system?socket=/run/truenas_libvirt/libvirt-sock`. Lásd a [docs/vm-backup-ssh-setup.md](https://github.com/junkerderprovinz/bombvault/blob/main/docs/vm-backup-ssh-setup.md) TrueNAS Scale szakaszát. Ha ez egy `qemu+ssh://` URI, a `LIBVIRT_HOST`, `LIBVIRT_SSH_USER` és `LIBVIRT_SSH_PORT` közül mindegyik, amelyik nincs beállítva, ebből kerül átvételre, a BombVault saját SSH-parancsaihoz is (NVRAM-átvitel, ZFS-adatkészletek). |
 | `PORT` | Nem | HTTP-port (alapból `3000`; csak `HTTP_ONLY=true` mellett használatos). |
 | `HTTPS_PORT` | Nem | HTTPS-port (alapból `3443`; a sablon 1:1 arányban teszi közzé, így a WebUI a `https://<ip>:3443` címen válaszol). |
 | `HTTP_ONLY` | Nem | Állítsd `true`-ra az önaláírt HTTPS-figyelő letiltásához, és csak egyszerű HTTP kiszolgálásához (egy TLS-lezáró reverse proxy mögötti használatra). |
@@ -26,6 +26,8 @@ Ez az oldal a konténer környezeti változóit, a sablon által biztosított cs
 ## Csatolások
 
 Csatold a Docker socketet, a flasht (`/boot`) és a **Host Data** gyökeret (`/mnt`), ahogy a CA-sablonban látható. A mentési *források* és *célok* egyaránt a Host Data alatt találhatók, és az **slave** módban van csatolva, így egy távoli megosztás, amely a konténer indulása után csatolódik (például a `/mnt/remotes` alatt), újraindítás nélkül válik láthatóvá.
+
+A ZFS-adatkészletek mentéséhez is ez a mód kell: egy adatkészlet pillanatképét a hoszt csak a konténer indulása után csatolja. Lásd: [ZFS-adatkészletek](zfs-datasets.md).
 
 A mentési tároló-útvonalak alapértelmezetten a `/mnt/user/bombvault/{container,vms,flash,config,files}` útvonalra mutatnak, és az első mentéskor jönnek létre. A helyet bármikor megváltoztathatod a **Beállítások, Mentési útvonalak** alatt.
 
