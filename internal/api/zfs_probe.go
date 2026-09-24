@@ -87,6 +87,8 @@ type ZFSDiscoverResult struct {
 	UnusedZvols  int                  `json:"unusedZvols"`
 	NotInItem    int                  `json:"notInItem"`
 	Truncated    bool                 `json:"truncated"`
+	// ListedAt is when the host was listed, in Unix seconds.
+	ListedAt int64 `json:"listedAt"`
 }
 
 // ZFSConnectionTest reaches the pool owner and reports what stands between the
@@ -161,33 +163,44 @@ func (s *Service) ZFSSpikeStatus() (string, error) {
 	return "", fmt.Errorf("%s [%s]", res.Target, res.Code)
 }
 
+// zfsHostListing is what one listing of the host found. The last one that
+// worked is kept, so the page can show its counts without listing every pool
+// over SSH each time it opens.
+type zfsHostListing struct {
+	list      []zfs.ListEntry
+	truncated bool
+	vmDirs    map[string]bool
+	vmVolumes map[string]bool
+	at        time.Time
+}
+
 // DiscoverZFSHost lists every dataset and volume of the host, with what each
-// one would be as an item and what already covers it.
-func (s *Service) DiscoverZFSHost(ctx context.Context) ZFSDiscoverResult {
+// one would be as an item and what already covers it. Unless fresh is set, the
+// last listing that worked answers, joined with the items as they are now.
+func (s *Service) DiscoverZFSHost(ctx context.Context, fresh bool) ZFSDiscoverResult {
 	res := ZFSDiscoverResult{Target: s.zfsSSHTarget(), Datasets: []ZFSDiscoveredEntry{}}
-	if s.zfs == nil {
-		res.Code = "ssh-missing"
-		return res
-	}
-	lctx, cancel := context.WithTimeout(ctx, zfsDiscoverTimeout)
-	defer cancel()
-	list, err := s.zfs.List(lctx)
-	if err != nil {
-		res.Code = zfsErrCode(err)
-		return res
+	s.zfsHostMu.Lock()
+	last := s.zfsHostLast
+	s.zfsHostMu.Unlock()
+	if fresh || last == nil {
+		listing, code := s.listZFSHost(ctx)
+		if code != "" {
+			res.Code = code
+			return res
+		}
+		last = &listing
 	}
 	res.Available = true
 	res.Code = "ok"
-	if len(list) > zfsMaxDiscoverEntries {
-		list = list[:zfsMaxDiscoverEntries]
-		res.Truncated = true
-	}
+	res.Truncated = last.truncated
+	res.ListedAt = last.at.Unix()
+	list := last.list
 
 	rows, err := s.store.ListZFSDatasets()
 	if err != nil {
 		log.Printf("api: zfs: the host listing could not read which datasets are already items: %v", err)
 	}
-	vmDirs, vmVolumes := s.zfsVMOwned(ctx)
+	vmDisks := zfsVMDiskDatasets(list, last.vmDirs)
 	recs := zfsMountRecords()
 	legacyBelow := zfsLegacyCounts(list)
 
@@ -203,7 +216,7 @@ func (s *Service) DiscoverZFSHost(ctx context.Context) ZFSDiscoverResult {
 			Encrypted:      e.Encryption != "" && e.Encryption != "off",
 			KeyLoaded:      e.Keystatus != "unavailable",
 			MemberCode:     zfs.MemberCode(e, nil),
-			VMVolume:       vmVolumes[e.Name],
+			VMVolume:       last.vmVolumes[e.Name],
 			Blockers:       []string{},
 		}
 		if rec, code := s.resolveDatasetMount(recs, e, false); code == "" {
@@ -220,7 +233,7 @@ func (s *Service) DiscoverZFSHost(ctx context.Context) ZFSDiscoverResult {
 		if e.Type == "volume" && !entry.VMVolume {
 			res.UnusedZvols++
 		}
-		entry.VMDisk = zfsHoldsVMDisk(e, vmDirs)
+		entry.VMDisk = vmDisks[e.Name]
 		for _, d := range rows {
 			switch {
 			case d.Dataset == e.Name:
@@ -236,6 +249,29 @@ func (s *Service) DiscoverZFSHost(ctx context.Context) ZFSDiscoverResult {
 		res.Datasets = append(res.Datasets, entry)
 	}
 	return res
+}
+
+// listZFSHost asks the host for its datasets and libvirt for its VMs' disks,
+// and keeps what it found. It returns the reason code when the host refused.
+func (s *Service) listZFSHost(ctx context.Context) (zfsHostListing, string) {
+	if s.zfs == nil {
+		return zfsHostListing{}, "ssh-missing"
+	}
+	lctx, cancel := context.WithTimeout(ctx, zfsDiscoverTimeout)
+	defer cancel()
+	list, err := s.zfs.List(lctx)
+	if err != nil {
+		return zfsHostListing{}, zfsErrCode(err)
+	}
+	listing := zfsHostListing{list: list, at: time.Now()}
+	if len(list) > zfsMaxDiscoverEntries {
+		listing.list, listing.truncated = list[:zfsMaxDiscoverEntries], true
+	}
+	listing.vmDirs, listing.vmVolumes = s.zfsVMOwned(ctx)
+	s.zfsHostMu.Lock()
+	s.zfsHostLast = &listing
+	s.zfsHostMu.Unlock()
+	return listing, ""
 }
 
 // CheckZFSDataset looks at a tree the way a run would, without taking a
@@ -415,17 +451,27 @@ func (s *Service) zfsVMOwned(ctx context.Context) (dirs map[string]bool, volumes
 	return dirs, volumes
 }
 
-// zfsHoldsVMDisk reports whether a VM keeps its disk images on this dataset.
-func zfsHoldsVMDisk(e zfs.ListEntry, dirs map[string]bool) bool {
-	if e.Type != "filesystem" || e.Mountpoint == "" || e.Mountpoint == "legacy" || e.Mountpoint == "none" {
-		return false
-	}
+// zfsVMDiskDatasets names the datasets a VM keeps its disk images on: for each
+// disk directory the mounted filesystem with the deepest mountpoint above it.
+// Its ancestors only contain that dataset, and flagging them would leave their
+// other children out of the add dialog's default.
+func zfsVMDiskDatasets(list []zfs.ListEntry, dirs map[string]bool) map[string]bool {
+	out := map[string]bool{}
 	for dir := range dirs {
-		if dir == e.Mountpoint || strings.HasPrefix(dir, e.Mountpoint+"/") {
-			return true
+		owner, depth := "", -1
+		for _, e := range list {
+			if e.Type != "filesystem" || !e.Mounted || !strings.HasPrefix(e.Mountpoint, "/") {
+				continue
+			}
+			if (dir == e.Mountpoint || strings.HasPrefix(dir, e.Mountpoint+"/")) && len(e.Mountpoint) > depth {
+				owner, depth = e.Name, len(e.Mountpoint)
+			}
+		}
+		if owner != "" {
+			out[owner] = true
 		}
 	}
-	return false
+	return out
 }
 
 // zfsHoldsSystemImage reports whether a dataset carries Docker's or libvirt's
