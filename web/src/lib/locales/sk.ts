@@ -1667,7 +1667,7 @@ const sk: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Položka vo vzdialenom alebo priamom repozitári nedostáva kópie.",
   "placementCode.unknownTarget": "Tento externý cieľ v tejto doméne neexistuje.",
   "placementCode.stackRule": "Priečinky projektu sa riadia predvolenou hodnotou kontajnerov a nemajú vlastné pravidlo.",
-  "placementCode.copyRuleTaken": "Tento názov už má kopírovacie pravidlá. Zvoľ iný názov.",
+  "placementCode.copyRuleTaken": "Tento názov už má vlastné kopírovacie pravidlá. Najprv ich tam obnov.",
   "placementCode.domainBusy": "Prebieha zálohovanie. Zvoľ znova, keď skončí.",
   "placementCode.hasBackups": "Umiestnenie sa už nedá zmeniť, keď má položka zálohy. Zostávajú tam, kam boli zapísané.",
   "placementCode.homeUncheckable": "Nepodarilo sa overiť, či táto položka už má zálohy, takže jej umiestnenie zostáva, aké je. Skús to znova, keď bude možné repozitár prečítať.",

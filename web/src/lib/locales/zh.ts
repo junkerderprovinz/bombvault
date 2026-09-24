@@ -1648,7 +1648,7 @@ const zh: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "远程或直接存储库上的项目不会获得副本。",
   "placementCode.unknownTarget": "该异地目标在此域中不存在。",
   "placementCode.stackRule": "项目文件夹遵循容器的默认设置，没有自己的规则。",
-  "placementCode.copyRuleTaken": "该名称已有复制规则。请选择其他名称。",
+  "placementCode.copyRuleTaken": "该名称已有自己的复制规则。请先在那里重置。",
   "placementCode.domainBusy": "备份正在进行。完成后请重新选择。",
   "placementCode.hasBackups": "项目一旦有了备份，位置就不能再更改。它们保留在写入时的位置。",
   "placementCode.homeUncheckable": "无法检查该项目是否已有备份，因此其位置保持不变。等存储库可以读取后再试一次。",

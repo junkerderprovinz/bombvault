@@ -1654,7 +1654,7 @@ const cs: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Položka ve vzdáleném nebo přímém repozitáři nedostává kopie.",
   "placementCode.unknownTarget": "Tento vzdálený cíl v této doméně neexistuje.",
   "placementCode.stackRule": "Složky projektu se řídí výchozí hodnotou kontejnerů a nemají vlastní pravidlo.",
-  "placementCode.copyRuleTaken": "Tento název už má kopírovací pravidla. Zvol jiný název.",
+  "placementCode.copyRuleTaken": "Tento název už má vlastní kopírovací pravidla. Nejdřív je tam obnov.",
   "placementCode.domainBusy": "Probíhá zálohování. Zvol znovu, až skončí.",
   "placementCode.hasBackups": "Umístění se už nedá změnit, jakmile má položka zálohy. Zůstávají tam, kam byly zapsány.",
   "placementCode.homeUncheckable": "Nepodařilo se ověřit, zda tato položka už má zálohy, takže její umístění zůstává, jaké je. Zkus to znovu, až půjde repozitář přečíst.",

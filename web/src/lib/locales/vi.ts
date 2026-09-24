@@ -1648,7 +1648,7 @@ const vi: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Mục trên kho từ xa hoặc kho trực tiếp không nhận bản sao.",
   "placementCode.unknownTarget": "Đích ngoại vi đó không tồn tại trong miền này.",
   "placementCode.stackRule": "Thư mục dự án theo mặc định của container và không có quy tắc riêng.",
-  "placementCode.copyRuleTaken": "Tên đó đã có quy tắc sao chép. Chọn tên khác.",
+  "placementCode.copyRuleTaken": "Tên đó đã có quy tắc sao chép riêng. Đặt lại chúng ở đó trước.",
   "placementCode.domainBusy": "Đang sao lưu. Chọn lại khi hoàn tất.",
   "placementCode.hasBackups": "Vị trí không thể thay đổi nữa khi mục đã có bản sao lưu. Chúng vẫn ở nơi đã được ghi.",
   "placementCode.homeUncheckable": "Không thể kiểm tra xem mục này đã có bản sao lưu hay chưa, vì vậy vị trí của nó vẫn giữ nguyên. Hãy thử lại khi có thể đọc được kho.",

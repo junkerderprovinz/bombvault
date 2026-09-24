@@ -1667,7 +1667,7 @@ const id: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Item pada repositori jarak jauh atau langsung tidak menerima salinan.",
   "placementCode.unknownTarget": "Target off-site itu tidak ada di domain ini.",
   "placementCode.stackRule": "Folder proyek mengikuti nilai bawaan container dan tidak punya aturan sendiri.",
-  "placementCode.copyRuleTaken": "Nama itu sudah punya aturan penyalinan. Pilih nama lain.",
+  "placementCode.copyRuleTaken": "Nama itu sudah punya aturan penyalinannya sendiri. Atur ulang dulu di sana.",
   "placementCode.domainBusy": "Sedang berlangsung pencadangan. Pilih lagi setelah selesai.",
   "placementCode.hasBackups": "Lokasi tidak bisa lagi berubah setelah item memiliki cadangan. Cadangan tetap di tempat ia ditulis.",
   "placementCode.homeUncheckable": "Tidak dapat diperiksa apakah item ini sudah memiliki cadangan, jadi lokasinya tetap seperti sekarang. Coba lagi setelah repositori dapat dibaca.",

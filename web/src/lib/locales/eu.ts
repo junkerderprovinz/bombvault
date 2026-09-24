@@ -1667,7 +1667,7 @@ const eu: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Urruneko edo zuzeneko biltegi bateko elementu batek ez du koparik jasotzen.",
   "placementCode.unknownTarget": "Kanpoko helmuga hori ez dago domeinu honetan.",
   "placementCode.stackRule": "Proiektu-karpetek edukiontzien balio lehenetsia jarraitzen dute eta ez dute beren arau propiorik.",
-  "placementCode.copyRuleTaken": "Izen horrek jada baditu kopiatze-arauak. Aukeratu beste izen bat.",
+  "placementCode.copyRuleTaken": "Izen horrek jada baditu bere kopiatze-arauak. Berrezarri itzazu han lehenbizi.",
   "placementCode.domainBusy": "Babeskopia bat ari da egiten. Aukeratu berriro amaitzen denean.",
   "placementCode.hasBackups": "Kokapena ezin da gehiago aldatu elementuak babeskopiak dituenean. Idatzi ziren tokian gelditzen dira.",
   "placementCode.homeUncheckable": "Ezin izan da egiaztatu elementu honek jada babeskopiarik duen, beraz haren kokapenak dagoen bezala jarraitzen du. Saiatu berriro biltegia irakurri ahal denean.",
