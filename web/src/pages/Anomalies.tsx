@@ -717,6 +717,14 @@ function ItemRow({
             key={`${e.scopeKind}:${e.part}:${e.family}`}
             className="flex flex-wrap items-center gap-2 text-xs text-carbon-textSub"
           >
+            {/* An expectation of a dump or a dataset says which series it
+                belongs to, or it would read as the item's own. */}
+            {e.scopeKind === "zfsds" && (
+              <span dir="ltr" className="font-mono text-carbon-text text-start">
+                {e.part}
+              </span>
+            )}
+            {e.scopeKind === "dump" && <span className="text-carbon-text">{t("anomaly.items.dumpSeries")}</span>}
             <span>
               {e.ceiling > 0
                 ? t("anomaly.expectation.ceiling")

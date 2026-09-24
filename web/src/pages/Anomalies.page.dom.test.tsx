@@ -480,6 +480,34 @@ describe("the items tab", () => {
     ).toBeTruthy();
   });
 
+  it("names the dataset or the dump an expectation belongs to", async () => {
+    getAnomalyItems.mockResolvedValue({
+      ok: true,
+      items: [
+        item({
+          domain: "zfs",
+          name: "tank",
+          expectations: [
+            { scopeKind: "zfsds", part: "tank/media", family: "source_bytes_down", sinceAt: 1700000000, ceiling: 0, updatedAt: 1700000000 },
+          ],
+        }),
+        item({
+          targetId: "tg-2",
+          name: "postgres",
+          expectations: [
+            { scopeKind: "dump", part: "", family: "dump_bytes_down", sinceAt: 1700000000, ceiling: 0, updatedAt: 1700000000 },
+          ],
+        }),
+      ],
+    });
+    await renderPage();
+    await openItems();
+    const dataset = screen.getByText("tank/media");
+    expect(dataset.parentElement?.textContent).toContain(en["anomaly.family.sourceBytesDown"]);
+    const dump = screen.getByText(en["anomaly.items.dumpSeries"]);
+    expect(dump.parentElement?.textContent).toContain(en["anomaly.family.dumpBytesDown"]);
+  });
+
   it("offers to forget what was marked as expected", async () => {
     getAnomalyItems.mockResolvedValue({
       ok: true,
