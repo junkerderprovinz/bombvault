@@ -814,7 +814,7 @@ func (e *anomalyEngine) RetentionHeld(ctx context.Context, sc anomalyScope) (boo
 		return false, "", err
 	}
 	for _, row := range rows {
-		if !anomalyHolds(row) {
+		if !anomalyHolds(row, settings) {
 			continue
 		}
 		if row.Metric == metricNewDataRewrite {
@@ -849,7 +849,7 @@ func (e *anomalyEngine) HeldIdentityTags() (heldIdentityTags, error) {
 	}
 	out := heldIdentityTags{}
 	for _, row := range rows {
-		if !anomalyHolds(row) {
+		if !anomalyHolds(row, settings) {
 			continue
 		}
 		for _, tag := range e.svc.heldTagsOf(row, items) {
@@ -1068,7 +1068,7 @@ func (e *anomalyEngine) rebuildCache() error {
 		case "info":
 			next.Summary.Open.Info++
 		}
-		if anomalyHolds(row) {
+		if anomalyHolds(row, settings) {
 			next.Summary.RetentionHeld++
 		}
 	}
@@ -1129,7 +1129,7 @@ func (e *anomalyEngine) itemView(ref anomalyItemRef, prefs store.ItemPrefs, sett
 			ResticMS: res.Typical.ResticMS,
 		}
 	}
-	item.Open, item.RetentionHeld = scopeCounts(open, itemScope)
+	item.Open, item.RetentionHeld = scopeCounts(open, itemScope, settings)
 
 	dumpScope := anomalyScope{Kind: anomalyScopeDump, ID: ref.TargetID}
 	if dump, hasDumps := results[dumpScope]; hasDumps && dump.Runs > 0 {
@@ -1139,7 +1139,7 @@ func (e *anomalyEngine) itemView(ref anomalyItemRef, prefs store.ItemPrefs, sett
 			},
 			Typical: AnomalySeriesTypical{SourceBytes: dump.Typical.SourceBytes, ResticMS: dump.Typical.ResticMS},
 		}
-		series.Open, series.RetentionHeld = scopeCounts(open, dumpScope)
+		series.Open, series.RetentionHeld = scopeCounts(open, dumpScope, settings)
 		item.Dump = &series
 		item.RetentionHeld = item.RetentionHeld || series.RetentionHeld
 	}
@@ -1268,7 +1268,7 @@ func newestEligibleAt(rows []store.SeriesRun) int64 {
 	return newest
 }
 
-func scopeCounts(open []store.Anomaly, sc anomalyScope) (AnomalyOpenCounts, bool) {
+func scopeCounts(open []store.Anomaly, sc anomalyScope, settings store.Settings) (AnomalyOpenCounts, bool) {
 	var counts AnomalyOpenCounts
 	held := false
 	for _, row := range open {
@@ -1283,7 +1283,7 @@ func scopeCounts(open []store.Anomaly, sc anomalyScope) (AnomalyOpenCounts, bool
 		case "info":
 			counts.Info++
 		}
-		held = held || anomalyHolds(row)
+		held = held || anomalyHolds(row, settings)
 	}
 	return counts, held
 }

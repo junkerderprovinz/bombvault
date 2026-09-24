@@ -190,7 +190,7 @@ func (e *anomalyEngine) sendNotifications(ctx context.Context, settings store.Se
 		if !anomalyNotifiable(row, prefs[row.TargetID].NotifyMin, settings, now) {
 			continue
 		}
-		views = append(views, anomalyViewOf(row, items, nil, nil))
+		views = append(views, anomalyViewOf(row, items, nil, nil, settings))
 		ids = append(ids, row.ID)
 		severities[row.ID] = row.Severity
 	}

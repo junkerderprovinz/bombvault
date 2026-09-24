@@ -14,6 +14,52 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
+// Switching the hold off lets the next retention pass forget again, so nothing
+// the reader sees may keep promising that old backups are being kept.
+func TestHeldFlagFollowsTheRetentionHoldSwitch(t *testing.T) {
+	f := newEngineFixture(t)
+	id := f.container(t, "nextcloud")
+	f.steadySeries(t, id, "backup", 11, 40*gib)
+	f.run(t, id, "backup", f.now-3600, 20*mib)
+	f.pass(t)
+	if row := onlyRow(t, f.openRows(t)); row.Metric != metricSourceBytesShrink {
+		t.Fatalf("want the collapse raised, got %s", row.Metric)
+	}
+
+	held := func(stage string, want bool) {
+		t.Helper()
+		page, err := f.svc.ListAnomalies(context.Background(), store.AnomalyFilter{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(page.Anomalies) != 1 || page.Anomalies[0].RetentionHeld != want {
+			t.Fatalf("%s: the finding reports retentionHeld %v, want %v", stage, !want, want)
+		}
+		count := 0
+		if want {
+			count = 1
+		}
+		if got := f.e.summary().RetentionHeld; got != count {
+			t.Fatalf("%s: the summary counts %d held item(s), want %d", stage, got, count)
+		}
+		items := f.e.itemViews()
+		if len(items) != 1 || items[0].RetentionHeld != want {
+			t.Fatalf("%s: the item badge reports %v, want %v", stage, !want, want)
+		}
+	}
+	held("with both switches on", true)
+
+	if _, err := f.st.MutateSettings(func(s *store.Settings) error {
+		s.AnomalyRetentionHold = false
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	f.e.MarkAllDirty()
+	f.pass(t)
+	held("with the hold switched off", false)
+}
+
 // A guard that cannot look must not wave the forget through: a retention pass
 // whose anomaly check fails deletes nothing and says so.
 func TestHoldCheckErrorSkipsTheForgetAndAlerts(t *testing.T) {
