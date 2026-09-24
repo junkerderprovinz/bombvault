@@ -1965,7 +1965,7 @@ const gl: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (mediante MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (mediante MCP, {key}, revogada)",
   "activityLog.viaMcpUnknownKey": "{line} (mediante MCP)",
-  "activityLog.viaMcpLine": "Iniciado mediante MCP coa chave {key}",
+  "activityLog.viaMcpLine": "one=Iniciado mediante MCP coa chave {keys}|other=Iniciado mediante MCP coas chaves {keys}",
   "activityLog.viaMcpLineUnknownKey": "Iniciado mediante MCP",
 
   // Export / import settings

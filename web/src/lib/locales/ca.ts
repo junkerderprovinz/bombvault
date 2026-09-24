@@ -1965,7 +1965,7 @@ const ca: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (mitjançant MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (mitjançant MCP, {key}, revocada)",
   "activityLog.viaMcpUnknownKey": "{line} (mitjançant MCP)",
-  "activityLog.viaMcpLine": "Iniciat mitjançant MCP amb la clau {key}",
+  "activityLog.viaMcpLine": "one=Iniciat mitjançant MCP amb la clau {keys}|other=Iniciat mitjançant MCP amb les claus {keys}",
   "activityLog.viaMcpLineUnknownKey": "Iniciat mitjançant MCP",
 
   // Export / import settings

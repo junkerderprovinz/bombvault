@@ -1965,7 +1965,7 @@ const et: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (MCP kaudu, {key})",
   "activityLog.viaMcpRevoked": "{line} (MCP kaudu, {key}, tühistatud)",
   "activityLog.viaMcpUnknownKey": "{line} (MCP kaudu)",
-  "activityLog.viaMcpLine": "Käivitatud MCP kaudu võtmega {key}",
+  "activityLog.viaMcpLine": "one=Käivitatud MCP kaudu võtmega {keys}|other=Käivitatud MCP kaudu võtmetega {keys}",
   "activityLog.viaMcpLineUnknownKey": "Käivitatud MCP kaudu",
 
   // Export / import settings

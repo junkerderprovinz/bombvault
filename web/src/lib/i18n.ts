@@ -2344,7 +2344,7 @@ export const en = {
   "activityLog.viaMcp": "{line} (via MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (via MCP, {key}, revoked)",
   "activityLog.viaMcpUnknownKey": "{line} (via MCP)",
-  "activityLog.viaMcpLine": "Started through MCP with the key {key}",
+  "activityLog.viaMcpLine": "one=Started through MCP with the key {keys}|other=Started through MCP with the keys {keys}",
   "activityLog.viaMcpLineUnknownKey": "Started through MCP",
 
   // Export / import settings (portable config file)
@@ -4635,7 +4635,7 @@ export const de: Translations = {
   "activityLog.viaMcp": "{line} (über MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (über MCP, {key}, widerrufen)",
   "activityLog.viaMcpUnknownKey": "{line} (über MCP)",
-  "activityLog.viaMcpLine": "Über MCP mit dem Schlüssel {key} gestartet",
+  "activityLog.viaMcpLine": "one=Über MCP mit dem Schlüssel {keys} gestartet|other=Über MCP mit den Schlüsseln {keys} gestartet",
   "activityLog.viaMcpLineUnknownKey": "Über MCP gestartet",
 
   // Einstellungen exportieren / importieren (portable Konfigurationsdatei)

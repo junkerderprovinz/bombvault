@@ -1965,7 +1965,7 @@ const lv: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (caur MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (caur MCP, {key}, atsaukta)",
   "activityLog.viaMcpUnknownKey": "{line} (caur MCP)",
-  "activityLog.viaMcpLine": "Palaists caur MCP ar atslēgu {key}",
+  "activityLog.viaMcpLine": "one=Palaists caur MCP ar atslēgu {keys}|other=Palaists caur MCP ar atslēgām {keys}",
   "activityLog.viaMcpLineUnknownKey": "Palaists caur MCP",
 
   // Export / import settings

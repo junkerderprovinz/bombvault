@@ -1965,7 +1965,7 @@ const ms: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (melalui MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (melalui MCP, {key}, dibatalkan)",
   "activityLog.viaMcpUnknownKey": "{line} (melalui MCP)",
-  "activityLog.viaMcpLine": "Dimulakan melalui MCP dengan kunci {key}",
+  "activityLog.viaMcpLine": "Dimulakan melalui MCP dengan kunci {keys}",
   "activityLog.viaMcpLineUnknownKey": "Dimulakan melalui MCP",
 
   // Export / import settings

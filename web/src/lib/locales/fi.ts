@@ -1741,7 +1741,7 @@ const fi: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (MCP:n kautta, {key})",
   "activityLog.viaMcpRevoked": "{line} (MCP:n kautta, {key}, kumottu)",
   "activityLog.viaMcpUnknownKey": "{line} (MCP:n kautta)",
-  "activityLog.viaMcpLine": "Käynnistetty MCP:n kautta avaimella {key}",
+  "activityLog.viaMcpLine": "one=Käynnistetty MCP:n kautta avaimella {keys}|other=Käynnistetty MCP:n kautta avaimilla {keys}",
   "activityLog.viaMcpLineUnknownKey": "Käynnistetty MCP:n kautta",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log

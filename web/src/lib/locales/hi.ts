@@ -1965,7 +1965,7 @@ const hi: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (MCP के ज़रिए, {key})",
   "activityLog.viaMcpRevoked": "{line} (MCP के ज़रिए, {key}, निरस्त)",
   "activityLog.viaMcpUnknownKey": "{line} (MCP के ज़रिए)",
-  "activityLog.viaMcpLine": "MCP के ज़रिए कुंजी {key} से शुरू किया गया",
+  "activityLog.viaMcpLine": "one=MCP के ज़रिए कुंजी {keys} से शुरू किया गया|other=MCP के ज़रिए कुंजियों {keys} से शुरू किया गया",
   "activityLog.viaMcpLineUnknownKey": "MCP के ज़रिए शुरू किया गया",
 
   // Export / import settings

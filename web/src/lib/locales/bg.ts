@@ -1965,7 +1965,7 @@ const bg: Partial<Translations> = {
   "activityLog.viaMcp": "{line} (през MCP, {key})",
   "activityLog.viaMcpRevoked": "{line} (през MCP, {key}, отменен)",
   "activityLog.viaMcpUnknownKey": "{line} (през MCP)",
-  "activityLog.viaMcpLine": "Стартирано през MCP с ключа {key}",
+  "activityLog.viaMcpLine": "one=Стартирано през MCP с ключа {keys}|other=Стартирано през MCP с ключовете {keys}",
   "activityLog.viaMcpLineUnknownKey": "Стартирано през MCP",
 
   // Export / import settings
