@@ -329,6 +329,70 @@ func TestRestoreAllLandsTreeRootInTarget(t *testing.T) {
 	}
 }
 
+// zfsdirParentOverChild backs up a parent whose directory "child" is 0700 and
+// holds a file, and returns a live target where "child" is the 0755 root of a
+// mounted child dataset.
+func zfsdirParentOverChild(t *testing.T) (Restic, string, Mode, string, string) {
+	t.Helper()
+	if runtime.GOOS == "windows" {
+		t.Skip("directory modes are a POSIX matter")
+	}
+	r, repo, m := zfsdirRepo(t)
+	dir := t.TempDir()
+	zfsdirTree(t, dir, "a.txt", "child/hidden.txt")
+	if err := os.Chmod(filepath.Join(dir, "child"), 0o700); err != nil { //nolint:gosec // G302: a directory, whose mode is the point
+		t.Fatal(err)
+	}
+	sum, err := r.BackupDir(context.Background(), repo, dir, []string{"zfs:tank/data"}, m)
+	if err != nil {
+		t.Fatalf("BackupDir: %v", err)
+	}
+	target := t.TempDir()
+	if err := os.Mkdir(filepath.Join(target, "child"), 0o755); err != nil { //nolint:gosec // G301: the live child's own mode
+		t.Fatal(err)
+	}
+	return r, repo, m, sum.SnapshotID, target
+}
+
+// TestRestoreAllOverAMountedChild restores a parent dataset over its live
+// tree. Restic gives an existing directory the snapshot's mode and fills it,
+// which on a child's mountpoint writes into the child, so an in-place restore
+// has to leave the mountpoint out.
+func TestRestoreAllOverAMountedChild(t *testing.T) {
+	t.Run("without an exclude the child is overwritten", func(t *testing.T) {
+		r, repo, m, snap, target := zfsdirParentOverChild(t)
+		if err := r.RestoreAll(context.Background(), repo, snap, target, m); err != nil {
+			t.Fatalf("RestoreAll: %v", err)
+		}
+		info, err := os.Stat(filepath.Join(target, "child"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.Mode().Perm() != 0o700 {
+			t.Fatalf("mode = %v, want the snapshot's 0700 written over the live 0755", info.Mode().Perm())
+		}
+	})
+	t.Run("an excluded mountpoint is left alone", func(t *testing.T) {
+		r, repo, m, snap, target := zfsdirParentOverChild(t)
+		if err := r.RestoreAll(context.Background(), repo, snap, target, m, "/child"); err != nil {
+			t.Fatalf("RestoreAll: %v", err)
+		}
+		if _, err := os.Stat(filepath.Join(target, "a.txt")); err != nil {
+			t.Fatalf("the parent's own file was not restored: %v", err)
+		}
+		info, err := os.Stat(filepath.Join(target, "child"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.Mode().Perm() != 0o755 {
+			t.Fatalf("the child's root directory became %v, want its own 0755 kept", info.Mode().Perm())
+		}
+		if _, err := os.Stat(filepath.Join(target, "child", "hidden.txt")); !os.IsNotExist(err) {
+			t.Fatalf("the parent's file under the child's mountpoint was written into it: %v", err)
+		}
+	})
+}
+
 // TestRestoreIncludeSlashLandsTreeRootInTarget checks the same for the include
 // form the drill uses to verify one member into a sandbox.
 func TestRestoreIncludeSlashLandsTreeRootInTarget(t *testing.T) {

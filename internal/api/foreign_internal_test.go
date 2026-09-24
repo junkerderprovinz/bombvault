@@ -167,7 +167,7 @@ func (f *foreignRecordingEngine) RestorePath(_ context.Context, repo, snapshotID
 // RestoreAll is the whole-snapshot restore a ZFS dataset takes: a member
 // snapshot's tree root is the dataset root, so its contents land in the target
 // without the path of the run that stored them.
-func (f *foreignRecordingEngine) RestoreAll(_ context.Context, repo, snapshotID, target string, m restic.Mode) error {
+func (f *foreignRecordingEngine) RestoreAll(_ context.Context, repo, snapshotID, target string, m restic.Mode, _ ...string) error {
 	f.record("RestoreAll")
 	f.recordMode(m)
 	f.mu.Lock()

@@ -59,6 +59,18 @@ func ValidateDatasetName(name string) error {
 	return nil
 }
 
+// ValidateMemberName checks a dataset name read back from a run: a descendant
+// may be longer than an item root, up to what a run's snapshot of it allows.
+func ValidateMemberName(name string) error {
+	if err := validateNameChars(name); err != nil {
+		return err
+	}
+	if !SnapshotNameFits(name) {
+		return &NameError{Code: "name-too-long", Reason: "dataset name is too long for a snapshot of it"}
+	}
+	return nil
+}
+
 // SnapshotNameFits reports whether a BombVault snapshot of name stays inside
 // ZFS's 255 byte limit. A descendant that does not fit makes the whole
 // recursive snapshot fail, so the preflight refuses the item and names it.

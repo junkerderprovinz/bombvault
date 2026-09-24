@@ -5650,7 +5650,7 @@ func (f *fakeResticEngine) BackupDir(_ context.Context, repo, dir string, tags [
 }
 
 // RestoreAll records where a whole snapshot was restored to.
-func (f *fakeResticEngine) RestoreAll(_ context.Context, _, snapshotID, target string, _ restic.Mode) error {
+func (f *fakeResticEngine) RestoreAll(_ context.Context, _, snapshotID, target string, _ restic.Mode, _ ...string) error {
 	f.restoreAllTargets = append(f.restoreAllTargets, snapshotID+":"+target)
 	return f.restoreErr
 }

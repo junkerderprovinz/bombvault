@@ -36,6 +36,7 @@ type fakeZFSHost struct {
 	snapshotErr error
 	destroyErr  error
 	primeErr    error
+	safetyErr   error
 
 	calls []string
 	// taken are the snapshot names currently on the host, so the mount table
@@ -140,7 +141,7 @@ func (h *fakeZFSHost) DestroyRecursive(_ context.Context, root, snap string) err
 
 func (h *fakeZFSHost) SnapshotSafety(_ context.Context, dataset, snap string) error {
 	h.record("snapshot " + dataset + "@" + snap)
-	return nil
+	return h.safetyErr
 }
 
 func (h *fakeZFSHost) DestroySafety(_ context.Context, dataset, snap string) error {
@@ -248,8 +249,12 @@ func (e *zfsFakeEngine) Copy(_ context.Context, destRepo, srcRepo string, _ []st
 
 func (e *zfsFakeEngine) Init(context.Context, string, restic.Mode) error { return nil }
 
-func (e *zfsFakeEngine) RestoreAll(_ context.Context, _, snapshotID, target string, _ restic.Mode) error {
-	e.recordRestore("RestoreAll|" + snapshotID + "->" + target)
+func (e *zfsFakeEngine) RestoreAll(_ context.Context, _, snapshotID, target string, _ restic.Mode, excludes ...string) error {
+	call := "RestoreAll|" + snapshotID + "->" + target
+	if len(excludes) > 0 {
+		call += "|without " + strings.Join(excludes, ",")
+	}
+	e.recordRestore(call)
 	return nil
 }
 
