@@ -24,12 +24,24 @@ func (s *Service) registerBackupCancel(key string, cancel context.CancelFunc) {
 	s.cancelMu.Unlock()
 }
 
+// bindBackupRun records the run the backup under key writes, so a cancel aimed
+// at that run cannot reach the next backup that registers the same key.
+func (s *Service) bindBackupRun(key, runID string) {
+	s.cancelMu.Lock()
+	if s.backupRuns == nil {
+		s.backupRuns = map[string]string{}
+	}
+	s.backupRuns[key] = runID
+	s.cancelMu.Unlock()
+}
+
 // unregisterBackupCancel drops a finished backup's entry and its cancellation
 // mark, so the next backup under the same key does not report its own failure
 // as cancelled.
 func (s *Service) unregisterBackupCancel(key string) {
 	s.cancelMu.Lock()
 	delete(s.backupCancels, key)
+	delete(s.backupRuns, key)
 	delete(s.cancelledBackups, key)
 	s.cancelMu.Unlock()
 }
@@ -41,9 +53,17 @@ func (s *Service) unregisterBackupCancel(key string) {
 // reach a restore.
 // The mark it sets makes runsAdapter.Finish record the run as cancelled rather
 // than failed.
-func (s *Service) CancelBackupRun(key string) bool {
+//
+// A non-empty runID cancels only while the backup under key still writes that
+// run, checked under the same lock as the cancel itself, so a caller that
+// looked the run up a moment earlier cannot reach the next backup of the item.
+// The web interface's button passes none: it means whatever runs there now.
+func (s *Service) CancelBackupRun(key, runID string) bool {
 	s.cancelMu.Lock()
 	cancel, ok := s.backupCancels[key]
+	if runID != "" && s.backupRuns[key] != runID {
+		ok = false
+	}
 	if ok {
 		if s.cancelledBackups == nil {
 			s.cancelledBackups = map[string]bool{}

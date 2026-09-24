@@ -314,6 +314,10 @@ type Service struct {
 	// stay callable by shutdown even after a user cancellation raced ahead of it.
 	cancelledBackups map[string]bool
 
+	// backupRuns is the run id each key in backupCancels writes, as far as it
+	// is known yet. Same guard, same lifetime.
+	backupRuns map[string]string
+
 	// shuttingDown is set once, by BeginShutdown, and never cleared: the process
 	// is on its way out. runsAdapter.Finish reads it to tell a run we ABORTED
 	// from a run that FAILED, which is the difference between a red row nobody
@@ -10709,7 +10713,11 @@ var _ backup.Runs = runsAdapter{}
 func (r runsAdapter) Start(targetID, kind string) (string, error) {
 	// The package-level form, because the bookkeeping-only call sites build
 	// this adapter without a Service.
-	return startRunWith(r.ctx, r.st, targetID, kind)
+	runID, err := startRunWith(r.ctx, r.st, targetID, kind)
+	if err == nil && r.svc != nil && r.cancelKey != "" && kind == "backup" {
+		r.svc.bindBackupRun(r.cancelKey, runID)
+	}
+	return runID, err
 }
 
 // shutdownStatus rewrites a failure that is really a shutdown ([375]).
@@ -11481,6 +11489,7 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 	if err != nil {
 		return backup.Summary{}, fmt.Errorf("backup vm: record run start: %w", err)
 	}
+	s.bindBackupRun("vm:"+name, runID)
 	deps.Runs = startedRunsAdapter{st: s.store, runID: runID, svc: s, cancelKey: "vm:" + name}
 	// RunTag correlates every snapshot ONE backup invocation produces — only
 	// meaningful (and only set) when this backup will actually produce MORE

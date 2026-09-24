@@ -1405,7 +1405,7 @@ func (h *Handler) handleBackupCancel(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	cancelled := h.svc.CancelBackupRun(body.Key)
+	cancelled := h.svc.CancelBackupRun(body.Key, "")
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "cancelled": cancelled})
 }
 
