@@ -381,7 +381,7 @@ func (s *Service) foreignInventory(ctx context.Context, repo string, mode restic
 			if rest, ok := strings.CutPrefix(tag, dbDumpIdentityPrefix); ok && rest != "" {
 				dbDumps[rest] = append(dbDumps[rest], snap)
 			}
-			if rest, ok := strings.CutPrefix(tag, "zfs:"); ok && zfs.ValidateDatasetName(rest) == nil {
+			if rest, ok := strings.CutPrefix(tag, "zfs:"); ok && zfs.ValidateMemberName(rest) == nil {
 				datasets[rest] = append(datasets[rest], snap)
 			}
 		}

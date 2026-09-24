@@ -83,6 +83,9 @@ type zfsRestorePlan struct {
 	steps   []zfsRestoreStep
 	paths   []string
 	inPlace bool
+	// covered are the places inside an in-place target where a child dataset
+	// is mounted, which the restore leaves alone.
+	covered []string
 	// consistency holds the item's containers down for the whole restore, and
 	// is nil when nothing is to be stopped.
 	consistency backup.ZFSConsistency
@@ -199,7 +202,7 @@ func zfsSnapshotDataset(snap restic.Snapshot, root string) (string, bool) {
 		if !ok || (dataset != root && !zfs.DescendantOf(dataset, root)) {
 			continue
 		}
-		if zfs.ValidateDatasetName(dataset) != nil {
+		if zfs.ValidateMemberName(dataset) != nil {
 			continue
 		}
 		return dataset, true
@@ -365,11 +368,15 @@ func (s *Service) planZFSRestoreInPlace(ctx context.Context, plan *zfsRestorePla
 	if !ok || member.SnapshotID == "" {
 		return ZFSRestoreAck{}, fmt.Errorf("dataset %q was not backed up at this restore point", req.Dataset)
 	}
-	cpath, code := s.zfsRestoreMount(ctx, d.Dataset, req.Dataset)
+	cpath, covered, code := s.zfsRestoreMount(ctx, d.Dataset, req.Dataset)
 	if code != "" {
 		return ZFSRestoreAck{}, zfsRefuse(code, req.Dataset)
 	}
+	if err := zfsRefuseCoveredPaths(plan.paths, covered); err != nil {
+		return ZFSRestoreAck{}, err
+	}
 	plan.inPlace = true
+	plan.covered = covered
 	plan.dataset = req.Dataset
 	plan.steps = []zfsRestoreStep{{snapshotID: member.SnapshotID, target: cpath}}
 	plan.snapshotID = member.SnapshotID
@@ -455,35 +462,66 @@ func zfsCleanRestorePaths(in []string) ([]string, error) {
 	return out, nil
 }
 
-// zfsRestoreMount answers where the container may write a dataset's live data,
-// or the reason code why it may not. Writing into the mountpoint directory of
-// an unmounted dataset lands in its parent, so nothing short of a writable
-// mount of the dataset itself counts.
-func (s *Service) zfsRestoreMount(ctx context.Context, root, dataset string) (string, string) {
+// zfsRestoreMount answers where the container may write a dataset's live data
+// and where child datasets are mounted inside it, or the reason code why it
+// may not. Writing into the mountpoint directory of an unmounted dataset lands
+// in its parent, so nothing short of a writable mount of the dataset itself
+// counts.
+func (s *Service) zfsRestoreMount(ctx context.Context, root, dataset string) (string, []string, string) {
 	if s.zfs == nil {
-		return "", "ssh-missing"
+		return "", nil, "ssh-missing"
 	}
 	lctx, cancel := context.WithTimeout(ctx, zfsListTimeout)
 	defer cancel()
 	tree, err := s.zfs.Tree(lctx, root)
 	if err != nil {
-		return "", zfsErrCode(err)
+		return "", nil, zfsErrCode(err)
 	}
 	entry, ok := zfsTreeEntry(tree, dataset)
 	if !ok {
-		return "", "not-found"
+		return "", nil, "not-found"
 	}
 	if code := zfs.MemberCode(entry, nil); code != "" {
-		return "", code
+		return "", nil, code
 	}
 	rec, code := s.resolveDatasetMount(zfsMountRecords(), entry, true)
 	if code != "" {
-		return "", code
+		return "", nil, code
 	}
 	if !zfs.Writable(rec) {
-		return "", "read-only-mount"
+		return "", nil, "read-only-mount"
 	}
-	return rec.MountPoint, ""
+	return rec.MountPoint, zfsMountedBelow(tree, entry), ""
+}
+
+// zfsMountedBelow names the places inside a dataset where its descendants are
+// mounted, relative to its mountpoint. The dataset's own snapshot holds there
+// the directory the child's mount hides: restored in place, its files would
+// land in the child and its mode and owner would replace the child's.
+func zfsMountedBelow(tree []zfs.ListEntry, entry zfs.ListEntry) []string {
+	var out []string
+	for _, e := range tree {
+		if e.Type != "filesystem" || !e.Mounted || !zfs.DescendantOf(e.Name, entry.Name) {
+			continue
+		}
+		if rel, ok := strings.CutPrefix(e.Mountpoint, entry.Mountpoint+"/"); ok {
+			out = append(out, "/"+rel)
+		}
+	}
+	return out
+}
+
+// zfsRefuseCoveredPaths refuses a selected path at or below a mounted child,
+// whose files belong to the child's own snapshot.
+func zfsRefuseCoveredPaths(selected, covered []string) error {
+	for _, p := range selected {
+		for _, c := range covered {
+			if p == c || strings.HasPrefix(p, c+"/") {
+				return fmt.Errorf("%q lies on the mounted child dataset at %q; restore it from that dataset", p, c)
+			}
+		}
+	}
+	return nil
 }
 
 func zfsTreeEntry(tree []zfs.ListEntry, dataset string) (zfs.ListEntry, bool) {
@@ -554,9 +592,14 @@ func (s *Service) zfsRestoreSize(ctx context.Context, plan zfsRestorePlan) (int6
 func (s *Service) runRestoreZFS(ctx context.Context, plan zfsRestorePlan) error {
 	defer s.lockDomainFor(zfsDomain, "restore")()
 	if plan.inPlace {
-		if _, code := s.zfsRestoreMount(ctx, plan.root, plan.dataset); code != "" {
+		_, covered, code := s.zfsRestoreMount(ctx, plan.root, plan.dataset)
+		if code != "" {
 			return &backup.ZFSRefusal{Detail: zfsRefusalSentence("restore", plan.dataset, &backup.ZFSRefusal{Code: code})}
 		}
+		if err := zfsRefuseCoveredPaths(plan.paths, covered); err != nil {
+			return err
+		}
+		plan.covered = covered
 	}
 	if plan.consistency != nil {
 		thaw, _, err := plan.consistency.Freeze(ctx)
@@ -575,7 +618,11 @@ func (s *Service) runRestoreZFS(ctx context.Context, plan zfsRestorePlan) error 
 
 func (s *Service) restoreZFSStep(ctx context.Context, plan zfsRestorePlan, step zfsRestoreStep) error {
 	if len(plan.paths) == 0 {
-		return s.engine.RestoreAll(ctx, plan.repo, step.snapshotID, step.target, plan.mode)
+		excludes := make([]string, len(plan.covered))
+		for i, c := range plan.covered {
+			excludes[i] = escapeGlobLiteral(c)
+		}
+		return s.engine.RestoreAll(ctx, plan.repo, step.snapshotID, step.target, plan.mode, excludes...)
 	}
 	for i, sel := range plan.paths {
 		if err := s.restoreZFSFile(ctx, plan, step, sel); err != nil {

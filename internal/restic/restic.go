@@ -743,8 +743,9 @@ func RestoreSubtreeIncludeArgs(repo, snapshotID, subtreePath, includePath, targe
 // RestoreAllArgs returns the argv for restoring a whole snapshot into target.
 // A ZFS member's snapshot has the dataset root as its tree root, because the
 // backup ran inside the snapshot directory on ".", so its files land directly
-// in target without the absolute path of the run that stored them.
-func RestoreAllArgs(repo, snapshotID, target string, m Mode) []string {
+// in target without the absolute path of the run that stored them. excludes
+// are patterns restic leaves out of the restore.
+func RestoreAllArgs(repo, snapshotID, target string, m Mode, excludes ...string) []string {
 	args := repoFlag(repo)
 	args = append(args, "restore")
 	if !m.Encrypted {
@@ -753,8 +754,11 @@ func RestoreAllArgs(repo, snapshotID, target string, m Mode) []string {
 	if m.NoLock {
 		args = append(args, "--no-lock") // a foreign restore only READS the source repo
 	}
-	args = append(args, "--json", "--target", target, "--", snapshotID)
-	return args
+	args = append(args, "--json", "--target", target)
+	for _, p := range excludes {
+		args = append(args, "--exclude", p)
+	}
+	return append(args, "--", snapshotID)
 }
 
 // CheckArgs returns the argv slice for `restic check` (verifies repository
@@ -2137,9 +2141,10 @@ func (r Restic) BackupDir(ctx context.Context, repo, dir string, tags []string, 
 	return ParseBackupSummary(out)
 }
 
-// RestoreAll restores a whole snapshot into target.
-func (r Restic) RestoreAll(ctx context.Context, repo, snapshotID, target string, m Mode) error {
-	_, err := r.run(ctx, RestoreAllArgs(repo, snapshotID, target, m), m)
+// RestoreAll restores a whole snapshot into target, leaving out what the
+// exclude patterns match.
+func (r Restic) RestoreAll(ctx context.Context, repo, snapshotID, target string, m Mode, excludes ...string) error {
+	_, err := r.run(ctx, RestoreAllArgs(repo, snapshotID, target, m, excludes...), m)
 	return err
 }
 

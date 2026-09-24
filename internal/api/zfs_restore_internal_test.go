@@ -249,6 +249,28 @@ func TestRestoreZFSInPlaceOneChildUsesRestoreAll(t *testing.T) {
 	}
 }
 
+func TestRestoreZFSInPlaceLeavesTheMountedChildrenAlone(t *testing.T) {
+	s, st, _, eng := zfsRestoreFixture(t)
+	d := zfsSeedItem(t, st, zfsRoot)
+
+	if _, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", zfsRestoreRequest(zfsRoot)); !started || err != nil {
+		t.Fatalf("started = %v, err = %v", started, err)
+	}
+	if run := zfsAwaitRestore(t, st, d.ID); run.Status != "success" {
+		t.Fatalf("run = %+v, want a successful restore", run)
+	}
+	want := "RestoreAll|" + zfsRootSnapID + "->" + zfsMemberPath(s.cfg.HostMountRoot, zfsRoot) + "|without /plex"
+	if got := strings.Join(eng.readRestores(), " "); got != want {
+		t.Fatalf("restic calls = %q, want %q", got, want)
+	}
+
+	req := zfsRestoreRequest(zfsRoot)
+	req.Paths = []string{"/plex/Preferences.xml"}
+	if _, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", req); started || err == nil {
+		t.Fatalf("started = %v, err = %v, want a file below a mounted child refused", started, err)
+	}
+}
+
 func TestRestoreZFSSafetySnapshotCreatedBeforeAckAndRecorded(t *testing.T) {
 	s, st, host, _ := zfsRestoreFixture(t)
 	d := zfsSeedItem(t, st, zfsRoot)
@@ -272,6 +294,65 @@ func TestRestoreZFSSafetySnapshotCreatedBeforeAckAndRecorded(t *testing.T) {
 		t.Fatalf("stored safety snapshots = %+v, want the one the answer named", rows)
 	}
 	zfsAwaitRestore(t, st, d.ID)
+}
+
+func TestRestoreZFSSafetySnapshotFailureRestoresNothing(t *testing.T) {
+	s, st, host, eng := zfsRestoreFixture(t)
+	d := zfsSeedItem(t, st, zfsRoot)
+	host.safetyErr = &zfs.CmdError{Code: "zfs-permission", Stderr: "cannot create snapshot: permission denied"}
+
+	_, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", zfsRestoreRequest(zfsRoot))
+	if started {
+		t.Fatal("the restore started without its safety snapshot")
+	}
+	if got := zfsCodeOf(t, err); got != "safety-snapshot-failed" {
+		t.Fatalf("code = %q, want safety-snapshot-failed", got)
+	}
+	if len(eng.readRestores()) != 0 {
+		t.Fatalf("restic ran without the safety snapshot: %v", eng.readRestores())
+	}
+	rows, err := st.ListZFSSafetySnapshots(d.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 0 {
+		t.Fatalf("stored safety snapshots = %+v, want none for one that was never taken", rows)
+	}
+	if s.batchActive.Load() {
+		t.Fatal("the refused restore kept the single-flight guard")
+	}
+}
+
+func TestRestoreZFSLongMemberIsOfferedAndRefusesOnlyItsSafetySnapshot(t *testing.T) {
+	s, st, host, eng := zfsRestoreFixture(t)
+	long := zfsRoot + "/" + strings.Repeat("l", 211)
+	root := s.cfg.HostMountRoot
+	host.tree = append(zfsTwoDatasetTree(), zfsEntry(long, "/mnt/"+long))
+	zfsMountFixture(t, append(zfsRestoreRecords(root, "rw"), zfs.MountRecord{
+		MountPoint: zfsMemberPath(root, long), Root: "/", FSType: "zfs", Source: long,
+		Options: []string{"rw"}, Optional: []string{"master:9"},
+	}), host, nil)
+	eng.snaps = append(eng.snaps, restic.Snapshot{
+		ID:    "c3c3c3c3",
+		Tags:  []string{"zfs:" + long},
+		Paths: []string{zfsMemberPath(root, long) + "/.zfs/snapshot/" + zfsStamp},
+	})
+	d := zfsSeedItem(t, st, zfsRoot)
+
+	points, err := s.ListZFSRestorePoints(context.Background(), d.ID, "local")
+	if err != nil {
+		t.Fatalf("list the restore points: %v", err)
+	}
+	if m, ok := zfsPointMember(points[0], long); !ok || m.SnapshotID != "c3c3c3c3" {
+		t.Fatalf("points = %+v, want the %d byte member with its snapshot", points, len(long))
+	}
+	_, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", zfsRestoreRequest(long))
+	if started || zfsCodeOf(t, err) != "safety-name-too-long" {
+		t.Fatalf("started = %v, err = %v, want the safety snapshot refused by its length", started, err)
+	}
+	if len(eng.readRestores()) != 0 {
+		t.Fatalf("restic ran: %v", eng.readRestores())
+	}
 }
 
 func TestRestoreZFSSafetyOffNeedsSecondConfirm(t *testing.T) {
@@ -305,12 +386,12 @@ func TestRestoreZFSSelectedFilesInPlace(t *testing.T) {
 	req := zfsRestoreRequest(zfsRoot)
 	req.SafetySnapshot = false
 	req.SafetyOffConfirm = true
-	req.Paths = []string{"/plex/config.xml"}
+	req.Paths = []string{"/config/app.xml"}
 	if _, started, err := s.StartRestoreZFS(context.Background(), d.ID, "local", req); !started || err != nil {
 		t.Fatalf("started = %v, err = %v", started, err)
 	}
 	zfsAwaitRestore(t, st, d.ID)
-	want := "RestoreInclude|" + zfsRootSnapID + "|/plex/config.xml->" + zfsMemberPath(s.cfg.HostMountRoot, zfsRoot)
+	want := "RestoreInclude|" + zfsRootSnapID + "|/config/app.xml->" + zfsMemberPath(s.cfg.HostMountRoot, zfsRoot)
 	if got := strings.Join(eng.readRestores(), " "); got != want {
 		t.Fatalf("restic calls = %q, want %q", got, want)
 	}

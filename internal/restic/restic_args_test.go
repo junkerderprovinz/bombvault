@@ -589,6 +589,14 @@ func TestRestoreAllArgs(t *testing.T) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
+	t.Run("excluded paths", func(t *testing.T) {
+		got := RestoreAllArgs("/repo", "abc123", "/mnt/cache/appdata", Mode{Encrypted: true}, "/plex", "/db")
+		want := []string{"-r", "/repo", "restore", "--json", "--target", "/mnt/cache/appdata",
+			"--exclude", "/plex", "--exclude", "/db", "--", "abc123"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
 }
 
 func TestDumpZipArgsEncrypted(t *testing.T) {

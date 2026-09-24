@@ -112,9 +112,10 @@ type ResticEngine interface {
 	// the container.
 	BackupFromCommand(ctx context.Context, repo, stdinPath string, tags, command []string, mode restic.Mode) (restic.Summary, []string, error)
 	RestorePath(ctx context.Context, repo, snapshotID, path string, mode restic.Mode) error
-	// RestoreAll restores a whole snapshot into target. A ZFS member's tree
-	// root is the dataset root, so its files land directly in target.
-	RestoreAll(ctx context.Context, repo, snapshotID, target string, mode restic.Mode) error
+	// RestoreAll restores a whole snapshot into target, without what the
+	// exclude patterns match. A ZFS member's tree root is the dataset root, so
+	// its files land directly in target.
+	RestoreAll(ctx context.Context, repo, snapshotID, target string, mode restic.Mode, excludes ...string) error
 	// DumpRaw streams the synthetic file at path, from the given snapshot, into
 	// w — the restore-side counterpart of BackupStdin, feeding a `zfs receive`
 	// over SSH (see backup.ZvolRestic's doc comment).

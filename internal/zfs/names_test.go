@@ -45,6 +45,26 @@ func TestValidateDatasetName(t *testing.T) {
 	}
 }
 
+func TestValidateMemberNameTakesEveryNameARunCanRead(t *testing.T) {
+	longest := "cache/" + strings.Repeat("m", MaxSnapshotNameLen-len("@bombvault-")-14-len("cache/"))
+	if !SnapshotNameFits(longest) {
+		t.Fatalf("the fixture is %d bytes, longer than a run can snapshot", len(longest))
+	}
+	if len(longest) <= MaxDatasetNameLen {
+		t.Fatalf("the fixture is %d bytes, too short to be longer than a root", len(longest))
+	}
+	if err := ValidateMemberName(longest); err != nil {
+		t.Fatalf("ValidateMemberName of a %d byte member = %v, want nil", len(longest), err)
+	}
+	var ne *NameError
+	if err := ValidateMemberName(longest + "m"); !errors.As(err, &ne) || ne.Code != "name-too-long" {
+		t.Fatalf("a member one byte too long = %v, want name-too-long", err)
+	}
+	if err := ValidateMemberName("cache/../etc"); !errors.As(err, &ne) || ne.Code != "invalid-name" {
+		t.Fatalf("a traversal = %v, want invalid-name", err)
+	}
+}
+
 func TestSnapshotNameIsUTCFourteenDigits(t *testing.T) {
 	cest := time.FixedZone("CEST", 2*60*60)
 	at := time.Date(2026, 9, 17, 5, 15, 0, 0, cest)
