@@ -34,7 +34,45 @@ type diagManifest struct {
 	CreatedAt string   `json:"createdAt"`
 	Redacted  bool     `json:"redacted"`
 	RemovedOn []string `json:"removedOnPurpose"`
+	MCP       diagMCP  `json:"mcp"`
 	Notes     []string `json:"notes"`
+}
+
+// diagMCP is everything the bundle says about the MCP keys: how many there are,
+// how many may start backups, how many an APP_KEY change broke, and when a
+// client last used one. A key's name is the operator's own word for one of
+// their machines and the hint identifies the key itself, so neither belongs in
+// a file written to be attached to a bug report.
+type diagMCP struct {
+	ActiveKeys         int   `json:"activeKeys"`
+	KeysAllowedToStart int   `json:"keysAllowedToStart"`
+	UnusableKeys       int   `json:"unusableKeys"`
+	LastUsedAt         int64 `json:"lastUsedAt"`
+}
+
+// mcpDiagnostics counts the keys for the manifest.
+func (h *Handler) mcpDiagnostics() (diagMCP, error) {
+	rows, err := h.store.ListMCPKeys()
+	if err != nil {
+		return diagMCP{}, err
+	}
+	var d diagMCP
+	for _, k := range rows {
+		if k.LastUsedAt > d.LastUsedAt {
+			d.LastUsedAt = k.LastUsedAt
+		}
+		if k.RevokedAt != 0 {
+			continue
+		}
+		d.ActiveKeys++
+		if k.CanStartBackups {
+			d.KeysAllowedToStart++
+		}
+		if h.mcpKeyUnusable(k) != "" {
+			d.UnusableKeys++
+		}
+	}
+	return d, nil
 }
 
 // diagLogCap bounds the log member. The ring itself is larger; this is what a
@@ -267,6 +305,10 @@ func (h *Handler) buildDiagnostics(ctx context.Context) ([]diagFile, error) {
 	}
 
 	// manifest.json — what this file is.
+	mcpCounts, mErr := h.mcpDiagnostics()
+	if mErr != nil {
+		log.Printf("api: diagnostics: reading the MCP key counts failed: %v", mErr)
+	}
 	add("manifest.json", diagManifest{
 		Product:   "BombVault",
 		Version:   Version,
@@ -280,7 +322,9 @@ func (h *Handler) buildDiagnostics(ctx context.Context) ([]diagFile, error) {
 			"registry authentications",
 			"the Backup Everything pre/post hook commands",
 			"passwords embedded in repository locations",
+			"MCP keys and their names (only counts are included)",
 		},
+		MCP: mcpCounts,
 		Notes: []string{
 			"This is a support bundle, not a configuration backup. Do not restore from it.",
 			"log.txt holds this process's recent output. After a container restart it starts empty; use `docker logs` for the run that failed.",
@@ -322,16 +366,18 @@ func (h *Handler) buildDiagnostics(ctx context.Context) ([]diagFile, error) {
 	// output, which handleRuns can serve as-is because it sits behind the
 	// session gate. A file meant to be attached to a public bug report cannot,
 	// so every error goes through scrubSecrets here, and a dump or an import
-	// loses the database tool's own message.
+	// loses the database tool's own message. The name of the MCP key behind a
+	// run goes the same way; the id stays, and the card maps it back.
 	runs, rErr := h.store.ListRuns(200)
 	if rErr != nil {
 		add("runs.json", nil, rErr)
 	} else {
-		names, domains := h.runTargetMaps()
-		views := make([]runView, 0, len(runs))
-		for _, run := range runs {
-			run.Error = scrubSecrets(shareableRunError(run.Kind, run.Error))
-			views = append(views, runView{Run: run, Target: names[run.TargetID], Domain: domains[run.TargetID]})
+		for i := range runs {
+			runs[i].Error = scrubSecrets(shareableRunError(runs[i].Kind, runs[i].Error))
+		}
+		views := h.runViews(runs)
+		for i := range views {
+			views[i].StartedViaLabel = ""
 		}
 		add("runs.json", views, nil)
 	}

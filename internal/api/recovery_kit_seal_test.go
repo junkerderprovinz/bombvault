@@ -131,3 +131,26 @@ func TestRecoveryKitStaysPlainWhenEncryptionIsOff(t *testing.T) {
 		t.Fatalf("the plain kit is missing its own content")
 	}
 }
+
+// TestRecoveryKitMentionsMCPKeysOnConfigRestore: restoring the settings backup
+// revokes every MCP key, and the kit is the one document a rebuilt box is read
+// from, so it has to say so before the operator wonders why their assistant
+// stopped answering. No key material goes with it.
+func TestRecoveryKitMentionsMCPKeysOnConfigRestore(t *testing.T) {
+	h, _, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	cookie := loginCookie(t, h, "correct horse battery staple")
+
+	w := getRaw(t, h, "/api/recovery-kit", cookie)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body = %s", w.Code, w.Body.String())
+	}
+	body := w.Body.String()
+	for _, want := range []string{"revokes every MCP key", "Settings > System > MCP server"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("the kit does not say %q", want)
+		}
+	}
+	if strings.Contains(body, "bvmcp_") {
+		t.Errorf("the kit carries key material")
+	}
+}
