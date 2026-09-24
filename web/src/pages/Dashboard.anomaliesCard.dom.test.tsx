@@ -127,7 +127,9 @@ describe("AnomaliesCard", () => {
   it("offers the settings when detection is switched off", () => {
     renderCard({ summary: summary({ enabled: false }) });
     expect(screen.getByText(en["anomaly.off"])).toBeTruthy();
-    expect(screen.getByRole("link", { name: en["anomaly.openSettings"] })).toBeTruthy();
+    expect(screen.getByRole("link", { name: en["anomaly.openSettings"] }).getAttribute("href")).toBe(
+      "/settings#anomalies"
+    );
     expect(screen.queryByText(en["anomaly.showEarlier"])).toBeNull();
   });
 

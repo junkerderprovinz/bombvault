@@ -265,7 +265,7 @@ export function NotifyCard({
 
       {/* A plain hash link: the settings page switches tabs on hashchange,
           which a router navigation does not fire. */}
-      <a href="#integrity" className="text-xs text-accentText hover:underline">
+      <a href="#anomalies" className="text-xs text-accentText hover:underline">
         {t("anomaly.settings.notifyCrossLink")}
       </a>
 
