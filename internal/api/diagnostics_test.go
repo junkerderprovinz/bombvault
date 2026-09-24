@@ -11,9 +11,11 @@ package api_test
 import (
 	"archive/zip"
 	"bytes"
+	"encoding/json"
 	"io"
 	"log"
 	"net/http"
+	"slices"
 	"strings"
 	"testing"
 
@@ -246,6 +248,94 @@ func TestDiagnosticsCarriesDBDumpState(t *testing.T) {
 	for _, quoted := range []string{detail, "alice@example.com"} {
 		if strings.Contains(runs, quoted) {
 			t.Errorf("runs.json carries %q, which a database tool said and which can quote a row: %s", quoted, runs)
+		}
+	}
+}
+
+// TestDiagnosticsCarriesOnlyMCPCounts: a key's name is the operator's own word
+// for one of their machines, so the bundle reports how many keys there are and
+// nothing else about them. The four-character hint is allowed and is what the
+// MCP log lines carry instead of the name, so the assertion is on names and
+// fingerprints.
+func TestDiagnosticsCarriesOnlyMCPCounts(t *testing.T) {
+	h, st, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
+
+	// Without the tee the ring stays empty and log.txt proves nothing.
+	prev := log.Writer()
+	log.SetOutput(logring.Default.Tee(io.Discard))
+	t.Cleanup(func() { log.SetOutput(prev) })
+
+	const label = "Laptop"
+	key, id := createMCPKey(t, h, label, true)
+	if res := mcpCallTool(t, h, key, "get_health", ""); res.IsError {
+		t.Fatalf("get_health: %v", res.Structured)
+	}
+	row, err := st.GetMCPKey(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := st.UpsertTarget(store.Target{ContainerName: "plex"}); err != nil {
+		t.Fatal(err)
+	}
+	tg, err := st.GetTargetByContainer("plex")
+	if err != nil {
+		t.Fatal(err)
+	}
+	runID, err := st.StartRunWith(tg.ID, "backup", store.RunMeta{StartedVia: "mcp", StartedViaKey: id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.FinishRun(runID, "success", "abc123", 1, ""); err != nil {
+		t.Fatal(err)
+	}
+
+	cookie := loginCookie(t, h, "correct horse battery staple")
+	w := getRaw(t, h, "/api/diagnostics", cookie)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body = %s", w.Code, w.Body.String())
+	}
+	members := zipMembers(t, w.Body.Bytes())
+
+	var manifest struct {
+		RemovedOn []string `json:"removedOnPurpose"`
+		MCP       struct {
+			ActiveKeys         int   `json:"activeKeys"`
+			KeysAllowedToStart int   `json:"keysAllowedToStart"`
+			UnusableKeys       int   `json:"unusableKeys"`
+			LastUsedAt         int64 `json:"lastUsedAt"`
+		} `json:"mcp"`
+	}
+	if err := json.Unmarshal([]byte(members["manifest.json"]), &manifest); err != nil {
+		t.Fatalf("decode manifest.json: %v", err)
+	}
+	if manifest.MCP.ActiveKeys != 1 || manifest.MCP.KeysAllowedToStart != 1 || manifest.MCP.UnusableKeys != 0 {
+		t.Errorf("mcp counts = %+v, want one active key that may start backups", manifest.MCP)
+	}
+	if manifest.MCP.LastUsedAt == 0 {
+		t.Errorf("mcp.lastUsedAt is zero although a tool was called: %+v", manifest.MCP)
+	}
+	if !slices.ContainsFunc(manifest.RemovedOn, func(s string) bool { return strings.Contains(s, "MCP keys") }) {
+		t.Errorf("the manifest does not say that MCP keys were left out: %v", manifest.RemovedOn)
+	}
+
+	runs := members["runs.json"]
+	for _, want := range []string{`"startedVia": "mcp"`, `"startedViaKey": "` + id + `"`, `"startedViaLabel": ""`} {
+		if !strings.Contains(runs, want) {
+			t.Errorf("runs.json does not carry %s: %s", want, runs)
+		}
+	}
+
+	// The MCP lines have to be in the log, or the name assertion below passes
+	// because the bundle carries no MCP output rather than no names.
+	if !strings.Contains(members["log.txt"], "tool get_health") {
+		t.Fatalf("log.txt did not capture the tool call: %q", members["log.txt"])
+	}
+	for name, body := range members {
+		for _, secret := range []string{label, row.Digest, key} {
+			if strings.Contains(body, secret) {
+				t.Errorf("%s carries the key's name or fingerprint. The bundle is made to be attached to a bug report.", name)
+			}
 		}
 	}
 }

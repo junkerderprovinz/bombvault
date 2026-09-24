@@ -131,7 +131,7 @@ func (h *Handler) mcpKeysAllowedFrom(r *http.Request) bool {
 }
 
 func (h *Handler) mcpKeyViewOf(k store.MCPKey, inUse bool) mcpKeyView {
-	v := mcpKeyView{
+	return mcpKeyView{
 		ID:              k.ID,
 		Label:           k.Label,
 		Hint:            k.Hint,
@@ -143,14 +143,19 @@ func (h *Handler) mcpKeyViewOf(k store.MCPKey, inUse bool) mcpKeyView {
 		RevokedAt:       k.RevokedAt,
 		RevokedReason:   k.RevokedReason,
 		InUse:           inUse,
+		Unusable:        h.mcpKeyUnusable(k),
 	}
-	// A reinstall or a restore onto another container brings a new APP_KEY and
-	// every digest stops matching at once. The check value is derived from the
-	// id, so it tells that apart from a client sending the wrong key.
+}
+
+// mcpKeyUnusable names why a key can no longer authenticate, or "" while it
+// still can. A reinstall or a restore onto another container brings a new
+// APP_KEY and every digest stops matching at once; the check value is derived
+// from the id, so it tells that apart from a client sending the wrong key.
+func (h *Handler) mcpKeyUnusable(k store.MCPKey) string {
 	if k.RevokedAt == 0 && k.Check != secret.MCPKeyCheck(h.cfg.AppKey, k.ID) {
-		v.Unusable = "app-key-changed"
+		return "app-key-changed"
 	}
-	return v
+	return ""
 }
 
 // mcpKeyItem builds the view of a single key for a mutation's response.

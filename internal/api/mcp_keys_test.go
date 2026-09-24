@@ -167,7 +167,16 @@ func TestMCPKeyUnusableAfterAppKeyChange(t *testing.T) {
 		t.Fatalf("a key from another APP_KEY must be reported unusable, got %v", rows)
 	}
 
-	_, m := doMCPKey(t, after, http.MethodPost, "/api/mcp/keys/"+id+"/rotate", "")
+	cookie := enableLogin(t, st, mcpAppKeyAfter)
+	bundle := getRaw(t, after, "/api/diagnostics", &http.Cookie{Name: "bv_session", Value: cookie}) //nolint:gosec // G124: request cookie; Secure and HttpOnly only apply to responses
+	if bundle.Code != http.StatusOK {
+		t.Fatalf("diagnostics: status = %d body = %s", bundle.Code, bundle.Body.String())
+	}
+	if manifest := zipMembers(t, bundle.Body.Bytes())["manifest.json"]; !strings.Contains(manifest, `"unusableKeys": 1`) {
+		t.Fatalf("the bundle does not count the key an APP_KEY change broke: %s", manifest)
+	}
+
+	_, m := doMCPKeyJSON(t, after, http.MethodPost, "/api/mcp/keys/"+id+"/rotate", "", mcpTestHost, cookie)
 	if m["ok"] != true {
 		t.Fatalf("rotate under the new APP_KEY: %v", m)
 	}
@@ -175,7 +184,8 @@ func TestMCPKeyUnusableAfterAppKeyChange(t *testing.T) {
 	if newKey == oldKey {
 		t.Fatal("rotate handed out the same key")
 	}
-	rows = mcpKeyRows(t, mcpKeyList(t, after), "keys")
+	_, list := doMCPKeyJSON(t, after, http.MethodGet, "/api/mcp/keys", "", mcpTestHost, cookie)
+	rows = mcpKeyRows(t, list, "keys")
 	if rows[0]["unusable"] != "" {
 		t.Fatalf("unusable = %v, want it cleared after a rotate", rows[0]["unusable"])
 	}

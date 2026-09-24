@@ -16764,6 +16764,8 @@ func (s *Service) RecoveryKit() (string, error) {
 		w("- config (off-site): %s\n", settings.ConfigOffsite)
 	}
 	w("\n")
+	w("Restoring this backup revokes every MCP key; create new keys under\n")
+	w("Settings > System > MCP server afterwards.\n\n")
 
 	// Off-site/cloud credentials — the stored rest-server / S3 keys and rclone
 	// config a user needs to reach a remote repository after losing BombVault.
