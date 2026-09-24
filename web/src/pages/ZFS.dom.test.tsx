@@ -63,6 +63,7 @@ vi.mock("../lib/api", async (importOriginal) => {
         datasets: [],
         hiddenLegacy: 0,
         truncated: false,
+        maxNameLength: 219,
         ...hostCounts,
       }),
     getSettings: () => Promise.resolve({ ok: true, hostMountRoot: "/host", settings: { perItemSchedules: false } }),
@@ -403,5 +404,29 @@ describe("ZFS page", () => {
     renderPage();
     expect(await screen.findByText(en["zfs.emptyTitle"])).toBeTruthy();
     expect(screen.getByLabelText(en["zfs.empty"])).toBeTruthy();
+  });
+
+  it("opens the add dialog from the empty state", async () => {
+    items = [];
+    renderPage();
+    await screen.findByText(en["zfs.emptyTitle"]);
+    fireEvent.click(screen.getByRole("button", { name: en["zfs.addDatasets"] }));
+    expect(await screen.findByRole("dialog", { name: en["zfs.add.title"] })).toBeTruthy();
+  });
+
+  it("offers the add dialog next to the count of datasets in no item", async () => {
+    hostCounts = { notInItem: 3, unusedZvols: 0 };
+    await renderWithItems();
+    const note = (await screen.findByText(en["zfs.notInItem"].replace("{n}", "3"))).closest("p");
+    fireEvent.click(within(note as HTMLElement).getByRole("button", { name: en["zfs.addDatasets"] }));
+    expect(await screen.findByRole("dialog", { name: en["zfs.add.title"] })).toBeTruthy();
+  });
+
+  it("opens the restore panel of an item", async () => {
+    await renderWithItems();
+    fireEvent.click(screen.getByRole("button", { name: en["snapshots.title"] }));
+    expect(
+      await screen.findByRole("group", { name: en["zfs.restore.title"].replace("{dataset}", "cache/appdata") }),
+    ).toBeTruthy();
   });
 });

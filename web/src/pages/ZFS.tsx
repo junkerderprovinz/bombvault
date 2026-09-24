@@ -9,10 +9,12 @@ import { EmptyStateIcon } from "../components/EmptyStateIcon";
 import { InfoBubble } from "../components/InfoBubble";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
 import { IconZFS } from "../components/navGlyphs";
+import { DEFAULT_RESTORE_FOLDER } from "../components/RestorePanel";
+import { ZFSAddDialog } from "../components/zfs/ZFSAddDialog";
 import { ZFSConnectionCard } from "../components/zfs/ZFSConnectionCard";
 import { ZFSDatasetRow } from "../components/zfs/ZFSDatasetRow";
-import { backupZFSAll, discoverZFS, listZFSDatasets, zfsHostDatasets } from "../lib/api";
-import type { ZFSDatasetView } from "../lib/api";
+import { backupZFSAll, discoverZFS, getSettings, listZFSDatasets, zfsHostDatasets } from "../lib/api";
+import type { ZFSDatasetView, ZFSHostDataset } from "../lib/api";
 import { hueVars } from "../lib/appearance";
 import { BULK_HUE } from "../lib/bulkHue";
 import { useT } from "../lib/i18n";
@@ -29,6 +31,10 @@ export function ZFS() {
   const [error, setError] = useState<string | null>(null);
   const [notInItem, setNotInItem] = useState(0);
   const [unusedZvols, setUnusedZvols] = useState(0);
+  const [hostDatasets, setHostDatasets] = useState<ReadonlyMap<string, ZFSHostDataset>>(new Map());
+  const [hostMountRoot, setHostMountRoot] = useState("/host/user");
+  const [restoreFolder, setRestoreFolder] = useState(DEFAULT_RESTORE_FOLDER);
+  const [adding, setAdding] = useState(false);
   const [discovering, setDiscovering] = useState(false);
   const [shakeDiscover, setShakeDiscover] = useState(0);
   const [backupAllBusy, setBackupAllBusy] = useState(false);
@@ -45,19 +51,31 @@ export function ZFS() {
       .catch(() => setError(t("zfs.loadFailed")));
   }, [t]);
 
-  useEffect(() => {
-    void loadItems().finally(() => setLoading(false));
-    // The host listing is the only source for what is not in an item yet. It
-    // reaches the server over SSH, so a failure leaves the counts at zero and
-    // the page renders without them.
+  const loadHost = useCallback(() => {
+    // The host listing is the only source for what is not in an item yet, and
+    // for whether a dataset can be written into. It reaches the server over
+    // SSH, so a failure leaves the counts at zero and the page renders without
+    // them.
     zfsHostDatasets()
       .then((res) => {
         if (!res.ok || !res.available) return;
         setNotInItem(res.notInItem);
         setUnusedZvols(res.unusedZvols);
+        setHostDatasets(new Map(res.datasets.map((d) => [d.dataset, d])));
       })
       .catch(() => undefined);
-  }, [loadItems]);
+  }, []);
+
+  useEffect(() => {
+    void loadItems().finally(() => setLoading(false));
+    loadHost();
+    getSettings()
+      .then((res) => {
+        if (res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
+        if (res.settings?.restoreFolder) setRestoreFolder(res.settings.restoreFolder);
+      })
+      .catch(() => undefined);
+  }, [loadItems, loadHost]);
 
   async function handleDiscover() {
     setDiscovering(true);
@@ -135,6 +153,14 @@ export function ZFS() {
           {!backupAllBusy && running.active && (
             <span className="text-xs text-carbon-textMuted">{t(busyPhraseKey(running.phase))}</span>
           )}
+          {!showEmptyState && (
+            <Button
+              label={t("zfs.addDatasets")}
+              labelKey="zfs.addDatasets"
+              tone="accent"
+              onClick={() => setAdding(true)}
+            />
+          )}
         </div>
       </div>
 
@@ -155,20 +181,41 @@ export function ZFS() {
             </Badge>
           </h2>
           <EmptyStateIcon icon={IconZFS} />
+          <Button
+            label={t("zfs.addDatasets")}
+            labelKey="zfs.addDatasets"
+            tone="accent"
+            onClick={() => setAdding(true)}
+          />
         </div>
       )}
 
       {items.length > 0 && (
         <div className="flex flex-col gap-3 glim-content-fade">
           {items.map((item, i) => (
-            <ZFSDatasetRow key={item.id} item={item} t={t} onRefresh={() => void loadItems()} index={i} />
+            <ZFSDatasetRow
+              key={item.id}
+              item={item}
+              t={t}
+              onRefresh={() => void loadItems()}
+              index={i}
+              host={hostDatasets}
+              hostMountRoot={hostMountRoot}
+              restoreFolder={restoreFolder}
+            />
           ))}
         </div>
       )}
 
       {notInItem > 0 && (
-        <p className="text-xs text-carbon-textMuted">
+        <p className="flex items-center gap-2 text-xs text-carbon-textMuted">
           {t("zfs.notInItem").replace("{n}", String(notInItem))}
+          <Button
+            label={t("zfs.addDatasets")}
+            labelKey="zfs.addDatasets"
+            tone="subtle"
+            onClick={() => setAdding(true)}
+          />
         </p>
       )}
       {unusedZvols > 0 && (
@@ -176,6 +223,16 @@ export function ZFS() {
           {t("zfs.unusedZvols").replace("{n}", String(unusedZvols))}
           <InfoBubble tip={t("zfs.unusedZvolsHint")} />
         </p>
+      )}
+
+      {adding && (
+        <ZFSAddDialog
+          onClose={() => setAdding(false)}
+          onAdded={() => {
+            void loadItems();
+            loadHost();
+          }}
+        />
       )}
     </div>
   );
