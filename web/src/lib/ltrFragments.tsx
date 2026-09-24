@@ -129,6 +129,20 @@ export const APPRISE_ENDPOINT_LTR_FRAGMENTS = ["/notify/"] as const;
 /** The authorized-keys path the VM SSH card tells the user to append to. */
 export const VM_SSH_KEY_PATH_LTR_FRAGMENTS = ["/root/.ssh/authorized_keys"] as const;
 
+/** The Unraid user share, which the ZFS pages name as the mapping that hides
+ *  snapshots. */
+export const USER_SHARE_LTR_FRAGMENTS = ["/mnt/user"] as const;
+
+/** The mount root a dataset needs a mountpoint below. */
+export const MOUNT_ROOT_LTR_FRAGMENTS = ["/mnt"] as const;
+
+/** Both spellings, for the fix that contrasts them. The longer one comes
+ *  first so the bare mount root is only wrapped where it stands alone. */
+export const USER_SHARE_VS_MOUNT_ROOT_LTR_FRAGMENTS = ["/mnt/user", "/mnt"] as const;
+
+/** zfs.excludesHint's example pattern, measured from the item's dataset. */
+export const ZFS_EXCLUDE_EXAMPLE_LTR_FRAGMENTS = ["/plex/Library/Cache"] as const;
+
 /** cadence.cronInvalid's worked example. Not a path, but the same bug: a run of
  *  digits, spaces, `*` and `/` is entirely weak/neutral bidi classes, so an RTL
  *  paragraph reorders the whole expression and the user is shown a cron line
@@ -162,6 +176,10 @@ export const LTR_FRAGMENTS_BY_KEY = {
   "settings.metricsHint": METRICS_ENDPOINT_LTR_FRAGMENTS,
   "vm.ssh.publicKey": VM_SSH_KEY_PATH_LTR_FRAGMENTS,
   "cadence.cronInvalid": CRON_EXAMPLE_LTR_FRAGMENTS,
+  "zfs.code.shfs-only": USER_SHARE_LTR_FRAGMENTS,
+  "zfs.fix.shfs-only": USER_SHARE_VS_MOUNT_ROOT_LTR_FRAGMENTS,
+  "zfs.fix.legacy-mount": MOUNT_ROOT_LTR_FRAGMENTS,
+  "zfs.excludesHint": ZFS_EXCLUDE_EXAMPLE_LTR_FRAGMENTS,
 } as const satisfies Record<string, readonly string[]>;
 
 /**

@@ -25,6 +25,7 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   "activityLog.lineOther",
   "cadence.fmtCron",
   "dbdump.versionLabel",
+  "zfs.safety.row",
 
   // Protocol and product names every locale writes in Latin script. Each also
   // appears untranslated in the locales' own surrounding prose.
@@ -33,6 +34,7 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   "notify.matrixHomeserver",
   "notify.healthchecks",
   "notify.smtp",
+  "zfs.connection.version",
 
   // "Containers" is the word el and he use in their own nav entry. Consistency
   // within the language decides, not whether the string looks English.

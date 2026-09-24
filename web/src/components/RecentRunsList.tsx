@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { listRuns } from "../lib/api";
 import type { Run } from "../lib/api";
@@ -34,19 +34,23 @@ function statusDotClass(status: string): string {
 /**
  * RecentRunsList shows one target's latest backup runs with their start and
  * end time and duration. It fetches the run log once and filters it by domain
- * and name.
+ * and name. With `renderDetail` each row opens to what that run did, which is
+ * where a domain with per-run detail of its own puts it.
  */
 export function RecentRunsList({
   name,
   domain,
   t,
+  renderDetail,
 }: {
   name: string;
   domain: "container" | "vm" | "files" | "zfs";
   t: T;
+  renderDetail?: (runId: string) => ReactNode;
 }) {
   const [runs, setRuns] = useState<Run[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openRun, setOpenRun] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -80,8 +84,9 @@ export function RecentRunsList({
       </p>
       {runs.map((run) => {
         const dur = run.finishedAt != null ? formatDuration(run.finishedAt - run.startedAt) : "";
-        return (
-          <div key={run.id} className="flex items-center gap-2 text-caption">
+        const open = openRun === run.id;
+        const line = (
+          <>
             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDotClass(run.status)}`} />
             <span className="text-carbon-textSub whitespace-nowrap">
               {formatTs(run.startedAt)}
@@ -93,6 +98,26 @@ export function RecentRunsList({
               )}
             </span>
             {dur && <span className="text-carbon-textMuted whitespace-nowrap">({dur})</span>}
+          </>
+        );
+        if (!renderDetail) {
+          return (
+            <div key={run.id} className="flex items-center gap-2 text-caption">
+              {line}
+            </div>
+          );
+        }
+        return (
+          <div key={run.id} className="flex flex-col gap-1">
+            <button
+              type="button"
+              aria-expanded={open}
+              onClick={() => setOpenRun(open ? "" : run.id)}
+              className="flex items-center gap-2 text-caption text-start hover:text-carbon-text"
+            >
+              {line}
+            </button>
+            {open && renderDetail(run.id)}
           </div>
         );
       })}

@@ -84,7 +84,7 @@ const RULES: Rule[] = [
 
   // Probing and inspection. "accept", "confirm" and "resolveAll" agree to what
   // is on screen, so they take the same check.
-  [/test|verify|check|drill|appendOnly|tamper|accept|approve|confirm(?!Password)|resolveAll|\.stored$/i, () => <IconCheckCircle />],
+  [/test|probe|verify|check|drill|appendOnly|tamper|accept|approve|confirm(?!Password)|resolveAll|\.stored$/i, () => <IconCheckCircle />],
   [/scan|discover|browse|search/i, () => <IconSearch />],
   [/show|reveal|preview|view/i, () => <IconEye />],
   [/hint|info|explain|examples/i, () => <IconInfo />],
