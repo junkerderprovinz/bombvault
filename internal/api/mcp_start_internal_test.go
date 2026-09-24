@@ -297,11 +297,12 @@ func TestMCPRetentionGuardKeepsOlderRestorePoints(t *testing.T) {
 		}
 	})
 
-	t.Run("the daily limit stands on its own", func(t *testing.T) {
+	t.Run("the daily limit counts attempts, not restore points", func(t *testing.T) {
 		h, repo, sets := newMCPStartHandler(t, "media")
 		set := sets["media"]
-		for range mcpItemStartsPerDay {
+		for range mcpItemStartsPerDay / 2 {
 			seedBackup(t, repo, set.ID, "mcp", "0b7e")
+			seedFailedBackup(t, repo, set.ID, "0b7e")
 		}
 		s, err := repo.GetSettings()
 		if err != nil {
@@ -466,6 +467,19 @@ func seedBackup(t *testing.T, repo *store.Repo, targetID, via, keyID string) {
 		t.Fatal(err)
 	}
 	if err := repo.FinishRun(id, "success", "", 0, ""); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// seedFailedBackup writes an MCP backup of an item that failed. It stopped the
+// container before it failed, which is why the daily budget counts it.
+func seedFailedBackup(t *testing.T, repo *store.Repo, targetID, keyID string) {
+	t.Helper()
+	id, err := repo.StartRunWith(targetID, "backup", store.RunMeta{StartedVia: "mcp", StartedViaKey: keyID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := repo.FinishRun(id, "failed", "", 0, "the pre-hook did not run"); err != nil {
 		t.Fatal(err)
 	}
 }
