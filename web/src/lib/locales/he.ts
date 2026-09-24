@@ -1656,7 +1656,7 @@ const he: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "פריט במאגר מרוחק או ישיר אינו מקבל עותקים.",
   "placementCode.unknownTarget": "היעד החיצוני הזה לא קיים בתחום הזה.",
   "placementCode.stackRule": "תיקיות פרויקט עוקבות אחרי ברירת המחדל של המכולות ואין להן כלל משלהן.",
-  "placementCode.copyRuleTaken": "לשם הזה כבר יש כללי העתקה. בחר שם אחר.",
+  "placementCode.copyRuleTaken": "לשם הזה כבר יש כללי העתקה משלו. אפס אותם שם קודם.",
   "placementCode.domainBusy": "מתבצע כרגע גיבוי. בחר שוב לאחר שיסתיים.",
   "placementCode.hasBackups": "המיקום כבר לא יכול להשתנות ברגע שיש לפריט גיבויים. הם נשארים היכן שנכתבו.",
   "placementCode.homeUncheckable": "לא ניתן היה לבדוק אם לפריט הזה כבר יש גיבויים, כך שהמיקום שלו נשאר כפי שהוא. נסה שוב כשניתן יהיה לקרוא את המאגר.",

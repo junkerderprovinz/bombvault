@@ -1651,7 +1651,7 @@ const pl: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Element w repozytorium zdalnym lub bezpośrednim nie otrzymuje kopii.",
   "placementCode.unknownTarget": "Ten zdalny cel nie istnieje w tej domenie.",
   "placementCode.stackRule": "Foldery projektu podążają za wartością domyślną kontenerów i nie mają własnej reguły.",
-  "placementCode.copyRuleTaken": "Ta nazwa ma już reguły kopiowania. Wybierz inną nazwę.",
+  "placementCode.copyRuleTaken": "Ta nazwa ma już własne reguły kopiowania. Zresetuj je tam najpierw.",
   "placementCode.domainBusy": "Trwa tworzenie kopii zapasowej. Wybierz ponownie, gdy się zakończy.",
   "placementCode.hasBackups": "Lokalizacji nie można już zmienić, gdy element ma kopie zapasowe. Pozostają tam, gdzie zostały zapisane.",
   "placementCode.homeUncheckable": "Nie udało się sprawdzić, czy ten element ma już kopie zapasowe, więc jego lokalizacja pozostaje bez zmian. Spróbuj ponownie, gdy repozytorium będzie można odczytać.",

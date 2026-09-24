@@ -1667,7 +1667,7 @@ const hr: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Stavka u udaljenom ili izravnom repozitoriju ne prima kopije.",
   "placementCode.unknownTarget": "To izvanmrežno odredište ne postoji u ovoj domeni.",
   "placementCode.stackRule": "Mape projekta prate zadanu vrijednost kontejnera i nemaju vlastito pravilo.",
-  "placementCode.copyRuleTaken": "Taj naziv već ima pravila kopiranja. Odaberi drugi naziv.",
+  "placementCode.copyRuleTaken": "Taj naziv već ima svoja pravila kopiranja. Prvo ih poništi ondje.",
   "placementCode.domainBusy": "Sigurnosno kopiranje je u tijeku. Odaberi ponovno kad završi.",
   "placementCode.hasBackups": "Lokacija se više ne može promijeniti kad stavka ima sigurnosne kopije. Ostaju ondje gdje su zapisane.",
   "placementCode.homeUncheckable": "Nije se moglo provjeriti ima li ova stavka već sigurnosne kopije, pa njezina lokacija ostaje kakva jest. Pokušaj ponovno kad se repozitorij bude mogao pročitati.",

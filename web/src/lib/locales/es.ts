@@ -1654,7 +1654,7 @@ const es: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Un elemento en un repositorio remoto o directo no recibe copias.",
   "placementCode.unknownTarget": "Ese destino externo no existe en este dominio.",
   "placementCode.stackRule": "Las carpetas de proyecto siguen el valor predeterminado de contenedores y no tienen una regla propia.",
-  "placementCode.copyRuleTaken": "Ese nombre ya tiene reglas de copia. Elige otro nombre.",
+  "placementCode.copyRuleTaken": "Ese nombre ya tiene sus propias reglas de copia. Restablécelas allí primero.",
   "placementCode.domainBusy": "Hay una copia de seguridad en curso. Vuelve a elegir cuando termine.",
   "placementCode.hasBackups": "La ubicación no se puede cambiar una vez que el elemento tiene copias de seguridad. Permanecen donde se escribieron.",
   "placementCode.homeUncheckable": "No se pudo comprobar si este elemento ya tiene copias de seguridad, así que su ubicación se queda como está. Vuelve a intentarlo cuando se pueda leer el repositorio.",

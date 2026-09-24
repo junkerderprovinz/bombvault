@@ -1667,7 +1667,7 @@ const gl: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Un elemento nun repositorio remoto ou directo non recibe copias.",
   "placementCode.unknownTarget": "Ese destino externo non existe neste dominio.",
   "placementCode.stackRule": "Os cartafoles de proxecto seguen o valor predeterminado de contedores e non teñen regra propia.",
-  "placementCode.copyRuleTaken": "Ese nome xa ten regras de copia. Escolle outro nome.",
+  "placementCode.copyRuleTaken": "Ese nome xa ten as súas propias regras de copia. Restablécellas alí primeiro.",
   "placementCode.domainBusy": "Hai unha copia de seguranza en curso. Escolle de novo cando remate.",
   "placementCode.hasBackups": "O lugar non pode cambiar unha vez que o elemento ten copias de seguranza. Quedan onde foron escritas.",
   "placementCode.homeUncheckable": "Non se puido comprobar se este elemento xa ten copias de seguranza, así que a súa localización queda como está. Téntao de novo cando se poida ler o repositorio.",

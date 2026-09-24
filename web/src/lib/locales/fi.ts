@@ -1656,7 +1656,7 @@ const fi: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Etä- tai suora-arkistossa oleva kohde ei saa kopioita.",
   "placementCode.unknownTarget": "Tätä etäkohdetta ei ole tässä toimialueessa.",
   "placementCode.stackRule": "Projektikansiot noudattavat konttien oletusarvoa eikä niillä ole omaa sääntöä.",
-  "placementCode.copyRuleTaken": "Tällä nimellä on jo kopiointisääntöjä. Valitse toinen nimi.",
+  "placementCode.copyRuleTaken": "Sillä nimellä on jo omat kopiointisäännöt. Palauta ne ensin siellä.",
   "placementCode.domainBusy": "Varmuuskopiointi on käynnissä. Valitse uudelleen, kun se on valmis.",
   "placementCode.hasBackups": "Sijaintia ei voi enää muuttaa, kun kohteella on varmuuskopioita. Ne pysyvät siellä, minne ne kirjoitettiin.",
   "placementCode.homeUncheckable": "Ei voitu tarkistaa, onko tällä kohteella jo varmuuskopioita, joten sen sijainti pysyy ennallaan. Yritä uudelleen, kun arkisto voidaan lukea.",

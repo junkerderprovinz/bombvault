@@ -65,6 +65,13 @@ describe("placementErrorText for deleting at a target", () => {
   });
 });
 
+describe("placementErrorText for a copy-rule-taken refusal", () => {
+  it("gives advice that fits a rename, a takeover and an unlink alike", () => {
+    const text = placementErrorText(t, "en", { ok: false, error: "x", code: "copy-rule-taken" }, "settings.error");
+    expect(text).not.toMatch(/choose another name/i);
+  });
+});
+
 describe("save warnings", () => {
   it("fill in the target and the count and go out as warnings", () => {
     const w = { code: "direct-retention-lowered" as const, targetId: "t", targetName: "B2", items: 3 };

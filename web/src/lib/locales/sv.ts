@@ -1656,7 +1656,7 @@ const sv: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Ett objekt i ett fjärr- eller direktarkiv får inga kopior.",
   "placementCode.unknownTarget": "Det externa målet finns inte i den här domänen.",
   "placementCode.stackRule": "Projektmappar följer standardvärdet för containrar och har ingen egen regel.",
-  "placementCode.copyRuleTaken": "Det namnet har redan kopieringsregler. Välj ett annat namn.",
+  "placementCode.copyRuleTaken": "Det namnet har redan egna kopieringsregler. Återställ dem där först.",
   "placementCode.domainBusy": "En säkerhetskopiering pågår. Välj igen när den är klar.",
   "placementCode.hasBackups": "Platsen kan inte ändras när objektet har säkerhetskopior. De stannar där de skrevs.",
   "placementCode.homeUncheckable": "Det gick inte att kontrollera om det här objektet redan har säkerhetskopior, så dess plats förblir som den är. Försök igen när arkivet kan läsas.",

@@ -1667,7 +1667,7 @@ const ca: Partial<Translations> = {
   "placementCode.copiesNotAllowed": "Un element en un repositori remot o directe no rep còpies.",
   "placementCode.unknownTarget": "Aquest destí extern no existeix en aquest domini.",
   "placementCode.stackRule": "Les carpetes de projecte segueixen el valor predeterminat de contenidors i no tenen regla pròpia.",
-  "placementCode.copyRuleTaken": "Aquest nom ja té regles de còpia. Tria un altre nom.",
+  "placementCode.copyRuleTaken": "Aquest nom ja té regles de còpia pròpies. Restableix-les allà primer.",
   "placementCode.domainBusy": "Hi ha una còpia de seguretat en curs. Torna a triar quan hagi acabat.",
   "placementCode.hasBackups": "La ubicació no pot canviar un cop l'element té còpies de seguretat. Es queden on es van escriure.",
   "placementCode.homeUncheckable": "No s'ha pogut comprovar si aquest element ja té còpies de seguretat, així que la seva ubicació es queda tal com està. Torna-ho a provar quan es pugui llegir el repositori.",
