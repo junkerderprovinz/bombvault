@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -983,4 +984,130 @@ func (s *Service) foreignContainerDestBase(target string) (string, error) {
 		return paths.Resolve(s.cfg.HostMountRoot, sub)
 	}
 	return s.platformFn().ForeignContainerDestBase(path.Clean(s.cfg.HostMountRoot)), nil
+}
+
+// handleForeignOpen opens another BombVault instance's repository read-only
+// with that instance's APP_KEY and returns an in-memory session id and the
+// snapshot inventory. The session and the key live only in memory with a TTL,
+// the repo is never initialised, and the key is never logged or echoed.
+// POST /api/foreign/open  body {location, key}
+func (h *Handler) handleForeignOpen(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Location string `json:"location"`
+		Key      string `json:"key"`
+		// Creds are the foreign repository's own backend credentials, needed for
+		// a remote location and used for this session only, never stored.
+		Creds *CloudCreds `json:"creds"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	session, inv, err := h.svc.OpenForeign(r.Context(), body.Location, body.Key, body.Creds)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"session": session, "inventory": inv}))
+}
+
+// handleForeignClose drops a foreign-repo session immediately (the UI calls it
+// on leave/unmount). Unknown or already-expired ids are a harmless no-op, so
+// this always succeeds. POST /api/foreign/close  body {session}
+func (h *Handler) handleForeignClose(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Session string `json:"session"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	h.svc.CloseForeign(body.Session)
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleForeignRestore restores one container, VM or file set from an open
+// foreign-repo session on the server and returns immediately, like
+// handleRestore. A bad request (unknown or expired session, no confirm, a file
+// set without target) fails with a 4xx before anything starts, and a busy
+// guard answers 409. The session key stays on the server.
+// POST /api/foreign/restore  body {session, domain, item, snapshot, confirm, target, paths, zvolPool}
+//
+// A non-empty paths restores just those entries of a file set into target.
+// zvolPool, for VMs only, names the destination ZFS pool a TrueNAS zvol disk
+// needs on a restore to another instance (see StartForeignRestore). Only a
+// direct API call sets it; without it such a restore fails early with a clear
+// message.
+func (h *Handler) handleForeignRestore(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Session   string   `json:"session"`
+		Domain    string   `json:"domain"`
+		Item      string   `json:"item"`
+		Snapshot  string   `json:"snapshot"`
+		Confirm   bool     `json:"confirm"`
+		Target    string   `json:"target"`
+		Paths     []string `json:"paths"`
+		Overwrite bool     `json:"overwrite"`
+		ZvolPool  string   `json:"zvolPool"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	started, err := h.svc.StartForeignRestore(r.Context(), body.Session, body.Domain, body.Item, body.Snapshot, body.Confirm, body.Target, body.Paths, body.Overwrite, body.ZvolPool)
+	if err != nil { // validation failed, nothing was started
+		writeJSON(w, http.StatusBadRequest, failEnvelope(err))
+		return
+	}
+	if !started { // another backup/restore holds the single-flight guard
+		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "error": "a backup or restore is already running"})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
+}
+
+// handleForeignFiles lists the files of one file set's snapshot in an open foreign
+// session, so the recovery UI can offer a picker before a selective restore.
+// The answer has the shape of the local list-files endpoint.
+// POST /api/foreign/files  body {session, domain, item, snapshot}
+func (h *Handler) handleForeignFiles(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Session  string `json:"session"`
+		Domain   string `json:"domain"`
+		Item     string `json:"item"`
+		Snapshot string `json:"snapshot"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	files, err := h.svc.ListForeignFiles(r.Context(), body.Session, body.Domain, body.Item, body.Snapshot)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if files == nil {
+		files = []restic.FileEntry{}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"files": files}))
+}
+
+// handleForeignContainerWarnings returns the non-appdata binds of a foreign
+// container that point at a pool this host lacks, so the Recovery card can warn
+// before a cross-pool restore. Appdata is remapped automatically; these binds
+// are the operator's to fix in the template.
+// POST /api/foreign/container-warnings  body {session, item}
+func (h *Handler) handleForeignContainerWarnings(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Session string `json:"session"`
+		Item    string `json:"item"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	warnings, err := h.svc.ForeignContainerBindWarnings(r.Context(), body.Session, body.Item)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if warnings == nil {
+		warnings = []ForeignBindWarning{}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"warnings": warnings}))
 }

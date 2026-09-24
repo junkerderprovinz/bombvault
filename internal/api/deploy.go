@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
@@ -156,4 +157,24 @@ func xmlCommentSafe(s string) string {
 		s += " "
 	}
 	return s
+}
+
+// handleDeploySnippet returns a one-time rest-server deployment recipe for a
+// domain's append-only off-site repo (docker run + compose + generated htpasswd
+// credentials). Nothing is stored on the server, so the plaintext password is
+// shown once. GET /api/offsite/{domain}/deploy-snippet
+func (h *Handler) handleDeploySnippet(w http.ResponseWriter, r *http.Request) {
+	domain := r.PathValue("domain")
+	switch domain {
+	case "containers", "vms", "flash", "config", "files":
+	default:
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
+		return
+	}
+	snip, err := buildDeploySnippet(domain)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"snippet": snip}))
 }

@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -472,4 +473,27 @@ func foldEncryption(repos []RepoEncryption) EncryptionVerdict {
 	default:
 		return VerdictUnconfigured
 	}
+}
+
+// handleDetectEncryption probes the configured repositories and reports which
+// encryption mode they are in, applying a definite result to
+// Settings.EncryptionEnabled so a restore on a fresh instance need not assert
+// it. POST /api/encryption/detect
+//
+// "encrypted" and "plain" are applied; "conflict", "absent", "unknown" and
+// "unconfigured" leave the setting alone and show as undecided. A failed probe
+// is never reported as "plain". The service has already scrubbed each repo's
+// Err.
+func (h *Handler) handleDetectEncryption(w http.ResponseWriter, r *http.Request) {
+	det, err := h.svc.DetectEncryption(r.Context())
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"verdict":           string(det.Verdict),
+		"applied":           det.Applied,
+		"encryptionEnabled": det.EncryptionEnabled,
+		"repos":             det.Repos,
+	}))
 }

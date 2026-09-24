@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -318,4 +319,47 @@ func (s *Service) moveDRDrillTargetVMTo(oldName, newName string) error {
 		return nil
 	})
 	return err
+}
+
+// handleTakeOverVM moves a VM entry onto the libvirt name its VM was renamed
+// to. POST /api/vms/{name}/takeover with body {"from":"<old libvirt name>"};
+// both are libvirt names, never TrueNAS display names.
+func (h *Handler) handleTakeOverVM(w http.ResponseWriter, r *http.Request) {
+	name, ok := h.vmNameParam(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		From string `json:"from"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if !validVMName(body.From) {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid VM name"})
+		return
+	}
+	if err := h.svc.TakeOverVM(r.Context(), body.From, name); err != nil {
+		takeoverFail(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleUnlinkVMAlias undoes a VM takeover. DELETE /api/vms/{name}/alias/{old};
+// {old} alone finds the entry, since a former name belongs to one entry.
+func (h *Handler) handleUnlinkVMAlias(w http.ResponseWriter, r *http.Request) {
+	if _, ok := h.vmNameParam(w, r); !ok {
+		return
+	}
+	old := r.PathValue("old")
+	if !validVMName(old) {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid VM name"})
+		return
+	}
+	if err := h.svc.UnlinkVMAlias(r.Context(), old); err != nil {
+		takeoverFail(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }

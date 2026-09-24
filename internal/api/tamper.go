@@ -290,3 +290,27 @@ func (s *Service) notifyProtectionLost(ctx context.Context, domain, detail strin
 		}
 	}
 }
+
+// handleTamperTest runs an active off-site tamper test for a domain: it probes the
+// far-side rest-server's delete path with side-effect-free DELETEs to verify the
+// append-only protection is actually enforced (not just configured).
+// POST /api/offsite/{domain}/tamper-test
+func (h *Handler) handleTamperTest(w http.ResponseWriter, r *http.Request) {
+	domain := r.PathValue("domain")
+	switch domain {
+	case "containers", "vms", "flash", "config", "files":
+	default:
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
+		return
+	}
+	verdict, err := h.svc.RunTamperTest(r.Context(), domain)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+		"testable":  verdict.Testable,
+		"protected": verdict.Protected,
+		"detail":    verdict.Detail,
+	}))
+}

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
@@ -276,4 +277,51 @@ func firstBlockedDep(deps []int, blocked []bool) int {
 // first (see compose.StartOrder).
 func stackStartOrder(members []stackMember) []int {
 	return compose.StartOrder(memberServicesAndDeps(members))
+}
+
+// stackParam reads {project}, a compose project name, which is laxer than a
+// container name but must not carry a path.
+func stackParam(w http.ResponseWriter, r *http.Request) (string, bool) {
+	project := r.PathValue("project")
+	if project == "" || strings.Contains(project, "/") || strings.Contains(project, "..") {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "invalid stack name"})
+		return "", false
+	}
+	return project, true
+}
+
+// handleRestoreStack restores every backed-up member of a compose stack stopped,
+// then optionally starts them in dependency order.
+// POST /api/stacks/{project}/restore
+//
+// Like handleRestore it runs detached after validation and member enumeration,
+// so a bad request or an empty stack still fails right away. Each member's
+// restore records its own "restore" run.
+func (h *Handler) handleRestoreStack(w http.ResponseWriter, r *http.Request) {
+	project, ok := stackParam(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		StartAfter     bool   `json:"startAfter"`
+		Confirm        bool   `json:"confirm"`
+		StackDirSource string `json:"stackDirSource"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	dirSource := ""
+	if body.StackDirSource != "" {
+		dirSource = normalizeSource(body.StackDirSource)
+	}
+	started, err := h.svc.StartRestoreStack(r.Context(), project, sourceParam(r), dirSource, body.StartAfter, body.Confirm)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if !started {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "a backup or restore is already running"})
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
 }
