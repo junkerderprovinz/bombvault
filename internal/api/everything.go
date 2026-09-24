@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
@@ -165,6 +166,27 @@ func (s *Service) backupEverythingHoldingGuard(ctx context.Context) (EverythingS
 	return EverythingSummary{RunID: runID, Status: status, Error: errMsg, Domains: results}, nil
 }
 
+type everythingSkipKey struct{}
+
+// WithEverythingSkips names the items a following "Backup Everything" pass
+// leaves out. The MCP retention guard is what fills it; the pass itself has no
+// opinion on which of the operator's items it may back up.
+func WithEverythingSkips(ctx context.Context, targetIDs []string) context.Context {
+	if len(targetIDs) == 0 {
+		return ctx
+	}
+	skip := make(map[string]bool, len(targetIDs))
+	for _, id := range targetIDs {
+		skip[id] = true
+	}
+	return context.WithValue(ctx, everythingSkipKey{}, skip)
+}
+
+func everythingSkips(ctx context.Context) map[string]bool {
+	skip, _ := ctx.Value(everythingSkipKey{}).(map[string]bool)
+	return skip
+}
+
 // StartBackupEverything starts a "Backup Everything" pass in the background and
 // returns at once, like StartBackupAll. A call while a pass is running returns
 // (false, nil). The pass is detached from the request's cancellation and needs
@@ -227,6 +249,8 @@ func (s *Service) everythingRunContainers(ctx context.Context, runID string, set
 		return everythingDomainFault(domain, err)
 	}
 	targets = schedule.DomainRunTargets(targets, settings.PerItemSchedules)
+	skip := everythingSkips(ctx)
+	targets = slices.DeleteFunc(targets, func(t store.Target) bool { return skip[t.ID] })
 	if !schedule.DomainRunHasWork(targets) {
 		return everythingDomainIdle(domain)
 	}
@@ -274,6 +298,8 @@ func (s *Service) everythingRunVMs(ctx context.Context, runID string, settings s
 	}
 	store.SortVMTargetsForRun(vms)
 	vms = schedule.DomainRunVMTargets(vms, settings.PerItemSchedules)
+	skip := everythingSkips(ctx)
+	vms = slices.DeleteFunc(vms, func(v store.VMTarget) bool { return skip[v.ID] })
 	if !schedule.DomainRunHasVMWork(vms) {
 		return everythingDomainIdle(domain)
 	}
@@ -316,6 +342,8 @@ func (s *Service) everythingRunFiles(ctx context.Context, runID string, settings
 		return everythingDomainFault(domain, err)
 	}
 	sets = schedule.DomainRunFileSets(sets, settings.PerItemSchedules)
+	skip := everythingSkips(ctx)
+	sets = slices.DeleteFunc(sets, func(fs store.FileSet) bool { return skip[fs.ID] })
 	if !schedule.DomainRunHasFileWork(sets) {
 		return everythingDomainIdle(domain)
 	}
@@ -385,6 +413,9 @@ func (s *Service) everythingRunZFS(ctx context.Context, runID string, settings s
 // run has nothing to aggregate, so only WithRunGroup is applied.
 func (s *Service) everythingRunFlash(ctx context.Context, runID string) EverythingDomainResult {
 	const domain = "flash"
+	if everythingSkips(ctx)[store.FlashTargetID] {
+		return everythingDomainIdle(domain)
+	}
 	if _, err := s.BackupFlash(WithRunGroup(ctx, runID)); err != nil {
 		log.Printf("api: backup everything: flash: backup failed: %v", err)
 		return everythingSingletonFault(domain, err)
@@ -396,6 +427,9 @@ func (s *Service) everythingRunFlash(ctx context.Context, runID string) Everythi
 // closure.
 func (s *Service) everythingRunConfig(ctx context.Context, runID string) EverythingDomainResult {
 	const domain = "config"
+	if everythingSkips(ctx)[store.ConfigTargetID] {
+		return everythingDomainIdle(domain)
+	}
 	if _, err := s.BackupConfig(WithRunGroup(ctx, runID)); err != nil {
 		log.Printf("api: backup everything: config: backup failed: %v", err)
 		return everythingSingletonFault(domain, err)
@@ -403,9 +437,9 @@ func (s *Service) everythingRunConfig(ctx context.Context, runID string) Everyth
 	return EverythingDomainResult{Domain: domain, Attempted: 1}
 }
 
-// everythingDomainIdle is the result for a multi-item domain with nothing to
-// back up. Returning it early skips the Healthchecks ping pair, the prune and
-// the off-site copy, as the scheduler's DomainRunHasWork gate does. Otherwise
+// everythingDomainIdle is the result for a domain with nothing to back up.
+// Returning it early skips the Healthchecks ping pair, the prune and the
+// off-site copy, as the scheduler's DomainRunHasWork gate does. Otherwise
 // a box without VMs would ping "0 of 0 items succeeded" to the dead-man's
 // switch and turn a red check green.
 func everythingDomainIdle(domain string) EverythingDomainResult {
