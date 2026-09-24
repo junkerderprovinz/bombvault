@@ -158,7 +158,10 @@ func anomalyDays(days float64) string {
 	if days < 1 {
 		return "less than a day"
 	}
-	return fmt.Sprintf("%d days", int(math.Round(days)))
+	if n := int(math.Round(days)); n != 1 {
+		return fmt.Sprintf("%d days", n)
+	}
+	return "1 day"
 }
 
 // sendNotifications pushes the open findings that have not been reported at
