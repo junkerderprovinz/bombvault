@@ -51,7 +51,7 @@ func zvolTagOf(entry string) (path, tag string) {
 // one.
 func TestRestoreVMRestoresEachDiskFromItsOwnSnapshot(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		t.Skip("drives BackupVM/RestoreVM with a real OS temp dir as HostMountRoot (paths.Within needs a leading /) — see file header comment")
+		t.Skip("drives BackupVM/RestoreVM with a real OS temp dir as HostMountRoot: paths.Within needs a leading /")
 	}
 	svc, eng, _, root := vmZvolTestService(t, mixedVMDomainXML, &zvolTPMSSH{})
 
@@ -111,7 +111,7 @@ func TestRestoreVMRestoresEachDiskFromItsOwnSnapshot(t *testing.T) {
 			t.Fatalf("dumpRawCalls entry %q: path %q not one of this backup's own zvol stdin paths", call, gotPath)
 		}
 		if gotID != wantID {
-			t.Fatalf("dumpRawCalls entry %q: dumped from snapshot %q, want %q (this disk's OWN backup)", call, gotID, wantID)
+			t.Fatalf("dumpRawCalls entry %q: dumped from snapshot %q, want %q (this disk's own backup)", call, gotID, wantID)
 		}
 	}
 }
@@ -120,7 +120,7 @@ func TestRestoreVMRestoresEachDiskFromItsOwnSnapshot(t *testing.T) {
 // restore uses the one file-backed snapshot and dumps no zvol.
 func TestRestoreVMFileOnlyUsesSingleSnapshot(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		t.Skip("drives BackupVM/RestoreVM with a real OS temp dir as HostMountRoot (paths.Within needs a leading /) — see file header comment")
+		t.Skip("drives BackupVM/RestoreVM with a real OS temp dir as HostMountRoot: paths.Within needs a leading /")
 	}
 	svc, eng, _, root := vmZvolTestService(t, fileOnlyVMDomainXML, &zvolTPMSSH{})
 
@@ -150,7 +150,7 @@ func TestRestoreVMFileOnlyUsesSingleSnapshot(t *testing.T) {
 // with an empty snapshot ID instead of a guessed one.
 func TestRestoreVMMixedDiskHistoricalRunFallsBackWithoutInventingSnapshots(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		t.Skip("drives BackupVM/RestoreVM with a real OS temp dir as HostMountRoot (paths.Within needs a leading /) — see file header comment")
+		t.Skip("drives BackupVM/RestoreVM with a real OS temp dir as HostMountRoot: paths.Within needs a leading /")
 	}
 	svc, eng, _, root := vmZvolTestService(t, mixedVMDomainXML, &zvolTPMSSH{})
 
@@ -169,11 +169,11 @@ func TestRestoreVMMixedDiskHistoricalRunFallsBackWithoutInventingSnapshots(t *te
 		t.Fatalf("restored = %v, want exactly one RestorePath call against deadbeef12345678 (unchanged fallback)", eng.restored)
 	}
 	if len(eng.dumpRawCalls) != 2 {
-		t.Fatalf("dumpRawCalls = %v, want 2 (RestoreZvolDisk still runs per disk, unchanged since Task 2)", eng.dumpRawCalls)
+		t.Fatalf("dumpRawCalls = %v, want 2 (RestoreZvolDisk still runs per disk)", eng.dumpRawCalls)
 	}
 	for _, call := range eng.dumpRawCalls {
 		if !strings.HasPrefix(call, ":") {
-			t.Fatalf("dumpRawCalls entry %q: want an EMPTY snapshot id (no vmrun: group to resolve from) — got a non-empty one, meaning a snapshot id was invented", call)
+			t.Fatalf("dumpRawCalls entry %q: want an empty snapshot id (no vmrun: group to resolve from), got an invented one", call)
 		}
 	}
 }

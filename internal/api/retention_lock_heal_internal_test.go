@@ -8,19 +8,14 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
-// lockHealEngine exercises forgetWithLockHeal's contract after the #92/#94
-// reversal: a plain (removeAll=false) stale-orphan unlock always runs before
-// forget, and forget itself is called exactly once — there is no more
-// force-unlock-and-retry, because force-removing a lock cannot fix a live
-// holder and would strip protection off a running restic op. Non-overridden
-// engine calls panic loudly via the nil embed, proving the heal path touches
-// nothing else.
+// lockHealEngine records the Unlock and ForgetPolicy calls of
+// forgetWithLockHeal. Any other engine call panics on the nil embed.
 type lockHealEngine struct {
-	ResticEngine // nil — non-overridden calls panic loudly
-	forgetErr    error
-	forgetCalls  int
-	unlockCalls  int
-	unlockAll    bool
+	ResticEngine
+	forgetErr   error
+	forgetCalls int
+	unlockCalls int
+	unlockAll   bool
 }
 
 func (e *lockHealEngine) ForgetPolicy(_ context.Context, _ string, _ restic.RetentionPolicy, _ restic.Mode, _ []string, _ bool) error {
@@ -34,9 +29,6 @@ func (e *lockHealEngine) Unlock(_ context.Context, _ string, removeAll bool, _ r
 	return nil
 }
 
-// TestForgetWithLockHealClearsStaleOrphanThenForgetsOnce pins the happy path:
-// a plain stale-orphan unlock (removeAll=false) runs once before a single
-// forget call.
 func TestForgetWithLockHealClearsStaleOrphanThenForgetsOnce(t *testing.T) {
 	eng := &lockHealEngine{}
 	s := &Service{engine: eng}
@@ -53,12 +45,10 @@ func TestForgetWithLockHealClearsStaleOrphanThenForgetsOnce(t *testing.T) {
 	}
 }
 
-// TestForgetWithLockHealDoesNotForceUnlockOrRetryOnLockErr pins the reversal of
-// #94: a lock error from forget is no longer force-unlocked (removeAll=true)
-// and retried — it surfaces as-is so applyRetention notifies. Waiting out a
-// transient lock is now the engine's job (--retry-lock), and a lock that
-// survives the routine stale-clear is either a real orphan (already handled
-// above) or a live holder that force-unlock cannot safely clear.
+// A lock error from forget surfaces as-is so applyRetention notifies. restic's
+// --retry-lock waits out a transient lock, and a lock that survives the stale
+// clear belongs to a live holder that a forced unlock would strip of its
+// protection (#94).
 func TestForgetWithLockHealDoesNotForceUnlockOrRetryOnLockErr(t *testing.T) {
 	lockErr := errors.New(`restic forget failed: unable to create lock in backend: repository is already locked by PID 12339 on 87379e1b0ca6 by root (UID 0, GID 0)`)
 	eng := &lockHealEngine{forgetErr: lockErr}
@@ -76,9 +66,6 @@ func TestForgetWithLockHealDoesNotForceUnlockOrRetryOnLockErr(t *testing.T) {
 	}
 }
 
-// TestForgetWithLockHealPassesThroughOtherErrors: a non-lock error is likewise
-// passed straight through — nothing about forgetWithLockHeal is lock-error
-// specific anymore.
 func TestForgetWithLockHealPassesThroughOtherErrors(t *testing.T) {
 	boom := errors.New("repository does not exist")
 	eng := &lockHealEngine{forgetErr: boom}
