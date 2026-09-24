@@ -588,7 +588,10 @@ func (e *anomalyEngine) evaluateScope(ctx context.Context, sc anomalyScope, p *a
 	return nil
 }
 
-// volumeScopes are the volumes this installation has readings for.
+// volumeScopes are the volumes this installation has readings for, and the ones
+// a finding is still open about. A disk that was replaced stops reporting, and
+// its findings would otherwise stand until someone acknowledged hardware that
+// is gone.
 func (e *anomalyEngine) volumeScopes(p *anomalyPass) []anomalyScope {
 	histories, err := e.volumeHistories(p)
 	if err != nil {
@@ -596,8 +599,22 @@ func (e *anomalyEngine) volumeScopes(p *anomalyPass) []anomalyScope {
 		p.errs++
 		return nil
 	}
-	out := make([]anomalyScope, 0, len(histories))
+	volumes := map[string]struct{}{}
 	for volume := range histories {
+		volumes[volume] = struct{}{}
+	}
+	rows, _, err := e.svc.store.ListAnomalies(store.AnomalyFilter{
+		ScopeKind: anomalyScopeVolume, Limit: anomalyOpenRowLimit,
+	})
+	if err != nil {
+		log.Printf("anomaly: read the open capacity findings: %v", err)
+		p.errs++
+	}
+	for _, row := range rows {
+		volumes[row.ScopeID] = struct{}{}
+	}
+	out := make([]anomalyScope, 0, len(volumes))
+	for volume := range volumes {
 		out = append(out, anomalyScope{Kind: anomalyScopeVolume, ID: volume})
 	}
 	return out
@@ -660,13 +677,16 @@ func (e *anomalyEngine) evaluateVolume(ctx context.Context, sc anomalyScope, p *
 	if err != nil {
 		return err
 	}
-	history := histories[sc.ID]
-	if history == nil {
-		return nil
-	}
 	state, err := e.svc.store.AnomalyScopeState(sc.Kind, sc.ID)
 	if err != nil {
 		return err
+	}
+	// Without a reading inside the window there is no room to judge: the disk
+	// was replaced, or the repository that sat on it moved away.
+	history := histories[sc.ID]
+	if history == nil {
+		return e.apply(sc, applyFindings(scopeRef{Kind: sc.Kind, ID: sc.ID}, nil,
+			[]absence{{Metric: metricCapacityETA}, {Metric: metricCapacityLow}}, state, p.now))
 	}
 	growth := e.repoGrowth(p)
 	sens := resolveSensitivity("", p.settings.AnomalySensitivity)

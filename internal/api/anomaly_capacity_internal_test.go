@@ -148,15 +148,47 @@ func TestCapacityFindingsComeFromTheSamples(t *testing.T) {
 		t.Fatalf("pass: %v", err)
 	}
 
-	rows, _, err := f.st.ListAnomalies(store.AnomalyFilter{ScopeKind: anomalyScopeVolume, ScopeID: "dev:801"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(rows) == 0 {
+	if len(f.volumeRows(t)) == 0 {
 		t.Fatal("a volume losing ten gibibytes a day raised nothing")
 	}
 	if f.e.summary().Open.Critical+f.e.summary().Open.Warning == 0 {
 		t.Fatalf("the summary does not carry the capacity finding: %+v", f.e.summary())
+	}
+}
+
+// A repository that moved to another disk leaves its old volume without
+// readings. The findings about it are about hardware nobody can look at any
+// more, so the next pass ends them instead of leaving them standing.
+func TestCapacityFindingsEndWhenTheVolumeStopsReporting(t *testing.T) {
+	f := newCapacityFixture(t)
+	total := int64(1) << 40
+	for i := range 20 {
+		if err := f.st.AddVolumeSample(store.VolumeSample{
+			Volume: "dev:801", At: f.now - int64(20-i)*86400,
+			FreeBytes: 200<<30 - int64(i)*10<<30, TotalBytes: &total,
+			Domains: []string{"containers"}, Source: "statfs",
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	f.e.MarkVolumeDirty()
+	if err := f.e.passOnce(context.Background()); err != nil {
+		t.Fatalf("pass: %v", err)
+	}
+	if len(f.volumeRows(t)) == 0 {
+		t.Fatal("a volume losing ten gibibytes a day raised nothing")
+	}
+
+	f.now += (capacityWindowDays + 1) * 86400
+	f.e.MarkVolumeDirty()
+	if err := f.e.passOnce(context.Background()); err != nil {
+		t.Fatalf("second pass: %v", err)
+	}
+
+	for _, row := range f.volumeRows(t) {
+		if row.RecoveredAt == 0 {
+			t.Fatalf("a finding about a disk that no longer reports still stands: %+v", row)
+		}
 	}
 }
 
@@ -277,6 +309,15 @@ func (f *capacityFixture) namedRepo(t *testing.T, id, loc string) {
 			t.Fatal(err)
 		}
 	}
+}
+
+func (f *capacityFixture) volumeRows(t *testing.T) []store.Anomaly {
+	t.Helper()
+	rows, _, err := f.st.ListAnomalies(store.AnomalyFilter{ScopeKind: anomalyScopeVolume, ScopeID: "dev:801"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return rows
 }
 
 func (f *capacityFixture) samples(t *testing.T) []store.VolumeSample {
