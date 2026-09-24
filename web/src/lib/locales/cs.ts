@@ -1736,6 +1736,11 @@ const cs: Partial<Translations> = {
   "activityLog.lineEmpty": "zatím nic",
   "activityLog.dayFilterChip": "Zobrazeno: {date}",
   "activityLog.clearDayFilter": "Zrušit filtr dne",
+  "activityLog.viaMcp": "{line} (přes MCP, {key})",
+  "activityLog.viaMcpRevoked": "{line} (přes MCP, {key}, odvolaný)",
+  "activityLog.viaMcpUnknownKey": "{line} (přes MCP)",
+  "activityLog.viaMcpLine": "Spuštěno přes MCP klíčem {key}",
+  "activityLog.viaMcpLineUnknownKey": "Spuštěno přes MCP",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

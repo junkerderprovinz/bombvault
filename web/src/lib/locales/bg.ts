@@ -1962,6 +1962,11 @@ const bg: Partial<Translations> = {
   "activityLog.lineEmpty": "все още нищо",
   "activityLog.dayFilterChip": "Показва се {date}",
   "activityLog.clearDayFilter": "Изчисти филтъра за деня",
+  "activityLog.viaMcp": "{line} (през MCP, {key})",
+  "activityLog.viaMcpRevoked": "{line} (през MCP, {key}, отменен)",
+  "activityLog.viaMcpUnknownKey": "{line} (през MCP)",
+  "activityLog.viaMcpLine": "Стартирано през MCP с ключа {key}",
+  "activityLog.viaMcpLineUnknownKey": "Стартирано през MCP",
 
   // Export / import settings
   "settingsIO.title": "Експорт / импорт на настройки",

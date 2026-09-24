@@ -1741,6 +1741,11 @@ const ro: Partial<Translations> = {
   "activityLog.lineEmpty": "nimic încă",
   "activityLog.dayFilterChip": "Se afișează {date}",
   "activityLog.clearDayFilter": "Șterge filtrul de zi",
+  "activityLog.viaMcp": "{line} (prin MCP, {key})",
+  "activityLog.viaMcpRevoked": "{line} (prin MCP, {key}, revocată)",
+  "activityLog.viaMcpUnknownKey": "{line} (prin MCP)",
+  "activityLog.viaMcpLine": "Pornit prin MCP cu cheia {key}",
+  "activityLog.viaMcpLineUnknownKey": "Pornit prin MCP",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

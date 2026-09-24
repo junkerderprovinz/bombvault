@@ -1738,6 +1738,11 @@ const fi: Partial<Translations> = {
   "activityLog.lineEmpty": "ei vielä mitään",
   "activityLog.dayFilterChip": "Näytetään {date}",
   "activityLog.clearDayFilter": "Poista päiväsuodatin",
+  "activityLog.viaMcp": "{line} (MCP:n kautta, {key})",
+  "activityLog.viaMcpRevoked": "{line} (MCP:n kautta, {key}, kumottu)",
+  "activityLog.viaMcpUnknownKey": "{line} (MCP:n kautta)",
+  "activityLog.viaMcpLine": "Käynnistetty MCP:n kautta avaimella {key}",
+  "activityLog.viaMcpLineUnknownKey": "Käynnistetty MCP:n kautta",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

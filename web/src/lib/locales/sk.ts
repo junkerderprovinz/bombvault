@@ -1962,6 +1962,11 @@ const sk: Partial<Translations> = {
   "activityLog.lineEmpty": "zatiaľ nič",
   "activityLog.dayFilterChip": "Zobrazuje sa {date}",
   "activityLog.clearDayFilter": "Vymazať filter dňa",
+  "activityLog.viaMcp": "{line} (cez MCP, {key})",
+  "activityLog.viaMcpRevoked": "{line} (cez MCP, {key}, zrušený)",
+  "activityLog.viaMcpUnknownKey": "{line} (cez MCP)",
+  "activityLog.viaMcpLine": "Spustené cez MCP kľúčom {key}",
+  "activityLog.viaMcpLineUnknownKey": "Spustené cez MCP",
 
   // Export / import settings
   "settingsIO.title": "Exportovať / importovať nastavenia",

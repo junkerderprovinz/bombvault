@@ -2341,6 +2341,11 @@ export const en = {
   // log to that day; the chip shows the active day and its × clears it).
   "activityLog.dayFilterChip": "Showing {date}",
   "activityLog.clearDayFilter": "Clear day filter",
+  "activityLog.viaMcp": "{line} (via MCP, {key})",
+  "activityLog.viaMcpRevoked": "{line} (via MCP, {key}, revoked)",
+  "activityLog.viaMcpUnknownKey": "{line} (via MCP)",
+  "activityLog.viaMcpLine": "Started through MCP with the key {key}",
+  "activityLog.viaMcpLineUnknownKey": "Started through MCP",
 
   // Export / import settings (portable config file)
   "settingsIO.title": "Export / import settings",
@@ -4627,6 +4632,11 @@ export const de: Translations = {
   "activityLog.lineEmpty": "noch nichts",
   "activityLog.dayFilterChip": "Zeige {date}",
   "activityLog.clearDayFilter": "Tagesfilter entfernen",
+  "activityLog.viaMcp": "{line} (über MCP, {key})",
+  "activityLog.viaMcpRevoked": "{line} (über MCP, {key}, widerrufen)",
+  "activityLog.viaMcpUnknownKey": "{line} (über MCP)",
+  "activityLog.viaMcpLine": "Über MCP mit dem Schlüssel {key} gestartet",
+  "activityLog.viaMcpLineUnknownKey": "Über MCP gestartet",
 
   // Einstellungen exportieren / importieren (portable Konfigurationsdatei)
   "settingsIO.title": "Einstellungen exportieren / importieren",

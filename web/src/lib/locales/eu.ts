@@ -1962,6 +1962,11 @@ const eu: Partial<Translations> = {
   "activityLog.lineEmpty": "oraindik ezer ez",
   "activityLog.dayFilterChip": "{date} erakusten",
   "activityLog.clearDayFilter": "Garbitu eguneko iragazkia",
+  "activityLog.viaMcp": "{line} (MCP bidez, {key})",
+  "activityLog.viaMcpRevoked": "{line} (MCP bidez, {key}, baliogabetua)",
+  "activityLog.viaMcpUnknownKey": "{line} (MCP bidez)",
+  "activityLog.viaMcpLine": "MCP bidez abiarazia {key} gakoarekin",
+  "activityLog.viaMcpLineUnknownKey": "MCP bidez abiarazia",
 
   // Export / import settings
   "settingsIO.title": "Esportatu / inportatu ezarpenak",

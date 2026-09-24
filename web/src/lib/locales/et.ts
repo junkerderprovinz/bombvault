@@ -1962,6 +1962,11 @@ const et: Partial<Translations> = {
   "activityLog.lineEmpty": "veel midagi pole",
   "activityLog.dayFilterChip": "Näidatakse {date}",
   "activityLog.clearDayFilter": "Tühjenda päevafilter",
+  "activityLog.viaMcp": "{line} (MCP kaudu, {key})",
+  "activityLog.viaMcpRevoked": "{line} (MCP kaudu, {key}, tühistatud)",
+  "activityLog.viaMcpUnknownKey": "{line} (MCP kaudu)",
+  "activityLog.viaMcpLine": "Käivitatud MCP kaudu võtmega {key}",
+  "activityLog.viaMcpLineUnknownKey": "Käivitatud MCP kaudu",
 
   // Export / import settings
   "settingsIO.title": "Ekspordi / impordi seaded",

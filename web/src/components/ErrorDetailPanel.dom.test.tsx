@@ -141,3 +141,27 @@ describe("a failed database dump in the panel", () => {
     expect(panel).toContain(`${en["run.kindBackup"]}: boom`);
   });
 });
+
+describe("a failure an assistant caused", () => {
+  it("names the MCP key under a failed run", async () => {
+    renderPanel([run({ id: "m1", startedVia: "mcp", startedViaKey: "k1", startedViaLabel: "office laptop" })]);
+
+    await waitFor(() => expect(listRuns).toHaveBeenCalled());
+    const panel = screen.getByRole("dialog").textContent ?? "";
+    expect(panel).toContain(en["activityLog.viaMcpLine"].replace("{key}", "office laptop"));
+  });
+
+  it("says only that MCP started it when the key is gone", async () => {
+    renderPanel([run({ id: "m2", startedVia: "mcp", startedViaKey: "k1" })]);
+
+    await waitFor(() => expect(listRuns).toHaveBeenCalled());
+    expect(screen.getByRole("dialog").textContent).toContain(en["activityLog.viaMcpLineUnknownKey"]);
+  });
+
+  it("leaves a run the web interface started alone", async () => {
+    renderPanel([run()]);
+
+    await waitFor(() => expect(listRuns).toHaveBeenCalled());
+    expect(screen.getByRole("dialog").textContent).not.toContain(en["activityLog.viaMcpLineUnknownKey"]);
+  });
+});

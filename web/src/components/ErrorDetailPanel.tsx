@@ -45,6 +45,8 @@ interface ErrorGroup {
   domains: string[]; // unique singular domains present in the group
   latest: number; // newest startedAt across the group (unix seconds)
   count: number; // number of failed runs in the group
+  viaMcp: boolean; // at least one member was started by an assistant
+  mcpLabels: string[]; // the MCP keys behind those members, without the purged ones
 }
 
 export function ErrorDetailPanel({
@@ -132,13 +134,17 @@ export function ErrorDetailPanel({
       const key = `${r.kind} ${message}`;
       let g = byMsg.get(key);
       if (!g) {
-        g = { key, kind: r.kind, message, ids: [], targets: [], domains: [], latest: 0, count: 0 };
+        g = { key, kind: r.kind, message, ids: [], targets: [], domains: [], latest: 0, count: 0, viaMcp: false, mcpLabels: [] };
         byMsg.set(key, g);
       }
       g.ids.push(r.id);
       g.count++;
       if (r.target && !g.targets.includes(r.target)) g.targets.push(r.target);
       if (r.domain && !g.domains.includes(r.domain)) g.domains.push(r.domain);
+      if (r.startedVia === "mcp") {
+        g.viaMcp = true;
+        if (r.startedViaLabel && !g.mcpLabels.includes(r.startedViaLabel)) g.mcpLabels.push(r.startedViaLabel);
+      }
       if (r.startedAt > g.latest) g.latest = r.startedAt;
     }
     return Array.from(byMsg.values()).sort((a, b) => b.latest - a.latest);
@@ -278,6 +284,15 @@ export function ErrorDetailPanel({
                       {g.targets.join(", ")}
                       {g.domains.length > 0 ? ` · ${g.domains.map((d) => domainLabel(d)).join(", ")}` : ""}
                     </span>
+                    {/* A failure an assistant caused overnight belongs where
+                        the operator first looks, not only in the activity log. */}
+                    {g.viaMcp && (
+                      <span className="wrap-break-word">
+                        {g.mcpLabels.length > 0
+                          ? t("activityLog.viaMcpLine").replace("{key}", g.mcpLabels.join(", "))
+                          : t("activityLog.viaMcpLineUnknownKey")}
+                      </span>
+                    )}
                     <span title={formatTs(g.latest)}>{relativeTime(t, g.latest)}</span>
                   </div>
                 </div>

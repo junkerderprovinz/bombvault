@@ -1962,6 +1962,11 @@ const gl: Partial<Translations> = {
   "activityLog.lineEmpty": "aínda nada",
   "activityLog.dayFilterChip": "Mostrando {date}",
   "activityLog.clearDayFilter": "Limpar filtro do día",
+  "activityLog.viaMcp": "{line} (mediante MCP, {key})",
+  "activityLog.viaMcpRevoked": "{line} (mediante MCP, {key}, revogada)",
+  "activityLog.viaMcpUnknownKey": "{line} (mediante MCP)",
+  "activityLog.viaMcpLine": "Iniciado mediante MCP coa chave {key}",
+  "activityLog.viaMcpLineUnknownKey": "Iniciado mediante MCP",
 
   // Export / import settings
   "settingsIO.title": "Exportar / importar configuración",

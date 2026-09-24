@@ -1962,6 +1962,11 @@ const hi: Partial<Translations> = {
   "activityLog.lineEmpty": "अभी तक कुछ नहीं",
   "activityLog.dayFilterChip": "{date} दिखाया जा रहा है",
   "activityLog.clearDayFilter": "दिन का फ़िल्टर हटाएँ",
+  "activityLog.viaMcp": "{line} (MCP के ज़रिए, {key})",
+  "activityLog.viaMcpRevoked": "{line} (MCP के ज़रिए, {key}, निरस्त)",
+  "activityLog.viaMcpUnknownKey": "{line} (MCP के ज़रिए)",
+  "activityLog.viaMcpLine": "MCP के ज़रिए कुंजी {key} से शुरू किया गया",
+  "activityLog.viaMcpLineUnknownKey": "MCP के ज़रिए शुरू किया गया",
 
   // Export / import settings
   "settingsIO.title": "सेटिंग्स एक्सपोर्ट / इंपोर्ट करें",

@@ -819,3 +819,46 @@ describe("dbdump runs", () => {
     expect(filtered.map((l) => l.id)).toEqual(["run:s1", "run:i1"]);
   });
 });
+
+describe("a run an assistant started", () => {
+  const viaMcp = (over: Partial<Run>): Run =>
+    makeRun({ startedVia: "mcp", startedViaKey: "k1", startedViaLabel: "office laptop", ...over });
+
+  it("appends via MCP with the key label", () => {
+    const lines = buildLogLines([viaMcp({})], {}, [], resolveName, 2_000_000);
+    expect(lines[0].text).toMatch(/^activityLog\.viaMcp /);
+    expect(lines[0].text).toContain("key=office laptop");
+    expect(lines[0].text).toContain("line=activityLog.lineBackupSuccess");
+
+    // A domain-wide operation an MCP start caused says so as well.
+    const prune = buildLogLines(
+      [viaMcp({ id: "p1", kind: "prune", targetId: "containers" })],
+      {},
+      [],
+      resolveName,
+      2_000_000
+    );
+    expect(prune[0].text).toMatch(/^activityLog\.viaMcp /);
+    expect(prune[0].text).toContain("line=activityLog.linePruneSuccess");
+  });
+
+  it("marks a revoked key", () => {
+    const lines = buildLogLines([viaMcp({ startedViaRevoked: true })], {}, [], resolveName, 2_000_000);
+    expect(lines[0].text).toContain("activityLog.viaMcpRevoked");
+    expect(lines[0].text).toContain("key=office laptop");
+  });
+
+  it("without a label", () => {
+    const lines = buildLogLines([viaMcp({ startedViaLabel: "" })], {}, [], resolveName, 2_000_000);
+    expect(lines[0].text).toContain("activityLog.viaMcpUnknownKey");
+    expect(lines[0].text).not.toContain("key=");
+  });
+
+  it("leaves a scheduled run and a live line untouched", () => {
+    const progress: ProgressMap = {
+      "container:plex": { phase: "backup", percent: 20, active: true, lastSeen: 5_000_000 },
+    };
+    const lines = buildLogLines([makeRun({ id: "s1", finishedAt: 900 })], progress, [], resolveName, 5_000_000);
+    expect(lines.map((l) => l.text).join(" ")).not.toContain("viaMcp");
+  });
+});

@@ -1946,6 +1946,11 @@ const sr: Partial<Translations> = {
   "activityLog.lineEmpty": "још ништа",
   "activityLog.dayFilterChip": "Приказано {date}",
   "activityLog.clearDayFilter": "Очисти филтер дана",
+  "activityLog.viaMcp": "{line} (преко MCP, {key})",
+  "activityLog.viaMcpRevoked": "{line} (преко MCP, {key}, опозван)",
+  "activityLog.viaMcpUnknownKey": "{line} (преко MCP)",
+  "activityLog.viaMcpLine": "Покренуто преко MCP кључем {key}",
+  "activityLog.viaMcpLineUnknownKey": "Покренуто преко MCP",
 
   // Export / import settings
   "settingsIO.title": "Извоз/увоз подешавања",

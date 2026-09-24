@@ -1738,6 +1738,11 @@ const el: Partial<Translations> = {
   "activityLog.lineEmpty": "τίποτα ακόμα",
   "activityLog.dayFilterChip": "Εμφάνιση: {date}",
   "activityLog.clearDayFilter": "Καθαρισμός φίλτρου ημέρας",
+  "activityLog.viaMcp": "{line} (μέσω MCP, {key})",
+  "activityLog.viaMcpRevoked": "{line} (μέσω MCP, {key}, ανακλήθηκε)",
+  "activityLog.viaMcpUnknownKey": "{line} (μέσω MCP)",
+  "activityLog.viaMcpLine": "Ξεκίνησε μέσω MCP με το κλειδί {key}",
+  "activityLog.viaMcpLineUnknownKey": "Ξεκίνησε μέσω MCP",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

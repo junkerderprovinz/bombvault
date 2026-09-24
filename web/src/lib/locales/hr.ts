@@ -1962,6 +1962,11 @@ const hr: Partial<Translations> = {
   "activityLog.lineEmpty": "još ništa",
   "activityLog.dayFilterChip": "Prikazuje se {date}",
   "activityLog.clearDayFilter": "Ukloni filtar dana",
+  "activityLog.viaMcp": "{line} (putem MCP-a, {key})",
+  "activityLog.viaMcpRevoked": "{line} (putem MCP-a, {key}, opozvan)",
+  "activityLog.viaMcpUnknownKey": "{line} (putem MCP-a)",
+  "activityLog.viaMcpLine": "Pokrenuto putem MCP-a ključem {key}",
+  "activityLog.viaMcpLineUnknownKey": "Pokrenuto putem MCP-a",
 
   // Export / import settings
   "settingsIO.title": "Izvoz / uvoz postavki",

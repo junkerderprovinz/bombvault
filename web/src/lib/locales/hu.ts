@@ -1741,6 +1741,11 @@ const hu: Partial<Translations> = {
   "activityLog.lineEmpty": "még semmi",
   "activityLog.dayFilterChip": "Megjelenítve: {date}",
   "activityLog.clearDayFilter": "Napszűrő törlése",
+  "activityLog.viaMcp": "{line} (MCP-n keresztül, {key})",
+  "activityLog.viaMcpRevoked": "{line} (MCP-n keresztül, {key}, visszavonva)",
+  "activityLog.viaMcpUnknownKey": "{line} (MCP-n keresztül)",
+  "activityLog.viaMcpLine": "MCP-n keresztül indítva a(z) {key} kulccsal",
+  "activityLog.viaMcpLineUnknownKey": "MCP-n keresztül indítva",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

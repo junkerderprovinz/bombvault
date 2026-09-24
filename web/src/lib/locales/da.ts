@@ -1738,6 +1738,11 @@ const da: Partial<Translations> = {
   "activityLog.lineEmpty": "intet endnu",
   "activityLog.dayFilterChip": "Viser {date}",
   "activityLog.clearDayFilter": "Ryd dagsfilteret",
+  "activityLog.viaMcp": "{line} (via MCP, {key})",
+  "activityLog.viaMcpRevoked": "{line} (via MCP, {key}, tilbagekaldt)",
+  "activityLog.viaMcpUnknownKey": "{line} (via MCP)",
+  "activityLog.viaMcpLine": "Startet via MCP med nøglen {key}",
+  "activityLog.viaMcpLineUnknownKey": "Startet via MCP",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

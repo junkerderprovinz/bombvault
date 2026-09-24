@@ -1962,6 +1962,11 @@ const lv: Partial<Translations> = {
   "activityLog.lineEmpty": "vēl nekā",
   "activityLog.dayFilterChip": "Rāda {date}",
   "activityLog.clearDayFilter": "Notīrīt dienas filtru",
+  "activityLog.viaMcp": "{line} (caur MCP, {key})",
+  "activityLog.viaMcpRevoked": "{line} (caur MCP, {key}, atsaukta)",
+  "activityLog.viaMcpUnknownKey": "{line} (caur MCP)",
+  "activityLog.viaMcpLine": "Palaists caur MCP ar atslēgu {key}",
+  "activityLog.viaMcpLineUnknownKey": "Palaists caur MCP",
 
   // Export / import settings
   "settingsIO.title": "Eksportēt / importēt iestatījumus",

@@ -1730,6 +1730,11 @@ const zh: Partial<Translations> = {
   "activityLog.lineEmpty": "暂无内容",
   "activityLog.dayFilterChip": "正在显示 {date}",
   "activityLog.clearDayFilter": "清除日期筛选",
+  "activityLog.viaMcp": "{line}（通过 MCP，{key}）",
+  "activityLog.viaMcpRevoked": "{line}（通过 MCP，{key}，已吊销）",
+  "activityLog.viaMcpUnknownKey": "{line}（通过 MCP）",
+  "activityLog.viaMcpLine": "通过 MCP 使用密钥 {key} 启动",
+  "activityLog.viaMcpLineUnknownKey": "通过 MCP 启动",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)

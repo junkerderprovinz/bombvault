@@ -1738,6 +1738,11 @@ const sv: Partial<Translations> = {
   "activityLog.lineEmpty": "inget än",
   "activityLog.dayFilterChip": "Visar {date}",
   "activityLog.clearDayFilter": "Rensa dagsfiltret",
+  "activityLog.viaMcp": "{line} (via MCP, {key})",
+  "activityLog.viaMcpRevoked": "{line} (via MCP, {key}, återkallad)",
+  "activityLog.viaMcpUnknownKey": "{line} (via MCP)",
+  "activityLog.viaMcpLine": "Startad via MCP med nyckeln {key}",
+  "activityLog.viaMcpLineUnknownKey": "Startad via MCP",
 
   // i18n wave — Folders rename companions + new keys (E1–E3, activity-log
   // finished-line texts, update-check line, digest/cache cards, revoke-all)
