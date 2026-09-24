@@ -1651,7 +1651,7 @@ const tr: Partial<Translations> = {
   "repos.offPremisesHint": "Kartlardaki siteler ve 3-2-1 için kendi başına bir site olarak sayılır. Kopyalar etkilenmez. Aynı binadaki bir rest-server'da bu kapalı olmalı.",
 
   // Refusals
-  "placementCode.unreadable": "Yerleştirme kuralları okunamadı, bu yüzden tekrar okunabilene kadar hiçbir şey kopyalanmıyor.",
+  "placementCode.unreadable": "Yerleşim kuralları okunamadı, bu yüzden tekrar okunabilene kadar hiçbir şey kopyalanmıyor.",
   "placementCode.invalid": "Bu yerleştirme seçimi geçerli değil.",
   "placementCode.copiesNotAllowed": "Uzak veya doğrudan bir depodaki öge kopya almaz.",
   "placementCode.unknownTarget": "Bu dış hedef bu alanda yok.",
@@ -1820,7 +1820,7 @@ const tr: Partial<Translations> = {
   "placement.planNotBackedUpOff": "Yedeklenmiyor: varsayılan, kapalı olan {home} konumunu gösteriyor.",
   "placement.planNotBackedUpMissing": "Yedeklenmiyor: varsayılan, artık var olmayan bir depoyu gösteriyor.",
   "placement.planCopied": "{targets} konumuna kopyalandı.",
-  "placement.planNoCopy": "Tesis dışında kopya yok.",
+  "placement.planNoCopy": "Bina dışında kopya yok.",
   "placement.planNoTarget": "{domain} için site dışı kopya kurulmadı.",
   "placement.sitesOne": "Bir konumda",
   "placement.sites": "{n} konumda",

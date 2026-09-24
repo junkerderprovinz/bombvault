@@ -801,7 +801,7 @@ const lt: Partial<Translations> = {
   "ransomware.replicationCurrent": "replikavimas atnaujintas",
   "ransomware.replicationOverdue": "replikavimas vėluoja",
   "ransomware.replicationNever": "dar nereplikuota",
-  "ransomware.replicationPaused": "kopijavimas kitoje vietoje pristabdytas: patvirtinkite vietą",
+  "ransomware.replicationPaused": "kopijavimas kitoje vietoje pristabdytas: patvirtinkite išdėstymą",
   "ransomware.drillOffsite": "atkūrimo patikra (nuotolinė)",
   "ransomware.drillOverdue": "atkūrimo patikra vėluoja",
   "ransomware.drillFailed": "atkūrimo patikra nepavyko",
@@ -1662,7 +1662,7 @@ const lt: Partial<Translations> = {
   "repos.offPremisesHint": "Kortelėse skaičiuojant vietas ir 3-2-1 taisyklę, laikoma atskira vieta. Kopijoms tai įtakos neturi. To paties pastato rest-server turėtų turėti šitai išjungtą.",
 
   // Refusals
-  "placementCode.unreadable": "Nepavyko perskaityti vietos nustatymo taisyklių, todėl niekas nekopijuojama, kol jų vėl nepavyks perskaityti.",
+  "placementCode.unreadable": "Nepavyko perskaityti išdėstymo taisyklių, todėl niekas nekopijuojama, kol jų vėl nepavyks perskaityti.",
   "placementCode.invalid": "Šis vietos pasirinkimas negalioja.",
   "placementCode.copiesNotAllowed": "Elementas nuotolinėje ar tiesioginėje saugykloje kopijų negauna.",
   "placementCode.unknownTarget": "Ši nuotolinė paskirtis šioje srityje neegzistuoja.",
@@ -1831,7 +1831,7 @@ const lt: Partial<Translations> = {
   "placement.planNotBackedUpOff": "Nekuriama atsarginė kopija: numatytoji rodo į {home}, kuri yra išjungta.",
   "placement.planNotBackedUpMissing": "Nekuriama atsarginė kopija: numatytoji rodo į saugyklą, kurios nebėra.",
   "placement.planCopied": "Nukopijuota į {targets}.",
-  "placement.planNoCopy": "Nėra kopijos už patalpų ribų.",
+  "placement.planNoCopy": "Nėra kopijos už pastato ribų.",
   "placement.planNoTarget": "{domain} nenustatyta kopija kitoje vietoje.",
   "placement.sitesOne": "Vienoje vietoje",
   "placement.sites": "{n} vietose",

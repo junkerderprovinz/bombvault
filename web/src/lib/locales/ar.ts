@@ -1092,7 +1092,7 @@ const ar: Partial<Translations> = {
   "ransomware.replicationCurrent": "النسخ محدَّث",
   "ransomware.replicationOverdue": "النسخ متأخر",
   "ransomware.replicationNever": "لم يُنسخ بعد",
-  "ransomware.replicationPaused": "النسخ خارج الموقع متوقف مؤقتًا: أكّد مكان الحفظ",
+  "ransomware.replicationPaused": "النسخ خارج الموقع متوقف مؤقتًا: أكّد الموضع",
   "ransomware.drillOffsite": "تمرين الاستعادة (خارج الموقع)",
   "ransomware.drillOverdue": "تمرين الاستعادة متأخر",
   "ransomware.drillFailed": "فشل تمرين الاستعادة",
@@ -1654,7 +1654,7 @@ const ar: Partial<Translations> = {
   "repos.offPremisesHint": "يُحتسب موقعًا قائمًا بذاته لأغراض المواقع وقاعدة 3-2-1 في البطاقات. لا يؤثر ذلك على النسخ. يجب إيقاف هذا لخادم rest-server في المبنى نفسه.",
 
   // Refusals
-  "placementCode.unreadable": "تعذّرت قراءة قواعد وضع النسخ، لذا لا يُنسخ شيء حتى تصبح قابلة للقراءة مرة أخرى.",
+  "placementCode.unreadable": "تعذّرت قراءة قواعد الموضع، لذا لا يُنسخ شيء حتى تصبح قابلة للقراءة مرة أخرى.",
   "placementCode.invalid": "اختيار الوضع هذا غير صالح.",
   "placementCode.copiesNotAllowed": "عنصر في مستودع بعيد أو مباشر لا يحصل على نسخ.",
   "placementCode.unknownTarget": "هذا الهدف الخارجي غير موجود في هذا النطاق.",
@@ -1823,7 +1823,7 @@ const ar: Partial<Translations> = {
   "placement.planNotBackedUpOff": "لا يُنسخ احتياطيًا: يشير الافتراضي إلى {home}، وهو مطفأ.",
   "placement.planNotBackedUpMissing": "لا يُنسخ احتياطيًا: يشير الافتراضي إلى مستودع لم يعد موجودًا.",
   "placement.planCopied": "نُسخ إلى {targets}.",
-  "placement.planNoCopy": "لا نسخة خارج الموقع.",
+  "placement.planNoCopy": "لا نسخة خارج المبنى.",
   "placement.planNoTarget": "لا توجد نسخة خارج الموقع معدّة لـ {domain}.",
   "placement.sitesOne": "في موقع واحد",
   "placement.sites": "في {n} مواقع",

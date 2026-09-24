@@ -1061,7 +1061,7 @@ const pl: Partial<Translations> = {
   "ransomware.replicationCurrent": "replikacja aktualna",
   "ransomware.replicationOverdue": "replikacja zaległa",
   "ransomware.replicationNever": "jeszcze nie replikowano",
-  "ransomware.replicationPaused": "kopiowanie poza lokalizację wstrzymane: potwierdź umiejscowienie",
+  "ransomware.replicationPaused": "kopiowanie poza lokalizację wstrzymane: potwierdź rozmieszczenie",
   "ransomware.drillOffsite": "próba przywracania (poza siedzibą)",
   "ransomware.drillOverdue": "próba przywracania zaległa",
   "ransomware.drillFailed": "próba przywracania nieudana",
@@ -1646,7 +1646,7 @@ const pl: Partial<Translations> = {
   "repos.offPremisesHint": "Liczy się jako osobna lokalizacja na potrzeby lokalizacji i 3-2-1 na kartach. Nie wpływa to na kopie. Rest-server w tym samym budynku powinien mieć to wyłączone.",
 
   // Refusals
-  "placementCode.unreadable": "Reguł umieszczenia nie udało się odczytać, więc nic nie jest kopiowane, dopóki znowu nie da się ich odczytać.",
+  "placementCode.unreadable": "Reguł rozmieszczenia nie udało się odczytać, więc nic nie jest kopiowane, dopóki znowu nie da się ich odczytać.",
   "placementCode.invalid": "Ten wybór umieszczenia jest nieprawidłowy.",
   "placementCode.copiesNotAllowed": "Element w repozytorium zdalnym lub bezpośrednim nie otrzymuje kopii.",
   "placementCode.unknownTarget": "Ten zdalny cel nie istnieje w tej domenie.",
@@ -1815,7 +1815,7 @@ const pl: Partial<Translations> = {
   "placement.planNotBackedUpOff": "Nie jest tworzona kopia zapasowa: wartość domyślna wskazuje na {home}, które jest wyłączone.",
   "placement.planNotBackedUpMissing": "Nie jest tworzona kopia zapasowa: wartość domyślna wskazuje na repozytorium, którego już nie ma.",
   "placement.planCopied": "Skopiowano do {targets}.",
-  "placement.planNoCopy": "Brak kopii poza siedzibą.",
+  "placement.planNoCopy": "Brak kopii poza obiektem.",
   "placement.planNoTarget": "Dla {domain} nie skonfigurowano kopii poza lokalizacją.",
   "placement.sitesOne": "W jednej lokalizacji",
   "placement.sites": "W {n} lokalizacjach",

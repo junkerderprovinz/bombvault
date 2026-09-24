@@ -1820,7 +1820,7 @@ const da: Partial<Translations> = {
   "placement.planNotBackedUpOff": "Sikkerhedskopieres ikke: standarden peger på {home}, som er slukket.",
   "placement.planNotBackedUpMissing": "Sikkerhedskopieres ikke: standarden peger på et depot, der ikke længere findes.",
   "placement.planCopied": "Kopieret til {targets}.",
-  "placement.planNoCopy": "Ingen kopi uden for huset.",
+  "placement.planNoCopy": "Ingen kopi uden for bygningen.",
   "placement.planNoTarget": "Der er ikke sat en ekstern kopi op for {domain}.",
   "placement.sitesOne": "På ét sted",
   "placement.sites": "På {n} steder",

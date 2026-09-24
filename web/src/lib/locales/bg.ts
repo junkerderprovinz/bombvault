@@ -1662,7 +1662,7 @@ const bg: Partial<Translations> = {
   "repos.offPremisesHint": "Смята се за отделен обект за целите на обектите и 3-2-1 в картите. Копията не се засягат. rest-server в същата сграда трябва да е с изключена тази настройка.",
 
   // Refusals
-  "placementCode.unreadable": "Правилата за разполагане не можаха да се прочетат, затова нищо не се копира, докато отново не се прочетат.",
+  "placementCode.unreadable": "Правилата за разположение не можаха да се прочетат, затова нищо не се копира, докато отново не се прочетат.",
   "placementCode.invalid": "Този избор на разполагане не е валиден.",
   "placementCode.copiesNotAllowed": "Елемент в отдалечено или директно хранилище не получава копия.",
   "placementCode.unknownTarget": "Тази цел извън обекта не съществува в този домейн.",
@@ -1831,7 +1831,7 @@ const bg: Partial<Translations> = {
   "placement.planNotBackedUpOff": "Не се архивира: подразбирането сочи към {home}, което е изключено.",
   "placement.planNotBackedUpMissing": "Не се архивира: подразбирането сочи към хранилище, което вече не съществува.",
   "placement.planCopied": "Копирано в {targets}.",
-  "placement.planNoCopy": "Няма копие извън обекта.",
+  "placement.planNoCopy": "Няма копие извън сградата.",
   "placement.planNoTarget": "За {domain} не е зададено копие извън обекта.",
   "placement.sitesOne": "На едно място",
   "placement.sites": "На {n} места",

@@ -1818,7 +1818,7 @@ const es: Partial<Translations> = {
   "placement.planNotBackedUpOff": "No se respalda: el valor predeterminado apunta a {home}, que está apagado.",
   "placement.planNotBackedUpMissing": "No se respalda: el valor predeterminado apunta a un repositorio que ya no existe.",
   "placement.planCopied": "Copiado a {targets}.",
-  "placement.planNoCopy": "Sin copia fuera de las instalaciones.",
+  "placement.planNoCopy": "Sin copia fuera del local.",
   "placement.planNoTarget": "No hay ninguna copia externa configurada para {domain}.",
   "placement.sitesOne": "En un sitio",
   "placement.sites": "En {n} sitios",

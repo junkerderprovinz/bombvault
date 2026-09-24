@@ -801,7 +801,7 @@ const hi: Partial<Translations> = {
   "ransomware.replicationCurrent": "रेप्लिकेशन अद्यतन है",
   "ransomware.replicationOverdue": "रेप्लिकेशन बकाया है",
   "ransomware.replicationNever": "अभी तक रेप्लिकेट नहीं हुआ",
-  "ransomware.replicationPaused": "ऑफ़-साइट प्रतिलिपि रुकी हुई है: स्थान की पुष्टि करें",
+  "ransomware.replicationPaused": "ऑफ़-साइट प्रतिलिपि रुकी हुई है: प्लेसमेंट की पुष्टि करें",
   "ransomware.drillOffsite": "रीस्टोर जाँच (ऑफ़-साइट)",
   "ransomware.drillOverdue": "रीस्टोर जाँच बकाया है",
   "ransomware.drillFailed": "रीस्टोर जाँच विफल हुई",

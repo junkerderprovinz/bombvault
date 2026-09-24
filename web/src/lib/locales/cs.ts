@@ -1818,7 +1818,7 @@ const cs: Partial<Translations> = {
   "placement.planNotBackedUpOff": "Nezálohuje se: výchozí nastavení ukazuje na {home}, které je vypnuté.",
   "placement.planNotBackedUpMissing": "Nezálohuje se: výchozí nastavení ukazuje na repozitář, který už neexistuje.",
   "placement.planCopied": "Kopírováno do {targets}.",
-  "placement.planNoCopy": "Žádná kopie mimo areál.",
+  "placement.planNoCopy": "Žádná kopie mimo objekt.",
   "placement.planNoTarget": "Pro {domain} není nastavena žádná kopie mimo lokalitu.",
   "placement.sitesOne": "Na jednom místě",
   "placement.sites": "Na {n} místech",

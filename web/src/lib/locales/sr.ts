@@ -799,7 +799,7 @@ const sr: Partial<Translations> = {
   "ransomware.replicationCurrent": "дуплирање ажурно",
   "ransomware.replicationOverdue": "дуплирање закашњело",
   "ransomware.replicationNever": "још није дуплирано",
-  "ransomware.replicationPaused": "копирање ван локације је паузирано: потврдите смештај",
+  "ransomware.replicationPaused": "копирање ван локације је паузирано: потврдите размештај",
   "ransomware.drillOffsite": "вежба враћања (спољна)",
   "ransomware.drillOverdue": "вежба враћања закашњела",
   "ransomware.drillFailed": "вежба враћања није успела",
@@ -1646,7 +1646,7 @@ const sr: Partial<Translations> = {
   "repos.offPremisesHint": "Рачуна се као засебна локација за локације и 3-2-1 на картицама. На копије то не утиче. Rest-server у истој згради треба да има ово искључено.",
 
   // Refusals
-  "placementCode.unreadable": "Правила распоређивања нису могла да се прочитају, па се ништа не копира док поново не буде могуће.",
+  "placementCode.unreadable": "Правила размештаја нису могла да се прочитају, па се ништа не копира док поново не буде могуће.",
   "placementCode.invalid": "Овај избор распоређивања није важећи.",
   "placementCode.copiesNotAllowed": "Ставка у удаљеном или директном репозиторијуму не добија копије.",
   "placementCode.unknownTarget": "Тај спољни циљ не постоји у овој домени.",
@@ -1815,7 +1815,7 @@ const sr: Partial<Translations> = {
   "placement.planNotBackedUpOff": "Не прави се резервна копија: подразумевано показује на {home}, које је искључено.",
   "placement.planNotBackedUpMissing": "Не прави се резервна копија: подразумевано показује на репозиторијум који више не постоји.",
   "placement.planCopied": "Копирано на {targets}.",
-  "placement.planNoCopy": "Нема копије ван просторија.",
+  "placement.planNoCopy": "Нема копије ван објекта.",
   "placement.planNoTarget": "За {domain} није подешена копија ван локације.",
   "placement.sitesOne": "На једној локацији",
   "placement.sites": "На {n} локација",

@@ -801,7 +801,7 @@ const sk: Partial<Translations> = {
   "ransomware.replicationCurrent": "replikácia aktuálna",
   "ransomware.replicationOverdue": "replikácia po termíne",
   "ransomware.replicationNever": "zatiaľ nereplikované",
-  "ransomware.replicationPaused": "kopírovanie mimo lokality pozastavené: potvrďte umiestnenie",
+  "ransomware.replicationPaused": "kopírovanie mimo lokality pozastavené: potvrďte rozmiestnenie",
   "ransomware.drillOffsite": "test obnovenia (externý)",
   "ransomware.drillOverdue": "test obnovenia po termíne",
   "ransomware.drillFailed": "test obnovenia zlyhal",
@@ -1662,7 +1662,7 @@ const sk: Partial<Translations> = {
   "repos.offPremisesHint": "Počíta sa ako samostatná lokalita pre lokality a 3-2-1 na kartách. Kópie tým nie sú dotknuté. Rest-server v tej istej budove by mal mať toto vypnuté.",
 
   // Refusals
-  "placementCode.unreadable": "Pravidlá umiestnenia sa nepodarilo prečítať, takže sa nič nekopíruje, kým to opäť nepôjde.",
+  "placementCode.unreadable": "Pravidlá rozmiestnenia sa nepodarilo prečítať, takže sa nič nekopíruje, kým to opäť nepôjde.",
   "placementCode.invalid": "Táto voľba umiestnenia nie je platná.",
   "placementCode.copiesNotAllowed": "Položka vo vzdialenom alebo priamom repozitári nedostáva kópie.",
   "placementCode.unknownTarget": "Tento externý cieľ v tejto doméne neexistuje.",
@@ -1831,7 +1831,7 @@ const sk: Partial<Translations> = {
   "placement.planNotBackedUpOff": "Nezálohuje sa: predvolené nastavenie ukazuje na {home}, ktoré je vypnuté.",
   "placement.planNotBackedUpMissing": "Nezálohuje sa: predvolené nastavenie ukazuje na repozitár, ktorý už neexistuje.",
   "placement.planCopied": "Skopírované do {targets}.",
-  "placement.planNoCopy": "Žiadna kópia mimo priestorov.",
+  "placement.planNoCopy": "Žiadna kópia mimo objektu.",
   "placement.planNoTarget": "Pre {domain} nie je nastavená kópia mimo lokality.",
   "placement.sitesOne": "Na jednom mieste",
   "placement.sites": "Na {n} miestach",

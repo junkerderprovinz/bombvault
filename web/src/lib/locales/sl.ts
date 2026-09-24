@@ -799,7 +799,7 @@ const sl: Partial<Translations> = {
   "ransomware.replicationCurrent": "podvajanje tekoče",
   "ransomware.replicationOverdue": "podvajanje zamuja",
   "ransomware.replicationNever": "še ni podvojeno",
-  "ransomware.replicationPaused": "kopiranje zunaj lokacije je začasno ustavljeno: potrdite umestitev",
+  "ransomware.replicationPaused": "kopiranje zunaj lokacije je začasno ustavljeno: potrdite postavitev",
   "ransomware.drillOffsite": "obnovitvena vaja (zunanja)",
   "ransomware.drillOverdue": "obnovitvena vaja zamuja",
   "ransomware.drillFailed": "obnovitvena vaja ni uspela",
@@ -1646,7 +1646,7 @@ const sl: Partial<Translations> = {
   "repos.offPremisesHint": "Za lokacije in 3-2-1 na karticah se šteje kot samostojna lokacija. Na kopije to ne vpliva. Rest-server v isti stavbi bi moral imeti to izklopljeno.",
 
   // Refusals
-  "placementCode.unreadable": "Pravil za namestitev ni bilo mogoče prebrati, zato se ne kopira nič, dokler jih ni spet mogoče prebrati.",
+  "placementCode.unreadable": "Pravil za postavitev ni bilo mogoče prebrati, zato se ne kopira nič, dokler jih ni spet mogoče prebrati.",
   "placementCode.invalid": "Ta izbira namestitve ni veljavna.",
   "placementCode.copiesNotAllowed": "Element v oddaljenem ali neposrednem repozitoriju ne dobiva kopij.",
   "placementCode.unknownTarget": "Ta zunanji cilj v tej domeni ne obstaja.",
@@ -1815,7 +1815,7 @@ const sl: Partial<Translations> = {
   "placement.planNotBackedUpOff": "Ni varnostno kopirano: privzeta vrednost kaže na {home}, ki je izklopljeno.",
   "placement.planNotBackedUpMissing": "Ni varnostno kopirano: privzeta vrednost kaže na repozitorij, ki ne obstaja več.",
   "placement.planCopied": "Kopirano v {targets}.",
-  "placement.planNoCopy": "Ni kopije zunaj prostorov.",
+  "placement.planNoCopy": "Ni kopije zunaj objekta.",
   "placement.planNoTarget": "Za {domain} ni nastavljene kopije zunaj lokacije.",
   "placement.sitesOne": "Na eni lokaciji",
   "placement.sites": "Na {n} lokacijah",

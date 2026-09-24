@@ -1831,7 +1831,7 @@ const id: Partial<Translations> = {
   "placement.planNotBackedUpOff": "Tidak dicadangkan: bawaan menunjuk ke {home}, yang dimatikan.",
   "placement.planNotBackedUpMissing": "Tidak dicadangkan: bawaan menunjuk ke repositori yang sudah tidak ada.",
   "placement.planCopied": "Disalin ke {targets}.",
-  "placement.planNoCopy": "Tidak ada salinan di luar lokasi.",
+  "placement.planNoCopy": "Tidak ada salinan di luar gedung.",
   "placement.planNoTarget": "Belum ada salinan off-site yang disiapkan untuk {domain}.",
   "placement.sitesOne": "Di satu lokasi",
   "placement.sites": "Di {n} lokasi",

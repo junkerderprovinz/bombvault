@@ -1092,7 +1092,7 @@ const th: Partial<Translations> = {
   "ransomware.replicationCurrent": "การจำลองเป็นปัจจุบัน",
   "ransomware.replicationOverdue": "การจำลองเกินกำหนด",
   "ransomware.replicationNever": "ยังไม่ได้จำลอง",
-  "ransomware.replicationPaused": "การทำสำเนานอกสถานที่หยุดชั่วคราว: ยืนยันตำแหน่งจัดเก็บ",
+  "ransomware.replicationPaused": "การทำสำเนานอกสถานที่หยุดชั่วคราว: ยืนยันการจัดวาง",
   "ransomware.drillOffsite": "การทดสอบกู้คืน (นอกสถานที่)",
   "ransomware.drillOverdue": "การทดสอบกู้คืนเกินกำหนด",
   "ransomware.drillFailed": "การทดสอบกู้คืนล้มเหลว",

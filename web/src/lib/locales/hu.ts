@@ -1823,7 +1823,7 @@ const hu: Partial<Translations> = {
   "placement.planNotBackedUpOff": "Nincs mentve: az alapértelmezés a(z) {home} helyre mutat, ami ki van kapcsolva.",
   "placement.planNotBackedUpMissing": "Nincs mentve: az alapértelmezés egy már nem létező tárolóra mutat.",
   "placement.planCopied": "Másolva ide: {targets}.",
-  "placement.planNoCopy": "Nincs telephelyen kívüli másolat.",
+  "placement.planNoCopy": "Nincs épületen kívüli másolat.",
   "placement.planNoTarget": "A(z) {domain} esetén nincs beállítva telephelyen kívüli másolat.",
   "placement.sitesOne": "Egy helyszínen",
   "placement.sites": "{n} helyszínen",

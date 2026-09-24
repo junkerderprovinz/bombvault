@@ -1081,7 +1081,7 @@ const vi: Partial<Translations> = {
   "ransomware.replicationCurrent": "sao chép đã cập nhật",
   "ransomware.replicationOverdue": "sao chép quá hạn",
   "ransomware.replicationNever": "chưa sao chép",
-  "ransomware.replicationPaused": "sao chép ngoài site đã tạm dừng: xác nhận vị trí lưu",
+  "ransomware.replicationPaused": "sao chép ngoài site đã tạm dừng: xác nhận nơi lưu trữ",
   "ransomware.drillOffsite": "diễn tập khôi phục (off-site)",
   "ransomware.drillOverdue": "diễn tập khôi phục quá hạn",
   "ransomware.drillFailed": "diễn tập khôi phục thất bại",
@@ -1643,7 +1643,7 @@ const vi: Partial<Translations> = {
   "repos.offPremisesHint": "Được tính là một địa điểm riêng cho số địa điểm và quy tắc 3-2-1 trên thẻ. Không ảnh hưởng đến các bản sao. Một rest-server trong cùng tòa nhà nên tắt tùy chọn này.",
 
   // Refusals
-  "placementCode.unreadable": "Không đọc được các quy tắc đặt vị trí, nên không có gì được sao chép cho đến khi đọc lại được.",
+  "placementCode.unreadable": "Không đọc được quy tắc của nơi lưu trữ, nên không có gì được sao chép cho đến khi đọc lại được.",
   "placementCode.invalid": "Lựa chọn vị trí này không hợp lệ.",
   "placementCode.copiesNotAllowed": "Mục trên kho từ xa hoặc kho trực tiếp không nhận bản sao.",
   "placementCode.unknownTarget": "Đích ngoại vi đó không tồn tại trong miền này.",
