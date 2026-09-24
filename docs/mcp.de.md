@@ -23,7 +23,7 @@ BombVault bringt einen Server für das Model Context Protocol (MCP) mit. Über d
 
 Folgendes bleibt in der Web-Oberfläche: Wiederherstellungen jeder Art (auch das Herunterladen, Speichern und Importieren eines Datenbank-Dumps), das Löschen von Backups, Prune, Unlock, Prüfungen und Übungen, die Off-site-Replikation, Einstellungen, Zugangsdaten und MCP-Schlüssel sowie das Abbrechen eines Backups, das der Zeitplan, die Web-Oberfläche oder ein anderer Schlüssel gestartet hat. Dasselbe gilt für das Bestätigen einer Anomalie oder das Markieren als erwartet, das auf der Seite **Anomalien** geschieht. Der Grund: Die Antworten der Werkzeuge enthalten Namen und Fehlermeldungen von deinem Server, und in jedem davon kann Text stehen, der den Assistenten lenken soll. Ein Assistent, der darauf hereinfällt, kann im schlimmsten Fall ein Backup innerhalb der unten genannten Grenzen starten oder eines abbrechen, das er selbst gestartet hat.
 
-Liegt das primäre Repository eines Elements woanders (S3, REST, SFTP, rclone), fragt `list_restore_points` dort nach, und der Aufruf kann eine Weile dauern. Off-site-Kopien lassen sich über MCP nicht auflisten.
+Liegt das primäre Repository eines Elements woanders (S3, REST, SFTP, rclone), fragt `list_restore_points` dort nach, und der Aufruf kann eine Weile dauern. Off-site-Kopien lassen sich über MCP nicht auflisten. Worauf die Anomalie-Prüfungen achten, steht unter [Funktionen](features.md), und wie ein ZFS-Element für jedes Dataset einen eigenen Snapshot anlegt, unter [ZFS-Datasets](zfs-datasets.md#contents).
 
 ## Was ein gestartetes Backup tut {#starting-backups}
 

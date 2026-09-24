@@ -23,7 +23,7 @@ BombVault are un server integrat pentru Model Context Protocol (MCP), protocolul
 
 Rămân în interfața web: restaurările de orice fel (inclusiv descărcarea, salvarea sau importul unui dump de bază de date), ștergerea copiilor, prune, unlock, verificările și exercițiile, replicarea off-site, setările, datele de autentificare și cheile MCP, precum și anularea unei copii pornite de programare, de interfața web sau de altă cheie. La fel și confirmarea unei anomalii sau marcarea ei ca așteptată, care se face pe pagina **Anomalii**. Motivul: răspunsurile uneltelor conțin nume și mesaje de eroare de pe serverul tău, iar oricare dintre ele poate conține un text scris ca să manipuleze asistentul. Un asistent care se lasă păcălit de un asemenea text poate cel mult să pornească o copie în limitele de mai jos sau să anuleze una pe care a pornit-o el.
 
-Dacă depozitul principal al unui element e la distanță (S3, REST, SFTP, rclone), `list_restore_points` îl contactează, iar apelul poate dura puțin. Copiile off-site nu pot fi listate prin MCP.
+Dacă depozitul principal al unui element e la distanță (S3, REST, SFTP, rclone), `list_restore_points` îl contactează, iar apelul poate dura puțin. Copiile off-site nu pot fi listate prin MCP. Ce urmăresc verificările de anomalii se descrie în [Funcționalități](features.md), iar cum păstrează un element ZFS câte un snapshot pentru fiecare set de date, în [Seturi de date ZFS](zfs-datasets.md#contents).
 
 ## Ce face o copie pornită {#starting-backups}
 

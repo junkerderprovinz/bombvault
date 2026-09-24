@@ -23,7 +23,7 @@ O BombVault traz um servidor para o Model Context Protocol (MCP), o protocolo co
 
 Fica na interface web: os restauros de qualquer tipo (incluindo descarregar, guardar ou importar um dump de base de dados), apagar cópias, prune, unlock, as verificações e os exercícios, a replicação externa, as definições, as credenciais e as chaves MCP, e cancelar uma cópia iniciada pelo agendamento, pela interface web ou por outra chave. O mesmo vale para reconhecer uma anomalia ou marcá-la como esperada, o que se faz na página **Anomalias**. O motivo: as respostas das ferramentas contêm nomes e mensagens de erro do seu servidor, e qualquer um deles pode trazer texto escrito para manipular o assistente. Um assistente que caia nesse texto pode, no pior caso, iniciar uma cópia dentro dos limites abaixo ou cancelar uma que ele próprio iniciou.
 
-Se o repositório principal de um elemento for remoto (S3, REST, SFTP, rclone), `list_restore_points` contacta-o e a chamada pode demorar algum tempo. As cópias externas não podem ser listadas por MCP.
+Se o repositório principal de um elemento for remoto (S3, REST, SFTP, rclone), `list_restore_points` contacta-o e a chamada pode demorar algum tempo. As cópias externas não podem ser listadas por MCP. O que as verificações de anomalias analisam está descrito em [Funcionalidades](features.md), e como um elemento ZFS guarda um snapshot por conjunto de dados, em [Conjuntos de dados ZFS](zfs-datasets.md#contents).
 
 ## O que faz uma cópia iniciada {#starting-backups}
 

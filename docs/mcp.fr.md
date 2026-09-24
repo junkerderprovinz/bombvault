@@ -23,7 +23,7 @@ BombVault intègre un serveur pour le Model Context Protocol (MCP), le protocole
 
 Tout ceci reste dans l'interface web : les restaurations de toute sorte (y compris télécharger, enregistrer ou importer un dump de base de données), la suppression de sauvegardes, prune, unlock, les vérifications et les exercices, la réplication hors site, les paramètres, les identifiants et les clés MCP, ainsi que l'annulation d'une sauvegarde lancée par la planification, par l'interface web ou par une autre clé. Il en va de même pour prendre acte d'une anomalie ou la marquer comme attendue, ce qui se fait sur la page **Anomalies**. La raison : les réponses des outils contiennent des noms et des messages d'erreur venant de votre serveur, et n'importe lequel d'entre eux peut contenir un texte écrit pour manipuler l'assistant. Un assistant qui s'y laisse prendre peut au pire lancer une sauvegarde dans les limites ci-dessous, ou annuler une sauvegarde qu'il a lancée lui-même.
 
-Si le dépôt principal d'un élément est distant (S3, REST, SFTP, rclone), `list_restore_points` le contacte, et l'appel peut prendre un moment. Les copies hors site ne peuvent pas être listées par MCP.
+Si le dépôt principal d'un élément est distant (S3, REST, SFTP, rclone), `list_restore_points` le contacte, et l'appel peut prendre un moment. Les copies hors site ne peuvent pas être listées par MCP. Ce que regardent les contrôles d'anomalies est décrit dans [Fonctionnalités](features.md), et la façon dont un élément ZFS garde un instantané par jeu de données, dans [Jeux de données ZFS](zfs-datasets.md#contents).
 
 ## Ce que fait une sauvegarde lancée {#starting-backups}
 

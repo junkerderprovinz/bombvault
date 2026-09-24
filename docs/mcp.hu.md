@@ -23,7 +23,7 @@ A BombVault beépített kiszolgálót kínál a Model Context Protocolhoz (MCP),
 
 Ezek a webes felületen maradnak: bármilyen visszaállítás (beleértve egy adatbázis-dump letöltését, mentését vagy importálását is), mentések törlése, prune, unlock, ellenőrzések és gyakorlatok, off-site replikáció, beállítások, hitelesítő adatok és MCP-kulcsok, valamint olyan mentés megszakítása, amelyet az ütemezés, a webes felület vagy egy másik kulcs indított. Ugyanez vonatkozik egy anomália nyugtázására vagy vártként megjelölésére, ami az **Anomáliák** oldalon történik. Az ok: az eszközök válaszai a kiszolgálódról származó neveket és hibaüzeneteket tartalmaznak, és bármelyikükben lehet olyan szöveg, amelyet az asszisztens irányítására írtak. Egy asszisztens, amely bedől ennek, legrosszabb esetben elindít egy mentést az alábbi korlátokon belül, vagy megszakít egyet, amelyet maga indított.
 
-Ha egy elem elsődleges tárolója máshol van (S3, REST, SFTP, rclone), a `list_restore_points` kapcsolódik hozzá, és a hívás eltarthat egy ideig. Az off-site másolatok MCP-n keresztül nem listázhatók.
+Ha egy elem elsődleges tárolója máshol van (S3, REST, SFTP, rclone), a `list_restore_points` kapcsolódik hozzá, és a hívás eltarthat egy ideig. Az off-site másolatok MCP-n keresztül nem listázhatók. Hogy az anomáliaellenőrzések mit néznek, azt a [Funkciók](features.md) oldal írja le, hogy egy ZFS-elem adatkészletenként egy pillanatképet tart, azt pedig a [ZFS-adatkészletek](zfs-datasets.md#contents) oldal.
 
 ## Mit csinál egy elindított mentés {#starting-backups}
 

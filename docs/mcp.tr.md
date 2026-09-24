@@ -23,7 +23,7 @@ BombVault, Model Context Protocol (MCP) için yerleşik bir sunucu içerir. Bu p
 
 Şunlar web arayüzünde kalır: her türlü geri yükleme (bir veritabanı dökümünü indirmek, kaydetmek ya da içe aktarmak dâhil), yedekleri silmek, prune, unlock, denetimler ve tatbikatlar, off-site çoğaltma, ayarlar, kimlik bilgileri ve MCP anahtarları ile zamanlamanın, web arayüzünün ya da başka bir anahtarın başlattığı bir yedeklemeyi iptal etmek. Bir anormalliği onaylamak ya da beklenen olarak işaretlemek de orada kalır; bu, **Anormallikler** sayfasında yapılır. Nedeni şu: araçların yanıtları sunucunuzdan gelen adları ve hata iletilerini içerir ve bunların herhangi biri asistanı yönlendirmek için yazılmış bir metin taşıyabilir. Böyle bir metne kanan bir asistan en kötü ihtimalle aşağıdaki sınırlar içinde bir yedekleme başlatabilir ya da kendi başlattığı bir yedeklemeyi iptal edebilir.
 
-Bir öğenin birincil deposu başka bir yerdeyse (S3, REST, SFTP, rclone), `list_restore_points` ona bağlanır ve çağrı biraz sürebilir. Off-site kopyalar MCP üzerinden listelenemez.
+Bir öğenin birincil deposu başka bir yerdeyse (S3, REST, SFTP, rclone), `list_restore_points` ona bağlanır ve çağrı biraz sürebilir. Off-site kopyalar MCP üzerinden listelenemez. Anormallik denetimlerinin neye baktığı [Özellikler](features.md) sayfasında, bir ZFS öğesinin her veri kümesi için bir anlık görüntü tutması ise [ZFS veri kümeleri](zfs-datasets.md#contents) sayfasında anlatılır.
 
 ## Başlatılan bir yedekleme ne yapar {#starting-backups}
 

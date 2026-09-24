@@ -23,7 +23,7 @@ BombVault heeft een ingebouwde server voor het Model Context Protocol (MCP), het
 
 Dit blijft in de webinterface: herstel van elke soort (ook het downloaden, opslaan of importeren van een databasedump), back-ups verwijderen, prune, unlock, controles en oefeningen, off-site-replicatie, instellingen, inloggegevens en MCP-sleutels, en het annuleren van een back-up die de planning, de webinterface of een andere sleutel heeft gestart. Hetzelfde geldt voor het bevestigen van een anomalie of het markeren ervan als verwacht, wat op de pagina **Anomalieën** gebeurt. De reden: de antwoorden van de hulpmiddelen bevatten namen en foutmeldingen van je server, en in elk daarvan kan tekst staan die bedoeld is om de assistent te sturen. Een assistent die daarin trapt, kan in het ergste geval een back-up starten binnen de grenzen hieronder, of er een annuleren die hij zelf heeft gestart.
 
-Staat de primaire repository van een item elders (S3, REST, SFTP, rclone), dan neemt `list_restore_points` daar contact mee op en kan de aanroep even duren. Off-site-kopieën zijn via MCP niet op te vragen.
+Staat de primaire repository van een item elders (S3, REST, SFTP, rclone), dan neemt `list_restore_points` daar contact mee op en kan de aanroep even duren. Off-site-kopieën zijn via MCP niet op te vragen. Waar de anomaliecontroles naar kijken, staat onder [Functies](features.md), en hoe een ZFS-item één snapshot per dataset bijhoudt, onder [ZFS-datasets](zfs-datasets.md#contents).
 
 ## Wat een gestarte back-up doet {#starting-backups}
 

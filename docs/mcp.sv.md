@@ -23,7 +23,7 @@ BombVault har en inbyggd server för Model Context Protocol (MCP), protokollet s
 
 Detta stannar i webbgränssnittet: återställningar av alla slag (även att ladda ner, spara eller importera en databasdump), att radera säkerhetskopior, prune, unlock, kontroller och övningar, off-site-replikering, inställningar, inloggningsuppgifter och MCP-nycklar, samt att avbryta en säkerhetskopia som schemat, webbgränssnittet eller en annan nyckel har startat. Detsamma gäller att kvittera en avvikelse eller markera den som förväntad, vilket görs på sidan **Avvikelser**. Skälet är att verktygens svar innehåller namn och felmeddelanden från din server, och vilket som helst av dem kan innehålla text som skrivits för att styra assistenten. En assistent som går på sådan text kan i värsta fall starta en säkerhetskopia inom gränserna nedan eller avbryta en som den själv startat.
 
-Om ett objekts primära repository ligger någon annanstans (S3, REST, SFTP, rclone) kontaktar `list_restore_points` det, och anropet kan ta en stund. Off-site-kopior kan inte listas via MCP.
+Om ett objekts primära repository ligger någon annanstans (S3, REST, SFTP, rclone) kontaktar `list_restore_points` det, och anropet kan ta en stund. Off-site-kopior kan inte listas via MCP. Vad avvikelsekontrollerna tittar på beskrivs under [Funktioner](features.md), och hur ett ZFS-objekt har en ögonblicksbild per datauppsättning under [ZFS-datauppsättningar](zfs-datasets.md#contents).
 
 ## Vad en startad säkerhetskopia gör {#starting-backups}
 

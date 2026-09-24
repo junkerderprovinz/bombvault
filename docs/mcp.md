@@ -23,7 +23,7 @@ BombVault has a built-in server for the Model Context Protocol (MCP), the protoc
 
 These stay in the web interface: restores of any kind (including downloading, saving or importing a database dump), deleting backups, prune, unlock, checks and drills, off-site replication, settings, credentials and MCP keys, and cancelling a backup that the schedule, the web interface or another key started. The same goes for acknowledging an anomaly or marking it as expected, which happens on the **Anomalies** page. The reason is that tool output contains names and error messages from your server, and any of them could carry text written to steer the assistant. An assistant that falls for such text can at worst start a backup within the limits below, or cancel one it started itself.
 
-If the primary repository of an item is remote (S3, REST, SFTP, rclone), `list_restore_points` contacts it, so the call can take a while. Off-site copies cannot be listed through MCP.
+If the primary repository of an item is remote (S3, REST, SFTP, rclone), `list_restore_points` contacts it, so the call can take a while. Off-site copies cannot be listed through MCP. What the anomaly checks look at is described under [Features](features.md), and how a ZFS item keeps one snapshot per dataset under [ZFS datasets](zfs-datasets.md#contents).
 
 ## What a started backup does {#starting-backups}
 

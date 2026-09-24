@@ -53,6 +53,8 @@ What happens when something goes wrong:
 - The stop waits for a running container backup to finish (up to 30 minutes for a manual run, up to the backup time limit for a scheduled one), so the two never stop and start the same container at once.
 - Before the first container stops, BombVault writes down which ones it stops. If BombVault is killed inside the window, it starts those containers again the next time it starts, sends a notification, and the item shows a red note for any container it could not start.
 
+The automatic database dumps (see [Features](features.md)) run with a container's own backup on the **Containers** page, not with a ZFS item. A database whose container is backed up only through its dataset gets no dump, so give it a command here.
+
 A container can be on this list and on the **Containers** page at the same time. Its data is then stored twice, in two repositories, and **Backup Everything** stops it twice. The item says so.
 
 ## Restoring {#restore}
@@ -125,6 +127,8 @@ A child that was emptied barely changes the total of a large tree, so anomaly de
 A dataset that the previous run backed up and this run could not read counts as emptied, as long as the item's selection did not change. That covers a key that is not loaded, a dataset that is not mounted and one that is gone from the tree. A child you exclude yourself changes the selection, so its history starts afresh instead. While a finding about lost data is open, retention keeps the old backups of that one dataset and prunes the rest of the tree as usual.
 
 On the **Items** tab of the **Anomalies** page every dataset has a line of its own under its item, and the item's tree on this page shows the open findings next to each dataset. The link in a finding opens the item's restore panel on the dataset's last good backup. Whether a run finishes is judged for the whole item, because a run succeeds or fails as a whole.
+
+The checks themselves are described under [Features](features.md). An assistant connected through the [MCP server](mcp.md) can list a ZFS item's restore points, start its backup and read the findings, but acknowledging one happens on the **Anomalies** page.
 
 ## Reason codes {#reason-codes}
 

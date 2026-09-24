@@ -23,7 +23,7 @@ BombVaultissa on sisäänrakennettu palvelin Model Context Protocolia (MCP) vart
 
 Nämä jäävät verkkokäyttöliittymään: kaikenlaiset palautukset (myös tietokantadumpin lataaminen, tallentaminen tai tuonti), varmuuskopioiden poistaminen, prune, unlock, tarkistukset ja harjoitukset, off-site-replikointi, asetukset, tunnukset ja MCP-avaimet sekä sellaisen varmuuskopion peruminen, jonka ajastus, verkkokäyttöliittymä tai toinen avain käynnisti. Sama koskee poikkeaman kuittaamista tai sen merkitsemistä odotetuksi, mikä tehdään **Poikkeamat**-sivulla. Syy on se, että työkalujen vastauksissa on palvelimesi nimiä ja virheilmoituksia, ja mikä tahansa niistä voi sisältää tekstiä, joka on kirjoitettu ohjaamaan avustajaa. Avustaja, joka lankeaa sellaiseen, voi pahimmillaan käynnistää varmuuskopion alla olevien rajojen sisällä tai perua sellaisen, jonka se itse käynnisti.
 
-Jos kohteen ensisijainen repositorio on muualla (S3, REST, SFTP, rclone), `list_restore_points` ottaa siihen yhteyttä, ja kutsu voi kestää hetken. Off-site-kopioita ei voi listata MCP:n kautta.
+Jos kohteen ensisijainen repositorio on muualla (S3, REST, SFTP, rclone), `list_restore_points` ottaa siihen yhteyttä, ja kutsu voi kestää hetken. Off-site-kopioita ei voi listata MCP:n kautta. Mitä poikkeamien tarkistukset katsovat, kerrotaan sivulla [Ominaisuudet](features.md), ja miten ZFS-kohde pitää yhden tilannevedoksen tietojoukkoa kohden, sivulla [ZFS-tietojoukot](zfs-datasets.md#contents).
 
 ## Mitä käynnistetty varmuuskopio tekee {#starting-backups}
 

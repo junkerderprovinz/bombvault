@@ -23,7 +23,7 @@ BombVault má vestavěný server pro Model Context Protocol (MCP), protokol, př
 
 Ve webovém rozhraní zůstává: obnova jakéhokoli druhu (včetně stažení, uložení nebo importu databázového dumpu), mazání záloh, prune, unlock, kontroly a cvičení, replikace off-site, nastavení, přihlašovací údaje a klíče MCP a také zrušení zálohy, kterou spustil plán, webové rozhraní nebo jiný klíč. Totéž platí pro potvrzení anomálie nebo její označení jako očekávané, což se dělá na stránce **Anomálie**. Důvod: odpovědi nástrojů obsahují názvy a chybové zprávy z vašeho serveru a kterákoli z nich může nést text napsaný tak, aby asistenta ovládl. Asistent, který na takový text naletí, může nanejvýš spustit zálohu v mezích uvedených níže nebo zrušit zálohu, kterou sám spustil.
 
-Pokud je primární repozitář položky vzdálený (S3, REST, SFTP, rclone), `list_restore_points` se k němu připojí a volání může chvíli trvat. Kopie off-site přes MCP vypsat nelze.
+Pokud je primární repozitář položky vzdálený (S3, REST, SFTP, rclone), `list_restore_points` se k němu připojí a volání může chvíli trvat. Kopie off-site přes MCP vypsat nelze. Na co se kontroly anomálií dívají, popisuje stránka [Funkce](features.md), a jak položka ZFS drží jeden snímek pro každou datovou sadu, stránka [Datové sady ZFS](zfs-datasets.md#contents).
 
 ## Co spuštěná záloha dělá {#starting-backups}
 

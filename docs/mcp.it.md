@@ -23,7 +23,7 @@ BombVault ha un server integrato per il Model Context Protocol (MCP), il protoco
 
 Restano nell'interfaccia web: i ripristini di ogni tipo (compresi scaricare, salvare o importare un dump di database), l'eliminazione di backup, prune, unlock, verifiche ed esercitazioni, la replica off-site, le impostazioni, le credenziali e le chiavi MCP, e l'annullamento di un backup avviato dalla pianificazione, dall'interfaccia web o da un'altra chiave. Lo stesso vale per confermare un'anomalia o segnarla come prevista, cosa che si fa nella pagina **Anomalie**. Il motivo: le risposte degli strumenti contengono nomi e messaggi di errore del tuo server, e ognuno di essi potrebbe contenere un testo scritto per manipolare l'assistente. Un assistente che ci casca può al massimo avviare un backup entro i limiti qui sotto, o annullarne uno che ha avviato lui stesso.
 
-Se il repository principale di un elemento è remoto (S3, REST, SFTP, rclone), `list_restore_points` lo contatta e la chiamata può richiedere un po' di tempo. Le copie off-site non si possono elencare tramite MCP.
+Se il repository principale di un elemento è remoto (S3, REST, SFTP, rclone), `list_restore_points` lo contatta e la chiamata può richiedere un po' di tempo. Le copie off-site non si possono elencare tramite MCP. Cosa guardano i controlli delle anomalie è descritto in [Funzionalità](features.md), e come un elemento ZFS tiene uno snapshot per ogni dataset in [Dataset ZFS](zfs-datasets.md#contents).
 
 ## Cosa fa un backup avviato {#starting-backups}
 

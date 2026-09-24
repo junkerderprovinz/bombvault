@@ -23,7 +23,7 @@ BombVault có sẵn một máy chủ cho Model Context Protocol (MCP), giao th�
 
 Những việc sau vẫn nằm trong giao diện web: mọi kiểu khôi phục (kể cả tải xuống, lưu hoặc nhập một bản dump cơ sở dữ liệu), xóa bản sao lưu, prune, unlock, kiểm tra và diễn tập, sao chép off-site, cài đặt, thông tin đăng nhập và khóa MCP, cùng việc hủy một lần sao lưu do lịch, giao diện web hoặc khóa khác bắt đầu. Việc xác nhận một bất thường hoặc đánh dấu nó là dự kiến cũng vậy, và được thực hiện trên trang **Bất thường**. Lý do: câu trả lời của công cụ chứa tên và thông báo lỗi từ máy chủ của bạn, và bất kỳ mục nào trong đó cũng có thể chứa văn bản viết ra để điều khiển trợ lý. Một trợ lý mắc bẫy văn bản như vậy, trong trường hợp xấu nhất, chỉ có thể bắt đầu một lần sao lưu trong các giới hạn bên dưới hoặc hủy một lần sao lưu do chính nó bắt đầu.
 
-Nếu kho chính của một mục nằm ở nơi khác (S3, REST, SFTP, rclone), `list_restore_points` sẽ kết nối tới đó và lệnh gọi có thể mất một lúc. Không thể liệt kê bản sao off-site qua MCP.
+Nếu kho chính của một mục nằm ở nơi khác (S3, REST, SFTP, rclone), `list_restore_points` sẽ kết nối tới đó và lệnh gọi có thể mất một lúc. Không thể liệt kê bản sao off-site qua MCP. Những gì các bước kiểm tra bất thường xem xét được mô tả trong [Tính năng](features.md), và cách một mục ZFS giữ một snapshot cho mỗi tập dữ liệu được mô tả trong [Tập dữ liệu ZFS](zfs-datasets.md#contents).
 
 ## Một lần sao lưu được bắt đầu sẽ làm gì {#starting-backups}
 
