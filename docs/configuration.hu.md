@@ -52,9 +52,14 @@ Minden konténernél a BombVault maga választja ki, mely bind csatolások és n
 - Mivel a védelem opcionális, ha nincs beállítva, a teljes felület és API (beleértve a telephelyen kívüli beállítást, a manipulációs teszt útvonalait és a helyreállítási csomagot) elérhető bárki számára, aki eléri a portot. Kapcsold be a védelmet, amint telephelyen kívüli, módosíthatatlan mentések vagy titkosítás van használatban.
 - A BombVaultot csak megbízható, nem kitett hálózaton futtasd. A távoli hozzáféréshez tedd egy reverse proxy mögé, amely hitelesítést és TLS-t ad hozzá. A válaszok alapszintű biztonsági fejléceket hordoznak (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Fordított proxy mögött minden kérés a proxy címét viseli, így `TRUSTED_PROXY` nélkül a fék minden ügyfelet egy vödörben számol, és egy támadó hibái téged is kizárnak. Add meg a proxyt a `TRUSTED_PROXY` értékeként, hogy visszatérjen az ügyfelenkénti számolás.
+- A BombVault előtti fordított proxynak tovább kell adnia az `Authorization` vagy az `X-API-Key` fejlécet a `/mcp` felé, és nem pufferelheti a válaszokat, különben az asszisztensek nem tudnak csatlakozni. Lásd [MCP-kiszolgáló](mcp.md#tls).
 - A `HTTP_ONLY=true` mellett a munkamenet-süti elveszíti a `Secure` jelzőjét (muszáj, hogy egyszerű HTTP-n működjön), így csak egy TLS-lezáró proxy mögött kapcsold be a jelszót, ha a bizalmasság számít.
 - A VM-mentés SSH-kapcsolata az első kapcsolatfelvételkor megbízik a hoszt-kulcsban (TOFU), és utána rögzíti. Ellenőrizd a hoszt kulcsát sávon kívül, ha a konténer-hoszt útvonalad nem megbízható.
 - A mentések a restic által titkosítottak, ha a titkosítás engedélyezve van (Beállítások; alapból be), a kulcs az `APP_KEY`-ből származtatva.
+
+## MCP-kiszolgáló {#mcp-server}
+
+Az MCP-kiszolgálóhoz nem kell környezeti változó. Úgy kapcsolod be, hogy létrehozol egy kulcsot a **Beállítások, Rendszer, MCP-kiszolgáló** részen, és a `/mcp` útvonalon válaszol ugyanazon a porton, mint a webes felület (például `https://192.168.1.10:3443/mcp`). Aktív kulcs nélkül ez az útvonal `404`-gyel válaszol. A klienseket, a tanúsítványokat és a korlátokat az [MCP-kiszolgáló](mcp.md) oldal írja le.
 
 ## VM-mentés SSH-n keresztül
 

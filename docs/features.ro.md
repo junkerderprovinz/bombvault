@@ -82,6 +82,10 @@ BombVault este simplu implicit și profund atunci când ai nevoie. Interfața ar
 - **Export în clar de VM.** VM-urile au același **Export (plain tar)**: `<name>.tar.gz` al imaginii (imaginilor) de disc plus `<name>.xml`, restaurabil cu `virsh define` plus discul, fără BombVault sau restic necesare.
 - **Criptează exporturile în clar (age).** Exporturile se află în afara restic, deci sunt în clar implicit. Activează criptarea age în Setări și adaugă unul sau mai mulți destinatari (o cheie publică age sau o cheie publică SSH). Fiecare export (container și VM `.tar.gz`, fișierele lor `.xml` însoțitoare și ZIP-ul flash) este apoi sigilat pentru acei destinatari, iar tu îl decriptezi mai târziu în afara stației cu cheia privată corespunzătoare. Ca regulă de siguranță, cu criptarea activată și niciun destinatar valid setat, un export eșuează cu o eroare clară în loc să scrie vreodată text în clar.
 
+## Asistenți IA (MCP) {#mcp}
+
+BombVault are un server MCP integrat prin care un asistent precum Claude Code sau Claude Desktop poate citi starea copiilor de rezervă, acoperirea, istoricul rulărilor, punctele de restaurare și activitatea în curs. Cu o cheie care îi permite, asistentul poate și să pornească o copie a unui element, a unui domeniu sau a tot și să anuleze copiile pe care le-a pornit. Restaurările, ștergerile, prune și setările rămân în interfața web. Fiecare client primește propria cheie în **Setări, Sistem, Server MCP**; o cheie apare o singură dată, e stocată doar ca amprentă și poate fi redenumită, înlocuită sau revocată oricând. Pornirile sunt limitate pe oră și pe element, iar o protecție a păstrării împiedică copiile unui asistent să-ți scoată propriile puncte de restaurare dintr-o politică "păstrează ultimele N". Fiecare rulare pornită de un asistent e marcată "prin MCP" cu numele cheii. Vezi [Server MCP](mcp.md).
+
 ## Altele
 
 - **Fă backup la multe simultan.** Selectează multiplu containere și apasă **Back up selected**. Lotul rulează pe partea de server, deci continuă chiar dacă închizi fila sau pierzi conexiunea. BombVault nu face niciodată backup (și deci nu oprește niciodată) propriul său container.

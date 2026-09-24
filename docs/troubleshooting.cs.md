@@ -61,6 +61,10 @@ Import zastaví kontejner, odsune jeho datovou složku stranou a nechá image vy
 
 Ruční návrat: zastavte kontejner, přejmenujte současnou datovou složku stranou, přejmenujte zachovanou složku zpět na původní název a kontejner spusťte. Na Unraidu to zvládne správce souborů na kartě Shares.
 
+## Asistent s umělou inteligencí se nepřipojí
+
+Stránka [Server MCP](mcp.md#troubleshooting) uvádí, co znamená každý stavový kód a každé odmítnutí koncového bodu MCP a co s tím dělat.
+
 ## Kontejner se stále restartuje nebo vypadá unhealthy
 
 BombVault hlásí healthy/unhealthy ze svého vlastního `/api/health`. Nástroj pro automatické hojení (například Autoheal) jej může restartovat automaticky, pokud se engine kdy zasekne. Zkontrolujte log kontejneru a report `/spike` pro základní příčinu.

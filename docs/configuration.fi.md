@@ -52,9 +52,14 @@ Kunkin kontin kohdalla BombVault valitsee itse, mitkä bind-liitokset ja nimetyt
 - Koska portti on käyttöön otettava, kun se on asettamatta, koko käyttöliittymä ja rajapinta (mukaan lukien etäsijainnin määritys, peukalointitestireitit ja palautuspaketti) ovat kenen tahansa tavoitettavissa, joka pääsee porttiin. Ota portti käyttöön heti kun käytät etäsijaintia, muuttumattomia varmuuskopioita tai salausta.
 - Aja BombVaultia vain luotetussa, altistamattomassa verkossa. Etäkäyttöä varten sijoita se käänteisen välityspalvelimen taakse, joka lisää todennuksen ja TLS:n. Vastaukset kantavat perustason turvaotsikot (CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy`).
 - Käänteisproxyn takana jokainen pyyntö kantaa proxyn osoitetta, joten ilman `TRUSTED_PROXY`-asetusta jarru laskee kaikki asiakkaat samaan ämpäriin ja hyökkääjän epäonnistumiset lukitsevat myös sinut ulos. Nimeä proxy `TRUSTED_PROXY`-asetuksessa, niin laskenta palaa asiakaskohtaiseksi.
+- BombVaultin edessä olevan käänteisen välityspalvelimen on välitettävä otsake `Authorization` tai `X-API-Key` polkuun `/mcp` eikä se saa puskuroida vastauksia, muuten avustajat eivät saa yhteyttä. Katso [MCP-palvelin](mcp.md#tls).
 - Asetuksella `HTTP_ONLY=true` istuntoeväste menettää `Secure`-lippunsa (sen on pakko, jotta se toimisi selkeän HTTP:n yli), joten ota salasana käyttöön TLS:n päättävän välityspalvelimen takana vain jos luottamuksellisuudella on väliä.
 - VM-varmuuskopioinnin SSH-yhteys luottaa isäntäavaimeen ensimmäisellä yhteydellä (TOFU) ja kiinnittää sen sen jälkeen. Vahvista isännän avain erillistä kanavaa pitkin, jos kontti-isäntä-reittisi ei ole luotettu.
 - Varmuuskopiot ovat resticin salaamia, kun salaus on käytössä (Asetukset; oletuksena päällä), avaimen ollessa johdettuna `APP_KEY`:stä.
+
+## MCP-palvelin {#mcp-server}
+
+MCP-palvelin ei tarvitse ympäristömuuttujaa. Otat sen käyttöön luomalla avaimen kohdassa **Asetukset, Järjestelmä, MCP-palvelin**, ja se vastaa polussa `/mcp` samassa portissa kuin verkkokäyttöliittymä (esimerkiksi `https://192.168.1.10:3443/mcp`). Ilman aktiivista avainta se polku vastaa `404`. Asiakasohjelmat, varmenteet ja rajat kuvataan sivulla [MCP-palvelin](mcp.md).
 
 ## VM-varmuuskopiointi SSH:n yli
 

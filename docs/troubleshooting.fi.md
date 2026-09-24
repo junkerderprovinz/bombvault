@@ -61,6 +61,10 @@ Tuonti pysäyttää kontin, siirtää sen datakansion sivuun ja antaa levykuvan 
 
 Käsin palautus: pysäytä kontti, nimeä nykyinen datakansio pois tieltä, nimeä säilytetty kansio takaisin alkuperäiselle nimelleen ja käynnistä kontti. Unraidissa tämän hoitaa Shares-välilehden tiedostonhallinta.
 
+## Tekoälyavustaja ei saa yhteyttä
+
+Sivu [MCP-palvelin](mcp.md#troubleshooting) kertoo, mitä kukin tilakoodi ja kukin MCP-päätepisteen hylkäys tarkoittaa ja mitä asialle voi tehdä.
+
 ## Kontti käynnistyy jatkuvasti uudelleen tai näyttää epäterveeltä
 
 BombVault raportoi terve/epäterve omasta `/api/health`-päätepisteestään. Automaattinen korjaustyökalu (kuten Autoheal) voi käynnistää sen uudelleen automaattisesti, jos moottori koskaan jumiutuu. Tarkista kontin loki ja `/spike`-raportti taustalla olevan syyn selvittämiseksi.

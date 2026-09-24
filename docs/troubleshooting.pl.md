@@ -61,6 +61,10 @@ Import zatrzymuje kontener, odsuwa jego folder danych na bok i pozwala obrazowi 
 
 Ręczne przywrócenie: zatrzymaj kontener, zmień nazwę bieżącego folderu danych, żeby zszedł z drogi, przywróć zachowanemu folderowi pierwotną nazwę i uruchom kontener. Na Unraidzie robi to menedżer plików w zakładce Shares.
 
+## Asystent AI nie może się połączyć
+
+Strona [Serwer MCP](mcp.md#troubleshooting) wyjaśnia, co oznacza każdy kod stanu i każda odmowa punktu końcowego MCP oraz co z tym zrobić.
+
 ## Kontener wciąż się restartuje lub wygląda na niesprawny
 
 BombVault zgłasza stan healthy/unhealthy z własnego `/api/health`. Narzędzie do auto-naprawy (takie jak Autoheal) może go automatycznie zrestartować, jeśli silnik kiedykolwiek się zaklinuje. Sprawdź log kontenera oraz raport `/spike` w poszukiwaniu przyczyny źródłowej.

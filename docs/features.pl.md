@@ -82,6 +82,10 @@ BombVault jest domyślnie prosty i głęboki, gdy tego potrzebujesz. Interfejs p
 - **Jawny eksport VM.** Maszyny wirtualne mają ten sam **Eksport (jawny tar)**: `<name>.tar.gz` obrazu(ów) dysku wraz z `<name>.xml`, przywracalny za pomocą `virsh define` plus dysk, bez potrzeby BombVault ani restic.
 - **Szyfruj eksporty jawne (age).** Eksporty znajdują się poza restic, więc domyślnie są w postaci jawnej. Włącz szyfrowanie age w Ustawieniach i dodaj jednego lub więcej odbiorców (klucz publiczny age lub klucz publiczny SSH). Każdy eksport (kontener i VM `.tar.gz`, ich pliki poboczne `.xml` oraz ZIP flash) jest wtedy pieczętowany dla tych odbiorców, a odszyfrowujesz go później poza maszyną pasującym kluczem prywatnym. Dla bezpieczeństwa, przy włączonym szyfrowaniu i braku ustawionego prawidłowego odbiorcy, eksport kończy się czytelnym błędem zamiast kiedykolwiek zapisać tekst jawny.
 
+## Asystenci AI (MCP) {#mcp}
+
+BombVault ma wbudowany serwer MCP, przez który asystent taki jak Claude Code czy Claude Desktop może czytać stan kopii zapasowych, pokrycie, historię przebiegów, punkty przywracania i bieżącą aktywność. Z kluczem, który na to pozwala, asystent może też uruchomić kopię jednego elementu, jednej domeny albo wszystkiego i anulować kopie, które sam uruchomił. Przywracanie, usuwanie, prune i ustawienia zostają w interfejsie WWW. Każdy klient dostaje własny klucz w **Ustawienia, System, Serwer MCP**; klucz pokazuje się raz, jest zapisywany tylko jako odcisk i w każdej chwili można go przemianować, wymienić albo unieważnić. Uruchomienia są ograniczone na godzinę i na element, a ochrona przechowywania nie pozwala, by kopie asystenta wypchnęły twoje własne punkty przywracania z zasady "zachowaj ostatnie N". Każdy przebieg uruchomiony przez asystenta jest oznaczony "przez MCP" z nazwą klucza. Zobacz [Serwer MCP](mcp.md).
+
 ## Pozostałe
 
 - **Twórz kopie wielu naraz.** Zaznacz wiele kontenerów i kliknij **Utwórz kopię zaznaczonych**. Wsad działa po stronie serwera, więc kontynuuje działanie, nawet jeśli zamkniesz kartę lub stracisz połączenie. BombVault nigdy nie tworzy kopii (a więc nigdy nie zatrzymuje) własnego kontenera.

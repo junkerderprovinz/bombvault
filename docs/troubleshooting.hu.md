@@ -61,6 +61,10 @@ Az import leállítja a konténert, félreteszi az adatmappáját, és hagyja, h
 
 Kézi visszaállítás: állítsd le a konténert, nevezd át az aktuális adatmappát az útból, nevezd vissza a megőrzött mappát az eredeti nevére, majd indítsd el a konténert. Unraidon ezt a Shares fül fájlkezelője elvégzi.
 
+## Egy MI-asszisztens nem tud csatlakozni
+
+Az [MCP-kiszolgáló](mcp.md#troubleshooting) oldal leírja, mit jelentenek az MCP-végpont egyes állapotkódjai és elutasításai, és mit tehetsz ellenük.
+
 ## A konténer folyamatosan újraindul vagy egészségtelennek tűnik
 
 A BombVault a saját `/api/health`-jéből jelent egészségeset/egészségtelent. Egy automatikus gyógyító eszköz (mint az Autoheal) automatikusan újraindíthatja, ha a motor valaha beragadna. Ellenőrizd a konténer naplóját és a `/spike` jelentést a mögöttes okért.

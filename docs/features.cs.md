@@ -82,6 +82,10 @@ BombVault je ve výchozím nastavení jednoduchý a hluboký, když to potřebuj
 - **Prostý export VM.** VM mají stejný **Export (prostý tar)**: `<name>.tar.gz` diskových image plus `<name>.xml`, obnovitelný pomocí `virsh define` plus disk, bez BombVaultu nebo restic.
 - **Šifrujte prosté exporty (age).** Exporty leží mimo restic, takže jsou ve výchozím stavu prostým textem. Zapněte šifrování age v Nastavení a přidejte jednoho nebo více příjemců (veřejný klíč age nebo veřejný klíč SSH). Každý export (kontejner a VM `.tar.gz`, jejich `.xml` sidecary a flash ZIP) je pak zapečetěn pro tyto příjemce a vy jej později dešifrujete mimo stroj odpovídajícím soukromým klíčem. Jako bezpečnostní pravidlo, se zapnutým šifrováním a bez nastaveného platného příjemce export selže s jasnou chybou místo toho, aby kdy zapsal prostý text.
 
+## Asistenti s umělou inteligencí (MCP) {#mcp}
+
+BombVault má vestavěný server MCP, přes který asistent jako Claude Code nebo Claude Desktop čte stav záloh, pokrytí, historii běhů, body obnovy a probíhající činnost. S klíčem, který to dovoluje, může asistent také spustit zálohu jedné položky, jedné domény nebo všeho a zrušit zálohy, které sám spustil. Obnovy, mazání, prune a nastavení zůstávají ve webovém rozhraní. Každý klient dostane vlastní klíč v **Nastavení, Systém, Server MCP**; klíč se zobrazí jednou, ukládá se jen jako otisk a kdykoli ho lze přejmenovat, nahradit nebo odvolat. Spuštění jsou omezená za hodinu i na položku a ochrana uchovávání brání tomu, aby zálohy asistenta vytlačily vaše vlastní body obnovy ze zásady "ponechat posledních N". Každý běh spuštěný asistentem je označený "přes MCP" s názvem klíče. Viz [Server MCP](mcp.md).
+
 ## Ostatní
 
 - **Zálohujte mnoho najednou.** Vyberte více kontejnerů a klikněte na **Zálohovat vybrané**. Dávka běží na straně serveru, takže pokračuje, i když zavřete kartu nebo ztratíte připojení. BombVault nikdy nezálohuje (a tedy nikdy nezastavuje) vlastní kontejner.
