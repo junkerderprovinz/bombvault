@@ -133,6 +133,32 @@ func (h *Handler) mcpKeysAllowedFrom(r *http.Request) bool {
 	return mcpKeyHostAllowed(r.Host)
 }
 
+// servedOwnCertificate reports whether the browser behind r negotiated TLS with
+// BombVault itself. Behind a proxy that ends TLS, clients see the proxy's
+// certificate, and a warning about BombVault's would point at the wrong fix.
+// A browser sends no server name for an IP address and the page's own name
+// otherwise; a proxy connecting upstream sends its target's name or none, and
+// usually a forwarding header as well.
+func servedOwnCertificate(r *http.Request) bool {
+	if r.TLS == nil {
+		return false
+	}
+	for _, name := range []string{"Forwarded", "X-Forwarded-For", "X-Forwarded-Host", "X-Forwarded-Proto", "X-Real-Ip"} {
+		if r.Header.Get(name) != "" {
+			return false
+		}
+	}
+	host := r.Host
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		host = h
+	}
+	host = strings.Trim(host, "[]")
+	if net.ParseIP(host) != nil {
+		return r.TLS.ServerName == ""
+	}
+	return strings.EqualFold(r.TLS.ServerName, host)
+}
+
 func (h *Handler) mcpKeyViewOf(k store.MCPKey, inUse bool) mcpKeyView {
 	return mcpKeyView{
 		ID:              k.ID,
@@ -193,7 +219,7 @@ func (h *Handler) handleListMCPKeys(w http.ResponseWriter, r *http.Request) {
 	}
 	_, _, authOn := h.authEnabled()
 	var certificate any
-	if info, ok := h.svc.CertificateInfo(); ok {
+	if info, ok := h.svc.CertificateInfo(); ok && servedOwnCertificate(r) {
 		certificate = info
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
