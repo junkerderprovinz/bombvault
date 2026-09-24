@@ -65,6 +65,19 @@ func tablePresent(table string) func(*sql.Tx) (bool, error) {
 	}
 }
 
+// migrationRecorded reports whether a migration of this name was applied under
+// any number, the guard for a body that changes rows rather than the schema.
+func migrationRecorded(name string) func(*sql.Tx) (bool, error) {
+	return func(tx *sql.Tx) (bool, error) {
+		var n int
+		err := tx.QueryRow(`SELECT count(*) FROM schema_migrations WHERE name = ?`, name).Scan(&n)
+		if err != nil {
+			return false, fmt.Errorf("probe migration %s: %w", name, err)
+		}
+		return n > 0, nil
+	}
+}
+
 // ADDING A MIGRATION — and the one rule that got broken here:
 //
 // Take the next unused number, append at the end, never edit a body that has
@@ -1776,13 +1789,30 @@ CREATE INDEX IF NOT EXISTS idx_zfs_run_members_dataset ON zfs_run_members(datase
 );`,
 		alreadySatisfied: tablePresent("zfs_safety_snapshots"),
 	},
+	{
+		// The Schedules tab treats the domain schedules as one while they are
+		// equal. zfs_schedule arrived as "off", which would split a shared
+		// schedule on upgrade, so it joins one that was in step. A switched-off
+		// domain never runs its schedule, so this starts nothing on its own.
+		// The guard is the name because an UPDATE leaves no column to probe,
+		// and it must not run twice after a renumbering.
+		version: zfsMigrationBase + 11,
+		name:    "settings_zfs_schedule_joins_sync",
+		sql: `UPDATE settings SET zfs_schedule = containers_schedule
+WHERE zfs_schedule = 'off'
+  AND containers_schedule NOT IN ('off', '')
+  AND vms_schedule = containers_schedule
+  AND flash_schedule = containers_schedule
+  AND files_schedule = containers_schedule;`,
+		alreadySatisfied: migrationRecorded("settings_zfs_schedule_joins_sync"),
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
 // so they keep their order if the base has to move before release.
 const dbDumpMigrationBase = 123
 
-// zfsMigrationBase numbers the eleven steps of the ZFS domain from one place,
+// zfsMigrationBase numbers the twelve steps of the ZFS domain from one place,
 // so they keep their order if the base has to move before release.
 const zfsMigrationBase = 126
 
