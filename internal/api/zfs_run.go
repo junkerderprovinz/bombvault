@@ -170,7 +170,7 @@ func (s *Service) recordZFSRefusal(ctx context.Context, d store.ZFSDataset, ref 
 	if _, sErr := s.store.SetZFSCheck(d.ID, ref.Code, ref.Detail, d.LastHostMountpoint, time.Now().Unix()); sErr != nil {
 		log.Printf("api: zfs: recording the check of %s failed: %v", d.Dataset, sErr)
 	}
-	if runID, sErr := s.store.StartRun(d.ID, "backup"); sErr != nil {
+	if runID, sErr := s.startRun(ctx, d.ID, "backup"); sErr != nil {
 		log.Printf("api: zfs: recording the refused run of %s failed: %v", d.Dataset, sErr)
 	} else if fErr := s.store.FinishRun(runID, "failed", "", 0, truncateRunErr(err)); fErr != nil {
 		log.Printf("api: zfs: finishing the refused run of %s failed: %v", d.Dataset, fErr)
