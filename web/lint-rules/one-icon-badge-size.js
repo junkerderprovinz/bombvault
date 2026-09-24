@@ -28,16 +28,16 @@ import {
 
 const RULE_ID = "one-icon-badge-size";
 
-/** The one canonical square-icon-badge stage. Badge.tsx SIZE_TOKENS.icon. */
+/** Badge.tsx SIZE_TOKENS.icon. */
 const CANONICAL_SIZE = "icon";
-/** The Tailwind step it resolves to: h-8 / w-8 = 32px. */
+/** h-8 / w-8, 32px. */
 const CANONICAL_STEP = "8";
 
 /** Utilities that fight Badge's own stage table if they appear on a Badge. */
 const SIZING_UTILITY =
   /^(?:h|w|size|min-h|min-w|p|px|py|leading)-(?!full$|fit$|auto$)[^:]+$|^text-\[[^\]]*(?:px|rem)\]$/;
 
-/** `h-8`, `w-12`, `size-9` → the numeric step, else undefined. */
+/** The numeric step of `h-8`, `w-12` or `size-9`, else undefined. */
 function boxStep(token, prefix) {
   const m = new RegExp(`^${prefix}-(\\d+(?:\\.\\d+)?)$`).exec(token);
   return m ? m[1] : undefined;
@@ -53,13 +53,13 @@ export default {
     schema: [],
     messages: {
       wrongSize:
-        'This square icon-only Badge asks for size="{{size}}". There is exactly ONE square-icon-badge size in this app — size="icon" (32px) — regardless of what the badge does or what it sits next to (Badge.tsx, "ONE SIZE FOR SQUARE ICON BADGES"). Drop the size prop or set size="icon".{{hatch}}',
+        'This square icon-only Badge asks for size="{{size}}". Square icon badges have one size, size="icon" (32px), whatever the badge does or sits next to. Drop the size prop or set size="icon".{{hatch}}',
       missingSize:
-        'This square icon-only Badge does not state its size, so it falls back to the "medium" text-chip stage. Add size="icon" — the one square-icon-badge size (32px).{{hatch}}',
+        'This square icon-only Badge does not state its size, so it falls back to the "medium" text-chip stage. Add size="icon", the one square icon badge size (32px).{{hatch}}',
       classNameOverride:
-        'This square icon-only Badge re-sizes itself from the call site with `{{token}}`. Badge pins height, width, padding and font-size together in SIZE_TOKENS so they cannot drift apart — take `{{token}}` out and let size="icon" decide.{{hatch}}',
+        'This square icon-only Badge re-sizes itself from the call site with `{{token}}`. Badge sets height, width, padding and font size together in SIZE_TOKENS so they cannot drift apart; take `{{token}}` out and let size="icon" decide.{{hatch}}',
       handRolled:
-        'This is a hand-rolled {{step}}px square icon control (`{{token}}`). Every square icon badge in the app is a `<Badge shape="square" size="icon">` at 32px — use that instead of a bespoke tile, so it also picks up the colour and shape engines for free.{{hatch}}',
+        'This is a hand-rolled {{step}}px square icon control (`{{token}}`). Every square icon badge in the app is a `<Badge shape="square" size="icon">` at 32px; use that instead of a bespoke tile, and it picks up the colour and shape engines as well.{{hatch}}',
     },
   },
 

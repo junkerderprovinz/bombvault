@@ -77,13 +77,13 @@ export default {
     schema: [],
     messages: {
       radius:
-        "`{{token}}` pins this control's corner radius, so it stops following the shape engine — it will keep these corners in `soft` and `square` mode while everything around it changes. Use `rounded-control` (or `rounded-card` / `rounded-pill`), which read --radius-* from index.css.{{hatch}}",
+        "`{{token}}` pins this control's corner radius, so it stops following the shape engine and keeps these corners in `soft` and `square` mode while everything around it changes. Use `rounded-control` (or `rounded-card` / `rounded-pill`), which read --radius-* from index.css.{{hatch}}",
       radiusInline:
         "`borderRadius` in an inline style pins this control's corners outside the shape engine. Use the `rounded-control` / `rounded-card` / `rounded-pill` classes, or `var(--radius-control)` if it really has to be inline.{{hatch}}",
       colourClass:
         "`{{token}}` hardcodes a colour on a control instead of reading the colour engine. Use the accent tokens (`bg-accent`, `text-accentContrast`, `bg-accentSoft`, `text-accentText`) or the carbon surface tokens, so this control follows the user's accent and rainbow.{{hatch}}",
       colourInline:
-        "`{{prop}}: {{value}}` hardcodes a colour on a control. Inline colours here must read a token — `var(--accent)`, `var(--accent-contrast)`, `var(--carbon-border)` — so the control follows the colour engine.{{hatch}}",
+        "`{{prop}}: {{value}}` hardcodes a colour on a control. Inline colours here must read a token such as `var(--accent)`, `var(--accent-contrast)` or `var(--carbon-border)`, so the control follows the colour engine.{{hatch}}",
     },
   },
 
