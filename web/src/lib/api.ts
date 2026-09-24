@@ -1963,7 +1963,7 @@ export function unlockDomain(
 }
 
 /**
- * POST /api/prune/{domain} — reclaim space from forgotten snapshots (restic
+ * POST /api/prune/{domain} reclaims space from forgotten snapshots (restic
  * prune). `paused` names the items a finding is holding: their snapshots were
  * kept on purpose, which is not the same as nothing to do.
  */
@@ -4147,7 +4147,7 @@ export function getAnomalies(
   return fetchJSON(`/api/anomalies${suffix ? `?${suffix}` : ""}`);
 }
 
-/** GET /api/anomalies/summary — served from memory, polled by the layout. */
+/** GET /api/anomalies/summary is served from memory and polled by the layout. */
 export function getAnomalySummary(): Promise<
   OkEnvelope & { summary: AnomalySummary }
 > {
@@ -4169,7 +4169,7 @@ export type AnomalyActionResult = OkEnvelope & {
 };
 
 /**
- * POST /api/anomalies/acknowledge — settle what the user has seen. This
+ * POST /api/anomalies/acknowledge settles what the user has seen. This
  * releases the hold on deleting old backups of those series, so it is the one
  * anomaly action with a consequence beyond the page.
  */
@@ -4183,7 +4183,7 @@ export function acknowledgeAnomalies(
   });
 }
 
-/** POST /api/anomalies/expected — settle and record the new level as normal. */
+/** POST /api/anomalies/expected settles and records the new level as normal. */
 export function markAnomaliesExpected(
   ids: string[],
   note?: string
@@ -4202,8 +4202,8 @@ export function getAnomalyItems(): Promise<
 }
 
 /**
- * PUT /api/anomalies/items/{targetId}/prefs — one item's overrides. A key that
- * is left out keeps its stored value, an empty one follows the global setting,
+ * PUT /api/anomalies/items/{targetId}/prefs carries one item's overrides. A key
+ * that is left out keeps its stored value, an empty one follows the global setting,
  * so the two controls can save on their own.
  */
 export function setItemAnomalyPrefs(
