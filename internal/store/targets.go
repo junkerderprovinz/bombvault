@@ -669,8 +669,9 @@ func scanTarget(s scanner) (Target, error) {
 // fails to rewrite fails before anything is written; pass the current
 // definition when there is nothing to rewrite.
 //
-// The entry's copy rule moves to the new name; a new name that carries a rule
-// of its own is ErrCopyRuleTaken.
+// The entry's copy rule moves to the new name, and so do the copies the
+// off-site targets were last seen holding under the old one. A new name that
+// carries a rule of its own is ErrCopyRuleTaken.
 func (r *Repo) RenameTargetWithAlias(oldName, newName, newDefinition string) error {
 	return r.renameWithAlias(containerEntries, oldName, newName, newDefinition, "")
 }

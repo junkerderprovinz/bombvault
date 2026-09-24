@@ -162,6 +162,11 @@ func (r *Repo) renameWithAlias(e entryTable, oldName, newName, newDefinition, uu
 	if err := renameCopyRuleTx(tx, placement, prefix+oldName, prefix+newName); err != nil {
 		return fmt.Errorf("rename %q: %w", oldName, err)
 	}
+	// Every copy counted under oldName so far predates the link, so all of
+	// them are the entry's.
+	if err := moveItemCopiesTx(tx, placement, prefix+oldName, prefix+newName); err != nil {
+		return fmt.Errorf("rename %q: %w", oldName, err)
+	}
 	if err := e.moveRow(tx, id, newName, newDefinition, uuid); err != nil {
 		return fmt.Errorf("rename %q: %w", oldName, err)
 	}

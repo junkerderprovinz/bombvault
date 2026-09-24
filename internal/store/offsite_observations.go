@@ -175,6 +175,24 @@ func (r *Repo) ResetTargetAged(domain, targetID string) error {
 	return nil
 }
 
+// moveItemCopiesTx files what each target held of identity from under to,
+// added to what it held of to already.
+func moveItemCopiesTx(tx *sql.Tx, domain, from, to string) error {
+	if _, err := tx.Exec(`INSERT INTO offsite_item_copies
+		(domain, identity, target_id, snapshot_count, latest_snapshot_at, observed_at)
+		SELECT domain, ?, target_id, snapshot_count, latest_snapshot_at, observed_at
+		FROM offsite_item_copies WHERE domain = ? AND identity = ?
+		ON CONFLICT(domain, target_id, identity) DO UPDATE SET snapshot_count = snapshot_count + excluded.snapshot_count,
+		  latest_snapshot_at = max(latest_snapshot_at, excluded.latest_snapshot_at),
+		  observed_at = min(observed_at, excluded.observed_at)`, to, domain, from); err != nil {
+		return fmt.Errorf("move the observed copies of %s: %w", from, err)
+	}
+	if _, err := tx.Exec(`DELETE FROM offsite_item_copies WHERE domain = ? AND identity = ?`, domain, from); err != nil {
+		return fmt.Errorf("move the observed copies of %s: %w", from, err)
+	}
+	return nil
+}
+
 func deleteTargetObservationsTx(tx *sql.Tx, targetID string) error {
 	if _, err := tx.Exec(`DELETE FROM offsite_item_copies WHERE target_id = ?`, targetID); err != nil {
 		return err
