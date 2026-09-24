@@ -74,7 +74,7 @@ import {
 // line because the split is by generator file, not by meaning: `upload-box-1`
 // and `download-box-1` are one Streamline drawing with the arrow reversed.
 import { NotifyCard } from "./settings/NotifyCard";
-import { Card, ToggleRow, type SaveState } from "./settings/shared";
+import { Card, LOGIN_PASSWORD_FIELD, ToggleRow, type SaveState } from "./settings/shared";
 import { IntegrityCard } from "./settings/IntegrityCard";
 import { VMSSHCard } from "./settings/VMSSHCard";
 import { FleetSettingsCard } from "./settings/FleetSettingsCard";
@@ -82,6 +82,7 @@ import { CloudCredSetsCard } from "./settings/CloudCredSetsCard";
 import { SettingsPortabilityCard } from "./settings/SettingsPortabilityCard";
 import { AboutCard } from "./settings/AboutCard";
 import { DashboardWidgetCard } from "./settings/DashboardWidgetCard";
+import { McpServerCard } from "./settings/McpServerCard";
 
 
 
@@ -4197,6 +4198,7 @@ export function SettingsPage() {
           }}
           hueIndex={nextHue()}
         />
+        <McpServerCard hueIndex={nextHue()} />
         </>
       )}
 
@@ -4497,6 +4499,7 @@ export function SettingsPage() {
             </label>
             <RevealInput
               {...revealPwNew}
+              id={LOGIN_PASSWORD_FIELD}
               value={pwNew}
               onChange={(e) => setPwNew(e.target.value)}
               autoComplete="new-password"

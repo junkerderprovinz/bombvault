@@ -102,8 +102,10 @@ interface SelectorCommon {
  * colours at the default offset; pages/settings/hueOffsets.test.ts requires
  * every hued selector in that tree to take its offset from here.
  *
- * The palette has eight colours and the tree nine selectors, so `drillKind`
- * shares the first label row's start. The two sit in different tabs.
+ * The palette has eight colours and the tree ten selectors, so `drillKind`
+ * shares the first label row's start and `mcpClient` shares `notifyOn`'s. Each
+ * pair sits in different tabs, `notifyOn` in Notifications and the client
+ * picker in System, so neither pair is ever on screen together.
  */
 export const HUE_OFFSET = {
   tabs: 0,
@@ -115,6 +117,7 @@ export const HUE_OFFSET = {
   theme: 6,
   notifyOn: 7,
   drillKind: 1,
+  mcpClient: 7,
 } as const;
 
 export type SelectorProps =
