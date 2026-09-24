@@ -625,10 +625,12 @@ func (s *Service) mirrorDirectCreds(ctx context.Context, targetID string) (*save
 }
 
 // keepDirectCreds runs after a save of credential values that left a direct
-// repository unable to open with its target's. When the save changed the
-// values behind the direct repository's own selector and those do not open it
-// either, it moves to a new set holding the values from before. They are not
-// probed: if they did not open it, keeping them makes nothing worse.
+// repository unable to open with its target's. If the save also changed the
+// values behind the repository's own selector and those fail too, the values
+// from before are probed, and only when they open it does it move to a new set
+// holding them. A repository that opens with neither stays on its selector, so
+// a server that was down during the save does not pin it to a key about to be
+// revoked.
 func (s *Service) keepDirectCreds(ctx context.Context, before store.Settings, direct, target store.OffsiteTarget) error {
 	settings, err := s.store.GetSettings()
 	if err != nil {
@@ -642,14 +644,16 @@ func (s *Service) keepDirectCreds(ctx context.Context, before store.Settings, di
 	if slices.Equal(cloudEnv(old), mode.Env) {
 		return nil
 	}
-	if !slices.Equal(mode.Env, s.offsiteModeForTarget(settings, target).Env) {
-		loc, err := s.resolveRepo(direct.Repo)
-		if err != nil {
-			return err
-		}
-		if s.opensWith(ctx, loc, mode) {
-			return nil
-		}
+	loc, err := s.resolveRepo(direct.Repo)
+	if err != nil {
+		return err
+	}
+	if !slices.Equal(mode.Env, s.offsiteModeForTarget(settings, target).Env) && s.opensWith(ctx, loc, mode) {
+		return nil
+	}
+	mode.Env = cloudEnv(old)
+	if !s.opensWith(ctx, loc, mode) {
+		return nil
 	}
 	kept := CloudCredSet{ID: newCredSetID(), Name: direct.Name + " (kept credentials)", KeptFor: direct.ID, CloudCreds: old}
 	if err := s.editCloudCredSets(func(sets []CloudCredSet) []CloudCredSet { return append(sets, kept) }); err != nil {
