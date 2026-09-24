@@ -368,3 +368,37 @@ func TestZFSHooksPostFailureIsRecordedOnTheRun(t *testing.T) {
 		t.Fatalf("hook detail = %q, want the command's error kept on the run", detail.HookDetail)
 	}
 }
+
+func TestZFSConsistencyStopsAContainerAContainerBackupStartedAgain(t *testing.T) {
+	dock := newZFSFakeDocker("db", "web")
+	dock.containers["web"].running = false
+	s, _, _, d := zfsStopFixture(t, dock, "db", "web")
+
+	// A container backup holds the domain with web stopped for its own copy.
+	release := s.lockDomainFor("containers", "backup")
+	done := make(chan error, 1)
+	go func() {
+		_, err := s.BackupZFSDataset(context.Background(), d.ID)
+		done <- err
+	}()
+	deadline := time.Now().Add(100 * time.Millisecond)
+	for time.Now().Before(deadline) && callIndex(dock.recorded(), "inspect:web") < 0 {
+		time.Sleep(time.Millisecond)
+	}
+	dock.mu.Lock()
+	dock.containers["web"].running = true
+	dock.mu.Unlock()
+	release()
+
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("backup: %v", err)
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("the run never got the containers domain")
+	}
+	if callIndex(dock.recorded(), "stop:web") < 0 {
+		t.Fatalf("calls = %v, want web stopped for the snapshot once the container backup started it again", dock.recorded())
+	}
+}

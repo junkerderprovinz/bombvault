@@ -100,19 +100,25 @@ func (s *Service) newZFSConsistency(d store.ZFSDataset, settings store.Settings,
 }
 
 func (c *zfsConsistency) Freeze(ctx context.Context) (func(context.Context), func() time.Duration, error) {
-	deps, err := c.running(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-	if len(deps) == 0 {
-		return func(context.Context) {}, func() time.Duration { return 0 }, nil
-	}
+	// The lock comes before the look at the stop list: a container backup
+	// stops its container under this lock and starts it again before letting
+	// go, so a container seen down from outside may be running by the time the
+	// snapshot is taken.
 	unlock, ok := c.svc.lockWithin(ctx, "containers", "zfs-consistency", c.wait)
 	if !ok {
 		if ctx.Err() != nil {
 			return nil, nil, ctx.Err()
 		}
 		return nil, nil, &backup.ZFSRefusal{Code: "containers-busy", Detail: c.item.Dataset}
+	}
+	deps, err := c.running(ctx)
+	if err != nil {
+		unlock()
+		return nil, nil, err
+	}
+	if len(deps) == 0 {
+		unlock()
+		return func(context.Context) {}, func() time.Duration { return 0 }, nil
 	}
 	c.unlock = unlock
 
