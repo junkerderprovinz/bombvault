@@ -1680,6 +1680,7 @@ const ar: Partial<Translations> = {
   "placementCode.nameMismatch": "الاسم المكتوب لا يطابق.",
   "placementCode.homeUnreadable": "تعذّرت قراءة موقع العنصر، لذا لم يُحذف شيء.",
   "placementCode.snapshotMissing": "هذه النسخة الاحتياطية لم تعد في المكان المختار.",
+  "placementCode.directAccessDenied": "المفتاح لا يستطيع قراءة هذا المكان. مفتاح مقتصر على مجلد الهدف نفسه لا يستطيع الوصول إلى المجلد المجاور له؛ اقصر المفتاح بدلاً من ذلك على المجلد الذي يعلو الهدف.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} المباشر يحتفظ الآن بأقل. العناصر التي نسختها الوحيدة هناك: {n}.",

@@ -1688,6 +1688,7 @@ const sk: Partial<Translations> = {
   "placementCode.nameMismatch": "Zadaný názov sa nezhoduje.",
   "placementCode.homeUnreadable": "Umiestnenie položky sa nepodarilo načítať, takže nič nebolo vymazané.",
   "placementCode.snapshotMissing": "Táto záloha už nie je na zvolenom mieste.",
+  "placementCode.directAccessDenied": "Kľúč nedokáže prečítať toto miesto. Kľúč obmedzený na vlastný priečinok cieľa sa nedostane do priečinka vedľa neho; namiesto toho obmedzte kľúč na priečinok nad cieľom.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} priamo teraz uchováva menej. Položky, ktorých jediná kópia je tam: {n}.",

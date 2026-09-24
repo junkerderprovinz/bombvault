@@ -1688,6 +1688,7 @@ const bg: Partial<Translations> = {
   "placementCode.nameMismatch": "Въведеното име не съвпада.",
   "placementCode.homeUnreadable": "Местоположението на елемента не можа да бъде прочетено, затова нищо не бе изтрито.",
   "placementCode.snapshotMissing": "Това архивиране вече не е на избраното място.",
+  "placementCode.directAccessDenied": "Ключът не може да прочете това място. Ключ, ограничен до собствената папка на целта, не може да достигне папката до нея; ограничи ключа до папката над целта.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} директно вече пази по-малко. Елементи, чието единствено копие е там: {n}.",

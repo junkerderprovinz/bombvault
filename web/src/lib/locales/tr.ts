@@ -1677,6 +1677,7 @@ const tr: Partial<Translations> = {
   "placementCode.nameMismatch": "Yazılan ad eşleşmiyor.",
   "placementCode.homeUnreadable": "Ögenin konumu okunamadı, bu yüzden hiçbir şey silinmedi.",
   "placementCode.snapshotMissing": "Bu yedek artık seçilen yerde değil.",
+  "placementCode.directAccessDenied": "Anahtar bu yeri okuyamaz. Hedefin kendi klasörüyle sınırlı bir anahtar, yanındaki klasöre erişemez; bunun yerine anahtarı hedefin üstündeki klasörle sınırla.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} doğrudan artık daha az tutuyor. Tek kopyası orada olan ögeler: {n}.",

@@ -1680,6 +1680,7 @@ const th: Partial<Translations> = {
   "placementCode.nameMismatch": "ชื่อที่พิมพ์ไม่ตรงกัน",
   "placementCode.homeUnreadable": "อ่านตำแหน่งของรายการไม่ได้ จึงไม่มีการลบสิ่งใด",
   "placementCode.snapshotMissing": "การสำรองข้อมูลนี้ไม่ได้อยู่ที่จุดที่เลือกไว้อีกต่อไป",
+  "placementCode.directAccessDenied": "คีย์นี้ไม่สามารถอ่านตำแหน่งนี้ได้ คีย์ที่จำกัดไว้เฉพาะโฟลเดอร์ของปลายทางเองจะเข้าไม่ถึงโฟลเดอร์ที่อยู่ข้างกัน ให้จำกัดคีย์ไว้ที่โฟลเดอร์ระดับบนของปลายทางแทน",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} โดยตรงเก็บข้อมูลน้อยลงแล้ว รายการที่มีสำเนาเดียวอยู่ที่นั่น: {n} รายการ",

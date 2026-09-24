@@ -1677,6 +1677,7 @@ const sv: Partial<Translations> = {
   "placementCode.nameMismatch": "Det inskrivna namnet stämmer inte.",
   "placementCode.homeUnreadable": "Objektets plats kunde inte läsas, så inget raderades.",
   "placementCode.snapshotMissing": "Den här säkerhetskopian finns inte längre på den valda platsen.",
+  "placementCode.directAccessDenied": "Nyckeln kan inte läsa den här platsen. En nyckel som är begränsad till målets egen mapp når inte mappen bredvid den; begränsa i stället nyckeln till mappen ovanför målet.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkt behåller nu mindre. Objekt vars enda kopia finns där: {n}.",

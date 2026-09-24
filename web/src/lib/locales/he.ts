@@ -1677,6 +1677,7 @@ const he: Partial<Translations> = {
   "placementCode.nameMismatch": "השם שהוקלד אינו תואם.",
   "placementCode.homeUnreadable": "לא ניתן היה לקרוא את מיקום הפריט, ולכן לא נמחק דבר.",
   "placementCode.snapshotMissing": "הגיבוי הזה כבר לא נמצא במקום שנבחר.",
+  "placementCode.directAccessDenied": "המפתח אינו יכול לקרוא את המקום הזה. מפתח המוגבל לתיקייה של היעד עצמו לא יכול להגיע לתיקייה הסמוכה לה; הגבל את המפתח במקום זאת לתיקייה שמעל היעד.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} ישיר שומר עכשיו פחות. פריטים שהעותק היחיד שלהם נמצא שם: {n}.",

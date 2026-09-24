@@ -1677,6 +1677,7 @@ const da: Partial<Translations> = {
   "placementCode.nameMismatch": "Det indtastede navn stemmer ikke.",
   "placementCode.homeUnreadable": "Elementets placering kunne ikke læses, så intet blev slettet.",
   "placementCode.snapshotMissing": "Denne sikkerhedskopi er ikke længere på det valgte sted.",
+  "placementCode.directAccessDenied": "Nøglen kan ikke læse dette sted. En nøgle, der er begrænset til destinationens egen mappe, kan ikke nå mappen ved siden af den; begræns i stedet nøglen til mappen over destinationen.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direkte bevarer nu mindre. Elementer hvis eneste kopi ligger der: {n}.",

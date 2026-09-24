@@ -30,6 +30,7 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "name-mismatch": "placementCode.nameMismatch",
   "home-unreadable": "placementCode.homeUnreadable",
   "snapshot-missing": "placementCode.snapshotMissing",
+  "direct-access-denied": "placementCode.directAccessDenied",
 };
 
 const WARNING_KEYS: Record<SaveWarning["code"], TranslationKey> = {

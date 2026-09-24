@@ -1688,6 +1688,7 @@ const is: Partial<Translations> = {
   "placementCode.nameMismatch": "Slegið nafn passar ekki.",
   "placementCode.homeUnreadable": "Ekki tókst að lesa staðsetningu atriðisins, svo ekkert var eytt.",
   "placementCode.snapshotMissing": "Þetta afrit er ekki lengur á valda staðnum.",
+  "placementCode.directAccessDenied": "Lykillinn getur ekki lesið þennan stað. Lykill sem er takmarkaður við möppu skotmarksins sjálfs nær ekki í möppuna við hliðina á henni; takmarkaðu lykilinn þess í stað við möppuna fyrir ofan skotmarkið.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} beint varðveitir nú minna. Atriði sem eiga eina afritið þar: {n}.",

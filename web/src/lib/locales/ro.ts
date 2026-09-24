@@ -1680,6 +1680,7 @@ const ro: Partial<Translations> = {
   "placementCode.nameMismatch": "Numele introdus nu se potrivește.",
   "placementCode.homeUnreadable": "Locația elementului nu a putut fi citită, așa că nu s-a șters nimic.",
   "placementCode.snapshotMissing": "Această copie de rezervă nu mai este în locul ales.",
+  "placementCode.directAccessDenied": "Cheia nu poate citi acest loc. O cheie limitată la dosarul propriu al țintei nu poate ajunge la dosarul alăturat; limitează în schimb cheia la dosarul de deasupra țintei.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direct păstrează acum mai puțin. Elemente a căror unică copie este acolo: {n}.",

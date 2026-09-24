@@ -1688,6 +1688,7 @@ const hr: Partial<Translations> = {
   "placementCode.nameMismatch": "Upisano ime se ne podudara.",
   "placementCode.homeUnreadable": "Lokaciju stavke nije bilo moguće pročitati, pa ništa nije izbrisano.",
   "placementCode.snapshotMissing": "Ova sigurnosna kopija više nije na odabranom mjestu.",
+  "placementCode.directAccessDenied": "Ključ ne može pročitati ovo mjesto. Ključ ograničen na vlastitu mapu odredišta ne može doprijeti do susjedne mape; umjesto toga ograniči ključ na mapu iznad odredišta.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} izravno sada čuva manje. Stavke čija je jedina kopija ondje: {n}.",

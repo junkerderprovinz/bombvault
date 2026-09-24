@@ -1672,6 +1672,7 @@ const uk: Partial<Translations> = {
   "placementCode.nameMismatch": "Введене ім'я не збігається.",
   "placementCode.homeUnreadable": "Не вдалося прочитати розташування елемента, тому нічого не було видалено.",
   "placementCode.snapshotMissing": "Цієї резервної копії більше немає в обраному місці.",
+  "placementCode.directAccessDenied": "Ключ не може прочитати це місце. Ключ, обмежений власною текою цілі, не може дістатися до теки поруч із нею; натомість обмеж ключ текою над ціллю.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} напряму тепер зберігає менше. Елементи, чия єдина копія там: {n}.",

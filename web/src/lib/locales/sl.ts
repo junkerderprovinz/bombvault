@@ -1672,6 +1672,7 @@ const sl: Partial<Translations> = {
   "placementCode.nameMismatch": "Vpisano ime se ne ujema.",
   "placementCode.homeUnreadable": "Lokacije elementa ni bilo mogoče prebrati, zato ni bilo nič izbrisano.",
   "placementCode.snapshotMissing": "Te varnostne kopije ni več na izbranem mestu.",
+  "placementCode.directAccessDenied": "Ključ ne more prebrati tega mesta. Ključ, omejen na lastno mapo cilja, ne more doseči mape ob njej; namesto tega omeji ključ na mapo nad ciljem.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} neposredno zdaj hrani manj. Elementi, katerih edina kopija je tam: {n}.",

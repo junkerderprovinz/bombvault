@@ -1672,6 +1672,7 @@ const ru: Partial<Translations> = {
   "placementCode.nameMismatch": "Введённое имя не совпадает.",
   "placementCode.homeUnreadable": "Не удалось прочитать расположение элемента, поэтому ничего не было удалено.",
   "placementCode.snapshotMissing": "Этой резервной копии больше нет в выбранном месте.",
+  "placementCode.directAccessDenied": "Ключ не может прочитать это место. Ключ, ограниченный собственной папкой цели, не может обратиться к папке рядом с ней; ограничьте ключ папкой на уровень выше цели.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} напрямую теперь хранит меньше. Элементы, чья единственная копия там: {n}.",

@@ -1677,6 +1677,7 @@ const pt: Partial<Translations> = {
   "placementCode.nameMismatch": "O nome digitado não corresponde.",
   "placementCode.homeUnreadable": "Não foi possível ler a localização do item, por isso nada foi apagado.",
   "placementCode.snapshotMissing": "Este backup já não está no lugar escolhido.",
+  "placementCode.directAccessDenied": "A chave não consegue ler este lugar. Uma chave limitada à pasta do próprio destino não consegue alcançar a pasta ao lado dela; limite antes a chave à pasta acima do destino.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} direto agora conserva menos. Itens cuja única cópia está lá: {n}.",

@@ -1688,6 +1688,7 @@ const lv: Partial<Translations> = {
   "placementCode.nameMismatch": "Ievadītais nosaukums nesakrīt.",
   "placementCode.homeUnreadable": "Neizdevās nolasīt vienuma atrašanās vietu, tāpēc nekas netika dzēsts.",
   "placementCode.snapshotMissing": "Šī dublējumkopija vairs nav izvēlētajā vietā.",
+  "placementCode.directAccessDenied": "Atslēga nevar nolasīt šo vietu. Atslēga, kas ir ierobežota tikai ar mērķa paša mapi, nevar piekļūt blakus esošajai mapei; tā vietā ierobežojiet atslēgu ar mapi virs mērķa.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} tieši tagad saglabā mazāk. Vienumi, kuru vienīgā kopija ir tur: {n}.",

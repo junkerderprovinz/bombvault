@@ -1669,6 +1669,7 @@ const vi: Partial<Translations> = {
   "placementCode.nameMismatch": "Tên đã nhập không khớp.",
   "placementCode.homeUnreadable": "Không thể đọc vị trí của mục, vì vậy không có gì bị xóa.",
   "placementCode.snapshotMissing": "Bản sao lưu này không còn ở vị trí đã chọn.",
+  "placementCode.directAccessDenied": "Khóa này không thể đọc được vị trí này. Khóa chỉ giới hạn trong thư mục riêng của đích sẽ không thể tiếp cận thư mục bên cạnh nó; hãy giới hạn khóa vào thư mục phía trên đích thay vì vậy.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} trực tiếp giờ giữ ít hơn. Các mục có bản sao duy nhất ở đó: {n}.",

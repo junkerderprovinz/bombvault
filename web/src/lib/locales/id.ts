@@ -1688,6 +1688,7 @@ const id: Partial<Translations> = {
   "placementCode.nameMismatch": "Nama yang diketik tidak cocok.",
   "placementCode.homeUnreadable": "Lokasi item tidak dapat dibaca, jadi tidak ada yang dihapus.",
   "placementCode.snapshotMissing": "Cadangan ini tidak lagi berada di tempat yang dipilih.",
+  "placementCode.directAccessDenied": "Kunci tidak dapat membaca tempat ini. Kunci yang dibatasi pada folder target itu sendiri tidak dapat menjangkau folder di sebelahnya; batasi kunci itu pada folder di atas target sebagai gantinya.",
 
   // Warnings
   "saveWarning.directRetentionLowered": "{target} langsung sekarang menyimpan lebih sedikit. Item yang satu-satunya salinannya ada di sana: {n}.",
