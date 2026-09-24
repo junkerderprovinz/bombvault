@@ -69,6 +69,26 @@ Minden problémához szögletes zárójelben ok-kód tartozik, és a [ZFS-adatk�
 - **`key-not-loaded`**: a titkosított adatkészletet, amelynek kulcsa nincs betöltve, kihagyja. Töltsd be a kulcsot a `zfs load-key` paranccsal, és csatold az adatkészletet; a következő mentés már tartalmazza.
 - **`ssh-auth`**: a kiszolgáló elutasította a BombVault kulcsát. A ZFS oldal kapcsolatkártyája mutatja a parancsot, amely engedélyezi; futtasd egyszer a kiszolgálón.
 
+## Egy elem "Tanul N/10" állapotban marad
+
+A legtöbb anomália-ellenőrzés egy elem 10 sikeres mentése után indul, és a számlálás újraindul a **Jelölés várhatóként** után és az elem kijelölésének módosulása után. Az ütemezés nélküli elem nem tanul, egy appdata nélküli konténernek pedig nincs miből tanulnia, amit a jelvénye is mutat.
+
+## A megőrzés nem törli többé egy elem régi mentéseit
+
+Egy nyitott kritikus anomália tartja vissza őket: az elem forrása majdnem üres, erősen összezsugorodott, vagy egy mentés az adatok nagy részét újra eltárolta. Nyisd meg az anomáliát az elem jelvényéről. Ha adat hiányzik vagy titkosították, előbb állítsd vissza a hivatkozott utolsó jó mentésből. Utána nyugtázd az anomáliát, vagy jelöld várhatónak, ha a változás tőled jött, és a következő futás a szokásos módon takarít. A megőrzési előnézet az ilyen elemet megtartottként jelöli.
+
+## A kézi tisztítás szerint néhány elemet megtartott
+
+Ugyanaz az ok: a tisztítás békén hagyja az ilyen anomáliájú elem régi mentéseit, és az üzenetében megnevezi az elemet. Minden mást a szokásos módon tisztít.
+
+## Az előzmények importja szerint egy tárolót nem sikerült beolvasni
+
+Frissítés után a BombVault egyszer beolvassa a korábbi mentések méretét minden tárolóból. Az a tároló, amely akkor nem volt elérhető, például egy leállt külső cél vagy egy fel nem csatolt megosztás, megjelenik a **Beállítások, Integritás** alatti **Anomáliák** kártyán, és naponta egyszer újrapróbálja. Addig az elemei az új mentésekből tanulnak.
+
+## A lemezterület-figyelmeztetés nem egyezik az Unraid irányítópulttal
+
+Az Unraid felhasználói megosztásán (`/mnt/user`) a szabad hely az egész tömbé, nem egyetlen lemezé. A távoli tárolókat csak olyan rclone távoli tárolókon keresztül méri, amelyek jelentik a szabad helyüket; az S3, B2, REST és SFTP tárolóknak nincs adatuk, és az **Anomáliák** kártyán nem mértként szerepelnek.
+
 ## A konténer folyamatosan újraindul vagy egészségtelennek tűnik
 
 A BombVault a saját `/api/health`-jéből jelent egészségeset/egészségtelent. Egy automatikus gyógyító eszköz (mint az Autoheal) automatikusan újraindíthatja, ha a motor valaha beragadna. Ellenőrizd a konténer naplóját és a `/spike` jelentést a mögöttes okért.

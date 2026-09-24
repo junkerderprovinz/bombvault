@@ -86,6 +86,19 @@ Skonfiguruj replikę poza siedzibą w zakładce **Ustawienia, Poza siedzibą**. 
 - **Limity przepustowości:** ogranicz tempo wysyłania/pobierania restic w Ustawienia, Poza siedzibą.
 - **Zimna i archiwalna klasa pamięci (S3):** dla natywnego repozytorium S3 poza siedzibą wybierz warstwę czytelną przy przywracaniu (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Zdalne rclone ustawiają swoją klasę w konfiguracji rclone.
 
+## Anomalie {#anomalies}
+
+Wykrywanie anomalii ustawiasz na karcie **Anomalie** w **Ustawienia, Integralność**. Każda kontrolka zapisuje się od razu po zmianie, a trzy pod przełącznikiem są ukryte, gdy wykrywanie jest wyłączone.
+
+| Ustawienie | Domyślnie | Co robi |
+|---|---|---|
+| **Wykrywaj anomalie** | Włączone | Porównuje każdą kopię z własną historią elementu. Po wyłączeniu nic nowego nie jest sprawdzane, a pozycja **Anomalie** znika z paska bocznego; karta nadal prowadzi do wcześniejszych wykryć. |
+| **Czułość** | Zrównoważona | Surowa zgłasza mniejsze zmiany, Łagodna tylko duże. |
+| **Wysyłaj powiadomienie dla** | Tylko krytyczne znaleziska | Najniższa waga, która wysyła wiadomość przez kanały skonfigurowane w Powiadomienia. Powtarzające się nieudane kopie i zrzuty oraz nieudane zaplanowane kontrole przywracania wysyłają już własną wiadomość i nie są wysyłane podwójnie. |
+| **Zachowuj stare kopie, gdy źródło mocno się kurczy lub zostaje nadpisane** | Włączone | Dopóki element ma otwarte wykrycie prawie pustego źródła, silnego skurczenia lub ponownego zapisania większości danych, retencja i czyszczenie nie ruszają jego starych kopii. Potwierdź wykrycie lub oznacz je jako oczekiwane, aby je zwolnić. |
+
+Każdy element może mieć własną czułość i własne minimum powiadomień. Ustawisz je na karcie **Elementy** strony **Anomalie** albo w panelu samego elementu: w sekcji folderów kontenera i w ustawieniach maszyny wirtualnej (obie w trybie zaawansowanym), w edytorze folderów zestawu folderów oraz na stronach **Flash** i **Autokopia**.
+
 ## Przenośne ustawienia (eksport i import) {#portable-settings-export-and-import}
 
 Karta **Eksport i import ustawień** na stronie Ustawienia zapisuje całą Twoją konfigurację BombVault (ustawienia domen, cele poza siedzibą, harmonogramy, przechowywanie, powiadomienia) do przenośnego pliku JSON, który możesz zaimportować na innej instancji, więc przeniesienie na nową maszynę lub sklonowanie konfiguracji nie oznacza ponownego wpisywania wszystkiego ręcznie. Import pokazuje podgląd i prosi o potwierdzenie oraz nigdy nie narusza Twoich danych ani historii kopii.

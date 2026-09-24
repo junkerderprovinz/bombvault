@@ -141,6 +141,9 @@ Egy kattintás letölti a **mesterkulcsot**, a **származtatott restic jelszót*
 !!! danger "Tárold a helyreállítási csomagot a szerveren kívül"
     A csomag azt a titkot tartalmazza, amely visszafejti a mentéseidet. Tartsd biztonságos, a szervertől elkülönített helyen (egy jelszókezelő, egy nyomtatott példány egy széfben). Ha elveszíted a BombVaultot és az `APP_KEY`-t is, helyreállítási csomag nélkül, a titkosított mentéseid nem állíthatók helyre.
 
+!!! warning "Nem mindig a legújabb pillanatképet kell visszaállítani"
+    A restic 0.17 óta a `restic snapshots` minden pillanatkép méretét mutatja. Adatvesztés után a legújabb pillanatkép lehet a kiürített, ezért ne állíts vissza olyan pillanatképet, amely sokkal kisebb az előzőeknél. Zsarolóvírus után lehet a titkosított, szokásos méretben. Ha a BombVault még fut, előbb nézd meg az **Anomáliák** oldalát: megnevezi az utolsó jó mentést. A visszaállításhoz nincs szükség a BombVault anomáliaadataira, és a megőrzés szüneteltetése mindig csak több pillanatképet tart meg.
+
 ### Ha a csomag épp nincs kéznél
 
 A jelszó sehol nincs tárolva, az `APP_KEY` értékéből **számolódik**. A kulccsal és egy shellel tehát magad is előállíthatod:

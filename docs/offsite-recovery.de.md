@@ -141,6 +141,9 @@ Ein Klick lädt den **Master-Key**, das **abgeleitete restic-Passwort** und die 
 !!! danger "Bewahre das Recovery-Kit off-box auf"
     Das Kit enthält das Geheimnis, das deine Backups entschlüsselt. Bewahre es an einem sicheren Ort getrennt vom Server auf (ein Passwortmanager, eine gedruckte Kopie im Safe). Wenn du sowohl BombVault als auch `APP_KEY` ohne Recovery-Kit verlierst, können deine verschlüsselten Backups nicht wiederhergestellt werden.
 
+!!! warning "Der neueste Snapshot ist nicht immer der richtige"
+    Seit restic 0.17 zeigt `restic snapshots` die Größe jedes Snapshots. Nach einem Datenverlust kann der neueste Snapshot der geleerte sein, stelle also keinen Snapshot wieder her, der viel kleiner ist als die davor. Nach Ransomware kann es der verschlüsselte in der üblichen Größe sein. Wenn BombVault noch läuft, sieh zuerst auf der Seite **Anomalien** nach: Sie nennt das letzte gute Backup. Für eine Wiederherstellung braucht es keine Anomalie-Daten von BombVault, und die Aufbewahrungspause behält immer nur mehr Snapshots.
+
 ### Wenn das Kit gerade nicht zur Hand ist
 
 Das Passwort ist nirgends gespeichert, es wird aus dem `APP_KEY` **berechnet**. Mit dem Schlüssel und einer Shell kannst du es also selbst nachbilden:

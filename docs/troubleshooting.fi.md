@@ -69,6 +69,26 @@ Jokaisella ongelmalla on syykoodi hakasulkeissa, ja sivu [ZFS-tietojoukot](zfs-d
 - **`key-not-loaded`**: salattu tietojoukko, jonka avainta ei ole ladattu, ohitetaan. Lataa avain komennolla `zfs load-key` ja liitä tietojoukko; seuraava varmuuskopio ottaa sen mukaan.
 - **`ssh-auth`**: palvelin hylkäsi BombVaultin avaimen. ZFS-sivun yhteyskortti näyttää komennon, joka valtuuttaa sen; aja se kerran palvelimella.
 
+## Kohde jää tilaan "Oppii N/10"
+
+Useimmat poikkeamatarkistukset alkavat kohteen 10 onnistuneen varmuuskopion jälkeen, ja laskenta alkaa alusta toiminnon **Merkitse odotetuksi** jälkeen ja kun kohteen valinta on muuttunut. Kohde, jolla ei ole ajastusta, ei opi, eikä kontilla ilman appdataa ole mistä oppia, minkä sen merkki myös kertoo.
+
+## Säilytys ei enää poista yhden kohteen vanhoja varmuuskopioita
+
+Avoin kriittinen poikkeama pitää ne: kohteen lähde on lähes tyhjä, on kutistunut voimakkaasti tai varmuuskopio on tallentanut suurimman osan datasta uudelleen. Avaa poikkeama kohteen merkistä. Jos dataa puuttuu tai se on salattu, palauta ensin linkitetystä viimeisestä hyvästä varmuuskopiosta. Kuittaa sitten poikkeama tai merkitse se odotetuksi, jos muutos oli sinun, niin seuraava ajo siivoaa tavalliseen tapaan. Säilytyksen esikatselu merkitsee tällaisen kohteen säilytetyksi.
+
+## Manuaalinen siivous kertoo, että joitakin kohteita säilytettiin
+
+Sama syy: siivous jättää tällaisen poikkeaman kohteen vanhat varmuuskopiot rauhaan ja nimeää kohteen viestissään. Kaikki muu siivotaan tavalliseen tapaan.
+
+## Historian tuonti kertoo, ettei tietovarastoa voitu lukea
+
+Päivityksen jälkeen BombVault lukee kerran aiempien varmuuskopioiden koot jokaisesta tietovarastosta. Tietovarasto, jota ei silloin tavoitettu, esimerkiksi alhaalla ollut ulkoinen kohde tai liittämätön jako, näkyy kortissa **Poikkeamat** kohdassa **Asetukset, Eheys**, ja sitä yritetään uudelleen kerran päivässä. Sillä välin sen kohteet oppivat uusista varmuuskopioista.
+
+## Levytilavaroitus ei vastaa Unraidin kojelautaa
+
+Unraidin käyttäjäjaolla (`/mnt/user`) vapaa tila on koko arrayn, ei yksittäisen levyn. Etätietovarastot mitataan vain rclone-etäkohteiden kautta, jotka ilmoittavat vapaan tilansa; S3-, B2-, REST- ja SFTP-tietovarastoilla ei ole lukua, ja ne näkyvät kortissa **Poikkeamat** mittaamattomina.
+
 ## Kontti käynnistyy jatkuvasti uudelleen tai näyttää epäterveeltä
 
 BombVault raportoi terve/epäterve omasta `/api/health`-päätepisteestään. Automaattinen korjaustyökalu (kuten Autoheal) voi käynnistää sen uudelleen automaattisesti, jos moottori koskaan jumiutuu. Tarkista kontin loki ja `/spike`-raportti taustalla olevan syyn selvittämiseksi.

@@ -86,6 +86,19 @@ Configura una replica off-site nella scheda **Impostazioni, Off-site**. Vedi [Of
 - **Limiti di banda:** limita la velocità di upload/download di restic sotto Impostazioni, Off-site.
 - **Classe di archiviazione fredda e d'archivio (S3):** per un repo off-site S3 nativo, scegli un livello leggibile in ripristino (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). I remote rclone impostano la loro classe nella configurazione rclone.
 
+## Anomalie {#anomalies}
+
+Il rilevamento delle anomalie si imposta nella scheda **Anomalie** di **Impostazioni, Integrità**. Ogni controllo salva appena lo cambi, e i tre sotto l'interruttore sono nascosti finché il rilevamento è spento.
+
+| Impostazione | Predefinito | Cosa fa |
+|---|---|---|
+| **Rileva le anomalie** | Attivo | Confronta ogni backup con la cronologia propria dell'elemento. Spento, non si controlla più nulla di nuovo e la voce **Anomalie** esce dalla barra laterale; la scheda continua a rimandare ai rilevamenti precedenti. |
+| **Sensibilità** | Equilibrata | Rigorosa segnala cambiamenti più piccoli, Permissiva solo quelli grandi. |
+| **Invia una notifica per** | Solo riscontri critici | La gravità minima che invia un messaggio tramite i canali configurati in Notifiche. Gli errori ripetuti di backup e dump e i controlli di ripristino pianificati falliti inviano già un proprio messaggio e non vengono inviati due volte. |
+| **Conserva i backup vecchi quando una sorgente si riduce molto o viene riscritta** | Attivo | Finché un elemento ha un rilevamento aperto per una sorgente quasi vuota, una forte riduzione o la maggior parte dei dati salvata di nuovo, la conservazione e la pulizia lasciano stare i suoi vecchi backup. Conferma il rilevamento o segnalo come previsto per liberarli. |
+
+Ogni elemento può avere una propria sensibilità e un proprio minimo di notifica. Impostali nella scheda **Elementi** della pagina **Anomalie**, oppure nel pannello dell'elemento stesso: la sezione cartelle di un container e le impostazioni di una VM (entrambe in modalità avanzata), l'editor delle cartelle di un set di cartelle e le pagine **Flash** e **Auto-backup**.
+
 ## Impostazioni portatili (esporta e importa) {#portable-settings-export-and-import}
 
 La scheda **Esporta e importa impostazioni** nella pagina Impostazioni scrive l'intera configurazione BombVault (impostazioni di dominio, destinazioni off-site, calendari, conservazione, notifiche) in un file JSON portatile che puoi importare su un'altra istanza, così passare a una nuova macchina o clonare una configurazione non significa reinserire tutto a mano. L'importazione mostra un'anteprima e chiede conferma, e non tocca mai i tuoi dati di backup o la cronologia.

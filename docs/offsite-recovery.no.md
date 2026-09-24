@@ -141,6 +141,9 @@ Ett klikk laster ned **hovednøkkelen**, det **utledede restic-passordet** og de
 !!! danger "Oppbevar gjenopprettingssettet bort fra serveren"
     Settet inneholder hemmeligheten som dekrypterer sikkerhetskopiene dine. Oppbevar det et trygt sted og adskilt fra serveren (en passordbehandler, en utskrevet kopi i et safe). Mister du både BombVault og `APP_KEY` uten et gjenopprettingssett, kan ikke de krypterte sikkerhetskopiene dine gjenopprettes.
 
+!!! warning "Det nyeste snapshotet er ikke alltid det som skal gjenopprettes"
+    Siden restic 0.17 viser `restic snapshots` størrelsen på hvert snapshot. Etter datatap kan det nyeste snapshotet være det tømte, så ikke gjenopprett et snapshot som er mye mindre enn de før det. Etter løsepengevirus kan det være det krypterte i vanlig størrelse. Kjører BombVault fortsatt, se først på siden **Avvik**: den nevner den siste gode sikkerhetskopien. En gjenoppretting trenger ingen avviksdata fra BombVault, og oppbevaringspausen beholder bare flere snapshots.
+
 ### Når settet ikke er for hånden
 
 Passordet lagres ingen steder, det **beregnes** ut fra `APP_KEY`. Med nøkkelen og et skall kan du altså gjenskape det selv:

@@ -141,6 +141,9 @@ Un clic descarga la **clave maestra**, la **contraseña restic derivada** y las 
 !!! danger "Guarda el kit de recuperación fuera del servidor"
     El kit contiene el secreto que descifra tus copias. Guárdalo en un lugar seguro y separado del servidor (un gestor de contraseñas, una copia impresa en una caja fuerte). Si pierdes tanto BombVault como `APP_KEY` sin kit de recuperación, tus copias cifradas no se pueden recuperar.
 
+!!! warning "La instantánea más reciente no siempre es la que hay que restaurar"
+    Desde restic 0.17, `restic snapshots` muestra el tamaño de cada instantánea. Tras una pérdida de datos, la instantánea más reciente puede ser la vaciada, así que no restaures una instantánea mucho más pequeña que las anteriores. Tras un ransomware puede ser la cifrada, con el tamaño habitual. Si BombVault sigue funcionando, mira antes su página **Anomalías**: indica la última copia buena. Una restauración no necesita ningún dato de anomalías de BombVault, y la pausa de retención solo conserva más instantáneas, nunca menos.
+
 ### Si no tienes el kit a mano
 
 La contraseña no se guarda en ningún sitio, se **calcula** a partir de la `APP_KEY`. Con la clave y una shell puedes reproducirla tú mismo:

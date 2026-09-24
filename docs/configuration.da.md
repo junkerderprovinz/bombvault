@@ -86,6 +86,19 @@ Opsæt en off-site-replika på fanen **Indstillinger, Off-site**. Se [Off-site o
 - **Båndbreddegrænser:** begræns restic-upload/download-hastigheden under Indstillinger, Off-site.
 - **Kold- og arkivlagringsklasse (S3):** for et native S3 off-site-repo, vælg et gendannelses-læsbart niveau (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-remotes sætter deres klasse i rclone-konfigurationen.
 
+## Afvigelser {#anomalies}
+
+Anomaliregistreringen indstilles i kortet **Afvigelser** under **Indstillinger, Integritet**. Hver kontrol gemmer, så snart du ændrer den, og de tre under kontakten er skjult, mens registreringen er slået fra.
+
+| Indstilling | Standard | Hvad den gør |
+|---|---|---|
+| **Find afvigelser** | Til | Sammenligner hver sikkerhedskopi med elementets egen historik. Slået fra kontrolleres intet nyt, og punktet **Afvigelser** forsvinder fra sidepanelet; kortet linker stadig til tidligere fund. |
+| **Følsomhed** | Balanceret | Streng melder mindre ændringer, Lempelig kun store. |
+| **Send en notifikation for** | Kun kritiske fund | Den laveste alvorlighed, der sender en besked via de kanaler, der er sat op under Notifikationer. Gentagne fejlede sikkerhedskopier og dumps og fejlede planlagte gendannelsestjek sender allerede deres egen besked og sendes ikke to gange. |
+| **Behold gamle sikkerhedskopier, når en kilde skrumper kraftigt eller omskrives** | Til | Så længe et element har et åbent fund for en næsten tom kilde, en kraftig skrumpning eller det meste af dataene gemt igen, lader opbevaring og oprydning elementets gamle sikkerhedskopier være. Kvittér for fundet eller markér det som forventet for at frigive dem. |
+
+Hvert element kan have sin egen følsomhed og sit eget notifikationsminimum. Indstil dem på fanen **Elementer** på siden **Afvigelser** eller i elementets eget panel: mappeafsnittet for en container og indstillingerne for en VM (begge i avanceret tilstand), mappeeditoren for et mappesæt og siderne **Flash** og **Auto-sikkerhedskopi**.
+
 ## Bærbare indstillinger (eksportér og importér) {#portable-settings-export-and-import}
 
 Kortet **Eksportér og importér indstillinger** på Indstillinger-siden skriver hele din BombVault-konfiguration (domæneindstillinger, off-site-destinationer, tidsplaner, opbevaring, notifikationer) til en bærbar JSON-fil, du kan importere på en anden instans, så et flyt til en ny boks eller kloning af en opsætning ikke betyder at genindtaste alt manuelt. Import viser en forhåndsvisning og beder om bekræftelse, og den rører aldrig dine sikkerhedskopidata eller -historik.

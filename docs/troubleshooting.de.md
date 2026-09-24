@@ -69,6 +69,26 @@ Jedes Problem trägt einen Grundcode in eckigen Klammern, und die Seite [ZFS-Dat
 - **`key-not-loaded`**: Ein verschlüsseltes Dataset, dessen Schlüssel nicht geladen ist, wird übersprungen. Lade den Schlüssel mit `zfs load-key` und hänge das Dataset ein; das nächste Backup nimmt es mit.
 - **`ssh-auth`**: Der Server hat BombVaults Schlüssel abgelehnt. Die Verbindungskarte auf der ZFS-Seite zeigt den Befehl, der ihn freischaltet; führe ihn einmal auf dem Server aus.
 
+## Ein Element bleibt bei "Lernt N/10" stehen
+
+Die meisten Anomalie-Prüfungen beginnen nach 10 erfolgreichen Backups eines Elements, und die Zählung beginnt neu nach **Als erwartet markieren** und nachdem sich die Auswahl des Elements geändert hat. Ein Element ohne Zeitplan lernt nicht, und ein Container ohne Appdata hat nichts, woraus er lernen könnte; das sagt auch sein Abzeichen.
+
+## Die Aufbewahrung löscht bei einem Element keine alten Backups mehr
+
+Eine offene kritische Anomalie hält sie fest: Die Quelle des Elements ist fast leer, stark geschrumpft, oder ein Backup hat die meisten Daten neu gespeichert. Öffne die Anomalie über das Abzeichen am Element. Wenn Daten fehlen oder verschlüsselt wurden, stelle zuerst aus dem verlinkten letzten guten Backup wieder her. Quittiere die Anomalie danach, oder markiere sie als erwartet, wenn die Änderung von dir kam, und der nächste Lauf räumt wieder wie gewohnt auf. Die Aufbewahrungsvorschau kennzeichnet so ein Element als behalten.
+
+## Das manuelle Aufräumen meldet, dass einige Elemente behalten wurden
+
+Dieselbe Ursache: Das Aufräumen lässt die alten Backups eines Elements mit so einer Anomalie in Ruhe und nennt das Element in seiner Meldung. Alles andere wird wie gewohnt aufgeräumt.
+
+## Der Verlaufsimport meldet ein Repository, das nicht gelesen werden konnte
+
+Nach dem Update liest BombVault einmal die Größen früherer Backups aus jedem Repository. Ein Repository, das zu diesem Zeitpunkt nicht erreichbar war, etwa ein ausgefallenes Off-site-Ziel oder eine nicht eingehängte Freigabe, steht in der Karte **Anomalien** unter **Einstellungen, Integrität** und wird einmal am Tag erneut versucht. Seine Elemente lernen in der Zwischenzeit aus neuen Backups.
+
+## Die Speicherplatzwarnung passt nicht zum Unraid-Dashboard
+
+Auf dem Unraid-User-Share (`/mnt/user`) ist der freie Platz der des ganzen Arrays, nicht der einer einzelnen Platte. Entfernte Repositories werden nur über rclone-Remotes gemessen, die ihren freien Platz melden; S3-, B2-, REST- und SFTP-Repositories haben keine Angabe und stehen in der Karte **Anomalien** als nicht gemessen.
+
 ## Der Container startet ständig neu oder wirkt ungesund
 
 BombVault meldet gesund/ungesund aus seinem eigenen `/api/health`. Ein Auto-Heal-Werkzeug (wie Autoheal) kann ihn automatisch neu starten, falls sich die Engine je verklemmt. Prüfe das Container-Log und den `/spike`-Bericht auf die zugrunde liegende Ursache.

@@ -86,6 +86,19 @@ Configure uma réplica externa no separador **Definições, Externo**. Consulte 
 - **Limites de largura de banda:** limite a taxa de envio/receção do restic em Definições, Externo.
 - **Classe de armazenamento fria e de arquivo (S3):** para um repo externo S3 nativo, escolha um nível legível para restauro (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Os remotos rclone definem a sua classe na configuração do rclone.
 
+## Anomalias {#anomalies}
+
+A deteção de anomalias configura-se no cartão **Anomalias** em **Definições, Integridade**. Cada controlo guarda assim que o altera, e os três abaixo do interruptor ficam ocultos enquanto a deteção está desligada.
+
+| Definição | Predefinição | O que faz |
+|---|---|---|
+| **Detetar anomalias** | Ligado | Compara cada backup com o histórico próprio do elemento. Desligado, nada de novo é verificado e a entrada **Anomalias** sai da barra lateral; o cartão continua a apontar para as deteções anteriores. |
+| **Sensibilidade** | Equilibrada | Rigorosa comunica alterações mais pequenas, Permissiva só as grandes. |
+| **Enviar uma notificação para** | Só achados críticos | A gravidade mínima que envia uma mensagem pelos canais configurados em Notificações. As falhas repetidas de backups e dumps e as verificações de restauro agendadas falhadas já enviam a sua própria mensagem e não são enviadas duas vezes. |
+| **Manter os backups antigos quando uma origem encolhe muito ou é reescrita** | Ligado | Enquanto um elemento tiver uma deteção aberta por uma origem quase vazia, um encolhimento forte ou a maior parte dos dados guardada de novo, a retenção e a limpeza deixam os seus backups antigos em paz. Confirme a deteção ou marque-a como esperada para os libertar. |
+
+Cada elemento pode ter a sua própria sensibilidade e o seu próprio mínimo de notificação. Defina-os no separador **Elementos** da página **Anomalias**, ou no painel do próprio elemento: a secção de pastas de um contentor e as definições de uma VM (ambas no modo avançado), o editor de pastas de um conjunto de pastas e as páginas **Flash** e **Auto-backup**.
+
 ## Definições portáteis (exportar e importar) {#portable-settings-export-and-import}
 
 O cartão **Exportar e importar definições** na página Definições escreve toda a sua configuração BombVault (definições de domínio, destinos externos, agendamentos, retenção, notificações) para um ficheiro JSON portátil que pode importar noutra instância, para que mudar para uma máquina nova ou clonar uma configuração não signifique reintroduzir tudo à mão. A importação mostra uma pré-visualização e pede confirmação, e nunca toca nos seus dados ou histórico de backup.

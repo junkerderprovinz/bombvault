@@ -149,6 +149,9 @@ One click downloads the **master key**, the **derived restic password**, and the
 !!! danger "Store the recovery kit off the server"
     The kit contains the secret that decrypts your backups. Keep it somewhere safe and separate from the server (a password manager, a printed copy in a safe). If you lose both BombVault and `APP_KEY` with no recovery kit, your encrypted backups cannot be recovered.
 
+!!! warning "The newest snapshot is not always the one to restore"
+    Since restic 0.17, `restic snapshots` shows each snapshot's size. After data loss the newest snapshot can be the emptied one, so do not restore a snapshot that is far smaller than the ones before it. After ransomware it can be the encrypted one at the usual size. If BombVault still runs, check its **Anomalies** page first: it names the last good backup. A restore does not need any of BombVault's anomaly data, and the retention pause only ever keeps more snapshots.
+
 ### Sealing the kit
 
 If you have turned on age encryption for the plain exports (Settings), the kit is sealed with it too and downloads as `bombvault-recovery-kit.md.age`. It is ASCII-armored rather than binary, so it is still plain text: pasting it into a password manager or printing it works exactly as before, the contents are simply unreadable without your key.

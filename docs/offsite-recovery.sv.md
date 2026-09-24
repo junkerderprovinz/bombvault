@@ -141,6 +141,9 @@ Ett klick laddar ner **huvudnyckeln**, det **härledda restic-lösenordet** och 
 !!! danger "Förvara återställningskitet bort från servern"
     Kitet innehåller hemligheten som dekrypterar dina säkerhetskopior. Förvara det på en säker plats åtskild från servern (en lösenordshanterare, en utskriven kopia i ett kassaskåp). Om du förlorar både BombVault och `APP_KEY` utan något återställningskit kan dina krypterade säkerhetskopior inte återställas.
 
+!!! warning "Den senaste snapshoten är inte alltid den som ska återställas"
+    Sedan restic 0.17 visar `restic snapshots` storleken på varje snapshot. Efter dataförlust kan den senaste snapshoten vara den tömda, så återställ inte en snapshot som är mycket mindre än de före den. Efter ransomware kan det vara den krypterade, i vanlig storlek. Om BombVault fortfarande körs, titta först på sidan **Avvikelser**: den anger den senaste bra säkerhetskopian. En återställning behöver inga avvikelsedata från BombVault, och gallringspausen behåller bara fler snapshots.
+
 ### När paketet inte finns till hands
 
 Lösenordet lagras ingenstans, det **beräknas** ur `APP_KEY`. Med nyckeln och ett skal kan du alltså återskapa det själv:

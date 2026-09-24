@@ -69,6 +69,26 @@ Každý problém nese kód důvodu v hranatých závorkách a stránka [Datové 
 - **`key-not-loaded`**: šifrovaná datová sada bez načteného klíče se přeskočí. Načti klíč pomocí `zfs load-key` a připoj sadu; příští záloha ji zahrne.
 - **`ssh-auth`**: server odmítl klíč BombVaultu. Karta připojení na stránce ZFS ukazuje příkaz, který ho povolí; spusť ho jednou na serveru.
 
+## Položka zůstává na "Učí se N/10"
+
+Většina kontrol anomálií začíná po 10 úspěšných zálohách položky a počítání začne znovu po **Označit jako očekávané** a po změně výběru položky. Položka bez plánu se neučí a kontejner bez appdata se nemá z čeho učit, což říká i jeho odznak.
+
+## Uchovávání přestalo mazat staré zálohy jedné položky
+
+Drží je otevřená kritická anomálie: zdroj položky je téměř prázdný, výrazně se zmenšil, nebo záloha znovu uložila většinu dat. Otevřete anomálii z odznaku u položky. Pokud data chybí nebo byla zašifrována, obnovte nejprve z odkazované poslední dobré zálohy. Pak anomálii potvrďte, nebo ji označte jako očekávanou, pokud změna pochází od vás, a další běh uklidí jako obvykle. Náhled uchovávání takovou položku označí jako ponechanou.
+
+## Ruční čištění hlásí, že některé položky byly ponechány
+
+Stejná příčina: čištění nechá staré zálohy položky s takovou anomálií na pokoji a uvede ji ve své zprávě. Všechno ostatní se vyčistí jako obvykle.
+
+## Import historie hlásí, že repozitář nešlo přečíst
+
+Po aktualizaci BombVault jednou načte velikosti dřívějších záloh z každého repozitáře. Repozitář, který v tu chvíli nebyl dostupný, například nefunkční vzdálený cíl nebo nepřipojená sdílená složka, je uveden na kartě **Anomálie** v **Nastavení, Integrita** a zkouší se znovu jednou denně. Jeho položky se mezitím učí z nových záloh.
+
+## Varování o místě na disku nesouhlasí s přehledem Unraidu
+
+Na uživatelské sdílené složce Unraidu (`/mnt/user`) je volné místo celého pole, ne jednoho disku. Vzdálené repozitáře se měří jen přes rclone remoty, které hlásí své volné místo; repozitáře S3, B2, REST a SFTP žádný údaj nemají a na kartě **Anomálie** jsou uvedeny jako neměřené.
+
 ## Kontejner se stále restartuje nebo vypadá unhealthy
 
 BombVault hlásí healthy/unhealthy ze svého vlastního `/api/health`. Nástroj pro automatické hojení (například Autoheal) jej může restartovat automaticky, pokud se engine kdy zasekne. Zkontrolujte log kontejneru a report `/spike` pro základní příčinu.

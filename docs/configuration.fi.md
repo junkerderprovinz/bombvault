@@ -86,6 +86,19 @@ Määritä etäreplika **Asetukset, Etä** -välilehdellä. Katso [Etäsijainti 
 - **Kaistanleveyden rajat:** rajoita resticin lähetys-/latausnopeutta kohdassa Asetukset, Etä.
 - **Kylmä- ja arkistotallennusluokka (S3):** natiiville S3-etärepolle valitse palautuksesta luettava taso (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-etäsijainnit asettavat luokkansa rclone-määrityksessä.
 
+## Poikkeamat {#anomalies}
+
+Poikkeamien tunnistus asetetaan kortissa **Poikkeamat** kohdassa **Asetukset, Eheys**. Jokainen säädin tallentuu heti, kun muutat sitä, ja kytkimen alla olevat kolme ovat piilossa, kun tunnistus on pois päältä.
+
+| Asetus | Oletus | Mitä se tekee |
+|---|---|---|
+| **Tunnista poikkeamat** | Päällä | Vertaa jokaista varmuuskopiota kohteen omaan historiaan. Pois päältä mitään uutta ei tarkisteta ja kohta **Poikkeamat** poistuu sivupalkista; kortti linkittää yhä aiempiin havaintoihin. |
+| **Herkkyys** | Tasapainoinen | Tiukka ilmoittaa pienemmistäkin muutoksista, Salliva vain suurista. |
+| **Lähetä ilmoitus, kun kyseessä on** | Vain kriittiset havainnot | Alin vakavuus, joka lähettää viestin kohdassa Ilmoitukset määritettyjen kanavien kautta. Toistuvasti epäonnistuneet varmuuskopiot ja vedokset sekä epäonnistuneet ajastetut palautustarkistukset lähettävät jo oman viestinsä, eikä niitä lähetetä kahdesti. |
+| **Säilytä vanhat varmuuskopiot, kun lähde kutistuu jyrkästi tai kirjoitetaan uudelleen** | Päällä | Niin kauan kuin kohteella on avoin havainto lähes tyhjästä lähteestä, voimakkaasta kutistumisesta tai suurimman osan datasta uudelleentallennuksesta, säilytys ja siivous jättävät kohteen vanhat varmuuskopiot rauhaan. Kuittaa havainto tai merkitse se odotetuksi vapauttaaksesi ne. |
+
+Jokaisella kohteella voi olla oma herkkyys ja oma ilmoitusminimi. Aseta ne sivun **Poikkeamat** välilehdellä **Kohteet** tai kohteen omassa paneelissa: kontin kansio-osiossa ja virtuaalikoneen asetuksissa (molemmat lisätilassa), kansiojoukon kansioeditorissa sekä sivuilla **Flash** ja **Itsevarmuuskopio**.
+
 ## Siirrettävät asetukset (vienti ja tuonti) {#portable-settings-export-and-import}
 
 **Vie ja tuo asetukset** -kortti Asetukset-sivulla kirjoittaa koko BombVault-kokoonpanosi (toimialueasetukset, etäkohteet, aikataulut, säilytys, ilmoitukset) siirrettävään JSON-tiedostoon, jonka voit tuoda toiseen instanssiin, joten uuteen laatikkoon siirtyminen tai kokoonpanon kloonaus ei tarkoita kaiken syöttämistä uudelleen käsin. Tuonti näyttää esikatselun ja pyytää vahvistusta, eikä se koskaan kosketa varmuuskopiodataasi tai historiaasi.

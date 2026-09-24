@@ -69,6 +69,26 @@ Ogni problema porta un codice di motivo tra parentesi quadre, e la pagina [Datas
 - **`key-not-loaded`**: un dataset cifrato la cui chiave non è caricata viene saltato. Carica la chiave con `zfs load-key` e monta il dataset; il backup successivo lo include.
 - **`ssh-auth`**: il server ha rifiutato la chiave di BombVault. La scheda di connessione nella pagina ZFS mostra il comando che la autorizza; eseguilo una volta sul server.
 
+## Un elemento resta su "Sta imparando N/10"
+
+La maggior parte dei controlli di anomalia parte dopo 10 backup riusciti di un elemento, e il conteggio riparte dopo **Segna come attesa** e dopo una modifica della selezione dell'elemento. Un elemento non pianificato non impara, e un container senza appdata non ha nulla da cui imparare, come dice il suo badge.
+
+## La conservazione non elimina più i vecchi backup di un elemento
+
+Li trattiene un'anomalia critica aperta: la sorgente dell'elemento è quasi vuota, si è ridotta molto, oppure un backup ha salvato di nuovo la maggior parte dei dati. Apri l'anomalia dal badge dell'elemento. Se mancano dati o sono stati cifrati, ripristina prima dall'ultimo backup buono collegato. Poi conferma l'anomalia, o segnala come prevista se il cambiamento è tuo, e l'esecuzione successiva pulisce come sempre. L'anteprima della conservazione indica un elemento del genere come mantenuto.
+
+## La pulizia manuale dice che alcuni elementi sono stati mantenuti
+
+La stessa causa: la pulizia lascia stare i vecchi backup di un elemento con un'anomalia di questo tipo e lo nomina nel suo messaggio. Tutto il resto viene pulito come sempre.
+
+## L'importazione della cronologia dice che un repository non si è potuto leggere
+
+Dopo l'aggiornamento BombVault legge una volta le dimensioni dei backup precedenti da ogni repository. Un repository non raggiungibile in quel momento, per esempio una destinazione esterna non disponibile o una condivisione non montata, compare nella scheda **Anomalie** di **Impostazioni, Integrità** e viene ritentato una volta al giorno. Nel frattempo i suoi elementi imparano dai nuovi backup.
+
+## L'avviso sullo spazio su disco non corrisponde alla dashboard di Unraid
+
+Sulla condivisione utente di Unraid (`/mnt/user`) lo spazio libero è quello dell'intero array, non di un singolo disco. I repository remoti vengono misurati solo tramite i remote rclone che riportano il loro spazio libero; i repository S3, B2, REST e SFTP non hanno un dato e compaiono come non misurati nella scheda **Anomalie**.
+
 ## Il container continua a riavviarsi o sembra non sano
 
 BombVault segnala sano/non sano dal proprio `/api/health`. Uno strumento di auto-heal (come Autoheal) può riavviarlo automaticamente se il motore dovesse mai incepparsi. Controlla il log del container e il report `/spike` per la causa sottostante.

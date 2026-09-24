@@ -86,6 +86,19 @@ Configurez un réplica hors site dans l'onglet **Paramètres, Hors site**. Voir 
 - **Limites de bande passante :** plafonnez le débit d'envoi/de téléchargement de restic sous Paramètres, Hors site.
 - **Classe de stockage froid et archivage (S3) :** pour un dépôt hors site S3 natif, choisissez un niveau lisible à la restauration (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Les remotes rclone définissent leur classe dans la config rclone.
 
+## Anomalies {#anomalies}
+
+La détection d'anomalies se règle dans la carte **Anomalies** de **Paramètres, Intégrité**. Chaque contrôle enregistre dès que vous le modifiez, et les trois sous l'interrupteur sont masqués tant que la détection est désactivée.
+
+| Réglage | Par défaut | Effet |
+|---|---|---|
+| **Détecter les anomalies** | Activé | Compare chaque sauvegarde à l'historique propre de l'élément. Désactivé, plus rien de nouveau n'est contrôlé et l'entrée **Anomalies** quitte la barre latérale ; la carte renvoie toujours vers les constats antérieurs. |
+| **Sensibilité** | Équilibrée | Stricte signale des changements plus petits, Permissive seulement les grands. |
+| **Envoyer une notification pour** | Seulement les constats critiques | La gravité minimale qui envoie un message par les canaux configurés dans Notifications. Les échecs répétés de sauvegardes et de dumps et les contrôles de restauration planifiés en échec envoient déjà leur propre message et ne sont pas envoyés deux fois. |
+| **Garder les anciennes sauvegardes quand une source rétrécit fortement ou est réécrite** | Activé | Tant qu'un élément a un constat ouvert pour une source presque vide, un fort rétrécissement ou la plupart de ses données réenregistrées, la rétention et le nettoyage laissent ses anciennes sauvegardes intactes. Accusez réception du constat ou marquez-le comme attendu pour les libérer. |
+
+Chaque élément peut avoir sa propre sensibilité et son propre minimum de notification. Réglez-les dans l'onglet **Éléments** de la page **Anomalies**, ou dans le panneau de l'élément : la section des dossiers d'un conteneur et les réglages d'une VM (tous deux en mode avancé), l'éditeur de dossiers d'un ensemble de dossiers, et les pages **Flash** et **Auto-sauvegarde**.
+
 ## Réglages portables (exporter et importer) {#portable-settings-export-and-import}
 
 La carte **Exporter et importer les réglages** sur la page Paramètres écrit toute votre configuration BombVault (réglages de domaine, cibles hors site, plannings, rétention, notifications) dans un fichier JSON portable que vous pouvez importer sur une autre instance, de sorte que migrer vers une nouvelle machine ou cloner une configuration ne signifie pas tout ressaisir à la main. L'import affiche un aperçu et demande confirmation, et ne touche jamais à vos données ou votre historique de sauvegarde.

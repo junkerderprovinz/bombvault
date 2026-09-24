@@ -69,6 +69,26 @@ Mỗi sự cố có một mã lý do trong ngoặc vuông, và trang [Tập dữ
 - **`key-not-loaded`**: tập dữ liệu mã hóa chưa nạp khóa sẽ bị bỏ qua. Nạp khóa bằng `zfs load-key` và gắn tập dữ liệu; lần sao lưu sau sẽ gồm nó.
 - **`ssh-auth`**: máy chủ từ chối khóa của BombVault. Thẻ kết nối trên trang ZFS hiện lệnh cấp quyền cho khóa; chạy lệnh đó một lần trên máy chủ.
 
+## Một mục đứng yên ở "Đang học N/10"
+
+Phần lớn kiểm tra bất thường bắt đầu sau 10 bản sao lưu thành công của một mục, và việc đếm bắt đầu lại sau **Đánh dấu là đã lường trước** và sau khi lựa chọn của mục thay đổi. Một mục không có lịch thì không học, và một container không có appdata thì không có gì để học, huy hiệu của nó cũng cho biết điều đó.
+
+## Chính sách lưu giữ không còn xóa bản sao lưu cũ của một mục
+
+Một bất thường nghiêm trọng đang mở giữ chúng lại: nguồn của mục gần như trống, đã co lại mạnh, hoặc một bản sao lưu đã lưu lại phần lớn dữ liệu. Mở bất thường từ huy hiệu trên mục. Nếu thiếu dữ liệu hoặc dữ liệu đã bị mã hóa, trước tiên hãy khôi phục từ bản sao lưu tốt cuối cùng được liên kết. Sau đó xác nhận bất thường, hoặc đánh dấu là đã lường trước nếu thay đổi do bạn, và lần chạy kế tiếp sẽ dọn dẹp như thường. Bản xem trước lưu giữ đánh dấu mục như vậy là được giữ lại.
+
+## Dọn dẹp thủ công báo rằng một số mục đã được giữ lại
+
+Cùng nguyên nhân: việc dọn dẹp không động đến các bản sao lưu cũ của mục có bất thường như vậy và nêu tên mục trong thông báo. Mọi thứ khác được dọn như thường.
+
+## Nhập lịch sử báo rằng không đọc được một kho lưu trữ
+
+Sau khi cập nhật, BombVault đọc một lần kích thước của các bản sao lưu trước đó từ mỗi kho. Một kho không truy cập được vào lúc đó, chẳng hạn một đích ngoài site bị sập hoặc một chia sẻ chưa được gắn, sẽ được liệt kê trong thẻ **Bất thường** tại **Cài đặt, Toàn vẹn** và được thử lại mỗi ngày một lần. Trong lúc đó, các mục của nó học từ các bản sao lưu mới.
+
+## Cảnh báo dung lượng đĩa không khớp với bảng điều khiển Unraid
+
+Trên chia sẻ người dùng của Unraid (`/mnt/user`), dung lượng trống là của cả mảng, không phải của một đĩa. Kho từ xa chỉ được đo qua các remote rclone có báo dung lượng trống; kho S3, B2, REST và SFTP không có số liệu và được liệt kê là chưa đo trong thẻ **Bất thường**.
+
 ## Container cứ khởi động lại hoặc trông không khỏe mạnh
 
 BombVault báo khỏe mạnh/không khỏe mạnh từ `/api/health` của chính nó. Một công cụ tự phục hồi (chẳng hạn Autoheal) có thể khởi động lại nó tự động nếu công cụ có bao giờ bị kẹt. Kiểm tra nhật ký container và báo cáo `/spike` để tìm nguyên nhân cơ bản.

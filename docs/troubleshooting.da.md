@@ -69,6 +69,26 @@ Hvert problem har en årsagskode i firkantede parenteser, og siden [ZFS-datasæt
 - **`key-not-loaded`**: et krypteret datasæt, hvis nøgle ikke er indlæst, springes over. Indlæs nøglen med `zfs load-key` og monter datasættet; næste sikkerhedskopi tager det med.
 - **`ssh-auth`**: serveren afviste BombVaults nøgle. Forbindelseskortet på ZFS-siden viser kommandoen, der godkender den; kør den én gang på serveren.
 
+## Et element bliver stående på "Lærer N/10"
+
+De fleste anomalitjek begynder efter 10 vellykkede sikkerhedskopier af et element, og optællingen starter forfra efter **Markér som forventet** og efter en ændring af elementets udvalg. Et element uden tidsplan lærer ikke, og en container uden appdata har intet at lære af, hvilket dens mærke også siger.
+
+## Opbevaringen sletter ikke længere gamle sikkerhedskopier af ét element
+
+En åben kritisk anomali holder dem tilbage: elementets kilde er næsten tom, er skrumpet kraftigt, eller en sikkerhedskopi har gemt det meste af dataene igen. Åbn anomalien fra mærket ved elementet. Hvis der mangler data, eller de er blevet krypteret, så gendan først fra den linkede seneste gode sikkerhedskopi. Kvittér derefter for anomalien, eller markér den som forventet, hvis ændringen kom fra dig, så rydder næste kørsel op som normalt. Forhåndsvisningen af opbevaringen markerer et sådant element som beholdt.
+
+## Manuel oprydning siger, at nogle elementer blev beholdt
+
+Samme årsag: oprydningen lader de gamle sikkerhedskopier af et element med sådan en anomali være og nævner elementet i sin besked. Alt andet ryddes op som normalt.
+
+## Historikimporten siger, at et repository ikke kunne læses
+
+Efter opgraderingen læser BombVault én gang størrelsen af tidligere sikkerhedskopier fra hvert repository. Et repository, der ikke kunne nås på det tidspunkt, for eksempel et offsite-mål, der var nede, eller et share, der ikke var monteret, står i kortet **Afvigelser** under **Indstillinger, Integritet** og forsøges igen én gang om dagen. Imens lærer dets elementer af nye sikkerhedskopier.
+
+## Advarslen om diskplads passer ikke med Unraids dashboard
+
+På Unraids brugershare (`/mnt/user`) er den ledige plads hele arrayets, ikke én disks. Fjerne repositorier måles kun via rclone-remotes, der oplyser deres ledige plads; S3-, B2-, REST- og SFTP-repositorier har intet tal og står som ikke målt i kortet **Afvigelser**.
+
 ## Containeren bliver ved med at genstarte eller ser usund ud
 
 BombVault rapporterer sund/usund fra sin egen `/api/health`. Et auto-heal-værktøj (såsom Autoheal) kan genstarte den automatisk, hvis motoren nogensinde går i baglås. Tjek containerloggen og `/spike`-rapporten for den underliggende årsag.

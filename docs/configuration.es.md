@@ -86,6 +86,19 @@ Configura una réplica externa en la pestaña **Ajustes, Externo**. Consulta [Co
 - **Límites de ancho de banda:** limita la velocidad de subida/bajada de restic en Ajustes, Externo.
 - **Clase de almacenamiento en frío y de archivo (S3):** para un repo externo S3 nativo, elige un nivel legible para restauración (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Los remotos de rclone establecen su clase en la configuración de rclone.
 
+## Anomalías {#anomalies}
+
+La detección de anomalías se configura en la tarjeta **Anomalías** de **Ajustes, Integridad**. Cada control se guarda en cuanto lo cambias, y los tres que hay bajo el interruptor se ocultan mientras la detección está desactivada.
+
+| Ajuste | Predeterminado | Qué hace |
+|---|---|---|
+| **Detectar anomalías** | Activado | Compara cada copia con el historial propio del elemento. Desactivado, no se comprueba nada nuevo y la entrada **Anomalías** desaparece de la barra lateral; la tarjeta sigue enlazando con los hallazgos anteriores. |
+| **Sensibilidad** | Equilibrada | Estricta avisa de cambios más pequeños, Permisiva solo de los grandes. |
+| **Enviar una notificación para** | Solo hallazgos críticos | La gravedad mínima que envía un mensaje por los canales configurados en Notificaciones. Los fallos repetidos de copias y volcados y las comprobaciones de restauración programadas fallidas ya envían su propio mensaje y no se envían dos veces. |
+| **Conservar las copias antiguas cuando un origen se reduce mucho o se reescribe** | Activado | Mientras un elemento tenga un hallazgo abierto por una fuente casi vacía, un encogimiento fuerte o la mayoría de sus datos guardados de nuevo, la retención y la limpieza no tocan sus copias antiguas. Confirma el hallazgo o márcalo como esperado para liberarlas. |
+
+Cada elemento puede tener su propia sensibilidad y su propio mínimo de notificación. Ajústalos en la pestaña **Elementos** de la página **Anomalías**, o en el panel del propio elemento: la sección de carpetas de un contenedor y los ajustes de una VM (ambos en modo avanzado), el editor de carpetas de un conjunto de carpetas y las páginas **Flash** y **Autocopia**.
+
 ## Ajustes portátiles (exportar e importar) {#portable-settings-export-and-import}
 
 La tarjeta **Exportar e importar ajustes** en la página de Ajustes escribe toda tu configuración de BombVault (ajustes de dominio, destinos externos, calendarios, retención, notificaciones) en un archivo JSON portátil que puedes importar en otra instancia, para que cambiar de máquina o clonar una instalación no signifique volver a introducirlo todo a mano. La importación muestra una vista previa y pide confirmación, y nunca toca tus datos de copia ni tu historial.

@@ -86,6 +86,19 @@ Hızlı kurulum:
 - **Bant genişliği sınırları:** Ayarlar, Site dışı altında restic yükleme/indirme hızını sınırlayın.
 - **Soğuk ve arşiv depolama sınıfı (S3):** yerel bir S3 site dışı deposu için geri yüklenebilir bir katman seçin (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone uzak konumları sınıflarını rclone yapılandırmasında ayarlar.
 
+## Anormallikler {#anomalies}
+
+Anomali algılama **Ayarlar, Bütünlük** altındaki **Anormallikler** kartında ayarlanır. Her denetim değiştirdiğiniz anda kaydedilir ve algılama kapalıyken anahtarın altındaki üçü gizlenir.
+
+| Ayar | Varsayılan | Ne yapar |
+|---|---|---|
+| **Anormallikleri algıla** | Açık | Her yedeği öğenin kendi geçmişiyle karşılaştırır. Kapalıyken yeni hiçbir şey denetlenmez ve **Anormallikler** girişi kenar çubuğundan kalkar; kart yine de önceki bulgulara bağlantı verir. |
+| **Hassasiyet** | Dengeli | Katı daha küçük değişiklikleri de bildirir, Hoşgörülü yalnızca büyükleri. |
+| **Şunlar için bildirim gönder** | Yalnızca kritik bulgular | Bildirimler altında kurulan kanallar üzerinden mesaj gönderen en düşük önem derecesi. Tekrarlanan başarısız yedekler ve dökümler ile başarısız zamanlanmış geri yükleme denetimleri zaten kendi mesajlarını gönderir ve iki kez gönderilmez. |
+| **Bir kaynak sert biçimde küçüldüğünde veya yeniden yazıldığında eski yedekleri tut** | Açık | Bir öğenin neredeyse boş kaynak, güçlü küçülme ya da verilerin çoğunun yeniden kaydedilmesi için açık bir bulgusu olduğu sürece saklama ve temizlik o öğenin eski yedeklerine dokunmaz. Serbest bırakmak için bulguyu onaylayın ya da beklenen olarak işaretleyin. |
+
+Her öğenin kendi hassasiyeti ve kendi bildirim alt sınırı olabilir. Bunları **Anormallikler** sayfasının **Ögeler** sekmesinde ya da öğenin kendi panelinde ayarlayın: bir konteynerin klasörler bölümü ve bir VM'nin ayarları (ikisi de gelişmiş modda), bir klasör setinin klasör düzenleyicisi ve **Flash** ile **Öz yedek** sayfaları.
+
 ## Taşınabilir ayarlar (dışa ve içe aktarma) {#portable-settings-export-and-import}
 
 Ayarlar sayfasındaki **Ayarları dışa ve içe aktar** kartı, tüm BombVault yapılandırmanızı (etki alanı ayarları, site dışı hedefler, zamanlamalar, saklama, bildirimler) başka bir örnekte içe aktarabileceğiniz taşınabilir bir JSON dosyasına yazar, böylece yeni bir makineye taşınmak ya da bir kurulumu klonlamak her şeyi elle yeniden girmek anlamına gelmez. İçe aktarma bir önizleme gösterir ve onay ister ve yedekleme verilerinize ya da geçmişinize asla dokunmaz.

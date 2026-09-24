@@ -141,6 +141,9 @@ Um clique transfere a **chave mestra**, a **palavra-passe restic derivada**, e a
 !!! danger "Guarde o kit de recuperação fora do servidor"
     O kit contém o segredo que decifra os seus backups. Guarde-o num local seguro e separado do servidor (um gestor de palavras-passe, uma cópia impressa num cofre). Se perder ambos o BombVault e a `APP_KEY` sem kit de recuperação, os seus backups encriptados não podem ser recuperados.
 
+!!! warning "O snapshot mais recente nem sempre é o que deve restaurar"
+    Desde o restic 0.17, `restic snapshots` mostra o tamanho de cada snapshot. Após uma perda de dados, o snapshot mais recente pode ser o que foi esvaziado, por isso não restaure um snapshot muito mais pequeno do que os anteriores. Após um ransomware pode ser o cifrado, com o tamanho habitual. Se o BombVault ainda estiver a correr, veja primeiro a sua página **Anomalias**: ela indica o último backup bom. Um restauro não precisa de nenhum dado de anomalias do BombVault, e a pausa da retenção só mantém mais snapshots.
+
 ### Se não tiveres o kit à mão
 
 A palavra-passe não está guardada em lado nenhum, é **calculada** a partir da `APP_KEY`. Com a chave e uma shell podes reproduzi-la tu próprio:

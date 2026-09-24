@@ -69,6 +69,26 @@ Każdy problem ma kod przyczyny w nawiasach kwadratowych, a strona [Zbiory danyc
 - **`key-not-loaded`**: zaszyfrowany zbiór, którego klucz nie jest załadowany, jest pomijany. Załaduj klucz poleceniem `zfs load-key` i zamontuj zbiór; następna kopia go obejmie.
 - **`ssh-auth`**: serwer odrzucił klucz BombVault. Karta połączenia na stronie ZFS pokazuje polecenie, które go autoryzuje; uruchom je raz na serwerze.
 
+## Element zatrzymuje się na "Uczy się N/10"
+
+Większość kontroli anomalii zaczyna się po 10 udanych kopiach elementu, a licznik zaczyna od nowa po **Oznacz jako oczekiwane** i po zmianie wyboru elementu. Element bez harmonogramu się nie uczy, a kontener bez appdata nie ma się na czym uczyć, co mówi też jego znaczek.
+
+## Retencja przestała usuwać stare kopie jednego elementu
+
+Wstrzymuje je otwarta krytyczna anomalia: źródło elementu jest prawie puste, mocno się skurczyło albo kopia zapisała ponownie większość danych. Otwórz anomalię ze znaczka przy elemencie. Jeśli brakuje danych albo zostały zaszyfrowane, najpierw przywróć je z podlinkowanej ostatniej dobrej kopii. Potem potwierdź anomalię albo oznacz ją jako oczekiwaną, jeśli zmiana była twoja, a następny przebieg posprząta jak zwykle. Podgląd retencji oznacza taki element jako zachowany.
+
+## Ręczne czyszczenie mówi, że niektóre elementy zostały zachowane
+
+Ta sama przyczyna: czyszczenie nie rusza starych kopii elementu z taką anomalią i wymienia go w swoim komunikacie. Wszystko inne jest czyszczone jak zwykle.
+
+## Import historii mówi, że nie udało się odczytać repozytorium
+
+Po aktualizacji BombVault raz odczytuje rozmiary wcześniejszych kopii z każdego repozytorium. Repozytorium, które było wtedy nieosiągalne, na przykład niedziałający cel zewnętrzny albo niezamontowany udział, pojawia się na karcie **Anomalie** w **Ustawienia, Integralność** i jest ponawiane raz dziennie. W tym czasie jego elementy uczą się na nowych kopiach.
+
+## Ostrzeżenie o miejscu na dysku nie zgadza się z pulpitem Unraid
+
+Na udziale użytkownika Unraid (`/mnt/user`) wolne miejsce to wolne miejsce całej macierzy, a nie jednego dysku. Repozytoria zdalne są mierzone tylko przez zdalne zasoby rclone, które podają swoje wolne miejsce; repozytoria S3, B2, REST i SFTP nie mają wartości i figurują na karcie **Anomalie** jako niezmierzone.
+
 ## Kontener wciąż się restartuje lub wygląda na niesprawny
 
 BombVault zgłasza stan healthy/unhealthy z własnego `/api/health`. Narzędzie do auto-naprawy (takie jak Autoheal) może go automatycznie zrestartować, jeśli silnik kiedykolwiek się zaklinuje. Sprawdź log kontenera oraz raport `/spike` w poszukiwaniu przyczyny źródłowej.

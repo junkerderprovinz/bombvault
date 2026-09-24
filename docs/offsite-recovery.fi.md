@@ -141,6 +141,9 @@ Yksi napsautus lataa **pääavaimen**, **johdetun restic-salasanan** ja **tarkat
 !!! danger "Säilytä palautuspaketti palvelimen ulkopuolella"
     Paketti sisältää salaisuuden, joka purkaa varmuuskopiosi salauksen. Pidä se turvallisessa paikassa erillään palvelimesta (salasananhallinta, tulostettu kopio kassakaapissa). Jos menetät sekä BombVaultin että `APP_KEY`:n ilman palautuspakettia, salattuja varmuuskopioitasi ei voi palauttaa.
 
+!!! warning "Uusin tilannevedos ei aina ole se, joka kannattaa palauttaa"
+    Restic 0.17:stä lähtien `restic snapshots` näyttää jokaisen tilannevedoksen koon. Tietojen menetyksen jälkeen uusin tilannevedos voi olla tyhjennetty, joten älä palauta tilannevedosta, joka on paljon edellisiä pienempi. Kiristyshaittaohjelman jälkeen se voi olla salattu, tavallisen kokoinen. Jos BombVault on yhä käynnissä, katso ensin sen sivu **Poikkeamat**: se nimeää viimeisen hyvän varmuuskopion. Palautus ei tarvitse BombVaultin poikkeamatietoja, ja säilytyksen tauko vain säilyttää enemmän tilannevedoksia.
+
 ### Kun paketti ei ole käsillä
 
 Salasanaa ei ole tallennettu mihinkään, se **lasketaan** `APP_KEY`-avaimesta. Avaimen ja komentotulkin avulla voit siis muodostaa sen itse:

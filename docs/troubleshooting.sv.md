@@ -69,6 +69,26 @@ Varje problem har en orsakskod inom hakparenteser, och sidan [ZFS-datauppsättni
 - **`key-not-loaded`**: en krypterad uppsättning vars nyckel inte är laddad hoppas över. Ladda nyckeln med `zfs load-key` och montera uppsättningen; nästa säkerhetskopia tar med den.
 - **`ssh-auth`**: servern avvisade BombVaults nyckel. Anslutningskortet på ZFS-sidan visar kommandot som godkänner den; kör det en gång på servern.
 
+## Ett objekt står kvar på "Lär sig N/10"
+
+De flesta avvikelsekontroller börjar efter 10 lyckade säkerhetskopior av ett objekt, och räkningen börjar om efter **Markera som väntad** och efter att objektets urval har ändrats. Ett objekt utan schema lär sig inte, och en container utan appdata har inget att lära sig av, vilket dess märke också säger.
+
+## Gallringen har slutat ta bort gamla säkerhetskopior för ett objekt
+
+En öppen kritisk avvikelse håller kvar dem: objektets källa är nästan tom, har krympt kraftigt, eller en säkerhetskopia har sparat det mesta av datan på nytt. Öppna avvikelsen från märket på objektet. Om data saknas eller har krypterats, återställ först från den länkade senaste bra säkerhetskopian. Kvittera sedan avvikelsen, eller markera den som väntad om ändringen var din, så gallrar nästa körning som vanligt. Förhandsvisningen av gallringen markerar ett sådant objekt som behållet.
+
+## Manuell rensning säger att vissa objekt behölls
+
+Samma orsak: rensningen låter de gamla säkerhetskopiorna för ett objekt med en sådan avvikelse vara och nämner objektet i sitt meddelande. Allt annat rensas som vanligt.
+
+## Historikimporten säger att ett repository inte kunde läsas
+
+Efter uppgraderingen läser BombVault en gång storleken på tidigare säkerhetskopior ur varje repository. Ett repository som inte gick att nå då, till exempel ett externt mål som låg nere eller en share som inte var monterad, listas i kortet **Avvikelser** under **Inställningar, Integritet** och prövas igen en gång om dagen. Under tiden lär sig dess objekt av nya säkerhetskopior.
+
+## Varningen om diskutrymme stämmer inte med Unraids instrumentpanel
+
+På Unraids användarshare (`/mnt/user`) är det lediga utrymmet hela arrayens, inte en enskild disks. Fjärrepositorier mäts bara via rclone-fjärrar som rapporterar sitt lediga utrymme; S3-, B2-, REST- och SFTP-repositorier saknar uppgift och listas som ej uppmätta i kortet **Avvikelser**.
+
 ## Containern startar om hela tiden eller ser osund ut
 
 BombVault rapporterar frisk/osund från sin egen `/api/health`. Ett auto-heal-verktyg (som Autoheal) kan starta om den automatiskt om motorn någonsin skulle kärva. Kontrollera containerloggen och `/spike`-rapporten för den underliggande orsaken.

@@ -69,6 +69,26 @@ Every problem carries a reason code in brackets, and the [ZFS datasets](zfs-data
 - **`key-not-loaded`**: an encrypted dataset whose key is not loaded is skipped. Load the key with `zfs load-key` and mount the dataset; the next backup includes it.
 - **`ssh-auth`**: the server refused BombVault's key. The connection card on the ZFS page shows the command that authorizes it; run it once on the server.
 
+## An item stays at "Learning N/10"
+
+Most anomaly checks start after 10 successful backups of an item, and the count starts again after **Mark as expected** and after the item's selection changed. An item that is not scheduled does not learn, and a container without appdata has nothing to learn from, which its badge says.
+
+## Retention stopped deleting old backups of one item
+
+An open critical anomaly is holding them: the item's source is almost empty, shrank sharply, or one backup stored most of its data again. Open the anomaly from the badge on the item. If data is missing or was encrypted, restore from the linked last good backup first. Then acknowledge the anomaly, or mark it as expected if the change was yours, and the next run prunes as usual. The retention preview marks such an item as kept.
+
+## Manual prune says some items were kept
+
+The same cause: prune leaves the old backups of an item with such an anomaly alone and names the item in its message. Everything else is pruned as usual.
+
+## History import says a repository could not be read
+
+After the upgrade BombVault reads the sizes of earlier backups from each repository once. A repository it could not reach at that time, such as an off-site target that was down or a share that was not mounted, is listed on the **Anomalies** card under **Settings, Integrity** and tried again once a day. Its items learn from new backups in the meantime.
+
+## The disk-space warning does not match the Unraid dashboard
+
+On the Unraid user share (`/mnt/user`) the free space is that of the whole array, not of one disk. Remote repositories are measured only through rclone remotes that report their free space; S3, B2, REST and SFTP repositories have no figure and are listed as not measured on the **Anomalies** card.
+
 ## The container keeps restarting or looks unhealthy
 
 BombVault reports healthy/unhealthy from its own `/api/health`. An auto-heal tool (such as Autoheal) can restart it automatically if the engine ever wedges. Check the container log and the `/spike` report for the underlying cause.

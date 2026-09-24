@@ -86,6 +86,19 @@ Nastavte repliku mimo lokalitu v záložce **Nastavení, Mimo lokalitu**. Komple
 - **Limity šířky pásma:** omezte rychlost nahrávání/stahování restic pod Nastavení, Mimo lokalitu.
 - **Studená a archivní třída úložiště (S3):** pro nativní S3 repozitář mimo lokalitu vyberte úroveň čitelnou pro obnovu (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone remotes nastavují svou třídu v konfiguraci rclone.
 
+## Anomálie {#anomalies}
+
+Detekce anomálií se nastavuje na kartě **Anomálie** v **Nastavení, Integrita**. Každý ovládací prvek se uloží hned po změně a tři pod přepínačem jsou skryté, dokud je detekce vypnutá.
+
+| Nastavení | Výchozí | Co dělá |
+|---|---|---|
+| **Rozpoznávat anomálie** | Zapnuto | Porovnává každou zálohu s vlastní historií položky. Po vypnutí se nic nového nekontroluje a položka **Anomálie** zmizí z postranního panelu; karta dál odkazuje na dřívější zjištění. |
+| **Citlivost** | Vyvážená | Přísná hlásí i menší změny, Shovívavá jen velké. |
+| **Posílat oznámení pro** | Jen kritické nálezy | Nejnižší závažnost, která pošle zprávu kanály nastavenými v Oznámení. Opakovaně selhané zálohy a výpisy a selhané plánované kontroly obnovy už posílají vlastní zprávu a neposílají se dvakrát. |
+| **Ponechat staré zálohy, když se zdroj prudce zmenší nebo je přepsán** | Zapnuto | Dokud má položka otevřené zjištění kvůli téměř prázdnému zdroji, výraznému zmenšení nebo znovu uložené většině dat, uchovávání a čištění nechají její staré zálohy na pokoji. Potvrďte zjištění nebo ho označte jako očekávané, aby se uvolnily. |
+
+Každá položka může mít vlastní citlivost a vlastní minimum oznámení. Nastavíte je na záložce **Položky** stránky **Anomálie** nebo v panelu samotné položky: v sekci složek kontejneru a v nastavení virtuálního počítače (obojí v pokročilém režimu), v editoru složek sady složek a na stránkách **Flash** a **Autozáloha**.
+
 ## Přenositelná nastavení (export a import) {#portable-settings-export-and-import}
 
 Karta **Export a import nastavení** na stránce Nastavení zapíše celou vaši konfiguraci BombVaultu (nastavení domén, cíle mimo lokalitu, plány, uchovávání, oznámení) do přenosného souboru JSON, který můžete importovat na jiné instanci, takže přechod na nový stroj nebo klonování sestavy neznamená znovu vše zadávat ručně. Import zobrazí náhled a požádá o potvrzení a nikdy se nedotkne vašich zálohovaných dat ani historie.

@@ -69,6 +69,26 @@ Chaque problème porte un code de raison entre crochets, et la page [Jeux de don
 - **`key-not-loaded`** : un jeu de données chiffré dont la clé n'est pas chargée est ignoré. Chargez la clé avec `zfs load-key` et montez le jeu ; la sauvegarde suivante l'inclut.
 - **`ssh-auth`** : le serveur a refusé la clé de BombVault. La carte de connexion de la page ZFS affiche la commande qui l'autorise ; exécutez-la une fois sur le serveur.
 
+## Un élément reste sur « Apprend N/10 »
+
+La plupart des contrôles d'anomalies commencent après 10 sauvegardes réussies d'un élément, et le compte repart de zéro après **Marquer comme attendue** et après une modification de la sélection de l'élément. Un élément non planifié n'apprend pas, et un conteneur sans appdata n'a rien dont apprendre, ce que son badge indique.
+
+## La rétention ne supprime plus les anciennes sauvegardes d'un élément
+
+Une anomalie critique ouverte les retient : la source de l'élément est presque vide, a fortement rétréci, ou une sauvegarde a réenregistré la plupart de ses données. Ouvrez l'anomalie depuis le badge de l'élément. Si des données manquent ou ont été chiffrées, restaurez d'abord depuis la dernière bonne sauvegarde indiquée. Accusez ensuite réception de l'anomalie, ou marquez-la comme attendue si le changement vient de vous, et l'exécution suivante nettoie comme d'habitude. L'aperçu de rétention signale un tel élément comme conservé.
+
+## Le nettoyage manuel indique que certains éléments ont été conservés
+
+Même cause : le nettoyage laisse intactes les anciennes sauvegardes d'un élément ayant une telle anomalie et nomme l'élément dans son message. Tout le reste est nettoyé comme d'habitude.
+
+## L'import de l'historique indique qu'un dépôt n'a pas pu être lu
+
+Après la mise à jour, BombVault lit une fois la taille des sauvegardes antérieures dans chaque dépôt. Un dépôt injoignable à ce moment, par exemple une cible hors site en panne ou un partage non monté, est listé dans la carte **Anomalies** de **Paramètres, Intégrité** et réessayé une fois par jour. Ses éléments apprennent entre-temps des nouvelles sauvegardes.
+
+## L'alerte d'espace disque ne correspond pas au tableau de bord Unraid
+
+Sur le partage utilisateur d'Unraid (`/mnt/user`), l'espace libre est celui de toute la grappe, pas d'un seul disque. Les dépôts distants ne sont mesurés que via les remotes rclone qui indiquent leur espace libre ; les dépôts S3, B2, REST et SFTP n'ont pas de valeur et figurent comme non mesurés dans la carte **Anomalies**.
+
 ## Le conteneur redémarre sans cesse ou semble non sain
 
 BombVault se signale sain/non sain depuis son propre `/api/health`. Un outil d'auto-réparation (comme Autoheal) peut le redémarrer automatiquement si le moteur venait à se coincer. Vérifiez le journal du conteneur et le rapport `/spike` pour la cause sous-jacente.

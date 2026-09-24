@@ -141,6 +141,9 @@ Un clic descarcă **cheia principală**, **parola restic derivată** și **loca�
 !!! danger "Stochează kitul de recuperare în afara serverului"
     Kitul conține secretul care decriptează backupurile tale. Păstrează-l undeva în siguranță și separat de server (un manager de parole, o copie printată într-un seif). Dacă pierzi atât BombVault cât și `APP_KEY` fără niciun kit de recuperare, backupurile tale criptate nu pot fi recuperate.
 
+!!! warning "Cel mai nou snapshot nu este întotdeauna cel de restaurat"
+    Începând cu restic 0.17, `restic snapshots` arată dimensiunea fiecărui snapshot. După o pierdere de date, cel mai nou snapshot poate fi cel golit, așa că nu restaura un snapshot mult mai mic decât cele dinaintea lui. După un ransomware poate fi cel criptat, de dimensiune obișnuită. Dacă BombVault încă rulează, uită-te mai întâi pe pagina sa **Anomalii**: ea numește ultimul backup bun. O restaurare nu are nevoie de niciun fel de date despre anomalii din BombVault, iar pauza retenției doar păstrează mai multe snapshoturi.
+
 ### Când kitul nu e la îndemână
 
 Parola nu este stocată nicăieri, se **calculează** din `APP_KEY`. Cu cheia și un shell o poți reproduce singur:
