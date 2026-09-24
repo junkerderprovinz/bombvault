@@ -40,6 +40,12 @@ const (
 	mcpTouchEvery     = time.Minute
 	mcpAuthLogEvery   = 10 * time.Second
 
+	// How many addresses the auth-failure throttle remembers. Everything older
+	// than mcpAuthLogEvery is dead weight, so the sweep at this mark almost
+	// always empties the map; the cap is what holds a caller rotating through
+	// an address range to a fixed amount of memory.
+	mcpAuthLogMax = 1024
+
 	// How long a tool that reads the database and Docker may take. Shutdown
 	// ends it too, so nothing outlives the process.
 	mcpReadTimeout = 15 * time.Second
@@ -320,14 +326,7 @@ func (h *Handler) touchMCPKey(k store.MCPKey, addr string, now time.Time) {
 // mcpAuthLogEvery per address, so a looping client cannot crowd everything else
 // out of the log ring the diagnostics bundle ships.
 func (h *Handler) logMCPAuthFailure(addr string, conflict bool) {
-	now := h.mcp.now()
-	h.mcp.authLogMu.Lock()
-	quiet := now.Unix()-h.mcp.authLog[addr] < int64(mcpAuthLogEvery.Seconds())
-	if !quiet {
-		h.mcp.authLog[addr] = now.Unix()
-	}
-	h.mcp.authLogMu.Unlock()
-	if quiet {
+	if !h.mcpAuthLogDue(addr) {
 		return
 	}
 	reason := "the key does not match any active one"
@@ -335,6 +334,33 @@ func (h *Handler) logMCPAuthFailure(addr string, conflict bool) {
 		reason = "Authorization and X-API-Key carry different keys"
 	}
 	log.Printf("api: mcp: refused a request from %s: %s", addr, reason)
+}
+
+// mcpAuthLogDue reports whether this address's refusal is the one to write, and
+// records it when it is. At mcpAuthLogMax addresses the entries whose quiet
+// window has run out go first; while a flood keeps the map full even after
+// that, the endpoint stays silent rather than remembering every address it was
+// ever reached from.
+func (h *Handler) mcpAuthLogDue(addr string) bool {
+	now := h.mcp.now().Unix()
+	cutoff := now - int64(mcpAuthLogEvery.Seconds())
+	h.mcp.authLogMu.Lock()
+	defer h.mcp.authLogMu.Unlock()
+	if h.mcp.authLog[addr] > cutoff {
+		return false
+	}
+	if len(h.mcp.authLog) >= mcpAuthLogMax {
+		for seen, at := range h.mcp.authLog {
+			if at <= cutoff {
+				delete(h.mcp.authLog, seen)
+			}
+		}
+		if len(h.mcp.authLog) >= mcpAuthLogMax {
+			return false
+		}
+	}
+	h.mcp.authLog[addr] = now
+	return true
 }
 
 // writeMCPJSONRPCError answers with a JSON-RPC error envelope. The id is null
