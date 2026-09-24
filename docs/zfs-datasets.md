@@ -63,7 +63,7 @@ Open **Backups** on the item, pick the backup, then the dataset. By default that
 - **To a folder.** Pick a folder below `/mnt`. BombVault checks that the folder is on a mounted pool or share and that there is enough free space. This works without the SSH link and for datasets that no longer exist.
 - **Select files** (Advanced): write only the files and folders you pick back into the dataset.
 - **All datasets of this backup** (Advanced): every dataset of the tree into its own subfolder of the folder you pick. Datasets that were skipped in that backup are named.
-- **From another server:** the **Recovery** page restores a dataset from another BombVault's repository, always into a folder.
+- **From another server:** the **Recovery** page restores from another BombVault's repository, always into a folder: all datasets of one backup, each into its own subfolder, or one dataset of the tree, whole or selected files.
 
 The item's list of containers to stop is offered for an in-place restore as well. Those containers stay stopped for the whole restore, and container backups wait meanwhile.
 
