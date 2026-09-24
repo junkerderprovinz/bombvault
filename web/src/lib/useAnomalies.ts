@@ -42,12 +42,56 @@ const AnomalyContext = createContext<AnomalySummaryState>({
   reload: () => undefined,
 });
 
+export interface OpenAnomaliesState {
+  list: AnomalyView[];
+  /** The open findings a run raised or was last seen in, by run id. */
+  byRunId: Map<string, AnomalyView[]>;
+  /** The snapshots open data-loss findings were raised on. */
+  flagged: Set<string>;
+  error: boolean;
+}
+
+const NO_OPEN: OpenAnomaliesState = { list: [], byRunId: new Map(), flagged: new Set(), error: false };
+
+// The open rows live in the provider, fetched only while something on screen
+// reads them: the dashboard shows them in three places, and three readers of
+// one pass must not be three requests.
+const OpenAnomalyContext = createContext<{ open: OpenAnomaliesState; watch: () => () => void }>({
+  open: NO_OPEN,
+  watch: () => () => undefined,
+});
+
+function indexByRun(list: AnomalyView[]): Map<string, AnomalyView[]> {
+  const out = new Map<string, AnomalyView[]>();
+  for (const a of list) {
+    for (const id of new Set([a.runId, a.lastRunId])) {
+      if (!id) continue;
+      out.set(id, [...(out.get(id) ?? []), a]);
+    }
+  }
+  return out;
+}
+
+async function readAllOpen(): Promise<AnomalyView[]> {
+  const all: AnomalyView[] = [];
+  let cursor = "";
+  do {
+    const res = await getAnomalies({ state: "open", limit: PAGE_SIZE, cursor: cursor || undefined });
+    if (!res.ok) throw new Error("the findings were refused");
+    all.push(...res.anomalies);
+    cursor = res.nextCursor;
+  } while (cursor);
+  return all;
+}
+
 export function AnomalyProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<Omit<AnomalySummaryState, "reload">>({
     summary: null,
     error: false,
     loading: true,
   });
+  const [openRows, setOpenRows] = useState<{ list: AnomalyView[]; error: boolean }>({ list: [], error: false });
+  const [watchers, setWatchers] = useState(0);
 
   const load = useCallback(() => {
     getAnomalySummary()
@@ -81,9 +125,47 @@ export function AnomalyProvider({ children }: { children: ReactNode }) {
     };
   }, [load]);
 
-  const value = useMemo(() => ({ ...state, reload: load }), [state, load]);
+  const generation = state.summary?.generation;
+  const watched = watchers > 0;
+  useEffect(() => {
+    if (!watched || generation === undefined) return;
+    let active = true;
+    readAllOpen()
+      .then((list) => {
+        if (active) setOpenRows({ list, error: false });
+      })
+      .catch(() => {
+        if (active) setOpenRows((prev) => ({ ...prev, error: true }));
+      });
+    return () => {
+      active = false;
+    };
+  }, [generation, watched]);
 
-  return createElement(AnomalyContext.Provider, { value }, children);
+  const watch = useCallback(() => {
+    setWatchers((n) => n + 1);
+    return () => setWatchers((n) => n - 1);
+  }, []);
+
+  const value = useMemo(() => ({ ...state, reload: load }), [state, load]);
+  const open = useMemo(
+    () => ({
+      open: {
+        list: openRows.list,
+        byRunId: indexByRun(openRows.list),
+        flagged: new Set(openRows.list.flatMap((a) => a.flaggedSnapshots ?? [])),
+        error: openRows.error,
+      },
+      watch,
+    }),
+    [openRows, watch]
+  );
+
+  return createElement(
+    AnomalyContext.Provider,
+    { value },
+    createElement(OpenAnomalyContext.Provider, { value: open }, children)
+  );
 }
 
 export function useAnomalySummary(): AnomalySummaryState {
@@ -95,41 +177,18 @@ export function useAnomalySummary(): AnomalySummaryState {
  * badges and counts are drawn from this list, so a page cut at 500 would show
  * an item as clean.
  */
-export function useOpenAnomalies(): { list: AnomalyView[]; error: boolean } {
-  const { summary } = useAnomalySummary();
-  const generation = summary?.generation;
-  const [list, setList] = useState<AnomalyView[]>([]);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    if (generation === undefined) return;
-    let active = true;
-    void (async () => {
-      const all: AnomalyView[] = [];
-      let cursor = "";
-      do {
-        const res = await getAnomalies({ state: "open", limit: PAGE_SIZE, cursor: cursor || undefined });
-        if (!res.ok) throw new Error("the findings were refused");
-        all.push(...res.anomalies);
-        cursor = res.nextCursor;
-      } while (cursor);
-      if (!active) return;
-      setList(all);
-      setError(false);
-    })().catch(() => {
-      if (active) setError(true);
-    });
-    return () => {
-      active = false;
-    };
-  }, [generation]);
-
-  return useMemo(() => ({ list, error }), [list, error]);
+export function useOpenAnomalies(): OpenAnomaliesState {
+  const { open, watch } = useContext(OpenAnomalyContext);
+  useEffect(() => watch(), [watch]);
+  return open;
 }
 
 export interface AnomalyItemsState {
   items: AnomalyItem[];
   byTarget: Map<string, AnomalyItem>;
+  /** The item a page row stands for. Containers and VMs know their name
+   *  rather than the target id the engine keys on. */
+  find: (domain: string, nameOrId: string) => AnomalyItem | undefined;
   /** The request failed or was refused. Consumers must not read this as calm. */
   error: boolean;
   loading: boolean;
@@ -186,8 +245,15 @@ export function useAnomalyItems(): AnomalyItemsState {
     setAttempt((n) => n + 1);
   }, [reload]);
 
-  return useMemo(
-    () => ({ items, byTarget: new Map(items.map((i) => [i.targetId, i])), error, loading, retry }),
-    [items, error, loading, retry]
-  );
+  return useMemo(() => {
+    const byTarget = new Map(items.map((i) => [i.targetId, i]));
+    // The domain is checked on the id path too: a container may be called
+    // "flash", which is also the flash drive's target id.
+    const find = (domain: string, nameOrId: string) => {
+      const byId = byTarget.get(nameOrId);
+      if (byId?.domain === domain) return byId;
+      return items.find((i) => i.domain === domain && i.name === nameOrId);
+    };
+    return { items, byTarget, find, error, loading, retry };
+  }, [items, error, loading, retry]);
 }

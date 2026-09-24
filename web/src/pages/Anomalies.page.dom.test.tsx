@@ -337,7 +337,7 @@ describe("a finding's own lines", () => {
     const link = screen.getByRole("link", {
       name: en["anomaly.action.restoreLastGood"].replace("{date}", new Date(1700000000 * 1000).toLocaleString()),
     });
-    expect(link.getAttribute("href")).toBe("/containers?restore=snap-9");
+    expect(link.getAttribute("href")).toBe("/containers?restore=snap-9&item=plex");
   });
 
   // The detector measures a rate per second; the row has to say per hour.

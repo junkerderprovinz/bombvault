@@ -23,6 +23,7 @@ import { useProgress } from "../../lib/progress";
 import { isWarningNote, RunReasonText } from "../../lib/runReason";
 import { useConfirm } from "../../lib/useConfirm";
 import { useToast } from "../../lib/toast";
+import { useOpenAnomalies } from "../../lib/useAnomalies";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { FolderBrowser } from "../FolderBrowser";
@@ -96,6 +97,7 @@ function DumpRow({
   format,
   onFormat,
   onChanged,
+  flagged,
   t,
 }: {
   dump: DBDumpView;
@@ -108,6 +110,8 @@ function DumpRow({
   format: DumpFormat;
   onFormat: (next: DumpFormat) => void;
   onChanged: () => void;
+  /** An open finding says this dump lost most of the database. */
+  flagged: boolean;
   t: T;
 }) {
   const { lang } = useT();
@@ -228,6 +232,11 @@ function DumpRow({
           <span className="text-xs text-carbon-textSub">
             {t("dbdump.versionLabel").replace("{engine}", engineName).replace("{version}", dump.version)}
           </span>
+        )}
+        {flagged && (
+          <Badge tone="fail" size="small">
+            {t("anomaly.snapshotFlagged")}
+          </Badge>
         )}
         <span className="text-xs text-carbon-textMuted flex-1">{humanBytes(dump.bytes)}</span>
 
@@ -399,6 +408,7 @@ export function DatabaseDumpList({
   const [failed, setFailed] = useState(false);
   const [ownTick, setOwnTick] = useState(0);
   const [format, setFormat] = useState<DumpFormat>(storedFormat);
+  const { flagged } = useOpenAnomalies();
   const onDumpsRef = useRef(onDumps);
   onDumpsRef.current = onDumps;
 
@@ -466,6 +476,7 @@ export function DatabaseDumpList({
           format={format}
           onFormat={pickFormat}
           onChanged={() => setOwnTick((n) => n + 1)}
+          flagged={flagged.has(dump.id)}
           t={t}
         />
       ))}

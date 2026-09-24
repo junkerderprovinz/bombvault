@@ -9,6 +9,8 @@ import { LanguageCard } from "./settings/LanguageCard";
 import { ReposCard } from "./settings/ReposCard";
 import { ThemeCard } from "./settings/ThemeCard";
 import { RestoreChecksSection } from "./settings/RestoreChecksSection";
+import { AnomalyCard } from "./settings/AnomalyCard";
+import { useAnomalySummary } from "../lib/useAnomalies";
 import { RcloneCard } from "./settings/RcloneCard";
 import { CloudCard } from "./settings/CloudCard";
 import { NumberField } from "../components/NumberField";
@@ -1115,6 +1117,7 @@ const TAB_ICON: Record<TabKey, ReactNode> = {
 // reordering, nothing to get wrong.
 export function SettingsPage() {
   const { t } = useT();
+  const { summary: anomalySummary } = useAnomalySummary();
   const { confirm, confirmDialog } = useConfirm();
   const { advanced } = useAdvanced();
   const { push, quiet, setQuiet } = useToast();
@@ -1459,6 +1462,11 @@ export function SettingsPage() {
   // save() as the digest card above it (autoSaveToggle).
   const [, setWatchdogSaveState] = useState<SaveState>("idle");
   const [, setWatchdogSaveError] = useState<string | null>(null);
+
+  // Anomalies card (integrity tab): every field saves on its own through
+  // autoSaveToggle, which puts the old value back when the save is refused.
+  const [, setAnomalySaveState] = useState<SaveState>("idle");
+  const [, setAnomalySaveError] = useState<string | null>(null);
 
   // Schedules tab (migrated from the retired Plans page). The container list
   // feeds the Containers schedule section's included-members list; syncSchedules
@@ -4403,6 +4411,17 @@ export function SettingsPage() {
           shake={schedFieldShake}
           pulse={fieldPulse}
           t={t}
+          hueIndex={nextHue()}
+        />
+
+        <AnomalyCard
+          t={t}
+          settings={settings}
+          summary={anomalySummary}
+          save={(key, next) => void autoSaveToggle(key, next, setAnomalySaveState, setAnomalySaveError)}
+          busy={fieldBusy}
+          shake={fieldShake}
+          pulse={fieldPulse}
           hueIndex={nextHue()}
         />
 

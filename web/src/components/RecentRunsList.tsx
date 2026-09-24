@@ -4,6 +4,8 @@ import { listRuns } from "../lib/api";
 import type { Run } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { formatTs, formatDuration } from "../lib/reltime";
+import { useOpenAnomalies } from "../lib/useAnomalies";
+import { RunAnomalyBadge } from "./RunAnomalyBadge";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -47,6 +49,7 @@ export function RecentRunsList({
 }) {
   const [runs, setRuns] = useState<Run[]>([]);
   const [loading, setLoading] = useState(true);
+  const { byRunId } = useOpenAnomalies();
 
   useEffect(() => {
     let alive = true;
@@ -93,6 +96,7 @@ export function RecentRunsList({
               )}
             </span>
             {dur && <span className="text-carbon-textMuted whitespace-nowrap">({dur})</span>}
+            <RunAnomalyBadge findings={byRunId.get(run.id)} t={t} />
           </div>
         );
       })}

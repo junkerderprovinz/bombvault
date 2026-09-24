@@ -18,6 +18,11 @@ import { FlashZipExportCard } from "./settings/FlashZipExportCard";
 import { InfoBubble } from "../components/InfoBubble";
 import { IconBackupNow, IconDownload, IconTrash } from "../components/Sidebar";
 import { tLtr } from "../lib/ltrFragments";
+import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
+import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
+import { findingSnapshotId } from "../lib/anomalies";
+import { useAnomalyItems, useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
+import { useRestoreRequest } from "../lib/restoreRequest";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -94,7 +99,24 @@ function FlashBackupButton({
 // and the browser has no event to wait for, so this is a fixed guess.
 const DOWNLOAD_PREPARING_MS = 20_000;
 
-function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; source: RepoSource; onDeleted: () => void; t: T }) {
+function FlashSnapshotRow({
+  snap,
+  source,
+  flagged,
+  preselected,
+  onDeleted,
+  t,
+}: {
+  snap: Snapshot;
+  source: RepoSource;
+  /** An open data-loss finding was raised on this snapshot. */
+  flagged: boolean;
+  /** A finding's restore link asked for this snapshot, so the row stands out
+   *  from its neighbours. */
+  preselected: boolean;
+  onDeleted: () => void;
+  t: T;
+}) {
   const [deleting, setDeleting] = useState(false);
   const [preparing, setPreparing] = useState(false);
   const { push } = useToast();
@@ -137,12 +159,21 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
   return (
     // py-1.5 keeps the row at 44px around the 32px icon badges, as in
     // RestorePanel's SnapshotRow.
-    <div className="flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0">
+    <div
+      className={`flex flex-col gap-1 py-1.5 border-b border-carbon-border last:border-0${
+        preselected ? " bg-carbon-surface2 px-2 rounded-control" : ""
+      }`}
+    >
       <div className="flex items-center gap-3 text-sm">
         <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">{snap.id.slice(0, 8)}</span>
         <span className="text-carbon-textMuted text-xs flex-1">
           {new Date(snap.time).toLocaleString()}
         </span>
+        {flagged && (
+          <Badge tone="fail" size="small">
+            {t("anomaly.snapshotFlagged")}
+          </Badge>
+        )}
         {/* No hueIndex: both badges take the Restore card's hue through the
             cascade. Delete gets no colour of its own, since a neutral badge
             would sit flat grey beside a hued one; the glyph, the tip and the
@@ -175,6 +206,10 @@ function FlashSnapshotRow({ snap, source, onDeleted, t }: { snap: Snapshot; sour
 
 export function Flash() {
   const { t } = useT();
+  const anomaly = useAnomalyItems().find("flash", "flash");
+  const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
+  const { flagged } = useOpenAnomalies();
+  const restoreRequest = useRestoreRequest();
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -220,7 +255,10 @@ export function Flash() {
     // spaces the heading and the cards.
     <div className={PAGE_SHELL}>
       <div>
-        <h1 className="text-2xl font-semibold text-carbon-text">{t("flash.title")}</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-semibold text-carbon-text">{t("flash.title")}</h1>
+          <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
+        </div>
         <p className="mt-1 text-sm text-carbon-textSub">{tLtr(t, "flash.subtitle")}</p>
         <div className="mt-2"><OffsiteIndicator domain="flash" /></div>
       </div>
@@ -246,6 +284,7 @@ export function Flash() {
               busyPhase={running.phase}
             />
           </div>
+          <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
 
           {/* As on the Folders page: a restore has its own control with its
               own warning. */}
@@ -301,7 +340,15 @@ export function Flash() {
         {!loading && snapshots.length > 0 && (
           <div className="rounded-card bg-carbon-background px-3 py-1">
             {snapshots.map((snap) => (
-              <FlashSnapshotRow key={snap.id} snap={snap} source={source} onDeleted={reload} t={t} />
+              <FlashSnapshotRow
+                key={snap.id}
+                snap={snap}
+                source={source}
+                flagged={flagged.has(findingSnapshotId(snap))}
+                preselected={findingSnapshotId(snap) === restoreRequest.snapshot}
+                onDeleted={reload}
+                t={t}
+              />
             ))}
           </div>
         )}

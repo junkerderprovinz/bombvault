@@ -47,6 +47,9 @@ export interface LogLine {
   /** A run that succeeded with a note worth acting on, coloured like the run
    *  history colours that note. */
   warn?: boolean;
+  /** The finished run behind the line, for the marks an open finding puts on
+   *  it. */
+  runId?: string;
 }
 
 /**
@@ -525,7 +528,7 @@ function buildHistoryLines(runs: Run[], resolveName: ResolveName, liveSignatures
     if (liveSignatures.has(signature)) continue;
 
     const { status, text } = finishedLineText(resolveName, run, domain, name);
-    const line: LogLine = { id: `run:${run.id}`, atMs: run.finishedAt * 1000, status, text, domain, kind: asLogKind(run.kind), live: false };
+    const line: LogLine = { id: `run:${run.id}`, runId: run.id, atMs: run.finishedAt * 1000, status, text, domain, kind: asLogKind(run.kind), live: false };
     if (run.status === "success" && isWarningNote(run.error)) line.warn = true;
     lines.push(line);
   }

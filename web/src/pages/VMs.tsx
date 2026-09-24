@@ -4,7 +4,7 @@ import { SourceToggle, type RepoSource } from "../components/SourceToggle";
 import { FilterPopover } from "../components/FilterPopover";
 import { IconTipButton } from "../components/IconTipButton";
 import { OffsiteIndicator } from "../components/OffsiteIndicator";
-import type { VM, Snapshot, VmOrder } from "../lib/api";
+import type { AnomalyItem, VM, Snapshot, VmOrder } from "../lib/api";
 import { BULK_HUE } from "../lib/bulkHue";
 import { useT, stateLabel } from "../lib/i18n";
 import { PAGE_SHELL } from "../lib/pageShell";
@@ -35,6 +35,11 @@ import { hueVars } from "../lib/appearance";
 import { Selector } from "../components/Selector";
 import { useToast } from "../lib/toast";
 import { RepoPicker } from "../components/RepoPicker";
+import { ItemAnomalyBadge } from "../components/ItemAnomalyBadge";
+import { ItemAnomalySettings } from "../components/ItemAnomalySettings";
+import { findingSnapshotId } from "../lib/anomalies";
+import { useAnomalyItems, useAnomalySummary, useOpenAnomalies } from "../lib/useAnomalies";
+import { useRestoreRequest, type RestoreRequest } from "../lib/restoreRequest";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -359,6 +364,8 @@ function VMSnapshotRow({
   vmName,
   vmDisplayName,
   source,
+  flagged,
+  preselected,
   onDeleted,
   t,
 }: {
@@ -368,6 +375,10 @@ function VMSnapshotRow({
   /** Display name for the cancel-confirm text; falls back to vmName. */
   vmDisplayName?: string;
   source: RepoSource;
+  /** An open data-loss finding was raised on this snapshot. */
+  flagged: boolean;
+  /** A finding's restore link asked for this snapshot. */
+  preselected: boolean;
   onDeleted: () => void;
   t: T;
 }) {
@@ -382,7 +393,7 @@ function VMSnapshotRow({
   const { push } = useToast();
   const [shake, setShake] = useState(0);
   // Collapsed by default so the list stays compact.
-  const [showRestore, setShowRestore] = useState(false);
+  const [showRestore, setShowRestore] = useState(preselected);
   const { confirm, confirmDialog } = useConfirm();
 
   async function handleDelete() {
@@ -414,6 +425,11 @@ function VMSnapshotRow({
         <span className="text-carbon-textMuted text-xs flex-1">
           {new Date(snap.time).toLocaleString()}
         </span>
+        {flagged && (
+          <Badge tone="fail" size="small">
+            {t("anomaly.snapshotFlagged")}
+          </Badge>
+        )}
         {snap.tags && snap.tags.length > 0 && (
           <span className="text-carbon-textMuted text-xs hidden sm:block">
             {snap.tags.join(", ")}
@@ -467,6 +483,7 @@ function VMRestorePanel({
   displayName,
   t,
   open,
+  preselect = "",
 }: {
   /** Raw libvirt name. Every call in this panel uses it, never displayName. */
   name: string;
@@ -477,6 +494,8 @@ function VMRestorePanel({
   /** Owned by VMRow's `openSections`, as components/RestorePanel.tsx takes
    *  `open` from ContainerRow, so both cards share one disclosure. */
   open: boolean;
+  /** The snapshot a finding's restore link asked for. */
+  preselect?: string;
 }) {
   const [source, setSource] = useState<RepoSource>("local");
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
@@ -490,6 +509,7 @@ function VMRestorePanel({
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const [shakeDeleteAll, setShakeDeleteAll] = useState(0);
+  const { flagged } = useOpenAnomalies();
 
   useEffect(() => {
     if (!open) return;
@@ -593,6 +613,8 @@ function VMRestorePanel({
                 vmName={name}
                 vmDisplayName={displayName}
                 source={source}
+                flagged={flagged.has(findingSnapshotId(snap))}
+                preselected={findingSnapshotId(snap) === preselect}
                 onDeleted={() => setReloadTick((n) => n + 1)}
                 t={t}
               />
@@ -613,6 +635,9 @@ export function VMRow({
   onToggleSelect,
   linkCandidates = [],
   index,
+  anomaly,
+  anomalyEnabled = false,
+  restoreRequest,
 }: {
   vm: VM;
   t: T;
@@ -623,6 +648,11 @@ export function VMRow({
   linkCandidates?: string[];
   /** Position in the rendered list, which sets the palette position. */
   index: number;
+  anomaly?: AnomalyItem;
+  anomalyEnabled?: boolean;
+  /** A finding's restore link for this VM: the card opens its backups and
+   *  comes into view. */
+  restoreRequest?: RestoreRequest;
 }) {
   const installed = vm.state !== "not-installed";
   const progressMap = useProgress();
@@ -635,7 +665,14 @@ export function VMRow({
 
   // The same shape as ContainerRow's `openSections`, although VMs have only one
   // section, so the two cards keep one disclosure control.
-  const [openSections, setOpenSections] = useState<Set<string>>(() => new Set());
+  const [openSections, setOpenSections] = useState<Set<string>>(
+    () => new Set(restoreRequest ? ["backups"] : [])
+  );
+  const cardRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    // jsdom has no scrollIntoView.
+    if (restoreRequest) cardRef.current?.scrollIntoView?.({ block: "start" });
+  }, [restoreRequest]);
   const { push } = useToast();
   // Reverted on a failed save, so the picker never shows a destination the
   // server did not accept.
@@ -659,6 +696,7 @@ export function VMRow({
 
   return (
     <div
+      ref={cardRef}
       style={{ ...hueVars(index), "--row-i": String(index) } as CSSProperties}
       // glim-active while this VM's own backup or restore runs, so reactive
       // mode shows the hue without hover, as on ContainerRow.
@@ -685,6 +723,7 @@ export function VMRow({
             <span className="font-semibold text-carbon-text text-sm min-w-0 truncate">
               {vm.name}
             </span>
+            <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
             {installed ? (
               <Badge tone={stateTone(vm.state)}>{stateLabel(t, vm.state)}</Badge>
             ) : (
@@ -806,6 +845,7 @@ export function VMRow({
             }}
             locked={vm.lastBackup != null}
           />
+          <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
         </Advanced>
 
         <VMRestorePanel
@@ -813,6 +853,7 @@ export function VMRow({
           displayName={vm.name}
           t={t}
           open={openSections.has("backups")}
+          preselect={restoreRequest?.snapshot}
         />
       </div>
 
@@ -1176,6 +1217,9 @@ function VMBackupOrderPanel({
 
 export function VMs() {
   const { t } = useT();
+  const anomalies = useAnomalyItems();
+  const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
+  const restoreRequest = useRestoreRequest();
   // Read directly rather than relying on <Advanced>: the order panel's
   // hueIndex={nextHue()} is evaluated when the element is built, even if
   // <Advanced> then renders nothing, so nextHue() may only run when the panel
@@ -1546,6 +1590,9 @@ export function VMs() {
               onToggleSelect={() => toggleSelect(v.libvirtName)}
               linkCandidates={notInstalledNames}
               index={i}
+              anomaly={anomalies.find("vm", v.libvirtName)}
+              anomalyEnabled={anomalyEnabled}
+              restoreRequest={restoreRequest.item === v.libvirtName ? restoreRequest : undefined}
             />
           ))}
         </div>
@@ -1558,7 +1605,16 @@ export function VMs() {
           {/* Continues the live list's colour sequence, so the first orphan
               does not repeat the first live row's colour. */}
           {orphans.map((v, i) => (
-            <VMRow key={v.libvirtName} vm={v} t={t} onRefresh={() => void loadVMs()} index={live.length + i} />
+            <VMRow
+              key={v.libvirtName}
+              vm={v}
+              t={t}
+              onRefresh={() => void loadVMs()}
+              index={live.length + i}
+              anomaly={anomalies.find("vm", v.libvirtName)}
+              anomalyEnabled={anomalyEnabled}
+              restoreRequest={restoreRequest.item === v.libvirtName ? restoreRequest : undefined}
+            />
           ))}
         </div>
       )}

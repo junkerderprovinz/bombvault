@@ -4019,6 +4019,8 @@ export type AnomalyView = {
   lastRunAt: number;
   /** Only on the findings that mean data was lost. */
   lastGood?: RestorePointRef;
+  /** The backups such a finding was raised and last seen on. */
+  flaggedSnapshots?: string[];
   observed: number;
   expected: number;
   threshold: number;

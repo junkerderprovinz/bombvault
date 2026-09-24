@@ -126,6 +126,44 @@ describe("RetentionPreview", () => {
     await waitFor(() => expect(screen.getByText(/not reachable now/)).toBeTruthy());
   });
 
+  // A held item removes nothing because an open anomaly keeps its backups,
+  // and the empty list must not read as a policy that has nothing to do.
+  it("shows paused items", async () => {
+    previewRetention.mockResolvedValue({
+      ok: true,
+      preview: {
+        policy: { on: true, keepLast: 1, keepDaily: 0, keepWeekly: 0, keepMonthly: 0 },
+        repos: [
+          {
+            name: "Containers",
+            appendOnly: false,
+            items: [
+              {
+                tag: "container:plex",
+                keep: [{ id: "1a1a1a1a", time: "2026-09-15T02:00:00Z" }],
+                remove: [],
+                paused: true,
+              },
+              {
+                tag: "container:sonarr",
+                keep: [{ id: "4d4d4d4d", time: "2026-09-15T02:00:00Z" }],
+                remove: [{ id: "5e5e5e5e", time: "2026-09-14T02:00:00Z" }],
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    renderPanel();
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(en["retentionPreview.show"], "i") }));
+
+    const paused = await screen.findByText(en["retentionPreview.paused"]);
+    expect(paused.className).toContain("text-statusWarn");
+    expect(paused.closest("div.mt-2")?.textContent).toContain("container:plex");
+    expect(screen.getAllByText(en["retentionPreview.paused"])).toHaveLength(1);
+  });
+
   it("shows the server's refusal instead of an empty panel", async () => {
     previewRetention.mockResolvedValue({ ok: false, error: "no backups yet" });
 

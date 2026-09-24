@@ -119,12 +119,16 @@ export function AnomalyRow({
   }
 
   const itemPath = DOMAIN_PATH[a.domain];
-  const restorePath =
-    itemPath && a.lastGood
-      ? `${itemPath}?restore=${encodeURIComponent(a.lastGood.snapshotId)}` +
-        (a.scopeKind === "zfsds" ? `&dataset=${encodeURIComponent(a.part)}` : "") +
-        (a.scopeKind === "dump" ? "&dump=1" : "")
-      : null;
+  let restorePath: string | null = null;
+  if (itemPath && a.lastGood) {
+    // The item names the row on a page that lists many; flash and config
+    // have no name and need none.
+    const params = new URLSearchParams({ restore: a.lastGood.snapshotId });
+    if (a.name) params.set("item", a.name);
+    if (a.scopeKind === "zfsds") params.set("dataset", a.part);
+    if (a.scopeKind === "dump") params.set("dump", "1");
+    restorePath = `${itemPath}?${params.toString()}`;
+  }
 
   const details: [string, string][] = [];
   if (DRILL_METRICS.has(a.metric)) {

@@ -136,6 +136,7 @@ export function RetentionPreview({
               <div className="text-xs text-carbon-textSub">
                 {itemLabel(item.tag, t)} · {t("retentionPreview.keeps")}: {item.keep?.length ?? 0}
               </div>
+              {item.paused && <p className="text-xs text-statusWarn">{t("retentionPreview.paused")}</p>}
               {(item.remove?.length ?? 0) > 0 && (
                 <ul className="mt-1 flex flex-col gap-0.5">
                   {item.remove?.map((snap) => (
