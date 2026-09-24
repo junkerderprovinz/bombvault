@@ -32,7 +32,6 @@ import { buildForecastLine, humanBytes, type ResolveForecast } from "../lib/fore
 import type { TranslationKey } from "../lib/i18n";
 import { Button } from "../components/Button";
 import { IconCheckCircle } from "../components/Sidebar";
-import { InfoBubble } from "../components/InfoBubble";
 import { tLtr } from "../lib/ltrFragments";
 import { zfsCodeSentence, zfsFixKey } from "../lib/zfsCodes";
 
