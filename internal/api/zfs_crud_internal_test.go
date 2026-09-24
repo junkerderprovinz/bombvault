@@ -334,6 +334,38 @@ func TestZFSSettingsAreBoundedAtSaveTime(t *testing.T) {
 	}
 }
 
+func TestPatchZFSDatasetRefusesSnapshotCommandsWithNowhereToRun(t *testing.T) {
+	s, st, _, _ := zfsRunFixture(t, zfsTwoDatasetTree())
+	s.docker = newZFSFakeDocker("postgres")
+	d := zfsSeedItem(t, st, zfsRoot)
+
+	dump := "pg_dumpall > /data/dump.sql"
+	for name, patch := range map[string]ZFSDatasetPatch{
+		"a pre command":  {PreSnapshot: &dump},
+		"a post command": {PostSnapshot: &dump},
+	} {
+		if code := zfsCodeOf(t, s.PatchZFSDataset(context.Background(), d.ID, patch)); code != "hook-container-missing" {
+			t.Fatalf("%s without a container: code = %q, want hook-container-missing", name, code)
+		}
+	}
+
+	postgres := "postgres"
+	if err := s.PatchZFSDataset(context.Background(), d.ID, ZFSDatasetPatch{HookContainer: &postgres, PreSnapshot: &dump}); err != nil {
+		t.Fatalf("a command with its container must be accepted: %v", err)
+	}
+	none := ""
+	if code := zfsCodeOf(t, s.PatchZFSDataset(context.Background(), d.ID, ZFSDatasetPatch{HookContainer: &none})); code != "hook-container-missing" {
+		t.Fatalf("taking the container from a stored command: code = %q, want hook-container-missing", code)
+	}
+	if err := s.PatchZFSDataset(context.Background(), d.ID, ZFSDatasetPatch{HookContainer: &none, PreSnapshot: &none}); err != nil {
+		t.Fatalf("clearing the command with its container must be accepted: %v", err)
+	}
+	blank := "   "
+	if err := s.PatchZFSDataset(context.Background(), d.ID, ZFSDatasetPatch{PostSnapshot: &blank}); err != nil {
+		t.Fatalf("a blank command runs nothing and needs no container: %v", err)
+	}
+}
+
 func TestPatchZFSDatasetCadenceFollowsTheDomainGrammar(t *testing.T) {
 	s, st, _, _ := zfsRunFixture(t, zfsTwoDatasetTree())
 	d := zfsSeedItem(t, st, zfsRoot)

@@ -189,6 +189,11 @@ func (s *Service) PatchZFSDataset(ctx context.Context, id string, p ZFSDatasetPa
 			return fmt.Errorf("a snapshot command may be at most %d bytes", zfsMaxCommandBytes)
 		}
 	}
+	// A command with no container to run in would be stored and then skipped
+	// on every run, so the snapshot the user thought was consistent is not.
+	if container, pre, post := zfsPatchedHooks(d, p); container == "" && (strings.TrimSpace(pre) != "" || strings.TrimSpace(post) != "") {
+		return zfsRefuse("hook-container-missing", "")
+	}
 	if p.ScheduleCadence != nil {
 		if vErr := zfsValidateCadence(*p.ScheduleCadence); vErr != nil {
 			return vErr
@@ -254,16 +259,7 @@ func (s *Service) applyZFSPatch(d store.ZFSDataset, p ZFSDatasetPatch) error {
 		}
 	}
 	if p.HookContainer != nil || p.PreSnapshot != nil || p.PostSnapshot != nil {
-		container, pre, post := d.HookContainer, d.PreSnapshot, d.PostSnapshot
-		if p.HookContainer != nil {
-			container = *p.HookContainer
-		}
-		if p.PreSnapshot != nil {
-			pre = *p.PreSnapshot
-		}
-		if p.PostSnapshot != nil {
-			post = *p.PostSnapshot
-		}
+		container, pre, post := zfsPatchedHooks(d, p)
 		if err := s.store.SetZFSHooks(d.ID, container, pre, post); err != nil {
 			return err
 		}
@@ -275,6 +271,22 @@ func (s *Service) applyZFSPatch(d store.ZFSDataset, p ZFSDatasetPatch) error {
 		}
 	}
 	return nil
+}
+
+// zfsPatchedHooks is the hook container and the two commands an item has once
+// the patch is applied.
+func zfsPatchedHooks(d store.ZFSDataset, p ZFSDatasetPatch) (container, pre, post string) {
+	container, pre, post = d.HookContainer, d.PreSnapshot, d.PostSnapshot
+	if p.HookContainer != nil {
+		container = *p.HookContainer
+	}
+	if p.PreSnapshot != nil {
+		pre = *p.PreSnapshot
+	}
+	if p.PostSnapshot != nil {
+		post = *p.PostSnapshot
+	}
+	return container, pre, post
 }
 
 // ZFSRunDetail returns what one run did to each dataset of the tree, how long

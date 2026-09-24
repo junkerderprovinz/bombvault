@@ -522,7 +522,7 @@ function ZFSItemSettings({ item, t, onChanged }: { item: ZFSDatasetView; t: T; o
               disabled={busy}
               className="w-64 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text"
               options={[
-                { value: "", label: t("zfs.stopContainersPlaceholder") },
+                { value: "", label: t("zfs.hookContainerNone") },
                 ...containers.filter((c) => !c.self).map((c) => ({ value: c.name, label: c.name })),
               ]}
             />
@@ -535,6 +535,7 @@ function ZFSItemSettings({ item, t, onChanged }: { item: ZFSDatasetView; t: T; o
                   setPre(e.target.value);
                   saveHooks(e.target.value, post);
                 }}
+                disabled={item.hookContainer === ""}
                 className="rounded-control bg-carbon-surface2 px-3 py-1.5 font-mono text-xs text-carbon-text text-start"
               />
             </label>
@@ -547,6 +548,7 @@ function ZFSItemSettings({ item, t, onChanged }: { item: ZFSDatasetView; t: T; o
                   setPost(e.target.value);
                   saveHooks(pre, e.target.value);
                 }}
+                disabled={item.hookContainer === ""}
                 className="rounded-control bg-carbon-surface2 px-3 py-1.5 font-mono text-xs text-carbon-text text-start"
               />
             </label>

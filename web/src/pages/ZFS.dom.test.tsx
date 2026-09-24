@@ -468,6 +468,24 @@ describe("ZFS page", () => {
     await waitFor(() => expect(calls).toContain("probe:z1"));
   });
 
+  it("takes snapshot commands only once a container is chosen to run them in", async () => {
+    localStorage.setItem("bombvault.advanced", "1");
+    await renderWithItems();
+    fireEvent.click(screen.getByRole("button", { name: en["common.edit"] }));
+    const place = screen.getByRole("combobox", { name: en["zfs.hookContainer"] });
+    expect(place.textContent).toContain(en["zfs.hookContainerNone"]);
+    expect((screen.getByLabelText(en["zfs.preSnapshot"]) as HTMLInputElement).disabled).toBe(true);
+    expect((screen.getByLabelText(en["zfs.postSnapshot"]) as HTMLInputElement).disabled).toBe(true);
+  });
+
+  it("offers the commands of an item that has a container for them", async () => {
+    localStorage.setItem("bombvault.advanced", "1");
+    items = [item({ hookContainer: "postgres", preSnapshot: "pg_backup_start" })];
+    await renderWithItems();
+    fireEvent.click(screen.getByRole("button", { name: en["common.edit"] }));
+    expect((screen.getByLabelText(en["zfs.preSnapshot"]) as HTMLInputElement).disabled).toBe(false);
+  });
+
   it("excludes a child through the tree in the item's settings", async () => {
     items = [
       item({
