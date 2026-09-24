@@ -71,6 +71,17 @@ it("names the items whose backups a prune kept", async () => {
   );
 });
 
+it("names a VM once with its disks and the flash drive by its backup type", async () => {
+  pruneDomain.mockResolvedValue({ ok: true, paused: ["vm:win11", "vm:win11:zvol:vdb", "flash"] });
+  await prune();
+  await waitFor(() =>
+    expect(push).toHaveBeenCalledWith(
+      en["anomaly.prunePaused"].replace("{names}", `win11, ${en["dashboard.domainFlash"]}`),
+      "warn"
+    )
+  );
+});
+
 it("stays quiet about anomalies when nothing was held", async () => {
   pruneDomain.mockResolvedValue({ ok: true });
   await prune();
