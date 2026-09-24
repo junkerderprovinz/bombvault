@@ -518,12 +518,12 @@ func TestZFSMigrationsAreSatisfiedWhenAlreadyApplied(t *testing.T) {
 
 	var zfsNames []string
 	for _, m := range migrations {
-		if m.version >= zfsMigrationBase {
+		if m.version >= zfsMigrationBase && m.version < anomalyMigrationBase {
 			zfsNames = append(zfsNames, m.name)
 		}
 	}
 	if len(zfsNames) != 12 {
-		t.Fatalf("found %d migrations from v%d up, want the 12 of the ZFS domain", len(zfsNames), zfsMigrationBase)
+		t.Fatalf("found %d migrations from v%d to v%d, want the 12 of the ZFS domain", len(zfsNames), zfsMigrationBase, anomalyMigrationBase-1)
 	}
 	for i, name := range zfsNames {
 		if _, err := db.Exec(`DELETE FROM schema_migrations WHERE name = ?`, name); err != nil {
@@ -544,7 +544,7 @@ func TestZFSMigrationsAreSatisfiedWhenAlreadyApplied(t *testing.T) {
 
 	applied := appliedVersions(t, db)
 	for _, m := range migrations {
-		if m.version < zfsMigrationBase {
+		if m.version < zfsMigrationBase || m.version >= anomalyMigrationBase {
 			continue
 		}
 		if applied[m.version] != m.name {
