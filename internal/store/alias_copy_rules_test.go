@@ -137,6 +137,25 @@ func TestADeletedEntryLeavesTheRuleOfTheNamesHolderToday(t *testing.T) {
 	mustRule(t, r, "containers", "container:nginx", store.SkipAll)
 }
 
+func TestADeletedEntryWritesNoRuleOnANameAnotherEntryCarries(t *testing.T) {
+	r := newRepo(t)
+	if _, err := r.UpsertTarget(store.Target{ContainerName: "nginx"}); err != nil {
+		t.Fatal(err)
+	}
+	store.SeedCopyRule(t, r, "containers", "container:nginx")
+	if err := r.RenameTargetWithAlias("nginx", "web", ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.UpsertTarget(store.Target{ContainerName: "nginx"}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := r.DeleteTarget("web"); err != nil {
+		t.Fatalf("DeleteTarget: %v", err)
+	}
+	mustNoRule(t, r, "containers", "container:nginx")
+}
+
 func TestADeletedEntryWithoutARuleLeavesItsFormerNamesFollowing(t *testing.T) {
 	r := newRepo(t)
 	if _, err := r.UpsertTarget(store.Target{ContainerName: "nginx"}); err != nil {
@@ -201,4 +220,23 @@ func TestADeletedVMLeavesItsCopyRuleOnItsFormerName(t *testing.T) {
 		t.Fatalf("DeleteVMTarget: %v", err)
 	}
 	mustRule(t, r, "vms", "vm:windows-11", store.SkipAll)
+}
+
+func TestADeletedVMWritesNoRuleOnANameAnotherVMCarries(t *testing.T) {
+	r := newRepo(t)
+	if _, err := r.UpsertVMTarget(store.VMTarget{Name: "windows-11"}); err != nil {
+		t.Fatal(err)
+	}
+	store.SeedCopyRule(t, r, "vms", "vm:windows-11", store.SkipAll)
+	if err := r.RenameVMTargetWithAlias("windows-11", "win11", "", ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.UpsertVMTarget(store.VMTarget{Name: "windows-11"}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := r.DeleteVMTarget("win11"); err != nil {
+		t.Fatalf("DeleteVMTarget: %v", err)
+	}
+	mustNoRule(t, r, "vms", "vm:windows-11")
 }

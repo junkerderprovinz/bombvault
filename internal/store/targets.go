@@ -581,7 +581,8 @@ func (r *Repo) SetExcludeCaches(containerName string, m map[string]bool) error {
 // index would keep those names from ever becoming aliases again. An alias
 // whose old_name only equals name but points at another row is that row's
 // history and stays. Each former name keeps the entry's copy rule, because the
-// snapshots taken under it outlive the row.
+// snapshots taken under it outlive the row, unless another row carries that
+// name today.
 func (r *Repo) DeleteTarget(name string) error {
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -606,7 +607,7 @@ func (r *Repo) DeleteTarget(name string) error {
 		return fmt.Errorf("DeleteTarget: %w", err)
 	}
 	if hasRow {
-		if err := keepRuleOnAliasesTx(tx, "container", id, name); err != nil {
+		if err := keepRuleOnAliasesTx(tx, containerEntries, id, name); err != nil {
 			return fmt.Errorf("DeleteTarget: %w", err)
 		}
 		if _, err := tx.Exec(`DELETE FROM target_aliases WHERE domain = 'container' AND target_id = ?`, id); err != nil {
