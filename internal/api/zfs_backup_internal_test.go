@@ -654,7 +654,7 @@ func TestZFSBackupCancelKeyIsRootKey(t *testing.T) {
 
 	cancelled := make(chan bool, 1)
 	host.onSnapshot = func(string) {
-		cancelled <- s.CancelBackupRun("zfs:" + zfsRoot)
+		cancelled <- s.CancelBackupRun("zfs:"+zfsRoot, "")
 	}
 	if _, err := s.BackupZFSDataset(context.Background(), d.ID); err == nil {
 		t.Fatal("a cancelled backup must not report success")

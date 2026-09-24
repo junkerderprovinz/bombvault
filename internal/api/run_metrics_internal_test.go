@@ -177,7 +177,7 @@ func TestRunsAdapterFinishWritesMetricsOnlyOnSuccess(t *testing.T) {
 		st := newTestStore(t)
 		s := &Service{store: st}
 		s.registerBackupCancel("files:set9", func() {})
-		s.CancelBackupRun("files:set9")
+		s.CancelBackupRun("files:set9", "")
 		runID, err := st.StartRun("tg3", "backup")
 		if err != nil {
 			t.Fatal(err)
