@@ -143,12 +143,10 @@ func (c *Client) Inspect(ctx context.Context, name string) (model.Inspect, error
 }
 
 // needsVolumeMountpoint reports whether a Mounts entry is a named-volume mount
-// the daemon reported without a host-side Source. Normally the daemon already
-// populates Source for a volume mount with its real storage location (e.g.
-// /var/lib/docker/volumes/<name>/_data), so this is the rare fallback case —
-// but resolveAppdataPaths (internal/api/service.go) needs a resolved Source to
-// back up a named volume at all, so it is worth the one extra VolumeInspect
-// call when the daemon left it empty.
+// the daemon reported without a host-side Source. The daemon normally fills in
+// the volume's storage location (e.g. /var/lib/docker/volumes/<name>/_data),
+// but the api package's resolveAppdataPaths cannot back up a named volume
+// without it, so the rare empty case is worth one extra VolumeInspect call.
 func needsVolumeMountpoint(m container.MountPoint) bool {
 	return m.Type == mount.TypeVolume && m.Source == "" && m.Name != ""
 }

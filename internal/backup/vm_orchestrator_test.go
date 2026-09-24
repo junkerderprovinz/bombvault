@@ -954,11 +954,9 @@ func TestVMBackupCarriesOneFormerlyTagPerFormerName(t *testing.T) {
 	}
 }
 
-// TestVMBlockDiskDevGivesDistinctIdentityTag proves that when a BlockDisks
-// entry carries a Dev (v8.0.0 VM service-layer integration, Task 2 — see
-// VMBlockDisk.Dev's doc comment), its restic backup call is tagged with its
-// OWN "vm:<name>:zvol:<dev>" identity — never the file-backed backup's
-// "vm:<name>" tag — alongside RunTag, so a caller (internal/api/service.go)
+// TestVMBlockDiskDevGivesDistinctIdentityTag checks that a BlockDisks entry
+// with a Dev is backed up under its own "vm:<name>:zvol:<dev>" tag instead of
+// the file-backed "vm:<name>", next to RunTag, so the api package's BackupVM
 // can apply retention to each disk's history as its own group.
 func TestVMBlockDiskDevGivesDistinctIdentityTag(t *testing.T) {
 	vm := &fakeVM{active: true, stateVal: "shut off"}
@@ -1052,16 +1050,12 @@ func TestRunTagSetHasNoEffectOnRestoreCalls(t *testing.T) {
 	}
 }
 
-// TestRestoreVMBlockDiskRestoreBaseDatasetReachesZFSReceiveTarget is the
-// end-to-end wiring proof for the cross-instance zvol restore fix: a
-// VMRestoreBlockDisk carrying a RestoreBaseDataset (what
-// internal/api/service.go's prepareRestoreVMForTarget sets after rebasing the
-// source dataset's pool onto an explicit destination pool via
-// virshcli.RebaseZvolDatasetPool) must have that value — not SourceDataset —
-// actually reach the fake ZFS host's StreamReceive target through the full
-// RestoreVM -> restoreBlockDisksAndLog -> RestoreZvolDisk call chain.
-// Complements vm_zvol_test.go's RestoreZvolDisk-level tests by proving the
-// value is actually threaded from VMRestoreDeps.BlockDisks all the way down.
+// TestRestoreVMBlockDiskRestoreBaseDatasetReachesZFSReceiveTarget checks that
+// a VMRestoreBlockDisk's RestoreBaseDataset, which the api package's
+// prepareRestoreVMForTarget sets for a cross-instance restore, is what reaches
+// the ZFS host's StreamReceive target through RestoreVM,
+// restoreBlockDisksAndLog and RestoreZvolDisk, rather than SourceDataset.
+// vm_zvol_test.go covers RestoreZvolDisk on its own.
 func TestRestoreVMBlockDiskRestoreBaseDatasetReachesZFSReceiveTarget(t *testing.T) {
 	vm := &fakeVM{stateVal: "running"}
 	r := &fakeRestic{}

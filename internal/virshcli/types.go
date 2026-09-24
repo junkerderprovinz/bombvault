@@ -9,39 +9,19 @@ import "context"
 type VMInfo struct {
 	Name  string
 	State string // "running", "shut off", "paused", ...
-	// FriendlyName is Name normalized for DISPLAY/MATCHING purposes only —
-	// see normalizeDomainName (virshcli.go) for the classifier, and
-	// vmInfoFromNames/Client.titleFromXML for how List resolves it. On a
-	// plain libvirt host it is always identical to Name (neither TrueNAS
-	// pattern matches an ordinary hand-chosen domain name). On TrueNAS 25.10
-	// "Goldeye" it strips the "{id}_" prefix TrueNAS's own libvirt naming
-	// convention adds (e.g. Name "1_debian" → FriendlyName "debian"). On
-	// TrueNAS 26, where Name becomes the VM's bare UUID, FriendlyName is the
-	// domain XML's <title> when List could recover one (one extra DumpXML
-	// call per UUID-named domain), or the UUID itself as a fallback when it
-	// couldn't. Name — never FriendlyName — stays the identifier every
-	// virsh command in this package/interface takes; nothing in this
-	// package uses FriendlyName for that.
+	// FriendlyName is Name normalized for display (see normalizeDomainName,
+	// and vmInfoFromNames and Client.titleFromXML for how List resolves it).
+	// On a plain libvirt host it equals Name. On TrueNAS 25.10 it drops the
+	// "{id}_" prefix ("1_debian" becomes "debian"); on TrueNAS 26, where Name
+	// is the VM's UUID, it is the domain XML's <title> (one extra DumpXML per
+	// such domain), or the UUID when there is none. Every virsh call takes
+	// Name.
 	//
-	// ⚠ On Unraid, "always identical to Name" is true in PRACTICE, not by
-	// CONSTRUCTION: normalizeDomainName classifies by shape alone (regex on
-	// the raw string), with no platform check. A hand-named Unraid VM that
-	// happens to collide with the TrueNAS 25.10 shape — e.g. literally named
-	// "10_Windows" — gets misclassified the same way a real TrueNAS domain
-	// would, and FriendlyName comes back "Windows", not "10_Windows". This
-	// is inert today because nothing consumes FriendlyName yet (see below),
-	// but a future caller MUST NOT trust it unconditionally: gate on the
-	// detected platform (platform.KindTrueNAS) before relying on
-	// FriendlyName over Name, rather than assuming the shape match alone
-	// means "this is TrueNAS".
-	//
-	// Consumed one layer up by internal/api/service.go's ListVMs, which uses
-	// it as the display name only (service.go:6650, guarded by the detected
-	// platform), so a TrueNAS VM shows its real name instead of a bare UUID.
-	// vm.Name stays the identifier everywhere that matters: DB target
-	// matching, backup tags and restore all key off it, never off
-	// FriendlyName, because the friendly name is presentation and can
-	// change under you.
+	// normalizeDomainName classifies by shape alone, so an Unraid VM that
+	// happens to be named "10_Windows" comes back as "Windows". The api
+	// package's ListVMs therefore shows FriendlyName only when the detected
+	// platform is TrueNAS, and target matching, backup tags and restore all
+	// key off Name.
 	FriendlyName string
 }
 

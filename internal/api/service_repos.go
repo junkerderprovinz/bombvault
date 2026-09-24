@@ -936,8 +936,8 @@ func (s *Service) reposThatExist(repos []domainRepoRef, notYet string) ([]domain
 			// "not present", and verify, prune, unlock and the drill would report an
 			// incomplete pass every night over repositories that are all fine.
 			//
-			// An unknown answer goes to the reported side, matching the other two
-			// unknown rules in this file (an unreadable in-use count counts as in use;
+			// An unknown answer goes to the reported side, matching the service's
+			// other two unknown rules (an unreadable in-use count counts as in use;
 			// an unreadable domain list counts as shared). Silence is the answer that
 			// loses information, so it is not the one an error gets.
 			switch s.repoEstablishmentOf(r.Loc) {
@@ -1177,7 +1177,7 @@ func (s *Service) UnlockDomain(ctx context.Context, domain, source string) ([]st
 	// picker offers it to all three), so forcing on a shared repository would
 	// yank the lock out from under another domain's running backup. There a
 	// stale clear is the right tool: it removes a lock restic itself deems
-	// dead and leaves a live one alone, as every other site in this file does.
+	// dead and leaves a live one alone, as every other unlock in the service does.
 	var firstErr error
 	for _, r := range repos {
 		rMode := s.repoModeFor(settings, domain, source, r.Loc)

@@ -771,11 +771,10 @@ func (s *Service) newestSnapshotFor(ctx context.Context, name string) (restic.Sn
 }
 
 // snapshotRoots intersects a snapshot's own recorded paths with the container's
-// CURRENT effective backup paths. Derived, never assumed: it is what makes the
-// snapshot path shape safe by construction (restic stores the exact absolute
-// strings the backup was given — service.go's backup path), and it is also what
-// covers the drift case where the folder selection narrowed since the last run.
-// Same pattern RestoreSubtreeIncludeArgs' callers already rely on.
+// current effective backup paths. restic records the exact absolute strings
+// Service.Backup gave it, so the result has the snapshot's path shape by
+// construction, and a folder selection that narrowed since the last run drops
+// out. RestoreSubtreeIncludeArgs' callers rely on the same pattern.
 func snapshotRoots(snapPaths, effective []string) []string {
 	inSnap := make(map[string]bool, len(snapPaths))
 	for _, p := range snapPaths {

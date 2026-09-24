@@ -70,8 +70,8 @@ func (s *Service) StartBackupVM(ctx context.Context, name string) (bool, error) 
 // vmRunTag returns the "vmrun:<runID>" correlation tag
 // (VMBackupDeps.RunTag in internal/backup/vm_orchestrator.go) carried by
 // the snapshot in snaps matching id (exact or unambiguous prefix, like
-// snapshotBelongs/snapshotSubtree above), or "" when there is no match or
-// the matching snapshot carries no such tag.
+// snapshotBelongs), or "" when there is no match or the matching snapshot
+// carries no such tag.
 //
 // "" is a permanent restore fallback: BackupVM sets RunTag only when the
 // VM has zvol disks, since a file-only VM's single snapshot is already
@@ -245,7 +245,7 @@ func (s *Service) ListVMs(ctx context.Context) ([]VMView, error) {
 	// populates it is shape-based, not platform-gated, so a non-TrueNAS host
 	// must never trust it even when it differs from Name. vm.Name, never
 	// FriendlyName, is still used below for the byName lookup and stays the
-	// identifier everywhere else in this file.
+	// identifier everywhere else.
 	isTrueNAS := s.platformFn().Kind() == platform.KindTrueNAS
 
 	live := make(map[string]bool, len(infos))
