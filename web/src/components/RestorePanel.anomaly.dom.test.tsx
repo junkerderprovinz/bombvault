@@ -44,6 +44,28 @@ const COLLAPSE = {
   flaggedSnapshots: ["bad0000000bb"],
 } as unknown as AnomalyView;
 
+const DUMP_COLLAPSE = {
+  ...COLLAPSE,
+  id: "an-2",
+  metric: "dump_bytes_shrink",
+  scopeKind: "dump",
+  lastGood: { runId: "run-6", snapshotId: "dumpgood0001", at: 1700000000 },
+  flaggedSnapshots: ["dumpbad00002"],
+} as unknown as AnomalyView;
+
+const dump = (id: string, time: string) => ({
+  id,
+  time,
+  engine: "postgres",
+  image: "postgres:16",
+  version: "16.4",
+  databases: ["plex"],
+  bytes: 1024,
+  damaged: false,
+});
+
+let dumpsOnServer: ReturnType<typeof dump>[] = [];
+
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
   return {
@@ -53,12 +75,12 @@ vi.mock("../lib/api", async (importOriginal) => {
         ok: true,
         snapshots: [snap("bad0000000bb", "2026-09-02T02:00:00Z"), snap("good000000aa", "2026-09-01T02:00:00Z")],
       }),
-    listDbDumps: () => Promise.resolve({ ok: true, dumps: [] }),
+    listDbDumps: () => Promise.resolve({ ok: true, dumps: dumpsOnServer }),
     listRuns: () => Promise.resolve({ ok: true, runs: [] }),
     getSettings: () => Promise.resolve({ ok: false }),
     listOffsiteTargets: () => Promise.resolve({ ok: true, targets: [] }),
     getAnomalySummary: () => Promise.resolve({ ok: true, summary: SUMMARY }),
-    getAnomalies: () => Promise.resolve({ ok: true, anomalies: [COLLAPSE], nextCursor: "" }),
+    getAnomalies: () => Promise.resolve({ ok: true, anomalies: [COLLAPSE, DUMP_COLLAPSE], nextCursor: "" }),
   };
 });
 
@@ -88,7 +110,10 @@ function rowOf(shortId: string): HTMLElement {
   return screen.getByText(shortId).closest("div.border-b") as HTMLElement;
 }
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  dumpsOnServer = [];
+});
 
 it("marks the flagged snapshot and preselects the last good one", async () => {
   await renderPanel({ preselect: "good000000aa" });
@@ -106,5 +131,18 @@ it("marks the flagged snapshot and preselects the last good one", async () => {
 it("opens nothing on its own without a request", async () => {
   await renderPanel();
   await screen.findByText("bad00000");
+  expect(screen.queryByText(en["restore.inPlaceHint"])).toBeNull();
+});
+
+it("marks the flagged dump and singles out the one a dump finding links to", async () => {
+  dumpsOnServer = [dump("dumpbad00002", "2026-09-02T02:00:00Z"), dump("dumpgood0001", "2026-09-01T02:00:00Z")];
+  await renderPanel({ preselectDump: "dumpgood0001" });
+
+  await screen.findByText("dumpbad0");
+  expect(within(rowOf("dumpbad0")).getByText(en["anomaly.snapshotFlagged"])).toBeTruthy();
+  expect(within(rowOf("dumpgood")).queryByText(en["anomaly.snapshotFlagged"])).toBeNull();
+  expect(rowOf("dumpgood").className).toContain("bg-carbon-surface2");
+  expect(rowOf("dumpbad0").className).not.toContain("bg-carbon-surface2");
+  // A dump link opens no snapshot's restore choices.
   expect(screen.queryByText(en["restore.inPlaceHint"])).toBeNull();
 });

@@ -2609,6 +2609,7 @@ export function ContainerRow({
         <RestorePanel
           name={container.name}
           preselect={restoreRequest && !restoreRequest.dump ? restoreRequest.snapshot : ""}
+          preselectDump={restoreRequest?.dump ? restoreRequest.snapshot : ""}
           aliases={aliases}
           t={t}
           installed={installed}
