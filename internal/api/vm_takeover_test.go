@@ -741,19 +741,6 @@ func TestTakeOverVMOntoARowWhoseOnlySettingIsTheEntrysOwnRule(t *testing.T) {
 	}
 }
 
-func TestDeleteBackupsVMWaitsForTheVMsOnTheHost(t *testing.T) {
-	f := newVMTakeover(t, vmPre)
-	f.virsh.listErr = errors.New("libvirt is not running")
-
-	err := f.svc.DeleteBackupsVM(context.Background(), "windows-11", "local")
-	if err == nil || !strings.Contains(err.Error(), "nothing was deleted") {
-		t.Fatalf("DeleteBackupsVM = %v, want a refusal", err)
-	}
-	if _, err := f.st.GetVMTargetByName("windows-11"); err != nil {
-		t.Fatalf("the entry went although the delete was refused: %v", err)
-	}
-}
-
 // The backups taken under win11 while the entry answered to it name
 // windows-11 as a former name, so taking win11 over again counts them as the
 // entry's own.

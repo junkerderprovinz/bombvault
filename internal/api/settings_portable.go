@@ -823,17 +823,13 @@ func (h *Handler) installedForImport(ctx context.Context, exp settingsExport) (s
 	if exp.CopyRules == nil {
 		return store.Installed{}, nil
 	}
-	settings, err := h.store.GetSettings()
-	if err != nil {
-		return store.Installed{}, fmt.Errorf("read settings: %w", err)
-	}
 	containers, err := h.svc.installedContainers(ctx)
 	if err != nil {
 		return store.Installed{}, fmt.Errorf("the installed containers could not be listed: %w", err)
 	}
-	vms, err := h.svc.installedVMs(ctx, settings)
+	vms, err := h.svc.heldVMNames(ctx)
 	if err != nil {
-		return store.Installed{}, fmt.Errorf("the VMs on the host could not be listed: %w", err)
+		return store.Installed{}, err
 	}
 	return store.Installed{Containers: containers, VMs: vms}, nil
 }
