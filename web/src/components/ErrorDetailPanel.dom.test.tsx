@@ -178,7 +178,7 @@ describe("a failure an assistant caused", () => {
       countText(en["activityLog.viaMcpLine"], "en", 1).replace("{keys}", "office laptop")
     );
     const group = line.closest("div.py-3");
-    expect(group?.textContent).toContain(en["errorPanel.count"].replace("{count}", "1"));
+    expect(group?.textContent).toContain(countText(en["errorPanel.count"], "en", 1));
     expect(screen.getAllByRole("button", { name: en["errorPanel.resolve"] })).toHaveLength(2);
   });
 
