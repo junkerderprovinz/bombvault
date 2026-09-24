@@ -3266,8 +3266,12 @@ func (s *Service) probeVolume(ctx context.Context, ref domainRepoRef,
 	if now-seen[volume] < volumeSampleRemoteEvery {
 		return nil, nil
 	}
+	remote, err := rcloneRemoteOf(ref.Loc)
+	if err != nil {
+		return nil, err
+	}
 	s.anomalies.noteVolumeProbe(volume, now)
-	about, err := s.rcloneAboutFn()(ctx, rcloneRemoteOf(ref.Loc))
+	about, err := s.rcloneAboutFn()(ctx, remote)
 	if err != nil {
 		return nil, err
 	}
