@@ -38,9 +38,10 @@ func newMCPRestorePointHandler(t *testing.T) (*Handler, *blockingSnapshotsEngine
 	return h, eng
 }
 
-// listFlashRestorePoints calls the tool the way the transport would.
-func listFlashRestorePoints(h *Handler) *mcp.CallToolResult {
-	ctx := withMCPCaller(context.Background(), mcpCaller{KeyID: "0b7e", Hint: "x9Qa", CanStartBackups: true})
+// listFlashRestorePoints calls the tool the way the transport would, on the
+// context the transport would hand it.
+func listFlashRestorePoints(ctx context.Context, h *Handler) *mcp.CallToolResult {
+	ctx = withMCPCaller(ctx, mcpCaller{KeyID: "0b7e", Hint: "x9Qa", CanStartBackups: true})
 	req := &mcp.CallToolRequest{Params: &mcp.CallToolParamsRaw{
 		Name:      "list_restore_points",
 		Arguments: json.RawMessage(`{"domain":"flash"}`),
@@ -57,7 +58,7 @@ func TestMCPRestorePointsTimeoutCancelsRestic(t *testing.T) {
 	t.Cleanup(func() { mcpResticTimeout = time.Minute })
 
 	done := make(chan *mcp.CallToolResult, 1)
-	go func() { done <- listFlashRestorePoints(h) }()
+	go func() { done <- listFlashRestorePoints(context.Background(), h) }()
 
 	select {
 	case res := <-done:
@@ -76,14 +77,14 @@ func TestMCPRestorePointsSemaphoreBusy(t *testing.T) {
 	h, eng := newMCPRestorePointHandler(t)
 
 	first := make(chan *mcp.CallToolResult, 1)
-	go func() { first <- listFlashRestorePoints(h) }()
+	go func() { first <- listFlashRestorePoints(context.Background(), h) }()
 	select {
 	case <-eng.entered:
 	case <-time.After(5 * time.Second):
 		t.Fatal("the first listing never reached the engine")
 	}
 
-	busy := listFlashRestorePoints(h)
+	busy := listFlashRestorePoints(context.Background(), h)
 	if got := mcpErrorCode(t, busy); got != "busy" {
 		t.Fatalf("a second listing gives %q, want busy", got)
 	}
@@ -98,10 +99,36 @@ func TestMCPRestorePointsSemaphoreBusy(t *testing.T) {
 		t.Fatal("the released listing never finished")
 	}
 
-	if third := listFlashRestorePoints(h); third.IsError {
+	if third := listFlashRestorePoints(context.Background(), h); third.IsError {
 		t.Fatalf("the slot was never given back: %v", third.StructuredContent)
 	}
 	if got := eng.callCount(); got != 2 {
 		t.Fatalf("restic ran %d times, want the two listings that held the slot", got)
+	}
+}
+
+// A client that hangs up mid-call cancels the tool context. Reporting that as a
+// slow repository sends an operator after a fault that is not there and drops
+// what restic really said on the way.
+func TestMCPRestorePointsCancelledClientIsNotATimeout(t *testing.T) {
+	h, eng := newMCPRestorePointHandler(t)
+	ctx, cancel := context.WithCancel(context.Background())
+
+	done := make(chan *mcp.CallToolResult, 1)
+	go func() { done <- listFlashRestorePoints(ctx, h) }()
+	select {
+	case <-eng.entered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the listing never reached the engine")
+	}
+	cancel()
+
+	select {
+	case res := <-done:
+		if got := mcpErrorCode(t, res); got != "failed" {
+			t.Fatalf("code = %q, want failed", got)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("the cancelled listing never came back")
 	}
 }

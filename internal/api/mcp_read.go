@@ -3,6 +3,7 @@ package api
 import (
 	"cmp"
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"slices"
@@ -32,7 +33,7 @@ const (
 
 // mcpItemsPerDomain caps one domain's item list, so a single answer stays a
 // size a client can read.
-const mcpItemsPerDomain = 500
+const mcpItemsPerDomain = 1000
 
 // How many restore points and database dumps one call may ask for, and how many
 // it gets without asking.
@@ -902,8 +903,10 @@ func (h *Handler) mcpSnapshotsOf(ctx context.Context, item mcpItem) ([]restic.Sn
 
 // mcpListingFailed answers a listing that did not come back. A deadline the
 // tool set itself reads as a timeout whatever restic reported on its way out.
+// A cancellation does not: the client hung up, the repository is not slow, and
+// the underlying error is the one worth reporting.
 func (h *Handler) mcpListingFailed(ctx context.Context, err error) *mcp.CallToolResult {
-	if ctx.Err() != nil {
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 		h.logMCPCall(ctx, "list_restore_points", "timeout")
 		return mcpToolError("timeout", "BombVault did not finish reading the repository in time", nil)
 	}
