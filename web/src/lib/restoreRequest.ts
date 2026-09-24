@@ -12,6 +12,9 @@ export type RestoreRequest = {
   item: string;
   /** The request is for the item's database dump rather than its files. */
   dump: boolean;
+  /** The dataset of a ZFS item's tree the snapshot belongs to, "" for every
+   *  other page. */
+  dataset: string;
 };
 
 export function readRestoreRequest(search: string): RestoreRequest {
@@ -20,6 +23,7 @@ export function readRestoreRequest(search: string): RestoreRequest {
     snapshot: params.get("restore") ?? "",
     item: params.get("item") ?? "",
     dump: params.get("dump") === "1",
+    dataset: params.get("dataset") ?? "",
   };
 }
 

@@ -346,6 +346,26 @@ describe("a finding's own lines", () => {
     expect(link.getAttribute("href")).toBe("/containers?restore=snap-9&item=plex");
   });
 
+  it("links a dataset's last good backup at its ZFS item, naming the dataset", async () => {
+    getAnomalies.mockImplementation(() =>
+      page([
+        finding({
+          domain: "zfs",
+          name: "tank/media",
+          scopeKind: "zfsds",
+          scopeId: "tank/media/photos",
+          part: "tank/media/photos",
+          lastGood: { runId: "run-9", snapshotId: "snap-9", at: 1700000000 },
+        }),
+      ])
+    );
+    await renderPage();
+    const link = screen.getByRole("link", {
+      name: en["anomaly.action.restoreLastGood"].replace("{date}", new Date(1700000000 * 1000).toLocaleString()),
+    });
+    expect(link.getAttribute("href")).toBe("/zfs?restore=snap-9&item=tank%2Fmedia&dataset=tank%2Fmedia%2Fphotos");
+  });
+
   // The detector measures a rate per second; the row has to say per hour.
   it("reads the largest usual amount per hour out of a per-second rate", async () => {
     getAnomalies.mockImplementation(() =>

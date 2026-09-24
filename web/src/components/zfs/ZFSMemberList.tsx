@@ -1,4 +1,7 @@
-import type { ZFSMemberView } from "../../lib/api";
+import { Link } from "react-router-dom";
+
+import { anomalySeverityTone, worstSeverity } from "../../lib/anomalies";
+import type { AnomalySeriesInfo, ZFSMemberView } from "../../lib/api";
 import type { useT } from "../../lib/i18n";
 import { tLtr } from "../../lib/ltrFragments";
 import { zfsCodeSentence, zfsFixKey, zfsMemberKey } from "../../lib/zfsCodes";
@@ -37,6 +40,8 @@ export function ZFSMemberList({
   excluded,
   onToggle,
   busy,
+  series,
+  targetId,
 }: {
   members: ZFSMemberView[];
   /** The item's root dataset, the name the first line carries. */
@@ -49,6 +54,10 @@ export function ZFSMemberList({
    *  member at all. */
   onToggle?: (dataset: string, include: boolean) => void;
   busy?: boolean;
+  /** What anomaly detection knows about each dataset, by name. */
+  series?: ReadonlyMap<string, AnomalySeriesInfo>;
+  /** The item the findings belong to, for the link to them. */
+  targetId?: string;
 }) {
   return (
     <ul className="flex flex-col gap-1">
@@ -80,6 +89,7 @@ export function ZFSMemberList({
             )}
             <span className={tone}>{label}</span>
             {fixKey && <InfoBubble tip={tLtr(t, fixKey)} />}
+            <DatasetAnomalies dataset={m.dataset} info={series?.get(m.dataset)} targetId={targetId} t={t} />
             {onToggle && m.relPath !== "" && m.outcome !== "zvol" && (
               <Toggle
                 hideLabel
@@ -94,5 +104,39 @@ export function ZFSMemberList({
         );
       })}
     </ul>
+  );
+}
+
+/** A dataset's open findings, and whether its old backups are kept because of
+ *  one. Each dataset of a tree is watched on its own, so the tree is where a
+ *  child that lost its data shows. */
+function DatasetAnomalies({
+  dataset,
+  info,
+  targetId,
+  t,
+}: {
+  dataset: string;
+  info?: AnomalySeriesInfo;
+  targetId?: string;
+  t: T;
+}) {
+  if (!info) return null;
+  const open = info.open.critical + info.open.warning + info.open.info;
+  const worst = worstSeverity(info.open);
+  return (
+    <>
+      {open > 0 && worst && targetId && (
+        <Link
+          to={`/anomalies?scope=item:${encodeURIComponent(targetId)}#findings`}
+          aria-label={t("anomaly.itemBadgeAria").replace("{name}", dataset).replace("{n}", open.toLocaleString())}
+        >
+          <Badge tone={anomalySeverityTone(worst)} size="small" shape="pill">
+            {open}
+          </Badge>
+        </Link>
+      )}
+      {info.retentionHeld && <span className="text-statusWarn">{t("anomaly.retentionPaused")}</span>}
+    </>
   );
 }

@@ -14,6 +14,8 @@ import {
   zfsRunMembers,
 } from "../../lib/api";
 import type {
+  AnomalyItem,
+  AnomalySeriesInfo,
   Container,
   ZFSDatasetPatch,
   ZFSDatasetView,
@@ -30,6 +32,7 @@ import { useT } from "../../lib/i18n";
 import { tLtr } from "../../lib/ltrFragments";
 import { anyActive, busyPhraseKey, useProgress } from "../../lib/progress";
 import { relativeTime, formatTs } from "../../lib/reltime";
+import type { RestoreRequest } from "../../lib/restoreRequest";
 import { useConfirm } from "../../lib/useConfirm";
 import { useDebouncedSave } from "../../lib/useDebouncedSave";
 import { useToast } from "../../lib/toast";
@@ -40,6 +43,8 @@ import { Button } from "../Button";
 import { EffectiveScheduleLine } from "../EffectiveScheduleLine";
 import { IconDisclosure } from "../IconDisclosure";
 import { InfoBubble } from "../InfoBubble";
+import { ItemAnomalyBadge } from "../ItemAnomalyBadge";
+import { ItemAnomalySettings } from "../ItemAnomalySettings";
 import { ProgressBar } from "../ProgressBar";
 import { RecentRunsList } from "../RecentRunsList";
 import { RepoPicker } from "../RepoPicker";
@@ -332,7 +337,21 @@ function ZFSExcludesEditor({ item, t, onSaved }: { item: ZFSDatasetView; t: T; o
   );
 }
 
-function ZFSItemSettings({ item, t, onChanged }: { item: ZFSDatasetView; t: T; onChanged: () => void }) {
+function ZFSItemSettings({
+  item,
+  t,
+  onChanged,
+  anomaly,
+  anomalyEnabled,
+  series,
+}: {
+  item: ZFSDatasetView;
+  t: T;
+  onChanged: () => void;
+  anomaly?: AnomalyItem;
+  anomalyEnabled: boolean;
+  series: ReadonlyMap<string, AnomalySeriesInfo>;
+}) {
   const { advanced } = useAdvanced();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
@@ -439,6 +458,8 @@ function ZFSItemSettings({ item, t, onChanged }: { item: ZFSDatasetView; t: T; o
             excluded={excluded}
             busy={busy}
             onToggle={(dataset, include) => void toggleChild(dataset, include)}
+            series={series}
+            targetId={item.id}
           />
         </div>
         {gone.map((dataset) => (
@@ -505,6 +526,8 @@ function ZFSItemSettings({ item, t, onChanged }: { item: ZFSDatasetView; t: T; o
           </p>
         )}
       </div>
+
+      <ItemAnomalySettings item={anomaly} enabled={anomalyEnabled} t={t} />
 
       {advanced && (
         <>
@@ -589,6 +612,9 @@ export function ZFSDatasetRow({
   host,
   hostMountRoot,
   restoreFolder,
+  anomaly,
+  anomalyEnabled = false,
+  restoreRequest,
 }: {
   item: ZFSDatasetView;
   t: T;
@@ -599,6 +625,11 @@ export function ZFSDatasetRow({
   host: ReadonlyMap<string, ZFSHostDataset>;
   hostMountRoot: string;
   restoreFolder: string;
+  /** What anomaly detection knows about this item and each of its datasets. */
+  anomaly?: AnomalyItem;
+  anomalyEnabled?: boolean;
+  /** A finding's link to a backup of this item to restore. */
+  restoreRequest?: RestoreRequest;
 }) {
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
@@ -612,8 +643,14 @@ export function ZFSDatasetRow({
   const [shake, setShake] = useState(0);
   const [sweeping, setSweeping] = useState(false);
   const deleteSafetyToo = useRef(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const series = new Map((anomaly?.datasets ?? []).map((s) => [s.part, s]));
 
   useEffect(() => setEnabled(item.enabled), [item.enabled]);
+  useEffect(() => {
+    // jsdom has no scrollIntoView.
+    if (restoreRequest) cardRef.current?.scrollIntoView?.({ block: "start" });
+  }, [restoreRequest]);
 
   const runFailed = item.lastRunStatus === "failed";
   const checkCode = item.lastCheckCode;
@@ -690,6 +727,7 @@ export function ZFSDatasetRow({
 
   return (
     <div
+      ref={cardRef}
       style={{ ...hueVars(index), "--row-i": String(index) } as CSSProperties}
       className={`relative overflow-hidden bg-carbon-surface rounded-card p-4 flex flex-col gap-3 glim-hue glim-stagger-row ${
         progress?.active ? "glim-active" : ""
@@ -701,6 +739,7 @@ export function ZFSDatasetRow({
             <span dir="ltr" className="font-semibold text-carbon-text text-sm truncate text-start">
               {item.dataset}
             </span>
+            <ItemAnomalyBadge item={anomaly} enabled={anomalyEnabled} t={t} />
             {item.excludes.length > 0 && (
               <Badge tone="neutral" wrap>
                 {t("zfs.excludesCount").replace("{n}", String(item.excludes.length))}
@@ -831,18 +870,30 @@ export function ZFSDatasetRow({
           <IconDisclosure open={membersOpen} />
           {t("zfs.membersSummary").replace("{n}", String(item.members.length))}
         </button>
-        {membersOpen && <ZFSMemberList members={item.members} root={item.dataset} t={t} />}
+        {membersOpen && (
+          <ZFSMemberList members={item.members} root={item.dataset} t={t} series={series} targetId={item.id} />
+        )}
       </div>
 
       {item.safetyCount > 0 && <ZFSSafetySection item={item} t={t} onRefresh={onRefresh} />}
 
-      {editing && <ZFSItemSettings item={item} t={t} onChanged={onRefresh} />}
+      {editing && (
+        <ZFSItemSettings
+          item={item}
+          t={t}
+          onChanged={onRefresh}
+          anomaly={anomaly}
+          anomalyEnabled={anomalyEnabled}
+          series={series}
+        />
+      )}
 
       <ZFSRestorePanel
         item={item}
         host={host}
         hostMountRoot={hostMountRoot}
         restoreFolder={restoreFolder}
+        preselect={restoreRequest}
       />
 
       <RecentRunsList

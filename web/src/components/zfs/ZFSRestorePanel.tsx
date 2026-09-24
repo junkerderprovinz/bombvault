@@ -8,9 +8,12 @@ import { copyText } from "../../lib/clipboard";
 import { useT } from "../../lib/i18n";
 import { tLtr } from "../../lib/ltrFragments";
 import { anyActive, busyPhraseKey, useProgress } from "../../lib/progress";
+import type { RestoreRequest } from "../../lib/restoreRequest";
+import { useOpenAnomalies } from "../../lib/useAnomalies";
 import { useConfirm } from "../../lib/useConfirm";
 import { useToast } from "../../lib/toast";
 import { zfsCodeSentence, zfsMemberKey } from "../../lib/zfsCodes";
+import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { FolderBrowser } from "../FolderBrowser";
 import { IconDisclosure } from "../IconDisclosure";
@@ -45,6 +48,7 @@ export function ZFSRestorePanel({
   host,
   hostMountRoot,
   restoreFolder,
+  preselect,
 }: {
   item: ZFSDatasetView;
   /** The cached host listing by dataset name, for the read-only check. Empty
@@ -52,12 +56,17 @@ export function ZFSRestorePanel({
   host: ReadonlyMap<string, ZFSHostDataset>;
   hostMountRoot: string;
   restoreFolder: string;
+  /** A dataset's backup a finding asked for: the panel opens on the instant
+   *  that wrote it. */
+  preselect?: RestoreRequest;
 }) {
   const { t } = useT();
   const { push } = useToast();
   const { advanced } = useAdvanced();
   const { confirm, confirmDialog } = useConfirm();
-  const [open, setOpen] = useState(false);
+  const { flagged } = useOpenAnomalies();
+  const [open, setOpen] = useState(preselect !== undefined);
+  const preselected = useRef(false);
   const [source, setSource] = useState<RepoSource>("local");
   const [points, setPoints] = useState<ZFSRestorePoint[]>([]);
   const [loading, setLoading] = useState(false);
@@ -90,6 +99,19 @@ export function ZFSRestorePanel({
         }
         const list = res.points ?? [];
         setPoints(list);
+        if (preselect && !preselected.current) {
+          preselected.current = true;
+          for (const p of list) {
+            const asked = p.members.find(
+              (m) => m.snapshotId === preselect.snapshot && (!preselect.dataset || m.dataset === preselect.dataset)
+            );
+            if (asked) {
+              setStamp(p.stamp);
+              setDataset(asked.dataset);
+              return;
+            }
+          }
+        }
         const first = list[0];
         if (!first) return;
         setStamp(first.stamp);
@@ -304,6 +326,11 @@ export function ZFSRestorePanel({
                   options={datasetOptions}
                   className="w-full max-w-md rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text"
                 />
+                {member && flagged.has(member.snapshotId) && (
+                  <Badge tone="fail" size="small" className="self-start">
+                    {t("anomaly.snapshotFlagged")}
+                  </Badge>
+                )}
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">

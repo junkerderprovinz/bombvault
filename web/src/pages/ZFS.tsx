@@ -20,12 +20,17 @@ import { BULK_HUE } from "../lib/bulkHue";
 import { useT } from "../lib/i18n";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { anyActive, busyPhraseKey, useProgress } from "../lib/progress";
+import { useRestoreRequest } from "../lib/restoreRequest";
 import { useToast } from "../lib/toast";
+import { useAnomalyItems, useAnomalySummary } from "../lib/useAnomalies";
 
 export function ZFS() {
   const { t } = useT();
   const { push } = useToast();
   const running = anyActive(useProgress());
+  const anomalies = useAnomalyItems();
+  const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
+  const restoreRequest = useRestoreRequest();
   const [items, setItems] = useState<ZFSDatasetView[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -205,6 +210,9 @@ export function ZFS() {
               host={hostDatasets}
               hostMountRoot={hostMountRoot}
               restoreFolder={restoreFolder}
+              anomaly={anomalies.find("zfs", item.id)}
+              anomalyEnabled={anomalyEnabled}
+              restoreRequest={restoreRequest.item === item.dataset ? restoreRequest : undefined}
             />
           ))}
         </div>

@@ -59,6 +59,7 @@ const DOMAIN_PATH: Record<string, string> = {
   vm: "/vms",
   vms: "/vms",
   files: "/files",
+  zfs: "/zfs",
   flash: "/flash",
   config: "/config",
 };
