@@ -1,0 +1,12 @@
+name: Style
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  comments:
+    uses: junkerderprovinz/junkerderprovinz/.github/workflows/comment-style.yml@7f5eed7b1a0c5f59e18c35c51f6805a0ed3bfb7f # main
