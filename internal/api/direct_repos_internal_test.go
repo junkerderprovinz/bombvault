@@ -365,6 +365,26 @@ func TestTestingADirectLocationReportsWhatIsThere(t *testing.T) {
 	}
 }
 
+func TestTestingADirectLocationReportsAccessDenied(t *testing.T) {
+	for name, msg := range map[string]string{
+		"s3/b2 access denied": "restic cat failed: Fatal: unable to open config file: Stat: Access Denied.",
+		"rest-server 401":     "restic cat failed: Fatal: unable to open config file: unexpected HTTP response (401): 401 Unauthorized",
+		"rest-server 403":     "restic cat failed: Fatal: unable to open config file: unexpected HTTP response (403): 403 Forbidden",
+	} {
+		t.Run(name, func(t *testing.T) {
+			f := newPlacementFixture(t)
+			target := f.target("vms", "B2", "b2:bkt:vms")
+			loc := "b2:bkt:vms-direct"
+			f.eng.opens[loc] = false
+			f.eng.openErr[loc] = errors.New(msg)
+			res := f.do("POST", "/api/offsite/targets/"+target.ID+"/direct/test", map[string]any{"location": loc})
+			if res["ok"] != false || res["code"] != "direct-access-denied" {
+				t.Fatalf("%s = %v", name, res)
+			}
+		})
+	}
+}
+
 func TestCreatingADirectRepositoryEnsuresItOnlyThen(t *testing.T) {
 	f := newPlacementFixture(t)
 	target := f.target("containers", "NAS", "backups/nas-offsite")
