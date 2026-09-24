@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
@@ -219,6 +220,22 @@ func TestMCPKeyChangesNotify(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// The notifications go out beside their responses, so a count is only
+	// settled once the messages have arrived.
+	waitForMessages := func(n int) []string {
+		t.Helper()
+		deadline := time.Now().Add(5 * time.Second)
+		for {
+			mu.Lock()
+			got := append([]string(nil), sent...)
+			mu.Unlock()
+			if len(got) >= n || time.Now().After(deadline) {
+				return got
+			}
+			time.Sleep(5 * time.Millisecond)
+		}
+	}
+
 	_, id := createMCPKey(t, h, "Laptop", true)
 	steps := []struct {
 		name   string
@@ -236,9 +253,7 @@ func TestMCPKeyChangesNotify(t *testing.T) {
 		}
 	}
 
-	mu.Lock()
-	got := append([]string(nil), sent...)
-	mu.Unlock()
+	got := waitForMessages(len(steps) + 1)
 	if len(got) != len(steps)+1 {
 		t.Fatalf("want one message per change, got %d: %v", len(got), got)
 	}
@@ -253,19 +268,32 @@ func TestMCPKeyChangesNotify(t *testing.T) {
 			}
 		}
 	}
-	if !strings.Contains(got[len(got)-1], row.Hint) {
-		t.Fatalf("the revoke message %q does not carry the hint %q", got[len(got)-1], row.Hint)
+	revoked := ""
+	for _, msg := range got {
+		if strings.Contains(msg, "MCP key revoked") {
+			revoked = msg
+		}
+	}
+	if !strings.Contains(revoked, row.Hint) {
+		t.Fatalf("the revoke message %q does not carry the hint %q", revoked, row.Hint)
 	}
 
 	if err := svc.SetNotifyConfig(notify.Config{On: "never", WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
 		t.Fatal(err)
 	}
-	createMCPKey(t, h, "Desktop", true)
-	mu.Lock()
-	quiet := len(sent) == len(got)
-	mu.Unlock()
-	if !quiet {
-		t.Fatal("notifications set to never still sent a message")
+	_, quiet := createMCPKey(t, h, "Desktop", true)
+
+	// One more change that does notify, so the silent one is settled by a
+	// message that arrived rather than by waiting for one that never does.
+	if err := svc.SetNotifyConfig(notify.Config{On: "always", WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
+		t.Fatal(err)
+	}
+	if _, m := doMCPKey(t, h, http.MethodPost, "/api/mcp/keys/"+quiet+"/revoke", ""); m["ok"] != true {
+		t.Fatalf("revoke the second key: %v", m)
+	}
+	after := waitForMessages(len(got) + 1)
+	if len(after) != len(got)+1 {
+		t.Fatalf("notifications set to never still sent a message: %v", after[len(got):])
 	}
 }
 
@@ -547,5 +575,63 @@ func TestMCPKeyListCarriesEndpointAndAuthState(t *testing.T) {
 	revoked := mcpKeyRows(t, list, "revoked")
 	if len(revoked) != 1 || revoked[0]["id"] != revokedID {
 		t.Fatalf("revoked keys = %v", revoked)
+	}
+}
+
+// The key is handed out exactly once, so the response must not wait behind a
+// notification endpoint that never answers: a cut connection would leave a key
+// nobody has ever seen.
+func TestMCPKeyReachesTheOperatorBeforeTheNotification(t *testing.T) {
+	var once sync.Once
+	reached := make(chan struct{})
+	release := make(chan struct{})
+	hook := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
+		once.Do(func() { close(reached) })
+		<-release
+	}))
+	defer hook.Close()
+	defer close(release)
+
+	st := newMemStore(t)
+	h, svc := newMCPKeyRouter(t, st, mcpAppKey)
+	if err := svc.SetNotifyConfig(notify.Config{
+		On: "always", WebhookEnabled: true, WebhookURL: hook.URL, WebhookFormat: "generic",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	type answer struct {
+		status int
+		body   map[string]any
+	}
+	done := make(chan answer, 1)
+	go func() {
+		r := httptest.NewRequest(http.MethodPost, "/api/mcp/keys", strings.NewReader(`{"label":"Laptop"}`))
+		r.Header.Set("Content-Type", "application/json")
+		r.Host = mcpTestHost
+		r.Header.Set("Origin", "https://"+mcpTestHost)
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		var m map[string]any
+		_ = json.Unmarshal(w.Body.Bytes(), &m)
+		done <- answer{status: w.Code, body: m}
+	}()
+
+	select {
+	case got := <-done:
+		if got.status != http.StatusOK || got.body["ok"] != true {
+			t.Fatalf("create: status=%d body=%v", got.status, got.body)
+		}
+		if key, _ := got.body["key"].(string); key == "" {
+			t.Fatalf("the answer carries no key: %v", got.body)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("the key was still waiting on the notification endpoint")
+	}
+
+	select {
+	case <-reached:
+	case <-time.After(3 * time.Second):
+		t.Fatal("no notification was sent at all")
 	}
 }
