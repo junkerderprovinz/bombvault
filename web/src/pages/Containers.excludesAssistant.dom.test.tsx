@@ -23,7 +23,7 @@
 // Selector.dom.test.tsx's header for this repo's naming convention.
 // ---------------------------------------------------------------------------
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { I18nProvider, useT } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { ExcludeSuggestion } from "../lib/api";
@@ -45,13 +45,17 @@ type SuggestReply = {
 };
 
 const suggestCalls: (string | undefined)[] = [];
+const previewCalls: string[] = [];
 let replies: SuggestReply[] = [];
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
   return {
     ...actual,
-    previewContainerExcludes: () => Promise.resolve({ ok: true, preview: [] }),
+    previewContainerExcludes: (name: string) => {
+      previewCalls.push(`container:${name}`);
+      return Promise.resolve({ ok: true, preview: [] });
+    },
     setContainerExcludes: () => Promise.resolve({ ok: true }),
     suggestContainerExcludes: (_name: string, source?: "live") => {
       suggestCalls.push(source);
@@ -87,6 +91,7 @@ async function openAssistant() {
 beforeEach(() => {
   localStorage.setItem("bv-lang", "en");
   suggestCalls.length = 0;
+  previewCalls.length = 0;
   replies = [];
 });
 
@@ -438,5 +443,41 @@ describe("the container advisory", () => {
     replies = [{ ok: true, suggestions: [], truncated: false, source: "snapshot", advisories: ["some-future-advisory"] }];
     await openAssistant();
     expect(screen.queryByText(/some-future-advisory/)).toBeNull();
+  });
+});
+
+// The editor is shared with the ZFS domain, which resolves its lines against a
+// dataset tree rather than a container's mounts.
+describe("an editor given its own preview", () => {
+  it("resolves the typed lines through it and leaves the container endpoint alone", async () => {
+    function OwnPreview() {
+      const { t } = useT();
+      return (
+        <ExcludesEditor
+          name="tank/appdata"
+          initial={[]}
+          open
+          t={t}
+          preview={(name, lines) => {
+            previewCalls.push(`own:${name}:${lines.join(",")}`);
+            return Promise.resolve([
+              { raw: lines[0], resolved: "/mnt/tank/appdata/cache", status: "translated", matches: true },
+            ]);
+          }}
+        />
+      );
+    }
+
+    render(
+      <I18nProvider>
+        <ToastProvider>
+          <OwnPreview />
+        </ToastProvider>
+      </I18nProvider>
+    );
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "cache" } });
+
+    await waitFor(() => expect(previewCalls).toEqual(["own:tank/appdata:cache"]));
+    expect(screen.getByTitle("/mnt/tank/appdata/cache")).toBeTruthy();
   });
 });

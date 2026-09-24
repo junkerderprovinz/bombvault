@@ -74,6 +74,20 @@ describe("Sidebar nav rows carry a rainbow hue position", () => {
     expect(recovery.className).toContain("glim-hue-icon");
   });
 
+  it("shows the ZFS destination only once the domain is on, with a hue of its own", () => {
+    const { unmount } = renderSidebar(["/"], { filesEnabled: true } as unknown as Settings);
+    expect(screen.queryByRole("link", { name: "ZFS" })).toBeNull();
+    unmount();
+
+    renderSidebar(["/"], { filesEnabled: true, zfsEnabled: true } as unknown as Settings);
+    const zfs = screen.getByRole("link", { name: "ZFS" });
+    expect(zfs.getAttribute("href")).toBe("/zfs");
+    expect(zfs.style.getPropertyValue("--item-hue")).toMatch(/^var\(--rb-[0-7]\)$/);
+    expect(zfs.style.getPropertyValue("--item-hue")).not.toBe(
+      screen.getByRole("link", { name: "Folders" }).style.getPropertyValue("--item-hue")
+    );
+  });
+
   it("hiding VMs keeps the hues of the tabs before it and moves the ones after", () => {
     // Only the domain flags this test needs; Sidebar reads no other field.
     const allOn = {

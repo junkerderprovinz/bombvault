@@ -42,6 +42,7 @@ const REPO_KEY = {
   vms: "vmsOffsite",
   flash: "flashOffsite",
   files: "filesOffsite",
+  zfs: "zfsOffsite",
   config: "configOffsite",
 } as const;
 const IMM_KEY = {
@@ -49,6 +50,7 @@ const IMM_KEY = {
   vms: "vmsOffsiteImmutable",
   flash: "flashOffsiteImmutable",
   files: "filesOffsiteImmutable",
+  zfs: "zfsOffsiteImmutable",
   config: "configOffsiteImmutable",
 } as const;
 // Each domain's backup path. Remote-primary mode reads it for display and
@@ -59,6 +61,7 @@ const PATH_KEY: Record<Domain, keyof Settings> = {
   flash: "flashPath",
   config: "configPath",
   files: "filesPath",
+  zfs: "zfsPath",
 };
 
 // "none" is an empty URL. "path" is a folder under the Host Data mount, such as

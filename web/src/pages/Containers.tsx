@@ -1792,10 +1792,31 @@ function StopContainersEditor({
 // container's live mounts: a container path is translated to the anchored host
 // path restic stored (shown muted), a bare name passes through, and a line that
 // would exclude nothing is warned. Clones StopContainersEditor + a preview pane.
-type ExcludePreviewRow = { raw: string; resolved: string; status: string; matches: boolean };
+export type ExcludePreviewRow = { raw: string; resolved: string; status: string; matches: boolean };
+
+// How a caller resolves candidate lines. Each domain has its own endpoint and
+// its own answer shape, so the adapter rather than the raw call is the prop.
+export type ExcludePreview = (name: string, lines: string[]) => Promise<ExcludePreviewRow[]>;
+
+const containerExcludePreview: ExcludePreview = async (name, lines) => {
+  const r = await previewContainerExcludes(name, lines);
+  return r.ok ? r.preview : [];
+};
 
 // `open` is controlled by the caller — see HooksEditor's own comment.
-export function ExcludesEditor({ name, initial, open, t }: { name: string; initial: string[]; open: boolean; t: T }) {
+export function ExcludesEditor({
+  name,
+  initial,
+  open,
+  t,
+  preview: resolvePreview = containerExcludePreview,
+}: {
+  name: string;
+  initial: string[];
+  open: boolean;
+  t: T;
+  preview?: ExcludePreview;
+}) {
   const [text, setText] = useState(initial.join("\n"));
   const [state, setState] = useState<"idle" | "saving">("idle");
   const { push } = useToast();
@@ -1824,9 +1845,9 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
     }
     let cancelled = false;
     const id = setTimeout(() => {
-      previewContainerExcludes(name, lines)
-        .then((r) => {
-          if (!cancelled) setPreview(r.ok ? r.preview : []);
+      resolvePreview(name, lines)
+        .then((rows) => {
+          if (!cancelled) setPreview(rows);
         })
         .catch(() => {
           if (!cancelled) setPreview([]);
@@ -1836,7 +1857,7 @@ export function ExcludesEditor({ name, initial, open, t }: { name: string; initi
       cancelled = true;
       clearTimeout(id);
     };
-  }, [text, name, open]);
+  }, [text, name, open, resolvePreview]);
 
   // The current exclude lines as the editor holds them (unsaved edits included) —
   // the single source both the save button and the assistant's one-click actions

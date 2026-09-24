@@ -81,6 +81,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     listContainers: () => Promise.resolve({ ok: true, containers: [] }),
     listVMs: () => Promise.resolve({ ok: true, vms: [] }),
     listFileSets: () => Promise.resolve({ ok: true, fileSets: [] }),
+    listZFSDatasets: () => Promise.resolve({ ok: true, datasets: [] }),
     getStatus: () => Promise.resolve({ ok: true }),
     importSettingsPreview: () =>
       Promise.resolve({

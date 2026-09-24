@@ -7,7 +7,7 @@ import { useT } from "../lib/i18n";
 import { Button } from "./Button";
 import { SelectField } from "./SelectField";
 
-type Domain = "containers" | "vms" | "flash" | "config" | "files";
+type Domain = "containers" | "vms" | "flash" | "config" | "files" | "zfs";
 
 // `as const` so each labelKey keeps its literal type: t() only accepts known
 // keys, which is what stops a typo here from reaching a user as a raw key.
@@ -17,6 +17,7 @@ const DOMAINS = [
   { key: "flash", labelKey: "settings.flashEnabled" },
   { key: "config", labelKey: "settings.configEnabled" },
   { key: "files", labelKey: "settings.filesEnabled" },
+  { key: "zfs", labelKey: "settings.zfsEnabled" },
 ] as const satisfies readonly { key: Domain; labelKey: string }[];
 
 /** The group's name: its identity tag, the dumps of a container in words, or

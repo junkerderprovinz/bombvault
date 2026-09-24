@@ -6,6 +6,7 @@ import { VMs } from "../pages/VMs";
 import { Flash } from "../pages/Flash";
 import { Config } from "../pages/Config";
 import { Files } from "../pages/Files";
+import { ZFS } from "../pages/ZFS";
 import { Instances } from "../pages/Instances";
 import { SettingsPage } from "../pages/Settings";
 import Recovery from "../pages/Recovery";
@@ -28,6 +29,7 @@ export function AppRouter() {
               <Route path="/flash" element={<Flash />} />
               <Route path="/config" element={<Config />} />
               <Route path="/files" element={<Files />} />
+              <Route path="/zfs" element={<ZFS />} />
               {/* Receiver, Pull and Fleet are tabs of Instances. Their own
                   paths stay as redirects because bookmarks, release notes and
                   support answers link to them. */}

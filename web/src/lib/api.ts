@@ -181,6 +181,9 @@ export interface Settings {
   flashEnabled: boolean;
   configEnabled: boolean;
   filesEnabled: boolean;
+  /** ZFS datasets: a dataset and the datasets below it are backed up together
+   *  from one recursive snapshot, over the same SSH link the VM domain uses. */
+  zfsEnabled: boolean;
   /** Receiver dashboard (read-only monitoring of an append-only off-site repo
    *  that another BombVault pushes to). Gates the Receiver tab like the other
    *  domain enables. Default false. */
@@ -198,6 +201,7 @@ export interface Settings {
   flashPath: string;
   configPath: string;
   filesPath: string;
+  zfsPath: string;
   restoreFolder: string;
   // Flash zip export (#28): after each flash backup, also write the snapshot out
   // as a plain .zip to this folder for off-server sync. Keep=0 → a single
@@ -219,16 +223,19 @@ export interface Settings {
   flashOffsite: string;
   configOffsite: string;
   filesOffsite: string;
+  zfsOffsite: string;
   containersOffsiteSchedule: string;
   vmsOffsiteSchedule: string;
   flashOffsiteSchedule: string;
   configOffsiteSchedule: string;
   filesOffsiteSchedule: string;
+  zfsOffsiteSchedule: string;
   containersSchedule: string;
   vmsSchedule: string;
   flashSchedule: string;
   configSchedule: string;
   filesSchedule: string;
+  zfsSchedule: string;
   /** "Backup Everything" pass: a 6th, independent cadence that runs
    *  every domain in sequence (containers, VMs, flash, folders, self-backup),
    *  then fires everythingPostHook exactly once — a dead-man's-switch ping
@@ -294,6 +301,7 @@ export interface Settings {
   flashOffsiteImmutable: boolean;
   configOffsiteImmutable: boolean;
   filesOffsiteImmutable: boolean;
+  zfsOffsiteImmutable: boolean;
   /** Off-site growth budget in GB (0 = alarm off). */
   offsiteGrowthBudgetGB: number;
   /** Cadence for the scheduled off-site tamper test (default "weekly Sun 04:30"). */
@@ -432,7 +440,7 @@ export interface Run {
   error: string;
   acknowledged: boolean; // true once dismissed from the dashboard error panel (#126)
   target: string; // human target name (container/VM/file-set name, or "Unraid flash")
-  // "container" | "vm" | "flash" | "config" | "files" | "everything" | "".
+  // "container" | "vm" | "flash" | "config" | "files" | "zfs" | "everything" | "".
   // "everything" is the Backup Everything pass's PARENT run (see
   // store.EverythingTargetID). main's own follow-up commit updated the Go-side
   // runView.Domain value comment for it and missed this, its TS counterpart.
@@ -530,6 +538,7 @@ export interface HistoryDay {
   flash: DayStat;
   config: DayStat;
   files: DayStat;
+  zfs: DayStat;
 }
 
 export interface HistoryResponse {
@@ -1425,10 +1434,11 @@ export function discoverVMs(probe = false): Promise<DiscoverEnvelope> {
 }
 
 /**
- * Runs all three domain discovers (rebuild containers + VMs from the encrypted
- * backup defs, plus file sets from their fileset: snapshot tags) and returns the
- * counts. The caller then re-fetches listContainers()/listVMs()/listFileSets()
- * to show the reconstructed targets.
+ * Runs every domain discover (rebuild containers + VMs from the encrypted
+ * backup defs, file sets from their fileset: snapshot tags and ZFS items from
+ * their zfs: tags) and returns the counts. The caller then re-fetches
+ * listContainers()/listVMs()/listFileSets()/listZFSDatasets() to show the
+ * reconstructed targets.
  *
  * handleDiscover answers HTTP 200 with an {ok:false, error} envelope on a real
  * failure (e.g. a wrong APP_KEY), so a naive `discovered ?? 0` would silently
@@ -1440,24 +1450,27 @@ export async function discoverAll(): Promise<{
   containers: number;
   vms: number;
   files: number;
+  zfs: number;
   error?: string;
   skipped: string[];
   skippedNeedsAction: boolean;
 }> {
-  const [c, v, f] = await Promise.all([discover(), discoverVMs(), discoverFiles()]);
-  const failed = [c, v, f].find((r) => !r.ok);
-  // De-duplicated: the same named repository is searched by all three domains, so
-  // one unmounted share would otherwise be named three times in one sentence.
-  const skipped = [...new Set([c, v, f].flatMap((r) => r.skipped ?? []))];
+  const results = await Promise.all([discover(), discoverVMs(), discoverFiles(), discoverZFS()]);
+  const [c, v, f, z] = results;
+  const failed = results.find((r) => !r.ok);
+  // De-duplicated: the same named repository is searched by every domain, so
+  // one unmounted share would otherwise be named several times in one sentence.
+  const skipped = [...new Set(results.flatMap((r) => r.skipped ?? []))];
   return {
     containers: c.discovered ?? 0,
     vms: v.discovered ?? 0,
     files: f.discovered ?? 0,
+    zfs: z.discovered ?? 0,
     ...(failed ? { error: failed.error ?? "discover failed" } : {}),
     skipped,
-    // ANY domain that hit something actionable. The sentence lists all three
-    // domains' skips together, so the flag has to be the union too.
-    skippedNeedsAction: [c, v, f].some((r) => r.skippedNeedsAction === true),
+    // ANY domain that hit something actionable. The sentence lists every
+    // domain's skips together, so the flag has to be the union too.
+    skippedNeedsAction: results.some((r) => r.skippedNeedsAction === true),
   };
 }
 
@@ -1887,7 +1900,7 @@ export function ackRecoveryKit(): Promise<OkEnvelope> {
 
 /** POST /api/check/{domain} — verify a domain's restic repo integrity. */
 export function checkDomain(
-  domain: "containers" | "vms" | "flash" | "files",
+  domain: "containers" | "vms" | "flash" | "files" | "zfs",
   source?: string
 ): Promise<OkEnvelope> {
   return fetchJSON(`/api/check/${domain}${srcParam(source)}`, { method: "POST" });
@@ -1948,7 +1961,7 @@ export function getDrills(
  * green tick.
  */
 export function unlockDomain(
-  domain: "containers" | "vms" | "flash" | "files",
+  domain: "containers" | "vms" | "flash" | "files" | "zfs",
   source?: string
 ): Promise<OkEnvelope & { skipped?: string[] }> {
   return fetchJSON(`/api/unlock/${domain}${srcParam(source)}`, { method: "POST" });
@@ -1956,7 +1969,7 @@ export function unlockDomain(
 
 /** POST /api/prune/{domain} — reclaim space from forgotten snapshots (restic prune). */
 export function pruneDomain(
-  domain: "containers" | "vms" | "flash" | "config" | "files",
+  domain: "containers" | "vms" | "flash" | "config" | "files" | "zfs",
   source?: string
 ): Promise<OkEnvelope> {
   return fetchJSON(`/api/prune/${domain}${srcParam(source)}`, { method: "POST" });
@@ -2010,14 +2023,14 @@ export type RetentionPreview = {
  * running, which is exactly when someone wants to know what tonight will delete.
  */
 export function previewRetention(
-  domain: "containers" | "vms" | "flash" | "config" | "files",
+  domain: "containers" | "vms" | "flash" | "config" | "files" | "zfs",
   source?: string
 ): Promise<OkEnvelope & { preview: RetentionPreview }> {
   return fetchJSON(`/api/retention/preview/${domain}${srcParam(source)}`);
 }
 
 /**
- * The five domains that can carry an off-site destination, a remote primary
+ * The domains that can carry an off-site destination, a remote primary
  * path, or both. Defined here because api.ts is the layer everything else
  * imports, so this is the one place a domain can be added without leaving a
  * stale copy behind.
@@ -2027,7 +2040,7 @@ export function previewRetention(
  * connection test and no per-destination credentials, even though its backend
  * supported all three the whole time (#176, kramttocs).
  */
-export type OffsiteDomain = "containers" | "vms" | "flash" | "config" | "files";
+export type OffsiteDomain = "containers" | "vms" | "flash" | "config" | "files" | "zfs";
 
 /** POST /api/offsite/{domain} — replicate a domain's local repo to its off-site repo now. */
 export function replicateOffsite(
@@ -2287,7 +2300,7 @@ export function deleteRepo(id: string): Promise<OkEnvelope> {
  * An unknown domain answers HTTP 400.
  */
 export function listOffsiteTargets(
-  domain?: "containers" | "vms" | "flash" | "config" | "files"
+  domain?: "containers" | "vms" | "flash" | "config" | "files" | "zfs"
 ): Promise<OkEnvelope & { targets?: OffsiteTarget[] }> {
   const qs = domain ? `?domain=${encodeURIComponent(domain)}` : "";
   return fetchJSON(`/api/offsite/targets${qs}`);
@@ -2323,7 +2336,7 @@ export function deleteOffsiteTarget(id: string): Promise<OkEnvelope> {
 
 /** DELETE /api/snapshots/{domain}/{id} — forget a single snapshot. */
 export function deleteSnapshot(
-  domain: "containers" | "vms" | "flash" | "config" | "files",
+  domain: "containers" | "vms" | "flash" | "config" | "files" | "zfs",
   id: string,
   source?: string
 ): Promise<OkEnvelope> {
@@ -2950,6 +2963,409 @@ export function discoverFiles(probe = false): Promise<DiscoverEnvelope> {
   return fetchJSON(`/api/files/discover${probe ? "?probe=true" : ""}`, { method: "POST" });
 }
 
+/*
+ * ZFS API (the zfs backup domain). The shapes match internal/api/zfs_views.go,
+ * zfs_probe.go, zfs_crud.go and zfs_restore.go.
+ *
+ * Every refusal that has a reason code answers {ok:false, code, error}. The
+ * page turns the code into a sentence (lib/zfsCodes.ts); `error` carries the
+ * raw host text and belongs in a details block, not in the sentence.
+ */
+
+/** A refusal that names the reason the page translates. */
+export type ZFSCodedEnvelope = OkEnvelope & { code?: string };
+
+/** One dataset of an item's tree, as the last check or run found it. */
+export interface ZFSMemberView {
+  dataset: string;
+  /** Path below the item's root, "" for the root itself. */
+  relPath: string;
+  hostMountpoint: string;
+  /** A member outcome (zfs.MemberOutcomes) or a reason code. */
+  outcome: string;
+  /** First seen after the item was created, so a run can name what it picked up. */
+  isNew: boolean;
+  usedByDataset: number;
+  lastBackupAt: number;
+}
+
+/** One ZFS item from GET /api/zfs. */
+export interface ZFSDatasetView {
+  id: string;
+  /** The root dataset; the item covers it and everything below it. */
+  dataset: string;
+  enabled: boolean;
+  excludes: string[];
+  scheduleCadence: string;
+  repo: string;
+  repoEffective: string;
+  stopContainers: string[];
+  /** Containers a failed run left stopped. */
+  restartPending: string[];
+  excludedChildren: string[];
+  hookContainer: string;
+  preSnapshot: string;
+  postSnapshot: string;
+  hostMountpoint: string;
+  lastBackup: number;
+  lastRunStatus: string;
+  /** "" when the item has never been checked; "ok" when nothing is wrong. */
+  lastCheckCode: string;
+  lastCheckDetail: string;
+  lastCheckAt: number;
+  /** Snapshot stamps an interrupted run left on the tree. */
+  leftoverCount: number;
+  safetyCount: number;
+  safetyOldestAt: number;
+  members: ZFSMemberView[];
+  effectiveSchedule: EffectiveSchedule;
+}
+
+export interface ListZFSDatasetsResponse extends OkEnvelope {
+  datasets?: ZFSDatasetView[];
+}
+
+/** What one look at a dataset tree found. */
+export interface ZFSCheck {
+  dataset: string;
+  code: string;
+  detail: string;
+  hostMountpoint: string;
+  containerPath: string;
+  /** Set with the "too many datasets" code: the limit and the first names over it. */
+  max?: number;
+  names?: string[];
+  members: ZFSMemberView[];
+}
+
+/** What stands between the domain and a working backup. */
+export interface ZFSConnectionResult extends OkEnvelope {
+  code: string;
+  target: string;
+  /** The target LIBVIRT_URI names, for the mismatch sentence. */
+  uriTarget: string;
+  version: string;
+  detail: string;
+  zfsBinary: string;
+  propagation: string;
+  /** Mounts that do not reach the container, named in the propagation fix. */
+  unpropagated: string[];
+}
+
+/** One dataset of the host listing, with what it may become. */
+export interface ZFSHostDataset {
+  dataset: string;
+  /** "filesystem" or "volume". */
+  type: string;
+  hostMountpoint: string;
+  referenced: number;
+  used: number;
+  usedByDataset: number;
+  mounted: boolean;
+  encrypted: boolean;
+  keyLoaded: boolean;
+  visible: boolean;
+  writable: boolean;
+  /** The outcome this dataset would have as a member, "" when it backs up. */
+  memberCode: string;
+  /** The item this dataset already is. */
+  managedId: string;
+  /** The item this dataset already sits inside. */
+  coveredBy: string;
+  vmDisk: boolean;
+  system: boolean;
+  /** A volume a VM references, so the VM domain already carries it. */
+  vmVolume: boolean;
+  /** Why this dataset cannot become an item of its own. */
+  blockers: string[];
+}
+
+/** The host listing plus the counts the page states. */
+export interface ZFSHostResult extends OkEnvelope {
+  available: boolean;
+  code: string;
+  target: string;
+  datasets: ZFSHostDataset[];
+  hiddenLegacy: number;
+  unusedZvols: number;
+  notInItem: number;
+  truncated: boolean;
+}
+
+/** One item the add dialog asks for. */
+export interface ZFSCreateItem {
+  dataset: string;
+  excludedChildren?: string[];
+  excludes?: string[];
+  stopContainers?: string[];
+  repo?: string;
+  enabled?: boolean;
+}
+
+/** What became of one requested item. An empty code means it was created. */
+export interface ZFSCreateResult {
+  dataset: string;
+  id: string;
+  code: string;
+  detail: string;
+}
+
+/** The fields one item's inline settings can change. */
+export interface ZFSDatasetPatch {
+  enabled?: boolean;
+  excludes?: string[];
+  excludedChildren?: string[];
+  scheduleCadence?: string;
+  repo?: string;
+  stopContainers?: string[];
+  hookContainer?: string;
+  preSnapshot?: string;
+  postSnapshot?: string;
+}
+
+/** What a delete left on the pool. */
+export interface ZFSDeleteResult extends OkEnvelope {
+  leftoversRemaining?: number;
+  safetyRemaining?: number;
+}
+
+/** One dataset of the tree as a restore point left it. A member with no
+ *  snapshot id was skipped, empty or excluded at the time. */
+export interface ZFSRestorePointItem {
+  dataset: string;
+  relPath: string;
+  snapshotId: string;
+  outcome: string;
+}
+
+/** One run instant: the member snapshots that share one host snapshot stamp. */
+export interface ZFSRestorePoint {
+  stamp: string;
+  time: number;
+  members: ZFSRestorePointItem[];
+}
+
+/** One restore the panel asks for. An empty targetPath restores in place. */
+export interface ZFSRestoreRequest {
+  stamp: string;
+  dataset: string;
+  wholeTree?: boolean;
+  /** Absolute inside the member's own tree; empty restores all of it. */
+  paths?: string[];
+  targetPath?: string;
+  confirm: boolean;
+  safetySnapshot?: boolean;
+  safetyOffConfirm?: boolean;
+  stopContainers?: boolean;
+}
+
+/** What the caller learns the moment a restore starts. */
+export interface ZFSRestoreAck extends ZFSCodedEnvelope {
+  started?: boolean;
+  target?: string;
+  safetySnapshot?: string;
+}
+
+/** What one run did to one dataset of the tree. */
+export interface ZFSRunMember {
+  dataset: string;
+  outcome: string;
+  resticSnapshot: string;
+  isNew: boolean;
+  bytesAdded: number;
+  filesNew: number;
+  filesChanged: number;
+  filesUnmodified: number;
+  durationMs: number;
+}
+
+/** One run's detail beyond what the runs list holds. */
+export interface ZFSRunDetail extends OkEnvelope {
+  members?: ZFSRunMember[];
+  /** How long the applications were held, -1 when the item stops nothing. */
+  windowSeconds?: number;
+  hookDetail?: string;
+}
+
+/** A snapshot an in-place restore kept, until the user deletes it. */
+export interface ZFSSafetySnapshot {
+  dataset: string;
+  name: string;
+  createdAt: number;
+  usedBytes: number;
+}
+
+/** What one exclude line would leave out of the next backup. */
+export interface ZFSExcludePreviewRow {
+  pattern: string;
+  matches: number;
+  sample: string[];
+}
+
+/** GET /api/zfs. Served from the database alone, so the list still renders
+ *  while the host is off. */
+export function listZFSDatasets(): Promise<ListZFSDatasetsResponse> {
+  return fetchJSON("/api/zfs");
+}
+
+/** GET /api/zfs/connection, the connection card's whole answer. */
+export function zfsConnection(): Promise<ZFSConnectionResult> {
+  return fetchJSON("/api/zfs/connection");
+}
+
+/** GET /api/zfs/host, the pools as the host has them, for the add dialog. */
+export function zfsHostDatasets(): Promise<ZFSHostResult> {
+  return fetchJSON("/api/zfs/host");
+}
+
+/** POST /api/zfs/check: what a tree the dialog offers would back up. */
+export function checkZFSDataset(
+  dataset: string,
+  excludedChildren: string[] = []
+): Promise<ZFSCodedEnvelope & { check?: ZFSCheck }> {
+  return fetchJSON("/api/zfs/check", {
+    method: "POST",
+    body: JSON.stringify({ dataset, excludedChildren }),
+  });
+}
+
+/** POST /api/zfs/datasets, adding the ticked trees. The batch answers item by
+ *  item, so one refused root does not lose the rest. */
+export function createZFSDatasets(
+  items: ZFSCreateItem[]
+): Promise<OkEnvelope & { results?: ZFSCreateResult[] }> {
+  return fetchJSON("/api/zfs/datasets", {
+    method: "POST",
+    body: JSON.stringify({ items }),
+  });
+}
+
+/** PATCH /api/zfs/datasets/{id}. A field left out keeps its stored value, so a
+ *  form that does not know a field cannot clear it. */
+export function patchZFSDataset(id: string, patch: ZFSDatasetPatch): Promise<ZFSCodedEnvelope> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+/** DELETE /api/zfs/datasets/{id}, keeping its backups. `safety` also destroys
+ *  the safety snapshots earlier restores kept. */
+export function deleteZFSDataset(id: string, safety = false): Promise<ZFSDeleteResult> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}?safety=${safety}`, {
+    method: "DELETE",
+  });
+}
+
+/** DELETE /api/zfs/datasets/{id}/backups: forget every member's snapshots,
+ *  then the item. */
+export function deleteBackupsZFSDataset(id: string): Promise<ZFSCodedEnvelope> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/backups`, { method: "DELETE" });
+}
+
+/** POST /api/zfs/datasets/{id}/backup. ASYNC (see BackupResponse): watch the
+ *  "zfs:<root>" SSE key and the recorded run for the outcome. */
+export function backupZFSDataset(id: string): Promise<BackupResponse> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/backup`, { method: "POST" });
+}
+
+/** POST /api/zfs/backup-all, one detached batch over the given items, watched
+ *  through the "batch:zfs" progress key. */
+export function backupZFSAll(ids: string[]): Promise<OkEnvelope & { started?: number }> {
+  return fetchJSON("/api/zfs/backup-all", {
+    method: "POST",
+    body: JSON.stringify({ ids }),
+  });
+}
+
+/** POST /api/zfs/datasets/{id}/probe: take a real snapshot, prove the container
+ *  can read it, remove it again. */
+export function probeZFSDataset(id: string): Promise<OkEnvelope & { check?: ZFSCheck }> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/probe`, { method: "POST" });
+}
+
+/** POST /api/zfs/datasets/{id}/sweep, removing the snapshot stamps earlier runs
+ *  left behind. `remaining` counts the ones that would not go. */
+export function sweepZFSDataset(id: string): Promise<ZFSCodedEnvelope & { remaining?: number }> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/sweep`, { method: "POST" });
+}
+
+/** GET /api/zfs/datasets/{id}/restore-points, newest first. */
+export function zfsRestorePoints(
+  id: string,
+  source?: string
+): Promise<ZFSCodedEnvelope & { points?: ZFSRestorePoint[] }> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/restore-points${srcParam(source)}`);
+}
+
+/** GET /api/zfs/datasets/{id}/files: one member snapshot's files, for the
+ *  selective restore. */
+export function listSnapshotFilesZFS(
+  id: string,
+  snapshot: string,
+  source?: string
+): Promise<ListFilesResponse> {
+  return fetchJSON(
+    `/api/zfs/datasets/${encodeURIComponent(id)}/files?snapshot=${encodeURIComponent(snapshot)}${srcParam(source, "&")}`
+  );
+}
+
+/** POST /api/zfs/datasets/{id}/restore. ASYNC: the ack carries the resolved
+ *  target and the safety snapshot's name; watch the "zfs:<root>" SSE key. */
+export function restoreZFS(
+  id: string,
+  req: ZFSRestoreRequest,
+  source?: string
+): Promise<ZFSRestoreAck> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/restore${srcParam(source)}`, {
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+}
+
+/** POST /api/zfs/discover, rebuilding the item list from the zfs: tags in
+ *  storage. `probe` = read-only readiness check (see discover). Rebuilt items
+ *  arrive DISABLED, and `rootsToCheck` counts the ones whose root was inferred
+ *  from tags alone and wants a look. */
+export function discoverZFS(probe = false): Promise<DiscoverEnvelope & { rootsToCheck?: number }> {
+  return fetchJSON(`/api/zfs/discover${probe ? "?probe=true" : ""}`, { method: "POST" });
+}
+
+/** GET /api/zfs/runs/{runId}/members, one run's per-dataset detail. */
+export function zfsRunMembers(runId: string): Promise<ZFSRunDetail> {
+  return fetchJSON(`/api/zfs/runs/${encodeURIComponent(runId)}/members`);
+}
+
+/** GET /api/zfs/datasets/{id}/safety-snapshots, reconciled against the pool. */
+export function listZFSSafetySnapshots(
+  id: string
+): Promise<ZFSCodedEnvelope & { snapshots?: ZFSSafetySnapshot[] }> {
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/safety-snapshots`);
+}
+
+/** DELETE /api/zfs/datasets/{id}/safety-snapshots, destroying one of them. */
+export function deleteZFSSafetySnapshot(
+  id: string,
+  dataset: string,
+  name: string
+): Promise<ZFSCodedEnvelope> {
+  const qs = new URLSearchParams({ dataset, name }).toString();
+  return fetchJSON(`/api/zfs/datasets/${encodeURIComponent(id)}/safety-snapshots?${qs}`, {
+    method: "DELETE",
+  });
+}
+
+/** POST /api/zfs/excludes/preview: what each exclude line would leave out. */
+export function previewZFSExcludes(
+  id: string,
+  excludes: string[]
+): Promise<OkEnvelope & { rows?: ZFSExcludePreviewRow[] }> {
+  return fetchJSON("/api/zfs/excludes/preview", {
+    method: "POST",
+    body: JSON.stringify({ id, excludes }),
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Encryption-mode auto-detection
 //
@@ -3034,6 +3450,9 @@ export interface ForeignInventory {
   /** Database dumps. They are not restored from here: the recovery kit says
    *  how to get one out with the restic CLI. */
   dbDumps: ForeignItem[];
+  /** One entry per dataset tree, carrying the snapshots of every dataset
+   *  below its root. */
+  zfs: ForeignItem[];
 }
 
 export interface ForeignOpenResponse extends OkEnvelope {
@@ -3098,7 +3517,7 @@ export function foreignClose(session: string): Promise<OkEnvelope> {
  */
 export async function foreignRestore(req: {
   session: string;
-  domain: "containers" | "vms" | "files";
+  domain: "containers" | "vms" | "files" | "zfs";
   item: string;
   snapshot: string;
   confirm: boolean;
@@ -3906,7 +4325,7 @@ export type CoverageItem = {
 
 /** One domain's part of the coverage answer. */
 export type CoverageDomain = {
-  domain: "containers" | "vms" | "files";
+  domain: "containers" | "vms" | "files" | "zfs";
   /** A switched-off domain reports neither protected nor unprotected items: it
    *  is a decision, not a gap. */
   enabled: boolean;

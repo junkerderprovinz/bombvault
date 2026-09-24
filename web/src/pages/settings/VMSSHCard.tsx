@@ -5,6 +5,7 @@ import { getVMSSH, testVMSSH } from "../../lib/api";
 import { copyText } from "../../lib/clipboard";
 import { useT } from "../../lib/i18n";
 import { tLtr } from "../../lib/ltrFragments";
+import { authorizeCommand } from "../../lib/sshAuthorize";
 import { useToast } from "../../lib/toast";
 import { Card } from "./shared";
 import { useEffect, useState } from "react";
@@ -21,13 +22,7 @@ export function VMSSHCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hu
   // replays its shake.
   const [shake, setShake] = useState(0);
 
-  // Ready-to-paste command that authorizes this key on the Unraid host, both for
-  // the live session and persistently (Unraid restores root.pubkeys on boot).
-  const authorizeCmd = pub
-    ? `mkdir -p /root/.ssh /boot/config/ssh && chmod 700 /root/.ssh
-echo '${pub}' | tee -a /root/.ssh/authorized_keys /boot/config/ssh/root.pubkeys >/dev/null
-chmod 600 /root/.ssh/authorized_keys`
-    : "";
+  const authorizeCmd = authorizeCommand(pub);
 
   useEffect(() => {
     getVMSSH()

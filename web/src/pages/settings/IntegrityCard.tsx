@@ -74,7 +74,7 @@ export function IntegrityCard({
   const [, setTgtVMState] = useState<SaveState>("idle");
   const [, setTgtVMError] = useState<string | null>(null);
 
-  type Domain = "containers" | "vms" | "flash" | "files";
+  type Domain = "containers" | "vms" | "flash" | "files" | "zfs";
   type Action = "verify" | "unlock" | "prune";
 
   const domains: { key: Domain; label: string }[] = [
@@ -82,6 +82,7 @@ export function IntegrityCard({
     { key: "vms", label: t("settings.vmsEnabled") },
     { key: "flash", label: t("settings.flashEnabled") },
     { key: "files", label: t("settings.filesEnabled") },
+    { key: "zfs", label: t("settings.zfsEnabled") },
   ];
 
   // Load the containers once for the DR-drill target picker (includes orphans
@@ -289,6 +290,7 @@ export function IntegrityCard({
     vms: settings.vmsOffsite !== "" && settings.vmsOffsiteImmutable,
     flash: settings.flashOffsite !== "" && settings.flashOffsiteImmutable,
     files: settings.filesOffsite !== "" && settings.filesOffsiteImmutable,
+    zfs: settings.zfsOffsite !== "" && settings.zfsOffsiteImmutable,
   };
 
   const selectCls =

@@ -32,6 +32,7 @@ const DOMAIN_SELECT_TO_RUN: Record<string, string> = {
   flash: "flash",
   config: "config",
   files: "files",
+  zfs: "zfs",
   everything: "everything",
 };
 
@@ -102,6 +103,8 @@ export function ErrorDetailPanel({
         return t("activityLog.domainConfig");
       case "files":
         return t("activityLog.domainFiles");
+      case "zfs":
+        return t("activityLog.domainZFS");
       case "everything":
         return t("activityLog.domainEverything");
       default:

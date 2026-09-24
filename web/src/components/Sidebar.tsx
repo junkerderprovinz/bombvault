@@ -9,6 +9,7 @@ import {
   IconContainers,
   IconVM,
   IconFiles,
+  IconZFS,
   IconFleet,
   IconDashboard,
   IconRecovery,
@@ -28,6 +29,7 @@ export {
   IconContainers,
   IconVM,
   IconFiles,
+  IconZFS,
   IconReceiver,
   IconFleet,
   IconFolder,
@@ -270,6 +272,7 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
   const flashEnabled = settings?.flashEnabled ?? false;
   const configEnabled = settings?.configEnabled ?? false;
   const filesEnabled = settings?.filesEnabled ?? false;
+  const zfsEnabled = settings?.zfsEnabled ?? false;
   const receiverEnabled = settings?.receiverEnabled ?? false;
   const fleetEnabled = settings?.fleetEnabled ?? false;
   const pullEnabled = settings?.pullEnabled ?? false;
@@ -484,6 +487,9 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
               )}
               {filesEnabled && (
                 <NavItem to="/files" label={t("nav.files")} icon={<IconFiles />} hueIndex={nextHue()} />
+              )}
+              {zfsEnabled && (
+                <NavItem to="/zfs" label={t("nav.zfs")} icon={<IconZFS />} hueIndex={nextHue()} />
               )}
               {configEnabled && (
                 <NavItem to="/config" label={t("nav.config")} icon={<IconConfig />} hueIndex={nextHue()} />

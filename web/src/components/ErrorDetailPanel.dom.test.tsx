@@ -88,6 +88,7 @@ describe("ErrorDetailPanel with the Backup Everything domain", () => {
       en["activityLog.domainFlash"],
       en["activityLog.domainConfig"],
       en["activityLog.domainFiles"],
+      en["activityLog.domainZFS"],
       en["activityLog.domainEverything"],
     ]);
   });

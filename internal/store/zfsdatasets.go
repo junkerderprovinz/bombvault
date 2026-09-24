@@ -80,18 +80,27 @@ type ZFSRun struct {
 
 // ZFSRunMember is what one run did to one dataset of the tree.
 type ZFSRunMember struct {
-	RunID, Dataset, Outcome, ResticSnapshot             string
-	IsNew                                               bool
-	BytesAdded, FilesNew, FilesChanged, FilesUnmodified int64
-	DurationMS                                          int64
+	RunID           string `json:"runId"`
+	Dataset         string `json:"dataset"`
+	Outcome         string `json:"outcome"`
+	ResticSnapshot  string `json:"resticSnapshot"`
+	IsNew           bool   `json:"isNew"`
+	BytesAdded      int64  `json:"bytesAdded"`
+	FilesNew        int64  `json:"filesNew"`
+	FilesChanged    int64  `json:"filesChanged"`
+	FilesUnmodified int64  `json:"filesUnmodified"`
+	DurationMS      int64  `json:"durationMs"`
 }
 
 // ZFSSafetySnapshot is a snapshot taken before an in-place restore. It is kept
 // until the user deletes it, so the sweeper that removes leaked backup stamps
 // has to be able to tell it apart.
 type ZFSSafetySnapshot struct {
-	ItemID, Dataset, Name string
-	CreatedAt, UsedBytes  int64
+	ItemID    string `json:"itemId"`
+	Dataset   string `json:"dataset"`
+	Name      string `json:"name"`
+	CreatedAt int64  `json:"createdAt"`
+	UsedBytes int64  `json:"usedBytes"`
 }
 
 const zfsDatasetColumns = `id, dataset, enabled, excludes, excluded_children, schedule_cadence, repo,

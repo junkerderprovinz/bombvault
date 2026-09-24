@@ -6,7 +6,7 @@ import type { TranslationKey } from "../lib/i18n";
 import { elapsedSince } from "../lib/reltime";
 import { InfoBubble } from "./InfoBubble";
 
-type Domain = "containers" | "vms" | "flash" | "files";
+type Domain = "containers" | "vms" | "flash" | "files" | "zfs";
 
 // A replication of an already seeded repo can finish in well under a second,
 // and the progress store lingers only about 0.8s, so the indicator stays up
@@ -86,7 +86,13 @@ export function OffsiteIndicator({ domain, withLabel }: { domain: Domain; withLa
   }, [visible]);
 
   if (!visible) return null;
-  const navKey = { containers: "nav.containers", vms: "nav.vms", flash: "nav.flash", files: "nav.files" } as const;
+  const navKey = {
+    containers: "nav.containers",
+    vms: "nav.vms",
+    flash: "nav.flash",
+    files: "nav.files",
+    zfs: "nav.zfs",
+  } as const;
   const label = withLabel ? `${t(navKey[domain])} · ` : "";
   const duration = elapsedSince(state?.startedAt, now);
   const statusText = offsiteStatusText(t, state, duration);

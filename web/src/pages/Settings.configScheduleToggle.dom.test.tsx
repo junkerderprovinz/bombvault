@@ -17,6 +17,7 @@ function baseSettings(over: Partial<Settings> = {}): Settings {
     vmsEnabled: false,
     flashEnabled: false,
     filesEnabled: false,
+    zfsEnabled: true,
     configEnabled: true,
     receiverEnabled: false,
     fleetEnabled: false,
@@ -24,23 +25,27 @@ function baseSettings(over: Partial<Settings> = {}): Settings {
     vmsPath: "backups/vms",
     flashPath: "backups/flash",
     filesPath: "backups/files",
+    zfsPath: "backups/zfs",
     configPath: "backups/config",
     restoreFolder: "restore",
     containersSchedule: "off",
     vmsSchedule: "off",
     flashSchedule: "off",
     filesSchedule: "off",
+    zfsSchedule: "off",
     configSchedule: "weekly Sun 04:00",
     containersOffsite: "",
     vmsOffsite: "",
     flashOffsite: "",
     configOffsite: "",
     filesOffsite: "",
+    zfsOffsite: "",
     containersOffsiteSchedule: "",
     vmsOffsiteSchedule: "",
     flashOffsiteSchedule: "",
     configOffsiteSchedule: "",
     filesOffsiteSchedule: "",
+    zfsOffsiteSchedule: "",
     everythingSchedule: "",
     everythingPreHook: "",
     everythingPostHook: "",
@@ -71,6 +76,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     listContainers: () => Promise.resolve({ ok: true, containers: [] }),
     listVMs: () => Promise.resolve({ ok: true, vms: [] }),
     listFileSets: () => Promise.resolve({ ok: true, fileSets: [] }),
+    listZFSDatasets: () => Promise.resolve({ ok: true, datasets: [] }),
     getStatus: () => Promise.resolve({ ok: true }),
   };
 });
@@ -171,5 +177,38 @@ describe("self-backup schedule toggle", () => {
     fireEvent.click(selfBackupToggle());
     await waitFor(() => expect(putBodies.length).toBe(1));
     expect(putBodies[0].configSchedule).toBe("daily 02:00");
+  });
+});
+
+describe("one schedule for every domain", () => {
+  it("carries the ZFS cadence along with the others", async () => {
+    settingsOnServer = baseSettings({ containersSchedule: "daily 02:00" });
+    await renderSchedulesTab();
+
+    await act(async () => {
+      fireEvent.click(screen.getAllByRole("switch", { name: en["jobs.syncSchedules"] })[0]);
+    });
+
+    await waitFor(() => expect(putBodies.at(-1)?.zfsSchedule).toBe("daily 02:00"));
+  });
+
+  it("hands the ZFS cadence back to its own card when the sync is switched off", async () => {
+    settingsOnServer = baseSettings({
+      containersSchedule: "daily 02:00",
+      vmsSchedule: "daily 02:00",
+      flashSchedule: "daily 02:00",
+      filesSchedule: "daily 02:00",
+      zfsSchedule: "daily 02:00",
+    });
+    await renderSchedulesTab();
+
+    const cadence = () => screen.getByRole("group", { name: en["jobs.zfsSection"] });
+    expect(cadence().hasAttribute("disabled")).toBe(true);
+
+    await act(async () => {
+      fireEvent.click(screen.getAllByRole("switch", { name: en["jobs.syncSchedules"] })[0]);
+    });
+
+    expect(cadence().hasAttribute("disabled")).toBe(false);
   });
 });

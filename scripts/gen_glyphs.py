@@ -200,6 +200,16 @@ DATABASE = (
 )
 DATABASE_BOX = "0 0 14 14"
 
+# ZFS datasets. Three separated platters on the same 14-unit grid as the
+# database cylinder: the pool is a stack of disks, and keeping the gaps open
+# stops the two marks reading as the same object in the rail.
+ZFS = (
+    '<ellipse cx="7" cy="2.6" rx="5.4" ry="1.8" />'
+    '<ellipse cx="7" cy="7" rx="5.4" ry="1.8" />'
+    '<ellipse cx="7" cy="11.4" rx="5.4" ry="1.8" />'
+)
+ZFS_BOX = "0 0 14 14"
+
 # Multi-line notes become block comments in the generated files; see doc().
 CLOSE_NOTE = """Close
 
@@ -231,6 +241,7 @@ EXTRA_NAV = [
     ("IconTabOffsite", "Off-site tab", CLOUD_BOX, CLOUD),
     ("IconCloud", "Off-site or cloud", CLOUD_BOX, CLOUD),
     ("IconDatabase", "A database", DATABASE_BOX, DATABASE),
+    ("IconZFS", "ZFS datasets", ZFS_BOX, ZFS),
     ("IconAdd", "Add", PLUS_BOX, PLUS),
     ("IconClose", CLOSE_NOTE, CROSS_BOX, CROSS),
     # Imported whole and cropped to their measured ink. Sources and licences,
