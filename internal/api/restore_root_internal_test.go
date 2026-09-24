@@ -241,11 +241,7 @@ func TestEffectiveBackupPathsWithSelectionIsOneRead(t *testing.T) {
 // behavioural test can land a write between them, so this scans the source, as
 // TestFilesCancelKeyMatchesTheProgressKey does.
 func TestBackupExcludesComeFromTheSameReadAsThePositionals(t *testing.T) {
-	raw, err := os.ReadFile("service.go")
-	if err != nil {
-		t.Fatalf("read service.go: %v", err)
-	}
-	src := string(raw)
+	src := mustReadService(t)
 
 	if !strings.Contains(src, "effective, selection := s.effectiveBackupPathsWithSelection(name, in)") {
 		t.Error("Backup no longer takes both halves of the selection from one read.")

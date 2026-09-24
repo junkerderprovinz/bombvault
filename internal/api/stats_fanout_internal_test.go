@@ -257,21 +257,18 @@ func TestPrimaryRemoteBudgetIgnoresAnItemsOwnRepository(t *testing.T) {
 // A domain wired straight to maybeCollectStats would sample once per item of a
 // round, with no error and no log line to show for it.
 func TestPerItemSuccessPathsUseTheRoundAwareHook(t *testing.T) {
-	src, err := os.ReadFile("service.go")
-	if err != nil {
-		t.Fatal(err)
-	}
+	src := mustReadService(t)
 	for _, domain := range []string{"containers", "vms", "flash", "files", "config"} {
-		if !strings.Contains(string(src), `s.collectStatsAfterItem(ctx, "`+domain+`")`) {
+		if !strings.Contains(src, `s.collectStatsAfterItem(ctx, "`+domain+`")`) {
 			t.Errorf("%s's success path must sample via collectStatsAfterItem", domain)
 		}
-		if strings.Contains(string(src), `s.maybeCollectStats(ctx, "`+domain+`")`) {
+		if strings.Contains(src, `s.maybeCollectStats(ctx, "`+domain+`")`) {
 			t.Errorf("%s's success path calls maybeCollectStats(ctx, ...) directly, which samples "+
 				"once per item during a round; use collectStatsAfterItem", domain)
 		}
 	}
 	// The round itself samples once at the end, with the batch context.
-	if !strings.Contains(string(src), `s.maybeCollectStats(bctx, "containers")`) {
+	if !strings.Contains(src, `s.maybeCollectStats(bctx, "containers")`) {
 		t.Error("a container round must still sample once, at the end")
 	}
 }

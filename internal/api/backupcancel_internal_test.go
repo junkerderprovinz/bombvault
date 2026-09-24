@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"os"
 	"strings"
 	"testing"
 
@@ -187,11 +186,7 @@ func TestASuccessfulBackupIsNeverRelabelled(t *testing.T) {
 // cancel func under the same "files:" + set.Name. It scans the source because
 // reaching the real registration takes a real restic backup.
 func TestFilesCancelKeyMatchesTheProgressKey(t *testing.T) {
-	raw, err := os.ReadFile("service.go")
-	if err != nil {
-		t.Fatalf("read service.go: %v", err)
-	}
-	src := string(raw)
+	src := mustReadService(t)
 
 	for _, want := range []string{
 		`s.registerBackupCancel("files:"+set.Name, cancel)`,

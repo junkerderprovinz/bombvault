@@ -2,6 +2,7 @@ package api
 
 import (
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -14,21 +15,34 @@ import (
 // because what matters is which resolution a call site uses: domainReposForOp
 // returns every repository, domainRepoSource only one.
 
+// mustReadService returns the service layer's source: every service*.go file of
+// the package, one after the other.
 func mustReadService(t *testing.T) string {
 	t.Helper()
-	raw, err := os.ReadFile("service.go")
+	files, err := filepath.Glob("service*.go")
 	if err != nil {
-		t.Fatalf("read service.go: %v", err)
+		t.Fatal(err)
 	}
-	return string(raw)
+	var src strings.Builder
+	for _, f := range files {
+		if strings.HasSuffix(f, "_test.go") {
+			continue
+		}
+		raw, err := os.ReadFile(f) //nolint:gosec // G304: a file name from this package's own directory
+		if err != nil {
+			t.Fatalf("read %s: %v", f, err)
+		}
+		src.Write(raw)
+	}
+	return src.String()
 }
 
-// funcBody returns the source of a *Service method in service.go, up to its
-// closing brace at column zero. Stopping there keeps the next function's doc
+// funcBody returns the source of a *Service method in the service files, up to
+// its closing brace at column zero. Stopping there keeps the next function's doc
 // comment from satisfying a guard.
 func funcBody(t *testing.T, src, name string) string {
 	t.Helper()
-	return receiverFuncBody(t, src, `\(s \*Service\)`, name, "service.go")
+	return receiverFuncBody(t, src, `\(s \*Service\)`, name, "service*.go")
 }
 
 // receiverFuncBody is funcBody for any receiver and file.
