@@ -401,7 +401,7 @@ func (h *Handler) recordMCPKeyChange(r *http.Request, k store.MCPKey, logged, ev
 	if event == "" {
 		return
 	}
-	ctx, addr := context.WithoutCancel(r.Context()), loginClientKey(r)
+	ctx, addr := context.WithoutCancel(r.Context()), h.loginClientKey(r)
 	h.svc.notifyMCPKeyChange(ctx, event, k.Label, k.Hint, addr)
 }
 

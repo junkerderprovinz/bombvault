@@ -3,6 +3,7 @@ package api_test
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
@@ -301,6 +303,56 @@ func TestMCPKeyChangesNotify(t *testing.T) {
 	after := waitForMessages(len(got) + 1)
 	if len(after) != len(got)+1 {
 		t.Fatalf("notifications set to never still sent a message: %v", after[len(got):])
+	}
+}
+
+// Behind a trusted reverse proxy every request comes from the proxy, so the
+// notification has to name the client the proxy forwarded, as the key's
+// lastUsedFrom does.
+func TestMCPKeyChangeNotificationNamesTheClientBehindAProxy(t *testing.T) {
+	messages := make(chan string, 4)
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Message string `json:"message"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		messages <- body.Message
+	}))
+	defer srv.Close()
+
+	_, proxies, err := net.ParseCIDR("192.0.2.0/24")
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	if _, _, err := api.EnsureSelfSigned(dir); err != nil {
+		t.Fatal(err)
+	}
+	h, svc := mcpRouterWith(t, newMemStore(t), config.Config{
+		AppKey: mcpAppKey, DataDir: dir, HostMountRoot: dir, TrustedProxies: []net.IPNet{*proxies},
+	})
+	if err := svc.SetNotifyConfig(notify.Config{On: "always", WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
+		t.Fatal(err)
+	}
+
+	r := httptest.NewRequest(http.MethodPost, "/api/mcp/keys", strings.NewReader(`{"label":"Laptop"}`))
+	r.Header.Set("Content-Type", "application/json")
+	r.Host = mcpTestHost
+	r.Header.Set("Origin", "https://"+mcpTestHost)
+	r.Header.Set("X-Forwarded-For", "198.51.100.7")
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+	if w.Code != http.StatusOK {
+		t.Fatalf("create: status=%d body=%s", w.Code, w.Body)
+	}
+
+	select {
+	case msg := <-messages:
+		if !strings.Contains(msg, "198.51.100.7") {
+			t.Fatalf("the notification reads %q, want it to name the forwarded client", msg)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("no notification was sent")
 	}
 }
 
