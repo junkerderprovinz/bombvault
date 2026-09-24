@@ -213,9 +213,9 @@ func (r *zfsRuns) Start(targetID, kind string) (string, error) {
 	return id, err
 }
 
-func (r *zfsRuns) Finish(runID, status, snapshotID string, bytes int64, errMsg string) error {
+func (r *zfsRuns) Finish(runID, status string, sum backup.Summary, errMsg string) error {
 	r.log.add("runFinish:%s", status)
-	return r.fakeRuns.Finish(runID, status, snapshotID, bytes, errMsg)
+	return r.fakeRuns.Finish(runID, status, sum, errMsg)
 }
 
 // zfsClock is the injected clock: it stands still until a sleep moves it, so a

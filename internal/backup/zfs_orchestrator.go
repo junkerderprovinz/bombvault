@@ -211,7 +211,7 @@ func BackupZFSItem(ctx context.Context, d ZFSBackupDeps) (Summary, error) {
 		status = statusFailed
 		runErr = &ZFSRefusal{Detail: strings.Join(failures, ", ")}
 	}
-	if finErr := d.Runs.Finish(runID, status, summary.SnapshotID, summary.Bytes, truncateErr(runErr)); finErr != nil {
+	if finErr := d.Runs.Finish(runID, status, summary, truncateErr(runErr)); finErr != nil {
 		log.Printf("zfs backup: finish run for %s: %v", d.Root, finErr)
 	}
 
@@ -234,7 +234,7 @@ func (d ZFSBackupDeps) post(ctx context.Context) string {
 
 // failRun records a refusal that ends the run before any member was read.
 func (d ZFSBackupDeps) failRun(runID string, err error) error {
-	if finErr := d.Runs.Finish(runID, statusFailed, "", 0, truncateErr(err)); finErr != nil {
+	if finErr := d.Runs.Finish(runID, statusFailed, Summary{}, truncateErr(err)); finErr != nil {
 		log.Printf("zfs backup: finish run for %s: %v", d.Root, finErr)
 	}
 	return err
