@@ -73,7 +73,7 @@ Le modèle ajoute `--add-host=host.docker.internal:host-gateway` afin que le con
 
 Configurez un réplica hors site dans l'onglet **Paramètres, Hors site**. Voir [Sauvegarde hors site et récupération](offsite-recovery.md) pour le flux de travail complet (immuable/append-only, test de sabotage et essais de reprise après sinistre). En bref :
 
-- **Backends :** SMB/CIFS et NFS (montez le partage et pointez-y un Chemin de sauvegarde), backends restic natifs sans rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), ou n'importe quel remote rclone (`rclone:<remote>:<bucket>/path`).
+- **Backends :** SMB/CIFS et NFS (montez le partage et pointez-y un Chemin de sauvegarde), backends restic natifs sans rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), ou n'importe quel remote rclone (`rclone:<remote>:<bucket>/path`).
 - **Les identifiants cloud** sont stockés chiffrés sous Paramètres, Hors site, Identifiants cloud.
 - **Les cibles SSH ne nécessitent rien d'installé côté distant.** `sftp:` requiert seulement un serveur SSH. Ajoutez la clé publique de **Paramètres, Système, Sauvegarde de VM via SSH** (aussi disponible à `/config/ssh/id_ed25519.pub`) à l'`~/.ssh/authorized_keys` de l'utilisateur cible.
 - **Copie hors site :** BombVault réplique les nouveaux instantanés avec `restic copy` au mieux. Le dépôt local reste principal. Chaque domaine a son propre planning hors site, plus un bouton **Répliquer maintenant**.

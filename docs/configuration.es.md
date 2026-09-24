@@ -73,7 +73,7 @@ La plantilla añade `--add-host=host.docker.internal:host-gateway` para que el c
 
 Configura una réplica externa en la pestaña **Ajustes, Externo**. Consulta [Copia externa y recuperación](offsite-recovery.md) para el flujo completo (inmutable/append-only, prueba de manipulación y ensayos de DR). En resumen:
 
-- **Backends:** SMB/CIFS y NFS (monta el recurso compartido y apunta una Ruta de copia a él), backends nativos de restic sin rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`), o cualquier remoto de rclone (`rclone:<remote>:<bucket>/path`).
+- **Backends:** SMB/CIFS y NFS (monta el recurso compartido y apunta una Ruta de copia a él), backends nativos de restic sin rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`), o cualquier remoto de rclone (`rclone:<remote>:<bucket>/path`).
 - Las **credenciales de la nube** se almacenan cifradas en Ajustes, Externo, Credenciales de la nube.
 - **Los destinos SSH no requieren nada instalado en el otro extremo.** `sftp:` solo necesita un servidor SSH. Añade la clave pública de **Ajustes, Sistema, Copia de VM por SSH** (también en `/config/ssh/id_ed25519.pub`) al `~/.ssh/authorized_keys` del usuario de destino.
 - **Copia externa:** BombVault replica las nuevas instantáneas con `restic copy` en modo de mejor esfuerzo. El repo local sigue siendo el principal. Cada dominio tiene su propio calendario externo, más un botón **Replicar ahora**.

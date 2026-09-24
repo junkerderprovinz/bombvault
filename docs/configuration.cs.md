@@ -73,7 +73,7 @@ Rychlé nastavení:
 
 Nastavte repliku mimo lokalitu v záložce **Nastavení, Mimo lokalitu**. Kompletní postup (neměnné/append-only, testování odolnosti a cvičné obnovy po havárii) najdete v [Mimo lokalitu a obnova](offsite-recovery.md). Ve zkratce:
 
-- **Backendy:** SMB/CIFS a NFS (připojte sdílenou složku a nasměrujte na ni Zálohovací cestu), nativní restic backendy bez rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) nebo libovolný rclone remote (`rclone:<remote>:<bucket>/path`).
+- **Backendy:** SMB/CIFS a NFS (připojte sdílenou složku a nasměrujte na ni Zálohovací cestu), nativní restic backendy bez rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) nebo libovolný rclone remote (`rclone:<remote>:<bucket>/path`).
 - **Přihlašovací údaje cloudu** se ukládají šifrovaně pod Nastavení, Mimo lokalitu, Přihlašovací údaje cloudu.
 - **SSH cíle nevyžadují nic nainstalovaného na druhé straně.** `sftp:` potřebuje jen SSH server. Přidejte veřejný klíč z **Nastavení, Systém, Záloha VM přes SSH** (také na `/config/ssh/id_ed25519.pub`) do `~/.ssh/authorized_keys` cílového uživatele.
 - **Kopie mimo lokalitu:** BombVault replikuje nové snímky pomocí `restic copy` na základě nejlepší snahy. Místní repozitář zůstává primární. Každá doména má vlastní plán mimo lokalitu, plus tlačítko **Replikovat nyní**.

@@ -35,7 +35,7 @@ A new off-site target receives every item that is not set to Local. The dialog t
 
 ### Direct repositories
 
-Choosing a target's direct repository under Off-site only opens a dialog with a suggested location next to the target, for example `b2:bucket:containers-direct`, and a connection test that creates nothing. **Create and use** creates the repository and points the item at it. A direct repository takes the target's key, storage class, limits, append-only setting and retention, and changes with them; the Repositories card shows it read-only. When a new key for the target cannot open it, the direct repository keeps the key it has and the save says so. Its snapshots carry the tag `bv:direct`, and every other retention pass keeps them, so a direct repository that lost its link to its target never ages by the local rules. A B2 key that is limited to the target's own folder cannot reach the folder next to it; limit the key to the folder above the target instead.
+Choosing a target's direct repository under Off-site only opens a dialog with a suggested location next to the target, for example `s3:https://s3.eu-central-003.backblazeb2.com/bucket/containers-direct`, and a connection test that creates nothing. **Create and use** creates the repository and points the item at it. A direct repository takes the target's key, storage class, limits, append-only setting and retention, and changes with them; the Repositories card shows it read-only. When a new key for the target cannot open it, the direct repository keeps the key it has and the save says so. Its snapshots carry the tag `bv:direct`, and every other retention pass keeps them, so a direct repository that lost its link to its target never ages by the local rules. B2 is reached through its S3 endpoint, with the key ID and application key entered as the S3 credentials; a key limited to the target's own folder cannot reach the folder next to it, so limit the key to the folder above the target instead.
 
 ### Off the premises
 
@@ -47,7 +47,7 @@ Copy choices live in BombVault's own settings. After a rebuild through Discover 
 
 ## Remote primary repositories {#remote-primary-repositories}
 
-A domain's Backup Path (Settings, Paths & Storage) is not limited to a local folder — point it straight at a restic remote (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`) and BombVault backs up to it directly, with no separate local copy and no replication step. This is a genuinely different shape from off-site replication above: there the local repo is primary and the off-site repo is a best-effort archive of it; here the remote repo **is** the primary, and it is the only copy unless you also configure off-site replication (or a second remote) for that domain.
+A domain's Backup Path (Settings, Paths & Storage) is not limited to a local folder — point it straight at a restic remote (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`, `rclone:remote:bucket/path`) and BombVault backs up to it directly, with no separate local copy and no replication step. This is a genuinely different shape from off-site replication above: there the local repo is primary and the off-site repo is a best-effort archive of it; here the remote repo **is** the primary, and it is the only copy unless you also configure off-site replication (or a second remote) for that domain.
 
 Each of the five path fields (Containers, VMs, Flash, Config, Files) has an inline **Local / Remote** switch right next to it:
 

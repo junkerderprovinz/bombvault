@@ -73,7 +73,7 @@ Das Template fügt `--add-host=host.docker.internal:host-gateway` hinzu, damit d
 
 Richte eine Off-site-Replik im Tab **Einstellungen, Off-site** ein. Siehe [Off-site & Wiederherstellung](offsite-recovery.md) für den vollständigen Ablauf (unveränderlich/append-only, Manipulationstest und DR-Übungen). Kurz gefasst:
 
-- **Backends:** SMB/CIFS und NFS (Freigabe einhängen und einen Backup-Pfad darauf richten), native restic-Backends ohne rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) oder jedes rclone-Remote (`rclone:<remote>:<bucket>/path`).
+- **Backends:** SMB/CIFS und NFS (Freigabe einhängen und einen Backup-Pfad darauf richten), native restic-Backends ohne rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) oder jedes rclone-Remote (`rclone:<remote>:<bucket>/path`).
 - **Cloud-Zugangsdaten** werden verschlüsselt gespeichert unter Einstellungen, Off-site, Cloud-Zugangsdaten.
 - **SSH-Ziele brauchen auf der Gegenseite nichts installiert.** `sftp:` benötigt nur einen SSH-Server. Füge den öffentlichen Schlüssel aus **Einstellungen, System, VM-Backup über SSH** (auch unter `/config/ssh/id_ed25519.pub`) den `~/.ssh/authorized_keys` des Zielbenutzers hinzu.
 - **Off-site-Kopie:** BombVault repliziert neue Snapshots mit `restic copy` auf Best-Effort-Basis. Das lokale Repo bleibt primär. Jeder Bereich hat seinen eigenen Off-site-Zeitplan, plus einen Button **Jetzt replizieren**.

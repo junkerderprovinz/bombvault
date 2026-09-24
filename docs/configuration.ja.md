@@ -73,7 +73,7 @@ BombVault は **libvirt のパスを一切マウントすることなく** KVM/l
 
 **Settings, Off-site** タブでオフサイトのレプリカをセットアップします。完全なワークフロー（イミュータブル/追記専用、改ざんテスト、DR ドリル）については[オフサイトと復旧](offsite-recovery.md)を参照してください。要点は以下のとおりです:
 
-- **バックエンド:** SMB/CIFS と NFS（共有をマウントして Backup Path をそこに向ける）、rclone なしのネイティブ restic バックエンド（`s3:...`、`rest:http://host:8000/repo`、`b2:...`、`sftp:user@host:/repo`）、または任意の rclone リモート（`rclone:<remote>:<bucket>/path`）。
+- **バックエンド:** SMB/CIFS と NFS（共有をマウントして Backup Path をそこに向ける）、rclone なしのネイティブ restic バックエンド（`s3:...`、`rest:http://host:8000/repo`、`sftp:user@host:/repo`）、または任意の rclone リモート（`rclone:<remote>:<bucket>/path`）。
 - **クラウド認証情報**は、Settings, Off-site, Cloud credentials で暗号化して保存されます。
 - **SSH ターゲットは相手側に何もインストールする必要がありません。** `sftp:` は SSH サーバーだけを必要とします。**Settings, System, VM Backup over SSH** の公開鍵（`/config/ssh/id_ed25519.pub` にもあります）を、ターゲットユーザーの `~/.ssh/authorized_keys` に追加します。
 - **オフサイトコピー:** BombVault はベストエフォート方式で `restic copy` により新しいスナップショットを複製します。ローカルリポジトリが主のままです。各ドメインには独自のオフサイトスケジュールがあり、**今すぐ複製**ボタンも備わっています。

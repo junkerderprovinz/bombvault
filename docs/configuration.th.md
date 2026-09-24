@@ -73,7 +73,7 @@ BombVault สำรองข้อมูล KVM/libvirt VMs **โดยไม่
 
 ตั้งค่าสำเนานอกสถานที่บนแท็บ **Settings, Off-site** ดู [Off-site & recovery](offsite-recovery.md) สำหรับกระบวนการเต็มรูปแบบ (ไม่เปลี่ยนแปลงได้/append-only, การทดสอบการแทรกแซง และการซ้อม DR) โดยสรุป:
 
-- **แบ็กเอนด์:** SMB/CIFS และ NFS (เมานต์แชร์แล้วชี้ Backup Path ไปยังมัน), แบ็กเอนด์ restic ดั้งเดิมโดยไม่ใช้ rclone (`s3:...`, `rest:http://host:8000/repo`, `b2:...`, `sftp:user@host:/repo`) หรือรีโมต rclone ใดก็ได้ (`rclone:<remote>:<bucket>/path`)
+- **แบ็กเอนด์:** SMB/CIFS และ NFS (เมานต์แชร์แล้วชี้ Backup Path ไปยังมัน), แบ็กเอนด์ restic ดั้งเดิมโดยไม่ใช้ rclone (`s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo`) หรือรีโมต rclone ใดก็ได้ (`rclone:<remote>:<bucket>/path`)
 - **ข้อมูลรับรองคลาวด์** ถูกเก็บแบบเข้ารหัสภายใต้ Settings, Off-site, Cloud credentials
 - **ปลายทาง SSH ไม่ต้องติดตั้งอะไรที่ฝั่งไกล** `sftp:` ต้องการเพียงเซิร์ฟเวอร์ SSH เพิ่มคีย์สาธารณะจาก **Settings, System, VM Backup over SSH** (อยู่ที่ `/config/ssh/id_ed25519.pub` ด้วย) ลงใน `~/.ssh/authorized_keys` ของผู้ใช้ปลายทาง
 - **การคัดลอกนอกสถานที่:** BombVault จำลองสแนปช็อตใหม่ด้วย `restic copy` แบบทำเท่าที่ทำได้ รีพอสิทอรีในเครื่องยังคงเป็นหลัก แต่ละโดเมนมีตารางเวลานอกสถานที่ของตัวเอง พร้อมปุ่ม **Replicate now**
