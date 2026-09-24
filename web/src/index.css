@@ -829,11 +829,28 @@
 :root               { --egg-logo: url("/logo.svg"); }
 [data-theme="dark"] { --egg-logo: url("/logo-light.svg"); }
 
+/* The house font is Noto Sans, shipped with the app for Latin, Cyrillic,
+   Greek, Vietnamese and Devanagari, with Noto's own cuts for Arabic, Hebrew and
+   Thai. The "Variable" names are the shipped files, the plain ones an install
+   on the machine. Chinese, Japanese and Korean are too heavy to ship, so their
+   Noto cut is used where the system has it, and the system font where it does
+   not; Han characters are drawn differently per language, so the lang of the
+   page picks the cut (GlimStone, "The house font"). */
+:root {
+  --font-cjk: "Noto Sans CJK SC", "Noto Sans SC";
+  --font-sans: "Noto Sans Variable", "Noto Sans", "Noto Sans Arabic Variable", "Noto Sans Arabic",
+    "Noto Sans Hebrew Variable", "Noto Sans Hebrew", "Noto Sans Thai Variable", "Noto Sans Thai",
+    var(--font-cjk), system-ui, -apple-system, sans-serif;
+}
+:lang(ja) { --font-cjk: "Noto Sans CJK JP", "Noto Sans JP"; }
+:lang(ko) { --font-cjk: "Noto Sans CJK KR", "Noto Sans KR"; }
+:lang(zh-TW), :lang(zh-Hant) { --font-cjk: "Noto Sans CJK TC", "Noto Sans TC"; }
+
 body {
   margin: 0;
   background-color: var(--carbon-bg);
   color: var(--carbon-text);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
