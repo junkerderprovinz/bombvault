@@ -504,6 +504,32 @@ func TestEnginePanicInOneItemIsCountedNotFatal(t *testing.T) {
 	}
 }
 
+// The page's figures are not what a retention pass asks about. A notification
+// blob this instance cannot decrypt must not stop it from deleting old backups
+// of every item in the installation.
+func TestUnreadableNotifyConfigDoesNotStopRetention(t *testing.T) {
+	f := newEngineFixture(t)
+	id := f.container(t, "plex")
+	f.steadySeries(t, id, "backup", 12, 40*gib)
+	if _, err := f.st.MutateSettings(func(s *store.Settings) error {
+		s.NotifyConf = "not base64 at all"
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	held, why, err := f.e.RetentionHeld(context.Background(), anomalyScope{Kind: anomalyScopeItem, ID: id})
+	if err != nil {
+		t.Fatalf("the hold check failed although the series is sound: %v", err)
+	}
+	if held {
+		t.Fatalf("a steady series holds nothing, got %q", why)
+	}
+	if !f.e.summary().NotifyMuted {
+		t.Fatal("a configuration that cannot be read is a channel that cannot deliver")
+	}
+}
+
 // The store runs on one connection, so a pass that started another query while
 // a result set was still open would never finish.
 func TestEngineSingleConnectionNoDeadlock(t *testing.T) {

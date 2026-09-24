@@ -153,11 +153,18 @@ func vmRunOf(snap restic.SnapshotMeta, runs map[string]store.UnmeasuredRun) stri
 // backfillRunMetrics fills the source figures of the runs that predate the
 // measurement, once per repository. A repository that would not open records
 // why and is tried again the next day; a repository that is done is read again
-// only when runs from an older image have appeared since.
+// only when runs from an older image have appeared since. Only one backfill
+// runs at a time: the read scheduled after boot and the worker's own would
+// otherwise list the same repositories twice and lose one of the two counts.
 func (e *anomalyEngine) backfillRunMetrics(ctx context.Context) error {
 	if e == nil {
 		return nil
 	}
+	if !e.backfilling.CompareAndSwap(false, true) {
+		return nil
+	}
+	defer e.backfilling.Store(false)
+
 	pending, err := e.svc.store.UnmeasuredSnapshotRuns()
 	if err != nil {
 		return err

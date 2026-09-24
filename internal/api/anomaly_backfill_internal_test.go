@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -135,9 +136,15 @@ type backfillEngine struct {
 	snaps []restic.SnapshotMeta
 	err   error
 	lists int
+	// before runs inside the listing, where a test can hold one backfill open
+	// while it starts another.
+	before func()
 }
 
 func (e *backfillEngine) SnapshotsMeta(context.Context, string, restic.Mode) ([]restic.SnapshotMeta, error) {
+	if e.before != nil {
+		e.before()
+	}
 	e.lists++
 	if e.err != nil {
 		return nil, e.err
@@ -286,6 +293,40 @@ func TestBackfillRetriesAFailedRepositoryOnceADay(t *testing.T) {
 	}
 	if slot := f.slot(t, "domain:containers"); !slot.Done || slot.Error != "" || slot.Filled != 1 {
 		t.Fatalf("the retry did not settle the slot: %+v", slot)
+	}
+}
+
+// The read scheduled for shortly after boot and the worker's own can meet.
+// Only one of them lists the repositories: the other would pay for the same
+// listing again and write the same slot counter back over it.
+func TestBackfillListsARepositoryOnceWhileOneIsRunning(t *testing.T) {
+	f := newBackfillFixture(t)
+	targetID := f.container(t, "Nexterm")
+	f.unmeasuredRun(t, targetID, "snap1", f.now-10*86400)
+	f.eng.snaps = []restic.SnapshotMeta{meta("snap1", "older", 40<<30, 900, 1<<30, f.now-10*86400, 120)}
+
+	var listings atomic.Int64
+	listing, release := make(chan struct{}), make(chan struct{})
+	f.eng.before = func() {
+		if listings.Add(1) == 1 {
+			close(listing)
+			<-release
+		}
+	}
+
+	done := make(chan error, 1)
+	go func() { done <- f.e.backfillRunMetrics(context.Background()) }()
+	<-listing
+	if err := f.e.backfillRunMetrics(context.Background()); err != nil {
+		t.Fatalf("second backfill: %v", err)
+	}
+	close(release)
+	if err := <-done; err != nil {
+		t.Fatalf("backfill: %v", err)
+	}
+
+	if got := listings.Load(); got != 1 {
+		t.Fatalf("the repository was listed %d times, want once", got)
 	}
 }
 
