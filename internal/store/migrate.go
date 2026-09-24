@@ -1976,6 +1976,20 @@ CREATE TABLE IF NOT EXISTS mcp_keys (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_keys_digest ON mcp_keys(key_digest) WHERE key_digest != '';
 CREATE UNIQUE INDEX IF NOT EXISTS idx_mcp_keys_active_label ON mcp_keys(lower(label)) WHERE revoked_at = 0;`,
 	},
+	{
+		// What restic read for each dataset of a ZFS tree, next to what the
+		// dataset added: a child emptied inside a large tree barely moves the
+		// item's total. NULL is unmeasured, 0 a dataset that held nothing. The
+		// index serves the backfill, which finds a member by the snapshot it
+		// wrote.
+		version: zfsMemberMetricsMigration,
+		name:    "zfs_run_members_source_metrics",
+		sql: `ALTER TABLE zfs_run_members ADD COLUMN source_bytes INTEGER;
+ALTER TABLE zfs_run_members ADD COLUMN source_files INTEGER;
+ALTER TABLE zfs_run_members ADD COLUMN has_parent INTEGER;
+CREATE INDEX IF NOT EXISTS idx_zfs_run_members_snapshot ON zfs_run_members(restic_snapshot);`,
+		alreadySatisfied: columnPresent("zfs_run_members", "source_bytes"),
+	},
 }
 
 // dbDumpMigrationBase numbers the three database-dump columns from one place,
@@ -1993,6 +2007,11 @@ const anomalyMigrationBase = 138
 // mcpMigrationBase numbers the MCP server's migrations from one place, so they
 // keep their order if the base has to move before release.
 const mcpMigrationBase = 141
+
+// zfsMemberMetricsMigration numbers the per-dataset source metrics. They extend
+// a ZFS table for anomaly detection, so they need both schemas and come after
+// every block above.
+const zfsMemberMetricsMigration = mcpMigrationBase + 2
 
 // Migrate applies any pending forward-only migrations to db.
 // It is idempotent: already-applied migrations are skipped.

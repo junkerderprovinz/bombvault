@@ -839,10 +839,12 @@ type SeriesRun struct {
 type RunTargetKind struct{ TargetID, Kind string }
 
 // UnmeasuredRun is a finished run whose source metrics the backfill can still
-// read out of its snapshot.
+// read out of its snapshot. Dataset names the ZFS dataset when the snapshot is
+// one member's of a ZFS run, and is empty for the run's own row.
 type UnmeasuredRun struct {
 	ID, TargetID, Kind, SnapshotID string
 	StartedAt                      int64
+	Dataset                        string
 }
 
 // BackfillMetrics are the figures one backfilled run gets. Bytes is set only
@@ -1038,15 +1040,24 @@ func (r *Repo) restorePointsOfChunk(ids []string, out map[string]RestorePoint) e
 }
 
 // UnmeasuredSnapshotRuns lists the successful backup and dump runs that left a
-// snapshot but no measurement, oldest first. Rows are drained before returning,
-// because the backfill writes on the same connection.
+// snapshot but no measurement, and the datasets of ZFS runs that did, oldest
+// first. A ZFS run's own row is left out: its snapshot is only its root
+// dataset's, and the datasets are measured one by one. Rows are drained before
+// returning, because the backfill writes on the same connection.
 func (r *Repo) UnmeasuredSnapshotRuns() ([]UnmeasuredRun, error) {
 	rows, err := r.db.Query(`
-		SELECT id, target_id, kind, snapshot_id, started_at
+		SELECT id, target_id, kind, snapshot_id, started_at, '' AS dataset, rowid
 		FROM runs
 		WHERE status = 'success' AND kind IN ('backup', 'dbdump')
 			AND snapshot_id IS NOT NULL AND snapshot_id <> '' AND source_bytes IS NULL
-		ORDER BY started_at ASC, rowid ASC`)
+			AND target_id NOT IN (SELECT id FROM zfs_datasets)
+		UNION ALL
+		SELECT r.id, r.target_id, r.kind, m.restic_snapshot, r.started_at, m.dataset, r.rowid
+		FROM zfs_run_members m
+		JOIN runs r ON r.id = m.run_id
+		WHERE r.status IN ('success', 'failed') AND m.outcome = 'backed-up'
+			AND m.restic_snapshot <> '' AND m.source_bytes IS NULL
+		ORDER BY 5 ASC, 7 ASC, 6 ASC`)
 	if err != nil {
 		return nil, fmt.Errorf("UnmeasuredSnapshotRuns: %w", err)
 	}
@@ -1055,7 +1066,9 @@ func (r *Repo) UnmeasuredSnapshotRuns() ([]UnmeasuredRun, error) {
 	var out []UnmeasuredRun
 	for rows.Next() {
 		var run UnmeasuredRun
-		if err := rows.Scan(&run.ID, &run.TargetID, &run.Kind, &run.SnapshotID, &run.StartedAt); err != nil {
+		var rowid int64
+		if err := rows.Scan(&run.ID, &run.TargetID, &run.Kind, &run.SnapshotID, &run.StartedAt,
+			&run.Dataset, &rowid); err != nil {
 			return nil, fmt.Errorf("UnmeasuredSnapshotRuns: %w", err)
 		}
 		out = append(out, run)

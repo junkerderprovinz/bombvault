@@ -34,7 +34,25 @@ func TestAnomalyMigrationsCreateSchema(t *testing.T) {
 		}
 	}
 
-	for _, name := range []string{"idx_runs_target_kind_started", "idx_anomalies_open_fingerprint", "idx_anomalies_scope", "idx_anomalies_target"} {
+	if _, err := db.Exec(`
+		INSERT INTO zfs_run_members (run_id, dataset, outcome, restic_snapshot, bytes_added)
+		VALUES ('old', 'tank/media', 'backed-up', 'snap', 4096)`); err != nil {
+		t.Fatalf("insert run member: %v", err)
+	}
+	for _, col := range []string{"source_bytes", "source_files", "has_parent"} {
+		var isNull bool
+		if err := db.QueryRow(`SELECT ` + col + ` IS NULL FROM zfs_run_members WHERE run_id = 'old'`).Scan(&isNull); err != nil {
+			t.Fatalf("read zfs_run_members.%s: %v", col, err)
+		}
+		if !isNull {
+			t.Fatalf("zfs_run_members.%s carries a value on a row written before the migration", col)
+		}
+	}
+
+	for _, name := range []string{
+		"idx_runs_target_kind_started", "idx_anomalies_open_fingerprint", "idx_anomalies_scope", "idx_anomalies_target",
+		"idx_zfs_run_members_snapshot",
+	} {
 		var n int
 		err := db.QueryRow(
 			`SELECT count(*) FROM sqlite_master WHERE type = 'index' AND name = ?`, name,
@@ -99,10 +117,16 @@ func TestAnomalyMigrationsCarryGuards(t *testing.T) {
 			guards[m.version] = m.alreadySatisfied != nil
 		}
 	}
+	for _, m := range migrations {
+		if m.version == zfsMemberMetricsMigration {
+			guards[m.version] = m.alreadySatisfied != nil
+		}
+	}
 	for version, want := range map[int]bool{
-		anomalyMigrationBase:     true,
-		anomalyMigrationBase + 1: false,
-		anomalyMigrationBase + 2: true,
+		anomalyMigrationBase:      true,
+		anomalyMigrationBase + 1:  false,
+		anomalyMigrationBase + 2:  true,
+		zfsMemberMetricsMigration: true,
 	} {
 		got, ok := guards[version]
 		if !ok {

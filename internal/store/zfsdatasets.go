@@ -90,7 +90,17 @@ type ZFSRunMember struct {
 	FilesChanged    int64  `json:"filesChanged"`
 	FilesUnmodified int64  `json:"filesUnmodified"`
 	DurationMS      int64  `json:"durationMs"`
+	// SourceBytes, SourceFiles and HasParent are what restic read, nil where it
+	// read nothing: anomaly detection tells a dataset that was skipped from one
+	// that held no data by them. The run detail the page shows has no use for
+	// them.
+	SourceBytes *int64 `json:"-"`
+	SourceFiles *int64 `json:"-"`
+	HasParent   *bool  `json:"-"`
 }
+
+// ZFSMemberRef names one dataset of one run.
+type ZFSMemberRef struct{ RunID, Dataset string }
 
 // ZFSSafetySnapshot is a snapshot taken before an in-place restore. It is kept
 // until the user deletes it, so the sweeper that removes leaked backup stamps
@@ -513,10 +523,15 @@ func (r *Repo) ListZFSRuns(itemID string, limit int) ([]ZFSRun, error) {
 // AddZFSRunMember records what one run did to one dataset. It is written as
 // each member finishes, so an interrupted run keeps what it managed.
 func (r *Repo) AddZFSRunMember(m ZFSRunMember) error {
+	var hasParent any
+	if m.HasParent != nil {
+		hasParent = boolToInt(*m.HasParent)
+	}
 	_, err := r.db.Exec(`
 		INSERT INTO zfs_run_members (run_id, dataset, outcome, is_new, restic_snapshot,
-			bytes_added, files_new, files_changed, files_unmodified, duration_ms)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			bytes_added, files_new, files_changed, files_unmodified, duration_ms,
+			source_bytes, source_files, has_parent)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(run_id, dataset) DO UPDATE SET
 			outcome = excluded.outcome,
 			is_new = excluded.is_new,
@@ -525,9 +540,13 @@ func (r *Repo) AddZFSRunMember(m ZFSRunMember) error {
 			files_new = excluded.files_new,
 			files_changed = excluded.files_changed,
 			files_unmodified = excluded.files_unmodified,
-			duration_ms = excluded.duration_ms`,
+			duration_ms = excluded.duration_ms,
+			source_bytes = excluded.source_bytes,
+			source_files = excluded.source_files,
+			has_parent = excluded.has_parent`,
 		m.RunID, m.Dataset, m.Outcome, boolInt(m.IsNew), m.ResticSnapshot,
 		m.BytesAdded, m.FilesNew, m.FilesChanged, m.FilesUnmodified, m.DurationMS,
+		m.SourceBytes, m.SourceFiles, hasParent,
 	)
 	if err != nil {
 		return fmt.Errorf("AddZFSRunMember %s: %w", m.Dataset, err)
@@ -535,20 +554,22 @@ func (r *Repo) AddZFSRunMember(m ZFSRunMember) error {
 	return nil
 }
 
+const zfsRunMemberColumns = `m.run_id, m.dataset, m.outcome, m.is_new, m.restic_snapshot,
+	m.bytes_added, m.files_new, m.files_changed, m.files_unmodified, m.duration_ms,
+	m.source_bytes, m.source_files, m.has_parent`
+
 // ListZFSRunMembers returns one run's members ordered by dataset.
 func (r *Repo) ListZFSRunMembers(runID string) ([]ZFSRunMember, error) {
 	return r.zfsRunMembers(`
-		SELECT run_id, dataset, outcome, is_new, restic_snapshot,
-		       bytes_added, files_new, files_changed, files_unmodified, duration_ms
-		FROM zfs_run_members WHERE run_id = ? ORDER BY dataset`, "ListZFSRunMembers", runID)
+		SELECT `+zfsRunMemberColumns+`
+		FROM zfs_run_members m WHERE m.run_id = ? ORDER BY m.dataset`, "ListZFSRunMembers", runID)
 }
 
 // ListZFSRunMembersByDataset returns one dataset's newest rows across runs,
 // most recent first, for the baselines a change is measured against.
 func (r *Repo) ListZFSRunMembersByDataset(dataset string, limit int) ([]ZFSRunMember, error) {
 	return r.zfsRunMembers(`
-		SELECT m.run_id, m.dataset, m.outcome, m.is_new, m.restic_snapshot,
-		       m.bytes_added, m.files_new, m.files_changed, m.files_unmodified, m.duration_ms
+		SELECT `+zfsRunMemberColumns+`
 		FROM zfs_run_members m
 		JOIN runs r ON r.id = m.run_id
 		WHERE m.dataset = ?
@@ -567,14 +588,133 @@ func (r *Repo) zfsRunMembers(query, label string, args ...any) ([]ZFSRunMember, 
 	for rows.Next() {
 		var m ZFSRunMember
 		var isNew int
+		var sourceBytes, sourceFiles, hasParent sql.NullInt64
 		if err := rows.Scan(&m.RunID, &m.Dataset, &m.Outcome, &isNew, &m.ResticSnapshot,
-			&m.BytesAdded, &m.FilesNew, &m.FilesChanged, &m.FilesUnmodified, &m.DurationMS); err != nil {
+			&m.BytesAdded, &m.FilesNew, &m.FilesChanged, &m.FilesUnmodified, &m.DurationMS,
+			&sourceBytes, &sourceFiles, &hasParent); err != nil {
 			return nil, fmt.Errorf("%s scan: %w", label, err)
 		}
 		m.IsNew = isNew != 0
+		m.SourceBytes = nullableInt(sourceBytes)
+		m.SourceFiles = nullableInt(sourceFiles)
+		if hasParent.Valid {
+			parent := hasParent.Int64 != 0
+			m.HasParent = &parent
+		}
 		out = append(out, m)
 	}
 	return out, rows.Err()
+}
+
+// DatasetSeries is ItemSeries for one dataset of a ZFS tree: its rows across
+// every run that recorded it, newest first, whichever item that run belonged
+// to. A row carries the run's status, start and selection fingerprint next to
+// the member's own outcome and figures, with Bytes the data the member added,
+// ResticMS how long it took and SnapshotID the restic snapshot it wrote.
+func (r *Repo) DatasetSeries(dataset string, cutoff int64, limit int) ([]SeriesRun, error) {
+	rows, err := r.db.Query(`
+		SELECT r.id, r.status, m.restic_snapshot, r.error, r.started_at, r.finished_at, m.bytes_added,
+		       m.source_bytes, m.source_files,
+		       CASE WHEN m.source_bytes IS NULL THEN NULL ELSE m.files_new END,
+		       m.duration_ms, m.has_parent, r.selection_fp, m.outcome
+		FROM zfs_run_members m
+		JOIN runs r ON r.id = m.run_id
+		WHERE m.dataset = ? AND r.status IN ('success', 'failed') AND r.started_at <= ?
+		ORDER BY r.started_at DESC, r.rowid DESC
+		LIMIT ?`, dataset, cutoff, limit)
+	if err != nil {
+		return nil, fmt.Errorf("DatasetSeries: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	var out []SeriesRun
+	for rows.Next() {
+		var run SeriesRun
+		var errCol, fp sql.NullString
+		var finishedAt sql.NullInt64
+		var sourceBytes, sourceFiles, filesNew, durationMS, hasParent sql.NullInt64
+		if err := rows.Scan(&run.ID, &run.Status, &run.SnapshotID, &errCol, &run.StartedAt, &finishedAt,
+			&run.Bytes, &sourceBytes, &sourceFiles, &filesNew, &durationMS, &hasParent, &fp,
+			&run.Outcome); err != nil {
+			return nil, fmt.Errorf("DatasetSeries: %w", err)
+		}
+		run.Error = errCol.String
+		run.FinishedAt = finishedAt.Int64
+		run.SourceBytes = nullableInt(sourceBytes)
+		run.SourceFiles = nullableInt(sourceFiles)
+		run.FilesNew = nullableInt(filesNew)
+		run.ResticMS = nullableInt(durationMS)
+		run.HasParent = nullableInt(hasParent)
+		if fp.Valid {
+			run.SelectionFP = &fp.String
+		}
+		out = append(out, run)
+	}
+	return out, rows.Err()
+}
+
+// ZFSDatasetOwners maps every dataset a ZFS run has recorded to the item whose
+// newest run recorded it. A dataset keeps its history when its tree is taken
+// over by another item, so it belongs to whichever item backs it up now.
+func (r *Repo) ZFSDatasetOwners() (map[string]string, error) {
+	// SQLite takes the bare target_id from the row that holds the maximum.
+	rows, err := r.db.Query(`
+		SELECT m.dataset, r.target_id, MAX(r.started_at)
+		FROM zfs_run_members m
+		JOIN runs r ON r.id = m.run_id
+		GROUP BY m.dataset`)
+	if err != nil {
+		return nil, fmt.Errorf("ZFSDatasetOwners: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	out := map[string]string{}
+	for rows.Next() {
+		var dataset, owner string
+		var newest int64
+		if err := rows.Scan(&dataset, &owner, &newest); err != nil {
+			return nil, fmt.Errorf("ZFSDatasetOwners: %w", err)
+		}
+		out[dataset] = owner
+	}
+	return out, rows.Err()
+}
+
+// SetZFSMemberMetrics fills in the source figures of datasets that have none
+// and returns how many rows it wrote. Like SetRunMetrics it never replaces
+// what a run measured itself.
+func (r *Repo) SetZFSMemberMetrics(m map[ZFSMemberRef]RunMetrics) (int, error) {
+	if len(m) == 0 {
+		return 0, nil
+	}
+	tx, err := r.db.Begin()
+	if err != nil {
+		return 0, fmt.Errorf("SetZFSMemberMetrics begin: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // no-op after Commit
+
+	set := 0
+	for ref, rm := range m {
+		var hasParent any
+		if rm.HasParent != nil {
+			hasParent = boolToInt(*rm.HasParent)
+		}
+		res, err := tx.Exec(`
+			UPDATE zfs_run_members
+			SET source_bytes = ?, source_files = ?, has_parent = ?
+			WHERE run_id = ? AND dataset = ? AND source_bytes IS NULL`,
+			rm.SourceBytes, rm.SourceFiles, hasParent, ref.RunID, ref.Dataset,
+		)
+		if err != nil {
+			return 0, fmt.Errorf("SetZFSMemberMetrics %s: %w", ref.Dataset, err)
+		}
+		n, _ := res.RowsAffected()
+		set += int(n)
+	}
+	if err := tx.Commit(); err != nil {
+		return 0, fmt.Errorf("SetZFSMemberMetrics commit: %w", err)
+	}
+	return set, nil
 }
 
 // UpsertZFSSafetySnapshot records a snapshot taken before an in-place restore.
