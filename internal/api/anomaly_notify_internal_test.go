@@ -53,6 +53,26 @@ func TestAnomalyNotifyTextSingleAndGrouped(t *testing.T) {
 	}
 }
 
+// The most urgent capacity message is the one about tomorrow, and it has to
+// read like the page does.
+func TestCapacityMessageCountsDays(t *testing.T) {
+	for days, want := range map[float64]string{
+		0.4: "less than a day",
+		1.2: "1 day",
+		2:   "2 days",
+		21:  "21 days",
+	} {
+		full := AnomalyView{
+			Metric: metricCapacityETA, Severity: "critical", ScopeKind: anomalyScopeVolume,
+			Observed: days, Details: map[string]any{"freeBytes": float64(2 << 30)},
+		}
+		want = "The disk holding the backup storage will be full in about " + want + " at the current rate."
+		if got := anomalySentence(full); got != want {
+			t.Fatalf("%v days reads %q, want %q", days, got, want)
+		}
+	}
+}
+
 // The singleton domains have no item name of their own, and a message that
 // called them differently from the backup notification would read as a
 // different thing entirely.
