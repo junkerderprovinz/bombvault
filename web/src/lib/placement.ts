@@ -365,7 +365,7 @@ const RULE_321: Record<PlacementObserved["rule321"], { key: TranslationKey; tone
   unconfirmed: { key: "placement.rule321Unconfirmed", tone: "unconfirmed" },
 };
 
-export function observedLine(t: T, lang: string, observed: PlacementObserved): StatusLine[] {
+export function observedLine(t: T, observed: PlacementObserved): StatusLine[] {
   if (observed.noBackup) return [{ text: t("placement.noBackup"), tone: "muted" }];
   const lines: StatusLine[] = [
     {
@@ -377,14 +377,15 @@ export function observedLine(t: T, lang: string, observed: PlacementObserved): S
     },
   ];
   for (const p of observed.places) {
-    if (p.place !== "local") lines.push(placeLine(t, lang, p));
+    if (p.place !== "local") lines.push(placeLine(t, p));
   }
   const rule = RULE_321[observed.rule321];
   lines.push({ text: t(rule.key), tone: rule.tone });
   return lines;
 }
 
-function placeLine(t: T, lang: string, p: ObservedPlace): StatusLine {
+// Dates follow the browser's locale, as formatTs and every other date in the app do.
+function placeLine(t: T, p: ObservedPlace): StatusLine {
   const at = (key: TranslationKey) => t(key).replace("{place}", () => p.label);
   switch (p.state) {
     case "counts":
@@ -409,7 +410,7 @@ function placeLine(t: T, lang: string, p: ObservedPlace): StatusLine {
       };
     case "old-copy":
       return {
-        text: at("placement.oldCopy").replace("{date}", () => new Date(p.latest * 1000).toLocaleDateString(lang)),
+        text: at("placement.oldCopy").replace("{date}", () => new Date(p.latest * 1000).toLocaleDateString()),
         tone: "muted",
       };
     case "no-copy":
