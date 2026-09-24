@@ -29,7 +29,7 @@ const RULE_ID = "no-status-color-on-control";
 /** Badge tones that signal a status rather than being chrome. */
 const STATUS_TONES = new Set(["fail", "warn", "ok"]);
 
-/** `text-statusFail`, `hover:bg-statusWarnBg`, `border-statusOkSolid`, … */
+/** `text-statusFail`, `hover:bg-statusWarnBg`, `border-statusOkSolid` and so on. */
 const STATUS_UTILITY =
   /^(?:bg|text|border|ring|outline|fill|stroke|decoration|divide|shadow|accent|caret)-status(?:Fail|Warn|Ok)[A-Za-z]*$/;
 
@@ -38,13 +38,13 @@ export default {
     type: "problem",
     docs: {
       description:
-        "An interactive control does not paint itself in a status colour — status green/amber/red is a readout, and a destructive action gets no bespoke red of its own.",
+        "An interactive control does not paint itself in a status colour: status green/amber/red is a readout, and a destructive action gets no bespoke red of its own.",
     },
     schema: [],
     messages: {
-      tone: 'This is a CONTROL (`{{el}}`), and it paints itself with tone="{{tone}}". A status colour is a readout, not chrome, and a destructive action gets no special red either — use the same tone as the controls it shares a row with (tone="neutral", or tone="active" to join the colour engine). The label and the confirm step already carry the meaning.{{hatch}}',
+      tone: 'This is a control (`{{el}}`), and it paints itself with tone="{{tone}}". A status colour is a readout, not chrome, and a destructive action gets no special red either. Use the same tone as the controls it shares a row with (tone="neutral", or tone="active" to join the colour engine); the label and the confirm step already carry the meaning.{{hatch}}',
       utility:
-        'This is a CONTROL (`{{el}}`), and `{{token}}` gives it a bespoke status colour. Status green/amber/red is a readout, not control chrome — use the neutral secondary chrome its siblings use (`bg-carbon-surface2` / `text-carbon-text` / `hover:bg-carbon-hover`).{{hatch}}',
+        'This is a control (`{{el}}`), and `{{token}}` gives it a bespoke status colour. Status green/amber/red is a readout, not control chrome; use the neutral secondary chrome its siblings use (`bg-carbon-surface2` / `text-carbon-text` / `hover:bg-carbon-hover`).{{hatch}}',
     },
   },
 
