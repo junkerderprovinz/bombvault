@@ -93,6 +93,7 @@ func TestMCPDomainsCoverEveryServiceDomain(t *testing.T) {
 	settings.FilesEnabled = true
 	settings.FlashEnabled = true
 	settings.ConfigEnabled = true
+	settings.ZFSEnabled = true
 	if err := repo.UpdateSettings(settings); err != nil {
 		t.Fatal(err)
 	}
@@ -139,6 +140,43 @@ func TestMCPDomainsCoverEveryServiceDomain(t *testing.T) {
 				t.Fatalf("%s does not accept the domain %q", def.tool.Name, domain)
 			}
 		}
+	}
+}
+
+// Every tool checks the domain against the vocabulary before it starts
+// anything, so no call reaches a start switch with a domain it does not know.
+// A domain added to the vocabulary without a branch of its own would, and it
+// must then start nothing rather than whatever the last branch backs up.
+func TestMCPStartSwitchesRefuseAnUnknownDomain(t *testing.T) {
+	h, repo, _ := newMCPStartHandler(t)
+	settings, err := repo.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ConfigEnabled = true
+	if err := repo.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	ctx := WithRunOrigin(context.Background(), RunOrigin{Via: "mcp", KeyID: "0b7e"})
+	item := mcpItem{Domain: "nas", ID: "nas", Name: "nas"}
+
+	if started, err := h.startMCPItem(ctx, item); started || err == nil {
+		t.Fatalf("start_backup's switch answered started=%v err=%v for an unknown domain", started, err)
+	}
+	waitForFilesIdle(t, h)
+	if started, err := h.startMCPDomain(ctx, "nas", []mcpItem{item}); started || err == nil {
+		t.Fatalf("start_domain_backup's switch answered started=%v err=%v for an unknown domain", started, err)
+	}
+	waitForFilesIdle(t, h)
+	if items, _, err := h.domainStartSelection(ctx, settings, "nas", false); err == nil {
+		t.Fatalf("the domain selection picked %v for an unknown domain", items)
+	}
+	runs, err := repo.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(runs) != 0 {
+		t.Fatalf("an unknown domain started %d runs, the first on %s", len(runs), runs[0].TargetID)
 	}
 }
 

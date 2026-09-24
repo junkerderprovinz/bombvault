@@ -175,11 +175,13 @@ func mcpEstablishRepos(t *testing.T, st *store.Repo, dir string) map[string]stri
 	settings.FilesEnabled = true
 	settings.FlashEnabled = true
 	settings.ConfigEnabled = true
+	settings.ZFSEnabled = true
 	settings.ContainersPath = "backups/containers"
 	settings.VMsPath = "backups/vms"
 	settings.FilesPath = "backups/files"
 	settings.FlashPath = "backups/flash"
 	settings.ConfigPath = "backups/config"
+	settings.ZFSPath = "backups/zfs"
 	if err := st.UpdateSettings(settings); err != nil {
 		t.Fatal(err)
 	}
@@ -188,6 +190,7 @@ func mcpEstablishRepos(t *testing.T, st *store.Repo, dir string) map[string]stri
 		"containers": settings.ContainersPath,
 		"vms":        settings.VMsPath,
 		"files":      settings.FilesPath,
+		"zfs":        settings.ZFSPath,
 		"flash":      settings.FlashPath,
 		"config":     settings.ConfigPath,
 	} {

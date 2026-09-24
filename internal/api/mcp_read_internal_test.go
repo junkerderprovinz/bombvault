@@ -9,6 +9,10 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"github.com/junkerderprovinz/bombvault/internal/dockercli"
+	"github.com/junkerderprovinz/bombvault/internal/schedule"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // newMCPRestorePointHandler wires a handler whose flash repository exists and
@@ -104,6 +108,132 @@ func TestMCPRestorePointsSemaphoreBusy(t *testing.T) {
 	}
 	if got := eng.callCount(); got != 2 {
 		t.Fatalf("restic ran %d times, want the two listings that held the slot", got)
+	}
+}
+
+// runningDocker reports the named containers as up and answers nothing else,
+// which is all list_items asks Docker for.
+type runningDocker struct {
+	dockercli.Docker
+	running []string
+}
+
+func (d runningDocker) List(context.Context) ([]dockercli.ContainerInfo, error) {
+	out := make([]dockercli.ContainerInfo, 0, len(d.running))
+	for _, name := range d.running {
+		out = append(out, dockercli.ContainerInfo{Name: name, State: "running"})
+	}
+	return out, nil
+}
+
+// mcpStructured is a tool result's structured content the way a client reads
+// it, as decoded JSON.
+func mcpStructured(t *testing.T, res *mcp.CallToolResult) map[string]any {
+	t.Helper()
+	if res.IsError {
+		t.Fatalf("the call was refused: %v", res.StructuredContent)
+	}
+	raw, err := json.Marshal(res.StructuredContent)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var out map[string]any
+	if err := json.Unmarshal(raw, &out); err != nil {
+		t.Fatalf("decode %s: %v", raw, err)
+	}
+	return out
+}
+
+// ZFS items are listed from the store. The host may be switched off, and a
+// listing that opened SSH for every call would be the most expensive read an
+// assistant can repeat.
+func TestMCPListItemsZFSDatasetsWithoutAskingTheHost(t *testing.T) {
+	h, _, repo, _ := newMCPGateHandler(t)
+	host := &fakeZFSHost{}
+	h.svc.zfs = host
+	h.docker = runningDocker{running: []string{"plex"}}
+	settings, err := repo.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ZFSEnabled = true
+	settings.ZFSSchedule = "daily 03:00"
+	if err := repo.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	plex, err := repo.CreateZFSDataset(store.ZFSDataset{
+		Dataset: "cache/appdata/plex", Enabled: true, StopContainers: []string{"plex", "redis"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := repo.SetZFSCheck(plex.ID, "not-mounted", "", "", time.Now().Unix()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := repo.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/archive"}); err != nil {
+		t.Fatal(err)
+	}
+	seedBackup(t, repo, plex.ID, "", "")
+	plex, err = repo.GetZFSDataset(plex.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	res, _ := h.toolListItems(mcpStartCaller("0b7e", false), &mcp.CallToolRequest{Params: &mcp.CallToolParamsRaw{
+		Name: "list_items", Arguments: json.RawMessage(`{"domain":"zfs"}`),
+	}})
+	domains, _ := mcpStructured(t, res)["domains"].([]any)
+	if len(domains) != 1 {
+		t.Fatalf("list_items for zfs returned %v", domains)
+	}
+	row, _ := domains[0].(map[string]any)
+	if row["domain"] != "zfs" || row["enabled"] != true {
+		t.Fatalf("the zfs domain reads %v", row)
+	}
+	items := map[string]map[string]any{}
+	for _, raw := range row["items"].([]any) {
+		item, _ := raw.(map[string]any)
+		name, _ := item["name"].(string)
+		items[name] = item
+	}
+
+	got := items["cache/appdata/plex"]
+	if got["id"] != plex.ID || got["included"] != true || got["lastCheckCode"] != "not-mounted" {
+		t.Fatalf("the dataset reads %v", got)
+	}
+	if want := schedule.EffectiveZFSDatasetSchedule(plex, settings).Kind; got["schedule"] != want {
+		t.Fatalf("schedule = %v, want %q", got["schedule"], want)
+	}
+	stops, _ := got["stops"].(map[string]any)
+	also, _ := stops["containers"].([]any)
+	if stops["self"] != false || stops["known"] != true || len(also) != 1 || also[0] != "plex" {
+		t.Fatalf("stops = %v, want the one configured container that is running", stops)
+	}
+	if got["lastSuccessAt"] == float64(0) {
+		t.Fatalf("the seeded backup is not stamped on the dataset: %v", got)
+	}
+	if archive := items["cache/archive"]; archive["included"] != false || archive["lastCheckCode"] != "" {
+		t.Fatalf("the switched-off dataset reads %v", archive)
+	}
+	if calls := host.recorded(); len(calls) != 0 {
+		t.Fatalf("listing the items asked the host %v", calls)
+	}
+}
+
+// get_activity names the run behind a ZFS backup the same way it does for the
+// other domains, so an assistant can pass it to cancel_backup.
+func TestMCPActivityNamesTheRunOfAZFSBackup(t *testing.T) {
+	h, _, repo, _ := newMCPGateHandler(t)
+	d, err := repo.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/appdata", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	runID, err := repo.StartRunWith(d.ID, "backup", store.RunMeta{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := h.runningRunID(ActivityItem{Domain: zfsDomain, Item: d.Dataset}); got != runID {
+		t.Fatalf("runId = %q, want the running backup %q", got, runID)
 	}
 }
 

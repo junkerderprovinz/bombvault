@@ -16,6 +16,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
 
 // How many repository size samples one call may ask for, and how many it gets
@@ -171,6 +172,10 @@ func (h *Handler) runningRunID(item ActivityItem) string {
 		if set, err := h.store.GetFileSetByName(item.Item); err == nil {
 			targetID = set.ID
 		}
+	case zfsDomain:
+		if d, err := h.store.GetZFSDatasetByName(item.Item); err == nil {
+			targetID = d.ID
+		}
 	case "flash":
 		targetID = store.FlashTargetID
 	case "config":
@@ -266,7 +271,9 @@ type mcpDatabase struct {
 
 // mcpItemView is one protected thing as list_items reports it. Installed is a
 // pointer because "not installed" and "nobody could ask Docker" are different
-// answers, and only containers have either.
+// answers, and only containers have either. LastCheckCode is a pointer for the
+// same reason: a ZFS item that was never checked reports an empty code, and no
+// other item has a check at all.
 type mcpItemView struct {
 	ID                  string       `json:"id"`
 	Name                string       `json:"name"`
@@ -274,6 +281,7 @@ type mcpItemView struct {
 	Included            bool         `json:"included"`
 	Paused              bool         `json:"paused"`
 	Schedule            string       `json:"schedule"`
+	LastCheckCode       *string      `json:"lastCheckCode,omitempty"`
 	Stops               mcpStops     `json:"stops"`
 	LastDurationSeconds int64        `json:"lastDurationSeconds"`
 	LastSuccessAt       int64        `json:"lastSuccessAt"`
@@ -364,9 +372,10 @@ func (h *Handler) mcpItems(ctx context.Context, settings store.Settings, domain 
 	if err != nil {
 		return nil, nil, err
 	}
+	live := h.mcpDockerOnce(ctx)
 
 	if _, want := items["containers"]; want && settings.ContainersEnabled {
-		rows, dockerAnswered, cErr := h.mcpContainerItems(ctx, settings, stamps)
+		rows, dockerAnswered, cErr := h.mcpContainerItems(ctx, settings, stamps, live)
 		if cErr != nil {
 			return nil, nil, cErr
 		}
@@ -412,6 +421,13 @@ func (h *Handler) mcpItems(ctx context.Context, settings store.Settings, domain 
 		}
 		items["files"] = rows
 	}
+	if _, want := items[zfsDomain]; want && settings.ZFSEnabled {
+		rows, zErr := h.mcpZFSItems(settings, stamps, live)
+		if zErr != nil {
+			return nil, nil, zErr
+		}
+		items[zfsDomain] = rows
+	}
 	if _, want := items["flash"]; want && settings.FlashEnabled {
 		items["flash"] = []mcpItemView{mcpSingletonItem("flash", settings.FlashSchedule, settings.EverythingSchedule, stamps)}
 	}
@@ -425,7 +441,7 @@ func (h *Handler) mcpItems(ctx context.Context, settings store.Settings, domain 
 // failure leaves the rows in place without an installed flag: the stored items
 // are still what an operator asks about, and dropping them because the socket
 // was busy would read as "BombVault protects nothing".
-func (h *Handler) mcpContainerItems(ctx context.Context, settings store.Settings, stamps map[string]store.BackupStamp) ([]mcpItemView, bool, error) {
+func (h *Handler) mcpContainerItems(ctx context.Context, settings store.Settings, stamps map[string]store.BackupStamp, docker func() mcpDockerState) ([]mcpItemView, bool, error) {
 	targets, err := h.store.ListTargets()
 	if err != nil {
 		return nil, false, err
@@ -435,21 +451,14 @@ func (h *Handler) mcpContainerItems(ctx context.Context, settings store.Settings
 		return nil, false, err
 	}
 
-	infos, listErr := h.docker.List(ctx)
-	if listErr != nil {
-		log.Printf("api: mcp: list_items: the container list is unavailable: %v", listErr)
-	}
-	live := make(map[string]dockercli.ContainerInfo, len(infos))
-	for _, c := range infos {
-		live[c.Name] = c
-	}
+	state := docker()
+	live, dockerAnswered := state.live, state.answered
 	byName := make(map[string]store.Target, len(targets))
 	for _, t := range targets {
 		byName[t.ContainerName] = t
 	}
-	dbRows := h.svc.dbDumpRows(ctx, infos, byName)
+	dbRows := h.svc.dbDumpRows(ctx, state.infos, byName)
 	self := h.svc.SelfContainerName(ctx)
-	dockerAnswered := listErr == nil
 
 	rows := make([]mcpItemView, 0, len(targets))
 	for _, t := range targets {
@@ -492,6 +501,71 @@ func (h *Handler) mcpContainerItems(ctx context.Context, settings store.Settings
 
 func isRunning(c dockercli.ContainerInfo) bool {
 	return strings.EqualFold(c.State, "running")
+}
+
+// mcpDockerState is the container list one call works from, and whether Docker
+// gave it.
+type mcpDockerState struct {
+	infos    []dockercli.ContainerInfo
+	live     map[string]dockercli.ContainerInfo
+	answered bool
+}
+
+// mcpDockerOnce asks Docker for its containers the first time a domain needs
+// them and hands every later domain the same answer, so one listing costs one
+// Docker call however many domains read what is running.
+func (h *Handler) mcpDockerOnce(ctx context.Context) func() mcpDockerState {
+	var state *mcpDockerState
+	return func() mcpDockerState {
+		if state != nil {
+			return *state
+		}
+		infos, err := h.docker.List(ctx)
+		if err != nil {
+			log.Printf("api: mcp: list_items: the container list is unavailable: %v", err)
+		}
+		live := make(map[string]dockercli.ContainerInfo, len(infos))
+		for _, c := range infos {
+			live[c.Name] = c
+		}
+		state = &mcpDockerState{infos: infos, live: live, answered: err == nil}
+		return *state
+	}
+}
+
+// mcpZFSItems lists the ZFS items off their stored rows. The host is never
+// asked: it may be switched off, and the rows already hold everything the
+// listing says. Docker is, but only when an item stops containers.
+func (h *Handler) mcpZFSItems(settings store.Settings, stamps map[string]store.BackupStamp, docker func() mcpDockerState) ([]mcpItemView, error) {
+	datasets, err := h.store.ListZFSDatasets()
+	if err != nil {
+		return nil, err
+	}
+	rows := make([]mcpItemView, 0, len(datasets))
+	for _, d := range datasets {
+		code := d.LastCheckCode
+		view := mcpItemView{
+			ID:            d.ID,
+			Name:          d.Dataset,
+			Included:      d.Enabled,
+			Paused:        schedule.PausedByOverride(d.ScheduleCadence, settings.PerItemSchedules),
+			Schedule:      schedule.EffectiveZFSDatasetSchedule(d, settings).Kind,
+			LastCheckCode: &code,
+			Stops:         mcpStops{Containers: []string{}, Known: true},
+		}
+		if len(d.StopContainers) > 0 {
+			state := docker()
+			view.Stops.Known = state.answered
+			for _, name := range d.StopContainers {
+				if isRunning(state.live[name]) {
+					view.Stops.Containers = append(view.Stops.Containers, name)
+				}
+			}
+		}
+		view.stamp(stamps[d.ID])
+		rows = append(rows, view)
+	}
+	return rows, nil
 }
 
 // mcpDatabaseOf is the database block of a container, or nil for one nothing
@@ -545,6 +619,8 @@ func mcpDomainEnabled(s store.Settings, domain string) bool {
 		return s.VMsEnabled
 	case "files":
 		return s.FilesEnabled
+	case zfsDomain:
+		return s.ZFSEnabled
 	case "flash":
 		return s.FlashEnabled
 	case "config":
@@ -581,6 +657,8 @@ func (h *Handler) resolveMCPItem(domain, item string) (mcpItem, *mcp.CallToolRes
 		return mcpItem{Domain: domain, ID: vm.ID, Name: vm.Name}, nil
 	case "files":
 		return h.resolveMCPFileSet(item)
+	case zfsDomain:
+		return h.resolveMCPDataset(item)
 	case "flash", "config":
 		if item != "" && item != domain {
 			return mcpItem{}, mcpToolError("invalid_argument", "the "+domain+" domain holds a single item, called "+domain, nil)
@@ -630,6 +708,25 @@ func (h *Handler) resolveMCPFileSet(item string) (mcpItem, *mcp.CallToolResult) 
 	}
 	return mcpItem{}, mcpToolError("ambiguous", "several folder sets are called "+item+"; pass the id of the one you mean",
 		map[string]any{"candidates": candidates})
+}
+
+// resolveMCPDataset finds a ZFS item by its id or by the dataset at its root. A
+// dataset on the host that nobody added is not an item, and MCP adds none.
+func (h *Handler) resolveMCPDataset(item string) (mcpItem, *mcp.CallToolResult) {
+	var d store.ZFSDataset
+	var err error
+	if runIDRe.MatchString(item) {
+		d, err = h.store.GetZFSDataset(item)
+	} else {
+		if zfs.ValidateDatasetName(item) != nil {
+			return mcpItem{}, mcpToolError("invalid_argument", "item must be the id or the name of a ZFS dataset, such as cache/appdata", nil)
+		}
+		d, err = h.store.GetZFSDatasetByName(item)
+	}
+	if err != nil {
+		return mcpItem{}, mcpToolError("not_found", "BombVault does not protect a ZFS dataset called "+item+"; it has to be added in the web interface first", nil)
+	}
+	return mcpItem{Domain: zfsDomain, ID: d.ID, Name: d.Dataset}, nil
 }
 
 // mcpRunStatuses are the states a run row can be in.
@@ -756,6 +853,14 @@ func (h *Handler) mcpDomainTargetIDs(domain string) ([]string, error) {
 		for _, set := range sets {
 			ids = append(ids, set.ID)
 		}
+	case zfsDomain:
+		datasets, err := h.store.ListZFSDatasets()
+		if err != nil {
+			return nil, err
+		}
+		for _, d := range datasets {
+			ids = append(ids, d.ID)
+		}
 	}
 	return ids, nil
 }
@@ -841,19 +946,27 @@ func (h *Handler) toolListRestorePoints(ctx context.Context, req *mcp.CallToolRe
 	ctx, cancel := h.mcpToolContext(ctx, mcpResticTimeout)
 	defer cancel()
 
-	snaps, err := h.mcpSnapshotsOf(ctx, item)
-	if err != nil {
-		return h.mcpListingFailed(ctx, err), nil
-	}
-	points := mcpRestorePointsOf(snaps)
-	total := len(points)
-	truncated := total > limit
-	if truncated {
-		points = points[:limit]
+	var points any
+	var total int
+	if item.Domain == zfsDomain {
+		zfsPoints, zErr := h.svc.ListZFSRestorePoints(ctx, item.ID, "local")
+		if zErr != nil {
+			return h.mcpListingFailed(ctx, zErr), nil
+		}
+		total = len(zfsPoints)
+		points = mcpZFSRestorePointsOf(zfsPoints[:min(total, limit)])
+	} else {
+		snaps, sErr := h.mcpSnapshotsOf(ctx, item)
+		if sErr != nil {
+			return h.mcpListingFailed(ctx, sErr), nil
+		}
+		all := mcpRestorePointsOf(snaps)
+		total = len(all)
+		points = all[:min(total, limit)]
 	}
 
 	repoItem := item.Name
-	if item.Domain == "files" {
+	if item.Domain == "files" || item.Domain == zfsDomain {
 		repoItem = item.ID
 	}
 	out := map[string]any{
@@ -862,7 +975,7 @@ func (h *Handler) toolListRestorePoints(ctx context.Context, req *mcp.CallToolRe
 		"repository":    "primary",
 		"remote":        h.svc.primaryRepoIsRemote(settings, item.Domain, repoItem),
 		"total":         total,
-		"truncated":     truncated,
+		"truncated":     total > limit,
 		"restorePoints": points,
 	}
 	if item.Domain == "containers" {
@@ -883,7 +996,8 @@ func (h *Handler) toolListRestorePoints(ctx context.Context, req *mcp.CallToolRe
 	return mcpOK(out), nil
 }
 
-// mcpSnapshotsOf lists an item's restore points in its primary repository.
+// mcpSnapshotsOf lists an item's restore points in its primary repository. A
+// ZFS item is not listed here: its snapshots only mean something grouped.
 func (h *Handler) mcpSnapshotsOf(ctx context.Context, item mcpItem) ([]restic.Snapshot, error) {
 	switch item.Domain {
 	case "containers":
@@ -924,6 +1038,48 @@ func mcpRestorePointsOf(snaps []restic.Snapshot) []mcpRestorePoint {
 	slices.SortStableFunc(out, func(a, b mcpRestorePoint) int {
 		return parseSnapshotTime(b.Time).Compare(parseSnapshotTime(a.Time))
 	})
+	return out
+}
+
+// mcpZFSRestorePoint is one moment of a ZFS item: the snapshots one backup took
+// of the datasets below it. A member's place under the item's mount is a path on
+// this host and stays here.
+type mcpZFSRestorePoint struct {
+	Stamp   string         `json:"stamp"`
+	Time    string         `json:"time"`
+	Members []mcpZFSMember `json:"members"`
+}
+
+// mcpZFSMember is one dataset of a ZFS restore point. A member the backup did
+// not read has no snapshot, and its outcome says why.
+type mcpZFSMember struct {
+	Dataset string `json:"dataset"`
+	ID      string `json:"id"`
+	ShortID string `json:"shortId"`
+	Outcome string `json:"outcome"`
+}
+
+// mcpZFSRestorePointsOf keeps a ZFS item's restore points grouped the way the
+// service hands them over, newest first. Flattened, the same moment would stand
+// in the list once for every dataset below the item.
+func mcpZFSRestorePointsOf(points []ZFSRestorePoint) []mcpZFSRestorePoint {
+	out := make([]mcpZFSRestorePoint, 0, len(points))
+	for _, p := range points {
+		at := ""
+		if p.Time > 0 {
+			at = time.Unix(p.Time, 0).UTC().Format(time.RFC3339)
+		}
+		members := make([]mcpZFSMember, 0, len(p.Members))
+		for _, m := range p.Members {
+			members = append(members, mcpZFSMember{
+				Dataset: m.Dataset,
+				ID:      m.SnapshotID,
+				ShortID: shortID(m.SnapshotID),
+				Outcome: m.Outcome,
+			})
+		}
+		out = append(out, mcpZFSRestorePoint{Stamp: p.Stamp, Time: at, Members: members})
+	}
 	return out
 }
 

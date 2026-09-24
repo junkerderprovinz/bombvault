@@ -1280,6 +1280,11 @@ func (s *Service) primaryRepoIsRemote(settings store.Settings, domain, item stri
 		if set, err = s.store.GetFileSet(item); err == nil {
 			repo, err = s.fileSetRepoFor(settings, set, "local")
 		}
+	case zfsDomain:
+		var d store.ZFSDataset
+		if d, err = s.store.GetZFSDataset(item); err == nil {
+			repo, err = s.zfsDatasetRepoFor(settings, d, "local")
+		}
 	default:
 		repo, err = s.repoFor(settings, domain, "local")
 	}

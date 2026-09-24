@@ -111,7 +111,8 @@ func (h *Handler) toolStartBackup(ctx context.Context, req *mcp.CallToolRequest)
 }
 
 // startMCPItem calls the service function behind the item's domain, the same
-// one the web interface reaches.
+// one the web interface reaches. A domain without a branch here starts nothing,
+// so one added to mcpDomains alone cannot back up something else instead.
 func (h *Handler) startMCPItem(ctx context.Context, item mcpItem) (bool, error) {
 	switch item.Domain {
 	case "containers":
@@ -122,9 +123,16 @@ func (h *Handler) startMCPItem(ctx context.Context, item mcpItem) (bool, error) 
 		return h.svc.StartBackupFileSet(ctx, item.ID)
 	case "flash":
 		return h.svc.StartBackupFlash(ctx)
-	default:
+	case "config":
 		return h.svc.StartBackupConfig(ctx)
 	}
+	return false, errMCPNoStart(item.Domain)
+}
+
+// errMCPNoStart is what a start switch answers for a domain it has no branch
+// for.
+func errMCPNoStart(domain string) error {
+	return fmt.Errorf("BombVault cannot start a backup of the %s domain through MCP", domain)
 }
 
 type startDomainBackupInput struct {
@@ -218,9 +226,10 @@ func (h *Handler) startMCPDomain(ctx context.Context, domain string, items []mcp
 		return h.svc.StartBackupFilesAll(ctx, mcpItemIDs(items))
 	case "flash":
 		return h.svc.StartBackupFlash(ctx)
-	default:
+	case "config":
 		return h.svc.StartBackupConfig(ctx)
 	}
+	return false, errMCPNoStart(domain)
 }
 
 func (h *Handler) toolStartBackupEverything(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -689,8 +698,10 @@ func (h *Handler) domainStartSelection(ctx context.Context, s store.Settings, do
 			}
 			items = append(items, mcpItem{Domain: domain, ID: set.ID, Name: set.Name})
 		}
-	default:
+	case "flash", "config":
 		items = append(items, mcpItem{Domain: domain, ID: domainRunTargetID(domain), Name: domain})
+	default:
+		return nil, nil, errMCPNoStart(domain)
 	}
 	return items, skipped, nil
 }

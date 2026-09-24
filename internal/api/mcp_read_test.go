@@ -193,6 +193,9 @@ func TestMCPGetStorageStats(t *testing.T) {
 			t.Fatalf("%s: code = %q, want invalid_argument", args, code)
 		}
 	}
+	if res := mcpCallTool(t, h, key, "get_storage_stats", `{"domain":"zfs"}`); res.IsError {
+		t.Fatalf("get_storage_stats for zfs: %v", res.Structured)
+	}
 	if code := mcpCallTool(t, h, key, "get_storage_stats", `{"domain":"nas"}`).code(t); code != "invalid_argument" {
 		t.Fatalf("an unknown domain gives %q, want invalid_argument", code)
 	}
@@ -744,12 +747,18 @@ func TestMCPListRunsDomainLevelRowsAndVocabulary(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	dataset, err := st.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/appdata", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
 	seedRun(t, st, plex.ID, "backup", "success", store.RunMeta{})
 	seedRun(t, st, vm.ID, "backup", "success", store.RunMeta{})
 	seedRun(t, st, set.ID, "backup", "success", store.RunMeta{})
+	datasetRun := seedRun(t, st, dataset.ID, "backup", "success", store.RunMeta{})
 	prune := seedRun(t, st, "containers", "prune", "success", store.RunMeta{})
 	verify := seedRun(t, st, "vms", "verify", "success", store.RunMeta{})
 	seedRun(t, st, "files", "offsite", "success", store.RunMeta{})
+	zfsPrune := seedRun(t, st, "zfs", "prune", "success", store.RunMeta{})
 	seedRun(t, st, store.EverythingTargetID, "backup", "success", store.RunMeta{})
 
 	rows := mcpRunRows(t, mcpCallTool(t, h, key, "list_runs", `{"domain":"containers","kind":"prune"}`))
@@ -763,6 +772,14 @@ func TestMCPListRunsDomainLevelRowsAndVocabulary(t *testing.T) {
 	if len(rows) != 1 || rows[0]["id"] != verify {
 		t.Fatalf("a vms verify is invisible under its own domain: %v", rows)
 	}
+	zfsRuns := mcpRunIDs(t, mcpCallTool(t, h, key, "list_runs", `{"domain":"zfs"}`))
+	if want := sortedCopy([]string{datasetRun, zfsPrune}); !slices.Equal(sortedCopy(zfsRuns), want) {
+		t.Fatalf("the zfs domain returned %v, want the dataset's backup and the domain's prune %v", zfsRuns, want)
+	}
+	rows = mcpRunRows(t, mcpCallTool(t, h, key, "list_runs", `{"domain":"zfs","item":"cache/appdata"}`))
+	if len(rows) != 1 || rows[0]["id"] != datasetRun || rows[0]["domain"] != "zfs" || rows[0]["itemName"] != "cache/appdata" {
+		t.Fatalf("the dataset's runs read %v", rows)
+	}
 
 	seen := map[string]bool{}
 	for _, row := range mcpRunRows(t, mcpCallTool(t, h, key, "list_runs", `{"limit":100}`)) {
@@ -772,7 +789,7 @@ func TestMCPListRunsDomainLevelRowsAndVocabulary(t *testing.T) {
 		}
 		seen[domain] = true
 	}
-	for _, domain := range []string{"containers", "vms", "files", "everything"} {
+	for _, domain := range []string{"containers", "vms", "files", "zfs", "everything"} {
 		if !seen[domain] {
 			t.Fatalf("no run came back with domain %q: %v", domain, seen)
 		}
@@ -927,11 +944,15 @@ func TestMCPRestorePointsPrimaryOnly(t *testing.T) {
 	if _, err := st.CreateFileSet(store.FileSet{Name: "Documents", Path: "documents", Enabled: true}); err != nil {
 		t.Fatal(err)
 	}
+	if _, err := st.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/appdata", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
 
 	for _, args := range []string{
 		`{"domain":"containers","item":"plex"}`,
 		`{"domain":"vms","item":"Windows11"}`,
 		`{"domain":"files","item":"Documents"}`,
+		`{"domain":"zfs","item":"cache/appdata"}`,
 		`{"domain":"flash"}`,
 		`{"domain":"config"}`,
 	} {
@@ -950,7 +971,7 @@ func TestMCPRestorePointsPrimaryOnly(t *testing.T) {
 	}
 	got := slices.Compact(sortedCopy(eng.listedRepos))
 	if !reflect.DeepEqual(got, sortedCopy(want)) {
-		t.Fatalf("the listings read %v, want only the five primary repositories %v", got, want)
+		t.Fatalf("the listings read %v, want only the six primary repositories %v", got, want)
 	}
 
 	for _, tool := range mcpListTools(t, h, key) {
@@ -1037,6 +1058,95 @@ func TestMCPRestorePointsIncludeDatabaseDumps(t *testing.T) {
 	}
 	if capped.Structured["databaseDumpsTruncated"] != true || capped.Structured["databaseDumpsTotal"] != float64(2) {
 		t.Fatalf("a capped dump list reads %v", capped.Structured)
+	}
+}
+
+// One ZFS backup writes a restic snapshot for every dataset below the item, so
+// a flat list would name the same moment once per dataset.
+func TestMCPRestorePointsZFSGroupedByStamp(t *testing.T) {
+	const (
+		root  = "cache/appdata"
+		child = "cache/appdata/plex"
+	)
+	member := func(id, dataset, stamp, when string) restic.Snapshot {
+		return restic.Snapshot{
+			ID:       id,
+			Time:     when,
+			Tags:     []string{"zfs:" + dataset},
+			Paths:    []string{"/host/user/" + dataset + "/.zfs/snapshot/" + stamp},
+			Hostname: "tower",
+		}
+	}
+	eng := &fakeResticEngine{}
+	h, st, _, key, dir := newMCPToolRouterDir(t, &fakeServiceDocker{}, eng)
+	mcpEstablishRepos(t, st, dir)
+	d, err := st.CreateZFSDataset(store.ZFSDataset{Dataset: root, Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	stamps := []string{"bombvault-20260914023107", "bombvault-20260915023107", "bombvault-20260916023107"}
+	for i, stamp := range stamps {
+		when := fmt.Sprintf("2026-09-%02dT02:31:07Z", 14+i)
+		eng.snaps = append(eng.snaps,
+			member(fmt.Sprintf("%064x", 2*i), root, stamp, when),
+			member(fmt.Sprintf("%064x", 2*i+1), child, stamp, when))
+	}
+
+	res := mcpCallTool(t, h, key, "list_restore_points", `{"domain":"zfs","item":"cache/appdata"}`)
+	points := mcpRows(t, res, "restorePoints")
+	if len(points) != 3 {
+		t.Fatalf("%d restore points came back, want one per backup: %v", len(points), points)
+	}
+	if res.Structured["total"] != float64(3) || res.Structured["truncated"] != false {
+		t.Fatalf("total = %v truncated = %v", res.Structured["total"], res.Structured["truncated"])
+	}
+	newest := points[0]
+	if newest["stamp"] != stamps[2] || newest["time"] != "2026-09-16T02:31:07Z" {
+		t.Fatalf("the first restore point is not the newest: %v", newest)
+	}
+	members, _ := newest["members"].([]any)
+	if len(members) != 2 {
+		t.Fatalf("members = %v, want both datasets", members)
+	}
+	first, _ := members[0].(map[string]any)
+	if len(first) != 4 || first["dataset"] != root || first["id"] != fmt.Sprintf("%064x", 4) || first["shortId"] != "00000000" || first["outcome"] != "backed-up" {
+		t.Fatalf("the root member reads %v", first)
+	}
+	for _, leak := range []string{"/host/user", "relPath", "tower"} {
+		if strings.Contains(res.text(t), leak) {
+			t.Fatalf("the answer repeats %q: %s", leak, res.text(t))
+		}
+	}
+	if _, ok := res.Structured["databaseDumps"]; ok {
+		t.Fatalf("a ZFS answer carries a databaseDumps key: %v", res.Structured)
+	}
+
+	byID := mcpCallTool(t, h, key, "list_restore_points", fmt.Sprintf(`{"domain":"zfs","item":%q,"limit":2}`, d.ID))
+	capped := mcpRows(t, byID, "restorePoints")
+	if len(capped) != 2 || capped[0]["stamp"] != stamps[2] || capped[1]["stamp"] != stamps[1] {
+		t.Fatalf("limit 2 returned %v, want the two newest moments", capped)
+	}
+	if kept, _ := capped[1]["members"].([]any); len(kept) != 2 {
+		t.Fatalf("the limit cut into the members of a restore point: %v", capped[1])
+	}
+	if byID.Structured["truncated"] != true {
+		t.Fatalf("truncated = %v with a moment left out", byID.Structured["truncated"])
+	}
+
+	_, body := doJSON(t, h, http.MethodGet, "/api/zfs/datasets/"+d.ID+"/restore-points", "")
+	if web, _ := body["points"].([]any); len(web) != len(points) {
+		t.Fatalf("the web interface offers %d restore points, the tool %d", len(web), len(points))
+	}
+
+	for _, c := range []struct{ item, code string }{
+		{"cache/unknown", "not_found"},
+		{"-rf", "invalid_argument"},
+		{"", "invalid_argument"},
+	} {
+		args := fmt.Sprintf(`{"domain":"zfs","item":%q}`, c.item)
+		if code := mcpCallTool(t, h, key, "list_restore_points", args).code(t); code != c.code {
+			t.Fatalf("item %q gives %q, want %s", c.item, code, c.code)
+		}
 	}
 }
 
