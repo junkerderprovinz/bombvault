@@ -126,6 +126,30 @@ describe("RetentionPreview", () => {
     await waitFor(() => expect(screen.getByText(/not reachable now/)).toBeTruthy());
   });
 
+  it("offers every domain that keeps snapshots, ZFS among them", () => {
+    renderPanel();
+    fireEvent.click(screen.getByRole("combobox"));
+    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual([
+      en["settings.containersEnabled"],
+      en["settings.vmsEnabled"],
+      en["settings.flashEnabled"],
+      en["settings.configEnabled"],
+      en["settings.filesEnabled"],
+      en["settings.zfsEnabled"],
+    ]);
+  });
+
+  it("asks the server about the domain the picker names", async () => {
+    previewRetention.mockResolvedValue({ ok: false, error: "no backups yet" });
+
+    renderPanel();
+    fireEvent.click(screen.getByRole("combobox"));
+    fireEvent.click(screen.getByRole("option", { name: en["settings.zfsEnabled"] }));
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(en["retentionPreview.show"], "i") }));
+
+    await waitFor(() => expect(previewRetention).toHaveBeenCalledWith("zfs", undefined));
+  });
+
   it("shows the server's refusal instead of an empty panel", async () => {
     previewRetention.mockResolvedValue({ ok: false, error: "no backups yet" });
 

@@ -18,7 +18,7 @@ class NoopEventSource {
 (globalThis as unknown as { EventSource: unknown }).EventSource = NoopEventSource;
 
 let containersOnServer: Container[] = [];
-let foreignInventory: ForeignInventory = { containers: [], vms: [], fileSets: [], dbDumps: [] };
+let foreignInventory: ForeignInventory = { containers: [], vms: [], fileSets: [], zfs: [], dbDumps: [] };
 const restore = vi.fn(() => Promise.resolve({ ok: true, started: true }));
 
 vi.mock("../lib/api", async (importOriginal) => {
@@ -36,6 +36,7 @@ vi.mock("../lib/api", async (importOriginal) => {
           vmsPath: "backups/vms",
           flashPath: "backups/flash",
           filesPath: "backups/files",
+          zfsPath: "backups/zfs",
           encryptionEnabled: true,
         },
         hostMountRoot: "/host/user",
@@ -44,11 +45,13 @@ vi.mock("../lib/api", async (importOriginal) => {
     discover: () => Promise.resolve({ ok: true, discovered: 1 }),
     discoverVMs: () => Promise.resolve({ ok: true, discovered: 0 }),
     discoverFiles: () => Promise.resolve({ ok: true, discovered: 0 }),
+    discoverZFS: () => Promise.resolve({ ok: true, discovered: 0 }),
     discoverAll: () =>
-      Promise.resolve({ containers: 2, vms: 0, files: 0, skipped: [], skippedNeedsAction: false }),
+      Promise.resolve({ containers: 2, vms: 0, files: 0, zfs: 0, skipped: [], skippedNeedsAction: false }),
     listContainers: () => Promise.resolve({ ok: true, containers: containersOnServer }),
     listVMs: () => Promise.resolve({ ok: true, vms: [] }),
     listFileSets: () => Promise.resolve({ ok: true, fileSets: [] }),
+    listZFSDatasets: () => Promise.resolve({ ok: true, datasets: [] }),
     listRuns: () => Promise.resolve({ ok: true, runs: [] }),
     getVMSSH: () => Promise.resolve({ ok: true, host: "tower" }),
     foreignOpen: () => Promise.resolve({ ok: true, session: "s1", inventory: foreignInventory }),
@@ -113,7 +116,7 @@ async function renderPage() {
 
 beforeEach(() => {
   containersOnServer = [];
-  foreignInventory = { containers: [], vms: [], fileSets: [], dbDumps: [] };
+  foreignInventory = { containers: [], vms: [], fileSets: [], zfs: [], dbDumps: [] };
   restore.mockClear();
 });
 
@@ -125,6 +128,7 @@ describe("a foreign repository holding only dumps", () => {
       containers: [],
       vms: [],
       fileSets: [],
+      zfs: [],
       dbDumps: [{ name: "immich_postgres", snapshots: [] }],
     };
     await renderPage();

@@ -2,7 +2,10 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -576,5 +579,81 @@ func TestZFSIsAKnownDomainOfTheRepositoryHelpers(t *testing.T) {
 	}
 	if len(refs) != 2 {
 		t.Fatalf("repositories in use = %d, want the domain's own and the item's named one", len(refs))
+	}
+}
+
+func zfsHandlerFor(t *testing.T, s *Service, st *store.Repo) *Handler {
+	t.Helper()
+	return NewHandler(s.cfg, st, nil, s, nil, nil)
+}
+
+// Both answers below hand out the store rows unchanged, so their wire names are
+// the store struct's own and a rename there would reach the page unnoticed.
+func TestZFSRunMembersAnswerNamesEveryFieldTheRunPanelReads(t *testing.T) {
+	s, st, _, _ := zfsRunFixture(t, zfsTwoDatasetTree())
+	d := zfsSeedItem(t, st, zfsRoot)
+	runID, err := st.StartRun(d.ID, "backup")
+	if err != nil {
+		t.Fatalf("start a run: %v", err)
+	}
+	if err := st.RecordZFSRun(runID, d.ID, "bombvault-20260101000000", 7, ""); err != nil {
+		t.Fatalf("record the run: %v", err)
+	}
+	if err := st.AddZFSRunMember(store.ZFSRunMember{
+		RunID: runID, Dataset: zfsRoot, Outcome: "backed-up", ResticSnapshot: "aaa",
+		IsNew: true, BytesAdded: 11, FilesNew: 2, FilesChanged: 3, FilesUnmodified: 4, DurationMS: 55,
+	}); err != nil {
+		t.Fatalf("record a member: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/zfs/runs/"+runID+"/members", nil)
+	req.SetPathValue("runId", runID)
+	w := httptest.NewRecorder()
+	zfsHandlerFor(t, s, st).handleZFSRunMembers(w, req)
+
+	var resp struct {
+		Members []map[string]any `json:"members"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v (%s)", err, w.Body.String())
+	}
+	if len(resp.Members) != 1 {
+		t.Fatalf("members = %v, want the one that was recorded", resp.Members)
+	}
+	for _, field := range []string{
+		"dataset", "outcome", "resticSnapshot", "isNew",
+		"bytesAdded", "filesNew", "filesChanged", "filesUnmodified", "durationMs",
+	} {
+		if _, ok := resp.Members[0][field]; !ok {
+			t.Errorf("member has no %q: %v", field, resp.Members[0])
+		}
+	}
+}
+
+func TestZFSSafetySnapshotsAnswerNamesEveryFieldTheListReads(t *testing.T) {
+	s, st, host, _ := zfsRepoFixture(t)
+	d := zfsSeedItem(t, st, zfsRoot)
+	host.snaps = []zfs.SnapshotEntry{
+		{Dataset: zfsRoot, Name: "bombvault-prerestore-20260101000000", Creation: 1_700_000_000, Used: 4096},
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/zfs/datasets/"+d.ID+"/safety-snapshots", nil)
+	req.SetPathValue("id", d.ID)
+	w := httptest.NewRecorder()
+	zfsHandlerFor(t, s, st).handleListZFSSafetySnapshots(w, req)
+
+	var resp struct {
+		Snapshots []map[string]any `json:"snapshots"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v (%s)", err, w.Body.String())
+	}
+	if len(resp.Snapshots) != 1 {
+		t.Fatalf("snapshots = %v, want the one the pool holds", resp.Snapshots)
+	}
+	for _, field := range []string{"dataset", "name", "createdAt", "usedBytes"} {
+		if _, ok := resp.Snapshots[0][field]; !ok {
+			t.Errorf("snapshot has no %q: %v", field, resp.Snapshots[0])
+		}
 	}
 }

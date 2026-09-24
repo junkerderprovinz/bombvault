@@ -80,7 +80,7 @@ function CopyBlock({ text, t }: { text: string; t: T }) {
   );
 }
 
-const MESH_DOMAINS = ["containers", "vms", "flash", "config", "files"] as const;
+const MESH_DOMAINS = ["containers", "vms", "flash", "config", "files", "zfs"] as const;
 
 // Same mapping as Dashboard's protectionChip, which is not exported.
 function protectionTone(level: string): "ok" | "fail" | "warn" | "neutral" {
@@ -106,6 +106,7 @@ const DOMAIN_LABEL_KEYS: Record<string, TranslationKey> = {
   vms: "settings.vmsEnabled",
   flash: "settings.flashEnabled",
   files: "settings.filesEnabled",
+  zfs: "settings.zfsEnabled",
   config: "settings.configEnabled",
 };
 

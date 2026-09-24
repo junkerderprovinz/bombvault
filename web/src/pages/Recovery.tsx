@@ -26,12 +26,14 @@ import {
   discover,
   discoverVMs,
   discoverFiles,
+  discoverZFS,
   discoverAll,
   getSettings,
   putSettings,
   listContainers,
   listVMs,
   listFileSets,
+  listZFSDatasets,
   listDbDumps,
   importDbDump,
   fileSetSnapshots,
@@ -56,6 +58,7 @@ import {
   type Container,
   type VM,
   type FileSetView,
+  type ZFSDatasetView,
   type FileEntry,
   type ForeignInventory,
   type ForeignItem,
@@ -362,7 +365,7 @@ function ForeignItemRow({
   onSessionGone,
   hueIndex,
 }: {
-  domain: "containers" | "vms" | "files";
+  domain: "containers" | "vms" | "files" | "zfs";
   item: ForeignItem;
   session: string;
   hostMountRoot: string;
@@ -382,7 +385,10 @@ function ForeignItemRow({
   // VMs start at the local VM domains path, the folder the backend falls back
   // to anyway; file sets start blank.
   const [target, setTarget] = useState(domain === "vms" ? "user/domains" : "");
-  const needsTarget = domain === "files" || domain === "vms";
+  // A dataset tree is restored into a folder here, never over the live
+  // datasets: an in-place ZFS restore needs the item's own settings, which a
+  // foreign repository does not carry.
+  const needsTarget = domain === "files" || domain === "vms" || domain === "zfs";
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
@@ -412,7 +418,8 @@ function ForeignItemRow({
   const onSessionGoneRef = useRef(onSessionGone);
   onSessionGoneRef.current = onSessionGone;
 
-  const runDomain = domain === "containers" ? "container" : domain === "vms" ? "vm" : "files";
+  const runDomain =
+    domain === "containers" ? "container" : domain === "vms" ? "vm" : domain === "zfs" ? "zfs" : "files";
   // Newest first for the picker; restic lists oldest first.
   const snaps = [...item.snapshots].reverse();
 
@@ -799,7 +806,7 @@ function ForeignRestoreCard({
       setLocalNames(names);
       setLocalKnown(known);
       setSession(res.session);
-      setInventory(res.inventory ?? { containers: [], vms: [], fileSets: [], dbDumps: [] });
+      setInventory(res.inventory ?? { containers: [], vms: [], fileSets: [], dbDumps: [], zfs: [] });
       setPhase("connected");
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -841,16 +848,21 @@ function ForeignRestoreCard({
   // The dumps count towards the total: a repository that holds only them is
   // not empty, it holds the only copy of those databases.
   const total = inventory
-    ? inventory.containers.length + inventory.vms.length + inventory.fileSets.length + inventory.dbDumps.length
+    ? inventory.containers.length +
+      inventory.vms.length +
+      inventory.fileSets.length +
+      inventory.zfs.length +
+      inventory.dbDumps.length
     : 0;
   const browseState: StepState = !session ? "idle" : sessionGone ? "warn" : total > 0 ? "ok" : "warn";
 
-  const groups: { domain: "containers" | "vms" | "files"; label: string; items: ForeignItem[] }[] =
+  const groups: { domain: "containers" | "vms" | "files" | "zfs"; label: string; items: ForeignItem[] }[] =
     inventory
       ? [
           { domain: "containers" as const, label: t("nav.containers"), items: inventory.containers },
           { domain: "vms" as const, label: t("nav.vms"), items: inventory.vms },
           { domain: "files" as const, label: t("nav.files"), items: inventory.fileSets },
+          { domain: "zfs" as const, label: t("nav.zfs"), items: inventory.zfs },
         ].filter((g) => g.items.length > 0)
       : [];
 
@@ -1032,10 +1044,11 @@ function ForeignRestoreCard({
                       session={session}
                       hostMountRoot={hostMountRoot}
                       existsLocally={
-                        // File sets restore into a chosen folder and never
-                        // overwrite. An unreadable local inventory counts as a
-                        // possible collision.
+                        // File sets and dataset trees restore into a chosen
+                        // folder and never overwrite. An unreadable local
+                        // inventory counts as a possible collision.
                         g.domain !== "files" &&
+                        g.domain !== "zfs" &&
                         (!localKnown ||
                           localNames.has(
                             (g.domain === "containers" ? "container:" : "vm:") + item.name
@@ -1043,6 +1056,7 @@ function ForeignRestoreCard({
                       }
                       collisionKnown={
                         g.domain !== "files" &&
+                        g.domain !== "zfs" &&
                         localKnown &&
                         localNames.has(
                           (g.domain === "containers" ? "container:" : "vm:") + item.name
@@ -1364,8 +1378,13 @@ export default function Recovery() {
     setChecking(true);
     setLastError(null);
     try {
-      const [c, v, f] = await Promise.all([discover(true), discoverVMs(true), discoverFiles(true)]);
-      const results: DiscoverResult[] = [c, v, f];
+      const [c, v, f, z] = await Promise.all([
+        discover(true),
+        discoverVMs(true),
+        discoverFiles(true),
+        discoverZFS(true),
+      ]);
+      const results: DiscoverResult[] = [c, v, f, z];
       const keyErr = results.find((r) => !r.ok && isKeyMismatch(r.error));
       if (keyErr) {
         setReadableState("bad");
@@ -1378,11 +1397,11 @@ export default function Recovery() {
         setLastError(otherErr.error ?? null);
         return "warn";
       }
-      const total = (c.discovered ?? 0) + (v.discovered ?? 0) + (f.discovered ?? 0);
+      const total = (c.discovered ?? 0) + (v.discovered ?? 0) + (f.discovered ?? 0) + (z.discovered ?? 0);
       // The wizard reads each domain's primary path, which after a disaster is
       // often an empty local folder. With the path named, an empty answer reads
       // as "it looked in the wrong place" rather than "my backups are gone".
-      setReadSources([c.repo, v.repo, f.repo].filter((r): r is string => !!r));
+      setReadSources([c.repo, v.repo, f.repo, z.repo].filter((r): r is string => !!r));
       // A repository that could not be opened keeps the pill off green even when
       // the others had content. One switched off on purpose is only named: it is
       // no fault, and holding the pill amber would also swallow the success
@@ -1435,10 +1454,12 @@ export default function Recovery() {
       vmsPath: settings.vmsPath,
       flashPath: settings.flashPath,
       filesPath: settings.filesPath,
+      zfsPath: settings.zfsPath,
       containersOffsite: settings.containersOffsite,
       vmsOffsite: settings.vmsOffsite,
       flashOffsite: settings.flashOffsite,
       filesOffsite: settings.filesOffsite,
+      zfsOffsite: settings.zfsOffsite,
       encryptionEnabled: settings.encryptionEnabled,
     };
     const updated: Settings = { ...base, ...patch };
@@ -1568,6 +1589,7 @@ export default function Recovery() {
     containers: number;
     vms: number;
     files: number;
+    zfs: number;
     skipped: string[];
     skippedNeedsAction: boolean;
   } | null>(null);
@@ -1576,6 +1598,7 @@ export default function Recovery() {
   const [containers, setContainers] = useState<Container[]>([]);
   const [vms, setVMs] = useState<VM[]>([]);
   const [fileSets, setFileSets] = useState<FileSetView[]>([]);
+  const [zfsItems, setZFSItems] = useState<ZFSDatasetView[]>([]);
 
   const runDiscover = useCallback(async () => {
     setDiscovering(true);
@@ -1591,10 +1614,16 @@ export default function Recovery() {
           isKeyMismatch(counts.error) ? t("recovery.appKeyRemedy") : counts.error
         );
       }
-      const [cs, vs, fs] = await Promise.all([listContainers(), listVMs(), listFileSets()]);
+      const [cs, vs, fs, zs] = await Promise.all([
+        listContainers(),
+        listVMs(),
+        listFileSets(),
+        listZFSDatasets(),
+      ]);
       setContainers(cs.containers ?? []);
       setVMs(vs.vms ?? []);
       setFileSets(fs.ok ? fs.fileSets ?? [] : []);
+      setZFSItems(zs.ok ? zs.datasets ?? [] : []);
       setDiscovered(counts);
     } catch (err) {
       setDiscoverError(err instanceof Error ? err.message : String(err));
@@ -1610,7 +1639,7 @@ export default function Recovery() {
   const discoverStepState: StepState = discovered
     ? discoverError || discovered.skippedNeedsAction
       ? "warn"
-      : discovered.containers + discovered.vms + discovered.files > 0
+      : discovered.containers + discovered.vms + discovered.files + discovered.zfs > 0
         ? "ok"
         : "warn"
     : "idle";
@@ -1686,7 +1715,8 @@ export default function Recovery() {
   // is listed apart and imports its dump in the same step.
   const containersWithFiles = containers.filter((c) => !c.dumpOnly);
   const dumpOnlyContainers = containers.filter((c) => c.dumpOnly);
-  const anyDiscovered = containers.length > 0 || vms.length > 0 || fileSets.length > 0;
+  const anyDiscovered =
+    containers.length > 0 || vms.length > 0 || fileSets.length > 0 || zfsItems.length > 0;
   const restoreStepState: StepState = restoreAllResult
     ? restoreAllResult.fail > 0
       ? "warn"
@@ -1907,6 +1937,12 @@ export default function Recovery() {
               hostMountRoot={hostMountRoot}
               onChange={(v) => setSettings((prev) => (prev ? { ...prev, filesPath: v } : prev))}
             />
+            <FolderBrowser
+              label={t("settings.zfsPath")}
+              value={settings.zfsPath}
+              hostMountRoot={hostMountRoot}
+              onChange={(v) => setSettings((prev) => (prev ? { ...prev, zfsPath: v } : prev))}
+            />
 
             {/* gap-2 because plain fields have no notch to clear. */}
             <StepDisclosure
@@ -1919,6 +1955,7 @@ export default function Recovery() {
                 ["vmsOffsite", "nav.vms"],
                 ["flashOffsite", "nav.flash"],
                 ["filesOffsite", "nav.files"],
+                ["zfsOffsite", "nav.zfs"],
               ] as const).map(([key, label]) => (
                 <div key={key} className="flex flex-col gap-1">
                   <label className="text-xs text-carbon-textSub">{t(label)}</label>
@@ -1967,7 +2004,7 @@ export default function Recovery() {
             title={discovering ? t("containers.discovering") : undefined}
           />
 
-          {discovered && discovered.containers + discovered.vms + discovered.files > 0 && (
+          {discovered && discovered.containers + discovered.vms + discovered.files + discovered.zfs > 0 && (
             <span className="text-sm text-statusOk">
               {t("recovery.foundCounts")
                 .replace("{c}", String(discovered.containers))
@@ -1975,11 +2012,14 @@ export default function Recovery() {
               {discovered.files > 0 && (
                 <> {t("recovery.filesFound").replace("{f}", String(discovered.files))}</>
               )}
+              {discovered.zfs > 0 && (
+                <> {t("recovery.zfsFound").replace("{n}", String(discovered.zfs))}</>
+              )}
             </span>
           )}
         </div>
 
-        {discovered && discovered.containers + discovered.vms + discovered.files === 0 && (
+        {discovered && discovered.containers + discovered.vms + discovered.files + discovered.zfs === 0 && (
           <p className="text-sm text-statusWarn">{t("recovery.foundNone")}</p>
         )}
         {/* Without the skipped repositories named, an unmounted share would
@@ -2104,6 +2144,19 @@ export default function Recovery() {
                     otherActive={rowOtherActive}
                     hueIndex={nextHue()}
                   />
+                ))}
+              </div>
+            )}
+            {zfsItems.length > 0 && (
+              <div className="flex flex-col">
+                <span className="inline-flex items-center gap-1 self-start text-xs font-medium text-carbon-textSub pt-2 pb-1">
+                  {t("nav.zfs")}
+                  <InfoBubble tip={t("recovery.zfsRestoreHint")} />
+                </span>
+                {zfsItems.map((d) => (
+                  <span key={d.id} className="py-1 text-sm text-carbon-text">
+                    {d.dataset}
+                  </span>
                 ))}
               </div>
             )}

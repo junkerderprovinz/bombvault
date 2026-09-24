@@ -298,6 +298,22 @@ export function IconDatabase() {
   );
 }
 
+/** ZFS datasets. */
+export function IconZFS() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 14 14"
+      fill="currentColor"
+      className="shrink-0"
+      aria-hidden="true"
+    >
+      <ellipse cx="7" cy="2.6" rx="5.4" ry="1.8" /><ellipse cx="7" cy="7" rx="5.4" ry="1.8" /><ellipse cx="7" cy="11.4" rx="5.4" ry="1.8" />
+    </svg>
+  );
+}
+
 /** Add. */
 export function IconAdd() {
   return (

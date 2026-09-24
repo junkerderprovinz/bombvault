@@ -586,6 +586,21 @@ describe("a live line whose stream has gone quiet", () => {
   });
 });
 
+describe("a running ZFS backup", () => {
+  it("is a line of its own domain, named after the root dataset", () => {
+    const lines = buildLogLines(
+      [],
+      { "zfs:tank/appdata": { phase: "backup", percent: 40, active: true, lastSeen: 2_000_000 } },
+      [],
+      resolveName,
+      2_000_000
+    );
+    expect(lines).toHaveLength(1);
+    expect(lines[0].domain).toBe("zfs");
+    expect(lines[0].text).toContain("tank/appdata");
+  });
+});
+
 // Every log line names its domain, since a container and a folder set can share
 // a name.
 describe("domainLabel", () => {
@@ -596,8 +611,12 @@ describe("domainLabel", () => {
   });
 
   it("labels every domain the log can emit, none falling through to the raw literal", () => {
-    for (const d of ["containers", "vms", "flash", "config", "files", "everything"]) {
-      expect(domainLabel(t, d)).toBe(`T:activityLog.domain${d[0].toUpperCase()}${d.slice(1)}`.replace("domainVms", "domainVMs"));
+    for (const d of ["containers", "vms", "flash", "config", "files", "zfs", "everything"]) {
+      expect(domainLabel(t, d)).toBe(
+        `T:activityLog.domain${d[0].toUpperCase()}${d.slice(1)}`
+          .replace("domainVms", "domainVMs")
+          .replace("domainZfs", "domainZFS")
+      );
     }
   });
 });

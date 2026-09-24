@@ -471,6 +471,7 @@ export function NotifyCard({
             ["flash", t("nav.flash")],
             ["config", t("nav.config")],
             ["files", t("nav.files")],
+            ["zfs", t("nav.zfs")],
           ] as const
         ).map(([key, label]) => (
           <label key={key} className={labelCls}>

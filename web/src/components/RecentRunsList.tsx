@@ -42,7 +42,7 @@ export function RecentRunsList({
   t,
 }: {
   name: string;
-  domain: "container" | "vm" | "files";
+  domain: "container" | "vm" | "files" | "zfs";
   t: T;
 }) {
   const [runs, setRuns] = useState<Run[]>([]);

@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { ApiError, backupEverythingNow, downloadRecoveryKit, getAuth, getSettings, importSettingsApply, listContainers, listFileSets, listVMs, patchFileSet, putSettings, replicateOffsite, setAuthPassword, setScheduleCadence, setVMScheduleCadence, testOffsite } from "../lib/api";
+import { ApiError, backupEverythingNow, downloadRecoveryKit, getAuth, getSettings, importSettingsApply, listContainers, listFileSets, listVMs, listZFSDatasets, patchFileSet, patchZFSDataset, putSettings, replicateOffsite, setAuthPassword, setScheduleCadence, setVMScheduleCadence, testOffsite } from "../lib/api";
 import { useOffsiteTargets, type OffsiteDomain } from "../lib/useOffsiteTargets";
 import { FolderBrowser } from "../components/FolderBrowser";
 import { AccentCard, IconResetArrow } from "./settings/AccentCard";
@@ -43,7 +43,7 @@ import { Button } from "../components/Button";
 import { ScheduleRow, scheduleStatus } from "../components/ScheduleBadge";
 import { RevealInput } from "../components/RevealInput";
 import { useReveal } from "../lib/useReveal";
-import type { Settings, Container, VM, FileSetView, RegistryAuthEntry } from "../lib/api";
+import type { Settings, Container, VM, FileSetView, RegistryAuthEntry, ZFSDatasetView } from "../lib/api";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { useToast } from "../lib/toast";
 import { useConfirm } from "../lib/useConfirm";
@@ -676,6 +676,111 @@ function FilesSection({
   );
 }
 
+// Domain section for ZFS, in the same shape as FilesSection: the cadence card
+// plus one row per item whose "include in schedule" toggle PATCHes the item
+// directly rather than going through a save bar.
+function ZFSSection({
+  settings,
+  syncSchedules,
+  items,
+  perItem,
+  onChange,
+  onItemsChanged,
+  t,
+  hueIndex,
+}: {
+  settings: Settings;
+  syncSchedules: boolean;
+  items: ZFSDatasetView[];
+  perItem: boolean;
+  onChange: (schedule: string) => void;
+  onItemsChanged: () => void;
+  t: ReturnType<typeof useT>["t"];
+  hueIndex?: number;
+}) {
+  const { push } = useToast();
+  const schedule = syncSchedules ? settings.containersSchedule : settings.zfsSchedule;
+  const [busy, setBusy] = useState<Record<string, boolean>>({});
+
+  async function setItemCadence(id: string, cadence: string) {
+    const res = await patchZFSDataset(id, { scheduleCadence: cadence });
+    if (res.ok) onItemsChanged();
+    return res;
+  }
+
+  async function toggle(item: ZFSDatasetView) {
+    setBusy((b) => ({ ...b, [item.id]: true }));
+    try {
+      const res = await patchZFSDataset(item.id, { enabled: !item.enabled });
+      if (res.ok) onItemsChanged();
+      else push(res.error ?? t("settings.error"), "fail");
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("settings.error"), "fail");
+    } finally {
+      setBusy((b) => ({ ...b, [item.id]: false }));
+    }
+  }
+
+  return (
+    <Card title={t("jobs.zfsSection")} hint={t("jobs.zfsIncludeHint")} hueIndex={hueIndex}>
+      <ScheduleRow schedule={schedule} hint={syncSchedules ? t("jobs.syncSchedulesHint") : undefined} />
+      <div className="rounded-card bg-carbon-surface2 p-4">
+        <CadenceBuilder
+          label={t("jobs.zfsSection")}
+          value={schedule}
+          disabled={syncSchedules}
+          onChange={onChange}
+          hueIndex={hueIndex}
+        />
+      </div>
+
+      {items.length === 0 ? (
+        <p className="text-sm text-carbon-textMuted">{t("jobs.noZfsDatasetsIncluded")}</p>
+      ) : (
+        <div className="flex flex-col gap-1 divide-y divide-carbon-border">
+          {items.map((d) => (
+            <div key={d.id} className="flex flex-col gap-2 py-2 text-sm">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-2 h-2 rounded-full shrink-0 ${
+                    d.enabled ? "bg-statusOkSolid" : "bg-carbon-surface3"
+                  }`}
+                />
+                <span dir="ltr" className="font-medium text-carbon-text flex-1 min-w-0 truncate text-start">
+                  {d.dataset}
+                </span>
+                {d.hostMountpoint && (
+                  <span dir="ltr" className="text-xs font-mono text-carbon-textMuted truncate hidden sm:block max-w-xs text-start">
+                    {d.hostMountpoint}
+                  </span>
+                )}
+                <label className="flex items-center gap-2 shrink-0 cursor-pointer">
+                  <span className="text-xs text-carbon-textSub">{t("files.enabled")}</span>
+                  <Toggle
+                    hideLabel
+                    label={`${t("files.enabled")}: ${d.dataset}`}
+                    checked={d.enabled}
+                    onChange={() => void toggle(d)}
+                    disabled={!!busy[d.id]}
+                  />
+                </label>
+              </div>
+              <EffectiveScheduleLine effective={d.effectiveSchedule} domainLabelKey="jobs.zfsSection" />
+              {perItem && (
+                <ItemScheduleOverride
+                  name={d.dataset}
+                  initial={d.scheduleCadence}
+                  onSave={(cadence) => setItemCadence(d.id, cadence)}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export function EverythingSection({
   settings,
   update,
@@ -703,6 +808,7 @@ export function EverythingSection({
     settings.vmsSchedule,
     settings.flashSchedule,
     settings.filesSchedule,
+    settings.zfsSchedule,
     settings.configSchedule,
   ].some((s) => scheduleStatus(s) !== "off");
   const overlapWarning = everythingOn && anyDomainOn;
@@ -1406,6 +1512,7 @@ export function SettingsPage() {
     | "vmsEnabled"
     | "flashEnabled"
     | "filesEnabled"
+    | "zfsEnabled"
     | "configEnabled"
     | "receiverEnabled"
     | "pullEnabled"
@@ -1468,6 +1575,8 @@ export function SettingsPage() {
   const [vms, setVMs] = useState<VM[]>([]);
   // File sets feed the Files schedule section's member list (live enabled toggles).
   const [fileSets, setFileSets] = useState<FileSetView[]>([]);
+  // ZFS items do the same for the ZFS schedule section.
+  const [zfsItems, setZFSItems] = useState<ZFSDatasetView[]>([]);
   const [syncSchedules, setSyncSchedules] = useState(false);
   // Task 5 (live-review — "Speichern-Buttons können weg, es soll immer alles
   // live gespeichert werden"): this whole tab used to funnel every field
@@ -1561,6 +1670,7 @@ export function SettingsPage() {
       s.vmsSchedule === s.containersSchedule &&
         s.flashSchedule === s.containersSchedule &&
         s.filesSchedule === s.containersSchedule &&
+        s.zfsSchedule === s.containersSchedule &&
         s.containersSchedule !== "off" &&
         s.containersSchedule !== ""
     );
@@ -1612,6 +1722,7 @@ export function SettingsPage() {
 
     // Load the file sets for the Schedules tab's Files section. Non-fatal too.
     loadFileSets();
+    loadZFSItems();
   }, []);
 
   // loadFileSets (re)fetches the file-set list — on mount and after a Files
@@ -1623,6 +1734,17 @@ export function SettingsPage() {
       })
       .catch(() => {
         // Non-fatal: the Files schedule section shows an empty member list.
+      });
+  }
+
+  // loadZFSItems does for the ZFS section what loadFileSets does for Folders.
+  function loadZFSItems() {
+    listZFSDatasets()
+      .then((r) => {
+        if (r.ok) setZFSItems(r.datasets ?? []);
+      })
+      .catch(() => {
+        // Non-fatal: the ZFS schedule section shows an empty member list.
       });
   }
 
@@ -1668,16 +1790,19 @@ export function SettingsPage() {
     if (
       settings.vmsSchedule === merged &&
       settings.flashSchedule === merged &&
-      settings.filesSchedule === merged
+      settings.filesSchedule === merged &&
+      settings.zfsSchedule === merged
     ) {
       return;
     }
     setSettings((prev) =>
-      prev ? { ...prev, vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged } : prev
+      prev
+        ? { ...prev, vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged, zfsSchedule: merged }
+        : prev
     );
     debouncedSave("schedSync", () => {
       void save(
-        { vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged },
+        { vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged, zfsSchedule: merged },
         setSchedSaveState,
         setSchedSaveError
       );
@@ -2226,12 +2351,15 @@ export function SettingsPage() {
     const prevVms = settings.vmsSchedule;
     const prevFlash = settings.flashSchedule;
     const prevFiles = settings.filesSchedule;
+    const prevZFS = settings.zfsSchedule;
     setSettings((s) =>
-      s ? { ...s, vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged } : s
+      s
+        ? { ...s, vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged, zfsSchedule: merged }
+        : s
     );
     setSyncToggleBusy(true);
     const ok = await save(
-      { vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged },
+      { vmsSchedule: merged, flashSchedule: merged, filesSchedule: merged, zfsSchedule: merged },
       setSchedSaveState,
       setSchedSaveError
     );
@@ -2239,7 +2367,9 @@ export function SettingsPage() {
     if (!ok) {
       setSyncSchedules(false);
       setSettings((s) =>
-        s ? { ...s, vmsSchedule: prevVms, flashSchedule: prevFlash, filesSchedule: prevFiles } : s
+        s
+          ? { ...s, vmsSchedule: prevVms, flashSchedule: prevFlash, filesSchedule: prevFiles, zfsSchedule: prevZFS }
+          : s
       );
       setSyncToggleShake((n) => n + 1);
     }
@@ -2381,7 +2511,8 @@ export function SettingsPage() {
     (settings.vmsOffsite !== "" && settings.vmsOffsiteImmutable) ||
     (settings.flashOffsite !== "" && settings.flashOffsiteImmutable) ||
     (settings.configOffsite !== "" && settings.configOffsiteImmutable) ||
-    (settings.filesOffsite !== "" && settings.filesOffsiteImmutable);
+    (settings.filesOffsite !== "" && settings.filesOffsiteImmutable) ||
+    (settings.zfsOffsite !== "" && settings.zfsOffsiteImmutable);
 
   // hueSeq/nextHue (GlimStone follow-up pass, jdp's second live-review round
   // — "Die ganzen... Abschnittsbadges sind nicht in der Farbengine!!"):
@@ -2748,6 +2879,16 @@ export function SettingsPage() {
             t={t}
             hueIndex={nextHue()}
           />
+          <ZFSSection
+            settings={settings}
+            syncSchedules={syncSchedules}
+            items={zfsItems}
+            perItem={settings.perItemSchedules}
+            onChange={(v) => scheduleField("zfsSchedule", v)}
+            onItemsChanged={loadZFSItems}
+            t={t}
+            hueIndex={nextHue()}
+          />
 
           {/* Off-site replication schedules (schedulesOffsite): one cadence per
               domain (+ config + files). Editors here are the sole owner of these
@@ -2759,6 +2900,7 @@ export function SettingsPage() {
               ["flashOffsiteSchedule", "nav.flash"],
               ["configOffsiteSchedule", "nav.config"],
               ["filesOffsiteSchedule", "nav.files"],
+              ["zfsOffsiteSchedule", "nav.zfs"],
             ] as const).map(([key, label]) => (
               <div key={key} className="flex flex-col gap-1">
                 <span className="text-xs text-carbon-textSub">{t(label)}</span>
@@ -3007,6 +3149,16 @@ export function SettingsPage() {
           hueIndex={3}
         />
         <ToggleRow
+          label={t("settings.zfsEnabled")}
+          hint={t("settings.zfsEnabledHint")}
+          checked={settings.zfsEnabled}
+          onChange={(v) => void toggleDomainEnabled("zfsEnabled", v)}
+          disabled={domainToggleBusy.zfsEnabled}
+          shakeNonce={domainToggleShake.zfsEnabled}
+          pulseNonce={fieldPulse.zfsEnabled}
+          hueIndex={4}
+        />
+        <ToggleRow
           label={t("settings.configEnabled")}
           hint={t("settings.configEnabledHint")}
           checked={settings.configEnabled}
@@ -3014,7 +3166,7 @@ export function SettingsPage() {
           disabled={domainToggleBusy.configEnabled}
           shakeNonce={domainToggleShake.configEnabled}
           pulseNonce={fieldPulse.configEnabled}
-          hueIndex={4}
+          hueIndex={5}
         />
         <ToggleRow
           label={t("settings.receiverEnabled")}
@@ -3024,7 +3176,7 @@ export function SettingsPage() {
           disabled={domainToggleBusy.receiverEnabled}
           shakeNonce={domainToggleShake.receiverEnabled}
           pulseNonce={fieldPulse.receiverEnabled}
-          hueIndex={5}
+          hueIndex={6}
         />
         <ToggleRow
           label={t("settings.fleetEnabled")}
@@ -3034,7 +3186,7 @@ export function SettingsPage() {
           disabled={domainToggleBusy.fleetEnabled}
           shakeNonce={domainToggleShake.fleetEnabled}
           pulseNonce={fieldPulse.fleetEnabled}
-          hueIndex={6}
+          hueIndex={7}
         />
         {/* Pull (#227). Last of the three and the only one that WRITES: the two
             above watch, this one fetches another instance's backups into this
@@ -3048,7 +3200,7 @@ export function SettingsPage() {
           disabled={domainToggleBusy.pullEnabled}
           shakeNonce={domainToggleShake.pullEnabled}
           pulseNonce={fieldPulse.pullEnabled}
-          hueIndex={7}
+          hueIndex={8}
         />
       </Card>
       )}
@@ -3160,6 +3312,22 @@ export function SettingsPage() {
           setSettings={setSettings}
           save={save}
           hueIndex={4}
+        />
+        <PathModeSwitch
+          label={t("settings.zfsPath")}
+          domain="zfs"
+          value={settings.zfsPath}
+          hostMountRoot={hostMountRoot}
+          onChange={(v) => {
+            setSettings((prev) => prev ? { ...prev, zfsPath: v } : prev);
+            debouncedSave("zfsPath", () =>
+              void save({ zfsPath: v }, setPathSaveState, setPathSaveError)
+            );
+          }}
+          settings={settings}
+          setSettings={setSettings}
+          save={save}
+          hueIndex={5}
         />
         <FolderBrowser
           label={t("settings.restoreFolder")}
@@ -3893,6 +4061,7 @@ export function SettingsPage() {
         ["vmsOffsite", "nav.vms", "vms"],
         ["flashOffsite", "nav.flash", "flash"],
         ["filesOffsite", "nav.files", "files"],
+        ["zfsOffsite", "nav.zfs", "zfs"],
         ["configOffsite", "nav.config", "config"],
       ] as const).map(([repoKey, label, domain]) => {
         const wizardOpen = offsiteWizard === domain;
@@ -4205,7 +4374,9 @@ export function SettingsPage() {
       {/* Advanced, OR shown whenever VMs are enabled so the SSH setup you    */}
       {/* need to make VM backups work is never hidden behind Advanced.       */}
       {/* ------------------------------------------------------------------ */}
-      {tab === "system" && (advanced || settings.vmsEnabled) && <VMSSHCard t={t} hueIndex={nextHue()} />}
+      {tab === "system" && (advanced || settings.vmsEnabled || settings.zfsEnabled) && (
+        <VMSSHCard t={t} hueIndex={nextHue()} />
+      )}
 
       {/* ------------------------------------------------------------------ */}
       {/* OFFSITE — Off-site backends (rclone + cloud credentials). Same     */}

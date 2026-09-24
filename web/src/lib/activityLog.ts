@@ -16,10 +16,10 @@ import { isWarningNote, runReason, runReasonParts } from "./runReason";
 export type LogStatus = "running" | "success" | "failed" | "offsite" | "info";
 
 /** The domain a line belongs to, for the domain filter. "everything" is the
- *  Backup Everything pass over the other five (store.EverythingTargetID on the
+ *  Backup Everything pass over the others (store.EverythingTargetID on the
  *  backend). "" means a finished run's target could not be resolved, e.g. a
  *  deleted item. */
-export type LogDomain = "containers" | "vms" | "flash" | "config" | "files" | "everything" | "";
+export type LogDomain = "containers" | "vms" | "flash" | "config" | "files" | "zfs" | "everything" | "";
 
 /** The operation kind, for the type filter. "update" (the image update after a
  *  backup) has no filter chip but still carries a kind for search. "drill" is
@@ -73,6 +73,7 @@ const DOMAIN_KEYS: Record<string, string> = {
   flash: "activityLog.domainFlash",
   config: "activityLog.domainConfig",
   files: "activityLog.domainFiles",
+  zfs: "activityLog.domainZFS",
   everything: "activityLog.domainEverything",
 };
 
@@ -116,6 +117,7 @@ function normalizeDomain(domain: string): LogDomain {
     domain === "flash" ||
     domain === "config" ||
     domain === "files" ||
+    domain === "zfs" ||
     domain === "everything"
   ) {
     return domain;
@@ -143,7 +145,7 @@ function formatBytesShort(n: number): string {
 }
 
 type ParsedKey =
-  | { scope: "item"; domain: "container" | "vm" | "files" | "flash" | "config"; name: string }
+  | { scope: "item"; domain: "container" | "vm" | "files" | "zfs" | "flash" | "config"; name: string }
   | { scope: "batch"; domain: string }
   | { scope: "offsite" | "prune" | "verify" | "drill" | "drdrill" | "tamper" | "export"; domain: string };
 
@@ -159,6 +161,7 @@ function parseProgressKey(key: string): ParsedKey | null {
   if (key.startsWith("container:")) return { scope: "item", domain: "container", name: key.slice("container:".length) };
   if (key.startsWith("vm:")) return { scope: "item", domain: "vm", name: key.slice("vm:".length) };
   if (key.startsWith("files:")) return { scope: "item", domain: "files", name: key.slice("files:".length) };
+  if (key.startsWith("zfs:")) return { scope: "item", domain: "zfs", name: key.slice("zfs:".length) };
   if (key.startsWith("batch:")) return { scope: "batch", domain: key.slice("batch:".length) };
   if (key.startsWith("offsite:")) return { scope: "offsite", domain: key.slice("offsite:".length) };
   if (key.startsWith("prune:")) return { scope: "prune", domain: key.slice("prune:".length) };
@@ -171,9 +174,9 @@ function parseProgressKey(key: string): ParsedKey | null {
 }
 
 /**
- * itemDisplayName resolves an item-scope key's display name. Container, VM
- * and file-set names are proper nouns and shown as is; the flash and config
- * singletons get their translated domain label. The check is on
+ * itemDisplayName resolves an item-scope key's display name. Container, VM,
+ * file-set and dataset names are proper nouns and shown as is; the flash and
+ * config singletons get their translated domain label. The check is on
  * `parsed.domain`, not on the name, so a container called "flash" stays a
  * container.
  */
@@ -624,7 +627,7 @@ function isoDateOf(atMs: number): string {
 }
 
 /** Domain quick-filter value ("all" plus every LogDomain except ""). */
-export type LogFilterDomain = "all" | "containers" | "vms" | "flash" | "config" | "files" | "everything";
+export type LogFilterDomain = "all" | "containers" | "vms" | "flash" | "config" | "files" | "zfs" | "everything";
 
 /** Type quick-filter value: "all" plus the kinds the filter bar offers, which
  *  leaves out "update". "drill" and "drdrill" are separate values (local
@@ -642,6 +645,7 @@ export const LOG_FILTER_DOMAINS: { value: LogFilterDomain; key: string }[] = [
   { value: "flash", key: "activityLog.domainFlash" },
   { value: "config", key: "activityLog.domainConfig" },
   { value: "files", key: "activityLog.domainFiles" },
+  { value: "zfs", key: "activityLog.domainZFS" },
   { value: "everything", key: "activityLog.domainEverything" },
 ];
 

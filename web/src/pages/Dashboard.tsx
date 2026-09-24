@@ -60,6 +60,8 @@ function runDomainLabel(t: ReturnType<typeof useT>["t"], domain: string): string
       return t("activityLog.domainConfig");
     case "files":
       return t("activityLog.domainFiles");
+    case "zfs":
+      return t("activityLog.domainZFS");
     default:
       return domain;
   }
@@ -693,7 +695,8 @@ export function ProtectionCard({
     setDrRunError((prev) => {
       const next: Record<string, string> = {};
       for (const d of domains) {
-        const drCapable = d.domain === "containers" || d.domain === "flash" || d.domain === "files";
+        const drCapable =
+          d.domain === "containers" || d.domain === "flash" || d.domain === "files" || d.domain === "zfs";
         const reachable = drCapable && d.status !== "off" && d.offsiteConfigured;
         if (reachable && prev[d.domain] !== undefined) next[d.domain] = prev[d.domain];
       }
@@ -742,6 +745,8 @@ export function ProtectionCard({
         return t("dashboard.domainFlash");
       case "files":
         return t("dashboard.domainFiles");
+      case "zfs":
+        return t("dashboard.domainZFS");
       default:
         return domain;
     }
@@ -771,11 +776,12 @@ export function ProtectionCard({
         <div className="@container divide-y divide-carbon-border glim-content-fade">
           {domains.map((d) => {
             const off = d.status === "off";
-            // Only containers, flash + files ever run an off-site DR drill
-            // (schedule.go drillTasks / runDRDrill). VMs + config can have an
-            // off-site repo but cannot be DR-drilled, so they must show NO DR
-            // pill or Run-DR button.
-            const drCapable = d.domain === "containers" || d.domain === "flash" || d.domain === "files";
+            // Only containers, flash, files and ZFS ever run an off-site DR
+            // drill (schedule.go drillTasks / runDRDrill). VMs + config can
+            // have an off-site repo but cannot be DR-drilled, so they must show
+            // NO DR pill or Run-DR button.
+            const drCapable =
+              d.domain === "containers" || d.domain === "flash" || d.domain === "files" || d.domain === "zfs";
             // Off-site DR opt-out (#37): the scheduled DR drill is turned off for a
             // DR-capable domain that HAS an off-site repo. The pill then reads NEUTRAL
             // ("manual only") — but only when there is no failing result to show.
@@ -1039,6 +1045,8 @@ export function RansomwareCard({
         return t("dashboard.domainFlash");
       case "files":
         return t("dashboard.domainFiles");
+      case "zfs":
+        return t("dashboard.domainZFS");
       default:
         return domain;
     }
@@ -1488,7 +1496,7 @@ function LastBackupsCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hue
 // Backup health heatmap (GitHub-contributions style)
 // ---------------------------------------------------------------------------
 
-type HeatDomain = "containers" | "vms" | "flash" | "config" | "files";
+type HeatDomain = "containers" | "vms" | "flash" | "config" | "files" | "zfs";
 
 // cellColor maps a day's outcome (for the selected domain) to a fill color:
 // any failure → red; all-ok → green shades that deepen with more successful
@@ -1588,6 +1596,8 @@ function HealthHeatmapCard({
         return t("dashboard.domainConfig");
       case "files":
         return t("dashboard.domainFiles");
+      case "zfs":
+        return t("dashboard.domainZFS");
     }
   };
 
@@ -1611,7 +1621,7 @@ function HealthHeatmapCard({
   // alone), and not grounds for a fresh opt-out either.
   const toggle = (
     <Selector
-      items={(["containers", "vms", "flash", "config", "files"] as HeatDomain[]).map((d) => ({
+      items={(["containers", "vms", "flash", "config", "files", "zfs"] as HeatDomain[]).map((d) => ({
         id: d,
         label: domainLabel(d),
       }))}
@@ -1754,7 +1764,7 @@ function Sparkline({
 // Storage card — repo size + dedup trend per domain
 // ---------------------------------------------------------------------------
 
-type StorageDomain = "containers" | "vms" | "flash" | "files";
+type StorageDomain = "containers" | "vms" | "flash" | "files" | "zfs";
 
 interface DomainStats {
   domain: StorageDomain;
@@ -1781,7 +1791,7 @@ function StorageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueInde
 
   useEffect(() => {
     let active = true;
-    const domains: StorageDomain[] = ["containers", "vms", "flash", "files"];
+    const domains: StorageDomain[] = ["containers", "vms", "flash", "files", "zfs"];
     Promise.all(domains.map((d) => getStats(d, "local", 90)))
       .then((results) => {
         if (!active) return;
@@ -1813,6 +1823,8 @@ function StorageCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueInde
         return t("dashboard.domainFlash");
       case "files":
         return t("dashboard.domainFiles");
+      case "zfs":
+        return t("dashboard.domainZFS");
     }
   };
 
@@ -2662,6 +2674,7 @@ export function Dashboard() {
             <OffsiteIndicator domain="vms" withLabel />
             <OffsiteIndicator domain="flash" withLabel />
             <OffsiteIndicator domain="files" withLabel />
+            <OffsiteIndicator domain="zfs" withLabel />
           </div>
         </div>
         {/* Real `.glim-bubble` tooltip, not the OS's native `title=` balloon

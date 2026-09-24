@@ -40,9 +40,9 @@ const APP_KEY_RE = /^[0-9a-f]{64}$/;
 const inputCls =
   "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus";
 
-/** Which local repository a source's snapshots land in. The same five the
+/** Which local repository a source's snapshots land in. The same ones the
  *  backup side knows; the server rejects anything else. */
-const DOMAINS = ["containers", "vms", "files", "flash", "config"] as const;
+const DOMAINS = ["containers", "vms", "files", "zfs", "flash", "config"] as const;
 type PullDomain = (typeof DOMAINS)[number];
 
 function PullSourceCard({

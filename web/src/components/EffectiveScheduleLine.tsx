@@ -1,14 +1,21 @@
-import { useT } from "../lib/i18n";
+import { useT, type TranslationKey } from "../lib/i18n";
 import { formatCadence } from "./CadenceBuilder";
 import type { EffectiveSchedule } from "../lib/api";
 
 /**
- * EffectiveScheduleLine says in one sentence what happens to a folder set,
- * since "Include in schedule", the Folders schedule and Backup Everything
- * interact. The server computes the outcome (schedule.EffectiveFileSetSchedule)
- * and this only formats it.
+ * EffectiveScheduleLine says in one sentence what happens to one item, since
+ * "Include in schedule", the domain schedule and Backup Everything interact.
+ * The server computes the outcome (schedule.EffectiveFileSetSchedule) and this
+ * only formats it. `domainLabelKey` is the schedule card's own title key, so
+ * the sentence names the card the reader would go to.
  */
-export function EffectiveScheduleLine({ effective }: { effective?: EffectiveSchedule }) {
+export function EffectiveScheduleLine({
+  effective,
+  domainLabelKey = "jobs.filesSection",
+}: {
+  effective?: EffectiveSchedule;
+  domainLabelKey?: TranslationKey;
+}) {
   const { t, lang } = useT();
   if (!effective) return null;
 
@@ -37,7 +44,7 @@ export function EffectiveScheduleLine({ effective }: { effective?: EffectiveSche
       tone = "text-carbon-textSub";
       break;
     case "domain":
-      text = t("files.effectiveDomain").replace("{when}", when).replace("{domain}", t("jobs.filesSection"));
+      text = t("files.effectiveDomain").replace("{when}", when).replace("{domain}", t(domainLabelKey));
       tone = "text-carbon-textSub";
       break;
     default:
