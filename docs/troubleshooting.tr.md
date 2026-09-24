@@ -89,6 +89,10 @@ Güncellemeden sonra BombVault önceki yedeklerin boyutlarını her depodan bir 
 
 Unraid kullanıcı paylaşımında (`/mnt/user`) boş alan tek bir diskin değil, tüm dizinin boş alanıdır. Uzak depolar yalnızca boş alanını bildiren rclone uzakları üzerinden ölçülür; S3, B2, REST ve SFTP depolarının değeri yoktur ve **Anormallikler** kartında ölçülmemiş olarak listelenir.
 
+## Bir yapay zekâ asistanı bağlanamıyor
+
+[MCP sunucusu](mcp.md#troubleshooting) sayfası, MCP uç noktasının her durum kodunun ve her reddinin ne anlama geldiğini ve ne yapılacağını anlatır.
+
 ## Konteyner sürekli yeniden başlıyor ya da sağlıksız görünüyor
 
 BombVault, kendi `/api/health`'inden sağlıklı/sağlıksız bildirir. Motor bir şekilde sıkışırsa bir otomatik onarma aracı (Autoheal gibi) onu otomatik olarak yeniden başlatabilir. Altta yatan neden için konteyner günlüğünü ve `/spike` raporunu denetleyin.
