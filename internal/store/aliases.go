@@ -113,15 +113,6 @@ func entriesOf(aliasDomain string) (entryTable, error) {
 	return entryTable{}, fmt.Errorf("no entries have aliases of %q", aliasDomain)
 }
 
-// carries reports whether a row of e has name.
-func (e entryTable) carries(tx *sql.Tx, name string) (bool, error) {
-	var n int
-	if err := tx.QueryRow(`SELECT count(*) FROM `+e.table+` WHERE `+e.nameCol+` = ?`, name).Scan(&n); err != nil {
-		return false, fmt.Errorf("check the entry of %s: %w", name, err)
-	}
-	return n > 0, nil
-}
-
 // holds reports whether something answers to name today: a row of e, or a
 // machine in installed, the names the host reports for e's domain. A container
 // or VM has no row until its first backup, yet its card can carry a rule.
@@ -129,7 +120,11 @@ func (e entryTable) holds(tx *sql.Tx, name string, installed map[string]bool) (b
 	if installed[name] {
 		return true, nil
 	}
-	return e.carries(tx, name)
+	var n int
+	if err := tx.QueryRow(`SELECT count(*) FROM `+e.table+` WHERE `+e.nameCol+` = ?`, name).Scan(&n); err != nil {
+		return false, fmt.Errorf("check the entry of %s: %w", name, err)
+	}
+	return n > 0, nil
 }
 
 // renameWithAlias moves the entry of e on oldName to newName and links

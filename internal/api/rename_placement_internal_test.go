@@ -208,6 +208,100 @@ func TestAFileExportedBeforeATakeoverKeepsTheOldHistoryOutOfTheTarget(t *testing
 	}
 }
 
+// The new nginx is set to Local on its card before its first backup, so it
+// holds that rule without a row.
+func TestAnImportLeavesTheRuleOfAnInstalledContainerOnItsName(t *testing.T) {
+	f := newPlacementFixture(t)
+	b2 := f.target("containers", "B2", "b2:bucket/containers")
+	f.listing("containers", b2.ID, 50)
+	web := f.container("web", "")
+	if _, err := f.st.AddAliasAt("container", "nginx", web.ID, 200); err != nil {
+		t.Fatal(err)
+	}
+	f.dock.installed = map[string]bool{"web": true, "nginx": true}
+	if res := f.do(http.MethodPatch, "/api/containers/nginx", map[string]any{"copies": map[string]any{"skip": []string{store.SkipAll}}}); res["ok"] != true {
+		t.Fatalf("PATCH = %v", res)
+	}
+	exp := f.do(http.MethodGet, "/api/settings/export", nil)
+
+	if res := f.do(http.MethodPost, "/api/settings/import?apply=true", exp); res["ok"] != true {
+		t.Fatalf("import = %v", res)
+	}
+	if skip, ok := ruleOf(t, f, "containers", "container:nginx"); !ok || !slices.Equal(skip, []string{store.SkipAll}) {
+		t.Fatalf("rule of nginx = %v (found %v), want [*]", skip, ok)
+	}
+	if skip, ok := ruleOf(t, f, "containers", "container:web"); ok {
+		t.Fatalf("web took the rule %v", skip)
+	}
+	f.hold(f.domainPath("containers"),
+		snap("aaaa0001", time.Now().Unix()+5, "container:nginx"),
+		snap("aaaa0003", 300, "container:web"))
+	if err := f.svc.ReplicateOffsite(context.Background(), "containers"); err != nil {
+		t.Fatalf("ReplicateOffsite: %v", err)
+	}
+	if got, want := copiedTo(f, b2.Repo), []string{"aaaa0003"}; !slices.Equal(got, want) {
+		t.Fatalf("copied %v to B2, want %v", got, want)
+	}
+}
+
+func TestAnImportWithCopyRulesWaitsForTheInstalledContainers(t *testing.T) {
+	f := newPlacementFixture(t)
+	exp := f.do(http.MethodGet, "/api/settings/export", nil)
+	f.rule("containers", "container:nginx", store.SkipAll)
+	f.dock.listErr = errors.New("docker socket unreachable")
+
+	res := f.do(http.MethodPost, "/api/settings/import?apply=true", exp)
+	if msg, _ := res["error"].(string); res["ok"] != false || !strings.Contains(msg, "not imported") {
+		t.Fatalf("import = %v, want a refusal", res)
+	}
+	if _, ok := ruleOf(t, f, "containers", "container:nginx"); !ok {
+		t.Fatal("the refused import replaced the copy rules")
+	}
+}
+
+func TestDiscoverLeavesTheRuleOfAnInstalledContainerOnAFormerName(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.rule("containers", "container:nginx", store.SkipAll)
+	f.hold(f.domainPath("containers"),
+		snap("aaaa0001", 100, "container:nginx"),
+		snap("aaaa0002", 300, "container:web", "formerly:nginx"))
+	writeLinkedContainerDef(t, f, "web", "nginx", 200)
+	f.dock.installed = map[string]bool{"nginx": true}
+
+	if _, err := f.svc.Discover(context.Background(), false); err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	if _, err := f.st.AliasByOldName("container", "nginx"); err != nil {
+		t.Fatalf("nginx is not linked to web: %v", err)
+	}
+	if skip, ok := ruleOf(t, f, "containers", "container:nginx"); !ok || !slices.Equal(skip, []string{store.SkipAll}) {
+		t.Fatalf("rule of nginx = %v (found %v), want [*]", skip, ok)
+	}
+	if skip, ok := ruleOf(t, f, "containers", "container:web"); ok {
+		t.Fatalf("web took the rule %v", skip)
+	}
+}
+
+func TestDiscoverLinksButLeavesTheRuleWhileTheInstalledContainersCannotBeListed(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.rule("containers", "container:nginx", store.SkipAll)
+	f.hold(f.domainPath("containers"),
+		snap("aaaa0001", 100, "container:nginx"),
+		snap("aaaa0002", 300, "container:web", "formerly:nginx"))
+	writeLinkedContainerDef(t, f, "web", "nginx", 200)
+	f.dock.listErr = errors.New("docker socket unreachable")
+
+	if _, err := f.svc.Discover(context.Background(), false); err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	if _, err := f.st.AliasByOldName("container", "nginx"); err != nil {
+		t.Fatalf("nginx is not linked to web: %v", err)
+	}
+	if skip, ok := ruleOf(t, f, "containers", "container:nginx"); !ok || !slices.Equal(skip, []string{store.SkipAll}) {
+		t.Fatalf("rule of nginx = %v (found %v), want [*]", skip, ok)
+	}
+}
+
 // writeLinkedContainerDef leaves the definition mirror of name at the domain
 // path, recording old as the former name linked to it at linkedAt.
 func writeLinkedContainerDef(t *testing.T, f *placementFixture, name, old string, linkedAt int64) {

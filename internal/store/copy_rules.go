@@ -366,12 +366,12 @@ func keepRuleOnNameTx(tx *sql.Tx, e entryTable, name, left string, installed map
 // CarryFormerNameRule moves the copy rule on oldName, a former name in
 // aliasDomain ("container" or "vm"), onto the entry it is linked to, as the
 // takeover that linked them would have; see carryFormerNameRulesTx.
-func (r *Repo) CarryFormerNameRule(aliasDomain, oldName string) error {
+func (r *Repo) CarryFormerNameRule(aliasDomain, oldName string, installed map[string]bool) error {
 	e, err := entriesOf(aliasDomain)
 	if err != nil {
 		return err
 	}
-	if err := r.inTx(func(tx *sql.Tx) error { return carryFormerNameRulesTx(tx, e, oldName) }); err != nil {
+	if err := r.inTx(func(tx *sql.Tx) error { return carryFormerNameRulesTx(tx, e, oldName, installed) }); err != nil {
 		return fmt.Errorf("CarryFormerNameRule: %w", err)
 	}
 	return nil
@@ -379,10 +379,11 @@ func (r *Repo) CarryFormerNameRule(aliasDomain, oldName string) error {
 
 // carryFormerNameRulesTx moves the rule on each former name of e, or on oldName
 // alone when it is given, onto the entry the name is linked to. A rule stays
-// where it is while that entry has one of its own, and while a row carries the
-// former name, since the rule is that row's then. The latest link goes first:
-// its rule is the one a chain of takeovers would have carried to the end.
-func carryFormerNameRulesTx(tx *sql.Tx, e entryTable, oldName string) error {
+// where it is while that entry has one of its own, and while something holds
+// the former name (a row, or a machine in installed), since the rule is that
+// one's then. The latest link goes first: its rule is the one a chain of
+// takeovers would have carried to the end.
+func carryFormerNameRulesTx(tx *sql.Tx, e entryTable, oldName string, installed map[string]bool) error {
 	domain, prefix, err := placementDomainForAlias(e.domain)
 	if err != nil {
 		return err
@@ -411,7 +412,7 @@ func carryFormerNameRulesTx(tx *sql.Tx, e entryTable, oldName string) error {
 		return fmt.Errorf("read the former names: %w", err)
 	}
 	for _, l := range links {
-		carried, err := e.carries(tx, l.old)
+		held, err := e.holds(tx, l.old, installed)
 		if err != nil {
 			return err
 		}
@@ -419,7 +420,7 @@ func carryFormerNameRulesTx(tx *sql.Tx, e entryTable, oldName string) error {
 		if err != nil {
 			return err
 		}
-		if carried || ruled {
+		if held || ruled {
 			continue
 		}
 		if err := moveCopyRuleTx(tx, domain, prefix+l.old, prefix+l.current); err != nil {

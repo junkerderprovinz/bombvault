@@ -286,7 +286,7 @@ func linkedTo(t *testing.T, r *store.Repo, name string, olds ...string) {
 
 func importRules(t *testing.T, r *store.Repo, rules ...store.CopyRule) {
 	t.Helper()
-	if err := r.ImportPlacement(store.PlacementImport{HasRules: true, Rules: rules}); err != nil {
+	if err := r.ImportPlacement(store.PlacementImport{HasRules: true, Rules: rules}, store.Installed{}); err != nil {
 		t.Fatalf("ImportPlacement: %v", err)
 	}
 }
@@ -319,6 +319,34 @@ func TestAnImportedRuleOnAFormerNameStaysWithItsOwner(t *testing.T) {
 		importRules(t, r, store.CopyRule{Domain: "containers", Identity: "container:nginx", Skip: []string{store.SkipAll}})
 		mustRule(t, r, "containers", "container:nginx", store.SkipAll)
 		mustNoRule(t, r, "containers", "container:web")
+	})
+	t.Run("a container is installed under the former name", func(t *testing.T) {
+		r := newRepo(t)
+		linkedTo(t, r, "web", "nginx")
+		rules := []store.CopyRule{{Domain: "containers", Identity: "container:nginx", Skip: []string{store.SkipAll}}}
+		installed := store.Installed{Containers: map[string]bool{"nginx": true}}
+		if err := r.ImportPlacement(store.PlacementImport{HasRules: true, Rules: rules}, installed); err != nil {
+			t.Fatalf("ImportPlacement: %v", err)
+		}
+		mustRule(t, r, "containers", "container:nginx", store.SkipAll)
+		mustNoRule(t, r, "containers", "container:web")
+	})
+	t.Run("a VM is defined under the former name", func(t *testing.T) {
+		r := newRepo(t)
+		vm, err := r.UpsertVMTarget(store.VMTarget{Name: "win11"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := r.AddVMAliasAt("windows-11", vm.ID, 200, ""); err != nil {
+			t.Fatal(err)
+		}
+		rules := []store.CopyRule{{Domain: "vms", Identity: "vm:windows-11", Skip: []string{store.SkipAll}}}
+		installed := store.Installed{VMs: map[string]bool{"windows-11": true}}
+		if err := r.ImportPlacement(store.PlacementImport{HasRules: true, Rules: rules}, installed); err != nil {
+			t.Fatalf("ImportPlacement: %v", err)
+		}
+		mustRule(t, r, "vms", "vm:windows-11", store.SkipAll)
+		mustNoRule(t, r, "vms", "vm:win11")
 	})
 }
 
@@ -355,12 +383,24 @@ func TestARuleOnANewlyLinkedFormerNameMovesToTheEntry(t *testing.T) {
 	linkedTo(t, r, "web", "nginx")
 	linkedTo(t, r, "postgres", "db")
 
-	if err := r.CarryFormerNameRule("container", "nginx"); err != nil {
+	if err := r.CarryFormerNameRule("container", "nginx", nil); err != nil {
 		t.Fatalf("CarryFormerNameRule: %v", err)
 	}
 	mustRule(t, r, "containers", "container:web", store.SkipAll)
 	mustNoRule(t, r, "containers", "container:nginx")
 	mustRule(t, r, "containers", "container:db", store.SkipAll)
+}
+
+func TestARuleOnANewlyLinkedFormerNameStaysWithTheContainerInstalledUnderIt(t *testing.T) {
+	r := newRepo(t)
+	store.SeedCopyRule(t, r, "containers", "container:nginx", store.SkipAll)
+	linkedTo(t, r, "web", "nginx")
+
+	if err := r.CarryFormerNameRule("container", "nginx", map[string]bool{"nginx": true}); err != nil {
+		t.Fatalf("CarryFormerNameRule: %v", err)
+	}
+	mustRule(t, r, "containers", "container:nginx", store.SkipAll)
+	mustNoRule(t, r, "containers", "container:web")
 }
 
 func TestARenamedVMTakesItsCopyRuleAndGivesItBackOnUnlink(t *testing.T) {
