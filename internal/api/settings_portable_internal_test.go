@@ -775,3 +775,83 @@ func TestImportLeavesMCPKeysAlone(t *testing.T) {
 		t.Fatalf("a crafted mcpKeys field changed the key set: %v", got)
 	}
 }
+
+// encoding/json drops both fields when two of them claim the same key, so a
+// setting named twice in the view would vanish from the export without an
+// error.
+func TestSettingsViewNamesEachFieldOnce(t *testing.T) {
+	seen := map[string]string{}
+	typ := reflect.TypeOf(settingsView{})
+	for i := range typ.NumField() {
+		f := typ.Field(i)
+		name, _, _ := strings.Cut(f.Tag.Get("json"), ",")
+		if prev, ok := seen[name]; ok {
+			t.Errorf("%s and %s are both exported as %q", prev, f.Name, name)
+		}
+		seen[name] = f.Name
+	}
+}
+
+// Every setting the database dumps, the ZFS domain and anomaly detection
+// brought is written under one key and reaches the instance the file is
+// applied to.
+func TestExportImportCarriesEveryDumpZFSAndAnomalySettingOnce(t *testing.T) {
+	src, srcStore := newPortableHandler(t, appKeyA)
+	seedSource(t, src, srcStore)
+	s, err := srcStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.DBDumpsEnabled = false
+	s.ZFSEnabled = true
+	s.ZFSPath = "zfs"
+	s.ZFSSchedule = "daily 03:30"
+	s.ZFSOffsite = "s3:offsite-zfs"
+	s.ZFSOffsiteSchedule = "weekly Sun 05:00"
+	s.ZFSOffsiteImmutable = true
+	s.AnomalyEnabled = false
+	s.AnomalySensitivity = "permissive"
+	s.AnomalyNotifyMin = "info"
+	s.AnomalyRetentionHold = false
+	if err := srcStore.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+
+	body, _ := doExport(t, src, "")
+	for _, key := range []string{
+		"dbDumpsEnabled",
+		"zfsEnabled", "zfsPath", "zfsSchedule", "zfsOffsite", "zfsOffsiteSchedule", "zfsOffsiteImmutable",
+		"anomalyEnabled", "anomalySensitivity", "anomalyNotifyMin", "anomalyRetentionHold",
+	} {
+		if n := bytes.Count(body, []byte(`"`+key+`":`)); n != 1 {
+			t.Errorf("the export names %q %d times, want once", key, n)
+		}
+	}
+
+	dst, dstStore := newPortableHandler(t, appKeyB)
+	if env := doImport(t, dst, body, "?apply=true"); env["ok"] != true {
+		t.Fatalf("apply envelope wrong: %v", env)
+	}
+	got, err := dstStore.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	type portable struct {
+		DBDumpsEnabled                                       bool
+		ZFSEnabled                                           bool
+		ZFSPath, ZFSSchedule, ZFSOffsite, ZFSOffsiteSchedule string
+		ZFSOffsiteImmutable                                  bool
+		AnomalyEnabled, AnomalyRetentionHold                 bool
+		AnomalySensitivity, AnomalyNotifyMin                 string
+	}
+	pick := func(x store.Settings) portable {
+		return portable{
+			x.DBDumpsEnabled, x.ZFSEnabled,
+			x.ZFSPath, x.ZFSSchedule, x.ZFSOffsite, x.ZFSOffsiteSchedule, x.ZFSOffsiteImmutable,
+			x.AnomalyEnabled, x.AnomalyRetentionHold, x.AnomalySensitivity, x.AnomalyNotifyMin,
+		}
+	}
+	if want, have := pick(s), pick(got); want != have {
+		t.Fatalf("after the import:\n got %+v\nwant %+v", have, want)
+	}
+}

@@ -348,3 +348,50 @@ func TestCoverageLeavesADumpingDatabaseAloneWhenTheFilesAreConsistent(t *testing
 		t.Fatalf("reason = %q, want no entry: the files backup stops the server and copies its data", got)
 	}
 }
+
+// A ZFS item with no schedule of its own is protected once the Backup
+// Everything pass runs, because the pass backs up ZFS items like the other
+// types; an item left out of the schedule stays named.
+func TestCoverageCountsZFSItemsBackupEverythingReaches(t *testing.T) {
+	h, st, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
+
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ZFSEnabled = true
+	s.ZFSSchedule = "off"
+	s.EverythingSchedule = "daily 05:00"
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/appdata", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.CreateZFSDataset(store.ZFSDataset{Dataset: "tank/media", Enabled: false}); err != nil {
+		t.Fatal(err)
+	}
+
+	m := mustCoverage(t, h)
+	reasons := coverageReasons(t, m)
+	if reason, named := reasons["cache/appdata"]; named {
+		t.Errorf("an item the Everything pass backs up is reported as %q", reason)
+	}
+	if reasons["tank/media"] != "not-included" {
+		t.Errorf("an item left out of the schedule reads %q, want not-included", reasons["tank/media"])
+	}
+
+	report, _ := m["coverage"].(map[string]any)
+	domains, _ := report["domains"].([]any)
+	for _, d := range domains {
+		dm, _ := d.(map[string]any)
+		if dm["domain"] != "zfs" {
+			continue
+		}
+		if dm["total"] != float64(2) || dm["protected"] != float64(1) {
+			t.Fatalf("the ZFS domain counts %v of %v protected, want 1 of 2", dm["protected"], dm["total"])
+		}
+		return
+	}
+	t.Fatalf("the report has no ZFS domain: %v", domains)
+}

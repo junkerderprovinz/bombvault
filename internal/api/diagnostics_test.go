@@ -417,3 +417,61 @@ func TestDiagnosticsCarriesOnlyMCPCounts(t *testing.T) {
 		}
 	}
 }
+
+// One bundle answers for all four of the database dumps, the ZFS domain,
+// anomaly detection and the MCP keys, so a report about any of them arrives
+// with its state and settings attached.
+func TestDiagnosticsNamesDumpsZFSAnomaliesAndMCPTogether(t *testing.T) {
+	h, st, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
+
+	s, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.ZFSEnabled = true
+	if err := st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/appdata", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "postgres"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	seedAnomaly(t, st, store.Anomaly{
+		ID: "shrink", Detector: "source", Metric: "dump_bytes_shrink", Severity: "critical",
+		ScopeKind: "dump", ScopeID: tg.ID, TargetID: tg.ID, Domain: "container",
+		LastSeenAt: time.Now().Unix(),
+	})
+	createMCPKey(t, h, "Laptop", false)
+
+	cookie := loginCookie(t, h, "correct horse battery staple")
+	w := getRaw(t, h, "/api/diagnostics", cookie)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d body = %s", w.Code, w.Body.String())
+	}
+	members := zipMembers(t, w.Body.Bytes())
+
+	for member, wants := range map[string][]string{
+		"dbdump.json":    {"["},
+		"zfs.json":       {`"cache/appdata"`},
+		"anomalies.json": {`"dump_bytes_shrink"`},
+		"manifest.json":  {`"activeKeys": 1`},
+		"settings.json":  {`"dbDumpsEnabled"`, `"zfsEnabled": true`, `"anomalyEnabled"`},
+	} {
+		body, ok := members[member]
+		if !ok {
+			t.Errorf("the bundle is missing %s. Members present: %v", member, memberNames(members))
+			continue
+		}
+		if strings.Contains(body, `"error"`) {
+			t.Errorf("%s holds an error instead of the state: %s", member, body)
+		}
+		for _, want := range wants {
+			if !strings.Contains(body, want) {
+				t.Errorf("%s does not carry %s: %s", member, want, body)
+			}
+		}
+	}
+}
