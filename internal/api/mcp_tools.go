@@ -141,7 +141,8 @@ func (h *Handler) mcpToolDefs() []mcpToolDef {
 				"Starts a backup of one item now and returns at once; the backup continues in BombVault. "+
 					"Call this only when the user asked for a backup in this conversation. "+
 					"A running container is stopped until its backup finishes, together with the containers listed as stopped with it; "+
-					"a VM with the graceful method is shut down and started again; folder sets, the flash drive and the configuration keep running. "+
+					"a VM with the graceful method is shut down and started again; a ZFS dataset stops the containers configured for it while its snapshot is taken; "+
+					"folder sets, the flash drive and the configuration keep running. "+
 					"Call list_items first to see what an item stops and how long its last backup took, and tell the user. "+
 					"After the backup BombVault applies the retention policy and may copy to the off-site repository. "+
 					mcpStartLimits+
@@ -158,7 +159,7 @@ func (h *Handler) mcpToolDefs() []mcpToolDef {
 					"then prunes and copies off-site once. Returns at once; the backups continue in BombVault. "+
 					"Call this only when the user asked for a backup in this conversation. "+
 					"A running container is stopped until its backup finishes, together with the containers listed as stopped with it; "+
-					"a VM with the graceful method is shut down and started again. "+
+					"a VM with the graceful method is shut down and started again; a ZFS dataset stops the containers configured for it while its snapshot is taken. "+
 					"Call list_items first to see what the items stop and how long their last backups took, and tell the user. "+
 					mcpStartLimits,
 				objectSchema(map[string]any{

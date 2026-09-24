@@ -381,6 +381,8 @@ func (s *Service) everythingRunZFS(ctx context.Context, runID string, settings s
 		return everythingDomainFault(zfsDomain, err)
 	}
 	items = schedule.DomainRunZFSDatasets(items, settings.PerItemSchedules)
+	skip := everythingSkips(ctx)
+	items = slices.DeleteFunc(items, func(d store.ZFSDataset) bool { return skip[d.ID] })
 	if !schedule.DomainRunHasZFSWork(items) {
 		return everythingDomainIdle(zfsDomain)
 	}

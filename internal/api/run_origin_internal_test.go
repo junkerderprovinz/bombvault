@@ -91,3 +91,35 @@ func TestRunStartsGoThroughTheOriginHelper(t *testing.T) {
 		}
 	}
 }
+
+// A ZFS backup an assistant started carries the key in its run row, and so does
+// the row a refusal before the run writes, which is the one an operator looks
+// at to learn who asked for a backup the host could not take.
+func TestZFSRunsCarryOrigin(t *testing.T) {
+	origin := RunOrigin{Via: "mcp", KeyID: "k1"}
+	for _, c := range []struct {
+		name   string
+		noHost bool
+		status string
+	}{
+		{"a backup that ran", false, "success"},
+		{"a backup the missing host refused", true, "failed"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			s, st, _, _ := zfsRunFixture(t, zfsTwoDatasetTree())
+			if c.noHost {
+				s.zfs = nil
+			}
+			d := zfsSeedItem(t, st, zfsRoot)
+
+			_, _ = s.BackupZFSDataset(WithRunOrigin(context.Background(), origin), d.ID)
+			run := zfsLastRun(t, st, d.ID)
+			if run.Status != c.status {
+				t.Fatalf("run status = %q (%s), want %s", run.Status, run.Error, c.status)
+			}
+			if run.StartedVia != origin.Via || run.StartedViaKey != origin.KeyID {
+				t.Fatalf("the run records via %q key %q, want the MCP origin", run.StartedVia, run.StartedViaKey)
+			}
+		})
+	}
+}

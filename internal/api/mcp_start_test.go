@@ -138,6 +138,133 @@ func TestMCPStartBackupDomainOff(t *testing.T) {
 	if code := res.code(t); code != "domain_off" {
 		t.Fatalf("start_domain_backup: code = %q, want domain_off (result %v)", code, res.Structured)
 	}
+
+	if _, err := rig.st.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/appdata", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range []struct{ tool, args string }{
+		{"start_backup", `{"domain":"zfs","item":"cache/appdata"}`},
+		{"start_domain_backup", `{"domain":"zfs"}`},
+	} {
+		res := mcpCallTool(t, rig.h, rig.key, c.tool, c.args)
+		if code := res.code(t); code != "domain_off" {
+			t.Fatalf("%s %s: code = %q, want domain_off (result %v)", c.tool, c.args, code, res.Structured)
+		}
+	}
+	wantNoRuns(t, rig.st)
+}
+
+// enableZFS switches the ZFS domain on over an existing repository. No host is
+// set up, so a started backup ends in the refused run the service records for
+// that, which is all a start test needs to see.
+func enableZFS(t *testing.T, rig *mcpStartRig) {
+	t.Helper()
+	s := mustSettings(t, rig.st)
+	s.ZFSEnabled = true
+	s.ZFSPath = "backups/zfs"
+	if err := rig.st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	establishLocalRepo(t, rig.dir, s.ZFSPath)
+}
+
+func TestMCPStartBackupZFSDatasets(t *testing.T) {
+	rig := newMCPStartRig(t, &fakeServiceDocker{listOut: []dockercli.ContainerInfo{runningContainer("plex")}}, &fakeResticEngine{})
+	enableZFS(t, rig)
+	appdata, err := rig.st.CreateZFSDataset(store.ZFSDataset{
+		Dataset: "cache/appdata", Enabled: true, StopContainers: []string{"plex"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	media, err := rig.st.CreateZFSDataset(store.ZFSDataset{Dataset: "tank/media", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, c := range []struct {
+		name, args string
+		dataset    store.ZFSDataset
+	}{
+		{"a dataset by name", `{"domain":"zfs","item":"cache/appdata"}`, appdata},
+		{"a dataset by id", fmt.Sprintf(`{"domain":"zfs","item":%q}`, media.ID), media},
+	} {
+		res := mcpCallTool(t, rig.h, rig.key, "start_backup", c.args)
+		if res.IsError {
+			t.Fatalf("%s: %v", c.name, res.Structured)
+		}
+		items := mcpRows(t, res, "items")
+		if len(items) != 1 || items[0]["id"] != c.dataset.ID || items[0]["name"] != c.dataset.Dataset {
+			t.Fatalf("%s: items = %v", c.name, items)
+		}
+		waitForBackupDone(t, rig.svc)
+		run, err := rig.st.LastRunForTarget(c.dataset.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if run == nil || run.StartedVia != "mcp" || run.StartedViaKey != rig.keyID {
+			t.Fatalf("%s: the run records %+v, want the MCP origin with key %s", c.name, run, rig.keyID)
+		}
+	}
+
+	res := mcpCallTool(t, rig.h, rig.key, "start_backup", `{"domain":"zfs","item":"cache/appdata"}`)
+	if code := res.code(t); code != "cooldown" {
+		t.Fatalf("a second start of the same dataset gives %q, want cooldown (result %v)", code, res.Structured)
+	}
+	res = mcpCallTool(t, rig.h, rig.key, "start_backup", `{"domain":"zfs","item":"tank/photos"}`)
+	if code := res.code(t); code != "not_found" {
+		t.Fatalf("a dataset nobody added gives %q, want not_found (result %v)", code, res.Structured)
+	}
+}
+
+// A ZFS item stops the containers configured for its snapshot, and the answer
+// has to say so before the apps go down.
+func TestMCPStartZFSDomainNamesWhatItStops(t *testing.T) {
+	rig := newMCPStartRig(t, &fakeServiceDocker{listOut: []dockercli.ContainerInfo{runningContainer("plex")}}, &fakeResticEngine{})
+	enableZFS(t, rig)
+	s := mustSettings(t, rig.st)
+	s.PerItemSchedules = true
+	if err := rig.st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	for _, d := range []store.ZFSDataset{
+		{Dataset: "cache/appdata", Enabled: true, StopContainers: []string{"plex", "redis"}},
+		{Dataset: "tank/media", Enabled: true},
+		{Dataset: "tank/old", Enabled: true},
+		{Dataset: "tank/spare"},
+	} {
+		created, err := rig.st.CreateZFSDataset(d)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if d.Dataset == "tank/old" {
+			if err := rig.st.SetZFSDatasetScheduleCadence(created.ID, "off"); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+
+	res := mcpCallTool(t, rig.h, rig.key, "start_domain_backup", `{"domain":"zfs"}`)
+	if res.IsError {
+		t.Fatalf("start_domain_backup: %v", res.Structured)
+	}
+	got := mcpStartedNames(t, res)
+	slices.Sort(got)
+	if !slices.Equal(got, []string{"cache/appdata", "tank/media"}) {
+		t.Fatalf("started %v, want the two datasets the operator protects and has not paused", got)
+	}
+	for _, item := range mcpRows(t, res, "items") {
+		stops, _ := item["stops"].(map[string]any)
+		also, _ := stops["containers"].([]any)
+		want := 0
+		if item["name"] == "cache/appdata" {
+			want = 1
+		}
+		if stops["self"] != false || stops["known"] != true || len(also) != want {
+			t.Fatalf("%v stops %v", item["name"], stops)
+		}
+	}
+	waitForBackupDone(t, rig.svc)
 }
 
 func TestMCPStartBackupSingletonsAndFileSets(t *testing.T) {
@@ -389,6 +516,47 @@ func TestMCPStartBackupEverythingHoldsGuardedItemsBack(t *testing.T) {
 	}
 	if n := backupRunCount(t, rig.st, immich.ID); n != 1 {
 		t.Fatalf("the container the guard leaves alone has %d backups, want one from the pass", n)
+	}
+}
+
+// The ZFS step of the pass has to leave out the datasets the guard holds back
+// as well, or the widest start tool is a way around the guard for them.
+func TestMCPStartBackupEverythingHoldsGuardedDatasetsBack(t *testing.T) {
+	rig := newMCPStartRig(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	enableZFS(t, rig)
+	s := mustSettings(t, rig.st)
+	s.RetentionKeepLast = 2
+	if err := rig.st.UpdateSettings(s); err != nil {
+		t.Fatal(err)
+	}
+	guarded, err := rig.st.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/appdata", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	free, err := rig.st.CreateZFSDataset(store.ZFSDataset{Dataset: "tank/media", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	seedRun(t, rig.st, guarded.ID, "backup", "success", store.RunMeta{StartedVia: "mcp", StartedViaKey: rig.keyID})
+
+	res := mcpCallTool(t, rig.h, rig.key, "start_backup_everything", "")
+	if res.IsError {
+		t.Fatalf("start_backup_everything: %v", res.Structured)
+	}
+	if got := mcpStartedNames(t, res); !slices.Contains(got, "zfs") {
+		t.Fatalf("items = %v, want the zfs domain in the pass", got)
+	}
+	skipped := mcpRows(t, res, "skipped")
+	if len(skipped) != 1 || skipped[0]["id"] != guarded.ID || skipped[0]["reason"] != "retention_guard" {
+		t.Fatalf("skipped = %v, want the guarded dataset with its reason", skipped)
+	}
+	waitForEverythingDone(t, rig.svc)
+
+	if n := backupRunCount(t, rig.st, guarded.ID); n != 1 {
+		t.Fatalf("the guarded dataset has %d backups, want only the one from before the pass", n)
+	}
+	if n := backupRunCount(t, rig.st, free.ID); n != 1 {
+		t.Fatalf("the dataset the guard leaves alone has %d backups, want one from the pass", n)
 	}
 }
 

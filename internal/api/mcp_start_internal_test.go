@@ -496,7 +496,7 @@ func TestMCPStartPermissionRecheckedInHandler(t *testing.T) {
 
 // A cancel reaches a backup only under the exact progress key the service
 // registered it with, so the two have to be read side by side: the derived key
-// here, the literal in service.go there.
+// here, the literal in the service there.
 func TestMCPCancelDerivesTheServiceKey(t *testing.T) {
 	h, repo, sets := newMCPStartHandler(t, "docs")
 	target, err := repo.UpsertTarget(store.Target{ContainerName: "plex"})
@@ -507,23 +507,33 @@ func TestMCPCancelDerivesTheServiceKey(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	raw, err := os.ReadFile("service.go")
+	dataset, err := repo.CreateZFSDataset(store.ZFSDataset{Dataset: "cache/appdata"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	src := string(raw)
+	rawService, err := os.ReadFile("service.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rawZFSRun, err := os.ReadFile("zfs_run.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	service, zfsRun := string(rawService), string(rawZFSRun)
 
 	for _, c := range []struct {
 		domain   string
 		targetID string
 		want     string
+		src      string
 		register string
 	}{
-		{"containers", target.ID, "container:plex", `s.registerBackupCancel("container:"+name, cancel)`},
-		{"vms", vm.ID, "vm:win11", `s.registerBackupCancel("vm:"+name, cancel)`},
-		{"files", sets["docs"].ID, "files:docs", `s.registerBackupCancel("files:"+set.Name, cancel)`},
-		{"flash", store.FlashTargetID, "flash", `s.registerBackupCancel("flash", cancel)`},
-		{"config", store.ConfigTargetID, "config", `s.registerBackupCancel("config", cancel)`},
+		{"containers", target.ID, "container:plex", service, `s.registerBackupCancel("container:"+name, cancel)`},
+		{"vms", vm.ID, "vm:win11", service, `s.registerBackupCancel("vm:"+name, cancel)`},
+		{"files", sets["docs"].ID, "files:docs", service, `s.registerBackupCancel("files:"+set.Name, cancel)`},
+		{"zfs", dataset.ID, "zfs:cache/appdata", zfsRun, `key := zfsDomain + ":" + d.Dataset`},
+		{"flash", store.FlashTargetID, "flash", service, `s.registerBackupCancel("flash", cancel)`},
+		{"config", store.ConfigTargetID, "config", service, `s.registerBackupCancel("config", cancel)`},
 	} {
 		key, item, ok := h.mcpCancelKey(store.Run{TargetID: c.targetID})
 		if !ok {
@@ -535,7 +545,7 @@ func TestMCPCancelDerivesTheServiceKey(t *testing.T) {
 		if item.Domain != c.domain || item.ID != c.targetID {
 			t.Fatalf("%s: item = %+v", c.domain, item)
 		}
-		if !strings.Contains(src, c.register) {
+		if !strings.Contains(c.src, c.register) {
 			t.Fatalf("%s backups no longer register under %s, so a cancel of one reaches nothing", c.domain, c.register)
 		}
 	}

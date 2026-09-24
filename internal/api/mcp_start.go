@@ -121,6 +121,8 @@ func (h *Handler) startMCPItem(ctx context.Context, item mcpItem) (bool, error) 
 		return h.svc.StartBackupVM(ctx, item.Name)
 	case "files":
 		return h.svc.StartBackupFileSet(ctx, item.ID)
+	case zfsDomain:
+		return h.svc.StartBackupZFSDataset(ctx, item.ID)
 	case "flash":
 		return h.svc.StartBackupFlash(ctx)
 	case "config":
@@ -224,6 +226,8 @@ func (h *Handler) startMCPDomain(ctx context.Context, domain string, items []mcp
 		return h.svc.StartBackupVMsAll(ctx, mcpItemNames(items))
 	case "files":
 		return h.svc.StartBackupFilesAll(ctx, mcpItemIDs(items))
+	case zfsDomain:
+		return h.svc.StartBackupZFSAll(ctx, mcpItemIDs(items))
 	case "flash":
 		return h.svc.StartBackupFlash(ctx)
 	case "config":
@@ -410,6 +414,7 @@ func mcpEnabledDomains(s store.Settings) []string {
 		{"vms", s.VMsEnabled},
 		{"flash", s.FlashEnabled},
 		{"files", s.FilesEnabled},
+		{zfsDomain, s.ZFSEnabled},
 		{"config", s.ConfigEnabled},
 	} {
 		if d.on {
@@ -698,6 +703,17 @@ func (h *Handler) domainStartSelection(ctx context.Context, s store.Settings, do
 			}
 			items = append(items, mcpItem{Domain: domain, ID: set.ID, Name: set.Name})
 		}
+	case zfsDomain:
+		datasets, err := h.store.ListZFSDatasets()
+		if err != nil {
+			return nil, nil, err
+		}
+		for _, d := range schedule.DomainRunZFSDatasets(datasets, perItem) {
+			if !d.Enabled || schedule.PausedByOverride(d.ScheduleCadence, s.PerItemSchedules) {
+				continue
+			}
+			items = append(items, mcpItem{Domain: domain, ID: d.ID, Name: d.Dataset})
+		}
 	case "flash", "config":
 		items = append(items, mcpItem{Domain: domain, ID: domainRunTargetID(domain), Name: domain})
 	default:
@@ -763,6 +779,26 @@ func (h *Handler) mcpStopsFor(ctx context.Context, domain string, items []mcpIte
 		for _, item := range items {
 			out[item.ID] = mcpStops{Self: graceful[item.ID], Containers: []string{}, Known: err == nil}
 		}
+	case zfsDomain:
+		datasets, dErr := h.store.ListZFSDatasets()
+		byID := make(map[string]store.ZFSDataset, len(datasets))
+		for _, d := range datasets {
+			byID[d.ID] = d
+		}
+		docker := h.mcpDockerOnce(ctx)
+		for _, item := range items {
+			stops := mcpStops{Containers: []string{}, Known: dErr == nil}
+			if names := byID[item.ID].StopContainers; len(names) > 0 {
+				state := docker()
+				stops.Known = stops.Known && state.answered
+				for _, name := range names {
+					if isRunning(state.live[name]) {
+						stops.Containers = append(stops.Containers, name)
+					}
+				}
+			}
+			out[item.ID] = stops
+		}
 	default:
 		for _, item := range items {
 			out[item.ID] = mcpStops{Containers: []string{}, Known: true}
@@ -773,8 +809,8 @@ func (h *Handler) mcpStopsFor(ctx context.Context, domain string, items []mcpIte
 
 // mcpCancelKey is the progress key the service registered a run's backup under,
 // with the item behind it. It has to read exactly as the key in Backup,
-// BackupVM, BackupFileSet, BackupFlash and BackupConfig, or a cancel reaches
-// nothing.
+// BackupVM, BackupFileSet, BackupZFSDataset, BackupFlash and BackupConfig, or a
+// cancel reaches nothing.
 func (h *Handler) mcpCancelKey(run store.Run) (string, mcpItem, bool) {
 	switch run.TargetID {
 	case store.FlashTargetID:
@@ -790,6 +826,9 @@ func (h *Handler) mcpCancelKey(run store.Run) (string, mcpItem, bool) {
 	}
 	if set, err := h.store.GetFileSet(run.TargetID); err == nil {
 		return "files:" + set.Name, mcpItem{Domain: "files", ID: set.ID, Name: set.Name}, true
+	}
+	if d, err := h.store.GetZFSDataset(run.TargetID); err == nil {
+		return zfsDomain + ":" + d.Dataset, mcpItem{Domain: zfsDomain, ID: d.ID, Name: d.Dataset}, true
 	}
 	return "", mcpItem{}, false
 }
