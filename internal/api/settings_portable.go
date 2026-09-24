@@ -823,9 +823,9 @@ func (h *Handler) installedForImport(ctx context.Context, exp settingsExport) (s
 	if exp.CopyRules == nil {
 		return store.Installed{}, nil
 	}
-	containers, err := h.svc.installedContainers(ctx)
+	containers, err := h.svc.heldContainerNames(ctx)
 	if err != nil {
-		return store.Installed{}, fmt.Errorf("the installed containers could not be listed: %w", err)
+		return store.Installed{}, err
 	}
 	vms, err := h.svc.heldVMNames(ctx)
 	if err != nil {

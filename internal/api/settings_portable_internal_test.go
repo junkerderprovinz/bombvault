@@ -37,8 +37,7 @@ func newPortableHandler(t *testing.T, appKey string) (*Handler, *store.Repo) {
 	// domain's copy sources to describe the targets a file adds, and that
 	// walk reaches the engine even with nothing ever run here.
 	eng := &placementEngine{snaps: map[string][]restic.Snapshot{}, listErr: map[string]error{}, opens: map[string]bool{}, lists: map[string]int{}}
-	// A file with copy rules asks Docker for the installed containers.
-	svc := &Service{cfg: cfg, store: st, engine: eng, docker: &placementDocker{}}
+	svc := &Service{cfg: cfg, store: st, engine: eng}
 	return &Handler{cfg: cfg, store: st, svc: svc}, st
 }
 
