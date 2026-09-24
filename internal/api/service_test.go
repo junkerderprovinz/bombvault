@@ -7504,6 +7504,26 @@ func TestRecoveryKit(t *testing.T) {
 			}
 		}
 	})
+
+	// After data loss the newest snapshot is often the emptied or encrypted
+	// one, and the kit is read when BombVault's own warnings are out of reach.
+	t.Run("the manual restore warns against the newest snapshot after data loss", func(t *testing.T) {
+		dir := t.TempDir()
+		cfg := config.Config{AppKey: strings.Repeat("c", 64), DataDir: dir, HostMountRoot: dir}
+		svc := api.NewService(cfg, newMemStore(t), &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+
+		kit, err := svc.RecoveryKit()
+		if err != nil {
+			t.Fatalf("RecoveryKit: %v", err)
+		}
+		manual := kit[strings.Index(kit, "## Manual restore without BombVault"):]
+		manual = manual[:strings.Index(manual, "Notes:")]
+		for _, want := range []string{"far smaller than the ones before it", "encrypted", "Anomalies page"} {
+			if !strings.Contains(manual, want) {
+				t.Errorf("the manual restore steps do not mention %q", want)
+			}
+		}
+	})
 }
 
 func TestRecoveryKitCredentials(t *testing.T) {

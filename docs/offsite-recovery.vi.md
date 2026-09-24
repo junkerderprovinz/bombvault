@@ -141,6 +141,9 @@ Một cú nhấp tải xuống **khóa chính**, **mật khẩu restic dẫn xu�
 !!! danger "Cất giữ bộ khôi phục ngoài máy chủ"
     Bộ khôi phục chứa bí mật giải mã các bản sao lưu của bạn. Giữ nó ở nơi an toàn và tách biệt khỏi máy chủ (một trình quản lý mật khẩu, một bản in trong két sắt). Nếu bạn mất cả BombVault và `APP_KEY` mà không có bộ khôi phục, các bản sao lưu đã mã hóa của bạn không thể khôi phục được.
 
+!!! warning "Snapshot mới nhất không phải lúc nào cũng là cái nên khôi phục"
+    Từ restic 0.17, `restic snapshots` hiển thị kích thước của mỗi snapshot. Sau khi mất dữ liệu, snapshot mới nhất có thể là cái đã bị làm trống, vì vậy đừng khôi phục một snapshot nhỏ hơn nhiều so với các snapshot trước nó. Sau ransomware, đó có thể là cái đã bị mã hóa với kích thước bình thường. Nếu BombVault vẫn chạy, hãy xem trang **Bất thường** trước: trang này nêu bản sao lưu tốt cuối cùng. Việc khôi phục không cần dữ liệu bất thường nào của BombVault, và việc tạm dừng lưu giữ chỉ giữ lại nhiều snapshot hơn.
+
 ### Khi không có bộ khôi phục trong tay
 
 Mật khẩu không được lưu ở đâu cả, nó được **tính** từ `APP_KEY`. Chỉ cần khóa và một shell là bạn tự tạo lại được:

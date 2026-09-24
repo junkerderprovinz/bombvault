@@ -84,6 +84,19 @@ Sätt upp en off-site-replik på fliken **Inställningar, Off-site**. Se [Off-si
 - **Bandbreddsgränser:** begränsa restics uppladdnings-/nedladdningshastighet under Inställningar, Off-site.
 - **Kall och arkivlagringsklass (S3):** för ett native S3-off-site-repo, välj en återställningsläsbar nivå (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-fjärrar ställer in sin klass i rclone-konfigurationen.
 
+## Avvikelser {#anomalies}
+
+Avvikelsedetekteringen ställs in i kortet **Avvikelser** under **Inställningar, Integritet**. Varje kontroll sparas så fort du ändrar den, och de tre under reglaget döljs medan detekteringen är avstängd.
+
+| Inställning | Standard | Vad den gör |
+|---|---|---|
+| **Upptäck avvikelser** | På | Jämför varje säkerhetskopia med objektets egen historik. Avstängt kontrolleras inget nytt och posten **Avvikelser** försvinner ur sidofältet; kortet länkar fortfarande till tidigare fynd. |
+| **Känslighet** | Balanserad | Strikt rapporterar mindre förändringar, Tillåtande bara stora. |
+| **Skicka avisering för** | Bara kritiska fynd | Den lägsta allvarlighetsgrad som skickar ett meddelande via kanalerna som ställts in under Aviseringar. Upprepade misslyckade säkerhetskopior och dumpar och misslyckade schemalagda återställningskontroller skickar redan ett eget meddelande och skickas inte två gånger. |
+| **Behåll gamla säkerhetskopior när en källa krymper kraftigt eller skrivs om** | På | Så länge ett objekt har ett öppet fynd för en nästan tom källa, en kraftig krympning eller det mesta av datan sparad på nytt låter gallring och rensning objektets gamla säkerhetskopior vara. Kvittera fyndet eller markera det som väntat för att släppa dem. |
+
+Varje objekt kan ha en egen känslighet och ett eget aviseringsminimum. Ställ in dem på fliken **Objekt** på sidan **Avvikelser**, eller i objektets egen panel: mappavsnittet för en container och inställningarna för en VM (båda i avancerat läge), mappredigeraren för en mappuppsättning och sidorna **Flash** och **Auto-säkerhetskopia**.
+
 ## Portabla inställningar (exportera och importera) {#portable-settings-export-and-import}
 
 Kortet **Exportera och importera inställningar** på Inställningar-sidan skriver hela din BombVault-konfiguration (domäninställningar, off-site-mål, scheman, retention, aviseringar) till en portabel JSON-fil som du kan importera på en annan instans, så att en flytt till en ny box eller kloning av en uppsättning inte innebär att allt måste matas in på nytt för hand. Import visar en förhandsgranskning och ber om bekräftelse, och den rör aldrig dina säkerhetskopieringsdata eller historik.

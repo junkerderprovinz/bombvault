@@ -61,6 +61,26 @@ Un import oprește containerul, pune deoparte folderul lui de date și lasă ima
 
 Ca să îl pui la loc manual: oprește containerul, redenumește folderul de date curent ca să îl dai la o parte, redenumește folderul păstrat înapoi la numele original și pornește containerul. Pe Unraid, managerul de fișiere din fila Shares face asta.
 
+## Un element rămâne la "Învață N/10"
+
+Majoritatea verificărilor de anomalii încep după 10 backupuri reușite ale unui element, iar numărătoarea reîncepe după **Marchează ca așteptată** și după ce selecția elementului s-a schimbat. Un element fără programare nu învață, iar un container fără appdata nu are din ce învăța, lucru pe care îl spune și insigna lui.
+
+## Retenția nu mai șterge backupurile vechi ale unui element
+
+Le ține o anomalie critică deschisă: sursa elementului este aproape goală, s-a micșorat mult sau un backup a salvat din nou cea mai mare parte a datelor. Deschide anomalia din insigna elementului. Dacă lipsesc date sau au fost criptate, restaurează mai întâi din ultimul backup bun indicat. Apoi confirmă anomalia sau marcheaz-o ca așteptată dacă schimbarea a fost a ta, iar următoarea rulare curăță ca de obicei. Previzualizarea retenției marchează un astfel de element ca păstrat.
+
+## Curățarea manuală spune că unele elemente au fost păstrate
+
+Aceeași cauză: curățarea lasă în pace backupurile vechi ale unui element cu o astfel de anomalie și îl numește în mesajul ei. Restul este curățat ca de obicei.
+
+## Importul istoricului spune că un depozit nu a putut fi citit
+
+După actualizare, BombVault citește o dată dimensiunile backupurilor anterioare din fiecare depozit. Un depozit care nu era accesibil atunci, de exemplu o destinație externă căzută sau un share nemontat, apare în cardul **Anomalii** din **Setări, Integritate** și este reîncercat o dată pe zi. Între timp, elementele lui învață din backupurile noi.
+
+## Avertismentul despre spațiul pe disc nu se potrivește cu panoul Unraid
+
+Pe share-ul de utilizator Unraid (`/mnt/user`) spațiul liber este cel al întregului array, nu al unui singur disc. Depozitele la distanță sunt măsurate doar prin remote-uri rclone care își raportează spațiul liber; depozitele S3, B2, REST și SFTP nu au o valoare și apar ca nemăsurate în cardul **Anomalii**.
+
 ## Containerul se tot repornește sau pare nesănătos
 
 BombVault raportează sănătos/nesănătos din propriul `/api/health`. Un instrument de auto-vindecare (precum Autoheal) îl poate reporni automat dacă motorul se blochează vreodată. Verifică jurnalul containerului și raportul `/spike` pentru cauza de bază.

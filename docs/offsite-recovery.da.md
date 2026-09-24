@@ -141,6 +141,9 @@ Dette er den brik, der gør katastrofegendannelse mulig, selv når der ikke er n
 !!! danger "Opbevar gendannelseskittet uden for serveren"
     Kittet indeholder hemmeligheden, der dekrypterer dine sikkerhedskopier. Hold det et sikkert sted adskilt fra serveren (en adgangskodemanager, en printet kopi i en boks). Hvis du mister både BombVault og `APP_KEY` uden noget gendannelseskit, kan dine krypterede sikkerhedskopier ikke gendannes.
 
+!!! warning "Det nyeste snapshot er ikke altid det, der skal gendannes"
+    Siden restic 0.17 viser `restic snapshots` størrelsen på hvert snapshot. Efter datatab kan det nyeste snapshot være det tømte, så gendan ikke et snapshot, der er langt mindre end dem før det. Efter ransomware kan det være det krypterede i den sædvanlige størrelse. Hvis BombVault stadig kører, så se først på siden **Afvigelser**: den nævner den seneste gode sikkerhedskopi. En gendannelse kræver ingen anomalidata fra BombVault, og opbevaringspausen beholder kun flere snapshots.
+
 ### Når sættet ikke er ved hånden
 
 Adgangskoden gemmes ingen steder, den **beregnes** ud fra `APP_KEY`. Med nøglen og en shell kan du altså genskabe den selv:

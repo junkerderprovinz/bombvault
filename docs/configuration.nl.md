@@ -84,6 +84,19 @@ Stel een off-site replica in op het tabblad **Instellingen, Off-site**. Zie [Off
 - **Bandbreedtelimieten:** begrens de restic-upload/downloadsnelheid onder Instellingen, Off-site.
 - **Koude en archiefopslagklasse (S3):** kies voor een native S3 off-site repo een herstel-leesbare tier (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-remotes stellen hun klasse in de rclone-config in.
 
+## Anomalieën {#anomalies}
+
+Anomaliedetectie stel je in op de kaart **Anomalieën** onder **Instellingen, Integriteit**. Elk bedieningselement slaat meteen op, en de drie onder de schakelaar zijn verborgen zolang de detectie uit staat.
+
+| Instelling | Standaard | Wat het doet |
+|---|---|---|
+| **Anomalieën detecteren** | Aan | Vergelijkt elke back-up met de eigen geschiedenis van het item. Uitgeschakeld wordt er niets nieuws meer gecontroleerd en verdwijnt het item **Anomalieën** uit de zijbalk; de kaart linkt nog steeds naar eerdere bevindingen. |
+| **Gevoeligheid** | Gebalanceerd | Streng meldt ook kleinere veranderingen, Soepel alleen grote. |
+| **Een melding sturen voor** | Alleen kritieke bevindingen | De laagste ernst die een bericht stuurt via de kanalen die onder Meldingen zijn ingesteld. Herhaald mislukte back-ups en dumps en mislukte geplande herstelcontroles sturen al een eigen bericht en worden niet dubbel verstuurd. |
+| **Oude back-ups bewaren als een bron sterk krimpt of wordt herschreven** | Aan | Zolang een item een open bevinding heeft voor een bijna lege bron, een sterke krimp of het grootste deel van de data opnieuw opgeslagen, laten retentie en opschonen de oude back-ups van dat item met rust. Bevestig de bevinding of markeer haar als verwacht om ze vrij te geven. |
+
+Elk item kan een eigen gevoeligheid en een eigen meldingsminimum hebben. Stel ze in op het tabblad **Items** van de pagina **Anomalieën**, of in het eigen paneel van het item: het mappengedeelte van een container en de instellingen van een VM (allebei in de geavanceerde modus), de mappeneditor van een mappenset en de pagina's **Flash** en **Zelf-back-up**.
+
 ## Portable instellingen (exporteren en importeren) {#portable-settings-export-and-import}
 
 De kaart **Instellingen exporteren en importeren** op de Instellingen-pagina schrijft je hele BombVault-configuratie (domeininstellingen, off-site doelen, planningen, retentie, meldingen) naar een portable JSON-bestand dat je op een andere instantie kunt importeren, zodat verhuizen naar een nieuwe machine of een setup klonen niet betekent dat je alles met de hand opnieuw invoert. Import toont een voorbeeld en vraagt om bevestiging, en raakt nooit je back-updata of historie aan.

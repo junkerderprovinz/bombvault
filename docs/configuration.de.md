@@ -84,6 +84,19 @@ Richte eine Off-site-Replik im Tab **Einstellungen, Off-site** ein. Siehe [Off-s
 - **Bandbreitenlimits:** begrenze die restic-Upload-/Download-Rate unter Einstellungen, Off-site.
 - **Kalt- und Archiv-Speicherklasse (S3):** wähle für ein natives S3-Off-site-Repo eine wiederherstellungslesbare Stufe (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-Remotes setzen ihre Klasse in der rclone-Konfiguration.
 
+## Anomalien {#anomalies}
+
+Die Anomalie-Erkennung stellst du in der Karte **Anomalien** unter **Einstellungen, Integrität** ein. Jedes Bedienelement speichert sofort, und die drei unter dem Schalter sind ausgeblendet, solange die Erkennung aus ist.
+
+| Einstellung | Standard | Wirkung |
+|---|---|---|
+| **Anomalien erkennen** | An | Vergleicht jedes Backup mit dem eigenen Verlauf des Elements. Ausgeschaltet wird nichts Neues mehr geprüft und der Eintrag **Anomalien** verschwindet aus der Seitenleiste; die Karte verlinkt weiter auf frühere Funde. |
+| **Empfindlichkeit** | Ausgewogen | Streng meldet schon kleinere Änderungen, Nachsichtig nur große. |
+| **Benachrichtigen bei** | Nur kritische Funde | Der niedrigste Schweregrad, der über die unter Benachrichtigungen eingerichteten Kanäle eine Nachricht schickt. Wiederholt fehlgeschlagene Backups und Dumps sowie fehlgeschlagene geplante Wiederherstellungsprüfungen schicken schon eine eigene Nachricht und werden nicht doppelt gemeldet. |
+| **Alte Backups behalten, wenn eine Quelle stark schrumpft oder neu geschrieben wird** | An | Solange ein Element einen offenen Fund zu einer fast leeren Quelle, einem starken Schrumpfen oder zu neu gespeicherten Daten hat, lassen Aufbewahrung und Aufräumen die alten Backups dieses Elements in Ruhe. Quittiere den Fund oder markiere ihn als erwartet, damit sie wieder gelöscht werden dürfen. |
+
+Jedes Element kann eine eigene Empfindlichkeit und ein eigenes Benachrichtigungsminimum haben. Du stellst sie im Reiter **Elemente** der Seite **Anomalien** ein oder im Panel des Elements selbst: im Ordnerbereich eines Containers und in den Einstellungen einer VM (beides im erweiterten Modus), im Ordner-Editor eines Ordner-Sets und auf den Seiten **Flash** und **Selbst-Backup**.
+
 ## Portable Einstellungen (Export und Import) {#portable-settings-export-and-import}
 
 Die Karte **Einstellungen exportieren und importieren** auf der Einstellungsseite schreibt deine gesamte BombVault-Konfiguration (Bereichseinstellungen, Off-site-Ziele, Zeitpläne, Aufbewahrung, Benachrichtigungen) in eine portable JSON-Datei, die du auf einer anderen Instanz importieren kannst, sodass ein Umzug auf eine neue Box oder das Klonen eines Setups nicht bedeutet, alles von Hand neu einzugeben. Der Import zeigt eine Vorschau und fragt nach Bestätigung und rührt niemals deine Backup-Daten oder -Historie an.

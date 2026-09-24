@@ -84,6 +84,19 @@ Thiết lập một bản sao off-site trên tab **Settings, Off-site**. Xem [Of
 - **Giới hạn băng thông:** giới hạn tốc độ tải lên/tải xuống của restic dưới Settings, Off-site.
 - **Lớp lưu trữ nguội và lưu trữ dài hạn (S3):** với một kho off-site S3 gốc, chọn một tầng có thể đọc để khôi phục (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Các remote rclone đặt lớp của chúng trong cấu hình rclone.
 
+## Bất thường {#anomalies}
+
+Phát hiện bất thường được thiết lập trong thẻ **Bất thường** tại **Cài đặt, Toàn vẹn**. Mỗi điều khiển được lưu ngay khi bạn thay đổi, và ba điều khiển dưới công tắc bị ẩn khi tính năng phát hiện đang tắt.
+
+| Thiết lập | Mặc định | Tác dụng |
+|---|---|---|
+| **Phát hiện bất thường** | Bật | So mỗi bản sao lưu với lịch sử riêng của mục. Khi tắt, không có gì mới được kiểm tra và mục **Bất thường** rời khỏi thanh bên; thẻ vẫn liên kết tới các phát hiện trước đó. |
+| **Độ nhạy** | Cân bằng | Nghiêm báo cả những thay đổi nhỏ hơn, Dễ dãi chỉ báo thay đổi lớn. |
+| **Gửi thông báo cho** | Chỉ các phát hiện nghiêm trọng | Mức nghiêm trọng thấp nhất gửi tin nhắn qua các kênh đã thiết lập tại Thông báo. Các lần sao lưu và dump thất bại lặp lại và các kiểm tra khôi phục theo lịch thất bại vốn đã gửi tin nhắn riêng và không bị gửi hai lần. |
+| **Giữ bản sao lưu cũ khi nguồn co lại mạnh hoặc bị ghi lại** | Bật | Chừng nào một mục còn một phát hiện đang mở về nguồn gần như trống, co lại mạnh hoặc phần lớn dữ liệu được lưu lại, việc lưu giữ và dọn dẹp sẽ không động đến các bản sao lưu cũ của mục đó. Xác nhận phát hiện hoặc đánh dấu là đã lường trước để giải phóng chúng. |
+
+Mỗi mục có thể có độ nhạy và mức thông báo tối thiểu riêng. Đặt chúng ở thẻ **Mục** của trang **Bất thường**, hoặc trong bảng của chính mục đó: phần thư mục của một container và thiết lập của một VM (cả hai ở chế độ nâng cao), trình sửa thư mục của một bộ thư mục, và các trang **Flash** và **Tự sao lưu**.
+
 ## Cài đặt di động (xuất và nhập) {#portable-settings-export-and-import}
 
 Thẻ **Xuất và nhập cài đặt** trên trang Settings ghi toàn bộ cấu hình BombVault của bạn (cài đặt miền, đích off-site, lịch trình, lưu giữ, thông báo) ra một tệp JSON di động mà bạn có thể nhập trên một phiên bản khác, nên chuyển sang một máy mới hay nhân bản một thiết lập không có nghĩa là nhập lại mọi thứ bằng tay. Việc nhập hiển thị một bản xem trước và hỏi xác nhận, và nó không bao giờ đụng đến dữ liệu hay lịch sử sao lưu của bạn.

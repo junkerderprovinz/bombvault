@@ -61,6 +61,26 @@ En import stopper containeren, setter datamappen til side og lar imaget lage en 
 
 Slik legger du den tilbake for hånd: stopp containeren, gi den nåværende datamappen et annet navn så den er av veien, gi den bevarte mappen tilbake det opprinnelige navnet, og start containeren. På Unraid gjør filbehandleren under fanen Shares dette.
 
+## Et element blir stående på "Lærer N/10"
+
+De fleste avvikskontroller begynner etter 10 vellykkede sikkerhetskopier av et element, og tellingen begynner på nytt etter **Merk som forventet** og etter at elementets utvalg er endret. Et element uten tidsplan lærer ikke, og en container uten appdata har ingenting å lære av, noe merket også sier.
+
+## Oppbevaringen sletter ikke lenger gamle sikkerhetskopier av ett element
+
+Et åpent kritisk avvik holder dem tilbake: elementets kilde er nesten tom, har krympet kraftig, eller en sikkerhetskopi har lagret det meste av dataene på nytt. Åpne avviket fra merket ved elementet. Mangler det data, eller er de kryptert, gjenopprett først fra den lenkede siste gode sikkerhetskopien. Kvitter deretter for avviket, eller merk det som forventet hvis endringen var din, så rydder neste kjøring som vanlig. Forhåndsvisningen av oppbevaringen merker et slikt element som beholdt.
+
+## Manuell opprydding sier at noen elementer ble beholdt
+
+Samme årsak: oppryddingen lar de gamle sikkerhetskopiene av et element med et slikt avvik være og nevner elementet i meldingen sin. Alt annet ryddes som vanlig.
+
+## Historikkimporten sier at et repository ikke kunne leses
+
+Etter oppgraderingen leser BombVault én gang størrelsen på tidligere sikkerhetskopier fra hvert repository. Et repository som ikke kunne nås da, for eksempel et eksternt mål som var nede eller en share som ikke var montert, står i kortet **Avvik** under **Innstillinger, Integritet** og prøves igjen én gang om dagen. I mellomtiden lærer elementene av nye sikkerhetskopier.
+
+## Varselet om diskplass stemmer ikke med Unraids dashbord
+
+På Unraids brukershare (`/mnt/user`) er den ledige plassen hele arrayets, ikke én disks. Eksterne repositorier måles bare via rclone-remoter som oppgir ledig plass; S3-, B2-, REST- og SFTP-repositorier har ikke noe tall og står som ikke målt i kortet **Avvik**.
+
 ## Containeren fortsetter å starte på nytt eller ser usunn ut
 
 BombVault rapporterer sunn/usunn fra sin egen `/api/health`. Et auto-heal-verktøy (som Autoheal) kan starte den på nytt automatisk hvis motoren noen gang skulle sette seg fast. Sjekk containerloggen og `/spike`-rapporten for den underliggende årsaken.

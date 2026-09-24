@@ -84,6 +84,19 @@ Configurează o replică off-site în fila **Setări, Off-site**. Vezi [Off-site
 - **Limite de lățime de bandă:** limitează rata de upload/download restic sub Setări, Off-site.
 - **Clasă de stocare la rece și de arhivă (S3):** pentru un depozit off-site S3 nativ, alege un nivel care permite restaurarea (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Remote-urile rclone își setează clasa în configurația rclone.
 
+## Anomalii {#anomalies}
+
+Detecția anomaliilor se configurează în cardul **Anomalii** din **Setări, Integritate**. Fiecare control se salvează imediat ce îl schimbi, iar cele trei de sub comutator sunt ascunse cât timp detecția este oprită.
+
+| Setare | Implicit | Ce face |
+|---|---|---|
+| **Detectează anomalii** | Pornit | Compară fiecare backup cu istoricul propriu al elementului. Oprit, nu se mai verifică nimic nou și intrarea **Anomalii** dispare din bara laterală; cardul trimite în continuare la constatările anterioare. |
+| **Sensibilitate** | Echilibrată | Strictă raportează schimbări mai mici, Permisivă doar pe cele mari. |
+| **Trimite o notificare pentru** | Doar constatări critice | Gravitatea minimă care trimite un mesaj prin canalele configurate în Notificări. Eșecurile repetate ale backupurilor și dumpurilor și verificările de restaurare programate eșuate trimit deja propriul mesaj și nu sunt trimise de două ori. |
+| **Păstrează copiile vechi când o sursă se micșorează brusc sau este rescrisă** | Pornit | Cât timp un element are o constatare deschisă pentru o sursă aproape goală, o micșorare puternică sau cea mai mare parte a datelor salvată din nou, retenția și curățarea lasă în pace backupurile lui vechi. Confirmă constatarea sau marcheaz-o ca așteptată ca să le eliberezi. |
+
+Fiecare element poate avea propria sensibilitate și propriul minim de notificare. Setează-le în fila **Elemente** a paginii **Anomalii** sau în panoul elementului: secțiunea de foldere a unui container și setările unei VM (ambele în modul avansat), editorul de foldere al unui set de foldere și paginile **Flash** și **Auto-backup**.
+
 ## Setări portabile (export și import) {#portable-settings-export-and-import}
 
 Cardul **Export și import setări** de pe pagina Setări scrie întreaga ta configurație BombVault (setări de domeniu, ținte off-site, programări, retenție, notificări) într-un fișier JSON portabil pe care îl poți importa pe o altă instanță, astfel încât mutarea pe o stație nouă sau clonarea unei configurații să nu însemne reintroducerea totul manual. Importul arată o previzualizare și cere confirmare și nu îți atinge niciodată datele sau istoricul de backup.

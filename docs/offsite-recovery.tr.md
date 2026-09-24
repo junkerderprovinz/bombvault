@@ -141,6 +141,9 @@ Tek tık, **ana anahtarı**, **türetilen restic parolasını** ve **tam depo ko
 !!! danger "Kurtarma kitini sunucu dışında saklayın"
     Kit, yedeklerinizin şifresini çözen gizli anahtarı içerir. Onu güvenli ve sunucudan ayrı bir yerde tutun (bir parola yöneticisi, bir kasada basılı bir kopya). Hem BombVault'u hem de `APP_KEY`'i kurtarma kiti olmadan kaybederseniz, şifreli yedekleriniz kurtarılamaz.
 
+!!! warning "En yeni anlık görüntü her zaman geri yüklenecek olan değildir"
+    restic 0.17'den beri `restic snapshots` her anlık görüntünün boyutunu gösterir. Veri kaybından sonra en yeni anlık görüntü boşaltılmış olan olabilir, bu yüzden öncekilerden çok daha küçük bir anlık görüntüyü geri yüklemeyin. Fidye yazılımından sonra olağan boyutta şifrelenmiş olan olabilir. BombVault hâlâ çalışıyorsa önce **Anormallikler** sayfasına bakın: son iyi yedeği gösterir. Geri yükleme için BombVault'un anomali verilerine gerek yoktur ve saklama duraklatması yalnızca daha fazla anlık görüntü tutar.
+
 ### Kurtarma seti elinizin altında değilse
 
 Parola hiçbir yerde saklanmaz, `APP_KEY` değerinden **hesaplanır**. Anahtar ve bir kabuk varsa onu kendiniz de üretebilirsiniz:

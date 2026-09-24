@@ -61,6 +61,26 @@ Een import stopt de container, zet zijn datamap opzij en laat de image er een le
 
 Met de hand terugzetten: stop de container, hernoem de huidige datamap uit de weg, hernoem de bewaarde map terug naar de oorspronkelijke naam en start de container. Op Unraid doet de bestandsbeheerder op het tabblad Shares dit.
 
+## Een item blijft op "Leert N/10" staan
+
+De meeste anomaliecontroles beginnen na 10 geslaagde back-ups van een item, en de telling begint opnieuw na **Als verwacht markeren** en nadat de selectie van het item is gewijzigd. Een item zonder planning leert niet, en een container zonder appdata heeft niets om van te leren, wat zijn badge ook zegt.
+
+## Retentie verwijdert geen oude back-ups meer van één item
+
+Een open kritieke anomalie houdt ze vast: de bron van het item is bijna leeg, sterk gekrompen, of een back-up heeft het grootste deel van de data opnieuw opgeslagen. Open de anomalie via de badge bij het item. Als er data ontbreekt of versleuteld is, herstel dan eerst vanaf de gelinkte laatste goede back-up. Bevestig daarna de anomalie, of markeer haar als verwacht als de wijziging van jou kwam, en de volgende run schoont weer gewoon op. De retentievoorvertoning markeert zo'n item als bewaard.
+
+## Handmatig opschonen meldt dat sommige items zijn bewaard
+
+Dezelfde oorzaak: opschonen laat de oude back-ups van een item met zo'n anomalie met rust en noemt het item in zijn melding. Al het andere wordt gewoon opgeschoond.
+
+## De geschiedenisimport meldt dat een repository niet gelezen kon worden
+
+Na de update leest BombVault één keer de groottes van eerdere back-ups uit elke repository. Een repository die op dat moment niet bereikbaar was, zoals een uitgevallen off-site-doel of een share die niet gekoppeld was, staat op de kaart **Anomalieën** onder **Instellingen, Integriteit** en wordt één keer per dag opnieuw geprobeerd. Zijn items leren intussen van nieuwe back-ups.
+
+## De waarschuwing over schijfruimte klopt niet met het Unraid-dashboard
+
+Op de Unraid-gebruikersshare (`/mnt/user`) is de vrije ruimte die van de hele array, niet van één schijf. Externe repositories worden alleen gemeten via rclone-remotes die hun vrije ruimte melden; S3-, B2-, REST- en SFTP-repositories hebben geen waarde en staan als niet gemeten op de kaart **Anomalieën**.
+
 ## De container blijft herstarten of ziet er unhealthy uit
 
 BombVault meldt healthy/unhealthy vanuit zijn eigen `/api/health`. Een auto-heal-tool (zoals Autoheal) kan hem automatisch herstarten als de engine ooit vastloopt. Controleer het containerlog en het `/spike`-rapport voor de onderliggende oorzaak.

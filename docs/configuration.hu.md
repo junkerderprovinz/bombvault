@@ -84,6 +84,19 @@ A sablon hozzáadja a `--add-host=host.docker.internal:host-gateway` opciót, ho
 - **Sávszélesség-korlátok:** korlátozd a restic fel- és letöltési sebességét a Beállítások, Telephelyen kívüli alatt.
 - **Hideg és archív tárolási osztály (S3):** egy natív S3 telephelyen kívüli tárolóhoz válassz egy visszaállításra olvasható szintet (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). Az rclone remote-ok a saját osztályukat az rclone konfigban állítják be.
 
+## Anomáliák {#anomalies}
+
+Az anomáliák észlelését a **Beállítások, Integritás** alatti **Anomáliák** kártyán állítod be. Minden vezérlő azonnal ment, amint módosítod, a kapcsoló alatti három pedig rejtve marad, amíg az észlelés ki van kapcsolva.
+
+| Beállítás | Alapérték | Mit csinál |
+|---|---|---|
+| **Anomáliák felismerése** | Be | Minden mentést összevet az elem saját előzményeivel. Kikapcsolva semmi újat nem ellenőriz, és az **Anomáliák** bejegyzés eltűnik az oldalsávból; a kártya továbbra is a korábbi észlelésekre mutat. |
+| **Érzékenység** | Kiegyensúlyozott | A Szigorú kisebb változásokat is jelez, a Megengedő csak nagyokat. |
+| **Értesítés küldése ekkor** | Csak kritikus leletek | Az a legalacsonyabb súlyosság, amely üzenetet küld az Értesítések alatt beállított csatornákon. Az ismételten sikertelen mentések és dumpok, valamint a sikertelen ütemezett visszaállítási ellenőrzések már saját üzenetet küldenek, ezeket nem küldi el kétszer. |
+| **Régi mentések megtartása, ha egy forrás erősen zsugorodik vagy újraíródik** | Be | Amíg egy elemnek nyitott észlelése van majdnem üres forrás, erős zsugorodás vagy az adatok nagy részének újbóli eltárolása miatt, a megőrzés és a tisztítás békén hagyja a régi mentéseit. Nyugtázd az észlelést vagy jelöld várhatónak, hogy felszabaduljanak. |
+
+Minden elemnek lehet saját érzékenysége és saját értesítési minimuma. Ezeket az **Anomáliák** oldal **Elemek** lapján vagy az elem saját paneljén állítod be: egy konténer mappaszakaszában és egy virtuális gép beállításaiban (mindkettő speciális módban), egy mappakészlet mappaszerkesztőjében, valamint a **Flash** és a **Önmentés** oldalon.
+
 ## Hordozható beállítások (exportálás és importálás) {#portable-settings-export-and-import}
 
 Az **Exportálás és importálás beállítások** kártya a Beállítások oldalon a teljes BombVault-konfigurációdat (tartománybeállítások, telephelyen kívüli célok, ütemezések, megőrzés, értesítések) egy hordozható JSON-fájlba írja, amelyet egy másik példányon importálhatsz, így egy új gépre költözés vagy egy beállítás klónozása nem jelenti azt, hogy mindent kézzel kell újra beírni. Az importálás előnézetet mutat és megerősítést kér, és soha nem érinti a mentési adataidat vagy előzményeidet.

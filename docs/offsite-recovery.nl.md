@@ -141,6 +141,9 @@ Eén klik downloadt de **hoofdsleutel**, het **afgeleide restic-wachtwoord** en 
 !!! danger "Bewaar de herstelkit buiten de server"
     De kit bevat het geheim dat je back-ups ontsleutelt. Bewaar hem ergens veilig en gescheiden van de server (een wachtwoordmanager, een geprinte kopie in een kluis). Als je zowel BombVault als `APP_KEY` verliest zonder herstelkit, kunnen je versleutelde back-ups niet worden hersteld.
 
+!!! warning "De nieuwste snapshot is niet altijd de juiste om te herstellen"
+    Sinds restic 0.17 toont `restic snapshots` de grootte van elke snapshot. Na dataverlies kan de nieuwste snapshot de leeggemaakte zijn, dus herstel geen snapshot die veel kleiner is dan de vorige. Na ransomware kan het de versleutelde zijn, met de gebruikelijke grootte. Draait BombVault nog, kijk dan eerst op de pagina **Anomalieën**: die noemt de laatste goede back-up. Een herstel heeft geen anomaliegegevens van BombVault nodig, en de retentiepauze bewaart alleen maar meer snapshots.
+
 ### Als het pakket niet bij de hand is
 
 Het wachtwoord staat nergens opgeslagen, het wordt **berekend** uit de `APP_KEY`. Met de sleutel en een shell kun je het dus zelf namaken:

@@ -141,6 +141,9 @@ Jedno kliknutí stáhne **hlavní klíč**, **odvozené heslo restic** a **přes
 !!! danger "Uložte sadu pro obnovu mimo server"
     Sada obsahuje tajemství, které dešifruje vaše zálohy. Uchovejte ji na bezpečném místě odděleně od serveru (správce hesel, tištěná kopie v trezoru). Pokud ztratíte jak BombVault, tak `APP_KEY` bez sady pro obnovu, vaše šifrované zálohy nelze obnovit.
 
+!!! warning "Nejnovější snímek není vždy ten, který obnovit"
+    Od restic 0.17 ukazuje `restic snapshots` velikost každého snímku. Po ztrátě dat může být nejnovější snímek ten vyprázdněný, proto neobnovujte snímek, který je mnohem menší než ty před ním. Po ransomwaru to může být ten zašifrovaný v obvyklé velikosti. Pokud BombVault ještě běží, podívejte se nejdřív na jeho stránku **Anomálie**: uvádí poslední dobrou zálohu. Obnova nepotřebuje žádná data o anomáliích z BombVault a pozastavení uchovávání vždy jen ponechá více snímků.
+
 ### Když sada není po ruce
 
 Heslo není nikde uloženo, **počítá se** z `APP_KEY`. S klíčem a shellem si je tedy dokážete odvodit sami:

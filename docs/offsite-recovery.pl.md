@@ -141,6 +141,9 @@ Jedno kliknięcie pobiera **klucz główny**, **wyprowadzone hasło restic** ora
 !!! danger "Przechowuj zestaw odzyskiwania poza serwerem"
     Zestaw zawiera sekret, który odszyfrowuje Twoje kopie. Trzymaj go w bezpiecznym miejscu, oddzielnie od serwera (menedżer haseł, wydrukowana kopia w sejfie). Jeśli stracisz zarówno BombVault, jak i `APP_KEY` bez zestawu odzyskiwania, Twoich zaszyfrowanych kopii nie da się odzyskać.
 
+!!! warning "Najnowsza migawka nie zawsze jest tą do przywrócenia"
+    Od restic 0.17 polecenie `restic snapshots` pokazuje rozmiar każdej migawki. Po utracie danych najnowsza migawka może być tą opróżnioną, więc nie przywracaj migawki dużo mniejszej niż poprzednie. Po ataku ransomware może to być migawka zaszyfrowana o zwykłym rozmiarze. Jeśli BombVault nadal działa, najpierw zajrzyj na jego stronę **Anomalie**: wskazuje ostatnią dobrą kopię. Przywracanie nie potrzebuje żadnych danych o anomaliach z BombVault, a wstrzymanie retencji zawsze tylko zachowuje więcej migawek.
+
 ### Gdy zestawu nie ma pod ręką
 
 Hasło nie jest nigdzie zapisane, jest **wyliczane** z `APP_KEY`. Mając klucz i powłokę, możesz je odtworzyć samodzielnie:

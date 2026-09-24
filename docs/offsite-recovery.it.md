@@ -141,6 +141,9 @@ Un clic scarica la **chiave master**, la **password restic derivata** e le **pos
 !!! danger "Conserva il kit di ripristino fuori dal server"
     Il kit contiene il segreto che decifra i tuoi backup. Tienilo in un luogo sicuro e separato dal server (un password manager, una copia stampata in una cassaforte). Se perdi sia BombVault che `APP_KEY` senza kit di ripristino, i tuoi backup cifrati non possono essere recuperati.
 
+!!! warning "Lo snapshot più recente non è sempre quello da ripristinare"
+    Da restic 0.17, `restic snapshots` mostra la dimensione di ogni snapshot. Dopo una perdita di dati lo snapshot più recente può essere quello svuotato, quindi non ripristinare uno snapshot molto più piccolo dei precedenti. Dopo un ransomware può essere quello cifrato, di dimensione normale. Se BombVault funziona ancora, controlla prima la sua pagina **Anomalie**: indica l'ultimo backup buono. Un ripristino non ha bisogno di alcun dato sulle anomalie di BombVault, e la pausa della conservazione mantiene sempre solo più snapshot.
+
 ### Se il kit non è a portata di mano
 
 La password non è memorizzata da nessuna parte, viene **calcolata** dall'`APP_KEY`. Con la chiave e una shell puoi quindi riprodurla da solo:

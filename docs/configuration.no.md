@@ -84,6 +84,19 @@ Sett opp en ekstern replika på **Innstillinger, Ekstern**-fanen. Se [Ekstern la
 - **Båndbreddegrenser:** begrens resticts opplastings-/nedlastingshastighet under Innstillinger, Ekstern.
 - **Kald og arkiv-lagringsklasse (S3):** for et native S3-eksternt repo, velg et gjenopprettingslesbart nivå (Standard, Standard-IA, One Zone-IA, Intelligent-Tiering, Glacier Instant Retrieval). rclone-remoter setter klassen sin i rclone-konfigurasjonen.
 
+## Avvik {#anomalies}
+
+Avviksoppdagelsen stilles inn i kortet **Avvik** under **Innstillinger, Integritet**. Hver kontroll lagres så snart du endrer den, og de tre under bryteren er skjult mens oppdagelsen er slått av.
+
+| Innstilling | Standard | Hva den gjør |
+|---|---|---|
+| **Oppdag avvik** | På | Sammenligner hver sikkerhetskopi med elementets egen historikk. Slått av kontrolleres ingenting nytt, og oppføringen **Avvik** forsvinner fra sidepanelet; kortet lenker fortsatt til tidligere funn. |
+| **Følsomhet** | Balansert | Streng melder mindre endringer, Romslig bare store. |
+| **Send varsel for** | Bare kritiske funn | Den laveste alvorlighetsgraden som sender en melding via kanalene som er satt opp under Varsler. Gjentatte mislykkede sikkerhetskopier og dumper og mislykkede planlagte gjenopprettingskontroller sender allerede en egen melding og sendes ikke to ganger. |
+| **Behold gamle sikkerhetskopier når en kilde krymper kraftig eller skrives om** | På | Så lenge et element har et åpent funn for en nesten tom kilde, en kraftig krymping eller det meste av dataene lagret på nytt, lar oppbevaring og opprydding elementets gamle sikkerhetskopier være. Kvitter for funnet eller merk det som forventet for å slippe dem. |
+
+Hvert element kan ha sin egen følsomhet og sitt eget varslingsminimum. Still dem inn på fanen **Elementer** på siden **Avvik**, eller i elementets eget panel: mappedelen for en container og innstillingene for en VM (begge i avansert modus), mappeeditoren for et mappesett og sidene **Flash** og **Auto-sikkerhetskopi**.
+
 ## Portable innstillinger (eksporter og importer) {#portable-settings-export-and-import}
 
 Kortet **Eksporter og importer innstillinger** på Innstillinger-siden skriver hele BombVault-konfigurasjonen din (domeneinnstillinger, eksterne mål, tidsplaner, oppbevaring, varsler) til en portabel JSON-fil du kan importere på en annen instans, så å flytte til en ny boks eller klone et oppsett ikke betyr å taste inn alt på nytt for hånd. Import viser en forhåndsvisning og ber om bekreftelse, og den rører aldri sikkerhetskopidataene eller -historikken din.

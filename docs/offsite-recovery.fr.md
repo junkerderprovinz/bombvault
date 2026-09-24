@@ -141,6 +141,9 @@ Un clic télécharge la **clé maîtresse**, le **mot de passe restic dérivé**
 !!! danger "Conservez le kit de récupération hors du serveur"
     Le kit contient le secret qui déchiffre vos sauvegardes. Gardez-le en lieu sûr et à l'écart du serveur (un gestionnaire de mots de passe, une copie imprimée dans un coffre). Si vous perdez à la fois BombVault et `APP_KEY` sans kit de récupération, vos sauvegardes chiffrées ne peuvent pas être récupérées.
 
+!!! warning "Le snapshot le plus récent n'est pas toujours celui à restaurer"
+    Depuis restic 0.17, `restic snapshots` affiche la taille de chaque snapshot. Après une perte de données, le snapshot le plus récent peut être celui qui a été vidé : ne restaurez donc pas un snapshot beaucoup plus petit que les précédents. Après un rançongiciel, ce peut être le snapshot chiffré, de taille habituelle. Si BombVault tourne encore, consultez d'abord sa page **Anomalies** : elle indique la dernière bonne sauvegarde. Une restauration n'a besoin d'aucune donnée d'anomalie de BombVault, et la pause de rétention ne fait jamais que garder plus de snapshots.
+
 ### Si le kit n'est pas sous la main
 
 Le mot de passe n'est stocké nulle part, il est **calculé** à partir de l'`APP_KEY`. Avec la clé et un shell, vous pouvez donc le reproduire vous-même :

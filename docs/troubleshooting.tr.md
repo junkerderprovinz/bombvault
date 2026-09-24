@@ -61,6 +61,26 @@ Başarısız bir döküm, çevresindeki yedeklemeyi asla düşürmez; kendi baş
 
 Elle geri koymak için: konteyneri durdurun, mevcut veri klasörünün adını değiştirip yoldan çekin, saklanan klasörü özgün adına geri döndürün ve konteyneri başlatın. Unraid'de bunu Shares sekmesindeki dosya yöneticisi yapar.
 
+## Bir öğe "Öğreniyor N/10" durumunda kalıyor
+
+Anomali denetimlerinin çoğu bir öğenin 10 başarılı yedeğinden sonra başlar ve sayım **Beklenen olarak işaretle** sonrasında ve öğenin seçimi değiştikten sonra yeniden başlar. Zamanlaması olmayan bir öğe öğrenmez, appdata'sı olmayan bir konteynerin de öğrenecek bir şeyi yoktur; rozeti de bunu söyler.
+
+## Saklama, bir öğenin eski yedeklerini silmeyi bıraktı
+
+Açık bir kritik anomali onları tutuyor: öğenin kaynağı neredeyse boş, çok küçülmüş ya da bir yedek verilerin çoğunu yeniden kaydetmiş. Anomaliyi öğedeki rozetten açın. Veri eksikse ya da şifrelenmişse önce bağlantısı verilen son iyi yedekten geri yükleyin. Ardından anomaliyi onaylayın ya da değişiklik sizden geldiyse beklenen olarak işaretleyin; sonraki çalıştırma her zamanki gibi temizler. Saklama önizlemesi böyle bir öğeyi tutulmuş olarak işaretler.
+
+## Elle temizlik bazı öğelerin tutulduğunu söylüyor
+
+Aynı neden: temizlik, böyle bir anomalisi olan öğenin eski yedeklerine dokunmaz ve öğeyi mesajında adlandırır. Geri kalan her şey her zamanki gibi temizlenir.
+
+## Geçmiş içe aktarımı bir deponun okunamadığını söylüyor
+
+Güncellemeden sonra BombVault önceki yedeklerin boyutlarını her depodan bir kez okur. O sırada erişilemeyen bir depo, örneğin çalışmayan bir uzak hedef ya da bağlanmamış bir paylaşım, **Ayarlar, Bütünlük** altındaki **Anormallikler** kartında listelenir ve günde bir kez yeniden denenir. Bu arada öğeleri yeni yedeklerden öğrenir.
+
+## Disk alanı uyarısı Unraid panosuyla uyuşmuyor
+
+Unraid kullanıcı paylaşımında (`/mnt/user`) boş alan tek bir diskin değil, tüm dizinin boş alanıdır. Uzak depolar yalnızca boş alanını bildiren rclone uzakları üzerinden ölçülür; S3, B2, REST ve SFTP depolarının değeri yoktur ve **Anormallikler** kartında ölçülmemiş olarak listelenir.
+
 ## Konteyner sürekli yeniden başlıyor ya da sağlıksız görünüyor
 
 BombVault, kendi `/api/health`'inden sağlıklı/sağlıksız bildirir. Motor bir şekilde sıkışırsa bir otomatik onarma aracı (Autoheal gibi) onu otomatik olarak yeniden başlatabilir. Altta yatan neden için konteyner günlüğünü ve `/spike` raporunu denetleyin.
